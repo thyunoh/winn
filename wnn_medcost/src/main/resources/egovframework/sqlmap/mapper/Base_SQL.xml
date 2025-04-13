@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_medcost.base.mapper.BaseMapper">
+	<select id="getCommList" parameterType="CodeMdDTO" resultType="CodeMdDTO"><![CDATA[
+        SELECT CODE_CD 
+             , SUB_CODE 
+             , SUB_CODE_NM
+          FROM TBL_CODE_DTL
+         WHERE CODE_GB IN 
+        ]]>
+        <foreach item="item" index="index" collection="codeGbList" open="(" separator="," close=")">
+            #{item}
+        </foreach><![CDATA[
+         AND CODE_CD IN 
+        ]]>
+        <foreach item="item" index="index" collection="codeCdList" open="(" separator="," close=")">
+            #{item}
+        </foreach><![CDATA[        
+           AND NOW() BETWEEN START_DT AND END_DT
+           AND USE_YN    = 'Y'
+           AND ACTION_YN = 'Y'
+    ]]>       
+    </select> 
+	<select id="getSugaCdList" parameterType="SugaCdDTO"  resultType="SugaCdDTO"><![CDATA[
+      SELECT FEE_CODE  ,
+	         FEE_TYPE  ,
+	         CASE WHEN FEE_TYPE = '1' THEN '수가'
+	              WHEN FEE_TYPE = '2' THEN '약가'
+	              WHEN FEE_TYPE = '3' THEN '재료'
+	              ELSE '수가' END AS FEE_TYPE_NM ,
+		    START_DT,
+	        END_DT,
+	        CLASS_NO,
+	        KOR_NM,
+	        ENG_NM,
+	        DIV_TYPE,
+	        SURG_YN,  
+	        CLN_PRICE,
+	        HOS_PRICE,   
+	        DNT_PRICE,
+	 		PBL_PRICE ,
+	 		MID_PRICE ,
+	 		ORH_PRICE ,
+	 		RLT_VALUE ,
+	 		COPAY_50  , 
+	 		COPAY_80  , 
+	 		COPAY_90  ,
+	 		DUP_YN    , 
+	 		CALC_NM   , 
+	 		SEC_MAJ   ,  
+	 		SEC_MIN   ,   
+	 		SUB_CAT    
+		FROM 
+		    TBL_SUGA_MST A
+	   WHERE ACTION_YN = 'Y' AND 
+	         
+		    ( A.FEE_CODE LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      A.KOR_NM   LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      A.ENG_NM   LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+		 AND A.FEE_TYPE = #{feeType}    
+	]]>
+	</select>
+
+     <select id = "SugaCdMstDupChk"  parameterType="SugaCdDTO"  resultType="String"><![CDATA[   
+       SELECT 'Y'
+       FROM TBL_SUGA_MST 
+       WHERE FEE_CODE  = #{feeCode}  
+         AND FEE_TYPE  = #{feeType} 
+         AND START_DT  = #{startDt}
+         AND ACTION_YN = 'Y'
+    ]]>  
+    </select> 
+
+    <insert id="insertSugaCdMst" parameterType="SugaCdDTO" > <![CDATA[ 
+        INSERT INTO TBL_SUGA_MST (
+            FEE_CODE , FEE_TYPE  , START_DT  , END_DT    , CLASS_NO , KOR_NM, ENG_NM,
+            DIV_TYPE , SURG_YN   , CLN_PRICE , HOS_PRICE , DNT_PRICE, PBL_PRICE,
+            MID_PRICE, ORH_PRICE , RLT_VALUE , COPAY_50  , COPAY_80 , COPAY_90 ,
+            DUP_YN   , CALC_NM   , SEC_MAJ   , SEC_MIN   , SUB_CAT  , REG_DTTM , 
+            REG_USER , REG_IP    , UPD_DTTM  , UPD_USER  , UPD_IP   , JOB_SEQ , ACTION_YN
+	    ) VALUES (
+	        #{feeCode} , #{feeType}  , #{startDt}  , #{endDt}    , #{classNo}  , #{korNm}    , 
+	        #{engNm}   , #{divType}  , #{surgYn}   , #{clnPrice} , #{hosPrice} , #{dntPrice} , 
+	        #{pblPrice} , #{midPrice}, #{orhPrice} , #{rltValue} , #{copay50}  , #{copay80}  , #{copay90} ,
+	        #{dupYn}   , #{calcNm}   , #{secMaj}   , #{secMin}   , #{subCat}   , NOW()  , #{regUser} , 
+	        #{regIp}   , NOW()  , #{updUser}  , #{updIp}    , 
+            (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+                   FROM TBL_SUGA_MST A 
+                   WHERE A.FEE_CODE = #{feeCode} 
+                     AND A.FEE_TYPE = #{feeType}
+                     AND A.START_DT = #{startDt}),  
+	        'Y'
+	    )	
+     ]]>
+    </insert>	   
+    <update id = "updateSugaCdMst"  parameterType="SugaCdDTO" ><![CDATA[ 
+       UPDATE TBL_SUGA_MST  
+         SET ACTION_YN = 'N', 
+             UPD_DTTM  = NOW()       , 
+             UPD_USER  = #{updUser} , 
+             UPD_IP    = #{updIp}
+       WHERE FEE_CODE  = #{feeCode}  
+         AND FEE_TYPE  = #{feeType} 
+         AND START_DT  = #{startDt}
+         AND ACTION_YN = 'Y'
+    ]]>
+    </update>	
+    <!-- 상병코드시작  -->                              
+	<select id="getDiseCdList" parameterType="DiseCdDTO"  resultType="DiseCdDTO"><![CDATA[
+	  	 select 
+             DIAG_CODE, 
+             START_DT, 
+             KOR_DIAG_NAME, 
+             ENG_DIAG_NAME, 
+             GENDER_TYPE, 
+             INFECT_TYPE, 
+             DIAG_TYPE, 
+             ICD10_CODE, 
+             END_DT, 
+             MAX_AGE, 
+             MIN_AGE, 
+             VCODE, 
+             DESC_INFO, 
+             REG_DTTM, 
+             REG_USER, 
+             REG_IP, 
+             UPD_DTTM, 
+             UPD_USER, 
+             UPD_IP
+		  From TBL_DISE_CODE
+		 Where ACTION_YN = 'Y' AND 
+		     ( DIAG_CODE     LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      KOR_DIAG_NAME   LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      ENG_DIAG_NAME   LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+     ]]>		    
+	</select>        
+     <select id = "DiseCdMstDupChk"  parameterType="DiseCdDTO"  resultType="String"><![CDATA[   
+       SELECT 'Y'
+       FROM TBL_DISE_CODE 
+       WHERE 1=1
+		   AND  DIAG_CODE = #{diagCode}
+		   AND  START_DT  = #{startDt}
+           AND  ACTION_YN = 'Y'
+    ]]>  
+    </select> 
+
+    <insert id="insertDiseCdMst" parameterType="DiseCdDTO" > <![CDATA[ 
+        INSERT INTO TBL_DISE_CODE 
+               (DIAG_CODE,        START_DT, 
+                KOR_DIAG_NAME,    ENG_DIAG_NAME, 
+                GENDER_TYPE,      INFECT_TYPE, 
+                DIAG_TYPE,        ICD10_CODE, 
+                END_DT,           MAX_AGE, 
+                MIN_AGE,          VCODE, 
+                DESC_INFO,        REG_DTTM, 
+                REG_USER,         REG_IP, 
+                UPD_DTTM,         UPD_USER, 
+                UPD_IP , JOB_SEQ , ACTION_YN 
+                )
+        VALUES ( #{diagCode},     #{startDt}, 
+                 #{korDiagName} , #{engDiagName}, 
+                 #{genderType}  , #{infectType}  , 
+                 #{diagType}    , #{icd10Code}   , 
+                 #{endDt} ,       #{maxAge}, 
+                 #{minAge},       #{vcode}, 
+                 #{descInfo},     NOW(), 
+                 #{regUser},      #{regIp}, 
+                 NOW(),            #{updUser}, 
+                 #{updIp}   , 
+                 (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+                   FROM TBL_DISE_CODE A 
+                   WHERE A.DIAG_CODE = #{diagCode} 
+                     AND A.START_DT  = #{startDt}), 'Y'
+	          )	
+     ]]>
+     
+    </insert>	   
+    <update id = "updateDiseCdMst"  parameterType="DiseCdDTO" ><![CDATA[ 
+       UPDATE TBL_DISE_CODE  
+         SET ACTION_YN = 'N', 
+             UPD_DTTM  = NOW()       , 
+             UPD_USER  = #{updUser} , 
+             UPD_IP    = #{updIp}
+       WHERE 1=1 
+         AND DIAG_CODE  = #{diagCode}  
+         AND START_DT   = #{startDt}
+         AND ACTION_YN  = 'Y'
+    ]]>
+    </update>	 
+ 	<select id="getCommMstList" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
+        SELECT CODE_CD 
+             , CODE_NM 
+             , START_DT
+             , END_DT 
+	         , USE_YN 
+	         , SORT
+	         , REG_DTTM
+	         , REG_USER
+	         , REG_IP
+	         , UPD_DTTM
+	         , UPD_USER
+	         , UPD_IP	         
+	    FROM TBL_CODE_MST
+	   WHERE 1=1
+	     AND ACTION_YN = 'Y' AND  
+		    (CODE_CD  LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      CODE_NM   LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      CODE_NM   LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+          ORDER BY CODE_CD 
+       ]]>
+	</select>	  
+	<insert id="insertCommMst" parameterType="CodeMdDTO"><![CDATA[
+	  INSERT INTO TBL_CODE_MST
+      ( CODE_CD  
+       ,CODE_NM    
+       ,START_DT  
+       ,END_DT    
+       ,USE_YN   
+       ,SORT     
+       ,REG_DTTM 
+       ,REG_USER 
+       ,REG_IP    
+       ,UPD_DTTM 
+       ,UPD_USER  
+       ,UPD_IP   
+       ,JOB_SEQ  
+       ,ACTION_YN   
+      ) VALUES(
+         #{codeCd}
+       , #{codeNm}  
+       , #{startDt}
+       , #{endDt}     
+       , #{useYn}
+       , #{sort}
+       , NOW() 
+       , #{regUser}      
+       , #{regIp} 
+       , NOW()            
+       , #{updUser} 
+       , #{updIp}    
+       , (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+              FROM TBL_CODE_MST A 
+              WHERE A.CODE_CD = #{codeCd}) 
+       ,'Y' 
+	   )	
+	]]>
+	</insert>
+    <update id = "updateCommMst"  parameterType="CodeMdDTO" ><![CDATA[ 
+       UPDATE TBL_CODE_MST
+          SET   ACTION_YN  = 'N'
+              , USE_YN     = 'N'
+              , END_DT     = #{endDt}    
+              , UPD_USER   = #{updUser}
+              , UPD_DTTM   = now() 
+              , UPD_IP     = #{updIp} 
+        WHERE CODE_CD      = #{codeCd}
+          AND ACTION_YN = 'Y' 	
+     ]]>    
+     </update>   
+     <select id = "CommMstDupChk"  parameterType="CodeMdDTO"  resultType="String"><![CDATA[   
+       SELECT 'Y'
+       FROM TBL_CODE_MST 
+       WHERE 1=1
+		   AND  CODE_CD  = #{codeCd}
+           AND  ACTION_YN = 'Y'
+    ]]>  
+    </select>  
+<!-- 공통코드 세브코드  -->
+    <select id ="getCodeDtlList" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
+		SELECT 
+		      B.CODE_CD  
+		    , B.SUB_CODE
+		    , B.CODE_GB 
+		    , CASE  WHEN B.CODE_GB IS NOT NULL THEN 
+		            (SELECT A.SUB_CODE_NM 
+		             FROM TBL_CODE_DTL A 
+		             WHERE A.CODE_CD = 'CODE_GB'
+		               AND A.SUB_CODE = B.CODE_GB
+		               AND A.ACTION_YN = 'Y'
+		             LIMIT 1)
+		        ELSE '' END AS DTL_CODE_NM
+		    ,RTRIM(B.SUB_CODE_NM) AS SUB_CODE_NM
+		    ,B.START_DT 
+		    ,B.END_DT   
+		    ,B.USE_YN   
+		    ,B.SORT
+            ,B.PROP_1
+            ,B.PROP_2
+            ,B.PROP_3
+            ,B.PROP_4
+            ,B.PROP_5 		    
+		FROM TBL_CODE_DTL B
+       WHERE 1=1 
+         AND B.CODE_CD   = #{codeCd} 
+	     AND B.ACTION_YN = 'Y' 
+          ORDER BY B.CODE_GB, B.CODE_CD  , B.SUB_CODE
+      ]]> 
+    </select>
+   <insert id = "insertCommDtl" parameterType="CodeMdDTO"><![CDATA[ 
+      INSERT INTO TBL_CODE_DTL
+      ( CODE_GB 
+       ,CODE_CD
+       ,SUB_CODE
+       ,SUB_CODE_NM
+       ,START_DT   
+       ,END_DT 
+       ,USE_YN
+       ,SORT
+       ,PROP_1
+       ,PROP_2
+       ,PROP_3
+       ,PROP_4
+       ,PROP_5 
+       ,REG_DTTM
+       ,REG_USER
+       ,REG_IP  
+       ,UPD_DTTM
+       ,UPD_USER
+       ,UPD_IP
+       ,JOB_SEQ
+       ,ACTION_YN
+      ) VALUES
+      ( #{codeGb}
+       ,#{codeCd}
+       ,#{subCode}
+       ,#{subCodeNm}
+       ,#{startDt}   
+       ,#{endDt} 
+       ,#{useYn} 
+       ,#{sort}
+       ,#{prop1}
+       ,#{prop2}
+       ,#{prop3}
+       ,#{prop4}
+       ,#{prop5}       
+       ,now() 
+       ,#{regUser}
+       ,#{regIp}
+       ,now() 
+       ,#{updUser}
+       ,#{updIp}
+       , (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+              FROM TBL_CODE_DTL A 
+              WHERE   A.CODE_GB  = #{codeGb}
+                  AND A.CODE_CD  = #{codeCd}
+                  AND A.SUB_CODE = #{subCode}
+          ) 
+       ,'Y' 
+      ) 
+    ]]>
+    </insert>    
+    
+    <select id ="CommDtlDupChk" parameterType="CodeMdDTO"  resultType="String"><![CDATA[ 
+      SELECT 'Y'
+        FROM TBL_CODE_DTL
+       WHERE CODE_GB   = #{codeGb}  
+         AND CODE_CD   = #{codeCd}
+         AND SUB_CODE  = #{subCode}
+         AND ACTION_YN = 'Y'
+    ]]>
+    </select> 
+           
+    <update id = "updateCommDtl"  parameterType="CodeMdDTO" ><![CDATA[ 
+       UPDATE TBL_CODE_DTL
+          SET  ACTION_YN   = 'N'
+             , UPD_DTTM    =  now() 
+             , UPD_USER    =  #{updUser}
+             , UPD_IP      =  #{updIp} 
+        WHERE CODE_GB      =  #{codeGb}
+          AND CODE_CD      =  #{codeCd}    
+          AND SUB_CODE     =  #{subCode}
+          AND ACTION_YN    = 'Y'
+    ]]>
+    </update>    
+    <select id="getWvalueList" parameterType="WvalDTO" resultType="WvalDTO"><![CDATA[ 
+       SELECT 
+            A.CATE_CODE
+           , A.ORDER_SEQ
+		   , A.START_DT 
+		   , A.END_DT 
+           , A.CAL_GUBUN 
+           , B.SUB_CODE_NM AS  WEVALUE_NM
+           , A.START_INDI
+           , A.END_INDI
+           , A.STD_SCORE
+           , A.WE_VALUE
+           , A.REG_DTTM
+           , A.REG_USER
+           , A.REG_IP
+           , A.UPD_DTTM
+           , A.UPD_USER
+           , A.UPD_IP
+        FROM TBL_WEVALUE_MST A
+             INNER JOIN TBL_CODE_DTL B ON B.CODE_GB = 'Z' 
+                                      AND B.ACTION_YN ='Y' 
+                                      AND B.CODE_CD = 'WVALUE' 
+                                      AND B.SUB_CODE = A.CATE_CODE
+        WHERE 1=1
+	 	  AND A.ACTION_YN = 'Y' 
+	 	  AND 
+		     ( A.CATE_CODE   LIKE CONCAT('%'  #{findData}  '%')  OR 
+		      A.WEVALUE_NM   LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+		  Order by A.CATE_CODE  , A.START_DT ,  A.ORDER_SEQ 
+	      ]]>         
+    </select>  
+    <!-- 가중치 -->
+    <insert id="insertWvalue" parameterType="WvalDTO"> <![CDATA[ 
+        INSERT INTO TBL_WEVALUE_MST (
+             CATE_CODE 
+            ,ORDER_SEQ 
+            ,START_DT 
+            ,END_DT 
+            ,CAL_GUBUN 
+            ,WEVALUE_NM 
+            ,START_INDI
+            ,END_INDI 
+            ,STD_SCORE 
+            ,WE_VALUE 
+            ,REG_DTTM 
+            ,REG_USER 
+            ,REG_IP 
+            ,UPD_DTTM 
+            ,UPD_USER 
+            ,UPD_IP 
+            ,JOB_SEQ 
+            ,ACTION_YN 
+        ) VALUES (
+            #{cateCode} 
+           , #{orderSeq} 
+           , #{startDt} 
+           , #{endDt} 
+           , #{calGubun} 
+           , #{wevalueNm} 
+           , #{startIndi}
+           , #{endIndi} 
+           , #{stdScore} 
+           , #{weValue} 
+           , NOW() 
+           , #{regUser} 
+           , #{regIp} 
+           , NOW() 
+           , #{updUser} 
+           , #{updIp}
+	       , (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+	              FROM TBL_WEVALUE_MST A 
+                 WHERE CATE_CODE = #{cateCode} 
+                   AND ORDER_SEQ = #{orderSeq} 
+                   AND START_DT  = #{startDt}
+             )     
+	       ,'Y' 
+        )
+     ]]>   
+    </insert>
+     <update id="updateWvalue"  parameterType="WvalDTO"> <![CDATA[ 
+        UPDATE TBL_WEVALUE_MST
+        SET  ACTION_YN = 'N'
+            ,UPD_DTTM    = NOW()
+            ,UPD_USER    = #{updUser}
+            ,UPD_IP      = #{updIp}
+        WHERE CATE_CODE = #{cateCode} 
+          AND ORDER_SEQ = #{orderSeq} 
+          AND START_DT  = #{startDt}
+          AND ACTION_YN = 'Y'
+    ]]>    
+    </update>  
+    <select id ="WvalueDupChk" parameterType="WvalDTO"  resultType="String"><![CDATA[ 
+      SELECT 'Y'
+        FROM TBL_WEVALUE_MST
+       WHERE CATE_CODE = #{cateCode} 
+         AND ORDER_SEQ = #{orderSeq} 
+         AND START_DT  = #{startDt}
+         AND ACTION_YN = 'Y'
+    ]]>
+    </select>  
+ <!-- 샘파일조회--> 
+    <select id="getsamverCdlist" parameterType="SamverDTO" resultType="SamverDTO">
+        SELECT 
+             A.SAMVER 
+            ,A.TBLINFO 
+            ,A.VERSION 
+            ,A.SEQ 
+            ,A.ITEM_NM 
+            ,A.SORT_SEQ 
+            ,A.START_POS 
+            ,A.END_POS
+            ,A.DATA_TYPE 
+            ,A.DECIMAL_POS 
+            ,A.DATAPROC_YN 
+            ,A.DB_COLNM 
+            ,A.LAST_YN 
+            ,A.DB_COMCOLNM
+            ,B.SUB_CODE_NM 
+            ,A.COL_SIZE 
+            ,A.REG_DTTM 
+            ,A.REG_USER 
+            ,A.REG_IP 
+            ,A.UPD_DTTM
+            ,A.UPD_USER
+            ,A.UPD_IP 
+        FROM TBL_SAMFVER_MST A
+        INNER JOIN 
+            TBL_CODE_DTL B  ON B.CODE_CD = 'TBLINFO' AND B.SUB_CODE = A.TBLINFO        
+        WHERE 1 = 1
+           AND A.ACTION_YN = 'Y'
+        <if test="samver != null and samver != ''">
+            AND (A.SAMVER LIKE CONCAT('%', #{samver}, '%') or  A.VERSION = #{version} or (A.SAMVER BETWEEN #{samver} AND #{prop1})) 
+        </if>
+        <if test="tblinfo != null and tblinfo != ''">
+            AND A.TBLINFO = #{tblinfo}
+        </if>
+        <if test="dataprocYn != null and dataprocYn != ''">
+            AND A.DATAPROC_YN = #{dataprocYn}
+        </if>
+        ORDER BY A.VERSION, A.SAMVER, B.SORT, A.TBLINFO,A.SEQ
+    </select>
+    <insert id="insertsamverCd" parameterType="SamverDTO"> <![CDATA[ 
+        INSERT INTO TBL_SAMFVER_MST (
+             SAMVER 
+            ,TBLINFO 
+            ,VERSION 
+            ,SEQ 
+            ,ITEM_NM 
+            ,SORT_SEQ 
+            ,START_POS 
+            ,END_POS
+            ,DATA_TYPE 
+            ,DECIMAL_POS 
+            ,DATAPROC_YN 
+            ,DB_COLNM 
+            ,LAST_YN 
+            ,DB_COMCOLNM
+            ,COL_SIZE 
+            ,REG_DTTM 
+            ,REG_USER 
+            ,REG_IP 
+            ,UPD_DTTM
+            ,UPD_USER
+            ,UPD_IP 
+            ,JOB_SEQ 
+            ,ACTION_YN 
+        ) VALUES (
+            #{samver} 
+           ,#{tblinfo} 
+           ,#{version} 
+           ,#{seq} 
+           ,#{itemNm} 
+           ,#{sortSeq} 
+           ,#{startPos}  
+           ,#{endPos} 
+           ,#{dataType}  
+           ,#{decimalPos}  
+           ,#{dataprocYn} 
+           ,#{dbColnm}  
+           ,#{lastYn}  
+           ,#{dbComcolnm} 
+           ,#{colSize}  
+           ,now()
+           ,#{regUser}  
+           ,#{regIp}  
+           ,now()
+           ,#{updUser} 
+           ,#{updIp}  
+	       , (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+	              FROM TBL_SAMFVER_MST A 
+                 WHERE SAMVER  = #{samver}
+                   AND TBLINFO = #{tblinfo} 
+                   AND VERSION = #{version} 
+                   AND SEQ     = #{seq}
+             )     
+	       ,'Y' 
+        )
+     ]]>   
+    </insert>  
+     <update id="updatesamverCd"  parameterType="SamverDTO"> <![CDATA[ 
+        UPDATE TBL_SAMFVER_MST
+        SET ACTION_YN = 'N'
+            ,UPD_DTTM    = NOW()
+            ,UPD_USER    = #{updUser}
+            ,UPD_IP      = #{updIp}
+          WHERE  SAMVER  = #{samver}
+             AND TBLINFO = #{tblinfo} 
+             AND VERSION = #{version} 
+             AND SEQ     = #{seq}
+             AND ACTION_YN = 'Y'
+    ]]>    
+    </update>  
+    <select id ="samverCdDupChk" parameterType="SamverDTO"  resultType="String"><![CDATA[ 
+      SELECT 'Y'
+        FROM TBL_SAMFVER_MST
+        WHERE  SAMVER  = #{samver}
+           AND TBLINFO = #{tblinfo} 
+           AND VERSION = #{version} 
+           AND SEQ     = #{seq}
+           AND ACTION_YN = 'Y'
+    ]]>
+    </select>             	        		                              	      
+</mapper>

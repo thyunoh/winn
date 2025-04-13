@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_consult.base.mapper.BaseMapper">
+
+	<select id="selCommMstList" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
+	  SELECT CODE_CD , 
+	         RTRIM(CODE_NM) CODE_NM ,
+	         DATE_FORMAT(START_DT, '%Y-%m-%d') START_DT ,
+	         DATE_FORMAT(END_DT, '%Y-%m-%d') END_DT, 
+	         IFNULL(USE_YN,'') USE_YN ,
+	         SORT ,
+	         REG_DTTM , 
+	         REG_USER , 
+	         REG_IP   ,
+	         UPD_DTTM , 
+	         UPD_USER , 
+	         UPD_IP 
+	    FROM TBL_CODE_MST
+	   WHERE 1=1
+	]]>
+      <if test='code_cd != null and code_cd != "" '><![CDATA[
+         AND ( CODE_CD LIKE CONCAT('%',#{codeCd},'%')  OR
+               CODE_NM LIKE CONCAT('%',#{codeCd},'%')
+             ) 
+      ]]>
+      </if>
+      <![CDATA[
+       ORDER BY CODE_CD 
+        ]]>
+	</select>	
+		
+	<select id="selCommMstDupChk" parameterType="CodeMdDTO"  resultType="String"> <![CDATA[
+	  SELECT 'Y'
+	    FROM TBL_CODE_MST
+	   WHERE CODE_cd = #{codeCd}
+	]]>
+	</select>	
+	
+	<insert id="insertCommMst" parameterType="CodeMdDTO"><![CDATA[
+	  INSERT INTO TBL_CODE_MST
+      (CODE_CD  ,
+       CODE_NM  ,  
+       START_DT , 
+       END_DT   , 
+       USE_YN   ,
+       SORT     ,
+       REG_DTTM ,
+       REG_USER ,
+       REG_IP   , 
+       UPD_DTTM ,
+       UPD_USER , 
+       UPD_IP   
+      ) VALUES
+      (#{codeCd},
+       #{codeNm},  
+       REPLACE(#{startDt} , '-', ''),
+       REPLACE(#{endDt} , '-', '') ,    
+       #{useYn},
+       #{sort},
+        NOW() ,
+       'admin', 
+       ''     ,
+        NOW() ,
+       'admin', 
+       ''  
+      ) 
+	]]>
+	</insert>	
+	
+    <update id = "updateCommMst"  parameterType="CodeMdDTO" ><![CDATA[ 
+       UPDATE TBL_CODE_MST
+          SET CODE_NM    = #{codeNm}, 
+              END_DT     = REPLACE(#{endDt} , '-', '') ,    
+              USE_YN     = #{useYn},
+              SORT       = #{sort} ,
+              UPD_USER   = 'admin' ,
+              UPD_DTTM   =  now() 
+        WHERE CODE_CD    = #{codeCd}
+    ]]>
+    </update>	
+    
+    <update id = "deleteCommMst"  parameterType="CodeMdDTO" ><![CDATA[ 
+       UPDATE TBL_CODE_MST
+          SET USE_YN    = 'N',
+              END_DT     = REPLACE(#{endDt} , '-', '') ,   
+              UPD_USER   = 'admin' ,
+              UPD_DTTM   =  now() 
+        WHERE CODE_CD    = #{codeCd}
+    ]]>
+  	</update>
+  <!--   공콩코드  디테일코드  -->     
+    <select id ="selCommDetailList" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
+      SELECT CODE_GB,
+             CODE_CD,
+             SUB_CODE,
+             RTRIM(SUB_CODE_NM) SUB_CODE_NM,
+             DATE_FORMAT(START_DT, '%Y-%m-%d') START_DT , 
+             DATE_FORMAT(END_DT, '%Y-%m-%d') END_DT , 
+             IFNULL(USE_YN,'') USE_YN ,
+             IFNull(SORT,'1') SORT ,
+	         REG_DTTM , 
+	         REG_USER , 
+	         REG_IP   ,
+	         UPD_DTTM , 
+	         UPD_USER , 
+	         UPD_IP              
+        FROM TBL_CODE_DTL 
+       WHERE CODE_CD  = #{code_cd} 
+      ]]> 
+      <if test="sub_code != null and sub_code != '' "><![CDATA[
+         AND ( SUB_CODE LIKE CONCAT('%',#{subCode},'%')  
+             ) 
+      ]]>
+      </if>
+      <![CDATA[
+       ORDER BY CODE_CD , CODE_GB , SUB_CODE
+      ]]>
+    </select>
+    
+	<select id="selectCodeDetailList" parameterType="CodeMdDTO" resultType="CodeMdDTO">
+	  <![CDATA[
+	  SELECT 
+	      A.CODE_GB,
+	      B.SUB_CODE_NM AS CODE_GBNM ,
+	      A.CODE_CD,
+	      A.SUB_CODE ,   
+	      A.SUB_CODE_NM  ,
+	      A.START_DT,
+	      A.END_DT,
+	      A.USE_YN,
+	      IFNULL(A.PROP_1,'') AS PROP_1 ,
+	      IFNULL(A.PROP_5,'') AS PROP_5 ,
+	      COALESCE(A.SORT, '1') AS SORT
+	  FROM TBL_CODE_DTL A
+	      INNER JOIN TBL_CODE_DTL B ON B.CODE_CD = 'CODE_GB' AND B.SUB_CODE = A.CODE_GB
+	  WHERE A.CODE_CD = #{codeCd}
+	  ]]>
+	  <if test='subCode != null and subCode != ""'>
+	    <![CDATA[
+	      AND A.SUB_CODE = #{subCode}
+	    ]]>
+	  </if>
+	  <if test='subCodeNm != null and subCodeNm != ""'>
+	    <![CDATA[
+	      AND A.SUB_CODE_NM LIKE CONCAT('%', #{subCodeNm}, '%')
+	    ]]>
+	  </if>
+	  <if test='useYn != null and useYn != ""'>
+	    <![CDATA[
+	      AND A.USE_YN = #{useYn}
+	    ]]>
+	  </if>
+	  <if test='codeGb != null and codeGb != ""'>
+	    <![CDATA[
+	      AND A.CODE_GB = #{codeGb}
+	    ]]>
+	  </if>
+	  ORDER BY A.SORT, A.SUB_CODE, A.START_DT
+	</select>
+   
+   <insert id = "insertCommDetail" parameterType="CodeMdDTO"><![CDATA[ 
+      INSERT INTO TBL_CODE_DTL
+      (CODE_GB ,
+       CODE_CD,
+       SUB_CODE,
+       SUB_CODE_NM,
+       START_DT,   
+       END_DT, 
+       USE_YN,
+       SORT,
+       REG_DTTM ,
+       REG_USER ,
+       REG_IP   , 
+       UPD_DTTM ,
+       UPD_USER , 
+       UPD_IP   ,
+       PROP_1   , 
+       PROP_5     
+      ) VALUES
+      (#{codeGb},
+       #{codeCd},
+       #{subCode},
+       #{subCodeNm},
+       REPLACE(#{startDt} , '-', ''),
+       REPLACE(#{endDt} , '-', '') ,  
+       #{useYn}, 
+       #{sort}  ,
+        NOW()   ,
+       'admin'  ,
+        ''      , 
+        NOW()   , 
+       'admin'  ,
+        ''      , 
+        prop1  , 
+        prop5            
+      ) 
+    ]]>
+    </insert>    
+    
+    <select id ="selCommDetailDupChk" parameterType="CodeMdDTO"  resultType="String"><![CDATA[ 
+      SELECT 'Y'
+        FROM TBL_CODE_DTL
+       WHERE CODE_CD   = #{codeCd}
+         AND SUB_CODE  = #{subCode}
+         AND CODE_GB   = #{codeGb}
+    ]]>
+    </select> 
+           
+    <update id = "updateCommDetail"  parameterType="CodeMdDTO" ><![CDATA[ 
+       UPDATE TBL_CODE_DTL
+          SET 
+              PROP_1        = #{prop1} ,
+              PROP_5        = #{prop5} ,
+              SUB_CODE_NM   = #{sub_cCodeNm}, 
+              END_DT        = REPLACE(#{endDt},'-',''), 
+              USE_YN        = #{useYn},
+              SORT          = #{sort},
+              UPD_DTTM      = now() ,
+              UPD_USER      = 'admin'
+        WHERE CODE_CD       = #{codeCd} 
+          AND SUB_CODE      = #{subCode}
+          AND CODE_GB       = #{codeGb}
+    ]]>
+    </update>    
+    <update id = "deleteCommDetail"  parameterType="CodeMdDTO" ><![CDATA[ 
+       UPDATE TBL_CODE_DTL
+          SET USE_YN     = 'N'
+              SORT       =  #{sort},
+              END_DT     =  DATE_FORMAT(NOW(), '%Y%m%d'), 
+              UPD_DTTM   =  now() ,
+              UPD_USER   = 'admin'
+        WHERE CODE_CD    = #{codeCd} 
+          AND SUB_CODE   = #{subCode}
+          AND CODE_GB    = #{codeGb}
+    ]]>
+    </update>
+	<select id="selCommDtlInfo" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
+	   SELECT 
+          CODE_CD,
+          SUB_CODE_NM
+	   FROM TBL_CODE_DTL
+	   WHERE 1=1
+	    AND CODE_CD = #{codeCd}
+	 ]]>  
+	</select> 
+
+</mapper>

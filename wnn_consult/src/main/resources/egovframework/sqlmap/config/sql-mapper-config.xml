@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+		<setting name="jdbcTypeForNull" value="NULL" />
+	</settings>
+    <typeAliases>
+   	    <typeAlias  alias="CodeMdDTO"  type="egovframework.wnn_consult.base.model.CodeMdDTO"/>
+   	    
+    	<typeAlias  alias="UserDTO"    type="egovframework.wnn_consult.user.model.UserDTO"/>
+        <typeAlias  alias="HospMdDTO"  type="egovframework.wnn_consult.user.model.HospMdDTO"/>
+        <typeAlias  alias="MberDTO"    type="egovframework.wnn_consult.user.model.MberDTO"/>
+        
+        <typeAlias  alias="NotiDTO"    type="egovframework.wnn_consult.mangr.model.NotiDTO"/>
+        <typeAlias  alias="AsqDTO"     type="egovframework.wnn_consult.mangr.model.AsqDTO"/>
+        <typeAlias  alias="FaqDTO"     type="egovframework.wnn_consult.mangr.model.FaqDTO"/>
+        <typeAlias  alias="FileDTO"     type="egovframework.wnn_consult.mangr.model.FileDTO"/>
+	</typeAliases>
+	
+</configuration>

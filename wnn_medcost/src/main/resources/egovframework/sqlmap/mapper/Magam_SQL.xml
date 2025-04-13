@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_medcost.magam.mapper.MagamMapper">
+	<resultMap id="magamMap" type="egovframework.wnn_medcost.magam.model.MagamDTO">	   
+          <result property="hosp_cd"     column="hosp_cd" />
+          <result property="mg_year"     column="mg_year" />
+          <result property="mgmonth"     column="mgmonth" />
+		  <result property="mg_flag"     column="mg_flag" />
+		  <result property="magamyn"     column="magamyn" />		  
+		  <result property="claim_no"    column="claim_no" />
+		  <result property="clform_ver"  column="clform_ver" />
+		  <result property="claim_type"  column="claim_type" />
+		  <result property="treat_type"  column="treat_type" />		  
+		  <result property="date_ym"     column="date_ym" />
+		  <result property="case_cnt"    column="case_cnt" />
+		  <result property="tot_amt"     column="tot_amt" />
+		  <result property="claim_amt"   column="claim_amt" />
+		  <result property="jobs_dt"     column="jobs_dt" />
+		  <result property="file_nm"     column="file_nm" />		  
+		  <result property="user_nm"     column="user_nm" />		  
+		  <result property="upd_dttm"    column="upd_dttm" />
+		  <result property="filenew"     column="filenew" />
+		  
+	</resultMap>
+	
+	<resultMap id="filesMap" type="egovframework.wnn_medcost.magam.model.FilesDTO">	   
+          <result property="hosp_cd"    column="hosp_cd" />
+          <result property="mg_year"    column="mg_year" />
+          <result property="mgmonth"    column="mgmonth" />
+		  <result property="mg_flag"    column="mg_flag" />
+		  <result property="jobs_dt"    column="jobs_dt" />
+		  <result property="file_nm"    column="file_nm" />
+		  <result property="line_no"    column="line_no" />
+		  <result property="lineval"    column="lineval" />
+		  <result property="reg_user"   column="reg_user" />
+		  <result property="reg_ip"     column="reg_ip" />
+		  <result property="upd_user"   column="upd_user" />
+		  <result property="upd_ip"     column="upd_ip" />
+	</resultMap>
+	
+	
+	
+
+	<select id="getMagamYearList" parameterType="MagamDTO"  resultMap="magamMap"><![CDATA[
+		WITH MONTHS AS (
+		    SELECT '01' AS MGMONTH UNION ALL
+		    SELECT '02' UNION ALL
+		    SELECT '03' UNION ALL
+		    SELECT '04' UNION ALL
+		    SELECT '05' UNION ALL
+		    SELECT '06' UNION ALL
+		    SELECT '07' UNION ALL
+		    SELECT '08' UNION ALL
+		    SELECT '09' UNION ALL
+		    SELECT '10' UNION ALL
+		    SELECT '11' UNION ALL
+		    SELECT '12'
+		)
+		SELECT 
+		    #{mg_year} AS MG_YEAR,
+		    M.MGMONTH,
+		    #{mg_flag} AS MG_FLAG,
+		    CASE WHEN A.MGMONTH IS NOT NULL THEN 'Y' ELSE 'N' END AS MAGAMYN
+		FROM MONTHS M LEFT JOIN TBL_MAGAM_INFO A ON M.MGMONTH = A.MGMONTH
+		 AND A.HOSP_CD = #{hosp_cd}
+		 AND A.MG_YEAR = #{mg_year}
+		 AND A.MG_FLAG = #{mg_flag}
+	   ORDER BY M.MGMONTH
+	]]>
+	</select>
+	
+	<select id="magamGetFileList" parameterType="MagamDTO"  resultMap="magamMap"><![CDATA[
+	  SELECT B.CLAIM_NO   AS claim_no
+		   , B.CLFORM_VER AS clform_ver
+		   , B.CLAIM_TYPE AS claim_type
+		   , B.TREAT_TYPE AS treat_type
+		   , B.DATE_YM    AS date_ym
+		   , B.CASE_CNT   AS case_cnt
+		   , B.TOT_AMT    AS tot_amt
+		   , B.CLAIM_AMT  AS claim_amt
+		   , B.FILE_NM    AS file_nm
+		   , B.JOBS_DT    AS jobs_dt
+		   , A.UPD_DTTM   AS upd_dttm
+		   , C.UPD_USER   AS user_nm
+	    FROM TBL_MAGAM_INFO A
+		LEFT OUTER JOIN TBL_MAGAM_CHUNG B ON A.HOSP_CD = B.HOSP_CD 
+		                                 AND A.MG_YEAR = B.MG_YEAR
+		                                 AND A.MGMONTH = B.MGMONTH
+		                                 AND A.MG_FLAG = B.MG_FLAG
+		LEFT OUTER JOIN TBL_USER_MST   C  ON C.HOSP_CD = A.HOSP_CD 
+		                                 AND C.USER_ID = A.UPD_USER
+		                                 AND NOW() BETWEEN C.START_DT AND C.END_DT
+		WHERE A.HOSP_CD = #{hosp_cd}
+		  AND A.MG_YEAR = #{mg_year}
+		  AND A.MGMONTH = #{mgmonth}
+		  AND A.MG_FLAG = #{mg_flag}
+	   
+	]]>
+	</select>
+	 
+	<insert id="uploadMagamFiles" parameterType="java.util.List">
+		INSERT INTO TBL_FILES_DATA (
+            HOSP_CD, MG_YEAR, MGMONTH, MG_FLAG,
+            JOBS_DT, FILE_NM, LINE_NO, LINEVAL, CHUNGGU,
+            REG_DTTM,REG_USER,REG_IP
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.hosp_cd}, #{item.mg_year},  #{item.mgmonth}, #{item.mg_flag},
+                #{item.jobs_dt}, #{item.file_nm},  #{item.line_no}, #{item.lineval}, #{item.chunggu},
+                NOW(),           #{item.reg_user}, #{item.reg_ip}
+            )
+        </foreach>
+	</insert>
+	
+	<update id="updateMagamInfo" parameterType="MagamDTO">
+        UPDATE TBL_MAGAM_INFO
+           SET JOBS_DT  = #{jobs_dt}
+             , UPD_DTTM = NOW()
+             , UPD_USER = #{upd_user}
+             , UPD_IP   = #{upd_ip}
+         WHERE HOSP_CD  = #{hosp_cd}
+           AND MG_YEAR  = #{mg_year}
+           AND MGMONTH  = #{mgmonth}
+           AND MG_FLAG  = #{mg_flag}
+    </update>
+    
+    <insert id="insertMagamInfo" parameterType="MagamDTO">
+        INSERT INTO TBL_MAGAM_INFO (
+            HOSP_CD, MG_YEAR, MGMONTH, MG_FLAG, 
+            JOBS_DT, REG_DTTM, REG_USER, REG_IP
+        )
+        VALUES (
+            #{hosp_cd}, #{mg_year}, #{mgmonth},  #{mg_flag}, 
+            #{jobs_dt}, NOW(),      #{reg_user}, #{reg_ip}
+        )
+    </insert>
+    
+    <!-- 저장 프로시저 호출 -->
+    <select id="callUploadMagamFiles" statementType="CALLABLE">
+        CALL SP_UPLOAD_MAGAM_FILES(#{filesDataJson, jdbcType=LONGVARCHAR})
+    </select>
+    
+ 	<select id="callUploadMagamSamFiles" statementType="CALLABLE">
+    	{CALL SP_UPLOAD_MAGAM_SAMFILES(#{hosp_cd,   mode=IN},
+    	                               #{mg_year,   mode=IN},
+    	                               #{mgmonth,   mode=IN},
+    	                               #{mg_flag,   mode=IN},
+    	                               #{jobs_dt,   mode=IN},
+    	                               #{file_nm,   mode=IN},
+    	                               #{reg_user,  mode=IN})}
+	</select>
+	
+	<!--
+	<insert id="uploadMagamFiles" parameterType="filesDTO">
+        INSERT INTO TBL_FILES_DATA (
+            HOSP_CD,
+            MG_YEAR,
+            MGMONTH,
+            MG_FLAG,
+            JOBS_DT,
+            FILE_NM,
+            LINE_NO,
+            LINEVAL,
+            REG_DTTM,
+            REG_USER,
+            REG_IP
+        )
+        VALUES (
+            #{hosp_cd},
+            #{mg_year},
+            #{mgmonth},
+            #{mg_flag},
+            #{jobs_dt},
+            #{file_nm},
+            #{line_no},
+            #{lineval},
+            NOW(),
+            #{reg_user},
+            #{reg_ip}
+        )
+    </insert>
+    -->
+</mapper>

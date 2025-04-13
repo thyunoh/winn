@@ -1,0 +1,756 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_consult.user.mapper.UserMapper">
+  
+	<select id="userLoginCheck" parameterType="UserDTO"  resultType="UserDTO"><![CDATA[
+	 SELECT 
+	    MAX(C.HOSP_CD) AS HOSP_CD,
+	    MAX(C.HOSP_NM) AS HOSP_NM,
+	    MAX(C.USER_ID) AS USER_ID,
+	    MAX(C.USER_NM) AS USER_NM,
+	    MAX(C.WINNER_YN) AS WINNER_YN,
+	    MAX(C.PASS_WD) AS PASS_WD,
+	    MAX(C.START_DT) AS START_DT,
+	    MAX(C.END_DT) AS END_DT,
+	    MAX(C.MAIN_GU) AS MAIN_GU,
+	    MAX(C.HOSP_UUID) AS HOSP_UUID,
+	    MAX(C.USE_NOT) AS USE_NOT,
+	    MAX(C.CONACT_GB) AS CONACT_GB
+	FROM (
+	    SELECT 
+	        A.HOSP_CD,
+	        B.HOSP_NM,
+	        A.USER_ID,
+	        A.USER_NM,
+	        B.WINNER_YN,
+	        A.PASS_WD,
+	        A.START_DT,
+	        A.END_DT,
+	        A.MAIN_GU,
+	        A.HOSP_UUID,
+	        (CASE 
+	            WHEN NOW() BETWEEN A.START_DT AND A.END_DT THEN 'Y'
+	            ELSE 'N'
+	        END) AS USE_NOT,
+	        (
+	            SELECT 
+	                CASE 
+	                    WHEN COUNT(DISTINCT CONACT_GB) = 2 
+	                         AND SUM(CONACT_GB IN (1,2)) = 2 THEN 'A'
+	                    WHEN COUNT(DISTINCT CONACT_GB) = 1 
+	                         AND MAX(CONACT_GB) = 1 THEN '1'
+	                    WHEN COUNT(DISTINCT CONACT_GB) = 1 
+	                         AND MAX(CONACT_GB) = 2 THEN '2'
+	                    ELSE 'N' 
+	                END
+	            FROM TBL_HOSPCONT_MST 
+	            WHERE HOSP_CD = #{hospCd}
+	              AND ACTION_YN = 'Y' 
+	              AND NOW() BETWEEN STR_TO_DATE(ACCEPT_DT, '%Y%m%d') 
+	                            AND STR_TO_DATE(CLOSE_DT, '%Y%m%d')
+	        ) AS CONACT_GB
+	    FROM TBL_USER_MST A
+	    JOIN TBL_HOSP_MST B 
+	        ON A.HOSP_CD = B.HOSP_CD 
+	        AND A.ACTION_YN = B.ACTION_YN
+	    WHERE A.ACTION_YN = 'Y'
+	      AND A.HOSP_CD = #{hospCd}
+	      AND A.USER_ID = #{userId}
+	
+	    UNION ALL
+	
+	    SELECT 
+	        '0' AS HOSP_CD,
+	        '0' AS HOSP_NM,
+	        '0' AS USER_ID,
+	        '0' AS USER_NM,
+	        '0' AS WINNER_YN,
+	        '0' AS PASS_WD,
+	        '0' AS START_DT,
+	        '0' AS END_DT,
+	        '0' AS MAIN_GU,
+	        '0' AS HOSP_UUID,
+	        '0' AS USE_NOT,
+	        '0' AS CONACT_GB
+	) C
+	]]>
+	</select>		
+	
+		<!-- 사용자 정보 조회 -->
+	<select id="userInfo" parameterType="UserDTO"  resultType="UserDTO"><![CDATA[ 
+	
+	  SELECT A.HOSP_CD
+	       , B.HOSP_NM
+	  	   , A.USER_ID
+	  	   , A.USER_NM
+	  	   , A.PASS_WD
+	  	   , DATE_FORMAT(A.START_DT,'%y-%m-%d') AS START_DT
+	       , DATE_FORMAT(A.END_DT,  '%y-%m-%d') AS END_DT 
+	       , A.MAIN_GU
+	       , 'Y' AS USE_YN
+	  	   , A.BIGO
+	  	   , A.PASS_CDT
+	       , A.REG_DTTM
+	       , A.REG_USER
+	       , A.REG_IP
+	       , A.UPD_DTTM
+	       , A.UPD_USER
+	       , A.UPD_IP
+	    FROM TBL_USER_MST A
+	       , TBL_HOSP_MST B
+	   WHERE A.HOSP_CD = #{hospCd}
+	     AND A.USER_ID = #{userId}
+	     AND A.ACTION = 'Y'
+         AMD A.ACTION_YN = B.ACTION_YN 
+	     AND NOW() BETWEEN A.START_DT AND A.END_DT
+	     AND B.HOSP_CD = A.HOSP_CD
+	]]>
+	</select>	
+
+     <select id="UsernmInfo" parameterType="UserDTO"  resultType="UserDTO"> <![CDATA[ 
+	  SELECT PASS_WD , 
+             USER_ID  
+	    FROM TBL_USER_MST
+       Where 1=1
+           AND ACTION_YN = 'Y' 
+		   And USER_NM = #{userNm}
+		   And EMAIL   = #{email}
+    ]]>
+    </select> 
+    <select id="UserPasswdInfo" parameterType="UserDTO"  resultType="UserDTO"> <![CDATA[ 
+	    SELECT   HOSP_CD , 
+	             TRIM(USER_ID) USER_ID , 
+	             PASS_WD 
+		    FROM TBL_USER_MST
+	       Where 1=1
+	           AND ACTION_YN = 'Y'
+			   And HOSP_CD   = #{hospCd}
+			   And USER_ID   = #{userId}
+	    ]]>
+	    <![CDATA[
+		   ORDER BY START_DT DESC
+		   LIMIT 1 
+		]]>
+    </select>	    
+	<!-- 비밀번호 변경 처리 -->
+	<update id= "UserPasswdChange" parameterType="UserDTO"><![CDATA[ 
+	  UPDATE TBL_USER_MST
+	     SET PASS_WD  = #{encPassWd}
+       Where 1=1
+           AND ACTION_YN = 'Y' 
+		   And HOSP_CD   = #{hospCd}
+		   And USER_ID   = #{userId}
+	]]>   
+	</update> 
+    <!-- Insert -->
+    <insert id="insertUser" parameterType="UserDTO"> <![CDATA[ 
+        INSERT INTO TBL_USER_MST (
+            HOSP_CD, 
+            USER_ID, 
+            USER_NM, 
+            START_DT, 
+            END_DT, 
+            MAIN_GU, 
+            PASS_WD, 
+            PASS_CDT,
+            BIGO, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP ,
+            USE_YN ,
+            HOSP_UUID  ,
+            WINNER_YN ,
+            EMAIL     ,  
+            USER_TEL 
+        ) VALUES (
+            #{hospCd}, 
+            #{userId}, 
+            #{userNm}, 
+            REPLACE(#{startDt} , '-', ''),
+            REPLACE(#{endDt} , '-', '') ,
+            #{mainGu}, 
+            #{passWd}, 
+            DATE_FORMAT(NOW(),'%Y-%m-%d') ,
+            #{bigo}, 
+             NOW(), 
+            #{regUser}, 
+            #{regIp}, 
+             NOW(), 
+            #{updUser}, 
+            #{updIp} ,
+            #{useYn} ,
+            #{hospUuid} ,
+            #{winnerYn},
+            #{email} ,
+            #{userTel}
+        )
+    ]]>
+    </insert>  
+     <update id="updateUser" parameterType="UserDTO"> <![CDATA[ 
+        UPDATE TBL_USER_MST
+        SET USER_NM    = #{userNm},
+            MAIN_GU    = #{mainGu},
+            BIGO       = #{bigo},
+            USE_YN     = #{useYn},
+            UPD_DTTM   = NOW(),
+            UPD_USER   = #{updUser},
+            UPD_IP     = #{updIp},
+            END_DT     = REPLACE(#{endDt} , '-', ''),
+            HOSP_UUID  = #{hospUuid} ,
+            WINNER_YN  = #{winnerYn} ,
+            EMAIL      = #{email} ,
+            USER_TEL   = #{userTel}
+        WHERE HOSP_CD  = #{hospCd}
+          AND USER_ID  = #{userId}
+          And START_DT = REPLACE(#{startDt} , '-', '')
+    ]]>      
+    </update>     
+    
+    <delete id="deleteUser" parameterType="UserDTO"> <![CDATA[ 
+        DELETE FROM TBL_USER_MST
+        WHERE HOSP_CD = #{hospCd}
+          AND USER_ID = #{userId}
+          And START_DT = REPLACE(#{startDt} , '-', '')
+     ]]>          
+    </delete> 
+    	
+    <select id="selHospList" parameterType="HospMdDTO"  resultType="HospMdDTO"><![CDATA[
+	    SELECT 
+	        HOSP_CD,
+	        HOSP_NM,
+	        HOSP_ADDR,
+	        HOSP_EXTRADR,
+	        HOSP_CEO,
+	        BUSI_NUM,
+	        INACCD,
+            DATE_FORMAT(START_DT, '%Y-%m-%d') START_DT , 
+            DATE_FORMAT(END_DT, '%Y-%m-%d') END_DT , 
+            DATE_FORMAT(JOIN_DT, '%Y-%m-%d') JOIN_DT , 
+            IFNULL(DATE_FORMAT(ACCEPT_DT, '%Y-%m-%d'),'') ACCEPT_DT , 
+            IFNULL(DATE_FORMAT(CLOSE_DT, '%Y-%m-%d'),'') CLOSE_DT , 
+            HOSP_TEL , 
+            HOSP_FAX , 
+            ZIP_CD ,             
+	        USE_YN,
+	        WARDCNT,
+	        ICUCNT,
+	        ERCNT,
+	        DOCCNT,
+	        STHPNM,
+	        REG_DTTM,
+	        REG_USER,
+	        REG_IP,
+	        UPD_DTTM,
+	        UPD_USER,
+	        UPD_IP,
+	        HOSP_UUID
+	    FROM TBL_HOSP_MST
+	    WHERE 1=1
+	    AND ACTION_YN = 'Y'
+        ]]> 
+        <if test='wnnchk != null and wnnchk != "" '>
+        <![CDATA[
+          AND IFNULL(WINNER_YN,'') <> 'Y'
+         ]]> 
+        </if>
+      <if test='hospCd != null and hospCd != "" '><![CDATA[
+         AND ( HOSP_CD LIKE CONCAT('%',#{hospCd},'%')  OR
+               HOSP_NM LIKE CONCAT('%',#{hospCd},'%')
+             ) 
+      ]]>
+      </if>
+      
+      <![CDATA[
+          ORDER BY HOSP_CD , START_DT
+      ]]>
+     </select>  
+
+     <select id="selHospsumList" parameterType="HospMdDTO"  resultType="HospMdDTO"><![CDATA[
+        SELECT * FROM 
+		(
+		SELECT 
+		    HM.HOSP_CD,
+		    HM.HOSP_UUID,
+		    RTRIM(HM.HOSP_NM) AS HOSP_NM,
+		    HM.HOSP_ADDR,
+		    HM.HOSP_EXTRADR,
+		    HM.HOSP_CEO,
+		    HM.BUSI_NUM ,	
+  	 	    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN 
+			    (SELECT SUB_CODE_NM FROM TBL_CODE_DTL 
+			     WHERE CODE_CD = 'CONACT_GB' AND SUB_CODE = HC.CONACT_GB)  END , ''))    AS NAME1,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN DATE_FORMAT(HC.START_DT,'%Y-%m-%d')  END , ''))  AS START_DT,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN DATE_FORMAT(HC.END_DT,'%Y-%m-%d')    END , ''))  AS END_DT,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN DATE_FORMAT(HC.JOIN_DT,'%Y-%m-%d')   END , ''))  AS JOIN_DT ,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN DATE_FORMAT(HC.ACCEPT_DT,'%Y-%m-%d') END , ''))  AS ACCEPT_DT ,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN DATE_FORMAT(HC.CLOSE_DT,'%Y-%m-%d')  END , ''))  AS CLOSE_DT ,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN 
+			    (SELECT SUB_CODE_NM FROM TBL_CODE_DTL 
+			     WHERE CODE_CD = 'CONACT_GB' AND SUB_CODE = HC.CONACT_GB)  END , ''))     AS NAME2, 
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN DATE_FORMAT(HC.START_DT,'%Y-%m-%d')  END , ''))   AS START_DT2,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN DATE_FORMAT(HC.END_DT,'%Y-%m-%d')    END , ''))   AS END_DT2 ,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN DATE_FORMAT(HC.JOIN_DT,'%Y-%m-%d')   END , ''))   AS JOIN_DT2 ,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN DATE_FORMAT(HC.ACCEPT_DT,'%Y-%m-%d') END , ''))   AS ACCEPT_DT2 ,
+		    MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN DATE_FORMAT(HC.CLOSE_DT,'%Y-%m-%d')  END , ''))   AS CLOSE_DT2 ,
+		    MAX(CASE WHEN HM.HOSP_CD <> '' THEN HM.UPD_DTTM  END)   AS UPD_DTTM 
+		FROM TBL_HOSP_MST HM
+		LEFT OUTER JOIN TBL_HOSPCONT_MST HC 
+		    ON HM.HOSP_CD = HC.HOSP_CD
+		    AND HC.CONACT_GB IN ('1', '2')
+		GROUP BY 
+		    HM.HOSP_CD,
+		    HM.HOSP_UUID,
+		    HM.HOSP_NM,
+		    HM.HOSP_ADDR,
+		    HM.HOSP_EXTRADR,
+		    HM.HOSP_CEO,
+		    HM.BUSI_NUM
+		) A
+		WHERE 1 = 1
+    	]]>
+      <if test='hospCd != null and hospCd != "" '><![CDATA[
+         AND ( A.HOSP_CD LIKE CONCAT('%',#{hospCd},'%')  OR
+               A.HOSP_NM LIKE CONCAT('%',#{hospCd},'%')
+             ) 
+      ]]>
+      </if>
+      <![CDATA[
+          ORDER BY A.HOSP_CD , A.START_DT
+      ]]>
+      </select>  
+          
+	  <insert id="insertHosp" parameterType="HospMdDTO"> <![CDATA[ 
+	    INSERT INTO TBL_HOSP_MST (
+	        HOSP_CD,
+	        HOSP_NM,
+	        HOSP_ADDR,
+	        HOSP_EXTRADR ,
+	        HOSP_CEO,
+	        BUSI_NUM,
+	        INACCD,
+	        START_DT,
+	        END_DT,
+	        JOIN_DT,
+	        ACCEPT_DT,
+	        CLOSE_DT,
+	        ZIP_CD,	 
+            HOSP_TEL , 
+            HOSP_FAX , 	               	        
+	        USE_YN,
+	        WARDCNT,
+	        ICUCNT,
+	        ERCNT,
+	        DOCCNT,
+	        STHPNM,
+	        REG_DTTM,
+	        REG_USER,
+	        REG_IP,
+	        UPD_DTTM,
+	        UPD_USER,
+	        UPD_IP , 
+	        HOSP_UUID
+	    ) VALUES (
+	        #{hospCd},
+	        #{hospNm},
+	        #{hospAddr},
+	        #{hospExtradr},
+	        #{hospCeo},
+	        #{busiNum},
+	        #{inaccd},
+            REPLACE(#{startDt} , '-', '') ,
+            REPLACE(#{endDt} , '-', ''),
+	        REPLACE(#{joinDt} , '-', ''),
+	        REPLACE(#{acceptDt} , '-', ''),
+	        REPLACE(#{closeDt} , '-', ''),
+	        #{zipCd},   
+	        #{hospTel} , 
+            #{hospFax} ,          
+	        #{useYn},
+	        #{wardcnt},
+	        #{icucnt},
+	        #{ercnt},
+	        #{doccnt},
+	        #{sthpnm},
+	        NOW(),
+	        #{regUser},
+	        #{regIp},
+	        NOW(),
+	        #{updUser},
+	        #{updIp} , 
+	        #{hospUuid}
+	    )
+    ]]>
+	</insert>   
+	
+	<update id="updateHosp" parameterType="HospMdDTO"> <![CDATA[ 
+	    UPDATE TBL_HOSP_MST
+	    SET 
+	        hosp_nm   = #{hospNm},
+	        hosp_addr = #{hospAddr},
+	        hosp_extradr = #{hospExtradr},
+	        hosp_ceo  = #{hospCeo},
+	        busi_num  = #{busiNum},
+	        inaccd    = #{inaccd},
+	        start_dt  = #{startDt} ,
+	        end_dt    = #{endDt} ,
+	        join_dt   = #{joinDt},
+	        accept_dt = #{acceptDt},
+	        close_dt  = #{closeDt},
+	        zip_cd    = #{zipCd}, 	
+	        hosp_tel  = #{hospTel},
+	        hosp_fax  = #{hospFax},        
+	        use_yn    = #{useYn},
+	        wardcnt   = #{wardcnt},
+	        icucnt    = #{icucnt},
+	        ercnt     = #{ercnt},
+	        doccnt    = #{doccnt},
+	        sthpnm    = #{sthpnm},
+	        upd_dttm  = NOW(),
+	        upd_user  = #{updUser},
+	        upd_ip    = #{updIp},
+	        hosp_uuid = #{hospUuid} 
+	    WHERE 1=1
+	      AND HOSP_CD  = #{hosp_cCd}
+	    ]]>   
+    </update>
+    	   
+	<delete id="deleteHosp" parameterType="HospMdDTO"> <![CDATA[ 
+	    DELETE FROM TBL_HOSP_MST 
+	    WHERE 1=1 
+	      AND HOSP_CD  = #{hospCd}
+	    ]]>  
+	</delete> 
+
+	<select  id="getHospmst" parameterType="HospMdDTO" resultType="HospMdDTO"><![CDATA[ 
+	    SELECT HOSP_CD  
+	     FROM TBL_HOSP_MST 
+	    WHERE 1=1 
+	      AND HOSP_CD  = #{hospCd}
+	    ]]>  
+	</select> 
+	      
+	<select id="HospInfo" parameterType="HospMdDTO"  resultType="HospMdDTO"> <![CDATA[
+	    SELECT 
+	        HOSP_CD,
+	        HOSP_NM,
+	        HOSP_ADDR,
+	        HOSP_EXTRADR ,
+	        HOSP_CEO,
+	        BUSI_NUM,
+	        INACCD,
+            START_DT , 
+            END_DT,  
+            JOIN_DT, 
+            ACCEPT_DT, 
+            CLOSE_DT,              
+            ZIP_CD ,  
+            HOSP_TEL ,
+            HOSP_FAX ,
+	        USE_YN,
+	        WARDCNT,
+	        ICUCNT,
+	        ERCNT,
+	        DOCCNT,
+	        STHPNM,
+	        REG_DTTM,
+	        REG_USER,
+	        REG_IP,
+	        UPD_DTTM,
+	        UPD_USER,
+	        UPD_IP ,
+	        HOSP_UUID
+	    FROM TBL_HOSP_MST
+	    WHERE 1=1 
+	      AND HOSP_CD  = #{hospCd}
+	   ]]>
+   </select> 	
+    <!-- INSERT 쿼리 -->
+    <insert id="insertMember" parameterType="MberDTO" ><![CDATA[
+        INSERT INTO TBL_MEMBER_MST (
+            EMAIL, 
+            HOSP_CD, 
+            HOSP_NM, 
+            PASS_WD, 
+            MBR_NM, 
+            MBR_TEL ,
+            USER_ID , 
+            JOB_NM ,
+            PER_USE_CD,
+            PER_USE_RED, 
+            PER_USE_YN ,
+            PER_INFO_CD,
+            PER_INFO_RED, 
+            PER_INFO_YN, 
+            PER_PRO_CD, 
+            PER_PRO_RED, 
+            PER_PRO_YN , 
+            HOSP_UUID , 
+            JOIN_DT, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP
+                                 
+        ) VALUES (
+            #{email}, 
+            #{hospCd}, 
+            #{hospNm}, 
+            #{passWd}, 
+            #{mbrNm}, 
+            #{mbrTel} ,
+            #{userId}, 
+            #{jobNm} ,
+            #{perUseCd},  
+            #{perUseRed}, 
+            #{perUseYn} ,
+            #{perInfoCd}, 
+            #{perInfoRed}, 
+            #{perInfoYn}, 
+            #{perProCd},  
+            #{perProRed}, 
+            #{perProYn},
+            #{hospUuid},
+            DATE_FORMAT(NOW(), '%Y%m%d'), 
+            NOW(), 
+            IFNULL(#{regUser}, ''),
+            IFNULL(#{regIp}, ''), 
+            NOW(), 
+            IFNULL(#{updUser}, ''),  
+            IFNULL(#{updIp}, '')                          
+        )       
+        ]]>
+    </insert>
+	<select id="selMberDupChk" parameterType="MberDTO"  resultType="String"> <![CDATA[
+	  SELECT 'Y'
+	    FROM TBL_MEMBER_MST
+	   WHERE HOSP_CD = #{hospCd}
+	     AND EMAIL   = #{email} 
+	]]>
+	</select>	    
+    <select   id="selectMbrList" parameterType="MberDTO"  resultType= "MberDTO"><![CDATA[
+        SELECT   
+            EMAIL, 
+            HOSP_CD, 
+            HOSP_NM, 
+            PASS_WD, 
+            MBR_NM, 
+            MBR_TEL ,
+            USER_ID , 
+            JOB_NM ,
+            IFNULL(USE_YN,'')  USE_YN , 
+            PER_USE_CD,
+            (SELECT CODE_NM FROM TBL_CODE_MST WHERE CODE_CD = PER_USE_CD) PER_USE_NM , 
+            PER_USE_RED, 
+            PER_USE_YN ,
+            PER_INFO_CD,
+            (SELECT CODE_NM FROM TBL_CODE_MST WHERE CODE_CD = PER_INFO_CD) PER_INFO_NM , 
+            PER_INFO_RED, 
+            PER_INFO_YN, 
+            PER_PRO_CD, 
+            (SELECT CODE_NM FROM TBL_CODE_MST WHERE CODE_CD = PER_PRO_CD) PER_PRO_NM ,
+            PER_PRO_RED, 
+            PER_PRO_YN , 
+            DATE_FORMAT(JOIN_DT, '%Y-%m-%d') JOIN_DT , 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP
+        FROM TBL_MEMBER_MST 
+        WHERE 1=1                 
+        ]]>
+		  <if test='hospCd != null and hospCd !="" '><![CDATA[
+	         AND (HOSP_CD LIKE CONCAT('%',#{hospCd},'%')
+	          OR  HOSP_NM LIKE CONCAT('%',#{hospCd},'%') )
+	      ]]>
+	      </if>
+	      <![CDATA[
+		     Order by UPD_DTTM desc  , HOSP_NM
+	      ]]>        
+    </select>
+     <select   id="getMbrList" parameterType="MberDTO"  resultType= "MberDTO"><![CDATA[
+		 SELECT     B.HOSP_UUID ,
+		            B.EMAIL, 
+		            B.HOSP_CD, 
+		            B.HOSP_NM, 
+		            B.PASS_WD , 
+		            B.MBR_NM  , 
+		            B.MBR_TEL ,
+		            SUBSTRING(B.A1,17,20) SUB_NM,
+		            SUBSTRING(B.A1,1,8) START_DT  ,
+		            SUBSTRING(B.A1,9,8) END_DT ,
+		            SUBSTRING(B.A2,17,20) SUB_NM1,
+		            SUBSTRING(B.A2,1,8) START_DT1  ,
+		            SUBSTRING(B.A2,9,8) END_DT1             
+		            
+		 FROM 
+		(
+			SELECT      A.HOSP_UUID ,
+			            A.EMAIL, 
+			            A.HOSP_CD, 
+			            A.HOSP_NM, 
+			            A.PASS_WD , 
+			            A.MBR_NM  , 
+			            A.MBR_TEL ,
+			    (SELECT CONCAT(IFNULL(T.START_DT, ''), IFNULL(T.END_DT, '') , IFNULL((SELECT SUB_CODE_NM 
+			                        FROM TBL_CODE_DTL 
+			                        WHERE CODE_CD = 'CONACT_GB' AND SUB_CODE = T.CONACT_GB), '') 
+			            ) A1
+			     FROM TBL_HOSPCONT_MST T
+			     WHERE T.HOSP_CD = A.HOSP_CD
+			       AND T.CONACT_GB = '1'
+			     ORDER BY T.START_DT DESC
+			     LIMIT 1) AS A1,
+			    (SELECT CONCAT(
+			                IFNULL(T.START_DT, ''), IFNULL(T.END_DT, '') ,   IFNULL((SELECT SUB_CODE_NM 
+			                        FROM TBL_CODE_DTL 
+			                        WHERE CODE_CD = 'CONACT_GB' AND SUB_CODE = T.CONACT_GB), '') 
+			            ) A2
+			     FROM TBL_HOSPCONT_MST T
+			     WHERE T.HOSP_CD = A.HOSP_CD
+			       AND T.CONACT_GB = '2'
+			     ORDER BY T.START_DT DESC
+			     LIMIT 1) AS A2
+			FROM (
+			    SELECT 
+			        B.HOSP_CD , 
+			        B.HOSP_UUID, 
+			        A.MBR_NM, 
+			        A.MBR_TEL, 
+			        A.PASS_WD, 
+			        A.JOIN_DT, 
+			        A.HOSP_NM, 
+			        A.EMAIL ,
+			        A.JOB_NM
+			    FROM TBL_MEMBER_MST A
+			    INNER JOIN TBL_HOSP_MST B ON A.HOSP_CD = B.HOSP_CD
+		          WHERE A.HOSP_CD = #{hospCd}
+			) A
+		) B                          
+        ]]>
+	    <if test='mbrNm != null and mbrNm !="" '><![CDATA[
+           WHERE (B.MBR_NM LIKE CONCAT('%',#{mbrNm},'%')
+            OR  B.MBR_NM LIKE CONCAT('%',#{mbrNm},'%') )
+        ]]>
+        </if>
+        <![CDATA[
+	       Order by B.HOSP_CD  , B.HOSP_NM
+        ]]>        
+    </select>
+    <select   id="selectMbrInfo" parameterType="MberDTO"  resultType= "MberDTO"><![CDATA[
+        SELECT   
+            EMAIL, 
+            HOSP_CD, 
+            HOSP_NM, 
+            PASS_WD, 
+            MBR_NM, 
+            MBR_TEL ,
+            USER_ID , 
+            IFNULL(USE_YN,'')  USE_YN ,
+            JOB_NM ,
+            PER_USE_CD,
+            (SELECT CODE_NM FROM TBL_CODE_MST WHERE CODE_CD = PER_USE_CD) PER_USE_NM ,
+            PER_USE_RED, 
+            PER_USE_YN ,
+            PER_INFO_CD,
+            (SELECT CODE_NM FROM TBL_CODE_MST WHERE CODE_CD = PER_INFO_CD) PER_INFO_NM , 
+            PER_INFO_RED, 
+            PER_INFO_YN, 
+            PER_PRO_CD, 
+            (SELECT CODE_NM FROM TBL_CODE_MST WHERE CODE_CD = PER_PRO_CD) PER_PRO_NM ,
+            PER_PRO_RED, 
+            PER_PRO_YN , 
+            JOIN_DT, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP
+        FROM TBL_MEMBER_MST 
+        WHERE 1=1     
+          AND HOSP_CD = #{hospCd} 
+          AND EMAIL   = #{email}            
+        ]]>
+    </select> 
+    <update   id="updateMember" parameterType="MberDTO"><![CDATA[
+        UPDATE  TBL_MEMBER_MST  
+        SET  
+            USER_ID = #{userId} , 
+            USE_YN  = #{useYn} 
+        WHERE 1=1     
+          AND HOSP_CD = #{hospCd} 
+          AND EMAIL   = #{email}            
+        ]]>
+    </update>     	
+    
+    <insert id="insertmbrUser" parameterType="MberDTO"> <![CDATA[ 
+        INSERT INTO TBL_USER_MST (
+            HOSP_CD, 
+            USER_ID, 
+            USER_NM, 
+            START_DT, 
+            END_DT, 
+            MAIN_GU, 
+            PASS_WD, 
+            PASS_CDT,
+            BIGO, 
+            USE_YN ,
+            HOSP_UUID  ,
+            WINNER_YN ,
+            EMAIL     ,  
+            USER_TEL , 
+            MBR_JOIN ,
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP  , 
+            JOB_SEQ ,
+            ACTION_YN 
+        ) VALUES (
+            #{hospCd}, 
+            #{email}, 
+            #{mbrNm}, 
+            DATE_FORMAT(NOW(), '%Y%m%d'),   
+            '20991231',
+            '2', 
+            #{passWd}, 
+            DATE_FORMAT(NOW(), '%Y%m%d'),   
+            '', 
+            'N' ,
+            ''  ,
+            '',
+            #{email} ,
+            #{mbrTel} ,
+            'Y',
+             NOW(), 
+            #{regUser}, 
+            #{regIp}, 
+             NOW(), 
+            #{updUser}, 
+            #{updIp} ,
+            (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+                   FROM TBL_USER_MST A 
+                   WHERE  HOSP_CD    = #{hospCd} 
+                      AND USER_ID    = #{email} 
+            ),'Y'                
+        )
+    ]]>
+    </insert>  
+ 	<select id = "UserDupChk"  parameterType="MberDTO"  resultType="String"><![CDATA[   
+	   SELECT 'Y'
+	   FROM TBL_USER_MST 
+        WHERE HOSP_CD   = #{hospCd} 
+          AND USER_ID   = #{email} 
+          AND ACTION_YN = 'Y'
+	  ]]>  
+	</select>        
+</mapper>

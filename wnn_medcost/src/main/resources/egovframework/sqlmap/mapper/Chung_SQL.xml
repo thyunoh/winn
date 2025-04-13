@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_medcost.chung.mapper.ChungMapper">
+	<select  id="chungList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
+		SELECT   A.DATE_YM
+               , A.HOSP_CD 
+               , A.CLAIM_NO  
+		       , A.CLFORM_VER
+		       , A.CFORM_NO
+		       , FN_GET_DTL_CODE('Z', 'INSUR_TYPE', A.INSUR_TYPE) AS  INSUR_TYPE
+		       , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)     AS  CFORM_NAME 
+		       , A.TREAT_TYPE
+		       , FN_GET_DTL_CODE('Z', 'TREAT_TYPE', A.TREAT_TYPE) AS TREAT_NAME 
+		       , A.CASE_CNT 
+		       , FORMAT(A.TOTAL_2 + A.NON100_COST, 0)             AS TOT_AMT
+		       , FORMAT(A.CLAIM_AMT + A.NON100_CLAIM + A.DISABLED_AMT, 0) AS CLAIM_AMT
+		       , FORMAT(A.SELF_AMT + A.NON100_CO_PAY, 0)          AS SELF_AMT
+		FROM  TBL_CHUNG_MST A 
+		WHERE   A.HOSP_CD = #{hospCd}
+		    AND A.DATE_YM = #{dateYm}
+        ]]>
+	    <if test="cformNo != null and cformNo != ''">
+		   AND A.CFORM_NO = #{cformNo}
+		</if>
+		<![CDATA[
+		  ORDER BY A.CLAIM_NO
+		]]>
+	</select>   
+	<select  id="myoungList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
+		SELECT    A.DATE_YM 
+		         ,B.HOSP_CD
+		         ,FN_GET_DTL_CODE('Z','MFORM_NO',B.MFORM_NO) AS MFORM_NM 
+		         ,B.CLAIM_NO
+		         ,B.BILL_SEQ 
+		         ,B.PAT_NAME
+		         ,B.FIRST_ADMT
+		  		 ,B.PAT_ID  
+		         ,B.FAC_CODE 
+		         ,CASE WHEN B.PAY_TYPE = '1' THEN '1.정액'
+		          ELSE '2.행위' END AS PAY_TYPE 
+		         ,CASE WHEN B.CLAIM_GRP = ''  THEN '일반'
+		               WHEN B.CLAIM_GRP = '1' THEN '보완'
+		               WHEN B.CLAIM_GRP = '2' THEN '추가'
+                       WHEN B.CLAIM_GRP = '3' THEN '분리'
+                  END  CLAIM_GRP    
+		         ,B.JIN_DAYS
+		         ,B.ACC_TYPE
+		         ,B.MED_TYPE
+		         ,B.MED_RESULT
+		         ,FORMAT(B.MED_AMT2  + B.NON100_AMT    + B.VET_AMT,0)       AS  MED_AMT 
+		         ,FORMAT(B.CLAIM_AMT + B.NON100_CLAIM  + B.DISABLED_AMT,0)  AS  CLAIM_AMT 
+		         ,FORMAT(B.SELF_AMT  + B.NON100_CO_PAY + B.VET_CO_PAY,0)    AS  SELF_AMT          
+		 FROM  TBL_CHUNG_MST  A ,
+		       TBL_MYOUNG_MST B
+		WHERE  B.HOSP_CD  = A.HOSP_CD 
+		   AND B.CLAIM_NO = A.CLAIM_NO 
+		   And A.HOSP_CD  = #{hospCd}
+		   AND A.DATE_YM  = #{dateYm}
+		   AND A.CLAIM_NO = #{claimNo}
+		   ORDER BY  A.DATE_YM , A.CLAIM_NO 
+	]]>
+	</select>
+	<select  id="diseList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
+		-- 진단명 
+		WITH DIAG_NAME_CTE AS (
+		    SELECT 
+		        DIAG_CODE,
+		        KOR_DIAG_NAME,
+		        ROW_NUMBER() OVER (PARTITION BY DIAG_CODE ORDER BY KOR_DIAG_NAME) AS RN
+		    FROM TBL_DISE_CODE
+		    WHERE ACTION_YN = 'Y'
+		)
+		SELECT 
+		    A.DATE_YM,
+		    B.HOSP_CD,
+		    C.BILL_SEQ,
+		    C.DIAG_CODE,
+		    D.KOR_DIAG_NAME AS DIAG_NAME,
+		    C.DIAG_TYPE,
+		    C.MED_FIELD,
+		    C.LICENSE_TYPE,
+		    C.LICENSE_NO ,
+		    C.MED_START_DATE
+		FROM TBL_CHUNG_MST A
+		JOIN TBL_MYOUNG_MST B ON A.HOSP_CD   = B.HOSP_CD 
+		                     AND A.CLAIM_NO  = B.CLAIM_NO
+		JOIN TBL_DISEASE_MST C ON C.HOSP_CD  = A.HOSP_CD 
+		                      AND C.CLAIM_NO = A.CLAIM_NO 
+						 	  AND C.BILL_SEQ = B.BILL_SEQ
+		LEFT JOIN DIAG_NAME_CTE D ON D.DIAG_CODE = C.DIAG_CODE 
+		                     AND D.RN = 1
+		WHERE  A.HOSP_CD  = #{hospCd}
+		  AND  A.DATE_YM  = #{dateYm}
+		  AND  A.CLAIM_NO = #{claimNo} 
+		  AND  B.BILL_SEQ = #{billSeq} 
+		  ORDER BY C.BILL_SEQ , C.DIAG_TYPE  
+	
+	]]>
+	</select>	
+	<select  id="jinordList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[	
+		-- 진료내역
+		WITH SUGA_CTE AS (
+		    SELECT 
+		        FEE_CODE, 
+		        FEE_TYPE, 
+		        MAX(START_DT) AS START_DT
+		    FROM TBL_SUGA_MST
+		    WHERE ACTION_YN = 'Y'
+		    GROUP BY FEE_CODE, FEE_TYPE
+		)
+		SELECT * FROM 
+		(
+		SELECT  B.DATE_YM 
+		     ,  A.HOSP_CD
+			  , '' AS  ITEM_NO 
+			  , '' AS  CODE_NO 
+			  , A.BILL_SEQ 
+			  , A.EDI_CODE  
+			  , IFNULL(D.KOR_NM,'') KOR_NAME 
+			  , A.CODE_TYPE
+			  ,'' UNIT_PRICE
+		     , IFNULL(A.ONCE_DOSE,'1') AS ONCE_DOSE 
+		     , A.DAILY_DOSE
+		     , A.TOTAL_DOSE
+		     , 0 AMOUNT
+		     FROM  TBL_JINOUT_MST A 
+		      JOIN TBL_CHUNG_MST B ON B.HOSP_CD  = A.HOSP_CD 
+				                  AND B.CLAIM_NO = A.CLAIM_NO   
+		      LEFT JOIN SUGA_CTE C 
+				  ON C.FEE_CODE = A.EDI_CODE 
+				 AND C.FEE_TYPE = CASE WHEN A.CODE_TYPE IN ('1', 'A') THEN '1'
+				                       WHEN A.CODE_TYPE IN ('3')      THEN '2'
+				                  ELSE '3'
+				                  END
+	     	 LEFT JOIN TBL_SUGA_MST D ON D.FEE_CODE = C.FEE_CODE 
+		                             AND D.FEE_TYPE = C.FEE_TYPE
+								     AND D.START_DT = C.START_DT  
+		     WHERE A.HOSP_CD  = #{hospCd}
+			  AND  A.CLAIM_NO = #{claimNo} 
+			  AND  A.BILL_SEQ = #{billSeq} 
+			  AND  B.DATE_YM  = #{dateYm}
+		UNION ALL 		
+		-- 2. 메인 쿼리
+		SELECT 
+		    A.DATE_YM,
+		    B.HOSP_CD,
+		    C.ITEM_NO ,
+		    C.CODE_NO ,
+		    C.BILL_SEQ,
+		    C.EDI_CODE,
+		    E.KOR_NM AS KOR_NAME,
+		    C.CODE_TYPE,
+		    FORMAT(C.UNIT_PRICE,0) AS UNIT_PRICE ,
+		    IFNULL(C.ONCE_DOSE,'1') AS ONCE_DOSE ,
+		    C.DAILY_DOSE,
+		    C.TOTAL_DOSE,
+		    FORMAT(C.AMOUNT,0) AMOUNT
+		FROM TBL_CHUNG_MST A
+		JOIN TBL_MYOUNG_MST B 
+		    ON A.HOSP_CD = B.HOSP_CD AND A.CLAIM_NO = B.CLAIM_NO
+		JOIN TBL_JINORD_MST C 
+		    ON C.HOSP_CD = A.HOSP_CD AND C.CLAIM_NO = B.CLAIM_NO 
+		   AND C.BILL_SEQ = B.BILL_SEQ
+		-- 개선된 JOIN
+		LEFT JOIN SUGA_CTE D 
+		  ON D.FEE_CODE = C.EDI_CODE 
+		 AND D.FEE_TYPE = CASE WHEN C.CODE_TYPE IN ('1', 'A') THEN '1'
+		                       WHEN C.CODE_TYPE IN ('3')      THEN '2'
+		                  ELSE '3'
+		                  END
+	   	 LEFT JOIN TBL_SUGA_MST E ON E.FEE_CODE = D.FEE_CODE 
+		                         AND E.FEE_TYPE = D.FEE_TYPE
+								 AND E.START_DT = D.START_DT 
+		WHERE  A.HOSP_CD  = #{hospCd}
+		  AND  A.DATE_YM  = #{dateYm}
+		  AND  A.CLAIM_NO = #{claimNo} 
+		  AND  B.BILL_SEQ = #{billSeq} 
+       ) K ORDER BY K.ITEM_NO ,K.CODE_NO  
+	]]>
+	</select>	
+	<select  id="hangList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
+		SELECT A.ITEM_NO , A.CODE_NO , 
+		    COALESCE(
+		        FN_GET_DTL_CODE('Y', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO)),
+		        FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))
+		    ) AS CODE_NAME,
+		    CASE WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1,0)
+		         WHEN E.HOS_GRD = '2' THEN IFNULL(D.PROP_2,0)
+		         WHEN E.HOS_GRD = '3' THEN IFNULL(D.PROP_3,0) 
+			 END GASAN_RATE,
+		    FORMAT(IFNULL(SUM(CASE WHEN C.FEE_CODE IS NULL    
+		                           THEN A.AMOUNT END), 0), 0) AS JEA_AMT, 
+		    FORMAT(IFNULL(SUM(CASE WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL)  
+		                           THEN A.AMOUNT END), 0), 0) AS HWI_AMT, 
+		    FORMAT(ROUND(SUM(CASE 
+		                      WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL) THEN 
+		                          A.AMOUNT * (
+		                              CASE 
+		                                  WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1, 0) / 100
+		                                  WHEN E.HOS_GRD = '2' THEN IFNULL(D.PROP_2, 0) / 100
+		                                  WHEN E.HOS_GRD = '3' THEN IFNULL(D.PROP_3, 0) / 100
+		                                  ELSE IFNULL(D.PROP_3, 0) / 100
+		                              END
+		                          )
+		                      ELSE 0   
+		                    END
+		          ), 0), 0) AS GASAN_AMT
+		FROM WNN.TBL_JINORD_MST A  	
+		JOIN WNN.TBL_CHUNG_MST B ON B.HOSP_CD  = A.HOSP_CD 
+		                        AND B.CLAIM_NO = A.CLAIM_NO  
+		                        AND B.DATE_YM  = #{dateYm}   	    
+		LEFT JOIN (SELECT FEE_CODE, MAX(START_DT) AS MAX_START_DT
+		                 FROM WNN.TBL_SUGA_MST
+		                WHERE FEE_TYPE = '1'
+		                  AND DIV_TYPE = '2'
+		             GROUP BY FEE_CODE
+		          ) C ON C.FEE_CODE      = A.EDI_CODE
+		             AND C.MAX_START_DT <= CONCAT(B.DATE_YM, '01')								       
+		LEFT JOIN WNN.TBL_CODE_DTL D 
+			ON  D.CODE_GB   = 'Z' 
+			AND D.ACTION_YN = 'Y'
+			AND D.CODE_CD   = 'CFORM_NO' 
+			AND D.SUB_CODE  = B.CFORM_NO 
+		LEFT JOIN WNN.TBL_HOSP_MST E 
+		   ON  E.HOSP_CD   = A.HOSP_CD 
+		   AND E.ACTION_YN = 'Y' 		
+		WHERE ((A.ITEM_NO = 'L' AND A.CODE_NO = '01') OR (A.ITEM_NO <> 'L'))
+		  AND A.HOSP_CD  = #{hospCd}
+		  AND A.CLAIM_NO = #{claimNo}
+		  AND A.BILL_SEQ = #{billSeq}
+		GROUP BY  A.ITEM_NO , A.CODE_NO ,CODE_NAME ,GASAN_RATE	
+		ORDER BY  A.ITEM_NO , A.CODE_NO	
+	]]>
+	</select>	
+	<select  id="spcList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[	
+		SELECT 
+		    A.DATE_YM,
+		    B.HOSP_CD,
+		    A.CLAIM_NO,
+		    C.BILL_SEQ,
+		    C.UNIT_TYPE , 
+		    C.SPEC_TYPE ,
+		    C.SPEC_DETAIL  
+		FROM TBL_CHUNG_MST A
+		JOIN TBL_MYOUNG_MST B 
+		  ON B.HOSP_CD  = A.HOSP_CD 
+		 AND B.CLAIM_NO = A.CLAIM_NO
+		JOIN TBL_SPECODE_MST C 
+		  ON  C.HOSP_CD  = A.HOSP_CD 
+		  AND C.CLAIM_NO = B.CLAIM_NO 
+		  AND C.BILL_SEQ = B.BILL_SEQ
+		WHERE A.HOSP_CD  = #{hospCd}
+		  AND A.DATE_YM  = #{dateYm}
+          AND A.CLAIM_NO = #{claimNo}
+		  AND B.BILL_SEQ = #{billSeq}
+	]]>
+	</select>				
+</mapper>

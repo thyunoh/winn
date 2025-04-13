@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+		<setting name="jdbcTypeForNull" value="NULL" />
+	</settings>
+    <typeAliases>  
+        <typeAlias  alias="WardDTO"     type="egovframework.wnn_medcost.user.model.WardDTO"/>
+        <typeAlias  alias="DietDTO"     type="egovframework.wnn_medcost.user.model.DietDTO"/>
+        <typeAlias  alias="LisenceDTO"  type="egovframework.wnn_medcost.user.model.LisenceDTO"/>
+    	<typeAlias  alias="UserDTO"     type="egovframework.wnn_medcost.user.model.UserDTO"/>
+    	<typeAlias  alias="HospMdDTO"   type="egovframework.wnn_medcost.user.model.HospMdDTO"/> 
+    	<typeAlias  alias="HospConDTO"  type="egovframework.wnn_medcost.user.model.HospConDTO"/> 
+    	    	
+    	<typeAlias  alias="SugaCdDTO"   type="egovframework.wnn_medcost.base.model.SugaCdDTO"/>
+    	<typeAlias  alias="CodeMdDTO"   type="egovframework.wnn_medcost.base.model.CodeMdDTO"/>
+    	<typeAlias  alias="DiseCdDTO"   type="egovframework.wnn_medcost.base.model.DiseCdDTO"/>
+    	<typeAlias  alias="WvalDTO"     type="egovframework.wnn_medcost.base.model.WvalDTO"/>
+    	<typeAlias  alias="SamverDTO"   type="egovframework.wnn_medcost.base.model.SamverDTO"/>
+
+    	<typeAlias  alias="MagamDTO"    type="egovframework.wnn_medcost.magam.model.MagamDTO"/>
+    	<typeAlias  alias="FilesDTO"    type="egovframework.wnn_medcost.magam.model.FilesDTO"/>
+    	
+    	<typeAlias  alias="FaqDTO"      type="egovframework.wnn_medcost.mangr.model.FaqDTO"/>
+    	<typeAlias  alias="NotiDTO"     type="egovframework.wnn_medcost.mangr.model.NotiDTO"/>
+    	<typeAlias  alias="FileDTO"     type="egovframework.wnn_medcost.mangr.model.FileDTO"/>
+    	<typeAlias  alias="AsqDTO"      type="egovframework.wnn_medcost.mangr.model.AsqDTO"/>
+    	
+        <typeAlias  alias="TongDTO"    type="egovframework.wnn_medcost.tong.model.TongDTO"/>
+        
+        <typeAlias  alias="ChungDTO"    type="egovframework.wnn_medcost.chung.model.ChungDTO"/>
+	</typeAliases>
+	
+</configuration>
