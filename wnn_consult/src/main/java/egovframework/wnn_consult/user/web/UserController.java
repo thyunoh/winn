@@ -144,6 +144,7 @@ public class UserController {
 					response.put("error_code", "00000");
 					response.put("error_mess", "정상적 처리 되었습니다.");
 					System.out.print("정상처리");
+					
 				} 
 			}
 		}catch(Exception ex) {

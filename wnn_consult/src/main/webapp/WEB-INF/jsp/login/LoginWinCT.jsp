@@ -128,56 +128,164 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		overflow: hidden;
 		text-overflow: ellipsis;
 	} 
-
-
+    #navbarMenuArea {
+	    display: flex;
+	    flex-direction: row;
+	    flex-wrap: nowrap; /* 줄바꿈 방지 */
+	    align-items: center;
+	    gap: 20px; /* 메뉴 사이 간격 */
+    }
+	.nav-right-banner {
+	  position: relative;
+	  width: 300px;
+	  height: 55px;
+	  background: transparent;
+	  overflow: hidden;
+	}
+	
+	/* 짙은 파란색 사선 배경 */
+	.main-blue {
+	  position: relative;
+	  width: 300px;
+	  height: 100px;
+	  background-color: #003b73;
+	  clip-path: polygon(60px 0%, 100% 0%, 100% 100%, 0% 100%);
+	  z-index: 1;
+	}
+	/* 옅은 하늘색 사선 */
+	.light-stripe {
+	  position: absolute;
+	  width: 10px;
+	  height: 100px; /* 전체 높이는 유지 */
+	  background-color: #7ecfff;
+	  clip-path: polygon(0 20%, 100% 20%, 100% 100%, 0% 100%);
+	  transform: skewX(-30deg);
+	  left: 40px;
+	  top: 10px;
+	  z-index: 2;
+	}
+	.back-to-top {
+	  position: fixed;
+	  bottom: 40px;
+	  right: 40px;
+	  z-index: 99;
+	  width: 60px;
+	  height: 60px;
+	  background-color: #00aaff;
+	  color: white;
+	  text-align: center;
+	  border-radius: 50%;
+	  font-weight: bold;
+	  display: none;
+	  flex-direction: column; /* 위아래 정렬 */
+	  align-items: center;
+	  justify-content: center;
+	  font-size: 14px;
+	  box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
+	}
+	.back-to-top i {
+	  font-size: 14px;
+	  margin-bottom: -10px; /* 간격 제거 */
+	}
 </style>
 <body>
 <!-- Navbar Start -->
 <div class="container-fluid_act bg-white mb-2">
 	<div class="row px-xl-8">
 		<div class="col-lg-3 d-none d-lg-block">
-			<a
-				class="btn d-flex justify-content-center align-items-center bg-white w-80"
+			<a class="btn d-flex justify-content-center align-items-center bg-white w-80"
 				data-bs-toggle="collapse" href="#navbar-vertical"
-				style="height: 50px; padding: 0; width: 70%;"> 
+				style="height: 50px; padding: 0; width: 70%;">
 				<img src="/images/winct/winner_log_han.png" alt="WinnerNet Logo"
 					id="consultingTitle"
 					style="width: 200px; height: 100px; object-fit: contain;">
 			</a>
 		</div>
-       <div class="col-lg-9">
-         <nav
-            class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
-            style="height: 55px; align-items: center;">
-            <div class="collapse navbar-collapse justify-content-between">
-               <div class="navbar-nav mr-auto py-0">
-                  <div class="nav-item dropdown">
-                     <a href="#" class="nav-link dropdown-toggle text-dark"
-                        style="font-size: 17px;" data-bs-toggle="dropdown" >컨설팅 소개</a>
-                     <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
-                        <a href="#" class="dropdown-item"
-                           onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a> 
-                        <a href="#" class="dropdown-item"
-                           onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a> 
-                        <a href="#" class="dropdown-item"
-                           onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a> 
-                        <a href="#" class="dropdown-item"
-                           onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a> 
-                        <a href="#" class="dropdown-item"
-                           onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
-                     </div>
-                  </div>
-                  <a href="https://winner797.net/" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -5px;"><strong>온라인교육센터</strong></a>
-                  <a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top:  -5px;"><strong>경영분석 프로그램</strong></a>
-                  <a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top:  -5px;"><strong>적정성평가 프로그램</strong></a>
-               </div>
-               <div class="navbar-nav ml-auto py-0 d-none d-lg-block"></div>
-            </div>
-         </nav>
-      </div>
+		<div class="col-lg-9">
+			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
+				style="height: 55px; align-items: center;">
+				<div class="collapse navbar-collapse justify-content-between">
+					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0">
+						<div class="nav-item dropdown">
+							<a href="#" class="nav-link dropdown-toggle text-dark"
+								style="font-size: 16px;" data-bs-toggle="dropdown">컨설팅 소개</a>
+							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
+								<a href="#" class="dropdown-item"
+									onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+								<a href="#" class="dropdown-item"
+									onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
+								<a href="#" class="dropdown-item"
+									onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+								<a href="#" class="dropdown-item"
+									onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+								<a href="#" class="dropdown-item"
+									onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+							</div>
+						</div>
+
+						<a href="https://winner797.net/" class="nav-link dropdown-toggle text-dark"
+							style="font-size: 16px; margin-top: -1px;"><strong>온라인교육센터</strong></a>
+
+						<div id="dynamicMenu_J"></div>
+						<div id="dynamicMenu_T"></div>
+					</div>
+					<div class="navbar-nav ml-auto py-0 d-none d-lg-block"></div>
+					<div class="nav-right-banner">
+					  <div class="main-blue"></div>
+					  <div class="light-stripe"></div>
+					</div>
+				</div>
+			</nav>
+		</div>
 	</div>
 </div>
 <!-- Navbar End -->
+
+<script>
+   //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
+	function hosp_conact() {
+		let s_conact_gb = getCookie("s_conact_gb");
+		let s_wnn_yn    = getCookie("s_wnn_yn") ;
+		let menuArea    = document.getElementById("dynamicMenu_J");
+		let menuHTML    = '';
+	
+		if (s_conact_gb === 'A' || s_wnn_yn == 'Y'  ) {
+			menuHTML += `
+				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				   <strong>적정성평가 프로그램</strong>
+				</a>
+			`;
+		} else if (s_conact_gb === '1') {
+			menuHTML += `
+				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				   <strong>경영분석 프로그램</strong>
+				</a>
+			`;
+		} else if (s_conact_gb === '2') {
+			menuHTML += `
+				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+			    <strong>적정성평가 프로그램</strong>
+			    </a>
+			`;
+		}
+	
+		menuArea.insertAdjacentHTML("beforeend", menuHTML);
+
+		let menuArea_T = document.getElementById("dynamicMenu_T");
+		let menuHTML_T = '';
+	
+		if (s_conact_gb === 'A' || s_wnn_yn == 'Y'  ) {
+			menuHTML_T += `
+				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				   <strong>경영분석 프로그램</strong>
+				</a>
+			`;
+		}
+	
+		menuArea_T.insertAdjacentHTML("beforeend", menuHTML_T);		
+	}
+	
+	</script>
 
 
 	<script> 
@@ -203,8 +311,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        });
 	    });
     </script>
-	<!-- 위너넷 컨설팅 이미지 시작-->
-	<!-- 타 화면 콘텐츠 영역 -->
+	<!-- 타 화면 콘텐츠 영역 위너넷 컨설팅 이미지 -->
 	<div id="contentArea"></div>
 
 	<!-- 위너넷 컨설팅 이미지 -->
@@ -805,7 +912,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			</div>
 		</div>
 	</div>
-
+	<a href="#" class="back-to-top" id="btnTop">
+	  <i class="fas fa-arrow-up"></i><br>TOP
+	</a>
 
 
 	<!-- 회원가입 스크립트 시작 -->
@@ -2352,9 +2461,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        				sessionStorage.setItem('s_mainfg', data.login_Main); 			// sessionStorage에 로그인 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
 	        				sessionStorage.setItem('s_use_yn', data.loginUseYN); 			// 사용여부(Y,정상사용자, N.종료사용자)
 	        				sessionStorage.setItem('s_hosp_uuid', $("#hospid").val().trim()); //위너넷이 접속시 데이타연관성 확인  
-
 	        	            showUserInfo(); 
-	        				
+        				
 	        	            winCheckOpen();
 	        				
         	            } else {
@@ -2475,8 +2583,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_hosp_uuid", sessionStorage.getItem('s_hospid'), 1);
         	//tbl_hospcont테이블 (진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N') 
         	setCookie("s_conact_gb", sessionStorage.getItem('s_conact_gb'), 1); //계약구분  
+      	
+        	hosp_conact() ;
         	
-            const url = "http://localhost:9080/user/";  // main.do 호출       
+        	const url = "http://localhost:9080/user/";  // main.do 호출       
             win_Check = window.open(url);            
             
             win_Check.addEventListener('unload', () => {
@@ -2562,7 +2672,21 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		        }
 		    });
 		}
+		// 스크롤 시 버튼 표시
+		window.onscroll = function () {
+		  const btn = document.getElementById("btnTop");
+		  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+		    btn.style.display = "flex";
+		  } else {
+		    btn.style.display = "none";
+		  }
+		};
 
+		// 버튼 클릭 시 상단 이동
+		document.getElementById("btnTop").onclick = function (e) {
+		  e.preventDefault();
+		  window.scrollTo({ top: 0, behavior: 'smooth' });
+		};
 		
 		/*
         function saveynchange() {

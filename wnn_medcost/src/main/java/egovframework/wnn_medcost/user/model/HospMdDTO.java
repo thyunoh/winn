@@ -53,7 +53,14 @@ public class HospMdDTO {
 	private String joinDt2;
 	private String fileYn ;
 	private String hosGrd ;
+	private String conactGb ;
 	
+	public String getConactGb() {
+		return conactGb;
+	}
+	public void setConactGb(String conactGb) {
+		this.conactGb = conactGb;
+	}
 	public String getHosGrd() {
 		return hosGrd;
 	}

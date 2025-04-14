@@ -24,8 +24,8 @@
                         <div id="custom-search" class="top-search-bar">
                             <a href="#" id="top-menu_a" class="btn btn-rounded btn-light btn-sm">전체메뉴</a>
                             <a href="#" id="top-menu_b" class="btn btn-rounded btn-light btn-sm">자료올리기</a>
-                			<a href="#" id="top-menu_c" class="btn btn-rounded btn-light btn-sm">진료비분석</a>
-                			<a href="#" id="top-menu_d" class="btn btn-rounded btn-light btn-sm">적정성평가</a>
+                			<div id="top-menu_c" > </div>
+                			<div id="top-menu_d" > </div>
                         </div>
                     </li>
                     <li class="nav-item">
@@ -70,10 +70,12 @@
             if (winner === 'Y') {
 	          	document.getElementById("hospserchtop").style.display = "flex";
 	        }
+      
 	 //   };
  		// 계약정보도  Login시 Cookie에 담아서 활용해야 됨. 아님,*** 추가해야될 내용에서 적용해도 됨.
     	// 공용변수로 사용
-	    var hospid = getCookie("hospid");   // 병원아이디
+    	hosp_conact() ;
+    	var hospid = getCookie("hospid");   // 병원아이디
 	    var userid = getCookie("userid");   // 사용자아이디
 	    var hospnm = getCookie("s_hospnm"); // 병원이름
 	    var usernm = getCookie("s_usernm"); // 사용자이름
@@ -144,14 +146,15 @@
 		        setCookie("hospid", data.hospCd, 1);
 		        setCookie("s_hospid", data.hospCd, 1);
 		        setCookie("s_hospnm", data.hospNm, 1);
+		        setCookie("s_conact_gb", data.conactGb, 1); // 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
 		        setCookie("s_winconect", 'Y',1);
 		        hospid = getCookie("hospid");   // 병원아이디
 		        hospnm = getCookie("s_hospnm"); 
 		        document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> ` 
 										                    + hospnm + `  [ ` 
 										                    + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
-		        
-		        
+		 	    alert(getCookie("s_conact_gb"));
+		        hosp_conact() ;
 		   //     localStorage.setItem('l_hospid', data.hospCd);
 
 		    });
@@ -173,5 +176,42 @@
 		        }
 		    });
 		}		
+		   //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
+		function hosp_conact() {
+			let s_conact_gb = getCookie("s_conact_gb");
+			let s_wnn_yn    = getCookie("s_wnn_yn") ;
+			let menuArea    = document.getElementById("top-menu_c");
+			let menuHTML    = '';
+			menuArea.innerHTML   = '';
+			
+			if (s_conact_gb === 'A') {
+				menuHTML += `
+					<a href="#" class="btn btn-rounded btn-light btn-sm">진료비분석</a>
+				`;
+			} else if (s_conact_gb === '1') {
+				menuHTML += `
+					<a href="#" class="btn btn-rounded btn-light btn-sm">진료비분석</a>
+				`;
+			} else if (s_conact_gb === '2') {
+				menuHTML += `
+					<a href="#" class="btn btn-rounded btn-light btn-sm">적정성평가</a>
+				`;
+			}	
+			menuArea.insertAdjacentHTML("beforeend", menuHTML);
+
+			
+			let menuArea_d = document.getElementById("top-menu_d");
+			let menuHTML_d = '';
+			menuArea_d.innerHTML   = '';
+			
+			if (s_conact_gb === 'A') {
+				menuHTML_d += `
+					<a href="#" class="btn btn-rounded btn-light btn-sm">적정성평가</a>
+				`;
+			}
+		
+			menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);		
+		}
+	
 	</script>
     <c:import url="sidebar.jsp" />

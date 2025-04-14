@@ -157,7 +157,24 @@
 	                    END
 	                ELSE 'N'
 	            END
-	        ) AS FILE_YN
+	        ) AS FILE_YN,
+           (
+	            SELECT 
+	                CASE 
+	                    WHEN COUNT(DISTINCT CONACT_GB) = 2 
+	                         AND SUM(CONACT_GB IN (1,2)) = 2 THEN 'A'
+	                    WHEN COUNT(DISTINCT CONACT_GB) = 1 
+	                         AND MAX(CONACT_GB) = 1 THEN '1'
+	                    WHEN COUNT(DISTINCT CONACT_GB) = 1 
+	                         AND MAX(CONACT_GB) = 2 THEN '2'
+	                    ELSE 'N' 
+	                END
+	            FROM TBL_HOSPCONT_MST 
+	            WHERE HOSP_CD = HM.HOSP_CD
+	              AND ACTION_YN = 'Y' 
+	              AND NOW() BETWEEN STR_TO_DATE(ACCEPT_DT, '%Y%m%d') 
+	                            AND STR_TO_DATE(CLOSE_DT, '%Y%m%d')
+	        ) AS CONACT_GB		        
 	
 	    FROM TBL_HOSP_MST HM
 	    LEFT JOIN TBL_HOSPCONT_MST HC 
