@@ -32,7 +32,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
+import egovframework.wnn_medcost.base.model.YakgaCdDTO;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
+import egovframework.wnn_medcost.base.model.JearyoCdDTO;
 import egovframework.wnn_medcost.base.model.SamverDTO;
 import egovframework.wnn_medcost.base.service.BaseService;
 import egovframework.wnn_medcost.util.ResponseObject;
@@ -822,5 +824,125 @@ public class BaseController {
             return ResponseEntity.status(500).body(e.getMessage());
             
         }
-	}		
+	}
+	//약가관리 
+	@RequestMapping(value="/yakgacd.do")
+    public String yakgacd(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/base/yakgacd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value="/yakgaCdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> getyakgaCdList(@ModelAttribute("DTO") YakgaCdDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("수가-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+				
+				List<YakgaCdDTO> yakgaList = svc.getYakgaCdList(dto);
+				
+				System.out.println("약갸-java size " + yakgaList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",yakgaList);
+
+		        System.out.println("수가-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	@RequestMapping(value="/yakgaCdUpdate.do", method = RequestMethod.POST)
+    public ResponseEntity<String> yakgaCdUpdate(@RequestBody List<YakgaCdDTO> data) {
+	
+		System.out.println("Update 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	
+        	for (YakgaCdDTO dto : data) {
+        		svc.updateYakCdMst(dto) ; //이력관리 
+       		    System.out.println("Fee Code: " + dto.getFeeCode());
+                System.out.println("Start_Dt: " + dto.getStartDt());
+     	
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
+	//재료대관리 
+	@RequestMapping(value="/jaeryocd.do")
+    public String jaeryocd(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/base/jaeryocd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }
+	@RequestMapping(value="/jaeryoCdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> jaeryoCdList(@ModelAttribute("DTO") JearyoCdDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("수가-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+				
+				List<JearyoCdDTO> jaeryoList = svc.getJaeryoCdList(dto);
+				
+				System.out.println("약갸-java size " + jaeryoList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",jaeryoList);
+
+		        System.out.println("수가-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}	
 }

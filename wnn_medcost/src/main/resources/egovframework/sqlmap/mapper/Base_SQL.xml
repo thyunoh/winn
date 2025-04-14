@@ -603,5 +603,74 @@
            AND SEQ     = #{seq}
            AND ACTION_YN = 'Y'
     ]]>
-    </select>             	        		                              	      
+    </select>  
+	<select id="getYakgaCdList" parameterType="YakgaCdDTO"  resultType="YakgaCdDTO"><![CDATA[
+      SELECT FEE_CODE ,
+ 		     START_DT ,
+	         KYE_GU   ,
+	         HOS_PRICE, 
+	         GA_PRICE ,
+	         BOK_PATH ,
+	         KOR_NM   ,
+	         STD      ,
+	         UNIT     ,
+	         UPSO     ,  
+	         BUN_CD   ,
+	 	 	 SUNG_CD  ,
+	 		 MED_GU   ,
+	 		 TEJANG_REA ,
+	 		 MED_LEVEL  ,
+	 		 LOW_YN     , 
+	 		 ETC_MED    , 
+	 		 OPT_MED_YN ,
+	 		 MED_REG_DT , 
+	 		 REP_CD     , 
+	 		 SPC_MED_GU ,  
+	 		 SALE_DT    ,   
+	 		 IDENTI_MED ,
+	 		 CHUNG__STD ,   
+	 		 COPAY_30   ,
+	 		 COPAY_50   ,  
+	 		 COPAY_80   ,
+	 		 COPAY_YN   , 
+	 		 PRE_FEE_CODE ,
+	 		 AFR_FEE_CODE
+		FROM 
+		    TBL_YAKGA_MST A
+	   WHERE A.ACTION_YN = 'Y' AND 
+		    ( A.FEE_CODE LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      A.KOR_NM   LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+	]]>
+	</select>   
+	<select id="getJaeryoCdList" parameterType="JearyoCdDTO"  resultType="JearyoCdDTO"><![CDATA[
+      SELECT FEE_CODE    ,
+ 		     START_DT    ,
+	         FIRST_DT    ,
+	         END_DT      , 
+	         MID_BUNRU   ,
+	         MID_CODE    ,
+	         KOR_NM      ,
+	         STD         ,
+	         UNIT        ,
+	         HOSP_PRICE  ,  
+	         COMPANY_NM  ,
+	 	 	 JAEJIL      ,
+	 		 IMP_UPSO    ,
+	 		 REG_NUMBER  ,
+	 		 COPAY_50    ,
+	 		 COPAY_80    , 
+	 		 COPAY_90    , 
+	 		 DUP_YN      ,
+	 		 REMARK 
+		FROM 
+		    TBL_JAERYO_MST A
+	   WHERE A.ACTION_YN = 'Y' AND 
+		    ( A.FEE_CODE LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      A.KOR_NM   LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+	]]>
+	</select>               	        		       	            	        		                              	      
 </mapper>

@@ -72,9 +72,24 @@
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/commcd.do">공통코드</a>
                                             </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">수가코드</a>
-                                            </li>
+									        <li class="nav-item">
+									            <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+									              data-target="#hira-code" aria-controls="hira-code">심평원고시코드
+									            </a>
+									            <div id="hira-code" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+									                <ul class="nav flex-column">
+									                    <li class="nav-item">
+									                        <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
+									                    </li>
+									                    <li class="nav-item">
+									                        <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
+									                    </li>
+									                    <li class="nav-item">
+									                        <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
+									                    </li>
+									                </ul>
+									            </div>
+									        </li>                                         
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/disecd.do">상병코드</a>
                                             </li>

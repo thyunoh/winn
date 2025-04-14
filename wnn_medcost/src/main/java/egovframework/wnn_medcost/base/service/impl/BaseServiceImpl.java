@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import egovframework.wnn_medcost.base.mapper.BaseMapper;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
+import egovframework.wnn_medcost.base.model.JearyoCdDTO;
 import egovframework.wnn_medcost.base.model.SamverDTO;
 import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
+import egovframework.wnn_medcost.base.model.YakgaCdDTO;
 import egovframework.wnn_medcost.base.service.BaseService;
 
 @Service("BaseService")
@@ -188,6 +190,24 @@ public class BaseServiceImpl implements BaseService {
 	public String samverCdDupChk(SamverDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.samverCdDupChk(dto);
+	}
+
+	@Override
+	public List<YakgaCdDTO> getYakgaCdList(YakgaCdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getYakgaCdList(dto);
+	}
+
+	@Override
+	public boolean updateYakCdMst(YakgaCdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateYakCdMst(dto);
+	}
+
+	@Override
+	public List<JearyoCdDTO> getJaeryoCdList(JearyoCdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getJaeryoCdList(dto);
 	}
 
 

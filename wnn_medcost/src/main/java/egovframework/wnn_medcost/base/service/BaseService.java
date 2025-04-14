@@ -5,9 +5,11 @@ import java.util.Map;
 
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
+import egovframework.wnn_medcost.base.model.JearyoCdDTO;
 import egovframework.wnn_medcost.base.model.SamverDTO;
 import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
+import egovframework.wnn_medcost.base.model.YakgaCdDTO;
 
 public interface BaseService {
     List<CodeMdDTO> getCommList(List<String> codeGbList, List<String> codeCdList) throws Exception;
@@ -41,5 +43,11 @@ public interface BaseService {
 	List<SamverDTO>   getsamverCdlist(SamverDTO dto) throws Exception;
 	boolean           insertsamverCd(SamverDTO dto)  throws Exception; 
 	boolean           updatesamverCd(SamverDTO dto)  throws Exception; 
-	String            samverCdDupChk(SamverDTO dto)  throws Exception; 		
+	String            samverCdDupChk(SamverDTO dto)  throws Exception; 	
+ //약가  	
+	List<YakgaCdDTO>  getYakgaCdList(YakgaCdDTO dto)  throws Exception;
+	boolean           updateYakCdMst(YakgaCdDTO dto)  throws Exception;	
+ //재료대 
+	List<JearyoCdDTO>  getJaeryoCdList(JearyoCdDTO dto)  throws Exception;
+	
 }

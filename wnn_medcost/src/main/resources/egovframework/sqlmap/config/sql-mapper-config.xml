@@ -19,6 +19,8 @@
     	<typeAlias  alias="DiseCdDTO"   type="egovframework.wnn_medcost.base.model.DiseCdDTO"/>
     	<typeAlias  alias="WvalDTO"     type="egovframework.wnn_medcost.base.model.WvalDTO"/>
     	<typeAlias  alias="SamverDTO"   type="egovframework.wnn_medcost.base.model.SamverDTO"/>
+    	<typeAlias  alias="YakgaCdDTO"   type="egovframework.wnn_medcost.base.model.YakgaCdDTO"/>
+    	<typeAlias  alias="JearyoCdDTO"  type="egovframework.wnn_medcost.base.model.JearyoCdDTO"/>
 
     	<typeAlias  alias="MagamDTO"    type="egovframework.wnn_medcost.magam.model.MagamDTO"/>
     	<typeAlias  alias="FilesDTO"    type="egovframework.wnn_medcost.magam.model.FilesDTO"/>
