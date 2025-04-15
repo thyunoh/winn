@@ -619,7 +619,8 @@
 	       , TBL_HOSP_MST B
 	   WHERE 1=1
 	     AND A.ACTION_YN = 'Y' 
-	     AND B.HOSP_CD = A.HOSP_CD 
+	     AND B.HOSP_CD   = A.HOSP_CD 
+	     AND B.ACTION_YN = A.ACTION_YN
       ]]>
 	    <if test='hospCd != null and hospCd != "" '>
 	    <![CDATA[
@@ -904,5 +905,86 @@
            AND START_YM  = #{startYm}
            AND ACTION_YN = 'Y' 
     ]]>  
-    </select>	        	   	                        	   	                  
+    </select>
+    <!-- 사용자 권한관리 -->
+	<select id="getUserAuthCdList" parameterType="UserAuthDTO"  resultType="UserAuthDTO"><![CDATA[
+	  SELECT A.USER_ID
+	       , A.HOSP_CD  
+	       , B.HOSP_NM  
+	  	   , C.USER_NM
+           , A.PGM_URL
+	  	   , A.INS_AUTH
+	  	   , A.UPD_AUTH    
+	  	   , A.DEL_AUTH
+	  	   , A.INQ_AUTH
+	  	   , A.REG_DTTM
+	  	   , A.REG_USER
+	  	   , A.REG_IP
+	  	   , A.UPD_DTTM
+	  	   , A.UPD_USER    
+	  	   , A.UPD_IP  
+	    FROM TBL_USERAUTH_MST A
+	       , TBL_HOSP_MST B
+	       , TBL_USER_MST C
+	   WHERE 1=1
+	     AND A.ACTION_YN = 'Y' 
+	     AND B.HOSP_CD   = A.HOSP_CD
+	     AND B.ACTION_YN = A.ACTION_YN
+	     AND C.HOSP_CD   = A.HOSP_CD 
+	     AND C.USER_ID   = A.USER_ID  
+	     AND C.ACTION_YN = A.ACTION_YN
+      ]]>
+	    <if test='hospCd != null and hospCd != "" '>
+	    <![CDATA[
+	       AND   A.HOSP_CD = #{hospCd}
+	     ]]>
+	    </if>
+	 <![CDATA[
+        ORDER BY A.HOSP_CD 
+	 ]]>
+	</select>
+     <insert id="insertUserAuthCd" parameterType="UserAuthDTO"> <![CDATA[ 
+        INSERT INTO TBL_USERAUTH_MST (
+            HOSP_CD   ,     USER_ID, 
+            INS_AUTH  ,     UPD_AUTH,
+            DEL_AUTH  ,     INQ_AUTH, 
+            REG_DTTM  ,     REG_USER,       
+            REG_IP    ,     UPD_DTTM,       
+            UPD_USER  ,     UPD_IP ,        
+            JOB_SEQ   ,     ACTION_YN 
+        ) VALUES (
+            #{hospCd}  ,     #{userId}  , 
+            #{insAuth} ,     #{updAuth} ,
+            #{delAuth} ,     #{inqAuth} , 
+            NOW()      ,     #{regUser} ,     
+            #{regIp}   ,     NOW()      ,     
+            #{updUser} ,     #{updIp}   ,        
+            (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+                   FROM TBL_USERAUTH_MST A 
+                   WHERE  HOSP_CD    = #{hospCd} 
+                      AND USER_ID    = #{userId} 
+
+            ),'Y'              
+        )
+    ]]>
+    </insert>  
+      <update id="updateUserAuthCd" parameterType="UserAuthDTO"><![CDATA[
+        UPDATE TBL_USERAUTH_MST
+        SET    ACTION_YN = 'N' 
+	         , UPD_DTTM  = NOW()      
+	         , UPD_USER  = #{updUser}  
+	         , UPD_IP    = #{updIp}
+        WHERE HOSP_CD    = #{hospCd} 
+          AND USER_ID    = #{userId} 
+          AND ACTION_YN  = 'Y'
+     ]]>   
+    </update>  
+	<select id = "UserAuthCdDupChk"  parameterType="UserAuthDTO"  resultType="String"><![CDATA[   
+	   SELECT 'Y'
+	   FROM TBL_USERAUTH_MST 
+        WHERE HOSP_CD   = #{hospCd} 
+          AND USER_ID   = #{userId} 
+          AND ACTION_YN = 'Y'
+	  ]]>  
+	</select>       	        	   	                        	   	                  
 </mapper>

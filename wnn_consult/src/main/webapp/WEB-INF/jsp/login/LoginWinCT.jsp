@@ -306,12 +306,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    };
 	    document.addEventListener("DOMContentLoaded", function() {
 	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
-	            interval: 3000, // 3초마다 변경
+	            interval: 2000, // 2초마다 변경
 	            ride: "carousel"
 	        });
 	    });
     </script>
-	<!-- 타 화면 콘텐츠 영역 위너넷 컨설팅 이미지 -->
 	<div id="contentArea"></div>
 
 	<!-- 위너넷 컨설팅 이미지 -->
@@ -556,8 +555,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			                    cursor: pointer;
 			                    margin-top: 20px;
 			                    margin-bottom: 5px;
-			                  ">
-			            로그인
+			                  ">로그인
 			          </button>
 			          <div style="font-size: 13px; font-weight: bold; color: white;">
 			            <a href="javascript:void(0);" onclick="fnmbrReg();" style="color: white; text-decoration: none;">회원가입</a> |
@@ -1722,30 +1720,30 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        }
 	    }
 </script>
-	<style>
-#asq_infoTable {
-	table-layout: fixed;
-	width: 100%;
-}
-
-#asq_infoTable th {
-	padding: 8px; /* 내부 여백 추가 */
-	vertical-align: middle; /* 글자 세로 정렬 */
-	background-color: #DCE6F1; /* 연한 하늘색 배경 */
-	font-weight: bold; /* 글씨 굵게 */
-	text-align: center; /* 가운데 정렬 */
-	font-size: 13px; /* 글자 크기 축소 */
-	height: 25px; /* 행 높이 제한 */
-}
-
-#asq_infoTable td {
-	padding: 6px; /* 내부 여백 */
-	vertical-align: middle; /* 글자 세로 정렬 */
-	text-align: center; /* 가운데 정렬 */
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
+<style>
+	#asq_infoTable {
+		table-layout: fixed;
+		width: 100%;
+	}
+	
+	#asq_infoTable th {
+		padding: 8px; /* 내부 여백 추가 */
+		vertical-align: middle; /* 글자 세로 정렬 */
+		background-color: #DCE6F1; /* 연한 하늘색 배경 */
+		font-weight: bold; /* 글씨 굵게 */
+		text-align: center; /* 가운데 정렬 */
+		font-size: 13px; /* 글자 크기 축소 */
+		height: 25px; /* 행 높이 제한 */
+	}
+	
+	#asq_infoTable td {
+		padding: 6px; /* 내부 여백 */
+		vertical-align: middle; /* 글자 세로 정렬 */
+		text-align: center; /* 가운데 정렬 */
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 </style>
 	<!-- 기존 1대1 질의응답  -->
 	<div class="modal fade" id="asq_main_tab" tabindex="-1"

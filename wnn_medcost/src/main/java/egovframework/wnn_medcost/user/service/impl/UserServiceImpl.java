@@ -14,6 +14,7 @@ import egovframework.wnn_medcost.user.mapper.UserMapper;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
+import egovframework.wnn_medcost.user.model.UserAuthDTO;
 import egovframework.wnn_medcost.user.model.UserDTO;
 import egovframework.wnn_medcost.user.model.WardDTO;
 import egovframework.wnn_medcost.user.model.DietDTO;
@@ -228,5 +229,29 @@ public class UserServiceImpl implements UserService {
 	public String WardCdDupChk(WardDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.WardCdDupChk(dto) ; 
+	}
+
+	@Override
+	public List<UserAuthDTO> getUserAuthCdList(UserAuthDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getUserAuthCdList(dto) ; 
+	}
+
+	@Override
+	public boolean insertUserAuthCd(UserAuthDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.insertUserAuthCd(dto) ; 
+	}
+
+	@Override
+	public boolean updateUserAuthCd(UserAuthDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateUserAuthCd(dto) ; 
+	}
+
+	@Override
+	public String UserAuthCdDupChk(UserAuthDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.UserAuthCdDupChk(dto) ; 
 	}
 }

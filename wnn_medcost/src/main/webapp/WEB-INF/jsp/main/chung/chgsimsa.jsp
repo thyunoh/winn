@@ -835,7 +835,7 @@
 		var dise_tableName  = document.getElementById('dise_tableName');
 		var dise_dataTable  = new DataTable();
 		dise_dataTable.clear();
-		var txt_Markln_dise  = 20;                       				
+		var txt_Markln_dise  = 18;                       				
 		function initdiseResultsTable() {
 		  if (!$.fn.DataTable.isDataTable('#' + dise_tableName.id)) {
 		   	dise_dataTable =  $('#' + dise_tableName.id).DataTable({  // 올바르게 닫힌 선택자

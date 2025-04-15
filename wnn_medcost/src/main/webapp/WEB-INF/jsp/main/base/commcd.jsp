@@ -264,10 +264,10 @@
 					style="text-align: left; flex: 1; overflow-y: auto;">
 					<div id="cd_inputZone">
 					    <input type="hidden" id="dtlCodeNm_one" name="dtlCodeNm_one"   value= "">
-						<input type="hidden" id="regUser_one"  name="regUser_one"      value="">
-						<input type="hidden" id="updUser_one"  name="updUser_one"      value="">
-						<input type="hidden" id="regIp_one"    name="regIp_one"        value="">
-						<input type="hidden" id="updIp_one"    name="updIp_one"        value="">
+						<input type="hidden" id="regUser_one"   name="regUser_one"     value="">
+						<input type="hidden" id="updUser_one"   name="updUser_one"     value="">
+						<input type="hidden" id="regIp_one"     name="regIp_one"       value="">
+						<input type="hidden" id="updIp_one"     name="updIp_one"       value="">
 						<div class="form-group row ">
 							<label for="codeGb_one"
 							class="col-2 col-lg-2 col-form-label text-left">코드구분</label>

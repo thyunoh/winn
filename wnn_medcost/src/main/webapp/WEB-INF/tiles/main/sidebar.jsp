@@ -93,9 +93,6 @@
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/disecd.do">상병코드</a>
                                             </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">질병코드</a>
-                                            </li>
                                              <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/wvalcd.do">가중치코드</a>
                                             </li>
@@ -125,7 +122,7 @@
                                                 <a class="nav-item nav-link"  href="/user/hospcd.do">계약관리</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">권한관리</a>
+                                                <a class="nav-item nav-link"  href="/user/userauthcd.do">권한관리</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/sugacd.do">수납관리</a>

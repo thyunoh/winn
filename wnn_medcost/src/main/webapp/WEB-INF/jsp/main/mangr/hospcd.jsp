@@ -2098,7 +2098,7 @@
 		function hc_newuptData() {
         	let hc_newData = {
                 hospCd_one:        $('#hospCd_one').val(),
-                subCodeNm_one:     $('#subCodeNm_one').val(),
+                subCodeNm_one:     $('#subCodeNm_one').val(), 
         		conactGb_one:      $('#conactGb_one').val(),
         		startDt_one:       $('#startDt_one').val(),
         		endDt_one:         $('#endDt_one').val(), 
@@ -2386,6 +2386,16 @@
 			    }  
 			}
 		}		
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('conactGb_one');
+		    document.getElementById('subCodeNm_one').value = '진료비경영분석' ;
+		});
+		
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('conactGb_one').addEventListener('change', function() {
+		    document.getElementById('subCodeNm_one').value = this.options[this.selectedIndex].text;
+		})		
 		function hc_fn_Insert(){
 			const results = hc_validateForm();
 			if (results)

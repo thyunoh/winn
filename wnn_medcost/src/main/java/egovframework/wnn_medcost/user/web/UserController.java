@@ -33,6 +33,7 @@ import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
+import egovframework.wnn_medcost.user.model.UserAuthDTO;
 import egovframework.wnn_medcost.user.model.UserDTO;
 import egovframework.wnn_medcost.user.model.WardDTO;
 import egovframework.wnn_medcost.user.service.UserService;
@@ -526,13 +527,8 @@ public class UserController extends BaseController {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
 	
-			
 				List<UserDTO> userList = svc.hospitalUserList(dto);
-				
-			//	for(HospMdDTO dao: hospList  ) {
-			//		System.out.println("병원-java getWardCnt : " + dao.getWardcnt());
-			//	}
-			
+		
 				System.out.println("병원-java size " + userList.size());
 				
 				Map<String, Object> response = new HashMap<>();
@@ -541,7 +537,7 @@ public class UserController extends BaseController {
 		        System.out.println("병원-java response : " + response);
 		        
 		        return response;
-				
+			
 				
 			} else {
 				return null;
@@ -1222,4 +1218,146 @@ public class UserController extends BaseController {
             
         }
 	}
+	//사용자 사용자권한관리 등록 
+	@RequestMapping(value="/userauthcd.do")
+    public String userauthcd(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/user/userauthcd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value="/userauthCdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> userauthCdList(@ModelAttribute("DTO") UserAuthDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("병원-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+	
+			
+				List<UserAuthDTO> userauthList = svc.getUserAuthCdList(dto);
+		
+				System.out.println("병원-java size " + userauthList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",userauthList);
+
+		        System.out.println("병원-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}	
+	@RequestMapping(value="/userauthCdInsert.do", method = RequestMethod.POST)
+    public ResponseEntity<String> userauthCdInsert(@RequestBody List<UserAuthDTO> data) {
+		
+		System.out.println("Insert 시작했음");
+		String returnValue = "OK";
+		
+		// 처리 로직
+        try {
+        	
+        	for (UserAuthDTO dto : data) {
+        		String dupchk =   svc.UserAuthCdDupChk(dto) ;
+        		if ("Y".equals(dupchk)) {
+        			return ResponseEntity.status(400).body(dto.getUserId()); 
+        		}        		
+        		svc.insertUserAuthCd(dto) ; 
+       		    System.out.println("hospCd: " + dto.getHospCd());
+            }
+     	
+            
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}
+	@RequestMapping(value="/userauthCdUpdate.do", method = RequestMethod.POST)
+    public ResponseEntity<String> userauthCdUpdate(@RequestBody List<UserAuthDTO> data) {
+	
+		System.out.println("Update 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	
+        	for (UserAuthDTO dto : data) {
+        		//기존자료 ATION_YN = 'N'
+        		svc.updateUserAuthCd(dto) ; //이력관리 
+       		    System.out.println("hospCd: "   + dto.getHospCd());
+	     		//입력루틴 사제는 없음   
+       		    svc.insertUserAuthCd(dto) ; 
+  	
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}
+	@RequestMapping(value="/userauthCdDelete.do", method = RequestMethod.POST)
+    public ResponseEntity<String> userauthCdDelete(@RequestBody List<UserAuthDTO> data) {
+		
+		System.out.println("Delete 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	for (UserAuthDTO dto : data) {
+        		dto.setHospCd(dto.getKeyhospCd());
+        		dto.setUserId(dto.getKeyuserId());
+     		
+        		svc.updateUserAuthCd(dto) ; //이력관리 
+       		    System.out.println("Key hospCd: " + dto.getKeyhospCd());
+              
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
+	@RequestMapping(value="/userauthCddupchk.do", method = RequestMethod.POST)
+	public ResponseEntity<String> userauthCddupck(@RequestBody UserAuthDTO dto) {
+	    System.out.println("useridupck 시작했음");
+	    String returnValue = "OK";
+
+	    try {
+	        // 아이디 중복 체크
+	        String dupchk = svc.UserAuthCdDupChk(dto);
+	        System.out.println("Key hospCd: " + dto.getKeyhospCd());
+
+	        if ("Y".equals(dupchk)) {
+	            return ResponseEntity.status(400).body("기존사용아이디가 존재합니다.");
+	        }
+
+	        return ResponseEntity.ok(returnValue);
+	        
+	    } catch (Exception e) {
+	        return ResponseEntity.status(500).body("서버 오류: " + e.getMessage());
+	    }
+	}		
 }
