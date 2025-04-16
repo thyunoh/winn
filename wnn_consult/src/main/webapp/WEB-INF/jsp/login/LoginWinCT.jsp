@@ -208,7 +208,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0">
 						<div class="nav-item dropdown">
 							<a href="#" class="nav-link dropdown-toggle text-dark"
-								style="font-size: 14px;" data-bs-toggle="dropdown">컨설팅 소개</a>
+								style="font-size: 16px;" data-bs-toggle="dropdown">컨설팅 소개</a>
 							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
 								<a href="#" class="dropdown-item"
 									onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
