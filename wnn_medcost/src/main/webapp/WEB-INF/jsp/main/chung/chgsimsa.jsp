@@ -56,7 +56,7 @@
                       </div>
                       <label for="cformNo" class="col-1 col-sm-1 col-form-label text-left">서식구분</label>
                       <div class="col-2 col-lg-2">
-                        <select id="cformNo" name="cformNo" class="custom-select" style="height: 35px; font-size: 14px;">
+                        <select id="cformNo" name="cformNo" class="custom-select" style="height: 35px; font-size: 16px;">
                           <option selected value="">선택</option>
                         </select>
                       </div>
@@ -1002,6 +1002,7 @@
 		            columns: [
 		            	{ title: "항",       data: "itemNo_four",      width: '30px' ,  className: "text-center"},
 		            	{ title: "목",       data: "codeNo_four",      width: '30px' ,  className: "text-center" },
+		            	{ title: "항명칭",    data: "subCodeNm_four",   visible: false,  className: "text-center" },
 		            	{ title: "청구코드",   data: "ediCode_four",     width: '60px' ,  className: "text-left"},  
 		                {
 		                    title: "수가명칭", data: "korName_four", width: '100px', className: "text-left",
@@ -1024,10 +1025,16 @@
 		                var lastItemNo = null;
 
 		                api.column(0, { page: 'current' }).data().each(function(itemNo, i) {
+		                    var rowData = api.row(i).data(); // 현재 행의 전체 데이터
+
 		                    if (lastItemNo !== itemNo) {
-		                        // 구분행 추가
 		                        $(rows).eq(i).before(
-		                         '<tr class="group-header"><td colspan="10" style="background:#f0f0f0;font-weight:bold;text-align:left;padding:2px 8px;height:24px;">[ 항: ' + itemNo + ' ]</td></tr>'
+		                            '<tr class="group-header">' +
+		                            '<td colspan="11" style="background:#f0f0f0;font-weight:bold;text-align:left;padding:2px 8px;height:24px;">' +
+		                            '[ 항: ' + itemNo + ' ] ' +
+		                            (rowData.subCodeNm_four ? '[   ' + rowData.subCodeNm_four + ' ]' : '') +
+		                            '</td>' +
+		                            '</tr>'
 		                        );
 		                        lastItemNo = itemNo;
 		                    }
@@ -1285,11 +1292,18 @@
 		            	        var gender = data.charAt(6);
 		            	        return birth + "-" + gender; // 템플릿 리터럴 없이 처리
 		            	    }
-		            	}, 
+		            	},
+		            	{ title: "정보",     data:  "spcodeNm_one"   ,    width: '100px' ,    className: "text-center" ,  
+		                 	render: function(data, type, row) {
+		                        return type === 'display' && data && data.length > 3
+		                            ? data.substr(0, 3) + '...'
+		                            : data;
+			                 	}
+			            },
 		            	{ title: "입원일자",     data:  "firstAdmt_one" ,     width: '50px' ,    className: "text-center" },
 		            	{ title: "총진료비",     data:  "medAmt_one"    ,     width: '50px' ,    className: "text-right"},
-		            	{ title: "청구액",      data:  "claimAmt_one"  ,      width: '50px' ,   className: "text-center"},
-		            	{ title: "본인액",      data:  "selfAmt_one"   ,      width: '50px' ,   className: "text-center"}		            	
+		            	{ title: "청구액",      data:  "claimAmt_one"  ,     width: '50px' ,   className: "text-center"},
+		            	{ title: "본인액",      data:  "selfAmt_one"   ,     width: '50px' ,   className: "text-center"}		            	
 		            ],
 		            ajax: myoungLoad,   
 				});                                 

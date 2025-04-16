@@ -62,6 +62,21 @@ public class ChungDTO {
 	private String  specType ;
 	private String  specDetail ;
 	
+	private String  subCodeNm ;
+	private String  spcodeNm ;
+	
+	public String getSpcodeNm() {
+		return spcodeNm;
+	}
+	public void setSpcodeNm(String spcodeNm) {
+		this.spcodeNm = spcodeNm;
+	}
+	public String getSubCodeNm() {
+		return subCodeNm;
+	}
+	public void setSubCodeNm(String subCodeNm) {
+		this.subCodeNm = subCodeNm;
+	}
 	public String getUnitType() {
 		return unitType;
 	}

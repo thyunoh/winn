@@ -49,9 +49,37 @@ public class UserDTO{
     private String useNot ;
     private String conactGb ;
     private String fileYn ;
-    
-    
-    public String getFileYn() {
+    private String insAuth ;
+    private String updAuth ;
+    private String delAuth ;
+    private String inqAuth ;
+
+ 
+    public String getInsAuth() {
+		return insAuth;
+	}
+	public void setInsAuth(String insAuth) {
+		this.insAuth = insAuth;
+	}
+	public String getUpdAuth() {
+		return updAuth;
+	}
+	public void setUpdAuth(String updAuth) {
+		this.updAuth = updAuth;
+	}
+	public String getDelAuth() {
+		return delAuth;
+	}
+	public void setDelAuth(String delAuth) {
+		this.delAuth = delAuth;
+	}
+	public String getInqAuth() {
+		return inqAuth;
+	}
+	public void setInqAuth(String inqAuth) {
+		this.inqAuth = inqAuth;
+	}
+	public String getFileYn() {
 		return fileYn;
 	}
 	public void setFileYn(String fileYn) {

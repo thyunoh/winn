@@ -141,6 +141,10 @@ public class UserController {
 					response.put("login_Connip", GetClientIP.getClientIP(request)); // 사용자 uuid 
 					response.put("login_WnnYN" , result.getWinnerYn()) ; //위너넷정보 
 					response.put("login_ConactGB" , result.getConactGb()) ; //계약정보(진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N')
+					response.put("login_insAuth"  , result.getInsAuth()) ; //입력권한 
+					response.put("login_updAuth"  , result.getUpdAuth()) ; //수정권한 
+					response.put("login_delAuth"  , result.getDelAuth()) ; //삭제권한 
+					response.put("login_inqAuth"  , result.getInqAuth()) ; //조회권한 
 					response.put("error_code", "00000");
 					response.put("error_mess", "정상적 처리 되었습니다.");
 					System.out.print("정상처리");

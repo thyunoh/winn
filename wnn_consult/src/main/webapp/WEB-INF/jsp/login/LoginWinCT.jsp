@@ -208,7 +208,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0">
 						<div class="nav-item dropdown">
 							<a href="#" class="nav-link dropdown-toggle text-dark"
-								style="font-size: 16px;" data-bs-toggle="dropdown">컨설팅 소개</a>
+								style="font-size: 14px;" data-bs-toggle="dropdown">컨설팅 소개</a>
 							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
 								<a href="#" class="dropdown-item"
 									onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
@@ -1303,9 +1303,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			$("#passWd1").focus();
 			return;
 		}
-		if( $("#bfPassWd1").val() != $("#af_pass_wd1").val()) {
+		if( $("#bfPassWd1").val() != $("#afPpassWd1").val()) {
 			alert("변경할 비밀번호를 확인하세요.!");
-			$("#bfUserPwd1").focus();
+			$("#bfPassWd1").focus();
 			return;
 		}
 		var formData = $("form[name='pwresetregForm']").serialize();
@@ -2459,7 +2459,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        				sessionStorage.setItem('s_mainfg', data.login_Main); 			// sessionStorage에 로그인 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
 	        				sessionStorage.setItem('s_use_yn', data.loginUseYN); 			// 사용여부(Y,정상사용자, N.종료사용자)
 	        				sessionStorage.setItem('s_hosp_uuid', $("#hospid").val().trim()); //위너넷이 접속시 데이타연관성 확인  
-	        	            showUserInfo(); 
+	        				sessionStorage.setItem('s_insauth', data.login_insAuth); //입력권한 
+	        				sessionStorage.setItem('s_updauth', data.login_updAuth); //수정권한 
+	        				sessionStorage.setItem('s_delauth', data.login_delAuth); //삭제권한 
+	        				sessionStorage.setItem('s_inqauth', data.login_inqAuth); //조회권한 
+	        				showUserInfo(); 
         				
 	        	            winCheckOpen();
 	        				
@@ -2545,6 +2549,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	//tbl_hospcont테이블 (진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N' 
         	setCookie("s_conact_gb", "", 0); 
         	setCookie("s_winconect", "", 0);
+        	setCookie("s_insauth", "", 0); //입력권한
+        	setCookie("s_updauth", "", 0); //수정권한 
+        	setCookie("s_delauth", "", 0); //삭제권한 
+        	setCookie("s_inqauth", "", 0); //조회권한 
     		// 세션 초기화
     	    sessionStorage.clear();    	 	
     	 	// 화면 초기화
@@ -2581,6 +2589,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_hosp_uuid", sessionStorage.getItem('s_hospid'), 1);
         	//tbl_hospcont테이블 (진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N') 
         	setCookie("s_conact_gb", sessionStorage.getItem('s_conact_gb'), 1); //계약구분  
+        	setCookie("s_insauth", sessionStorage.getItem('s_insauth'), 1); //입력권한
+        	setCookie("s_updauth", sessionStorage.getItem('s_updauth'), 1); //수정권한  
+        	setCookie("s_delauth", sessionStorage.getItem('s_delauth'), 1); //삭제권한  
+        	setCookie("s_inqauth", sessionStorage.getItem('s_inqauth'), 1); //조회권한  
       	
         	hosp_conact() ;
         	

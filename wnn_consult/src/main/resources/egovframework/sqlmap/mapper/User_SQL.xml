@@ -4,18 +4,22 @@
   
 	<select id="userLoginCheck" parameterType="UserDTO"  resultType="UserDTO"><![CDATA[
 	 SELECT 
-	    MAX(C.HOSP_CD) AS HOSP_CD,
-	    MAX(C.HOSP_NM) AS HOSP_NM,
-	    MAX(C.USER_ID) AS USER_ID,
-	    MAX(C.USER_NM) AS USER_NM,
+	    MAX(C.HOSP_CD)   AS HOSP_CD,
+	    MAX(C.HOSP_NM)   AS HOSP_NM,
+	    MAX(C.USER_ID)   AS USER_ID,
+	    MAX(C.USER_NM)   AS USER_NM,
 	    MAX(C.WINNER_YN) AS WINNER_YN,
-	    MAX(C.PASS_WD) AS PASS_WD,
-	    MAX(C.START_DT) AS START_DT,
-	    MAX(C.END_DT) AS END_DT,
-	    MAX(C.MAIN_GU) AS MAIN_GU,
+	    MAX(C.PASS_WD)   AS PASS_WD,
+	    MAX(C.START_DT)  AS START_DT,
+	    MAX(C.END_DT)    AS END_DT,
+	    MAX(C.MAIN_GU)   AS MAIN_GU,
 	    MAX(C.HOSP_UUID) AS HOSP_UUID,
-	    MAX(C.USE_NOT) AS USE_NOT,
-	    MAX(C.CONACT_GB) AS CONACT_GB
+	    MAX(C.USE_NOT)   AS USE_NOT,
+	    MAX(C.CONACT_GB) AS CONACT_GB ,
+	    MAX(C.INS_AUTH)  AS INS_AUTH ,
+	    MAX(C.UPD_AUTH)  AS UPD_AUTH ,
+	    MAX(C.DEL_AUTH)  AS DEL_AUTH ,
+	    MAX(C.INQ_AUTH)  AS INQ_AUTH 
 	FROM (
 	    SELECT 
 	        A.HOSP_CD,
@@ -28,6 +32,10 @@
 	        A.END_DT,
 	        A.MAIN_GU,
 	        A.HOSP_UUID,
+	        C.INS_AUTH ,
+	        C.UPD_AUTH ,
+	        C.DEL_AUTH ,
+	        C.INQ_AUTH ,        
 	        (CASE 
 	            WHEN NOW() BETWEEN A.START_DT AND A.END_DT THEN 'Y'
 	            ELSE 'N'
@@ -51,8 +59,12 @@
 	        ) AS CONACT_GB
 	    FROM TBL_USER_MST A
 	    JOIN TBL_HOSP_MST B 
-	        ON A.HOSP_CD = B.HOSP_CD 
+	        ON A.HOSP_CD    = B.HOSP_CD 
 	        AND A.ACTION_YN = B.ACTION_YN
+        LEFT JOIN TBL_USERAUTH_MST C 
+	        ON  C.HOSP_CD   = A.HOSP_CD
+	        AND C.USER_ID   = A.USER_ID
+	        AND C.ACTION_YN = A.ACTION_YN	        
 	    WHERE A.ACTION_YN = 'Y'
 	      AND A.HOSP_CD = #{hospCd}
 	      AND A.USER_ID = #{userId}
@@ -71,7 +83,11 @@
 	        '0' AS MAIN_GU,
 	        '0' AS HOSP_UUID,
 	        '0' AS USE_NOT,
-	        '0' AS CONACT_GB
+	        '0' AS CONACT_GB ,
+	        '0' AS INS_AUTH ,
+	        '0' AS UPD_AUTH ,
+	        '0' AS DEL_AUTH ,
+	        '0' AS INQ_AUTH
 	) C
 	]]>
 	</select>		
@@ -100,8 +116,8 @@
 	       , TBL_HOSP_MST B
 	   WHERE A.HOSP_CD = #{hospCd}
 	     AND A.USER_ID = #{userId}
-	     AND A.ACTION = 'Y'
-         AMD A.ACTION_YN = B.ACTION_YN 
+	     AND A.ACTION_YN = 'Y'
+         AND B.ACTION_YN = A.ACTION_YN 
 	     AND NOW() BETWEEN A.START_DT AND A.END_DT
 	     AND B.HOSP_CD = A.HOSP_CD
 	]]>
@@ -138,8 +154,8 @@
 	     SET PASS_WD  = #{encPassWd}
        Where 1=1
            AND ACTION_YN = 'Y' 
-		   And HOSP_CD   = #{hospCd}
-		   And USER_ID   = #{userId}
+		   AND HOSP_CD   = #{hospCd}
+		   AND USER_ID   = #{userId}
 	]]>   
 	</update> 
     <!-- Insert -->
@@ -465,6 +481,7 @@
 	    FROM TBL_HOSP_MST
 	    WHERE 1=1 
 	      AND HOSP_CD  = #{hospCd}
+	      AND ACTION_YN = 'Y' 
 	   ]]>
    </select> 	
     <!-- INSERT 쿼리 -->

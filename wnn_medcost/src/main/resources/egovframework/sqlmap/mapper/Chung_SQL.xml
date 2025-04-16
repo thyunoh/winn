@@ -10,11 +10,13 @@
 		       , FN_GET_DTL_CODE('Z', 'INSUR_TYPE', A.INSUR_TYPE) AS  INSUR_TYPE
 		       , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)     AS  CFORM_NAME 
 		       , A.TREAT_TYPE
-		       , FN_GET_DTL_CODE('Z', 'TREAT_TYPE', A.TREAT_TYPE) AS TREAT_NAME 
+               , CASE WHEN SUBSTRING(A.CFORM_NO,1,1) <> 'M' THEN 
+				      FN_GET_DTL_CODE('Z', 'TREAT_TYPE', A.TREAT_TYPE) 
+				 ELSE FN_GET_DTL_CODE('Z', 'TREAT_SAN_TYPE', A.TREAT_TYPE) END TREAT_NAME 
 		       , A.CASE_CNT 
-		       , FORMAT(A.TOTAL_2 + A.NON100_COST, 0)             AS TOT_AMT
-		       , FORMAT(A.CLAIM_AMT + A.NON100_CLAIM + A.DISABLED_AMT, 0) AS CLAIM_AMT
-		       , FORMAT(A.SELF_AMT + A.NON100_CO_PAY, 0)          AS SELF_AMT
+		       , FORMAT(IFNULL(A.TOTAL_2,0) + IFNULL(A.NON100_COST,0), 0)                                 AS TOT_AMT
+		       , FORMAT(IFNULL(A.CLAIM_AMT,0) + IFNULL(A.NON100_CLAIM,0) + IFNULL(A.DISABLED_AMT,0), 0)   AS CLAIM_AMT
+		       , FORMAT(IFNULL(A.SELF_AMT,0) + IFNULL(A.NON100_CO_PAY,0), 0)                              AS SELF_AMT
 		FROM  TBL_CHUNG_MST A 
 		WHERE   A.HOSP_CD = #{hospCd}
 		    AND A.DATE_YM = #{dateYm}
@@ -34,6 +36,7 @@
 		         ,B.BILL_SEQ 
 		         ,B.PAT_NAME
 		         ,B.FIRST_ADMT
+		         ,IFNULL(FN_GET_DTL_CODE('Z','SPEC_TYPE',C.SPEC_TYPE),'') AS SPCODE_NM 
 		  		 ,B.PAT_ID  
 		         ,B.FAC_CODE 
 		         ,CASE WHEN B.PAY_TYPE = '1' THEN '1.정액'
@@ -47,11 +50,15 @@
 		         ,B.ACC_TYPE
 		         ,B.MED_TYPE
 		         ,B.MED_RESULT
-		         ,FORMAT(B.MED_AMT2  + B.NON100_AMT    + B.VET_AMT,0)       AS  MED_AMT 
-		         ,FORMAT(B.CLAIM_AMT + B.NON100_CLAIM  + B.DISABLED_AMT,0)  AS  CLAIM_AMT 
-		         ,FORMAT(B.SELF_AMT  + B.NON100_CO_PAY + B.VET_CO_PAY,0)    AS  SELF_AMT          
-		 FROM  TBL_CHUNG_MST  A ,
-		       TBL_MYOUNG_MST B
+		         ,FORMAT(IFNULL(B.MED_AMT2,0)  + IFNULL(B.NON100_AMT,0)    + IFNULL(B.VET_AMT,0),0)       AS  MED_AMT 
+		         ,FORMAT(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.DISABLED_AMT,0),0)  AS  CLAIM_AMT 
+		         ,FORMAT(IFNULL(B.SELF_AMT,0)  + IFNULL(B.NON100_CO_PAY,0) + IFNULL(B.VET_CO_PAY,0),0)    AS  SELF_AMT          
+		 FROM  TBL_CHUNG_MST  A 
+		  JOIN TBL_MYOUNG_MST B      ON  B.HOSP_CD  = A.HOSP_CD 
+		                             AND B.CLAIM_NO = A.CLAIM_NO 
+        LEFT JOIN TBL_SPECODE_MST C ON  C.HOSP_CD = A.HOSP_CD 
+		                             AND C.CLAIM_NO = A.CLAIM_NO 
+								     AND C.BILL_SEQ = B.BILL_SEQ 
 		WHERE  B.HOSP_CD  = A.HOSP_CD 
 		   AND B.CLAIM_NO = A.CLAIM_NO 
 		   And A.HOSP_CD  = #{hospCd}
@@ -77,10 +84,10 @@
 		    C.DIAG_CODE,
 		    D.KOR_DIAG_NAME AS DIAG_NAME,
 		    C.DIAG_TYPE,
-		    C.MED_FIELD,
-		    C.LICENSE_TYPE,
-		    C.LICENSE_NO ,
-		    C.MED_START_DATE
+		    IFNULL(C.MED_FIELD,'')    AS MED_FIELD ,
+		    IFNULL(C.LICENSE_TYPE,'') AS LICENSE_TYPE ,
+		    IFNULL(C.LICENSE_NO ,'')  AS LICENSE_NO ,
+		    IFNULL(C.MED_START_DATE,'') AS MED_START_DATE
 		FROM TBL_CHUNG_MST A
 		JOIN TBL_MYOUNG_MST B ON A.HOSP_CD   = B.HOSP_CD 
 		                     AND A.CLAIM_NO  = B.CLAIM_NO
@@ -110,10 +117,11 @@
 		)
 		SELECT * FROM 
 		(
-		SELECT  B.DATE_YM 
-		     ,  A.HOSP_CD
+		SELECT   B.DATE_YM 
+		      ,  A.HOSP_CD
 			  , '' AS  ITEM_NO 
 			  , '' AS  CODE_NO 
+			  , FN_GET_DTL_CODE('','','') SUB_CODE_NM   
 			  , A.BILL_SEQ 
 			  , A.EDI_CODE  
 			  , IFNULL(D.KOR_NM,'') KOR_NAME 
@@ -134,7 +142,7 @@
 				                  END
 	     	 LEFT JOIN TBL_SUGA_MST D ON D.FEE_CODE = C.FEE_CODE 
 		                             AND D.FEE_TYPE = C.FEE_TYPE
-								     AND D.START_DT = C.START_DT  
+								     AND D.START_DT = C.START_DT 
 		     WHERE A.HOSP_CD  = #{hospCd}
 			  AND  A.CLAIM_NO = #{claimNo} 
 			  AND  A.BILL_SEQ = #{billSeq} 
@@ -146,6 +154,7 @@
 		    B.HOSP_CD,
 		    C.ITEM_NO ,
 		    C.CODE_NO ,
+		    FN_GET_DTL_CODE('YD','ITEM_NO',C.ITEM_NO) SUB_CODE_NM  ,
 		    C.BILL_SEQ,
 		    C.EDI_CODE,
 		    E.KOR_NM AS KOR_NAME,
@@ -179,20 +188,26 @@
 	]]>
 	</select>	
 	<select  id="hangList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
+	SELECT B.ITEM_NO , B.CODE_NO ,B.CODE_NAME, B.GASAN_RATE 
+	        , FORMAT(SUM(B.JEA_AMT),0)    AS JEA_AMT  
+		 	, FORMAT(SUM(B.HWI_AMT),0)    AS HWI_AMT 
+			, FORMAT(SUM(B.GASAN_AMT),0)  AS GASAN_AMT
+	FROM
+	(
 		SELECT A.ITEM_NO , A.CODE_NO , 
-		    COALESCE(
-		        FN_GET_DTL_CODE('Y', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO)),
-		        FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))
-		    ) AS CODE_NAME,
+		        CASE WHEN F.MFORM_NO = 'M312' THEN  
+		             FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))
+		        ELSE FN_GET_DTL_CODE('Y', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO)) END 
+		     AS CODE_NAME,
 		    CASE WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1,0)
 		         WHEN E.HOS_GRD = '2' THEN IFNULL(D.PROP_2,0)
 		         WHEN E.HOS_GRD = '3' THEN IFNULL(D.PROP_3,0) 
 			 END GASAN_RATE,
-		    FORMAT(IFNULL(SUM(CASE WHEN C.FEE_CODE IS NULL    
-		                           THEN A.AMOUNT END), 0), 0) AS JEA_AMT, 
-		    FORMAT(IFNULL(SUM(CASE WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL)  
-		                           THEN A.AMOUNT END), 0), 0) AS HWI_AMT, 
-		    FORMAT(ROUND(SUM(CASE 
+		    IFNULL(SUM(CASE WHEN C.FEE_CODE IS NULL    
+		                           THEN A.AMOUNT END), 0) AS JEA_AMT, 
+		    IFNULL(SUM(CASE WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL)  
+		                           THEN A.AMOUNT END), 0) AS HWI_AMT, 
+		    ROUND(SUM(CASE 
 		                      WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL) THEN 
 		                          A.AMOUNT * (
 		                              CASE 
@@ -204,7 +219,7 @@
 		                          )
 		                      ELSE 0   
 		                    END
-		          ), 0), 0) AS GASAN_AMT
+		          ), 0) AS GASAN_AMT
 		FROM WNN.TBL_JINORD_MST A  	
 		JOIN WNN.TBL_CHUNG_MST B ON B.HOSP_CD  = A.HOSP_CD 
 		                        AND B.CLAIM_NO = A.CLAIM_NO  
@@ -223,13 +238,19 @@
 			AND D.SUB_CODE  = B.CFORM_NO 
 		LEFT JOIN WNN.TBL_HOSP_MST E 
 		   ON  E.HOSP_CD   = A.HOSP_CD 
-		   AND E.ACTION_YN = 'Y' 		
+		   AND E.ACTION_YN = 'Y' 
+		LEFT JOIN TBL_MYOUNG_MST F 
+		   ON  F.HOSP_CD  = A.HOSP_CD 
+		   AND F.CLAIM_NO = A.CLAIM_NO 
+		   AND F.BILL_SEQ = A.BILL_SEQ   		
 		WHERE ((A.ITEM_NO = 'L' AND A.CODE_NO = '01') OR (A.ITEM_NO <> 'L'))
 		  AND A.HOSP_CD  = #{hospCd}
 		  AND A.CLAIM_NO = #{claimNo}
 		  AND A.BILL_SEQ = #{billSeq}
-		GROUP BY  A.ITEM_NO , A.CODE_NO ,CODE_NAME ,GASAN_RATE	
-		ORDER BY  A.ITEM_NO , A.CODE_NO	
+		GROUP BY  A.ITEM_NO , A.CODE_NO ,CODE_NAME ,GASAN_RATE , MFORM_NO
+	) B
+	GROUP BY  B.ITEM_NO , B.CODE_NO , B.CODE_NAME , B.GASAN_RATE 
+	ORDER BY  B.ITEM_NO , B.CODE_NO	
 	]]>
 	</select>	
 	<select  id="spcList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[	
