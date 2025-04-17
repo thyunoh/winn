@@ -248,9 +248,9 @@
         
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
-			               // ['joinDt', 'desc'] ,     // 내림차순 정렬
+			               // ['joinDt', 'desc'] ,   // 내림차순 정렬
 			               // ['hospCd', 'asc' ],    // 오름차순 정렬
-            			//	['hospNm', 'asc']     
+            			   // ['hospNm', 'asc' ]     
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
 		var showSortNo = ['joinDt','hospCd','hospNm'];                   

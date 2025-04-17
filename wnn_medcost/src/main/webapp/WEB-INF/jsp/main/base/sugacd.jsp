@@ -1567,6 +1567,11 @@
 		function modalMainClose() {
 			$("#" + modalName.id).modal('hide');
 		}
+		
+	    document.addEventListener("DOMContentLoaded", function() {
+	        applyAuthControl();
+	    });
+	    
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
