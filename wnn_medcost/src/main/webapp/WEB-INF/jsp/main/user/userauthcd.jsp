@@ -74,9 +74,9 @@
 			data-keyboard="false">
 			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 				role="dialog"
-				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40vw; max-width: 50vw; max-height: 50vh;">
+				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35vw; max-width: 45vw; max-height: 50vh;">
 				<div class="modal-content"
-					style="height: 55%; display: flex; flex-direction: column;">
+					style="height: 45%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
 						<h6 class="modal-title" id="modalHead"></h6>
 						<!-- ============================================================== -->
@@ -85,24 +85,19 @@
 						<div class="form-row">
 							<div class="col-sm-12 mb-2" style="text-align: right;">
 								<button id="form_btn_new" type="submit"
-									class="btn btn-outline-dark" onClick="fn_Potion()">
-									센터. <i class="far fa-object-group"></i>
+									class="btn btn-outline-dark" onClick="fn_Potion()">센터. <i class="far fa-object-group"></i>
 								</button>
 								<button id="form_btn_ins" type="submit"
-									class="btn btn-outline-info" onClick="fn_Insert()">
-									입력. <i class="far fa-edit"></i>
+									class="btn btn-outline-info" onClick="fn_Insert()">입력. <i class="far fa-edit"></i>
 								</button>
 								<button id="form_btn_udt" type="submit"
-									class="btn btn-outline-success" onClick="fn_Update()">
-									수정. <i class="far fa-save"></i>
+									class="btn btn-outline-success" onClick="fn_Update()">수정. <i class="far fa-save"></i>
 								</button>
 								<button id="form_btn_del" type="submit"
-									class="btn btn-outline-danger" onClick="fn_Delete()">
-									삭제. <i class="far fa-trash-alt"></i>
+									class="btn btn-outline-danger" onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
 								</button>
 								<button type="button" class="btn btn-outline-dark"
-									data-dismiss="modal" onClick="closeMainModal()">  
-									닫기 <i class="fas fa-times"></i>
+									data-dismiss="modal" onClick="closeMainModal()">닫기 <i class="fas fa-times"></i>
 								</button>
 							</div>
 						</div>
@@ -126,7 +121,7 @@
 							<input type="hidden" id="updIp"       name="updIp"    value="">
 							<div class="form-group row ">
 								<label for="hospCd"  class="col-2 col-lg-2 col-form-label text-left">요양기관</label>
-								<div class="col-4 col-lg-4">
+								<div class="col-6 col-lg-6">
 	                                   <div class="input-group">								
 									 	<input id="hospCd" name="hospCd" type="text" 
 						    				class="form-control text-left" placeholder="요양기관를 등록하세요">
@@ -137,7 +132,7 @@
 							</div>
 							<div class="form-group row">
 							    <label for="userId" class="col-2 col-lg-2 col-form-label text-left">사용자정보</label>
-							    <div class="col-4 col-lg-4">
+							    <div class="col-6 col-lg-6">
 							        <div class="input-group">
 							            <select id="userId" name="userId"  class= "custom-select">
 							                <option value="">사용자를 선택하세요</option>
@@ -158,18 +153,10 @@
 								        <span class="form-check-label" for="updAuth">수정권한</span>
 								    </div>
 								</div>
-						    </div>
-							<div class="form-group row">
 								<div class="col-3 col-lg-3 col-form-label text-left">
 								    <div class="form-check form-check-inline">
 								        <input class="form-check-input" type="checkbox" id="delAuth" name="delAuth" value="Y" checked>
 								        <span class="form-check-label" for="delAuth">삭제권한</span>
-								    </div>
-								</div>
-	                            <div class="col-3 col-lg-3 col-form-label text-left">
-								    <div class="form-check form-check-inline">
-								        <input class="form-check-input" type="checkbox" id="inqAuth" name="inqAuth" value="Y" checked>
-								        <span class="form-check-label" for="inqAuth">조회권한</span>
 								    </div>
 								</div>
 						    </div>
@@ -275,7 +262,7 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['병원정보','병원명','사용아이디','사용자명','입력권한','수정권한','삭제권한','조회권한','작성일시'];
+		var c_Head_Set = ['병원정보','병원명','사용아이디','사용자명','입력권한','수정권한','삭제권한','작성일시'];
 		var columnsSet = [       				
 	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
 	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '300px',  },
@@ -284,7 +271,6 @@
 	        				{ data: 'insAuth',   visible: true,  className: 'dt-body-center', width: '100px',  },
 	        				{ data: 'updAuth',   visible: true,  className: 'dt-body-center', width: '100px',  },
 	        				{ data: 'delAuth',   visible: true,  className: 'dt-body-center', width: '100px',  }, 
-	        				{ data: 'inqAuth',   visible: true,  className: 'dt-body-center', width: '100px',  },
 	        				{ data: 'updDttm',   visible: true,  className: 'dt-body-center', width: '100px',  }        				
 					    ];
 		
@@ -402,8 +388,8 @@
 		                input.readOnly = isReadOnly;
 		            }
 		        });		
-		        if (s_hospcd  && s_wnn_yn != 'Y'){
-		           hospCdInput.readOnly = true ;
+		        if ( (s_hospcd  && s_wnn_yn != 'Y') || (s_hospcd != s_hosp_uuid) ){
+		           hospCdInput.readOnly    = true ;
 		           hospserch.style.display = 'none'	
 		        }else{
 		           hospCdInput.readOnly = false ; //워너넷에서 로그인한경우 입력시 요양기관처야함 
@@ -522,9 +508,8 @@
 			    // 모달 띄우기
 			    $("#" + modalName.id).modal('show');   
 			    //위너넷이아니면  병원정보 자동로그인에서 가져와서 등록  
-			    console.log(getCookie("s_hospid") +"---"+ getCookie("s_wnn_yn"))
 
-			    if (getCookie("s_hospid") &&  getCookie("s_wnn_yn") != 'Y')  {
+			    if ( (getCookie("s_hospid") &&  getCookie("s_wnn_yn") != 'Y') || (s_hospcd != s_hosp_uuid) )  {
 			        inputZone.querySelector("[name='hospCd']").value = getCookie("s_hospid") || "";
 			        inputZone.querySelector("[name='hospNm']").value = getCookie("s_hospnm") || "";
 			    }			    
@@ -1527,7 +1512,7 @@
 
 		        // ✅ 데이터가 올바른지 검증 후 실행
 		        if (data && data.hospCd) {
-		            callback(data);
+		        	callback(data);
 		        } else {
 		            console.warn("🚨 유효하지 않은 병원 데이터:", data);
 		            alert("선택한 병원의 정보가 올바르지 않습니다. 다시 시도해주세요.");
@@ -1540,22 +1525,20 @@
 		setInterval(function () {
 		    let newHospid = sessionStorage.getItem('hospid');
 		    if (newHospid && newHospid !== currentHospid) {
-		        console.log("병원이 변경됨: " + newHospid);
 		        currentHospid = newHospid; // 변경된 ID로 갱신
 		      //병원병원에서 접속시 요양기관 값셋팅
-			    let s_hospcd = getCookie("s_hospid") ;
-				findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
+			    s_hospcd = getCookie("s_hospid") ;
+		        findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
 				$("#hospCd1").val(s_hospcd);
 				triggerFind();
 		    }
-		}, 1000); // 1초마다 체크 (너무 짧으면 3000ms로 늘려도 됨)
-		// 강제로 실행하고 싶을 때 사용할 함수
+		}, 1000); // 1초마다 체크 
 		function triggerFind() {
 		    fn_FindData();
+		    loadUserList() ;
 		}		
 		function loadUserList() {
 		    const hospCd = jQuery('#hospCd1').val(); // hospCd 값 가져오기
-
 		    jQuery.ajax({
 		        url: "/user/puserCdList.do",
 		        type: 'POST',
@@ -1588,12 +1571,7 @@
 		    let userNm = selectedOption.getAttribute('data-usernm') || "";
 		    document.getElementById('userNm').value = userNm;
 		});
-		
-		// 1) 버튼 클릭 시 호출
-		$('#hospserch').on('click', function(e) {
-		    e.preventDefault();
-		    loadUserList();
-		});
+	
 
 		// 2) 페이지 로드시 자동 호출 (요양기관 세팅되어 있는 경우만)
 		$(document).ready(function() {

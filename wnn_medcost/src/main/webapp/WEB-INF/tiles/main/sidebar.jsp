@@ -53,6 +53,9 @@
                                     <a class="nav-item nav-link"  href="/user/pusercd.do">사용자등록</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/user/userauthcd.do">사용자권한관리</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/wardcd.do">병동현황등록</a>
                                 </li>
                            </ul>
@@ -118,11 +121,14 @@
                                                                                                  aria-controls="base-info-3">병원정보 관리</a>
                                     <div id="base-info-3" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/user/hospcd.do">계약관리</a>
-                                            </li>
+											<li class="nav-item" id="hospcont">
+											    <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
+											</li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/userauthcd.do">권한관리</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/user/mbrcd.do">회원가입현황</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/sugacd.do">수납관리</a>
@@ -138,7 +144,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" 
-                                                                data-target="#base-info-4" aria-controls="base-info-4">기타정보 관리</a>
+                                                                data-target="#base-info-4" aria-controls="base-info-4">정보운영관리</a>
                                     <div id="base-info-4" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item">
@@ -174,28 +180,22 @@
                     <!-- 진료비 분석 보고서 -->    
                     <li class="nav-item menu-section" id="menu-c">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
-                                                                                         <i class="fas fa-cogs"></i>분야별현황확인</a>
+                                                                                         <i class="fas fa-cogs"></i>분야별통계</a>
                         <div id="management" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-1" 
-                                                                                                       aria-controls="management-1">양방</a>
+                                                                                                       aria-controls="management-1">진료실적통계</a>
                                     <div id="management-1" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_00.do">일당,건당진료비</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_01.do">주요진료지표</a>
-                                            </li>
-                                            <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_02.do">진료과별 건당진료비</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_05.do">전문의별 건당진료비</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비와 구성비</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_04.do">다빈도상병 진료구성비</a>
@@ -211,18 +211,26 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-2" 
-                                                                                                       aria-controls="management-2">한방</a>
+                                                                                                       aria-controls="management-2">주요지표통계</a>
                                     <div id="management-2" class="collapse submenu" style="background-color: white;">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">일당,건당진료비</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">다빈도 치료현황</a>
-                                            </li>
-                                        </ul>
+                                      <ul class="nav flex-column">
+                                         <li class="nav-item">
+                                              <a class="nav-item nav-link"  href="/tong/f_tong_01.do">진료지표</a>
+                                          </li>
+                                      </ul>
                                     </div>
                                 </li>                                
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-3" 
+                                                                                                       aria-controls="management-3">처치항목별통계</a>
+                                    <div id="management-3" class="collapse submenu" style="background-color: white;">
+                                      <ul class="nav flex-column">
+                                             <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비와 구성비</a>
+                                            </li>
+                                      </ul>
+                                    </div>
+                                </li>
                             </ul>
                         </div>
                     </li>
@@ -308,7 +316,21 @@
     </div>
     
 </div>
-
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+    let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부 
+    if (s_wnn_yn != 'Y') {
+        hosp_conact();
+    }
+});
+// 병원계약정보 위너넷만 메뉴가 생성됨   
+function hosp_conact() {
+    const menuItem = document.getElementById("hospcont");
+    if (menuItem) {
+        menuItem.style.display = "none";  // 공간 없이 완전히 제거
+    }
+}
+</script>		
 <!-- ============================================================== -->
 <!-- sidebar end -->
 <!-- ============================================================== -->

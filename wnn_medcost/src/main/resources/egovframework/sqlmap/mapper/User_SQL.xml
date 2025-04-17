@@ -986,5 +986,32 @@
           AND USER_ID   = #{userId} 
           AND ACTION_YN = 'Y'
 	  ]]>  
-	</select>       	        	   	                        	   	                  
+	</select>  
+    <!-- 회원가입정보조회   -->                              
+    <select id="getMemberList" parameterType="MembrDTO" resultType="MembrDTO"><![CDATA[
+        SELECT  A.HOSP_CD
+              , A.HOSP_NM 
+              , A.EMAIL
+              , A.MBR_NM  
+              , A.JOB_NM 
+              , A.MBR_TEL
+              , A.PER_USE_YN 
+              , A.PER_INFO_YN 
+              , A.PER_PRO_YN 
+              , A.JOIN_DT 
+              , A.UPD_DTTM 
+              , UPD_IP
+        FROM  TBL_MEMBER_MST A  
+        WHERE 1=1
+     ]]>     
+   <if test='findData != null and findData != "" '>
+        <![CDATA[
+        AND ( A.HOSP_CD LIKE CONCAT('%',#{findData},'%')  
+           OR A.HOSP_NM LIKE CONCAT('%',#{findData},'%') )
+        ]]>
+    </if>
+     <![CDATA[
+        ORDER BY A.JOIN_DT DESC , A.HOSP_CD ASC , A.HOSP_NM ASC
+    ]]>   
+    </select>     	     	        	   	                        	   	                  
 </mapper>

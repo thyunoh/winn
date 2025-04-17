@@ -153,7 +153,6 @@
 		        document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> ` 
 										                    + hospnm + `  [ ` 
 										                    + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
-		 	    alert(getCookie("s_conact_gb"));
 		        hosp_conact() ;
 		   //     localStorage.setItem('l_hospid', data.hospCd);
 

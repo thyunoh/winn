@@ -12,6 +12,7 @@ import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
+import egovframework.wnn_medcost.user.model.MembrDTO;
 import egovframework.wnn_medcost.user.model.UserAuthDTO;
 
 
@@ -72,6 +73,10 @@ public interface UserMapper {
 	List<UserAuthDTO>  getUserAuthCdList(UserAuthDTO dto)    throws Exception;
 	boolean            insertUserAuthCd(UserAuthDTO dto)     throws Exception; 
 	boolean            updateUserAuthCd(UserAuthDTO dto)     throws Exception; 
-	String             UserAuthCdDupChk(UserAuthDTO dto)     throws Exception;		
+	String             UserAuthCdDupChk(UserAuthDTO dto)     throws Exception;	
+	//회원가입정보
+	List<MembrDTO>     getMemberList(MembrDTO dto)           throws Exception;	
+	boolean            updateMember(MembrDTO dto)            throws Exception; 
+	
 }
                     

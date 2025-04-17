@@ -7,6 +7,7 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
+<!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/bootstrap.css"     rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
     <!-- DataTables CSS -->
@@ -25,9 +26,6 @@
                         <div class="card">                        	
                             <div class="card-body">  
 	                            <div class="form-row mb-2">
- 		                            <div class="col-1 col-lg-1"> 
- 			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid text-left" required placeholder="">
-			                        </div> 
                                     <div class="col-sm-4">
                                         <div class="input-group">
                                              <input id="findData" type="text" class="form-control" placeholder="3글자 이상 입력 후 [ enter ]" 
@@ -36,19 +34,15 @@
                                                  <button type="button" class="btn btn-rounded btn-primary"  onClick="fn_FindData()">조회. <i class="fas fa-search"></i></button>
                                              </div>
                                         </div>
-                                    </div>                                 
+                                    </div>
                                     <div class="col-sm-6">                                    
                                          <div class="btn-group ml-auto">
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
-                                            <button id="btnInsert"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
-                                            <button id="btnUpdate"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
-                                            <button id="btnDelete"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button id="btnSearchDelete"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""   onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
- 								<div style="width: 100%;">							    
+								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
 								        
 								    </table>
@@ -67,8 +61,8 @@
         <!-- ============================================================== -->        
 	    <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
-	                                                   transform:translate(-50%, -50%); width:40vw; max-width:40vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 60%;display: flex;flex-direction: column;">
+	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
+	        <div class="modal-content" style="height: 70%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 		            <h6 class="modal-title" id="modalHead"></h6> 
 	              <!-- ============================================================== -->
@@ -80,7 +74,7 @@
 	                    <button id="form_btn_ins" type="submit" class="btn btn-outline-info"    onClick="fn_Insert()">입력. <i class="far fa-edit"></i></button>
 					    <button id="form_btn_udt" type="submit" class="btn btn-outline-success" onClick="fn_Update()">수정. <i class="far fa-save"></i></button>
 	   				    <button id="form_btn_del" type="submit" class="btn btn-outline-danger"  onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i></button>
-	   				    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="closeMainModal()">닫기 <i class="fas fa-times"></i></button>
+	   				    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="modalMainClose()">닫기 <i class="fas fa-times"></i></button>
 	                 </div>                      
 	              </div>
 	              <!-- ============================================================== -->
@@ -93,54 +87,47 @@
                 	<!-- ============================================================== -->
                     <!-- text input 1개 start -->
                     <!-- ============================================================== -->
-                    <input type="hidden" id="regUser"     name="regUser"     value="">
-                    <input type="hidden" id="updUser"     name="updUser"     value="">
-                    <input type="hidden" id="regIp"       name="regIp"       value="">
-                    <input type="hidden" id="updIp"       name="updIp"      value= "">
-                    <input type="hidden" id="hospNm"      name="hospNm"     value= "">
-                    <input type="hidden" id="subCodeNm"   name="subCodeNm"  value= "">
-                    <input type="hidden" id="userNm"      name="userNm"     value= "">
-                    <div class="form-group row ">
-	                   <label for="hospCd" class="col-2 col-lg-2 col-form-label text-left">요양기관</label>
-	                   <div class="col-6 col-lg-6">                                       
-                            <div class="input-group">								
-						 	    <input id="hospCd" name="hospCd" type="text"
-			    				class="form-control text-left" placeholder="요양기관를 등록하세요" style="margin-left: 10px;">
-								<button id = "hospserch"    class="btn btn-outline-info"><i class="fas fa-search">검색</i>
-								</button>
-						   </div>	
-	                   </div>
-	                </div>
-	                <div class="form-group row ">   
-                       <label for="dietGb" class="col-2 col-lg-2 col-form-label text-left">식대구분</label>
-                       <div class="col-6 col-lg-6">  
-						  <select id="dietGb" name="dietGb" class="custom-select" oninput="findField(this)" required style="height:35px; font-size:14px;">
-						     <option selected value= "" >구분 1</option> 
-						  </select>
-	                   </div>
+                    <input type="hidden" id="faqSeq"  name="faqSeq" value="">
+                    <input type="hidden" id="fileGb"  name="fileGb" value="">
+                    <input type="hidden" id="hospCd"  name="hospCd" value="">
+                    <input type="hidden" id="regUser" name="regUser" value="">
+                    <input type="hidden" id="updDttm" name="updDttm" value="">
+                    <input type="hidden" id="updUser" name="updUser" value="">
+                    <input type="hidden" id="regIp"   name="regIp"   value="">
+                    <input type="hidden" id="updIp"   name="updIp "  value= "">
+                    <div class="form-row">
+                        <label for="qstnConts" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
+	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
+                            <textarea id="qstnConts" name="qstnConts" type="text"  data-parsley-trigger="change" placeholder="" 
+                                                                             autocomplete="off" class="form-control" rows="3" ></textarea>
+                        </div>
+                    </div>  
+                   <div class="form-row">
+                        <label for="ansrConts" class="col-2 col-lg-2 col-form-label text-left">질문답변</label>
+	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
+                            <textarea id="ansrConts" name="ansrConts" type="text"  data-parsley-trigger="change" placeholder="" 
+                                                                             autocomplete="off" class="form-control" rows="12" ></textarea>
+                        </div>
+                    </div>  
+	                 <div class="form-group row">
+                         <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">적용시작일</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="startDt" name="startDt"  type="text" class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
+                            
+                        </div>
+                        <label for="endDt" class="col-2 col-lg-2 col-form-label text-left">적용종료일</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="endDt" name="endDt" value = '20991231' type="text" class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
+                            
+                        </div>   
+                        <label for="useYn" class="col-2 col-lg-2 col-form-label text-left">사용여부</label>
+                        <div class="col-2 col-lg-2">
+	                        <select class="custom-select" name="useYn" id="useYn">
+				                <option value="Y">Y</option>
+				                <option value="N" selected>N</option>
+	 		                </select>
+                        </div>
                     </div>
-                    <div class="form-group row g-0 mb-0">
-                       <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
-	                   <div class="col-4 col-lg-4">                                       
-	                      <input id="startDt" name="startDt" type="text"  class="form-control date1-inputmask" required placeholder="yyyy-mm-dd" >
-	                   </div>
-	                </div>   
-	                <div class="form-group row g-0 mb-0">
-                       <label for="endDt" class="col-2 col-lg-2 col-form-label text-left">종료일자</label>
-	                   <div class="col-4 col-lg-4">                                       
-	                      <input id="endDt" name="endDt" type="text" value = '20991231' class="form-control date1-inputmask" required placeholder="yyyy-mm-dd" >
-	                   </div>
-	                 </div>  
-	                 <div class="form-group row g-0 mb-0">  
-                        <label for="useYne" class="col-2 col-lg-2 col-form-label text-left">사용구분</label>
-                        <div class="col-2 col-lg-2">  
-						  <select id="useYn" name="useYn" class="custom-select">
-						      <option value="Y">Y</option>
-						      <option value= "N" selected>N</option>
-						  </select>
-	                    </div>
-                    </div>
- 
                 <!-- ============================================================== -->
                 <!-- end form 수정해야 될 곳 -->
                 <!-- ============================================================== -->
@@ -168,7 +155,9 @@
 		modalHead.innerText = "...";
 		var inputZone = document.getElementById('inputZone');
 		// Form마다 수정해야 될 부분 종료
-		
+        let s_hospcd = getCookie("s_hospid") ;	
+        $("#hospCd").val(s_hospcd);
+        $("#fileGb").val("5");
 		// Form마다 조회 조건 변경 시작
 		var findTxtln  = 0;    // 조회조건시 글자수 제한 / 0이면 제한 없음
 		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
@@ -177,18 +166,8 @@
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
 		findValues.push({ id: "findData", val: "",  chk: true  });
-        //병원병원에서 접속시 요양기관 값셋팅
-	    let s_hospcd    = getCookie("s_hospid") ;
-	    let s_wnn_yn    = getCookie("s_wnn_yn") ;
-	    let s_hosp_uuid = getCookie("s_hosp_uuid");
-	  //원너넷이 아니거나 워너넷에서 병원을 선택해서 처리한 경우)
-	    if ( (s_hospcd &&  s_wnn_yn != 'Y') || (s_hospcd != s_hosp_uuid) )   { 
-	        findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
-            $("#hospCd1").val(s_hospcd);
-	    }else{
-	        findValues.push({ id: "hospCd1", val:"",  chk: false  });
-            $("#hospCd1").val("");	    	
-	    }
+		//Form마다 조회 조건 변경 종료
+		
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
 		var edit_Data = null;
@@ -200,13 +179,13 @@
 		<!-- ============================================================== -->
 		var list_flag = ['Z'];     										// 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 		//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
-		var list_code = ['GASAN_SIK'];     // 구분코드 필요한 만큼 선언해서 사용
-		var select_id = ['dietGb'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
+		var list_code = [];     // 구분코드 필요한 만큼 선언해서 사용
+		var select_id = [];     // 구분코드 데이터 담길 Select (ComboBox ID) 
 		var firstnull = ['Y'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
 		<!-- ============================================================== -->
-		var format_convert = ['startDt','endDt'] ; //날자에서 '-' '/' 제외설정   
+		var format_convert = ['startDt','endDt','joinDt'] ; //날자에서 '-' '/' 제외설정   
 		
 		<!-- ============================================================== -->
 		<!-- Table Setting Start -->
@@ -241,15 +220,18 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['병원정보','병원명','식대구분','식대명칭','시작일자','종료일자','등록자','사용여부'];
+		var c_Head_Set = ['병원코드','병원명','회원성명','이메일','아이디','전화번호','가입일','동의여부','등록일자'];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
-	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '200px',  },
-	        				{ data: 'dietGb',    visible: true,  className: 'dt-body-center', width: '30px',   name: 'keydietGb', primaryKey: true },
-	         				{ data: 'subCodeNm', visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				{ data: 'startDt',   visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyStartDt', primaryKey: true,
+	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center' , width: '100px',  },
+	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left'   , width: '200px',  },
+	        				{ data: 'mbrNm',     visible: true,  className: 'dt-body-left'   , width: '100px',  },
+	        				{ data: 'email'  ,   visible: true,  className: 'dt-body-center' , width: '200px',  },
+	        				{ data: 'userId' ,   visible: true,  className: 'dt-body-center' , width: '100px',  },
+	        				{ data: 'mbrTel' ,   visible: true,  className: 'dt-body-center' , width: '100px',  },
+	        				// getFormat 사용시 
+	        				{ data: 'joinDt',    visible: true,  className: 'dt-body-center', width: '100px',  
 	                          	render: function(data, type, row) {
 		            				if (type === 'display') {
 		            					return getFormat(data,'d1')
@@ -257,34 +239,26 @@
 		                			return data;
 	            				}
 	        				},
-	        				{ data: 'endDt',  visible: true,   className: 'dt-body-center', width: '100px', 
-	                          	render: function(data, type, row) {
-		            				if (type === 'display') {
-		            					return getFormat(data,'d1')
-		                			}
-		                			return data;
-	            				}
-	        				},        				
-					        { data: 'userNm',   visible: true,  className: 'dt-body-center', width: '100px',  },
-					        { data: 'useYn' ,   visible: true,  className: 'dt-body-center', width: '100px',  }
-					    ];
+	        				{ data: 'perUseYn',      visible: true,  className: 'dt-body-center'  , width: '100px',  } ,
+	        				{ data: 'updDttm',       visible: true,  className: 'dt-body-center'  , width: '100px',  } 
+	        			  ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
         var s_AutoNums = true;   		             // 자동순번 표시 여부
         
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
-							['dietGb' , 'asc' ],    // 오름차순 정렬
-							['hospCd' , 'asc' ],    // 오름차순 정렬
-            				['startDt', 'desc']     // 내림차순 정렬
+			               // ['joinDt', 'desc'] ,     // 내림차순 정렬
+			               // ['hospCd', 'asc' ],    // 오름차순 정렬
+            			//	['hospNm', 'asc']     
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['hospCd','dietGb','subCodeNm'];                   
+		var showSortNo = ['joinDt','hospCd','hospNm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var txt_Markln = 20;           	 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['subCodeNm'];
+		var markColums = ['hospNm','email'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -294,6 +268,7 @@
 			find_Check();
 		    comm_Check();
 		};
+
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
 		function triggerEnterKey() {
 		    let findDataInput = document.getElementById("findData");
@@ -364,11 +339,8 @@
 		<!-- ============================================================== -->
 		<script type="text/javascript">
 		function modal_key_hidden(flag) {	
-	        const dietGbInput     = document.getElementById("dietGb");
-	        const hospCdInput     = document.getElementById("hospCd");
-	        const startDtInput    = document.getElementById("startDt");
-		    const hospserch       = document.getElementById('hospserch');
-	        const inputs = [dietGbInput, startDtInput,hospCdInput];
+	        const faqSeqInput     = document.getElementById("faqSeq");
+	        const inputs = [faqSeqInput];
 	        if (flag !== 'I') {
 		        const isReadOnly = flag !== 'I';
 		        inputs.forEach(input => {
@@ -376,28 +348,14 @@
 		                input.readOnly = isReadOnly;
 		            }
 		        });
-		        hospserch.style.display = 'none'
 		    }else{
 		        const isReadOnly = flag == 'N';
 		        inputs.forEach(input => {
 		            if (input) { // 요소가 존재하는지 확인
 		                input.readOnly = isReadOnly;
 		            }
-		        });		
-		        if ( (s_hospcd  && s_wnn_yn != 'Y') || (s_hospcd != s_hosp_uuid)) {
-		           hospCdInput.readOnly = true ;
-		           hospserch.style.display = 'none'	
-		        }else{
-		           hospCdInput.readOnly = false ; //워너넷에서 로그인한경우 입력시 요양기관처야함   
-		           hospserch.style.display = 'inline-block'	
-    	        }
+		        });		    	
 		    }
-	        //콤보박스는 READONLY로 안됨
-	        if (flag !== 'I') {
-	            $(dietGbInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
-	        } else {
-	            $(dietGbInput).css("pointer-events", "").css("background-color", ""); // 활성화
-	        }	        
 		}
 		function modal_Open(flag) {	
 			let modal_OpenFlag = true;
@@ -504,12 +462,7 @@
 			    window.addEventListener('resize', centerModal);
 			    // 모달 띄우기
 			    $("#" + modalName.id).modal('show');   
-			    //위너넷이아니면  병원정보 자동로그인에서 가져와서 등록  
-                //위너넷으로 유지하면 병원코드 활성화 요양기관이거나 위너넷에서 요양기관을 선택시 요양기관을 가져온다     
-			    if ( (s_hospcd  && s_wnn_yn !== 'Y') || (s_hospcd != s_hosp_uuid) ) {
-			        inputZone.querySelector("[name='hospCd']").value = getCookie("s_hospid") || "";
-			        inputZone.querySelector("[name='hospNm']").value = getCookie("s_hospnm") || "";
-                }			    
+			    
 			    if (getCookie("s_userid")) {
 			        inputZone.querySelector("[name='regUser']").value = getCookie("s_userid");
 			        inputZone.querySelector("[name='updUser']").value = getCookie("s_userid");
@@ -668,32 +621,7 @@
 			    });
 			    
 			    
-			    // 입력 버튼 클릭 이벤트
-			    $('#' + tableName.id + ' tbody').on('click', '.ins-btn', function() {
-			        // 여기에 입력 로직을 구현하세요
-			        
-			    });
-			    // 수정 버튼 클릭 이벤트
-			    $('#' + tableName.id + ' tbody').on('click', '.upt-btn', function() {
-			        var data = dataTable.row($(this).parents('tr')).data();
-			        // 여기에 수정 로직을 구현하세요
-			    });
-		
-			    // 삭제 버튼 클릭 이벤트
-			    $('#' + tableName.id + ' tbody').on('click', '.del-btn', function() {
-			    	
-			    	var data = dataTable.row($(this).parents('tr')).data();
-			    	
-			    	messageBox("9","<h5>정말로 삭제하시겠습니까 ? 수가코드 : " + data.fee_code + " 입니다. </h5><p></p><br>",mainFocus,"","");
-			    	confirmYes.addEventListener('click', () => {
-			    		// Yes후 여기서 처리할 로직 구현
-			    		
-			    		// grid data 삭제
-			    		dataTable.row($(this).parents('tr')).remove().draw();    		 
-			    		messageDialog.hide();
-			    		
-			        });
-			    });
+
 				
 			    // 컬럼 Click과 CheckBox를 이벤트 동작이 동시에 일어나 분리함  
 			    dataTable.on('click', 'td', function(e) {
@@ -728,12 +656,7 @@
 				  	    } 
 				  	});    
 			    }
-				//더블클릭시 수정모드  
-			    $('#' + tableName.id + ' tbody').on('dblclick', 'tr', function () {
-			        let table = $('#' + tableName.id).DataTable();
-			        let rowData = table.row(this).data(); // 해당 행 데이터 가져오기
-			        modal_Open('U', rowData);
-			    });
+
 				//datatable(jquery) 옵션관련 label을 span 변환 
 				 $(document).ready(function() {
 	                 let replaceLabelWithSpan = function(forValue) {
@@ -762,14 +685,13 @@
 		    let find = {};
 		   	
 		   	for (let findValue of findValues) {
-		   		let key = findValue.id === "hospCd1" ? "hospCd" : findValue.id;
-		   		console.log(findValue.id);
+		   		let key = findValue.id === "feeType1" ? "feeType" : findValue.id;
 		   		find[key] = findValue.val;
 		   	}
 		   	
 		    $.ajax({
 		        type: "POST",
-		        url: "/user/dietCdList.do",
+		        url: "/user/membrList.do",
 		        data: find,
 		        dataType: "json",
 		        
@@ -867,35 +789,27 @@
 		//일력값 오류체크및 서버데이타전달(json) 
 		function validateForm() {
 		    const results = formValCheck(inputZone.id, {
-		    	dietGb:       { kname: "식대구분", k_req: true, k_spc: true, k_clr: true },
-		        hospCd:       { kname: "요양기관", k_req: true },
-		        startDt:      { kname: "시작일자", k_req: true }
+		    	//faqSeq:     { kname: "등록순서", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
+		    	//fileGb:     { kname: "구분", k_req: true },
+		    	hospCd:     { kname: "병원코드", k_req: true },
+		    	email:      { kname: "이메일" , k_req: true },
+		    	hospNm:     { kname: "병원명",  k_req: true },
+		    	mbrNm:      { kname: "회원명",  k_req: true },
+		    	jobNm:      { kname: "직위",   k_req: true }
 		    });
 		    return results;
 		}
 		//그리드상 데이타생성및 수정 작업
 		function newuptData() {
         	let newData = {
-         		dietGb:     $('#dietGb').val(),
-         		hospCd:     $('#hospCd').val(),
-         		hospNm:     $('#hospNm').val(),
-         		subCodeNm:  $('#subCodeNm').val(),
-         		startDt:    $('#startDt').val(), 
-         		endDt:      $('#endDt').val(), 
-         		userNm:     $('#userNm').val(), 
-         		useYn:      $('#useYn').val(), 
+        		hospCd:     $('#hospCd').val(),
+        		email:      $('#email').val(),
+        		hospNm:     $('#hospNm').val(),
+        		mbrNm:      $('#mbrNm').val(),
+        		jobNm:      $('#jobNm').val(),
 			    };
 		    return newData;
 		}	
-		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
-		window.addEventListener('DOMContentLoaded', function() {
-		    var select = document.getElementById('dietGb');
-		    document.getElementById('subCodeNm').value = select.options[select.selectedIndex].text;
-		});
-		// 사용자가 선택을 변경할 때 적용
-		document.getElementById('dietGb').addEventListener('change', function() {
-		    document.getElementById('subCodeNm').value = this.options[this.selectedIndex].text;
-		});
 		function fn_Insert(){
 			const results = validateForm();
 			if (results)
@@ -917,7 +831,7 @@
 		        dats.push(data);	    
 			    $.ajax({
 			            type: "POST",
-			            url: "/user/dietCdInsert.do",
+			            url: "/mangr/faqCdInsert.do",
 			            data: JSON.stringify(dats),
 			            contentType: "application/json",
 			    	    dataType: "json",
@@ -980,7 +894,7 @@
 		        // 5. AJAX로 서버 업데이트 요청
 		        $.ajax({
 		            type: "POST",
-		            url: "/user/dietCdUpdate.do",
+		            url: "/mangr/faqCdUpdate.do",
 		            data: JSON.stringify(mergeData), // JSON 변환
 		            contentType: "application/json",
 		            dataType: "json",
@@ -1034,7 +948,7 @@
 					if (keys.length > 0) {	        	
 						$.ajax({
 				            type: "POST",
-				            url: "/user/dietCdDelete.do",	    	    
+				            url: "/mangr/faqCdDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",
@@ -1130,7 +1044,7 @@
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
-				            url: "/base/dietCdDelete.do",	    	    
+				            url: "/mangr/faqCdDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",
@@ -1297,7 +1211,7 @@
 				            
 				            if (filteredItems.length > 0) {
 				            	if (firstnull[i] === "Y")
-				            		select.append('<option value=""></option>');
+				            		select.append('<option value="">선택</option>');
 				            		
 				            	filteredItems.forEach(function (item) {
 				                    select.append('<option value=' + item.subCode + '>' + item.subCodeNm + '</option>');
@@ -1456,47 +1370,8 @@
 		    	fn_FindData(); 
 		    }
 		}
-		function closeMainModal() {
+		function modalMainClose() {
 			$("#" + modalName.id).modal('hide');
-		}
-		// 병원검색 /js/winmc/schcommons.js///////////////
-		$("#hospserch").on("click", function () {
-		    openHospitalSearch(function (data) {
-		        $("#hospCd").val(data.hospCd);
-		        $("#hospNm").val(data.hospNm);
-		    });
-		});
-		
-		function openHospitalSearch(callback) {
-		    openCommonSearch("hospital", function (data) {
-		        console.log("받은 병원 데이터:", data);
-
-		        // ✅ 데이터가 올바른지 검증 후 실행
-		        if (data && data.hospCd) {
-		            callback(data);
-		        } else {
-		            console.warn("🚨 유효하지 않은 병원 데이터:", data);
-		            alert("선택한 병원의 정보가 올바르지 않습니다. 다시 시도해주세요.");
-		        }
-		    });
-		}
-//요양병원 아이디 변경시 재조회 
-		let currentHospid = sessionStorage.getItem('hospid'); // 최초 병원 ID 저장
-		setInterval(function () {
-		    let newHospid = sessionStorage.getItem('hospid');
-		    if (newHospid && newHospid !== currentHospid) {
-		        console.log("병원이 변경됨: " + newHospid);
-		        currentHospid = newHospid; // 변경된 ID로 갱신
-		      //병원병원에서 접속시 요양기관 값셋팅
-			    let s_hospcd = getCookie("s_hospid") ;
-				findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
-				$("#hospCd1").val(s_hospcd);
-				triggerFind();
-		    }
-		}, 1000); // 1초마다 체크 (너무 짧으면 3000ms로 늘려도 됨)
-		// 강제로 실행하고 싶을 때 사용할 함수
-		function triggerFind() {
-		    fn_FindData();
 		}
 		</script>
 		<!-- ============================================================== -->

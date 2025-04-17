@@ -377,7 +377,7 @@
 		                input.readOnly = isReadOnly;
 		            }
 		        });		
-		        if (s_hospcd  && s_wnn_yn != 'Y'){
+		        if ( (s_hospcd  && s_wnn_yn != 'Y') || (s_hospcd != s_hosp_uuid) ){
 		           hospCdInput.readOnly = true ;
 		           hospserch.style.display = 'none'	
 		        }else{
@@ -493,7 +493,7 @@
 			    // 모달 띄우기
 			    $("#" + modalName.id).modal('show');   
 			    //위너넷이아니면  병원정보 자동로그인에서 가져와서 등록  
-			    if (s_hospcd  && s_wnn_yn !== 'Y'){
+			    if ((s_hospcd  && s_wnn_yn !== 'Y') || (s_hospcd != s_hosp_uuid) ){
 			        inputZone.querySelector("[name='hospCd']").value = getCookie("s_hospid") || "";
 			        inputZone.querySelector("[name='hospNm']").value = getCookie("s_hospnm") || "";
                 }			    

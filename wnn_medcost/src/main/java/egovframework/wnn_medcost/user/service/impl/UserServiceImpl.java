@@ -14,6 +14,7 @@ import egovframework.wnn_medcost.user.mapper.UserMapper;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
+import egovframework.wnn_medcost.user.model.MembrDTO;
 import egovframework.wnn_medcost.user.model.UserAuthDTO;
 import egovframework.wnn_medcost.user.model.UserDTO;
 import egovframework.wnn_medcost.user.model.WardDTO;
@@ -253,5 +254,17 @@ public class UserServiceImpl implements UserService {
 	public String UserAuthCdDupChk(UserAuthDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.UserAuthCdDupChk(dto) ; 
+	}
+
+	@Override
+	public List<MembrDTO> getMemberList(MembrDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getMemberList(dto) ; 
+	}
+
+	@Override
+	public boolean updateMember(MembrDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateMember(dto) ; 
 	}
 }

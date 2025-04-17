@@ -137,7 +137,7 @@
       <input style="text-align: center" type="month" id="startMonth" value="2025-01" style="width: 100px; padding: 4px;">
       <span>~</span>
       <span for="endMonth">종료년월</span>
-      <input style="text-align: center" type="month" id="endMonth" value="2025-02" style="width: 100px; padding: 4px;">
+      <input style="text-align: center" type="month" id="endMonth" value="2025-03" style="width: 100px; padding: 4px;">
 	   <span for="inoutType">구분</span>
 	   <div style="width: 100px;">
 			<select class="custom-select" id="inoutType">

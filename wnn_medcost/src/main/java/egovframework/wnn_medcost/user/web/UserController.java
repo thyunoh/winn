@@ -33,6 +33,7 @@ import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
+import egovframework.wnn_medcost.user.model.MembrDTO;
 import egovframework.wnn_medcost.user.model.UserAuthDTO;
 import egovframework.wnn_medcost.user.model.UserDTO;
 import egovframework.wnn_medcost.user.model.WardDTO;
@@ -1359,5 +1360,54 @@ public class UserController extends BaseController {
 	    } catch (Exception e) {
 	        return ResponseEntity.status(500).body("서버 오류: " + e.getMessage());
 	    }
-	}		
+	}	
+	//회원가입현황관리 
+	@RequestMapping(value="/mbrcd.do")
+    public String mbrcd(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/user/mbrcd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value="/membrList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> membrList(@ModelAttribute("DTO") MembrDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("수가-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+			
+				List<MembrDTO> memberList = svc.getMemberList(dto);
+				
+				System.out.println("면허등록-java size " + memberList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",memberList);
+
+		        System.out.println("수가-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}	
 }

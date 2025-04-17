@@ -15,117 +15,115 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    body {
-      margin: 0;
-      background-color: #f3f4f6;
-      color: #111827;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 30px;
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
-    }
-    h4 {
-      font-size: 28px;
-      font-weight: bold;
-      color: #1f2937;
-      margin-bottom: 30px;
-      border-left: 6px solid #3b82f6;
-      padding-left: 16px;
-    }
-    .filter-box {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .filter-box span {
-      font-weight: 500;
-      font-size: 15px;
-    }
-    input[type="month"] {
-      padding: 8px 12px;
-      font-size: 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #3b82f6;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    button:hover {
-      background-color: #2563eb;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
-    }
-    .chart-box {
-      margin-bottom: 30px;
-      background: #f9fafb;
-      padding: 24px;
-      border-radius: 12px;
-    }
-    canvas {
-      width: 100% !important;
-      height: auto !important;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      overflow-x: auto;
-      margin-top: 16px;
-      background-color: #ffffff;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-    }
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 12px;
-      text-align: center;
-      font-size: 14px;
-    }
-    th {
-      background-color: #f3f4f6;
-      font-weight: 700;
-      color: #374151;
-    }
-    td {
-      background-color: #ffffff;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9fafb;
-    }
-    @media (max-width: 768px) {
-      .filter-box {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      table {
-        font-size: 12px;
-      }
-      th, td {
-        padding: 8px;
-      }
-    }
-    @media print {
-      #pdfBtn, #serBtn {
-        display: none !important;
-      }
-    }
+	* {
+	  box-sizing: border-box;
+	  font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+	}
+	body {
+	  margin: 0;
+	  background-color: #f8fafc;
+	  color: #1e293b;
+	}
+	.container {
+	  max-width: 1200px;
+	  margin: 40px auto;
+	  padding: 40px;
+	  background: linear-gradient(to bottom right, #ffffff, #f1f5f9);
+	  border-radius: 1.5rem;
+	  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+	}
+	h4 {
+	  font-size: 1.75rem;
+	  font-weight: 700;
+	  color: #0f172a;
+	  margin-bottom: 2rem;
+	  border-left: 6px solid #3b82f6;
+	  padding-left: 1rem;
+	}
+	.filter-box {
+	  display: flex;
+	  flex-wrap: wrap;
+	  gap: 1rem;
+	  margin-bottom: 2rem;
+	  align-items: center;
+	}
+	.filter-box span {
+	  font-weight: 500;
+	  font-size: 0.95rem;
+	}
+	input[type="month"],
+	select {
+	  padding: 0.6rem 0.9rem;
+	  font-size: 0.9rem;
+	  border: 1px solid #cbd5e1;
+	  border-radius: 0.75rem;
+	  background-color: #fff;
+	}
+	button {
+	  display: flex;
+	  align-items: center;
+	  gap: 6px;
+	  padding: 0.65rem 1.2rem;
+	  background-color: #3b82f6;
+	  border: none;
+	  border-radius: 0.75rem;
+	  color: white;
+	  font-size: 0.95rem;
+	  font-weight: 600;
+	  cursor: pointer;
+	  transition: background 0.3s ease, transform 0.2s ease;
+	}
+	button:hover {
+	  background-color: #2563eb;
+	  transform: translateY(-2px);
+	  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
+	}
+	.chart-box {
+	  margin-bottom: 2rem;
+	  background: #f1f5f9;
+	  padding: 1.5rem;
+	  border-radius: 1rem;
+	}
+	canvas {
+	  width: 100% !important;
+	  height: auto !important;
+	}
+	table {
+	  width: 100%;
+	  border-collapse: collapse;
+	  margin-top: 1rem;
+	  background-color: #ffffff;
+	  border-radius: 1rem;
+	  overflow: hidden;
+	}
+	th, td {
+	  border: 1px solid #e2e8f0;
+	  padding: 0.85rem;
+	  text-align: center;
+	  font-size: 0.9rem;
+	}
+	th {
+	  background-color: #e2e8f0;
+	  font-weight: 600;
+	  color: #334155;
+	}
+	tr:nth-child(even) td {
+	  background-color: #f8fafc;
+	}
+	@media (max-width: 768px) {
+	  .filter-box {
+	    flex-direction: column;
+	    align-items: flex-start;
+	  }
+	  table {
+	    font-size: 0.8rem;
+	  }
+	}
+	@media print {
+	  #pdfBtn, #serBtn {
+	    display: none !important;
+	  }
+	}
   </style>
 </head>
 <body>
@@ -136,11 +134,39 @@
     <div class="filter-box">
       <span for="startMonth">시작년월</span>
       <input type="month" id="startMonth" value="2025-01">
-      <span>~</span>
       <span for="endMonth">종료년월</span>
-      <input type="month" id="endMonth" value="2025-02">
-      <button id="serBtn" onclick="filterData()">검색</button>
-      <button id="pdfBtn" onclick="downloadPDF()">PDF 출력</button>
+      <input type="month" id="endMonth"   value="2025-03">
+ 	   <span for="medType">진료</span>
+	   <div style="width: 80px;">
+			<select class="custom-select" id="medType">
+			    <option value="0" selected>전체</option>
+			    <option value="1">의과</option>
+			    <option value="2">치과</option>
+			    <option value="9">한방</option>
+		    </select>      
+	    </div>
+ 	   <span for="jrType">행위</span>
+	   <div style="width: 80px; font-size:10px ;">
+			<select class="custom-select" id="jrType">
+			    <option value="0" selected>전체</option>
+			    <option value="1">정액</option>
+			    <option value="2">행위</option>
+		    </select>      
+	    </div>
+	   <span for="amtType">금액</span>
+ 	   <div style="width: 80px;">
+			<select class="custom-select" id="amtType">
+			    <option value="1" selected>총액</option>
+			    <option value="2">청구액</option>
+		    </select>      
+	    </div>
+		<!-- 검색 버튼 -->
+		<button id="serBtn" onclick="filterData()">
+		  <i class="fas fa-search"></i> 검색
+		</button>
+		<button id="pdfBtn" onclick="downloadPDF()">
+		  <i class="fas fa-file-pdf"></i> PDF출력
+		</button>
     </div>
 	<div id="loadingSpinner" style="display:none; text-align:center; margin-top:5px;">
 	  <img src="/images/winct/loading.gif" alt="로딩 이미지 테스트">
