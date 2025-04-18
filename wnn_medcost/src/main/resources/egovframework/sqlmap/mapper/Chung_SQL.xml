@@ -39,7 +39,7 @@
 		         ,IFNULL(FN_GET_DTL_CODE('Z','SPEC_TYPE',C.SPEC_TYPE),'') AS SPCODE_NM 
 		  		 ,B.PAT_ID  
 		         ,B.FAC_CODE 
-		         ,CASE WHEN B.PAY_TYPE = '1' THEN '1.정액'
+		         ,CASE WHEN (B.PAY_TYPE = '1' OR  B.MED_TYPE = '03') THEN '1.정액'
 		          ELSE '2.행위' END AS PAY_TYPE 
 		         ,CASE WHEN B.CLAIM_GRP = ''  THEN '일반'
 		               WHEN B.CLAIM_GRP = '1' THEN '보완'

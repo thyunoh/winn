@@ -42,12 +42,12 @@
                  
                                     <div class="col-sm-6">                                    
                                          <div class="btn-group ml-auto">
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""    onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
-                                            <button id="btnInsert"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
-                                            <button id="btnUpdate"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
-                                            <button id="btnDelete"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button id="btnSearchDelete"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
+                                            <button                 class="btn btn-outline-dark"                  data-toggle="tooltip" data-placement="top" title="" onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
+                                            <button id="btnInsert"  class="btn btn-outline-dark btn-insert"       data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
+                                            <button id="btnUpdate"  class="btn btn-outline-dark btn-update"       data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
+                                            <button id="btnDelete"  class="btn btn-outline-dark btn-delete"       data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
+                                            <button id="btnSearchDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button                 class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -88,13 +88,13 @@
 									class="btn btn-outline-dark" onClick="fn_Potion()">센터. <i class="far fa-object-group"></i>
 								</button>
 								<button id="form_btn_ins" type="submit"
-									class="btn btn-outline-info" onClick="fn_Insert()">입력. <i class="far fa-edit"></i>
+									class="btn btn-outline-info   btn-insert" onClick="fn_Insert()">입력. <i class="far fa-edit"></i>
 								</button>
 								<button id="form_btn_udt" type="submit"
-									class="btn btn-outline-success" onClick="fn_Update()">수정. <i class="far fa-save"></i>
+									class="btn btn-outline-success btn-update" onClick="fn_Update()">수정. <i class="far fa-save"></i>
 								</button>
 								<button id="form_btn_del" type="submit"
-									class="btn btn-outline-danger" onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
+									class="btn btn-outline-danger btn-delete " onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
 								</button>
 								<button type="button" class="btn btn-outline-dark"
 									data-dismiss="modal" onClick="closeMainModal()">닫기 <i class="fas fa-times"></i>
@@ -123,10 +123,9 @@
 								<label for="hospCd"  class="col-2 col-lg-2 col-form-label text-left">요양기관</label>
 								<div class="col-6 col-lg-6">
 	                                   <div class="input-group">								
-									 	<input id="hospCd" name="hospCd" type="text" 
+						 			 	    <input id="hospCd" name="hospCd" type="text" 
 						    				class="form-control text-left" placeholder="요양기관를 등록하세요">
-											<button id = "hospserch"    class="btn btn-outline-info"><i class="fas fa-search">검색</i>
-											</button>
+											<button id = "hospserch"  class="btn btn-outline-info"><i class="fas fa-search">검색</i></button>
 									   </div>	
 							    </div>
 							</div>
@@ -197,7 +196,7 @@
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
 		findValues.push({ id: "findData", val: "",  chk: true  });
-//병원병원에서 접속시 요양기관 값셋팅
+      //병원병원에서 접속시 요양기관 값셋팅
 	    let s_hospcd = getCookie("s_hospid") ;
 	    let s_wnn_yn = getCookie("s_wnn_yn") ;
 	    let s_hosp_uuid = getCookie("s_hosp_uuid");
@@ -428,7 +427,7 @@
 		            modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 	
 		    formValClear(inputZone.id);
 		    
 			if (flag !== 'I'){ 
@@ -1580,7 +1579,10 @@
 		        loadUserList();
 		    }
 		});
-	
+		//권한조건체크 applyAuthControl.js
+	    document.addEventListener("DOMContentLoaded", function() {
+	        applyAuthControl();
+	    });	
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

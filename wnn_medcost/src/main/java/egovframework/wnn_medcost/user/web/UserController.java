@@ -1410,4 +1410,20 @@ public class UserController extends BaseController {
 			return null;
 		}
 	}	
+	//위너넷 사용자권한관리 등록 
+	@RequestMapping(value="/wnnauthcd.do")
+    public String wnnauthcd(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/user/wnnauthcd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }		
 }

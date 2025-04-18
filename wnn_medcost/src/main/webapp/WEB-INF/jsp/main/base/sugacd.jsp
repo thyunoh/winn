@@ -42,12 +42,12 @@
                                     </div>                                    
                                     <div class="col-sm-6">                                    
                                          <div class="btn-group ml-auto">
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button id="btnDelete" class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
+                                            <button  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
+                                            <button  class="btn btn-outline-dark btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
+                                            <button  class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
+                                            <button  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
+                                            <button  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -79,10 +79,10 @@
               <!-- ============================================================== -->                  
               <div class="form-row">
                   <div class="col-sm-12 mb-2" style="text-align:right;"> 
-                    <button id="form_btn_new" type="submit" class="btn btn-outline-dark"   onClick="fn_Potion()">센터. <i class="far fa-object-group"></i></button>
-                    <button id="form_btn_ins" type="submit" class="btn btn-outline-info"    onClick="fn_Insert()">입력. <i class="far fa-edit"></i></button>
-				    <button id="form_btn_udt" type="submit" class="btn btn-outline-success" onClick="fn_Update()">수정. <i class="far fa-save"></i></button>
-   				    <button id="form_btn_del" type="submit" class="btn btn-outline-danger"  onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i></button>
+                    <button id="form_btn_new" type="submit" class="btn btn-outline-dark"    onClick="fn_Potion()">센터. <i class="far fa-object-group"></i></button>
+                    <button id="form_btn_ins" type="submit" class="btn btn-outline-info    btn-insert" onClick="fn_Insert()">입력. <i class="far fa-edit"></i></button>
+				    <button id="form_btn_udt" type="submit" class="btn btn-outline-success btn-update" onClick="fn_Update()">수정. <i class="far fa-save"></i></button>
+   				    <button id="form_btn_del" type="submit" class="btn btn-outline-danger  btn-delete" onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i></button>
    				    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="modalMainClose()">닫기 <i class="fas fa-times"></i></button>
                  </div>                      
               </div>
@@ -368,15 +368,8 @@
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
 		<!-- ============================================================== -->
-
-	    //입력수정삭제 조회 권한 
-	    let s_insauth =  getCookie("s_insauth");
-	    let s_updauth =  getCookie("s_updauth");
-	    let s_delauth =  getCookie("s_delauth");
-	    let s_inqauth =  getCookie("s_inqauth");
-	    
+   
 		window.onload = function() { 
-			del_auth() ;
 			find_Check();
 		    comm_Check();
 		};
@@ -392,24 +385,6 @@
 		        console.log("🔍 Enter 키 자동 실행 완료!");
 		    }
 		}
-	    function del_auth(){
-           //검색삭제 권한  
-		    if (s_delauth == 'N' || s_delauth == ''){
-		    	document.getElementById('btnDelete').disabled = true;
-		    };
-	    }
-	    function upd_auth(){
-		    //입력 수정삭제 조회 권한  
-		    if (s_insauth == 'N' || s_insauth == ''){
-		    	insertButton.style.display = 'none';
-		    };
-		    if (s_updauth == 'N' || s_updauth == ''){
-		    	updateButton.style.display = 'none';
-		    };		    
-		    if (s_delauth == 'N' || s_delauth == ''){
-		    	deleteButton.style.display = 'none';
-		    };
-	    }
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 End -->
@@ -520,10 +495,8 @@
 		            deleteButton.style.display = 'inline-block';
 		            modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
-		    }   
-		    
-            upd_auth() ; //입력수정삭제조회  
-		    
+		    }    
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
 			if (flag !== 'I'){ 
@@ -1567,7 +1540,7 @@
 		function modalMainClose() {
 			$("#" + modalName.id).modal('hide');
 		}
-		
+		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });

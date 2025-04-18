@@ -42,28 +42,23 @@
 										data-placement="top" title="" onClick="fn_re_load()">
 										재조회. <i class="fas fa-binoculars"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
-										data-placement="top" title="신규 Data 입력"
-										onClick="modal_Open('I')">
+									<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
+										data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">
 										입력. <i class="far fa-edit"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
-										data-placement="top" title="선택 Data 수정"
-										onClick="modal_Open('U')">
+									<button class="btn btn-outline-dark btn-update" data-toggle="tooltip"
+										data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">
 										수정. <i class="far fa-save"></i>
 									</button>
-									<button class="btn btn-outline-dark"
-										data-toggle="tooltip" data-placement="top" title="선택 Data 삭제"
-										onClick="modal_Open('D')">
-										삭제. <i class="far fa-trash-alt"></i>
+									<button class="btn btn-outline-dark btn-delete"
+										data-toggle="tooltip" data-placement="top" title="선택 Data 삭제"onClick="modal_Open('D')">
+										삭제. <i class="far fa-trash-alt"></i>   
 									</button>
-									<button class="btn btn-outline-dark d-none"
-										data-toggle="tooltip" data-placement="top" title="체크 Data 삭제"
-										onClick="fn_findchk()">
+									<button class="btn btn-outline-dark d-none btn-delete"
+										data-toggle="tooltip" data-placement="top" title="체크 Data 삭제"onClick="fn_findchk()">
 										검색삭제. <i class="far fa-calendar-check"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
-										data-placement="top" title="화면 Size 확대.축소"
+									<button class="btn btn-outline-dark" data-toggle="tooltip"data-placement="top" title="화면 Size 확대.축소"
 										id="fullscreenToggle">
 										화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i>
 									</button>
@@ -93,16 +88,16 @@
 								    </div>	
 									<div class="col-sm-6">
 										<div class="btn-group ml-auto">
-											<button class="btn btn-outline-dark" data-toggle="tooltip"
+											<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
 												data-placement="top" title="신규 Data 입력" onClick="cd_modal_Open('I')">
 												입력. <i class="far fa-edit"></i>
 											</button>
-											<button class="btn btn-outline-dark" data-toggle="tooltip"
+											<button class="btn btn-outline-dark btn-update" data-toggle="tooltip"
 												data-placement="top" title="선택 Data 수정"
 												onClick="cd_modal_Open('U')">
 												수정. <i class="far fa-save"></i>
 											</button>
-											<button class="btn btn-outline-dark" data-toggle="tooltip"
+											<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 												data-placement="top" title="선택 Data 삭제"
 												onClick="cd_modal_Open('D')">
 												삭제. <i class="far fa-trash-alt"></i>
@@ -152,16 +147,13 @@
 								센터. <i class="far fa-object-group"></i>
 							</button>
 							<button id="form_btn_ins" type="submit"
-								class="btn btn-outline-info" onClick="fn_Insert()">
-								입력. <i class="far fa-edit"></i>
+								class="btn btn-outline-info btn-insert"  onClick="fn_Insert()">입력. <i class="far fa-edit"></i>
 							</button>
 							<button id="form_btn_udt" type="submit"
-								class="btn btn-outline-success" onClick="fn_Update()">
-								수정. <i class="far fa-save"></i>
+								class="btn btn-outline-success btn-update" onClick="fn_Update()">수정. <i class="far fa-save"></i>
 							</button>
 							<button id="form_btn_del" type="submit"
-								class="btn btn-outline-danger" onClick="fn_Delete()">
-								삭제. <i class="far fa-trash-alt"></i>
+								class="btn btn-outline-danger btn-delete" onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
 							</button>
 							<button type="button" class="btn btn-outline-dark"
 								data-dismiss="modal" onClick="modalMainClose()">
@@ -242,20 +234,16 @@
 					<div class="form-row">
 						<div class="col-sm-12 mb-2" style="text-align: right;">
 							<button id="cd_form_btn_ins" type="submit"
-								class="btn btn-outline-info" onClick="cd_fn_Insert()">
-								입력. <i class="far fa-edit"></i>
+								class="btn btn-outline-info btn-insert" onClick="cd_fn_Insert()">입력. <i class="far fa-edit"></i>
 							</button>
 							<button id="cd_form_btn_udt" type="submit"
-								class="btn btn-outline-success" onClick="cd_fn_Update()">
-								수정. <i class="far fa-save"></i>
+								class="btn btn-outline-success btn-update" onClick="cd_fn_Update()">수정. <i class="far fa-save"></i>
 							</button>
 							<button id="cd_form_btn_del" type="submit"
-								class="btn btn-outline-danger" onClick="cd_fn_Delete()">
-								삭제. <i class="far fa-trash-alt"></i>
+								class="btn btn-outline-danger btn-delete" onClick="cd_fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
 							</button>
 							<button type="button" class="btn btn-outline-dark"
-								data-dismiss="modal" onClick="cd_modalClose()">
-								닫기 <i class="fas fa-times"></i>
+								data-dismiss="modal" onClick="cd_modalClose()">닫기 <i class="fas fa-times"></i>
 							</button>
 						</div>
 					</div>
@@ -631,7 +619,7 @@
 		            modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 			
 		    formValClear(inputZone.id);
 		    
 			if (flag !== 'I'){ 
@@ -1958,7 +1946,7 @@
 		            cd_modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 	
 		    formValClear(cd_inputZone.id);
 		 // codeCdone 값이 있는지 확인 후 설정
 		    if (flag == 'I'){
@@ -2344,6 +2332,10 @@
 		function cd_modalClose() {
 			$("#" + cd_modalName.id).modal('hide');
 		}
+		//권한조건체크 applyAuthControl.js
+	    document.addEventListener("DOMContentLoaded", function() {
+	        applyAuthControl();
+	    });
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

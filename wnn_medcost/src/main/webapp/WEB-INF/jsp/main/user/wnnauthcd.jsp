@@ -7,9 +7,10 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
-<!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/bootstrap.css"     rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
+
+
     <!-- DataTables CSS -->
     <style>
     </style>
@@ -26,6 +27,9 @@
                         <div class="card">                        	
                             <div class="card-body">  
 	                            <div class="form-row mb-2">
+ 		                            <div class="col-1 col-lg-1"> 
+ 			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid text-left" required placeholder="">
+			                        </div> 
                                     <div class="col-sm-4">
                                         <div class="input-group">
                                              <input id="findData" type="text" class="form-control" placeholder="3글자 이상 입력 후 [ enter ]" 
@@ -34,30 +38,20 @@
                                                  <button type="button" class="btn btn-rounded btn-primary"  onClick="fn_FindData()">조회. <i class="fas fa-search"></i></button>
                                              </div>
                                         </div>
-                                    </div>
+                                    </div>      
+                 
                                     <div class="col-sm-6">                                    
                                          <div class="btn-group ml-auto">
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
-                                            <button class="btn btn-outline-dark btn-insert " data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
-                                            <button class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
-                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
+                                            <button                 class="btn btn-outline-dark"                  data-toggle="tooltip" data-placement="top" title="" onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
+                                            <button id="btnInsert"  class="btn btn-outline-dark btn-insert"       data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
+                                            <button id="btnUpdate"  class="btn btn-outline-dark btn-update"       data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
+                                            <button id="btnDelete"  class="btn btn-outline-dark btn-delete"       data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
+                                            <button id="btnSearchDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button                 class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
-                            	
-                                <!-- 
-                              	display: 기본 DataTables 스타일을 적용합니다.
-								nowrap: 셀 내용이 한 줄로 표시되도록 하며, 필요한 경우 가로 스크롤을 생성합니다.
-								stripe: 짝수/홀수 행에 다른 배경색을 적용하여 가독성을 높입니다.
-								hover: 마우스를 올린 행의 배경색을 변경하여 강조합니다.
-								compact: 테이블의 패딩을 줄여 더 조밀한 레이아웃을 만듭니다.
-								cell-border: 셀 주위에 테두리를 추가합니다.
-								row-border: 행 사이에 테두리를 추가합니다.
-								order-column: 정렬된 열을 시각적으로 강조합니다.
-								responsive: 반응형 디자인을 적용하여 작은 화면에서도 잘 보이도록 합니다.
-                                -->
+                        	
 								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
 								        
@@ -74,114 +68,108 @@
 		</div>        
 		<!-- ============================================================== -->
         <!-- modal form start -->
-        <!-- ============================================================== -->        
-	    <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
-	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
-	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 80%;display: flex;flex-direction: column;">
-	          <div class="modal-header bg-light">
-		            <h6 class="modal-title" id="modalHead"></h6> 
-	              <!-- ============================================================== -->
-	              <!-- button start -->
-	              <!-- ============================================================== -->                  
-	              <div class="form-row">
-	                  <div class="col-sm-12 mb-2" style="text-align:right;"> 
-	                    <button id="form_btn_new" type="submit" class="btn btn-outline-dark"   onClick="fn_Potion()">센터. <i class="far fa-object-group"></i></button>
-	                    <button id="form_btn_ins" type="submit" class="btn btn-outline-info    btn-insert"  onClick="fn_Insert()">입력. <i class="far fa-edit"></i></button>
-					    <button id="form_btn_udt" type="submit" class="btn btn-outline-success btn-update"  onClick="fn_Update()">수정. <i class="far fa-save"></i></button>
-	   				    <button id="form_btn_del" type="submit" class="btn btn-outline-danger  btn-delete"  onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i></button>
-	   				    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="modalMainClose()">닫기 <i class="fas fa-times"></i></button>
-	                 </div>                      
-	              </div>
-	              <!-- ============================================================== -->
-	              <!-- end button -->
-	              <!-- ============================================================== -->   
-	          </div>
-	          <div class="modal-body" style="text-align: left;flex: 1;overflow-y: auto;">	          
-                <!-- ================================================================== -->		          
-                <div id="inputZone">                
-                	<!-- ============================================================== -->
-                    <!-- text input 1개 start -->
-                    <!-- ============================================================== -->
-                    <input type="hidden" id="regUser" name="regUser" value="">
-                    <input type="hidden" id="updUser" name="updUser" value="">
-                    <input type="hidden" id="regIp"   name="regIp"   value="">
-                    <input type="hidden" id="updIp"   name="updIp "  value= "">
-                    <div class="form-group row ">
-                        <label for="diagCode" class="col-2 col-lg-2 col-form-label text-left">진단코드</label>
-                        <div class="col-2 col-sm-2">
-                            <input id="diagCode" name="diagCode" type="text" class="form-control is-invalid text-left" required placeholder="진단코드]">
-                        </div>
-	                   <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
-	                   <div class="col-2 col-lg-2">                                       
-	                      <input id="startDt" name="startDt" type="text" class="form-control date1-inputmask" required placeholder="yyyy-mm-dd" >
-	                   </div>
-                       <label for="genderType" class="col-2 col-lg-2 col-form-label text-left">남녀구분</label>
-                       <div class="col-2 col-lg-2">  
-						  <select id="genderType" name="genderType" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
-						     <option selected value= "" >구분 1</option> 
-						  </select>
-	                   </div>
-                    </div>
-                    <div class="form-group row g-0 mb-0">
-                        <label for="korDiagName" class="col-2 col-sm-2 col-form-label text-left">한글진단명</label>
-                        <div class="col-10 col-sm-10">
-                            <input id="korDiagName" name="korDiagName" type="text" class="form-control text-left" placeholder="한글진단명을 입력하세요">
-                        </div>
-                    </div>
-					<div class="form-group row g-0 mb-0">
-					    <label for="engDiagName" class="col-2 col-sm-2 col-form-label text-left">영문진단명</label>
-					    <div class="col-10 col-sm-10">
-					        <textarea id="engDiagName" name="engDiagName" data-parsley-trigger="change" placeholder="영문진단명을 입력하세요"
-					                autocomplete="off" class="form-control" rows="3"></textarea>
-					    </div>
-					</div>                     
-                    <div class="form-group row">
-                        <label for="infectType" class="col-2 col-lg-2 col-form-label text-left">법정전염병</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="infectType" name="infectType" type="text"  class="form-control"  placeholder="">
-                        </div>
-                        <label for="diagType" class="col-2 col-lg-2 col-form-label text-left">상병구분</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="diagType"   name="diagType"  type="text" class="form-control"   placeholder="" >
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="minAge" class="col-2 col-lg-2 col-form-label text-left">하한연령</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="minAge"     name="minAge"   value = "0"  type="number" class="form-control" style="text-align: right;" placeholder="">
-                        </div>
-                        <label for="maxAge" class="col-2 col-lg-2 col-form-label text-left">상한연령</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="maxAge"     name="maxAge"   value = "999"    type="number"    class="form-control"  style="text-align: right;" placeholder="">
-                        </div>
-                    </div>
-                     <div class="form-group row">
-                        <label for="vcode" class="col-2 col-lg-2 col-form-label text-left">특정코드</label>
-                        <div class="col-2 col-lg-2">
-                            <input id="vcode" name="vcode"  type="text" class="form-control"  placeholder="">
-                        </div>
-                        <label for="icd10Code" class="col-2 col-lg-2 col-form-label text-left">ICD10</label>
-                        <div class="col-2 col-lg-2">
-                            <input id="icd10Code" name="icd10Code"  type="text" class="form-control"  placeholder="">
-                        </div>
-                        <label for="endDt" class="col-2 col-lg-2 col-form-label text-left">적용종료일</label>
-                        <div class="col-2 col-lg-2">
-                            <input id="endDt" name="endDt"  type="text" class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
-                            
-                        </div>   
-                    </div>
- 
-                <!-- ============================================================== -->
-                <!-- end form 수정해야 될 곳 -->
-                <!-- ============================================================== -->
-	          </div>
-	          <div class="modal-footer">
-	          </div>
-	        </div>
-	      </div>
-	    </div>
-	    </div>
+		        <!-- ============================================================== -->
+		<div class="modal fade" id="modalName" tabindex="-1"
+			data-backdrop="static" role="dialog" aria-hidden="false"
+			data-keyboard="false">
+			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+				role="dialog"
+				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35vw; max-width: 45vw; max-height: 50vh;">
+				<div class="modal-content"
+					style="height: 45%; display: flex; flex-direction: column;">
+					<div class="modal-header bg-light">
+						<h6 class="modal-title" id="modalHead"></h6>
+						<!-- ============================================================== -->
+						<!-- button start -->
+						<!-- ============================================================== -->
+						<div class="form-row">
+							<div class="col-sm-12 mb-2" style="text-align: right;">
+								<button id="form_btn_new" type="submit"
+									class="btn btn-outline-dark" onClick="fn_Potion()">센터. <i class="far fa-object-group"></i>
+								</button>
+								<button id="form_btn_ins" type="submit"
+									class="btn btn-outline-info   btn-insert" onClick="fn_Insert()">입력. <i class="far fa-edit"></i>
+								</button>
+								<button id="form_btn_udt" type="submit"
+									class="btn btn-outline-success btn-update" onClick="fn_Update()">수정. <i class="far fa-save"></i>
+								</button>
+								<button id="form_btn_del" type="submit"
+									class="btn btn-outline-danger btn-delete " onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
+								</button>
+								<button type="button" class="btn btn-outline-dark"
+									data-dismiss="modal" onClick="closeMainModal()">닫기 <i class="fas fa-times"></i>
+								</button>
+							</div>
+						</div>
+						<!-- ============================================================== -->
+						<!-- end button -->
+						<!-- ============================================================== -->
+					</div>
+					<div class="modal-body"
+						style="text-align: left; flex: 1; overflow-y: auto;">
+						<!-- ================================================================== -->
+						<div id="inputZone">
+							<!-- ============================================================== -->
+							<!-- text input 1개 start -->
+							<!-- ============================================================== -->
+							<input type="hidden" id="userNm"      name="userNm"   value="">
+							<input type="hidden" id="hospNm"      name="hospNm"   value="">
+							<input type="hidden" id="updDttm"     name="updDttm"  value="">
+							<input type="hidden" id="regUser"     name="regUser"  value="">
+							<input type="hidden" id="updUser"     name="updUser"  value="">
+							<input type="hidden" id="regIp"       name="regIp"    value=""> 
+							<input type="hidden" id="updIp"       name="updIp"    value="">
+							<div class="form-group row ">
+								<label for="hospCd"  class="col-2 col-lg-2 col-form-label text-left">요양기관</label>
+								<div class="col-6 col-lg-6">
+	                                   <div class="input-group">								
+						 			 	    <input id="hospCd" name="hospCd" type="text" 
+						    				class="form-control text-left" placeholder="요양기관를 등록하세요">
+											<button id = "hospserch"  class="btn btn-outline-info"><i class="fas fa-search">검색</i></button>
+									   </div>	
+							    </div>
+							</div>
+							<div class="form-group row">
+							    <label for="userId" class="col-2 col-lg-2 col-form-label text-left">사용자정보</label>
+							    <div class="col-6 col-lg-6">
+							        <div class="input-group">
+							            <select id="userId" name="userId"  class= "custom-select">
+							                <option value="">사용자를 선택하세요</option>
+							            </select>
+							        </div>
+							    </div>
+							</div>
+							<div class="form-group row">
+								<div class="col-3 col-lg-3 col-form-label text-left">
+								    <div class="form-check form-check-inline">
+								        <input class="form-check-input" type="checkbox" id="insAuth" name="insAuth" value="Y" checked>
+								        <span class="form-check-label" for="insAuth">입력권한</span>
+								    </div>
+								</div>
+								<div class="col-3 col-lg-3 col-form-label text-left">
+								    <div class="form-check form-check-inline">
+								        <input class="form-check-input" type="checkbox" id="updAuth" name="updAuth" value="Y" checked>
+								        <span class="form-check-label" for="updAuth">수정권한</span>
+								    </div>
+								</div>
+								<div class="col-3 col-lg-3 col-form-label text-left">
+								    <div class="form-check form-check-inline">
+								        <input class="form-check-input" type="checkbox" id="delAuth" name="delAuth" value="Y" checked>
+								        <span class="form-check-label" for="delAuth">삭제권한</span>
+								    </div>
+								</div>
+						    </div>
+							<!-- ============================================================== -->
+							<!-- end form 수정해야 될 곳 -->
+							<!-- ============================================================== -->
+						</div>
+						<div class="modal-footer"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 모달이 로드될 영역 -->
+       <div id="modalContainer"></div>
         <!-- ============================================================== -->
         <!-- modal form end -->
         <!-- ============================================================== -->
@@ -201,14 +189,22 @@
 		// Form마다 수정해야 될 부분 종료
 		
 		// Form마다 조회 조건 변경 시작
-		var findTxtln  = 3;    // 조회조건시 글자수 제한 / 0이면 제한 없음
+		var findTxtln  = 0;    // 조회조건시 글자수 제한 / 0이면 제한 없음
 		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
 		var findValues = [];
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData", val: "B00",  chk: true  });
-		//Form마다 조회 조건 변경 종료
+		findValues.push({ id: "findData", val: "",  chk: true  });
+      //병원병원에서 접속시 요양기관 값셋팅
+	    let s_hospcd = getCookie("s_hospid") ;
+	    let s_wnn_yn = getCookie("s_wnn_yn") ;
+	    let s_hosp_uuid = getCookie("s_hosp_uuid");
+	  //원너넷이 아니거나 워너넷에서 병원을 선택해서 처리한 경우)
+	    if  (s_hospcd   &&  s_wnn_yn == 'Y')    { 
+	        findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
+            $("#hospCd1").val(s_hospcd);
+	    }
 		
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
@@ -221,9 +217,9 @@
 		<!-- ============================================================== -->
 		var list_flag = ['Z'];     										// 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 		//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
-		var list_code = ['GENDER'];     // 구분코드 필요한 만큼 선언해서 사용
-		var select_id = ['genderType'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
-		var firstnull = ['Y'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
+	    var list_code = []; 
+	    var select_id = [];     // 구분코드 데이터 담길 Select (ComboBox ID)
+		var firstnull = [];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
 		<!-- ============================================================== -->
@@ -262,36 +258,16 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['진단코드','시작적용일','한글명','영문명','성별구분','법정감염병구분','상병구분','ICD10' ,'특정코드','종료일'  ];
-		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
-	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
-	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'diagCode',   visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyDiagCode', primaryKey: true },
-	        				// getFormat 사용시 
-	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyStartDt', primaryKey: true,
-	                          	render: function(data, type, row) {
-		            				if (type === 'display') {
-		            					return getFormat(data,'d1')
-		                			}
-		                			return data;
-	            				}
-	        				},
-	        				{ data: 'korDiagName',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				{ data: 'engDiagName',  visible: true,  className: 'dt-body-left'  , width: '300px',  },	        				
-					        { data: 'genderType' ,   visible: true,  className: 'dt-body-center', width: '100px',  },
-					        { data: 'infectType' ,   visible: true,  className: 'dt-body-center', width: '100px',  },
-					        { data: 'diagType'   ,   visible: true,  className: 'dt-body-left'  , width: '300px',  } ,
-					        // getFormat 사용시
-					        { data: 'icd10Code'  ,   visible: true,  className: 'dt-body-center', width: '100px',  },
-					        { data: 'vcode'       ,   visible: true,  className: 'dt-body-center', width: '100px',  },
-					        { data: 'endDt'      ,   visible: true,  className: 'dt-body-center', width: '100px',    
-					            render: function(data, type, row) {
-					            	if (type === 'display') {
-					            		return getFormat(data,'d1')
-					                }
-					                return data;
-					            }
-					        }
+		var c_Head_Set = ['병원정보','병원명','사용아이디','사용자명','입력권한','수정권한','삭제권한','작성일시'];
+		var columnsSet = [       				
+	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
+	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '300px',  },
+	        				{ data: 'userId',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keyuserId', primaryKey: true },
+	        				{ data: 'userNm',    visible: true,  className: 'dt-body-center', width: '100px',  },
+	        				{ data: 'insAuth',   visible: true,  className: 'dt-body-center', width: '100px',  },
+	        				{ data: 'updAuth',   visible: true,  className: 'dt-body-center', width: '100px',  },
+	        				{ data: 'delAuth',   visible: true,  className: 'dt-body-center', width: '100px',  }, 
+	        				{ data: 'updDttm',   visible: true,  className: 'dt-body-center', width: '100px',  }        				
 					    ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -299,16 +275,16 @@
         
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
-							['diagCode', 'asc' ],    // 오름차순 정렬
-            				['startDt', 'desc']     // 내림차순 정렬
+							['userId' , 'asc' ],    // 오름차순 정렬
+							['hospCd' , 'asc' ]     // 오름차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['diagCode','korDiagName'];                   
+		var showSortNo = ['hospCd','userId'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['korDiagName','engDiagName'];
+		var markColums = ['hospNm'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -318,7 +294,6 @@
 			find_Check();
 		    comm_Check();
 		};
-
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
 		function triggerEnterKey() {
 		    let findDataInput = document.getElementById("findData");
@@ -389,10 +364,11 @@
 		<!-- ============================================================== -->
 		<script type="text/javascript">
 		function modal_key_hidden(flag) {	
-	        const diagCodeInput     = document.getElementById("diagCode");
-	        const startDtInput      = document.getElementById("startDt");
+	        const hospCdInput     = document.getElementById("hospCd");
+			const userIdInput     = document.getElementById("userId");
+		    const hospserch       = document.getElementById('hospserch');
+	        const inputs = [userIdInput, hospCdInput];
 
-	        const inputs = [diagCodeInput, startDtInput];
 	        if (flag !== 'I') {
 		        const isReadOnly = flag !== 'I';
 		        inputs.forEach(input => {
@@ -400,14 +376,27 @@
 		                input.readOnly = isReadOnly;
 		            }
 		        });
+		        hospserch.style.display   = 'none'
 		    }else{
 		        const isReadOnly = flag == 'N';
 		        inputs.forEach(input => {
 		            if (input) { // 요소가 존재하는지 확인
 		                input.readOnly = isReadOnly;
 		            }
-		        });		    	
+		        });		
+		        if ( s_hospcd  && s_wnn_yn == 'Y') {
+		           hospCdInput.readOnly    = true ;
+		           hospserch.style.display = 'none'	
+		        }else{
+		           hospCdInput.readOnly = false ; //워너넷에서 로그인한경우 입력시 요양기관처야함 
+		           hospserch.style.display = 'inline-block'	
+		        }
 		    }
+	        if (flag !== 'I') {
+	            $(userIdInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	        } else {
+	            $(userIdInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	        }	        
 		}
 		function modal_Open(flag) {	
 			let modal_OpenFlag = true;
@@ -435,7 +424,7 @@
 		            modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 		
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 	
 		    formValClear(inputZone.id);
 		    
 			if (flag !== 'I'){ 
@@ -514,7 +503,12 @@
 			    window.addEventListener('resize', centerModal);
 			    // 모달 띄우기
 			    $("#" + modalName.id).modal('show');   
-			    
+			    //위너넷이아니면  병원정보 자동로그인에서 가져와서 등록  
+
+			    if  (getCookie("s_hospid") &&  getCookie("s_wnn_yn") == 'Y')   {
+			        inputZone.querySelector("[name='hospCd']").value = getCookie("s_hospid") || "";
+			        inputZone.querySelector("[name='hospNm']").value = getCookie("s_hospnm") || "";
+			    }			    
 			    if (getCookie("s_userid")) {
 			        inputZone.querySelector("[name='regUser']").value = getCookie("s_userid");
 			        inputZone.querySelector("[name='updUser']").value = getCookie("s_userid");
@@ -767,13 +761,14 @@
 		    let find = {};
 		   	
 		   	for (let findValue of findValues) {
-		   		let key = findValue.id === "feeType1" ? "feeType" : findValue.id;
+		   		let key = findValue.id === "hospCd1" ? "hospCd" : findValue.id;
+		   		console.log(findValue.id);
 		   		find[key] = findValue.val;
 		   	}
 		   	
 		    $.ajax({
-		        type: "POST",
-		        url: "/base/diseCdList.do",
+		        type: "POST", 
+		        url: "/user/userauthCdList.do",
 		        data: find,
 		        dataType: "json",
 		        
@@ -871,40 +866,31 @@
 		//일력값 오류체크및 서버데이타전달(json) 
 		function validateForm() {
 		    const results = formValCheck(inputZone.id, {
-		    	diagCode:     { kname: "수가코드", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
-		        startDt:      { kname: "시작일자", k_req: true },
-		        endDt:        { kname: "종료일자", k_req: true },
-		        vcode:        { kname: "특정코드" },
-		        minAge:       { kname: "상한연령", k_req: true },
-		        maxAge:       { kname: "하한연령", k_req: true },
-		        korDiagName:  { kname: "한글명", k_req: true },
-		        engDiagName:  { kname: "영문명", k_req: true },
-		        genderTType:  { kname: "남녀구분"},
-		        infectType:   { kname: "법정전염병"},
-		        icd10Code:    { kname: "ICD10"},
-		        diagType:     { kname: "상병구분",k_req: true}
+		    	hospCd:       { kname: "요양기관",    k_req: true, k_spc: true, k_clr: true },
+		    	userId:       { kname: "사용자아이디", k_req: true }
 		    });
 		    return results;
 		}
 		//그리드상 데이타생성및 수정 작업
 		function newuptData() {
         	let newData = {
-        	    diagCode:     $('#diagCode').val(),
-                startDt:      replaceMulti($('#startDt').val(), "-", "/"),
-                endDt:        replaceMulti($('#endDt').val(), "-", "/"), 
-                vcode:         $('#vcode').val(),
-                minAge:       $('#minAge').val(),
-                maxAge:       $('#maxAge').val(),
-                korDiagName: $('#korDiagName').val(),
-                engDiagName: $('#engDiagName').val(),
-                genderType:   $('#genderType').val(),
-                infectType:   $('#infectType').val(),
-                icd10Code:    $('#icd10Code').val(),
-                diagType:     $('#diagType').val(),
+           		hospCd:     $('#hospCd').val(),
+           		hospNm:     $('#hospNm').val(),
+        		userId:     $('#userId').val(),
+        		userNm:     $('#userId').val(),
+        	    insAuth:    $('#insAuth').is(":checked") ? "Y" : "N",
+        		updAuth:    $('#updAuth').is(":checked") ? "Y" : "N",
+        	    delAuth:    $('#delAuth').is(":checked") ? "Y" : "N",
+        		updDttm:    $('#updDttm').val()
 			    };
 		    return newData;
 		}	
 		function fn_Insert(){
+			let dupchkVal = $("#dupchk").val();
+			if (["N", "X"].includes(dupchkVal)) {
+			    messageBox("1", "<h5>사용자아이디 중복체크 여부를 확인하세요.!!</h5><p></p><br>", mainFocus, "", "");
+			    return;
+			} 			
 			const results = validateForm();
 			if (results)
 			{
@@ -921,11 +907,11 @@
 		        		data[result.id] = result.val;
 		        	}	
 		        });
-				
+		        check_auth(data);
 		        dats.push(data);	    
 			    $.ajax({
 			            type: "POST",
-			            url: "/base/diseCdInsert.do",
+			            url: "/user/userauthCdInsert.do",
 			            data: JSON.stringify(dats),
 			            contentType: "application/json",
 			    	    dataType: "json",
@@ -938,7 +924,7 @@
 			            	
 			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	            	
 			            	$("#" + modalName.id).modal('hide');
-			            	
+			            	fn_re_load() ;
 			        	},
 			        	error: function(xhr, status, error) {
 				         	switch (xhr.status){  
@@ -961,6 +947,7 @@
 		}
 		// Modal Form에서 수정
 		function fn_Update() {
+
 		    // 1. 입력값 검증 및 유효성 검사
             const results = validateForm();
 		    if (results) {
@@ -978,7 +965,7 @@
 		        	}	
   	
 		        });
-		
+		        check_auth(data);
 		        // 3. 선택된 행의 Primary Key 가져오기
 		        var selectedRows = dataTable.rows('.selected');
 		        let keys = dataTableKeys(dataTable, selectedRows);
@@ -988,7 +975,7 @@
 		        // 5. AJAX로 서버 업데이트 요청
 		        $.ajax({
 		            type: "POST",
-		            url: "/base/diseCdUpdate.do",
+		            url: "/user/userauthCdUpdate.do",
 		            data: JSON.stringify(mergeData), // JSON 변환
 		            contentType: "application/json",
 		            dataType: "json",
@@ -1022,11 +1009,6 @@
 		// Modal Form에서 삭제
 		function fn_Delete(){
 			let isKey = false;
-			// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
-			// error:    오류나 실패를 나타내는 빨간색 X 아이콘
-			// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
-			// info:     정보를 나타내는 파란색 i 아이콘
-			// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
 			Swal.fire({title:'삭제여부',text:'정말 삭제 하시겠습니까 ?', icon:'question' ,
 					   showCancelButton:true,confirmButtonText:'예',cancelButtonText:'아니오',
 					   customClass: {
@@ -1042,7 +1024,7 @@
 					if (keys.length > 0) {	        	
 						$.ajax({
 				            type: "POST",
-				            url: "/base/diseCdDelete.do",	    	    
+				            url: "/user/userauthCdDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",
@@ -1112,11 +1094,6 @@
 		// Check된 자료 찾아 삭제
 		function fn_findchk(){
 			let isKey = false; 	    
-		 	// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
-			// error:    오류나 실패를 나타내는 빨간색 X 아이콘
-			// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
-			// info:     정보를 나타내는 파란색 i 아이콘
-			// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
 			Swal.fire({title:'삭제여부',text:'정말 삭제 하시겠습니까 ?', 
 				       icon:'question' ,
 					   showCancelButton:true,confirmButtonText:'예',cancelButtonText:'아니오',
@@ -1138,7 +1115,7 @@
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
-				            url: "/base/diseCdDelete.do",	    	    
+				            url: "/base/userauthCdDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",
@@ -1206,6 +1183,53 @@
 			        });
 				}
 			});
+		}
+		function check_auth(data) {
+		    let insAuthCheckbox = document.getElementById("insAuth");
+		    data["insAuth"] = insAuthCheckbox.checked ? "Y" : "N";
+
+		    let updAuthCheckbox = document.getElementById("updAuth");
+		    data["updAuth"] = updAuthCheckbox.checked ? "Y" : "N";
+
+		    let delAuthCheckbox = document.getElementById("delAuth");
+		    data["delAuth"] = delAuthCheckbox.checked ? "Y" : "N";
+
+		}
+		
+		function fnDupchk() {
+		    let userId = $('#userId').val();
+
+		    if (userId === "") {
+		        messageBox("1", "<h5>사용자아이디를 입력하세요,!!</h5><p></p><br>", "userId", "", "");
+		        return;
+		    }
+		    $("#dupchk").val("N");
+		    $.ajax({
+		        type: "POST",
+		        url: "/user/puserCddupchk.do",
+		        data: JSON.stringify({ userId: $("#userId").val(), hospCd: $("#hospCd").val() } ),
+		        contentType: "application/json",
+		        dataType: "json" ,
+		    	success: function(response) {
+		           messageBox("1", "<h5>해당 사용자아이디는 사용가능합니다.</h5><p></p><br>", "userId", "", "");
+		           $("#dupchk").val("Y");
+			    },
+	        	error: function(xhr, status, error) {
+		         	switch (xhr.status){  
+		         	     case 500: messageBox("5","<h5>서버에 문제가 발생했습니다.</h5>" +  
+	                               "<h6>잠시후 다시, 시도해주십시요. !!</h6>",mainFocus,"","");
+		        		    break;
+		         	     case 400:
+		        		    messageBox("5","<h5>기존사용아이디가 존재합니다.</h5>" +  
+	                               "<h6>다시 확인하고, 시도해주십시요. !!</h6>",mainFocus,"","");
+		        		    break;
+		         	      default :  
+		                     messageBox("5", "<h5>알 수 없는 오류가 발생했습니다.</h5>" +  
+	                                   "<h6>관리자에게 문의하세요.</h6>", mainFocus, "", "");
+	                        break;
+			       	}
+		        }	
+		    });
 		}
 		</script>	
 		<!-- ============================================================== -->
@@ -1305,7 +1329,7 @@
 				            
 				            if (filteredItems.length > 0) {
 				            	if (firstnull[i] === "Y")
-				            		select.append('<option value="">선택</option>');
+				            		select.append('<option value=""></option>');
 				            		
 				            	filteredItems.forEach(function (item) {
 				                    select.append('<option value=' + item.subCode + '>' + item.subCodeNm + '</option>');
@@ -1464,13 +1488,95 @@
 		    	fn_FindData(); 
 		    }
 		}
-		function modalMainClose() {
+		function closeMainModal() {
 			$("#" + modalName.id).modal('hide');
 		}
+		
+		// 병원검색 /js/winmc/schcommons.js///////////////
+		$("#hospserch").on("click", function () {
+		    openHospitalSearch(function (data) {
+		        $("#hospCd").val(data.hospCd);
+		    });
+		});
+		
+		function openHospitalSearch(callback) {
+		    openCommonSearch("hospital", function (data) {
+		        console.log("받은 병원 데이터:", data);
+
+		        // ✅ 데이터가 올바른지 검증 후 실행
+		        if (data && data.hospCd) {
+		        	callback(data);
+		        } else {
+		            console.warn("🚨 유효하지 않은 병원 데이터:", data);
+		            alert("선택한 병원의 정보가 올바르지 않습니다. 다시 시도해주세요.");
+		        }
+		    });
+		}
+         ///////////////////////////////////////////////////////////
+		let currentHospid = sessionStorage.getItem('hospid'); // 최초 병원 ID 저장
+
+		setInterval(function () {
+		    let newHospid = sessionStorage.getItem('hospid');
+		    if (newHospid && newHospid !== currentHospid) {
+		        currentHospid = newHospid; // 변경된 ID로 갱신
+		      //병원병원에서 접속시 요양기관 값셋팅
+			    s_hospcd = getCookie("s_hospid") ;
+		        findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
+				$("#hospCd1").val(s_hospcd);
+				triggerFind();
+		    }
+		}, 1000); // 1초마다 체크 
+		function triggerFind() {
+		    fn_FindData();
+		    loadUserList() ;
+		}		
+		function loadUserList() {
+		    const hospCd = jQuery('#hospCd1').val(); // hospCd 값 가져오기
+		    jQuery.ajax({
+		        url: "/user/puserCdList.do",
+		        type: 'POST',
+		        data: { hospCd: hospCd },
+		        dataType: 'json',
+		        success: function(res) {
+		            const $select = jQuery('#userId'); // ← 여기 변경됨
+		            $select.empty().append('<option value="">사용자를 선택하세요</option>');
+
+		            if (res && res.data && res.data.length > 0) {
+		            	res.data.forEach(user => {
+		            	    $select.append(
+		            	        '<option value="' + user.userId + '" data-usernm="' + user.userNm + '">' +
+		            	        user.userNm + ' (' + user.userId + ')' +
+		            	        '</option>'
+		            	    );
+		            	});
+		            } else {
+		                $select.append('<option value="">해당 요양기관에 사용자가 없습니다</option>');
+		            }
+		        },
+		        error: function() {
+		            alert('사용자 목록을 가져오는데 실패했습니다.');
+		        }
+		    });
+		}
+		
+		document.getElementById('userId').addEventListener('change', function () {
+		    let selectedOption = this.options[this.selectedIndex];
+		    let userNm = selectedOption.getAttribute('data-usernm') || "";
+		    document.getElementById('userNm').value = userNm;
+		});
+	
+
+		// 2) 페이지 로드시 자동 호출 (요양기관 세팅되어 있는 경우만)
+		$(document).ready(function() {
+		    const hospCd1 = $('#hospCd1').val();
+		    if (hospCd1 && hospCd1.trim() !== '') {
+		        loadUserList();
+		    }
+		});
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
-	    });		
+	    });	
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

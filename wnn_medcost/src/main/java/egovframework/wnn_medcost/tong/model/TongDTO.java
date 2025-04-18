@@ -135,8 +135,29 @@ public class TongDTO {
     private String avgCurr ;     
     private String amtDiff ; 
     private String percentVsPrev ;
+    private String medType ; //의과,치과,한방(0,1,2,3) 
+    private String jrType  ; //정액/행위(0,1,2) 
+    private String amtType ; //총액/청구액(1,2)
     
-    public String getAvgPrev() {
+    public String getMedType() {
+		return medType;
+	}
+	public void setMedType(String medType) {
+		this.medType = medType;
+	}
+	public String getJrType() {
+		return jrType;
+	}
+	public void setJrType(String jrType) {
+		this.jrType = jrType;
+	}
+	public String getAmtType() {
+		return amtType;
+	}
+	public void setAmtType(String amtType) {
+		this.amtType = amtType;
+	}
+	public String getAvgPrev() {
 		return avgPrev;
 	}
 	public void setAvgPrev(String avgPrev) {

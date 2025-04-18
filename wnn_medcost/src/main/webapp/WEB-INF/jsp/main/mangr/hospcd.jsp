@@ -51,23 +51,23 @@
 										data-placement="top" title="" onClick="fn_re_load()">
 										재조회. <i class="fas fa-binoculars"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
 										data-placement="top" title="신규 Data 입력"
 										onClick="modal_Open('I')">
 										입력. <i class="far fa-edit"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-update" data-toggle="tooltip"
 										data-placement="top" title="선택 Data 수정"
 										onClick="modal_Open('U')">
 										수정. <i class="far fa-save"></i>
 									</button>
 									<!-- <button class="btn btn-outline-dark d-none">   -->
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-toggle="tooltip" data-placement="top" title="선택 Data 삭제"
 										onClick="modal_Open('D')">
 										삭제. <i class="far fa-trash-alt"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-toggle="tooltip" data-placement="top" title="체크 Data 삭제"
 										onClick="fn_findchk()">
 										검색삭제. <i class="far fa-calendar-check"></i>
@@ -106,17 +106,17 @@
 								class="d-flex justify-content-between align-items-center border p-2 rounded">
 								<h6 class="mb-1 fw-bold text-dark">계약정보</h6>
 								<div>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
 										data-placement="top" title="신규 Data 입력"
 										onClick="hc_modal_Open('I')">
 										입력. <i class="far fa-edit"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-update" data-toggle="tooltip"
 										data-placement="top" title="선택 Data 수정"
 										onClick="hc_modal_Open('U')">
 										수정. <i class="far fa-save"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-placement="top" title="선택 Data 삭제"
 										onClick="hc_modal_Open('D')">
 										삭제. <i class="far fa-trash-alt"></i>
@@ -132,17 +132,17 @@
 								class="d-flex justify-content-between align-items-center border p-2 rounded">
 								<h6 class="mb-1 fw-bold text-dark">사용자정보</h6>
 								<div>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
 										data-placement="top" title="신규 Data 입력"
 										onClick="hu_modal_Open('I')">
 										입력. <i class="far fa-edit"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-update" data-toggle="tooltip"
 										data-placement="top" title="선택 Data 수정"
 										onClick="hu_modal_Open('U')">
 										수정. <i class="far fa-save"></i>
 									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
+									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-placement="top" title="선택 Data 삭제"
 										onClick="hu_modal_Open('D')">
 										삭제. <i class="far fa-trash-alt"></i>
@@ -200,19 +200,19 @@
 				<div class="form-row">
 					<div class="col-sm-12 mb-2" style="text-align: right;">
 						<button id="form_btn_new" type="submit"
-							class="btn btn-outline-dark" onClick="fn_Potion()">
+							class="btn btn-outline-dark btn-delete" onClick="fn_Potion()">
 							센터. <i class="far fa-object-group"></i>
 						</button>
 						<button id="form_btn_ins" type="submit"
-							class="btn btn-outline-info" onClick="fn_Insert()">
+							class="btn btn-outline-info btn-insert" onClick="fn_Insert()">
 							입력. <i class="far fa-edit"></i>
 						</button>
 						<button id="form_btn_udt" type="submit"
-							class="btn btn-outline-success" onClick="fn_Update()">
+							class="btn btn-outline-success btn-update" onClick="fn_Update()">
 							수정. <i class="far fa-save"></i>
 						</button>
 						<button id="form_btn_del" type="submit"
-							class="btn btn-outline-danger" onClick="fn_Delete()">
+							class="btn btn-outline-danger btn-delete" onClick="fn_Delete()">
 							삭제. <i class="far fa-trash-alt"></i>
 						</button>
 						<button type="button" class="btn btn-outline-dark"
@@ -404,15 +404,15 @@
 				<div class="form-row">
 					<div class="col-sm-12 mb-2" style="text-align: right;">
 						<button id="hc_form_btn_ins" type="submit"
-							class="btn btn-outline-info" onClick="hc_fn_Insert()">
+							class="btn btn-outline-info btn-insert" onClick="hc_fn_Insert()">
 							입력. <i class="far fa-edit"></i>
 						</button>
 						<button id="hc_form_btn_udt" type="submit"
-							class="btn btn-outline-success" onClick="hc_fn_Update()">
+							class="btn btn-outline-success btn-update" onClick="hc_fn_Update()">
 							수정. <i class="far fa-save"></i>
 						</button>
 						<button id="hc_form_btn_del" type="submit"
-							class="btn btn-outline-danger" onClick="hc_fn_Delete()">
+							class="btn btn-outline-danger btn-delete" onClick="hc_fn_Delete()">
 							삭제. <i class="far fa-trash-alt"></i>
 						</button>
 						<button type="button" class="btn btn-outline-dark"
@@ -547,15 +547,15 @@
 				<div class="form-row">
 					<div class="col-sm-12 mb-2" style="text-align: right;">
 						<button id="hu_form_btn_ins" type="submit"
-							class="btn btn-outline-info" onClick="hu_fn_Insert()">
+							class="btn btn-outline-info btn-insert" onClick="hu_fn_Insert()">
 							입력. <i class="far fa-edit"></i>
 						</button>
 						<button id="hu_form_btn_udt" type="submit"
-							class="btn btn-outline-success" onClick="hu_fn_Update()">
+							class="btn btn-outline-success btn-update" onClick="hu_fn_Update()">
 							수정. <i class="far fa-save"></i>
 						</button>
 						<button id="hu_form_btn_del" type="submit"
-							class="btn btn-outline-danger" onClick="hu_fn_Delete()">
+							class="btn btn-outline-danger btn-delete" onClick="hu_fn_Delete()">
 							삭제. <i class="far fa-trash-alt"></i>
 						</button>
 						<button type="button" class="btn btn-outline-dark"
@@ -971,7 +971,7 @@
 		            modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
 			if (flag !== 'I'){ 
@@ -2289,7 +2289,7 @@
 		            hc_modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(hc_inputZone.id);
 		 // hospUuidone 값이 있는지 확인 후 설정
 		    if (flag == 'I'){
@@ -2878,7 +2878,7 @@
 		            hu_modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(hu_inputZone.id);
 		 // hospUuidone 값이 있는지 확인 후 설정
 		    if (flag == 'I'){
@@ -3775,6 +3775,11 @@
 	function hu_modalClose() {
 		$("#" + hu_modalName.id).modal('hide');
 	}		
+	//권한조건체크 applyAuthControl.js
+    document.addEventListener("DOMContentLoaded", function() {
+        applyAuthControl();
+    });
+
 	</script>
 <!-- ============================================================== -->
 <!-- 기타 정보 End -->

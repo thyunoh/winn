@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.wnn_medcost.tong.mapper.TongMapper">
+    <!-- 기간별 건수와 진료비 추이  '6' 건강에서는 약국처방조제/ 산재한방통원-->
 	<select  id="tong00List" parameterType="TongDTO" resultType="TongDTO"><![CDATA[
 	 	SELECT 
 		    A.HOSP_CD ,
 		    A.DATE_YM        AS dateYm,
 		    COUNT(*)         AS totalCount,
 		    SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-			                                                   + IFNULL(B.VET_AMT,0))                AS totalAmt,
+			                                                     + IFNULL(B.VET_AMT,0))              AS totalAmt,
 		    TRUNCATE(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.VET_AMT,0) 
 			                                   + IFNULL(B.NON100_CLAIM,0)) /COUNT(*), 0)             AS totalAvgAmt,
-		    SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN 1 ELSE 0 END)                    AS ipCount,
-		    SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN 
+		    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                AS ipCount,
+		    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 
                         IFNULL(B.CLAIM_AMT,0 + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 		                                       + IFNULL(B.VET_AMT,0)) ELSE 0 END)                    AS ipAmt,
 			COALESCE(
 			    TRUNCATE(
-			        SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN 
+			        SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 
 			              IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 							                    + IFNULL(B.VET_AMT,0) ELSE 0 END) /
-			        NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN 1 ELSE 0 END), 0),
+			        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 			    0),
 			0)                                                                                        AS ipAvgAmt ,
-		    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') THEN 1 ELSE 0 END)                             AS opCount,
-		    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') THEN 
+		    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                     AS opCount,
+		    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 
 		                  IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 								                + IFNULL(B.VET_AMT,0) ELSE 0 END)                     AS opAmt,
 			COALESCE(
 			    TRUNCATE(
-			        SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') THEN 
+			        SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 
 			              IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0)
 							                    + IFNULL(B.VET_AMT,0)  ELSE 0 END) /
-			        NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') THEN 1 ELSE 0 END), 0),
+			        NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 			    0), 
 			0)                                                                                        AS opAvgAmt
 		FROM  TBL_CHUNG_MST A
@@ -40,12 +41,21 @@
 		WHERE 1=1
 		   AND A.HOSP_CD = #{hospCd}  
 	    ]]>	  
-		  <if test="startMonth != null and startMonth != ''">
+		<if test="startMonth != null and startMonth != ''">
 		    AND A.DATE_YM &gt;= #{startMonth}
-		  </if>
-		  <if test="endMonth != null and endMonth != ''">
+		</if>
+		<if test="endMonth != null and endMonth != ''">
 		    AND A.DATE_YM &lt;= #{endMonth}
-		  </if>
+		</if>
+		<if test="medType == '1' "> <!-- 의과 -->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test="medType == '2' "> <!-- 치과 -->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test="medType == '3' "> <!-- 한방 -->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
 		<![CDATA[
 		GROUP BY A.HOSP_CD , A.DATE_YM
 		ORDER BY A.HOSP_CD , A.DATE_YM
@@ -94,25 +104,25 @@
 		    SELECT A.DATE_YM                                                                                              AS dateYm,
 		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt ,
 		           COUNT(*)                                                                                               AS claimCount ,
-		           SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN 1 ELSE 0 END)                                  AS ipCount ,
-                   SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') 
+		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
                                     THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
                                                                                            + IFNULL(B.VET_AMT,0)) 
                    ELSE 0 END)                                                                                            AS ipTotAmt	,
-                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN B.PAT_ID END)                       AS iuniqPatients,		           
-                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') THEN 1 ELSE 0 END)                                          AS opCount ,
-                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') 
+                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
                             THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
                                                                                    + IFNULL(B.VET_AMT,0)) 
                    ELSE 0 END)                                                                                           AS opTotAmt ,
-			       SUM( CASE A.TREAT_TYPE IN('2','4','9') WHEN ( 
+			       SUM( CASE A.TREAT_TYPE IN('2','4','9','H','6') WHEN ( 
 			                SELECT MIN(CODE_NO) FROM TBL_JINORD_MST C
 			                WHERE C.ITEM_NO = '01'          AND C.HOSP_CD = B.HOSP_CD 
 			                  AND C.CLAIM_NO = B.CLAIM_NO   AND C.BILL_SEQ = B.BILL_SEQ
 			            ) = '01' THEN 1
 			            ELSE 0  END
 			       )                                                                                                     AS first_jin,
-			       SUM(CASE A.TREAT_TYPE IN('2','4','9') WHEN (
+			       SUM(CASE A.TREAT_TYPE IN('2','4','9','H','6') WHEN (
 			                SELECT MIN(CODE_NO) FROM TBL_JINORD_MST C
 			                WHERE C.ITEM_NO = '01'          AND C.HOSP_CD  = B.HOSP_CD 
 			                  AND C.CLAIM_NO = B.CLAIM_NO   AND C.BILL_SEQ = B.BILL_SEQ
@@ -135,25 +145,25 @@
 		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 		                                                                + IFNULL(B.VET_AMT,0))     AS totalAmt ,
 		           COUNT(*)                                                                        AS claimCount ,
-		           SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN 1 ELSE 0 END)           AS ipCount ,
-                   SUM(CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') 
+		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)       AS ipCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
                                     THEN  (IFNULL(B.CLAIM_AMT,0)   + IFNULL(B.DISABLED_AMT,0) 
                                         + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) 
-                   ELSE 0 END)                                                                     AS ipTotAmt	,
-                  COUNT(DISTINCT CASE WHEN A.TREAT_TYPE IN('1','3','5','8','A') THEN B.PAT_ID END) AS iuniqPatients  ,
-                  SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') THEN 1 ELSE 0 END)                    AS opCount ,
-                  SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9') 
+                   ELSE 0 END)                                                                             AS ipTotAmt	,
+                  COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)     AS iuniqPatients  ,
+                  SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                    AS opCount ,
+                  SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
                                     THEN (IFNULL(B.CLAIM_AMT,0)     + IFNULL(B.DISABLED_AMT,0) 
                                         + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0)) 
                   ELSE 0 END)                                                                      AS opTotAmt,
-			      SUM( CASE A.TREAT_TYPE IN('2','4','9') WHEN (
+			      SUM( CASE A.TREAT_TYPE IN('2','4','9','H','6') WHEN (
 			                SELECT MIN(CODE_NO)  FROM TBL_JINORD_MST C
 			                WHERE C.ITEM_NO = '01'          AND C.HOSP_CD = B.HOSP_CD 
 			                  AND C.CLAIM_NO = B.CLAIM_NO   AND C.BILL_SEQ = B.BILL_SEQ
 			            ) = '01' THEN 1
 			            ELSE 0  END
 			       )                                                                               AS first_jin,
-			       SUM(CASE A.TREAT_TYPE IN('2','4','9') WHEN (
+			       SUM(CASE A.TREAT_TYPE IN('2','4','9','H','6') WHEN (
 			                SELECT MIN(CODE_NO)  FROM TBL_JINORD_MST C
 			                WHERE C.ITEM_NO = '01'          AND C.HOSP_CD  = B.HOSP_CD 
 			                  AND C.CLAIM_NO = B.CLAIM_NO   AND C.BILL_SEQ = B.BILL_SEQ
@@ -196,10 +206,10 @@
 		]]>
 		<choose>
 		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE IN ('1','3','5','8','A')
+		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 		  </when>
 		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9')
+		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
 		  </otherwise>
 		</choose>
 		<![CDATA[
@@ -318,12 +328,12 @@
 	  <choose>
 	    <when test='ipwe == "I"'>
 	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('1','3','5','8','A')
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 	      ]]>
 	    </when>
 	    <otherwise>
 	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('2','4','9')
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	      ]]>
 	    </otherwise>
 	  </choose>
@@ -350,12 +360,12 @@
        <choose>
 	    <when test='ipwe == "I"'>
 	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('1','3','5','8','A')
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 	      ]]>
 	    </when>
 	    <otherwise>
 	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('2','4','9')
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	      ]]>
 	    </otherwise>
 	  </choose> 
@@ -402,12 +412,12 @@
        <choose>
 	    <when test='ipwe == "I"'>
 	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('1','3','5','8','A')
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 	      ]]>
 	    </when>
 	    <otherwise>
 	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('2','4','9')
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	      ]]>
 	    </otherwise>
 	  </choose>   
@@ -440,10 +450,10 @@
 		]]>
 		<choose>
 		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE IN ('1','3','5','8','A')
+		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 		  </when>
 		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9')
+		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
 		  </otherwise>
 		</choose>
 		<![CDATA[
@@ -493,10 +503,10 @@
 		]]>
 		<choose>
 		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE IN ('1','3','5','8','A')
+		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 		  </when>
 		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9')
+		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
 		  </otherwise>
 		</choose>
 		<![CDATA[
@@ -560,10 +570,10 @@
 		]]>
         <choose>
 		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE IN ('1','3','5','8','A')
+		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 		  </when>
 		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9')
+		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
 		  </otherwise>
 		</choose>
 		<![CDATA[

@@ -126,9 +126,6 @@
 											    <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
 											</li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/user/userauthcd.do">권한관리</a>
-                                            </li>
-                                            <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/mbrcd.do">회원가입현황</a>
                                             </li>
                                             <li class="nav-item">
@@ -144,10 +141,13 @@
                                     </div>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" 
+                                    <a class="nav-item nav-link" id = "wnnauth1"  href="#" data-toggle="collapse" aria-expanded="false" 
                                                                 data-target="#base-info-4" aria-controls="base-info-4">정보운영관리</a>
                                     <div id="base-info-4" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/user/wnnauthcd.do">위너넷권한관리</a>
+                                            </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/mangr/noticd.do">공지사항</a>
                                             </li>
@@ -324,11 +324,15 @@ window.addEventListener("DOMContentLoaded", function() {
         hosp_conact();
     }
 });
-// 병원계약정보 위너넷만 메뉴가 생성됨   
+// 위너넷만 메뉴가 생성됨   
 function hosp_conact() {
-    const menuItem = document.getElementById("hospcont");
-    if (menuItem) {
-        menuItem.style.display = "none";  // 공간 없이 완전히 제거
+    const hospcont = document.getElementById("hospcont"); 
+    const wnnauth1 = document.getElementById("wnnauth1");
+    if (hospcont) {
+    	hospcont.style.display = "none";  // 계약정보  
+    }
+    if (wnnauth1) {
+    	wnnauth1.style.display = "none";  // 운영정보 
     }
 }
 </script>		

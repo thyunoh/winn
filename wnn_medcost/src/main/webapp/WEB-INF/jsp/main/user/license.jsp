@@ -43,26 +43,14 @@
                                     <div class="col-sm-6">                                    
                                          <div class="btn-group ml-auto">
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
-                                            <button id="btnInsert"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
-                                            <button id="btnUpdate"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
-                                            <button id="btnDelete"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button id="btnSearchDelete"  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button id="btnInsert"  class="btn btn-outline-dark btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
+                                            <button id="btnUpdate"  class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
+                                            <button id="btnDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
+                                            <button id="btnSearchDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
-                            	
-                                <!-- 
-                              	display: 기본 DataTables 스타일을 적용합니다.
-								nowrap: 셀 내용이 한 줄로 표시되도록 하며, 필요한 경우 가로 스크롤을 생성합니다.
-								stripe: 짝수/홀수 행에 다른 배경색을 적용하여 가독성을 높입니다.
-								hover: 마우스를 올린 행의 배경색을 변경하여 강조합니다.
-								compact: 테이블의 패딩을 줄여 더 조밀한 레이아웃을 만듭니다.
-								cell-border: 셀 주위에 테두리를 추가합니다.
-								row-border: 행 사이에 테두리를 추가합니다.
-								order-column: 정렬된 열을 시각적으로 강조합니다.
-								responsive: 반응형 디자인을 적용하여 작은 화면에서도 잘 보이도록 합니다.
-                                -->
 								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
 								        
@@ -96,24 +84,19 @@
 						<div class="form-row">
 							<div class="col-sm-12 mb-2" style="text-align: right;">
 								<button id="form_btn_new" type="submit"
-									class="btn btn-outline-dark" onClick="fn_Potion()">
-									센터. <i class="far fa-object-group"></i>
+									class="btn btn-outline-dark" onClick="fn_Potion()">센터. <i class="far fa-object-group"></i>
 								</button>
 								<button id="form_btn_ins" type="submit"
-									class="btn btn-outline-info" onClick="fn_Insert()">
-									입력. <i class="far fa-edit"></i>
+									class="btn btn-outline-info btn-insert"    onClick="fn_Insert()">입력. <i class="far fa-edit"></i>
 								</button>
 								<button id="form_btn_udt" type="submit"
-									class="btn btn-outline-success" onClick="fn_Update()">
-									수정. <i class="far fa-save"></i>
+									class="btn btn-outline-success btn-update" onClick="fn_Update()">수정. <i class="far fa-save"></i>
 								</button>
 								<button id="form_btn_del" type="submit"
-									class="btn btn-outline-danger" onClick="fn_Delete()">
-									삭제. <i class="far fa-trash-alt"></i>
+									class="btn btn-outline-danger btn-delete"  onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i>
 								</button>
 								<button type="button" class="btn btn-outline-dark"
-									data-dismiss="modal" onClick="closeMainModal()">  
-									닫기 <i class="fas fa-times"></i>
+									data-dismiss="modal" onClick="closeMainModal()">닫기 <i class="fas fa-times"></i>
 								</button>
 							</div>
 						</div>
@@ -509,7 +492,7 @@
 		            modalHead.innerText  = "삭제 모드입니다" ;
 		            break;
 		    }    
-			
+		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전
 		    formValClear(inputZone.id);
 		    
 			if (flag !== 'I'){ 
@@ -1585,6 +1568,11 @@
 		function triggerFind() {
 		    fn_FindData();
 		}		
+		//권한조건체크 applyAuthControl.js
+	    document.addEventListener("DOMContentLoaded", function() {
+	        applyAuthControl();
+	    });
+
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

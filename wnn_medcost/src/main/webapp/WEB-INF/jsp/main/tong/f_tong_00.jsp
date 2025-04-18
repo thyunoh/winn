@@ -142,7 +142,7 @@
 			    <option value="0" selected>전체</option>
 			    <option value="1">의과</option>
 			    <option value="2">치과</option>
-			    <option value="9">한방</option>
+			    <option value="3">한방</option>
 		    </select>      
 	    </div>
  	   <span for="jrType">행위</span>
@@ -206,9 +206,9 @@
   }
 
   function filterData() {
-	  const start = document.getElementById('startMonth').value;
-	  const end   = document.getElementById('endMonth').value;
-
+	  const start     = document.getElementById('startMonth').value;
+	  const end       = document.getElementById('endMonth').value;
+	  const medType   = document.getElementById('medType').value;
 	  if (!start || !end) {
 	    alert("시작월과 종료월을 모두 선택해주세요.");
 	    return;
@@ -223,7 +223,7 @@
 	  $.ajax({
 		type: 'post',
 		url: '/tong/t_tong00List.do',
-		data: { hospCd : s_hospid , startMonth: formattedStart, endMonth: formattedEnd },
+		data: { hospCd : s_hospid , startMonth: formattedStart, endMonth: formattedEnd  , medType : medType },
 	    dataType: "json",
 	    success: function(data) {
 	      const labels = [];  
