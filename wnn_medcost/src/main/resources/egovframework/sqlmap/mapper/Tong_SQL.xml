@@ -47,13 +47,13 @@
 		<if test="endMonth != null and endMonth != ''">
 		    AND A.DATE_YM &lt;= #{endMonth}
 		</if>
-		<if test="medType == '1' "> <!-- 의과 -->
+		<if test='medType == "1" '> <!-- 의과 -->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
-		<if test="medType == '2' "> <!-- 치과 -->
+		<if test='medType == "2" '> <!-- 치과 -->
 		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
 		</if>
-		<if test="medType == '3' "> <!-- 한방 -->
+		<if test='medType == "3" '> <!-- 한방 -->
 		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
 		</if>
 		<![CDATA[
