@@ -132,13 +132,16 @@
 
     <!-- 검색 조건 -->
     <div class="filter-box">
-      <span for="startMonth">시작년월</span>
-      <input type="month" id="startMonth" value="2025-01">
-      <span for="endMonth">종료년월</span>
-      <input type="month" id="endMonth"   value="2025-03">
+		<span for="startMonth">시작년월</span>
+		<input type="month" id="startMonth" value="2025-01" 
+		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
+		<span>~</span>
+		<span for="endMonth">종료년월</span>
+		<input type="month" id="endMonth" value="2025-02" 
+		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
  	   <span for="medType">진료</span>
 	   <div style="width: 80px;">
-			<select class="custom-select" id="medType">
+			<select class="custom-select" id="medType" style= "font-size:14px ;">
 			    <option value="0" selected>전체</option>
 			    <option value="1">의과</option>
 			    <option value="2">치과</option>
@@ -146,16 +149,16 @@
 		    </select>      
 	    </div>
  	   <span for="jrType">행위</span>
-	   <div style="width: 80px; font-size:10px ;">
-			<select class="custom-select" id="jrType">
+	   <div style="width: 80px;">
+			<select class="custom-select" id="jrType" style= "font-size:14px ;">
 			    <option value="0" selected>전체</option>
 			    <option value="1">정액</option>
 			    <option value="2">행위</option>
 		    </select>      
 	    </div>
 	   <span for="amtType">금액</span>
- 	   <div style="width: 80px;">
-			<select class="custom-select" id="amtType">
+ 	   <div style="width: 90px;">
+			<select class="custom-select" id="amtType" style= "font-size:14px ;">
 			    <option value="1" selected>총액</option>
 			    <option value="2">청구액</option>
 		    </select>      
@@ -209,6 +212,8 @@
 	  const start     = document.getElementById('startMonth').value;
 	  const end       = document.getElementById('endMonth').value;
 	  const medType   = document.getElementById('medType').value;
+	  const jrType    = document.getElementById('jrType').value;
+	  const amtType   = document.getElementById('amtType').value;
 	  if (!start || !end) {
 	    alert("시작월과 종료월을 모두 선택해주세요.");
 	    return;
@@ -223,7 +228,8 @@
 	  $.ajax({
 		type: 'post',
 		url: '/tong/t_tong00List.do',
-		data: { hospCd : s_hospid , startMonth: formattedStart, endMonth: formattedEnd  , medType : medType },
+		data: { hospCd : s_hospid , startMonth: formattedStart, endMonth: formattedEnd  
+			  , medType : medType , jrType : jrType , amtType : amtType },
 	    dataType: "json",
 	    success: function(data) {
 	      const labels = [];  

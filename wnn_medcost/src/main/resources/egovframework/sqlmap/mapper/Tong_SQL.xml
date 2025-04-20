@@ -3,43 +3,92 @@
 <mapper namespace="egovframework.wnn_medcost.tong.mapper.TongMapper">
     <!-- 기간별 건수와 진료비 추이  '6' 건강에서는 약국처방조제/ 산재한방통원-->
 	<select  id="tong00List" parameterType="TongDTO" resultType="TongDTO"><![CDATA[
-	 	SELECT 
-		    A.HOSP_CD ,
-		    A.DATE_YM        AS dateYm,
-		    COUNT(*)         AS totalCount,
-		    SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-			                                                     + IFNULL(B.VET_AMT,0))              AS totalAmt,
-		    TRUNCATE(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.VET_AMT,0) 
-			                                   + IFNULL(B.NON100_CLAIM,0)) /COUNT(*), 0)             AS totalAvgAmt,
-		    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                AS ipCount,
-		    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 
-                        IFNULL(B.CLAIM_AMT,0 + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                       + IFNULL(B.VET_AMT,0)) ELSE 0 END)                    AS ipAmt,
-			COALESCE(
-			    TRUNCATE(
-			        SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 
-			              IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-							                    + IFNULL(B.VET_AMT,0) ELSE 0 END) /
-			        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
-			    0),
-			0)                                                                                        AS ipAvgAmt ,
-		    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                     AS opCount,
-		    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 
-		                  IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-								                + IFNULL(B.VET_AMT,0) ELSE 0 END)                     AS opAmt,
-			COALESCE(
-			    TRUNCATE(
-			        SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 
-			              IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0)
-							                    + IFNULL(B.VET_AMT,0)  ELSE 0 END) /
-			        NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
-			    0), 
-			0)                                                                                        AS opAvgAmt
-		FROM  TBL_CHUNG_MST A
-		 JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO  = B.CLAIM_NO
-		                      AND A.HOSP_CD   = B.HOSP_CD   
-		WHERE 1=1
-		   AND A.HOSP_CD = #{hospCd}  
+	    SELECT 
+	        A.HOSP_CD,
+	        A.DATE_YM AS dateYm,
+	        COUNT(*) AS totalCount,
+	        ]]>
+	        <!-- 전체 합계 -->
+	        <choose>
+	            <when test='amtType == "2"'> <!-- 청구액 -->
+	                SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+	                                                                     + IFNULL(B.VET_AMT,0)) AS totalAmt,
+	                TRUNCATE(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) 
+	                        + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) / COUNT(*), 0)    AS totalAvgAmt,
+	            </when>
+	            <otherwise> <!-- 총액 -->
+	                SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                          AS totalAmt,
+	                TRUNCATE(SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) / COUNT(*), 0)  AS totalAvgAmt,
+	            </otherwise>
+	        </choose>
+	
+	        <!-- 입원 관련 -->
+	        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END)         AS ipCount,
+	
+	        <choose>
+	            <when test='amtType == "2"'> <!-- 청구액 -->
+	                SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
+	                    IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                ELSE 0 END)                                                                AS ipAmt,
+	                COALESCE(
+	                    TRUNCATE(
+	                        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
+	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                        ELSE 0 END)
+	                        /
+	                        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
+	                    0), 0)                                                                AS ipAvgAmt,
+	            </when>
+	            <otherwise> <!-- 총액 -->
+	                SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
+	                    IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                ELSE 0 END)                                                               AS ipAmt,
+	                COALESCE(
+	                    TRUNCATE(
+	                        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
+	                            IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                        ELSE 0 END)
+	                        /
+	                        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
+	                    0), 0)                                                                AS ipAvgAmt,
+	            </otherwise>
+	        </choose>
+	
+	        <!-- 외래 관련 -->
+	        SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN 1 ELSE 0 END) AS opCount,
+	
+	        <choose>
+	            <when test='amtType == "2"'> <!-- 청구액 -->
+	                SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
+	                    IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                ELSE 0 END)                                                               AS opAmt,
+	                COALESCE(
+	                    TRUNCATE(
+	                        SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
+	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                        ELSE 0 END)
+	                        / NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
+	                    0), 0)                                                               AS opAvgAmt
+	            </when>
+	            <otherwise>  <!-- 총액 -->
+	                SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
+	                    IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                ELSE 0 END)                                                              AS opAmt,
+	                COALESCE(
+	                    TRUNCATE(
+	                        SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
+	                            IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                        ELSE 0 END) 
+	                        / NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
+	                    0), 0)                                                               AS opAvgAmt
+	            </otherwise>
+	        </choose>
+	    <![CDATA[
+		    FROM TBL_CHUNG_MST A
+		    JOIN TBL_MYOUNG_MST B 
+		      ON A.CLAIM_NO = B.CLAIM_NO
+		     AND A.HOSP_CD  = B.HOSP_CD
+		    WHERE A.HOSP_CD = #{hospCd} 
 	    ]]>	  
 		<if test="startMonth != null and startMonth != ''">
 		    AND A.DATE_YM &gt;= #{startMonth}
@@ -47,14 +96,20 @@
 		<if test="endMonth != null and endMonth != ''">
 		    AND A.DATE_YM &lt;= #{endMonth}
 		</if>
-		<if test='medType == "1" '> <!-- 의과 -->
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
-		<if test='medType == "2" '> <!-- 치과 -->
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
 		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
 		</if>
-		<if test='medType == "3" '> <!-- 한방 -->
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
 		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
 		</if>
 		<![CDATA[
 		GROUP BY A.HOSP_CD , A.DATE_YM
@@ -102,6 +157,10 @@
             prev.return_jin    as oReturnCasesPrev
 		FROM (
 		    SELECT A.DATE_YM                                                                                              AS dateYm,
+		    ]]>
+	        <!-- 전체 합계 -->
+	        <choose>
+	            <when test='amtType == "2"'> <!-- 청구액 -->
 		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt ,
 		           COUNT(*)                                                                                               AS claimCount ,
 		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
@@ -115,6 +174,22 @@
                             THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
                                                                                    + IFNULL(B.VET_AMT,0)) 
                    ELSE 0 END)                                                                                           AS opTotAmt ,
+               </when>
+	            <otherwise> <!-- 총액 -->
+		           SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                                     AS totalAmt ,
+		           COUNT(*)                                                                                               AS claimCount ,
+		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
+                                    THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
+                   ELSE 0 END)                                                                                            AS ipTotAmt	,
+                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
+                                   THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
+                   ELSE 0 END)                                                                                            AS opTotAmt ,
+	            </otherwise>
+	        </choose>
+	        <![CDATA[		   
 			       SUM( CASE A.TREAT_TYPE IN('2','4','9','H','6') WHEN ( 
 			                SELECT MIN(CODE_NO) FROM TBL_JINORD_MST C
 			                WHERE C.ITEM_NO = '01'          AND C.HOSP_CD = B.HOSP_CD 
@@ -138,10 +213,30 @@
 		                         AND A.HOSP_CD  = B.HOSP_CD  
 		    WHERE   A.HOSP_CD = #{hospCd}  
 		       AND  A.DATE_YM = #{endMonth} 
+		    ]]>   
+			<if test='medType == "1" '> <!-- 의과 산재조건-->
+			    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+			</if>
+			<if test='medType == "2" '> <!-- 치과 산재조건-->
+			    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+			</if>
+			<if test='medType == "3" '> <!-- 한방 산재조건-->
+			    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+			</if>
+			<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+			    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+			</if>		
+			<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+			    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+			</if>
+			<![CDATA[
 		    GROUP BY A.DATE_YM
 		) curr
 		LEFT JOIN (
 		    SELECT A.DATE_YM                                                                       AS dateYm,
+		    ]]>
+	        <choose>
+	            <when test='amtType == "2"'> <!-- 청구액 -->		    
 		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 		                                                                + IFNULL(B.VET_AMT,0))     AS totalAmt ,
 		           COUNT(*)                                                                        AS claimCount ,
@@ -155,7 +250,23 @@
                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
                                     THEN (IFNULL(B.CLAIM_AMT,0)     + IFNULL(B.DISABLED_AMT,0) 
                                         + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0)) 
-                  ELSE 0 END)                                                                      AS opTotAmt,
+                  ELSE 0 END)                                                                              AS opTotAmt,
+                </when>
+	            <otherwise> <!-- 총액 -->
+		           SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                      AS totalAmt ,
+		           COUNT(*)                                                                                AS claimCount ,
+		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)               AS ipCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
+                                    THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
+                   ELSE 0 END)                                                                             AS ipTotAmt	,
+                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)    AS iuniqPatients,		           
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                   AS opCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
+                                   THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
+                   ELSE 0 END)                                                                             AS opTotAmt ,
+	            </otherwise>
+	        </choose>
+	        <![CDATA[	                          
 			      SUM( CASE A.TREAT_TYPE IN('2','4','9','H','6') WHEN (
 			                SELECT MIN(CODE_NO)  FROM TBL_JINORD_MST C
 			                WHERE C.ITEM_NO = '01'          AND C.HOSP_CD = B.HOSP_CD 
@@ -178,6 +289,23 @@
 		    JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO
 		                         AND A.HOSP_CD  = B.HOSP_CD  
 		    WHERE  A.HOSP_CD = #{hospCd}
+		    ]]>   
+			<if test='medType == "1" '> <!-- 의과 산재조건-->
+			    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+			</if>
+			<if test='medType == "2" '> <!-- 치과 산재조건-->
+			    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+			</if>
+			<if test='medType == "3" '> <!-- 한방 산재조건-->
+			    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+			</if>
+			<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+			    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+			</if>		
+			<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+			    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+			</if>
+			<![CDATA[		    
 		      AND  A.DATE_YM = DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{endMonth}, '01'), '%Y%m%d'),INTERVAL 1 MONTH),'%Y%m')
 		    GROUP BY A.DATE_YM
 		) prev
@@ -185,13 +313,22 @@
     ]]>
     </select>  
     <!-- 총진료비 과별 건수당 진료비  -->
-	<select id="tong02List" parameterType="TongDTO" resultType="TongDTO">
-	<![CDATA[
+	<select id="tong02List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
 		WITH BASE_DATA AS (
 		    SELECT  
 		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,  
-		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
-		        COUNT(*)                                                                                               AS claimCount
+		    ]]>
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->
+		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
+		          COUNT(*)                                                                                               AS claimCount
+		      </when>
+			  <otherwise> <!-- 총액 -->
+                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                                                    AS totalAmt,
+		          COUNT(*)                                                                                               AS claimCount			    
+			  </otherwise>
+		    </choose>
+		    <![CDATA[
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B 
 		      ON  A.CLAIM_NO = B.CLAIM_NO 
@@ -204,14 +341,28 @@
 		    WHERE A.HOSP_CD  = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		]]>
-		<choose>
-		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-		  </when>
-		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
-		  </otherwise>
-		</choose>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
+
 		<![CDATA[
 		    GROUP BY MED_FIELD
 		),
@@ -324,52 +475,82 @@
 		     AND SM.MAX_START_DT <= CONCAT(A.DATE_YM, '01')
 		    WHERE A.HOSP_CD       = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-		  ]]>
-	  <choose>
-	    <when test='ipwe == "I"'>
-	      <![CDATA[
-	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-	      ]]>
-	    </when>
-	    <otherwise>
-	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
-	      ]]>
-	    </otherwise>
-	  </choose>
-	  <![CDATA[
+		      AND IFNULL(C.AMOUNT,0) > 0
+	   ]]>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
+
+		<![CDATA[
 	      GROUP BY C.ITEM_NO, C.CODE_NO WITH ROLLUP
 		) X
 		WHERE NOT (ITEM_NO != '00' AND CODE_NO = '00')
 		ORDER BY percentOfTotal DESC, ITEM_NO, CODE_NO
 	  ]]>
 	</select>
- 	<select id="tong04List" parameterType="TongDTO" resultType="TongDTO">     
- 	<![CDATA[
+ 	<select id="tong04List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[    
 		 WITH TOTAL_SUMMARY AS (
 		    SELECT 
+	    ]]>
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->		    
 		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 		                                                             + IFNULL(B.VET_AMT,0)) AS total_amt_all,
 		        COUNT(*)                                                                    AS total_claims_all
+             </when>
+              <otherwise> <!-- 총액 -->
+                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                       AS total_amt_all,
+		          COUNT(*)                                                                  AS total_claims_all
+			  </otherwise>
+		   </choose>
+	    <![CDATA[     	   
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B 
 		      ON A.CLAIM_NO = B.CLAIM_NO AND A.HOSP_CD = B.HOSP_CD
 		WHERE A.HOSP_CD = #{hospCd}
           AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-       ]]>
-       <choose>
-	    <when test='ipwe == "I"'>
-	      <![CDATA[
-	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-	      ]]>
-	    </when>
-	    <otherwise>
-	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
-	      ]]>
-	    </otherwise>
-	  </choose> 
-	  <![CDATA[
+	   ]]>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
+
+		<![CDATA[
 		)
 	  ]]>
 	  <![CDATA[	
@@ -381,20 +562,36 @@
 		        WHERE DIAG_CODE = C.DIAG_CODE
 		        LIMIT 1
 		    ), '') AS DIAG_NAME,
-		    
-		    SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                         + IFNULL(B.VET_AMT,0))         AS totalAmt,
-		    COUNT(*)                                                                            AS claimCount,
-		    COUNT(DISTINCT B.PAT_ID)                                                            AS uniqPatients,
-		
-		    FLOOR(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                      + IFNULL(B.VET_AMT,0)) / COUNT(*))                AS amtPerClaim,
-		    FLOOR(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                      + IFNULL(B.VET_AMT,0)) / COUNT(DISTINCT B.PAT_ID)) AS amtPerPatient,
-		
-		    ROUND(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0))  
-		                                                       / MAX(ts.total_amt_all) * 100, 1) AS rateOfTotalAmt,
-		
+		    ]]>
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->		    
+			    SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+			                                                         + IFNULL(B.VET_AMT,0))          AS totalAmt,
+			    COUNT(*)                                                                             AS claimCount,
+			    
+			    COUNT(DISTINCT B.PAT_ID)                                                             AS uniqPatients,
+			
+			    FLOOR(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+			                                      + IFNULL(B.VET_AMT,0)) / COUNT(*))                 AS amtPerClaim,
+			    FLOOR(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+			                                      + IFNULL(B.VET_AMT,0)) / COUNT(DISTINCT B.PAT_ID)) AS amtPerPatient,
+			
+			    ROUND(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0))  
+			                                                       / MAX(ts.total_amt_all) * 100, 1) AS rateOfTotalAmt,
+		      </when>
+		      <otherwise> <!-- 총액 -->
+			    SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                   AS totalAmt,
+			    COUNT(*)                                                                             AS claimCount,
+			    
+			    COUNT(DISTINCT B.PAT_ID)                                                             AS uniqPatients,
+			
+			    FLOOR(SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) / COUNT(*))                 AS amtPerClaim,
+			    FLOOR(SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) / COUNT(DISTINCT B.PAT_ID)) AS amtPerPatient,
+			
+			    ROUND(SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) / MAX(ts.total_amt_all) * 100, 1) AS rateOfTotalAmt,
+		      </otherwise>
+		    </choose>
+		 <![CDATA[	     
 		    ROUND(COUNT(*) / MAX(ts.total_claims_all) * 100, 1) AS rateOfClaims
 		
 		FROM TBL_CHUNG_MST A
@@ -408,34 +605,53 @@
 		JOIN TOTAL_SUMMARY ts
 		WHERE A.HOSP_CD = #{hospCd}
           AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-       ]]>
-       <choose>
-	    <when test='ipwe == "I"'>
-	      <![CDATA[
-	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-	      ]]>
-	    </when>
-	    <otherwise>
-	      <![CDATA[
-	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
-	      ]]>
-	    </otherwise>
-	  </choose>   
-	  <![CDATA[       
+	   ]]>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
+
+		<![CDATA[       
 		GROUP BY C.DIAG_CODE
 		ORDER BY claimCount DESC
 		LIMIT 30
 	  ]]>		
  	</select>  
     <!-- 총진료비 의사별 건수당 진료비  -->
-	<select id="tong05List" parameterType="TongDTO" resultType="TongDTO">
-	<![CDATA[
+	<select id="tong05List" parameterType="TongDTO" resultType="TongDTO"><![CDATA[
 		WITH BASE_DATA AS (
 		    SELECT  
-		        IFNULL(C.LICENSE_NO, '99') AS LICENSE_NO,  
+  	            IFNULL(C.LICENSE_NO, '00')                                                        AS LICENSE_NO ,
+		        COUNT(*)                                                                          AS claimCount ,	
+	   ]]>  	              
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->
 		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                             + IFNULL(B.VET_AMT,0))       AS totalAmt,
-		        COUNT(*)                                                                          AS claimCount
+		                                                             + IFNULL(B.VET_AMT,0))       AS totalAmt 
+		      </when>
+		      <otherwise> <!-- 총액 -->
+		        SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                AS totalAmt
+      
+		      </otherwise>
+		    </choose>
+		<![CDATA[      
 		    FROM TBL_CHUNG_MST A
 			    JOIN TBL_MYOUNG_MST B 
 			      ON A.CLAIM_NO = B.CLAIM_NO 
@@ -448,16 +664,30 @@
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		]]>
-		<choose>
-		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-		  </when>
-		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
-		  </otherwise>
-		</choose>
-		<![CDATA[
-		    GROUP BY IFNULL(C.LICENSE_NO, '99')
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
+
+		<![CDATA[    
+		    GROUP BY IFNULL(C.LICENSE_NO, '00')
 		),
 		TOTAL_SUM AS (
 		    SELECT SUM(totalAmt) AS totalAmt FROM BASE_DATA
@@ -465,14 +695,14 @@
 		BASE_WITH_TOTAL AS (
 		    SELECT * FROM BASE_DATA
 		    UNION ALL
-		    SELECT '00' AS LICENSE_NO, SUM(totalAmt), SUM(claimCount) FROM BASE_DATA
+		    SELECT '99' AS LICENSE_NO, SUM(claimCount) , SUM(totalAmt) FROM BASE_DATA
 		)
 		SELECT 
-		    CASE WHEN  A.LICENSE_NO = '00' THEN '' ELSE A.LICENSE_NO END  AS LICENSE_NO,  
+		    CASE WHEN  A.LICENSE_NO = '00' THEN '(산재)' ELSE A.LICENSE_NO END  AS LICENSE_NO,  
 		    COALESCE(D.SUB_CODE_NM, '전체') AS LICENSE_NAME,
 		    A.totalAmt,
 		    A.claimCount,
-		    FLOOR(A.totalAmt / A.claimCount) AS avgAmt,
+		    FLOOR(A.totalAmt / A.claimCount)          AS avgAmt,
 		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal 
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
@@ -490,10 +720,19 @@
 	<![CDATA[
 		WITH BASE_DATA AS (
 		    SELECT  
-		        IFNULL(A.CFORM_NO, '99') AS CFORM_NO,  
+		        IFNULL(A.CFORM_NO, '00')                                                         AS CFORM_NO   , 
+		        COUNT(*)                                                                         AS claimCount ,
+		]]>         
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->
 		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                             + IFNULL(B.VET_AMT,0))      AS totalAmt,
-		        COUNT(*)                                                                         AS claimCount
+		                                                             + IFNULL(B.VET_AMT,0))      AS totalAmt 
+		      </when>
+		      <otherwise> <!-- 총액 -->
+		        SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                AS totalAmt
+		      </otherwise>
+		    </choose>
+		<![CDATA[  
 		    FROM TBL_CHUNG_MST A
 			    JOIN TBL_MYOUNG_MST B 
 			      ON A.CLAIM_NO = B.CLAIM_NO 
@@ -501,16 +740,30 @@
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		]]>
-		<choose>
-		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-		  </when>
-		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
-		  </otherwise>
-		</choose>
-		<![CDATA[
-		    GROUP BY IFNULL(A.CFORM_NO, '99')
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
+
+		<![CDATA[    
+		    GROUP BY IFNULL(A.CFORM_NO, '00')
 		),
 		TOTAL_SUM AS (
 		    SELECT SUM(totalAmt) AS totalAmt FROM BASE_DATA
@@ -518,7 +771,7 @@
 		BASE_WITH_TOTAL AS (
 		    SELECT * FROM BASE_DATA
 		    UNION ALL
-		    SELECT '00' AS CFORM_NO, SUM(totalAmt), SUM(claimCount) FROM BASE_DATA
+		    SELECT '99' AS CFORM_NO, SUM(claimCount) ,  SUM(totalAmt)  FROM BASE_DATA
 		)
 		SELECT 
 		    CASE WHEN  A.CFORM_NO = '00' THEN '' ELSE A.CFORM_NO END  AS CFORM_NO,  
@@ -530,10 +783,10 @@
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
 		LEFT JOIN TBL_CODE_DTL D 
-		  ON D.CODE_GB = 'Z' 
-		 AND D.CODE_CD = 'CFORM_NO'  
-		 AND D.ACTION_YN = 'Y'
-		 AND D.SUB_CODE = A.CFORM_NO  
+		  ON D.CODE_GB    = 'Z' 
+		 AND D.CODE_CD    = 'CFORM_NO'  
+		 AND D.ACTION_YN  = 'Y'
+		 AND D.SUB_CODE   = A.CFORM_NO  
 		ORDER BY percentOfTotal DESC, A.CFORM_NO
 	]]>
 	</select> 	             	   	             	 	             	   	                                	   	                  
@@ -548,10 +801,19 @@
 		),
 		BASE_DATA AS (
 		    SELECT  
-		        IFNULL(C.LICENSE_NO, '99') AS LICENSE_NO,  
+		        IFNULL(C.LICENSE_NO, '00') AS LICENSE_NO,  
 		        A.DATE_YM,
+		]]>
+		 <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->        
 		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
 		                                                             + IFNULL(B.VET_AMT,0)) AS TOTALAMT,
+		      </when>
+		      <otherwise>
+		        SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                           AS TOTALAMT , 
+		      </otherwise>
+		 </choose>         
+		 <![CDATA[                                                  
 		        COUNT(*)                                                                    AS CLAIMCOUNT
 		    FROM TBL_CHUNG_MST A
 			    JOIN TBL_MYOUNG_MST B 
@@ -568,16 +830,29 @@
 			        DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{endMonth}, '01'), '%Y%m%d'),INTERVAL 1 MONTH),'%Y%m')
 			      )
 		]]>
-        <choose>
-		  <when test='ipwe == "I"'>
-		    AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-		  </when>
-		  <otherwise>
-		    AND A.TREAT_TYPE IN ('2','4','9','H','6')
-		  </otherwise>
-		</choose>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<if test='jrType == "1" '> <!-- 정액   산재조건  -->    
+		    AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		</if>		
+		<if test='jrType == "2" '> <!-- 행위   산재조건  -->    
+		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
+		</if>
 		<![CDATA[
-		    GROUP BY IFNULL(C.LICENSE_NO, '99'), A.DATE_YM
+		    GROUP BY IFNULL(C.LICENSE_NO, '00'), A.DATE_YM
 		),
 		PIVOTED AS (
 		    SELECT
@@ -595,7 +870,7 @@
 		    SELECT * FROM PIVOTED
 		    UNION ALL
 		    SELECT
-		        '00' AS LICENSE_NO,
+		        '99' AS LICENSE_NO,
 		        SUM(AMT_PREV),
 		        SUM(AMT_CURR),
 		        SUM(CNT_PREV),
@@ -604,10 +879,10 @@
 		)
 		SELECT 
 		    CASE 
-		        WHEN P.LICENSE_NO = '00' THEN '' 
+		        WHEN P.LICENSE_NO = '00' THEN '(산재)' 
 		        ELSE P.LICENSE_NO END AS LICENSE_NO  ,
 		    CASE 
-		        WHEN P.LICENSE_NO = '00' THEN '전체'
+		        WHEN P.LICENSE_NO = '99' THEN '전체'
 		        ELSE COALESCE(D.SUB_CODE_NM, '기타')
 		    END                                                AS LICENSE_NAME,
 		
@@ -637,7 +912,7 @@
 			 AND D.CODE_CD   = 'LICENSE_NO'
 			 AND D.ACTION_YN = 'Y'
 			 AND D.SUB_CODE = P.LICENSE_NO
-			ORDER BY P.LICENSE_NO
+			ORDER BY P.AMT_PREV DESC  , P.LICENSE_NO
 	]]>
 
 	</select>

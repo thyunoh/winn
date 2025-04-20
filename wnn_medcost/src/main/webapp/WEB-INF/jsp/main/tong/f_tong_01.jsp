@@ -134,6 +134,30 @@
     <div class="filter-box">
       <span for="endMonth">청구년월</span>
       <input type="month" id="endMonth" value="2025-02">
+ 	   <span for="medType">진료</span>
+	   <div style="width: 90px;">
+			<select class="custom-select" id="medType" style= "font-size:14px ;">
+			    <option value="0" selected>전체</option>
+			    <option value="1">의과</option>
+			    <option value="2">치과</option>
+			    <option value="3">한방</option>
+		    </select>      
+	    </div>
+ 	   <span for="jrType">행위</span>
+	   <div style="width: 90px;">
+			<select class="custom-select" id="jrType" style= "font-size:14px ;">
+			    <option value="0" selected>전체</option>
+			    <option value="1">정액</option>
+			    <option value="2">행위</option>
+		    </select>      
+	    </div>
+	   <span for="amtType">금액</span>
+ 	   <div style="width: 90px;">
+			<select class="custom-select" id="amtType" style= "font-size:14px ;">
+			    <option value="1" selected>총액</option>
+			    <option value="2">청구액</option>
+		    </select>      
+	    </div>
       <button id="serBtn" onclick="filterData()">검색</button>
       <button id="pdfBtn" onclick="downloadPDF()">PDF 출력</button>
     </div>   
@@ -308,7 +332,10 @@
   }
 
   function filterData() {
-	  const end = document.getElementById('endMonth').value;
+	  const end       = document.getElementById('endMonth').value;
+	  const medType   = document.getElementById('medType').value;
+	  const jrType    = document.getElementById('jrType').value;
+	  const amtType   = document.getElementById('amtType').value;	  
 
 	  if (!end) {
 	    alert("시작월과 종료월을 모두 선택해주세요.");
@@ -323,7 +350,8 @@
 	  $.ajax({
 		  type: 'post',
 		  url: '/tong/t_tong01List.do',
-		  data: { hospCd: s_hospid, endMonth: formattedEnd },
+		  data: { hospCd: s_hospid, endMonth: formattedEnd , 
+			      medType : medType , jrType : jrType , amtType : amtType },  
 		  dataType: "json",
 		  success: function (data) {
 		    if (data && data.length >= 1) {

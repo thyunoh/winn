@@ -133,13 +133,39 @@
   <div class="container">
     <h2>전문의별 전월비교 진료비</h2>
     <div class="filter-box">
-      <span for="endMonth">적용년월</span>
-      <input style="text-align: center" type="month" id="endMonth" value="2025-02" style="width: 100px; padding: 4px;">
+       <span for="endMonth">적용년월</span>
+	   <input type="month" id="endMonth" value="2025-02" 
+		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
 	   <span for="inoutType">구분</span>
-	   <div style="width: 100px;">
-			<select class="custom-select" id="inoutType">
-			    <option value="I" selected>입원</option>
+	   <div style="width: 80px;">
+			<select class="custom-select" id="inoutType" style= "font-size:13px ;">
+			    <option value="T" selected>전체</option>
+			    <option value="I">입원</option>
 			    <option value="O">외래</option>
+		    </select>      
+	    </div>
+ 	   <span for="medType">진료</span>
+	   <div style="width: 70px;">
+			<select class="custom-select" id="medType" style= "font-size:13px ;">
+			    <option value="0" selected>전체</option>
+			    <option value="1">의과</option>
+			    <option value="2">치과</option>
+			    <option value="3">한방</option>
+		    </select>      
+	    </div>
+ 	   <span for="jrType">행위</span>
+	   <div style="width: 70px;">
+			<select class="custom-select" id="jrType" style= "font-size:13px ;">
+			    <option value="0" selected>전체</option>
+			    <option value="1">정액</option>
+			    <option value="2">행위</option>
+		    </select>      
+	    </div>
+	   <span for="amtType">금액</span>
+ 	   <div style="width: 90px;">
+			<select class="custom-select" id="amtType" style= "font-size:13px ;">
+			    <option value="1" selected>총액</option>
+			    <option value="2">청구액</option>
 		    </select>      
 	    </div>
       <button id="serBtn" onclick="filterData()">검색</button>
@@ -187,8 +213,11 @@
 
     // ✅ 데이터 필터 함수
     function filterData() {
-      const end    = document.getElementById('endMonth').value;
-      const ioType = document.getElementById('inoutType').value;
+      const end       = document.getElementById('endMonth').value;
+      const ioType    = document.getElementById('inoutType').value;
+	  const medType   = document.getElementById('medType').value;
+	  const jrType    = document.getElementById('jrType').value;
+	  const amtType   = document.getElementById('amtType').value;       
 
       if (!end) {
         alert("가준월을 선택해주세요.");
@@ -201,7 +230,8 @@
       $.ajax({
         type: 'post',
         url: '/tong/t_tong07List.do',
-        data: { hospCd: s_hospid, ipwe : ioType , endMonth: formattedEnd },
+        data: { hospCd: s_hospid, ipwe : ioType , endMonth: formattedEnd , 
+        	   medType : medType , jrType : jrType , amtType : amtType },
         dataType: "json",
 	    success: function(data) {
 	       	  const labels     = [];  
