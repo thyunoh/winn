@@ -85,9 +85,8 @@
 	        </choose>
 	    <![CDATA[
 		    FROM TBL_CHUNG_MST A
-		    JOIN TBL_MYOUNG_MST B 
-		      ON A.CLAIM_NO = B.CLAIM_NO
-		     AND A.HOSP_CD  = B.HOSP_CD
+		    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO
+		                          AND A.HOSP_CD  = B.HOSP_CD
 		    WHERE A.HOSP_CD = #{hospCd} 
 	    ]]>	  
 		<if test="startMonth != null and startMonth != ''">
@@ -330,14 +329,12 @@
 		    </choose>
 		    <![CDATA[
 		    FROM TBL_CHUNG_MST A
-		    JOIN TBL_MYOUNG_MST B 
-		      ON  A.CLAIM_NO = B.CLAIM_NO 
-		      AND A.HOSP_CD  = B.HOSP_CD
-		    LEFT JOIN TBL_DISEASE_MST C 
-		      ON C.CLAIM_NO  = B.CLAIM_NO 
-		     AND C.HOSP_CD   = B.HOSP_CD 
-		     AND C.BILL_SEQ  = B.BILL_SEQ 
-		     AND C.DIAG_TYPE = '1'
+		    JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO 
+		                           AND A.HOSP_CD  = B.HOSP_CD
+		    LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO  = B.CLAIM_NO 
+		                                AND C.HOSP_CD   = B.HOSP_CD 
+		                                AND C.BILL_SEQ  = B.BILL_SEQ 
+		                                AND C.DIAG_TYPE = '1'
 		    WHERE A.HOSP_CD  = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		]]>
@@ -383,11 +380,10 @@
 		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal 
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
-		LEFT JOIN TBL_CODE_DTL D 
-		  ON D.CODE_GB    = 'Z' 
-		 AND D.CODE_CD    = 'MED_DEPT'
-		 AND D.ACTION_YN  = 'Y'
-		 AND D.SUB_CODE   = A.MED_FIELD
+		LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB    = 'Z' 
+		                         AND D.CODE_CD    = 'MED_DEPT'
+		                         AND D.ACTION_YN  = 'Y'
+		                         AND D.SUB_CODE   = A.MED_FIELD
 		ORDER BY percentOfTotal DESC, A.MED_FIELD
 	]]>
 
@@ -395,37 +391,35 @@
     <!-- 처치항목별 건당진료비와 구성비  -->
 	<select id="tong03List" parameterType="TongDTO" resultType="TongDTO">
 	  <![CDATA[
-		SELECT ITEM_NO,  CODE_NO,
-		    CASE WHEN ITEM_NO = '00' THEN '전체'
-		    ELSE (
-		          SELECT SUB_CODE_NM 
-		          FROM TBL_CODE_DTL 
-		          WHERE CODE_GB   = 'YD' 
-		            AND CODE_CD   = 'ITEM_NO'
-					AND ACTION_YN = 'Y' 
-		            AND SUB_CODE  = TRIM(ITEM_NO)
-		     )
-		    END AS ITEM_NAME,
-		    CASE WHEN ITEM_NO = '00' THEN '전체'
-		        ELSE (
-		            COALESCE(
-		                (SELECT SUB_CODE_NM 
-		                 FROM TBL_CODE_DTL 
-		                 WHERE CODE_GB = 'Y' 
-		                   AND CODE_CD = 'CODE_NO' 
-		                   AND ACTION_YN = 'Y' 
-		                   AND SUB_CODE = CONCAT(TRIM(ITEM_NO), CODE_NO)
-		                 LIMIT 1),
-		                (SELECT SUB_CODE_NM 
-		                 FROM TBL_CODE_DTL 
-		                 WHERE CODE_GB = 'H' 
-		                   AND CODE_CD = 'CODE_NO'
-								 AND ACTION_YN = 'Y'  
-		                   AND SUB_CODE = CONCAT(TRIM(ITEM_NO), CODE_NO)
-		                 LIMIT 1)
-		            )
-		        )
-		    END                                                             AS CODE_NAME,
+		    SELECT ITEM_NO,  CODE_NO,
+			    CASE WHEN ITEM_NO = '00' THEN '전체'
+			    ELSE (
+			          SELECT SUB_CODE_NM 
+			          FROM TBL_CODE_DTL 
+			          WHERE CODE_GB   = 'YD' 
+			            AND CODE_CD   = 'ITEM_NO'
+						AND ACTION_YN = 'Y' 
+			            AND SUB_CODE  = TRIM(ITEM_NO)
+			     )  END                                                     AS ITEM_NAME,
+			    CASE WHEN ITEM_NO = '00' THEN '전체'
+			        ELSE (
+			            COALESCE(
+			                (SELECT SUB_CODE_NM 
+			                 FROM TBL_CODE_DTL 
+			                 WHERE CODE_GB = 'Y' 
+			                   AND CODE_CD = 'CODE_NO' 
+			                   AND ACTION_YN = 'Y' 
+			                   AND SUB_CODE = CONCAT(TRIM(ITEM_NO), CODE_NO)
+			                 LIMIT 1),
+			                (SELECT SUB_CODE_NM 
+			                 FROM TBL_CODE_DTL 
+			                 WHERE CODE_GB = 'H' 
+			                   AND CODE_CD = 'CODE_NO'
+							   AND ACTION_YN = 'Y'  
+			                   AND SUB_CODE = CONCAT(TRIM(ITEM_NO), CODE_NO)
+			                 LIMIT 1)
+			            )
+			     )   END                                                    AS CODE_NAME,
 		    totalAmt   ,
 		    claimCount ,
 		    FLOOR(totalAmt / claimCount)                                    AS avgAmt,
@@ -449,22 +443,18 @@
 		        )                                                      AS totalAmt,
 		        COUNT(*)                                               AS claimCount
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B 
-			      ON A.CLAIM_NO = B.CLAIM_NO 
-			     AND A.HOSP_CD  = B.HOSP_CD
-			    LEFT JOIN TBL_JINORD_MST C 
-			      ON C.CLAIM_NO = B.CLAIM_NO 
-			     AND C.HOSP_CD  = B.HOSP_CD 
-			     AND C.BILL_SEQ = B.BILL_SEQ 
-			     AND ((C.ITEM_NO = 'L' AND C.CODE_NO = '01') OR (C.ITEM_NO <> 'L'))
-			    LEFT JOIN WNN.TBL_CODE_DTL D 
-			      ON D.CODE_GB   = 'Z' 
-			     AND D.ACTION_YN = 'Y'
-			     AND D.CODE_CD   = 'CFORM_NO' 
-			     AND D.SUB_CODE  = A.CFORM_NO 
-			    LEFT JOIN WNN.TBL_HOSP_MST E 
-			      ON E.HOSP_CD   = A.HOSP_CD 
-			     AND E.ACTION_YN = 'Y' 			   	
+			    JOIN TBL_MYOUNG_MST B   ON A.CLAIM_NO = B.CLAIM_NO 
+			                           AND A.HOSP_CD  = B.HOSP_CD
+			    LEFT JOIN TBL_JINORD_MST C   ON C.CLAIM_NO = B.CLAIM_NO 
+			                           AND C.HOSP_CD  = B.HOSP_CD 
+			                           AND C.BILL_SEQ = B.BILL_SEQ 
+			                           AND ((C.ITEM_NO = 'L' AND C.CODE_NO = '01') OR (C.ITEM_NO <> 'L'))
+			    LEFT JOIN WNN.TBL_CODE_DTL D  ON D.CODE_GB   = 'Z' 
+			                           AND D.ACTION_YN = 'Y'
+			                           AND D.CODE_CD   = 'CFORM_NO' 
+			                           AND D.SUB_CODE  = A.CFORM_NO 
+			    LEFT JOIN WNN.TBL_HOSP_MST E ON E.HOSP_CD   = A.HOSP_CD 
+			                           AND E.ACTION_YN = 'Y' 	
 			    LEFT JOIN (SELECT FEE_CODE, MAX(START_DT) AS MAX_START_DT
 			        FROM WNN.TBL_SUGA_MST
 			        WHERE FEE_TYPE = '1'
@@ -523,8 +513,8 @@
 		   </choose>
 	    <![CDATA[     	   
 		    FROM TBL_CHUNG_MST A
-		    JOIN TBL_MYOUNG_MST B 
-		      ON A.CLAIM_NO = B.CLAIM_NO AND A.HOSP_CD = B.HOSP_CD
+		    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO 
+		                          AND A.HOSP_CD = B.HOSP_CD
 		WHERE A.HOSP_CD = #{hospCd}
           AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 	   ]]>
@@ -595,13 +585,12 @@
 		    ROUND(COUNT(*) / MAX(ts.total_claims_all) * 100, 1) AS rateOfClaims
 		
 		FROM TBL_CHUNG_MST A
-		JOIN TBL_MYOUNG_MST B 
-		  ON A.CLAIM_NO = B.CLAIM_NO AND A.HOSP_CD = B.HOSP_CD
-		LEFT JOIN TBL_DISEASE_MST C 
-		  ON C.CLAIM_NO = B.CLAIM_NO 
-		 AND C.HOSP_CD = B.HOSP_CD 
-		 AND C.BILL_SEQ = B.BILL_SEQ 
-		 AND C.DIAG_TYPE = '1'
+		JOIN TBL_MYOUNG_MST B   ON A.CLAIM_NO = B.CLAIM_NO 
+		                       AND A.HOSP_CD = B.HOSP_CD
+		LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO = B.CLAIM_NO 
+		                       AND C.HOSP_CD = B.HOSP_CD 
+		                       AND C.BILL_SEQ = B.BILL_SEQ 
+		                       AND C.DIAG_TYPE = '1'
 		JOIN TOTAL_SUMMARY ts
 		WHERE A.HOSP_CD = #{hospCd}
           AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
@@ -653,14 +642,12 @@
 		    </choose>
 		<![CDATA[      
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B 
-			      ON A.CLAIM_NO = B.CLAIM_NO 
-			     AND A.HOSP_CD = B.HOSP_CD
-			    LEFT JOIN TBL_DISEASE_MST C 
-			      ON C.CLAIM_NO = B.CLAIM_NO 
-			     AND C.HOSP_CD  = B.HOSP_CD 
-			     AND C.BILL_SEQ = B.BILL_SEQ 
-			     AND C.DIAG_TYPE = '1'
+			    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO 
+			                          AND A.HOSP_CD = B.HOSP_CD
+			    LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO = B.CLAIM_NO 
+			                                AND C.HOSP_CD  = B.HOSP_CD 
+			                                AND C.BILL_SEQ = B.BILL_SEQ 
+			                                AND C.DIAG_TYPE = '1'
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		]]>
@@ -706,18 +693,16 @@
 		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal 
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
-		LEFT JOIN TBL_CODE_DTL D 
-		  ON D.CODE_GB = 'Z' 
-		 AND D.CODE_CD = 'LICENSE_NO'
-		 AND D.ACTION_YN = 'Y'
-		 AND D.SUB_CODE = A.LICENSE_NO
+		LEFT JOIN TBL_CODE_DTL D   ON D.CODE_GB = 'Z' 
+		                          AND D.CODE_CD = 'LICENSE_NO'
+		                          AND D.ACTION_YN = 'Y'
+	 	                          AND D.SUB_CODE = A.LICENSE_NO
 		ORDER BY percentOfTotal DESC, A.LICENSE_NO
 	]]>
 
 	</select>
-    <!-- 유형별 정수액대비 건수비율   -->
-	<select id="tong06List" parameterType="TongDTO" resultType="TongDTO">
-	<![CDATA[
+    <!-- 유형별 청구액대비 건수비율   -->
+	<select id="tong06List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
 		WITH BASE_DATA AS (
 		    SELECT  
 		        IFNULL(A.CFORM_NO, '00')                                                         AS CFORM_NO   , 
@@ -734,9 +719,8 @@
 		    </choose>
 		<![CDATA[  
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B 
-			      ON A.CLAIM_NO = B.CLAIM_NO 
-			     AND A.HOSP_CD = B.HOSP_CD
+			    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO 
+			                          AND A.HOSP_CD  = B.HOSP_CD
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		]]>
@@ -775,24 +759,22 @@
 		)
 		SELECT 
 		    CASE WHEN  A.CFORM_NO = '00' THEN '' ELSE A.CFORM_NO END  AS CFORM_NO,  
-		    COALESCE(D.SUB_CODE_NM, '전체') AS CFORM_NAME,
+		    COALESCE(D.SUB_CODE_NM, '전체')                            AS CFORM_NAME,
 		    A.totalAmt,
 		    A.claimCount,
-		    FLOOR(A.totalAmt / A.claimCount) AS avgAmt,
-		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal 
+		    FLOOR(A.totalAmt / A.claimCount)                          AS avgAmt,
+		    ROUND((A.totalAmt / T.totalAmt) * 100, 1)                 AS percentOfTotal 
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
-		LEFT JOIN TBL_CODE_DTL D 
-		  ON D.CODE_GB    = 'Z' 
-		 AND D.CODE_CD    = 'CFORM_NO'  
-		 AND D.ACTION_YN  = 'Y'
-		 AND D.SUB_CODE   = A.CFORM_NO  
+		LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB    = 'Z' 
+	                        	 AND D.CODE_CD    = 'CFORM_NO'  
+		                         AND D.ACTION_YN  = 'Y'
+	 	                         AND D.SUB_CODE   = A.CFORM_NO  
 		ORDER BY percentOfTotal DESC, A.CFORM_NO
 	]]>
 	</select> 	             	   	             	 	             	   	                                	   	                  
     <!-- 총진료비 의사별 전월  건수당 진료비  -->
-	<select id="tong07List" parameterType="TongDTO" resultType="TongDTO">
-	<![CDATA[
+	<select id="tong07List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
 		WITH
 		PARAMS AS (
 		    SELECT 
@@ -816,14 +798,12 @@
 		 <![CDATA[                                                  
 		        COUNT(*)                                                                    AS CLAIMCOUNT
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B 
-			      ON A.CLAIM_NO = B.CLAIM_NO 
-			     AND A.HOSP_CD  = B.HOSP_CD
-			    LEFT JOIN TBL_DISEASE_MST C 
-			      ON C.CLAIM_NO  = B.CLAIM_NO 
-			     AND C.HOSP_CD   = B.HOSP_CD 
-			     AND C.BILL_SEQ  = B.BILL_SEQ 
-			     AND C.DIAG_TYPE = '1'
+			    JOIN TBL_MYOUNG_MST B   ON A.CLAIM_NO = B.CLAIM_NO 
+			                           AND A.HOSP_CD  = B.HOSP_CD
+			    LEFT JOIN TBL_DISEASE_MST C ON C.CLAIM_NO  = B.CLAIM_NO 
+			                               AND C.HOSP_CD   = B.HOSP_CD 
+			                               AND C.BILL_SEQ  = B.BILL_SEQ 
+			                               AND C.DIAG_TYPE = '1'
 			    WHERE A.HOSP_CD  = #{hospCd}
 			      AND A.DATE_YM IN (
 			        #{endMonth}, 
@@ -907,13 +887,197 @@
 		    ) AS PERCENT_VS_PREV
 		
 		FROM WITH_TOTAL P
-			LEFT JOIN TBL_CODE_DTL D 
-			  ON D.CODE_GB   = 'Z' 
-			 AND D.CODE_CD   = 'LICENSE_NO'
-			 AND D.ACTION_YN = 'Y'
-			 AND D.SUB_CODE = P.LICENSE_NO
+			LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB   = 'Z' 
+	 		                         AND D.CODE_CD   = 'LICENSE_NO'
+			                         AND D.ACTION_YN = 'Y'
+		 	                         AND D.SUB_CODE = P.LICENSE_NO
 			ORDER BY P.AMT_PREV DESC  , P.LICENSE_NO
 	]]>
-
 	</select>
+    <!-- 정액환자 약제비율  -->
+	<select id="tong08List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
+		WITH BASE_DATA AS (
+		    SELECT  
+		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,  
+		    ]]>
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->
+		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
+		          COUNT(*)                                                                                               AS claimCount ,
+		      </when>
+			  <otherwise> <!-- 총액 -->
+                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                                                     AS totalAmt,
+		          COUNT(*)                                                                                               AS claimCount,			    
+			  </otherwise>
+		    </choose>
+		    <![CDATA[
+		    SUM(IFNULL(D.yakAmt, 0))                                                                                     AS yakAmt
+		    FROM TBL_CHUNG_MST A
+		    JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO 
+		                           AND A.HOSP_CD  = B.HOSP_CD
+		    LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO  = B.CLAIM_NO 
+		                           AND C.HOSP_CD   = B.HOSP_CD 
+		                           AND C.BILL_SEQ  = B.BILL_SEQ 
+		                           AND C.DIAG_TYPE = '1'
+			LEFT JOIN (
+			    SELECT HOSP_CD, CLAIM_NO, BILL_SEQ, SUM(AMOUNT) AS yakAmt
+			    FROM TBL_JINORD_MST
+			    WHERE 1=1 
+			      AND ITEM_NO = 'L' AND CODE_TYPE IN('3')
+			    GROUP BY HOSP_CD, CLAIM_NO , BILL_SEQ
+			    ) D   ON  D.HOSP_CD  = B.HOSP_CD
+			         AND  D.CLAIM_NO = B.CLAIM_NO
+			         AND  D.BILL_SEQ = B.BILL_SEQ		     
+		    WHERE A.HOSP_CD  = #{hospCd}
+		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+		      AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+		]]>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<![CDATA[
+		    GROUP BY MED_FIELD
+		),
+		TOTAL_SUM AS (
+		    SELECT SUM(totalAmt) AS totalAmt , SUM(yakAmt) yakAmt FROM BASE_DATA
+		),
+		BASE_WITH_TOTAL AS (
+		    SELECT * FROM BASE_DATA
+		    UNION ALL
+		    SELECT '00' AS MED_FIELD, SUM(totalAmt), SUM(claimCount)  , SUM(yakAmt) yakAmt FROM BASE_DATA
+		)
+		SELECT 
+		    A.MED_FIELD AS MED_DEPT,  
+		    COALESCE(D.SUB_CODE_NM, '전체')            AS MED_NAME,
+		    A.totalAmt,
+		    A.claimCount,
+		    FLOOR( A.totalAmt / A.claimCount)         AS avgAmt,
+		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal ,
+            A.yakAmt,
+		    ROUND((A.yakAmt  / T.totalAmt) * 100, 1)  AS percentOfAmt		    
+		FROM BASE_WITH_TOTAL A
+		JOIN TOTAL_SUM T ON 1=1
+		LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB    = 'Z' 
+  		                         AND D.CODE_CD    = 'MED_DEPT'
+	 	                         AND D.ACTION_YN  = 'Y'
+		                         AND D.SUB_CODE   = A.MED_FIELD
+		ORDER BY percentOfTotal DESC, A.MED_FIELD
+	]]>	
+	</select>
+    <!-- 정액환자 진료비제외 항목비율 -->
+	<select id="tong09List" parameterType="TongDTO" resultType="TongDTO">
+	  <![CDATA[
+		SELECT ITEM_NO,  CODE_NO,
+		    CASE WHEN ITEM_NO = '00' THEN '전체'
+		    ELSE (
+		          SELECT SUB_CODE_NM 
+		          FROM TBL_CODE_DTL 
+		          WHERE CODE_GB   = 'YD' 
+		            AND CODE_CD   = 'ITEM_NO'
+					AND ACTION_YN = 'Y' 
+		            AND SUB_CODE  = TRIM(ITEM_NO)
+		     )
+		    END AS ITEM_NAME,
+		    CASE WHEN ITEM_NO = '00' THEN '전체'
+		        ELSE (
+		            COALESCE(
+		                (SELECT SUB_CODE_NM 
+		                 FROM TBL_CODE_DTL 
+		                 WHERE CODE_GB = 'Y' 
+		                   AND CODE_CD = 'CODE_NO' 
+		                   AND ACTION_YN = 'Y' 
+		                   AND SUB_CODE = CONCAT(TRIM(ITEM_NO), CODE_NO)
+		                 LIMIT 1),
+		                (SELECT SUB_CODE_NM 
+		                 FROM TBL_CODE_DTL 
+		                 WHERE CODE_GB = 'H' 
+		                   AND CODE_CD = 'CODE_NO'
+						   AND ACTION_YN = 'Y'  
+		                   AND SUB_CODE = CONCAT(TRIM(ITEM_NO), CODE_NO)
+		                 LIMIT 1)
+		            )
+		        )
+		    END                                                             AS CODE_NAME,
+		    totalAmt   ,
+		    claimCount ,
+		    FLOOR(totalAmt / claimCount)                                    AS avgAmt,
+		    ROUND((totalAmt / SUM(CASE WHEN ITEM_NO != '00' AND CODE_NO != '00' 
+			                   THEN totalAmt ELSE 0 END) OVER ()) * 100, 1) AS percentOfTotal
+		FROM (
+		    SELECT  
+		        IF(GROUPING(C.ITEM_NO), '00', IFNULL(C.ITEM_NO, '99')) AS ITEM_NO,
+		        IF(GROUPING(C.CODE_NO), '00', C.CODE_NO)               AS CODE_NO,
+		        SUM(CASE WHEN (C.CODE_TYPE IN ('1','A') AND SM.FEE_CODE IS NOT NULL) THEN 
+		                    IFNULL(C.AMOUNT,0) * (
+		                        CASE 
+		                            WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1, 0) / 100
+		                            WHEN E.HOS_GRD = '2' THEN IFNULL(D.PROP_2, 0) / 100
+		                            WHEN E.HOS_GRD = '3' THEN IFNULL(D.PROP_3, 0) / 100
+		                            ELSE IFNULL(D.PROP_3, 0) / 100
+		                        END
+		                    )
+		                ELSE 0
+		            END + IFNULL(C.AMOUNT,0)
+		        )                                                      AS totalAmt,
+		        COUNT(*)                                               AS claimCount
+		    FROM TBL_CHUNG_MST A
+			    JOIN TBL_MYOUNG_MST B     ON A.CLAIM_NO = B.CLAIM_NO 
+			                             AND A.HOSP_CD  = B.HOSP_CD
+			    LEFT JOIN TBL_JINORD_MST C   ON C.CLAIM_NO = B.CLAIM_NO 
+			                             AND C.HOSP_CD  = B.HOSP_CD 
+			                             AND C.BILL_SEQ = B.BILL_SEQ 
+			                             AND (C.ITEM_NO = 'L' AND C.CODE_NO <> '01')
+			    LEFT JOIN WNN.TBL_CODE_DTL D ON D.CODE_GB   = 'Z' 
+			                             AND D.ACTION_YN = 'Y'   
+			                             AND D.CODE_CD   = 'CFORM_NO' 
+			                             AND D.SUB_CODE  = A.CFORM_NO 
+			    LEFT JOIN WNN.TBL_HOSP_MST E ON E.HOSP_CD   = A.HOSP_CD 
+			                             AND E.ACTION_YN = 'Y' 			   	
+			    LEFT JOIN (SELECT FEE_CODE, MAX(START_DT) AS MAX_START_DT
+			        FROM WNN.TBL_SUGA_MST
+			        WHERE FEE_TYPE = '1'
+			          AND DIV_TYPE = '2'
+			        GROUP BY FEE_CODE
+		    ) SM 
+		      ON SM.FEE_CODE = C.EDI_CODE
+		     AND SM.MAX_START_DT <= CONCAT(A.DATE_YM, '01')
+		    WHERE A.HOSP_CD       = #{hospCd}
+		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+		      AND IFNULL(C.AMOUNT,0) > 0
+		      AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+	   ]]>
+	   <if test='ipwe == "I"'>
+	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	   </if>
+	   <if test='ipwe == "O"'>
+	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	   </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<![CDATA[
+	      GROUP BY C.ITEM_NO, C.CODE_NO WITH ROLLUP
+		) X
+		WHERE NOT (ITEM_NO != '00' AND CODE_NO = '00')
+		ORDER BY percentOfTotal DESC, ITEM_NO, CODE_NO
+	  ]]>
+	</select>	
 </mapper>

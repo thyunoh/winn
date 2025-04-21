@@ -11,7 +11,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>진료과별 건당진료비</title>
+  <title>정액환자 약제비율</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -131,7 +131,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>진료과별 건당진료비</h2>
+    <h2>정액환자 약제비율</h2>
     <div class="filter-box">
 		<span for="startMonth">시작년월</span>
 		<input type="month" id="startMonth" value="2025-01" 
@@ -157,14 +157,6 @@
 			    <option value="3">한방</option>
 		    </select>      
 	    </div>
- 	   <span for="jrType">행위</span>
-	   <div style="width: 80px;">
-			<select class="custom-select" id="jrType" style= "font-size:13px ;">
-			    <option value="0" selected>전체</option>
-			    <option value="1">정액</option>
-			    <option value="2">행위</option>
-		    </select>      
-	    </div>
 	   <span for="amtType">금액</span>
  	   <div style="width: 80px;">
 			<select class="custom-select" id="amtType" style= "font-size:13px ;">
@@ -187,13 +179,15 @@
 	  <thead>
 	    <tr>
 	      <th rowspan="2">진료과구분</th>
-	      <th colspan="4">분류내용</th>
+	      <th colspan="6">분류내용</th>
 	    </tr>
 	    <tr>
 	      <th>청구액</th>
 	      <th>건수</th>
 	      <th>건당진료비</th>
 	      <th>대비(%)</th>
+	      <th>약제비용</th>
+	      <th>약제비율</th>
 	    </tr>
 	  </thead>
 	  <tbody id="tableBody">
@@ -217,7 +211,6 @@
       const end       = document.getElementById('endMonth').value;
       const ioType    = document.getElementById('inoutType').value;
 	  const medType   = document.getElementById('medType').value;
-	  const jrType    = document.getElementById('jrType').value;
 	  const amtType   = document.getElementById('amtType').value;      
 
       if (!start || !end) {
@@ -231,31 +224,37 @@
       $("#loadingSpinner").show(); // 로딩 표시
       $.ajax({
         type: 'post',
-        url: '/tong/t_tong02List.do',
+        url: '/tong/t_tong08List.do',
         data: { hospCd: s_hospid, ipwe : ioType ,startMonth: formattedStart, endMonth: formattedEnd 
-        	, medType : medType , jrType : jrType , amtType : amtType },
+        	   , medType : medType , amtType : amtType },
         dataType: "json",
 	    success: function(data) {
 		      const labels    = [];  
 		      const costs     = [];
 		      const counts    = [];
 		      const percents  = []; 
+		      const ycosts    = [];
+		      const ypercents = []; 
 	    	  const tableData = [];
 		      data.forEach(item => {
 			      labels.push(item.medName);
 		          costs.push((item.totalAmt / 1000000).toFixed(2)); // 백만원 단위로 변환
 		          counts.push((item.claimCount / 1000).toFixed(2)); // 천건 단위로 변환
 		          percents.push(item.percentOfTotal);
+		          ycosts.push((item.yakAmt / 100000).toFixed(2)); // 십만원 단위로 변환
+		          ypercents.push(item.percentOfAmt);
 		    	 const row = [
 		          item.medName ,
 		          numberWithCommas(item.totalAmt),
 		          numberWithCommas(item.claimCount),
 		          numberWithCommas(item.avgAmt),
-		          numberWithCommas(item.percentOfTotal)
+		          numberWithCommas(item.percentOfTotal),
+		          numberWithCommas(item.yakAmt),
+		          numberWithCommas(item.percentOfAmt)
 		        ];
 		        tableData.push({ row });
 		      });
-		      renderChart(labels, costs, counts , percents);
+		      renderChart(labels, costs, counts , percents ,ycosts ,ypercents );
 		      renderTable(tableData);
 		    },
 		    error: function(xhr, status, error) {
@@ -280,7 +279,7 @@
           tbody.appendChild(tr);
         });
       }
-    function renderChart(labels, costs, counts, percents) {
+    function renderChart(labels, costs, counts, percents, ycosts, ypercents) {
     	  const ctx = document.getElementById('costChart').getContext('2d');
     	  if (chart) chart.destroy();
 
@@ -298,9 +297,21 @@
     	          datalabels: {
     	            anchor: 'end',
     	            align: 'end',
-    	            formatter: (value, context) => {
-    	              return percents[context.dataIndex] + '%';
-    	            },
+    	            formatter: (value, context) => percents[context.dataIndex] + '%',
+    	            color: '#000',
+    	            font: { weight: 'bold' }
+    	          }
+    	        },
+    	        {
+    	          type: 'bar',
+    	          label: '약제비용 (십만원)',
+    	          data: ycosts,
+    	          yAxisID: 'y',
+    	          backgroundColor: 'rgba(255, 99, 132, 0.6)',
+    	          datalabels: {
+    	            anchor: 'end',
+    	            align: 'end',
+    	            formatter: (value, context) => ypercents[context.dataIndex] + '%',
     	            color: '#000',
     	            font: { weight: 'bold' }
     	          }
@@ -313,6 +324,15 @@
     	          borderColor: 'blue',
     	          backgroundColor: 'blue',
     	          tension: 0.3
+    	        },
+    	        {
+    	          type: 'line',
+    	          label: '약제비율 (%)',
+    	          data: ypercents,
+    	          yAxisID: 'y2',
+    	          borderColor: 'red',
+    	          backgroundColor: 'red',
+    	          tension: 0.3
     	        }
     	      ]
     	    },
@@ -321,28 +341,36 @@
     	      maintainAspectRatio: false,
     	      interaction: { mode: 'index', intersect: false },
     	      plugins: {
-    	        datalabels: {
-    	          display: true
-    	        }
+    	        datalabels: { display: true }
     	      },
     	      stacked: false,
     	      scales: {
     	        y: {
     	          type: 'linear',
     	          position: 'left',
-    	          title: { display: true, text: '진료비(백만원)' }
+    	          title: { display: true, text: '금액(백만원 / 십만원)' }
     	        },
     	        y1: {
     	          type: 'linear',
     	          position: 'right',
     	          title: { display: true, text: '건수(천건)' },
     	          grid: { drawOnChartArea: false }
+    	        },
+    	        y2: {
+    	          type: 'linear',
+    	          position: 'right',
+    	          title: { display: true, text: '약제비율 (%)' },
+    	          grid: { drawOnChartArea: false },
+    	          ticks: { callback: value => `${value}%` },
+    	          beginAtZero: true,
+    	          display: true
     	        }
     	      }
     	    },
     	    plugins: [ChartDataLabels]
     	  });
     	}
+
 
   function downloadPDF() {
     const pdfBtn  = document.getElementById('pdfBtn');
@@ -356,7 +384,7 @@
 
     const opt = {
     		  margin: [2, 10, 5, 10], // [상(top), 우(right), 하(bottom), 좌(left)]
-    		  filename: '진료과별 건당진료비.pdf',
+    		  filename: '정액환자 약제비율.pdf',
     		  image: { type: 'jpeg', quality: 1 },
     		  html2canvas: { scale: 2, useCORS: true ,scrollY: 0},
     		  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }

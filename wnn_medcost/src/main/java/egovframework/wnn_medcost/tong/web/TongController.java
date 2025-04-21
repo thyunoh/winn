@@ -260,7 +260,63 @@ public class TongController {
 	        e.printStackTrace();
 	    }
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
-	}				
+	}
+	//진료과별 약제비율 
+	@RequestMapping(value="/f_tong_08.do")
+    public String f_tong_08(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/tong/f_tong_08";				
+			} else {  	
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value= "/t_tong08List.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<TongDTO> t_tong08List(@ModelAttribute("DTO") TongDTO dto) {
+	    List<TongDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.tong08List(dto);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}	
+	//정액환자진료비제외 항목비율  
+	@RequestMapping(value="/f_tong_09.do")
+    public String f_tong_09(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/tong/f_tong_09";				
+			} else {  	
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value= "/t_tong09List.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<TongDTO> t_tong09List(@ModelAttribute("DTO") TongDTO dto) {
+	    List<TongDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.tong09List(dto);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}	
 }
 
 

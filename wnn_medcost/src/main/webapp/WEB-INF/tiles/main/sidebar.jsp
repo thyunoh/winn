@@ -105,7 +105,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-2" 
-                                                                                                 aria-controls="base-info-2">기준코드 관리</a>
+                                                                             aria-controls="base-info-2">기준코드 관리</a>
                                     <div id="base-info-2" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item">
@@ -119,7 +119,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-3" 
-                                                                                                 aria-controls="base-info-3">병원정보 관리</a>
+                                                                             aria-controls="base-info-3">병원정보 관리</a>
                                     <div id="base-info-3" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
 											<li class="nav-item" id="hospcont">
@@ -130,9 +130,6 @@
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/sugacd.do">수납관리</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">현황관리</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/chung/chgsimsa.do">청구심사조회</a>
@@ -207,6 +204,9 @@
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_07.do">전문의별 전월대비진료비</a>
                                             </li> 
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_08.do">정액환자 약제비율</a>
+                                            </li>
                                         </ul>
                                     </div>
                                 </li>
@@ -227,7 +227,10 @@
                                     <div id="management-3" class="collapse submenu" style="background-color: white;">
                                       <ul class="nav flex-column">
                                              <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비와 구성비</a>
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비 구성비</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_09.do">정액 진료비제외 항목비율</a>
                                             </li>
                                       </ul>
                                     </div>

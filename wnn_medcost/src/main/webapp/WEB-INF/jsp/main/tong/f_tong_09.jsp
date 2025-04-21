@@ -11,7 +11,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>진료과별 건당진료비</title>
+  <title>정액환자 진료비제외 항목비율</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -97,7 +97,7 @@
       border: 1px solid #e5e7eb;
       padding: 4px;
       text-align: center;
-      font-size: 16px;
+      font-size: 14px;
     }
     th {
       background-color: #f3f4f6;
@@ -131,15 +131,15 @@
 </head>
 <body>
   <div class="container">
-    <h2>진료과별 건당진료비</h2>
+    <h2>정액환자 진료비제외 항목비율</h2>
     <div class="filter-box">
 		<span for="startMonth">시작년월</span>
 		<input type="month" id="startMonth" value="2025-01" 
-		       style="width: 120px; font-size: 13px; padding: 3px; text-align: center;">
-		<span></span>
+		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
+		<span>~</span>
 		<span for="endMonth">종료년월</span>
 		<input type="month" id="endMonth" value="2025-02" 
-		       style="width: 120px; font-size: 13px; padding: 3px; text-align: center;">
+		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
 	   <span for="inoutType">구분</span>
 	   <div style="width: 80px;">
 			<select class="custom-select" id="inoutType" style= "font-size:13px ;">
@@ -157,27 +157,12 @@
 			    <option value="3">한방</option>
 		    </select>      
 	    </div>
- 	   <span for="jrType">행위</span>
-	   <div style="width: 80px;">
-			<select class="custom-select" id="jrType" style= "font-size:13px ;">
-			    <option value="0" selected>전체</option>
-			    <option value="1">정액</option>
-			    <option value="2">행위</option>
-		    </select>      
-	    </div>
-	   <span for="amtType">금액</span>
- 	   <div style="width: 80px;">
-			<select class="custom-select" id="amtType" style= "font-size:13px ;">
-			    <option value="1" selected>총액</option>
-			    <option value="2">청구액</option>
-		    </select>      
-	    </div>
       <button id="serBtn" onclick="filterData()">검색</button>
       <button id="pdfBtn" onclick="downloadPDF()">PDF 출력</button>
-	<div id="loadingSpinner" style="display:none; text-align:center; margin-top:10px;">
+    </div>  
+	<div id="loadingSpinner" style="display:none; text-align:center; margin-top:2px;">
 	  <img src="/images/winct/loading.gif" alt="로딩 이미지 테스트">
 	</div> 
-    </div>  
         <!-- 차트 영역 -->
     <div class="chart-box">
       <canvas id="costChart"></canvas>
@@ -186,20 +171,19 @@
 	<table id="dataTable" border="1" cellspacing="0" cellpadding="1" style="border-collapse: collapse; text-align: center;">
 	  <thead>
 	    <tr>
-	      <th rowspan="2">진료과구분</th>
+	      <th rowspan="2" style="width: 100px;">진료항구분</th>
+	      <th rowspan="2" style="width: 100px;">진료목구분</th>
 	      <th colspan="4">분류내용</th>
 	    </tr>
 	    <tr>
-	      <th>청구액</th>
-	      <th>건수</th>
-	      <th>건당진료비</th>
-	      <th>대비(%)</th>
+	      <th style="width: 100px;">진료비총액</th>
+	      <th style="width: 80px;">건수</th>
+	      <th style="width: 100px;">건당진료비</th>
+	      <th style="width: 80px;">대비(%)</th>
 	    </tr>
 	  </thead>
 	  <tbody id="tableBody">
-
    	 </tbody>
-  
 	</table>
   </div>  
 </body>
@@ -217,9 +201,7 @@
       const end       = document.getElementById('endMonth').value;
       const ioType    = document.getElementById('inoutType').value;
 	  const medType   = document.getElementById('medType').value;
-	  const jrType    = document.getElementById('jrType').value;
-	  const amtType   = document.getElementById('amtType').value;      
-
+  
       if (!start || !end) {
         alert("시작월과 종료월을 모두 선택해주세요.");
         return;
@@ -231,9 +213,9 @@
       $("#loadingSpinner").show(); // 로딩 표시
       $.ajax({
         type: 'post',
-        url: '/tong/t_tong02List.do',
-        data: { hospCd: s_hospid, ipwe : ioType ,startMonth: formattedStart, endMonth: formattedEnd 
-        	, medType : medType , jrType : jrType , amtType : amtType },
+        url: '/tong/t_tong09List.do',
+        data: { hospCd: s_hospid, ipwe : ioType ,startMonth: formattedStart, endMonth: formattedEnd ,
+                medType : medType},
         dataType: "json",
 	    success: function(data) {
 		      const labels    = [];  
@@ -242,12 +224,13 @@
 		      const percents  = []; 
 	    	  const tableData = [];
 		      data.forEach(item => {
-			      labels.push(item.medName);
-		          costs.push((item.totalAmt / 1000000).toFixed(2)); // 백만원 단위로 변환
+		    	  labels.push(item.itemName + " (" + item.codeName + ")");
+		          costs.push((item.totalAmt / 1000000).toFixed(2)); // 십만원 단위로 변환
 		          counts.push((item.claimCount / 1000).toFixed(2)); // 천건 단위로 변환
 		          percents.push(item.percentOfTotal);
 		    	 const row = [
-		          item.medName ,
+		          item.itemName ,
+		          item.codeName ,
 		          numberWithCommas(item.totalAmt),
 		          numberWithCommas(item.claimCount),
 		          numberWithCommas(item.avgAmt),
@@ -356,7 +339,7 @@
 
     const opt = {
     		  margin: [2, 10, 5, 10], // [상(top), 우(right), 하(bottom), 좌(left)]
-    		  filename: '진료과별 건당진료비.pdf',
+    		  filename: '정액환자 진료비제외 항목비율.pdf',
     		  image: { type: 'jpeg', quality: 1 },
     		  html2canvas: { scale: 2, useCORS: true ,scrollY: 0},
     		  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }

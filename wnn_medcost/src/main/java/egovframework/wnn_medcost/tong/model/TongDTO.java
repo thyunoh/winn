@@ -6,7 +6,7 @@ public class TongDTO {
 	}
     private String dateYm;
     private int totalCount;
-    private int totalAmt;
+    private float totalAmt;
     private int totalAvgAmt;
     private int ipCount;
     private int ipAmt;
@@ -138,8 +138,22 @@ public class TongDTO {
     private String medType ; //의과,치과,한방(0,1,2,3) 
     private String jrType  ; //정액/행위(0,1,2) 
     private String amtType ; //총액/청구액(1,2)
+    private String yakAmt  ;      //약제비용   
+    private String percentOfAmt ; //약제비율 
     
-    public String getMedType() {
+    public String getPercentOfAmt() {
+		return percentOfAmt;
+	}
+	public void setPercentOfAmt(String percentOfAmt) {
+		this.percentOfAmt = percentOfAmt;
+	}
+	public String getYakAmt() {
+		return yakAmt;
+	}
+	public void setYakAmt(String yakAmt) {
+		this.yakAmt = yakAmt;
+	}
+	public String getMedType() {
 		return medType;
 	}
 	public void setMedType(String medType) {
@@ -697,10 +711,10 @@ public class TongDTO {
 	public void setTotalCount(int totalCount) {
 		this.totalCount = totalCount;
 	}
-	public int getTotalAmt() {
+	public float getTotalAmt() {
 		return totalAmt;
 	}
-	public void setTotalAmt(int totalAmt) {
+	public void setTotalAmt(float totalAmt) {
 		this.totalAmt = totalAmt;
 	}
 	public int getTotalAvgAmt() {

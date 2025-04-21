@@ -28,12 +28,14 @@
                 			<div id="top-menu_d" > </div>
                         </div>
                     </li>
+                    <!--  
                     <li class="nav-item">
                         <div id="custom-search" class="ml-2 top-search-bar">
                         	<input class="form-control" type="text" placeholder="Search.."  maxlength="20">
                         </div>
                         
-                    </li>
+                    </li> 
+                    -->
 					<li class="nav-item">
 					  <div id="custom-search" class="ms-2 top-search-bar">
 							<button id="hospserchtop"
