@@ -2600,7 +2600,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
             win_Check = window.open(url);            
             
             win_Check.addEventListener('unload', () => {
-            	
                 // 창이 닫혔을 때
                 document.loginForm.hospid.disabled = false;
                 document.loginForm.userid.disabled = false;

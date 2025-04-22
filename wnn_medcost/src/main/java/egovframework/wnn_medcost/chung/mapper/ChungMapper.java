@@ -15,4 +15,5 @@ public interface ChungMapper {
 	List<ChungDTO>    jinordList(ChungDTO dto)         throws Exception;
 	List<ChungDTO>    hangList(ChungDTO dto)           throws Exception;
 	List<ChungDTO>    spcList(ChungDTO dto)            throws Exception;
+	boolean           temp_suga_mst(ChungDTO dto)      throws Exception;
 }

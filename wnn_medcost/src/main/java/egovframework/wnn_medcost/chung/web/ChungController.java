@@ -18,13 +18,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
-
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import egovframework.util.ClientInfo;
+import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.chung.model.ChungDTO;
 import egovframework.wnn_medcost.chung.service.ChungService;
 @Controller
@@ -183,7 +184,23 @@ public class ChungController {
 		} catch(Exception ex) {
 			return null;
 		}
-	}			
+	}	
+	@RequestMapping(value="/tempsugamst.do", method = RequestMethod.POST)
+    public ResponseEntity<String> tempsugamst(@RequestBody List<ChungDTO> data) {
+        try {
+        	String returnValue = "OK";
+        	for (ChungDTO dto : data) {
+        		svc.temp_suga_mst(dto) ; //이력관리 
+     	
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
 }
 
 

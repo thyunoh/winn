@@ -70,4 +70,10 @@ public class ChungServiceImpl implements ChungService {
 		// TODO Auto-generated method stub
 		return mapper.spcList(dto) ;
 	}
+
+	@Override
+	public boolean temp_suga_mst(ChungDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.temp_suga_mst(dto) ;
+	}
 }

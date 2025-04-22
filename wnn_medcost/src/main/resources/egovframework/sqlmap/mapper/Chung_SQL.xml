@@ -28,6 +28,19 @@
 		  ORDER BY A.CLAIM_NO
 		]]>
 	</select>   
+	<update id="temp_suga_mst" parameterType="ChungDTO"><![CDATA[
+	    DROP TEMPORARY TABLE IF EXISTS TEMP_SUGA_CTE;
+	
+	    CREATE TEMPORARY TABLE TEMP_SUGA_CTE AS
+	    SELECT 
+	        FEE_CODE, 
+	        FEE_TYPE, 
+	        MAX(START_DT) AS START_DT
+	    FROM TBL_SUGA_MST
+	    WHERE ACTION_YN = 'Y'
+	    GROUP BY FEE_CODE, FEE_TYPE;
+	]]>    
+	</update>		
 	<select  id="myoungList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
 		SELECT    A.DATE_YM 
 		         ,B.HOSP_CD
@@ -136,10 +149,7 @@
 				                  AND B.CLAIM_NO = A.CLAIM_NO   
 		      LEFT JOIN SUGA_CTE C 
 				  ON C.FEE_CODE = A.EDI_CODE 
-				 AND C.FEE_TYPE = CASE WHEN A.CODE_TYPE IN ('1', 'A') THEN '1'
-				                       WHEN A.CODE_TYPE IN ('3')      THEN '2'
-				                  ELSE '3'
-				                  END
+				 AND C.FEE_TYPE = '2'
 	     	 LEFT JOIN TBL_SUGA_MST D ON D.FEE_CODE = C.FEE_CODE 
 		                             AND D.FEE_TYPE = C.FEE_TYPE
 								     AND D.START_DT = C.START_DT 

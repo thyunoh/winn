@@ -361,7 +361,7 @@
 		var showSortNo = ['feeCode','korNm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = ['feeType','feeTypeNm'];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var txt_Markln = 30;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
 		var markColums = ['korNm','engNm'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양

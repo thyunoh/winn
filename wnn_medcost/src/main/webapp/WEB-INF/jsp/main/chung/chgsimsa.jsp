@@ -1030,7 +1030,7 @@
 		                    if (lastItemNo !== itemNo) {
 		                        $(rows).eq(i).before(
 		                            '<tr class="group-header">' +
-		                            '<td colspan="11" style="background:#f0f0f0;font-weight:bold;text-align:left;padding:2px 8px;height:24px;">' +
+		                            '<td colspan="11" style="background:#d0e7ff;font-weight:bold;text-align:left;padding:2px 8px;height:24px;">' +
 		                            '[ 항: ' + itemNo + ' ] ' +
 		                            (rowData.subCodeNm_four ? '[   ' + rowData.subCodeNm_four + ' ]' : '') +
 		                            '</td>' +
@@ -1347,6 +1347,16 @@
 					    	        $('#' + my_tableName.id).DataTable().clear().draw();
 					    	    }
 					    	    callback(receiveList);
+                 	    	//    $.ajax({
+					    	//        url: "/chung/tempsugamst.do",
+					    	//        type: "POST",
+					    	//        success: function(response) {
+					    	//            console.log("tempsugamst success:", response);
+					    	//        },
+					    	//        error: function(xhr, status, error) {
+					    	//            console.error("tempsugamst error:", error);
+					    	 //       }
+					    	 //   });
 				            } else {
 				            	callback([]); // 빈 배열을 콜백으로 전달
 				            }
