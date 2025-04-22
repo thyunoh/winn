@@ -1347,16 +1347,6 @@
 					    	        $('#' + my_tableName.id).DataTable().clear().draw();
 					    	    }
 					    	    callback(receiveList);
-                 	    	//    $.ajax({
-					    	//        url: "/chung/tempsugamst.do",
-					    	//        type: "POST",
-					    	//        success: function(response) {
-					    	//            console.log("tempsugamst success:", response);
-					    	//        },
-					    	//        error: function(xhr, status, error) {
-					    	//            console.error("tempsugamst error:", error);
-					    	 //       }
-					    	 //   });
 				            } else {
 				            	callback([]); // 빈 배열을 콜백으로 전달
 				            }

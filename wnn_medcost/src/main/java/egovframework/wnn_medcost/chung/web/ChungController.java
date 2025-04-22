@@ -125,7 +125,7 @@ public class ChungController {
 	public Map<String, Object> jinordList(@ModelAttribute("DTO") ChungDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
 		cookie_value = ClientInfo.getCookie(request);		
 		try {
-			
+        	
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
 				List<ChungDTO> jinordList = svc.jinordList(dto);
@@ -184,22 +184,6 @@ public class ChungController {
 		} catch(Exception ex) {
 			return null;
 		}
-	}	
-	@RequestMapping(value="/tempsugamst.do", method = RequestMethod.POST)
-    public ResponseEntity<String> tempsugamst(@RequestBody List<ChungDTO> data) {
-        try {
-        	String returnValue = "OK";
-        	for (ChungDTO dto : data) {
-        		svc.temp_suga_mst(dto) ; //이력관리 
-     	
-            }
-        	return ResponseEntity.ok(returnValue);   
-        	
-        } catch (Exception e) {
-        	
-            return ResponseEntity.status(500).body(e.getMessage());
-            
-        }
 	}	
 }
 
