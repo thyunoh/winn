@@ -113,7 +113,7 @@
 		    <version>1.4</version>
 		</dependency>
       <!--  sftp 설정-->
-		
+	
         <!-- mysql이나 oracle DB 사용시 아래 설정 추가   -->
         <dependency>
             <groupId>com.googlecode.log4jdbc</groupId>
@@ -210,10 +210,16 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>3.17</version>
 		</dependency>
-
+		
+		<!--Jackson 라이브러리 -->
+		<dependency>
+		  <groupId>com.fasterxml.jackson.core</groupId>
+		  <artifactId>jackson-databind</artifactId>
+		  <version>2.15.3</version> <!-- 버전은 프로젝트에 맞게 조정 -->
+		</dependency>
+		
         <!-- jsonView 설정 -->
-		 
-		 
+ 
 		<dependency>
 		   <groupId>com.fasterxml.jackson.core</groupId>
 		   <artifactId>jackson-core</artifactId>

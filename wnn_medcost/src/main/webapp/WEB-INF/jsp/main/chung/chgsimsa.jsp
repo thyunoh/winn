@@ -14,7 +14,7 @@
 <link href="/css/winmc/style.css?v=123" rel="stylesheet">
 <style>
   .dashboard-wrapper * {
-    font-size: 11px !important;
+    font-size: 12px !important;
   }
   #hang_tableName td, 
   #hang_tableName th {
@@ -28,7 +28,7 @@
 <!-- ============================================================== -->
 <!-- Main Form start -->
 <!-- ============================================================== -->
-<div class="dashboard-wrapper" style="font-size: 12px;">
+<div class="dashboard-wrapper">
   <div class="container-fluid dashboard-content px-1">
     <div class="row mx-0">
       <!-- 전체 탭 카드 -->
@@ -79,7 +79,7 @@
                 <div class="row">
                   <!-- 🔵 새 좌측 영역 (약 2/12) -->
                   <div class="col-md-3">
-	                   <div class="card-body" style="padding: 2px 16px;">
+	                   <div class="card-body" style="padding: 2px 10px;">
 	                    <table id="my_tableName" class="display nowrap stripe hover cell-border order-column responsive" style="width: 100%;"></table>
 	                  </div>
                   </div>
@@ -87,14 +87,14 @@
                   <!-- 진단명/행위료 합계 -->
                   <div class="col-md-4">
                     <div class="card mt-0">
-                      <div class="card-body" style="padding: 2px 8px;">
+                      <div class="card-body" style="padding: 2px 4px;">
                         <table 
                              id="dise_tableName" class="display nowrap stripe hover cell-border order-column responsive" style="width: 100%;">
                         </table>
                       </div>
                     </div>
                     <div class="card mt-0">
-                      <div class="card-body" style="padding: 2px 16px;">
+                      <div class="card-body" style="padding: 2px 4px;">
                         <table id="hang_tableName" class="display nowrap stripe hover cell-border order-column responsive" style="width: 100%;">
                           <tfoot>
 						    <tr>
@@ -109,7 +109,7 @@
                     </div>
 
                     <div class="card mt-0">
-                      <div class="card-body" style="padding: 2px 8px;">
+                      <div class="card-body" style="padding: 2px 4px;">
                         <table id="spc_tableName" class="display nowrap stripe hover cell-border order-column responsive" style="width: 100%;">
                         </table>
                       </div>
@@ -119,7 +119,7 @@
                   <!-- 진료내역  -->
                   <div class="col-md-5">
                     <div class="card mt-0">
-                      <div class="card-body" style="padding: 2px 8px;">
+                      <div class="card-body" style="padding: 2px 4px;">
                         <table id="jin_tableName" class="display nowrap stripe hover cell-border order-column responsive" style="width: 100%;"></table>
                       </div>
                     </div>
@@ -835,7 +835,7 @@
 		var dise_tableName  = document.getElementById('dise_tableName');
 		var dise_dataTable  = new DataTable();
 		dise_dataTable.clear();
-		var txt_Markln_dise  = 18;                       				
+		var txt_Markln_dise  = 16;                       				
 		function initdiseResultsTable() {
 		  if (!$.fn.DataTable.isDataTable('#' + dise_tableName.id)) {
 		   	dise_dataTable =  $('#' + dise_tableName.id).DataTable({  // 올바르게 닫힌 선택자
@@ -874,9 +874,9 @@
 		                            : data;
 			                  	}    
 		                    },
-			            	{ title: "주진단",    data: "diagType_two",     width: '20px' , className: "text-center"},  
-			            	{ title: "진료과",    data: "medField_two",     width: '20px',  className: "text-center"},  
-			            	{ title: "면허번호",   data: "licenseNo_two",    width: '50px', className: "text-center"} ,
+			            	{ title: "주진단",    data: "diagType_two",      width: '20px' , className: "text-center"},  
+			            	{ title: "진료과",    data: "medField_two",      width: '20px',  className: "text-center"},  
+			            	{ title: "면허번호",   data: "licenseNo_two",     width: '50px', className: "text-center"} ,
 			            	{ title: "진료개시일",  data: "medStartDate_two", width: '80px',  className: "text-center", 
 				              	render: function(data, type, row) {
 		            				if (type === 'display') {
@@ -968,7 +968,7 @@
 		var jin_tableName  = document.getElementById('jin_tableName');
 		var jin_dataTable  = new DataTable();
 		jin_dataTable.clear();
-		var txt_Markln_jin  = 20;
+		var txt_Markln_jin  = 16;
 		function initjinResultsTable() {
 		  if (!$.fn.DataTable.isDataTable('#' + jin_tableName.id)) {
 		  jin_dataTable =  $('#' + jin_tableName.id).DataTable({  // 올바르게 닫힌 선택자

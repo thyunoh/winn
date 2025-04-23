@@ -16,6 +16,7 @@ import egovframework.wnn_medcost.mangr.model.ChartDTO;
 import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
+import egovframework.wnn_medcost.user.model.LisenceDTO;
 
 public interface MangrService {
     List<CodeMdDTO> getCommList(List<String> codeGbList, List<String> codeCdList) throws Exception;
@@ -27,7 +28,7 @@ public interface MangrService {
 
 	//공지사항 
 	List<NotiDTO>     getnotiCdList(NotiDTO dto)   throws Exception; 
-	int              insertnotiCd(NotiDTO dto)     throws Exception; 
+	int               insertnotiCd(NotiDTO dto)    throws Exception; 
 	boolean           updatenotiCd(NotiDTO dto)    throws Exception; 
 	String            notiCdDupChk(NotiDTO dto)    throws Exception; 		
     //문서등록 
@@ -46,4 +47,8 @@ public interface MangrService {
     //문서파일 
 	List<FileDTO>    getFileCdList(FileDTO dto)  throws Exception; 
 	void             deleteFile(String hospCd , String filePath, String fileSeq, String fileGb , String updUser , String  updIp );
+
+	//엑셀저장 
+	void            insertExcelDoctorBatch(List<LisenceDTO> list);
+
 }

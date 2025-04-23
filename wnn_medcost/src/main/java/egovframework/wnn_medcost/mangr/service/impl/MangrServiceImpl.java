@@ -33,6 +33,7 @@ import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
 import egovframework.wnn_medcost.mangr.service.MangrService;
+import egovframework.wnn_medcost.user.model.LisenceDTO;
 
 @Service("MangrService")
 public class MangrServiceImpl implements MangrService {
@@ -192,5 +193,9 @@ public class MangrServiceImpl implements MangrService {
 			e.printStackTrace();
 		}
 	}
-
+   //옉셀저장 
+	@Override
+	public void insertExcelDoctorBatch(List<LisenceDTO> list) {
+		 mapper.insertExcelDoctor(list); // 반복문 없이 한 번에!
+	}
 }

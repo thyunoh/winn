@@ -388,5 +388,22 @@
           AND ACTION_YN   = 'Y' 
     ]]>      
     </update>   
-	                                	   	                  
+    <!-- 엑셀저장 저장 -->
+	<insert id="insertExcelDoctor" parameterType="java.util.List">
+	    INSERT INTO licexcel_doctor (
+	        name,
+	        license_date,
+	        entry_date,
+	        hosp_cd
+	    )
+	    VALUES
+	    <foreach collection="list" item="dto" separator=",">
+	        (
+	            #{dto.name},
+	            #{dto.licenseDate},
+	            #{dto.entryDate},
+	            #{dto.hospCd}
+	        )
+	    </foreach>
+	</insert>	                                	   	                  
 </mapper>

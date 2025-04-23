@@ -51,9 +51,19 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="upload-container">
+									<div style="text-align: right;">
+									  <form id="excelForm" action="/uploadExcel" method="post" enctype="multipart/form-data" style="display: inline-block;">
+									    <input type="file" name="excelFile" id="excelFile" style="width: 400px;" />
+									    <button type="submit" class="btn btn-success btn-sm">미리보기</button>
+									  </form>
+									
+									  <button type="button" id="saveDataBtn" class="btn btn-primary btn-sm" style="display: none; margin-left: 5px;">자료저장</button>
+									</div>
+	                                <div id="excelPreview"></div>
+                                </div>
 								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
-								        
 								    </table>
 								</div>
                             </div>
@@ -100,6 +110,7 @@
 								</button>
 							</div>
 						</div>
+			
 						<!-- ============================================================== -->
 						<!-- end button -->
 						<!-- ============================================================== -->
@@ -1572,8 +1583,162 @@
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });
+	 // ✅ 전역 변수 추가 (미리보기 데이터 저장용)
+	    let previewData = [];
 
-		</script>
+	    // ✅ 엑셀 미리보기 처리
+	    document.getElementById("excelForm").addEventListener("submit", function (e) {
+	      e.preventDefault();
+
+	      const fileInput = document.getElementById("excelFile");
+	      if (!fileInput.files || fileInput.files.length === 0) {
+	        alert("파일을 선택해주세요.");
+	        document.getElementById("excelPreview").innerHTML = "";
+	        return;
+	      }
+
+	      document.getElementById("saveDataBtn").style.display = 'inline-block';
+
+	      const formData = new FormData(this);
+
+	      fetch("/mangr/previewExcel.do", {
+	        method: "POST",
+	        body: formData,
+	      })
+	        .then((res) => {
+	          if (!res.ok) throw new Error("HTTP 에러: " + res.status);
+	          return res.json();
+	        })
+	        .then((data) => {
+	          document.getElementById("excelPreview").innerHTML = ""; // 기존 미리보기 삭제
+	          renderTable(data); // 표 렌더링
+	        })
+	        .catch((e) => {
+	          console.error("오류 발생:", e.message);
+	          alert("서버에서 JSON을 받지 못했습니다.");
+	        });
+	    });
+
+	    // ✅ 테이블 렌더링 함수
+	    function renderTable(data) {
+	      // 🟡 미리보기 데이터를 전역 변수에 저장
+	      previewData = data;
+
+	      const container = document.getElementById("excelPreview");
+
+	      if (!Array.isArray(data) || data.length === 0) {
+	        container.innerHTML = "<p>미리볼 데이터가 없습니다.</p>";
+	        return;
+	      }
+
+	      const previewBox = document.createElement("div");
+	      previewBox.style.position = "relative";
+	      previewBox.style.border = "1px solid #ddd";
+	      previewBox.style.padding = "10px";
+	      previewBox.style.marginTop = "20px";
+	      previewBox.style.backgroundColor = "#fafafa";
+
+	      const closeBtn = document.createElement("span");
+	      closeBtn.textContent = "×";
+	      closeBtn.style.position = "absolute";
+	      closeBtn.style.top = "8px";
+	      closeBtn.style.right = "12px";
+	      closeBtn.style.cursor = "pointer";
+	      closeBtn.style.fontSize = "20px";
+	      closeBtn.style.fontWeight = "bold";
+	      closeBtn.style.color = "#999";
+
+	      closeBtn.addEventListener("mouseenter", () => (closeBtn.style.color = "#ff5c5c"));
+	      closeBtn.addEventListener("mouseleave", () => (closeBtn.style.color = "#999"));
+	      closeBtn.addEventListener("click", () => (container.innerHTML = ""));
+
+	      previewBox.appendChild(closeBtn);
+
+	      const table = document.createElement("table");
+	      table.style.borderCollapse = "collapse";
+	      table.style.width = "100%";
+	      table.border = "1";
+	      table.cellPadding = "5";
+
+	      const thead = document.createElement("thead");
+	      const headerRow = document.createElement("tr");
+	      const keys = Object.keys(data[0]);
+
+	      keys.forEach((key) => {
+	        const th = document.createElement("th");
+	        th.textContent = key;
+	        th.style.border = "1px solid #999";
+	        th.style.padding = "4px";
+	        th.style.backgroundColor = "#f2f2f2";
+	        headerRow.appendChild(th);
+	      });
+	      thead.appendChild(headerRow);
+	      table.appendChild(thead);
+
+	      const tbody = document.createElement("tbody");
+
+	      data.forEach((row) => {
+	        const tr = document.createElement("tr");
+	        keys.forEach((key) => {
+	          const td = document.createElement("td");
+	          td.textContent = row[key] ?? "";
+	          td.style.border = "1px solid #ccc";
+	          td.style.padding = "4px";
+	          tr.appendChild(td);
+	        });
+	        tbody.appendChild(tr);
+	      });
+
+	      table.appendChild(tbody);
+	      previewBox.appendChild(table);
+	      container.innerHTML = ""; // 초기화
+	      container.appendChild(previewBox);
+	    }
+
+	    // ✅ 자료 저장 처리
+	    document.getElementById("saveDataBtn").addEventListener("click", () => {
+	      const fileInput = document.getElementById("excelFile");
+	      if (!fileInput.files || fileInput.files.length === 0) {
+	        alert("파일을 선택해주세요.");
+	        document.getElementById("excelPreview").innerHTML = "";
+	        return;
+	      }
+
+	      if (!previewData || previewData.length === 0) {
+	        alert("저장할 데이터가 없습니다.");
+	        return;
+	      }
+
+	      const hospCd1 = document.getElementById("hospCd1").value;
+	      if (hospCd1 === "") {
+	        messageBox("1", "<h6> 요양기관이 선택되어야합니다. </h6><p></p><br>", mainFocus, "", "");
+	        return;
+	      }
+
+	      fetch("/mangr/CellsaveExcelData.do", {
+	        method: "POST",
+	        headers: {
+	          "Content-Type": "application/json"
+	        },
+	        body: JSON.stringify({ hospCd: hospCd1, data: previewData })
+	      })
+	        .then(res => res.json())
+	        .then(result => {
+	          if (result.success) {
+	            alert("저장되었습니다.");
+	            // 저장 완료 후 초기화(선택)
+	            document.getElementById("saveDataBtn").style.display = "none";
+	          } else {
+	            alert("저장 실패: " + result.message);
+	          }
+	        })
+	        .catch(err => {
+	          alert("서버 오류 발생");
+	          console.error(err);
+	        });
+	    });
+
+	  </script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
 		<!-- ============================================================== -->

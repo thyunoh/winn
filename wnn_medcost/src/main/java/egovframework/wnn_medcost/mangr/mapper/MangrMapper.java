@@ -3,6 +3,7 @@ package egovframework.wnn_medcost.mangr.mapper;
 import java.util.Map;
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.egovframe.rte.psl.dataaccess.mapper.Mapper;
 
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
@@ -10,6 +11,7 @@ import egovframework.wnn_medcost.mangr.model.AsqDTO;
 import egovframework.wnn_medcost.mangr.model.ChartDTO;
 import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
+import egovframework.wnn_medcost.user.model.LisenceDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 @Mapper("mangrMapper")
 public interface MangrMapper {	
@@ -43,4 +45,7 @@ public interface MangrMapper {
     //문서파일 
 	List<FileDTO>     getFileCdList(FileDTO dto)  throws Exception;
 	boolean           deleteFileCd(FileDTO dto)   throws Exception;
+	
+	//
+	void insertExcelDoctor(@Param("list") List<LisenceDTO> list);
 }
