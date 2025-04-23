@@ -30,7 +30,7 @@
  		                            <div class="col-1 col-lg-1"> 
  			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid text-left" required placeholder="">
 			                        </div> 
-                                    <div class="col-sm-4">
+                                    <div class="col-sm-3">
                                         <div class="input-group">
                                              <input id="findData" type="text" class="form-control" placeholder="3글자 이상 입력 후 [ enter ]" 
                                                                                                  onkeyup="findEnterKey()" oninput="findField(this)">
@@ -55,7 +55,7 @@
 									<div style="text-align: right;">
 									  <form id="excelForm" action="/uploadExcel" method="post" enctype="multipart/form-data" style="display: inline-block;">
 									    <input type="file" name="excelFile" id="excelFile" style="width: 400px;" />
-									    <button type="submit" class="btn btn-success btn-sm">미리보기</button>
+									    <button type="submit" class="btn btn-success btn-sm" style="margin-top: -4px;">미리보기</button>
 									  </form>
 									
 									  <button type="button" id="saveDataBtn" class="btn btn-primary btn-sm" style="display: none; margin-left: 5px;">자료저장</button>
