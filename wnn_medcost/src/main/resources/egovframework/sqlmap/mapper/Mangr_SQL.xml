@@ -390,7 +390,7 @@
     </update>   
     <!-- 엑셀저장 저장 -->
 	<insert id="insertExcelDoctor" parameterType="java.util.List">
-	    INSERT INTO licexcel_doctor (
+	    INSERT INTO TBL_HOSPEMP_MST (
 	        name,
 	        license_date,
 	        entry_date,
