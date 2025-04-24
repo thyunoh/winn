@@ -1,6 +1,9 @@
 package egovframework.wnn_medcost.user.web;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -11,19 +14,26 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import egovframework.wnn_medcost.util.ResponseObject;
 import egovframework.util.ClientInfo;
@@ -32,6 +42,7 @@ import egovframework.wnn_medcost.base.web.BaseController;
 import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
+import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 import egovframework.wnn_medcost.user.model.MembrDTO;
 import egovframework.wnn_medcost.user.model.UserAuthDTO;
@@ -41,7 +52,14 @@ import egovframework.wnn_medcost.user.service.UserService;
 import egovframework.util.EgovFileScrty;
 
 import org.springframework.ui.ModelMap;
+import org.apache.poi.ss.usermodel.CellType;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 @Controller
 @RequestMapping("/user")  // 클래스 레벨에서 기본 경로 설정
@@ -1425,5 +1443,184 @@ public class UserController extends BaseController {
 		} catch(Exception ex) {
 			return "";
 		}
+    }	
+	//의사.간호사 엑셀업로드   
+	@RequestMapping(value="/licexcel.do")
+    public String licexcel(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/user/licexcel";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
     }		
+	//엑셀자료 미리보기  
+    @PostMapping("/previewExcel.do")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> previewExcel(@RequestParam("excelFile") MultipartFile file, HttpSession session) {
+        List<Map<String, Object>> dataList = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd"); // 하이픈 없는 날짜 포맷
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Row headerRow = sheet.getRow(0);
+            if (headerRow == null) throw new IllegalArgumentException("엑셀 첫 행이 비어 있습니다.");
+
+            for (int i = 2; i <= sheet.getLastRowNum(); i++) { // 2번째 행부터 시작
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                Map<String, Object> map = new LinkedHashMap<>();
+                for (int j = 0; j < headerRow.getLastCellNum(); j++) {
+                    Cell headerCell = headerRow.getCell(j);
+                    Cell cell = row.getCell(j);
+
+                    String key = headerCell != null ? headerCell.getStringCellValue().trim() : "Column" + j;
+                    String value = "";
+
+                    if (cell != null) {
+                    	try {
+                    	    if (DateUtil.isCellDateFormatted(cell)) {
+                    	        value = dateFormat.format(cell.getDateCellValue());
+                    	    } else {
+                    	        value = cell.toString().trim();
+                    	    }
+                    	} catch (Exception e) {
+                    	    value = cell.toString().trim();
+                    	}
+                    }
+
+                    map.put(key, value);
+                }
+                dataList.add(map);
+            }
+
+            session.setAttribute("previewExcel", dataList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(dataList);
+    }
+  //엑셀로드 저장(cell 를 setdto 해서 처리하는 경우 ) 
+    @SuppressWarnings("unchecked")
+    @PostMapping("/CellsaveExcelData.do")
+    @ResponseBody
+    public Map<String, Object> CellsaveExcelData(@RequestBody Map<String, Object> request) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String hospCd = (String) request.get("hospCd");
+            List<Map<String, Object>> rows = (List<Map<String, Object>>) request.get("data");
+            List<LicnumDTO> dtoList = new ArrayList<>();
+
+            for (Map<String, Object> row : rows) {
+                LicnumDTO dto = new LicnumDTO();
+
+                dto.setLicenseGb((String) row.get("면허종별"));
+                
+             // '의사구분' 또는 '세부종별' 중 하나
+                if (row.containsKey("의사구분")) {
+                    dto.setDoctorGb((String) row.get("의사구분"));
+                } else if (row.containsKey("세부종별")) {
+                    dto.setDoctorGb((String) row.get("세부종별")); //간호사   
+                }
+
+                // '의사형태' 또는 '직책' 중 하나
+                if (row.containsKey("의사형태")) {
+                    dto.setDoctorType((String) row.get("의사형태"));
+                } else if (row.containsKey("직책")) {
+                    dto.setDoctorType((String) row.get("직책")); //간호사   
+                }
+                if (row.containsKey("간호등급여부")) {
+                   dto.setNurGrd((String) row.get("간호등급여부")); //간호사                 
+                }
+                dto.setName((String) row.get("성명"));
+                dto.setJumin((String) row.get("주민등록번호"));
+                dto.setWorkGb((String) row.get("근무형태"));
+                dto.setLicNum((String) row.get("면허번호"));
+
+                String licDat = (String) row.get("면허취득일자");
+                if (licDat != null && licDat.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setLicDat(licDat.replaceAll("-", ""));
+                }
+                String ipDat = (String) row.get("입사일자");
+                if (ipDat != null && ipDat.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setIpDat(ipDat.replaceAll("-", ""));
+                }
+
+                dto.setVacGb((String) row.get("구분"));
+
+                String vacStart = (String) row.get("시작일자");
+                if (vacStart != null && vacStart.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setVacStart(vacStart.replaceAll("-", ""));
+                }
+
+                String vacEnd = (String) row.get("종료일자");
+                if (vacEnd != null && vacEnd.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setVacEnd(vacEnd.replaceAll("-", ""));
+                }
+
+                dto.setVacSubnm((String) row.get("대체자"));
+
+                String vacSubStart = (String) row.get("대체시작일자");
+                if (vacSubStart != null && vacSubStart.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setVacsubStrdt(vacSubStart.replaceAll("-", ""));
+                }
+
+                String vacSubEnd = (String) row.get("대체종료일자");
+                if (vacSubEnd != null && vacSubEnd.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setVacsubEnddt(vacSubEnd.replaceAll("-", ""));
+                }
+
+                dto.setWardNm((String) row.get("병동명"));
+                dto.setWardDanwi((String) row.get("단위"));
+
+                String wardStart = (String) row.get("근무시작일자");
+                if (wardStart != null && wardStart.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setWardStrdt(wardStart.replaceAll("-", ""));
+                }
+
+                String wardEnddt = (String) row.get("근무종료일자");
+                if (wardEnddt != null && wardEnddt.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setWardEnddt(wardEnddt.replaceAll("-", ""));
+                }                
+                
+                dto.setWardMain((String) row.get("전담여부"));
+
+                String lastWorkdt = (String) row.get("최종근무일");
+                if (lastWorkdt != null && lastWorkdt.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setLastWorkdt(lastWorkdt.replaceAll("-", ""));
+                }
+
+                dto.setHisInfo((String) row.get("이력조회"));
+                dto.setManChg((String) row.get("인력변동"));
+                dto.setManRea((String) row.get("변동이유"));
+                dto.setHospCd(hospCd);
+                if (dto.getIpDat() != "" && dto.getIpDat() != null) {
+                    dtoList.add(dto);
+                }
+            }
+
+            if (!dtoList.isEmpty()) {
+                svc.insertExcelDoctorBatch(dtoList);
+            }
+
+            result.put("success", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
 }

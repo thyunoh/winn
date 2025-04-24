@@ -40,15 +40,18 @@ import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
 import egovframework.wnn_medcost.mangr.service.MangrService;
+import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
 @Controller
 @RequestMapping("/mangr")  // 클래스 레벨에서 기본 경로 설정
@@ -469,92 +472,5 @@ public class MangrController {
 			return "";
 		}
     }
-	//엑셀자료 미리보기  
-    @PostMapping("/previewExcel.do")
-    @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> previewExcel(@RequestParam("excelFile") MultipartFile file, HttpSession session) {
-        List<Map<String, Object>> dataList = new ArrayList<>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd"); // 하이픈 없는 날짜 포맷
-
-        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
-            Row headerRow = sheet.getRow(0);
-            if (headerRow == null) throw new IllegalArgumentException("엑셀 첫 행이 비어 있습니다.");
-
-            for (int i = 2; i <= sheet.getLastRowNum(); i++) { // 2번째 행부터 시작
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-
-                Map<String, Object> map = new LinkedHashMap<>();
-                for (int j = 0; j < headerRow.getLastCellNum(); j++) {
-                    Cell headerCell = headerRow.getCell(j);
-                    Cell cell = row.getCell(j);
-
-                    String key = headerCell != null ? headerCell.getStringCellValue().trim() : "Column" + j;
-                    String value = "";
-
-                    if (cell != null) {
-                    	try {
-                    	    if (DateUtil.isCellDateFormatted(cell)) {
-                    	        value = dateFormat.format(cell.getDateCellValue());
-                    	    } else {
-                    	        value = cell.toString().trim();
-                    	    }
-                    	} catch (Exception e) {
-                    	    value = cell.toString().trim();
-                    	}
-                    }
-
-                    map.put(key, value);
-                }
-                dataList.add(map);
-            }
-
-            session.setAttribute("previewExcel", dataList);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(dataList);
-    }
-  //엑셀로드 저장(cell 를 setdto 해서 처리하는 경우 ) 
-    @PostMapping("/CellsaveExcelData.do")
-    @ResponseBody
-    public Map<String, Object> CellsaveExcelData(@RequestBody Map<String, Object> request) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            String hospCd = (String) request.get("hospCd");
-            List<List<Object>> rows = (List<List<Object>>) request.get("data");
-            List<LisenceDTO> dtoList = new ArrayList<>(); // 한꺼번에 담을 리스트
-            for (int i = 1; i < rows.size(); i++) {
-                List<Object> row = rows.get(i);
-                if (row.size() < 4) continue;
-                LisenceDTO dto = new LisenceDTO();
-             //   dto.setName((String) row.get(0));
-                String licenseDate = (String) row.get(2);
-                if (licenseDate != null && licenseDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
-             //       dto.setLicenseDate(licenseDate.replaceAll("-", ""));
-                }
-                String entryDate = (String) row.get(3);
-                if (entryDate != null && entryDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            //        dto.setEntryDate(entryDate.replaceAll("-", ""));
-                }
-               // dto.setHospCd(hospCd); // 병원코드 설정
-                dtoList.add(dto);      // 리스트에 추가
-            }
-            // 리스트를 한 번에 저장 (서비스에서 일괄처리 메서드 필요)
-            if (!dtoList.isEmpty()) {
-                svc.insertExcelDoctorBatch(dtoList); // 이 메서드를 따로 구현해야 함
-            }
-            result.put("success", true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            result.put("success", false);
-            result.put("message", e.getMessage());
-        }
-        return result;
-    }
 }
+

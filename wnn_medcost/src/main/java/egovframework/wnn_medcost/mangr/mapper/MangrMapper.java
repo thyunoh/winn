@@ -45,7 +45,4 @@ public interface MangrMapper {
     //문서파일 
 	List<FileDTO>     getFileCdList(FileDTO dto)  throws Exception;
 	boolean           deleteFileCd(FileDTO dto)   throws Exception;
-	
-	//
-	void insertExcelDoctor(@Param("list") List<LisenceDTO> list);
 }

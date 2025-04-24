@@ -48,7 +48,6 @@ public interface MangrService {
 	List<FileDTO>    getFileCdList(FileDTO dto)  throws Exception; 
 	void             deleteFile(String hospCd , String filePath, String fileSeq, String fileGb , String updUser , String  updIp );
 
-	//엑셀저장 
-	void            insertExcelDoctorBatch(List<LisenceDTO> list);
+
 
 }

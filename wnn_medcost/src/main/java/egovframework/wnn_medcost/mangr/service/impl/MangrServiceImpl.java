@@ -193,9 +193,4 @@ public class MangrServiceImpl implements MangrService {
 			e.printStackTrace();
 		}
 	}
-   //옉셀저장 
-	@Override
-	public void insertExcelDoctorBatch(List<LisenceDTO> list) {
-		 mapper.insertExcelDoctor(list); // 반복문 없이 한 번에!
-	}
 }

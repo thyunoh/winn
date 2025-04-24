@@ -1013,5 +1013,100 @@
      <![CDATA[
         ORDER BY A.JOIN_DT DESC , A.HOSP_CD ASC , A.HOSP_NM ASC
     ]]>   
-    </select>     	     	        	   	                        	   	                  
+    </select>    
+    <!-- 의사정보 자료저장 -->
+	<insert id="insertExcelDoctor" parameterType="java.util.List">
+	    INSERT INTO TBL_LICENSE_MST (
+	          HOSP_CD
+	        , LIC_NUM
+	        , IP_DAT 
+	        , LICENSE_GB
+	        , DOCTOR_GB
+	        , DOCTOR_TYPE
+	        , NAME
+	        , JUMIN
+	        , WORK_GB
+	        , LIC_DAT
+	        , VAC_GB
+	        , VAC_START
+	        , VAC_END
+	        , VAC_SUBNM
+	        , VACSUB_STRDT
+	        , VACSUB_ENDDT
+	        , WARD_NM
+	        , WARD_DANWI
+	        , WARD_STRDT
+	        , WARD_ENDDT
+	        , WARD_MAIN
+	        , LAST_WORKDT
+	        , HIS_INFO
+	        , MAN_CHG
+	        , MAN_REA
+	        , NUR_GRD
+	        , ACTION_YN
+	        , REG_DTTM
+	        , UPD_DTTM
+	    )
+	    VALUES
+	    <foreach collection="list" item="item" separator=",">
+	        (
+	          #{item.hospCd}
+	        , #{item.licNum}
+	        , #{item.ipDat} 
+	        , #{item.licenseGb}
+	        , #{item.doctorGb}
+	        , #{item.doctorType}
+	        , #{item.name}
+	        , #{item.jumin}
+	        , #{item.workGb}
+	        , #{item.licDat}
+	        , #{item.vacGb}
+	        , #{item.vacStart}
+	        , #{item.vacEnd}
+	        , #{item.vacSubnm}
+	        , #{item.vacsubStrdt}
+	        , #{item.vacsubEnddt}
+	        , #{item.wardNm}
+	        , #{item.wardDanwi}
+	        , #{item.wardStrdt}
+	        , #{item.wardEnddt}
+	        , #{item.wardMain}
+	        , #{item.lastWorkdt}
+	        , #{item.hisInfo}
+	        , #{item.manChg}
+	        , #{item.manRea}
+	        , #{item.nurGrd}
+	        , 'Y'
+	        , NOW() 
+	        , NOW() 
+	        )
+	    </foreach>
+	    ON DUPLICATE KEY UPDATE 
+	        LICENSE_GB   = VALUES(LICENSE_GB),
+	        DOCTOR_GB    = VALUES(DOCTOR_GB),
+	        DOCTOR_TYPE  = VALUES(DOCTOR_TYPE),
+	        NAME         = VALUES(NAME),
+	        JUMIN        = VALUES(JUMIN),
+	        WORK_GB      = VALUES(WORK_GB),
+	        LIC_DAT      = VALUES(LIC_DAT),
+	        VAC_GB       = VALUES(VAC_GB),
+	        VAC_START    = VALUES(VAC_START),
+	        VAC_END      = VALUES(VAC_END),
+	        VAC_SUBNM    = VALUES(VAC_SUBNM),
+	        VACSUB_STRDT = VALUES(VACSUB_STRDT),
+	        VACSUB_ENDDT = VALUES(VACSUB_ENDDT),
+	        WARD_NM      = VALUES(WARD_NM),
+	        WARD_DANWI   = VALUES(WARD_DANWI),
+	        WARD_STRDT   = VALUES(WARD_STRDT),
+	        WARD_ENDDT   = VALUES(WARD_ENDDT),
+	        WARD_MAIN    = VALUES(WARD_MAIN),
+	        LAST_WORKDT  = VALUES(LAST_WORKDT),
+	        HIS_INFO     = VALUES(HIS_INFO),
+	        MAN_CHG      = VALUES(MAN_CHG),
+	        MAN_REA      = VALUES(MAN_REA),
+	        NUR_GRD      = VALUES(NUR_GRD),
+	        ACTION_YN    = 'Y' ,
+	        UPD_DTTM     = NOW()  
+	</insert>
+                    	   	                  
 </mapper>

@@ -13,6 +13,7 @@ import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.user.mapper.UserMapper;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
+import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 import egovframework.wnn_medcost.user.model.MembrDTO;
 import egovframework.wnn_medcost.user.model.UserAuthDTO;
@@ -267,4 +268,9 @@ public class UserServiceImpl implements UserService {
 		// TODO Auto-generated method stub
 		return mapper.updateMember(dto) ; 
 	}
+   //옉셀저장 
+	@Override
+	public void insertExcelDoctorBatch(List<LicnumDTO> list) {
+		 mapper.insertExcelDoctor(list); // 반복문 없이 한 번에!
+	}	
 }

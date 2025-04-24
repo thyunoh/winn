@@ -2,6 +2,7 @@ package egovframework.wnn_medcost.user.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.egovframe.rte.psl.dataaccess.mapper.Mapper;
 
 import com.mysql.cj.LicenseConfiguration;
@@ -11,6 +12,7 @@ import egovframework.wnn_medcost.user.model.WardDTO;
 import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
+import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 import egovframework.wnn_medcost.user.model.MembrDTO;
 import egovframework.wnn_medcost.user.model.UserAuthDTO;
@@ -77,6 +79,8 @@ public interface UserMapper {
 	//회원가입정보
 	List<MembrDTO>     getMemberList(MembrDTO dto)           throws Exception;	
 	boolean            updateMember(MembrDTO dto)            throws Exception; 
+	//
+	void              insertExcelDoctor(@Param("list") List<LicnumDTO> list);
 	
 }
                     

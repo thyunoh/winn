@@ -15,6 +15,7 @@
     	<typeAlias  alias="HospConDTO"  type="egovframework.wnn_medcost.user.model.HospConDTO"/> 
     	<typeAlias  alias="UserAuthDTO"  type="egovframework.wnn_medcost.user.model.UserAuthDTO"/> 
     	<typeAlias  alias="MembrDTO"     type="egovframework.wnn_medcost.user.model.MembrDTO"/> 
+    	<typeAlias  alias="LicnumDTO"     type="egovframework.wnn_medcost.user.model.LicnumDTO"/>
 	    	
     	<typeAlias  alias="SugaCdDTO"   type="egovframework.wnn_medcost.base.model.SugaCdDTO"/>
     	<typeAlias  alias="CodeMdDTO"   type="egovframework.wnn_medcost.base.model.CodeMdDTO"/>

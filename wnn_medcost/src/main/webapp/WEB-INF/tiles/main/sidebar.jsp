@@ -169,8 +169,17 @@
                                     <a class="nav-item nav-link"  href="/base/magamFileUpload.do">청구.평가 업로드</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/base/sugacd.do">기타.자료 업로드</a>
-                                </li>
+						            <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+						              data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
+						            </a>
+						            <div id="lic_excel" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+						                <ul class="nav flex-column">
+						                    <li class="nav-item">
+						                        <a class="nav-item nav-link" href="/user/licexcel.do">의사.간호사 엑셀</a>
+						                    </li>
+						                </ul>
+						            </div>
+							   </li>                                     
                             </ul>
                         </div>
                     </li>
