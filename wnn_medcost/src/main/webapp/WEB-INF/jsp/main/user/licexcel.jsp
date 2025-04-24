@@ -417,7 +417,7 @@
 	        .then(res => res.json())
 	        .then(result => {
 	          if (result.success) {
-	        	  messageBox("1", "<h6> 정상적으로 자료가 정상되었습니다. </h6><p></p><br>", mainFocus, "", "");
+	        	  messageBox("1", "<h6> 정상적으로 자료가 생성 되었습니다. </h6><p></p><br>", mainFocus, "", "");
 	        	  document.getElementById("saveDataBtn").classList.add("d-none");
 	          } else {
 	            alert("저장 실패: " + result.message);
