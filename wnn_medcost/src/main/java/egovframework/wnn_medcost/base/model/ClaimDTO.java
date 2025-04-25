@@ -38,6 +38,9 @@ public class ClaimDTO {
     private String updUser;  // 최종변경자
     private String updIp;    // 최종변경 IP
 
+    private transient String findData; // MyBatis에서 매핑되지 않도록 설정
+
+    
     public String getKeycformIo() {
 		return keycformIo;
 	}
@@ -69,9 +72,7 @@ public class ClaimDTO {
 	public void setCformSubName(String cformSubName) {
 		this.cformSubName = cformSubName;
 	}
-	// 검색 데이터 (MyBatis ResultMap 제외)
-    private transient String findData; // MyBatis에서 매핑되지 않도록 설정
-
+	
 	public String getKeyhosGrd() {
 		return keyhosGrd;
 	}

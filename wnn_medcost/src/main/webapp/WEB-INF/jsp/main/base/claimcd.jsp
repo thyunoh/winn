@@ -263,25 +263,23 @@
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
 		var c_Head_Set = ['요양등급','요양등급명','유형구분','유형명칭','보조유형','보조유형명칭','외래입원','항','목','청구코드시작','청구코드종료' ,'적용년월','청구율','경증율','등록일'];
-		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
-	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
-	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'hosGrd',       visible: false,  className: 'dt-body-center', width: '100px',  name: 'keyhosGrd'   , primaryKey: true },
-	        				{ data: 'hosGrdName',   visible: true,   className: 'dt-body-center', width: '200px',  },
-	        				{ data: 'cformNo',      visible: false,  className: 'dt-body-center', width: '100px',  name: 'keycformNo'  , primaryKey: true },
-	        				{ data: 'cformName',    visible: true,   className: 'dt-body-center', width: '200px',  },	        				
-	        				{ data: 'cformSub',     visible: false,  className: 'dt-body-center', width: '100px',  name: 'keycformSub' , primaryKey: true },
-	        				{ data: 'cformSubName', visible: true,   className: 'dt-body-center', width: '200px',  },	
-	        				{ data: 'cformIo',      visible: true,   className: 'dt-body-left'  , width: '100px',  name: 'keycformIo'  , primaryKey: true },
-	        				{ data: 'itemNo',       visible: true,   className: 'dt-body-left'  , width: '50px',   name: 'keyitemNo'   , primaryKey: true },
-	        				{ data: 'codeNo',       visible: true,   className: 'dt-body-left'  , width: '50px',   name: 'keycodeNo'   , primaryKey: true },       				
-	        				{ data: 'ediFcode',     visible: true,   className: 'dt-body-left'  , width: '100px',  name: 'keyediFcode' , primaryKey: true },
-	        				{ data: 'ediTcode',     visible: true,   className: 'dt-body-left'  , width: '100px',  name: 'keyediTcode' , primaryKey: true },
-	        				{ data: 'startYm',      visible: true,   className: 'dt-body-left'  , width: '100px',  name: 'keystartYm'  , primaryKey: true },
-	        				{ data: 'claimRate' ,   visible: true,   className: 'dt-body-center', width: '100px',  },
-					        { data: 'minorRate' ,   visible: true,   className: 'dt-body-center', width: '100px',  },
-					        { data: 'updDttm'   ,   visible: true,   className: 'dt-body-left'  , width: '100px',  }
-					    ];
+		var columnsSet = [           
+						    { data: 'hosGrd'    , visible: false, className: 'dt-body-center', width: '100px', name: 'keyhosGrd', primaryKey: true },
+						    { data: 'hosGrdName', visible: true, className: 'dt-body-center', width: '50px' },
+						    { data: 'cformNo'   , visible: false, className: 'dt-body-center', width: '100px', name: 'keycformNo', primaryKey: true },
+						    { data: 'cformName' , visible: true, className: 'dt-body-left', width: '200px' },
+						    { data: 'cformSub'  , visible: false, className: 'dt-body-center', width: '100px', name: 'keycformSub', primaryKey: true },
+						    { data: 'cformSubName', visible: true, className: 'dt-body-left', width: '200px' },
+						    { data: 'cformIo'   , visible: true, className: 'dt-body-center', width: '50px', name: 'keycformIo', primaryKey: true },
+						    { data: 'itemNo'    , visible: true, className: 'dt-body-center', width: '50px', name: 'keyitemNo', primaryKey: true },
+						    { data: 'codeNo'    , visible: true, className: 'dt-body-center', width: '50px', name: 'keycodeNo', primaryKey: true },
+						    { data: 'ediFcode'  , visible: true, className: 'dt-body-center', width: '100px', name: 'keyediFcode', primaryKey: true },
+						    { data: 'ediTcode'  , visible: true, className: 'dt-body-center', width: '100px', name: 'keyediTcode', primaryKey: true },
+						    { data: 'startYm'   , visible: true, className: 'dt-body-center', width: '100px', name: 'keystartYm', primaryKey: true },
+						    { data: 'claimRate' , visible: true, className: 'dt-body-right', width: '100px' },
+						    { data: 'minorRate' , visible: true, className: 'dt-body-right', width: '100px' },
+						    { data: 'updDttm'   , visible: true, className: 'dt-body-center', width: '100px' }
+						];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
         var s_AutoNums = true;   		             // 자동순번 표시 여부
@@ -756,7 +754,7 @@
 		    let find = {};
 		   	
 		   	for (let findValue of findValues) {
-		   		let key = findValue.id === "feeType1" ? "feeType" : findValue.id;
+		   		let key = findValue.id;
 		   		find[key] = findValue.val;
 		   	}
 		   	
