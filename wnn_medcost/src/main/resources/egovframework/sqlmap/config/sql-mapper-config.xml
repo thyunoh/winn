@@ -24,6 +24,7 @@
     	<typeAlias  alias="SamverDTO"   type="egovframework.wnn_medcost.base.model.SamverDTO"/>
     	<typeAlias  alias="YakgaCdDTO"   type="egovframework.wnn_medcost.base.model.YakgaCdDTO"/>
     	<typeAlias  alias="JearyoCdDTO"  type="egovframework.wnn_medcost.base.model.JearyoCdDTO"/>
+    	<typeAlias  alias="ClaimDTO"     type="egovframework.wnn_medcost.base.model.ClaimDTO"/>
 
     	<typeAlias  alias="MagamDTO"    type="egovframework.wnn_medcost.magam.model.MagamDTO"/>
     	<typeAlias  alias="FilesDTO"    type="egovframework.wnn_medcost.magam.model.FilesDTO"/>

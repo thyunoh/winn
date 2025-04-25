@@ -6,6 +6,7 @@ import java.util.List;
 import org.egovframe.rte.psl.dataaccess.mapper.Mapper;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
 import egovframework.wnn_medcost.base.model.SamverDTO;
+import egovframework.wnn_medcost.base.model.ClaimDTO;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
@@ -50,5 +51,10 @@ public interface BaseMapper {
 	boolean           updateYakCdMst(YakgaCdDTO dto)  throws Exception; 
 	
 	List<JearyoCdDTO>  getJaeryoCdList(JearyoCdDTO dto)  throws Exception;
-
+	
+	//청구율
+	List<ClaimDTO>     getclaimCdList(ClaimDTO dto)   throws Exception; 
+	boolean            insertclaimCd(ClaimDTO dto)    throws Exception; 
+	boolean            updateclaimCd(ClaimDTO dto)    throws Exception; 
+	String             claimCdDupChk(ClaimDTO dto)    throws Exception; 
 }                     

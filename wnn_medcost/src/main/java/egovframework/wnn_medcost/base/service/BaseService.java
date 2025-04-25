@@ -3,6 +3,7 @@ package egovframework.wnn_medcost.base.service;
 import java.util.List;
 import java.util.Map;
 
+import egovframework.wnn_medcost.base.model.ClaimDTO;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
 import egovframework.wnn_medcost.base.model.JearyoCdDTO;
@@ -49,5 +50,10 @@ public interface BaseService {
 	boolean           updateYakCdMst(YakgaCdDTO dto)  throws Exception;	
  //재료대 
 	List<JearyoCdDTO>  getJaeryoCdList(JearyoCdDTO dto)  throws Exception;
-	
+
+	//청구율
+	List<ClaimDTO>     getclaimCdList(ClaimDTO dto)   throws Exception; 
+	boolean            insertclaimCd(ClaimDTO dto)    throws Exception; 
+	boolean            updateclaimCd(ClaimDTO dto)    throws Exception; 
+	String             claimCdDupChk(ClaimDTO dto)    throws Exception; 	
 }

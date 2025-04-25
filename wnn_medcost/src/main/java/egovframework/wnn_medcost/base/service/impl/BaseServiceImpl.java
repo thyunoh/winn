@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import egovframework.wnn_medcost.base.mapper.BaseMapper;
+import egovframework.wnn_medcost.base.model.ClaimDTO;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
 import egovframework.wnn_medcost.base.model.JearyoCdDTO;
@@ -208,6 +209,30 @@ public class BaseServiceImpl implements BaseService {
 	public List<JearyoCdDTO> getJaeryoCdList(JearyoCdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.getJaeryoCdList(dto);
+	}
+
+	@Override
+	public List<ClaimDTO> getclaimCdList(ClaimDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getclaimCdList(dto);
+	}
+
+	@Override
+	public boolean insertclaimCd(ClaimDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.insertclaimCd(dto);
+	}
+
+	@Override
+	public boolean updateclaimCd(ClaimDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateclaimCd(dto);
+	}
+
+	@Override
+	public String claimCdDupChk(ClaimDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.claimCdDupChk(dto);
 	}
 
 

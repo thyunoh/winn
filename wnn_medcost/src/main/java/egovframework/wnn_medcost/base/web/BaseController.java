@@ -29,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import egovframework.wnn_medcost.base.model.ClaimDTO;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
@@ -944,5 +945,132 @@ public class BaseController {
 		} catch(Exception ex) {
 			return null;
 		}
+	}
+	//청구율 계산 
+	@RequestMapping(value="/claimcd.do")
+    public String claimcd(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/base/claimcd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }
+	
+	@RequestMapping(value="/claimCdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> claimCdList(@ModelAttribute("DTO") ClaimDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("청구율-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+				
+				List<ClaimDTO> claimList = svc.getclaimCdList(dto);
+				
+				System.out.println("청구율-java size " + claimList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",claimList);
+
+		        System.out.println("청구율-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	@RequestMapping(value="/claimCdInsert.do", method = RequestMethod.POST)
+    public ResponseEntity<String> claimCdInsert(@RequestBody List<ClaimDTO> data) {
+		
+		System.out.println("Insert 시작했음");
+		String returnValue = "OK";
+		
+		// 처리 로직
+        try {
+        	
+        	for (ClaimDTO dto : data) {
+        		String dupchk =   svc.claimCdDupChk(dto) ;
+        		if ("Y".equals(dupchk)) {
+        			return ResponseEntity.status(400).body(dto.getCformNo()); 
+        		}
+        		svc.insertclaimCd(dto) ; 
+       		    System.out.println("Tblinfo: "  + dto.getCformNo());
+       		    System.out.println("Version: "  + dto.getCformSub());
+            }
+           
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
+	@RequestMapping(value="/claimCdUpdate.do", method = RequestMethod.POST)
+    public ResponseEntity<String> claimCdUpdate(@RequestBody List<ClaimDTO> data) {
+	
+		System.out.println("Update 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	
+        	for (ClaimDTO dto : data) {
+        		svc.updateclaimCd(dto) ; //이력관리 
+       		    System.out.println("Fee Code: " + dto.getCformIo());
+                System.out.println("Start_Dt: " + dto.getCformNo());
+     	
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
+	@RequestMapping(value="/claimCdDelete.do", method = RequestMethod.POST)
+    public ResponseEntity<String> claimCdDelete(@RequestBody List<ClaimDTO> data) {
+		
+		System.out.println("Delete 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	for (ClaimDTO dto : data) {
+        		dto.setHosGrd(dto.getKeyhosGrd());
+        		dto.setCformNo(dto.getKeycformNo()); 
+        		dto.setCformSub(dto.getKeycformSub());
+        		dto.setCformIo(dto.getKeycformIo()); 
+        		dto.setItemNo(dto.getKeyitemNo()); 
+        		dto.setCodeNo(dto.getKeycodeNo()); 
+        		dto.setEdiFcode(dto.getKeyediFcode());
+        		dto.setEdiTcode(dto.getKeyediTcode());
+        		svc.updateclaimCd(dto) ; //이력관리 
+       		    System.out.println("Key CformNo: " + dto.getKeycformNo());
+             
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
 	}	
 }

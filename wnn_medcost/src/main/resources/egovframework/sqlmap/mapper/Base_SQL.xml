@@ -672,5 +672,109 @@
 		      A.KOR_NM   LIKE CONCAT('%'  #{findData}  '%')
 		    )  
 	]]>
-	</select>               	        		       	            	        		                              	      
+	</select>   
+    <!-- 청구율계산   -->                              
+	<select id="getclaimCdList" parameterType="ClaimDTO"  resultType="ClaimDTO"><![CDATA[
+	  	 select 
+            , A.HOS_GRD, 
+            , FN_GET_DTL_CODE('Z', 'HOS_GRD', A.HOS_GRD)         AS    HOS_GRD_NAME 
+            , A.CFORM_NO, 
+            , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)       AS    CFORM_NAME 
+            , A.CFORM_SUB, 
+            , FN_GET_DTL_CODE('Z', 'CFORM_SUB', A.CFORM_SUB)     AS    CFORM_SUB_NAME 
+            , A.CFORM_IO, 
+            , A.ITEM_NO, 
+            , A.CODE_NO, 
+            , A.EDI_FCODE, 
+            , A.EDI_TCODE, 
+            , A.START_YM, 
+            , A.CLAIM_RATE, 
+            , A.MINOR_RATE, 
+            , A.REG_DTTM, 
+            , A.REG_USER, 
+            , A.REG_IP, 
+            , A.UPD_DTTM, 
+            , A.UPD_USER, 
+            , A.UPD_IP
+		  From TBL_CLAIMRATE_MST A
+		 Where A.ACTION_YN = 'Y' AND 
+		     ( A.CLAIM_NO     LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      A.CLAIM_NO      LIKE CONCAT('%'  #{findData}  '%')
+		     OR 
+		      A.CLAIM_NO      LIKE CONCAT('%'  #{findData}  '%')
+		    )  
+     ]]>		    
+	</select>  
+    <insert id="insertclaimCd" parameterType="ClaimDTO" > <![CDATA[ 
+        INSERT INTO TBL_CLAIMRATE_MST 
+               (HOSP_GRD,         CFORM_NO, 
+                CFORM_SUB,        CFORM_IO, 
+                ITEM_NO,          CODE_NO, 
+                EDI_FCODE,        EDI_TCODE, 
+                START_YM,         CLAIM_RATE,       
+                MINOR_RATE,       REG_DTTM, 
+                REG_USER,         REG_IP, 
+                UPD_DTTM,         UPD_USER, 
+                UPD_IP , 
+                JOB_SEQ ,
+                ACTION_YN 
+                )
+        VALUES ( #{hosGrd}   ,   #{cformNo}  , 
+                 #{cformSub} ,   #{cformIo}  , 
+                 #{itemNo}   ,   #{codeNo}   , 
+                 #{ediFcode} ,   #{ediTcode} , 
+                 #{startYm}  ,   #{claimRate}, 
+                 #{minorRate},   
+                 NOW()       ,   #{regUser}  ,   
+                 #{regIp}    ,   NOW()       ,   
+                 #{updUser}  ,   #{updIp}    , 
+                 (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+                   FROM TBL_CLAIMRATE_MST A 
+                   WHERE A.HOSP_GRD   = #{hosGrd} 
+                     AND A.CFORM_NO   = #{cformNo}
+                     AND A.CFORM_SUB  = #{cformSub}
+                     AND A.CFORM_IO   = #{cformIo}
+                     AND A.ITEM_NO    = #{itemNo}
+                     AND A.CODE_NO    = #{codeNo}
+                     AND A.EDI_FCODE  = #{ediFcode}
+                     AND A.EDI_TCODE  = #{ediTcode}
+                     AND A.START_YM   = #{startYm}
+                     ), 'Y'
+	          )	
+     ]]>
+     </insert>
+      <update id="updateclaimCd"  parameterType="ClaimDTO"> <![CDATA[ 
+        UPDATE TBL_CLAIMRATE_MST
+        SET ACTION_YN = 'N'
+            ,UPD_DTTM    = NOW()
+            ,UPD_USER    = #{updUser}
+            ,UPD_IP      = #{updIp}
+          WHERE HOSP_GRD   = #{hosGrd} 
+            AND CFORM_NO   = #{cformNo}
+            AND CFORM_SUB  = #{cformSub}
+            AND CFORM_IO   = #{cformIo}
+            AND ITEM_NO    = #{itemNo}
+            AND CODE_NO    = #{codeNo}
+            AND EDI_FCODE  = #{ediFcode}
+            AND EDI_TCODE  = #{ediTcode}
+            AND START_YM   = #{startYm}
+            AND ACTION_YN = 'Y'
+    ]]>    
+    </update>  
+    <select id ="claimCdDupChk" parameterType="ClaimDTO"  resultType="String"><![CDATA[ 
+      SELECT 'Y'
+        FROM TBL_CLAIMRATE_MST
+        WHERE  HOSP_GRD   = #{hosGrd} 
+           AND CFORM_NO   = #{cformNo}
+           AND CFORM_SUB  = #{cformSub}
+           AND CFORM_IO   = #{cformIo}
+           AND ITEM_NO    = #{itemNo}
+           AND CODE_NO    = #{codeNo}
+           AND EDI_FCODE  = #{ediFcode}
+           AND EDI_TCODE  = #{ediTcode}
+           AND START_YM   = #{startYm}
+           AND ACTION_YN = 'Y'
+    ]]>
+    </select>    	      	            	        		       	            	        		                              	      
 </mapper>

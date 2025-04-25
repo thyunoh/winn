@@ -103,6 +103,9 @@
                                              <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/wvalcd.do">가중치코드</a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/base/claimcd.do">유형별 청구율관리</a>
+                                            </li>
                                         </ul>
                                     </div>
                                 </li>
