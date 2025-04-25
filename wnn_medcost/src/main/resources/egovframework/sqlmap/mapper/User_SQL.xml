@@ -1019,7 +1019,7 @@
 	    INSERT INTO TBL_LICENSE_MST (
 	          HOSP_CD
 	        , LIC_NUM
-	        , IP_DAT 
+	        , IP_DT 
 	        , LICENSE_GB
 	        , DOCTOR_GB
 	        , DOCTOR_TYPE
@@ -1052,7 +1052,7 @@
 	        (
 	          #{item.hospCd}
 	        , #{item.licNum}
-	        , #{item.ipDat} 
+	        , #{item.ipDt} 
 	        , #{item.licenseGb}
 	        , #{item.doctorGb}
 	        , #{item.doctorType}
@@ -1108,5 +1108,164 @@
 	        ACTION_YN    = 'Y' ,
 	        UPD_DTTM     = NOW()  
 	</insert>
-                    	   	                  
+	<!-- 인력신고현황   -->  
+    <select id="getLicNumList" parameterType="LicnumDTO" resultType="LicnumDTO"><![CDATA[
+		SELECT 
+		    A.HOSP_CD,
+		    A.LIC_NUM,
+		    A.LICENSE_GB ,
+		    COALESCE(C.SUB_CODE_NM, '') AS SUB_CODE_NM,
+		    A.NAME,
+		    A.JUMIN,
+		    D.USER_NM AS UPD_USER_NM,
+		    B.HOSP_NM,
+		    COALESCE(A.IP_DT, '')         AS IP_DT,
+		    COALESCE(A.LIC_DAT, '')       AS LIC_DAT,
+		    A.DOCTOR_GB,
+		    A.DOCTOR_TYPE,
+		    A.WORK_GB,
+		    A.VAC_GB,
+		    COALESCE(A.VAC_START, '')     AS VAC_START,
+		    COALESCE(A.VAC_END, '')       AS VAC_END,
+		    A.VAC_SUBNM , 
+		    COALESCE(A.VACSUB_STRDT, '')  AS VACSUB_STRDT,
+		    COALESCE(A.VACSUB_ENDDT, '')  AS VACSUB_ENDDT,
+		    A.WARD_NM,
+		    COALESCE(A.WARD_STRDT, '')    AS WARD_STRDT,
+		    COALESCE(A.WARD_ENDDT, '')    AS WARD_ENDDT,
+		    COALESCE(A.LAST_WORKDT, '')   AS LAST_WORKDT,
+		    A.HIS_INFO , 
+		    A.MAN_CHG  ,
+		    A.MAN_REA  ,
+		    IFNULL(A.NUR_GRD,'')          AS NUR_GRD ,
+		    A.REG_USER,
+		    A.REG_IP,
+		    A.UPD_DTTM,
+		    A.UPD_USER,
+		    A.UPD_IP
+		FROM TBL_LICENSE_MST A
+		LEFT JOIN TBL_HOSP_MST B
+		    ON  B.HOSP_CD   = A.HOSP_CD 
+		    AND B.ACTION_YN = A.ACTION_YN
+		LEFT JOIN TBL_CODE_DTL C
+		    ON  C.CODE_GB = 'Z'
+		    AND C.ACTION_YN = 'Y'
+		    AND C.CODE_CD = 'LIC_TYPE'
+		    AND C.SUB_CODE = A.LICENSE_GB
+		    AND C.ACTION_YN = 'Y'
+		LEFT JOIN TBL_USER_MST D
+		    ON  D.HOSP_CD = A.HOSP_CD
+		    AND D.USER_ID = A.UPD_USER
+		    AND D.ACTION_YN = 'Y'
+		WHERE A.ACTION_YN = 'Y'
+     ]]>     
+    <if test='hospCd != null and hospCd != "" '>
+        <![CDATA[
+        AND   A.HOSP_CD = #{hospCd}
+        ]]>
+    </if>
+     <![CDATA[
+        ORDER BY A.HOSP_CD , A.LICENSE_GB  , A.LIC_NUM 
+    ]]>   
+    </select>     
+    <insert id="insertLicNum" parameterType="LicnumDTO" ><![CDATA[
+        INSERT INTO TBL_LICENSE_MST (
+	          HOSP_CD
+	        , LIC_NUM
+	        , IP_DT 
+	        , LICENSE_GB
+	        , DOCTOR_GB
+	        , DOCTOR_TYPE
+	        , NAME
+	        , JUMIN
+	        , WORK_GB
+	        , LIC_DAT
+	        , VAC_GB
+	        , VAC_START
+	        , VAC_END
+	        , VAC_SUBNM
+	        , VACSUB_STRDT
+	        , VACSUB_ENDDT
+	        , WARD_NM
+	        , WARD_DANWI
+	        , WARD_STRDT
+	        , WARD_ENDDT
+	        , WARD_MAIN
+	        , LAST_WORKDT
+	        , HIS_INFO
+	        , MAN_CHG
+	        , MAN_REA
+	        , NUR_GRD
+	        , REG_DTTM
+	        , REG_USER
+	        , REG_IP 
+	        , UPD_DTTM
+	        , UPD_USER
+	        , UPD_IP  
+	        , JOB_SEQ 
+	        , ACTION_YN
+        ) VALUES (
+	          #{hospCd}
+	        , #{licNum}
+	        , #{ipDt} 
+	        , #{licenseGb}
+	        , #{doctorGb}
+	        , #{doctorType}
+	        , #{name}
+	        , #{jumin}
+	        , #{workGb}
+	        , #{licDat}
+	        , #{vacGb}
+	        , #{vacStart}
+	        , #{vacEnd}
+	        , #{vacSubnm}
+	        , #{vacsubStrdt}
+	        , #{vacsubEnddt}
+	        , #{wardNm}
+	        , #{wardDanwi}
+	        , #{wardStrdt}
+	        , #{wardEnddt}
+	        , #{wardMain}
+	        , #{lastWorkdt}
+	        , #{hisInfo}
+	        , #{manChg}
+	        , #{manRea}
+	        , #{nurGrd}
+            , NOW() 
+            , #{regUser} 
+            , #{regIp} 
+            , NOW() 
+            , #{updUser} 
+            , #{updIp} 
+			,(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+			 FROM TBL_LICENSE_MST A 
+			 WHERE A.LIC_NUM    = #{licNum} 
+			   AND A.HOSP_CD    = #{hospCd} 
+			   AND A.IP_DT      = #{ipDt}
+			) , 'Y'
+        )
+    ]]>    
+    </insert>  
+     <update id="updateLicNum" parameterType="LicnumDTO" ><![CDATA[
+        UPDATE TBL_LICENSE_MST
+        SET  ACTION_YN   = 'N'
+            ,UPD_DTTM    = NOW()
+            ,UPD_USER    = #{updUser}
+            ,UPD_IP      = #{updIp}
+        WHERE  LIC_NUM   = #{licNum} 
+           AND HOSP_CD   = #{hospCd} 
+           AND IP_DT     = #{ipDt}
+           AND ACTION_YN = 'Y' 
+    ]]>      
+    </update>  
+     <select id = "LicNumDupChk"  parameterType="LicnumDTO"  resultType="String"><![CDATA[   
+       SELECT 'Y'
+       FROM TBL_LICENSE_MST 
+       WHERE 1=1
+           AND LIC_NUM   = #{licNum} 
+           AND HOSP_CD   = #{hospCd} 
+           AND IP_DT     = #{ipDt}
+           AND ACTION_YN = 'Y' 
+    ]]>  
+    </select>	                    	   	                  
 </mapper>

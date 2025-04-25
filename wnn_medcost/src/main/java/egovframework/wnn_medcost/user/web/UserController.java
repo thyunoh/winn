@@ -1552,9 +1552,9 @@ public class UserController extends BaseController {
                 if (licDat != null && licDat.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
                     dto.setLicDat(licDat.replaceAll("-", ""));
                 }
-                String ipDat = (String) row.get("입사일자");
-                if (ipDat != null && ipDat.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
-                    dto.setIpDat(ipDat.replaceAll("-", ""));
+                String ipDt = (String) row.get("입사일자");
+                if (ipDt != null && ipDt.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {
+                    dto.setIpDt(ipDt.replaceAll("-", ""));
                 }
 
                 dto.setVacGb((String) row.get("구분"));
@@ -1605,7 +1605,7 @@ public class UserController extends BaseController {
                 dto.setManChg((String) row.get("인력변동"));
                 dto.setManRea((String) row.get("변동이유"));
                 dto.setHospCd(hospCd);
-                if (dto.getIpDat() != "" && dto.getIpDat() != null) {
+                if (dto.getIpDt() != "" && dto.getIpDt() != null) {
                     dtoList.add(dto);
                 }
             }
@@ -1622,5 +1622,129 @@ public class UserController extends BaseController {
         }
         return result;
     }
+    //인력신고현황 
+	@RequestMapping(value="/licnumber.do")
+    public String licnumber(HttpServletRequest request, ModelMap model) {
 
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/user/licnumber";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }
+	//인력신고현황 관리 
+	@RequestMapping(value="/licnumList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> getlicnumList(@ModelAttribute("DTO") LicnumDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("수가-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+			
+				List<LicnumDTO> LicNumList = svc.getLicNumList(dto);
+				
+				System.out.println("인력신고등록-java size " + LicNumList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",LicNumList);
+
+		        System.out.println("수가-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	@RequestMapping(value="/licnumInsert.do", method = RequestMethod.POST)
+    public ResponseEntity<String> licnumInsert(@RequestBody List<LicnumDTO> data) {
+		
+		System.out.println("Insert 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	for (LicnumDTO dto : data) {
+        		String dupchk =   svc.LicNumDupChk(dto) ;
+        		if ("Y".equals(dupchk)) {
+        			return ResponseEntity.status(400).body(dto.getLicNum()); 
+        		}
+       		    System.out.println("licCode: "  + dto.getLicNum());
+       		    System.out.println("HospCd: "   + dto.getHospCd());
+       		    System.out.println("ipDt: "     + dto.getIpDt());
+        		svc.insertLicNum(dto) ; 
+            }
+         
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}
+	@RequestMapping(value="/licnumUpdate.do", method = RequestMethod.POST)
+    public ResponseEntity<String> licnumUpdate(@RequestBody List<LicnumDTO> data) {
+	
+		System.out.println("Update 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	
+        	for (LicnumDTO dto : data) {
+       		    System.out.println("licCode: " + dto.getLicNum());
+       		    System.out.println("HospCd: "  + dto.getHospCd());
+       		    System.out.println("ipDt: "    + dto.getIpDt());
+        		
+        		svc.updateLicNum(dto) ; //이력관리 
+        		svc.insertLicNum(dto) ; 
+     	
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}
+	@RequestMapping(value="/licnumDelete.do", method = RequestMethod.POST)
+    public ResponseEntity<String> licnumDelete(@RequestBody List<LicnumDTO> data) {
+		
+		System.out.println("Delete 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	for (LicnumDTO dto : data) {
+        		dto.setLicNum(dto.getKeylicNum()); 
+        		dto.setHospCd(dto.getKeyhospCd()); 
+        		dto.setIpDt(dto.getKeyipDt()); 
+        		svc.updateLicNum(dto) ; //이력관리 
+       		    System.out.println("licCode: " + dto.getLicNum());
+       		    System.out.println("HospCd: "  + dto.getHospCd());
+              
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
 }

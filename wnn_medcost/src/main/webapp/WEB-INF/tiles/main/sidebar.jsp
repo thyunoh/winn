@@ -48,6 +48,9 @@
                                     <a class="nav-item nav-link"  href="/user/license.do">의사면허등록</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/user/licnumber.do">인력신고현황등록</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/dietcd.do">가산식대등록</a>
                                 </li>
                                 <li class="nav-item">
@@ -175,7 +178,7 @@
 						            <div id="lic_excel" class="collapse submenu" style="background-color: white; padding-left: 15px;">
 						                <ul class="nav flex-column">
 						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/user/licexcel.do">의사.간호사 엑셀</a>
+						                        <a class="nav-item nav-link" href="/user/licexcel.do">인력신고현황 엑셀</a>
 						                    </li>
 						                </ul>
 						            </div>

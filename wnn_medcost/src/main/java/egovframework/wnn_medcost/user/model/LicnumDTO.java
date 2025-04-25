@@ -9,11 +9,12 @@ public class LicnumDTO {
     // Key Fields
     private String keyhospCd;    // 
     private String keylicNum;    // 
-    private String keyipDat;      // 
+    private String keyipDt;      // 
     
     private String hospCd;
+    private String hospNm;
     private String licNum;
-    private String ipDat;
+    private String ipDt;
 
     private String licenseGb;
     private String doctorGb;
@@ -41,8 +42,24 @@ public class LicnumDTO {
     private String manChg;
     private String manRea;
     private String nurGrd;
+ 
+	private String regDttm; // 등록일시
+	private String regUser; // 등록자
+	private String regIp; // 등록 IP
+	private String updDttm; // 최종변경일시
+	private String updUser; // 최종변경자
+	private String updIp; // 최종변경 IP    
     
-    public String getNurGrd() {
+    public String getHospNm() {
+		return hospNm;
+	}
+	public void setHospNm(String hospNm) {
+		this.hospNm = hospNm;
+	}
+	public void setKeyipDt(String keyipDt) {
+		this.keyipDt = keyipDt;
+	}
+	public String getNurGrd() {
 		return nurGrd;
 	}
 	public void setNurGrd(String nurGrd) {
@@ -68,11 +85,11 @@ public class LicnumDTO {
 	public void setKeylicNum(String keylicNum) {
 		this.keylicNum = keylicNum;
 	}
-	public String getKeyipDat() {
-		return keyipDat;
+	public String getKeyipDt() {
+		return keyipDt;
 	}
-	public void setKeyipDat(String keyipDat) {
-		this.keyipDat = keyipDat;
+	public void setKeyipDat(String keyipDt) {
+		this.keyipDt = keyipDt;
 	}
 	public String getHospCd() {
 		return hospCd;
@@ -86,11 +103,11 @@ public class LicnumDTO {
 	public void setLicNum(String licNum) {
 		this.licNum = licNum;
 	}
-	public String getIpDat() {
-		return ipDat;
+	public String getIpDt() {
+		return ipDt;
 	}
-	public void setIpDat(String ipDat) {
-		this.ipDat = ipDat;
+	public void setIpDt(String ipDt) {
+		this.ipDt = ipDt;
 	}
 	public String getLicenseGb() {
 		return licenseGb;
@@ -225,6 +242,41 @@ public class LicnumDTO {
 	public void setFindData(String findData) {
 		this.findData = findData;
 	}
-
-    
+	public String getRegDttm() {
+		return regDttm;
+	}
+	public void setRegDttm(String regDttm) {
+		this.regDttm = regDttm;
+	}
+	public String getRegUser() {
+		return regUser;
+	}
+	public void setRegUser(String regUser) {
+		this.regUser = regUser;
+	}
+	public String getRegIp() {
+		return regIp;
+	}
+	public void setRegIp(String regIp) {
+		this.regIp = regIp;
+	}
+	public String getUpdDttm() {
+		return updDttm;
+	}
+	public void setUpdDttm(String updDttm) {
+		this.updDttm = updDttm;
+	}
+	public String getUpdUser() {
+		return updUser;
+	}
+	public void setUpdUser(String updUser) {
+		this.updUser = updUser;
+	}
+	public String getUpdIp() {
+		return updIp;
+	}
+	public void setUpdIp(String updIp) {
+		this.updIp = updIp;
+	}
+   
 }

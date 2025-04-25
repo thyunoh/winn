@@ -11,24 +11,25 @@
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
 
 <style>
-  #excelPreview {
-    width: 100%;
-    max-height: 700px;  /* ← 높이 제한은 있지만, 내부 내용이 넘칠 때만 스크롤 */
-    overflow-y: auto;
-  }
-
-  #excelTable {
-    width: 100% !important;
-    min-width: 1200px;
-    table-layout: auto;
-  }
-
-  #excelPreview th {
-    position: sticky;
-    top: 0;
-    background: #f9f9f9;
-    z-index: 1;
-  }
+	#excelPreview {
+	  width: 100%;
+	  min-height: 600px;   /* ← 최소 높이 확보 */
+	  max-height: none;    /* ← 최대 높이 해제 */
+	  overflow-y: auto; 
+ 	}
+	
+	#excelTable {
+	  width: 100% !important;
+	  min-width: 1200px;
+	  table-layout: auto;
+	}
+	
+	#excelPreview th {
+	  position: sticky;
+	  top: 0;
+	  background: #f9f9f9;
+	  z-index: 1;
+	}
 </style>
 		
 		<!-- ============================================================== -->
@@ -51,7 +52,7 @@
 		              <div class="col-1 ml-1" style="width: 20%;">
 		                <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid">
 		              </div>
-		              <h6 style="margin-top: 10px; margin-left: 10px; ">의사 간호사 엑셀자료 업로드</h6>
+		              <h6 style="margin-top: 10px; margin-left: 10px; ">인력신고현황 엑셀자료 업로드</h6>
 		            </div>
 		
 		            <!-- 엑셀 업로드 및 버튼 -->

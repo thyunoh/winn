@@ -72,4 +72,9 @@ public interface UserService {
 	
 	//엑셀저장 
 	void               insertExcelDoctorBatch(List<LicnumDTO> list);
+	 //인력신고현황 
+	List<LicnumDTO>    getLicNumList(LicnumDTO dto)          throws Exception;
+	boolean            insertLicNum(LicnumDTO dto)           throws Exception; 
+	boolean            updateLicNum(LicnumDTO dto)           throws Exception; 
+	String             LicNumDupChk(LicnumDTO dto)           throws Exception;
 }

@@ -272,5 +272,29 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void insertExcelDoctorBatch(List<LicnumDTO> list) {
 		 mapper.insertExcelDoctor(list); // 반복문 없이 한 번에!
+	}
+   //인력신고현황 
+	@Override
+	public List<LicnumDTO> getLicNumList(LicnumDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getLicNumList(dto);
+	}
+
+	@Override
+	public boolean insertLicNum(LicnumDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.insertLicNum(dto);
+	}
+
+	@Override
+	public boolean updateLicNum(LicnumDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateLicNum(dto);
+	}
+
+	@Override
+	public String LicNumDupChk(LicnumDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.LicNumDupChk(dto);
 	}	
 }

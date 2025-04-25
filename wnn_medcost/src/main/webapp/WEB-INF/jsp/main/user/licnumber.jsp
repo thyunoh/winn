@@ -13,7 +13,7 @@
 
     <!-- DataTables CSS -->
 <style>
- </style>
+</style>
 		<!-- ============================================================== -->
         <!-- Main Form start -->
         <!-- ============================================================== -->
@@ -74,7 +74,7 @@
 				role="dialog"
 				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 				<div class="modal-content"
-					style="height: 60%; display: flex; flex-direction: column;">
+					style="height: 100%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
 						<h6 class="modal-title" id="modalHead"></h6>
 						<!-- ============================================================== -->
@@ -112,8 +112,6 @@
 							<!-- text input 1개 start -->
 							<!-- ============================================================== -->
 							<input type="hidden" id="hospNm"      name="hospNm" value="">
-							<input type="hidden" id="subCodeNm"   name="subCodeNm" value="">
-							<input type="hidden" id="updUserNnm"  name="updUserNnm" value="">
 							<input type="hidden" id="regUser"     name="regUser" value="">
 							<input type="hidden" id="updUser"     name="updUser" value="">
 							<input type="hidden" id="regIp"       name="regIp" value=""> 
@@ -131,11 +129,16 @@
 								<label for="licNum"	class="col-2 col-lg-2 col-form-label text-left">면허번호</label>
 								<div class="col-4 col-lg-4">	
 									<input id="licNum" name="licNum" type="text"
-									class="form-control text-left" placeholder="면허번호 입력하세요">
+									class="form-control text-left" required placeholder="">
 						    	</div>
 							</div>
 							<div class="form-group row ">
 								<div class="input-group">
+									<label for="name"	class="col-2 col-lg-2 col-form-label text-left">성명</label>
+									<div class="col-4 col-lg-4">
+										<input id="name" name="name" type="text"
+											class="form-control text-left" required placeholder="">
+									</div>
 									<label for="ipDt"
 										class="col-2 col-lg-2 col-form-label text-left">입사일자</label>
 									<div class="col-4 col-lg-4">
@@ -143,60 +146,166 @@
 											class="form-control date1-inputmask" required
 											placeholder="yyyy-mm-dd">
 									</div>
-									<label for="teDt" class="col-2 col-lg-2 col-form-label text-left">퇴사일자</label>
-									<div class="col-4 col-lg-4">
-										<input id="teDt" name="teDt" type="text"
-											class="form-control date1-inputmask" required
-											placeholder="yyyy-mm-dd">
-									</div>
 								</div>
 							</div>
 							<div class="form-group row ">
-								<label for="userNm"	class="col-2 col-lg-2 col-form-label text-left">성명</label>
+								<label for=licenseGb
+									class="col-2 col-lg-2 col-form-label text-left">면허종별</label>
 								<div class="col-4 col-lg-4">
-									<input id="userNm" name="userNm" type="text"
-										class="form-control text-left" placeholder="사용자명을 입력하세요">
+									<input id="licenseGb" name="licenseGb" type="text" required
+										class="form-control text-left" placeholder="">
 								</div>
-								<label for="licType"
-									class="col-2 col-lg-2 col-form-label text-left">면허구분</label>
+								<label for=doctorGb
+									class="col-2 col-lg-2 col-form-label text-left">의사(간호)구분</label>
 								<div class="col-4 col-lg-4">
-									<select id="licType" name="licType" class="custom-select"
-										oninput="findField(this)" style="height: 35px; font-size: 14px;">
-										<option selected value="">구분 1</option>
-									</select>
+									<input id="doctorGb" name="doctorGb" type="text" required
+										class="form-control text-left" placeholder="">
 								</div>
-		
 							</div>
 							<div class="form-group row ">
-								<label for=licDetail
-									class="col-2 col-lg-2 col-form-label text-left">면허세부내용</label>
+								<label for=doctorType
+									class="col-2 col-lg-2 col-form-label text-left">의사형태(직책)</label>
 								<div class="col-4 col-lg-4">
-									<input id="licDetail" name="licDetail" type="text"
-										class="form-control text-left" placeholder="면허세부내용를 입력하세요">
+									<input id="doctorType" name="doctorType" type="text" required
+										class="form-control text-left" placeholder="">
 								</div>
-								<label for=weekHours
-									class="col-2 col-lg-2 col-form-label text-left">근무시간</label>
+								<label for=jumin
+									class="col-2 col-lg-2 col-form-label text-left">주민번호</label>
 								<div class="col-4 col-lg-4">
-									<input id="weekHours" name="weekHours" type="text"
-										class="form-control text-left" placeholder="근무시간를 입력하세요">
+									<input id="jumin" name="jumin" type="text"
+										class="form-control text-left" placeholder="">
 								</div>
 							</div>
                             <div class="form-group row ">
-								<label for=deptCode
-									class="col-2 col-lg-2 col-form-label text-left">진료과</label>
+								<label for=workGb
+									class="col-2 col-lg-2 col-form-label text-left">근무형태</label>
 								<div class="col-4 col-lg-4">
-									<input id="deptCode" name="deptCode" type="text"
-										class="form-control text-left" placeholder="진료과를 입력하세요">
+									<input id="workGb" name="workGb" type="text"
+										class="form-control text-left" placeholder="">
 								</div>
-								<label for="useYn"
-									class="col-2 col-lg-2 col-form-label text-left">사용구분</label>
+								<label for=licDat
+									class="col-2 col-lg-2 col-form-label text-left">면허취득일자</label>
 								<div class="col-4 col-lg-4">
-									<select id="useYn" name="useYn" class="custom-select">
-										<option value="Y">Y</option>
-										<option value="N" selected>N</option>
-									</select>
+									<input id="licDat" name="licDat" type="text"
+										class="form-control date1-inputmask" required
+										placeholder="yyyy-mm-dd">
 								</div>
 							</div>
+                            <div class="form-group row ">
+								<label for=vacGb
+									class="col-2 col-lg-2 col-form-label text-left">휴가구분</label>
+								<div class="col-2 col-lg-2">
+									<input id="vacGb" name="vacGb" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+								<label for=vacStart
+									class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
+								<div class="col-2 col-lg-2">
+									<input id="vacStart" name="vacStart" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+								<label for=vacEnd
+									class="col-2 col-lg-2 col-form-label text-left">종료일자</label>
+								<div class="col-2 col-lg-2">
+									<input id="vacEnd" name="vacEnd" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+							</div>
+                            <div class="form-group row ">
+								<label for=vacSubnm
+									class="col-2 col-lg-2 col-form-label text-left">대체자명</label>
+								<div class="col-2 col-lg-2">
+									<input id="vacSubnm" name="vacSubnm" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+								<label for=vacsubStrdt
+									class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
+								<div class="col-2 col-lg-2">
+									<input id="vacsubStrdt" name="vacsubStrdt" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+								<label for=vacsubEnddt
+									class="col-2 col-lg-2 col-form-label text-left">종료일자</label>
+								<div class="col-2 col-lg-2">
+									<input id="vacsubEnddt" name="vacsubEnddt" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+							</div>
+                            <div class="form-group row ">
+								<label for=wardNm
+									class="col-2 col-lg-2 col-form-label text-left">병동명</label>
+								<div class="col-6 col-lg-6">
+									<input id="wardNm" name="wardNm" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+								<label for=wardDanwi
+									class="col-2 col-lg-2 col-form-label text-left">근무단위</label>
+								<div class="col-2 col-lg-2">
+									<input id="wardDanwi" name="wardDanwi" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+							</div>
+                            <div class="form-group row ">
+								<label for=wardStrdt
+									class="col-2 col-lg-2 col-form-label text-left">근무시작일자</label>
+								<div class="col-2 col-lg-2">
+									<input id="wardStrdt" name="wardStrdt" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+                                <label for=wardEnddt
+									class="col-2 col-lg-2 col-form-label text-left">근무종료일자</label>
+								<div class="col-2 col-lg-2">
+									<input id="wardEnddt" name="wardEnddt" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+                                <label for=wardMain
+									class="col-2 col-lg-2 col-form-label text-left">전담여부</label>
+								<div class="col-2 col-lg-2">
+									<input id="wardMain" name="wardMain" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+							</div>	
+                            <div class="form-group row ">
+								<label for=lastWorkdt
+									class="col-2 col-lg-2 col-form-label text-left">최종근무일</label>
+								<div class="col-2 col-lg-2">
+									<input id="lastWorkdt" name="lastWorkdt" type="text"
+										class="form-control date1-inputmask" 
+										placeholder="yyyy-mm-dd">
+								</div>
+                                <label for=hisInfo
+									class="col-2 col-lg-2 col-form-label text-left">이력조회</label>
+								<div class="col-2 col-lg-2">
+									<input id="hisInfo" name="hisInfo" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+                                <label for=manChg
+									class="col-2 col-lg-2 col-form-label text-left">인력변동</label>
+								<div class="col-2 col-lg-2">
+									<input id="manChg" name="manChg" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+							</div>	
+                            <div class="form-group row ">
+                                <label for=manRea
+									class="col-2 col-lg-2 col-form-label text-left">변동사유</label>
+								<div class="col-4 col-lg-4">
+									<input id="manRea" name="manRea" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+                                <label for=nurGrd
+									class="col-2 col-lg-2 col-form-label text-left">간호등급적용여부</label>
+								<div class="col-4 col-lg-4">
+									<input id="nurGrd" name="nurGrd" type="text"
+										class="form-control text-left" placeholder="">
+								</div>
+							</div>	
 							<!-- ============================================================== -->
 							<!-- end form 수정해야 될 곳 -->
 							<!-- ============================================================== -->
@@ -258,13 +367,14 @@
 		<!-- ============================================================== -->
 		var list_flag = ['Z'];     										// 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 		//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
-	    var list_code = ['LIC_TYPE']; 
-	    var select_id = ['licType'];     // 구분코드 데이터 담길 Select (ComboBox ID)
+	    var list_code = []; 
+	    var select_id = [];     // 구분코드 데이터 담길 Select (ComboBox ID)
 		var firstnull = ['N'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
 		<!-- ============================================================== -->
-		var format_convert = ['ipDt','teDt'] ; //날자에서 '-' '/' 제외설정   
+		var format_convert = ['ipDt','licDat','vacStart','vacEnd','vacsubStrdt','vacsubEnddt','wardStrdt',
+			                  'wardEnddt','lastWorkdt'] ; //날자에서 '-' '/' 제외설정   
 		
 		<!-- ============================================================== -->
 		<!-- Table Setting Start -->
@@ -299,26 +409,29 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set =  [ { name: '병원정보',  className: 'dt-body-center' },
-						    { name: '병원명',   className: 'dt-body-center' },
-						    { name: '라이센스',  className: 'dt-body-center' },
-						    { name: '성명',     className: 'dt-body-center' },
-						    { name: '입사일자',  className: 'dt-body-center' },
-						    { name: '면허구분',  className: 'dt-body-center' },
-						    { name: '퇴사일자',  className: 'dt-body-center' },
-						    { name: '세부구분',  className: 'dt-body-center' },
-						    { name: '근무시간',  className: 'dt-body-center' },
-						    { name: '진료과',   className: 'dt-body-center' },
-						    { name: '등록자',   className: 'dt-body-center' }
+		var c_Head_Set =  [ { name: '병원정보',      className: 'dt-body-center' },
+						    { name: '면허번호',      className: 'dt-body-center' },
+						    { name: '성명',         className: 'dt-body-center' },
+						    { name: '입사일자',      className: 'dt-body-center' },
+						    { name: '면허종별',      className: 'dt-body-center' },
+						    { name: '의사(간호)구분', className: 'dt-body-center' },
+						    { name: '의사형태(직책)', className: 'dt-body-center' },
+						    { name: '주민번호',      className: 'dt-body-center' },
+						    { name: '근무형태',      className: 'dt-body-center' },
+						    { name: '면허취득일자',   className: 'dt-body-center' },
+						    { name: '병동명',        className: 'dt-body-center' },
+						    { name: '근무단위',        className: 'dt-body-center' },
+						    { name: '근무시작',        className: 'dt-body-center' },
+						    { name: '근무종료',        className: 'dt-body-center' },
+						    { name: '간호등급적용여부',   className: 'dt-body-center' }
 						 ] ;  
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
-	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '300px',  },
+	        				{ data: 'hospCd',    visible: false, className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
 	        				{ data: 'licNum',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keylicNum', primaryKey: true },
-	        				{ data: 'userNm',    visible: true,  className: 'dt-body-center', width: '100px',  },
-	        				{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt', primaryKey: true ,
+	        				{ data: 'name',      visible: true,  className: 'dt-body-center', width: '200px',  },
+	        				{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt'  , primaryKey: true ,
                              	render: function(data, type, row) {
 	            				if (type === 'display') {
 	            					return getFormat(data,'d1')
@@ -326,8 +439,12 @@
 	                			return data;
                              	}
             				},
-            				{ data: 'subCodeNm',       visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'teDt',            visible: true,  className: 'dt-body-center', width: '100px', 
+            				{ data: 'licenseGb',       visible: true,  className: 'dt-body-center', width: '100px',  },
+            				{ data: 'doctorGb',        visible: true,  className: 'dt-body-center', width: '100px',  },
+            				{ data: 'doctorType',      visible: true,  className: 'dt-body-center', width: '100px',  },
+            				{ data: 'jumin',           visible: true,  className: 'dt-body-center', width: '100px',  },
+            				{ data: 'workGb',          visible: true,  className: 'dt-body-center', width: '100px',  },
+            				{ data: 'licDat',          visible: true,  className: 'dt-body-center', width: '100px', 
 	                          	render: function(data, type, row) {
 		            			if (type === 'display') {
 		            					return getFormat(data,'d1')
@@ -335,28 +452,44 @@
 		                			return data;
 	            				}
 	        				},
-	        				{ data: 'licDetail',    visible: true,  className: 'dt-body-center', width: '100px',  },
-	        				{ data: 'weekHours',    visible: true,  className: 'dt-body-center', width: '100px',  },
-	        				{ data: 'deptCode',     visible: true,  className: 'dt-body-center', width: '100px',  },
-					        { data: 'updUserNnm',   visible: true,  className: 'dt-body-center', width: '100px',  }
-					    ];
+	
+	        				{ data: 'wardNm',       visible: true,  className: 'dt-body-center', width: '100px',  },
+	        				{ data: 'wardDanwi',    visible: true,  className: 'dt-body-center', width: '100px',  },
+            				{ data: 'wardStrdt',    visible: true,  className: 'dt-body-center', width: '100px', 
+	                          	render: function(data, type, row) {
+		            			if (type === 'display') {
+		            					return getFormat(data,'d1')
+		                			}
+		                			return data;
+	            				}
+	        				},
+            				{ data: 'wardEnddt',    visible: true,  className: 'dt-body-center', width: '100px', 
+	                          	render: function(data, type, row) {
+		            			if (type === 'display') {
+		            					return getFormat(data,'d1')
+		                			}
+		                			return data;
+	            				}
+	        				},
+	        				{ data: 'nurGrd',     visible: true,  className: 'dt-body-center', width: '100px',  }
+	        		];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
         var s_AutoNums = true;   		             // 자동순번 표시 여부
         
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
-							['licNum' , 'asc' ],    // 오름차순 정렬
-							['hospCd' , 'asc' ],    // 오름차순 정렬
-            				['ipDt', 'desc']     // 내림차순 정렬
+							['hospCd'    , 'asc' ],    // 오름차순 정렬
+							['licenseGb' , 'asc' ],    // 오름차순 정렬
+            				['doctorGb'  , 'asc']      // 오름차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['hospCd','licNum','ipDt'];                   
+		var showSortNo = ['hospCd','licNum','ipDt','licenseGb','doctorGb','doctorType'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = [];
+		var markColums = ['workGb'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -837,7 +970,7 @@
 		   	
 		    $.ajax({
 		        type: "POST", 
-		        url: "/user/licenseCdList.do",
+		        url: "/user/licnumList.do",
 		        data: find,
 		        dataType: "json",
 		        
@@ -900,9 +1033,8 @@
 			} else {
 				fn_FindDataTable();
 			}
-			
 		}
-		
+
 		function fn_FindDataTable() {
 			if (firstflag) {
 				firstflag = false;
@@ -935,30 +1067,46 @@
 		//일력값 오류체크및 서버데이타전달(json) 
 		function validateForm() {
 		    const results = formValCheck(inputZone.id, {
-		    	hospCd:       { kname: "요양기관", k_req: true, k_spc: true, k_clr: true },
-		    	licNum:       { kname: "면허번호", k_req: true },
-		    	userNm:       { kname: "사용자성명" , k_req: true },
-		    	ipDt:         { kname: "입사일자", k_req: true},
-		    	licType:      { kname: "구분번호", k_req: true }
+		    	hospCd:       { kname: "요양기관",      k_req: true, k_spc: true, k_clr: true },
+		    	licNum:       { kname: "면허번호",      k_req: true },
+		    	name:         { kname: "성명"  ,       k_req: true },
+		    	ipDt:         { kname: "입사일자",      k_req: true},
+		    	licenseGb:    { kname: "구분번호",      k_req: true },
+		    	doctorGb:     { kname: "의사구분(직책)", k_req: true },
+		    	doctorType:   { kname: "의사형태",      k_req: true },
+		    	jumin:        { kname: "주민번호",      k_req: true },
+		    	licDat:       { kname: "면허취득일자",   k_req: true }
 		    });
 		    return results;
 		}
 		//그리드상 데이타생성및 수정 작업
 		function newuptData() {
         	let newData = {
+             	hospCd:        $('#hospCd').val(),
         		licNum:        $('#licNum').val(),
-         		hospCd:        $('#hospCd').val(),
          		hospNm:        $('#hospNm').val(),
-         		subCodeNm:     $('#subCodeNm').val(),
-         		userNm:        $('#userNm').val(),
+         		name:          $('#name').val(),
+         		jumin:         $('#jumin').val(),
          		ipDt:          $('#ipDt').val(), 
-         		teDt:          $('#teDt').val(), 
-         		userNm:        $('#userNm').val(), 
-         		updUserNnm:    $('#updUserNnm').val(), 
-         		licDetail:     $('#licDetail').val(), 
-         		weekHours:     $('#weekHours').val(), 
-         		deptCode:      $('#deptCode').val()
-			    };
+         		workGb:        $('#workGb').val(), 
+         		licDat:        $('#licDat').val(), 
+         		vacGb:         $('#vacGb').val(), 
+         		vacStart:      $('#vacStart').val(), 
+         		vacEnd:        $('#vacEnd').val(), 
+         		vacSubnm:      $('#vacSubnm').val(),
+         		vacsubStrdt:   $('#vacsubStrdt').val(), 
+         		vacsubEnddt:   $('#vacsubEnddt').val(), 
+         		wardNm:        $('#wardNm').val(),
+         		wardDanwi:     $('#wardDanwi').val(),
+         		wardStrdt:     $('#wardStrdt').val(),
+         		wardEnddt:     $('#wardEnddt').val(),
+         		wardMain:      $('#wardMain').val(),
+         		lastWorkdt:    $('#lastWorkdt').val(),
+         		hisInfo:       $('#hisInfo').val(),
+         		manChg:        $('#manChg').val(),
+         		manRea:        $('#manRea').val(),
+         		nurGrd:        $('#nurGrd').val()
+        	};
 		    return newData;
 		}	
 		function fn_Insert(){
@@ -982,7 +1130,7 @@
 		        dats.push(data);	    
 			    $.ajax({
 			            type: "POST",
-			            url: "/user/licenseCdInsert.do",
+			            url: "/user/licnumInsert.do",
 			            data: JSON.stringify(dats),
 			            contentType: "application/json",
 			    	    dataType: "json",
@@ -1046,7 +1194,7 @@
 		        // 5. AJAX로 서버 업데이트 요청
 		        $.ajax({
 		            type: "POST",
-		            url: "/user/licenseCdUpdate.do",
+		            url: "/user/licnumUpdate.do",
 		            data: JSON.stringify(mergeData), // JSON 변환
 		            contentType: "application/json",
 		            dataType: "json",
@@ -1080,14 +1228,9 @@
 		// Modal Form에서 삭제
 		function fn_Delete(){
 			let isKey = false;
-			// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
-			// error:    오류나 실패를 나타내는 빨간색 X 아이콘
-			// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
-			// info:     정보를 나타내는 파란색 i 아이콘
-			// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
 			Swal.fire({title:'삭제여부',text:'정말 삭제 하시겠습니까 ?', icon:'question' ,
 					   showCancelButton:true,confirmButtonText:'예',cancelButtonText:'아니오',
-					   customClass: {
+					   customClass: { 
 						   popup: 'small-swal'}
 			     }).then((result) => {
 				// 사용자가 '예' 버튼을 클릭한 경우
@@ -1100,7 +1243,7 @@
 					if (keys.length > 0) {	        	
 						$.ajax({
 				            type: "POST",
-				            url: "/user/licenseCdDelete.do",	    	    
+				            url: "/user/licnumDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",
@@ -1196,7 +1339,7 @@
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
-				            url: "/base/licenseCdDelete.do",	    	    
+				            url: "/base/licnumDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",

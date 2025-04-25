@@ -627,6 +627,7 @@
 	<select id="tong05List" parameterType="TongDTO" resultType="TongDTO"><![CDATA[
 		WITH BASE_DATA AS (
 		    SELECT  
+		        C.HOSP_CD                                                                                       ,
   	            IFNULL(C.LICENSE_NO, '00')                                                        AS LICENSE_NO ,
 		        COUNT(*)                                                                          AS claimCount ,	
 	   ]]>  	              
@@ -642,8 +643,8 @@
 		    </choose>
 		<![CDATA[      
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO 
-			                          AND A.HOSP_CD = B.HOSP_CD
+			    JOIN TBL_MYOUNG_MST B     ON A.CLAIM_NO = B.CLAIM_NO 
+			                             AND A.HOSP_CD = B.HOSP_CD
 			    LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO = B.CLAIM_NO 
 			                                AND C.HOSP_CD  = B.HOSP_CD 
 			                                AND C.BILL_SEQ = B.BILL_SEQ 
@@ -674,7 +675,7 @@
 		</if>
 
 		<![CDATA[    
-		    GROUP BY IFNULL(C.LICENSE_NO, '00')
+		    GROUP BY C.HOSP_CD ,  IFNULL(C.LICENSE_NO, '00')
 		),
 		TOTAL_SUM AS (
 		    SELECT SUM(totalAmt) AS totalAmt FROM BASE_DATA
@@ -682,21 +683,23 @@
 		BASE_WITH_TOTAL AS (
 		    SELECT * FROM BASE_DATA
 		    UNION ALL
-		    SELECT '99' AS LICENSE_NO, SUM(claimCount) , SUM(totalAmt) FROM BASE_DATA
+		    SELECT '99' AS HOSP_CD,  '99' AS LICENSE_NO, SUM(claimCount) , SUM(totalAmt) FROM BASE_DATA
 		)
 		SELECT 
 		    CASE WHEN  A.LICENSE_NO = '00' THEN '(산재)' ELSE A.LICENSE_NO END  AS LICENSE_NO,  
-		    COALESCE(D.SUB_CODE_NM, '전체') AS LICENSE_NAME,
+		    COALESCE(D.NAME, '전체') AS LICENSE_NAME,
 		    A.totalAmt,
 		    A.claimCount,
 		    FLOOR(A.totalAmt / A.claimCount)          AS avgAmt,
 		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal 
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
-		LEFT JOIN TBL_CODE_DTL D   ON D.CODE_GB = 'Z' 
-		                          AND D.CODE_CD = 'LICENSE_NO'
-		                          AND D.ACTION_YN = 'Y'
-	 	                          AND D.SUB_CODE = A.LICENSE_NO
+		LEFT JOIN TBL_LICENSE_MST D  ON D.HOSP_CD   = A.HOSP_CD 
+	 	                            AND D.LIC_NUM   = A.LICENSE_NO
+	 	                            AND D.IP_DT     = (SELECT MAX(IP_DT) FROM TBL_LICENSE_MST 
+	 	                                                             WHERE HOSP_CD = A.HOSP_CD 
+	 	                                                               AND LIC_NUM = A.LICENSE_NO) 
+		                            AND D.ACTION_YN = 'Y'
 		ORDER BY percentOfTotal DESC, A.LICENSE_NO
 	]]>
 
@@ -783,6 +786,7 @@
 		),
 		BASE_DATA AS (
 		    SELECT  
+		        C.HOSP_CD                               ,
 		        IFNULL(C.LICENSE_NO, '00') AS LICENSE_NO,  
 		        A.DATE_YM,
 		]]>
@@ -798,8 +802,8 @@
 		 <![CDATA[                                                  
 		        COUNT(*)                                                                    AS CLAIMCOUNT
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B   ON A.CLAIM_NO = B.CLAIM_NO 
-			                           AND A.HOSP_CD  = B.HOSP_CD
+			    JOIN TBL_MYOUNG_MST B       ON A.CLAIM_NO  = B.CLAIM_NO 
+			                               AND A.HOSP_CD   = B.HOSP_CD
 			    LEFT JOIN TBL_DISEASE_MST C ON C.CLAIM_NO  = B.CLAIM_NO 
 			                               AND C.HOSP_CD   = B.HOSP_CD 
 			                               AND C.BILL_SEQ  = B.BILL_SEQ 
@@ -832,10 +836,11 @@
 		    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
 		</if>
 		<![CDATA[
-		    GROUP BY IFNULL(C.LICENSE_NO, '00'), A.DATE_YM
+		    GROUP BY C.HOSP_CD , IFNULL(C.LICENSE_NO, '00'), A.DATE_YM
 		),
 		PIVOTED AS (
 		    SELECT
+		        HOSP_CD   ,
 		        LICENSE_NO,
 		        MAX(CASE WHEN DATE_YM = DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{endMonth}, '01'), '%Y%m%d')
 		                                                                ,INTERVAL 1 MONTH),'%Y%m') THEN TOTALAMT END)   AS AMT_PREV,
@@ -844,12 +849,13 @@
 		                                                                ,INTERVAL 1 MONTH),'%Y%m') THEN CLAIMCOUNT END) AS CNT_PREV,
 		        MAX(CASE WHEN DATE_YM = #{endMonth} THEN CLAIMCOUNT END)                                                AS CNT_CURR
 		    FROM BASE_DATA
-		    GROUP BY LICENSE_NO
+		    GROUP BY HOSP_CD  , LICENSE_NO
 		),
 		WITH_TOTAL AS (
 		    SELECT * FROM PIVOTED
 		    UNION ALL
 		    SELECT
+		        '99' AS HOSP_CD   ,
 		        '99' AS LICENSE_NO,
 		        SUM(AMT_PREV),
 		        SUM(AMT_CURR),
@@ -863,7 +869,7 @@
 		        ELSE P.LICENSE_NO END AS LICENSE_NO  ,
 		    CASE 
 		        WHEN P.LICENSE_NO = '99' THEN '전체'
-		        ELSE COALESCE(D.SUB_CODE_NM, '기타')
+		        ELSE COALESCE(D.NAME, '기타')
 		    END                                                AS LICENSE_NAME,
 		
 		    COALESCE(AMT_PREV, 0)                              AS AMT_PREV,
@@ -887,10 +893,12 @@
 		    ) AS PERCENT_VS_PREV
 		
 		FROM WITH_TOTAL P
-			LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB   = 'Z' 
-	 		                         AND D.CODE_CD   = 'LICENSE_NO'
-			                         AND D.ACTION_YN = 'Y'
-		 	                         AND D.SUB_CODE = P.LICENSE_NO
+		    LEFT JOIN TBL_LICENSE_MST D  ON D.HOSP_CD = P.HOSP_CD 
+	 	                                AND D.LIC_NUM = P.LICENSE_NO
+	 	                                AND D.IP_DT   = (SELECT MAX(IP_DT) FROM TBL_LICENSE_MST 
+	 	                                                             WHERE HOSP_CD  = P.HOSP_CD 
+	 	                                                              AND  LIC_NUM  = P.LICENSE_NO) 
+		                                AND D.ACTION_YN = 'Y'
 			ORDER BY P.AMT_PREV DESC  , P.LICENSE_NO
 	]]>
 	</select>
