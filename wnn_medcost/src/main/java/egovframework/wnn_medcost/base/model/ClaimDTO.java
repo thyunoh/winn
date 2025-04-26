@@ -26,7 +26,7 @@ public class ClaimDTO {
     private String  startYm;       // 적용년월
     private String  claimRate;    // 청구율
     private String  minorRate;    // 경증청구율
-    
+    private String  cformType;
     private String  hosGrdName;    // 청구율
     private String  cformName;    // 청구율
     private String  cformSubName;    // 경증청구율
@@ -41,7 +41,15 @@ public class ClaimDTO {
     private transient String findData; // MyBatis에서 매핑되지 않도록 설정
 
     
-    public String getKeycformIo() {
+    public String getCformType() {
+		return cformType;
+	}
+
+	public void setCformType(String cformType) {
+		this.cformType = cformType;
+	}
+
+	public String getKeycformIo() {
 		return keycformIo;
 	}
 

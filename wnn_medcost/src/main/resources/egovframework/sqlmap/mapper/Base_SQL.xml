@@ -679,6 +679,7 @@
               A.HOS_GRD 
             , FN_GET_DTL_CODE('Z', 'HOS_GRD', A.HOS_GRD)         AS    HOS_GRD_NAME 
             , A.CFORM_NO 
+            , A.CFORM_TYPE
             , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)       AS    CFORM_NAME 
             , A.CFORM_SUB 
             , IFNULL(FN_GET_DTL_CODE('Z', 'CFORM_SUB', A.CFORM_SUB),'')  AS    CFORM_SUB_NAME 
@@ -708,7 +709,7 @@
 	</select>  
     <insert id="insertclaimCd" parameterType="ClaimDTO" > <![CDATA[ 
         INSERT INTO TBL_CLAIMRATE_MST 
-               (HOS_GRD,          CFORM_NO, 
+               (HOS_GRD,          CFORM_NO, CFORM_TYPE ,
                 CFORM_SUB,        CFORM_IO, 
                 ITEM_NO,          CODE_NO, 
                 EDI_FCODE,        EDI_TCODE, 
@@ -720,7 +721,7 @@
                 JOB_SEQ ,
                 ACTION_YN 
                 )
-        VALUES ( #{hosGrd}   ,   #{cformNo}  , 
+        VALUES ( #{hosGrd}   ,   #{cformNo}  , #{cformType}  ,
                  #{cformSub} ,   #{cformIo}  , 
                  #{itemNo}   ,   #{codeNo}   , 
                  #{ediFcode} ,   #{ediTcode} , 
@@ -731,15 +732,16 @@
                  #{updUser}  ,   #{updIp}    , 
                  (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
                    FROM TBL_CLAIMRATE_MST A 
-                   WHERE A.HOP_GRD    = #{hosGrd} 
-                     AND A.CFORM_NO   = #{cformNo}
-                     AND A.CFORM_SUB  = #{cformSub}
-                     AND A.CFORM_IO   = #{cformIo}
-                     AND A.ITEM_NO    = #{itemNo}
-                     AND A.CODE_NO    = #{codeNo}
-                     AND A.EDI_FCODE  = #{ediFcode}
-                     AND A.EDI_TCODE  = #{ediTcode}
-                     AND A.START_YM   = #{startYm}
+                   WHERE A.HOP_GRD      = #{hosGrd} 
+                     AND A.CFORM_NO     = #{cformNo}
+                     AND A.CFORM_TYPE   = #{cformType}
+                     AND A.CFORM_SUB    = #{cformSub}
+                     AND A.CFORM_IO     = #{cformIo}
+                     AND A.ITEM_NO      = #{itemNo}
+                     AND A.CODE_NO      = #{codeNo}
+                     AND A.EDI_FCODE    = #{ediFcode}
+                     AND A.EDI_TCODE    = #{ediTcode}
+                     AND A.START_YM     = #{startYm}
                      ), 'Y'
 	          )	
      ]]>
@@ -751,30 +753,32 @@
             ,UPD_USER    = #{updUser}
             ,UPD_IP      = #{updIp}
           WHERE HOS_GRD     = #{hosGrd} 
-            AND CFORM_NO   = #{cformNo}
-            AND CFORM_SUB  = #{cformSub}
-            AND CFORM_IO   = #{cformIo}
-            AND ITEM_NO    = #{itemNo}
-            AND CODE_NO    = #{codeNo}
-            AND EDI_FCODE  = #{ediFcode}
-            AND EDI_TCODE  = #{ediTcode}
-            AND START_YM   = #{startYm}
-            AND ACTION_YN = 'Y'
+            AND CFORM_NO    = #{cformNo}
+            AND CFORM_TYPE  = #{cformType}
+            AND CFORM_SUB   = #{cformSub}
+            AND CFORM_IO    = #{cformIo}
+            AND ITEM_NO     = #{itemNo}
+            AND CODE_NO     = #{codeNo}
+            AND EDI_FCODE   = #{ediFcode}
+            AND EDI_TCODE   = #{ediTcode}
+            AND START_YM    = #{startYm}
+            AND ACTION_YN   = 'Y'
     ]]>    
     </update>  
     <select id ="claimCdDupChk" parameterType="ClaimDTO"  resultType="String"><![CDATA[ 
       SELECT 'Y'
         FROM TBL_CLAIMRATE_MST
-        WHERE  HOS_GRD    = #{hosGrd} 
-           AND CFORM_NO   = #{cformNo}
-           AND CFORM_SUB  = #{cformSub}
-           AND CFORM_IO   = #{cformIo}
-           AND ITEM_NO    = #{itemNo}
-           AND CODE_NO    = #{codeNo}
-           AND EDI_FCODE  = #{ediFcode}
-           AND EDI_TCODE  = #{ediTcode}
-           AND START_YM   = #{startYm}
-           AND ACTION_YN = 'Y'
+        WHERE  HOS_GRD     = #{hosGrd} 
+           AND CFORM_NO    = #{cformNo}
+           AND CFORM_TYPE  = #{cformType}
+           AND CFORM_SUB   = #{cformSub}
+           AND CFORM_IO    = #{cformIo}
+           AND ITEM_NO     = #{itemNo}
+           AND CODE_NO     = #{codeNo}
+           AND EDI_FCODE   = #{ediFcode}
+           AND EDI_TCODE   = #{ediTcode}
+           AND START_YM    = #{startYm}
+           AND ACTION_YN   = 'Y'
     ]]>
     </select>    	      	            	        		       	            	        		                              	      
 </mapper>
