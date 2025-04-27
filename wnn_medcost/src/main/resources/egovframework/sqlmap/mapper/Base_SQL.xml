@@ -677,17 +677,23 @@
 	<select id="getclaimCdList" parameterType="ClaimDTO"  resultType="ClaimDTO"><![CDATA[
 	  	 select 
               A.HOS_GRD 
-            , FN_GET_DTL_CODE('Z', 'HOS_GRD', A.HOS_GRD)         AS    HOS_GRD_NAME 
+            , FN_GET_DTL_CODE('Z', 'HOS_GRD', A.HOS_GRD)                        AS    HOS_GRD_NAME 
             , A.CFORM_NO 
-            , A.CFORM_TYPE
-            , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)       AS    CFORM_NAME 
-            , A.CFORM_SUB 
-            , IFNULL(FN_GET_DTL_CODE('Z', 'CFORM_SUB', A.CFORM_SUB),'')  AS    CFORM_SUB_NAME 
+            , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)                      AS    CFORM_NAME 
+            , A.MED_COV_TYPE
+            , IFNULL(FN_GET_DTL_CODE('Z', 'MED_COV_TYPE', A.MED_COV_TYPE),'')   AS    MED_COV_NAME 
+            , A.ACC_TYPE 
+            , IFNULL(FN_GET_DTL_CODE('Z', 'ACC_TYPE', A.ACC_TYPE),'')           AS    ACC_TYPE_NAME 
             , A.CFORM_IO 
+             , IFNULL(FN_GET_DTL_CODE('Z', 'CFORM_IO', A.CFORM_IO),'')          AS    CFORM_IO_NAME 
             , A.ITEM_NO 
             , A.CODE_NO 
             , A.EDI_FCODE 
             , A.EDI_TCODE 
+            , A.EDI_LCODE
+            , A.EDI_PCODE1
+            , A.EDI_PCODE2
+            , A.EDI_PCODE3    
             , A.START_YM 
             , A.CLAIM_RATE 
             , A.MINOR_RATE 
@@ -699,20 +705,18 @@
             , A.UPD_IP
 		  From TBL_CLAIMRATE_MST A
 		 Where A.ACTION_YN = 'Y' AND 
-		     ( A.CFORM_NO     LIKE CONCAT('%'  #{findData}  '%')
-		     OR 
-		      A.CFORM_NO      LIKE CONCAT('%'  #{findData}  '%')
-		     OR 
-		      A.CFORM_NO      LIKE CONCAT('%'  #{findData}  '%')
-		    )  
+		     ( A.CFORM_NO     LIKE CONCAT('%'  #{cformNo}  '%') )  
      ]]>		    
 	</select>  
     <insert id="insertclaimCd" parameterType="ClaimDTO" > <![CDATA[ 
         INSERT INTO TBL_CLAIMRATE_MST 
-               (HOS_GRD,          CFORM_NO, CFORM_TYPE ,
-                CFORM_SUB,        CFORM_IO, 
+               (HOS_GRD,          CFORM_NO, 
+                MED_COV_TYPE ,
+                ACC_TYPE,         CFORM_IO, 
                 ITEM_NO,          CODE_NO, 
                 EDI_FCODE,        EDI_TCODE, 
+                EDI_LCODE,        EDI_PCODE1,
+                EDI_PCODE2,       EDI_PCODE3,  
                 START_YM,         CLAIM_RATE,       
                 MINOR_RATE,       REG_DTTM, 
                 REG_USER,         REG_IP, 
@@ -721,10 +725,13 @@
                 JOB_SEQ ,
                 ACTION_YN 
                 )
-        VALUES ( #{hosGrd}   ,   #{cformNo}  , #{cformType}  ,
-                 #{cformSub} ,   #{cformIo}  , 
+        VALUES ( #{hosGrd}   ,   #{cformNo}  , 
+                 #{medCovType}  ,
+                 #{accType} ,   #{cformIo}  , 
                  #{itemNo}   ,   #{codeNo}   , 
                  #{ediFcode} ,   #{ediTcode} , 
+                 #{ediLcode} ,   #{ediPcode1} ,
+                 #{ediPcode2} ,  #{ediPcode3} ,
                  #{startYm}  ,   #{claimRate}, 
                  #{minorRate},   
                  NOW()       ,   #{regUser}  ,   
@@ -752,33 +759,33 @@
             ,UPD_DTTM    = NOW()
             ,UPD_USER    = #{updUser}
             ,UPD_IP      = #{updIp}
-          WHERE HOS_GRD     = #{hosGrd} 
-            AND CFORM_NO    = #{cformNo}
-            AND CFORM_TYPE  = #{cformType}
-            AND CFORM_SUB   = #{cformSub}
-            AND CFORM_IO    = #{cformIo}
-            AND ITEM_NO     = #{itemNo}
-            AND CODE_NO     = #{codeNo}
-            AND EDI_FCODE   = #{ediFcode}
-            AND EDI_TCODE   = #{ediTcode}
-            AND START_YM    = #{startYm}
-            AND ACTION_YN   = 'Y'
+          WHERE HOS_GRD       = #{hosGrd} 
+            AND CFORM_NO      = #{cformNo}
+            AND MED_COV_TYPE  = #{medCovType}
+            AND ACC_TYPE      = #{accType}
+            AND CFORM_IO      = #{cformIo}
+            AND ITEM_NO       = #{itemNo}
+            AND CODE_NO       = #{codeNo}
+            AND EDI_FCODE     = #{ediFcode}
+            AND EDI_TCODE     = #{ediTcode}
+            AND START_YM      = #{startYm}
+            AND ACTION_YN     = 'Y'
     ]]>    
     </update>  
     <select id ="claimCdDupChk" parameterType="ClaimDTO"  resultType="String"><![CDATA[ 
       SELECT 'Y'
         FROM TBL_CLAIMRATE_MST
-        WHERE  HOS_GRD     = #{hosGrd} 
-           AND CFORM_NO    = #{cformNo}
-           AND CFORM_TYPE  = #{cformType}
-           AND CFORM_SUB   = #{cformSub}
-           AND CFORM_IO    = #{cformIo}
-           AND ITEM_NO     = #{itemNo}
-           AND CODE_NO     = #{codeNo}
-           AND EDI_FCODE   = #{ediFcode}
-           AND EDI_TCODE   = #{ediTcode}
-           AND START_YM    = #{startYm}
-           AND ACTION_YN   = 'Y'
+        WHERE  HOS_GRD       = #{hosGrd} 
+           AND CFORM_NO      = #{cformNo}
+           AND MED_COV_TYPE  = #{medCovType}
+           AND ACC_TYPE      = #{accType}
+           AND CFORM_IO      = #{cformIo}
+           AND ITEM_NO       = #{itemNo}
+           AND CODE_NO       = #{codeNo}
+           AND EDI_FCODE     = #{ediFcode}
+           AND EDI_TCODE     = #{ediTcode}
+           AND START_YM      = #{startYm}
+           AND ACTION_YN     = 'Y'
     ]]>
     </select>    	      	            	        		       	            	        		                              	      
 </mapper>

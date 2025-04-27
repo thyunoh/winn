@@ -7,29 +7,36 @@ public class ClaimDTO {
 	}
 	private String keyhosGrd;       // 1(상급)2.(종합)3.(병원)
     private String keycformNo;       // 보험유형(건강보험 요양급여비용 심사청구서)
-    private String keycformSub;      // 보조유형
+    private String keymedcovtype;    //급여분류 
+    private String keyacctype;       // 공상구분  
     private String keycformIo;       // 외래입원
     private String keyitemNo;        // 항
     private String keycodeNo;        // 목
-    private String keyediFcode;      // FROM(EDI_CODE)
-    private String keyediTcode;      // TO(EDI_CODE)
+    private String keyedifcode;      // FROM(EDI_CODE)
+    private String keyeditcode;      // TO(EDI_CODE)
     private String keystartYm;       // 적용년월
     
 	private String  hosGrd;       // 1(상급)2.(종합)3.(병원)
     private String  cformNo;       // 보험유형(건강보험 요양급여비용 심사청구서)
-    private String  cformSub;      // 보조유형
+    private String  medCovType;   //급여분류 
+    private String  accType;      // 공상구분 
     private String  cformIo;       // 외래입원
     private String  itemNo;        // 항
     private String  codeNo;        // 목
     private String  ediFcode;      // FROM(EDI_CODE)
     private String  ediTcode;      // TO(EDI_CODE)
+    private String  ediLcode;      // 
+    private String  ediPcode1;      // 
+    private String  ediPcode2; 
+    private String  ediPcode3;
     private String  startYm;       // 적용년월
     private String  claimRate;    // 청구율
     private String  minorRate;    // 경증청구율
-    private String  cformType;
     private String  hosGrdName;    // 청구율
     private String  cformName;    // 청구율
-    private String  cformSubName;    // 경증청구율
+    private String  accTypeName;    // 경증청구율
+    private String  medCovName ;
+    private String  cformIoName ;    // 청구율
     // Audit Fields
     private String regDttm;  // 등록일시
     private String regUser;  // 등록자
@@ -38,15 +45,61 @@ public class ClaimDTO {
     private String updUser;  // 최종변경자
     private String updIp;    // 최종변경 IP
 
-    private transient String findData; // MyBatis에서 매핑되지 않도록 설정
-
-    
-    public String getCformType() {
-		return cformType;
+    public String getCformIoName() {
+		return cformIoName;
 	}
 
-	public void setCformType(String cformType) {
-		this.cformType = cformType;
+	public void setCformIoName(String cformIoName) {
+		this.cformIoName = cformIoName;
+	}
+	private transient String findData; // MyBatis에서 매핑되지 않도록 설정
+
+	public String getMedCovName() {
+		return medCovName;
+	}
+
+	public String getKeymedcovtype() {
+		return keymedcovtype;
+	}
+
+	public void setKeymedcovtype(String keymedcovtype) {
+		this.keymedcovtype = keymedcovtype;
+	}
+
+	public String getKeyacctype() {
+		return keyacctype;
+	}
+
+	public void setKeyacctype(String keyacctype) {
+		this.keyacctype = keyacctype;
+	}
+
+	public String getAccTypeName() {
+		return accTypeName;
+	}
+
+	public void setAccTypeName(String accTypeName) {
+		this.accTypeName = accTypeName;
+	}
+
+	public void setMedCovName(String medCovName) {
+		this.medCovName = medCovName;
+	}
+
+	public String getMedCovType() {
+		return medCovType;
+	}
+
+	public void setMedCovType(String medCovType) {
+		this.medCovType = medCovType;
+	}
+
+	public String getAccType() {
+		return accType;
+	}
+
+	public void setAccType(String accType) {
+		this.accType = accType;
 	}
 
 	public String getKeycformIo() {
@@ -72,15 +125,6 @@ public class ClaimDTO {
 	public void setCformName(String cformName) {
 		this.cformName = cformName;
 	}
-
-	public String getCformSubName() {
-		return cformSubName;
-	}
-
-	public void setCformSubName(String cformSubName) {
-		this.cformSubName = cformSubName;
-	}
-	
 	public String getKeyhosGrd() {
 		return keyhosGrd;
 	}
@@ -95,14 +139,6 @@ public class ClaimDTO {
 
 	public void setKeycformNo(String keycformNo) {
 		this.keycformNo = keycformNo;
-	}
-
-	public String getKeycformSub() {
-		return keycformSub;
-	}
-
-	public void setKeycformSub(String keycformSub) {
-		this.keycformSub = keycformSub;
 	}
 
 	public String getKeyclaimIo() {
@@ -129,21 +165,6 @@ public class ClaimDTO {
 		this.keycodeNo = keycodeNo;
 	}
 
-	public String getKeyediFcode() {
-		return keyediFcode;
-	}
-
-	public void setKeyediFcode(String keyediFcode) {
-		this.keyediFcode = keyediFcode;
-	}
-
-	public String getKeyediTcode() {
-		return keyediTcode;
-	}
-
-	public void setKeyediTcode(String keyediTcode) {
-		this.keyediTcode = keyediTcode;
-	}
 
 	public String getKeystartYm() {
 		return keystartYm;
@@ -280,20 +301,60 @@ public class ClaimDTO {
 		this.cformNo = cformNo;
 	}
 
-	public String getCformSub() {
-		return cformSub;
-	}
-
-	public void setCformSub(String cformSub) {
-		this.cformSub = cformSub;
-	}
-
 	public String getCformIo() {
 		return cformIo;
 	}
 
 	public void setCformIo(String cformIo) {
 		this.cformIo = cformIo;
+	}
+
+	public String getEdiLcode() {
+		return ediLcode;
+	}
+
+	public void setEdiLcode(String ediLcode) {
+		this.ediLcode = ediLcode;
+	}
+
+	public String getEdiPcode1() {
+		return ediPcode1;
+	}
+
+	public void setEdiPcode1(String ediPcode1) {
+		this.ediPcode1 = ediPcode1;
+	}
+
+	public String getEdiPcode2() {
+		return ediPcode2;
+	}
+
+	public void setEdiPcode2(String ediPcode2) {
+		this.ediPcode2 = ediPcode2;
+	}
+
+	public String getEdiPcode3() {
+		return ediPcode3;
+	}
+
+	public void setEdiPcode3(String ediPcode3) {
+		this.ediPcode3 = ediPcode3;
+	}
+
+	public String getKeyedifcode() {
+		return keyedifcode;
+	}
+
+	public void setKeyedifcode(String keyedifcode) {
+		this.keyedifcode = keyedifcode;
+	}
+
+	public String getKeyeditcode() {
+		return keyeditcode;
+	}
+
+	public void setKeyeditcode(String keyeditcode) {
+		this.keyeditcode = keyeditcode;
 	}
 
     

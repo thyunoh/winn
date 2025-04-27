@@ -199,13 +199,13 @@
 							<label for="startDt"
 								class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
 							<div class="col-4 col-lg-4">
-								<input id="startDt" name="startDt" type="text"
+								<input id="startDt" name="startDt" type="text" value = "20000101"
 									class="form-control date1-inputmask" placeholder="yyyy-mm-dd"
 									maxlength="">
 							</div>
 							<label for="endDt" class="col-2 col-lg-2 col-form-label text-left">종료일자</label>
 							<div class="col-4 col-lg-4">
-								<input id="endDt" name="endDt" type="text" 
+								<input id="endDt" name="endDt" type="text" value = "20991231"
 									class="form-control date1-inputmask" placeholder="yyyy-mm-dd"
 									maxlength="">
 							</div>
@@ -290,7 +290,7 @@
 							<label for="startDt_one"
 								class="col-2 col-lg-2 col-form-label text-left">적용일자</label>
 							<div class="col-4 col-lg-4">
-								<input id="startDt_one" name="startDt_one" type="text"
+								<input id="startDt_one" name="startDt_one" type="text" value = "20000101"
 									class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
 							</div>
 							<label for="endDt_one"
@@ -304,7 +304,7 @@
 							<label for="sort_one"
 								class="col-2 col-lg-2 col-form-label text-left">순서</label>
 							<div class="col-4 col-lg-4">
-								<input id="sort_one" name="sort_one" type="text"
+								<input id="sort_one" name="sort_one" type="text" value = "1"
 									class="form-control" placeholder="">
 							</div>
 							<label for="useYn_one"

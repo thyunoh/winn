@@ -28,11 +28,12 @@
 	                            <div class="form-row mb-2">
                                     <div class="col-sm-4">
                                         <div class="input-group">
-                                             <input id="findData" type="text" class="form-control" placeholder="3글자 이상 입력 후 [ enter ]" 
-                                                                                                 onkeyup="findEnterKey()" oninput="findField(this)">
-                                             <div class="input-group-append">
-                                                 <button type="button" class="btn btn-rounded btn-primary"  onClick="fn_FindData()">조회. <i class="fas fa-search"></i></button>
-                                             </div>
+	                                        <label for="cformNo1" class="col-2 col-sm-2 col-form-label text-left">유형구분</label>
+						                    <div class="col-7 col-lg-7">
+						                       <select id="cformNo1" name="cformNo1" class="custom-select" style="height: 35px; font-size: 14px;">
+						                         <option selected value="">선택</option>
+						                      </select>
+						                    </div>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">                                    
@@ -41,7 +42,6 @@
                                             <button class="btn btn-outline-dark btn-insert " data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
                                             <button class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
                                             <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
@@ -78,7 +78,7 @@
 	    <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 80%;display: flex;flex-direction: column;">
+	        <div class="modal-content" style="height: 70%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 		            <h6 class="modal-title" id="modalHead"></h6> 
 	              <!-- ============================================================== -->
@@ -108,70 +108,91 @@
                     <input type="hidden" id="regIp"   name="regIp"   value="">
                     <input type="hidden" id="updIp"   name="updIp "  value= "">
                     <div class="form-group row ">
-                        <label for="diagCode" class="col-2 col-lg-2 col-form-label text-left">진단코드</label>
-                        <div class="col-2 col-sm-2">
-                            <input id="diagCode" name="diagCode" type="text" class="form-control is-invalid text-left" required placeholder="진단코드]">
-                        </div>
-	                   <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
-	                   <div class="col-2 col-lg-2">                                       
-	                      <input id="startDt" name="startDt" type="text" class="form-control date1-inputmask" required placeholder="yyyy-mm-dd" >
+                       <label for="hosGrd" class="col-2 col-lg-2 col-form-label text-left">병원등급</label>
+                       <div class="col-4 col-lg-4">  
+						  <select id="hosGrd" name="hosGrd" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
+						     <option selected value= "" >구분 1</option> 
+						  </select>
 	                   </div>
-                       <label for="genderType" class="col-2 col-lg-2 col-form-label text-left">남녀구분</label>
-                       <div class="col-2 col-lg-2">  
-						  <select id="genderType" name="genderType" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
+                       <label for="cformNo" class="col-2 col-lg-2 col-form-label text-left">청구서식</label>
+                       <div class="col-4 col-lg-4">  
+						  <select id="cformNo" name="cformNo" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
 						     <option selected value= "" >구분 1</option> 
 						  </select>
 	                   </div>
                     </div>
-                    <div class="form-group row g-0 mb-0">
-                        <label for="korDiagName" class="col-2 col-sm-2 col-form-label text-left">한글진단명</label>
-                        <div class="col-10 col-sm-10">
-                            <input id="korDiagName" name="korDiagName" type="text" class="form-control text-left" placeholder="한글진단명을 입력하세요">
+                    <div class="form-group row ">
+                       <label for="medCovType" class="col-2 col-lg-2 col-form-label text-left">의보종별구분</label>
+                       <div class="col-4 col-lg-4">  
+						  <select id="medCovType" name="medCovType" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
+						     <option selected value= "" >구분 1</option> 
+						  </select>
+	                   </div>
+                       <label for="accType" class="col-2 col-lg-2 col-form-label text-left">공상(보조유형)</label>
+                       <div class="col-4 col-lg-4">  
+						  <select id="accType" name="accType" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
+						     <option selected value= "" >구분 1</option> 
+						  </select>
+	                   </div>
+                    </div>
+                     <div class="form-group row ">
+                        <label for="cformIo" class="col-2 col-lg-2 col-form-label text-left">외래입원</label>
+                       <div class="col-2 col-lg-2">  
+						  <select id="cformIo" name="cformIo" class="custom-select" oninput="findField(this)" style="height:35px; font-size:14px;">
+						     <option selected value= "" >구분 1</option> 
+						  </select>
+	                   </div>
+                        <label for="itemNo" class="col-2 col-lg-2 col-form-label text-left">항</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="itemNo" name="itemNo" type="text"  class="form-control" required placeholder="">
+                        </div>
+                        <label for="codeNo" class="col-2 col-lg-2 col-form-label text-left">목</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="codeNo" name="codeNo" type="text"  class="form-control" required placeholder="">
                         </div>
                     </div>
-					<div class="form-group row g-0 mb-0">
-					    <label for="engDiagName" class="col-2 col-sm-2 col-form-label text-left">영문진단명</label>
-					    <div class="col-10 col-sm-10">
-					        <textarea id="engDiagName" name="engDiagName" data-parsley-trigger="change" placeholder="영문진단명을 입력하세요"
-					                autocomplete="off" class="form-control" rows="3"></textarea>
-					    </div>
-					</div>                     
                     <div class="form-group row">
-                        <label for="infectType" class="col-2 col-lg-2 col-form-label text-left">법정전염병</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="infectType" name="infectType" type="text"  class="form-control"  placeholder="">
+                        <label for="ediFcode" class="col-2 col-lg-2 col-form-label text-left">청구코드시작</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="ediFcode" name="ediFcode" type="text"  class="form-control"  required placeholder="">
                         </div>
-                        <label for="diagType" class="col-2 col-lg-2 col-form-label text-left">상병구분</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="diagType"   name="diagType"  type="text" class="form-control"   placeholder="" >
+                        <label for="ediTcode" class="col-2 col-lg-2 col-form-label text-left">청구코드종료</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="ediTcode"   name="ediTcode"  type="text" class="form-control" required  placeholder="" >
+                        </div>
+                        <label for="startYm" class="col-2 col-lg-2 col-form-label text-left">적용년월</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="startYm" name="startYm"  type="text" class="form-control" required  placeholder="">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="minAge" class="col-2 col-lg-2 col-form-label text-left">하한연령</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="minAge"     name="minAge"   value = "0"  type="number" class="form-control" style="text-align: right;" placeholder="">
+                        <label for="edilcode" class="col-2 col-lg-2 col-form-label text-left">like코드</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="edilcode" name="edilcode" type="text"  class="form-control"  placeholder="">
                         </div>
-                        <label for="maxAge" class="col-2 col-lg-2 col-form-label text-left">상한연령</label>
-                        <div class="col-4 col-lg-4">
-                            <input id="maxAge"     name="maxAge"   value = "999"    type="number"    class="form-control"  style="text-align: right;" placeholder="">
+                        <label for="edipcode1" class="col-2 col-lg-2 col-form-label text-left">산정코드1</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="edipcode1"   name="edipcode1"  type="text" class="form-control"   placeholder="" >
+                        </div>
+                        <label for="edipcode2" class="col-2 col-lg-2 col-form-label text-left">산정코드2</label>
+                        <div class="col-2 col-lg-2">
+                            <input id="edipcode2"   name="edipcode2"  type="text" class="form-control"   placeholder="" >
                         </div>
                     </div>
-                     <div class="form-group row">
-                        <label for="vcode" class="col-2 col-lg-2 col-form-label text-left">특정코드</label>
+                    <div class="form-group row">
+                        <label for="edipcode3" class="col-2 col-lg-2 col-form-label text-left">산정코드3</label>
                         <div class="col-2 col-lg-2">
-                            <input id="vcode" name="vcode"  type="text" class="form-control"  placeholder="">
+                            <input id="edipcode2"   name="edipcode3"  type="text" class="form-control"   placeholder="" >
                         </div>
-                        <label for="icd10Code" class="col-2 col-lg-2 col-form-label text-left">ICD10</label>
+                        <label for="claimRate" class="col-2 col-lg-2 col-form-label text-left">청구율</label>
                         <div class="col-2 col-lg-2">
-                            <input id="icd10Code" name="icd10Code"  type="text" class="form-control"  placeholder="">
+                            <input id="claimRate"     name="claimRate"   value = "0"  type="number" required   class="form-control" style="text-align: right;" placeholder="">
                         </div>
-                        <label for="endDt" class="col-2 col-lg-2 col-form-label text-left">적용종료일</label>
+                        <label for="minorRate" class="col-2 col-lg-2 col-form-label text-left">경증청구율</label>
                         <div class="col-2 col-lg-2">
-                            <input id="endDt" name="endDt"  type="text" class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
-                            
-                        </div>   
+                            <input id= "minorRate"    name="minorRate"   value = "0"  type="number"    class="form-control"  style="text-align: right;" placeholder="">
+                        </div>
                     </div>
- 
                 <!-- ============================================================== -->
                 <!-- end form 수정해야 될 곳 -->
                 <!-- ============================================================== -->
@@ -221,9 +242,9 @@
 		<!-- ============================================================== -->
 		var list_flag = ['Z'];     										// 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 		//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
-		var list_code = ['HOS_GRD','CFORM_NO','CFORM_SUB'];     // 구분코드 필요한 만큼 선언해서 사용
-		var select_id = ['hosGrd','cformNo','cformSub'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
-		var firstnull = ['N','N','N'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
+		var list_code = ['HOS_GRD','CFORM_NO','CFORM_NO','MED_COV_TYPE','ACC_TYPE','CFORM_IO'];     // 구분코드 필요한 만큼 선언해서 사용
+		var select_id = ['hosGrd','cformNo','cformNo1','medCovType','accType','cformIo'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
+		var firstnull = ['N','N','Y','N','N','N'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
 		<!-- ============================================================== -->
@@ -262,23 +283,26 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['요양등급','요양등급명','유형구분','유형명칭','보조유형','보조유형명칭','외래입원','항','목','청구코드시작','청구코드종료' ,'적용년월','청구율','경증율','등록일'];
+		var c_Head_Set = ['요양등급','요양등급명','유형구분','유형명칭','보조(공상)명칭','외래입원','의보구분','의보명칭','보조(공상)'
+			                                        ,'구분','항','목','청구코드시작','청구코드종료' ,'적용년월','청구율','경증청구율'];
 		var columnsSet = [           
-						    { data: 'hosGrd'    , visible: false, className: 'dt-body-center', width: '100px', name: 'keyhosGrd', primaryKey: true },
-						    { data: 'hosGrdName', visible: true, className: 'dt-body-center', width: '50px' },
-						    { data: 'cformNo'   , visible: false, className: 'dt-body-center', width: '100px', name: 'keycformNo', primaryKey: true },
-						    { data: 'cformName' , visible: true, className: 'dt-body-left', width: '200px' },
-						    { data: 'cformSub'  , visible: false, className: 'dt-body-center', width: '100px', name: 'keycformSub', primaryKey: true },
-						    { data: 'cformSubName', visible: true, className: 'dt-body-left', width: '200px' },
-						    { data: 'cformIo'   , visible: true, className: 'dt-body-center', width: '50px', name: 'keycformIo', primaryKey: true },
-						    { data: 'itemNo'    , visible: true, className: 'dt-body-center', width: '50px', name: 'keyitemNo', primaryKey: true },
-						    { data: 'codeNo'    , visible: true, className: 'dt-body-center', width: '50px', name: 'keycodeNo', primaryKey: true },
-						    { data: 'ediFcode'  , visible: true, className: 'dt-body-center', width: '100px', name: 'keyediFcode', primaryKey: true },
-						    { data: 'ediTcode'  , visible: true, className: 'dt-body-center', width: '100px', name: 'keyediTcode', primaryKey: true },
-						    { data: 'startYm'   , visible: true, className: 'dt-body-center', width: '100px', name: 'keystartYm', primaryKey: true },
-						    { data: 'claimRate' , visible: true, className: 'dt-body-right', width: '100px' },
-						    { data: 'minorRate' , visible: true, className: 'dt-body-right', width: '100px' },
-						    { data: 'updDttm'   , visible: true, className: 'dt-body-center', width: '100px' }
+						    { data: 'hosGrd'     , visible: false, className: 'dt-body-center'  , width: '100px', name: 'keyhosGrd' , primaryKey: true },
+						    { data: 'hosGrdName' , visible: true,  className: 'dt-body-center'  , width: '50px' },
+						    { data: 'cformNo'    , visible: true,  className: 'dt-body-center'  , width: '50px',  name: 'keycformNo', primaryKey: true },
+						    { data: 'cformName'  , visible: true,  className: 'dt-body-center'  , width: '150px' },
+						    { data: 'cformIo'    , visible: false, className: 'dt-body-center'  , width: '50px',  name: 'keycformIo' , primaryKey: true },
+						    { data: 'cformIoName', visible: true,  className: 'dt-body-center'  , width: '50px'},
+						    { data: 'medCovType' , visible: false, className: 'dt-body-center'  , width: '50px' , name: 'keymedcovtype', primaryKey: true },
+						    { data: 'medCovName' , visible: true,  className: 'dt-body-center  ', width: '50px' },
+						    { data: 'accType'    , visible: true,  className: 'dt-body-center'  , width: '50px',  name: 'keyacctype' , primaryKey: true },
+						    { data: 'accTypeName', visible: true,  className: 'dt-body-center'  , width: '100px' },
+						    { data: 'itemNo'     , visible: true,  className: 'dt-body-center'  , width: '50px',  name: 'keyitemNo'  , primaryKey: true },
+						    { data: 'codeNo'     , visible: true,  className: 'dt-body-center'  , width: '50px',  name: 'keycodeNo'  , primaryKey: true },
+						    { data: 'ediFcode'   , visible: true,  className: 'dt-body-center'  , width: '100px', name: 'keyedifcode', primaryKey: true },
+						    { data: 'ediTcode'   , visible: true,  className: 'dt-body-center'  , width: '100px', name: 'keyeditcode', primaryKey: true },
+						    { data: 'startYm'    , visible: true,  className: 'dt-body-center'  , width: '100px', name: 'keystartYm' , primaryKey: true },
+						    { data: 'claimRate'  , visible: true,  className: 'dt-body-right'   , width: '100px' },
+						    { data: 'minorRate'  , visible: true,  className: 'dt-body-right'   , width: '100px' }
 						];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -287,15 +311,15 @@
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
 							['cformNo',  'asc' ],    // 오름차순 정렬
-            				['cformSub', 'asc']     // 내림차순 정렬
+            				['medCovType', 'asc']     // 내림차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['cformNo','cformSub'];                   
+		var showSortNo = ['cformNo','cformName','accType','medCovType'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['cformName','cformSubName'];
+		var markColums = ['cformName','medCovName'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -304,6 +328,7 @@
 		window.onload = function() { 
 			find_Check();
 		    comm_Check();
+	
 		};
 
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
@@ -376,10 +401,18 @@
 		<!-- ============================================================== -->
 		<script type="text/javascript">
 		function modal_key_hidden(flag) {	
-	        const diagCodeInput     = document.getElementById("diagCode");
-	        const startDtInput      = document.getElementById("startDt");
-
-	        const inputs = [diagCodeInput, startDtInput];
+	        const hosGrdInput          = document.getElementById("hosGrd");
+	        const cformNoInput         = document.getElementById("cformNo");
+	        const medCovTypeInput      = document.getElementById("medCovType");
+	        const accTypeInput         = document.getElementById("accType");
+	        const cformIoInput         = document.getElementById("cformIo");
+	        const itemNoInput          = document.getElementById("itemNo");
+	        const codeNoInput          = document.getElementById("codeNo");
+	        const ediFcodeInput        = document.getElementById("ediFcode");
+	        const ediTcodeInput        = document.getElementById("ediTcode");
+	        const startYmInput         = document.getElementById("startYm");
+	        const inputs = [hosGrdInput, hosGrdInput,medCovTypeInput,accTypeInput,cformIoInput,itemNoInput,codeNoInput,
+	        	            ediFcodeInput,ediTcodeInput,startYmInput];
 	        if (flag !== 'I') {
 		        const isReadOnly = flag !== 'I';
 		        inputs.forEach(input => {
@@ -395,6 +428,20 @@
 		            }
 		        });		    	
 		    }
+	        if (flag !== 'I') {
+	            $(hosGrdInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	            $(cformNoInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	            $(medCovTypeInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	            $(accTypeInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	            $(cformIoInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	        } else {
+	            $(hosGrdInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	            $(cformNoInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	            $(medCovTypeInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	            $(accTypeInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	            $(cformIoInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	        }
+		
 		}
 		function modal_Open(flag) {	
 			let modal_OpenFlag = true;
@@ -754,14 +801,14 @@
 		    let find = {};
 		   	
 		   	for (let findValue of findValues) {
-		   		let key = findValue.id;
+		   		let key = findValue.id === "cformNo1" ? "cformNo" : findValue.id;
 		   		find[key] = findValue.val;
 		   	}
-		   	
+		   	const cformNo  = document.getElementById('cformNo1').value ;
 		    $.ajax({
 		        type: "POST",
 		        url: "/base/claimCdList.do",
-		        data: find,
+		        data: {cformNo : cformNo } ,
 		        dataType: "json",
 		        
 		        // timeout: 10000, // 10초 후 타임아웃
@@ -858,36 +905,40 @@
 		//일력값 오류체크및 서버데이타전달(json) 
 		function validateForm() {
 		    const results = formValCheck(inputZone.id, {
-		    	diagCode:     { kname: "수가코드", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
-		        startDt:      { kname: "시작일자", k_req: true },
-		        endDt:        { kname: "종료일자", k_req: true },
-		        vcode:        { kname: "특정코드" },
-		        minAge:       { kname: "상한연령", k_req: true },
-		        maxAge:       { kname: "하한연령", k_req: true },
-		        korDiagName:  { kname: "한글명", k_req: true },
-		        engDiagName:  { kname: "영문명", k_req: true },
-		        genderTType:  { kname: "남녀구분"},
-		        infectType:   { kname: "법정전염병"},
-		        icd10Code:    { kname: "ICD10"},
-		        diagType:     { kname: "상병구분",k_req: true}
+		    	hosGrd:     { kname: "병원등급" , k_req: true, k_spc: true, k_clr: true },
+		    	cformNo:    { kname: "청구유형" , k_req: true },
+		    	medCovType: { kname: "급여종별" , k_req: true },
+		    	accType:    { kname: "공상(보조)유형" },
+		    	cformIo:    { kname: "입원외래"   , k_req: true },
+		    	itemNo:     { kname: "항"       , k_req: true },
+		    	codeNo:     { kname: "목"       , k_req: true },
+		    	ediFcode:   { kname: "보험코드시작", k_req: true },
+		    	ediTcode:   { kname: "보험코드종료", k_req: true },
+		        startYm:    { kname: "적용년월"   , k_req: true },
+		        claimRate:  { kname: "청구율"    , k_req: true}
 		    });
 		    return results;
 		}
 		//그리드상 데이타생성및 수정 작업
 		function newuptData() {
         	let newData = {
-        	    diagCode:     $('#diagCode').val(),
-                startDt:      replaceMulti($('#startDt').val(), "-", "/"),
-                endDt:        replaceMulti($('#endDt').val(), "-", "/"), 
-                vcode:         $('#vcode').val(),
-                minAge:       $('#minAge').val(),
-                maxAge:       $('#maxAge').val(),
-                korDiagName: $('#korDiagName').val(),
-                engDiagName: $('#engDiagName').val(),
-                genderType:   $('#genderType').val(),
-                infectType:   $('#infectType').val(),
-                icd10Code:    $('#icd10Code').val(),
-                diagType:     $('#diagType').val(),
+        		hosGrd:          $('#hosGrd').val(),
+        		hosGrdName:      $('#hosGrdName').val(),
+        		cformNo:         $('#cformNo').val(),
+        		cformName:       $('#cformName').val(),
+        		medCovType:      $('#medCovType').val(),
+        		medCovName:      $('#medCovName').val(),
+        		accType:         $('#accType').val(),
+        		accTypeName:     $('#accTypeName').val(),
+        		cformIo:         $('#cformIo').val(),
+        		cformIoNm:       $('#cformIoNm').val(),
+        		itemNo:          $('#itemNo').val(),
+        		codeNo:          $('#codeNo').val(),
+        		ediFcode:        $('#ediFcode').val(),
+        		ediTcode:        $('#ediTcode').val(),
+        		startYm:         $('#startYm').val(),
+        		claimRate:       $('#claimRate').val(),
+        		minorRate:       $('#minorRate').val()
 			    };
 		    return newData;
 		}	

@@ -1012,7 +1012,7 @@ public class BaseController {
         		}
         		svc.insertclaimCd(dto) ; 
        		    System.out.println("Tblinfo: "  + dto.getCformNo());
-       		    System.out.println("Version: "  + dto.getCformSub());
+       		    System.out.println("Version: "  + dto.getMedCovType());
             }
            
         	return ResponseEntity.ok(returnValue);   
@@ -1055,12 +1055,13 @@ public class BaseController {
         	for (ClaimDTO dto : data) {
         		dto.setHosGrd(dto.getKeyhosGrd());
         		dto.setCformNo(dto.getKeycformNo()); 
-        		dto.setCformSub(dto.getKeycformSub());
+        		dto.setMedCovType(dto.getKeymedcovtype());
+        		dto.setAccType(dto.getKeyacctype()); 
         		dto.setCformIo(dto.getKeycformIo()); 
         		dto.setItemNo(dto.getKeyitemNo()); 
         		dto.setCodeNo(dto.getKeycodeNo()); 
-        		dto.setEdiFcode(dto.getKeyediFcode());
-        		dto.setEdiTcode(dto.getKeyediTcode());
+        		dto.setEdiFcode(dto.getKeyedifcode());
+        		dto.setEdiTcode(dto.getKeyeditcode());
         		svc.updateclaimCd(dto) ; //이력관리 
        		    System.out.println("Key CformNo: " + dto.getKeycformNo());
              
