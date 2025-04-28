@@ -343,9 +343,9 @@ window.addEventListener("DOMContentLoaded", function() {
 function hosp_conact() {
     const hospcont = document.getElementById("hospcont"); 
     const wnnauth1 = document.getElementById("wnnauth1");
-    const comcode = document.getElementById("comcode");
+    const comcode  = document.getElementById("comcode");
     const ratecode = document.getElementById("ratecode");
-    const samcode = document.getElementById("samcode");
+    const samcode  = document.getElementById("samcode");
     if (samcode) {
     	samcode.style.display = "none";  // 샘버젼  
     }  
