@@ -73,7 +73,7 @@
                                                                                                                 aria-controls="base-info-1">각종코드 관리</a>
                                     <div id="base-info-1" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item">
+                                            <li class="nav-item" id = "comcode">
                                                 <a class="nav-item nav-link"  href="/base/commcd.do">공통코드</a>
                                             </li>
 									        <li class="nav-item">
@@ -100,7 +100,7 @@
                                              <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/wvalcd.do">가중치코드</a>
                                             </li>
-                                            <li class="nav-item">
+                                            <li class="nav-item" id = "ratecode">
                                                 <a class="nav-item nav-link"  href="/base/claimcd.do">유형별 청구율관리</a>
                                             </li>
                                         </ul>
@@ -111,7 +111,7 @@
                                                                              aria-controls="base-info-2">기준코드 관리</a>
                                     <div id="base-info-2" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item">
+                                            <li class="nav-item" id = "samcode">
                                                 <a class="nav-item nav-link"  href="/base/samvercd.do">샘파일 버전</a>
                                             </li>
                                             <li class="nav-item">
@@ -343,6 +343,18 @@ window.addEventListener("DOMContentLoaded", function() {
 function hosp_conact() {
     const hospcont = document.getElementById("hospcont"); 
     const wnnauth1 = document.getElementById("wnnauth1");
+    const comcode = document.getElementById("comcode");
+    const ratecode = document.getElementById("ratecode");
+    const samcode = document.getElementById("samcode");
+    if (samcode) {
+    	samcode.style.display = "none";  // 샘버젼  
+    }  
+    if (comcode) {
+    	comcode.style.display = "none";  // 공통코드 
+    }    
+    if (ratecode) {
+    	ratecode.style.display = "none";  // 청구율 
+    }  
     if (hospcont) {
     	hospcont.style.display = "none";  // 계약정보  
     }
