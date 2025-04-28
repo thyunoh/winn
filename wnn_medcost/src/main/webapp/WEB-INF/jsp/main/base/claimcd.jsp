@@ -948,7 +948,7 @@
 			    };
 		    return newData;
 		}
-		//////////////////////////////////////////////////인덱스명칭 가져오는 내용 입력수정후   
+		//////////////////////////////////////////////////인덱스명칭 가져오는 내용 입력수정후(그리드뿌려질때)   
 		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
 		window.addEventListener('DOMContentLoaded', function() {
 		    var select = document.getElementById('hosGrd');
