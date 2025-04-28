@@ -966,29 +966,18 @@ public class BaseController {
 	@RequestMapping(value="/claimCdList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> claimCdList(@ModelAttribute("DTO") ClaimDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
-		
 		System.out.println("청구율-java 1- start ");		
-		
 		cookie_value = ClientInfo.getCookie(request);		
 		try {
-			
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				
 				dto.setFindData(dto.getFindData());
-				
 				List<ClaimDTO> claimList = svc.getclaimCdList(dto);
-				
 				System.out.println("청구율-java size " + claimList.size());
-				
 				Map<String, Object> response = new HashMap<>();
 		        response.put("data",claimList);
-
 		        System.out.println("청구율-java response : " + response);
-		        
 		        return response;
-				
-				
 			} else {
 				return null;
 			}	
@@ -998,13 +987,10 @@ public class BaseController {
 	}
 	@RequestMapping(value="/claimCdInsert.do", method = RequestMethod.POST)
     public ResponseEntity<String> claimCdInsert(@RequestBody List<ClaimDTO> data) {
-		
 		System.out.println("Insert 시작했음");
 		String returnValue = "OK";
-		
 		// 처리 로직
         try {
-        	
         	for (ClaimDTO dto : data) {
         		String dupchk =   svc.claimCdDupChk(dto) ;
         		if ("Y".equals(dupchk)) {
@@ -1014,42 +1000,30 @@ public class BaseController {
        		    System.out.println("Tblinfo: "  + dto.getCformNo());
        		    System.out.println("Version: "  + dto.getMedCovType());
             }
-           
         	return ResponseEntity.ok(returnValue);   
-        	
         } catch (Exception e) {
-        	
             return ResponseEntity.status(500).body(e.getMessage());
-            
         }
 	}	
 	@RequestMapping(value="/claimCdUpdate.do", method = RequestMethod.POST)
     public ResponseEntity<String> claimCdUpdate(@RequestBody List<ClaimDTO> data) {
-	
 		System.out.println("Update 시작했음");
 		String returnValue = "OK";
 		// 처리 로직
         try {
-        	
         	for (ClaimDTO dto : data) {
         		svc.updateclaimCd(dto) ; //이력관리 
-        		
         		svc.insertclaimCd(dto) ; 
        		    System.out.println("CFORM_IO: " + dto.getCformIo());
                 System.out.println("CFORM_NO: " + dto.getCformNo());
-     	
-            }
+             }
         	return ResponseEntity.ok(returnValue);   
-        	
         } catch (Exception e) {
-        	
-            return ResponseEntity.status(500).body(e.getMessage());
-            
+             return ResponseEntity.status(500).body(e.getMessage());
         }
 	}	
 	@RequestMapping(value="/claimCdDelete.do", method = RequestMethod.POST)
     public ResponseEntity<String> claimCdDelete(@RequestBody List<ClaimDTO> data) {
-		
 		System.out.println("Delete 시작했음");
 		String returnValue = "OK";
 		// 처리 로직
@@ -1064,16 +1038,13 @@ public class BaseController {
         		dto.setCodeNo(dto.getKeycodeNo()); 
         		dto.setEdiFcode(dto.getKeyedifcode());
         		dto.setEdiTcode(dto.getKeyeditcode());
+        		dto.setStartYm(dto.getKeystartYm());
         		svc.updateclaimCd(dto) ; //이력관리 
        		    System.out.println("Key CformNo: " + dto.getKeycformNo());
-             
             }
         	return ResponseEntity.ok(returnValue);   
-        	
         } catch (Exception e) {
-        	
             return ResponseEntity.status(500).body(e.getMessage());
-            
         }
 	}	
 }
