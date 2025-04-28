@@ -911,17 +911,17 @@
 		//일력값 오류체크및 서버데이타전달(json) 
 		function validateForm() {
 		    const results = formValCheck(inputZone.id, {
-		    	hosGrd:     { kname: "병원등급" , k_req: true, k_spc: true, k_clr: true },
-		    	cformNo:    { kname: "청구유형" , k_req: true },
-		    	medCovType: { kname: "급여종별" , k_req: true },
-		    	accType:    { kname: "공상(보조)유형" },
-		    	cformIo:    { kname: "입원외래"   , k_req: true },
-		    	itemNo:     { kname: "항"       , k_req: true },
-		    	codeNo:     { kname: "목"       , k_req: true },
-		    	ediFcode:   { kname: "보험코드시작", k_req: true },
-		    	ediTcode:   { kname: "보험코드종료", k_req: true },
-		        startYm:    { kname: "적용년월"   , k_req: true },
-		        claimRate:  { kname: "청구율"    , k_req: true}
+		    	hosGrd:     { kname: "병원등급"      , k_req: true, k_spc: true, k_clr: true },
+		    	cformNo:    { kname: "청구유형"      , k_req: true },
+		    	medCovType: { kname: "급여종별"      , k_req: true },
+		    	accType:    { kname: "공상(보조)유형" , k_req: true },
+		    	cformIo:    { kname: "입원외래"      , k_req: true },
+		    	itemNo:     { kname: "항"          , k_req: true },
+		    	codeNo:     { kname: "목"          , k_req: true },
+		    	ediFcode:   { kname: "보험코드시작"   , k_req: true },
+		    	ediTcode:   { kname: "보험코드종료"   , k_req: true },
+		        startYm:    { kname: "적용년월"      , k_req: true },
+		        claimRate:  { kname: "청구율"       , k_req: true}
 		    });
 		    return results;
 		}
