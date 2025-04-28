@@ -1033,8 +1033,10 @@ public class BaseController {
         	
         	for (ClaimDTO dto : data) {
         		svc.updateclaimCd(dto) ; //이력관리 
-       		    System.out.println("Fee Code: " + dto.getCformIo());
-                System.out.println("Start_Dt: " + dto.getCformNo());
+        		
+        		svc.insertclaimCd(dto) ; 
+       		    System.out.println("CFORM_IO: " + dto.getCformIo());
+                System.out.println("CFORM_NO: " + dto.getCformNo());
      	
             }
         	return ResponseEntity.ok(returnValue);   

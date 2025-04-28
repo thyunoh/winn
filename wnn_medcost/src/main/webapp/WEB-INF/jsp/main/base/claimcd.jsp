@@ -103,6 +103,12 @@
                 	<!-- ============================================================== -->
                     <!-- text input 1개 start -->
                     <!-- ============================================================== -->
+                    <input type="hidden" id="cformName"    name="cformName"   value="">
+                    <input type="hidden" id="medCovName"   name="medCovName"  value="">
+                    <input type="hidden" id="accTypeName"  name="accTypeName" value="">
+                    <input type="hidden" id="cformIoNm"    name="cformIoNm "  value= "">
+                    <input type="hidden" id="hosGrdName"   name="hosGrdName " value= "">
+                    
                     <input type="hidden" id="regUser" name="regUser" value="">
                     <input type="hidden" id="updUser" name="updUser" value="">
                     <input type="hidden" id="regIp"   name="regIp"   value="">
@@ -923,15 +929,15 @@
 		function newuptData() {
         	let newData = {
         		hosGrd:          $('#hosGrd').val(),
-        		hosGrdName:      $('#hosGrdName').val(),
         		cformNo:         $('#cformNo').val(),
-        		cformName:       $('#cformName').val(),
         		medCovType:      $('#medCovType').val(),
-        		medCovName:      $('#medCovName').val(),
         		accType:         $('#accType').val(),
+        		cformName:       $('#cformName').val(),
+        		medCovName:      $('#medCovName').val(),
         		accTypeName:     $('#accTypeName').val(),
-        		cformIo:         $('#cformIo').val(),
-        		cformIoNm:       $('#cformIoNm').val(),
+        	    cformIoNm:       $('#cformIoNm').val(),
+        	    hosGrdName:      $('#hosGrdName').val(),
+        	    cformIo:         $('#cformIo').val(),
         		itemNo:          $('#itemNo').val(),
         		codeNo:          $('#codeNo').val(),
         		ediFcode:        $('#ediFcode').val(),
@@ -941,7 +947,63 @@
         		minorRate:       $('#minorRate').val()
 			    };
 		    return newData;
-		}	
+		}
+		//////////////////////////////////////////////////인덱스명칭 가져오는 내용 입력수정후   
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('hosGrd');
+		    document.getElementById('hosGrdName').value = select.options[select.selectedIndex].text;
+		});
+		
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('hosGrd').addEventListener('change', function() {
+		    document.getElementById('hosGrdName').value = this.options[this.selectedIndex].text;
+		});		
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('cformNo');
+		    document.getElementById('cformName').value = select.options[select.selectedIndex].text;
+		});
+		
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('cformNo').addEventListener('change', function() {
+		    document.getElementById('cformName').value = this.options[this.selectedIndex].text;
+		});		
+
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('medCovType');
+		    document.getElementById('medCovName').value = select.options[select.selectedIndex].text;
+		});
+		
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('medCovType').addEventListener('change', function() {
+		    document.getElementById('medCovName').value = this.options[this.selectedIndex].text;
+		});	
+
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('accType');
+		    document.getElementById('accTypeName').value = select.options[select.selectedIndex].text;
+		});
+		
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('accType').addEventListener('change', function() {
+		    document.getElementById('accTypeName').value = this.options[this.selectedIndex].text;
+		});	
+
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('cformIo');
+		    document.getElementById('cformIoName').value = select.options[select.selectedIndex].text;
+		});
+		
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('cformIo').addEventListener('change', function() {
+		    document.getElementById('cformIoName').value = this.options[this.selectedIndex].text;
+		});	
+		////////////////////////////////////////////////////////////////////////////////////
+		
 		function fn_Insert(){
 			const results = validateForm();
 			if (results)

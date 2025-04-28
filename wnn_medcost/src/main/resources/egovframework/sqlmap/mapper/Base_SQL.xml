@@ -726,23 +726,23 @@
                 ACTION_YN 
                 )
         VALUES ( #{hosGrd}   ,   #{cformNo}  , 
-                 #{medCovType}  ,
-                 #{accType} ,   #{cformIo}  , 
+                 #{medCovType},
+                 #{accType}  ,   #{cformIo}  , 
                  #{itemNo}   ,   #{codeNo}   , 
                  #{ediFcode} ,   #{ediTcode} , 
-                 #{ediLcode} ,   #{ediPcode1} ,
-                 #{ediPcode2} ,  #{ediPcode3} ,
+                 IFNULL(#{ediLcode},'') ,   IFNULL(#{ediPcode1},'') ,
+                 IFNULL(#{ediPcode2},'') ,  IFNULL(#{ediPcode3},'') ,
                  #{startYm}  ,   #{claimRate}, 
-                 #{minorRate},   
-                 NOW()       ,   #{regUser}  ,   
-                 #{regIp}    ,   NOW()       ,   
-                 #{updUser}  ,   #{updIp}    , 
+                 #{minorRate},   NOW()       ,   
+                 #{regUser}  ,   #{regIp}    ,   
+                 NOW()       ,   #{updUser}  ,   
+                 #{updIp}    , 
                  (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
                    FROM TBL_CLAIMRATE_MST A 
-                   WHERE A.HOP_GRD      = #{hosGrd} 
+                   WHERE A.HOS_GRD      = #{hosGrd} 
                      AND A.CFORM_NO     = #{cformNo}
-                     AND A.CFORM_TYPE   = #{cformType}
-                     AND A.CFORM_SUB    = #{cformSub}
+                     AND A.MED_COV_TYPE = #{medCovType}
+                     AND A.ACC_TYPE     = #{accType}
                      AND A.CFORM_IO     = #{cformIo}
                      AND A.ITEM_NO      = #{itemNo}
                      AND A.CODE_NO      = #{codeNo}
@@ -755,7 +755,7 @@
      </insert>
       <update id="updateclaimCd"  parameterType="ClaimDTO"> <![CDATA[ 
         UPDATE TBL_CLAIMRATE_MST
-        SET ACTION_YN = 'N'
+        SET ACTION_YN    = 'N'
             ,UPD_DTTM    = NOW()
             ,UPD_USER    = #{updUser}
             ,UPD_IP      = #{updIp}
