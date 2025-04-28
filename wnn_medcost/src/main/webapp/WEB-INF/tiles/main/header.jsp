@@ -55,5 +55,7 @@
 	<script type="text/javascript" src="/js/winmc/contact.js"></script>
 	<script type="text/javascript" src="/js/winmc/loading.js"></script>
 	<script type="text/javascript" src="/js/winmc/jqBootstrapValidation.min.js"></script> 
+	<script type="text/javascript" src="/js/winmc/schcommons.js"></script> <!--공통검색 -->
+    <script type="text/javascript" src="/js/winmc/authControl.js"></script> <!--권한관리 -->
 	
 	

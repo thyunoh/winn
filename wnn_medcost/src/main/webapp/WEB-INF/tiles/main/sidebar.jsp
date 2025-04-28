@@ -9,8 +9,6 @@
 <!-- Customized Bootstrap Stylesheet -->
 <!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script type="text/javascript" src="/js/winmc/schcommons.js"></script> <!--공통검색 -->
-<script type="text/javascript" src="/js/winmc/authControl.js"></script> <!--권한관리 -->
 <link href="/css/winmc/bootstrap.css"   rel="stylesheet">
 <link href="/css/winmc/style.css?v=123" rel="stylesheet">
    
