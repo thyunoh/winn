@@ -1288,10 +1288,6 @@
 								   popup: 'small-swal'}
 				        });
 					}
-			        
-			          
-				
-				
 				} else if (result.isDismissed) {
 					Swal.fire({
 			            title: '취소확인',
@@ -1334,29 +1330,21 @@
 				            	key_ID[column.name] = rowData[column.data]; 
 				            }	
 				        });
-		
-				        // 객체를 배열에 추가
+ 			           // 객체를 배열에 추가
 				        keysID.push(key_ID);
 			        } 
 			    });
 			}
 			return keysID;
 		}
-		
 		// 첫조회 확인
 		function find_Check() {
 			if (!firstflag){
-				
 				if (findTxtln > 0) {
-					
 					const foundItem = findValues.find(item => item.chk === true);
-		
 					if (foundItem !== undefined) {
-						
 						const index = findValues.findIndex(item => item.id === foundItem.id);
-						
 					    let { kCount, eCount, nCount, tCount } = getLengthCounts(findValues[index].val);
-						
 					    if (tCount >= findTxtln) {
 					    	tableName.style.display = 'inline-block';
 							fn_FirstGridSet();	
@@ -1364,12 +1352,10 @@
 							firstflag = true;
 							messageBox("4","조회시 " + findTxtln + "글자 이상 " + getCodeMessage("A001"),findValues[index].id,"","");
 						}
-					    
 					} else {
 						firstflag = true;
 					    messageBox("4","글자수 " + findTxtln + "글자 이상 조건이 있지만 조회 객체에는 true설정 안됨 !!",mainFocus,"","");			    
 					}
-					
 				} else {
 					tableName.style.display = 'inline-block';
 					fn_FirstGridSet();
@@ -1388,25 +1374,17 @@
 				        listCd: list_code
 				    },
 				    dataType: "json",
-				 	
 				    beforeSend : function () {
-				    	
 					},
 				    success: function(response) {
-				   	
 				        const commList = response.data || [];
-				        
 				        for (var i = 0; i < select_id.length; i++) {
-				            
 				        	let select = $('#' + select_id[i]);
 				            select.empty();
-				            
 				            let filteredItems = commList.filter(item => item.codeCd === list_code[i]);
-				            
 				            if (filteredItems.length > 0) {
 				            	if (firstnull[i] === "Y")
 				            		select.append('<option value="">선택</option>');
-				            		
 				            	filteredItems.forEach(function (item) {
 				                    select.append('<option value=' + item.subCode + '>' + item.subCodeNm + '</option>');
 				                });
@@ -1422,8 +1400,6 @@
 				});
 			}
 		}
-			
-		
 		//mask 설정
 		$(function(e) {
 		    "use strict";
@@ -1444,44 +1420,34 @@
 		        }
 		    })
 		});
-		
 		// modal EnterKey 
 		document.addEventListener('DOMContentLoaded', () => {
 			inputEnterFocus(inputZone.id);
 		});
-		
-		
 		// Table Heads 정리하기
         if (c_Head_Set.length > 0) {
-        	
         	const thead = document.createElement('thead');
        	    thead.id = 'tableHead';
-
        	    const tr = document.createElement('tr');
-
        	    // 체크박스 열 추가
        	    if (s_CheckBox) {
        	        const th = document.createElement('th');
        	        th.innerHTML = '<input type="checkbox" id="selectAll">';
        	        tr.appendChild(th);
        	    }
-
        	    // 자동 번호 열 추가
        	    if (s_AutoNums) {
        	        const th = document.createElement('th');
        	        th.textContent = 'No';
        	        tr.appendChild(th);
        	    }
-
        	    // 헤더 배열을 순회하며 <th> 추가
        	    c_Head_Set.forEach(header => {
        	        const th = document.createElement('th');
        	        th.textContent = header; // 텍스트만 추가
        	        tr.appendChild(th);
        	    });
-
 	       	thead.appendChild(tr);
-	       	    
        	    // 기존 thead가 있으면 대체하고 없으면 새로 추가
        	    const existingThead = tableName.querySelector('thead');
        	    if (existingThead) {
@@ -1549,9 +1515,7 @@
         }
 		// 조회 조건 담기
 		function findField(element) {
-			
 			const index = findValues.findIndex(item => item.id === element.id);
-		
 			if (index !== -1) {
 			    findValues[index].val = element.value;
 			} else {
@@ -1575,5 +1539,3 @@
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
 		<!-- ============================================================== -->
-
-		
