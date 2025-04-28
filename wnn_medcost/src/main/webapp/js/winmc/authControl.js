@@ -1,9 +1,3 @@
-// 권한 쿠키 가져오기
-let s_insauth = getCookie("s_insauth");
-let s_updauth = getCookie("s_updauth");
-let s_delauth = getCookie("s_delauth");
-let s_inqauth = getCookie("s_inqauth");
-
 // 버튼 권한 제어 함수
 function applyAuthControl() {
     // 입력 권한
@@ -18,18 +12,5 @@ function applyAuthControl() {
     // 삭제 권한
     if (s_delauth === 'N' || s_delauth === '') {
         document.querySelectorAll('.btn-delete').forEach(btn => btn.style.display = 'none');
-    }
-}
-function getCookie(name) {
-    var search = name + "=";
-    if (document.cookie.length > 0) {
-        offset = document.cookie.indexOf(search);
-        if (offset != -1) {                              
-            offset += search.length;                     
-            end = document.cookie.indexOf(";", offset); 
-            if (end == -1)
-                end = document.cookie.length;
-            return unescape(document.cookie.substring(offset, end));
-        }
     }
 }

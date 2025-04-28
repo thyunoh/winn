@@ -92,6 +92,13 @@
 										                + hospnm + `  [ ` 
 										                + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;	    	
 	    }
+	    
+	 // 권한 쿠키 가져오기 TBL_USERAUTH_MST 테이블에 정의  
+	    let s_insauth = getCookie("s_insauth");
+	    let s_updauth = getCookie("s_updauth");
+	    let s_delauth = getCookie("s_delauth");
+	    let s_inqauth = getCookie("s_inqauth");
+	    
 	    function getCookie(name) {
 	        var search = name + "=";
 	        if (document.cookie.length > 0) {
