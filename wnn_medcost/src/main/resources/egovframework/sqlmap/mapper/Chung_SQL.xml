@@ -104,87 +104,7 @@
 	
 	]]>
 	</select>	
-	
-	<select  id="jinordList_ord" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[	
-		-- 진료내역
-		WITH SUGA_CTE AS (
-		    SELECT 
-		        FEE_CODE, 
-		        FEE_TYPE, 
-		        MAX(START_DT) AS START_DT
-		    FROM TBL_SUGA_MST
-		    WHERE ACTION_YN = 'Y'
-		    GROUP BY FEE_CODE, FEE_TYPE
-		)
-		SELECT * FROM 
-		(
-		SELECT   B.DATE_YM 
-		      ,  A.HOSP_CD
-			  , '' AS  ITEM_NO 
-			  , '' AS  CODE_NO 
-			  , FN_GET_DTL_CODE('','','') SUB_CODE_NM   
-			  , A.BILL_SEQ 
-			  , A.EDI_CODE  
-			  , IFNULL(D.KOR_NM,'') KOR_NAME 
-			  , A.CODE_TYPE
-			  ,'' UNIT_PRICE
-		     , IFNULL(A.ONCE_DOSE,'1') AS ONCE_DOSE 
-		     , A.DAILY_DOSE
-		     , A.TOTAL_DOSE
-		     , 0 AMOUNT
-		     FROM  TBL_JINOUT_MST A 
-		      JOIN TBL_CHUNG_MST B ON B.HOSP_CD  = A.HOSP_CD 
-				                  AND B.CLAIM_NO = A.CLAIM_NO   
-		      LEFT JOIN SUGA_CTE C 
-				  ON C.FEE_CODE = A.EDI_CODE 
-				 AND C.FEE_TYPE = '2'
-	     	 LEFT JOIN TBL_SUGA_MST D ON D.FEE_CODE = C.FEE_CODE 
-		                             AND D.FEE_TYPE = C.FEE_TYPE
-								     AND D.START_DT = C.START_DT 
-		     WHERE A.HOSP_CD  = #{hospCd}
-			  AND  A.CLAIM_NO = #{claimNo} 
-			  AND  A.BILL_SEQ = #{billSeq} 
-			  AND  B.DATE_YM  = #{dateYm}
-		UNION ALL 		
-		-- 2. 메인 쿼리
-		SELECT 
-		    A.DATE_YM,
-		    B.HOSP_CD,
-		    C.ITEM_NO ,
-		    C.CODE_NO ,
-		    FN_GET_DTL_CODE('YD','ITEM_NO',C.ITEM_NO) SUB_CODE_NM  ,
-		    C.BILL_SEQ,
-		    C.EDI_CODE,
-		    E.KOR_NM AS KOR_NAME,
-		    C.CODE_TYPE,
-		    FORMAT(C.UNIT_PRICE,0) AS UNIT_PRICE ,
-		    IFNULL(C.ONCE_DOSE,'1') AS ONCE_DOSE ,
-		    C.DAILY_DOSE,
-		    C.TOTAL_DOSE,
-		    FORMAT(C.AMOUNT,0) AMOUNT
-		FROM TBL_CHUNG_MST A
-		JOIN TBL_MYOUNG_MST B 
-		    ON A.HOSP_CD = B.HOSP_CD AND A.CLAIM_NO = B.CLAIM_NO
-		JOIN TBL_JINORD_MST C 
-		    ON C.HOSP_CD = A.HOSP_CD AND C.CLAIM_NO = B.CLAIM_NO 
-		   AND C.BILL_SEQ = B.BILL_SEQ
-		-- 개선된 JOIN
-		LEFT JOIN  SUGA_CTE  D 
-		  ON D.FEE_CODE = C.EDI_CODE 
-		 AND D.FEE_TYPE = CASE WHEN C.CODE_TYPE IN ('1', 'A') THEN '1'
-		                       WHEN C.CODE_TYPE IN ('3')      THEN '2'
-		                  ELSE '3'
-		                  END
-	   	 LEFT JOIN TBL_SUGA_MST E ON E.FEE_CODE = D.FEE_CODE 
-		                         AND E.FEE_TYPE = D.FEE_TYPE
-								 AND E.START_DT = D.START_DT 
-		WHERE  A.HOSP_CD  = #{hospCd}
-		  AND  A.DATE_YM  = #{dateYm}
-		  AND  A.CLAIM_NO = #{claimNo} 
-		  AND  B.BILL_SEQ = #{billSeq} 
-       ) K ORDER BY K.ITEM_NO ,K.CODE_NO  
-	]]>
-	</select>	
+
 	<select  id="jinordList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[	
 		SELECT 
 			K.DATE_YM,
@@ -268,8 +188,10 @@
 	FROM
 	(
 		SELECT A.ITEM_NO , A.CODE_NO , 
-		        CASE WHEN F.MFORM_NO = 'M312' THEN  
-		             FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))
+		        CASE WHEN F.MFORM_NO = 'M312' THEN  -- 산재(한방)  의과 (M311)
+		                  FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))
+		             WHEN F.MFORM_NO = 'K020' THEN  -- 건보(한방) 
+		                  FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))     
 		        ELSE FN_GET_DTL_CODE('Y', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO)) END 
 		     AS CODE_NAME,
 		    CASE WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1,0)
