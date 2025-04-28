@@ -120,8 +120,8 @@
                                         </ul>
                                     </div>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link"  id="hospcont" href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-3" 
+                                <li class="nav-item"  id="hospcont">
+                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-3" 
                                                                              aria-controls="base-info-3">병원정보 관리</a>
                                     <div id="base-info-3" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
@@ -140,8 +140,8 @@
                                         </ul>
                                     </div>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" id = "wnnauth1"  href="#" data-toggle="collapse" aria-expanded="false" 
+                                <li class="nav-item" id = "wnnauth1">
+                                    <a class="nav-item nav-link"   href="#" data-toggle="collapse" aria-expanded="false" 
                                                                 data-target="#base-info-4" aria-controls="base-info-4">정보운영관리</a>
                                     <div id="base-info-4" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
