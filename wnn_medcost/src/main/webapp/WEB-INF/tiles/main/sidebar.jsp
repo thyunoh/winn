@@ -121,11 +121,11 @@
                                     </div>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-3" 
+                                    <a class="nav-item nav-link"  id="hospcont" href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-3" 
                                                                              aria-controls="base-info-3">병원정보 관리</a>
                                     <div id="base-info-3" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-											<li class="nav-item" id="hospcont">
+											<li class="nav-item">
 											    <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
 											</li>
                                             <li class="nav-item">
