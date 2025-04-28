@@ -34,8 +34,7 @@
 	                    TRUNCATE(
 	                        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
 	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
-	                        ELSE 0 END)
-	                        /
+	                        ELSE 0 END)  /
 	                        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 	                    0), 0)                                                                AS ipAvgAmt,
 	            </when>
@@ -47,8 +46,7 @@
 	                    TRUNCATE(
 	                        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
 	                            IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
-	                        ELSE 0 END)
-	                        /
+	                        ELSE 0 END)  /
 	                        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 	                    0), 0)                                                                AS ipAvgAmt,
 	            </otherwise>
@@ -153,9 +151,22 @@
             curr.first_jin     as oFirstCasesCurr, 
             prev.first_jin     as oFirstCasesPrev,
             curr.return_jin    as oReturnCasesCurr, 
-            prev.return_jin    as oReturnCasesPrev
+            prev.return_jin    as oReturnCasesPrev ,
+            (SELECT DOC_CNT  FROM  TBL_WARD_MST C  WHERE C.HOSP_CD   = curr.HOSP_CD
+		                                            AND  C.START_YM  <= curr.dateYm 
+		                                            AND  C.ACTION_YN = 'Y' ORDER BY C.START_YM DESC  LIMIT 1)             AS allSpecCurr , 
+            (SELECT DOC_CNT  FROM  TBL_WARD_MST C WHERE  C.HOSP_CD   = prev.HOSP_CD
+		                                           AND   C.START_YM  <= prev.dateYm 
+		                                           AND   C.ACTION_YN = 'Y' ORDER BY C.START_YM DESC  LIMIT 1)             AS allSpecPrev ,
+            (SELECT WARD_CNT  FROM  TBL_WARD_MST C  WHERE C.HOSP_CD   = curr.HOSP_CD
+		                                            AND  C.START_YM  <= curr.dateYm 
+		                                            AND  C.ACTION_YN = 'Y' ORDER BY C.START_YM DESC  LIMIT 1)             AS allBedsCurr , 
+            (SELECT WARD_CNT  FROM  TBL_WARD_MST C WHERE  C.HOSP_CD   = prev.HOSP_CD
+		                                           AND   C.START_YM  <= prev.dateYm 
+		                                           AND   C.ACTION_YN = 'Y' ORDER BY C.START_YM DESC  LIMIT 1)             AS allBedsPrev 
 		FROM (
 		    SELECT A.DATE_YM                                                                                              AS dateYm,
+		           A.HOSP_CD ,                                                                                          
 		    ]]>
 	        <!-- 전체 합계 -->
 	        <choose>
@@ -175,16 +186,16 @@
                    ELSE 0 END)                                                                                           AS opTotAmt ,
                </when>
 	            <otherwise> <!-- 총액 -->
-		           SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                                     AS totalAmt ,
+		           SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                                      AS totalAmt ,
 		           COUNT(*)                                                                                               AS claimCount ,
 		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
                    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
-                                    THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
+                                    THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
                    ELSE 0 END)                                                                                            AS ipTotAmt	,
                    COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
-                                   THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
+                                   THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
                    ELSE 0 END)                                                                                            AS opTotAmt ,
 	            </otherwise>
 	        </choose>
@@ -206,7 +217,7 @@
 			                  AND C.CLAIM_NO = B.CLAIM_NO   AND C.BILL_SEQ = B.BILL_SEQ
 			            ) IS NULL THEN 1
 			            ELSE 0  END
-			      )                                                                                                     AS return_jin                    
+                    )                                                                                                     AS return_jin                    
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO
 		                         AND A.HOSP_CD  = B.HOSP_CD  
@@ -229,10 +240,11 @@
 			    AND  ( IFNULL(B.PAY_TYPE,'') NOT IN('1') OR (A.CFORM_NO = 'M110' AND IFNULL(B.MED_TYPE,'') NOT IN('03')) )
 			</if>
 			<![CDATA[
-		    GROUP BY A.DATE_YM
+		    GROUP BY  A.HOSP_CD , A.DATE_YM
 		) curr
 		LEFT JOIN (
 		    SELECT A.DATE_YM                                                                       AS dateYm,
+		           A.HOSP_CD ,                                             
 		    ]]>
 	        <choose>
 	            <when test='amtType == "2"'> <!-- 청구액 -->		    
@@ -256,12 +268,12 @@
 		           COUNT(*)                                                                                AS claimCount ,
 		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)               AS ipCount ,
                    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
-                                    THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
+                                    THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
                    ELSE 0 END)                                                                             AS ipTotAmt	,
                    COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)    AS iuniqPatients,		           
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                   AS opCount ,
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
-                                   THEN (IFNULL(TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
+                                   THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
                    ELSE 0 END)                                                                             AS opTotAmt ,
 	            </otherwise>
 	        </choose>
@@ -283,7 +295,7 @@
 			                  AND C.CLAIM_NO = B.CLAIM_NO   AND C.BILL_SEQ = B.BILL_SEQ
 			            ) IS NULL THEN 1
 			            ELSE 0  END
-			      )                                                                                AS return_jin               	                         
+			      )                                                                                AS return_jin 
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO
 		                         AND A.HOSP_CD  = B.HOSP_CD  
@@ -306,7 +318,7 @@
 			</if>
 			<![CDATA[		    
 		      AND  A.DATE_YM = DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{endMonth}, '01'), '%Y%m%d'),INTERVAL 1 MONTH),'%Y%m')
-		    GROUP BY A.DATE_YM
+		    GROUP BY A.HOSP_CD , A.DATE_YM
 		) prev
 		ON prev.dateYm = DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(curr.dateYm, '01'), '%Y%m%d'),INTERVAL 1 MONTH),'%Y%m')
     ]]>

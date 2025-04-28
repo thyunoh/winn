@@ -182,9 +182,9 @@
 		  <tr>
 		    <td rowspan="6">전체</td>
 		    <td>입원병상수</td>
-		    <td id="allBedsCurr">291</td>
-		    <td id="allBedsPrev">291</td>
-		    <td id="allBedsRate">100</td>
+		    <td id="allBedsCurr"></td>
+		    <td id="allBedsPrev"></td>
+		    <td id="allBedsRate"></td>
 		  </tr>
 		  <tr>
 		    <td>전문의 수</td>
@@ -219,7 +219,7 @@
 		
 		  <!-- Inpatient -->
 		  <tr>
-		    <td rowspan="8">입원</td>
+		    <td rowspan="8">입원</td> 
 		    <td>건수</td>
 		    <td id="iCasesCurr"></td>
 		    <td id="iCasesPrev"></td>
@@ -231,7 +231,7 @@
 		    <td id="iCostPrev"></td>
 		    <td id="iCostRate"></td>
 		  </tr>
-		  <tr>
+		  <tr> <!-- style="display: none;" -->
 		    <td>평균재원일수</td>
 		    <td id="iAvgStayCurr"></td>
 		    <td id="iAvgStayPrev"></td>
@@ -389,10 +389,23 @@
 
 		      // ✅ 전체 진료건수
 		      setCases("allCases", row.allCasesPrev , row.allCasesCurr ,row.allCasesRate);
+      
+			    // 전체 병동 수
+		      const Bprev = Number(row.allBedsPrev);
+		      const Bcurr = Number(row.allBedsCurr);
 
-		      row.allSpecPrev = '94';
-		      row.allSpecCurr = '92';
-
+		      let Brate = 0;
+		      if (Bprev > 0) {
+		          Brate = (Bcurr / Bprev) * 100;
+		      }
+		      document.getElementById("allBedsCurr").innerText = numberWithCommas(Bcurr);
+		      document.getElementById("allBedsPrev").innerText = numberWithCommas(Bprev);
+		      document.getElementById("allBedsRate").innerText = Math.floor(Brate);  //
+		      
+		   // 전체병동 수
+		      setCases("allBeds", row.allBedsPrev , row.allBedsCurr , Math.floor(Brate));			      
+		      // 전체 전문의 수
+     
 		      const prev = Number(row.allSpecPrev);
 		      const curr = Number(row.allSpecCurr);
 

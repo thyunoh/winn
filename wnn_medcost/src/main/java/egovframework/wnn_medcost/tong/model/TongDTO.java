@@ -17,6 +17,13 @@ public class TongDTO {
     private String startMonth ;
     private String endMonth;
     private String hospCd;
+    
+    private String allSpecCurr;
+    private String allSpecPrev;
+
+    private String allBedsCurr;
+    private String allBedsPrev;
+    
     //진료비(백만원)전체 
     private String allCostCurr;
     private String allCostPrev;
@@ -141,7 +148,31 @@ public class TongDTO {
     private String yakAmt  ;      //약제비용   
     private String percentOfAmt ; //약제비율 
     
-    public String getPercentOfAmt() {
+    public String getAllBedsCurr() {
+		return allBedsCurr;
+	}
+	public void setAllBedsCurr(String allBedsCurr) {
+		this.allBedsCurr = allBedsCurr;
+	}
+	public String getAllBedsPrev() {
+		return allBedsPrev;
+	}
+	public void setAllBedsPrev(String allBedsPrev) {
+		this.allBedsPrev = allBedsPrev;
+	}
+	public String getAllSpecCurr() {
+		return allSpecCurr;
+	}
+	public void setAllSpecCurr(String allSpecCurr) {
+		this.allSpecCurr = allSpecCurr;
+	}
+	public String getAllSpecPrev() {
+		return allSpecPrev;
+	}
+	public void setAllSpecPrev(String allSpecPrev) {
+		this.allSpecPrev = allSpecPrev;
+	}
+	public String getPercentOfAmt() {
 		return percentOfAmt;
 	}
 	public void setPercentOfAmt(String percentOfAmt) {
