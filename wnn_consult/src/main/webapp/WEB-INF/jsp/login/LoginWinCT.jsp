@@ -1171,27 +1171,20 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
 		<div class="modal-dialog modal-lg" style="max-width: 500px;">
 			<div class="modal-content rounded-3 shadow-lg">
-				<form:form commandName="DTO" id="pwserchregForm" name="pwregForm"
-					method="post">
-					<h3 class="text-center">아이디찾기 비밀번호초기화</h3>
+				<form:form commandName="DTO" id="pwserchregForm" name="pwregForm" method="post">
+					<h3 class="text-center">아이디찾기 비밀번호 초기화</h3>
 					<div class="pass-box w-70">
-						<input type="text" name="userNm1" class="form-control mt-2"
-							id="userNm1" placeholder="사용자성명" /> <input type="text"
-							name="email1" class="form-control mt-2" id="email1"
-							placeholder="사용자이메일" />
+						<input type="text" name="userNm1" class="form-control mt-2"	id="userNm1" placeholder="사용자성명" /> 
+						<input type="text" name="email1" class="form-control mt-2"  id="email1"  placeholder="사용자이메일" />
 						<h11 style="font-size: 12px; color: #555;"> 아이디를 찾기 위해서 성명 및
-						이메일를 등록하고 아이디찾기를 실행하세요 </h11>
-						<input type="text" class="form-control mt-2" id="userId"
-							name="userId" placeholder="사용자아이디">
+ 					 	    이메일를 등록하고 아이디찾기를 실행하세요 </h11>
+						<input type="text" class="form-control mt-2" id="userId" name="userId" placeholder="사용자아이디">
 					</div>
 				</form:form>
 				<div class="set-btn-box w-100 mt-3 text-right">
-					<button type="button" class="btn btn-outline-dark"
-						onclick="fnPasswdmanagerClose();">취소</button>
-					<button type="button" class="btn btn-primary"
-						onclick="fnpwsearch();">아이디찾기</button>
-					<button type="button" class="btn btn-primary"
-						onclick="fnPasswdreset();">초기화/변경</button>
+					<button type="button" class="btn btn-outline-dark" 	onclick="fnPasswdmanagerClose();">취소</button>
+					<button type="button" class="btn btn-primary"  	    onclick="fnpwsearch();">아이디찾기</button>
+					<button type="button" class="btn btn-primary" 	    onclick="fnPasswdreset();">초기화/변경</button>
 					<!--  원래는 팝업 fnPwdClear()  -->
 				</div>
 			</div>
@@ -1830,20 +1823,17 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
 		<div
 			class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 45vw; max-width: 45vw; max-height: 50vh;">
+			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
 			<div class="modal-content"
 				style="height: 72%; display: flex; flex-direction: column;">
 				<div class="modal-header  bg-light">
 					<h6 class="modal-title">문의 등록</h6>
 					<div class="form-row">
 						<div class="col-sm-12 mb-2" style="text-align: right;">
-							<button type="button" id="save_btn" type="submit"
-								class="btn btn-outline-info" onClick="fnasq_SaveProc()">
-								저장. <i class="far fa-edit"></i>
+							<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
 							</button>
 							<button type="button" class="btn btn-outline-dark"
-								data-dismiss="modal" onClick="asqModalClose()">
-								닫기 <i class="fas fa-times"></i>
+								data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
 							</button>
 						</div>
 					</div>
