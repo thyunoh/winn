@@ -158,13 +158,16 @@
 		        setCookie("s_conact_gb", data.conactGb, 1); // 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
 		        setCookie("s_winconect", 'Y',1);
 		        hospid = getCookie("hospid");   // 병원아이디
+		        if (hospnm != getCookie("s_hospnm")){
+		        	hosp_conact();
+		        	location.reload(); // 페이지 새로고침
+		            return; // reload 이후의 코드는 실행 안 되게 return
+		        } 
 		        hospnm = getCookie("s_hospnm"); 
+		        
 		        document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> ` 
 										                    + hospnm + `  [ ` 
 										                    + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
-		        hosp_conact() ;
-		   //     localStorage.setItem('l_hospid', data.hospCd);
-
 		    });
 		});
         function setCookie(name, value, expiredays) {
@@ -184,7 +187,7 @@
 		        }
 		    });
 		}		
-		   //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
+		   //계약관련 메뉴설정체크 A. 전체 1.진료비분석 2. 적정성평가 
 		function hosp_conact() {
 			let s_conact_gb = getCookie("s_conact_gb");
 			let s_wnn_yn    = getCookie("s_wnn_yn") ;
@@ -220,6 +223,6 @@
 		
 			menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);		
 		}
-	
+
 	</script>
     <c:import url="sidebar.jsp" />

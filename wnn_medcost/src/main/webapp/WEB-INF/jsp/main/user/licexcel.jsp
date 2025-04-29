@@ -60,10 +60,7 @@
 						<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
 						  <form id="excelForm" action="/uploadExcel" method="post" enctype="multipart/form-data" class="d-flex align-items-center">
 						    <input 
-						      type="file" 
-						      name="excelFile" 
-						      id="excelFile" 
-						      class="form-control-file mr-2" 
+						      type="file"  name="excelFile"  id="excelFile" class="form-control-file mr-2" 
 						      style="width: 450px; padding: 6px 12px; margin-right: 10px;"
 						    />
 							<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px; height: 34px;">엑셀미리보기</button>
@@ -131,14 +128,7 @@
        <div id="modalContainer"></div>
 
 		<script type="text/javascript">
-		
-    	var findTxtln  = 0;    // 조회조건시 글자수 제한 / 0이면 제한 없음
-		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
-		var findValues = [];
-		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
-		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
-		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData", val: "",  chk: true  });
+
         //병원병원에서 접속시 요양기관 값셋팅
 	    let s_hospcd = getCookie("s_hospid") ;
 	    let s_wnn_yn = getCookie("s_wnn_yn") ;
@@ -151,75 +141,8 @@
 	        findValues.push({ id: "hospCd1", val:"",  chk: false  });
             $("#hospCd1").val("");	    	
 	    }
-		
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
-		var edit_Data = null;
-		var dataTable = new DataTable();
-		dataTable.clear();
-		
-		<!-- ============================================================== -->
-		<!-- Table Setting Start -->
-		<!-- ============================================================== -->
-		var gridColums = [];
-		var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
-		var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-		var page_Hight = 650;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
-		var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse
-		
-		var datWaiting = true;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
-		var page_Navig = true;   		// 페이지 네비게이션 표시여부 
-		var hd_Sorting = true;   		// Head 정렬(asc,desc) 표시여부
-		var info_Count = true;   		// 총건수 대비 현재 건수 보기 표시여부 
-		var searchShow = true;   		// 검색창 Show/Hide 표시여부
-		var showButton = true;   		// Button (복사, 엑셀, 출력)) 표시여부
-		
-		var copyBtn_nm = '복사.';
-		var copy_Title = 'Copy Title';		
-		var excelBtnnm = '엑셀.';
-		var excelTitle = 'Excel Title';
-		var excelFName = "파일명_";		// Excel Download시 파일명
-		var printBtnnm = '출력.';
-		var printTitle = 'Print Title';
-        
-		var find_Enter = false;  		// 검색창 바로바로 찾기(false) / Enter후 찾기(true)
-		var row_Select = true;   		// Page내 Data 선택시 선택 row 색상 표시
-		
-		var colPadding = '0.2px'   		// 행 높이 간격 설정
-		var data_Count = [30 , 50, 70, 100, 150, 200];  // Data 보기 설정
-		var defaultCnt = 30;                      // Data Default 갯수
-		
-		
-		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set =  [ 
-						 ] ;  
-		var columnsSet = [ 
-					    ];
-		
-		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
-        var s_AutoNums = true;   		             // 자동순번 표시 여부
-        
-		// 초기 data Sort,  없으면 []
-		var muiltSorts = [
-							['licNum' , 'asc' ],    // 오름차순 정렬
-							['hospCd' , 'asc' ],    // 오름차순 정렬
-            				['ipDt', 'desc']     // 내림차순 정렬
-        				 ];
-        // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['hospCd','licNum','ipDt'];                   
-		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
-		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
-		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = [];
-		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
-		<!-- ============================================================== -->
-		<!-- Table Setting End -->
-		<!-- ============================================================== -->
-		
-		window.onload = function() { 
-		};
-
 		</script>
 		<script type="text/javascript">
 	
@@ -315,21 +238,21 @@
 		  }
 		
 		  const previewBox = document.createElement("div");
-		  previewBox.style.position = "relative";
-		  previewBox.style.border = "1px solid #ddd";
-		  previewBox.style.padding = "10px";
-		  previewBox.style.marginTop = "20px";
+		  previewBox.style.position        = "relative";
+		  previewBox.style.border          = "1px solid #ddd";
+		  previewBox.style.padding         = "10px";
+		  previewBox.style.marginTop       = "20px";
 		  previewBox.style.backgroundColor = "#fafafa";
 		
 		  const closeBtn = document.createElement("span");
-		  closeBtn.textContent = "×";
-		  closeBtn.style.position = "absolute";
-		  closeBtn.style.top = "8px";
-		  closeBtn.style.right = "12px";
-		  closeBtn.style.cursor = "pointer";
-		  closeBtn.style.fontSize = "20px";
+		  closeBtn.textContent      = "×";
+		  closeBtn.style.position   = "absolute";
+		  closeBtn.style.top        = "8px";
+		  closeBtn.style.right      = "12px";
+		  closeBtn.style.cursor     = "pointer";
+		  closeBtn.style.fontSize   = "20px";
 		  closeBtn.style.fontWeight = "bold";
-		  closeBtn.style.color = "#999";
+		  closeBtn.style.color      = "#999";
 		  closeBtn.addEventListener("mouseenter", () => (closeBtn.style.color = "#ff5c5c"));
 		  closeBtn.addEventListener("mouseleave", () => (closeBtn.style.color = "#999"));
 		  closeBtn.addEventListener("click", () => (container.innerHTML = ""));
@@ -337,15 +260,15 @@
 		
 		  // ✅ 테이블 스크롤 래퍼 div 추가
 		  const scrollWrapper = document.createElement("div");
-		  scrollWrapper.style.overflow = "auto";
+		  scrollWrapper.style.overflow  = "auto";
 		  scrollWrapper.style.maxHeight = "300px"; // 세로 스크롤
-		  scrollWrapper.style.maxWidth = "100%"; // 가로 스크롤
-		  scrollWrapper.style.border = "1px solid #ccc";
+		  scrollWrapper.style.maxWidth  = "100%"; // 가로 스크롤
+		  scrollWrapper.style.border    = "1px solid #ccc";
 		
 		  const table = document.createElement("table");
-		  table.style.borderCollapse = "collapse";
-		  table.style.width = "max-content"; // 가로 길이 강제
-		  table.style.whiteSpace = "nowrap"; // 줄바꿈 방지
+		  table.style.borderCollapse    = "collapse";
+		  table.style.width             = "max-content"; // 가로 길이 강제
+		  table.style.whiteSpace        = "nowrap"; // 줄바꿈 방지
 		
 		  const thead = document.createElement("thead");
 		  const headerRow = document.createElement("tr");
@@ -353,14 +276,14 @@
 		
 		  keys.forEach((key) => {
 		    const th = document.createElement("th");
-		    th.textContent = key;
-		    th.style.border = "1px solid #999";
-		    th.style.padding = "6px 12px";
+		    th.textContent           = key;
+		    th.style.border          = "1px solid #999";
+		    th.style.padding         = "6px 12px";
 		    th.style.backgroundColor = "#f2f2f2";
-		    th.style.position = "sticky";
-		    th.style.top = "0";
-		    th.style.zIndex = "1";
-		    th.style.textAlign = "center";
+		    th.style.position        = "sticky";
+		    th.style.top             = "0";
+		    th.style.zIndex          = "1";
+		    th.style.textAlign       = "center";
 		    headerRow.appendChild(th);
 		  });
 		  thead.appendChild(headerRow);
@@ -370,12 +293,12 @@
 		  data.forEach((row) => {
 		    const tr = document.createElement("tr");
 		    keys.forEach((key) => {
-		      const td = document.createElement("td");
-		      td.textContent = row[key] ?? "";
-		      td.style.border = "1px solid #ccc";
-		      td.style.padding = "6px 10px";
-		      td.style.textAlign = "center";
-		      tr.appendChild(td);
+		        const td = document.createElement("td");
+		        td.textContent     = row[key] ?? "";
+		        td.style.border    = "1px solid #ccc";
+		        td.style.padding   = "6px 10px";
+		        td.style.textAlign = "center";
+		        tr.appendChild(td);
 		    });
 		    tbody.appendChild(tr);
 		  });
@@ -411,7 +334,7 @@
 	      fetch("/user/CellsaveExcelData.do", {
 	        method: "POST",
 	        headers: {
-	          "Content-Type": "application/json"
+	            "Content-Type": "application/json"
 	        },
 	        body: JSON.stringify({ hospCd: hospCd1, data: previewData })
 	      })
