@@ -137,7 +137,7 @@
 		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
 		<span>~</span>
 		<span for="endMonth">종료년월</span>
-		<input type="month" id="endMonth" value="2025-02" 
+		<input type="month" id="endMonth" value="2025-03" 
 		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
  	   <span for="medType">진료</span>
 	   <div style="width: 80px;">
@@ -159,8 +159,8 @@
 	   <span for="amtType">금액</span>
  	   <div style="width: 90px;">
 			<select class="custom-select" id="amtType" style= "font-size:14px ;">
-			    <option value="1" selected>총액</option>
-			    <option value="2">청구액</option>
+			    <option value="2" selected>청구액</option>
+			    <option value="1">총액</option>
 		    </select>      
 	    </div>
 		<!-- 검색 버튼 -->

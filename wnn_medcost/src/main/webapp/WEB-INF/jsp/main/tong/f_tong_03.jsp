@@ -138,7 +138,7 @@
 		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
 		<span>~</span>
 		<span for="endMonth">종료년월</span>
-		<input type="month" id="endMonth" value="2025-02" 
+		<input type="month" id="endMonth" value="2025-03" 
 		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
 	   <span for="inoutType">구분</span>
 	   <div style="width: 80px;">

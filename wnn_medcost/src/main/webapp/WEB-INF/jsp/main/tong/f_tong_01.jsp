@@ -133,7 +133,7 @@
     <h2>주요 진료지표</h2>
     <div class="filter-box">
       <span for="endMonth">청구년월</span>
-      <input type="month" id="endMonth" value="2025-02">
+      <input type="month" id="endMonth" value="2025-03">
  	   <span for="medType">진료</span>
 	   <div style="width: 90px;">
 			<select class="custom-select" id="medType" style= "font-size:14px ;">
@@ -154,8 +154,8 @@
 	   <span for="amtType">금액</span>
  	   <div style="width: 90px;">
 			<select class="custom-select" id="amtType" style= "font-size:14px ;">
-			    <option value="1" selected>총액</option>
-			    <option value="2">청구액</option>
+			    <option value="2" selected>청구액</option>
+			    <option value="1">총액</option>
 		    </select>      
 	    </div>
       <button id="serBtn" onclick="filterData()">검색</button>
