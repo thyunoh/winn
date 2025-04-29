@@ -2043,6 +2043,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        document.getElementById("asq_regForm").reset();
 	        setCurrDate("regDtm");
 	        $("#ansrConts").prop("readonly", "true");
+	        $("#ansrWan").css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
 	        $("#save_btn").show(); // 답변내용 보이기
 	        asqModalOpen();
 

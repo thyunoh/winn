@@ -69,6 +69,14 @@
 						</div>
 		
 		              <!-- 엑셀 미리보기 -->
+					<style>
+					  #excelPreview {
+					    height: 300px; /* 기본 높이 설정 */
+					    overflow-y: auto; /* 내용이 넘치면 세로 스크롤 표시 */
+					    border: 1px solid #ddd; /* 테두리 추가 (선택사항) */
+					    padding: 10px; /* 안쪽 여백 (선택사항) */
+					  }
+					</style>
 		              <div id="excelPreview">
 		                <table id="excelTable" class="table table-bordered table-hover table-sm">
 		                  <!-- 동적 데이터 삽입 예정 -->
@@ -128,7 +136,14 @@
        <div id="modalContainer"></div>
 
 		<script type="text/javascript">
-
+		
+    	var findTxtln  = 0;    // 조회조건시 글자수 제한 / 0이면 제한 없음
+		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
+		var findValues = [];
+		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
+		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
+		// 조회조건은 필요한 만큼 추가사용 하면됨.
+		findValues.push({ id: "findData", val: "",  chk: true  });
         //병원병원에서 접속시 요양기관 값셋팅
 	    let s_hospcd = getCookie("s_hospid") ;
 	    let s_wnn_yn = getCookie("s_wnn_yn") ;
@@ -141,8 +156,20 @@
 	        findValues.push({ id: "hospCd1", val:"",  chk: false  });
             $("#hospCd1").val("");	    	
 	    }
+		
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
+		var edit_Data = null;
+		var dataTable = new DataTable();
+		dataTable.clear();
+
+		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
+        var s_AutoNums = true;   		             // 자동순번 표시 여부
+		var markColums = [];
+		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
+		<!-- ============================================================== -->
+		<!-- Table Setting End -->
+		<!-- ============================================================== -->
 		</script>
 		<script type="text/javascript">
 	
@@ -238,21 +265,21 @@
 		  }
 		
 		  const previewBox = document.createElement("div");
-		  previewBox.style.position        = "relative";
-		  previewBox.style.border          = "1px solid #ddd";
-		  previewBox.style.padding         = "10px";
-		  previewBox.style.marginTop       = "20px";
+		  previewBox.style.position = "relative";
+		  previewBox.style.border = "1px solid #ddd";
+		  previewBox.style.padding = "10px";
+		  previewBox.style.marginTop = "20px";
 		  previewBox.style.backgroundColor = "#fafafa";
 		
 		  const closeBtn = document.createElement("span");
-		  closeBtn.textContent      = "×";
-		  closeBtn.style.position   = "absolute";
-		  closeBtn.style.top        = "8px";
-		  closeBtn.style.right      = "12px";
-		  closeBtn.style.cursor     = "pointer";
-		  closeBtn.style.fontSize   = "20px";
+		  closeBtn.textContent = "×";
+		  closeBtn.style.position = "absolute";
+		  closeBtn.style.top = "8px";
+		  closeBtn.style.right = "12px";
+		  closeBtn.style.cursor = "pointer";
+		  closeBtn.style.fontSize = "20px";
 		  closeBtn.style.fontWeight = "bold";
-		  closeBtn.style.color      = "#999";
+		  closeBtn.style.color = "#999";
 		  closeBtn.addEventListener("mouseenter", () => (closeBtn.style.color = "#ff5c5c"));
 		  closeBtn.addEventListener("mouseleave", () => (closeBtn.style.color = "#999"));
 		  closeBtn.addEventListener("click", () => (container.innerHTML = ""));
@@ -260,15 +287,15 @@
 		
 		  // ✅ 테이블 스크롤 래퍼 div 추가
 		  const scrollWrapper = document.createElement("div");
-		  scrollWrapper.style.overflow  = "auto";
+		  scrollWrapper.style.overflow = "auto";
 		  scrollWrapper.style.maxHeight = "300px"; // 세로 스크롤
-		  scrollWrapper.style.maxWidth  = "100%"; // 가로 스크롤
-		  scrollWrapper.style.border    = "1px solid #ccc";
+		  scrollWrapper.style.maxWidth = "100%"; // 가로 스크롤
+		  scrollWrapper.style.border = "1px solid #ccc";
 		
 		  const table = document.createElement("table");
-		  table.style.borderCollapse    = "collapse";
-		  table.style.width             = "max-content"; // 가로 길이 강제
-		  table.style.whiteSpace        = "nowrap"; // 줄바꿈 방지
+		  table.style.borderCollapse = "collapse";
+		  table.style.width = "max-content"; // 가로 길이 강제
+		  table.style.whiteSpace = "nowrap"; // 줄바꿈 방지
 		
 		  const thead = document.createElement("thead");
 		  const headerRow = document.createElement("tr");
@@ -276,14 +303,14 @@
 		
 		  keys.forEach((key) => {
 		    const th = document.createElement("th");
-		    th.textContent           = key;
-		    th.style.border          = "1px solid #999";
-		    th.style.padding         = "6px 12px";
+		    th.textContent = key;
+		    th.style.border = "1px solid #999";
+		    th.style.padding = "6px 12px";
 		    th.style.backgroundColor = "#f2f2f2";
-		    th.style.position        = "sticky";
-		    th.style.top             = "0";
-		    th.style.zIndex          = "1";
-		    th.style.textAlign       = "center";
+		    th.style.position = "sticky";
+		    th.style.top = "0";
+		    th.style.zIndex = "1";
+		    th.style.textAlign = "center";
 		    headerRow.appendChild(th);
 		  });
 		  thead.appendChild(headerRow);
@@ -293,12 +320,12 @@
 		  data.forEach((row) => {
 		    const tr = document.createElement("tr");
 		    keys.forEach((key) => {
-		        const td = document.createElement("td");
-		        td.textContent     = row[key] ?? "";
-		        td.style.border    = "1px solid #ccc";
-		        td.style.padding   = "6px 10px";
-		        td.style.textAlign = "center";
-		        tr.appendChild(td);
+		      const td = document.createElement("td");
+		      td.textContent = row[key] ?? "";
+		      td.style.border = "1px solid #ccc";
+		      td.style.padding = "6px 10px";
+		      td.style.textAlign = "center";
+		      tr.appendChild(td);
 		    });
 		    tbody.appendChild(tr);
 		  });
@@ -334,7 +361,7 @@
 	      fetch("/user/CellsaveExcelData.do", {
 	        method: "POST",
 	        headers: {
-	            "Content-Type": "application/json"
+	          "Content-Type": "application/json"
 	        },
 	        body: JSON.stringify({ hospCd: hospCd1, data: previewData })
 	      })
