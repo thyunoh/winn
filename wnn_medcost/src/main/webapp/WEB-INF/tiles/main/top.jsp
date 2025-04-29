@@ -159,9 +159,9 @@
 		        setCookie("s_winconect", 'Y',1);
 		        hospid = getCookie("hospid");   // 병원아이디
 		        if (hospnm != getCookie("s_hospnm")){
-		        	hosp_conact();
+		        	//hosp_conact();
 		        	location.reload(); // 페이지 새로고침
-		            return; // reload 이후의 코드는 실행 안 되게 return
+		            return;            // reload 이후의 코드는 실행 안 되게 return
 		        } 
 		        hospnm = getCookie("s_hospnm"); 
 		        
