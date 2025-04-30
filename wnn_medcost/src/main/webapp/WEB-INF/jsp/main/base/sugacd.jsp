@@ -103,7 +103,7 @@
                     <div class="form-group row ">
                         <label for="feeCode" class="col-2 col-sm-2 col-form-label text-left">수가코드</label>
                         <div class="col-2 col-sm-2">
-                            <input id="feeCode" name="feeCode" type="text" class="form-control is-invalid text-left" required placeholder="수가코드를 임력하세요]">
+                            <input id="feeCode" name="feeCode" type="text" class="form-control is-invalid text-left" required placeholder="">
                         </div>
                        <label for="feeType" class="col-2 col-lg-2 col-form-label text-left">수가구분</label>
                        <div class="col-2 col-lg-2">  
@@ -254,7 +254,7 @@
 		// Form마다 수정해야 될 부분 종료
 		
 		// Form마다 조회 조건 변경 시작
-		var findTxtln  = 3;    // 조회조건시 글자수 제한 / 0이면 제한 없음
+		var findTxtln  = 2;    // 조회조건시 글자수 제한 / 0이면 제한 없음
 		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
 		var findValues = [];
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
