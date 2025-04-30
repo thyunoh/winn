@@ -106,6 +106,15 @@
 	</select>	
 
 	<select  id="jinordList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[	
+		WITH SUGA_CTE AS (
+		    SELECT 
+		        FEE_CODE, 
+		        FEE_TYPE, 
+		        MAX(START_DT) AS START_DT
+		    FROM TBL_SUGA_MST
+		    WHERE ACTION_YN = 'Y'
+		    GROUP BY FEE_CODE, FEE_TYPE
+		)
 		SELECT 
 			K.DATE_YM,
 		    K.HOSP_CD,
@@ -170,14 +179,15 @@
 		  AND  A.CLAIM_NO = #{claimNo} 
 		  AND  B.BILL_SEQ = #{billSeq} 
        )K 
-	    LEFT JOIN TMP_SUGA_MST D  ON D.FEE_CODE = K.EDI_CODE 
-		                         AND D.FEE_TYPE = CASE WHEN K.CODE_TYPE IN ('1', 'A') THEN '1'
-		                                               WHEN K.CODE_TYPE IN ('3')      THEN '2'
-		                                          ELSE '3' END
-	   	LEFT JOIN TBL_SUGA_MST E ON E.FEE_CODE  = D.FEE_CODE 
+	    LEFT JOIN SUGA_CTE D  ON D.FEE_CODE = K.EDI_CODE 
+				             AND D.FEE_TYPE = CASE WHEN K.CODE_TYPE IN ('1', 'A') THEN '1'
+				                                   WHEN K.CODE_TYPE IN ('3')      THEN '2'
+				                              ELSE '3' END
+		LEFT JOIN TBL_SUGA_MST E ON E.FEE_CODE  = D.FEE_CODE 
 		                        AND E.FEE_TYPE  = D.FEE_TYPE
-		 		         		AND E.START_DT  = D.START_DT 
-		 ORDER BY K.ITEM_NO ,K.CODE_NO  
+							  	AND E.START_DT  = D.START_DT  
+							    AND E.ACTION_YN = 'Y'
+		ORDER BY K.ITEM_NO ,K.CODE_NO  
 	]]>
 	</select>	
 	<select  id="hangList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
@@ -188,10 +198,12 @@
 	FROM
 	(
 		SELECT A.ITEM_NO , A.CODE_NO , 
-		        CASE WHEN F.MFORM_NO = 'M312' THEN  -- 산재(한방)  의과 (M311)
+		        CASE WHEN F.MFORM_NO IN('M312','M322') THEN  -- 산재(한방)  
 		                  FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))
-		             WHEN F.MFORM_NO = 'K020' THEN  -- 건보(한방) 
+		             WHEN F.MFORM_NO IN('K020','K021','K030','K031') THEN  -- 건보(한방) 
 		                  FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))     
+                     WHEN F.MFORM_NO IN('C110','C111')  THEN  -- 자보(한방) 
+		                  FN_GET_DTL_CODE('H', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO))  
 		        ELSE FN_GET_DTL_CODE('Y', 'CODE_NO', CONCAT(TRIM(A.ITEM_NO), A.CODE_NO)) END 
 		     AS CODE_NAME,
 		    CASE WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1,0)

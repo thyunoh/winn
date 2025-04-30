@@ -137,6 +137,7 @@
                         <div class="col-10 col-sm-10">
                             <input id="engNm" name="engNm" type="text" class="form-control" placeholder="영문명칭을 입력하세요" maxlength="">
                         </div>
+                      
                     </div>
   
                     <div class="form-group row ">
@@ -203,17 +204,26 @@
                     </div>
                     <div class="form-group row">
 		                  <label for="secMaj" class="col-2 col-lg-2 col-form-label text-left">장구분</label>
-		                  <div class="col-2 col-lg-2">
+		                  <div class="col-4 col-lg-4">
 		                      <input id="secMaj" name="secMaj" type="text" class="form-control"  placeholder="" maxlength="">
 		                  </div>
 		                  <label for="secMin" class="col-2 col-lg-2 col-form-label text-left">절구분</label>
-		                  <div class="col-2 col-lg-2">
+		                  <div class="col-4 col-lg-4">
 		                      <input id="secMin" name="secMin" type="text" class="form-control"  placeholder="" maxlength="">
 		                  </div>
+                    </div>    
+                     <div class="form-group row">
 		                  <label for="subCat" class="col-2 col-lg-2 col-form-label text-left">세구분</label>
-		                  <div class="col-2 col-lg-2">
+		                  <div class="col-4 col-lg-4">
 		                      <input id="subCat" name="subCat" type="text" class="form-control"  placeholder="" maxlength="">
 		                  </div>
+                          <label for="divType" class="col-2 col-lg-2 col-form-label text-left">행위가산</label>
+                          <div class="col-4 col-lg-4">
+	                          <select class="custom-select" name="divType" id="divType">
+				                  <option value="1">미가산</option>
+				                  <option value="2" selected>가산</option>
+	 		                  </select> 
+	 		               </div> 		                  
                     </div>    
                 <!-- ============================================================== -->
                 <!-- end form 수정해야 될 곳 -->
