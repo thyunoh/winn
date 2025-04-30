@@ -52,7 +52,9 @@
 		              <div class="col-1 ml-1" style="width: 20%;">
 		                <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid">
 		              </div>
-		              <h6 style="margin-top: 10px; margin-left: 10px; ">인력신고현황 엑셀자료 업로드</h6>
+                      <span style= "margin-top: 5px; margin-left: 10px; font-size: 15px;  display: inline-block;">
+							    인력신고현황 엑셀자료 업로드
+					  </span>
 		            </div>
 		
 		            <!-- 엑셀 업로드 및 버튼 -->
@@ -65,6 +67,9 @@
 						    />
 							<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px; height: 34px;">엑셀미리보기</button>
 							<button type="button" id="saveDataBtn" class="btn btn-primary btn-sm d-none" style="height: 38px;">자료저장</button>
+							<span style="color: red; margin-top: 5px; margin-left: 10px; display: inline-block;">
+							    해당 요양기관 정보가 맞는지 확인하고 진행하세요!
+							</span>
 						  </form>
 						</div>
 		
