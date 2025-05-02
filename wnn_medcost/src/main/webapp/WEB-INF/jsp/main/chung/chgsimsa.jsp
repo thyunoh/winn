@@ -1300,10 +1300,11 @@
 		                            : data;
 			                 	}
 			            },
-		            	{ title: "입원일자",     data:  "firstAdmt_one" ,     width: '50px' ,    className: "text-center" },
-		            	{ title: "총진료비",     data:  "medAmt_one"    ,     width: '50px' ,    className: "text-right"},
-		            	{ title: "청구액",      data:  "claimAmt_one"  ,     width: '50px' ,   className: "text-center"},
-		            	{ title: "본인액",      data:  "selfAmt_one"   ,     width: '50px' ,   className: "text-center"}		            	
+		            	{ title: "입원일자",      data:  "firstAdmt_one" ,     width: '50px' ,   className: "text-center" },
+		            	{ title: "총진료비",      data:  "medAmt_one"    ,     width: '50px' ,   className: "text-right"},
+		            	{ title: "청구액",       data:  "claimAmt_one"  ,     width: '50px' ,   className: "text-center"},
+		            	{ title: "본인액",       data:  "selfAmt_one"   ,     width: '50px' ,   className: "text-center"},
+		            	{ title: "공상구분",      data:  "accType_one"   ,     width: '50px' ,   className: "text-center"}	
 		            ],
 		            ajax: myoungLoad,   
 				});                                 

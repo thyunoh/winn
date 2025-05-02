@@ -56,9 +56,10 @@
 		 FROM  TBL_CHUNG_MST  A 
 		  JOIN TBL_MYOUNG_MST B      ON  B.HOSP_CD  = A.HOSP_CD 
 		                             AND B.CLAIM_NO = A.CLAIM_NO 
-        LEFT JOIN TBL_SPECODE_MST C ON  C.HOSP_CD = A.HOSP_CD 
+        LEFT JOIN TBL_SPECODE_MST C ON  C.HOSP_CD   = A.HOSP_CD 
 		                             AND C.CLAIM_NO = A.CLAIM_NO 
 								     AND C.BILL_SEQ = B.BILL_SEQ 
+								     AND C.SPEC_TYPE IN('MT010','MT011')
 		WHERE  B.HOSP_CD  = A.HOSP_CD 
 		   AND B.CLAIM_NO = A.CLAIM_NO 
 		   And A.HOSP_CD  = #{hospCd}
