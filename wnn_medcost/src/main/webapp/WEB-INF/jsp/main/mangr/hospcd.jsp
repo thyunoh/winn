@@ -762,7 +762,6 @@
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'hospCd',        visible: true,  className: 'dt-body-center'  , width: '100px',  name: 'keyHospCd', primaryKey: true },
 	        				{ data: 'hospNm',        visible: true,  className: 'dt-body-left'    , width: '300px',  },
-	        				{ data: 'name1',         visible: true,  className: 'dt-body-center'  , width: '100px',  },
 	        				{ data: 'joinDt',        visible: true,  className: 'dt-body-center'  , width: '100px', 
 	                          	render: function(data, type, row) {
 		            				if (type === 'display') {
@@ -771,6 +770,7 @@
 		                			return data;
 	            				}
 	        				},
+	        				{ data: 'name1',         visible: true,  className: 'dt-body-center'  , width: '100px',  },
 	        				// getFormat 사용시 
 	        				{ data: 'startDt1',    visible: true,  className: 'dt-body-center', width: '100px', 
 	                          	render: function(data, type, row) {
