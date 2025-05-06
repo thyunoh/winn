@@ -316,6 +316,7 @@
 		LEFT OUTER JOIN TBL_HOSPCONT_MST HC 
 		    ON HM.HOSP_CD = HC.HOSP_CD
 		    AND HC.CONACT_GB IN ('1', '2')
+		WHERE HM.ACTION_YN = 'Y'    
 		GROUP BY 
 		    HM.HOSP_CD,
 		    HM.HOSP_UUID,
@@ -429,7 +430,8 @@
 	        upd_ip    = #{updIp},
 	        hosp_uuid = #{hospUuid} 
 	    WHERE 1=1
-	      AND HOSP_CD  = #{hosp_cCd}
+	      AND HOSP_CD  = #{hospCd}
+	      AND ACTION_YN = 'Y' 
 	    ]]>   
     </update>
     	   
@@ -437,6 +439,7 @@
 	    DELETE FROM TBL_HOSP_MST 
 	    WHERE 1=1 
 	      AND HOSP_CD  = #{hospCd}
+	      AND ACTION_YN = 'Y' 
 	    ]]>  
 	</delete> 
 
@@ -445,6 +448,7 @@
 	     FROM TBL_HOSP_MST 
 	    WHERE 1=1 
 	      AND HOSP_CD  = #{hospCd}
+	      AND ACTION_YN = 'Y' 
 	    ]]>  
 	</select> 
 	      
