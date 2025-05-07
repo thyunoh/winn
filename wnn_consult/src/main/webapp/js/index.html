@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title> 위너넷 - 25.05.06 </title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link href="https://fonts.googleapis.com/earlyaccess/nanumgothic.css" rel="stylesheet">
+</head>
+<body>
+  <div id="wrap">
+    <header>
+      <div class="headerInner">
+        <div class="logoMenu">
+          <h1><a href="./index.html"><img src="./images/logo.svg" alt="로고" class="logo"></a></h1>
+          <nav>
+            <ul class="menu">
+              <li><a href="#">컨설팅 소개</a>
+                <ul class="submenu">
+                  <li><a href="#">의료기관컨설팅</a></li>
+                  <li><a href="#">재청구컨설팅</a></li>
+                  <li><a href="#">의료기관인증컨설팅</a></li>
+                  <li><a href="#">적정성평가컨설팅</a></li>
+                  <li><a href="#">현지조사컨설팅</a></li>
+                </ul></li>
+              <li><a href="#">온라인교육센터</a>
+                <ul class="submenu">
+                  <li><a href="#">의료기관컨설팅</a></li>
+                  <li><a href="#">재청구컨설팅</a></li>
+                  <li><a href="#">의료기관인증컨설팅</a></li>
+                  <li><a href="#">적정성평가컨설팅</a></li>
+                  <li><a href="#">현지조사컨설팅</a></li>
+                </ul></li>
+              <li><a href="#">경영분석/적정성</a>
+                <ul class="submenu">
+                  <li><a href="#">의료기관컨설팅</a></li>
+                  <li><a href="#">재청구컨설팅</a></li>
+                  <li><a href="#">의료기관인증컨설팅</a></li>
+                  <li><a href="#">적정성평가컨설팅</a></li>
+                  <li><a href="#">현지조사컨설팅</a></li>
+                </ul></li>
+            </ul>
+          </nav>
+        </div>
+        
+        <img src="./images/headerRight.svg" alt="Header Decoration" class="headerRightImg">
+      </div>
+    </header>
+    <main>
+      <section class="mainSlide">
+        <div class="sliderWrapper">
+          <!-- 컨트롤 버튼 + 넘버 -->
+          <div class="controlPanel">
+            <button id="toggleBtn">
+              <div id="toggleIcon">
+                <img src="./images/stop.png" alt="정지 버튼" width="32" height="30">
+              </div>
+            </button>           
+             <!-- 슬라이드 번호 -->
+            <div class="number" data-slide="0">01</div>
+            <div class="number" data-slide="1">02</div>
+          </div>
+        
+          <!-- 슬라이드 이미지 -->
+          <div class="slider">
+            <img src="./images/slide1.svg" class="slide active" alt="슬라이드 1">
+            <img src="./images/slide2.svg" class="slide" alt="슬라이드 2">
+          </div>
+        </div>
+      
+
+        <!-- <div class="mainSlideInner">
+          <h2 class="blind">메인 슬라이드</h2>
+          <div class="imgContents">
+            <p><a href="#"><img src="./images/mainText.svg" alt="메인텍스트"></a></p>
+            <p><a href="#"><img src="./images/mainRound.jpg" alt="메인스텝"></a></p>
+          </div>
+        </div> -->
+
+
+      </section>
+
+      <section class="loginAbout">
+        <div class="loginAboutInner">
+          <div class="loginLeft">
+            <h2 class="blind">로그인</h2>
+            <div class="login">
+              <div class="loginHeader">
+                <span>로그인</span><span>LOGIN</span>
+              </div>
+              <form action="/login" method="post" autocomplete="on">
+                <div class="loginForm">
+                  <div class="inputContainer">
+                    <label for="providerNumber" class="blind">요양기관번호</label>
+                    <input type="text" id="providerNumber" name="providerNumber" placeholder="요양기관번호" required>
+              
+                    <label for="userId" class="blind">아이디</label>
+                    <input type="text" id="userId" name="userId" placeholder="아이디" required>
+              
+                    <label for="password" class="blind">패스워드</label>
+                    <input type="password" id="password" name="password" placeholder="패스워드" required>
+                  </div>
+              
+                  <button type="submit" class="loginButton">로그인</button>
+                </div>
+              
+                <div class="bottomForm">
+                  <div class="checkboxForm">
+                    <label>
+                      <input type="checkbox" name="autoLogin"> 자동 로그인
+                    </label>
+                    <label>
+                      <input type="checkbox" name="saveId"> 아이디 저장
+                    </label>
+                  </div>
+              
+                  <div class="join">
+                    <a href="#" class="bold">회원가입</a>
+                    <span class="divider"></span>
+                    <a href="#">ID/PW 찾기</a>
+                  </div>
+                </div>
+              </form>
+              
+            </div>
+          </div>
+          <div class="loginRight">
+            <h2 class="blind">시스템소개</h2>
+            <div class="detale">
+                <div class="left">
+                    <h3>이끌림 <span>e-Clip</span></h3>
+                    <a href="#"><img src="./images/chart.png" alt="지구그래프"></a>
+                    <p>체계적인 컨설팅 분석평가 프로그램  <br>
+                        데이터 기반으로 맞춤 솔루션</p>
+                    <a href="#" class="btn"> <span>프로그램 바로가기</span><img src="./images/arrowRight.svg" alt="버튼"></a>
+                </div>
+                <div class="right">
+                    <div class="topAbout">
+                        <h3>컨설팅 소개</h3>
+                        <p><a href="#"><img src="./images/file.png" alt="파일이미지"></a>
+                           <span class="text">의료특화 전문 교육  <br>
+                            의료기관 전문 컨설팅
+                            </span></p>
+                            <a href="#" class="btn"> <span>컨설팅 소개서 다운로드</span><img src="./images/down.svg" alt="버튼"></a>
+                    </div>
+                    <div class="online">
+                        <h3>온라인 교육센터</h3>
+                        <p><a href="#"><img src="./images/help.png" alt="상담이미지"></a> <span class="text">효과적인 학습을 위한 교육 <br>
+                            실천 가능한 팁과 전략 제공</span></p>
+                            <a href="#" class="btn"> <span>홈페이지 바로가기</span><img src="./images/arrowRight.svg" alt="버튼"></a>
+                    </div>
+                </div>
+            </div>
+            <!-- <p><a href="#"><img src="./images/about.png" alt="상세시스템"></a></p> -->
+          </div>
+        </div>
+        <img src="./images/loginBg.svg" alt="Login Background" class="loginBg">
+      </section>
+
+      <section class="noticeHelpdesk">
+        <div class="noticeHelpdeskInner">
+          <h2 class="blind">공지사항 및 고객센터</h2>
+          <div class="noticeHelpdeskContent">
+            <div class="notice">
+              <div class="tabContainer">
+                <div class="tabs">
+                  <button class="tab active" data-tab="notice">공지사항</button>
+                  <button class="tab" data-tab="press1">심사정보방</button>
+                  <button class="tab" data-tab="press2">소식지</button>
+                </div>
+
+                <div class="tabContent active" id="notice">
+                  <ul>
+                    <li><button class="tagButton">공지사항</button><span><a href="#">위너넷 컨설팅 홈페이지 오픈안내.......</a></span><em>2025.05.05</em></li>
+                    <li><button class="tagButton">공지사항</button><span><a href="#">위너넷 컨설팅 홈페이지 오픈안내.......</a></span><em>2025.05.05</em></li>
+                    <li><button class="tagButton">공지사항</button><span><a href="#">위너넷 컨설팅 홈페이지 오픈안내.......</a></span><em>2025.05.05</em></li>
+                    <li><button class="tagButton">공지사항</button><span><a href="#">위너넷 컨설팅 홈페이지 오픈안내.......</a></span><em>2025.05.05</em></li>
+                    <li><button class="tagButton">공지사항</button><span><a href="#">위너넷 컨설팅 홈페이지 오픈안내.......</a></span><em>2025.05.05</em></li>
+                  </ul>
+                </div>
+
+                <div class="tabContent" id="press1">
+                  <ul>
+                    <li><button class="tagButton">심사정보방</button><span><a href="#">위너넷 심사정보방 게시물.......</a></span><em>2025.05.06</em></li>
+                    <li><button class="tagButton">심사정보방</button><span><a href="#">위너넷 심사정보방 게시물.......</a></span><em>2025.05.06</em></li>
+                    <li><button class="tagButton">심사정보방</button><span><a href="#">위너넷 심사정보방 게시물.......</a></span><em>2025.05.06</em></li>
+                    <li><button class="tagButton">심사정보방</button><span><a href="#">위너넷 심사정보방 게시물.......</a></span><em>2025.05.06</em></li>
+                    <li><button class="tagButton">심사정보방</button><span><a href="#">위너넷 심사정보방 게시물.......</a></span><em>2025.05.06</em></li>
+                  </ul>
+                </div>
+
+                <div class="tabContent" id="press2">
+                  <ul>
+                    <li><button class="tagButton">소식지</button><span><a href="#">위너넷 소식지 게시물.......</a></span><em>2025.05.07</em></li>
+                    <li><button class="tagButton">소식지</button><span><a href="#">위너넷 소식지 게시물.......</a></span><em>2025.05.07</em></li>
+                    <li><button class="tagButton">소식지</button><span><a href="#">위너넷 소식지 게시물.......</a></span><em>2025.05.07</em></li>
+                    <li><button class="tagButton">소식지</button><span><a href="#">위너넷 소식지 게시물.......</a></span><em>2025.05.07</em></li>
+                    <li><button class="tagButton">소식지</button><span><a href="#">위너넷 소식지 게시물.......</a></span><em>2025.05.07</em></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="helpdesk">
+             
+              <div class="helpdeskHeader">
+               <h3> 고객센터<span>CUSTOMER</span></h3>
+                <p>02-2653-7971</p>
+                <p>월-금 09:00 ~ 18:00<span>|</span> 점심시간 12:00 ~13:00<span>|</span> 주말/공휴일 휴무</p>
+              </div>
+              <ul>
+                <li><a href="#"><img src="./images/kakao.svg" alt="카카오상담"><span>카카오상담</span></a></li>
+                <li><a href="#"><img src="./images/headset.svg" alt="1:1상담"><span>1:1상담</span></a></li>
+                <li><a href="#"><img src="./images/faq.svg" alt="자주하는질문"><span>자주하는질문</span></a></li>
+              </ul>
+              <!-- <p><a href="#"><img src="./images/helpDesk.svg" alt="고객센터"></a></p> -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footerInner">
+        <div class="bmenu">
+          <ul class="bomenu">
+            <li><a href="#">위너넷 평생교육원</a></li>
+            <li><a href="#">위너넷 온라인교육센터</a></li>
+            <li><a href="#">한국보험의료인증원</a></li>
+            <li><a href="#">건강보험공단</a></li>
+            <li><a href="#">건강보험심사평가원</a></li>
+            <li><a href="#">요양기관업무포털</a></li>
+            <li><a href="#">통합사이트</a></li>
+          </ul>
+        </div>
+        <div class="blogoCopy">
+          <div class="blogocopyInner">
+            <div class="blogo">
+              <h2><a href="./index.html"><img src="./images/blogo.svg" alt="하단로고"></a></h2>
+            </div>
+            <div class="copyright">
+              <p>상호명｜(주)위너넷  주소｜서울시 서초구 서초대로74길 33, 비트빌 <br>
+              전화｜02-2653-7971  팩스｜02-2653-7901  이메일｜winner797@naver.com<br>
+             Copyright &copy; 2011 By ㈜위너넷 All Rights Reserved.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <a href="#" class="scroll-arrow">
+      <img src="./images/btnArrow.svg" alt="하단화살표">
+    </a>
+  </div>
+
+  <div class="quick-menu">
+    <ul>
+      <li><a href="#"><img src="./images/youtube.svg" alt="유튜브" class="snsImg"><span>유튜브</span></a></li>
+      <li><a href="#"><img src="./images/blog.svg" alt="블로그" class="snsImg"><span>블로그</span></a></li>
+      <li><a href="#"><img src="./images/insta.svg" alt="인스타그램" class="snsImg"><span>인스타그램</span></a></li>
+    </ul>
+    <a href="#"><img src="./images/quickArrow.svg" alt="더보기" class="quick-arrow-btn"></a>
+  </div>
+
+  <script src="./js/winnernet.js"></script>
+</body>
+</html>

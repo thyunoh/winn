@@ -107,7 +107,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
    }
 	#noticeTable, #noticeTable1, #noticeTable2 {
 		table-layout: fixed;
-		width: 100%;
+		width: 70%;
 	}
 	
 	#noticeTable th, #noticeTable1 th, #noticeTable2 th {
@@ -187,6 +187,17 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	  font-size: 14px;
 	  margin-bottom: -10px; /* 간격 제거 */
 	}
+.loginBg {
+    width: 300px;
+    height: 400px; /* 줄인 세로 크기 */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-40%, -50%);
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 0;
+}
 </style>
 <body>
 <!-- Navbar Start -->
@@ -196,7 +207,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			<a class="btn d-flex justify-content-center align-items-center bg-white w-80"
 				data-bs-toggle="collapse" href="#navbar-vertical"
 				style="height: 50px; padding: 0; width: 70%;">
-				<img src="/images/winct/winner_log_han.png" alt="WinnerNet Logo"
+				<img src="/images/winct/logo.svg" alt="WinnerNet Logo"
 					id="consultingTitle"
 					style="width: 200px; height: 100px; object-fit: contain;">
 			</a>
@@ -222,11 +233,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div id="dynamicMenu_J"></div>
 						<div id="dynamicMenu_T"></div>
 					</div>
-					<div class="navbar-nav ml-auto py-0 d-none d-lg-block"></div>
-					<div class="nav-right-banner">
-					  <div class="main-blue"></div>
-					  <div class="light-stripe"></div>
-					</div>
+					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg">
 				</div>
 			</nav>
 		</div>
@@ -462,7 +469,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="row px-xl-8">
 			<!-- 캐러셀: 전체 너비 사용 -->
 		<div class="col-lg-12">
-		  <div id="header-carousel" class="carousel slide carousel-fade mb-3" data-bs-ride="carousel">
+		  <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel">
 		    <ol class="carousel-indicators">
 		      <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
 		      <li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
@@ -471,29 +478,29 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		
 		    <div class="carousel-inner">
 		      <!-- 슬라이드 1 -->
-		      <div class="carousel-item active" style="height: 350px;">
+		      <div class="carousel-item active" style="height: 310px;">
 		        <div class="d-flex align-items-center justify-content-center h-100">
 		          <img src="/images/winct/image-1.jpg" 
 		               class="img-fluid"
-		               style="max-width: 200% !important; max-height: 90% !important; object-fit: contain !important;">
+		               style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
 		        </div>
 		      </div>
 		
 		      <!-- 슬라이드 2 -->
-		      <div class="carousel-item" style="height: 350px;">
+		      <div class="carousel-item" style="height: 310px;">
 		        <div class="d-flex align-items-center justify-content-center h-100">
 		          <img src="/images/winct/image-2.jpg" 
 		               class="img-fluid"
-		                style="max-width: 200% !important; max-height: 90% !important; object-fit: contain !important;">
+		                style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
 		        </div>
 		      </div>
 		
 		      <!-- 슬라이드 3 -->
-		      <div class="carousel-item" style="height: 350px;">
+		      <div class="carousel-item" style="height: 310px;">
 		        <div class="d-flex align-items-center justify-content-center h-100">
 		          <img src="/images/winct/image-3.jpg" 
 		               class="img-fluid"
-		                style="max-width: 200% !important; max-height: 90% !important; object-fit: contain !important;">
+		                style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
 		        </div>
 		      </div>
 		    </div>
@@ -507,7 +514,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			<!-- 로그인 영역 -->
 			<div class="col-lg-6">
-			  <div class="contact-form box-p-10 mb-3" style="min-height: 230px; background-color: #003366;">
+			  <div class="contact-form box-p-10 mb-3" style="min-height: 230px; 
+			       background-color: #003366;">
 			    <form name="loginForm" id="loginForm">
 			      <div style="display: flex; align-items: flex-start; justify-content: flex-end;">
 			        <!-- 입력 필드 영역 -->
@@ -556,6 +564,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			          </div>
 			        </div>
 			      </div>
+                 <img src="/images/winct/loginBg.svg" alt="Login Background" class="loginBg">
+ 
 			    </form>
 			
 			    <!-- 로그인 성공 시 사용자 카드 -->
@@ -602,18 +612,29 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		</div>
 	</div>
    </div>
-</div>
-	<div class="container-fluid mb-2">
+	<div class="container-fluid mb-2" style="margin-left: 320px;">
 		<div class="row px-xl-8">
 			<div class="col-lg-4">
 				<div class="bg-light box-p-10" style="height: 215px;">
+					<!-- 탭 헤더 -->
 					<div class="nav nav-tabs mb-1 border-bottom border-primary">
 						<a class="nav-item nav-link active px-4 py-2 fw-bold"
-							data-bs-toggle="tab" href="#notice-tab"> <i
-							class="fas fa-bell me-1"></i> 공지사항
+							data-bs-toggle="tab" href="#notice-tab">
+							<i class="fas fa-bell me-1"></i> 공지사항
+						</a>
+						<a class="nav-item nav-link px-4 py-2 fw-bold text-muted"
+							data-bs-toggle="tab" href="#tab-pane-1">
+							<i class="fas fa-clinic-medical me-1"></i> 심사방
+						</a>
+						<a class="nav-item nav-link px-4 py-2 fw-bold text-muted"
+							data-bs-toggle="tab" href="#tab-pane-2">
+							<i class="fas fa-newspaper me-1"></i> 소식지
 						</a>
 					</div>
+			
+					<!-- 탭 콘텐츠 -->
 					<div class="tab-content">
+						<!-- 공지사항 -->
 						<div class="tab-pane fade active show" id="notice-tab">
 							<div class="scroll-table-container"
 								style="max-height: 200px; overflow-x: auto; overflow-y: auto;">
@@ -624,7 +645,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 										<col style="width: 200px">
 										<col style="width: 180px">
 									</colgroup>
- 									<tbody id="noticeArea">
+									<tbody id="noticeArea">
 										<tr>
 											<td colspan="6">&nbsp;</td>
 										</tr>
@@ -632,22 +653,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								</table>
 							</div>
 						</div>
-					</div>
-				</div>
-			</div>
-			<div class="col-lg-4">
-				<div class="bg-light box-p-10" style="height: 215px;">
-					<div class="nav nav-tabs mb-1 border-bottom border-primary">
-						<a class="nav-item nav-link active px-4 py-2 fw-bold"
-							data-bs-toggle="tab" href="#tab-pane-1"> <i
-							class="fas fa-clinic-medical me-1"></i> 심사방
-						</a> <a class="nav-item nav-link px-4 py-2 fw-bold text-muted"
-							data-bs-toggle="tab" href="#tab-pane-2"> <i
-							class="fas fa-newspaper me-1"></i> 소식지
-						</a>
-					</div>
-					<div class="tab-content">
-						<div class="tab-pane fade active show" id="tab-pane-1">
+			
+						<!-- 심사방 -->
+						<div class="tab-pane fade" id="tab-pane-1">
 							<div class="scroll-table-container"
 								style="max-height: 200px; overflow-x: auto; overflow-y: auto;">
 								<table id="noticeTable1" class="table table-bordered">
@@ -665,6 +673,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								</table>
 							</div>
 						</div>
+			
+						<!-- 소식지 -->
 						<div class="tab-pane fade" id="tab-pane-2">
 							<div class="scroll-table-container"
 								style="max-height: 200px; overflow-x: auto; overflow-y: auto;">
@@ -687,41 +697,49 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				</div>
 			</div>
 
-			<div class="col-lg-4">
 
-				<div class="bg-transparent box-p-10" style="height: 250px; margin-top: -10px;">
-					<div class="row">
-						<div class="col-14 text-left">
-							<!--<h5 class="text-dark text-uppercase font-weight-bold">고객센터</h5>-->
-							<img class="img-fluid" src="/images/winct/c-tel-01.png">
-						<div>
-					</div>
+			<div class="col-lg-4">
+              <div class="helpdesk">
+				<div class="helpdeskHeader" style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px;">
+				  <h3 style="font-size: 24px; margin-bottom: 10px;">
+				    고객센터 <span style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
+				  </h3>
+				  <p style="font-size: 28px; font-weight: bold; color: #333; margin: 1px 0;">02-2653-7971</p>
+				  <p style="font-size: 12px; color: #666; margin-top: 1px;">
+				    월-금 09:00 ~ 18:00<span style="margin: 0 5px;">|</span>
+				    점심시간 12:00 ~13:00<span style="margin: 0 5px;">|</span>
+				    주말/공휴일 휴무
+				  </p>
 				</div>
-				<div class="bg-light box-p-10" style="height: 100px; margin-top: 20px;">
-					<div class="row">
-						<div class="col-4">
-							<a href="https://open.kakao.com/o/gBvFxyYg"> <img
-								class="img-fluid" src="/images/winct/KKO_10_1.png" alt="카카오상담" style="margin-top: 20px;">
+				<div class="bg-light box-p-10" style="width: 530px; height: 80px; margin-top: 20px; position: relative; left: -10px;">
+					<div class="row text-center">
+						<div class="col-4 d-flex justify-content-center align-items-center">
+							<a href="https://open.kakao.com/o/gBvFxyYg" class="d-flex align-items-center text-dark" style="text-decoration: none;">
+								<img class="img-fluid" src="/images/winct/kakao.svg" alt="카카오상담" style="height: 30px; margin-right: 8px; margin-top: 15px;">
+								<span style="font-size: 0.7rem;">카카오상담</span>
 							</a>
 						</div>
-						<div class="col-4">
-							<a href="#" onclick="fnasq_main();"> <img class="img-fluid"
-								src="/images/winct/1-1_10_1.png" alt="1대1상담" style="margin-top: 20px;">
+						<div class="col-4 d-flex justify-content-center align-items-center">
+							<a href="#" onclick="fnasq_main();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
+								<img class="img-fluid" src="/images/winct/headset.svg" alt="1대1상담" style="height: 30px; margin-right: 8px; margin-top: 15px;">
+								<span style="font-size: 0.7rem;">1대1상담</span>
 							</a>
 						</div>
-						<div class="col-4">
-							<a href="#" onclick="loadFaqData();"> <img class="img-fluid"
-								src="/images/winct/FAQ_10_1.png" alt="자주듣는질문" style="margin-top: 20px;"> 
+						<div class="col-4 d-flex justify-content-center align-items-center">
+							<a href="#" onclick="loadFaqData();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
+								<img class="img-fluid" src="/images/winct/faq.svg" alt="자주듣는질문" style="height: 30px; margin-right: 8px; margin-top: 15px;">
+								<span style="font-size: 0.7rem;">자주하는질문</span>
 							</a>
 						</div>
 					</div>
 				</div>
 				
-			</div>
-		</div>
+			  </div>
+		   </div>
+	   </div>
 	</div>
 	<!--  공공기관 포털   -->
-	<div class="container-fluid bg-info mb-2">
+	<div class="bmenu">
 		<div class="row px-xl-8">
 			<div class="col-lg-12 bg-info">
 				<nav
@@ -729,15 +747,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					<div class="collapse navbar-collapse">
 						<!-- 메뉴를 가로 정렬 -->
 						<div class="navbar-nav d-flex justify-content-center w-100 py-0">
-							<a href="https://winner797.kr/main/" class="nav-item nav-link">위너넷
-								평생교육원</a> <a href="https://www.hirachung.co.kr/"
-								class="nav-item nav-link">한국보험의료인증원</a> <a
-								href="https://www.nhis.or.kr/nhis/index.do"
-								class="nav-item nav-link">건강보험공단</a> <a
-								href="https://www.hira.or.kr" class="nav-item nav-link">건강보험심사평가원</a>
-							<a href="https://biz.hira.or.kr/index.do"
-								class="nav-item nav-link">요양기관업무포탈</a> <a href="#"
-								class="nav-item nav-link">통합사이트</a>
+							<a href="https://winner797.kr/main/" class="nav-item nav-link">위너넷 평생교육원</a> 
+							<a href="https://winner797.net/" class="nav-item nav-link">위너넷 온라인교육센터</a> 
+							<a href="https://www.hirachung.co.kr/" class="nav-item nav-link">한국보험의료인증원</a> 
+							<a href="https://www.nhis.or.kr/nhis/index.do" class="nav-item nav-link">건강보험공단</a> 
+							<a href="https://www.hira.or.kr" class="nav-item nav-link">건강보험심사평가원</a>
+							<a href="https://biz.hira.or.kr/index.do" class="nav-item nav-link">요양기관업무포탈</a> 
+							<a href="#"	class="nav-item nav-link">통합사이트</a>
 						</div>
 					</div>
 				</nav>
