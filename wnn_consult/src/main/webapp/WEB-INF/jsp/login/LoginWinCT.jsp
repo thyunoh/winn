@@ -2027,7 +2027,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        $.ajax({
 	            type: "post",
 	            url: "/mangr/ctl_getHospmst.do",
-	            data: { hospCd: sessionStorage.getItem('s_hospid') },
+	            data: { hospCd: getCookie("hospid") },
 	            dataType: "json",
 	            success: function (data) {
 	                if (data.error_code != "0") {
@@ -2037,7 +2037,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	                $("#hospCd").val(data.result.hospCd);
 	            }
 	        });
-
 	        document.getElementById("asq_regForm").reset();
 	        setCurrDate("regDtm");
 	        $("#ansrConts").prop("readonly", "true");

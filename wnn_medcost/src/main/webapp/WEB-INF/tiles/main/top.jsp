@@ -58,7 +58,7 @@
 					</li>
                 </ul>    
                 <ul class="navbar-nav ml-auto">
-                	<li class="nav-item">
+                	<li class="nav-item" style="font-size: 16px;">
                         <a id="logininfo" class="dropdown-item" href="#"></a>
                     </li>                    
                 </ul>
