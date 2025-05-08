@@ -494,7 +494,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		                style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
 		        </div>
 		      </div>
-		
 		      <!-- 슬라이드 3 -->
 		      <div class="carousel-item" style="height: 310px;">
 		        <div class="d-flex align-items-center justify-content-center h-100">
