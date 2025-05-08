@@ -46,7 +46,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <script type="text/javascript" src="/js/winct/contact.js"></script>
 <script type="text/javascript" src="/js/winct/loading.js"></script>
 <script type="text/javascript" src="/js/winct/schcommons.js"></script>
-<!-- 공통검색 -->
+<!-- 공통검색 1-->
 
 <!-- wnnnet 설정끝 -->
 <!-- DataTables JS 추가 -->
