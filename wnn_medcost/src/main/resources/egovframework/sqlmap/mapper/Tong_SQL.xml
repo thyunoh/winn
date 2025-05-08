@@ -86,6 +86,14 @@
 		    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO
 		                          AND A.HOSP_CD  = B.HOSP_CD
 		    WHERE A.HOSP_CD = #{hospCd} 
+			  AND NOT EXISTS (
+			      SELECT 1
+			      FROM TBL_SPECODE_MST C
+			      WHERE C.HOSP_CD = A.HOSP_CD
+			        AND C.CLAIM_NO = A.CLAIM_NO
+			        AND C.BILL_SEQ = B.BILL_SEQ
+			        AND C.SPEC_TYPE = 'JS008'
+			  )		    
 	    ]]>	  
 		<if test="startMonth != null and startMonth != ''">
 		    AND A.DATE_YM &gt;= #{startMonth}
@@ -223,6 +231,14 @@
 		                         AND A.HOSP_CD  = B.HOSP_CD  
 		    WHERE   A.HOSP_CD = #{hospCd}  
 		       AND  A.DATE_YM = #{endMonth} 
+			   AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST C
+			        WHERE C.HOSP_CD   = A.HOSP_CD
+			          AND C.CLAIM_NO  = A.CLAIM_NO
+			          AND C.BILL_SEQ  = B.BILL_SEQ
+			          AND C.SPEC_TYPE = 'JS008'
+			   )		    
 		    ]]>   
 			<if test='medType == "1" '> <!-- 의과 산재조건-->
 			    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
@@ -299,7 +315,15 @@
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO
 		                         AND A.HOSP_CD  = B.HOSP_CD  
-		    WHERE  A.HOSP_CD = #{hospCd}
+		    WHERE   A.HOSP_CD = #{hospCd}
+			   AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST C
+			        WHERE C.HOSP_CD   = A.HOSP_CD
+			          AND C.CLAIM_NO  = A.CLAIM_NO
+			          AND C.BILL_SEQ  = B.BILL_SEQ
+			          AND C.SPEC_TYPE = 'JS008'
+			   )	
 		    ]]>   
 			<if test='medType == "1" '> <!-- 의과 산재조건-->
 			    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
@@ -349,6 +373,14 @@
 		                                AND C.DIAG_TYPE = '1'
 		    WHERE A.HOSP_CD  = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+			  AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST D
+			        WHERE D.HOSP_CD   = A.HOSP_CD
+			          AND D.CLAIM_NO  = A.CLAIM_NO
+			          AND D.BILL_SEQ  = B.BILL_SEQ
+			          AND D.SPEC_TYPE = 'JS008'
+			   )	
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -478,6 +510,14 @@
 		    WHERE A.HOSP_CD       = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND IFNULL(C.AMOUNT,0) > 0
+			  AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST F
+			        WHERE F.HOSP_CD   = A.HOSP_CD
+			          AND F.CLAIM_NO  = A.CLAIM_NO
+			          AND F.BILL_SEQ  = B.BILL_SEQ
+			          AND F.SPEC_TYPE = 'JS008'
+			  )	
 	   ]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -529,6 +569,14 @@
 		                          AND A.HOSP_CD = B.HOSP_CD
 		WHERE A.HOSP_CD = #{hospCd}
           AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+  	      AND  NOT EXISTS (
+		        SELECT 1
+		        FROM TBL_SPECODE_MST C
+		        WHERE C.HOSP_CD   = A.HOSP_CD
+		          AND C.CLAIM_NO  = A.CLAIM_NO
+		          AND C.BILL_SEQ  = B.BILL_SEQ
+		          AND C.SPEC_TYPE = 'JS008'
+		   )	
 	   ]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -606,6 +654,14 @@
 		JOIN TOTAL_SUMMARY ts
 		WHERE A.HOSP_CD = #{hospCd}
           AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+		  AND  NOT EXISTS (
+		        SELECT 1
+		        FROM TBL_SPECODE_MST D
+		        WHERE D.HOSP_CD   = A.HOSP_CD
+		          AND D.CLAIM_NO  = A.CLAIM_NO
+		          AND D.BILL_SEQ  = B.BILL_SEQ
+		          AND D.SPEC_TYPE = 'JS008'
+		   )	
 	   ]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -656,13 +712,21 @@
 		<![CDATA[      
 		    FROM TBL_CHUNG_MST A
 			    JOIN TBL_MYOUNG_MST B     ON A.CLAIM_NO = B.CLAIM_NO 
-			                             AND A.HOSP_CD = B.HOSP_CD
+			                              AND A.HOSP_CD = B.HOSP_CD
 			    LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO = B.CLAIM_NO 
 			                                AND C.HOSP_CD  = B.HOSP_CD 
 			                                AND C.BILL_SEQ = B.BILL_SEQ 
 			                                AND C.DIAG_TYPE = '1'
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+			      AND  NOT EXISTS (
+			          SELECT 1
+			          FROM TBL_SPECODE_MST D
+			          WHERE D.HOSP_CD   = A.HOSP_CD
+			            AND D.CLAIM_NO  = A.CLAIM_NO
+			            AND D.BILL_SEQ  = B.BILL_SEQ
+			            AND D.SPEC_TYPE = 'JS008'
+			      )	
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -738,6 +802,14 @@
 			                          AND A.HOSP_CD  = B.HOSP_CD
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+			      AND  NOT EXISTS (
+			           SELECT 1
+			           FROM TBL_SPECODE_MST C
+			           WHERE C.HOSP_CD   = A.HOSP_CD
+			             AND C.CLAIM_NO  = A.CLAIM_NO
+			             AND C.BILL_SEQ  = B.BILL_SEQ
+			             AND C.SPEC_TYPE = 'JS008'
+		  	      )	
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -825,6 +897,14 @@
 			        #{endMonth}, 
 			        DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{endMonth}, '01'), '%Y%m%d'),INTERVAL 1 MONTH),'%Y%m')
 			      )
+			     AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST D
+			        WHERE D.HOSP_CD   = A.HOSP_CD
+			          AND D.CLAIM_NO  = A.CLAIM_NO
+			          AND D.BILL_SEQ  = B.BILL_SEQ
+			          AND D.SPEC_TYPE = 'JS008'
+			    )	
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -951,6 +1031,14 @@
 		    WHERE A.HOSP_CD  = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+			  AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST E
+			        WHERE E.HOSP_CD   = A.HOSP_CD
+			          AND E.CLAIM_NO  = A.CLAIM_NO
+			          AND E.BILL_SEQ  = B.BILL_SEQ
+			          AND E.SPEC_TYPE = 'JS008'
+			   )	
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -1077,6 +1165,14 @@
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND IFNULL(C.AMOUNT,0) > 0
 		      AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
+			  AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST F
+			        WHERE F.HOSP_CD   = A.HOSP_CD
+			          AND F.CLAIM_NO  = A.CLAIM_NO
+			          AND F.BILL_SEQ  = B.BILL_SEQ
+			          AND F.SPEC_TYPE = 'JS008'
+			   )	
 	   ]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')

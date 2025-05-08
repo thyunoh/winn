@@ -244,7 +244,7 @@
 		    <td id="iCostPerCaseRate"></td>
 		  </tr>
 		  <tr>
-		    <td>일당진료비(천원)</td>
+		    <td>인당진료비(천원)</td>
 		    <td id="iCostPerDayCurr"></td>
 		    <td id="iCostPerDayPrev"></td>
 		    <td id="iCostPerDayRate"></td>

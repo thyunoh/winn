@@ -46,7 +46,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <script type="text/javascript" src="/js/winct/contact.js"></script>
 <script type="text/javascript" src="/js/winct/loading.js"></script>
 <script type="text/javascript" src="/js/winct/schcommons.js"></script>
-<!-- 공통검색 1-->
+<!-- 공통검색 -->
 
 <!-- wnnnet 설정끝 -->
 <!-- DataTables JS 추가 -->
@@ -84,11 +84,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	  height: 50px;
 	  margin: 10px 0;
 	}
-  .image-layout {
-     display: flex;
-     gap: 20px;
-     align-items: flex-start;
-   }
 	.slanted-banner {
 	  background-color: #003b74;
 	  position: absolute;
@@ -187,17 +182,66 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	  font-size: 14px;
 	  margin-bottom: -10px; /* 간격 제거 */
 	}
-.loginBg {
-    width: 300px;
-    height: 400px; /* 줄인 세로 크기 */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-40%, -50%);
-    object-fit: contain;
-    pointer-events: none;
-    z-index: 0;
-}
+	.loginBg {
+	    width: 300px;
+	    height: 400px; /* 줄인 세로 크기 */
+	    position: absolute;
+	    top: 50%;
+	    left: 50%;
+	    transform: translate(-40%, -50%);
+	    object-fit: contain;
+	    pointer-events: none;
+	    z-index: 0;
+	}
+	.social-box {
+	  border: 2px solid #003366;
+	  border-radius: 10px;
+	  padding: 10px;
+	  width: 80px; /* 박스 너비 줄임 */
+	}
+	
+	.social-box ul {
+	  list-style: none;
+	  padding: 0;
+	  margin: 0;
+	}
+	
+	.social-box li {
+	  text-align: center;
+	  margin-bottom: 15px; /* 간격도 조금 줄임 */
+	}
+	
+	.snsImg {
+	  display: block;
+	  margin: 0 auto;
+	  width: 20px; /* 이미지 크기 축소 */
+	}
+	
+	.social-box span {
+	  display: block;
+	  margin-top: 4px;
+	  color: black;
+	  font-size: 10px; /* 글자 크기 축소 */
+	  font-weight: bold;
+	}
+	.program-button {
+	  background-color: #0061b2; /* 버튼 배경색 */
+	  color: #fff; /* 텍스트 색상 */
+	  font-size: 12px; /* 텍스트 크기 줄임 */
+	  padding: 1px 6px; /* 버튼 내 여백을 최소화 (높이 더 감소) */
+	  border: 2px solid #004b87; /* 테두리 추가 */
+	  border-radius: 25px; /* 둥근 모서리 */
+	  display: flex; /* 텍스트와 화살표 정렬 */
+	  align-items: center; /* 세로 정렬 */
+	  justify-content: space-between; /* 텍스트와 화살표를 양 끝으로 배치 */
+	  cursor: pointer; /* 마우스 포인터 */
+	  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
+	  transition: all 0.3s ease; /* 효과 */
+	}
+	
+	.arrow {
+	  font-size: 3px; /* 화살표 크기 조정 */
+	}
 </style>
 <body>
 <!-- Navbar Start -->
@@ -214,7 +258,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		</div>
 		<div class="col-lg-9">
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
-				style="height: 55px; align-items: center;">
+				style="height: 50px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0">
 						<div class="nav-item dropdown">
@@ -233,7 +277,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div id="dynamicMenu_J"></div>
 						<div id="dynamicMenu_T"></div>
 					</div>
-					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg">
+					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 75px;">
 				</div>
 			</nav>
 		</div>
@@ -465,7 +509,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	</script>
 	
 	<!-- Carousel Start -->
-	<div class="container-fluid mb-1">
+	<div class="container-fluid mb-2">
 		<div class="row px-xl-8">
 			<!-- 캐러셀: 전체 너비 사용 -->
 		<div class="col-lg-12">
@@ -478,29 +522,29 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		
 		    <div class="carousel-inner">
 		      <!-- 슬라이드 1 -->
-		      <div class="carousel-item active" style="height: 310px;">
-		        <div class="d-flex align-items-center justify-content-center h-100">
-		          <img src="/images/winct/image-1.jpg" 
-		               class="img-fluid"
-		               style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
-		        </div>
-		      </div>
-		
+		     <div class="carousel-item active" style="height: 270px;">
+				  <div class="d-flex align-items-center justify-content-center h-100" style="width: 100%;">
+				    <img src="/images/winct/image-1.jpg" 
+				         class="img-fluid"
+				         style="width: 55%; height: 270px; object-fit: fill;  margin-left: -70px;">
+				  </div>
+			 </div>
+	
 		      <!-- 슬라이드 2 -->
-		      <div class="carousel-item" style="height: 310px;">
-		        <div class="d-flex align-items-center justify-content-center h-100">
-		          <img src="/images/winct/image-2.jpg" 
-		               class="img-fluid"
-		                style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
-		        </div>
+		      <div class="carousel-item" style="height: 270px;">
+		        <div class="d-flex align-items-center justify-content-center h-100" style="width: 100%;">
+				    <img src="/images/winct/image-2.jpg" 
+				         class="img-fluid"
+				         style="width: 55%; height: 270px; object-fit: fill;  margin-left: -70px;">
+				  </div>
 		      </div>
 		      <!-- 슬라이드 3 -->
-		      <div class="carousel-item" style="height: 310px;">
-		        <div class="d-flex align-items-center justify-content-center h-100">
-		          <img src="/images/winct/image-3.jpg" 
-		               class="img-fluid"
-		                style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; transform: translateX(-45px);">
-		        </div>
+		      <div class="carousel-item" style="height: 270px;">
+		        <div class="d-flex align-items-center justify-content-center h-100" style="width: 100%;">
+				    <img src="/images/winct/image-3.jpg" 
+				         class="img-fluid"
+				         style="width: 55%; height: 270px; object-fit: fill;  margin-left: -70px;">
+				  </div>
 		      </div>
 		    </div>
 		  </div>
@@ -513,7 +557,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			<!-- 로그인 영역 -->
 			<div class="col-lg-6">
-			  <div class="contact-form box-p-10 mb-3" style="min-height: 230px; 
+			  <div class="contact-form box-p-10 mb-3" style="min-height: 220px; 
 			       background-color: #003366;">
 			    <form name="loginForm" id="loginForm">
 			      <div style="display: flex; align-items: flex-start; justify-content: flex-end;">
@@ -553,7 +597,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			                    border-radius: 10px;
 			                    font-size: 14px;
 			                    cursor: pointer;
-			                    margin-top: 20px;
+			                    margin-top: 26px;
 			                    margin-bottom: 5px;
 			                  ">로그인
 			          </button>
@@ -582,38 +626,111 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			</div>
 			<!-- 이미지 배너 영역 -->
 		
-				<div class="image-layout">
-				  <!-- 왼쪽 이미지 -->
-				  <img class="img-fluid left-img" src="/images/winct/e_clip.png" alt="e_clip">
-				
-					  <!-- 오른쪽 위아래 이미지 묶음 -->
-				  <div class="right-img-group" style="margin-left: -20px;">
-					 <img class="img-fluid" src="/images/winct/on_consult.png" alt="on_consult" style="margin-top: -2px;">
-					 <a href="https://winner797.net/" target="_blank">
-					  <img class="img-fluid" src="/images/winct/on_edu.png" alt="on_edu" style="margin-top: -20px;">
-					 </a>
+			<div class="image-layout" style="display: flex; justify-content: space-between; align-items: flex-start;">
+			  <!-- 왼쪽 이미지 -->
+			  <div style="flex: 1;">
+			    <img class="img-fluid left-img" src="/images/winct/e_clip.png" alt="e_clip" style="display: block; margin-bottom: 10px;">
+			    <!-- 텍스트 두 줄로 아래로 배치 -->
+				<div style="text-align: left; clear: both;">
+				  <span style="font-size: 12px; font-weight: bold; margin-left: 8px;">체계적인 컨설팅 분석평가 프로그램</span>
+				</div>
+				<div style="text-align: left;">
+				  <span style="font-size: 12px; font-weight: bold; margin-left: 8px;">데이터 기반으로 맞춤 솔루션</span>
+				</div>
+			    <button class="program-button" style="margin-left: 50px; height: 26px; margin-top: 25px;">
+			      프로그램 바로가기
+			      <span class="arrow">→</span>
+			    </button>
+			  </div>
+			
+			  <!-- 오른쪽 이미지 묶음 -->
+			  <div class="right-img-group" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 20px; margin-top: 3px;">
+			    <!-- 두 번째 이미지(우측 선상 유지) -->
+				<div style="display: flex; align-items: flex-start;">
+				  <!-- 이미지 -->
+				  <img class="img-fluid" src="/images/winct/on_consult.png" alt="on_consult" style="transform: scaleX(1.06); margin-right: 15px;">
+				  
+				  <!-- 텍스트 영역 -->
+				  <div style="display: flex; flex-direction: column; justify-content: flex-start;">
+					<div style="text-align: left; margin-bottom: 5px;">
+					  <span style="font-size: 18px; margin-bottom: 10px; font-weight: bold; color: black;">컨설팅 소개</span>
+					</div>
+					<div style="text-align: left; ">
+					  <span style="font-size: 12px; font-weight: bold; ">의료특화 전문교육</span>
+					</div>
+					<div style="text-align: left;">
+					  <span style="font-size: 12px; font-weight: bold; ">의료기관전문컨설팅</span>
+					</div>
+				    
+				    <!-- 버튼 -->
+					<button class="program-button" style="height: 26px; margin-top: 5px; margin-left: -20px;">
+					  컨설팅소개서다운로드
+					  <span class="arrow">→</span>
+					</button>
 				  </div>
 				</div>
 			
-			  <!-- 오른쪽 소셜 아이콘 박스 -->
-			  <div class="social-box">
-			    <a href="https://www.youtube.com/watch?v=WaWoMowapjI" target="_blank">
-			      <img src="/images/winct/YTB_10_1.png" alt="유튜브">
-			    </a>
-			    <a href="https://www.instagram.com/" target="_blank">
-			      <img src="/images/winct/IST_10_1.png" alt="인스타그램">
-			    </a>
-			    <a href="https://blog.naver.com/ewinner7/222973843240" target="_blank">
-			      <img src="/images/winct/BLG_10_1.png" alt="블로그">
-			    </a>
+				<!-- 세 번째 이미지(두 번째 아래로 위치) -->
+				<div style="display: flex; flex-direction: row; align-items: center; margin-top: 1px;">
+				  <!-- 이미지 -->
+				  <a href="https://winner797.net/" target="_blank">
+				    <img class="img-fluid" src="/images/winct/on_edu.png" alt="on_edu" style="transform: scaleX(1.06);">
+				  </a>
+				
+				  <!-- 텍스트 영역 -->
+				  <div style="display: flex; flex-direction: column; justify-content: flex-start; margin-left: 7px;">
+				    <div style="text-align: left; margin-bottom: 5px;">
+				      <span style="font-size: 18px; margin-bottom: 10px; font-weight: bold; color: black;">온라인교육센터</span>
+				    </div>
+				    <div style="text-align: left;">
+				      <span style="font-size: 12px; font-weight: bold;">효과적인 학습을 위한 교육</span>
+				    </div>
+				    <div style="text-align: left;">
+				      <span style="font-size: 12px; font-weight: bold;">실전 가능한 팁과 전략 제공</span>
+				    </div>
+				    
+				    <!-- 버튼 -->
+					<button onclick="window.location.href='https://winner797.net/';" class="program-button" style="height: 26px; margin-top: 5px; margin-left: 0;">
+					  홈페이지 바로가기
+					  <span class="arrow">→</span>
+					</button>
+				  </div>
+				</div>
+			    
 			  </div>
+			</div>
+
+			  <!-- 오른쪽 소셜 아이콘 박스 -->
+				<div class="social-box">
+				  <ul>
+				    <li>
+				      <a href="https://www.youtube.com/watch?v=WaWoMowapjI">
+				        <img src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
+				        <span>유튜브</span>
+				      </a>
+				    </li>
+				    <li>
+				      <a href="https://blog.naver.com/ewinner7/222973843240">
+				        <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
+				        <span>블로그</span>
+				      </a>
+				    </li>
+				    <li>
+				      <a href="https://www.instagram.com">
+				        <img src="/images/winct/insta.svg" alt="인스타그램" class="snsImg">
+				        <span>인스타그램</span>
+				      </a>
+				    </li>
+				  </ul>
+				</div>
+				
 			</div>
 		</div>
 	</div>
    </div>
-	<div class="container-fluid mb-2" style="margin-left: 320px;">
+	<div class="container-fluid mb-2" style="margin-left: 390px;">
 		<div class="row px-xl-8">
-			<div class="col-lg-4">
+			<div class="col-lg-auto" style="width: 565px;">
 				<div class="bg-light box-p-10" style="height: 215px;">
 					<!-- 탭 헤더 -->
 					<div class="nav nav-tabs mb-1 border-bottom border-primary">
@@ -710,24 +827,24 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				    주말/공휴일 휴무
 				  </p>
 				</div>
-				<div class="bg-light box-p-10" style="width: 530px; height: 80px; margin-top: 20px; position: relative; left: -10px;">
+				<div class="bg-light box-p-10" style="width: 470px; height: 80px; margin-top: 20px; position: relative; left: -10px;">
 					<div class="row text-center">
 						<div class="col-4 d-flex justify-content-center align-items-center">
 							<a href="https://open.kakao.com/o/gBvFxyYg" class="d-flex align-items-center text-dark" style="text-decoration: none;">
 								<img class="img-fluid" src="/images/winct/kakao.svg" alt="카카오상담" style="height: 30px; margin-right: 8px; margin-top: 15px;">
-								<span style="font-size: 0.7rem;">카카오상담</span>
+								<span style="font-size: 0.8rem;">카카오상담</span>
 							</a>
 						</div>
-						<div class="col-4 d-flex justify-content-center align-items-center">
+						<div class="col-3 d-flex justify-content-center align-items-center">
 							<a href="#" onclick="fnasq_main();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
 								<img class="img-fluid" src="/images/winct/headset.svg" alt="1대1상담" style="height: 30px; margin-right: 8px; margin-top: 15px;">
-								<span style="font-size: 0.7rem;">1대1상담</span>
+								<span style="font-size: 0.8rem;">1대1상담</span>
 							</a>
 						</div>
 						<div class="col-4 d-flex justify-content-center align-items-center">
 							<a href="#" onclick="loadFaqData();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
 								<img class="img-fluid" src="/images/winct/faq.svg" alt="자주듣는질문" style="height: 30px; margin-right: 8px; margin-top: 15px;">
-								<span style="font-size: 0.7rem;">자주하는질문</span>
+								<span style="font-size: 0.8rem;">자주하는질문</span>
 							</a>
 						</div>
 					</div>
