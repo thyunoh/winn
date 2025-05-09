@@ -666,8 +666,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	</div>
 	<!--  공공기관 포털   -->
 	<div class="bmenu">
-	    <div class="row px-xl-8">
-	        <div class="col-lg-12" style="background-color: #004080;"> <!-- 약간 연한 남색 -->
+	    <!-- px-xl-8 제거 -->
+	    <div class="row m-0"> 
+	        <!-- col에 padding 제거 -->
+	        <div class="col-lg-12 p-0" style="background-color: #004080;"> 
 	            <nav class="navbar navbar-expand-lg navbar-dark py-3 py-lg-0 px-0">
 	                <div class="collapse navbar-collapse">
 	                    <div class="navbar-nav d-flex justify-content-center w-100 py-0">
@@ -684,9 +686,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        </div>
 	    </div>
 	</div>
-
 	<!--회원가입 모달창   -->
-
 	<div id="mainModal" class="modal fade" tabindex="-1" data-backdrop="static"
 		data-keyboard="false" aria-hidden="true" role="dialog">
 		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document"
