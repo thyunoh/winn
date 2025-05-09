@@ -545,16 +545,16 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			<div class="col-lg-auto" style="width: 580px;">
 				<div class="bg-light box-p-10" style="height: 215px;">
 					<!-- 탭 헤더 -->
-					<div class="nav nav-tabs mb-1 border-bottom border-primary">
-						<a class="nav-item nav-link active px-4 py-2 fw-bold"
+					<div class="nav nav-tabs mb-1 border-bottom border-primary d-flex">
+						<a class="nav-item nav-link active px-4 py-2 fw-bold text-center flex-fill"
 							data-bs-toggle="tab" href="#notice-tab">
 							<i class="fas fa-bell me-1"></i> 공지사항
 						</a>
-						<a class="nav-item nav-link px-4 py-2 fw-bold text-muted"
+						<a class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
 							data-bs-toggle="tab" href="#tab-pane-1">
 							<i class="fas fa-clinic-medical me-1"></i> 심사방
 						</a>
-						<a class="nav-item nav-link px-4 py-2 fw-bold text-muted"
+						<a class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
 							data-bs-toggle="tab" href="#tab-pane-2">
 							<i class="fas fa-newspaper me-1"></i> 소식지
 						</a>
