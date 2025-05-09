@@ -464,7 +464,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				  <!-- 텍스트 영역 -->
 				  <div style="display: flex; flex-direction: column; justify-content: flex-start;">
 					<div style="text-align: left; margin-bottom: 5px;">
-					  <span style="font-size: 18px; margin-bottom: 10px; font-weight: bold; color: black;">컨설팅 소개</span>
+					  <span style="font-size: 17px; margin-bottom: 10px; font-weight: bold; color: black;">컨설팅 소개</span>
 					</div>
 					<div style="text-align: left; ">
 					  <span style="font-size: 12px; font-weight: bold; ">의료특화 전문교육</span>
@@ -491,7 +491,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				  <!-- 텍스트 영역 -->
 				  <div style="display: flex; flex-direction: column; justify-content: flex-start; margin-left: 7px;">
 				    <div style="text-align: left; margin-bottom: 5px;">
-				      <span style="font-size: 18px; margin-bottom: 10px; font-weight: bold; color: black;">온라인교육센터</span>
+				      <span style="font-size: 17px; margin-bottom: 10px; font-weight: bold; color: black;">온라인교육센터</span>
 				    </div>
 				    <div style="text-align: left;">
 				      <span style="font-size: 12px; font-weight: bold;">효과적인 학습을 위한 교육</span>
