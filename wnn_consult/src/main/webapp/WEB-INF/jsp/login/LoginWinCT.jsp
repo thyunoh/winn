@@ -72,7 +72,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				<div class="collapse navbar-collapse justify-content-between">
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:10px;">
 						<div class="nav-item dropdown">
-						    <a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px;" data-bs-toggle="dropdown">컨설팅 소개</a>
+						    <a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px;" data-bs-toggle="dropdown"><strong>컨설팅 소개</strong></a>
 						    <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
 						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
 						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
