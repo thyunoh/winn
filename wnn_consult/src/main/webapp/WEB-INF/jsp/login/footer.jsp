@@ -4,7 +4,7 @@
  <style>
  </style>
  <div class="wrapper">
-	  <footer class="footer" id="footer" style="color: var(--color-gray); background-color: #2c2c2c; width: 100%;">
+	  <footer class="footer" id="footer" style="color: var(--color-gray); background-color: #00325B; width: 100%;">
 	    <div class="inner" style="text-align:center; font-size:12px">
 	      <div class="footer_inner" style="box-sizing: border-box; max-width: 800px; 
 	                  margin: 0 auto; width: 70%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-wrap: wrap;">

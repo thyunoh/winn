@@ -39,7 +39,7 @@
 href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <link href="/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/css/winct/style.css?v=123" rel="stylesheet">
-
+<link href="/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
 <!-- JavaScript -->
 <script type="text/javascript" src="/js/winct/main.js"></script>
 <script type="text/javascript" src="/js/winct/message.js"></script>
@@ -52,215 +52,25 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <!-- DataTables JS 추가 -->
 </head>
 <style>
-	.social-container {
-	  position: relative;            /* 기준점 설정 */
-	  display: flex;
-	  justify-content: space-between;
-	  align-items: center;
-	}
-	
-	.wincheck-img {
-	  margin-top: -15px; /* 원하는 만큼 숫자 조절 */
-	  max-width: 50%;                /* 왼쪽 이미지 크기 조절 */
-	}
-	.social-box {
-	  position: fixed;
-	  top: 35%;
-	  right: 270px; /* ← 기존 20px → 60px로 늘려서 왼쪽으로 당김 */
-	  background: #ffffff;
-	  border: 2px solid #0d3b66;
-	  border-radius: 16px;
-	  padding: 14px 10px;
-	  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	  display: flex;
-	  flex-direction: column;
-	  align-items: center;
-	  gap: 10px;
-	  z-index: 9999;
-	}
-	
-	.social-box img {
-	  width: 50px;
-	  height: 50px;
-	  margin: 10px 0;
-	}
-	.slanted-banner {
-	  background-color: #003b74;
-	  position: absolute;
-	  top: 0;
-	  right: 0;
-	  width: 280px;
-	  height: 100%;
-	  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
-	  z-index: -1;
-	}
-
-   .right-img-group {
-     display: flex;
-     flex-direction: column;
-     gap: 20px;
-   }
-	#noticeTable, #noticeTable1, #noticeTable2 {
-		table-layout: fixed;
-		width: 70%;
-	}
-	
-	#noticeTable th, #noticeTable1 th, #noticeTable2 th {
-		padding: 8px;
-		vertical-align: middle;
-		background-color: #DCE6F1;
-		font-weight: bold;
-		text-align: center;
-		font-size: 13px;
-		height: 25px;
-	}
-	
-	#noticeTable td, #noticeTable1 td, #noticeTable2 td {
-		padding: 6px;
-		vertical-align: middle;
-		text-align: center;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	} 
-    #navbarMenuArea {
-	    display: flex;
-	    flex-direction: row;
-	    flex-wrap: nowrap; /* 줄바꿈 방지 */
-	    align-items: center;
-	    gap: 20px; /* 메뉴 사이 간격 */
-    }
-	.nav-right-banner {
-	  position: relative;
-	  width: 300px;
-	  height: 55px;
-	  background: transparent;
-	  overflow: hidden;
-	}
-	
-	/* 짙은 파란색 사선 배경 */
-	.main-blue {
-	  position: relative;
-	  width: 300px;
-	  height: 100px;
-	  background-color: #003b73;
-	  clip-path: polygon(60px 0%, 100% 0%, 100% 100%, 0% 100%);
-	  z-index: 1;
-	}
-	/* 옅은 하늘색 사선 */
-	.light-stripe {
-	  position: absolute;
-	  width: 10px;
-	  height: 100px; /* 전체 높이는 유지 */
-	  background-color: #7ecfff;
-	  clip-path: polygon(0 20%, 100% 20%, 100% 100%, 0% 100%);
-	  transform: skewX(-30deg);
-	  left: 40px;
-	  top: 10px;
-	  z-index: 2;
-	}
-	.back-to-top {
-	  position: fixed;
-	  bottom: 40px;
-	  right: 40px;
-	  z-index: 99;
-	  width: 60px;
-	  height: 60px;
-	  background-color: #00aaff;
-	  color: white;
-	  text-align: center;
-	  border-radius: 50%;
-	  font-weight: bold;
-	  display: none;
-	  flex-direction: column; /* 위아래 정렬 */
-	  align-items: center;
-	  justify-content: center;
-	  font-size: 14px;
-	  box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
-	}
-	.back-to-top i {
-	  font-size: 14px;
-	  margin-bottom: -10px; /* 간격 제거 */
-	}
-	.loginBg {
-	    width: 300px;
-	    height: 400px; /* 줄인 세로 크기 */
-	    position: absolute;
-	    top: 50%;
-	    left: 50%;
-	    transform: translate(-40%, -50%);
-	    object-fit: contain;
-	    pointer-events: none;
-	    z-index: 0;
-	}
-	.social-box {
-	  border: 2px solid #003366;
-	  border-radius: 10px;
-	  padding: 10px;
-	  width: 80px; /* 박스 너비 줄임 */
-	}
-	
-	.social-box ul {
-	  list-style: none;
-	  padding: 0;
-	  margin: 0;
-	}
-	
-	.social-box li {
-	  text-align: center;
-	  margin-bottom: 15px; /* 간격도 조금 줄임 */
-	}
-	
-	.snsImg {
-	  display: block;
-	  margin: 0 auto;
-	  width: 20px; /* 이미지 크기 축소 */
-	}
-	
-	.social-box span {
-	  display: block;
-	  margin-top: 4px;
-	  color: black;
-	  font-size: 10px; /* 글자 크기 축소 */
-	  font-weight: bold;
-	}
-	.program-button {
-	  background-color: #0061b2; /* 버튼 배경색 */
-	  color: #fff; /* 텍스트 색상 */
-	  font-size: 12px; /* 텍스트 크기 줄임 */
-	  padding: 1px 6px; /* 버튼 내 여백을 최소화 (높이 더 감소) */
-	  border: 2px solid #004b87; /* 테두리 추가 */
-	  border-radius: 25px; /* 둥근 모서리 */
-	  display: flex; /* 텍스트와 화살표 정렬 */
-	  align-items: center; /* 세로 정렬 */
-	  justify-content: space-between; /* 텍스트와 화살표를 양 끝으로 배치 */
-	  cursor: pointer; /* 마우스 포인터 */
-	  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
-	  transition: all 0.3s ease; /* 효과 */
-	}
-	
-	.arrow {
-	  font-size: 3px; /* 화살표 크기 조정 */
-	}
 </style>
 <body>
 <!-- Navbar Start -->
 <div class="container-fluid_act bg-white mb-2">
 	<div class="row px-xl-8">
 		<div class="col-lg-3 d-none d-lg-block">
-			<a class="btn d-flex justify-content-center align-items-center bg-white w-80"
-				data-bs-toggle="collapse" href="#navbar-vertical"
-				style="height: 50px; padding: 0; width: 70%;">
-				<img src="/images/winct/logo.svg" alt="WinnerNet Logo"
-					id="consultingTitle"
-					style="width: 200px; height: 100px; object-fit: contain;">
-			</a>
+		<a class="btn d-flex align-items-center bg-white w-80"
+		   data-bs-toggle="collapse" href="#navbar-vertical"
+		   style="height: 50px; padding: 0; width: 70%;">
+		   
+			<img src="/images/winct/logo.svg" alt="WinnerNet Logo" id="consultingTitle"
+			     style="width: 200px; height: auto; object-fit: contain; display: block; margin-left: 50px; margin-right: auto;">
+		</a>
 		</div>
 		<div class="col-lg-9">
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
 				style="height: 50px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0">
+					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:10px;">
 						<div class="nav-item dropdown">
 						    <a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px;" data-bs-toggle="dropdown">컨설팅 소개</a>
 						    <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
@@ -664,7 +474,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				    
 				    <!-- 버튼 -->
 					<button class="program-button" style="height: 26px; margin-top: 5px; margin-left: -20px;">
-					  컨설팅소개서다운로드
+					  컨설팅소개서 다운로드
 					  <span class="arrow">→</span>
 					</button>
 				  </div>
@@ -690,7 +500,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				    </div>
 				    
 				    <!-- 버튼 -->
-					<button onclick="window.location.href='https://winner797.net/';" class="program-button" style="height: 26px; margin-top: 5px; margin-left: 0;">
+					<button onclick="window.location.href='https://winner797.net/';" class="program-button" style="height: 26px; margin-top: 4px; margin-left: -6px;">
 					  홈페이지 바로가기
 					  <span class="arrow">→</span>
 					</button>
@@ -710,27 +520,28 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				      </a>
 				    </li>
 				    <li>
-				      <a href="https://blog.naver.com/ewinner7/222973843240">
-				        <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
-				        <span>블로그</span>
-				      </a>
-				    </li>
-				    <li>
 				      <a href="https://www.instagram.com">
 				        <img src="/images/winct/insta.svg" alt="인스타그램" class="snsImg">
 				        <span>인스타그램</span>
 				      </a>
 				    </li>
+				    <li>
+				      <a href="https://blog.naver.com/ewinner7/222973843240">
+				        <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
+				        <span>블로그</span>
+				      </a>
+				    </li>
 				  </ul>
+				  <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
 				</div>
-				
 			</div>
 		</div>
 	</div>
    </div>
-	<div class="container-fluid mb-2" style="margin-left: 390px;">
+   
+	<div class="container-fluid_noti mb-2" style="margin-left: 390px;">
 		<div class="row px-xl-8">
-			<div class="col-lg-auto" style="width: 565px;">
+			<div class="col-lg-auto" style="width: 580px;">
 				<div class="bg-light box-p-10" style="height: 215px;">
 					<!-- 탭 헤더 -->
 					<div class="nav nav-tabs mb-1 border-bottom border-primary">
@@ -753,12 +564,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 공지사항 -->
 						<div class="tab-pane fade active show" id="notice-tab">
 							<div class="scroll-table-container"
-								style="max-height: 200px; overflow-x: auto; overflow-y: auto;">
+								style="max-height: 200px;  overflow-y: auto;">
 								<table id="noticeTable" class="table table-bordered">
 									<colgroup>
-										<col style="width: 30px">
-										<col style="width: 120px">
-										<col style="width: 200px">
+										<col style="width: 50px">
+										<col style="width: 270px">
 										<col style="width: 180px">
 									</colgroup>
 									<tbody id="noticeArea">
@@ -773,12 +583,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 심사방 -->
 						<div class="tab-pane fade" id="tab-pane-1">
 							<div class="scroll-table-container"
-								style="max-height: 200px; overflow-x: auto; overflow-y: auto;">
+								style="max-height: 200px; overflow-y: auto;">
 								<table id="noticeTable1" class="table table-bordered">
 									<colgroup>
-										<col style="width: 30px">
-										<col style="width: 120px">
-										<col style="width: 200px">
+										<col style="width: 50px">
+										<col style="width: 270px">
 										<col style="width: 180px">
 									</colgroup>
 									<tbody id="noticeArea1">
@@ -793,12 +602,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 소식지 -->
 						<div class="tab-pane fade" id="tab-pane-2">
 							<div class="scroll-table-container"
-								style="max-height: 200px; overflow-x: auto; overflow-y: auto;">
+								style="max-height: 200px;  overflow-y: auto;">
 								<table id="noticeTable2" class="table table-bordered">
 									<colgroup>
-										<col style="width: 30px">
-										<col style="width: 120px">
-										<col style="width: 200px">
+										<col style="width: 50px">
+										<col style="width: 270px">
 										<col style="width: 180px">
 									</colgroup>
 									<tbody id="noticeArea2">
@@ -809,6 +617,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								</table>
 							</div>
 						</div>
+						
 					</div>
 				</div>
 			</div>
@@ -816,34 +625,35 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			<div class="col-lg-4">
               <div class="helpdesk">
-				<div class="helpdeskHeader" style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px;">
-				  <h3 style="font-size: 24px; margin-bottom: 10px;">
+				<div class="helpdeskHeader" style="text-align: left; font-family: Arial, sans-serif; margin-left: -10px; margin-top: 20px;">
+				  <hr style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 1cm;">
+				  <h3 style="font-size: 22px; margin-bottom: 10px;">
 				    고객센터 <span style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
 				  </h3>
-				  <p style="font-size: 28px; font-weight: bold; color: #333; margin: 1px 0;">02-2653-7971</p>
-				  <p style="font-size: 12px; color: #666; margin-top: 1px;">
-				    월-금 09:00 ~ 18:00<span style="margin: 0 5px;">|</span>
-				    점심시간 12:00 ~13:00<span style="margin: 0 5px;">|</span>
-				    주말/공휴일 휴무
-				  </p>
+					<p style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">02-2653-7971</p>
+					<p style="font-size: 12px; color: #666; margin-top: 0px;">
+					  <strong>월-금</strong> 09:00 ~ 18:00<span   style="margin: 0 5px;">|</span>
+					  <strong>점심시간</strong> 12:00 ~ 13:00<span style="margin: 0 5px;">|</span>
+					  <strong>주말/공휴일 휴무</strong>
+					</p>
 				</div>
-				<div class="bg-light box-p-10" style="width: 470px; height: 80px; margin-top: 20px; position: relative; left: -10px;">
+				<div class="bg-light box-p-10" style="width: 470px; height: 60px; margin-top: 20px; position: relative; left: -10px;">
 					<div class="row text-center">
 						<div class="col-4 d-flex justify-content-center align-items-center">
 							<a href="https://open.kakao.com/o/gBvFxyYg" class="d-flex align-items-center text-dark" style="text-decoration: none;">
-								<img class="img-fluid" src="/images/winct/kakao.svg" alt="카카오상담" style="height: 30px; margin-right: 8px; margin-top: 15px;">
+								<img class="img-fluid" src="/images/winct/kakao.svg" alt="카카오상담" style="height: 30px; margin-right: 8px; margin-top: 12px;">
 								<span style="font-size: 0.8rem;">카카오상담</span>
 							</a>
 						</div>
 						<div class="col-3 d-flex justify-content-center align-items-center">
 							<a href="#" onclick="fnasq_main();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
-								<img class="img-fluid" src="/images/winct/headset.svg" alt="1대1상담" style="height: 30px; margin-right: 8px; margin-top: 15px;">
+								<img class="img-fluid" src="/images/winct/headset.svg" alt="1대1상담" style="height: 30px; margin-right: 8px; margin-top: 12px;">
 								<span style="font-size: 0.8rem;">1대1상담</span>
 							</a>
 						</div>
 						<div class="col-4 d-flex justify-content-center align-items-center">
 							<a href="#" onclick="loadFaqData();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
-								<img class="img-fluid" src="/images/winct/faq.svg" alt="자주듣는질문" style="height: 30px; margin-right: 8px; margin-top: 15px;">
+								<img class="img-fluid" src="/images/winct/faq.svg" alt="자주듣는질문" style="height: 30px; margin-right: 8px; margin-top: 12px;">
 								<span style="font-size: 0.8rem;">자주하는질문</span>
 							</a>
 						</div>
@@ -856,26 +666,25 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	</div>
 	<!--  공공기관 포털   -->
 	<div class="bmenu">
-		<div class="row px-xl-8">
-			<div class="col-lg-12 bg-info">
-				<nav
-					class="navbar navbar-expand-lg bg-info navbar-dark py-3 py-lg-0 px-0">
-					<div class="collapse navbar-collapse">
-						<!-- 메뉴를 가로 정렬 -->
-						<div class="navbar-nav d-flex justify-content-center w-100 py-0">
-							<a href="https://winner797.kr/main/" class="nav-item nav-link">위너넷 평생교육원</a> 
-							<a href="https://winner797.net/" class="nav-item nav-link">위너넷 온라인교육센터</a> 
-							<a href="https://www.hirachung.co.kr/" class="nav-item nav-link">한국보험의료인증원</a> 
-							<a href="https://www.nhis.or.kr/nhis/index.do" class="nav-item nav-link">건강보험공단</a> 
-							<a href="https://www.hira.or.kr" class="nav-item nav-link">건강보험심사평가원</a>
-							<a href="https://biz.hira.or.kr/index.do" class="nav-item nav-link">요양기관업무포탈</a> 
-							<a href="#"	class="nav-item nav-link">통합사이트</a>
-						</div>
-					</div>
-				</nav>
-			</div>
-		</div>
+	    <div class="row px-xl-8">
+	        <div class="col-lg-12" style="background-color: #004080;"> <!-- 약간 연한 남색 -->
+	            <nav class="navbar navbar-expand-lg navbar-dark py-3 py-lg-0 px-0">
+	                <div class="collapse navbar-collapse">
+	                    <div class="navbar-nav d-flex justify-content-center w-100 py-0">
+	                        <a href="https://winner797.kr/main/" class="nav-item nav-link">위너넷 평생교육원</a> 
+	                        <a href="https://winner797.net/" class="nav-item nav-link">위너넷 온라인교육센터</a> 
+	                        <a href="https://www.hirachung.co.kr/" class="nav-item nav-link">한국보험의료인증원</a> 
+	                        <a href="https://www.nhis.or.kr/nhis/index.do" class="nav-item nav-link">건강보험공단</a> 
+	                        <a href="https://www.hira.or.kr" class="nav-item nav-link">건강보험심사평가원</a>
+	                        <a href="https://biz.hira.or.kr/index.do" class="nav-item nav-link">요양기관업무포탈</a> 
+	                        <a href="#" class="nav-item nav-link">통합사이트</a>
+	                    </div>
+	                </div>
+	            </nav>
+	        </div>
+	    </div>
 	</div>
+
 	<!--회원가입 모달창   -->
 
 	<div id="mainModal" class="modal fade" tabindex="-1" data-backdrop="static"
@@ -1591,8 +1400,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    		          + data.resultList[i].notiContent.replace(/\s+/g, '_').replace(/'/g, "\\'") + '">';
 		    		          
 		 				dataTxt += 	"<td>" + (i+1)  + "</td>" ; 
-						dataTxt +=  "<td>" + data.resultList[i].notiTitle   + "</td>" ;
-						dataTxt +=  "<td class='txt-left ellips'>" + data.resultList[i].notiContent    + "</td>" ;
+						dataTxt += "<td style='text-align: left;'>" + data.resultList[i].notiTitle + "</td>";
+					//	dataTxt +=  "<td class='txt-left ellips'>" + data.resultList[i].notiContent    + "</td>" ;
 						dataTxt +=  "<td>" + data.resultList[i].updDttm     + "</td>" ; 
 					//	dataTxt +=  "<td>" + data.resultList[i].userNm      + "</td>" ;
 						dataTxt +=  "<td>" + data.resultList[i].notiRedcnt  + "</td>" ;

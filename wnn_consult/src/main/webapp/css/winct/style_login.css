@@ -1,969 +1,200 @@
-/* ===================== Reset ===================== */
-* {
-    margin: 0;
-    padding: 0;
-
-}
-
-body {
-    /* background-color: #F2F3F7; */
-    font-family: 'Nanum Gothic', '맑은 고딕', Malgun Gothic, sans-serif;
-    font-size: 16px;
-}
-a {text-decoration: none; }
-img:hover {opacity: 0.7;}
-ul li {list-style: none;}
-/* ===================== Layout Wrappers ===================== */
-#wrap {
-    width: 100%;
-    
-}
-
-.container {
-    width: 100%;
-}
-
-/* ===================== Header ===================== */
-header {
-    width: 100%;
-    height: 80px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    background: linear-gradient(to right, #fff 90%, #003B71 10%);
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-
-}
-
-.headerInner {
-    width: 1200px;
-    margin: 0 auto;
-    height: 80px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-}
-
-.logoMenu {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    width: 1200px;
-    height: 80px;
-    align-items: center;
-    flex: 1;
-    background-color: #fff;
-}
-
-.headerRightImg {
-    position: absolute;
-    right: -480px;
-    top: 0;
-}
-
-.headerInner .menu {
-    align-items: center;
-    width: 800px;
-    height: 80px;
-    font-size: 20px;
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-   
-
-}.menu>li {
-    width: 30.333%;
-    height: 80px;
-    box-sizing: border-box;
-    position: relative;
-    padding: 0;
-    margin: 0;
-}
-
-
-.menu>li>a {
-    display: flex; 
-    align-items: center;
-    justify-content: center; 
-    text-decoration: none;
-    color: #333;
-    font-weight: bold;
-    transition: color 0.3s;
-    height: 100%;
-    width: 100%;
-    box-sizing: border-box; 
-    position: relative;
-
-    text-align: center;
-}
-
-/* hover 시 텍스트 색상 변경 */
-.menu>li>a:hover,
-.menu>li>a:focus {
-    color: #0975b7;
-}
-
-/* hover 시 하단 선 표시 */
-.menu>li>a:hover::after,
-.menu>li>a:focus::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: #0975b7;
-    display: block;
-}
-
-
-/* submenu */
-.submenu {
-    width: 243px; 
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;  
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: #ffffff;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 0px;
-    z-index: 3;  
-    display: flex;
-    gap: 10px;
-    transition: opacity 0.3s ease;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    font-size: 15px;
-  }
-  
-  /* 마우스를 li 전체에 올렸을 때 보여지게 */
-  .menu > li:hover .submenu {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-  }
-  
-  .submenu>li {
-    list-style: none;
-  }
-  
-  .submenu>li>a {
-    white-space: nowrap;
-    display: block;
-    padding: 10px 16px;
-    text-decoration: none;
-    color: #333;
-
-   
-  }
-  
-  .submenu>li>a:hover {
-    background-color: #e8f6ff;
- color: #0975b7;
- text-decoration: underline;
-  }
-  
-/* ===================== Main ===================== */
-main {
-    padding-top: 80px;
-}
-
-.blind {
-    text-indent: -9999px;
-    position: absolute;
-    left: 5000px;
-    font-size: 0;
-    width: 0;
-}
-
-.mainSlide {
-    height: 604px;
-    background-color: #F2F3F7;
-    width: 100%;
-}
-
-.mainSlide p:nth-child(1) { padding-top: 120px; }
-.mainSlide p:nth-child(2) { padding-top: 50px; }
-
-.mainSlideInner {
-    width: 1200px;
-    margin: 0 auto;
-    height: 100%;   
-}
-
-.mainSlideInner .imgContents {
-    display: flex;
-    justify-content: space-between;
-}
-
-
-/* slide */
-
-.sliderWrapper {
-    width:100%;
-    height: 604px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    margin: 0 auto;
-    background-color: #000;
-  }
-  /* 왼쪽 하단에 컨트롤 패널 배치 */
-.controlPanel {
-    position: absolute;
-    left:17.5%;
-    bottom: 16%; 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px; /* 버튼 사이에 간격 */
-    padding: 10px;
-    z-index: 10;
-  }
-
-  .controlPanel button {
-    background: transparent;   /* 배경 제거 */
-  border: none;              /* 테두리 제거 */
-  padding: 0;                /* 내부 여백 제거 */
-  margin: 0;                 /* 외부 여백 제거 */
-  cursor: pointer;           /* 마우스 커서 변경 */
-  outline: none;             /* 포커스 테두리 제거 */
-  display: inline-flex;      /* 이미지 크기에 맞춤 */
-  align-items: center;
-  justify-content: center;
-  }
-  
-  /* 기본 넘버 스타일 */
-  .controlPanel .number {
-    font-size: 30px;
-    color: #999; /* 기본 글자 색상 */
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s;
-  }
-  
-  /* 넘버가 클릭되었을 때 파란색으로 강조 */
-  .controlPanel .number.active {
-    color: #2facf9;
-  }
-  
-  .controlPanel .number:hover {
-    color: #2facf9;
-  }
-  
-  /* 버튼 스타일 */
-  .controlPanel button {
-  
-    border: none;
- 
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-
-  
-  /* 슬라이드 */
-  .slider {
-    flex: 1;
-    position: relative;
-    height: 100%;
-  }
-  
-  .slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 604px;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 0.6s ease-in-out;
-    z-index: 0;
-  }
-  
-  .slide.active {
-    opacity: 1;
-    z-index: 1;
-  }
-  
-  
-/* ===================== Login Section ===================== */
-.loginAbout {
-    position: relative;
-    z-index: 2;
-    height: 80px;
-    background:
-        linear-gradient(to left, #F9F9F9 45%, #003B71 55%),
-        url('./images/winct/loginBg.svg') no-repeat 50px 50px;
-    background-size: auto;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-.loginBg {
-    width: 500px;
-    height: 80px; /* 세로 크기를 조절: 아이디저장 근처까지만 보이게 */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-170%, -50%);
-    object-fit: contain; /* 이미지 비율 유지하면서 크기 맞추기 */
-    pointer-events: none;
-    z-index: 0;
-}
-
-.loginAboutInner {
-    background-color: #F9F9F9;
-    width: 1200px;
-    margin: 0 auto;
-    height: 100%;
-    display: flex;   
-}
-
-.loginLeft {
-    width: 55%;
-    background-color: #003B71;
-    color: #fff;
-}
-
-.loginHeader {
-    margin: 60px 0 30px;
-}
-
-.loginHeader span:nth-child(1) {
-    font-size: 30px;
-    font-weight: bold;
-}
-
-.loginHeader span:nth-child(2) {
-    font-size: 15px;
-    margin-left: 15px;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-
-/* Login Form */
-.loginForm {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    width: 94%;
-    max-width: 800px;
-}
-
-.loginForm input {
-    width: 415px;
-    height: 50px;
-    padding: 0 10px;
-    font-size: 15px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    outline: none;
-    transition: border 0.3s ease;
-    box-sizing: border-box;
-}
-
-.loginForm input:focus,
-.loginForm input:hover {
-    border: 3px solid #088EE2 !important;
-}
-
-.loginLeft input::placeholder {
-    color: #AAAAAA !important;
-}
-
-.loginButton {
-    width: 190px;
-    height: 190px;
-    background-color: #088EE2;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 25px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    text-align: center;
-}
-
-.loginButton:hover {
-    background-color: #0074cc;
-}
-
-.bottomForm {
-    width: 415px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    font-size: 14px;
-}
-
-.inputContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    flex: 1;
-}
-
-.checkboxForm > label {
-    margin-right: 20px !important;
-    display: inline-flex !important;
-    align-items: center;
-    gap: 5px !important;
-    cursor: pointer !important;
-    color: #fff !important;
-}
-
-.checkboxForm input[type="checkbox"] {
-    accent-color: #088EE2 !important;
-    width: 16px !important;
-    height: 16px !important;
-    cursor: pointer !important;
-}
-
-.join {
-    display: flex;
-    align-items: center;
-}
-
-.join .bold {
-    font-weight: bold;
-}
-
-.join .divider {
-    width: 1px;
-    height: 7px;
-    background-color: rgba(255, 255, 255, 0.5);
-    margin-left: 20px;
-}
-
-.join a {
-    margin-left: 20px;
-    text-decoration: none;
-    color: #2facf9;
-    font-weight: bold;
-    transition: color 0.2s;
-}
-
-.join a:hover {
-    color: #005fa3;
-}
-
-.loginRight {
-    width: 45%;
-    background-color: #F9F9F9;
-    color: #333;
-    margin-left: 30px;
-}
-.loginRight .detale { 
-    width:510px; 
-    height: 354px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    box-sizing: border-box; 
-    padding-top: 47px;
-  }
-  
-  .loginRight .detale .left { 
-    width: 250px; 
-    height: 360px; 
-    /* padding-top: 10px;  */
-   
-  }
-  
-  .loginRight .detale .left h3 { 
-    font-size: 22px; 
-    color: #F29004; 
-    margin-bottom: 38px; 
-    text-align: center;
-  }
-  .loginRight .detale .left h3+a {display: block;text-align: center;}
-  .loginRight .detale .left h3 span { 
-    font-size: 22px; 
-    color: #000; 
-  }
-  
-  .loginRight .detale .left p { 
-    line-height: 1.6; 
-    font-size: 13px; 
-    margin-bottom: 27px;
-    margin-top: 10px;
-    text-align: center;
-  }
-
-  a.btn { 
-    padding: 0 30px; 
-    box-sizing: border-box;
-    font-weight: bold; 
-    text-decoration: none;
-    width: 250px; 
-    height: 44px; 
-    background-color: #003B71; 
-    border-radius: 8px;
-    display: flex; 
-    align-items: center; 
-    color: #fff;
-    justify-content: space-between;
-  }
-  
-  
-  .detale p+a.btn { 
-    height: 44px;
-  }
-  .detale p+a.btn:hover { 
-    background-color: #032e56; 
-  }
-
-  .loginRight .detale .right { 
-   
-    width: 232px; 
-    height: 365px; 
-    display: flex; 
-    justify-content: space-between; 
-    gap: 20px;
-    flex-direction: column; 
-    box-sizing: border-box;
-    margin-top: 12px;
-  }
-  
-  .loginRight .detale .right h3 { 
-    font-size: 22px; 
-    color: #000; 
-    padding-bottom: 21px; 
-    box-sizing: border-box; 
-    text-align: center;
-  }
-  
-  .loginRight .detale .right .topAbout p { 
-    display: flex; 
-    /* justify-content: space-between; */
-   
-    width:245px;
-    gap:10px;
-
-    
-  }
-  
-  .loginRight .detale .right .online p { 
-    display: flex; 
-    width:245px;
-    gap:10px;
-    margin-bottom: 1px;
-    /* justify-content: space-between; */
-
-  }
-  .loginRight .detale .right .online p+a {margin-bottom: 6px;}
-
-  
-  .loginRight .detale p { 
-    line-height: 1.6; 
-    font-size: 13px; 
-    margin-bottom: 10px;
-  }
-  
-.text {margin: 10px 0 0 5px;}
-/* ===================== Notice & Helpdesk ===================== */
-.noticeHelpdesk {
-    height: 350px;
-    background-color: #fff;
-}
-
-.noticeHelpdeskInner {
-    width: 1200px;
-    margin: 0 auto;   
-}
-
-.noticeHelpdeskInner h2 {
-    margin-bottom: 20px;
-}
-
-.noticeHelpdeskContent {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: center;
-}
-
-.noticeHelpdeskContent .notice {
-    width: 53.5%;
-    display: flex;
-    align-items: center;
-    height: 396px;
-    justify-content: space-between;
-}
-
-/* Tabs */
-.tabContainer {
-    width: 100%;
-    margin: 0 auto;
-}
-
-.tabs {
-    display: flex;
-}
-.tab {
-    width: 220px;
-    height: 40px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd; /* 기존 3px → 1px로 수정 */
-    border-bottom: none;
-    color: #555;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 17px;
-    box-sizing: border-box;
-    margin-right: -1px; /* [추가] 중첩 라인 제거 */
-    position: relative;
-    z-index: 1; /* [추가] 활성 탭이 위로 오도록 */
-}
-
-/* active 상태 - 테두리 컬러만 다르게, 두께 동일하게 유지 */
-.tab.active {
-    background-color: #fff;
-    border: 1px solid #003B71; 
-    border-bottom: 1px solid #fff;
-    color: #003B71;
-    z-index: 2; /* [추가] 활성 탭 위로 */
-}
-
-.tab:not(.active) {
-    /* border: 1px solid #ddd; */
-
-    border-top: 1px solid #ddd; 
-  border-bottom: 1px solid #003B71; 
-  border-left: 1px solid #ddd; 
-  border-right: 1px solid #ddd; 
-
-
-
-    background-color: #f9f9f9;
-    color: #555;
-}
-
-.tabContent {
-    display: none;
-    background: #fff;
-    padding-top: 20px;
-    box-sizing: border-box;
-}
-
-.tabContent.active {
-    display: block;
-}
-
-.tabContent ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.tabContent li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    font-size: 15px;
-    color: #333;
-}
-
-.tagButton {
-    /* width: 80px; */
-    
-    background-color: #003B71;
-    color: #fff;
-    border: none;
-    border-radius: 25px;
-    font-size: 12px;
-    margin-right: 10px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    padding: 5px 16px; 
-}
-
-.tabContent span {
-    flex: 1;
-}
-
-.tabContent span a {
-    color: #333;
-    text-decoration: none;
-}
-
-.tabContent span a:hover,
-.tabContent span a:focus {
-    color: #088EE2;
-    text-decoration: underline;
-    font-weight: bold;
-}
-
-.tabContent em {
-    font-size: 13px;
-    color: #9e9e9e;
-    margin-left: 10px;
-    font-style: normal;
-}
-
-.noticeHelpdeskContent .helpdesk {
-    width:525px;
-    display: flex;
-    height: 350px; 
-    padding: 63px 0 63px 0;
-    box-sizing: border-box;
-    flex-direction: column;
-}
-.noticeHelpdeskContent .helpdesk h3 {
-    font-size: 30px;
-    margin-bottom: 40px;
-}
-.noticeHelpdeskContent .helpdesk span {
-    font-size: 15px;
-    font-weight: normal;
-    margin-left: 15px;
-    color: #BCBCBC;
-}
-.noticeHelpdeskContent .helpdesk p+span {
-    color: #000;
-    display: block;
-}
-.noticeHelpdeskContent .helpdesk h3+p {
-    font-size: 45px;
-    color: #000;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-.noticeHelpdeskContent .helpdesk h3+p>span {
-    color: #BCBCBC;
-}.noticeHelpdeskContent .helpdesk ul {
-    margin-top: 40px;
-    width: 100%;
-    display: flex;
-    align-items: stretch; /* 높이를 통일 */
-    justify-content: space-between;
-    border: 1px solid #BCBCBC;
-    border-left: none; /* 중복 라인 제거 */
-}
-
-.noticeHelpdeskContent .helpdesk ul li {
-    flex: 1;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-left: 1px solid #BCBCBC;
-    box-sizing: border-box;
-}
-
-.noticeHelpdeskContent .helpdesk ul li a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px; /* 이미지와 텍스트 간 여백 */
-    text-decoration: none;
-    width: 100%;
-    height: 100%;
-    color: #000;
-}
-
-
-.noticeHelpdeskContent .helpdesk ul li img {
-    width: 20px; /* 필요에 따라 조정 가능 */
-    height: 20px;
-    display: block;
-}
-
-.noticeHelpdeskContent .helpdesk ul li a span {
-    color: #000;
-}
-.noticeHelpdeskContent .helpdesk ul li a:hover span {
-    text-decoration: underline;
-    color: #000;
-    font-weight: bold;
-
-}
-/* ===================== Footer ===================== */
-footer {
-    height: 270px;
-    border-top: 1px solid #ccc;
-    background-color: #002A50;
-}
-
-.bmenu {
-    width: 100%;
-    background-color: #003B71;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.bmenu .bomenu {
-    list-style: none;
-    display: flex;
-    width: 1200px;
-    margin: 0 auto;
-    flex-wrap: wrap;
-    gap: 15px;
-    height: 80px;
-    align-items: center;
-    justify-content: space-between;   
-}
-
-
-
-
-
-
-
-
-
-
-
-.bmenu .bomenu li a {
-    color: #fff;
-    text-decoration: none;
-}
-
-.bmenu .bomenu li a:hover {
-    color: #088EE2;
-    text-decoration: underline;
-}
-
-.blogoCopy {
-    width: 100%;
-    background-color: #002A50;
-}
-
-.blogocopyInner {
-    width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    align-items: flex-start;
-    gap: 30px;
-    padding: 30px 0;   
-}
-
-.blogo {
-    width: 210px;
-    flex-shrink: 0;
-}
-
-.blogo img {
-    opacity: 0.5;
-}
-
-.blogo h2 {
-    font-size: 20px;
-}
-
-.copyright>p {
-    flex: 1;
-    font-size: 14px;
-    line-height: 1.8;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* ===================== Scroll Arrow ===================== */
-.scroll-arrow {
-    position: fixed;
-    bottom: 140px;
-    right: 12%;
-    z-index: 1000;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.scroll-arrow.show {
-    opacity: 1;
-    visibility: visible;
-}
-
-.scroll-arrow img {
-    width: 88px;
-    height: auto;
-}
-
-/* ===================== Quick Menu ===================== */
-.quick-menu {
-    position: fixed;
-    z-index: 3;
-    top: 220px;
-    right: 80px;
-    width: 90px;
-    height: 350px;
-    background-color: white;
-    border: 3px solid #003B71;
-    border-radius: 35px 8px 35px 8px;
-    /* border-radius: 8px; */
-    box-shadow: 0 0 18px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    text-align: center;
-}
-
-.quick-arrow-btn {
-    position: absolute;
-    bottom: -22px;
-    left: 50%;
-    transform: translateX(-50%);
-    cursor: pointer;
-    width: 40px;
-    height: auto;
-}
-
-.quick-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 30px 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.quick-menu ul li {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.quick-menu ul li .snsImg {
-    width: 40px;
-    height: auto;
-    margin: 12px 0;
-}
-
-.quick-menu ul li a {
-    text-decoration: none;
-    color: #6e6e6e;
-    font-weight: bold;
-    font-size: 15px;
-    transition: color 0.3s;
-}
-
-.quick-menu ul li a:hover {
-    color: #c0c0c0;
-    opacity: 0.7;
-}
-
-.quick-menu ul li a span {
-    display: block;
-    margin-top: 0;
-}
+	.social-container {
+	  position: relative;            /* 기준점 설정 */
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	}
+	
+	.wincheck-img {
+	  margin-top: -15px; /* 원하는 만큼 숫자 조절 */
+	  max-width: 50%;                /* 왼쪽 이미지 크기 조절 */
+	}
+	.social-box {
+	  position: fixed;
+	  top: 35%;
+	  right: 270px; /* ← 기존 20px → 60px로 늘려서 왼쪽으로 당김 */
+	  background: #ffffff;
+	  border: 2px solid #0d3b66;
+	  border-radius: 16px;
+	  padding: 14px 10px;
+	  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  gap: 10px;
+	  z-index: 9999;
+	}
+	
+	.social-box img {
+	  width: 50px;
+	  height: 50px;
+	  margin: 10px 0;
+	}
+	.slanted-banner {
+	  background-color: #003b74;
+	  position: absolute;
+	  top: 0;
+	  right: 0;
+	  width: 280px;
+	  height: 100%;
+	  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
+	  z-index: -1;
+	}
+
+   .right-img-group {
+     display: flex;
+     flex-direction: column;
+     gap: 20px;
+   }
+	#noticeTable, #noticeTable1, #noticeTable2 {
+		table-layout: fixed;
+		width: 70%;
+	}
+	
+	#noticeTable th, #noticeTable1 th, #noticeTable2 th {
+		padding: 8px;
+		vertical-align: middle;
+		background-color: #DCE6F1;
+		font-weight: bold;
+		text-align: center;
+		font-size: 13px;
+		height: 25px;
+	}
+	
+	#noticeTable td, #noticeTable1 td, #noticeTable2 td {
+		padding: 6px;
+		vertical-align: middle;
+		text-align: center;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	} 
+    #navbarMenuArea {
+	    display: flex;
+	    flex-direction: row;
+	    flex-wrap: nowrap; /* 줄바꿈 방지 */
+	    align-items: center;
+	    gap: 20px; /* 메뉴 사이 간격 */
+    }
+	.nav-right-banner {
+	  position: relative;
+	  width: 300px;
+	  height: 55px;
+	  background: transparent;
+	  overflow: hidden;
+	}
+	
+	/* 짙은 파란색 사선 배경 */
+	.main-blue {
+	  position: relative;
+	  width: 300px;
+	  height: 100px;
+	  background-color: #003b73;
+	  clip-path: polygon(60px 0%, 100% 0%, 100% 100%, 0% 100%);
+	  z-index: 1;
+	}
+	/* 옅은 하늘색 사선 */
+	.light-stripe {
+	  position: absolute;
+	  width: 10px;
+	  height: 100px; /* 전체 높이는 유지 */
+	  background-color: #7ecfff;
+	  clip-path: polygon(0 20%, 100% 20%, 100% 100%, 0% 100%);
+	  transform: skewX(-30deg);
+	  left: 40px;
+	  top: 10px;
+	  z-index: 2;
+	}
+	.back-to-top {
+	  position: fixed;
+	  bottom: 40px;
+	  right: 40px;
+	  z-index: 99;
+	  width: 60px;
+	  height: 60px;
+	  background-color: #00aaff;
+	  color: white;
+	  text-align: center;
+	  border-radius: 50%;
+	  font-weight: bold;
+	  display: none;
+	  flex-direction: column; /* 위아래 정렬 */
+	  align-items: center;
+	  justify-content: center;
+	  font-size: 14px;
+	  box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
+	}
+	.back-to-top i {
+	  font-size: 14px;
+	  margin-bottom: -10px; /* 간격 제거 */
+	}
+	.loginBg {
+	    width: 300px;
+	    height: 400px; /* 줄인 세로 크기 */
+	    position: absolute;
+	    top: 50%;
+	    left: 50%;
+	    transform: translate(-40%, -50%);
+	    object-fit: contain;
+	    pointer-events: none;
+	    z-index: 0;
+	}
+	.social-box {
+	  border: 2px solid #003366;
+	  border-radius: 10px;
+	  padding: 10px;
+	  width: 80px; /* 박스 너비 줄임 */
+	}
+	
+	.social-box ul {
+	  list-style: none;
+	  padding: 0;
+	  margin: 0;
+	}
+	
+	.social-box li {
+	  text-align: center;
+	  margin-bottom: 15px; /* 간격도 조금 줄임 */
+	}
+	
+	.snsImg {
+	  display: block;
+	  margin: 0 auto;
+	  width: 20px; /* 이미지 크기 축소 */
+	}
+	
+	.social-box span {
+	  display: block;
+	  margin-top: 4px;
+	  color: black;
+	  font-size: 10px; /* 글자 크기 축소 */
+	  font-weight: bold;
+	}
+	.program-button {
+	  background-color: #0061b2; /* 버튼 배경색 */
+	  color: #fff; /* 텍스트 색상 */
+	  font-size: 12px; /* 텍스트 크기 줄임 */
+	  padding: 1px 6px; /* 버튼 내 여백을 최소화 (높이 더 감소) */
+	  border: 2px solid #004b87; /* 테두리 추가 */
+	  border-radius: 25px; /* 둥근 모서리 */
+	  display: flex; /* 텍스트와 화살표 정렬 */
+	  align-items: center; /* 세로 정렬 */
+	  justify-content: space-between; /* 텍스트와 화살표를 양 끝으로 배치 */
+	  cursor: pointer; /* 마우스 포인터 */
+	  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
+	  transition: all 0.3s ease; /* 효과 */
+	}
+	
+	.arrow {
+	  font-size: 3px; /* 화살표 크기 조정 */
+	}
+	.quick-arrow-btn {
+        margin: 0 auto;	
+	    position: absolute;
+	    bottom: -30px;
+	    left: 50%;
+	    transform: translateX(-50%);
+	    cursor: pointer;
+	    width: 1px; /* 기존 40px → 20px로 변경 */
+	    height: auto;
+	}
