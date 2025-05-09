@@ -9822,8 +9822,8 @@ a.text-dark:hover, a.text-dark:focus {
 #userInfoCard {
     /*margin: 0 auto;*/
     display: none;
-    height: 100%; /* 부모 높이 대비 70% */
-    width: 100%; /* 부모 넓이 대비 70% */
+    height:  120%; /* 부모 높이 대비 70% */
+    width:   100%; /* 부모 넓이 대비 70% */
     /*max-height: 500px;*/ /* 최대 높이 제한 */
     /*max-width: 500px;*/ /* 최대 넓이 제한 */
 }

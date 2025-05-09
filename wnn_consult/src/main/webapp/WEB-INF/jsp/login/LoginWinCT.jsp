@@ -422,7 +422,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			    </form>
 			
 			    <!-- 로그인 성공 시 사용자 카드 -->
-			    <div id="userInfoCard" style="display: none; overflow: auto; max-height: 200px;" class="mt-4">
+			    <div id="userInfoCard" style="display: none; overflow: auto; max-height: 250px;" class="mt-2">
 			      <div class="user_card">
 			        <div class="user_card-body">
 			          <h1 class="user_card-title">환영합니다</h1>
