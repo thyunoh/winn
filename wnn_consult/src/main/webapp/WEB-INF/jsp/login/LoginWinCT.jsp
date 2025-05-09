@@ -447,7 +447,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				<div style="text-align: left;">
 				  <span style="font-size: 12px; font-weight: bold; margin-left: 8px;">데이터 기반으로 맞춤 솔루션</span>
 				</div>
-			    <button class="program-button" style="margin-left: 50px; height: 26px; margin-top: 25px;">
+			    <button onclick="window.location.href='https://blog.naver.com/newzealandky/223718188178';"	 
+			    	            class="program-button" style="margin-left: 50px; height: 26px; margin-top: 25px;">
 			      프로그램 바로가기
 			      <span class="arrow">→</span>
 			    </button>
@@ -498,7 +499,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				    <div style="text-align: left;">
 				      <span style="font-size: 12px; font-weight: bold;">실전 가능한 팁과 전략 제공</span>
 				    </div>
-				    
 				    <!-- 버튼 -->
 					<button onclick="window.location.href='https://winner797.net/';" class="program-button" style="height: 26px; margin-top: 4px; margin-left: -6px;">
 					  홈페이지 바로가기
