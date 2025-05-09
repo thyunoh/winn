@@ -374,8 +374,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			        <!-- 입력 필드 영역 -->
 			        <div style="flex-grow: 0; width: 250px;">
 			          <hr style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
-			          <h6 class="section-title position-relative mb-2">
-			            <span class="pr-4" style="color: white;">로그인 <small style="font-size: 0.75em; color: white;">LOGIN</small> </span> <!-- 글자색 흰색으로 -->
+			          <h6 class="section-title position-relative mb-2"> <!-- 글자색 흰색으로 -->
+			            <span class="pr-4" style="color: white;">로그인 <small style="font-size: 0.75em; color: white;">LOGIN</small> </span> 
 			          </h6>
 			          <div class="control-group mb-2">
 			            <input type="text" class="form-control" id="hospid" placeholder="Hospital Number" />
