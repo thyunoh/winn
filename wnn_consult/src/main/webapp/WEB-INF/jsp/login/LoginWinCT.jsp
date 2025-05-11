@@ -243,6 +243,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 	    // 기존 컨테이너 숨기기
 	    $(".container-fluid").hide();  // 기존 요소 숨기기
+	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
 	}
 
 	document.addEventListener("DOMContentLoaded", function() {
@@ -2609,7 +2610,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		// 스크롤 시 버튼 표시
 		window.onscroll = function () {
 		  const btn = document.getElementById("btnTop");
-		  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+		  if (document.body.scrollTop > 0 || document.documentElement.scrollTop > 0) {
 		    btn.style.display = "flex";
 		  } else {
 		    btn.style.display = "none";
