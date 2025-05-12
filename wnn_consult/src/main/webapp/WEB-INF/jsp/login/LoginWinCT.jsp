@@ -475,7 +475,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					  <span style="font-size: 12px; font-weight: bold; ">의료기관전문컨설팅</span>
 					</div>
 				    
-				    <!-- 버튼 -->
+				    <!-- 버튼1 -->
 				    <a href="#">
 						<button class="program-button" style="height: 26px; margin-top: 5px; margin-left: -20px;">
 						  컨설팅소개서 다운로드
