@@ -77,4 +77,5 @@ public interface UserService {
 	boolean            insertLicNum(LicnumDTO dto)           throws Exception; 
 	boolean            updateLicNum(LicnumDTO dto)           throws Exception; 
 	String             LicNumDupChk(LicnumDTO dto)           throws Exception;
+	boolean            inserthospemp_Licnum(LicnumDTO dto)    throws Exception;
 }

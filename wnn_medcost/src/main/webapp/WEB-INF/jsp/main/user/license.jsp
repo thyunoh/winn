@@ -42,7 +42,8 @@
                  
                                     <div class="col-sm-6">                                    
                                          <div class="btn-group ml-auto">
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
+                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="" onClick="license_load()">라이센스 가져오기<i class="fas fa-binoculars"></i></button>
+                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" style = "margin-left :20px" title="" onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
                                             <button id="btnInsert"  class="btn btn-outline-dark btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
                                             <button id="btnUpdate"  class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
                                             <button id="btnDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
@@ -305,6 +306,7 @@
 						    { name: '성명',     className: 'dt-body-center' },
 						    { name: '입사일자',  className: 'dt-body-center' },
 						    { name: '면허구분',  className: 'dt-body-center' },
+						    { name: '면허명칭',  className: 'dt-body-center' },
 						    { name: '퇴사일자',  className: 'dt-body-center' },
 						    { name: '세부구분',  className: 'dt-body-center' },
 						    { name: '근무시간',  className: 'dt-body-center' },
@@ -315,7 +317,7 @@
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
-	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '300px',  },
+	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '200px',  },
 	        				{ data: 'licNum',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keylicNum', primaryKey: true },
 	        				{ data: 'userNm',    visible: true,  className: 'dt-body-center', width: '100px',  },
 	        				{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt', primaryKey: true ,
@@ -326,6 +328,7 @@
 	                			return data;
                              	}
             				},
+            				{ data: 'licType',         visible: true,  className: 'dt-body-center', width: '50px',  },
             				{ data: 'subCodeNm',       visible: true,  className: 'dt-body-center', width: '100px',  },
             				{ data: 'teDt',            visible: true,  className: 'dt-body-center', width: '100px', 
 	                          	render: function(data, type, row) {
@@ -336,7 +339,7 @@
 	            				}
 	        				},
 	        				{ data: 'licDetail',    visible: true,  className: 'dt-body-center', width: '100px',  },
-	        				{ data: 'weekHours',    visible: true,  className: 'dt-body-center', width: '100px',  },
+	        				{ data: 'weekHours',    visible: true,  className: 'dt-body-center', width: '200px',  },
 	        				{ data: 'deptCode',     visible: true,  className: 'dt-body-center', width: '100px',  },
 					        { data: 'updUserNnm',   visible: true,  className: 'dt-body-center', width: '100px',  }
 					    ];
@@ -351,7 +354,7 @@
             				['ipDt', 'desc']     // 내림차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['hospCd','licNum','ipDt'];                   
+		var showSortNo = ['hospCd','licNum','ipDt','licType'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
@@ -1572,7 +1575,33 @@
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });
+	    function license_load() {
+	        const hospCd1 = document.getElementById("hospCd1").value;
+        	let  s_userid = getCookie("s_userid") ;
+        	let  s_connip = getCookie("s_connip") ;
 
+	        if (hospCd1 == '' || hospCd1 ==  null) {
+	           messageBox("4", "요양기관을 선택하고 진행하세요  !!",mainFocus,"","");
+	        }
+	        if (hospCd1 !== '') {
+	            $.ajax({
+	                type: "POST",
+	                url: "/user/hospemp_licnum.do",
+	                data: { hospCd: hospCd1 ,regUser : s_userid , regIp : s_connip ,
+	                	    updUser : s_userid , updIp : s_connip
+	                	  },
+	                dataType: "json",
+	                success: function(response) {
+	                    // 응답 처리 로직 추가
+	                    console.log(response);
+	                    fn_re_load() ;
+	                },
+	                error: function(xhr, status, error) {
+	                    console.error("AJAX 요청 실패:", status, error);
+	                }
+	            });
+	        }
+	    }
 	  </script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

@@ -296,5 +296,11 @@ public class UserServiceImpl implements UserService {
 	public String LicNumDupChk(LicnumDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.LicNumDupChk(dto);
+	}
+
+	@Override
+	public boolean inserthospemp_Licnum(LicnumDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.inserthospemp_Licnum(dto);
 	}	
 }

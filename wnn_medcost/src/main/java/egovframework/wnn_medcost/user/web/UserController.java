@@ -1746,5 +1746,35 @@ public class UserController extends BaseController {
             return ResponseEntity.status(500).body(e.getMessage());
             
         }
-	}	
+	}
+
+	@RequestMapping(value="/hospemp_licnum.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseEntity<Map<String, Object>> hospemp_licnum(@ModelAttribute("DTO") LicnumDTO dto, 
+	                                                          HttpSession session, 
+	                                                          HttpServletRequest request) throws Exception {
+	    
+	    System.out.println("라이센스등록 - java 1 - start");
+	    
+	    Map<String, Object> result = new HashMap<>();
+	    
+	    try {
+	        if (dto.getHospCd() != null && !dto.getHospCd().trim().isEmpty()) {
+        	
+	        	svc.inserthospemp_Licnum(dto); // 저장 처리
+
+	            result.put("success", true);
+	            result.put("message", "저장되었습니다.");
+	        } else {
+	            result.put("success", false);
+	            result.put("message", "병원코드가 없습니다.");
+	        }
+	    } catch (Exception ex) {
+	        result.put("success", false);
+	        result.put("message", "에러 발생: " + ex.getMessage());
+	    }
+
+	    return ResponseEntity.ok(result);
+	}
+
 }

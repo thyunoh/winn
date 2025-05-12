@@ -1267,5 +1267,64 @@
            AND IP_DT     = #{ipDt}
            AND ACTION_YN = 'Y' 
     ]]>  
-    </select>	                    	   	                  
+    </select>	
+    <insert id="inserthospemp_Licnum" parameterType="LicnumDTO" ><![CDATA[
+		INSERT INTO TBL_HOSPEMP_MST 
+		(
+		    HOSP_CD,
+		    LIC_NUM,
+		    IP_DT,
+		    TE_DT,
+		    USER_NM,
+		    LIC_TYPE,
+		    LIC_DETAIL,
+		    WEEK_HOURS,
+		    ACTION_YN,
+		    DEPT_CODE,
+		    USE_YN,
+		    REG_DTTM,
+		    REG_USER,
+		    REG_IP,
+		    UPD_DTTM,
+		    UPD_USER,
+		    UPD_IP
+		)
+		SELECT 
+		    HOSP_CD,
+		    LIC_NUM,
+		    IP_DT,
+		    '20991231', 
+		    NAME,
+		    CASE 
+		        WHEN LICENSE_GB = '의사'     THEN '01'
+		        WHEN LICENSE_GB = '치과의사'  THEN '02'
+		        WHEN LICENSE_GB = '한의사'    THEN '03'
+		        WHEN LICENSE_GB = '간호사'    THEN '05'
+		        WHEN LICENSE_GB = '간호조무사' THEN '06'
+		        WHEN LICENSE_GB = '약사'     THEN '07'
+		        WHEN LICENSE_GB = '영양사'    THEN '18'
+		        ELSE ''  END,
+		    DOCTOR_TYPE,
+		    WORK_GB    ,       
+		    'Y',      
+		    '',       
+		    'Y',      
+		    NOW(),    
+		    #{regUser},
+		    #{regIp},
+		    NOW(),    
+		    #{updUser},
+		    #{updIp}
+		FROM TBL_LICENSE_MST L
+		WHERE L.HOSP_CD = #{hospCd}
+		  AND NOT EXISTS (
+		        SELECT 1 
+		        FROM TBL_HOSPEMP_MST H 
+		        WHERE H.HOSP_CD = L.HOSP_CD
+		          AND H.LIC_NUM = L.LIC_NUM
+		          AND H.IP_DT   = L.IP_DT
+		  )
+
+    ]]>    
+    </insert>                          	   	                  
 </mapper>

@@ -42,7 +42,7 @@
                         <div id="user-info" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/user/license.do">의사면허등록</a>
+                                    <a class="nav-item nav-link"  href="/user/license.do">라이센스면허등록</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/licnumber.do">인력신고현황등록</a>
