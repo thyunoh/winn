@@ -243,6 +243,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 	    // 기존 컨테이너 숨기기
 	    $(".container-fluid").hide();  // 기존 요소 숨기기
+	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
 	}
 
 	document.addEventListener("DOMContentLoaded", function() {
@@ -475,10 +476,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					</div>
 				    
 				    <!-- 버튼 -->
-					<button class="program-button" style="height: 26px; margin-top: 5px; margin-left: -20px;">
-					  컨설팅소개서 다운로드
-					  <span class="arrow">→</span>
-					</button>
+				    <a href="#">
+						<button class="program-button" style="height: 26px; margin-top: 5px; margin-left: -20px;">
+						  컨설팅소개서 다운로드
+						  <span class="arrow">→</span>
+						</button>
+					</a>
 				  </div>
 				</div>
 			

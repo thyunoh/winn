@@ -1,16 +1,9 @@
 package egovframework.wnn_consult.mangr.web;
 
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -19,17 +12,12 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import egovframework.util.GetClientIP;
 import egovframework.wnn_consult.mangr.service.MangrService;
 import egovframework.wnn_consult.user.service.UserService;
 import egovframework.wnn_consult.mangr.model.NotiDTO;
@@ -38,7 +26,7 @@ import egovframework.wnn_consult.mangr.model.FaqDTO;
 import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.wnn_consult.user.model.HospMdDTO;
 import egovframework.wnn_consult.user.model.UserDTO;
-import egovframework.util.EgovFileScrty;
+
 
 import org.springframework.ui.ModelMap;
 
