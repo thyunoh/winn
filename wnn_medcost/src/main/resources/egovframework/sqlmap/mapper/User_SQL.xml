@@ -734,6 +734,16 @@
         AND   A.HOSP_CD = #{hospCd}
         ]]>
     </if>
+   <if test='findData != null and findData != "" '>
+        <![CDATA[
+        AND ( A.USER_NM LIKE CONCAT('%',#{findData},'%') )
+        ]]>
+    </if>    
+    <if test='checkValue != null and checkValue == "Y" '>
+        <![CDATA[
+        AND  (A.WEEK_HOURS = '' OR A.WEEK_HOURS IS NULL)
+        ]]>
+    </if>    
      <![CDATA[
         ORDER BY A.HOSP_CD , A.LIC_NUM, A.LIC_TYPE 
     ]]>   

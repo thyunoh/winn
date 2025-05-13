@@ -32,12 +32,17 @@
 			                        </div> 
                                     <div class="col-sm-3">
                                         <div class="input-group">
-                                             <input id="findData" type="text" class="form-control" placeholder="3글자 이상 입력 후 [ enter ]" 
+                                             <input id="findData" type="text" class="form-control" placeholder="3글자이상 입력 후 [enter]" 
                                                                                                  onkeyup="findEnterKey()" oninput="findField(this)">
-                                             <div class="input-group-append">
+											<span style="margin-left: 20px; margin-top: 5px; ">
+											  <input type="checkbox" id="checkValue" name="checkValue">
+											  근무 미지정자
+											</span>
+                                             <div class="input-group-append" style="margin-left: 20px;">
                                                  <button type="button" class="btn btn-rounded btn-primary"  onClick="fn_FindData()">조회. <i class="fas fa-search"></i></button>
                                              </div>
                                         </div>
+                                        
                                     </div>      
                  
                                     <div class="col-sm-6">                                    
@@ -837,11 +842,12 @@
 		   		console.log(findValue.id);
 		   		find[key] = findValue.val;
 		   	}
-		   	
-		    $.ajax({
+		   	let checkValue = $("#checkValue").is(":checked") ? "Y" : "N";
+		   	let findData   = $("#findData").val() ;
+		   	$.ajax({
 		        type: "POST", 
 		        url: "/user/licenseCdList.do",
-		        data: find,
+		        data: {find: find, checkValue: checkValue , findData : findData},
 		        dataType: "json",
 		        
 		        // timeout: 10000, // 10초 후 타임아웃

@@ -30,6 +30,15 @@ public class LisenceDTO {
 	private String updDttm; // 최종변경일시
 	private String updUser; // 최종변경자
 	private String updIp; // 최종변경 IP
+	private String checkValue ;
+	private transient String findData; // MyBatis에서 매핑되지 않도록 설정
+	
+	public String getCheckValue() {
+		return checkValue;
+	}
+	public void setCheckValue(String checkValue) {
+		this.checkValue = checkValue;
+	}
 	
     public String getUseYn() {
 		return useYn;
@@ -69,7 +78,6 @@ public class LisenceDTO {
 	public void setUpdUserNnm(String updUserNnm) {
 		this.updUserNnm = updUserNnm;
 	}
-	private transient String findData; // MyBatis에서 매핑되지 않도록 설정
 
 	public String getKeyhospCd() {
 		return keyhospCd;
