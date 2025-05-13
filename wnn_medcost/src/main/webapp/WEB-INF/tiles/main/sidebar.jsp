@@ -59,9 +59,12 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/wardcd.do">병동현황등록</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/user/hospgrdcd.do">의사간호사등급현황</a>
+                                </li>
                            </ul>
                         </div>
-                    </li>
+                    </li> 
                     <!-- 기준정보 -->
                     <li class="nav-item">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info" aria-controls="base-info">

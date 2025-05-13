@@ -1305,7 +1305,8 @@
 		        WHEN LICENSE_GB = '영양사'    THEN '18'
 		        ELSE ''  END,
 		    DOCTOR_TYPE,
-		    WORK_GB    ,       
+		    CASE WHEN (WORK_GB LIKE '%40시간%' OR WORK_GB = '상근') THEN '40' 
+		    ELSE WORK_GB END ,       
 		    'Y',      
 		    '',       
 		    'Y',      
@@ -1326,5 +1327,141 @@
 		  )
 
     ]]>    
-    </insert>                          	   	                  
+    </insert>   
+<!-- 의사간호사 등급(년도별) -->
+    <select id="getHospGrdist" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
+        SELECT 
+            HOSP_CD,
+            START_YY,
+            BUNJI,
+            JOB_SEQ,
+            NUR_GRD,
+            NUR_PAT_CNT,
+            NUR_CNT,
+            NUR_SUB_CNT,
+            PAT_NUR_NUMR,
+            PAT_NUR_CNT,
+            NUR_NUR_MUMR,
+            DOC_GRD,
+            DOC_PAT_CNT,
+            DOC_CNT,
+            PAT_DOC_CNT,
+            SDOC_CNT,
+            SDOC_DOC_CNT,
+            NEED_GA,
+            NEED_PAT,
+            NEED_PHAM,
+            NEED_INFO,
+            NEED_RAD,
+            NEED_LAB,
+            NEED_THER,
+            NEED_SOCI,
+            ACTION_YN,
+            REG_DTTM,
+            REG_USER,
+            REG_IP,
+            UPD_DTTM,
+            UPD_USER,
+            UPD_IP
+        FROM TBL_GRADE_MST
+        WHERE 1 = 1
+         AND HOSP_CD   = #{hospCd}
+         AND ACTION_YN = 'Y' 
+       ]]>
+    </select>  
+    <insert id="insertHospGrd" parameterType="HospGrdDTO" ><![CDATA[
+        INSERT INTO TBL_GRADE_MST (
+            HOSP_CD,
+            START_YY,
+            BUNJI,
+            NUR_GRD,
+            NUR_PAT_CNT,
+            NUR_CNT,
+            NUR_SUB_CNT,
+            PAT_NUR_NUMR,
+            PAT_NUR_CNT,
+            NUR_NUR_MUMR,
+            DOC_GRD,
+            DOC_PAT_CNT,
+            DOC_CNT,
+            PAT_DOC_CNT,
+            SDOC_CNT,
+            SDOC_DOC_CNT,
+            NEED_GA,
+            NEED_PAT,
+            NEED_PHAM,
+            NEED_INFO,
+            NEED_RAD,
+            NEED_LAB,
+            NEED_THER,
+            NEED_SOCI,
+            REG_DTTM,
+            REG_USER,
+            REG_IP,
+            UPD_DTTM,
+            UPD_USER,
+            UPD_IP ,
+	        JOB_SEQ , 
+	        ACTION_YN
+        ) VALUES (
+	          #{hospCd}
+	        , #{startYy}
+	        , #{bunji} 
+	        , #{nurGrd}
+	        , #{nurPatCnt}
+	        , #{nurCnt}
+	        , #{nurSubCnt}
+	        , #{patNurNumr}
+	        , #{patNurCnt}
+	        , #{nurNurMumr}
+	        , #{docGrd}
+	        , #{docPatCnt}
+	        , #{docCnt}
+	        , #{patDocCnt}
+	        , #{sdocCnt}
+	        , #{sdocDocCnt}
+	        , #{needGa}
+	        , #{needPat}
+	        , #{needPham}
+	        , #{needInfo}
+	        , #{needRad}
+	        , #{needLab}
+	        , #{needTher}
+	        , #{needSoci}
+            , NOW() 
+            , #{regUser} 
+            , #{regIp} 
+            , NOW() 
+            , #{updUser} 
+            , #{updIp} 
+			,(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+			 FROM TBL_GRADE_MST A 
+			 WHERE A.HOSP_CD    = #{hospCd} 
+			   AND A.START_YY   = #{startYy} 
+			   AND A.BUNJI      = #{bunji}
+			) , 'Y'
+        )
+    ]]>    
+    </insert> 
+      <update id="updateHospGrd" parameterType="HospGrdDTO"><![CDATA[
+        UPDATE TBL_GRADE_MST
+        SET    ACTION_YN = 'N' 
+	         , UPD_DTTM  = NOW()      
+	         , UPD_USER  = #{updUser}  
+	         , UPD_IP    = #{updIp}
+        WHERE HOSP_CD    = #{hospCd} 
+          AND START_YY   = #{startYy} 
+          AND BUNJI      = #{bunji} 
+          AND ACTION_YN = 'Y'
+     ]]>   
+    </update>      
+	<select id = "HospGrdDupChk"  parameterType="HospGrdDTO"  resultType="String"><![CDATA[   
+	   SELECT 'Y'
+	   FROM TBL_GRADE_MST 
+        WHERE HOSP_CD    = #{hospCd} 
+          AND START_YY   = #{startYy} 
+          AND BUNJI      = #{bunji} 
+          AND ACTION_YN = 'Y'
+	  ]]>  
+	</select>                                   	   	                  
 </mapper>

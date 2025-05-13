@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.user.mapper.UserMapper;
 import egovframework.wnn_medcost.user.model.HospConDTO;
+import egovframework.wnn_medcost.user.model.HospGrdDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
@@ -302,5 +303,29 @@ public class UserServiceImpl implements UserService {
 	public boolean inserthospemp_Licnum(LicnumDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.inserthospemp_Licnum(dto);
+	}
+	
+    //의사 간호사년도별 분기별 등급관리 
+	@Override
+	public List<HospGrdDTO> getHospGrdist(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getHospGrdist(dto);
+	}
+	@Override
+	public boolean insertHospGrd(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.insertHospGrd(dto);
+	}
+
+	@Override
+	public boolean updateHospGrd(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateHospGrd(dto);
+	}
+
+	@Override
+	public String HospGrdDupChk(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.HospGrdDupChk(dto);
 	}	
 }

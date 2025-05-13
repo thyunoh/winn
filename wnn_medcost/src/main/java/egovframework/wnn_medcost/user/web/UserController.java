@@ -41,6 +41,7 @@ import egovframework.wnn_medcost.base.model.DiseCdDTO;
 import egovframework.wnn_medcost.base.web.BaseController;
 import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
+import egovframework.wnn_medcost.user.model.HospGrdDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
@@ -1776,5 +1777,130 @@ public class UserController extends BaseController {
 
 	    return ResponseEntity.ok(result);
 	}
+    //의사/간호사등급현황  
+	@RequestMapping(value="/hospgrdcd.do")
+    public String hospgrdcd(HttpServletRequest request, ModelMap model) {
 
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/user/hospgrdcd";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }
+	@RequestMapping(value="/hospgrdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> hospgrdList(@ModelAttribute("DTO") HospGrdDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("의사.간호사등급 -java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+			
+				List<HospGrdDTO> HospGrdList = svc.getHospGrdist(dto);
+				
+				System.out.println("의사.간호사등급-java size " + HospGrdList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",HospGrdList);
+
+		        System.out.println("의사.간호사등급-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	@RequestMapping(value="/hospGrdInsert.do", method = RequestMethod.POST)
+    public ResponseEntity<String> hospGrdInsert(@RequestBody List<HospGrdDTO> data) {
+		
+		System.out.println("Insert 시작했음");
+		String returnValue = "OK";
+		
+		// 처리 로직
+        try {
+        	
+        	for (HospGrdDTO dto : data) {
+        		String dupchk =   svc.HospGrdDupChk(dto) ;
+        		if ("Y".equals(dupchk)) {
+        			return ResponseEntity.status(400).body(dto.getKeyhospCd()); 
+        		}
+        		svc.insertHospGrd(dto) ; 
+       		    System.out.println("hospCd: " + dto.getKeyhospCd());
+            }
+        	
+            
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}
+	@RequestMapping(value="/hospGrdUpdate.do", method = RequestMethod.POST)
+    public ResponseEntity<String> hospGrdUpdate(@RequestBody List<HospGrdDTO> data) {
+	
+		System.out.println("Update 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	
+        	for (HospGrdDTO dto : data) {
+       		    System.out.println("HospCd: "   + dto.getHospCd());
+       		    System.out.println("startYy: "  + dto.getStartYy());
+       		    System.out.println("bunji: "    + dto.getBunji());
+        		
+        		svc.updateHospGrd(dto) ; //이력관리 
+        		svc.insertHospGrd(dto) ; 
+     	
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
+	@RequestMapping(value="/hospGrdDelete.do", method = RequestMethod.POST)
+    public ResponseEntity<String> hospGrdDelete(@RequestBody List<HospGrdDTO> data) {
+		
+		System.out.println("Delete 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	for (HospGrdDTO dto : data) {
+        		dto.setHospCd(dto.getKeyhospCd()); 
+        		dto.setStartYy(dto.getKeystartYy()); 
+        		dto.setBunji(dto.getKeybunji()); 
+        		svc.updateHospGrd(dto) ; //이력관리 
+       		    System.out.println("HospCd: "   + dto.getHospCd());
+       		    System.out.println("startYy: "  + dto.getStartYy());
+       		    System.out.println("bunji: "    + dto.getBunji());
+              
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
 }

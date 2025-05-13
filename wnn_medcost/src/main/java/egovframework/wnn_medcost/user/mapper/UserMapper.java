@@ -11,6 +11,7 @@ import egovframework.wnn_medcost.user.model.UserDTO;
 import egovframework.wnn_medcost.user.model.WardDTO;
 import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
+import egovframework.wnn_medcost.user.model.HospGrdDTO;
 import egovframework.wnn_medcost.user.model.HospMdDTO;
 import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
@@ -88,6 +89,12 @@ public interface UserMapper {
 	boolean            updateLicNum(LicnumDTO dto)        throws Exception; 
 	String             LicNumDupChk(LicnumDTO dto)        throws Exception;
 	
-	boolean            inserthospemp_Licnum(LicnumDTO dto)    throws Exception; 
+	boolean            inserthospemp_Licnum(LicnumDTO dto) throws Exception; 
+
+   //병원간호사의사등급 
+	List<HospGrdDTO> getHospGrdist(HospGrdDTO dto)        throws Exception;
+	boolean          insertHospGrd(HospGrdDTO dto)        throws Exception; 
+	boolean          updateHospGrd(HospGrdDTO dto)        throws Exception; 
+	String           HospGrdDupChk(HospGrdDTO dto)        throws Exception; 	
 }
                     
