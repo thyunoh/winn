@@ -616,8 +616,11 @@
 	      SELECT 
 	        CASE 
 	          WHEN (SELECT SUB_CODE FROM TBL_CODE_DTL 
-	                WHERE CODE_CD = 'DISEASE_TYPE' AND CODE_GB = 'Z' 
-	                  AND SUB_CODE <> 'ZZ' AND SUB_CODE = LEFT(C.DIAG_CODE, 3) 
+	                WHERE CODE_CD = 'DISEASE_TYPE' 
+	                  AND CODE_GB = 'Z' 
+	                  AND SUB_CODE <> 'ZZ'
+	                  AND ACTION_YN = 'Y'  
+	                  AND SUB_CODE = LEFT(C.DIAG_CODE, 3) 
 	                LIMIT 1) IS NOT NULL 
 	          THEN LEFT(C.DIAG_CODE, 3) 
 	          ELSE 'ZZ' 
