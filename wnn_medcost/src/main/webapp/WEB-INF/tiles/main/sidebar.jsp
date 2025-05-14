@@ -219,31 +219,33 @@
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_07.do">전문의별 전월대비진료비</a>
                                             </li> 
-									        <li class="nav-item">
-									            <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
-									              data-target="#yak-code" aria-controls="yak-code">약제비율
-									            </a>
-									            <div id="yak-code" class="collapse submenu" style="background-color: white; padding-left: 15px;">
-									                <ul class="nav flex-column">
-									                    <li class="nav-item">
-									                        <a class="nav-item nav-link" href="/tong/f_tong_08.do">정액환자 약제비율</a>
-									                    </li>
-									                    <li class="nav-item">
-									                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">행위환자 약제비율</a>
-									                    </li>
-									                    <li class="nav-item">
-									                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">전체환자 약제비율</a>
-									                    </li>
-									                </ul>
-									            </div>
-									        </li>         
                                         </ul>
                                     </div>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-2" 
-                                                                                                       aria-controls="management-2">주요지표통계</a>
+                                                                                                       aria-controls="management-2">진료대비 약제비율</a>
                                     <div id="management-2" class="collapse submenu" style="background-color: white;">
+                                      <ul class="nav flex-column">
+                                            <li class="nav-item">
+						                        <a class="nav-item nav-link" href="/tong/f_tong_08.do">정액환자(비청구분)</a>
+						                    </li>
+						                    <li class="nav-item">
+						                        <a class="nav-item nav-link" href="/tong/f_tong_082.do">정액환자(전체)</a>
+						                    </li>
+						                    <li class="nav-item">
+						                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">행위환자</a>
+						                    </li>
+						                    <li class="nav-item">
+						                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">전체환자</a>
+						                    </li>
+                                      </ul>
+                                    </div>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-3" 
+                                                                                                       aria-controls="management-3">주요지표통계</a>
+                                    <div id="management-3" class="collapse submenu" style="background-color: white;">
                                       <ul class="nav flex-column">
                                          <li class="nav-item">
                                               <a class="nav-item nav-link"  href="/tong/f_tong_01.do">진료지표</a>
@@ -252,15 +254,15 @@
                                     </div>
                                 </li>                                
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-3" 
-                                                                                                       aria-controls="management-3">처치항목별통계</a>
-                                    <div id="management-3" class="collapse submenu" style="background-color: white;">
+                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management-4" 
+                                                                                                       aria-controls="management-4">처치항목별통계</a>
+                                    <div id="management-4" class="collapse submenu" style="background-color: white;">
                                       <ul class="nav flex-column">
                                              <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비 구성비</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_09.do">정액 진료비제외 항목비율</a>
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_09.do">정액환자 비청구분 항목비율</a>
                                             </li>
                                       </ul>
                                     </div>
