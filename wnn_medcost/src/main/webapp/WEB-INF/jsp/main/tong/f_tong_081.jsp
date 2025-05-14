@@ -241,7 +241,7 @@
 		          costs.push((item.totalAmt / 1000000).toFixed(2)); // 백만원 단위로 변환
 		          counts.push((item.claimCount / 1000).toFixed(2)); // 천건 단위로 변환
 		          percents.push(item.percentOfTotal);
-		          ycosts.push((item.yakAmt / 100000).toFixed(2)); // 십만원 단위로 변환
+		          ycosts.push((item.yakAmt / 1000000).toFixed(2)); // 백만원 단위로 변환
 		          ypercents.push(item.percentOfAmt);
 		    	 const row = [
 		          item.medName ,
@@ -304,7 +304,7 @@
     	        },
     	        {
     	          type: 'bar',
-    	          label: '약제비용 (십만원)',
+    	          label: '약제비용 (백만원)',
     	          data: ycosts,
     	          yAxisID: 'y',
     	          backgroundColor: 'rgba(255, 99, 132, 0.6)',

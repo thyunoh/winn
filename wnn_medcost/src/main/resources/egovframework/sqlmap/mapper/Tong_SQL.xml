@@ -1157,7 +1157,7 @@
 			    SELECT HOSP_CD, CLAIM_NO, BILL_SEQ, SUM(AMOUNT) AS yakAmt
 			    FROM TBL_JINORD_MST
 			    WHERE 1=1 
-			         AND CODE_TYPE IN('3')
+			         AND ITEM_NO <> 'L' AND CODE_TYPE IN('3')
 			    GROUP BY HOSP_CD, CLAIM_NO , BILL_SEQ
 			    ) D   ON  D.HOSP_CD  = B.HOSP_CD
 			         AND  D.CLAIM_NO = B.CLAIM_NO
