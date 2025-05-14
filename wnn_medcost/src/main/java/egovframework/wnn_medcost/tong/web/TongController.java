@@ -317,6 +317,34 @@ public class TongController {
 	    }
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
 	}	
+	//행위환자 약제비율 
+	@RequestMapping(value="/f_tong_081.do")
+    public String f_tong_081(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/tong/f_tong_081";				
+			} else {  	
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value= "/t_tong081List.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<TongDTO> t_tong081List(@ModelAttribute("DTO") TongDTO dto) {
+	    List<TongDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.tong081List(dto);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}		
 }
 
 

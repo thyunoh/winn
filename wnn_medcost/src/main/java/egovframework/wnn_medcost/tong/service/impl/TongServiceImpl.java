@@ -90,5 +90,12 @@ public class TongServiceImpl implements TongService {
 	public List<TongDTO> tong09List(TongDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.tong09List(dto) ;
+	}
+
+
+	@Override
+	public List<TongDTO> tong081List(TongDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.tong081List(dto) ;
 	}	
 }

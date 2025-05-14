@@ -219,9 +219,24 @@
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/tong/f_tong_07.do">전문의별 전월대비진료비</a>
                                             </li> 
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_08.do">정액환자 약제비율</a>
-                                            </li>
+									        <li class="nav-item">
+									            <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+									              data-target="#yak-code" aria-controls="yak-code">약제비율
+									            </a>
+									            <div id="yak-code" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+									                <ul class="nav flex-column">
+									                    <li class="nav-item">
+									                        <a class="nav-item nav-link" href="/tong/f_tong_08.do">정액환자 약제비율</a>
+									                    </li>
+									                    <li class="nav-item">
+									                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">행위환자 약제비율</a>
+									                    </li>
+									                    <li class="nav-item">
+									                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">전체환자 약제비율</a>
+									                    </li>
+									                </ul>
+									            </div>
+									        </li>         
                                         </ul>
                                     </div>
                                 </li>

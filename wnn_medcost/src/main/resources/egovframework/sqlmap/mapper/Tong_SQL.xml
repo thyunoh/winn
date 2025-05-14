@@ -101,6 +101,10 @@
 		<if test="endMonth != null and endMonth != ''">
 		    AND A.DATE_YM &lt;= #{endMonth}
 		</if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -240,6 +244,10 @@
 			          AND C.SPEC_TYPE = 'JS008'
 			   )		    
 		    ]]>   
+		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+		 	  AND A.MED_TYPE NOT IN('2')
+			  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+		    </if>
 			<if test='medType == "1" '> <!-- 의과 산재조건-->
 			    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 			</if>
@@ -325,6 +333,10 @@
 			          AND C.SPEC_TYPE = 'JS008'
 			   )	
 		    ]]>   
+		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+		 	  AND A.MED_TYPE NOT IN('2')
+			  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+		    </if>
 			<if test='medType == "1" '> <!-- 의과 산재조건-->
 			    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 			</if>
@@ -388,6 +400,10 @@
 	   <if test='ipwe == "O"'>
 	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	   </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -525,6 +541,10 @@
 	   <if test='ipwe == "O"'>
 	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	   </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	    AND A.MED_TYPE NOT IN('2')
+		    AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -582,7 +602,11 @@
 	      AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
 	    </if>
 	    <if test='ipwe == "O"'>
-	      AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	      AND A.TREAT_TYPE IN ('2','4','9','H','6') 
+	    </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
 	    </if>
 	    <if test='medType == "1"'>
 	      AND ( A.MED_TYPE IN('1','5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2')) )
@@ -661,6 +685,10 @@
 	        <if test='ipwe == "O"'>
 	          AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	        </if>
+		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+		 	  AND A.MED_TYPE NOT IN('2')
+			  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+		    </if>
 	        <if test='medType == "1"'>
 	          AND ( A.MED_TYPE IN('1','5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2')) )
 	        </if>
@@ -734,6 +762,10 @@
 	   <if test='ipwe == "O"'>
 	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	   </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -817,6 +849,10 @@
 	   <if test='ipwe == "O"'>
 	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
 	   </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -906,12 +942,16 @@
 			          AND D.SPEC_TYPE = 'JS008'
 			    )	
 		]]>
-	   <if test='ipwe == "I"'>
-	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-	   </if>
-	   <if test='ipwe == "O"'>
-	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
-	   </if>
+	    <if test='ipwe == "I"'>
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	    </if>
+	    <if test='ipwe == "O"'>
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	    </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -1040,12 +1080,111 @@
 			          AND E.SPEC_TYPE = 'JS008'
 			   )	
 		]]>
-	   <if test='ipwe == "I"'>
-	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-	   </if>
-	   <if test='ipwe == "O"'>
-	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
-	   </if>
+	    <if test='ipwe == "I"'>
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	    </if>
+	    <if test='ipwe == "O"'>
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	    </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
+		<if test='medType == "1" '> <!-- 의과 산재조건-->
+		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
+		</if>
+		<if test='medType == "2" '> <!-- 치과 산재조건-->
+		    AND ( A.MED_TYPE IN('2') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4') ) )
+		</if>
+		<if test='medType == "3" '> <!-- 한방 산재조건-->
+		    AND ( A.MED_TYPE IN('9') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('5','6') ) )
+		</if>
+		<![CDATA[
+		    GROUP BY MED_FIELD
+		),
+		TOTAL_SUM AS (
+		    SELECT SUM(totalAmt) AS totalAmt , SUM(yakAmt) yakAmt FROM BASE_DATA
+		),
+		BASE_WITH_TOTAL AS (
+		    SELECT * FROM BASE_DATA
+		    UNION ALL
+		    SELECT '00' AS MED_FIELD, SUM(totalAmt), SUM(claimCount)  , SUM(yakAmt) yakAmt FROM BASE_DATA
+		)
+		SELECT 
+		    A.MED_FIELD AS MED_DEPT,  
+		    COALESCE(D.SUB_CODE_NM, '전체')            AS MED_NAME,
+		    A.totalAmt,
+		    A.claimCount,
+		    FLOOR( A.totalAmt / A.claimCount)         AS avgAmt,
+		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal ,
+            A.yakAmt,
+		    ROUND((A.yakAmt  / T.totalAmt) * 100, 1)  AS percentOfAmt		    
+		FROM BASE_WITH_TOTAL A
+		JOIN TOTAL_SUM T ON 1=1
+		LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB    = 'Z' 
+  		                         AND D.CODE_CD    = 'MED_DEPT'
+	 	                         AND D.ACTION_YN  = 'Y'
+		                         AND D.SUB_CODE   = A.MED_FIELD
+		ORDER BY percentOfTotal DESC, A.MED_FIELD
+	]]>	
+	</select>
+    <!-- 행위환자 약제비율  -->
+	<select id="tong081List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
+		WITH BASE_DATA AS (
+		    SELECT  
+		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,  
+		    ]]>
+	        <choose>
+	          <when test='amtType == "2"'> <!-- 청구액 -->
+		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
+		          COUNT(*)                                                                                               AS claimCount ,
+		      </when>
+			  <otherwise> <!-- 총액 -->
+                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                                                     AS totalAmt,
+		          COUNT(*)                                                                                               AS claimCount,			    
+			  </otherwise>
+		    </choose>
+		    <![CDATA[
+		    SUM(IFNULL(D.yakAmt, 0))                                                                                     AS yakAmt
+		    FROM TBL_CHUNG_MST A
+		    JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO 
+		                           AND A.HOSP_CD  = B.HOSP_CD
+		    LEFT JOIN TBL_DISEASE_MST C  ON C.CLAIM_NO  = B.CLAIM_NO 
+		                           AND C.HOSP_CD   = B.HOSP_CD 
+		                           AND C.BILL_SEQ  = B.BILL_SEQ 
+		                           AND C.DIAG_TYPE = '1'
+			LEFT JOIN (
+			    SELECT HOSP_CD, CLAIM_NO, BILL_SEQ, SUM(AMOUNT) AS yakAmt
+			    FROM TBL_JINORD_MST
+			    WHERE 1=1 
+			         AND CODE_TYPE IN('3')
+			    GROUP BY HOSP_CD, CLAIM_NO , BILL_SEQ
+			    ) D   ON  D.HOSP_CD  = B.HOSP_CD
+			         AND  D.CLAIM_NO = B.CLAIM_NO
+			         AND  D.BILL_SEQ = B.BILL_SEQ		     
+		    WHERE A.HOSP_CD  = #{hospCd}
+		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+		      AND B.PAY_TYPE NOT IN('1')  -- 정액이 아닌경우 
+		      AND NOT (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03'))  -- 산재정액이 아닌경우 
+			  AND  NOT EXISTS (
+			        SELECT 1
+			        FROM TBL_SPECODE_MST E
+			        WHERE E.HOSP_CD   = A.HOSP_CD
+			          AND E.CLAIM_NO  = A.CLAIM_NO
+			          AND E.BILL_SEQ  = B.BILL_SEQ
+			          AND E.SPEC_TYPE = 'JS008'
+			   )	
+		]]>
+	    <if test='ipwe == "I"'>
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	    </if>
+	    <if test='ipwe == "O"'>
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	    </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
@@ -1174,12 +1313,16 @@
 			          AND F.SPEC_TYPE = 'JS008'
 			   )	
 	   ]]>
-	   <if test='ipwe == "I"'>
-	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
-	   </if>
-	   <if test='ipwe == "O"'>
-	       AND A.TREAT_TYPE IN ('2','4','9','H','6')
-	   </if>
+	    <if test='ipwe == "I"'>
+	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
+	    </if>
+	    <if test='ipwe == "O"'>
+	        AND A.TREAT_TYPE IN ('2','4','9','H','6')
+	    </if>
+	    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
+	 	  AND A.MED_TYPE NOT IN('2')
+		  AND NOT (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('3','4'))
+	    </if>
 		<if test='medType == "1" '> <!-- 의과 산재조건-->
 		    AND ( A.MED_TYPE IN('1' ,'5') OR (A.CFORM_NO = 'M110' AND A.TREAT_TYPE IN('1','2') ) )
 		</if>
