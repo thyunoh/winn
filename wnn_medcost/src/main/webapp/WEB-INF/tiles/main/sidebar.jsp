@@ -36,7 +36,7 @@
                         <a class="nav-item nav-link" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>                        
                     </li>
                 
-                    <li class="nav-item menu-section">
+                    <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
                                                                                       <i class="fas fa-cloud-upload-alt"></i>요양기관등록</a>
                         <div id="user-info" class="collapse submenu" style="background-color: white;">

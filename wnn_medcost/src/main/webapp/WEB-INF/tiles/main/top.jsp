@@ -125,6 +125,7 @@
 	    // 전체 메뉴보기
 	    $('#top-menu_a').on('click', function () {
             $('.menu-section').hide();
+            $('#menu-a').show();
             $('#menu-b').show();
             $('#menu-c').show();
             $('#menu-d').show();
