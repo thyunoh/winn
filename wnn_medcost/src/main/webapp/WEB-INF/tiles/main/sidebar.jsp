@@ -231,13 +231,13 @@
 						                        <a class="nav-item nav-link" href="/tong/f_tong_08.do">정액환자(비청구분)</a>
 						                    </li>
 						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_082.do">정액환자(전체)</a>
+						                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">정액환자(전체)</a>
 						                    </li>
 						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">행위환자</a>
+						                        <a class="nav-item nav-link" href="/tong/f_tong_082.do">행위환자</a>
 						                    </li>
 						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">전체환자</a>
+						                        <a class="nav-item nav-link" href="/tong/f_tong_083.do">전체환자</a>
 						                    </li>
                                       </ul>
                                     </div>

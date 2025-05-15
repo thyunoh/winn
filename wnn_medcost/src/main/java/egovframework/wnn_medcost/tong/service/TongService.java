@@ -20,7 +20,7 @@ public interface TongService {
 	List<TongDTO>     tong06List(TongDTO dto)      throws Exception;
 	List<TongDTO>     tong07List(TongDTO dto)      throws Exception;
 	List<TongDTO>     tong08List(TongDTO dto)      throws Exception;
-	List<TongDTO>     tong081List(TongDTO dto)     throws Exception;
 	List<TongDTO>     tong082List(TongDTO dto)     throws Exception;
+	List<TongDTO>     tong083List(TongDTO dto)     throws Exception;
 	List<TongDTO>     tong09List(TongDTO dto)      throws Exception;
 }

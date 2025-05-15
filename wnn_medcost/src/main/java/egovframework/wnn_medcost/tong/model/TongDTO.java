@@ -17,7 +17,7 @@ public class TongDTO {
     private String startMonth ;
     private String endMonth;
     private String hospCd;
-    
+    private String prtChk;
     private String allSpecCurr;
     private String allSpecPrev;
 
@@ -148,7 +148,13 @@ public class TongDTO {
     private String yakAmt  ;      //약제비용   
     private String percentOfAmt ; //약제비율 
     
-    public String getAllBedsCurr() {
+    public String getPrtChk() {
+		return prtChk;
+	}
+	public void setPrtChk(String prtChk) {
+		this.prtChk = prtChk;
+	}
+	public String getAllBedsCurr() {
 		return allBedsCurr;
 	}
 	public void setAllBedsCurr(String allBedsCurr) {

@@ -261,7 +261,8 @@ public class TongController {
 	    }
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
 	}
-	//진료과별 약제비율 
+
+	//정액환자 진료비제외 약제비율 
 	@RequestMapping(value="/f_tong_08.do")
     public String f_tong_08(HttpServletRequest request, ModelMap model) {
 
@@ -276,10 +277,12 @@ public class TongController {
 		} catch(Exception ex) {
 			return "";
 		}
-    }	
+    }
+	
 	@RequestMapping(value= "/t_tong08List.do", method = RequestMethod.POST)
 	@ResponseBody
 	public List<TongDTO> t_tong08List(@ModelAttribute("DTO") TongDTO dto) {
+		dto.setPrtChk("JJ")  ;
 	    List<TongDTO> resultLst = new ArrayList<>();
 	    try { 
 	        resultLst = svc.tong08List(dto);
@@ -289,6 +292,37 @@ public class TongController {
 	    }
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
 	}	
+	
+	//정액환자 약제비율(전체)
+	@RequestMapping(value="/f_tong_081.do")
+    public String f_tong_081(HttpServletRequest request, ModelMap model) {
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/tong/f_tong_081";				
+			} else {  	
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value= "/t_tong081List.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<TongDTO> t_tong081List(@ModelAttribute("DTO") TongDTO dto) {
+
+		dto.setPrtChk("JA")  ;
+
+        List<TongDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.tong08List(dto);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}		
 	//정액환자진료비제외 항목비율  
 	@RequestMapping(value="/f_tong_09.do")
     public String f_tong_09(HttpServletRequest request, ModelMap model) {
@@ -318,34 +352,6 @@ public class TongController {
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
 	}	
 	//행위환자 약제비율 
-	@RequestMapping(value="/f_tong_081.do")
-    public String f_tong_081(HttpServletRequest request, ModelMap model) {
-
-        cookie_value = ClientInfo.getCookie(request);		
-		try {
-			if (cookie_value.get("s_hospid").trim() != null &&
-				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/tong/f_tong_081";				
-			} else {  	
-				return "";
-			}	
-		} catch(Exception ex) {
-			return "";
-		}
-    }	
-	@RequestMapping(value= "/t_tong081List.do", method = RequestMethod.POST)
-	@ResponseBody
-	public List<TongDTO> t_tong081List(@ModelAttribute("DTO") TongDTO dto) {
-	    List<TongDTO> resultLst = new ArrayList<>();
-	    try { 
-	        resultLst = svc.tong081List(dto);
-	        System.out.println("file 데이터 개수: " + resultLst.size());
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
-	}		
-	//정액환자 약제비율(전체)
 	@RequestMapping(value="/f_tong_082.do")
     public String f_tong_082(HttpServletRequest request, ModelMap model) {
 
@@ -364,6 +370,7 @@ public class TongController {
 	@RequestMapping(value= "/t_tong082List.do", method = RequestMethod.POST)
 	@ResponseBody
 	public List<TongDTO> t_tong082List(@ModelAttribute("DTO") TongDTO dto) {
+		dto.setPrtChk("HY")  ;
 	    List<TongDTO> resultLst = new ArrayList<>();
 	    try { 
 	        resultLst = svc.tong082List(dto);
@@ -372,7 +379,36 @@ public class TongController {
 	        e.printStackTrace();
 	    }
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
-	}		
+	}	
+	//전체환자 약제비율 
+	@RequestMapping(value="/f_tong_083.do")
+    public String f_tong_083(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/tong/f_tong_083";				
+			} else {  	
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value= "/t_tong083List.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<TongDTO> t_tong083List(@ModelAttribute("DTO") TongDTO dto) {
+		dto.setPrtChk("TY")  ;
+	    List<TongDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.tong082List(dto);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}			
 }
 
 

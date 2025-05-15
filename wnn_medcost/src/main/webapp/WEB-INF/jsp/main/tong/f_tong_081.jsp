@@ -11,7 +11,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>행위환자 약제비율</title>
+  <title>정액환자 약제비율(전체)</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -131,7 +131,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>행위환자 약제비율</h2>
+    <h2>정액환자 약제비율(전체)</h2>
     <div class="filter-box">
 		<span for="startMonth">시작년월</span>
 		<input type="month" id="startMonth" value="2025-01" 
@@ -384,7 +384,7 @@
 
     const opt = {
     		  margin: [2, 10, 5, 10], // [상(top), 우(right), 하(bottom), 좌(left)]
-    		  filename: '행위환자 약제비율.pdf',
+    		  filename: '정액환자 약제비율(전체).pdf',
     		  image: { type: 'jpeg', quality: 1 },
     		  html2canvas: { scale: 2, useCORS: true ,scrollY: 0},
     		  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
