@@ -2019,6 +2019,7 @@
 		function openAddressSearch() {
 		    $('#addressModal').modal({ backdrop: false, keyboard: true }); // 배경 막음 없이 모달 열기
 		    $('#addressModal').css("z-index", "10700"); // z-index를 올려서 다른 모달보다 위로 배치
+		    $("#addressModal").modal("show"); // Bootstrap 모달 닫기
 		}
 		// 주소 검색 모달 닫기
 		function closeModal() {

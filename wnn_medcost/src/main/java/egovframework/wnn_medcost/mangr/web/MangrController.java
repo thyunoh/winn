@@ -99,6 +99,7 @@ public class MangrController {
 				
 				Map<String, Object> response = new HashMap<>();
 		        response.put("data",faqList);
+		        response.put("error_code", "0"); // 정상 응답
 
 		        System.out.println("faq-java response : " + response);
 		        
@@ -472,5 +473,47 @@ public class MangrController {
 			return "";
 		}
     }
+	/* 일대일 질의응답*/	
+	@RequestMapping(value= "/asqList.do")
+	public String ctl_asqList(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
+		try { 
+			//코그구분 정보 조회
+			List<?>  resultLst = svc.getasqCdList(dto);
+			model.addAttribute("resultLst", resultLst);
+			model.addAttribute("resultCnt", resultLst.size());
+			model.addAttribute("error_code", "0"); 
+		}catch(Exception ex) {
+			model.addAttribute("error_code", "10000"); 
+		}
+		return "jsonView";
+	}	
+	@RequestMapping(value= "/selectAnsrInfo.do")
+	public String mangr_selectAnsrInfo(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
+		try { 
+			//코그구분 정보 조회
+			AsqDTO  result = svc.selectqstnInfo(dto);
+			model.addAttribute("result", result);
+			model.addAttribute("error_code", "0"); 
+		}catch(Exception ex) {
+			model.addAttribute("error_code", "10000"); 
+		}
+		return "jsonView";
+	}	
+	@RequestMapping(value="/asqSaveAct.do")
+	public String mangr_asqSaveAct(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
+		try { 
+			//코그구분 정보 조회
+			System.out.println("getIud " + dto.getIud());
+			if ("QI".equals(dto.getIud())){
+				svc.insertasqCd(dto) ;
+			}else if ("QU".equals(dto.getIud())){
+			}else if ("QD".equals(dto.getIud())){
+			}
+			model.addAttribute("error_code", "0"); 	
+		}catch(Exception ex) {
+			model.addAttribute("error_code", "10000"); 
+		}
+		return "jsonView";
+	}			
 }
 

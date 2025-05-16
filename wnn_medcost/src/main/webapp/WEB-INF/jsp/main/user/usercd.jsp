@@ -124,8 +124,9 @@
 							<!-- ============================================================== -->
 							<!-- text input 1개 start -->
 							<!-- ============================================================== -->
-							<input type="hidden" id="regUser"     name="regUser" value="">
-							<input type="hidden" id="updUser"     name="updUser" value="">
+							<input type="hidden" id="regUser"     name="regUser"     value="">
+							<input type="hidden" id="updUser"     name="updUser"     value="">
+							<input type="hidden" id="hospNm"      name="hospNm"      value= "">
 							<input type="hidden" id="mainGuNm"    name="mainGuNm"    value= "">
 							<input type="hidden" id="regIp" name="regIp" value=""> <input
 								type="hidden" id="updIp" name="updIp" value="">
@@ -965,6 +966,7 @@
         	let newData = {
          		userId:     $('#userId').val(),
          		hospCd:     $('#hospCd').val(),
+         		hospNm:     $('#hospNm').val(),
          		mainGuNm:   $('#mainGuNm').val(),
          		startDt:    $('#startDt').val(), 
          		endDt:      $('#endDt').val(), 
@@ -993,6 +995,15 @@
             } 
         	return true ;
         }
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('mainGu');
+		    document.getElementById('mainGuNm').value = select.options[select.selectedIndex].text;
+		});
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('mainGu').addEventListener('change', function() {
+		    document.getElementById('mainGuNm').value = this.options[this.selectedIndex].text;
+		});        
 		function fn_Insert(){
 			//패스워드 체크 
 			if (!pass_chk('I')){ 

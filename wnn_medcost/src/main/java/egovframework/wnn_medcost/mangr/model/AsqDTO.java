@@ -24,6 +24,7 @@ public class AsqDTO {
     private String actionYn;         // 활성 여부
     private String readCnt;         // 조회 수
     private String subCodeNm;      // 공지 세부내용
+    private String iud = ""; 
 
     private String regDttm;   // 등록 일시
     private String regUser;          // 등록자
@@ -36,6 +37,22 @@ public class AsqDTO {
     private String ansrStat; 
 	private String hospNm ;
     private String userNm ;
+ 
+    
+    public String getIud() {
+		return iud;
+	}
+	public void setIud(String iud) {
+		this.iud = iud;
+	}
+	public String getUidGubun() {
+		return uidGubun;
+	}
+	public void setUidGubun(String uidGubun) {
+		this.uidGubun = uidGubun;
+	}
+	private String uidGubun ;
+    
     public String getUserNm() {
 		return userNm;
 	}

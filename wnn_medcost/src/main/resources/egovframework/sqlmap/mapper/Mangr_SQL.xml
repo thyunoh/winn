@@ -366,12 +366,20 @@
         WHERE 1=1  
              AND A.ACTION_YN = 'Y'
  		 ]]>
+		  <if test='hospCd != null and hospCd !="" '>
+	         AND A.HOSP_cd = #{hospCd}
+	      </if>		 
 		  <if test="asqGb != null and asqGb != '' and   asqGb == '1' ">
 	         AND IFNULL(A.QSTN_WAN,'') = 'Y'
 	      </if>
 		  <if test="asqGb != null and asqGb != '' and  asqGb == '2' ">
 	         AND IFNULL(A.ANSR_WAN,'') = 'Y'
-	      </if>	      
+	      </if>	 
+		  <if test='qstnTitle != null and qstnTitle !="" '><![CDATA[
+	         AND (A.QSTN_TITLE LIKE CONCAT(#{qstnTitle},'%')
+	          OR  A.QSTN_CONTS LIKE CONCAT(#{qstnTitle},'%') )
+	      ]]>
+	      </if>	           
 	      <![CDATA[
 		     Order by A.REG_DTTM  DESC
 	      ]]>
@@ -388,5 +396,116 @@
           AND ACTION_YN   = 'Y' 
     ]]>      
     </update>   
-                              	   	                  
+    <select id="selectqstnlist" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
+        SELECT 
+            A.HOSP_CD, 
+            A.FILE_GB, 
+            A.QSTN_TITLE, 
+            A.ASQ_SEQ ,
+            CASE WHEN IFNULL(B.USER_NM,'') = '' THEN A.REG_USER 
+            ELSE B.USER_NM  END  USER_NM ,
+            C.HOSP_NM ,
+            A.QSTN_CONTS, 
+            A.ASQ_SHARE, 
+            IFNULL(A.ANSR_CONTS,'') ANSR_CONTS , 
+            A.UPDATE_SW, 
+            A.REG_DTTM, 
+            A.REG_USER, 
+            A.REG_IP, 
+            A.READ_CNT ,
+            A.UPD_DTTM, 
+            A.UPD_USER, 
+            A.UPD_IP, 
+            A.ANSR_DTTM, 
+            A.ANSR_USER, 
+            A.ANSR_IP, 
+            A.ANSR_UPD_DTTM, 
+            A.ANSR_UPD_USER, 
+            A.ANSR_UPD_IP , 
+            A.HOSP_UUID ,
+            A.QSTN_WAN  ,
+            A.ANSR_WAN  ,
+            CASE WHEN  A.QSTN_WAN = 'Y' THEN '완료'
+            ELSE '진행' END QSTN_STAT ,
+            CASE WHEN  A.ANSR_WAN = 'Y' THEN '완료'
+            ELSE '진행' END ANSR_STAT             
+           FROM TBL_ASQ_MST A 
+            LEFT JOIN  TBL_USER_MST B ON B.USER_ID    = A.REG_USER
+                                     AND B.HOSP_CD    = A.HOSP_CD 
+                                     AND B.ACTION_YN  = A.ACTION_YN  
+            LEFT JOIN  TBL_HOSP_MST C ON C.HOSP_CD    = A.HOSP_CD 
+                                     AND C.ACTION_YN  = A.ACTION_YN  
+        WHERE 1=1  
+             AND A.ACTION_YN = 'Y'
+		 ]]>
+		  <if test='hospCd != null and hospCd !="" '><![CDATA[
+	         AND A.HOSP_cd = #{hospCd}
+	      ]]>
+	      </if>
+		  <if test='qstnTitle != null and qstnTitle !="" '><![CDATA[
+	         AND (A.QSTN_TITLE LIKE CONCAT(#{qstnTitle},'%')
+	          OR  A.QSTN_CONTS LIKE CONCAT(#{qstnTitle},'%') )
+	      ]]>
+	      </if>
+	      <![CDATA[
+		     Order by A.UPD_DTTM  DESC
+	      ]]>
+    </select> 
+      <select  id="selectqstnInfo" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
+        SELECT 
+            QSTN_TITLE ,
+            QSTN_CONTS ,
+            IFNULL(QSTN_WAN,'')  QSTN_WAN  ,
+            ANSR_CONTS , 
+            IFNULL(ANSR_WAN,'')  ANSR_WAN  ,
+            UPDATE_SW  ,
+            FILE_GB    ,
+            ASQ_SEQ    ,
+            REG_DTTM   ,
+            REG_USER   ,
+            REG_IP     , 
+            UPD_DTTM   ,
+            UPD_USER   ,
+            UPD_IP     
+         FROM  TBL_ASQ_MST   
+        WHERE  ASQ_SEQ  = #{asqSeq} 
+           AND ACTION_YN = 'Y'
+     ]]>   
+    </select>   
+      <!-- 질문입력  -->   
+     <insert id="insertasqCd" parameterType="AsqDTO"> <![CDATA[ 
+        INSERT INTO TBL_ASQ_MST (
+            HOSP_CD, 
+            FILE_GB, 
+            QSTN_TITLE, 
+            QSTN_CONTS, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP, 
+            QSTN_WAN ,
+            JOB_SEQ  ,
+            ACTION_YN 
+        ) VALUES (
+            #{hospCd}, 
+            #{fileGb}, 
+            #{qstnTitle}, 
+            #{qstnConts}, 
+            NOW(), 
+            #{regUser}, 
+            #{regIp}, 
+            NOW(), 
+            #{updUser}, 
+            #{updIp}, 
+            #{qstnWan},
+			,(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+		   	       FROM  TBL_ASQ_MST A 
+			       WHERE A.HOSP_CD   = #{hospCd} 
+			         AND A.FILE_GB   = #{fileGb} 
+			) , 'Y'       
+        )
+    ]]>    
+    </insert>                                    	   	                  
 </mapper>

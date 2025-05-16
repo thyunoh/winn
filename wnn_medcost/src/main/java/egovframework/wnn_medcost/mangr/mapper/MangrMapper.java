@@ -41,6 +41,8 @@ public interface MangrMapper {
 	boolean           insertasqCd(AsqDTO dto)    throws Exception; 
 	boolean           updateasqCd(AsqDTO dto)    throws Exception; 
 	String            asqCdDupChk(AsqDTO dto)    throws Exception;
+	List<AsqDTO>      selectqstnlist(AsqDTO dto)    throws Exception;
+	AsqDTO            selectqstnInfo(AsqDTO dto)  throws Exception;
 	
     //문서파일 
 	List<FileDTO>     getFileCdList(FileDTO dto)  throws Exception;

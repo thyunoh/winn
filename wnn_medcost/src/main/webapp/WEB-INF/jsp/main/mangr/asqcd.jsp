@@ -26,7 +26,10 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
                         <div class="card">                        	
                             <div class="card-body">  
 	                            <div class="form-row mb-2">
-                                    <div class="col-sm-1">
+ 		                            <div class="col-1 col-lg-1"> 
+ 			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid text-left" required placeholder="">
+			                        </div> 	                            
+                                    <div class="col-sm-1" style ="margin-top:-5px">
                                       <select id="asqGb" class="w-72 p-2 rounded-lg" oninput="findField(this)">
 									    <option selected value="1">구분 1</option>
 									  </select>
@@ -163,9 +166,6 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		var modalHead = document.getElementById('modalHead');
 		modalHead.innerText = "...";
 		var inputZone = document.getElementById('inputZone');
-		// Form마다 수정해야 될 부분 종료
-        let s_hospcd = getCookie("s_hospid") ;	
-        $("#hospCd").val(s_hospcd);
 		// Form마다 조회 조건 변경 시작
 		var findTxtln  = 0;    // 조회조건시 글자수 제한 / 0이면 제한 없음
 		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
@@ -174,8 +174,17 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
 		findValues.push({ id: "findData", val: "",  chk: true  });
-		//Form마다 조회 조건 변경 종료
-		
+	    let s_hospcd    = getCookie("s_hospid") ;
+	    let s_wnn_yn    = getCookie("s_wnn_yn") ;
+	    let s_hosp_uuid = getCookie("s_hosp_uuid");
+	  //원너넷이 아니거나 워너넷에서 병원을 선택해서 처리한 경우)
+	    if ( (s_hospcd &&  s_wnn_yn != 'Y') || (s_hospcd != s_hosp_uuid) )   { 
+	        findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
+            $("#hospCd1").val(s_hospcd);
+	    }else{
+	        findValues.push({ id: "hospCd1", val:"",  chk: false  });
+            $("#hospCd1").val("");	    	
+	    }
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
 		var edit_Data = null;
@@ -719,7 +728,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		    let find = {};
 		   	
 		   	for (let findValue of findValues) {
-		   		let key = findValue.id === "feeType1" ? "feeType" : findValue.id;
+		   		let key = findValue.id === "hospCd1" ? "hospCd" : findValue.id;
 		   		find[key] = findValue.val;
 		   	}
 		   	
@@ -1410,6 +1419,25 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		function modalMainClose() {
 			$("#" + modalName.id).modal('hide');
 		}
+
+		//요양병원 아이디 변경시 재조회 
+		let currentHospid = sessionStorage.getItem('hospid'); // 최초 병원 ID 저장
+		setInterval(function () {
+		    let newHospid = sessionStorage.getItem('hospid');
+		    if (newHospid && newHospid !== currentHospid) {
+		        console.log("병원이 변경됨: " + newHospid);
+		        currentHospid = newHospid; // 변경된 ID로 갱신
+		      //병원병원에서 접속시 요양기관 값셋팅
+			    let s_hospcd = getCookie("s_hospid") ;
+				findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
+				$("#hospCd1").val(s_hospcd);
+				triggerFind();
+		    }
+		}, 1000); // 1초마다 체크 (너무 짧으면 3000ms로 늘려도 됨)
+		// 강제로 실행하고 싶을 때 사용할 함수
+		function triggerFind() {
+		    fn_FindData();
+		}		
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();

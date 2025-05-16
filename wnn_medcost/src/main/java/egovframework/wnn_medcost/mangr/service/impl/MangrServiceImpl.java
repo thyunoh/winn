@@ -193,4 +193,16 @@ public class MangrServiceImpl implements MangrService {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public List<AsqDTO> selectqstnlist(AsqDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.selectqstnlist(dto) ;
+	}
+
+	@Override
+	public AsqDTO selectqstnInfo(AsqDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.selectqstnInfo(dto) ;
+	}
 }

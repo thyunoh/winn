@@ -93,7 +93,8 @@
 			        AND C.CLAIM_NO = A.CLAIM_NO
 			        AND C.BILL_SEQ = B.BILL_SEQ
 			        AND C.SPEC_TYPE = 'JS008'
-			  )		    
+			  )	
+			  AND IFNULL(B.DELYN,'') <> 'Y'  	    
 	    ]]>	  
 		<if test="startMonth != null and startMonth != ''">
 		    AND A.DATE_YM &gt;= #{startMonth}
@@ -242,7 +243,8 @@
 			          AND C.CLAIM_NO  = A.CLAIM_NO
 			          AND C.BILL_SEQ  = B.BILL_SEQ
 			          AND C.SPEC_TYPE = 'JS008'
-			   )		    
+			   )	
+			   AND IFNULL(B.DELYN,'') <> 'Y'  	    
 		    ]]>   
 		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
 		 	  AND A.MED_TYPE NOT IN('2')
@@ -331,7 +333,8 @@
 			          AND C.CLAIM_NO  = A.CLAIM_NO
 			          AND C.BILL_SEQ  = B.BILL_SEQ
 			          AND C.SPEC_TYPE = 'JS008'
-			   )	
+			   )
+			   AND IFNULL(B.DELYN,'') <> 'Y'  	
 		    ]]>   
 		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
 		 	  AND A.MED_TYPE NOT IN('2')
@@ -393,6 +396,7 @@
 			          AND D.BILL_SEQ  = B.BILL_SEQ
 			          AND D.SPEC_TYPE = 'JS008'
 			   )	
+			   AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -534,6 +538,7 @@
 			          AND F.BILL_SEQ  = B.BILL_SEQ
 			          AND F.SPEC_TYPE = 'JS008'
 			  )	
+			  AND IFNULL(B.DELYN,'') <> 'Y'  
 	   ]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -595,8 +600,12 @@
 	        AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 	        AND NOT EXISTS (
 	          SELECT 1 FROM TBL_SPECODE_MST C
-	          WHERE C.HOSP_CD = A.HOSP_CD AND C.CLAIM_NO = A.CLAIM_NO AND C.BILL_SEQ = B.BILL_SEQ AND C.SPEC_TYPE = 'JS008'
+	          WHERE C.HOSP_CD = A.HOSP_CD 
+	            AND C.CLAIM_NO = A.CLAIM_NO 
+	            AND C.BILL_SEQ = B.BILL_SEQ 
+	            AND C.SPEC_TYPE = 'JS008'
 	        )
+	        AND IFNULL(B.DELYN,'') <> 'Y'  
 	  ]]>
 	    <if test='ipwe == "I"'>
 	      AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -678,6 +687,7 @@
 	          WHERE D.HOSP_CD = A.HOSP_CD AND D.CLAIM_NO = A.CLAIM_NO 
 	            AND D.BILL_SEQ = B.BILL_SEQ AND D.SPEC_TYPE = 'JS008'
 	        )
+	        AND IFNULL(B.DELYN,'') <> 'Y'  
 	  ]]>
 	        <if test='ipwe == "I"'>
 	          AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -755,6 +765,7 @@
 			            AND D.BILL_SEQ  = B.BILL_SEQ
 			            AND D.SPEC_TYPE = 'JS008'
 			      )	
+			      AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -842,6 +853,7 @@
 			             AND C.BILL_SEQ  = B.BILL_SEQ
 			             AND C.SPEC_TYPE = 'JS008'
 		  	      )	
+		  	      AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	   <if test='ipwe == "I"'>
 	       AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -940,7 +952,8 @@
 			          AND D.CLAIM_NO  = A.CLAIM_NO
 			          AND D.BILL_SEQ  = B.BILL_SEQ
 			          AND D.SPEC_TYPE = 'JS008'
-			    )	
+			     )	
+			     AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	    <if test='ipwe == "I"'>
 	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -1086,6 +1099,7 @@
 			          AND E.BILL_SEQ  = B.BILL_SEQ
 			          AND E.SPEC_TYPE = 'JS008'
 			   )	
+			   AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	    <if test='ipwe == "I"'>
 	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -1186,7 +1200,8 @@
 			          AND E.CLAIM_NO  = A.CLAIM_NO
 			          AND E.BILL_SEQ  = B.BILL_SEQ
 			          AND E.SPEC_TYPE = 'JS008'
-			   )	
+			   )
+			   AND IFNULL(B.DELYN,'') <> 'Y'  	
 		]]>
 	    <if test='ipwe == "I"'>
 	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -1325,6 +1340,7 @@
 			          AND F.BILL_SEQ  = B.BILL_SEQ
 			          AND F.SPEC_TYPE = 'JS008'
 			   )	
+			   AND IFNULL(B.DELYN,'') <> 'Y'  
 	   ]]>
 	    <if test='ipwe == "I"'>
 	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
