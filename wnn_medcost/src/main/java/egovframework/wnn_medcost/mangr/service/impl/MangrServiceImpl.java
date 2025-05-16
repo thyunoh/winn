@@ -205,4 +205,10 @@ public class MangrServiceImpl implements MangrService {
 		// TODO Auto-generated method stub
 		return mapper.selectqstnInfo(dto) ;
 	}
+
+	@Override
+	public boolean updateQstnCd(AsqDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.updateQstnCd(dto) ;
+	}
 }

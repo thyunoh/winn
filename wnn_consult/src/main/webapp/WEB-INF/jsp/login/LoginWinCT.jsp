@@ -1735,13 +1735,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	</div>
 
 	<!--질문응답-->
-	<div class="modal fade" id="asq_main" tabindex="-1"
+	<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
 		data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
 		<div
 			class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
 			<div class="modal-content"
-				style="height: 72%; display: flex; flex-direction: column;">
+				style="height: 74%; display: flex; flex-direction: column;">
 				<div class="modal-header  bg-light">
 					<h6 class="modal-title">문의 등록</h6>
 					<div class="form-row">
@@ -1792,7 +1792,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									style="height: 35px; font-size: 14px;">
 									<option value="">선택</option>
 									<option value="Y">Y. 질문완료</option>
-									<option value="N">N. 진행중</option>
+									<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
 								</select>
 							</div>
 						</div>
@@ -2037,10 +2037,14 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    var msg = "";
 
 	    if (uidGubun.substring(1, 2) != "D") {
-	        // 삭제가 아닐 때만 필수 입력값 확인 및 form 데이터 설정
-	        if (!fnRequired('fileGbasq', '공지구분을 확인 하세요.')) return;
-	        if (!fnRequired('qstnTitle', '질문제목을 확인 하세요.')) return;
-	        if (!fnRequired('qstnConts', '질문내용을 확인하세요.')) return;
+	        if ( $("#qstnTitle").val() == "") { 
+	            messageBox("1", "<h6>질문제목을 입력하세요.!!</h6><p></p>", "", "", "");
+		        return; 
+	        }         
+	        if ( $("#qstnConts").val() == "") {
+	            messageBox("1", "<h6>질문내용을 입력하세요.!!</h6><p></p>", "", "", "");
+		        return; 
+	        }         
 		    formData = $("form[name='asq_regForm']").serialize();
 	    }else{
 	        formData = {

@@ -499,6 +499,7 @@ public class MangrController {
 		}
 		return "jsonView";
 	}	
+	//요양기관 등록사이드바  
 	@RequestMapping(value="/asqSaveAct.do")
 	public String mangr_asqSaveAct(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
@@ -507,7 +508,10 @@ public class MangrController {
 			if ("QI".equals(dto.getIud())){
 				svc.insertasqCd(dto) ;
 			}else if ("QU".equals(dto.getIud())){
+				svc.updateQstnCd(dto) ; 
+				svc.insertasqCd(dto) ;
 			}else if ("QD".equals(dto.getIud())){
+				svc.updateQstnCd(dto) ; 
 			}
 			model.addAttribute("error_code", "0"); 	
 		}catch(Exception ex) {

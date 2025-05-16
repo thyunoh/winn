@@ -458,13 +458,13 @@
 	</div>
 </div>
 	<!--질문응답-->
-	<div class="modal fade" id="asq_main" tabindex="-1"
+	<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-top:-25px"
 		data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
 		<div
 			class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
 			<div class="modal-content"
-				style="height: 72%; display: flex; flex-direction: column;">
+				style="height: 74%; display: flex; flex-direction: column;">
 				<div class="modal-header  bg-light">
 					<h6 class="modal-title">문의 등록</h6>
 					<div class="form-row">
@@ -481,13 +481,14 @@
 					method="post" enctype="multipart/form-data">
 					<div class="modal-body text-left flex-fill overflow-auto">
 						<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-						<input  type="hidden" name="iudasq"  id="iudasq" />
+						<input  type="hidden" name="iud"     id="iud" />
 						<input	type="hidden" name="asqSeq"  id="asqSeq" /> 
 						<input  type="hidden" name="fileGb"  id="fileGb" value="4" /> 
 						<input  type="hidden" name="hospCd"  id="hospCd" /> 
 						<input  type="hidden" name="regUser" id="regUser" /> 
 						<input  type="hidden" name="updUser" id="updUser" />
-
+						<input  type="hidden" name="regIp"   id="regIp" /> 
+						<input  type="hidden" name="updIp"   id="updIp" />
 						<div class="form-group ">
 							<label for="qstnTitle"
 								class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
@@ -514,7 +515,7 @@
 									style="height: 35px; font-size: 14px;">
 									<option value="">선택</option>
 									<option value="Y">Y. 질문완료</option>
-									<option value="N">N. 진행중</option>
+									<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
 								</select>
 							</div>
 						</div>
@@ -706,6 +707,8 @@ function asqModalOpen() {
 	$("#hospCd").val(getCookie("hospid")  || '') ;
 	$("#updUser").val(getCookie("userid") || '') ;
 	$("#regUser").val(getCookie("userid") || '') ;
+	$("#updIp").val(getCookie("s_connip") || '') ;
+	$("#regIp").val(getCookie("s_connip") || '') ;
 	$("#iud").val(uidGubun);
     $('#asq_main').modal('show');
 } 
@@ -829,22 +832,20 @@ function fn_asqsave(iud) {
 function fnasq_SaveProc() {
     var formData = {};
     var msg = "";     
-    let qstnTitle    = document.getElementById("qstnTitle");
-    let qstnConts    = document.getElementById("qstnConts");
     if (uidGubun.substring(1, 2) != "D") {
-        if (!qstnTitle) {
-            messageBox("1", "<h6>질문제목을 확인하세요.!!</h6><p></p>", "", "", "");
+        if ( $("#qstnTitle").val() == "") { 
+            messageBox("1", "<h6>질문제목을 입력하세요.!!</h6><p></p>", "", "", "");
 	        return; 
         }         
-        if (!qstnConts) {
-            messageBox("1", "<h6>질문내용을 확인하세요.!!</h6><p></p>", "", "", "");
+        if ( $("#qstnConts").val() == "") {
+            messageBox("1", "<h6>질문내용을 입력하세요.!!</h6><p></p>", "", "", "");
 	        return; 
         }         
 	    formData = $("form[name='asq_regForm']").serialize();
     }else{
         formData = {
                    asqSeq:    lasqSeq,   // 문의글 고유번호
-                   fileGbasq: lfileGb,   // 파일구분
+                   fileGb:    lfileGb,   // 파일구분
                    iud:       uidGubun   // 처리 구분 (삭제: "D")
                 };
     }
@@ -871,7 +872,6 @@ function fnasq_SaveProc() {
     };
     // 실제 삭제 로직을 실행하는 함수
     function execute() {
-    	alert("현재 iud 값: " + uidGubun); // iud 값 확인용 alert 추가
         $.ajax({
             type: "post",
             url: "/mangr/asqSaveAct.do",

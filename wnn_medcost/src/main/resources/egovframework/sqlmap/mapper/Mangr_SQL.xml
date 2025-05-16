@@ -384,7 +384,7 @@
 		     Order by A.REG_DTTM  DESC
 	      ]]>
     </select>   
-      <update id="updateasqCd" parameterType="AsqDTO" ><![CDATA[
+    <update id="updateasqCd" parameterType="AsqDTO" ><![CDATA[
         UPDATE TBL_ASQ_MST
         SET  ANSR_WAN     = #{ansrWan}  
             ,ANSR_CONTS   = #{ansrConts}           
@@ -500,12 +500,23 @@
             #{updUser}, 
             #{updIp}, 
             #{qstnWan},
-			,(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+			(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
 		   	       FROM  TBL_ASQ_MST A 
 			       WHERE A.HOSP_CD   = #{hospCd} 
 			         AND A.FILE_GB   = #{fileGb} 
 			) , 'Y'       
         )
     ]]>    
-    </insert>                                    	   	                  
+    </insert>    
+    <update id="updateQstnCd" parameterType="AsqDTO" ><![CDATA[
+        UPDATE TBL_ASQ_MST
+        SET  ACTION_YN    = 'N'          
+            ,UPD_DTTM     = NOW()
+            ,UPD_USER     = #{updUser}
+            ,UPD_IP       = #{updIp}
+        WHERE ASQ_SEQ     = #{asqSeq} 
+		  AND FILE_GB     = #{fileGb} 
+          AND ACTION_YN   = 'Y' 
+    ]]>      
+    </update>                                      	   	                  
 </mapper>
