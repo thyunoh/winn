@@ -473,7 +473,7 @@ public class MangrController {
 			return "";
 		}
     }
-	/* 일대일 질의응답*/	
+	/* 사이드바 일대일 질의응답 */	
 	@RequestMapping(value= "/asqList.do")
 	public String ctl_asqList(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
@@ -487,6 +487,7 @@ public class MangrController {
 		}
 		return "jsonView";
 	}	
+	/* 사이드바 일대일 질의응답 */	
 	@RequestMapping(value= "/selectAnsrInfo.do")
 	public String mangr_selectAnsrInfo(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
@@ -499,7 +500,7 @@ public class MangrController {
 		}
 		return "jsonView";
 	}	
-	//요양기관 등록사이드바  
+	/* 사이드바 일대일 질의응답 */	 
 	@RequestMapping(value="/asqSaveAct.do")
 	public String mangr_asqSaveAct(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
