@@ -871,6 +871,7 @@ function fnasq_SaveProc() {
     };
     // 실제 삭제 로직을 실행하는 함수
     function execute() {
+    	alert("현재 iud 값: " + uidGubun); // iud 값 확인용 alert 추가
         $.ajax({
             type: "post",
             url: "/mangr/asqSaveAct.do",
