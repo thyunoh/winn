@@ -492,7 +492,7 @@ public class MangrController {
 	public String mangr_selectAnsrInfo(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
 			//코그구분 정보 조회
-			AsqDTO  result = svc.selectqstnInfo(dto);
+			AsqDTO  result = svc.selectQstnInfo(dto);
 			model.addAttribute("result", result);
 			model.addAttribute("error_code", "0"); 
 		}catch(Exception ex) {
@@ -507,10 +507,10 @@ public class MangrController {
 			//코그구분 정보 조회
 			System.out.println("getIud " + dto.getIud());
 			if ("QI".equals(dto.getIud())){
-				svc.insertasqCd(dto) ;
+				svc.insertQstnCd(dto) ;
 			}else if ("QU".equals(dto.getIud())){
 				svc.updateQstnCd(dto) ; 
-				svc.insertasqCd(dto) ;
+				svc.insertQstnCd(dto) ;
 			}else if ("QD".equals(dto.getIud())){
 				svc.updateQstnCd(dto) ; 
 			}

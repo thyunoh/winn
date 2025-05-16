@@ -38,12 +38,11 @@ public interface MangrMapper {
 	
 	 //질의응답 (위너넷답변)
 	List<AsqDTO>      getasqCdList(AsqDTO dto)   throws Exception; 
-	boolean           insertasqCd(AsqDTO dto)    throws Exception; 
 	boolean           updateasqCd(AsqDTO dto)    throws Exception; 
 	String            asqCdDupChk(AsqDTO dto)    throws Exception;
-	List<AsqDTO>      selectqstnlist(AsqDTO dto) throws Exception;
 	//사이드바에서 사용자 일대일질문  
-	AsqDTO            selectqstnInfo(AsqDTO dto) throws Exception;
+	AsqDTO            selectQstnInfo(AsqDTO dto) throws Exception;
+	boolean           insertQstnCd(AsqDTO dto)   throws Exception; 
 	boolean           updateQstnCd(AsqDTO dto)   throws Exception; 
 	
     //문서파일 

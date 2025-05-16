@@ -133,12 +133,6 @@ public class MangrServiceImpl implements MangrService {
 	}
 
 	@Override
-	public boolean insertasqCd(AsqDTO dto) throws Exception {
-		// TODO Auto-generated method stub
-		return mapper.insertasqCd(dto) ;
-	}
-
-	@Override
 	public boolean updateasqCd(AsqDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.updateasqCd(dto) ;
@@ -195,17 +189,16 @@ public class MangrServiceImpl implements MangrService {
 	}
 
 	@Override
-	public List<AsqDTO> selectqstnlist(AsqDTO dto) throws Exception {
+	public AsqDTO selectQstnInfo(AsqDTO dto) throws Exception {
 		// TODO Auto-generated method stub
-		return mapper.selectqstnlist(dto) ;
+		return mapper.selectQstnInfo(dto) ;
 	}
 
 	@Override
-	public AsqDTO selectqstnInfo(AsqDTO dto) throws Exception {
+	public boolean insertQstnCd(AsqDTO dto) throws Exception {
 		// TODO Auto-generated method stub
-		return mapper.selectqstnInfo(dto) ;
+		return mapper.insertQstnCd(dto) ;
 	}
-
 	@Override
 	public boolean updateQstnCd(AsqDTO dto) throws Exception {
 		// TODO Auto-generated method stub
