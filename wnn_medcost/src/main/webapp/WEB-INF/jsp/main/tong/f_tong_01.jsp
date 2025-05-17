@@ -261,6 +261,7 @@
 
 		        document.getElementById(id + 'Curr').innerText = numberWithCommas(currNum.toFixed(1));
 		        document.getElementById(id + 'Prev').innerText = numberWithCommas(prevNum.toFixed(1));
+		        document.getElementById(id + 'Rate').innerText = rate ;
 		        document.getElementById(id + 'Rate').innerText = document.getElementById(id + 'Rate').innerText == "Infinity" ? 0 : rate;
 		      }
 		      // ✅ 전체 진료비(백만원)
@@ -274,6 +275,7 @@
 
 		        document.getElementById(id + 'Curr').innerText = numberWithCommas(currNum);
 		        document.getElementById(id + 'Prev').innerText = numberWithCommas(prevNum);
+		        document.getElementById(id + 'Rate').innerText = rate ;
 		        document.getElementById(id + 'Rate').innerText = document.getElementById(id + 'Rate').innerText == "Infinity" ? 0 : rate;
 		      }
 
