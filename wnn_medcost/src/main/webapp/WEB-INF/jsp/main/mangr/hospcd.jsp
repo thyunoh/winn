@@ -251,25 +251,17 @@
 					<div class="form-group row ">
 						<label for="hospCd"
 							class="col-2 col-sm-2 col-form-label text-left">요양기관</label>
-						<div class="col-4 col-sm-4">
+						<div class="col-2 col-sm-2">
 							<input id="hospCd" name="hospCd" type="text"
 								class="form-control is-invalid text-left" required
 								placeholder="요양기관를 입력하세요">
 						</div>
 						<label for="joinDt"
 							class="col-2 col-lg-2 col-form-label text-left">가입일자</label>
-						<div class="col-4 col-lg-4">
+						<div class="col-2 col-lg-2">
 							<input id="joinDt" name="joinDt" type="text"
 								class="form-control date1-inputmask" required
 								placeholder="yyyy-mm-dd">
-						</div>
-					</div>
-					<div class="form-group row g-0 mb-0">
-						<label for="hospNm"
-							class="col-2 col-lg-2 col-form-label text-left">요양기관명</label>
-						<div class="col-6 col-sm-6">
-							<input id="hospNm" name="hospNm" type="text"
-								class="form-control text-left" placeholder="요양기관명을 입력하세요">
 						</div>
 						<label for="hosGrd"	class="col-2 col-lg-2 col-form-label text-left">종별등급</label>
 						<div class="col-2 col-lg-2">
@@ -279,7 +271,22 @@
 							</select>
 						</div>
 					</div>
-					<div class="form-group row g-0 mb-0">
+					<div class="form-group row">
+						<label for="hospNm"
+							class="col-2 col-lg-2 col-form-label text-left">요양기관명</label>
+						<div class="col-6 col-sm-6">
+							<input id="hospNm" name="hospNm" type="text"
+								class="form-control text-left" placeholder="요양기관명을 입력하세요">
+						</div>
+						<label for="winnerYn" class="col-2 col-lg-2 col-form-label text-left" style="color: red;">위너넷여부</label>
+						<div class="col-2 col-lg-2">
+							<select id="winnerYn" name="winnerYn" class="custom-select">
+								<option value="Y">Y</option>
+								<option value="N" selected>N</option>
+							</select>
+						</div>							
+					</div>
+					<div class="form-group row">
 						<label for="zipCd" class="col-2 col-lg-2 col-form-label text-left">우편번호</label>
 						<div class="col-4 col-sm-4">
 							<div class="input-group">
@@ -290,16 +297,9 @@
 									<i class="fas fa-search">검색</i>
 								</button>
 							</div>
-						</div>
-						<label for="winnerYn" class="col-2 col-lg-2 col-form-label text-left" style="color: red;">위너넷여부</label>
-						<div class="col-2 col-lg-2">
-							<select id="winnerYn" name="winnerYn" class="custom-select">
-								<option value="Y">Y</option>
-								<option value="N" selected>N</option>
-							</select>
-						</div>						
+						</div>                                                  
 					</div>
-					<div class="form-group row g-0 mb-0">
+					<div class="form-group row">
 						<label for="hospAddr"
 							class="col-2 col-lg-2 col-form-label text-left">주소</label>
 						<div class="col-10 col-sm-10">
@@ -307,7 +307,7 @@
 								class="form-control text-left" placeholder="주소를 입력하세요">
 						</div>
 					</div>
-					<div class="form-group row g-0 mb-0">
+					<div class="form-group row">
 						<label for="hospExtradr"
 							class="col-2 col-lg-2 col-form-label text-left">상세주소</label>
 						<div class="col-10 col-sm-10">
@@ -318,28 +318,25 @@
 					<div class="form-group row ">
 						<label for="hospTel"
 							class="col-2 col-lg-2 col-form-label text-left">연락처</label>
-						<div class="col-4 col-lg-4">
+						<div class="col-2 col-lg-2">
 							<input id="hospTel" name="hospTel" type="text"
 								class="form-control phone-inputmask"
 								placeholder="(010)-0000-0000" maxlength="">
 						</div>
 						<label for="hospFax"
 							class="col-2 col-lg-2 col-form-label text-left">Fax</label>
-						<div class="col-4 col-lg-4">
+						<div class="col-2 col-lg-2">
 							<input id="hospFax" name="hospFax" type="text"
 								class="form-control phone-inputmask"
 								placeholder="(010)-0000-0000" " maxlength="">
 						</div>
-					</div>
-<!--					<div class="form-group row">
- 						<label for="winnerYn"
-							class="col-2 col-lg-2 col-form-label text-left">위너넷여부</label>
+						<label for="omtYn" class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center" style="height: 100%;">청구누락대상</label>
 						<div class="col-2 col-lg-2">
-							<select id="winnerYn" name="winnerYn" class="custom-select">
-								<option value="Y">Y</option>
-								<option value="N" selected>N</option>
+							<select id="omtYn" name="omtYn" class="custom-select">
+							    <option value="2" selected>누락</option>
+								<option value="1">전체</option>
 							</select>
-						</div> -->
+						</div>						
 					</div>
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data">
@@ -1879,7 +1876,21 @@
 		$(function(e) {
 		    "use strict";
 		    $(".date1-inputmask").inputmask("9999-99-99"),
-		    $(".phone-inputmask").inputmask("(999)-9999-9999"),
+		    // 전화번호 마스크 (서울, 휴대폰, 지역번호 등 대응)
+		    $(".phone-inputmask").inputmask({
+		        mask: [
+		            "02-9999-9999",     // 서울 2자리
+		            "010-9999-9999",    // 휴대폰
+		            "011-9999-9999",    // 옛날 휴대폰
+		            "016-9999-9999",    // 옛날 휴대폰
+		            "070-9999-9999",    // 인터넷전화
+		            "031-999-9999",     // 지역번호 + 짧은번호
+		            "031-9999-9999"     // 지역번호 + 긴번호
+		        ],
+		        greedy: false,
+		        clearIncomplete: true,
+		        placeholder: ""
+		    });
 		    $(".email-inputmask").inputmask({
 		        mask: "*{1,20}[.*{1,20}][.*{1,20}][.*{1,20}]@*{1,20}[*{2,6}][*{1,2}].*{1,}[.*{2,6}][.*{1,2}]",
 		        greedy: !1,
@@ -1894,6 +1905,7 @@
 		            }
 		        }
 		    })
+		    
 		});
 		
 		// modal EnterKey 
@@ -2822,6 +2834,7 @@
 		function modal_key_hidden(flag) {	
 			// 병원정보
 	        const hospCdInput         = document.getElementById("hospCd");
+	        const winnerYnInput       = document.getElementById("winnerYn");
 	        // 계약정보
 	        const conactGb_oneInput   = document.getElementById("conactGb_one");
 	        const startDt_oneInput    = document.getElementById("startDt_one");
@@ -2829,7 +2842,7 @@
 	        // 사용자 정보 
 	        const userId_twoInput     = document.getElementById("userId_two");
 	        const startDt_twoInput    = document.getElementById("startDt_two");
-	        const inputs = [hospCdInput, conactGb_oneInput, startDt_oneInput, endDt_oneInput, userId_twoInput, startDt_twoInput];
+	        const inputs = [hospCdInput, winnerYnInput, conactGb_oneInput, startDt_oneInput, endDt_oneInput, userId_twoInput, startDt_twoInput];
 	        if (flag !== 'I') {
 		        const isReadOnly = flag !== 'I';
 		        inputs.forEach(input => {
@@ -2851,8 +2864,8 @@
 	        } else {
 	            $(conactGb_oneInput).css("pointer-events", "").css("background-color", ""); // 활성화
 	        }
+		    $(winnerYnInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
 		}
-	
 		function hu_modal_Open(flag) {	
 
             let hu_modal_OpenFlag = true;

@@ -453,6 +453,7 @@
 			) , 'Y'       
         )
     ]]>    
+    
     </insert>    
     <update id="updateQstnCd" parameterType="AsqDTO" ><![CDATA[
         UPDATE TBL_ASQ_MST

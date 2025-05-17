@@ -14,116 +14,8 @@
   <title>기간별 건수와 진료비 추이</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="/css/winmc/style_tong.css?v=123" rel="stylesheet">
   <style>
-	* {
-	  box-sizing: border-box;
-	  font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
-	}
-	body {
-	  margin: 0;
-	  background-color: #f8fafc;
-	  color: #1e293b;
-	}
-	.container {
-	  max-width: 1200px;
-	  margin: 40px auto;
-	  padding: 40px;
-	  background: linear-gradient(to bottom right, #ffffff, #f1f5f9);
-	  border-radius: 1.5rem;
-	  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-	}
-	h4 {
-	  font-size: 1.75rem;
-	  font-weight: 700;
-	  color: #0f172a;
-	  margin-bottom: 2rem;
-	  border-left: 6px solid #3b82f6;
-	  padding-left: 1rem;
-	}
-	.filter-box {
-	  display: flex;
-	  flex-wrap: wrap;
-	  gap: 1rem;
-	  margin-bottom: 2rem;
-	  align-items: center;
-	}
-	.filter-box span {
-	  font-weight: 500;
-	  font-size: 0.95rem;
-	}
-	input[type="month"],
-	select {
-	  padding: 0.6rem 0.9rem;
-	  font-size: 0.9rem;
-	  border: 1px solid #cbd5e1;
-	  border-radius: 0.75rem;
-	  background-color: #fff;
-	}
-	button {
-	  display: flex;
-	  align-items: center;
-	  gap: 6px;
-	  padding: 0.65rem 1.2rem;
-	  background-color: #3b82f6;
-	  border: none;
-	  border-radius: 0.75rem;
-	  color: white;
-	  font-size: 0.95rem;
-	  font-weight: 600;
-	  cursor: pointer;
-	  transition: background 0.3s ease, transform 0.2s ease;
-	}
-	button:hover {
-	  background-color: #2563eb;
-	  transform: translateY(-2px);
-	  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
-	}
-	.chart-box {
-	  margin-bottom: 2rem;
-	  background: #f1f5f9;
-	  padding: 1.5rem;
-	  border-radius: 1rem;
-	}
-	canvas {
-	  width: 100% !important;
-	  height: auto !important;
-	}
-	table {
-	  width: 100%;
-	  border-collapse: collapse;
-	  margin-top: 1rem;
-	  background-color: #ffffff;
-	  border-radius: 1rem;
-	  overflow: hidden;
-	}
-	th, td {
-	  border: 1px solid #e2e8f0;
-	  padding: 0.85rem;
-	  text-align: center;
-	  font-size: 0.9rem;
-	}
-	th {
-	  background-color: #e2e8f0;
-	  font-weight: 600;
-	  color: #334155;
-	}
-	tr:nth-child(even) td {
-	  background-color: #f8fafc;
-	}
-	@media (max-width: 768px) {
-	  .filter-box {
-	    flex-direction: column;
-	    align-items: flex-start;
-	  }
-	  table {
-	    font-size: 0.8rem;
-	  }
-	}
-	@media print {
-	  #pdfBtn, #serBtn {
-	    display: none !important;
-	  }
-	}
   </style>
 </head>
 <body>
@@ -142,10 +34,10 @@
  	   <span for="medType">진료</span>
 	   <div style="width: 80px;">
 			<select class="custom-select" id="medType" style= "font-size:14px ;">
-			    <option value="0" selected>전체</option>
-			    <option value="1">의과</option>
+			    <option value="1" selected>의과</option>
 			    <option value="2">치과</option>
 			    <option value="3">한방</option>
+			    <option value="0">전체</option>
 		    </select>      
 	    </div>
  	   <span for="jrType">행위</span>

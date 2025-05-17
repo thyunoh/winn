@@ -15,118 +15,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <link href="/css/winmc/style_tong.css?v=123" rel="stylesheet">    
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    body {
-      margin: 0;
-      background-color: #f3f4f6;
-      color: #111827;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 30px;
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
-    }
-    h2 {
-      font-size: 28px;
-      font-weight: bold;
-      color: #1f2937;
-      margin-bottom: 30px;
-      border-left: 6px solid #3b82f6;
-      padding-left: 16px;
-    }
-    .filter-box {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .filter-box span {
-      font-weight: 500;
-      font-size: 15px;
-    }
-    input[type="month"] {
-      padding: 8px 12px;
-      font-size: 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #3b82f6;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    button:hover {
-      background-color: #2563eb;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
-    }
-    .chart-box {
-      margin-bottom: 30px;
-      background: #f9fafb;
-      padding: 24px;
-      border-radius: 12px;
-    }
-    canvas {
-      width: 100% !important;
-      height: auto !important;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      overflow-x: auto;
-      margin-top: 16px;
-      background-color: #ffffff;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-    }
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 4px;
-      text-align: center;
-      font-size: 16px;
-    }
-    th {
-      background-color: #f3f4f6;
-      font-weight: 700;
-      color: #374151;
-    }
-    td {
-      background-color: #ffffff;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9fafb;
-    }
-    @media (max-width: 768px) {
-      .filter-box {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      table {
-        font-size: 12px;
-      }
-      th, td {
-        padding: 8px;
-      }
-    }
-    @media print {
-      #pdfBtn, #serBtn {
-        display: none !important;
-      }
-    }
   </style>
 </head>
 <body>
@@ -151,10 +41,10 @@
  	   <span for="medType">진료</span>
 	   <div style="width: 80px;">
 			<select class="custom-select" id="medType" style= "font-size:13px ;">
-			    <option value="0" selected>전체</option>
-			    <option value="1">의과</option>
+			    <option value="1" selected>의과</option>
 			    <option value="2">치과</option>
 			    <option value="3">한방</option>
+			    <option value="0">전체</option>
 		    </select>      
 	    </div>
 	   <span for="amtType">금액</span>

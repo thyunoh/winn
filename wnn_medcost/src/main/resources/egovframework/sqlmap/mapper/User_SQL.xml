@@ -110,6 +110,8 @@
 	        HM.ACTION_YN,
 	        HM.JOIN_DT,
 	        HM.HOS_GRD,
+	        HM.OMT_YN,
+	        HM.WINNER_YN ,
 	        -- 계약 구분 1 관련 정보 (예: 위탁 계약)
 	        MAX(CASE WHEN HC.CONACT_GB = '1' THEN CODE1.SUB_CODE_NM END) AS NAME2,
 	        MAX(IFNULL(CASE WHEN HC.CONACT_GB = '1' THEN DATE_FORMAT(HC.START_DT, '%Y-%m-%d') END, '')) AS START_DT2,
@@ -125,22 +127,22 @@
 	        MAX(IFNULL(CASE WHEN HC.CONACT_GB = '2' THEN DATE_FORMAT(HC.CLOSE_DT, '%Y-%m-%d') END, '')) AS CLOSE_DT1,
 	
 	        -- 병원 정보
-	        MAX(HM.USE_YN) AS USE_YN,
+	        MAX(HM.USE_YN)   AS USE_YN,
 	        MAX(HM.UPD_DTTM) AS UPD_DTTM,
 	        MAX(HM.UPD_USER) AS UPD_USER,
-	        MAX(HM.UPD_IP) AS UPD_IP,
+	        MAX(HM.UPD_IP)   AS UPD_IP,
 	        MAX(HM.REG_DTTM) AS REG_DTTM,
 	        MAX(HM.REG_USER) AS REG_USER,
-	        MAX(HM.REG_IP) AS REG_IP,
-	        MAX(HM.ZIP_CD) AS ZIP_CD,
+	        MAX(HM.REG_IP)   AS REG_IP,
+	        MAX(HM.ZIP_CD)   AS ZIP_CD,
 	        MAX(HM.HOSP_TEL) AS HOSP_TEL,
 	        MAX(HM.HOSP_FAX) AS HOSP_FAX,
-	        MAX(HM.INACCD) AS INACCD,
-	        MAX(HM.WARDCNT) AS WARDCNT,
-	        MAX(HM.ERCNT) AS ERCNT,
-	        MAX(HM.ICUCNT) AS ICUCNT,
-	        MAX(HM.DOCCNT) AS DOCCNT,
-	        MAX(HM.STHPNM) AS STHPNM,
+	        MAX(HM.INACCD)   AS INACCD,
+	        MAX(HM.WARDCNT)  AS WARDCNT,
+	        MAX(HM.ERCNT)    AS ERCNT,
+	        MAX(HM.ICUCNT)   AS ICUCNT,
+	        MAX(HM.DOCCNT)   AS DOCCNT,
+	        MAX(HM.STHPNM)   AS STHPNM,
 	        MAX(
 	            CASE 
 	                WHEN HM.HOSP_CD <> '' THEN 
@@ -203,7 +205,9 @@
 	        HM.BUSI_NUM,    
 	        HM.ACTION_YN,
 	        HM.JOIN_DT ,
-	        HM.HOS_GRD 
+	        HM.HOS_GRD ,
+	        HM.WINNER_YN ,
+	        HM.OMT_YN
 	
 	) A
 	WHERE A.ACTION_YN = 'Y'
@@ -235,7 +239,8 @@
 	      UPD_DTTM,	        UPD_USER,
 	      UPD_IP , 	        HOSP_UUID ,
 	      WINNER_YN ,       HOS_GRD   ,
-	      JOB_SEQ ,         ACTION_YN
+	      JOB_SEQ ,         ACTION_YN ,
+	      OMT_YN 
 	  ) VALUES (
 	      #{hospCd},         #{hospNm},
 	      #{hospAddr},       #{hospExtradr},
@@ -255,6 +260,7 @@
           (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
                    FROM TBL_HOSP_MST A 
                    WHERE A.HOSP_CD = #{hospCd}),'Y'  
+          ,#{omtYn}         
  	  )
 	 ]]>
 	</insert>   
