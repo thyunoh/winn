@@ -158,6 +158,7 @@
 			}
 		  });
 		}
+    
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
