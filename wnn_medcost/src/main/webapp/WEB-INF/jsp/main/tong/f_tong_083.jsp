@@ -82,9 +82,7 @@
 	    </tr>
 	  </thead>
 	  <tbody id="tableBody">
-
    	 </tbody>
-  
 	</table>
   </div>  
 </body>
