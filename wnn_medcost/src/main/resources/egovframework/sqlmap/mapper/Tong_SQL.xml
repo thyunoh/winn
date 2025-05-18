@@ -1139,7 +1139,8 @@
 		    FLOOR( A.totalAmt / A.claimCount)         AS avgAmt,
 		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal ,
             A.yakAmt,
-		    ROUND((A.yakAmt  / T.totalAmt) * 100, 1)  AS percentOfAmt		    
+		    ROUND((A.yakAmt  / T.totalAmt) * 100, 1)  AS percentOfAmt ,
+		    ROUND((A.yakAmt  / T.yakAmt) * 100, 1)    AS yakPercentOfYakAmt		    
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
 		LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB    = 'Z' 
@@ -1241,7 +1242,8 @@
 		    FLOOR( A.totalAmt / A.claimCount)         AS avgAmt,
 		    ROUND((A.totalAmt / T.totalAmt) * 100, 1) AS percentOfTotal ,
             A.yakAmt,
-		    ROUND((A.yakAmt  / T.totalAmt) * 100, 1)  AS percentOfAmt		    
+		    ROUND((A.yakAmt  / T.totalAmt) * 100, 1)  AS percentOfAmt	,
+		    ROUND((A.yakAmt  / T.yakAmt) * 100, 1)    AS yakPercentOfYakAmt	    
 		FROM BASE_WITH_TOTAL A
 		JOIN TOTAL_SUM T ON 1=1
 		LEFT JOIN TBL_CODE_DTL D  ON D.CODE_GB    = 'Z' 

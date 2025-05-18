@@ -147,8 +147,15 @@ public class TongDTO {
     private String amtType ; //총액/청구액(1,2)
     private String yakAmt  ;      //약제비용   
     private String percentOfAmt ; //약제비율 
+    private String yakPercentOfYakAmt ;
     
-    public String getPrtChk() {
+    public String getYakPercentOfYakAmt() {
+		return yakPercentOfYakAmt;
+	}
+	public void setYakPercentOfYakAmt(String yakPercentOfYakAmt) {
+		this.yakPercentOfYakAmt = yakPercentOfYakAmt;
+	}
+	public String getPrtChk() {
 		return prtChk;
 	}
 	public void setPrtChk(String prtChk) {

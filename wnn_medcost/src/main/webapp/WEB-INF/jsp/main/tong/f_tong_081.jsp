@@ -69,7 +69,7 @@
 	  <thead>
 	    <tr>
 	      <th rowspan="2">진료과구분</th>
-	      <th colspan="6">분류내용</th>
+	      <th colspan="7">분류내용</th>
 	    </tr>
 	    <tr>
 	      <th>청구액</th>
@@ -78,6 +78,7 @@
 	      <th>대비(%)</th>
 	      <th>약제비용</th>
 	      <th>약제비율</th>
+	      <th>수순약제비율</th>
 	    </tr>
 	  </thead>
 	  <tbody id="tableBody">
@@ -140,7 +141,8 @@
 		          numberWithCommas(item.avgAmt),
 		          numberWithCommas(item.percentOfTotal),
 		          numberWithCommas(item.yakAmt),
-		          numberWithCommas(item.percentOfAmt)
+		          numberWithCommas(item.percentOfAmt),
+		          numberWithCommas(item.yakPercentOfYakAmt)
 		        ];
 		        tableData.push({ row });
 		      });
