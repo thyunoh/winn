@@ -19,9 +19,6 @@
 <!-- Template Javascript -->
 <!-- ============================================================== -->
 <!-- sidebar start -->
-<!-- ============================================================== -->
-<!-- <c:if test='${not empty cookie.s_wnn_yn and cookie.s_wnn_yn.value == "Y"}'>  -->
-<!--  </c:if> -->
 <style>
 </style>
 <div class="nav-left-sidebar" style="background-color: white; color: black;">
@@ -355,7 +352,6 @@
 	    </div>
         
     </div>
-
 </div>
 <!-- 질의응답스크립트 종료 -->
 <!-- FAQ 모달 -->
@@ -889,6 +885,44 @@ function fnasq_SaveProc() {
     }
 
 }
+$(document).ready(function () {
+    // 메뉴 항목 클릭 시 .active 클래스 부여
+    $('.nav-item.nav-link').on('click', function () {
+        // 현재 사이드바 내 모든 항목에서 active 제거
+        $('.nav-item.nav-link').removeClass('active');
+        // 현재 클릭한 항목에 active 추가
+        $(this).addClass('active');
+    });
+});
+document.addEventListener('DOMContentLoaded', function () {
+    const currentPath = window.location.pathname;
+
+    // 모든 nav-link 순회
+    document.querySelectorAll('.nav-link').forEach(function (link) {
+        const href = link.getAttribute('href');
+
+        if (href && currentPath.includes(href)) {
+            link.classList.add('active');
+
+            // 현재 링크 기준으로 상위 submenu 모두 열기
+            let parent = link.closest('.nav-item');
+            while (parent) {
+                const submenu = parent.querySelector('.submenu');
+                if (submenu) {
+                    submenu.classList.add('show');
+                }
+
+                const toggler = parent.querySelector('[data-toggle="collapse"]');
+                if (toggler) {
+                    toggler.setAttribute('aria-expanded', 'true');
+                }
+
+                // 다음 상위로 이동
+                parent = parent.parentElement.closest('.nav-item');
+            }
+        }
+    });
+});
 
 </script>		
 <!-- ============================================================== -->

@@ -258,5 +258,6 @@
 	        }
 	    }
 	});
+
 	</script>
     <c:import url="sidebar.jsp" />
