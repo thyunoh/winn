@@ -23,10 +23,6 @@
 <!-- <c:if test='${not empty cookie.s_wnn_yn and cookie.s_wnn_yn.value == "Y"}'>  -->
 <!--  </c:if> -->
 <style>
-	.tr-primary {
-		background-color: #007bff;
-		color: #fff;
-	}
 </style>
 <div class="nav-left-sidebar" style="background-color: white; color: black;">
     <div class="menu-list">

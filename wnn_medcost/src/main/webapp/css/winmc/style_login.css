@@ -74,3 +74,13 @@
 	background-color: #007bff;
 	color: #fff;
   }   
+  .top-menu-btn {
+      margin-right: 4px;
+      transition: background-color 0.3s ease;
+  }
+
+  .top-menu-btn.active {
+      background-color: #FFD580 !important;  /* 연한 주황색 */
+      color: white !important;
+      font-weight: bold;
+  }  

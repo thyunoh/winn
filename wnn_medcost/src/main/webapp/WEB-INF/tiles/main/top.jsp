@@ -3,17 +3,8 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<link href="/css/winmc/style_login.css?v=123" rel="stylesheet">
 <style>
-    .top-menu-btn {
-        margin-right: 4px;
-        transition: background-color 0.3s ease;
-    }
-
-    .top-menu-btn.active {
-        background-color: #FFD580 !important;  /* 연한 주황색 */
-        color: white !important;
-        font-weight: bold;
-    }
 </style>
 <!-- ============================================================== -->
 <!-- main wrapper -->
