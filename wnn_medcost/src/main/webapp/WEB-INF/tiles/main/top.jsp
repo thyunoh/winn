@@ -3,6 +3,18 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<style>
+    .top-menu-btn {
+        margin-right: 4px;
+        transition: background-color 0.3s ease;
+    }
+
+    .top-menu-btn.active {
+        background-color: #FFD580 !important;  /* 연한 주황색 */
+        color: white !important;
+        font-weight: bold;
+    }
+</style>
 <!-- ============================================================== -->
 <!-- main wrapper -->
 <!-- ============================================================== -->
@@ -22,10 +34,10 @@
                 <ul class="navbar-nav ml-left">
 					<li class="nav-item">
                         <div id="custom-search" class="top-search-bar">
-                            <a href="#" id="top-menu_a" class="btn btn-rounded btn-light btn-sm">전체메뉴</a>
-                            <a href="#" id="top-menu_b" class="btn btn-rounded btn-light btn-sm">자료올리기</a>
-                			<div id="top-menu_c" > </div>
-                			<div id="top-menu_d" > </div>
+                            <a href="#" id="top-menu_a" class="btn btn-rounded btn-light btn-sm top-menu-btn">전체메뉴</a>
+                            <a href="#" id="top-menu_b" class="btn btn-rounded btn-light btn-sm top-menu-btn">자료올리기</a>
+                			<div id="top-menu_c"> </div>
+                			<div id="top-menu_d"> </div>
                         </div>
                     </li>
                     <!--  
@@ -123,28 +135,37 @@
 	    
 	    // 일단, 단순하게 메뉴보기만 설정하고 넘어감
 	    // 전체 메뉴보기
-	    $('#top-menu_a').on('click', function () {
-            $('.menu-section').hide();
-            $('#menu-a').show();
-            $('#menu-b').show();
-            $('#menu-c').show();
-            $('#menu-d').show();
-        });
-	 	// 자료올리기 메뉴보기
-	    $('#top-menu_b').on('click', function () {
-            $('.menu-section').hide();
-            $('#menu-b').show();
-        });
-	    // 진료비분석 메뉴보기
-        $('#top-menu_c').on('click', function () {
-            $('.menu-section').hide();
-            $('#menu-c').show();
-        });
-     	// 적정성분석 메뉴보기
-        $('#top-menu_d').on('click', function () {
-            $('.menu-section').hide();
-            $('#menu-d').show();
-        });
+		function clearMenuActive() {
+		    $('.top-menu-btn').removeClass('active');
+		}
+		
+		$('#top-menu_a').on('click', function () {
+		    clearMenuActive();
+		    $(this).addClass('active');
+		    $('.menu-section').hide();
+		    $('#menu-a, #menu-b, #menu-c, #menu-d').show();
+		});
+		
+		$('#top-menu_b').on('click', function () {
+		    clearMenuActive();
+		    $(this).addClass('active');
+		    $('.menu-section').hide();
+		    $('#menu-b').show();
+		});
+		
+		$(document).on('click', '#top-menu_c_btn', function () {
+		    clearMenuActive();
+		    $(this).addClass('active');
+		    $('.menu-section').hide();
+		    $('#menu-c').show();
+		});
+		
+		$(document).on('click', '#top-menu_d_btn', function () {
+		    clearMenuActive();
+		    $(this).addClass('active');
+		    $('.menu-section').hide();
+		    $('#menu-d').show();
+		});
 		$("#hospserchtop").on("click", function () {
 		    openHospitalSearchtop(function (data) {
 		        // 세션에 저장
@@ -189,41 +210,62 @@
 		    });
 		}		
 		   //계약관련 메뉴설정체크 A. 전체 1.진료비분석 2. 적정성평가 
-		function hosp_conact() {
-			let s_conact_gb = getCookie("s_conact_gb");
-			let s_wnn_yn    = getCookie("s_wnn_yn") ;
-			let menuArea    = document.getElementById("top-menu_c");
-			let menuHTML    = '';
-			menuArea.innerHTML   = '';
-			
-			if (s_conact_gb === 'A') {
-				menuHTML += `
-					<a href="#" class="btn btn-rounded btn-light btn-sm">진료비분석</a>
-				`;
-			} else if (s_conact_gb === '1') {
-				menuHTML += `
-					<a href="#" class="btn btn-rounded btn-light btn-sm">진료비분석</a>
-				`;
-			} else if (s_conact_gb === '2') {
-				menuHTML += `
-					<a href="#" class="btn btn-rounded btn-light btn-sm">적정성평가</a>
-				`;
-			}	
-			menuArea.insertAdjacentHTML("beforeend", menuHTML);
+	function hosp_conact() {
+	    let s_conact_gb = getCookie("s_conact_gb");
+	
+	    // top-menu_c 영역 구성
+	    let menuArea = document.getElementById("top-menu_c");
+	    let menuHTML = '';
+	    menuArea.innerHTML = '';
+	
+	    if (s_conact_gb === 'A' || s_conact_gb === '1') {
+	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
+	    } else if (s_conact_gb === '2') {
+	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_c_btn" data-type="evaluation">적정성평가</a>`;
+	    }
+	
+	    menuArea.insertAdjacentHTML("beforeend", menuHTML);
+	
+	    // top-menu_d 영역 구성
+	    let menuArea_d = document.getElementById("top-menu_d");
+	    let menuHTML_d = '';
+	    menuArea_d.innerHTML = '';
+	
+	    if (s_conact_gb === 'A') {
+	        menuHTML_d += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+	    }
+	
+	    menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);
+	
+	    // ★ localStorage에 저장된 선택 메뉴 복원
+	    const selectedTopMenu = localStorage.getItem('selectedTopMenu');
+	    if (selectedTopMenu) {
+	        const selectedBtn = document.getElementById(selectedTopMenu);
+	        if (selectedBtn) {
+	            selectedBtn.classList.add('active');
+	        }
+	    }
+	}
 
-			
-			let menuArea_d = document.getElementById("top-menu_d");
-			let menuHTML_d = '';
-			menuArea_d.innerHTML   = '';
-			
-			if (s_conact_gb === 'A') {
-				menuHTML_d += `
-					<a href="#" class="btn btn-rounded btn-light btn-sm">적정성평가</a>
-				`;
-			}
-		
-			menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);		
-		}
+	// 클릭 시 active 클래스 부여 및 저장
+	$(document).on('click', '.top-menu-btn', function () {
+	    $('.top-menu-btn').removeClass('active');
+	    $(this).addClass('active');
 
+	    // 선택된 top-menu ID 저장
+	    localStorage.setItem('selectedTopMenu', $(this).attr('id'));
+	});
+
+	// 페이지 로드시 저장된 메뉴 상태 복원
+	$(document).ready(function () {
+	    const selectedTopMenu = localStorage.getItem('selectedTopMenu');
+	    if (selectedTopMenu) {
+	        const selectedBtn = document.getElementById(selectedTopMenu);
+	        if (selectedBtn) {
+	            selectedBtn.classList.add('active');
+	            $('#' + selectedTopMenu).trigger('click');  // ⭐ 클릭 이벤트 강제 발생
+	        }
+	    }
+	});
 	</script>
     <c:import url="sidebar.jsp" />
