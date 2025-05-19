@@ -39,7 +39,7 @@
 		    </select>      
 	    </div>
  	   <span for="medType">진료</span>
-	   <div style="width: 70px;">
+	   <div style="width: 72px;">
 			<select class="custom-select" id="medType" style= "font-size:13px ;">
 			    <option value="1" selected>의과</option>
 			    <option value="2">치과</option>
@@ -69,7 +69,11 @@
 	<div id="loadingSpinner" style="display:none; text-align:center; margin-top:2px;">
 	  <img src="/images/winct/loading.gif" alt="로딩 이미지 테스트">
 	</div>  
-	   
+    <!-- 차트 영역 -->
+    <div class="chart-box">
+      <canvas id="costChart"></canvas>
+    </div>
+    	   
 	<table id="dataTable" border="1" cellspacing="0" cellpadding="1" style="border-collapse: collapse; text-align: center;">
 	  <thead>
 	    <tr>
@@ -102,9 +106,9 @@
 
     // ✅ 데이터 필터 함수
     function filterData() {
-      const start  = document.getElementById('startMonth').value;
-      const end    = document.getElementById('endMonth').value;
-      const ioType = document.getElementById('inoutType').value;
+      const start     = document.getElementById('startMonth').value;
+      const end       = document.getElementById('endMonth').value;
+      const ioType    = document.getElementById('inoutType').value;
 	  const medType   = document.getElementById('medType').value;
 	  const jrType    = document.getElementById('jrType').value;
 	  const amtType   = document.getElementById('amtType').value;       
@@ -127,8 +131,16 @@
            	, medType : medType , jrType : jrType , amtType : amtType },
         dataType: "json",
 	    success: function(data) {
+		      const labels = [];  
+		      const costs = [];
+		      const counts = [];	
+		      const percents  = [];
 	    	  const tableData = [];
 		      data.forEach(item => {
+		    	 labels.push(item.diagName);
+		         costs.push((item.totalAmt / 1000000).toFixed(2)); // 십만원 단위로 변환
+		         counts.push((item.claimCount / 1000).toFixed(2)); // 천건 단위로 변환
+		         percents.push(item.rateOfTotalAmt);
 		    	 const row = [
 		          item.diagCode ,
 		          item.diagName ,
@@ -142,6 +154,7 @@
 		          ];
 		        tableData.push({ row });
 		      });
+		      renderChart(labels, costs, counts,percents);		      
 		      renderTable(tableData);
 		    },
 		    error: function(xhr, status, error) {
@@ -166,7 +179,74 @@
           tbody.appendChild(tr);
         });
       }
-  function downloadPDF() {
+    function renderChart(labels, costs, counts, percents) {
+  	  const ctx = document.getElementById('costChart').getContext('2d');
+  	  if (chart) chart.destroy();
+
+  	  chart = new Chart(ctx, {
+  	    type: 'bar',
+  	    data: {
+  	      labels: labels,
+  	      datasets: [
+  	        {
+  	          type: 'bar',
+  	          label: '진료비 (백만원)',
+  	          data: costs,
+  	          yAxisID: 'y',
+  	          backgroundColor: 'rgba(135, 206, 250, 0.7)',
+  	          datalabels: {
+  	            anchor: 'end',
+  	            align: 'end',
+  	            formatter: (value, context) => {
+  	              return percents[context.dataIndex] + '%';
+  	            },
+  	            color: '#000',
+  	            font: { weight: 'bold' }
+  	          }
+  	        },
+	        {
+  	          type: 'line',
+  	          label: '건수 (천건)',
+  	          data: counts,
+  	          yAxisID: 'y1',
+  	          borderColor: 'blue',
+  	          backgroundColor: 'blue',
+  	          tension: 0.3
+  	        }
+  	        
+  	      ]
+  	    },
+  	    options: {
+  	      responsive: true,
+  	      maintainAspectRatio: false,
+  	      interaction: { mode: 'index', intersect: false },
+  	      plugins: {
+  	        datalabels: {
+  	          display: true
+  	        }
+  	      },
+  	      stacked: false,
+  	      scales: {
+  	        y: {
+  	          type: 'linear',
+  	          position: 'left',
+  	          title: { display: true, text: '진료비(백만원)' }
+  	        },
+	        y1: {
+  	          type: 'linear',
+  	          position: 'right',
+  	          title: { display: true, text: '건당비율 (%)' },
+  	          grid: { drawOnChartArea: false },
+  	          ticks: { callback: value => `${value}%` },
+  	          beginAtZero: true,
+  	          display: true
+  	        }  	        
+  	      }
+  	    },
+  	    plugins: [ChartDataLabels]
+  	  });
+  	}
+    function downloadPDF() {
     const pdfBtn  = document.getElementById('pdfBtn');
     const serBtn  = document.getElementById('serBtn');
     const element = document.querySelector(".container");

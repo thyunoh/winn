@@ -6,7 +6,7 @@ public class TongDTO {
 	}
     private String dateYm;
     private int totalCount;
-    private float totalAmt;
+    private String totalAmt;
     private int totalAvgAmt;
     private int ipCount;
     private int ipAmt;
@@ -755,10 +755,10 @@ public class TongDTO {
 	public void setTotalCount(int totalCount) {
 		this.totalCount = totalCount;
 	}
-	public float getTotalAmt() {
+	public String getTotalAmt() {
 		return totalAmt;
 	}
-	public void setTotalAmt(float totalAmt) {
+	public void setTotalAmt(String totalAmt) {
 		this.totalAmt = totalAmt;
 	}
 	public int getTotalAvgAmt() {
