@@ -33,7 +33,11 @@
         WHERE 1=1  
              AND A.ACTION_YN = 'Y'
              AND A.USE_YN    = 'Y'  
-             AND A.FILE_GB   = #{fileGb}    
+		 ]]>
+		 <if test='fileGb != "0" '>
+	         AND A.FILE_GB   = #{fileGb}  
+	     </if>             
+         <![CDATA[    
              AND DATE_FORMAT(now(),'%Y%m%d') BETWEEN REPLACE(A.START_DT,'-','') AND REPLACE(A.END_DT,'-','')
              AND DATE_FORMAT(A.UPD_DTTM,'%Y%m%d') BETWEEN REPLACE(#{startDt},'-','') AND REPLACE(#{endDt},'-','')
 		 ]]>
@@ -50,7 +54,7 @@
 	        ]]></when>
 	    </choose>
 	         <![CDATA[
-	      order by A.FILE_GB , A.UPD_DTTM DESC 
+	      Order By  A.UPD_DTTM DESC 
 	         ]]>
     </select>         
     

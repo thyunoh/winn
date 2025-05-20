@@ -80,12 +80,13 @@
   }
 
   .top-menu-btn.active {
-      background-color: #FFD580 !important;  /* 연한 주황색 */
+      background-color: #3399FF !important;  /* 연한 주황색 */
       color: white !important;
       font-weight: bold;
   }  
   .nav-item.nav-link.active {
-      background-color: #FFD580 !important;  /* 연한 주황색 */
+      background-color: #3399FF !important;  /* 연한 주황색 */
       color: white !important;
       font-weight: bold;
   }  
+  

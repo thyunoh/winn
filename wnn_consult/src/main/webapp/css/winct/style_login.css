@@ -12,7 +12,7 @@
 	.social-box {
 	  position: fixed;
 	  top: 35%;
-	  right: 270px; /* ← 기존 20px → 60px로 늘려서 왼쪽으로 당김 */
+	  right: 10; /* 우측 끝에 고정 */
 	  background: #ffffff;
 	  border: 2px solid #0d3b66;
 	  border-radius: 16px;
@@ -39,7 +39,11 @@
 	  height: 100%;
 	  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
 	  z-index: -1;
-	}
+	}  
+    .social-box ul li span {
+     font-size: 0.7rem; /* 글자 크기 조절 */
+     font-weight: bold;  /* 필요하면 굵게 */
+    }
 
    .right-img-group {
      display: flex;
@@ -271,4 +275,67 @@
 	.tr-primary {
 		background-color: #d9edf7; /* 또는 원하는 강조 색상 */
 	}	 
- /*자주하는 질문끝*/ 	
+ /*자주하는 질문끝*/
+ /*이끌림,컨설팅소개 온라인교육*/ 	
+    .program-image {
+      height: 60px;
+      width: auto;
+      transform: scaleX(1.06);
+      margin-right: 15px;
+    }
+
+    .program-button {
+      height: 26px;
+      width: 160px;
+      margin-top: 15px;
+    }
+
+    .arrow {
+      margin-left: 5px;
+    }
+
+    .program-block {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: -10px;
+      margin-left: 50px
+    }
+
+    .program-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      margin-left: 30px;
+    }
+
+    .program-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: black;
+      text-align: left;
+      margin-bottom: 5px;
+    }
+
+    .program-desc {
+      font-size: 15px;
+      font-weight: bold;
+      text-align: left;
+      white-space: nowrap;
+    } 
+  /*카카오 인스타그램 블로그 */ 
+  .bg-light.box-p-10 a {
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 5px; /* 둥근 모서리 (선택사항) */
+    padding: 5px 10px;   /* 여백 추가 (선택사항) */
+  }
+
+  .bg-light.box-p-10 a:hover {
+   background-color: #cce5ff; /* 연한 파란색 배경 */
+   color: #007bff;            /* 파란색 텍스트 */
+   text-decoration: none;
+  }
+
+  .bg-light.box-p-10 a:hover img {
+    filter: brightness(0.8);   /* 이미지 살짝 어둡게 */
+  }
+  

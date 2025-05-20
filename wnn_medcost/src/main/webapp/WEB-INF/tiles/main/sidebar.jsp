@@ -421,7 +421,6 @@
 							<col style="width: 60px">
 							<col style="width: 120px">
 						</colgroup>
-
 						<thead>
 							<tr>
 								<th>번호</th>
@@ -449,96 +448,93 @@
 		</div>
 	</div>
 </div>
-	<!--질문응답-->
-	<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-top:-25px"
-		data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-		<div
-			class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
-			<div class="modal-content"
-				style="height: 74%; display: flex; flex-direction: column;">
-				<div class="modal-header  bg-light">
-					<h6 class="modal-title">문의 등록</h6>
-					<div class="form-row">
-						<div class="col-sm-12 mb-2" style="text-align: right;">
-							<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
-							</button>
-							<button type="button" class="btn btn-outline-dark"
-								data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
-							</button>
+<!--질문응답-->
+<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-top:-25px"
+	data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
+	<div
+		class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
+		<div class="modal-content"
+			style="height: 74%; display: flex; flex-direction: column;">
+			<div class="modal-header  bg-light">
+				<h6 class="modal-title">문의 등록</h6>
+				<div class="form-row">
+					<div class="col-sm-12 mb-2" style="text-align: right;">
+						<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" 
+						                         onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
+						</button>
+						<button type="button" class="btn btn-outline-dark"
+							data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+			<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
+				method="post" enctype="multipart/form-data">
+				<div class="modal-body text-left flex-fill overflow-auto">
+					<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
+					<input  type="hidden" name="iud"     id="iud" />
+					<input	type="hidden" name="asqSeq"  id="asqSeq" /> 
+					<input  type="hidden" name="fileGb"  id="fileGb" value="4" /> 
+					<input  type="hidden" name="hospCd"  id="hospCd" /> 
+					<input  type="hidden" name="regUser" id="regUser" /> 
+					<input  type="hidden" name="updUser" id="updUser" />
+					<input  type="hidden" name="regIp"   id="regIp" /> 
+					<input  type="hidden" name="updIp"   id="updIp" />
+					<div class="form-group ">
+						<label for="qstnTitle"
+							class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
+						<div class="col-10 col-lg-10">
+							<input id="qstnTitle" name="qstnTitle" type="text" required
+								class="form-control" placeholder="">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="qstnConts"
+							class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
+						<div class="col-10 col-lg-10">
+							<textarea id="qstnConts" name="qstnConts" required
+								placeholder="" class="form-control" rows="5"></textarea>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="qstnWan"
+							class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
+						<div class="col-4 col-lg-4">
+							<select id="qstnWan" name="qstnWan" class="custom-select"
+								style="height: 35px; font-size: 14px;">
+								<option value="">선택</option>
+								<option value="Y">Y. 질문완료</option>
+								<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="ansrConts"
+							class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
+						<div class="col-10 col-lg-10">
+							<textarea id="ansrConts" name="ansrConts"
+								placeholder="" class="form-control" rows="8"></textarea>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="ansrWan"
+							class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
+						<div class="col-4 col-lg-4">
+							<select id="ansrWan" name="ansrWan" class="custom-select"
+								style="height: 35px; font-size: 14px;">
+								<option value="">선택</option>
+								<option value="Y">Y. 답변완료</option>
+								<option value="N">N. 진행중</option>
+							</select>
 						</div>
 					</div>
 				</div>
-				<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-					method="post" enctype="multipart/form-data">
-					<div class="modal-body text-left flex-fill overflow-auto">
-						<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-						<input  type="hidden" name="iud"     id="iud" />
-						<input	type="hidden" name="asqSeq"  id="asqSeq" /> 
-						<input  type="hidden" name="fileGb"  id="fileGb" value="4" /> 
-						<input  type="hidden" name="hospCd"  id="hospCd" /> 
-						<input  type="hidden" name="regUser" id="regUser" /> 
-						<input  type="hidden" name="updUser" id="updUser" />
-						<input  type="hidden" name="regIp"   id="regIp" /> 
-						<input  type="hidden" name="updIp"   id="updIp" />
-						<div class="form-group ">
-							<label for="qstnTitle"
-								class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
-							<div class="col-10 col-lg-10">
-								<input id="qstnTitle" name="qstnTitle" type="text" required
-									class="form-control" placeholder="">
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="qstnConts"
-								class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
-							<div class="col-10 col-lg-10">
-								<textarea id="qstnConts" name="qstnConts" required
-									placeholder="" class="form-control" rows="5"></textarea>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="qstnWan"
-								class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
-							<div class="col-4 col-lg-4">
-								<select id="qstnWan" name="qstnWan" class="custom-select"
-									style="height: 35px; font-size: 14px;">
-									<option value="">선택</option>
-									<option value="Y">Y. 질문완료</option>
-									<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
-								</select>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="ansrConts"
-								class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
-							<div class="col-10 col-lg-10">
-								<textarea id="ansrConts" name="ansrConts"
-									placeholder="" class="form-control" rows="8"></textarea>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="ansrWan"
-								class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
-							<div class="col-4 col-lg-4">
-								<select id="ansrWan" name="ansrWan" class="custom-select"
-									style="height: 35px; font-size: 14px;">
-									<option value="">선택</option>
-									<option value="Y">Y. 답변완료</option>
-									<option value="N">N. 진행중</option>
-								</select>
-							</div>
-						</div>
-					</div>
-				</form:form>
-			</div>
-			<div class="modal-footer"></div>
+			</form:form>
 		</div>
+		<div class="modal-footer"></div>
 	</div>
+</div>
 <script>
 window.addEventListener("DOMContentLoaded", function() {
     let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부 
@@ -627,19 +623,16 @@ function loadFaqData() {
         }
     });
 }
-
 // FAQ 모달 닫기
 function faqMainClose() {
     console.log("📢 FAQ 모달 닫힘 실행");
     $('#faqModal').modal('hide');
 }  
-
 /*질의응답메인*/
 function asqMainClose() {
     $('#asq_main_tab').modal('hide');
 }   
-      
-	
+
 function fnasq_main() {
       	
     fnasq_Search();
@@ -657,7 +650,7 @@ function fnasq_main() {
         $('#overlay').remove();
     });
 }    
-   
+  
 function fnasq_Search() {
 	$("#asq_infoTable tr").attr("class", ""); 
     if (document.getElementById("asq_regForm")) {
@@ -707,7 +700,6 @@ function asqModalOpen() {
 function asqModalClose() {
     $('#asq_main').modal('hide');
 }
-
 var  lasqSeq  ;
 var  lfileGb  ;  
 var  lregUser ;
@@ -723,9 +715,8 @@ function fn_asqDtlSearch(asqSeq) {
 }
 function fn_asqsave(iud) {
     $("#iud").val(iud); // 입력(I), 수정(U), 삭제(D)
-    
     var asqSeq = $("#asqSeq").val();
-    
+
     if (iud.substring(1, 2) === "U" || iud.substring(1, 2) === "D") {
         if (!asqSeq) {
 		    messageBox("1", "<h6>해당자료를 선택하세요.!!</h6><p></p>", "", "", "");
@@ -734,7 +725,6 @@ function fn_asqsave(iud) {
     }
     uidGubun = iud;
     $("#ansrWan").closest(".form-wrap").hide(); // 답변완료 숨기기
-
     if (iud.substring(1, 2) == "I") {
         $("#hospCd").val(getCookie("hospid"));
         document.getElementById("asq_regForm").reset();
@@ -742,7 +732,6 @@ function fn_asqsave(iud) {
         $("#ansrWan").css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
         $("#save_btn").show(); // 답변내용 보이기
         asqModalOpen();
-
     } else if (iud.substring(1, 2) == "U") {
         if ($("#asqSeq").val() == "") {
             alert("선택된 정보가 없습니다.!");
@@ -773,7 +762,6 @@ function fn_asqsave(iud) {
                 }else{
                 	$("#save_btn").show(); // 답변내용 
                	}
-
                 if (uidGubun.substring(0, 1) == "Q") {
                     // 질문
                     $("#qstnTitle").prop("readonly", "");
@@ -786,7 +774,6 @@ function fn_asqsave(iud) {
                 asqModalOpen();
             }
         });
-
     } else if (iud.substring(1, 2) == "D") {
         // 삭제 전에 ansrWan 상태 확인 후 처리
         $.ajax({
@@ -799,7 +786,6 @@ function fn_asqsave(iud) {
                     alert(data.error_msg);
                     return;
                 }
-
                 var ansrStat = data.result.ansrWan; 
                 if (ansrStat.trim() == ""  ||  ansrStat.trim() !== "Y") {
                     lasqSeq  = data.result.asqSeq  ;
@@ -812,7 +798,6 @@ function fn_asqsave(iud) {
                 } else {
                     alert("답변 상태를 확인할 수 없습니다."); // ansrStat이 null 또는 undefined일 때
                 }
-
             },
             error: function () {
                 alert("삭제할 항목의 정보를 불러오는 중 오류가 발생했습니다.");
@@ -844,7 +829,7 @@ function fnasq_SaveProc() {
     if (uidGubun.substring(1, 2) === "D") {
         // 모달을 띄우고 "deleteAction"이라는 식별자로 구분
         messageBox("2", "<h6>삭제 하시겠습니까?</h6><p></p>", "", "", "deleteAction");
-        
+       
     }else{
     	 execute() ; 
     }

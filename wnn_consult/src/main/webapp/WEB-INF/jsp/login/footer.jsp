@@ -9,11 +9,11 @@
 	      <div class="footer_inner" style="box-sizing: border-box; max-width: 800px; 
 	                  margin: 0 auto; width: 60%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-wrap: wrap;">
 					<h2 class="f_logo" style="margin-top: -25px;">
-						<img src="/images/winct/winner_log.jpg" alt="위너넷">
+						<img src="/images/winct/winner_log_top.png" alt="위너넷">
 					</h2>
 					<div class="footer_con">
-						<address>
-							<div style="margin-bottom: 10px;"> 
+						<address style="text-align: left;">
+							<div style="margin-bottom: 10px;">
 								<!-- <span>상호명｜위너넷 컨설팅</span> -->
 								<span>상호명｜(주)위너넷</span>
 								<span>주소｜서울시 서초구 효령로70길 36-9, 위너빌딩</span>
@@ -23,8 +23,8 @@
 								<span>팩스｜02-2653-7901</span>
 								<span>이메일｜winner797@naver.com</span>
 							</div>
-							<div>
-								<p class="copy">Copyrightⓒ 2011 By ㈜위너넷 All Rights Reserved.</p>
+							<div> <br>
+							  <span class="copy" style="margin: 0;">Copyrightⓒ 2011 By ㈜위너넷 All Rights Reserved.</span>
 							</div>
 						</address>
 					</div>
