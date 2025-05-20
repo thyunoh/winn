@@ -524,7 +524,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					   rel="noopener noreferrer"
 					   class="program-button"
 					   style="display: inline-flex; align-items: center; gap: 5px;
-					          margin-top: 1px; text-decoration: none; padding: 10px 20px;
+					          margin-top: 5px; text-decoration: none; padding: 10px 20px;
 					          vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
 					  <span>홈페이지 바로가기</span>
 					  <span class="arrow">&rarr;</span>
