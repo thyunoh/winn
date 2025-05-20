@@ -600,7 +600,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									</colgroup>
 									<tbody id="noticeArea">
 										<tr>
-											<td colspan="6">&nbsp;</td>
+											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -618,7 +618,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									</colgroup>
 									<tbody id="noticeArea1">
 										<tr>
-											<td colspan="6">&nbsp;</td>
+											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -636,7 +636,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									</colgroup>
 									<tbody id="noticeArea2">
 										<tr>
-											<td colspan="6">&nbsp;</td>
+											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -655,7 +655,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									</colgroup>
 									<tbody id="noticeArea3">
 										<tr>
-											<td colspan="6">&nbsp;</td>
+											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
