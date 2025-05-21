@@ -92,7 +92,7 @@
 		role="dialog"
 		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 		<div class="modal-content"
-			style="height: 100%; display: flex; flex-direction: column;">
+			style="height: 90%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
 				<h6 class="modal-title" id="modalHead"></h6>
 				<!-- ============================================================== -->
@@ -140,7 +140,8 @@
 							type="hidden" id="updDttm" name="updDttm" value=""> <input
 							type="hidden" id="updUser" name="updUser" value=""> <input
 							type="hidden" id="regIp" name="regIp" value=""> <input
-							type="hidden" id="updIp" name="updIp " value="">
+							type="hidden" id="updIp" name="updIp " value=""><input
+							type="hidden" id="fileYn" name="fileYn " value="">
 					<div class="form-row">
 						<label for="fileGb"
 							class="col-2 col-lg-2 col-form-label text-left">공지구분</label>
@@ -498,6 +499,7 @@
 		    //파일업로드후 초기화 
 		    fileinput_clear() ;
 		    
+	    
 			let modal_OpenFlag = true;
 			
 			const insertButton = document.getElementById('form_btn_ins');
@@ -549,8 +551,12 @@
 					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
 					return null;
 				}
+	            showfileModal(document.getElementById("notiSeq").value, document.getElementById("fileGb").value);
+			}else{
+	            let tbody = document.querySelector("#fileTable tbody");
+	            tbody.innerHTML = "";
 			}
-            showfileModal(document.getElementById("notiSeq").value, document.getElementById("fileGb").value);
+				
 			if (modal_OpenFlag) {
 				// 모달을 드레그할 수 있도록 처리
 			    // Make the DIV element draggable:	    
@@ -992,7 +998,8 @@
         		startDt:      $('#startDt').val(),
         		endDt:        $('#endDt').val(),
         		useYn:        $('#useYn').val(),
-        		updDttm :     $('#updDttm').val()
+        		updDttm :     $('#updDttm').val(),
+        		fileYn :      $('#fileYn').val()
 			    };
 		    return newData;
 		}	

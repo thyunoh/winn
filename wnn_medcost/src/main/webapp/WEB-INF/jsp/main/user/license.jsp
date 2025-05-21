@@ -844,10 +844,11 @@
 		   	}
 		   	let checkValue = $("#checkValue").is(":checked") ? "Y" : "N";
 		   	let findData   = $("#findData").val() ;
+		   	let hospCd     = $("#hospCd1").val() ;
 		   	$.ajax({
 		        type: "POST", 
 		        url: "/user/licenseCdList.do",
-		        data: {find: find, checkValue: checkValue , findData : findData},
+		        data: {find: find, checkValue: checkValue , findData : findData , hospCd : hospCd },
 		        dataType: "json",
 		        
 		        // timeout: 10000, // 10초 후 타임아웃

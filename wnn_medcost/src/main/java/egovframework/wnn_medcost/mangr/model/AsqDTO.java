@@ -37,6 +37,21 @@ public class AsqDTO {
     private String ansrStat; 
 	private String hospNm ;
     private String userNm ;
+	private String hospCd2; //사이드바 작업
+	private String fileGb2 ;
+	
+    public String getFileGb2() {
+		return fileGb2;
+	}
+	public void setFileGb2(String fileGb2) {
+		this.fileGb2 = fileGb2;
+	}
+	public String getHospCd2() {
+		return hospCd2;
+	}
+	public void setHospCd2(String hospCd2) {
+		this.hospCd2 = hospCd2;
+	}
  
     
     public String getIud() {

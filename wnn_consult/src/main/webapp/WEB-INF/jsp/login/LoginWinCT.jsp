@@ -52,42 +52,17 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <!-- DataTables JS 추가 -->
 </head>
 <style>
-.consulting-menu {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  padding-bottom: 0; /* 아래 공간 없앰 */
-}
-
-/* 글자 살짝 올라감 */
-.consulting-menu:hover,
-.consulting-menu.active {
-  transform: translateY(-4px);
-}
-
-/* 역삼각형 모양 - 글자 바로 아래 */
-.consulting-menu::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  margin-top: 2px;
-  transform: translateX(-50%) translateY(-10px); /* 필요시 px 조정 */
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid #3399FF;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-}
-
-.consulting-menu:hover::after,
-.consulting-menu.active::after {
-  opacity: 1;
+#userInfoCard {
+  display: none;
+  overflow: auto;
+  max-height: 220px;
+  width: 100%;           /* 부모 너비 100% 차지 */
+  box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
+  margin-top: 10px;
 }
 
 </style>
+
 <body>
 <!-- Navbar Start -->
 <div class="container-fluid_act bg-white mb-2">
@@ -103,7 +78,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		</div>
 		<div class="col-lg-9">
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
-				style="height: 50px; align-items: center;">
+				style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:60px;">
 						<div class="nav-item dropdown">
@@ -128,7 +103,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div id="dynamicMenu_J"></div>
 						<div id="dynamicMenu_T"></div>
 					</div>
-					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 75px;">
+					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
 				</div>
 			</nav>
 		</div>
@@ -364,7 +339,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<!-- Carousel Start -->
 		<div class="container-fluid mb-2">
 		  <div class="row px-xl-8">
-		    <div class="col-lg-12 mx-auto">
+		    <div class="col-lg-12 mx-auto"> 
 		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel">
 		        <ol class="carousel-indicators">
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
@@ -374,29 +349,29 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		
 		        <div class="carousel-inner">
 		          <!-- 슬라이드 1 -->
-		          <div class="carousel-item active" style="height: 290px;">
+		          <div class="carousel-item active" style="height: 400px;"> 
 		            <div class="d-flex align-items-center justify-content-center h-100 w-100">
 		              <img src="/images/winct/image-1.jpg" 
 		                   class="img-fluid"
-		                   style="width: 100%; height: 300px; object-fit: cover;">
+		                   style="width: 100%; height: 400px; object-fit: cover;"> 
 		            </div>
 		          </div>
 		
 		          <!-- 슬라이드 2 -->
-		          <div class="carousel-item" style="height: 290px;">
+		          <div class="carousel-item" style="height: 400px;">
 		            <div class="d-flex align-items-center justify-content-center h-100 w-100">
 		              <img src="/images/winct/image-2.jpg" 
 		                   class="img-fluid"
-		                   style="width: 100%; height: 300px; object-fit: cover;">
+		                   style="width: 100%; height: 400px; object-fit: cover;">
 		            </div>
 		          </div>
 		
 		          <!-- 슬라이드 3 -->
-		          <div class="carousel-item" style="height: 290px;">
+		          <div class="carousel-item" style="height: 400px;">
 		            <div class="d-flex align-items-center justify-content-center h-100 w-100">
 		              <img src="/images/winct/image-3.jpg" 
 		                   class="img-fluid"
-		                   style="width: 100%; height: 300px; object-fit: cover;">
+		                   style="width: 100%; height: 400px; object-fit: cover;">
 		            </div>
 		          </div>
 		        </div>
@@ -412,12 +387,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    <div class="row">
 		
 		      <!-- 로그인 영역 -->
-		      <div class="col-lg-5">
+		      <div class="col-lg-6" style="flex: 0 0 46%; max-width: 46%; margin-left: -60px;">
 		        <div class="contact-form box-p-10 mb-3" style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
 		          <form name="loginForm" id="loginForm">
 		            <div style="display: flex; align-items: flex-start; justify-content: center;">
 		              <!-- 입력 필드 영역 -->
-		              <div style="flex-grow: 0; width: 250px;">
+		              <div style="flex-grow: 0; width: 280px;">
 		                <hr style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
 		                <h6 class="section-title position-relative mb-2">
 		                  <span class="pr-4" style="color: white;">로그인 <small style="font-size: 0.75em; color: white;">LOGIN</small></span>
@@ -438,9 +413,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		              </div>
 		
 		              <!-- 로그인 버튼 + 링크 -->
-		              <div style="margin-left: 140px; text-align: center;">
+		              <div style="margin-left: 180px; text-align: center;">
 		                <button type="button" id="blogin" onclick="login()"
-		                  style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 32px; margin-bottom: 5px;">
+		                  style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; 
+		                  border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 32px; margin-bottom: 5px;">
 		                  로그인
 		                </button>
 		                <div style="font-size: 13px; font-weight: bold; color: white;">
@@ -454,7 +430,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		          </form>
 		
 		          <!-- 로그인 성공 시 사용자 카드 -->
-		          <div id="userInfoCard" style="display: none; overflow: auto; max-height: 250px;" class="mt-2">
+		          <div id="userInfoCard" style="display: none; overflow: auto; max-height: 220px;" class="mt-2">
 		            <div class="user_card">
 		              <div class="user_card-body">
 		                <h1 class="user_card-title">환영합니다</h1>
@@ -471,7 +447,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		      <div class="image-layout" style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 40px;">
 		        <!-- 왼쪽 이미지 -->
 		        <div style="flex: 1;">
-		          <img class="img-fluid left-img" src="/images/winct/e_clip.png" alt="e_clip" style="display: block; margin-bottom: 15px;">
+		          <img class="img-fluid left-img" src="/images/winct/e_clip.png" alt="e_clip" style="width: 270px;  display: block; margin-bottom: 2px;">
 		          <div style="text-align: left; clear: both;">
 		            <span style="font-size: 15px; font-weight: bold; margin-left: 8px;">체계적인 컨설팅 분석평가 프로그램</span>
 		          </div>
@@ -491,11 +467,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				<div class="right-img-group" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 10px;">
 				  <!-- 컨설팅 소개 영역 -->
 				<div class="program-block">
-				  <img src="/images/winct/on_consult.png" alt="on_consult" style="width: 100px; cursor: pointer;">
+				  <img src="/images/winct/on_consult.png" alt="on_consult" style="width: 115px; cursor: pointer;">
 				  <div class="program-text">
 				    <div class="program-title">컨설팅 소개</div>
 				    <div class="program-desc">의료특화 전문교육</div>
-				    <div class="program-desc">의료기관전문컨설팅</div>
+				    <div class="program-desc">의료기관 전문컨설팅</div>
 				    <a href="/path/to/consulting-intro.pdf" download
 				       class="program-button"
 				       style="display: inline-flex; align-items: center; gap: 0px; margin-top: 5px; margin-left:-2px;
@@ -510,7 +486,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				  <a href="https://winner797.net/" target="_blank" rel="noopener noreferrer">
 				    <img src="/images/winct/on_edu.png" 
 				         alt="온라인교육센터" 
-				         style="width: 100px; cursor: pointer; pointer-events: auto; z-index: 10; position: relative;">
+				         style="width: 115px; cursor: pointer; pointer-events: auto; z-index: 10; position: relative;">
 				  </a>
 				  
 				  <div class="program-text">
@@ -566,12 +542,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
    </div>
    
-	<div class="container-fluid_noti mb-2" style="margin-left: 270px;">
+	<div class="container-fluid_noti mb-2" style="margin-left: 210px;">
 		<div class="row px-xl-8">
-			<div class="col-lg-auto" style="width: 630px;">
+			<div class="col-lg-auto" style="width: 695px;">
 				<div class="bg-light box-p-10" style="height: 215px;">
 					<!-- 탭 헤더 -->
-					<div class="nav nav-tabs mb-1 border-bottom border-primary d-flex">
+					<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
 					    <a class="nav-item nav-link active px-4 py-2 fw-bold text-dark text-center flex-fill"
 					        data-bs-toggle="tab" href="#tab-pane-1">전체
 					    </a>
@@ -592,15 +568,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div class="tab-pane fade active show" id="tab-pane-1">
 							<div class="scroll-table-container"
 								style="max-height: 130px;  overflow-y: auto;">
-								<table id="noticeTable" class="table table-bordered">
+								<table class="notice-table" id="noticeTable" class="table table-bordered" style="font-size: 14px;">
 									<colgroup>
-										<col style="width: 50px">
-										<col style="width: 270px">
-										<col style="width: 180px">
+										<col style="width: 100px">
+										<col style="width: 350px">
+										<col style="width: 120px">
 									</colgroup>
 									<tbody id="noticeArea">
 										<tr>
-											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
+											<td colspan="3" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -610,15 +586,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div class="tab-pane fade" id="tab-pane-2">
 							<div class="scroll-table-container"
 								style="max-height: 130px; overflow-y: auto;">
-								<table id="noticeTable1" class="table table-bordered">
+								<table class="notice-table" id="noticeTable1" class="table table-bordered" style="font-size: 14px;">
 									<colgroup>
-										<col style="width: 50px">
-										<col style="width: 270px">
-										<col style="width: 180px">
+										<col style="width: 100px">
+										<col style="width: 350px">
+										<col style="width: 120px">
 									</colgroup>
 									<tbody id="noticeArea1">
 										<tr>
-											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
+											<td colspan="3" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -628,15 +604,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div class="tab-pane fade" id="tab-pane-3">
 							<div class="scroll-table-container"
 								style="max-height: 130px; overflow-y: auto;">
-								<table id="noticeTable2" class="table table-bordered">
+								<table class="notice-table" id="noticeTable2" class="table table-bordered" style="font-size: 14px;">
 									<colgroup>
-										<col style="width: 50px">
-										<col style="width: 270px">
-										<col style="width: 180px">
+										<col style="width: 100px">
+										<col style="width: 350px">
+										<col style="width: 120px">
 									</colgroup>
 									<tbody id="noticeArea2">
 										<tr>
-											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
+											<td colspan="3" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -647,15 +623,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div class="tab-pane fade" id="tab-pane-4">
 							<div class="scroll-table-container"
 								style="max-height: 130px;  overflow-y: auto;">
-								<table id="noticeTable3" class="table table-bordered">
+								<table class="notice-table" id="noticeTable3" class="table table-bordered" style="font-size: 14px;">
 									<colgroup>
-										<col style="width: 50px">
-										<col style="width: 270px">
-										<col style="width: 180px">
+										<col style="width: 100px">
+										<col style="width: 350px">
+										<col style="width: 120px">
 									</colgroup>
 									<tbody id="noticeArea3">
 										<tr>
-											<td colspan="6" style="font-weight: bold;">&nbsp;</td>
+											<td colspan="3" style="font-weight: bold;">&nbsp;</td>
 										</tr>
 									</tbody>
 								</table>
@@ -1449,6 +1425,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		   		if(data.error_code != "0") return;
 		   		if(data.resultCnt > 0 ){
 		   			var dataTxt = "" ;
+		   			const maxLength = 30;  // 최대 글자 수 설정
 		    		for(var i=0 ; i < data.resultCnt; i++){
 		    			dataTxt = '<tr  class="" onclick="showAdminModal(\'' 
 		    		          + data.resultList[i].notiSeq + '\', \'' 
@@ -1459,12 +1436,23 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    		          + data.resultList[i].fileGb + '_' 
 		    		          + data.resultList[i].notiTitle.replace(/\s+/g, '_').replace(/'/g, "\\'") + '_' 
 		    		          + data.resultList[i].notiContent.replace(/\s+/g, '_').replace(/'/g, "\\'") + '">';
-		    		          
-		 				dataTxt += 	"<td>" + (i+1)  + "</td>" ; 
-						dataTxt += "<td style='text-align: left;'>" + data.resultList[i].notiTitle + "</td>";
-					//	dataTxt +=  "<td class='txt-left ellips'>" + data.resultList[i].notiContent    + "</td>" ;
-						dataTxt +=  "<td>" + data.resultList[i].updDttm     + "</td>" ; 
-					//	dataTxt +=  "<td>" + data.resultList[i].userNm      + "</td>" ;
+	    		       // fileGb 값에 따라 다르게 표시
+
+	    		          if (data.resultList[i].fileGb == "1") {
+	    		              dataTxt += "<td class='rounded-box notice'>공지사항</td>";
+	    		          } else if (data.resultList[i].fileGb == "2") {
+	    		              dataTxt += "<td class='rounded-box audit'>심사방</td>";
+	    		          } else if (data.resultList[i].fileGb == "3") {
+	    		              dataTxt += "<td class='rounded-box newsletter'>소식지</td>";
+	    		          }
+	  		   			let title = data.resultList[i].notiTitle;
+
+			   			// 글자가 maxLength보다 길면 자르고 "..." 붙임
+			   			if (title.length > maxLength) {
+			   			   title = title.substring(0, maxLength) + " ...";
+			   			}	    		       
+						dataTxt += "<td style='text-align: left;'>" + title  + "</td>";
+						dataTxt += "<td>" + data.resultList[i].updDttm.split(' ')[0] + "</td>";
 						dataTxt +=  "<td>" + data.resultList[i].notiRedcnt  + "</td>" ;
 						dataTxt +=  "</tr>";  
 			            $(targetArea).append(dataTxt);
@@ -2663,7 +2651,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		  e.preventDefault();
 		  window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
-		
 		/*
         function saveynchange() {
             if (document.loginForm.saveyn.checked === true) { 
@@ -2674,7 +2661,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
             }
         }
         */
-        
+      
     </script>
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>

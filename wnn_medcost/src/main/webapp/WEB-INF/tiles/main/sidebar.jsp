@@ -475,8 +475,8 @@
 					<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
 					<input  type="hidden" name="iud"     id="iud" />
 					<input	type="hidden" name="asqSeq"  id="asqSeq" /> 
-					<input  type="hidden" name="fileGb"  id="fileGb" value="4" /> 
-					<input  type="hidden" name="hospCd"  id="hospCd" /> 
+					<input  type="hidden" name="fileGb2"  id="fileGb2" value="4" /> 
+					<input  type="hidden" name="hospCd2"  id="hospCd2" /> 
 					<input  type="hidden" name="regUser" id="regUser" /> 
 					<input  type="hidden" name="updUser" id="updUser" />
 					<input  type="hidden" name="regIp"   id="regIp" /> 
@@ -689,7 +689,7 @@ function fnasq_Search() {
 }
 /*질의응답모달*/
 function asqModalOpen() {
-	$("#hospCd").val(getCookie("hospid")  || '') ;
+	$("#hospCd2").val(getCookie("hospid")  || '') ;
 	$("#updUser").val(getCookie("userid") || '') ;
 	$("#regUser").val(getCookie("userid") || '') ;
 	$("#updIp").val(getCookie("s_connip") || '') ;
@@ -726,7 +726,7 @@ function fn_asqsave(iud) {
     uidGubun = iud;
     $("#ansrWan").closest(".form-wrap").hide(); // 답변완료 숨기기
     if (iud.substring(1, 2) == "I") {
-        $("#hospCd").val(getCookie("hospid"));
+        $("#hospCd2").val(getCookie("hospid"));
         document.getElementById("asq_regForm").reset();
         $("#ansrConts").prop("readonly", "true");
         $("#ansrWan").css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용

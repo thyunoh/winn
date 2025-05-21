@@ -435,8 +435,8 @@
             JOB_SEQ  ,
             ACTION_YN 
         ) VALUES (
-            #{hospCd}, 
-            #{fileGb}, 
+            #{hospCd2}, 
+            #{fileGb2}, 
             #{qstnTitle}, 
             #{qstnConts}, 
             NOW(), 
@@ -448,8 +448,8 @@
             #{qstnWan},
 			(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
 		   	       FROM  TBL_ASQ_MST A 
-			       WHERE A.HOSP_CD   = #{hospCd} 
-			         AND A.FILE_GB   = #{fileGb} 
+			       WHERE A.HOSP_CD   = #{hospCd2} 
+			         AND A.FILE_GB   = #{fileGb2} 
 			) , 'Y'       
         )
     ]]>    

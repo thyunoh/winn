@@ -338,4 +338,76 @@
   .bg-light.box-p-10 a:hover img {
     filter: brightness(0.8);   /* 이미지 살짝 어둡게 */
   }
-  
+ /*공지사항 */
+.rounded-box {
+    border-radius: 15px;
+    padding: 2px 0;             /* 좌우 패딩 최소화 (너비 고정이니까 필요 없음) */
+    color: black;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.2;
+    display: inline-block;
+    width: 60px;                /* 고정된 박스 너비 */
+    box-sizing: border-box;     /* 패딩 포함한 전체 너비 유지 */
+}
+.notice { background-color: #C8E6C9; } /* 공지사항 배경 색 (가장 연한 초록) */
+.audit { background-color: #B2EBF2; } /* 심사방 배경 색 (가장 연한 파랑) */
+.newsletter { background-color: #FFECB3; } /* 소식지 배경 색 (가장 연한 오렌지) */
+
+.consulting-menu {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  padding-bottom: 0; /* 아래 공간 없앰 */
+}
+
+/* 글자 살짝 올라감 */
+.consulting-menu:hover,
+.consulting-menu.active {
+  transform: translateY(-4px);
+}
+
+/* 역삼각형 모양 - 글자 바로 아래 */
+.consulting-menu::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-top: 2px;
+  transform: translateX(-50%) translateY(-10px); /* 필요시 px 조정 */
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #3399FF;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.consulting-menu:hover::after,
+.consulting-menu.active::after {
+  opacity: 1;
+}
+.notice-table, 
+.notice-table th, 
+.notice-table td {
+  border: none !important;
+}
+.notice-table tbody tr {
+  background-color: transparent !important;
+}
+.notice-table tr.selected {
+  background-color: #f0f0f0 !important;
+}
+#noticeArea,#noticeArea1,#noticeArea2,#noticeArea3 tr {
+    cursor: pointer; /* 마우스 오버 시 손 모양 커서 */
+}
+.nav-link {
+  color: #6c757d; /* 연한 회색 (기본 text-muted 색) */
+  font-weight: 600;
+}
+
+.nav-link.active {
+  color: #212529 !important; /* 진한 검정 (기본 text-dark 색) */
+  font-weight: 700;
+}
