@@ -9,11 +9,11 @@ public class HospGrdDTO {
     // Key Fields
     private String keyhospCd;     // 병원코드 (key)
     private String keystartYy;    // 년도 (key)
-    private String keybunji;      // 분기 (key)
+    private String keyqterFlag;      // 분기 (key)
     
     private String hospCd;
     private String startYy;
-    private String bunji;
+    private String qterFlag;
     private String jobSeq;
 
     private String nurGrd;
@@ -47,8 +47,86 @@ public class HospGrdDTO {
     private String updDttm;
     private String updUser;
     private String updIp;
+    private String hospgrade;
+    private String patCount;
+    private String docCount;
+    private String nurCount;
+    private String nurSCnt;
+    private String phamDays;
+    private String totalDay;
+    
+    public String getHospgrade() {
+		return hospgrade;
+	}
 
-    private transient String findData; // MyBatis에서 매핑되지 않도록 설정
+	public void setHospgrade(String hospgrade) {
+		this.hospgrade = hospgrade;
+	}
+
+	public String getPatCount() {
+		return patCount;
+	}
+
+	public void setPatCount(String patCount) {
+		this.patCount = patCount;
+	}
+
+	public String getDocCount() {
+		return docCount;
+	}
+
+	public void setDocCount(String docCount) {
+		this.docCount = docCount;
+	}
+
+	public String getNurCount() {
+		return nurCount;
+	}
+
+	public void setNurCount(String nurCount) {
+		this.nurCount = nurCount;
+	}
+
+	public String getNurSCnt() {
+		return nurSCnt;
+	}
+
+	public void setNurSCnt(String nurSCnt) {
+		this.nurSCnt = nurSCnt;
+	}
+
+	public String getPhamDays() {
+		return phamDays;
+	}
+
+	public void setPhamDays(String phamDays) {
+		this.phamDays = phamDays;
+	}
+
+	public String getTotalDay() {
+		return totalDay;
+	}
+
+	public void setTotalDay(String totalDay) {
+		this.totalDay = totalDay;
+	}
+	private transient String findData; // MyBatis에서 매핑되지 않도록 설정
+
+	public String getKeyqterFlag() {
+		return keyqterFlag;
+	}
+
+	public void setKeyqterFlag(String keyqterFlag) {
+		this.keyqterFlag = keyqterFlag;
+	}
+
+	public String getQterFlag() {
+		return qterFlag;
+	}
+
+	public void setQterFlag(String qterFlag) {
+		this.qterFlag = qterFlag;
+	}
 
 	public String getKeyhospCd() {
 		return keyhospCd;
@@ -66,13 +144,6 @@ public class HospGrdDTO {
 		this.keystartYy = keystartYy;
 	}
 
-	public String getKeybunji() {
-		return keybunji;
-	}
-
-	public void setKeybunji(String keybunji) {
-		this.keybunji = keybunji;
-	}
 
 	public String getHospCd() {
 		return hospCd;
@@ -90,13 +161,6 @@ public class HospGrdDTO {
 		this.startYy = startYy;
 	}
 
-	public String getBunji() {
-		return bunji;
-	}
-
-	public void setBunji(String bunji) {
-		this.bunji = bunji;
-	}
 
 	public String getJobSeq() {
 		return jobSeq;

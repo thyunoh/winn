@@ -86,8 +86,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="col-lg-3 d-none d-lg-block">
 		<a class="btn d-flex align-items-center bg-white w-80"
 		   data-bs-toggle="collapse" href="#navbar-vertical"
-		   style="height: 50px; padding: 0; width: 70%;">
-		   
+		   style="height: 50px; padding: 0; width: 70%; margin-left:180px;">
 			<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle;">
 		</a>
 		</div>

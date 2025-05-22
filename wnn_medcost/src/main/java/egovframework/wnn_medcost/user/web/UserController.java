@@ -1864,7 +1864,7 @@ public class UserController extends BaseController {
         	for (HospGrdDTO dto : data) {
        		    System.out.println("HospCd: "   + dto.getHospCd());
        		    System.out.println("startYy: "  + dto.getStartYy());
-       		    System.out.println("bunji: "    + dto.getBunji());
+       		    System.out.println("QterFlag: "    + dto.getQterFlag());
         		
         		svc.updateHospGrd(dto) ; //이력관리 
         		svc.insertHospGrd(dto) ; 
@@ -1888,11 +1888,11 @@ public class UserController extends BaseController {
         	for (HospGrdDTO dto : data) {
         		dto.setHospCd(dto.getKeyhospCd()); 
         		dto.setStartYy(dto.getKeystartYy()); 
-        		dto.setBunji(dto.getKeybunji()); 
+        		dto.setQterFlag(dto.getKeyqterFlag()); 
         		svc.updateHospGrd(dto) ; //이력관리 
        		    System.out.println("HospCd: "   + dto.getHospCd());
        		    System.out.println("startYy: "  + dto.getStartYy());
-       		    System.out.println("bunji: "    + dto.getBunji());
+       		    System.out.println("bunji: "    + dto.getQterFlag());
               
             }
         	return ResponseEntity.ok(returnValue);   

@@ -74,7 +74,7 @@
 				role="dialog"
 				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 				<div class="modal-content"
-					style="height: 80%; display: flex; flex-direction: column;">
+					style="height: 50%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
 						<h6 class="modal-title" id="modalHead"></h6>
 						<!-- ============================================================== -->
@@ -134,9 +134,9 @@
 								        pattern="\d{4}" maxlength="4" minlength="4"
 								        title="4자리연도">
 								</div>
-		                        <label for="bunji" class="col-2 col-lg-2 col-form-label text-left">분기</label>
+		                        <label for="qterFlag" class="col-2 col-lg-2 col-form-label text-left">분기</label>
 		                        <div class="col-2 col-lg-2">
-			                        <select class="custom-select" name="bunji" id="bunji">
+			                        <select class="custom-select" name="qterFlag" id="qterFlag">
 						                <option value="1" selected>1분기</option>
 						                <option value="2">2분기</option>
 						                <option value="3">3분기</option>
@@ -146,9 +146,9 @@
 							</div>
 							<div class="form-group row ">
 								<div class="input-group">
-                                    <label for="nurGrd" class="col-2 col-lg-2 col-form-label text-left">간호등급</label>
+                                    <label for="hospgrade" class="col-2 col-lg-2 col-form-label text-left">병원등급</label>
 			                        <div class="col-2 col-lg-2">
-				                        <select class="custom-select" name="nurGrd" id="nurGrd">
+				                        <select class="custom-select" name="hospgrade" id="hospgrade">
 							                <option value="1" selected>1등급</option>
 							                <option value="2">2등급</option>
 							                <option value="3">3등급</option>
@@ -157,129 +157,43 @@
 							                <option value="4">6등급</option>
 				 		                </select> 
 				 		            </div>
-				 		            <label for=nurPatCnt class="col-2 col-lg-2 col-form-label text-left">환자수(3개월)</label>
+				 		            <label for=patCount class="col-2 col-lg-2 col-form-label text-left">평균 환자수</label>
 								    <div class="col-2 col-lg-2">
-									<input id="nurPatCnt" name="nurPatCnt" type="text" value = "0" required
+									<input id="patCount" name="patCount" type="text" value = "0" required
 										class="form-control text-left" placeholder="">
 								    </div>
-				 		            <label for=nurCnt class="col-2 col-lg-2 col-form-label text-left">간호사수(3개월)</label>
+				 		            <label for=docCount class="col-2 col-lg-2 col-form-label text-left">평균 의사수</label>
 								    <div class="col-2 col-lg-2">
-									<input id="nurCnt" name="nurCnt" type="text" value = "0" required
+									<input id="docCount" name="docCount" type="text" value = "0" required
 										class="form-control text-left" placeholder="">
 								    </div>
 								</div>
 							</div>
 							<div class="form-group row ">
-                                <label for=nurSubCnt class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">간호조무사수(3개월)</label>
+                                <label for=nurCount class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">평균 간호사수</label>
 							    <div class="col-2 col-lg-2">
-								<input id="nurSubCnt" name="nurSubCnt" type="text" value = "0" required
+								<input id="nurCount" name="nurCount" type="text" value = "0" required
 									class="form-control text-left" placeholder="">
 							    </div>
-                                <label for=patNurNumr class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">환자수/간호인력수</label>
+                                <label for=nurSCnt class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">평균 간호인력수</label>
 							    <div class="col-2 col-lg-2">
-								<input id="patNurNumr" name="patNurNumr" type="text" value = "0" required
+								<input id="nurSCnt" name="nurSCnt" type="text" value = "0" required
 									class="form-control text-left" placeholder="">
 							    </div>
-                                <label for=patNurCnt class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">환자수/간호사수</label>
+                                <label for=phamDays class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">약사 재직일수</label>
 							    <div class="col-2 col-lg-2">
-								<input id="patNurCnt" name="patNurCnt" type="text" value = "0" required
+								<input id="phamDays" name="phamDays" type="text" value = "0" required
 									class="form-control text-left" placeholder="">
 							    </div>
 							</div>
 							<div class="form-group row ">
-                                <label for=nurNurMumr class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">간호사수/간호인력수</label>
+                                <label for=totalDay class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">전체 일수</label>
 							    <div class="col-2 col-lg-2">
-								<input id="nurNurMumr" name="nurNurMumr" type="text" value = "0" required
+								<input id="totalDay" name="totalDay" type="text" value = "0" required
 									class="form-control text-left" placeholder="">
 							    </div>
-                                <label for="docGrd" class="col-2 col-lg-2 col-form-label text-left">의사등급</label>
-		                        <div class="col-2 col-lg-2">
-			                        <select class="custom-select" name="docGrd" id="docGrd">
-						                <option value="1" selected>1등급</option>
-						                <option value="2">2등급</option>
-						                <option value="3">3등급</option>
-						                <option value="4">4등급</option>
-						                <option value="4">5등급</option>
-						                <option value="4">6등급</option>
-			 		                </select> 
-			 		            </div>
-                                <label for=docPatCnt class="col-2 col-lg-2 col-form-label text-left">환자수(3개월)</label>
-							    <div class="col-2 col-lg-2">
-								<input id="docPatCnt" name="docPatCnt" type="text" value = "0" required
-									class="form-control text-left" placeholder="">
-							    </div>
-							</div>
-                            <div class="form-group row ">
-                                <label for=docCnt class="col-2 col-lg-2 col-form-label text-left">의사수(3개월)</label>
-							    <div class="col-2 col-lg-2">
-								<input id="docCnt" name="docCnt" type="text" value = "0" required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=patDocCnt class="col-2 col-lg-2 col-form-label text-left">환자수/의사수</label>
-							    <div class="col-2 col-lg-2">
-								<input id="patDocCnt" name="patDocCnt" type="text" value = "0" required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=sdocCnt class="col-2 col-lg-2 col-form-label text-left">전문의수</label>
-							    <div class="col-2 col-lg-2">
-								<input id="sdocCnt" name="sdocCnt" type="text" value = "0" required
-									class="form-control text-left" placeholder="">
-							    </div>
-							</div>
-                            <div class="form-group row ">
-                                <label for=sdocDocCnt class="col-2 col-lg-2 col-form-label text-left">전문의수/의사수</label>
-							    <div class="col-2 col-lg-2">
-								<input id="sdocDocCnt" name="sdocDocCnt" type="text" value = "0" required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=needGa class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">필요인력가산여부</label>
-							    <div class="col-2 col-lg-2">
-								 <select class="custom-select" name="needGa" id="needGa">
-						                <option value="N" selected>N</option>
-						                <option value="Y">Y</option>
-						         </select>
-						        </div>  
-                                <label for=needPat class="col-2 col-lg-2 col-form-label text-left">환자수(3개월)</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needPat" name="needPat" type="text" value = "0" required
-									class="form-control text-left" placeholder="">
-							    </div>						             
-							</div>
-                            <div class="form-group row ">
-                                <label for=needPham class="col-2 col-lg-2 col-form-label text-left">약사수</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needPham" name="needPham" type="text"  required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=needInfo class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">보건의료정보관리사</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needInfo" name="needInfo" type="text"  required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=needRad class="col-2 col-lg-2 col-form-label text-left">방사선사</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needRad" name="needRad" type="text" required
-									class="form-control text-left" placeholder="">
-							    </div>
-							</div>
-                            <div class="form-group row ">
-                                <label for=needLab class="col-2 col-lg-2 col-form-label text-left">임상병리사</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needLab" name="needLab" type="text"  required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=needTher class="col-2 col-lg-2 col-form-label text-left">물리치료사</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needTher" name="needTher" type="text"  required
-									class="form-control text-left" placeholder="">
-							    </div>
-                                <label for=needSoci class="col-2 col-lg-2 col-form-label text-left">사회복지사</label>
-							    <div class="col-2 col-lg-2">
-								<input id="needSoci" name="needSoci" type="text"  required
-									class="form-control text-left" placeholder="">
-							    </div>
-							</div>
-
+    						</div>
+ 
 							<!-- ============================================================== -->
 							<!-- end form 수정해야 될 곳 -->
 							<!-- ============================================================== -->
@@ -385,35 +299,27 @@
 		var c_Head_Set =  [ { name: '병원정보',              className: 'dt-body-center' },
 						    { name: '해당년도',              className: 'dt-body-center' },
 						    { name: '분기',                 className: 'dt-body-center' },
-						    { name: '간호등급',              className: 'dt-body-center' },
-						    { name: '환자수(3개월)',          className: 'dt-body-center' },
-						    { name: '간호사수(3개월)',         className: 'dt-body-center' },
-						    { name: '간호조무사수(3개월)',      className: 'dt-body-center' },
-						    { name: '환자수/간호인력수',        className: 'dt-body-center' },
-						    { name: '환자수/간호사수',         className: 'dt-body-center' },
-						    { name: '간호사수/간호인력수',      className: 'dt-body-center' },
-						    { name: '의사등급',              className: 'dt-body-center' },
-						    { name: '환자수(3개월)',          className: 'dt-body-center' },
-						    { name: '의사수(3개월)',          className: 'dt-body-center' },
-						    { name: '환자수/의사수',           className: 'dt-body-center' }
+						    { name: '병원 등급',             className: 'dt-body-center' },
+						    { name: '평균 환자수',            className: 'dt-body-center' },
+						    { name: '평균 의사수',            className: 'dt-body-center' },
+						    { name: '평균 간호사수',           className: 'dt-body-center' },
+						    { name: '평균 간호인력수',         className: 'dt-body-center' },
+						    { name: '약사 재직일수',           className: 'dt-body-center' },
+						    { name: '전체 일수',             className: 'dt-body-center' }
 						 ] ;  
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'hospCd',      visible: true,  className: 'dt-body-center', width: '50px',  name: 'keyhospCd' , primaryKey: true },
-	        				{ data: 'startYy',     visible: true,  className: 'dt-body-center', width: '50px',   name: 'keystartYy', primaryKey: true },
-	        				{ data: 'bunji',       visible: true,  className: 'dt-body-center', width: '30px',   name: 'keybunji'  , primaryKey: true },
-            				{ data: 'nurGrd',      visible: true,  className: 'dt-body-center', width: '30px',  },
-            				{ data: 'nurPatCnt',   visible: true,  className: 'dt-body-center', width: '30px',  },
-            				{ data: 'nurCnt',      visible: true,  className: 'dt-body-center', width: '30px',  },
-            				{ data: 'nurSubCnt',   visible: true,  className: 'dt-body-center', width: '30px',  },
-            				{ data: 'patNurNumr',  visible: true,  className: 'dt-body-center', width: '30px',  },
-	        				{ data: 'patNurCnt',   visible: true,  className: 'dt-body-center', width: '30px',  },
-	        				{ data: 'nurNurMumr',  visible: true,  className: 'dt-body-center', width: '30px',  },
-	        				{ data: 'docGrd',      visible: true,  className: 'dt-body-center', width: '30px',  },
-            				{ data: 'docPatCnt',   visible: true,  className: 'dt-body-center', width: '30px',  },
-            				{ data: 'docCnt',      visible: true,  className: 'dt-body-center', width: '30px',  },
-	        				{ data: 'patDocCnt',   visible: true,  className: 'dt-body-center', width: '30px',  }
+	        				{ data: 'hospCd',      visible: true,  className: 'dt-body-center', width: '50px',   name: 'keyhospCd'     , primaryKey: true },
+	        				{ data: 'startYy',     visible: true,  className: 'dt-body-center', width: '50px',   name: 'keystartYy'   , primaryKey: true },
+	        				{ data: 'qterFlag',    visible: true,  className: 'dt-body-center', width: '30px',   name: 'keyqterFlag'  , primaryKey: true },
+            				{ data: 'hospgrade',   visible: true,  className: 'dt-body-center', width: '30px',  },
+            				{ data: 'patCount',    visible: true,  className: 'dt-body-center', width: '30px',  },
+            				{ data: 'docCount',    visible: true,  className: 'dt-body-center', width: '30px',  },
+            				{ data: 'nurCount',    visible: true,  className: 'dt-body-center', width: '30px',  },
+            				{ data: 'nurSCnt',     visible: true,  className: 'dt-body-center', width: '30px',  },
+	        				{ data: 'phamDays',    visible: true,  className: 'dt-body-center', width: '30px',  },
+	        				{ data: 'totalDay',    visible: true,  className: 'dt-body-center', width: '30px',  }
 	        				];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -423,10 +329,10 @@
 		var muiltSorts = [
 							['hospCd'    , 'asc' ],    // 오름차순 정렬
 							['startYy'   , 'asc' ],    // 오름차순 정렬
-            				['bunji'     , 'asc']      // 오름차순 정렬
+            				['qterFlag'  , 'asc']      // 오름차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['startYy','bunji'];                   
+		var showSortNo = ['startYy','qterFlag'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
@@ -513,9 +419,9 @@
 		function modal_key_hidden(flag) {	
 	        const hospCdInput     = document.getElementById("hospCd");
 			const startYyInput    = document.getElementById("startYy");
-	        const bunjiInput      = document.getElementById("bunji");
+	        const qterFlagInput   = document.getElementById("qterFlag");
 		    const hospserch       = document.getElementById('hospserch');
-	        const inputs          = [startYyInput, startYyInput, bunjiInput , hospCdInput];
+	        const inputs          = [startYyInput, startYyInput, qterFlagInput , hospCdInput];
 
 	        if (flag !== 'I') {
 		        const isReadOnly = flag !== 'I';
@@ -542,9 +448,9 @@
 		    }
 	        //콤보박스는 READONLY로 안됨
 	        if (flag !== 'I') {
-	            $(bunjiInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	            $(qterFlagInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
 	        } else {
-	            $(bunjiInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	            $(qterFlagInput).css("pointer-events", "").css("background-color", ""); // 활성화
 	        }	        
 		}
 		function modal_Open(flag) {	
@@ -1017,29 +923,15 @@
 		    const results = formValCheck(inputZone.id, {
 		    	hospCd:       { kname: "요양기관",             k_req: true, k_spc: true, k_clr: true },
 		    	startYy:      { kname: "해당년도",             k_req: true },
-		    	bunji:        { kname: "분기"  ,              k_req: true },
-		    	nurGrd:       { kname: "간호등급",             k_req: true},
-		    	nurPatCnt:    { kname: "환자수(3개월평균)" ,     k_req: true },
-		    	nurCnt:       { kname: "간호사수(3개월평균)",     k_req: true },
-		    	nurSubCnt:    { kname: "간호조무사수(3개월 평균)", k_req: true },
-		    	patNurNumr:   { kname: "환자수대간호인력수",      k_req: true },
-		    	patNurCnt:    { kname: "환자수대간호사수",        k_req: true },
-		    	nurNurMumr:   { kname: "간호사수대간호인력수",     k_req: true },
-		    	docGrd:       { kname: "의사등급",             k_req: true },
-		    	docPatCnt:    { kname: "환자수(3개월평균)",      k_req: true },
-		    	docCnt:       { kname: "의사수(3개월평균)",      k_req: true },
-		    	patDocCnt:    { kname: "환자수대의사수 ",        k_req: true },
-		    	sdocCnt:      { kname: "전문의수 ",            k_req: true },
-		    	sdocDocCnt:   { kname: "전문의수대의사수",       k_req: true },
-		    	needGa:       { kname: "필요인력가산여부",       k_req: true },
-		    	needPat:      { kname: "환자수(3개월평균)",      k_req: true },
-		    	needPham:     { kname: "약사수",              k_req: true },
-		    	needInfo:     { kname: "보건의료정보관리사",      k_req: true },
-		    	needRad:      { kname: "방사선사",             k_req: true },
-		    	needLab:      { kname: " 임상병리사",           k_req: true },
-		    	needTher:     { kname: " 물리치료사",           k_req: true },
-		    	needSoci:     { kname: " 사회복지사",           k_req: true }
-		    });
+		    	qterFlag:     { kname: "분기"  ,              k_req: true },
+		    	hospgrade:    { kname: "병원 등급",            k_req: true},
+		    	patCount:     { kname: "평균 환자수" ,          k_req: true },
+		    	docCount:     { kname: "평균 의사수",           k_req: true },
+		    	nurCount:     { kname: "평균 간호사수",          k_req: true },
+		    	nurSCnt:      { kname: "평균 간호인력수",        k_req: true },
+		    	phamDays:     { kname: "약사 재직일수",         k_req: true },
+		    	totalDay:     { kname: "전체 일수",            k_req: true }
+		   	});
 		    return results;
 		}
 		//그리드상 데이타생성및 수정 작업
@@ -1047,30 +939,14 @@
         	let newData = {
              	hospCd:        $('#hospCd').val(),
              	startYy:       $('#startYy').val(),
-             	bunji:         $('#bunji').val(),
-             	nurGrd:        $('#nurGrd').val(),
-             	nurPatCnt:     $('#nurPatCnt').val(),
-             	nurCnt:        $('#nurCnt').val(), 
-             	nurSubCnt:     $('#nurSubCnt').val(), 
-             	patNurNumr:    $('#patNurNumr').val(), 
-             	patNurCnt:     $('#patNurCnt').val(), 
-             	nurNurMumr:    $('#nurNurMumr').val(),
-             	
-             	docGrd:        $('#docGrd').val(), 
-             	docPatCnt:     $('#docPatCnt').val(),
-             	docCnt:        $('#docCnt').val(), 
-             	patDocCnt:     $('#patDocCnt').val(), 
-             	sdocCnt:       $('#sdocCnt').val(),
-             	sdocDocCnt:    $('#sdocDocCnt').val(),
-             	
-             	needGa:        $('#needGa').val(),
-             	needPat:       $('#needPat').val(),
-             	needPham:      $('#needPham').val(),
-             	needInfo:      $('#needInfo').val(),
-             	needLab:       $('#needLab').val(),
-             	needRad:       $('#needRad').val(),
-             	needTher:      $('#needTher').val(),
-             	needSoci:      $('#needSoci').val()
+             	qterFlag:      $('#qterFlag').val(),
+             	hospgrade:     $('#hospgrade').val(),
+             	patCount:      $('#patCount').val(),
+             	docCount:      $('#docCount').val(), 
+             	nurCount:      $('#nurCount').val(), 
+             	nurSCnt:       $('#nurSCnt').val(), 
+             	phamDays:      $('#phamDays').val(), 
+             	totalDay:      $('#totalDay').val()
         	};
 		    return newData;
 		}	
@@ -1679,8 +1555,9 @@
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
+	        const currentYear = new Date().getFullYear();  // 현재 년도
+	        document.getElementById("startYy").value = currentYear;
 	    });
-
 	  </script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
