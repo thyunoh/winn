@@ -380,7 +380,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 		
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
-		<div class="col-lg-10" style="margin-top: 400px;">
+		<div class="col-lg-10" style="margin-top: 400px;"> <!-- style="margin-top: 400px; 올려서 오버뱁  -->
 		  <div class="login-banner-wrapper" style="transform: translateX(220px); transition: all 0.3s ease;">
 		    <div class="row">
 		
