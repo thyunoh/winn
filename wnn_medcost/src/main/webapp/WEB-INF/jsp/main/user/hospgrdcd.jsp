@@ -132,7 +132,7 @@
 								        class="form-control text-left" required
 								        placeholder="YYYY"
 								        pattern="\d{4}" maxlength="4" minlength="4"
-								        title="4자리연도">
+								        title="4자리연도" style="font-size: 16px;">
 								</div>
 		                        <label for="qterFlag" class="col-2 col-lg-2 col-form-label text-left">분기</label>
 		                        <div class="col-2 col-lg-2">
@@ -493,6 +493,9 @@
 					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
 					return null;
 				}
+			}else{
+		        const currentYear = new Date().getFullYear();  // 현재 년도
+		        document.getElementById("startYy").value = currentYear;
 			}
 			
 			if (modal_OpenFlag) {
@@ -1555,8 +1558,6 @@
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
-	        const currentYear = new Date().getFullYear();  // 현재 년도
-	        document.getElementById("startYy").value = currentYear;
 	    });
 	  </script>
 		<!-- ============================================================== -->

@@ -210,9 +210,9 @@
 	    menuArea.innerHTML = '';
 	
 	    if (s_conact_gb === 'A' || s_conact_gb === '1') {
-	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
+	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
 	    } else if (s_conact_gb === '2') {
-	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_c_btn" data-type="evaluation">적정성평가</a>`;
+	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_c_btn" data-type="evaluation">적정성평가</a>`;
 	    }
 	
 	    menuArea.insertAdjacentHTML("beforeend", menuHTML);
@@ -223,7 +223,7 @@
 	    menuArea_d.innerHTML = '';
 	
 	    if (s_conact_gb === 'A') {
-	        menuHTML_d += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+	        menuHTML_d += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
 	    }
 	
 	    menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);

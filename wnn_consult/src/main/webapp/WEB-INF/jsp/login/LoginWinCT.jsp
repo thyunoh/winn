@@ -60,23 +60,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
   margin-top: 10px;
 }
-.navbar-nav .nav-item .nav-link {
-    color: #007bff;  /* Default blue color for the menu items */
-    padding: 10px 15px;  /* Default padding */
-    transition: background-color 0.3s ease, color 0.3s ease;  /* Smooth transition */
-}
-
-.navbar-nav .nav-item:hover .nav-link {
-    color: white;  /* White text when hovering */
-    background-color: #0056b3;  /* Dark blue background on hover */
-}
-
-.navbar-nav .nav-item.active .nav-link {
-    color: white !important;  /* White text when active */
-    background-color: #007bff;  /* Blue background when active */
-    padding: 12px 20px;  /* Larger box with more padding */
-    border-radius: 4px;  /* Optional: Rounded corners for the active item */
-}
 </style>
 
 <body>
@@ -87,7 +70,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<a class="btn d-flex align-items-center bg-white w-80"
 		   data-bs-toggle="collapse" href="#navbar-vertical"
 		   style="height: 50px; padding: 0; width: 70%; margin-left:180px;">
-			<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle;">
+			<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
 		</a>
 		</div>
 		<div class="col-lg-9">
@@ -107,7 +90,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						    </div>
 						</div>
 						<a href="https://winner797.net/" 
-						   class="nav-link dropdown-toggle text-dark"
+						   class="nav-link dropdown-toggle text-dark consulting-menu"
 						   style="font-size: 16px; margin-top: -1px;" 
 						   target="_blank" 
 						   rel="noopener noreferrer">
@@ -135,19 +118,19 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	
 		if (s_conact_gb === 'A' || s_wnn_yn == 'Y'  ) {
 			menuHTML += `
-				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
 				   <strong>적정성평가 프로그램</strong>
 				</a>
 			`;
 		} else if (s_conact_gb === '1') {
 			menuHTML += `
-				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
 				   <strong>경영분석 프로그램</strong>
 				</a>
 			`;
 		} else if (s_conact_gb === '2') {
 			menuHTML += `
-				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
 			    <strong>적정성평가 프로그램</strong>
 			    </a>
 			`;
@@ -160,7 +143,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	
 		if (s_conact_gb === 'A' || s_wnn_yn == 'Y'  ) {
 			menuHTML_T += `
-				<a href="#" class="nav-link dropdown-toggle text-dark" style="font-size: 16px; margin-top: -1px;">
+				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
 				   <strong>경영분석 프로그램</strong>
 				</a>
 			`;
@@ -190,7 +173,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    };
 	    document.addEventListener("DOMContentLoaded", function() {
 	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
-	            interval: 3000, // 3초마다 변경
+	            interval: 4000, // 4초마다 변경
 	            ride: "carousel"
 	        });
 	    });
@@ -465,7 +448,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		            <span style="font-size: 14px; font-weight: bold; margin-left: 8px;">체계적인 컨설팅 분석평가 프로그램</span>
 		          </div>
 		          <div style="text-align: left;">
-		            <span style="font-size: 15px; font-weight: bold; margin-left: 8px;">데이터 기반으로 맞춤 솔루션</span>
+		            <span style="font-size: 14px; font-weight: bold; margin-left: 8px;">데이터 기반으로 맞춤 솔루션</span>
 		          </div>
 					<a href="https://blog.naver.com/newzealandky/223718188178" 
 					   target="_blank" 
@@ -479,7 +462,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		        
 				<!-- 오른쪽 이미지 묶음 -->
 				<div class="right-img-group" style="flex: 1; display: flex; flex-direction: column; 
-				                             align-items: flex-start; margin-left: -60px; margin-top: 20px;">
+				                             align-items: flex-start; margin-left: -50px; margin-top: 20px;">
 				  <!-- 컨설팅 소개 영역 -->
 				<div class="program-block">
 				  <div class="program-text">
@@ -2663,20 +2646,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		  e.preventDefault();
 		  window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
-		function setActive(element) {
-		    // Remove the active class and reset styles from all items
-		    var items = document.querySelectorAll('.navbar-nav .nav-item');
-		    items.forEach(item => {
-		        item.classList.remove('active');
-		        item.querySelector('.nav-link').style.padding = '10px 15px'; // Reset padding
-		        item.querySelector('.nav-link').style.color = '#007bff'; // Reset text color
-		    });
-
-		    // Add the active class to the clicked item
-		    element.classList.add('active');
-		    element.querySelector('.nav-link').style.padding = '12px 20px'; // Increase padding
-		    element.querySelector('.nav-link').style.color = 'white'; // Set text color to white for the active item
-		}
 		/*
         function saveynchange() {
             if (document.loginForm.saveyn.checked === true) { 
