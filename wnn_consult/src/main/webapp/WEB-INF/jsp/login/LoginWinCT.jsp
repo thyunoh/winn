@@ -60,6 +60,23 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
   margin-top: 10px;
 }
+.navbar-nav .nav-item .nav-link {
+    color: #007bff;  /* Default blue color for the menu items */
+    padding: 10px 15px;  /* Default padding */
+    transition: background-color 0.3s ease, color 0.3s ease;  /* Smooth transition */
+}
+
+.navbar-nav .nav-item:hover .nav-link {
+    color: white;  /* White text when hovering */
+    background-color: #0056b3;  /* Dark blue background on hover */
+}
+
+.navbar-nav .nav-item.active .nav-link {
+    color: white !important;  /* White text when active */
+    background-color: #007bff;  /* Blue background when active */
+    padding: 12px 20px;  /* Larger box with more padding */
+    border-radius: 4px;  /* Optional: Rounded corners for the active item */
+}
 </style>
 
 <body>
@@ -71,8 +88,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		   data-bs-toggle="collapse" href="#navbar-vertical"
 		   style="height: 50px; padding: 0; width: 70%;">
 		   
-			<img src="/images/winct/winner_log_top.png" alt="WinnerNet Logo" id="consultingTitle"
-			     style="width: 200px; height: auto; object-fit: contain; display: block; margin-left: 270px; margin-right: auto;">
+			<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle;">
 		</a>
 		</div>
 		<div class="col-lg-9">
@@ -457,8 +473,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					   rel="noopener noreferrer" 
 					   class="program-button" 
 					   style="margin-left: 40px; height: 26px; margin-top: 20px; display: inline-flex; align-items: center; text-decoration: none;">
-					  프로그램 바로가기
-					  <span class="arrow" style="margin-left: 3px;">→</span>
+					  <span style="padding-left: 10px;">프로그램 바로가기</span>
+					  <span class="arrow" style="margin-left: 1px;">→</span>
 					</a>
 		        </div>
 		        
@@ -2648,6 +2664,20 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		  e.preventDefault();
 		  window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
+		function setActive(element) {
+		    // Remove the active class and reset styles from all items
+		    var items = document.querySelectorAll('.navbar-nav .nav-item');
+		    items.forEach(item => {
+		        item.classList.remove('active');
+		        item.querySelector('.nav-link').style.padding = '10px 15px'; // Reset padding
+		        item.querySelector('.nav-link').style.color = '#007bff'; // Reset text color
+		    });
+
+		    // Add the active class to the clicked item
+		    element.classList.add('active');
+		    element.querySelector('.nav-link').style.padding = '12px 20px'; // Increase padding
+		    element.querySelector('.nav-link').style.color = 'white'; // Set text color to white for the active item
+		}
 		/*
         function saveynchange() {
             if (document.loginForm.saveyn.checked === true) { 
