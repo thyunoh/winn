@@ -9,7 +9,7 @@
 	      <div class="footer_inner" style="box-sizing: border-box; max-width: 800px; 
 	                  margin: 0 auto; width: 60%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-wrap: wrap;">
 					<h2 class="f_logo" style="margin-top: -25px;">
-						<img src="/images/winct/winner_log_top.png" alt="위너넷">
+						<img src="/images/winct/winnner_log_bot.svg" alt="위너넷">
 					</h2>
 					<div class="footer_con">
 						<address style="text-align: left;">

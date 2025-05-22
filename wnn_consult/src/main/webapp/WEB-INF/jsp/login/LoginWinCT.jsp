@@ -60,7 +60,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
   margin-top: 10px;
 }
-
 </style>
 
 <body>
@@ -176,7 +175,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    };
 	    document.addEventListener("DOMContentLoaded", function() {
 	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
-	            interval: 2000, // 2초마다 변경
+	            interval: 3000, // 3초마다 변경
 	            ride: "carousel"
 	        });
 	    });
@@ -334,55 +333,54 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    }, { passive: false });
 	});	
 
-	</script>
-	
+</script>
+
 		<!-- Carousel Start -->
-		<div class="container-fluid mb-2">
+		<div class="container-fluid mb-2" style="position: relative;">
 		  <div class="row px-xl-8">
 		    <div class="col-lg-12 mx-auto"> 
-		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel">
+		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" style="position: absolute; top: 0; left: 0; right: 0; z-index: -1;">
 		        <ol class="carousel-indicators">
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="2"></li>
 		        </ol>
-		
-		        <div class="carousel-inner">
-		          <!-- 슬라이드 1 -->
-		          <div class="carousel-item active" style="height: 400px;"> 
-		            <div class="d-flex align-items-center justify-content-center h-100 w-100">
-		              <img src="/images/winct/image-1.jpg" 
-		                   class="img-fluid"
-		                   style="width: 100%; height: 400px; object-fit: cover;"> 
-		            </div>
+		        
+		        <!-- 슬라이드 1 -->
+		        <div class="carousel-item active" style="height: 490px; overflow: hidden;">
+		          <div class="d-flex align-items-center justify-content-center h-100; width: 100%;">
+		            <img src="/images/winct/image1.svg"
+		                 class="img-fluid"
+		                 style="object-fit: contain;">
 		          </div>
-		
-		          <!-- 슬라이드 2 -->
-		          <div class="carousel-item" style="height: 400px;">
-		            <div class="d-flex align-items-center justify-content-center h-100 w-100">
-		              <img src="/images/winct/image-2.jpg" 
-		                   class="img-fluid"
-		                   style="width: 100%; height: 400px; object-fit: cover;">
-		            </div>
+		        </div>
+		        
+		        <!-- 슬라이드 2 -->
+		        <div class="carousel-item" style="height: 490px; overflow: hidden;">
+		          <div class="d-flex align-items-center justify-content-center h-100; width: 100%;">
+		            <img src="/images/winct/image2.svg"
+		                 class="img-fluid"
+		                 style="object-fit: contain;">
 		          </div>
-		
-		          <!-- 슬라이드 3 -->
-		          <div class="carousel-item" style="height: 400px;">
-		            <div class="d-flex align-items-center justify-content-center h-100 w-100">
-		              <img src="/images/winct/image-3.jpg" 
-		                   class="img-fluid"
-		                   style="width: 100%; height: 400px; object-fit: cover;">
-		            </div>
+		        </div>
+		        
+		        <!-- 슬라이드 3 -->
+		        <div class="carousel-item" style="height: 490px; overflow: hidden;">
+		          <div class="d-flex align-items-center justify-content-center h-100; width: 100%;">
+		            <img src="/images/winct/image3.svg"
+		                 class="img-fluid"
+		                 style="object-fit: contain;">
 		          </div>
 		        </div>
 		      </div>
 		    </div>
 		  </div>
 		</div>
+		<!-- Carousel End -->
 
-
+		
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
-		<div class="col-lg-10">
+		<div class="col-lg-10" style="margin-top: 400px;">
 		  <div class="login-banner-wrapper" style="transform: translateX(220px); transition: all 0.3s ease;">
 		    <div class="row">
 		
@@ -444,12 +442,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		
 		      <!-- 이미지 배너 영역 -->
 
-		      <div class="image-layout" style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 40px;">
+		      <div class="image-layout" style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 40px; margin-top: -10px;">
 		        <!-- 왼쪽 이미지 -->
 		        <div style="flex: 1;">
-		          <img class="img-fluid left-img" src="/images/winct/e_clip.png" alt="e_clip" style="width: 270px;  display: block; margin-bottom: 2px;">
-		          <div style="text-align: left; clear: both;">
-		            <span style="font-size: 15px; font-weight: bold; margin-left: 8px;">체계적인 컨설팅 분석평가 프로그램</span>
+		          <img class="img-fluid left-img" src="/images/winct/e_clip.svg" alt="e_clip" style="width: 500px;  display: block; margin-bottom: 2px;">
+		          <div style="text-align: left; margin-top: -80px; clear: both;">
+		            <span style="font-size: 14px; font-weight: bold; margin-left: 8px;">체계적인 컨설팅 분석평가 프로그램</span>
 		          </div>
 		          <div style="text-align: left;">
 		            <span style="font-size: 15px; font-weight: bold; margin-left: 8px;">데이터 기반으로 맞춤 솔루션</span>
@@ -458,16 +456,17 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					   target="_blank" 
 					   rel="noopener noreferrer" 
 					   class="program-button" 
-					   style="margin-left: 50px; height: 26px; margin-top: 10px; display: inline-flex; align-items: center; text-decoration: none;">
+					   style="margin-left: 40px; height: 26px; margin-top: 20px; display: inline-flex; align-items: center; text-decoration: none;">
 					  프로그램 바로가기
 					  <span class="arrow" style="margin-left: 3px;">→</span>
 					</a>
 		        </div>
+		        
 				<!-- 오른쪽 이미지 묶음 -->
-				<div class="right-img-group" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 10px;">
+				<div class="right-img-group" style="flex: 1; display: flex; flex-direction: column; 
+				                             align-items: flex-start; margin-left: -60px; margin-top: 20px;">
 				  <!-- 컨설팅 소개 영역 -->
 				<div class="program-block">
-				  <img src="/images/winct/on_consult.png" alt="on_consult" style="width: 115px; cursor: pointer;">
 				  <div class="program-text">
 				    <div class="program-title">컨설팅 소개</div>
 				    <div class="program-desc">의료특화 전문교육</div>
@@ -484,9 +483,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				
 				<div class="program-block">
 				  <a href="https://winner797.net/" target="_blank" rel="noopener noreferrer">
-				    <img src="/images/winct/on_edu.png" 
-				         alt="온라인교육센터" 
-				         style="width: 115px; cursor: pointer; pointer-events: auto; z-index: 10; position: relative;">
 				  </a>
 				  
 				  <div class="program-text">
@@ -540,7 +536,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		  </div>
 		</div>
 
-   </div>
    
 	<div class="container-fluid_noti mb-2" style="margin-left: 210px;">
 		<div class="row px-xl-8">
@@ -688,6 +683,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		   </div>
 	   </div>
 	</div>
+	
 	<!--  공공기관 포털   -->
 	<div class="bmenu">
 	    <div class="row m-0"> 
@@ -708,6 +704,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        </div>
 	    </div>
 	</div>
+
 	<!--회원가입 모달창   -->
 	<div id="mainModal" class="modal fade" tabindex="-1" data-backdrop="static"
 		data-keyboard="false" aria-hidden="true" role="dialog">
