@@ -320,11 +320,7 @@ public class UserController extends BaseController {
 				dto.setFindData(dto.getFindData()) ;
 			
 				List<HospMdDTO> hospList = svc.selHospCdList(dto);
-				
-			//	for(HospMdDTO dao: hospList  ) {
-			//		System.out.println("병원-java getWardCnt : " + dao.getWardcnt());
-			//	}
-			
+		
 				System.out.println("병원-java size " + hospList.size());
 				
 				Map<String, Object> response = new HashMap<>();

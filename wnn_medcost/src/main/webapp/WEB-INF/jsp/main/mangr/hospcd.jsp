@@ -395,7 +395,7 @@
 		role="dialog"
 		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 		<div class="modal-content"
-			style="height: 85%; display: flex; flex-direction: column;">
+			style="height: 70%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
 				<h6 class="modal-title" id="hc_modalHead"></h6>
 				<div class="form-row">
@@ -422,14 +422,13 @@
 			<div class="modal-body"
 				style="text-align: left; flex: 1; overflow-y: auto;">
 				<div id="hc_inputZone">
-					<input type="hidden" id="hospUuid_one" name="hospUuid_one" value="">
-					<input type="hidden" id="subCodeNm_one" name="subCodeNm_one"
-						value=""> <input type="hidden" id="hospCd_one"
-						name="hospCd_one" value=""> <input type="hidden"
-						id="regUser_one" name="regUser_one" value=""> <input
-						type="hidden" id="updUser_one" name="updUser_one" value="">
-					<input type="hidden" id="regIp_one" name="regIp_one" value="">
-					<input type="hidden" id="updIp_one" name="updIp_one" value="">
+					<input type="hidden" id="hospUuid_one"  name="hospUuid_one"  value="">
+					<input type="hidden" id="subCodeNm_one" name="subCodeNm_one" value=""> 
+					<input type="hidden" id="hospCd_one"	name="hospCd_one"    value=""> 
+					<input type="hidden" id="regUser_one"   name="regUser_one"   value=""> 
+					<input type="hidden" id="updUser_one"   name="updUser_one"   value="">
+					<input type="hidden" id="regIp_one"     name="regIp_one"     value="">
+					<input type="hidden" id="updIp_one"     name="updIp_one"     value="">
 					<div class="form-group row ">
 						<label for="conactGb_one"
 							class="col-2 col-lg-2 col-form-label text-left">계약구분</label>
@@ -2103,7 +2102,7 @@
 		        ocsUserId_one:    { kname: "아이디" },
 		        ocsUserPw_one:    { kname: "패스워드"},
 		        conUserId_one:    { kname: "계약담당"},
-		        conUserTel_one:       { kname: "전화번호"}
+		        conUserTel_one:   { kname: "전화번호"}
 		    });
 		    return results;
 		}
@@ -2450,10 +2449,10 @@
 			            	let hc_newData = hc_newuptData();
 	
 			            	hc_dataTable.row.add(hc_newData).draw(false);
-			            	
-			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	            	
+    			
+			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	
 			            	$("#" + hc_modalName.id).modal('hide');
-			            	
+	            	
 			        	},
 			        	error: function(xhr, status, error) {
 				         	switch (xhr.status){  
@@ -2472,8 +2471,11 @@
 				           	}
 			        	}	
 			    });
+			    let hc_newData = hc_newuptData();
+			    hosp_cont_getload(hc_newData.hospCd_one); // Pass the hospCd here
 			}
 		}
+	
 		// Modal Form에서 수정
 		function hc_fn_Update() {
 		    // 1. 입력값 검증 및 유효성 검사
@@ -3793,6 +3795,55 @@
     document.addEventListener("DOMContentLoaded", function() {
         applyAuthControl();
     });
+    function hosp_cont_getload(hospidcd) {
+    	
+        $.ajax({
+            type: "POST",
+            url: "/user/hospCdList.do", // URL을 컨트롤러의 URL과 맞추기
+            data: { hospCd: hospidcd }, // 필요한 데이터 보내기
+            dataType: "json",
+            success: function(response) {
+                if (response && Object.keys(response).length > 0) {
+                    let newHospData = {
+                        hospCd: hospidcd,
+                        name1:    response.data[0].name1,
+                        startDt1: response.data[0].startDt1,
+                        endDt1:   response.data[0].endDt1,
+                        name2:    response.data[0].name2,
+                        startDt2: response.data[0].startDt2,
+                        endDt2:   response.data[0].endDt2
+                    };
+                    let rowFound = false;
+                    // Ensure you're accessing the right table and row
+                    dataTable.rows().every(function(rowIdx, tableLoop, rowLoop) {
+                        const rowData = this.data();
+                        if (hospidcd === rowData.hospCd) {
+                            this.data(newHospData);
+                            this.invalidate().draw(false);
+                            rowFound = true;
+                            $(this.node()).addClass('selected');
+                            $(this.node()).trigger('click');
+                            return false; // Break the loop
+                        }
+                    });
+
+                    if (!rowFound) {
+                        alert("해당 병원 코드(hospCd)가 존재하지 않습니다.");
+                    }
+
+                    dataTable.draw();  // This will now correctly refresh the table
+                } else {
+                    alert("필수 데이터(name1, name2)가 부족합니다.");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX 오류:", status, error);
+                alert("서버 통신 오류가 발생했습니다.");
+            }
+        });
+    }
+
+
 
 	</script>
 <!-- ============================================================== -->

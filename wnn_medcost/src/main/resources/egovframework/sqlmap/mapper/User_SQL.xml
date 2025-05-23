@@ -211,12 +211,13 @@
 	
 	) A
 	WHERE A.ACTION_YN = 'Y'
-    ]]>
+	]]>
+    <if test='hospCd != null and hospCd != "" '>
+        AND HOSP_CD = #{hospCd}
+    </if>
     <if test='findData != null and findData != "" '>
-        <![CDATA[
         AND ( A.HOSP_CD LIKE CONCAT('%',#{findData},'%')  
            OR A.HOSP_NM LIKE CONCAT('%',#{findData},'%') )
-        ]]>
     </if>
     <![CDATA[
     ORDER BY A.HOSP_CD 
