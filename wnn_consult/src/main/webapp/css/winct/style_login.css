@@ -411,3 +411,30 @@
   color: #212529 !important; /* 진한 검정 (기본 text-dark 색) */
   font-weight: 700;
 }
+/*로그인 */
+
+#userInfoCard {
+  display: none;
+  overflow: auto;
+  max-height: 220px;
+  width: 100%;           /* 부모 너비 100% 차지 */
+  box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
+  margin-top: 10px;
+}
+.carousel-indicators {
+  justify-content: flex-end;
+  left: unset !important;
+  right: -50px !important;
+  bottom: 10px;
+  position: absolute;
+  background-color: transparent;
+  padding: 0;
+}
+
+.carousel-indicators [data-bs-target] {
+  background-color: #add8e6; /* 비활성 인디케이터: 연한 파란색 */
+}
+
+.carousel-indicators .active {
+  background-color: #90ee90; /* 활성 인디케이터: 연한 녹색 */
+}

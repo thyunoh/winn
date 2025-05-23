@@ -52,14 +52,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <!-- DataTables JS 추가 -->
 </head>
 <style>
-#userInfoCard {
-  display: none;
-  overflow: auto;
-  max-height: 220px;
-  width: 100%;           /* 부모 너비 100% 차지 */
-  box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
-  margin-top: 10px;
-}
 </style>
 
 <body>
@@ -69,7 +61,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="col-lg-3 d-none d-lg-block">
 		<a class="btn d-flex align-items-center bg-white w-80"
 		   data-bs-toggle="collapse" href="#navbar-vertical"
-		   style="height: 50px; padding: 0; width: 70%; margin-left:180px;">
+		   style="height: 30px; padding: 0; width: 40%; margin-left:200px; margin-top:15px;">
 			<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
 		</a>
 		</div>
@@ -77,23 +69,23 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
 				style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:60px;">
-						<div class="nav-item dropdown">
-						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 16px;" 
-						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개</strong></a>
-						    <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
-						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 15px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:20px;">
+						<div class="nav-item dropdown-toggle text-dark">
+						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px;" 
+						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개 </strong></a>
+				                                              
+						    <div class="dropdown-menu dropdown-menu-end bg-light rounded-0 border-0 m-0">
+						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
+						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
 						    </div>
 						</div>
 						<a href="https://winner797.net/" 
 						   class="nav-link dropdown-toggle text-dark consulting-menu"
 						   style="font-size: 16px; margin-top: -1px;" 
-						   target="_blank" 
-						   rel="noopener noreferrer">
+						   target="_blank" rel="noopener noreferrer">
 						   <strong>온라인교육센터</strong>
 						</a>
 
@@ -337,7 +329,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="container-fluid mb-2" style="position: relative;">
 		  <div class="row px-xl-8">
 		    <div class="col-lg-12 mx-auto"> 
-		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" style="position: absolute; top: 0; left: 0; right: 0; z-index: -1;">
+		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" style="position: absolute; top: 50%; left: 0; right: 10px; z-index: -1;">
+
 		        <ol class="carousel-indicators">
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
@@ -455,8 +448,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					   rel="noopener noreferrer" 
 					   class="program-button" 
 					   style="margin-left: 40px; height: 26px; margin-top: 20px; display: inline-flex; align-items: center; text-decoration: none;">
-					  <span style="padding-left: 10px;">프로그램 바로가기</span>
-					  <span class="arrow" style="margin-left: 1px;">→</span>
+					  <span style="margin-left: 10px;">프로그램 바로가기</span>
+					  <span class="arrow" style="margin-left:-10px;">→</span>
 					</a>
 		        </div>
 		        
@@ -469,13 +462,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				    <div class="program-title">컨설팅 소개</div>
 				    <div class="program-desc">의료특화 전문교육</div>
 				    <div class="program-desc">의료기관 전문컨설팅</div>
-				    <a href="/path/to/consulting-intro.pdf" download
-				       class="program-button"
-				       style="display: inline-flex; align-items: center; gap: 0px; margin-top: 5px; margin-left:-2px;
-				        text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
-				      컨설팅소개서다운로드
-				      <span class="arrow">→</span>
-				    </a>
+					<a href="/path/to/consulting-intro.pdf" download
+					   class="program-button"
+					   style="display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; margin-left:-1px;
+					    text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
+					    <span style="margin-left: -5px;">컨설팅소개서 다운로드</span>
+					    <span class="arrow" style="margin-left: -2px;">→</span>
+					</a>
 				  </div>
 				</div>
 				
