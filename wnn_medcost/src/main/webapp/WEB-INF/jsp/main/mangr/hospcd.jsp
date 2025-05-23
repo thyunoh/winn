@@ -3802,8 +3802,11 @@
             url: "/user/hospCdList.do", // URL을 컨트롤러의 URL과 맞추기
             data: { hospCd: hospidcd }, // 필요한 데이터 보내기
             dataType: "json",
+            timeout: 10000, // 10초 후 타임아웃
+	        beforeSend : function () {
+			},
             success: function(response) {
-                if (response && Object.keys(response).length > 0) {
+            	if (response && Object.keys(response).length > 0) {
                     let newHospData = {
                         hospCd: hospidcd,
                         name1:    response.data[0].name1,
@@ -3814,7 +3817,6 @@
                         endDt2:   response.data[0].endDt2
                     };
                     let rowFound = false;
-                    // Ensure you're accessing the right table and row
                     dataTable.rows().every(function(rowIdx, tableLoop, rowLoop) {
                         const rowData = this.data();
                         if (hospidcd === rowData.hospCd) {

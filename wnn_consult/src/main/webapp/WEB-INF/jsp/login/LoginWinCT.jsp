@@ -69,12 +69,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
 				style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:20px;">
+					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:10px;">
 						<div class="nav-item dropdown-toggle text-dark">
 						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px;" 
 						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개 </strong></a>
 				                                              
-						    <div class="dropdown-menu dropdown-menu-end bg-light rounded-0 border-0 m-0">
+						    <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
@@ -99,7 +99,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	</div>
 </div>
 <!-- Navbar End -->
-
+<!-- 컨설팅소개서  -->
+<div id="contentArea"></div>
 <script>
    //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
 	function hosp_conact() {
@@ -170,8 +171,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        });
 	    });
     </script>
-	<div id="contentArea"></div>
-
 	<!-- 위너넷 컨설팅 이미지 -->
 	<script> 	<!-- 타jsp화면을 주메뉴에 가져와서 화면에 뿌리주는 기능  -->
 	function loadPage(pageUrl) {
@@ -366,7 +365,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		      </div>
 		    </div>
 		  </div>
-		</div>
+
 		<!-- Carousel End -->
 
 		
@@ -500,32 +499,33 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		      </div>
 		    </div>
 		  </div>
-		
-		  <!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
-		  <div class="social-box">
-		    <ul>
-				<li>
-				  <a href="https://www.youtube.com/watch?v=WaWoMowapjI" target="_blank" rel="noopener noreferrer">
-				    <img src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
-				    <span>유튜브</span>
-				  </a>
-				</li>
-				<li>
-				  <a href="https://blog.naver.com/ewinner7/222973843240" target="_blank" rel="noopener noreferrer">
-				    <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
-				    <span>블로그</span>
-				  </a>
-				</li>
-				<li>
-				  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
-				    <img src="/images/winct/insta.svg" alt="인스타그램" class="snsImg">
-				    <span>인스타그램</span>
-				  </a>
-				</li>
-		    </ul>
-		    <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
-		  </div>
-		</div>
+	 </div> <!-- 여기를 까지 -->
+	 
+	  <!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
+	  <div class="social-box">
+	    <ul>
+			<li>
+			  <a href="https://www.youtube.com/watch?v=WaWoMowapjI" target="_blank" rel="noopener noreferrer">
+			    <img src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
+			    <span>유튜브</span>
+			  </a>
+			</li>
+			<li>
+			  <a href="https://blog.naver.com/ewinner7/222973843240" target="_blank" rel="noopener noreferrer">
+			    <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
+			    <span>블로그</span>
+			  </a>
+			</li>
+			<li>
+			  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
+			    <img src="/images/winct/insta.svg" alt="인스타그램" class="snsImg">
+			    <span>인스타그램</span>
+			  </a>
+			</li>
+	    </ul>
+	    <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
+	  </div>
+	</div>
 
    
 	<div class="container-fluid_noti mb-2" style="margin-left: 210px;">
