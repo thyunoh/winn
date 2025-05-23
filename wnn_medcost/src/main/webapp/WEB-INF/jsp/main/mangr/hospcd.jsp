@@ -2452,6 +2452,14 @@
     			
 			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	
 			            	$("#" + hc_modalName.id).modal('hide');
+			                // ✅ 저장 완료 후 hosp_cont_getload 실행
+			                if (hc_newData.hospCd_one) {
+			                    setTimeout(() => {
+			                        hosp_cont_getload(hc_newData.hospCd_one); // 0.3초 지연 후 실행
+			                    }, 300);
+			                } else {
+			                    console.warn("hospCd_one 없음, 데이터 갱신 생략");
+			                }			            	
 	            	
 			        	},
 			        	error: function(xhr, status, error) {
@@ -2471,8 +2479,6 @@
 				           	}
 			        	}	
 			    });
-			    let hc_newData = hc_newuptData();
-			    hosp_cont_getload(hc_newData.hospCd_one); // Pass the hospCd here
 			}
 		}
 	
@@ -3796,51 +3802,51 @@
         applyAuthControl();
     });
     function hosp_cont_getload(hospidcd) {
-    	
         $.ajax({
             type: "POST",
-            url: "/user/hospCdList.do", // URL을 컨트롤러의 URL과 맞추기
-            data: { hospCd: hospidcd }, // 필요한 데이터 보내기
+            url: "/user/hospCdList.do",
+            data: { hospCd: hospidcd },
             dataType: "json",
-            timeout: 10000, // 10초 후 타임아웃
-	        beforeSend : function () {
-			},
+            timeout: 10000,
+            beforeSend: function () {
+                console.log("병원 데이터 조회 요청 시작:", hospidcd);
+            },
             success: function(response) {
-            	if (response && Object.keys(response).length > 0) {
+                if (response && response.data && response.data.length > 0) {
+                    const data = response.data[0];
                     let newHospData = {
-                        hospCd: hospidcd,
-                        name1:    response.data[0].name1,
-                        startDt1: response.data[0].startDt1,
-                        endDt1:   response.data[0].endDt1,
-                        name2:    response.data[0].name2,
-                        startDt2: response.data[0].startDt2,
-                        endDt2:   response.data[0].endDt2
+                        hospCd:   hospidcd,
+                        name1:    data.name1,
+                        startDt1: data.startDt1,
+                        endDt1:   data.endDt1,
+                        name2:    data.name2,
+                        startDt2: data.startDt2,
+                        endDt2:   data.endDt2
                     };
                     let rowFound = false;
-                    dataTable.rows().every(function(rowIdx, tableLoop, rowLoop) {
+                    dataTable.rows().every(function () {
                         const rowData = this.data();
-                        if (hospidcd === rowData.hospCd) {
+                        if (String(hospidcd) === String(rowData.hospCd)) {
                             this.data(newHospData);
                             this.invalidate().draw(false);
                             rowFound = true;
                             $(this.node()).addClass('selected');
                             $(this.node()).trigger('click');
-                            return false; // Break the loop
+                            return false;
                         }
                     });
 
                     if (!rowFound) {
-                        alert("해당 병원 코드(hospCd)가 존재하지 않습니다.");
+                        alert("해당 병원 코드(hospCd)가 그리드에 존재하지 않습니다.");
                     }
-
-                    dataTable.draw();  // This will now correctly refresh the table
+                    dataTable.draw();  // This will now correctly refresh 
                 } else {
-                    alert("필수 데이터(name1, name2)가 부족합니다.");
+                    alert("병원 데이터가 비어있거나 필수 정보가 없습니다.");
                 }
             },
             error: function(xhr, status, error) {
-                console.error("AJAX 오류:", status, error);
-                alert("서버 통신 오류가 발생했습니다.");
+                console.error("병원 데이터 조회 오류:", status, error);
+                alert("병원 데이터 조회 중 오류가 발생했습니다.");
             }
         });
     }
