@@ -527,10 +527,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	  </div>
 	</div>
 
-   
-	<div class="container-fluid_noti mb-2" style="margin-left: 210px;">
+   <!-- 공지사항 그리드 시작 -->
+	<div class="container-fluid_noti mb-2" style="margin-left: 227px;"> <!-- 원위치 210  --> 
 		<div class="row px-xl-8">
-			<div class="col-lg-auto" style="width: 695px;">
+			<div class="col-lg-auto" style="width: 682px;">             <!-- 원넓이사이즈 695-->
 				<div class="bg-light box-p-10" style="height: 215px;">
 					<!-- 탭 헤더 -->
 					<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
@@ -627,7 +627,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					</div>
 				</div>
 			</div>
-
+<!-- 공지사항 그리드 끝-->
 
 			<div class="col-lg-4">
               <div class="helpdesk">
