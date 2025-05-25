@@ -15,7 +15,7 @@
 <link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
 <style>
   .dashboard-wrapper * {
-    font-size: 12px !important;
+    font-size: 13px !important;
   }
   #hang_tableName td, 
   #hang_tableName th {
