@@ -9,7 +9,9 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page"%>
 <%@ page import="java.util.Date"%>
 <!-- Customized Bootstrap Stylesheet -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 아이콘 -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 저장아이콘 -->
+
 <link href="/css/winmc/bootstrap.css" rel="stylesheet">
 <link href="/css/winmc/style.css?v=123" rel="stylesheet">
 <script
@@ -370,9 +372,9 @@
 					<p>
 						<strong><%=request.getAttribute("message") != null ? request.getAttribute("message") : ""%></strong>
 					</p>
-					<div class="table-container" style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
+					<div class="table-file-container" style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 0.85em;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
 					       </table>    
 					    </div>
 					</div>     

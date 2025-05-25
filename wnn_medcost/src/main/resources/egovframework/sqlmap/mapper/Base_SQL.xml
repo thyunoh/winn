@@ -404,13 +404,14 @@
                                       AND B.ACTION_YN ='Y' 
                                       AND B.CODE_CD = 'WVALUE' 
                                       AND B.SUB_CODE = A.CATE_CODE
+                                      AND B.ACTION_YN = 'Y'  
         WHERE 1=1
 	 	  AND A.ACTION_YN = 'Y' 
 	 	  AND 
 		     ( A.CATE_CODE   LIKE CONCAT('%'  #{findData}  '%')  OR 
 		      A.WEVALUE_NM   LIKE CONCAT('%'  #{findData}  '%')
 		    )  
-		  Order by A.CATE_CODE  , A.START_DT ,  A.ORDER_SEQ 
+		  Order by A.START_DT  , A.CATE_CODE  ,   A.ORDER_SEQ 
 	      ]]>         
     </select>  
     <!-- 가중치 -->

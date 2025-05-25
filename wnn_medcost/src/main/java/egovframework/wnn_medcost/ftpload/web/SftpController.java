@@ -27,10 +27,10 @@ public class SftpController {
         this.sftpService = sftpService;
     }
     // ✅ SFTP 연결 정보 (임시 하드코딩 – properties 방식 권장)
-    private static final String SFTP_HOST = "114.108.153.178";
-    private static final int    SFTP_PORT = 22;
-    private static final String SFTP_USER = "winner";
-    private static final String SFTP_PASSWORD = "winner_20@%";
+    private static final String SFTP_HOST      = "114.108.153.178";
+    private static final int    SFTP_PORT      = 22;
+    private static final String SFTP_USER      = "winner";
+    private static final String SFTP_PASSWORD  = "winner_20@%";
     private static final String BASE_DIRECTORY = "/home/winner/upload/";
     @RestControllerAdvice
     public class GlobalRestExceptionHandler {
