@@ -14,8 +14,8 @@
 
 <link href="/css/winmc/bootstrap.css" rel="stylesheet">
 <link href="/css/winmc/style.css?v=123" rel="stylesheet">
-<script
-	src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <!-- 카카오주소검색 -->
 <!-- DataTables CSS -->
 <style>

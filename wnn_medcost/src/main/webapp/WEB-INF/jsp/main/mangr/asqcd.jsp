@@ -10,6 +10,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 <!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/bootstrap.css"     rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
     </style>

@@ -11,8 +11,9 @@
  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
 
-<link href="/css/winmc/bootstrap.css" rel="stylesheet">
+<link href="/css/winmc/bootstrap.css"   rel="stylesheet">
 <link href="/css/winmc/style.css?v=123" rel="stylesheet">
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
 <!-- DataTables CSS -->
 <style>
 </style>
