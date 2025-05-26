@@ -66,42 +66,48 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		</a>
 		</div>
 		<div class="col-lg-9">
-			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
-				style="height: 60px; align-items: center;">
-				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:20px;">
-						<a href="http://www.winnernet.co.kr/" 
-						   class="nav-link dropdown-toggle text-dark consulting-menu" 
-						   style="font-size: 17px; font-weight: bold;" 
-						   target="_blank" 
-						   rel="noopener noreferrer">
-						   <strong>위너넷</strong>
-						</a>
-						<div class="nav-item dropdown-toggle text-dark">
-						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px; font-weight: bold;" 
-						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개 </strong></a>
-						    <div class="dropdown-menu dropdown-menu-end bg-light rounded-0 border-0 m-0">
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
-						    </div>
-						</div>
-						<a href="https://winner797.net/" 
-						   class="nav-link dropdown-toggle text-dark consulting-menu"
-						   style="font-size: 16px; margin-top: -1px;" 
-						   target="_blank" rel="noopener noreferrer">
-						   <strong>온라인교육센터</strong>
-						</a>
-
-						<div id="dynamicMenu_J"></div>
-						<div id="dynamicMenu_T"></div>
-					</div>
-					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
-				</div>
-			</nav>
+		    <nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px;">
+		        <div class="collapse navbar-collapse justify-content-between">
+		            <div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left: 20px;">
+		                <a href="http://www.winnernet.co.kr/" 
+		                   class="nav-link dropdown-toggle text-dark consulting-menu" 
+		                   style="font-size: 17px; font-weight: bold;" 
+		                   target="_blank" rel="noopener noreferrer">
+		                   <strong>위너넷</strong>
+		                </a>
+		
+		                <!-- 드롭다운 구조 수정 -->
+		                <div class="nav-item dropdown">
+		                    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" 
+		                       style="font-size: 17px; font-weight: bold;" 
+		                       data-bs-toggle="dropdown">
+		                       <strong>컨설팅 소개</strong>
+		                    </a>
+		                    <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
+		                        <a class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+		                        <a class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
+		                        <a class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+		                        <a class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+		                        <a class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+		                    </div>
+		                </div>
+		
+		                <a href="https://winner797.net/" 
+		                   class="nav-link dropdown-toggle text-dark consulting-menu" 
+		                   style="font-size: 16px;" 
+		                   target="_blank" rel="noopener noreferrer">
+		                   <strong>온라인교육센터</strong>
+		                </a>
+		
+		                <div id="dynamicMenu_J"></div>
+		                <div id="dynamicMenu_T"></div>
+		            </div>
+		
+		            <img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
+		        </div>
+		    </nav>
 		</div>
+
 	</div>
 </div>
 <!-- Navbar End -->
