@@ -21,16 +21,22 @@
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 
 <!-- DataTables (중복 제거 후 유지) -->
-<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.css">
-<script src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.js"></script>
+<link rel="stylesheet"
+	href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.css">
+<script
+	src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.js"></script>
 <!-- Bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script
+	src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- 아이콘 및 폰트 -->
 <link href="/images/icons/winnernet.ico" rel="icon" type="image/x-icon">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link
+	href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+	rel="stylesheet">
 
 <!-- CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <link href="/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/css/winct/style.css?v=123" rel="stylesheet">
 <link href="/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
@@ -63,7 +69,6 @@
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
 				style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
-<<<<<<< HEAD
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:20px;">
 						<a href="http://www.winnernet.co.kr/" 
 						   class="nav-link dropdown-toggle text-dark consulting-menu" 
@@ -72,18 +77,10 @@
 						   rel="noopener noreferrer">
 						   <strong>위너넷</strong>
 						</a>
-=======
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:10px;">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn
 						<div class="nav-item dropdown-toggle text-dark">
 						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px; font-weight: bold;" 
 						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개 </strong></a>
-<<<<<<< HEAD
 						    <div class="dropdown-menu dropdown-menu-end bg-light rounded-0 border-0 m-0">
-=======
-				                                              
-						    <div class="dropdown-menu bg-light rounded-0 border-0 m-0">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
@@ -108,8 +105,7 @@
 	</div>
 </div>
 <!-- Navbar End -->
-<!-- 컨설팅소개서  -->
-<div id="contentArea"></div>
+
 <script>
    //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
 	function hosp_conact() {
@@ -180,6 +176,8 @@
 	        });
 	    });
     </script>
+	<div id="contentArea"></div>
+
 	<!-- 위너넷 컨설팅 이미지 -->
 	<script> 	<!-- 타jsp화면을 주메뉴에 가져와서 화면에 뿌리주는 기능  -->
 	function loadPage(pageUrl) {
@@ -375,7 +373,7 @@
 		      </div>
 		    </div>
 		  </div>
-
+		</div>
 		<!-- Carousel End -->
 
 		
@@ -526,7 +524,6 @@
 
 					</div>
 				</div>
-<<<<<<< HEAD
 			</div>
 		</div>
 		<!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
@@ -554,46 +551,11 @@
 		    <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
 		  </div>
 		</div>
-=======
-				
-			  </div>
-		        
-		      </div>
-		    </div>
-		  </div>
-	 </div> <!-- 여기를 까지 -->
-	 
-	  <!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
-	  <div class="social-box">
-	    <ul>
-			<li>
-			  <a href="https://www.youtube.com/watch?v=WaWoMowapjI" target="_blank" rel="noopener noreferrer">
-			    <img src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
-			    <span>유튜브</span>
-			  </a>
-			</li>
-			<li>
-			  <a href="https://blog.naver.com/ewinner7/222973843240" target="_blank" rel="noopener noreferrer">
-			    <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
-			    <span>블로그</span>
-			  </a>
-			</li>
-			<li>
-			  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
-			    <img src="/images/winct/insta.svg" alt="인스타그램" class="snsImg">
-			    <span>인스타그램</span>
-			  </a>
-			</li>
-	    </ul>
-	    <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
-	  </div>
-	</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn
 
-   <!-- 공지사항 그리드 시작 -->
-	<div class="container-fluid_noti mb-2" style="margin-left: 227px;"> <!-- 원위치 210  --> 
+   
+	<div class="container-fluid_noti mb-2" style="margin-left: 210px;">
 		<div class="row px-xl-8">
-			<div class="col-lg-auto" style="width: 682px;">             <!-- 원넓이사이즈 695-->
+			<div class="col-lg-auto" style="width: 695px;">
 				<div class="bg-light box-p-10" style="height: 215px;">
 					<!-- 탭 헤더 -->
 					<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
@@ -690,7 +652,7 @@
 					</div>
 				</div>
 			</div>
-<!-- 공지사항 그리드 끝-->
+
 
 			<div class="col-lg-4">
               <div class="helpdesk">
