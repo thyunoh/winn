@@ -457,7 +457,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					style="display: flex; justify-content: space-between; 
 					       align-items: flex-start; margin: -5px -50px 14px 40px; /* 상단, 우측, 하단 , 좌측 */ 
 					       border: 2px solid red; border-radius: 10px; 
-					       padding: -15px 80px 80px 50px; /* 위, 오른쪽, 아래, 왼쪽 */ 
+					       padding: -18px 80px 70px 50px; /* 위, 오른쪽, 아래, 왼쪽 */ 
 					       box-sizing: border-box; background-color: #fff; margin-left: 30px;">
 					<div class="image-layout"
 						style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 50px; margin-top: -5px;">
@@ -465,8 +465,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div style="flex-basis: 70%; max-width: 60%; padding-right: 20px;">
 							<img class="img-fluid left-img" src="/images/winct/e_clip.svg"
 								alt="e_clip"
-								style="width: 500px; display: block; margin-bottom: 2px;">
-							<div style="text-align: left; margin-top: -70px; clear: both;">
+								style="width: 500px; display: block; margin-bottom: 6px;">
+							<div style="text-align: left; margin-top: -75px; clear: both;">
 								<span style="font-size: 14px; font-weight: bold; margin-left: 8px;">체계적인
 									컨설팅 분석평가 프로그램</span>
 							</div>
@@ -484,7 +484,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 						<!-- 오른쪽 이미지 묶음 -->
 						<div class="right-img-group"
-							style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 5px; ">
+							style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 8px; ">
 							<!-- 컨설팅 소개 영역 -->
 							<div class="program-block" style="margin-left: 30px;">
 								<div class="program-text">
@@ -493,7 +493,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									<div class="program-desc">의료기관 전문컨설팅</div>
 									<a href="/path/to/consulting-intro.pdf" download
 										class="program-button"
-										style="display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; margin-left: -1px; 
+										style="display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: -3px; 
 										       text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
 										<span style="margin-left: -5px;">컨설팅소개서 다운로드</span> <span
 										class="arrow" style="margin-left: -2px;">→</span>
@@ -501,11 +501,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								</div>
 							</div>
 
-							<div class="program-block" style="margin-left: 30px;">
+							<div class="program-block" style="margin-left: 30px;"> 
 								<a href="https://winner797.net/" target="_blank"
 									rel="noopener noreferrer"> </a>
 
-								<div class="program-text" style="margin-top: -6px;">
+								<div class="program-text" style="margin-top: -3px;">
 									<div class="program-title">온라인교육센터</div>
 									<div class="program-desc">효과적인 학습을 위한 교육</div>
 									<div class="program-desc">실전 가능한 팁과 전략 제공</div>
@@ -513,7 +513,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									<!-- 버튼을 a 태그로 대체 -->
 									<a href="https://winner797.net/" target="_blank"
 										rel="noopener noreferrer" class="program-button"
-										style="display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; 
+										style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; 
 										       text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
 										<span>홈페이지 바로가기</span> <span class="arrow">&rarr;</span>
 									</a>
