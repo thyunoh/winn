@@ -112,8 +112,8 @@
 		    <artifactId>commons-fileupload</artifactId>
 		    <version>1.4</version>
 		</dependency>
-      <!--  sftp 설정-->
-	
+        <!--  sftp 설정-->
+
         <!-- mysql이나 oracle DB 사용시 아래 설정 추가   -->
         <dependency>
             <groupId>com.googlecode.log4jdbc</groupId>

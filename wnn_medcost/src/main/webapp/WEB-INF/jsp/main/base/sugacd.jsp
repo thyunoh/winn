@@ -8,8 +8,9 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/bootstrap.css" rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"   rel="stylesheet">
+<link href="/css/winmc/bootstrap.css"       rel="stylesheet">
+<link href="/css/winmc/style.css?v=123"     rel="stylesheet">
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
     </style>
@@ -254,13 +255,13 @@
 		// Form마다 수정해야 될 부분 종료
 		
 		// Form마다 조회 조건 변경 시작
-		var findTxtln  = 2;    // 조회조건시 글자수 제한 / 0이면 제한 없음
+		var findTxtln  = 3;    // 조회조건시 글자수 제한 / 0이면 제한 없음
 		var firstflag  = false; // 첫음부터 Find하시려면 false를 주면됨
 		var findValues = [];
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData",  val: "AA100",  chk: true  });
+		findValues.push({ id: "findData",  val: "",  chk: true  });
 		findValues.push({ id: "feeType1",  val: "1", chk: false });
 		//Form마다 조회 조건 변경 종료
 		

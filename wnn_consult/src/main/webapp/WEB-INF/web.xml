@@ -30,7 +30,7 @@
     <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
   </listener>
   
-  <!-- sftp를 위한설정  --> 
+<!-- sftp를 위한설정  --> 
   <servlet>
     <servlet-name>action</servlet-name>
     <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>

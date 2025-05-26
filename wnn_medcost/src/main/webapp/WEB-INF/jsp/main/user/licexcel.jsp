@@ -9,6 +9,7 @@
 <%@ page import ="java.util.Date" %>
 <link href="/css/winmc/bootstrap.css"     rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
 
 <style>
 	#excelPreview {

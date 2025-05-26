@@ -9,11 +9,13 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page"%>
 <%@ page import="java.util.Date"%>
 <!-- Customized Bootstrap Stylesheet -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 아이콘 -->
-<link href="/css/winmc/bootstrap.css" rel="stylesheet">
-<link href="/css/winmc/style.css?v=123" rel="stylesheet">
-<script
-	src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
+
+<link href="/css/winmc/bootstrap.css"       rel="stylesheet">
+<link href="/css/winmc/style.css?v=123"     rel="stylesheet">
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <!-- 카카오주소검색 -->
 <!-- DataTables CSS -->
 <style>
@@ -370,9 +372,9 @@
 					<p>
 						<strong><%=request.getAttribute("message") != null ? request.getAttribute("message") : ""%></strong>
 					</p>
-					<div class="table-container" style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
+					<div class="table-file-container" style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 0.85em;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
 					       </table>    
 					    </div>
 					</div>     
@@ -2452,6 +2454,9 @@
     			
 			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	
 			            	$("#" + hc_modalName.id).modal('hide');
+		            	
+			            	HospGrid_Update(hc_newData.hospCd_one) ; //상당그리드 업데이트  
+	                
 	            	
 			        	},
 			        	error: function(xhr, status, error) {
@@ -2471,8 +2476,6 @@
 				           	}
 			        	}	
 			    });
-			    let hc_newData = hc_newuptData();
-			    hosp_cont_getload(hc_newData.hospCd_one); // Pass the hospCd here
 			}
 		}
 	
@@ -2532,10 +2535,12 @@
 		                });
 		
 		                dataTable.draw(false);
-		                
-		                // 7. 모달 닫기 및 성공 메시지 표시
+	                
+ 	                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + hc_modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
+		                
+		                HospGrid_Update(hc_updatedData.hospCd_one) ; //상당그리드 업데이트  
 		            },
 		            error: function(xhr, status, error) {
 		                console.error("업데이트 실패", xhr.responseText);
@@ -2579,13 +2584,16 @@
 						            customClass: {
 										   popup: 'small-swal'}
 						        });
+				            	let hc_updatedData = hc_newuptData();
+			            	
 							    // 선택된 행 삭제
 							    selectedRows.remove().draw();
 							    // 삭제 후 선택 초기화
 							    selectedRow = null; 
 							    $("#" + hc_modalName.id).modal('hide');
-		
-				        	},
+							    
+							    HospGrid_Update(hc_updatedData.hospCd_one) ; //상당그리드 업데이트 
+				            },
 				        	error: function(xhr, status, error) {
 				        		Swal.fire({
 						            title: '에러확인',
@@ -3795,54 +3803,71 @@
     document.addEventListener("DOMContentLoaded", function() {
         applyAuthControl();
     });
-    function hosp_cont_getload(hospidcd) {
+    /*입력수정삭제 시 hosp_cont_getload(hospidcd) 호출 */
+    function HospGrid_Update(hospCd) {
+
+        if (hospCd) {
+            setTimeout(() => {
+                hosp_cont_getload(hospCd); // 0.3초 지연 후 실행
+            }, 300);
+        } else {
+            console.warn("hospCd_one 없음, 데이터 갱신 생략");
+        }	    	
     	
+    }
+	
+	/*계약정보입력후 상단자료 그리드 업데이트*/
+	function hosp_cont_getload(hospidcd) {
         $.ajax({
             type: "POST",
-            url: "/user/hospCdList.do", // URL을 컨트롤러의 URL과 맞추기
-            data: { hospCd: hospidcd }, // 필요한 데이터 보내기
+            url: "/user/hospCdList.do",
+            data: { hospCd: hospidcd },  // 서버에서는 이 hospCd 기준으로 1건 반환해야 함
             dataType: "json",
-            success: function(response) {
-                if (response && Object.keys(response).length > 0) {
-                    let newHospData = {
-                        hospCd: hospidcd,
-                        name1:    response.data[0].name1,
-                        startDt1: response.data[0].startDt1,
-                        endDt1:   response.data[0].endDt1,
-                        name2:    response.data[0].name2,
-                        startDt2: response.data[0].startDt2,
-                        endDt2:   response.data[0].endDt2
-                    };
+            timeout: 10000,
+            beforeSend: function () {
+                console.log("병원 데이터 조회 요청 시작:", hospidcd);
+            },
+            success: function (response) {
+                if (response && response.data && response.data.length > 0) {
+                    const newRowData = response.data[0];  // ← 서버에서 받은 최신 데이터 (전체 필드 포함)
+
                     let rowFound = false;
-                    // Ensure you're accessing the right table and row
-                    dataTable.rows().every(function(rowIdx, tableLoop, rowLoop) {
+
+                    dataTable.rows().every(function () {
                         const rowData = this.data();
-                        if (hospidcd === rowData.hospCd) {
-                            this.data(newHospData);
-                            this.invalidate().draw(false);
+
+                        if (String(rowData.hospCd) === String(hospidcd)) {
+                            console.log("업데이트 대상 행 찾음:", rowData.hospCd);
+
+                            this.data(newRowData);   // ✅ 행 전체를 새로운 객체로 교체
+                            this.invalidate();        // 무효화 → 렌더링 재계산
                             rowFound = true;
+
+                            // 선택 상태 유지
+                            dataTable.$('tr.selected').removeClass('selected');
                             $(this.node()).addClass('selected');
                             $(this.node()).trigger('click');
-                            return false; // Break the loop
+
+                            return false;  // 탐색 종료
                         }
                     });
 
                     if (!rowFound) {
-                        alert("해당 병원 코드(hospCd)가 존재하지 않습니다.");
+                        alert("상단 그리드에 hospCd 일치 행이 없어 새로 추가합니다.");
+                        dataTable.row.add(newRowData).draw(false);
+                    } else {
+                        dataTable.draw(false);  // 현재 페이지 유지한 채 UI 반영
                     }
-
-                    dataTable.draw();  // This will now correctly refresh the table
                 } else {
-                    alert("필수 데이터(name1, name2)가 부족합니다.");
+                    alert("해당 병원 데이터를 찾을 수 없습니다.");
                 }
             },
-            error: function(xhr, status, error) {
-                console.error("AJAX 오류:", status, error);
-                alert("서버 통신 오류가 발생했습니다.");
+            error: function (err) {
+                alert("상단 병원 목록 갱신 중 오류 발생");
+                console.error(err);
             }
         });
     }
-
 
 
 	</script>

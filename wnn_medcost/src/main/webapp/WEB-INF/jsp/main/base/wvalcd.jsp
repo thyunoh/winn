@@ -10,6 +10,7 @@
 <!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/bootstrap.css"     rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
+<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
     </style>
@@ -256,14 +257,10 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['분류번호','분류순서','분류명','구분(점수/율)','시작일','지표시작','지표종료','표준화점수' ,'가중치','종료일'  ];
+		var c_Head_Set = ['시작일','분류번호','분류순서','분류명','구분(점수/율)','지표시작','지표종료','표준화점수' ,'가중치','종료일'  ];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'cateCode',   visible: true,  className: 'dt-body-center' , width: '100px',  name: 'keycateCode', primaryKey: true },
-	        				{ data: 'orderSeq',   visible: true,  className: 'dt-body-center' , width: '100px',  name: 'keyorderSeq', primaryKey: true },
-	        				{ data: 'wevalueNm',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
-	        				{ data: 'calGubun',  visible: true,   className: 'dt-body-center' , width: '100px',  },
 	        				// getFormat 사용시 
 	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keystartDt', primaryKey: true,
 	                          	render: function(data, type, row) {
@@ -273,6 +270,10 @@
 		                			return data;
 	            				}
 	        				},
+	        				{ data: 'cateCode',   visible: true,  className: 'dt-body-center' , width: '50px',  name: 'keycateCode', primaryKey: true },
+	        				{ data: 'orderSeq',   visible: true,  className: 'dt-body-center' , width: '50px',  name: 'keyorderSeq', primaryKey: true },
+	        				{ data: 'wevalueNm',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
+	        				{ data: 'calGubun',  visible: true,   className: 'dt-body-center' , width: '100px',  },
 	        				{ data: 'startIndi',   visible: true,  className: 'dt-body-center', width: '100px',  },	        				
 					        { data: 'endIndi'  ,   visible: true,  className: 'dt-body-center', width: '100px',  },
 					        { data: 'stdScore' ,   visible: true,  className: 'dt-body-center', width: '100px',  },
@@ -292,11 +293,12 @@
         
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
-							['cateCode', 'asc' ],    // 오름차순 정렬
+			                ['startDt', 'asc' ],       // 오름차순 정렬				
+			                ['cateCode', 'asc' ],      // 오름차순 정렬
             				['wevalueNm', 'desc']     // 내림차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['cateCode','wevalueNm'];                    
+		var showSortNo = ['startDt','cateCode','wevalueNm'];                    
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
