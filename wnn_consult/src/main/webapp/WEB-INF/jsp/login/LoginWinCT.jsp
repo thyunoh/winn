@@ -70,10 +70,16 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
 					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:20px;">
+						<a href="http://www.winnernet.co.kr/" 
+						   class="nav-link dropdown-toggle text-dark consulting-menu" 
+						   style="font-size: 17px; font-weight: bold;" 
+						   target="_blank" 
+						   rel="noopener noreferrer">
+						   <strong>위너넷</strong>
+						</a>
 						<div class="nav-item dropdown-toggle text-dark">
-						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px;" 
+						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px; font-weight: bold;" 
 						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개 </strong></a>
-				                                              
 						    <div class="dropdown-menu dropdown-menu-end bg-light rounded-0 border-0 m-0">
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
 						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
@@ -329,7 +335,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="container-fluid mb-2" style="position: relative;">
 		  <div class="row px-xl-8">
 		    <div class="col-lg-12 mx-auto"> 
-		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" style="position: absolute; top: 50%; left: 0; right: 10px; z-index: -1;">
+		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" 
+		                                       style="position: absolute; top: 50%; left: 40px; right: 10px; z-index: -1;">
 
 		        <ol class="carousel-indicators">
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
@@ -372,136 +379,154 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
 		<div class="col-lg-10" style="margin-top: 400px;"> <!-- style="margin-top: 400px; 올려서 오버뱁  -->
-		  <div class="login-banner-wrapper" style="transform: translateX(220px); transition: all 0.3s ease;">
-		    <div class="row">
-		
-		      <!-- 로그인 영역 -->
-		      <div class="col-lg-6" style="flex: 0 0 46%; max-width: 46%; margin-left: -60px;">
-		        <div class="contact-form box-p-10 mb-3" style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
-		          <form name="loginForm" id="loginForm">
-		            <div style="display: flex; align-items: flex-start; justify-content: center;">
-		              <!-- 입력 필드 영역 -->
-		              <div style="flex-grow: 0; width: 280px;">
-		                <hr style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
-		                <h6 class="section-title position-relative mb-2">
-		                  <span class="pr-4" style="color: white;">로그인 <small style="font-size: 0.75em; color: white;">LOGIN</small></span>
-		                </h6>
-		                <div class="control-group mb-2">
-		                  <input type="text" class="form-control" id="hospid" placeholder="Hospital Number" style="width: 150%;" />
-		                </div>
-		                <div class="control-group mb-2">
-		                  <input type="text" class="form-control" id="userid" placeholder="User ID" style="width: 150%;" />
-		                </div>
-		                <div class="control-group mb-2">
-		                  <input type="password" class="form-control" id="passwd" placeholder="PassWord" style="width: 150%;" />
-		                </div>
-		                <div class="form-check mb-2" style="white-space: nowrap; color: white;">
-		                  <input class="form-check-input" type="checkbox" id="saveyn">
-		                  <span class="form-check-label font-weight-bold" for="saveyn" style="font-size: 13px;">아이디저장</span>
-		                </div>
-		              </div>
-		
-		              <!-- 로그인 버튼 + 링크 -->
-		              <div style="margin-left: 180px; text-align: center;">
-		                <button type="button" id="blogin" onclick="login()"
-		                  style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; 
-		                  border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 32px; margin-bottom: 5px;">
-		                  로그인
-		                </button>
-		                <div style="font-size: 13px; font-weight: bold; color: white;">
-		                  <a href="javascript:void(0);" onclick="fnmbrReg();" style="color: white; text-decoration: none;">회원가입</a> |
-		                  <a href="javascript:void(0);" onclick="fnPasswdmanager();" style="color: white; text-decoration: none;">ID/PW찾기</a>
-		                </div>
-		              </div>
-		            </div>
-		
-		            <img src="/images/winct/loginBg.svg" alt="Login Background" class="loginBg">
-		          </form>
-		
-		          <!-- 로그인 성공 시 사용자 카드 -->
-		          <div id="userInfoCard" style="display: none; overflow: auto; max-height: 220px;" class="mt-2">
-		            <div class="user_card">
-		              <div class="user_card-body">
-		                <h1 class="user_card-title">환영합니다</h1>
-		                <h3 class="user_card-text" id="user_name"></h3>
-		                <button class="btn btn-primary" onclick="logout()">로그아웃</button>
-		              </div>
-		            </div>
-		          </div>
-		        </div>
-		      </div>
-		
-		      <!-- 이미지 배너 영역 -->
+		<div class="login-banner-wrapper"
+			style="transform: translateX(220px); transition: all 0.3s ease;">
+			<div class="row">
 
-		      <div class="image-layout" style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 40px; margin-top: -10px;">
-		        <!-- 왼쪽 이미지 -->
-		        <div style="flex: 1;">
-		          <img class="img-fluid left-img" src="/images/winct/e_clip.svg" alt="e_clip" style="width: 500px;  display: block; margin-bottom: 2px;">
-		          <div style="text-align: left; margin-top: -80px; clear: both;">
-		            <span style="font-size: 14px; font-weight: bold; margin-left: 8px;">체계적인 컨설팅 분석평가 프로그램</span>
-		          </div>
-		          <div style="text-align: left;">
-		            <span style="font-size: 14px; font-weight: bold; margin-left: 8px;">데이터 기반으로 맞춤 솔루션</span>
-		          </div>
-					<a href="https://blog.naver.com/newzealandky/223718188178" 
-					   target="_blank" 
-					   rel="noopener noreferrer" 
-					   class="program-button" 
-					   style="margin-left: 40px; height: 26px; margin-top: 20px; display: inline-flex; align-items: center; text-decoration: none;">
-					  <span style="margin-left: 10px;">프로그램 바로가기</span>
-					  <span class="arrow" style="margin-left:-10px;">→</span>
-					</a>
-		        </div>
-		        
-				<!-- 오른쪽 이미지 묶음 -->
-				<div class="right-img-group" style="flex: 1; display: flex; flex-direction: column; 
-				                             align-items: flex-start; margin-left: -50px; margin-top: 20px;">
-				  <!-- 컨설팅 소개 영역 -->
-				<div class="program-block">
-				  <div class="program-text">
-				    <div class="program-title">컨설팅 소개</div>
-				    <div class="program-desc">의료특화 전문교육</div>
-				    <div class="program-desc">의료기관 전문컨설팅</div>
-					<a href="/path/to/consulting-intro.pdf" download
-					   class="program-button"
-					   style="display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; margin-left:-1px;
-					    text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
-					    <span style="margin-left: -5px;">컨설팅소개서 다운로드</span>
-					    <span class="arrow" style="margin-left: -2px;">→</span>
-					</a>
-				  </div>
+				<!-- 로그인 영역 -->
+				<div class="col-lg-6"
+					style="flex: 0 0 46%; max-width: 46%; margin-left: -60px;">
+					<div class="contact-form box-p-10 mb-3"
+						style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
+						<form name="loginForm" id="loginForm">
+							<div
+								style="display: flex; align-items: flex-start; justify-content: center;">
+								<!-- 입력 필드 영역 -->
+								<div style="flex-grow: 0; width: 280px;">
+									<hr
+										style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
+									<h6 class="section-title position-relative mb-2">
+										<span class="pr-4" style="color: white;">로그인 <small
+											style="font-size: 0.75em; color: white;">LOGIN</small></span>
+									</h6>
+									<div class="control-group mb-2">
+										<input type="text" class="form-control" id="hospid"
+											placeholder="Hospital Number" style="width: 150%;" />
+									</div>
+									<div class="control-group mb-2">
+										<input type="text" class="form-control" id="userid"
+											placeholder="User ID" style="width: 150%;" />
+									</div>
+									<div class="control-group mb-2">
+										<input type="password" class="form-control" id="passwd"
+											placeholder="PassWord" style="width: 150%;" />
+									</div>
+									<div class="form-check mb-2"
+										style="white-space: nowrap; color: white;">
+										<input class="form-check-input" type="checkbox" id="saveyn">
+										<span class="form-check-label font-weight-bold" for="saveyn"
+											style="font-size: 13px;">아이디저장</span>
+									</div>
+								</div>
+
+								<!-- 로그인 버튼 + 링크 -->
+								<div style="margin-left: 180px; text-align: center;">
+									<button type="button" id="blogin" onclick="login()"
+										style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 32px; margin-bottom: 5px;">
+										로그인</button>
+									<div style="font-size: 13px; font-weight: bold; color: white;">
+										<a href="javascript:void(0);" onclick="fnmbrReg();"
+											style="color: white; text-decoration: none;">회원가입</a> | <a
+											href="javascript:void(0);" onclick="fnPasswdmanager();"
+											style="color: white; text-decoration: none;">ID/PW찾기</a>
+									</div>
+								</div>
+							</div>
+
+							<img src="/images/winct/loginBg.svg" alt="Login Background"
+								class="loginBg">
+						</form>
+
+						<!-- 로그인 성공 시 사용자 카드 -->
+						<div id="userInfoCard"
+							style="display: none; overflow: auto; max-height: 220px;"
+							class="mt-2">
+							<div class="user_card">
+								<div class="user_card-body">
+									<h1 class="user_card-title">환영합니다</h1>
+									<h3 class="user_card-text" id="user_name"></h3>
+									<button class="btn btn-primary" onclick="logout()">로그아웃</button>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
-				
-				<div class="program-block">
-				  <a href="https://winner797.net/" target="_blank" rel="noopener noreferrer">
-				  </a>
-				  
-				  <div class="program-text">
-				    <div class="program-title">온라인교육센터</div>
-				    <div class="program-desc">효과적인 학습을 위한 교육</div>
-				    <div class="program-desc">실전 가능한 팁과 전략 제공</div>
-				
-				    <!-- 버튼을 a 태그로 대체 -->
-					<a href="https://winner797.net/"
-					   target="_blank"
-					   rel="noopener noreferrer"
-					   class="program-button"
-					   style="display: inline-flex; align-items: center; gap: 5px;
-					          margin-top: 5px; text-decoration: none; padding: 10px 20px;
-					          vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
-					  <span>홈페이지 바로가기</span>
-					  <span class="arrow">&rarr;</span>
-					</a>
-				  </div>
+
+				<!-- 이미지 배너 영역 -->
+				<div class="image-layout"
+					style="display: flex; justify-content: space-between; 
+					       align-items: flex-start; margin: -5px -50px 14px 40px; /* 상단, 우측, 하단 , 좌측 */ 
+					       border: 2px solid red; border-radius: 10px; 
+					       padding: -15px 80px 80px 50px; /* 위, 오른쪽, 아래, 왼쪽 */ 
+					       box-sizing: border-box; background-color: #fff; margin-left: 30px;">
+					<div class="image-layout"
+						style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 50px; margin-top: -5px;">
+						<!-- 왼쪽 이미지 -->
+						<div style="flex-basis: 70%; max-width: 60%; padding-right: 20px;">
+							<img class="img-fluid left-img" src="/images/winct/e_clip.svg"
+								alt="e_clip"
+								style="width: 500px; display: block; margin-bottom: 2px;">
+							<div style="text-align: left; margin-top: -70px; clear: both;">
+								<span style="font-size: 14px; font-weight: bold; margin-left: 8px;">체계적인
+									컨설팅 분석평가 프로그램</span>
+							</div>
+							<div style="text-align: left;">
+								<span style="font-size: 14px; font-weight: bold; margin-left: 8px;">데이터
+									기반으로 맞춤 솔루션</span>
+							</div>
+							<a href="https://blog.naver.com/newzealandky/223718188178"
+								target="_blank" rel="noopener noreferrer" class="program-button"
+								style="margin-left: 40px; height: 26px; margin-top: 15px; display: inline-flex; align-items: center; text-decoration: none;">
+								<span style="margin-left: 10px;">프로그램 바로가기</span> <span
+								class="arrow" style="margin-left: -10px;">→</span>
+							</a>
+						</div>
+
+						<!-- 오른쪽 이미지 묶음 -->
+						<div class="right-img-group"
+							style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 5px; ">
+							<!-- 컨설팅 소개 영역 -->
+							<div class="program-block" style="margin-left: 30px;">
+								<div class="program-text">
+									<div class="program-title">컨설팅 소개</div>
+									<div class="program-desc">의료특화 전문교육</div>
+									<div class="program-desc">의료기관 전문컨설팅</div>
+									<a href="/path/to/consulting-intro.pdf" download
+										class="program-button"
+										style="display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; margin-left: -1px; 
+										       text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
+										<span style="margin-left: -5px;">컨설팅소개서 다운로드</span> <span
+										class="arrow" style="margin-left: -2px;">→</span>
+									</a>
+								</div>
+							</div>
+
+							<div class="program-block" style="margin-left: 30px;">
+								<a href="https://winner797.net/" target="_blank"
+									rel="noopener noreferrer"> </a>
+
+								<div class="program-text" style="margin-top: -6px;">
+									<div class="program-title">온라인교육센터</div>
+									<div class="program-desc">효과적인 학습을 위한 교육</div>
+									<div class="program-desc">실전 가능한 팁과 전략 제공</div>
+
+									<!-- 버튼을 a 태그로 대체 -->
+									<a href="https://winner797.net/" target="_blank"
+										rel="noopener noreferrer" class="program-button"
+										style="display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; 
+										       text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
+										<span>홈페이지 바로가기</span> <span class="arrow">&rarr;</span>
+									</a>
+								</div>
+							</div>
+
+						</div>
+
+					</div>
 				</div>
-				
-			  </div>
-		        
-		      </div>
-		    </div>
-		  </div>
-		
-		  <!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
+			</div>
+		</div>
+		<!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
 		  <div class="social-box">
 		    <ul>
 				<li>
