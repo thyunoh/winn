@@ -66,42 +66,51 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		</a>
 		</div>
 		<div class="col-lg-9">
-			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0"
-				style="height: 60px; align-items: center;">
+			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style= "margin-left:20px;">
-						<a href="http://www.winnernet.co.kr/" 
-						   class="nav-link dropdown-toggle text-dark consulting-menu" 
-						   style="font-size: 17px; font-weight: bold;" 
-						   target="_blank" 
-						   rel="noopener noreferrer">
+					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left:20px;">
+		
+						<!-- 위너넷 링크 -->
+						<a href="http://www.winnernet.co.kr/"
+						   class="nav-link text-dark consulting-menu"
+						   style="font-size: 17px; font-weight: bold;"
+						   target="_blank" rel="noopener noreferrer">
 						   <strong>위너넷</strong>
 						</a>
-						<div class="nav-item dropdown-toggle text-dark">
-						    <a href="#" class="nav-link dropdown-toggle text-dark consulting-menu"  style="font-size: 17px; font-weight: bold;" 
-						                                              data-bs-toggle="dropdown"><strong>컨설팅 소개 </strong></a>
-						    <div class="dropdown-menu dropdown-menu-end bg-light rounded-0 border-0 m-0">
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
-						       <a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
-						    </div>
+		
+						<!-- 컨설팅 소개 드롭다운 -->
+						<div class="nav-link text-dark position-relative">
+							<a href="#" class="nav-link text-dark  consulting-menu"
+							   style="font-size: 17px; font-weight: bold;"
+							   data-bs-toggle="dropdown">
+							   <strong>컨설팅 소개</strong>
+							</a>
+							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
+								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+							</div>
 						</div>
-						<a href="https://winner797.net/" 
-						   class="nav-link dropdown-toggle text-dark consulting-menu"
-						   style="font-size: 16px; margin-top: -1px;" 
+		
+						<!-- 온라인 교육센터 링크 -->
+						<a href="https://winner797.net/"
+						   class="nav-link text-dark consulting-menu"
+						   style="font-size: 16px; margin-top: -1px;"
 						   target="_blank" rel="noopener noreferrer">
 						   <strong>온라인교육센터</strong>
 						</a>
-
+		
 						<div id="dynamicMenu_J"></div>
 						<div id="dynamicMenu_T"></div>
 					</div>
+		
 					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
 				</div>
 			</nav>
 		</div>
+
 	</div>
 </div>
 <!-- Navbar End -->
@@ -109,56 +118,59 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <script>
    //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
 	function hosp_conact() {
-		let s_conact_gb = getCookie("s_conact_gb");
-		let s_wnn_yn    = getCookie("s_wnn_yn") ;
-		let menuArea    = document.getElementById("dynamicMenu_J");
-		let menuHTML    = '';
+	    let s_conact_gb = getCookie("s_conact_gb");
+	    let s_wnn_yn    = getCookie("s_wnn_yn");
 	
-		if (s_conact_gb === 'A' || s_wnn_yn == 'Y'  ) {
-			menuHTML += `
-				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
-				   <strong>적정성평가 프로그램</strong>
-				</a>
-			`;
-		} else if (s_conact_gb === '1') {
-			menuHTML += `
-				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
-				   <strong>경영분석 프로그램</strong>
-				</a>
-			`;
-		} else if (s_conact_gb === '2') {
-			menuHTML += `
-				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
-			    <strong>적정성평가 프로그램</strong>
-			    </a>
-			`;
-		}
+	    // 💡 먼저 기존 메뉴 초기화 (중복 방지)
+	    let menuArea = document.getElementById("dynamicMenu_J");
+	    let menuArea_T = document.getElementById("dynamicMenu_T");
 	
-		menuArea.insertAdjacentHTML("beforeend", menuHTML);
-
-		let menuArea_T = document.getElementById("dynamicMenu_T");
-		let menuHTML_T = '';
+	    if (menuArea) menuArea.innerHTML = '';    // 기존 내용 제거
+	    if (menuArea_T) menuArea_T.innerHTML = ''; // 기존 내용 제거
 	
-		if (s_conact_gb === 'A' || s_wnn_yn == 'Y'  ) {
-			menuHTML_T += `
-				<a href="#" class="nav-link dropdown-toggle text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
-				   <strong>경영분석 프로그램</strong>
-				</a>
-			`;
-		}
+	    let menuHTML = '';
+	    let menuHTML_T = '';
 	
-		menuArea_T.insertAdjacentHTML("beforeend", menuHTML_T);		
+	    if (s_conact_gb === 'A' || s_wnn_yn === 'Y') {
+	        menuHTML += `
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	                <strong>적정성평가 프로그램</strong>
+	            </a>
+	        `;
+	        menuHTML_T += `
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	                <strong>경영분석 프로그램</strong>
+	            </a>
+	        `;
+	    } else if (s_conact_gb === '1') {
+	        menuHTML += `
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	                <strong>경영분석 프로그램</strong>
+	            </a>
+	        `;
+	    } else if (s_conact_gb === '2') {
+	        menuHTML += `
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	                <strong>적정성평가 프로그램</strong>
+	            </a>
+	        `;
+	    }
+	
+	    // 삽입
+	    if (menuArea) menuArea.insertAdjacentHTML("beforeend", menuHTML);
+	    if (menuArea_T) menuArea_T.insertAdjacentHTML("beforeend", menuHTML_T);
 	}
-	
 	</script>
-
 
 	<script> 
        function setActive(element) {
-	        document.querySelectorAll('.nav-item').forEach(item => {
-	            item.classList.remove('active');
-	        });
-	        element.classList.add('active');
+    	    // 드롭다운 항목에서 active 클래스 제거
+    	    document.querySelectorAll('.dropdown-item').forEach(item => {
+    	        item.classList.remove('active');
+    	    });
+
+    	    // 클릭한 항목에 active 클래스 추가
+    	    element.classList.add('active');
        } 
 	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
 	    window.onload = function() {
@@ -182,6 +194,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	<script> 	<!-- 타jsp화면을 주메뉴에 가져와서 화면에 뿌리주는 기능  -->
 	function loadPage(pageUrl) {
 		console.log("✅ 페이지 로드 완료: " + pageUrl);
+
+	    // 기존 컨테이너 숨기기
+	    $(".container-fluid").hide();  // 기존 요소 숨기기
+	    $(".login-banner-wrapper").hide();  // 기존 요소 숨기기
+	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
+	    
 	    fetch(pageUrl)
 	        .then(response => response.text())
 	        .then(data => {
@@ -251,12 +269,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            });
 	        })
 	        .catch(error => console.error('❌ 페이지 로딩 오류:', error));
-
-	    // 기존 컨테이너 숨기기
-	    $(".container-fluid").hide();  // 기존 요소 숨기기
-	    $(".login-banner-wrapper").hide();  // 기존 요소 숨기기
-	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
-	}
+   }
 
 	document.addEventListener("DOMContentLoaded", function() {
 	    let contentArea = document.getElementById("contentArea");
@@ -474,7 +487,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								<span style="font-size: 14px; font-weight: bold; margin-left: 8px;">데이터
 									기반으로 맞춤 솔루션</span>
 							</div>
-							<a href="https://blog.naver.com/newzealandky/223718188178"
+							<a  onclick = "winCheckOpen()"
 								target="_blank" rel="noopener noreferrer" class="program-button"
 								style="margin-left: 40px; height: 26px; margin-top: 15px; display: inline-flex; align-items: center; text-decoration: none;">
 								<span style="margin-left: 10px;">프로그램 바로가기</span> <span
@@ -542,9 +555,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				  </a>
 				</li>
 				<li>
-				  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
-				    <img src="/images/winct/insta.svg" alt="인스타그램" class="snsImg">
-				    <span>인스타그램</span>
+				  <a href="https://open.kakao.com/o/gBvFxyYg" target="_blank" rel="noopener noreferrer">
+				    <img src="/images/winct/insta.svg" alt="카카오톡" class="snsImg">
+				    <span>카카오톡</span>
 				  </a>
 				</li>
 		    </ul>
@@ -656,43 +669,43 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			<div class="col-lg-4">
               <div class="helpdesk">
-				<div class="helpdeskHeader" style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px; margin-top: 20px;">
-				  <hr style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 1cm;">
-				  <h3 style="font-size: 22px; margin-bottom: 10px;">
-				    고객센터 <span style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
-				  </h3>
-					<p style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">02-2653-7971</p>
-					<p style="font-size: 14px; color: #666; margin-top: 0px;">
-					  <strong>월-금</strong> 09:00 ~ 18:00<span   style="margin: 0 5px;">|</span>
-					  <strong>점심시간</strong> 12:00 ~ 13:00<span style="margin: 0 5px;">|</span>
-					  <strong>주말/공휴일 휴무</strong>
-					</p>
-				</div>
-				<div class="bg-light box-p-10" style="width: 640px; height: 60px; margin-top: 20px; position: relative; left: 20px;">
-				    <div class="row text-center">
+				<div class="bg-light box-p-10" style="width: 640px; height: 60px; margin-top: 0px; position: relative; left: 20px;">
+				    <div class="row text-center" style="margin-top: -7px;">
 				        <div class="col-4 d-flex justify-content-center align-items-center">
 				            <a href="https://open.kakao.com/o/gBvFxyYg" 
 				               class="d-flex align-items-center text-dark" 
 				               style="text-decoration: none;" 
 				               target="_blank" 
 				               rel="noopener noreferrer">
-				                <img class="img-fluid" src="/images/winct/kakao.svg" alt="카카오상담" style="height: 30px; margin-right: 8px; margin-top: 12px;">
+				                <img class="img-fluid" src="/images/winct/kakao.svg" alt="카카오상담" style="height: 30px; margin-right: 8px; margin-top: 7px;">
 				                <span style="font-size: 0.9rem; font-weight: bold;">카카오상담</span>
 				            </a>
 				        </div>
 				        <div class="col-3 d-flex justify-content-center align-items-center">
 				            <a href="#" onclick="fnasq_main();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
-				                <img class="img-fluid" src="/images/winct/headset.svg" alt="1대1상담" style="height: 30px; margin-right: 8px; margin-top: 12px;">
+				                <img class="img-fluid" src="/images/winct/headset.svg" alt="1대1상담" style="height: 30px; margin-right: 8px; margin-top: 7px;">
 				                <span style="font-size: 0.9rem; font-weight: bold;">1대1상담</span>
 				            </a>
 				        </div>
 				        <div class="col-4 d-flex justify-content-center align-items-center">
 				            <a href="#" onclick="loadFaqData();" class="d-flex align-items-center text-dark" style="text-decoration: none;">
-				                <img class="img-fluid" src="/images/winct/faq.svg" alt="자주듣는질문" style="height: 30px; margin-right: 8px; margin-top: 12px;">
+				                <img class="img-fluid" src="/images/winct/faq.svg" alt="자주듣는질문" style="height: 30px; margin-right: 8px; margin-top: 7px;">
 				                <span style="font-size: 0.9rem; font-weight: bold;">자주하는질문</span>
 				            </a>
 				        </div>
 				    </div>
+					<div class="helpdeskHeader" style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px; margin-top: 50px;">
+					  <hr style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 1cm;">
+					  <h3 style="font-size: 22px; margin-bottom: 10px;">
+					    고객센터 <span style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
+					  </h3>
+						<p style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">02-6953-2452</p>
+						<p style="font-size: 14px; color: #666; margin-top: 0px;">
+						  <strong>월-금</strong> 09:00 ~ 18:00<span   style="margin: 0 5px;">|</span>
+						  <strong>점심시간</strong> 12:00 ~ 13:00<span style="margin: 0 5px;">|</span>
+						  <strong>주말/공휴일 휴무</strong>
+						</p>
+					</div>
 				</div>
 
 			  </div>
@@ -1164,7 +1177,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				<div class="set-btn-box w-100 mt-3 text-right">
 					<button type="button" class="btn btn-outline-dark" 	onclick="fnPasswdmanagerClose();">취소</button>
 					<button type="button" class="btn btn-primary"  	    onclick="fnpwsearch();">아이디찾기</button>
-					<button type="button" class="btn btn-primary" 	    onclick="fnPasswdreset();">초기화/변경</button>
+					<button type="button" class="btn btn-primary" 	    onclick="fnPasswdreset();">비밀번호 초기화/변경</button>
 					<!--  원래는 팝업 fnPwdClear()  -->
 				</div>
 			</div>
@@ -2540,7 +2553,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         window.onresize = syncCardSize;
     	
         function winCheckOpen() {
-            
+        	if (sessionStorage.getItem('s_hospnm') == ""  || sessionStorage.getItem('s_hospnm') == null  ) {
+        		messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
+        	    return;
+        	}
         	if (win_Check && !win_Check.closed) {
                 // 기존 창이 열려 있으면 닫기
                 win_Check.close();
@@ -2561,6 +2577,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_updauth", sessionStorage.getItem('s_updauth'), 1); //수정권한  
         	setCookie("s_delauth", sessionStorage.getItem('s_delauth'), 1); //삭제권한  
         	setCookie("s_inqauth", sessionStorage.getItem('s_inqauth'), 1); //조회권한  
+    		
       	
         	hosp_conact() ;
         	

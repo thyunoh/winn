@@ -438,3 +438,8 @@
 .carousel-indicators .active {
   background-color: #90ee90; /* 활성 인디케이터: 연한 녹색 */
 }
+/*서브메뉴선택시
+.dropdown-item.active {
+    background-color: #007bff;
+    color: white;
+}
