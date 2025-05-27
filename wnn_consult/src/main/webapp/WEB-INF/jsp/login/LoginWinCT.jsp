@@ -355,10 +355,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<!-- Carousel Start -->
 		<div class="container-fluid mb-2" style="position: relative;">
 		  <div class="row px-xl-8">
-		    <div class="col-lg-12 mx-auto"> 
-		      <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" 
-		                                       style="position: absolute; top: 50%; left: 40px; right: 10px; z-index: -1;">
-
+		    <div class="col-lg-12 mx-auto"> <!-- 수정시 이미지 좌측공백 유의-->
+              <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" 
+                                               style="position: absolute; top: 50%; left: 0; right: 10px; z-index: -1;">
 		        <ol class="carousel-indicators">
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
 		          <li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
@@ -522,11 +521,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					</div>
 				</div>
 
-				<!-- 이미지 배너 영역 -->
+				<!-- 이미지 배너 영역  #ccc -->
 				<div class="image-layout"
 					style="display: flex; justify-content: space-between; 
 					       align-items: flex-start; margin: -5px -50px 14px 40px; /* 상단, 우측, 하단 , 좌측 */ 
-					       border: 2px solid red; border-radius: 10px; 
+					       border: 1px solid #999; border-radius: 12px;  <!-- border: 2px solid red;  border-radius: 10px; 원래 -->
 					       padding: -18px 80px 70px 50px; /* 위, 오른쪽, 아래, 왼쪽 */ 
 					       box-sizing: border-box; background-color: #fff; margin-left: 30px;">
 					<div class="image-layout"
@@ -726,7 +725,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			<div class="col-lg-4">
               <div class="helpdesk">
-				<div class="bg-light box-p-10" style="width: 640px; height: 60px; margin-top: 0px; position: relative; left: 20px;">
+				<div class="bg-light box-p-10" style="width: 640px; height: 60px; margin-top: 0px; margin-left: -5px; position: relative; left: 20px;">
 				    <div class="row text-center" style="margin-top: -7px;">
 				        <div class="col-4 d-flex justify-content-center align-items-center">
 				            <a href="https://open.kakao.com/o/gBvFxyYg" 
