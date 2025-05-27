@@ -155,7 +155,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            </a>
 	        `;
 	    }
-	
 	    // 삽입
 	    if (menuArea) menuArea.insertAdjacentHTML("beforeend", menuHTML);
 	    if (menuArea_T) menuArea_T.insertAdjacentHTML("beforeend", menuHTML_T);
