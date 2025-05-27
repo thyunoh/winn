@@ -68,7 +68,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="col-lg-9">
 			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px; align-items: center;">
 				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left:20px;">
+					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left:-50px;">
 		
 						<!-- 위너넷 링크 -->
 						<a href="http://www.winnernet.co.kr/"
@@ -397,6 +397,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    
 		  </div>
 		</div>
+		
 		<!-- Carousel End -->
 
 		
@@ -478,7 +479,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									
 									    <!-- 마지막 접속시간 고정 영역 -->
 									    <div style="position: absolute; right: 0; font-size: 16px; margin-right: -20px;">
-									        <strong>마지막접속시간:</strong> 2025.05.27
+									        <strong>마지막접속일자:</strong> 2025.05.27
 									    </div>
 									</div>
 
