@@ -74,7 +74,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<a href="http://www.winnernet.co.kr/"
 						   class="nav-link text-dark consulting-menu"
 						   style="font-size: 17px; font-weight: bold;"
-						   target="_blank" rel="noopener noreferrer">
+						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
 						   <strong>위너넷</strong>
 						</a>
 		
@@ -82,7 +82,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<div class="nav-link text-dark position-relative">
 							<a href="#" class="nav-link text-dark  consulting-menu"
 							   style="font-size: 17px; font-weight: bold;"
-							   data-bs-toggle="dropdown">
+							   data-bs-toggle="dropdown" onclick="setMainActive(this)">
 							   <strong>컨설팅 소개</strong>
 							</a>
 							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
@@ -98,12 +98,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<a href="https://winner797.net/"
 						   class="nav-link text-dark consulting-menu"
 						   style="font-size: 16px; margin-top: -1px;"
-						   target="_blank" rel="noopener noreferrer">
+						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
 						   <strong>온라인교육센터</strong>
 						</a>
 		
-						<div id="dynamicMenu_J"></div>
-						<div id="dynamicMenu_T"></div>
+						<div id="dynamicMenu_J" onclick="setMainActive(this)"></div>
+						<div id="dynamicMenu_T" onclick="setMainActive(this)"></div>
 					</div>
 		
 					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
@@ -171,6 +171,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     	    // 클릭한 항목에 active 클래스 추가
     	    element.classList.add('active');
        } 
+       function setMainActive(element) {
+    	    // 기존 모든 주메뉴에서 active 클래스 제거
+    	    document.querySelectorAll('.consulting-menu').forEach(item => {
+    	        item.classList.remove('active');
+    	    });
+
+    	    // 현재 클릭한 주메뉴에 active 클래스 추가
+    	    element.classList.add('active');
+    	}       
 	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
 	    window.onload = function() {
 	        sessionStorage.setItem("previousPage", window.location.href);

@@ -438,8 +438,52 @@
 .carousel-indicators .active {
   background-color: #90ee90; /* 활성 인디케이터: 연한 녹색 */
 }
-/*서브메뉴선택시
+/*서브메뉴선택시 */
 .dropdown-item.active {
     background-color: #007bff;
     color: white;
+}
+
+.consulting-menu {
+    transition: all 0.2s ease;
+    display: inline-block;
+    position: relative;
+}
+
+/* hover 또는 active 상태에서 위로 이동 */
+.consulting-menu:hover,
+.consulting-menu.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-radius: 5px;
+    padding: 10px 20px;
+    margin: 0 5px;
+    text-decoration: none;
+    transform: translateY(-3px);  /* 살짝 위로 이동 */
+}
+
+/* strong 텍스트 색상 */
+.consulting-menu:hover strong,
+.consulting-menu.active strong {
+    color: white !important;
+}
+
+/* 하단에 삼각형 표시 */
+.consulting-menu::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent transparent;
+    transition: all 0.2s ease;
+}
+
+/* hover 또는 active 시 삼각형 위쪽 방향으로 흰색 표시 */
+.consulting-menu:hover::after,
+.consulting-menu.active::after {
+    border-top-color: white;
+    transform: translateX(-50%) translateY(-10px); /* 삼각형도 같이 위로 이동 */
 }

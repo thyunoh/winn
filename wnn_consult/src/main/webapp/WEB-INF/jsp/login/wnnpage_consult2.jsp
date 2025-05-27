@@ -28,7 +28,7 @@
 <!-- 서브 탭메뉴 영역 -->
 <ul class="stab-menu nav nav-tabs">
     <li class="stab-item">
-        <a class="stab-link nav-link" id="tab1" data-bs-toggle="tab" href="#sub-tab1" onclick="changeTab(event, 'sub-tab1')">재구성 컨설팅</a>
+        <a class="stab-link active" id="tab1" data-bs-toggle="tab" href="#sub-tab1" onclick="changeTab(event, 'sub-tab1')">재구성 컨설팅</a>
     </li>
 </ul>
 <div class="tab-content">
