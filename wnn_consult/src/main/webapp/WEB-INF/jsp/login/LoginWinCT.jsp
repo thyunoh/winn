@@ -391,8 +391,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		                 style="object-fit: contain;">
 		          </div>
 		        </div>
+		        
 		      </div>
 		    </div>
+		    
 		  </div>
 		</div>
 		<!-- Carousel End -->
@@ -460,16 +462,62 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 						<!-- 로그인 성공 시 사용자 카드 -->
 						<div id="userInfoCard"
-							style="display: none; overflow: auto; max-height: 220px;"
-							class="mt-2">
-							<div class="user_card">
-								<div class="user_card-body">
-									<h1 class="user_card-title">환영합니다</h1>
-									<h3 class="user_card-text" id="user_name"></h3>
-									<button class="btn btn-primary" onclick="logout()">로그아웃</button>
-								</div>
-							</div>
+						     style="display: none; overflow: auto; max-height: 220px;"
+						     class="mt-2">
+						    <div class="user_card">
+						        <div class="user_card-body" style="position: relative;">
+									<div style="position: relative; display: flex; align-items: center; font-size: 20px; margin-top: -20px; margin-left: -80px;">
+									    
+									    <!-- 병원 이름 + 환영 메시지 그룹 -->
+									    <div style="display: flex; align-items: center;">
+									        <h3 id="hosp_name" class="user_card-text"
+									            style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 25px; margin-left: 50px; padding-bottom: 10px;">
+									        </h3>
+									        <span style="margin-left: 10px;">님 환영합니다.</span>
+									    </div>
+									
+									    <!-- 마지막 접속시간 고정 영역 -->
+									    <div style="position: absolute; right: 0; font-size: 16px; margin-right: -20px;">
+									        <strong>마지막접속시간:</strong> 2025.05.27
+									    </div>
+									</div>
+
+									<div class="title"  style="margin-top: -5px; margin-left: -30px;" >*최근 3개월 자료 등록현황</div>
+									<div style="display: flex; justify-content: space-between; align-items: flex-start;">
+									    
+									    <!-- 좌측 input-grid -->
+									    <div class="input-grid" style="margin-top: -10px; margin-left: -30px;">
+									        <div class="cell-label"></div>
+									        <div class="cell-label">1월</div>
+									        <div class="cell-label">2월</div>
+									        <div class="cell-label">3월</div>
+									
+									        <div class="cell-label">경영분석</div>
+									        <input type="text" id="admin_one"    name="admin_one">
+									        <input type="text" id="admin_two"    name="admin_two">
+									        <input type="text" id="admin_three"  name="admin_three">
+									
+									        <div class="cell-label">적정성평가</div>
+									        <input type="text" id="cost_one"   name="cost_one">
+									        <input type="text" id="cost_two"   name="cost_two">
+									        <input type="text" id="cost_three" name="cost_three">
+									    </div>
+									
+									    <!-- 우측 로그아웃 버튼 -->
+									    <div style="margin-right: 10px;">
+									        <button class="btn btn-primary"
+									                onclick="logout()"
+									                style="width: 150px; height: 70px; font-size: 16px; margin-left: 75px;">
+									            로그아웃
+									        </button>
+									    </div>
+									</div>
+									
+						        </div>
+						    </div>
+						    
 						</div>
+						
 					</div>
 				</div>
 
@@ -2506,7 +2554,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         		const form_Element = document.getElementById('loginForm');
                 const userInfoCard = document.getElementById('userInfoCard');
                 
-        	    document.getElementById('user_name').textContent = sessionStorage.getItem('s_usernm') + `님 반갑습니다 !!`;
+        	    document.getElementById('hosp_name').textContent = sessionStorage.getItem('s_hospnm');
                 
                 if (form_Element) {
                     userInfoCard.style.height = `${form_Element.offsetHeight}px`;
