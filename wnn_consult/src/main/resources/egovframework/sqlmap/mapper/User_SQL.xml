@@ -9,6 +9,9 @@
 	    MAX(C.USER_ID)   AS USER_ID,
 	    MAX(C.USER_NM)   AS USER_NM,
 	    MAX(C.WINNER_YN) AS WINNER_YN,
+	    MAX(C.LAST_CONDTTM) AS LAST_CONDTTM,
+	    MAX(C.LAST_CONUSER) AS LAST_CONUSER,
+	    MAX(C.WINNER_YN) AS WINNER_YN,
 	    MAX(C.PASS_WD)   AS PASS_WD,
 	    MAX(C.START_DT)  AS START_DT,
 	    MAX(C.END_DT)    AS END_DT,
@@ -27,6 +30,8 @@
 	        A.USER_ID,
 	        A.USER_NM,
 	        B.WINNER_YN,
+	        B.LAST_CONDTTM,
+	        B.LAST_CONUSER,
 	        A.PASS_WD,
 	        A.START_DT,
 	        A.END_DT,
@@ -77,6 +82,8 @@
 	        '0' AS USER_ID,
 	        '0' AS USER_NM,
 	        '0' AS WINNER_YN,
+	        '0' AS LAST_CONDTTM,
+	        '0' AS LAST_CONUSER,
 	        '0' AS PASS_WD,
 	        '0' AS START_DT,
 	        '0' AS END_DT,
@@ -773,5 +780,33 @@
           AND USER_ID   = #{email} 
           AND ACTION_YN = 'Y'
 	  ]]>  
-	</select>        
+	</select>
+ 	<select id = "getReportList"  parameterType="UserDTO"  resultType="UserDTO"><![CDATA[   
+		SELECT 
+		  COALESCE(MAX(CASE WHEN (MG_YEAR * 100 + MGMONTH) = DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH), '%Y%m') + 0 THEN '등록' END), '-') AS MONTH_3,
+		  COALESCE(MAX(CASE WHEN (MG_YEAR * 100 + MGMONTH) = DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 2 MONTH), '%Y%m') + 0 THEN '등록' END), '-') AS MONTH_2,
+		  COALESCE(MAX(CASE WHEN (MG_YEAR * 100 + MGMONTH) = DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH), '%Y%m') + 0 THEN '등록' END), '-') AS MONTH_1
+		FROM TBL_MAGAM_INFO
+		WHERE HOSP_CD = #{hospCd}
+		
+		UNION ALL
+		
+		SELECT 
+		  COALESCE(MAX(CASE WHEN JOBYYMM = DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH), '%Y%m') + 0 THEN '등록' END), '-') AS MONTH_3,
+		  COALESCE(MAX(CASE WHEN JOBYYMM = DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 2 MONTH), '%Y%m') + 0 THEN '등록' END), '-') AS MONTH_2,
+		  COALESCE(MAX(CASE WHEN JOBYYMM = DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH), '%Y%m') + 0 THEN '등록' END), '-') AS MONTH_1
+		FROM TBL_PAT_INDI
+		WHERE HOSP_CD = #{hospCd}
+	  ]]>  
+	</select>
+
+	<!-- 최종접속정보 업데이트-->  
+	<update   id="Last_updateHOSP" parameterType="UserDTO"><![CDATA[      
+	    UPDATE TBL_HOSP_MST 
+	       SET LAST_CONDTTM = NOW(), 
+        	   LAST_CONUSER = #{lastConuser} 
+          WHERE ACTION_YN = 'Y' 
+            AND HOSP_CD = #{hospCd}
+    ]]>        
+    </update>    
 </mapper>

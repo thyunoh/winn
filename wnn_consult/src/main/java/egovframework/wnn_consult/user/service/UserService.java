@@ -16,11 +16,14 @@ public interface UserService {
 	boolean userPwdChange(UserDTO dto) throws Exception;
 
 	UserDTO   UsernmInfo(UserDTO dto)         throws Exception;
-	UserDTO   UserPasswdInfo(UserDTO dto)    throws Exception;
-	boolean   UserPasswdChange(UserDTO dto)  throws Exception;	
-	boolean   insertUser(UserDTO dto)        throws Exception;
-	boolean   updateUser(UserDTO dto)        throws Exception;	
-	boolean   deleteUser(UserDTO dto)        throws Exception;	
+	UserDTO   UserPasswdInfo(UserDTO dto)     throws Exception;
+	boolean   UserPasswdChange(UserDTO dto)   throws Exception;	
+	boolean   insertUser(UserDTO dto)         throws Exception;
+	boolean   updateUser(UserDTO dto)         throws Exception;	
+	boolean   deleteUser(UserDTO dto)         throws Exception;
+	boolean   Last_updateHOSP(UserDTO dto)    throws Exception;
+	List<UserDTO>   getReportList(UserDTO dto)      throws Exception;
+	
 	boolean   insertmbrUser (MberDTO dto)    throws Exception;
 	String    UserDupChk (MberDTO dto)       throws Exception;	
 	
@@ -39,5 +42,4 @@ public interface UserService {
 	MberDTO   selectMbrInfo(MberDTO dto)     throws Exception; 
 	boolean   updateMember(MberDTO dto)      throws Exception;
 	List<?>   getMbrList(MberDTO dto)        throws Exception;	
-
 }

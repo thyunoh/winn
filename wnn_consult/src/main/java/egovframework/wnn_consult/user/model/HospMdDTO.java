@@ -59,7 +59,7 @@ public class HospMdDTO {
     private String acceptDt2;
     private String closeDt2;
 
-	public String getWnnchk() {
+    public String getWnnchk() {
 		return wnnchk;
 	}
 	public void setWnnchk(String wnnchk) {

@@ -1,5 +1,8 @@
 package egovframework.wnn_consult.user.web;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,7 @@ import egovframework.wnn_consult.user.model.HospMdDTO;
 import egovframework.wnn_consult.user.service.UserService;
 import egovframework.wnn_consult.base.model.CodeMdDTO;
 import egovframework.wnn_consult.base.service.BaseService;
+import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.util.EgovFileScrty;
 
 import org.springframework.ui.ModelMap;
@@ -145,8 +149,14 @@ public class UserController {
 					response.put("login_updAuth"  , result.getUpdAuth()) ; //수정권한 
 					response.put("login_delAuth"  , result.getDelAuth()) ; //삭제권한 
 					response.put("login_inqAuth"  , result.getInqAuth()) ; //조회권한 
+					LocalDateTime now = LocalDateTime.now();
+					String formattedNow = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+					
+					response.put("login_Last_Condttm" , formattedNow) ; //최종접속일자  
+					response.put("login_Last_Conuser" , result.getLastConuser()) ; //최종접속자  
 					response.put("error_code", "00000");
 					response.put("error_mess", "정상적 처리 되었습니다.");
+					
 					System.out.print("정상처리");
 					
 				} 
@@ -161,6 +171,7 @@ public class UserController {
 	    
 	    return response;
 	}
+
 	@RequestMapping(value= "/popup/login_pwdmgr.do")
 	public String login_pwdsearch(@ModelAttribute("DTO") UserDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 
@@ -387,5 +398,22 @@ public class UserController {
         response.put("message", ex.getMessage());
 		}
         return response;
-	}			
+	}
+	/*경여분석/적정성평가등록여부 */	
+	@RequestMapping(value= "/user/getReportList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<UserDTO> getfileCdList(@ModelAttribute("DTO") UserDTO dto) {
+	    List<UserDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.getReportList(dto);
+	        System.out.println("file 데이터 개수: " + resultLst);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	        for (UserDTO dtoItem : resultLst) {
+	            System.out.println("DTO 내용: " + dtoItem);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}	
 }

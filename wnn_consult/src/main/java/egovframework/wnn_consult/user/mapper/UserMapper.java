@@ -24,6 +24,10 @@ public interface UserMapper {
 	boolean   updateUser(UserDTO dto)        throws Exception;	
 	boolean   deleteUser(UserDTO dto)        throws Exception;	
 	boolean   insertmbrUser (MberDTO dto)    throws Exception;	
+	boolean   Last_updateHOSP(UserDTO dto)   throws Exception;
+
+	List<UserDTO>   getReportList(UserDTO dto)     throws Exception;
+	
 	String    UserDupChk (MberDTO dto)       throws Exception;	
 
 	List<?>   selHospList(HospMdDTO dto)    throws Exception; 
@@ -41,5 +45,4 @@ public interface UserMapper {
 	MberDTO   selectMbrInfo(MberDTO dto)     throws Exception; 
 	boolean   updateMember(MberDTO dto)      throws Exception;
 	List<?>   getMbrList(MberDTO dto)        throws Exception;	
-
 }

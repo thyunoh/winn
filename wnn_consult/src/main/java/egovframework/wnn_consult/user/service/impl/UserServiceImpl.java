@@ -2,15 +2,11 @@ package egovframework.wnn_consult.user.service.impl;
 
 import java.util.List;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import egovframework.wnn_consult.base.model.CodeMdDTO;
-import egovframework.wnn_consult.base.service.BaseService;
 import egovframework.wnn_consult.user.mapper.UserMapper;
 import egovframework.wnn_consult.user.model.HospMdDTO;
 import egovframework.wnn_consult.user.model.MberDTO;
@@ -180,6 +176,17 @@ public class UserServiceImpl implements UserService {
 	public String UserDupChk(MberDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.UserDupChk(dto);
+	}
+	//최종접속정보 업데이트 
+	@Override
+	public boolean Last_updateHOSP(UserDTO dto) throws Exception {
+        return mapper.Last_updateHOSP(dto);
+	}
+
+	@Override
+	public List<UserDTO> getReportList(UserDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.getReportList(dto);
 	}
 
 }

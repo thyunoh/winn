@@ -42,7 +42,11 @@ public class UserDTO{
     private String useYn;           // 사용 여부
     private String hospUuid;        
     private String hospUuid1;       
-    private String winnerYn;        
+    
+    private String winnerYn;  
+    private String lastCondttm ; 
+    private String lastConuser ; 
+    
     private String email;           
     private String userTel;          // 사용자 전화번호
 	private String hospNm ;
@@ -53,9 +57,41 @@ public class UserDTO{
     private String updAuth ;
     private String delAuth ;
     private String inqAuth ;
-
+    private String month3;
+    private String month2;
+    private String month1;
  
-    public String getInsAuth() {
+    public String getMonth3() {
+		return month3;
+	}
+	public void setMonth3(String month3) {
+		this.month3 = month3;
+	}
+	public String getMonth2() {
+		return month2;
+	}
+	public void setMonth2(String month2) {
+		this.month2 = month2;
+	}
+	public String getMonth1() {
+		return month1;
+	}
+	public void setMonth1(String month1) {
+		this.month1 = month1;
+	}
+	public String getLastCondttm() {
+		return lastCondttm;
+	}
+	public void setLastCondttm(String lastCondttm) {
+		this.lastCondttm = lastCondttm;
+	}
+	public String getLastConuser() {
+		return lastConuser;
+	}
+	public void setLastConuser(String lastConuser) {
+		this.lastConuser = lastConuser;
+	}
+	public String getInsAuth() {
 		return insAuth;
 	}
 	public void setInsAuth(String insAuth) {

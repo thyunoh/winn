@@ -52,7 +52,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <!-- DataTables JS 추가 -->
 </head>
 <style>
-</style>
+</style>	
 
 <body>
 <!-- Navbar Start -->
@@ -419,8 +419,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									<hr
 										style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
 									<h6 class="section-title position-relative mb-2">
-										<span class="pr-4" style="color: white;">로그인 <small
-											style="font-size: 0.75em; color: white;">LOGIN</small></span>
+									  <span class="pr-6" style="color: white; font-size: 1.2em;">
+									    로그인 <small style="font-size: 0.80em; color: white;">LOGIN</small>
+									  </span>
 									</h6>
 									<div class="control-group mb-2">
 										<input type="text" class="form-control" id="hospid"
@@ -445,7 +446,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								<!-- 로그인 버튼 + 링크 -->
 								<div style="margin-left: 180px; text-align: center;">
 									<button type="button" id="blogin" onclick="login()"
-										style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 32px; margin-bottom: 5px;">
+										style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; 
+										       border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 36px; margin-bottom: 5px;">
 										로그인</button>
 									<div style="font-size: 13px; font-weight: bold; color: white;">
 										<a href="javascript:void(0);" onclick="fnmbrReg();"
@@ -471,37 +473,37 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									    <!-- 병원 이름 + 환영 메시지 그룹 -->
 									    <div style="display: flex; align-items: center;">
 									        <h3 id="hosp_name" class="user_card-text"
-									            style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 25px; margin-left: 50px; padding-bottom: 10px;">
+									            style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 20px; margin-left: 50px; padding-bottom: 10px;">
 									        </h3>
 									        <span style="margin-left: 10px;">님 환영합니다.</span>
 									    </div>
 									
 									    <!-- 마지막 접속시간 고정 영역 -->
-									    <div style="position: absolute; right: 0; font-size: 16px; margin-right: -20px;">
-									        <strong>마지막접속일자:</strong> 2025.05.27
+									    <div style="position: absolute; right: 0; font-size: 16px; margin-right: -15px;">
+									        <strong>마지막접속일자:</strong> <span style= "font-size: 14px;" id="last_dttm"></span>
 									    </div>
 									</div>
 
 									<div class="title"  style="margin-top: -5px; margin-left: -30px;" >*최근 3개월 자료 등록현황</div>
 									<div style="display: flex; justify-content: space-between; align-items: flex-start;">
-									    
-									    <!-- 좌측 input-grid -->
-									    <div class="input-grid" style="margin-top: -10px; margin-left: -30px;">
-									        <div class="cell-label"></div>
-									        <div class="cell-label">1월</div>
-									        <div class="cell-label">2월</div>
-									        <div class="cell-label">3월</div>
-									
-									        <div class="cell-label">경영분석</div>
-									        <input type="text" id="admin_one"    name="admin_one">
-									        <input type="text" id="admin_two"    name="admin_two">
-									        <input type="text" id="admin_three"  name="admin_three">
-									
-									        <div class="cell-label">적정성평가</div>
-									        <input type="text" id="cost_one"   name="cost_one">
-									        <input type="text" id="cost_two"   name="cost_two">
-									        <input type="text" id="cost_three" name="cost_three">
-									    </div>
+							    
+																			    <!-- 좌측 input-grid -->
+										<div class="input-grid" style="margin-top: -10px; margin-left: -30px;">
+										    <div class="cell-label">현싯점(-1개월)</div>
+										    <div><input type="text" id="month3" value="3월" /></div>
+										    <div><input type="text" id="month2" value="2월" /></div>
+										    <div><input type="text" id="month1" value="1월" /></div>
+										
+										    <div class="cell-label">경영분석</div>
+										    <div id="admin_three" style ="font-size: 12px; font-weight: bold;">-</div>
+										    <div id="admin_two"   style ="font-size: 12px; font-weight: bold;">-</div>
+										    <div id="admin_one"   style ="font-size: 12px; font-weight: bold;">-</div>
+										
+										    <div class="cell-label">적정성평가</div>
+										    <div id="cost_three"  style ="font-size: 12px; font-weight: bold;">-</div>
+										    <div id="cost_two"    style ="font-size: 12px; font-weight: bold;">-</div>
+										    <div id="cost_one"    style ="font-size: 12px; font-weight: bold;">-</div>
+										</div>
 									
 									    <!-- 우측 로그아웃 버튼 -->
 									    <div style="margin-right: 10px;">
@@ -2500,6 +2502,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        				sessionStorage.setItem('s_updauth', data.login_updAuth); //수정권한 
 	        				sessionStorage.setItem('s_delauth', data.login_delAuth); //삭제권한 
 	        				sessionStorage.setItem('s_inqauth', data.login_inqAuth); //조회권한 
+	        				sessionStorage.setItem('s_last_dttm', data.login_Last_Condttm); 	        //// 최종접속일자  
+	        				sessionStorage.setItem('s_last_user', data.login_Last_Conuser); 	        //// 최종접속자  
 	        				showUserInfo(); 
         				
 	        	            winCheckOpen();
@@ -2548,14 +2552,16 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	});
         }
         function showUserInfo(login_user_name) {
-
         	if (sessionStorage.getItem('s_hospid') !== null && sessionStorage.getItem('s_hospid') !== '') {
         		
         		const form_Element = document.getElementById('loginForm');
                 const userInfoCard = document.getElementById('userInfoCard');
                 
-        	    document.getElementById('hosp_name').textContent = sessionStorage.getItem('s_hospnm');
-                
+        	    document.getElementById('hosp_name').textContent = sessionStorage.getItem('s_hospnm'); //접속병원  
+                var lastDttm = sessionStorage.getItem('s_last_dttm');
+                if (lastDttm) {
+                   document.getElementById('last_dttm').textContent = lastDttm ; //접속시간 
+                } 
                 if (form_Element) {
                     userInfoCard.style.height = `${form_Element.offsetHeight}px`;
                     userInfoCard.style.Width  = `${form_Element.offsetWidth}px`;
@@ -2563,6 +2569,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
                 
                 form_Element.style.display = 'none';
                 userInfoCard.style.display = 'block';
+                GetReportList() ;
             }
     	}
 
@@ -2582,6 +2589,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_hospuuid", "", 0);
         	setCookie("s_connip", "", 0);
         	setCookie("s_wnn_yn", "", 0);  //tbl_hosp_mst 워너넷여부 
+        	setCookie("s_last_dttm", "", 0);  //tbl_hosp_mst 최종접속일자 
+        	setCookie("s_last_user", "", 0);  //tbl_hosp_mst 최종접속자  
         	setCookie("s_hosp_uuid", "", 0);  // 
         	//tbl_hospcont테이블 (진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N' 
         	setCookie("s_conact_gb", "", 0); 
@@ -2626,6 +2635,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_use_yn", sessionStorage.getItem('s_use_yn'), 1);
         	setCookie("s_connip", sessionStorage.getItem('s_connip'), 1);
         	setCookie("s_wnn_yn", sessionStorage.getItem('s_wnn_yn'), 1);
+        	setCookie("s_last_dttm", sessionStorage.getItem('s_last_dttm'), 1);
+        	setCookie("s_last_user", sessionStorage.getItem('s_last_user'), 1);
         	setCookie("s_hosp_uuid", sessionStorage.getItem('s_hospid'), 1);
         	//tbl_hospcont테이블 (진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N') 
         	setCookie("s_conact_gb", sessionStorage.getItem('s_conact_gb'), 1); //계약구분  
@@ -2731,23 +2742,38 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    btn.style.display = "none";
 		  }
 		};
+		//이전3개월 처리내용
+		function GetReportList() {	    
+		    $.ajax({
+		        type: "post",
+		        url: "user/getReportList.do",
+		        data: { hospCd: sessionStorage.getItem('s_hospid') },
+		        dataType: "json",
+		        success: function (data) {
+		        	console.log("서버 응답 데이터:", data);
+		            const admin = data[0] || {};
+		            const cost  = data[1] || {};
+		            document.getElementById('admin_three').textContent = admin.month3 ||'-';
+		            document.getElementById('admin_two').textContent   = admin.month2 ||'-';
+		            document.getElementById('admin_one').textContent   = admin.month1 ||'-';
 
-		// 버튼 클릭 시 상단 이동
-		document.getElementById("btnTop").onclick = function (e) {
-		  e.preventDefault();
-		  window.scrollTo({ top: 0, behavior: 'smooth' });
-		};
-		/*
-        function saveynchange() {
-            if (document.loginForm.saveyn.checked === true) { 
-                document.loginForm.autoyn.disabled  = false;
-            } else {
-                document.loginForm.autoyn.checked   = false;
-                document.loginForm.autoyn.disabled  = true;
-            }
-        }
-        */
-      
+		            document.getElementById('cost_three').textContent  = cost.month3  ||'-';
+		            document.getElementById('cost_two').textContent    = cost.month2  ||'-';
+		            document.getElementById('cost_one').textContent    = cost.month1  ||'-';
+		        },
+		        error: function (xhr, status, error) {
+		            // 요청 실패 시에도 안전하게 '-' 처리
+		            document.getElementById('admin_three').textContent = '-';
+		            document.getElementById('admin_two').textContent   = '-';
+		            document.getElementById('admin_one').textContent   = '-';
+		            document.getElementById('cost_three').textContent  = '-';
+		            document.getElementById('cost_two').textContent    = '-';
+		            document.getElementById('cost_one').textContent    = '-';
+		            console.error("데이터 요청 실패:", error);
+		        }
+		    });	    
+		}
+
     </script>
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
