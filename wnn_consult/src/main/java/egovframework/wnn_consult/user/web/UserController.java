@@ -14,9 +14,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,7 +27,6 @@ import egovframework.wnn_consult.user.model.HospMdDTO;
 import egovframework.wnn_consult.user.service.UserService;
 import egovframework.wnn_consult.base.model.CodeMdDTO;
 import egovframework.wnn_consult.base.service.BaseService;
-import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.util.EgovFileScrty;
 
 import org.springframework.ui.ModelMap;
