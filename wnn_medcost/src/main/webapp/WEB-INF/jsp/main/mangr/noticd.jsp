@@ -135,15 +135,15 @@
 					<!-- ============================================================== -->
 					<!-- text input 1개 start -->
 					<!-- ============================================================== -->
-					<input  type="hidden" id="notiSeq" name="notiSeq" value="">
-					<input  type="hidden" id="hospCd" name="hospCd" value=""> <input
+					<input  type="hidden" id="notiSeq"   name="notiSeq"   value="">
+					<input  type="hidden" id="hospCd"    name="hospCd"    value=""> <input
 							type="hidden" id="subCodeNm" name="subCodeNm" value=""> <input
-							type="hidden" id="regUser" name="regUser" value=""> <input
-							type="hidden" id="updDttm" name="updDttm" value=""> <input
-							type="hidden" id="updUser" name="updUser" value=""> <input
-							type="hidden" id="regIp" name="regIp" value=""> <input
-							type="hidden" id="updIp" name="updIp " value=""><input
-							type="hidden" id="fileYn" name="fileYn " value="">
+							type="hidden" id="regUser"   name="regUser"   value=""> <input
+							type="hidden" id="updDttm"   name="updDttm"   value=""> <input
+							type="hidden" id="updUser"   name="updUser"   value=""> <input
+							type="hidden" id="regIp"     name="regIp"     value=""> <input
+							type="hidden" id="updIp"     name="updIp "    value=""><input
+							type="hidden" id="fileYn"    name="fileYn "   value="">
 					<div class="form-row">
 						<label for="fileGb"
 							class="col-2 col-lg-2 col-form-label text-left">공지구분</label>

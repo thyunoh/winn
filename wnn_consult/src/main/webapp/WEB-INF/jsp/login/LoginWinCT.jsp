@@ -614,7 +614,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				</li>
 				<li>
 				  <a href="https://open.kakao.com/o/gBvFxyYg" target="_blank" rel="noopener noreferrer">
-				    <img src="/images/winct/insta.svg" alt="카카오톡" class="snsImg">
+				    <img src="/images/winct/kakao.png" alt="카카오톡" class="snsImg">
 				    <span>카카오톡</span>
 				  </a>
 				</li>
