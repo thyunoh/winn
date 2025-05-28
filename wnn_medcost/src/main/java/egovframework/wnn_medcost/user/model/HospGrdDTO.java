@@ -54,8 +54,17 @@ public class HospGrdDTO {
     private String nurSCnt;
     private String phamDays;
     private String totalDay;
+    private String goldScore ;
     
-    public String getHospgrade() {
+    public String getGoldScore() {
+		return goldScore;
+	}
+
+	public void setGoldScore(String goldScore) {
+		this.goldScore = goldScore;
+	}
+
+	public String getHospgrade() {
 		return hospgrade;
 	}
 

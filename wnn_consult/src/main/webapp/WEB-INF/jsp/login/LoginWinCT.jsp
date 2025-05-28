@@ -471,12 +471,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									<div style="position: relative; display: flex; align-items: center; font-size: 20px; margin-top: -20px; margin-left: -80px;">
 									    
 									    <!-- 병원 이름 + 환영 메시지 그룹 -->
-									    <div style="display: flex; align-items: center;">
-									        <h3 id="hosp_name" class="user_card-text"
-									            style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 20px; margin-left: 50px; padding-bottom: 10px;">
-									        </h3>
-									        <span style="margin-left: 10px;">님 환영합니다.</span>
-									    </div>
+										<div style="display: flex; align-items: center;">
+										    <h3 id="hosp_name" class="user_card-text"
+										        style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 16px; margin-left: 50px; padding-bottom: 2px;">
+										    </h3>
+										    <span style="margin-left: 10px;">님 환영합니다.</span>
+										</div>
 									
 									    <!-- 마지막 접속시간 고정 영역 -->
 									    <div style="position: absolute; right: 0; font-size: 16px; margin-right: -15px;">

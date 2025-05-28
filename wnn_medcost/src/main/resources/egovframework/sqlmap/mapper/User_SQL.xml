@@ -1360,6 +1360,7 @@
             NUR_S_CNT,
             PHAM_DAYS ,
             TOTAL_DAY ,
+            GLOD_SCORE ,
             REG_DTTM,
             REG_USER,
             REG_IP,
@@ -1390,6 +1391,7 @@
 		    NUR_S_CNT,
 		    PHAM_DAYS,
 		    TOTAL_DAY,
+		    GLOD_SCORE ,
 		    JOB_SEQ,
 		    ACTION_YN
 		) 
@@ -1410,12 +1412,13 @@
 		    #{nurSCnt},
 		    #{phamDays},
 		    #{totalDay},
+		    #{glodScore},
 		    (
-		        SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
-		        FROM TBL_GRADE_MST A
-		        WHERE A.HOSP_CD = #{hospCd} 
-		          AND A.START_YY = #{startYy} 
-		          AND A.QTER_FLAG = #{qterFlag}
+		     SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+		       FROM TBL_GRADE_MST A
+		       WHERE A.HOSP_CD = #{hospCd} 
+		         AND A.START_YY = #{startYy} 
+		         AND A.QTER_FLAG = #{qterFlag}
 		    ),
 		    'Y'
 		);
