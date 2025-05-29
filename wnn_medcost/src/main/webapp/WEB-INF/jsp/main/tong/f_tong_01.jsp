@@ -14,7 +14,7 @@
   <title>주요 진료지표</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link href="/css/winmc/style_tong.css?v=123" rel="stylesheet">  
+  <link href="/css/winmc/style_comm.css?v=123" rel="stylesheet">  
   <style>
   </style>
 </head>
