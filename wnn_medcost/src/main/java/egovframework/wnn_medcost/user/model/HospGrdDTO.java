@@ -55,8 +55,17 @@ public class HospGrdDTO {
     private String phamDays;
     private String totalDay;
     private String goldScore ;
+    private String goldName ;
     
-    public String getGoldScore() {
+    public String getGoldName() {
+		return goldName;
+	}
+
+	public void setGoldName(String goldName) {
+		this.goldName = goldName;
+	}
+
+	public String getGoldScore() {
 		return goldScore;
 	}
 

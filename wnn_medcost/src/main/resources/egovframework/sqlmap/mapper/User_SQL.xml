@@ -1361,6 +1361,7 @@
             PHAM_DAYS ,
             TOTAL_DAY ,
             GLOD_SCORE ,
+            GLOD_NAME ,
             REG_DTTM,
             REG_USER,
             REG_IP,
@@ -1392,6 +1393,7 @@
 		    PHAM_DAYS,
 		    TOTAL_DAY,
 		    GLOD_SCORE ,
+		    GLOD_NAME  ,
 		    JOB_SEQ,
 		    ACTION_YN
 		) 
@@ -1413,6 +1415,7 @@
 		    #{phamDays},
 		    #{totalDay},
 		    #{glodScore},
+		    #{glodName},
 		    (
 		     SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
 		       FROM TBL_GRADE_MST A

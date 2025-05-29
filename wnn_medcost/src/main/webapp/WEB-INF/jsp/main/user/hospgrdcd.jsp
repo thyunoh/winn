@@ -9,7 +9,7 @@
 <%@ page import ="java.util.Date" %>
 <link href="/css/winmc/bootstrap.css"     rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"   rel="stylesheet">
-<link href="/css/winmc/addstyle.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
 <style>
 </style>
@@ -188,11 +188,20 @@
 							<div class="form-group row ">
                                 <label for=totalDay class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">전체 일수</label>
 							    <div class="col-2 col-lg-2">
-								<input id="totalDay" name="totalDay" type="text" value = "0" required
+								   <input id="totalDay" name="totalDay" type="text" value = "0" required
 									class="form-control text-left" placeholder="">
 							    </div>
+                                <label for=glodScore class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">해당년도목표점수</label>
+							    <div class="col-2 col-lg-2">
+								     <input id="glodScore" name="glodScore" type="number" class="form-control text-left" placeholder="">
+							    </div>
     						</div>
- 
+							<div class="form-group row ">
+                                <label for=glodName class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">해당년도목표명칭</label>
+							    <div class="col-6 col-lg-6">
+								     <input id="glodName" name="glodName" type="text" class="form-control text-left" placeholder="">
+							    </div>
+    						</div> 
 							<!-- ============================================================== -->
 							<!-- end form 수정해야 될 곳 -->
 							<!-- ============================================================== -->
@@ -299,17 +308,19 @@
 						    { name: '해당년도',              className: 'dt-body-center' },
 						    { name: '분기',                 className: 'dt-body-center' },
 						    { name: '병원 등급',             className: 'dt-body-center' },
-						    { name: '평균 환자수',            className: 'dt-body-center' },
-						    { name: '평균 의사수',            className: 'dt-body-center' },
-						    { name: '평균 간호사수',           className: 'dt-body-center' },
+						    { name: '평균 환자수',           className: 'dt-body-center' },
+						    { name: '평균 의사수',           className: 'dt-body-center' },
+						    { name: '평균 간호사수',          className: 'dt-body-center' },
 						    { name: '평균 간호인력수',         className: 'dt-body-center' },
-						    { name: '약사 재직일수',           className: 'dt-body-center' },
-						    { name: '전체 일수',             className: 'dt-body-center' }
+						    { name: '약사 재직일수',          className: 'dt-body-center' },
+						    { name: '전체 일수',             className: 'dt-body-center' },
+						    { name: '해당년도목표명칭',        className: 'dt-body-center' },
+						    { name: '해당년도목표점수',         className: 'dt-body-center' }
 						 ] ;  
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'hospCd',      visible: true,  className: 'dt-body-center', width: '50px',   name: 'keyhospCd'     , primaryKey: true },
+	        				{ data: 'hospCd',      visible: true,  className: 'dt-body-center', width: '50px',   name: 'keyhospCd'    , primaryKey: true },
 	        				{ data: 'startYy',     visible: true,  className: 'dt-body-center', width: '50px',   name: 'keystartYy'   , primaryKey: true },
 	        				{ data: 'qterFlag',    visible: true,  className: 'dt-body-center', width: '30px',   name: 'keyqterFlag'  , primaryKey: true },
             				{ data: 'hospgrade',   visible: true,  className: 'dt-body-center', width: '30px',  },
@@ -318,7 +329,9 @@
             				{ data: 'nurCount',    visible: true,  className: 'dt-body-center', width: '30px',  },
             				{ data: 'nurSCnt',     visible: true,  className: 'dt-body-center', width: '30px',  },
 	        				{ data: 'phamDays',    visible: true,  className: 'dt-body-center', width: '30px',  },
-	        				{ data: 'totalDay',    visible: true,  className: 'dt-body-center', width: '30px',  }
+	        				{ data: 'totalDay',    visible: true,  className: 'dt-body-center', width: '30px',  },
+	        				{ data: 'goldName',    visible: true,  className: 'dt-body-center', width: '100px', },
+	        				{ data: 'goldScore',   visible: true,  className: 'dt-body-center', width: '30px',  }
 	        				];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
