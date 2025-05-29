@@ -356,40 +356,6 @@
 .audit { background-color: #B2EBF2; } /* 심사방 배경 색 (가장 연한 파랑) */
 .newsletter { background-color: #FFECB3; } /* 소식지 배경 색 (가장 연한 오렌지) */
 
-.consulting-menu {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  padding-bottom: 0; /* 아래 공간 없앰 */
-}
-
-/* 글자 살짝 올라감 */
-.consulting-menu:hover,
-.consulting-menu.active {
-  transform: translateY(-4px);
-}
-
-/* 역삼각형 모양 - 글자 바로 아래 */
-.consulting-menu::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  margin-top: 2px;
-  transform: translateX(-50%) translateY(-10px); /* 필요시 px 조정 */
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid #3399FF;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-}
-
-.consulting-menu:hover::after,
-.consulting-menu.active::after {
-  opacity: 1;
-}
 .notice-table, 
 .notice-table th, 
 .notice-table td {
@@ -444,50 +410,6 @@
 .dropdown-item.active {
     background-color: #007bff;
     color: white;
-}
-
-.consulting-menu {
-    transition: all 0.2s ease;
-    display: inline-block;
-    position: relative;
-}
-
-/* hover 또는 active 상태에서 위로 이동 */
-.consulting-menu:hover,
-.consulting-menu.active {
-    background-color: #007bff !important;
-    color: white !important;
-    border-radius: 5px;
-    padding: 10px 20px;
-    margin: 0 5px;
-    text-decoration: none;
-    transform: translateY(-3px);  /* 살짝 위로 이동 */
-}
-
-/* strong 텍스트 색상 */
-.consulting-menu:hover strong,
-.consulting-menu.active strong {
-    color: white !important;
-}
-
-/* 하단에 삼각형 표시 */
-.consulting-menu::after {
-    content: '';
-    position: absolute;
-    bottom: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 6px;
-    border-style: solid;
-    border-color: transparent transparent transparent transparent;
-    transition: all 0.2s ease;
-}
-
-/* hover 또는 active 시 삼각형 위쪽 방향으로 흰색 표시 */
-.consulting-menu:hover::after,
-.consulting-menu.active::after {
-    border-top-color: white;
-    transform: translateX(-50%) translateY(-10px); /* 삼각형도 같이 위로 이동 */
 }
 .input-grid {
     display: grid;
@@ -549,3 +471,70 @@
     text-align: center;
     font-weight: bold;
 }
+
+/* 공통 스타일 */
+.consulting-menu {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  padding: 10px 20px;
+  margin: 0 5px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* hover 시 */
+.consulting-menu:hover {
+  background-color: #0059b3 !important; /* ← 더 연한 파랑으로 변경 */
+  color: white !important;
+  transform: translateY(-6px);
+}
+
+/* active 시 */
+.consulting-menu.active {
+  background-color: #0059b3 !important;
+  color: white !important;
+  transform: translateY(-5px); /* 위로 튀는 강조 효과 */
+  padding-top: 15px;
+  padding-bottom: 25px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 35px;
+  border-bottom-right-radius: 35px;  
+}
+
+/* strong 텍스트 색상 변경 */
+.consulting-menu:hover strong,
+.consulting-menu.active strong {
+  color: white !important;
+}
+
+/* 역삼각형 */
+.consulting-menu::after {
+  content: '';
+  position: absolute;
+  bottom: 5px; /* ← top: 100% 대신 고정 위치 */
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid white;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 삼각형 활성화 */
+.consulting-menu:hover::after,
+.consulting-menu.active::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+

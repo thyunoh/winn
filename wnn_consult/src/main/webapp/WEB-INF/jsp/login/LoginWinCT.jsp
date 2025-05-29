@@ -73,7 +73,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 위너넷 링크 -->
 						<a href="http://www.winnernet.co.kr/"
 						   class="nav-link text-dark consulting-menu"
-						   style="font-size: 17px; font-weight: bold;"
+						   style="font-size: 16px; font-weight: bold; padding: 24px;"
 						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
 						   <strong>위너넷</strong>
 						</a>
@@ -81,23 +81,23 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 컨설팅 소개 드롭다운 -->
 						<div class="nav-link text-dark position-relative">
 							<a href="#" class="nav-link text-dark  consulting-menu"
-							   style="font-size: 17px; font-weight: bold;"
+							   style="font-size: 16px; font-weight: bold; padding: 24px;"
 							   data-bs-toggle="dropdown" onclick="setMainActive(this)">
 							   <strong>컨설팅 소개</strong>
 							</a>
 							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
-								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 17px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
 							</div>
 						</div>
 		
 						<!-- 온라인 교육센터 링크 -->
 						<a href="https://winner797.net/"
 						   class="nav-link text-dark consulting-menu"
-						   style="font-size: 16px; margin-top: -1px;"
+						   style="font-size: 16px; padding: 24px;"
 						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
 						   <strong>온라인교육센터</strong>
 						</a>
@@ -133,24 +133,24 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	
 	    if (s_conact_gb === 'A' || s_wnn_yn === 'Y') {
 	        menuHTML += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; padding: 24px;">
 	                <strong>적정성평가 프로그램</strong>
 	            </a>
 	        `;
 	        menuHTML_T += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
 	                <strong>경영분석 프로그램</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '1') {
 	        menuHTML += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
 	                <strong>경영분석 프로그램</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '2') {
 	        menuHTML += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; margin-top: -1px;">
+	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
 	                <strong>적정성평가 프로그램</strong>
 	            </a>
 	        `;
