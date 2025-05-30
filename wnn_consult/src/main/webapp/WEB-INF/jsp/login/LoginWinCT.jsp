@@ -488,11 +488,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							    
 																			    <!-- 좌측 input-grid -->
 										<div class="input-grid" style="margin-top: -10px; margin-left: -30px;">
-										    <div class="cell-label">현싯점(-1개월)</div>
-										    <div><input type="text" id="month3" value="3월" /></div>
-										    <div><input type="text" id="month2" value="2월" /></div>
-										    <div><input type="text" id="month1" value="1월" /></div>
-										
+										    <div class="cell-label">업무구분</div>
+										    <div id="month3" style ="font-size: 13px; font-weight: bold;"></div>
+										    <div id="month2" style ="font-size: 13px; font-weight: bold;"></div>
+										    <div id="month1" style ="font-size: 13px; font-weight: bold;"></div>
+										    
 										    <div class="cell-label">경영분석</div>
 										    <div id="admin_three" style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_two"   style ="font-size: 12px; font-weight: bold;">-</div>
@@ -2772,10 +2772,35 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		            document.getElementById('cost_one').textContent    = '-';
 		            console.error("데이터 요청 실패:", error);
 		        }
-		    });	    
+		    });	  
+		    setPreviousMonths();
 		}
+		/* 현재달기준 -1개월  */
+	    function setPreviousMonths() {
+	        var today = new Date();
 
+	        // 각각 이전 달부터 3개월 전까지 계산
+	        var prev1 = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+	        var prev2 = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+	        var prev3 = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+
+	        // YYYY-MM 포맷으로 바꾸는 함수
+	        function formatMonth(date) {
+	            var year = date.getFullYear();
+	            var month = date.getMonth() + 1;
+	            if (month < 10) {
+	                month = '0' + month;
+	            }
+	            return year + '-' + month;
+	        }
+
+	        // 각 input 박스에 값 채우기
+	        document.getElementById('month1').textContent = formatMonth(prev1);
+	        document.getElementById('month2').textContent = formatMonth(prev2);
+	        document.getElementById('month3').textContent = formatMonth(prev3);
+	    }
     </script>
+    
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
 </html>
