@@ -488,14 +488,14 @@
   box-sizing: border-box;
 }
 
-/* hover 시 */
+/* hover 선택시 */
 .consulting-menu:hover {
   background-color: #0059b3 !important; /* ← 더 연한 파랑으로 변경 */
   color: white !important;
   transform: translateY(-6px);
 }
 
-/* active 시 */
+/* active 선택후시 */
 .consulting-menu.active {
   background-color: #0059b3 !important;
   color: white !important;
