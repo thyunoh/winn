@@ -513,13 +513,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									            로그아웃
 									        </button>
 									    </div>
+									    
 									</div>
-									
 						        </div>
 						    </div>
-						    
 						</div>
-						
 					</div>
 				</div>
 
