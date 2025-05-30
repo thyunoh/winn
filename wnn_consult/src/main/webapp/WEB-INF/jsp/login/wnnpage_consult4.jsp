@@ -34,7 +34,7 @@
         <a class="stab-link active" id="tab2" data-bs-toggle="tab" href="#sub-tab2" onclick="changeTab(event, 'sub-tab1')">요양병원컨설팅</a>
     </li>
 </ul>
-<div class="tab-content">
+<div class="tab-content" style="padding-bottom: 150px;">
     <div class="tab-pane fade" id="sub-tab1">
         <div class="steb-container">
             <div class="chart-wrap" style="width: 70%;">

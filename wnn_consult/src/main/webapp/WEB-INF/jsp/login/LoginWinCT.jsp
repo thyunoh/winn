@@ -208,7 +208,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    $(".login-banner-wrapper").hide();  // 기존 요소 숨기기
 	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
 	    
-	    fetch(pageUrl)
+        fetch(pageUrl)
 	        .then(response => response.text())
 	        .then(data => {
 	            let contentArea = document.getElementById("contentArea");
@@ -277,7 +277,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            });
 	        })
 	        .catch(error => console.error('❌ 페이지 로딩 오류:', error));
-   }
+	}
 
 	document.addEventListener("DOMContentLoaded", function() {
 	    let contentArea = document.getElementById("contentArea");
@@ -396,8 +396,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    
 		  </div>
 		  
-		<!-- 하단 간격 유지일경우  </div>   --> 
-		
 		<!-- Carousel End -->
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
 		<div class="col-lg-10" style="margin-top: 400px;"> <!-- style="margin-top: 400px; 올려서 오버뱁  -->
@@ -770,7 +768,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	     </div>
 	   </div>
 	
-	</div>     <!-- 하단 간격 유지안할 경우 --> 
+	</div>     <!-- 하단 간격 유지안함  컨설팅소개서 여기까지 덮는다 --> 
 	
 	<!--  공공기관 포털   -->
 	<div class="bmenu">

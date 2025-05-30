@@ -32,7 +32,7 @@
         <a class="stab-link active" id="tab1" data-bs-toggle="tab" href="#sub-tab1" onclick="changeTab(event, 'sub-tab1')">현지조사 컨설팅</a>
     </li>
 </ul>
-<div class="tab-content">
+<div class="tab-content" style="padding-bottom: 150px;">
     <div class="tab-pane fade" id="sub-tab1">
         <div class="steb-container">
             <div class="chart-wrap" style="width: 70%;">
