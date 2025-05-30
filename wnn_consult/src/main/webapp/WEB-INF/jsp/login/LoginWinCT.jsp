@@ -395,11 +395,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    </div>
 		    
 		  </div>
-		</div>
+		  
+		<!-- 하단 간격 유지일경우  </div>   --> 
 		
 		<!-- Carousel End -->
-
-		
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
 		<div class="col-lg-10" style="margin-top: 400px;"> <!-- style="margin-top: 400px; 올려서 오버뱁  -->
 		<div class="login-banner-wrapper"
@@ -489,10 +488,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							    
 																			    <!-- 좌측 input-grid -->
 										<div class="input-grid" style="margin-top: -10px; margin-left: -30px;">
-										    <div class="cell-label">업무구분</div>
-										    <div id="month3" style ="font-size: 13px; font-weight: bold;"> </div>
-										    <div id="month2" style ="font-size: 13px; font-weight: bold;"> </div>
-										    <div id="month1" style ="font-size: 13px; font-weight: bold;"> </div>
+										    <div class="cell-label">현싯점(-1개월)</div>
+										    <div><input type="text" id="month3" value="3월" /></div>
+										    <div><input type="text" id="month2" value="2월" /></div>
+										    <div><input type="text" id="month1" value="1월" /></div>
 										
 										    <div class="cell-label">경영분석</div>
 										    <div id="admin_three" style ="font-size: 12px; font-weight: bold;">-</div>
@@ -513,11 +512,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									            로그아웃
 									        </button>
 									    </div>
-									    
 									</div>
+									
 						        </div>
 						    </div>
+						    
 						</div>
+						
 					</div>
 				</div>
 
@@ -766,8 +767,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			  </div>
 		   </div>
+	     </div>
 	   </div>
-	</div>
+	
+	</div>     <!-- 하단 간격 유지안할 경우 --> 
 	
 	<!--  공공기관 포털   -->
 	<div class="bmenu">
@@ -2769,31 +2772,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		            document.getElementById('cost_one').textContent    = '-';
 		            console.error("데이터 요청 실패:", error);
 		        }
-		    });	
-		    setPreviousMonths(); 
-		}
-		function setPreviousMonths() {
-		    const today = new Date();
-
-		    // month1: 이전달
-		    const prev1 = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-		    // month2: 전전달
-		    const prev2 = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-		    // month3: 전전전달
-		    const prev3 = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-
-		    // YYYY-MM 포맷 문자열 연결 방식
-		    function formatMonth(date) {
-		        var year = date.getFullYear();
-		        var month = date.getMonth() + 1;
-		        if (month < 10) {
-		            month = '0' + month;
-		        }
-		        return year + '-' + month;
-		    }
-		    document.getElementById('month1').textContent = formatMonth(prev1);
-		    document.getElementById('month2').textContent = formatMonth(prev2);
-		    document.getElementById('month3').textContent = formatMonth(prev3);
+		    });	    
 		}
 
     </script>
