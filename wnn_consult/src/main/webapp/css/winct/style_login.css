@@ -655,7 +655,6 @@
   max-height: 95%; /* ⬅ 높이를 조금 더 늘림 */
   overflow: auto;
 }
-
 .popup-box img {
   max-width: 100%;
   height: auto;
