@@ -2797,6 +2797,31 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        document.getElementById('month2').textContent = formatMonth(prev2);
 	        document.getElementById('month3').textContent = formatMonth(prev3);
 	    }
+/* wnnpage_consult3.jsp 로직이 여기에서 실행됨  */
+	    function openMyImagePopup(imgSrc) {
+	      const popupImg = document.getElementById("popupImg");
+	      const overlay  = document.getElementById("overlay");
+	      const popupBox = document.getElementById("popupBox");
+
+	      if (popupImg && overlay && popupBox) {
+	        popupImg.src = imgSrc;
+	        overlay.style.display = "block";
+	        popupBox.style.display = "block";
+	      } else {
+	        console.error("팝업 요소를 찾을 수 없습니다.");
+	      }
+	    }
+	    function closePopup() {
+	      const overlay = document.getElementById("overlay");
+	      const popupBox = document.getElementById("popupBox");
+
+	      if (overlay && popupBox) {
+	        overlay.style.display = "none";
+	        popupBox.style.display = "none";
+	      } else {
+	        console.error("팝업 요소를 찾을 수 없습니다.");
+	      }
+	    }
     </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
