@@ -20,6 +20,7 @@
 <!-- Custom CSS -->
 <link href="/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/css/winct/style.css" rel="stylesheet">
+<link href="/css/winct/style_login.css?v=123" rel="stylesheet">
 <style>
 </style>
 </head>
@@ -37,8 +38,8 @@
 <div class="tab-content" style="padding-bottom: 150px;">
     <div class="tab-pane fade" id="sub-tab1">
         <div class="steb-container">
-            <div class="chart-wrap" style="width: 70%;">
-				    <section class="content-box" style="width: 70%;">
+            <div class="chart-wrap">
+				    <section class="content-box">
                     <img src="/images/winct/consult4_1.jpg" class="img-fluid" alt="WinnerNet Main Image">
                 </section>
             </div>
@@ -47,8 +48,8 @@
 
     <div class="tab-pane fade" id="sub-tab2">
         <div class="steb-container">
-            <div class="chart-wrap" style="width: 70%;">
-				    <section class="content-box" style="width: 70%;">
+            <div class="chart-wrap">
+				    <section class="content-box">
                     <img src="/images/winct/consult4_2.jpg" class="img-fluid" alt="WinnerNet Main Image">
                 </section>
             </div>

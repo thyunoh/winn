@@ -532,5 +532,9 @@
   opacity: 1;
   transform: translateX(-50%) translateY(-2px);
 }
-
-
+/*컨설팅소개서 */
+.chart-wrap,
+.content-box {
+  width: 75% !important;
+  margin: 0 auto;
+}

@@ -19,6 +19,7 @@
 <!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/css/winct/style.css" rel="stylesheet">
+<link href="/css/winct/style_login.css?v=123" rel="stylesheet"> 
 <!-- Template Javascript -->
 <script type="text/javascript" src="/js/winct/main.js"></script>
 <script type="text/javascript" src="/js/winct/message.js"></script>
@@ -47,8 +48,8 @@
 	<div class="tab-content" style="padding-bottom: 150px;">
 	    <div class="tab-pane fade" id="sub-tab1">
 	        <div class="steb-container">
-	            <div class="chart-wrap" style="width: 70%;">
-				    <section class="content-box" style="width: 70%;">
+	            <div class="chart-wrap">
+				    <section class="content-box">
 				        <img src="/images/winct/consult1_1.jpg" class="img-fluid" alt="WinnerNet Main Image">
 				    </section>
 				</div>
@@ -57,8 +58,8 @@
 	
 	    <div class="tab-pane fade" id="sub-tab2">
 	        <div class="steb-container">
-	            <div class="chart-wrap" style="width: 70%;">
-				    <section class="content-box" style="width: 70%;">
+	            <div class="chart-wrap">
+				    <section class="content-box">
 	                    <img src="/images/winct/consult1_2.jpg" class="img-fluid" alt="WinnerNet Main Image">
 	                </section>
 	            </div>
@@ -67,8 +68,8 @@
 	
 	    <div class="tab-pane fade" id="sub-tab3">
 	        <div class="steb-container">
-	            <div class="chart-wrap" style="width: 70%;">
-				    <section class="content-box" style="width: 70%;">
+	            <div class="chart-wrap">
+				    <section class="content-box">
 	                    <img src="/images/winct/consult1_3.jpg" class="img-fluid" alt="WinnerNet Main Image">
 	                </section>
 	            </div>
