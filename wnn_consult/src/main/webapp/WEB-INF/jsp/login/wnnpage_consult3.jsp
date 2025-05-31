@@ -43,7 +43,6 @@
           <!-- 이미지 -->
           <img src="/images/winct/consult3_1.jpg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">
 
-
           <!-- 오버레이 버튼 -->
           <button type="button" class="btn overlay-btn overlay-btn-l" onclick="openMyImagePopup('/images/winct/consult3_1_1.jpg')">자세히보기</button>
           <button type="button" class="btn overlay-btn overlay-btn-c" onclick="openMyImagePopup('/images/winct/consult3_1_2.jpg')">자세히보기</button>
