@@ -1,4 +1,4 @@
-	.social-container {
+		.social-container {
 	  position: relative;            /* 기준점 설정 */
 	  display: flex;
 	  justify-content: space-between;
@@ -652,7 +652,7 @@
   padding: 20px;
   border-radius: 8px;
   max-width: 90%;
-  max-height: 95%; /* ⬅ 높이를 조금 더 늘림 */
+  max-height: 90%; /* ⬅ 높이를 조금 더 늘림 */
   overflow: auto;
 }
 .popup-box img {

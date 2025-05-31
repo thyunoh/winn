@@ -25,7 +25,7 @@
   <title>위너넷 컨설팅</title>
 
 <style>
- </style>
+</style>
 </head>
 <body>
 <!-- 서브 탭메뉴 영역 -->
@@ -58,7 +58,7 @@
   <div class="popup-close" onclick="closePopup()">
   <span class="close-text">닫기</span>
 </div>
-  <img id="popupImg" src="" alt="팝업 이미지" width="600" height="600">
+  <img id="popupImg" src="" alt="팝업 이미지">
 </div>
 <script type="text/javascript">
 </script>
