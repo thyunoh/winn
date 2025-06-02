@@ -75,7 +75,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						   class="nav-link text-dark consulting-menu"
 						   style="font-size: 16px; font-weight: bold; padding: 24px;"
 						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
-						   <strong>위너넷</strong>
+						   <strong>위너넷 소개</strong>
 						</a>
 		
 						<!-- 컨설팅 소개 드롭다운 -->
@@ -134,24 +134,24 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	    if (s_conact_gb === 'A' || s_wnn_yn === 'Y') {
 	        menuHTML += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; padding: 24px;">
-	                <strong>적정성평가 프로그램</strong>
+	                <strong>적정성평가</strong>
 	            </a>
 	        `;
 	        menuHTML_T += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>경영분석 프로그램</strong>
+	                <strong>경영분석</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '1') {
 	        menuHTML += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>경영분석 프로그램</strong>
+	                <strong>경영분석</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '2') {
 	        menuHTML += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>적정성평가 프로그램</strong>
+	                <strong>적정성평가</strong>
 	            </a>
 	        `;
 	    }
@@ -724,7 +724,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 			<div class="col-lg-4">
               <div class="helpdesk">
-				<div class="bg-light box-p-10" style="width: 640px; height: 60px; margin-top: 0px; margin-left: -5px; position: relative; left: 20px;">
+				<div class="bg-light box-p-10" style="width: 640px; height: 60px; margin-top: 0px; margin-left: -12px; position: relative; left: 20px;">
 				    <div class="row text-center" style="margin-top: -7px;">
 				        <div class="col-4 d-flex justify-content-center align-items-center">
 				            <a href="https://open.kakao.com/o/gBvFxyYg" 
@@ -1428,20 +1428,20 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 					<div class="modal-body" style="overflow-y: auto; padding: 20px;">
 						<div class="mb-0">
-							<label for="notiTitle" class="form-label fw-bold"
-								style="font-size: 14px !important; display: block; text-align: left;">제목</label>
-							<input type="text" name="notiTitle" id="notiTitle"
-								class="form-control" placeholder="제목을 입력하세요.">
+							<label for="notiTitle" class="form-label font-weight: bold;"
+								style="font-size: 15px !important; display: block; text-align: left;">제목</label>
+							<textarea  name="notiTitle" id="notiTitle" rows="2"
+								class="form-control" placeholder="제목을 입력하세요."> </textarea>
 						</div>
 
 						<div class="mb-0">
-							<label for="notiTitle" class="form-label fw-bold"
-								style="font-size: 14px !important; display: block; text-align: left;">내용</label>
+							<label for="notiContent" class="form-label font-weight: bold;"
+								style="font-size: 15px !important; display: block; text-align: left;">내용</label>
 							<textarea class="form-control" name="notiContent"
-								id="notiContent" rows="12" placeholder="내용을 입력하세요."
+								id="notiContent" rows="13" placeholder="내용을 입력하세요."
 								style="resize: none; font-size: 14px;"></textarea>
 						</div>
-						<h3 class="mt-3">첨부 문서</h3>
+						<h5 class="mt-3">첨부 문서</h5>
 						<div class="table-container"
 							style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
 							<div style="max-height: 150px; overflow-y: auto;">
