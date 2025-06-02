@@ -559,13 +559,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									<div class="program-title">컨설팅 소개</div>
 									<div class="program-desc">의료특화 전문교육</div>
 									<div class="program-desc">의료기관 전문컨설팅</div>
-									<a href="/path/to/consulting-intro.pdf" download
-										class="program-button"
-										style="display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: -3px; 
-										       text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
-										<span style="margin-left: -5px;">컨설팅소개서 다운로드</span> <span
-										class="arrow" style="margin-left: -2px;">→</span>
-									</a>
+										<a href="/path/to/consulting-intro.pdf" download onclick="downloadFile()"
+											class="program-button"
+											style="display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: -3px; 
+											       text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
+											<span style="margin-left: -5px;">컨설팅소개서 다운로드</span>
+											<span class="arrow" style="margin-left: -2px;">→</span>
+										</a>
 								</div>
 							</div>
 
@@ -594,7 +594,17 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				</div>
 			</div>
 		</div>
-		<!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
+<script>
+    //컨설팅소개서 다운로드
+	function downloadFile() {
+		const filePath = "/home/winner/upload/consulting-intro.jpg"; // 실제 SFTP 경로
+		const encodedPath = encodeURIComponent(filePath);
+		window.location.href = "/sftp/download.do?filePath=" + encodedPath;
+		// 기본 링크 다운로드 방지 (선택사항)
+		event.preventDefault(); // 이 줄을 넣으면 href로 다운로드되지 않고 SFTP만 사용됨
+	}
+</script>
+          <!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
 		  <div class="social-box">
 		    <ul>
 				<li>
