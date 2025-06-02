@@ -56,8 +56,8 @@
 <div class="overlay" id="overlay" onclick="closePopup()"></div>
 <div class="popup-box" id="popupBox">
   <div class="popup-close" onclick="closePopup()">
-  <span class="close-text">닫기</span>
-</div>
+      <span class="close-text">닫기</span>
+  </div>
   <img id="popupImg" src="" alt="팝업 이미지">
 </div>
 <script type="text/javascript">
