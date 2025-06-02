@@ -629,7 +629,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
 		  </div>
 		</div>
-
+      
    
 	<div class="container-fluid_noti mb-2" style="margin-left: 210px;">
 		<div class="row px-xl-8">
