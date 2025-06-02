@@ -52,7 +52,7 @@
     </div>
   </div>
 </div>
-<!-- 팝업 영역 -->
+<!-- 팝업영역 openMyImagePopup이 펑션은 login\LoginWinCT.jsp 실행됨   -->
 <div class="overlay" id="overlay" onclick="closePopup()"></div>
 <div class="popup-box" id="popupBox">
   <div class="popup-close" onclick="closePopup()">
