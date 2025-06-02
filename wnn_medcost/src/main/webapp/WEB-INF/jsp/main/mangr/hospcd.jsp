@@ -343,7 +343,7 @@
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data">
 						<div class="container mt-1">
-							<div class="form-group row">
+							<div class="form-group">
 								<input type="hidden" name="action" value="upload"> <label
 									class="col-2 col-lg-2 col-form-label text-left">파일 업로드</label>
 								<div class="col-10 col-lg-10">
@@ -372,7 +372,7 @@
 					<p>
 						<strong><%=request.getAttribute("message") != null ? request.getAttribute("message") : ""%></strong>
 					</p>
-					<div class="table-file-container" style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
+					<div class="table-file-container" style="width: 100%; margin-top: -20px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
 					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
 					       </table>    

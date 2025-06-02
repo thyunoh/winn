@@ -79,7 +79,7 @@
 	    <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 70%;display: flex;flex-direction: column;">
+	        <div class="modal-content" style="height: 60%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 		            <h6 class="modal-title" id="modalHead"></h6> 
 	              <!-- ============================================================== -->

@@ -698,12 +698,12 @@ label {
    background-color: #ffffff;
    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
  }
- 
+ /* 데이타그리드 폰트사이즈   */
  th, td {
    border: 1px solid #e5e7eb;
    padding: 4px;
    text-align: center;
-   font-size: 14px; 
+   font-size: 13px; 
  }
  th {
    background-color: #f3f4f6;
