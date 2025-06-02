@@ -60,7 +60,6 @@
   </div>
   <img id="popupImg" src="" alt="팝업 이미지">
 </div>
-<script type="text/javascript">
-</script>
+
 </body>
 </html>
