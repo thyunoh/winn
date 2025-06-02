@@ -604,7 +604,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		event.preventDefault(); // 이 줄을 넣으면 href로 다운로드되지 않고 SFTP만 사용됨
 	}
 </script>
-          <!-- 오른쪽 소셜 아이콘 박스 (건드릴 필요 없음) -->
+          <!-- 오른쪽 소셜 아이콘 박스 -->
 		  <div class="social-box">
 		    <ul>
 				<li>
