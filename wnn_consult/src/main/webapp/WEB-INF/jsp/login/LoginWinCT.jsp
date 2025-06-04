@@ -1896,13 +1896,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					method="post" enctype="multipart/form-data">
 					<div class="modal-body text-left flex-fill overflow-auto">
 						<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-						<input type="hidden" name="iudasq" id="iudasq" /> <input
-							type="hidden" name="asqSeq" id="asqSeq" /> <input type="hidden"
-							name="fileGbasq" id="fileGbasq" value="4" /> <input type="hidden"
-							name="hospCdasq" id="hospCdasq" /> <input type="hidden"
-							name="hospUuidasq" id="hospUuidasq" /> <input type="hidden"
-							name="regUserasq" id="regUserasq" /> <input type="hidden"
-							name="updUserasq" id="updUserasq" />
+						<input type="hidden" name="iudasq"      id="iudasq" /> 
+						<input type="hidden" name="asqSeq"      id="asqSeq" /> 
+						<input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" /> 
+						<input type="hidden" name="hospCdasq"   id="hospCdasq" /> 
+						<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
+						<input type="hidden" name="regUserasq"  id="regUserasq" /> 
+						<input type="hidden" name="updUserasq"  id="updUserasq" />
 
 						<div class="form-group ">
 							<label for="qstnTitle"

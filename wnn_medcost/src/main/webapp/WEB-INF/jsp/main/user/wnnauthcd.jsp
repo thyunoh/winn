@@ -76,7 +76,7 @@
 				role="dialog"
 				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35vw; max-width: 45vw; max-height: 50vh;">
 				<div class="modal-content"
-					style="height: 45%; display: flex; flex-direction: column;">
+					style="height: 40%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
 						<h6 class="modal-title" id="modalHead"></h6>
 						<!-- ============================================================== -->

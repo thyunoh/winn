@@ -8,8 +8,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/bootstrap.css"     rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"   rel="stylesheet">
+<link href="/css/winmc/bootstrap.css"         rel="stylesheet">
+<link href="/css/winmc/style.css?v=123"       rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
@@ -87,7 +87,6 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                <div id="inputZone">
 		                    <!-- Hidden Inputs -->
 		                    <input type="hidden" id="qstnStat"  name="qstnStat" value="">
-		                    <input type="hidden" id="ansrStat"  name="ansrStat" value="">
 		                    <input type="hidden" id="hospNm"    name="hospNm"   value="">
 		                    <input type="hidden" id="userNm"    name="userNm"   value="">
 		                    <input type="hidden" id="asqSeq"    name="asqSeq"   value="">
@@ -100,7 +99,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    <div class="form-row">
 		                        <label for="qstnTitle" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
 		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
-		                            <textarea id="qstnTitle" name="qstnTitle" class="form-control" rows="1"></textarea>
+		                            <textarea id="qstnTitle" name="qstnTitle" class="form-control" rows="1" readonly ></textarea>
 		                        </div>
 		                    </div>  
 		
@@ -108,7 +107,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    <div class="form-row">
 		                        <label for="qstnConts" class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
 		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
-		                            <textarea id="qstnConts" name="qstnConts" class="form-control" rows="5"></textarea>
+		                            <textarea id="qstnConts" name="qstnConts" class="form-control" rows="5" readonly></textarea>
 		                        </div>
 		                    </div>  
 		
@@ -116,9 +115,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    <div class="form-row">
 		                        <label for="qstnWan" class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
 		                        <div class="col-2 col-lg-2">
-		                            <select class="custom-select" name="qstnWan" id="qstnWan">
-		                                <option value="Y">Y</option>
-		                                <option value="N" selected>N</option>
+		                            <select name="qstnWan" id="qstnWan" class="custom-select">
+		                                <option value="Y">완료</option>
+		                                <option value="N" selected>진행</option>
 		                            </select>
 		                        </div>
 		                    </div>
@@ -136,8 +135,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        <label for="ansrWan" class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
 		                        <div class="col-2 col-lg-2">
 		                            <select class="custom-select" name="ansrWan" id="ansrWan">
-		                                <option value="Y">Y</option>
-		                                <option value="N" selected>N</option>
+		                                <option value="Y">완료</option>
+		                                <option value="N" selected>진행</option>
 		                            </select>
 		                        </div>
 		                    </div>
@@ -372,7 +371,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 	        } else {
 	            $(qstnWanInput).css("pointer-events", "").css("background-color", ""); // 활성화
 	        }	        
+	        $(qstnWan).css("pointer-events", "none").css("background-color", "#e9ecef");
 		}
+		
 		function modal_Open(flag) {	
 			let modal_OpenFlag = true;
 			const insertButton = document.getElementById('form_btn_ins');

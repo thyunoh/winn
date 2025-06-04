@@ -135,7 +135,7 @@
 			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
 			                                     width: 50vw; max-width: 35vw; height: 40vh; max-height: 60vh;">
 			<div class="modal-content"
-				style="height: 50%; display: flex; flex-direction: column;">
+				style="height: 40%; display: flex; flex-direction: column;">
 				<div class="modal-header bg-light">
 					<h6 class="modal-title" id="modalHead"></h6>
 					<!-- ============================================================== -->
@@ -190,7 +190,7 @@
 						</div>
 						<div class="form-group row">
 							<label for="codeNm"
-								class="col-2 col-lg-2 col-form-label text-left">대표코드명칭</label>
+								class="col-2 col-lg-2 col-form-label d-flex align-items-center h-100 justify-content-center">대표코드명칭</label>
 							<div class="col-10 col-sm-10">
 								<input id="codeNm" name="codeNm" type="text"
 									class="form-control text-left" placeholder="대표코드명칭을 입력하세요">

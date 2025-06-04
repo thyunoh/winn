@@ -261,7 +261,7 @@
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData",  val: "",  chk: true  });
+		findValues.push({ id: "findData",  val: "AA100",  chk: true  });
 		findValues.push({ id: "feeType1",  val: "1", chk: false });
 		//Form마다 조회 조건 변경 종료
 		
@@ -372,9 +372,9 @@
 		var showSortNo = ['feeCode','korNm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = ['feeType','feeTypeNm'];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 30;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['korNm','engNm'];
+		var markColums = ['korNm','engNm','calcNm'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->

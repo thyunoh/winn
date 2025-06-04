@@ -322,7 +322,7 @@
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
-	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '200px',  },
+	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-center', width: '180px',  },
 	        				{ data: 'licNum',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keylicNum', primaryKey: true },
 	        				{ data: 'userNm',    visible: true,  className: 'dt-body-center', width: '100px',  },
 	        				{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt', primaryKey: true ,
@@ -364,7 +364,7 @@
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = [];
+		var markColums = ['hospNm'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->

@@ -51,8 +51,8 @@
                                         </div>
                                     </div>
                                 </div>
-								<div style="width: 100%;">							    
-								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
+								<div style="width: 100%;">						    
+								    <table id="tableName" class="display nowrap">
 								    </table>
 								</div>
                             </div>
@@ -74,7 +74,7 @@
 				role="dialog"
 				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 				<div class="modal-content"
-					style="height: 100%; display: flex; flex-direction: column;">
+					style="height: 95%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
 						<h6 class="modal-title" id="modalHead"></h6>
 						<!-- ============================================================== -->
@@ -409,70 +409,71 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set =  [ { name: '병원정보',      className: 'dt-body-center' },
-						    { name: '면허번호',      className: 'dt-body-center' },
-						    { name: '성명',         className: 'dt-body-center' },
-						    { name: '입사일자',      className: 'dt-body-center' },
-						    { name: '면허종별',      className: 'dt-body-center' },
-						    { name: '의사(간호)구분', className: 'dt-body-center' },
-						    { name: '의사형태(직책)', className: 'dt-body-center' },
-						    { name: '주민번호',      className: 'dt-body-center' },
-						    { name: '근무형태',      className: 'dt-body-center' },
-						    { name: '면허취득일자',   className: 'dt-body-center' },
-						    { name: '병동명',        className: 'dt-body-center' },
-						    { name: '근무단위',        className: 'dt-body-center' },
-						    { name: '근무시작',        className: 'dt-body-center' },
-						    { name: '근무종료',        className: 'dt-body-center' },
-						    { name: '간호등급적용여부',   className: 'dt-body-center' }
-						 ] ;  
+		var c_Head_Set =  [
+				    { name: '병원정보',      className: 'dt-body-center' },
+				    { name: '면허번호',      className: 'dt-body-center' },
+				    { name: '성 명',        className: 'dt-body-center' },
+				    { name: '입사일자',      className: 'dt-body-center' },
+				    { name: '면허종별',      className: 'dt-body-center' },
+				    { name: '의사(간호)구분', className: 'dt-body-center' },
+				    { name: '의사형태(직책)', className: 'dt-body-center' },
+				    { name: '주민번호',      className: 'dt-body-center' },
+				    { name: '근무형태',      className: 'dt-body-center' },
+				    { name: '면허취득일자',   className: 'dt-body-center' },
+				    { name: '병동명',        className: 'dt-body-center'},
+				    { name: '근무단위',       className: 'dt-body-center'},
+				    { name: '근무시작',       className: 'dt-body-center'},
+				    { name: '근무종료',       className: 'dt-body-center'},
+				    { name: '간호등급적용',    className: 'dt-body-center'}
+		]; 
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
-	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
-	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'hospCd',    visible: false, className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
-	        				{ data: 'licNum',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keylicNum', primaryKey: true },
-	        				{ data: 'name',      visible: true,  className: 'dt-body-center', width: '200px',  },
-	        				{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt'  , primaryKey: true ,
-                             	render: function(data, type, row) {
-	            				if (type === 'display') {
-	            					return getFormat(data,'d1')
-	                			}
-	                			return data;
-                             	}
-            				},
-            				{ data: 'licenseGb',       visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'doctorGb',        visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'doctorType',      visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'jumin',           visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'workGb',          visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'licDat',          visible: true,  className: 'dt-body-center', width: '100px', 
-	                          	render: function(data, type, row) {
-		            			if (type === 'display') {
-		            					return getFormat(data,'d1')
-		                			}
-		                			return data;
-	            				}
-	        				},
-	
-	        				{ data: 'wardNm',       visible: true,  className: 'dt-body-center', width: '100px',  },
-	        				{ data: 'wardDanwi',    visible: true,  className: 'dt-body-center', width: '100px',  },
-            				{ data: 'wardStrdt',    visible: true,  className: 'dt-body-center', width: '100px', 
-	                          	render: function(data, type, row) {
-		            			if (type === 'display') {
-		            					return getFormat(data,'d1')
-		                			}
-		                			return data;
-	            				}
-	        				},
-            				{ data: 'wardEnddt',    visible: true,  className: 'dt-body-center', width: '100px', 
-	                          	render: function(data, type, row) {
-		            			if (type === 'display') {
-		            					return getFormat(data,'d1')
-		                			}
-		                			return data;
-	            				}
-	        				},
-	        				{ data: 'nurGrd',     visible: true,  className: 'dt-body-center', width: '100px',  }
-	        		];
+			// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
+			// dt-body-center, dt-body-left, dt-body-right	        				
+			{ data: 'hospCd',    visible: false, className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
+			{ data: 'licNum',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keylicNum', primaryKey: true },
+			{ data: 'name',      visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt'  , primaryKey: true ,
+             	render: function(data, type, row) {
+				if (type === 'display') {
+					return getFormat(data,'d1')
+    			}
+    			return data;
+             	}
+			},
+			{ data: 'licenseGb',       visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'doctorGb',        visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'doctorType',      visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'jumin',           visible: true,  className: 'dt-body-center', width: '120px',  },
+			{ data: 'workGb',          visible: true,  className: 'dt-body-center', width: '200px',  },
+			{ data: 'licDat',          visible: true,  className: 'dt-body-center', width: '100px', 
+              	render: function(data, type, row) {
+    			if (type === 'display') {
+    					return getFormat(data,'d1')
+        			}
+        			return data;
+				}
+			},
+
+			{ data: 'wardNm',       visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'wardDanwi',    visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'wardStrdt',    visible: true,  className: 'dt-body-center', width: '100px', 
+              	render: function(data, type, row) {
+    			if (type === 'display') {
+    					return getFormat(data,'d1')
+        			}
+        			return data;
+				}
+			},
+			{ data: 'wardEnddt',    visible: true,  className: 'dt-body-center', width: '100px', 
+              	render: function(data, type, row) {
+    			if (type === 'display') {
+    					return getFormat(data,'d1')
+        			}
+        			return data;
+				}
+			},
+			{ data: 'nurGrd',     visible: true,  className: 'dt-body-center', width: '100px',  }
+	    ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
         var s_AutoNums = true;   		             // 자동순번 표시 여부
@@ -486,10 +487,10 @@
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
 		var showSortNo = ['hospCd','licNum','ipDt','licenseGb','doctorGb','doctorType'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
-		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var hideColums = ['hospCd'];             // 없으면 []; 일부 컬럼 숨길때		
+		var txt_Markln = 10;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['workGb'];
+		var markColums = ['workGb','wardNm'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -823,6 +824,7 @@
 			    		columns: gridColums,
 				        order: muiltSorts,
 					    columnDefs: [
+	    	
 					    	// 특정 열만 정렬
 					    	{ 
 					    		orderable: true,  

@@ -693,7 +693,7 @@ label {
  table {
    width: 100%;
    border-collapse: collapse;
-   overflow-x: auto;
+  /* overflow-x: auto;*/
    margin-top: 16px;
    background-color: #ffffff;
    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
