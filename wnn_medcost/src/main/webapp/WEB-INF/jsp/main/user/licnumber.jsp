@@ -824,7 +824,6 @@
 			    		columns: gridColums,
 				        order: muiltSorts,
 					    columnDefs: [
-	    	
 					    	// 특정 열만 정렬
 					    	{ 
 					    		orderable: true,  
