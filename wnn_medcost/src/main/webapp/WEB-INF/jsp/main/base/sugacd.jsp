@@ -328,6 +328,7 @@
 						    { name: '상대점수', className: 'dt-body-center' },
 						    { name: '병원단가', className: 'dt-body-center' },
 						    { name: '산정명칭', className: 'dt-body-center' }
+						    
 						];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
@@ -357,7 +358,7 @@
 					        },
 					        { data: 'rltValue' , visible: true, className: 'dt-body-center', width: '100px',  },
 					        { data: 'hosPrice' , visible: true, className: 'dt-body-center', width: '100px',  },
-					        { data: 'calcNm'   , visible: true, className: 'dt-body-left'  , width: '300px',  }
+					        { data: 'calcNm'   , visible: true, className: 'dt-body-left'  , width: '300px',  }					        
 						 ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
