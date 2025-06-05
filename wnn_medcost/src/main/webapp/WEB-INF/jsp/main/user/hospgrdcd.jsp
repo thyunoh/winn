@@ -849,7 +849,7 @@
 		   	
 		    $.ajax({
 		        type: "POST", 
-		        url: "/user/hospgrdList.do",
+		        url: "/user/selhospgrdList.do",
 		        data: find,
 		        dataType: "json",
 		        

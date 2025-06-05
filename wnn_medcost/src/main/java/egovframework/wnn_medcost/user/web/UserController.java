@@ -1822,6 +1822,39 @@ public class UserController extends BaseController {
 			return null;
 		}
 	}
+	@RequestMapping(value="/selhospgrdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> selhospgrdList(@ModelAttribute("DTO") HospGrdDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("의사.간호사등급 -java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+			
+				List<HospGrdDTO> HospGrdList = svc.selHospGrdList(dto);
+				
+				System.out.println("의사.간호사등급-java size " + HospGrdList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",HospGrdList);
+
+		        System.out.println("의사.간호사등급-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
 	@RequestMapping(value="/hospGrdInsert.do", method = RequestMethod.POST)
     public ResponseEntity<String> hospGrdInsert(@RequestBody List<HospGrdDTO> data) {
 		

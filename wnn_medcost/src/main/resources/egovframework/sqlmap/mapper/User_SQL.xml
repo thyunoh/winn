@@ -1345,7 +1345,7 @@
 
     ]]>    
     </insert>   
-<!-- 의사간호사 등급(년도별) -->
+<!-- 의사간호사 등급(년도별) 목표점수가져오기 -->
     <select id="getHospGrdList" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
 		SELECT 
 		    HOSP_CD,
@@ -1360,8 +1360,20 @@
 		    NUR_S_CNT,
 		    PHAM_DAYS,
 		    TOTAL_DAY,
-		    GOAL_SCORE,
-		    GOAL_NAME,
+		    ]]>
+		    <if test='startYy != null and startYy != ""'>
+             (SELECT MAX(GOAL_SCORE)
+		      FROM TBL_GRADE_MST
+		      WHERE HOSP_CD = #{hospCd}
+		        AND ACTION_YN = 'Y'
+		        AND START_YY = #{startYy} ) AS GOAL_SCORE ,  
+             (SELECT MAX(GOAL_NAME)
+		      FROM TBL_GRADE_MST
+		      WHERE HOSP_CD = #{hospCd}
+		        AND ACTION_YN = 'Y'
+		        AND START_YY = #{startYy} ) AS GOAL_NAME ,  
+		    </if>
+		    <![CDATA[
 		    REG_DTTM,
 		    REG_USER,
 		    REG_IP,
@@ -1378,19 +1390,49 @@
 		  </if>
 		  <if test='qterFlag != null and qterFlag != ""'>
 		    AND QTER_FLAG = #{qterFlag}
-		    AND GOAL_SCORE = (
-		      SELECT MAX(GOAL_SCORE)
-		      FROM TBL_GRADE_MST
-		      WHERE HOSP_CD = #{hospCd}
-		        AND ACTION_YN = 'Y'
-		        AND START_YY = #{startYy}
-		        AND QTER_FLAG = #{qterFlag}
-		     )
 		  </if>
 		  <![CDATA[
-		   Order by  HOSP_CD ASC  , START_YY DESC , QTER_FLAG DESC ,  
+		   Order by  HOSP_CD ASC  , START_YY DESC , QTER_FLAG DESC   
 		  ]]>
     </select>  
+    <!--  의사간호사 등급(년도별) 입력  -->
+    <select id="selHospGrdList" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
+		SELECT 
+		    HOSP_CD,
+		    START_YY,
+		    QTER_FLAG,
+		    JOB_SEQ,
+		    ACTION_YN,
+		    HOSPGRADE,
+		    PAT_COUNT,
+		    DOC_COUNT,
+		    NUR_COUNT,
+		    NUR_S_CNT,
+		    PHAM_DAYS,
+		    TOTAL_DAY,
+            GOAL_SCORE ,  
+            GOAL_NAME  ,  
+   	        REG_DTTM,
+		    REG_USER,
+		    REG_IP,
+		    UPD_DTTM,
+		    UPD_USER,
+		    UPD_IP
+		FROM TBL_GRADE_MST
+		WHERE 1 = 1
+		  AND HOSP_CD = #{hospCd}
+		  AND ACTION_YN = 'Y'
+		  ]]>
+		  <if test='startYy != null and startYy != ""'>
+		    AND START_YY = #{startYy}
+		  </if>
+		  <if test='qterFlag != null and qterFlag != ""'>
+		    AND QTER_FLAG = #{qterFlag}
+		  </if>
+		  <![CDATA[
+		   Order by  HOSP_CD ASC  , START_YY DESC , QTER_FLAG DESC   
+		  ]]>
+    </select>      
 <!-- 병원등급 단순입력  -->    
     <insert id="insertHospGrd" parameterType="HospGrdDTO" ><![CDATA[
 		INSERT INTO TBL_GRADE_MST (

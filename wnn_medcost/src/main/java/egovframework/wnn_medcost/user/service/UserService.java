@@ -82,6 +82,7 @@ public interface UserService {
 	
    //병원간호사의사등급 
 	List<HospGrdDTO> getHospGrdList(HospGrdDTO dto)       throws Exception;
+	List<HospGrdDTO> selHospGrdList(HospGrdDTO dto)       throws Exception;
 	boolean          insertHospGrd(HospGrdDTO dto)        throws Exception; 
 	boolean          updateHospGrd(HospGrdDTO dto)        throws Exception; 
 	String           HospGrdDupChk(HospGrdDTO dto)        throws Exception; 	

@@ -333,5 +333,11 @@ public class UserServiceImpl implements UserService {
 	public boolean saveHospGrd(HospGrdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.saveHospGrd(dto);
+	}
+
+	@Override
+	public List<HospGrdDTO> selHospGrdList(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.selHospGrdList(dto);
 	}	
 }
