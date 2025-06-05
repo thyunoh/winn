@@ -191,17 +191,27 @@
 								   <input id="totalDay" name="totalDay" type="text" value = "0" required
 									class="form-control text-left" placeholder="">
 							    </div>
-                                <label for=glodScore class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">해당년도목표점수</label>
+                                <label for=goalScore class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">해당년도목표점수</label>
 							    <div class="col-2 col-lg-2">
-								     <input id="glodScore" name="glodScore" type="number" class="form-control text-left" placeholder="">
+								     <input id="goalScore" name="goalScore" type="number" class="form-control text-left" placeholder="">
 							    </div>
     						</div>
-							<div class="form-group row ">
-                                <label for=glodName class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">해당년도목표명칭</label>
-							    <div class="col-6 col-lg-6">
-								     <input id="glodName" name="glodName" type="text" class="form-control text-left" placeholder="">
+							<div class="form-group row">
+							    <label for="goalName" class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center">
+							        해당년도목표명칭
+							    </label>
+							    
+							    <!-- 입력란 -->
+							    <div class="col-6 col-lg-6 d-flex align-items-center">
+							        <input id="goalName" name="goalName" type="text" class="form-control text-left" placeholder="">
 							    </div>
-    						</div> 
+							
+							    <!-- 안내 문구 -->
+							    <!-- 안내 문구: 작게 표시 -->
+							    <div class="col-4 col-lg-4 d-flex align-items-center">
+							        <small class="text-muted">※ 목표점수 목표명은  해당년도 1분기에만 입력.</small>
+							    </div>
+							</div>
 							<!-- ============================================================== -->
 							<!-- end form 수정해야 될 곳 -->
 							<!-- ============================================================== -->
@@ -330,8 +340,8 @@
             				{ data: 'nurSCnt',     visible: true,  className: 'dt-body-center', width: '30px',  },
 	        				{ data: 'phamDays',    visible: true,  className: 'dt-body-center', width: '30px',  },
 	        				{ data: 'totalDay',    visible: true,  className: 'dt-body-center', width: '30px',  },
-	        				{ data: 'goldName',    visible: true,  className: 'dt-body-center', width: '100px', },
-	        				{ data: 'goldScore',   visible: true,  className: 'dt-body-center', width: '30px',  }
+	        				{ data: 'goalName',    visible: true,  className: 'dt-body-center', width: '100px', },
+	        				{ data: 'goalScore',   visible: true,  className: 'dt-body-center', width: '30px',  }
 	        				];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -961,7 +971,9 @@
              	nurCount:      $('#nurCount').val(), 
              	nurSCnt:       $('#nurSCnt').val(), 
              	phamDays:      $('#phamDays').val(), 
-             	totalDay:      $('#totalDay').val()
+             	totalDay:      $('#totalDay').val(),
+               	goalScore:     $('#goalScore').val(), 
+               	goalName:      $('#goalName').val()
         	};
 		    return newData;
 		}	

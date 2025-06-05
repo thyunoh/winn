@@ -1346,34 +1346,52 @@
     ]]>    
     </insert>   
 <!-- 의사간호사 등급(년도별) -->
-    <select id="getHospGrdist" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
-        SELECT 
-            HOSP_CD,
-            START_YY,
-            QTER_FLAG,
-            JOB_SEQ,
-            ACTION_YN,
-            HOSPGRADE ,
-            PAT_COUNT,
-            DOC_COUNT,
-            NUR_COUNT,
-            NUR_S_CNT,
-            PHAM_DAYS ,
-            TOTAL_DAY ,
-            GLOD_SCORE ,
-            GLOD_NAME ,
-            REG_DTTM,
-            REG_USER,
-            REG_IP,
-            UPD_DTTM,
-            UPD_USER,
-            UPD_IP 
-        FROM TBL_GRADE_MST
-        WHERE 1 = 1
-         AND HOSP_CD   = #{hospCd}
-         AND ACTION_YN = 'Y' 
-       ]]>
+    <select id="getHospGrdList" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
+		SELECT 
+		    HOSP_CD,
+		    START_YY,
+		    QTER_FLAG,
+		    JOB_SEQ,
+		    ACTION_YN,
+		    HOSPGRADE,
+		    PAT_COUNT,
+		    DOC_COUNT,
+		    NUR_COUNT,
+		    NUR_S_CNT,
+		    PHAM_DAYS,
+		    TOTAL_DAY,
+		    GOAL_SCORE,
+		    GOAL_NAME,
+		    REG_DTTM,
+		    REG_USER,
+		    REG_IP,
+		    UPD_DTTM,
+		    UPD_USER,
+		    UPD_IP
+		FROM TBL_GRADE_MST
+		WHERE 1 = 1
+		  AND HOSP_CD = #{hospCd}
+		  AND ACTION_YN = 'Y'
+		  ]]>
+		  <if test='startYy != null and startYy != ""'>
+		    AND START_YY = #{startYy}
+		  </if>
+		  <if test='qterFlag != null and qterFlag != ""'>
+		    AND QTER_FLAG = #{qterFlag}
+		    AND GOAL_SCORE = (
+		      SELECT MAX(GOAL_SCORE)
+		      FROM TBL_GRADE_MST
+		      WHERE HOSP_CD = #{hospCd}
+		        AND ACTION_YN = 'Y'
+		        AND START_YY = #{startYy}
+		        AND QTER_FLAG = #{qterFlag}
+		     )
+		  </if>
+		  <![CDATA[
+		   Order by  HOSP_CD ASC  , START_YY DESC , QTER_FLAG DESC ,  
+		  ]]>
     </select>  
+<!-- 병원등급 단순입력  -->    
     <insert id="insertHospGrd" parameterType="HospGrdDTO" ><![CDATA[
 		INSERT INTO TBL_GRADE_MST (
 		    HOSP_CD,
@@ -1392,8 +1410,8 @@
 		    NUR_S_CNT,
 		    PHAM_DAYS,
 		    TOTAL_DAY,
-		    GLOD_SCORE ,
-		    GLOD_NAME  ,
+		    GOAL_SCORE ,
+		    GOAL_NAME  ,
 		    JOB_SEQ,
 		    ACTION_YN
 		) 
@@ -1414,13 +1432,13 @@
 		    #{nurSCnt},
 		    #{phamDays},
 		    #{totalDay},
-		    #{glodScore},
-		    #{glodName},
+		    #{goalScore},
+		    #{goalName},
 		    (
 		     SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
 		       FROM TBL_GRADE_MST A
-		       WHERE A.HOSP_CD = #{hospCd} 
-		         AND A.START_YY = #{startYy} 
+		       WHERE A.HOSP_CD   = #{hospCd} 
+		         AND A.START_YY  = #{startYy} 
 		         AND A.QTER_FLAG = #{qterFlag}
 		    ),
 		    'Y'
@@ -1428,6 +1446,74 @@
 
     ]]>    
     </insert> 
+    <!-- 병원등급 입력후 오류시 업데이트  -->
+	<insert id="saveHospGrd" parameterType="HospGrdDTO">
+	  <![CDATA[
+	    INSERT INTO TBL_GRADE_MST (
+	        HOSP_CD,
+	        START_YY,
+	        QTER_FLAG,
+	        REG_DTTM,
+	        REG_USER,
+	        REG_IP,
+	        UPD_DTTM,
+	        UPD_USER,
+	        UPD_IP,
+	        HOSPGRADE,
+	        PAT_COUNT,
+	        DOC_COUNT,
+	        NUR_COUNT,
+	        NUR_S_CNT,
+	        PHAM_DAYS,
+	        TOTAL_DAY,
+	        GOAL_SCORE,
+	        GOAL_NAME,
+	        JOB_SEQ,
+	        ACTION_YN
+	    )
+	    VALUES (
+	        #{hospCd},
+	        #{startYy},
+	        #{qterFlag},
+	        NOW(),
+	        #{regUser},
+	        #{regIp},
+	        NOW(),
+	        #{updUser},
+	        #{updIp},
+	        #{hospgrade},
+	        #{patCount},
+	        #{docCount},
+	        #{nurCount},
+	        #{nurSCnt},
+	        #{phamDays},
+	        #{totalDay},
+	        #{goalScore},
+	        #{goalName},
+	        (
+	            SELECT IFNULL(MAX(A.JOB_SEQ) + 1, 1)
+	            FROM TBL_GRADE_MST A
+	            WHERE A.HOSP_CD   = #{hospCd}
+	              AND A.START_YY  = #{startYy}
+	              AND A.QTER_FLAG = #{qterFlag}
+	        ),
+	        'Y'
+	    )
+	    ON DUPLICATE KEY UPDATE
+	        HOSPGRADE  = #{hospgrade},
+	        PAT_COUNT  = #{patCount},
+	        DOC_COUNT  = #{docCount},
+	        NUR_COUNT  = #{nurCount},
+	        NUR_S_CNT  = #{nurSCnt},
+	        PHAM_DAYS  = #{phamDays},
+	        TOTAL_DAY  = #{totalDay},
+	        GOAL_SCORE = #{goalScore},
+	        GOAL_NAME  = #{goalName},
+	        UPD_DTTM   = NOW(),
+	        UPD_USER   = #{updUser},
+	        UPD_IP     = #{updIp};
+	  ]]>
+	</insert>
       <update id="updateHospGrd" parameterType="HospGrdDTO"><![CDATA[
         UPDATE TBL_GRADE_MST
         SET    ACTION_YN = 'N' 

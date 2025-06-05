@@ -1803,7 +1803,7 @@ public class UserController extends BaseController {
 				
 				dto.setFindData(dto.getFindData());
 			
-				List<HospGrdDTO> HospGrdList = svc.getHospGrdist(dto);
+				List<HospGrdDTO> HospGrdList = svc.getHospGrdList(dto);
 				
 				System.out.println("의사.간호사등급-java size " + HospGrdList.size());
 				
@@ -1890,6 +1890,27 @@ public class UserController extends BaseController {
        		    System.out.println("startYy: "  + dto.getStartYy());
        		    System.out.println("bunji: "    + dto.getQterFlag());
               
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}	
+	@RequestMapping(value="/saveHospGrd.do", method = RequestMethod.POST)
+    public ResponseEntity<String> saveHospGrd(@RequestBody List<HospGrdDTO> data) {
+		
+		System.out.println("Insert 시작했음");
+		String returnValue = "OK";
+		
+		// 처리 로직
+        try {
+        	
+        	for (HospGrdDTO dto : data) {
+         		svc.saveHospGrd(dto) ; 
+       		    System.out.println("hospCd: " + dto.getKeyhospCd());
             }
         	return ResponseEntity.ok(returnValue);   
         	

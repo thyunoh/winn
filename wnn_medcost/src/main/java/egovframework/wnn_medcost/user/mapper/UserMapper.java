@@ -92,9 +92,10 @@ public interface UserMapper {
 	boolean            inserthospemp_Licnum(LicnumDTO dto) throws Exception; 
 
    //병원간호사의사등급 
-	List<HospGrdDTO> getHospGrdist(HospGrdDTO dto)        throws Exception;
+	List<HospGrdDTO> getHospGrdList(HospGrdDTO dto)       throws Exception;
 	boolean          insertHospGrd(HospGrdDTO dto)        throws Exception; 
 	boolean          updateHospGrd(HospGrdDTO dto)        throws Exception; 
-	String           HospGrdDupChk(HospGrdDTO dto)        throws Exception; 	
+	String           HospGrdDupChk(HospGrdDTO dto)        throws Exception; 
+	boolean          saveHospGrd(HospGrdDTO dto)          throws Exception; 
 }
                     

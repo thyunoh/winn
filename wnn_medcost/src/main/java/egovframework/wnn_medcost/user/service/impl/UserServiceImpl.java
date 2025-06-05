@@ -307,9 +307,9 @@ public class UserServiceImpl implements UserService {
 	
     //의사 간호사년도별 분기별 등급관리 
 	@Override
-	public List<HospGrdDTO> getHospGrdist(HospGrdDTO dto) throws Exception {
+	public List<HospGrdDTO> getHospGrdList(HospGrdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
-		return mapper.getHospGrdist(dto);
+		return mapper.getHospGrdList(dto);
 	}
 	@Override
 	public boolean insertHospGrd(HospGrdDTO dto) throws Exception {
@@ -327,5 +327,11 @@ public class UserServiceImpl implements UserService {
 	public String HospGrdDupChk(HospGrdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.HospGrdDupChk(dto);
+	}
+
+	@Override
+	public boolean saveHospGrd(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.saveHospGrd(dto);
 	}	
 }

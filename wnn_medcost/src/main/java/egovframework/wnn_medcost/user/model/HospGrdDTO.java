@@ -54,23 +54,24 @@ public class HospGrdDTO {
     private String nurSCnt;
     private String phamDays;
     private String totalDay;
-    private String goldScore ;
-    private String goldName ;
-    
-    public String getGoldName() {
-		return goldName;
+    private String goalScore ;
+    private String goalName ;
+
+
+	public String getGoalScore() {
+		return goalScore;
 	}
 
-	public void setGoldName(String goldName) {
-		this.goldName = goldName;
+	public void setGoalScore(String goalScore) {
+		this.goalScore = goalScore;
 	}
 
-	public String getGoldScore() {
-		return goldScore;
+	public String getGoalName() {
+		return goalName;
 	}
 
-	public void setGoldScore(String goldScore) {
-		this.goldScore = goldScore;
+	public void setGoalName(String goalName) {
+		this.goalName = goalName;
 	}
 
 	public String getHospgrade() {
