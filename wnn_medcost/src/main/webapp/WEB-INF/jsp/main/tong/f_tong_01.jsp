@@ -254,31 +254,38 @@
 		      }
 
 		      // 💰 진료비용 (백만원 단위로 나누고, 콤마 표시)
-		      function setCost(id, prevVal, currVal, rateVal) {
-		        const prevNum = prevVal ? prevVal / 1000000 : 0;
-		        const currNum = currVal ? currVal / 1000000 : 0;
-		        const rate = rateVal || 0;
-
-		        document.getElementById(id + 'Curr').innerText = numberWithCommas(currNum.toFixed(1));
-		        document.getElementById(id + 'Prev').innerText = numberWithCommas(prevNum.toFixed(1));
-		        document.getElementById(id + 'Rate').innerText = rate ;
-		        document.getElementById(id + 'Rate').innerText = document.getElementById(id + 'Rate').innerText == "Infinity" ? 0 : rate;
-		      }
+			  function setCost(id, prevVal, currVal, rateVal) {
+				  const prevNum = prevVal ? prevVal / 1000000 : 0;
+				  const currNum = currVal ? currVal / 1000000 : 0;
+				  const rate = rateVal || 0;
+				
+				  // 유효한 숫자인 경우만 콤마 포맷, 아니면 '-'
+				  const displayPrev = isFinite(prevNum) ? numberWithCommas(prevNum.toFixed(1)) : '-';
+				  const displayCurr = isFinite(currNum) ? numberWithCommas(currNum.toFixed(1)) : '-';
+				  const displayRate = isFinite(rate) ? rate : '-';
+				
+				  document.getElementById(id + 'Curr').innerText = displayCurr;
+				  document.getElementById(id + 'Prev').innerText = displayPrev;
+				  document.getElementById(id + 'Rate').innerText = displayRate;
+			  }
 		      // ✅ 전체 진료비(백만원)
 		      setCost("allCost", row.allCostPrev , row.allCostCurr ,  row.allCostRate);
 		      
 		      // 🧾 전체 진료건수
-		      function setCases(id, prevVal, currVal, rateVal) {
-		        const prevNum = prevVal || 0;
-		        const currNum = currVal || 0;
-		        const rate = rateVal || 0;
-
-		        document.getElementById(id + 'Curr').innerText = numberWithCommas(currNum);
-		        document.getElementById(id + 'Prev').innerText = numberWithCommas(prevNum);
-		        document.getElementById(id + 'Rate').innerText = rate ;
-		        document.getElementById(id + 'Rate').innerText = document.getElementById(id + 'Rate').innerText == "Infinity" ? 0 : rate;
-		      }
-
+			  function setCases(id, prevVal, currVal, rateVal) {
+				  const prevNum = prevVal || 0;
+				  const currNum = currVal || 0;
+				  let rate = rateVal || 0;
+				
+				  // 숫자가 유효하지 않을 경우 '-'로 표시
+				  const displayPrev = isFinite(prevNum) ? numberWithCommas(prevNum) : '-';
+				  const displayCurr = isFinite(currNum) ? numberWithCommas(currNum) : '-';
+				  const displayRate = isFinite(rate) ? rate : '-';
+				
+				  document.getElementById(id + 'Curr').innerText = displayCurr;
+				  document.getElementById(id + 'Prev').innerText = displayPrev;
+				  document.getElementById(id + 'Rate').innerText = displayRate;
+			  }
 		      // ✅ 전체 진료건수
 		      setCases("allCases", row.allCasesPrev , row.allCasesCurr ,row.allCasesRate);
       

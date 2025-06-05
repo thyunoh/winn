@@ -81,9 +81,18 @@
 <script>
     let chart;
  // ✅ 3자리마다 콤마 표시 함수 (한 번만 정의)
-	  function numberWithCommas(x) {
-	    return x?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") || "0";
+	function numberWithCommas(x) {
+	  if (x == null || x === '') return "0";
+	
+	  let num = typeof x === 'number' ? x.toFixed(0) : x.toString();
+	
+	  // 지수 표기법으로 된 숫자를 정수 문자열로 변환
+	  if (num.includes('e') || num.includes('E')) {
+	    num = Number(num).toFixed(0);
 	  }
+	
+	  return num.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	}
 
     // ✅ 데이터 필터 함수
     function filterData() {

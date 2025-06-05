@@ -787,13 +787,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            <nav class="navbar navbar-expand-lg navbar-dark py-3 py-lg-0 px-0">
 	                <div class="collapse navbar-collapse">
 	                    <div class="navbar-nav d-flex justify-content-center w-100 py-0">
-	                        <a href="https://winner797.kr/main/"      class="nav-item nav-link" target="_blank">위너넷 평생교육원</a> 
-	                        <a href="https://winner797.net/"          class="nav-item nav-link" target="_blank">위너넷 온라인교육센터</a> 
-	                        <a href="https://www.hirachung.co.kr/"    class="nav-item nav-link" target="_blank">한국보험의료인증원</a> 
+	                        <a href="https://winner797.kr/main/"           class="nav-item nav-link" target="_blank">위너넷 평생교육원</a> 
+	                        <a href="https://winner797.net/"               class="nav-item nav-link" target="_blank">위너넷 온라인교육센터</a> 
+	                        <a href="https://www.hirachung.co.kr/"         class="nav-item nav-link" target="_blank">한국보험의료인증원</a> 
 	                        <a href="https://www.nhis.or.kr/nhis/index.do" class="nav-item nav-link" target="_blank">건강보험공단</a> 
-	                        <a href="https://www.hira.or.kr"          class="nav-item nav-link" target="_blank">건강보험심사평가원</a>
-	                        <a href="https://biz.hira.or.kr/index.do" class="nav-item nav-link" target="_blank">요양기관업무포탈</a> 
-	                        <a href="#" class="nav-item nav-link" target="_blank">통합사이트</a>
+	                        <a href="https://www.hira.or.kr"               class="nav-item nav-link" target="_blank">건강보험심사평가원</a>
+	                        <a href="https://biz.hira.or.kr/index.do"      class="nav-item nav-link" target="_blank">요양기관업무포탈</a> 
+	                        <a href="#"                                    class="nav-item nav-link" target="_blank">통합사이트</a>
 	                    </div>
 	                </div>
 	            </nav>

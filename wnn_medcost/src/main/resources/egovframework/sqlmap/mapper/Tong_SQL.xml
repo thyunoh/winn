@@ -484,7 +484,7 @@
 			                 LIMIT 1)
 			            )
 			     )   END                                                    AS CODE_NAME,
-		    totalAmt   ,
+		    FLOOR(totalAmt)   totalAmt  ,
 		    claimCount ,
 		    FLOOR(totalAmt / claimCount)                                    AS avgAmt,
 		    ROUND((totalAmt / SUM(CASE WHEN ITEM_NO != '00' AND CODE_NO != '00' 
@@ -1287,7 +1287,7 @@
 		            )
 		        )
 		    END                                                             AS CODE_NAME,
-		    totalAmt   ,
+		    FLOOR(totalAmt)  totalAmt    ,
 		    claimCount ,
 		    FLOOR(totalAmt / claimCount)                                    AS avgAmt,
 		    ROUND((totalAmt / SUM(CASE WHEN ITEM_NO != '00' AND CODE_NO != '00' 
