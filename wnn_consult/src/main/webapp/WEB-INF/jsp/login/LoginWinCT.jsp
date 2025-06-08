@@ -102,8 +102,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						   <strong>온라인교육센터</strong>
 						</a>
 		
-						<div id="dynamicMenu_J" onclick="setMainActive(this)"></div>
-						<div id="dynamicMenu_T" onclick="setMainActive(this)"></div>
+						<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
+						<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
 					</div>
 		
 					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
@@ -139,13 +139,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        `;
 	        menuHTML_T += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>경영분석</strong>
+	                <strong>진료비분석</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '1') {
 	        menuHTML += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>경영분석</strong>
+	                <strong>진료비분석</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '2') {
@@ -491,7 +491,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 										    <div id="month2" style ="font-size: 13px; font-weight: bold;"></div>
 										    <div id="month1" style ="font-size: 13px; font-weight: bold;"></div>
 										    
-										    <div class="cell-label">경영분석</div>
+										    <div class="cell-label">진료비분석</div>
 										    <div id="admin_three" style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_two"   style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_one"   style ="font-size: 12px; font-weight: bold;">-</div>
