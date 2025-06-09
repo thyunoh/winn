@@ -125,14 +125,14 @@
                                                                              aria-controls="base-info-3">병원정보 관리</a>
                                     <div id="base-info-3" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-                                 <li class="nav-item">
-                                     <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
-                                 </li>
+                                           <li class="nav-item">
+                                               <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
+                                           </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/mbrcd.do">회원가입현황</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">수납관리</a>
+                                                <a class="nav-item nav-link"  href="">수납관리</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/chung/chgsimsa.do">청구심사조회</a>
@@ -267,53 +267,6 @@
                             </ul>
                         </div>
                     </li>
-                    <!-- 적정성 평가 보고서 -->
-                    <!--
-                    <li class="nav-item menu-section" id="menu-d">
-                        <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#adequacy" aria-controls="adequacy">
-                                                                                                         <i class="fas fa-notes-medical"></i>지표별점수확인</a>
-                        <div id="adequacy" class="collapse submenu" style="background-color: white;">
-                            <ul class="nav flex-column">                            
-                               <li class="nav-item">
-                                 <a class="nav-item nav-link"  href="/base/sugacd.do" ><i class="fas"></i>구조영역</a>
-                             </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#adequacy-1" 
-                                                                                                         aria-controls="adequacy-1">진료영역 지표별</a>
-                                    <div id="adequacy-1" class="collapse submenu" style="background-color: white;">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">정액수가 현황</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">특정기간 현황</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">재활치료 현황</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">투석치료 현황</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#adequacy-2" aria-controls="adequacy-2">평가대상자</a>
-                                    <div id="adequacy-2" class="collapse submenu" style="background-color: white;">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">일당,건당진료비</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">다빈도 치료현황</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </li>                                
-                            </ul>
-                        </div>
-                    </li>
-                    -->
                 </ul>
             </div>            
         </nav>
