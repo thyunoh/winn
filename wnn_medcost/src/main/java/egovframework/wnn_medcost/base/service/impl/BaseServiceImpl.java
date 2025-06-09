@@ -228,7 +228,6 @@ public class BaseServiceImpl implements BaseService {
 		// TODO Auto-generated method stub
 		return mapper.updateclaimCd(dto);
 	}
-
 	@Override
 	public String claimCdDupChk(ClaimDTO dto) throws Exception {
 		// TODO Auto-generated method stub

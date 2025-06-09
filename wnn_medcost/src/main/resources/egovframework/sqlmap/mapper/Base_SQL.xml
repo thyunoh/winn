@@ -415,7 +415,7 @@
         WHERE 1=1
           AND A.START_DT = #{startDt}    
 	 	  AND A.ACTION_YN = 'Y' 
-		  Order by A.START_DT  , A.CATE_CODE  ,   A.ORDER_SEQ 
+		  Order by A.START_DT , A.CATE_CODE  ,   A.ORDER_SEQ 
 	      ]]>         
     </select>  
     <insert id="copWvalueList" parameterType="WvalDTO"><![CDATA[ 

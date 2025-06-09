@@ -34,7 +34,6 @@ public interface BaseService {
 	boolean           insertCommDtl(CodeMdDTO dto)  throws Exception; 
 	boolean           updateCommDtl(CodeMdDTO dto)  throws Exception; 
 	String            CommDtlDupChk(CodeMdDTO dto)  throws Exception; 	
-
    //가중치관리 
 	List<WvalDTO>     getWvalueList(WvalDTO dto)    throws Exception; 
 	List<WvalDTO>     selWvalueList(WvalDTO dto)    throws Exception;

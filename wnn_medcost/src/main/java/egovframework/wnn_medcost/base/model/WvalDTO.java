@@ -10,7 +10,6 @@ public class WvalDTO{
 	private String keyorderSeq ;
 	private String keystartDt ;
 	private transient String findData;
-	
     private String cateCode; // 분류코드
     private String orderSeq; // 분류순서
     private String startDt; // 시작일자

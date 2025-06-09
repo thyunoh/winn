@@ -11,7 +11,6 @@
 
 <!-- ============================================================== -->
 <!-- sidebar start -->
-
 <div class="nav-left-sidebar" style="background-color: white; color: black;">
     <div class="menu-list">
         <nav class="navbar navbar-expand-lg navbar-white">

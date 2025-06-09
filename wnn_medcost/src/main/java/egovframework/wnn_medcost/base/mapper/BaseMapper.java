@@ -16,7 +16,7 @@ import egovframework.wnn_medcost.base.model.JearyoCdDTO;
 public interface BaseMapper {	
 	
 	List<CodeMdDTO> getCommList(Map<String, Object> params) throws Exception;
-	
+
 	List<SugaCdDTO>   getSugaCdList(SugaCdDTO dto)    throws Exception;
 	boolean           insertSugaCdMst(SugaCdDTO dto)  throws Exception; 
 	boolean           updateSugaCdMst(SugaCdDTO dto)  throws Exception; 

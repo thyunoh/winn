@@ -659,7 +659,6 @@ public class BaseController {
 			return null;
 		}
 	}	
-
 	@RequestMapping(value="/copwvalcdList.do", method = RequestMethod.POST)
     public ResponseEntity<String> copwvalcdList(@RequestBody List<WvalDTO> data) {
 	
@@ -667,7 +666,7 @@ public class BaseController {
 		String returnValue = "OK";
 		// 처리 로직
         try {
-        	
+    	
         	for (WvalDTO dto : data) {
         		svc.copWvalueList(dto); // 이력관리
             }
