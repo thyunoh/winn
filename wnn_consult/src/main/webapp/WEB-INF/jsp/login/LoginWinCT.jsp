@@ -491,7 +491,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 										    <div id="month2" style ="font-size: 13px; font-weight: bold;"></div>
 										    <div id="month1" style ="font-size: 13px; font-weight: bold;"></div>
 										    
-										    <div class="cell-label">경영분석</div>
+										    <div class="cell-label">진료비분석</div>
 										    <div id="admin_three" style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_two"   style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_one"   style ="font-size: 12px; font-weight: bold;">-</div>

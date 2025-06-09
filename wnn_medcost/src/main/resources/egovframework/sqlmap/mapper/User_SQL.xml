@@ -1420,9 +1420,11 @@
 		    UPD_IP
 		FROM TBL_GRADE_MST
 		WHERE 1 = 1
-		  AND HOSP_CD = #{hospCd}
-		  AND ACTION_YN = 'Y'
+		    AND ACTION_YN = 'Y'
 		  ]]>
+		   <if test='hospCd != null and hospCd != "" '>
+		    AND HOSP_CD = #{hospCd}
+		   </if>
 		  <if test='startYy != null and startYy != ""'>
 		    AND START_YY = #{startYy}
 		  </if>
