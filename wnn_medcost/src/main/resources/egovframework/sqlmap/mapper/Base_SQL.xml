@@ -381,6 +381,13 @@
           AND ACTION_YN    = 'Y'
     ]]>
     </update>    
+    <select id="selWvalueList" parameterType="WvalDTO" resultType="WvalDTO"><![CDATA[ 
+       SELECT START_DT AS START_DT_TWO
+        FROM TBL_WEVALUE_MST
+       Group by  START_DT
+	   Order by  START_DT DESC  
+	   ]]>         
+    </select>  
     <select id="getWvalueList" parameterType="WvalDTO" resultType="WvalDTO"><![CDATA[ 
        SELECT 
             A.CATE_CODE
@@ -406,14 +413,52 @@
                                       AND B.SUB_CODE = A.CATE_CODE
                                       AND B.ACTION_YN = 'Y'  
         WHERE 1=1
+          AND A.START_DT = #{startDt}    
 	 	  AND A.ACTION_YN = 'Y' 
-	 	  AND 
-		     ( A.CATE_CODE   LIKE CONCAT('%'  #{findData}  '%')  OR 
-		      A.WEVALUE_NM   LIKE CONCAT('%'  #{findData}  '%')
-		    )  
 		  Order by A.START_DT  , A.CATE_CODE  ,   A.ORDER_SEQ 
 	      ]]>         
     </select>  
+    <insert id="copWvalueList" parameterType="WvalDTO"><![CDATA[ 
+				INSERT INTO TBL_WEVALUE_MST (
+				    CATE_CODE,
+				    ORDER_SEQ,
+				    START_DT,
+				    END_DT,
+				    CAL_GUBUN,
+				    START_INDI,
+				    END_INDI,
+				    STD_SCORE,
+				    WE_VALUE,
+				    REG_DTTM,
+				    REG_USER,
+				    REG_IP,
+				    UPD_DTTM,
+				    UPD_USER,
+				    UPD_IP,
+				    ACTION_YN
+				)
+				SELECT 
+				    CATE_CODE,
+				    ORDER_SEQ,
+				    #{newStartDt} AS START_DT,     -- 새로 지정할 시작일
+				    '20991231'    AS END_DT,       -- 새로 지정할 종료일
+				    CAL_GUBUN,
+				    START_INDI,
+				    END_INDI,
+				    STD_SCORE,
+				    WE_VALUE,
+				    NOW()       AS REG_DTTM,        -- 현재시간으로 등록일 갱신
+				    #{regUser}  AS REG_USER,        -- 복사 사용자
+				    #{regIp}    AS REG_IP,
+				    NOW()       AS UPD_DTTM,
+				    #{updUser}  AS UPD_USER,
+				    #{updIp}    AS UPD_IP,
+				    'Y'         AS ACTION_YN
+				FROM TBL_WEVALUE_MST
+				WHERE START_DT = #{startDt}
+				  AND ACTION_YN = 'Y'
+	      ]]>         
+    </insert>  
     <!-- 가중치 -->
     <insert id="insertWvalue" parameterType="WvalDTO"> <![CDATA[ 
         INSERT INTO TBL_WEVALUE_MST (

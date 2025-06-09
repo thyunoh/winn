@@ -36,10 +36,12 @@ public interface BaseService {
 	String            CommDtlDupChk(CodeMdDTO dto)  throws Exception; 	
 
    //가중치관리 
-	List<WvalDTO>     getWvalueList(WvalDTO dto) throws Exception; 
-	boolean           insertWvalue(WvalDTO dto)  throws Exception; 
-	boolean           updateWvalue(WvalDTO dto)  throws Exception; 
-	String            WvalueDupChk(WvalDTO dto)  throws Exception; 	
+	List<WvalDTO>     getWvalueList(WvalDTO dto)    throws Exception; 
+	List<WvalDTO>     selWvalueList(WvalDTO dto)    throws Exception;
+	boolean           insertWvalue(WvalDTO dto)     throws Exception; 
+	boolean           updateWvalue(WvalDTO dto)     throws Exception; 
+	String            WvalueDupChk(WvalDTO dto)     throws Exception; 	
+	boolean           copWvalueList(WvalDTO dto)    throws Exception;
 //samfile 	
 	List<SamverDTO>   getsamverCdlist(SamverDTO dto) throws Exception;
 	boolean           insertsamverCd(SamverDTO dto)  throws Exception; 

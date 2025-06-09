@@ -235,5 +235,17 @@ public class BaseServiceImpl implements BaseService {
 		return mapper.claimCdDupChk(dto);
 	}
 
+	@Override
+	public List<WvalDTO> selWvalueList(WvalDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.selWvalueList(dto);
+	}
+
+	@Override
+	public boolean copWvalueList(WvalDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.copWvalueList(dto);
+	}
+
 
 }

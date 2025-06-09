@@ -593,6 +593,39 @@ public class BaseController {
 			return "";
 		}
     }
+	@RequestMapping(value="/selwvalcdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> selwvalcdList(@ModelAttribute("DTO") WvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("가중치-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				dto.setFindData(dto.getFindData());
+	
+				List<WvalDTO> wvalList = svc.selWvalueList(dto);
+				
+				System.out.println("가중치-java size " + wvalList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",wvalList);
+
+		        System.out.println("수가-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}	
 	@RequestMapping(value="/wvalcdList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> getwvalcdList(@ModelAttribute("DTO") WvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
@@ -626,6 +659,26 @@ public class BaseController {
 			return null;
 		}
 	}	
+
+	@RequestMapping(value="/copwvalcdList.do", method = RequestMethod.POST)
+    public ResponseEntity<String> copwvalcdList(@RequestBody List<WvalDTO> data) {
+	
+		System.out.println("copy Update 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	
+        	for (WvalDTO dto : data) {
+        		svc.copWvalueList(dto); // 이력관리
+            }
+        	return ResponseEntity.ok(returnValue);   
+        	
+        } catch (Exception e) {
+        	
+            return ResponseEntity.status(500).body(e.getMessage());
+            
+        }
+	}
 	@RequestMapping(value="/WvalueInsert.do", method = RequestMethod.POST)
     public ResponseEntity<String> WvalueInsert(@RequestBody List<WvalDTO> data) {
 		

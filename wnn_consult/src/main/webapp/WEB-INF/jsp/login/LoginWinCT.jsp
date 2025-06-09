@@ -73,7 +73,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 위너넷 링크 -->
 						<a href="http://www.winnernet.co.kr/"
 						   class="nav-link text-dark consulting-menu"
-						   style="font-size: 16px; font-weight: bold; padding: 24px;"
+						   style="font-size: 16px; padding: 24px;"
 						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
 						   <strong>위너넷 소개</strong>
 						</a>
@@ -81,7 +81,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 컨설팅 소개 드롭다운 -->
 						<div class="nav-link text-dark position-relative">
 							<a href="#" class="nav-link text-dark  consulting-menu"
-							   style="font-size: 16px; font-weight: bold; padding: 24px;"
+							   style="font-size: 16px; padding: 24px;"
 							   data-bs-toggle="dropdown" onclick="setMainActive(this)">
 							   <strong>컨설팅 소개</strong>
 							</a>
@@ -102,8 +102,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						   <strong>온라인교육센터</strong>
 						</a>
 		
-						<div id="dynamicMenu_J" onclick="setMainActive(this)"></div>
-						<div id="dynamicMenu_T" onclick="setMainActive(this)"></div>
+						<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
+						<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
 					</div>
 		
 					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
@@ -139,13 +139,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        `;
 	        menuHTML_T += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>경영분석</strong>
+	                <strong>진료비분석</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '1') {
 	        menuHTML += `
 	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>경영분석</strong>
+	                <strong>진료비분석</strong>
 	            </a>
 	        `;
 	    } else if (s_conact_gb === '2') {

@@ -1,26 +1,17 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+   pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap"rel="stylesheet">
-<link href="/images/icons/winnernet.ico" rel="icon" type="image/x-icon" >
-<!-- Customized Bootstrap Stylesheet -->
-<!-- Bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
-<link href="/css/winmc/bootstrap.css"   rel="stylesheet">
-<link href="/css/winmc/style.css?v=123" rel="stylesheet">
-<link href="/css/winmc/style_login.css?v=123" rel="stylesheet">
-<!-- JavaScript -->
-<script type="text/javascript" src="/js/winmc/message.js"></script>
 
-<!-- Template Javascript -->
+<link href="/images/icons/winnernet.ico" rel="icon" type="image/x-icon" >
+
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+
 <!-- ============================================================== -->
 <!-- sidebar start -->
-<style>
-</style>
+
 <div class="nav-left-sidebar" style="background-color: white; color: black;">
     <div class="menu-list">
         <nav class="navbar navbar-expand-lg navbar-white">
@@ -35,8 +26,16 @@
                         Menu
                     </li>
                     <li class="nav-item ">
-                        <a class="nav-item nav-link" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>                        
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>                        
                     </li>
+                   <li class="nav-item menu-section" id="menu-c">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/total_Report.do" ><i class="fa fa-calculator"></i>진료비-분석 현황</a>
+                   </li>
+                
+                    <li class="nav-item menu-section" id="menu-d">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" ><i class="fa fa-list-ol"></i>적정성-평가 현황</a>
+                    </li>
+                
                 
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
@@ -81,29 +80,26 @@
                                             <li class="nav-item" id = "comcode">
                                                 <a class="nav-item nav-link"  href="/base/commcd.do">공통코드</a>
                                             </li>
-									        <li class="nav-item">
-									            <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
-									              data-target="#hira-code" aria-controls="hira-code">심평원고시코드
-									            </a>
-									            <div id="hira-code" class="collapse submenu" style="background-color: white; padding-left: 15px;">
-									                <ul class="nav flex-column">
-									                    <li class="nav-item">
-									                        <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
-									                    </li>
-									                    <li class="nav-item">
-									                        <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
-									                    </li>
-									                    <li class="nav-item">
-									                        <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
-									                    </li>
-									                </ul>
-									            </div>
-									        </li>                                         
+                                   <li class="nav-item">
+                                       <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+                                         data-target="#hira-code" aria-controls="hira-code">심평원고시코드
+                                       </a>
+                                       <div id="hira-code" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+                                           <ul class="nav flex-column">
+                                               <li class="nav-item">
+                                                   <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
+                                               </li>
+                                               <li class="nav-item">
+                                                   <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
+                                               </li>
+                                               <li class="nav-item">
+                                                   <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
+                                               </li>
+                                           </ul>
+                                       </div>
+                                   </li>                                         
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/disecd.do">상병코드</a>
-                                            </li>
-                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/wvalcd.do">가중치코드</a>
                                             </li>
                                             <li class="nav-item" id = "ratecode">
                                                 <a class="nav-item nav-link"  href="/base/claimcd.do">유형별 청구율관리</a>
@@ -120,7 +116,7 @@
                                                 <a class="nav-item nav-link"  href="/base/samvercd.do">샘파일 버전</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">적정성 지표</a>
+                                                <a class="nav-item nav-link"  href="/base/wvalcd.do">적정성지표</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -130,9 +126,9 @@
                                                                              aria-controls="base-info-3">병원정보 관리</a>
                                     <div id="base-info-3" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-											<li class="nav-item">
-											    <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
-											</li>
+                                 <li class="nav-item">
+                                     <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
+                                 </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/mbrcd.do">회원가입현황</a>
                                             </li>
@@ -174,26 +170,26 @@
                         <div id="file-upload" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/base/magamFileUpload.do">청구.평가 업로드</a>
+                                    <a class="nav-item nav-link"  href="/main/magamFileUpload.do">청구.평가 업로드</a>
                                 </li>
                                 <li class="nav-item">
-						            <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
-						              data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
-						            </a>
-						            <div id="lic_excel" class="collapse submenu" style="background-color: white; padding-left: 15px;">
-						                <ul class="nav flex-column">
-						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/user/licexcel.do">인력신고현황 엑셀</a>
-						                    </li>
-						                </ul>
-						            </div>
-							   </li>                                     
+                              <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+                                data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
+                              </a>
+                              <div id="lic_excel" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+                                  <ul class="nav flex-column">
+                                      <li class="nav-item">
+                                          <a class="nav-item nav-link" href="/user/licexcel.do">인력신고현황 엑셀</a>
+                                      </li>
+                                  </ul>
+                              </div>
+                        </li>                                     
                             </ul>
                         </div>
                     </li>
                     
                     <!-- 진료비 분석 보고서 -->    
-                    <li class="nav-item menu-section" id="menu-c">
+                    <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
                                                                                          <i class="fas fa-cogs"></i>분야별통계</a>
                         <div id="management" class="collapse submenu" style="background-color: white;">
@@ -230,17 +226,17 @@
                                     <div id="management-2" class="collapse submenu" style="background-color: white;">
                                       <ul class="nav flex-column">
                                             <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_08.do">정액환자(비청구분)</a>
-						                    </li>
-						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_081.do">정액환자(전체)</a>
-						                    </li>
-						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_082.do">행위환자</a>
-						                    </li>
-						                    <li class="nav-item">
-						                        <a class="nav-item nav-link" href="/tong/f_tong_083.do">전체환자</a>
-						                    </li>
+                                          <a class="nav-item nav-link" href="/tong/f_tong_08.do">정액환자(비청구분)</a>
+                                      </li>
+                                      <li class="nav-item">
+                                          <a class="nav-item nav-link" href="/tong/f_tong_081.do">정액환자(전체)</a>
+                                      </li>
+                                      <li class="nav-item">
+                                          <a class="nav-item nav-link" href="/tong/f_tong_082.do">행위환자</a>
+                                      </li>
+                                      <li class="nav-item">
+                                          <a class="nav-item nav-link" href="/tong/f_tong_083.do">전체환자</a>
+                                      </li>
                                       </ul>
                                     </div>
                                 </li>
@@ -261,10 +257,10 @@
                                     <div id="management-4" class="collapse submenu" style="background-color: white;">
                                       <ul class="nav flex-column">
                                              <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비 구성비</a>
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_03.do">항목별 건당진료비 구성</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/tong/f_tong_09.do">정액환자 비청구분 항목비율</a>
+                                                <a class="nav-item nav-link"  href="/tong/f_tong_09.do">정액환자 비청구분 항목비</a>
                                             </li>
                                       </ul>
                                     </div>
@@ -273,23 +269,20 @@
                         </div>
                     </li>
                     <!-- 적정성 평가 보고서 -->
-                    <!--  -->
+                    <!--
                     <li class="nav-item menu-section" id="menu-d">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#adequacy" aria-controls="adequacy">
                                                                                                          <i class="fas fa-notes-medical"></i>지표별점수확인</a>
                         <div id="adequacy" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">                            
-                            	<li class="nav-item">
-                        			<a class="nav-item nav-link"  href="/base/sugacd.do" ><i class="fas"></i>구조영역</a>
-                    			</li>
+                               <li class="nav-item">
+                                 <a class="nav-item nav-link"  href="/base/sugacd.do" ><i class="fas"></i>구조영역</a>
+                             </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#adequacy-1" 
                                                                                                          aria-controls="adequacy-1">진료영역 지표별</a>
                                     <div id="adequacy-1" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/sugacd.do">유치도뇨관이 있는 환자율</a>
-                                            </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/sugacd.do">정액수가 현황</a>
                                             </li>
@@ -321,13 +314,13 @@
                             </ul>
                         </div>
                     </li>
-                    <!--  -->
+                    -->
                 </ul>
             </div>            
         </nav>
         
         <div class="fixed-sidebar-info-box">
-	        <div class="col-xl-12" >
+           <div class="col-xl-12" >
                 <div class="card border-3 border-top border-top-primary">
                     <div class="card-body">
                         <img class="img-fluid" src="/images/winct/c-tel-01.png" alt="고객센터">
@@ -336,20 +329,20 @@
                         </div>
                         <nav aria-label="..."></nav>
                         <ul class="pagination pagination-xl">
-                       		<li class="page-item">
-                       			<a href="#"><img class="img-fluid" src="/images/winct/KKO_10_1.png" alt="카카오상담"></a>
-                       		</li>
+                             <li class="page-item">
+                                <a href="#"><img class="img-fluid" src="/images/winct/KKO_10_1.png" alt="카카오상담"></a>
+                             </li>
                             <li class="page-item">
-                            	<a href="#" onclick="fnasq_main();"><img class="img-fluid" src="/images/winct/1-1_10_1.png" alt="1대1상담"></a>
+                               <a href="#" onclick="fnasq_main();"><img class="img-fluid" src="/images/winct/1-1_10_1.png" alt="1대1상담"></a>
                             </li>
                             <li class="page-item">
-                            	<a href="#" onclick="loadFaqData();"> <img class="img-fluid" src="/images/winct/FAQ_10_1.png" alt="자주듣는질문"></a>
+                               <a href="#" onclick="loadFaqData();"> <img class="img-fluid" src="/images/winct/FAQ_10_1.png" alt="자주듣는질문"></a>
                             </li>
-                       	</ul>                        
+                          </ul>                        
                     </div>
                 </div>
             </div>
-	    </div>
+       </div>
         
     </div>
 </div>
@@ -374,166 +367,166 @@
 </div>
 <!-- 기존 1대1 질의응답  -->
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
-	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-	<div class="modal-dialog modal-lg modal-dialog-centered" 
-		style="max-width: 900px; width: 90%;">
-		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
-		<div class="modal-content shadow-lg rounded-4"
-			style="height: auto; max-height: 90vh; border: none;">
-			<div class="modal-header bg-light"
-				style="height: 35px; padding: 3px 8px;">
-				<h5 class="modal-title">상담문의 목록</h5>
-			</div>
-			<!-- modal-body의 높이를 줄여서 최대 65vh 정도로 제한 -->
-			<div class="modal-body bg-light"
-				style="max-height: 60vh; overflow-y: auto;">
-				<div class="d-flex align-items-center justify-content-between mb-3">
-					<div class="d-flex">
-						<input type="text" id="searchText"
-							class="form-control rounded-3 border" placeholder="검색어를 입력하세요."
-							onkeypress="if(event.keyCode == 13){fnasq_Search();}"
-							style="width: 300px;">
-						<button type="button" class="btn btn-warning rounded-3 ms-2"
-							onclick="fnasq_Search()" style="margin-left: 8px;">
-							<i class="fas fa-search"></i> 검색
-						</button>
-					</div>
-					<div>
-						<button class="btn btn-outline-info" onclick="fn_asqsave('QD');">질문취소</button>
-						<button class="btn btn-outline-info" onclick="fn_asqsave('QI');">질문등록</button>
-						<button class="btn btn-outline-info" onclick="fn_asqsave('QU');">답변조회(수정)</button>
-						<button class="btn btn-outline-dark" onclick="asqMainClose();">
-							닫기 <i class="fas fa-times"></i>
-						</button>
-					</div>
-				</div>
-				<div class="table-responsive rounded-3 shadow-sm mt-1 border"
-					style="height: 500px; overflow-y: auto;">
-					<table id="asq_infoTable" class="table table-bordered">
-						<colgroup>
-							<col style="width: 50px">
-							<col style="width: 180px">
-							<!-- 질문제목 너비 줄임 -->
-							<col style="width: 180px">
-							<!-- 질문내용 너비 줄임 -->
-							<col style="width: 60px">
-							<col style="width: 60px">
-							<col style="width: 60px">
-							<col style="width: 120px">
-						</colgroup>
-						<thead>
-							<tr>
-								<th>번호</th>
-								<th title="질문제목">질문제목</th>
-								<th title="질문내용">질문내용</th>
-								<th>질문상태</th>
-								<th>답변상태</th>
-								<th>질문자</th>
-								<th>작성일</th>
-							</tr>
-						</thead>
-						<tbody id="asqdataArea" style="background-color: white;">
-							<tr>
-								<td colspan="7" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<!-- modal-footer의 패딩을 줄여서 높이를 좁힘 -->
-			<div class="modal-footer"
-				style="background-color: white; padding: 5px 10px;">
-				<!-- 필요한 footer 내용 추가 -->
-			</div>
-		</div>
-	</div>
+   data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+   <div class="modal-dialog modal-lg modal-dialog-centered" 
+      style="max-width: 900px; width: 90%;">
+      <!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
+      <div class="modal-content shadow-lg rounded-4"
+         style="height: auto; max-height: 90vh; border: none;">
+         <div class="modal-header bg-light"
+            style="height: 35px; padding: 3px 8px;">
+            <h5 class="modal-title">상담문의 목록</h5>
+         </div>
+         <!-- modal-body의 높이를 줄여서 최대 65vh 정도로 제한 -->
+         <div class="modal-body bg-light"
+            style="max-height: 60vh; overflow-y: auto;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+               <div class="d-flex">
+                  <input type="text" id="searchText"
+                     class="form-control rounded-3 border" placeholder="검색어를 입력하세요."
+                     onkeypress="if(event.keyCode == 13){fnasq_Search();}"
+                     style="width: 300px;">
+                  <button type="button" class="btn btn-warning rounded-3 ms-2"
+                     onclick="fnasq_Search()" style="margin-left: 8px;">
+                     <i class="fas fa-search"></i> 검색
+                  </button>
+               </div>
+               <div>
+                  <button class="btn btn-outline-info" onclick="fn_asqsave('QD');">질문취소</button>
+                  <button class="btn btn-outline-info" onclick="fn_asqsave('QI');">질문등록</button>
+                  <button class="btn btn-outline-info" onclick="fn_asqsave('QU');">답변조회(수정)</button>
+                  <button class="btn btn-outline-dark" onclick="asqMainClose();">
+                     닫기 <i class="fas fa-times"></i>
+                  </button>
+               </div>
+            </div>
+            <div class="table-responsive rounded-3 shadow-sm mt-1 border"
+               style="height: 500px; overflow-y: auto;">
+               <table id="asq_infoTable" class="table table-bordered">
+                  <colgroup>
+                     <col style="width: 50px">
+                     <col style="width: 180px">
+                     <!-- 질문제목 너비 줄임 -->
+                     <col style="width: 180px">
+                     <!-- 질문내용 너비 줄임 -->
+                     <col style="width: 60px">
+                     <col style="width: 60px">
+                     <col style="width: 60px">
+                     <col style="width: 120px">
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>번호</th>
+                        <th title="질문제목">질문제목</th>
+                        <th title="질문내용">질문내용</th>
+                        <th>질문상태</th>
+                        <th>답변상태</th>
+                        <th>질문자</th>
+                        <th>작성일</th>
+                     </tr>
+                  </thead>
+                  <tbody id="asqdataArea" style="background-color: white;">
+                     <tr>
+                        <td colspan="7" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+         </div>
+         <!-- modal-footer의 패딩을 줄여서 높이를 좁힘 -->
+         <div class="modal-footer"
+            style="background-color: white; padding: 5px 10px;">
+            <!-- 필요한 footer 내용 추가 -->
+         </div>
+      </div>
+   </div>
 </div>
 <!--질문응답-->
 <div class="modal fade" id="asq_main" tabindex="-1" style= "margin-top:-25px"
-	data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-	<div
-		class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
-		<div class="modal-content"
-			style="height: 74%; display: flex; flex-direction: column;">
-			<div class="modal-header  bg-light">
-				<h6 class="modal-title">문의 등록</h6>
-				<div class="form-row">
-					<div class="col-sm-12 mb-2" style="text-align: right;">
-						<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" 
-						                         onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
-						</button>
-						<button type="button" class="btn btn-outline-dark"
-							data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
-						</button>
-					</div>
-				</div>
-			</div>
-			<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-				method="post" enctype="multipart/form-data">
-				<div class="modal-body text-left flex-fill overflow-auto">
-					<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-					<input  type="hidden" name="iud"     id="iud" />
-					<input	type="hidden" name="asqSeq"  id="asqSeq" /> 
-					<input  type="hidden" name="fileGb2"  id="fileGb2" value="4" /> 
-					<input  type="hidden" name="hospCd2"  id="hospCd2" /> 
-					<input  type="hidden" name="regUser" id="regUser" /> 
-					<input  type="hidden" name="updUser" id="updUser" />
-					<input  type="hidden" name="regIp"   id="regIp" /> 
-					<input  type="hidden" name="updIp"   id="updIp" />
-					<div class="form-group ">
-						<label for="qstnTitle"
-							class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
-						<div class="col-10 col-lg-10">
-							<input id="qstnTitle" name="qstnTitle" type="text" required
-								class="form-control" placeholder="">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="qstnConts"
-							class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
-						<div class="col-10 col-lg-10">
-							<textarea id="qstnConts" name="qstnConts" required
-								placeholder="" class="form-control" rows="5"></textarea>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="qstnWan"
-							class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
-						<div class="col-4 col-lg-4">
-							<select id="qstnWan" name="qstnWan" class="custom-select"
-								style="height: 35px; font-size: 14px;">
-								<option value="">선택</option>
-								<option value="Y">Y. 질문완료</option>
-								<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
-							</select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="ansrConts"
-							class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
-						<div class="col-10 col-lg-10">
-							<textarea id="ansrConts" name="ansrConts"
-								placeholder="" class="form-control" rows="8"></textarea>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="ansrWan"
-							class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
-						<div class="col-4 col-lg-4">
-							<select id="ansrWan" name="ansrWan" class="custom-select"
-								style="height: 35px; font-size: 14px;">
-								<option value="">선택</option>
-								<option value="Y">Y. 답변완료</option>
-								<option value="N">N. 진행중</option>
-							</select>
-						</div>
-					</div>
-				</div>
-			</form:form>
-		</div>
-		<div class="modal-footer"></div>
-	</div>
+   data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
+   <div
+      class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+      style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
+      <div class="modal-content"
+         style="height: 74%; display: flex; flex-direction: column;">
+         <div class="modal-header  bg-light">
+            <h6 class="modal-title">문의 등록</h6>
+            <div class="form-row">
+               <div class="col-sm-12 mb-2" style="text-align: right;">
+                  <button type="button" id="save_btn" type="submit" class="btn btn-outline-info" 
+                                           onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-dark"
+                     data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
+                  </button>
+               </div>
+            </div>
+         </div>
+         <form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
+            method="post" enctype="multipart/form-data">
+            <div class="modal-body text-left flex-fill overflow-auto">
+               <!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
+               <input  type="hidden" name="iud"     id="iud" />
+               <input   type="hidden" name="asqSeq"  id="asqSeq" /> 
+               <input  type="hidden" name="fileGb2"  id="fileGb2" value="4" /> 
+               <input  type="hidden" name="hospCd2"  id="hospCd2" /> 
+               <input  type="hidden" name="regUser" id="regUser" /> 
+               <input  type="hidden" name="updUser" id="updUser" />
+               <input  type="hidden" name="regIp"   id="regIp" /> 
+               <input  type="hidden" name="updIp"   id="updIp" />
+               <div class="form-group ">
+                  <label for="qstnTitle"
+                     class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
+                  <div class="col-10 col-lg-10">
+                     <input id="qstnTitle" name="qstnTitle" type="text" required
+                        class="form-control" placeholder="">
+                  </div>
+               </div>
+               <div class="form-group">
+                  <label for="qstnConts"
+                     class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
+                  <div class="col-10 col-lg-10">
+                     <textarea id="qstnConts" name="qstnConts" required
+                        placeholder="" class="form-control" rows="5"></textarea>
+                  </div>
+               </div>
+               <div class="form-group">
+                  <label for="qstnWan"
+                     class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
+                  <div class="col-4 col-lg-4">
+                     <select id="qstnWan" name="qstnWan" class="custom-select"
+                        style="height: 35px; font-size: 14px;">
+                        <option value="">선택</option>
+                        <option value="Y">Y. 질문완료</option>
+                        <option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
+                     </select>
+                  </div>
+               </div>
+               <div class="form-group">
+                  <label for="ansrConts"
+                     class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
+                  <div class="col-10 col-lg-10">
+                     <textarea id="ansrConts" name="ansrConts"
+                        placeholder="" class="form-control" rows="8"></textarea>
+                  </div>
+               </div>
+               <div class="form-group">
+                  <label for="ansrWan"
+                     class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
+                  <div class="col-4 col-lg-4">
+                     <select id="ansrWan" name="ansrWan" class="custom-select"
+                        style="height: 35px; font-size: 14px;">
+                        <option value="">선택</option>
+                        <option value="Y">Y. 답변완료</option>
+                        <option value="N">N. 진행중</option>
+                     </select>
+                  </div>
+               </div>
+            </div>
+         </form:form>
+      </div>
+      <div class="modal-footer"></div>
+   </div>
 </div>
 <script>
 window.addEventListener("DOMContentLoaded", function() {
@@ -550,19 +543,19 @@ function hosp_conact() {
     const ratecode = document.getElementById("ratecode");
     const samcode  = document.getElementById("samcode");
     if (samcode) {
-    	samcode.style.display = "none";  // 샘버젼  
+       samcode.style.display = "none";  // 샘버젼  
     }  
     if (comcode) {
-    	comcode.style.display = "none";  // 공통코드 
+       comcode.style.display = "none";  // 공통코드 
     }    
     if (ratecode) {
-    	ratecode.style.display = "none";  // 청구율 
+       ratecode.style.display = "none";  // 청구율 
     }  
     if (hospcont) {
-    	hospcont.style.display = "none";  // 계약정보  
+       hospcont.style.display = "none";  // 계약정보  
     }
     if (wnnauth1) {
-    	wnnauth1.style.display = "none";  // 운영정보 
+       wnnauth1.style.display = "none";  // 운영정보 
     }
 }
 function loadFaqData() {
@@ -579,23 +572,23 @@ function loadFaqData() {
         success: function (response) {
             let faqHtml = "";
             if (response.error_code === "0" && Array.isArray(response.data) && response.data.length > 0) {
-            	$.each(response.data, function (index, faq) {
-            	    let question = String(faq.qstnConts || "질문이 없습니다.").trim();
-            	    let answer   = String(faq.ansrConts || "답변이 없습니다.").trim();
+               $.each(response.data, function (index, faq) {
+                   let question = String(faq.qstnConts || "질문이 없습니다.").trim();
+                   let answer   = String(faq.ansrConts || "답변이 없습니다.").trim();
 
-            	    // div 요소 동적 생성
-            	    let faqItem = $("<div>", { class: "faq-item" });
-            	    
-            	    let faqQuestion = $("<div>", { class: "faq-question", onclick: "fnFaqToggle(this)" }).text(question);
-            	    let arrowSpan = $("<span>", { class: "arrow" }).text("▼");
-            	    faqQuestion.append(arrowSpan);
+                   // div 요소 동적 생성
+                   let faqItem = $("<div>", { class: "faq-item" });
+                   
+                   let faqQuestion = $("<div>", { class: "faq-question", onclick: "fnFaqToggle(this)" }).text(question);
+                   let arrowSpan = $("<span>", { class: "arrow" }).text("▼");
+                   faqQuestion.append(arrowSpan);
 
-            	    let faqAnswer = $("<div>", { class: "faq-answer", style: "display: none;" }).text(answer);
+                   let faqAnswer = $("<div>", { class: "faq-answer", style: "display: none;" }).text(answer);
 
-            	    faqItem.append(faqQuestion).append(faqAnswer);
+                   faqItem.append(faqQuestion).append(faqAnswer);
 
-            	    $("#faqList").append(faqItem); // 리스트에 추가
-            	});
+                   $("#faqList").append(faqItem); // 리스트에 추가
+               });
             } else {
                 faqHtml = `<p class="text-muted text-center">검색된 결과가 없습니다.</p>`;
             }
@@ -634,7 +627,7 @@ function asqMainClose() {
 }   
 
 function fnasq_main() {
-      	
+         
     fnasq_Search();
     $('#asq_main_tab').modal('show') ;
     $("#asqdataArea").empty();
@@ -652,49 +645,49 @@ function fnasq_main() {
 }    
   
 function fnasq_Search() {
-	$("#asq_infoTable tr").attr("class", ""); 
+   $("#asq_infoTable tr").attr("class", ""); 
     if (document.getElementById("asq_regForm")) {
         document.getElementById("asq_regForm").reset();
     }
     $("#asqSeq").val("") ;
     $("#asqdataArea").empty();
     $.ajax({
-	   	url : '/mangr/asqList.do',
-	    type : 'post',
-	    data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
-		dataType : "json",
-	   	success : function(data) {
-	   		if(data.error_code != "0") return;
+         url : '/mangr/asqList.do',
+       type : 'post',
+       data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
+      dataType : "json",
+         success : function(data) {
+            if(data.error_code != "0") return;
 
-	   		if(data.resultCnt > 0 ){
-	    		var dataTxt = "";
-	    		for(var i=0 ; i < data.resultCnt; i++){
-	    			dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
-	    			                                                                + data.resultLst[i].asqSeq+'">';
-	 				dataTxt += 	"<td>" + (i+1)  + "</td>" ; 
-	 				dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
-					dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;	
-					dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;	
-	 				dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;	
-	 				dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
-					dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
-					dataTxt +=  "</tr>";
-		            $("#asqdataArea").append(dataTxt);
-	        	 }
-		 	  }else{
-				  $("#asqdataArea").append("<tr><td colspan='7'>검색된 정보가 없습니다.</td></tr>");
-			  }
-	      }
+            if(data.resultCnt > 0 ){
+             var dataTxt = "";
+             for(var i=0 ; i < data.resultCnt; i++){
+                dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
+                                                                                + data.resultLst[i].asqSeq+'">';
+                dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
+                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
+               dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
+               dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;   
+                dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
+                dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
+               dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
+               dataTxt +=  "</tr>";
+                  $("#asqdataArea").append(dataTxt);
+               }
+            }else{
+              $("#asqdataArea").append("<tr><td colspan='7'>검색된 정보가 없습니다.</td></tr>");
+           }
+         }
    });
 }
 /*질의응답모달*/
 function asqModalOpen() {
-	$("#hospCd2").val(getCookie("hospid")  || '') ;
-	$("#updUser").val(getCookie("userid") || '') ;
-	$("#regUser").val(getCookie("userid") || '') ;
-	$("#updIp").val(getCookie("s_connip") || '') ;
-	$("#regIp").val(getCookie("s_connip") || '') ;
-	$("#iud").val(uidGubun);
+   $("#hospCd2").val(getCookie("hospid")  || '') ;
+   $("#updUser").val(getCookie("userid") || '') ;
+   $("#regUser").val(getCookie("userid") || '') ;
+   $("#updIp").val(getCookie("s_connip") || '') ;
+   $("#regIp").val(getCookie("s_connip") || '') ;
+   $("#iud").val(uidGubun);
     $('#asq_main').modal('show');
 } 
 function asqModalClose() {
@@ -705,13 +698,13 @@ var  lfileGb  ;
 var  lregUser ;
 var  lregIp   ;
 function fn_asqDtlSearch(asqSeq) { 
-	if (!asqSeq) return;
+   if (!asqSeq) return;
 
-	$("#asqSeq").val(asqSeq);
+   $("#asqSeq").val(asqSeq);
 
-	// row 클릭 시 바탕색 변경 처리
-	$("#asq_infoTable tr").removeClass("tr-primary"); // 모든 행 클래스 초기화
-	$("#row_" + asqSeq).addClass("tr-primary");       // 선택된 행에 강조 클래스 추가
+   // row 클릭 시 바탕색 변경 처리
+   $("#asq_infoTable tr").removeClass("tr-primary"); // 모든 행 클래스 초기화
+   $("#row_" + asqSeq).addClass("tr-primary");       // 선택된 행에 강조 클래스 추가
 }
 function fn_asqsave(iud) {
     $("#iud").val(iud); // 입력(I), 수정(U), 삭제(D)
@@ -719,8 +712,8 @@ function fn_asqsave(iud) {
 
     if (iud.substring(1, 2) === "U" || iud.substring(1, 2) === "D") {
         if (!asqSeq) {
-		    messageBox("1", "<h6>해당자료를 선택하세요.!!</h6><p></p>", "", "", "");
-		    return; 
+          messageBox("1", "<h6>해당자료를 선택하세요.!!</h6><p></p>", "", "", "");
+          return; 
         }
     }
     uidGubun = iud;
@@ -760,8 +753,8 @@ function fn_asqsave(iud) {
                 if ($("#ansrWan").val().trim() === "Y") {
                     $("#save_btn").hide(); // 답변내용 숨기기
                 }else{
-                	$("#save_btn").show(); // 답변내용 
-               	}
+                   $("#save_btn").show(); // 답변내용 
+                  }
                 if (uidGubun.substring(0, 1) == "Q") {
                     // 질문
                     $("#qstnTitle").prop("readonly", "");
@@ -792,9 +785,9 @@ function fn_asqsave(iud) {
                     lfileGb  = data.result.fileGb  ;  
                     lregUser = data.result.regUser ;
                     lregIp   = data.result.regIp ;
-                	fnasq_SaveProc(); // 즉시 삭제 실행
+                   fnasq_SaveProc(); // 즉시 삭제 실행
                 } else if (ansrStat === "Y") {
-                	messageBox("1", "<h6>답변완료된 항목은 삭제할 수 없습니다.!!</h6><p></p>", "", "", "");
+                   messageBox("1", "<h6>답변완료된 항목은 삭제할 수 없습니다.!!</h6><p></p>", "", "", "");
                 } else {
                     alert("답변 상태를 확인할 수 없습니다."); // ansrStat이 null 또는 undefined일 때
                 }
@@ -812,13 +805,13 @@ function fnasq_SaveProc() {
     if (uidGubun.substring(1, 2) != "D") {
         if ( $("#qstnTitle").val() == "") { 
             messageBox("1", "<h6>질문제목을 입력하세요.!!</h6><p></p>", "", "", "");
-	        return; 
+           return; 
         }         
         if ( $("#qstnConts").val() == "") {
             messageBox("1", "<h6>질문내용을 입력하세요.!!</h6><p></p>", "", "", "");
-	        return; 
+           return; 
         }         
-	    formData = $("form[name='asq_regForm']").serialize();
+       formData = $("form[name='asq_regForm']").serialize();
     }else{
         formData = {
                    asqSeq:    lasqSeq,   // 문의글 고유번호
@@ -831,18 +824,18 @@ function fnasq_SaveProc() {
         messageBox("2", "<h6>삭제 하시겠습니까?</h6><p></p>", "", "", "deleteAction");
        
     }else{
-    	 execute() ; 
+        execute() ; 
     }
     window.modalClose = function(flag, jobs, yesno) {
         console.log("modalClose 실행됨! flag:", flag, "jobs:", jobs, "yesno:", yesno);
 
         if (jobs === "deleteAction") {
             if (flag === "N") {
-    	        $("#messageDialog").modal("hide"); // 모달 닫기
+               $("#messageDialog").modal("hide"); // 모달 닫기
                 return; // 'N'을 선택하면 아무 작업도 하지 않음
             }
             if (flag === "Y") {
-            	execute(); // 삭제 실행 함수 호출
+               execute(); // 삭제 실행 함수 호출
             }
         }
         $("#messageDialog").modal("hide"); // 모달 닫기
@@ -909,8 +902,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-</script>		
+</script>      
 <!-- ============================================================== -->
 <!-- sidebar end -->
 <!-- ============================================================== -->
+        
         

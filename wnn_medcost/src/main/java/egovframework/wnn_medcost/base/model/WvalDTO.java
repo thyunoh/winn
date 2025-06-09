@@ -26,8 +26,22 @@ public class WvalDTO{
     private String regIp; // 입력IP
     private String updDttm; // 수정일시
     private String updUser; // 수정자
-    private String updIp; // 수정IP  
+    private String updIp; // 수정IP 
+    private String startDtTwo ;
+    private String newStartDt ;
 
+	public String getNewStartDt() {
+		return newStartDt;
+	}
+	public void setNewStartDt(String newStartDt) {
+		this.newStartDt = newStartDt;
+	}
+	public String getStartDtTwo() {
+		return startDtTwo;
+	}
+	public void setStartDtTwo(String startDtTwo) {
+		this.startDtTwo = startDtTwo;
+	}
 	public String getEndDt() {
 		return endDt;
 	}

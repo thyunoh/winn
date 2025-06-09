@@ -20,10 +20,60 @@
 		<div class="dashboard-wrapper">
             <div class="container-fluid  dashboard-content">
                 <div class="row">
-                    <!-- ============================================================== -->
-                    <!-- data table start -->
-                    <!-- ============================================================== -->                    
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+		 			<!-- 좌측 카드 : 상단 내용 (너비를 줄여서 50% 배정) -->
+					<div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 col-12" style="padding-right: 3px;">
+						<div class="card">
+							<div class="card-body">
+								<div class="form-row mb-2">
+									<div class="col-sm-6">
+		     							<div class="btn-group ml-auto">
+			                                <input id="codeCd" type="text" class="form-control d-none">
+			                                <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            
+			                                             onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
+										</div>
+									</div>
+									<button type="button" 
+									          class="btn btn-warning text-dark" 
+									          onclick="fn_CopyData()"style="margin-left: 20px; min-width: 70px;">복사작성
+									</button>
+								</div>
+								<div class="form-group d-flex align-items-center">
+								  <div class="form-row w-100" style="gap: 3px;"> <!-- Bootstrap 4에서는 gap 안됨 → 대신 margin 사용 -->
+								    
+								    <!-- 연도 -->
+								    <div class="col-auto" style="padding: 0 1px;">
+								      <select id="copyDate" name="copyDate" required class="custom-select">
+								        <!-- 연도 옵션 -->
+								      </select>
+								    </div>
+								
+								    <!-- 월 -->
+								    <div class="col-auto" style="padding: 0 1px;">
+								      <select id="copyMonth" name="copyMonth" required class="custom-select">
+								        <!-- 월 옵션 -->
+								      </select>
+								    </div>
+								
+								    <!-- 일 -->
+								    <div class="col-auto" style="padding: 0 1px;">
+								      <select id="copyDay" name="copyDay" required class="custom-select">
+								        <!-- 일 옵션 -->
+								      </select>
+								    </div>
+								
+								  </div>
+								</div>
+								<div style="width: 100%; margin-top: -15px;">
+									<table id="wv_tableName"
+										class="display nowrap stripe hover cell-border order-column responsive">
+										<!-- 테이블 내용 -->
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+		                  <!-- 우측 카드 : 기존 하단의 공통세부정보 영역을 이동 -->
+					<div class="col-xl-10 col-lg-10 col-md-10 col-sm-12 col-12" style="padding-right: 4px;">
                         <div class="card">                        	
                             <div class="card-body">  
 	                            <div class="form-row mb-2">
@@ -312,6 +362,7 @@
 		window.onload = function() { 
 			find_Check();
 		    comm_Check();
+		    start_date();
 		};
 
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
@@ -771,47 +822,44 @@
 		}	   
 		
 		//ajax 함수 정의
+		let startDt = "" ;
 		function dataLoad(data, callback, settings) {
+		    $('#' + wv_tableName.id).on("click", "tr", function () {
+		        let find = {};
 		
-			// var table = $(settings.nTable).DataTable();
-		    // table.processing(true); // 처리 중 상태 시작
-				
-		    let find = {};
-		   	
-		   	for (let findValue of findValues) {
-		   		let key = findValue.id === "feeType1" ? "feeType" : findValue.id;
-		   		find[key] = findValue.val;
-		   	}
-		   	
-		    $.ajax({
-		        type: "POST",
-		        url: "/base/wvalcdList.do",
-		        data: find,
-		        dataType: "json",
-		        
-		        // timeout: 10000, // 10초 후 타임아웃
-		        beforeSend : function () {
-		        	
-				},
-		        success: function(response) {
-		        	// table.processing(false); // 처리 중 상태 종료
-		            if (response && Object.keys(response).length > 0) {
-		            	callback(response);
-		            } else {
-		            	callback([]); // 빈 배열을 콜백으로 전달
-		            }
-		        },
-		        error: function(jqXHR, textStatus, errorThrown) {
-		        	// table.processing(false); // 처리 중 상태 종료		                    
-		            callback({
-		                data: []
-		            });
-		            // table.clear().draw(); // 테이블 초기화 및 다시 그리기
+		        for (let findValue of findValues) {
+		            let key = findValue.id === findValue.id;
+		            find[key] = findValue.val;
 		        }
+		
+		        let selectedRowData = $('#' + wv_tableName.id).DataTable().row(this).data(); // 선택한 행 데이터
+		        startDt = selectedRowData.startDtTwo;
+		
+		        $.ajax({
+		            type: "POST",
+		            url: "/base/wvalcdList.do",
+		            data: { startDt: startDt },
+		            dataType: "json",
+		            beforeSend: function () {
+		                let table = $('#' + tableName.id).DataTable();
+		                table.clear().draw(); // 기존 테이블 초기화
+		            },
+		            success: function (response) {
+		                if (response && Object.keys(response).length > 0) {
+		                    callback(response);
+		                } else {
+		                    callback([]); // 빈 배열 전달
+		                }
+		            },
+		            error: function (jqXHR, textStatus, errorThrown) {
+		                callback({
+		                    data: []
+		                });
+		            }
+		        });
 		    });
-		    
-		    
 		}
+
 		
 		
 		// DataTable에 자료 담기 Start	   
@@ -1477,9 +1525,208 @@
 		}
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
+	    	initWvResultsTable() ;
 	        applyAuthControl();
 	    });
+	    var wvedit_Data = null;
+	    var wvtmpedit_Data = null;
+	    var wv_tableName = document.getElementById('wv_tableName');
+	    var wv_dataTable = new DataTable();
+	    wv_dataTable.clear();
 
+	    function initWvResultsTable() {
+	        if (!$.fn.DataTable.isDataTable('#' + wv_tableName.id)) {
+	            wv_dataTable = $('#' + wv_tableName.id).DataTable({
+	                responsive: false,
+	                autoWidth: false,
+	                ordering: false,
+	                searching: false,
+	                lengthChange: true,
+	                info: false,
+	                paging: false,
+	                scrollY: "670px",
+	                fixedHeader: true,
+	                search: {
+	                    return: false,
+	                },
+	                rowCallback: function (row, data, index) {
+	                    $(row).find('td').css('padding', colPadding);
+	                },
+	                language: {
+	                    search: "자 료 검 색 : ",
+	                    emptyTable: "데이터가 없습니다.",
+	                    lengthMenu: "_MENU_",
+	                    info: "현재 _START_ - _END_ / 총 _TOTAL_건",
+	                    infoEmpty: "데이터 없음",
+	                    infoFiltered: "( _MAX_건의 데이터에서 필터링됨 )",
+	                    loadingRecords: "대기중...",
+	                    processing: "잠시만 기다려 주세요...",
+	                    paginate: {
+	                        next: "다음",
+	                        previous: "이전"
+	                    },
+	                },
+	                columns: [
+	                    {
+	                        title: "적용일자",
+	                        data: "startDtTwo",
+	                        className: "text-center",
+	                        render: function (data, type, row) {
+	                            if (type === 'display') {
+	                                return getFormat(data, 'd1');
+	                            }
+	                            return data;
+	                        }
+	                    },
+	                ],
+	                ajax: wvLoad,
+	            });
+
+			    /* 싱글 선택 start(선택표시) */
+			    if (row_Select) {
+			    	wv_dataTable.on('click', 'tbody tr', (e) => {
+				  	    let classList = e.currentTarget.classList;
+				  	 
+				  	    if (!classList.contains('selected')) {
+				  	    	wv_dataTable.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
+				  	        classList.add('selected');
+				  	    } 
+				  	});    
+			    }
+	        }
+	    }
+
+	    function wvLoad(data, callback, settings) {
+	        $.ajax({
+	            type: "POST",
+	            url: "/base/selwvalcdList.do",
+	            data: find,
+	            dataType: "json",
+	            beforeSend: function () {
+	                // 요청 전 처리 (필요 시 작성)
+	            },
+	            success: function (response) {
+	                if (response && Object.keys(response).length > 0) {
+	                    callback(response);
+	                } else {
+	                    callback({ data: [] }); // 빈 데이터 셋 반환
+	                }
+	            },
+	            error: function (jqXHR, textStatus, errorThrown) {
+	                callback({ data: [] }); // 에러 시 빈 데이터 반환
+	            }
+	        });
+	    }
+	    //현재년도롤 선텍되게 
+		function start_date() {
+		    const yearSelect = document.getElementById('copyDate');
+		    const monthSelect = document.getElementById('copyMonth');
+		    const daySelect = document.getElementById('copyDay');
+		    const currentDate = new Date();
+		    const currentYear = currentDate.getFullYear();
+		    const currentMonth = currentDate.getMonth() + 1; // 0-based index
+		    const currentDay = currentDate.getDate();
+		
+		    // 연도 추가
+		    for (let year = currentYear - 2; year <= currentYear + 3; year++) {
+		        const option = document.createElement('option');
+		        option.value = year;
+		        option.textContent = year;
+		        if (year === currentYear) option.selected = true;
+		        yearSelect.appendChild(option);
+		    }
+		
+		 // 월 추가 (1~12)
+		    for (let month = 1; month <= 12; month++) {
+		        const value = month.toString().padStart(2, '0');
+		        const option = document.createElement('option');
+		        option.value = value;
+		        option.textContent = value;
+		        if (month === currentMonth) option.selected = true;
+		        monthSelect.appendChild(option);
+		    }
+
+		    // 일 추가 (1~31)
+			function updateDays() {
+			    const year = parseInt(yearSelect.value);
+			    const month = parseInt(monthSelect.value);
+			    const daysInMonth = new Date(year, month, 0).getDate();
+			
+			    daySelect.innerHTML = ''; // 기존 옵션 초기화
+			    for (let day = 1; day <= daysInMonth; day++) {
+			        const value = day.toString().padStart(2, '0');
+			        const option = document.createElement('option');
+			        option.value = value;
+			        option.textContent = value;
+			        if (day === 1) option.selected = true; // 항상 1일이 선택되도록 설정
+			        daySelect.appendChild(option);
+			    }
+			}
+		
+		    // 초기 일 설정
+		    updateDays();
+		
+		    // 연도나 월이 변경되면 일자 업데이트
+		    yearSelect.addEventListener('change', updateDays);
+		    monthSelect.addEventListener('change', updateDays);
+		}
+		function fn_CopyData() {
+			Swal.fire({
+			    title: '복사진행여부',
+			    text: '복사 진행 하시겠습니까 ?',
+			    icon: 'question',
+			    showCancelButton: true,
+			    confirmButtonText: '예',
+			    cancelButtonText: '아니오',
+			    customClass: {
+			        popup: 'small-swal'
+			    }
+			}).then((result) => {
+			    // 사용자가 '예' 버튼을 클릭한 경우
+			    if (result.isConfirmed) {
+			        const year = document.getElementById("copyDate").value;
+			        const month = document.getElementById("copyMonth").value.padStart(2, '0');
+			        const day = document.getElementById("copyDay").value.padStart(2, '0');
+			        const newStartDt = year + month + day;
+
+			        let regUser = getCookie("s_userid") || "";
+			        let updUser = regUser;
+			        let regIp = getCookie("s_connip") || "";
+			        let updIp = regIp;
+
+			        // JSON 배열 생성
+			        const postData = [{
+			            startDt: startDt,
+			            newStartDt: newStartDt,
+			            regUser: regUser,
+			            updUser: updUser,
+			            regIp: regIp,
+			            updIp: updIp
+			        }];
+
+			        $.ajax({
+			            type: "POST",
+			            url: "/base/copwvalcdList.do",
+			            data: JSON.stringify(postData),
+			            contentType: "application/json",  // JSON으로 전송
+			            dataType: "text", // 서버에서 문자열을 반환하는 경우
+			            beforeSend: function () {
+			                let table = $('#' + tableName.id).DataTable(); // ❗ tableName.id 정의 필요
+			                table.clear().draw();
+			            },
+			            success: function (response) {
+			                messageBox("1", "<h6> 정상적으로 업데이트되었습니다. </h6>", mainFocus, "", "");
+		                    // ✅ 복사 후 데이터 다시 불러오기
+		                    location.reload();
+			            },
+			            error: function (jqXHR, textStatus, errorThrown) {
+			                console.error("에러 발생:", textStatus, errorThrown);
+			                alert("오류 발생: " + jqXHR.responseText);
+			            }
+			        });
+			    }
+			}); // 🔚 Swal.then 끝
+		}
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
