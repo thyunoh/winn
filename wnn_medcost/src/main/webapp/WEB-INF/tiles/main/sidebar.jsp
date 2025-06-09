@@ -106,12 +106,12 @@
                                         </ul>
                                     </div>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item" id="samcode">
                                     <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info-2" 
                                                                              aria-controls="base-info-2">기준코드 관리</a>
                                     <div id="base-info-2" class="collapse submenu" style="background-color: white;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item" id = "samcode">
+                                            <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/samvercd.do">샘파일 버전</a>
                                             </li>
                                             <li class="nav-item">
