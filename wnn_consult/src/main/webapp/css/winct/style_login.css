@@ -382,12 +382,14 @@
 /*로그인 */
 
 #userInfoCard {
-  display: none;
-  overflow: auto;
-  max-height: 220px;
-  width: 100%;           /* 부모 너비 100% 차지 */
-  box-sizing: border-box; /* 패딩, 보더 포함 크기 계산 */
-  margin-top: 10px;
+  display: block; /* 테스트용으로 표시 */
+  max-height: 180px;
+  width: 52%;
+  max-width: 600px;
+  box-sizing: border-box;
+  margin-top: 45px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .carousel-indicators {
   justify-content: flex-end;

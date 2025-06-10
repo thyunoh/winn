@@ -378,7 +378,8 @@ public class UserController {
 	try {
 		dto.setWnnchk("N") ;//병원검색하명 등록시 위너넷은 제외한다 
 		List<?> result = svc.selHospList(dto) ;
-		log.error("🚨 HospMdDTO  : " + dto.getWnnchk());
+		log.error("🚨 getWnnchk  : " + dto.getWnnchk());
+		log.error("🚨 getHospCd  : " + dto.getHospCd());
 		if (result == null || result.isEmpty()) {
             response.put("error_code", "10001");  // 데이터 없음
             response.put("message", "No data found");
@@ -399,13 +400,30 @@ public class UserController {
 	/*경여분석/적정성평가등록여부 */	
 	@RequestMapping(value= "/user/getReportList.do", method = RequestMethod.POST)
 	@ResponseBody
-	public List<UserDTO> getfileCdList(@ModelAttribute("DTO") UserDTO dto) {
+	public List<UserDTO> getReportList(@ModelAttribute("DTO") UserDTO dto) {
 	    List<UserDTO> resultLst = new ArrayList<>();
 	    try { 
 	        resultLst = svc.getReportList(dto);
 	        System.out.println("file 데이터 개수: " + resultLst);
 	        System.out.println("file 데이터 개수: " + resultLst.size());
 	        for (UserDTO dtoItem : resultLst) {
+	            System.out.println("DTO 내용: " + dtoItem);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
+	}	
+	/*회원가입시 계약에따라 병원명가져오기 */	
+	@RequestMapping(value= "/user/selHospsumList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<HospMdDTO> selHospsumList(@ModelAttribute("DTO") HospMdDTO dto) {
+	    List<HospMdDTO> resultLst = new ArrayList<>();
+	    try { 
+	        resultLst = svc.selHospsumList(dto);
+	        System.out.println("file 데이터 개수: " + resultLst);
+	        System.out.println("file 데이터 개수: " + resultLst.size());
+	        for (HospMdDTO dtoItem : resultLst) {
 	            System.out.println("DTO 내용: " + dtoItem);
 	        }
 	    } catch (Exception e) {

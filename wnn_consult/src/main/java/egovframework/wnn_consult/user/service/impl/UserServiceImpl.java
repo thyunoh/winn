@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public List<?> selHospsumList(HospMdDTO dto) throws Exception {
+	public List<HospMdDTO> selHospsumList(HospMdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.selHospsumList(dto);
 	}

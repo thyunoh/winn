@@ -460,17 +460,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						</form>
 
 						<!-- 로그인 성공 시 사용자 카드 -->
-						<div id="userInfoCard"
-						     style="display: none; overflow: auto; max-height: 220px;"
-						     class="mt-2">
+						<div id="userInfoCard"  style="display: none;"  class="mt-2">
 						    <div class="user_card">
 						        <div class="user_card-body" style="position: relative;">
-									<div style="position: relative; display: flex; align-items: center; font-size: 20px; margin-top: -20px; margin-left: -80px;">
+									<div style="position: relative; display: flex; align-items: center; font-size: 1.25rem; margin-top: -2vh;">
 									    
 									    <!-- 병원 이름 + 환영 메시지 그룹 -->
 										<div style="display: flex; align-items: center;">
 										    <h3 id="hosp_name" class="user_card-text"
-										        style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 16px; margin-left: 50px; padding-bottom: 2px;">
+										        style="font-size: 20px; border-bottom: 2px solid #000; margin-top: 16px; margin-left: -20px; padding-bottom: 2px;">
 										    </h3>
 										    <span style="margin-left: 10px;">님 환영합니다.</span>
 										</div>
@@ -486,17 +484,17 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							    
 																			    <!-- 좌측 input-grid -->
 										<div class="input-grid" style="margin-top: -10px; margin-left: -30px;">
-										    <div class="cell-label">업무구분</div>
+										    <div style ="font-size: 13px; font-weight: bold;">업무구분</div>
 										    <div id="month3" style ="font-size: 13px; font-weight: bold;"></div>
 										    <div id="month2" style ="font-size: 13px; font-weight: bold;"></div>
 										    <div id="month1" style ="font-size: 13px; font-weight: bold;"></div>
 										    
-										    <div class="cell-label">경영분석</div>
+										    <div style ="font-size: 13px; font-weight: bold;">경영분석</div>
 										    <div id="admin_three" style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_two"   style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="admin_one"   style ="font-size: 12px; font-weight: bold;">-</div>
 										
-										    <div class="cell-label">적정성평가</div>
+										    <div style ="font-size: 13px; font-weight: bold;"> 적정성평가</div>
 										    <div id="cost_three"  style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="cost_two"    style ="font-size: 12px; font-weight: bold;">-</div>
 										    <div id="cost_one"    style ="font-size: 12px; font-weight: bold;">-</div>
@@ -506,7 +504,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									    <div style="margin-right: 10px;">
 									        <button class="btn btn-primary"
 									                onclick="logout()"
-									                style="width: 150px; height: 70px; font-size: 16px; margin-left: 75px;">
+									                style="width: 150px; height: 70px; font-size: 16px; margin-left: 60px;">
 									            로그아웃
 									        </button>
 									    </div>
@@ -514,9 +512,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 									
 						        </div>
 						    </div>
-						    
 						</div>
-						
+                        <!-- userInfoCard 끝 -->
 					</div>
 				</div>
 
@@ -833,7 +830,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								<input id="hospCd" name="hospCd" type="text" class="form-control"
 									placeholder="병원코드를 입력하세요">
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" onclick="fnDupchk()">
-									<i class="fas fa-search"></i> 중복체크
+									<i class="fas fa-search"></i> 기관체크
 								</button>
 							</div>
 						</div>
@@ -848,6 +845,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								</button>
 							</div>
 						</div>
+						<div class="mt-2" style="font-size: 0.8rem; padding-left: 2px;">
+						    <span id="cont_name" style="color: blue;"></span>
+						    <span id="cont_startDt"></span>
+						    <span id="cont_endDt"></span>
+						    <span id="cont_name1"style="color: blue;"></span>
+						    <span id="cont_startDt1"></span>
+						    <span id="cont_endDt1"></span>
+						</div>						
+						
 						<!-- 이메일 -->
 						<div class="mb-3">
 							<label for="email" class="form-label" style="font-size: 0.9rem;">이메일</label>
@@ -979,7 +985,12 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	<script>	
 		    /*회원가입*/ 
 		    function fnmbrReg(){
-		        document.getElementById('memregForm').reset();
+		    	 const ids = ['cont_name', 'cont_startDt', 'cont_endDt', 'cont_name1', 'cont_startDt1', 'cont_endDt1'];
+		    	 ids.forEach(id => {
+		    	   const el = document.getElementById(id);
+		    	   if (el) el.textContent = '';  // 초기값 설정
+		    	 });
+		    	document.getElementById('memregForm').reset();
 		        // 모달 표시
 		        $('#mainModal').modal('show');
 		        // 배경 흐리게 처리
@@ -1101,9 +1112,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	              messageBox("1","<h6>병원정보를 입력하세요.!!</h6><p></p>","hospCd","","");
 	              return; 
 	        	}
-	        	if ($("email").val()  ===""){
-	        		messageBox("1","<h6>이메일정보를 입력하세요.!!</h6><p></p>","email","","");
-	                return;         		
+	        	let email = $("#email").val().trim();
+
+	        	if (email === "") {
+	        	    messageBox("1", "<h6>이메일 정보를 입력하세요.!!</h6><p></p>", "email", "", "");
+	        	    return;
 	        	}
 	        	$.ajax( {
 	        		type : "post",
@@ -2726,6 +2739,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			openHospitalSearch(function (data) {
 		        $("#hospCd").val(data.hospCd);
 		        $("#hospNm").val(data.hospNm);
+		        hospcont_search();
 		    });
 		});
 		
@@ -2788,9 +2802,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        var today = new Date();
 
 	        // 각각 이전 달부터 3개월 전까지 계산
-	        var prev1 = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-	        var prev2 = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-	        var prev3 = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+	        var prev1 = new Date(today.getFullYear(), today.getMonth() - 0, 1);
+	        var prev2 = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+	        var prev3 = new Date(today.getFullYear(), today.getMonth() - 2, 1);
 
 	        // YYYY-MM 포맷으로 바꾸는 함수
 	        function formatMonth(date) {
@@ -2832,7 +2846,69 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        console.error("팝업 요소를 찾을 수 없습니다.");
 	      }
 	    }
-    </script>
+	    $(document).ready(function () {
+	        $("#hospCd").on("keydown", function (e) {
+	            // Enter 키: 13, Tab 키: 9
+	            if (e.keyCode === 13 || e.keyCode === 9) {
+	                e.preventDefault(); // 기본 동작 방지 (필요한 경우)
+	                hospcont_search();
+	            }
+	        });
+	    });
+	    
+	    function hospcont_search() {
+	        const hospCd = document.getElementById("hospCd").value; // 👈 병원코드 입력값 가져오기
+	        $.ajax({
+	            type: "post",
+	            url: "user/selHospsumList.do",
+	            data: { hospCd: hospCd },
+	            dataType: "json",
+	            success: function (data) {
+	                console.log("서버 응답 데이터:", data);
+	                const cont = Array.isArray(data) && data.length > 0 ? data[0] : {};
+
+	                function setValue(id, value) {
+	                    const el = document.getElementById(id);
+	                    if (el) el.value = value || '';
+	                }
+
+	                function setText(id, value) {
+	                    const el = document.getElementById(id);
+	                    if (el) el.textContent = value || '';
+	                }
+
+	                function isDateInRange(start, end) {
+	                    const now = new Date();
+	                    const startDate = new Date(start);
+	                    const endDate = new Date(end);
+	                    if (isNaN(startDate) || isNaN(endDate)) return false;
+	                    return startDate <= now && now <= endDate;
+	                }
+
+	                // 기간 유효성 판단
+	                const rangeValid1 = isDateInRange(cont.startDt, cont.endDt);
+	                const rangeValid2 = isDateInRange(cont.startDt2, cont.endDt2);
+
+	                // 병원명 설정
+	                setValue('hospNm', cont.hospNm);
+
+	                // 날짜 조건에 따라 날짜 또는 공백 처리
+	                setText('cont_startDt',  rangeValid1 ? cont.startDt  +'~' : '');
+	                setText('cont_endDt',    rangeValid1 ? cont.endDt    : '');
+	                setText('cont_startDt1', rangeValid2 ? cont.startDt2 +'~' : '');
+	                setText('cont_endDt1',   rangeValid2 ? cont.endDt2   : '');
+
+	                const startDtVal  = document.getElementById('cont_startDt')?.textContent;
+	                const startDtVal2 = document.getElementById('cont_startDt1')?.textContent;
+
+	                setText('cont_name',  startDtVal  ? cont.name1 : '');
+	                setText('cont_name1', startDtVal2 ? cont.name2 : '');
+
+
+	            }
+	        });
+	    }
+	    </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>

@@ -30,8 +30,8 @@ public interface UserMapper {
 	
 	String    UserDupChk (MberDTO dto)       throws Exception;	
 
-	List<?>   selHospList(HospMdDTO dto)    throws Exception; 
-	List<?>   selHospsumList(HospMdDTO dto) throws Exception; 
+	List<?>           selHospList(HospMdDTO dto)    throws Exception; 
+	List<HospMdDTO>   selHospsumList(HospMdDTO dto) throws Exception; 
 	HospMdDTO   HospInfo(HospMdDTO dto)     throws Exception;
 	boolean   insertHosp(HospMdDTO dto)     throws Exception; 
 	boolean   updateHosp(HospMdDTO dto)     throws Exception; 
