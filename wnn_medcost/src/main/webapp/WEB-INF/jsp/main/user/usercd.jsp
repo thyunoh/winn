@@ -315,7 +315,7 @@
 		var gridColums = [];
 		var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 		var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-		var page_Hight = 300;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+		var page_Hight = 250;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 		var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse
 		
 		var datWaiting = true;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -1701,7 +1701,7 @@
 			            lengthChange:  true, // 페이지당 개수 변경 옵션 제거
 			            info:          false,
 			            paging:        false, // 페이징 제거
-			            scrollY:      "100px", // 세로 스크롤 추가
+			            scrollY:      "150px", // 세로 스크롤 추가
 			            fixedHeader: true, // 헤더 고정
 		    			search: {
 		    	            return:  false,          	            
