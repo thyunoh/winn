@@ -28,16 +28,16 @@ public interface UserMapper {
 
 	List<UserDTO>   getReportList(UserDTO dto)     throws Exception;
 	
-	String    UserDupChk (MberDTO dto)       throws Exception;	
+	String          UserDupChk (MberDTO dto)       throws Exception;	
 
-	List<?>           selHospList(HospMdDTO dto)    throws Exception; 
-	List<HospMdDTO>   selHospsumList(HospMdDTO dto) throws Exception; 
-	HospMdDTO   HospInfo(HospMdDTO dto)     throws Exception;
-	boolean   insertHosp(HospMdDTO dto)     throws Exception; 
-	boolean   updateHosp(HospMdDTO dto)     throws Exception; 
-	boolean   deleteHosp(HospMdDTO dto)     throws Exception; 	
-	boolean   insertHospDtlMonlyList(HospMdDTO dto)  throws Exception; 
-	HospMdDTO getHospmst(HospMdDTO dto)    throws Exception;
+	List<?>           selHospList(HospMdDTO dto)     throws Exception; 
+	List<HospMdDTO>   selHospsumList(HospMdDTO dto)  throws Exception; 
+	HospMdDTO         HospInfo(HospMdDTO dto)        throws Exception;
+	boolean           insertHosp(HospMdDTO dto)      throws Exception; 
+	boolean           updateHosp(HospMdDTO dto)      throws Exception; 
+	boolean           deleteHosp(HospMdDTO dto)      throws Exception; 	
+	boolean           insertHospDtlMonlyList(HospMdDTO dto)  throws Exception; 
+	HospMdDTO         getHospmst(HospMdDTO dto)              throws Exception;
 	
 	boolean   insertMember(MberDTO dto)      throws Exception; 
 	String    selMberDupChk(MberDTO dto)     throws Exception; 

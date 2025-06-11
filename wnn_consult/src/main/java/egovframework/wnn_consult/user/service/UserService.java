@@ -27,7 +27,7 @@ public interface UserService {
 	boolean   insertmbrUser (MberDTO dto)    throws Exception;
 	String    UserDupChk (MberDTO dto)       throws Exception;	
 	
-	List<?>   selHospList(HospMdDTO dto)    throws Exception; 
+	List<?>   selHospList(HospMdDTO dto)            throws Exception; 
 	List<HospMdDTO>   selHospsumList(HospMdDTO dto) throws Exception; 
 	HospMdDTO   HospInfo(HospMdDTO dto)     throws Exception;
 	boolean   insertHosp(HospMdDTO dto)     throws Exception; 

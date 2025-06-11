@@ -182,7 +182,6 @@ public class UserServiceImpl implements UserService {
 	public boolean Last_updateHOSP(UserDTO dto) throws Exception {
         return mapper.Last_updateHOSP(dto);
 	}
-
 	@Override
 	public List<UserDTO> getReportList(UserDTO dto) throws Exception {
 		// TODO Auto-generated method stub

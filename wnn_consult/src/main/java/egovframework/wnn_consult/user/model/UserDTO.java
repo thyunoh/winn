@@ -48,7 +48,7 @@ public class UserDTO{
     private String lastConuser ; 
     
     private String email;           
-    private String userTel;          // 사용자 전화번호
+    private String userTel;          //1 사용자 전화번호
 	private String hospNm ;
     private String useNot ;
     private String conactGb ;

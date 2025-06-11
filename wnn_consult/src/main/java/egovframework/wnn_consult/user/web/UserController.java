@@ -414,7 +414,7 @@ public class UserController {
 	    }
 	    return resultLst; // 리스트만 반환하여 JSON 배열 구조 유지
 	}	
-	/*회원가입시 계약에따라 병원명가져오기 */	
+	/*회원가입시 계약에따라 병원명가져오기 1*/	
 	@RequestMapping(value= "/user/selHospsumList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public List<HospMdDTO> selHospsumList(@ModelAttribute("DTO") HospMdDTO dto) {
