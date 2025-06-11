@@ -47,7 +47,7 @@ public interface UserMapper {
 	boolean          insertHospCont(HospConDTO dto)      throws Exception; 
 	boolean          updateHospCont(HospConDTO dto)      throws Exception; 
 	String           HospContDupChk(HospConDTO dto)      throws Exception; 
-	
+	List<HospConDTO> getHospContList(HospConDTO dto)     throws Exception;
    //식대관리
 	List<DietDTO>     getDietcdList(DietDTO dto)         throws Exception; 
 	boolean           insertDietcd(DietDTO dto)          throws Exception; 

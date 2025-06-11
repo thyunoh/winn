@@ -35,9 +35,10 @@ public interface UserService {
 
 	
 	List<HospConDTO> selectHospContList(HospConDTO dto) throws Exception;
-	boolean        insertHospCont(HospConDTO dto)       throws Exception; 
-	boolean        updateHospCont(HospConDTO dto)       throws Exception; 
-	String         HospContDupChk(HospConDTO dto)       throws Exception; 
+	boolean          insertHospCont(HospConDTO dto)     throws Exception; 
+	boolean          updateHospCont(HospConDTO dto)     throws Exception; 
+	String           HospContDupChk(HospConDTO dto)     throws Exception; 
+	List<HospConDTO> getHospContList(HospConDTO dto)    throws Exception;
 	
 	List<DietDTO>  getDietcdList(DietDTO dto)           throws Exception; 
 	boolean        insertDietcd(DietDTO dto)            throws Exception; 

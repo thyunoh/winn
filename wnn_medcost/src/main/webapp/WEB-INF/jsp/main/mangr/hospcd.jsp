@@ -290,7 +290,7 @@
 					</div>
 					<div class="form-group row">
 						<label for="zipCd" class="col-2 col-lg-2 col-form-label text-left">우편번호</label>
-						<div class="col-4 col-sm-4">
+						<div class="col-6 col-sm-6">
 							<div class="input-group">
 								<input id="zipCd" name="zipCd" type="text"
 									class="form-control text-left" placeholder="우편번호를 입력하세요">
@@ -299,7 +299,14 @@
 									<i class="fas fa-search">검색</i>
 								</button>
 							</div>
-						</div>                                                  
+						</div>    
+						<label for="useYn" class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center" style="height: 100%;">시뮬레이터사용여부</label>
+						<div class="col-2 col-lg-2">
+							<select id="omtYn" name="useYn" class="custom-select">
+							    <option value="Y" selected>사용</option>
+								<option value="N">미사용</option>
+							</select>
+						</div>				                                              
 					</div>
 					<div class="form-group row">
 						<label for="hospAddr"

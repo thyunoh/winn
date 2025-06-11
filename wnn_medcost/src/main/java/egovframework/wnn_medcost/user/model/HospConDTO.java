@@ -38,6 +38,51 @@ public class HospConDTO   {
     private String regDttm;
     private String updDttm;
     private String fileYn ;
+    private String hospNm ;
+    private String hospAddr ;
+    private String hospTel ;
+    private String hospFax ;
+    private String wardCnt ;
+    
+	public String getHospNm() {
+		return hospNm;
+	}
+
+	public void setHospNm(String hospNm) {
+		this.hospNm = hospNm;
+	}
+
+	public String getHospAddr() {
+		return hospAddr;
+	}
+
+	public void setHospAddr(String hospAddr) {
+		this.hospAddr = hospAddr;
+	}
+
+	public String getHospTel() {
+		return hospTel;
+	}
+
+	public void setHospTel(String hospTel) {
+		this.hospTel = hospTel;
+	}
+
+	public String getHospFax() {
+		return hospFax;
+	}
+
+	public void setHospFax(String hospFax) {
+		this.hospFax = hospFax;
+	}
+
+	public String getWardCnt() {
+		return wardCnt;
+	}
+
+	public void setWardCnt(String wardCnt) {
+		this.wardCnt = wardCnt;
+	}
 
 	public String getFileYn() {
 		return fileYn;

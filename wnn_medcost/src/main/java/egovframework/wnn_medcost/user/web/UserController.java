@@ -415,7 +415,7 @@ public class UserController extends BaseController {
 	//계약정보 
 	@RequestMapping(value="/hospContList.do", method = RequestMethod.POST)
 	@ResponseBody
-	public Map<String, Object> getHospContList(@ModelAttribute("DTO") HospConDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+	public Map<String, Object> hospContList(@ModelAttribute("DTO") HospConDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
 		
 		System.out.println("병원-java 1- start ");		
 		
@@ -529,7 +529,41 @@ public class UserController extends BaseController {
             return ResponseEntity.status(500).body(e.getMessage());
             
         }
-	}	
+	}
+	//사용자등록시 보여주기 
+	@RequestMapping(value="/gethospContList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> getHospContList(@ModelAttribute("DTO") HospConDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("병원-java 1- start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+	
+			
+				List<HospConDTO> hospContList = svc.getHospContList(dto);
+
+			
+				System.out.println("병원-java size " + hospContList.size());
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",hospContList);
+
+		        System.out.println("병원-java response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
 	//사용자등록정보 
 	@RequestMapping(value="/hospuserList.do", method = RequestMethod.POST)
 	@ResponseBody

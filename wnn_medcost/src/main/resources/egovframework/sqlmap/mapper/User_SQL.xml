@@ -318,8 +318,52 @@
           AND A.HOSP_CD = #{hospCd}
           ORDER BY A.CONACT_GB ,  A.START_DT DESC 
         ]]>
-    
     </select>  
+    <!--  사용자등록시 보여주기  -->
+    <select id="getHospContList" parameterType="HospConDTO" resultType= "HospConDTO"><![CDATA[
+			WITH ranked AS (
+			  SELECT 
+			      A.HOSP_CD,
+			      B.HOSP_NM,
+			      B.HOSP_ADDR,
+			      B.HOSP_TEL,
+			      B.HOSP_FAX,
+			      C.SUB_CODE_NM,
+			      A.START_DT,
+			      A.END_DT,
+			      ROW_NUMBER() OVER (PARTITION BY A.HOSP_CD ORDER BY A.START_DT DESC) AS rn,
+			      (SELECT WARD_CNT 
+			         FROM TBL_WARD_MST 
+			        WHERE HOSP_CD = A.HOSP_CD 
+			          AND ACTION_YN = 'Y' 
+			        ORDER BY START_YM DESC 
+			        LIMIT 1
+			      ) AS WARD_CNT
+			  FROM TBL_HOSPCONT_MST A
+			  JOIN TBL_HOSP_MST B 
+			    ON   B.HOSP_CD   = A.HOSP_CD 
+			     AND B.ACTION_YN = A.ACTION_YN
+			  JOIN TBL_CODE_DTL C 
+			     ON C.CODE_CD   = 'CONACT_GB' 
+			    AND C.SUB_CODE  = A.CONACT_GB 
+			    AND C.ACTION_YN = A.ACTION_YN
+			  WHERE A.HOSP_CD = #{hospCd}
+			    AND A.ACTION_YN = 'Y'
+			)
+			SELECT 
+			    CASE WHEN rn = 1 THEN HOSP_NM ELSE ''   END AS HOSP_NM,
+			    CASE WHEN rn = 1 THEN HOSP_CD ELSE ''   END AS HOSP_CD,
+			    CASE WHEN rn = 1 THEN HOSP_ADDR ELSE '' END AS HOSP_ADDR,
+			    CASE WHEN rn = 1 THEN HOSP_TEL ELSE ''  END AS HOSP_TEL,
+			    CASE WHEN rn = 1 THEN HOSP_FAX ELSE ''  END AS HOSP_FAX,
+			    CASE WHEN rn = 1 THEN WARD_CNT ELSE ''  END AS WARD_CNT,
+			    SUB_CODE_NM,
+			    START_DT,
+			    END_DT
+			FROM ranked
+			ORDER BY START_DT DESC
+        ]]>
+    </select>
 	<select id = "HospContDupChk"  parameterType="HospConDTO"  resultType="String"><![CDATA[   
 	   SELECT 'Y'
 	   FROM TBL_HOSPCONT_MST 

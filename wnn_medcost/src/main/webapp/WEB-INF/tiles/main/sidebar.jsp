@@ -4,7 +4,6 @@
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
-
 <link href="/images/icons/winnernet.ico" rel="icon" type="image/x-icon" >
 
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
@@ -41,13 +40,13 @@
                                                                                       <i class="fas fa-cloud-upload-alt"></i>요양기관등록</a>
                         <div id="user-info" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
-                                <li class="nav-item">
+                                <li class="nav-item" id="hospuser1">
                                     <a class="nav-item nav-link"  href="/user/license.do">라이센스면허등록</a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item" id="hospuser2">
                                     <a class="nav-item nav-link"  href="/user/licnumber.do">인력신고현황등록</a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item" id="hospuser3">
                                     <a class="nav-item nav-link"  href="/user/dietcd.do">가산식대등록</a>
                                 </li>
                                 <li class="nav-item">
@@ -56,10 +55,10 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/userauthcd.do">사용자권한관리</a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item" id="hospuser4">
                                     <a class="nav-item nav-link"  href="/user/wardcd.do">병동현황등록</a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item"  id="hospuser5">
                                     <a class="nav-item nav-link"  href="/user/hospgrdcd.do">의사간호사등급현황</a>
                                 </li>
                            </ul>
@@ -489,26 +488,36 @@ window.addEventListener("DOMContentLoaded", function() {
 });
 // 위너넷만 메뉴가 생성됨   
 function hosp_conact() {
-    const hospcont = document.getElementById("hospcont"); 
-    const wnnauth1 = document.getElementById("wnnauth1");
-    const comcode  = document.getElementById("comcode");
-    const ratecode = document.getElementById("ratecode");
-    const samcode  = document.getElementById("samcode");
-    if (samcode) {
-       samcode.style.display = "none";  // 샘버젼  
-    }  
-    if (comcode) {
-       comcode.style.display = "none";  // 공통코드 
-    }    
-    if (ratecode) {
-       ratecode.style.display = "none";  // 청구율 
-    }  
-    if (hospcont) {
-       hospcont.style.display = "none";  // 계약정보  
-    }
-    if (wnnauth1) {
-       wnnauth1.style.display = "none";  // 운영정보 
-    }
+    const hospcont  = document.getElementById("hospcont"); 
+    const wnnauth1  = document.getElementById("wnnauth1");
+    const comcode   = document.getElementById("comcode");
+    const ratecode  = document.getElementById("ratecode");
+    const samcode   = document.getElementById("samcode");
+    const hospuser1  = document.getElementById("hospuser1");
+    const hospuser2  = document.getElementById("hospuser2");
+    const hospuser3  = document.getElementById("hospuser3");
+    const hospuser4  = document.getElementById("hospuser4");
+    const hospuser5  = document.getElementById("hospuser5");
+    const hideElementsById = (ids) => {
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        });
+    };
+
+    // 숨기고자 하는 ID 목록
+    hideElementsById([
+        "samcode",    // 샘버전
+        "comcode",    // 공통코드
+        "ratecode",   // 청구율
+        "hospcont",   // 계약정보
+        "wnnauth1",   // 운영정보
+        "hospuser1",  // 병원사용
+        "hospuser2",
+        "hospuser3",
+        "hospuser4",
+        "hospuser5"
+    ]);
 }
 function loadFaqData() {
     // 모달을 먼저 연다 (첫 번째 열 때 닫히는 문제 해결)

@@ -51,18 +51,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            	
-                                <!-- 
-                              	display: 기본 DataTables 스타일을 적용합니다.
-								nowrap: 셀 내용이 한 줄로 표시되도록 하며, 필요한 경우 가로 스크롤을 생성합니다.
-								stripe: 짝수/홀수 행에 다른 배경색을 적용하여 가독성을 높입니다.
-								hover: 마우스를 올린 행의 배경색을 변경하여 강조합니다.
-								compact: 테이블의 패딩을 줄여 더 조밀한 레이아웃을 만듭니다.
-								cell-border: 셀 주위에 테두리를 추가합니다.
-								row-border: 행 사이에 테두리를 추가합니다.
-								order-column: 정렬된 열을 시각적으로 강조합니다.
-								responsive: 반응형 디자인을 적용하여 작은 화면에서도 잘 보이도록 합니다.
-                                -->
 								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
 								        
@@ -70,6 +58,31 @@
 								</div>
                             </div>
                         </div>
+						<div class="container-fluid px-1"> <!-- 기존 container 대신 fluid 사용 -->
+						    <div class="row">
+						        <div class="col-12">
+						            <div class="card">
+						                <div class="card-body">
+						                    <div class="form-row mb-2">
+												<div class="col-1 d-flex justify-content-center align-items-center">
+												    <div class="border p-2 rounded w-100 text-center">
+												        <h6 class="mb-0 fw-bold text-dark">계약정보</h6>
+												    </div>
+												</div>
+						                        <div class="col-12 mt-3">
+						                            <div style="width: 100%;">
+						                                <table id="hp_tableName" class="display nowrap stripe hover cell-border order-column responsive" style="width: 100%;">
+						                                    <!-- 테이블 내용 -->
+						                                </table>
+						                            </div>
+						                        </div>
+						                    </div>
+						                </div>
+						            </div>
+						        </div>
+						    </div>
+						</div>
+
                     </div>
                     <!-- ============================================================== -->
                     <!-- data table end   -->
@@ -77,6 +90,7 @@
 			</div>                
 		  </div>
 		</div>        
+	<!-- Bottom Section End -->
 		<!-- ============================================================== -->
         <!-- modal form start -->
 		        <!-- ============================================================== -->
@@ -85,7 +99,7 @@
 			data-keyboard="false">
 			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 				role="dialog"
-				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
+				style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 				<div class="modal-content"
 					style="height: 60%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
@@ -237,7 +251,7 @@
 		</div>
 		<!-- 모달이 로드될 영역 -->
        <div id="modalContainer"></div>
-<!-- ============================================================== -->
+        <!-- ============================================================== -->
         <!-- modal form end -->
         <!-- ============================================================== -->
 		<!-- ============================================================== -->
@@ -301,7 +315,7 @@
 		var gridColums = [];
 		var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 		var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-		var page_Hight = 650;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+		var page_Hight = 300;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 		var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse
 		
 		var datWaiting = true;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -333,10 +347,10 @@
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyurhospCd', primaryKey: true },
-	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '300px',  },
+	        				{ data: 'hospNm',    visible: true,  className: 'dt-body-left',   width: '450px',  },
 	        				{ data: 'userId',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keyuruserId', primaryKey: true },
-	        				{ data: 'userNm',    visible: true,  className: 'dt-body-center', width: '100px',  },
-	        				{ data: 'mainGuNm',  visible: true,  className: 'dt-body-center', width: '100px',  },
+	        				{ data: 'userNm',    visible: true,  className: 'dt-body-center', width: '150px',  },
+	        				{ data: 'mainGuNm',  visible: true,  className: 'dt-body-center', width: '150px',  },
 	        				{ data: 'startDt',   visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyurstartDt', primaryKey: true,
 	                          	render: function(data, type, row) {
 		            				if (type === 'display') {
@@ -1663,6 +1677,7 @@
 				findValues.push({ id: "hospCd1", val: s_hospcd,  chk: false  });
 				$("#hospCd1").val(s_hospcd);
 				triggerFind();
+				hpontLoad();
 		    }
 		}, 1000); // 1초마다 체크 (너무 짧으면 3000ms로 늘려도 됨)
 		// 강제로 실행하고 싶을 때 사용할 함수
@@ -1672,7 +1687,109 @@
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
+	        initHpResultsTable() ;
 	    });
+	    var hp_dataTable  = new DataTable();
+		hp_dataTable.clear();
+		function initHpResultsTable() {
+			  if (!$.fn.DataTable.isDataTable('#' + hp_tableName.id)) {
+			   	hp_dataTable =  $('#' + hp_tableName.id).DataTable({  // 올바르게 닫힌 선택자
+			            responsive:    false,
+			            autoWidth:     false,
+			            ordering:      false,
+			            searching:     false, // 검색 기능 제거
+			            lengthChange:  true, // 페이지당 개수 변경 옵션 제거
+			            info:          false,
+			            paging:        false, // 페이징 제거
+			            scrollY:      "100px", // 세로 스크롤 추가
+			            fixedHeader: true, // 헤더 고정
+		    			search: {
+		    	            return:  false,          	            
+		    	        },	
+					    rowCallback: function(row, data, index) {
+				            $(row).find('td').css('padding',colPadding); 
+				        },	
+			            language: {
+							search: "자 료 검 색 : ",
+						    emptyTable: "데이터가 없습니다.",
+						    lengthMenu: "_MENU_",
+						    info: "현재 _START_ - _END_ / 총 _TOTAL_건",
+						    infoEmpty: "데이터 없음",
+						    infoFiltered: "( _MAX_건의 데이터에서 필터링됨 )",
+						    loadingRecords: "대기중...",
+						    processing: "잠시만 기다려 주세요...",
+						    paginate: {"next": "다음", "previous": "이전"},
+			            },
+			            columns: [
+			            	{ title: "병원명",     data: "hospNm" ,        className: "text-center"  , width: '100px'},  
+			            	{ title: "요양기관",    data: "hospCd",         className: "text-center" , width: '100px'},  
+			            	{ title: "주 소",      data: "hospAddr",       className: "text-left"   , width: '300px'},  
+			            	{ title: "연락처",      data: "hospTel",        className: "text-center" , width: '100px'},  
+			            	{ title: "fax",       data: "hospFax",        className: "text-center" , width: '100px'},  
+			            	{ title: "가동병상수",   data: "wardCnt",        className: "text-center" , width: '100px'},  
+			            	{ title: "계약명칭",    data: "subCodeNm",      className: "text-center" , width: '100px'},  
+			            	{ title: "계약시작일",   data: "startDt",        className: "text-center" , width: '100px',  
+				              render: function(data, type, row) {
+				            	 if (type === 'display') {
+				            	     return getFormat(data,'d1')
+				                 }
+				                 return data;
+				              }  
+				            },
+				            { title: "계약종료일",    data: "endDt",          className: "text-center" , width: '100px',  
+				                render: function(data, type, row) {
+						            	if (type === 'display') {
+						            		return getFormat(data,'d1')
+						                }
+						                return data;
+				                }        
+						     }
+			            ],
+			            ajax: hpontLoad,   
+					});                               
+				    /* 싱글 선택 start */
+				    if (row_Select) {
+				    	hp_dataTable.on('click', 'tbody tr', (e) => {
+					  	    let classList = e.currentTarget.classList;
+					  	 
+					  	    if (!classList.contains('selected')) {
+					  	    	hp_dataTable.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
+					  	        classList.add('selected');
+					  	    } 
+					  	});    
+				    }	
+			    }
+			}
+			function hpontLoad(data, callback, settings) {
+			    const hospElem = document.getElementById('hospCd1');
+			    const hospCd1 = hospElem ? hospElem.value : '';
+	
+			    if (hospCd1) {
+			        $.ajax({
+			            url: "/user/gethospContList.do",
+			            type: "POST",
+			            data: { hospCd: hospCd1 },
+			            dataType: "json",
+			            beforeSend: function () {
+			                var table = $('#' + hp_tableName.id).DataTable();
+			                table.clear().draw(); // 기존 데이터 초기화
+			            },
+			            success: function (response) {
+			            	if (response && Object.keys(response).length > 0) {
+					    	    $('#' + hp_tableName.id).DataTable().clear().draw();
+					    	    callback(response);
+				            } else {
+				            	callback([]); // 빈 배열을 콜백으로 전달
+				            }
+			            },
+			            error: function () {
+			                callback({ data: [] });
+			            }
+			        });
+			    } else {
+			        callback({ data: [] }); // hospCd1이 없을 경우도 처리
+			    }
+			}
 
 		</script>
 		<!-- ============================================================== -->

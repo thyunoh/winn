@@ -26,8 +26,7 @@
 <script
 	src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.js"></script>
 <!-- Bootstrap -->
-<script
-	src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script	src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- 아이콘 및 폰트 -->
 <link href="/images/icons/winnernet.ico" rel="icon" type="image/x-icon">
 <link
@@ -52,7 +51,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <!-- DataTables JS 추가 -->
 </head>
 <style>
-</style>	
+</style>
+	
 
 <body>
 <!-- Navbar Start -->
@@ -589,7 +589,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 					</div>
 				</div>
+				<!-- 이미지 배너 영역  #ccc -->
 			</div>
+			
 		</div>
 <script>
     //컨설팅소개서 다운로드
@@ -769,9 +771,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						</p>
 					</div>
 				</div>
-
 			  </div>
 		   </div>
+		   <!--  -->
 	     </div>
 	   </div>
 	
@@ -1068,6 +1070,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            const afPassWd = $("#afPassWd").val();
 	            if (passWd === "" || afPassWd === "") {
 	                messageBox("1", "<h6>비밀번호를 입력하세요.!!</h6><p></p>", "passWd", "", "");
+	                return;
+	            }
+	            if (passWd.length < 5) {
+	                messageBox("1", "<h6>비밀번호는 5자 이상이어야 합니다.!!</h6><p></p>", "passWd", "", "");
 	                return;
 	            }
 	            if (passWd !== afPassWd) {
@@ -2626,19 +2632,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     	 	// 화면 초기화
     	    location.reload();
     	}
-    	
-    	function syncCardSize() {
-    		const form_Element = document.getElementById('loginForm');
-            const userInfoCard = document.getElementById('userInfoCard');
-            
-            if (form_Element && userInfoCard) {
-                const formStyles = window.getComputedStyle(form_Element);
-                userInfoCard.style.height = formStyles.height;
-                userInfoCard.style.width  = formStyles.width;
-            }
-        }    	
-        window.onresize = syncCardSize;
-    	
         function winCheckOpen() {
         	if (sessionStorage.getItem('s_hospnm') == ""  || sessionStorage.getItem('s_hospnm') == null  ) {
         		messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
