@@ -258,18 +258,18 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		    </div>
 		
 		    <!-- 이미지 배너 영역 -->
-		    <div class="col-lg-6 d-flex justify-content-start" style="margin-left: 220px;">
+		    <div class="col-lg-6 d-flex justify-content-start" style="margin-left: 230px;">
 		      <div class="image-layout"
 		           style="display: flex; justify-content: space-between; align-items: flex-start; 
 		                  border: 1px solid #999; border-radius: 12px; 
-		                  padding: 13px; box-sizing: border-box; background-color: #fff; margin-top: -4px;">
+		                  padding: 13px; box-sizing: border-box; background-color: #fff;">
 		        <div class="image-layout" style="display: flex; justify-content: space-between; align-items: flex-start;">
 		          <!-- 왼쪽 이미지 -->
 		          <div style="flex-basis: 65%; max-width: 65%; padding-right: 20px; margin-top: -30px;">
 		            <img class="img-fluid left-img" src="/images/winct/e_clip.svg"
 		                 alt="e_clip"
-		                 style="width: 500px; display: block; margin-bottom: 8px;">
-		            <div style="text-align: left; margin-top: -90px;">
+		                 style="width: 500px; display: block; margin-bottom: 20px;">
+		            <div style="text-align: left; margin-top: -95px;">
 		              <span style="font-size: 14px; font-weight: bold;">체계적인 컨설팅 분석평가 프로그램</span>
 		            </div>
 		            <div style="text-align: left;">
@@ -277,14 +277,14 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		            </div>
 		            <a onclick="winCheckOpen()"
 		               target="_blank" rel="noopener noreferrer" class="program-button"
-		               style="margin-left: 40px; height: 26px; margin-top: 15px; display: inline-flex; align-items: center; text-decoration: none;">
+		               style="margin-left: 40px; height: 26px; margin-top: 9px; display: inline-flex; align-items: center; text-decoration: none;">
 		              <span style="margin-left: 10px;">프로그램 바로가기</span> <span class="arrow" style="margin-left: -10px;">→</span>
 		            </a>
 		          </div>
 		
 		          <!-- 오른쪽 이미지 묶음 -->
 		          <div class="right-img-group"
-		               style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: -8px;">
+		               style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: -10px;">
 		            <!-- 컨설팅 소개 영역 -->
 		            <div class="program-block" style="margin-left: 45px;">
 		              <div class="program-text">
