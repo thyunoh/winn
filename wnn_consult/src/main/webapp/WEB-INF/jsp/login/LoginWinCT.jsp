@@ -168,7 +168,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="login-banner-wrapper d-flex flex-column align-items-center" style="transition: all 0.3s ease;">
 		  <div class="row justify-content-center align-items-start w-100 flex-nowrap">
 		    <!-- 로그인 영역 -->
-		    <div class="col-lg-6 col-md-12 d-flex justify-content-end" style="transform: translateX(213px);">
+		    <div class="col-lg-6 col-md-12 d-flex justify-content-end" style="transform: translateX(220px);">
 		      <div class="contact-form box-p-10 mb-3 w-100"
 		           style="min-height: 220px; background-color: #003366; border-radius: 10px; max-width: 665px;">
 		        <form name="loginForm" id="loginForm">
