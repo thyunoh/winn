@@ -1538,7 +1538,7 @@
                    lengthChange: true,
                    info:         false,
                    paging:       false,
-                   scrollY: "650px",
+                   scrollY:    "650px",
                    fixedHeader:  true,
                    search: {
                        return:   false,

@@ -56,301 +56,66 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 <body>
 <!-- Navbar Start -->
-<div class="container-fluid_act bg-white mb-2">
-	<div class="row px-xl-8">
-		<div class="col-lg-3 d-none d-lg-block">
-		<a class="btn d-flex align-items-center bg-white w-80"
-		   data-bs-toggle="collapse" href="#navbar-vertical"
-		   style="height: 30px; padding: 0; width: 40%; margin-left:49%; margin-top:15px;">
-			<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
-		</a>
-		</div>
-		<div class="col-lg-9">
-			<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px; align-items: center;">
-				<div class="collapse navbar-collapse justify-content-between">
-					<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left:-50px;">
-		
-						<!-- 위너넷 링크 -->
-						<a href="http://www.winnernet.co.kr/"
-						   class="nav-link text-dark consulting-menu"
-						   style="font-size: 16px; padding: 24px;"
-						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
-						   <strong>위너넷 소개</strong>
-						</a>
-		
-						<!-- 컨설팅 소개 드롭다운 -->
-						<div class="nav-link text-dark position-relative">
-							<a href="#" class="nav-link text-dark  consulting-menu"
+	<div class="container-fluid_act bg-white mb-2">
+		<div class="row px-xl-8">
+			<div class="col-lg-3 d-none d-lg-block">
+			<a class="btn d-flex align-items-center bg-white w-80"
+			   data-bs-toggle="collapse" href="#navbar-vertical"
+			   style="height: 30px; padding: 0; width: 40%; margin-left:49%; margin-top:15px;">
+				<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
+			</a>
+			</div>
+			<div class="col-lg-9">
+				<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px; align-items: center;">
+					<div class="collapse navbar-collapse justify-content-between">
+						<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left:-50px;">
+			
+							<!-- 위너넷 링크 -->
+							<a href="http://www.winnernet.co.kr/"
+							   class="nav-link text-dark consulting-menu"
 							   style="font-size: 16px; padding: 24px;"
-							   data-bs-toggle="dropdown" onclick="setMainActive(this)">
-							   <strong>컨설팅 소개</strong>
+							   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
+							   <strong>위너넷 소개</strong>
 							</a>
-							<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
-								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
-								<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+			
+							<!-- 컨설팅 소개 드롭다운 -->
+							<div class="nav-link text-dark position-relative">
+								<a href="#" class="nav-link text-dark  consulting-menu"
+								   style="font-size: 16px; padding: 24px;"
+								   data-bs-toggle="dropdown" onclick="setMainActive(this)">
+								   <strong>컨설팅 소개</strong>
+								</a>
+								<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+								</div>
 							</div>
+			
+							<!-- 온라인 교육센터 링크 -->
+							<a href="https://winner797.net/"
+							   class="nav-link text-dark consulting-menu"
+							   style="font-size: 16px; padding: 24px;"
+							   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
+							   <strong>온라인교육센터</strong>
+							</a>
+			
+							<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
+							<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
 						</div>
-		
-						<!-- 온라인 교육센터 링크 -->
-						<a href="https://winner797.net/"
-						   class="nav-link text-dark consulting-menu"
-						   style="font-size: 16px; padding: 24px;"
-						   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
-						   <strong>온라인교육센터</strong>
-						</a>
-		
-						<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
-						<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
+			
+						<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
 					</div>
-		
-					<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
-				</div>
-			</nav>
+				</nav>
+			</div>
+	
 		</div>
-
 	</div>
-</div>
 <!-- Navbar End -->
 
-<script>
-   //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
-	function hosp_conact() {
-	    let s_conact_gb = getCookie("s_conact_gb");
-	    let s_wnn_yn    = getCookie("s_wnn_yn");
-	
-	    // 💡 먼저 기존 메뉴 초기화 (중복 방지)
-	    let menuArea = document.getElementById("dynamicMenu_J");
-	    let menuArea_T = document.getElementById("dynamicMenu_T");
-	
-	    if (menuArea) menuArea.innerHTML = '';    // 기존 내용 제거
-	    if (menuArea_T) menuArea_T.innerHTML = ''; // 기존 내용 제거
-	
-	    let menuHTML = '';
-	    let menuHTML_T = '';
-	
-	    if (s_conact_gb === 'A' || s_wnn_yn === 'Y') {
-	        menuHTML += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; padding: 24px;">
-	                <strong>적정성평가</strong>
-	            </a>
-	        `;
-	        menuHTML_T += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>진료비분석</strong>
-	            </a>
-	        `;
-	    } else if (s_conact_gb === '1') {
-	        menuHTML += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>진료비분석</strong>
-	            </a>
-	        `;
-	    } else if (s_conact_gb === '2') {
-	        menuHTML += `
-	            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-	                <strong>적정성평가</strong>
-	            </a>
-	        `;
-	    }
-	    // 삽입
-	    if (menuArea) menuArea.insertAdjacentHTML("beforeend", menuHTML);
-	    if (menuArea_T) menuArea_T.insertAdjacentHTML("beforeend", menuHTML_T);
-	}
-	</script>
-
-	<script> 
-       function setActive(element) {
-    	    // 드롭다운 항목에서 active 클래스 제거
-    	    document.querySelectorAll('.dropdown-item').forEach(item => {
-    	        item.classList.remove('active');
-    	    });
-
-    	    // 클릭한 항목에 active 클래스 추가
-    	    element.classList.add('active');
-       } 
-       function setMainActive(element) {
-    	    // 기존 모든 주메뉴에서 active 클래스 제거
-    	    document.querySelectorAll('.consulting-menu').forEach(item => {
-    	        item.classList.remove('active');
-    	    });
-
-    	    // 현재 클릭한 주메뉴에 active 클래스 추가
-    	    element.classList.add('active');
-    	}       
-	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
-	    window.onload = function() {
-	        sessionStorage.setItem("previousPage", window.location.href);
-	        setTimeout(function() {
-	            document.body.style.display = "none";
-	            document.body.offsetHeight; // 리플로우 강제 발생
-	            document.body.style.display = "block";
-	        }, 100);
-	    };
-	    document.addEventListener("DOMContentLoaded", function() {
-	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
-	            interval: 4000, // 4초마다 변경
-	            ride: "carousel"
-	        });
-	    });
-    </script>
-	<div id="contentArea"></div>
-
-	<!-- 위너넷 컨설팅 이미지 -->
-	<script> 	<!-- 타jsp화면을 주메뉴에 가져와서 화면에 뿌리주는 기능  -->
-	function loadPage(pageUrl) {
-		console.log("✅ 페이지 로드 완료: " + pageUrl);
-
-	    // 기존 컨테이너 숨기기
-	    $(".container-fluid").hide();  // 기존 요소 숨기기
-	    $(".login-banner-wrapper").hide();  // 기존 요소 숨기기
-	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
-	    
-        fetch(pageUrl)
-	        .then(response => response.text())
-	        .then(data => {
-	            let contentArea = document.getElementById("contentArea");
-	            
-	            // 기존 내용 초기화 후 새로운 내용 추가
-	            contentArea.innerHTML = "";  
-	            contentArea.innerHTML = data; 
-
-	            console.log("✅ 페이지 로드 완료: " + pageUrl);
-
-	            // 첫 번째 탭 강제 선택 (기본값: sub-tab1)
-	            let firstTab = document.querySelector(".stab-menu a");
-	            let activeTab = "#sub-tab1";  // 항상 첫 번째 탭을 기본값으로 설정
-
-	            console.log("✅ 활성화할 탭:", activeTab);
-
-	            sessionStorage.setItem("activeTab", activeTab); // 저장된 값 업데이트
-
-	            // 모든 탭 비활성화 후 기본 탭 활성화
-	            document.querySelectorAll(".stab-menu a").forEach(tab => {
-	                tab.classList.remove("active");
-	                if (tab.getAttribute("href") === activeTab) {
-	                    tab.classList.add("active");
-	                }
-	            });
-
-	            // 모든 탭 컨텐츠 비활성화 후 기본 탭 활성화
-	            document.querySelectorAll(".tab-pane").forEach(pane => {
-	                pane.classList.remove("show", "active");
-	            });
-
-	            let activeContent = document.querySelector(activeTab);
-	            if (activeContent) {
-	                activeContent.classList.add("show", "active");
-	            }
-
-	            // **Bootstrap 탭 강제 실행 (Bootstrap 5)**
-	            let activeTabElement = document.querySelector(`a[href="${activeTab}"]`);
-	            if (activeTabElement) {
-	                var tabInstance = new bootstrap.Tab(activeTabElement);
-	                tabInstance.show();
-	                console.log("✅ Bootstrap 탭 강제 실행됨");
-	            }
-
-	            // 🚀 **탭 클릭 이벤트 재설정**
-	            document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
-	                tab.addEventListener('click', function (event) {
-	                    event.preventDefault();
-	                    let targetTab = tab.getAttribute("href");
-
-	                    console.log("✅ 사용자 탭 선택: " + targetTab);
-
-	                    sessionStorage.setItem("activeTab", targetTab);
-	                    
-	                    // 기존의 active 상태 초기화
-	                    document.querySelectorAll(".stab-menu a").forEach(t => t.classList.remove("active"));
-	                    tab.classList.add("active");
-
-	                    // 기존의 tab-pane 내용 제거 후 새로운 탭 활성화
-	                    document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("show", "active"));
-	                    let targetContent = document.querySelector(targetTab);
-	                    if (targetContent) {
-	                        targetContent.classList.add("show", "active");
-	                    }
-	                });
-	            });
-	        })
-	        .catch(error => console.error('❌ 페이지 로딩 오류:', error));
-	}
-
-	document.addEventListener("DOMContentLoaded", function() {
-	    let contentArea = document.getElementById("contentArea");
-	    let consultingTitle = document.getElementById("consultingTitle");
-
-	    function goBackOrRedirect() {
-	        const previousPage = sessionStorage.getItem("previousPage");
-	        
-	        if (previousPage && previousPage !== window.location.href) {
-	            history.replaceState(null, "", previousPage);
-	            location.reload();
-	        } else {
-	            history.replaceState(null, "", "/");
-	            location.reload();
-	        }
-	    }
-
-	    window.addEventListener("beforeunload", function() {
-	        sessionStorage.setItem("previousPage", window.location.href);
-	    });
-
-	    function adjustLayout() {
-	        requestAnimationFrame(() => {
-	            if (contentArea.innerHTML.trim() !== "") { 
-	                let contentHeight = contentArea.offsetHeight;
-	                let windowHeight = window.innerHeight;
-
-	                if (contentHeight < windowHeight * 0.8) {
-	                    contentArea.style.minHeight = (windowHeight * 0.8) + "px";
-	                }
-
-	                let dynamicMargin = Math.max(50, contentArea.offsetHeight * 0.1);
-
-	                consultingTitle.onclick = function(event) {
-	                    event.preventDefault();
-	                    setTimeout(() => {
-	                        goBackOrRedirect();
-	                    }, 50);
-	                };
-	            } else {
-	                contentArea.style.minHeight = "0px";
-	                consultingTitle.onclick = null;
-	            }
-	        });
-	    }
-
-	    adjustLayout();
-
-	    let observer = new MutationObserver(() => requestAnimationFrame(adjustLayout));
-	    observer.observe(contentArea, { childList: true, subtree: true });
-
-	    window.addEventListener("resize", () => requestAnimationFrame(adjustLayout));
-	});
-
-	//마우스희 제동 
-	document.addEventListener("DOMContentLoaded", function () {
-	    let tableContainer = document.querySelector(".table-responsive");
-
-	    tableContainer.addEventListener("wheel", function (event) {
-	        let isScrollable = tableContainer.scrollHeight > tableContainer.clientHeight;
-
-	        if (isScrollable) {
-	            let atTop = tableContainer.scrollTop === 0;
-	            let atBottom = tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight;
-
-	            if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) {
-	                event.preventDefault();
-	            }
-	        }
-	    }, { passive: false });
-	});	
-
-</script>
+	   <div id="contentArea"></div>
 
 		<!-- Carousel Start -->
 		<div class="container-fluid mb-2" style="position: relative;">
@@ -593,16 +358,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			</div>
 			
 		</div>
-<script>
-    //컨설팅소개서 다운로드
-	function downloadFile() {
-		const filePath = "/home/winner/upload/consulting-intro.jpg"; // 실제 SFTP 경로
-		const encodedPath = encodeURIComponent(filePath);
-		window.location.href = "/sftp/download.do?filePath=" + encodedPath;
-		// 기본 링크 다운로드 방지 (선택사항)
-		event.preventDefault(); // 이 줄을 넣으면 href로 다운로드되지 않고 SFTP만 사용됨
-	}
-</script>
+
           <!-- 오른쪽 소셜 아이콘 박스 -->
 		  <div class="social-box">
 		    <ul>
@@ -777,7 +533,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	     </div>
 	   </div>
 	
-	</div>     <!-- 하단 간격 유지안함  컨설팅소개서 여기까지 덮는다 --> 
+	</div>     
+	<!-- 하단 간격 유지안함  컨설팅소개서 여기까지 덮는다 --> 
 	
 	<!--  공공기관 포털   -->
 	<div class="bmenu">
@@ -799,7 +556,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        </div>
 	    </div>
 	</div>
-
+    <!--    메인화면 끝  -->
+    
 	<!--회원가입 모달창   -->
 	<div id="mainModal" class="modal fade" tabindex="-1" data-backdrop="static"
 		data-keyboard="false" aria-hidden="true" role="dialog">
@@ -971,6 +729,91 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	  <i class="fas fa-arrow-up"></i><br>TOP
 	</a>
 	<script>
+
+   //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
+	function hosp_conact() {
+		    let s_conact_gb = getCookie("s_conact_gb");
+		    let s_wnn_yn    = getCookie("s_wnn_yn");
+		
+		    // 💡 먼저 기존 메뉴 초기화 (중복 방지)
+		    let menuArea = document.getElementById("dynamicMenu_J");
+		    let menuArea_T = document.getElementById("dynamicMenu_T");
+		
+		    if (menuArea) menuArea.innerHTML = '';    // 기존 내용 제거
+		    if (menuArea_T) menuArea_T.innerHTML = ''; // 기존 내용 제거
+		
+		    let menuHTML = '';
+		    let menuHTML_T = '';
+		
+		    if (s_conact_gb === 'A' || s_wnn_yn === 'Y') {
+		        menuHTML += `
+		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; padding: 24px;">
+		                <strong>적정성평가</strong>
+		            </a>
+		        `;
+		        menuHTML_T += `
+		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
+		                <strong>진료비분석</strong>
+		            </a>
+		        `;
+		    } else if (s_conact_gb === '1') {
+		        menuHTML += `
+		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
+		                <strong>진료비분석</strong>
+		            </a>
+		        `;
+		    } else if (s_conact_gb === '2') {
+		        menuHTML += `
+		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
+		                <strong>적정성평가</strong>
+		            </a>
+		        `;
+		    }
+	    // 삽입
+		    if (menuArea) menuArea.insertAdjacentHTML("beforeend", menuHTML);
+		    if (menuArea_T) menuArea_T.insertAdjacentHTML("beforeend", menuHTML_T);
+		}
+       function setActive(element) {
+    	    // 드롭다운 항목에서 active 클래스 제거
+    	    document.querySelectorAll('.dropdown-item').forEach(item => {
+    	        item.classList.remove('active');
+    	    });
+
+    	    // 클릭한 항목에 active 클래스 추가
+    	    element.classList.add('active');
+       } 
+       function setMainActive(element) {
+    	    // 기존 모든 주메뉴에서 active 클래스 제거
+    	    document.querySelectorAll('.consulting-menu').forEach(item => {
+    	        item.classList.remove('active');
+    	    });
+
+    	    // 현재 클릭한 주메뉴에 active 클래스 추가
+    	    element.classList.add('active');
+    	}       
+	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
+	    window.onload = function() {
+	        sessionStorage.setItem("previousPage", window.location.href);
+	        setTimeout(function() {
+	            document.body.style.display = "none";
+	            document.body.offsetHeight; // 리플로우 강제 발생
+	            document.body.style.display = "block";
+	        }, 100);
+	    };
+	    document.addEventListener("DOMContentLoaded", function() {
+	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
+	            interval: 4000, // 4초마다 변경
+	            ride: "carousel"
+	        });
+	    });
+	//컨설팅소개서 다운로드
+	function downloadFile() {
+		const filePath = "/home/winner/upload/consulting-intro.jpg"; // 실제 SFTP 경로
+		const encodedPath = encodeURIComponent(filePath);
+		window.location.href = "/sftp/download.do?filePath=" + encodedPath;
+		// 기본 링크 다운로드 방지 (선택사항)
+		event.preventDefault(); // 이 줄을 넣으면 href로 다운로드되지 않고 SFTP만 사용됨
+	}
 	document.querySelectorAll('.nav-tabs .nav-link').forEach(function(tab) {
 	    tab.addEventListener('click', function () {
 	        document.querySelectorAll('.nav-tabs .nav-link').forEach(function(t) {
@@ -981,7 +824,158 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        this.classList.add('text-dark');
 	    });
 	});
-	</script>
+ 	<!-- 타jsp화면을 주메뉴에 가져와서 화면에 뿌리주는 기능  -->
+	function loadPage(pageUrl) {
+		console.log("✅ 페이지 로드 완료: " + pageUrl);
+
+	    // 기존 컨테이너 숨기기
+	    $(".container-fluid").hide();  // 기존 요소 숨기기
+	    $(".login-banner-wrapper").hide();  // 기존 요소 숨기기
+	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
+	    
+        fetch(pageUrl)
+	        .then(response => response.text())
+	        .then(data => {
+	            let contentArea = document.getElementById("contentArea");
+	            
+	            // 기존 내용 초기화 후 새로운 내용 추가
+	            contentArea.innerHTML = "";  
+	            contentArea.innerHTML = data; 
+
+	            console.log("✅ 페이지 로드 완료: " + pageUrl);
+
+	            // 첫 번째 탭 강제 선택 (기본값: sub-tab1)
+	            let firstTab = document.querySelector(".stab-menu a");
+	            let activeTab = "#sub-tab1";  // 항상 첫 번째 탭을 기본값으로 설정
+
+	            console.log("✅ 활성화할 탭:", activeTab);
+
+	            sessionStorage.setItem("activeTab", activeTab); // 저장된 값 업데이트
+
+	            // 모든 탭 비활성화 후 기본 탭 활성화
+	            document.querySelectorAll(".stab-menu a").forEach(tab => {
+	                tab.classList.remove("active");
+	                if (tab.getAttribute("href") === activeTab) {
+	                    tab.classList.add("active");
+	                }
+	            });
+
+	            // 모든 탭 컨텐츠 비활성화 후 기본 탭 활성화
+	            document.querySelectorAll(".tab-pane").forEach(pane => {
+	                pane.classList.remove("show", "active");
+	            });
+
+	            let activeContent = document.querySelector(activeTab);
+	            if (activeContent) {
+	                activeContent.classList.add("show", "active");
+	            }
+
+	            // **Bootstrap 탭 강제 실행 (Bootstrap 5)**
+	            let activeTabElement = document.querySelector(`a[href="${activeTab}"]`);
+	            if (activeTabElement) {
+	                var tabInstance = new bootstrap.Tab(activeTabElement);
+	                tabInstance.show();
+	                console.log("✅ Bootstrap 탭 강제 실행됨");
+	            }
+
+	            // 🚀 **탭 클릭 이벤트 재설정**
+	            document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+	                tab.addEventListener('click', function (event) {
+	                    event.preventDefault();
+	                    let targetTab = tab.getAttribute("href");
+
+	                    console.log("✅ 사용자 탭 선택: " + targetTab);
+
+	                    sessionStorage.setItem("activeTab", targetTab);
+	                    
+	                    // 기존의 active 상태 초기화
+	                    document.querySelectorAll(".stab-menu a").forEach(t => t.classList.remove("active"));
+	                    tab.classList.add("active");
+
+	                    // 기존의 tab-pane 내용 제거 후 새로운 탭 활성화
+	                    document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("show", "active"));
+	                    let targetContent = document.querySelector(targetTab);
+	                    if (targetContent) {
+	                        targetContent.classList.add("show", "active");
+	                    }
+	                });
+	            });
+	        })
+	        .catch(error => console.error('❌ 페이지 로딩 오류:', error));
+	}
+
+	document.addEventListener("DOMContentLoaded", function() {
+	    let contentArea = document.getElementById("contentArea");
+	    let consultingTitle = document.getElementById("consultingTitle");
+
+	    function goBackOrRedirect() {
+	        const previousPage = sessionStorage.getItem("previousPage");
+	        
+	        if (previousPage && previousPage !== window.location.href) {
+	            history.replaceState(null, "", previousPage);
+	            location.reload();
+	        } else {
+	            history.replaceState(null, "", "/");
+	            location.reload();
+	        }
+	    }
+
+	    window.addEventListener("beforeunload", function() {
+	        sessionStorage.setItem("previousPage", window.location.href);
+	    });
+
+	    function adjustLayout() {
+	        requestAnimationFrame(() => {
+	            if (contentArea.innerHTML.trim() !== "") { 
+	                let contentHeight = contentArea.offsetHeight;
+	                let windowHeight = window.innerHeight;
+
+	                if (contentHeight < windowHeight * 0.8) {
+	                    contentArea.style.minHeight = (windowHeight * 0.8) + "px";
+	                }
+
+	                let dynamicMargin = Math.max(50, contentArea.offsetHeight * 0.1);
+
+	                consultingTitle.onclick = function(event) {
+	                    event.preventDefault();
+	                    setTimeout(() => {
+	                        goBackOrRedirect();
+	                    }, 50);
+	                };
+	            } else {
+	                contentArea.style.minHeight = "0px";
+	                consultingTitle.onclick = null;
+	            }
+	        });
+	    }
+
+	    adjustLayout();
+
+	    let observer = new MutationObserver(() => requestAnimationFrame(adjustLayout));
+	    observer.observe(contentArea, { childList: true, subtree: true });
+
+	    window.addEventListener("resize", () => requestAnimationFrame(adjustLayout));
+	});
+
+	//마우스희 제동 
+	document.addEventListener("DOMContentLoaded", function () {
+	    let tableContainer = document.querySelector(".table-responsive");
+
+	    tableContainer.addEventListener("wheel", function (event) {
+	        let isScrollable = tableContainer.scrollHeight > tableContainer.clientHeight;
+
+	        if (isScrollable) {
+	            let atTop = tableContainer.scrollTop === 0;
+	            let atBottom = tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight;
+
+	            if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) {
+	                event.preventDefault();
+	            }
+	        }
+	    }, { passive: false });
+	});	
+
+   </script>
 
 	<!-- 회원가입 스크립트 시작 -->
 	<script>	
