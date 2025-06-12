@@ -1,4 +1,4 @@
-		.social-container {
+	.social-container {
 	  position: relative;            /* 기준점 설정 */
 	  display: flex;
 	  justify-content: space-between;
@@ -32,6 +32,11 @@
 	  height: 50px;
 	  margin: 10px 0;
 	}
+    .social-box ul li span {
+     font-size: 0.7rem; /* 글자 크기 조절 */
+     font-weight: bold;  /* 필요하면 굵게 */
+    }
+
 	.slanted-banner {
 	  background-color: #003b74;
 	  position: absolute;
@@ -42,11 +47,6 @@
 	  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
 	  z-index: -1;
 	}  
-    .social-box ul li span {
-     font-size: 0.7rem; /* 글자 크기 조절 */
-     font-weight: bold;  /* 필요하면 굵게 */
-    }
-
    .right-img-group {
      display: flex;
      flex-direction: column;
