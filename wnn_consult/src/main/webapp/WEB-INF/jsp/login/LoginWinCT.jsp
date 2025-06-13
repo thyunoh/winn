@@ -2720,7 +2720,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
                 userInfoCard.style.overflow = "hidden";
             }
         });
-		// 병원검색 /js/winmc/schcommons.js///////////////
+		// 병원검색 /js/winct/schcommons.js///////////////
 		$("#hospserch").on("click", function () {
 			openHospitalSearch(function (data) {
 		        $("#hospCd").val(data.hospCd);

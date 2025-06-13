@@ -75,8 +75,8 @@ function setupCommonTable(searchType) {
 
     let table = $("#commonSearchTable").DataTable({
         scrollX: true,
-        scrollY: "400px",
-        scrollCollapse: true,
+        scrollY: "200px",
+        scrollCollapse: true,   // ✅ 높이 자동 축소 허용
         autoWidth: true,
         ordering: true,
         pageLength: -1,
@@ -85,7 +85,7 @@ function setupCommonTable(searchType) {
         paging: false,
         fixedHeader: false,
         lengthMenu: [],
-        searching: false,  // ✅ 자동 검색 제거
+        searching: false,
         data: [],
         columns: [
             { title: "번호", data: null, className: "text-center", width: "50px" },
@@ -117,7 +117,18 @@ function setupCommonTable(searchType) {
             closeCommonSearch();
         }
     });
+
+    // ✅ 테이블 크기 재조정
+    setTimeout(() => {
+        table.columns.adjust().draw();
+    }, 100);
 }
+
+$(window).on('resize', function () {
+    if ($.fn.DataTable.isDataTable('#commonSearchTable')) {
+        $('#commonSearchTable').DataTable().columns.adjust().draw();
+    }
+});
 
 // ✅ 데이터 로딩 (검색 버튼 클릭 시 호출)
 function loadCommonSearchData(searchType) {
@@ -169,13 +180,13 @@ function getTableColumns(searchType) {
         "hospital": [
             { title: "요양기관", data: "hospCd", className: "text-center" },
             { title: "병원명칭", data: "hospNm", className: "text-left" },
-            { title: "주소", data: "hospAddr", className: "text-left" }
+            { title: "주소",    data: "hospAddr", className: "text-left" }
         ],
         "user": [
             { title: "사용자아이디", data: "userId", className: "text-center" },
-            { title: "성명", data: "userNm", className: "text-left" },
-            { title: "요양기관", data: "hospCd", className: "text-center" },
-            { title: "병원명칭", data: "hospNm", className: "text-left" }
+            { title: "성명",      data: "userNm", className: "text-left" },
+            { title: "요양기관",   data: "hospCd", className: "text-center" },
+            { title: "병원명칭",   data: "hospNm", className: "text-left" }
         ]
     }[searchType] || [];
 }
