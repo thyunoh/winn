@@ -264,12 +264,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						                  <div id="cost_two" style="font-size: 12px; font-weight: bold;">-</div>
 						                  <div id="cost_one" style="font-size: 12px; font-weight: bold;">-</div>
 						                </div>
-								
+						
 									    <!-- 우측 로그아웃 버튼 -->
 									    <div style="margin-right: 10px;">
-									        <button class="btn btn-primary"
-									                onclick="logout()"
-									                style="width: 150px; height: 70px; font-size: 16px; margin-left: 60px;">
+									        <button class="btn btn-primary" onclick="logout()"
+									                style="width: 150px; height: 70px; font-size: 16px; margin-left: 45px;">
 									            로그아웃
 									        </button>
 									    </div>
