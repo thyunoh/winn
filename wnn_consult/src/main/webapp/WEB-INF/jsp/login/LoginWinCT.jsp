@@ -2949,7 +2949,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
             } else if (screenWidth <= 1745) {
                 container.style.marginLeft = '-350px';
             } else {
-                container.style.marginLeft = '-315px'; // 1920 표준위치  
+                container.style.marginLeft = '-315px'; // 1920 표준위치 1 
             }
         }
         // 화면 크기 변경 시마다 margin 값을 조정
