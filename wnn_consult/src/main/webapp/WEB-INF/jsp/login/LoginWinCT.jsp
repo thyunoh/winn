@@ -115,52 +115,56 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	</div>
 <!-- Navbar End -->
 
-	   <div id="contentArea"></div>
+	<div id="contentArea"></div>
 
 		<!-- Carousel Start -->
-		<div class="container-fluid mb-2" style="position: relative;">
-		  <div class="row px-xl-8">
-		    <div class="col-lg-12 mx-auto"> <!-- 수정시 이미지 좌측공백 유의-->
-              <div id="header-carousel" class="carousel slide carousel-fade mb-2" data-bs-ride="carousel" 
-                                               style="position: absolute; top: 50%; left: 0; right: 10px; z-index: -1;">
-		        <ol class="carousel-indicators">
-		          <li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
-		          <li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
-		          <li data-bs-target="#header-carousel" data-bs-slide-to="2"></li>
-		        </ol>
-		        
-		        <!-- 슬라이드 1 -->
-		        <div class="carousel-item active" style="height: 490px; overflow: hidden;">
-		          <div class="d-flex align-items-center justify-content-center h-100; width: 100%;">
-		            <img src="/images/winct/image1.svg"
-		                 class="img-fluid"
-		                 style="object-fit: contain;">
-		          </div>
-		        </div>
-		        
-		        <!-- 슬라이드 2 -->
-		        <div class="carousel-item" style="height: 490px; overflow: hidden;">
-		          <div class="d-flex align-items-center justify-content-center h-100; width: 100%;">
-		            <img src="/images/winct/image2.svg"
-		                 class="img-fluid"
-		                 style="object-fit: contain;">
-		          </div>
-		        </div>
-		        
-		        <!-- 슬라이드 3 -->
-		        <div class="carousel-item" style="height: 490px; overflow: hidden;">
-		          <div class="d-flex align-items-center justify-content-center h-100; width: 100%;">
-		            <img src="/images/winct/image3.svg"
-		                 class="img-fluid"
-		                 style="object-fit: contain;">
-		          </div>
-		        </div>
-		        
-		      </div>
-		    </div>
-		    
-		  </div>
-		  
+	<div class="container-fluid mb-2" style="position: relative;">
+		<div class="row px-xl-8">
+			<div class="col-lg-12 mx-auto">
+				<!-- 수정시 이미지 좌측공백 유의-->
+				<div id="header-carousel" class="carousel slide carousel-fade mb-2"
+					data-bs-ride="carousel"
+					style="position: absolute; top: 50%; left: 0; right: 10px; z-index: -1;">
+					<ol class="carousel-indicators">
+						<li data-bs-target="#header-carousel" data-bs-slide-to="0"
+							class="active"></li>
+						<li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
+						<li data-bs-target="#header-carousel" data-bs-slide-to="2"></li>
+					</ol>
+
+					<!-- 슬라이드 1 -->
+					<div class="carousel-item active"
+						style="height: 490px; overflow: hidden;">
+						<div
+							class="d-flex align-items-center justify-content-center h-100; width: 100%;">
+							<img src="/images/winct/image1.svg" class="img-fluid"
+								style="object-fit: contain;">
+						</div>
+					</div>
+
+					<!-- 슬라이드 2 -->
+					<div class="carousel-item" style="height: 490px; overflow: hidden;">
+						<div
+							class="d-flex align-items-center justify-content-center h-100; width: 100%;">
+							<img src="/images/winct/image2.svg" class="img-fluid"
+								style="object-fit: contain;">
+						</div>
+					</div>
+
+					<!-- 슬라이드 3 -->
+					<div class="carousel-item" style="height: 490px; overflow: hidden;">
+						<div
+							class="d-flex align-items-center justify-content-center h-100; width: 100%;">
+							<img src="/images/winct/image3.svg" class="img-fluid"
+								style="object-fit: contain;">
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+
 		<!-- Carousel End -->
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
 		<div class="col-lg-10" style="margin-top: 400px;">
@@ -170,10 +174,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				style="width: 100%; max-width: 1700px; margin: 0 auto; transition: all 0.3s ease; transform: translateX(220px);">
 				<div class="row ">
 					<!-- 로그인 영역 -->
-					
-						<div class="container-fluid mb-2 px-3" style="transform: translateX(-170px);">
-						  <div class="row justify-content-center px-xl-8" style="flex-wrap: nowrap;">
-							<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
+
+					<div class="container-fluid mb-2 px-3"
+						style="transform: translateX(-170px);">
+						<div class="row justify-content-center px-xl-8"
+							style="flex-wrap: nowrap;">
+							<div class="col-lg-auto"
+								style="width: 725px; flex-shrink: 0; min-width: 725px;">
 								<div class="contact-form box-p-10 mb-3"
 									style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
 									<form name="loginForm" id="loginForm">
@@ -253,8 +260,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 												</div>
 
 												<div class="title"
-													style="margin-top: -5px; margin-left: -30px;">*최근
-													3개월 자료 등록현황</div>
+													style="margin-top: -5px; margin-left: -30px;">*최근 3개월
+													자료 등록현황</div>
 												<div
 													style="display: flex; justify-content: space-between; align-items: flex-start;">
 													<!-- 좌측 input-grid -->
@@ -300,22 +307,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							</div>
 
 							<!-- 이미지 배너 영역  #ccc -->
-								<div class="image-layout"
-								  style="
-								    display: flex;
-								    justify-content: space-between;
-								    align-items: flex-start;
-								    margin: -5px -30px 14px 20px;
-								    border: 1px solid #999;
-								    border-radius: 12px;
-								    padding: 10px 20px 15px 20px;
-								    box-sizing: border-box;
-								    background-color: #fff;
-								    flex-shrink: 0;
-								    min-width: 500px;
-								    max-width: 640px;
-								    max-height: 230px;
-								  ">
+							<div class="image-layout"
+								style="display: flex; justify-content: space-between; align-items: flex-start; margin: -5px -30px 14px 20px; border: 1px solid #999; border-radius: 12px; padding: 10px 20px 15px 20px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 500px; max-width: 640px; max-height: 230px;">
 								<div class="image-layout"
 									style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 50px; margin-top: -5px;">
 									<!-- 왼쪽 이미지 -->
@@ -372,8 +365,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 												<!-- 버튼을 a 태그로 대체 -->
 												<a href="https://winner797.net/" target="_blank"
 													rel="noopener noreferrer" class="program-button"
-													style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; text-decoration: none; padding: 10px 20px; 
-													       vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
+													style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
 													<span>홈페이지 바로가기</span> <span class="arrow">&rarr;</span>
 												</a>
 											</div>
@@ -387,10 +379,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					</div>
 				</div>
 
-		<!--  공지사항   -->
-				<div class="container-fluid mb-2 px-3" style="transform: translateX(-210px);">
-					<div class="row justify-content-center px-xl-8">
-						<div class="col-lg-auto" style="width: 690px;">
+				<!--  공지사항   -->
+				<div class="container-fluid_noti mb-2 px-3"
+					style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
+					<div class="row justify-content-center px-xl-8"
+						style="flex-wrap: nowrap;">
+						<div class="col-lg-auto"
+							style="width: 690px; flex-shrink: 0; min-width: 690px;">
 							<div class="bg-light box-p-10" style="height: 215px;">
 								<!-- 탭 헤더 -->
 								<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
@@ -488,7 +483,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 								</div>
 							</div>
 						</div>
-			<!-- 고객센터  -->
+
+						<!-- 고객센터 -->
 						<div class="col-lg-4">
 							<div class="helpdesk">
 								<div class="bg-light box-p-10"
@@ -549,37 +545,33 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!--  -->
 					</div>
 				</div>
+
+			</div>
+			<!-- 오른쪽 소셜 아이콘 박스 -->
+			<div class="d-flex justify-content-center w-100 mt-2">
+				<div class="social-box">
+					<ul>
+						<li><a href="https://www.youtube.com/watch?v=WaWoMowapjI"
+							target="_blank" rel="noopener noreferrer"> <img
+								src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
+								<span>유튜브</span>
+						</a></li>
+						<li><a href="https://blog.naver.com/ewinner7/222973843240"
+							target="_blank" rel="noopener noreferrer"> <img
+								src="/images/winct/blog.svg" alt="블로그" class="snsImg"> <span>블로그</span>
+						</a></li>
+						<li><a href="https://open.kakao.com/o/gBvFxyYg"
+							target="_blank" rel="noopener noreferrer"> <img
+								src="/images/winct/kakao.png" alt="카카오톡" class="snsImg"> <span>카카오톡</span>
+						</a></li>
+					</ul>
+					<img src="/images/winct/quickArrow.svg" alt="더보기"
+						class="quick-arrow-btn" style="width: 34px; height: auto;">
+				</div>
 			</div>
 		</div>
-
-		<!-- 오른쪽 소셜 아이콘 박스 -->
-		  <div class="d-flex justify-content-center w-100 mt-2">
-		    <div class="social-box">
-		      <ul>
-		        <li>
-		          <a href="https://www.youtube.com/watch?v=WaWoMowapjI" target="_blank" rel="noopener noreferrer">
-		            <img src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
-		            <span>유튜브</span>
-		          </a>
-		        </li>
-		        <li>
-		          <a href="https://blog.naver.com/ewinner7/222973843240" target="_blank" rel="noopener noreferrer">
-		            <img src="/images/winct/blog.svg" alt="블로그" class="snsImg">
-		            <span>블로그</span>
-		          </a>
-		        </li>
-		        <li>
-		          <a href="https://open.kakao.com/o/gBvFxyYg" target="_blank" rel="noopener noreferrer">
-		            <img src="/images/winct/kakao.png" alt="카카오톡" class="snsImg">
-		            <span>카카오톡</span>
-		          </a>
-		        </li>
-		      </ul>
-		      <img src="/images/winct/quickArrow.svg" alt="더보기" class="quick-arrow-btn" style="width: 34px; height: auto;">
-		    </div>
-		  </div>
-	</div>     <!-- 하단 간격 유지안함  컨설팅소개서 여기까지 덮는다 --> 
-	
+		<!-- 하단 간격 유지안함  컨설팅소개서 여기까지 덮는다 -->
+	</div>
 	<!--  공공기관 포털   -->
 	<div class="bmenu">
 	    <div class="row m-0"> 
@@ -2939,6 +2931,32 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            }
 	        });
 	    }
+	    //해상도에따른 위치 조절 기능 
+        function adjustMargin() {
+            const container = document.querySelector('.container-fluid_noti');
+            const screenWidth = window.innerWidth;
+
+            if (screenWidth > 1920) {
+                container.style.marginLeft = '-270px';
+            } else if (screenWidth <= 960) {
+                container.style.marginLeft = '-265px';    
+            } else if (screenWidth <= 1097) {
+                container.style.marginLeft = '-485px';
+            } else if (screenWidth <= 1280) {
+                container.style.marginLeft = '-450px';
+            } else if (screenWidth <= 1536) {
+                container.style.marginLeft = '-395px';
+            } else if (screenWidth <= 1745) {
+                container.style.marginLeft = '-350px';
+            } else {
+                container.style.marginLeft = '-315px'; // 1920 표준위치  
+            }
+        }
+        // 화면 크기 변경 시마다 margin 값을 조정
+        window.addEventListener('resize', adjustMargin);
+
+        // 페이지 로드 시 최초 한번 호출
+        adjustMargin();
 	    </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
