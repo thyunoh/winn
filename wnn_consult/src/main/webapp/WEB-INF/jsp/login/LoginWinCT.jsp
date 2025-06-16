@@ -120,6 +120,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<!-- Carousel Start -->
 	<div class="container-fluid mb-2" style="position: relative;">
 		<div class="row px-xl-8">
+		    <!-- 슬라이드 시작  -->
 			<div class="col-lg-12 mx-auto">
 				<!-- 수정시 이미지 좌측공백 유의-->
 				<div id="header-carousel" class="carousel slide carousel-fade mb-2"
@@ -162,7 +163,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 				</div>
 			</div>
-
+        <!-- 슬라이드 끝  -->
 		</div>
 
 		<!-- Carousel End -->
@@ -170,17 +171,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		<div class="col-lg-10" style="margin-top: 400px;">
 			<!-- style="margin-top: 400px; 올려서 오버뱁  -->
 			<!--   로그인시작  -->
-			<div class="login-banner-wrapper"
+			<div class="login-banner-wrapper" id = "login_form" 
 				style="width: 100%; max-width: 1700px; margin: 0 auto; transition: all 0.3s ease; transform: translateX(220px);">
 				<div class="row ">
 					<!-- 로그인 영역 -->
 
-					<div class="container-fluid mb-2 px-3"
-						style="transform: translateX(-170px);">
+					<div class="container-fluid mb-2 px-3" 	style="transform: translateX(-170px);">
 						<div class="row justify-content-center px-xl-8"
 							style="flex-wrap: nowrap;">
-							<div class="col-lg-auto"
-								style="width: 725px; flex-shrink: 0; min-width: 725px;">
+							<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
 								<div class="contact-form box-p-10 mb-3"
 									style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
 									<form name="loginForm" id="loginForm">
@@ -380,12 +379,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				</div>
 
 				<!--  공지사항   -->
+				
 				<div class="container-fluid_noti mb-2 px-3"
 					style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
-					<div class="row justify-content-center px-xl-8"
-						style="flex-wrap: nowrap;">
-						<div class="col-lg-auto"
-							style="width: 690px; flex-shrink: 0; min-width: 690px;">
+					  <div class="row justify-content-center" id="noti-row" style="flex-wrap: nowrap;">
+						<div class="col-lg-auto" style="width: 690px; flex-shrink: 0; min-width: 690px;">
 							<div class="bg-light box-p-10" style="height: 215px;">
 								<!-- 탭 헤더 -->
 								<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
@@ -2931,6 +2929,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	            }
 	        });
 	    }
+
 	    //해상도에따른 위치 조절 기능 
         function adjustMargin() {
             const container = document.querySelector('.container-fluid_noti');
@@ -2957,6 +2956,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
         // 페이지 로드 시 최초 한번 호출
         adjustMargin();
+
 	    </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
