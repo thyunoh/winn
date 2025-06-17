@@ -2921,7 +2921,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        });
 	    }
 
-	    //해상도에따른 위치 조절 기능 
+	    //해상도에따른 위치 조절 기능 (공지사항/고객샌터 )
         function adjustMargin() {
             const container  = document.querySelector('.container-fluid_noti');
             const screenWidth = window.innerWidth;
@@ -2947,7 +2947,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
         // 페이지 로드 시 최초 한번 호출
         adjustMargin();
-
+        //상단이미지 중앙이 아닌 로그인 화면비율에 맞게 조정 (좌측으로 이동정렬)
         function adjustCarouselPosition() {
         	  const items = document.querySelectorAll('.carousel-item');
         	  const indis  = document.querySelectorAll('.carousel-indicators');
