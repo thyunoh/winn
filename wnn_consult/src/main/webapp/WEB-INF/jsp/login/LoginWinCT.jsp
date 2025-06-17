@@ -52,18 +52,16 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 </head>
 <style>
 </style>
-	
-
 <body>
 <!-- Navbar Start -->
 	<div class="container-fluid_act bg-white mb-2">
 		<div class="row px-xl-8">
 			<div class="col-lg-3 d-none d-lg-block">
-			<a class="btn d-flex align-items-center bg-white w-80"
-			   data-bs-toggle="collapse" href="#navbar-vertical"
-			   style="height: 30px; padding: 0; width: 40%; margin-left:49%; margin-top:15px;">
-				<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
-			</a>
+				<a class="btn d-flex align-items-center bg-white w-80"
+				   data-bs-toggle="collapse" href="#navbar-vertical"
+				   style="height: 30px; padding: 0; width: 40%; margin-left:49%; margin-top:15px;">
+					<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
+				</a>
 			</div>
 			<div class="col-lg-9">
 				<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px; align-items: center;">
@@ -134,30 +132,22 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					</ol>
 
 					<!-- 슬라이드 1 -->
-					<div class="carousel-item active"
-						style="height: 490px; overflow: hidden;">
-						<div
-							class="d-flex align-items-center justify-content-center h-100; width: 100%;">
-							<img src="/images/winct/image1.svg" class="img-fluid"
-								style="object-fit: contain;">
+					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						   <img src="/images/winct/image1.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
-					</div>
-
+					</div>					
 					<!-- 슬라이드 2 -->
-					<div class="carousel-item" style="height: 490px; overflow: hidden;">
-						<div
-							class="d-flex align-items-center justify-content-center h-100; width: 100%;">
-							<img src="/images/winct/image2.svg" class="img-fluid"
-								style="object-fit: contain;">
+					<div class="carousel-item" style="height: 540px; overflow: hidden;">
+						<div class="d-flex align-items-center justify-content-center w-100 h-100">
+							<img src="/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
-
+					
 					<!-- 슬라이드 3 -->
-					<div class="carousel-item" style="height: 490px; overflow: hidden;">
-						<div
-							class="d-flex align-items-center justify-content-center h-100; width: 100%;">
-							<img src="/images/winct/image3.svg" class="img-fluid"
-								style="object-fit: contain;">
+					<div class="carousel-item" style="height: 540px; overflow: hidden;">
+						<div class="d-flex align-items-center justify-content-center w-100 h-100">
+							<img src="/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
 
@@ -176,7 +166,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 				<div class="row ">
 					<!-- 로그인 영역 -->
 
-					<div class="container-fluid mb-2 px-3" 	style="transform: translateX(-170px);">
+					<div class="container-fluid mb-2 px-3" 	id = "login_line"  style="transform: translateX(-170px);">
 						<div class="row justify-content-center px-xl-8"
 							style="flex-wrap: nowrap;">
 							<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
@@ -567,6 +557,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						class="quick-arrow-btn" style="width: 34px; height: auto;">
 				</div>
 			</div>
+			<!-- 오른쪽 소셜 아이콘 박스 -->
 		</div>
 		<!-- 하단 간격 유지안함  컨설팅소개서 여기까지 덮는다 -->
 	</div>
@@ -2932,13 +2923,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
 	    //해상도에따른 위치 조절 기능 
         function adjustMargin() {
-            const container = document.querySelector('.container-fluid_noti');
+            const container  = document.querySelector('.container-fluid_noti');
             const screenWidth = window.innerWidth;
 
             if (screenWidth > 1920) {
                 container.style.marginLeft = '-270px';
             } else if (screenWidth <= 960) {
-                container.style.marginLeft = '-265px';    
+                container.style.marginLeft = '-265px';   
             } else if (screenWidth <= 1097) {
                 container.style.marginLeft = '-485px';
             } else if (screenWidth <= 1280) {
@@ -2957,7 +2948,35 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         // 페이지 로드 시 최초 한번 호출
         adjustMargin();
 
-	    </script>
+        function adjustCarouselPosition() {
+        	  const items = document.querySelectorAll('.carousel-item');
+        	  const indis  = document.querySelectorAll('.carousel-indicators');
+        	  const windowWidth = window.innerWidth;
+
+        	  items.forEach((item) => {
+        		  if (windowWidth > 1920) {
+        	      const offset = Math.floor((1920 - windowWidth) / 100)* 10;
+        	      item.style.transform = 'translateX(' + offset + 'px)';
+        	    } else {
+        	      // 데스크탑/노트북에서는 원래 위치
+        	      item.style.transform = 'translateX(0)';
+        	    }
+        	  });
+        	  indis.forEach((indi) => {
+        		  if (windowWidth > 1920) {
+        	      const indiset = windowWidth - (windowWidth + 2500);
+        	      indi.style.transform = 'translateX(' + indiset + 'px)';
+        	    } else {
+        	      // 데스크탑/노트북에서는 원래 위치
+        	      indi.style.transform = 'translateX(0)';
+        	    }
+        	  });        	  
+        	}
+
+        	// 로딩 및 화면 크기 변경 시 적용
+        	window.addEventListener('load', adjustCarouselPosition);
+        	window.addEventListener('resize', adjustCarouselPosition);
+        	</script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>

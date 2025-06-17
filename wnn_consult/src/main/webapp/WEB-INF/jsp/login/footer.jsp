@@ -1,8 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <link href="/css/winct/style.css?v=123"   rel="stylesheet">
- <style>
- </style>
+<style>
+</style>
  <div class="wrapper">
 	  <footer class="footer" id="footer" style="color: var(--color-gray); background-color: #00325B; width: 100%;">
 	    <div class="inner" style="text-align:center; font-size:12px">
