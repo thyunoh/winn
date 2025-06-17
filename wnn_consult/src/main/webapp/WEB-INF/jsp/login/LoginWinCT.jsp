@@ -2973,9 +2973,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	  });        	  
         	}
 
-        	// 로딩 및 화면 크기 변경 시 적용
-        	window.addEventListener('load', adjustCarouselPosition);
-        	window.addEventListener('resize', adjustCarouselPosition);
+            adjustCarouselPosition(); // 페이지 로딩 시 바로 실행
+            window.addEventListener('resize', adjustCarouselPosition);
         	</script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
