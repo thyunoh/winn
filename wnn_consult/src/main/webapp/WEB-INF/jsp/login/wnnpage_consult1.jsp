@@ -28,6 +28,9 @@
 <script type="text/javascript" src="/js/winct/jqBootstrapValidation.min.js"></script> 
 <!-- wnnnet 설정끝 -->
 <style>
+.tab-content {
+    min-height: calc(100vh - 100px); /* 대략 footer 높이 고려해서 조정 */
+}
 </style>
 </head>
 <body>
@@ -50,7 +53,7 @@
 	        <div class="steb-container">
 	            <div class="chart-wrap">
 				    <section class="content-box">
-				        <img src="/images/winct/consult1_1.jpg" class="img-fluid" alt="WinnerNet Main Image">
+				        <img src="/images/winct/consult1_1.jpg" class="img-fluid"  alt="WinnerNet Main Image">
 				    </section>
 				</div>
 	        </div>
@@ -80,6 +83,5 @@
 <!-- JavaScript 추가 -->
 <script>
 </script>
-
 </body>
 </html>

@@ -25,6 +25,9 @@
   <title>위너넷 컨설팅</title>
 
 <style>
+.tab-content {
+    min-height: calc(100vh - 100px); /* 대략 footer 높이 고려해서 조정 */
+}
 </style>
 </head>
 <body>

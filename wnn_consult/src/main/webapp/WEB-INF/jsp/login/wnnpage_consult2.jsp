@@ -23,6 +23,9 @@
 <link href="/css/winct/style_login.css?v=123" rel="stylesheet">
 
 <style>
+.tab-content {
+    min-height: calc(100vh - 100px); /* 대략 footer 높이 고려해서 조정 */
+}
 </style>
 </head>
 <body>

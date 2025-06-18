@@ -928,7 +928,6 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        })
 	        .catch(error => console.error('❌ 페이지 로딩 오류:', error));
 	}
-
 	document.addEventListener("DOMContentLoaded", function() {
 	    let contentArea = document.getElementById("contentArea");
 	    let consultingTitle = document.getElementById("consultingTitle");
@@ -2975,7 +2974,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
             adjustCarouselPosition(); // 페이지 로딩 시 바로 실행
             window.addEventListener('resize', adjustCarouselPosition);
-        	</script>
+        </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
