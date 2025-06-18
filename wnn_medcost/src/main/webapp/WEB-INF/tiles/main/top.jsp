@@ -137,7 +137,14 @@
 		    clearMenuActive();
 		    $(this).addClass('active');
 		    $('.menu-section').hide();
-		    $('#menu-a, #menu-b, #menu-c, #menu-d').show();
+		    let s_conact_gb = getCookie("s_conact_gb");
+		    if (s_conact_gb == 'A') {
+		        $('#menu-a, #menu-b, #menu-c, #menu-d').show();
+		    }else if (s_conact_gb == '1') { //경영분석 
+		        $('#menu-a, #menu-b, #menu-c').show(); 
+		    }else if (s_conact_gb == '2') { //적정성평가 
+		        $('#menu-a, #menu-b, #menu-d').show(); 
+		    }    
 		});
 		
 		$('#top-menu_b').on('click', function () {
@@ -215,7 +222,7 @@
 	    if (s_conact_gb === 'A' || s_conact_gb === '1') {
 	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
 	    } else if (s_conact_gb === '2') {
-	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_c_btn" data-type="evaluation">적정성평가</a>`;
+	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
 	    }
 	
 	    menuArea.insertAdjacentHTML("beforeend", menuHTML);

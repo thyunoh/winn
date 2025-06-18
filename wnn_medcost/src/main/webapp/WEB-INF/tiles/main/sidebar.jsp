@@ -488,11 +488,11 @@ window.addEventListener("DOMContentLoaded", function() {
 });
 // 위너넷만 메뉴가 생성됨   
 function hosp_conact() {
-    const hospcont  = document.getElementById("hospcont"); 
-    const wnnauth1  = document.getElementById("wnnauth1");
-    const comcode   = document.getElementById("comcode");
-    const ratecode  = document.getElementById("ratecode");
-    const samcode   = document.getElementById("samcode");
+    const hospcont   = document.getElementById("hospcont"); 
+    const wnnauth1   = document.getElementById("wnnauth1");
+    const comcode    = document.getElementById("comcode");
+    const ratecode   = document.getElementById("ratecode");
+    const samcode    = document.getElementById("samcode");
     const hospuser1  = document.getElementById("hospuser1");
     const hospuser2  = document.getElementById("hospuser2");
     const hospuser3  = document.getElementById("hospuser3");
@@ -519,6 +519,7 @@ function hosp_conact() {
         "hospuser5"
     ]);
 }
+
 function loadFaqData() {
     // 모달을 먼저 연다 (첫 번째 열 때 닫히는 문제 해결)
     $('#faqModal').modal('show');
@@ -614,9 +615,9 @@ function fnasq_Search() {
     $("#asqdataArea").empty();
     $.ajax({
          url : '/mangr/asqList.do',
-       type : 'post',
-       data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
-      dataType : "json",
+         type : 'post',
+         data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
+         dataType : "json",
          success : function(data) {
             if(data.error_code != "0") return;
 
@@ -625,12 +626,12 @@ function fnasq_Search() {
              for(var i=0 ; i < data.resultCnt; i++){
                 dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
                                                                                 + data.resultLst[i].asqSeq+'">';
-                dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
-                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
+               dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
+               dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
                dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;   
-                dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
-                dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
+               dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
+               dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
                dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
                dataTxt +=  "</tr>";
                   $("#asqdataArea").append(dataTxt);
