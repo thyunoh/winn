@@ -15,8 +15,8 @@ function openCommonSearch(searchType, callback) {
     if (!document.getElementById('commonSearchModal')) {
         $("body").append(`
             <div class="modal fade" id="commonSearchModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 31%;">
-                    <div class="modal-content shadow-lg rounded-4 border-0" style="min-height: 600px; background: white; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.1);">
+                <div class="modal-dialog modal-lg" style="width: 30%; height: 60%; margin-top: 180px; margin-left: auto; ">
+                    <div class="modal-content shadow-lg rounded-4 border-0" style="min-height: 700px; background: white; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.1);">
                         <header class="modal-header d-flex justify-content-between align-items-center p-2" style="background: #e9ecef; border-top-left-radius: 15px; border-top-right-radius: 15px;">
                             <h5 id="commonSearchTitle" class="m-0 font-weight-bold">🔍 검색</h5>
                             <button type="button" class="btn btn-outline-dark rounded px-2 py-1" data-dismiss="modal" onClick="closeCommonSearch()">닫기 <i class="fas fa-times"></i></button>
