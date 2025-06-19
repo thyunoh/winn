@@ -256,7 +256,7 @@
 						<div class="col-2 col-sm-2">
 							<input id="hospCd" name="hospCd" type="text"
 								class="form-control is-invalid text-left" required
-								placeholder="요양기관를 입력하세요">
+								placeholder="요양기관를 입력">
 						</div>
 						<label for="joinDt"
 							class="col-2 col-lg-2 col-form-label text-left">가입일자</label>
@@ -302,7 +302,7 @@
 						</div>    
 						<label for="useYn" class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center" style="height: 100%;">시뮬레이터사용여부</label>
 						<div class="col-2 col-lg-2">
-							<select id="omtYn" name="useYn" class="custom-select">
+							<select id="useYn" name="useYn" class="custom-select">
 							    <option value="Y" selected>사용</option>
 								<option value="N">미사용</option>
 							</select>
@@ -336,7 +336,7 @@
 							class="col-2 col-lg-2 col-form-label text-left">Fax</label>
 						<div class="col-2 col-lg-2">
 							<input id="hospFax" name="hospFax" type="text"
-								class="form-control phone-inputmask"
+								class="form-control"
 								placeholder="(010)-0000-0000" " maxlength="">
 						</div>
 						<label for="omtYn" class="col-2 col-lg-2 col-form-label d-flex align-items-center justify-content-center" style="height: 100%;">청구누락대상</label>
@@ -1887,17 +1887,26 @@
 		    // 전화번호 마스크 (서울, 휴대폰, 지역번호 등 대응)
 		    $(".phone-inputmask").inputmask({
 		        mask: [
-		            "02-9999-9999",     // 서울 2자리
-		            "010-9999-9999",    // 휴대폰
-		            "011-9999-9999",    // 옛날 휴대폰
-		            "016-9999-9999",    // 옛날 휴대폰
-		            "070-9999-9999",    // 인터넷전화
-		            "031-999-9999",     // 지역번호 + 짧은번호
-		            "031-9999-9999"     // 지역번호 + 긴번호
+		            "02-####-####",
+		            "010-####-####",
+		            "011-####-####",
+		            "016-####-####",
+		            "017-####-####",
+		            "018-####-####",
+		            "019-####-####",
+		            "070-####-####",
+		            "03##-###-####", // 3자리 지역번호
+		            "03##-####-####" // 4자리 국번
 		        ],
 		        greedy: false,
 		        clearIncomplete: true,
-		        placeholder: ""
+		        placeholder: "",
+		        definitions: {
+		            "#": {
+		                validator: "[0-9]",
+		                cardinality: 1
+		            }
+		        }
 		    });
 		    $(".email-inputmask").inputmask({
 		        mask: "*{1,20}[.*{1,20}][.*{1,20}][.*{1,20}]@*{1,20}[*{2,6}][*{1,2}].*{1,}[.*{2,6}][.*{1,2}]",

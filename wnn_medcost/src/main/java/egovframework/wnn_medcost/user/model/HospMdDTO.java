@@ -54,7 +54,14 @@ public class HospMdDTO {
 	private String fileYn ;
 	private String hosGrd ;
 	private String conactGb ;
+	private	String omtYn;
 	
+	public String getOmtYn() {
+		return omtYn;
+	}
+	public void setOmtYn(String omtYn) {
+		this.omtYn = omtYn;
+	}
 	public String getConactGb() {
 		return conactGb;
 	}
