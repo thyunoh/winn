@@ -376,7 +376,6 @@ public class UserController {
 	public Map<String, Object> phospList(@ModelAttribute("DTO") HospMdDTO dto) throws Exception {
 	    Map<String, Object> response = new HashMap<>() ;
 	try {
-		dto.setWnnchk("N") ;//병원검색하명 등록시 위너넷은 제외한다 
 		List<?> result = svc.selHospList(dto) ;
 		log.error("🚨 getWnnchk  : " + dto.getWnnchk());
 		log.error("🚨 getHospCd  : " + dto.getHospCd());

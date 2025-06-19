@@ -2301,69 +2301,68 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	function loadFaqData() {
 	    if (!sessionStorage.getItem('s_hospid')) {
 	        messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
-	        return; 
-	    } 
-	
-	    // 모달을 먼저 연다 (첫 번째 열 때 닫히는 문제 해결)
+	        return;
+	    }
+
+	    // 모달을 먼저 연다
 	    $('#faqModal').modal('show');
-	
+
 	    $("#faqList").html(`<p class="text-muted text-center"></p>`);
-	
+
 	    $.ajax({
 	        url: "/mangr/faqList.do",
 	        type: "POST",
 	        data: {},
 	        dataType: "json",
 	        success: function (response) {
-	            let faqHtml = "";
+	            const $faqList = $("#faqList");
+	            $faqList.empty(); // 기존 내용 제거
+
 	            if (response.error_code === "0" && Array.isArray(response.resultLst) && response.resultLst.length > 0) {
-	            	$.each(response.resultLst, function (index, faq) {
-	            	    let question = String(faq.qstnConts || "질문이 없습니다.").trim();
-	            	    let answer = String(faq.ansrConts || "답변이 없습니다.").trim();
+	                $.each(response.resultLst, function (index, faq) {
+	                    const question = String(faq.qstnConts || "질문이 없습니다.").trim();
+	                    const answer = String(faq.ansrConts || "답변이 없습니다.").trim();
 
-	            	    // div 요소 동적 생성
-	            	    let faqItem = $("<div>", { class: "faq-item" });
-	            	    
-	            	    let faqQuestion = $("<div>", { class: "faq-question", onclick: "fnFaqToggle(this)" }).text(question);
-	            	    let arrowSpan = $("<span>", { class: "arrow" }).text("▼");
-	            	    faqQuestion.append(arrowSpan);
+	                    // FAQ 항목 생성
+	                    const $faqItem = $("<div>", { class: "faq-item" });
 
-	            	    let faqAnswer = $("<div>", { class: "faq-answer", style: "display: none;" }).text(answer);
+	                    const $faqQuestion = $("<div>", { class: "faq-question" }).text(question);
+	                    const $arrowSpan = $("<span>", { class: "arrow" }).text("▼");
+	                    $faqQuestion.append($arrowSpan);
 
-	            	    faqItem.append(faqQuestion).append(faqAnswer);
+	                    const $faqAnswer = $("<div>", { class: "faq-answer", style: "display: none;" }).text(answer);
 
-	            	    $("#faqList").append(faqItem); // 리스트에 추가
-	            	});
+	                    $faqItem.append($faqQuestion).append($faqAnswer);
+	                    $faqList.append($faqItem);
+	                });
+
+	                // 클릭 이벤트 바인딩
+	                $(".faq-question").off("click").on("click", function () {
+	                    const $item = $(this).closest(".faq-item");
+
+	                    if ($item.hasClass("active")) {
+	                        $item.removeClass("active").find(".faq-answer").slideUp();
+	                        $item.find(".arrow").text("▼");
+	                    } else {
+	                        $(".faq-item").removeClass("active").find(".faq-answer").slideUp();
+	                        $(".faq-item .arrow").text("▼");
+
+	                        $item.addClass("active").find(".faq-answer").slideDown();
+	                        $item.find(".arrow").text("▲");
+	                    }
+	                });
+
+	                console.log("📢 FAQ 데이터 로드 완료");
 	            } else {
-	                faqHtml = `<p class="text-muted text-center">검색된 결과가 없습니다.</p>`;
+	                $faqList.html(`<p class="text-muted text-center">검색된 결과가 없습니다.</p>`);
 	            }
-             //   console.log(faqHtml)
-	         //    $("#faqList").html(faqHtml);	
-
-	            // FAQ 클릭 이벤트 적용
-	            $(".faq-item .faq-question").off("click").on("click", function () {
-	                let $item = $(this).closest(".faq-item");
-	                
-	                if ($item.hasClass("active")) {
-	                    $item.removeClass("active").find(".faq-answer").slideUp();
-	                    $item.find(".arrow").text("▼"); // 화살표 ▼로 변경
-	                } else {
-	                    $(".faq-item").removeClass("active").find(".faq-answer").slideUp();
-	                    $(".faq-item .arrow").text("▼"); // 모든 화살표 초기화
-	
-	                    $item.addClass("active").find(".faq-answer").slideDown();
-	                    $item.find(".arrow").text("▲"); // 현재 열린 항목의 화살표 ▲ 변경
-	                }
-	            });
-	
-	            console.log("📢 FAQ 데이터 로드 완료");
 	        },
 	        error: function () {
 	            $("#faqList").html(`<p class="text-danger text-center">FAQ 데이터를 불러오는 중 오류가 발생했습니다.</p>`);
 	        }
 	    });
 	}
-	
+
 	// FAQ 모달 닫기
 	function faqMainClose() {
 	    console.log("📢 FAQ 모달 닫힘 실행");
