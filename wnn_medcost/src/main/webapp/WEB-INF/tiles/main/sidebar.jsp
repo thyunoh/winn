@@ -33,7 +33,9 @@
                     <li class="nav-item menu-section" id="menu-d">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" ><i class="fa fa-list-ol"></i>적정성-평가 현황</a>
                     </li>
-                
+                     <li class="nav-item menu-section" id="menu-e">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do" ><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
+                    </li>               
                 
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
@@ -480,12 +482,6 @@
    </div>
 </div>
 <script>
-window.addEventListener("DOMContentLoaded", function() {
-    let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부 
-    if (s_wnn_yn != 'Y') {
-        hosp_conact();
-    }
-});
 // 위너넷만 메뉴가 생성됨   
 function hosp_conact() {
     const hospcont   = document.getElementById("hospcont"); 
@@ -607,7 +603,7 @@ function fnasq_main() {
 }    
   
 function fnasq_Search() {
-   $("#asq_infoTable tr").attr("class", ""); 
+    $("#asq_infoTable tr").attr("class", ""); 
     if (document.getElementById("asq_regForm")) {
         document.getElementById("asq_regForm").reset();
     }
@@ -624,9 +620,9 @@ function fnasq_Search() {
             if(data.resultCnt > 0 ){
              var dataTxt = "";
              for(var i=0 ; i < data.resultCnt; i++){
-                dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
+               dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
                                                                                 + data.resultLst[i].asqSeq+'">';
-               dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
+               dataTxt +=  "<td>" + (i+1)  + "</td>" ; 
                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
                dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;   
@@ -862,8 +858,36 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
+    let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부 
+    if (s_wnn_yn != 'Y') {
+        hosp_conact();
+    }
+    hosp_action_conact();
 });
+//원래 top.jsp에서 하지만 위의메뉴가 선택않되었을때 를 대비해서 
+function hosp_action_conact() {
+    let s_conact_gb = getCookie("s_conact_gb");
+    const menu_c = document.getElementById("menu-c");
+    const menu_d = document.getElementById("menu-d");
+    const menu_e = document.getElementById("menu-e");
 
+    // 모두 숨기기
+    menu_c.style.display = "none";
+    menu_d.style.display = "none";
+    menu_e.style.display = "none";
+
+    // 조건에 따라 다시 보이게 설정
+    if (s_conact_gb === 'A') {
+        menu_c.style.display = "block";
+        menu_d.style.display = "block";
+        menu_e.style.display = "block";
+    } else if (s_conact_gb === '1') {
+        menu_c.style.display = "block";
+    } else if (s_conact_gb === '2') {
+        menu_d.style.display = "block";
+        menu_e.style.display = "block";
+    }
+}
 </script>      
 <!-- ============================================================== -->
 <!-- sidebar end -->

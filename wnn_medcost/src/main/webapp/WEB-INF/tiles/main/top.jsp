@@ -89,14 +89,17 @@
 	    var usernm = getCookie("s_usernm"); // 사용자이름
 	    var mainfg = getCookie("s_mainfg"); // 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
 	    var use_yn = getCookie("s_use_yn"); // 사용여부(Y,정상사용자, N.종료사용자)
+	    
+	    function closeTab() {
+	        window.close(); // 현재 탭 닫기
+	        self.close();   // 일부 브라우저에서 추가적으로 닫기 시도
+	    }
 	    if  (getCookie("s_winconect") != 'Y') {
-	        document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> ` 
-	                                                     + hospnm + `  [ ` 
-	                                                     + usernm + `님 ] 반갑습니다 !! ( 종료하기 ) `;
+	        document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
+	                                                       + usernm + `님 ] 반갑습니다 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;
 	    }else{
-	        document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> ` 
-										                + hospnm + `  [ ` 
-										                + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;	    	
+	        document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
+										                   + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;	    	
 	    }
 	    
 	 // 권한 쿠키 가져오기 TBL_USERAUTH_MST 테이블에 정의  
@@ -139,11 +142,11 @@
 		    $('.menu-section').hide();
 		    let s_conact_gb = getCookie("s_conact_gb");
 		    if (s_conact_gb == 'A') {
-		        $('#menu-a, #menu-b, #menu-c, #menu-d').show();
+		        $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e').show();
 		    }else if (s_conact_gb == '1') { //경영분석 
 		        $('#menu-a, #menu-b, #menu-c').show(); 
 		    }else if (s_conact_gb == '2') { //적정성평가 
-		        $('#menu-a, #menu-b, #menu-d').show(); 
+		        $('#menu-a, #menu-b, #menu-d, #menu-e').show(); 
 		    }    
 		});
 		
@@ -166,6 +169,7 @@
 		    $(this).addClass('active');
 		    $('.menu-section').hide();
 		    $('#menu-d').show();
+		    $('#menu-e').show();
 		});
 		$("#hospserchtop").on("click", function () {
 		    openHospitalSearchtop(function (data) {
