@@ -4,6 +4,7 @@
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
+
 <link href="/images/icons/winnernet.ico" rel="icon" type="image/x-icon" >
 
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
@@ -26,17 +27,19 @@
                     <li class="nav-item ">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>                        
                     </li>
-                   <li class="nav-item menu-section" id="menu-c">
+                    
+                    <li class="nav-item menu-section" id="menu-c">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/total_Report.do" ><i class="fa fa-calculator"></i>진료비-분석 현황</a>
-                   </li>
+                    </li>
                 
                     <li class="nav-item menu-section" id="menu-d">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" ><i class="fa fa-list-ol"></i>적정성-평가 현황</a>
                     </li>
-                     <li class="nav-item menu-section" id="menu-e">
+                    
+                    <li class="nav-item menu-section" id="menu-e">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do" ><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
-                    </li>               
-                
+                    </li>
+                	
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
                                                                                       <i class="fas fa-cloud-upload-alt"></i>요양기관등록</a>
@@ -51,12 +54,15 @@
                                 <li class="nav-item" id="hospuser3">
                                     <a class="nav-item nav-link"  href="/user/dietcd.do">가산식대등록</a>
                                 </li>
+                                
+                                
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/pusercd.do">사용자등록</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/user/userauthcd.do">사용자권한관리</a>
                                 </li>
+                                 
                                 <li class="nav-item" id="hospuser4">
                                     <a class="nav-item nav-link"  href="/user/wardcd.do">병동현황등록</a>
                                 </li>
@@ -65,7 +71,8 @@
                                 </li>
                            </ul>
                         </div>
-                    </li> 
+                    </li>
+                    
                     <!-- 기준정보 -->
                     <li class="nav-item">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info" aria-controls="base-info">
@@ -84,7 +91,7 @@
                                        <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
                                          data-target="#hira-code" aria-controls="hira-code">심평원고시코드
                                        </a>
-                                       <div id="hira-code" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+                                       <div id="hira-code" class="collapse submenu" style="background-color: white;">
                                            <ul class="nav flex-column">
                                                <li class="nav-item">
                                                    <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
@@ -176,7 +183,7 @@
                               <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
                                 data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
                               </a>
-                              <div id="lic_excel" class="collapse submenu" style="background-color: white; padding-left: 15px;">
+                              <div id="lic_excel" class="collapse submenu" style="background-color: white;">
                                   <ul class="nav flex-column">
                                       <li class="nav-item">
                                           <a class="nav-item nav-link" href="/user/licexcel.do">인력신고현황 엑셀</a>
@@ -482,39 +489,7 @@
    </div>
 </div>
 <script>
-// 위너넷만 메뉴가 생성됨   
-function hosp_conact() {
-    const hospcont   = document.getElementById("hospcont"); 
-    const wnnauth1   = document.getElementById("wnnauth1");
-    const comcode    = document.getElementById("comcode");
-    const ratecode   = document.getElementById("ratecode");
-    const samcode    = document.getElementById("samcode");
-    const hospuser1  = document.getElementById("hospuser1");
-    const hospuser2  = document.getElementById("hospuser2");
-    const hospuser3  = document.getElementById("hospuser3");
-    const hospuser4  = document.getElementById("hospuser4");
-    const hospuser5  = document.getElementById("hospuser5");
-    const hideElementsById = (ids) => {
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = "none";
-        });
-    };
 
-    // 숨기고자 하는 ID 목록
-    hideElementsById([
-        "samcode",    // 샘버전
-        "comcode",    // 공통코드
-        "ratecode",   // 청구율
-        "hospcont",   // 계약정보
-        "wnnauth1",   // 운영정보
-        "hospuser1",  // 병원사용
-        "hospuser2",
-        "hospuser3",
-        "hospuser4",
-        "hospuser5"
-    ]);
-}
 
 function loadFaqData() {
     // 모달을 먼저 연다 (첫 번째 열 때 닫히는 문제 해결)
@@ -603,7 +578,7 @@ function fnasq_main() {
 }    
   
 function fnasq_Search() {
-    $("#asq_infoTable tr").attr("class", ""); 
+   $("#asq_infoTable tr").attr("class", ""); 
     if (document.getElementById("asq_regForm")) {
         document.getElementById("asq_regForm").reset();
     }
@@ -611,23 +586,23 @@ function fnasq_Search() {
     $("#asqdataArea").empty();
     $.ajax({
          url : '/mangr/asqList.do',
-         type : 'post',
-         data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
-         dataType : "json",
+       type : 'post',
+       data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
+      dataType : "json",
          success : function(data) {
             if(data.error_code != "0") return;
 
             if(data.resultCnt > 0 ){
              var dataTxt = "";
              for(var i=0 ; i < data.resultCnt; i++){
-               dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
+                dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
                                                                                 + data.resultLst[i].asqSeq+'">';
-               dataTxt +=  "<td>" + (i+1)  + "</td>" ; 
-               dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
+                dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
+                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
                dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;   
-               dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
-               dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
+                dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
+                dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
                dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
                dataTxt +=  "</tr>";
                   $("#asqdataArea").append(dataTxt);
@@ -829,10 +804,44 @@ $(document).ready(function () {
         // 현재 클릭한 항목에 active 추가
         $(this).addClass('active');
     });
+    
+    
 });
-document.addEventListener('DOMContentLoaded', function () {
-    const currentPath = window.location.pathname;
+	//위너넷만 메뉴가 생성됨   
+function hosp_conact() {
+    const hospcont  = document.getElementById("hospcont"); 
+    const wnnauth1  = document.getElementById("wnnauth1");
+    const comcode   = document.getElementById("comcode");
+    const ratecode  = document.getElementById("ratecode");
+    const samcode   = document.getElementById("samcode");
+    const hospuser1  = document.getElementById("hospuser1");
+    const hospuser2  = document.getElementById("hospuser2");
+    const hospuser3  = document.getElementById("hospuser3");
+    const hospuser4  = document.getElementById("hospuser4");
+    const hospuser5  = document.getElementById("hospuser5");
+    const hideElementsById = (ids) => {
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        });
+    };
 
+    // 숨기고자 하는 ID 목록
+    hideElementsById([
+        "samcode",    // 샘버전
+        "comcode",    // 공통코드
+        "ratecode",   // 청구율
+        "hospcont",   // 계약정보
+        "wnnauth1",   // 운영정보
+        "hospuser1",  // 병원사용
+        "hospuser2",
+        "hospuser3",
+        "hospuser4",
+        "hospuser5"
+    ]);
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const currentPath = window.location.pathname;    
     // 모든 nav-link 순회
     document.querySelectorAll('.nav-link').forEach(function (link) {
         const href = link.getAttribute('href');
@@ -863,6 +872,7 @@ document.addEventListener('DOMContentLoaded', function () {
         hosp_conact();
     }
 });
+
 </script>      
 <!-- ============================================================== -->
 <!-- sidebar end -->

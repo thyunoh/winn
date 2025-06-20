@@ -3,10 +3,9 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<script	src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <link href="/css/winmc/style_login.css?v=123" rel="stylesheet">
-<style>
-</style>
+
+
 <!-- ============================================================== -->
 <!-- main wrapper -->
 <!-- ============================================================== -->
@@ -20,6 +19,7 @@
             <a class="navbar-brand ml-4 mr-5" href="/user/dashboard.do">
 			  <img src="/images/winct/wincheck.jpg" alt="WinnerNet Logo" height="40">
 			</a>
+			
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" 
                                           aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -28,8 +28,8 @@
                 <ul class="navbar-nav ml-left">
 					<li class="nav-item">
                         <div id="custom-search" class="top-search-bar">
-                            <a href="#" id="top-menu_a" class="btn btn-rounded btn-light btn-sm top-menu-btn">전체메뉴</a>
-                            <a href="#" id="top-menu_b" class="btn btn-rounded btn-light btn-sm top-menu-btn">자료올리기</a>
+                            <a href="/user/dashboard.do" id="top-menu_a" class="btn btn-rounded btn-light btn-sm top-menu-btn">전체메뉴</a>
+                            <a href="/main/magamFileUpload.do" id="top-menu_b" class="btn btn-rounded btn-light btn-sm top-menu-btn">자료올리기</a>
                 			<div id="top-menu_c"> </div>
                 			<div id="top-menu_d"> </div>
                         </div>
@@ -64,7 +64,7 @@
 					</li>
                 </ul>    
                 <ul class="navbar-nav ml-auto">
-                	<li class="nav-item" style="font-size: 16px;">
+                	<li class="nav-item"  style="font-size: 16px;">
                         <a id="logininfo" class="dropdown-item" href="#"></a>
                     </li>                    
                 </ul>
@@ -73,10 +73,12 @@
     </div>
     <script type="text/javascript">
     
+    	
+    
 	 //   window.onload = function () {
 	        var winner = getCookie("s_wnn_yn").trim();
             if (winner === 'Y') {
-	          	document.getElementById("hospserchtop").style.display = "flex";
+            	document.getElementById("hospserchtop").style.display = "flex";
 	        }
       
 	 //   };
@@ -90,6 +92,7 @@
 	    var mainfg = getCookie("s_mainfg"); // 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
 	    var use_yn = getCookie("s_use_yn"); // 사용여부(Y,정상사용자, N.종료사용자)
 	    
+	   
 	    function closeTab() {
 	        window.close(); // 현재 탭 닫기
 	        self.close();   // 일부 브라우저에서 추가적으로 닫기 시도
@@ -101,6 +104,7 @@
 	        document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
 										                   + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;	    	
 	    }
+	    
 	    
 	 // 권한 쿠키 가져오기 TBL_USERAUTH_MST 테이블에 정의  
 	    let s_insauth = getCookie("s_insauth");
@@ -132,7 +136,7 @@
 	    
 	    // 일단, 단순하게 메뉴보기만 설정하고 넘어감
 	    // 전체 메뉴보기
-		function clearMenuActive() {
+	    function clearMenuActive() {
 		    $('.top-menu-btn').removeClass('active');
 		}
 		
@@ -168,10 +172,11 @@
 		    clearMenuActive();
 		    $(this).addClass('active');
 		    $('.menu-section').hide();
-		    $('#menu-d').show();
-		    $('#menu-e').show();
+		    $('#menu-d, #menu-e').show();
 		});
+	    
 		$("#hospserchtop").on("click", function () {
+			
 		    openHospitalSearchtop(function (data) {
 		        // 세션에 저장
 		        sessionStorage.setItem('hospid', data.hospCd);  
@@ -215,7 +220,7 @@
 		    });
 		}		
 		   //계약관련 메뉴설정체크 A. 전체 1.진료비분석 2. 적정성평가 
-	function hosp_conact() {
+		function hosp_conact() {
 	    let s_conact_gb = getCookie("s_conact_gb");
 	
 	    // top-menu_c 영역 구성
@@ -224,9 +229,9 @@
 	    menuArea.innerHTML = '';
 	
 	    if (s_conact_gb === 'A' || s_conact_gb === '1') {
-	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
+	    	menuHTML += `<a href="/user/dashboard.do" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
 	    } else if (s_conact_gb === '2') {
-	        menuHTML += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+	    	menuHTML += `<a href="/user/dashboard.do" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
 	    }
 	
 	    menuArea.insertAdjacentHTML("beforeend", menuHTML);
@@ -237,7 +242,7 @@
 	    menuArea_d.innerHTML = '';
 	
 	    if (s_conact_gb === 'A') {
-	        menuHTML_d += `<a href="#" class="btn btn-rounded btn-light btn-sm top-menu-btn consulting-menu" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+	        menuHTML_d += `<a href="/user/dashboard.do" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
 	    }
 	
 	    menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);
@@ -252,29 +257,32 @@
 	    }
 	}
 
-	// 클릭 시 active 클래스 부여 및 저장
+	$(document).ready(function () {
+	    let isFirstLogin = sessionStorage.getItem('isFirstLogin'); // 세션 기준으로 최초 로그인 여부 확인
+	    let selectedTopMenu;
+
+	    if (!isFirstLogin) {
+	        // 최초 로그인: top-menu_a 클릭
+	        selectedTopMenu = 'top-menu_a';
+	        sessionStorage.setItem('isFirstLogin', 'false'); // 이후부터는 최초 아님
+	    } else {
+	        // 이후: 마지막 선택 메뉴 사용 (없으면 top-menu_a로 fallback)
+	        selectedTopMenu = localStorage.getItem('selectedTopMenu') || 'top-menu_a';
+	    }
+
+	    // 메뉴 활성화 및 클릭 이벤트 실행
+	    $('.top-menu-btn').removeClass('active');
+	    $('#' + selectedTopMenu).addClass('active').trigger('click');
+	});
+
+	// 메뉴 클릭 시 처리
 	$(document).on('click', '.top-menu-btn', function () {
 	    $('.top-menu-btn').removeClass('active');
 	    $(this).addClass('active');
 
-	    // 선택된 top-menu ID 저장
+	    // 선택된 메뉴 ID 저장
 	    localStorage.setItem('selectedTopMenu', $(this).attr('id'));
-	});
-
-	// 페이지 로드시 저장된 메뉴 상태 복원
-	$(document).ready(function () {
-	    const selectedTopMenu = localStorage.getItem('selectedTopMenu');
-	    if (selectedTopMenu) {
-	        const selectedBtn = document.getElementById(selectedTopMenu);
-	        if (selectedBtn) {
-	            selectedBtn.classList.add('active');
-	            $('#' + selectedTopMenu).trigger('click');  // ⭐ 클릭 이벤트 강제 발생
-	        }
-	    }
-	    // 현재 메뉴에 active 클래스가 하나도 없으면 top-menu_a 클릭 이벤트 트리거
-	    if (!$('.top-menu .active').length) {
-	        $('#top-menu_a').trigger('click');
-	    }
 	});
 	</script>
     <c:import url="sidebar.jsp" />
+

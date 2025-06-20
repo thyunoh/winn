@@ -46,6 +46,7 @@
 	<script src="/assets/vendor/inputmask/js/jquery.inputmask.bundle.js"></script>	
 	<!-- messagebox js -->
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>	
+	<script	src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 	<!-- Template Javascript -->
 	<script type="text/javascript" src="/js/winmc/main.js"></script>
 	<script type="text/javascript" src="/js/winmc/mess_cd.js"></script>
