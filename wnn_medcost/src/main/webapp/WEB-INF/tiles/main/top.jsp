@@ -271,7 +271,10 @@
 	            $('#' + selectedTopMenu).trigger('click');  // ⭐ 클릭 이벤트 강제 발생
 	        }
 	    }
+	    // 현재 메뉴에 active 클래스가 하나도 없으면 top-menu_a 클릭 이벤트 트리거
+	    if (!$('.top-menu .active').length) {
+	        $('#top-menu_a').trigger('click');
+	    }
 	});
-
 	</script>
     <c:import url="sidebar.jsp" />

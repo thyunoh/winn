@@ -862,32 +862,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (s_wnn_yn != 'Y') {
         hosp_conact();
     }
-    hosp_action_conact();
 });
-//원래 top.jsp에서 하지만 위의메뉴가 선택않되었을때 를 대비해서 
-function hosp_action_conact() {
-    let s_conact_gb = getCookie("s_conact_gb");
-    const menu_c = document.getElementById("menu-c");
-    const menu_d = document.getElementById("menu-d");
-    const menu_e = document.getElementById("menu-e");
-
-    // 모두 숨기기
-    menu_c.style.display = "none";
-    menu_d.style.display = "none";
-    menu_e.style.display = "none";
-
-    // 조건에 따라 다시 보이게 설정
-    if (s_conact_gb === 'A') {
-        menu_c.style.display = "block";
-        menu_d.style.display = "block";
-        menu_e.style.display = "block";
-    } else if (s_conact_gb === '1') {
-        menu_c.style.display = "block";
-    } else if (s_conact_gb === '2') {
-        menu_d.style.display = "block";
-        menu_e.style.display = "block";
-    }
-}
 </script>      
 <!-- ============================================================== -->
 <!-- sidebar end -->

@@ -1448,6 +1448,8 @@
         		startDt2:    $('#startDt2').val(),
         		endDt2:      $('#endDt2').val() ,
         		updDttm:     $('#updDttm').val(),
+        		omtYn:       $('#omtYn').val(),
+        		useYn:       $('#useYn').val(),
         		fileYn:      $('#fileYn').val()
 			    };
 		    return newData;
