@@ -134,20 +134,20 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 					<!-- 슬라이드 1 -->
 					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
 						<div class="slide-image-container d-flex align-items-center w-100 h-100">
-						   <img src="/images/winct/image1.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+						   <img src="/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>					
 					<!-- 슬라이드 2 -->
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-							<img src="/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+							<img src="/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
 					
 					<!-- 슬라이드 3 -->
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-							<img src="/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+							<img src="/images/winct/image1.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
 

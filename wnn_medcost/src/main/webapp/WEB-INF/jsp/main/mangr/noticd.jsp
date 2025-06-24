@@ -1005,6 +1005,15 @@
 			    };
 		    return newData;
 		}	
+		// 페이지 로드 시 자동 적용(입력시 참고인덱스한것 가져오는 조건 )
+		window.addEventListener('DOMContentLoaded', function() {
+		    var select = document.getElementById('fileGb');
+		    document.getElementById('subCodeNm').value = select.options[select.selectedIndex].text;
+		});
+		// 사용자가 선택을 변경할 때 적용
+		document.getElementById('fileGb').addEventListener('change', function() {
+		    document.getElementById('subCodeNm').value = this.options[this.selectedIndex].text;
+		});		
 		function fn_Insert(){
 			const results = validateForm();
 			if (results)
@@ -1227,7 +1236,7 @@
                	  // 사용자가 '예' 버튼을 클릭한 경우
 				if (result.isConfirmed) {
 					// 체크박스가 ':checked'인 행만 선택
-					let  = dataTable.rows(function (idx, data, node) {
+					let selectedRows = dataTable.rows(function (idx, data, node) {
 					    let $row = $(node); // 현재 행의 DOM 노드
 					    let $checkbox = $row.find('input[type="checkbox"]'); // 체크박스 찾기
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링

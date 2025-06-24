@@ -115,14 +115,14 @@
                     <div class="form-row">
                         <label for="qstnConts" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
 	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
-                            <textarea id="qstnConts" name="qstnConts" type="text"  data-parsley-trigger="change" placeholder="" 
+                            <textarea id="qstnConts" name="qstnConts" data-parsley-trigger="change" placeholder="" 
                                                                              autocomplete="off" class="form-control" rows="3" ></textarea>
                         </div>
                     </div>  
                    <div class="form-row">
                         <label for="ansrConts" class="col-2 col-lg-2 col-form-label text-left">질문답변</label>
 	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
-                            <textarea id="ansrConts" name="ansrConts" type="text"  data-parsley-trigger="change" placeholder="" 
+                            <textarea id="ansrConts" name="ansrConts"  data-parsley-trigger="change" placeholder="" 
                                                                              autocomplete="off" class="form-control" rows="12" ></textarea>
                         </div>
                     </div>  
@@ -244,7 +244,7 @@
 	        				{ data: 'faqSeq',     visible: false, className: 'dt-body-center', width: '100px',  name: 'keyfaqSeq', primaryKey: true },
 	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
 	        				{ data: 'ansrConts',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				// getFormat 사용시 
+	        				// getFormat 사용시   
 	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  
 	                          	render: function(data, type, row) {
 		            				if (type === 'display') {
@@ -892,12 +892,11 @@
 			            	// checkbox, 자동순번은 넣지 않습니다.
 			            	// *******단, 나머지 컬럼은 반드시 기술해야 합니다. 
 			            	let newData = newuptData();
-	
 			            	dataTable.row.add(newData).draw(false);
 			            	
 			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	            	
 			            	$("#" + modalName.id).modal('hide');
-			            	
+			            	fn_re_load();
 			        	},
 			        	error: function(xhr, status, error) {
 				         	switch (xhr.status){  
@@ -1086,14 +1085,15 @@
                	  // 사용자가 '예' 버튼을 클릭한 경우
 				if (result.isConfirmed) {
 					// 체크박스가 ':checked'인 행만 선택
-					let  = dataTable.rows(function (idx, data, node) {
+					let selectedRows = dataTable.rows(function (idx, data, node) {
 					    let $row = $(node); // 현재 행의 DOM 노드
 					    let $checkbox = $row.find('input[type="checkbox"]'); // 체크박스 찾기
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링
 					});
-					
+
+					// 이후 선택된 행의 데이터를 처리
 					let keys = dataTableKeys(dataTable, selectedRows);
-					
+
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
