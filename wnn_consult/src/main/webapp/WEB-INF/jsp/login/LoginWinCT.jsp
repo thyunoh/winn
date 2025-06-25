@@ -610,10 +610,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<input type="hidden" name="iud" id="iud" />
 						<!-- 병원 코드 -->
 						<div class="mb-3">
-							<label for="hospCd" class="form-label" style="font-size: 0.9rem;"> 병원코드</label>
+							<label for="hospCd" class="form-label" style="font-size: 0.9rem;"> 병원코드 (필수)</label>
 							<div class="input-group">
 								<input id="hospCd" name="hospCd" type="text" class="form-control"
-									placeholder="병원코드를 입력하세요">
+									placeholder="병원코드를 입력하고 enter key 하세요 ">
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" onclick="fnDupchk()">
 									<i class="fas fa-search"></i> 기관체크
 								</button>
@@ -621,11 +621,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						</div>
 						<!-- 병원명 -->
 						<div class="mb-3">
-							<label for="hospNm" class="form-label" style="font-size: 0.9rem;">병원명</label>
+							<label for="hospNm" class="form-label" style="font-size: 0.9rem;">병원명 (필수)</label>
 							<div class="input-group">
 								<input id="hospNm" name="hospNm" type="text" class="form-control"
 									placeholder="병원명을 입력하세요">
-								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" id="hospserch">
+								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" id="hospserch" style="display: none;">
 									<i class="fas fa-search"></i> 병원검색
 								</button>
 							</div>
@@ -641,7 +641,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						
 						<!-- 이메일 -->
 						<div class="mb-3">
-							<label for="email" class="form-label" style="font-size: 0.9rem;">이메일</label>
+							<label for="email" class="form-label" style="font-size: 0.9rem;">이메일 (필수)</label>
 							<div class="input-group">
 								<input id="email" name="email" type="text" class="form-control"
 									placeholder="이메일 주소를 입력하세요">
@@ -657,11 +657,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 비밀번호 -->
 						<div class="row g-2 mb-3">
 							<div class="col">
-								<label for="passWd" class="form-label" style="font-size: 0.9rem;" >비밀번호</label>
+								<label for="passWd" class="form-label" style="font-size: 0.9rem;" >비밀번호 (필수)</label>
 								<input type="password" id="passWd" name="passWd" class="form-control">
 							</div>
 							<div class="col">
-								<label for="afPassWd" class="form-label" style="font-size: 0.9rem;" >비밀번호 확인</label>
+								<label for="afPassWd" class="form-label" style="font-size: 0.9rem;" >비밀번호확인 (필수)</label>
 								<input type="password" id="afPassWd" name="afPassWd" class="form-control">
 							</div>
 						</div>
@@ -669,11 +669,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 담당자 -->
 						<div class="row g-2 mb-3">
 							<div class="col">
-								<label for="mbrNm" class="form-label" style="font-size: 0.9rem;" >담당자명</label>
+								<label for="mbrNm" class="form-label" style="font-size: 0.9rem;" >담당자명 (필수)</label>
 								<input type="text" id="mbrNm" name="mbrNm" class="form-control">
 							</div>
 							<div class="col">
-								<label for="mbrTel" class="form-label" style="font-size: 0.9rem;" >전화번호</label>
+								<label for="mbrTel" class="form-label" style="font-size: 0.9rem;" >전화번호 (필수)</label>
 								<input type="text" id="mbrTel" name="mbrTel" class="form-control">
 							</div>
 						</div>
@@ -688,7 +688,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							<div class="d-flex justify-content-between align-items-center mb-2">
 								<div class="form-check">
 									<input type="checkbox" id="peruseyn" name="peruseyn" class="form-check-input agreement-checkbox" onchange="checkAction()">
-									<span class="form-check-label">이용약관 동의</span>
+									<span class="form-check-label">이용약관 동의 (필수)</span>
 								</div>
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button"
 									onclick="openModal('이용약관 동의','PER_USE_CD')">세부확인</button>
@@ -697,7 +697,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							<div class="d-flex justify-content-between align-items-center mb-2">
 								<div class="form-check">
 									<input type="checkbox" id="perinfoyn" name="perinfoyn" class="form-check-input agreement-checkbox" onchange="checkAction()">
-									<span class="form-check-label">개인정보 수집 및 이용</span>
+									<span class="form-check-label">개인정보 수집 및 이용 (필수)</span>
 								</div>
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button"
 									onclick="openModal('개인정보 수집 및 이용 동의','PER_INFO_CD')">세부확인</button>
@@ -706,7 +706,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							<div class="d-flex justify-content-between align-items-center">
 								<div class="form-check">
 									<input type="checkbox" id="perproyn" name="perproyn" class="form-check-input agreement-checkbox" onchange="checkAction()">
-									<span class="form-check-label">개인정보 처리위탁 동의</span>
+									<span class="form-check-label">개인정보 처리위탁 동의 (필수)</span>
 								</div>
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button"
 									onclick="openModal('개인정보 처리위탁 동의','PER_PRO_CD')">세부확인</button>
@@ -1090,8 +1090,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	                messageBox("1", "<h6>비밀번호를 입력하세요.!!</h6><p></p>", "passWd", "", "");
 	                return;
 	            }
-	            if (passWd.length < 5) {
-	                messageBox("1", "<h6>비밀번호는 5자 이상이어야 합니다.!!</h6><p></p>", "passWd", "", "");
+	            if (passWd.length < 4) {
+	                messageBox("1", "<h6>비밀번호는 4자 이상이어야 합니다.!!</h6><p></p>", "passWd", "", "");
 	                return;
 	            }
 	            if (passWd !== afPassWd) {
@@ -1099,14 +1099,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	                return;
 	            }
 
-	            // 약관 동의 여부 체크
-	            const terms = ['perUseYn', 'perInfoYn', 'perProYn'];
-	            for (let term of terms) {
-	                if (document.getElementById(term).value !== "Y") {
-	                    messageBox("1", "<h6>전체 약관동의를 하여야 합니다!</h6><p></p>", "", "", "");
-	                    return;
-	                }
-	            }
+	         // 약관 동의 여부 체크
+				const terms = ['peruseyn', 'perinfoyn', 'perproyn'];
+				for (let term of terms) {
+				    const checkbox = document.getElementById(term);
+				    if (!checkbox || !checkbox.checked) {
+				        messageBox("1", "<h6>전체 약관동의를 하여야 합니다!</h6><p></p>", "", "", "");
+				        return;
+				    }
+				}
 
 	        	$("#perUseCd").val("PER_USE_CD") ;
 	        	$("#perInfoCd").val("PER_INFO_CD") ;
@@ -1402,7 +1403,9 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 		$.ajax( {
 			type : "post",
 			url : CommonUtil.getContextPath() + "/base/pwdchgAct.do",
-			data : formData,
+			data : {hospCd  :  $("#hospCd1").val() , userId    : $("#userId1").val() , 
+				    passWd  :  $("#passWd1").val() , bfPassWd  : $("#bfPassWd1").val()
+				  },
 			dataType : "json",
 			success : function(data) {
 				if(data.error_code != "0") {

@@ -324,12 +324,13 @@
 								class="form-control text-left" placeholder="상세주소를 입력하세요">
 						</div>
 					</div>
+					<!--  class="form-control phone-inputmask" -->
 					<div class="form-group row ">
 						<label for="hospTel"
 							class="col-2 col-lg-2 col-form-label text-left">연락처</label>
 						<div class="col-2 col-lg-2">
 							<input id="hospTel" name="hospTel" type="text"
-								class="form-control phone-inputmask"
+								class="form-control"
 								placeholder="(010)-0000-0000" maxlength="">
 						</div>
 						<label for="hospFax"
@@ -2823,7 +2824,7 @@
 				hutmpedit_Data = hutmpedit_Data || {}; 
 				hutmpedit_Data.hospCd_two   = hospidcd; // 기본값 저장
 				hutmpedit_Data.hospUuid_two = hospUuidcd;
-			    if (hospUuidcd) {
+			    if (hospidcd) {
 			        // AJAX 요청하여 hospUuid에 해당하는 데이터 가져오기
 			        $.ajax({
 			            url: "/user/hospuserList.do", // 실제 서버 엔드포인트 입력

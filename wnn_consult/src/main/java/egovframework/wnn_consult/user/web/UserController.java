@@ -195,11 +195,6 @@ public class UserController {
 	@RequestMapping(value= "/base/pwdresetAct.do")
 	public String base_pwdresetAct(@ModelAttribute("DTO") UserDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
-			if (!getHospUuidByCd(dto.getHospCd(), model ,dto)) {
-				return "jspnView" ;
-				
-			}
-    
 			UserDTO result = svc.UserPasswdInfo(dto);
 			if(result.getUserId() == null || result.getUserId().toString().isEmpty()){
 				model.addAttribute("error_code", "20000");
@@ -228,22 +223,7 @@ public class UserController {
 	public String UserPwdChangeSave(@ModelAttribute("DTO") UserDTO dto, HttpServletRequest request, ModelMap model)
 			throws Exception {  
 		try {
-			if (!getHospUuidByCd(dto.getHospCd1(), model ,dto)) {
-				return "jspnView" ;
-				
-			}
-			if (dto.getUserId1() != null && !dto.getUserId1().isEmpty()) {
-	            dto.setUserId(dto.getUserId1());
-	        }
-	            
-	        if (dto.getPassWd1() != null && !dto.getPassWd1().isEmpty()) {
-	            dto.setPassWd(dto.getPassWd1()) ;
-	        }  
-	          
-	        if (dto.getBfPassWd1() != null && !dto.getBfPassWd1().isEmpty()) {
-	            dto.setBfPassWd(dto.getBfPassWd1());
-	        }
-            
+           
             UserDTO result = svc.userInfo(dto);
 
             if (result == null || "".equals(result.getUserId()) || result.getUserId() == null) { 
@@ -261,7 +241,7 @@ public class UserController {
 
 			if(dto.getBfPassWd() == "") {
 				model.addAttribute("error_code", "30000");
-				model.addAttribute("error_msg" , "비밀번호 변경할 사용자 정보가 존재하지 않습니다.");
+				model.addAttribute("error_msg" , "비밀번호 변경할 정보가 존재하지 않습니다.");
 				return "jsonView";
 			}
 			dto.setEncPassWd(EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId()));
@@ -283,23 +263,7 @@ public class UserController {
 		//
 		return "jsonView";
 	}	
-    /* 병원 코드로 hosp_uuid 조회 (공통 메서드) */
-    private boolean getHospUuidByCd(String hospCd, ModelMap model, UserDTO dto) throws Exception {
-        if (hospCd != null && !hospCd.isEmpty()) {
-            HospMdDTO hdto = new HospMdDTO();
-            dto.setHospCd(hospCd);
-            hdto.setHospCd(hospCd);
-            HospMdDTO result1 = svc.HospInfo(hdto);
 
-            if (result1 == null || result1.getHospUuid() == null || result1.getHospUuid().toString().isEmpty()) {
-                model.addAttribute("error_code", "20000");
-                model.addAttribute("error_msg", "요양기관정보가 존재하지 않습니다.");
-                return false;
-            }
-            dto.setHospUuid(result1.getHospUuid());
-        }
-        return true;
-    }	
 	/* 회원가입시 병원검색  */
 	@RequestMapping(value= "/user/ctl_hospList.do", method = RequestMethod.POST)
 	public String ctl_hospList(@ModelAttribute("DTO") HospMdDTO dto, HttpServletRequest request, Model model) throws Exception {
@@ -336,8 +300,8 @@ public class UserController {
 			//코그구분 정보 조회
 			if ("I".equals(dto.getIud())) {
 				
-				dto.setPassWd(EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getHospCd()));
-				String chkapwd = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getHospCd());
+				dto.setPassWd(EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getEmail()));
+				String chkapwd = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getEmail());
 	
 				if(chkapwd == "") {
 					model.addAttribute("error_code", "30000");
@@ -345,7 +309,7 @@ public class UserController {
 					return "jsonView";
 				}
 				
-				String chkbpwd = EgovFileScrty.encryptPassword(dto.getAfPassWd(), dto.getHospCd());
+				String chkbpwd = EgovFileScrty.encryptPassword(dto.getAfPassWd(), dto.getEmail());
 					
 				if ((chkbpwd == "") & (chkapwd != chkbpwd)) {
 					model.addAttribute("error_code", "30000");

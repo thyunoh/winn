@@ -753,7 +753,7 @@
             #{passWd}, 
             DATE_FORMAT(NOW(), '%Y%m%d'),   
             '', 
-            'N' ,
+            'Y' ,
             ''  ,
             '',
             #{email} ,
