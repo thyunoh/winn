@@ -590,7 +590,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 			style="max-width: 600px;">
 			<div class="modal-content rounded-3 shadow-lg">
 				<div class="modal-header bg-light">
-						<h5 class="modal-title">회원등록</h5>
+						<h5 class="modal-title">회원등록</h5> 
+						<!-- 필수 입력 안내 -->
+						<div class="px-3 pt-2" style="font-size: 0.8rem; color: #666;">
+						    <span style="color: red;">*</span> 는 필수 입력 항목입니다.
+						</div>
 						<div class="form-row">
 							<div class="col-sm-12 mb-2" style="text-align: right;">
 								<button type="submit" class="btn btn-outline-dark rounded px-2 py-1"
@@ -604,16 +608,15 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							</div>
 						</div>
 				</div>
-	
 				<div class="modal-body">
 					<form id="memregForm" name="memregForm" method="post">
 						<input type="hidden" name="iud" id="iud" />
 						<!-- 병원 코드 -->
 						<div class="mb-3">
-							<label for="hospCd" class="form-label" style="font-size: 0.9rem;"> 병원코드 (필수)</label>
+							<label for="hospCd" class="form-label" style="font-size: 0.9rem;"> 병원코드 <span style="color: red;"> *</span></label>
 							<div class="input-group">
 								<input id="hospCd" name="hospCd" type="text" class="form-control"
-									placeholder="병원코드를 입력하고 enter key 하세요 ">
+									placeholder="병원코드를 입력하고 enter key를 치세요 ">
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" onclick="fnDupchk()">
 									<i class="fas fa-search"></i> 기관체크
 								</button>
@@ -621,7 +624,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						</div>
 						<!-- 병원명 -->
 						<div class="mb-3">
-							<label for="hospNm" class="form-label" style="font-size: 0.9rem;">병원명 (필수)</label>
+							<label for="hospNm" class="form-label" style="font-size: 0.9rem;">병원명 <span style="color: red;"> *</span></label>
 							<div class="input-group">
 								<input id="hospNm" name="hospNm" type="text" class="form-control"
 									placeholder="병원명을 입력하세요">
@@ -641,7 +644,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						
 						<!-- 이메일 -->
 						<div class="mb-3">
-							<label for="email" class="form-label" style="font-size: 0.9rem;">이메일 (필수)</label>
+							<label for="email" class="form-label" style="font-size: 0.9rem;">이메일 <span style="color: red;"> *</span></label>
 							<div class="input-group">
 								<input id="email" name="email" type="text" class="form-control"
 									placeholder="이메일 주소를 입력하세요">
@@ -657,11 +660,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 비밀번호 -->
 						<div class="row g-2 mb-3">
 							<div class="col">
-								<label for="passWd" class="form-label" style="font-size: 0.9rem;" >비밀번호 (필수)</label>
+								<label for="passWd" class="form-label" style="font-size: 0.9rem;" >비밀번호 <span style="color: red;"> *</span></label>
 								<input type="password" id="passWd" name="passWd" class="form-control">
 							</div>
 							<div class="col">
-								<label for="afPassWd" class="form-label" style="font-size: 0.9rem;" >비밀번호확인 (필수)</label>
+								<label for="afPassWd" class="form-label" style="font-size: 0.9rem;" >비밀번호확인 <span style="color: red;"> *</span></label>
 								<input type="password" id="afPassWd" name="afPassWd" class="form-control">
 							</div>
 						</div>
@@ -669,11 +672,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 						<!-- 담당자 -->
 						<div class="row g-2 mb-3">
 							<div class="col">
-								<label for="mbrNm" class="form-label" style="font-size: 0.9rem;" >담당자명 (필수)</label>
+								<label for="mbrNm" class="form-label" style="font-size: 0.9rem;" >담당자명 <span style="color: red;"> *</span></label>
 								<input type="text" id="mbrNm" name="mbrNm" class="form-control">
 							</div>
 							<div class="col">
-								<label for="mbrTel" class="form-label" style="font-size: 0.9rem;" >전화번호 (필수)</label>
+								<label for="mbrTel" class="form-label" style="font-size: 0.9rem;" >전화번호 <span style="color: red;"> *</span></label>
 								<input type="text" id="mbrTel" name="mbrTel" class="form-control">
 							</div>
 						</div>
@@ -688,7 +691,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							<div class="d-flex justify-content-between align-items-center mb-2">
 								<div class="form-check">
 									<input type="checkbox" id="peruseyn" name="peruseyn" class="form-check-input agreement-checkbox" onchange="checkAction()">
-									<span class="form-check-label">이용약관 동의 (필수)</span>
+									<span class="form-check-label">이용약관 동의 <span style="color: red;"> *</span></span>
 								</div>
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button"
 									onclick="openModal('이용약관 동의','PER_USE_CD')">세부확인</button>
@@ -697,7 +700,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							<div class="d-flex justify-content-between align-items-center mb-2">
 								<div class="form-check">
 									<input type="checkbox" id="perinfoyn" name="perinfoyn" class="form-check-input agreement-checkbox" onchange="checkAction()">
-									<span class="form-check-label">개인정보 수집 및 이용 (필수)</span>
+									<span class="form-check-label">개인정보 수집 및 이용 <span style="color: red;"> *</span></span>
 								</div>
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button"
 									onclick="openModal('개인정보 수집 및 이용 동의','PER_INFO_CD')">세부확인</button>
@@ -706,7 +709,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 							<div class="d-flex justify-content-between align-items-center">
 								<div class="form-check">
 									<input type="checkbox" id="perproyn" name="perproyn" class="form-check-input agreement-checkbox" onchange="checkAction()">
-									<span class="form-check-label">개인정보 처리위탁 동의 (필수)</span>
+									<span class="form-check-label">개인정보 처리위탁 동의 <span style="color: red;"> *</span></span>
 								</div>
 								<button class="btn btn-outline-dark rounded px-2 py-1" type="button"
 									onclick="openModal('개인정보 처리위탁 동의','PER_PRO_CD')">세부확인</button>
@@ -1113,9 +1116,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        	$("#perInfoCd").val("PER_INFO_CD") ;
 	        	$("#perProCd").val("PER_PRO_CD") ;
 	        	var formData = $("form[name='memregForm']").serialize() ;
-	        	if (!confirm("입력 하시겠습니다?")) {
+	        	if (!confirm("회원가입 하시겠습니다?")) {
 	                return;  
 	            }
+        	
 	        	$.ajax( {
 	        		type : "post" ,                      
 	        		url  : CommonUtil.getContextPath() + "/user/MemberSaveAct.do",
@@ -2544,7 +2548,8 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 	        				sessionStorage.setItem('s_wnn_yn', data.login_WnnYN); 	        ////tbl_hosp_mst 워너넷여부 
 	        				sessionStorage.setItem('s_conact_gb', data.login_ConactGB);     // tbl_hospcont테이블을 (진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N') 
 	        				sessionStorage.setItem('s_mainfg', data.login_Main); 			// sessionStorage에 로그인 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
-	        				sessionStorage.setItem('s_use_yn', data.loginUseYN); 			// 사용여부(Y,정상사용자, N.종료사용자)
+	        				sessionStorage.setItem('s_use_yn', data.loginUseYN); 			// 사용여부(Y,정상사용자, N.종료사용자)기간 
+	        				sessionStorage.setItem('s_use_can', data.loginUseCan); 			// 사용여부(Y,정상사용자, N.종료사용자) y.n
 	        				sessionStorage.setItem('s_hosp_uuid', $("#hospid").val().trim()); //위너넷이 접속시 데이타연관성 확인  
 	        				sessionStorage.setItem('s_insauth', data.login_insAuth); //입력권한 
 	        				sessionStorage.setItem('s_updauth', data.login_updAuth); //수정권한 
@@ -2573,7 +2578,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	        	} else if (data.error_code === "10001") { //계약정보(진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N')
         	        		messageBox("4","<h6>계약관련 사용권한을 확인하세요 !!</h6><p></P>" +
  	        				       "<h6>로그인 정보를 확인하고 다시 로그인하십시요 !!</h6>","hospid","","");
-  	        		
+        	        //	} else if (data.error_code === "10002") { //사용여부 Y ,N)    // 협의후 판단  
+        	        //		messageBox("4","<h6>사용여부를 확인하세요 !!</h6><p></P>" +
+ 	        		//		       "<h6>사용자 사용여부를 확인하고 로그인하세요 !!</h6>","hospid","","");
+        	        //	
         	        	} else if (data.error_code === "20000") {
         	        		
         	        		messageBox("4","<h5>비밀번호가 맞지 않습니다.</h5><p></P>" +
@@ -2634,6 +2642,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_usernm", "", 0);
         	setCookie("s_mainfg", "", 0);
         	setCookie("s_use_yn", "", 0);
+        	setCookie("s_use_can", "", 0);
         	setCookie("s_hospuuid", "", 0);
         	setCookie("s_connip", "", 0);
         	setCookie("s_wnn_yn", "", 0);  //tbl_hosp_mst 워너넷여부 
@@ -2668,6 +2677,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	setCookie("s_usernm", sessionStorage.getItem('s_usernm'), 1);
         	setCookie("s_mainfg", sessionStorage.getItem('s_mainfg'), 1);
         	setCookie("s_use_yn", sessionStorage.getItem('s_use_yn'), 1);
+        	setCookie("s_use_can", sessionStorage.getItem('s_use_can'), 1);
         	setCookie("s_connip", sessionStorage.getItem('s_connip'), 1);
         	setCookie("s_wnn_yn", sessionStorage.getItem('s_wnn_yn'), 1);
         	setCookie("s_last_dttm", sessionStorage.getItem('s_last_dttm'), 1);

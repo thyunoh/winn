@@ -117,7 +117,11 @@ public class UserController {
 					    response.put("error_code", "10001");
 						response.put("error_mess", "계약관련 사용권한을 확인하세요 !");
 						System.out.print("계약관련 사용권한을 확인하세요.!");
-	            } else {
+			//	}else if (!result.getUseYn().equals("Y")) { //사용여부 Y ,N)   
+			//	    response.put("error_code", "10002");
+			//		response.put("error_mess", "사용자 사용여부를 확인하세요 !");
+			//		System.out.print("사용자 사용여부를 확인하세요.!");
+				} else {
 	            	log.error("s_main_gu: " + result.getMainGu());
 	            	log.error("s_wnn_yn: "  + result.getWinnerYn());
 	            	log.error("s_conact_gb: "  + result.getConactGb());
@@ -138,6 +142,7 @@ public class UserController {
 					response.put("login_User", result.getUserNm()); // 사용자
 					response.put("login_Main", result.getMainGu()); // 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
 					response.put("loginUseYN", result.getUseNot()); // 사용여부
+					response.put("loginUseCan", result.getUseYn()); // 사용여부
 					response.put("login_Hospuuid", result.getHospUuid()); // 사용자 uuid 
 					response.put("login_Connip", GetClientIP.getClientIP(request)); // 사용자 uuid 
 					response.put("login_WnnYN" , result.getWinnerYn()) ; //위너넷정보 
