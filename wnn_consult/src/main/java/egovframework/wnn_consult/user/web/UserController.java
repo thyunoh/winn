@@ -117,10 +117,10 @@ public class UserController {
 					    response.put("error_code", "10001");
 						response.put("error_mess", "계약관련 사용권한을 확인하세요 !");
 						System.out.print("계약관련 사용권한을 확인하세요.!");
-			//	}else if (!result.getUseYn().equals("Y")) { //사용여부 Y ,N)   
-			//	    response.put("error_code", "10002");
-			//		response.put("error_mess", "사용자 사용여부를 확인하세요 !");
-			//		System.out.print("사용자 사용여부를 확인하세요.!");
+				}else if (!result.getUseYn().equals("Y")) { //사용여부 Y ,N)   
+				    response.put("error_code", "10002");
+					response.put("error_mess", "사용자 사용여부를 확인하세요 !");
+					System.out.print("사용자 사용여부를 확인하세요.!");
 				} else {
 	            	log.error("s_main_gu: " + result.getMainGu());
 	            	log.error("s_wnn_yn: "  + result.getWinnerYn());

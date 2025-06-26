@@ -2578,10 +2578,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
         	        	} else if (data.error_code === "10001") { //계약정보(진료비,적정성(A), 진료비 '1' 적정성 '2' ,else 'N')
         	        		messageBox("4","<h6>계약관련 사용권한을 확인하세요 !!</h6><p></P>" +
  	        				       "<h6>로그인 정보를 확인하고 다시 로그인하십시요 !!</h6>","hospid","","");
-        	        //	} else if (data.error_code === "10002") { //사용여부 Y ,N)    // 협의후 판단  
-        	        //		messageBox("4","<h6>사용여부를 확인하세요 !!</h6><p></P>" +
- 	        		//		       "<h6>사용자 사용여부를 확인하고 로그인하세요 !!</h6>","hospid","","");
-        	        //	
+        	        	} else if (data.error_code === "10002") { //사용여부 Y ,N)    // 협의후 판단  
+        	        		messageBox("4","<h6>사용여부를 확인하세요 !!</h6><p></P>" +
+ 	        				       "<h6>사용자 사용여부를 확인하고 로그인하세요 !!</h6>","hospid","","");
+        	        	
         	        	} else if (data.error_code === "20000") {
         	        		
         	        		messageBox("4","<h5>비밀번호가 맞지 않습니다.</h5><p></P>" +
