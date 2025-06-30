@@ -59,7 +59,7 @@
 									</button>
 									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">
-										검색삭제. <i class="far fa-calendar-check"></i>
+										선택삭제. <i class="far fa-calendar-check"></i>
 									</button>
 									<button class="btn btn-outline-dark" data-toggle="tooltip"
 										data-placement="top" title="화면 Size 확대.축소"
