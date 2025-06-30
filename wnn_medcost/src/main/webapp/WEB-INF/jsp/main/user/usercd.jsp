@@ -1260,7 +1260,7 @@
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링
 					});
 					
-					let keys = dataTableKeys(dataTable, selectedRows);
+					let keys = dataTableKeys(dataTable, selectedRows);					
 					
 			        if (keys.length > 0) {
 						$.ajax({
@@ -1315,10 +1315,7 @@
 								   popup: 'small-swal'}
 				        });
 					}
-			        
-			          
-				
-				
+
 				} else if (result.isDismissed) {
 					Swal.fire({
 			            title: '취소확인',
@@ -1396,7 +1393,6 @@
 				            	key_ID[column.name] = rowData[column.data]; 
 				            }	
 				        });
-		
 				        // 객체를 배열에 추가
 				        keysID.push(key_ID);
 			        } 
