@@ -36,10 +36,16 @@
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" ><i class="fa fa-list-ol"></i>적정성-평가 현황</a>
                     </li>
                     
+                    <!--   
+                    <li class="nav-item menu-section" id="menu-f">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" ><i class="fa fa-list-ol"></i>적정성-Simulation</a>
+                    </li>
+                    -->
+                    
                     <li class="nav-item menu-section" id="menu-e">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do" ><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
                     </li>
-                	
+                   
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
                                                                                       <i class="fas fa-cloud-upload-alt"></i>요양기관등록</a>
@@ -74,7 +80,7 @@
                     </li>
                     
                     <!-- 기준정보 -->
-                    <li class="nav-item">
+                    <li class="nav-item menu-section" id="menu-h">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info" aria-controls="base-info">
                                                                                                             <i class="fas fa-list-ul"></i>기준정보</a>
                         <div id="base-info" class="collapse submenu" style="background-color: white;">
@@ -87,24 +93,24 @@
                                             <li class="nav-item" id = "comcode">
                                                 <a class="nav-item nav-link"  href="/base/commcd.do">공통코드</a>
                                             </li>
-                                   <li class="nav-item">
-                                       <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
-                                         data-target="#hira-code" aria-controls="hira-code">심평원고시코드
-                                       </a>
-                                       <div id="hira-code" class="collapse submenu" style="background-color: white;">
-                                           <ul class="nav flex-column">
-                                               <li class="nav-item">
-                                                   <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
-                                               </li>
-                                               <li class="nav-item">
-                                                   <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
-                                               </li>
-                                               <li class="nav-item">
-                                                   <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
-                                               </li>
-                                           </ul>
-                                       </div>
-                                   </li>                                         
+		                                   <li class="nav-item">
+		                                       <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+		                                         data-target="#hira-code" aria-controls="hira-code">심평원고시코드
+		                                       </a>
+		                                       <div id="hira-code" class="collapse submenu" style="background-color: white;">
+		                                           <ul class="nav flex-column">
+		                                               <li class="nav-item">
+		                                                   <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
+		                                               </li>
+		                                               <li class="nav-item">
+		                                                   <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
+		                                               </li>
+		                                               <li class="nav-item">
+		                                                   <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
+		                                               </li>
+		                                           </ul>
+		                                       </div>
+		                                   </li>                                         
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/disecd.do">상병코드</a>
                                             </li>
@@ -196,7 +202,7 @@
                     </li>
                     
                     <!-- 진료비 분석 보고서 -->    
-                    <li class="nav-item menu-section" id="menu-a">
+                    <li class="nav-item menu-section" id="menu-g">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
                                                                                          <i class="fas fa-cogs"></i>분야별통계</a>
                         <div id="management" class="collapse submenu" style="background-color: white;">
@@ -807,9 +813,9 @@ $(document).ready(function () {
     
     
 });
-	//위너넷만 메뉴가 생성됨   
+   //위너넷만 메뉴가 생성됨   
 function hosp_conact() {
-    const hospcont  = document.getElementById("hospcont"); 
+	const hospcont  = document.getElementById("hospcont"); 
     const wnnauth1  = document.getElementById("wnnauth1");
     const comcode   = document.getElementById("comcode");
     const ratecode  = document.getElementById("ratecode");
@@ -825,7 +831,6 @@ function hosp_conact() {
             if (el) el.style.display = "none";
         });
     };
-
     // 숨기고자 하는 ID 목록
     hideElementsById([
         "samcode",    // 샘버전
