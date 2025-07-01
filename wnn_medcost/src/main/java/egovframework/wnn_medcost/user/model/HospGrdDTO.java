@@ -12,6 +12,7 @@ public class HospGrdDTO {
     private String keyqterFlag;      // 분기 (key)
     
     private String hospCd;
+    private String hospNm;
     private String startYy;
     private String qterFlag;
     private String jobSeq;
@@ -57,6 +58,14 @@ public class HospGrdDTO {
     private String goalScore ;
     private String goalName ;
 
+
+	public String getHospNm() {
+		return hospNm;
+	}
+
+	public void setHospNm(String hospNm) {
+		this.hospNm = hospNm;
+	}
 
 	public String getGoalScore() {
 		return goalScore;

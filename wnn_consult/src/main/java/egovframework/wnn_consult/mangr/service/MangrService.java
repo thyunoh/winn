@@ -8,7 +8,6 @@ import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.wnn_consult.mangr.model.NotiDTO;
 
 public interface MangrService {
-
 	List<?>     selectNotiMstList(NotiDTO dto)  throws Exception; 
 	NotiDTO     selectNotiMstinfo(NotiDTO dto)  throws Exception; 
 	boolean     insertNotiMst(NotiDTO dto)      throws Exception;

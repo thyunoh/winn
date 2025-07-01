@@ -34,8 +34,7 @@
 	rel="stylesheet">
 
 <!-- CSS -->
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <link href="/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/css/winct/style.css?v=123" rel="stylesheet">
 <link href="/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->

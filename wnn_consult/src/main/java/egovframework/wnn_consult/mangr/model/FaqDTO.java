@@ -1,5 +1,4 @@
 package egovframework.wnn_consult.mangr.model;
-
 public class FaqDTO {
 	// 기본 필드
     private String faqSeq;        // FAQ SEQ
@@ -10,7 +9,7 @@ public class FaqDTO {
     private String endDt;         // 적용 종료일자
     private String useYn;         // 사용 여부
     private String hospCd; 
-    // 등록 및 수정 정보
+    // 등록 및 수정 정보1
     private String regUser;       // 등록자
     private String regDttm;       // 등록 일시
     private String regIp;         // 등록 IP

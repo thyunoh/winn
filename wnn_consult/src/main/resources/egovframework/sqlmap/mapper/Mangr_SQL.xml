@@ -333,7 +333,7 @@
         WHERE  ASQ_SEQ  = #{asqSeq} 
      ]]>   
     </select> 
-   <!-- 자주하는 질문--> 
+   <!-- 자주하는 질문 --> 
     <select id="selectfaqlist" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[ 
         SELECT 
             A.FAQ_SEQ ,

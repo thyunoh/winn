@@ -1034,7 +1034,7 @@
                	  // 사용자가 '예' 버튼을 클릭한 경우
 				if (result.isConfirmed) {
 					// 체크박스가 ':checked'인 행만 선택
-					let  = dataTable.rows(function (idx, data, node) {
+					let selectedRows = dataTable.rows(function (idx, data, node) {
 					    let $row = $(node); // 현재 행의 DOM 노드
 					    let $checkbox = $row.find('input[type="checkbox"]'); // 체크박스 찾기
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링

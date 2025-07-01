@@ -174,7 +174,8 @@ public class MangrController {
 		}
 		return "jsonView";
 	}		
-	/*자주하는 질문*/	
+	/*자주하는 질문*/
+	
 	@RequestMapping(value= "/mangr/faqList.do" , method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> getfaqCdList(@ModelAttribute("DTO") FaqDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

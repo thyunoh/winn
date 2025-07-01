@@ -42,7 +42,7 @@
                                             <button class="btn btn-outline-dark btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
                                             <button class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
                                             <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">체크삭제. <i class="far fa-calendar-check"></i></button>
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
@@ -127,7 +127,7 @@
                         </div>
                     </div>  
 	                 <div class="form-group row">
-                         <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">적용시작일</label>
+                        <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">적용시작일</label>
                         <div class="col-2 col-lg-2">
                             <input id="startDt" name="startDt"  type="text" class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
                             
@@ -375,9 +375,17 @@
 		            if (input) { // 요소가 존재하는지 확인
 		                input.readOnly = isReadOnly;
 		            }
-		        });		    	
+		        });	
+		        now_check() ;
 		    }
 		}
+		function now_check() {
+	        let today = new Date();
+	        let formattedDate = today.getFullYear().toString() +
+	                            ('0' + (today.getMonth() + 1)).slice(-2) +
+	                            ('0' + today.getDate()).slice(-2);
+	        document.getElementById('startDt').value = formattedDate;
+	    };
 		function modal_Open(flag) {	
 			let modal_OpenFlag = true;
 			const insertButton = document.getElementById('form_btn_ins');
@@ -1430,6 +1438,7 @@
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });
+
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

@@ -45,7 +45,7 @@
                                             <button id="btnInsert"  class="btn btn-outline-dark btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
                                             <button id="btnUpdate"  class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
                                             <button id="btnDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button id="btnSearchDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">선택삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button id="btnSearchDelete"  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">체크삭제. <i class="far fa-calendar-check"></i></button>
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
@@ -147,7 +147,7 @@
 								<div class="input-group">
                                     <label for="hospgrade" class="col-2 col-lg-2 col-form-label text-left">병원등급</label>
 			                        <div class="col-2 col-lg-2">
-				                        <select class="custom-select" name="hospgrade" id="hospgrade">
+				                        <select class="custom-select"  required  name="hospgrade" id="hospgrade">
 							                <option value="1" selected>1등급</option>
 							                <option value="2">2등급</option>
 							                <option value="3">3등급</option>
@@ -314,7 +314,8 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set =  [ { name: '병원정보',              className: 'dt-body-center' },
+		var c_Head_Set =  [ { name: '요양기관',              className: 'dt-body-center' },
+			                { name: '요양기관명',             className: 'dt-body-left' },
 						    { name: '해당년도',              className: 'dt-body-center' },
 						    { name: '분기',                 className: 'dt-body-center' },
 						    { name: '병원 등급',             className: 'dt-body-center' },
@@ -331,6 +332,7 @@
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'hospCd',      visible: true,  className: 'dt-body-center', width: '50px',   name: 'keyhospCd'    , primaryKey: true },
+	        				{ data: 'hospNm',      visible: true,  className: 'dt-body-left'  , width: '200px', },
 	        				{ data: 'startYy',     visible: true,  className: 'dt-body-center', width: '50px',   name: 'keystartYy'   , primaryKey: true },
 	        				{ data: 'qterFlag',    visible: true,  className: 'dt-body-center', width: '30px',   name: 'keyqterFlag'  , primaryKey: true },
             				{ data: 'hospgrade',   visible: true,  className: 'dt-body-center', width: '30px',  },
@@ -350,11 +352,12 @@
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
 							['hospCd'    , 'asc' ],    // 오름차순 정렬
-							['startYy'   , 'asc' ],    // 오름차순 정렬
-            				['qterFlag'  , 'asc']      // 오름차순 정렬
+							['hospNm'    , 'asc' ],    // 오름차순 정렬
+							['startYy'   , 'desc' ],    // 오름차순 정렬
+            				['qterFlag'  , 'desc']      // 오름차순 정렬
         				 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['startYy','qterFlag'];                   
+		var showSortNo = ['hospCd','hospNm','startYy','qterFlag'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
@@ -963,6 +966,7 @@
 		function newuptData() {
         	let newData = {
              	hospCd:        $('#hospCd').val(),
+             	hospNm:        $('#hospNm').val(),
              	startYy:       $('#startYy').val(),
              	qterFlag:      $('#qterFlag').val(),
              	hospgrade:     $('#hospgrade').val(),
@@ -1207,7 +1211,7 @@
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
-				            url: "/base/hospGrdDelete.do",	    	    
+				            url: "/user/hospGrdDelete.do",	    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",
@@ -1544,6 +1548,7 @@
 		$("#hospserch").on("click", function () {
 		    openHospitalSearch(function (data) {
 		        $("#hospCd").val(data.hospCd);
+		        $("#hospNm").val(data.hospNm);
 		    });
 		});
 		

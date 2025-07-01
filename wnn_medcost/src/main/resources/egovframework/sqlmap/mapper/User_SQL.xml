@@ -1442,41 +1442,45 @@
     <!--  의사간호사 등급(년도별) 입력  -->
     <select id="selHospGrdList" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
 		SELECT 
-		    HOSP_CD,
-		    START_YY,
-		    QTER_FLAG,
-		    JOB_SEQ,
-		    ACTION_YN,
-		    HOSPGRADE,
-		    PAT_COUNT,
-		    DOC_COUNT,
-		    NUR_COUNT,
-		    NUR_S_CNT,
-		    PHAM_DAYS,
-		    TOTAL_DAY,
-            GOAL_SCORE ,  
-            GOAL_NAME  ,  
-   	        REG_DTTM,
-		    REG_USER,
-		    REG_IP,
-		    UPD_DTTM,
-		    UPD_USER,
-		    UPD_IP
-		FROM TBL_GRADE_MST
+		    A.HOSP_CD,
+		    B.HOSP_NM,
+		    A.START_YY,
+		    A.QTER_FLAG,
+		    A.JOB_SEQ,
+		    A.ACTION_YN,
+		    A.HOSPGRADE,
+		    A.PAT_COUNT,
+		    A.DOC_COUNT,
+		    A.NUR_COUNT,
+		    A.NUR_S_CNT,
+		    A.PHAM_DAYS,
+		    A.TOTAL_DAY,
+            A.GOAL_SCORE ,  
+            A.GOAL_NAME  ,  
+   	        A.REG_DTTM   ,
+		    A.REG_USER   ,
+		    A.REG_IP     ,
+		    A.UPD_DTTM   ,
+		    A.UPD_USER   ,
+		    A.UPD_IP
+		FROM TBL_GRADE_MST A 
+		   , TBL_HOSP_MST  B
 		WHERE 1 = 1
-		    AND ACTION_YN = 'Y'
+		    AND A.ACTION_YN = 'Y'
+		    AND B.HOSP_CD    = A.HOSP_CD 
+		    AND B.ACTION_YN  = A.ACTION_YN 
 		  ]]>
 		   <if test='hospCd != null and hospCd != "" '>
-		    AND HOSP_CD = #{hospCd}
+		    AND A.HOSP_CD = #{hospCd}
 		   </if>
 		  <if test='startYy != null and startYy != ""'>
-		    AND START_YY = #{startYy}
+		    AND A.START_YY = #{startYy}
 		  </if>
 		  <if test='qterFlag != null and qterFlag != ""'>
-		    AND QTER_FLAG = #{qterFlag}
+		    AND A.QTER_FLAG = #{qterFlag}
 		  </if>
 		  <![CDATA[
-		   Order by  HOSP_CD ASC  , START_YY DESC , QTER_FLAG DESC   
+		   Order by  A.HOSP_CD ASC  , A.START_YY DESC , A.QTER_FLAG DESC   
 		  ]]>
     </select>      
 <!-- 병원등급 단순입력  -->    
