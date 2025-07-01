@@ -1282,11 +1282,17 @@
 						<input type="text" class="form-control mt-2" id="userId" name="userId" placeholder="사용자아이디">
 					</div>
 				</form:form>
-				<div class="set-btn-box w-100 mt-3 text-right">
-					<button type="button" class="btn btn-outline-dark" 	onclick="fnPasswdmanagerClose();">취소</button>
-					<button type="button" class="btn btn-primary"  	    onclick="fnpwsearch();">아이디찾기</button>
-					<button type="button" class="btn btn-primary" 	    onclick="fnPasswdreset();">비밀번호 초기화/변경</button>
-					<!--  원래는 팝업 fnPwdClear()  -->
+				<div class="set-btn-box w-100 mt-3 d-flex justify-content-between">
+					<div>
+						<button type="button" class="btn btn-outline-dark" onclick="fnPasswdmanagerClose();">취소</button>
+						<button type="button" class="btn btn-primary" onclick="fnpwsearch();">아이디찾기  <i class="fas fa-search"></i> </button>
+					</div>
+					<div>
+						<button type="button" class="btn btn-primary" onclick="fnPasswdreset();">
+						  비밀번호 초기화/변경
+						  <i class="fas fa-arrow-right"></i>
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -1296,8 +1302,15 @@
 	<!--아이디찾기  -->
 	<script>
 	function fnpwsearch(){
-		if(!fnRequired('userNm1', '사용자 성명을 입력하세요 .'))   return;
-		if(!fnRequired('email1',   '사용자 이메일를 입력하세요 .'))   return;
+		if ($("#userNm1").val() ==""){
+			messageBox("1","<h6> 사용자 성명을 입력하세요 .!</h6><p></p>","","","");
+			return;
+		}
+		if ($("#email1").val() == ""){
+		    messageBox("1", "<h6>사용자 이메일를 입력하세요 .!</h6><p></p>", "", "", "");
+		    return; 
+		}
+		
 		$("#userId").val("") ;
 		$.ajax( {
 			type : "post",
@@ -1369,13 +1382,13 @@
 				<div class="set-btn-box w-100 mt-3 d-flex justify-content-between">
 					<div>
 						<button type="button" class="btn btn-primary"
-							onclick="fnSaveReset();">비밀번호초기화</button>
+							onclick="fnSaveReset();">비밀번호초기화 <i class="bi bi-arrow-clockwise"></i> </button>
 					</div>
 					<div>
 						<button type="button" class="btn btn-outline-dark"
 							onclick="fnPasswdresetClose();">취소</button>
 						<button type="button" class="btn btn-primary"
-							onclick="fnSavechg();">변경</button>
+							onclick="fnSavechg();">변경 <i class="fas fa-cog"></i> </button>
 					</div>
 				</div>
 			</div>
@@ -1440,11 +1453,11 @@
 			success : function(data) {   
 				if(data.error_code != "0"){
 					if(data.error_code == "20000"){ 
-						alert(data.error_msg);
+						messageBox("1", "<h6>비밀번호 변경할 사용자 정보가 존재하지 않습니다!</h6><p></p>", "", "", "");
 						$("#userId1").focus();
 					}	
 					else{ 
-						alert(data.error_msg);
+						messageBox("1", "<h6>사용자 비밀번호 변경 실패하였습니다!</h6><p></p>", "", "", "");
 						$("#userId1").focus();
 					}
 				}else{

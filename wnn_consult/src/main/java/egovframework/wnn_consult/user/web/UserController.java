@@ -201,7 +201,7 @@ public class UserController {
 	public String base_pwdresetAct(@ModelAttribute("DTO") UserDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
 			UserDTO result = svc.UserPasswdInfo(dto);
-			if(result.getUserId() == null || result.getUserId().toString().isEmpty()){
+			if (result == null || result.getUserId() == null || result.getUserId().toString().trim().isEmpty()) {
 				model.addAttribute("error_code", "20000");
 			    model.addAttribute("error_msg", "비밀번호 변경할 사용자 정보가 존재하지 않습니다.");
 			    return "jsonView";			
