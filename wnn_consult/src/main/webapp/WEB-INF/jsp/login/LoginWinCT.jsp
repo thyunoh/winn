@@ -1297,8 +1297,6 @@
 			</div>
 		</div>
 	</div>
-
-
 	<!--아이디찾기  -->
 	<script>
 	function fnpwsearch(){
