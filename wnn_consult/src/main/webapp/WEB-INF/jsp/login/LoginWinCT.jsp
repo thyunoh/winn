@@ -1843,179 +1843,176 @@
 	        }
 	    }
 </script>
-<style>
-
-</style>
-	<!-- 기존 1대1 질의응답  -->
-	<div class="modal fade" id="asq_main_tab" tabindex="-1"
-		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-		<div class="modal-dialog modal-lg"
-			style="max-width: 900px; width: 90%;">
-			<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
-			<div class="modal-content shadow-lg rounded-4"
-				style="height: auto; max-height: 90vh; border: none;">
-				<div class="modal-header bg-light"
-					style="height: 35px; padding: 5px 10px;">
-					<h5 class="modal-title">상담문의 목록</h5>
-				</div>
-				<!-- modal-body의 높이를 줄여서 최대 65vh 정도로 제한 -->
-				<div class="modal-body bg-light"
-					style="max-height: 60vh; overflow-y: auto;">
-					<div class="d-flex align-items-center justify-content-between mb-3">
-						<div class="d-flex">
-							<input type="text" id="searchText"
-								class="form-control rounded-3 border" placeholder="검색어를 입력하세요."
-								onkeypress="if(event.keyCode == 13){fnasq_Search();}"
-								style="width: 300px;">
-							<button type="button" class="btn btn-warning rounded-3 ms-2"
-								onclick="fnasq_Search()" style="margin-left: 8px;">
-								<i class="fas fa-search"></i> 검색
-							</button>
-						</div>
-						<div>
-							<button class="btn btn-outline-info" onclick="fn_asqsave('QD');">질문취소</button>
-							<button class="btn btn-outline-info" onclick="fn_asqsave('QI');">질문등록</button>
-							<button class="btn btn-outline-info" onclick="fn_asqsave('QU');">답변조회(수정)</button>
-							<button class="btn btn-outline-dark" onclick="asqMainClose();">
-								닫기 <i class="fas fa-times"></i>
-							</button>
-						</div>
+<!-- 기존 1대1 질의응답  -->
+<div class="modal fade" id="asq_main_tab" tabindex="-1"
+	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+	<div class="modal-dialog modal-lg"
+		style="max-width: 900px; width: 90%;">
+		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
+		<div class="modal-content shadow-lg rounded-4"
+			style="height: auto; max-height: 90vh; border: none;">
+			<div class="modal-header bg-light"
+				style="height: 35px; padding: 5px 10px;">
+				<h5 class="modal-title">상담문의 목록</h5>
+			</div>
+			<!-- modal-body의 높이를 줄여서 최대 65vh 정도로 제한 -->
+			<div class="modal-body bg-light"
+				style="max-height: 60vh; overflow-y: auto;">
+				<div class="d-flex align-items-center justify-content-between mb-3">
+					<div class="d-flex">
+						<input type="text" id="searchText"
+							class="form-control rounded-3 border" placeholder="검색어를 입력하세요."
+							onkeypress="if(event.keyCode == 13){fnasq_Search();}"
+							style="width: 300px;">
+						<button type="button" class="btn btn-warning rounded-3 ms-2"
+							onclick="fnasq_Search()" style="margin-left: 8px;">
+							<i class="fas fa-search"></i> 검색
+						</button>
 					</div>
-					<div class="table-responsive rounded-3 shadow-sm mt-1 border"
-						style="height: 500px; overflow-y: auto;">
-						<table id="asq_infoTable" class="table table-bordered">
-							<colgroup>
-								<col style="width: 50px">
-								<col style="width: 150px">
-								<col style="width: 160px">
-								<!-- 질문제목 너비 줄임 -->
-								<col style="width: 160px">
-								<!-- 질문내용 너비 줄임 -->
-								<col style="width: 60px">
-								<col style="width: 60px">
-								<col style="width: 60px">
-								<col style="width: 120px">
-							</colgroup>
-
-							<thead>
-								<tr>
-									<th>번호</th>
-									<th>병원정보</th>
-									<th title="질문제목">질문제목</th>
-									<th title="질문내용">질문내용</th>
-									<th>질문상태</th>
-									<th>답변상태</th>
-									<th>질문자</th>
-									<th>작성일</th>
-								</tr>
-							</thead>
-							<tbody id="asqdataArea" style="background-color: white;">
-								<tr>
-									<td colspan="8" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
-								</tr>
-							</tbody>
-						</table>
+					<div>
+						<button class="btn btn-outline-info" onclick="fn_asqsave('QD');">질문취소</button>
+						<button class="btn btn-outline-info" onclick="fn_asqsave('QI');">질문등록</button>
+						<button class="btn btn-outline-info" onclick="fn_asqsave('QU');">답변조회(수정)</button>
+						<button class="btn btn-outline-dark" onclick="asqMainClose();">
+							닫기 <i class="fas fa-times"></i>
+						</button>
 					</div>
 				</div>
-				<!-- modal-footer의 패딩을 줄여서 높이를 좁힘 -->
-				<div class="modal-footer"
-					style="background-color: white; padding: 5px 10px;">
-					<!-- 필요한 footer 내용 추가 -->
+				<div class="table-responsive rounded-3 shadow-sm mt-1 border"
+					style="height: 500px; overflow-y: auto;">
+					<table id="asq_infoTable" class="table table-bordered">
+						<colgroup>
+							<col style="width: 50px">
+							<col style="width: 150px">
+							<col style="width: 160px">
+							<!-- 질문제목 너비 줄임 -->
+							<col style="width: 160px">
+							<!-- 질문내용 너비 줄임 -->
+							<col style="width: 60px">
+							<col style="width: 60px">
+							<col style="width: 60px">
+							<col style="width: 120px">
+						</colgroup>
+
+						<thead>
+							<tr>
+								<th>번호</th>
+								<th>병원정보</th>
+								<th title="질문제목">질문제목</th>
+								<th title="질문내용">질문내용</th>
+								<th>질문상태</th>
+								<th>답변상태</th>
+								<th>질문자</th>
+								<th>작성일</th>
+							</tr>
+						</thead>
+						<tbody id="asqdataArea" style="background-color: white;">
+							<tr>
+								<td colspan="8" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
+			</div>
+			<!-- modal-footer의 패딩을 줄여서 높이를 좁힘 -->
+			<div class="modal-footer"
+				style="background-color: white; padding: 5px 10px;">
+				<!-- 필요한 footer 내용 추가 -->
 			</div>
 		</div>
 	</div>
+</div>
 
-	<!--`-->
-	<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
-		data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-		<div
-			class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
-			<div class="modal-content"
-				style="height: 74%; display: flex; flex-direction: column;">
-				<div class="modal-header  bg-light">
-					<h6 class="modal-title">문의 등록</h6>
-					<div class="form-row">
-						<div class="col-sm-12 mb-2" style="text-align: right;">
-							<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
-							</button>
-							<button type="button" class="btn btn-outline-dark"
-								data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
-							</button>
+<!---->
+<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
+	data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
+	<div
+		class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
+		<div class="modal-content"
+			style="height: 74%; display: flex; flex-direction: column;">
+			<div class="modal-header  bg-light">
+				<h6 class="modal-title">문의 등록</h6>
+				<div class="form-row">
+					<div class="col-sm-12 mb-2" style="text-align: right;">
+						<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
+						</button>
+						<button type="button" class="btn btn-outline-dark"
+							data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+			<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
+				method="post" enctype="multipart/form-data">
+				<div class="modal-body text-left flex-fill overflow-auto">
+					<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
+					<input type="hidden" name="iudasq"      id="iudasq" /> 
+					<input type="hidden" name="asqSeq"      id="asqSeq" /> 
+					<input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" /> 
+					<input type="hidden" name="hospCdasq"   id="hospCdasq" /> 
+					<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
+					<input type="hidden" name="regUserasq"  id="regUserasq" /> 
+					<input type="hidden" name="updUserasq"  id="updUserasq" />
+
+					<div class="form-group ">
+						<label for="qstnTitle"
+							class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
+						<div class="col-10 col-lg-10">
+							<input id="qstnTitle" name="qstnTitle" type="text"
+								class="form-control" placeholder="질문제목을 입력하세요">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="qstnConts"
+							class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
+						<div class="col-10 col-lg-10">
+							<textarea id="qstnConts" name="qstnConts"
+								placeholder="질문내용을 입력하세요" class="form-control" rows="5"></textarea>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="qstnWan"
+							class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
+						<div class="col-4 col-lg-4">
+							<select id="qstnWan" name="qstnWan" class="custom-select"
+								style="height: 35px; font-size: 14px;">
+								<option value="">선택</option>
+								<option value="Y">Y. 질문완료</option>
+								<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="ansrConts"
+							class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
+						<div class="col-10 col-lg-10">
+							<textarea id="ansrConts" name="ansrConts"
+								placeholder="답변내용 입력하세요" class="form-control" rows="8"></textarea>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="ansrWan"
+							class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
+						<div class="col-4 col-lg-4">
+							<select id="ansrWan" name="ansrWan" class="custom-select"
+								style="height: 35px; font-size: 14px;">
+								<option value="">선택</option>
+								<option value="Y">Y. 답변완료</option>
+								<option value="N">N. 진행중</option>
+							</select>
 						</div>
 					</div>
 				</div>
-				<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-					method="post" enctype="multipart/form-data">
-					<div class="modal-body text-left flex-fill overflow-auto">
-						<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-						<input type="hidden" name="iudasq"      id="iudasq" /> 
-						<input type="hidden" name="asqSeq"      id="asqSeq" /> 
-						<input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" /> 
-						<input type="hidden" name="hospCdasq"   id="hospCdasq" /> 
-						<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
-						<input type="hidden" name="regUserasq"  id="regUserasq" /> 
-						<input type="hidden" name="updUserasq"  id="updUserasq" />
-
-						<div class="form-group ">
-							<label for="qstnTitle"
-								class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
-							<div class="col-10 col-lg-10">
-								<input id="qstnTitle" name="qstnTitle" type="text"
-									class="form-control" placeholder="질문제목을 입력하세요">
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="qstnConts"
-								class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
-							<div class="col-10 col-lg-10">
-								<textarea id="qstnConts" name="qstnConts"
-									placeholder="질문내용을 입력하세요" class="form-control" rows="5"></textarea>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="qstnWan"
-								class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
-							<div class="col-4 col-lg-4">
-								<select id="qstnWan" name="qstnWan" class="custom-select"
-									style="height: 35px; font-size: 14px;">
-									<option value="">선택</option>
-									<option value="Y">Y. 질문완료</option>
-									<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
-								</select>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="ansrConts"
-								class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
-							<div class="col-10 col-lg-10">
-								<textarea id="ansrConts" name="ansrConts"
-									placeholder="답변내용 입력하세요" class="form-control" rows="8"></textarea>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="ansrWan"
-								class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
-							<div class="col-4 col-lg-4">
-								<select id="ansrWan" name="ansrWan" class="custom-select"
-									style="height: 35px; font-size: 14px;">
-									<option value="">선택</option>
-									<option value="Y">Y. 답변완료</option>
-									<option value="N">N. 진행중</option>
-								</select>
-							</div>
-						</div>
-					</div>
-				</form:form>
-			</div>
-			<div class="modal-footer"></div>
+			</form:form>
 		</div>
+		<div class="modal-footer"></div>
 	</div>
+</div>
 
 
 
