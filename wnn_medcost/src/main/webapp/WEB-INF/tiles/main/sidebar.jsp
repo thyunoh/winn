@@ -474,7 +474,7 @@
  				<div class="form-group d-flex align-items-start">
 				   <label for="ansrConts"
 				      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
-				      질문내용
+				      답변내용
 				   </label>
 				   <textarea id="ansrConts" name="ansrConts" required
 				      placeholder="" class="form-control" rows="9"
