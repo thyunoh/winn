@@ -1991,7 +1991,7 @@
 							class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
 						<div class="col-10 col-lg-10">
 							<textarea id="ansrConts" name="ansrConts"
-								placeholder="답변내용 입력하세요" class="form-control" rows="8"></textarea>
+								placeholder="답변내용 입력하세요" class="form-control" rows="9"></textarea>
 						</div>
 					</div>
 
