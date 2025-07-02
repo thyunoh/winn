@@ -1926,7 +1926,7 @@
 		</div>
 	</div>
 
-	<!--질문응답-->
+	<!--`-->
 	<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
 		data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
 		<div

@@ -87,6 +87,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                <div id="inputZone">
 		                    <!-- Hidden Inputs -->
 		                    <input type="hidden" id="qstnStat"  name="qstnStat" value="">
+		                    <input type="hidden" id="ansrStat"  name="ansrStat" value="">
 		                    <input type="hidden" id="hospNm"    name="hospNm"   value="">
 		                    <input type="hidden" id="userNm"    name="userNm"   value="">
 		                    <input type="hidden" id="asqSeq"    name="asqSeq"   value="">
@@ -814,7 +815,6 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 			// 재조회시 전체 선택 체크박스 해제
 			$("#selectAll").prop("checked", false);
 		}
-		
 		function fn_re_load(){
 			if (findValues && findValues.length > 0) {
 				fn_FindData();
@@ -852,7 +852,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
         		qstnStat:   $('#qstnStat').val(),
         		ansrStat:   $('#ansrStat').val(),
         		qstnWan:    $('#qstnWan').val(),
-        		ansrWan:   $('#ansrWan').val(),
+        		ansrWan:    $('#ansrWan').val(),
         		useYn:      $('#useYn').val(),
         		updDttm :   $('#updDttm').val()
 			    };
@@ -950,8 +950,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                console.log("업데이트 성공", response);
 		                // 6. DataTable에 변경된 값 반영
 		                let updatedData = newuptData();		                
-
+		                let selectedIndex = null;
 		                selectedRows.every(function(rowIdx) {
+		                	selectedIndex = rowIdx;  // 가장 마지막 선택 인덱스 저장
 		                    let rowData = this.data();
 		                    Object.keys(updatedData).forEach(function(key) {
 		                    	rowData[key] = updatedData[key];
@@ -960,7 +961,20 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                });
 		
 		                dataTable.draw(false);
-		                
+	                    // 조회 함수 호출
+	                    fn_FindData();
+		             // 3. draw 이벤트 후, 저장했던 행 다시 선택
+		                dataTable.on('draw', function () {
+		                    if (selectedIndex !== null) {
+		                        let row = dataTable.row(selectedIndex);
+		                        if (row.node()) {
+		                            $(row.node()).addClass('selected'); // CSS로 강조
+		                            // 선택 유지를 위한 스크롤 위치 조정도 필요 시 추가 가능
+		                        }
+		                    }
+		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
+		                    dataTable.off('draw');
+		                });       
 		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
