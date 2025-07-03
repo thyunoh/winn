@@ -1410,7 +1410,9 @@
 				        	let select = $('#' + select_id[i]);
 				            select.empty();
 				            
-				            let filteredItems = commList.filter(item => item.codeCd === list_code[i]);
+				            let filteredItems = commList.filter(item => 
+				                item.codeCd === list_code[i] && item.subCode !== 'C'
+				                );
 				            
 				            if (filteredItems.length > 0) {
 				            	if (firstnull[i] === "Y")
