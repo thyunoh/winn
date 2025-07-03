@@ -141,38 +141,54 @@
       }
       
       $('#top-menu_a').on('click', function () {
-          clearMenuActive();
-          $(this).addClass('active');
-          $('.menu-section').hide();
-          let s_conact_gb = getCookie("s_conact_gb");
-          if (s_conact_gb == 'A') {
-              $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
-          }else if (s_conact_gb == '1') { //경영분석 
-              $('#menu-a, #menu-b, #menu-c, #menu-g, #menu-h').show();
-          }else if (s_conact_gb == '2') { //적정성평가 
-              $('#menu-a, #menu-b, #menu-d, #menu-e, #menu-f').show();
-          }    
+         clearMenuActive();
+         $(this).addClass('active');
+         $('.menu-section').hide();
+         let s_conact_gb = getCookie("s_conact_gb");
+         if (s_conact_gb == 'A') {
+             $('#menu-a, #menu-b, #menu-c, #menu-d, #menu-e, #menu-f, #menu-g, #menu-h').show();
+         }else if (s_conact_gb == '1') { //경영분석 
+             $('#menu-a, #menu-b, #menu-c, #menu-g, menu-h').show();
+         }else if (s_conact_gb == '2') { //적정성평가 
+             $('#menu-a, #menu-b, #menu-d, #menu-e, #menu-f').show();
+         }
       });
       
       $('#top-menu_b').on('click', function () {
-          clearMenuActive();
-          $(this).addClass('active');
-          $('.menu-section').hide();
-          $('#menu-b').show();
+         clearMenuActive();
+        $(this).addClass('active');
+        $('.menu-section').hide();
+        let s_conact_gb = getCookie("s_conact_gb");
+        if (s_conact_gb == 'A') {
+            $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
+        } else {
+           $('#menu-b').show();
+        }
       });
       
       $('#top-menu_c_btn').on('click', function () {
-          clearMenuActive();
-          $(this).addClass('active');
-          $('.menu-section').hide();
-          $('#menu-c').show();
+         clearMenuActive();
+        $(this).addClass('active');
+        $('.menu-section').hide();
+        let s_conact_gb = getCookie("s_conact_gb");
+        if (s_conact_gb == 'A') {
+            $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
+        }else if (s_conact_gb == '1') { //진료비분석
+           $('#menu-c').show();
+        }
       });
       
       $('#top-menu_d_btn').on('click', function () {
-          clearMenuActive();
-          $(this).addClass('active');
-          $('.menu-section').hide();
-          $('#menu-d, #menu-e, #menu-f').show();
+         clearMenuActive();
+        $(this).addClass('active');
+        $('.menu-section').hide();
+          
+        let s_conact_gb = getCookie("s_conact_gb");
+        if (s_conact_gb == 'A') {
+            $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
+        }else if (s_conact_gb == '2') { //적정성평가 
+             $('#menu-d, #menu-e, #menu-f').show();
+        }
       });
        
       $("#hospserchtop").on("click", function () {
@@ -268,11 +284,9 @@
        } else {
            // 이후: 마지막 선택 메뉴 사용 (없으면 top-menu_a로 fallback)
            selectedTopMenu = localStorage.getItem('selectedTopMenu') || 'top-menu_a';
-          
-          
-       
        }
-
+       
+       
        // 메뉴 활성화 및 클릭 이벤트 실행
        $('.top-menu-btn').removeClass('active');
        $('#' + selectedTopMenu).addClass('active').trigger('click');

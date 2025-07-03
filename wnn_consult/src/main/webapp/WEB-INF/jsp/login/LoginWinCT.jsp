@@ -69,18 +69,18 @@
 			
 							<!-- 위너넷 링크 -->
 							<a href="http://www.winnernet.co.kr/"
-							   class="nav-link text-dark consulting-menu"
+							   class="nav-link consulting-menu"
 							   style="font-size: 16px; padding: 24px;"
 							   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
-							   <strong>위너넷 소개</strong>
+							   위너넷 소개
 							</a>
 			
 							<!-- 컨설팅 소개 드롭다운 -->
 							<div class="nav-link text-dark position-relative">
-								<a href="#" class="nav-link text-dark  consulting-menu"
+								<a href="#" class="nav-link  consulting-menu"
 								   style="font-size: 16px; padding: 24px;"
 								   data-bs-toggle="dropdown" onclick="setMainActive(this)">
-								   <strong>컨설팅 소개</strong>
+								   컨설팅 소개
 								</a>
 								<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
 									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
@@ -93,10 +93,10 @@
 			
 							<!-- 온라인 교육센터 링크 -->
 							<a href="https://winner797.net/"
-							   class="nav-link text-dark consulting-menu"
+							   class="nav-link consulting-menu"
 							   style="font-size: 16px; padding: 24px;"
 							   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
-							   <strong>온라인교육센터</strong>
+							   온라인교육센터
 							</a>
 			
 							<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
@@ -485,7 +485,7 @@
 												rel="noopener noreferrer"> <img class="img-fluid"
 												src="/images/winct/kakao.svg" alt="카카오상담"
 												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.9rem; font-weight: bold;">카카오상담</span>
+												<span style="font-size: 0.8rem; font-weight: bold;">카카오상담</span>
 											</a>
 										</div>
 										<div
@@ -493,9 +493,9 @@
 											<a href="#" onclick="fnasq_main();"
 												class="d-flex align-items-center text-dark"
 												style="text-decoration: none;"> <img class="img-fluid"
-												src="/images/winct/headset.svg" alt="1대1상담"
+												src="/images/winct/headset.svg" alt="1:1문의하기"
 												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.9rem; font-weight: bold;">1대1상담</span>
+												<span style="font-size: 0.8rem; font-weight: bold;">1:1 문의하기</span>
 											</a>
 										</div>
 										<div
@@ -505,7 +505,7 @@
 												style="text-decoration: none;"> <img class="img-fluid"
 												src="/images/winct/faq.svg" alt="자주듣는질문"
 												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.9rem; font-weight: bold;">자주하는질문</span>
+												<span style="font-size: 0.8rem; font-weight: bold;">자주하는질문</span>
 											</a>
 										</div>
 									</div>
@@ -763,10 +763,10 @@
 		    let s_wnn_yn    = getCookie("s_wnn_yn");
 		
 		    // 💡 먼저 기존 메뉴 초기화 (중복 방지)
-		    let menuArea = document.getElementById("dynamicMenu_J");
+		    let menuArea   = document.getElementById("dynamicMenu_J");
 		    let menuArea_T = document.getElementById("dynamicMenu_T");
 		
-		    if (menuArea) menuArea.innerHTML = '';    // 기존 내용 제거
+		    if (menuArea)   menuArea.innerHTML   = '';    // 기존 내용 제거
 		    if (menuArea_T) menuArea_T.innerHTML = ''; // 기존 내용 제거
 		
 		    let menuHTML = '';
@@ -774,25 +774,25 @@
 		
 		    if (s_conact_gb === 'A' || s_wnn_yn === 'Y') {
 		        menuHTML += `
-		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px; padding: 24px;">
-		                <strong>적정성평가</strong>
+		            <a href="#" class="nav-link consulting-menu" style="font-size: 16px; padding: 24px;">
+		                적정성평가
 		            </a>
 		        `;
 		        menuHTML_T += `
-		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-		                <strong>진료비분석</strong>
+		            <a href="#" class="nav-link consulting-menu" style="font-size: 16px;  padding: 24px;">
+		                진료비분석
 		            </a>
 		        `;
 		    } else if (s_conact_gb === '1') {
 		        menuHTML += `
-		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-		                <strong>진료비분석</strong>
+		            <a href="#" class="nav-link  consulting-menu" style="font-size: 16px;  padding: 24px;">
+		                진료비분석
 		            </a>
 		        `;
 		    } else if (s_conact_gb === '2') {
 		        menuHTML += `
-		            <a href="#" class="nav-link text-dark consulting-menu" style="font-size: 16px;  padding: 24px;">
-		                <strong>적정성평가</strong>
+		            <a href="#" class="nav-link  consulting-menu" style="font-size: 16px;  padding: 24px;">
+		                적정성평가
 		            </a>
 		        `;
 		    }
@@ -1890,7 +1890,6 @@
 							<!-- 질문내용 너비 줄임 -->
 							<col style="width: 60px">
 							<col style="width: 60px">
-							<col style="width: 60px">
 							<col style="width: 120px">
 						</colgroup>
 
@@ -1900,7 +1899,6 @@
 								<th>병원정보</th>
 								<th title="질문제목">질문제목</th>
 								<th title="질문내용">질문내용</th>
-								<th>질문상태</th>
 								<th>답변상태</th>
 								<th>질문자</th>
 								<th>작성일</th>
@@ -1908,7 +1906,7 @@
 						</thead>
 						<tbody id="asqdataArea" style="background-color: white;">
 							<tr>
-								<td colspan="8" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
+								<td colspan="7" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
 							</tr>
 						</tbody>
 					</table>
@@ -1930,7 +1928,7 @@
 		class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
 		<div class="modal-content"
-			style="height: 74%; display: flex; flex-direction: column;">
+			style="height: 70%; display: flex; flex-direction: column;">
 			<div class="modal-header  bg-light">
 				<h6 class="modal-title">문의 등록</h6>
 				<div class="form-row">
@@ -1950,63 +1948,52 @@
 					<input type="hidden" name="iudasq"      id="iudasq" /> 
 					<input type="hidden" name="asqSeq"      id="asqSeq" /> 
 					<input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" /> 
+					<input type="hidden" name="qstnWan"     id="qstnWan"   value="Y" /> 
 					<input type="hidden" name="hospCdasq"   id="hospCdasq" /> 
 					<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
 					<input type="hidden" name="regUserasq"  id="regUserasq" /> 
 					<input type="hidden" name="updUserasq"  id="updUserasq" />
 
-					<div class="form-group ">
-						<label for="qstnTitle"
-							class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
-						<div class="col-10 col-lg-10">
-							<input id="qstnTitle" name="qstnTitle" type="text"
-								class="form-control" placeholder="질문제목을 입력하세요">
-						</div>
+	               <div class="form-group d-flex align-items-start">
+					   <label for="qstnTitle"
+					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+					      질문제목
+					   </label>
+					   <textarea id="qstnTitle" name="qstnTitle" required
+					      placeholder="" class="form-control" rows="2"
+					      style="flex: 1;"></textarea>
 					</div>
 
-					<div class="form-group">
-						<label for="qstnConts"
-							class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
-						<div class="col-10 col-lg-10">
-							<textarea id="qstnConts" name="qstnConts"
-								placeholder="질문내용을 입력하세요" class="form-control" rows="5"></textarea>
-						</div>
+					<div class="form-group d-flex align-items-start">
+					   <label for="qstnConts"
+					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+					      질문내용
+					   </label>
+					   <textarea id="qstnConts" name="qstnConts" required
+					      placeholder="" class="form-control" rows="5"
+					      style="flex: 1;"></textarea>
 					</div>
 
-					<div class="form-group">
-						<label for="qstnWan"
-							class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
-						<div class="col-4 col-lg-4">
-							<select id="qstnWan" name="qstnWan" class="custom-select"
-								style="height: 35px; font-size: 14px;">
-								<option value="">선택</option>
-								<option value="Y">Y. 질문완료</option>
-								<option value="N" selected>N. 진행중</option> <!-- 기본값 설정 -->
-							</select>
-						</div>
+	 				<div class="form-group d-flex align-items-start">
+					   <label for="ansrConts"
+					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+					      답변내용
+					   </label>
+					   <textarea id="ansrConts" name="ansrConts" required
+					      placeholder="" class="form-control" rows="9"
+					      style="flex: 1;"></textarea>
 					</div>
-
-					<div class="form-group">
-						<label for="ansrConts"
-							class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
-						<div class="col-10 col-lg-10">
-							<textarea id="ansrConts" name="ansrConts"
-								placeholder="답변내용 입력하세요" class="form-control" rows="9"></textarea>
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label for="ansrWan"
-							class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
-						<div class="col-4 col-lg-4">
-							<select id="ansrWan" name="ansrWan" class="custom-select"
-								style="height: 35px; font-size: 14px;">
-								<option value="">선택</option>
-								<option value="Y">Y. 답변완료</option>
-								<option value="N">N. 진행중</option>
-							</select>
-						</div>
-					</div>
+	               <div class="form-group d-flex align-items-center">
+	                  <label for="ansrWan"
+	                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+	                     답변완료</label>
+	                     <select id="ansrWan" name="ansrWan" class="custom-select"
+	                        style="height: 35px; font-size: 14px; width: 120px;">
+	                        <option value="">선택</option>
+	                        <option value="Y">Y. 답변완료</option>
+	                        <option value="N">N. 진행중</option>
+	                     </select>
+	               </div>
 				</div>
 			</form:form>
 		</div>
@@ -2074,13 +2061,13 @@
 		   		if(data.resultCnt > 0 ){
 		    		var dataTxt = "";
 		    		for(var i=0 ; i < data.resultCnt; i++){
-		    			dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
-		    			                                                                + data.resultLst[i].asqSeq+'">';
+		    			dataTxt = '<tr onclick="fn_rowClick(\'' + data.resultLst[i].asqSeq + '\')" ' +
+		    	          'ondblclick="fn_rowDblClick(\'' + data.resultLst[i].asqSeq + '\')" ' +
+		    	          'id="row_' + data.resultLst[i].asqSeq + '">';
 		 				dataTxt += 	"<td>" + (i+1)  + "</td>" ; 
 		 				dataTxt +=  "<td>" + data.resultLst[i].hospNm   + "</td>" ;
 		 				dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
 						dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;	
-						dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;	
 		 				dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;	
 		 				dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
 						dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
@@ -2097,6 +2084,20 @@
     var  lfileGb  ;  
     var  lregUser ;
     var  lregIp   ;
+    let clickTimer = null;
+    function fn_rowClick(asqSeq) {
+        // 단일 클릭 시 (delay 후 실행, 만약 더블클릭이면 clearTimeout)
+        clickTimer = setTimeout(function () {
+            fn_asqDtlSearch(asqSeq);
+        }, 250); // 더블클릭보다 살짝 느리게
+    }
+
+    function fn_rowDblClick(asqSeq) {
+        // 더블클릭 시: 단일 클릭 취소하고 저장 실행
+        clearTimeout(clickTimer);
+        fn_asqDtlSearch(asqSeq);  // 필요 시 생략 가능
+        fn_asqsave('QU');
+    }    
 	function fn_asqDtlSearch(asqSeq){ 
 			if(asqSeq == '' || asqSeq == null) return;
 			$("#asqSeq").val(asqSeq);
@@ -2104,7 +2105,7 @@
 			$("#asq_infoTable tr").attr("class", ""); 
 			$("#asq_infoTable #"+asqSeq).attr("checked", true);
 			$("#asq_infoTable #row_"+asqSeq).attr("class", "tr-primary");
-		}
+	}
 	function fn_asqsave(iud) {
 	    $("#iud").val(iud); // 입력(I), 수정(U), 삭제(D)
         
@@ -2887,58 +2888,64 @@
 	    });
 	    
 	    function hospcont_search() {
-	        const hospCd = document.getElementById("hospCd").value; // 👈 병원코드 입력값 가져오기
-	        $.ajax({
-	            type: "post",
-	            url: "user/selHospsumList.do",
-	            data: { hospCd: hospCd },
-	            dataType: "json",
-	            success: function (data) {
-	                console.log("서버 응답 데이터:", data);
-	                const cont = Array.isArray(data) && data.length > 0 ? data[0] : {};
+	           const hospCd = document.getElementById("hospCd").value; // 👈 병원코드 입력값 가져오기
+	           if (/^\d{8}$/.test(hospCd)) {
+	              $.ajax({
+	                  type: "post",
+	                  url: "user/selHospsumList.do",
+	                  data: { hospCd: hospCd },
+	                  dataType: "json",
+	                  success: function (data) {
+	                      console.log("서버 응답 데이터:", data);
+	                      const cont = Array.isArray(data) && data.length > 0 ? data[0] : {};
 
-	                function setValue(id, value) {
-	                    const el = document.getElementById(id);
-	                    if (el) el.value = value || '';
-	                }
+	                      function setValue(id, value) {
+	                          const el = document.getElementById(id);
+	                          if (el) el.value = value || '';
+	                      }
 
-	                function setText(id, value) {
-	                    const el = document.getElementById(id);
-	                    if (el) el.textContent = value || '';
-	                }
+	                      function setText(id, value) {
+	                          const el = document.getElementById(id);
+	                          if (el) el.textContent = value || '';
+	                      }
 
-	                function isDateInRange(start, end) {
-	                    const now = new Date();
-	                    const startDate = new Date(start);
-	                    const endDate = new Date(end);
-	                    if (isNaN(startDate) || isNaN(endDate)) return false;
-	                    return startDate <= now && now <= endDate;
-	                }
+	                      function isDateInRange(start, end) {
+	                          const now = new Date();
+	                          const startDate = new Date(start);
+	                          const endDate = new Date(end);
+	                          if (isNaN(startDate) || isNaN(endDate)) return false;
+	                          return startDate <= now && now <= endDate;
+	                      }
 
-	                // 기간 유효성 판단
-	                const rangeValid1 = isDateInRange(cont.startDt, cont.endDt);
-	                const rangeValid2 = isDateInRange(cont.startDt2, cont.endDt2);
+	                      // 기간 유효성 판단
+	                      const rangeValid1 = isDateInRange(cont.startDt, cont.endDt);
+	                      const rangeValid2 = isDateInRange(cont.startDt2, cont.endDt2);
 
-	                // 병원명 설정
-	                setValue('hospNm', cont.hospNm);
+	                      // 병원명 설정
+	                      setValue('hospNm', cont.hospNm);
 
-	                // 날짜 조건에 따라 날짜 또는 공백 처리
-	                setText('cont_startDt',  rangeValid1 ? cont.startDt  +'~' : '');
-	                setText('cont_endDt',    rangeValid1 ? cont.endDt    : '');
-	                setText('cont_startDt1', rangeValid2 ? cont.startDt2 +'~' : '');
-	                setText('cont_endDt1',   rangeValid2 ? cont.endDt2   : '');
+	                      // 날짜 조건에 따라 날짜 또는 공백 처리
+	                      setText('cont_startDt',  rangeValid1 ? cont.startDt  +'~' : '');
+	                      setText('cont_endDt',    rangeValid1 ? cont.endDt    : '');
+	                      setText('cont_startDt1', rangeValid2 ? cont.startDt2 +'~' : '');
+	                      setText('cont_endDt1',   rangeValid2 ? cont.endDt2   : '');
 
-	                const startDtVal  = document.getElementById('cont_startDt')?.textContent;
-	                const startDtVal2 = document.getElementById('cont_startDt1')?.textContent;
+	                      const startDtVal  = document.getElementById('cont_startDt')?.textContent;
+	                      const startDtVal2 = document.getElementById('cont_startDt1')?.textContent;
 
-	                setText('cont_name',  startDtVal  ? cont.name1 : '');
-	                setText('cont_name1', startDtVal2 ? cont.name2 : '');
+	                      setText('cont_name',  startDtVal  ? cont.name1 : '');
+	                      setText('cont_name1', startDtVal2 ? cont.name2 : '');
 
 
-	            }
-	        });
-	    }
+	                  }
+	              });
+	           
+	           } else {
+	              messageBox("1","<h6>요양기관기호를 8자를 모두 입력후 Enter !!</h6><p></p>","hospCd","","");
+	              return;
+	           }
 
+	     }
 	    //해상도에따른 위치 조절 기능 (공지사항/고객샌터 )
         function adjustMargin() {
             const container  = document.querySelector('.container-fluid_noti');

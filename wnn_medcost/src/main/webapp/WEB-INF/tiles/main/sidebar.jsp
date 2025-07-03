@@ -37,7 +37,7 @@
                     </li>
                     
                             
-                    <li class="nav-item menu-section" id="menu-f">
+                    <li class="nav-item" id="simulation">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" ><i class="fa fa-list-ol"></i>적정성-Simulation</a>
                     </li>
                     
@@ -143,6 +143,9 @@
                                                <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
                                            </li>
                                             <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/user/wnnauthcd.do">위너넷권한관리</a>
+                                            </li>
+                                            <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/mbrcd.do">회원가입현황</a>
                                             </li>
                                             <li class="nav-item">
@@ -154,25 +157,27 @@
                                         </ul>
                                     </div>
                                 </li>
-                                <li class="nav-item" id = "wnnauth1">
-                                    <a class="nav-item nav-link"   href="#" data-toggle="collapse" aria-expanded="false" 
-                                                                data-target="#base-info-4" aria-controls="base-info-4">정보운영관리</a>
-                                    <div id="base-info-4" class="collapse submenu" style="background-color: white;">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/user/wnnauthcd.do">위너넷권한관리</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/mangr/noticd.do">공지사항</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/mangr/asqcd.do">질의응답</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/mangr/faqcd.do">자주하는 질문</a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                             </ul>
+                        </div>
+                    </li>
+                     <li class="nav-item" id = "wnnauth1"> 
+						<a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false"
+						   data-target="#base-info-4" aria-controls="base-info-4">
+						   <i class="fas fa-comments"></i> 고객지원
+						</a>
+                        <div id="base-info-4" class="collapse submenu" style="background-color: white;">
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/mangr/noticd.do">공지사항/심사방</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/mangr/faqcd.do">자주하는 질문</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="">원격지원상담</a>
                                 </li>
                             </ul>
                         </div>
@@ -371,11 +376,10 @@
                      <col style="width: 50px">
                      <col style="width: 180px">
                      <!-- 질문제목 너비 줄임 -->
-                     <col style="width: 180px">
+                     <col style="width: 300px">
                      <!-- 질문내용 너비 줄임 -->
-                     <col style="width: 60px">
-                     <col style="width: 60px">
-                     <col style="width: 60px">
+                     <col style="width: 70px">
+                     <col style="width: 70px">
                      <col style="width: 120px">
                   </colgroup>
                   <thead>
@@ -383,7 +387,6 @@
                         <th>번호</th>
                         <th title="질문제목">질문제목</th>
                         <th title="질문내용">질문내용</th>
-                        <th>질문상태</th>
                         <th>답변상태</th>
                         <th>질문자</th>
                         <th>작성일</th>
@@ -433,6 +436,7 @@
                <input  type="hidden" name="iud"      id="iud" />
                <input  type="hidden" name="asqSeq"   id="asqSeq" /> 
                <input  type="hidden" name="fileGb2"  id="fileGb2" value="4" /> 
+               <input  type="hidden" name="qstnWan"  id="qstnWan" value="Y" /> 
                <input  type="hidden" name="hospCd2"  id="hospCd2" /> 
                <input  type="hidden" name="regUser"  id="regUser" /> 
                <input  type="hidden" name="updUser"  id="updUser" />
@@ -456,19 +460,8 @@
 				      placeholder="" class="form-control" rows="5"
 				      style="flex: 1;"></textarea>
 				</div>
-          
-				<div class="form-group d-flex align-items-center">
-				   <label for="qstnWan"
-				      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
-				      질문완료
-				   </label>
-				   <select id="qstnWan" name="qstnWan" class="custom-select"
-				      style="height: 35px; font-size: 14px; width: 120px;">
-				      <option value="">선택</option>
-				      <option value="Y">Y. 질문완료</option>
-				      <option value="N" selected>N. 진행중</option>
-				   </select>
-				</div>
+        
+
  				<div class="form-group d-flex align-items-start">
 				   <label for="ansrConts"
 				      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
@@ -592,25 +585,25 @@ function fnasq_Search() {
     $("#asqdataArea").empty();
     $.ajax({
          url : '/mangr/asqList.do',
-       type : 'post',
-       data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
-      dataType : "json",
+         type : 'post',
+         data : {hospCd : getCookie("hospid")  , qstnTitle : $("#searchText").val() },
+         dataType : "json",
          success : function(data) {
             if(data.error_code != "0") return;
 
             if(data.resultCnt > 0 ){
              var dataTxt = "";
              for(var i=0 ; i < data.resultCnt; i++){
-                dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
-                                                                                + data.resultLst[i].asqSeq+'">';
+	    	    dataTxt = '<tr onclick="fn_rowClick(\'' + data.resultLst[i].asqSeq + '\')" ' +
+	    	          'ondblclick="fn_rowDblClick(\'' + data.resultLst[i].asqSeq + '\')" ' +
+	    	          'id="row_' + data.resultLst[i].asqSeq + '">';
                 dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
                 dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
-               dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
-               dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;   
-                dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
+                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
+                dataTxt +=  "<td>" + data.resultLst[i].ansrStat + "</td>" ;   
                 dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
-               dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
-               dataTxt +=  "</tr>";
+                dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
+                dataTxt +=  "</tr>";
                   $("#asqdataArea").append(dataTxt);
                }
             }else{
@@ -636,6 +629,20 @@ var  lasqSeq  ;
 var  lfileGb  ;  
 var  lregUser ;
 var  lregIp   ;
+let clickTimer = null;
+function fn_rowClick(asqSeq) {
+    // 단일 클릭 시 (delay 후 실행, 만약 더블클릭이면 clearTimeout)
+    clickTimer = setTimeout(function () {
+        fn_asqDtlSearch(asqSeq);
+    }, 250); // 더블클릭보다 살짝 느리게
+}
+
+function fn_rowDblClick(asqSeq) {
+    // 더블클릭 시: 단일 클릭 취소하고 저장 실행
+    clearTimeout(clickTimer);
+    fn_asqDtlSearch(asqSeq);  // 필요 시 생략 가능
+    fn_asqsave('QU');
+}    
 function fn_asqDtlSearch(asqSeq) { 
    if (!asqSeq) return;
 
@@ -818,13 +825,14 @@ function hosp_conact() {
     const hospcont  = document.getElementById("hospcont"); 
     const wnnauth1  = document.getElementById("wnnauth1");
     const comcode   = document.getElementById("comcode");
-    const ratecode  = document.getElementById("ratecode");
-    const samcode   = document.getElementById("samcode");
-    const hospuser1  = document.getElementById("hospuser1");
-    const hospuser2  = document.getElementById("hospuser2");
-    const hospuser3  = document.getElementById("hospuser3");
-    const hospuser4  = document.getElementById("hospuser4");
-    const hospuser5  = document.getElementById("hospuser5");
+    const ratecode    = document.getElementById("ratecode");
+    const samcode     = document.getElementById("samcode");
+    const hospuser1   = document.getElementById("hospuser1");
+    const hospuser2   = document.getElementById("hospuser2");
+    const hospuser3   = document.getElementById("hospuser3");
+    const hospuser4   = document.getElementById("hospuser4");
+    const hospuser5   = document.getElementById("hospuser5");
+    const simulation  = document.getElementById("simulation");
     const hideElementsById = (ids) => {
         ids.forEach(id => {
             const el = document.getElementById(id);
@@ -843,7 +851,8 @@ function hosp_conact() {
         "hospuser2",
         "hospuser3",
         "hospuser4",
-        "hospuser5"
+        "hospuser5",
+        "simulation"
     ]);
 }
 document.addEventListener('DOMContentLoaded', function () {

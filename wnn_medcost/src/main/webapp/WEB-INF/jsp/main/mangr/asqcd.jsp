@@ -136,8 +136,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        <label for="ansrWan" class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
 		                        <div class="col-2 col-lg-2">
 		                            <select class="custom-select" name="ansrWan" id="ansrWan">
-		                                <option value="Y">완료</option>
-		                                <option value="N" selected>진행</option>
+							            <option value="Y" selected>완료</option>
+							            <option value="N">진행</option>
 		                            </select>
 		                        </div>
 		                    </div>
