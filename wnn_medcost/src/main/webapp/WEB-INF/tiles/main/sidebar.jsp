@@ -36,11 +36,11 @@
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" ><i class="fa fa-list-ol"></i>적정성-평가 현황</a>
                     </li>
                     
-                    <!--   
+                            
                     <li class="nav-item menu-section" id="menu-f">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" ><i class="fa fa-list-ol"></i>적정성-Simulation</a>
                     </li>
-                    -->
+                    
                     
                     <li class="nav-item menu-section" id="menu-e">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do" ><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
@@ -93,24 +93,24 @@
                                             <li class="nav-item" id = "comcode">
                                                 <a class="nav-item nav-link"  href="/base/commcd.do">공통코드</a>
                                             </li>
-		                                   <li class="nav-item">
-		                                       <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
-		                                         data-target="#hira-code" aria-controls="hira-code">심평원고시코드
-		                                       </a>
-		                                       <div id="hira-code" class="collapse submenu" style="background-color: white;">
-		                                           <ul class="nav flex-column">
-		                                               <li class="nav-item">
-		                                                   <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
-		                                               </li>
-		                                               <li class="nav-item">
-		                                                   <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
-		                                               </li>
-		                                               <li class="nav-item">
-		                                                   <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
-		                                               </li>
-		                                           </ul>
-		                                       </div>
-		                                   </li>                                         
+                                   <li class="nav-item">
+                                       <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+                                         data-target="#hira-code" aria-controls="hira-code">심평원고시코드
+                                       </a>
+                                       <div id="hira-code" class="collapse submenu" style="background-color: white;">
+                                           <ul class="nav flex-column">
+                                               <li class="nav-item">
+                                                   <a class="nav-item nav-link" href="/base/sugacd.do">수가코드</a>
+                                               </li>
+                                               <li class="nav-item">
+                                                   <a class="nav-item nav-link" href="/base/yakgacd.do">약가코드</a>
+                                               </li>
+                                               <li class="nav-item">
+                                                   <a class="nav-item nav-link" href="/base/jaeryocd.do">재료대코드</a>
+                                               </li>
+                                           </ul>
+                                       </div>
+                                   </li>                                         
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/disecd.do">상병코드</a>
                                             </li>
@@ -361,9 +361,7 @@
                   <button class="btn btn-outline-dark" onclick="fn_asqsave('QD');">질문취소</button>
                   <button class="btn btn-outline-dark" onclick="fn_asqsave('QI');">질문등록</button>
                   <button class="btn btn-outline-dark" onclick="fn_asqsave('QU');">답변조회(수정)</button>
-                  <button class="btn btn-outline-dark" onclick="asqMainClose();">
-                     닫기 <i class="fas fa-times"></i>
-                  </button>
+                  <button class="btn btn-outline-dark" onclick="asqMainClose();">닫기 <i class="fas fa-times"></i></button>
                </div>
             </div>
             <div class="table-responsive rounded-3 shadow-sm mt-1 border"
@@ -498,10 +496,7 @@
    </div>
 </div>
 
-
 <script>
-
-
 function loadFaqData() {
     // 모달을 먼저 연다 (첫 번째 열 때 닫히는 문제 해결)
     $('#faqModal').modal('show');
@@ -608,12 +603,12 @@ function fnasq_Search() {
              for(var i=0 ; i < data.resultCnt; i++){
                 dataTxt = '<tr  class="" onclick="fn_asqDtlSearch(\''+ data.resultLst[i].asqSeq +'\');" id="row_' 
                                                                                 + data.resultLst[i].asqSeq+'">';
-               dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
-               dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
+                dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
+                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
                dataTxt +=  "<td>" + data.resultLst[i].qstnStat    + "</td>" ;   
-               dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
-               dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
+                dataTxt +=  "<td>" + data.resultLst[i].ansrStat    + "</td>" ;   
+                dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
                dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
                dataTxt +=  "</tr>";
                   $("#asqdataArea").append(dataTxt);
@@ -820,7 +815,7 @@ $(document).ready(function () {
 });
    //위너넷만 메뉴가 생성됨   
 function hosp_conact() {
-	const hospcont  = document.getElementById("hospcont"); 
+    const hospcont  = document.getElementById("hospcont"); 
     const wnnauth1  = document.getElementById("wnnauth1");
     const comcode   = document.getElementById("comcode");
     const ratecode  = document.getElementById("ratecode");
@@ -836,6 +831,7 @@ function hosp_conact() {
             if (el) el.style.display = "none";
         });
     };
+
     // 숨기고자 하는 ID 목록
     hideElementsById([
         "samcode",    // 샘버전
@@ -887,5 +883,6 @@ document.addEventListener('DOMContentLoaded', function () {
 <!-- ============================================================== -->
 <!-- sidebar end -->
 <!-- ============================================================== -->
+        
         
         
