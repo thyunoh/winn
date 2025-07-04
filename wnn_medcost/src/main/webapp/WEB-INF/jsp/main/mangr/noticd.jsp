@@ -1412,7 +1412,7 @@
 				            
 				            let filteredItems = commList.filter(item => 
 				                item.codeCd === list_code[i] && item.subCode !== 'C'  //계약관련는 제외 
-				                );
+				            );
 				            
 				            if (filteredItems.length > 0) {
 				            	if (firstnull[i] === "Y")

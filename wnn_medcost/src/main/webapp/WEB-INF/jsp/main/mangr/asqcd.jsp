@@ -1269,10 +1269,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 				        	let select = $('#' + select_id[i]);
 				            select.empty();
 				            
-				            // 'subCode'가 'C'인 항목은 제외
-				            let filteredItems = commList.filter(item => 
-				                item.codeCd === list_code[i] && item.subCode !== 'C'
-				            );
+				            let filteredItems = commList.filter(item => item.codeCd === list_code[i]);
 				            
 				            if (filteredItems.length > 0) {
 				            	if (firstnull[i] === "Y")
