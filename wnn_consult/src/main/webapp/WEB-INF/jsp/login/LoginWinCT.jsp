@@ -477,17 +477,18 @@
 								<div class="bg-light box-p-10"
 									style="width: 635px; height: 60px; margin-top: 0px; position: relative; left: 5px;">
 									<div class="row text-center" style="margin-top: -7px;">
-										<div
-											class="col-4 d-flex justify-content-center align-items-center">
-											<a href="https://open.kakao.com/o/gBvFxyYg"
+										<div class="col-4 d-flex justify-content-center align-items-center">
+											<a href="#"
+												onclick= "ready_kakao();"
 												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;" target="_blank"
-												rel="noopener noreferrer"> <img class="img-fluid"
-												src="/images/winct/kakao.svg" alt="카카오상담"
-												style="height: 30px; margin-right: 8px; margin-top: 7px;">
+												style="text-decoration: none;">
+												<img class="img-fluid"
+													src="/images/winct/kakao.svg" alt="카카오상담"
+													style="height: 30px; margin-right: 8px; margin-top: 7px;">
 												<span style="font-size: 0.8rem; font-weight: bold;">카카오상담</span>
 											</a>
 										</div>
+										
 										<div
 											class="col-3 d-flex justify-content-center align-items-center">
 											<a href="#" onclick="fnasq_main();"
@@ -1114,6 +1115,10 @@
 	        	$("#perUseCd").val("PER_USE_CD") ;
 	        	$("#perInfoCd").val("PER_INFO_CD") ;
 	        	$("#perProCd").val("PER_PRO_CD") ;
+	        	
+	        	let trimmedEmail = $("#email").val().trim();
+	        	$("#email").val(trimmedEmail);
+	        	
 	        	var formData = $("form[name='memregForm']").serialize() ;
 	        	if (!confirm("회원가입 하시겠습니다?")) {
 	                return;  
@@ -3000,6 +3005,9 @@
 
             adjustCarouselPosition(); // 페이지 로딩 시 바로 실행
             window.addEventListener('resize', adjustCarouselPosition);
+         function ready_kakao(){
+        	 messageBox("1","<h6>카카오상담은 준비중입니다 !!</h6><p></p>","","",""); 
+         }   
         </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>

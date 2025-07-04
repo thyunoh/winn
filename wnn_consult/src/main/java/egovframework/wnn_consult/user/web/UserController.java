@@ -1,8 +1,10 @@
 package egovframework.wnn_consult.user.web;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,9 +107,14 @@ public class UserController {
 				
 				// 암호된 상태로 저장 후 EgovFileScrty 풀고 해야됨.
 				// 일단은 암호화 안된 상태로 테스트
-				String chkpwd = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getUserId());
-				System.out.print("비밀번호를 확인하세요.!");
-				if (!result.getPassWd().equals(chkpwd)) {
+				String chkpwd1 = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getUserId().trim());
+
+				String inputEnc = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getUserId().trim().toLowerCase());
+				String chkpwd2  = Base64.getUrlEncoder().encodeToString(inputEnc.getBytes(StandardCharsets.UTF_8));
+				
+				// 둘 다 틀릴 경우만 실행됨 (즉, 둘 중 하나라도 맞으면 통과)
+				
+				if (!result.getPassWd().equals(chkpwd1) && !result.getPassWd().equals(chkpwd2)) {
 					
 					response.put("error_code", "20000");
 					response.put("error_mess", "비밀번호를 확인하세요.!");
@@ -206,7 +213,11 @@ public class UserController {
 			    model.addAttribute("error_msg", "비밀번호 변경할 사용자 정보가 존재하지 않습니다.");
 			    return "jsonView";			
 			}
-			dto.setEncPassWd(EgovFileScrty.encryptPassword("1234", dto.getUserId()));
+
+			String encrypted     = EgovFileScrty.encryptPassword("1234", dto.getUserId().trim().toLowerCase());
+			String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+			dto.setEncPassWd(base64Encoded);
+			
 			//비밀번호 변경 처리			
 			boolean chk = svc.UserPasswdChange(dto);
 			
@@ -236,9 +247,12 @@ public class UserController {
 				model.addAttribute("error_msg" , "비밀번호 변경할 사용자 정보가 존재하지 않습니다.");
 				return "jsonView";
 			}
-			String chkpwd = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getUserId());
+			String chkpwd1 = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getUserId().trim());
 			
-			if(!result.getPassWd().equals(chkpwd)) {
+			String encrypted = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getUserId().trim().toLowerCase());
+			String chkpwd2   = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+			
+			if (!result.getPassWd().equals(chkpwd1) && !result.getPassWd().equals(chkpwd2)) {
 				model.addAttribute("error_code", "30000");
 				model.addAttribute("error_msg" , "현재 비밀번호를 확인하세요.!");
 				return "jsonView";
@@ -249,7 +263,10 @@ public class UserController {
 				model.addAttribute("error_msg" , "비밀번호 변경할 정보가 존재하지 않습니다.");
 				return "jsonView";
 			}
-			dto.setEncPassWd(EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId()));
+			String encrypted_1     = EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId().trim().toLowerCase());
+			String base64Encoded   = Base64.getUrlEncoder().encodeToString(encrypted_1.getBytes(StandardCharsets.UTF_8));
+			dto.setEncPassWd(base64Encoded);
+			
 			boolean chk = svc.UserPasswdChange(dto);
 			
 			if(chk) {
@@ -305,17 +322,23 @@ public class UserController {
 			//코그구분 정보 조회
 			if ("I".equals(dto.getIud())) {
 				
-				dto.setPassWd(EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getEmail()));
-				String chkapwd = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getEmail());
-	
+				String encrypted_1   = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getEmail().trim().toLowerCase());
+				String chkapwd       = Base64.getUrlEncoder().encodeToString(encrypted_1.getBytes(StandardCharsets.UTF_8));
+				
+				String encrypted     = EgovFileScrty.encryptPassword(dto.getPassWd(), dto.getEmail().trim().toLowerCase());
+				String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+				dto.setPassWd(base64Encoded);
+			
 				if(chkapwd == "") {
 					model.addAttribute("error_code", "30000");
 					model.addAttribute("error_msg" , "등록할 비밀번호를 입력하세요   .");
 					return "jsonView";
 				}
 				
-				String chkbpwd = EgovFileScrty.encryptPassword(dto.getAfPassWd(), dto.getEmail());
-					
+				
+				String encrypted_2 = EgovFileScrty.encryptPassword(dto.getAfPassWd(), dto.getEmail().trim().toLowerCase());
+				String chkbpwd     = Base64.getUrlEncoder().encodeToString(encrypted_2.getBytes(StandardCharsets.UTF_8));
+				
 				if ((chkbpwd == "") & (chkapwd != chkbpwd)) {
 					model.addAttribute("error_code", "30000");
 					model.addAttribute("error_msg" , "등록할 비밀번호와 상이합니다    .");

@@ -1,7 +1,9 @@
 package egovframework.wnn_medcost.user.web;
 
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -609,7 +611,9 @@ public class UserController extends BaseController {
         		dto.setEncPassWd("");
         		//패스워드통과 했으면 
         		if (!dto.getBfPassWd().isEmpty()) {
-        			dto.setEncPassWd(EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId())) ;
+    				String encrypted     = EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId().trim().toLowerCase());
+    				String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+    				dto.setEncPassWd(base64Encoded);
         		}
         		String dupchk =   svc.UsermstDupChk(dto) ;
         		if ("Y".equals(dupchk)) {
@@ -644,7 +648,9 @@ public class UserController extends BaseController {
 	       		 dto.setEncPassWd("");
 	     		//패스워드통과 했으면 
 	     		if (!dto.getBfPassWd().isEmpty()) {
-	     			dto.setEncPassWd(EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId())) ;
+	     			String encrypted     = EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId().trim().toLowerCase());
+    				String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+    				dto.setEncPassWd(base64Encoded);
 	     		}
 	     		//입력루틴 사제는 없음   
        		    svc.insertUsermst(dto) ; 
@@ -886,7 +892,9 @@ public class UserController extends BaseController {
         		dto.setEncPassWd("");
         		//패스워드통과 했으면 
         		if (!dto.getBfPassWd().isEmpty()) {
-        			dto.setEncPassWd(EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId())) ;
+	     			String encrypted     = EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId().trim().toLowerCase());
+    				String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+    				dto.setEncPassWd(base64Encoded);        			
         		}
         		String dupchk =   svc.UserCdDupChk(dto) ;
         		if ("Y".equals(dupchk)) {
@@ -921,7 +929,9 @@ public class UserController extends BaseController {
 	       		 dto.setEncPassWd("");
 	     		//패스워드통과 했으면 
 	     		if (!dto.getBfPassWd().isEmpty()) {
-	     			dto.setEncPassWd(EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId())) ;
+	     			String encrypted     = EgovFileScrty.encryptPassword(dto.getBfPassWd(), dto.getUserId().trim().toLowerCase());
+    				String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
+    				dto.setEncPassWd(base64Encoded);	     			
 	     		}
 	     		//입력루틴 사제는 없음   
        		    svc.insertUserCd(dto) ; 

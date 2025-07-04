@@ -169,7 +169,7 @@
 									</button>
 									<label for="startDt"
 										class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
-									<div class="col-3 col-lg-3">
+									<div class="col-2 col-lg-2">
 										<input id="startDt" name="startDt" type="text"
 											class="form-control date1-inputmask" required
 											placeholder="yyyy-mm-dd">
