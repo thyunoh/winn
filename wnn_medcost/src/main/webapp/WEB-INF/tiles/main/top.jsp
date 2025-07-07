@@ -141,54 +141,56 @@
       }
       
       $('#top-menu_a').on('click', function () {
-         clearMenuActive();
-         $(this).addClass('active');
-         $('.menu-section').hide();
-         let s_conact_gb = getCookie("s_conact_gb");
-         if (s_conact_gb == 'A') {
-             $('#menu-a, #menu-b, #menu-c, #menu-d, #menu-e, #menu-f, #menu-g, #menu-h').show();
-         }else if (s_conact_gb == '1') { //경영분석 
-             $('#menu-a, #menu-b, #menu-c, #menu-g, menu-h').show();
-         }else if (s_conact_gb == '2') { //적정성평가 
-             $('#menu-a, #menu-b, #menu-d, #menu-e, #menu-f').show();
-         }
+    	  clearMenuActive();
+	      $(this).addClass('active');
+	      $('.menu-section').hide();
+          // 위너넷일때 전체화면 보이게       
+	      let s_conact_gb = (getCookie("s_winconect") == 'Y') ? "A" : getCookie("s_conact_gb");
+	      
+	      if (s_conact_gb == 'A') {
+	          $('#menu-a, #menu-b, #menu-c, #menu-d, #menu-e, #menu-f, #menu-g, #menu-h').show();
+	      }else if (s_conact_gb == '1') { //경영분석 
+	          $('#menu-a, #menu-b, #menu-c, #menu-g, menu-h').show();
+	      }else if (s_conact_gb == '2') { //적정성평가 
+	          $('#menu-a, #menu-b, #menu-d, #menu-e, #menu-f').show();
+	      }
       });
       
       $('#top-menu_b').on('click', function () {
-         clearMenuActive();
-        $(this).addClass('active');
-        $('.menu-section').hide();
-        let s_conact_gb = getCookie("s_conact_gb");
-        if (s_conact_gb == 'A') {
-            $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
-        } else {
-           $('#menu-b').show();
-        }
+    	  clearMenuActive();
+		  $(this).addClass('active');
+		  $('.menu-section').hide();
+		  let s_conact_gb = getCookie("s_conact_gb");
+		  if (s_conact_gb == 'A') {
+		      $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
+		  } else {
+		  	$('#menu-b').show();
+		  }
       });
       
       $('#top-menu_c_btn').on('click', function () {
-         clearMenuActive();
-        $(this).addClass('active');
-        $('.menu-section').hide();
-        let s_conact_gb = getCookie("s_conact_gb");
-        if (s_conact_gb == 'A') {
-            $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
-        }else if (s_conact_gb == '1') { //진료비분석
-           $('#menu-c').show();
-        }
+    	  clearMenuActive();
+		  $(this).addClass('active');
+		  $('.menu-section').hide();
+		  let s_conact_gb = getCookie("s_conact_gb");
+		  if (s_conact_gb == 'A') {
+		      $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
+		  }else if (s_conact_gb == '1') { //진료비분석
+		  	$('#menu-c').show();
+		  }
       });
       
       $('#top-menu_d_btn').on('click', function () {
-         clearMenuActive();
-        $(this).addClass('active');
-        $('.menu-section').hide();
-          
-        let s_conact_gb = getCookie("s_conact_gb");
-        if (s_conact_gb == 'A') {
-            $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
-        }else if (s_conact_gb == '2') { //적정성평가 
-             $('#menu-d, #menu-e, #menu-f').show();
-        }
+    	  clearMenuActive();
+		  $(this).addClass('active');
+		  $('.menu-section').hide();
+		    
+		  let s_conact_gb = getCookie("s_conact_gb");
+		  if (s_conact_gb == 'A') {
+		      $('#menu-a, #menu-b, #menu-c, #menu-d , #menu-e, #menu-f, #menu-g, #menu-h').show();
+		  }else if (s_conact_gb == '2') { //적정성평가 
+		  	  $('#menu-d, #menu-e, #menu-f').show();
+		  }
       });
        
       $("#hospserchtop").on("click", function () {

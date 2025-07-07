@@ -64,7 +64,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		<!-- ============================================================== -->
         <!-- modal form start -->
         <!-- ============================================================== -->        
-		<div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
+		<div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 		    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" 
 		         style="max-width: 45vw; max-height: 80vh;">
 		        <div class="modal-content">

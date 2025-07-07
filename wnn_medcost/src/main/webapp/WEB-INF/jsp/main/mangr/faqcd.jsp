@@ -76,7 +76,7 @@
 		<!-- ============================================================== -->
         <!-- modal form start -->
         <!-- ============================================================== -->        
-	    <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
+        <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
 	        <div class="modal-content" style="height: 70%;display: flex;flex-direction: column;">
@@ -137,9 +137,9 @@
                             <input id="endDt" name="endDt" value = '20991231' type="text" class="form-control date1-inputmask" placeholder="yyyy-mm-dd">
                             
                         </div>   
-                        <label for="useYn" class="col-2 col-lg-2 col-form-label text-left">사용여부</label>
+                        <label for="useYn" class="col-2 col-lg-2 col-form-label text-left" style="display:none;">사용여부</label>
                         <div class="col-2 col-lg-2">
-	                        <select class="custom-select" name="useYn" id="useYn">
+	                        <select class="custom-select" name="useYn" id="useYn" style="display:none;">
 				                <option value="Y">Y</option>
 				                <option value="N" selected>N</option>
 	 		                </select>

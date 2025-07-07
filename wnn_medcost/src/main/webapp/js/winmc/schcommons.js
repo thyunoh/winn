@@ -300,7 +300,7 @@ function getTableColumns(searchType) {
             { title: "요양기관"  , data: "hospCd"   , className: "text-center" , width: '100px',},
             { title: "병원명칭"  , data: "hospNm"   , className: "text-left"   , width: '150px', },
             { title: "주소"     , data: "hospAddr" , className: "text-left"   , width: '200px', },
-            { title: "계약구분"  , data: "conactGb" , className: "text-center" , width: '50px', },
+            { title: "계약구분"  , data: "conactGb" , visible: false , className: "text-center" , width: '50px', },
         ],
         "user": [
             { title: "사용자아이디" , data: "userId", className: "text-center" , width: '100px',},
