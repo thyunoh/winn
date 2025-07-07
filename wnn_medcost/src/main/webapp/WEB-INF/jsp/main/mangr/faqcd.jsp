@@ -7,7 +7,11 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
- 
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.js"></script>
+
 <!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/bootstrap.css"         rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"       rel="stylesheet">
@@ -43,9 +47,9 @@
                                             <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
                                             <button class="btn btn-outline-dark btn-insert" data-bs-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
                                             <button class="btn btn-outline-dark btn-update" data-bs-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
-                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">체크삭제. <i class="far fa-calendar-check"></i></button>
-                                            <button class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
+                                            <button class="btn btn-outline-dark btn-delete" data-bs-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
+                                            <button class="btn btn-outline-dark btn-delete" data-bs-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">체크삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button class="btn btn-outline-dark" data-bs-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -80,7 +84,7 @@
         <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 70%;display: flex;flex-direction: column;">
+	        <div class="modal-content" style="height: 75%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 		            <h6 class="modal-title" id="modalHead"></h6> 
 	              <!-- ============================================================== -->
@@ -126,7 +130,7 @@
                             <textarea id="ansrConts" name="ansrConts"  data-parsley-trigger="change" placeholder="" 
                                                                              autocomplete="off" class="form-control" rows="12" ></textarea>
                         </div>
-                    </div>  
+                    </div>
 	                 <div class="form-group row">
                         <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">적용시작일</label>
                         <div class="col-2 col-lg-2">
@@ -162,7 +166,6 @@
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 Start -->
 		<!-- ============================================================== -->
-
 		<script type="text/javascript">
 		
 		// 안해도 상관없음, 단 getElementById를 변경하면 꼭해야됨
@@ -279,7 +282,7 @@
 		var showSortNo = ['updDttm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [faqSeq];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var txt_Markln = 30;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
 		var markColums = ['qstnConts','ansrConts'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
@@ -492,7 +495,10 @@
 			    // 모달 창 크기가 변경될 때도 중앙에 유지
 			    window.addEventListener('resize', centerModal);
 			    // 모달 띄우기
-			    $("#" + modalName.id).modal('show');   
+			  //  $("#" + modalName.id).modal('show');   
+							    
+				const modal = new bootstrap.Modal(document.getElementById('modalName'));
+				modal.show(); // 이게 실행돼야 shown.bs.modal 이벤트가 동작합니다.
 			    
 			    if (getCookie("s_userid")) {
 			        inputZone.querySelector("[name='regUser']").value = getCookie("s_userid");
@@ -974,7 +980,21 @@
 		                });
 		
 		                dataTable.draw(false);
-		                
+	
+	                    fn_FindData();
+		             // 3. draw 이벤트 후, 저장했던 행 다시 선택
+		                dataTable.on('draw', function () {
+		                    if (selectedIndex !== null) {
+		                        let row = dataTable.row(selectedIndex);
+		                        if (row.node()) {
+		                            $(row.node()).addClass('selected'); // CSS로 강조
+		                            // 선택 유지를 위한 스크롤 위치 조정도 필요 시 추가 가능
+		                        }
+		                    }
+		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
+		                    dataTable.off('draw');
+		                }); 
+		             
 		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
@@ -1436,37 +1456,39 @@
 		function modalMainClose() {
 			$("#" + modalName.id).modal('hide');
 		}
-		//권한조건체크 applyAuthControl.js
-	    document.addEventListener("DOMContentLoaded", function() {
-	        applyAuthControl();
-	        const modal = document.getElementById('modalName');
+		document.addEventListener("DOMContentLoaded", function () {
+		    applyAuthControl();
+			const modalElement = document.getElementById('modalName');
 
-	        modal.addEventListener('shown.bs.modal', function () {
-	          const $editor = jQuery('#ansrConts');
-	          if ($editor.next().hasClass('note-editor')) {
-	            $editor.summernote('destroy');
-	          }
-	          $editor.summernote({
-	            placeholder: '답변 내용을 입력하세요',
-	            height: 300,
-	            toolbar: [
-	              ['style', ['bold', 'italic', 'underline']],
-	              ['font', ['fontsize', 'color']],
-	              ['para', ['ul', 'ol', 'paragraph']],
-	              ['insert', ['link']],
-	              ['view', ['codeview']]
-	            ]
-	          });
-	        });
+			modalElement.addEventListener('shown.bs.modal', function (event) {
+			const $editor = jQuery('#ansrConts');
 
-	        modal.addEventListener('hidden.bs.modal', function () {
-	          const $editor = jQuery('#ansrConts');
-	          if ($editor.next().hasClass('note-editor')) {
-	            $editor.summernote('destroy');
-	          }
-	        });
+		    if ($editor.next().hasClass('note-editor')) {
+			    alert("모달 열림 - summernote 초기화 시도");
+		    	$editor.summernote('destroy');
+		    }
 
-	      });		
+		    $editor.summernote({
+		      placeholder: '답변 내용을 입력하세요',
+		      height: 300,
+		      toolbar: [
+		        ['style', ['bold', 'italic', 'underline']],
+		        ['font', ['fontsize', 'color']],
+		        ['para', ['ul', 'ol', 'paragraph']],
+		        ['insert', ['link']],
+		        ['view', ['codeview']]
+		      ]
+		    });
+		  });
+
+		  // 모달 닫힐 때 summernote 제거
+		  modalElement.addEventListener('hidden.bs.modal', function (event) {
+		    const $editor = jQuery('#ansrConts');
+		    if ($editor.next().hasClass('note-editor')) {
+		      $editor.summernote('destroy');
+		    }
+		  });
+		});
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
