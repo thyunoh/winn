@@ -9,6 +9,7 @@
 		    ,A.FILE_GB
 		    ,A.QSTN_CONTS
 		    ,A.ANSR_CONTS 
+		    ,A.ANSR_CONTS  AS ANSR_CONTS1
 		    ,B.USER_NM
 		    ,IFNULL(A.START_DT,'') START_DT
 		    ,IFNULL(A.END_DT,'') END_DT
@@ -49,7 +50,7 @@
         ) VALUES (
 			 #{fileGb}
 		    ,#{qstnConts}
-		    ,#{ansrConts} 
+		    ,#{ansrConts1} 
 		    ,#{startDt}
 		    ,#{endDt}
 		    ,#{useYn}

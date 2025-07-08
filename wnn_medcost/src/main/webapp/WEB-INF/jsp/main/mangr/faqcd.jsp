@@ -8,16 +8,13 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-lite.min.js"></script>
+<!-- jQuery -->
 
-<!-- Customized Bootstrap Stylesheet -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <link href="/css/winmc/bootstrap.css"         rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"       rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
-
-    <!-- DataTables CSS -->
     <style>
     </style>
 		<!-- ============================================================== -->
@@ -53,18 +50,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            	
-                                <!-- 
-                              	display: 기본 DataTables 스타일을 적용합니다.
-								nowrap: 셀 내용이 한 줄로 표시되도록 하며, 필요한 경우 가로 스크롤을 생성합니다.
-								stripe: 짝수/홀수 행에 다른 배경색을 적용하여 가독성을 높입니다.
-								hover: 마우스를 올린 행의 배경색을 변경하여 강조합니다.
-								compact: 테이블의 패딩을 줄여 더 조밀한 레이아웃을 만듭니다.
-								cell-border: 셀 주위에 테두리를 추가합니다.
-								row-border: 행 사이에 테두리를 추가합니다.
-								order-column: 정렬된 열을 시각적으로 강조합니다.
-								responsive: 반응형 디자인을 적용하여 작은 화면에서도 잘 보이도록 합니다.
-                                -->
 								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
 								    </table>
@@ -84,7 +69,7 @@
         <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 75%;display: flex;flex-direction: column;">
+	        <div class="modal-content" style="height: 80%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 		            <h6 class="modal-title" id="modalHead"></h6> 
 	              <!-- ============================================================== -->
@@ -109,14 +94,15 @@
                 	<!-- ============================================================== -->
                     <!-- text input 1개 start -->
                     <!-- ============================================================== -->
-                    <input type="hidden" id="faqSeq"  name="faqSeq" value="">
-                    <input type="hidden" id="fileGb"  name="fileGb" value="">
-                    <input type="hidden" id="hospCd"  name="hospCd" value="">
+                    <input type="hidden" id="faqSeq"  name="faqSeq"  value="">
+                    <input type="hidden" id="fileGb"  name="fileGb"  value="">
+                    <input type="hidden" id="hospCd"  name="hospCd"  value="">
                     <input type="hidden" id="regUser" name="regUser" value="">
                     <input type="hidden" id="updDttm" name="updDttm" value="">
                     <input type="hidden" id="updUser" name="updUser" value="">
                     <input type="hidden" id="regIp"   name="regIp"   value="">
                     <input type="hidden" id="updIp"   name="updIp "  value= "">
+                    <input type="hidden" id="useYn"   name="useYn "  value= "Y">
                     <div class="form-row">
                         <label for="qstnConts" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
 	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
@@ -124,13 +110,14 @@
                                                                              autocomplete="off" class="form-control" rows="3" ></textarea>
                         </div>
                     </div>  
-                    <div class="form-row">
-                        <label for="ansrConts" class="col-2 col-lg-2 col-form-label text-left">질문답변</label>
-	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
-                            <textarea id="ansrConts" name="ansrConts"  data-parsley-trigger="change" placeholder="" 
-                                                                             autocomplete="off" class="form-control" rows="12" ></textarea>
-                        </div>
-                    </div>
+	                 <div class="form-row">
+	                        <label for="ansrConts1" class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
+		                    <div class="col-xl-10 col-lg-10 text-left mb-2">
+	                            <textarea id="ansrConts1" name="ansrConts1" data-parsley-trigger="change" placeholder="" 
+	                                                                             autocomplete="off" class="form-control" rows="15" ></textarea>
+	                        </div>
+	                 </div>   
+              
 	                 <div class="form-group row">
                         <label for="startDt" class="col-2 col-lg-2 col-form-label text-left">적용시작일</label>
                         <div class="col-2 col-lg-2">
@@ -166,6 +153,9 @@
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 Start -->
 		<!-- ============================================================== -->
+		<link   href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+		<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/lang/summernote-ko-KR.min.js"></script>
 		<script type="text/javascript">
 		
 		// 안해도 상관없음, 단 getElementById를 변경하면 꼭해야됨
@@ -248,7 +238,7 @@
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'faqSeq',     visible: false, className: 'dt-body-center', width: '100px',  name: 'keyfaqSeq', primaryKey: true },
 	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				{ data: 'ansrConts',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
+	        				{ data: 'ansrConts1',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
 	        				// getFormat 사용시   
 	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  
 	                          	render: function(data, type, row) {
@@ -284,7 +274,7 @@
 		var hideColums = [faqSeq];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 30;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['qstnConts','ansrConts'];
+		var markColums = ['qstnConts','ansrConts1'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -420,17 +410,22 @@
 		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
-			if (flag !== 'I'){ 
+		    modalName_rich(); // 항상 먼저 실행하여 에디터 초기화
+			
+		    if (flag !== 'I'){ 
 				// 수정.삭제 모드 (대상확인)
 				if (edit_Data) {
 					// Value Setting
 					formValueSet(inputZone.id,edit_Data);
-					
+					$('#ansrConts1').summernote('code', edit_Data.ansrConts1 || '');
 				} else {
 					modal_OpenFlag = false;
 					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
 					return null;
 				}
+			} else {
+				// 신규 등록 모드이므로 Summernote 초기화
+				$('#ansrConts1').summernote('code', '');
 			}
 			
 			if (modal_OpenFlag) {
@@ -439,6 +434,7 @@
 			    
 				var element = document.querySelector('#' + modalName.id);
 			    dragElement(element);
+			    
 	            //수정시 키는 readonly
 	            modal_key_hidden(flag) ;
 	            
@@ -492,14 +488,13 @@
 		     	        $("#" + firstFocus.attr('id')).focus();
 			        }, 500); // 포커스 강제 설정
 			    });
+			    
+			    
 			    // 모달 창 크기가 변경될 때도 중앙에 유지
 			    window.addEventListener('resize', centerModal);
 			    // 모달 띄우기
-			  //  $("#" + modalName.id).modal('show');   
-							    
-				const modal = new bootstrap.Modal(document.getElementById('modalName'));
-				modal.show(); // 이게 실행돼야 shown.bs.modal 이벤트가 동작합니다.
-			    
+			    $("#" + modalName.id).modal('show');   
+				
 			    if (getCookie("s_userid")) {
 			        inputZone.querySelector("[name='regUser']").value = getCookie("s_userid");
 			        inputZone.querySelector("[name='updUser']").value = getCookie("s_userid");
@@ -508,7 +503,7 @@
 			    if (getCookie("s_connip")) {
 			        inputZone.querySelector("[name='regIp']").value = getCookie("s_connip");
 			        inputZone.querySelector("[name='updIp']").value = getCookie("s_connip");
-			    }  
+			    }
 			}
 		}
 		function fn_Potion() {
@@ -859,7 +854,7 @@
 		    	//faqSeq:     { kname: "등록순서", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
 		    	//fileGb:     { kname: "구분", k_req: true },
 		    	qstnConts:  { kname: "질문제목", k_req: true },
-		    	ansrConts:  { kname: "질문답변" , k_req: true },
+		    	ansrConts1:  { kname: "질문답변" , k_req: true },
 		    	startDt:    { kname: "시작일", k_req: true },
 		    	endDt:      { kname: "종료일", k_req: true },
 		    	useYn:      { kname: "사용여부", k_req: true }
@@ -871,7 +866,7 @@
         	let newData = {
        			faqSeq:     $('#faqSeq').val(),
         		qstnConts:  $('#qstnConts').val(),
-        		ansrConts:  $('#ansrConts').val(),
+        		ansrConts1:  $('#ansrConts1').val(),
         		startDt:    $('#startDt').val(),
         		endDt:      $('#endDt').val(),
         		useYn:      $('#useYn').val(),
@@ -1457,38 +1452,31 @@
 			$("#" + modalName.id).modal('hide');
 		}
 		document.addEventListener("DOMContentLoaded", function () {
-		    applyAuthControl();
-			const modalElement = document.getElementById('modalName');
-
-			modalElement.addEventListener('shown.bs.modal', function (event) {
-			const $editor = jQuery('#ansrConts');
-
-		    if ($editor.next().hasClass('note-editor')) {
-			    alert("모달 열림 - summernote 초기화 시도");
-		    	$editor.summernote('destroy');
-		    }
-
-		    $editor.summernote({
-		      placeholder: '답변 내용을 입력하세요',
-		      height: 300,
-		      toolbar: [
-		        ['style', ['bold', 'italic', 'underline']],
-		        ['font', ['fontsize', 'color']],
-		        ['para', ['ul', 'ol', 'paragraph']],
-		        ['insert', ['link']],
-		        ['view', ['codeview']]
-		      ]
-		    });
-		  });
-
-		  // 모달 닫힐 때 summernote 제거
-		  modalElement.addEventListener('hidden.bs.modal', function (event) {
-		    const $editor = jQuery('#ansrConts');
-		    if ($editor.next().hasClass('note-editor')) {
-		      $editor.summernote('destroy');
-		    }
-		  });
+			  applyAuthControl();
 		});
+		function modalName_rich() {
+			$('#ansrConts1').summernote({
+			   placeholder: '내용을 입력하세요...',
+			   tabsize: 1,
+			   height: 300,
+			   lang: 'ko-KR',
+			   toolbar: [
+			     ['style', ['style']],
+			     ['font', ['bold', 'italic', 'underline', 'clear']],
+			     ['fontname', ['fontname']],
+			     ['fontsize', ['fontsize']],
+			     ['color', ['color']],
+			   ],
+			   fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
+			   fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
+			   callbacks: {
+			     onInit: function() {
+			       // 에디터가 초기화된 후 기본 글자 크기를 12px로 설정
+			       $('#ansrConts1').next().find('.note-editable').css('font-size', '14px');
+			     }
+			   }
+			});
+		}
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

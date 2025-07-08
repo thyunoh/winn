@@ -128,7 +128,8 @@ public class MangrController {
         	//		return ResponseEntity.status(400).body(dto.getFaqSeq()); 
         	//	}
         		svc.insertfaqCd(dto) ; 
-       		    System.out.println("FaqSeq: "  + dto.getFaqSeq());
+       		    System.out.println("FaqSeq: "      + dto.getFaqSeq());
+       		    System.out.println("ANSR_CONTS: "  + dto.getAnsrConts1());
             }
         	
             
