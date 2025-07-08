@@ -854,7 +854,7 @@
 		    	//faqSeq:     { kname: "등록순서", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
 		    	//fileGb:     { kname: "구분", k_req: true },
 		    	qstnConts:  { kname: "질문제목", k_req: true },
-		    	ansrConts1:  { kname: "질문답변" , k_req: true },
+		    	ansrConts1: { kname: "질문답변" , k_req: true },
 		    	startDt:    { kname: "시작일", k_req: true },
 		    	endDt:      { kname: "종료일", k_req: true },
 		    	useYn:      { kname: "사용여부", k_req: true }
@@ -866,7 +866,7 @@
         	let newData = {
        			faqSeq:     $('#faqSeq').val(),
         		qstnConts:  $('#qstnConts').val(),
-        		ansrConts1:  $('#ansrConts1').val(),
+        		ansrConts1: $('#ansrConts1').val(),
         		startDt:    $('#startDt').val(),
         		endDt:      $('#endDt').val(),
         		useYn:      $('#useYn').val(),
