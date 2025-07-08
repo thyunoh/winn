@@ -129,7 +129,8 @@ public class MangrController {
         	//	}
         		svc.insertfaqCd(dto) ; 
        		    System.out.println("FaqSeq: "      + dto.getFaqSeq());
-       		    System.out.println("ANSR_CONTS: "  + dto.getAnsrConts1());
+       		    System.out.println("ansr_conts: "  + dto.getAnsrConts1());
+       		    System.out.println("qstnConts: "   + dto.getQstnConts1());
             }
         	
             

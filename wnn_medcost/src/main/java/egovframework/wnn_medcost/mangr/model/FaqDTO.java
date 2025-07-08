@@ -11,6 +11,7 @@ public class FaqDTO {
 	private String faqSeq;         // SEQ
     private String fileGb;          // 질문 구분
     private String qstnConts;       // 질문내용
+    private String qstnConts1;       // 질문내용
     private String ansrConts;       // 답변 내용
     private String ansrConts1;       // 답변 내용
     private String startDt;         // 시작 날짜 (YYYYMMDD)
@@ -24,6 +25,12 @@ public class FaqDTO {
     private String updUser;         // 최종 변경자
     private String updIp;           // 최종 변경 IP
 
+	public String getQstnConts1() {
+		return qstnConts1;
+	}
+	public void setQstnConts1(String qstnConts1) {
+		this.qstnConts1 = qstnConts1;
+	}
 	public String getAnsrConts1() {
 		return ansrConts1;
 	}

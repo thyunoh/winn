@@ -104,9 +104,9 @@
                     <input type="hidden" id="updIp"   name="updIp "  value= "">
                     <input type="hidden" id="useYn"   name="useYn "  value= "Y">
                     <div class="form-row">
-                        <label for="qstnConts" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
+                        <label for="qstnConts1" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
 	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
-                            <textarea id="qstnConts" name="qstnConts" data-parsley-trigger="change" placeholder="" 
+                            <textarea id="qstnConts1" name="qstnConts1" data-parsley-trigger="change" placeholder="" 
                                                                              autocomplete="off" class="form-control" rows="3" ></textarea>
                         </div>
                     </div>  
@@ -237,7 +237,7 @@
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'faqSeq',     visible: false, className: 'dt-body-center', width: '100px',  name: 'keyfaqSeq', primaryKey: true },
-	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
+	        				{ data: 'qstnConts1',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
 	        				{ data: 'ansrConts1',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
 	        				// getFormat 사용시   
 	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  
@@ -274,7 +274,7 @@
 		var hideColums = [faqSeq];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 30;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
-		var markColums = ['qstnConts','ansrConts1'];
+		var markColums = ['qstnConts1','ansrConts1'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 		<!-- ============================================================== -->
 		<!-- Table Setting End -->
@@ -410,8 +410,7 @@
 		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
-		    modalName_rich(); // 항상 먼저 실행하여 에디터 초기화
-			
+		    modalName_rich();
 		    if (flag !== 'I'){ 
 				// 수정.삭제 모드 (대상확인)
 				if (edit_Data) {
@@ -853,7 +852,7 @@
 		    const results = formValCheck(inputZone.id, {
 		    	//faqSeq:     { kname: "등록순서", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
 		    	//fileGb:     { kname: "구분", k_req: true },
-		    	qstnConts:  { kname: "질문제목", k_req: true },
+		    	qstnConts1:  { kname: "질문제목", k_req: true },
 		    	ansrConts1: { kname: "질문답변" , k_req: true },
 		    	startDt:    { kname: "시작일", k_req: true },
 		    	endDt:      { kname: "종료일", k_req: true },
@@ -865,7 +864,7 @@
 		function newuptData() {
         	let newData = {
        			faqSeq:     $('#faqSeq').val(),
-        		qstnConts:  $('#qstnConts').val(),
+        		qstnConts1: $('#qstnConts1').val(),
         		ansrConts1: $('#ansrConts1').val(),
         		startDt:    $('#startDt').val(),
         		endDt:      $('#endDt').val(),
@@ -965,7 +964,7 @@
 		                console.log("업데이트 성공", response);
 		                // 6. DataTable에 변경된 값 반영
 		                let updatedData = newuptData();		                
-
+	                    
 		                selectedRows.every(function(rowIdx) {
 		                    let rowData = this.data();
 		                    Object.keys(updatedData).forEach(function(key) {
@@ -976,20 +975,6 @@
 		
 		                dataTable.draw(false);
 	
-	                    fn_FindData();
-		             // 3. draw 이벤트 후, 저장했던 행 다시 선택
-		                dataTable.on('draw', function () {
-		                    if (selectedIndex !== null) {
-		                        let row = dataTable.row(selectedIndex);
-		                        if (row.node()) {
-		                            $(row.node()).addClass('selected'); // CSS로 강조
-		                            // 선택 유지를 위한 스크롤 위치 조정도 필요 시 추가 가능
-		                        }
-		                    }
-		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
-		                    dataTable.off('draw');
-		                }); 
-		             
 		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
@@ -1453,6 +1438,7 @@
 		}
 		document.addEventListener("DOMContentLoaded", function () {
 			  applyAuthControl();
+			  modalName_rich() ;
 		});
 		function modalName_rich() {
 			$('#ansrConts1').summernote({
@@ -1477,6 +1463,9 @@
 			   }
 			});
 		}
+		$('#modalName').on('hidden.bs.modal', function () {
+			  $('#ansrConts1').summernote('destroy');
+		});		
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

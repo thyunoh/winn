@@ -8,6 +8,7 @@
 		    ,A.HOSP_CD    
 		    ,A.FILE_GB
 		    ,A.QSTN_CONTS
+		    ,A.QSTN_CONTS  AS QSTN_CONTS1
 		    ,A.ANSR_CONTS 
 		    ,A.ANSR_CONTS  AS ANSR_CONTS1
 		    ,B.USER_NM
@@ -49,7 +50,7 @@
             ,ACTION_YN
         ) VALUES (
 			 #{fileGb}
-		    ,#{qstnConts}
+		    ,#{qstnConts1}
 		    ,#{ansrConts1} 
 		    ,#{startDt}
 		    ,#{endDt}
