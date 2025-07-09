@@ -1546,112 +1546,135 @@
 	function fnnotice_search(fileGb) {
 		let targetArea, targetTable;
 		switch (fileGb) {
-	    	case 0:
-	    		targetArea  = "#noticeArea"   ;
-	    		targetTable = "#noticeTable"  ;
-	    		break ;
-	        case 1:
-	            targetArea  = "#noticeArea1"  ;
-	            targetTable = "#noticeTable1" ;
-	            break;
-	        case 2:
-	            targetArea  = "#noticeArea2"  ;
-	            targetTable = "#noticeTable2" ;
-	            break;
-	        case 3:
-	            targetArea  = "#noticeArea3"  ;
-	            targetTable = "#noticeTable3" ;
-	            break
-	        default:
-	            targetArea  = "#noticeArea"   ;
-	            targetTable = "#noticeTable"  ;
-	    }
+			case 0:
+				targetArea  = "#noticeArea";
+				targetTable = "#noticeTable";
+				break;
+			case 1:
+				targetArea  = "#noticeArea1";
+				targetTable = "#noticeTable1";
+				break;
+			case 2:
+				targetArea  = "#noticeArea2";
+				targetTable = "#noticeTable2";
+				break;
+			case 3:
+				targetArea  = "#noticeArea3";
+				targetTable = "#noticeTable3";
+				break;
+			default:
+				targetArea  = "#noticeArea";
+				targetTable = "#noticeTable";
+		}
 		
-		$(targetTable  + " tr").attr("class", "");
+		$(targetTable + " tr").attr("class", "");
 		
-	    if (document.getElementById("regForm")) {
-	        document.getElementById("regForm").reset();
-	    }
-	    
+		if (document.getElementById("regForm")) {
+			document.getElementById("regForm").reset();
+		}
+		
 		$(targetArea).empty();
+		
 		$.ajax({
-		   	url : CommonUtil.getContextPath() + '/mangr/ctl_notiList.do',
-		    type : 'post',
-		    data : {fileGb    : fileGb   ,
-		    	    startDt : "20230101",
-		    	    endDt   : "20991231",
-		    	    searchText : "" },
-			dataType : "json",
-		   	success : function(data) {
-		   		if(data.error_code != "0") return;
-		   		if(data.resultCnt > 0 ){
-		   			var dataTxt = "" ;
-		   			const maxLength = 30;  // 최대 글자 수 설정
-		    		for(var i=0 ; i < data.resultCnt; i++){
-		    			dataTxt = '<tr  class="" onclick="showAdminModal(\'' 
-		    		          + data.resultList[i].notiSeq + '\', \'' 
-		    		          + data.resultList[i].fileGb + '\', \'' 
-		    		          + data.resultList[i].notiTitle.replace(/'/g, "\\'") + '\', \'' 
-		    		          + data.resultList[i].notiContent.replace(/'/g, "\\'") + '\');" id="row_' 
-		    		          + data.resultList[i].notiSeq + '_' 
-		    		          + data.resultList[i].fileGb + '_' 
-		    		          + data.resultList[i].notiTitle.replace(/\s+/g, '_').replace(/'/g, "\\'") + '_' 
-		    		          + data.resultList[i].notiContent.replace(/\s+/g, '_').replace(/'/g, "\\'") + '">';
-	    		       // fileGb 값에 따라 다르게 표시
+			url: CommonUtil.getContextPath() + '/mangr/ctl_notiList.do',
+			type: 'post',
+			data: {
+				fileGb: fileGb,
+				startDt: "20230101",
+				endDt: "20991231",
+				searchText: ""
+			},
+			dataType: "json",
+			success: function(data) {
+				if (data.error_code != "0") return;
+				
+				if (data.resultCnt > 0) {
+					const maxLength = 30;
 
-	    		          if (data.resultList[i].fileGb == "1") {
-	    		              dataTxt += "<td class='rounded-box notice'>공지사항</td>";
-	    		          } else if (data.resultList[i].fileGb == "2") {
-	    		              dataTxt += "<td class='rounded-box audit'>심사방</td>";
-	    		          } else if (data.resultList[i].fileGb == "3") {
-	    		              dataTxt += "<td class='rounded-box newsletter'>소식지</td>";
-	    		          }
-	  		   			let title = data.resultList[i].notiTitle;
+					for (let i = 0; i < data.resultCnt; i++) {
+						const noti = data.resultList[i];
+						const notiSeq = noti.notiSeq;
+						const fileGb = noti.fileGb;
+						const notiTitle = encodeURIComponent(noti.notiTitle);
+						const notiContent = encodeURIComponent(noti.notiContent);
 
-			   			// 글자가 maxLength보다 길면 자르고 "..." 붙임
-			   			if (title.length > maxLength) {
-			   			   title = title.substring(0, maxLength) + " ...";
-			   			}	    		       
-						dataTxt += "<td style='text-align: left;'>" + title  + "</td>";
-						dataTxt += "<td>" + data.resultList[i].updDttm.split(' ')[0] + "</td>";
-						dataTxt +=  "<td>" + data.resultList[i].notiRedcnt  + "</td>" ;
-						dataTxt +=  "</tr>";  
-			            $(targetArea).append(dataTxt);
-		        	 }
-			 	  }else{
-					  $(targetArea).append("<tr><td colspan='4'>검색된 정보가 없습니다.</td></tr>");
-				  }
-		      }
-	   });
-	}   
-	function showAdminModal(notiSeq,fileGb,notiTitle,notiContent) {
+						let dataTxt = '<tr onclick="showAdminModal(\'' 
+							+ notiSeq + '\', \'' 
+							+ fileGb + '\', \'' 
+							+ notiTitle + '\', \'' 
+							+ notiContent + '\')">';
+
+						// 분류 표시
+						if (fileGb == "1") {
+							dataTxt += "<td class='rounded-box notice'>공지사항</td>";
+						} else if (fileGb == "2") {
+							dataTxt += "<td class='rounded-box audit'>심사방</td>";
+						} else if (fileGb == "3") {
+							dataTxt += "<td class='rounded-box newsletter'>소식지</td>";
+						}
+
+						// 제목 표시
+						let titleText = decodeURIComponent(notiTitle);
+						if (titleText.length > maxLength) {
+							titleText = titleText.substring(0, maxLength) + " ...";
+						}
+
+						dataTxt += "<td style='text-align: left;'>" + titleText + "</td>";
+						dataTxt += "<td>" + noti.updDttm.split(' ')[0] + "</td>";
+						dataTxt += "<td>" + noti.notiRedcnt + "</td>";
+						dataTxt += "</tr>";
+
+						$(targetArea).append(dataTxt);
+					}
+				} else {
+					$(targetArea).append("<tr><td colspan='4'>검색된 정보가 없습니다.</td></tr>");
+				}
+			}
+		});
+	}
+
+	function showAdminModal(notiSeq, fileGb, notiTitle, notiContent) {
+		// 로그인 여부 확인
 		if (!sessionStorage.getItem('s_hospid')) {
-		    messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
-		    return; 
+			messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
+			return; 
 		} 
-	    $("#notiSeq").val(notiSeq);
-	    $("#fileGb").val(fileGb);
-	    switch (parseInt(fileGb, 10)) {
-	        case 1:
-	            $("#notiname").text("공지사항");
-	            break;
-	        case 2:
-	            $("#notiname").text("심사방");
-	            break;     
-	        case 3:
-	            $("#notiname").text("소식지");
-	            break;     
-	        default:
-	            $("#notiname").text("공지사항");
-	            break;        		
-	    }
-	    $("#notiTitle").val(notiTitle.replace(/_/g, ' '));  // 공백 복원
-	    $("#notiContent").val(notiContent.replace(/_/g, ' '));  // 공백 복원
-	    
-	    showfileModal(notiSeq,fileGb);
 
-	    $("#adminModal").modal('show');  // Bootstrap 모달 사용 예제
-	}   
+		// 디코딩 처리
+		const title = decodeURIComponent(notiTitle);
+		const content = decodeURIComponent(notiContent);
+
+		// 기본 값 세팅
+		$("#notiSeq").val(notiSeq);
+		$("#fileGb").val(fileGb);
+
+		// 공지 유형에 따라 이름 출력
+		switch (parseInt(fileGb, 10)) {
+			case 1:
+				$("#notiname").text("공지사항");
+				break;
+			case 2:
+				$("#notiname").text("심사방");
+				break;     
+			case 3:
+				$("#notiname").text("소식지");
+				break;     
+			default:
+				$("#notiname").text("공지사항");
+				break;        		
+		}
+
+		// 제목 및 내용 표시
+		$("#notiTitle").val(title);  // input 박스에 제목
+		modalName_rich(content);     // Summernote에 내용 세팅
+
+		// 파일 표시 함수 호출
+		showfileModal(notiSeq, fileGb);
+
+		// 모달 열기
+		$("#adminModal").modal('show');
+	}
+
 	//데이타테입르 최초생성 
 	$(document).ready(function() {
 	    console.log("📌 최초 DataTables 생성");
@@ -3077,7 +3100,46 @@
          function ready_kakao(){
         	 messageBox("1","<h6>카카오상담은 준비중입니다 !!</h6><p></p>","","",""); 
          }   
-        </script>
+         //공지사항 리치에디터  
+			function modalName_rich(notiText) {
+			  let safeAnswer = (notiText || '');
+			  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
+			
+			  $('#notiContent').summernote({
+			    placeholder: '내용을 입력하세요...',
+			    tabsize: 1,
+			    height: 300,
+			    lang: 'ko-KR',
+			    toolbar: [
+			      ['style', ['style']],
+			      ['font', ['bold', 'italic', 'underline', 'clear']],
+			      ['fontname', ['fontname']],
+			      ['fontsize', ['fontsize']],
+			      ['color', ['color']],
+			    ],
+			    fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
+			    fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
+			    callbacks: {
+			      onInit: function () {
+			        const $editable = $('#notiContent').next().find('.note-editable');
+			        // 폰트 크기 및 정렬 설정
+			        $editable.css({
+			          'font-size': '14px',
+			          'text-align': 'left' // ← 여기 추가
+			        });
+			        // 툴바 숨김
+			        $('#notiContent').next(".note-editor").find(".note-toolbar").hide();
+			        // 줄바꿈 유지된 내용 적용
+			        $('#notiContent').summernote('code', convertedAnswer);
+			      }
+			    }
+			  });
+			}
+			// 모달이 닫힐 때 두 에디터 제거
+			$('#adminModal').on('hidden.bs.modal', function () {
+			  $('#notiContent').summernote('destroy');
+			});
+         </script>
     
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
