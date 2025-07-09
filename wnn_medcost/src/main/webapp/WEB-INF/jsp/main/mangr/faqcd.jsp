@@ -9,9 +9,6 @@
 <%@ page import ="java.util.Date" %>
 
 <!-- jQuery -->
-
-<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <link href="/css/winmc/bootstrap.css"         rel="stylesheet">
 <link href="/css/winmc/style.css?v=123"       rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
@@ -153,9 +150,6 @@
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 Start -->
 		<!-- ============================================================== -->
-		<link   href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
-		<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/lang/summernote-ko-KR.min.js"></script>
 		<script type="text/javascript">
 		
 		// 안해도 상관없음, 단 getElementById를 변경하면 꼭해야됨
@@ -237,8 +231,32 @@
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'faqSeq',     visible: false, className: 'dt-body-center', width: '100px',  name: 'keyfaqSeq', primaryKey: true },
-	        				{ data: 'qstnConts1',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				{ data: 'ansrConts1',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
+	        				{ 
+	        					  data: 'qstnConts1',  
+	        					  visible: true,  
+	        					  className: 'dt-body-left',  
+	        					  width: '400px',
+	        					  render: function (data, type, row) {
+	        					    if (type === 'display') {
+	        					      var text = $('<div>').html(data).text(); // HTML 태그 제거
+	        					      return text.length > txt_Markln ? text.substring(0, txt_Markln) + '...' : text;
+	        					    }
+	        					    return data;
+	        					  }
+        					},
+        					{ 
+	        					  data: 'ansrConts1',  
+	        					  visible: true,  
+	        					  className: 'dt-body-left',  
+	        					  width: '400px',
+	        					  render: function (data, type, row) {
+	        					    if (type === 'display') {
+	        					      var text = $('<div>').html(data).text(); // HTML 태그 제거
+	        					      return text.length > txt_Markln ? text.substring(0, txt_Markln) + '...' : text;
+	        					    }
+	        					    return data;
+	        					  }
+        					}, 
 	        				// getFormat 사용시   
 	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  
 	                          	render: function(data, type, row) {
@@ -272,7 +290,7 @@
 		var showSortNo = ['updDttm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = [faqSeq];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 30;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var txt_Markln = 40;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
 		var markColums = ['qstnConts1','ansrConts1'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
@@ -410,13 +428,12 @@
 		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
-		    modalName_rich();
 		    if (flag !== 'I'){ 
 				// 수정.삭제 모드 (대상확인)
 				if (edit_Data) {
 					// Value Setting
 					formValueSet(inputZone.id,edit_Data);
-					$('#ansrConts1').summernote('code', edit_Data.ansrConts1 || '');
+					modalName_rich(edit_Data.ansrConts1);
 				} else {
 					modal_OpenFlag = false;
 					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
@@ -424,7 +441,7 @@
 				}
 			} else {
 				// 신규 등록 모드이므로 Summernote 초기화
-				$('#ansrConts1').summernote('code', '');
+				modalName_rich("");
 			}
 			
 			if (modal_OpenFlag) {
@@ -852,7 +869,7 @@
 		    const results = formValCheck(inputZone.id, {
 		    	//faqSeq:     { kname: "등록순서", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
 		    	//fileGb:     { kname: "구분", k_req: true },
-		    	qstnConts1:  { kname: "질문제목", k_req: true },
+		    	qstnConts1: { kname: "질문제목", k_req: true },
 		    	ansrConts1: { kname: "질문답변" , k_req: true },
 		    	startDt:    { kname: "시작일", k_req: true },
 		    	endDt:      { kname: "종료일", k_req: true },
@@ -890,7 +907,7 @@
 		        		data[result.id] = result.val;
 		        	}	
 		        });
-				
+      
 		        dats.push(data);	    
 			    $.ajax({
 			            type: "POST",
@@ -974,7 +991,21 @@
 		                });
 		
 		                dataTable.draw(false);
-	
+			           // 3. draw 이벤트 후, 저장했던 행 다시 선택
+	                    fn_FindData();
+
+		                dataTable.on('draw', function () {
+		                    if (selectedIndex !== null) {
+		                        let row = dataTable.row(selectedIndex);
+		                        if (row.node()) {
+		                            $(row.node()).addClass('selected'); // CSS로 강조
+		                            // 선택 유지를 위한 스크롤 위치 조정도 필요 시 추가 가능
+		                        }
+		                    }
+		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
+		                    dataTable.off('draw');
+		                });
+		                
 		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
@@ -1438,34 +1469,43 @@
 		}
 		document.addEventListener("DOMContentLoaded", function () {
 			  applyAuthControl();
-			  modalName_rich() ;
 		});
-		function modalName_rich() {
-			$('#ansrConts1').summernote({
-			   placeholder: '내용을 입력하세요...',
-			   tabsize: 1,
-			   height: 300,
-			   lang: 'ko-KR',
-			   toolbar: [
-			     ['style', ['style']],
-			     ['font', ['bold', 'italic', 'underline', 'clear']],
-			     ['fontname', ['fontname']],
-			     ['fontsize', ['fontsize']],
-			     ['color', ['color']],
-			   ],
-			   fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
-			   fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
-			   callbacks: {
-			     onInit: function() {
-			       // 에디터가 초기화된 후 기본 글자 크기를 12px로 설정
-			       $('#ansrConts1').next().find('.note-editable').css('font-size', '14px');
-			     }
-			   }
-			});
-		}
-		$('#modalName').on('hidden.bs.modal', function () {
+		function modalName_rich(answerText) {
+			  // answerText가 null/undefined일 경우 빈 문자열로 초기화
+			  let safeAnswer = (answerText || '');
+			  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
+
+			  $('#ansrConts1').summernote({
+			    placeholder: '내용을 입력하세요...',
+			    tabsize: 1,
+			    height: 300,
+			    lang: 'ko-KR',
+			    toolbar: [
+			      ['style', ['style']],
+			      ['font', ['bold', 'italic', 'underline', 'clear']],
+			      ['fontname', ['fontname']],
+			      ['fontsize', ['fontsize']],
+			      ['color', ['color']],
+			    ],
+			    fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
+			    fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
+			    callbacks: {
+			      onInit: function () {
+			        // 폰트 크기
+			        $('#ansrConts1').next().find('.note-editable').css('font-size', '14px');
+			        // 줄바꿈 유지된 내용 적용
+			        $('#ansrConts1').summernote('code', convertedAnswer);
+			      }
+			    }
+			  });
+			}
+
+
+			// 모달이 닫힐 때 두 에디터 제거
+			$('#modalName').on('hidden.bs.modal', function () {
 			  $('#ansrConts1').summernote('destroy');
-		});		
+			});
+
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
