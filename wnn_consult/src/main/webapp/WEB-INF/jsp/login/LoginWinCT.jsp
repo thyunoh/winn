@@ -1509,7 +1509,7 @@
 							<label for="notiTitle" class="form-label font-weight: bold;"
 								style="font-size: 15px !important; display: block; text-align: left;">제목</label>
 							<textarea  name="notiTitle" id="notiTitle" rows="2"
-								class="form-control" placeholder="제목을 입력하세요."> </textarea>
+								class="form-control" placeholder="제목을 입력하세요." style="font-size: 15px;" > </textarea>
 						</div>
 
 						<div class="mb-0">

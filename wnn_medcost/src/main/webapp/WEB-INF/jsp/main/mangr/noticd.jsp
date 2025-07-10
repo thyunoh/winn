@@ -92,7 +92,7 @@
 		role="dialog"
 		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 		<div class="modal-content"
-			style="height: 94%; display: flex; flex-direction: column;">
+			style="height: 100%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
 				<h6 class="modal-title" id="modalHead"></h6>
 				<!-- ============================================================== -->
@@ -194,17 +194,17 @@
 					</div>
 
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
-						method="post" enctype="multipart/form-data" style="margin-top: -20px;">
-						<div class="container mt-1">
+						method="post" enctype="multipart/form-data" style="margin-top: -12px;">
+						<div class="container-md mt-1">
 							<div class="form-group">
-								<input type="hidden" name="action" value="upload"> <label
-									class="col-2 col-lg-2 col-form-label text-left">파일 업로드</label>
+								<input type="hidden" name="action" value="upload"> 
+									<label class="col-2 col-lg-2 col-form-label text-left" style="margin-left: -25px;">파일 업로드</label>
 								<div class="col-10 col-lg-10">
 									<!-- 파일 선택 버튼 -->
 									<div class="btn-box">
-										<button type="button" class="btn btn-primary btn-sm"
+										<button type="button" class="btn btn-primary custom-btn-small"
 											onclick="openFileInput()">파일 선택</button>
-										<button type="submit" class="btn btn-success btn-sm">업로드</button>
+										<button type="submit" class="btn btn-success custom-btn-small">업로드</button>
 									</div>
 
 									<!-- 숨겨진 파일 입력 -->
@@ -225,7 +225,7 @@
 					<p>
 						<strong><%=request.getAttribute("message") != null ? request.getAttribute("message") : ""%></strong>
 					</p>
-					<div class="table-file-container" style="width: 100%;  margin-top: -20px; border: 1px solid #ddd; border-radius: 10px;">
+					<div class="table-file-container" style="width: 100%;  margin-top: 30px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
 					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
 					       </table>    
@@ -326,11 +326,20 @@
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'notiSeq',    visible: false, className: 'dt-body-center', width: '100px',   name: 'keynotiSeq', primaryKey: true },
-	        				{ data: 'fileGb',     visible: false, className: 'dt-body-center', width: '100px',   name: 'keyfileGb', primaryKey: true },
-	        				{ data: 'subCodeNm',  visible: true,  className: 'dt-body-left'  , width: '100px',  },
-	        				{ data: 'notiTitle',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				{ data: 'notiContent',  visible: true,  className: 'dt-body-left'  , width: '300px',  },
+	        				{ data: 'notiSeq',      visible: false, className: 'dt-body-center', width: '100px',   name: 'keynotiSeq', primaryKey: true },
+	        				{ data: 'fileGb',       visible: false, className: 'dt-body-center', width: '100px',   name: 'keyfileGb', primaryKey: true },
+	        				{ data: 'subCodeNm',    visible: true,  className: 'dt-body-left'  , width: '100px',  },
+	        				{ data: 'notiTitle',    visible: true,  className: 'dt-body-left'  , width: '300px',  },
+	        				{ data: 'notiContent',  visible: true,  className: 'dt-body-left'  , width: '300px',
+	        					  render: function (data, type, row) {
+	        					    if (type === 'display') {
+	        					      var text = $('<div>').html(data).text(); // HTML 태그 제거
+	        					      return text.length > txt_Markln ? text.substring(0, txt_Markln) + '...' : text;
+	        					    }
+	        					    return data;
+	        					  }
+	        				},
+
 	        				// getFormat 사용시 
 	        				{ data: 'startDt',    visible: true,  className: 'dt-body-center', width: '100px',  
 	                          	render: function(data, type, row) {
@@ -545,7 +554,7 @@
 				if (edit_Data) {
 					// Value Setting
 					formValueSet(inputZone.id,edit_Data);
-			
+					modalName_rich(edit_Data.notiContent);
 				} else {
 					modal_OpenFlag = false;
 					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
@@ -555,6 +564,7 @@
 			}else{
 	            let tbody = document.querySelector("#fileTable tbody");
 	            tbody.innerHTML = "";
+	            modalName_rich("");
 			}
 				
 			if (modal_OpenFlag) {
@@ -2010,6 +2020,42 @@
     document.addEventListener("DOMContentLoaded", function() {
         applyAuthControl();
     });
+	function modalName_rich(answerText) {
+		  // answerText가 null/undefined일 경우 빈 문자열로 초기화
+		  let safeAnswer = (answerText || '');
+		  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
+
+		  $('#notiContent').summernote({
+		    placeholder: '내용을 입력하세요...',
+		    tabsize: 1,
+		    height: 300,
+		    lang: 'ko-KR',
+		    toolbar: [
+		      ['style', ['style']],
+		      ['font', ['bold', 'italic', 'underline', 'clear']],
+		      ['fontname', ['fontname']],
+		      ['fontsize', ['fontsize']],
+		      ['color', ['color']],
+		    ],
+		    fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
+		    fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
+		    callbacks: {
+		      onInit: function () {
+		        // 폰트 크기
+		        $('#notiContent').next().find('.note-editable').css('font-size', '14px');
+		        // 줄바꿈 유지된 내용 적용
+		        $('#notiContent').summernote('code', convertedAnswer);
+		      }
+		    }
+		  });
+		}
+
+
+		// 모달이 닫힐 때 두 에디터 제거
+		$('#modalName').on('hidden.bs.modal', function () {
+		  $('#notiContent').summernote('destroy');
+		});
+	
 	</script>
 <!-- ============================================================== -->
 <!-- 기타 정보 End -->
