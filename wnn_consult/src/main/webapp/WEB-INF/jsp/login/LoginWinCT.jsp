@@ -3101,7 +3101,7 @@
         	 messageBox("1","<h6>카카오상담은 준비중입니다 !!</h6><p></p>","","",""); 
          }   
          //공지사항 리치에디터  
-			function modalName_rich(notiText) {
+		function modalName_rich(notiText) {
 			  let safeAnswer = (notiText || '');
 			  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
 			
