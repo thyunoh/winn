@@ -204,4 +204,16 @@ public class MangrServiceImpl implements MangrService {
 		// TODO Auto-generated method stub
 		return mapper.updateQstnCd(dto) ;
 	}
+
+	@Override
+	public NotiDTO selectNotiBySeq(int notiSeq) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.selectNotiBySeq(notiSeq) ;
+	}
+
+	@Override
+	public boolean delupdatenotiCd(NotiDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.delupdatenotiCd(dto) ;
+	}
 }

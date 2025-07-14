@@ -246,14 +246,20 @@ public class MangrController {
 		// 처리 로직
         try {
             for (NotiDTO dto : data) {
-                Long notiSeq = (long) svc.insertnotiCd(dto); // 공지사항 ID 생성
-                notiSeqList.add(notiSeq);
+                svc.insertnotiCd(dto); // 공지사항 ID 생성
+                notiSeqList.add((long) dto.getNotiSeq());
                 System.out.println("NotiSeq: "  +dto.getNotiSeq());
                 response.put("status", "OK");
-
-                // 첫 번째 notiSeq만 응답으로 전달 (리스트가 아닌 단일 값)
+                
+                NotiDTO dto1 =  svc.selectNotiBySeq(dto.getNotiSeq());
+                
                 if (!notiSeqList.isEmpty()) {
-                    response.put("notiSeq", dto.getNotiSeq()); 
+                    response.put("hospCd", dto1.getHospCd()); 
+                    response.put("notiSeq", dto1.getNotiSeq()); 
+                    response.put("fileGb", dto1.getFileGb()); 
+                    response.put("regUser", dto1.getRegUser()); 
+                    response.put("regIp", dto1.getRegIp()); 
+                    System.out.println("notiSeqList: "  +dto1.getNotiSeq());
                 }
             }
             response.put("notiSeqList", notiSeqList); // 삽입된 공지사항 번호 리스트 반환
@@ -277,8 +283,6 @@ public class MangrController {
         	for (NotiDTO dto : data) {
         		System.out.println(dto.getNotiSeq());
         		svc.updatenotiCd(dto) ; //이력관리 
-        		
-            	svc.insertnotiCd(dto) ; 
        		    System.out.println("FaqSeq: "  + dto.getNotiSeq());
      	
             }
@@ -300,7 +304,7 @@ public class MangrController {
         	for (NotiDTO dto : data) {
         		dto.setNotiSeq(dto.getKeynotiSeq()); 
         		dto.setFileGb(dto.getKeyfileGb()); 
-        		svc.updatenotiCd(dto) ; //이력관리 
+        		svc.delupdatenotiCd(dto) ; //이력관리 
        		    System.out.println("Key notiSEQ: " + dto.getKeynotiSeq());
              
             }

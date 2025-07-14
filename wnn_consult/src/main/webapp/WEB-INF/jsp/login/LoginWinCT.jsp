@@ -35,7 +35,7 @@
 
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-<link href="/css/winct/bootstrap.css" rel="stylesheet">
+<link href="/css/winct/bootstrap.css" rel="styleshㄹeet">
 <link href="/css/winct/style.css?v=123" rel="stylesheet">
 <link href="/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
 <!-- JavaScript -->
@@ -2361,7 +2361,6 @@
 
         // FAQ 리스트 초기화
         $("#faqList").html(`<p class="text-muted text-center"></p>`);
-
         // AJAX로 FAQ 데이터 요청
         $.ajax({
         	url: "/mangr/faqList.do",

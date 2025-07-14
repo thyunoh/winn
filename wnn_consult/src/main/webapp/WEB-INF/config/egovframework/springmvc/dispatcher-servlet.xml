@@ -82,7 +82,7 @@
         <property name="definitions">
             <list>
         
-                <value>/WEB-INF/config/egovframework/tiles/tiles-define.xml</value>
+                <value>/WEB-INF/config/egovframework/tiles/tiles-define.xml</value> 
             </list>
         </property>
     </bean>

@@ -29,7 +29,9 @@ public interface MangrService {
 	//공지사항 
 	List<NotiDTO>     getnotiCdList(NotiDTO dto)   throws Exception; 
 	int               insertnotiCd(NotiDTO dto)    throws Exception; 
+	NotiDTO           selectNotiBySeq(int notiSeq) throws Exception;
 	boolean           updatenotiCd(NotiDTO dto)    throws Exception; 
+	boolean           delupdatenotiCd(NotiDTO dto)  throws Exception; 
 	String            notiCdDupChk(NotiDTO dto)    throws Exception; 		
     //문서등록 
 	int               insertFileCd(FileDTO dto)    throws Exception; 

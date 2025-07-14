@@ -140,6 +140,16 @@
 	        ORDER by  A.UPD_DTTM DESC , A.FILE_GB 
 	    ]]>
     </select>   
+	<select id="selectNotiBySeq" parameterType="NotiDTO" resultType="NotiDTO">
+	    SELECT 
+	        NOTI_SEQ, FILE_GB, START_DT, END_DT, USE_YN, HOSP_CD,
+	        NOTI_TITLE, NOTI_CONTENT, UPDATE_SW, NOTI_REDCNT,
+	        REG_DTTM, REG_USER, REG_IP,
+	        UPD_DTTM, UPD_USER, UPD_IP,
+	        JOB_SEQ, ACTION_YN
+	    FROM TBL_NOTI_MST
+	    WHERE NOTI_SEQ = #{notiSeq}
+	</select>    
     <insert id="insertnotiCd" parameterType="NotiDTO" useGeneratedKeys="true" keyProperty="notiSeq" keyColumn="NOTI_SEQ"><![CDATA[
         INSERT INTO TBL_NOTI_MST (
 	         FILE_GB   
@@ -185,15 +195,30 @@
     </insert>    
      <update id="updatenotiCd" parameterType="NotiDTO" ><![CDATA[
         UPDATE TBL_NOTI_MST
-        SET  ACTION_YN   = 'N'
-            ,UPD_DTTM    = NOW()
-            ,UPD_USER    = #{updUser}
-            ,UPD_IP      = #{updIp}
-        WHERE NOTI_SEQ   = #{notiSeq} 
-		  AND FILE_GB    = #{fileGb} 
+        SET  FILE_GB      = #{fileGb}   
+	        ,START_DT     = #{startDt} 
+		    ,END_DT       = #{endDt} 
+	        ,USE_YN       = #{useYn} 
+	        ,HOSP_CD      = #{hospCd}
+	        ,NOTI_TITLE   = #{notiTitle}  
+	        ,NOTI_CONTENT = #{notiContent}
+	        ,UPDATE_SW    = #{updateSw} 
+            ,UPD_DTTM     = NOW()
+            ,UPD_USER     = #{updUser}
+            ,UPD_IP       = #{updIp}
+        WHERE NOTI_SEQ    = #{notiSeq} 
+		  AND FILE_GB     = #{fileGb} 
           AND ACTION_YN = 'Y' 
     ]]>      
     </update> 
+     <update id="delupdatenotiCd" parameterType="NotiDTO" ><![CDATA[
+        UPDATE TBL_NOTI_MST
+        SET  ACTION_YN    = 'N'
+        WHERE NOTI_SEQ    = #{notiSeq} 
+		  AND FILE_GB     = #{fileGb} 
+          AND ACTION_YN = 'Y' 
+    ]]>      
+    </update>     
   <!--  문서등록 -->
     <select  id="getFileCdList" parameterType="FileDTO"  resultType ="FileDTO"> <![CDATA[ 
         SELECT  

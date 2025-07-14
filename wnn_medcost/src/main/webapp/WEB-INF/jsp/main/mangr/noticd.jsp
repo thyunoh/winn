@@ -187,8 +187,8 @@
 						<label for="useYn" class="col-2 col-lg-2 col-form-label text-left">사용여부</label>
 						<div class="col-2 col-lg-2">
 							<select class="custom-select" name="useYn" id="useYn" value='Y'>
-								<option value="Y">Y</option>
-								<option value="N" selected>N</option>
+								<option value="Y" selected>Y</option>
+								<option value="N">N</option>
 							</select>
 						</div>
 					</div>
@@ -198,13 +198,13 @@
 						<div class="container-md mt-1">
 							<div class="form-group">
 								<input type="hidden" name="action" value="upload"> 
-									<label class="col-2 col-lg-2 col-form-label text-left" style="margin-left: -25px;">파일 업로드</label>
+									<label class="col-2 col-lg-2 col-form-label text-left" style="margin-left: -25px;">파일업로드</label>
 								<div class="col-10 col-lg-10">
 									<!-- 파일 선택 버튼 -->
 									<div class="btn-box">
 										<button type="button" class="btn btn-primary custom-btn-small"
 											onclick="openFileInput()">파일 선택</button>
-										<button type="submit" class="btn btn-success custom-btn-small">업로드</button>
+										<button type="submit" id = "uploaded"   class="btn btn-success custom-btn-small">업로드</button>
 									</div>
 
 									<!-- 숨겨진 파일 입력 -->
@@ -212,12 +212,12 @@
 										style="display: none;" onchange="changeHandler(event)">
 									<p id="file-name-display" style="color: blue;"></p>
 									<!-- 드래그 앤 드롭 영역 -->
-									<div id="drag-area" ondrop="dropHandler(event)"
-										ondragover="dragOverHandler(event)">
-										<p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.</p>
-										<div id="file-list" class="file-list-container"></div>
+									<div id="drag-area" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+									  <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
+									    (<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
+									  </p>
+									  <div id="file-list" class="file-list-container"></div>
 									</div>
-
 								</div>
 							</div>
 						</div>
@@ -519,18 +519,20 @@
 		    insertButton.style.display = 'none';
 		    updateButton.style.display = 'none';
 		    deleteButton.style.display = 'none';
-		    if (flag == 'I') {
-		        document.getElementById("file-input").disabled = true;
-		        document.querySelector(".btn-box").style.display = "none";
-		        document.getElementById("drag-area").style.pointerEvents = "none";
+    	    if (flag == 'I') {
+		        document.getElementById("file-input").disabled = false;
+		        document.querySelector(".btn-box").style.display = "inline-block";
+		        document.getElementById("uploaded").hidden = true;
+		        document.getElementById("drag-area").style.pointerEvents = "auto";  // 고친 부분
 		        document.getElementById("drag-area").style.opacity = 0.5;
 		    } else {
 		        document.getElementById("file-input").disabled = false;
+		        document.getElementById("uploaded").hidden = false;
 		        document.querySelector(".btn-box").style.display = "inline-block";
 		        document.getElementById("drag-area").style.pointerEvents = "auto";  // 고친 부분
 		        document.getElementById("drag-area").style.opacity = 1;
 		    }
-		    
+
 		    // Show button
 		    switch (flag) {
 		        case 'I': // Show Insert button
@@ -1054,7 +1056,12 @@
 			            	dataTable.row.add(newData).draw(false);
 			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	            	
 			            	$("#" + modalName.id).modal('hide');
-			            	
+			                // ✅ 파일이 있는 경우에만 업로드
+			                const fileInput = document.getElementById("file-input");
+			                if (fileInput.files.length > 0) {
+			                    uploadFileWithNoticeInfo(response);
+			                }
+			                fn_re_load();
 			        	},
 			        	error: function(xhr, status, error) {
 				         	switch (xhr.status){  
@@ -1819,6 +1826,49 @@
 		        statusDisplay.style.color = "red";
 		    });
 		}); 
+		//입력시 자동등록 
+		function uploadFileWithNoticeInfo(response) {
+		    const fileInput = document.getElementById("file-input");
+		    const statusDisplay = document.getElementById("file-name-display");
+
+		    const formData = new FormData();
+		    for (let i = 0; i < fileInput.files.length; i++) {
+		        formData.append("file", fileInput.files[i]);
+		    }
+
+		    formData.append("action", "upload");
+		    formData.append("hospCd", response.hospCd);
+		    formData.append("notiSeq", response.notiSeq);
+		    formData.append("fileGb", response.fileGb);
+		    formData.append("regUser", response.regUser);
+		    formData.append("regIp", response.regIp);
+
+		    fetch("/sftp/fileupload.do", {
+		        method: "POST",
+		        body: formData
+		    })
+		    .then(response => {
+		        if (!response.ok) {
+		            throw new Error(`서버 오류: ${response.status}`);
+		        }
+		        return response.text();
+		    })
+		    .then(data => {
+		        fileInput.value = "";
+		        console.log("✅ 파일 업로드 성공:", data);
+		        statusDisplay.textContent = "✅ 업로드 성공!";
+		        statusDisplay.style.color = "green";
+	        
+		        fileinput_clear() //파일문서초기화 
+
+		    })
+		    .catch(error => {
+		        console.error("❌ 파일 업로드 실패:", error);
+		        statusDisplay.textContent = "❌ 업로드 실패!";
+		        statusDisplay.style.color = "red";
+		    });
+		}
+
 		//데이타테입르 최초생성 
 		$(document).ready(function() {
 		    console.log("📌 최초 DataTables 생성");
