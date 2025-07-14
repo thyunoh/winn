@@ -334,7 +334,7 @@
     </update>   
     <update id="updateFilePath" parameterType="FileDTO" ><![CDATA[
         UPDATE TBL_FILE_MST
-         SET  FILE_PATH     = #{filePath}
+         SET  FILE_PATH    = #{filePath}
         WHERE FILE_SEQ     = #{fileSeq} 
 		  AND FILE_GB      = #{fileGb} 
 		  AND SEQ          = #{seq} 
