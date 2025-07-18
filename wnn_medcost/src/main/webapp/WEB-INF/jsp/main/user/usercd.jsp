@@ -94,9 +94,7 @@
 		<!-- ============================================================== -->
         <!-- modal form start -->
 		        <!-- ============================================================== -->
-		<div class="modal fade" id="modalName" tabindex="-1"
-			data-backdrop="static" role="dialog" aria-hidden="false"
-			data-keyboard="false">
+		<div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 				role="dialog"
 				style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
@@ -214,7 +212,7 @@
 									class="col-2 col-lg-2 col-form-label text-left">종료일자</label>
 								<div class="col-4 col-lg-4">
 									<input id="endDt" name="endDt" type="text"
-										class="form-control date1-inputmask" required
+										class="form-control date1-inputmask" value = "20991231"  required
 										placeholder="yyyy-mm-dd">
 								</div>
 								<label for="useYn"
@@ -486,6 +484,7 @@
 		                input.readOnly = isReadOnly;
 		            }
 		        });		
+		        now_check() ;
 		        if ( (s_hospcd  && s_wnn_yn != 'Y') || (s_hospcd != s_hosp_uuid) ){
 		           hospCdInput.readOnly = true ;
 		           hospserch.style.display = 'none'	
@@ -495,6 +494,13 @@
 		        }
 		    }
 		}
+		function now_check() {
+	        let today = new Date();
+	        let formattedDate = today.getFullYear().toString() +
+	                            ('0' + (today.getMonth() + 1)).slice(-2) +
+	                            ('0' + today.getDate()).slice(-2);
+	        document.getElementById('startDt').value = formattedDate;
+	    };
 		function modal_Open(flag) {	
 			let modal_OpenFlag = true;
 			const insertButton = document.getElementById('form_btn_ins');

@@ -69,9 +69,7 @@
 		<!-- ============================================================== -->
         <!-- modal form start -->
 		        <!-- ============================================================== -->
-		<div class="modal fade" id="modalName" tabindex="-1"
-			data-backdrop="static" role="dialog" aria-hidden="false"
-			data-keyboard="false">
+		<div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 				role="dialog"
 				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35vw; max-width: 45vw; max-height: 50vh;">
@@ -131,11 +129,12 @@
 							</div>
 							<div class="form-group row">
 							    <label for="userId" class="col-2 col-lg-2 col-form-label text-left">사용자정보</label>
-							    <div class="col-6 col-lg-6">
+							    <div class="col-7 col-lg-7">
 							        <div class="input-group">
 							            <select id="userId" name="userId"  class= "custom-select">
 							                <option value="">사용자를 선택하세요</option>
 							            </select>
+							            <button id = "hospCHK"  class="btn btn-outline-info"><i class="fas fa-search">사용자갱신</i></button>
 							        </div>
 							    </div>
 							</div>
@@ -206,9 +205,14 @@
             $("#hospCd1").val(s_hospcd);
 	    }else{
 	        findValues.push({ id: "hospCd1", val:"",  chk: false  });
-            $("#hospCd1").val("");	    	
+            $("#hospCd1").val("");	 
+            $("#hospCHK").show() ;
 	    }
-		
+	    $("#hospCHK").hide() ;
+	    
+        if (s_wnn_yn == 'Y'){
+           $("#hospCHK").show() ;
+        }   
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
 		var edit_Data = null;
@@ -1537,7 +1541,13 @@
 		    loadUserList() ;
 		}		
 		function loadUserList() {
-		    const hospCd = jQuery('#hospCd1').val(); // hospCd 값 가져오기
+			let hospCd = "";
+
+			if ($.trim($('#hospCd1').val()) !== "") {
+			    hospCd = $('#hospCd1').val().trim();
+			} else if ($.trim($('#hospCd').val()) !== "") {
+			    hospCd = $('#hospCd').val().trim();
+			} 
 		    jQuery.ajax({
 		        url: "/user/puserCdList.do",
 		        type: 'POST',
@@ -1573,16 +1583,25 @@
 	
 
 		// 2) 페이지 로드시 자동 호출 (요양기관 세팅되어 있는 경우만)
-		$(document).ready(function() {
+	    $(document).ready(function() {
 		    const hospCd1 = $('#hospCd1').val();
 		    if (hospCd1 && hospCd1.trim() !== '') {
 		        loadUserList();
 		    }
-		});
+	        // 검색 버튼 클릭 시
+		    $('#hospCHK, #hospserch').on('click', function () {
+		        const hospCd = $('#hospCd').val();
+		        if (hospCd && hospCd.trim() !== '') {
+		            loadUserList();
+		        }
+		    });
+
+	    });		
 		//권한조건체크 applyAuthControl.js
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });	
+
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
