@@ -188,12 +188,30 @@ public class MangrController {
         }
 	}	
 	@RequestMapping(value="/noticd.do")
-    public String noticd(HttpServletRequest request, ModelMap model) {
+    public String noticd(HttpServletRequest request, ModelMap model , @RequestParam(value = "type", required = false, defaultValue = "notice") String type) {
 
         cookie_value = ClientInfo.getCookie(request);		
-		try {
+        model.addAttribute("type", type);
+        try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
+			    switch (type) {
+			        case "notice":
+			            model.addAttribute("title", "공지사항");
+			            model.addAttribute("fileGb1", "1");   // 숫자값 전달
+			            break;
+			        case "review":
+			            model.addAttribute("title", "심사방");
+			            model.addAttribute("fileGb1", "2");   // 숫자값 전달
+			            break;
+			        case "newsletter":
+			            model.addAttribute("title", "소식지");
+			            model.addAttribute("fileGb1", "3");   // 숫자값 전달
+			            break;
+			        default:
+			            model.addAttribute("title", "공지사항");
+			            model.addAttribute("fileGb1", "1");
+			    }  
 				return ".main/mangr/noticd";				
 			} else {
 				return "";

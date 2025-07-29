@@ -180,7 +180,13 @@
                         <div id="base-info-4" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/mangr/noticd.do">공지사항/심사방</a>
+                                    <a class="nav-item nav-link"  href="/mangr/noticd.do?type=notice">공지사항</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/mangr/noticd.do?type=review">심 사 방</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/mangr/noticd.do?type=newsletter">소 식 지</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/mangr/faqcd.do">자주하는 질문</a>
@@ -189,7 +195,7 @@
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="">원격지원상담</a>
+                                    <a href="https://www.seetrol.co.kr"   class="nav-item nav-link" target="_blank">원격지원상담</a>
                                 </li>
                             </ul>
                         </div>
