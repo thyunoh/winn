@@ -195,7 +195,7 @@
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="https://www.seetrol.co.kr"   class="nav-item nav-link" target="_blank">원격지원상담</a>
+                                    <a href="https://377.co.kr"   class="nav-item nav-link" target="_blank">원격지원상담</a>
                                 </li>
                             </ul>
                         </div>
