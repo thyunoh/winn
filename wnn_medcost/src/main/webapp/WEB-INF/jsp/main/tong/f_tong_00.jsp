@@ -19,7 +19,9 @@
   </style>
 </head>
 <body>
-  <div class="container">
+
+
+  <div class="container_tong">
     <h4>기간별 건수와 진료비 추이</h4>
 
     <!-- 검색 조건 -->
@@ -56,12 +58,14 @@
 		    </select>      
 	    </div>
 		<!-- 검색 버튼 -->
-		<button id="serBtn" onclick="filterData()">
+		
+		<button id="serBtn" class="btn btn-outline-primary text-black btn-sm" onclick="filterData()">
 		  <i class="fas fa-search"></i> 검색
 		</button>
-		<button id="pdfBtn" onclick="downloadPDF()">
+		<button id="pdfBtn" class="btn btn-outline-primary text-black btn-sm" onclick="downloadPDF()">
 		  <i class="fas fa-file-pdf"></i> PDF출력
 		</button>
+		
     </div>
 	<div id="loadingSpinner" style="display:none; text-align:center; margin-top:5px;">
 	  <img src="/images/winct/loading.gif" alt="로딩 이미지 테스트">
@@ -227,7 +231,7 @@
   function downloadPDF() {
     const pdfBtn = document.getElementById('pdfBtn');
     const serBtn = document.getElementById('serBtn');
-    const element = document.querySelector(".container");
+    const element = document.querySelector(".container_tong");
 
     pdfBtn.style.display = 'none';
     serBtn.style.display = 'none';

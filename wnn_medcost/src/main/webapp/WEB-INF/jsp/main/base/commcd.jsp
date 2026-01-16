@@ -8,8 +8,6 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/bootstrap.css"     rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"   rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
 <style>
 </style>
@@ -57,7 +55,7 @@
 									</button>
 									<button class="btn btn-outline-dark d-none btn-delete"
 										data-toggle="tooltip" data-placement="top" title="체크 Data 삭제"onClick="fn_findchk()">
-										체크삭제. <i class="far fa-calendar-check"></i>
+										선택삭제. <i class="far fa-calendar-check"></i>
 									</button>
 									<button class="btn btn-outline-dark" data-toggle="tooltip"data-placement="top" title="화면 Size 확대.축소"
 										id="fullscreenToggle">
@@ -1296,7 +1294,7 @@
                	  // 사용자가 '예' 버튼을 클릭한 경우
 				if (result.isConfirmed) {
 					// 체크박스가 ':checked'인 행만 선택
-					let  selectedRows = dataTable.rows(function (idx, data, node) {
+					let selectedRows = dataTable.rows(function (idx, data, node) {
 					    let $row = $(node); // 현재 행의 DOM 노드
 					    let $checkbox = $row.find('input[type="checkbox"]'); // 체크박스 찾기
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링
@@ -1307,7 +1305,7 @@
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
-				            url: "/base/commMstDelete.do",    	    
+				            url: "/user/commMstDelete.do",    	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",

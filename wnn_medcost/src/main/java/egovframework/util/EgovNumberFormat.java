@@ -3,6 +3,7 @@ package egovframework.util;
 import java.text.NumberFormat;
 import java.util.Locale;
 
+
 /**
  * 숫자, 통화, 퍼센트에 대한 형식 변환을 수행하는 클래스
  */

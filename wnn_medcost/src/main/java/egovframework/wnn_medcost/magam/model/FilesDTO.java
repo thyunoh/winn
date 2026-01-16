@@ -2,8 +2,6 @@ package egovframework.wnn_medcost.magam.model;
 
 import java.util.List;
 
-import org.springframework.web.multipart.MultipartFile;
-
 public class FilesDTO{
 
 	private static final long serialVersionUID = 1L;
@@ -20,6 +18,7 @@ public class FilesDTO{
 	
     private String file_nm;         // 파일명칭
     private int    line_no;         // 라인번호
+    private int    t_lines;         // 총라인수
     private String lineval;         // 라인값
     private String chunggu;         // 청구서포함여부
     
@@ -30,7 +29,36 @@ public class FilesDTO{
 	private String upd_user;		// 최종변경자
 	private String upd_ip;	    	// 최종변경 ip
 
+	private String ver_number;      // Ver Check 
+	private String errcode;     	// 오류코드
+	private String errmess;     	// 오류메세지
 	
+	
+	
+	public String getErrcode() {
+		return errcode;
+	}
+	public void setErrcode(String errcode) {
+		this.errcode = errcode;
+	}
+	public String getErrmess() {
+		return errmess;
+	}
+	public void setErrmess(String errmess) {
+		this.errmess = errmess;
+	}
+	public int getT_lines() {
+		return t_lines;
+	}
+	public void setT_lines(int t_lines) {
+		this.t_lines = t_lines;
+	}
+	public String getVer_number() {
+		return ver_number;
+	}
+	public void setVer_number(String ver_number) {
+		this.ver_number = ver_number;
+	}
 	public String getHosp_cd() {
 		return hosp_cd;
 	}

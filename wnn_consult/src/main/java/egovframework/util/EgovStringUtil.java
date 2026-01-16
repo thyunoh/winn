@@ -70,6 +70,10 @@ public class EgovStringUtil {
 	 * @param slength 지정길이
 	 * @return 지정길이로 잘라서 더할분자열 합친 문자열
 	 */
+	private EgovStringUtil() {
+		
+	}
+	
 	public static String cutString(String source, String output, int slength) {
 		String returnVal = null;
 		if (source != null) {

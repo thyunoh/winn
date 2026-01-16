@@ -7,8 +7,6 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
-<link href="/css/winmc/bootstrap.css"     rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"   rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
 
     <!-- DataTables CSS -->
@@ -1250,6 +1248,10 @@
 			// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
 			// info:     정보를 나타내는 파란색 i 아이콘
 			// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
+			
+			
+			
+			
 			Swal.fire({title:'삭제여부',text:'정말 삭제 하시겠습니까 ?', 
 				       icon:'question' ,
 					   showCancelButton:true,confirmButtonText:'예',cancelButtonText:'아니오',
@@ -1266,7 +1268,7 @@
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링
 					});
 					
-					let keys = dataTableKeys(dataTable, selectedRows);					
+					let keys = dataTableKeys(dataTable, selectedRows);
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
@@ -1320,7 +1322,10 @@
 								   popup: 'small-swal'}
 				        });
 					}
-
+			        
+			          
+				
+				
 				} else if (result.isDismissed) {
 					Swal.fire({
 			            title: '취소확인',
@@ -1398,6 +1403,7 @@
 				            	key_ID[column.name] = rowData[column.data]; 
 				            }	
 				        });
+		
 				        // 객체를 배열에 추가
 				        keysID.push(key_ID);
 			        } 
@@ -1797,4 +1803,4 @@
 		<!-- 기타 정보 End -->
 		<!-- ============================================================== -->
 
-		
+	

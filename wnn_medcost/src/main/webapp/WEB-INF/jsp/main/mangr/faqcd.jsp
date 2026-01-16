@@ -7,11 +7,9 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
-
-<!-- jQuery -->
-<link href="/css/winmc/bootstrap.css"         rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"       rel="stylesheet">
+<!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+    <!-- DataTables CSS -->
     <style>
     </style>
 		<!-- ============================================================== -->
@@ -47,8 +45,10 @@
                                         </div>
                                     </div>
                                 </div>
+                            	
 								<div style="width: 100%;">							    
 								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
+								        
 								    </table>
 								</div>
                             </div>
@@ -63,7 +63,7 @@
 		<!-- ============================================================== -->
         <!-- modal form start -->
         <!-- ============================================================== -->        
-        <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
+	    <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
 	        <div class="modal-content" style="height: 80%;display: flex;flex-direction: column;">
@@ -389,7 +389,7 @@
 		                input.readOnly = isReadOnly;
 		            }
 		        });	
-		        now_check() ;
+		        now_check() ;    	
 		    }
 		}
 		function now_check() {
@@ -428,7 +428,7 @@
 		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
-		    if (flag !== 'I'){ 
+			if (flag !== 'I'){ 
 				// 수정.삭제 모드 (대상확인)
 				if (edit_Data) {
 					// Value Setting
@@ -450,7 +450,6 @@
 			    
 				var element = document.querySelector('#' + modalName.id);
 			    dragElement(element);
-			    
 	            //수정시 키는 readonly
 	            modal_key_hidden(flag) ;
 	            
@@ -504,13 +503,11 @@
 		     	        $("#" + firstFocus.attr('id')).focus();
 			        }, 500); // 포커스 강제 설정
 			    });
-			    
-			    
 			    // 모달 창 크기가 변경될 때도 중앙에 유지
 			    window.addEventListener('resize', centerModal);
 			    // 모달 띄우기
 			    $("#" + modalName.id).modal('show');   
-				
+			    
 			    if (getCookie("s_userid")) {
 			        inputZone.querySelector("[name='regUser']").value = getCookie("s_userid");
 			        inputZone.querySelector("[name='updUser']").value = getCookie("s_userid");
@@ -519,7 +516,7 @@
 			    if (getCookie("s_connip")) {
 			        inputZone.querySelector("[name='regIp']").value = getCookie("s_connip");
 			        inputZone.querySelector("[name='updIp']").value = getCookie("s_connip");
-			    }
+			    }  
 			}
 		}
 		function fn_Potion() {
@@ -907,7 +904,7 @@
 		        		data[result.id] = result.val;
 		        	}	
 		        });
-      
+				
 		        dats.push(data);	    
 			    $.ajax({
 			            type: "POST",
@@ -981,7 +978,7 @@
 		                console.log("업데이트 성공", response);
 		                // 6. DataTable에 변경된 값 반영
 		                let updatedData = newuptData();		                
-	                    
+
 		                selectedRows.every(function(rowIdx) {
 		                    let rowData = this.data();
 		                    Object.keys(updatedData).forEach(function(key) {

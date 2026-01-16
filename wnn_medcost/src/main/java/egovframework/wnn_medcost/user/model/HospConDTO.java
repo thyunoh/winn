@@ -83,7 +83,7 @@ public class HospConDTO   {
 	public void setWardCnt(String wardCnt) {
 		this.wardCnt = wardCnt;
 	}
-
+	
 	public String getFileYn() {
 		return fileYn;
 	}

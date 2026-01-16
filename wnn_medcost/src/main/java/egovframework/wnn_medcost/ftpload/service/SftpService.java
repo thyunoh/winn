@@ -18,7 +18,7 @@ public class SftpService {
     private static final String SFTP_USER = "winner"; // 사용자명
     private static final String SFTP_PASSWORD = "winner_20@%"; // 비밀번호
     private static final String BASE_DIRECTORY = "/home/winner/upload/"; // 기본 업로드 폴더
-
+    
     @Resource(name = "MangrService") // DB 저장을 위한 서비스
     private MangrService svc;
 

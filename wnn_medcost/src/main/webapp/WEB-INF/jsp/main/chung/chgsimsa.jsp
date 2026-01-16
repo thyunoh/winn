@@ -10,8 +10,6 @@
 <%@ page import="java.util.Date"%>
 <!-- Customized Bootstrap Stylesheet -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 아이콘 -->
-<link href="/css/winmc/bootstrap.css" rel="stylesheet">
-<link href="/css/winmc/style.css?v=123" rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
 <style>
   .dashboard-wrapper * {

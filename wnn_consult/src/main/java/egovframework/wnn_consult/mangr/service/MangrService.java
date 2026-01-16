@@ -8,6 +8,7 @@ import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.wnn_consult.mangr.model.NotiDTO;
 
 public interface MangrService {
+
 	List<?>     selectNotiMstList(NotiDTO dto)  throws Exception; 
 	NotiDTO     selectNotiMstinfo(NotiDTO dto)  throws Exception; 
 	boolean     insertNotiMst(NotiDTO dto)      throws Exception;
@@ -22,7 +23,7 @@ public interface MangrService {
 	AsqDTO      selectqstnInfo(AsqDTO dto)      throws Exception;
 	boolean     updateAnsrMst(AsqDTO dto)       throws Exception;	
 	boolean     updatedelasqCd(AsqDTO dto)       throws Exception;	
-	List<FaqDTO>  selectfaqlist(FaqDTO dto)  throws Exception; 
+	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception; 
 	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception; 	
 	
     //문서파일 

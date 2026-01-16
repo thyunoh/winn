@@ -334,16 +334,35 @@ public class UserServiceImpl implements UserService {
 		// TODO Auto-generated method stub
 		return mapper.saveHospGrd(dto);
 	}
+	
+	@Override
+	public boolean yearSaveHospGrd(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.yearSaveHospGrd(dto);
+	}
 
 	@Override
 	public List<HospGrdDTO> selHospGrdList(HospGrdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.selHospGrdList(dto);
+	}	
+	
+	@Override
+	public HospGrdDTO selectHospGrd(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		return mapper.selectHospGrd(dto);
 	}
-
+	
 	@Override
 	public List<HospConDTO> getHospContList(HospConDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.getHospContList(dto);
 	}	
+	
+	@Override
+	public void callIndicatorsStructureZone(HospGrdDTO dto) throws Exception {
+		// TODO Auto-generated method stub
+		mapper.callIndicatorsStructureZone(dto);
+	}
+	
 }

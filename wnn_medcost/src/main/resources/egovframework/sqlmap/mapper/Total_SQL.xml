@@ -1,0 +1,1413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_medcost.total.mapper.TotalMapper">
+
+	<select id="total_DataList_01" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO">
+	    WITH inspection AS (
+			
+			 SELECT MAX(COALESCE(a.HOS_PRICE,0) * DAY(LAST_DAY(CONCAT(#{workYm}, '01'))))  AS errAmt
+	           FROM TBL_SUGA_MST a
+	          WHERE a.FEE_CODE IN (SELECT DISTINCT 
+	                                      dd.EDI_CODE
+	                                 FROM TBL_DRUG_MST dd
+	                                WHERE dd.CODEFLAG = '1')
+	                                  AND a.FEE_TYPE = '1'                   
+	                                  AND a.START_DT = (SELECT MAX(b.START_DT)
+	                                                      FROM TBL_SUGA_MST b
+	                                                     WHERE b.FEE_CODE = a.FEE_CODE
+	                                                       AND b.FEE_TYPE = a.FEE_TYPE
+	                                                       AND CONCAT(#{workYm}, '01') >= b.START_DT 
+	                                                     LIMIT 1)
+			 )
+             SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+		          , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+			         
+		          , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+				 		 THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+						 ELSE '' END AS patNm  		
+							
+			      , CASE WHEN mm.MFORM_NO IN ('H020','H120','H022','D020','P020')        = '1' THEN '보험' 
+			             WHEN mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030') = '2' THEN '보호'
+			             WHEN mm.MFORM_NO in ('C020','C120','C022')                      = '3' THEN '자보'
+			             WHEN mm.MFORM_NO IN ('M311','M321','M331')                      = '4' THEN '산재' 
+			             ELSE '' END                          AS medCovType
+			      , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+			             WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+			             WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+			             ELSE '원청구' END                       AS claimGrp
+			      , mm.BILL_SEQ                               AS billSeq
+			      , pm.MMSE_SCORE                             AS mmseVal
+			      , (SELECT errAmt FROM inspection)           AS inspAmt
+			      , 'E1'                                      AS inspCode
+			   FROM TBL_MYOUNG_MST mm 
+			   JOIN ( SELECT DISTINCT 
+				             jm.HOSP_CD
+				           , jm.CLAIM_NO
+				           , jm.BILL_SEQ
+				        FROM TBL_CHUNG_MST  cm
+				        JOIN TBL_JINORD_MST jm ON jm.HOSP_CD  = cm.HOSP_CD 
+				                              AND jm.CLAIM_NO = cm.CLAIM_NO
+				       WHERE cm.HOSP_CD = #{hospCd}
+		                 AND cm.DATE_YM = #{workYm}
+		                 AND     EXISTS (SELECT 1 
+						                   FROM TBL_JINORD_MST j1
+								          WHERE j1.HOSP_CD  = jm.HOSP_CD
+								            AND j1.CLAIM_NO = jm.CLAIM_NO
+								            AND j1.BILL_SEQ = jm.BILL_SEQ
+									        AND j1.EDI_CODE IN (SELECT DISTINCT 
+									                                   dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+								                                 WHERE dd.CODEFLAG = '1'))
+						 AND NOT EXISTS (SELECT 1 
+						                   FROM TBL_JINORD_MST j2
+									      WHERE j2.HOSP_CD  = jm.HOSP_CD
+									        AND j2.CLAIM_NO = jm.CLAIM_NO
+									        AND j2.BILL_SEQ = jm.BILL_SEQ
+									        AND j2.EDI_CODE IN (SELECT DISTINCT 
+									                                   dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+								                                 WHERE dd.CODEFLAG = '2'))
+				    ) cj 
+				 ON cj.HOSP_CD  = mm.HOSP_CD 
+			    AND cj.CLAIM_NO = mm.CLAIM_NO 
+			    AND cj.BILL_SEQ = mm.BILL_SEQ
+			   JOIN TBL_PATVAL_MST pm
+	             ON pm.HOSP_CD = mm.HOSP_CD
+		        AND pm.MED_START LIKE CONCAT(#{workYm},'%')
+		        AND pm.PAT_ID = mm.PAT_ID
+		        AND pm.MMSE_YN = '1'
+                AND 13 >= pm.MMSE_SCORE  
+			  UNION ALL
+			 SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+		          , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+			         
+		          , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+				 		 THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+						 ELSE '' END AS patNm  		
+							
+			      , CASE WHEN mm.MFORM_NO IN ('H020','H120','H022','D020','P020')        = '1' THEN '보험' 
+			             WHEN mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030') = '2' THEN '보호'
+			             WHEN mm.MFORM_NO in ('C020','C120','C022')                      = '3' THEN '자보'
+			             WHEN mm.MFORM_NO IN ('M311','M321','M331')                      = '4' THEN '산재' 
+			             ELSE '' END                          AS medCovType
+			      , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+			             WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+			             WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+			             ELSE '원청구' END                      AS claimGrp
+			      , mm.BILL_SEQ                               AS billSeq
+			      , pm.MMSE_SCORE                             AS mmseVal
+			      , (SELECT errAmt FROM inspection)           AS inspAmt
+			      , 'E2'                                      AS inspCode
+			   FROM TBL_MYOUNG_MST mm 
+			   JOIN ( SELECT DISTINCT 
+				             jm.HOSP_CD
+				           , jm.CLAIM_NO
+				           , jm.BILL_SEQ
+				        FROM TBL_CHUNG_MST  cm
+				        JOIN TBL_JINORD_MST jm ON jm.HOSP_CD  = cm.HOSP_CD 
+				                              AND jm.CLAIM_NO = cm.CLAIM_NO
+				                              
+				       WHERE cm.HOSP_CD = #{hospCd}
+		                 AND cm.DATE_YM = #{workYm}
+		                 AND EXISTS (SELECT 1 
+						               FROM TBL_JINORD_MST j1
+							          WHERE j1.HOSP_CD  = jm.HOSP_CD
+							            AND j1.CLAIM_NO = jm.CLAIM_NO
+							            AND j1.BILL_SEQ = jm.BILL_SEQ
+								        AND j1.EDI_CODE IN (SELECT DISTINCT 
+								                                   dd.EDI_CODE
+							                                  FROM TBL_DRUG_MST dd
+							                                 WHERE dd.CODEFLAG = '1'))
+						 AND EXISTS (SELECT 1 
+					                   FROM TBL_JINORD_MST j2
+								      WHERE j2.HOSP_CD  = jm.HOSP_CD
+								        AND j2.CLAIM_NO = jm.CLAIM_NO
+								        AND j2.BILL_SEQ = jm.BILL_SEQ
+								        AND j2.EDI_CODE IN (SELECT DISTINCT 
+								                                   dd.EDI_CODE
+							                                  FROM TBL_DRUG_MST dd
+							                                 WHERE dd.CODEFLAG = '2'))
+				    ) cj 
+				 ON cj.HOSP_CD   = mm.HOSP_CD 
+				AND cj.CLAIM_NO  = mm.CLAIM_NO 
+				AND cj.BILL_SEQ  = mm.BILL_SEQ
+               JOIN TBL_PATVAL_MST pm
+                 ON pm.HOSP_CD = mm.HOSP_CD
+                AND pm.MED_START LIKE CONCAT(#{workYm},'%')
+                AND pm.PAT_ID = mm.PAT_ID
+                AND pm.MMSE_YN = '1'
+                AND 13 >= pm.MMSE_SCORE 
+              UNION ALL
+             SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+		          , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+			         
+		          , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+				 		 THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+						 ELSE '' END AS patNm  		
+							
+			      , CASE WHEN mm.MFORM_NO IN ('H020','H120','H022','D020','P020')        = '1' THEN '보험' 
+			             WHEN mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030') = '2' THEN '보호'
+			             WHEN mm.MFORM_NO in ('C020','C120','C022')                      = '3' THEN '자보'
+			             WHEN mm.MFORM_NO IN ('M311','M321','M331')                      = '4' THEN '산재' 
+			             ELSE '' END                          AS medCovType
+			      , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+			             WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+			             WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+			             ELSE '원청구' END                      AS claimGrp
+			      , mm.BILL_SEQ                               AS billSeq
+			      , pm.MMSE_SCORE                             AS mmseVal
+			      , (SELECT errAmt FROM inspection)           AS inspAmt
+			      , 'E3'                                      AS inspCode
+			   FROM TBL_MYOUNG_MST mm 
+			   JOIN ( SELECT DISTINCT 
+				             jm.HOSP_CD
+				           , jm.CLAIM_NO
+				           , jm.BILL_SEQ
+				        FROM TBL_CHUNG_MST  cm
+				        JOIN TBL_JINORD_MST jm ON jm.HOSP_CD  = cm.HOSP_CD 
+				                              AND jm.CLAIM_NO = cm.CLAIM_NO
+				       WHERE cm.HOSP_CD = #{hospCd}
+		                 AND cm.DATE_YM = #{workYm}
+		                 AND     EXISTS (SELECT 1 
+						                   FROM TBL_JINORD_MST j1
+								          WHERE j1.HOSP_CD  = jm.HOSP_CD
+								            AND j1.CLAIM_NO = jm.CLAIM_NO
+								            AND j1.BILL_SEQ = jm.BILL_SEQ
+									        AND j1.EDI_CODE IN (SELECT DISTINCT 
+									                                   dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+								                                 WHERE dd.CODEFLAG = '1'))
+						 AND NOT EXISTS (SELECT 1 
+						                   FROM TBL_JINORD_MST j2
+									      WHERE j2.HOSP_CD  = jm.HOSP_CD
+									        AND j2.CLAIM_NO = jm.CLAIM_NO
+									        AND j2.BILL_SEQ = jm.BILL_SEQ
+									        AND j2.EDI_CODE IN (SELECT DISTINCT 
+									                                   dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+								                                 WHERE dd.CODEFLAG = '2'))
+				    ) cj 
+				 ON cj.HOSP_CD  = mm.HOSP_CD 
+			    AND cj.CLAIM_NO = mm.CLAIM_NO 
+			    AND cj.BILL_SEQ = mm.BILL_SEQ
+	           JOIN TBL_PATVAL_MST pm
+	             ON pm.HOSP_CD = mm.HOSP_CD
+		        AND pm.MED_START LIKE CONCAT(#{workYm},'%')
+		        AND pm.PAT_ID = mm.PAT_ID
+		        AND pm.MMSE_YN = '1'
+		        AND pm.MMSE_SCORE > 13
+	</select>
+	<select id="total_DataList_02" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO">	
+		SELECT DISTINCT LEFT(COALESCE(a.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(a.PAT_NM, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(a.PAT_NM, ''), CHAR_LENGTH(COALESCE(a.PAT_NM, '')) - 1), '*')
+					ELSE '' END AS patNm       
+                    
+		     , a.ADMIT_DT   							AS admitDt
+		     , a.MED_START  							AS medStart		     
+		     , a.DOC_DT     							AS docDt
+		     , CASE WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'A' THEN '의료최고도'
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'B' THEN '의료고도'  							
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'C' THEN '의료중도'
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'D' THEN '의료경도'
+		            ELSE '선택입원군' END AS patClass
+		     , CASE WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'C' AND (a.CEREBRAL_P  = '1' OR a.SPINAL_INJ = '1' OR a.HEMIPLEGIA = '1' OR a.ALL_LIMBS  = '1' OR
+		                                                                a.PARKINSON   = '1' OR a.HIV        = '1' OR a.MYASTHENIA = '1' OR a.MUSC_DIS   = '1' OR
+		                                                                a.SPINAL_ATRO = '1' OR a.HUNTINGTON = '1' OR a.HERED_ATAX = '1' OR a.MS         = '1' OR                  
+		                                                                a.SYSTEM_ATRO = '1' OR a.PROG_SUPRA = '1' OR a.VIRAL_INF  = '1' OR a.SUB_NECR   = '1')
+		                                                            AND ADL_SCORE_CHECK(a.DRESSING
+		                                                                         ,a.WASHING
+		                                                                         ,a.BRUSHING
+		                                                                         ,a.BATHING
+		                                                                         ,a.EATING
+		                                                                         ,a.MOVE_POS
+		                                                                         ,a.SIT_UP
+		                                                                         ,a.TRANSFER
+		                                                                         ,a.EXIT_ROOM
+		                                                                         ,a.TOILET_USE,'1') = 17       THEN '중도 → 의료고도 가능'
+                    WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'E' AND a.DEMENTIA = '0' AND a.PSYCH_DRUG = '1' THEN '선택 → 의료중도 가능' 
+                    WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'C' AND (a.CEREBRAL_P  = '1' OR a.SPINAL_INJ = '1' OR a.HEMIPLEGIA = '1' OR a.ALL_LIMBS  = '1' OR
+		                                                                a.PARKINSON   = '1' OR a.HIV        = '1' OR a.MYASTHENIA = '1' OR a.MUSC_DIS   = '1' OR
+		                                                                a.SPINAL_ATRO = '1' OR a.HUNTINGTON = '1' OR a.HERED_ATAX = '1' OR a.MS         = '1' OR                  
+		                                                                a.SYSTEM_ATRO = '1' OR a.PROG_SUPRA = '1' OR a.VIRAL_INF  = '1' OR a.SUB_NECR   = '1')
+		                                                            AND ADL_SCORE_CHECK(a.DRESSING
+		                                                                         ,a.WASHING
+		                                                                         ,a.BRUSHING
+		                                                                         ,a.BATHING
+		                                                                         ,a.EATING
+		                                                                         ,a.MOVE_POS
+		                                                                         ,a.SIT_UP
+		                                                                         ,a.TRANSFER
+		                                                                         ,a.EXIT_ROOM
+		                                                                         ,a.TOILET_USE,'1') = 17       THEN '경도 → 의료중도 가능'	
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'E' AND a.DEMENTIA = '0' AND a.PSYCH_DRUG = '1' THEN '선택 → 의료경도 가능'
+		            ELSE '' END AS classUp
+		     , CASE WHEN a.EVAL_TYPE = '1' THEN ' 입원 평가'
+		            WHEN a.EVAL_TYPE = '2' THEN ' 계속 입원 중인 환자 평가' 	
+		            WHEN a.EVAL_TYPE = '3' THEN ' 이전 환자평가표를 적용하는 경우'
+		            ELSE '' END AS evalType
+  	      FROM TBL_PATVAL_MST a
+  	     WHERE a.HOSP_CD = #{hospCd}
+		   AND a.MED_START LIKE CONCAT(#{workYm}, '%')
+		   AND LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = CASE WHEN #{codeFg} = '1' THEN 'A' 
+		                                                  WHEN #{codeFg} = '2' THEN 'B'  
+		                                                  WHEN #{codeFg} = '3' THEN 'C'
+		                                                  ELSE  'E' END
+  	      
+	</select>
+	
+	<select id="total_DataList_03" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+		SELECT DISTINCT LEFT(COALESCE(a.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(a.PAT_NM, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(a.PAT_NM, ''), CHAR_LENGTH(COALESCE(a.PAT_NM, '')) - 1), '*')
+					ELSE '' END AS patNm  
+		     , a.ADMIT_DT   							AS admitDt
+		     , a.MED_START  							AS medStart		     
+		     , a.DOC_DT     							AS docDt
+		     , CASE WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'A' THEN '의료최고도'
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'B' THEN '의료고도'  							
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'C' THEN '의료중도'
+		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'D' THEN '의료경도'
+		            ELSE '선택입원군' END AS patClass
+		     , CASE WHEN a.EVAL_TYPE = '1' THEN ' 입원 평가'
+		            WHEN a.EVAL_TYPE = '2' THEN ' 계속 입원 중인 환자 평가' 	
+		            WHEN a.EVAL_TYPE = '3' THEN ' 이전 환자평가표를 적용하는 경우'
+		            ELSE '' END AS evalType
+		     , ADL_SCORE_CHECK(a.DRESSING,a.WASHING,a.BRUSHING,a.BATHING,a.EATING,a.MOVE_POS,a.SIT_UP,a.TRANSFER,a.EXIT_ROOM,a.TOILET_USE,'1') AS adlScore
+  	      FROM TBL_PATVAL_MST a
+         WHERE a.HOSP_CD = #{hospCd}
+           AND a.MED_START LIKE CONCAT(#{workYm}, '%')
+        ]]>
+        <if test='codeFg == "1"'><![CDATA[
+		       AND LEFT(COALESCE(a.PAT_CLASS, 'E'), 1)   = 'C'
+		       AND (
+		             a.CEREBRAL_P  = '1' OR a.SPINAL_INJ = '1' OR a.HEMIPLEGIA = '1' OR a.ALL_LIMBS  = '1' OR
+		             a.PARKINSON   = '1' OR a.HIV        = '1' OR a.MYASTHENIA = '1' OR a.MUSC_DIS   = '1' OR
+		             a.SPINAL_ATRO = '1' OR a.HUNTINGTON = '1' OR a.HERED_ATAX = '1' OR a.MS         = '1' OR
+		             a.SYSTEM_ATRO = '1' OR a.PROG_SUPRA = '1' OR a.VIRAL_INF  = '1' OR a.SUB_NECR   = '1'
+		           )
+		       AND ADL_SCORE_CHECK(a.DRESSING,a.WASHING,a.BRUSHING,a.BATHING,a.EATING,a.MOVE_POS,a.SIT_UP,a.TRANSFER,a.EXIT_ROOM,a.TOILET_USE,'1') = 17
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		       AND LEFT(COALESCE(a.PAT_CLASS, 'E'), 1)   = 'E'
+		       AND a.DEMENTIA   = '0'
+		       AND a.PSYCH_DRUG = '1'
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		       AND LEFT(COALESCE(a.PAT_CLASS, 'E'), 1)   = 'D'
+		       AND (
+		             a.CEREBRAL_P  = '1' OR a.SPINAL_INJ = '1' OR a.HEMIPLEGIA = '1' OR a.ALL_LIMBS  = '1' OR
+		             a.PARKINSON   = '1' OR a.HIV        = '1' OR a.MYASTHENIA = '1' OR a.MUSC_DIS   = '1' OR
+		             a.SPINAL_ATRO = '1' OR a.HUNTINGTON = '1' OR a.HERED_ATAX = '1' OR a.MS         = '1' OR
+		             a.SYSTEM_ATRO = '1' OR a.PROG_SUPRA = '1' OR a.VIRAL_INF  = '1' OR a.SUB_NECR   = '1'
+		           )
+		       AND ADL_SCORE_CHECK(a.DRESSING,a.WASHING,a.BRUSHING,a.BATHING,a.EATING,a.MOVE_POS,a.SIT_UP,a.TRANSFER,a.EXIT_ROOM,a.TOILET_USE,'1') = 10
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		       AND LEFT(COALESCE(a.PAT_CLASS, 'E'), 1)   = 'E'
+		       AND a.DEMENTIA  = '1'
+		       AND a.DEMN_DRUG = '0'
+		]]></if>
+  	      
+	</select>         	         
+	         
+	<select id="total_DataList_04" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+	         
+	         , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm  		
+					
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+		            ELSE '원청구' END                      AS claimGrp
+		     , mm.BILL_SEQ                               AS billSeq
+		     , COALESCE(mm.TOT_AMT, 0)   + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS totAmt
+		     , COALESCE(mm.CLAIM_AMT, 0) + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS claimAmt
+		     , COALESCE(mm.SELF_AMT, 0)                  AS selfAmt
+		     , COALESCE(mm.DISABLED_AMT, 0)              AS disabledAmt
+		     , mm.JIN_DAYS                               AS jinDays
+		     , mm.ADM_DAYS                               AS admDays
+	      FROM TBL_CHUNG_MST  cm
+		  JOIN TBL_MYOUNG_MST mm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		 WHERE cm.HOSP_CD = #{hospCd}
+		   AND cm.DATE_YM = #{workYm}
+		   AND NOT EXISTS ( SELECT 1
+                              FROM TBL_SPECODE_MST tsm
+                             WHERE tsm.HOSP_CD   = mm.HOSP_CD
+                               AND tsm.CLAIM_NO  = mm.CLAIM_NO
+                               AND tsm.BILL_SEQ  = mm.BILL_SEQ
+                               AND tsm.SPEC_TYPE = 'JS008' )
+           AND COALESCE(mm.DELYN,'') = ''                     
+		]]>
+		<if test='codeFg == "1"'><![CDATA[   
+		   AND mm.MFORM_NO IN ('H020','H120','H022','D020','P020')
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		   AND mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND mm.MFORM_NO in ('C020','C120','C022')
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		   AND mm.MFORM_NO IN ('M311','M321','M331') 
+		   AND mm.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+		]]></if>	                         
+	     
+	</select>   
+	
+	<select id="total_DataList_05" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm  
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+		            ELSE '원청구' END                      AS claimGrp
+		     , mm.BILL_SEQ                               AS billSeq
+		     , COALESCE(mm.TOT_AMT, 0)   + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS totAmt
+		     , COALESCE(mm.CLAIM_AMT, 0) + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS claimAmt
+		     , COALESCE(mm.SELF_AMT, 0)                  AS selfAmt
+		     , COALESCE(mm.DISABLED_AMT, 0)              AS disabledAmt
+		     
+		     , CASE WHEN sj.TYPE_CODE = 'MT010' THEN '폐렴'
+		            WHEN sj.TYPE_CODE = 'MT011' THEN '폐혈증'
+		            WHEN sj.TYPE_CODE = '03'    THEN '중환자실'
+		            WHEN sj.TYPE_CODE = '04'    THEN '격리실'		                                                     
+					ELSE '' END                          AS myoungFg
+					
+		     , mm.JIN_DAYS                               AS jinDays
+		     , mm.ADM_DAYS                               AS admDays
+	      FROM TBL_CHUNG_MST  cm
+		  JOIN TBL_MYOUNG_MST mm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+          JOIN (SELECT DISTINCT HOSP_CD, CLAIM_NO, BILL_SEQ, TYPE_CODE
+                  FROM (SELECT DISTINCT mm2.HOSP_CD, mm2.CLAIM_NO, mm2.BILL_SEQ, sm2.SPEC_TYPE AS TYPE_CODE
+                          FROM TBL_CHUNG_MST   cm2
+				          JOIN TBL_MYOUNG_MST  mm2 ON cm2.HOSP_CD = mm2.HOSP_CD AND cm2.CLAIM_NO = mm2.CLAIM_NO
+				          JOIN TBL_SPECODE_MST sm2 ON mm2.HOSP_CD = sm2.HOSP_CD AND mm2.CLAIM_NO = sm2.CLAIM_NO AND mm2.BILL_SEQ = sm2.BILL_SEQ     
+					     WHERE cm2.HOSP_CD = #{hospCd}
+					       AND cm2.DATE_YM = #{workYm}
+					       AND sm2.SPEC_TYPE IN ('MT010','MT011')
+				       ]]>
+				       <if test='codeFg == "1"'><![CDATA[   
+					       AND mm2.MFORM_NO IN ('H020','H120','H022','D020','P020')
+					   ]]></if>		
+					   <if test='codeFg == "2"'><![CDATA[
+						   AND mm2.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+					   ]]></if>		
+					   <if test='codeFg == "3"'><![CDATA[
+					       AND mm2.MFORM_NO IN ('C020','C120','C022')
+					   ]]></if>		
+					   <if test='codeFg == "4"'><![CDATA[
+					       AND mm2.MFORM_NO IN ('M311','M321','M331') 
+					       AND mm2.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+					   ]]></if><![CDATA[					            
+				         UNION ALL
+				        SELECT DISTINCT mm3.HOSP_CD, mm3.CLAIM_NO, mm3.BILL_SEQ, jm3.CODE_NO AS TYPE_CODE
+				          FROM TBL_CHUNG_MST  cm3
+						  JOIN TBL_MYOUNG_MST mm3 ON cm3.HOSP_CD = mm3.HOSP_CD AND cm3.CLAIM_NO = mm3.CLAIM_NO
+						  JOIN TBL_JINORD_MST jm3 ON mm3.HOSP_CD = jm3.HOSP_CD AND mm3.CLAIM_NO = jm3.CLAIM_NO AND mm3.BILL_SEQ = jm3.BILL_SEQ
+					 	 WHERE cm3.HOSP_CD = #{hospCd}
+						   AND cm3.DATE_YM = #{workYm}
+						   AND jm3.ITEM_NO = '02'
+				           AND jm3.CODE_NO IN ('03','04')
+					   ]]>
+					   <if test='codeFg == "1"'><![CDATA[   
+					       AND mm3.MFORM_NO IN ('H020','H120','H022','D020','P020')
+					   ]]></if>		
+					   <if test='codeFg == "2"'><![CDATA[
+					       AND mm3.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+					   ]]></if>		
+					   <if test='codeFg == "3"'><![CDATA[
+					       AND mm3.MFORM_NO IN ('C020','C120','C022')
+					   ]]></if>		
+					   <if test='codeFg == "4"'><![CDATA[
+					       AND mm3.MFORM_NO IN ('M311','M321','M331') 
+					       AND mm3.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+					   ]]></if><![CDATA[							   
+				       ) AS subquery
+               ) sj ON mm.HOSP_CD = sj.HOSP_CD AND mm.CLAIM_NO = sj.CLAIM_NO AND mm.BILL_SEQ = sj.BILL_SEQ
+		 WHERE cm.HOSP_CD = #{hospCd}
+		   AND cm.DATE_YM = #{workYm}
+		   AND NOT EXISTS ( SELECT 1
+                              FROM TBL_SPECODE_MST tsm
+                             WHERE tsm.HOSP_CD   = mm.HOSP_CD
+                               AND tsm.CLAIM_NO  = mm.CLAIM_NO
+                               AND tsm.BILL_SEQ  = mm.BILL_SEQ
+                               AND tsm.SPEC_TYPE = 'JS008' )
+           AND COALESCE(mm.DELYN,'') = ''                    
+		]]>
+		<if test='codeFg == "1"'><![CDATA[   
+		   AND mm.MFORM_NO IN ('H020','H120','H022','D020','P020')
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		   AND mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND mm.MFORM_NO IN ('C020','C120','C022')
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		   AND mm.MFORM_NO IN ('M311','M321','M331') 
+		   AND mm.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+		]]></if>	                         
+	     
+	</select>
+	
+	<select id="total_DataList_06" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+		            ELSE '원청구' END                      AS claimGrp
+		     , mm.BILL_SEQ                               AS billSeq
+		     , COALESCE(mm.TOT_AMT, 0)   + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS totAmt
+		     , COALESCE(mm.CLAIM_AMT, 0) + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS claimAmt
+		     , COALESCE(mm.SELF_AMT, 0)                  AS selfAmt
+		     , COALESCE(mm.DISABLED_AMT, 0)              AS disabledAmt
+		     
+		     , CASE WHEN sm.SPEC_TYPE = 'MT010' THEN '폐렴'
+		            WHEN sm.SPEC_TYPE = 'MT011' THEN '폐혈증'
+					ELSE '' END                          AS myoungFg
+					
+		     , mm.JIN_DAYS                               AS jinDays
+		     , mm.ADM_DAYS                               AS admDays
+	      FROM TBL_CHUNG_MST  cm
+		  JOIN TBL_MYOUNG_MST mm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		  JOIN (SELECT DISTINCT mm2.HOSP_CD, mm2.CLAIM_NO, mm2.BILL_SEQ, sm2.SPEC_TYPE
+                  FROM TBL_CHUNG_MST   cm2
+			      JOIN TBL_MYOUNG_MST  mm2 ON cm2.HOSP_CD = mm2.HOSP_CD AND cm2.CLAIM_NO = mm2.CLAIM_NO
+			      JOIN TBL_SPECODE_MST sm2 ON mm2.HOSP_CD = sm2.HOSP_CD AND mm2.CLAIM_NO = sm2.CLAIM_NO AND mm2.BILL_SEQ = sm2.BILL_SEQ     
+			     WHERE cm2.HOSP_CD = #{hospCd}
+			       AND cm2.DATE_YM = #{workYm}
+			       AND sm2.SPEC_TYPE  IN ('MT010','MT011')
+			    ]]>
+			    <if test='codeFg == "1"'><![CDATA[   
+				   AND mm2.MFORM_NO IN ('H020','H120','H022','D020','P020')
+				]]></if>		
+				<if test='codeFg == "2"'><![CDATA[
+				   AND mm2.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+				]]></if>		
+				<if test='codeFg == "3"'><![CDATA[
+				   AND mm2.MFORM_NO IN ('C020','C120','C022')
+				]]></if>		
+				<if test='codeFg == "4"'><![CDATA[
+				   AND mm2.MFORM_NO IN ('M311','M321','M331') 
+				   AND mm2.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+				]]></if><![CDATA[
+               ) sm ON mm.HOSP_CD = sm.HOSP_CD AND mm.CLAIM_NO = sm.CLAIM_NO AND mm.BILL_SEQ = sm.BILL_SEQ                                   
+		 WHERE cm.HOSP_CD = #{hospCd}
+		   AND cm.DATE_YM = #{workYm}
+		   AND NOT EXISTS ( SELECT 1
+                              FROM TBL_SPECODE_MST tsm
+                             WHERE tsm.HOSP_CD   = mm.HOSP_CD
+                               AND tsm.CLAIM_NO  = mm.CLAIM_NO
+                               AND tsm.BILL_SEQ  = mm.BILL_SEQ
+                               AND tsm.SPEC_TYPE = 'JS008' )
+           AND COALESCE(mm.DELYN,'') = ''                    
+		]]>
+		<if test='codeFg == "1"'><![CDATA[   
+		   AND mm.MFORM_NO IN ('H020','H120','H022','D020','P020')
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		   AND mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND mm.MFORM_NO in ('C020','C120','C022')
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		   AND mm.MFORM_NO IN ('M311','M321','M331') 
+		   AND mm.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+		]]></if>	                         
+	     
+	</select>
+	
+	<select id="total_DataList_07" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+		            ELSE '원청구' END                      AS claimGrp
+		     , mm.BILL_SEQ                               AS billSeq
+		     , COALESCE(mm.TOT_AMT, 0)   + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS totAmt
+		     , COALESCE(mm.CLAIM_AMT, 0) + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS claimAmt
+		     , COALESCE(mm.SELF_AMT, 0)                  AS selfAmt
+		     , COALESCE(mm.DISABLED_AMT, 0)              AS disabledAmt
+		     
+		     , CASE WHEN jm.CODE_NO = '04' THEN '격리실'
+		            ELSE '' END                          AS myoungFg
+					
+		     , mm.JIN_DAYS                               AS jinDays
+		     , mm.ADM_DAYS                               AS admDays
+	      FROM TBL_CHUNG_MST  cm
+		  JOIN TBL_MYOUNG_MST mm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		  JOIN (SELECT DISTINCT mm3.HOSP_CD, mm3.CLAIM_NO, mm3.BILL_SEQ, jm3.CODE_NO 
+		          FROM TBL_CHUNG_MST  cm3
+				  JOIN TBL_MYOUNG_MST mm3 ON cm3.HOSP_CD = mm3.HOSP_CD AND cm3.CLAIM_NO = mm3.CLAIM_NO
+				  JOIN TBL_JINORD_MST jm3 ON mm3.HOSP_CD = jm3.HOSP_CD AND mm3.CLAIM_NO = jm3.CLAIM_NO AND mm3.BILL_SEQ = jm3.BILL_SEQ
+			 	 WHERE cm3.HOSP_CD = #{hospCd}
+				   AND cm3.DATE_YM = #{workYm}
+				   AND jm3.ITEM_NO = '02'
+		           AND jm3.CODE_NO = '04'		            
+				]]>
+			    <if test='codeFg == "1"'><![CDATA[   
+				   AND mm3.MFORM_NO IN ('H020','H120','H022','D020','P020')
+				]]></if>		
+				<if test='codeFg == "2"'><![CDATA[
+				   AND mm3.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+				]]></if>		
+				<if test='codeFg == "3"'><![CDATA[
+				   AND mm3.MFORM_NO IN ('C020','C120','C022')
+				]]></if>		
+				<if test='codeFg == "4"'><![CDATA[
+				   AND mm3.MFORM_NO IN ('M311','M321','M331') 
+				   AND mm3.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+				]]></if><![CDATA[
+				
+	           ) jm ON mm.HOSP_CD = jm.HOSP_CD AND mm.CLAIM_NO = jm.CLAIM_NO AND mm.BILL_SEQ = jm.BILL_SEQ                    
+		 WHERE cm.HOSP_CD = #{hospCd}
+		   AND cm.DATE_YM = #{workYm}
+		   AND NOT EXISTS ( SELECT 1
+                              FROM TBL_SPECODE_MST tsm
+                             WHERE tsm.HOSP_CD   = mm.HOSP_CD
+                               AND tsm.CLAIM_NO  = mm.CLAIM_NO
+                               AND tsm.BILL_SEQ  = mm.BILL_SEQ
+                               AND tsm.SPEC_TYPE = 'JS008' )
+           AND COALESCE(mm.DELYN,'') = ''                   
+		]]>
+		<if test='codeFg == "1"'><![CDATA[   
+		   AND mm.MFORM_NO IN ('H020','H120','H022','D020','P020')
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		   AND mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND mm.MFORM_NO in ('C020','C120','C022')
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		   AND mm.MFORM_NO IN ('M311','M321','M331') 
+		   AND mm.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20')
+		]]></if>	                         
+	     
+	</select>
+	
+	<select id="total_DataList_08" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구'
+		            ELSE '원청구' END                      AS claimGrp
+		     , mm.BILL_SEQ                               AS billSeq
+		     , COALESCE(mm.TOT_AMT, 0)   + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS totAmt
+		     , COALESCE(mm.CLAIM_AMT, 0) + COALESCE(mm.VET_AMT, 0) + COALESCE(mm.NON100_VET, 0) + COALESCE(mm.NON100_CLAIM, 0)                 AS claimAmt
+		     , COALESCE(mm.SELF_AMT, 0)                  AS selfAmt
+		     , COALESCE(mm.DISABLED_AMT, 0)              AS disabledAmt
+		     
+		     , CASE WHEN mm.PAY_TYPE = '0' THEN '정액수가'
+		            WHEN mm.PAY_TYPE = '9' THEN '행위수가'
+		            ELSE '' END                          AS myoungFg
+		     
+		     , mm.JIN_DAYS                               AS jinDays
+		     , mm.ADM_DAYS                               AS admDays
+	      FROM TBL_CHUNG_MST  cm
+		  JOIN TBL_MYOUNG_MST mm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO                  
+		 WHERE cm.HOSP_CD = #{hospCd}
+		   AND cm.DATE_YM = #{workYm}
+		   AND NOT EXISTS ( SELECT 1
+                              FROM TBL_SPECODE_MST tsm
+                             WHERE tsm.HOSP_CD   = mm.HOSP_CD
+                               AND tsm.CLAIM_NO  = mm.CLAIM_NO
+                               AND tsm.BILL_SEQ  = mm.BILL_SEQ
+                               AND tsm.SPEC_TYPE = 'JS008' )
+           AND COALESCE(mm.DELYN,'') = ''                    
+		]]>
+		<if test='codeFg == "1"'><![CDATA[   
+		   AND mm.MFORM_NO IN ('K020')
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		   AND mm.MFORM_NO IN ('K030')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND mm.MFORM_NO in ('C110')
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		   AND mm.MFORM_NO IN ('M312','M322') 
+		   AND mm.MED_TYPE IN  ('01', '03', '04', '06', '08', '10')
+		]]></if>	                         
+	     
+	</select>
+	
+	
+	<select id="total_DataList_09" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH hospital_grade AS (
+		     SELECT DISTINCT hm.HOSP_CD
+		          , hm.HOS_GRD 
+	           FROM TBL_HOSP_MST hm
+	          WHERE hm.HOSP_CD = #{hospCd}
+	            AND hm.ACTION_YN = 'Y'
+	          LIMIT 1  
+	    ),
+		hospclaim_rate AS (
+		     SELECT DISTINCT
+		            cm.HOSP_CD
+		          , cm.CLAIM_NO
+		          , cm.CFORM_NO
+		          , cm.DATE_YM
+		          , cm.MED_TYPE
+		          , cm.TREAT_TYPE
+		          , jm.BILL_SEQ
+		          , jm.EDI_CODE                                                                AS edi_code
+                  , ROUND(jm.UNIT_PRICE)                       								   AS unit_amt
+                  , jm.DAILY_DOSE                             								   AS dailyqty 
+                  , jm.TOTAL_DOSE                             								   AS totalday
+                  , ROUND(CASE WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '112' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_1, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '212' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_2, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '312' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_3, 0) / 100)
+	                           ELSE jm.UNIT_PRICE  END)                                         AS gasanamt
+	                           
+                  , ROUND(CASE WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '112' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_1, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '212' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_2, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '312' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_3, 0) / 100)
+	                           ELSE jm.UNIT_PRICE END * COALESCE(tcm.CLAIM_RATE,0.8))           AS claimamt
+		       FROM TBL_CHUNG_MST       cm
+		       JOIN TBL_JINORD_MST      jm  ON jm.HOSP_CD  = cm.HOSP_CD  
+		                                   AND jm.CLAIM_NO = cm.CLAIM_NO
+		                                   AND COALESCE(jm.AMOUNT,0) > 0	     
+		       	    				       AND jm.EDI_CODE IN ( SELECT DISTINCT dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+									                             WHERE dd.CODEFLAG = 'M' )
+									                         
+               LEFT JOIN TBL_SUGA_MST    sm ON sm.FEE_CODE IN ( SELECT DISTINCT dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+									                             WHERE dd.CODEFLAG = 'M' )
+									       AND sm.FEE_TYPE  = '1'
+                                           AND sm.DIV_TYPE  = '2'
+                                           AND sm.ACTION_YN = 'Y'
+                                           AND CONCAT(cm.DATE_YM,'01') BETWEEN sm.START_DT AND sm.END_DT 	
+                LEFT JOIN hospital_grade hg ON hg.HOSP_CD = cm.HOSP_CD  
+	            LEFT JOIN TBL_CODE_DTL   cd ON cd.CODE_GB  = 'Z' 
+	                                       AND cd.CODE_CD  = 'CFORM_NO' 
+	                                       AND cd.SUB_CODE = cm.CFORM_NO
+	                                       AND cd.ACTION_YN = 'Y'                        
+       			LEFT JOIN TBL_CLAIMRATE_MST tcm 
+       			                            ON tcm.HOS_GRD      = hg.HOS_GRD  
+       			                           AND tcm.CFORM_NO	    = cm.CFORM_NO	
+       			                           AND tcm.MED_COV_TYPE = '0'
+       			                           AND tcm.ACC_TYPE     = '0'
+       			                           AND tcm.CFORM_IO     = 'I'
+       			                           AND tcm.ITEM_NO      = jm.ITEM_NO
+       			                           AND tcm.CODE_NO      = jm.CODE_NO
+       			                           AND tcm.EDI_FCODE    = '000000000'    
+                                           AND tcm.EDI_TCODE    = 'ZZZZZZZZZ' 
+                                           AND tcm.START_YM     = '202501' 
+                                           AND tcm.ACTION_YN    = 'Y'	    
+             WHERE cm.HOSP_CD = #{hospCd}
+		       AND cm.DATE_YM = #{workYm}
+		          
+		     ]]>
+			 <if test='codeFg == "1"'><![CDATA[   
+			    AND cm.CFORM_NO IN ('H010')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "2"'><![CDATA[
+			    AND cm.CFORM_NO IN ('H011')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "3"'><![CDATA[
+			    AND cm.CFORM_NO in ('C010')
+			    AND cm.MED_TYPE IN ('1', '2')
+			 ]]></if>		
+			 <if test='codeFg == "4"'><![CDATA[
+			    AND cm.CFORM_NO   IN ('M110', 'M120', 'M130') 
+			    AND cm.TREAT_TYPE IN ('1', '3')
+			 ]]></if> 
+			    AND COALESCE(jm.AMOUNT,0) > 0                        
+		)
+        SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            
+		     , mm.BILL_SEQ                               AS billSeq
+		     , CAST(cr.gasanamt AS UNSIGNED)             AS calcAmt                                                             
+             , CAST(cr.claimamt AS UNSIGNED)             AS claimAmt
+		     , CAST(cr.gasanamt AS UNSIGNED)  
+		     - CAST(cr.claimamt AS UNSIGNED)             AS selfAmt
+             , cr.edi_code                               AS ediCode
+             , cr.unit_amt                               AS unitAmt
+             , cr.dailyqty                               AS dayQtys 
+             , cr.totalday                               AS totDays             
+	      FROM hospclaim_rate cr
+	      JOIN TBL_MYOUNG_MST mm ON mm.HOSP_CD  = cr.HOSP_CD 
+	                            AND mm.CLAIM_NO = cr.CLAIM_NO
+	                            AND mm.BILL_SEQ = cr.BILL_SEQ
+		 WHERE cr.HOSP_CD = #{hospCd}
+		   AND cr.DATE_YM = #{workYm}		                         
+	     ORDER BY 1,2
+	</select>
+	
+	<!-- 
+	<select id="total_DataList_09" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH hospclaim_rate AS (
+		     SELECT DISTINCT
+		            cm.HOSP_CD
+		          , cm.CLAIM_NO
+		          , cm.CFORM_NO
+		          , cm.DATE_YM
+		          , cm.MED_TYPE
+		          , cm.TREAT_TYPE
+		          , jm.BILL_SEQ
+		          , jm.EDI_CODE                                                                AS edi_code
+                  , ROUND(jm.UNIT_PRICE)                       								   AS unit_amt
+                  , jm.DAILY_DOSE                             								   AS dailyqty 
+                  , jm.TOTAL_DOSE                             								   AS totalday
+		          , FN_GASAN_AMOUNT(cm.HOSP_CD,cm.DATE_YM ,cm.CFORM_NO,jm.EDI_CODE,jm.AMOUNT)  AS gasanamt
+		          
+		          , FN_CLAIM_AMOUNT(jm.HOSP_CD,jm.CLAIM_NO,jm.BILL_SEQ,jm.ROW_NO,
+                                    cm.DATE_YM,cm.CFORM_NO,jm.EDI_CODE,jm.AMOUNT)              AS claimamt
+		       FROM TBL_CHUNG_MST  cm
+		       JOIN TBL_JINORD_MST jm  ON jm.HOSP_CD  = cm.HOSP_CD  
+		                              AND jm.CLAIM_NO = cm.CLAIM_NO
+		       	    				  AND jm.EDI_CODE IN ( SELECT DISTINCT dd.EDI_CODE
+								                             FROM TBL_DRUG_MST dd
+									                        WHERE dd.CODEFLAG = 'M' )
+			 WHERE cm.HOSP_CD = #{hospCd}
+		       AND cm.DATE_YM = #{workYm}
+		     ]]>
+			 <if test='codeFg == "1"'><![CDATA[   
+			    AND cm.CFORM_NO IN ('H010')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "2"'><![CDATA[
+			    AND cm.CFORM_NO IN ('H011')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "3"'><![CDATA[
+			    AND cm.CFORM_NO in ('C010')
+			    AND cm.MED_TYPE IN ('1', '2')
+			 ]]></if>		
+			 <if test='codeFg == "4"'><![CDATA[
+			    AND cm.CFORM_NO   IN ('M110', 'M120', 'M130') 
+			    AND cm.TREAT_TYPE IN ('1', '3')
+			 ]]></if> 
+			    AND COALESCE(jm.AMOUNT,0) > 0 
+		)
+        SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , COALESCE(mm.PAT_NAME, '')                 AS patNm
+		     
+		     , CASE #{codeFg}
+               	    WHEN '1' THEN '보험'
+               	    WHEN '2' THEN '보호'
+               	    WHEN '3' THEN '자보'
+               	    WHEN '4' THEN '산재'   ELSE ''  END    AS medCovType
+               	    
+		     , CASE mm.CLAIM_GRP
+		            WHEN '1' THEN '보완청구'
+		            WHEN '2' THEN '추가청구'
+		            WHEN '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            
+		     , mm.BILL_SEQ                               AS billSeq
+		     , cr.gasanamt                               AS calcAmt                                                             
+             , cr.claimamt                               AS claimAmt
+		     , cr.gasanamt - cr.claimamt                 AS selfAmt
+             , cr.edi_code                               AS ediCode
+             , cr.unit_amt                               AS unitAmt
+             , cr.dailyqty                               AS dayQtys 
+             , cr.totalday                               AS totDays                      
+	      FROM hospclaim_rate cr
+	      JOIN TBL_MYOUNG_MST mm ON mm.HOSP_CD  = cr.HOSP_CD 
+	                            AND mm.CLAIM_NO = cr.CLAIM_NO
+	                            AND mm.BILL_SEQ = cr.BILL_SEQ
+		 WHERE cr.HOSP_CD = #{hospCd}
+		   AND cr.DATE_YM = #{workYm}			                         
+	     ORDER BY 1,2	
+	     
+	</select>
+	-->
+	
+	 
+	<select id="total_DataList_10" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH hospital_grade AS (
+		     SELECT DISTINCT hm.HOSP_CD
+		          , hm.HOS_GRD 
+	           FROM TBL_HOSP_MST hm
+	          WHERE hm.HOSP_CD = #{hospCd}
+	            AND hm.ACTION_YN = 'Y'
+	          LIMIT 1  
+	    ),
+		hospclaim_rate AS (
+		     SELECT DISTINCT
+		            cm.HOSP_CD
+		          , cm.CLAIM_NO
+		          , cm.CFORM_NO
+		          , cm.DATE_YM
+		          , cm.MED_TYPE
+		          , cm.TREAT_TYPE
+		          , jm.BILL_SEQ
+		          , jm.EDI_CODE                                                                AS edi_code
+                  , ROUND(jm.UNIT_PRICE)                       								   AS unit_amt
+                  , jm.DAILY_DOSE                             								   AS dailyqty 
+                  , jm.TOTAL_DOSE                             								   AS totalday
+                  , ROUND(CASE WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '112' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_1, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '212' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_2, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '312' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_3, 0) / 100)
+	                           ELSE jm.UNIT_PRICE  END)                                         AS gasanamt
+	                           
+                  , ROUND(CASE WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '112' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_1, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '212' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_2, 0) / 100)
+	                           WHEN CONCAT(hg.HOS_GRD,sm.FEE_TYPE,sm.DIV_TYPE) = '312' THEN jm.UNIT_PRICE + (jm.UNIT_PRICE * COALESCE(cd.PROP_3, 0) / 100)
+	                           ELSE jm.UNIT_PRICE END * COALESCE(tcm.CLAIM_RATE,0.8))           AS claimamt
+		       FROM TBL_CHUNG_MST       cm
+		       JOIN TBL_JINORD_MST      jm  ON jm.HOSP_CD  = cm.HOSP_CD  
+		                                   AND jm.CLAIM_NO = cm.CLAIM_NO
+		                                   AND COALESCE(jm.AMOUNT,0) > 0	     
+		       	    				       AND jm.EDI_CODE IN ( SELECT DISTINCT dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+									                             WHERE dd.CODEFLAG IN ('C','D') )
+									                         
+               LEFT JOIN TBL_SUGA_MST    sm ON sm.FEE_CODE IN ( SELECT DISTINCT dd.EDI_CODE
+								                                  FROM TBL_DRUG_MST dd
+									                             WHERE dd.CODEFLAG IN ('C','D') )
+									       AND sm.FEE_TYPE  = '1'
+                                           AND sm.DIV_TYPE  = '2'
+                                           AND sm.ACTION_YN = 'Y'
+                                           AND CONCAT(cm.DATE_YM,'01') BETWEEN sm.START_DT AND sm.END_DT 	
+                LEFT JOIN hospital_grade hg ON hg.HOSP_CD = cm.HOSP_CD  
+	            LEFT JOIN TBL_CODE_DTL   cd ON cd.CODE_GB  = 'Z' 
+	                                       AND cd.CODE_CD  = 'CFORM_NO' 
+	                                       AND cd.SUB_CODE = cm.CFORM_NO
+	                                       AND cd.ACTION_YN = 'Y'                        
+       			LEFT JOIN TBL_CLAIMRATE_MST tcm 
+       			                            ON tcm.HOS_GRD      = hg.HOS_GRD  
+       			                           AND tcm.CFORM_NO	    = cm.CFORM_NO	
+       			                           AND tcm.MED_COV_TYPE = '0'
+       			                           AND tcm.ACC_TYPE     = '0'
+       			                           AND tcm.CFORM_IO     = 'I'
+       			                           AND tcm.ITEM_NO      = jm.ITEM_NO
+       			                           AND tcm.CODE_NO      = jm.CODE_NO
+       			                           AND tcm.EDI_FCODE    = '000000000'    
+                                           AND tcm.EDI_TCODE    = 'ZZZZZZZZZ' 
+                                           AND tcm.START_YM     = '202501' 
+                                           AND tcm.ACTION_YN    = 'Y'	    
+             WHERE cm.HOSP_CD = #{hospCd}
+		       AND cm.DATE_YM = #{workYm}   
+		     ]]>
+			 <if test='codeFg == "1"'><![CDATA[   
+			    AND cm.CFORM_NO IN ('H010')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "2"'><![CDATA[
+			    AND cm.CFORM_NO IN ('H011')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "3"'><![CDATA[
+			    AND cm.CFORM_NO in ('C010')
+			    AND cm.MED_TYPE IN ('1', '2')
+			 ]]></if>		
+			 <if test='codeFg == "4"'><![CDATA[
+			    AND cm.CFORM_NO   IN ('M110', 'M120', 'M130') 
+			    AND cm.TREAT_TYPE IN ('1', '3')
+			 ]]></if>
+			    AND COALESCE(jm.AMOUNT,0) > 0              
+		)
+        SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
+		            WHEN #{codeFg}    = '2' THEN '보호'
+		            WHEN #{codeFg}    = '3' THEN '자보'
+		            WHEN #{codeFg}    = '4' THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            
+		     , mm.BILL_SEQ                               AS billSeq
+		     , CAST(cr.gasanamt AS UNSIGNED)             AS calcAmt                                                             
+             , CAST(cr.claimamt AS UNSIGNED)             AS claimAmt
+		     , CAST(cr.gasanamt AS UNSIGNED)  
+		     - CAST(cr.claimamt AS UNSIGNED)             AS selfAmt
+             , cr.edi_code                               AS ediCode
+             , cr.unit_amt                               AS unitAmt
+             , cr.dailyqty                               AS dayQtys 
+             , cr.totalday                               AS totDays             
+	      FROM hospclaim_rate cr
+	      JOIN TBL_MYOUNG_MST mm ON mm.HOSP_CD  = cr.HOSP_CD 
+	                            AND mm.CLAIM_NO = cr.CLAIM_NO
+	                            AND mm.BILL_SEQ = cr.BILL_SEQ
+		 WHERE cr.HOSP_CD = #{hospCd}
+		   AND cr.DATE_YM = #{workYm}			                         
+	     ORDER BY 1,2	
+	</select> 
+	
+	<!--   
+	<select id="total_DataList_10" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH hospclaim_rate AS (
+		     SELECT DISTINCT
+		            cm.HOSP_CD
+		          , cm.CLAIM_NO
+		          , cm.CFORM_NO
+		          , cm.DATE_YM
+		          , cm.MED_TYPE
+		          , cm.TREAT_TYPE
+		          , jm.BILL_SEQ
+		          , jm.EDI_CODE                                                                AS edi_code
+                  , ROUND(jm.UNIT_PRICE)                       								   AS unit_amt
+                  , jm.DAILY_DOSE                             								   AS dailyqty 
+                  , jm.TOTAL_DOSE                             								   AS totalday
+                  
+		          , FN_GASAN_AMOUNT(cm.HOSP_CD,cm.DATE_YM ,cm.CFORM_NO,jm.EDI_CODE,jm.AMOUNT)  AS gasanamt
+		          
+		          , FN_CLAIM_AMOUNT(jm.HOSP_CD,jm.CLAIM_NO,jm.BILL_SEQ,jm.ROW_NO,
+                                    cm.DATE_YM,cm.CFORM_NO,jm.EDI_CODE,jm.AMOUNT)              AS claimamt
+		                           
+		       FROM TBL_CHUNG_MST  cm
+		       JOIN TBL_JINORD_MST jm  ON jm.HOSP_CD  = cm.HOSP_CD  
+		                              AND jm.CLAIM_NO = cm.CLAIM_NO
+		       	    				  AND jm.EDI_CODE IN ( SELECT DISTINCT dd.EDI_CODE
+								                             FROM TBL_DRUG_MST dd
+									                        WHERE dd.CODEFLAG IN ('C','D') )
+			 WHERE cm.HOSP_CD = #{hospCd}
+		       AND cm.DATE_YM = #{workYm}
+		     ]]>
+			 <if test='codeFg == "1"'><![CDATA[   
+			    AND cm.CFORM_NO IN ('H010')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "2"'><![CDATA[
+			    AND cm.CFORM_NO IN ('H011')
+			    AND cm.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "3"'><![CDATA[
+			    AND cm.CFORM_NO in ('C010')
+			    AND cm.MED_TYPE IN ('1', '2')
+			 ]]></if>		
+			 <if test='codeFg == "4"'><![CDATA[
+			    AND cm.CFORM_NO   IN ('M110', 'M120', 'M130') 
+			    AND cm.TREAT_TYPE IN ('1', '3')
+			 ]]></if>
+			    AND COALESCE(jm.AMOUNT,0) > 0              
+		) 
+        SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , COALESCE(mm.PAT_NAME, '')                 AS patNm
+		     
+		     , CASE #{codeFg}
+               	    WHEN '1' THEN '보험'
+               	    WHEN '2' THEN '보호'
+               	    WHEN '3' THEN '자보'
+               	    WHEN '4' THEN '산재'   ELSE ''  END    AS medCovType
+               	    
+		     , CASE mm.CLAIM_GRP
+		            WHEN '1' THEN '보완청구'
+		            WHEN '2' THEN '추가청구'
+		            WHEN '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            
+		     , mm.BILL_SEQ                               AS billSeq
+		     , cr.gasanamt                               AS calcAmt                                                             
+             , cr.claimamt                               AS claimAmt
+		     , cr.gasanamt - cr.claimamt                 AS selfAmt
+             , cr.edi_code                               AS ediCode
+             , cr.unit_amt                               AS unitAmt
+             , cr.dailyqty                               AS dayQtys 
+             , cr.totalday                               AS totDays
+	      FROM hospclaim_rate cr
+	      JOIN TBL_MYOUNG_MST mm  ON mm.HOSP_CD  = cr.HOSP_CD 
+	                             AND mm.CLAIM_NO = cr.CLAIM_NO
+	                             AND mm.BILL_SEQ = cr.BILL_SEQ
+		 WHERE cr.HOSP_CD = #{hospCd}
+		   AND cr.DATE_YM = #{workYm}
+			                         
+	     ORDER BY 1,2	
+	</select>     
+	-->
+	
+	<select id="total_DataList_11" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH gumsadata AS (
+			 SELECT DISTINCT 
+	                jm.HOSP_CD  
+	              , cm.CFORM_NO                                
+	              , jm.CLAIM_NO  
+	              , jm.ITEM_NO
+	              , jm.CODE_NO
+	              , jm.BILL_SEQ                               AS billSeq
+			      , jm.EDI_CODE                               AS ediCode
+			      , RIGHT(jm.EDI_CODE,1)                      AS subCode
+			      , ROUND(jm.UNIT_PRICE)                      AS unitAmt
+	              , jm.DAILY_DOSE                             AS dayQtys 
+	              , jm.TOTAL_DOSE                             AS totDays
+			      , jm.AMOUNT                                 AS calPrics
+		      FROM TBL_CHUNG_MST  cm FORCE INDEX (INDEX01)
+			  JOIN TBL_JINORD_MST jm FORCE INDEX (INDEX02) ON cm.HOSP_CD = jm.HOSP_CD AND cm.CLAIM_NO = jm.CLAIM_NO     
+		
+	     	 WHERE cm.HOSP_CD = #{hospCd}
+			   AND cm.DATE_YM = #{workYm}
+			   AND (
+			        jm.ITEM_NO = '09' AND jm.CODE_NO IN ('01','02','03')
+					OR
+					jm.ITEM_NO = 'L'  AND jm.CODE_NO IN ('89')
+				   )                      
+		)
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN gd.CFORM_NO = 'H010' THEN '보험' 
+		            WHEN gd.CFORM_NO = 'H011' THEN '보호'
+		            WHEN gd.CFORM_NO = 'C010' THEN '자보'
+		            WHEN gd.CFORM_NO IN ('M110', 'M120', 'M130')  THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            
+		     , gd.billSeq 
+		     , gd.ediCode 
+		     
+             , gd.unitAmt 
+             , gd.dayQtys
+             , gd.totDays
+		     , gd.calPrics
+	      FROM gumsadata      gd
+		  JOIN TBL_MYOUNG_MST mm ON mm.HOSP_CD  = gd.HOSP_CD 
+		                        AND mm.CLAIM_NO = gd.CLAIM_NO 
+		                        AND mm.BILL_SEQ = gd.billSeq
+		 WHERE 1=1	   
+		   AND NOT EXISTS ( SELECT 1
+	                          FROM TBL_SPECODE_MST tsm
+	                         WHERE tsm.HOSP_CD   = mm.HOSP_CD
+	                           AND tsm.CLAIM_NO  = mm.CLAIM_NO
+	                           AND tsm.BILL_SEQ  = mm.BILL_SEQ
+	                           AND tsm.SPEC_TYPE = 'JS008' )
+	       AND COALESCE(mm.DELYN,'') = ''                    
+		]]>
+		<if test='codeFg == "2"'><![CDATA[   
+		   AND gd.subCode != 'Z'
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND gd.subCode  = 'Z'
+		]]></if>		
+		<if test='codeFg == "5"'><![CDATA[
+		   AND gd.ITEM_NO  = 'L'
+		]]></if>		
+		<if test='codeFg == "6"'><![CDATA[
+		   AND gd.ITEM_NO != 'L'
+		]]></if>	                         
+	    
+	</select>
+	  
+	<select id="total_DataList_12" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH approdata AS (
+			 SELECT DISTINCT 
+	                jm.HOSP_CD  
+	              , cm.CFORM_NO                                
+	              , jm.CLAIM_NO  
+	              , jm.ITEM_NO
+	              , jm.CODE_NO
+	              , jm.BILL_SEQ                               AS billSeq
+			      , jm.EDI_CODE                               AS ediCode
+			      , RIGHT(jm.EDI_CODE,1)                      AS subCode
+			      , ROUND(jm.UNIT_PRICE)                      AS unitAmt
+	              , jm.DAILY_DOSE                             AS dayQtys 
+	              , jm.TOTAL_DOSE                             AS totDays
+			      , jm.AMOUNT                                 AS calPrics
+		      FROM TBL_CHUNG_MST  cm FORCE INDEX (INDEX01)
+			  JOIN TBL_JINORD_MST jm FORCE INDEX (INDEX02) ON cm.HOSP_CD = jm.HOSP_CD AND cm.CLAIM_NO = jm.CLAIM_NO     
+		
+	     	 WHERE cm.HOSP_CD   = #{hospCd}
+			   AND cm.DATE_YM   = #{workYm}
+			   AND jm.CODE_TYPE = '3'  
+			   AND ((jm.ITEM_NO = '03' AND jm.CODE_NO IN ('01','02'))
+					 OR
+					(jm.ITEM_NO = '04' AND jm.CODE_NO IN ('01','02','03','06'))
+				     OR
+				    (jm.ITEM_NO = 'L'  AND jm.CODE_NO IN ('83','84')))
+			                       
+		)
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , CASE WHEN ad.CFORM_NO = 'H010' THEN '보험' 
+		            WHEN ad.CFORM_NO = 'H011' THEN '보호'
+		            WHEN ad.CFORM_NO = 'C010' THEN '자보'
+		            WHEN ad.CFORM_NO IN ('M110', 'M120', 'M130')  THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            		            
+		     , ad.billSeq 
+		     , ad.ediCode 
+		     
+             , ad.unitAmt 
+             , ad.dayQtys
+             , ad.totDays
+		     , ad.calPrics
+	      FROM approdata      ad
+		  JOIN TBL_MYOUNG_MST mm ON mm.HOSP_CD = ad.HOSP_CD AND mm.CLAIM_NO = ad.CLAIM_NO AND mm.BILL_SEQ = ad.billSeq
+          
+		 WHERE 1=1	 
+		   AND NOT EXISTS ( SELECT 1
+	                          FROM TBL_SPECODE_MST tsm
+	                         WHERE tsm.HOSP_CD   = mm.HOSP_CD
+	                           AND tsm.CLAIM_NO  = mm.CLAIM_NO
+	                           AND tsm.BILL_SEQ  = mm.BILL_SEQ
+	                           AND tsm.SPEC_TYPE = 'JS008' )
+	       AND COALESCE(mm.DELYN,'') = ''                      
+		]]>
+		<if test='codeFg == "2"'><![CDATA[   
+		   AND ad.ITEM_NO in ('03','L')  AND ad.CODE_NO IN ('01','02','83','84')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		   AND ad.ITEM_NO in ('04','L')  AND ad.CODE_NO IN ('01','02','03','06','83','84')
+		]]></if>		
+		<if test='codeFg == "5"'><![CDATA[
+		   AND ad.ITEM_NO  = 'L'         AND ad.CODE_NO IN ('83','84')
+		]]></if>		
+		<if test='codeFg == "6"'><![CDATA[
+		   AND ad.ITEM_NO in ('03','04') AND ad.CODE_NO IN ('01','02','03','06')
+		]]></if>	                         
+	    
+	</select>
+	 
+	<select id="total_DataList_13" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    WITH jumin_check AS (
+		    SELECT COUNT(*) AS cnt
+		      FROM TBL_IPWON_INFO b
+		     WHERE b.HOSP_CD = #{hospCd}
+		       AND b.JOBYYMM = #{workYm}
+		       AND COALESCE(LEFT(b.JUMINNO, 6), '') != ''
+		),
+		query1 AS (
+		    SELECT REGEXP_REPLACE(a.PATNAME, '[0-9]', '') AS PATNAME,
+		           SUM(
+		                DATEDIFF(
+		                    CASE 
+		                        WHEN COALESCE(a.TEWONDT, '') = '' THEN LAST_DAY(CONCAT(a.JOBYYMM, '01')) 
+		                        WHEN REPLACE(REPLACE(a.TEWONDT, '-', ''), '/', '') > DATE_FORMAT(LAST_DAY(CONCAT(a.JOBYYMM, '01')), '%Y%m%d') 
+		                        THEN LAST_DAY(CONCAT(a.JOBYYMM, '01')) 
+		                        ELSE
+		                            CASE 
+		                                WHEN REPLACE(REPLACE(a.TEWONDT, '-', ''), '/', '') = '' THEN LAST_DAY(CONCAT(a.JOBYYMM, '01')) 
+		                                ELSE STR_TO_DATE(REPLACE(REPLACE(a.TEWONDT, '-', ''), '/', ''), '%Y%m%d')
+		                            END
+		                    END,
+		                    STR_TO_DATE(
+		                        CASE 
+		                            WHEN REPLACE(REPLACE(a.IPWONDT, '-', ''), '/', '') = '' THEN NULL
+		                            WHEN REPLACE(REPLACE(a.IPWONDT, '-', ''), '/', '') < CONCAT(a.JOBYYMM, '01') 
+		                            THEN CONCAT(a.JOBYYMM, '01') 
+		                            ELSE REPLACE(REPLACE(a.IPWONDT, '-', ''), '/', '') 
+		                        END, '%Y%m%d'
+		                    )
+		                )
+		                + CASE WHEN REPLACE(REPLACE(a.IPWONDT, '-', ''), '/', '') = '' THEN 0
+		                       WHEN STR_TO_DATE(REPLACE(REPLACE(a.IPWONDT, '-', ''), '/', ''), '%Y%m%d') >= STR_TO_DATE(CONCAT(a.JOBYYMM, '01'), '%Y%m%d') 
+		                        AND LEFT(a.IPWONTM, 2) BETWEEN '00' AND '08' THEN 1 ELSE 0 END
+		                + CASE WHEN REPLACE(REPLACE(a.TEWONDT, '-', ''), '/', '') = '' THEN 0
+		                       WHEN STR_TO_DATE(REPLACE(REPLACE(a.TEWONDT, '-', ''), '/', ''), '%Y%m%d') <= LAST_DAY(STR_TO_DATE(CONCAT(a.JOBYYMM, '01'), '%Y%m%d')) 
+		                        AND LEFT(a.TEWONTM, 2) BETWEEN '19' AND '24' THEN 1 ELSE 0 END
+		           ) + 1 AS STAY_DAYS,
+							       
+		           REPLACE(a.IPWONDT, '-', '')     AS IPWONDT,
+		           MAX(a.IPWONTM)                  AS IPWONTM,
+		           LEFT(COALESCE(a.JUMINNO ,''),6) AS JUMINNO,
+		           REPLACE(a.TEWONDT, '-', '')     AS TEWONDT,
+		           MAX(a.TEWONTM)                  AS TEWONTM
+		           
+		      FROM TBL_IPWON_INFO a
+		     WHERE a.HOSP_CD = #{hospCd}
+		       AND a.JOBYYMM = #{workYm}
+		     GROUP BY REGEXP_REPLACE(a.PATNAME, '[0-9]', ''), a.IPWONDT, a.JUMINNO, a.TEWONDT
+		),
+		query2 AS (
+		    SELECT REGEXP_REPLACE(mm.PAT_NAME, '[0-9]', '') AS PATNAME,
+		           SUM(ad.IPWONDAY)                         AS STAY_DAYS,
+		           mm.FIRST_ADMT                            AS IPWONDT,
+		           LEFT(COALESCE(mm.PAT_ID,''),6)           AS JUMINNO
+		      FROM ( SELECT jm.HOSP_CD
+		                  , jm.CLAIM_NO
+		                  , jm.BILL_SEQ
+		                  , SUM(jm.TOTAL_DOSE) AS IPWONDAY
+		               FROM TBL_CHUNG_MST  cm
+		               JOIN TBL_JINORD_MST jm ON jm.HOSP_CD  = cm.HOSP_CD
+		                                     AND jm.CLAIM_NO = cm.CLAIM_NO
+		                                     AND jm.EDI_CODE IN (SELECT DISTINCT dm.EDI_CODE
+		                                                           FROM TBL_DRUG_MST dm
+		                                                          WHERE dm.CODEFLAG = 'S')
+		              WHERE cm.HOSP_CD = #{hospCd}
+		                AND cm.DATE_YM = #{workYm}
+		                AND (jm.ITEM_NO IN ('02') OR (jm.ITEM_NO = 'L' AND jm.CODE_NO = '82'))
+		              GROUP BY jm.HOSP_CD, jm.CLAIM_NO, jm.BILL_SEQ
+		      ) ad
+		      JOIN TBL_MYOUNG_MST mm ON mm.HOSP_CD  = ad.HOSP_CD 
+		                            AND mm.CLAIM_NO = ad.CLAIM_NO 
+		                            AND mm.BILL_SEQ = ad.BILL_SEQ
+		                            AND NOT EXISTS ( SELECT 1
+                                                         FROM TBL_SPECODE_MST tsm
+                                                        WHERE tsm.HOSP_CD   = mm.HOSP_CD
+                                                          AND tsm.CLAIM_NO  = mm.CLAIM_NO
+                                                          AND tsm.BILL_SEQ  = mm.BILL_SEQ
+                                                          AND tsm.SPEC_TYPE = 'JS008' )
+                					AND COALESCE(mm.DELYN,'') = ''
+		     GROUP BY REGEXP_REPLACE(mm.PAT_NAME, '[0-9]', ''), mm.FIRST_ADMT, LEFT(COALESCE(mm.PAT_ID,''),6)
+		)
+		SELECT CASE WHEN CHAR_LENGTH(COALESCE(q1.PATNAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(q1.PATNAME, ''), CHAR_LENGTH(COALESCE(q1.PATNAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+		     , q1.JUMINNO               AS patId
+		     , q1.IPWONDT               AS admitDt
+		     , q1.IPWONTM               AS admitTm
+		     , q1.TEWONDT               AS dischDt
+		     , q1.TEWONTM               AS dischTm
+		     , q1.STAY_DAYS             AS admDays
+		     , COALESCE(q2.STAY_DAYS,0) AS totDays
+		     , CASE WHEN q1.STAY_DAYS - COALESCE(q2.STAY_DAYS, 0) = 0 THEN '' 
+		            WHEN COALESCE(q2.JUMINNO,'') = ''                 THEN '대상자 누락'  
+		            ELSE CONCAT('일수차이 : ', q1.STAY_DAYS - COALESCE(q2.STAY_DAYS, 0)) END AS jobNote  
+		  FROM query1 q1
+		  JOIN jumin_check jc ON 1=1
+		  LEFT JOIN query2 q2
+		         ON ((jc.cnt > 0 AND q1.JUMINNO = q2.JUMINNO)
+		             OR   
+		             (jc.cnt = 0 AND q1.PATNAME = q2.PATNAME AND q1.IPWONDT = q2.IPWONDT))
+		  JOIN TBL_HOSP_MST hm ON hm.HOSP_CD   = #{hospCd}
+		                      AND hm.ACTION_YN = 'Y'
+         WHERE 1=1
+           AND ( hm.OMT_YN != '2' 
+                 OR 
+                (hm.OMT_YN = '2' AND q1.STAY_DAYS - COALESCE(q2.STAY_DAYS, 0) != 0)
+               )
+	]]>     
+	</select>   
+	<select id="total_DataList_14" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
+	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					ELSE '' END AS patNm
+                    
+		     , CASE WHEN cj.CFORM_NO = 'H010' THEN '보험' 
+		            WHEN cj.CFORM_NO = 'H011' THEN '보호'
+		            WHEN cj.CFORM_NO = 'C010' THEN '자보'
+		            WHEN cj.CFORM_NO IN ('M110', 'M120', 'M130')  THEN '산재' 
+		            ELSE '' END                          AS medCovType
+		     , CASE WHEN mm.CLAIM_GRP = '1' THEN '보완청구'
+		            WHEN mm.CLAIM_GRP = '2' THEN '추가청구'
+		            WHEN mm.CLAIM_GRP = '3' THEN '분리청구' ELSE '원청구' END AS claimGrp
+		            		            
+		     , cj.billSeq 
+		     , cj.ediCode
+             , cj.unitAmt 
+             , cj.dayQtys
+             , cj.totDays
+		     , cj.calPrics
+	      FROM TBL_MYOUNG_MST mm 
+		  JOIN ( SELECT DISTINCT 
+			            jm.HOSP_CD  
+		              , cm.CFORM_NO                                
+		              , jm.CLAIM_NO  
+		              , jm.BILL_SEQ                               AS billSeq
+				      , jm.EDI_CODE                               AS ediCode
+				      , ROUND(jm.UNIT_PRICE)                      AS unitAmt
+		              , jm.DAILY_DOSE                             AS dayQtys 
+		              , jm.TOTAL_DOSE                             AS totDays
+				      , jm.AMOUNT                                 AS calPrics
+			       FROM TBL_CHUNG_MST  cm
+			       JOIN TBL_JINORD_MST jm 
+			         ON jm.HOSP_CD  = cm.HOSP_CD 
+			        AND jm.CLAIM_NO = cm.CLAIM_NO
+			      WHERE cm.HOSP_CD  = #{hospCd}
+		            AND cm.DATE_YM = #{workYm}
+			        AND jm.EDI_CODE IN (SELECT DISTINCT dd.EDI_CODE
+			                              FROM TBL_DRUG_MST dd
+			                             WHERE dd.CODEFLAG IN ('C','D','M','T'))
+			    ) cj ON cj.HOSP_CD  = mm.HOSP_CD AND cj.CLAIM_NO = mm.CLAIM_NO AND cj.billSeq = mm.BILL_SEQ
+			    
+		  WHERE ((mm.MFORM_NO IN ('M311','M321','M331','M312','M313') AND mm.MED_TYPE IN ('01','03','04','06','08','10','12','14','16','18','20'))
+	              OR
+	             (mm.MFORM_NO IN ('H020','H120','H022','K020','D020','P020',
+	                              'H030','H130','H032','K030','H040','H042','P030',
+	                              'K020','K030','C110','M322',
+	                              'C020','C120','C022','C110'))
+	            )
+			AND NOT EXISTS (SELECT 1
+			                  FROM TBL_SPECODE_MST tsm
+			                 WHERE tsm.HOSP_CD   = mm.HOSP_CD
+			                   AND tsm.CLAIM_NO  = mm.CLAIM_NO
+			                   AND tsm.BILL_SEQ  = mm.BILL_SEQ
+			                   AND tsm.SPEC_TYPE = 'JS008'
+			               )
+			AND COALESCE(mm.DELYN, '') = ''                      
+		]]>
+		<if test='codeFg == "1"'><![CDATA[   
+		    AND mm.MFORM_NO IN ('H020','H120','H022','D020','P020')
+		]]></if>		
+		<if test='codeFg == "2"'><![CDATA[
+		    AND mm.MFORM_NO IN ('H030','H130','H032','H040','H042','P030')
+		]]></if>		
+		<if test='codeFg == "3"'><![CDATA[
+		    AND mm.MFORM_NO IN ('C020','C120','C022')
+		]]></if>		
+		<if test='codeFg == "4"'><![CDATA[
+		    AND mm.MFORM_NO IN ('M311','M321','M331')
+		]]></if>	                         
+	    
+	</select>           
+	            
+</mapper>

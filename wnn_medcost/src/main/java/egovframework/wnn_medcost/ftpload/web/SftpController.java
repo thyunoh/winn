@@ -1,6 +1,10 @@
 package egovframework.wnn_medcost.ftpload.web;
 
 import egovframework.wnn_medcost.ftpload.service.SftpService;
+import egovframework.wnn_medcost.magam.web.MagamController;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +25,9 @@ import java.util.*;
 @RequestMapping("/sftp")
 public class SftpController {
 
+	
+	private static final Logger log = LoggerFactory.getLogger(SftpController.class);
+	
     private final SftpService sftpService;
 
     public SftpController(SftpService sftpService) {
@@ -41,7 +48,7 @@ public class SftpController {
             return ResponseEntity.status(500).body("❌ 서버 오류: " + e.getMessage());
         }
     }
-    /**
+    /**@   sftp -p 22 winner@SFTP_HOST
      * ✅ 다중 파일 업로드 처리 (ResponseEntity로 결과 반환)
      */
     @PostMapping("/fileupload.do")
@@ -114,8 +121,14 @@ public class SftpController {
             
             String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
 
+            log.error("📁 요청된 파일 경로: " + remoteFilePath);	
             System.out.println("📁 요청된 파일 경로: " + remoteFilePath);
 
+            System.out.println("filePath: " + filePath);
+            System.out.println("BASE_DIRECTORY: " + BASE_DIRECTORY);
+            System.out.println("cleanedPath: " + cleanedPath);
+            System.out.println("remoteFilePath: " + remoteFilePath);
+            
             // ✅ 경로 존재 여부 확인
             try {
                 SftpATTRS attrs = channelSftp.lstat(remoteFilePath);

@@ -6,6 +6,3 @@
     		<p> COPYRIGHT©2024 WinnerNet. ALL RIGHTS RESERVED </p>
     	</div>
     </footer>
-    
-    
-    

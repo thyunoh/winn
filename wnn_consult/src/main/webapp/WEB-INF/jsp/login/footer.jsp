@@ -1,15 +1,15 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<link href="/css/winct/style.css?v=123"   rel="stylesheet">
-<style>
-</style>
+<link href="/wnn_consult/css/winct/style.css?v=123"   rel="stylesheet">
+ <style>
+ </style>
  <div class="wrapper">
 	  <footer class="footer" id="footer" style="color: var(--color-gray); background-color: #00325B; width: 100%;">
 	    <div class="inner" style="text-align:center; font-size:12px">
 	      <div class="footer_inner" style="box-sizing: border-box; max-width: 800px; 
 	                  margin: 0 auto; width: 60%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-wrap: wrap;">
 					<h2 class="f_logo" style="margin-top: -25px;">
-						<img src="/images/winct/winnner_log_bot.svg" alt="위너넷">
+						<img src="/wnn_consult/images/winct/winnner_log_bot.svg" alt="위너넷">
 					</h2>
 					<div class="footer_con">
 						<address style="text-align: left;">

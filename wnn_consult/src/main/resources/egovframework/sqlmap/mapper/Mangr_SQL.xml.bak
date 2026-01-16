@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.wnn_consult.mangr.mapper.MangrMapper">
+    <select id="selectNotiMstList" parameterType="NotiDTO" resultType="NotiDTO"> <![CDATA[ 
+        SELECT 
+          A.NOTI_SEQ ,
+          A.FILE_GB  , 
+          C.SUB_CODE_NM AS  NOTI_NM,
+          CASE WHEN IFNULL(B.USER_NM,'') <> '' THEN IFNULL(B.USER_NM,'') 
+          ELSE A.UPD_USER END USER_NM ,
+          DATE_FORMAT(A.START_DT, '%Y-%m-%d') START_DT ,
+	      DATE_FORMAT(A.END_DT, '%Y-%m-%d') END_DT, 
+          A.USE_YN , 
+          IFNULL(A.HOSP_CD,'') HOSP_CD ,
+          A.NOTI_TITLE , 
+          A.NOTI_CONTENT , 
+          A.UPDATE_SW ,
+          IFNULL(A.NOTI_REDCNT,'') NOTI_REDCNT , 
+          A.REG_DTTM ,
+          A.REG_USER , 
+          A.REG_IP , 
+          A.UPD_DTTM ,
+          A.UPD_USER , 
+          A.UPD_IP  
+        FROM TBL_NOTI_MST A 
+        LEFT JOIN TBL_USER_MST B ON  B.USER_ID   = A.UPD_USER  
+                                AND  B.HOSP_CD   = A.HOSP_CD
+                                AND  B.ACTION_YN = A.ACTION_YN 
+        LEFT JOIN TBL_CODE_DTL C ON  C.CODE_GB   = 'Z' 
+                                 AND C.CODE_CD   = 'NOTI_GB' 
+                                 AND C.SUB_CODE  = A.FILE_GB
+                                 AND C.ACTION_YN = A.ACTION_YN 
+        WHERE 1=1  
+             AND A.ACTION_YN = 'Y'
+             AND A.USE_YN    = 'Y'  
+		 ]]>
+		 <if test='fileGb != "0" '>
+	         AND A.FILE_GB   = #{fileGb}  
+	     </if>             
+         <![CDATA[    
+             AND DATE_FORMAT(now(),'%Y%m%d') BETWEEN REPLACE(A.START_DT,'-','') AND REPLACE(A.END_DT,'-','')
+             AND DATE_FORMAT(A.UPD_DTTM,'%Y%m%d') BETWEEN REPLACE(#{startDt},'-','') AND REPLACE(#{endDt},'-','')
+		 ]]>
+	    <choose>
+	        <when test="searchGb = 'T' and searchText != null and searchText != ''"><![CDATA[
+	            AND (A.NOTI_TITLE LIKE CONCAT('%', #{searchText}, '%'))
+	        ]]></when>
+	        <when test="searchGb = 'E' and searchText != null and searchText != ''"><![CDATA[
+	            AND (A.NOTI_CONTENT LIKE CONCAT('%', #{searchText}, '%'))
+	        ]]></when>
+	        <when test="searchText != null and searchText != ''"><![CDATA[
+	            AND (A.NOTI_TITLE LIKE CONCAT('%', #{searchText}, '%')
+	            OR  A.NOTI_CONTENT LIKE CONCAT('%', #{searchText}, '%'))
+	        ]]></when>
+	    </choose>
+	         <![CDATA[
+	      Order By  A.UPD_DTTM DESC 
+	         ]]>
+    </select>         
+    
+    <select id="selectNotiMstinfo" parameterType="NotiDTO" resultType="NotiDTO"> <![CDATA[ 
+        SELECT 
+          A.NOTI_SEQ ,
+          A.FILE_GB  , 
+          A.START_DT , 
+          A.END_DT ,
+          A.USE_YN , 
+          A.HOSP_CD ,
+          A.NOTI_TITLE , 
+          A.NOTI_CONTENT , 
+          A.UPDATE_SW ,
+          A.NOTI_REDCNT , 
+          A.REG_DTTM ,
+          A.REG_USER , 
+          A.REG_IP , 
+          A.UPD_DTTM ,
+          A.UPD_USER , 
+          A.UPD_IP ,
+          A.HOSP_UUID
+        FROM TBL_NOTI_MST A
+        WHERE 1=1
+         AND A.NOTI_SEQ = #{notiSeq} 
+    ]]> 
+    </select> 
+      
+    <insert id="insertNotiMst" parameterType="NotiDTO"> <![CDATA[ 
+        INSERT INTO TBL_NOTI_MST (
+            FILE_GB, 
+            START_DT, 
+            END_DT, 
+            USE_YN, 
+            HOSP_CD, 
+            NOTI_TITLE, 
+            NOTI_CONTENT, 
+            UPDATE_SW, 
+            NOTI_REDCNT, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP ,
+            HOSP_UUID
+        ) 
+        VALUES (
+            #{fileGb}, 
+            REPLACE(#{startDt} , '-', ''), 
+            REPLACE(#{endDt} , '-', '') , 
+            #{useYn}, 
+            #{hospCd}, 
+            #{notiTitle}, 
+            #{notiContent}, 
+            #{updateSw}, 
+            #{notiRedcnt}, 
+            now(), 
+            #{regUser}, 
+            #{regIp}, 
+            now(), 
+            #{updUser}, 
+            #{updIp} ,
+            #{hospUuid}
+        )
+    ]]>    
+    </insert>    
+    <!--        NOTI_REDCNT  = #{noti_redcnt}, -->
+    <update id="updateNotiMst" parameterType="NotiDTO"> <![CDATA[ 
+        UPDATE TBL_NOTI_MST
+        SET 
+            START_DT     = REPLACE(#{startDt} , '-', ''),
+            END_DT       = REPLACE(#{endDt} , '-', '') ,    
+            USE_YN       = #{useYn},
+            HOSP_CD      = #{hospCd},
+            NOTI_TITLE   = #{notiTitle},
+            NOTI_CONTENT = #{notiContent},
+            UPDATE_SW    = #{updateSw},
+            UPD_DTTM     = now(),
+            UPD_USER     = #{updUser},
+            UPD_IP       = #{updIp} ,
+            HOSP_UUID    = #{hospUuid}
+        WHERE NOTI_SEQ   = #{notiSeq} 
+         AND  FILE_GB    = #{fileGb} 
+    ]]>    
+    </update>
+    <delete id="deleteNotiMst" parameterType="NotiDTO"> <![CDATA[ 
+        DELETE FROM TBL_NOTI_MST
+        WHERE NOTI_SEQ   = #{notiSeq}
+        AND   FILE_GB    = #{fileGb} 
+    ]]>    
+    </delete>  
+    <update id="updatecntNotiMst" parameterType="NotiDTO"> <![CDATA[ 
+ 
+       UPDATE TBL_NOTI_MST 
+        SET NOTI_REDCNT = NOTI_REDCNT + 1 
+	  WHERE NOTI_SEQ = #{notiSeq} 
+	    AND FILE_GB  = #{fileGb}
+    ]]>    
+    </update> 
+    <!-- 질문응답 -->
+    <select id="selectqstnlist" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
+        SELECT 
+            A.HOSP_CD, 
+            A.FILE_GB, 
+            A.QSTN_TITLE, 
+            A.ASQ_SEQ ,
+            CASE WHEN IFNULL(B.USER_NM,'') = '' THEN A.REG_USER 
+            ELSE B.USER_NM  END  USER_NM ,
+            C.HOSP_NM ,
+            A.QSTN_CONTS, 
+            A.ASQ_SHARE, 
+            IFNULL(A.ANSR_CONTS,'') ANSR_CONTS , 
+            A.UPDATE_SW, 
+            A.REG_DTTM, 
+            A.REG_USER, 
+            A.REG_IP, 
+            A.READ_CNT ,
+            A.UPD_DTTM, 
+            A.UPD_USER, 
+            A.UPD_IP, 
+            A.ANSR_DTTM, 
+            A.ANSR_USER, 
+            A.ANSR_IP, 
+            A.ANSR_UPD_DTTM, 
+            A.ANSR_UPD_USER, 
+            A.ANSR_UPD_IP , 
+            A.HOSP_UUID ,
+            A.QSTN_WAN  ,
+            A.ANSR_WAN  ,
+            CASE WHEN  A.QSTN_WAN = 'Y' THEN '완료'
+            ELSE '진행' END QSTN_STAT ,
+            CASE WHEN  A.ANSR_WAN = 'Y' THEN '완료'
+            ELSE '진행' END ANSR_STAT             
+           FROM TBL_ASQ_MST A 
+            LEFT JOIN  TBL_USER_MST B ON B.USER_ID    = A.REG_USER
+                                     AND B.HOSP_CD    = A.HOSP_CD 
+                                     AND B.ACTION_YN  = A.ACTION_YN  
+            LEFT JOIN  TBL_HOSP_MST C ON C.HOSP_CD    = A.HOSP_CD 
+                                     AND C.ACTION_YN  = A.ACTION_YN  
+        WHERE 1=1  
+             AND A.ACTION_YN = 'Y'
+		 ]]>
+		  <if test='hospCdasq != null and hospCdasq !="" '><![CDATA[
+	         AND A.HOSP_cd = #{hospCdasq}
+	      ]]>
+	      </if>
+		  <if test='qstnTitle != null and qstnTitle !="" '><![CDATA[
+	         AND (A.QSTN_TITLE LIKE CONCAT(#{qstnTitle},'%')
+	          OR  A.QSTN_CONTS LIKE CONCAT(#{qstnTitle},'%') )
+	      ]]>
+	      </if>
+	      <![CDATA[
+		     Order by A.UPD_DTTM  DESC
+	      ]]>
+    </select>
+     <select id="getasqCdList" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
+       SELECT 
+            A.FILE_GB, 
+            A.QSTN_TITLE, 
+            A.ASQ_SEQ ,
+            IFNULL(B.USER_NM,'') USER_NM  ,
+            C.HOSP_NM ,
+            A.QSTN_CONTS, 
+            A.ASQ_SHARE, 
+            IFNULL(A.ANSR_CONTS,'') ANSR_CONTS , 
+            A.UPDATE_SW, 
+            A.REG_DTTM, 
+            A.REG_USER, 
+            A.REG_IP, 
+            A.READ_CNT ,
+            A.UPD_DTTM, 
+            A.UPD_USER, 
+            A.UPD_IP, 
+            IFNULL(A.QSTN_WAN,'') QSTN_WAN  ,
+            IFNULL(A.ANSR_WAN,'') ANSR_WAN ,
+            CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
+            ELSE '질문진행' END QSTN_STAT ,
+            CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
+            ELSE '답변진행' END ANSR_STAT             
+           FROM TBL_ASQ_MST A 
+            LEFT JOIN  TBL_USER_MST B ON B.USER_ID = A.REG_USER
+                                     AND B.HOSP_CD = A.HOSP_CD 
+                                     AND B.ACTION_YN  = A.ACTION_YN  
+            LEFT JOIN  TBL_HOSP_MST C ON C.HOSP_CD = A.HOSP_CD 
+                                     AND C.ACTION_YN  = A.ACTION_YN  
+        WHERE 1=1  
+             AND A.ACTION_YN = 'Y'
+             AND A.HOSP_CD  = #{hospCd} 
+ 		 ]]>
+		  <if test="asqGb != null and asqGb != '' and  asqGb == '1' ">
+	         AND IFNULL(A.QSTN_WAN,'') = 'Y'
+	      </if>
+		  <if test="asqGb != null and asqGb != '' and  asqGb == '2' ">
+	         AND IFNULL(A.ANSR_WAN,'') = 'Y'
+	      </if>	      
+	      <![CDATA[
+		     Order by A.REG_DTTM  DESC
+	      ]]>
+    </select>       
+     <!-- 질문입력  -->   
+     <insert id="insertqstnMst" parameterType="AsqDTO"> <![CDATA[ 
+        INSERT INTO TBL_ASQ_MST (
+            HOSP_CD, 
+            FILE_GB, 
+            QSTN_TITLE, 
+            QSTN_CONTS, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP, 
+            HOSP_UUID ,
+            QSTN_WAN
+        ) VALUES (
+            #{hospCdasq}, 
+            #{fileGbasq}, 
+            #{qstnTitle}, 
+            #{qstnConts}, 
+            NOW(), 
+            #{regUserasq}, 
+            #{regIp}, 
+            NOW(), 
+            #{updUserasq}, 
+            #{updIp}, 
+            #{hospUuidasq} ,
+            #{qstnWan}
+        )
+    ]]>    
+    </insert>    
+    <!-- 질문수정 -->
+     <update id="updateqstnMst" parameterType="AsqDTO"> <![CDATA[ 
+        UPDATE TBL_ASQ_MST
+        SET 
+            QSTN_TITLE   = #{qstnTitle},
+            QSTN_CONTS   = #{qstnConts},
+            REG_DTTM     = NOW(),
+            REG_USER     = #{regUserasq},
+            REG_IP       = #{regIp} ,
+            QSTN_WAN     = #{qstnWan}
+        WHERE ASQ_SEQ  = #{asqSeq} 
+          AND FILE_GB  = #{fileGbasq}
+          AND ACTION_YN = 'Y' 
+     ]]>   
+    </update>   
+      <update id="updatedelasqCd" parameterType="AsqDTO"> <![CDATA[ 
+        UPDATE TBL_ASQ_MST
+        SET 
+            ACTION_YN    = 'N',
+            REG_DTTM     = NOW(),
+            REG_USER     = #{regUserasq},
+            REG_IP       = #{regIp} 
+        WHERE ASQ_SEQ  = #{asqSeq} 
+          AND FILE_GB  = #{fileGbasq}
+          AND ACTION_YN = 'Y'
+     ]]>   
+    </update>   
+     <select  id="selectqstnInfo" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
+        SELECT 
+            QSTN_TITLE ,
+            QSTN_CONTS ,
+            IFNULL(QSTN_WAN,'')  QSTN_WAN  ,
+            ANSR_CONTS , 
+            IFNULL(ANSR_WAN,'')  ANSR_WAN  ,
+            UPDATE_SW  ,
+            FILE_GB    ,
+            ASQ_SEQ    ,
+            REG_DTTM   ,
+            REG_USER   ,
+            REG_IP     , 
+            UPD_DTTM   ,
+            UPD_USER   ,
+            UPD_IP     
+         FROM  TBL_ASQ_MST   
+        WHERE  ASQ_SEQ  = #{asqSeq} 
+     ]]>   
+    </select> 
+   <!-- 자주하는 질문 --> 
+    <select id="selectfaqlist" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[     
+        SELECT 
+            A.FAQ_SEQ ,
+            A.FILE_GB, 
+            A.QSTN_CONTS, 
+            IFNULL(A.ANSR_CONTS,'') ANSR_CONTS , 
+            A.REG_DTTM, 
+            A.REG_USER, 
+            A.REG_IP, 
+            A.UPD_DTTM, 
+            A.UPD_USER, 
+            A.UPD_IP ,
+            A.SORT_SEQ
+           FROM TBL_FAQ_MST A 
+        WHERE 1=1  
+          AND A.ACTION_YN = 'Y'  
+		 ]]>
+		  <if test='qstnConts != null and qstnConts !="" '><![CDATA[
+	         AND (A.QSTN_CONTS LIKE CONCAT(#{qstnConts},'%')
+	          OR  A.ANSR_CONTS LIKE CONCAT(#{ansrConts},'%') )
+	      ]]>
+	      </if>
+	      <![CDATA[
+		     Order by A.SORT_SEQ  DESC
+	      ]]>
+    </select>
+     <insert id="insertfaqMst" parameterType="FaqDTO"> <![CDATA[ 
+        INSERT INTO TBL_FAQ_MST (
+            FILE_GB, 
+            QSTN_CONTS, 
+            ANSR_CONTS, 
+            REG_DTTM, 
+            REG_USER, 
+            REG_IP, 
+            UPD_DTTM, 
+            UPD_USER, 
+            UPD_IP ,
+            SORT_SEQ
+        ) VALUES (
+            #{fileGb}, 
+            #{qstnConts}, 
+            #{ansrConts}, 
+            NOW(), 
+            #{regUser}, 
+            #{regIp}, 
+            NOW(), 
+            #{updUser}, 
+            #{updIp} ,
+            #{sortSeq}
+        )
+    ]]>    
+    </insert>    
+     <update id="updatefaqMst" parameterType="FaqDTO"> <![CDATA[ 
+        UPDATE TBL_FAQ_MST
+        SET 
+            QSTN_TITLE   = #{qstnTitle},
+            ANSR_CONTS   = #{qstnConts},
+            UPDATE_SW    = #{updateSw},
+            UPD_DTTM     = NOW(),
+            UPD_USER     = #{updUser},
+            UPD_IP       = #{updIp} ,
+            SORT_SEQ     = #{sortSeq} 
+        WHERE FAQ_SEQ  = #{sortSeq} 
+     ]]>   
+    </update>   
+     <select  id="selectfaqInfo" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[ 
+        SELECT 
+            QSTN_CONTS ,
+            ANSR_CONTS ,
+            START_DT   ,
+            END_DT , 
+            USE_YN   ,
+            REG_DTTM  ,
+            REG_USER   ,
+            REG_IP   ,
+            UPD_DTTM  ,
+            UPD_USER   ,
+            UPD_IP    ,
+            SORT_SEQ     
+         FROM  TBL_FAQ_MST   
+        WHERE  FAQ_SEQ  = #{faqSeq} 
+     ]]>   
+    </select>          
+    <select  id="getFileCdList" parameterType="FileDTO"  resultType ="FileDTO"> <![CDATA[ 
+        SELECT  
+	         A.FILE_SEQ   
+	        ,A.FILE_GB  
+            ,B.SUB_CODE_NM   
+	        ,A.FILE_TITLE  
+	        ,A.FILE_PATH  
+	        ,A.FILE_SIZE  
+	        ,A.HOSP_CD 
+	        ,A.USE_YN  
+	        ,A.REG_DTTM 
+	        ,A.REG_USER  
+	        ,A.REG_IP  
+	        ,A.UPD_DTTM 
+	        ,A.UPD_USER  
+	        ,A.UPD_IP 
+          FROM TBL_FILE_MST A  
+          LEFT JOIN  TBL_CODE_DTL B ON B.CODE_GB    = 'Z'
+                                  AND B.CODE_CD    = 'NOTI_GB'
+                                  AND B.SUB_CODE   = A.FILE_GB
+                                  AND B.ACTION_YN  = A.ACTION_YN           
+          WHERE 1=1
+           AND A.ACTION_YN = 'Y' 
+           AND A.FILE_SEQ = #{fileSeq}
+           AND A.FILE_GB  = #{fileGb} 
+       ]]>     
+        <if test='hospCd != null and hospCd != "" '>
+        <![CDATA[
+           AND   A.HOSP_CD = #{hospCd}
+        ]]>
+    </if>
+    </select>    
+</mapper>

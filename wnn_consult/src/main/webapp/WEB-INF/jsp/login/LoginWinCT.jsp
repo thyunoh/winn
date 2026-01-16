@@ -8,7 +8,6 @@
 <%@ page import="java.util.*"%>
 <!DOCTYPE html>
 <html>
-
 <!-- 로그인 -->
 <head>
 <meta charset="UTF-8" />
@@ -36,16 +35,15 @@
 
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-<link href="/css/winct/bootstrap.css" rel="styleshㄹeet">
-<link href="/css/winct/style.css?v=123" rel="stylesheet">
-<link href="/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
+<link href="/wnn_consult/css/winct/bootstrap.css" rel="stylesheet">
+<link href="/wnn_consult/css/winct/style.css?v=123" rel="stylesheet">
+<link href="/wnn_consult/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
 <!-- JavaScript -->
-<script type="text/javascript" src="/js/winct/main.js"></script>
-<script type="text/javascript" src="/js/winct/message.js"></script>
-<script type="text/javascript" src="/js/winct/contact.js"></script>
-<script type="text/javascript" src="/js/winct/loading.js"></script>
-<script type="text/javascript" src="/js/winct/schcommons.js"></script>
-
+<script type="text/javascript" src="/wnn_consult/js/winct/main.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/message.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/contact.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/loading.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/schcommons.js"></script>
 <!-- 리치 에디터  -->
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
@@ -58,8 +56,102 @@
 
 <!-- wnnnet 설정끝 -->
 <!-- DataTables JS 추가 -->
+
 </head>
 <style>
+/* 팝업 배경 오버레이 */
+.overlay_1 {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+/* 팝업창 */
+.popup-box_1 {
+  display: none;
+  position: fixed;
+  width: 1080px;
+  height: 1080px;
+  top: 50%; 
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 40%;
+  max-height: 90%; 
+  overflow: auto;
+}
+
+.popup-box_1 img {
+  max-width: 100%;
+  height: auto;
+}
+
+.popup-close_1 {
+  position: absolute;
+  top: 10px; right: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  color: red;
+  cursor: pointer;
+}
+
+.overlay_1 {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background: rgba(0,0,0,0.5);
+   z-index: 999;
+ }
+
+ .popup-box_1 {
+   position: fixed;
+   top: 50%;
+   left: 0; /* 좌측 끝으로 이동 */
+   transform: translateY(-50%);
+   background: white;
+   padding: 10px;
+   z-index: 1000;
+   max-height: 80vh;
+   overflow: auto; /* 스크롤 가능하도록 */
+ }
+ 
+.popup-close_1 {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  background-color: #f0f0f0; /* 버튼처럼 보이게 */
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  color: black; /* 글자색을 검정으로 지정 */
+}
+
+.popup-close_1:hover {
+  background-color: #ddd;
+}
+
+#popupImg_1 {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 비율 유지하면서 전체 영역에 맞춤 */
+    display: block;
+    background: #fff; /* 이미지 로딩 전 배경 */
+}
+
 </style>
 <body>
 <!-- Navbar Start -->
@@ -69,7 +161,7 @@
 				<a class="btn d-flex align-items-center bg-white w-80"
 				   data-bs-toggle="collapse" href="#navbar-vertical"
 				   style="height: 30px; padding: 0; width: 40%; margin-left:49%; margin-top:15px;">
-					<img src="/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
+					<img src="/wnn_consult/images/winct/winner_log_top.svg" alt="WinnerNet Logo" id="consultingTitle">
 				</a>
 			</div>
 			<div class="col-lg-9">
@@ -93,11 +185,11 @@
 								   컨설팅 소개
 								</a>
 								<div class="dropdown-menu bg-light rounded-0 border-0 m-0">
-									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult1.do')">의료기관컨설팅</a>
-									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult2.do')">재청구컨설팅</a>
-									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
-									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
-									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/login/wnnpage_consult5.do')">현지조사컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/wnn_consult/login/wnnpage_consult1.do')">의료기관컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/wnn_consult/login/wnnpage_consult2.do')">재청구컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/wnn_consult/login/wnnpage_consult3.do')">의료기관인증컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/wnn_consult/login/wnnpage_consult4.do')">적정성평가컨설팅</a>
+									<a href="#" class="dropdown-item" style="font-size: 16px;" onclick="setActive(this); loadPage('/wnn_consult/login/wnnpage_consult5.do')">현지조사컨설팅</a>
 								</div>
 							</div>
 			
@@ -113,7 +205,7 @@
 							<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
 						</div>
 			
-						<img src="/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
+						<img src="/wnn_consult/images/winct/headerRight.svg" alt="Header Decoration" class="headerRightImg" style="height: 83px;">
 					</div>
 				</nav>
 			</div>
@@ -127,42 +219,117 @@
 		<!-- Carousel Start -->
 	<div class="container-fluid mb-2" style="position: relative;">
 		<div class="row px-xl-8">
-		    <!-- 슬라이드 시작  -->
+		    
+		    <!-- 슬라이드 시작 -->
 			<div class="col-lg-12 mx-auto">
-				<!-- 수정시 이미지 좌측공백 유의-->
-				<div id="header-carousel" class="carousel slide carousel-fade mb-2"
-					data-bs-ride="carousel"
-					style="position: absolute; top: 50%; left: 0; right: 10px; z-index: -1;">
+				<div id="header-carousel" 
+					 class="carousel slide carousel-fade mb-2"
+					 data-bs-ride="carousel"
+					 data-bs-interval="2000"
+					 style="position: absolute; top: 50%; left: 0; right: 10px; z-index: 0;">
+			
 					<ol class="carousel-indicators">
-						<li data-bs-target="#header-carousel" data-bs-slide-to="0"
-							class="active"></li>
+						<li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
 						<li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
 						<li data-bs-target="#header-carousel" data-bs-slide-to="2"></li>
+						<li data-bs-target="#header-carousel" data-bs-slide-to="3"></li>
+						<li data-bs-target="#header-carousel" data-bs-slide-to="4"></li>
 					</ol>
-
-					<!-- 슬라이드 1 -->
+			
+					<!-- 슬라이드들 -->
 					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
 						<div class="slide-image-container d-flex align-items-center w-100 h-100">
-						   <img src="/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
-						</div>
-					</div>					
-					<!-- 슬라이드 2 -->
-					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-							<img src="/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+							<a href="https://winner797.net/detail.php?number=324" target="_blank">
+								<img src="/wnn_consult/images/winct/image9.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+							</a>
 						</div>
 					</div>
-					
-					<!-- 슬라이드 3 -->
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-							<img src="/images/winct/image1.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+							<a href="https://winner797.net/detail.php?number=321" target="_blank">
+								<img src="/wnn_consult/images/winct/image7.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+							</a>
 						</div>
 					</div>
-
+					<div class="carousel-item" style="height: 540px; overflow: hidden;">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+							<img src="/wnn_consult/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+						</div>
+					</div>
+					<div class="carousel-item" style="height: 540px; overflow: hidden;">
+						<div class="d-flex align-items-center justify-content-center w-100 h-100">
+							<img src="/wnn_consult/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+						</div>
+					</div>
+					<div class="carousel-item" style="height: 540px; overflow: hidden;">
+						<div class="d-flex align-items-center justify-content-center w-100 h-100">
+							<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank">
+								<img src="/wnn_consult/images/winct/image5.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+							</a>
+						</div>
+					</div>
+			
+					<!-- 왼쪽 화살표 버튼 -->
+					<button class="custom-arrow left-arrow" type="button" data-bs-target="#header-carousel" data-bs-slide="prev">
+						<span class="arrow-text">◁</span>
+					</button>
+			
+					<!-- 오른쪽 화살표 버튼 -->
+					<button class="custom-arrow right-arrow" type="button" data-bs-target="#header-carousel" data-bs-slide="next">
+						<span class="arrow-text">▷</span>
+					</button>
+			
 				</div>
 			</div>
-        <!-- 슬라이드 끝  -->
+			
+			<!-- CSS -->
+			<style>
+			.custom-arrow {
+				position: absolute;
+				top: 45%; /* 전체 높이의 45% 지점 */
+				transform: translateY(-50%);
+				background: transparent !important; /* 완전 투명 배경 */
+				border: none !important;
+				color: black; /* 검은색 화살표 */
+				font-size: 24px;
+				font-weight: bold;
+				z-index: 10;
+				cursor: pointer;
+				opacity: 0.8;
+				transition: opacity 0.2s;
+				width: 50px;
+				height: 50px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			
+			/* 클릭, 포커스 시에도 아무 표시 안 나게 */
+			.custom-arrow:focus,
+			.custom-arrow:active,
+			.custom-arrow:focus-visible {
+				outline: none !important;
+				box-shadow: none !important;
+				background: transparent !important;
+			}
+			
+			.custom-arrow:hover {
+				opacity: 1;
+			}
+			
+			.left-arrow {
+				left: 20px;
+			}
+			.right-arrow {
+				right: 20px;
+			}
+			
+			.arrow-text {
+				user-select: none;
+				background: none !important;
+			}
+			</style>
+			<!-- 슬라이드 끝 -->
 		</div>
 
 		<!-- Carousel End -->
@@ -228,7 +395,7 @@
 											</div>
 										</div>
 
-										<img src="/images/winct/loginBg.svg" alt="Login Background"
+										<img src="/wnn_consult/images/winct/loginBg.svg" alt="Login Background"
 											class="loginBg">
 									</form>
 
@@ -306,13 +473,26 @@
 
 							<!-- 이미지 배너 영역  #ccc -->
 							<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; margin: -5px -30px 14px 20px; border: 1px solid #999; border-radius: 12px; padding: 10px 20px 15px 20px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 500px; max-width: 640px; max-height: 230px;">
+								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
 								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; margin-left: 50px; margin-top: -5px;">
-									<!-- 왼쪽 이미지 -->
+									style="display: flex; justify-content: space-between; align-items: flex-start; ">
+									
+									
+               
+									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip2.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
+									<button type="button" class="btn overlay-btn overlay-btn-i1" onclick="winCheckOpen()"></button>	
+									<!--  
+									<button type="button" class="btn overlay-btn overlay-btn-i2" onclick="downloadFile()"></button>	
+									-->
+									<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" onclick="downloadFile()"></a>
+									<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button"></a>
+									<!-- 
+									<button type="button" class="btn overlay-btn overlay-btn-i3" onclick="winCheckOpen()"></button>
+									-->		
+									<!-- 왼쪽 이미지
 									<div
 										style="flex-basis: 70%; max-width: 60%; padding-right: 20px;">
-										<img class="img-fluid left-img" src="/images/winct/e_clip.svg"
+										<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip.svg"
 											alt="e_clip"
 											style="width: 500px; display: block; margin-bottom: 15px;">
 										<div style="text-align: left; margin-top: -75px; clear: both;">
@@ -333,10 +513,10 @@
 										</a>
 									</div>
 
-									<!-- 오른쪽 이미지 묶음 -->
+									
 									<div class="right-img-group"
 										style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 1px;">
-										<!-- 컨설팅 소개 영역 -->
+										
 										<div class="program-block" style="margin-left: 30px;">
 											<div class="program-text">
 												<div class="program-title">컨설팅 소개</div>
@@ -360,7 +540,7 @@
 												<div class="program-desc">효과적인 학습을 위한 교육</div>
 												<div class="program-desc">실전 가능한 팁과 전략 제공</div>
 
-												<!-- 버튼을 a 태그로 대체 -->
+												
 												<a href="https://winner797.net/" target="_blank"
 													rel="noopener noreferrer" class="program-button"
 													style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
@@ -370,7 +550,7 @@
 										</div>
 
 									</div>
-
+									 -->
 								</div>
 							</div>
 						</div>
@@ -382,8 +562,8 @@
 				<div class="container-fluid_noti mb-2 px-3"
 					style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
 					  <div class="row justify-content-center" id="noti-row" style="flex-wrap: nowrap;">
-						<div class="col-lg-auto" style="width: 690px; flex-shrink: 0; min-width: 690px;">
-							<div class="bg-light box-p-10" style="height: 215px;">
+						<div class="col-lg-auto" style="width: 700px; flex-shrink: 0; min-width: 700px;">
+							<div class="bg-light box-p-10" style="height: 220px;">
 								<!-- 탭 헤더 -->
 								<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
 									<a
@@ -403,16 +583,16 @@
 									<div class="tab-pane fade active show" id="tab-pane-1">
 										<div class="scroll-table-container"
 											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table" id="noticeTable"
-												class="table table-bordered" style="font-size: 14px;">
+											<table class="notice-table table table-bordered" id="noticeTable" style="font-size: 14px;">
 												<colgroup>
-													<col style="width: 100px">
-													<col style="width: 350px">
+													<col style="width: 100px"> 
+												    <col style="width: 350px"> 
 													<col style="width: 120px">
+													<col style="width: 10px">
 												</colgroup>
 												<tbody id="noticeArea">
 													<tr>
-														<td colspan="3" style="font-weight: bold;">&nbsp;</td>
+														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
 													</tr>
 												</tbody>
 											</table>
@@ -422,16 +602,16 @@
 									<div class="tab-pane fade" id="tab-pane-2">
 										<div class="scroll-table-container"
 											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table" id="noticeTable1"
-												class="table table-bordered" style="font-size: 14px;">
+											<table class="notice-table table table-bordered" id="noticeTable1" style="font-size: 14px;">
 												<colgroup>
-													<col style="width: 100px">
-													<col style="width: 350px">
+													<col style="width: 100px"> 
+												    <col style="width: 350px"> 
 													<col style="width: 120px">
+													<col style="width: 10px">
 												</colgroup>
 												<tbody id="noticeArea1">
 													<tr>
-														<td colspan="3" style="font-weight: bold;">&nbsp;</td>
+														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
 													</tr>
 												</tbody>
 											</table>
@@ -441,16 +621,16 @@
 									<div class="tab-pane fade" id="tab-pane-3">
 										<div class="scroll-table-container"
 											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table" id="noticeTable2"
-												class="table table-bordered" style="font-size: 14px;">
+											<table class="notice-table table table-bordered" id="noticeTable2" style="font-size: 14px;">
 												<colgroup>
-													<col style="width: 100px">
-													<col style="width: 350px">
+													<col style="width: 100px"> 
+												    <col style="width: 350px"> 
 													<col style="width: 120px">
+													<col style="width: 10px">
 												</colgroup>
 												<tbody id="noticeArea2">
 													<tr>
-														<td colspan="3" style="font-weight: bold;">&nbsp;</td>
+														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
 													</tr>
 												</tbody>
 											</table>
@@ -458,30 +638,43 @@
 									</div>
 
 									<!-- 소식지 -->
+									
 									<div class="tab-pane fade" id="tab-pane-4">
 										<div class="scroll-table-container"
 											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table" id="noticeTable3"
-												class="table table-bordered" style="font-size: 14px;">
+											<table class="notice-table table table-bordered" id="noticeTable3" style="font-size: 14px;">
 												<colgroup>
-													<col style="width: 100px">
-													<col style="width: 350px">
+													<col style="width: 100px"> 
+												    <col style="width: 350px"> 
 													<col style="width: 120px">
+													<col style="width: 10px">
 												</colgroup>
 												<tbody id="noticeArea3">
 													<tr>
-														<td colspan="3" style="font-weight: bold;">&nbsp;</td>
+														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
 													</tr>
 												</tbody>
 											</table>
 										</div>
 									</div>
-
+									
 								</div>
 							</div>
 						</div>
 
-						<!-- 고객센터 -->
+						
+						
+						
+						<div class="image-layout"
+								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
+								<div class="image-layout"
+									style="display: flex; justify-content: space-between; align-items: flex-start; ">
+									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip3.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
+									<button type="button" class="btn overlay-btn overlay-btn-i6" onclick="fnasq_main()"></button>	
+									<button type="button" class="btn overlay-btn overlay-btn-i7" onclick="loadFaqData()"></button>	
+								</div>	
+						</div>			
+						<!-- 고객센터 
 						<div class="col-lg-4">
 							<div class="helpdesk">
 								<div class="bg-light box-p-10"
@@ -493,18 +686,17 @@
 												class="d-flex align-items-center text-dark"
 												style="text-decoration: none;">
 												<img class="img-fluid"
-													src="/images/winct/kakao.svg" alt="카카오상담"
+													src="/wnn_consult/images/winct/kakao.svg" alt="카카오상담"
 													style="height: 30px; margin-right: 8px; margin-top: 7px;">
 												<span style="font-size: 0.8rem; font-weight: bold;">카카오상담</span>
 											</a>
 										</div>
-										
 										<div
 											class="col-3 d-flex justify-content-center align-items-center">
 											<a href="#" onclick="fnasq_main();"
 												class="d-flex align-items-center text-dark"
 												style="text-decoration: none;"> <img class="img-fluid"
-												src="/images/winct/headset.svg" alt="1:1문의하기"
+												src="/wnn_consult/images/winct/headset.svg" alt="1대1상담"
 												style="height: 30px; margin-right: 8px; margin-top: 7px;">
 												<span style="font-size: 0.8rem; font-weight: bold;">1:1 문의하기</span>
 											</a>
@@ -514,7 +706,7 @@
 											<a href="#" onclick="loadFaqData();"
 												class="d-flex align-items-center text-dark"
 												style="text-decoration: none;"> <img class="img-fluid"
-												src="/images/winct/faq.svg" alt="자주듣는질문"
+												src="/wnn_consult/images/winct/faq.svg" alt="자주듣는질문"
 												style="height: 30px; margin-right: 8px; margin-top: 7px;">
 												<span style="font-size: 0.8rem; font-weight: bold;">자주하는질문</span>
 											</a>
@@ -540,6 +732,7 @@
 								</div>
 							</div>
 						</div>
+						-->
 						<!--  -->
 					</div>
 				</div>
@@ -549,21 +742,23 @@
 			<div class="d-flex justify-content-center w-100 mt-2">
 				<div class="social-box">
 					<ul>
-						<li><a href="https://www.youtube.com/watch?v=WaWoMowapjI"
+						<li><a href="https://www.youtube.com/@winnernet797"
 							target="_blank" rel="noopener noreferrer"> <img
-								src="/images/winct/youtube.svg" alt="유튜브" class="snsImg">
+								src="/wnn_consult/images/winct/youtube.svg" alt="유튜브" class="snsImg">
 								<span>유튜브</span>
 						</a></li>
-						<li><a href="https://blog.naver.com/ewinner7/222973843240"
+						<li><a href="https://blog.naver.com/ewinner7"
 							target="_blank" rel="noopener noreferrer"> <img
-								src="/images/winct/blog.svg" alt="블로그" class="snsImg"> <span>블로그</span>
+								src="/wnn_consult/images/winct/blog.svg" alt="블로그" class="snsImg"> <span>블로그</span>
 						</a></li>
+						<!--  
 						<li><a href="https://open.kakao.com/o/gBvFxyYg"
 							target="_blank" rel="noopener noreferrer"> <img
-								src="/images/winct/kakao.png" alt="카카오톡" class="snsImg"> <span>카카오톡</span>
+								src="/wnn_consult/images/winct/kakao.png" alt="카카오톡" class="snsImg"> <span>카카오톡</span>
 						</a></li>
+						-->
 					</ul>
-					<img src="/images/winct/quickArrow.svg" alt="더보기"
+					<img src="/wnn_consult/images/winct/quickArrow.svg" alt="더보기"
 						class="quick-arrow-btn" style="width: 34px; height: auto;">
 				</div>
 			</div>
@@ -583,8 +778,7 @@
 	                        <a href="https://www.hirachung.co.kr/"         class="nav-item nav-link" target="_blank">한국보험의료인증원</a> 
 	                        <a href="https://www.nhis.or.kr/nhis/index.do" class="nav-item nav-link" target="_blank">건강보험공단</a> 
 	                        <a href="https://www.hira.or.kr"               class="nav-item nav-link" target="_blank">건강보험심사평가원</a>
-	                        <a href="https://biz.hira.or.kr/index.do"      class="nav-item nav-link" target="_blank">요양기관업무포탈</a> 
-	                        <a href="#"                                    class="nav-item nav-link" target="_blank">통합사이트</a>
+	                        <a href="https://biz.hira.or.kr/index.do"      class="nav-item nav-link" target="_blank">요양기관업무포탈</a>
 	                    </div>
 	                </div>
 	            </nav>
@@ -733,6 +927,14 @@
 	</div>
 	
 	
+	<div class="overlay_1" id="overlay_1" onclick="closePopup_1()"></div>
+	<div class="popup-box_1" id="popupBox_1">
+	  	<div class="popup-close_1" onclick="closePopup_1()">
+	    	<span class="close-text_1">닫기</span>
+	  	</div>
+	  	<img id="popupImg_1" src="" alt="팝업 이미지">
+	</div>
+
 	<!-- Modal 동의서 확인 -->
 	<div id="termsModal" class="modal fade" data-backdrop="static"
 		data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
@@ -766,8 +968,10 @@
 	<a href="#" class="back-to-top" id="btnTop">
 	  <i class="fas fa-arrow-up"></i><br>TOP
 	</a>
+	
+	
 	<script>
-
+	
    //계약관련 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
 	function hosp_conact() {
 		    let s_conact_gb = getCookie("s_conact_gb");
@@ -828,27 +1032,32 @@
 
     	    // 현재 클릭한 주메뉴에 active 클래스 추가
     	    element.classList.add('active');
-    	}       
+    	}     
+        
+        
+        
 	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
 	    window.onload = function() {
-	        sessionStorage.setItem("previousPage", window.location.href);
+
+	    	sessionStorage.setItem("previousPage", window.location.href);
 	        setTimeout(function() {
 	            document.body.style.display = "none";
 	            document.body.offsetHeight; // 리플로우 강제 발생
 	            document.body.style.display = "block";
 	        }, 100);
 	    };
+	    /*
 	    document.addEventListener("DOMContentLoaded", function() {
 	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
-	            interval: 4000, // 4초마다 변경
+	            interval: 2000, // 4초마다 변경
 	            ride: "carousel"
 	        });
-	    });
+	    });  */
 	//컨설팅소개서 다운로드
 	function downloadFile() {
 		const filePath = "/home/winner/upload/consulting-intro.jpg"; // 실제 SFTP 경로
 		const encodedPath = encodeURIComponent(filePath);
-		window.location.href = "/sftp/download.do?filePath=" + encodedPath;
+		window.location.href = "/wnn_consult/sftp/download.do?filePath=" + encodedPath;
 		// 기본 링크 다운로드 방지 (선택사항)
 		event.preventDefault(); // 이 줄을 넣으면 href로 다운로드되지 않고 SFTP만 사용됨
 	}
@@ -952,7 +1161,7 @@
 	            history.replaceState(null, "", previousPage);
 	            location.reload();
 	        } else {
-	            history.replaceState(null, "", "/");
+	        	history.replaceState(null, "", "/wnn_consult/login.do");
 	            location.reload();
 	        }
 	    }
@@ -1125,10 +1334,8 @@
 	        	$("#perUseCd").val("PER_USE_CD") ;
 	        	$("#perInfoCd").val("PER_INFO_CD") ;
 	        	$("#perProCd").val("PER_PRO_CD") ;
-	        	
 	        	let trimmedEmail = $("#email").val().trim();
 	        	$("#email").val(trimmedEmail);
-	        	
 	        	var formData = $("form[name='memregForm']").serialize() ;
 	        	if (!confirm("회원가입 하시겠습니다?")) {
 	                return;  
@@ -1312,6 +1519,8 @@
 			</div>
 		</div>
 	</div>
+
+
 	<!--아이디찾기  -->
 	<script>
 	function fnpwsearch(){
@@ -1323,7 +1532,6 @@
 		    messageBox("1", "<h6>사용자 이메일를 입력하세요 .!</h6><p></p>", "", "", "");
 		    return; 
 		}
-		
 		$("#userId").val("") ;
 		$.ajax( {
 			type : "post",
@@ -1547,7 +1755,7 @@
 	function fnnotice_search(fileGb) {
 		let targetArea, targetTable;
 		switch (fileGb) {
-			case 0:
+	    	case 0:
 				targetArea  = "#noticeArea";
 				targetTable = "#noticeTable";
 				break;
@@ -1575,7 +1783,6 @@
 		}
 		
 		$(targetArea).empty();
-		
 		$.ajax({
 			url: CommonUtil.getContextPath() + '/mangr/ctl_notiList.do',
 			type: 'post',
@@ -1605,6 +1812,7 @@
 							+ notiTitle + '\', \'' 
 							+ notiContent + '\')">';
 
+						
 						// 분류 표시
 						if (fileGb == "1") {
 							dataTxt += "<td class='rounded-box notice'>공지사항</td>";
@@ -1639,9 +1847,8 @@
 		if (!sessionStorage.getItem('s_hospid')) {
 			messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
 			return; 
-		} 
-
-		// 디코딩 처리
+		}  
+	    // 디코딩 처리
 		const title = decodeURIComponent(notiTitle);
 		const content = decodeURIComponent(notiContent);
 
@@ -1674,8 +1881,7 @@
 
 		// 모달 열기
 		$("#adminModal").modal('show');
-	}
-
+	}  
 	//데이타테입르 최초생성 
 	$(document).ready(function() {
 	    console.log("📌 최초 DataTables 생성");
@@ -1747,7 +1953,7 @@
 	                let fileUrl = "#";
 	                if (doc.filePath && doc.fileTitle) {
 	                    let encodedPath = encodeURIComponent(doc.filePath);
-	                    fileUrl = "/sftp/download.do?filePath=" + encodedPath;
+	                    fileUrl = "/wnn_consult/sftp/download.do?filePath=" + encodedPath;
 	                }
 
 	                console.log("📌 생성된 SFTP fileUrl:", fileUrl);
@@ -1812,7 +2018,7 @@
 	    const fileUrl = $(this).attr("href");
 	    const fileTitle = $(this).attr("download");
 
-	    if (!fileUrl.startsWith("/sftp/download.do")) {
+	    if (!fileUrl.startsWith("/wnn_consult/sftp/download.do")) {
 	        alert("❌ 유효하지 않은 다운로드 경로입니다.");
 	        e.preventDefault();
 	    }
@@ -1840,6 +2046,7 @@
 	        }
 	    });
 	}
+	
 </script>
 	<!-- 공지사항 스크립트 종료-->
 	<script>
@@ -2040,7 +2247,6 @@
 </div>
 
 
-
 	<!-- 질의응답 스크립트 시작 -->
 	<script>
 	function fnasq_main() {
@@ -2135,7 +2341,7 @@
         clearTimeout(clickTimer);
         fn_asqDtlSearch(asqSeq);  // 필요 시 생략 가능
         fn_asqsave('QU');
-    }    
+    }
 	function fn_asqDtlSearch(asqSeq){ 
 			if(asqSeq == '' || asqSeq == null) return;
 			$("#asqSeq").val(asqSeq);
@@ -2156,6 +2362,7 @@
 	        }
 	    }
 	    uidGubun = iud;
+	    
 	    $("#ansrWan").closest(".form-wrap").hide(); // 답변완료 숨기기
 
 	    if (iud.substring(1, 2) == "I") {
@@ -2274,6 +2481,7 @@
 		        return; 
 	        }         
 		    formData = $("form[name='asq_regForm']").serialize();
+		    
 	    }else{
 	        formData = {
 	                   asqSeq:    lasqSeq,   // 문의글 고유번호
@@ -2306,8 +2514,8 @@
 	    function execute() {
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/asqSaveAct.do",
-	            data: formData,  // formData가 정의되어 있어야 함
+	            url: "/wnn_consult/mangr/asqSaveAct.do",
+	            data: formData,  // formData가 정의되어 있어야 함 
 	            dataType: "json",
 	            success: function (data) {
 	                if (data.error_code !== "0") {
@@ -2362,10 +2570,12 @@
 
         // FAQ 리스트 초기화
         $("#faqList").html(`<p class="text-muted text-center"></p>`);
+
         // AJAX로 FAQ 데이터 요청
+        
         $.ajax({
-        	url: "/mangr/faqList.do",
-            type: "POST",
+        	type: "post",
+        	url: "${pageContext.request.contextPath}/mangr/getfaqCdList.do",
             data: {},
             dataType: "json",
             success: function (response) {
@@ -2466,8 +2676,8 @@
                 } else {
                     $("#faqList").html(`<p class="text-muted text-center">검색된 결과가 없습니다.</p>`);
                 }
-
-                console.log("📢 FAQ 데이터 로드 완료");
+	            
+				console.log("📢 FAQ 데이터 로드 완료");
             },
             error: function () {
                 $("#faqList").html(`<p class="text-danger text-center">FAQ 데이터를 불러오는 중 오류가 발생했습니다.</p>`);
@@ -2506,9 +2716,19 @@
    		window.addEventListener('unload', () => {    	
         	logout();
     	});
+   		
+   		
+   		function openImagePopup(imgUrl) {
+   			window.open('popup.jsp?img=' + encodeURIComponent(imgUrl),
+   			            'imgPopup',
+		    	        'width=1080,height=1350,resizable=no,scrollbars=no');
+    	}
+   		
     	// 자식 창 변수
         let win_Check;
         window.onload = function() {
+        	
+        	// openMyImagePopup_1('/wnn_consult/images/winct/popup2.jpg');
         	
             if (getCookie("saveyn")) {
                 document.loginForm.saveyn.checked  = true;
@@ -2798,7 +3018,8 @@
       	
         	hosp_conact() ;
         	
-        	const url = "http://localhost:9080/user/";  // main.do 호출       
+        	const url = "http://localhost:8080/user/";    
+
             win_Check = window.open(url);            
             
             win_Check.addEventListener('unload', () => {
@@ -2949,6 +3170,30 @@
 	        document.getElementById('month2').textContent = formatMonth(prev2);
 	        document.getElementById('month3').textContent = formatMonth(prev3);
 	    }
+	    function openMyImagePopup_1(imgSrc) {
+		      const popupImg = document.getElementById("popupImg_1");
+		      const overlay  = document.getElementById("overlay_1");
+		      const popupBox = document.getElementById("popupBox_1");
+
+		      if (popupImg && overlay && popupBox) {
+		        popupImg.src = imgSrc;
+		        overlay.style.display = "block";
+		        popupBox.style.display = "block";
+		      } else {
+		        console.error("팝업 요소를 찾을 수 없습니다.");
+		      }
+		    }
+	    function closePopup_1() {
+		      const overlay = document.getElementById("overlay_1");
+		      const popupBox = document.getElementById("popupBox_1");
+
+		      if (overlay && popupBox) {
+		        overlay.style.display = "none";
+		        popupBox.style.display = "none";
+		      } else {
+		        console.error("팝업 요소를 찾을 수 없습니다.");
+		      }
+		    }
 /* wnnpage_consult3.jsp 로직이 여기에서 실행됨  */
 	    function openMyImagePopup(imgSrc) {
 	      const popupImg = document.getElementById("popupImg");
@@ -3101,7 +3346,7 @@
         	 messageBox("1","<h6>카카오상담은 준비중입니다 !!</h6><p></p>","","",""); 
          }   
          //공지사항 리치에디터  
-		function modalName_rich(notiText) {
+			function modalName_rich(notiText) {
 			  let safeAnswer = (notiText || '');
 			  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
 			
@@ -3139,8 +3384,8 @@
 			$('#adminModal').on('hidden.bs.modal', function () {
 			  $('#notiContent').summernote('destroy');
 			});
-         </script>
-    
+         </script>    
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
 </html>
+

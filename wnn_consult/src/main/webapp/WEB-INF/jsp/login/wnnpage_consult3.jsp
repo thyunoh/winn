@@ -44,12 +44,15 @@
       <div class="chart-wrap">
         <section class="content-box text-center position-relative" style="display: inline-block;">
           <!-- 이미지 -->
-          <img src="/images/winct/consult3_1.jpg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">
+          <img src="/wnn_consult/images/winct/consult3_11.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">
 
           <!-- 오버레이 버튼 -->
-          <button type="button" class="btn overlay-btn overlay-btn-l" onclick="openMyImagePopup('/images/winct/consult3_1_1.jpg')">자세히보기</button>
-          <button type="button" class="btn overlay-btn overlay-btn-c" onclick="openMyImagePopup('/images/winct/consult3_1_2.jpg')">자세히보기</button>
-          <button type="button" class="btn overlay-btn overlay-btn-r" onclick="openMyImagePopup('/images/winct/consult3_1_3.jpg')">자세히보기</button>
+          <button type="button" class="btn overlay-btn overlay-btn-a" onclick="openMyImagePopup('/wnn_consult/images/winct/consult3_1_1.svg')"></button>
+          <button type="button" class="btn overlay-btn overlay-btn-b" onclick="openMyImagePopup('/wnn_consult/images/winct/consult3_1_2.svg')"></button>
+          <button type="button" class="btn overlay-btn overlay-btn-c" onclick="openMyImagePopup('/wnn_consult/images/winct/consult3_1_3.svg')"></button>
+          
+          <button type="button" class="btn overlay-btn overlay-btn-d" onclick="fnasq_main()"></button>
+          
         </section>
       </div>
     </div>
@@ -66,3 +69,6 @@
 
 </body>
 </html>
+
+
+

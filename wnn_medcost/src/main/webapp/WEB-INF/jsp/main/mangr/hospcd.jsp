@@ -12,8 +12,6 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
 
-<link href="/css/winmc/bootstrap.css"       rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"     rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <!-- 카카오주소검색 -->
@@ -72,7 +70,7 @@
 									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-toggle="tooltip" data-placement="top" title="체크 Data 삭제"
 										onClick="fn_findchk()">
-										선택삭제. <i class="far fa-calendar-check"></i>
+										체크삭제. <i class="far fa-calendar-check"></i>
 									</button>
 									<button class="btn btn-outline-dark" data-toggle="tooltip"
 										data-placement="top" title="화면 Size 확대.축소"
@@ -547,7 +545,7 @@
 		role="dialog"
 		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 		<div class="modal-content"
-			style="height: 60%; display: flex; flex-direction: column;">
+			style="height: 55%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
 				<h6 class="modal-title" id="hu_modalHead"></h6>
 				<div class="form-row">
@@ -3557,20 +3555,22 @@
 		
 		//파일문서 업로드 부분(다중처리)
 		document.getElementById("uploadForm").addEventListener("submit", function (event) {
+			
 		    event.preventDefault(); // 기본 제출 방지
-
+			
 		    let fileInput     = document.getElementById("file-input"); 
 		    let statusDisplay = document.getElementById("file-name-display");
-
 		    if (!fileInput.files.length) {
 		        alert("📌 파일을 선택해주세요!");
 		        return;
 		    }
+		    
 		    let formData = new FormData();
 		    // ✅ 다중 파일 추가 (서버에서 `files`로 받도록 수정)
 		    for (let i = 0; i < fileInput.files.length; i++) {
 		        formData.append("file", fileInput.files[i]); 
 		    }
+		    
 		    // ✅ 추가 폼 데이터 설정
 		    
 		    let hospcd   =  document.getElementById("hospCd").value;
@@ -3584,11 +3584,12 @@
 		    formData.append("fileGb" , filegb); // 1: 공시사항, 2: 심사방, 3: 소식지  
 		    formData.append("regUser", reguser);
 		    formData.append("regIp"  , regip);
-
+		    
 		    console.log("📌 FormData 확인:");
 		    for (let pair of formData.entries()) {
 		        console.log(`🔹 Key: ${pair[0]}, Value:`, pair[1]);
-		    }       
+		    }
+		    
 		    fetch("/sftp/fileupload.do", {
 		        method: "POST",
 		        body: formData
@@ -3609,7 +3610,7 @@
 		    })
 		    .catch(error => {
 		        console.error("❌ 파일 업로드 실패:", error);
-		        statusDisplay.textContent = "❌ 업로드 실패!";
+		        statusDisplay.textContent = "❌ 업로드 실패!!!!!!!";
 		        statusDisplay.style.color = "red";
 		    });
 		}); 

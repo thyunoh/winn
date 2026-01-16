@@ -2,6 +2,7 @@ package egovframework.util;
 
 import java.io.Serializable;
 
+
 /**
  * @Class Name  : EgovFormBasedFileVo.java
  * @Description : Form-based File Upload VO

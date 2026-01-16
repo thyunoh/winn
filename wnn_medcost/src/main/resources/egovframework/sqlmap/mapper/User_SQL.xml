@@ -318,6 +318,7 @@
           AND A.HOSP_CD = #{hospCd}
           ORDER BY A.CONACT_GB ,  A.START_DT DESC 
         ]]>
+    
     </select>  
     <!--  사용자등록시 보여주기  -->
     <select id="getHospContList" parameterType="HospConDTO" resultType= "HospConDTO"><![CDATA[
@@ -1407,15 +1408,15 @@
 		    ]]>
 		    <if test='startYy != null and startYy != ""'>
              (SELECT MAX(GOAL_SCORE)
-		      FROM TBL_GRADE_MST
-		      WHERE HOSP_CD = #{hospCd}
-		        AND ACTION_YN = 'Y'
-		        AND START_YY = #{startYy} ) AS GOAL_SCORE ,  
+		        FROM TBL_GRADE_MST
+		       WHERE HOSP_CD = #{hospCd}
+		         AND ACTION_YN = 'Y'
+		         AND START_YY = #{startYy} ) AS GOAL_SCORE,  
              (SELECT MAX(GOAL_NAME)
-		      FROM TBL_GRADE_MST
-		      WHERE HOSP_CD = #{hospCd}
-		        AND ACTION_YN = 'Y'
-		        AND START_YY = #{startYy} ) AS GOAL_NAME ,  
+		        FROM TBL_GRADE_MST
+		       WHERE HOSP_CD = #{hospCd}
+		         AND ACTION_YN = 'Y'
+		         AND START_YY = #{startYy} ) AS GOAL_NAME,  
 		    </if>
 		    <![CDATA[
 		    REG_DTTM,
@@ -1526,13 +1527,7 @@
 		    #{totalDay},
 		    #{goalScore},
 		    #{goalName},
-		    (
-		     SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
-		       FROM TBL_GRADE_MST A
-		       WHERE A.HOSP_CD   = #{hospCd} 
-		         AND A.START_YY  = #{startYy} 
-		         AND A.QTER_FLAG = #{qterFlag}
-		    ),
+		    1,
 		    'Y'
 		);
 
@@ -1560,6 +1555,8 @@
 	        TOTAL_DAY,
 	        GOAL_SCORE,
 	        GOAL_NAME,
+	        GOAL_JUGI,
+	        GOAL_CHASU,
 	        JOB_SEQ,
 	        ACTION_YN
 	    )
@@ -1582,13 +1579,9 @@
 	        #{totalDay},
 	        #{goalScore},
 	        #{goalName},
-	        (
-	            SELECT IFNULL(MAX(A.JOB_SEQ) + 1, 1)
-	            FROM TBL_GRADE_MST A
-	            WHERE A.HOSP_CD   = #{hospCd}
-	              AND A.START_YY  = #{startYy}
-	              AND A.QTER_FLAG = #{qterFlag}
-	        ),
+	        #{goalJugi},
+	        #{goalChasu},
+	        1,
 	        'Y'
 	    )
 	    ON DUPLICATE KEY UPDATE
@@ -1601,6 +1594,8 @@
 	        TOTAL_DAY  = #{totalDay},
 	        GOAL_SCORE = #{goalScore},
 	        GOAL_NAME  = #{goalName},
+	        GOAL_JUGI  = #{goalJugi},
+	        GOAL_CHASU = #{goalChasu},
 	        UPD_DTTM   = NOW(),
 	        UPD_USER   = #{updUser},
 	        UPD_IP     = #{updIp};
@@ -1626,5 +1621,69 @@
           AND QTER_FLAG  = #{qterFlag}  
           AND ACTION_YN = 'Y'
 	  ]]>  
-	</select>                                   	   	                  
+	</select>  
+	
+	<select id="selectHospGrd" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[ 
+	    WITH year_goal_tbl AS (
+		    SELECT A.HOSP_CD
+		         , A.START_YY
+		         , MAX(A.GOAL_SCORE) AS GOAL_SCORE
+		         , MAX(A.GOAL_NAME)  AS GOAL_NAME
+		         , MAX(A.GOAL_JUGI)  AS GOAL_JUGI
+		         , MAX(A.GOAL_CHASU) AS GOAL_CHASU
+		      FROM TBL_GRADE_MST A
+		     WHERE A.HOSP_CD  = #{hospCd}
+		       AND A.START_YY = #{startYy}
+		     GROUP BY A.HOSP_CD, A.START_YY
+		)
+		SELECT gt.HOSP_CD
+		     , gt.START_YY
+		     , gm.QTER_FLAG
+		     , gm.JOB_SEQ
+		     , gm.ACTION_YN
+		     , gm.HOSPGRADE
+		     , gm.PAT_COUNT
+		     , gm.DOC_COUNT
+		     , gm.NUR_COUNT
+		     , gm.NUR_S_CNT
+		     , gm.PHAM_DAYS
+		     , gm.TOTAL_DAY
+		     , gt.GOAL_SCORE
+		     , gt.GOAL_NAME
+		     , gt.GOAL_JUGI
+		     , gt.GOAL_CHASU
+		  FROM year_goal_tbl gt
+		  LEFT JOIN TBL_GRADE_MST gm ON gm.HOSP_CD   = gt.HOSP_CD
+		                            AND gm.START_YY  = gt.START_YY
+		                            AND gm.QTER_FLAG = #{qterFlag}
+		                            AND gm.JOB_SEQ   = 1
+		 LIMIT 1  
+		   
+	 ]]> 
+    </select>  
+	 
+	 <update id="yearSaveHospGrd" parameterType="HospGrdDTO"><![CDATA[
+        UPDATE TBL_GRADE_MST
+           SET GOAL_NAME  = #{goalName}
+             , GOAL_SCORE = #{goalScore}
+             , GOAL_JUGI  = #{goalJugi}
+	         , GOAL_CHASU = #{goalChasu}
+	         , UPD_DTTM   = NOW()      
+	         , UPD_USER   = #{updUser}  
+	         , UPD_IP     = #{updIp}
+        WHERE HOSP_CD     = #{hospCd} 
+          AND START_YY    = #{startYy}
+     ]]>   
+    </update>    
+   
+    <select id="callIndicatorsStructureZone" statementType="CALLABLE">
+    	{ CALL SP_INDICATORS_STRUCTURE_ZONE(
+	        #{hospCd,    mode=IN, jdbcType=VARCHAR},
+	        #{jobYm,     mode=IN, jdbcType=VARCHAR},
+	        #{strYm,     mode=IN, jdbcType=VARCHAR},
+	        #{endYm,     mode=IN, jdbcType=VARCHAR},
+	        #{regUser,   mode=IN, jdbcType=VARCHAR}
+	    ) }
+	</select> 
+                                	   	                  
 </mapper>

@@ -531,8 +531,8 @@ public class UserController extends BaseController {
             return ResponseEntity.status(500).body(e.getMessage());
             
         }
-	}
-	//사용자등록시 보여주기 
+	}	
+    //사용자등록시 보여주기 
 	@RequestMapping(value="/gethospContList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> getHospContList(@ModelAttribute("DTO") HospConDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
@@ -1976,25 +1976,126 @@ public class UserController extends BaseController {
             
         }
 	}	
-	@RequestMapping(value="/saveHospGrd.do", method = RequestMethod.POST)
-    public ResponseEntity<String> saveHospGrd(@RequestBody List<HospGrdDTO> data) {
+	@RequestMapping(value = "/saveHospGrd.do", method = RequestMethod.POST)
+	public ResponseEntity<String> saveHospGrd(@RequestBody List<HospGrdDTO> data) {
+	    /*
+		System.out.println("saveHospGrd 호출됨");
+	    
+	    try {
+	        for (HospGrdDTO dto : data) {
+	        	System.out.println("HospCd: " + dto.getHospCd());
+       		    System.out.println("startYy: " + dto.getStartYy());
+       		    System.out.println("qterFlag: " + dto.getQterFlag());
+       		    System.out.println("goalScore: " + dto.getGoalScore());
+       		    
+	        	svc.saveHospGrd(dto);
+	        	svc.yearSaveHospGrd(dto);
+	        	
+	        }
+	        return ResponseEntity.ok("OK");
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(500).body("Error: " + e.getMessage());
+	    }
+	    */
 		
-		System.out.println("Insert 시작했음");
-		String returnValue = "OK";
+		System.out.println("saveHospGrd 호출됨");
+
+		try {
+	        for (HospGrdDTO dto : data) {
+	        	
+	            String originalYear = dto.getStartYy();
+	            String originalQter = dto.getQterFlag();
+
+	            int qter = Integer.parseInt(originalQter);
+	            int year = Integer.parseInt(originalYear);
+
+	            if (qter == 1) {
+	                dto.setStartYy(String.valueOf(year - 1));
+	                dto.setQterFlag("4");
+	            } else {
+	                dto.setStartYy(String.valueOf(year));
+	                dto.setQterFlag(String.valueOf(qter - 1));
+	            }
+
+	            System.out.println("1회차 호출");
+	            System.out.println("HospCd: " + dto.getHospCd());
+	            System.out.println("startYy: " + dto.getStartYy());
+	            System.out.println("qterFlag: " + dto.getQterFlag());
+	            System.out.println("goalScore: " + dto.getGoalScore());
+
+	            svc.saveHospGrd(dto);
+	            
+	            switch (dto.getQterFlag()) {
+	                case "1":
+	                	dto.setStrYm(dto.getStartYy() + "01");
+	                	dto.setEndYm(dto.getStartYy() + "03");
+	                    break;
+	                case "2":
+	                	dto.setStrYm(dto.getStartYy() + "04");
+	                	dto.setEndYm(dto.getStartYy() + "06");
+	                    break;
+	                case "3":
+	                	dto.setStrYm(dto.getStartYy() + "07");
+	                	dto.setEndYm(dto.getStartYy() + "08");
+	                    break;
+	                case "4":
+	                	dto.setStrYm(dto.getStartYy() + "10");
+	                	dto.setEndYm(dto.getStartYy() + "12");
+	                    break;
+	            }
+	            dto.setJobYm(dto.getStrYm());
+	            
+	            svc.callIndicatorsStructureZone(dto);
+	            
+	            
+	            dto.setStartYy(originalYear);
+	            dto.setQterFlag(originalQter);
+
+	            System.out.println("2회차 호출");
+	            System.out.println("HospCd: " + dto.getHospCd());
+	            System.out.println("startYy: " + dto.getStartYy());
+	            System.out.println("qterFlag: " + dto.getQterFlag());
+	            System.out.println("goalScore: " + dto.getGoalScore());
+
+	            svc.saveHospGrd(dto);
+	            svc.yearSaveHospGrd(dto);
+	        }
+
+	        return ResponseEntity.ok("OK");
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(500).body("Error: " + e.getMessage());
+	    }
+	}
+	@RequestMapping(value="/selectHospGrd.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> selectHospGrd(@ModelAttribute("DTO") HospGrdDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
 		
-		// 처리 로직
-        try {
-        	
-        	for (HospGrdDTO dto : data) {
-         		svc.saveHospGrd(dto) ; 
-       		    System.out.println("hospCd: " + dto.getKeyhospCd());
-            }
-        	return ResponseEntity.ok(returnValue);   
-        	
-        } catch (Exception e) {
-        	
-            return ResponseEntity.status(500).body(e.getMessage());
-            
-        }
-	}	
+		System.out.println("selectHospGrd - start ");		
+		
+		cookie_value = ClientInfo.getCookie(request);		
+		try {
+			
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				
+				HospGrdDTO HospGrdList = svc.selectHospGrd(dto);
+				
+				Map<String, Object> response = new HashMap<>();
+		        response.put("data",HospGrdList);
+
+		        System.out.println("selectHospGrd response : " + response);
+		        
+		        return response;
+				
+				
+			} else {
+				return null;
+			}	
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	
 }

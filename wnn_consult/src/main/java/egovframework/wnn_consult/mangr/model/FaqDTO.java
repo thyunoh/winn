@@ -1,5 +1,14 @@
 package egovframework.wnn_consult.mangr.model;
+
 public class FaqDTO {
+	
+	private static final long serialVersionUID = 1L;
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+	
 	// 기본 필드
     private String faqSeq;        // FAQ SEQ
     private String fileGb;        // 파일 구분
@@ -16,7 +25,7 @@ public class FaqDTO {
     private String updUser;       // 수정자
     private String updDttm;       // 수정 일시
     private String updIp;         // 수정 IP
-    
+
 	public String getHospCd() {
 		return hospCd;
 	}

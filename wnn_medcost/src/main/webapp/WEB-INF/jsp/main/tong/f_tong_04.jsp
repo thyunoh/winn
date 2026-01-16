@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container_tong">
     <h2>다빈도상병 진료구성비</h2>
     <div class="filter-box">
 		<span for="startMonth">시작년월</span>
@@ -39,7 +39,7 @@
 		    </select>      
 	    </div>
  	   <span for="medType">진료</span>
-	   <div style="width: 72px;">
+	   <div style="width: 70px;">
 			<select class="custom-select" id="medType" style= "font-size:13px ;">
 			    <option value="1" selected>의과</option>
 			    <option value="2">치과</option>
@@ -62,8 +62,12 @@
 			    <option value="1">총액</option>
 		    </select>      
 	    </div>
-      <button id="serBtn" onclick="filterData()">검색</button>
-      <button id="pdfBtn" onclick="downloadPDF()">PDF 출력</button>
+      <button id="serBtn" class="btn btn-outline-primary text-black btn-sm" onclick="filterData()">
+		  <i class="fas fa-search"></i> 검색
+		</button>
+		<button id="pdfBtn" class="btn btn-outline-primary text-black btn-sm" onclick="downloadPDF()">
+		  <i class="fas fa-file-pdf"></i> PDF출력
+		</button>
     </div>  
     
 	<div id="loadingSpinner" style="display:none; text-align:center; margin-top:2px;">
@@ -249,7 +253,7 @@
     function downloadPDF() {
     const pdfBtn  = document.getElementById('pdfBtn');
     const serBtn  = document.getElementById('serBtn');
-    const element = document.querySelector(".container");
+    const element = document.querySelector(".container_tong");
 
     pdfBtn.style.display = 'none';
     serBtn.style.display = 'none';

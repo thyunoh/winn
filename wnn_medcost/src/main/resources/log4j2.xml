@@ -4,26 +4,42 @@
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d %5p [%c] %m%n" />
         </Console>
+        <!-- 파일로 로그 저장 설정 추가 -->
+        <File name="fileLogger" fileName="/usr/share/tomcat9/logs/serverlog/server.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %5p [%c] - %m%n" />
+        </File>
     </Appenders>
     <Loggers>
         <Logger name="java.sql" level="DEBUG" additivity="false">
-            <AppenderRef ref="console" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="fileLogger"/>
         </Logger>
+
         <Logger name="egovframework" level="DEBUG" additivity="false">
-            <AppenderRef ref="console" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="fileLogger"/>
         </Logger>
+
         <Logger name="org.egovframe" level="DEBUG" additivity="false">
-            <AppenderRef ref="console" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="fileLogger"/>
         </Logger>
-          <!-- log SQL with timing information, post execution -->
+
+        <!-- SQL 실행 시간 관련 로그 -->
         <Logger name="jdbc.sqltiming" level="ERROR" additivity="false">
-            <AppenderRef ref="console" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="fileLogger"/>
         </Logger>
+
         <Logger name="org.springframework" level="ERROR" additivity="false">
-            <AppenderRef ref="console" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="fileLogger"/>
         </Logger>
+
+        <!-- Root Logger (전체 애플리케이션 로그) -->
         <Root level="ERROR" additivity="true">
-            <AppenderRef ref="console" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="fileLogger"/>
         </Root>
     </Loggers>
 </Configuration>

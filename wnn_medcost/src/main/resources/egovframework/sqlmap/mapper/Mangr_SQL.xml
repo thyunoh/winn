@@ -29,6 +29,7 @@
 		    AND B.ACTION_YN = A.ACTION_YN 
 		WHERE A.ACTION_YN = 'Y'
         ORDER BY A.UPD_DTTM  DESC
+        
     ]]>   
     </select>     
     <insert id="insertfaqCd" parameterType="FaqDTO" ><![CDATA[
@@ -149,7 +150,7 @@
 	        JOB_SEQ, ACTION_YN
 	    FROM TBL_NOTI_MST
 	    WHERE NOTI_SEQ = #{notiSeq}
-	</select>    
+	</select>
     <insert id="insertnotiCd" parameterType="NotiDTO" useGeneratedKeys="true" keyProperty="notiSeq" keyColumn="NOTI_SEQ"><![CDATA[
         INSERT INTO TBL_NOTI_MST (
 	         FILE_GB   
@@ -207,8 +208,8 @@
             ,UPD_USER     = #{updUser}
             ,UPD_IP       = #{updIp}
         WHERE NOTI_SEQ    = #{notiSeq} 
-		  AND FILE_GB     = #{fileGb} 
-          AND ACTION_YN = 'Y' 
+		  AND FILE_GB     = #{fileGb}          
+		  AND ACTION_YN = 'Y' 
     ]]>      
     </update> 
      <update id="delupdatenotiCd" parameterType="NotiDTO" ><![CDATA[
@@ -218,7 +219,7 @@
 		  AND FILE_GB     = #{fileGb} 
           AND ACTION_YN = 'Y' 
     ]]>      
-    </update>     
+    </update>
   <!--  문서등록 -->
     <select  id="getFileCdList" parameterType="FileDTO"  resultType ="FileDTO"> <![CDATA[ 
         SELECT  
@@ -334,7 +335,7 @@
     </update>   
     <update id="updateFilePath" parameterType="FileDTO" ><![CDATA[
         UPDATE TBL_FILE_MST
-         SET  FILE_PATH    = #{filePath}
+         SET  FILE_PATH     = #{filePath}
         WHERE FILE_SEQ     = #{fileSeq} 
 		  AND FILE_GB      = #{fileGb} 
 		  AND SEQ          = #{seq} 

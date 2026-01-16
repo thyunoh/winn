@@ -115,7 +115,7 @@ public class UserController {
 				// 둘 다 틀릴 경우만 실행됨 (즉, 둘 중 하나라도 맞으면 통과)
 				
 				if (!result.getPassWd().equals(chkpwd1) && !result.getPassWd().equals(chkpwd2)) {
-					
+										
 					response.put("error_code", "20000");
 					response.put("error_mess", "비밀번호를 확인하세요.!");
 					System.out.print("비밀번호를 확인하세요.!");
@@ -213,7 +213,7 @@ public class UserController {
 			    model.addAttribute("error_msg", "비밀번호 변경할 사용자 정보가 존재하지 않습니다.");
 			    return "jsonView";			
 			}
-
+			
 			String encrypted     = EgovFileScrty.encryptPassword("1234", dto.getUserId().trim().toLowerCase());
 			String base64Encoded = Base64.getUrlEncoder().encodeToString(encrypted.getBytes(StandardCharsets.UTF_8));
 			dto.setEncPassWd(base64Encoded);

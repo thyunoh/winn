@@ -60,6 +60,10 @@
                        <i class="fas fa-hospital-symbol"></i>
                        <span>병원검색</span>
                      </button>
+                     <!--    
+                     <button id="googlesheets" onclick="googleSheet()" class="btn btn-sm btn-primary" style="display: none;">🌐구글시트</button>
+                     -->
+                     
                  </div>
                </li>
                 </ul>    
@@ -79,9 +83,22 @@
            var winner = getCookie("s_wnn_yn").trim();
             if (winner === 'Y') {
                document.getElementById("hospserchtop").style.display = "flex";
+            //   document.getElementById("googlesheets").style.display = "flex";
            }
       
     //   };
+    
+    	
+    	function googleSheet(url) {
+			if (!url || typeof url !== 'string' || url.trim() === '') {
+		        window.open('https://docs.google.com/spreadsheets/u/0/', '_blank');
+		    } else {
+		        window.open(url, '_blank');
+		    }	
+			// window.open('https://docs.google.com/spreadsheets/d/1kZ9Y98S-njt7-u6ey4_CxE1jECF9SJOR1Ts2IN2wfdk/edit?gid=0#gid=0', '_blank');
+		}
+    	
+    
        // 계약정보도  Login시 Cookie에 담아서 활용해야 됨. 아님,*** 추가해야될 내용에서 적용해도 됨.
        // 공용변수로 사용
        hosp_conact() ;
@@ -144,9 +161,9 @@
     	  clearMenuActive();
 	      $(this).addClass('active');
 	      $('.menu-section').hide();
-          // 위너넷일때 전체화면 보이게       
+	      // 위너넷일때 전체화면 보이게
 	      let s_conact_gb = (getCookie("s_winconect") == 'Y') ? "A" : getCookie("s_conact_gb");
-	      
+
 	      if (s_conact_gb == 'A') {
 	          $('#menu-a, #menu-b, #menu-c, #menu-d, #menu-e, #menu-f, #menu-g, #menu-h').show();
 	      }else if (s_conact_gb == '1') { //경영분석 

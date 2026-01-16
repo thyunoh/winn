@@ -153,13 +153,14 @@
 
 
 /* 0.1. Body / Typography 
+-- 맑은 고딕
    ========================================================================== */
 
 body {
-    font-family: 'Circular Std Book';
+    font-family: sans-serif;
     font-style: normal;
     font-weight: normal;
-    font-size: 14px;
+    font-size: 10px;
     color: #71748d;
     background-color: #efeff6;
     -webkit-font-smoothing: antialiased;
@@ -856,8 +857,12 @@ Background Color / Color
 -------------------------*/
 
 .bg-primary {
-    background-color: #5969ff !important;
+    background-color: #014992 !important;
     color: #fff !important;
+}
+
+.bg-primary2 {
+    background-color: #0166CC !important;
 }
 
 .bg-brand {
@@ -882,8 +887,10 @@ Background Color / Color
 }
 
 .bg-info {
-    background-color: #25d5f2 !important;
+    background-color: #0B8ECA !important;
 }
+
+
 
 .bg-light {
     background-color: #f9f9ff !important;

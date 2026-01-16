@@ -10,7 +10,7 @@
 	</jdbc:embedded-database>
      --> 
      
-    <!-- hsql (테스트용 메모리 DB)
+    <!-- hsql (테스트용 메모리 DB) 
     <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
         <property name="driverClassName" value="net.sf.log4jdbc.DriverSpy"/>
         <property name="url" value="jdbc:log4jdbc:hsqldb:hsql://localhost/sampledb"/>
@@ -18,15 +18,14 @@
     </bean>
     -->  
     
-    <!-- Mysql (POM에서 commons-dbcp, mysql-connector-java 관련 라이브러리 설정 ) -->
     <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>        
         <property name="url" value="jdbc:mysql://114.108.153.178:3306/WNN" />
         <property name="username" value="winner"/>
         <property name="password" value="winnerdb_20@%"/>
     </bean>
     
-    
+	 
     <!-- oracle (POM에서 commons-dbcp, ojdbc(라이센스 사항으로 별도로 배포되지 않음) 관련 라이브러리 설정)
     <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
         <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>

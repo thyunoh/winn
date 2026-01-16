@@ -85,7 +85,7 @@ function setupCommonTable(searchType) {
         paging: false,
         fixedHeader: false,
         lengthMenu: [],
-        searching: false,
+        searching: false,  // ✅ 자동 검색 제거
         data: [],
         columns: [
             { title: "번호", data: null, className: "text-center", width: "50px" },

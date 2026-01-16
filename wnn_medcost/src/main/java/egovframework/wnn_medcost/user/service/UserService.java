@@ -2,6 +2,7 @@ package egovframework.wnn_medcost.user.service;
 
 import java.util.List;
 
+import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.user.model.DietDTO;
 import egovframework.wnn_medcost.user.model.HospConDTO;
 import egovframework.wnn_medcost.user.model.HospGrdDTO;
@@ -35,9 +36,9 @@ public interface UserService {
 
 	
 	List<HospConDTO> selectHospContList(HospConDTO dto) throws Exception;
-	boolean          insertHospCont(HospConDTO dto)     throws Exception; 
-	boolean          updateHospCont(HospConDTO dto)     throws Exception; 
-	String           HospContDupChk(HospConDTO dto)     throws Exception; 
+	boolean        insertHospCont(HospConDTO dto)       throws Exception; 
+	boolean        updateHospCont(HospConDTO dto)       throws Exception; 
+	String         HospContDupChk(HospConDTO dto)       throws Exception; 
 	List<HospConDTO> getHospContList(HospConDTO dto)    throws Exception;
 	
 	List<DietDTO>  getDietcdList(DietDTO dto)           throws Exception; 
@@ -88,4 +89,8 @@ public interface UserService {
 	boolean          updateHospGrd(HospGrdDTO dto)        throws Exception; 
 	String           HospGrdDupChk(HospGrdDTO dto)        throws Exception; 	
 	boolean          saveHospGrd(HospGrdDTO dto)          throws Exception;
+	boolean          yearSaveHospGrd(HospGrdDTO dto)      throws Exception;
+	HospGrdDTO       selectHospGrd(HospGrdDTO dto)        throws Exception;
+	
+	void callIndicatorsStructureZone(HospGrdDTO dto)      throws Exception;
 }

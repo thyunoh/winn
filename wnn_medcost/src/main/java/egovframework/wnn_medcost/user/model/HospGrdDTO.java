@@ -55,9 +55,17 @@ public class HospGrdDTO {
     private String nurSCnt;
     private String phamDays;
     private String totalDay;
-    private String goalScore ;
-    private String goalName ;
+    private String goalScore;
+    private String goalName;
 
+    private String goalJugi;
+    private String goalChasu;
+    
+    private String jobYm;
+    private String strYm;
+    private String endYm;
+  
+  
 
 	public String getHospNm() {
 		return hospNm;
@@ -65,6 +73,46 @@ public class HospGrdDTO {
 
 	public void setHospNm(String hospNm) {
 		this.hospNm = hospNm;
+	}
+		
+	public String getJobYm() {
+		return jobYm;
+	}
+
+	public void setJobYm(String jobYm) {
+		this.jobYm = jobYm;
+	}
+
+	public String getStrYm() {
+		return strYm;
+	}
+
+	public void setStrYm(String strYm) {
+		this.strYm = strYm;
+	}
+
+	public String getEndYm() {
+		return endYm;
+	}
+
+	public void setEndYm(String endYm) {
+		this.endYm = endYm;
+	}
+
+	public String getGoalJugi() {
+		return goalJugi;
+	}
+
+	public void setGoalJugi(String goalJugi) {
+		this.goalJugi = goalJugi;
+	}
+
+	public String getGoalChasu() {
+		return goalChasu;
+	}
+
+	public void setGoalChasu(String goalChasu) {
+		this.goalChasu = goalChasu;
 	}
 
 	public String getGoalScore() {

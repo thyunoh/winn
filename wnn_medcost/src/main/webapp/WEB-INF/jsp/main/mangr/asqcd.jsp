@@ -8,8 +8,6 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/bootstrap.css"         rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"       rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
@@ -136,7 +134,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        <label for="ansrWan" class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
 		                        <div class="col-2 col-lg-2">
 		                            <select class="custom-select" name="ansrWan" id="ansrWan">
-							            <option value="Y" selected>완료</option>
+		                                <option value="Y" selected>완료</option>
 							            <option value="N">진행</option>
 		                            </select>
 		                        </div>
@@ -815,6 +813,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 			// 재조회시 전체 선택 체크박스 해제
 			$("#selectAll").prop("checked", false);
 		}
+		
 		function fn_re_load(){
 			if (findValues && findValues.length > 0) {
 				fn_FindData();
@@ -974,8 +973,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    }
 		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
 		                    dataTable.off('draw');
-		                });       
-		                // 7. 모달 닫기 및 성공 메시지 표시
+		                });       		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
 		            },
@@ -1095,7 +1093,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
                	  // 사용자가 '예' 버튼을 클릭한 경우
 				if (result.isConfirmed) {
 					// 체크박스가 ':checked'인 행만 선택
-					let  = dataTable.rows(function (idx, data, node) {
+					let selectedRows = dataTable.rows(function (idx, data, node) {
 					    let $row = $(node); // 현재 행의 DOM 노드
 					    let $checkbox = $row.find('input[type="checkbox"]'); // 체크박스 찾기
 					    return $checkbox.is(':checked'); // 체크된 행만 필터링

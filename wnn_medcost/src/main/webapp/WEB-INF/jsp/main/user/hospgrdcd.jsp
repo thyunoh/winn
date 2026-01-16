@@ -7,8 +7,6 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
-<link href="/css/winmc/bootstrap.css"     rel="stylesheet">
-<link href="/css/winmc/style.css?v=123"   rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
 <style>
@@ -355,7 +353,7 @@
 							['hospNm'    , 'asc' ],    // 오름차순 정렬
 							['startYy'   , 'desc' ],    // 오름차순 정렬
             				['qterFlag'  , 'desc']      // 오름차순 정렬
-        				 ];
+            			 ];
         // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
 		var showSortNo = ['hospCd','hospNm','startYy','qterFlag'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
@@ -966,7 +964,7 @@
 		function newuptData() {
         	let newData = {
              	hospCd:        $('#hospCd').val(),
-             	hospNm:        $('#hospNm').val(),
+                hospNm:        $('#hospNm').val(), 
              	startYy:       $('#startYy').val(),
              	qterFlag:      $('#qterFlag').val(),
              	hospgrade:     $('#hospgrade').val(),
@@ -1211,7 +1209,7 @@
 			        if (keys.length > 0) {
 						$.ajax({
 				            type: "POST",
-				            url: "/user/hospGrdDelete.do",	    	    
+				            url: "/user/hospGrdDelete.do",	 	    
 				    	    data: JSON.stringify(keys),	    	    
 				    	    contentType: "application/json",
 				    	    dataType: "json",

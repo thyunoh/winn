@@ -6,38 +6,45 @@
 		<setting name="mapUnderscoreToCamelCase" value="true" />
 		<setting name="jdbcTypeForNull" value="NULL" />
 	</settings>
-    <typeAliases>  
+    <typeAliases>
         <typeAlias  alias="WardDTO"     type="egovframework.wnn_medcost.user.model.WardDTO"/>
         <typeAlias  alias="DietDTO"     type="egovframework.wnn_medcost.user.model.DietDTO"/>
         <typeAlias  alias="LisenceDTO"  type="egovframework.wnn_medcost.user.model.LisenceDTO"/>
     	<typeAlias  alias="UserDTO"     type="egovframework.wnn_medcost.user.model.UserDTO"/>
     	<typeAlias  alias="HospMdDTO"   type="egovframework.wnn_medcost.user.model.HospMdDTO"/> 
     	<typeAlias  alias="HospConDTO"  type="egovframework.wnn_medcost.user.model.HospConDTO"/> 
-    	<typeAlias  alias="UserAuthDTO" type="egovframework.wnn_medcost.user.model.UserAuthDTO"/> 
-    	<typeAlias  alias="MembrDTO"    type="egovframework.wnn_medcost.user.model.MembrDTO"/> 
-    	<typeAlias  alias="LicnumDTO"   type="egovframework.wnn_medcost.user.model.LicnumDTO"/>
-	    <typeAlias  alias="HospGrdDTO"  type="egovframework.wnn_medcost.user.model.HospGrdDTO"/>
+    	<typeAlias  alias="UserAuthDTO"  type="egovframework.wnn_medcost.user.model.UserAuthDTO"/> 
+    	<typeAlias  alias="MembrDTO"     type="egovframework.wnn_medcost.user.model.MembrDTO"/> 
+    	<typeAlias  alias="LicnumDTO"     type="egovframework.wnn_medcost.user.model.LicnumDTO"/>
+	    <typeAlias  alias="HospGrdDTO"     type="egovframework.wnn_medcost.user.model.HospGrdDTO"/>
 	    	
-    	<typeAlias  alias="SugaCdDTO"    type="egovframework.wnn_medcost.base.model.SugaCdDTO"/>
-    	<typeAlias  alias="CodeMdDTO"    type="egovframework.wnn_medcost.base.model.CodeMdDTO"/>
-    	<typeAlias  alias="DiseCdDTO"    type="egovframework.wnn_medcost.base.model.DiseCdDTO"/>
-    	<typeAlias  alias="WvalDTO"      type="egovframework.wnn_medcost.base.model.WvalDTO"/>
-    	<typeAlias  alias="SamverDTO"    type="egovframework.wnn_medcost.base.model.SamverDTO"/>
+    	<typeAlias  alias="SugaCdDTO"   type="egovframework.wnn_medcost.base.model.SugaCdDTO"/>
+    	<typeAlias  alias="CodeMdDTO"   type="egovframework.wnn_medcost.base.model.CodeMdDTO"/>
+    	<typeAlias  alias="DiseCdDTO"   type="egovframework.wnn_medcost.base.model.DiseCdDTO"/>
+    	<typeAlias  alias="WvalDTO"     type="egovframework.wnn_medcost.base.model.WvalDTO"/>
+    	<typeAlias  alias="SamverDTO"   type="egovframework.wnn_medcost.base.model.SamverDTO"/>
     	<typeAlias  alias="YakgaCdDTO"   type="egovframework.wnn_medcost.base.model.YakgaCdDTO"/>
     	<typeAlias  alias="JearyoCdDTO"  type="egovframework.wnn_medcost.base.model.JearyoCdDTO"/>
     	<typeAlias  alias="ClaimDTO"     type="egovframework.wnn_medcost.base.model.ClaimDTO"/>
-
-    	<typeAlias  alias="MagamDTO"     type="egovframework.wnn_medcost.magam.model.MagamDTO"/>
-    	<typeAlias  alias="FilesDTO"     type="egovframework.wnn_medcost.magam.model.FilesDTO"/>
     	
-    	<typeAlias  alias="FaqDTO"       type="egovframework.wnn_medcost.mangr.model.FaqDTO"/>
-    	<typeAlias  alias="NotiDTO"      type="egovframework.wnn_medcost.mangr.model.NotiDTO"/>
-    	<typeAlias  alias="FileDTO"      type="egovframework.wnn_medcost.mangr.model.FileDTO"/>
-    	<typeAlias  alias="AsqDTO"       type="egovframework.wnn_medcost.mangr.model.AsqDTO"/>
+    	<typeAlias  alias="FaqDTO"      type="egovframework.wnn_medcost.mangr.model.FaqDTO"/>
+    	<typeAlias  alias="NotiDTO"     type="egovframework.wnn_medcost.mangr.model.NotiDTO"/>
+    	<typeAlias  alias="FileDTO"     type="egovframework.wnn_medcost.mangr.model.FileDTO"/>
+    	<typeAlias  alias="AsqDTO"      type="egovframework.wnn_medcost.mangr.model.AsqDTO"/>
     	
-        <typeAlias  alias="TongDTO"      type="egovframework.wnn_medcost.tong.model.TongDTO"/>
+        <typeAlias  alias="TongDTO"    type="egovframework.wnn_medcost.tong.model.TongDTO"/>
         
-        <typeAlias  alias="ChungDTO"     type="egovframework.wnn_medcost.chung.model.ChungDTO"/>
+        <typeAlias  alias="ChungDTO"    type="egovframework.wnn_medcost.chung.model.ChungDTO"/>
+
+    	<typeAlias  alias="MagamDTO"    type="egovframework.wnn_medcost.magam.model.MagamDTO"/>
+    	<typeAlias  alias="FilesDTO"    type="egovframework.wnn_medcost.magam.model.FilesDTO"/>
+    	<typeAlias  alias="IpwonDTO"    type="egovframework.wnn_medcost.magam.model.IpwonDTO"/>
+        <typeAlias  alias="IndiDTO"     type="egovframework.wnn_medcost.magam.model.IndiDTO"/>
+        <typeAlias  alias="PatvalDTO"   type="egovframework.wnn_medcost.magam.model.PatvalDTO"/>
+        
+    	<typeAlias  alias="TotalDTO"   type="egovframework.wnn_medcost.total.model.TotalDTO"/>
+    	
+    	
 	</typeAliases>
 	
 </configuration>

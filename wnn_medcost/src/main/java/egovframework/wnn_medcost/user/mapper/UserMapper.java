@@ -98,5 +98,9 @@ public interface UserMapper {
 	boolean          updateHospGrd(HospGrdDTO dto)        throws Exception; 
 	String           HospGrdDupChk(HospGrdDTO dto)        throws Exception; 
 	boolean          saveHospGrd(HospGrdDTO dto)          throws Exception; 
+	boolean          yearSaveHospGrd(HospGrdDTO dto)      throws Exception; 
+	HospGrdDTO       selectHospGrd(HospGrdDTO dto)        throws Exception;
+	
+	void callIndicatorsStructureZone(HospGrdDTO dto)      throws Exception;
 }
                     

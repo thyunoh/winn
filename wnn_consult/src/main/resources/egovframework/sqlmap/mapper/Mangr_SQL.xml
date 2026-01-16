@@ -54,7 +54,7 @@
 	        ]]></when>
 	    </choose>
 	         <![CDATA[
-	      Order By  A.UPD_DTTM DESC 
+	      Order By  A.UPD_DTTM DESC , A.UPDATE_SW DESC
 	         ]]>
     </select>         
     
@@ -269,7 +269,8 @@
             UPD_USER, 
             UPD_IP, 
             HOSP_UUID ,
-            QSTN_WAN
+            QSTN_WAN,
+            JOB_SEQ 
         ) VALUES (
             #{hospCdasq}, 
             #{fileGbasq}, 
@@ -282,7 +283,12 @@
             #{updUserasq}, 
             #{updIp}, 
             #{hospUuidasq} ,
-            #{qstnWan}
+            #{qstnWan},
+            (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
+		   	       FROM  TBL_ASQ_MST A 
+			       WHERE A.HOSP_CD   = #{hospCdasq} 
+			         AND A.FILE_GB   = #{fileGbasq} 
+			)
         )
     ]]>    
     </insert>    
@@ -334,12 +340,12 @@
      ]]>   
     </select> 
    <!-- 자주하는 질문 --> 
-    <select id="selectfaqlist" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[ 
+    <select id="selectfaqList" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[ 
         SELECT 
             A.FAQ_SEQ ,
             A.FILE_GB, 
             A.QSTN_CONTS, 
-            IFNULL(A.ANSR_CONTS,'') ANSR_CONTS , 
+            IFNULL(A.ANSR_CONTS,'') AS ANSR_CONTS, 
             A.REG_DTTM, 
             A.REG_USER, 
             A.REG_IP, 
@@ -360,6 +366,7 @@
 		     Order by A.SORT_SEQ  DESC
 	      ]]>
     </select>
+    <!--  
      <insert id="insertfaqMst" parameterType="FaqDTO"> <![CDATA[ 
         INSERT INTO TBL_FAQ_MST (
             FILE_GB, 
@@ -399,6 +406,7 @@
         WHERE FAQ_SEQ  = #{sortSeq} 
      ]]>   
     </update>   
+    -->
      <select  id="selectfaqInfo" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[ 
         SELECT 
             QSTN_CONTS ,

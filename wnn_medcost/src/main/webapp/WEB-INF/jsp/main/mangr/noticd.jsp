@@ -11,8 +11,6 @@
  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
 
-<link href="/css/winmc/bootstrap.css"   rel="stylesheet">
-<link href="/css/winmc/style.css?v=123" rel="stylesheet">
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
 <!-- DataTables CSS -->
 <style>
@@ -31,9 +29,10 @@
 					<div class="card-body">
 						<div class="form-row mb-2">
 							<div class="col-sm-1">
-							  <select id="fileGb1" class="w-72 p-2 rounded-lg" oninput="findField(this)" disabled>
-							    <option value="">구분 1</option>
-							  </select>
+								<select id="fileGb1" class="w-72 p-2 rounded-lg"
+									oninput="findField(this)">
+									<option selected value="1">구분 1</option>
+								</select>
 							</div>
 							<div class="col-sm-6">
 								<div class="btn-group ml-auto">
@@ -145,12 +144,9 @@
 						<label for="fileGb"
 							class="col-2 col-lg-2 col-form-label text-left">공지구분</label>
 						<div class="col-2 col-lg-2">
-							<select id="fileGb" class="custom-select" disabled
-							  style="height: 35px; font-size: 14px;">
-							  <option value="">구분1</option>
-							  <option value="1" ${fileGb1 == '1' ? 'selected' : ''}>공지사항</option>
-							  <option value="2" ${fileGb1 == '2' ? 'selected' : ''}>심사방</option>
-							  <option value="3" ${fileGb1 == '3' ? 'selected' : ''}>소식지</option>
+							<select id="fileGb" name="fileGb" class="custom-select"
+								oninput="findField(this)" style="height: 35px; font-size: 14px;">
+								<option value="" selected>구분1</option>
 							</select>
 						</div>
 					</div>
@@ -220,6 +216,7 @@
 									  </p>
 									  <div id="file-list" class="file-list-container"></div>
 									</div>
+
 								</div>
 							</div>
 						</div>
@@ -283,9 +280,9 @@
 		<!-- ============================================================== -->
 		var list_flag = ['Z'];     										// 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 		//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
-		var list_code = ['FILE_GB'];     // 구분코드 필요한 만큼 선언해서 사용
-		var select_id = [];     // 구분코드 데이터 담길 Select (ComboBox ID) 
-		var firstnull = [];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김
+		var list_code = ['FILE_GB','FILE_GB'];     // 구분코드 필요한 만큼 선언해서 사용
+		var select_id = ['fileGb','fileGb1'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
+		var firstnull = ['N','Y'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
 		<!-- ============================================================== -->
@@ -521,7 +518,7 @@
 		    insertButton.style.display = 'none';
 		    updateButton.style.display = 'none';
 		    deleteButton.style.display = 'none';
-    	    if (flag == 'I') {
+		    if (flag == 'I') {
 		        document.getElementById("file-input").disabled = false;
 		        document.querySelector(".btn-box").style.display = "inline-block";
 		        document.getElementById("uploaded").hidden = true;
@@ -534,7 +531,7 @@
 		        document.getElementById("drag-area").style.pointerEvents = "auto";  // 고친 부분
 		        document.getElementById("drag-area").style.opacity = 1;
 		    }
-
+		    
 		    // Show button
 		    switch (flag) {
 		        case 'I': // Show Insert button
@@ -894,7 +891,7 @@
 		    $.ajax({
 		        type: "POST",
 		        url: "/mangr/notiCdList.do",
-		        data: { fileGb: $('#fileGb1').val() } ,
+		        data: find,
 		        dataType: "json",
 		        
 		        // timeout: 10000, // 10초 후 타임아웃
@@ -1791,6 +1788,7 @@
 		    let filegb   =  document.getElementById("fileGb").value;
 		    let reguser  =  document.getElementById("regUser").value;
 		    let regip    =  document.getElementById("regIp").value;
+		    
 		    formData.append("action" , "upload");
 		    formData.append("hospCd" , hospcd); // 병원 코드
 		    formData.append("notiSeq", notiseq); // 공시사항 번호
@@ -1870,7 +1868,6 @@
 		        statusDisplay.style.color = "red";
 		    });
 		}
-
 		//데이타테입르 최초생성 
 		$(document).ready(function() {
 		    console.log("📌 최초 DataTables 생성");
@@ -2107,30 +2104,7 @@
 		$('#modalName').on('hidden.bs.modal', function () {
 		  $('#notiContent').summernote('destroy');
 		});
-		  // 서버에서 전달받은 값 (JSP에서 렌더링될 값)
-		  const fileGb1 = '${fileGb1}';  // 예: '1', '2', '3' 또는 ''
-
-		  // select 요소
-		  const select = document.getElementById("fileGb1");
-
-		  // 옵션 목록
-		  const options = [
-		    { value: '', text: '구분 1' },
-		    { value: '1', text: '공지사항' },
-		    { value: '2', text: '심사방' },
-		    { value: '3', text: '소식지' }
-		  ];
-
-		  // 옵션을 셀렉트에 추가
-		  options.forEach(opt => {
-		    const option = document.createElement("option");
-		    option.value = opt.value;
-		    option.textContent = opt.text;
-		    if (fileGb1 === opt.value) {
-		      option.selected = true;
-		    }
-		    select.appendChild(option);
-		  });		
+	
 	</script>
 <!-- ============================================================== -->
 <!-- 기타 정보 End -->

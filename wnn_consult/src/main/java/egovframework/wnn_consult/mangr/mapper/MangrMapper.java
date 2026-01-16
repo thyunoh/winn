@@ -7,10 +7,9 @@ import egovframework.wnn_consult.mangr.model.NotiDTO;
 import egovframework.wnn_consult.mangr.model.AsqDTO;
 import egovframework.wnn_consult.mangr.model.FaqDTO;
 import egovframework.wnn_consult.mangr.model.FileDTO;
-
 @Mapper("MangrMapper")
 public interface MangrMapper {
-
+	
 	List<?>     selectNotiMstList(NotiDTO dto)  throws Exception; 
 	NotiDTO     selectNotiMstinfo(NotiDTO dto)  throws Exception; 
 	boolean     insertNotiMst(NotiDTO dto)      throws Exception;
@@ -28,7 +27,7 @@ public interface MangrMapper {
     //문서파일 
 	List<FileDTO>  getFileCdList(FileDTO dto)  throws Exception; 
 	
-	List<FaqDTO>  selectfaqlist(FaqDTO dto)  throws Exception; 
+	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception; 
 	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception; 
 	
 }

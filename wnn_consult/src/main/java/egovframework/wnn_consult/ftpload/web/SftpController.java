@@ -2,6 +2,9 @@ package egovframework.wnn_consult.ftpload.web;
 
 import com.jcraft.jsch.*;
 import egovframework.wnn_consult.ftpload.service.SftpService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +17,8 @@ import java.util.Properties;
 @RequestMapping("/sftp")
 public class SftpController {
 
+	private static final Logger log = LoggerFactory.getLogger(SftpController.class);
+	
     private final SftpService sftpService;
 
     public SftpController(SftpService sftpService) {
@@ -21,6 +26,7 @@ public class SftpController {
     }
 
     // ✅ SFTP 연결 정보 (임시 하드코딩 – properties 방식 권장)
+    
     private static final String SFTP_HOST      = "114.108.153.178";
     private static final int    SFTP_PORT      = 22;
     private static final String SFTP_USER      = "winner";
@@ -63,7 +69,14 @@ public class SftpController {
             
             String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
 
+            log.error("📁 요청된 파일 경로: " + remoteFilePath);	
             System.out.println("📁 요청된 파일 경로: " + remoteFilePath);
+            
+            System.out.println("filePath: " + filePath);
+            System.out.println("BASE_DIRECTORY: " + BASE_DIRECTORY);
+            System.out.println("cleanedPath: " + cleanedPath);
+            System.out.println("remoteFilePath: " + remoteFilePath);
+            
 
             // ✅ 경로 존재 여부 확인
             try {

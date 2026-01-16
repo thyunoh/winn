@@ -7,8 +7,6 @@ import java.util.regex.Pattern;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
-
-
 public class ClientInfo {
 	
 	public static String getClientIP(HttpServletRequest request) {

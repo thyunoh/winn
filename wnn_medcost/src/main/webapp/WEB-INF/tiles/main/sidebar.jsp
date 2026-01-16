@@ -18,7 +18,6 @@
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/lang/summernote-ko-KR.min.js"></script>
 <!-- 리치에디터 -->
-
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 
 <!-- ============================================================== -->
@@ -40,27 +39,53 @@
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>                        
                     </li>
                     
+                    <li class="nav-item menu-section" id="menu-b">
+                        <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#file-upload" aria-controls="file-upload">
+                                                                                      <i class="fas fa-cloud-upload-alt"></i>자료올리기</a>
+                        <div id="file-upload" class="collapse submenu" style="background-color: white;">
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link"  href="/main/magamFileUpload.do">청구.평가 업로드</a>
+                                </li>
+                                <li class="nav-item">
+                              <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
+                                data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
+                              </a>
+                              <div id="lic_excel" class="collapse submenu" style="background-color: white;">
+                                  <ul class="nav flex-column">
+                                      <li class="nav-item">
+                                          <a class="nav-item nav-link" href="/user/licexcel.do">인력신고현황 엑셀</a>
+                                      </li>
+                                  </ul>
+                              </div>
+                        </li>                                     
+                            </ul>
+                        </div>
+                    </li>
+                    
                     <li class="nav-item menu-section" id="menu-c">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/total_Report.do" ><i class="fa fa-calculator"></i>진료비-분석 현황</a>
                     </li>
                 
                     <li class="nav-item menu-section" id="menu-d">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" ><i class="fa fa-list-ol"></i>적정성-평가 현황</a>
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" >
+                        <i class="fa fa-list-ol" aria-hidden="true"></i>적정성-평가 현황</a>
                     </li>
                     
                             
                     <li class="nav-item" id="simulation">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" ><i class="fa fa-list-ol"></i>적정성-Simulation</a>
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" >
+                        <i class="fa fa-cart-plus" aria-hidden="true"></i>적정성-Simulation</a>
                     </li>
                     
                     
                     <li class="nav-item menu-section" id="menu-e">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do" ><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do"><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
                     </li>
                    
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
-                                                                                      <i class="fas fa-cloud-upload-alt"></i>요양기관등록</a>
+                                                                                      <i class="fa fa-building" aria-hidden="true"></i></i>요양기관등록</a>
                         <div id="user-info" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item" id="hospuser1">
@@ -94,7 +119,7 @@
                     <!-- 기준정보 -->
                     <li class="nav-item menu-section" id="menu-h">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#base-info" aria-controls="base-info">
-                                                                                                            <i class="fas fa-list-ul"></i>기준정보</a>
+                                                                                                            <i class="fa fa-copyright" aria-hidden="true"></i>기준정보</a>
                         <div id="base-info" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
@@ -180,13 +205,7 @@
                         <div id="base-info-4" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/mangr/noticd.do?type=notice">공지사항</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/mangr/noticd.do?type=review">심 사 방</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/mangr/noticd.do?type=newsletter">소 식 지</a>
+                                    <a class="nav-item nav-link"  href="/mangr/noticd.do">공지사항/심사방</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/mangr/faqcd.do">자주하는 질문</a>
@@ -195,34 +214,12 @@
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="https://377.co.kr"   class="nav-item nav-link" target="_blank">원격지원상담</a>
+                                    <a class="nav-item nav-link"  href="">원격지원상담</a>
                                 </li>
                             </ul>
                         </div>
                     </li>
-                    <li class="nav-item menu-section" id="menu-b">
-                        <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#file-upload" aria-controls="file-upload">
-                                                                                      <i class="fas fa-cloud-upload-alt"></i>자료올리기</a>
-                        <div id="file-upload" class="collapse submenu" style="background-color: white;">
-                            <ul class="nav flex-column">
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link"  href="/main/magamFileUpload.do">청구.평가 업로드</a>
-                                </li>
-                                <li class="nav-item">
-                              <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
-                                data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
-                              </a>
-                              <div id="lic_excel" class="collapse submenu" style="background-color: white;">
-                                  <ul class="nav flex-column">
-                                      <li class="nav-item">
-                                          <a class="nav-item nav-link" href="/user/licexcel.do">인력신고현황 엑셀</a>
-                                      </li>
-                                  </ul>
-                              </div>
-                        </li>                                     
-                            </ul>
-                        </div>
-                    </li>
+                    
                     
                     <!-- 진료비 분석 보고서 -->    
                     <li class="nav-item menu-section" id="menu-g">
@@ -355,7 +352,6 @@
     </div>
   </div>
 </div>
-		
 <!-- 기존 1대1 질의응답  -->
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
    data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
@@ -628,7 +624,6 @@ function loadFaqData() {
         }
     });
 }
-
 // FAQ 모달 닫기
 function faqMainClose() {
     console.log("📢 FAQ 모달 닫힘 실행");
@@ -913,7 +908,9 @@ function hosp_conact() {
     const hospuser3   = document.getElementById("hospuser3");
     const hospuser4   = document.getElementById("hospuser4");
     const hospuser5   = document.getElementById("hospuser5");
-    const simulation  = document.getElementById("simulation");
+    
+  //  const simulation  = document.getElementById("simulation");
+  
     const hideElementsById = (ids) => {
         ids.forEach(id => {
             const el = document.getElementById(id);
@@ -932,8 +929,9 @@ function hosp_conact() {
         "hospuser2",
         "hospuser3",
         "hospuser4",
-        "hospuser5",
-        "simulation"
+        "hospuser5"
+        
+      //  ,"simulation"
     ]);
 }
 document.addEventListener('DOMContentLoaded', function () {
@@ -965,10 +963,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부 
     if (s_wnn_yn != 'Y') {
-        hosp_conact();
+    	hosp_conact();
     }
 });
-
 
 </script>      
 <!-- ============================================================== -->

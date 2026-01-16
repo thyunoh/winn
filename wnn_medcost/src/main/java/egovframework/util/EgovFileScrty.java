@@ -43,7 +43,7 @@ import org.apache.commons.codec.binary.Base64;
  */
 public class EgovFileScrty {
 
-    // 파일구분자
+	// 파일구분자
     static final char FILE_SEPARATOR = File.separatorChar;
 
     static final int BUFFER_SIZE = 1024;

@@ -160,8 +160,13 @@ public class MangrController {
 	public String mangr_asqSaveAct(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 
 			//코그구분 정보 조회
-			System.out.println("getIudasq " + dto.getIudasq());
+			System.out.println("getHospCdasq " + dto.getHospCdasq());
+			System.out.println("getFileGbasq " + dto.getFileGbasq());
+			System.out.println("getQstnConts " + dto.getQstnTitle());
+			System.out.println("getQstnConts " + dto.getQstnConts());
+			
 			if ("QI".equals(dto.getIudasq())){
+				System.out.println("insertqstnMst 시작");
 				svc.insertqstnMst(dto) ;
 			}else if ("QU".equals(dto.getIudasq())){
 				svc.updateqstnMst(dto) ;
@@ -174,15 +179,23 @@ public class MangrController {
 		}
 		return "jsonView";
 	}		
-	/*자주하는 질문*/
 	
-	@RequestMapping(value= "/mangr/faqList.do" , method = RequestMethod.POST)
+	
+	/*자주하는 질문*/
+	@RequestMapping(value= "/mangr/getfaqCdList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> getfaqCdList(@ModelAttribute("DTO") FaqDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		
+		System.out.println("FAQ 호출");
+		
 		Map<String, Object> response = new HashMap<>();    
 		try { 
+			System.out.println("FAQ 진입");
 			//코그구분 정보 조회
-			List<FaqDTO> resultLst = svc.selectfaqlist(dto);
+			List<FaqDTO> resultLst = svc.selectfaqList(dto);
+			
+			System.out.println("FAQ 실행");
+			
 	        response.put("resultLst", resultLst);
             response.put("resultCnt", resultLst.size());
             response.put("error_code", "0"); // 정상 응답
@@ -195,6 +208,7 @@ public class MangrController {
 	        }
 	        return response;
 	}
+	
 	/*문서화일*/	
 	@RequestMapping(value= "/mangr/fileCdList.do", method = RequestMethod.POST)
 	@ResponseBody

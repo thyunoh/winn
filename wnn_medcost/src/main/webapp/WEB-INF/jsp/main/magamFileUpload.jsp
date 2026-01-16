@@ -22,7 +22,8 @@
                         <div class="col-xl-12 col-lg-12">
                         
                             <div class="card mb-3">
-	                            <div class="card-header d-flex">
+                                
+	                            <div class="card-header d-flex align-items-center">
 	                                <h3 class="card-header-title">년도</h3>
 	                                <select id="year_Select" class="custom-select ml-left w-auto  ml-2 mr-4">
 	                                </select>
@@ -31,21 +32,24 @@
 	                                	<option selected value="1">파일선택</option>
 				                        <option value="2">폴더선택</option>
 	                                </select> 
-	                                <select id="allowedFiles" class="custom-select ml-left w-auto ml-2 mr-4"  style="display: none;">	                                	
+	                                <select id="allowedFiles" class="custom-select ml-left w-auto ml-2 mr-4" style="display: none;">	                                	
 	                                </select>
-	                                <select id="claimType" class="custom-select ml-left w-auto ml-2 mr-4"  style="display: none;">	                                	
+	                                <select id="specode" class="custom-select ml-left w-auto ml-2 mr-4"      style="display: none;">	                                	
 	                                </select>
-	                                <select id="insurType" class="custom-select ml-left w-auto ml-2 mr-4"  style="display: none;">	                                	
+	                                <select id="claimType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">	                                	
 	                                </select>
-	                                <select id="treatType" class="custom-select ml-left w-auto ml-2 mr-4"  style="display: none;">	                                	
+	                                <select id="insurType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">	                                	
 	                                </select>
+	                                <select id="treatType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">	                                	
+	                                </select>
+	                                
 	                            </div>
 	                        </div>
 		                        
                             <div class="tab-regular mb-3">
 							    <ul class="nav nav-tabs" id="mg_FlagTab" role="tablist">
 							        <li class="nav-item">
-							            <a class="nav-link active" id="c-tab" data-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="true" data-type="8">청구샘파일</a>
+							            <a class="nav-link active" id="c-tab" data-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="true" data-type="8" >청구샘파일</a>
 							        </li>
 							        <li class="nav-item">
 							            <a class="nav-link" id="p-tab" data-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="false" data-type="9">환자평가표</a>
@@ -55,9 +59,9 @@
 							    <div class="tab-content" id="mg_FlagTabContent">
 							        <div class="tab-pane fade show active" id="content" role="tabpanel">
 							            <div class="row" id="months-container">
-							                <!-- 월별 카드가 여기에 동적으로 추가됩니다 -->
 							                
 							            </div>
+							            
 							        </div>
 							    </div>
 							</div>
@@ -73,7 +77,11 @@
                      
                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                          <div class="card">
-                             <h6 class="card-header" style="color: #8b0000; font-weight: bold;">청구서 / 평가표는 업로드시 기존자료는 삭제되고, 현재 등록된 자료로 신규생성 됩니다.</h6>
+                             <strong class="card-header" style="color: #8b0000; font-weight: bold;">
+                             	청구서 자료등록 시 청구번호가 일치하면 기존자료는 삭제되고, 현재 등록하신 자료로 신규생성 됩니다. ( 마감, 예상시간은 네트워크 또는 서버상태에 따라 차이가 날 수 있습니다. )<br>
+                             	평가서 자료등록 시 모든자료는 신규생성 됩니다.<br>
+                             	입원현황 업로드 시 입원환자의 주민번호 앞 6자리가 부재할 경우 부재할 경우‘진료비 분석 청구 누락 대상자’ 및 ‘적정성평가 대상자 확인’의 정확도가 낮아질 수 있습니다. 
+                             </strong>
                              <div class="card-body">
                              	 <div class="form-row mb-2">
 	                                <input type="file" id="folderInput" multiple style="display: none;">
@@ -87,9 +95,22 @@
                                             <button class="btn btn-outline-success mr-2" data-toggle="tooltip" data-placement="top" title="등록된 자료 Upload" onClick="fn_file_upload()">서버전송. <i class="fas fa-cloud-upload-alt"></i></button>
                                             -->
                                         </div>
-                                    </div>                                    
-                                </div>
-                                
+                                    </div> 
+                                    
+                                                                       
+                                 </div>
+                                 
+                                 <!--  
+                                 <div class="loading" style="display:none;">진행중</div>
+								 -->
+								 <div id="progress-container">
+								     <div id="progress-bar"></div>
+								     <div id="progress-text">0%</div>
+								 </div>
+								 <div class="loading" style="display:none;">
+								     <p>예상</br>시간</br><span id="estimatedTime">0</span>초</p>
+								 </div>
+								 
                                  <div id="file_category" style="height: 500px;">                                 
 	                                 <!-- 
 	                              	 display: 기본 DataTables 스타일을 적용합니다.
@@ -118,13 +139,16 @@
 	
     
 <script type="text/javascript">
-
+	var signUp = 'N'; // 파일등록 진행여부
+	var gExcel = 'N';                  
 	var gFiles = null;
-	var g_Year = new Date().getFullYear(); // 당해년도
-	var gMonth = '01';                     // 1월
-	var g_Flag = '8';                      // 8.청구서 9.평가표
-	var allowedFiles = [];                 // 적용가능 파일 담기
-	var allowedPairs = [];                 // 적용가능 필요 파일
+	var g_Year = new Date().getFullYear();                       // 당해년도
+	var gMonth = String(new Date().getMonth()).padStart(2, '0'); // 당월
+	var jobMon = String(new Date().getMonth()).padStart(2, '0'); // 당월
+	var g_Flag = '8';                      						 // 8.청구서 9.평가표	 
+	var allowedFiles = [];
+	var allowedPairs = [];
+	var specode = [];
 	// 안해도 상관없음, 단 getElementById를 변경하면 꼭해야됨
 	// Form마다 수정해야 될 부분 시작
 	var tableName = document.getElementById('tableName');
@@ -152,7 +176,7 @@
 	var gridColums = [];
 	var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 	var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-	var page_Hight = 500;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+	var page_Hight = 400;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 	var p_Collapse = true;  		// Page 길이까지 auto size - scrollCollapse
 	
 	var datWaiting = true;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -160,7 +184,7 @@
 	var hd_Sorting = true;   		// Head 정렬(asc,desc) 표시여부
 	var info_Count = false;   		// 총건수 대비 현재 건수 보기 표시여부 
 	var searchShow = false;   		// 검색창 Show/Hide 표시여부
-	var showButton = false;   		// Button (복사, 엑셀, 출력)) 표시여부
+	var showButton = true;   		// Button (복사, 엑셀, 출력)) 표시여부
 	
 	var copyBtn_nm = '복사.';
 	var copy_Title = 'Copy Title';		
@@ -173,21 +197,21 @@
 	var find_Enter = false;  		// 검색창 바로바로 찾기(false) / Enter후 찾기(true)
 	var row_Select = true;   		// Page내 Data 선택시 선택 row 색상 표시
 	
-	var colPadding = '0.5px'   		// 행 높이 간격 설정
+	var colPadding = '3px'   		// 행 높이 간격 설정
 	var data_Count = [5, 10, 15, 20, 30];  // Data 보기 설정
 	var defaultCnt = 15;                   // Data Default 갯수
 	
 	
 	//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-	var c_Head_Set = [ '청구번호','버전','청구구분','진료형태','진료년월', '건수','총진료비','청구금액','작업-KEY','작업일시','작업자','파일명'];
+	var c_Head_Set = [ '번호','버전','구분','형태','진료년월', '건수','총진료비','청구금액','작업-KEY','작업일시','작업자','파일명','작업년','작업월','마감','락' ];
 
 	var columnsSet = [ 
 		
-					 	{ data: 'claim_no',   visible: true,  className: 'dt-body-center',  width: '100px' },
-					    { data: 'clform_ver', visible: true,  className: 'dt-body-center',  width: '50px'  },
-					    { data: 'claim_type', visible: true,  className: 'dt-body-center',  width: '250px' },
-					    { data: 'claim_type', visible: true,  className: 'dt-body-center',  width: '250px' },
-					    { data: 'date_ym',    visible: true,  className: 'dt-body-center',  width: '100px',
+					 	{ data: 'claim_no',      visible: true,  className: 'dt-body-center',  width: '100px' },
+					    { data: 'clform_ver',    visible: true,  className: 'dt-body-center',  width: '50px'  },
+					    { data: 'claim_type_nm', visible: false, className: 'dt-body-center',  width: '250px' },
+					    { data: 'treat_type_nm', visible: true,  className: 'dt-body-center',  width: '250px' },
+					    { data: 'date_ym',       visible: true,  className: 'dt-body-center',  width: '100px',
 						    render: function(data, type, row) {
 		            			if (type === 'display') {
 		            				return getFormat(data,'d6')
@@ -222,7 +246,12 @@
 						{ data: 'jobs_dt',  visible: true,  className: 'dt-body-center',  width: '100px' },
 	        			{ data: 'upd_dttm', visible: true,  className: 'dt-body-center',  width: '100px' },
 	        			{ data: 'user_nm',  visible: true,  className: 'dt-body-center',  width: '100px' },        			   
-	        			{ data: 'file_nm',  visible: true,  className: 'dt-body-center',  width: '150px' }
+	        			{ data: 'file_nm',  visible: true,  className: 'dt-body-center',  width: '150px' },
+	        			
+	        			{ data: 'mg_year',  visible: false, className: 'dt-body-center',  width: '100px' },
+	        			{ data: 'mgmonth',  visible: false, className: 'dt-body-center',  width: '100px' },
+	        			{ data: 'mg_flag',  visible: false, className: 'dt-body-center',  width: '100px' },
+	        			{ data: 'lock_yn',  visible: false, className: 'dt-body-center',  width: '100px' }
         			   
 					 ];
 	
@@ -250,9 +279,9 @@
 	<!-- ============================================================== -->
 	var list_flag = ['Z'];     			  // 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 	//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
-	var list_code = ['ALLOWED'];          // 구분코드 필요한 만큼 선언해서 사용
-	var select_id = ['allowedFiles'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
-	var firstnull = ['N'];                // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김  
+	var list_code = ['ALLOWED','SPECODE'];          // 구분코드 필요한 만큼 선언해서 사용
+	var select_id = ['allowedFiles','specode'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
+	var firstnull = ['N','N'];                // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김  
 	<!-- ============================================================== -->
 	<!-- 공통코드 Setting End -->
 	<!-- ============================================================== -->
@@ -278,19 +307,17 @@ $(document).ready(function() {
 	}	
 	populateYearSelect();
 	
-    // 초기 로드
     loadMonthsData();
 
     $('#year_Select').on('change', function() {
     	g_Year = $(this).val();
-        const activeTab = $('#mg_FlagTab a.active');
+        let activeTab = $('#mg_FlagTab a.active');
         g_Flag = activeTab.data('type');
         findField('mg_year', g_Year)
         findField('mg_flag', g_Flag)
         loadMonthsData();
     });
 
-    // 탭 전환 시 이벤트
     $('#mg_FlagTab a').on('click', function (e) {
         e.preventDefault();
         $(this).tab('show');
@@ -301,18 +328,30 @@ $(document).ready(function() {
         loadMonthsData();
     });
     
+    
     document.addEventListener('click', function(e) {
-	    if(e.target && e.target.getAttribute('data-action') === 'fileLoad') {
-	  	  	fileLoad_Open(e.target.getAttribute('data-mgmonth'));
-	  	}
-	  	if(e.target && e.target.getAttribute('data-action') === 'fileView') {
+	    
+    	if (e.target && e.target.getAttribute('data-action') === 'fileLoad') {
+    		fileLoad_Open(e.target.getAttribute('data-mgmonth'));
+    	}
+    	if(e.target && e.target.getAttribute('data-action') === 'fileView') {
 	  	  	fileView_Open(e.target.getAttribute('data-mgmonth'));
 	  	}
+    	if (e.target && e.target.getAttribute('data-action') === 'excelLoad') {
+    		excelLoad_Open(e.target.getAttribute('data-mgmonth'));
+    	}
+    	if (e.target && e.target.getAttribute('data-action') === 'magamLock') {
+    		magamLock_Open(e.target.getAttribute('data-mgmonth'));
+    	}
+    	
+    	
    	});
-   
+    
     find_Check();
     
-    comm_Check();    
+    comm_Check();
+    
+    console.log("준비완료");
 
 });
 </script> 
@@ -369,7 +408,7 @@ $(document).ready(function() {
 			        		    filename: function() {
 			        		        var d = new Date();
 			        		        var formattedDate = d.getFullYear() + 
-			        		                            ('0' + (d.getMonth() + 1)).slice(-2) + 
+			        		                            ('0' + (d.getMonth())).slice(-2) + 
 			        		                            ('0' + d.getDate()).slice(-2) + '_' +
 			        		                            ('0' + d.getHours()).slice(-2) + 
 			        		                            ('0' + d.getMinutes()).slice(-2) + 
@@ -458,15 +497,84 @@ $(document).ready(function() {
 		    	
 		    	var data = dataTable.row($(this).parents('tr')).data();
 		    	
-		    	messageBox("9","<h5>정말로 삭제하시겠습니까 ? 파일명칭 : " + data.file_nm + " 입니다. </h5><p></p><br>","","","");
-		    	confirmYes.addEventListener('click', () => {
-		    		// Yes후 여기서 처리할 로직 구현
+		    	//교육담당자  mainfg = 3으로 등록되어 있어 삭제 권한 없음, 병원담당자 mainfg = 1 또는 2인 경우 삭제권한 있음. (병원직원, mainfg = 3 담당자로 등록된 경우 삭제 권한 없음)
+		    	if (((data.lock_yn === 'N' && ['1', '2'].includes(mainfg)) || (winner === 'Y' && ['1', '2'].includes(mainfg)))) {
+			    	// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
+					// error:    오류나 실패를 나타내는 빨간색 X 아이콘
+					// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
+					// info:     정보를 나타내는 파란색 i 아이콘
+					// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
+					Swal.fire({title: '삭제여부',
+							   html:  '파일명칭 : <strong>' + data.treat_type_nm + ' - ' + data.case_cnt + '건</strong> 입니다.',
+							   icon:  'question',
+							   showCancelButton: true,
+							   confirmButtonText: '삭제',
+							   cancelButtonText: '취소',
+							   customClass: {
+								   popup: 'small-swal'}
+					           }).then((result) => {
+	
+					    if (result.isConfirmed) {
+						
+				    		$.ajax({
+				    		  url: "/main/deleteMagamClaimNo.do",
+			   	              type: "POST",
+			   	              data: { hosp_cd: hospid,
+			   	            	      mg_year: data.mg_year,
+			   	            	      mgmonth: data.mgmonth,
+			   	            	      mg_flag: data.mg_flag,
+						    	      claim_no: data.claim_no,
+						    	      reg_user: userid
+						      },
+						      dataType: "json",
+						      success: function(response) {
+						    	 
+						    	 dataTable.ajax.reload();
+						    	 
+						    	 Swal.fire({
+							            title: '처리확인',
+							            text:  '정상처리 되었습니다. ',
+							            icon:  'success',
+							            confirmButtonText: '확인',
+							            timer: 1000,
+							            timerProgressBar: true,
+							            showConfirmButton: false
+							     });
+						    	 jobMon = gMonth; 
+						    	 loadMonthsData();
+						      },
+						      error: function(xhr, status, error) {
+						          console.error("Error fetching data:", error);
+						      }
+						      
+							});
+					  	}
+			        });
+		    	} else {
+		    		if (!['1', '2'].includes(mainfg)) {
+		    			Swal.fire({
+				            title: '권한확인',
+				            text:  '삭제권한이 없습니다. 삭제 불가',
+				            icon:  'error',
+				            confirmButtonText: '확인',
+				            timer: 1000,
+				            timerProgressBar: true,
+				            showConfirmButton: false
+				     	});
+		    		} else {
+		    			Swal.fire({
+				            title: '마감확인',
+				            text:  '마감자료입니다. 삭제 불가',
+				            icon:  'error',
+				            confirmButtonText: '확인',
+				            timer: 1000,
+				            timerProgressBar: true,
+				            showConfirmButton: false
+				     	});	
+		    		}
 		    		
-		    		// grid data 삭제
-		    		dataTable.row($(this).parents('tr')).remove().draw();    		 
-		    		messageDialog.hide();
-		    		
-		        });
+		    	}
+				
 		    });
 			
 		    // 컬럼 Click과 CheckBox를 이벤트 동작이 동시에 일어나 분리함  
@@ -531,6 +639,7 @@ $(document).ready(function() {
 	        success: function(response) {
 	        	//table.processing(false); // 처리 중 상태 종료
 	            if (response && Object.keys(response).length > 0) {
+	            	
 	            	callback(response);
 	            } else {
 	            	callback([]); // 빈 배열을 콜백으로 전달
@@ -613,43 +722,7 @@ $(document).ready(function() {
 <!-- ============================================================== -->
 <script type="text/javascript">
 
-	function fileLoad_Open(mgmonth) {
-		
-		event.stopPropagation();
-	    gMonth = mgmonth;
-	    findField('mgmonth', gMonth)
-	    
-	    let file_Select = document.getElementById("file_Select");
-	    let folderInput = document.getElementById('folderInput');
-	    
-	    if (file_Select.value === "2") {
-	      // 폴더 선택이 선택된 경우 webkitdirectory 속성 추가
-	      folderInput.setAttribute("webkitdirectory", "");
-	    } else {
-	      // 파일 선택이 선택된 경우 webkitdirectory 속성 제거
-	      folderInput.removeAttribute("webkitdirectory");
-	    }
-	 	// accept 속성 설정
-	    let acceptExtensions = allowedFiles.map(file => {
-		    if (file.startsWith('*.')) {
-		        return '.' + file.slice(2);
-		    } else {
-		        return '.' + file.split('.').pop();
-		    }
-	    }).join(',');
-	    
-	    folderInput.setAttribute('accept', acceptExtensions);
-	    
-	    folderInput.click();
-	    
-	}
-
-	function fileView_Open(mgmonth) {
-		event.stopPropagation();
-		gMonth = mgmonth;
-		findField('mgmonth', gMonth)
-		dataTable.ajax.reload();
-	}
+	
 	// key Setting
 	function dataTableKeys(dataTable, selectedRows) {
 		// 데이터 객체 초기화
@@ -715,10 +788,10 @@ $(document).ready(function() {
 		if (list_code.length > 0) {
 			$.ajax({
 			    type: "POST",
-			    url: "/suga/commList.do",    
+			    url: "/base/commList.do",    
 			    data: {
-			        list_gb: list_flag,
-			        list_cd: list_code
+			        listGb: list_flag,
+			        listCd: list_code
 			    },
 			    dataType: "json",
 			 	
@@ -727,7 +800,6 @@ $(document).ready(function() {
 				},
 			    success: function(response) {
 			   	
-			    	allowedFiles = []; // 적용가능 파일 담기
 			    	
 			        let commList = response.data || [];
 			    	
@@ -736,7 +808,8 @@ $(document).ready(function() {
 			        	let select = $('#' + select_id[i]);
 			            select.empty();
 			            
-			            let filteredItems = commList.filter(item => item.code_cd === list_code[i]);
+			            
+			            let filteredItems = commList.filter(item => item.codeCd === list_code[i]);
 			            
 			            if (filteredItems.length > 0) {
 			            	if (firstnull[i] === "Y")
@@ -744,10 +817,14 @@ $(document).ready(function() {
 			            		
 			            	filteredItems.forEach(function (item) {
 			            		
-			                    select.append('<option value=' + item.sub_code + '>' + item.sub_code_nm + '</option>');
+			                    select.append('<option value=' + item.subCode + '>' + item.subCodeNm + '</option>');
 			                    
-			                    allowedFiles.push(item.sub_code); 
-			                    allowedPairs.push(item.sub_code_nm);
+			                    if (list_code[i] === "ALLOWED") {
+			                    	allowedFiles.push(item.subCode); 
+			                    	allowedPairs.push(item.subCodeNm);	
+			                    } else {
+			                    	specode.push(item.subCode);	
+			                    }
 			                    
 			                });
 			            } else {
@@ -883,13 +960,13 @@ $(document).ready(function() {
       		}
       	}
      	// Button 생성
-     	/*
+     	/* btn-outline-danger */
         gridColums.push({ data: null, orderable: false, searchable: false, className: 'dt-center',
-            render: function(data, type, row) {
-                return  '<button class="btn btn-outline-light btn-xs del-btn">삭제.<i class="far fa-trash-alt"></i></button>';
+            render: function(data, type, row) { 
+                return  '<button class="btn btn-outline-danger btn-xs del-btn">삭제..<i class="far fa-trash-alt"></i></button>';
             }
         });
-     	**/
+     	
       	
       	if (mark_Colnm.length > 0) { markColums = mark_Colnm; }
       	if (show_Sorts.length > 0) { showSortNo = show_Sorts; }
@@ -926,228 +1003,625 @@ $(document).ready(function() {
 <!-- ============================================================== -->
 <!-- 월별,  8.청구서 9.평가표 정보 Start -->
 <!-- ============================================================== -->
+
+  
+
+
 <script type="text/javascript">
 
-document.getElementById('folderInput').addEventListener("change", handleFileSelection);
-
-function handleFileSelection(event) {
+async function handleFileSelection(event) {
 	
-    let lfiles = event.target.files;
-    
-    let gFiles = Array.from(lfiles).filter(file => {
-        let fileName = file.name;
-        return file.size > 0 && allowedFiles.some(pattern => {
-            if (pattern.startsWith('*.')) {
-                return fileName.toLowerCase().endsWith(pattern.slice(2).toLowerCase());
-            } else if (pattern.endsWith('.*')) {
-                return fileName.toLowerCase().startsWith(pattern.slice(0, -2).toLowerCase());
-            } else {
-                return fileName === pattern;
-            }
-        });
-    });
+	signUp = 'Y';
+	
+	if (gExcel === 'Y') {
+	
+		const columnMapping = {
+		    'chartno': ['차트번호', '환자ID', '차트 No', 'Chart', 'Chart Number'],
+		    'patname': ['수진자명', '환자명', '환자이름', '이름', '성명'],		    
+		    'ipwondt': ['입원일', '입원일자', '입원날짜', 'Admission', 'Admission Date', '최초입원일', '실입원일'],
+		    'ipwontm': ['입원시간', 'Admission Time'],
+		    'tewondt': ['퇴원일', '퇴원일자', '퇴원날짜', 'Discharge', 'Discharge Date', '실퇴원일'],
+		    'tewontm': ['퇴원시간', 'Discharge Time'],
+		    'juminno': ['주민번호', '주민등록번호'],
+		    'docname': ['의사', '진료의', '주치의', '의사성명', '의사명'],
+		    'dept_nm': ['진료과', '진료과목', '진료과명'],
+		    'insurnm': ['환자유형', '보험유형', '유형', '보험', '자격', '보종'],
+		    'word_nm': ['병동'],
+		    'room_nm': ['병실']
+		};
 
-    let missingPairs = [];
-    let missingFiles = [];
-    let chungguFiles = [];
-    for (let i = 0; i < allowedFiles.length; i++) {
-        if (allowedPairs[i] !== '-') {
-            let fileExists   = false;
-            let existingFile = null;
-
-            for (let file of gFiles) {
-                let fileName = file.name;
-                let pattern  = allowedFiles[i];
-                
-                if (pattern.startsWith('*.')) {
-                    fileExists = fileName.toLowerCase().endsWith(pattern.slice(2).toLowerCase());
-                } else if (pattern.endsWith('.*')) {
-                    fileExists = fileName.toLowerCase().startsWith(pattern.slice(0, -2).toLowerCase());
-                } else {
-                    fileExists = fileName === pattern;
-                }
-                
-                if (fileExists) {
-                    existingFile = fileName;
-                    chungguFiles.push(existingFile);
-                    // break;
-                }
-            }
-
-            if (fileExists) {
-                let pairExists = gFiles.some(file => {
-                    let fileName = file.name;
-                    let pairPattern = allowedPairs[i];
-                    
-                    if (pairPattern.startsWith('*.')) {
-                        return fileName.toLowerCase().endsWith(pairPattern.slice(2).toLowerCase());
-                    } else if (pairPattern.endsWith('.*')) {
-                        return fileName.toLowerCase().startsWith(pairPattern.slice(0, -2).toLowerCase());
-                    } else {
-                        return fileName === pairPattern;
-                    }
-                });
-
-                if (!pairExists) {
-                    missingPairs.push(allowedPairs[i]);
-                    missingFiles.push(existingFile);
-                }
-            }
-        }
-    }
-    
-    if (missingFiles.length > 0) {
-    	messageBox("4","<h5>청구서 파일 누락 [ " + missingPairs[0] + " ],   청구서가 필요한 파일은 : " + missingFiles[0] + " 입니다. </h5><p></p><br>","","","");
-    } else {
-    	
-    	if (gFiles) { // 서버전송
-    		let jobs_dt = getJobDateTime();
-    		let pro_cnt = 0;
-    		
-    		gFiles.forEach(file => {
-    			
-    			let reader = new FileReader();
-
-    			reader.readAsText(file, 'euc-kr');
-    			
-    			reader.onload = function (e) {
-    				
-    				let content = e.target.result;
-			        
-			        let lines = content.split('\n');
-			        
-			        let chunggu = '1';
-			        
-			        if (file.name != 'M010.1') {
-			            chunggu = chungguFiles.includes(file.name) ? '2' : '1';
-			        }
-			        
-			        let data = lines.map((line, index) => ({
-			            hosp_cd: hospid,
-			            mg_year: g_Year,
-			            mgmonth: gMonth,
-			            mg_flag: g_Flag,
-			            jobs_dt: jobs_dt,
-			            chunggu: chunggu,
-			            file_nm: file.name,
-			            line_no: index + 1,
-			            lineval: line,
-			            reg_user: userid,
-			            upd_user: userid,
-			            reg_ip: '127.0.0.1',
-			            upd_ip: '127.0.0.1'
-			        })).filter(item => item.lineval);
-
-				    // 만약 data가 비어있을 경우 처리
-				    
-				    if (data.length === 0) {
-				    	messageBox("4", "<h5>파일명 : " + file.name + " 은 유효한 데이터가 없습니다. 파일을 확인하세요.<br></h5><p></p><br>", "", "", "");
-				    } else {
-				        // AJAX 요청
-				    	$.ajax({
-				    	    url: '/main/uploadMagamFiles.do',
-				    	    type: 'POST',
-				    	    contentType: 'application/json',
-				    	    data: JSON.stringify(data),
-				    	    success: function (response) {
-				    	        pro_cnt++; 
-				    	        
-				    	        if (pro_cnt === gFiles.length) {
-				    	            messageBox("1", "<h5>모든 파일이 정상적으로 실행 되었습니다.</h5><p></p><br>", "", "", "");		    		            		
-				    	            dataTable.ajax.reload();
-				    	            try {
-				    	            	loadMonthsData();
-				    	            } catch (e) {
-				    	                console.error("loadMonthsData 실행 중 오류 발생:", e);
-				    	            }
-				    	        }
-				    	    },
-				    	    error: function(xhr, status, error) {
-				    	        console.error('Error Status Code:', xhr.status);
-				    	        console.error('Response Text:', xhr.responseText);
-				    	        console.error('Error Status:', status);
-				    	        console.error('Error Message:', error);
-				    	        
-				    	        if (!errorOccurred) {
-				    	            errorOccurred = true;
-				    	            
-				    	            let errorMessage = 'Error occurred while processing files. ';
-				    	            
-				    	            if (xhr.responseText) {
-				    	                errorMessage += 'Server response: ' + xhr.responseText;
-				    	            }
-				    	            messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. " + errorMessage + "<br>Status Code: " + xhr.status + "</h5><p></p><br>", "", "", "");
-				    	        }
-				    	        pro_cnt++;
-				    	    }
-				    	});
-				    }    
-    		    };	
-    		    
-    		});
-    		/*
-    		formData.append("mg_Year", g_Year);   // Add year
-    		formData.append("mgMonth", gMonth);   // Add month
-    		formData.append("mg_Flag", g_Flag);   // Add flag
-
-    		
-    		$.ajax({
-    		    url: '/main/uploadMagamFiles.do',
-    		    type: 'POST',
-    		    data: formData,
-    		    processData: false, // Disable processing form data
-    		    contentType: false, // Use FormData default content type
-    		    
-    		    success: function(data) {
-    		        console.log('Server Response:', data);
-    		        messageBox("1", "<h5> All files have been processed successfully. </h5><p></p><br>", "", "", "");
-    		    },
-    		    error: function(xhr, status, error) {
-    		        console.error('Error Status Code:', xhr.status);
-    		        console.error('Response Text:', xhr.responseText);
-    		        console.error('Error Status:', status);
-    		        console.error('Error Message:', error);
-    		        
-    		        let errorMessage = 'Error occurred while processing files. ';
-    		        if (xhr.responseText) {
-    		            errorMessage += 'Server response: ' + xhr.responseText;
-    		        }
-    		        
-    		        messageBox("4", "<h5>" + errorMessage + "<br>Status Code: " + xhr.status + "</h5><p></p><br>", "", "", "");
-    		    }
-    		});
-			
-			
-			
-			fetch('/main/uploadMagamFiles.do', {
-			    method: 'POST',
-			    body: formData,
-			})
-		    .then(response => {
-		        if (response.ok) {
-		        	return response.text(); // 서버 응답이 JSON이 아니라 텍스트일 경우
-		        } else {
-		        	throw new Error('파일 업로드 실패');
+		function mapColumnName(actualName) {
+			actualName = actualName.trim().toLowerCase().replace(/\s+/g, '');
+			for (const [standardName, aliases] of Object.entries(columnMapping)) {
+		        if (aliases.includes(actualName.trim())) {
+		            return standardName;
 		        }
-		    })
-		    .then(data => {
-		    	console.log('서버 응답:', data);
-		        messageBox("1", "<h5> 모든 전송파일이 정상적으로 처리되었습니다. </h5><p></p><br>", "", "", "");
-		    })
-		    .catch(error => {
-		    	console.error('오류 발생:', error);
-		        messageBox("4", "<h5> 전송파일 처리 중 오류가 발생했습니다. <br> " + error + " - 잠시 후 다시 시도해 주십시오! </h5><p></p><br>", "", "", "");
+		    }
+		    return null;
+		}
+		
+		const files = event.target.files;
+	    const datas = [];
+	    const jobdt = getJobDateTime();
+	    
+	    let seqNumber = 0;
+		let jumin_Cnt = 0;
+		
+		for (let file of files) {
+	        const reader = new FileReader();
+	        
+	        await new Promise((resolve, reject) => {
+	            reader.onload = function (e) {
+	            	
+	                const binaryStr = e.target.result;
+	                const work_Book = XLSX.read(binaryStr, {type: 'binary',codepage: 949,raw: true});
+	                
+	                work_Book.SheetNames.forEach(sheetName => {
+	                	
+	                	const worksheet = work_Book.Sheets[sheetName];
+	                    
+	                	// const json_Data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true, cellDates: true });
+	                    
+	                	const json_Data = XLSX.utils.sheet_to_json(worksheet, {
+	                		defval: '',
+	                	    raw: false,
+	                	    cellDates: true
+						});
+	                	
+	                	function formatDateString(value) {
+	                		
+                            if (!value) return '';
+
+                            // "YYYY-MM-DD HH:MM:SS"
+                            if (typeof value === 'string' && value.includes(' ')) {
+                                return value.split(' ')[0];
+                            }
+                            // "M/D/YY" or "MM/DD/YY"
+                            if (typeof value === 'string' && value.includes('/')) {
+                            	
+                                const parts = value.split('/');
+                                if (parts.length !== 3) return '';
+
+                                let [month, day, year] = parts.map(p => p.trim().padStart(2, '0'));
+                                
+                                if (year.length === 2) {
+                                    const yearNum = parseInt(year, 10);
+                                    year = yearNum < 50 ? '20' + year : '19' + year;
+                                }
+                                
+                                return year + '-' + month + '-' + day;
+                            }
+                            // Date 객체
+                            if (value instanceof Date) {
+                            	
+                                const year = value.getFullYear();
+                                const month = (value.getMonth() + 1).toString().padStart(2, '0');
+                                const day = value.getDate().toString().padStart(2, '0');
+                                
+                                return year + '-' + month + '-' + day;
+                            }
+
+                            return value;
+                        }
+	                	
+	                    json_Data.forEach(row => {
+	                        
+	                    	const mappedRow = {};
+	                        seqNumber++;
+	                        mappedRow['hosp_cd']  = hospid;
+	                        mappedRow['jobyymm']  = g_Year + gMonth;
+	                        mappedRow['seq_num']  = seqNumber;
+	                        mappedRow['file_nm']  = file.name;
+	                        mappedRow['jobs_dt']  = jobdt;
+	                        mappedRow['reg_user'] = userid;
+	                        
+	                        for (const [key, value] of Object.entries(row)) {
+                            	
+	                        	const mappedKey = mapColumnName(key.trim());
+	                        	
+	                        	if (mappedKey === 'juminno') {
+	                        		if (value) { jumin_Cnt++; }
+	                        	} 
+	                        	
+	                        	if (mappedKey === 'ipwondt' || mappedKey === 'tewondt') {
+	                        		mappedRow[mappedKey] = formatDateString(value);
+	                        	} else if (mappedKey) {
+	                        		mappedRow[mappedKey] = value;
+                                }
+	                        }
+	                        datas.push(mappedRow);
+	                    });
+	                });
+	                resolve();
+	            };
+	            reader.onerror = function (e) {
+	                console.error("파일 읽기 실패", e);
+	                reject(e);
+	            };
+	            reader.readAsBinaryString(file);
+	        });
+	    }
+	    
+		if (datas.length > 0 && jumin_Cnt === seqNumber) {
+	    	$.ajax({
+                url: '/main/saveExcelDatas.do',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(datas),
+                
+                success: function(response) {
+                	signUp = 'N';
+                	if (response.error_code !== "0") {
+	                    messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+	                } else {
+	                    messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
+	                    dataTable.ajax.reload();
+	                    
+                        try {
+                        	jobMon = gMonth; 	
+                            loadMonthsData();
+                            
+                        } catch (e) {
+                            console.error("loadMonthsData 실행 중 오류 발생:", e);
+                        }
+	                }	      	
+			    },
+			    error: function(xhr, status, error) {
+			    	signUp = 'N';
+			        console.error("Error fetching data:", error);
+			    }
+				      
 			});
-			*/	
-    	}
-    }	    
+	    	
+	    } else if (datas.length > 0){
+	    	let mess = '주민번호 앞 6자리 일부 누락된 입원현황 파일';
+	    	let cnts = seqNumber - jumin_Cnt;
+	    	
+	    	if (jumin_Cnt === 0) { 
+	    		mess = '주민번호 앞 6자리 전체 누락된 입원현황 파일'; 
+	    	}
+	    	// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
+			// error:    오류나 실패를 나타내는 빨간색 X 아이콘
+			// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
+			// info:     정보를 나타내는 파란색 i 아이콘
+			// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
+			Swal.fire({title: '등록여부',
+					   html:  '<strong> 누락정보 : ' + mess + ' : 누락건수 [' + cnts + ']건 입니다. </strong>',
+					   icon:  'question',
+					   showCancelButton: true,
+					   confirmButtonText: '등록',
+					   cancelButtonText:  '취소',
+					   customClass: {
+						   popup: 'small-swal'}
+			           }).then((result) => {
+
+			    if (result.isConfirmed) {
+				
+			    	$.ajax({
+		                url: '/main/saveExcelDatas.do',
+		                type: 'POST',
+		                contentType: 'application/json',
+		                data: JSON.stringify(datas),
+		                
+		                success: function(response) {
+		                	signUp = 'N';
+		                	if (response.error_code !== "0") {
+			                    messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+			                } else {
+			                    messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
+			                    dataTable.ajax.reload();
+		                        try {
+		                        	jobMon = gMonth; 
+		                            loadMonthsData();
+		                        } catch (e) {
+		                            console.error("loadMonthsData 실행 중 오류 발생:", e);
+		                        }
+			                }	      	
+					    },
+					    error: function(xhr, status, error) {
+					    	signUp = 'N';
+					        console.error("Error fetching data:", error);
+					    }
+						      
+					});
+			  	} else {
+			  		signUp = 'N';
+			  	}
+	        });
+	    } else {
+	    	signUp = 'N';
+	    	messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 입원현황 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
+	    }
+	    
+	} else {
+		
+		let lfiles = event.target.files;
+		
+		// *.확장자 형태만 추출
+		const restrictedExtensions = allowedFiles
+		  .filter(pattern => pattern.startsWith('*.'))
+		  .map(pattern => pattern.slice(2).toLowerCase());
+
+		// 확장자가 제한 목록에 있는지 검사
+		let hasRestrictedExt = Array.from(lfiles).some(file => {
+		  let ext = file.name.split('.').pop().toLowerCase();
+		  return restrictedExtensions.includes(ext);
+		});
+
+		// 제한된 확장자가 있고, 파일이 2개 이상이면 경고
+		if (hasRestrictedExt && lfiles.length > 1) {
+			signUp = 'N';
+			messageBox("4","<h5>산재,산재한방,자보한방등 <br>청구서와 명세서가 분리된 경우 이외에는 1건씩 파일을 등록하셔야 됩니다.<br>다중으로 선택된 데이터 파일은 업로드가 불가합니다.<br>각각 자료 업로드 진행 부탁드립니다</h5><p></p><br>","","","");
+		    return; 
+		}
+			    
+		let gFiles = Array.from(lfiles).filter(file => {
+	        let fileName = file.name;
+	        return file.size > 0 && allowedFiles.some(pattern => {
+	            if (pattern.startsWith('*.')) {
+	                return fileName.toLowerCase().endsWith(pattern.slice(2).toLowerCase());
+	            } else if (pattern.endsWith('.*')) {
+	                return fileName.toLowerCase().startsWith(pattern.slice(0, -2).toLowerCase());
+	            } else {
+	                return fileName === pattern;
+	            }
+	        });
+	    });
+	
+	    let missingPairs = [];
+	    let missingFiles = [];
+	    let chungguFiles = [];
+	    for (let i = 0; i < allowedFiles.length; i++) {
+	        if (allowedPairs[i] !== '-') {
+	            let fileExists   = false;
+	            let existingFile = null;
+	
+	            for (let file of gFiles) {
+	                let fileName = file.name;
+	                let pattern  = allowedFiles[i];
+	                
+	                if (pattern.startsWith('*.')) {
+	                    fileExists = fileName.toLowerCase().endsWith(pattern.slice(2).toLowerCase());
+	                } else if (pattern.endsWith('.*')) {
+	                    fileExists = fileName.toLowerCase().startsWith(pattern.slice(0, -2).toLowerCase());
+	                } else {
+	                    fileExists = fileName === pattern;
+	                }
+	                
+	                if (fileExists) {
+	                    existingFile = fileName;
+	                    chungguFiles.push(existingFile);
+	                    // break;
+	                }
+	            }
+	
+	            if (fileExists) {
+	                let pairExists = gFiles.some(file => {
+	                    let fileName = file.name;
+	                    let pairPattern = allowedPairs[i];
+	                    
+	                    if (pairPattern.startsWith('*.')) {
+	                        return fileName.toLowerCase().endsWith(pairPattern.slice(2).toLowerCase());
+	                    } else if (pairPattern.endsWith('.*')) {
+	                        return fileName.toLowerCase().startsWith(pairPattern.slice(0, -2).toLowerCase());
+	                    } else {
+	                        return fileName === pairPattern;
+	                    }
+	                });
+	
+	                if (!pairExists) {
+	                    missingPairs.push(allowedPairs[i]);
+	                    missingFiles.push(existingFile);
+	                }
+	            }
+	        }
+	    }
+	    
+	    if (missingFiles.length > 0) {
+	    	signUp = 'N';
+	    	messageBox("4","<h5>청구서 파일 누락 [ " + missingPairs[0] + " ],   청구서가 필요한 파일은 : " + missingFiles[0] + " 입니다. </h5><p></p><br>","","","");
+	    } else {
+	    	
+	    	if (gFiles) {
+	    		let jobs_dt = getJobDateTime();
+	    	    
+	    	    let errorCheck = false;
+	
+	    	    let num = 0;
+	    	  
+	    	    let readFilesPromises = gFiles.map(file => {
+	    	        return new Promise((resolve) => {
+	    	            let reader = new FileReader();
+	    	            reader.readAsText(file, 'euc-kr');
+	    	            reader.onload = function (e) {
+	    	                let content = e.target.result;
+	    	                let lines = content.split('\n');
+	    	                let chunggu = '1';
+	    	                
+	    	                if (file.name != 'M010.1') { 
+	    	                    chunggu = chungguFiles.includes(file.name) ? '2' : '1';
+	    	                }
+	    	                
+	    	                
+	    	                let data = lines
+	    	                    .map((line, index) => ({
+	    	                        hosp_cd: hospid,
+	    	                        mg_year: g_Year,
+	    	                        mgmonth: gMonth,
+	    	                        mg_flag: g_Flag,
+	    	                        jobs_dt: jobs_dt,
+	    	                        chunggu: chunggu,
+	    	                        file_nm: file.name,
+	    	                        line_no: index + 1,
+	    	                        lineval: line,
+	    	                        reg_user: userid,
+	    	                        upd_user: userid,
+	    	                        reg_ip: '127.0.0.1',
+	    	                        upd_ip: '127.0.0.1',
+	    	                    }))
+	    	                    .filter((item) => {
+	    	                        return item.lineval && !specode.some(word => item.lineval.includes(word));
+	    	                    });
+	    	                
+
+							
+							resolve(data);	
+	    	            };
+	    	            reader.onerror = function (e) {
+	    	                reject(e);
+	    	            };
+	    	        });
+	    	    });
+	
+	    	    
+	    	    Promise.all(readFilesPromises)
+	   	        	.then(allData => {
+		   	            let allDataFlat = allData.flat();   	            
+		   	      		
+		   	            let t_lines = allData.reduce((sum, file) => sum + file.length, 0);
+		   	      		
+		   	            if (t_lines > 0) {
+			   	      		allDataFlat.forEach(file => { file.t_lines = t_lines; });
+			   	            
+			   	      		let estimatedTime;
+			   	      		
+					   	    if (String(g_Flag) === '8') {
+					   	        estimatedTime = ((t_lines / 80) * 1);
+					   	    } else {
+					   	        estimatedTime = ((t_lines / 25) * 1);
+					   	    }
+			   	      		$("#estimatedTime").text(estimatedTime.toFixed(1));
+				   	        $("#progress-container").show();
+				   	     	let progressBar  = $("#progress-bar");
+		                    let progressText = $("#progress-text");
+		
+		                    progressBar.css("width", "0%");
+		                    progressText.text("0%");
+			
+				   	        let startTime = Date.now();
+				   	        let updateInterval = 100;
+				   	        let interval = setInterval(function () {
+				   	            let elapsed = (Date.now() - startTime) / 1000;
+				   	            let progress = Math.min((elapsed / estimatedTime) * 100, 100);
+				   	            
+				   	            progressBar.css("width", progress + "%");
+				   	            progressText.text(Math.round(progress) + "%");
+			
+				   	            if (progress >= 100) {
+				   	                clearInterval(interval);
+				   	            }
+				   	        }, updateInterval);
+			   	            
+			   	            $.ajax({
+			   	                url: '/main/uploadMagamFiles.do',
+			   	                type: 'POST',
+			   	                contentType: 'application/json',
+			   	                data: JSON.stringify(allDataFlat),
+				   	            beforeSend: function() {
+				                    $('.loading').show();
+				                    $('#estimatedTime').text(estimatedTime.toFixed(1));
+				                },
+			   	                success: function (response) {
+			   	                	signUp = 'N';
+			   	                    if (response.error_code !== "0" & !errorCheck) {
+			   	                        // 오류 발생 시 메시지 출력 및 모든 처리 종료
+			   	                        messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+			   	                        errorCheck = true; // 오류 플래그 설정
+			   	                    } else {
+			   	                    	clearInterval(interval);
+				   	                    progressBar.css("width", "100%");
+				   	                    progressText.text("100%");
+				   	                  	$("#progress-container").fadeOut();
+			   	                        
+				   	                  	
+			   	                    	messageBox("1", "<h5>모든 파일이 정상적으로 실행 되었습니다.</h5><p></p><br>", "", "", "");
+			                            dataTable.ajax.reload();
+			                            
+			                            try {
+			                            	jobMon = gMonth; 
+			                                loadMonthsData();
+			                                
+			                            } catch (e) {
+			                                console.error("loadMonthsData 실행 중 오류 발생:", e);
+			                            }
+			   	                    }
+			   	                },
+			   	                error: function (xhr, status, error) {
+			   	                	signUp = 'N';
+			   	                    console.error('Error Status Code:', xhr.status);
+			   	                    console.error('Response Text:', xhr.responseText);
+			   	                    console.error('Error Status:', status);
+			   	                    console.error('Error Message:', error);
+			   	                    if (!errorCheck) {
+			   	                        errorCheck = true;
+			
+			   	                        let errorMessage = 'Error occurred while processing files. ';
+			   	                        if (xhr.responseText) {
+			   	                            errorMessage += 'Server response: ' + xhr.responseText;
+			   	                        }
+			   	                        messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + errorMessage + "<br>" + "Status Code: " + xhr.status + "</h5><p></p><br>", "", "", "");
+			   	                    }
+			   	                },
+			   	             complete: function() {
+			   	            	 signUp = 'N';
+			                     $('.loading').fadeOut();
+			                     clearInterval(interval);
+		   	                     progressBar.css("width", "100%");
+		   	                     progressText.text("100%");
+		   	                  	 $("#progress-container").fadeOut();
+			                 },
+			             });
+				     }
+			     })
+			     .catch(error => {
+			    	 signUp = 'N';
+			         console.error('File read error:', error);
+			     })
+	    	    
+	    	} else {
+	    		signUp = 'N';
+	    	}	
+	    } 
+	}
 }
+
+function fileLoad_Open(mgmonth) {
+	
+	if (signUp === 'Y') {
+		Swal.fire({
+            title: '파일 등록 진행 중.',
+            text:  '파일 등록 중입니다. 잠시 후 등록하세요.',
+            icon:  'warning',
+            confirmButtonText: '확인',
+            timer: 500,
+            timerProgressBar: true,
+            showConfirmButton: false
+     	});
+	} else {
+		
+		try {
+			gExcel = 'N';
+	        event.stopPropagation();
+	        
+	        gMonth = mgmonth;
+	        findField('mgmonth', gMonth);
+	
+	        let file_Select = document.getElementById("file_Select");
+	        let folderInput = document.getElementById('folderInput'); // 이 부분을 추가
+	
+	        if (!folderInput) {
+	            console.error("folderInput 요소를 찾을 수 없습니다.");
+	            return;
+	        }
+	
+	        if (file_Select.value === "2") {
+	            folderInput.setAttribute("webkitdirectory", "");
+	        } else {
+	            folderInput.removeAttribute("webkitdirectory");
+	        }
+	        // accept 속성 설정
+	        let acceptExtensions = allowedFiles.map(file => {
+	            if (file.startsWith('*.')) {
+	                return '.' + file.slice(2);
+	            } else {
+	                return '.' + file.split('.').pop();
+	            }
+	        }).join(',');
+	
+	        folderInput.setAttribute('accept', acceptExtensions);
+	        
+	        folderInput.value    = '';
+	        folderInput.onchange = handleFileSelection;
+	        folderInput.click();
+	        
+	    } catch (error) {
+	        console.error("fileLoad_Open 함수 실행 중 오류 발생:", error);
+	    }
+	}
+}
+
+function excelLoad_Open(mgmonth) {
+	
+	try {
+		gExcel = 'Y';
+        event.stopPropagation();
+        gMonth = mgmonth;
+        findField('mgmonth', gMonth);
+
+        let folderInput = document.getElementById('folderInput'); // 이 부분을 추가
+
+        if (!folderInput) {
+            console.error("folderInput 요소를 찾을 수 없습니다.");
+            return;
+        }
+
+        folderInput.removeAttribute("webkitdirectory");
+        
+        const acceptExtensions = ".xlsx, .xls";
+        folderInput.setAttribute("accept", acceptExtensions);
+        
+        folderInput.value    = '';
+        folderInput.onchange = handleFileSelection;
+        folderInput.click();
+        
+    } catch (error) {
+        console.error("excelLoad_Open 함수 실행 중 오류 발생:", error);
+    }
+}
+
+function magamLock_Open(mgmonth) {
+	
+	gMonth = mgmonth;
+	
+	$.ajax({
+		url: "/main/updateMagamLock.do",
+        type: "POST",
+        data: { hosp_cd: hospid,
+                mg_year: g_Year,
+                mgmonth: gMonth,
+         	    mg_flag: g_Flag
+	    },
+	    dataType: "json",
+	    success: function(response) {
+	     	 
+	        dataTable.ajax.reload();
+	    	 
+	        Swal.fire({
+		           title: '처리확인',
+		           text:  '정상처리 되었습니다. ',
+		           icon:  'success',
+		           confirmButtonText: '확인',
+		           timer: 1000,
+		           timerProgressBar: true,
+		           showConfirmButton: false
+		    });
+	    	  
+	    	jobMon = gMonth; 
+	    	loadMonthsData();
+	    },
+	    error: function(xhr, status, error) {
+	        console.error("Error fetching data:", error);
+	    }
+	      
+	});
+	
+	
+    
+}
+
+function fileView_Open(mgmonth) {
+	event.stopPropagation();
+	gMonth = mgmonth;
+	findField('mgmonth', gMonth)
+	dataTable.ajax.reload();
+}
+
 
 function getJobDateTime() {
 	
     let now     = new Date();
     let year    = now.getFullYear();
-    let month   = String(now.getMonth() + 1).padStart(2, '0');
+    let month   = String(now.getMonth()).padStart(2, '0');
     let day     = String(now.getDate()).padStart(2, '0');
     let hours   = String(now.getHours()).padStart(2, '0');
     let minutes = String(now.getMinutes()).padStart(2, '0');
@@ -1160,7 +1634,8 @@ function loadMonthsData() {
 	$.ajax({
         url: '/main/getMagamYearList.do',
         method: 'POST',
-        data: { mg_year: g_Year,
+        data: { hosp_cd: hospid, 
+        	    mg_year: g_Year,
         	    mg_flag: g_Flag
         	  },
         success: function(response) {
@@ -1183,50 +1658,92 @@ function updateMonthsContainer(rawData) {
         return;
     }
 
+    let fMonth = '01';
     find.data.forEach((item, index) => {
+        let activeTabId = $('#mg_FlagTab a.active').attr('id');
+        let headerClass;
+        let buttonClass;
+
+        if (activeTabId === "c-tab") {
+            headerClass = item.magamyn === "Y" ? "bg-info" : "bg-light";
+            buttonClass = item.magamyn === "Y" ? "btn-outline-info" : "btn-outline-info";
+        } else {
+            headerClass = item.magamyn === "Y" ? "bg-primary" : "bg-light";
+            buttonClass = item.magamyn === "Y" ? "btn-outline-primary" : "btn-outline-primary";
+        }
+
+        const h4headClass = item.magamyn === "Y" ? "text-white" : "text-black";
+        const button_Text = item.magamyn === "Y" ? "등록완료" : "미등록";
+        const hovers_Text = item.magamyn === "Y" ? "재등록" : "등록하기";
+
+        let buttonHTML = '';
         
-	    const headerClass = item.magamyn === "Y" ? "bg-primary" : "bg-light";
-	    const h4headClass = item.magamyn === "Y" ? "text-white" : "text-black";
-	    const buttonClass = item.magamyn === "Y" ? "btn-outline-primary" : "btn-outline-light";
-	    const button_Text = item.magamyn === "Y" ? "등록완료" : "미등록";
-	    const hovers_Text = item.magamyn === "Y" ? "재등록" : "등록하기";
+        if (item.lock_yn === "N" || (winner === 'Y' && ['1', '2'].includes(mainfg))) {
+        	buttonHTML += '<button data-action="fileLoad" data-mgmonth="' + item.mgmonth + '" id="' + item.mgmonth + '" class="btn ' + buttonClass + ' btn-block btn-sm small hover-change mb-2" data-original="' + button_Text + '" data-hover="' + hovers_Text + '">' + button_Text + '</button>';
+        }
+        
+        if (item.magamyn === "Y") {
+        	fMonth = item.mgmonth;
+            buttonHTML += '<button data-action="fileView" data-mgmonth="' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">자료보기</button>';
+        } else {
+            buttonHTML += '<button class="btn btn-outline-success btn-block btn-sm small text-green mb-2">보기없음</button>';
+        }
 
-	    let buttonHTML  = '<button data-action="fileLoad" data-mgmonth="' + item.mgmonth + '"  id="' + item.mgmonth + '" class="btn ' + buttonClass + ' btn-block btn-sm hover-change d-flex align-items-center justify-content-center" data-original="' + button_Text + '" data-hover="' + hovers_Text + '">' + button_Text + '</button>';
+        if (item.ipwonyn === "Y") {
+            buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">입원현황</button>';
+        } else {
+            if (item.magamyn === "Y") {
+                buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">등록안됨</button>';
+            } else {
+                buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">자료없음</button>';
+            }
+        }
 
-	    if (item.magamyn === "Y") {
-	        buttonHTML += '<button data-action="fileView" data-mgmonth="' + item.mgmonth + '" class="btn btn-outline-info btn-block btn-sm d-flex align-items-center justify-content-center">자료보기</button>';
-	    } else {
-	        buttonHTML += '<button class="btn btn-outline-light  btn-block btn-sm d-flex align-items-center justify-content-center text-white">보기없음</button>';
-	    }    	    
-	    
-	    const cardHTML = 
-	        '<div class="col-xl-1 col-lg-1">' +
-	            '<div class="card">' +
-	                '<div class="card-header ' + headerClass + ' text-center p-1">' +
-	                    '<h4 class="mb-0 ' + h4headClass + '">' + item.mgmonth + '월' + '</h4>' +
-	                '</div>' +
-	                '<div class="card-body text-center">' +
-	                    buttonHTML +
-	                '</div>' +
-	            '</div>' +
-	        '</div>';
+        if ((winner === 'Y' && ['1', '2'].includes(mainfg)) && item.magamyn === "Y") {
+        	if (item.lock_yn === "Y") {
+                buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-danger         text-black btn-block btn-sm small mb-2">🔒잠김</button>';
+            } else {
+                buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-outline-danger text-black btn-block btn-sm small mb-2">🔓열림</button>';
+            }
+        }
+        
+        
+        const cardHTML =
+            '<div class="col-xl-1 col-lg-2 col-md-3 col-sm-4 col-6 mb-3">' +
+                '<div class="card h-100">' +
+                    '<div class="card-header ' + headerClass + ' text-center p-1">' +
+                        '<h4 class="mb-0 ' + h4headClass + '">' + item.mgmonth + '월' + '</h4>' +
+                    '</div>' +
+                    '<div class="card-body text-center p-2">' +
+                        buttonHTML +
+                    '</div>' +
+                '</div>' +
+            '</div>';
 
-	    monthsContainer.append(cardHTML);
+        monthsContainer.append(cardHTML);
+    });
 
-	    // 마우스 이벤트 처리
-	    $('.hover-change').hover(
-	        function() {
-	            $(this).text($(this).data('hover'));
-	        },
-	        function() {
-	            $(this).text($(this).data('original'));
-	        }
-	    );
-	});
+    // 마우스 이벤트 처리
+    $('.hover-change').hover(
+        function () {
+            $(this).text($(this).data('hover'));
+        },
+        function () {
+            $(this).text($(this).data('original'));
+        }
+    );
+
+    // if (fMonth != gMonth) {
+        // gMonth = fMonth;
+        
+        fileView_Open(jobMon);
+        
+    // }
 }
+
+
 
 </script>
 <!-- ============================================================== -->
 <!-- 월별,  8.청구서 9.평가표 정보 End -->
-<!-- ============================================================== -->
-       
+<!-- ============================================================== -->     
