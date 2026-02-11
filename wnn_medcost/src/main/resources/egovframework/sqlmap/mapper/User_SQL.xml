@@ -174,9 +174,16 @@
 	            FROM TBL_HOSPCONT_MST 
 	            WHERE HOSP_CD = HM.HOSP_CD
 	              AND ACTION_YN = 'Y' 
-	              AND NOW() BETWEEN STR_TO_DATE(ACCEPT_DT, '%Y%m%d') 
-	                            AND STR_TO_DATE(CLOSE_DT, '%Y%m%d')
-	        ) AS CONACT_GB		        
+	              -- 위너넷으로 할경우 종료일자 20991231일로 (20260211처리) 
+                  AND NOW() BETWEEN STR_TO_DATE(ACCEPT_DT, '%Y%m%d')
+                              AND STR_TO_DATE(
+                                  CASE
+                                      WHEN #{wnnchk} IS NOT NULL AND #{wnnchk} != ''
+                                      THEN '20991231'
+                                      ELSE CLOSE_DT
+                                  END
+                              , '%Y%m%d')
+	             ) AS CONACT_GB		        
 	
 	    FROM TBL_HOSP_MST HM
 	    LEFT JOIN TBL_HOSPCONT_MST HC 
