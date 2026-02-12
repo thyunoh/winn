@@ -161,10 +161,11 @@
 	            END
 	        ) AS FILE_YN,
            (
+                -- 위너넷으로 할경우 종료일자 20991231일로 (20260211처리) > 에서 >= 로  
 	            SELECT 
 	                CASE 
 	                    WHEN COUNT(DISTINCT CONACT_GB) = 2 
-	                         AND SUM(CONACT_GB IN (1,2)) = 2 THEN 'A'
+	                         AND SUM(CONACT_GB IN (1,2)) >= 2 THEN 'A'
 	                    WHEN COUNT(DISTINCT CONACT_GB) = 1 
 	                         AND MAX(CONACT_GB) = 1 THEN '1'
 	                    WHEN COUNT(DISTINCT CONACT_GB) = 1 
