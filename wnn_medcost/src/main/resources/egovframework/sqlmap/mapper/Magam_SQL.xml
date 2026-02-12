@@ -1669,6 +1669,7 @@
 				 , IFNULL(a.POS_CHANGE,0)        AS posChange
 				 , IFNULL(a.NUTR_SKIN,0)         AS nutSupply
 				 , IFNULL(a.SKIN_ULC_DRES,0)     AS skinDress
+				 , IFNULL(a.HEIG_YN,0)           AS heigYn
 			  FROM TBL_PATVAL_MST a
 			 WHERE a.HOSP_CD = #{hospCd}
 			   AND a.MED_START LIKE CONCAT(#{jobYymm},'%')
@@ -1730,6 +1731,7 @@
 			 , cm.posChange
 			 , cm.nutSupply
 			 , cm.skinDress
+			 , cm.heigYn 
 			 
 			 
 			 /* 
@@ -1823,7 +1825,7 @@
 			 , IFNULL(tpm.POS_CHANGE,0)        AS posChange
 			 , IFNULL(tpm.NUTR_SKIN,0)         AS nutSupply
 			 , IFNULL(tpm.SKIN_ULC_DRES,0)     AS skinDress
-			 
+			 , IFNULL(tpm.HEIG_YN,0)           AS heigYn
 			 , '9' AS dressingYn
 			 , 'Y' AS nextTarget
 			         

@@ -82,7 +82,7 @@ public class PatvalDTO {
 	
 	private String useYn;           // 사용여부
 	
-	
+	private String heigYn;      // 피부궤양 드레싱
 	
 	public String getUseYn() {
 		return useYn;
@@ -283,6 +283,15 @@ public class PatvalDTO {
 	public void setSkinDress(String skinDress) {
 		this.skinDress = skinDress;
 	}
+
+	
+	public String getHeigYn() {
+		return heigYn;
+	}
+	public void setHeigYn(String heigYn) {
+		this.heigYn = heigYn;
+	}
+
 	public String getMainDiagCd() {
 		return mainDiagCd;
 	}
