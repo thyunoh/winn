@@ -109,17 +109,22 @@
        var mainfg = getCookie("s_mainfg"); // 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
        var use_yn = getCookie("s_use_yn"); // 사용여부(Y,정상사용자, N.종료사용자)
        
+       var closeDt1 = getCookie("s_closeDt1");
+       var closeDt2 = getCookie("s_closeDt2");
       
        function closeTab() {
            window.close(); // 현재 탭 닫기
            self.close();   // 일부 브라우저에서 추가적으로 닫기 시도
        }
+       
+       //'진료비: '+ closeDt2 +'-'+ '적정성: ' + closeDt1 + '   ' + 
+
        if  (getCookie("s_winconect") != 'Y') {
            document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
                                                           + usernm + `님 ] 반갑습니다 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;
        }else{
            document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
-                                                 + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;          
+                                                          + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;          
        }
        
        
@@ -224,6 +229,10 @@
               setCookie("s_hospnm", data.hospNm, 1);
               setCookie("s_conact_gb", data.conactGb, 1); // 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
               setCookie("s_winconect", 'Y',1);
+
+              setCookie("s_closeDt1", data.closeDt1, 1);
+              setCookie("s_closeDt2", data.closeDt2, 1);
+              
               hospid = getCookie("hospid");   // 병원아이디
               if (hospnm != getCookie("s_hospnm")){
                  //hosp_conact();
@@ -231,8 +240,8 @@
                   return;            // reload 이후의 코드는 실행 안 되게 return
               } 
               hospnm = getCookie("s_hospnm"); 
-              
-              document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> ` 
+              document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> `
+            	                                //  + '진료비: '+ closeDt2 +'~'+ '적정성: ' + closeDt1 + '   '  
                                                   + hospnm + `  [ ` 
                                                   + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
           });

@@ -919,6 +919,7 @@ function fn_ViewData(data) {
 			    		    { label: 'b' },
 			    		    { label: 'c' },
 			    		    { label: 'd' },
+			    		    { label: '체중'},
 			    		    { label: '처치'}
 			    		    
 			    	 	]
@@ -963,7 +964,7 @@ function fn_ViewData(data) {
 						{ data: 'posChange', visible: true,  className: 'dt-body-center', width: '100px'  },
 						{ data: 'nutSupply', visible: true,  className: 'dt-body-center', width: '100px'  },
 						{ data: 'skinDress', visible: true,  className: 'dt-body-center', width: '100px'  },
-						
+						{ data: 'heigYn'   , visible: true,  className: 'dt-body-center', width: '100px'  },
 					    { data: 'dressingYn', visible: true, className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환

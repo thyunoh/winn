@@ -55,6 +55,22 @@ public class HospMdDTO {
 	private String hosGrd ;
 	private String conactGb ;
 	private	String omtYn;
+	private String closeDt1;
+	private String closeDt2;
+	
+    public String getCloseDt1() {
+		return closeDt1;
+	}
+	public void setCloseDt1(String closeDt1) {
+		this.closeDt1 = closeDt1;
+	}
+	
+	public String getCloseDt2() {
+		return closeDt2;
+	}
+	public void setCloseDt2(String closeDt2) {
+		this.closeDt2 = closeDt2;
+	}
 	
 	public String getOmtYn() {
 		return omtYn;
