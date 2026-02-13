@@ -10,7 +10,6 @@
 <%
 	Date nowTime = new Date();
 %>
-
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
