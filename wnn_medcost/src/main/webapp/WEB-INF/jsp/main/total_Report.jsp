@@ -30,6 +30,9 @@
 	                                       
 	                            <div class="card-body">
 								    <div class="row">
+								        <div class="col-lg-12">
+								            <button class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData_all('00')">《 전체 대상 점검 》</button>								                        
+								        </div>
 								        <div class="col-lg-6">
 								            <button data-action="FindView" data-value="accordion_item_1" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">요양병원 입원료 차등제 / 식대가산 점검</button>
 								            <button data-action="FindView" data-value="accordion_item_2" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('02')">월별 정액수가 분포율【 환자평가표 】</button>            
@@ -2715,6 +2718,55 @@ function fn_CreateData(flag) {
    		
     //});
 }
+//전체 처리
+function fn_CreateData_all() {
+
+    let selected_Year = document.getElementById("year_Select").value;
+    let selectedMonth = document.getElementById("monthSelect").value;
+
+    const flagList = [
+        '01','02','03','04','05','06',
+        '07','08','09','10','11','12',
+        '13','14'
+    ];
+
+    let index = 0;
+
+    function runNext() {
+
+        if (index >= flagList.length) {
+            alert("전체 자료 생성 완료!");
+            // 필요하면 여기서 갱신
+            // setMakeGrid();
+            return;
+        }
+
+        const currentFg = flagList[index];
+
+        $.ajax({
+            url: "/main/createTotalReport.do",
+            type: "POST",
+            data: {
+                hosp_cd: hospid,
+                jobyymm: selected_Year + selectedMonth,
+                make_fg: currentFg
+            },
+            success: function(response) {
+                console.log(currentFg + " success:", response);
+                index++;
+                runNext();
+            },
+            error: function(xhr, status, error) {
+                console.error(currentFg + " error:", error);
+                index++;
+                runNext(); // 실패해도 다음 진행 (원하면 여기서 중단 가능)
+            }
+        });
+    }
+
+    runNext();
+}
+
 
 function fn_Update()
 {
