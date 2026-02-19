@@ -1397,6 +1397,7 @@
 			        WHEN sub.dangerYn = 'N' AND sub.overdayYn = 'N' THEN 'N'
 			        ELSE ''
 			         END     AS dangerLow
+			 , indwellCath        
 			 , sub.overdayYn AS overDay 
 			
 		  FROM (SELECT left(c.PAT_ID,6)             AS patId
@@ -1411,6 +1412,7 @@
 				                      c.TRANSFER >= 4  AND  c.EXIT_ROOM >= 4 AND c.TOILET_USE >= 4 AND c.BEDRIDDEN >= 4) OR 
 				                     (c.PARALYSIS = '1' OR  c.ALL_LIMBS = '1' OR c.CEREBRAL_P  = '1')
 				                THEN 'Y' ELSE 'N' END ) AS dangerYn
+				     , MAX(INDWELL_CATH) AS   indwellCath           
 				  FROM TBL_PATVAL_MST c
 				 WHERE c.HOSP_CD = #{hospCd}
 				   AND c.MED_START LIKE CONCAT(#{jobYymm},'%')

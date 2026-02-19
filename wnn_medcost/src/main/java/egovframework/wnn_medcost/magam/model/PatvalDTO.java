@@ -79,11 +79,20 @@ public class PatvalDTO {
 	private String jobFlag;         // 작업구분 
 	
 	private String overDay;         // 14일 초과 
+	private String indwellCath;         // 유치도뇨관 
 	
 	private String useYn;           // 사용여부
 	
 	private String heigYn;      // 피부궤양 드레싱
 	
+	
+	
+	public String getIndwellCath() {
+		return indwellCath;
+	}
+	public void setIndwellCath(String indwellCath) {
+		this.indwellCath = indwellCath;
+	}
 	public String getUseYn() {
 		return useYn;
 	}

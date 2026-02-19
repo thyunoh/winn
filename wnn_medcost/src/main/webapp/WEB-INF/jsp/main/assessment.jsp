@@ -770,6 +770,7 @@ function fn_ViewData(data) {
 			        	    { label: '개시일',           rowspan: 2 },
 			        	    { label: '작성일',           rowspan: 2 },
 			        	    { label: selected_Year + '년 ' + selectedMonth + '월 (당월)', colspan: 2 },
+			        	    { label: 'foley체크',        rowspan: 2 } ,
 			        	    { label: '14일초과',          rowspan: 2 }
 			        	],
 			        	[
@@ -824,6 +825,15 @@ function fn_ViewData(data) {
 						        return data;
 						    },
 						},
+						{ data: 'indwellCath', visible: true, className: 'dt-body-center', width: '100px',
+							render: function(data, type, row) {
+						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환
+								if (type === 'display') {
+								      return data === '1' ? '✔' : '';
+								}
+								return data;
+						    }
+					    },						
 						{ data: 'overDay', visible: true, className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환
