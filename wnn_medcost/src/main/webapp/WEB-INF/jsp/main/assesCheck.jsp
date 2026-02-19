@@ -329,7 +329,8 @@ function fn_CreateData(flag) {
 						            if (prefix === 'J' && data === 'J1') return '욕창 과거력 확인';
 						            if (prefix === 'J' && data === 'J2') return '욕창처치 확인';
 						            if (prefix === 'J' && data === 'J3') return '욕창처치 확인';
-	
+						            if (prefix === 'J' && data === 'J4') return '욕창처치 확인';
+						            if (prefix === 'J' && data === 'J5') return '욕창처치 확인';
 						            /* 일상생활 */
 						            if (prefix === 'K') return 'ADL 점수 점검';
 						            if (prefix === 'L') return '행동증상 점검';
