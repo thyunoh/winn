@@ -1397,6 +1397,7 @@
 			        WHEN sub.dangerYn = 'N' AND sub.overdayYn = 'N' THEN 'N'
 			        ELSE ''
 			         END     AS dangerLow
+			 , indwellCath        
 			 , sub.overdayYn AS overDay 
 			
 		  FROM (SELECT left(c.PAT_ID,6)             AS patId
@@ -1411,6 +1412,7 @@
 				                      c.TRANSFER >= 4  AND  c.EXIT_ROOM >= 4 AND c.TOILET_USE >= 4 AND c.BEDRIDDEN >= 4) OR 
 				                     (c.PARALYSIS = '1' OR  c.ALL_LIMBS = '1' OR c.CEREBRAL_P  = '1')
 				                THEN 'Y' ELSE 'N' END ) AS dangerYn
+				     , MAX(INDWELL_CATH) AS   indwellCath           
 				  FROM TBL_PATVAL_MST c
 				 WHERE c.HOSP_CD = #{hospCd}
 				   AND c.MED_START LIKE CONCAT(#{jobYymm},'%')
@@ -3315,7 +3317,6 @@
 		          AND A.ADMIT_DT = C.ADMIT_DT
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
-		   AND A.INDWELL_CATH = 'Y'
 		   AND C.LAST_FG      = '1'
 		   AND A.URINE_CTL    = '0'
 		   AND A.INDWELL_CATH = '1'
@@ -3517,9 +3518,40 @@
 							                      AND jm.EDI_CODE = 'M0121'
 				           WHERE cm.HOSP_CD = #{hospCd}
 				             AND cm.DATE_YM = #{jobYymm})
-		
-		UNION ALL
-		
+	           
+  		 UNION ALL  	
+
+		  SELECT DISTINCT
+		         LEFT(A.PAT_ID,6)                                  AS patId
+		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					ELSE '' END AS patNm
+		       , A.ADMIT_DT                                        AS admitDt
+			   , A.MED_START                                       AS medStart  
+			   , A.DOC_DT                                          AS docDt
+			   , A.EVAL_TYPE                                       AS evalType
+			   , 'J5'                                              AS errType  
+			   , '욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가' AS errName
+		  FROM TBL_PATVAL_MST A
+		  JOIN (SELECT B.HOSP_CD
+		  	         , B.CHUNGSEQ
+			         , B.CLFORM_VER
+			         , B.PAT_ID
+			         , B.ADMIT_DT
+		          FROM TBL_PATVAL_MST B
+		         WHERE B.HOSP_CD = #{hospCd}
+		           AND B.MED_START LIKE CONCAT(#{jobYymm},'%')
+		           AND REPLACE(CONCAT(B.PR_ULCER1,B.PR_ULCER2,B.PR_ULCER3,B.PR_ULCER4),'0','') != ''
+		           AND B.NUTR_SKIN = '1'  
+		           AND B.WEIG_HEIG_YN = '0'  
+		       ) C  ON A.HOSP_CD  = C.HOSP_CD 
+		           AND A.PAT_ID   = C.PAT_ID 
+		           AND A.ADMIT_DT = C.ADMIT_DT
+          WHERE A.HOSP_CD = #{hospCd}
+            AND A.MED_START LIKE CONCAT(#{jobYymm},'%')	
+            	           
+		UNION ALL  
+		          		
 		-- [일상생활수행능력(ADL)개선 점검 1] 전월대비 총점 ±1점인 대상자
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
@@ -3658,7 +3690,7 @@
 		   AND DATEDIFF(STR_TO_DATE(C.DOC_DT,   '%Y%m%d'), 
 		                STR_TO_DATE(C.TEST_DATE,'%Y%m%d')) > 90
 		
-		ORDER BY errType
+		-- ORDER BY errType
 	</select>
 	
 	<select id="select_assesCheck01" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
@@ -4109,7 +4141,6 @@
 		          AND A.ADMIT_DT = C.ADMIT_DT
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
-		   AND A.INDWELL_CATH = 'Y'
 		   AND C.LAST_FG      = '1'
 		   AND A.URINE_CTL    = '0'
 		   AND A.INDWELL_CATH = '1'	 	  

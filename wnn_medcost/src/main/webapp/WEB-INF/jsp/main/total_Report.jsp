@@ -10,7 +10,6 @@
 <%
 	Date nowTime = new Date();
 %>
-
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
@@ -30,6 +29,9 @@
 	                                       
 	                            <div class="card-body">
 								    <div class="row">
+								        <div class="col-lg-12">
+								            <button class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData_all('00')">《 전체 대상 점검 》</button>								                        
+								        </div>
 								        <div class="col-lg-6">
 								            <button data-action="FindView" data-value="accordion_item_1" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">요양병원 입원료 차등제 / 식대가산 점검</button>
 								            <button data-action="FindView" data-value="accordion_item_2" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('02')">월별 정액수가 분포율【 환자평가표 】</button>            
@@ -2715,6 +2717,55 @@ function fn_CreateData(flag) {
    		
     //});
 }
+//전체 처리
+function fn_CreateData_all() {
+
+    let selected_Year = document.getElementById("year_Select").value;
+    let selectedMonth = document.getElementById("monthSelect").value;
+
+    const flagList = [
+        '01','02','03','04','05','06',
+        '07','08','09','10','11','12',
+        '13','14'
+    ];
+
+    let index = 0;
+
+    function runNext() {
+
+        if (index >= flagList.length) {
+            alert("전체 자료 생성 완료!");
+            // 필요하면 여기서 갱신
+            // setMakeGrid();
+            return;
+        }
+
+        const currentFg = flagList[index];
+
+        $.ajax({
+            url: "/main/createTotalReport.do",
+            type: "POST",
+            data: {
+                hosp_cd: hospid,
+                jobyymm: selected_Year + selectedMonth,
+                make_fg: currentFg
+            },
+            success: function(response) {
+                console.log(currentFg + " success:", response);
+                index++;
+                runNext();
+            },
+            error: function(xhr, status, error) {
+                console.error(currentFg + " error:", error);
+                index++;
+                runNext(); // 실패해도 다음 진행 (원하면 여기서 중단 가능)
+            }
+        });
+    }
+
+    runNext();
+}
+
 
 function fn_Update()
 {
@@ -2969,12 +3020,18 @@ function total_Report_DataList() {
     }
     else if (jobFlag === "05") { tableName = document.getElementById('tableName05');
     
-	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수'  ];	    
-		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+	    c_Head_Set = [  '환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수','청구번호' ];	    
+		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' ,
+							render: function(data, type, row) {
+	           					if (data === '분리청구') {
+	           						return '' ;
+	               				}
+	               				return data;
+	       					},
+						},	
 						{ data: 'billSeq',  visible: true,  className: 'dt-body-center', width: '80px' },
 						
 		   				{ data: 'totAmt',   visible: true,  className: 'dt-body-right',  width: '120px',
@@ -3012,7 +3069,8 @@ function total_Report_DataList() {
 						
 						{ data: 'myoungFg', visible: true,  className: 'dt-body-center', width: '100px' },
 		   				{ data: 'jinDays',  visible: true,  className: 'dt-body-right', width: '100px' },    	   				
-		   				{ data: 'admDays',  visible: true,  className: 'dt-body-right', width: '100px' }
+		   				{ data: 'admDays',  visible: true,  className: 'dt-body-right', width: '100px' },
+		   				{ data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' }
 					 ];
 		// 초기 data Sort,  없으면 []
 		muiltSorts = [];
