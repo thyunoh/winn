@@ -242,9 +242,9 @@
 		                                                                         ,a.TOILET_USE,'1') = 17       THEN '경도 → 의료중도 가능'	
 		            WHEN LEFT(COALESCE(a.PAT_CLASS, 'E'), 1) = 'E' AND a.DEMENTIA = '0' AND a.PSYCH_DRUG = '1' THEN '선택 → 의료경도 가능'
 		            ELSE '' END AS classUp
-		     , CASE WHEN a.EVAL_TYPE = '1' THEN ' 입원 평가'
-		            WHEN a.EVAL_TYPE = '2' THEN ' 계속 입원 중인 환자 평가' 	
-		            WHEN a.EVAL_TYPE = '3' THEN ' 이전 환자평가표를 적용하는 경우'
+		     , CASE WHEN a.EVAL_TYPE = '1' THEN ' 1.입원'     -- ' 입원 평가'
+		            WHEN a.EVAL_TYPE = '2' THEN ' 2.계속입원'  -- ' 계속 입원 중인 환자 평가' 	
+		            WHEN a.EVAL_TYPE = '3' THEN ' 3.이전평가'  -- ' 이전 환자평가표를 적용하는 경우'
 		            ELSE '' END AS evalType
   	      FROM TBL_PATVAL_MST a
   	     WHERE a.HOSP_CD = #{hospCd}

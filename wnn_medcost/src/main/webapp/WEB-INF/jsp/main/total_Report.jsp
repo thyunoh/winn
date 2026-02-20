@@ -2898,9 +2898,22 @@ function total_Report_DataList() {
 			  			    },
 						},
 						
-						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '100px'  },
-						{ data: 'evalType',  visible: true,  className: 'dt-body-left',   width: '100px'  },
-						{ data: 'classUp',   visible: true,  className: 'dt-body-left',   width: '100px'  }
+						{ data: 'patClass',  visible: true,  className: 'dt-body-center',   width: '100px'  },
+						{ data: 'evalType',  visible: true,  className: 'dt-body-center',   width: '100px'  },
+						{
+						    data: 'classUp',
+						    visible: true,
+						    className: 'dt-body-left',
+						    width: '100px',
+						    render: function(data, type, row) {
+						        if (type === 'display') {
+						            if (data !== null && data !== '' && data !== undefined) {
+						                return '<span style="color: blue; font-weight: bold;">' + data + '</span>';
+						            }
+						        }
+						        return data;
+						    }
+						}
     				 ];
     	
     	// 초기 data Sort,  없으면 []
