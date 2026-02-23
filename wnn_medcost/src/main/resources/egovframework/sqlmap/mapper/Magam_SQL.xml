@@ -161,7 +161,7 @@
 	         A.CLAIM_NO    AS claim_no
 		   , A.CLFORM_VER  AS clform_ver
 		   , IFNULL(C.SUB_CODE_NM,'') AS claim_type_nm
-		   , IFNULL(D.SUB_CODE_NM,'') AS treat_type_nm
+	       , IFNULL(D.SUB_CODE_NM,'') AS treat_type_nm
 		   , A.DATE_YM     AS date_ym
 		   , A.CASE_CNT    AS case_cnt
 		   , COALESCE(E.TOT_AMT,0)+COALESCE(E.NON100_COST,0) AS tot_amt
@@ -401,48 +401,164 @@
     </select>
 	
 	<select id="setTotalReport_02" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
-	    WITH ValidMonths AS (
-		   SELECT JOBCODE 
-		        , COUNT(DISTINCT CASE WHEN COALESCE(J_COUNT, 0) > 0 OR COALESCE(JAMOUNT, 0) > 0 
-		                              THEN JOBYYMM 
-		                          END) AS month_count 
-		     FROM TBL_REPORT_MST 
-		    WHERE HOSP_CD = #{hosp_cd}
-		      AND JOBYYMM BETWEEN #{fr_yymm} AND #{endyymm}
-		      AND MAKE_FG = #{make_fg}
-		    GROUP BY JOBCODE
+		WITH ValidMonths AS (
+		    SELECT JOBCODE
+		         , COUNT(DISTINCT CASE WHEN COALESCE(J_COUNT, 0) > 0 OR COALESCE(JAMOUNT, 0) > 0 
+		                               THEN JOBYYMM 
+		                           END) AS month_count 
+		      FROM TBL_REPORT_MST 
+		     WHERE HOSP_CD = #{hosp_cd}
+		       AND JOBYYMM  BETWEEN #{fr_yymm} AND #{endyymm}
+		       AND MAKE_FG  = #{make_fg}
+		     GROUP BY JOBCODE
 		)
 		SELECT M.JOBCODE AS jobcode,
-		       COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) AS fr_yymm,
-		       COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) AS midyymm,
-		       COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) AS endyymm,
-		       COALESCE(
-		           IF(VM.month_count > 0, 
-		              ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2), 
-		              0), 
-		           0) AS avg_val,
+		
+		       /* fr_yymm */
+		       CASE 
+		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0) = 0
+		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0)), ']',
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) > 0
+		                    THEN CONCAT(FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0)), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS fr_yymm,
+		
+		       /* midyymm */
+		       CASE 
+		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0) = 0
+		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0)), ']',
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) > 0
+		                    THEN CONCAT(FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0)), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS midyymm,
+		
+		       /* endyymm */
+		       CASE 
+		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0) = 0
+		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0)), ']',
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) > 0
+		                    THEN CONCAT(FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0)), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS endyymm,
+		
+		       /* avg_val 개별행: JAMOUNT 정수, J_COUNT 소수점 유지 */
+		       CASE
+		           WHEN COALESCE(IF(VM.month_count > 0,
+		                    FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count),
+		                    0), 0) = 0
+		            AND COALESCE(IF(VM.month_count > 0,
+		                    ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2),
+		                    0), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', COALESCE(IF(VM.month_count > 0,
+		                       FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count),
+		                       0), 0), ']',
+		               CASE WHEN COALESCE(IF(VM.month_count > 0,
+		                            ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2),
+		                            0), 0) > 0
+		                    THEN CONCAT(
+		                             COALESCE(IF(VM.month_count > 0,
+		                                 ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2),
+		                                 0), 0), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS avg_val,
+		
 		       COALESCE(SUM(ROUND(CASE WHEN M.JOBYYMM = #{endyymm} THEN FN_TA_HOSP(#{hosp_cd}, #{endyymm}, #{make_fg}, M.JOBCODE) END)), 0) AS ta_e_ym
-		 FROM TBL_REPORT_MST M
-		 LEFT JOIN ValidMonths VM ON M.JOBCODE = VM.JOBCODE
-		WHERE M.HOSP_CD = #{hosp_cd}  
-		  AND M.JOBYYMM BETWEEN #{fr_yymm} AND #{endyymm}
-		  AND M.MAKE_FG = #{make_fg}
-		GROUP BY M.JOBCODE
+		
+		  FROM TBL_REPORT_MST M
+		  LEFT JOIN ValidMonths VM ON M.JOBCODE = VM.JOBCODE
+		 WHERE M.HOSP_CD = #{hosp_cd}
+		   AND M.JOBYYMM  BETWEEN #{fr_yymm} AND #{endyymm}
+		   AND M.MAKE_FG  = #{make_fg}
+		 GROUP BY M.JOBCODE
 		
 		UNION ALL
 		
 		SELECT 'T' AS jobcode,
-		       COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) AS fr_yymm,
-		       COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) AS midyymm,
-		       COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) AS endyymm,
-		       ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / COALESCE(MAX(VM.month_count), 1)) AS avg_val,
+		
+		       /* fr_yymm 합계(T) */
+		       CASE 
+		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0) = 0
+		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0)), ']',
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) > 0
+		                    THEN CONCAT(FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0)), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS fr_yymm,
+		
+		       /* midyymm 합계(T) */
+		       CASE 
+		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0) = 0
+		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0)), ']',
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) > 0
+		                    THEN CONCAT(FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0)), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS midyymm,
+		
+		       /* endyymm 합계(T) */
+		       CASE 
+		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0) = 0
+		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0)), ']',
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) > 0
+		                    THEN CONCAT(FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0)), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS endyymm,
+		
+		       /* avg_val 합계(T)행: JAMOUNT 정수, J_COUNT 정수 */
+		       CASE
+		           WHEN COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1)), 0) = 0
+		            AND COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT  END) / COALESCE(MAX(VM.month_count), 1)), 0) = 0
+		           THEN ''
+		           ELSE CONCAT(
+		               '[', COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1)), 0), ']',
+		               CASE WHEN COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / COALESCE(MAX(VM.month_count), 1)), 0) > 0
+		                    THEN CONCAT(
+		                             COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / COALESCE(MAX(VM.month_count), 1)), 0), '%')
+		                    ELSE ''
+		               END
+		           )
+		       END AS avg_val,
+		
 		       0 AS ta_e_ym
-		 FROM TBL_REPORT_MST M
-		 LEFT JOIN ValidMonths VM ON M.JOBCODE = VM.JOBCODE
-		WHERE M.HOSP_CD = #{hosp_cd}    
-		  AND M.JOBYYMM BETWEEN #{fr_yymm} AND #{endyymm}
-		  AND M.MAKE_FG = #{make_fg}
-		ORDER BY jobcode;
+		
+		  FROM TBL_REPORT_MST M
+		  LEFT JOIN ValidMonths VM ON M.JOBCODE = VM.JOBCODE
+		 WHERE M.HOSP_CD = #{hosp_cd}
+		   AND M.JOBYYMM  BETWEEN #{fr_yymm} AND #{endyymm}
+		   AND M.MAKE_FG  = #{make_fg}
+		 ORDER BY jobcode;
 
     ]]> 		 
     </select>
@@ -3519,8 +3635,27 @@
 				           WHERE cm.HOSP_CD = #{hospCd}
 				             AND cm.DATE_YM = #{jobYymm})
 	           
-  		 UNION ALL  	
-
+  		 UNION ALL  
+  		 -- 환자평가표 관찰기간내 체충 측정 여부	
+		  SELECT DISTINCT
+		         LEFT(A.PAT_ID,6)                                  AS patId
+		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					ELSE '' END AS patNm
+		       , A.ADMIT_DT                                        AS admitDt
+			   , A.MED_START                                       AS medStart  
+			   , A.DOC_DT                                          AS docDt
+			   , A.EVAL_TYPE                                       AS evalType
+			   , 'J4'                                              AS errType  
+			   , '환자평가표 관찰기간내 체충 측정 여부' AS errName
+		  FROM TBL_PATVAL_MST A
+          WHERE A.HOSP_CD = #{hospCd}
+            AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
+		    AND A.WEIG_DT NOT BETWEEN A.MED_START AND A.DOC_DT            
+            AND A.WEIG_HEIG_YN = '1' 
+            
+       UNION ALL
+          -- 욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가  
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
@@ -3533,22 +3668,11 @@
 			   , 'J5'                                              AS errType  
 			   , '욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가' AS errName
 		  FROM TBL_PATVAL_MST A
-		  JOIN (SELECT B.HOSP_CD
-		  	         , B.CHUNGSEQ
-			         , B.CLFORM_VER
-			         , B.PAT_ID
-			         , B.ADMIT_DT
-		          FROM TBL_PATVAL_MST B
-		         WHERE B.HOSP_CD = #{hospCd}
-		           AND B.MED_START LIKE CONCAT(#{jobYymm},'%')
-		           AND REPLACE(CONCAT(B.PR_ULCER1,B.PR_ULCER2,B.PR_ULCER3,B.PR_ULCER4),'0','') != ''
-		           AND B.NUTR_SKIN = '1'  
-		           AND B.WEIG_HEIG_YN = '0'  
-		       ) C  ON A.HOSP_CD  = C.HOSP_CD 
-		           AND A.PAT_ID   = C.PAT_ID 
-		           AND A.ADMIT_DT = C.ADMIT_DT
-          WHERE A.HOSP_CD = #{hospCd}
+		  WHERE A.HOSP_CD = #{hospCd}
             AND A.MED_START LIKE CONCAT(#{jobYymm},'%')	
+		    AND REPLACE(CONCAT(A.PR_ULCER1,A.PR_ULCER2,A.PR_ULCER3,A.PR_ULCER4),'0','') != ''
+		    AND A.NUTR_SKIN = '1'  
+		    AND A.WEIG_HEIG_YN = '0'             
             	           
 		UNION ALL  
 		          		
