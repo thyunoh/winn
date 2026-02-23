@@ -85,8 +85,14 @@ public class PatvalDTO {
 	
 	private String heigYn;      // 피부궤양 드레싱
 	
+	private String weig;
 	
-	
+	public String getWeig() {
+		return weig;
+	}
+	public void setWeig(String weig) {
+		this.weig = weig;
+	}
 	public String getIndwellCath() {
 		return indwellCath;
 	}
