@@ -3033,18 +3033,18 @@ function total_Report_DataList() {
     }
     else if (jobFlag === "05") { tableName = document.getElementById('tableName05');
     
-	    c_Head_Set = [  '환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수','청구번호' ];	    
+	    c_Head_Set = [  '환자ID','성명','종별','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수','청구번호' ];	    
 		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' ,
-							render: function(data, type, row) {
-	           					if (data === '분리청구') {
-	           						return '' ;
-	               				}
-	               				return data;
-	       					},
-						},	
+					//	{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' ,
+					//		render: function(data, type, row) {
+	           		//			if (data === '분리청구') {
+	           		//				return '' ;
+	               	//			}
+	               	//			return data;
+	       			//		},
+					//	},	
 						{ data: 'billSeq',  visible: true,  className: 'dt-body-center', width: '80px' },
 						
 		   				{ data: 'totAmt',   visible: true,  className: 'dt-body-right',  width: '120px',

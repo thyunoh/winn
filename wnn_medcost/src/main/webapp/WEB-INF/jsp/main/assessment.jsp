@@ -825,7 +825,7 @@ function fn_ViewData(data) {
 						        return data;
 						    },
 						},
-						{ data: 'indwellCath', visible: true, className: 'dt-body-center', width: '100px',
+						{ data: 'indwellCath', visible: true, className: 'dt-body-center', width: '40px',
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환
 								if (type === 'display') {
@@ -914,7 +914,8 @@ function fn_ViewData(data) {
 			    		    { label: '욕창단계(당월)', colspan: 4 },
 			    		    { label: '욕창처치(당월)', colspan: 5 },
 			    		    
-			    		    { label: '다음월', rowspan: 2 }
+			    		    { label: '다음월', rowspan: 2 },
+			    		    { label: '처치'  , rowspan: 2 }
 			    		],
 			    		[
 			    			{ label: '1' },
@@ -929,8 +930,8 @@ function fn_ViewData(data) {
 			    		    { label: 'b' },
 			    		    { label: 'c' },
 			    		    { label: 'd' },
-			    		    { label: '체중'},
-			    		    { label: '처치'}
+			    		    { label: '체중'}
+			    		    
 			    		    
 			    	 	]
 			    	 ];
@@ -974,7 +975,7 @@ function fn_ViewData(data) {
 						{ data: 'posChange', visible: true,  className: 'dt-body-center', width: '100px'  },
 						{ data: 'nutSupply', visible: true,  className: 'dt-body-center', width: '100px'  },
 						{ data: 'skinDress', visible: true,  className: 'dt-body-center', width: '100px'  },
-						{ data: 'heigYn'   , visible: true,  className: 'dt-body-center', width: '100px'  },
+						{ data: 'weig'     , visible: true,  className: 'dt-body-center', width: '100px'  },
 					    { data: 'dressingYn', visible: true, className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환

@@ -123,7 +123,7 @@
            document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
                                                           + usernm + `님 ] 반갑습니다 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;
        }else{
-           document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
+           document.getElementById('logininfo').innerHTML = '진료비: '+ closeDt2 +'-'+ '적정성: ' + closeDt1 + '   ' +  hospnm + `  [ ` 
                                                           + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;          
        }
        
