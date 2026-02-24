@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"D:/egv/winn\" show HEAD:wnn_consult/src/main/webapp/WEB-INF/jsp/login/LoginWinCT.jsp)",
+      "Bash(node:*)"
+    ]
+  }
+}
