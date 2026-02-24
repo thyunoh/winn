@@ -959,32 +959,32 @@ function setMakeGrid() {
     } else if (jobFlag === "05" ) {
     	makeGrid(
     	  'grid-container1',
-    	  [9, 4],
+    	  [11, 4],
     	  ["내용", yymm1, yymm2, yymm3, avg_0],
-    	  ["보험", "보호", "자보", "산재", "합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비"],
-    	  ["합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비"],
-    	  [5,6,8],
+    	  ["보험", "보호", "자보", "산재", "합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비", "행위처치금액", "1일당 처치료"],
+    	  ["합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비", "행위처치금액", "1일당 처치료"],
+    	  [5,6,8,10],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
     	
     } else if (jobFlag === "06" ) {
     	makeGrid(
     	  'grid-container1',
-    	  [9, 4],
+    	  [11, 4],
     	  ["내용", yymm1, yymm2, yymm3, avg_0],
-    	  ["보험", "보호", "자보", "산재", "합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비"],
+    	  ["보험", "보호", "자보", "산재", "합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비", "행위처치금액", "1일당 처치료"],
     	  ["합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비"],
-    	  [5,6,8],
+    	  [5,6,8,10],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
     } else if (jobFlag === "07" ) {
     	makeGrid(
     	  'grid-container1',
-    	  [9, 4],
+    	  [11, 4],
     	  ["내용", yymm1, yymm2, yymm3, avg_0],
-    	  ["보험", "보호", "자보", "산재", "합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비"],
+    	  ["보험", "보호", "자보", "산재", "합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비", "행위처치금액", "1일당 처치료"],
     	  ["합계", "특정 총진료일수", "평균진료일수", "건당진료비", "일당진료비"],
-    	  [5,6,8],
+    	  [5,6,8,10],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
     	
@@ -3097,12 +3097,11 @@ function total_Report_DataList() {
     }
     else if (jobFlag === "06") { tableName = document.getElementById('tableName06');
     
-	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수'  ];	    
-		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+	    c_Head_Set = [ '환자ID','성명','종별','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수' ,'청구번호'  ];	    
+		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
+					//	{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'billSeq',  visible: true,  className: 'dt-body-center', width: '80px' },
 						
 		   				{ data: 'totAmt',   visible: true,  className: 'dt-body-right',  width: '120px',
@@ -3140,7 +3139,8 @@ function total_Report_DataList() {
 						
 						{ data: 'myoungFg', visible: true,  className: 'dt-body-center', width: '100px' },
 		   				{ data: 'jinDays',  visible: true,  className: 'dt-body-right', width: '100px' },    	   				
-		   				{ data: 'admDays',  visible: true,  className: 'dt-body-right', width: '100px' }
+		   				{ data: 'admDays',  visible: true,  className: 'dt-body-right', width: '100px' },
+		   				{ data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' }
 					 ];
 		// 초기 data Sort,  없으면 []
 		muiltSorts = [];
@@ -3155,12 +3155,11 @@ function total_Report_DataList() {
     }
     else if (jobFlag === "07") { tableName = document.getElementById('tableName07');
     
-	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수'  ];	    
-		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+	    c_Head_Set = [  '환자ID','성명','종별','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수' ,'청구번호'  ];	    
+		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
+					//	{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'billSeq',  visible: true,  className: 'dt-body-center', width: '80px' },
 						
 		   				{ data: 'totAmt',   visible: true,  className: 'dt-body-right',  width: '120px',
@@ -3198,7 +3197,8 @@ function total_Report_DataList() {
 						
 						{ data: 'myoungFg', visible: true,  className: 'dt-body-center', width: '100px' },
 		   				{ data: 'jinDays',  visible: true,  className: 'dt-body-right', width: '100px' },    	   				
-		   				{ data: 'admDays',  visible: true,  className: 'dt-body-right', width: '100px' }
+		   				{ data: 'admDays',  visible: true,  className: 'dt-body-right', width: '100px' },
+		   				{ data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' }
 					 ];
 		// 초기 data Sort,  없으면 []
 		muiltSorts = [];

@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <link href="/wnn_consult/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/wnn_consult/css/winct/style.css?v=123" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style_login.css?v=124" rel="stylesheet"> <!-- 로그인css  -->
+<link href="/wnn_consult/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
 <!-- JavaScript -->
 <script type="text/javascript" src="/wnn_consult/js/winct/main.js"></script>
 <script type="text/javascript" src="/wnn_consult/js/winct/message.js"></script>
@@ -151,55 +151,6 @@
     display: block;
     background: #fff; /* 이미지 로딩 전 배경 */
 }
-
-
-
-
-/* 전체 하늘색 박스 */
-.bg-light-blue {
-    background-color: #cfe9ff;
-}
-
-/* 서비스 카드 */
-.service-card {
-    background: #ffffff;
-    border-radius: 10px;
-    padding: 14px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-decoration: none;
-    color: #333;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* hover 효과 */
-.service-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    background-color: #f8fbff;
-}
-
-/* 아이콘 색상 */
-.service-icon {
-    font-size: 20px;
-    color: #3aa0ff;
-}
-
-/* 텍스트 */
-.service-label {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-/* 오른쪽 화살표 */
-.service-arrow {
-    font-size: 16px;
-    color: #999;
-}
-
-
 
 </style>
 <body>
@@ -530,10 +481,76 @@
                
 									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip2.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
 									<button type="button" class="btn overlay-btn overlay-btn-i1" onclick="winCheckOpen()"></button>	
+									<!--  
+									<button type="button" class="btn overlay-btn overlay-btn-i2" onclick="downloadFile()"></button>	
+									-->
 									<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" onclick="downloadFile()"></a>
 									<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button"></a>
+									<!-- 
+									<button type="button" class="btn overlay-btn overlay-btn-i3" onclick="winCheckOpen()"></button>
+									-->		
+									<!-- 왼쪽 이미지
+									<div
+										style="flex-basis: 70%; max-width: 60%; padding-right: 20px;">
+										<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip.svg"
+											alt="e_clip"
+											style="width: 500px; display: block; margin-bottom: 15px;">
+										<div style="text-align: left; margin-top: -75px; clear: both;">
+											<span
+												style="font-size: 14px; font-weight: bold; margin-left: 2px;">체계적인
+												컨설팅 분석평가 프로그램</span>
+										</div>
+										<div style="text-align: left;">
+											<span
+												style="font-size: 14px; font-weight: bold; margin-left: 2px;">데이터
+												기반으로 맞춤 솔루션</span>
+										</div>
+										<a onclick="winCheckOpen()" target="_blank"
+											rel="noopener noreferrer" class="program-button"
+											style="margin-left: 20px; height: 26px; margin-top: 15px; display: inline-flex; align-items: center; text-decoration: none;">
+											<span style="margin-left: 10px;">프로그램 바로가기</span> <span
+											class="arrow" style="margin-left: -30px;">→</span>
+										</a>
+									</div>
 
+									
+									<div class="right-img-group"
+										style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 1px;">
+										
+										<div class="program-block" style="margin-left: 30px;">
+											<div class="program-text">
+												<div class="program-title">컨설팅 소개</div>
+												<div class="program-desc">의료특화 전문교육</div>
+												<div class="program-desc">의료기관 전문컨설팅</div>
+												<a href="/path/to/consulting-intro.pdf" download
+													onclick="downloadFile()" class="program-button"
+													style="display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: -3px; text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
+													<span style="margin-left: -5px;">컨설팅소개서 다운로드</span> <span
+													class="arrow" style="margin-left: -2px;">→</span>
+												</a>
+											</div>
+										</div>
 
+										<div class="program-block" style="margin-left: 30px;">
+											<a href="https://winner797.net/" target="_blank"
+												rel="noopener noreferrer"> </a>
+
+											<div class="program-text" style="margin-top: -3px;">
+												<div class="program-title">온라인교육센터</div>
+												<div class="program-desc">효과적인 학습을 위한 교육</div>
+												<div class="program-desc">실전 가능한 팁과 전략 제공</div>
+
+												
+												<a href="https://winner797.net/" target="_blank"
+													rel="noopener noreferrer" class="program-button"
+													style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
+													<span>홈페이지 바로가기</span> <span class="arrow">&rarr;</span>
+												</a>
+											</div>
+										</div>
+
+									</div>
+									 -->
 								</div>
 							</div>
 						</div>
@@ -657,62 +674,67 @@
 									<button type="button" class="btn overlay-btn overlay-btn-i7" onclick="loadFaqData()"></button>	
 								</div>	
 						</div>			
-						<!--  -->
-					</div>
-
-				<!-- 자주찾는 서비스 영역 -->
-				<div class="row justify-content-center mt-2" style="flex-wrap: nowrap;">
-					<div style="width: 1295px; flex-shrink: 0;">
-						<div class="py-2 px-4 bg-light-blue">
-							<div class="row align-items-center">
-								<div class="col-md-3 mb-2 mb-md-0">
-									<h6 class="fw-bold mb-0">자주찾는 서비스</h6>
-								</div>
-								<div class="col-md-9">
-									<div class="row g-2">
-										<div class="col-6 col-md-3">
-											<a href="#" onclick="fnasq_main(); return false;" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-headset service-icon"></i>
-													<span class="service-label">1:1 문의하기</span>
-												</div>
-												<i class="bi bi-chevron-right service-arrow"></i>
+						<!-- 고객센터 
+						<div class="col-lg-4">
+							<div class="helpdesk">
+								<div class="bg-light box-p-10"
+									style="width: 635px; height: 60px; margin-top: 0px; position: relative; left: 5px;">
+									<div class="row text-center" style="margin-top: -7px;">
+										<div class="col-4 d-flex justify-content-center align-items-center">
+											<a href="#"
+												onclick= "ready_kakao();"
+												class="d-flex align-items-center text-dark"
+												style="text-decoration: none;">
+												<img class="img-fluid"
+													src="/wnn_consult/images/winct/kakao.svg" alt="카카오상담"
+													style="height: 30px; margin-right: 8px; margin-top: 7px;">
+												<span style="font-size: 0.8rem; font-weight: bold;">카카오상담</span>
 											</a>
 										</div>
-										<div class="col-6 col-md-3">
-											<a href="#" onclick="loadFaqData(); return false;" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-patch-question service-icon"></i>
-													<span class="service-label">자주하는 질문</span>
-												</div>
-												<i class="bi bi-chevron-right service-arrow"></i>
+										<div
+											class="col-3 d-flex justify-content-center align-items-center">
+											<a href="#" onclick="fnasq_main();"
+												class="d-flex align-items-center text-dark"
+												style="text-decoration: none;"> <img class="img-fluid"
+												src="/wnn_consult/images/winct/headset.svg" alt="1대1상담"
+												style="height: 30px; margin-right: 8px; margin-top: 7px;">
+												<span style="font-size: 0.8rem; font-weight: bold;">1:1 문의하기</span>
 											</a>
 										</div>
-										<div class="col-6 col-md-3">
-											<a href="#" onclick="downloadFile(); return false;" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-file-earmark-person service-icon"></i>
-													<span class="service-label">컨설팅 소개</span>
-												</div>
-												<i class="bi bi-chevron-right service-arrow"></i>
+										<div
+											class="col-4 d-flex justify-content-center align-items-center">
+											<a href="#" onclick="loadFaqData();"
+												class="d-flex align-items-center text-dark"
+												style="text-decoration: none;"> <img class="img-fluid"
+												src="/wnn_consult/images/winct/faq.svg" alt="자주듣는질문"
+												style="height: 30px; margin-right: 8px; margin-top: 7px;">
+												<span style="font-size: 0.8rem; font-weight: bold;">자주하는질문</span>
 											</a>
 										</div>
-										<div class="col-6 col-md-3">
-											<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-mortarboard service-icon"></i>
-													<span class="service-label">온라인교육센터</span>
-												</div>
-												<i class="bi bi-chevron-right service-arrow"></i>
-											</a>
-										</div>
+									</div>
+									<div class="helpdeskHeader"
+										style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px; margin-top: 50px;">
+										<hr
+											style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 1cm;">
+										<h3 style="font-size: 22px; margin-bottom: 10px;">
+											고객센터 <span
+												style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
+										</h3>
+										<p
+											style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">02-6953-2452</p>
+										<p style="font-size: 14px; color: #666; margin-top: 0px;">
+											<strong>월-금</strong> 09:00 ~ 18:00<span
+												style="margin: 0 5px;">|</span> <strong>점심시간</strong> 12:00
+											~ 13:00<span style="margin: 0 5px;">|</span> <strong>주말/공휴일
+												휴무</strong>
+										</p>
 									</div>
 								</div>
 							</div>
 						</div>
+						-->
+						<!--  -->
 					</div>
-				</div>
-				<!-- 자주찾는 서비스 영역 끝 -->
 				</div>
 
 			</div>

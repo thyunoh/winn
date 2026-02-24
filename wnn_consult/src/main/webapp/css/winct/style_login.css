@@ -845,7 +845,7 @@
     height: auto;
     display: block;
 }
-/* */ 
+/* */
 #contentArea {
     flex: 1;
     width: 100%;
@@ -854,3 +854,61 @@
     padding: 0 15px;
     box-sizing: border-box;
 }
+
+/* 자주찾는 서비스 */
+.bg-light-blue {
+    background-color: #e4eef7;
+    border-radius: 12px;
+    border: 1px solid #c2d8ec;
+}
+
+.service-card {
+    background: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    color: #333 !important;
+    text-decoration: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border: 1px solid #e4ecf4 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    transition: background-color 0.2s, box-shadow 0.2s;
+    min-height: 44px;
+    gap: 6px;
+}
+
+.service-card:hover {
+    background-color: #003366 !important;
+    box-shadow: 0 3px 10px rgba(0,51,102,0.2);
+}
+
+.service-card:hover .service-icon,
+.service-card:hover .service-label,
+.service-card:hover .service-arrow {
+    color: #fff !important;
+}
+
+.service-icon {
+    font-size: 1.3rem !important;
+    color: #3a3a3a !important;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.service-label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    white-space: nowrap;
+}
+
+.service-arrow {
+    font-size: 0.75rem !important;
+    color: #999 !important;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+/* 자주찾는 서비스 끝 */
