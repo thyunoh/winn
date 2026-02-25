@@ -287,14 +287,14 @@
 			
 					<!-- 슬라이드들 -->
 					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="d-flex align-items-center justify-content-center w-100 h-100">
 							<a href="https://winner797.net/detail.php?number=324" target="_blank">
 								<img src="/wnn_consult/images/winct/image9.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 							</a>
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="d-flex align-items-center justify-content-center w-100 h-100">
 							<a href="https://winner797.net/detail.php?number=321" target="_blank">
 								<img src="/wnn_consult/images/winct/image7.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 							</a>
