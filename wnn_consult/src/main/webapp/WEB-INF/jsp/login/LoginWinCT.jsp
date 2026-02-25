@@ -387,39 +387,40 @@
 			<!-- style="margin-top: 400px; 올려서 오버뱁  -->
 			<!--   로그인시작  -->
 			<div class="login-banner-wrapper" id = "login_form" 
-				style="width: 100%; max-width: 1700px; margin: 0 auto; transition: all 0.3s ease; transform: translateX(220px);">
-				<div class="row ">
+				style="width: 100%; max-width: 1700px; margin: 0 auto; transition: all 0.3s ease;">
+				<div>
 					<!-- 로그인 영역 -->
 
-					<div class="container-fluid mb-2 px-3" 	id = "login_line"  style="transform: translateX(-170px);">
-						<div class="row justify-content-center px-xl-8"
+					<div class="container-fluid mb-2 px-3" 	id = "login_line"  style="margin-left: -30px;">
+						<div class="row justify-content-center" 
 							style="flex-wrap: nowrap;">
-							<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
+							<div style="margin-left: 250px; display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 20px;">
+							<div style="width: 600px; flex-shrink: 0; min-width: 600px;">
 								<div class="contact-form box-p-10 mb-3"
 									style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
 									<form name="loginForm" id="loginForm">
 										<div
 											style="display: flex; align-items: flex-start; justify-content: center;">
 											<!-- 입력 필드 영역 -->
-											<div style="flex-grow: 0; width: 280px;">
+											<div style="flex-grow: 0; width: 280px; margin-left: 10px;">
 												<hr
 													style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
 												<h6 class="section-title position-relative mb-2">
 													<span class="pr-6" style="color: white; font-size: 1.2em;">
-														로그인 <small style="font-size: 0.80em; color: white;">LOGIN</small>
+														로그인 <small style="font-size: 0.80em; color: white;"></small>
 													</span>
 												</h6>
 												<div class="control-group mb-2">
 													<input type="text" class="form-control" id="hospid"
-														placeholder="Hospital Number" style="width: 150%;" />
+														placeholder="Hospital Number" style="width: 120%;" />
 												</div>
 												<div class="control-group mb-2">
 													<input type="text" class="form-control" id="userid"
-														placeholder="User ID" style="width: 150%;" />
+														placeholder="User ID" style="width: 120%;" />
 												</div>
 												<div class="control-group mb-2">
 													<input type="password" class="form-control" id="passwd"
-														placeholder="PassWord" style="width: 150%;" />
+														placeholder="PassWord" style="width: 120%;" />
 												</div>
 												<div class="form-check mb-2"
 													style="white-space: nowrap; color: white;">
@@ -430,7 +431,7 @@
 											</div>
 
 											<!-- 로그인 버튼 + 링크 -->
-											<div style="margin-left: 180px; text-align: center;">
+											<div style="margin-left: 80px; text-align: center;">
 												<button type="button" id="blogin" onclick="login()"
 													style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 36px; margin-bottom: 5px;">
 													로그인</button>
@@ -505,7 +506,7 @@
 													</div>
 
 													<!-- 우측 로그아웃 버튼 -->
-													<div style="margin-left: 68px; flex-shrink: 0;">
+													<div style="margin-left: 18px; flex-shrink: 0;">
 														<button class="btn btn-warning" onclick="logout()"
 															style="min-width: 120px; height: 60px; font-size: 16px;">
 															로그아웃</button>
@@ -516,26 +517,35 @@
 										</div>
 
 									</div>
-
+								<!-- 로그인 성공 시 사용자 카드 -->
 								</div>
 							</div>
 
 							<!-- 이미지 배너 영역  #ccc -->
 							<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
-								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; ">
-									
-									
-               
-									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip2.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
-									<button type="button" class="btn overlay-btn overlay-btn-i1" onclick="winCheckOpen()"></button>	
-									<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" onclick="downloadFile()"></a>
-									<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button"></a>
-
-
-								</div>
+							     style="display: flex; 
+							            justify-content: flex-start; 
+							            align-items: center; 
+							            gap: 20px; 
+							            padding: 10px; 
+							            width: 100%; 
+							            max-width: 1200px;
+							            margin-top:-15px;">
+							
+							    <div style="position: relative;">
+							        <img src="/wnn_consult/images/winct/wcheck_main.jpg"
+							             style="width: 340px; height: 230px; display: block;">
+										<a href="javascript:void(0)"
+										   onclick="winCheckOpen(); return false;"
+										   style="position:absolute; top:0; left:0; width:100%; height:100%; display:block;">
+										</a>
+							    </div>
+							
+							    <img src="/wnn_consult/images/winct/time_main.jpg"
+							         style="width: 340px; height: 230px; display: block;">
 							</div>
+							</div>
+							
 						</div>
 					</div>
 				</div>
@@ -545,124 +555,68 @@
 				<div class="container-fluid_noti mb-2 px-3"
 					style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
 					  <div class="row justify-content-center" id="noti-row" style="flex-wrap: nowrap;">
-						<div class="col-lg-auto" style="width: 700px; flex-shrink: 0; min-width: 700px;">
-							<div class="bg-light box-p-10" style="height: 220px;">
-								<!-- 탭 헤더 -->
-								<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
-									<a
-										class="nav-item nav-link active px-4 py-2 fw-bold text-dark text-center flex-fill"
-										data-bs-toggle="tab" href="#tab-pane-1">전체 </a> <a
-										class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
-										data-bs-toggle="tab" href="#tab-pane-2">공지사항 </a> <a
-										class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
-										data-bs-toggle="tab" href="#tab-pane-3">심사방 </a> <a
-										class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
-										data-bs-toggle="tab" href="#tab-pane-4">소식지 </a>
-								</div>
+						<div style="width: 1300px; flex-shrink: 0; margin-left: 520px; display: flex; gap: 10px;">
 
-								<!-- 탭 콘텐츠 -->
-								<div class="tab-content">
-									<!-- 전체 -->
-									<div class="tab-pane fade active show" id="tab-pane-1">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
+							<!-- 공지사항 패널 -->
+							<div style="flex: 1; min-width: 0;">
+								<div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
+									<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+										<h6 class="fw-bold mb-0" style="font-size: 14px;"><i class="bi bi-check-circle me-1"></i>공지사항</h6>
+										<a href="javascript:void(0);" style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">더보기</a>
 									</div>
-									<!-- 공지사항 -->
-									<div class="tab-pane fade" id="tab-pane-2">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable1" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea1">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
+									<hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
+									<div class="scroll-table-container" style="max-height: 155px; overflow-y: auto;">
+										<table class="notice-table" id="noticeTable1" style="font-size: 13px; width: 100%; border-collapse: collapse;">
+										<tbody id="noticeArea1">
+										<tr><td colspan="4" style="font-weight: bold;">&nbsp;</td></tr>
+										</tbody>
+										</table>
 									</div>
-									<!-- 심사방 -->
-									<div class="tab-pane fade" id="tab-pane-3">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable2" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea2">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-
-									<!-- 소식지 -->
-									
-									<div class="tab-pane fade" id="tab-pane-4">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable3" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea3">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-									
 								</div>
 							</div>
-						</div>
 
-						
-						
-						
-						<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
-								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; ">
-									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip3.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
-									<button type="button" class="btn overlay-btn overlay-btn-i6" onclick="fnasq_main()"></button>	
-									<button type="button" class="btn overlay-btn overlay-btn-i7" onclick="loadFaqData()"></button>	
-								</div>	
-						</div>			
-						<!--  -->
-					</div>
+							<!-- 소식지 패널 -->
+							<div style="flex: 1; min-width: 0;">
+								<div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
+									<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+										<h6 class="fw-bold mb-0" style="font-size: 14px;"><i class="bi bi-journal-bookmark me-1"></i>소식지</h6>
+										<a href="javascript:void(0);" style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">더보기</a>
+									</div>
+									<hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
+									<div class="scroll-table-container" style="max-height: 155px; overflow-y: auto;">
+										<table class="notice-table" id="noticeTable3" style="font-size: 13px; width: 100%; border-collapse: collapse;">
+										<tbody id="noticeArea3">
+										<tr><td colspan="4" style="font-weight: bold;">&nbsp;</td></tr>
+										</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+
+							<!-- 심사방 패널 -->
+							<div style="flex: 1; min-width: 0;">
+								<div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
+									<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+										<h6 class="fw-bold mb-0" style="font-size: 14px;"><i class="bi bi-file-earmark-search me-1"></i>심사방</h6>
+										<a href="javascript:void(0);" style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">더보기</a>
+									</div>
+									<hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
+									<div class="scroll-table-container" style="max-height: 155px; overflow-y: auto;">
+										<table class="notice-table" id="noticeTable2" style="font-size: 13px; width: 100%; border-collapse: collapse;">
+										<tbody id="noticeArea2">
+										<tr><td colspan="4" style="font-weight: bold;">&nbsp;</td></tr>
+										</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					  </div>
 
 				<!-- 자주찾는 서비스 영역 -->
 				<div class="row justify-content-center mt-2" style="flex-wrap: nowrap;">
-					<div style="width: 1295px; flex-shrink: 0;">
+					<div style="width: 1300px; flex-shrink: 0; margin-left: 520px;">
 						<div class="py-2 px-4 bg-light-blue">
 							<div class="row align-items-center">
 								<div class="col-md-3 mb-2 mb-md-0">
@@ -1470,7 +1424,7 @@
 
 	<div class="modal fade" id="passserachModal" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-		<div class="modal-dialog modal-lg" style="max-width: 500px;">
+		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 550px;">
 			<div class="modal-content rounded-3 shadow-lg">
 				<form:form commandName="DTO" id="pwserchregForm" name="pwregForm" method="post">
 					<h3 class="text-center">아이디찾기 비밀번호 초기화</h3>
@@ -1558,7 +1512,7 @@
 	<div class="modal fade" id="pwresetForm" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true"
 		style="margin-left: -1px;">
-		<div class="modal-dialog modal-lg" style="max-width: 500px;">
+		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 520px;">
 			<div class="modal-content rounded-3 shadow-lg">
 				<form:form commandName="DTO" id="pwresetregForm"
 					name="pwresetregForm" method="post">
@@ -1669,14 +1623,17 @@
 		        alert("요청 처리 중 오류가 발생했습니다.");
 		    }
 		}); 
+		
+		
 	}
 </script>
 	<!-- 비빌번호 초기화 변경  -->
+	
 
 	<!-- 공지사항 모달 -->
 	<div id="adminModal" class="modal fade" data-backdrop="static"
 		data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
-		<div class="modal-dialog modal-lg" style="max-width: 800px;">
+		<div class="modal-dialog modal-lg" style="max-width: 800px; margin-top: 450px;">
 			<div class="modal-content"
 				style="height: 80%; display: flex; flex-direction: column; position: relative; border-radius: 10px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);">
 				<div class="modal-header" style="height: 38px; padding: 5px 10px;">
@@ -2070,7 +2027,7 @@
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
 	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
 	<div class="modal-dialog modal-lg"
-		style="max-width: 900px; width: 90%;">
+		style="max-width: 900px; width: 90%; margin-top: 500px;">
 		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
 		<div class="modal-content shadow-lg rounded-4"
 			style="height: auto; max-height: 90vh; border: none;">
@@ -2519,7 +2476,7 @@
 
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" style="margin-top: -20px;"> <!-- 여기 추가 -->
+  <div class="modal-dialog modal-lg" style="margin-top: 430px;"> <!-- 여기 추가 -->
     <div class="modal-content" style="max-height: 900px;"> <!-- 높이 제한 -->
       <div class="modal-header">
         <h5 class="modal-title" id="faqModalLabel">자주 묻는 질문 (FAQ)</h5>
@@ -3366,4 +3323,3 @@
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
 </html>
-
