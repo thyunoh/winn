@@ -514,7 +514,6 @@
 							        </div>
 							    </div>
 							    
-							    
 							    <br>
 							    <div class="card-body11">
 								    <div class="row">
@@ -532,23 +531,6 @@
 								        </div>
 								   </div>     
 								</div>   
-							<!--      <br> -->
-							  	<div class="card-body11">
-								    <div class="row">
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC5" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC6" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC7" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC8" class="morris_chart_height"></div>
-								        </div>
-								   </div>     
-								</div>   
 							    <br>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
@@ -559,6 +541,50 @@
 															       
 									</table>
 							    </div>
+
+							    <!-- ============================================ -->
+							    <!-- 타병원 비교 영역 시작 -->
+							    <!-- ============================================ -->
+							    <hr style="margin: 10px 0; border-top: 2px solid #2b5797;">
+							    <div class="card-header11">
+							        <h5 class="text-left ml-3 mb-1" style="color: #2b5797;">
+							            타병원 비교 검사료 현황
+							        </h5>
+							        <div class="d-flex align-items-center ml-3 mt-2 mb-2">
+							            <label class="mb-0 mr-2" style="font-weight: bold; white-space: nowrap;">비교병원 :</label>
+							            <input id="cmpHospCd" name="cmpHospCd" type="text" class="form-control"
+							                   placeholder="요양기호 입력" style="width: 140px;" maxlength="8"
+							                   onkeyup="if(this.value.length===8) fn_SearchCmpHosp();">
+							            <input id="cmpHospNm" name="cmpHospNm" type="text" class="form-control ml-2"
+							                   placeholder="병원명" style="width: 200px;" readonly>
+							            <button class="btn btn-outline-primary btn-sm ml-2" type="button" id="cmpHospSearch"
+							                    style="white-space: nowrap;">
+							                <i class="fas fa-search"></i> 병원검색
+							            </button>
+							            <button class="btn btn-primary btn-sm ml-2" type="button" id="cmpHospApply"
+							                    onclick="fn_CmpHospApply('11')" style="white-space: nowrap;">
+							                조회
+							            </button>
+							            <button class="btn btn-outline-secondary btn-sm ml-1" type="button"
+							                    onclick="fn_CmpHospClear()" style="white-space: nowrap;">
+							                초기화
+							            </button>
+							        </div>
+							        <!-- 비교 결과 테이블 영역 -->
+							        <div id="cmpResultC" style="display: none; margin: 10px;">
+							            <div class="input-group-append mb-1">
+							                <div class="row w-100 justify-content-between align-items-center">
+							                    <label class="ml-3 mb-0 small" style="color: #2b5797; font-weight: bold;">
+							                        ※ 비교병원: <span id="cmpHospInfo"></span>
+							                    </label>
+							                    <label class="text-right ml-auto mb-0 small">[ 비율 ] / 계산총액</label>
+							                </div>
+							            </div>
+							            <div id="grid-containerCmp11"></div>
+							        </div>
+							    </div>
+							    <!-- 타병원 비교 영역 끝 -->
+
 							</div>
 							<div class="card" id="card_containerD" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
@@ -607,24 +633,7 @@
 								        </div>
 								   </div>     
 								</div>   
-							   <!--      <br> -->
-							    <div class="card-body11">
-								    <div class="row">
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD5" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD6" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD7" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD8" class="morris_chart_height"></div>
-								        </div>
-								   </div>     
-								</div>   
-							    <br>							    
+							    <br>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
 							    <div class="card-header11">
@@ -2402,124 +2411,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 	                    colors: ['#C785C8', '#ED7D31'],
 	                    formatter: function (y) { return y + '%'; }
 	                });
-////////////////////////////////////////////////////////////////////////// 타병원 
-		 	    	const chartContainer5 = document.getElementById("morris-bar-chartC5");    	    	
-	                chartContainer5.innerHTML = '';
-	                chartContainer5.style.height = "200px";
-	                chartContainer5.style.width  = "250px";
 	                
-	                let totamt_t = replaceMulti(response.resultData[1,0].ta_e_ym,",");
-	                let wonamt_t = replaceMulti(response.resultData[2,1].ta_e_ym,",");
-	                let witamt_t = replaceMulti(response.resultData[3,2].ta_e_ym,",");
-	                let onlyNo_t = replaceMulti(response.resultData[4,3].ta_e_ym,",");
-	                let totgam_t = onlyNo_t.match(/(\d[\d,]*)\s*$/)[1].replace(/,/g,'');
-	                let drgamt_t = replaceMulti(response.resultData[5,4].ta_e_ym,",");
-	                let hwiamt_t = replaceMulti(response.resultData[6,5].ta_e_ym,",");
-	                
-	                let pro_01_t = 0;
-	                let pro_02_t = 0;
-	                let pro_03_t = 0;
-	                let pro_04_t = 0;
-	                let pro_05_t = 0;
-	                let pro_06_t = 0;
-	                
-	                if (totamt_t > 0) {
-	                	pro_01_t = Math.round((totgam_t / totamt_t) * 100);
-	                	pro_02_t = 100 - pro_01_t;
-	                } 
-	                if (wonamt_t + witamt_t > 0 ) {
-	                	pro_03_t = Math.round((witamt_t / totgam_t) * 100);
-	                	pro_04_t = 100 - pro_03_t;
-	                }
-	                if (drgamt_t + hwiamt_t > 0) {
-	                	pro_05_t = Math.round((drgamt_t / totgam_t) * 100);
-	                	pro_06_t = 100 - pro_05_t;
-	                }
-	                
-	                const chart5 = Morris.Bar({
-		    	        element: 'morris-bar-chartC5',
-		    	        data: [
-	    	        	   	{ y: '타병원 총진료비 대비 검사비 (백만원)', 
-			    	          a: Math.round(totamt_t/1000000), 
-			    	          b: Math.round(totgam_t/1000000), 
-			    	          c: Math.round(drgamt_t/1000000), 
-			    	          d: Math.round(hwiamt_t/1000000) }
-		    	        ],
-		    	        xkey: 'y',
-		    		    ykeys: ['a', 'b', 'c', 'd'],
-		    		    labels: ['총진료비','총검사비', '정액금액','행위금액' ],
-		    		    barColors: ['#0B8ECA','#00B050', '#C785C8', '#ED7D31'],
-		    		    hideHover: 'auto',
-		    		    gridLineColor: '#eef0f2',
-		    		    resize: true,
-		    		    gridTextSize: 12, // 축 폰트 크기 조절
-		    		    labelsColor: '#000', // 레이블 색상 설정
-		    		    barSizeRatio: 1, // 막대 크기 조정
-		    		    barGap: 5 // 막대 간격 조정
-		    	    });
-	                
-	                const chartContainer6 = document.getElementById("morris-bar-chartC6");    	    	
-	                chartContainer6.innerHTML = '';
-	                chartContainer6.style.height = "180px";
-	                chartContainer6.style.width  = "180px";
-	                
-	                const chart6 = Morris.Donut({
-	                    element: 'morris-bar-chartC6',
-	                    data: [{
-	                        label: "\xa0 \xa0 총진료비 \xa0 \xa0",
-	                        value: pro_02_t,
-	                    }, {
-	                        label: "\xa0 \xa0 총검사료 \xa0 \xa0",
-	                        value: pro_01_t
-	                    }],
-	                    resize: true,
-	                    colors: ['#0B8ECA','#00B050'],
-	                    formatter: function (y) { return y + '%'; }
-	                });
-	                setTimeout(() => { chart6.select(1); }, 50);
-	                
-	                
-	                const chartContainer7 = document.getElementById("morris-bar-chartC7");    	    	
-	                chartContainer7.innerHTML = '';
-	                chartContainer7.style.height = "180px";
-	                chartContainer7.style.width  = "180px";
-	                
-	                const chart7 = Morris.Donut({
-	                    element: 'morris-bar-chartC7',
-	                    data: [{
-	                        label: "\xa0 \xa0 총검사료(원내) \xa0 \xa0",
-	                        value: pro_04_t,
-	                    }, {
-	                        label: "\xa0 \xa0 총검사료(위탁) \xa0 \xa0",
-	                        value: pro_03_t
-	                    }],
-	                    resize: true,
-	                    colors: ['#BFB500', '#808080'], 
-	                	formatter: function (y) { return y + '%'; }
-	                });
-	                
-	                
-	                const chartContainer8 = document.getElementById("morris-bar-chartC8");    	    	
-	                chartContainer8.innerHTML = '';
-	                chartContainer8.style.height = "180px";
-	                chartContainer8.style.width  = "180px";
-	                
-	                const chart8 = Morris.Donut({
-	                    element: 'morris-bar-chartC8',
-	                    data: [{
-	                        label: "\xa0 \xa0 총검사료(정액) \xa0 \xa0",
-	                        value: pro_05_t,
-	                    }, {
-	                        label: "\xa0 \xa0 총검사료(행위) \xa0 \xa0",
-	                        value: pro_06_t
-	                    }], 
-	                    resize: true,
-	                    colors: ['#C785C8', '#ED7D31'],
-	                    formatter: function (y) { return y + '%'; }
-	                });
-
-
-
 		 	    } else if (jobFlag === "12") { 
 		 	    	const chartContainer = document.getElementById("morris-bar-chartD1");    	    	
 	                chartContainer.innerHTML = '';
@@ -2633,121 +2525,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 	                    colors: ['#C785C8', '#ED7D31'],
 	                    formatter: function (y) { return y + '%'; }
 	                });
-///////////         타병원약제
-                  
-		 	    	const chartContainer5 = document.getElementById("morris-bar-chartD5");    	    	
-	                chartContainer5.innerHTML = '';
-	                chartContainer5.style.height = "200px";
-	                chartContainer5.style.width  = "250px";
 	                
-	                let totamt_t = replaceMulti(response.resultData[1,0].ta_e_ym,",");
-	                let phar03_t = replaceMulti(response.resultData[2,1].ta_e_ym,",");
-	                let phar04_t = replaceMulti(response.resultData[3,2].ta_e_ym,",");
-	                let onlyNo_t = replaceMulti(response.resultData[4,3].ta_e_ym,",");
-	                let totpha_t = onlyNo_t.match(/(\d[\d,]*)\s*$/)[1].replace(/,/g,'');
-	                let drgamt_t = replaceMulti(response.resultData[5,4].ta_e_ym,",");
-	                let hwiamt_t = replaceMulti(response.resultData[6,5].ta_e_ym,",");
-	                
-	                let pro_01_t = 0;
-	                let pro_02_t = 0;
-	                let pro_03_t = 0;
-	                let pro_04_t = 0;
-	                let pro_05_t = 0;
-	                let pro_06_t = 0;
-	                
-	                if (totamt_t > 0) {
-	                	pro_01_t = Math.round((totpha_t / totamt_t) * 100);
-	                	pro_02_t = 100 - pro_01_t;
-	                } 
-	                if (phar03_t + phar04_t > 0 ) {
-	                	pro_03_t = Math.round((phar03_t / totpha_t) * 100);
-	                	pro_04_t = 100 - pro_03_t;
-	                }
-	                if (drgamt_t + hwiamt_t > 0) {
-	                	pro_05_t = Math.round((drgamt_t / totpha_t) * 100);
-	                	pro_06_t = 100 - pro_05_t;	
-	                }
-	                
-	                const chart5 = Morris.Bar({
-		    	        element: 'morris-bar-chartD5',
-		    	        data: [
-		    	            { y: '타병원 총진료비 대비 약제비 (백만원)', 
-		    	              a: Math.round(totamt_t/1000000), 
-		    	              b: Math.round(totpha_t/1000000), 
-		    	              c: Math.round(drgamt_t/1000000), 
-		    	              d: Math.round(hwiamt_t/1000000) }
-		    	        ],
-		    	        xkey: 'y',
-		    		    ykeys: ['a', 'b', 'c', 'd'],
-		    		    labels: ['총진료비','총약제비', '정액금액','행위금액' ],
-		    		    barColors: ['#0B8ECA','#00B050', '#C785C8', '#ED7D31'],
-		    		    hideHover: 'auto',
-		    		    gridLineColor: '#eef0f2',
-		    		    resize: true,
-		    		    gridTextSize: 12, // 축 폰트 크기 조절
-		    		    labelsColor: '#000', // 레이블 색상 설정
-		    		    barSizeRatio: 1, // 막대 크기 조정
-		    		    barGap: 5 // 막대 간격 조정
-		    	    });
-	                
-	                const chartContainer6 = document.getElementById("morris-bar-chartD6");    	    	
-	                chartContainer6.innerHTML = '';
-	                chartContainer6.style.height = "180px";
-	                chartContainer6.style.width  = "180px";
-	                
-	                const chart6 = Morris.Donut({
-	                    element: 'morris-bar-chartD6',
-	                    data: [{
-	                        label: "\xa0 \xa0 총진료비 \xa0 \xa0",
-	                        value: pro_02_t,
-	                    }, {
-	                        label: "\xa0 \xa0 총약제비 \xa0 \xa0",
-	                        value: pro_01_t
-	                    }],
-	                    resize: true,
-	                    colors: ['#0B8ECA','#00B050'],
-	                    formatter: function (y) { return y + '%'; }
-	                });
-	                setTimeout(() => { chart6.select(1); }, 50);
-	                
-	                const chartContainer7 = document.getElementById("morris-bar-chartD7");    	    	
-	                chartContainer7.innerHTML = '';
-	                chartContainer7.style.height = "180px";
-	                chartContainer7.style.width  = "180px";
-	                
-	                const chart7 = Morris.Donut({
-	                    element: 'morris-bar-chartD7',
-	                    data: [{
-	                        label: "\xa0 \xa0 총약제비(경구) \xa0 \xa0",
-	                        value: pro_03_t,
-	                    }, {
-	                        label: "\xa0 \xa0 총약제비(주사) \xa0 \xa0",
-	                        value: pro_04_t
-	                    }],
-	                    resize: true,
-	                    colors: ['#BFB500', '#808080'], 
-	                	formatter: function (y) { return y + '%'; }
-	                });
-	                
-	                const chartContainer8 = document.getElementById("morris-bar-chartD8");    	    	
-	                chartContainer8.innerHTML = '';
-	                chartContainer8.style.height = "180px";
-	                chartContainer8.style.width  = "180px";
-	                
-	                const chart8 = Morris.Donut({
-	                    element: 'morris-bar-chartD8',
-	                    data: [{
-	                        label: "\xa0 \xa0 총약제비(정액) \xa0 \xa0",
-	                        value: pro_05_t,
-	                    }, {
-	                        label: "\xa0 \xa0 총약제비(행위) \xa0 \xa0",
-	                        value: pro_06_t
-	                    }], 
-	                    resize: true,
-	                    colors: ['#C785C8', '#ED7D31'],
-	                    formatter: function (y) { return y + '%'; }
-	                });
-//////////////////////////////////////////////////////////////
 		 	    } else if (jobFlag === "13") { 
 		 	    	jobCode = '1'; 
 		 	    	total_Report_DataList();
@@ -4284,8 +4062,116 @@ $(document).ready(function() {
 	
 
 });
-	
-</script> 
+
+</script>
+
+<!-- ============================================================== -->
+<!-- 타병원 비교 검색 스크립트 -->
+<!-- ============================================================== -->
+<script type="text/javascript">
+
+// 비교병원 요양기호로 병원명 조회
+function fn_SearchCmpHosp() {
+    var cmpHospCd = $("#cmpHospCd").val().trim();
+    if (cmpHospCd.length !== 8) {
+        alert("요양기호 8자리를 입력해주세요.");
+        return;
+    }
+    $.ajax({
+        url: "/main/selectHospInfo.do",
+        type: "POST",
+        data: { hosp_cd: cmpHospCd },
+        success: function(response) {
+            if (response && response.hospNm) {
+                $("#cmpHospNm").val(response.hospNm);
+            } else {
+                $("#cmpHospNm").val("");
+                alert("해당 요양기호의 병원을 찾을 수 없습니다.");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("병원 조회 오류:", error);
+            alert("병원 조회 중 오류가 발생했습니다.");
+        }
+    });
+}
+
+// 병원검색 팝업 (상단 병원검색과 동일한 openCommonSearch 활용)
+$(document).ready(function() {
+    $("#cmpHospSearch").on("click", function() {
+        openCommonSearch("hospital", function(data) {
+            if (data && data.hospCd) {
+                $("#cmpHospCd").val(data.hospCd);
+                $("#cmpHospNm").val(data.hospNm);
+            } else {
+                alert("선택한 병원의 정보가 올바르지 않습니다.");
+            }
+        });
+    });
+});
+
+// 비교병원 조회 실행
+function fn_CmpHospApply(makeFg) {
+    var cmpHospCd = $("#cmpHospCd").val().trim();
+    var cmpHospNm = $("#cmpHospNm").val().trim();
+
+    if (!cmpHospCd || cmpHospCd.length !== 8) {
+        alert("비교할 병원의 요양기호 8자리를 입력해주세요.");
+        $("#cmpHospCd").focus();
+        return;
+    }
+    if (!cmpHospNm) {
+        alert("병원명이 확인되지 않았습니다. 요양기호를 다시 확인해주세요.");
+        return;
+    }
+
+    let selected_Year = document.getElementById("year_Select").value;
+    let selectedMonth = document.getElementById("monthSelect").value;
+    let jobyymm = selected_Year + selectedMonth;
+
+    // 비교병원 정보 표시
+    $("#cmpHospInfo").text(cmpHospCd + " / " + cmpHospNm);
+    $("#cmpResultC").show();
+
+    // 비교병원 데이터 조회 AJAX
+    $.ajax({
+        url: "/main/selectTotalReport.do",
+        type: "POST",
+        data: {
+            hosp_cd: cmpHospCd,
+            fr_yymm: jobyymm,
+            midyymm: jobyymm,
+            endyymm: jobyymm,
+            make_fg: makeFg
+        },
+        success: function(response) {
+            if (response.error_code != "0") {
+                alert("비교병원 데이터 조회에 실패했습니다.");
+                return;
+            }
+            // TODO: grid-containerCmp11에 비교 결과 그리드 렌더링
+            // 기존 setMakeGrid 로직 참고하여 비교 테이블 구성
+            console.log("비교병원 데이터:", response);
+            alert("비교병원 [" + cmpHospNm + "] 데이터 조회 완료");
+        },
+        error: function(xhr, status, error) {
+            console.error("비교병원 조회 오류:", error);
+            alert("비교병원 데이터 조회 중 오류가 발생했습니다.");
+        }
+    });
+}
+
+// 초기화
+function fn_CmpHospClear() {
+    $("#cmpHospCd").val("");
+    $("#cmpHospNm").val("");
+    $("#cmpHospInfo").text("");
+    $("#cmpResultC").hide();
+    $("#grid-containerCmp11").empty();
+}
+
+</script>
+
 
 
        
