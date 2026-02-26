@@ -624,7 +624,8 @@
 								        </div>
 								   </div>     
 								</div>   
-							    <br>							    
+							    <br>	
+							    						    
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
 							    <div class="card-header11">

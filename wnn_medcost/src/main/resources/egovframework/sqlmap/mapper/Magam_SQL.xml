@@ -735,8 +735,7 @@
 		  AND M.JOBCODE IN ('A', 'B', 'C', 'D')
 		ORDER BY jobcode;
 	    
-
-	    
+   
     ]]> 		 
     
     </select>
