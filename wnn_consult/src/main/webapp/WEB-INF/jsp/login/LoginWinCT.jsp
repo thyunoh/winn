@@ -638,8 +638,8 @@
 								</div>
 							</div>
 
-						</div>
-					  </div>
+				 	 </div>
+				 </div>
 
 				<!-- 자주찾는 서비스 영역 -->
 				<div class="row justify-content-center mt-2" style="flex-wrap: nowrap;">
