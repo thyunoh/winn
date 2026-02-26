@@ -392,18 +392,19 @@
 				<div>
 					<!-- 로그인 영역 -->
 
-					<div class="container-fluid mb-2 px-3" 	id = "login_line"  style="margin-left: -30px;">
-						<div class="row justify-content-center" 
+					<div class="container-fluid_login mb-2 px-3" 	id = "login_line"  style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
+						<div class="row justify-content-center"
 							style="flex-wrap: nowrap;">
-							<div style="margin-left: 250px; display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 20px;">
-							<div style="width: 600px; flex-shrink: 0; min-width: 600px;">
+							<div style="width: 1350px; flex-shrink: 0; margin-left: 520px; display: flex; gap: 10px; align-items: flex-start;">
+							<!--  로그인박스 영역 flex: 1.4 이부분을 수정하면 됨  -->
+							<div style="flex: 1.4; min-width: 0;">
 								<div class="contact-form box-p-10 mb-3"
-									style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
+									style="min-height: 220px; background-color: #003366; margin-left: 25px; border-radius: 10px;">
 									<form name="loginForm" id="loginForm">
 										<div
 											style="display: flex; align-items: flex-start; justify-content: center;">
 											<!-- 입력 필드 영역 -->
-											<div style="flex-grow: 0; width: 280px; margin-left: 10px;">
+											<div style="flex-grow: 0; width: 280px; margin-left: 8px;">
 												<hr
 													style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
 												<h6 class="section-title position-relative mb-2">
@@ -507,9 +508,9 @@
 													</div>
 
 													<!-- 우측 로그아웃 버튼 -->
-													<div style="margin-left: 18px; flex-shrink: 0;">
+													<div style="margin-left: 10px; flex-shrink: 0;">
 														<button class="btn btn-warning" onclick="logout()"
-															style="min-width: 120px; height: 60px; font-size: 16px;">
+															style="min-width: 100px; height: 60px; font-size: 16px;">
 															로그아웃</button>
 													</div>
 												</div>
@@ -521,29 +522,21 @@
 								<!-- 로그인 성공 시 사용자 카드 -->
 								</div>
 							</div>
-
+                           <!--  로그인박스 영역  -->
+                           
 							<!-- 이미지 배너 영역  #ccc -->
-							<div class="image-layout"
-							     style="display: flex; 
-							            justify-content: flex-start; 
-							            align-items: center; 
-							            gap: 20px; 
-							            padding: 10px; 
-							            width: 100%; 
-							            max-width: 1200px;
-							            margin-top:-15px;">
-							
-							    <div style="position: relative;">
+							<div style="flex: 1; min-width: 0; position: relative;">
 							        <img src="/wnn_consult/images/winct/wcheck_main.jpg"
-							             style="width: 340px; height: 230px; display: block;">
+							             style="width: 95%; height: 230px; display: block; object-fit: cover; border-radius: 8px; margin-left: 7px;">
 										<a href="javascript:void(0)"
 										   onclick="winCheckOpen(); return false;"
 										   style="position:absolute; top:0; left:0; width:100%; height:100%; display:block;">
 										</a>
-							    </div>
-							
+							</div>
+
+							<div style="flex: 1; min-width: 0;">
 							    <img src="/wnn_consult/images/winct/time_main.jpg"
-							         style="width: 340px; height: 230px; display: block;">
+							         style="width: 95%; height: 230px; display: block; object-fit: cover; border-radius: 8px; margin-left: -5px;">
 							</div>
 						 </div>
 							
@@ -3258,26 +3251,30 @@
 	           }
 
 	     }
-	    //해상도에따른 위치 조절 기능 (공지사항/고객샌터 )
+	    //해상도에따른 위치 조절 기능 (공지사항/고객샌터/로그인영역 )
         function adjustMargin() {
             const container  = document.querySelector('.container-fluid_noti');
+            const loginLine  = document.querySelector('.container-fluid_login');
             const screenWidth = window.innerWidth;
 
+            var marginVal;
             if (screenWidth > 1920) {
-                container.style.marginLeft = '-270px';
+                marginVal = '-270px';
             } else if (screenWidth <= 960) {
-                container.style.marginLeft = '-265px';   
+                marginVal = '-265px';
             } else if (screenWidth <= 1097) {
-                container.style.marginLeft = '-485px';
+                marginVal = '-485px';
             } else if (screenWidth <= 1280) {
-                container.style.marginLeft = '-450px';
+                marginVal = '-450px';
             } else if (screenWidth <= 1536) {
-                container.style.marginLeft = '-395px';
+                marginVal = '-395px';
             } else if (screenWidth <= 1745) {
-                container.style.marginLeft = '-350px';
+                marginVal = '-350px';
             } else {
-                container.style.marginLeft = '-315px'; // 1920 표준위치 1 
+                marginVal = '-315px'; // 1920 표준위치 1
             }
+            if (container) container.style.marginLeft = marginVal;
+            if (loginLine) loginLine.style.marginLeft = marginVal;
         }
         // 화면 크기 변경 시마다 margin 값을 조정
         window.addEventListener('resize', adjustMargin);
