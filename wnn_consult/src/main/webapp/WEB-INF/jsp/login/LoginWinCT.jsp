@@ -545,7 +545,7 @@
 							    <img src="/wnn_consult/images/winct/time_main.jpg"
 							         style="width: 340px; height: 230px; display: block;">
 							</div>
-							</div>
+						 </div>
 							
 						</div>
 					</div>
@@ -560,27 +560,48 @@
 
 							<!-- 공지사항 패널 -->
 							<div style="flex: 1; min-width: 0;">
-								<div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
-									<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-										<h6 class="fw-bold mb-0" style="font-size: 14px;"><i class="bi bi-check-circle me-1"></i>공지사항</h6>
-										<a href="javascript:void(0);" style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">더보기</a>
-									</div>
-									<hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
-									<div class="scroll-table-container" style="max-height: 155px; overflow-y: auto;">
-										<table class="notice-table" id="noticeTable1" style="font-size: 13px; width: 100%; border-collapse: collapse;">
-										<tbody id="noticeArea1">
-										<tr><td colspan="4" style="font-weight: bold;">&nbsp;</td></tr>
-										</tbody>
-										</table>
-									</div>
-								</div>
+							    <div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
+							        
+							        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+							            
+							            <h6 class="fw-bold mb-0 d-flex align-items-center" style="font-size: 15px; width:100px;">
+							                <img src="/wnn_consult/images/winct/noti1_rep.svg"
+							                     class="notice-icon me-1"
+							                     alt="공지사항 아이콘"  style="margin-right: 8px;">
+							                공지사항
+							            </h6>
+							
+							            <a href="javascript:void(0);" 
+							               style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">
+							               더보기
+							            </a>
+							        </div>
+							
+							        <hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
+							
+							        <div class="scroll-table-container" style="max-height: 155px; overflow-y: auto;">
+							            <table class="notice-table" id="noticeTable1" style="font-size: 13px; width: 100%; border-collapse: collapse;">
+							                <tbody id="noticeArea1">
+							                    <tr>
+							                        <td colspan="4" style="font-weight: bold;">&nbsp;</td>
+							                    </tr>
+							                </tbody>
+							            </table>
+							        </div>
+							
+							    </div>
 							</div>
 
 							<!-- 소식지 패널 -->
 							<div style="flex: 1; min-width: 0;">
 								<div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
 									<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-										<h6 class="fw-bold mb-0" style="font-size: 14px;"><i class="bi bi-journal-bookmark me-1"></i>소식지</h6>
+										<h6 class="fw-bold mb-0 d-flex align-items-center" style="font-size: 15px; width:100px;">
+							                <img src="/wnn_consult/images/winct/noti2_rep.svg"
+							                     class="notice-icon me-1"
+							                     alt="소식지 아이콘"  style="margin-right: 8px;">
+							                소식지
+							            </h6>
 										<a href="javascript:void(0);" style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">더보기</a>
 									</div>
 									<hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
@@ -598,7 +619,12 @@
 							<div style="flex: 1; min-width: 0;">
 								<div style="height: 220px; border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px 14px; box-sizing: border-box; overflow: hidden;">
 									<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-										<h6 class="fw-bold mb-0" style="font-size: 14px;"><i class="bi bi-file-earmark-search me-1"></i>심사방</h6>
+										<h6 class="fw-bold mb-0 d-flex align-items-center" style="font-size: 15px; width:100px;">
+							                <img src="/wnn_consult/images/winct/noti3_rep.svg"
+							                     class="notice-icon me-1"
+							                     alt="심사방 아이콘"  style="margin-right: 8px;">
+							                심사방
+							            </h6>
 										<a href="javascript:void(0);" style="font-size: 12px; color: #888; text-decoration: none; border: 1px solid #ccc; padding: 1px 7px; border-radius: 3px;">더보기</a>
 									</div>
 									<hr style="margin: 4px 0 8px 0; border-top: 1px solid #444; border-bottom: none;">
@@ -627,26 +653,32 @@
 									<div class="row g-2">
 										<div class="col-6 col-md-3">
 											<a href="#" onclick="fnasq_main(); return false;" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-headset service-icon"></i>
+												<div class="d-flex align-items-center">
+										            <img src="/wnn_consult/images/winct/1_1quest_rep.svg"
+										                 class="service-icon"
+										                 style="width:24px; margin-right:12px;">
 													<span class="service-label">1:1 문의하기</span>
 												</div>
 												<i class="bi bi-chevron-right service-arrow"></i>
 											</a>
 										</div>
 										<div class="col-6 col-md-3">
-											<a href="#" onclick="loadFaqData(); return false;" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-patch-question service-icon"></i>
-													<span class="service-label">자주하는 질문</span>
-												</div>
-												<i class="bi bi-chevron-right service-arrow"></i>
-											</a>
+										    <a href="#" onclick="loadFaqData(); return false;" class="service-card">
+										        <div class="d-flex align-items-center">
+										            <img src="/wnn_consult/images/winct/quest_rep.svg"
+										                 class="service-icon"
+										                 style="width:24px; margin-right:12px;">
+										            <span class="service-label">자주하는 질문</span>
+										        </div>
+										        <i class="bi bi-chevron-right service-arrow"></i>
+										    </a>
 										</div>
 										<div class="col-6 col-md-3">
 											<a href="#" onclick="downloadFile(); return false;" class="service-card">
-												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-file-earmark-person service-icon"></i>
+												<div class="d-flex align-items-center">
+													<img src="/wnn_consult/images/winct/consult_rep.svg"
+										                 class="service-icon"
+										                 style="width:24px; margin-right:12px;">
 													<span class="service-label">컨설팅 소개</span>
 												</div>
 												<i class="bi bi-chevron-right service-arrow"></i>
@@ -655,7 +687,9 @@
 										<div class="col-6 col-md-3">
 											<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="service-card">
 												<div class="d-flex align-items-center gap-5">
-													<i class="bi bi-mortarboard service-icon"></i>
+													<img src="/wnn_consult/images/winct/online_rep.svg"
+										                 class="service-icon"
+										                 style="width:24px; margin-right:12px;">
 													<span class="service-label">온라인교육센터</span>
 												</div>
 												<i class="bi bi-chevron-right service-arrow"></i>
