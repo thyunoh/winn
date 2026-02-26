@@ -760,7 +760,19 @@
 		      AND MAKE_FG = #{make_fg}
 		      AND JOBCODE IN ('A','D')
 		    GROUP BY JOBYYMM
-		)
+		),
+		TaHospSummary AS (
+		    SELECT 
+		        JOBYYMM,
+		        SUM(CASE WHEN JOBCODE = 'A' THEN FN_TA_HOSP(#{hosp_cd}, JOBYYMM, #{make_fg}, JOBCODE) ELSE 0 END) AS ta_jinryo,
+		        SUM(CASE WHEN JOBCODE = 'D' THEN FN_TA_HOSP(#{hosp_cd}, JOBYYMM, #{make_fg}, JOBCODE) ELSE 0 END) AS ta_gumsa
+		    FROM TBL_REPORT_MST
+		    WHERE HOSP_CD <> #{hosp_cd}
+		      AND JOBYYMM BETWEEN #{fr_yymm} AND #{endyymm}
+		      AND MAKE_FG = #{make_fg}
+		      AND JOBCODE IN ('A','D')
+		    GROUP BY JOBYYMM
+		)		
 		SELECT 
 		    M.JOBCODE AS jobcode,
 		
@@ -815,11 +827,57 @@
 		                   FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count, 2), 0), 
 		                   0)
 		            )
-		    END AS avg_val
+		    END AS avg_val ,
+		    -- ta_f_ym 
+		    CASE 
+		        WHEN M.JOBCODE = 'D' AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm}
+		                THEN FN_TA_HOSP(#{hosp_cd}, #{fr_yymm}, #{make_fg}, M.JOBCODE) END), 0) > 0 THEN
+		            CONCAT('[ ',
+		                   ROUND((MAX(CASE WHEN THS.JOBYYMM = #{fr_yymm} THEN THS.ta_gumsa END)
+		                       / COALESCE(MAX(CASE WHEN THS.JOBYYMM = #{fr_yymm} THEN THS.ta_jinryo END), 0)) * 100),
+		                   '% ] ',
+		                   FORMAT(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm}
+		                       THEN FN_TA_HOSP(#{hosp_cd}, #{fr_yymm}, #{make_fg}, M.JOBCODE) END), 0), 0))
+		        ELSE
+		            FORMAT(ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} 
+		                       THEN FN_TA_HOSP(#{hosp_cd}, #{fr_yymm} , #{make_fg}, M.JOBCODE) END), 0), 0), 0)
+		    END AS ta_f_ym,
+		
+		    -- ta_m_ym 
+		    CASE 
+		        WHEN M.JOBCODE = 'D' AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm}
+		                THEN FN_TA_HOSP(#{hosp_cd}, #{midyymm}, #{make_fg}, M.JOBCODE) END), 0) > 0 THEN
+		            CONCAT('[ ',
+		                   ROUND((MAX(CASE WHEN THS.JOBYYMM = #{midyymm} THEN THS.ta_gumsa END)
+		                       / COALESCE(MAX(CASE WHEN THS.JOBYYMM = #{midyymm} THEN THS.ta_jinryo END), 0)) * 100),
+		                   '% ] ',
+		                   FORMAT(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm}
+		                       THEN FN_TA_HOSP(#{hosp_cd}, #{midyymm}, #{make_fg}, M.JOBCODE) END), 0), 0))
+		        ELSE
+		            FORMAT(ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} 
+		                       THEN FN_TA_HOSP(#{hosp_cd}, #{midyymm} , #{make_fg}, M.JOBCODE) END), 0), 0), 0)
+		    END AS ta_m_ym,
+		
+		    -- ta_e_ym 
+		    CASE 
+		        WHEN M.JOBCODE = 'D' AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm}
+		                THEN FN_TA_HOSP(#{hosp_cd}, #{endyymm}, #{make_fg}, M.JOBCODE) END), 0) > 0 THEN
+		            CONCAT('[ ',
+		                   ROUND((MAX(CASE WHEN THS.JOBYYMM = #{endyymm} THEN THS.ta_gumsa END)
+		                       / COALESCE(MAX(CASE WHEN THS.JOBYYMM = #{endyymm} THEN THS.ta_jinryo END), 0)) * 100),
+		                   '% ] ',
+		                   FORMAT(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm}
+		                       THEN FN_TA_HOSP(#{hosp_cd}, #{endyymm}, #{make_fg}, M.JOBCODE) END), 0), 0))
+		        ELSE
+		            FORMAT(ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} 
+		                       THEN FN_TA_HOSP(#{hosp_cd}, #{endyymm} , #{make_fg}, M.JOBCODE) END), 0), 0), 0)
+		    END AS ta_e_ym		    
+		    
 		
 		FROM TBL_REPORT_MST M
 		LEFT JOIN ValidMonths VM ON M.JOBCODE = VM.JOBCODE
 		LEFT JOIN TotalSummaryMonthly TSM ON M.JOBYYMM = TSM.JOBYYMM
+		LEFT JOIN TaHospSummary THS ON M.JOBYYMM = THS.JOBYYMM
 		WHERE M.HOSP_CD = #{hosp_cd}  
 		  AND M.JOBYYMM BETWEEN #{fr_yymm} AND #{endyymm}
 		  AND M.MAKE_FG = #{make_fg}
