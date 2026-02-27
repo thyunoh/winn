@@ -202,6 +202,36 @@ public class MangrController {
 			return "";
 		}
     }	
+	@RequestMapping(value="/noticd2.do")
+    public String noticd2(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/mangr/noticd2";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }	
+	@RequestMapping(value="/noticd3.do")
+    public String noticd3(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);		
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/mangr/noticd3";				
+			} else {
+				return "";
+			}	
+		} catch(Exception ex) {
+			return "";
+		}
+    }		
 	@RequestMapping(value="/notiCdList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> notiCdList(@ModelAttribute("DTO") NotiDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

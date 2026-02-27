@@ -15,9 +15,9 @@
     border-radius: 4px !important;
     font-size: 14px;
     font-weight: 600;
-    border: 1.5px solid #d0d5dd !important;
+    border: 1.5px solid #42A5F5 !important;
     background-color: #ffffff;
-    color: #344054;
+    color: #2196F3;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -25,8 +25,8 @@
     margin-right: 4px;
 }
 .top-menu-btn:hover {
-    background-color: #f0f6ff;
-    border-color: #2196f3 !important;
+    background-color: #E3F2FD;
+    border-color: #1E88E5 !important;
     color: #1976d2;
     text-decoration: none;
 }
@@ -54,9 +54,9 @@
     border-radius: 4px !important;
     font-size: 14px;
     font-weight: 600;
-    border: 1.5px solid #d0d5dd !important;
+    border: 1.5px solid #42A5F5 !important;
     background-color: #ffffff;
-    color: #344054;
+    color: #2196F3;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -64,8 +64,8 @@
     margin-right: 4px;
 }
 .top-btn-sub:hover {
-    background-color: #f0f6ff;
-    border-color: #2196f3 !important;
+    background-color: #E3F2FD;
+    border-color: #1E88E5 !important;
     color: #1976d2;
     text-decoration: none;
 }
@@ -95,13 +95,13 @@
                         <div id="custom-search" class="top-search-bar">
 						<a href="/user/dashboard.do"
 						   id="top-menu_a"
-						   class="btn btn-light btn-sm top-menu-btn border border-dark">
+						   class="btn btn-light btn-sm top-menu-btn border">
 						   <i class="fas fa-bars"></i> 전체메뉴
 						</a>
 
 						<a href="/main/magamFileUpload.do"
 						   id="top-menu_b"
-						   class="btn btn-light btn-sm top-menu-btn border border-dark">
+						   class="btn btn-light btn-sm top-menu-btn border">
 						   <i class="fas fa-cloud-upload-alt"></i> 자료올리기
 						</a>
                          <div id="top-menu_c"> </div>
@@ -119,7 +119,7 @@
                <li class="nav-item">
                  <div id="custom-search" class="ms-2 top-search-bar">
                      <button id="hospserchtop"
-                       class="btn btn-light btn-sm top-btn-sub border border-dark"
+                       class="btn btn-light btn-sm top-btn-sub border"
                        style="display: none !important;"
                      >
                        <i class="fas fa-search"></i> <span>병원검색</span>
@@ -184,11 +184,13 @@
        //'진료비: '+ closeDt2 +'-'+ '적정성: ' + closeDt1 + '   ' + 
 
        if  (getCookie("s_winconect") != 'Y') {
-           document.getElementById('logininfo').innerHTML = hospnm + `  [ ` 
-                                                          + usernm + `님 ] 반갑습니다 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;
+           document.getElementById('logininfo').innerHTML = hospnm + `  [ `
+                                                          + usernm + `님 ] 반갑습니다 !! &nbsp;&nbsp;&nbsp;`
+                                                          + `<button type="button" class="btn btn-light btn-sm top-btn-sub border" onclick="closeTab()"><i class="fas fa-power-off mr-1"></i> 종료하기</button>`;
        }else{
-           document.getElementById('logininfo').innerHTML = '진료비: '+ closeDt2 +'-'+ '적정성: ' + closeDt1 + '   ' +  hospnm + `  [ ` 
-                                                          + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp <a href="#" onclick="closeTab()"><i class="fas fa-power-off mr-2"></i> ( 종료하기 ) </a>`;          
+           document.getElementById('logininfo').innerHTML = '진료비: '+ closeDt2 +'-'+ '적정성: ' + closeDt1 + '   ' +  hospnm + `  [ `
+                                                          + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp;`
+                                                          + `<button type="button" class="btn btn-light btn-sm top-btn-sub border" onclick="closeTab()"><i class="fas fa-power-off mr-1"></i> 종료하기</button>`;
        }
        
        
@@ -304,10 +306,11 @@
                   return;            // reload 이후의 코드는 실행 안 되게 return
               } 
               hospnm = getCookie("s_hospnm"); 
-              document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> `
-                  //  + '진료비: '+ closeDt2 +'~'+ '적정성: ' + closeDt1 + '   '  
-                    + hospnm + `  [ ` 
-                    + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
+              document.getElementById('logininfo').innerHTML =
+                    //  '진료비: '+ closeDt2 +'~'+ '적정성: ' + closeDt1 + '   '
+                      hospnm + `  [ `
+                    + usernm + `님 ] 위너넷접속 !! &nbsp;&nbsp;&nbsp;`
+                    + `<button type="button" class="btn btn-light btn-sm top-btn-sub border" onclick="closeTab()"><i class="fas fa-power-off mr-1"></i> 종료하기</button>`;
           });
       });
         function setCookie(name, value, expiredays) {
@@ -337,9 +340,9 @@
        menuArea.innerHTML = '';
    
        if (s_conact_gb === 'A' || s_conact_gb === '1') {
-          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_c_btn" data-type="analysis"><i class="fas fa-chart-bar"></i> 진료비분석</a>`;
+          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border" id="top-menu_c_btn" data-type="analysis"><i class="fas fa-chart-bar"></i> 진료비분석</a>`;
        } else if (s_conact_gb === '2') {
-          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation"><i class="fas fa-clipboard-check"></i> 적정성평가</a>`;
+          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border" id="top-menu_d_btn" data-type="evaluation"><i class="fas fa-clipboard-check"></i> 적정성평가</a>`;
        }
    
        menuArea.insertAdjacentHTML("beforeend", menuHTML);
@@ -350,7 +353,7 @@
        menuArea_d.innerHTML = '';
    
        if (s_conact_gb === 'A') {
-           menuHTML_d += `<a href="/user/dashboard.do" class="btn  btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation"><i class="fas fa-clipboard-check"></i> 적정성평가</a>`;
+           menuHTML_d += `<a href="/user/dashboard.do" class="btn  btn btn-light btn-sm top-menu-btn border" id="top-menu_d_btn" data-type="evaluation"><i class="fas fa-clipboard-check"></i> 적정성평가</a>`;
        }
    
        menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);
