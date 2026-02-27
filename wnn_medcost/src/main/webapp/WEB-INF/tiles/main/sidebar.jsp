@@ -305,30 +305,27 @@
             </div>            
         </nav>
         
-        <div class="fixed-sidebar-info-box">
-           <div class="col-xl-12" >
-                <div class="card border-3 border-top border-top-primary">
-                    <div class="card-body">
-                        <img class="img-fluid" src="/images/winct/c-tel-01.png" alt="고객센터">
-                        <div class="metric-value d-inline-block">
-                            <h3 class="mb-1">02-2653-7971</h3>
-                        </div>
-                        <nav aria-label="..."></nav>
-                        <ul class="pagination pagination-xl">
-                             <li class="page-item">
-                                <a href="#"><img class="img-fluid" src="/images/winct/KKO_10_1.png" alt="카카오상담"></a>
-                             </li>
-                            <li class="page-item">
-                               <a href="#" onclick="fnasq_main();"><img class="img-fluid" src="/images/winct/1-1_10_1.png" alt="1대1상담"></a>
-                            </li>
-                            <li class="page-item">
-                               <a href="#" onclick="loadFaqData();"> <img class="img-fluid" src="/images/winct/FAQ_10_1.png" alt="자주듣는질문"></a>
-                            </li>
-                          </ul>                        
-                    </div>
-                </div>
-            </div>
-       </div>
+		<div class="fixed-sidebar-info-box">
+		    <div class="col-xl-12">
+		        <div class="card border-3 border-top border-top-primary">
+		            <div class="card-body">
+		                <img class="img-fluid" src="/images/winct/time_main.svg" alt="고객센터" style="height: 140px; margin-top: -10px; width: 120%;">
+		                <div class="mt-3">
+		                    <a href="#" onclick="fnasq_main();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between mb-2" 
+		                        style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px;">
+		                        <span><i class="fas fa-headphones me-2" style="opacity: 0.6;"></i> <b>1:1 문의하기</b></span>
+		                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
+		                    </a>
+		                    <a href="#" onclick="loadFaqData();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between" 
+		                       style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px;">
+		                        <span><i class="fas fa-clipboard-list me-2" style="opacity: 0.6;"></i> <b>자주하는 질문</b></span>
+		                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
+		                    </a>
+		                </div>
+		            </div>
+		        </div>
+		    </div>
+		</div>
         
     </div>
 </div>

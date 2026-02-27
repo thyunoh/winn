@@ -237,28 +237,57 @@
     	  });
     	}
 
+  function getSelectedText(id) {
+    const el = document.getElementById(id);
+    return el ? el.options[el.selectedIndex].text : '';
+  }
+
   function downloadPDF() {
-    const pdfBtn  = document.getElementById('pdfBtn');
-    const serBtn  = document.getElementById('serBtn');
+    const pdfBtn = document.getElementById('pdfBtn');
+    if (pdfBtn.disabled) return;
+    pdfBtn.disabled = true;
+
+    const filterBox = document.querySelector(".filter-box");
+    const spinner = document.getElementById('loadingSpinner');
     const element = document.querySelector(".container_tong");
 
-    pdfBtn.style.display = 'none';
-    serBtn.style.display = 'none';
+    const condBar = document.createElement('div');
+    condBar.id = 'pdfCondBar';
+    condBar.style.cssText = 'background:#f0f4f8; border:1px solid #ccc; border-radius:6px; padding:7px 14px; margin-bottom:8px; font-size:12px; color:#333; display:flex; gap:16px; flex-wrap:wrap; align-items:center;';
+    const startVal = document.getElementById('startMonth').value || '';
+    const endVal = document.getElementById('endMonth').value || '';
+    condBar.innerHTML =
+      '<span style="font-weight:bold; color:#1a56db;">조회조건</span>' +
+      '<span>기간 : ' + startVal + ' ~ ' + endVal + '</span>' +
+      '<span>구분 : ' + getSelectedText('inoutType') + '</span>' +
+      '<span>진료 : ' + getSelectedText('medType') + '</span>' +
+      '<span>행위 : ' + getSelectedText('jrType') + '</span>' +
+      '<span>금액 : ' + getSelectedText('amtType') + '</span>';
+    filterBox.parentNode.insertBefore(condBar, filterBox.nextSibling);
+
+    filterBox.style.display = 'none';
+    spinner.style.display = 'none';
     element.style.transform = "scale(1.0)";
     element.style.transformOrigin = "top left";
 
     const opt = {
-    		  margin: [2, 10, 5, 10], // [상(top), 우(right), 하(bottom), 좌(left)]
-    		  filename: '전문의별 건당진료비.pdf',
-    		  image: { type: 'jpeg', quality: 1 },
-    		  html2canvas: { scale: 2, useCORS: true ,scrollY: 0},
-    		  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: [2, 10, 5, 10],
+      filename: '유형별 건당진료비.pdf',
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(element).save().then(() => {
+    }).catch(function(err) {
+      console.error("PDF 생성 오류:", err);
+      alert("PDF 생성에 실패했습니다.");
+    }).finally(function() {
       element.style.transform = "";
-      pdfBtn.style.display = 'inline-block';
-      serBtn.style.display = 'inline-block';
+      filterBox.style.display = '';
+      const bar = document.getElementById('pdfCondBar');
+      if (bar) bar.remove();
+      pdfBtn.disabled = false;
     });
   }
 </script>

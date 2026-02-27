@@ -28,8 +28,17 @@
                 <ul class="navbar-nav ml-left">
                <li class="nav-item">
                         <div id="custom-search" class="top-search-bar">
-                            <a href="/user/dashboard.do" id="top-menu_a" class="btn btn-rounded btn-light btn-sm top-menu-btn">전체메뉴</a>
-                            <a href="/main/magamFileUpload.do" id="top-menu_b" class="btn btn-rounded btn-light btn-sm top-menu-btn">자료올리기</a>
+						<a href="/user/dashboard.do"
+						   id="top-menu_a"
+						   class="btn btn-light btn-sm top-menu-btn border border-dark">
+						   전체메뉴
+						</a>
+						
+						<a href="/main/magamFileUpload.do"
+						   id="top-menu_b"
+						   class="btn btn-light btn-sm top-menu-btn border border-dark">
+						   자료올리기
+						</a>
                          <div id="top-menu_c"> </div>
                          <div id="top-menu_d"> </div>
                         </div>
@@ -273,9 +282,9 @@
        menuArea.innerHTML = '';
    
        if (s_conact_gb === 'A' || s_conact_gb === '1') {
-          menuHTML += `<a href="/user/dashboard.do" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
+          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
        } else if (s_conact_gb === '2') {
-          menuHTML += `<a href="/user/dashboard.do" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
        }
    
        menuArea.insertAdjacentHTML("beforeend", menuHTML);
@@ -286,7 +295,7 @@
        menuArea_d.innerHTML = '';
    
        if (s_conact_gb === 'A') {
-           menuHTML_d += `<a href="/user/dashboard.do" class="btn btn-rounded btn-light btn-sm top-menu-btn" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+           menuHTML_d += `<a href="/user/dashboard.do" class="btn  btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
        }
    
        menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);

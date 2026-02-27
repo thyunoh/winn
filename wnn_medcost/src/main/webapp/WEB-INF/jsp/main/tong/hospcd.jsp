@@ -543,34 +543,33 @@
 	data-keyboard="false">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 		role="dialog"
-		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
+		style="max-width: 750px; width: 90vw;">
 		<div class="modal-content"
-			style="height: 55%; display: flex; flex-direction: column;">
-			<div class="modal-header bg-light">
-				<h6 class="modal-title" id="hu_modalHead"></h6>
-				<div class="form-row">
-					<div class="col-sm-12 mb-2" style="text-align: right;">
-						<button id="hu_form_btn_ins" type="submit"
-							class="btn btn-outline-info btn-insert" onClick="hu_fn_Insert()">
-							입력. <i class="far fa-edit"></i>
-						</button>
-						<button id="hu_form_btn_udt" type="submit"
-							class="btn btn-outline-success btn-update" onClick="hu_fn_Update()">
-							수정. <i class="far fa-save"></i>
-						</button>
-						<button id="hu_form_btn_del" type="submit"
-							class="btn btn-outline-danger btn-delete" onClick="hu_fn_Delete()">
-							삭제. <i class="far fa-trash-alt"></i>
-						</button>
-						<button type="button" class="btn btn-outline-dark"
-							data-dismiss="modal" onClick="hu_modalClose()">
-							닫기 <i class="fas fa-times"></i>
-						</button>
-					</div>
+			style="display: flex; flex-direction: column; max-height: 80vh;">
+			<div class="modal-header bg-light py-2"
+				style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+				<h6 class="modal-title mb-0" id="hu_modalHead"></h6>
+				<div style="white-space: nowrap;">
+					<button id="hu_form_btn_ins" type="submit"
+						class="btn btn-outline-info btn-sm btn-insert" onClick="hu_fn_Insert()">
+						입력 <i class="far fa-edit"></i>
+					</button>
+					<button id="hu_form_btn_udt" type="submit"
+						class="btn btn-outline-success btn-sm btn-update" onClick="hu_fn_Update()">
+						수정 <i class="far fa-save"></i>
+					</button>
+					<button id="hu_form_btn_del" type="submit"
+						class="btn btn-outline-danger btn-sm btn-delete" onClick="hu_fn_Delete()">
+						삭제 <i class="far fa-trash-alt"></i>
+					</button>
+					<button type="button" class="btn btn-outline-dark btn-sm"
+						data-dismiss="modal" onClick="hu_modalClose()">
+						닫기 <i class="fas fa-times"></i>
+					</button>
 				</div>
 			</div>
 			<div class="modal-body"
-				style="text-align: left; flex: 1; overflow-y: auto;">
+				style="text-align: left; flex: 1; overflow-y: auto; padding: 15px 20px;">
 				<div id="hu_inputZone">
 					<input type="hidden" id="hospUuid_two" name="hospUuid_two" value="">
 					<input type="hidden" id="hospCd_two"   name="hospCd_two"   value="">
@@ -581,94 +580,95 @@
 					<input type="hidden" id="updIp_two"    name="updIp_two"    value="">
 					<input type="hidden" id="mainGuNm_two" name="mainGuNm_two" value="">
 					<input type="hidden" name="dupchk" id="dupchk" value="X" />
-					<div class="form-group row ">
-						<div class="input-group">
-							<label for="userId_two"
-								class="col-2 col-lg-2 col-form-label text-left">사용아이디</label>
-							<div class="col-4 col-lg-4">
+					<div class="form-group row mb-2">
+						<label for="userId_two"
+							class="col-2 col-form-label text-left">사용아이디</label>
+						<div class="col-4">
+							<div class="input-group">
 								<input id="userId_two" name="userId_two" type="text"
 									class="form-control text-left" placeholder="사용자아이디 입력하세요">
-							</div>
-							<button class="btn btn-outline-info" onclick="fnDupchk()">
-								<i class="fas fa-search">중복</i>
-							</button>
-							<label for="startDt_two"
-								class="col-2 col-lg-2 col-form-label text-left">시작일자</label>
-							<div class="col-2 col-lg-2">
-								<input id="startDt_two" name="startDt_two" type="text"
-									class="form-control date1-inputmask" required
-									placeholder="yyyy-mm-dd">
+								<div class="input-group-append">
+									<button class="btn btn-outline-info btn-sm" type="button" onclick="fnDupchk()">
+										<i class="fas fa-search"></i> 중복
+									</button>
+								</div>
 							</div>
 						</div>
+						<label for="startDt_two"
+							class="col-2 col-form-label text-left">시작일자</label>
+						<div class="col-4">
+							<input id="startDt_two" name="startDt_two" type="text"
+								class="form-control date1-inputmask" required
+								placeholder="yyyy-mm-dd">
+						</div>
 					</div>
-					<div class="form-group row ">
+					<div class="form-group row mb-2">
 						<label for="userNm_two"
-							class="col-2 col-lg-2 col-form-label text-left">사용자성명</label>
-						<div class="col-4 col-lg-4">
+							class="col-2 col-form-label text-left">사용자성명</label>
+						<div class="col-4">
 							<input id="userNm_two" name="userNm_two" type="text"
 								class="form-control text-left" placeholder="사용자명을 입력하세요">
 						</div>
 						<label for="mainGu_two"
-							class="col-2 col-lg-2 col-form-label text-left">사용자구분</label>
-						<div class="col-4 col-lg-4">
+							class="col-2 col-form-label text-left">사용자구분</label>
+						<div class="col-4">
 							<select id="mainGu_two" name="mainGu_two" class="custom-select"
 								oninput="findField(this)" style="height: 35px; font-size: 14px;">
 								<option selected value="">구분 1</option>
 							</select>
 						</div>
-
 					</div>
-					<div class="form-group row ">
+					<div class="form-group row mb-2">
 						<label for="userTel_two"
-							class="col-2 col-lg-2 col-form-label text-left">담당전화</label>
-						<div class="col-4 col-lg-4">
+							class="col-2 col-form-label text-left">담당전화</label>
+						<div class="col-4">
 							<input id="userTel_two" name="userTel_two" type="text"
 								class="form-control phone-inputmask"
-								placeholder="(010)-0000-0000" maxlength="">
+								placeholder="010-0000-0000" maxlength="">
 						</div>
 						<label for="email_two"
-							class="col-2 col-lg-2 col-form-label text-left">이메일주소</label>
-						<div class="col-4 col-lg-4">
+							class="col-2 col-form-label text-left">이메일주소</label>
+						<div class="col-4">
 							<input id="email_two" name="email_two" type="text"
 								class="form-control email-inputmask"
-								placeholder="메일주소 예) aaa@bbb.com" maxlength="">
+								placeholder="aaa@bbb.com" maxlength="">
 						</div>
 					</div>
-					<div class="form-group row ">
+					<div class="form-group row mb-2">
 						<label for="endDt_two"
-							class="col-2 col-lg-2 col-form-label text-left">종료일자</label>
-						<div class="col-2 col-lg-2">
+							class="col-2 col-form-label text-left">종료일자</label>
+						<div class="col-2">
 							<input id="endDt_two" name="endDt_two" type="text"
 								class="form-control date1-inputmask" required
 								placeholder="yyyy-mm-dd">
 						</div>
 						<label for="useYn_two"
-							class="col-2 col-lg-2 col-form-label text-left">사용구분</label>
-						<div class="col-2 col-lg-2">
+							class="col-2 col-form-label text-left">사용구분</label>
+						<div class="col-2">
 							<select id="useYn_two" name="useYn_two" class="custom-select">
 								<option value="Y">Y</option>
 								<option value="N" selected>N</option>
 							</select>
 						</div>
 						<label for="mbrJoin_two"
-							class="col-2 col-lg-2 col-form-label text-left">회원가입여부</label>
-						<div class="col-2 col-lg-2">
+							class="col-2 col-form-label text-left">회원가입</label>
+						<div class="col-2">
 							<select id="mbrJoin_two" name="mbrJoin_two" class="custom-select">
 								<option value="Y">Y</option>
 								<option value="N" selected>N</option>
 							</select>
 						</div>
 					</div>
-					<div class="form-group row ">
+					<div class="form-group row mb-2">
 						<label for="bfPassWd_two"
-							class="col-2 col-lg-2 col-form-label text-left">비밀번호</label>
-						<div class="col-4 col-lg-4">
+							class="col-2 col-form-label text-left">비밀번호</label>
+						<div class="col-4">
 							<input id="bfPassWd_two" name="bfPassWd_two" type="password"
 								class="form-control text-left" placeholder="">
 						</div>
 						<label for="afPassWd_two"
-							class="col-2 col-lg-2 col-form-label text-left">비밀번호확인</label>
-						<div class="col-4 col-lg-4">
+							class="col-2 col-form-label text-left">비밀번호확인</label>
+						<div class="col-4">
 							<input id="afPassWd_two" name="afPassWd_two" type="password"
 								class="form-control text-left" placeholder="">
 						</div>
