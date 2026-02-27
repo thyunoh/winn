@@ -30,7 +30,7 @@
 						<div class="form-row mb-2">
 							<div class="col-sm-1">
 								<select id="fileGb1" class="w-72 p-2 rounded-lg"
-									oninput="findField(this)">
+									oninput="findField(this)" style="pointer-events: none; background-color: #e9ecef; opacity: 0; transition: opacity 0.3s;">
 									<option selected value="1">구분 1</option>
 								</select>
 							</div>
@@ -140,7 +140,7 @@
 							type="hidden" id="regIp"     name="regIp"     value=""> <input
 							type="hidden" id="updIp"     name="updIp "    value=""><input
 							type="hidden" id="fileYn"    name="fileYn "   value="">
-					<div class="form-row">
+					<div class="form-group row">
 						<label for="fileGb"
 							class="col-2 col-lg-2 col-form-label text-left">공지구분</label>
 						<div class="col-2 col-lg-2">
@@ -149,6 +149,14 @@
 								<option value="" selected>구분1</option>
 							</select>
 						</div>
+						<label for="updateSw" 
+						    class="col-2 col-lg-2 col-form-label text-left">고정여부</label>
+						<div class="col-2 col-lg-2">
+							<select class="custom-select" name="updateSw" id="updateSw" value='Y'>
+								<option value="Y" selected>Y</option>
+								<option value="N">N</option>
+							</select>
+						</div> 						
 					</div>
 					<div class="form-row">
 						<label for="notiTitle"
@@ -190,7 +198,6 @@
 							</select>
 						</div>
 					</div>
-
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data" style="margin-top: -12px;">
 						<div class="container-md mt-1">
@@ -226,7 +233,7 @@
 					</p>
 					<div class="table-file-container" style="width: 100%;  margin-top: 30px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 14px;">
 					       </table>    
 					    </div>
 					</div>     
@@ -266,7 +273,7 @@
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData", val: "",  chk: true  });
+		findValues.push({ id: "findData", val: "1",  chk: true  });
 		//Form마다 조회 조건 변경 종료
 		
 		// 초기값 설정
@@ -321,7 +328,7 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['순서','공지구분','공지명칭','공지제목','공지내용','시작일','종료일','사용여부','등록일','첨부자료'];
+		var c_Head_Set = ['순서','공지구분','공지명칭','공지제목','공지내용','시작일','종료일','사용여부','등록일','첨부자료','고정여부'];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
@@ -371,7 +378,8 @@
 	        			        }
 	        			        return data; // 'display' 외 타입은 원본 데이터 반환
 	        			      }  
-	        				}
+	        				},
+	        				{ data: 'updateSw',      visible: true,  className: 'dt-body-center'  , width: '50px',  },
 	        			  ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -398,8 +406,8 @@
 		window.onload = function() { 
 			find_Check();
 		    comm_Check();
-		};
 
+		}; 
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
 		function triggerEnterKey() {
 		    let findDataInput = document.getElementById("findData");
@@ -490,11 +498,9 @@
 		        });		    	
 		        now_check() ;
 		    }
-	        if (flag !== 'I') {
-	            $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
-	        } else {
-	            $(fileGbInput).css("pointer-events", "").css("background-color", ""); // 활성화
-	        }	        
+	        // fileGb는 모든 모드에서 강제 '1' 고정, 선택 불가
+	        $(fileGbInput).val("1");
+	        $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef");	        
 		}
 		function now_check() {
 	        let today = new Date();
@@ -1439,6 +1445,14 @@
 				                select.append('<option value="">No options</option>');
 				            }
 				        }
+				        // 공통코드 로딩 완료 후 fileGb1 강제 고정
+				        var fileGb1 = document.getElementById("fileGb1");
+				        if (fileGb1) {
+				            fileGb1.value = "1";
+				            findField(fileGb1);
+				            fileGb1.style.opacity = "1";
+				        }
+				        fn_re_load();
 				    },
 				    error: function(jqXHR, textStatus, errorThrown) {
 				    	console.error("Status:   " + jqXHR.status);

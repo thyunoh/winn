@@ -30,8 +30,8 @@
 						<div class="form-row mb-2">
 							<div class="col-sm-1">
 								<select id="fileGb1" class="w-72 p-2 rounded-lg"
-									oninput="findField(this)">
-									<option selected value="2">구분 1</option>
+									oninput="findField(this)" style="pointer-events: none; background-color: #e9ecef; opacity: 0; transition: opacity 0.3s;">
+									<option selected value="3">구분 1</option>
 								</select>
 							</div>
 							<div class="col-sm-6">
@@ -226,7 +226,7 @@
 					</p>
 					<div class="table-file-container" style="width: 100%;  margin-top: 30px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 14px;">
 					       </table>    
 					    </div>
 					</div>     
@@ -490,11 +490,9 @@
 		        });		    	
 		        now_check() ;
 		    }
-	        if (flag !== 'I') {
-	            $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
-	        } else {
-	            $(fileGbInput).css("pointer-events", "").css("background-color", ""); // 활성화
-	        }	        
+	        // fileGb는 모든 모드에서 강제 '2' 고정, 선택 불가
+	        $(fileGbInput).val("2");
+	        $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef");	        
 		}
 		function now_check() {
 	        let today = new Date();
@@ -1439,6 +1437,14 @@
 				                select.append('<option value="">No options</option>');
 				            }
 				        }
+				        // 공통코드 로딩 완료 후 fileGb1 강제 고정
+				        var fileGb1 = document.getElementById("fileGb1");
+				        if (fileGb1) {
+				            fileGb1.value = "2";
+				            findField(fileGb1);
+				            fileGb1.style.opacity = "1";
+				        }
+				        fn_re_load();
 				    },
 				    error: function(jqXHR, textStatus, errorThrown) {
 				    	console.error("Status:   " + jqXHR.status);

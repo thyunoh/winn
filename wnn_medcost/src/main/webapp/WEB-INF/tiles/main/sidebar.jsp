@@ -220,7 +220,7 @@
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
                                 </li>
 								<li class="nav-item">
-								    <a class="nav-item nav-link"  href="https://377.co.kr">원격지원상담 </a>
+								    <a class="nav-item nav-link"  href="https://377.co.kr" target="_blank">원격지원상담 </a>
 								</li>
                             </ul>
                         </div>
@@ -318,13 +318,13 @@
 		                <img class="img-fluid" src="/images/winct/time_main.svg" alt="고객센터" style="height: 140px; margin-top: -10px; width: 120%;">
 		                <div class="mt-3">
 		                    <a href="#" onclick="fnasq_main();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between mb-2" 
-		                        style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px;">
-		                        <span><i class="fas fa-headphones me-2" style="opacity: 0.6;"></i> <b>1:1 문의하기</b></span>
+		                        style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
+		                        <span><i class="fas fa-headphones" style="opacity: 0.6; margin-right: 10px;"></i> <b>1:1 문의하기</b></span>
 		                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
 		                    </a>
 		                    <a href="#" onclick="loadFaqData();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between" 
-		                       style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px;">
-		                        <span><i class="fas fa-clipboard-list me-2" style="opacity: 0.6;"></i> <b>자주하는 질문</b></span>
+		                       style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
+		                        <span><i class="fas fa-clipboard-list" style="opacity: 0.6; margin-right: 10px;"></i> <b>자주하는 질문</b></span>
 		                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
 		                    </a>
 		                </div>
