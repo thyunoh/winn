@@ -5,6 +5,71 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <link href="/css/winmc/style_login.css?v=123" rel="stylesheet">
 
+<style>
+/* ===== 상단 메뉴 버튼 스타일 ===== */
+.top-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 4px !important;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1.5px solid #d0d5dd !important;
+    background-color: #ffffff;
+    color: #344054;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+.top-menu-btn:hover {
+    background-color: #f0f6ff;
+    border-color: #2196f3 !important;
+    color: #1976d2;
+    text-decoration: none;
+}
+.top-menu-btn.active,
+.top-menu-btn:active {
+    background-color: #2196f3 !important;
+    border-color: #2196f3 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(33,150,243,0.3);
+    text-decoration: none;
+}
+.top-menu-btn.active:hover {
+    background-color: #1976d2 !important;
+    border-color: #1976d2 !important;
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+/* 병원검색, 종료하기 등 메뉴 외 버튼 (동일 스타일, JS 연동 없음) */
+.top-btn-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 4px !important;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1.5px solid #d0d5dd !important;
+    background-color: #ffffff;
+    color: #344054;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+.top-btn-sub:hover {
+    background-color: #f0f6ff;
+    border-color: #2196f3 !important;
+    color: #1976d2;
+    text-decoration: none;
+}
+</style>
 
 <!-- ============================================================== -->
 <!-- main wrapper -->
@@ -31,13 +96,13 @@
 						<a href="/user/dashboard.do"
 						   id="top-menu_a"
 						   class="btn btn-light btn-sm top-menu-btn border border-dark">
-						   전체메뉴
+						   <i class="fas fa-bars"></i> 전체메뉴
 						</a>
-						
+
 						<a href="/main/magamFileUpload.do"
 						   id="top-menu_b"
 						   class="btn btn-light btn-sm top-menu-btn border border-dark">
-						   자료올리기
+						   <i class="fas fa-cloud-upload-alt"></i> 자료올리기
 						</a>
                          <div id="top-menu_c"> </div>
                          <div id="top-menu_d"> </div>
@@ -54,20 +119,10 @@
                <li class="nav-item">
                  <div id="custom-search" class="ms-2 top-search-bar">
                      <button id="hospserchtop"
-                       class="btn d-flex align-items-center gap-1 px-3 py-1 rounded-pill"
-                       style="
-                         display: none !important;
-                         background-color: #e3f2fd;
-                         border: 2px solid #2196f3;
-                         color: #1565c0;
-                         font-weight: 600;
-                         font-size: 14px;
-                         box-shadow: 0 0 6px rgba(33, 150, 243, 0.3);
-                         transition: all 0.2s ease-in-out;
-                       "
+                       class="btn btn-light btn-sm top-btn-sub border border-dark"
+                       style="display: none !important;"
                      >
-                       <i class="fas fa-hospital-symbol"></i>
-                       <span>병원검색</span>
+                       <i class="fas fa-search"></i> <span>병원검색</span>
                      </button>
                      <!--    
                      <button id="googlesheets" onclick="googleSheet()" class="btn btn-sm btn-primary" style="display: none;">🌐구글시트</button>
@@ -250,9 +305,9 @@
               } 
               hospnm = getCookie("s_hospnm"); 
               document.getElementById('logininfo').innerHTML = `<i class="fas fa-power-off mr-2"></i> `
-            	                                //  + '진료비: '+ closeDt2 +'~'+ '적정성: ' + closeDt1 + '   '  
-                                                  + hospnm + `  [ ` 
-                                                  + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
+                  //  + '진료비: '+ closeDt2 +'~'+ '적정성: ' + closeDt1 + '   '  
+                    + hospnm + `  [ ` 
+                    + usernm + `님 ] 위너넷접속 !! ( 종료하기 ) `;
           });
       });
         function setCookie(name, value, expiredays) {
@@ -282,9 +337,9 @@
        menuArea.innerHTML = '';
    
        if (s_conact_gb === 'A' || s_conact_gb === '1') {
-          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_c_btn" data-type="analysis">진료비분석</a>`;
+          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_c_btn" data-type="analysis"><i class="fas fa-chart-bar"></i> 진료비분석</a>`;
        } else if (s_conact_gb === '2') {
-          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+          menuHTML += `<a href="/user/dashboard.do" class="btn btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation"><i class="fas fa-clipboard-check"></i> 적정성평가</a>`;
        }
    
        menuArea.insertAdjacentHTML("beforeend", menuHTML);
@@ -295,7 +350,7 @@
        menuArea_d.innerHTML = '';
    
        if (s_conact_gb === 'A') {
-           menuHTML_d += `<a href="/user/dashboard.do" class="btn  btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation">적정성평가</a>`;
+           menuHTML_d += `<a href="/user/dashboard.do" class="btn  btn btn-light btn-sm top-menu-btn border border-dark" id="top-menu_d_btn" data-type="evaluation"><i class="fas fa-clipboard-check"></i> 적정성평가</a>`;
        }
    
        menuArea_d.insertAdjacentHTML("beforeend", menuHTML_d);
