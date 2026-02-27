@@ -27,15 +27,15 @@
 			<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
 				<div class="card">
 					<div class="card-body">
-						<div class="form-row mb-2">
-							<div class="col-sm-1">
-								<select id="fileGb1" class="w-72 p-2 rounded-lg"
-									oninput="findField(this)" style="pointer-events: none; background-color: #e9ecef; opacity: 0; transition: opacity 0.3s;">
-									<option selected value="1">구분 1</option>
+						<div style="display:flex; justify-content:space-between; align-items:center; width:100%;" class="mb-2">
+							<div style="flex-shrink:0;">
+								<select id="fileGb1" class="btn btn-outline-dark btn-sm" style="padding:6px 14px; font-size:14px; pointer-events:none; background-color:#e9ecef;"
+									oninput="findField(this)" disabled>
+									<option selected value="${noti_type}">구분</option>
 								</select>
 							</div>
-							<div class="col-sm-6">
-								<div class="btn-group ml-auto">
+							<div style="flex-shrink:0; margin-left:auto;">
+								<div class="btn-group">
 									<button class="btn btn-outline-dark" data-toggle="tooltip"
 										data-placement="top" title="" onClick="fn_re_load()">
 										재조회. <i class="fas fa-binoculars"></i>
@@ -140,7 +140,7 @@
 							type="hidden" id="regIp"     name="regIp"     value=""> <input
 							type="hidden" id="updIp"     name="updIp "    value=""><input
 							type="hidden" id="fileYn"    name="fileYn "   value="">
-					<div class="form-group row">
+					<div class="form-row">
 						<label for="fileGb"
 							class="col-2 col-lg-2 col-form-label text-left">공지구분</label>
 						<div class="col-2 col-lg-2">
@@ -149,14 +149,6 @@
 								<option value="" selected>구분1</option>
 							</select>
 						</div>
-						<label for="updateSw" 
-						    class="col-2 col-lg-2 col-form-label text-left">고정여부</label>
-						<div class="col-2 col-lg-2">
-							<select class="custom-select" name="updateSw" id="updateSw" value='Y'>
-								<option value="Y" selected>Y</option>
-								<option value="N">N</option>
-							</select>
-						</div> 						
 					</div>
 					<div class="form-row">
 						<label for="notiTitle"
@@ -198,6 +190,7 @@
 							</select>
 						</div>
 					</div>
+
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data" style="margin-top: -12px;">
 						<div class="container-md mt-1">
@@ -233,7 +226,7 @@
 					</p>
 					<div class="table-file-container" style="width: 100%;  margin-top: 30px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 14px;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
 					       </table>    
 					    </div>
 					</div>     
@@ -255,6 +248,9 @@
 <!-- 기본 초기화 Start -->
 <!-- ============================================================== -->
 <script type="text/javascript">
+		// noti_type 값 받기 (컨트롤러에서 전달)
+		var noti_type = '${noti_type}' || '1';
+
 		// 안해도 상관없음, 단 getElementById를 변경하면 꼭해야됨
 		// Form마다 수정해야 될 부분 시작
 		var tableName = document.getElementById('tableName');
@@ -273,7 +269,7 @@
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData", val: "1",  chk: true  });
+		findValues.push({ id: "findData", val: noti_type,  chk: true  });
 		//Form마다 조회 조건 변경 종료
 		
 		// 초기값 설정
@@ -328,7 +324,7 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['순서','공지구분','공지명칭','공지제목','공지내용','시작일','종료일','사용여부','등록일','첨부자료','고정여부'];
+		var c_Head_Set = ['순서','공지구분','공지명칭','공지제목','공지내용','시작일','종료일','사용여부','등록일','첨부자료'];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
@@ -378,8 +374,7 @@
 	        			        }
 	        			        return data; // 'display' 외 타입은 원본 데이터 반환
 	        			      }  
-	        				},
-	        				{ data: 'updateSw',      visible: true,  className: 'dt-body-center'  , width: '50px',  },
+	        				}
 	        			  ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -403,11 +398,17 @@
 	    
 		let dt_com = new DataTransfer();
 	    
-		window.onload = function() { 
+		window.onload = function() {
 			find_Check();
 		    comm_Check();
+		    // noti_type 값으로 fileGb1 강제 설정 (disabled이므로 val 직접 설정)
+		    var $fileGb1 = $('#fileGb1');
+		    $fileGb1.val(noti_type);
+		    $fileGb1.prop('disabled', true);  // 변경 불가
+		    // 조회 실행
+		    triggerEnterKey();
+		};
 
-		}; 
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
 		function triggerEnterKey() {
 		    let findDataInput = document.getElementById("findData");
@@ -498,9 +499,11 @@
 		        });		    	
 		        now_check() ;
 		    }
-	        // fileGb는 모든 모드에서 강제 '1' 고정, 선택 불가
-	        $(fileGbInput).val("1");
-	        $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef");	        
+	        if (flag !== 'I') {
+	            $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
+	        } else {
+	            $(fileGbInput).css("pointer-events", "").css("background-color", ""); // 활성화
+	        }	        
 		}
 		function now_check() {
 	        let today = new Date();
@@ -1445,14 +1448,6 @@
 				                select.append('<option value="">No options</option>');
 				            }
 				        }
-				        // 공통코드 로딩 완료 후 fileGb1 강제 고정
-				        var fileGb1 = document.getElementById("fileGb1");
-				        if (fileGb1) {
-				            fileGb1.value = "1";
-				            findField(fileGb1);
-				            fileGb1.style.opacity = "1";
-				        }
-				        fn_re_load();
 				    },
 				    error: function(jqXHR, textStatus, errorThrown) {
 				    	console.error("Status:   " + jqXHR.status);
