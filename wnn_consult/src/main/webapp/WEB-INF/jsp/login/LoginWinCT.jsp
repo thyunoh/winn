@@ -298,6 +298,7 @@
 							</a>
 						</div>
 					</div>
+					
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="d-flex align-items-center justify-content-center w-100 h-100">
 					<!-- 	<a href="https://winner797.net/detail.php?number=321" target="_blank">  -->
@@ -306,6 +307,7 @@
 							</a>
 						</div>
 					</div>
+					
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="slide-image-container d-flex align-items-center w-100 h-100">
 							<img src="/wnn_consult/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
@@ -316,6 +318,7 @@
 							<img src="/wnn_consult/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
+					
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="d-flex align-items-center justify-content-center w-100 h-100">
 						<!-- 	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank">  -->

@@ -34,6 +34,7 @@
 									<option selected value="${noticeType}">구분</option>
 								</select>
 							</div>
+							
 							<div class="col-sm-6">
 								<div class="btn-group ml-auto">
 									<button class="btn btn-outline-dark" data-toggle="tooltip"
