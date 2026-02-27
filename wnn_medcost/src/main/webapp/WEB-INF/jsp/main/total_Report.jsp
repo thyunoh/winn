@@ -24,7 +24,11 @@
 	                                <select id="year_Select" class="custom-select ml-left w-auto  ml-2 mr-4"></select>
 	                                <h3 class="card-header-title ml-2">월</h3>
 	                                <select id="monthSelect" class="custom-select ml-left w-auto  ml-2 mr-4"></select>
-	                                
+
+	                                <div class="ml-auto d-flex">
+	                                    <button id="btnPdfOne" class="btn btn-outline-primary btn-sm mr-1" style="display:none;" onclick="fn_PdfExportOne()"><i class="fas fa-file-pdf"></i> 개별출력</button>
+	                                    <button id="btnPdfAllPages" class="btn btn-primary btn-sm" style="display:none;" onclick="fn_PdfExportAllPages()"><i class="fas fa-file-pdf"></i> 전체출력</button>
+	                                </div>
 	                            </div>
 	                                       
 	                            <div class="card-body">
@@ -64,7 +68,7 @@
 								        	<button data-action="FindView" data-value="accordion_item_F" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('14')">특정 진료비</button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_E" class="btn btn-info            text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('13')">《 입원현황기준 누락 대상자 보기 》</button>
+								        	<button data-action="FindView" data-value="accordion_item_E" data-pdf-exclude="true" class="btn btn-info text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('13')">《 입원현황기준 누락 대상자 보기 》 <span class="badge badge-light text-muted ml-1" style="font-size:9px;">PDF제외</span></button>
 								        </div>
 								    </div>
 								    <br>
@@ -695,7 +699,10 @@
         	</div>
     	</div>
     </div>
-    
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script type="text/javascript">
 
 var openAccordionId = null;
@@ -832,6 +839,15 @@ document.addEventListener("DOMContentLoaded", function () {
             
         });
     });
+
+    // 페이지 로드 시 PDF 버튼 즉시 표시
+    var btnPdfOneInit = document.getElementById('btnPdfOne');
+    var btnPdfAllInit = document.getElementById('btnPdfAllPages');
+    if (btnPdfOneInit) btnPdfOneInit.style.display = 'inline-block';
+    // s_wnn_yn(위너넷사용자-로그인시설정) 또는 s_winconect(병원검색후설정)
+    if (btnPdfAllInit && (getCookie("s_wnn_yn") === 'Y' || getCookie("s_winconect") === 'Y')) {
+        btnPdfAllInit.style.display = 'inline-block';
+    }
 });
 
 function setMakeGrid() {
@@ -866,8 +882,8 @@ function setMakeGrid() {
 	cardE.style.display = 'none';	
 	cardF.style.display = 'none';	
 	
-	let lab_txt = document.getElementById('lab_text');	
-	
+	let lab_txt = document.getElementById('lab_text');
+
     if        (jobFlag === "01" ) {
     	card1.style.display = 'flex';
     	lab_txt.textContent = "등급·가산";
@@ -1097,6 +1113,485 @@ function setMakeGrid() {
     	
     }
 	
+}
+
+// ============================================================
+// PDF 공통 설정 - jobFlag별 매핑 테이블
+// ============================================================
+var PDF_MAP = {
+    "01": { cardId: "card_container1", title: "요양병원 입원료 차등제 / 식대가산 점검" },
+    "02": { cardId: "card_container2", title: "월별 정액수가 분포율【 환자평가표 】" },
+    "03": { cardId: "card_container3", title: "환자군별 상향 가능 대상자 명단" },
+    "04": { cardId: "card_container4", title: "월별 청구현황【 장기요양 + 특정기간 】" },
+    "05": { cardId: "card_container5", title: "특정기간【 폐렴,패혈증,격리실,중환자실 】" },
+    "06": { cardId: "card_container6", title: "특정기간 현황【 폐렴, 패혈증 】" },
+    "07": { cardId: "card_container7", title: "특정기간 현황【 격리실 】" },
+    "08": { cardId: "card_container8", title: "한방「입원」월별 청구현황" },
+    "09": { cardId: "card_containerA", title: "재활치료 청구현황" },
+    "10": { cardId: "card_containerB", title: "투석치료 청구현황" },
+    "11": { cardId: "card_containerC", title: "검사료 현황" },
+    "12": { cardId: "card_containerD", title: "약제료 현황" },
+    "13": { cardId: "card_containerE", title: "입원현황기준 누락 대상자 보기" },
+    "14": { cardId: "card_containerF", title: "특정 진료비" }
+};
+
+// ============================================================
+// 공통 함수 - 우측 카드에 차트(canvas/svg)가 있는지 확인
+// ============================================================
+function fn_HasChart(cardEl) {
+    if (!cardEl) return false;
+    var canvases = cardEl.querySelectorAll('canvas');
+    var svgs     = cardEl.querySelectorAll('svg');
+    return (canvases.length > 0 || svgs.length > 0);
+}
+
+// ============================================================
+// 공통 함수 - 한 페이지 분량 PDF용 div 생성
+// ============================================================
+function fn_BuildPdfPage(flag, yearVal, monthVal) {
+    const config = PDF_MAP[flag];
+    if (!config) return null;
+
+    // 도표(grid)에 데이터가 있는지 확인
+    const gridEl = document.getElementById('grid-container1');
+    if (!gridEl || gridEl.children.length === 0) return null;
+
+    const page = document.createElement('div');
+    page.style.padding = '15px 20px';
+    page.style.backgroundColor = '#fff';
+
+    // ── 제목 ──
+    const titleEl = document.createElement('h4');
+    titleEl.textContent = config.title;
+    titleEl.style.textAlign = 'center';
+    titleEl.style.marginBottom = '3px';
+    titleEl.style.fontWeight = 'bold';
+    titleEl.style.fontSize = '16px';
+    page.appendChild(titleEl);
+
+    // ── 년월 정보 ──
+    const subTitle = document.createElement('p');
+    subTitle.textContent = yearVal + '년 ' + monthVal + '월';
+    subTitle.style.textAlign = 'center';
+    subTitle.style.marginBottom = '12px';
+    subTitle.style.color = '#666';
+    subTitle.style.fontSize = '12px';
+    page.appendChild(subTitle);
+
+    // ── 도표 영역 ──
+    const gridClone = gridEl.cloneNode(true);
+    gridClone.style.width = '100%';
+    page.appendChild(gridClone);
+
+    // ── 메모(textarea) ──
+    const textareaEl = document.getElementById('textarea1');
+    if (textareaEl && textareaEl.value.trim() !== '') {
+        const memoDiv = document.createElement('div');
+        memoDiv.style.marginTop = '8px';
+        memoDiv.style.padding = '6px 8px';
+        memoDiv.style.border = '1px solid #ccc';
+        memoDiv.style.backgroundColor = '#f9f9f9';
+        memoDiv.style.whiteSpace = 'pre-wrap';
+        memoDiv.style.fontSize = '10px';
+        memoDiv.textContent = textareaEl.value;
+        page.appendChild(memoDiv);
+    }
+
+    // ── 우측 카드에 차트가 있는 경우에만 그래프 영역 추가 ──
+    // (그리드(DataTable)만 있는 카드는 도표만 출력)
+    const cardEl = document.getElementById(config.cardId);
+    if (cardEl && fn_HasChart(cardEl)) {
+
+        // 구분선
+        const hrEl = document.createElement('hr');
+        hrEl.style.margin = '10px 0';
+        hrEl.style.borderTop = '1px solid #ccc';
+        page.appendChild(hrEl);
+
+        const cardClone = cardEl.cloneNode(true);
+        cardClone.style.display = 'block';
+        cardClone.style.height = 'auto';
+        cardClone.style.width = '100%';
+        cardClone.style.boxShadow = 'none';
+
+        // 모든 Canvas(Chart.js)를 이미지로 변환
+        const originalCanvases = cardEl.querySelectorAll('canvas');
+        const clonedCanvases  = cardClone.querySelectorAll('canvas');
+        originalCanvases.forEach(function(origCvs, idx) {
+            if (clonedCanvases[idx]) {
+                try {
+                    const imgEl = document.createElement('img');
+                    imgEl.src = origCvs.toDataURL('image/png', 1.0);
+                    imgEl.style.width = origCvs.style.width || '100%';
+                    imgEl.style.height = origCvs.style.height || 'auto';
+                    imgEl.style.maxHeight = '250px';
+                    imgEl.style.objectFit = 'contain';
+                    clonedCanvases[idx].parentNode.replaceChild(imgEl, clonedCanvases[idx]);
+                } catch(e) { /* canvas 변환 실패 시 무시 */ }
+            }
+        });
+
+        // Morris 차트(SVG)는 cloneNode로 이미 복제됨
+
+        page.appendChild(cardClone);
+    }
+
+    return page;
+}
+
+// ============================================================
+// 개별 출력 - 현재 보고있는 항목만 PDF 출력
+// ============================================================
+function fn_PdfExportOne() {
+    if (!jobFlag) { alert('출력할 항목을 먼저 선택해 주세요.'); return; }
+
+    const yearVal  = document.getElementById("year_Select").value;
+    const monthVal = document.getElementById("monthSelect").value;
+    const config   = PDF_MAP[jobFlag];
+    if (!config) return;
+
+    const page = fn_BuildPdfPage(jobFlag, yearVal, monthVal);
+    if (!page) { alert('출력할 데이터가 없습니다.'); return; }
+
+    const printArea = document.createElement('div');
+    printArea.style.width = '190mm';
+    printArea.appendChild(page);
+    document.body.appendChild(printArea);
+
+    const fileName = config.title.replace(/[【】\s\/「」《》]/g, '_') + '_' + yearVal + monthVal + '.pdf';
+
+    const opt = {
+        margin:      [10, 10, 10, 10],
+        filename:    fileName,
+        image:       { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#fff' },
+        jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(printArea).save().then(function() {
+        document.body.removeChild(printArea);
+    });
+}
+
+// ============================================================
+// 전체 출력 - 직접 AJAX 호출 방식으로 순차 데이터 로드 후 PDF 생성
+// ============================================================
+function fn_PdfExportAllPages() {
+    var yearVal  = document.getElementById("year_Select").value;
+    var monthVal = document.getElementById("monthSelect").value;
+
+    // 병원명 (top.jsp 전역변수 hospnm 사용)
+    var hospName = (typeof hospnm !== 'undefined') ? hospnm : '';
+
+    // FindView 버튼 목록 수집 (data-pdf-exclude 속성이 있는 버튼은 제외)
+    var buttons = document.querySelectorAll("button[data-action='FindView']:not([data-pdf-exclude])");
+    var btnArray = Array.from(buttons);
+
+    if (btnArray.length === 0) {
+        alert('출력할 항목이 없습니다.');
+        return;
+    }
+
+    // 버튼에서 flag 값 추출 (onclick 속성에서 fn_CreateData('XX') 파싱)
+    var flagList = [];
+    btnArray.forEach(function(btn) {
+        var onclickStr = btn.getAttribute('onclick') || '';
+        var m = onclickStr.match(/fn_CreateData\s*\(\s*['"](\d+)['"]\s*\)/);
+        if (m) flagList.push(m[1]);
+    });
+
+    if (flagList.length === 0) {
+        alert('출력할 항목이 없습니다.');
+        return;
+    }
+
+    var pages = [];
+    var bIdx = 0;
+
+    // 스피너 CSS 삽입 (한 번만)
+    if (!document.getElementById('pdfSpinnerStyle')) {
+        var spinStyle = document.createElement('style');
+        spinStyle.id = 'pdfSpinnerStyle';
+        spinStyle.textContent = '@keyframes pdfSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}';
+        document.head.appendChild(spinStyle);
+    }
+
+    // 진행 표시
+    var progressMsg = document.createElement('div');
+    progressMsg.id = 'pdfProgress';
+    progressMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:20px 40px;border-radius:8px;z-index:99999;font-size:16px;box-shadow:0 4px 15px rgba(0,0,0,0.3);display:flex;align-items:center;gap:12px;';
+
+    var spinner = document.createElement('div');
+    spinner.id = 'pdfSpinner';
+    spinner.style.cssText = 'width:22px;height:22px;border:3px solid rgba(255,255,255,0.3);border-top:3px solid #fff;border-radius:50%;animation:pdfSpin 0.8s linear infinite;flex-shrink:0;';
+    progressMsg.appendChild(spinner);
+
+    var progressText = document.createElement('span');
+    progressText.id = 'pdfProgressText';
+    progressText.textContent = '자료 수집 중... (0/' + flagList.length + ')';
+    progressMsg.appendChild(progressText);
+
+    document.body.appendChild(progressMsg);
+
+    // ── STEP 1: 직접 AJAX 순차 호출 → success 콜백에서 페이지 캡처 ──
+    function processNextFlag() {
+        if (bIdx >= flagList.length) {
+            renderPagesToPdf();
+            return;
+        }
+
+        var currentFlag = flagList[bIdx];
+        var title = PDF_MAP[currentFlag] ? PDF_MAP[currentFlag].title : '';
+        progressText.textContent = '자료 수집 중... (' + (bIdx + 1) + '/' + flagList.length + ') ' + title;
+
+        // 전역 jobFlag 설정 (setMakeGrid 에서 사용)
+        jobFlag = currentFlag;
+
+        // 직접 AJAX 호출 (fn_CreateData 와 동일한 호출)
+        $.ajax({
+            url: "/main/createTotalReport.do",
+            type: "POST",
+            data: {
+                hosp_cd: hospid,
+                jobyymm: yearVal + monthVal,
+                make_fg: currentFlag
+            },
+            timeout: 60000,  // 60초 타임아웃 (투석치료 등 느린 항목 대응)
+            success: function(response) {
+                if (response) {
+                    var accordionBody = document.querySelector("#rounded-stylish_collapse");
+                    if (accordionBody) {
+                        accordionBody.classList.add("show");
+                    }
+                    // setMakeGrid 호출 → 내부에서 selectTotalReport.do AJAX 발생
+                    setMakeGrid();
+                }
+
+                // $.active 폴링 — 활성 AJAX가 0이 되면 즉시 캡처
+                var pollCount = 0;
+                function pollAjaxDone() {
+                    pollCount++;
+                    if ($.active === 0 || pollCount >= 300) {
+                        // 모든 AJAX 완료 → 차트 렌더링 약간 대기 후 캡처
+                        setTimeout(function() {
+                            try {
+                                if (PDF_MAP[currentFlag]) {
+                                    var page = fn_BuildPdfPage(currentFlag, yearVal, monthVal);
+                                    if (page) pages.push(page);
+                                }
+                            } catch(e) {
+                                console.error('페이지 캡처 오류 (flag=' + currentFlag + '):', e);
+                            }
+                            bIdx++;
+                            setTimeout(processNextFlag, 30);
+                        }, 150);
+                    } else {
+                        setTimeout(pollAjaxDone, 50);
+                    }
+                }
+                // selectTotalReport.do AJAX 시작 대기 후 폴링
+                setTimeout(pollAjaxDone, 30);
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 오류 (flag=' + currentFlag + '):', status, error);
+                // 오류 발생해도 다음 항목으로 진행
+                bIdx++;
+                setTimeout(processNextFlag, 50);
+            }
+        });
+    }
+
+    // ── 표지 페이지 생성 ──
+    function buildCoverPage() {
+        var cover = document.createElement('div');
+        cover.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;padding:40px;box-sizing:border-box;';
+
+        // 상단 라인
+        var topLine = document.createElement('div');
+        topLine.style.cssText = 'width:80%;height:3px;background:linear-gradient(to right,#1a56db,#3b82f6,#1a56db);margin-bottom:60px;';
+        cover.appendChild(topLine);
+
+        // 요양기관명
+        if (hospName) {
+            var hospNameEl = document.createElement('h2');
+            hospNameEl.textContent = hospName;
+            hospNameEl.style.cssText = 'font-size:24px;font-weight:bold;color:#1a56db;margin-bottom:40px;text-align:center;letter-spacing:4px;';
+            cover.appendChild(hospNameEl);
+        }
+
+        // 메인 타이틀
+        var mainTitle = document.createElement('h1');
+        mainTitle.textContent = '종 합 보 고 서';
+        mainTitle.style.cssText = 'font-size:36px;font-weight:bold;color:#1a1a1a;letter-spacing:12px;margin-bottom:30px;text-align:center;';
+        cover.appendChild(mainTitle);
+
+        // 서브 타이틀
+        var subTitle = document.createElement('h2');
+        subTitle.textContent = '요양병원 청구현황 분석';
+        subTitle.style.cssText = 'font-size:20px;font-weight:normal;color:#555;margin-bottom:60px;text-align:center;';
+        cover.appendChild(subTitle);
+
+        // 년월 정보
+        var dateInfo = document.createElement('div');
+        dateInfo.style.cssText = 'font-size:22px;color:#333;margin-bottom:15px;text-align:center;font-weight:bold;';
+        dateInfo.textContent = yearVal + '년 ' + monthVal + '월';
+        cover.appendChild(dateInfo);
+
+        // 생성일
+        var now = new Date();
+        var createDate = document.createElement('p');
+        createDate.style.cssText = 'font-size:14px;color:#888;margin-bottom:60px;text-align:center;';
+        createDate.textContent = '출력일: ' + now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        cover.appendChild(createDate);
+
+        // 목차
+        var tocTitle = document.createElement('div');
+        tocTitle.style.cssText = 'font-size:15px;font-weight:bold;color:#333;margin-bottom:10px;text-align:left;width:70%;';
+        tocTitle.textContent = '[ 목 차 ]';
+        cover.appendChild(tocTitle);
+
+        var tocList = document.createElement('div');
+        tocList.style.cssText = 'width:70%;text-align:left;';
+        var tocNum = 1;
+        flagList.forEach(function(flag) {
+            if (PDF_MAP[flag]) {
+                var item = document.createElement('div');
+                item.style.cssText = 'font-size:12px;color:#444;padding:4px 0;border-bottom:1px dotted #ddd;display:flex;justify-content:space-between;';
+                var label = document.createElement('span');
+                label.textContent = tocNum + '.  ' + PDF_MAP[flag].title;
+                item.appendChild(label);
+                var pg = document.createElement('span');
+                pg.textContent = '' + (tocNum + 1);
+                pg.style.color = '#999';
+                item.appendChild(pg);
+                tocList.appendChild(item);
+                tocNum++;
+            }
+        });
+        cover.appendChild(tocList);
+
+        // 하단 라인
+        var botLine = document.createElement('div');
+        botLine.style.cssText = 'width:80%;height:3px;background:linear-gradient(to right,#1a56db,#3b82f6,#1a56db);margin-top:60px;';
+        cover.appendChild(botLine);
+
+        return cover;
+    }
+
+    // ── STEP 2: 수집된 페이지를 jsPDF에 한 장씩 이미지로 추가 ──
+    function renderPagesToPdf() {
+        if (pages.length === 0) {
+            if (progressMsg.parentNode) progressMsg.parentNode.removeChild(progressMsg);
+            alert('출력할 데이터가 없습니다.');
+            return;
+        }
+
+        // 표지를 pages 맨 앞에 삽입
+        var coverPage = buildCoverPage();
+        pages.unshift(coverPage);
+
+        progressText.textContent = 'PDF 생성 중... (0/' + pages.length + ')';
+
+        var JsPDF = null;
+        try {
+            if (window.jspdf && window.jspdf.jsPDF) {
+                JsPDF = window.jspdf.jsPDF;
+            } else if (window.jsPDF) {
+                JsPDF = window.jsPDF;
+            }
+        } catch(e) {}
+
+        if (!JsPDF) {
+            if (progressMsg.parentNode) progressMsg.parentNode.removeChild(progressMsg);
+            alert('PDF 라이브러리 로드 실패. 페이지를 새로고침 후 다시 시도해 주세요.');
+            return;
+        }
+
+        var pdf = new JsPDF('p', 'mm', 'a4');
+        var pdfW = pdf.internal.pageSize.getWidth();
+        var pdfH = pdf.internal.pageSize.getHeight();
+        var margin = 10;
+        var cW = pdfW - (margin * 2);
+        var cH = pdfH - (margin * 2);
+        var pIdx = 0;
+
+        function renderNext() {
+            if (pIdx >= pages.length) {
+                try {
+                    var pdfFileName = hospName ? (hospName + '_종합보고서_' + yearVal + monthVal + '.pdf') : ('종합보고서_' + yearVal + monthVal + '.pdf');
+                    pdf.save(pdfFileName);
+                } catch(e) {
+                    console.error('PDF 저장 오류:', e);
+                    alert('PDF 저장 중 오류가 발생했습니다.');
+                }
+                if (progressMsg.parentNode) progressMsg.parentNode.removeChild(progressMsg);
+                return;
+            }
+
+            progressText.textContent = 'PDF 생성 중... (' + (pIdx + 1) + '/' + pages.length + ')';
+
+            var pageDiv = pages[pIdx];
+
+            var wrapper = document.createElement('div');
+            // 표지 페이지는 A4 비율로 높이 고정
+            if (pIdx === 0) {
+                wrapper.style.cssText = 'position:absolute;left:-9999px;top:0;width:190mm;height:277mm;background:#fff;';
+            } else {
+                wrapper.style.cssText = 'position:absolute;left:-9999px;top:0;width:190mm;background:#fff;';
+            }
+            wrapper.appendChild(pageDiv);
+            document.body.appendChild(wrapper);
+
+            html2canvas(wrapper, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(function(canvas) {
+                var imgData = canvas.toDataURL('image/jpeg', 0.95);
+                var imgW = cW;
+                var imgH = (canvas.height * imgW) / canvas.width;
+
+                if (imgH > cH) {
+                    var ratio = cH / imgH;
+                    imgH = cH;
+                    imgW = imgW * ratio;
+                }
+
+                if (pIdx > 0) pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH);
+
+                if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+                pIdx++;
+                setTimeout(renderNext, 50);
+            }).catch(function(err) {
+                console.error('PDF 페이지 렌더링 오류:', err);
+                if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+                pIdx++;
+                setTimeout(renderNext, 50);
+            });
+        }
+
+        renderNext();
+
+        // 모든 페이지 렌더링 완료 후 페이지 번호 삽입
+        var origSave = pdf.save.bind(pdf);
+        pdf.save = function(filename) {
+            var totalPages = pdf.internal.getNumberOfPages();
+            for (var i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(9);
+                pdf.setTextColor(150, 150, 150);
+                var pageText = '- ' + i + ' / ' + totalPages + ' -';
+                var textW = pdf.getStringUnitWidth(pageText) * 9 / pdf.internal.scaleFactor;
+                var xPos = (pdfW - textW) / 2;
+                pdf.text(pageText, xPos, pdfH - 7);
+            }
+            origSave(filename);
+        };
+    }
+
+    processNextFlag();
 }
 
 function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, mergeCells = []) {
