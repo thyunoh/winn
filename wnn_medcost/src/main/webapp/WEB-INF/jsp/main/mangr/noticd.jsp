@@ -29,9 +29,9 @@
 					<div class="card-body">
 						<div class="form-row mb-2">
 							<div class="col-sm-1">
-								<select id="fileGb1" class="w-72 p-2 rounded-lg"
-									oninput="findField(this)" style="pointer-events: none; background-color: #e9ecef; opacity: 0; transition: opacity 0.3s;">
-									<option selected value="1">구분 1</option>
+								<select id="fileGb1" class="btn btn-outline-dark btn-sm" style="padding:6px 14px; font-size:14px; pointer-events:none; background-color:#e9ecef;"
+									oninput="findField(this)" disabled>
+									<option selected value="${noticeType}">구분</option>
 								</select>
 							</div>
 							<div class="col-sm-6">
@@ -273,7 +273,7 @@
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "findData", val: "1",  chk: true  });
+		findValues.push({ id: "findData", val: ${noticeType},  chk: true  });
 		//Form마다 조회 조건 변경 종료
 		
 		// 초기값 설정
@@ -499,7 +499,7 @@
 		        now_check() ;
 		    }
 	        // fileGb는 모든 모드에서 강제 '1' 고정, 선택 불가
-	        $(fileGbInput).val("1");
+	        $(fileGbInput).val(${noticeType});
 	        $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef");	        
 		}
 		function now_check() {
@@ -1448,7 +1448,7 @@
 				        // 공통코드 로딩 완료 후 fileGb1 강제 고정
 				        var fileGb1 = document.getElementById("fileGb1");
 				        if (fileGb1) {
-				            fileGb1.value = "1";
+				            fileGb1.value = ${noticeType};
 				            findField(fileGb1);
 				            fileGb1.style.opacity = "1";
 				        }

@@ -187,6 +187,7 @@ public class MangrController {
             
         }
 	}	
+	//공지사항 
 	@RequestMapping(value="/noticd.do")
     public String noticd(HttpServletRequest request, ModelMap model) {
 
@@ -194,6 +195,7 @@ public class MangrController {
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
+				model.addAttribute("noticeType", "1");   // ✅ 1 전달
 				return ".main/mangr/noticd";				
 			} else {
 				return "";
@@ -202,6 +204,7 @@ public class MangrController {
 			return "";
 		}
     }	
+	//심사방 
 	@RequestMapping(value="/noticd2.do")
     public String noticd2(HttpServletRequest request, ModelMap model) {
 
@@ -209,7 +212,8 @@ public class MangrController {
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/mangr/noticd2";				
+				model.addAttribute("noticeType", "2");   // ✅ 2 전달
+				return ".main/mangr/noticd";				
 			} else {
 				return "";
 			}	
@@ -217,6 +221,7 @@ public class MangrController {
 			return "";
 		}
     }	
+	//소식지 
 	@RequestMapping(value="/noticd3.do")
     public String noticd3(HttpServletRequest request, ModelMap model) {
 
@@ -224,7 +229,8 @@ public class MangrController {
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/mangr/noticd3";				
+				model.addAttribute("noticeType", "3");   // ✅ 3 전달
+				return ".main/mangr/noticd";				
 			} else {
 				return "";
 			}	
