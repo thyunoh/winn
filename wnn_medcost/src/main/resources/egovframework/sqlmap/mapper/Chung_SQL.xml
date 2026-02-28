@@ -212,7 +212,7 @@
 		    IFNULL(SUM(CASE WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL)  
 		                           THEN A.AMOUNT END), 0) AS HWI_AMT, 
 		    ROUND(SUM(CASE 
-		                      WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL) THEN 
+		                      WHEN (A.CODE_TYPE IN ('1','A') AND C.FEE_CODE IS NOT NULL) AND IFNULL(I.SPEC_TYPE,'') <> 'JS008' THEN 
 		                          A.AMOUNT * (
 		                              CASE 
 		                                  WHEN E.HOS_GRD = '1' THEN IFNULL(D.PROP_1, 0) / 100
@@ -246,7 +246,12 @@
 		LEFT JOIN TBL_MYOUNG_MST F 
 		   ON  F.HOSP_CD  = A.HOSP_CD 
 		   AND F.CLAIM_NO = A.CLAIM_NO 
-		   AND F.BILL_SEQ = A.BILL_SEQ   		
+		   AND F.BILL_SEQ = A.BILL_SEQ   	
+		LEFT JOIN TBL_SPECODE_MST I
+		   ON  I.HOSP_CD  = A.HOSP_CD 
+		   AND I.CLAIM_NO = A.CLAIM_NO 
+		   AND I.BILL_SEQ = A.BILL_SEQ
+		   AND I.ROW_NO   = A.ROW_NO  		    	
 		WHERE ((A.ITEM_NO = 'L' AND A.CODE_NO = '01') OR (A.ITEM_NO <> 'L'))
 		  AND A.HOSP_CD  = #{hospCd}
 		  AND A.CLAIM_NO = #{claimNo}
