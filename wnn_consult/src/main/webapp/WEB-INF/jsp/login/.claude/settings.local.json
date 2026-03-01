@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xxd \"C:/Users/HYUN/git/win/wnn_medcost/src/main/webapp/WEB-INF/jsp/main/total_Report.jsp\")"
+      "Bash(xxd \"C:/Users/HYUN/git/win/wnn_medcost/src/main/webapp/WEB-INF/jsp/main/total_Report.jsp\")",
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \":*)",
+      "Bash(python -c \"filepath = r''C:\\\\Users\\\\HYUN\\\\git\\\\win\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\jsp\\\\main\\\\total_Report.jsp''; f=open\\(filepath,''r'',encoding=''utf-8''\\); lines=f.readlines\\(\\); f.close\\(\\); print\\(f''Total lines: {len\\(lines\\)}''\\); print\\(f''L2978: {lines[2977].rstrip\\(\\)[:80]}''\\); print\\(f''L3204: {lines[3203].rstrip\\(\\)[:80]}''\\); print\\(f''L3205: {lines[3204].rstrip\\(\\)[:80]}''\\); print\\(f''L3209: {lines[3208].rstrip\\(\\)[:80]}''\\); print\\(f''L3436: {lines[3435].rstrip\\(\\)[:80]}''\\); print\\(f''L3437: {lines[3436].rstrip\\(\\)[:80]}''\\)\")"
     ]
   }
 }
