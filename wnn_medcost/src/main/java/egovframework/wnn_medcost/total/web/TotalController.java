@@ -101,10 +101,15 @@ public class TotalController {
             	resultdt = svc.total_DataList_08(dto);
             	response.put("data",resultdt);
 		        System.out.println("total_DataList 08 response : " + response.size());    
-        	} else if (dto.getMakeFg().equals("09")) {   
+        	} else if (dto.getMakeFg().equals("09")) {
+
         		System.out.println("total_DataList 09 - 시작했음");
             	resultdt = svc.total_DataList_09(dto);
             	response.put("data",resultdt);
+
+            	List<TotalDTO> resultSub = svc.total_DataList_09_Sub(dto);
+            	response.put("dataSub", resultSub);
+
 		        System.out.println("total_DataList 09 response : " + response.size());    
         	} else if (dto.getMakeFg().equals("10")) {   
         		System.out.println("total_DataList 10 - 시작했음");

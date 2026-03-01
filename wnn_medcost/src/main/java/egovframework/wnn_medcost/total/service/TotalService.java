@@ -15,6 +15,7 @@ public interface TotalService {
 	List<TotalDTO> total_DataList_07(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_08(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_09(TotalDTO dto) throws Exception;
+	List<TotalDTO> total_DataList_09_Sub(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_10(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_11(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_12(TotalDTO dto) throws Exception;

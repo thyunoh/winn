@@ -198,4 +198,16 @@ public class TotalServiceImpl implements TotalService {
         }
 	}
 
+	@Override
+	public List<TotalDTO> total_DataList_09_Sub(TotalDTO dto) throws Exception {
+		try {
+			
+			return mapper.total_DataList_09_Sub(dto);
+			
+		} catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList(); // 빈 리스트 반환
+        }
+	}
+
 }

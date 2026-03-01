@@ -794,6 +794,55 @@
 		   AND cr.DATE_YM = #{workYm}		                         
 	     ORDER BY 1,2
 	</select>
+	<!--  각각 항목 코드별조회 -->
+	<select id="total_DataList_09_Sub" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
+		    SELECT   A.CFORM_NO AS claimNo,  B.EDI_CODE AS ediCode
+		           , CAST(COUNT(DISTINCT LEFT(COALESCE(D.PAT_ID, '0000000'), 7)) AS CHAR) AS jinDays 
+		         --  , CAST(COUNT(*) AS CHAR) AS jinDays 
+		           , CAST(SUM(AMOUNT) AS CHAR) AS calcAmt
+		    FROM TBL_CHUNG_MST A
+		    JOIN TBL_JINORD_MST B
+		        ON A.HOSP_CD = B.HOSP_CD 
+				 AND A.CLAIM_NO = B.CLAIM_NO
+		       AND COALESCE(B.AMOUNT,0) > 0
+		       AND B.EDI_CODE IN 
+				    (SELECT DISTINCT C.EDI_CODE FROM TBL_DRUG_MST C WHERE C.CODEFLAG = 'M')
+		       AND  NOT EXISTS (        
+						      SELECT 1
+						      FROM TBL_SPECODE_MST C
+						      WHERE C.HOSP_CD  = A.HOSP_CD
+						        AND C.CLAIM_NO = A.CLAIM_NO
+						        AND C.BILL_SEQ = B.BILL_SEQ
+						        AND C.ROW_NO   = B.ROW_NO
+						        AND C.SPEC_TYPE = 'JS008'
+					     )  
+				AND  B.ITEM_NO NOT IN('L')       
+	        JOIN TBL_MYOUNG_MST D
+                ON D.HOSP_CD  = A.HOSP_CD
+               AND D.CLAIM_NO = A.CLAIM_NO
+               AND D.BILL_SEQ = B.BILL_SEQ      				     
+		    WHERE   A.HOSP_CD = #{hospCd}
+			    AND A.DATE_YM = #{workYm}
+		        AND COALESCE(B.AMOUNT,0) > 0
+		     ]]>
+			 <if test='codeFg == "1"'><![CDATA[  
+			    AND A.CFORM_NO IN ('H010')
+			    AND A.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "2"'><![CDATA[
+			    AND A.CFORM_NO IN ('H011')
+			    AND A.MED_TYPE IN ('1', '2', '5')
+			 ]]></if>		
+			 <if test='codeFg == "3"'><![CDATA[
+			    AND A.CFORM_NO in ('C010')
+			    AND A.MED_TYPE IN ('1', '2')
+			 ]]></if>		
+			 <if test='codeFg == "4"'><![CDATA[
+			    AND A.CFORM_NO   IN ('M110', 'M120', 'M130') 
+			    AND A.TREAT_TYPE IN ('1', '3')
+			 ]]></if> 
+		     GROUP  BY A.CFORM_NO , B.EDI_CODE
+	</select>
 	
 	<!-- 
 	<select id="total_DataList_09" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[

@@ -87,6 +87,18 @@
     													</div>
                                     				</div>
 	                                                <div id="grid-container1"></div>
+	                                                <!-- 수가코드별 현황 서브 테이블 (좌측 도표 밑, 좌우 양분) -->
+	                                                <div id="subTable09Wrapper" style="display:none; margin-top:10px;">
+	                                                    <h4 class="ml-1 mb-1" style="font-weight:bold;">수가코드별 현황</h4>
+	                                                    <div style="display:flex; gap:10px;">
+	                                                        <div style="flex:1; min-width:0;">
+	                                                            <table id="tableName09SubL" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
+	                                                        </div>
+	                                                        <div style="flex:1; min-width:0;">
+	                                                            <table id="tableName09SubR" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
+	                                                        </div>
+	                                                    </div>
+	                                                </div>
 								                    <div class="form-row">
 									                    <div class="col-xl-12 col-lg-12 text-left mb-1">
 								                  	        <div class="form-group">
@@ -444,7 +456,7 @@
 							        <div id="cchart_category" style="max-height: 300px;"> 
 							            <!-- <div id="morris-bar-chartA" ></div> -->
 							            <canvas id="mixedChartA1" style="width: 100%; height: 250px;  padding: 20px 20px; "></canvas>
-							        </div>   
+							        </div>
 							    </div>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
@@ -880,8 +892,9 @@ function setMakeGrid() {
 	cardC.style.display = 'none';
 	cardD.style.display = 'none';	
 	cardE.style.display = 'none';	
-	cardF.style.display = 'none';	
-	
+	cardF.style.display = 'none';
+	document.getElementById('subTable09Wrapper').style.display = 'none';
+
 	let lab_txt = document.getElementById('lab_text');
 
     if        (jobFlag === "01" ) {
@@ -4690,8 +4703,12 @@ function dataLoad(data, callback, settings) {
             if (response && Object.keys(response).length > 0) {
             	console.log(response);
             	callback(response);
-            	
-            	
+
+            	// 수가코드별 현황 서브 테이블 (jobFlag 09)
+            	if (jobFlag === "09" && response.dataSub) {
+            		fn_SubTable09(response.dataSub);
+            	}
+
             } else {
             	callback([]); // 빈 배열을 콜백으로 전달
             }
@@ -4704,10 +4721,74 @@ function dataLoad(data, callback, settings) {
             //table.clear().draw(); // 테이블 초기화 및 다시 그리기
         }
     });
-    
+
 }
 
+// 수가코드별 현황 서브 DataTable (좌/우 양분)
+var subTable09L = null;
+var subTable09R = null;
 
+function fn_SubTable09(subData) {
+	// 기존 테이블 정리
+	['#tableName09SubL', '#tableName09SubR'].forEach(function(id) {
+		if ($.fn.DataTable.isDataTable(id)) {
+			$(id).DataTable().clear().destroy();
+			$(id).empty();
+		}
+	});
+
+	$('#subTable09Wrapper').show();
+
+	// 데이터 양분 (금액 내림차순 정렬 후 반으로 나눔)
+	subData.sort(function(a, b) {
+		return Number(b.calcAmt) - Number(a.calcAmt);
+	});
+	var half = Math.ceil(subData.length / 2);
+	var leftData  = subData.slice(0, half);
+	var rightData = subData.slice(half);
+
+	var thead = '<thead><tr><th>수가코드</th><th>인원(코드별)</th><th>금액</th></tr></thead>';
+	$('#tableName09SubL').append(thead);
+	$('#tableName09SubR').append(thead);
+
+	var dtOptions = {
+		language: {
+			emptyTable: "데이터가 없습니다.",
+			info: "총 _TOTAL_건",
+			infoEmpty: "데이터 없음",
+		},
+		columns: [
+			{ data: 'ediCode', className: 'dt-body-center' },
+			{ data: 'jinDays', className: 'dt-body-right',
+				render: function(data, type, row) {
+					if (type === 'display') {
+						return getFormat(data, 'n1');
+					}
+					return data;
+				}
+			},
+			{ data: 'calcAmt', className: 'dt-body-right',
+				render: function(data, type, row) {
+					if (type === 'display') {
+						return getFormat(data, 'n1') + '원';
+					}
+					return data;
+				}
+			}
+		],
+		paging: false,
+		searching: false,
+		ordering: true,
+		info: true,
+		scrollY: '250px',
+		scrollCollapse: true,
+		order: [[2, 'desc']],
+		autoWidth: false,
+	};
+
+	subTable09L = $('#tableName09SubL').DataTable($.extend(true, {}, dtOptions, { data: leftData }));
+	subTable09R = $('#tableName09SubR').DataTable($.extend(true, {}, dtOptions, { data: rightData }));
+}
 
 </script>
 <!-- ============================================================== -->
