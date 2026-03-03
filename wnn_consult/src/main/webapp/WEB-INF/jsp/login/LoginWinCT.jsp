@@ -69,7 +69,6 @@
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 999;
 }
-
 /* 팝업창 */
 .popup-box_1 {
   display: none;
