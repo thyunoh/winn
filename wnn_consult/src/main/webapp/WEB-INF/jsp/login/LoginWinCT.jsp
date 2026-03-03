@@ -193,13 +193,13 @@
 
 /* 텍스트 */
 .service-label {
-    font-size: 17px;
+    font-size: 40px;
     font-weight: 600;
 }
 
 /* 오른쪽 화살표 */
 .service-arrow {
-    font-size: 17px;
+    font-size: 20px;
     color: #999;
 }
 
@@ -393,7 +393,7 @@
 
 		<!-- Carousel End -->
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
-		<div class="col-lg-10" style="margin-top: 400px;">
+		<div class="col-lg-10" style="margin-top: 400px; margin-left: 40px;">
 			<!-- style="margin-top: 400px; 올려서 오버뱁  -->
 			<!--   로그인시작  -->
 			<div class="login-banner-wrapper" id = "login_form" 
@@ -404,7 +404,7 @@
 					<div class="container-fluid_login mb-2 px-3" 	id = "login_line"  style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
 						<div class="row justify-content-center"
 							style="flex-wrap: nowrap;">
-							<div style="width: 1350px; flex-shrink: 0; margin-left: 520px; display: flex; gap: 10px; align-items: flex-start;">
+							<div style="width: 1650px; flex-shrink: 0; margin-left: 520px; display: flex; gap: 10px; align-items: flex-start;">
 							<!--  로그인박스 영역 flex: 1.4 이부분을 수정하면 됨  -->
 							<div style="flex: 1.4; min-width: 0;">
 								<div class="contact-form box-p-10 mb-3"
@@ -413,7 +413,7 @@
 										<div
 											style="display: flex; align-items: flex-start; justify-content: center;">
 											<!-- 입력 필드 영역 -->
-											<div style="flex-grow: 0; width: 280px; margin-left: 8px;">
+											<div style="flex-grow: 0; width: 380px; margin-left: 8px;">
 												<hr
 													style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
 												<h6 class="section-title position-relative mb-2">
@@ -442,7 +442,7 @@
 											</div>
 
 											<!-- 로그인 버튼 + 링크 -->
-											<div style="margin-left: 80px; text-align: center;">
+											<div style="margin-left: 100px; text-align: center;">
 												<button type="button" id="blogin" onclick="login()"
 													style="height: 120px; width: 120px; background-color: #2b5797; color: #fff; font-weight: bold; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; margin-top: 36px; margin-bottom: 5px;">
 													로그인</button>
@@ -521,7 +521,7 @@
 							<!-- 이미지 배너 영역  #ccc -->
 							<div style="flex: 1; min-width: 0; position: relative;">
 							        <img src="/wnn_consult/images/winct/wcheck_main.svg"
-							             style="width: 95%; height: 230px; display: block; object-fit: cover; border-radius: 8px; margin-left: 7px;">
+							             style="width: 96%; height: 230px; display: block; object-fit: cover; border-radius: 8px; margin-left: 5px;">
 										<a href="javascript:void(0)"
 										   onclick="winCheckOpen(); return false;"
 										   style="position:absolute; top:0; left:0; width:100%; height:100%; display:block;">
@@ -530,7 +530,7 @@
 
 							<div style="flex: 1; min-width: 0;">
 							    <img src="/wnn_consult/images/winct/time_main.svg"
-							         style="width: 95%; height: 230px; display: block; object-fit: cover; border-radius: 8px; margin-left: -5px;">
+							         style="width: 96%; height: 230px; display: block; object-fit: cover; border-radius: 8px; margin-left: -5px;">
 							</div>
 						 </div>
 							
@@ -543,7 +543,7 @@
 				<div class="container-fluid_noti mb-2 px-3"
 					style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
 					  <div class="row justify-content-center" id="noti-row" style="flex-wrap: nowrap;">
-						<div style="width: 1300px; flex-shrink: 0; margin-left: 520px; display: flex; gap: 10px;">
+						<div style="width: 1600px; flex-shrink: 0; margin-left: 520px; display: flex; gap: 10px;">
 
 							<!-- 공지사항 패널 -->
 							<div style="flex: 1; min-width: 0;">
@@ -630,7 +630,7 @@
 
 				<!-- 자주찾는 서비스 영역 -->
 				<div class="row justify-content-center mt-2" style="flex-wrap: nowrap;">
-					<div style="width: 1300px; flex-shrink: 0; margin-left: 520px;">
+					<div style="width: 1600px; flex-shrink: 0; margin-left: 520px;">
 						<div class="py-2 px-4 bg-light-blue">
 							<div class="row align-items-center">
 								<div class="col-md-3 mb-2 mb-md-0">
@@ -1620,6 +1620,7 @@
 		}
 		if(!confirm("해당사용자의 비밀번호를 초기화 하시겠습니까?")) return;
 
+		
 		$.ajax( {
 			type : "post",
 			url : CommonUtil.getContextPath() + "/base/pwdresetAct.do",
@@ -1695,7 +1696,6 @@
 								</table>
 							</div>
 						</div>
-						<!-- 파일있으면 파일 다운로드 구현 부분  -->
 					</div>
 				</form:form>
 			</div>
@@ -1835,7 +1835,6 @@
 
 		// 파일 표시 함수 호출
 		showfileModal(notiSeq, fileGb);
-
 		// 모달 열기
 		$("#adminModal").modal('show');
 	}  
@@ -1883,7 +1882,7 @@
 	function showfileModal(notiSeq, fileGb) {
 	    $.ajax({
 	        type: "post",
-	        url: "/mangr/fileCdList.do",
+	        url: "${pageContext.request.contextPath}/mangr/fileCdList.do",
 	        data: { fileGb: fileGb, fileSeq: notiSeq },
 	        dataType: "json",
 	        success: function (data) {
@@ -1912,7 +1911,7 @@
 	                    let encodedPath = encodeURIComponent(doc.filePath);
 	                    fileUrl = "/wnn_consult/sftp/download.do?filePath=" + encodedPath;
 	                }
-
+	                	                
 	                console.log("📌 생성된 SFTP fileUrl:", fileUrl);
 
 	                tableBody += "<tr>";
@@ -2138,7 +2137,7 @@
 						<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
 						</button>
 						<button type="button" class="btn btn-outline-dark"
-							data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
+							onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
 						</button>
 					</div>
 				</div>
@@ -2230,16 +2229,19 @@
 	function asqMainClose() {
 	    $('#asq_main_tab').modal('hide');
 	}   
-	/*질의응답모달*/
+
 	function asqModalOpen() {
 		$("#hospCdasq").val(sessionStorage.getItem('s_hospid') || '') ;
 		$("#updUserasq").val(sessionStorage.getItem('s_userid') || '');
 		$("#regUserasq").val(sessionStorage.getItem('s_userid') || '');
 		$("#iudasq").val(uidGubun);
+   
+   
 	    $('#asq_main').modal('show');
-	} 
+
+	}
 	function asqModalClose() {
-	    $('#asq_main').modal('hide');
+		$('#asq_main').modal('hide');
 	}        
 	
 	
@@ -2252,7 +2254,7 @@
 	    $("#asqSeq").val("") ;
 	    $("#asqdataArea").empty();
 	    $.ajax({
-		   	url : 'mangr/ctl_asqList.do',
+		   	url : '${pageContext.request.contextPath}/mangr/ctl_asqList.do',
 		    type : 'post',
 		    data : {hospCdasq : sessionStorage.getItem('s_hospid')  , qstnTitle : $("#searchText").val() },
 			dataType : "json",
@@ -2326,7 +2328,7 @@
 	        // 등록 폼 초기화
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/ctl_getHospmst.do",
+	            url: "${pageContext.request.contextPath}/mangr/ctl_getHospmst.do",
 	            data: { hospCd: getCookie("hospid") },
 	            dataType: "json",
 	            success: function (data) {
@@ -2337,8 +2339,9 @@
 	                $("#hospCd").val(data.result.hospCd);
 	            }
 	        });
+
 	        document.getElementById("asq_regForm").reset();
-	        setCurrDate("regDtm");
+	      //  setCurrDate("regDtm");
 	        $("#ansrConts").prop("readonly", "true");
 	        $("#ansrWan").css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
 	        $("#save_btn").show(); // 답변내용 보이기
@@ -2353,7 +2356,7 @@
 	        $("#regDtm").prop("readonly", false);
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/selectAnsrInfo.do",
+	            url: "${pageContext.request.contextPath}/mangr/selectAnsrInfo.do",
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2372,11 +2375,10 @@
 	                $("#regDtm").val(data.result.regDtm);
 
 	                if ($("#ansrWan").val().trim() === "Y") {
-	                    $("#save_btn").hide(); // 답변내용 숨기기
+	                   // $("#save_btn").hide(); // 답변내용 숨기기
 	                }else{
 	                	$("#save_btn").show(); // 답변내용 
 	               	}
-
 	                if (uidGubun.substring(0, 1) == "Q") {
 	                    // 질문
 	                    $("#qstnTitle").prop("readonly", "");
@@ -2394,7 +2396,7 @@
 	        // 삭제 전에 ansrWan 상태 확인 후 처리
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
+	            url: "${pageContext.request.contextPath}/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2479,7 +2481,7 @@
 	                    alert(data.error_msg);
 	                    return;
 	                }
-	                $('#asq_main').modal('hide'); // 성공 시 모달 닫기
+	                asqModalClose(); // BS5 네이티브 API로 모달 닫기
 	                fnasq_Search();
 	            },
 	            error: function (xhr, status, error) {
