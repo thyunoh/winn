@@ -3022,6 +3022,7 @@
         	setCookie("s_inqauth", sessionStorage.getItem('s_inqauth'), 1); //조회권한  
     		
       	
+        	
         	hosp_conact() ;
         	
         //	const url = "http://localhost:8080/user/";    
