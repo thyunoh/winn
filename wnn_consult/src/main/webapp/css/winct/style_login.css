@@ -659,11 +659,11 @@
 }
 
 .overlay-btn-i1 {
-  left: 66.9%;
-  top: 63%;
-  width: 160px;
-  height: 33px;
-  transform: translateX(-86%); 
+  left: 4%;
+  top: 82%;
+  width: 210px;
+  height: 40px;
+  transform: none;
 }
 
 .overlay-btn-i2 {
@@ -684,36 +684,36 @@
 }
 
 .overlay-btn-i4 {
-  left: 86.8%;
-  top: 26%;
-  width: 137px;
-  height: 27px;
-  transform: translateX(-86%); 
+  left: 62%;
+  top: 33%;
+  width: 180px;
+  height: 28px;
+  transform: none;
 }
 
 
 .overlay-btn-i5 {
-  left: 86.8%;
-  top: 69%;
-  width: 137px;
-  height: 27px;
-  transform: translateX(-86%); 
+  left: 62%;
+  top: 80%;
+  width: 165px;
+  height: 28px;
+  transform: none;
 }
 
 .overlay-btn-i6 {
-  left: 78%;
-  top: 61%;
-  width: 240px;
-  height: 42px;
-  transform: translateX(-86%); 
+  left: 90%;
+  top: 8%;
+  width: 220px;
+  height: 85px;
+  transform: none;
 }
 
 .overlay-btn-i7 {
-  left: 78%;
-  top: 83%;
-  width: 240px;
-  height: 42px;
-  transform: translateX(-86%); 
+  left: 90%;
+  top: 55%;
+  width: 220px;
+  height: 85px;
+  transform: none;
 }
 
 .overlay-btn:hover {
