@@ -34,12 +34,9 @@ public class SftpController {
         this.sftpService = sftpService;
     }
     // ✅ SFTP 연결 정보 (임시 하드코딩 – properties 방식 권장)
-<<<<<<< HEAD
-    private static final String SFTP_HOST      = "localhost";// "114.108.153.178"; 
-=======
+    private static final String SFTP_HOST      = "localhost";
   //  private static final String SFTP_HOST      = "114.108.153.178";
-    private static final String SFTP_HOST      = "localhost";  
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
+
     private static final int    SFTP_PORT      = 22;
     private static final String SFTP_USER      = "winner";
     private static final String SFTP_PASSWORD  = "winner_20@%";
