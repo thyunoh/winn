@@ -33,33 +33,17 @@
 	href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
 	rel="stylesheet">
 
-<!-- 배포 시 버전 번호를 변경하면 브라우저 캐시 강제 갱신 -->
-<%
-    String cacheVer = "20260305003";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
-%>
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-<<<<<<< HEAD
-<link href="/wnn_consult/css/winct/bootstrap.css?v=<%=cacheVer%>" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style.css?v=<%=cacheVer%>" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style_login.css?v=<%=cacheVer%>" rel="stylesheet"> <!-- 로그인css  -->
-=======
 <link href="/wnn_consult/css/winct/bootstrap.css" rel="stylesheet">
 <link href="/wnn_consult/css/winct/style.css?v=123" rel="stylesheet">
 <link href="/wnn_consult/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 <!-- JavaScript -->
-<script type="text/javascript" src="/wnn_consult/js/winct/main.js?v=<%=cacheVer%>"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/message.js?v=<%=cacheVer%>"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/contact.js?v=<%=cacheVer%>"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/loading.js?v=<%=cacheVer%>"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/schcommons.js?v=<%=cacheVer%>"></script>
-<!-- ★ CommonUtil (contextPath 등) - tiles 미사용 페이지이므로 직접 로드 -->
-<script type="text/javascript" src="${pageContext.request.contextPath}/asset/js/commonUtil.js?v=<%=cacheVer%>"></script>
-<script>
-    // tiles header.jsp와 동일하게 contextPath를 sessionStorage에 설정
-    sessionStorage.setItem("contextPath", '<c:out value="${pageContext.request.contextPath}"/>');
-</script>
+<script type="text/javascript" src="/wnn_consult/js/winct/main.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/message.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/contact.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/loading.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/schcommons.js"></script>
 <!-- 리치 에디터  -->
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
@@ -491,14 +475,6 @@
 							</div>
 
 							<!-- 이미지 배너 영역  #ccc -->
-<<<<<<< HEAD
-							<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
-							<div class="image-btn-wrap" style="position: relative; width: 590px; height: 225px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
-								<img class="img-fluid" src="/wnn_consult/images/winct/e_clip2.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
-								<button type="button" class="btn overlay-btn overlay-btn-i1" style="left:5%; top:65%; width:35%; height:20%; background-color:transparent !important;" onclick="winCheckOpen()"></button>
-								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" style="left:60%; top:25%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
-								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" style="left:60%; top:75%; width:30%; height:14%; background-color:transparent !important;"></a>
-=======
 							<div class="image-layout"
 								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
 								<div class="image-layout"
@@ -579,7 +555,6 @@
 									</div>
 									 -->
 								</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 							</div>
 						</div>
 					</div>
@@ -603,8 +578,6 @@
 										data-bs-toggle="tab" href="#tab-pane-3">심사방 </a> <a
 										class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
 										data-bs-toggle="tab" href="#tab-pane-4">소식지 </a>
-<<<<<<< HEAD
-=======
 								</div>
 
 								<!-- 탭 콘텐츠 -->
@@ -688,36 +661,10 @@
 										</div>
 									</div>
 									
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 								</div>
-<<<<<<< HEAD
-=======
 							</div>
 						</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 
-<<<<<<< HEAD
-								<!-- 탭 콘텐츠 -->
-								<div class="tab-content">
-									<!-- 전체 -->
-									<div class="tab-pane fade active show" id="tab-pane-1">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-=======
 						
 						
 						
@@ -784,86 +731,12 @@
 											~ 13:00<span style="margin: 0 5px;">|</span> <strong>주말/공휴일
 												휴무</strong>
 										</p>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 									</div>
-									<!-- 공지사항 -->
-									<div class="tab-pane fade" id="tab-pane-2">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable1" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea1">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-									<!-- 심사방 -->
-									<div class="tab-pane fade" id="tab-pane-3">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable2" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea2">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-
-									<!-- 소식지 -->
-									
-									<div class="tab-pane fade" id="tab-pane-4">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable3" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea3">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-									
 								</div>
 							</div>
 						</div>
-<<<<<<< HEAD
-
-						
-						
-						
-						<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
-						<div class="image-btn-wrap" style="position: relative; width: 590px; height: 220px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
-							<img class="img-fluid" src="/wnn_consult/images/winct/e_clip3.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
-							<button type="button" class="btn overlay-btn overlay-btn-i6" style="left:50%; top:10%; width:44%; height:30%;  !important;" onclick="fnasq_main()"></button>
-							<button type="button" class="btn overlay-btn overlay-btn-i7" style="left:50%; top:54%; width:44%; height:30%;  !important;" onclick="loadFaqData()"></button>
-						</div>			
-=======
 						-->
 						<!--  -->
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 					</div>
 				</div>
 
@@ -1473,7 +1346,7 @@
         	
 	        	$.ajax( {
 	        		type : "post" ,                      
-	        		url  : "${pageContext.request.contextPath}" + "/user/MemberSaveAct.do",
+	        		url  : CommonUtil.getContextPath() + "/user/MemberSaveAct.do",
 	        		data : formData,
 	        		dataType : "json",
 	        		success : function(data) {    
@@ -1500,7 +1373,7 @@
 	        	}
 	        	$.ajax( {
 	        		type : "post",
-	        		url :  "${pageContext.request.contextPath}" + "/user/MberDupChk.do",
+	        		url :  "/user/MberDupChk.do",
 	        		data : {hospCd : $("#hospCd").val(),email : $("#email").val()},
 	        		dataType : "json",
 	        		success : function(data) {    
@@ -1524,7 +1397,7 @@
 	        	const modalName = document.getElementById('modalname');
 	            modalName.textContent = "(필수)" + headerValue; 
 	            $.ajax( {
-	        		url : "${pageContext.request.contextPath}" + "/base/ctl_selCommDtlInfo.do",
+	        		url : CommonUtil.getContextPath() + "/base/ctl_selCommDtlInfo.do",
 	        		type : "post",
 	        		data : {codeCd : codeCd},
 	        		dataType : "json",
@@ -1622,13 +1495,8 @@
 
 	<div class="modal fade" id="passserachModal" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-<<<<<<< HEAD
-		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 50px;">
-			<div class="modal-content rounded-3 shadow-lg" style="min-height: 300px; padding: 20px;">
-=======
 		<div class="modal-dialog modal-lg" style="max-width: 500px;">
 			<div class="modal-content rounded-3 shadow-lg">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 				<form:form commandName="DTO" id="pwserchregForm" name="pwregForm" method="post">
 					<h3 class="text-center">아이디찾기 비밀번호 초기화</h3>
 					<div class="pass-box w-70">
@@ -1670,7 +1538,7 @@
 		$("#userId").val("") ;
 		$.ajax( {
 			type : "post",
-			url : "${pageContext.request.contextPath}" + "/popup/login_usersearch.do",
+			url : CommonUtil.getContextPath() + "/popup/login_usersearch.do",
 			data : {userNm : $("#userNm1").val() , email : $("#email1").val() },
 			dataType : "json",
 			success : function(data) {
@@ -1691,7 +1559,7 @@
 
 	    var popupwidth  = 450;
 	    var popupheight = 350;
-	    var url = "${pageContext.request.contextPath}" + "/popup/login_pwdchg.do";
+	    var url = CommonUtil.getContextPath() + "/popup/login_pwdchg.do";
 	    
 	    // 모니터 해상도를 기준으로 중앙 위치 계산
 	    var screenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
@@ -1715,13 +1583,8 @@
 	<div class="modal fade" id="pwresetForm" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true"
 		style="margin-left: -1px;">
-<<<<<<< HEAD
-		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 20px;">
-			<<div class="modal-content rounded-3 shadow-lg" style="min-height: 380px; padding: 20px;">
-=======
 		<div class="modal-dialog modal-lg" style="max-width: 500px;">
 			<div class="modal-content rounded-3 shadow-lg">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 				<form:form commandName="DTO" id="pwresetregForm"
 					name="pwresetregForm" method="post">
 					<h4>비밀번호 초기화 변경</h4>
@@ -1779,7 +1642,7 @@
 		var formData = $("form[name='pwresetregForm']").serialize();
 		$.ajax( {
 			type : "post",
-			url : "${pageContext.request.contextPath}" + "/base/pwdchgAct.do",
+			url : CommonUtil.getContextPath() + "/base/pwdchgAct.do",
 			data : {hospCd  :  $("#hospCd1").val() , userId    : $("#userId1").val() , 
 				    passWd  :  $("#passWd1").val() , bfPassWd  : $("#bfPassWd1").val()
 				  },
@@ -1808,7 +1671,7 @@
 
 		$.ajax( {
 			type : "post",
-			url : "${pageContext.request.contextPath}" + "/base/pwdresetAct.do",
+			url : CommonUtil.getContextPath() + "/base/pwdresetAct.do",
 			data : {hospCd  :  $("#hospCd1").val() , userId : $("#userId1").val()},
 			dataType : "json",
 			success : function(data) {   
@@ -1837,17 +1700,6 @@
 
 	<!-- 공지사항 모달 -->
 	<div id="adminModal" class="modal fade" data-backdrop="static"
-<<<<<<< HEAD
-	    data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
-	    <div class="modal-dialog modal-lg" style="max-width: 800px; margin: 30px auto;">
-	        <div class="modal-content"
-	            style="display: flex; flex-direction: column; position: relative; border-radius: 10px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1); max-height: calc(100vh - 60px);">
-	            
-	            <!-- 헤더 -->
-				<div class="modal-header"
-				    style="padding: 10px 15px; display: flex; align-items: center; justify-content: flex-start; border-bottom: 1px solid #dee2e6; flex-shrink: 0;">
-				    <span id="notiname" style="font-size: 20px; color: black;">공지사항</span>
-=======
 		data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
 		<div class="modal-dialog modal-lg" style="max-width: 800px;">
 			<div class="modal-content"
@@ -1856,55 +1708,7 @@
 					<span id="notiname" style="font-size: 20px; color: black;"></span>
 					<button type="button" class="btn btn-outline-dark btn-sm"
 						onclick="readsaveAdminModal(document.getElementById('notiSeq').value, document.getElementById('fileGb').value, this)">닫기</button>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 				</div>
-<<<<<<< HEAD
-	            <!-- 폼 (body만 포함) -->
-	            <form:form commandName="DTO" id="regForm" name="regForm"
-	                method="post" enctype="multipart/form-data"
-	                style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
-	                <input type="hidden" name="iud" id="iud" />
-	                <input type="hidden" name="notiSeq" id="notiSeq" />
-	                <input type="hidden" name="fileGb" id="fileGb" />
-	                <div class="modal-body" style="overflow-y: auto; padding: 20px; flex-grow: 1; min-height: 0;">
-	                    <div class="mb-0">
-	                        <label for="notiTitle" class="form-label"
-	                            style="font-size: 15px; font-weight: bold; display: block; text-align: left;">제목</label>
-	                        <textarea name="notiTitle" id="notiTitle" rows="2"
-	                            class="form-control" placeholder="제목을 입력하세요."
-	                            style="font-size: 15px; resize: none;"></textarea>
-	                    </div>
-	                    <div class="mb-0 mt-2">
-	                        <label for="notiContent" class="form-label"
-	                            style="font-size: 15px; font-weight: bold; display: block; text-align: left;">내용</label>
-	                        <textarea class="form-control" name="notiContent"
-	                            id="notiContent" rows="10" placeholder="내용을 입력하세요."
-	                            style="resize: none; font-size: 14px;"></textarea>
-	                    </div>
-	                    <h5 class="mt-3">첨부 문서</h5>
-	                    <div class="table-container"
-	                        style="width: 100%; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
-	                        <div style="max-height: 200px; overflow-y: auto;">
-	                            <table id="fileTable"
-	                                class="display nowrap table table-hover table-bordered"
-	                                style="width: 100%; margin-bottom: 0;">
-	                            </table>
-	                        </div>
-	                    </div>
-	                </div>
-	            </form:form>
-	
-	            <!-- 닫기 버튼 - form 밖에 위치 -->
-	            <div class="modal-footer"
-	                style="display: flex; justify-content: center; border-top: 1px solid #dee2e6; padding: 10px; flex-shrink: 0;">
-	                <button type="button" class="btn btn-outline-dark btn-sm"
-	                    style="width: 120px;"
-	                    onclick="readsaveAdminModal(document.getElementById('notiSeq').value, document.getElementById('fileGb').value, this)">닫기</button>
-	            </div>
-	
-	        </div>
-	    </div>
-=======
 				<form:form commandName="DTO" id="regForm" name="regForm"
 					method="post" enctype="multipart/form-data"
 					style="flex-grow: 1; display: flex; flex-direction: column;">
@@ -1942,7 +1746,6 @@
 				</form:form>
 			</div>
 		</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	</div>
 	<!-- 공지사항 스크립트시작 -->
 	<script>
@@ -1984,7 +1787,7 @@
 		
 		$(targetArea).empty();
 		$.ajax({
-			url: '${pageContext.request.contextPath}' + '/mangr/ctl_notiList.do',
+			url: CommonUtil.getContextPath() + '/mangr/ctl_notiList.do',
 			type: 'post',
 			data: {
 				fileGb: fileGb,
@@ -2126,11 +1929,7 @@
 	function showfileModal(notiSeq, fileGb) {
 	    $.ajax({
 	        type: "post",
-<<<<<<< HEAD
-	        url: "${pageContext.request.contextPath}" + "/mangr/fileCdList.do",
-=======
-	        url: "/mangr/fileCdList.do",
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
+	        url:  CommonUtil.getContextPath() + "/mangr/fileCdList.do",
 	        data: { fileGb: fileGb, fileSeq: notiSeq },
 	        dataType: "json",
 	        success: function (data) {
@@ -2230,7 +2029,7 @@
 	function readsaveAdminModal(notiSeq, fileGb, button) {
 	    $(button).prop('disabled', true);
 	    $.ajax({
-	        url: '${pageContext.request.contextPath}' + '/mangr/read_noticnt.do',
+	        url: CommonUtil.getContextPath() + '/mangr/read_noticnt.do',
 	        type: 'post',
 	        data: { notiSeq: notiSeq, fileGb: fileGb },
 	        dataType: "json",
@@ -2296,11 +2095,7 @@
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
 	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
 	<div class="modal-dialog modal-lg"
-<<<<<<< HEAD
-		style="max-width: 900px; width: 90%; margin-top: 40px;">
-=======
 		style="max-width: 900px; width: 90%;">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
 		<div class="modal-content shadow-lg rounded-4"
 			style="height: auto; max-height: 90vh; border: none;">
@@ -2374,29 +2169,6 @@
 	</div>
 </div>
 
-<<<<<<< HEAD
-<div class="modal fade" id="asq_main" tabindex="-1"
-    data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-        style="width: 50vw; max-width: 900px; min-width: 400px; margin-top: -110px;">
-        <div class="modal-content"
-            style="max-height: calc(100vh - 100px); display: flex; flex-direction: column;">
-            
-            <!-- 헤더 -->
-            <div class="modal-header bg-light" style="flex-shrink: 0;">
-                <h6 class="modal-title">문의 등록</h6>
-                <div class="form-row">
-                    <div class="col-sm-12 mb-2" style="text-align: right;">
-                        <button type="button" id="save_btn" class="btn btn-outline-info" 
-                            onClick="fnasq_SaveProc()">저장 <i class="far fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-dark"
-                            data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-=======
 <!---->
 <div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
 	data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
@@ -2429,68 +2201,52 @@
 					<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
 					<input type="hidden" name="regUserasq"  id="regUserasq" /> 
 					<input type="hidden" name="updUserasq"  id="updUserasq" />
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 
-            <!-- 폼 바디 -->
-            <form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-                method="post" enctype="multipart/form-data"
-                style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
-                <div class="modal-body text-left" style="overflow-y: auto; flex-grow: 1; min-height: 0;">
-                    <input type="hidden" name="iudasq"      id="iudasq" />
-                    <input type="hidden" name="asqSeq"      id="asqSeq" />
-                    <input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" />
-                    <input type="hidden" name="qstnWan"     id="qstnWan"   value="Y" />
-                    <input type="hidden" name="hospCdasq"   id="hospCdasq" />
-                    <input type="hidden" name="hospUuidasq" id="hospUuidasq" />
-                    <input type="hidden" name="regUserasq"  id="regUserasq" />
-                    <input type="hidden" name="updUserasq"  id="updUserasq" />
+	               <div class="form-group d-flex align-items-start">
+					   <label for="qstnTitle"
+					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+					      질문제목
+					   </label>
+					   <textarea id="qstnTitle" name="qstnTitle" required
+					      placeholder="" class="form-control" rows="2"
+					      style="flex: 1;"></textarea>
+					</div>
 
-                    <div class="form-group d-flex align-items-start">
-                        <label for="qstnTitle"
-                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; 
-                            width: 100px; min-width: 100px; margin-right: 10px;">
-                            질문제목
-                        </label>
-                        <textarea id="qstnTitle" name="qstnTitle" required
-                            class="form-control" rows="2"
-                            style="flex: 1;"></textarea>
-                    </div>
-                    <div class="form-group d-flex align-items-start">
-                        <label for="qstnConts"
-                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; 
-                            width: 100px; min-width: 100px; margin-right: 10px;">
-                            질문내용
-                        </label>
-                        <textarea id="qstnConts" name="qstnConts" required
-                            class="form-control" rows="5"
-                            style="flex: 1;"></textarea>
-                    </div>
-                    <div class="form-group d-flex align-items-start">
-                        <label for="ansrConts"
-                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
-                            답변내용
-                        </label>
-                        <textarea id="ansrConts" name="ansrConts" required
-                            class="form-control" rows="9"
-                            style="flex: 1;"></textarea>
-                    </div>
-                    <div class="form-group d-flex align-items-center">
-                        <label for="ansrWan"
-                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
-                            답변완료
-                        </label>
-                        <select id="ansrWan" name="ansrWan" class="custom-select"
-                            style="height: 35px; font-size: 14px; width: 120px;">
-                            <option value="">선택</option>
-                            <option value="Y">Y. 답변완료</option>
-                            <option value="N">N. 진행중</option>
-                        </select>
-                    </div>
-                </div>
-            </form:form>
+					<div class="form-group d-flex align-items-start">
+					   <label for="qstnConts"
+					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+					      질문내용
+					   </label>
+					   <textarea id="qstnConts" name="qstnConts" required
+					      placeholder="" class="form-control" rows="5"
+					      style="flex: 1;"></textarea>
+					</div>
 
-        </div>
-    </div>
+	 				<div class="form-group d-flex align-items-start">
+					   <label for="ansrConts"
+					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+					      답변내용
+					   </label>
+					   <textarea id="ansrConts" name="ansrConts" required
+					      placeholder="" class="form-control" rows="9"
+					      style="flex: 1;"></textarea>
+					</div>
+	               <div class="form-group d-flex align-items-center">
+	                  <label for="ansrWan"
+	                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
+	                     답변완료</label>
+	                     <select id="ansrWan" name="ansrWan" class="custom-select"
+	                        style="height: 35px; font-size: 14px; width: 120px;">
+	                        <option value="">선택</option>
+	                        <option value="Y">Y. 답변완료</option>
+	                        <option value="N">N. 진행중</option>
+	                     </select>
+	               </div>
+				</div>
+			</form:form>
+		</div>
+		<div class="modal-footer"></div>
+	</div>
 </div>
 
 
@@ -2542,11 +2298,7 @@
 	    $("#asqSeq").val("") ;
 	    $("#asqdataArea").empty();
 	    $.ajax({
-<<<<<<< HEAD
-		   	url : '${pageContext.request.contextPath}' + '/mangr/ctl_asqList.do',
-=======
 		   	url : 'mangr/ctl_asqList.do',
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 		    type : 'post',
 		    data : {hospCdasq : sessionStorage.getItem('s_hospid')  , qstnTitle : $("#searchText").val() },
 			dataType : "json",
@@ -2620,11 +2372,7 @@
 	        // 등록 폼 초기화
 	        $.ajax({
 	            type: "post",
-<<<<<<< HEAD
-	            url: "${pageContext.request.contextPath}" + "/mangr/ctl_getHospmst.do",
-=======
 	            url: "/mangr/ctl_getHospmst.do",
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	            data: { hospCd: getCookie("hospid") },
 	            dataType: "json",
 	            success: function (data) {
@@ -2651,11 +2399,7 @@
 	        $("#regDtm").prop("readonly", false);
 	        $.ajax({
 	            type: "post",
-<<<<<<< HEAD
-	            url: "${pageContext.request.contextPath}" + "/mangr/selectAnsrInfo.do",
-=======
 	            url: "/mangr/selectAnsrInfo.do",
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2696,11 +2440,7 @@
 	        // 삭제 전에 ansrWan 상태 확인 후 처리
 	        $.ajax({
 	            type: "post",
-<<<<<<< HEAD
-	            url: "${pageContext.request.contextPath}" + "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
-=======
 	            url: "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2777,7 +2517,7 @@
 	    function execute() {
 	        $.ajax({
 	            type: "post",
-	            url: "${pageContext.request.contextPath}" + "/mangr/asqSaveAct.do",
+	            url: "/wnn_consult/mangr/asqSaveAct.do",
 	            data: formData,  // formData가 정의되어 있어야 함 
 	            dataType: "json",
 	            success: function (data) {
@@ -2804,11 +2544,7 @@
 
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-<<<<<<< HEAD
-  <div class="modal-dialog modal-lg" style="margin-top: 5px;"> <!-- 여기 추가 -->
-=======
   <div class="modal-dialog modal-lg" style="margin-top: -20px;"> <!-- 여기 추가 -->
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
     <div class="modal-content" style="max-height: 900px;"> <!-- 높이 제한 -->
       <div class="modal-header">
         <h5 class="modal-title" id="faqModalLabel">자주 묻는 질문 (FAQ)</h5>
@@ -3115,7 +2851,7 @@
         	
         	$.ajax({
         	    type: "POST",
-        	    url: "${pageContext.request.contextPath}" + "/user/loginChk.do",
+        	    url: CommonUtil.getContextPath() + "/user/loginChk.do",
         	    data: {
 			        hospCd: document.loginForm.hospid.value,
 			        userId: document.loginForm.userid.value,
@@ -3285,13 +3021,8 @@
       	
         	hosp_conact() ;
         	
-<<<<<<< HEAD
-        //	const url = "http://localhost:8080/user/";    
-        	const url = "https://winner797.co.kr/user/dashboard.do/"; 
-=======
         	const url = "http://localhost:8080/user/";    
         //	const url = "https://winner797.co.kr/user/dashboard.do/"; 
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
         	
             win_Check = window.open(url);            
             
@@ -3391,7 +3122,7 @@
 		function GetReportList() {	    
 		    $.ajax({
 		        type: "post",
-		        url: "${pageContext.request.contextPath}" + "/user/getReportList.do",
+		        url: "user/getReportList.do",
 		        data: { hospCd: sessionStorage.getItem('s_hospid') },
 		        dataType: "json",
 		        success: function (data) {
@@ -3507,7 +3238,7 @@
 	           if (/^\d{8}$/.test(hospCd)) {
 	              $.ajax({
 	                  type: "post",
-	                  url: "${pageContext.request.contextPath}" + "/user/selHospsumList.do",
+	                  url: "user/selHospsumList.do",
 	                  data: { hospCd: hospCd },
 	                  dataType: "json",
 	                  success: function (data) {
