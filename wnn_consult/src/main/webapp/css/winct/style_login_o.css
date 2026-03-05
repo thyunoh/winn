@@ -658,41 +658,62 @@
   transform: translateX(-86%); 
 }
 
-/* ── WinCheck+ 이미지 (e_clip2.svg) ── */
 .overlay-btn-i1 {
-  left: 3%;
-  top: 72%;
-  width: 35%;
-  height: 20%;
+  left: 4%;
+  top: 82%;
+  width: 210px;
+  height: 40px;
+  transform: none;
+}
+
+.overlay-btn-i2 {
+  left: 86.8%;
+  top: 32%;
+  width: 137px;
+  height: 27px;
+  transform: translateX(-86%); 
+}
+
+
+.overlay-btn-i3 {
+  left: 86.8%;
+  top: 76%;
+  width: 137px;
+  height: 27px;
+  transform: translateX(-86%); 
 }
 
 .overlay-btn-i4 {
   left: 62%;
-  top: 34%;
-  width: 30%;
-  height: 14%;
+  top: 33%;
+  width: 180px;
+  height: 28px;
+  transform: none;
 }
+
 
 .overlay-btn-i5 {
   left: 62%;
   top: 80%;
-  width: 30%;
-  height: 14%;
+  width: 165px;
+  height: 28px;
+  transform: none;
 }
 
-/* ── 고객센터 이미지 (e_clip3.svg) ── */
 .overlay-btn-i6 {
-  left: 54%;
-  top: 10%;
-  width: 44%;
-  height: 40%;
+  left: 90%;
+  top: 8%;
+  width: 220px;
+  height: 85px;
+  transform: none;
 }
 
 .overlay-btn-i7 {
-  left: 54%;
-  top: 54%;
-  width: 44%;
-  height: 38%;
+  left: 90%;
+  top: 55%;
+  width: 220px;
+  height: 85px;
+  transform: none;
 }
 
 .overlay-btn:hover {
@@ -824,7 +845,7 @@
     height: auto;
     display: block;
 }
-/* */ 
+/* */
 #contentArea {
     flex: 1;
     width: 100%;
@@ -833,3 +854,61 @@
     padding: 0 15px;
     box-sizing: border-box;
 }
+
+/* 자주찾는 서비스 */
+.bg-light-blue {
+    background-color: #e4eef7;
+    border-radius: 12px;
+    border: 1px solid #c2d8ec;
+}
+
+.service-card {
+    background: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    color: #333 !important;
+    text-decoration: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border: 1px solid #e4ecf4 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    transition: background-color 0.2s, box-shadow 0.2s;
+    min-height: 44px;
+    gap: 6px;
+}
+
+.service-card:hover {
+    background-color: #003366 !important;
+    box-shadow: 0 3px 10px rgba(0,51,102,0.2);
+}
+
+.service-card:hover .service-icon,
+.service-card:hover .service-label,
+.service-card:hover .service-arrow {
+    color: #fff !important;
+}
+
+.service-icon {
+    font-size: 1.3rem !important;
+    color: #3a3a3a !important;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.service-label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    white-space: nowrap;
+}
+
+.service-arrow {
+    font-size: 0.75rem !important;
+    color: #999 !important;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+/* 자주찾는 서비스 끝 */

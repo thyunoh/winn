@@ -5450,6 +5450,7 @@ a.close.disabled {
   content: none;
 }
 
+/*
 .modal-content {
   position: relative;
   display: flex;
@@ -5461,6 +5462,7 @@ a.close.disabled {
   border: 1px solid rgba(0, 0, 0, 0.2);
   outline: 0;
 }
+*/
 
 
 
@@ -9716,24 +9718,23 @@ a.text-dark:hover, a.text-dark:focus {
   }
 }
 
-/* kbs 추가 - 주석처리: position:absolute가 모든 모달(.modal-content)에 적용되어
-   회원가입/공지사항/1:1문의/FAQ 등 전체 모달이 상단으로 올라가는 원인이었음.
-   messageBox는 이미 modal-dialog-centered 클래스로 중앙 정렬됨 */
-/*
+/* kbs   추가 */
+/* Modal 변경 */
 .modal-content {
   position: absolute;
-  pointer-events: auto;
+  pointer-events: auto;             /* model close */
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%); /* 중앙 정렬 */
   background: #fff;
   padding: 20px;
   border-radius: 8px;
   min-width: 20%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  text-align: center;
+  text-align: center; 
+  /* width: 40%; */
+  
 }
-*/
 
 
 /* Modal 변경. */

@@ -33,17 +33,27 @@
 	href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
 	rel="stylesheet">
 
+<!-- 배포 시 버전 번호를 변경하면 브라우저 캐시 강제 갱신 -->
+<%
+    String cacheVer = "20260305003";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
+%>
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-<link href="/wnn_consult/css/winct/bootstrap.css" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style.css?v=123" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
+<link href="/wnn_consult/css/winct/bootstrap.css?v=<%=cacheVer%>" rel="stylesheet">
+<link href="/wnn_consult/css/winct/style.css?v=<%=cacheVer%>" rel="stylesheet">
+<link href="/wnn_consult/css/winct/style_login.css?v=<%=cacheVer%>" rel="stylesheet"> <!-- 로그인css  -->
 <!-- JavaScript -->
-<script type="text/javascript" src="/wnn_consult/js/winct/main.js"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/message.js"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/contact.js"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/loading.js"></script>
-<script type="text/javascript" src="/wnn_consult/js/winct/schcommons.js"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/main.js?v=<%=cacheVer%>"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/message.js?v=<%=cacheVer%>"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/contact.js?v=<%=cacheVer%>"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/loading.js?v=<%=cacheVer%>"></script>
+<script type="text/javascript" src="/wnn_consult/js/winct/schcommons.js?v=<%=cacheVer%>"></script>
+<!-- ★ CommonUtil (contextPath 등) - tiles 미사용 페이지이므로 직접 로드 -->
+<script type="text/javascript" src="${pageContext.request.contextPath}/asset/js/commonUtil.js?v=<%=cacheVer%>"></script>
+<script>
+    // tiles header.jsp와 동일하게 contextPath를 sessionStorage에 설정
+    sessionStorage.setItem("contextPath", '<c:out value="${pageContext.request.contextPath}"/>');
+</script>
 <!-- 리치 에디터  -->
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
@@ -238,23 +248,21 @@
 			
 					<!-- 슬라이드들 -->
 					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
-						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-				    	<!--<a href="https://winner797.net/detail.php?number=324" target="_blank">  -->
-							<a href="https://winner797.kr/lecture/?seq=1075" target="_blank">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<!--  	<a href="https://winner797.net/detail.php?number=324" target="_blank"> -->
+						      	<a href="https://winner797.kr/lecture/?seq=1075" target="_blank">
 								<img src="/wnn_consult/images/winct/image9.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 							</a>
 						</div>
 					</div>
-					
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-					<!-- 	<a href="https://winner797.net/detail.php?number=321" target="_blank">  -->
-							<a href="https://winner797.kr/lecture/?seq=1073" target="_blank">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<!--  	<a href="https://winner797.net/detail.php?number=321" target="_blank"> -->
+						     	<a href="https://winner797.kr/lecture/?seq=1073" target="_blank">
 								<img src="/wnn_consult/images/winct/image7.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 							</a>
 						</div>
 					</div>
-					
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="slide-image-container d-flex align-items-center w-100 h-100">
 							<img src="/wnn_consult/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
@@ -265,11 +273,10 @@
 							<img src="/wnn_consult/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
-					
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="d-flex align-items-center justify-content-center w-100 h-100">
-						<!-- 	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank">  -->
-							    <a href=" https://winner797.kr/lecture/?seq=1024&sort01=&page=1" target="_blank">
+						<!--  	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank"> -->
+						  	    <a href="https://winner797.kr/lecture/?seq=1024&sort01=&page=1" target="_blank"> 
 								<img src="/wnn_consult/images/winct/image5.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 							</a>
 						</div>
@@ -478,86 +485,12 @@
 							</div>
 
 							<!-- 이미지 배너 영역  #ccc -->
-							<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
-								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; ">
-									
-									
-               
-									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip2.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
-									<button type="button" class="btn overlay-btn overlay-btn-i1" onclick="winCheckOpen()"></button>	
-									<!--  
-									<button type="button" class="btn overlay-btn overlay-btn-i2" onclick="downloadFile()"></button>	
-									-->
-									<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" onclick="downloadFile()"></a>
-									<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button"></a>
-									<!-- 
-									<button type="button" class="btn overlay-btn overlay-btn-i3" onclick="winCheckOpen()"></button>
-									-->		
-									<!-- 왼쪽 이미지
-									<div
-										style="flex-basis: 70%; max-width: 60%; padding-right: 20px;">
-										<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip.svg"
-											alt="e_clip"
-											style="width: 500px; display: block; margin-bottom: 15px;">
-										<div style="text-align: left; margin-top: -75px; clear: both;">
-											<span
-												style="font-size: 14px; font-weight: bold; margin-left: 2px;">체계적인
-												컨설팅 분석평가 프로그램</span>
-										</div>
-										<div style="text-align: left;">
-											<span
-												style="font-size: 14px; font-weight: bold; margin-left: 2px;">데이터
-												기반으로 맞춤 솔루션</span>
-										</div>
-										<a onclick="winCheckOpen()" target="_blank"
-											rel="noopener noreferrer" class="program-button"
-											style="margin-left: 20px; height: 26px; margin-top: 15px; display: inline-flex; align-items: center; text-decoration: none;">
-											<span style="margin-left: 10px;">프로그램 바로가기</span> <span
-											class="arrow" style="margin-left: -30px;">→</span>
-										</a>
-									</div>
-
-									
-									<div class="right-img-group"
-										style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 1px;">
-										
-										<div class="program-block" style="margin-left: 30px;">
-											<div class="program-text">
-												<div class="program-title">컨설팅 소개</div>
-												<div class="program-desc">의료특화 전문교육</div>
-												<div class="program-desc">의료기관 전문컨설팅</div>
-												<a href="/path/to/consulting-intro.pdf" download
-													onclick="downloadFile()" class="program-button"
-													style="display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: -3px; text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
-													<span style="margin-left: -5px;">컨설팅소개서 다운로드</span> <span
-													class="arrow" style="margin-left: -2px;">→</span>
-												</a>
-											</div>
-										</div>
-
-										<div class="program-block" style="margin-left: 30px;">
-											<a href="https://winner797.net/" target="_blank"
-												rel="noopener noreferrer"> </a>
-
-											<div class="program-text" style="margin-top: -3px;">
-												<div class="program-title">온라인교육센터</div>
-												<div class="program-desc">효과적인 학습을 위한 교육</div>
-												<div class="program-desc">실전 가능한 팁과 전략 제공</div>
-
-												
-												<a href="https://winner797.net/" target="_blank"
-													rel="noopener noreferrer" class="program-button"
-													style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
-													<span>홈페이지 바로가기</span> <span class="arrow">&rarr;</span>
-												</a>
-											</div>
-										</div>
-
-									</div>
-									 -->
-								</div>
+							<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
+							<div class="image-btn-wrap" style="position: relative; width: 590px; height: 225px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
+								<img class="img-fluid" src="/wnn_consult/images/winct/e_clip2.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
+								<button type="button" class="btn overlay-btn overlay-btn-i1" style="left:5%; top:65%; width:35%; height:20%; background-color:transparent !important;" onclick="winCheckOpen()"></button>
+								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" style="left:60%; top:25%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
+								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" style="left:60%; top:75%; width:30%; height:14%; background-color:transparent !important;"></a>
 							</div>
 						</div>
 					</div>
@@ -671,75 +604,12 @@
 						
 						
 						
-						<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
-								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; ">
-									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip3.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
-									<button type="button" class="btn overlay-btn overlay-btn-i6" onclick="fnasq_main()"></button>	
-									<button type="button" class="btn overlay-btn overlay-btn-i7" onclick="loadFaqData()"></button>	
-								</div>	
+						<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
+						<div class="image-btn-wrap" style="position: relative; width: 590px; height: 220px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
+							<img class="img-fluid" src="/wnn_consult/images/winct/e_clip3.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
+							<button type="button" class="btn overlay-btn overlay-btn-i6" style="left:50%; top:10%; width:44%; height:30%;  !important;" onclick="fnasq_main()"></button>
+							<button type="button" class="btn overlay-btn overlay-btn-i7" style="left:50%; top:54%; width:44%; height:30%;  !important;" onclick="loadFaqData()"></button>
 						</div>			
-						<!-- 고객센터 
-						<div class="col-lg-4">
-							<div class="helpdesk">
-								<div class="bg-light box-p-10"
-									style="width: 635px; height: 60px; margin-top: 0px; position: relative; left: 5px;">
-									<div class="row text-center" style="margin-top: -7px;">
-										<div class="col-4 d-flex justify-content-center align-items-center">
-											<a href="#"
-												onclick= "ready_kakao();"
-												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;">
-												<img class="img-fluid"
-													src="/wnn_consult/images/winct/kakao.svg" alt="카카오상담"
-													style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.8rem; font-weight: bold;">카카오상담</span>
-											</a>
-										</div>
-										<div
-											class="col-3 d-flex justify-content-center align-items-center">
-											<a href="#" onclick="fnasq_main();"
-												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;"> <img class="img-fluid"
-												src="/wnn_consult/images/winct/headset.svg" alt="1대1상담"
-												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.8rem; font-weight: bold;">1:1 문의하기</span>
-											</a>
-										</div>
-										<div
-											class="col-4 d-flex justify-content-center align-items-center">
-											<a href="#" onclick="loadFaqData();"
-												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;"> <img class="img-fluid"
-												src="/wnn_consult/images/winct/faq.svg" alt="자주듣는질문"
-												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.8rem; font-weight: bold;">자주하는질문</span>
-											</a>
-										</div>
-									</div>
-									<div class="helpdeskHeader"
-										style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px; margin-top: 50px;">
-										<hr
-											style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 1cm;">
-										<h3 style="font-size: 22px; margin-bottom: 10px;">
-											고객센터 <span
-												style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
-										</h3>
-										<p
-											style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">02-6953-2452</p>
-										<p style="font-size: 14px; color: #666; margin-top: 0px;">
-											<strong>월-금</strong> 09:00 ~ 18:00<span
-												style="margin: 0 5px;">|</span> <strong>점심시간</strong> 12:00
-											~ 13:00<span style="margin: 0 5px;">|</span> <strong>주말/공휴일
-												휴무</strong>
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-						-->
-						<!--  -->
 					</div>
 				</div>
 
@@ -1349,7 +1219,7 @@
         	
 	        	$.ajax( {
 	        		type : "post" ,                      
-	        		url  : CommonUtil.getContextPath() + "/user/MemberSaveAct.do",
+	        		url  : "${pageContext.request.contextPath}" + "/user/MemberSaveAct.do",
 	        		data : formData,
 	        		dataType : "json",
 	        		success : function(data) {    
@@ -1376,7 +1246,7 @@
 	        	}
 	        	$.ajax( {
 	        		type : "post",
-	        		url :  "/user/MberDupChk.do",
+	        		url :  "${pageContext.request.contextPath}" + "/user/MberDupChk.do",
 	        		data : {hospCd : $("#hospCd").val(),email : $("#email").val()},
 	        		dataType : "json",
 	        		success : function(data) {    
@@ -1400,7 +1270,7 @@
 	        	const modalName = document.getElementById('modalname');
 	            modalName.textContent = "(필수)" + headerValue; 
 	            $.ajax( {
-	        		url : CommonUtil.getContextPath() + "/base/ctl_selCommDtlInfo.do",
+	        		url : "${pageContext.request.contextPath}" + "/base/ctl_selCommDtlInfo.do",
 	        		type : "post",
 	        		data : {codeCd : codeCd},
 	        		dataType : "json",
@@ -1418,7 +1288,7 @@
 	        		}
 	        	});
 	            
-	            switch(code_cd){
+	            switch(codeCd){
 	        	    case "perUseCd":
 	        	    	confirm_red[0] = 'Y'; // 배열에 '1' 추가
 	        	    	break;
@@ -1498,8 +1368,8 @@
 
 	<div class="modal fade" id="passserachModal" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-		<div class="modal-dialog modal-lg" style="max-width: 500px;">
-			<div class="modal-content rounded-3 shadow-lg">
+		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 50px;">
+			<div class="modal-content rounded-3 shadow-lg" style="min-height: 300px; padding: 20px;">
 				<form:form commandName="DTO" id="pwserchregForm" name="pwregForm" method="post">
 					<h3 class="text-center">아이디찾기 비밀번호 초기화</h3>
 					<div class="pass-box w-70">
@@ -1541,7 +1411,7 @@
 		$("#userId").val("") ;
 		$.ajax( {
 			type : "post",
-			url : CommonUtil.getContextPath() + "/popup/login_usersearch.do",
+			url : "${pageContext.request.contextPath}" + "/popup/login_usersearch.do",
 			data : {userNm : $("#userNm1").val() , email : $("#email1").val() },
 			dataType : "json",
 			success : function(data) {
@@ -1562,7 +1432,7 @@
 
 	    var popupwidth  = 450;
 	    var popupheight = 350;
-	    var url = CommonUtil.getContextPath() + "/popup/login_pwdchg.do";
+	    var url = "${pageContext.request.contextPath}" + "/popup/login_pwdchg.do";
 	    
 	    // 모니터 해상도를 기준으로 중앙 위치 계산
 	    var screenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
@@ -1586,8 +1456,8 @@
 	<div class="modal fade" id="pwresetForm" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true"
 		style="margin-left: -1px;">
-		<div class="modal-dialog modal-lg" style="max-width: 500px;">
-			<div class="modal-content rounded-3 shadow-lg">
+		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 20px;">
+			<<div class="modal-content rounded-3 shadow-lg" style="min-height: 380px; padding: 20px;">
 				<form:form commandName="DTO" id="pwresetregForm"
 					name="pwresetregForm" method="post">
 					<h4>비밀번호 초기화 변경</h4>
@@ -1645,7 +1515,7 @@
 		var formData = $("form[name='pwresetregForm']").serialize();
 		$.ajax( {
 			type : "post",
-			url : CommonUtil.getContextPath() + "/base/pwdchgAct.do",
+			url : "${pageContext.request.contextPath}" + "/base/pwdchgAct.do",
 			data : {hospCd  :  $("#hospCd1").val() , userId    : $("#userId1").val() , 
 				    passWd  :  $("#passWd1").val() , bfPassWd  : $("#bfPassWd1").val()
 				  },
@@ -1674,7 +1544,7 @@
 
 		$.ajax( {
 			type : "post",
-			url : CommonUtil.getContextPath() + "/base/pwdresetAct.do",
+			url : "${pageContext.request.contextPath}" + "/base/pwdresetAct.do",
 			data : {hospCd  :  $("#hospCd1").val() , userId : $("#userId1").val()},
 			dataType : "json",
 			success : function(data) {   
@@ -1703,52 +1573,61 @@
 
 	<!-- 공지사항 모달 -->
 	<div id="adminModal" class="modal fade" data-backdrop="static"
-		data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
-		<div class="modal-dialog modal-lg" style="max-width: 800px;">
-			<div class="modal-content"
-				style="height: 80%; display: flex; flex-direction: column; position: relative; border-radius: 10px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);">
-				<div class="modal-header" style="height: 38px; padding: 5px 10px;">
-					<span id="notiname" style="font-size: 20px; color: black;"></span>
-					<button type="button" class="btn btn-outline-dark btn-sm"
-						onclick="readsaveAdminModal(document.getElementById('notiSeq').value, document.getElementById('fileGb').value, this)">닫기</button>
+	    data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+	    <div class="modal-dialog modal-lg" style="max-width: 800px; margin: 30px auto;">
+	        <div class="modal-content"
+	            style="display: flex; flex-direction: column; position: relative; border-radius: 10px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1); max-height: calc(100vh - 60px);">
+	            
+	            <!-- 헤더 -->
+				<div class="modal-header"
+				    style="padding: 10px 15px; display: flex; align-items: center; justify-content: flex-start; border-bottom: 1px solid #dee2e6; flex-shrink: 0;">
+				    <span id="notiname" style="font-size: 20px; color: black;">공지사항</span>
 				</div>
-				<form:form commandName="DTO" id="regForm" name="regForm"
-					method="post" enctype="multipart/form-data"
-					style="flex-grow: 1; display: flex; flex-direction: column;">
-					<input type="hidden" name="iud" id="iud" />
-					<input type="hidden" name="notiSeq" id="notiSeq" />
-					<input type="hidden" name="fileGb" id="fileGb" />
-
-					<div class="modal-body" style="overflow-y: auto; padding: 20px;">
-						<div class="mb-0">
-							<label for="notiTitle" class="form-label font-weight: bold;"
-								style="font-size: 15px !important; display: block; text-align: left;">제목</label>
-							<textarea  name="notiTitle" id="notiTitle" rows="2"
-								class="form-control" placeholder="제목을 입력하세요." style="font-size: 15px;" > </textarea>
-						</div>
-
-						<div class="mb-0">
-							<label for="notiContent" class="form-label font-weight: bold;"
-								style="font-size: 15px !important; display: block; text-align: left;">내용</label>
-							<textarea class="form-control" name="notiContent"
-								id="notiContent" rows="13" placeholder="내용을 입력하세요."
-								style="resize: none; font-size: 14px;"></textarea>
-						</div>
-						<h5 class="mt-3">첨부 문서</h5>
-						<div class="table-container"
-							style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
-							<div style="max-height: 150px; overflow-y: auto;">
-								<table id="fileTable"
-									class="display nowrap table table-hover table-bordered"
-									style="width: 100%;">
-								</table>
-							</div>
-						</div>
-						<!-- 파일있으면 파일 다운로드 구현 부분  -->
-					</div>
-				</form:form>
-			</div>
-		</div>
+	            <!-- 폼 (body만 포함) -->
+	            <form:form commandName="DTO" id="regForm" name="regForm"
+	                method="post" enctype="multipart/form-data"
+	                style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+	                <input type="hidden" name="iud" id="iud" />
+	                <input type="hidden" name="notiSeq" id="notiSeq" />
+	                <input type="hidden" name="fileGb" id="fileGb" />
+	                <div class="modal-body" style="overflow-y: auto; padding: 20px; flex-grow: 1; min-height: 0;">
+	                    <div class="mb-0">
+	                        <label for="notiTitle" class="form-label"
+	                            style="font-size: 15px; font-weight: bold; display: block; text-align: left;">제목</label>
+	                        <textarea name="notiTitle" id="notiTitle" rows="2"
+	                            class="form-control" placeholder="제목을 입력하세요."
+	                            style="font-size: 15px; resize: none;"></textarea>
+	                    </div>
+	                    <div class="mb-0 mt-2">
+	                        <label for="notiContent" class="form-label"
+	                            style="font-size: 15px; font-weight: bold; display: block; text-align: left;">내용</label>
+	                        <textarea class="form-control" name="notiContent"
+	                            id="notiContent" rows="10" placeholder="내용을 입력하세요."
+	                            style="resize: none; font-size: 14px;"></textarea>
+	                    </div>
+	                    <h5 class="mt-3">첨부 문서</h5>
+	                    <div class="table-container"
+	                        style="width: 100%; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+	                        <div style="max-height: 200px; overflow-y: auto;">
+	                            <table id="fileTable"
+	                                class="display nowrap table table-hover table-bordered"
+	                                style="width: 100%; margin-bottom: 0;">
+	                            </table>
+	                        </div>
+	                    </div>
+	                </div>
+	            </form:form>
+	
+	            <!-- 닫기 버튼 - form 밖에 위치 -->
+	            <div class="modal-footer"
+	                style="display: flex; justify-content: center; border-top: 1px solid #dee2e6; padding: 10px; flex-shrink: 0;">
+	                <button type="button" class="btn btn-outline-dark btn-sm"
+	                    style="width: 120px;"
+	                    onclick="readsaveAdminModal(document.getElementById('notiSeq').value, document.getElementById('fileGb').value, this)">닫기</button>
+	            </div>
+	
+	        </div>
+	    </div>
 	</div>
 	<!-- 공지사항 스크립트시작 -->
 	<script>
@@ -1790,7 +1669,7 @@
 		
 		$(targetArea).empty();
 		$.ajax({
-			url: CommonUtil.getContextPath() + '/mangr/ctl_notiList.do',
+			url: '${pageContext.request.contextPath}' + '/mangr/ctl_notiList.do',
 			type: 'post',
 			data: {
 				fileGb: fileGb,
@@ -1932,7 +1811,7 @@
 	function showfileModal(notiSeq, fileGb) {
 	    $.ajax({
 	        type: "post",
-	        url: "/mangr/fileCdList.do",
+	        url: "${pageContext.request.contextPath}" + "/mangr/fileCdList.do",
 	        data: { fileGb: fileGb, fileSeq: notiSeq },
 	        dataType: "json",
 	        success: function (data) {
@@ -2032,7 +1911,7 @@
 	function readsaveAdminModal(notiSeq, fileGb, button) {
 	    $(button).prop('disabled', true);
 	    $.ajax({
-	        url: CommonUtil.getContextPath() + '/mangr/read_noticnt.do',
+	        url: '${pageContext.request.contextPath}' + '/mangr/read_noticnt.do',
 	        type: 'post',
 	        data: { notiSeq: notiSeq, fileGb: fileGb },
 	        dataType: "json",
@@ -2098,7 +1977,7 @@
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
 	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
 	<div class="modal-dialog modal-lg"
-		style="max-width: 900px; width: 90%;">
+		style="max-width: 900px; width: 90%; margin-top: 40px;">
 		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
 		<div class="modal-content shadow-lg rounded-4"
 			style="height: auto; max-height: 90vh; border: none;">
@@ -2172,84 +2051,88 @@
 	</div>
 </div>
 
-<!---->
-<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
-	data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-	<div
-		class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
-		<div class="modal-content"
-			style="height: 70%; display: flex; flex-direction: column;">
-			<div class="modal-header  bg-light">
-				<h6 class="modal-title">문의 등록</h6>
-				<div class="form-row">
-					<div class="col-sm-12 mb-2" style="text-align: right;">
-						<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
-						</button>
-						<button type="button" class="btn btn-outline-dark"
-							data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
-						</button>
-					</div>
-				</div>
-			</div>
-			<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-				method="post" enctype="multipart/form-data">
-				<div class="modal-body text-left flex-fill overflow-auto">
-					<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-					<input type="hidden" name="iudasq"      id="iudasq" /> 
-					<input type="hidden" name="asqSeq"      id="asqSeq" /> 
-					<input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" /> 
-					<input type="hidden" name="qstnWan"     id="qstnWan"   value="Y" /> 
-					<input type="hidden" name="hospCdasq"   id="hospCdasq" /> 
-					<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
-					<input type="hidden" name="regUserasq"  id="regUserasq" /> 
-					<input type="hidden" name="updUserasq"  id="updUserasq" />
+<div class="modal fade" id="asq_main" tabindex="-1"
+    data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+        style="width: 50vw; max-width: 900px; min-width: 400px; margin-top: -110px;">
+        <div class="modal-content"
+            style="max-height: calc(100vh - 100px); display: flex; flex-direction: column;">
+            
+            <!-- 헤더 -->
+            <div class="modal-header bg-light" style="flex-shrink: 0;">
+                <h6 class="modal-title">문의 등록</h6>
+                <div class="form-row">
+                    <div class="col-sm-12 mb-2" style="text-align: right;">
+                        <button type="button" id="save_btn" class="btn btn-outline-info" 
+                            onClick="fnasq_SaveProc()">저장 <i class="far fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-dark"
+                            data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-	               <div class="form-group d-flex align-items-start">
-					   <label for="qstnTitle"
-					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
-					      질문제목
-					   </label>
-					   <textarea id="qstnTitle" name="qstnTitle" required
-					      placeholder="" class="form-control" rows="2"
-					      style="flex: 1;"></textarea>
-					</div>
+            <!-- 폼 바디 -->
+            <form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
+                method="post" enctype="multipart/form-data"
+                style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+                <div class="modal-body text-left" style="overflow-y: auto; flex-grow: 1; min-height: 0;">
+                    <input type="hidden" name="iudasq"      id="iudasq" />
+                    <input type="hidden" name="asqSeq"      id="asqSeq" />
+                    <input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" />
+                    <input type="hidden" name="qstnWan"     id="qstnWan"   value="Y" />
+                    <input type="hidden" name="hospCdasq"   id="hospCdasq" />
+                    <input type="hidden" name="hospUuidasq" id="hospUuidasq" />
+                    <input type="hidden" name="regUserasq"  id="regUserasq" />
+                    <input type="hidden" name="updUserasq"  id="updUserasq" />
 
-					<div class="form-group d-flex align-items-start">
-					   <label for="qstnConts"
-					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
-					      질문내용
-					   </label>
-					   <textarea id="qstnConts" name="qstnConts" required
-					      placeholder="" class="form-control" rows="5"
-					      style="flex: 1;"></textarea>
-					</div>
+                    <div class="form-group d-flex align-items-start">
+                        <label for="qstnTitle"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; 
+                            width: 100px; min-width: 100px; margin-right: 10px;">
+                            질문제목
+                        </label>
+                        <textarea id="qstnTitle" name="qstnTitle" required
+                            class="form-control" rows="2"
+                            style="flex: 1;"></textarea>
+                    </div>
+                    <div class="form-group d-flex align-items-start">
+                        <label for="qstnConts"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; 
+                            width: 100px; min-width: 100px; margin-right: 10px;">
+                            질문내용
+                        </label>
+                        <textarea id="qstnConts" name="qstnConts" required
+                            class="form-control" rows="5"
+                            style="flex: 1;"></textarea>
+                    </div>
+                    <div class="form-group d-flex align-items-start">
+                        <label for="ansrConts"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
+                            답변내용
+                        </label>
+                        <textarea id="ansrConts" name="ansrConts" required
+                            class="form-control" rows="9"
+                            style="flex: 1;"></textarea>
+                    </div>
+                    <div class="form-group d-flex align-items-center">
+                        <label for="ansrWan"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
+                            답변완료
+                        </label>
+                        <select id="ansrWan" name="ansrWan" class="custom-select"
+                            style="height: 35px; font-size: 14px; width: 120px;">
+                            <option value="">선택</option>
+                            <option value="Y">Y. 답변완료</option>
+                            <option value="N">N. 진행중</option>
+                        </select>
+                    </div>
+                </div>
+            </form:form>
 
-	 				<div class="form-group d-flex align-items-start">
-					   <label for="ansrConts"
-					      style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
-					      답변내용
-					   </label>
-					   <textarea id="ansrConts" name="ansrConts" required
-					      placeholder="" class="form-control" rows="9"
-					      style="flex: 1;"></textarea>
-					</div>
-	               <div class="form-group d-flex align-items-center">
-	                  <label for="ansrWan"
-	                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; margin-right: 10px;">
-	                     답변완료</label>
-	                     <select id="ansrWan" name="ansrWan" class="custom-select"
-	                        style="height: 35px; font-size: 14px; width: 120px;">
-	                        <option value="">선택</option>
-	                        <option value="Y">Y. 답변완료</option>
-	                        <option value="N">N. 진행중</option>
-	                     </select>
-	               </div>
-				</div>
-			</form:form>
-		</div>
-		<div class="modal-footer"></div>
-	</div>
+        </div>
+    </div>
 </div>
 
 
@@ -2301,7 +2184,7 @@
 	    $("#asqSeq").val("") ;
 	    $("#asqdataArea").empty();
 	    $.ajax({
-		   	url : 'mangr/ctl_asqList.do',
+		   	url : '${pageContext.request.contextPath}' + '/mangr/ctl_asqList.do',
 		    type : 'post',
 		    data : {hospCdasq : sessionStorage.getItem('s_hospid')  , qstnTitle : $("#searchText").val() },
 			dataType : "json",
@@ -2375,7 +2258,7 @@
 	        // 등록 폼 초기화
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/ctl_getHospmst.do",
+	            url: "${pageContext.request.contextPath}" + "/mangr/ctl_getHospmst.do",
 	            data: { hospCd: getCookie("hospid") },
 	            dataType: "json",
 	            success: function (data) {
@@ -2387,7 +2270,7 @@
 	            }
 	        });
 	        document.getElementById("asq_regForm").reset();
-	        setCurrDate("regDtm");
+	      //  setCurrDate("regDtm");
 	        $("#ansrConts").prop("readonly", "true");
 	        $("#ansrWan").css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
 	        $("#save_btn").show(); // 답변내용 보이기
@@ -2402,7 +2285,7 @@
 	        $("#regDtm").prop("readonly", false);
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/selectAnsrInfo.do",
+	            url: "${pageContext.request.contextPath}" + "/mangr/selectAnsrInfo.do",
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2443,7 +2326,7 @@
 	        // 삭제 전에 ansrWan 상태 확인 후 처리
 	        $.ajax({
 	            type: "post",
-	            url: "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
+	            url: "${pageContext.request.contextPath}" + "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2520,7 +2403,7 @@
 	    function execute() {
 	        $.ajax({
 	            type: "post",
-	            url: "/wnn_consult/mangr/asqSaveAct.do",
+	            url: "${pageContext.request.contextPath}" + "/mangr/asqSaveAct.do",
 	            data: formData,  // formData가 정의되어 있어야 함 
 	            dataType: "json",
 	            success: function (data) {
@@ -2547,7 +2430,7 @@
 
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" style="margin-top: -20px;"> <!-- 여기 추가 -->
+  <div class="modal-dialog modal-lg" style="margin-top: 5px;"> <!-- 여기 추가 -->
     <div class="modal-content" style="max-height: 900px;"> <!-- 높이 제한 -->
       <div class="modal-header">
         <h5 class="modal-title" id="faqModalLabel">자주 묻는 질문 (FAQ)</h5>
@@ -2854,7 +2737,7 @@
         	
         	$.ajax({
         	    type: "POST",
-        	    url: CommonUtil.getContextPath() + "/user/loginChk.do",
+        	    url: "${pageContext.request.contextPath}" + "/user/loginChk.do",
         	    data: {
 			        hospCd: document.loginForm.hospid.value,
 			        userId: document.loginForm.userid.value,
@@ -3025,8 +2908,8 @@
         	hosp_conact() ;
         	
         //	const url = "http://localhost:8080/user/";    
-        	const url = "https://winner797.co.kr/user/dashboard.do";
-
+        	const url = "https://winner797.co.kr/user/dashboard.do/"; 
+        	
             win_Check = window.open(url);            
             
             win_Check.addEventListener('unload', () => {
@@ -3125,7 +3008,7 @@
 		function GetReportList() {	    
 		    $.ajax({
 		        type: "post",
-		        url: "user/getReportList.do",
+		        url: "${pageContext.request.contextPath}" + "/user/getReportList.do",
 		        data: { hospCd: sessionStorage.getItem('s_hospid') },
 		        dataType: "json",
 		        success: function (data) {
@@ -3241,7 +3124,7 @@
 	           if (/^\d{8}$/.test(hospCd)) {
 	              $.ajax({
 	                  type: "post",
-	                  url: "user/selHospsumList.do",
+	                  url: "${pageContext.request.contextPath}" + "/user/selHospsumList.do",
 	                  data: { hospCd: hospCd },
 	                  dataType: "json",
 	                  success: function (data) {
