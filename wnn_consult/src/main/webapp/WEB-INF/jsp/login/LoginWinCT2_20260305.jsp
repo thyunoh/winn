@@ -1929,7 +1929,7 @@
 	function showfileModal(notiSeq, fileGb) {
 	    $.ajax({
 	        type: "post",
-	        url: "/mangr/fileCdList.do",
+	        url:  CommonUtil.getContextPath() + "/mangr/fileCdList.do",
 	        data: { fileGb: fileGb, fileSeq: notiSeq },
 	        dataType: "json",
 	        success: function (data) {
