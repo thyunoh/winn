@@ -39,15 +39,9 @@
 %>
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-<<<<<<< HEAD
 <link href="/wnn_consult/css/winct/bootstrap.css?v=<%=cacheVer%>" rel="stylesheet">
 <link href="/wnn_consult/css/winct/style.css?v=<%=cacheVer%>" rel="stylesheet">
 <link href="/wnn_consult/css/winct/style_login.css?v=<%=cacheVer%>" rel="stylesheet"> <!-- 로그인css  -->
-=======
-<link href="/wnn_consult/css/winct/bootstrap.css" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style.css?v=123" rel="stylesheet">
-<link href="/wnn_consult/css/winct/style_login.css?v=123" rel="stylesheet"> <!-- 로그인css  -->
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 <!-- JavaScript -->
 <script type="text/javascript" src="/wnn_consult/js/winct/main.js?v=<%=cacheVer%>"></script>
 <script type="text/javascript" src="/wnn_consult/js/winct/message.js?v=<%=cacheVer%>"></script>
@@ -491,95 +485,12 @@
 							</div>
 
 							<!-- 이미지 배너 영역  #ccc -->
-<<<<<<< HEAD
 							<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
 							<div class="image-btn-wrap" style="position: relative; width: 590px; height: 225px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
 								<img class="img-fluid" src="/wnn_consult/images/winct/e_clip2.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
 								<button type="button" class="btn overlay-btn overlay-btn-i1" style="left:5%; top:65%; width:35%; height:20%; background-color:transparent !important;" onclick="winCheckOpen()"></button>
 								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" style="left:60%; top:25%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
 								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" style="left:60%; top:75%; width:30%; height:14%; background-color:transparent !important;"></a>
-=======
-							<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
-								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; ">
-									
-									
-               
-									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip2.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
-									<button type="button" class="btn overlay-btn overlay-btn-i1" onclick="winCheckOpen()"></button>	
-									<!--  
-									<button type="button" class="btn overlay-btn overlay-btn-i2" onclick="downloadFile()"></button>	
-									-->
-									<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" onclick="downloadFile()"></a>
-									<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button"></a>
-									<!-- 
-									<button type="button" class="btn overlay-btn overlay-btn-i3" onclick="winCheckOpen()"></button>
-									-->		
-									<!-- 왼쪽 이미지
-									<div
-										style="flex-basis: 70%; max-width: 60%; padding-right: 20px;">
-										<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip.svg"
-											alt="e_clip"
-											style="width: 500px; display: block; margin-bottom: 15px;">
-										<div style="text-align: left; margin-top: -75px; clear: both;">
-											<span
-												style="font-size: 14px; font-weight: bold; margin-left: 2px;">체계적인
-												컨설팅 분석평가 프로그램</span>
-										</div>
-										<div style="text-align: left;">
-											<span
-												style="font-size: 14px; font-weight: bold; margin-left: 2px;">데이터
-												기반으로 맞춤 솔루션</span>
-										</div>
-										<a onclick="winCheckOpen()" target="_blank"
-											rel="noopener noreferrer" class="program-button"
-											style="margin-left: 20px; height: 26px; margin-top: 15px; display: inline-flex; align-items: center; text-decoration: none;">
-											<span style="margin-left: 10px;">프로그램 바로가기</span> <span
-											class="arrow" style="margin-left: -30px;">→</span>
-										</a>
-									</div>
-
-									
-									<div class="right-img-group"
-										style="flex-basis: 50%; max-width: 50%; padding-right: 20px; margin-left: -170px; margin-top: 1px;">
-										
-										<div class="program-block" style="margin-left: 30px;">
-											<div class="program-text">
-												<div class="program-title">컨설팅 소개</div>
-												<div class="program-desc">의료특화 전문교육</div>
-												<div class="program-desc">의료기관 전문컨설팅</div>
-												<a href="/path/to/consulting-intro.pdf" download
-													onclick="downloadFile()" class="program-button"
-													style="display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: -3px; text-decoration: none; padding: 10px 20px; font-size: 12px; line-height: 1; white-space: nowrap;">
-													<span style="margin-left: -5px;">컨설팅소개서 다운로드</span> <span
-													class="arrow" style="margin-left: -2px;">→</span>
-												</a>
-											</div>
-										</div>
-
-										<div class="program-block" style="margin-left: 30px;">
-											<a href="https://winner797.net/" target="_blank"
-												rel="noopener noreferrer"> </a>
-
-											<div class="program-text" style="margin-top: -3px;">
-												<div class="program-title">온라인교육센터</div>
-												<div class="program-desc">효과적인 학습을 위한 교육</div>
-												<div class="program-desc">실전 가능한 팁과 전략 제공</div>
-
-												
-												<a href="https://winner797.net/" target="_blank"
-													rel="noopener noreferrer" class="program-button"
-													style="display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; text-decoration: none; padding: 10px 20px; vertical-align: middle; font-size: 12px; line-height: 1; white-space: nowrap;">
-													<span>홈페이지 바로가기</span> <span class="arrow">&rarr;</span>
-												</a>
-											</div>
-										</div>
-
-									</div>
-									 -->
-								</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 							</div>
 						</div>
 					</div>
@@ -603,8 +514,6 @@
 										data-bs-toggle="tab" href="#tab-pane-3">심사방 </a> <a
 										class="nav-item nav-link px-4 py-2 fw-bold text-muted text-center flex-fill"
 										data-bs-toggle="tab" href="#tab-pane-4">소식지 </a>
-<<<<<<< HEAD
-=======
 								</div>
 
 								<!-- 탭 콘텐츠 -->
@@ -688,168 +597,9 @@
 										</div>
 									</div>
 									
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
-								</div>
-<<<<<<< HEAD
-=======
-							</div>
-						</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
-
-<<<<<<< HEAD
-								<!-- 탭 콘텐츠 -->
-								<div class="tab-content">
-									<!-- 전체 -->
-									<div class="tab-pane fade active show" id="tab-pane-1">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-=======
-						
-						
-						
-						<div class="image-layout"
-								style="display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #999; border-radius: 12px; box-sizing: border-box; background-color: #fff; flex-shrink: 0; min-width: 590px; max-width: 590px; max-height: 220px;">
-								<div class="image-layout"
-									style="display: flex; justify-content: space-between; align-items: flex-start; ">
-									<img class="img-fluid left-img" src="/wnn_consult/images/winct/e_clip3.svg"	alt="e_clip" style="width: 590px; height: 220px; display: block; margin-bottom: 15px;">
-									<button type="button" class="btn overlay-btn overlay-btn-i6" onclick="fnasq_main()"></button>	
-									<button type="button" class="btn overlay-btn overlay-btn-i7" onclick="loadFaqData()"></button>	
-								</div>	
-						</div>			
-						<!-- 고객센터 
-						<div class="col-lg-4">
-							<div class="helpdesk">
-								<div class="bg-light box-p-10"
-									style="width: 635px; height: 60px; margin-top: 0px; position: relative; left: 5px;">
-									<div class="row text-center" style="margin-top: -7px;">
-										<div class="col-4 d-flex justify-content-center align-items-center">
-											<a href="#"
-												onclick= "ready_kakao();"
-												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;">
-												<img class="img-fluid"
-													src="/wnn_consult/images/winct/kakao.svg" alt="카카오상담"
-													style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.8rem; font-weight: bold;">카카오상담</span>
-											</a>
-										</div>
-										<div
-											class="col-3 d-flex justify-content-center align-items-center">
-											<a href="#" onclick="fnasq_main();"
-												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;"> <img class="img-fluid"
-												src="/wnn_consult/images/winct/headset.svg" alt="1대1상담"
-												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.8rem; font-weight: bold;">1:1 문의하기</span>
-											</a>
-										</div>
-										<div
-											class="col-4 d-flex justify-content-center align-items-center">
-											<a href="#" onclick="loadFaqData();"
-												class="d-flex align-items-center text-dark"
-												style="text-decoration: none;"> <img class="img-fluid"
-												src="/wnn_consult/images/winct/faq.svg" alt="자주듣는질문"
-												style="height: 30px; margin-right: 8px; margin-top: 7px;">
-												<span style="font-size: 0.8rem; font-weight: bold;">자주하는질문</span>
-											</a>
-										</div>
-									</div>
-									<div class="helpdeskHeader"
-										style="text-align: left; font-family: Arial, sans-serif; margin-left: 20px; margin-top: 50px;">
-										<hr
-											style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 1cm;">
-										<h3 style="font-size: 22px; margin-bottom: 10px;">
-											고객센터 <span
-												style="font-size: 12px; color: #888; margin-left: 5px;">CUSTOMER</span>
-										</h3>
-										<p
-											style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">02-6953-2452</p>
-										<p style="font-size: 14px; color: #666; margin-top: 0px;">
-											<strong>월-금</strong> 09:00 ~ 18:00<span
-												style="margin: 0 5px;">|</span> <strong>점심시간</strong> 12:00
-											~ 13:00<span style="margin: 0 5px;">|</span> <strong>주말/공휴일
-												휴무</strong>
-										</p>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
-									</div>
-									<!-- 공지사항 -->
-									<div class="tab-pane fade" id="tab-pane-2">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable1" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea1">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-									<!-- 심사방 -->
-									<div class="tab-pane fade" id="tab-pane-3">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable2" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea2">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-
-									<!-- 소식지 -->
-									
-									<div class="tab-pane fade" id="tab-pane-4">
-										<div class="scroll-table-container"
-											style="max-height: 130px; overflow-y: auto;">
-											<table class="notice-table table table-bordered" id="noticeTable3" style="font-size: 14px;">
-												<colgroup>
-													<col style="width: 100px"> 
-												    <col style="width: 350px"> 
-													<col style="width: 120px">
-													<col style="width: 10px">
-												</colgroup>
-												<tbody id="noticeArea3">
-													<tr>
-														<td colspan="4" style="font-weight: bold;">&nbsp;</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-									</div>
-									
 								</div>
 							</div>
 						</div>
-<<<<<<< HEAD
 
 						
 						
@@ -860,10 +610,6 @@
 							<button type="button" class="btn overlay-btn overlay-btn-i6" style="left:50%; top:10%; width:44%; height:30%;  !important;" onclick="fnasq_main()"></button>
 							<button type="button" class="btn overlay-btn overlay-btn-i7" style="left:50%; top:54%; width:44%; height:30%;  !important;" onclick="loadFaqData()"></button>
 						</div>			
-=======
-						-->
-						<!--  -->
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 					</div>
 				</div>
 
@@ -1622,13 +1368,8 @@
 
 	<div class="modal fade" id="passserachModal" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-<<<<<<< HEAD
 		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 50px;">
 			<div class="modal-content rounded-3 shadow-lg" style="min-height: 300px; padding: 20px;">
-=======
-		<div class="modal-dialog modal-lg" style="max-width: 500px;">
-			<div class="modal-content rounded-3 shadow-lg">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 				<form:form commandName="DTO" id="pwserchregForm" name="pwregForm" method="post">
 					<h3 class="text-center">아이디찾기 비밀번호 초기화</h3>
 					<div class="pass-box w-70">
@@ -1715,13 +1456,8 @@
 	<div class="modal fade" id="pwresetForm" tabindex="-1"
 		data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true"
 		style="margin-left: -1px;">
-<<<<<<< HEAD
 		<div class="modal-dialog modal-lg" style="max-width: 500px; margin-top: 20px;">
 			<<div class="modal-content rounded-3 shadow-lg" style="min-height: 380px; padding: 20px;">
-=======
-		<div class="modal-dialog modal-lg" style="max-width: 500px;">
-			<div class="modal-content rounded-3 shadow-lg">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 				<form:form commandName="DTO" id="pwresetregForm"
 					name="pwresetregForm" method="post">
 					<h4>비밀번호 초기화 변경</h4>
@@ -1837,7 +1573,6 @@
 
 	<!-- 공지사항 모달 -->
 	<div id="adminModal" class="modal fade" data-backdrop="static"
-<<<<<<< HEAD
 	    data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
 	    <div class="modal-dialog modal-lg" style="max-width: 800px; margin: 30px auto;">
 	        <div class="modal-content"
@@ -1847,18 +1582,7 @@
 				<div class="modal-header"
 				    style="padding: 10px 15px; display: flex; align-items: center; justify-content: flex-start; border-bottom: 1px solid #dee2e6; flex-shrink: 0;">
 				    <span id="notiname" style="font-size: 20px; color: black;">공지사항</span>
-=======
-		data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
-		<div class="modal-dialog modal-lg" style="max-width: 800px;">
-			<div class="modal-content"
-				style="height: 80%; display: flex; flex-direction: column; position: relative; border-radius: 10px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);">
-				<div class="modal-header" style="height: 38px; padding: 5px 10px;">
-					<span id="notiname" style="font-size: 20px; color: black;"></span>
-					<button type="button" class="btn btn-outline-dark btn-sm"
-						onclick="readsaveAdminModal(document.getElementById('notiSeq').value, document.getElementById('fileGb').value, this)">닫기</button>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
-				</div>
-<<<<<<< HEAD
+				</div>	
 	            <!-- 폼 (body만 포함) -->
 	            <form:form commandName="DTO" id="regForm" name="regForm"
 	                method="post" enctype="multipart/form-data"
@@ -1881,7 +1605,7 @@
 	                            id="notiContent" rows="10" placeholder="내용을 입력하세요."
 	                            style="resize: none; font-size: 14px;"></textarea>
 	                    </div>
-	                    <h5 class="mt-3">첨부 문서</h5>
+	                    <h5 class="mt-2">첨부 문서</h5>
 	                    <div class="table-container"
 	                        style="width: 100%; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
 	                        <div style="max-height: 200px; overflow-y: auto;">
@@ -1904,45 +1628,6 @@
 	
 	        </div>
 	    </div>
-=======
-				<form:form commandName="DTO" id="regForm" name="regForm"
-					method="post" enctype="multipart/form-data"
-					style="flex-grow: 1; display: flex; flex-direction: column;">
-					<input type="hidden" name="iud" id="iud" />
-					<input type="hidden" name="notiSeq" id="notiSeq" />
-					<input type="hidden" name="fileGb" id="fileGb" />
-
-					<div class="modal-body" style="overflow-y: auto; padding: 20px;">
-						<div class="mb-0">
-							<label for="notiTitle" class="form-label font-weight: bold;"
-								style="font-size: 15px !important; display: block; text-align: left;">제목</label>
-							<textarea  name="notiTitle" id="notiTitle" rows="2"
-								class="form-control" placeholder="제목을 입력하세요." style="font-size: 15px;" > </textarea>
-						</div>
-
-						<div class="mb-0">
-							<label for="notiContent" class="form-label font-weight: bold;"
-								style="font-size: 15px !important; display: block; text-align: left;">내용</label>
-							<textarea class="form-control" name="notiContent"
-								id="notiContent" rows="13" placeholder="내용을 입력하세요."
-								style="resize: none; font-size: 14px;"></textarea>
-						</div>
-						<h5 class="mt-3">첨부 문서</h5>
-						<div class="table-container"
-							style="width: 100%; border: 1px solid #ddd; border-radius: 10px;">
-							<div style="max-height: 150px; overflow-y: auto;">
-								<table id="fileTable"
-									class="display nowrap table table-hover table-bordered"
-									style="width: 100%;">
-								</table>
-							</div>
-						</div>
-						<!-- 파일있으면 파일 다운로드 구현 부분  -->
-					</div>
-				</form:form>
-			</div>
-		</div>
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	</div>
 	<!-- 공지사항 스크립트시작 -->
 	<script>
@@ -2126,11 +1811,7 @@
 	function showfileModal(notiSeq, fileGb) {
 	    $.ajax({
 	        type: "post",
-<<<<<<< HEAD
 	        url: "${pageContext.request.contextPath}" + "/mangr/fileCdList.do",
-=======
-	        url: "/mangr/fileCdList.do",
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	        data: { fileGb: fileGb, fileSeq: notiSeq },
 	        dataType: "json",
 	        success: function (data) {
@@ -2296,11 +1977,7 @@
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
 	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
 	<div class="modal-dialog modal-lg"
-<<<<<<< HEAD
-		style="max-width: 900px; width: 90%; margin-top: 40px;">
-=======
-		style="max-width: 900px; width: 90%;">
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
+		style="max-width: 900px; width: 90%; margin-top: 20px;">
 		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->
 		<div class="modal-content shadow-lg rounded-4"
 			style="height: auto; max-height: 90vh; border: none;">
@@ -2374,11 +2051,10 @@
 	</div>
 </div>
 
-<<<<<<< HEAD
 <div class="modal fade" id="asq_main" tabindex="-1"
     data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-        style="width: 50vw; max-width: 900px; min-width: 400px; margin-top: -110px;">
+        style="width: 50vw; max-width: 900px; min-width: 400px; margin-top: -30px;">
         <div class="modal-content"
             style="max-height: calc(100vh - 100px); display: flex; flex-direction: column;">
             
@@ -2396,40 +2072,6 @@
                     </div>
                 </div>
             </div>
-=======
-<!---->
-<div class="modal fade" id="asq_main" tabindex="-1" style= "margin-left:-5px"
-	data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-	<div
-		class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 47vw; max-width: 47vw; max-height: 50vh;">
-		<div class="modal-content"
-			style="height: 70%; display: flex; flex-direction: column;">
-			<div class="modal-header  bg-light">
-				<h6 class="modal-title">문의 등록</h6>
-				<div class="form-row">
-					<div class="col-sm-12 mb-2" style="text-align: right;">
-						<button type="button" id="save_btn" type="submit" class="btn btn-outline-info" onClick="fnasq_SaveProc()">저장. <i class="far fa-edit"></i>
-						</button>
-						<button type="button" class="btn btn-outline-dark"
-							data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
-						</button>
-					</div>
-				</div>
-			</div>
-			<form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-				method="post" enctype="multipart/form-data">
-				<div class="modal-body text-left flex-fill overflow-auto">
-					<!-- Spring Form 태그 사용 (Spring MVC 환경이라면 적용 가능) -->
-					<input type="hidden" name="iudasq"      id="iudasq" /> 
-					<input type="hidden" name="asqSeq"      id="asqSeq" /> 
-					<input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" /> 
-					<input type="hidden" name="qstnWan"     id="qstnWan"   value="Y" /> 
-					<input type="hidden" name="hospCdasq"   id="hospCdasq" /> 
-					<input type="hidden" name="hospUuidasq" id="hospUuidasq" /> 
-					<input type="hidden" name="regUserasq"  id="regUserasq" /> 
-					<input type="hidden" name="updUserasq"  id="updUserasq" />
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 
             <!-- 폼 바디 -->
             <form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
@@ -2542,11 +2184,7 @@
 	    $("#asqSeq").val("") ;
 	    $("#asqdataArea").empty();
 	    $.ajax({
-<<<<<<< HEAD
 		   	url : '${pageContext.request.contextPath}' + '/mangr/ctl_asqList.do',
-=======
-		   	url : 'mangr/ctl_asqList.do',
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 		    type : 'post',
 		    data : {hospCdasq : sessionStorage.getItem('s_hospid')  , qstnTitle : $("#searchText").val() },
 			dataType : "json",
@@ -2620,11 +2258,7 @@
 	        // 등록 폼 초기화
 	        $.ajax({
 	            type: "post",
-<<<<<<< HEAD
 	            url: "${pageContext.request.contextPath}" + "/mangr/ctl_getHospmst.do",
-=======
-	            url: "/mangr/ctl_getHospmst.do",
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	            data: { hospCd: getCookie("hospid") },
 	            dataType: "json",
 	            success: function (data) {
@@ -2651,11 +2285,7 @@
 	        $("#regDtm").prop("readonly", false);
 	        $.ajax({
 	            type: "post",
-<<<<<<< HEAD
 	            url: "${pageContext.request.contextPath}" + "/mangr/selectAnsrInfo.do",
-=======
-	            url: "/mangr/selectAnsrInfo.do",
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2696,11 +2326,7 @@
 	        // 삭제 전에 ansrWan 상태 확인 후 처리
 	        $.ajax({
 	            type: "post",
-<<<<<<< HEAD
 	            url: "${pageContext.request.contextPath}" + "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
-=======
-	            url: "/mangr/selectAnsrInfo.do",  // 답변 상태 조회 API
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 	            data: { asqSeq: $("#asqSeq").val() },
 	            dataType: "json",
 	            success: function (data) {
@@ -2804,11 +2430,7 @@
 
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-<<<<<<< HEAD
   <div class="modal-dialog modal-lg" style="margin-top: 5px;"> <!-- 여기 추가 -->
-=======
-  <div class="modal-dialog modal-lg" style="margin-top: -20px;"> <!-- 여기 추가 -->
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
     <div class="modal-content" style="max-height: 900px;"> <!-- 높이 제한 -->
       <div class="modal-header">
         <h5 class="modal-title" id="faqModalLabel">자주 묻는 질문 (FAQ)</h5>
@@ -3285,13 +2907,8 @@
       	
         	hosp_conact() ;
         	
-<<<<<<< HEAD
         //	const url = "http://localhost:8080/user/";    
-        	const url = "https://winner797.co.kr/user/dashboard.do/"; 
-=======
-        	const url = "http://localhost:8080/user/";    
-        //	const url = "https://winner797.co.kr/user/dashboard.do/"; 
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
+        	const url = "https://winner797.co.kr/user/dashboard.do"; 
         	
             win_Check = window.open(url);            
             
