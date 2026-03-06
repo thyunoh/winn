@@ -7,7 +7,11 @@
       "Bash(sed \"s/.*[\"\"''\\(]//\")",
       "Bash(sed \"s/.*''//\")",
       "Bash(sed 's/.*=\"\"//')",
-      "Bash(ls \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_consult\\\\src\\\\main\\\\webapp\\\\images\\\\winct\"\" | wc -l && echo \"---\" && ls \"C:Usersusergitwinnwnn_consultsrcmainwebappimageswinct\"\")"
+      "Bash(ls \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_consult\\\\src\\\\main\\\\webapp\\\\images\\\\winct\"\" | wc -l && echo \"---\" && ls \"C:Usersusergitwinnwnn_consultsrcmainwebappimageswinct\"\")",
+      "Bash(xxd \"C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java\")",
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \"f=open\\(''C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java'',''rb''\\);c=f.read\\(\\);f.close\\(\\);lines=c.split\\(b''\\\\n''\\);[print\\(f''L{i+1}: {repr\\(lines[i]\\)}''\\) for i in range\\(550,559\\)]\")",
+      "Bash(od -c \"C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java\")"
     ]
   }
 }
