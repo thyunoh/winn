@@ -8,6 +8,7 @@
 	</settings>
     <typeAliases>
         <typeAlias  alias="WardDTO"     type="egovframework.wnn_medcost.user.model.WardDTO"/>
+        
         <typeAlias  alias="DietDTO"     type="egovframework.wnn_medcost.user.model.DietDTO"/>
         <typeAlias  alias="LisenceDTO"  type="egovframework.wnn_medcost.user.model.LisenceDTO"/>
     	<typeAlias  alias="UserDTO"     type="egovframework.wnn_medcost.user.model.UserDTO"/>
@@ -41,6 +42,7 @@
     	<typeAlias  alias="IpwonDTO"    type="egovframework.wnn_medcost.magam.model.IpwonDTO"/>
         <typeAlias  alias="IndiDTO"     type="egovframework.wnn_medcost.magam.model.IndiDTO"/>
         <typeAlias  alias="PatvalDTO"   type="egovframework.wnn_medcost.magam.model.PatvalDTO"/>
+        
         
     	<typeAlias  alias="TotalDTO"   type="egovframework.wnn_medcost.total.model.TotalDTO"/>
     	

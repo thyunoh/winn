@@ -63,15 +63,14 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
         <!-- modal form start -->
         <!-- ============================================================== -->        
 		<div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
-		    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" 
-		         style="max-width: 45vw; max-height: 80vh;">
-		        <div class="modal-content">
+		    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+		         style="max-width: 50vw; max-height: 90vh;">
+		        <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
 		            <!-- Modal Header -->
 		            <div class="modal-header bg-light">
-		                <h6 class="modal-title" id="modalHead"></h6> 
+		                <h5 class="modal-title" id="modalHead"></h5> 
 			              <div class="form-row">
 			                  <div class="col-sm-12 mb-2" style="text-align:right;"> 
-			                    <button id="form_btn_new" type="submit" class="btn btn-outline-dark"   onClick="fn_Potion()">센터. <i class="far fa-object-group"></i></button>
 			                    <button id="form_btn_ins" type="submit" class="btn btn-outline-info    btn-insert"  onClick="fn_Insert()">입력. <i class="far fa-edit"></i></button>
 							    <button id="form_btn_udt" type="submit" class="btn btn-outline-success btn-update"  onClick="fn_Update()">답변저장. <i class="far fa-save"></i></button>
 			   				    <button id="form_btn_del" type="submit" class="btn btn-outline-danger  btn-delete"  onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i></button>
@@ -81,7 +80,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		            </div>
 		
 		            <!-- Modal Body (Form Content) -->
-		            <div class="modal-body" style="overflow-y: auto;">
+		            <div class="modal-body" style="flex: 1 1 auto; overflow-y: auto; min-height: 0;">
 		                <div id="inputZone">
 		                    <!-- Hidden Inputs -->
 		                    <input type="hidden" id="qstnStat"  name="qstnStat" value="">
@@ -108,8 +107,32 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
 		                            <textarea id="qstnConts" name="qstnConts" class="form-control" rows="5" readonly></textarea>
 		                        </div>
-		                    </div>  
-		
+		                    </div>
+
+		                    <!-- 질문자 업로드 파일 조회/다운로드 (fileGb='4') -->
+		                    <div id="qstn-file-area" style="margin-top: 5px; margin-bottom: 10px; display:none;">
+		                       <label style="font-size: 13px; font-weight: 600; color: #2874A6; margin-bottom: 4px; display:block;">
+		                          <i class="fa-solid fa-floppy-disk" style="color:#2874A6;"></i> 질문 첨부파일
+		                       </label>
+		                       <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
+		                          <div style="max-height: 150px; overflow-y: auto;">
+		                             <table id="qstn-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
+		                                <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
+		                                   <tr>
+		                                      <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
+		                                      <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
+		                                      <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
+		                                      <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
+		                                      <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
+		                                      <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
+		                                   </tr>
+		                                </thead>
+		                                <tbody id="qstn-file-tbody"></tbody>
+		                             </table>
+		                          </div>
+		                       </div>
+		                    </div>
+
 		                    <!-- Question Completed Select -->
 		                    <div class="form-row">
 		                        <label for="qstnWan" class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
@@ -125,7 +148,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    <div class="form-row">
 		                        <label for="ansrConts" class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
 		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
-		                            <textarea id="ansrConts" name="ansrConts" class="form-control" rows="10"></textarea>
+		                            <textarea id="ansrConts" name="ansrConts" class="form-control" rows="8"></textarea>
 		                        </div>
 		                    </div>
 		
@@ -139,6 +162,55 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                            </select>
 		                        </div>
 		                    </div>
+
+		                    <!-- 답변자 파일 업로드 영역 -->
+		                    <div class="form-group" id="ansr-upload-area" style="margin-top: 5px;">
+		                       <div class="container-md mt-1" style="padding: 0;">
+		                          <div class="form-group">
+		                             <label class="col-form-label text-left" style="font-size: 13px; font-weight: 500;">답변 파일업로드</label>
+		                             <div>
+		                                <div class="btn-box" style="display: flex; gap: 5px; align-items: center;">
+		                                   <button type="button" class="btn btn-primary btn-sm" onclick="openAnsrFileInput()">파일 선택</button>
+		                                   <input type="file" id="ansr-file-input" multiple style="display:none;" onchange="ansrHandleFiles(this.files)">
+		                                </div>
+		                                <div id="ansr-drop-zone"
+		                                   style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; margin-top: 5px; min-height: 40px; cursor: pointer;"
+		                                   ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
+		                                   ondragleave="this.style.borderColor='#ccc'; this.style.backgroundColor='';"
+		                                   ondrop="event.preventDefault(); this.style.borderColor='#ccc'; this.style.backgroundColor=''; ansrDropHandler(event);">
+		                                   <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.</p>
+		                                   <div id="ansr-file-list-new" class="file-list-container"></div>
+		                                </div>
+		                             </div>
+		                          </div>
+		                       </div>
+		                    </div>
+
+		                    <!-- 답변자 업로드된 파일 테이블 (fileGb='5') -->
+		                    <div id="ansr-file-area2" style="margin-top: 5px; margin-bottom: 10px; display:none;">
+		                       <label style="font-size: 13px; font-weight: 600; color: green; margin-bottom: 4px; display:block;">
+		                          <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 첨부파일
+		                       </label>
+		                       <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
+		                          <div style="max-height: 150px; overflow-y: auto;">
+		                             <table id="ansr-file-table2" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
+		                                <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
+		                                   <tr>
+		                                      <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
+		                                      <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
+		                                      <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
+		                                      <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
+		                                      <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
+		                                      <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">삭제</th>
+		                                      <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
+		                                   </tr>
+		                                </thead>
+		                                <tbody id="ansr-file-tbody2"></tbody>
+		                             </table>
+		                          </div>
+		                       </div>
+		                    </div>
+
 		                </div>
 		            </div>
 		
@@ -240,8 +312,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        		//		{ data: 'asqSeq',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyasqSeq', primaryKey: true },
-	        	//			{ data: 'fileGb',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyfileGb', primaryKey: true },
+	        				{ data: 'asqSeq',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyasqSeq', primaryKey: true },
+	        				{ data: 'fileGb',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyfileGb', primaryKey: true },
 	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-left'   , width: '100px',  },
 	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '100px',  },
 	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
@@ -401,20 +473,31 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		    }    
 		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전
 		    formValClear(inputZone.id);
-		    
-			if (flag !== 'I'){ 
+
+			if (flag !== 'I'){
 				// 수정.삭제 모드 (대상확인)
 				if (edit_Data) {
 					// Value Setting
 					formValueSet(inputZone.id,edit_Data);
-					
+					// 파일 목록 로딩
+					var asqSeqVal = edit_Data.asqSeq;
+					if (asqSeqVal) {
+					    showQstnFileList(asqSeqVal);   // 질문자 파일 조회/다운로드
+					    showAnsrFileList2(asqSeqVal);   // 답변자 파일 삭제/다운로드
+					}
+					ansrFileClear();
 				} else {
 					modal_OpenFlag = false;
-					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
+					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");
 					return null;
 				}
+			} else {
+				// 입력 모드 - 파일 영역 초기화
+				$("#qstn-file-area").hide();
+				$("#ansr-file-area2").hide();
+				ansrFileClear();
 			}
-			
+
 			if (modal_OpenFlag) {
 				// 모달을 드레그할 수 있도록 처리
 			    // Make the DIV element draggable:	    
@@ -928,10 +1011,14 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 			        	}
 		        	}else{
 		        		data[result.id] = result.val;
-		        	}	
-  	
+		        	}
 		        });
-		
+		        // SQL WHERE절에 필요한 키값 및 updUser/updIp 추가
+		        data['asqSeq']  = $('#asqSeq').val();
+		        data['fileGb']  = $('#fileGb').val();
+		        data['updUser'] = $('#updUser').val();
+		        data['updIp']   = $('#updIp').val();
+
 		        // 3. 선택된 행의 Primary Key 가져오기
 		        var selectedRows = dataTable.rows('.selected');
 		        let keys = dataTableKeys(dataTable, selectedRows);
@@ -947,35 +1034,22 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		            dataType: "json",
 		            success: function(response) {
 		                console.log("업데이트 성공", response);
-		                // 6. DataTable에 변경된 값 반영
-		                let updatedData = newuptData();		                
-		                let selectedIndex = null;
-		                selectedRows.every(function(rowIdx) {
-		                	selectedIndex = rowIdx;  // 가장 마지막 선택 인덱스 저장
-		                    let rowData = this.data();
-		                    Object.keys(updatedData).forEach(function(key) {
-		                    	rowData[key] = updatedData[key];
+		                // 6. 답변 파일 업로드 처리 (fn_FindData 전에 먼저 실행)
+		                var savedAsqSeq = $('#asqSeq').val() || (edit_Data ? edit_Data.asqSeq : '');
+		                var ansrFileInput = document.getElementById('ansr-file-input');
+		                if (ansrFileInput && ansrFileInput.files && ansrFileInput.files.length > 0 && savedAsqSeq) {
+		                    var hospCd  = getCookie("s_hospid") || (edit_Data ? edit_Data.hospCd : '') || '';
+		                    var regUser = getCookie("s_userid") || '';
+		                    uploadAnsrFiles(savedAsqSeq, hospCd, regUser, function() {
+		                        fn_FindData();
+		                        $("#" + modalName.id).modal('hide');
+		                        messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
 		                    });
-		                    this.data(rowData);
-		                });
-		
-		                dataTable.draw(false);
-	                    // 조회 함수 호출
-	                    fn_FindData();
-		             // 3. draw 이벤트 후, 저장했던 행 다시 선택
-		                dataTable.on('draw', function () {
-		                    if (selectedIndex !== null) {
-		                        let row = dataTable.row(selectedIndex);
-		                        if (row.node()) {
-		                            $(row.node()).addClass('selected'); // CSS로 강조
-		                            // 선택 유지를 위한 스크롤 위치 조정도 필요 시 추가 가능
-		                        }
-		                    }
-		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
-		                    dataTable.off('draw');
-		                });       		                // 7. 모달 닫기 및 성공 메시지 표시
-		                $("#" + modalName.id).modal('hide');
-		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
+		                } else {
+		                    fn_FindData();
+		                    $("#" + modalName.id).modal('hide');
+		                    messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
+		                }
 		            },
 		            error: function(xhr, status, error) {
 		                console.error("업데이트 실패", xhr.responseText);
@@ -1456,6 +1530,255 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });
+
+		// ====== 질문자 파일 조회/다운로드 (fileGb='4') ======
+		function showQstnFileList(asqSeq) {
+		    if (!asqSeq) { $("#qstn-file-area").hide(); return; }
+		    $.ajax({
+		        url: '/mangr/fileCdList.do',
+		        type: 'POST',
+		        data: { fileSeq: asqSeq, fileGb: '4' },
+		        dataType: 'json',
+		        success: function(data) {
+		            var tbody = document.getElementById('qstn-file-tbody');
+		            tbody.innerHTML = '';
+		            if (data && data.length > 0) {
+		                for (var i = 0; i < data.length; i++) {
+		                    var subCodeNm = data[i].subCodeNm || '문서';
+		                    var fileTitle = data[i].fileTitle || '제목 없음';
+		                    var fileSize  = data[i].fileSize  || '';
+		                    var regDttm   = data[i].regDttm   || '';
+		                    var fileUrl   = '#';
+		                    if (data[i].filePath && data[i].fileTitle) {
+		                        fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
+		                    }
+		                    var row = '<tr style="border-bottom: 1px solid #eee;">';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + (i + 1) + '</td>';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + subCodeNm + '</td>';
+		                    row += '<td style="padding:6px 8px;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:none; font-weight:500;">' + fileTitle + '</a></td>';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + fileSize + ' KB</td>';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + regDttm + '</td>';
+		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+		                    if (fileUrl !== '#') {
+		                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
+		                        row += "<i class='fa-solid fa-floppy-disk' style='font-size: 1.1em;'></i>";
+		                        row += '</a>';
+		                    }
+		                    row += '</td>';
+		                    row += '</tr>';
+		                    tbody.innerHTML += row;
+		                }
+		                $("#qstn-file-area").show();
+		            } else {
+		                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
+		                $("#qstn-file-area").show();
+		            }
+		        }
+		    });
+		}
+
+		// ====== 답변자 파일 업로드/삭제/다운로드 (fileGb='5') ======
+		var ansrSelectedFiles = new DataTransfer();
+
+		function openAnsrFileInput() {
+		    document.getElementById('ansr-file-input').click();
+		}
+
+		function ansrHandleFiles(files) {
+		    for (var i = 0; i < files.length; i++) {
+		        ansrSelectedFiles.items.add(files[i]);
+		    }
+		    document.getElementById('ansr-file-input').files = ansrSelectedFiles.files;
+		    ansrShowNewFileList();
+		}
+
+		function ansrDropHandler(event) {
+		    var files = event.dataTransfer.files;
+		    ansrHandleFiles(files);
+		}
+
+		function ansrShowNewFileList() {
+		    var html = '';
+		    var files = ansrSelectedFiles.files;
+		    for (var i = 0; i < files.length; i++) {
+		        html += '<div class="file-item" style="display:flex; align-items:center; justify-content:space-between; padding:3px 8px; border-bottom:1px solid #eee;">' +
+		            '<span><i class="fa fa-file" style="color:#555; margin-right:5px;"></i>' + files[i].name +
+		            ' (' + Math.round(files[i].size / 1024) + 'KB)</span>' +
+		            '<button type="button" onclick="ansrRemoveNewFile(' + i + ')" class="delete-btn" style="border:none; background:none; color:red; cursor:pointer; font-size:12px;">삭제</button>' +
+		            '</div>';
+		    }
+		    document.getElementById('ansr-file-list-new').innerHTML = html;
+		}
+
+		function ansrRemoveNewFile(index) {
+		    var newDt = new DataTransfer();
+		    var files = ansrSelectedFiles.files;
+		    for (var i = 0; i < files.length; i++) {
+		        if (i !== index) newDt.items.add(files[i]);
+		    }
+		    ansrSelectedFiles = newDt;
+		    document.getElementById('ansr-file-input').files = ansrSelectedFiles.files;
+		    ansrShowNewFileList();
+		}
+
+		function uploadAnsrFiles(asqSeq, hospCd, regUser, callback) {
+		    var files = document.getElementById('ansr-file-input').files;
+		    if (!files || files.length === 0) {
+		        if (typeof callback === 'function') callback();
+		        return;
+		    }
+		    var formData = new FormData();
+		    for (var i = 0; i < files.length; i++) {
+		        formData.append('file', files[i]);
+		    }
+		    formData.append('hospCd', hospCd || '');
+		    formData.append('fileGb', '5');
+		    formData.append('notiSeq', asqSeq);
+		    formData.append('regUser', regUser || '');
+		    formData.append('regIp', '');
+
+		    $.ajax({
+		        url: '/sftp/fileupload.do',
+		        type: 'POST',
+		        data: formData,
+		        processData: false,
+		        contentType: false,
+		        success: function(res) {
+		            console.log('답변 파일 업로드 성공:', res);
+		            if (typeof callback === 'function') callback();
+		        },
+		        error: function(xhr) {
+		            console.log('답변 파일 업로드 실패:', xhr.responseText);
+		            alert('파일 업로드 중 오류가 발생했습니다.');
+		            if (typeof callback === 'function') callback();
+		        }
+		    });
+		}
+
+		function showAnsrFileList2(asqSeq) {
+		    if (!asqSeq) { $("#ansr-file-area2").hide(); return; }
+		    $.ajax({
+		        url: '/mangr/fileCdList.do',
+		        type: 'POST',
+		        data: { fileSeq: asqSeq, fileGb: '5' },
+		        dataType: 'json',
+		        success: function(data) {
+		            var tbody = document.getElementById('ansr-file-tbody2');
+		            tbody.innerHTML = '';
+		            if (data && data.length > 0) {
+		                for (var i = 0; i < data.length; i++) {
+		                    var subCodeNm = data[i].subCodeNm || '문서';
+		                    var fileTitle = data[i].fileTitle || '제목 없음';
+		                    var fileSize  = data[i].fileSize  || '';
+		                    var regDttm   = data[i].regDttm   || '';
+		                    var fileUrl   = '#';
+		                    if (data[i].filePath && data[i].fileTitle) {
+		                        fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
+		                    }
+		                    var row = '<tr style="border-bottom: 1px solid #eee;">';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + (i + 1) + '</td>';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + subCodeNm + '</td>';
+		                    row += '<td style="padding:6px 8px;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:none; font-weight:500;">' + fileTitle + '</a></td>';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + fileSize + ' KB</td>';
+		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + regDttm + '</td>';
+		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+		                    row += "<a href='javascript:void(0);' onclick=\"deleteAnsrFile('" + data[i].filePath + "','" + asqSeq + "');\" title='삭제' style='color:black;'>";
+		                    row += "<i class='fa-solid fa-trash' style='font-size: 1.1em;'></i>";
+		                    row += '</a></td>';
+		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+		                    if (fileUrl !== '#') {
+		                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
+		                        row += "<i class='fa-solid fa-floppy-disk' style='font-size: 1.1em;'></i>";
+		                        row += '</a>';
+		                    }
+		                    row += '</td>';
+		                    row += '</tr>';
+		                    tbody.innerHTML += row;
+		                }
+		                $("#ansr-file-area2").show();
+		            } else {
+		                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
+		                $("#ansr-file-area2").show();
+		            }
+		        }
+		    });
+		}
+
+		function deleteAnsrFile(filePath, asqSeq) {
+		    Swal.fire({
+		        title: '삭제여부',
+		        text: '파일을 삭제하시겠습니까?',
+		        icon: 'question',
+		        showCancelButton: true,
+		        confirmButtonText: '예',
+		        cancelButtonText: '아니오',
+		        customClass: { popup: 'small-swal' }
+		    }).then((result) => {
+		        if (result.isConfirmed) {
+		            var savedAnsr = $("#ansrConts").val();
+		            var savedWan  = $("#ansrWan").val();
+		            $.ajax({
+		                url: '/sftp/deleteFile.do',
+		                type: 'POST',
+		                data: {
+		                    hospCd: getCookie("s_hospid") || '',
+		                    filePath: filePath,
+		                    fileSeq: asqSeq,
+		                    fileGb: '5',
+		                    updUser: getCookie("s_userid") || '',
+		                    updIp: getCookie("s_connip") || ''
+		                },
+		                success: function(res) {
+		                    $("#ansrConts").val(savedAnsr);
+		                    $("#ansrWan").val(savedWan);
+		                    showAnsrFileList2(asqSeq);
+		                    Swal.fire({
+		                        title: '처리확인',
+		                        text: '정상처리 되었습니다.',
+		                        icon: 'success',
+		                        timer: 1500,
+		                        timerProgressBar: true,
+		                        showConfirmButton: false,
+		                        customClass: { popup: 'small-swal' }
+		                    });
+		                },
+		                error: function(xhr) {
+		                    Swal.fire({
+		                        title: '에러확인',
+		                        text: '문제 발생, 잠시후 다시 하십시요.',
+		                        icon: 'error',
+		                        timer: 1500,
+		                        timerProgressBar: true,
+		                        showConfirmButton: false,
+		                        customClass: { popup: 'small-swal' }
+		                    });
+		                }
+		            });
+		        } else if (result.isDismissed) {
+		            Swal.fire({
+		                title: '취소확인',
+		                text: '작업이 취소 되었습니다.',
+		                icon: 'info',
+		                timer: 1000,
+		                timerProgressBar: true,
+		                showConfirmButton: false,
+		                customClass: { popup: 'small-swal' }
+		            });
+		        }
+		    });
+		}
+
+		function ansrFileClear() {
+		    ansrSelectedFiles = new DataTransfer();
+		    var fileInput = document.getElementById('ansr-file-input');
+		    if (fileInput) fileInput.value = '';
+		    var listNew = document.getElementById('ansr-file-list-new');
+		    if (listNew) listNew.innerHTML = '';
+		    var tbody = document.getElementById('ansr-file-tbody2');
+		    if (tbody) tbody.innerHTML = '';
+		    $("#ansr-file-area2").hide();
+		}
+
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->

@@ -168,12 +168,16 @@ public class MangrController {
 			if ("QI".equals(dto.getIudasq())){
 				System.out.println("insertqstnMst 시작");
 				svc.insertqstnMst(dto) ;
+				model.addAttribute("asqSeq", dto.getAsqSeq());
+				model.addAttribute("hospCd", dto.getHospCdasq());
+				model.addAttribute("regUser", dto.getRegUserasq());
 			}else if ("QU".equals(dto.getIudasq())){
 				svc.updateqstnMst(dto) ;
+				model.addAttribute("asqSeq", dto.getAsqSeq());
 			}else if ("QD".equals(dto.getIudasq())){
 				svc.updatedelasqCd(dto) ;
 			}
-			model.addAttribute("error_code", "0"); 	
+			model.addAttribute("error_code", "0");
 		}catch(Exception ex) {
 			model.addAttribute("error_code", "10000"); 
 		}

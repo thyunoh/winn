@@ -83,9 +83,17 @@ public class SftpController {
                 String fileSize = Long.toString(fileSizeInKB / 1024); // KB 단위 (소수점 없이)
                 
                 System.out.println("파일사이즈: " + fileSize);
-                boolean result = sftpService.uploadFile(
-                    tempFile.getAbsolutePath(), originalFilename, folder,  //fileName에서 변경
-                    hospCd, fileGb, notiSeq, regUser, regIp ,fileSize);
+                boolean result = false;
+                try {
+                    result = sftpService.uploadFile(
+                        tempFile.getAbsolutePath(), originalFilename, folder,
+                        hospCd, fileGb, notiSeq, regUser, regIp, fileSize);
+                } finally {
+                    // 임시파일 삭제
+                    if (tempFile.exists()) {
+                        tempFile.delete();
+                    }
+                }
 
                 if (!result) {
                     return ResponseEntity.status(500).body("❌ 일부 업로드 실패");

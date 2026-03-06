@@ -39,8 +39,16 @@ public class AsqDTO {
     private String userNm ;
 	private String hospCd2; //사이드바 작업
 	private String fileGb2 ;
+    private String fileYn;
+    
 	
-    public String getFileGb2() {
+    public String getFileYn() {
+		return fileYn;
+	}
+	public void setFileYn(String fileYn) {
+		this.fileYn = fileYn;
+	}
+	public String getFileGb2() {
 		return fileGb2;
 	}
 	public void setFileGb2(String fileGb2) {

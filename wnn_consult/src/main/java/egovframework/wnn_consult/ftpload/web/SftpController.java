@@ -11,7 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.Properties;
+import java.nio.file.Files;
+import java.util.*;
 
 @RestController
 @RequestMapping("/sftp")
@@ -44,6 +45,78 @@ public class SftpController {
         public ResponseEntity<String> handleException(Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ 서버 오류: " + e.getMessage());
+        }
+    }
+
+    /**
+     * ✅ 다중 파일 업로드 처리
+     */
+    @PostMapping("/fileupload.do")
+    public ResponseEntity<String> uploadFile(
+        @RequestParam("file") MultipartFile[] files,
+        @RequestParam String hospCd,
+        @RequestParam String fileGb,
+        @RequestParam String notiSeq,
+        @RequestParam String regUser,
+        @RequestParam String regIp
+    ) {
+        try {
+            System.out.println("파일 수: " + files.length);
+
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+
+                String originalFilename = file.getOriginalFilename();
+                System.out.println("파일명: " + originalFilename);
+
+                String fileName = UUID.randomUUID() + "_" + originalFilename;
+                java.io.File tempFile = Files.createTempFile("upload_", fileName).toFile();
+                file.transferTo(tempFile);
+
+                String folder = hospCd + "/" + notiSeq + "/" + fileGb;
+
+                long fileSizeInKB = file.getSize();
+                String fileSize = Long.toString(fileSizeInKB / 1024);
+
+                System.out.println("파일사이즈: " + fileSize);
+                boolean result = false;
+                try {
+                    result = sftpService.uploadFile(
+                        tempFile.getAbsolutePath(), originalFilename, folder,
+                        hospCd, fileGb, notiSeq, regUser, regIp, fileSize);
+                } finally {
+                    // 임시파일 삭제
+                    if (tempFile.exists()) {
+                        tempFile.delete();
+                    }
+                }
+
+                if (!result) {
+                    return ResponseEntity.status(500).body("❌ 일부 업로드 실패");
+                }
+            }
+
+            return ResponseEntity.ok("✅ 모든 파일 업로드 성공");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("❌ 업로드 실패: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/deleteFile.do")
+    public ResponseEntity<String> deleteFile(@RequestParam String hospCd,
+                                             @RequestParam String filePath,
+                                             @RequestParam String fileSeq,
+                                             @RequestParam String fileGb,
+                                             @RequestParam String updUser,
+                                             @RequestParam String updIp) {
+        boolean result = sftpService.deleteFile(hospCd, filePath, fileSeq, fileGb, updUser, updIp);
+
+        if (result) {
+            return ResponseEntity.ok("✅ 삭제 성공");
+        } else {
+            return ResponseEntity.status(500).body("❌ 삭제 실패");
         }
     }
 

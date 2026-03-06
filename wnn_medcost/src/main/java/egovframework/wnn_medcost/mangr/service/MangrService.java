@@ -46,7 +46,8 @@ public interface MangrService {
 	String            asqCdDupChk(AsqDTO dto)       throws Exception;
 	//사이드바에서 사용자 일대일질문 
 	AsqDTO            selectQstnInfo(AsqDTO dto)    throws Exception;
-	boolean           insertQstnCd(AsqDTO dto)      throws Exception; 
+	boolean           insertQstnCd(AsqDTO dto)      throws Exception;
+	boolean           updateQstnMst(AsqDTO dto)     throws Exception;
 	boolean           updateQstnCd(AsqDTO dto)      throws Exception; 
 
     //문서파일 

@@ -200,9 +200,12 @@ public class MangrServiceImpl implements MangrService {
 		return mapper.insertQstnCd(dto) ;
 	}
 	@Override
+	public boolean updateQstnMst(AsqDTO dto) throws Exception {
+		return mapper.updateQstnMst(dto);
+	}
+	@Override
 	public boolean updateQstnCd(AsqDTO dto) throws Exception {
-		// TODO Auto-generated method stub
-		return mapper.updateQstnCd(dto) ;
+		return mapper.updateQstnCd(dto);
 	}
 
 	@Override

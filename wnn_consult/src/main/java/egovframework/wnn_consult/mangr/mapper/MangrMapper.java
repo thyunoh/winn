@@ -24,10 +24,12 @@ public interface MangrMapper {
 	AsqDTO      selectqstnInfo(AsqDTO dto)  throws Exception;
 	boolean     updateAnsrMst(AsqDTO dto)   throws Exception;	
 	boolean     updatedelasqCd(AsqDTO dto)  throws Exception;
-    //문서파일 
-	List<FileDTO>  getFileCdList(FileDTO dto)  throws Exception; 
-	
-	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception; 
+    //문서파일
+	List<FileDTO>  getFileCdList(FileDTO dto)  throws Exception;
+	boolean     saveFileCd(FileDTO dto)      throws Exception;
+	boolean     deleteFileCd(FileDTO dto)    throws Exception;
+
+	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception;
 	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception; 
 	
 }

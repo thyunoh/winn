@@ -26,6 +26,10 @@ public interface MangrService {
 	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception; 
 	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception; 	
 	
-    //문서파일 
-	List<FileDTO>  getFileCdList(FileDTO dto)  throws Exception; 
+    //문서파일
+	List<FileDTO>  getFileCdList(FileDTO dto)  throws Exception;
+	void saveFile(String fileName, String filePath, String hospCd,
+			String fileGb, String notiSeq, String regUser, String regIp, String fileSize);
+	void deleteFile(String hospCd, String filePath, String fileSeq,
+			String fileGb, String updUser, String updIp);
 }

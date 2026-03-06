@@ -127,4 +127,39 @@ public class MangrServiceImpl implements MangrService {
 		// TODO Auto-generated method stub
 		return mapper.getFileCdList(dto);
 	}
+
+	@Override
+	public void saveFile(String fileName, String filePath, String hospCd,
+			String fileGb, String notiSeq, String regUser, String regIp, String fileSize) {
+		FileDTO dto = new FileDTO();
+		dto.setHospCd(hospCd);
+		dto.setFileGb(fileGb);
+		dto.setFileSeq(notiSeq);
+		dto.setFileTitle(fileName);
+		dto.setFilePath(filePath);
+		dto.setRegUser(regUser);
+		dto.setRegIp(regIp);
+		dto.setFileSize(fileSize);
+		try {
+			mapper.saveFileCd(dto);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void deleteFile(String hospCd, String filePath, String fileSeq,
+			String fileGb, String updUser, String updIp) {
+		FileDTO dto = new FileDTO();
+		dto.setFileGb(fileGb);
+		dto.setFileSeq(fileSeq);
+		dto.setFilePath(filePath);
+		dto.setUpdUser(updUser);
+		dto.setUpdIp(updIp);
+		try {
+			mapper.deleteFileCd(dto);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

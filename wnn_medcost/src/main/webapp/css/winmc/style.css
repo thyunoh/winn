@@ -9992,12 +9992,26 @@ p {
     font-size: 18px;
 }
 .nav-left-sidebar {
-    overflow-y: auto;  /* 세로 스크롤 활성화 */
-    overflow-x: hidden; /* 가로 스크롤 방지 */
-    max-height: 100vh;  /* 화면 높이를 벗어나지 않도록 설정 */
-}
-.nav-left-sidebar {
+    overflow: hidden !important;  /* 사이드바 전체는 스크롤 안함 */
+    height: calc(100vh - 60px) !important;
+    max-height: calc(100vh - 60px) !important;
     background-color: white !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.nav-left-sidebar .menu-list {
+    flex: 1 1 0 !important;
+    overflow-y: auto !important;  /* 메뉴 영역만 스크롤 */
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+    height: 0 !important;  /* flex 내부 스크롤을 위해 필요 */
+}
+.nav-left-sidebar .menu-list .navbar {
+    display: block !important;
+    height: auto !important;
+}
+.nav-left-sidebar .fixed-sidebar-info-box {
+    flex-shrink: 0 !important;  /* 고객센터 박스 고정 */
 }
 .font12-text {
     font-size: 12px;

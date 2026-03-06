@@ -48,8 +48,15 @@ public class AsqDTO {
     private String hospUuidasq;
     private String regUserasq;
     private String asqGb;
-    
-    
+    private String fileYn;
+
+
+    public String getFileYn() {
+		return fileYn;
+	}
+	public void setFileYn(String fileYn) {
+		this.fileYn = fileYn;
+	}
     public String getAsqGb() {
 		return asqGb;
 	}

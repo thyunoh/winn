@@ -188,8 +188,12 @@
             CASE WHEN  A.QSTN_WAN = 'Y' THEN '완료'
             ELSE '진행' END QSTN_STAT ,
             CASE WHEN  A.ANSR_WAN = 'Y' THEN '완료'
-            ELSE '진행' END ANSR_STAT             
-           FROM TBL_ASQ_MST A 
+            ELSE '진행' END ANSR_STAT ,
+            CASE WHEN EXISTS (
+                SELECT 1 FROM TBL_FILE_MST F
+                WHERE F.FILE_SEQ = A.ASQ_SEQ AND F.FILE_GB IN ('4','5') AND F.ACTION_YN = 'Y'
+            ) THEN 'Y' ELSE 'N' END AS FILE_YN
+           FROM TBL_ASQ_MST A
             LEFT JOIN  TBL_USER_MST B ON B.USER_ID    = A.REG_USER
                                      AND B.HOSP_CD    = A.HOSP_CD 
                                      AND B.ACTION_YN  = A.ACTION_YN  
@@ -234,7 +238,12 @@
             CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
             ELSE '질문진행' END QSTN_STAT ,
             CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
-            ELSE '답변진행' END ANSR_STAT             
+            ELSE '답변진행' END ANSR_STAT   ,    
+	        CASE WHEN EXISTS (
+	            SELECT 1 FROM TBL_FILE_MST F
+	            WHERE F.FILE_SEQ = A.ASQ_SEQ AND F.FILE_GB IN ('4','5') AND F.ACTION_YN = 'Y'
+	        ) THEN 'Y' ELSE 'N' END AS FILE_YN             
+                  
            FROM TBL_ASQ_MST A 
             LEFT JOIN  TBL_USER_MST B ON B.USER_ID = A.REG_USER
                                      AND B.HOSP_CD = A.HOSP_CD 
@@ -256,7 +265,7 @@
 	      ]]>
     </select>       
      <!-- 질문입력  -->   
-     <insert id="insertqstnMst" parameterType="AsqDTO"> <![CDATA[ 
+     <insert id="insertqstnMst" parameterType="AsqDTO" useGeneratedKeys="true" keyProperty="asqSeq" keyColumn="ASQ_SEQ"> <![CDATA[
         INSERT INTO TBL_ASQ_MST (
             HOSP_CD, 
             FILE_GB, 
@@ -456,5 +465,30 @@
            AND   A.HOSP_CD = #{hospCd}
         ]]>
     </if>
-    </select>    
+    </select>
+
+    <!-- 파일 저장 -->
+    <insert id="saveFileCd" parameterType="FileDTO" useGeneratedKeys="true" keyProperty="seq" keyColumn="SEQ">
+        <![CDATA[
+        INSERT INTO TBL_FILE_MST (
+            HOSP_CD, FILE_GB, FILE_SEQ, FILE_TITLE, FILE_PATH,
+            FILE_SIZE, USE_YN, REG_DTTM, REG_USER, REG_IP
+        ) VALUES (
+            #{hospCd}, #{fileGb}, #{fileSeq}, #{fileTitle},
+            #{filePath}, #{fileSize}, 'Y', NOW(), #{regUser}, #{regIp}
+        )
+        ]]>
+    </insert>
+
+    <!-- 파일 삭제 (소프트삭제) -->
+    <update id="deleteFileCd" parameterType="FileDTO">
+        <![CDATA[
+        UPDATE TBL_FILE_MST
+        SET ACTION_YN = 'N', UPD_DTTM = NOW(),
+            UPD_USER = #{updUser}, UPD_IP = #{updIp}
+        WHERE FILE_SEQ = #{fileSeq} AND FILE_GB = #{fileGb}
+          AND FILE_PATH = #{filePath} AND ACTION_YN = 'Y'
+        ]]>
+    </update>
+
 </mapper>

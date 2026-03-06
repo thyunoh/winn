@@ -391,7 +391,14 @@
             CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
             ELSE '질문진행' END QSTN_STAT ,
             CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
-            ELSE '답변진행' END ANSR_STAT             
+            ELSE '답변진행' END ANSR_STAT  ,
+	        CASE WHEN EXISTS (
+	                SELECT 1 FROM TBL_FILE_MST F
+	                WHERE F.FILE_SEQ = A.ASQ_SEQ
+	                  AND F.FILE_GB IN ('4','5')
+	                  AND F.ACTION_YN = 'Y'
+	            ) THEN 'Y' ELSE 'N'
+	        END AS FILE_YN                          
            FROM TBL_ASQ_MST A 
             LEFT JOIN  TBL_USER_MST B ON B.USER_ID = A.REG_USER
                                      AND B.HOSP_CD = A.HOSP_CD 
@@ -454,42 +461,61 @@
      ]]>   
     </select>   
       <!-- 질문입력  -->   
-     <insert id="insertQstnCd" parameterType="AsqDTO"> <![CDATA[ 
+     <insert id="insertQstnCd" parameterType="AsqDTO">
+        <selectKey keyProperty="asqSeq" resultType="String" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        <![CDATA[
         INSERT INTO TBL_ASQ_MST (
-            HOSP_CD, 
-            FILE_GB, 
-            QSTN_TITLE, 
-            QSTN_CONTS, 
-            REG_DTTM, 
-            REG_USER, 
-            REG_IP, 
-            UPD_DTTM, 
-            UPD_USER, 
-            UPD_IP, 
+            HOSP_CD,
+            FILE_GB,
+            QSTN_TITLE,
+            QSTN_CONTS,
+            REG_DTTM,
+            REG_USER,
+            REG_IP,
+            UPD_DTTM,
+            UPD_USER,
+            UPD_IP,
             QSTN_WAN ,
             JOB_SEQ  ,
-            ACTION_YN 
+            ACTION_YN
         ) VALUES (
-            #{hospCd2}, 
-            #{fileGb2}, 
-            #{qstnTitle}, 
-            #{qstnConts}, 
-            NOW(), 
-            #{regUser}, 
-            #{regIp}, 
-            NOW(), 
-            #{updUser}, 
-            #{updIp}, 
+            #{hospCd2},
+            #{fileGb2},
+            #{qstnTitle},
+            #{qstnConts},
+            NOW(),
+            #{regUser},
+            #{regIp},
+            NOW(),
+            #{updUser},
+            #{updIp},
             #{qstnWan},
 			(SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
-		   	       FROM  TBL_ASQ_MST A 
-			       WHERE A.HOSP_CD   = #{hospCd2} 
-			         AND A.FILE_GB   = #{fileGb2} 
-			) , 'Y'       
+		   	       FROM  TBL_ASQ_MST A
+			       WHERE A.HOSP_CD   = #{hospCd2}
+			         AND A.FILE_GB   = #{fileGb2}
+			) , 'Y'
         )
-    ]]>    
-    
-    </insert>    
+    ]]>
+
+    </insert>
+    <!-- 질문내용 수정 (레코드 유지) -->
+    <update id="updateQstnMst" parameterType="AsqDTO"><![CDATA[
+        UPDATE TBL_ASQ_MST
+        SET  QSTN_TITLE   = #{qstnTitle}
+            ,QSTN_CONTS   = #{qstnConts}
+            ,UPD_DTTM     = NOW()
+            ,UPD_USER     = #{updUser}
+            ,UPD_IP       = #{updIp}
+            ,QSTN_WAN     = #{qstnWan}
+        WHERE ASQ_SEQ     = #{asqSeq}
+          AND FILE_GB     = #{fileGb}
+          AND ACTION_YN   = 'Y'
+    ]]>
+    </update>
+    <!-- 질문 비활성화 (삭제용) -->
     <update id="updateQstnCd" parameterType="AsqDTO" ><![CDATA[
         UPDATE TBL_ASQ_MST
         SET  ACTION_YN    = 'N'          
