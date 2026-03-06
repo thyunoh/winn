@@ -3,7 +3,11 @@
     "allow": [
       "Bash(xxd \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_consult\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\jsp\\\\login\\\\LoginWinCT.jsp\")",
       "Bash(xxd)",
-      "Bash(curl -s \"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\")"
+      "Bash(curl -s \"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\")",
+      "Bash(sed \"s/.*[\"\"''\\(]//\")",
+      "Bash(sed \"s/.*''//\")",
+      "Bash(sed 's/.*=\"\"//')",
+      "Bash(ls \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_consult\\\\src\\\\main\\\\webapp\\\\images\\\\winct\"\" | wc -l && echo \"---\" && ls \"C:Usersusergitwinnwnn_consultsrcmainwebappimageswinct\"\")"
     ]
   }
 }
