@@ -14,65 +14,127 @@
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
 <!-- DataTables CSS -->
 <style>
+/* 공지사항 전체 영역 */
+#noti_wrapper { padding: 10px 15px; }
+
+/* 테이블 전체 너비 */
+#noti_wrapper table.dataTable { width: 100% !important; }
+
+/* 테이블 헤더 */
+#noti_wrapper table.dataTable thead th {
+	background-color: #e8f4fd;
+	padding: 10px 8px;
+	font-size: 13px;
+	font-weight: 600;
+	text-align: center;
+	border-bottom: 2px solid #b8d4e8;
+	white-space: nowrap;
+}
+/* 테이블 행 */
+#noti_wrapper table.dataTable tbody td {
+	padding: 8px;
+	font-size: 13px;
+	border-bottom: 1px solid #eee;
+}
+#noti_wrapper table.dataTable tbody tr:hover { background-color: #f5faff !important; }
+
+/* 상단: 검색 필터 우측 정렬 */
+#noti_wrapper .dataTables_filter { text-align: right !important; }
+
+/* 하단: 페이징 + 정보 */
+#noti_wrapper .dataTables_info { font-size: 13px; }
+#noti_wrapper .dataTables_paginate { font-size: 13px; }
+
+/* 하단 버튼 영역 - 페이징 row 바로 위, 우측 정렬 */
+#noti_wrapper .noti-btn-area {
+	display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+	padding: 8px 0 5px 0;
+}
+#noti_wrapper .noti-btn-area select {
+	height: 34px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; padding: 0 8px;
+}
+#noti_wrapper .noti-btn-area button {
+	height: 34px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; padding: 0 12px;
+	background: white; cursor: pointer;
+}
+#noti_wrapper .noti-btn-area button:hover { background-color: #f0f0f0; }
+
+/* 카드/대시보드 패딩 최소화 */
+.dashboard-content { padding: 10px !important; }
+
+/* ===== 모달 균형 배치 (CSS only, 넓이 50vw 유지) ===== */
+/* 헤더: 제목(좌) ↔ 버튼(우) 한 줄 균형 */
+#modalName .modal-header {
+	display: flex; align-items: center; justify-content: space-between;
+	padding: 8px 15px; flex-wrap: nowrap; border-bottom: 2px solid #dee2e6;
+}
+#modalName .modal-header .modal-title { flex-shrink: 0; font-weight: 600; font-size: 15px; margin-right: 10px; }
+#modalName .modal-header .form-row { flex-shrink: 0; margin: 0; }
+#modalName .modal-header .form-row .col-sm-12 {
+	display: flex; gap: 4px; align-items: center; padding: 0; margin: 0; max-width: 100%;
+}
+#modalName .modal-header .btn { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+/* 바디: 폼 균일 간격 */
+#modalName .modal-body { padding: 12px 18px; }
+#modalName .modal-body .form-group,
+#modalName .modal-body .form-row { margin-bottom: 8px; align-items: center; }
+#modalName .modal-body .col-form-label { font-size: 13px; font-weight: 500; padding: 4px 5px; }
+#modalName .modal-body .form-control,
+#modalName .modal-body .custom-select { font-size: 13px; height: 32px; padding: 2px 8px; }
+#modalName .modal-body textarea.form-control { height: auto; padding: 6px 8px; }
+/* 파일업로드 정렬 */
+#modalName #uploadForm { margin-top: 0 !important; }
+#modalName #uploadForm .container-md { padding: 0; }
+#modalName #uploadForm .btn-box { display: flex; gap: 5px; align-items: center; }
+#modalName .table-file-container { margin-top: 8px !important; }
+#modalName .modal-footer { padding: 5px 15px; }
 </style>
 <!-- ============================================================== -->
 <!-- Main Form start -->
 <!-- ============================================================== -->
 <div class="dashboard-wrapper">
-	<div class="container-fluid  dashboard-content">
+	<div class="container-fluid dashboard-content">
 		<div class="row">
 			<!-- ============================================================== -->
 			<!-- data table start -->
 			<!-- ============================================================== -->
 			<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
 				<div class="card">
-					<div class="card-body">
-						<div class="form-row mb-2">
-							<div class="col-sm-1">
-								<select id="fileGb1" class="btn btn-outline-dark btn-sm" style="padding:6px 14px; font-size:14px; pointer-events:none; background-color:#e9ecef;"
-									oninput="findField(this)" disabled>
-									<option selected value="${noticeType}">구분</option>
-								</select>
-							</div>
-							
-							<div class="col-sm-6">
-								<div class="btn-group ml-auto">
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
-										data-placement="top" title="" onClick="fn_re_load()">
-										재조회. <i class="fas fa-binoculars"></i>
-									</button>
-									<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
-										data-placement="top" title="신규 Data 입력"
-										onClick="modal_Open('I')">
-										입력. <i class="far fa-edit"></i>
-									</button>
-									<button class="btn btn-outline-dark  btn-update" data-toggle="tooltip"
-										data-placement="top" title="선택 Data 수정"
-										onClick="modal_Open('U')">
-										수정. <i class="far fa-save"></i>
-									</button>
-									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
-										data-placement="top" title="선택 Data 삭제"
-										onClick="modal_Open('D')">
-										삭제. <i class="far fa-trash-alt"></i>
-									</button>
-									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
-										data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">
-										체크삭제. <i class="far fa-calendar-check"></i>
-									</button>
-									<button class="btn btn-outline-dark" data-toggle="tooltip"
-										data-placement="top" title="화면 Size 확대.축소"
-										id="fullscreenToggle">
-										화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i>
-									</button>
-								</div>
-							</div>
-						</div>
+					<div class="card-body" id="noti_wrapper">
+						<!-- 구분 (숨김) -->
+						<select id="fileGb1" style="display:none;"
+							oninput="findField(this)" disabled>
+							<option selected value="${noticeType}">구분</option>
+						</select>
+						<!-- 테이블 -->
 						<div style="width: 100%;">
 							<table id="tableName"
-								class="display nowrap stripe hover cell-border  order-column responsive">
-
+								class="display nowrap stripe hover cell-border order-column responsive">
 							</table>
+						</div>
+						<!-- 하단 버튼 영역 -->
+						<div class="noti-btn-area">
+							<select id="fileGb1_view" class="btn btn-outline-dark btn-sm" style="padding:4px 10px; font-size:13px; pointer-events:none; background-color:#e9ecef;" disabled>
+								<option selected value="${noticeType}">공지사항</option>
+							</select>
+							<button class="btn btn-outline-dark" onClick="fn_re_load()">
+								<i class="fas fa-binoculars"></i> 재조회
+							</button>
+							<button class="btn btn-outline-dark btn-insert" onClick="modal_Open('I')">
+								<i class="far fa-edit"></i> 입력
+							</button>
+							<button class="btn btn-outline-dark btn-update" onClick="modal_Open('U')">
+								<i class="far fa-save"></i> 수정
+							</button>
+							<button class="btn btn-outline-dark btn-delete" onClick="modal_Open('D')">
+								<i class="far fa-trash-alt"></i> 삭제
+							</button>
+							<button class="btn btn-outline-dark btn-delete" onClick="fn_findchk()">
+								<i class="far fa-calendar-check"></i> 체크삭제
+							</button>
+							<button class="btn btn-outline-dark" id="fullscreenToggle">
+								<i class="fas fa-expand" id="fullscreenIcon"></i> 화면확대축소
+							</button>
 						</div>
 					</div>
 				</div>
@@ -204,7 +266,7 @@
 						<div class="container-md mt-1">
 							<div class="form-group">
 								<input type="hidden" name="action" value="upload"> 
-									<label class="col-2 col-lg-2 col-form-label text-left" style="margin-left: -25px;">파일업로드</label>
+									<label class="col-2 col-lg-2 col-form-label text-left" style="margin-left: -10px;">파일업로드</label>
 								<div class="col-10 col-lg-10">
 									<!-- 파일 선택 버튼 -->
 									<div class="btn-box">
@@ -336,8 +398,8 @@
 	        				{ data: 'notiSeq',      visible: false, className: 'dt-body-center', width: '100px',   name: 'keynotiSeq', primaryKey: true },
 	        				{ data: 'fileGb',       visible: false, className: 'dt-body-center', width: '100px',   name: 'keyfileGb', primaryKey: true },
 	        				{ data: 'subCodeNm',    visible: true,  className: 'dt-body-left'  , width: '100px',  },
-	        				{ data: 'notiTitle',    visible: true,  className: 'dt-body-left'  , width: '300px',  },
-	        				{ data: 'notiContent',  visible: true,  className: 'dt-body-left'  , width: '300px',
+	        				{ data: 'notiTitle',    visible: true,  className: 'dt-body-left'  , width: '500px',  },
+	        				{ data: 'notiContent',  visible: true,  className: 'dt-body-left'  , width: '500px',
 	        					  render: function (data, type, row) {
 	        					    if (type === 'display') {
 	        					      var text = $('<div>').html(data).text(); // HTML 태그 제거
@@ -404,11 +466,11 @@
 	    
 		let dt_com = new DataTransfer();
 	    
-		window.onload = function() { 
+		window.onload = function() {
 			find_Check();
 		    comm_Check();
+		};
 
-		}; 
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
 		function triggerEnterKey() {
 		    let findDataInput = document.getElementById("findData");
@@ -670,7 +732,7 @@
 			(function($) {
 				 dataTable = $('#' + tableName.id).DataTable({	
 						language : {
-							search: "자 료 검 색 : ",
+							search: "자료검색 : ",
 						    emptyTable: "데이터가 없습니다.",
 						    lengthMenu: "_MENU_",
 						    info: "현재 _START_ - _END_ / 총 _TOTAL_건",
@@ -694,20 +756,32 @@
 		    	            return:     find_Enter,          	            
 		    	        },		    	        
 					    rowCallback: function(row, data, index) {
-				            $(row).find('td').css('padding',colPadding); 
-				        },				        
+				            $(row).find('td').css('padding',colPadding);
+				        },
+				        drawCallback: function() {
+				            // 버튼 영역이 아직 이동되지 않았으면 placeholder로 이동
+				            var $target = $('#tableName_wrapper .noti-btn-target');
+				            if ($target.length && !$target.children().length) {
+				                var $btnArea = $('.noti-btn-area');
+				                if ($btnArea.length) {
+				                    $target.append($btnArea);
+				                }
+				            }
+				        },
 				        lengthMenu: [data_Count, data_Count],
 				        pageLength: defaultCnt, 
 				        // 페이지와 버튼 넓히기  
 						//dom: showButton   ? '<"row"<"col-sm-2"l><"col-sm-2"B><"col-sm-5"><"col-sm-3"f>>t<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>'
 						//                  : '<"row"<"col-sm-2"l><"col-sm-7"><"col-sm-3"f>>t<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>',
 							// 페이지와 버튼 간격 좁히기 
-						dom: showButton  
-						        ? '<"datatable-controls d-flex align-items-center justify-content-between"<"d-flex"<"mr-2"l><"mr-2"B><"ml-auto"f>>>' +
+						dom: showButton
+						        ? '<"datatable-controls d-flex align-items-center"<"d-flex w-100"<"mr-2"l><"mr-2"B><"ml-auto"f>>>' +
 						          't' +
+						          '<"noti-btn-target">' +
 						          '<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>'
-						        : '<"datatable-controls d-flex align-items-center justify-content-between"<"d-flex"<"mr-2"l><"ml-auto"f>>>' +
+						        : '<"datatable-controls d-flex align-items-center"<"d-flex w-100"<"mr-2"l><"ml-auto"f>>>' +
 						          't' +
+						          '<"noti-btn-target">' +
 						          '<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>',
 	                        //
 						                  
@@ -967,7 +1041,7 @@
 			if (firstflag) {
 				firstflag = false;
 				tableName.style.display = 'inline-block';
-				fn_FirstGridSet();	
+				fn_FirstGridSet();
 			} else {
 				dataTable.ajax.reload();
 			}
@@ -1603,6 +1677,10 @@
 		    if (event.key === 'Enter') {
 		    	fn_FindData(); 
 		    }
+		}
+		// 파일 선택 버튼 - 글로벌 함수 (onclick에서 호출)
+		function openFileInput() {
+		    document.getElementById('file-input').click();
 		}
 		// 파일 업로드 기능
 		document.addEventListener("DOMContentLoaded", function () {

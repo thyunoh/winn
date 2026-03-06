@@ -22,7 +22,21 @@
 
 <!-- ============================================================== -->
 <!-- sidebar start -->
-<div class="nav-left-sidebar" style="background-color: white; color: black;">
+<style>
+.nav-left-sidebar {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: calc(100vh - 60px) !important;
+    background-color: white !important;
+}
+.nav-left-sidebar .fixed-sidebar-info-box {
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    z-index: 10;
+}
+</style>
+<div class="nav-left-sidebar">
     <div class="menu-list">
         <nav class="navbar navbar-expand-lg navbar-white">
             <a class="d-xl-none d-lg-none" href="#">Dashboard</a>
@@ -311,29 +325,29 @@
             </div>            
         </nav>
         
-		<div class="fixed-sidebar-info-box">
-		    <div class="col-xl-12">
-		        <div class="card border-3 border-top border-top-primary">
-		            <div class="card-body">
-		                <img class="img-fluid" src="/images/winct/time_main.svg" alt="고객센터" style="height: 140px; margin-top: -10px; width: 120%;">
-		                <div class="mt-3">
-		                    <a href="#" onclick="fnasq_main();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between mb-2" 
-		                        style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
-		                        <span><i class="fas fa-headphones" style="opacity: 0.6; margin-right: 10px;"></i> <b>1:1 문의하기</b></span>
-		                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
-		                    </a>
-		                    <a href="#" onclick="loadFaqData();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between" 
-		                       style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
-		                        <span><i class="fas fa-clipboard-list" style="opacity: 0.6; margin-right: 10px;"></i> <b>자주하는 질문</b></span>
-		                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
-		                    </a>
-		                </div>
-		            </div>
-		        </div>
-		    </div>
-		</div>
-        
+
     </div>
+	<div class="fixed-sidebar-info-box">
+	    <div class="col-xl-12">
+	        <div class="card border-3 border-top border-top-primary">
+	            <div class="card-body">
+	                <img class="img-fluid" src="/images/winct/time_main.svg" alt="고객센터" style="height: 140px; margin-top: -10px; width: 120%;">
+	                <div class="mt-3">
+	                    <a href="#" onclick="fnasq_main();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between mb-2"
+	                        style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
+	                        <span><i class="fas fa-headphones" style="opacity: 0.6; margin-right: 10px;"></i> <b>1:1 문의하기</b></span>
+	                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
+	                    </a>
+	                    <a href="#" onclick="loadFaqData();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between"
+	                       style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
+	                        <span><i class="fas fa-clipboard-list" style="opacity: 0.6; margin-right: 10px;"></i> <b>자주하는 질문</b></span>
+	                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
+	                    </a>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</div>
 </div>
 <!-- 질의응답스크립트 종료 -->
 <!-- FAQ 모달 -->
@@ -440,9 +454,8 @@
    data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
    <div
       class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-      style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40vw; max-width: 40vw; max-height: 50vh;">
-      <div class="modal-content"
-         style="height: 80%; display: flex; flex-direction: column;">
+      style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 40vw; min-width: 520px; max-height: 50vh;">
+      <div class="modal-content"      style="height: 70%; display: flex; flex-direction: column;">
          <div class="modal-header  bg-light">
             <h4 class="modal-title">문의 등록</h4>
 				<div class="form-row">
@@ -912,8 +925,17 @@ $(document).ready(function () {
         // 현재 클릭한 항목에 active 추가
         $(this).addClass('active');
     });
-    
-    
+
+    // ESC 키로 모달 닫기
+    $(document).on('keydown', function(e) {
+        if (e.keyCode === 27) {
+            if ($('#asq_main').hasClass('show')) {
+                asqModalClose();
+            } else if ($('#asq_main_tab').hasClass('show')) {
+                asqMainClose();
+            }
+        }
+    });
 });
    //위너넷만 메뉴가 생성됨   
 function hosp_conact() {

@@ -3329,7 +3329,7 @@ function total_Report_DataList() {
 	if      (jobFlag === "01") { tableName = document.getElementById('tableName01');
 	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','MMSE','월 예상수익','점검내용' ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: false,  className: 'dt-body-center', width: '100px' },
@@ -3371,7 +3371,7 @@ function total_Report_DataList() {
         c_Head_Set = [  '환자ID','성명','입원일자','요양개시','작성일자','평가군','평가구분','상향가능'  ];
         
     	columnsSet = [  
-			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
+			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },
 					    
 					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '100px',
@@ -3433,7 +3433,7 @@ function total_Report_DataList() {
         page_Hight = 800;
     	
     	c_Head_Set = [  '환자ID','성명','입원일자','요양개시','작성일자','평가군','평가구분','ADL점수'  ];    	
-    	columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+    	columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'admitDt',  visible: true,  className: 'dt-body-center', width: '100px',
 			                render: function(data, type, row) {
@@ -3479,7 +3479,7 @@ function total_Report_DataList() {
     	
 	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','청구기간','입원일수'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3535,7 +3535,7 @@ function total_Report_DataList() {
     else if (jobFlag === "05") { tableName = document.getElementById('tableName05');
     
 	    c_Head_Set = [  '환자ID','성명','종별','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수','청구번호' ];	    
-		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 					//	{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' ,
@@ -3599,7 +3599,7 @@ function total_Report_DataList() {
     else if (jobFlag === "06") { tableName = document.getElementById('tableName06');
     
 	    c_Head_Set = [ '환자ID','성명','종별','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수' ,'청구번호'  ];	    
-		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 					//	{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3657,7 +3657,7 @@ function total_Report_DataList() {
     else if (jobFlag === "07") { tableName = document.getElementById('tableName07');
     
 	    c_Head_Set = [  '환자ID','성명','종별','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수' ,'청구번호'  ];	    
-		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+		columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 					//	{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3714,7 +3714,7 @@ function total_Report_DataList() {
     else if (jobFlag === "08") { tableName = document.getElementById('tableName08');
 	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','급여총액','청구금액','장애기금','본인부담','명세서','청구기간','입원일수'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3771,7 +3771,7 @@ function total_Report_DataList() {
     else if (jobFlag === "09") { tableName = document.getElementById('tableName09');
 	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','계산총액','청구금액','본인부담','EDI코드','단가','일투','일수'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3829,7 +3829,7 @@ function total_Report_DataList() {
     else if (jobFlag === "10") { tableName = document.getElementById('tableName10');
 	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','계산총액','청구금액','본인부담','EDI코드','단가','일투','일수'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType',  visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3889,7 +3889,7 @@ function total_Report_DataList() {
     	page_Hight = 360;
     	c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','EDI코드','단가','일투','일수','계산금액'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType', visible: true, className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3934,7 +3934,7 @@ function total_Report_DataList() {
 		page_Hight = 620;
 		c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','EDI코드','단가','일투','일수','계산금액'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType', visible: true, className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
@@ -3978,7 +3978,7 @@ function total_Report_DataList() {
     	page_Hight = 880;
 		        
         c_Head_Set = [  '생년월일','성명','입원일자','입원시간','퇴원일자','퇴원시간','입원일수','청구일수','누락정보' ];    	
-       	columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+       	columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
    						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
    						{ data: 'admitDt',  visible: true,  className: 'dt-body-center', width: '100px',
    			                render: function(data, type, row) {
@@ -4018,7 +4018,7 @@ function total_Report_DataList() {
 	    page_Hight = 580;
 	    c_Head_Set = [  '청구번호','환자ID','성명','종별','청구구분','명일련','EDI코드','단가','일투','일수','계산금액'  ];	    
 		columnsSet = [  { data: 'claimNo',  visible: true,  className: 'dt-body-center', width: '100px' },
-						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px' },
+						{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType', visible: true, className: 'dt-body-center', width: '100px' },
 						{ data: 'claimGrp', visible: true,  className: 'dt-body-center', width: '100px' },
