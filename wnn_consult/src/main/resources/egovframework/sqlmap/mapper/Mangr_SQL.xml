@@ -358,8 +358,8 @@
           AND A.ACTION_YN = 'Y'  
 		 ]]>
 		  <if test='qstnConts != null and qstnConts !="" '><![CDATA[
-	         AND (A.QSTN_CONTS LIKE CONCAT(#{qstnConts},'%')
-	          OR  A.ANSR_CONTS LIKE CONCAT(#{ansrConts},'%') )
+	         AND (A.QSTN_CONTS LIKE CONCAT('%',#{qstnConts},'%')
+	          OR  A.ANSR_CONTS LIKE CONCAT('%',#{ansrConts},'%') )
 	      ]]>
 	      </if>
 	      <![CDATA[

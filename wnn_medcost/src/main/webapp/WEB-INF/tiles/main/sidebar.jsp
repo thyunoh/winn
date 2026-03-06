@@ -348,6 +348,14 @@
         </button>
       </div>
       <div class="modal-body" style="max-height: 700px; overflow-y: auto;">
+        <div class="input-group mb-3">
+          <input type="text" id="faqSearchInput" class="form-control" placeholder="검색어를 입력하세요" onkeypress="if(event.keyCode===13) searchFaq();">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="button" onclick="searchFaq();">
+              <i class="fas fa-search"></i> 검색
+            </button>
+          </div>
+        </div>
         <div id="faqList">
           <p class="text-muted text-center">FAQ 데이터를 불러오려면 버튼을 클릭하세요.</p>
         </div>
@@ -509,18 +517,20 @@
 </div>
 
 <script>
-function loadFaqData() {
+function loadFaqData(keyword) {
     // 모달 열기
     $('#faqModal').modal('show');
 
     // FAQ 리스트 초기화
     $("#faqList").html(`<p class="text-muted text-center"></p>`);
 
+    var searchKeyword = keyword || "";
+
     // AJAX로 FAQ 데이터 요청
     $.ajax({
         url: "/mangr/faqCdList.do",
         type: "POST",
-        data: {},
+        data: { qstnConts: searchKeyword, ansrConts: searchKeyword },
         dataType: "json",
         success: function (response) {
             if (response.error_code === "0" && Array.isArray(response.data) && response.data.length > 0) {
@@ -627,6 +637,12 @@ function loadFaqData() {
         }
     });
 }
+// FAQ 검색
+function searchFaq() {
+    var keyword = $.trim($("#faqSearchInput").val());
+    loadFaqData(keyword);
+}
+
 // FAQ 모달 닫기
 function faqMainClose() {
     console.log("📢 FAQ 모달 닫힘 실행");

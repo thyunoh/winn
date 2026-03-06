@@ -35,7 +35,7 @@
 
 <!-- 배포 시 버전 번호를 변경하면 브라우저 캐시 강제 갱신 -->
 <%
-    String cacheVer = "20260305003";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
+    String cacheVer = "20260306002";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
 %>
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
@@ -269,12 +269,12 @@
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="d-flex align-items-center justify-content-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
 							<img src="/wnn_consult/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="d-flex align-items-center justify-content-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank"> -->
 						  	    <a href="https://winner797.kr/lecture/?seq=1024&sort01=&page=1" target="_blank"> 
 								<img src="/wnn_consult/images/winct/image5.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
@@ -351,11 +351,11 @@
 			<!-- style="margin-top: 400px; 올려서 오버뱁  -->
 			<!--   로그인시작  -->
 			<div class="login-banner-wrapper" id = "login_form" 
-				style="width: 100%; max-width: 1700px; margin: 0 auto; transition: all 0.3s ease; transform: translateX(220px);">
+				style="width: 100%; max-width: 1700px; margin: 0 auto; transition: all 0.3s ease;">
 				<div class="row ">
 					<!-- 로그인 영역 -->
 
-					<div class="container-fluid mb-2 px-3" 	id = "login_line"  style="transform: translateX(-170px);">
+					<div class="container-fluid mb-2" 	id = "login_line" style="padding-left: 150px;">
 						<div class="row justify-content-center px-xl-8"
 							style="flex-wrap: nowrap;">
 							<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
@@ -489,20 +489,16 @@
 							<div class="image-btn-wrap" style="position: relative; width: 590px; height: 225px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
 								<img class="img-fluid" src="/wnn_consult/images/winct/e_clip2.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
 								<button type="button" class="btn overlay-btn overlay-btn-i1" style="left:5%; top:65%; width:35%; height:20%; background-color:transparent !important;" onclick="winCheckOpen()"></button>
-								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" style="left:60%; top:25%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
-								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" style="left:60%; top:75%; width:30%; height:14%; background-color:transparent !important;"></a>
+								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" style="left:62%; top:30%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
+								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" style="left:62%; top:76%; width:30%; height:14%; background-color:transparent !important;"></a>
 							</div>
 						</div>
-					</div>
-				</div>
 
-				<!--  공지사항   -->
-				
-				<div class="container-fluid_noti mb-2 px-3"
-					style="margin: 0 auto; transition: all 0.3s ease; margin-left: -315px;">
-					  <div class="row justify-content-center" id="noti-row" style="flex-wrap: nowrap;">
-						<div class="col-lg-auto" style="width: 700px; flex-shrink: 0; min-width: 700px;">
-							<div class="bg-light box-p-10" style="height: 220px;">
+					<!--  공지사항   -->
+					<div class="row justify-content-center noti-section"
+						style="flex-wrap: nowrap; visibility: hidden;">
+						<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
+							<div class="bg-light box-p-10" style="height: 220px; margin-left: 35px;">
 								<!-- 탭 헤더 -->
 								<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
 									<a
@@ -607,11 +603,12 @@
 						<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
 						<div class="image-btn-wrap" style="position: relative; width: 590px; height: 220px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
 							<img class="img-fluid" src="/wnn_consult/images/winct/e_clip3.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
-							<button type="button" class="btn overlay-btn overlay-btn-i6" style="left:50%; top:10%; width:44%; height:30%;  !important;" onclick="fnasq_main()"></button>
-							<button type="button" class="btn overlay-btn overlay-btn-i7" style="left:50%; top:54%; width:44%; height:30%;  !important;" onclick="loadFaqData()"></button>
+							<button type="button" class="btn overlay-btn overlay-btn-i6" style="left:54%; top:10%; width:44%; height:40%; background-color:transparent !important;" onclick="fnasq_main()"></button>
+							<button type="button" class="btn overlay-btn overlay-btn-i7" style="left:54%; top:54%; width:44%; height:38%; background-color:transparent !important;" onclick="loadFaqData()"></button>
 						</div>			
 					</div>
 				</div>
+			</div>
 
 			</div>
 			<!-- 오른쪽 소셜 아이콘 박스 -->
@@ -912,16 +909,47 @@
         
         
         
-	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
-	    window.onload = function() {
+	    // 공지사항 정렬 함수
+	    function alignNotiToLogin() {
+	        var allRows = document.querySelectorAll('#login_line > .row');
+	        if (allRows.length < 2) return;
+	        var loginBox = allRows[0].querySelector('.contact-form');
+	        if (!loginBox) return;
+	        var notiRow = allRows[1];
+	        var notiBox = notiRow.querySelector('.bg-light');
+	        if (!notiBox) return;
+	        // 초기화 후 측정
+	        notiRow.style.justifyContent = 'flex-start';
+	        notiRow.style.paddingLeft = '0px';
+	        notiRow.offsetHeight;
+	        var loginLeft = loginBox.getBoundingClientRect().left;
+	        var notiLeft = notiBox.getBoundingClientRect().left;
+	        var diff = loginLeft - notiLeft;
+	        if (diff > 0) {
+	            notiRow.style.paddingLeft = diff + 'px';
+	            notiRow.offsetHeight;
+	            // 2차 보정
+	            var newLeft = notiBox.getBoundingClientRect().left;
+	            var remain = loginLeft - newLeft;
+	            if (Math.abs(remain) > 0.5) {
+	                notiRow.style.paddingLeft = (diff + remain + 75) + 'px';
+	            }
+	        }
+	        notiRow.style.visibility = 'visible';
+	    }
 
+	    // 페이지가 로드될 때마다 현재 페이지를 세션 저장소에 기록
+	    window.addEventListener('load', function() {
 	    	sessionStorage.setItem("previousPage", window.location.href);
-	        setTimeout(function() {
-	            document.body.style.display = "none";
-	            document.body.offsetHeight; // 리플로우 강제 발생
-	            document.body.style.display = "block";
-	        }, 100);
-	    };
+	        alignNotiToLogin();
+	    });
+
+	    // 해상도/줌 변경 시 재정렬
+	    var resizeTimer;
+	    window.addEventListener('resize', function() {
+	        clearTimeout(resizeTimer);
+	        resizeTimer = setTimeout(alignNotiToLogin, 50);
+	    });
 	    /*
 	    document.addEventListener("DOMContentLoaded", function() {
 	        var myCarousel = new bootstrap.Carousel(document.querySelector("#header-carousel"), {
@@ -954,7 +982,7 @@
 	    // 기존 컨테이너 숨기기
 	    $(".container-fluid").hide();  // 기존 요소 숨기기
 	    $(".login-banner-wrapper").hide();  // 기존 요소 숨기기
-	    $(".container-fluid_noti").hide();  // 기존 요소 숨기기
+	    $(".noti-section").hide();  // 기존 요소 숨기기
 	    
         fetch(pageUrl)
 	        .then(response => response.text())
@@ -2053,8 +2081,8 @@
 
 <div class="modal fade" id="asq_main" tabindex="-1"
     data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-        style="width: 50vw; max-width: 900px; min-width: 400px; margin-top: -30px;">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg"
+        style="max-width: 900px; width: 90%; margin-top: 20px;">
         <div class="modal-content"
             style="max-height: calc(100vh - 100px); display: flex; flex-direction: column;">
             
@@ -2439,6 +2467,14 @@
         </button>
       </div>
       <div class="modal-body" style="max-height: 700px; overflow-y: auto;">
+        <div class="input-group mb-3">
+          <input type="text" id="faqSearchInput" class="form-control" placeholder="검색어를 입력하세요" onkeypress="if(event.keyCode===13) searchFaq();">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="button" onclick="searchFaq();">
+              <i class="fas fa-search"></i> 검색
+            </button>
+          </div>
+        </div>
         <div id="faqList">
           <p class="text-muted text-center">FAQ 데이터를 불러오려면 버튼을 클릭하세요.</p>
         </div>
@@ -2449,7 +2485,7 @@
 
 	<!-- 자주하는 질문 스크립트 시작-->
 	<script>
-	function loadFaqData() {
+	function loadFaqData(keyword) {
 	    if (!sessionStorage.getItem('s_hospid')) {
 	        messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
 	        return;
@@ -2460,12 +2496,14 @@
         // FAQ 리스트 초기화
         $("#faqList").html(`<p class="text-muted text-center"></p>`);
 
+        var searchKeyword = keyword || "";
+
         // AJAX로 FAQ 데이터 요청
-        
+
         $.ajax({
         	type: "post",
         	url: "${pageContext.request.contextPath}/mangr/getfaqCdList.do",
-            data: {},
+            data: { qstnConts: searchKeyword, ansrConts: searchKeyword },
             dataType: "json",
             success: function (response) {
             	if (response.error_code === "0" && Array.isArray(response.resultLst) && response.resultLst.length > 0) {
@@ -2573,6 +2611,12 @@
             }
         });
     }
+
+	// FAQ 검색
+	function searchFaq() {
+	    var keyword = $.trim($("#faqSearchInput").val());
+	    loadFaqData(keyword);
+	}
 
 	// FAQ 모달 닫기
 	function faqMainClose() {
@@ -2907,8 +2951,11 @@
       	
         	hosp_conact() ;
         	
-        //	const url = "http://localhost:8080/user/";    
-        	const url = "https://winner797.co.kr/user/dashboard.do"; 
+        //  const url = "http://localhost:8080/user/";    
+        //  const url = "https://winner797.co.kr/user/dashboard.do";
+            const url = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? "http://localhost:8080/user/"
+                    : "https://winner797.co.kr/user/dashboard.do";
         	
             win_Check = window.open(url);            
             
@@ -3180,7 +3227,7 @@
 	     }
 	    //해상도에따른 위치 조절 기능 (공지사항/고객샌터 )
         function adjustMargin() {
-            const container  = document.querySelector('.container-fluid_noti');
+            const container  = document.querySelector('.noti-section');
             const screenWidth = window.innerWidth;
 
             if (screenWidth > 1920) {
