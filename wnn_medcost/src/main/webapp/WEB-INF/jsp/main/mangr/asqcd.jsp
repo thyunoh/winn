@@ -111,9 +111,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 
 		                    <!-- 질문자 업로드 파일 조회/다운로드 (fileGb='4') -->
 		                    <div id="qstn-file-area" style="margin-top: 5px; margin-bottom: 10px; display:none;">
-		                       <label style="font-size: 13px; font-weight: 600; color: #2874A6; margin-bottom: 4px; display:block;">
-		                          <i class="fa-solid fa-floppy-disk" style="color:#2874A6;"></i> 질문 첨부파일
-		                       </label>
+									<label style="font-size: 13px; font-weight: 600; color: #2874A6; margin-bottom: 4px; display: block; text-align: left;">
+									    <i class="fa-solid fa-floppy-disk" style="color:#2874A6;"></i> 질문 첨부파일
+									</label>
 		                       <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
 		                          <div style="max-height: 150px; overflow-y: auto;">
 		                             <table id="qstn-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
@@ -138,8 +138,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        <label for="qstnWan" class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
 		                        <div class="col-2 col-lg-2">
 		                            <select name="qstnWan" id="qstnWan" class="custom-select">
-		                                <option value="Y">완료</option>
-		                                <option value="N" selected>진행</option>
+		                                <option value="Y">질문완료</option>
+		                                <option value="N" selected>질문진행</option>
 		                            </select>
 		                        </div>
 		                    </div>
@@ -157,8 +157,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        <label for="ansrWan" class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
 		                        <div class="col-2 col-lg-2">
 		                            <select class="custom-select" name="ansrWan" id="ansrWan">
-		                                <option value="Y" selected>완료</option>
-							            <option value="N">진행</option>
+		                                <option value="Y">답변완료</option>
+							            <option value="N" selected>답변진행</option>
 		                            </select>
 		                        </div>
 		                    </div>
@@ -166,8 +166,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    <!-- 답변자 파일 업로드 영역 -->
 		                    <div class="form-group" id="ansr-upload-area" style="margin-top: 5px;">
 		                       <div class="container-md mt-1" style="padding: 0;">
-		                          <div class="form-group">
-		                             <label class="col-form-label text-left" style="font-size: 13px; font-weight: 500;">답변 파일업로드</label>
+		                          <div class="form-group">   
+		                             <label class="col-form-label d-block w-100 ps-0" style="font-size: 13px; font-weight: 600; text-align: left !important; 
+		                                     margin-left: 0 !important; padding-left: 0 !important;">답변 파일업로드</label>
 		                             <div>
 		                                <div class="btn-box" style="display: flex; gap: 5px; align-items: center;">
 		                                   <button type="button" class="btn btn-primary btn-sm" onclick="openAnsrFileInput()">파일 선택</button>
@@ -188,9 +189,10 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 
 		                    <!-- 답변자 업로드된 파일 테이블 (fileGb='5') -->
 		                    <div id="ansr-file-area2" style="margin-top: 5px; margin-bottom: 10px; display:none;">
-		                       <label style="font-size: 13px; font-weight: 600; color: green; margin-bottom: 4px; display:block;">
-		                          <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 첨부파일
-		                       </label>
+								<label style="font-size: 13px; font-weight: 600; color: green; margin-bottom: 4px; display: block; 
+								     text-align: left !important; padding-left: 0 !important; margin-left: 0 !important;">
+								    <i class="fa-solid fa-floppy-disk" style="color: green;"></i> 답변 첨부파일
+								</label>		                       
 		                       <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
 		                          <div style="max-height: 150px; overflow-y: auto;">
 		                             <table id="ansr-file-table2" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
@@ -308,7 +310,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['요양기관','질문제목','질문내용','질문상태','답변내용','답변상태','등록자','등록일'];
+		var c_Head_Set = ['','','요양기관','질문제목','질문내용','질문상태','답변내용','답변상태','등록자','등록일','첨부파일'];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
@@ -321,7 +323,19 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 	        				{ data: 'ansrConts',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
 	        				{ data: 'ansrStat',   visible: true,  className: 'dt-body-left'   , width: '50px',   },
 	        				{ data: 'userNm',     visible: true,  className: 'dt-body-left'   , width: '50px',   },
-	        				{ data: 'regDttm',    visible: true,  className: 'dt-body-center' , width: '100px',  } 
+	        				{ data: 'regDttm',    visible: true,  className: 'dt-body-center' , width: '100px',  },
+	        				{ data: 'fileYn',     visible: true,  className: 'dt-body-center' , width: '50px',
+	        				    render: function (data, type, row) {
+	        				        if (type === 'display') {
+	        				            if (data === 'Y') {
+	        				                return '<i class="fa fa-save" title="첨부파일 있음" style="color: green;"></i>';
+	        				            } else {
+	        				                return '';
+	        				            }
+	        				        }
+	        				        return data;
+	        				    }
+	        				}
 	        			  ];
 		
 		var s_CheckBox = true;   		           	 // CheckBox 표시 여부
@@ -479,6 +493,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 				if (edit_Data) {
 					// Value Setting
 					formValueSet(inputZone.id,edit_Data);
+					// ansrWan 값이 없으면 'N'(진행) 기본값 설정
+					$('#ansrWan option').prop('selected', false);
+					$('#ansrWan option[value="' + (edit_Data.ansrWan || 'N') + '"]').prop('selected', true);
 					// 파일 목록 로딩
 					var asqSeqVal = edit_Data.asqSeq;
 					if (asqSeqVal) {
