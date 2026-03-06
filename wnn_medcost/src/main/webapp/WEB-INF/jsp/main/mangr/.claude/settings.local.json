@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd \"C:\\\\Users\\\\HYUN\\\\git\\\\win\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\jsp\\\\main\\\\mangr\\\\asqcd.jsp\")",
+      "Bash(xxd)"
+    ]
+  }
+}
