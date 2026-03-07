@@ -980,15 +980,24 @@ function fn_ViewData(data) {
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환
 								if (type === 'display') {
+									var hasPrev = row.prevStep1 !== '0' || row.prevStep2 !== '0' || row.prevStep3 !== '0' || row.prevStep4 !== '0';
+									var allCurtZero = row.curtStep1 === '0' && row.curtStep2 === '0' && row.curtStep3 === '0' && row.curtStep4 === '0';
+									var curtStep1Is1 = row.curtStep1 === '1';
+									var condMet = hasPrev && (allCurtZero || curtStep1Is1);
 						        	if (data === '1') return '해당';
-						            if (data === '2') return '미처치';
+						        	if (data === '2' && condMet) return '해당';
+						        	if (data === '2') return '미처치';
 						            if (data === '3') return '미처치';
 						            if (data === '9') return '';
 						        }
 						        return data;
 						    },
-						    createdCell: function(td, cellData) {
-						        if (cellData === '1') {
+						    createdCell: function(td, cellData, rowData) {
+						    	var hasPrev = rowData.prevStep1 !== '0' || rowData.prevStep2 !== '0' || rowData.prevStep3 !== '0' || rowData.prevStep4 !== '0';
+						    	var allCurtZero = rowData.curtStep1 === '0' && rowData.curtStep2 === '0' && rowData.curtStep3 === '0' && rowData.curtStep4 === '0';
+						    	var curtStep1Is1 = rowData.curtStep1 === '1';
+						    	var condMet = hasPrev && (allCurtZero || curtStep1Is1);
+						        if (cellData === '1' || (cellData === '2' && condMet)) {
 						            td.style.color = 'green';
 						            td.style.fontWeight = 'bold';
 						        }
