@@ -256,7 +256,7 @@
 		                                                  ELSE  'E' END
   	      
 	</select>
-	
+
 	<select id="total_DataList_03" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
 		SELECT DISTINCT LEFT(COALESCE(a.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(a.PAT_NM, '')) >= 1 
@@ -274,7 +274,7 @@
 		            WHEN a.EVAL_TYPE = '2' THEN ' 계속 입원 중인 환자 평가' 	
 		            WHEN a.EVAL_TYPE = '3' THEN ' 이전 환자평가표를 적용하는 경우'
 		            ELSE '' END AS evalType
-		     , ADL_SCORE_CHECK(a.DRESSING,a.WASHING,a.BRUSHING,a.BATHING,a.EATING,a.MOVE_POS,a.SIT_UP,a.TRANSFER,a.EXIT_ROOM,a.TOILET_USE,'1') AS adlScore
+		     , ADL_SCORE_CHECK(a.DRESSING,a.WASHING,a.BRUSHING,a.BATHING,a.EATING,a.MOVE_POS,a.SIT_UP,a.TRANSFER,a.EXIT_ROOM,a.TOILET_USE,'3') AS adlScore 
   	      FROM TBL_PATVAL_MST a
          WHERE a.HOSP_CD = #{hospCd}
            AND a.MED_START LIKE CONCAT(#{workYm}, '%')
