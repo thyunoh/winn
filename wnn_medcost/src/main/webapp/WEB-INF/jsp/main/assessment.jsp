@@ -427,8 +427,10 @@ function fn_CreateData(flag) {
 	if (flag === 1) {
 		const card = document.getElementById('card_container');
 	    card.style.display = 'none';
-	    jobFlag = '00';	
-		$('#' + tableName.id).DataTable().clear().destroy();
+	    jobFlag = '00';
+		if ($.fn.DataTable.isDataTable('#' + tableName.id)) {
+			$('#' + tableName.id).DataTable().clear().destroy();
+		}
 		$('#' + tableName.id).empty();
 	}
 	

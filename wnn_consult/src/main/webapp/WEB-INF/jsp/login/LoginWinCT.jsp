@@ -2006,7 +2006,7 @@
 </script>
 <!-- 기존 1대1 질의응답  -->
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
-	data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+	data-bs-backdrop="static" data-bs-keyboard="true" aria-hidden="true">
 	<div class="modal-dialog modal-lg"
 		style="max-width: 900px; width: 90%; margin-top: 20px;">
 		<!-- 모달 전체 높이를 100vh에서 auto로 변경하고 최대 높이를 제한 -->

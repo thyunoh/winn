@@ -3018,7 +3018,7 @@
 	-->
 	
 	<select id="select_CategoryList14" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
-	    WITH filtered_pat AS (
+		WITH filtered_pat AS (
 		    SELECT pm1.PAT_ID
 		      FROM TBL_PATVAL_MST pm1
 		     WHERE pm1.HOSP_CD = #{hospCd}
@@ -3031,6 +3031,9 @@
 		     GROUP BY pm1.PAT_ID
 		    HAVING SUM(CASE WHEN LEFT(IFNULL(pm1.PAT_CLASS,PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)),1) NOT IN ('D','E') 
 		                    THEN 1 ELSE 0 END) = 0
+		       /* A31(중도입원) 이력 있는 환자 전체 제외 */
+		       AND SUM(CASE WHEN IFNULL(pm1.PAT_CLASS, PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)) = 'A31'
+		                    THEN 1 ELSE 0 END) = 0
 		)
 		SELECT DISTINCT 
 		       LEFT(pm2.PAT_ID,6) AS patId 
@@ -3040,13 +3043,39 @@
 		     , pm2.ADMIT_DT     AS admitDt  
 		     , pm2.MED_START    AS medStart                     
 		     , pm2.DOC_DT       AS docDt
-		       
 		     , CASE WHEN IFNULL(pm2.PAT_CLASS,'') = '' 
 		            THEN LEFT(PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START),1)
 		            ELSE LEFT(pm2.PAT_CLASS,1) 
 		             END AS cPatClass
-		     , CASE WHEN LEFT(IFNULL(pm2.PAT_CLASS,PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)),1) IN ('D','E') AND 
-		                 DATEDIFF(COALESCE(ii.TEWONDT, DATE_FORMAT(pm2.DOC_DT,'%Y%m%d')), DATE_FORMAT(pm2.ADMIT_DT,'%Y%m%d')) + 1 >= 181 
+		     , CASE WHEN LEFT(IFNULL(pm2.PAT_CLASS,PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)),1) IN ('D','E')
+		             AND (
+		                   <![CDATA[
+		                   /* 현재 입원 기간 180일 이상 */
+		                   DATEDIFF(COALESCE(ii.TEWONDT, DATE_FORMAT(pm2.DOC_DT,'%Y%m%d')), DATE_FORMAT(pm2.ADMIT_DT,'%Y%m%d')) + 1 >= 181
+		                   ]]>
+		                   OR
+		                   /* 이전 입원 내역 있을 때 년도 기준 누적 180일 이상 */
+		                   EXISTS (
+		                       SELECT 1
+		                         FROM TBL_IPWON_INFO prev_ii
+		                        WHERE prev_ii.HOSP_CD = #{hospCd}
+		                          AND LEFT(prev_ii.JUMINNO,6) = LEFT(pm2.PAT_ID,6)
+		                          AND prev_ii.PATNAME = REGEXP_REPLACE(pm2.PAT_NM,'[0-9]','')
+		                          AND COALESCE(prev_ii.TEWONDT,'') != ''
+		                          <![CDATA[
+		                          AND REPLACE(prev_ii.TEWONDT,'-','') < REPLACE(pm2.ADMIT_DT,'-','')
+		                          AND DATEDIFF(
+		                                  STR_TO_DATE(REPLACE(COALESCE(ii.TEWONDT,
+		                                      DATE_FORMAT(pm2.DOC_DT,'%Y%m%d')),'-',''),'%Y%m%d'),
+		                                  CASE
+		                                      WHEN LEFT(REPLACE(prev_ii.IPWONDT,'-',''),4) < LEFT(pm2.ADMIT_DT,4)
+		                                      THEN STR_TO_DATE(CONCAT(LEFT(pm2.ADMIT_DT,4),'0101'),'%Y%m%d')
+		                                      ELSE STR_TO_DATE(REPLACE(prev_ii.IPWONDT,'-',''),'%Y%m%d')
+		                                  END
+		                              ) + 1 >= 181
+		                          ]]>
+		                   )
+		             )
 		            THEN 'Y' ELSE '' 
 		             END AS longAdm
 		     , CASE WHEN LEFT(IFNULL(pm2.PAT_CLASS,PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)),1) IN ('A','B','C') 
@@ -3066,9 +3095,10 @@
 		        AND COALESCE(ii.TEWONDT,'')   != ''
 		        AND #{jobYymm} >= LEFT(REPLACE(ii.TEWONDT,'-',''),6) 
 		        AND pm2.PAT_NM  = REGEXP_REPLACE(ii.PATNAME, '[0-9]', '')
-		
 		  WHERE pm2.HOSP_CD = #{hospCd}
 		    AND pm2.PAT_ID IN (SELECT fp.PAT_ID FROM filtered_pat fp)
+		    /* A31 입원건 자체도 명단에서 제외 */
+		    AND IFNULL(pm2.PAT_CLASS, PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)) != 'A31'
 		    <![CDATA[
 		      AND pm2.MED_START BETWEEN CONCAT(CASE WHEN CAST(SUBSTRING(#{jobYymm},5,2) AS UNSIGNED) <= 6 THEN #{jobYymm}
 		                                            ELSE CONCAT(SUBSTRING(#{jobYymm},1,4), '07') END, '01')
