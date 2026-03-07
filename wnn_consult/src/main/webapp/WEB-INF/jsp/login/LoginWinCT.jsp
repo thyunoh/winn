@@ -2147,14 +2147,16 @@
                             답변내용
                         </label>
                         <textarea id="ansrConts" name="ansrConts" required
-                            class="form-control" rows="9"
+                            class="form-control" rows="8"
                             style="flex: 1;"></textarea>
                     </div>
                     <!-- 답변자 첨부파일 그리드 (FILE_GB='5') -->
                     <div id="ansr-file-area" style="margin-top: 5px; margin-bottom: 8px; display:none;">
-                        <label style="font-size: 13px; font-weight: 600; color: #2874A6; margin-bottom: 4px; display:block;">
-                            <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 첨부파일
-                        </label>
+                        <div class="d-flex align-items-center" style="margin-bottom: 4px;">
+                            <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; font-size: 13px; margin: 0;">
+                                <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 파일
+                            </label>
+                        </div>
                         <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
                             <div style="max-height: 150px; overflow-y: auto;">
                                 <table id="ansr-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
@@ -2188,35 +2190,27 @@
                     </div>
 
                     <!-- 파일첨부 영역 -->
-                    <div class="form-group" id="asq-file-area" style="margin-top: -12px;">
-                        <div class="container-md mt-1" style="padding: 0;">
-                            <div class="form-group">
-                                <label class="col-form-label text-left" style="font-size: 13px; font-weight: 500;">파일업로드</label>
-                                <div>
-                                    <!-- 파일 선택 / 업로드 버튼 -->
-                                    <div class="btn-box" style="display: flex; gap: 5px; align-items: center;">
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="openAsqFileInput()">파일 선택</button>
-                                        <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
-                                    </div>
-                                    <!-- 드래그 앤 드롭 영역 -->
-                                    <div id="asq-drop-zone"
-                                        style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; margin-top: 5px; min-height: 40px; cursor: pointer;"
-                                        ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
-                                        ondragleave="this.style.borderColor='#ccc'; this.style.backgroundColor='';"
-                                        ondrop="event.preventDefault(); this.style.borderColor='#ccc'; this.style.backgroundColor=''; asqDropHandler(event);">
-                                        <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
-                                            (<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
-                                        </p>
-                                        <div id="asq-file-list-new" class="file-list-container"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div id="asq-file-area" style="margin-top: 0; border: 1px solid #ddd; border-radius: 5px; padding: 8px;">
+                        <div style="display: flex; flex-wrap: nowrap; align-items: center; margin-bottom: 5px;">
+                            <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 0 10px 0 0; white-space: nowrap;">파일업로드</label>
+                            <button type="button" class="btn btn-primary btn-sm" style="white-space: nowrap;" onclick="openAsqFileInput()">파일 선택</button>
+                            <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
+                        </div>
+                        <div id="asq-drop-zone"
+                            style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; min-height: 40px; cursor: pointer;"
+                            ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
+                            ondragleave="this.style.borderColor='#ccc'; this.style.backgroundColor='';"
+                            ondrop="event.preventDefault(); this.style.borderColor='#ccc'; this.style.backgroundColor=''; asqDropHandler(event);">
+                            <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
+                                (<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
+                            </p>
+                            <div id="asq-file-list-new" class="file-list-container"></div>
                         </div>
                     </div>
                 </div>
                     <!-- 기존 업로드된 파일 테이블 -->
                     <div class="table-file-container" style="width: 100%; margin-top: 5px; margin-bottom: 10px; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
-                        <div style="max-height: 150px; overflow-y: auto;">
+                        <div style="max-height: 250px; overflow-y: auto;">
                             <table id="asq-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; display:none; margin-bottom: 0;">
                                 <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
                                     <tr>

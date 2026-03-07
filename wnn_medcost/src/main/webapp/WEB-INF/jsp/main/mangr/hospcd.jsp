@@ -349,29 +349,21 @@
 					</div>
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data">
-						<div class="container mt-1">
-							<div class="form-group">
-								<input type="hidden" name="action" value="upload"> <label
-									class="col-2 col-lg-2 col-form-label text-left">파일 업로드</label>
-								<div class="col-10 col-lg-10">
-									<!-- 파일 선택 버튼 -->
-									<div class="btn-box">
-										<button type="button" class="btn btn-primary btn-sm"
-											onclick="openFileInput()">파일 선택</button>
-										<button type="submit" class="btn btn-success btn-sm">업로드</button>
-									</div>
-
-									<!-- 숨겨진 파일 입력 -->
-									<input type="file" id="file-input" name="file" multiple
-										style="display: none;" onchange="changeHandler(event)">
-									<p id="file-name-display" style="color: blue;"></p>
-									<!-- 드래그 앤 드롭 영역 -->
-									<div id="drag-area" ondrop="dropHandler(event)"
-										ondragover="dragOverHandler(event)">
-										<p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.</p>
-										<div id="file-list" class="file-list-container"></div>
-									</div>
-
+						<input type="hidden" name="action" value="upload">
+						<div class="form-group row mb-1">
+							<label class="col-2 col-lg-2 col-form-label text-left">파일 업로드</label>
+							<div class="col-10 col-lg-10">
+								<div class="btn-box mb-1">
+									<button type="button" id="fileSelectBtn" class="btn btn-primary btn-sm">파일 선택</button>
+									<button type="submit" class="btn btn-success btn-sm">업로드</button>
+								</div>
+								<input type="file" id="file-input" name="file" multiple
+									style="display: none;">
+								<p id="file-name-display" style="color: blue; margin: 0;"></p>
+								<div id="drag-area" ondrop="dropHandler(event)"
+									ondragover="dragOverHandler(event)">
+									<p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.</p>
+									<div id="file-list" class="file-list-container"></div>
 								</div>
 							</div>
 						</div>
@@ -548,7 +540,7 @@
 		<div class="modal-content"
 			style="height: 55%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
-				<h6 class="modal-title" id="hu_modalHead"></h6>
+				<h5 class="modal-title" id="hu_modalHead"></h5>
 				<div class="form-row">
 					<div class="col-sm-12 mb-2" style="text-align: right;">
 						<button id="hu_form_btn_ins" type="submit"
@@ -2823,6 +2815,7 @@
 				hutmpedit_Data = hutmpedit_Data || {}; 
 				hutmpedit_Data.hospCd_two   = hospidcd; // 기본값 저장
 				hutmpedit_Data.hospUuid_two = hospUuidcd;
+				hutmpedit_Data.hospNm_two   = selectedRowData.hospNm;
 			    if (hospidcd) {
 			        // AJAX 요청하여 hospUuid에 해당하는 데이터 가져오기
 			        $.ajax({
@@ -2930,6 +2923,26 @@
 		        }		    	
 		       $("#hospCd_two").val(hutmpedit_Data.hospCd_two ? hutmpedit_Data.hospCd_two : '');
 		       $("#hospUuid_two").val(hutmpedit_Data.hospUuid_two ? hutmpedit_Data.hospUuid_two : '');
+		       
+		       // 기본입력 조건 
+		       $("#userId_two").val(hutmpedit_Data.hospCd_two || '');
+		       $("#userNm_two").val((hutmpedit_Data.hospNm_two || '').substring(0, 3));
+		       
+		       var today = new Date();
+		       var yyyy = today.getFullYear();
+		       var mm = String(today.getMonth() + 1).padStart(2, '0');
+		       var dd = String(today.getDate()).padStart(2, '0');
+		       $("#startDt_two").val(yyyy + mm + dd);
+		       $("#endDt_two").val('20991231');
+		       $("#useYn_two").val('Y');
+		       $("#mbrJoin_two").val('Y');
+		       
+		       $("#mainGu_two").val('3');
+		       
+    	       $("#bfPassWd_two").val('1234');
+		       $("#afPassWd_two").val('1234');
+		       //
+
 		    }   
 	        if (flag !== 'I') {
 				// 수정.삭제 모드 (대상확인)
@@ -3529,7 +3542,7 @@
 		    loadFileListFromStorage();
 		
 		    // 📌 파일 선택 버튼이 있으면 이벤트 리스너 추가
-		    const fileSelectButton = document.querySelector(".btn-primary");
+		    const fileSelectButton = document.getElementById("fileSelectBtn");
 		    if (fileSelectButton) {
 		        fileSelectButton.addEventListener("click", openFileInput);
 		    }

@@ -84,7 +84,6 @@
 #modalName .modal-body textarea.form-control { height: auto; padding: 6px 8px; }
 /* 파일업로드 정렬 */
 #modalName #uploadForm { margin-top: 0 !important; }
-#modalName #uploadForm .container-md { padding: 0; }
 #modalName #uploadForm .btn-box { display: flex; gap: 5px; align-items: center; }
 #modalName .table-file-container { margin-top: 8px !important; }
 #modalName .modal-footer { padding: 5px 15px; }
@@ -262,31 +261,23 @@
 						</div>
 					</div>
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
-						method="post" enctype="multipart/form-data" style="margin-top: -12px;">
-						<div class="container-md mt-1">
-							<div class="form-group">
-								<input type="hidden" name="action" value="upload"> 
-									<label class="col-2 col-lg-2 col-form-label text-left" style="margin-left: -10px;">파일업로드</label>
-								<div class="col-10 col-lg-10">
-									<!-- 파일 선택 버튼 -->
-									<div class="btn-box">
-										<button type="button" class="btn btn-primary custom-btn-small"
-											onclick="openFileInput()">파일 선택</button>
-										<button type="submit" id = "uploaded"   class="btn btn-success custom-btn-small">업로드</button>
-									</div>
-
-									<!-- 숨겨진 파일 입력 -->
-									<input type="file" id="file-input" name="file" multiple
-										style="display: none;" onchange="changeHandler(event)">
-									<p id="file-name-display" style="color: blue;"></p>
-									<!-- 드래그 앤 드롭 영역 -->
-									<div id="drag-area" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-									  <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
-									    (<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
-									  </p>
-									  <div id="file-list" class="file-list-container"></div>
-									</div>
-
+						method="post" enctype="multipart/form-data">
+						<input type="hidden" name="action" value="upload">
+						<div class="form-group row mb-1">
+							<label class="col-2 col-lg-2 col-form-label text-left">파일업로드</label>
+							<div class="col-10 col-lg-10">
+								<div class="btn-box mb-1">
+									<button type="button" id="fileSelectBtn" class="btn btn-primary custom-btn-small">파일 선택</button>
+									<button type="submit" id="uploaded" class="btn btn-success custom-btn-small">업로드</button>
+								</div>
+								<input type="file" id="file-input" name="file" multiple
+									style="display: none;" onchange="changeHandler(event)">
+								<p id="file-name-display" style="color: blue; margin: 0;"></p>
+								<div id="drag-area" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+									<p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
+										(<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
+									</p>
+									<div id="file-list" class="file-list-container"></div>
 								</div>
 							</div>
 						</div>
@@ -1678,10 +1669,6 @@
 		    	fn_FindData(); 
 		    }
 		}
-		// 파일 선택 버튼 - 글로벌 함수 (onclick에서 호출)
-		function openFileInput() {
-		    document.getElementById('file-input').click();
-		}
 		// 파일 업로드 기능
 		document.addEventListener("DOMContentLoaded", function () {
 		    const dragArea = document.getElementById("drag-area");
@@ -1833,7 +1820,7 @@
 		    loadFileListFromStorage();
 		
 		    // 📌 파일 선택 버튼이 있으면 이벤트 리스너 추가
-		    const fileSelectButton = document.querySelector(".btn-primary");
+		    const fileSelectButton = document.getElementById("fileSelectBtn");
 		    if (fileSelectButton) {
 		        fileSelectButton.addEventListener("click", openFileInput);
 		    }

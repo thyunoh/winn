@@ -514,9 +514,9 @@
 
                <!-- 답변자 첨부파일 그리드 -->
                <div id="ansr-file-area" style="margin-top: 5px; margin-bottom: 8px; display:none;">
-                  <label style="font-size: 13px; font-weight: 600; color: #2874A6; margin-bottom: 4px; display:block;">
-                     <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 첨부파일
-                  </label>
+                   <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; font-size: 13px; margin: 0;">
+                       <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 파일
+                   </label>                  
                   <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
                      <div style="max-height: 150px; overflow-y: auto;">
                         <table id="ansr-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
@@ -551,14 +551,13 @@
 
                <!-- 파일첨부 영역 -->
                <div class="form-group" id="asq-file-area" style="margin-top: -12px;">
-                  <div class="container-md mt-1" style="padding: 0;">
-                     <div class="form-group">
-                        <label class="col-form-label text-left" style="font-size: 13px; font-weight: 500;">파일업로드</label>
-                        <div>
-                           <div class="btn-box" style="display: flex; gap: 5px; align-items: center;">
-                              <button type="button" class="btn btn-primary btn-sm" onclick="openAsqFileInput()">파일 선택</button>
-                              <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
-                           </div>
+                     <div class="form-group mb-1">
+                        <div class="d-flex align-items-center">
+                           <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; 
+                                 min-width: 100px; margin-right: 10px; font-size: 14px;">파일업로드</label>
+                           <button type="button" class="btn btn-primary btn-sm" onclick="openAsqFileInput()">파일 선택</button>
+                           <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
+                        </div>
                            <div id="asq-drop-zone"
                               style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; margin-top: 5px; min-height: 40px; cursor: pointer;"
                               ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
@@ -571,7 +570,6 @@
                            </div>
                         </div>
                      </div>
-                  </div>
                </div>
 
                <!-- 질문자 업로드된 파일 테이블 -->
