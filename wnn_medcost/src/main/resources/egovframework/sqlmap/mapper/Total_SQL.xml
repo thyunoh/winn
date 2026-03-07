@@ -195,7 +195,8 @@
 		        AND pm.MED_START LIKE CONCAT(#{workYm},'%')
 		        AND pm.PAT_ID = mm.PAT_ID
 		        AND pm.MMSE_YN = '1'
-		        AND pm.MMSE_SCORE > 13
+		        AND pm.MMSE_SCORE >= 13  
+		        <!--  식대점검 13점 이상  -->
 	</select>
 	<select id="total_DataList_02" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO">	
 		SELECT DISTINCT LEFT(COALESCE(a.PAT_ID, '0000000'), 7)   AS patId

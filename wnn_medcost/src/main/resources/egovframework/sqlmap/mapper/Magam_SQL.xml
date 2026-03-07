@@ -418,11 +418,14 @@
 		       CASE 
 		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0) = 0
 		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0)),
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0))
+		               END,
 		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) > 0
-		                    THEN CONCAT('[', ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0), 2), '%]')
+		                    THEN CONCAT(' [', ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0), 2), '%]')
 		                    ELSE ''
 		               END
 		           )
@@ -432,11 +435,14 @@
 		       CASE 
 		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0) = 0
 		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0)),
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0))
+		               END,
 		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) > 0
-		                    THEN CONCAT('[', ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0), 2), '%]')
+		                    THEN CONCAT(' [', ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0), 2), '%]')
 		                    ELSE ''
 		               END
 		           )
@@ -446,33 +452,41 @@
 		       CASE 
 		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0) = 0
 		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0)),
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0))
+		               END,
 		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) > 0
-		                    THEN CONCAT('[', ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0), 2), '%]')
+		                    THEN CONCAT(' [', ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0), 2), '%]')
 		                    ELSE ''
 		               END
 		           )
 		       END AS endyymm,
 		
-		       /* avg_val 개별행: JAMOUNT 정수, J_COUNT [소수점2자리%] */
+		       /* avg_val 개별행: JAMOUNT 소수점1자리(ROUND 1), J_COUNT [소수점2자리%] */
 		       CASE
 		           WHEN COALESCE(IF(VM.month_count > 0,
-		                    FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count),
+		                    ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count, 1),
 		                    0), 0) = 0
 		            AND COALESCE(IF(VM.month_count > 0,
 		                    ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2),
 		                    0), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               COALESCE(IF(VM.month_count > 0,
-		                   FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count),
-		                   0), 0),
+		               CASE WHEN COALESCE(IF(VM.month_count > 0,
+		                            ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count, 1),
+		                            0), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE COALESCE(IF(VM.month_count > 0,
+		                             ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / VM.month_count, 1),
+		                             0), 0)
+		               END,
 		               CASE WHEN COALESCE(IF(VM.month_count > 0,
 		                            ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2),
 		                            0), 0) > 0
-		                    THEN CONCAT('[',
+		                    THEN CONCAT(' [',
 		                             COALESCE(IF(VM.month_count > 0,
 		                                 ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / VM.month_count, 2),
 		                                 0), 0), '%]')
@@ -498,11 +512,14 @@
 		       CASE 
 		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0) = 0
 		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0)),
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JAMOUNT END), 0))
+		               END,
 		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0) > 0
-		                    THEN CONCAT('[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0)), '%]')
+		                    THEN CONCAT(' [', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.J_COUNT END), 0)), '%]')
 		                    ELSE ''
 		               END
 		           )
@@ -512,11 +529,14 @@
 		       CASE 
 		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0) = 0
 		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0)),
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JAMOUNT END), 0))
+		               END,
 		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0) > 0
-		                    THEN CONCAT('[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0)), '%]')
+		                    THEN CONCAT(' [', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.J_COUNT END), 0)), '%]')
 		                    ELSE ''
 		               END
 		           )
@@ -526,25 +546,31 @@
 		       CASE 
 		           WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0) = 0
 		            AND COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0)),
+		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.JAMOUNT END), 0))
+		               END,
 		               CASE WHEN COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0) > 0
-		                    THEN CONCAT('[', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0)), '%]')
+		                    THEN CONCAT(' [', FLOOR(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{endyymm} THEN M.J_COUNT END), 0)), '%]')
 		                    ELSE ''
 		               END
 		           )
 		       END AS endyymm,
 		
-		       /* avg_val 합계(T)행: JAMOUNT 정수, J_COUNT [정수%] */
+		       /* avg_val 합계(T)행: JAMOUNT 소수점1자리(ROUND 1), J_COUNT [정수%] */
 		       CASE
-		           WHEN COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1)), 0) = 0
+		           WHEN COALESCE(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1), 1), 0) = 0
 		            AND COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT  END) / COALESCE(MAX(VM.month_count), 1)), 0) = 0
-		           THEN ''
+		           THEN '자료없음'
 		           ELSE CONCAT(
-		               COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1)), 0),
+		               CASE WHEN COALESCE(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1), 1), 0) = 0
+		                    THEN '자료없음'
+		                    ELSE COALESCE(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.JAMOUNT END) / COALESCE(MAX(VM.month_count), 1), 1), 0)
+		               END,
 		               CASE WHEN COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / COALESCE(MAX(VM.month_count), 1)), 0) > 0
-		                    THEN CONCAT('[',
+		                    THEN CONCAT(' [',
 		                             COALESCE(FLOOR(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) THEN M.J_COUNT END) / COALESCE(MAX(VM.month_count), 1)), 0), '%]')
 		                    ELSE ''
 		               END
