@@ -63,24 +63,32 @@ function messageBox(flag,mess,setf,wsize,jobs,addmessyn){
     };
 
     let modalHTML = `
-    <div class="modal fade" id="messageDialog" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-height: 80vh;">
-            <div class="modal-content rounded-3 overflow-hidden" style="width: ${wsize}%; max-height: 70vh; display: flex; flex-direction: column;">
-                <div class="modal-header ${modalColors[flag]} text-white text-center w-100" style="padding: 8px;">
-                    <h5 class="modal-title text-white mx-auto">${modalTitles[flag]}</h5>
-                </div>
-                <div class="modal-body text-center" style="flex-grow: 1; padding: 10px;">
-                    <p class="m-3 fw-bold text-dark">${mess}</p>
-                </div>
-                <div class="modal-footer border-0 d-flex justify-content-center" style="padding: 8px;">
-                    ${modalButtons[flag]}
-                </div>
-            </div>
-        </div>
-    </div> `;
+	<div class="modal fade" id="messageDialog" tabindex="-1" aria-hidden="true">
+	    <div class="modal-dialog" style="margin-top: 50px;">
+	        <div class="modal-content rounded-3 overflow-hidden" style="max-width: ${wsize}%; margin: 0 auto;">
+	            <div class="modal-header ${modalColors[flag]} text-white text-center w-100" style="padding: 8px;">
+	                <h5 class="modal-title text-white mx-auto">${modalTitles[flag]}</h5>
+	            </div>
+	            <div class="modal-body text-center" style="padding: 10px;">
+	                <p class="m-3 fw-bold text-dark">${mess}</p>
+	            </div>
+	            <div class="modal-footer border-0 d-flex justify-content-center" style="padding: 8px;">
+	                ${modalButtons[flag]}
+	            </div>
+	        </div>
+	    </div>
+	</div>`;
 
 
     $("body").append(modalHTML);
+
+    // viewport=1280 환경에서 실제 화면 중앙에 배치
+    var screenH = window.innerHeight;
+    var scale = document.documentElement.clientWidth / window.innerWidth;
+    var realTop = (screenH / 2 - 100) * scale;
+    if(realTop < 50) realTop = 50;
+    $("#messageDialog .modal-dialog").css("margin-top", realTop + "px");
+
     $("#messageDialog").modal('show');
 }
 

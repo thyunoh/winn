@@ -11,7 +11,8 @@
 <!-- 로그인 -->
 <head>
 <meta charset="UTF-8" />
-<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<!--  <meta content="width=device-width, initial-scale=1.0" name="viewport"> --> 
+  <meta content="width=1280" name="viewport"> 
 <!-- Google Web Fonts -->
 <!-- JavaScript Libraries -->
 <!-- wnnnet 설정시작 -->
@@ -35,7 +36,7 @@
 
 <!-- 배포 시 버전 번호를 변경하면 브라우저 캐시 강제 갱신 -->
 <%
-    String cacheVer = "20260306003";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
+    String cacheVer = "20260308001";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
 %>
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
@@ -168,9 +169,9 @@
 </style>
 <body>
 <!-- Navbar Start -->
-	<div class="container-fluid_act bg-white mb-2">
+	<div class="container-fluid_act bg-white" style="position: sticky; top: 0; z-index: 100;">
 		<div class="row px-xl-8">
-			<div class="col-lg-3 d-none d-lg-block">
+			<div class="col-lg-3">
 				<a class="btn d-flex align-items-center bg-white w-80"
 				   data-bs-toggle="collapse" href="#navbar-vertical"
 				   style="height: 30px; padding: 0; width: 40%; margin-left:49%; margin-top:15px;">
@@ -178,8 +179,8 @@
 				</a>
 			</div>
 			<div class="col-lg-9">
-				<nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0 px-0" style="height: 60px; align-items: center;">
-					<div class="collapse navbar-collapse justify-content-between">
+				<nav class="navbar navbar-expand bg-white navbar-light py-0 px-0" style="height: 60px; align-items: center;">
+					<div class="navbar-collapse justify-content-between" style="display: flex !important;">
 						<div id="navbarMenuArea" class="navbar-nav mr-auto py-0" style="margin-left:-50px;">
 			
 							<!-- 위너넷 링크 -->
@@ -227,19 +228,18 @@
 	</div>
 <!-- Navbar End -->
 
-	<div id="contentArea"></div>
+	<div id="contentArea" style="display:none;"></div>
 
 		<!-- Carousel Start -->
-	<div class="container-fluid mb-2" style="position: relative;">
-		<div class="row px-xl-8">
-		    
+	<div id="carouselContainer" class="container-fluid" style="position: relative; min-height: 540px; padding: 0; margin: 0; margin-top: 10px; overflow: hidden; background-color: #fff;">
+
 		    <!-- 슬라이드 시작 -->
-			<div class="col-lg-12 mx-auto">
-				<div id="header-carousel" 
-					 class="carousel slide carousel-fade mb-2"
+			<div>
+				<div id="header-carousel"
+					 class="carousel slide carousel-fade"
 					 data-bs-ride="carousel"
 					 data-bs-interval="2000"
-					 style="position: absolute; top: 50%; left: 0; right: 10px; z-index: 0;">
+					 style="position: absolute; top: 0; left: 0; right: 0; z-index: 0;">
 			
 					<ol class="carousel-indicators">
 						<li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
@@ -251,36 +251,36 @@
 			
 					<!-- 슬라이드들 -->
 					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=324" target="_blank"> -->
 						      	<a href="https://winner797.kr/lecture/?seq=1075" target="_blank">
-								<img src="/wnn_consult/images/winct/image9.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+								<img src="/wnn_consult/images/winct/image9.png" style="width: 100%; height: 100%; object-fit: cover;">
 							</a>
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=321" target="_blank"> -->
 						     	<a href="https://winner797.kr/lecture/?seq=1073" target="_blank">
-								<img src="/wnn_consult/images/winct/image7.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+								<img src="/wnn_consult/images/winct/image7.png" style="width: 100%; height: 100%; object-fit: cover;">
 							</a>
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
-							<img src="/wnn_consult/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
+							<img src="/wnn_consult/images/winct/image2.svg" style="width: 100%; height: 100%; object-fit: cover;">
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
-							<img src="/wnn_consult/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
+							<img src="/wnn_consult/images/winct/image3.svg" style="width: 100%; height: 100%; object-fit: cover;">
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank"> -->
 						  	    <a href="https://winner797.kr/lecture/?seq=1024&sort01=&page=1" target="_blank"> 
-								<img src="/wnn_consult/images/winct/image5.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
+								<img src="/wnn_consult/images/winct/image5.svg" style="width: 100%; height: 100%; object-fit: cover;">
 							</a>
 						</div>
 					</div>
@@ -301,15 +301,15 @@
 			<!-- CSS -->
 			<style>
 			.slide-image-container a {
-				display: flex;
-				align-items: center;
-				justify-content: center;
+				display: block;
 				width: 100%;
 				height: 100%;
 			}
 			.slide-image-container img {
 				display: block;
-				margin: 0 auto;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
 			}
 			.custom-arrow {
 				position: absolute;
@@ -357,7 +357,6 @@
 			}
 			</style>
 			<!-- 슬라이드 끝 -->
-		</div>
 
 		<!-- Carousel End -->
 		<!-- 로그인과 이미지 배너를 그룹으로 묶어서 오른쪽으로 이동 -->
@@ -515,7 +514,7 @@
 					<div class="row justify-content-center noti-section"
 						style="flex-wrap: nowrap; visibility: hidden;">
 						<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
-							<div class="bg-light box-p-10" style="height: 220px; margin-left: 35px;">
+							<div class="bg-light box-p-10" style="height: 220px; margin-left: 35px; border: 1px solid #ccc; border-radius: 8px;">
 								<!-- 탭 헤더 -->
 								<div class="nav nav-tabs mb-1 border-bottom border-black d-flex">
 									<a
@@ -1005,10 +1004,11 @@
 	        .then(response => response.text())
 	        .then(data => {
 	            let contentArea = document.getElementById("contentArea");
-	            
+	            contentArea.style.display = "block";
+
 	            // 기존 내용 초기화 후 새로운 내용 추가
-	            contentArea.innerHTML = "";  
-	            contentArea.innerHTML = data; 
+	            contentArea.innerHTML = "";
+	            contentArea.innerHTML = data;
 
 	            console.log("✅ 페이지 로드 완료: " + pageUrl);
 
@@ -1111,6 +1111,7 @@
 	                };
 	            } else {
 	                contentArea.style.minHeight = "0px";
+	                contentArea.style.display = "none";
 	                consultingTitle.onclick = null;
 	            }
 	        });
@@ -3625,6 +3626,7 @@
 
             adjustCarouselPosition(); // 페이지 로딩 시 바로 실행
             window.addEventListener('resize', adjustCarouselPosition);
+
          function ready_kakao(){
         	 messageBox("1","<h6>카카오상담은 준비중입니다 !!</h6><p></p>","","",""); 
          }   
