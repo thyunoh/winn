@@ -93,19 +93,22 @@
   content: none;
 }
 
+/* 주석처리: position:absolute가 모달 위치를 비정상적으로 만드는 원인 */
+/*
 .modal-content {
   position: absolute;
-  pointer-events: auto;             /* model close */
+  pointer-events: auto;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); /* 중앙 정렬 */
+  transform: translate(-50%, -50%);
   background: #fff;
   padding: 20px;
   border-radius: 8px;
   min-width: 30%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  text-align: center; 
+  text-align: center;
 }
+*/
 
 
 .modal-backdrop {

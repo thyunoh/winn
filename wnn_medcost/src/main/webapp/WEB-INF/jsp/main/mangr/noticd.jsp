@@ -7,6 +7,13 @@
 <%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator"%>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page"%>
 <%@ page import="java.util.Date"%>
+<%-- 공지구분 코드 → 명칭 매핑 --%>
+<c:choose>
+	<c:when test="${noticeType == '1'}"><c:set var="noticeTypeName" value="공지사항"/></c:when>
+	<c:when test="${noticeType == '2'}"><c:set var="noticeTypeName" value="심사방"/></c:when>
+	<c:when test="${noticeType == '3'}"><c:set var="noticeTypeName" value="소식지"/></c:when>
+	<c:otherwise><c:set var="noticeTypeName" value="구분"/></c:otherwise>
+</c:choose>
 <!-- Customized Bootstrap Stylesheet -->
  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
@@ -50,12 +57,11 @@
 	display: flex; justify-content: flex-end; align-items: center; gap: 8px;
 	padding: 8px 0 5px 0;
 }
-#noti_wrapper .noti-btn-area select {
-	height: 34px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; padding: 0 8px;
-}
+#noti_wrapper .noti-btn-area select,
 #noti_wrapper .noti-btn-area button {
-	height: 34px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; padding: 0 12px;
-	background: white; cursor: pointer;
+	height: 32px; line-height: 30px; border: 1px solid #ccc; border-radius: 4px;
+	font-size: 13px; font-weight: 600; padding: 0 12px; vertical-align: middle;
+	background: white; cursor: pointer; box-sizing: border-box;
 }
 #noti_wrapper .noti-btn-area button:hover { background-color: #f0f0f0; }
 
@@ -73,20 +79,24 @@
 #modalName .modal-header .form-row .col-sm-12 {
 	display: flex; gap: 4px; align-items: center; padding: 0; margin: 0; max-width: 100%;
 }
-#modalName .modal-header .btn { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+#modalName .modal-header .btn { padding: 4px 12px !important; font-size: 12px; white-space: nowrap; line-height: 1.5; vertical-align: middle; }
 /* 바디: 폼 균일 간격 */
-#modalName .modal-body { padding: 12px 18px; }
+#modalName .modal-body { padding: 8px 18px; }
 #modalName .modal-body .form-group,
-#modalName .modal-body .form-row { margin-bottom: 8px; align-items: center; }
-#modalName .modal-body .col-form-label { font-size: 13px; font-weight: 500; padding: 4px 5px; }
+#modalName .modal-body .form-row { margin-bottom: 1px; align-items: center; }
+#modalName .modal-body .col-form-label { font-size: 13px; font-weight: 500; padding: 1px 5px 1px 18px; }
 #modalName .modal-body .form-control,
-#modalName .modal-body .custom-select { font-size: 13px; height: 32px; padding: 2px 8px; }
-#modalName .modal-body textarea.form-control { height: auto; padding: 6px 8px; }
+#modalName .modal-body .custom-select { font-size: 13px; height: 30px; padding: 1px 8px; }
+#modalName .modal-body textarea.form-control { height: auto; padding: 4px 8px; }
 /* 파일업로드 정렬 */
-#modalName #uploadForm { margin-top: 0 !important; }
+#modalName #uploadForm { margin-top: -5px !important; padding-top: 0 !important; }
 #modalName #uploadForm .btn-box { display: flex; gap: 5px; align-items: center; }
-#modalName .table-file-container { margin-top: 8px !important; }
-#modalName .modal-footer { padding: 5px 15px; }
+#modalName .table-file-container { margin-top: 5px !important; }
+/* 공지내용 이후 간격 축소 */
+#modalName #uploadForm .form-row,
+#modalName #uploadForm .form-group { margin-bottom: 0; }
+#modalName .drag-area { margin-top: 0 !important; margin-bottom: 0 !important; }
+#modalName .modal-footer { padding: 2px 15px; }
 </style>
 <!-- ============================================================== -->
 <!-- Main Form start -->
@@ -103,7 +113,7 @@
 						<!-- 구분 (숨김) -->
 						<select id="fileGb1" style="display:none;"
 							oninput="findField(this)" disabled>
-							<option selected value="${noticeType}">구분</option>
+							<option selected value="${noticeType}">${noticeTypeName}</option>
 						</select>
 						<!-- 테이블 -->
 						<div style="width: 100%;">
@@ -116,22 +126,22 @@
 							<select id="fileGb1_view" class="btn btn-outline-dark btn-sm" style="padding:4px 10px; font-size:13px; pointer-events:none; background-color:#e9ecef;" disabled>
 								<option selected value="${noticeType}">공지사항</option>
 							</select>
-							<button class="btn btn-outline-dark" onClick="fn_re_load()">
+							<button class="btn btn-outline-dark btn-sm" onClick="fn_re_load()">
 								<i class="fas fa-binoculars"></i> 재조회
 							</button>
-							<button class="btn btn-outline-dark btn-insert" onClick="modal_Open('I')">
+							<button class="btn btn-outline-dark btn-sm btn-insert" onClick="modal_Open('I')">
 								<i class="far fa-edit"></i> 입력
 							</button>
-							<button class="btn btn-outline-dark btn-update" onClick="modal_Open('U')">
+							<button class="btn btn-outline-dark btn-sm btn-update" onClick="modal_Open('U')">
 								<i class="far fa-save"></i> 수정
 							</button>
-							<button class="btn btn-outline-dark btn-delete" onClick="modal_Open('D')">
+							<button class="btn btn-outline-dark btn-sm btn-delete" onClick="modal_Open('D')">
 								<i class="far fa-trash-alt"></i> 삭제
 							</button>
-							<button class="btn btn-outline-dark btn-delete" onClick="fn_findchk()">
+							<button class="btn btn-outline-dark btn-sm btn-delete" onClick="fn_findchk()">
 								<i class="far fa-calendar-check"></i> 체크삭제
 							</button>
-							<button class="btn btn-outline-dark" id="fullscreenToggle">
+							<button class="btn btn-outline-dark btn-sm" id="fullscreenToggle">
 								<i class="fas fa-expand" id="fullscreenIcon"></i> 화면확대축소
 							</button>
 						</div>
@@ -150,7 +160,7 @@
 <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">	
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 		role="dialog"
-		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
+		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 85vh;">
 		<div class="modal-content"
 			style="height: 100%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
@@ -159,24 +169,24 @@
 				<!-- button start -->
 				<!-- ============================================================== -->
 				<div class="form-row">
-					<div class="col-sm-12 mb-2" style="text-align: right;">
+					<div class="col-sm-12 mb-0" style="text-align: right;">
 						<button id="form_btn_new" type="submit"
-							class="btn btn-outline-dark" onClick="fn_Potion()">
+							class="btn btn-outline-dark btn-sm" onClick="fn_Potion()">
 							센터. <i class="far fa-object-group"></i>
 						</button>
 						<button id="form_btn_ins" type="submit"
-							class="btn btn-outline-info btn-insert" onClick="fn_Insert()">
+							class="btn btn-outline-info btn-insert btn-sm" onClick="fn_Insert()">
 							입력. <i class="far fa-edit"></i>
 						</button>
 						<button id="form_btn_udt" type="submit"
-							class="btn btn-outline-success btn-update" onClick="fn_Update()">
+							class="btn btn-outline-success btn-update btn-sm" onClick="fn_Update()">
 							수정. <i class="far fa-save"></i>
 						</button>
 						<button id="form_btn_del" type="submit"
-							class="btn btn-outline-danger btn-delete" onClick="fn_Delete()">
+							class="btn btn-outline-danger btn-delete btn-sm" onClick="fn_Delete()">
 							삭제. <i class="far fa-trash-alt"></i>
 						</button>
-						<button type="button" class="btn btn-outline-dark"
+						<button type="button" class="btn btn-outline-dark btn-sm"
 							data-dismiss="modal" onClick="modalMainClose()">
 							닫기 <i class="fas fa-times"></i>
 						</button>
@@ -208,7 +218,7 @@
 						<div class="col-2 col-lg-2">
 							<select id="fileGb" name="fileGb" class="custom-select"
 								oninput="findField(this)" style="height: 35px; font-size: 14px;">
-								<option value="" selected>구분1</option>
+								<option selected value="${noticeType}">${noticeTypeName}</option>
 							</select>
 						</div>
 						<label for="updateSw" 
@@ -235,7 +245,7 @@
 						<div class="col-xl-10 col-lg-10 text-left mb-2">
 							<textarea id="notiContent" name="notiContent" type="text"
 								data-parsley-trigger="change" placeholder="" autocomplete="off"
-								class="form-control" rows="8"></textarea>
+								class="form-control" rows="7"></textarea>
 						</div>
 					</div>
 					<div class="form-group row">
@@ -281,11 +291,8 @@
 								</div>
 							</div>
 						</div>
-					</form>  
-					<p>
-						<strong><%=request.getAttribute("message") != null ? request.getAttribute("message") : ""%></strong>
-					</p>
-					<div class="table-file-container" style="width: 100%;  margin-top: 30px; border: 1px solid #ddd; border-radius: 10px;">
+					</form>
+					<div class="table-file-container" style="width: 100%; margin-top: 5px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
 					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 14px;">
 					       </table>    
@@ -457,10 +464,10 @@
 	    
 		let dt_com = new DataTransfer();
 	    
-		window.onload = function() {
+		$(document).ready(function() {
 			find_Check();
 		    comm_Check();
-		};
+		});
 
 		// find_data` 입력 필드에서 Enter 키 이벤트를 강제 실행하는 함수
 		function triggerEnterKey() {
@@ -552,9 +559,9 @@
 		        });		    	
 		        now_check() ;
 		    }
-	        // fileGb는 모든 모드에서 강제 '1' 고정, 선택 불가
-	        $(fileGbInput).val(${noticeType});
-	        $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef");	        
+	        // fileGb는 모든 모드에서 전화면 공지구분 고정, 선택 불가
+	        $(fileGbInput).val('${noticeType}');
+	        $(fileGbInput).css("pointer-events", "none").css("background-color", "#e9ecef");
 		}
 		function now_check() {
 	        let today = new Date();
@@ -610,7 +617,7 @@
 		    applyAuthControl(); //권한관리 (입력수정삭제 ) 모달뛰우기전 
 		    formValClear(inputZone.id);
 		    
-			if (flag !== 'I'){ 
+			if (flag !== 'I'){
 				// 수정.삭제 모드 (대상확인)
 				if (edit_Data) {
 					// Value Setting
@@ -618,14 +625,17 @@
 					modalName_rich(edit_Data.notiContent);
 				} else {
 					modal_OpenFlag = false;
-					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
+					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");
 					return null;
 				}
-	            showfileModal(document.getElementById("notiSeq").value, document.getElementById("fileGb").value);
+				// edit_Data에서 직접 가져옴 (comm_Check 완료 여부와 무관하게 정확한 값 전달)
+	            showfileModal(edit_Data.notiSeq, edit_Data.fileGb);
 			}else{
 	            let tbody = document.querySelector("#fileTable tbody");
 	            tbody.innerHTML = "";
 	            modalName_rich("");
+	            // 입력 모드에서도 공지구분을 기본값(전화면 공지구분)으로 세팅
+	            $('#fileGb').val('${noticeType}');
 			}
 				
 			if (modal_OpenFlag) {
@@ -1473,7 +1483,7 @@
 			$("#" + mainFocus).focus();
 		}
 		// 공통담기
-		function comm_Check() {			
+		function comm_Check() {		
 			if (list_code.length > 0) {
 				$.ajax({
 				    type: "POST",
@@ -1991,6 +2001,11 @@
 		    });
 		});	  
 		function showfileModal(notiSeq, fileGb) {
+		    console.log("📌 showfileModal 호출 - notiSeq:", notiSeq, ", fileGb:", fileGb);
+		    if (!notiSeq || !fileGb) {
+		        console.warn("⚠️ showfileModal: notiSeq 또는 fileGb 값이 없습니다.");
+		        return;
+		    }
 		    $.ajax({
 		        type: "post",
 		        url: "/mangr/fileCdList.do",
@@ -2001,6 +2016,10 @@
 		            console.log("📌 서버 응답 데이터:", JSON.stringify(data, null, 2));
 
 		            let tbody = document.querySelector("#fileTable tbody");
+		            if (!tbody) {
+		                console.warn("⚠️ #fileTable tbody가 아직 생성되지 않았습니다.");
+		                return;
+		            }
 		            tbody.innerHTML = "";
 
 		            if (!Array.isArray(data) || data.length === 0) {

@@ -64,7 +64,7 @@ function messageBox(flag,mess,setf,wsize,jobs,addmessyn){
 
     let modalHTML = `
 	<div class="modal fade" id="messageDialog" tabindex="-1" aria-hidden="true">
-	    <div class="modal-dialog" style="margin-top: -350px;">
+	  <div class="modal-dialog" style="margin-top: 15vh !important;">
 	        <div class="modal-content rounded-3 overflow-hidden" style="max-width: ${wsize}%; margin: 0 auto;">
 	            <div class="modal-header ${modalColors[flag]} text-white text-center w-100" style="padding: 8px;">
 	                <h5 class="modal-title text-white mx-auto">${modalTitles[flag]}</h5>
@@ -82,11 +82,11 @@ function messageBox(flag,mess,setf,wsize,jobs,addmessyn){
     $("body").append(modalHTML);
 
     // viewport=1280 환경에서 실제 화면 중앙에 배치
-    var screenH = window.innerHeight;
-    var scale = document.documentElement.clientWidth / window.innerWidth;
-    var realTop = (screenH / 2 - 100) * scale;
-    if(realTop < 50) realTop = 50;
-    $("#messageDialog .modal-dialog").css("margin-top", realTop + "px");
+  //  var screenH = window.innerHeight;
+  //  var scale = document.documentElement.clientWidth / window.innerWidth;
+  //  var realTop = (screenH / 2 - 100) * scale;
+  //  if(realTop < 50) realTop = 50;
+  //  $("#messageDialog .modal-dialog").css("margin-top", realTop + "px");
 
     $("#messageDialog").modal('show');
 }

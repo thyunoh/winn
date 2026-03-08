@@ -26,6 +26,12 @@
     <param-name>contextConfigLocation</param-name>
     <param-value>classpath*:egovframework/spring/context-*.xml</param-value>
   </context-param>
+  <!-- Spring Profile 기본값: local (로컬 개발환경) -->
+  <!-- 서버에서는 Tomcat JVM 옵션으로 -Dspring.profiles.active=prod 설정 -->
+  <context-param>
+    <param-name>spring.profiles.default</param-name>
+    <param-value>local</param-value>
+  </context-param>
 
   <listener>
     <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>

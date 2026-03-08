@@ -36,7 +36,7 @@
 
 <!-- 배포 시 버전 번호를 변경하면 브라우저 캐시 강제 갱신 -->
 <%
-    String cacheVer = "20260308001";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
+    String cacheVer = "20260308006";  // ★ 배포할 때마다 이 값을 변경하세요 (날짜+순번 권장)
 %>
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">

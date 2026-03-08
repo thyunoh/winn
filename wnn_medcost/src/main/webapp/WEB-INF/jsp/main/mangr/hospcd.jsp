@@ -373,7 +373,7 @@
 					</p>
 					<div class="table-file-container" style="width: 100%; margin-top: -20px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 14px;">
 					       </table>    
 					    </div>
 					</div>     
@@ -565,6 +565,11 @@
 			<div class="modal-body"
 				style="text-align: left; flex: 1; overflow-y: auto;">
 				<div id="hu_inputZone">
+					<!-- ★ Chrome 자격증명 자동완성 방지: 더미 필드 (Chrome이 여기에 autofill → 실제 필드/검색창 무시) -->
+					<div style="position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden;" aria-hidden="true">
+						<input type="text" tabindex="-1" autocomplete="username" name="fake_user_chrome">
+						<input type="password" tabindex="-1" autocomplete="current-password" name="fake_pass_chrome">
+					</div>
 					<input type="hidden" id="hospUuid_two" name="hospUuid_two" value="">
 					<input type="hidden" id="hospCd_two"   name="hospCd_two"   value="">
 					<input type="hidden" id="passWd_two"   name="passWd_two"   value="">
@@ -580,7 +585,8 @@
 								class="col-2 col-lg-2 col-form-label text-left">사용아이디</label>
 							<div class="col-4 col-lg-4">
 								<input id="userId_two" name="userId_two" type="text"
-									class="form-control text-left" placeholder="사용자아이디 입력하세요">
+									class="form-control text-left" placeholder="사용자아이디 입력하세요"
+									autocomplete="off">
 							</div>
 							<button class="btn btn-outline-info" onclick="fnDupchk()">
 								<i class="fas fa-search">중복</i>
@@ -599,7 +605,8 @@
 							class="col-2 col-lg-2 col-form-label text-left">사용자성명</label>
 						<div class="col-4 col-lg-4">
 							<input id="userNm_two" name="userNm_two" type="text"
-								class="form-control text-left" placeholder="사용자명을 입력하세요">
+								class="form-control text-left" placeholder="사용자명을 입력하세요"
+								autocomplete="off">
 						</div>
 						<label for="mainGu_two"
 							class="col-2 col-lg-2 col-form-label text-left">사용자구분</label>
@@ -657,13 +664,15 @@
 							class="col-2 col-lg-2 col-form-label text-left">비밀번호</label>
 						<div class="col-4 col-lg-4">
 							<input id="bfPassWd_two" name="bfPassWd_two" type="password"
-								class="form-control text-left" placeholder="">
+								class="form-control text-left" placeholder=""
+								autocomplete="new-password">
 						</div>
 						<label for="afPassWd_two"
 							class="col-2 col-lg-2 col-form-label text-left">비밀번호확인</label>
 						<div class="col-4 col-lg-4">
 							<input id="afPassWd_two" name="afPassWd_two" type="password"
-								class="form-control text-left" placeholder="">
+								class="form-control text-left" placeholder=""
+								autocomplete="new-password">
 						</div>
 					</div>
 				</div>
@@ -1194,7 +1203,12 @@
 					    
 					    ajax: dataLoad,
 					});
-				 
+				// 브라우저 자동완성 방지: DataTables 검색 input 초기화
+				// (근본 원인: 비밀번호 필드 때문에 Chrome 자격증명 매니저가 검색창을 username으로 인식)
+				// → 비밀번호 필드에 autocomplete="new-password" + 더미 필드로 해결
+				$('.dataTables_filter input').attr('autocomplete', 'off').val('');
+				dataTable.search('').draw();
+
 				// 전체 선택 체크박스 기능
 			    $('#selectAll').on('click', function() {
 			        var rows = dataTable.rows({ 'search': 'applied' }).nodes();
@@ -2318,7 +2332,7 @@
 		 // hospUuidone 값이 있는지 확인 후 설정
 		    if (flag == 'I'){
 		        if (!hctmpedit_Data) {
-		        	messageBox("1","<h6> 병원자료가 선택되지 않았습니다. !!</h6><p></p><br>",mainFocus,"","");	
+		        	messageBox("1","<h5> 병원자료가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");	
 		            return;
 		        }
 		    	$("#hospCd_one").val(hctmpedit_Data.hospCd_one ? hctmpedit_Data.hospCd_one : '');
@@ -2918,7 +2932,7 @@
 		 // hospUuidone 값이 있는지 확인 후 설정
 		    if (flag == 'I'){
 		        if (!hutmpedit_Data) {
-		        	messageBox("1","<h6> 병원자료가 선택되지 않았습니다. !!</h6><p></p><br>",mainFocus,"","");	
+		        	messageBox("1","<h5> 병원자료가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");	
 		            return;
 		        }		    	
 		       $("#hospCd_two").val(hutmpedit_Data.hospCd_two ? hutmpedit_Data.hospCd_two : '');

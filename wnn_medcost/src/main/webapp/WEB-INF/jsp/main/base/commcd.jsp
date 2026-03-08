@@ -629,7 +629,7 @@
 					
 				} else {
 					modal_OpenFlag = false;
-					messageBox("1","<h6>작업 할 Data가 선택되지 않았습니다. !!</h6><p></p><br>",mainFocus,"","");			
+					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
 					return null;
 				}
 			}
@@ -1110,15 +1110,15 @@
 			        	error: function(xhr, status, error) {
 				         	switch (xhr.status){  
 				         	     case 500: messageBox("5","<h5>서버에 문제가 발생했습니다.</h5>" +  
-			                               "<h6>잠시후 다시, 시도해주십시요. !!</h6>",mainFocus,"","");
+			                               "<h5>잠시후 다시, 시도해주십시요. !!</h5>",mainFocus,"","");
 				        		    break;
 				         	     case 400:
 				        		    messageBox("5","<h5>기존자료가 존재합니다.</h5>" +  
-			                               "<h6>다시 확인하고, 시도해주십시요. !!</h6>",mainFocus,"","");
+			                               "<h5>다시 확인하고, 시도해주십시요. !!</h5>",mainFocus,"","");
 				        		    break;
 				        		 defalut:  
 				                     messageBox("5", "<h5>알 수 없는 오류가 발생했습니다.</h5>" +  
-			                                   "<h6>관리자에게 문의하세요.</h6>", mainFocus, "", "");
+			                                   "<h5>관리자에게 문의하세요.</h5>", mainFocus, "", "");
 			                        break;
 				        		end    
 				           	}
@@ -1180,7 +1180,7 @@
 		            },
 		            error: function(xhr, status, error) {
 		                console.error("업데이트 실패", xhr.responseText);
-		                messageBox("5", "<h5>서버에 문제가 발생했습니다.</h5><h6>잠시 후 다시 시도해주세요.</h6>", mainFocus, "", "");
+		                messageBox("5", "<h5>서버에 문제가 발생했습니다.</h5><h5>잠시 후 다시 시도해주세요.</h5>", mainFocus, "", "");
 		            }
 		        });
 		    }
@@ -1951,7 +1951,7 @@
 		    if (flag == 'I'){
                 console.log("cdtmpedit_Data", cdtmpedit_Data);
                 if (!cdtmpedit_Data) {
-		        	messageBox("1","<h6> 공통대표코드를 선택되지 않았습니다. !!</h6><p></p><br>",mainFocus,"","");	
+		        	messageBox("1","<h5> 공통대표코드를 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");	
 		            return;
 		        }
                 $("#codeGb_one").val("Z") ; //입력 코드구분 공통으로 설정 
@@ -1964,7 +1964,7 @@
 			
 				} else {
 					cd_modal_OpenFlag = false;
-					messageBox("1","<h6>작업 할 Data가 선택되지 않았습니다. !!</h6><p></p><br>",mainFocus,"","");			
+					messageBox("1","<h5>작업 할 Data가 선택되지 않았습니다. !!</h5><p></p><br>",mainFocus,"","");			
 					return null;
 				}
 			}
@@ -2103,15 +2103,15 @@
 			        	error: function(xhr, status, error) {
 				         	switch (xhr.status){  
 				         	     case 500: messageBox("5","<h5>서버에 문제가 발생했습니다.</h5>" +  
-			                               "<h6>잠시후 다시, 시도해주십시요. !!</h6>",mainFocus,"","");
+			                               "<h5>잠시후 다시, 시도해주십시요. !!</h5>",mainFocus,"","");
 				        		    break;
 				         	     case 400:
 				        		    messageBox("5","<h5>기존자료가 존재합니다.</h5>" +  
-			                               "<h6>다시 확인하고, 시도해주십시요. !!</h6>",mainFocus,"","");
+			                               "<h5>다시 확인하고, 시도해주십시요. !!</h5>",mainFocus,"","");
 				        		    break;
 				         	     default:  
 				                     messageBox("5", "<h5>알 수 없는 오류가 발생했습니다.</h5>" +  
-			                                   "<h6>관리자에게 문의하세요.</h6>", mainFocus, "", "");
+			                                   "<h5>관리자에게 문의하세요.</h5>", mainFocus, "", "");
 			                        break;
 				        		end    
 				           	}
@@ -2184,7 +2184,7 @@
 		            },
 		            error: function(xhr, status, error) {
 		                console.error("업데이트 실패", xhr.responseText);
-		                messageBox("5", "<h5>서버에 문제가 발생했습니다.</h5><h6>잠시 후 다시 시도해주세요.</h6>", mainFocus, "", "");
+		                messageBox("5", "<h5>서버에 문제가 발생했습니다.</h5><h5>잠시 후 다시 시도해주세요.</h5>", mainFocus, "", "");
 		            }
 		        });
 		    }

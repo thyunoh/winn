@@ -9718,23 +9718,24 @@ a.text-dark:hover, a.text-dark:focus {
   }
 }
 
-/* kbs   추가 */
-/* Modal 변경 */
+/* kbs 추가 - 주석처리: position:absolute가 모든 모달(.modal-content)에 적용되어
+   모달 위치가 비정상적으로 표시되는 원인이었음.
+   messageBox는 margin-top: 15vh로 중앙 정렬됨 */
+/*
 .modal-content {
   position: absolute;
-  pointer-events: auto;             /* model close */
+  pointer-events: auto;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); /* 중앙 정렬 */
+  transform: translate(-50%, -50%);
   background: #fff;
   padding: 20px;
   border-radius: 8px;
   min-width: 20%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  text-align: center; 
-  /* width: 40%; */
-  
+  text-align: center;
 }
+*/
 
 
 /* Modal 변경. */
