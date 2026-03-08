@@ -88,6 +88,11 @@
                                     				</div>
 	                                                <div id="grid-container1"></div>
 	                                                <!-- 수가코드별 현황 서브 테이블 (좌측 도표 밑, 좌우 양분) -->
+	                                                <style>
+	                                                    #subTable09Wrapper .dataTables_info {
+	                                                        display: none !important;
+	                                                    }
+	                                                </style>
 	                                                <div id="subTable09Wrapper" style="display:none; margin-top:10px;">
 	                                                    <h4 class="ml-1 mb-1" style="font-weight:bold;">수가코드별 현황</h4>
 	                                                    <div style="display:flex; gap:10px;">
@@ -98,6 +103,7 @@
 	                                                            <table id="tableName09SubR" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
 	                                                        </div>
 	                                                    </div>
+	                                                    <div id="subTable09TotalInfo" style="text-align:center; padding:5px 0; font-size:13px;"></div>
 	                                                </div>
 								                    <div class="form-row">
 									                    <div class="col-xl-12 col-lg-12 text-left mb-1">
@@ -1372,13 +1378,27 @@ function fn_HasChart(cardEl) {
 // ============================================================
 // 공통 함수 - 한 페이지 분량 PDF용 div 생성
 // ============================================================
-function fn_BuildPdfPage(flag, yearVal, monthVal) {
+function fn_BuildPdfPage(flag, yearVal, monthVal, isAllExport) {
     const config = PDF_MAP[flag];
     if (!config) return null;
 
     // 도표(grid)에 데이터가 있는지 확인
     const gridEl = document.getElementById('grid-container1');
     if (!gridEl || gridEl.children.length === 0) return null;
+
+    // 전체 PDF 출력 시: 도표 데이터가 모두 비어있으면("-" 또는 빈값) 출력 제외
+    if (isAllExport) {
+        var dataCells = gridEl.querySelectorAll('div');
+        var hasData = false;
+        dataCells.forEach(function(cell) {
+            var txt = (cell.textContent || '').trim();
+            // 헤더(배경색 #DFE6F7)가 아닌 데이터 셀만 체크
+            if (cell.style.backgroundColor !== 'rgb(223, 230, 247)' && txt !== '' && txt !== '-' && txt !== '0' && txt !== '자료없음') {
+                hasData = true;
+            }
+        });
+        if (!hasData) return null;
+    }
 
     const page = document.createElement('div');
     page.style.padding = '15px 20px';
@@ -1565,6 +1585,7 @@ function fn_PdfExportAllPages() {
     }
 
     var pages = [];
+    var includedFlags = [];
     var bIdx = 0;
 
     // 스피너 CSS 삽입 (한 번만)
@@ -1606,6 +1627,12 @@ function fn_PdfExportAllPages() {
         // 전역 jobFlag 설정 (setMakeGrid 에서 사용)
         jobFlag = currentFlag;
 
+        // 아코디언 헤더 타이틀 업데이트
+        var accordionHeaderText = document.querySelector(".accordion__header--text");
+        if (accordionHeaderText) {
+            accordionHeaderText.textContent = title;
+        }
+
         // 직접 AJAX 호출 (fn_CreateData 와 동일한 호출)
         $.ajax({
             url: "/main/createTotalReport.do",
@@ -1635,8 +1662,11 @@ function fn_PdfExportAllPages() {
                         setTimeout(function() {
                             try {
                                 if (PDF_MAP[currentFlag]) {
-                                    var page = fn_BuildPdfPage(currentFlag, yearVal, monthVal);
-                                    if (page) pages.push(page);
+                                    var page = fn_BuildPdfPage(currentFlag, yearVal, monthVal, true);
+                                    if (page) {
+                                        pages.push(page);
+                                        includedFlags.push(currentFlag);
+                                    }
                                 }
                             } catch(e) {
                                 console.error('페이지 캡처 오류 (flag=' + currentFlag + '):', e);
@@ -1712,7 +1742,7 @@ function fn_PdfExportAllPages() {
         var tocList = document.createElement('div');
         tocList.style.cssText = 'width:70%;text-align:left;';
         var tocNum = 1;
-        flagList.forEach(function(flag) {
+        includedFlags.forEach(function(flag) {
             if (PDF_MAP[flag]) {
                 var item = document.createElement('div');
                 item.style.cssText = 'font-size:12px;color:#444;padding:4px 0;border-bottom:1px dotted #ddd;display:flex;justify-content:space-between;';
@@ -4506,14 +4536,22 @@ function fn_SubTable09(subData) {
 		searching: false,
 		ordering: true,
 		info: true,
-		scrollY: '250px',
-		scrollCollapse: true,
 		order: [[2, 'desc']],
-		autoWidth: false,
+		autoWidth: true
 	};
 
-	subTable09L = $('#tableName09SubL').DataTable($.extend(true, {}, dtOptions, { data: leftData }));
-	subTable09R = $('#tableName09SubR').DataTable($.extend(true, {}, dtOptions, { data: rightData }));
+	var totalCount = subData.length;
+	subTable09L = $('#tableName09SubL').DataTable($.extend(true, {}, dtOptions, {
+		data: leftData,
+		info: false
+	}));
+	subTable09R = $('#tableName09SubR').DataTable($.extend(true, {}, dtOptions, {
+		data: rightData,
+		info: false
+	}));
+
+	// 합산 건수를 좌우 테이블 아래 가운데에 표시
+	$('#subTable09TotalInfo').text('총 ' + totalCount + '건');
 }
 
 </script>

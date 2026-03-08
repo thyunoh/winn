@@ -251,7 +251,7 @@
 			
 					<!-- 슬라이드들 -->
 					<div class="carousel-item active" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=324" target="_blank"> -->
 						      	<a href="https://winner797.kr/lecture/?seq=1075" target="_blank">
 								<img src="/wnn_consult/images/winct/image9.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
@@ -259,7 +259,7 @@
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=321" target="_blank"> -->
 						     	<a href="https://winner797.kr/lecture/?seq=1073" target="_blank">
 								<img src="/wnn_consult/images/winct/image7.png" style="object-fit: contain; max-width: 100%; max-height: 100%;">
@@ -267,17 +267,17 @@
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
 							<img src="/wnn_consult/images/winct/image2.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
 							<img src="/wnn_consult/images/winct/image3.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
 						</div>
 					</div>
 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
-						<div class="slide-image-container d-flex align-items-center w-100 h-100">
+						<div class="slide-image-container d-flex align-items-center justify-content-center w-100 h-100">
 						<!--  	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank"> -->
 						  	    <a href="https://winner797.kr/lecture/?seq=1024&sort01=&page=1" target="_blank"> 
 								<img src="/wnn_consult/images/winct/image5.svg" style="object-fit: contain; max-width: 100%; max-height: 100%;">
@@ -297,9 +297,20 @@
 			
 				</div>
 			</div>
-			
+			<!-- 슬라이드 끝 -->
 			<!-- CSS -->
 			<style>
+			.slide-image-container a {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 100%;
+				height: 100%;
+			}
+			.slide-image-container img {
+				display: block;
+				margin: 0 auto;
+			}
 			.custom-arrow {
 				position: absolute;
 				top: 45%; /* 전체 높이의 45% 지점 */
@@ -359,8 +370,7 @@
 					<!-- 로그인 영역 -->
 
 					<div class="container-fluid mb-2" 	id = "login_line" style="padding-left: 150px;">
-						<div class="row justify-content-center px-xl-8"
-							style="flex-wrap: nowrap;">
+						<div class="row justify-content-center px-xl-8"	style="flex-wrap: nowrap;">
 							<div class="col-lg-auto" style="width: 725px; flex-shrink: 0; min-width: 725px;">
 								<div class="contact-form box-p-10 mb-3"
 									style="min-height: 220px; background-color: #003366; margin-left: 35px; border-radius: 10px;">
@@ -373,7 +383,7 @@
 													style="border: none; border-top: 2px solid #aaa; margin: 2px 0; width: 0.8cm;">
 												<h6 class="section-title position-relative mb-2">
 													<span class="pr-6" style="color: white; font-size: 1.2em;">
-														로그인 <small style="font-size: 0.80em; color: white;">LOGIN</small>
+														로그인 <small style="font-size: 0.80em; color: white;"></small>
 													</span>
 												</h6>
 												<div class="control-group mb-2">
@@ -489,11 +499,15 @@
 
 							<!-- 이미지 배너 영역  #ccc -->
 							<!-- ★ 이미지 버튼 영역: position:relative로 버튼이 이미지 안에 위치하도록 설정 -->
-							<div class="image-btn-wrap" style="position: relative; width: 590px; height: 225px; border: 1px solid #999; border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
+							<div class="image-btn-wrap" style="position: relative; width: 590px; height: 225px; border: 1px solid #999; 
+							    border-radius: 12px; overflow: hidden; background-color: #fff; flex-shrink: 0;">
 								<img class="img-fluid" src="/wnn_consult/images/winct/e_clip2.svg" alt="e_clip" style="width: 100%; height: 100%; display: block;">
-								<button type="button" class="btn overlay-btn overlay-btn-i1" style="left:5%; top:65%; width:35%; height:20%; background-color:transparent !important;" onclick="winCheckOpen()"></button>
-								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" style="left:62%; top:30%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
-								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" style="left:62%; top:76%; width:30%; height:14%; background-color:transparent !important;"></a>
+								<button type="button" class="btn overlay-btn overlay-btn-i1" style="left:5%; top:65%; width:35%; height:20%; 
+								        background-color:transparent !important;" onclick="winCheckOpen()"></button>
+								<a href="/path/to/consulting-intro.pdf" download class="btn overlay-btn overlay-btn-i4 program-button" 
+								         style="left:62%; top:30%; width:30%; height:14%; background-color:transparent !important;" onclick="downloadFile()"></a>
+								<a href="https://winner797.net/" target="_blank" rel="noopener noreferrer" class="btn overlay-btn overlay-btn-i5 program-button" 
+								         style="left:62%; top:76%; width:30%; height:14%; background-color:transparent !important;"></a>
 							</div>
 						</div>
 
@@ -3583,32 +3597,6 @@
 	           }
 
 	     }
-	    //해상도에따른 위치 조절 기능 (공지사항/고객샌터 )
-        function adjustMargin() {
-            const container  = document.querySelector('.noti-section');
-            const screenWidth = window.innerWidth;
-
-            if (screenWidth > 1920) {
-                container.style.marginLeft = '-270px';
-            } else if (screenWidth <= 960) {
-                container.style.marginLeft = '-265px';   
-            } else if (screenWidth <= 1097) {
-                container.style.marginLeft = '-485px';
-            } else if (screenWidth <= 1280) {
-                container.style.marginLeft = '-450px';
-            } else if (screenWidth <= 1536) {
-                container.style.marginLeft = '-395px';
-            } else if (screenWidth <= 1745) {
-                container.style.marginLeft = '-350px';
-            } else {
-                container.style.marginLeft = '-315px'; // 1920 표준위치 1 
-            }
-        }
-        // 화면 크기 변경 시마다 margin 값을 조정
-        window.addEventListener('resize', adjustMargin);
-
-        // 페이지 로드 시 최초 한번 호출
-        adjustMargin();
         //상단이미지 중앙이 아닌 로그인 화면비율에 맞게 조정 (좌측으로 이동정렬)
         function adjustCarouselPosition() {
         	  const items = document.querySelectorAll('.carousel-item');
