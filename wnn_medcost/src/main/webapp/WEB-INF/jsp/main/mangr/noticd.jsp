@@ -1136,16 +1136,21 @@
 			    	    dataType: "json",
 			            success: function(response) {
 			            	// checkbox, 자동순번은 넣지 않습니다.
-			            	// *******단, 나머지 컬럼은 반드시 기술해야 합니다. 
+			            	// *******단, 나머지 컬럼은 반드시 기술해야 합니다.
 			            	let newData = newuptData();
 			            	dataTable.row.add(newData).draw(false);
-			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");	            	
-			            	$("#" + modalName.id).modal('hide');
-			                // ✅ 파일이 있는 경우에만 업로드
+			                // ✅ 모달 닫기 전에 파일 업로드 먼저 처리 (모달 hide 시 file input 초기화 방지)
 			                const fileInput = document.getElementById("file-input");
+			                console.log("📌 [디버그] fileInput.files.length:", fileInput.files.length);
+			                console.log("📌 [디버그] response:", JSON.stringify(response));
 			                if (fileInput.files.length > 0) {
+			                    console.log("📌 [디버그] uploadFileWithNoticeInfo 호출");
 			                    uploadFileWithNoticeInfo(response);
+			                } else {
+			                    console.warn("⚠️ [디버그] 파일이 없어서 업로드 건너뜀");
 			                }
+			            	messageBox("1","<h5> 정상처리 되었습니다 ...... </h5><p></p><br>",mainFocus,"","");
+			            	$("#" + modalName.id).modal('hide');
 			                fn_re_load();
 			        	},
 			        	error: function(xhr, status, error) {
@@ -1900,7 +1905,9 @@
 		    })
 		    .then(response => {
 		        if (!response.ok) {
-		            throw new Error(`서버 오류: ${response.status}`);
+		            return response.text().then(errText => {
+		                throw new Error(`서버 오류(${response.status}): ${errText}`);
+		            });
 		        }
 		        return response.text();
 		    })
@@ -1909,9 +1916,9 @@
 		        console.log("✅ 파일 업로드 성공:", data);
 		        statusDisplay.textContent = "✅ 업로드 성공!";
 		        statusDisplay.style.color = "green";
-		        
-		        fileinput_clear() //파일문서초기화 
-		        
+
+		        fileinput_clear() //파일문서초기화
+
 		        showfileModal(document.getElementById("notiSeq").value, document.getElementById("fileGb").value);
 		    })
 		    .catch(error => {
@@ -1919,7 +1926,7 @@
 		        statusDisplay.textContent = "❌ 업로드 실패!";
 		        statusDisplay.style.color = "red";
 		    });
-		}); 
+		});
 		//입력시 자동등록 
 		function uploadFileWithNoticeInfo(response) {
 		    const fileInput = document.getElementById("file-input");
@@ -1943,7 +1950,9 @@
 		    })
 		    .then(response => {
 		        if (!response.ok) {
-		            throw new Error(`서버 오류: ${response.status}`);
+		            return response.text().then(errText => {
+		                throw new Error(`서버 오류(${response.status}): ${errText}`);
+		            });
 		        }
 		        return response.text();
 		    })
@@ -1952,8 +1961,8 @@
 		        console.log("✅ 파일 업로드 성공:", data);
 		        statusDisplay.textContent = "✅ 업로드 성공!";
 		        statusDisplay.style.color = "green";
-	        
-		        fileinput_clear() //파일문서초기화 
+
+		        fileinput_clear() //파일문서초기화
 
 		    })
 		    .catch(error => {

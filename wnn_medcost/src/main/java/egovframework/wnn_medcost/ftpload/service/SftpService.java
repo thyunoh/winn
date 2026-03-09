@@ -14,9 +14,9 @@ import java.util.Properties;
 public class SftpService {
 
     private static final String SFTP_HOST =
-        (System.getProperty("user.home").contains("/home") || System.getenv("HOSTNAME") != null)
-        ? "localhost"
-        : "114.108.153.178"; // SFTP 서버 주소
+        System.getProperty("os.name", "").toLowerCase().startsWith("win")
+        ? "114.108.153.178"
+        : "localhost"; // 서버(Linux)에서는 localhost, 로컬(Windows)에서는 원격 IP
     private static final int    SFTP_PORT = 22; // SFTP 포트
     private static final String SFTP_USER = "winner"; // 사용자명
     private static final String SFTP_PASSWORD = "winner_20@%"; // 비밀번호

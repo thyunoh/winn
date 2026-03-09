@@ -29,9 +29,9 @@ public class SftpController {
     // ✅ SFTP 연결 정보 (임시 하드코딩 – properties 방식 권장)
     
     private static final String SFTP_HOST = 
-    	    (System.getProperty("user.home").contains("/home") || System.getenv("HOSTNAME") != null)
-    	    ? "localhost"
-    	    : "114.108.153.178";
+            System.getProperty("os.name", "").toLowerCase().startsWith("win")
+            ? "114.108.153.178"
+            : "localhost"; // 서버(Linux)에서는 localhost, 로컬(Windows)에서는 원격 IP
    
     private static final int    SFTP_PORT      = 22;
     private static final String SFTP_USER      = "winner";
