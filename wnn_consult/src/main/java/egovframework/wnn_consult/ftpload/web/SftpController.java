@@ -25,7 +25,6 @@ public class SftpController {
     public SftpController(SftpService sftpService) {
         this.sftpService = sftpService;
     }
-
     // ✅ SFTP 연결 정보 (임시 하드코딩 – properties 방식 권장)
     
     private static final String SFTP_HOST = 
