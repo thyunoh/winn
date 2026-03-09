@@ -45,6 +45,8 @@ public class MagamDTO{
 	private String claim_amt;
 	private String file_nm;     	// 파일명
 	
+	private String js008Yn;
+	
 	private String user_nm;     	// 등록자명
 	
 	// 기타 필요필드 
@@ -86,6 +88,14 @@ public class MagamDTO{
 	
 	
 	
+	public String getJs008Yn() {
+		return js008Yn;
+	}
+
+	public void setJs008Yn(String js008Yn) {
+		this.js008Yn = js008Yn;
+	}
+
 	public String getHttp_st() {
 		return http_st;
 	}

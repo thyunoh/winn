@@ -223,7 +223,10 @@
 	        				    render: function(data, type, row) {
 	        				        if (type === 'display') {
 	        				            if (data === 'Y') {
-	        				                return '<span style="color:#ff0000; font-weight:bold;">' + data + '</span>';
+	        				                return '<span style="font-weight:bold;">타병원</span>';
+	        				            }
+	        				            if (data === 'N') {
+	        				                return '<span style="font-weight:bold;">-</span>';
 	        				            }
 	        				        }
 	        				        return data;
@@ -1422,6 +1425,7 @@
 					    paginate: {"next": "다음", "previous": "이전"},
 		            },
 		            columns: [
+		            	{data:  "rowNo_seven"       ,  width: '20px' ,   className: "text-center" },
 		            	{data:  "unitType_seven"    ,  width: '20px' ,   className: "text-center" }, 
 		            	{data:  "specType_seven"    ,  width: '20px' ,  },
 		            	{data:  "specDetail_seven"  ,  width: '300px',  

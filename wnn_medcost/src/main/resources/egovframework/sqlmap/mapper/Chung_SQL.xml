@@ -304,7 +304,8 @@
 		    C.BILL_SEQ,
 		    C.UNIT_TYPE , 
 		    C.SPEC_TYPE ,
-		    C.SPEC_DETAIL  
+		    C.SPEC_DETAIL  ,
+		    C.ROW_NO 
 		FROM TBL_CHUNG_MST A
 		JOIN TBL_MYOUNG_MST B 
 		  ON B.HOSP_CD  = A.HOSP_CD 
@@ -317,6 +318,7 @@
 		  AND A.DATE_YM  = #{dateYm}
           AND A.CLAIM_NO = #{claimNo}
 		  AND B.BILL_SEQ = #{billSeq}
+		  ORDER BY C.ROW_NO  
 	]]>
 	</select>				
 </mapper>

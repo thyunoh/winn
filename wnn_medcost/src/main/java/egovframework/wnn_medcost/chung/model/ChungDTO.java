@@ -66,7 +66,15 @@ public class ChungDTO {
 	private String  spcodeNm ;
 	
 	private String   js008Yn ;
+	private String   rowNo ;
 	
+	
+	public String getRowNo() {
+		return rowNo;
+	}
+	public void setRowNo(String rowNo) {
+		this.rowNo = rowNo;
+	}
 	public String getJs008Yn() {
 		return js008Yn;
 	}

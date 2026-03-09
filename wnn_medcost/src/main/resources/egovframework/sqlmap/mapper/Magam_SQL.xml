@@ -157,63 +157,124 @@
 	</select>
 	
 	<select id="magamGetFileList" parameterType="MagamDTO"  resultMap="magamMap"><![CDATA[
-	  SELECT DISTINCT
-	         A.CLAIM_NO    AS claim_no
-		   , A.CLFORM_VER  AS clform_ver
-		   , IFNULL(C.SUB_CODE_NM,'') AS claim_type_nm
-	       , IFNULL(D.SUB_CODE_NM,'') AS treat_type_nm
-		   , A.DATE_YM     AS date_ym
-		   , A.CASE_CNT    AS case_cnt
-		   , COALESCE(E.TOT_AMT,0)+COALESCE(E.NON100_COST,0) AS tot_amt
-		   , COALESCE(E.CLAIM_AMT,0)+COALESCE(E.NON100_CLAIM,0)+COALESCE(E.VET_CLAM,0)+COALESCE(E.NON100_VET,0) AS claim_amt
-		   , A.FILE_NM     AS file_nm
-		   , A.JOBS_DT     AS jobs_dt
-		   , A.UPD_DTTM    AS upd_dttm
-		   , B.USER_NM     AS user_nm
-		   , A.MG_YEAR     AS mg_year
-		   , A.MGMONTH     AS mgmonth
-		   , A.MG_FLAG     AS mg_flag
-		   , CASE WHEN A.MG_FLAG = 'Z' THEN 
-               (SELECT IFNULL(F2.LOCK_YN, 'N')
-                  FROM TBL_MAGAM_INFO F2
-                 WHERE F2.HOSP_CD = A.HOSP_CD 
-                   AND F2.MG_YEAR = A.MG_YEAR 
-                   AND F2.MGMONTH = A.MGMONTH 
-                   AND F2.MG_FLAG = #{mg_flag}
-                 LIMIT 1)
-                  ELSE IFNULL(F.LOCK_YN, 'N') END AS lock_yn
-	    FROM TBL_MAGAM_CHUNG A
-	    LEFT OUTER JOIN TBL_CHUNG_MST  E  ON E.HOSP_CD   = A.HOSP_CD 
-	                                     AND E.CLAIM_NO  = A.CLAIM_NO
-	    LEFT OUTER JOIN TBL_USER_MST   B  ON B.HOSP_CD   = A.HOSP_CD 
-		                                 AND B.USER_ID   = A.UPD_USER
-		                                 AND B.ACTION_YN = 'Y'
-		                                 AND NOW() BETWEEN B.START_DT AND B.END_DT
-		                                  
-		LEFT OUTER JOIN TBL_CODE_DTL   C  ON C.CODE_GB = 'Z'
-		                                 AND C.CODE_CD = 'CLAIM_TYPE'
-		                                 AND C.SUB_CODE = A.CLAIM_TYPE 
-		                                 AND NOW() BETWEEN C.START_DT AND C.END_DT
-		LEFT OUTER JOIN TBL_CODE_DTL   D  ON D.CODE_GB = 'Z'
-										 AND D.CODE_CD = 'TREAT_TYPE'
-		                                 AND D.SUB_CODE = A.TREAT_TYPE 
-		                                 AND NOW() BETWEEN D.START_DT AND D.END_DT
-		                                   
-        LEFT OUTER JOIN TBL_MAGAM_INFO F  ON F.HOSP_CD = A.HOSP_CD 
-	                                     AND F.MG_YEAR = A.MG_YEAR
-	                                     AND F.MGMONTH = A.MGMONTH
-	                                     AND F.MG_FLAG = A.MG_FLAG                                                  
-		WHERE A.HOSP_CD = #{hosp_cd}
-		  AND A.MG_YEAR = #{mg_year}
-		  AND A.MGMONTH = #{mgmonth}
-		]]>
-		<if test='mg_flag == "8"'><![CDATA[   
-		   AND A.MG_FLAG IN ('8','Z') 
-		]]></if>  
-		<if test='mg_flag == "9"'><![CDATA[   
-		   AND A.MG_FLAG IN ('9','Z') 
-		]]></if>  
-	   
+	  WITH CTE_MYOUNG AS (
+	    SELECT B.HOSP_CD
+	          ,B.CLAIM_NO
+	          ,SUM(FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 1)
+	             + FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 4)
+	               )           AS MED_AMT
+	          ,SUM(FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 2)
+	             + FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 5)
+	               )           AS SELF_AMT
+	          ,SUM(FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 3)
+	             + FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 6)
+	               )           AS CLAIM_AMT
+	      FROM TBL_MYOUNG_MST B
+	      JOIN TBL_MAGAM_CHUNG MC
+	        ON  B.HOSP_CD   = #{hosp_cd} 
+	       AND  MC.HOSP_CD  = B.HOSP_CD
+	       AND  MC.CLAIM_NO = B.CLAIM_NO
+	       AND  MC.MG_YEAR  = #{mg_year}
+	       AND  MC.MGMONTH  = #{mgmonth}
+ 	]]>
+	    <if test='mg_flag == "8"'><![CDATA[
+	       AND  MC.MG_FLAG IN ('8','Z')
+	    ]]></if>
+	    <if test='mg_flag == "9"'><![CDATA[
+	       AND  MC.MG_FLAG IN ('9','Z')
+	    ]]></if>
+	<![CDATA[
+	     WHERE B.HOSP_CD = #{hosp_cd}
+	       AND (
+	               SELECT COUNT(DISTINCT tsm.ROW_NO)
+	                 FROM TBL_SPECODE_MST tsm
+	                WHERE tsm.HOSP_CD   = B.HOSP_CD
+	                  AND tsm.CLAIM_NO  = B.CLAIM_NO
+	                  AND tsm.BILL_SEQ  = B.BILL_SEQ
+	                  AND tsm.SPEC_TYPE = 'JS008'
+	           )
+	           <>
+	           (
+	               SELECT COUNT(*)
+	                 FROM TBL_JINORD_MST jsm
+	                WHERE jsm.HOSP_CD  = B.HOSP_CD
+	                  AND jsm.CLAIM_NO = B.CLAIM_NO
+	                  AND jsm.BILL_SEQ = B.BILL_SEQ
+	                  AND jsm.ITEM_NO <> 'L'
+	           )
+	     GROUP BY B.HOSP_CD, B.CLAIM_NO
+	)
+	SELECT DISTINCT
+	    A.CLAIM_NO        AS claim_no
+	  , A.CLFORM_VER      AS clform_ver
+	  , IFNULL(C.SUB_CODE_NM,'') AS claim_type_nm
+	  , IFNULL(D.SUB_CODE_NM,'') AS treat_type_nm
+	  , A.DATE_YM         AS date_ym
+	  , A.CASE_CNT        AS case_cnt
+	  , COALESCE(NULLIF(E.TOTAL_2, 0), E.TOT_AMT, 0) - COALESCE(CM.MED_AMT, 0)                     AS tot_amt
+	  , COALESCE(E.CLAIM_AMT,0)  + COALESCE(E.NON100_CLAIM,0) + COALESCE(E.VET_CLAM,0)
+	    + COALESCE(E.NON100_VET,0) + COALESCE(E.DISABLED_AMT,0) - COALESCE(CM.CLAIM_AMT, 0)       AS claim_amt
+	  , A.FILE_NM         AS file_nm
+	  , A.JOBS_DT         AS jobs_dt
+	  , A.UPD_DTTM        AS upd_dttm
+	  , B.USER_NM         AS user_nm
+	  , A.MG_YEAR         AS mg_year
+	  , A.MGMONTH         AS mgmonth
+	  , A.MG_FLAG         AS mg_flag
+	  , CASE WHEN A.MG_FLAG = 'Z'
+	         THEN (
+	             SELECT IFNULL(F2.LOCK_YN, 'N')
+	             FROM   TBL_MAGAM_INFO F2
+	             WHERE  F2.HOSP_CD  = A.HOSP_CD
+	               AND  F2.MG_YEAR  = A.MG_YEAR
+	               AND  F2.MGMONTH  = A.MGMONTH
+	               AND  F2.MG_FLAG  = #{mg_flag}
+	             LIMIT 1
+	         )
+	         ELSE IFNULL(F.LOCK_YN, 'N')
+	    END AS lock_yn
+	  , CASE
+	        WHEN A.CLAIM_NO = '0000000000' OR  A.MG_FLAG = '9' THEN 'N'
+	        WHEN CM.CLAIM_NO IS NOT NULL    THEN 'N'
+	        ELSE 'Y'
+	    END AS js008Yn
+	FROM       TBL_MAGAM_CHUNG A
+	LEFT OUTER JOIN CTE_MYOUNG CM
+	    ON  CM.HOSP_CD  = A.HOSP_CD
+	    AND CM.CLAIM_NO = A.CLAIM_NO
+	LEFT OUTER JOIN TBL_CHUNG_MST E
+	    ON  E.HOSP_CD  = A.HOSP_CD
+	    AND E.CLAIM_NO = A.CLAIM_NO
+	LEFT OUTER JOIN TBL_USER_MST B
+	    ON  B.HOSP_CD   = A.HOSP_CD
+	    AND B.USER_ID   = A.UPD_USER
+	    AND B.ACTION_YN = 'Y'
+	    AND NOW() BETWEEN B.START_DT AND B.END_DT
+	LEFT OUTER JOIN TBL_CODE_DTL C
+	    ON  C.CODE_GB  = 'Z'
+	    AND C.CODE_CD  = 'CLAIM_TYPE'
+	    AND C.SUB_CODE = A.CLAIM_TYPE
+	    AND NOW() BETWEEN C.START_DT AND C.END_DT
+	LEFT OUTER JOIN TBL_CODE_DTL D
+	    ON  D.CODE_GB  = 'Z'
+	    AND D.CODE_CD  = 'TREAT_TYPE'
+	    AND D.SUB_CODE = A.TREAT_TYPE
+	    AND NOW() BETWEEN D.START_DT AND D.END_DT
+	LEFT OUTER JOIN TBL_MAGAM_INFO F
+	    ON  F.HOSP_CD  = A.HOSP_CD
+	    AND F.MG_YEAR  = A.MG_YEAR
+	    AND F.MGMONTH  = A.MGMONTH
+	    AND F.MG_FLAG  = A.MG_FLAG
+	WHERE A.HOSP_CD = #{hosp_cd}
+	  AND A.MG_YEAR = #{mg_year}
+	  AND A.MGMONTH = #{mgmonth}
+	]]>
+	    <if test='mg_flag == "8"'><![CDATA[
+	  AND A.MG_FLAG IN ('8','Z')
+	    ]]></if>
+	    <if test='mg_flag == "9"'><![CDATA[
+	  AND A.MG_FLAG IN ('9','Z')
+	    ]]></if>
 	</select>
 	 
 	<insert id="uploadMagamFilesMain" parameterType="java.util.List">

@@ -203,7 +203,7 @@
 	
 	
 	//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-	var c_Head_Set = [ '번호','버전','구분','형태','진료년월', '건수','총진료비','청구금액','작업-KEY','작업일시','작업자','파일명','작업년','작업월','마감','락' ];
+	var c_Head_Set = [ '번호','버전','구분','형태','타병원','진료년월', '건수','총진료비','청구금액','작업-KEY','작업일시','작업자','파일명','작업년','작업월','마감','락' ];
 
 	var columnsSet = [ 
 		
@@ -211,6 +211,23 @@
 					    { data: 'clform_ver',    visible: true,  className: 'dt-body-center',  width: '50px'  },
 					    { data: 'claim_type_nm', visible: false, className: 'dt-body-center',  width: '250px' },
 					    { data: 'treat_type_nm', visible: true,  className: 'dt-body-center',  width: '250px' },
+        				{ 
+        				    data: 'js008Yn', 
+        				    visible: true, 
+        				    className: 'dt-body-center', 
+        				    width: '60px',
+        				    render: function(data, type, row) {
+        				        if (type === 'display') {
+        				            if (data === 'Y') {
+        				                return '<span style="font-weight:bold;">타병원</span>';
+        				            }
+        				            if (data === 'N') {
+        				                return '<span style="font-weight:bold;">-</span>';
+        				            }
+        				        }
+        				        return data;
+        				    }
+        				},
 					    { data: 'date_ym',       visible: true,  className: 'dt-body-center',  width: '100px',
 						    render: function(data, type, row) {
 		            			if (type === 'display') {

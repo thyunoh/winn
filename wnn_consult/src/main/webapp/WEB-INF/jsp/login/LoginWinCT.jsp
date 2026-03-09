@@ -3019,8 +3019,11 @@
 	    
 	    });
  
-   		window.addEventListener('unload', () => {    	
-        	logout();
+   		window.addEventListener('unload', () => {
+        	// F5 새로고침 시 로그아웃 방지 - 자식 창만 닫기
+        	if (win_Check && !win_Check.closed) {
+        		win_Check.close();
+        	}
     	});
    		
    		
@@ -3033,9 +3036,15 @@
     	// 자식 창 변수
         let win_Check;
         window.onload = function() {
-        	
+
         	// openMyImagePopup_1('/wnn_consult/images/winct/popup2.jpg');
-        	
+
+        	// F5 새로고침 시 sessionStorage에 로그인 정보가 있으면 로그인 상태 복원
+        	if (sessionStorage.getItem('s_hospid') && sessionStorage.getItem('s_hospid') !== '') {
+        		showUserInfo();
+        		return;
+        	}
+
             if (getCookie("saveyn")) {
                 document.loginForm.saveyn.checked  = true;
                 document.loginForm.passwd.focus();
@@ -3047,16 +3056,16 @@
             /*
             if (getCookie("autoyn")) {
                 document.loginForm.autoyn.checked = true;
-            } 
+            }
             */
             if (getCookie("hospid")) {
-                document.loginForm.hospid.value = getCookie("hospid"); 
+                document.loginForm.hospid.value = getCookie("hospid");
             } else {
             	document.loginForm.hospid.focus();
             }
-            	 
+
             if (getCookie("userid")) {
-                document.loginForm.userid.value = getCookie("userid"); 
+                document.loginForm.userid.value = getCookie("userid");
             }
             /*
             if (getCookie("passwd")) {
@@ -3068,7 +3077,7 @@
                 login();
             }
             */
-            
+
         }
 
         function login() {

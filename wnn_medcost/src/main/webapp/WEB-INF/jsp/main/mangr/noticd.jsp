@@ -45,25 +45,34 @@
 }
 #noti_wrapper table.dataTable tbody tr:hover { background-color: #f5faff !important; }
 
-/* 상단: 검색 필터 우측 정렬 */
-#noti_wrapper .dataTables_filter { text-align: right !important; }
+/* 상단: 검색 필터 */
+#noti_wrapper .dataTables_filter { text-align: left !important; }
 
 /* 하단: 페이징 + 정보 */
 #noti_wrapper .dataTables_info { font-size: 13px; }
 #noti_wrapper .dataTables_paginate { font-size: 13px; }
 
-/* 하단 버튼 영역 - 페이징 row 바로 위, 우측 정렬 */
+/* 버튼 영역 - 상단 배치 */
 #noti_wrapper .noti-btn-area {
-	display: flex; justify-content: flex-end; align-items: center; gap: 8px;
-	padding: 8px 0 5px 0;
+	display: flex; align-items: center; gap: 6px;
+	padding: 0; margin: 0;
 }
 #noti_wrapper .noti-btn-area select,
 #noti_wrapper .noti-btn-area button {
-	height: 32px; line-height: 30px; border: 1px solid #ccc; border-radius: 4px;
-	font-size: 13px; font-weight: 600; padding: 0 12px; vertical-align: middle;
+	height: 36px; line-height: 34px; border: 1px solid #aaa; border-radius: 4px;
+	font-size: 14px; font-weight: 600; padding: 0 14px; vertical-align: middle;
 	background: white; cursor: pointer; box-sizing: border-box;
 }
 #noti_wrapper .noti-btn-area button:hover { background-color: #f0f0f0; }
+
+/* 상단 컨트롤 영역 줄바꿈 허용 */
+#noti_wrapper .datatable-controls { padding: 5px 0; }
+/* DataTable 기본 버튼(복사/엑셀/출력) 크기 조정 */
+#noti_wrapper .dt-buttons .dt-button {
+	height: 36px !important; line-height: 34px !important;
+	font-size: 14px !important; font-weight: 600 !important;
+	padding: 0 14px !important; border-radius: 4px !important;
+}
 
 /* 카드/대시보드 패딩 최소화 */
 .dashboard-content { padding: 10px !important; }
@@ -110,11 +119,6 @@
 			<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
 				<div class="card">
 					<div class="card-body" id="noti_wrapper">
-						<!-- 구분 (숨김) -->
-						<select id="fileGb1" style="display:none;"
-							oninput="findField(this)" disabled>
-							<option selected value="${noticeType}">${noticeTypeName}</option>
-						</select>
 						<!-- 테이블 -->
 						<div style="width: 100%;">
 							<table id="tableName"
@@ -123,8 +127,9 @@
 						</div>
 						<!-- 하단 버튼 영역 -->
 						<div class="noti-btn-area">
-							<select id="fileGb1_view" class="btn btn-outline-dark btn-sm" style="padding:4px 10px; font-size:13px; pointer-events:none; background-color:#e9ecef;" disabled>
-								<option selected value="${noticeType}">공지사항</option>
+							<select id="fileGb1" class="btn btn-outline-dark btn-sm" style="padding:4px 10px; font-size:14px; pointer-events:none; background-color:#e9ecef;"
+								oninput="findField(this)" disabled>
+								<option selected value="${noticeType}">${noticeTypeName}</option>
 							</select>
 							<button class="btn btn-outline-dark btn-sm" onClick="fn_re_load()">
 								<i class="fas fa-binoculars"></i> 재조회
@@ -776,13 +781,11 @@
 						//                  : '<"row"<"col-sm-2"l><"col-sm-7"><"col-sm-3"f>>t<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>',
 							// 페이지와 버튼 간격 좁히기 
 						dom: showButton
-						        ? '<"datatable-controls d-flex align-items-center"<"d-flex w-100"<"mr-2"l><"mr-2"B><"ml-auto"f>>>' +
+						        ? '<"datatable-controls d-flex align-items-center"<"d-flex w-100 flex-wrap align-items-center"<"mr-2"l><"mr-2"B><"mr-2"f><"noti-btn-target">>>' +
 						          't' +
-						          '<"noti-btn-target">' +
 						          '<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>'
-						        : '<"datatable-controls d-flex align-items-center"<"d-flex w-100"<"mr-2"l><"ml-auto"f>>>' +
+						        : '<"datatable-controls d-flex align-items-center"<"d-flex w-100 flex-wrap align-items-center"<"mr-2"l><"mr-2"f><"noti-btn-target">>>' +
 						          't' +
-						          '<"noti-btn-target">' +
 						          '<"row mt-2"<"col-sm-7"i><"col-sm-5"p>>',
 	                        //
 						                  
@@ -1092,7 +1095,8 @@
         		endDt:        $('#endDt').val(),
         		useYn:        $('#useYn').val(),
         		updDttm :     $('#updDttm').val(),
-        		fileYn :      $('#fileYn').val()
+        		fileYn :      $('#fileYn').val(),
+        		updateSw :    $('#updateSw').val()
 			    };
 		    return newData;
 		}	
