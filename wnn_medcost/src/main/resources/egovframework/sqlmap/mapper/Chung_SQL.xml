@@ -1,33 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.wnn_medcost.chung.mapper.ChungMapper">
-	<select  id="chungList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
-		SELECT   A.DATE_YM
-               , A.HOSP_CD 
-               , A.CLAIM_NO  
-		       , A.CLFORM_VER
-		       , A.CFORM_NO
-		       , FN_GET_DTL_CODE('Z', 'INSUR_TYPE', A.INSUR_TYPE) AS  INSUR_TYPE
-		       , FN_GET_DTL_CODE('Z', 'CFORM_NO', A.CFORM_NO)     AS  CFORM_NAME 
-		       , A.TREAT_TYPE
-               , CASE WHEN SUBSTRING(A.CFORM_NO,1,1) <> 'M' THEN 
-				      FN_GET_DTL_CODE('Z', 'TREAT_TYPE', A.TREAT_TYPE) 
-				 ELSE FN_GET_DTL_CODE('Z', 'TREAT_SAN_TYPE', A.TREAT_TYPE) END TREAT_NAME 
-		       , A.CASE_CNT 
-		       , FORMAT(IFNULL(A.TOTAL_2,A.TOT_AMT) + IFNULL(A.NON100_COST,0), 0)                         AS TOT_AMT
-		       , FORMAT(IFNULL(A.CLAIM_AMT,0) + IFNULL(A.NON100_CLAIM,0) + IFNULL(A.DISABLED_AMT,0), 0)   AS CLAIM_AMT
-		       , FORMAT(IFNULL(A.SELF_AMT,0) + IFNULL(A.NON100_CO_PAY,0), 0)                              AS SELF_AMT
-		FROM  TBL_CHUNG_MST A 
-		WHERE   A.HOSP_CD = #{hospCd}
-		    AND A.DATE_YM = #{dateYm}
-        ]]>
-	    <if test="cformNo != null and cformNo != ''">
-		   AND A.CFORM_NO = #{cformNo}
-		</if>
+		<select id="chungList" parameterType="ChungDTO" resultType="ChungDTO">
 		<![CDATA[
-		  ORDER BY A.CLAIM_NO
+			SELECT A.DATE_YM
+			      ,A.HOSP_CD
+			      ,A.CLAIM_NO
+			      ,A.CLFORM_VER
+			      ,A.CFORM_NO
+			      ,FN_GET_DTL_CODE('Z', 'INSUR_TYPE', A.INSUR_TYPE)  AS INSUR_TYPE
+			      ,FN_GET_DTL_CODE('Z', 'CFORM_NO',   A.CFORM_NO)    AS CFORM_NAME
+			      ,A.TREAT_TYPE
+			      ,CASE WHEN SUBSTRING(A.CFORM_NO,1,1) <> 'M'
+			            THEN FN_GET_DTL_CODE('Z', 'TREAT_TYPE',     A.TREAT_TYPE)
+			            ELSE FN_GET_DTL_CODE('Z', 'TREAT_SAN_TYPE', A.TREAT_TYPE)
+			       END                                               AS TREAT_NAME
+			      ,A.CASE_CNT
+			      ,FORMAT(IFNULL(A.TOTAL_2, A.TOT_AMT)
+			            + IFNULL(A.NON100_COST,   0), 0)              AS TOT_AMT
+			      ,FORMAT(IFNULL(A.CLAIM_AMT,  0)
+			            + IFNULL(A.NON100_CLAIM,  0)
+			            + IFNULL(A.DISABLED_AMT,  0), 0)              AS CLAIM_AMT
+			      ,FORMAT(IFNULL(A.SELF_AMT,   0)
+			            + IFNULL(A.NON100_CO_PAY, 0), 0)              AS SELF_AMT
+			      /* ★ JS008 타과 체크 */
+			      ,CASE WHEN EXISTS (
+			                SELECT 1
+			                  FROM TBL_MYOUNG_MST B
+			                 WHERE B.HOSP_CD  = A.HOSP_CD
+			                   AND B.CLAIM_NO = A.CLAIM_NO
+			                   AND (SELECT COUNT(DISTINCT tsm.ROW_NO)
+			                          FROM TBL_SPECODE_MST tsm
+			                         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			                           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			                           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			                           AND tsm.SPEC_TYPE = 'JS008')
+			                       <> (SELECT COUNT(*)
+			                             FROM TBL_JINORD_MST jsm
+			                            WHERE jsm.HOSP_CD  = B.HOSP_CD
+			                              AND jsm.CLAIM_NO = B.CLAIM_NO
+			                              AND jsm.BILL_SEQ = B.BILL_SEQ
+			                              AND jsm.ITEM_NO <> 'L')
+			            ) THEN 'N'
+			              ELSE 'Y'
+			       END                               AS JS008_YN
+			  FROM TBL_CHUNG_MST A
+		     WHERE A.HOSP_CD = #{hospCd}
+		       AND A.DATE_YM = #{dateYm}
 		]]>
-	</select>   
+		    <!-- ★ CDATA 밖에서 <if> 처리 → <> 연산자 없으므로 CDATA 불필요 -->
+		    <if test="cformNo != null and cformNo != ''">
+		        AND A.CFORM_NO = #{cformNo}
+		    </if>
+		<![CDATA[
+		     ORDER BY A.DATE_YM, A.CLAIM_NO
+		]]>
+    </select>
 	<select  id="myoungList" parameterType="ChungDTO" resultType="ChungDTO"><![CDATA[
 		SELECT    A.DATE_YM 
 		         ,B.HOSP_CD
@@ -50,9 +78,15 @@
 		         ,B.ACC_TYPE
 		         ,B.MED_TYPE
 		         ,B.MED_RESULT
-		         ,FORMAT(IFNULL(B.MED_AMT2,B.TOT_AMT)  + IFNULL(B.NON100_AMT,0)    + IFNULL(B.VET_AMT,0),0)  AS  MED_AMT 
-		         ,FORMAT(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.DISABLED_AMT,0),0)     AS  CLAIM_AMT 
-		         ,FORMAT(IFNULL(B.SELF_AMT,0)  + IFNULL(B.NON100_CO_PAY,0) + IFNULL(B.VET_CO_PAY,0),0)       AS  SELF_AMT          
+		         ,FORMAT(IFNULL(B.MED_AMT2,B.TOT_AMT)  
+		               + IFNULL(B.NON100_AMT,0)       
+		               + IFNULL(B.VET_AMT,0),0)         AS  MED_AMT 
+		         ,FORMAT(IFNULL(B.CLAIM_AMT,0)       
+		              + IFNULL(B.NON100_CLAIM,0)     
+		              + IFNULL(B.DISABLED_AMT,0),0)     AS  CLAIM_AMT 
+		         ,FORMAT(IFNULL(B.SELF_AMT,0)        
+		              + IFNULL(B.NON100_CO_PAY,0)   
+		              + IFNULL(B.VET_CO_PAY,0),0)       AS  SELF_AMT          
 		 FROM  TBL_CHUNG_MST  A 
 		  JOIN TBL_MYOUNG_MST B      ON  B.HOSP_CD  = A.HOSP_CD 
 		                             AND B.CLAIM_NO = A.CLAIM_NO 

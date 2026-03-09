@@ -207,7 +207,7 @@
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['요양기관','청구번호','서식버젼','서식명칭','진료형태','종별구분','청구건수','총진료비','청구액','본인액'];
+		var c_Head_Set = ['요양기관','청구번호','서식버젼', '타병원', '서식명칭','진료형태','종별구분','청구건수','총진료비','청구액','본인액'];
 		
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
@@ -215,6 +215,20 @@
 	        				{ data: 'hospCd',        visible: true,  className: 'dt-body-center'  , width: '100px',  },
 	        				{ data: 'claimNo',       visible: true,  className: 'dt-body-center'  , width: '100px',  },
 	        				{ data: 'clformVer',     visible: true,  className: 'dt-body-center'  , width: '60px',   },
+	        				{ 
+	        				    data: 'js008Yn', 
+	        				    visible: true, 
+	        				    className: 'dt-body-center', 
+	        				    width: '60px',
+	        				    render: function(data, type, row) {
+	        				        if (type === 'display') {
+	        				            if (data === 'Y') {
+	        				                return '<span style="color:#ff0000; font-weight:bold;">' + data + '</span>';
+	        				            }
+	        				        }
+	        				        return data;
+	        				    }
+	        				},
 	        				{ data: 'cformName',     visible: true,  className: 'dt-body-left'    , width: '300px',  },
 	        				{ data: 'treatName',     visible: true,  className: 'dt-body-left'    , width: '100px',  },
 	        				{ data: 'insurType',     visible: true,  className: 'dt-body-center'  , width: '100px',  },	   

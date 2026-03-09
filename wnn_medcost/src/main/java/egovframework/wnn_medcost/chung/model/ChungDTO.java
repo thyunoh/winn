@@ -65,6 +65,14 @@ public class ChungDTO {
 	private String  subCodeNm ;
 	private String  spcodeNm ;
 	
+	private String   js008Yn ;
+	
+	public String getJs008Yn() {
+		return js008Yn;
+	}
+	public void setJs008Yn(String js008Yn) {
+		this.js008Yn = js008Yn;
+	}
 	public String getSpcodeNm() {
 		return spcodeNm;
 	}
