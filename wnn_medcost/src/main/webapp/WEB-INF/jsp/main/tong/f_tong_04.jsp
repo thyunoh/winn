@@ -31,7 +31,7 @@
 		<input type="month" id="endMonth" value="2025-03" 
 		       style="width: 120px; font-size: 13px; padding: 4px; text-align: center;">
 	   <span for="inoutType">구분</span>
-	   <div style="width: 80px;">
+	   <div style="width: 70px;">
 			<select class="custom-select" id="inoutType" style= "font-size:13px ;">
 			    <option value="T" selected>전체</option>
 			    <option value="I">입원</option>

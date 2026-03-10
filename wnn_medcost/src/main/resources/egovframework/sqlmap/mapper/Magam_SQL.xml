@@ -211,9 +211,9 @@
 	  , IFNULL(D.SUB_CODE_NM,'') AS treat_type_nm
 	  , A.DATE_YM         AS date_ym
 	  , A.CASE_CNT        AS case_cnt
-	  , COALESCE(NULLIF(E.TOTAL_2, 0), E.TOT_AMT, 0) - COALESCE(CM.MED_AMT, 0)                     AS tot_amt
+	  , COALESCE(NULLIF(E.TOTAL_2, 0), E.TOT_AMT, 0) + COALESCE(E.NON100_COST,0) - COALESCE(CM.MED_AMT, 0)    AS tot_amt
 	  , COALESCE(E.CLAIM_AMT,0)  + COALESCE(E.NON100_CLAIM,0) + COALESCE(E.VET_CLAM,0)
-	    + COALESCE(E.NON100_VET,0) + COALESCE(E.DISABLED_AMT,0) - COALESCE(CM.CLAIM_AMT, 0)       AS claim_amt
+	    + COALESCE(E.NON100_VET,0) + COALESCE(E.DISABLED_AMT,0) - COALESCE(CM.CLAIM_AMT, 0)                   AS claim_amt
 	  , A.FILE_NM         AS file_nm
 	  , A.JOBS_DT         AS jobs_dt
 	  , A.UPD_DTTM        AS upd_dttm
@@ -238,7 +238,7 @@
 	        WHEN CM.CLAIM_NO IS NOT NULL    THEN 'N'
 	        ELSE 'Y'
 	    END AS js008Yn
-	FROM       TBL_MAGAM_CHUNG A
+	FROM  TBL_MAGAM_CHUNG A
 	LEFT OUTER JOIN CTE_MYOUNG CM
 	    ON  CM.HOSP_CD  = A.HOSP_CD
 	    AND CM.CLAIM_NO = A.CLAIM_NO

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?> 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.wnn_medcost.tong.mapper.TongMapper">
     <!-- 기간별 건수와 진료비 추이  '6' 건강에서는 약국처방조제/ 산재한방통원-->
@@ -11,14 +11,24 @@
 	        <!-- 전체 합계 -->
 	        <choose>
 	            <when test='amtType == "2"'> <!-- 청구액 -->
-	                SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-	                                                                     + IFNULL(B.VET_AMT,0)) AS totalAmt,
+	                SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) 
+	              + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0) 
+	              - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)  
+	              - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                        AS totalAmt,
+	              
 	                TRUNCATE(SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) 
-	                        + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) / COUNT(*), 0)    AS totalAvgAmt,
+	                      + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+	                      - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)                                         
+	                      - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) / COUNT(*), 0) AS totalAvgAmt,
 	            </when>
 	            <otherwise> <!-- 총액 -->
-	                SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                          AS totalAmt,
-	                TRUNCATE(SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) / COUNT(*), 0)  AS totalAvgAmt,
+	                SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                  AS totalAmt,
+	                    
+	                TRUNCATE(SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)  
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4)  ) / COUNT(*), 0)  AS totalAvgAmt,
 	            </otherwise>
 	        </choose>
 	
@@ -28,24 +38,28 @@
 	        <choose>
 	            <when test='amtType == "2"'> <!-- 청구액 -->
 	                SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
-	                    IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                    IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+	                         - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6)
 	                ELSE 0 END)                                                                AS ipAmt,
 	                COALESCE(
 	                    TRUNCATE(
 	                        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
-	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+	                            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6)
 	                        ELSE 0 END)  /
 	                        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 	                    0), 0)                                                                AS ipAvgAmt,
 	            </when>
 	            <otherwise> <!-- 총액 -->
 	                SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
-	                    IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                    COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4)
 	                ELSE 0 END)                                                               AS ipAmt,
 	                COALESCE(
 	                    TRUNCATE(
 	                        SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN
-	                            IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                            COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4)
 	                        ELSE 0 END)  /
 	                        NULLIF(SUM(CASE WHEN A.TREAT_TYPE NOT IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 	                    0), 0)                                                                AS ipAvgAmt,
@@ -58,24 +72,28 @@
 	        <choose>
 	            <when test='amtType == "2"'> <!-- 청구액 -->
 	                SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
-	                    IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                    IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+	                         - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6)
 	                ELSE 0 END)                                                               AS opAmt,
 	                COALESCE(
 	                    TRUNCATE(
 	                        SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
-	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)
+	                            IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+	                            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6)
 	                        ELSE 0 END)
 	                        / NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 	                    0), 0)                                                               AS opAvgAmt
 	            </when>
 	            <otherwise>  <!-- 총액 -->
 	                SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
-	                    IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                     COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                     - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4)
 	                ELSE 0 END)                                                              AS opAmt,
 	                COALESCE(
 	                    TRUNCATE(
 	                        SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN
-	                            IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)
+	                            COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4)
 	                        ELSE 0 END) 
 	                        / NULLIF(SUM(CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN 1 ELSE 0 END), 0),
 	                    0), 0)                                                               AS opAvgAmt
@@ -86,14 +104,18 @@
 		    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO
 		                          AND A.HOSP_CD  = B.HOSP_CD
 		    WHERE A.HOSP_CD = #{hospCd} 
-			  AND NOT EXISTS (
-			      SELECT 1
-			      FROM TBL_SPECODE_MST C
-			      WHERE C.HOSP_CD = A.HOSP_CD
-			        AND C.CLAIM_NO = A.CLAIM_NO
-			        AND C.BILL_SEQ = B.BILL_SEQ
-			        AND C.SPEC_TYPE = 'JS008'
-			  )	
+		      AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = B.HOSP_CD
+		           AND tsm.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = B.HOSP_CD
+		           AND jsm.CLAIM_NO = B.CLAIM_NO
+		           AND jsm.BILL_SEQ = B.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L') 
 			  AND IFNULL(B.DELYN,'') <> 'Y'  	    
 	    ]]>	  
 		<if test="startMonth != null and startMonth != ''">
@@ -184,31 +206,40 @@
 	        <!-- 전체 합계 -->
 	        <choose>
 	            <when test='amtType == "2"'> <!-- 청구액 -->
-		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt ,
+		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) +  IFNULL(B.NON100_VET,0)
+		           - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)- FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) AS totalAmt ,
 		           COUNT(*)                                                                                               AS claimCount ,
 		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
                    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
                                     THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-                                                                                           + IFNULL(B.VET_AMT,0)) 
+                                          + IFNULL(B.VET_AMT,0) + +  IFNULL(B.NON100_VET,0) 
+                     - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)- FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) 
                    ELSE 0 END)                                                                                            AS ipTotAmt	,
                    COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
-                            THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-                                                                                   + IFNULL(B.VET_AMT,0)) 
+                                    THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+                                          + IFNULL(B.VET_AMT,0) + +  IFNULL(B.NON100_VET,0) 
+                     - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)- FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) 
                    ELSE 0 END)                                                                                           AS opTotAmt ,
                </when>
 	            <otherwise> <!-- 총액 -->
-		           SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                                      AS totalAmt ,
+	               SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                                             AS totalAmt,		           
 		           COUNT(*)                                                                                               AS claimCount ,
 		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
                    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
-                                    THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
+                                    THEN (COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) 
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) ) 
                    ELSE 0 END)                                                                                            AS ipTotAmt	,
                    COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
-                                   THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
+                                    THEN (COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) 
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )  
                    ELSE 0 END)                                                                                            AS opTotAmt ,
 	            </otherwise>
 	        </choose>
@@ -236,14 +267,18 @@
 		                         AND A.HOSP_CD  = B.HOSP_CD  
 		    WHERE   A.HOSP_CD = #{hospCd}  
 		       AND  A.DATE_YM = #{endMonth} 
-			   AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST C
-			        WHERE C.HOSP_CD   = A.HOSP_CD
-			          AND C.CLAIM_NO  = A.CLAIM_NO
-			          AND C.BILL_SEQ  = B.BILL_SEQ
-			          AND C.SPEC_TYPE = 'JS008'
-			   )	
+		       AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = B.HOSP_CD
+		           AND tsm.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = B.HOSP_CD
+		           AND jsm.CLAIM_NO = B.CLAIM_NO
+		           AND jsm.BILL_SEQ = B.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L') 
 			   AND IFNULL(B.DELYN,'') <> 'Y'  	    
 		    ]]>   
 		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
@@ -273,34 +308,42 @@
 		           A.HOSP_CD ,                                             
 		    ]]>
 	        <choose>
-	            <when test='amtType == "2"'> <!-- 청구액 -->		    
-		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                                + IFNULL(B.VET_AMT,0))     AS totalAmt ,
-		           COUNT(*)                                                                        AS claimCount ,
-		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)       AS ipCount ,
+	            <when test='amtType == "2"'> <!-- 청구액 -->
+		           SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0) +  IFNULL(B.NON100_VET,0)
+		           - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)- FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) AS totalAmt ,
+		           COUNT(*)                                                                                               AS claimCount ,
+		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
                    SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
-                                    THEN  (IFNULL(B.CLAIM_AMT,0)   + IFNULL(B.DISABLED_AMT,0) 
-                                        + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) 
-                   ELSE 0 END)                                                                             AS ipTotAmt	,
-                  COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)     AS iuniqPatients  ,
-                  SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                    AS opCount ,
-                  SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
-                                    THEN (IFNULL(B.CLAIM_AMT,0)     + IFNULL(B.DISABLED_AMT,0) 
-                                        + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0)) 
-                  ELSE 0 END)                                                                              AS opTotAmt,
-                </when>
-	            <otherwise> <!-- 총액 -->
-		           SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                      AS totalAmt ,
-		           COUNT(*)                                                                                AS claimCount ,
-		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)               AS ipCount ,
-                   SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
-                                    THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) 
-                   ELSE 0 END)                                                                             AS ipTotAmt	,
-                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)    AS iuniqPatients,		           
-                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                   AS opCount ,
+                                    THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+                                          + IFNULL(B.VET_AMT,0) + +  IFNULL(B.NON100_VET,0) 
+                     - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)- FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) 
+                   ELSE 0 END)                                                                                            AS ipTotAmt	,
+                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
                    SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
-                                   THEN (IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))  
-                   ELSE 0 END)                                                                             AS opTotAmt ,
+                                    THEN (IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
+                                          + IFNULL(B.VET_AMT,0) + +  IFNULL(B.NON100_VET,0) 
+                     - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)- FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) ) 
+                   ELSE 0 END)                                                                                           AS opTotAmt ,
+               </when>
+	            <otherwise> <!-- 총액 -->
+	               SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                                             AS totalAmt,		           
+		           COUNT(*)                                                                                               AS claimCount ,
+		           SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN 1 ELSE 0 END)                              AS ipCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') 
+                                    THEN (COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) 
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) ) 
+                   ELSE 0 END)                                                                                            AS ipTotAmt	,
+                   COUNT(DISTINCT CASE WHEN A.TREAT_TYPE NOT IN('2','4','9','H','6') THEN B.PAT_ID END)                   AS iuniqPatients,		           
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') THEN 1 ELSE 0 END)                                  AS opCount ,
+                   SUM(CASE WHEN A.TREAT_TYPE IN('2','4','9','H','6') 
+                                    THEN (COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1) 
+                                        - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )  
+                   ELSE 0 END)                                                                                            AS opTotAmt ,
 	            </otherwise>
 	        </choose>
 	        <![CDATA[	                          
@@ -326,14 +369,18 @@
 		    JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO
 		                         AND A.HOSP_CD  = B.HOSP_CD  
 		    WHERE   A.HOSP_CD = #{hospCd}
-			   AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST C
-			        WHERE C.HOSP_CD   = A.HOSP_CD
-			          AND C.CLAIM_NO  = A.CLAIM_NO
-			          AND C.BILL_SEQ  = B.BILL_SEQ
-			          AND C.SPEC_TYPE = 'JS008'
-			   )
+		       AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = B.HOSP_CD
+		           AND tsm.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = B.HOSP_CD
+		           AND jsm.CLAIM_NO = B.CLAIM_NO
+		           AND jsm.BILL_SEQ = B.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L') 
 			   AND IFNULL(B.DELYN,'') <> 'Y'  	
 		    ]]>   
 		    <if test='medType == "0"'> <!-- 전체 일때 치과는 제외 -->
@@ -370,11 +417,17 @@
 		    ]]>
 	        <choose>
 	          <when test='amtType == "2"'> <!-- 청구액 -->
-		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
+	             SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) 
+	              + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0) 
+	              - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)  
+	              - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                                                  AS totalAmt,
 		          COUNT(*)                                                                                               AS claimCount
 		      </when>
 			  <otherwise> <!-- 총액 -->
-                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                                                    AS totalAmt,
+                  SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                                            AS totalAmt,
+
 		          COUNT(*)                                                                                               AS claimCount			    
 			  </otherwise>
 		    </choose>
@@ -388,14 +441,18 @@
 		                                AND C.DIAG_TYPE = '1'
 		    WHERE A.HOSP_CD  = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-			  AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST D
-			        WHERE D.HOSP_CD   = A.HOSP_CD
-			          AND D.CLAIM_NO  = A.CLAIM_NO
-			          AND D.BILL_SEQ  = B.BILL_SEQ
-			          AND D.SPEC_TYPE = 'JS008'
-			   )	
+		      AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = B.HOSP_CD
+		           AND tsm.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = B.HOSP_CD
+		           AND jsm.CLAIM_NO = B.CLAIM_NO
+		           AND jsm.BILL_SEQ = B.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L') 	
 			   AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	   <if test='ipwe == "I"'>
@@ -513,6 +570,14 @@
 			                           AND C.HOSP_CD  = B.HOSP_CD 
 			                           AND C.BILL_SEQ = B.BILL_SEQ 
 			                           AND ((C.ITEM_NO = 'L' AND C.CODE_NO = '01') OR (C.ITEM_NO <> 'L'))
+									   AND NOT EXISTS ( /* JS008 추가 */
+										       SELECT 1
+										         FROM TBL_SPECODE_MST tsm
+										        WHERE tsm.HOSP_CD   = C.HOSP_CD
+										          AND tsm.CLAIM_NO  = C.CLAIM_NO
+										          AND tsm.BILL_SEQ  = C.BILL_SEQ
+										          AND tsm.ROW_NO    = C.ROW_NO 
+										          AND tsm.SPEC_TYPE = 'JS008')			                           
 			    LEFT JOIN WNN.TBL_CODE_DTL D  ON D.CODE_GB   = 'Z' 
 			                           AND D.ACTION_YN = 'Y'
 			                           AND D.CODE_CD   = 'CFORM_NO' 
@@ -530,14 +595,18 @@
 		    WHERE A.HOSP_CD       = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND IFNULL(C.AMOUNT,0) > 0
-			  AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST F
-			        WHERE F.HOSP_CD   = A.HOSP_CD
-			          AND F.CLAIM_NO  = A.CLAIM_NO
-			          AND F.BILL_SEQ  = B.BILL_SEQ
-			          AND F.SPEC_TYPE = 'JS008'
-			  )	
+		      AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = B.HOSP_CD
+		           AND tsm.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = B.HOSP_CD
+		           AND jsm.CLAIM_NO = B.CLAIM_NO
+		           AND jsm.BILL_SEQ = B.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L') 
 			  AND IFNULL(B.DELYN,'') <> 'Y'  
 	   ]]>
 	   <if test='ipwe == "I"'>
@@ -580,15 +649,20 @@
 	      SELECT 
 	  ]]>
 	      <choose>
-	        <when test='amtType == "2"'>
+	        <when test='amtType == "2"'> /* 청구 */
 	          <![CDATA[
-	            SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS total_amt_all,
+	            SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0)  + IFNULL(B.NON100_CLAIM,0)  
+	                   + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0) 
+	                   - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)  
+	                   - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )  AS total_amt_all,
 	            COUNT(*) AS total_claims_all
 	          ]]>
 	        </when>
 	        <otherwise>
 	          <![CDATA[
-	            SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0)) AS total_amt_all,
+	            SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )  AS total_amt_all,
 	            COUNT(*) AS total_claims_all
 	          ]]>
 	        </otherwise>
@@ -598,13 +672,18 @@
 	      JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO AND A.HOSP_CD = B.HOSP_CD
 	      WHERE A.HOSP_CD = #{hospCd}
 	        AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-	        AND NOT EXISTS (
-	          SELECT 1 FROM TBL_SPECODE_MST C
-	          WHERE C.HOSP_CD = A.HOSP_CD 
-	            AND C.CLAIM_NO = A.CLAIM_NO 
-	            AND C.BILL_SEQ = B.BILL_SEQ 
-	            AND C.SPEC_TYPE = 'JS008'
-	        )
+		    AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = B.HOSP_CD
+		           AND tsm.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = B.HOSP_CD
+		           AND jsm.CLAIM_NO = B.CLAIM_NO
+		           AND jsm.BILL_SEQ = B.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L') 
 	        AND IFNULL(B.DELYN,'') <> 'Y'  
 	  ]]>
 	    <if test='ipwe == "I"'>
@@ -739,11 +818,15 @@
 	   ]]>  	              
 	        <choose>
 	          <when test='amtType == "2"'> <!-- 청구액 -->
-		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                             + IFNULL(B.VET_AMT,0))       AS totalAmt 
+	                SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) 
+	                   + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0) 
+	                   - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)  
+	                   - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                     AS totalAmt
 		      </when>
 		      <otherwise> <!-- 총액 -->
-		        SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                AS totalAmt
+	                SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+	                    - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                    AS totalAmt
       
 		      </otherwise>
 		    </choose>
@@ -757,14 +840,18 @@
 			                                AND C.DIAG_TYPE = '1'
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-			      AND  NOT EXISTS (
-			          SELECT 1
-			          FROM TBL_SPECODE_MST D
-			          WHERE D.HOSP_CD   = A.HOSP_CD
-			            AND D.CLAIM_NO  = A.CLAIM_NO
-			            AND D.BILL_SEQ  = B.BILL_SEQ
-			            AND D.SPEC_TYPE = 'JS008'
-			      )	
+			      AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+			          FROM TBL_SPECODE_MST tsm
+			         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			           AND tsm.SPEC_TYPE = 'JS008')
+			       <>  (SELECT COUNT(*)
+			          FROM TBL_JINORD_MST jsm
+			         WHERE jsm.HOSP_CD  = B.HOSP_CD
+			           AND jsm.CLAIM_NO = B.CLAIM_NO
+			           AND jsm.BILL_SEQ = B.BILL_SEQ
+			           AND jsm.ITEM_NO <> 'L') 	
 			      AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	   <if test='ipwe == "I"'>
@@ -832,27 +919,35 @@
 		]]>         
 	        <choose>
 	          <when test='amtType == "2"'> <!-- 청구액 -->
-		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                             + IFNULL(B.VET_AMT,0))      AS totalAmt 
+		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0)
+		           + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+		           - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)
+		           - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                         AS totalAmt
 		      </when>
 		      <otherwise> <!-- 총액 -->
-		        SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                                AS totalAmt
+		        SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+		            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+		            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                        AS totalAmt
 		      </otherwise>
 		    </choose>
-		<![CDATA[  
+		<![CDATA[
 		    FROM TBL_CHUNG_MST A
-			    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO 
+			    JOIN TBL_MYOUNG_MST B  ON A.CLAIM_NO = B.CLAIM_NO
 			                          AND A.HOSP_CD  = B.HOSP_CD
 			    WHERE A.HOSP_CD = #{hospCd}
 			      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
-			      AND  NOT EXISTS (
-			           SELECT 1
-			           FROM TBL_SPECODE_MST C
-			           WHERE C.HOSP_CD   = A.HOSP_CD
-			             AND C.CLAIM_NO  = A.CLAIM_NO
-			             AND C.BILL_SEQ  = B.BILL_SEQ
-			             AND C.SPEC_TYPE = 'JS008'
-		  	      )	
+			      AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+			          FROM TBL_SPECODE_MST tsm
+			         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			           AND tsm.SPEC_TYPE = 'JS008')
+			       <>  (SELECT COUNT(*)
+			          FROM TBL_JINORD_MST jsm
+			         WHERE jsm.HOSP_CD  = B.HOSP_CD
+			           AND jsm.CLAIM_NO = B.CLAIM_NO
+			           AND jsm.BILL_SEQ = B.BILL_SEQ
+			           AND jsm.ITEM_NO <> 'L')
 		  	      AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	   <if test='ipwe == "I"'>
@@ -923,12 +1018,16 @@
 		        A.DATE_YM,
 		]]>
 		 <choose>
-	          <when test='amtType == "2"'> <!-- 청구액 -->        
-		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) 
-		                                                             + IFNULL(B.VET_AMT,0)) AS TOTALAMT,
+	          <when test='amtType == "2"'> <!-- 청구액 -->
+		        SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0)
+		           + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+		           - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)
+		           - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                    AS TOTALAMT,
 		      </when>
 		      <otherwise>
-		        SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0))                           AS TOTALAMT , 
+		        SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+		            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+		            - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                   AS TOTALAMT ,
 		      </otherwise>
 		 </choose>         
 		 <![CDATA[                                                  
@@ -945,14 +1044,18 @@
 			        #{endMonth}, 
 			        DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{endMonth}, '01'), '%Y%m%d'),INTERVAL 1 MONTH),'%Y%m')
 			      )
-			     AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST D
-			        WHERE D.HOSP_CD   = A.HOSP_CD
-			          AND D.CLAIM_NO  = A.CLAIM_NO
-			          AND D.BILL_SEQ  = B.BILL_SEQ
-			          AND D.SPEC_TYPE = 'JS008'
-			     )	
+			     AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+			          FROM TBL_SPECODE_MST tsm
+			         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			           AND tsm.SPEC_TYPE = 'JS008')
+			       <>  (SELECT COUNT(*)
+			          FROM TBL_JINORD_MST jsm
+			         WHERE jsm.HOSP_CD  = B.HOSP_CD
+			           AND jsm.CLAIM_NO = B.CLAIM_NO
+			           AND jsm.BILL_SEQ = B.BILL_SEQ
+			           AND jsm.ITEM_NO <> 'L')
 			     AND IFNULL(B.DELYN,'') <> 'Y'  
 		]]>
 	    <if test='ipwe == "I"'>
@@ -1050,21 +1153,26 @@
     <!-- 정액환자 약제비율(비청구) ,전체  -->
 	<select id="tong08List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
 		WITH BASE_DATA AS (
-		    SELECT  
-		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,  
+		    SELECT
+		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,
 		    ]]>
 	        <choose>
 	          <when test='amtType == "2"'> <!-- 청구액 -->
-		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
-		          COUNT(*)                                                                                               AS claimCount ,
+		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0)
+		             + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+		             - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)
+		             - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                                              AS totalAmt,
+		          COUNT(*)                                                                                              AS claimCount ,
 		      </when>
 			  <otherwise> <!-- 총액 -->
-                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                                                     AS totalAmt,
-		          COUNT(*)                                                                                               AS claimCount,			    
+                  SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+                      - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+                      - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                                            AS totalAmt,
+		          COUNT(*)                                                                                             AS claimCount,
 			  </otherwise>
 		    </choose>
 		    <![CDATA[
-		    SUM(IFNULL(D.yakAmt, 0))                                                                                     AS yakAmt
+		    SUM(IFNULL(D.yakAmt, 0))                                                                                   AS yakAmt
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO 
 		                           AND A.HOSP_CD  = B.HOSP_CD
@@ -1073,33 +1181,54 @@
 		                           AND C.BILL_SEQ  = B.BILL_SEQ 
 		                           AND C.DIAG_TYPE = '1'
 			LEFT JOIN (
-			    SELECT HOSP_CD, CLAIM_NO, BILL_SEQ, SUM(AMOUNT) AS yakAmt
-			    FROM TBL_JINORD_MST
+			    SELECT jj.HOSP_CD, jj.CLAIM_NO, jj.BILL_SEQ, SUM(jj.AMOUNT) AS yakAmt
+			    FROM TBL_JINORD_MST jj
 			    WHERE 1=1 
 			    ]]>
 			    <if test='prtChk == "JJ"'>  -- 정액진료비제외 
-			      AND ITEM_NO = 'L' AND CODE_TYPE IN('3')
+			      AND jj.ITEM_NO = 'L' AND jj.CODE_TYPE IN('3')
+				  AND NOT EXISTS ( /* JS008 추가 */
+			       SELECT 1
+			         FROM TBL_SPECODE_MST tsm
+			        WHERE tsm.HOSP_CD   = jj.HOSP_CD
+			          AND tsm.CLAIM_NO  = jj.CLAIM_NO
+			          AND tsm.BILL_SEQ  = jj.BILL_SEQ
+			          AND tsm.ROW_NO    = jj.ROW_NO 
+			          AND tsm.SPEC_TYPE = 'JS008')  
 			    </if>
 			    <if test='prtChk == "JA"'>  -- 정액환자 전체 
-			      AND CODE_TYPE IN('3')
+			      AND jj.CODE_TYPE IN('3')
+			      AND NOT EXISTS ( /* JS008 추가 */
+				       SELECT 1
+				         FROM TBL_SPECODE_MST tsm
+				        WHERE tsm.HOSP_CD   = jj.HOSP_CD
+				          AND tsm.CLAIM_NO  = jj.CLAIM_NO
+				          AND tsm.BILL_SEQ  = jj.BILL_SEQ
+				          AND tsm.ROW_NO    = jj.ROW_NO 
+				          AND tsm.SPEC_TYPE = 'JS008')
 			    </if>
-			    <![CDATA[			      
-			    GROUP BY HOSP_CD, CLAIM_NO , BILL_SEQ
+			    <![CDATA[			
+			      AND  jj.HOSP_CD = #{hospCd}       
+			    GROUP BY jj.HOSP_CD, jj.CLAIM_NO , jj.BILL_SEQ
 			    ) D   ON  D.HOSP_CD  = B.HOSP_CD
 			         AND  D.CLAIM_NO = B.CLAIM_NO
 			         AND  D.BILL_SEQ = B.BILL_SEQ		     
 		    WHERE A.HOSP_CD  = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
-			  AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST E
-			        WHERE E.HOSP_CD   = A.HOSP_CD
-			          AND E.CLAIM_NO  = A.CLAIM_NO
-			          AND E.BILL_SEQ  = B.BILL_SEQ
-			          AND E.SPEC_TYPE = 'JS008'
-			   )	
-			   AND IFNULL(B.DELYN,'') <> 'Y'  
+			  AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+			          FROM TBL_SPECODE_MST tsm
+			         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			           AND tsm.SPEC_TYPE = 'JS008')
+			       <>  (SELECT COUNT(*)
+			          FROM TBL_JINORD_MST jsm
+			         WHERE jsm.HOSP_CD  = B.HOSP_CD
+			           AND jsm.CLAIM_NO = B.CLAIM_NO
+			           AND jsm.BILL_SEQ = B.BILL_SEQ
+			           AND jsm.ITEM_NO <> 'L')
+			   AND IFNULL(B.DELYN,'') <> 'Y'
 		]]>
 	    <if test='ipwe == "I"'>
 	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -1153,21 +1282,26 @@
     <!-- 행위환자(전체환자) 약제비율  -->
 	<select id="tong082List" parameterType="TongDTO" resultType="TongDTO"> <![CDATA[
 		WITH BASE_DATA AS (
-		    SELECT  
-		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,  
+		    SELECT
+		        IFNULL(C.MED_FIELD, B.MED_TYPE) AS MED_FIELD,
 		    ]]>
 	        <choose>
 	          <when test='amtType == "2"'> <!-- 청구액 -->
-		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0) + IFNULL(B.NON100_CLAIM,0) + IFNULL(B.VET_AMT,0)) AS totalAmt,
-		          COUNT(*)                                                                                               AS claimCount ,
+		          SUM(IFNULL(B.CLAIM_AMT,0) + IFNULL(B.DISABLED_AMT,0)
+		             + IFNULL(B.NON100_CLAIM,0)  + IFNULL(B.VET_AMT,0) + IFNULL(B.NON100_VET,0)
+		             - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 3)
+		             - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 6) )                                              AS totalAmt,
+		          COUNT(*)                                                                                              AS claimCount ,
 		      </when>
 			  <otherwise> <!-- 총액 -->
-                  SUM(IFNULL(B.TOT_AMT,0) + IFNULL(B.NON100_AMT,0) )                                                     AS totalAmt,
-		          COUNT(*)                                                                                               AS claimCount,			    
+                  SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+                      - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 1)
+                      - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ, 4) )                                            AS totalAmt,
+		          COUNT(*)                                                                                             AS claimCount,
 			  </otherwise>
 		    </choose>
 		    <![CDATA[
-		    SUM(IFNULL(D.yakAmt, 0))                                                                                     AS yakAmt
+		    SUM(IFNULL(D.yakAmt, 0))                                                                                   AS yakAmt
 		    FROM TBL_CHUNG_MST A
 		    JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO 
 		                           AND A.HOSP_CD  = B.HOSP_CD
@@ -1176,11 +1310,20 @@
 		                           AND C.BILL_SEQ  = B.BILL_SEQ 
 		                           AND C.DIAG_TYPE = '1'
 			LEFT JOIN (
-			    SELECT HOSP_CD, CLAIM_NO, BILL_SEQ, SUM(AMOUNT) AS yakAmt
-			    FROM TBL_JINORD_MST
+			    SELECT jj.HOSP_CD, jj.CLAIM_NO, jj.BILL_SEQ, SUM(jj.AMOUNT) AS yakAmt
+			    FROM TBL_JINORD_MST jj
 			    WHERE 1=1 
-			         AND  CODE_TYPE IN('3')
-			    GROUP BY  HOSP_CD, CLAIM_NO , BILL_SEQ
+			         AND  jj.CODE_TYPE IN('3')
+			         AND NOT EXISTS ( /* JS008 추가 */
+				       SELECT 1
+				         FROM TBL_SPECODE_MST tsm
+				        WHERE tsm.HOSP_CD   = jj.HOSP_CD
+				          AND tsm.CLAIM_NO  = jj.CLAIM_NO
+				          AND tsm.BILL_SEQ  = jj.BILL_SEQ
+				          AND tsm.ROW_NO    = jj.ROW_NO 
+				          AND tsm.SPEC_TYPE = 'JS008')
+				     AND  jj.HOSP_CD = #{hospCd}     
+			    GROUP BY  jj.HOSP_CD, jj.CLAIM_NO , jj.BILL_SEQ
 			    ) D   ON  D.HOSP_CD  = B.HOSP_CD
 			         AND  D.CLAIM_NO = B.CLAIM_NO
 			         AND  D.BILL_SEQ = B.BILL_SEQ		     
@@ -1194,15 +1337,19 @@
               <if test='prtChk == "TY"'>  -- 전체환자 조건없이 전체
 		      </if>
               <![CDATA[
-			  AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST E
-			        WHERE E.HOSP_CD   = A.HOSP_CD
-			          AND E.CLAIM_NO  = A.CLAIM_NO
-			          AND E.BILL_SEQ  = B.BILL_SEQ
-			          AND E.SPEC_TYPE = 'JS008'
-			   )
-			   AND IFNULL(B.DELYN,'') <> 'Y'  	
+			  AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+			          FROM TBL_SPECODE_MST tsm
+			         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			           AND tsm.SPEC_TYPE = 'JS008')
+			       <>  (SELECT COUNT(*)
+			          FROM TBL_JINORD_MST jsm
+			         WHERE jsm.HOSP_CD  = B.HOSP_CD
+			           AND jsm.CLAIM_NO = B.CLAIM_NO
+			           AND jsm.BILL_SEQ = B.BILL_SEQ
+			           AND jsm.ITEM_NO <> 'L')
+			   AND IFNULL(B.DELYN,'') <> 'Y'
 		]]>
 	    <if test='ipwe == "I"'>
 	        AND A.TREAT_TYPE NOT IN ('2','4','9','H','6')
@@ -1316,6 +1463,14 @@
 			                             AND C.HOSP_CD  = B.HOSP_CD 
 			                             AND C.BILL_SEQ = B.BILL_SEQ 
 			                             AND (C.ITEM_NO = 'L' AND C.CODE_NO <> '01')
+									     AND NOT EXISTS ( /* JS008 추가 */
+										       SELECT 1
+										         FROM TBL_SPECODE_MST tsm
+										        WHERE tsm.HOSP_CD   = jj.HOSP_CD
+										          AND tsm.CLAIM_NO  = jj.CLAIM_NO
+										          AND tsm.BILL_SEQ  = jj.BILL_SEQ
+										          AND tsm.ROW_NO    = jj.ROW_NO 
+										          AND tsm.SPEC_TYPE = 'JS008')			                             
 			    LEFT JOIN WNN.TBL_CODE_DTL D ON D.CODE_GB   = 'Z' 
 			                             AND D.ACTION_YN = 'Y'   
 			                             AND D.CODE_CD   = 'CFORM_NO' 
@@ -1334,14 +1489,18 @@
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND IFNULL(C.AMOUNT,0) > 0
 		      AND ( B.PAY_TYPE IN('1') OR (A.CFORM_NO = 'M110' AND B.MED_TYPE IN('03')) )
-			  AND  NOT EXISTS (
-			        SELECT 1
-			        FROM TBL_SPECODE_MST F
-			        WHERE F.HOSP_CD   = A.HOSP_CD
-			          AND F.CLAIM_NO  = A.CLAIM_NO
-			          AND F.BILL_SEQ  = B.BILL_SEQ
-			          AND F.SPEC_TYPE = 'JS008'
-			   )	
+			  AND (SELECT COUNT(DISTINCT tsm.ROW_NO) /* JS008 추가 */
+			          FROM TBL_SPECODE_MST tsm
+			         WHERE tsm.HOSP_CD   = B.HOSP_CD
+			           AND tsm.CLAIM_NO  = B.CLAIM_NO
+			           AND tsm.BILL_SEQ  = B.BILL_SEQ
+			           AND tsm.SPEC_TYPE = 'JS008')
+			       <>  (SELECT COUNT(*)
+			          FROM TBL_JINORD_MST jsm
+			         WHERE jsm.HOSP_CD  = B.HOSP_CD
+			           AND jsm.CLAIM_NO = B.CLAIM_NO
+			           AND jsm.BILL_SEQ = B.BILL_SEQ
+			           AND jsm.ITEM_NO <> 'L')
 			   AND IFNULL(B.DELYN,'') <> 'Y'  
 	   ]]>
 	    <if test='ipwe == "I"'>
