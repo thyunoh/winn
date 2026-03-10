@@ -1383,16 +1383,16 @@
 		              , jm.TOTAL_DOSE                             AS totDays
 				      , jm.AMOUNT                                 AS calPrics
 			       FROM TBL_CHUNG_MST  cm
-			       JOIN TBL_JINORD_MST jm 
+			       JOIN TBL_JINORD_MST jm    
 			         ON jm.HOSP_CD  = cm.HOSP_CD 
 			        AND jm.CLAIM_NO = cm.CLAIM_NO
 			      WHERE cm.HOSP_CD  = #{hospCd}
-		            AND cm.DATE_YM = #{workYm}
+		            AND cm.DATE_YM  = #{workYm}
 					AND EXISTS (
 						    SELECT 1
 						    FROM TBL_DRUG_MST dd
 						    WHERE dd.EDI_CODE = jm.EDI_CODE
-						      AND dd.CODEFLAG IN ('C','D','M','T'))
+						       AND dd.CODEFLAG IN ('C','D','M','T')) 
 				    AND NOT EXISTS ( /* JS008 추가 */
 					       SELECT 1
 					         FROM TBL_SPECODE_MST tsm
