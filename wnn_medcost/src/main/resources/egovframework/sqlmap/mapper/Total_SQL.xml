@@ -1388,9 +1388,11 @@
 			        AND jm.CLAIM_NO = cm.CLAIM_NO
 			      WHERE cm.HOSP_CD  = #{hospCd}
 		            AND cm.DATE_YM = #{workYm}
-			        AND jm.EDI_CODE IN (SELECT DISTINCT dd.EDI_CODE
-			                              FROM TBL_DRUG_MST dd
-			                             WHERE dd.CODEFLAG IN ('C','D','M','T'))
+					AND EXISTS (
+						    SELECT 1
+						    FROM TBL_DRUG_MST dd
+						    WHERE dd.EDI_CODE = jm.EDI_CODE
+						      AND dd.CODEFLAG IN ('C','D','M','T'))
 				    AND NOT EXISTS ( /* JS008 추가 */
 					       SELECT 1
 					         FROM TBL_SPECODE_MST tsm
