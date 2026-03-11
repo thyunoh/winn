@@ -391,7 +391,7 @@
             CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
             ELSE '질문진행' END QSTN_STAT ,
             CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
-            ELSE '답변진행' END ANSR_STAT  ,
+            ELSE '답변대기' END ANSR_STAT  ,
 	        CASE WHEN EXISTS (
 	                SELECT 1 FROM TBL_FILE_MST F
 	                WHERE F.FILE_SEQ = A.ASQ_SEQ
@@ -411,10 +411,10 @@
 		  <if test='hospCd != null and hospCd !="" '>
 	         AND A.HOSP_cd = #{hospCd}
 	      </if>		 
-		  <if test="asqGb != null and asqGb != '' and   asqGb == '1' ">
+		  <if test='asqGb != null and asqGb != "" and asqGb == "1"'>
 	         AND IFNULL(A.QSTN_WAN,'') = 'Y'
 	      </if>
-		  <if test="asqGb != null and asqGb != '' and  asqGb == '2' ">
+		  <if test='asqGb != null and asqGb != "" and asqGb == "2"'>
 	         AND IFNULL(A.ANSR_WAN,'') = 'Y'
 	      </if>	 
 		  <if test='qstnTitle != null and qstnTitle !="" '><![CDATA[

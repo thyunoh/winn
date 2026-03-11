@@ -185,10 +185,10 @@
             A.HOSP_UUID ,
             A.QSTN_WAN  ,
             A.ANSR_WAN  ,
-            CASE WHEN  A.QSTN_WAN = 'Y' THEN '완료'
-            ELSE '진행' END QSTN_STAT ,
-            CASE WHEN  A.ANSR_WAN = 'Y' THEN '완료'
-            ELSE '진행' END ANSR_STAT ,
+            CASE WHEN  A.QSTN_WAN = 'Y' THEN '질문완료'
+            ELSE '질문대기' END QSTN_STAT ,
+            CASE WHEN  A.ANSR_WAN = 'Y' THEN '답변완료'
+            ELSE '답변대기' END ANSR_STAT ,
             CASE WHEN EXISTS (
                 SELECT 1 FROM TBL_FILE_MST F
                 WHERE F.FILE_SEQ = A.ASQ_SEQ AND F.FILE_GB IN ('4','5') AND F.ACTION_YN = 'Y'
@@ -238,7 +238,7 @@
             CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
             ELSE '질문진행' END QSTN_STAT ,
             CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
-            ELSE '답변진행' END ANSR_STAT   ,    
+            ELSE '답변대기' END ANSR_STAT   ,    
 	        CASE WHEN EXISTS (
 	            SELECT 1 FROM TBL_FILE_MST F
 	            WHERE F.FILE_SEQ = A.ASQ_SEQ AND F.FILE_GB IN ('4','5') AND F.ACTION_YN = 'Y'

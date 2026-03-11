@@ -1,5 +1,4 @@
-f<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"  pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>  
 <%@ taglib prefix="ui" uri="http://egovframework.gov/ctl/ui"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -24,23 +23,22 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="card">                        	
                             <div class="card-body">  
-	                            <div class="form-row mb-2">
- 		                            <div class="col-1 col-lg-1"> 
- 			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control is-invalid text-left" required placeholder="">
-			                        </div> 	                            
-                                    <div class="col-sm-1" style ="margin-top:-5px">
-                                      <select id="asqGb" class="w-72 p-2 rounded-lg" oninput="findField(this)">
-									    <option selected value="1">구분 1</option>
+	                            <div id="topControlBar" class="form-row" style="display:none;">
+ 		                            <div class="col-auto">
+ 			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control form-control-sm is-invalid text-left" required placeholder="" style="width:80px;">
+			                        </div>
+                                    <div class="col-auto">
+                                      <select id="asqGb" class="form-control form-control-sm" oninput="findField(this)" style="width:80px;">
+									    <option selected value="">선택</option>
 									  </select>
-									</div> 
-                                    <div class="col-sm-6">                                    
-                                         <div class="btn-group ml-auto">
-                                            <button class="btn btn-outline-dark"        data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">재조회. <i class="fas fa-binoculars"></i></button>
-                                            <button class="btn btn-outline-dark d-none btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>                                            
-                                            <button class="btn btn-outline-dark btn-update"        data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">답변달기. <i class="far fa-save"></i></button>                                            
-                                            <button class="btn btn-outline-dark d-none btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
-                                            <button class="btn btn-outline-dark d-none btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">검색삭제. <i class="far fa-calendar-check"></i></button>
-                                            <button class="btn btn-outline-dark"        data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
+									</div>
+                                    <div class="col-auto">
+                                         <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-dark"        data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">조회. <i class="fas fa-binoculars"></i></button>
+                                            <button class="btn btn-sm btn-outline-dark d-none btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>
+                                            <button class="btn btn-sm btn-outline-dark btn-update"        
+                                                  data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')"><img src="/images/winct/qnst_q.svg" alt="" style="width:16px; height:16px; vertical-align:middle;"> 답변둥록.</button>
+                                            <button class="btn btn-sm btn-outline-dark"        data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -61,163 +59,185 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		</div>        
 		<!-- ============================================================== -->
         <!-- modal form start -->
-        <!-- ============================================================== -->        
-		<div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
-		    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-		         style="max-width: 50vw; max-height: 90vh;">
-		        <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
-		            <!-- Modal Header -->
-		            <div class="modal-header bg-light">
-		                <h5 class="modal-title" id="modalHead"></h5> 
-			              <div class="form-row">
-			                  <div class="col-sm-12 mb-2" style="text-align:right;"> 
-			                    <button id="form_btn_ins" type="submit" class="btn btn-outline-info    btn-insert"  onClick="fn_Insert()">입력. <i class="far fa-edit"></i></button>
-							    <button id="form_btn_udt" type="submit" class="btn btn-outline-success btn-update"  onClick="fn_Update()">답변저장. <i class="far fa-save"></i></button>
-			   				    <button id="form_btn_del" type="submit" class="btn btn-outline-danger  btn-delete"  onClick="fn_Delete()">삭제. <i class="far fa-trash-alt"></i></button>
-			   				    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="modalMainClose()">닫기 <i class="fas fa-times"></i></button>
-			                 </div>                      
-			              </div>
+        <!-- ============================================================== -->
+		<style>
+		#modalName .btn-outline-secondary,
+		#modalName .btn-outline-secondary:hover,
+		#modalName .btn-outline-secondary:focus,
+		#modalName .btn-outline-secondary:active,
+		#modalName .btn-outline-secondary:active:focus,
+		#modalName .btn-outline-secondary.active {
+		    color: #000 !important;
+		    background-color: #fff !important;
+		    border-color: #bbb !important;
+		    outline: none !important;
+		    box-shadow: none !important;
+		}
+		#modalName .form-control:invalid,
+		#modalName .form-control:required:invalid,
+		#modalName .form-control.is-invalid,
+		#modalName .was-validated .form-control:invalid {
+		    border-color: #ddd !important;
+		    box-shadow: none !important;
+		    background-image: none !important;
+		}
+		/* summernote-bs4 CSS와 summernote-lite CSS 중복 아이콘 방지 */
+		#modalName .note-editor .note-icon-caret {
+		    display: none !important;
+		}
+		#modalName .note-editor .note-btn .note-icon-caret {
+		    display: none !important;
+		}
+		#modalName .note-editor .note-toolbar .dropdown-toggle::after {
+		    display: inline-block !important;
+		    content: '' !important;
+		    border-top: .3em solid;
+		    border-right: .3em solid transparent;
+		    border-left: .3em solid transparent;
+		    margin-left: .3em;
+		    vertical-align: middle;
+		}
+		</style>
+		<div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" data-keyboard="true" role="dialog" aria-hidden="true">
+		    <div class="modal-dialog modal-dialog-scrollable modal-lg"
+		         style="max-width: 820px; width: 90%; margin-top: 10px;">
+		        <div class="modal-content"
+		             style="max-height: calc(100vh - 10px); display: flex; flex-direction: column; border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
+
+		            <!-- 타이틀 헤더 -->
+		            <div style="background: #fff; padding: 10px 24px 6px 24px; flex-shrink: 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+		                <h5 id="modalHead" style="margin: 0; font-weight: 700; font-size: 17px; color: #222;"></h5>
+		                <div>
+		                </div>
 		            </div>
-		
-		            <!-- Modal Body (Form Content) -->
-		            <div class="modal-body" style="flex: 1 1 auto; overflow-y: auto; min-height: 0;">
+
+		            <!-- Modal Body -->
+		            <div class="modal-body" style="overflow-y: auto; flex-grow: 1; min-height: 0; padding: 0 24px 20px 24px; background: #f9f9f9;">
 		                <div id="inputZone">
 		                    <!-- Hidden Inputs -->
-		                    <input type="hidden" id="qstnStat"  name="qstnStat" value="">
-		                    <input type="hidden" id="ansrStat"  name="ansrStat" value="">
+		                    <input type="hidden" id="qstnStat2"  name="qstnStat" value="">
+		                    <input type="hidden" id="ansrStat2"  name="ansrStat" value="">
 		                    <input type="hidden" id="hospNm"    name="hospNm"   value="">
 		                    <input type="hidden" id="userNm"    name="userNm"   value="">
-		                    <input type="hidden" id="asqSeq"    name="asqSeq"   value="">
-		                    <input type="hidden" id="fileGb"    name="fileGb"   value="">
+		                    <input type="hidden" id="asqSeq2"    name="asqSeq"   value="">
+		                    <input type="hidden" id="fileGb2"    name="fileGb"   value="">
 		                    <input type="hidden" id="updDttm"   name="updDttm"  value="">
 		                    <input type="hidden" id="updUser"   name="updUser"  value="">
 		                    <input type="hidden" id="updIp"     name="updIp"    value="">
-		
-		                    <!-- Question Title Input -->
-		                    <div class="form-row">
-		                        <label for="qstnTitle" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
-		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
-		                            <textarea id="qstnTitle" name="qstnTitle" class="form-control" rows="1" readonly ></textarea>
+
+		                    <!-- 질문제목 섹션 -->
+		                    <div style="margin-top: 6px;">
+		                        <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            질문제목
 		                        </div>
-		                    </div>  
-		
-		                    <!-- Question Content Input -->
-		                    <div class="form-row">
-		                        <label for="qstnConts" class="col-2 col-lg-2 col-form-label text-left">질문내용</label>
-		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
-		                            <textarea id="qstnConts" name="qstnConts" class="form-control" rows="5" readonly></textarea>
+		                        <div style="background: #fff; border: 1px solid #d0d0d0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
+		                            <textarea id="qstnTitle2" name="qstnTitle" class="form-control" rows="1" readonly
+		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
 		                        </div>
 		                    </div>
 
-		                    <!-- 질문자 업로드 파일 조회/다운로드 (fileGb='4') -->
-		                    <div id="qstn-file-area" style="margin-top: 5px; margin-bottom: 10px; display:none;">
-									<label style="font-size: 13px; font-weight: 600; color: #2874A6; margin-bottom: 4px; display: block; text-align: left;">
-									    <i class="fa-solid fa-floppy-disk" style="color:#2874A6;"></i> 질문 첨부파일
-									</label>
-		                       <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
-		                          <div style="max-height: 150px; overflow-y: auto;">
-		                             <table id="qstn-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
-		                                <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
-		                                   <tr>
-		                                      <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
-		                                      <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
-		                                      <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
-		                                      <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
-		                                      <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
-		                                      <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
-		                                   </tr>
+		                    <!-- 질문내용 섹션 -->
+		                    <div style="margin-top: 4px;">
+		                        <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            질문내용
+		                        </div>
+		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
+		                            <textarea id="qstnConts2" name="qstnConts" class="form-control" rows="4" readonly
+		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: normal; resize: vertical;"></textarea>
+		                        </div>
+		                    </div>
+
+		                    <!-- 질문자 첨부파일 섹션 (fileGb='4') -->
+		                    <div id="qstn-file-area" style="margin-top: 4px; display:none;">
+		                        <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            질문첨부파일
+		                        </div>
+		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: 1px solid #ccc; border-radius: 0 0 8px 8px; padding: 0;">
+		                            <table id="qstn-file-table" class="table" style="width: 100%; font-size: 13px; margin-bottom: 0; border-collapse: collapse;">
+		                                <thead style="display: none;">
+		                                    <tr>
+		                                        <th>문서제목</th><th>사이즈</th><th>작성일</th><th></th>
+		                                    </tr>
 		                                </thead>
 		                                <tbody id="qstn-file-tbody"></tbody>
-		                             </table>
-		                          </div>
-		                       </div>
-		                    </div>
-
-		                    <!-- Question Completed Select -->
-		                    <div class="form-row">
-		                        <label for="qstnWan" class="col-2 col-lg-2 col-form-label text-left">질문완료</label>
-		                        <div class="col-2 col-lg-2">
-		                            <select name="qstnWan" id="qstnWan" class="custom-select">
-		                                <option value="Y">질문완료</option>
-		                                <option value="N" selected>질문진행</option>
-		                            </select>
-		                        </div>
-		                    </div>
-		
-		                    <!-- Answer Content Input -->
-		                    <div class="form-row">
-		                        <label for="ansrConts" class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
-		                        <div class="col-xl-10 col-lg-10 text-left mb-2">
-		                            <textarea id="ansrConts" name="ansrConts" class="form-control" rows="8"></textarea>
-		                        </div>
-		                    </div>
-		
-		                    <!-- Answer Completed Select -->
-		                    <div class="form-row">
-		                        <label for="ansrWan" class="col-2 col-lg-2 col-form-label text-left">답변완료</label>
-		                        <div class="col-2 col-lg-2">
-		                            <select class="custom-select" name="ansrWan" id="ansrWan">
-		                                <option value="Y">답변완료</option>
-							            <option value="N" selected>답변진행</option>
-		                            </select>
+		                            </table>
 		                        </div>
 		                    </div>
 
-		                    <!-- 답변자 파일 업로드 영역 -->
-		                    <div class="form-group" id="ansr-upload-area" style="margin-top: 5px;">
-		                       <div class="container-md mt-1" style="padding: 0;">
-		                          <div class="form-group">   
-		                             <label class="col-form-label d-block w-100 ps-0" style="font-size: 13px; font-weight: 600; text-align: left !important; 
-		                                     margin-left: 0 !important; padding-left: 0 !important;">답변 파일업로드</label>
-		                             <div>
-		                                <div class="btn-box" style="display: flex; gap: 5px; align-items: center;">
-		                                   <button type="button" class="btn btn-primary btn-sm" onclick="openAnsrFileInput()">파일 선택</button>
-		                                   <input type="file" id="ansr-file-input" multiple style="display:none;" onchange="ansrHandleFiles(this.files)">
-		                                </div>
-		                                <div id="ansr-drop-zone"
-		                                   style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; margin-top: 5px; min-height: 40px; cursor: pointer;"
-		                                   ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
-		                                   ondragleave="this.style.borderColor='#ccc'; this.style.backgroundColor='';"
-		                                   ondrop="event.preventDefault(); this.style.borderColor='#ccc'; this.style.backgroundColor=''; ansrDropHandler(event);">
-		                                   <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.</p>
-		                                   <div id="ansr-file-list-new" class="file-list-container"></div>
-		                                </div>
-		                             </div>
-		                          </div>
-		                       </div>
+		                    <!-- 질문완료 (숨김처리) -->
+		                    <div class="form-group" style="margin-top: 0; display: none;">
+		                        <select name="qstnWan" id="qstnWan2" class="custom-select">
+		                            <option value="Y">질문완료</option>
+		                            <option value="N" selected>질문진행</option>
+		                        </select>
+		                    </div>
+
+		                    <!-- 답변내용 섹션 -->
+		                    <div style="margin-top: 4px;">
+		                        <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            답변내용
+		                        </div>
+		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 0;">
+		                            <textarea id="ansrConts2" name="ansrConts" class="form-control" rows="7" required></textarea>
+		                        </div>
+		                    </div>
+
+		                    <!-- 답변 파일업로드 섹션 -->
+		                    <div style="margin-top: 4px;">
+		                        <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            답변 파일업로드
+		                        </div>
+		                        <div id="ansr-upload-area" style="background: #fff; border: 1px solid #e0e0e0; border-top: 1px solid #ccc; padding: 10px 14px;">
+		                            <div style="display: flex; align-items: center;">
+		                                <button type="button" class="btn btn-outline-secondary btn-sm" style="border-radius: 4px; font-size: 13px; padding: 4px 14px; border-color: #bbb; color: #000;" onclick="openAnsrFileInput()">파일찾기</button>
+		                                <input type="file" id="ansr-file-input" multiple style="display:none;" onchange="ansrHandleFiles(this.files)">
+		                            </div>
+		                            <div id="ansr-drop-zone" style="border: none; padding: 0; min-height: 0;">
+		                                <div id="ansr-file-list-new" class="file-list-container"></div>
+		                            </div>
+		                        </div>
 		                    </div>
 
 		                    <!-- 답변자 업로드된 파일 테이블 (fileGb='5') -->
-		                    <div id="ansr-file-area2" style="margin-top: 5px; margin-bottom: 10px; display:none;">
-								<label style="font-size: 13px; font-weight: 600; color: green; margin-bottom: 4px; display: block; 
-								     text-align: left !important; padding-left: 0 !important; margin-left: 0 !important;">
-								    <i class="fa-solid fa-floppy-disk" style="color: green;"></i> 답변 첨부파일
-								</label>		                       
-		                       <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
-		                          <div style="max-height: 150px; overflow-y: auto;">
-		                             <table id="ansr-file-table2" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
-		                                <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
-		                                   <tr>
-		                                      <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
-		                                      <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
-		                                      <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
-		                                      <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
-		                                      <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
-		                                      <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">삭제</th>
-		                                      <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
-		                                   </tr>
+		                    <div id="ansr-file-area2" style="margin-top: 4px; display:none;">
+		                        <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            답변첨부파일
+		                        </div>
+		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: 1px solid #ccc; border-radius: 0 0 8px 8px; padding: 0;">
+		                            <table id="ansr-file-table2" class="table" style="width: 100%; font-size: 13px; margin-bottom: 0; border-collapse: collapse;">
+		                                <thead style="display: none;">
+		                                    <tr>
+		                                        <th>문서제목</th><th>사이즈</th><th>작성일</th><th></th><th></th>
+		                                    </tr>
 		                                </thead>
 		                                <tbody id="ansr-file-tbody2"></tbody>
-		                             </table>
-		                          </div>
-		                       </div>
+		                            </table>
+		                        </div>
+		                    </div>
+
+		                    <!-- 답변완료 섹션 -->
+		                    <div style="margin-top: 4px;">
+		                        <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px;">
+		                            답변완료
+		                        </div>
+		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
+		                            <select class="custom-select" name="ansrWan" id="ansrWan2"
+		                                style="height: 35px; font-size: 14px; width: 100%;">
+		                                <option value="Y">답변완료</option>
+		                                <option value="N" selected>답변진행</option>
+		                            </select>
+		                        </div>
 		                    </div>
 
 		                </div>
 		            </div>
-		
-		            <!-- Modal Footer (Action Buttons) -->
-		            <div class="modal-footer">
+
+		            <!-- Modal Footer -->
+		            <div class="modal-footer" style="background: #fff; padding: 10px 24px; border-top: 1px solid #eee; justify-content: center;">
+		                <button id="form_btn_ins" type="button" class="btn btn-outline-dark btn-sm" style="font-size: 13px; padding: 5px 18px; display:none;" onClick="fn_Insert()">입력 <i class="far fa-edit"></i></button>
+		                <button id="form_btn_udt" type="button" class="btn btn-outline-dark btn-sm" style="font-size: 13px; padding: 5px 18px;" onClick="fn_Update()">답변저장 <i class="far fa-save"></i></button>
+		                <button id="form_btn_del" type="button" class="btn btn-outline-dark btn-sm" style="font-size: 13px; padding: 5px 18px; display:none;" onClick="fn_Delete()">삭제 <i class="far fa-trash-alt"></i></button>
+		                <button type="button" class="btn btn-outline-dark btn-sm" style="font-size: 13px; padding: 5px 18px;" data-dismiss="modal" onClick="modalMainClose()">닫기 <i class="fas fa-times"></i></button>
 		            </div>
 		        </div>
 		    </div>
@@ -256,8 +276,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
             $("#hospCd1").val(s_hospcd);
 	    }else{
 	        findValues.push({ id: "hospCd1", val:"",  chk: false  });
-            $("#hospCd1").val("");	    	
+            $("#hospCd1").val("");
 	    }
+	    findValues.push({ id: "asqGb", val: "",  chk: false  });
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
 		var edit_Data = null;
@@ -270,7 +291,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		var list_flag = ['Z'];     										// 대표코드, ['Z','X','Y'] 여러개 줄 수 있음
 		//  list_code, select_id, firstnull는 갯수가 같아야함. firstnull의 마지막이 'N'이면 생략가능, 하지만 쌍으로 맞추는게 좋음 
 		var list_code = ['ASQ_GB'];     // 구분코드 필요한 만큼 선언해서 사용
-		var select_id = ['asqGb'];     // 구분코드 데이터 담길 Select (ComboBox ID) 
+		var select_id = ['asqGb'];     // 구분코드 데이터 담길 Select (ComboBox ID)
 		var firstnull = ['Y'];                              // Y 첫번째 Null,이후 Data 담김 / N 바로 Data 담김 
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
@@ -310,25 +331,23 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
-		var c_Head_Set = ['','','요양기관','질문제목','질문내용','질문상태','답변내용','답변상태','등록자','등록일','첨부파일'];
+		var c_Head_Set = ['','','답변상태','질문항목','질문내용','병원명','질문자','작성일','첨부파일'];
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
 	        				{ data: 'asqSeq',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyasqSeq', primaryKey: true },
 	        				{ data: 'fileGb',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyfileGb', primaryKey: true },
-	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-left'   , width: '100px',  },
-	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '100px',  },
-	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
-	        				{ data: 'qstnStat',   visible: true,  className: 'dt-body-left'   , width: '50px',   },
-	        				{ data: 'ansrConts',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
 	        				{ data: 'ansrStat',   visible: true,  className: 'dt-body-left'   , width: '50px',   },
-	        				{ data: 'userNm',     visible: true,  className: 'dt-body-left'   , width: '50px',   },
-	        				{ data: 'regDttm',    visible: true,  className: 'dt-body-center' , width: '100px',  },
+	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
+	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '400px',  },
+	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-left'   , width: '300px',  },
+	        				{ data: 'userNm',     visible: true,  className: 'dt-body-left'   , width: '300px',   },
+	        				{ data: 'regDttm',    visible: true,  className: 'dt-body-center' , width: '150px',  },
 	        				{ data: 'fileYn',     visible: true,  className: 'dt-body-center' , width: '50px',
 	        				    render: function (data, type, row) {
 	        				        if (type === 'display') {
 	        				            if (data === 'Y') {
-	        				                return '<i class="fa fa-save" title="첨부파일 있음" style="color: green;"></i>';
+	        				                return '<img src="/images/winct/filedown.svg" title="첨부파일 있음" style="width:16px; height:16px; vertical-align:middle;">';
 	        				            } else {
 	        				                return '';
 	        				            }
@@ -349,7 +368,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		var showSortNo = ['regDttm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = ['asqSeq','fileGb'];             // 없으면 []; 일부 컬럼 숨길때		
-		var txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+		var txt_Markln = 80;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
 		// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
 		var markColums = ['qstnTitle','qstnConts','ansrConts'];
 		var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
@@ -432,9 +451,9 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		<!-- ============================================================== -->
 		<script type="text/javascript">
 		function modal_key_hidden(flag) {	
-	        const qstnTitleInput     = document.getElementById("qstnTitle");
-	        const qstnContsInput     = document.getElementById("qstnConts");
-	        const qstnWanInput       = document.getElementById("qstnWan");
+	        const qstnTitleInput     = document.getElementById("qstnTitle2");
+	        const qstnContsInput     = document.getElementById("qstnConts2");
+	        const qstnWanInput       = document.getElementById("qstnWan2");
 	        const inputs = [qstnTitleInput,qstnContsInput,qstnWanInput];
 	        if (flag !== 'I') {
 		        const isReadOnly = flag !== 'I';
@@ -456,7 +475,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 	        } else {
 	            $(qstnWanInput).css("pointer-events", "").css("background-color", ""); // 활성화
 	        }	        
-	        $(qstnWan).css("pointer-events", "none").css("background-color", "#e9ecef");
+	        $(qstnWanInput).css("pointer-events", "none").css("background-color", "#e9ecef");
 		}
 		
 		function modal_Open(flag) {	
@@ -478,7 +497,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		            break;
 		        case 'U': // Show Update button
 		            updateButton.style.display = 'inline-block';
-		            modalHead.innerText  = "수정 모드입니다" ;
+		            modalHead.innerText  = "1:1 문의하기" ;
 		            break;
 		        case 'D': // Show Delete button
 		            deleteButton.style.display = 'inline-block';
@@ -493,9 +512,18 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 				if (edit_Data) {
 					// Value Setting
 					formValueSet(inputZone.id,edit_Data);
+					// ID가 변경된 필드 수동 설정 (2→접미사 때문에 formValueSet 매칭 안됨)
+					$('#qstnTitle2').val(edit_Data.qstnTitle || '');
+					$('#qstnConts2').val(edit_Data.qstnConts || '');
+					$('#asqSeq2').val(edit_Data.asqSeq || '');
+					$('#fileGb2').val(edit_Data.fileGb || '');
+					$('#qstnStat2').val(edit_Data.qstnStat || '');
+					$('#ansrStat2').val(edit_Data.ansrStat || '');
 					// ansrWan 값이 없으면 'N'(진행) 기본값 설정
 					$('#ansrWan option').prop('selected', false);
 					$('#ansrWan option[value="' + (edit_Data.ansrWan || 'N') + '"]').prop('selected', true);
+					// 답변내용 Summernote는 모달 표시 후 초기화
+					var _ansrText = edit_Data.ansrConts || '';
 					// 파일 목록 로딩
 					var asqSeqVal = edit_Data.asqSeq;
 					if (asqSeqVal) {
@@ -513,79 +541,27 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 				$("#qstn-file-area").hide();
 				$("#ansr-file-area2").hide();
 				ansrFileClear();
+				var _ansrText = '';
 			}
 
 			if (modal_OpenFlag) {
-				// 모달을 드레그할 수 있도록 처리
-			    // Make the DIV element draggable:	    
-			    
-				var element = document.querySelector('#' + modalName.id);
-			    dragElement(element);
-	            //수정시 키는 readonly
-	            modal_key_hidden(flag) ;
-	            
-			    function dragElement(elmnt) {
-			        var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-			        // 어디든 클릭하여 움직여도 가능 (.modal-content)
-			        // 타이틀 클릭하여 움직여만 가능 (.modal-header)
-			        // 필요시 변경하여 사용하면 됨
-			        if (elmnt.querySelector('.modal-header')) {
-			            elmnt.querySelector('.modal-header').onmousedown = dragMouseDown;
-			        } else {
-			            elmnt.onmousedown = dragMouseDown;
-			        }
-			        function dragMouseDown(e) {
-			            e = e || window.event;
-			            //e.preventDefault(); // 기본 동작 방지
-			            pos3 = e.clientX;
-			            pos4 = e.clientY;
-			            document.onmouseup = closeDragElement;
-			            document.onmousemove = elementDrag;
-			        }
-		
-			        function elementDrag(e) {
-			            e = e || window.event;
-			            //e.preventDefault(); // 기본 동작 방지
-			            pos1 = pos3 - e.clientX;
-			            pos2 = pos4 - e.clientY;
-			            pos3 = e.clientX;
-			            pos4 = e.clientY;
-			            elmnt.style.top  = (elmnt.offsetTop - pos2)  + "px";
-			            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-			        }
-		
-			        function closeDragElement() {
-			            document.onmouseup = null;
-			            document.onmousemove = null;
-			        }
-			    }
-		
-			    function centerModal() {
-			        const modal = document.querySelector('#' + modalName.id);
-			        modal.style.top  = "50%";
-			        modal.style.left = "50%";
-			        modal.style.transform = "translate(-50%, -50%)";
-			    }
-			    // 모달 띄울 때 항상 중앙에 위치
-			    $("#" + modalName.id).on('show.bs.modal', function () {	    	
-			        centerModal();
-			        var firstFocus = $(this).find('input:first');
-			        setTimeout(function () {
-		     	        $("#" + firstFocus.attr('id')).focus();
-			        }, 500); // 포커스 강제 설정
-			    });
-			    // 모달 창 크기가 변경될 때도 중앙에 유지
-			    window.addEventListener('resize', centerModal);
+			    //수정시 키는 readonly
+			    modal_key_hidden(flag) ;
 			    // 모달 띄우기
-			    $("#" + modalName.id).modal('show');   
-			    
+			    $("#" + modalName.id).modal('show');
+
+			    // Summernote는 모달이 완전히 표시된 후 초기화
+			    $('#modalName').one('shown.bs.modal', function() {
+			        modalName_rich(_ansrText);
+			    });
+
 			    if (getCookie("s_userid")) {
 	  	            inputZone.querySelector("[name='updUser']").value = getCookie("s_userid");
 			    }
 
 			    if (getCookie("s_connip")) {
 			        inputZone.querySelector("[name='updIp']").value = getCookie("s_connip");
-			    }  
+			    }
 			}
 		}
 		function fn_Potion() {
@@ -720,7 +696,17 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 					    ],
 				        ajax: dataLoad,
 					});
-				 
+
+				// 상단 컨트롤을 자료검색 우측 끝으로 이동
+				setTimeout(function() {
+				    var controlsDiv = document.querySelector('.datatable-controls');
+				    var topBar = document.getElementById('topControlBar');
+				    if (controlsDiv && topBar) {
+				        topBar.style.cssText = 'display:flex !important; align-items:center; gap:5px; margin:0; margin-left:auto;';
+				        controlsDiv.appendChild(topBar);
+				    }
+				}, 500);
+
 				// 전체 선택 체크박스 기능
 			    $('#selectAll').on('click', function() {
 			        var rows = dataTable.rows({ 'search': 'applied' }).nodes();
@@ -827,12 +813,16 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		    // table.processing(true); // 처리 중 상태 시작
 				
 		    let find = {};
-		   	
+
 		   	for (let findValue of findValues) {
 		   		let key = findValue.id === "hospCd1" ? "hospCd" : findValue.id;
+		   		// DOM에서 실시간 값 가져오기
+		   		var el = document.getElementById(findValue.id);
+		   		if (el) {
+		   		    findValue.val = el.value;
+		   		}
 		   		find[key] = findValue.val;
 		   	}
-		   	
 		    $.ajax({
 		        type: "POST",
 		        url: "/mangr/asqCdList.do",
@@ -935,8 +925,8 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		    const results = formValCheck(inputZone.id, {
 		    	//faqSeq:     { kname: "등록순서", k_min: 3, k_max: 10, k_req: true, k_spc: true, k_clr: true },
 		    	//fileGb:     { kname: "구분", k_req: true },
-		    	ansrConts:  { kname: "답변내용" , k_req: true },
-		    	ansrWan  :  { kname: "딥변여부" , k_req: true },
+		    	ansrConts2:  { kname: "답변내용" , k_req: true },
+		    	ansrWan2 :  { kname: "딥변여부" , k_req: true },
 		    });
 		    return results;
 		}
@@ -945,19 +935,23 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
         	let newData = {
         		userNm:     $('#userNm').val(),  	
         		hospNm:     $('#hospNm').val(),        			
-        		qstnTitle:  $('#qstnTitle').val(),
-        		qstnConts:  $('#qstnConts').val(),
-        		ansrConts:  $('#ansrConts').val(),
-        		qstnStat:   $('#qstnStat').val(),
-        		ansrStat:   $('#ansrStat').val(),
-        		qstnWan:    $('#qstnWan').val(),
-        		ansrWan:    $('#ansrWan').val(),
+        		qstnTitle:  $('#qstnTitle2').val(),
+        		qstnConts:  $('#qstnConts2').val(),
+        		ansrConts:  $('#ansrConts2').val(),  // id changed to ansrConts2 but key stays ansrConts for DataTable
+        		qstnStat:   $('#qstnStat2').val(),
+        		ansrStat:   $('#ansrStat2').val(),
+        		qstnWan:    $('#qstnWan2').val(),
+        		ansrWan:    $('#ansrWan2').val(),
         		useYn:      $('#useYn').val(),
         		updDttm :   $('#updDttm').val()
 			    };
 		    return newData;
 		}	
 		function fn_Insert(){
+			// Summernote 내용을 textarea에 동기화
+			if ($('#ansrConts2').next('.note-editor').length) {
+				$('#ansrConts2').val($('#ansrConts2').summernote('code'));
+			}
 			const results = validateForm();
 			if (results)
 			{
@@ -972,10 +966,23 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 			        	}
 		        	}else{
 		        		data[result.id] = result.val;
-		        	}	
+		        	}
 		        });
-				
-		        dats.push(data);	    
+				// id가 ansrConts2이므로 서버가 기대하는 ansrConts로 매핑
+				if (data.hasOwnProperty('ansrConts2')) {
+				    data['ansrConts'] = data['ansrConts2'];
+				    delete data['ansrConts2'];
+				}
+				// Map new IDs back to original server-side names
+				if (data.hasOwnProperty('qstnTitle2')) { data['qstnTitle'] = data['qstnTitle2']; delete data['qstnTitle2']; }
+				if (data.hasOwnProperty('qstnConts2')) { data['qstnConts'] = data['qstnConts2']; delete data['qstnConts2']; }
+				if (data.hasOwnProperty('qstnStat2'))  { data['qstnStat']  = data['qstnStat2'];  delete data['qstnStat2']; }
+				if (data.hasOwnProperty('ansrStat2'))   { data['ansrStat']  = data['ansrStat2'];   delete data['ansrStat2']; }
+				if (data.hasOwnProperty('qstnWan2'))    { data['qstnWan']   = data['qstnWan2'];    delete data['qstnWan2']; }
+				if (data.hasOwnProperty('ansrWan2'))     { data['ansrWan']   = data['ansrWan2'];     delete data['ansrWan2']; }
+				if (data.hasOwnProperty('asqSeq2'))     { data['asqSeq']   = data['asqSeq2'];     delete data['asqSeq2']; }
+				if (data.hasOwnProperty('fileGb2'))      { data['fileGb']   = data['fileGb2'];      delete data['fileGb2']; }
+		        dats.push(data);
 			    $.ajax({
 			            type: "POST",
 			            url: "/mangr/asqCdInsert.do",
@@ -1014,6 +1021,10 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		}
 		// Modal Form에서 수정
 		function fn_Update() {
+		    // Summernote 내용을 textarea에 동기화
+		    if ($('#ansrConts2').next('.note-editor').length) {
+		        $('#ansrConts2').val($('#ansrConts2').summernote('code'));
+		    }
 		    // 1. 입력값 검증 및 유효성 검사
             const results = validateForm();
 		    if (results) {
@@ -1030,18 +1041,38 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		        		data[result.id] = result.val;
 		        	}
 		        });
+		        // id가 ansrConts2이므로 서버가 기대하는 ansrConts로 매핑
+		        if (data.hasOwnProperty('ansrConts2')) {
+		            data['ansrConts'] = data['ansrConts2'];
+		            delete data['ansrConts2'];
+		        }
+		        // Map new IDs back to original server-side names
+		        if (data.hasOwnProperty('qstnTitle2')) { data['qstnTitle'] = data['qstnTitle2']; delete data['qstnTitle2']; }
+		        if (data.hasOwnProperty('qstnConts2')) { data['qstnConts'] = data['qstnConts2']; delete data['qstnConts2']; }
+		        if (data.hasOwnProperty('qstnStat2'))  { data['qstnStat']  = data['qstnStat2'];  delete data['qstnStat2']; }
+		        if (data.hasOwnProperty('ansrStat2'))   { data['ansrStat']  = data['ansrStat2'];   delete data['ansrStat2']; }
+		        if (data.hasOwnProperty('qstnWan2'))    { data['qstnWan']   = data['qstnWan2'];    delete data['qstnWan2']; }
+		        if (data.hasOwnProperty('ansrWan2'))     { data['ansrWan']   = data['ansrWan2'];     delete data['ansrWan2']; }
+		        if (data.hasOwnProperty('asqSeq2'))     { data['asqSeq']   = data['asqSeq2'];     delete data['asqSeq2']; }
+		        if (data.hasOwnProperty('fileGb2'))      { data['fileGb']   = data['fileGb2'];      delete data['fileGb2']; }
 		        // SQL WHERE절에 필요한 키값 및 updUser/updIp 추가
-		        data['asqSeq']  = $('#asqSeq').val();
-		        data['fileGb']  = $('#fileGb').val();
-		        data['updUser'] = $('#updUser').val();
-		        data['updIp']   = $('#updIp').val();
+		        data['asqSeq']  = $('#asqSeq2').val() || (edit_Data ? edit_Data.asqSeq : '');
+		        data['fileGb']  = $('#fileGb2').val() || (edit_Data ? edit_Data.fileGb : '');
+		        data['updUser'] = $('#updUser').val() || getCookie("s_userid") || '';
+		        data['updIp']   = $('#updIp').val() || getCookie("s_connip") || '';
 
 		        // 3. 선택된 행의 Primary Key 가져오기
 		        var selectedRows = dataTable.rows('.selected');
 		        let keys = dataTableKeys(dataTable, selectedRows);
-		
+
 		        // 4. Primary Key와 입력 데이터 병합 (배열로 만들어 서버에 전송)
-		        let mergeData = keys.map(key => ({ ...data, ...key }));
+		        let mergeData;
+		        if (keys.length > 0) {
+		            mergeData = keys.map(key => ({ ...data, ...key }));
+		        } else {
+		            // 선택된 행이 없을 경우 hidden input의 키값으로 직접 전송
+		            mergeData = [data];
+		        }
 		        // 5. AJAX로 서버 업데이트 요청
 		        $.ajax({
 		            type: "POST",
@@ -1052,7 +1083,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		            success: function(response) {
 		                console.log("업데이트 성공", response);
 		                // 6. 답변 파일 업로드 처리 (fn_FindData 전에 먼저 실행)
-		                var savedAsqSeq = $('#asqSeq').val() || (edit_Data ? edit_Data.asqSeq : '');
+		                var savedAsqSeq = $('#asqSeq2').val() || (edit_Data ? edit_Data.asqSeq : '');
 		                var ansrFileInput = document.getElementById('ansr-file-input');
 		                if (ansrFileInput && ansrFileInput.files && ansrFileInput.files.length > 0 && savedAsqSeq) {
 		                    var hospCd  = getCookie("s_hospid") || (edit_Data ? edit_Data.hospCd : '') || '';
@@ -1522,10 +1553,51 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		    }
 		}
 		function modalMainClose() {
+			$('#ansrConts2').summernote('destroy');
 			$("#" + modalName.id).modal('hide');
 		}
 
-		//요양병원 아이디 변경시 재조회 
+		// 답변내용 Summernote 에디터 초기화
+		function modalName_rich(answerText) {
+			if (typeof $.fn.summernote === 'undefined') {
+				console.log('summernote 미로드 상태');
+				return;
+			}
+			let safeAnswer = (answerText || '');
+			let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
+
+			// 기존 Summernote가 있으면 먼저 제거
+			try { $('#ansrConts2').summernote('destroy'); } catch(e) {}
+
+			$('#ansrConts2').summernote({
+				placeholder: '답변 내용을 입력하세요...',
+				tabsize: 1,
+				height: 200,
+				lang: 'ko-KR',
+				toolbar: [
+					['style', ['style']],
+					['font', ['bold', 'italic', 'underline', 'clear']],
+					['fontname', ['fontname']],
+					['fontsize', ['fontsize']],
+					['color', ['color']],
+				],
+				fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
+				fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
+				callbacks: {
+					onInit: function () {
+						$('#ansrConts2').next().find('.note-editable').css('font-size', '14px');
+						$('#ansrConts2').summernote('code', convertedAnswer);
+					}
+				}
+			});
+		}
+
+		// 모달이 닫힐 때 Summernote 제거
+		$('#modalName').on('hidden.bs.modal', function () {
+			$('#ansrConts2').summernote('destroy');
+		});
+
+		//요양병원 아이디 변경시 재조회
 		let currentHospid = sessionStorage.getItem('hospid'); // 최초 병원 ID 저장
 		setInterval(function () {
 		    let newHospid = sessionStorage.getItem('hospid');
@@ -1561,7 +1633,6 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		            tbody.innerHTML = '';
 		            if (data && data.length > 0) {
 		                for (var i = 0; i < data.length; i++) {
-		                    var subCodeNm = data[i].subCodeNm || '문서';
 		                    var fileTitle = data[i].fileTitle || '제목 없음';
 		                    var fileSize  = data[i].fileSize  || '';
 		                    var regDttm   = data[i].regDttm   || '';
@@ -1570,15 +1641,13 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
 		                    }
 		                    var row = '<tr style="border-bottom: 1px solid #eee;">';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + (i + 1) + '</td>';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + subCodeNm + '</td>';
-		                    row += '<td style="padding:6px 8px;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:none; font-weight:500;">' + fileTitle + '</a></td>';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + fileSize + ' KB</td>';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + regDttm + '</td>';
-		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+		                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
+		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
+		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
 		                    if (fileUrl !== '#') {
 		                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
-		                        row += "<i class='fa-solid fa-floppy-disk' style='font-size: 1.1em;'></i>";
+		                        row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
 		                        row += '</a>';
 		                    }
 		                    row += '</td>';
@@ -1587,7 +1656,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                }
 		                $("#qstn-file-area").show();
 		            } else {
-		                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
+		                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
 		                $("#qstn-file-area").show();
 		            }
 		        }
@@ -1684,7 +1753,6 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		            tbody.innerHTML = '';
 		            if (data && data.length > 0) {
 		                for (var i = 0; i < data.length; i++) {
-		                    var subCodeNm = data[i].subCodeNm || '문서';
 		                    var fileTitle = data[i].fileTitle || '제목 없음';
 		                    var fileSize  = data[i].fileSize  || '';
 		                    var regDttm   = data[i].regDttm   || '';
@@ -1693,19 +1761,17 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                        fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
 		                    }
 		                    var row = '<tr style="border-bottom: 1px solid #eee;">';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + (i + 1) + '</td>';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + subCodeNm + '</td>';
-		                    row += '<td style="padding:6px 8px;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:none; font-weight:500;">' + fileTitle + '</a></td>';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + fileSize + ' KB</td>';
-		                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + regDttm + '</td>';
-		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+		                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
+		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
+		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
 		                    row += "<a href='javascript:void(0);' onclick=\"deleteAnsrFile('" + data[i].filePath + "','" + asqSeq + "');\" title='삭제' style='color:black;'>";
-		                    row += "<i class='fa-solid fa-trash' style='font-size: 1.1em;'></i>";
+		                    row += "<i class='fa-solid fa-trash' style='font-size: 1.0em;'></i>";
 		                    row += '</a></td>';
-		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
 		                    if (fileUrl !== '#') {
 		                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
-		                        row += "<i class='fa-solid fa-floppy-disk' style='font-size: 1.1em;'></i>";
+		                        row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
 		                        row += '</a>';
 		                    }
 		                    row += '</td>';
@@ -1714,7 +1780,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                }
 		                $("#ansr-file-area2").show();
 		            } else {
-		                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
+		                tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
 		                $("#ansr-file-area2").show();
 		            }
 		        }
@@ -1732,7 +1798,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		        customClass: { popup: 'small-swal' }
 		    }).then((result) => {
 		        if (result.isConfirmed) {
-		            var savedAnsr = $("#ansrConts").val();
+		            var savedAnsr = $("#ansrConts2").val();
 		            var savedWan  = $("#ansrWan").val();
 		            $.ajax({
 		                url: '/sftp/deleteFile.do',
@@ -1746,7 +1812,7 @@ f<%@ page language="java" contentType="text/html; charset=UTF-8"
 		                    updIp: getCookie("s_connip") || ''
 		                },
 		                success: function(res) {
-		                    $("#ansrConts").val(savedAnsr);
+		                    $("#ansrConts2").val(savedAnsr);
 		                    $("#ansrWan").val(savedWan);
 		                    showAnsrFileList2(asqSeq);
 		                    Swal.fire({

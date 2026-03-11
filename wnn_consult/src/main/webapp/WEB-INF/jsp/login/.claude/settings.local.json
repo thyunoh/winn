@@ -11,7 +11,25 @@
       "Bash(xxd \"C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java\")",
       "Bash(python3 -c \":*)",
       "Bash(python -c \"f=open\\(''C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java'',''rb''\\);c=f.read\\(\\);f.close\\(\\);lines=c.split\\(b''\\\\n''\\);[print\\(f''L{i+1}: {repr\\(lines[i]\\)}''\\) for i in range\\(550,559\\)]\")",
-      "Bash(od -c \"C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java\")"
+      "Bash(od -c \"C:/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/wnn_medcost/mangr/web/MangrController.java\")",
+      "Bash(python -c \"print\\(''hello''\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node \"C:/Users/user/git/winn/replace_modal.js\")",
+      "Read(//c/Users/user/AppData/Local/Programs/**)",
+      "Bash(ls /c/Python*/python.exe)",
+      "Bash(where python:*)",
+      "Bash(py --version)",
+      "Bash(node /tmp/apply_changes.js)",
+      "Bash(echo $TEMP)",
+      "Bash(echo $TMP)",
+      "Bash(node \"C:/Users/user/git/winn/apply_changes.js\")",
+      "Bash(git -C \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_medcost\" log --oneline -5 -- \"src/main/webapp/WEB-INF/jsp/main/mangr/asqcd.jsp\")",
+      "Bash(git -C \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_medcost\" show 6967370:src/main/webapp/WEB-INF/jsp/main/mangr/asqcd.jsp)",
+      "Bash(git -C \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_medcost\" show 6967370:wnn_medcost/src/main/webapp/WEB-INF/jsp/main/mangr/asqcd.jsp)",
+      "Bash(python3 fix_ids.py)",
+      "Bash(python fix_ids.py)",
+      "Bash(node fix_ids.js)",
+      "Bash(node fix_ids2.js)"
     ]
   }
 }

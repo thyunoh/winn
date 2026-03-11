@@ -106,6 +106,19 @@
 #modalName #uploadForm .form-group { margin-bottom: 0; }
 #modalName .drag-area { margin-top: 0 !important; margin-bottom: 0 !important; }
 #modalName .modal-footer { padding: 2px 15px; }
+/* summernote-bs4 CSS와 summernote-lite CSS 중복 아이콘 방지 */
+#modalName .note-editor .note-icon-caret {
+    display: none !important;
+}
+#modalName .note-editor .note-toolbar .dropdown-toggle::after {
+    display: inline-block !important;
+    content: '' !important;
+    border-top: .3em solid;
+    border-right: .3em solid transparent;
+    border-left: .3em solid transparent;
+    margin-left: .3em;
+    vertical-align: middle;
+}
 </style>
 <!-- ============================================================== -->
 <!-- Main Form start -->

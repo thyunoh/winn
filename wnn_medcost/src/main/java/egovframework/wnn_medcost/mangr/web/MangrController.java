@@ -443,7 +443,7 @@ public class MangrController {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
 
-				System.out.println("Asq " + dto.getAsqSeq());
+				System.out.println("Asq asqSeq=" + dto.getAsqSeq() + ", asqGb=" + dto.getAsqGb() + ", hospCd=" + dto.getHospCd() + ", qstnTitle=" + dto.getQstnTitle());
 
 			    List<AsqDTO> asqList = svc.getasqCdList(dto);
 

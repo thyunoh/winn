@@ -36,6 +36,25 @@
     background-color: white;
     z-index: 10;
 }
+/* 파일찾기 버튼 빨간색 제거 */
+#asq_main .btn-outline-secondary,
+#asq_main .btn-outline-secondary:hover,
+#asq_main .btn-outline-secondary:focus,
+#asq_main .btn-outline-secondary:active,
+#asq_main .btn-outline-secondary:active:focus,
+#asq_main .btn-outline-secondary.active {
+    color: #000 !important;
+    background-color: #fff !important;
+    border-color: #bbb !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+#asq_main .btn:focus,
+#asq_main .btn:active,
+#asq_main .btn:active:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
 </style>
 <div class="nav-left-sidebar">
     <div class="menu-list">
@@ -212,7 +231,7 @@
                              </ul>
                         </div>
                     </li>
-                     <li class="nav-item" id = "wnnauth1"> 
+                     <li class="nav-item" id = "wnnauth1">
 						<a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false"
 						   data-target="#base-info-4" aria-controls="base-info-4">
 						   <i class="fas fa-comments"></i> 고객지원
@@ -231,18 +250,22 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/mangr/faqcd.do">자주하는 질문</a>
                                 </li>
+                                <!--  
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
                                 </li>
+                                -->
 								<li class="nav-item">
 								    <a class="nav-item nav-link"  href="https://377.co.kr" target="_blank">원격지원상담 </a>
 								</li>
                             </ul>
                         </div>
                     </li>
-                    
-                    
-                    <!-- 진료비 분석 보고서 -->    
+                    <li class="nav-item" id="adminAsqMenu" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/asqcd.do"><i class="fas fa-headset"></i>관리자 1:1 문의하기</a>
+                    </li>
+
+                    <!-- 진료비 분석 보고서 -->
                     <li class="nav-item menu-section" id="menu-g">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
                                                                                          <i class="fas fa-cogs"></i>분야별통계</a>
@@ -394,86 +417,87 @@
          <div class="modal-body bg-light"
             style="max-height: 60vh; overflow-y: auto;">
             <div class="d-flex align-items-center justify-content-between mb-3">
-               <div class="d-flex">
+               <div class="d-flex" style="position: relative;">
                   <input type="text" id="searchText"
                      class="form-control rounded-3 border" placeholder="검색어를 입력하세요."
                      onkeypress="if(event.keyCode == 13){fnasq_Search();}"
-                     style="width: 300px;">
-                  <button type="button" class="btn btn-warning rounded-3 ms-2"
-                     onclick="fnasq_Search()" style="margin-left: 8px;">
-                     <i class="fas fa-search"></i> 검색
-                  </button>
+                     style="width: 250px; font-size: 13px; height: 33px; padding-right: 35px;">
+                  <i class="fas fa-search" onclick="fnasq_Search();" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; font-size: 14px;"></i>
                </div>
                <div>
-                  <button class="btn btn-outline-dark" onclick="fn_asqsave('QD');">질문취소</button>
-                  <button class="btn btn-outline-dark" onclick="fn_asqsave('QI');">질문등록</button>
-                  <button class="btn btn-outline-dark" onclick="fn_asqsave('QU');">답변조회(수정)</button>
-                  <button class="btn btn-outline-dark" onclick="asqMainClose();">닫기 <i class="fas fa-times"></i></button>
+                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QD');" style="font-size: 13px; padding: 5px 11px;">
+                     <img src="/images/winct/qnst_c.svg" alt="질문취소" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">질문취소</button>
+                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QI');" style="font-size: 13px; padding: 5px 11px;">
+                     <img src="/images/winct/qnst_i.svg" alt="질문등록" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">질문등록</button>
+                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QU');" style="font-size: 13px; padding: 5px 11px;">
+                     <img src="/images/winct/qnst_q.svg" alt="질문조회" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">답변조회(수정)</button>
                </div>
             </div>
             <div class="table-responsive rounded-3 shadow-sm mt-1 border"
-               style="height: 500px; overflow-y: auto;">
+               style="height:500px; overflow-y: auto;">
                <table id="asq_infoTable" class="table table-bordered">
                   <colgroup>
-                     <col style="width: 50px">
-                     <col style="width: 180px">
-                     <col style="width: 280px">
-                     <col style="width: 70px">
-                     <col style="width: 40px">
-                     <col style="width: 70px">
+                     <col style="width: 30px">
+                     <!-- NO -->
+                     <col style="width: 60px">
+                     <!-- 답변상태 -->
                      <col style="width: 120px">
+                     <!-- 질문항목 -->
+                     <col style="width: 160px">
+                     <!-- 질문내용 -->
+                     <col style="width: 80px">
+                     <!-- 병원명 -->
+                     <col style="width: 60px">
+                     <!-- 질문자 -->
+                     <col style="width: 110px">
+                     <!-- 작성일 -->
+                     <col style="width: 30px">
+                     <!-- 첨부 -->
                   </colgroup>
                   <thead>
-                     <tr>
-                        <th>번호</th>
-                        <th title="질문제목">질문제목</th>
-                        <th title="질문내용">질문내용</th>
+                    <tr style="background: #afd4ec; color: #000; font-weight: 600; font-size: 14px !important;">
+                        <th>NO</th>
                         <th>답변상태</th>
-                        <th>첨부</th>
+                        <th title="질문항목">질문항목</th>
+                        <th title="질문내용">질문내용</th>
+                        <th>병원명</th>
                         <th>질문자</th>
                         <th>작성일</th>
+                        <th>첨부</th>
                      </tr>
                   </thead>
                   <tbody id="asqdataArea" style="background-color: white;">
                      <tr>
-                        <td colspan="7" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
+                        <td colspan="8" class="text-muted">&nbsp; 검색된 결과가 없습니다.</td>
                      </tr>
                   </tbody>
                </table>
             </div>
          </div>
-         <!-- modal-footer의 패딩을 줄여서 높이를 좁힘 -->
-         <div class="modal-footer"
-            style="background-color: white; padding: 5px 10px;">
-            <!-- 필요한 footer 내용 추가 -->
+         <div class="modal-footer" style="background-color: white; padding: 5px 10px; justify-content: center;">
+            <button class="btn btn-outline-info" onclick="asqMainClose();">닫기 <i class="fas fa-times"></i></button>
          </div>
       </div>
    </div>
 </div>
 <!--질문응답-->
-<div class="modal fade" id="asq_main" tabindex="-1" style="margin-top:-25px"
+<div class="modal fade" id="asq_main" tabindex="-1"
    data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
-   <div
-      class="modal-dialog modal-dialog-centered"
-      style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 55vw; max-width: 45vw; min-width: 520px; max-height: calc(100vh - 40px);">
-      <div class="modal-content" style="max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden;">
-         <div class="modal-header bg-light">
-            <h4 class="modal-title">문의 등록</h4>
-            <div class="form-row">
-               <div class="col-sm-12 mb-1 d-flex justify-content-end gap-2">
-                  <button type="button" id="save_btn" class="btn btn-outline-dark" onClick="fnasq_SaveProc()">
-                     저장 <i class="far fa-edit"></i>
-                  </button>
-                  <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="asqModalClose()">
-                     닫기 <i class="fas fa-times"></i>
-                  </button>
-               </div>
-            </div>
+   <div class="modal-dialog modal-dialog-scrollable modal-lg"
+      style="max-width: 910px; width: 90%; margin-top: 30px;">
+      <div class="modal-content"
+         style="max-height: calc(100vh - 110px); display: flex; flex-direction: column; border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
+
+         <!-- 타이틀 헤더 -->
+         <div style="background: #fff; padding: 10px 24px 6px 24px; flex-shrink: 0; border-bottom: 1px solid #eee;">
+            <h5 style="margin: 0; font-weight: 700; font-size: 16px; color: #222;">1:1 문의하기</h5>
          </div>
+
+         <!-- 폼 바디 -->
          <form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
-            method="post" enctype="multipart/form-data"
-            style="flex: 1 1 auto; min-height: 0; overflow-y: auto;">
-            <div class="modal-body text-left" style="padding: 15px 20px;">
+            method="post" enctype="multipart/form-data" novalidate="novalidate"
+            style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+            <div class="modal-body" style="overflow-y: auto; flex-grow: 1; min-height: 0; padding: 0 24px 15px 24px; background: #f9f9f9;">
                <input type="hidden" name="iud"      id="iud" />
                <input type="hidden" name="asqSeq"   id="asqSeq" />
                <input type="hidden" name="fileGb"   id="fileGb" value="4" />
@@ -485,62 +509,74 @@
                <input type="hidden" name="regIp"    id="regIp" />
                <input type="hidden" name="updIp"    id="updIp" />
 
-               <div class="form-group d-flex align-items-start">
-                  <label for="qstnTitle"
-                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
+               <!-- 질문제목 섹션 -->
+               <div style="margin-top: 15px;">
+                  <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
                      질문제목
-                  </label>
-                  <textarea id="qstnTitle" name="qstnTitle" required
-                     class="form-control" rows="2" style="flex: 1;"></textarea>
-               </div>
-
-               <div class="form-group d-flex align-items-start">
-                  <label for="qstnConts"
-                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
-                     질문내용
-                  </label>
-                  <textarea id="qstnConts" name="qstnConts" required
-                     class="form-control" rows="3" style="flex: 1;"></textarea>
-               </div>
-
-               <div class="form-group d-flex align-items-start">
-                  <label for="ansrConts"
-                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
-                     답변내용
-                  </label>
-                  <textarea id="ansrConts" name="ansrConts" required
-                     class="form-control" rows="5" style="flex: 1;"></textarea>
-               </div>
-
-               <!-- 답변자 첨부파일 그리드 -->
-               <div id="ansr-file-area" style="margin-top: 5px; margin-bottom: 8px; display:none;">
-                   <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; font-size: 13px; margin: 0;">
-                       <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 파일
-                   </label>                  
-                  <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
-                     <div style="max-height: 150px; overflow-y: auto;">
-                        <table id="ansr-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
-                           <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
-                              <tr>
-                                 <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
-                                 <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
-                                 <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
-                                 <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
-                                 <th style="text-align:center; width:300px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
-                                 <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
-                              </tr>
-                           </thead>
-                           <tbody id="ansr-file-tbody"></tbody>
-                        </table>
-                     </div>
+                  </div>
+                  <div style="background: #fff; border: 1px solid #d0d0d0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
+                     <textarea id="qstnTitle" name="qstnTitle" required
+                        class="form-control" rows="2"
+                        style="border: 1px solid #ddd; border-radius: 6px; font-size: 12px; resize: vertical;"></textarea>
                   </div>
                </div>
 
-               <div class="form-group d-flex align-items-center">
-                  <label for="ansrWan"
-                     style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
-                     답변완료
-                  </label>
+               <!-- 질문내용 섹션 -->
+               <div style="margin-top: 12px;">
+                  <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
+                     질문내용
+                  </div>
+                  <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
+                     <textarea id="qstnConts" name="qstnConts" required
+                        class="form-control" rows="4"
+                        style="border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-weight: normal; resize: vertical;"></textarea>
+                  </div>
+               </div>
+
+               <!-- 질문첨부파일 섹션 -->
+               <div style="margin-top: 12px;">
+                  <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
+                     질문첨부파일
+                  </div>
+                  <div id="asq-file-area" style="background: #fff; border: 1px solid #e0e0e0; border-top: 1px solid #ccc; padding: 10px 14px;">
+                     <div style="display: flex; align-items: center;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" style="border-radius: 4px; font-size: 13px; padding: 4px 14px; 
+                             border-color: #bbb; color: #000; outline: none !important; box-shadow: none !important;" onclick="openAsqFileInput()">파일찾기</button>
+                        <span id="asq-file-label" style="margin-left: 14px; color: #999; font-size: 13px;">선택된 파일 없음</span>
+                        <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
+                     </div>
+                     <div id="asq-drop-zone" style="border: none; padding: 0; min-height: 0;">
+                        <div id="asq-file-list-new" class="file-list-container"></div>
+                     </div>
+                  </div>
+                  <!-- 기존 업로드된 파일 목록 -->
+                  <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 0;">
+                     <table id="asq-file-table" class="table" style="width: 100%; font-size: 12px; display:none; margin-bottom: 0; border-collapse: collapse;">
+                        <thead style="display: none;">
+                           <tr>
+                              <th>문서제목</th><th>사이즈</th><th>작성일</th><th></th><th></th>
+                           </tr>
+                        </thead>
+                        <tbody id="asq-file-tbody"></tbody>
+                     </table>
+                  </div>
+               </div>
+
+               <!-- 답변내용 섹션 -->
+               <div style="margin-top: 12px;">
+                  <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
+                     답변내용
+                  </div>
+                  <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
+                     <div id="ansrContsView"
+                        style="border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-weight: normal; min-height:200px; max-height: 400px; 
+                                overflow-y: auto; padding: 8px 12px; background: #fff;"></div>
+                     <input type="hidden" id="ansrConts" name="ansrConts" value="">
+                  </div>
+               </div>
+
+               <!-- 답변완료 (숨김처리용) -->
+               <div class="form-group" style="margin-top: 0; display: none;">
                   <select id="ansrWan" name="ansrWan" class="custom-select"
                      style="height: 35px; font-size: 14px; width: 120px;">
                      <option value="">선택</option>
@@ -549,53 +585,37 @@
                   </select>
                </div>
 
-               <!-- 파일첨부 영역 -->
-               <div class="form-group" id="asq-file-area" style="margin-top: -12px;">
-                     <div class="form-group mb-1">
-                        <div class="d-flex align-items-center">
-                           <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; 
-                                 min-width: 100px; margin-right: 10px; font-size: 14px;">파일업로드</label>
-                           <button type="button" class="btn btn-primary btn-sm" onclick="openAsqFileInput()">파일 선택</button>
-                           <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
-                        </div>
-                           <div id="asq-drop-zone"
-                              style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; margin-top: 5px; min-height: 40px; cursor: pointer;"
-                              ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
-                              ondragleave="this.style.borderColor='#ccc'; this.style.backgroundColor='';"
-                              ondrop="event.preventDefault(); this.style.borderColor='#ccc'; this.style.backgroundColor=''; asqDropHandler(event);">
-                              <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
-                                 (<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
-                              </p>
-                              <div id="asq-file-list-new" class="file-list-container"></div>
-                           </div>
-                        </div>
-                     </div>
-               </div>
-
-               <!-- 질문자 업로드된 파일 테이블 -->
-               <div class="table-file-container" style="width: 100%; margin-top: 5px; margin-bottom: 10px; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
-                  <div style="max-height: 150px; overflow-y: auto;">
-                     <table id="asq-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; display:none; margin-bottom: 0;">
-                        <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
+               <!-- 답변자 첨부파일 섹션 (FILE_GB='5') -->
+               <div id="ansr-file-area" style="margin-top: 12px; display:none;">
+                  <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
+                     답변첨부파일
+                  </div>
+                  <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 0;">
+                     <table id="ansr-file-table" class="table" style="width: 100%; font-size: 12px; margin-bottom: 0; border-collapse: collapse;">
+                        <thead style="display: none;">
                            <tr>
-                              <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
-                              <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
-                              <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
-                              <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
-                              <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
-                              <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">삭제</th>
-                              <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
+                              <th>문서제목</th><th>사이즈</th><th>작성일</th><th></th>
                            </tr>
                         </thead>
-                        <tbody id="asq-file-tbody"></tbody>
+                        <tbody id="ansr-file-tbody"></tbody>
                      </table>
                   </div>
                </div>
 
             </div>
+
+            <!-- 하단 버튼 영역 -->
+            <div style="background: #fff; padding: 12px 24px; border-top: 1px solid #eee; text-align: center; flex-shrink: 0;">
+               <button type="button" id="save_btn" class="btn"
+                  style="background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 8px 30px; font-size: 14px; font-weight: 500; color: #333; margin-right: 8px;"
+                  onClick="fnasq_SaveProc()">저장</button>
+               <button type="button" class="btn"
+                  style="background: #5bb8e8; border: none; border-radius: 6px; padding: 8px 30px; font-size: 14px; font-weight: 500; color: #fff;"
+                  data-dismiss="modal" onClick="asqModalClose()">닫기</button>
+            </div>
          </form:form>
+
       </div>
-      <div class="modal-footer"></div>
    </div>
 </div>
 
@@ -775,18 +795,22 @@ function fnasq_Search() {
 	    	    dataTxt = '<tr onclick="fn_rowClick(\'' + data.resultLst[i].asqSeq + '\')" ' +
 	    	          'ondblclick="fn_rowDblClick(\'' + data.resultLst[i].asqSeq + '\')" ' +
 	    	          'id="row_' + data.resultLst[i].asqSeq + '">';
-                dataTxt +=    "<td>" + (i+1)  + "</td>" ; 
+                dataTxt +=  "<td>" + (i+1)  + "</td>" ;
+                var statTxt = data.resultLst[i].ansrStat;
+                if(statTxt == '답변대기') statTxt = '답변대기';
+                else if(statTxt == '답변완료') statTxt = '답변완료';
+                dataTxt +=  "<td style='white-space:nowrap;'>" + statTxt    + "</td>" ;
                 dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnTitle    + "</td>" ;
-                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;   
-                dataTxt +=  "<td>" + data.resultLst[i].ansrStat + "</td>" ;
-                dataTxt +=  "<td>" + (data.resultLst[i].fileYn === 'Y' ? '<i class="fa-solid fa-floppy-disk" title="파일 있음" style="color: green; font-size:15px;"></i>' : '') + "</td>" ;
+                dataTxt +=  "<td class='txt-left ellips'>" + data.resultLst[i].qstnConts    + "</td>" ;
+                dataTxt +=  "<td>" + data.resultLst[i].hospNm   + "</td>" ;
                 dataTxt +=  "<td>" + data.resultLst[i].userNm   + "</td>" ;
-                dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ; 
+                dataTxt +=  "<td>" + data.resultLst[i].updDttm  + "</td>" ;
+                dataTxt +=  "<td>" + (data.resultLst[i].fileYn === 'Y' ? '<img src="/images/winct/filedown.svg" alt="파일 있음" title="파일 있음" style="width:15px; height:15px; vertical-align:middle;">' : '') + "</td>" ;
                 dataTxt +=  "</tr>";
                   $("#asqdataArea").append(dataTxt);
                }
             }else{
-              $("#asqdataArea").append("<tr><td colspan='7'>검색된 정보가 없습니다.</td></tr>");
+              $("#asqdataArea").append("<tr><td colspan='8'>검색된 정보가 없습니다.</td></tr>");
            }
          }
    });
@@ -849,14 +873,15 @@ function fn_asqsave(iud) {
         $("#hospCd2").val(getCookie("hospid"));
         $("#regUser").val(getCookie("userid"));
         $("#updUser").val(getCookie("userid"));
-        $("#ansrConts").prop("readonly", "true");
+        $("#ansrConts").val("");
+        $("#ansrContsView").html("");
         $("#ansrWan").css("pointer-events", "none").css("background-color", "#e9ecef"); // 비활성화된 느낌의 배경색 적용
         $("#save_btn").show(); // 답변내용 보이기
         asqFileClear();
         $("#asq-file-table").show();
-        $("#asq-file-tbody").html("<tr><td colspan='7' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>");
+        $("#asq-file-tbody").html("<tr><td colspan='5' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>");
         $("#ansr-file-area").show();
-        $("#ansr-file-tbody").html("<tr><td colspan='6' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>");
+        $("#ansr-file-tbody").html("<tr><td colspan='4' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>");
         asqModalOpen();
     } else if (iud.substring(1, 2) == "U") {
         if ($("#asqSeq").val() == "") {
@@ -880,6 +905,8 @@ function fn_asqsave(iud) {
                 $("#qstnWan").val(data.result.qstnWan);
                 $("#ansrWan").val(data.result.ansrWan); // 답변완료 여부 값 설정
                 $("#ansrConts").val(data.result.ansrConts);
+                var ansrHtml = (data.result.ansrConts || '').replace(/\n/g, '<br>');
+                $("#ansrContsView").html(ansrHtml);
                 $("#fileGb").val(data.result.fileGb);
                 $("#regDtm").val(data.result.regDtm);
 
@@ -1113,9 +1140,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-    let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부 
+    let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부
     if (s_wnn_yn != 'Y') {
     	hosp_conact();
+    }
+    // 관리자 1:1 문의하기 메뉴 표시
+    var winner = getCookie("s_wnn_yn").trim();
+    if (winner === 'Y') {
+        var adminAsq = document.getElementById("adminAsqMenu");
+        if (adminAsq) adminAsq.style.display = "";
     }
 });
 
@@ -1146,7 +1179,7 @@ function asqShowNewFileList() {
         html += '<div class="file-item" style="display:flex; align-items:center; justify-content:space-between; padding:3px 8px; border-bottom:1px solid #eee;">' +
             '<span><i class="fa fa-file" style="color:#555; margin-right:5px;"></i>' + files[i].name +
             ' (' + Math.round(files[i].size / 1024) + 'KB)</span>' +
-            '<button type="button" onclick="asqRemoveNewFile(' + i + ')" class="delete-btn" style="border:none; background:none; color:red; cursor:pointer; font-size:12px;">삭제</button>' +
+            '<button type="button" onclick="asqRemoveNewFile(' + i + ')" class="delete-btn" style="border:none; background:none; color:#333; cursor:pointer; font-size:12px;">삭제</button>' +
             '</div>';
     }
     document.getElementById('asq-file-list-new').innerHTML = html;
@@ -1220,19 +1253,17 @@ function showAsqFileList(asqSeq) {
                         fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
                     }
                     var row = '<tr style="border-bottom: 1px solid #eee;">';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + (i + 1) + '</td>';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + subCodeNm + '</td>';
-                    row += '<td style="padding:6px 8px;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:none; font-weight:500;">' + fileTitle + '</a></td>';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + fileSize + ' KB</td>';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + regDttm + '</td>';
-                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
+                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
+                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
                     row += "<a href='javascript:void(0);' onclick=\"deleteAsqFile('" + data[i].filePath + "','" + asqSeq + "');\" title='삭제' style='color:black;'>";
                     row += "<i class='fa-solid fa-trash' style='font-size: 1.1em;'></i>";
                     row += '</a></td>';
-                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
                     if (fileUrl !== '#') {
                         row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
-                        row += "<i class='fa-solid fa-floppy-disk' style='font-size: 1.1em;'></i>";
+                        row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
                         row += '</a>';
                     }
                     row += '</td>';
@@ -1241,7 +1272,7 @@ function showAsqFileList(asqSeq) {
                 }
                 $("#asq-file-table").show();
             } else {
-                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
                 $("#asq-file-table").show();
             }
         }
@@ -1262,6 +1293,7 @@ function deleteAsqFile(filePath, asqSeq) {
             var savedTitle = $("#qstnTitle").val();
             var savedConts = $("#qstnConts").val();
             var savedAnsr  = $("#ansrConts").val();
+            var savedAnsrHtml = $("#ansrContsView").html();
             var savedWan   = $("#ansrWan").val();
 
             $.ajax({
@@ -1280,6 +1312,7 @@ function deleteAsqFile(filePath, asqSeq) {
                     $("#qstnTitle").val(savedTitle);
                     $("#qstnConts").val(savedConts);
                     $("#ansrConts").val(savedAnsr);
+                    $("#ansrContsView").html(savedAnsrHtml);
                     $("#ansrWan").val(savedWan);
                     showAsqFileList(asqSeq);
                     Swal.fire({
@@ -1344,15 +1377,13 @@ function showAnsrFileList(asqSeq) {
                         fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
                     }
                     var row = '<tr style="border-bottom: 1px solid #eee;">';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + (i + 1) + '</td>';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + subCodeNm + '</td>';
-                    row += '<td style="padding:6px 8px;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:none; font-weight:500;">' + fileTitle + '</a></td>';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + fileSize + ' KB</td>';
-                    row += '<td style="text-align:center; padding:6px 4px; color:#555;">' + regDttm + '</td>';
-                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px;">';
+                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
+                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
+                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
                     if (fileUrl !== '#') {
                         row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
-                        row += "<i class='fa-solid fa-floppy-disk' style='font-size: 1.1em;'></i>";
+                        row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
                         row += '</a>';
                     }
                     row += '</td>';
@@ -1361,7 +1392,7 @@ function showAnsrFileList(asqSeq) {
                 }
                 $("#ansr-file-area").show();
             } else {
-                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#999;'>등록된 파일이 없습니다.</td></tr>";
                 $("#ansr-file-area").show();
             }
         }
