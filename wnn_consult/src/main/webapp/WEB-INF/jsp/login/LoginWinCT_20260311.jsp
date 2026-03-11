@@ -2102,20 +2102,30 @@
 <div class="modal fade" id="asq_main" tabindex="-1"
     data-bs-backdrop="static" data-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-lg"
-        style="max-width: 700px; width: 90%; margin-top: 20px;">
+        style="max-width: 900px; width: 90%; margin-top: 20px;">
         <div class="modal-content"
-            style="max-height: calc(100vh - 60px); display: flex; flex-direction: column; border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
-
-            <!-- 타이틀 헤더 -->
-            <div style="background: #fff; padding: 18px 24px 10px 24px; flex-shrink: 0; border-bottom: 1px solid #eee;">
-                <h5 style="margin: 0; font-weight: 700; font-size: 18px; color: #222;">1:1 문의하기</h5>
+            style="max-height: calc(100vh - 100px); display: flex; flex-direction: column;">
+            
+            <!-- 헤더 -->
+            <div class="modal-header bg-light" style="flex-shrink: 0;">
+                <h6 class="modal-title">문의 등록</h6>
+                <div class="form-row">
+                    <div class="col-sm-12 mb-2" style="text-align: right;">
+                        <button type="button" id="save_btn" class="btn btn-outline-info" 
+                            onClick="fnasq_SaveProc()">저장 <i class="far fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-dark"
+                            data-dismiss="modal" onClick="asqModalClose()">닫기 <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- 폼 바디 -->
             <form:form commandName="DTO" id="asq_regForm" name="asq_regForm"
                 method="post" enctype="multipart/form-data"
                 style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
-                <div class="modal-body" style="overflow-y: auto; flex-grow: 1; min-height: 0; padding: 0 24px 15px 24px; background: #f9f9f9;">
+                <div class="modal-body text-left" style="overflow-y: auto; flex-grow: 1; min-height: 0; padding: 15px 20px;">
                     <input type="hidden" name="iudasq"      id="iudasq" />
                     <input type="hidden" name="asqSeq"      id="asqSeq" />
                     <input type="hidden" name="fileGbasq"   id="fileGbasq" value="4" />
@@ -2125,71 +2135,67 @@
                     <input type="hidden" name="regUserasq"  id="regUserasq" />
                     <input type="hidden" name="updUserasq"  id="updUserasq" />
 
-                    <!-- 질문제목 섹션 -->
-					<div style="margin-top: 15px;">
-					    <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
-					        질문제목
-					    </div>
-					    <div style="background: #fff; border: 1px solid #d0d0d0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
-					        <textarea id="qstnTitle" name="qstnTitle" required
-					            class="form-control" rows="2"
-					            style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
-					    </div>
-					</div>
-                    <!-- 질문내용 섹션 -->
-                    <div style="margin-top: 12px;">
-                        <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
+                    <div class="form-group d-flex align-items-start">
+                        <label for="qstnTitle"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; 
+                            width: 100px; min-width: 100px; margin-right: 10px;">
+                            질문제목
+                        </label>
+                        <textarea id="qstnTitle" name="qstnTitle" required
+                            class="form-control" rows="2"
+                            style="flex: 1;"></textarea>
+                    </div>
+                    <div class="form-group d-flex align-items-start">
+                        <label for="qstnConts"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; 
+                            width: 100px; min-width: 100px; margin-right: 10px;">
                             질문내용
-                        </div>
-                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
-                            <textarea id="qstnConts" name="qstnConts" required
-                                class="form-control" rows="5"
-                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
-                        </div>
+                        </label>
+                        <textarea id="qstnConts" name="qstnConts" required
+                            class="form-control" rows="5"
+                            style="flex: 1;"></textarea>
                     </div>
-
-                    <!-- 질문첨부파일 섹션 -->
-                    <div style="margin-top: 12px;">
-                        <div style="background: #afd4ec; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
-                            질문첨부파일
-                        </div>
-                        <div id="asq-file-area" style="background: #fff; border: 1px solid #e0e0e0; border-top: none; padding: 10px 14px;">
-                            <div style="display: flex; align-items: center;">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" style="border-radius: 4px; font-size: 13px; padding: 4px 14px; border-color: #bbb; color: #000;" onclick="openAsqFileInput()">파일찾기</button>
-                                <span id="asq-file-label" style="margin-left: 14px; color: #999; font-size: 13px;">선택된 파일 없음</span>
-                                <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
-                            </div>
-                            <div id="asq-drop-zone" style="border: none; padding: 0; min-height: 0;">
-                                <div id="asq-file-list-new" class="file-list-container"></div>
-                            </div>
-                        </div>
-                        <!-- 기존 업로드된 파일 목록 (별도 카드) -->
-                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 0;">
-                            <table id="asq-file-table" class="table" style="width: 100%; font-size: 13px; display:none; margin-bottom: 0; border-collapse: collapse;">
-                                <thead style="display: none;">
-                                    <tr>
-                                        <th>문서제목</th><th>사이즈</th><th>작성일</th><th>삭제</th><th>첨부</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="asq-file-tbody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- 답변내용 섹션 -->
-                    <div style="margin-top: 12px;">
-                        <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
+                    <div class="form-group d-flex align-items-start">
+                        <label for="ansrConts"
+                   
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
                             답변내용
+                        </label>
+                        <textarea id="ansrConts" name="ansrConts" required
+                            class="form-control" rows="8"
+                            style="flex: 1;"></textarea>
+                    </div>
+                    <!-- 답변자 첨부파일 그리드 (FILE_GB='5') -->
+                    <div id="ansr-file-area" style="margin-top: 5px; margin-bottom: 8px; display:none;">
+                        <div class="d-flex align-items-center" style="margin-bottom: 4px;">
+                            <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; font-size: 13px; margin: 0;">
+                                <i class="fa-solid fa-floppy-disk" style="color:green;"></i> 답변 파일
+                            </label>
                         </div>
-                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
-                            <textarea id="ansrConts" name="ansrConts" required
-                                class="form-control" rows="5"
-                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
+                        <div class="table-file-container" style="width: 100%; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
+                            <div style="max-height: 150px; overflow-y: auto;">
+                                <table id="ansr-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; margin-bottom: 0;">
+                                    <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
+                                        <tr>
+                                            <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px;">번호</th>
+                                            <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px;">문서유형</th>
+                                            <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px;">문서제목</th>
+                                            <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px;">사이즈</th>
+                                            <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px;">작성일</th>
+                                            <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px;">첨부</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ansr-file-tbody"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 답변완료 (숨김처리용) -->
-                    <div class="form-group" style="margin-top: 0; display: none;">
+                    <div class="form-group d-flex align-items-center">
+                        <label for="ansrWan"
+                            style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; width: 100px; min-width: 100px; margin-right: 10px;">
+                            답변완료
+                        </label>
                         <select id="ansrWan" name="ansrWan" class="custom-select"
                             style="height: 35px; font-size: 14px; width: 120px;">
                             <option value="">선택</option>
@@ -2198,40 +2204,51 @@
                         </select>
                     </div>
 
-                    <!-- 답변자 첨부파일 섹션 (FILE_GB='5') -->
-                    <div id="ansr-file-area" style="margin-top: 12px; display:none;">
-                        <div style="background: #d4eaf7; color: #000; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13px;">
-                            답변첨부파일
+                    <!-- 파일첨부 영역 -->
+                    <div id="asq-file-area" style="margin-top: 0; border: 1px solid #ddd; border-radius: 5px; padding: 8px;">
+                        <div style="display: flex; flex-wrap: nowrap; align-items: center; margin-bottom: 5px;">
+                            <label style="background-color: #e6f3f7; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 13px; margin: 0 10px 0 0; white-space: nowrap;">파일업로드</label>
+                            <button type="button" class="btn btn-primary btn-sm" style="white-space: nowrap;" onclick="openAsqFileInput()">파일 선택</button>
+                            <input type="file" id="asq-file-input" multiple style="display:none;" onchange="asqHandleFiles(this.files)">
                         </div>
-                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 0;">
-                            <table id="ansr-file-table" class="table" style="width: 100%; font-size: 13px; margin-bottom: 0; border-collapse: collapse;">
-                                <thead style="display: none;">
+                        <div id="asq-drop-zone"
+                            style="border: 2px dashed #ccc; border-radius: 4px; padding: 8px; text-align: center; color: #999; font-size: 14px; min-height: 40px; cursor: pointer;"
+                            ondragover="event.preventDefault(); this.style.borderColor='#007bff'; this.style.backgroundColor='#f0f8ff';"
+                            ondragleave="this.style.borderColor='#ccc'; this.style.backgroundColor='';"
+                            ondrop="event.preventDefault(); this.style.borderColor='#ccc'; this.style.backgroundColor=''; asqDropHandler(event);">
+                            <p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
+                                (<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
+                            </p>
+                            <div id="asq-file-list-new" class="file-list-container"></div>
+                        </div>
+                    </div>
+                </div>
+                    <!-- 기존 업로드된 파일 테이블 -->
+                    <div class="table-file-container" style="width: 100%; margin-top: 5px; margin-bottom: 10px; border: 1px solid #d0dbe5; border-radius: 10px; padding: 5px 12px; background: #fafcfe;">
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            <table id="asq-file-table" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px; display:none; margin-bottom: 0;">
+                                <thead style="background-color: #e8f4fd; border-bottom: 2px solid #b8d4e8;">
                                     <tr>
-                                        <th>문서제목</th><th>사이즈</th><th>작성일</th><th>첨부</th>
+                                        <th style="text-align:center; width:40px; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">번호</th>
+                                        <th style="text-align:center; width:80px; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">문서유형</th>
+                                        <th style="text-align:center; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">문서제목</th>
+                                        <th style="text-align:center; width:60px; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">사이즈</th>
+                                        <th style="text-align:center; width:100px; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">작성일</th>
+                                        <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">삭제</th>
+                                        <th style="text-align:center; width:45px; padding:8px 4px; font-weight:600; font-size:12px; white-space:nowrap;">첨부</th>
                                     </tr>
                                 </thead>
-                                <tbody id="ansr-file-tbody"></tbody>
+                                <tbody id="asq-file-tbody"></tbody>
                             </table>
                         </div>
                     </div>
-
-                </div>
-
-                <!-- 하단 버튼 영역 -->
-                <div style="background: #fff; padding: 12px 24px; border-top: 1px solid #eee; text-align: center; flex-shrink: 0;">
-                    <button type="button" id="save_btn" class="btn"
-                        style="background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 8px 30px; font-size: 14px; font-weight: 500; color: #333; margin-right: 8px;"
-                        onClick="fnasq_SaveProc()">저장</button>
-                    <button type="button" class="btn"
-                        style="background: #5bb8e8; border: none; border-radius: 6px; padding: 8px 30px; font-size: 14px; font-weight: 500; color: #fff;"
-                        data-dismiss="modal" onClick="asqModalClose()">닫기</button>
                 </div>
             </form:form>
 
         </div>
     </div>
 </div>
-<!--  질의응답 모달끝 -->
+
 
 	<!-- 질의응답 스크립트 시작 -->
 	<script>
