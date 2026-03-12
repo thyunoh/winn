@@ -3273,6 +3273,10 @@
                     setCookie("s_asq_bar_off", "N", 1);
                     fn_loadTodayAsq();
                     setInterval(fn_loadTodayAsq, 30000);
+                    // 탭 전환 시 즉시 갱신
+                    document.addEventListener('visibilitychange', function() {
+                        if (!document.hidden) fn_loadTodayAsq();
+                    });
                 }
             }
     	}
