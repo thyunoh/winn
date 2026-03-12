@@ -680,8 +680,7 @@
 					$('#qstnStat2').val(edit_Data.qstnStat || '');
 					$('#ansrStat2').val(edit_Data.ansrStat || '');
 					// ansrWan 값이 없으면 'N'(진행) 기본값 설정
-					$('#ansrWan option').prop('selected', false);
-					$('#ansrWan option[value="' + (edit_Data.ansrWan || 'N') + '"]').prop('selected', true);
+					$('#ansrWan2').val(edit_Data.ansrWan || 'N');
 					// 답변내용 Summernote는 모달 표시 후 초기화
 					var _ansrText = edit_Data.ansrConts || '';
 					// 파일 목록 로딩
