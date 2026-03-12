@@ -394,7 +394,8 @@
 <!-- FAQ 모달 -->
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" style="margin-top: 420px;"> <!-- 여기 추가 -->
+  <div class="modal-dialog modal-lg" style="margin-top: 100px;"> <!-- 여기 추가 -->
+ 
     <div class="modal-content" style="max-height: 900px;"> <!-- 높이 제한 -->
       <div class="modal-header">
         <h5 class="modal-title" id="faqModalLabel">자주 묻는 질문 (FAQ)</h5>
