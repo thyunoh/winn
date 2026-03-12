@@ -3267,6 +3267,13 @@
                 form_Element.style.display = 'none';
                 userInfoCard.style.display = 'block';
                 GetReportList() ;
+                // s_wnn_yn='Y' 일때만 답변대기 알림
+                var wnnYn = (sessionStorage.getItem('s_wnn_yn') || getCookie("s_wnn_yn") || '').trim();
+                if (wnnYn === 'Y') {
+                    setCookie("s_asq_bar_off", "N", 1);
+                    fn_loadTodayAsq();
+                    setInterval(fn_loadTodayAsq, 30000);
+                }
             }
     	}
 
@@ -3679,7 +3686,262 @@
 			$('#adminModal').on('hidden.bs.modal', function () {
 			  $('#notiContent').summernote('destroy');
 			});
-         </script>    
+         </script>
+
+<!-- ============================================================== -->
+<!-- 하단 질문 알림 툴바 (공통) Start -->
+<!-- ============================================================== -->
+<style>
+#todayAsqBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 36px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    color: #fff;
+    display: none;
+    align-items: center;
+    z-index: 9999;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+    font-size: 13px;
+    overflow: hidden;
+}
+#todayAsqBar .asq-bar-label {
+    flex-shrink: 0;
+    background: #e67e22;
+    color: #fff;
+    font-weight: 700;
+    padding: 0 14px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+#todayAsqBar .asq-bar-scroll {
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+#todayAsqBar .asq-bar-track {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: asqMarquee 20s linear infinite;
+    gap: 0;
+}
+#todayAsqBar .asq-bar-track:hover {
+    animation-play-state: paused;
+}
+#todayAsqBar .asq-bar-msg {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 30px 0 0;
+    white-space: nowrap;
+}
+#todayAsqBar .asq-bar-msg .hosp-name {
+    font-weight: 700;
+    color: #ffd700;
+}
+#todayAsqBar .asq-bar-msg .user-name {
+    font-weight: 600;
+    color: #90cdf4;
+}
+#todayAsqBar .asq-bar-msg .qstn-title {
+    color: #e2e8f0;
+    font-style: italic;
+}
+#todayAsqBar .asq-bar-msg .ansr-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+    color: #1a202c;
+}
+#todayAsqBar .asq-bar-msg .sep {
+    color: #4a7ab5;
+    margin: 0 8px;
+}
+#todayAsqBar .asq-bar-toggle {
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 3px 10px;
+    margin-right: 8px;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+#todayAsqBar .asq-bar-toggle:hover {
+    background: rgba(255,255,255,0.25);
+}
+#todayAsqBar .asq-bar-cnt {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: #a0aec0;
+    padding: 0 6px;
+    white-space: nowrap;
+}
+@keyframes asqMarquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+</style>
+<div id="todayAsqBar">
+    <div class="asq-bar-label">
+        <i class="fas fa-bell"></i> 답변대기
+    </div>
+    <div class="asq-bar-scroll">
+        <div class="asq-bar-track" id="asqBarTrack"></div>
+    </div>
+    <div class="asq-bar-cnt" id="asqBarCnt"></div>
+    <button class="asq-bar-toggle" id="asqBarToggle" onclick="fn_asqBarToggle()" title="메세지 끄기">
+        <i class="fas fa-bell-slash"></i> 끄기
+    </button>
+</div>
+<script type="text/javascript">
+// ===== 하단 마퀴 질문 알림 (공통) =====
+
+function fn_getDateStr(daysAgo) {
+    var d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    var yyyy = d.getFullYear();
+    var mm   = ('0' + (d.getMonth() + 1)).slice(-2);
+    var dd   = ('0' + d.getDate()).slice(-2);
+    return {
+        dash:  yyyy + '-' + mm + '-' + dd,
+        slash: yyyy + '/' + mm + '/' + dd,
+        plain: yyyy + mm + dd
+    };
+}
+
+// 질문 데이터 조회 (wnn_consult용)
+function fn_loadTodayAsq() {
+    var hospCd = sessionStorage.getItem('s_hospid') || '';
+    if (!hospCd) return;
+    $.ajax({
+        type: "POST",
+        url: '${pageContext.request.contextPath}' + '/mangr/ctl_asqList.do',
+        data: { hospCdasq: hospCd },
+        dataType: "json",
+        success: function(data) {
+            if (data.error_code === "0" && data.resultLst) {
+                fn_todayAsqAlert(data.resultLst);
+            }
+        }
+    });
+}
+
+// 어제~오늘 답변대기 질문만 필터링 → 마퀴 표시
+function fn_todayAsqAlert(dataList) {
+    var bar = document.getElementById('todayAsqBar');
+    if (!bar) return;
+
+    if (!dataList || dataList.length === 0) {
+        bar.style.display = 'none';
+        return;
+    }
+
+    var today     = fn_getDateStr(0);
+    var yesterday = fn_getDateStr(1);
+
+    function isRecentDate(dtStr) {
+        var s = (dtStr || '').toString();
+        return s.indexOf(today.dash) >= 0 || s.indexOf(today.slash) >= 0 || s.indexOf(today.plain) >= 0
+            || s.indexOf(yesterday.dash) >= 0 || s.indexOf(yesterday.slash) >= 0 || s.indexOf(yesterday.plain) >= 0;
+    }
+
+    var filtered = [];
+    for (var i = 0; i < dataList.length; i++) {
+        var row = dataList[i];
+        var ansrWan = (row.ansrWan || '').toString().trim();
+        if (ansrWan === 'Y') continue;
+        var regDttm = (row.regDttm || row.updDttm || '').toString();
+        if (isRecentDate(regDttm)) {
+            filtered.push(row);
+        }
+    }
+
+    if (filtered.length === 0) {
+        bar.style.display = 'none';
+        return;
+    }
+
+    var msgHtml = '';
+    for (var j = 0; j < filtered.length; j++) {
+        var item = filtered[j];
+        var hospNm = item.hospNm  || '';
+        var userNm = item.userNm  || '';
+        var title  = item.qstnTitle || '';
+
+        msgHtml += '<span class="asq-bar-msg">';
+        if (j > 0) msgHtml += '<span class="sep">|</span>';
+        msgHtml += '<span class="hosp-name">' + hospNm + '</span> ';
+        msgHtml += '<span class="user-name">' + userNm + '</span>님 질문등록';
+        if (title) {
+            var shortTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
+            msgHtml += ' - <span class="qstn-title">' + shortTitle + '</span>';
+        }
+        msgHtml += ' <span class="ansr-badge">답변대기</span>';
+        msgHtml += '</span>';
+    }
+
+    var trackDiv = document.getElementById('asqBarTrack');
+    trackDiv.innerHTML = msgHtml + msgHtml;
+
+    var duration = Math.max(10, filtered.length * 4);
+    trackDiv.style.animationDuration = duration + 's';
+
+    var cntDiv = document.getElementById('asqBarCnt');
+    if (cntDiv) cntDiv.textContent = filtered.length + '건';
+
+    bar.style.display = 'flex';
+
+    // 이전에 끄기 상태였으면 복원
+    var barOff = (getCookie("s_asq_bar_off") || '').trim();
+    if (barOff === 'Y') {
+        trackDiv.style.animationPlayState = 'paused';
+        var scroll = bar.querySelector('.asq-bar-scroll');
+        if (scroll) scroll.style.opacity = '0.3';
+        var btn = document.getElementById('asqBarToggle');
+        if (btn) btn.innerHTML = '<i class="fas fa-bell"></i> 켜기';
+    }
+}
+
+function fn_asqBarToggle() {
+    var bar = document.getElementById('todayAsqBar');
+    var track = document.getElementById('asqBarTrack');
+    var btn = document.getElementById('asqBarToggle');
+    var scroll = bar ? bar.querySelector('.asq-bar-scroll') : null;
+
+    if (track && track.style.animationPlayState !== 'paused') {
+        // 끄기
+        track.style.animationPlayState = 'paused';
+        if (scroll) scroll.style.opacity = '0.3';
+        if (btn) btn.innerHTML = '<i class="fas fa-bell"></i> 켜기';
+        setCookie("s_asq_bar_off", "Y", 1);
+    } else {
+        // 켜기
+        if (track) track.style.animationPlayState = 'running';
+        if (scroll) scroll.style.opacity = '1';
+        if (btn) btn.innerHTML = '<i class="fas fa-bell-slash"></i> 끄기';
+        setCookie("s_asq_bar_off", "N", 1);
+    }
+}
+</script>
+<!-- ============================================================== -->
+<!-- 하단 질문 알림 툴바 (공통) End -->
+<!-- ============================================================== -->
+
 	<jsp:include page="footer.jsp"></jsp:include>
 </body>
 </html>
