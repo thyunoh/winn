@@ -12,54 +12,210 @@
     <style>
         .dataTables_scrollHead thead th { text-align: center !important; }
         .dataTables_scrollBody tbody td { font-weight: normal !important; }
+
+        /* ===== 상담문의 목록 컨셉 스타일 ===== */
+        .asq-popup-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+            max-width: 100%;
+            margin: 10px auto;
+            padding: 0;
+            overflow: hidden;
+        }
+        .asq-popup-card .asq-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+            padding: 22px 28px 0 28px;
+            margin: 0;
+        }
+        .asq-popup-card .asq-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px 10px 28px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .asq-popup-card .asq-search-box {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid #bbb;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+            height: 36px;
+            min-width: 220px;
+        }
+        .asq-popup-card .asq-search-box input {
+            border: none;
+            outline: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            flex: 1;
+            height: 100%;
+            background: transparent;
+        }
+        .asq-popup-card .asq-search-box button {
+            border: none;
+            background: transparent;
+            padding: 0 10px;
+            cursor: pointer;
+            color: #555;
+            font-size: 15px;
+            height: 100%;
+        }
+        .asq-popup-card .asq-btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .asq-popup-card .asq-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1.5px solid #333;
+            border-radius: 6px;
+            background: #fff;
+            color: #222;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .asq-popup-card .asq-btn:hover {
+            background: #f0f0f0;
+        }
+        .asq-popup-card .asq-btn i,
+        .asq-popup-card .asq-btn img {
+            font-size: 14px;
+        }
+        /* 테이블 영역 */
+        .asq-popup-card .asq-table-wrap {
+            padding: 0 28px 10px 28px;
+        }
+        /* 테이블 헤더 */
+        .asq-popup-card table.dataTable thead th,
+        .asq-popup-card .dataTables_scrollHead table thead th,
+        .asq-popup-card .dt-scroll-head table thead th {
+            background: #c5d9ea !important;
+            color: #222 !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            border-bottom: 1px solid #ccd8e2 !important;
+            padding: 6px 8px !important;
+            line-height: 1.3 !important;
+        }
+        /* 테이블 데이터 행 간격 축소 */
+        .asq-popup-card table.dataTable tbody td,
+        .asq-popup-card .dataTables_scrollBody table tbody td {
+            font-size: 13px !important;
+            padding: 4px 8px !important;
+            border-bottom: 1px solid #eee !important;
+            color: #444;
+            line-height: 1.3 !important;
+        }
+        .asq-popup-card table.dataTable tbody tr:hover {
+            background: #f5f9fd !important;
+        }
+    </style>
+    <style id="asq-override-styles">
+        /* ===== 1. 선택 행 색상 (연한 파란색) ===== */
+        table.dataTable tbody tr.selected > *,
+        table.dataTable tbody tr.selected,
+        table.dataTable.stripe tbody tr.odd.selected > *,
+        table.dataTable.stripe tbody tr.even.selected > *,
+        table.dataTable.hover tbody tr.selected:hover > *,
+        table.dataTable.display tbody tr.selected > *,
+        table.dataTable.order-column tbody tr.selected > * {
+            background-color: #cde0f0 !important;
+            color: #111 !important;
+            box-shadow: none !important;
+        }
+
+        /* ===== 2. 헤더-데이터 간격 제거 (DT 1.x + 2.x 클래스 모두 대응) ===== */
+        /* DT 1.x 클래스 */
+        div.dataTables_scrollBody thead,
+        /* DT 2.x 클래스 */
+        div.dt-scroll-body thead {
+            visibility: collapse !important;
+            height: 0 !important;
+            line-height: 0 !important;
+            overflow: hidden !important;
+        }
+        div.dataTables_scrollBody thead th, div.dataTables_scrollBody thead td,
+        div.dt-scroll-body thead th, div.dt-scroll-body thead td {
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            line-height: 0 !important;
+            font-size: 0 !important;
+        }
+        div.dataTables_scrollHead, div.dt-scroll-head { margin-bottom: 0 !important; border-bottom: none !important; padding-bottom: 0 !important; }
+        div.dataTables_scrollBody, div.dt-scroll-body { margin-top: 0 !important; border-top: none !important; padding-top: 0 !important; }
+        div.dataTables_scrollHead table, div.dt-scroll-head table { margin-bottom: 0 !important; border-bottom: none !important; }
+        div.dataTables_scrollBody table, div.dt-scroll-body table { margin-top: 0 !important; border-top: none !important; }
+        div.dataTables_scrollHeadInner, div.dt-scroll-headInner { padding-right: 0 !important; }
+        div.dataTables_scroll, div.dt-scroll { overflow: visible !important; }
+
+        /* ===== 3. 우측 버튼 글자 진하게 ===== */
+        .asq-btn-group .asq-btn {
+            font-weight: 700 !important;
+        }
     </style>
 		<!-- ============================================================== -->
         <!-- Main Form start -->
         <!-- ============================================================== -->
 		<div class="dashboard-wrapper">
-            <div class="container-fluid  dashboard-content">
+            <div class="container-fluid dashboard-content">
                 <div class="row">
                     <!-- ============================================================== -->
                     <!-- data table start -->
-                    <!-- ============================================================== -->                    
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                        <div class="card">                        	
-                            <div class="card-body">  
-	                            <div id="topControlBar" class="form-row" style="display:none;">
- 		                            <div class="col-auto d-flex align-items-center">
- 			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control form-control-sm is-invalid text-left" required placeholder="" style="width:80px;">
- 			                         <label class="ml-1 mb-0" style="font-size:0.8rem; cursor:pointer; white-space:nowrap;"><input type="checkbox" id="chkHospCd1Init" onclick="fn_hospCd1Init(this)"> 전체</label>
-			                        </div>
-                                    <div class="col-auto">
-                                      <select id="asqGb" class="form-control form-control-sm" oninput="findField(this)" style="width:80px;">
-									    <option selected value="">선택</option>
-									  </select>
-									</div>
-                                    <div class="col-auto">
-                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-dark"        data-toggle="tooltip" data-placement="top" title=""            onClick="fn_re_load()">조회. <i class="fas fa-binoculars"></i></button>
-                                            <button class="btn btn-sm btn-outline-dark d-none btn-insert" data-toggle="tooltip" data-placement="top" title="신규 Data 입력" onClick="modal_Open('I')">입력. <i class="far fa-edit"></i></button>
-                                            <button class="btn btn-sm btn-outline-dark btn-update"        
-                                                  data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')"><img src="/images/winct/qnst_q.svg" alt="" style="width:16px; height:16px; vertical-align:middle;"> 답변둥록.</button>
-                                            <button class="btn btn-sm btn-outline-dark"        data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
-                                        </div>
-                                    </div>
+                    <!-- ============================================================== -->
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12" style="display:flex; justify-content:center;">
+                        <div class="asq-popup-card">
+                            <!-- 타이틀 -->
+                            <h2 class="asq-title">상담문의 목록</h2>
+
+                            <!-- 툴바 -->
+                            <div id="topControlBar" class="asq-toolbar" style="display:none;">
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <label class="mb-0" style="font-size:13px; font-weight:600; white-space:nowrap; color:#333;">요양기관</label>
+                                    <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control form-control-sm text-left" placeholder="" style="width:80px; border:1.5px solid #bbb; border-radius:5px; background:#fff; font-size:13px; height:34px;">
+                                    <label class="mb-0" style="font-size:13px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:4px;"><input type="checkbox" id="chkHospCd1Init" 
+                                           onclick="fn_hospCd1Init(this)" style="width:15px; height:15px; accent-color:#5a8bb5;"> 전체</label>
+                                    <select id="asqGb" class="form-control form-control-sm" oninput="findField(this)" style="width:80px; border:1.5px solid #bbb; border-radius:5px; font-size:13px; height:34px;">
+                                        <option selected value="">선택</option>
+                                    </select>
                                 </div>
-                            	
-								<div style="width: 100%;">							    
-								    <table id="tableName" class="display nowrap stripe hover cell-border  order-column responsive">
-								        
-								    </table>
-								</div>
+                                <div class="asq-btn-group">
+                                    <button class="asq-btn" onclick="fn_re_load()" title="조회"><i class="fas fa-binoculars"></i> 조회</button>
+                                    <button class="asq-btn btn-update" onclick="modal_Open('U')" title="답변조회등록"><img src="/images/winct/qnst_q.svg" alt="" style="width:16px; height:16px; vertical-align:middle;"> 답변조회등록</button>
+                                    <button class="asq-btn" id="fullscreenToggle" title="화면 Size 확대.축소" style="display:none;"><i class="fas fa-expand" id="fullscreenIcon"></i></button>
+                                </div>
                             </div>
+
+                            <!-- 테이블 영역 -->
+                            <div class="asq-table-wrap">
+                                <div style="width: 100%;">
+                                    <table id="tableName" class="display nowrap stripe hover cell-border order-column responsive">
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 하단 닫기 버튼 제거 -->
                         </div>
                     </div>
                     <!-- ============================================================== -->
                     <!-- data table end   -->
                     <!-- ============================================================== -->
-			</div>                
-		  </div>
-		</div>        
+                </div>
+            </div>
+        </div>
 		<!-- ============================================================== -->
         <!-- modal form start -->
         <!-- ============================================================== -->
@@ -621,6 +777,19 @@
 				            $(window).on('resize', function() {
 				                api.columns.adjust();
 				            });
+				            // ===== 헤더-데이터 간격 제거 (DT 1.x + 2.x) =====
+				            var $w = $(api.table().container());
+				            // scrollBody 내부 숨겨진 thead 제거
+				            $w.find('.dataTables_scrollBody thead, .dt-scroll-body thead').css({
+				                'visibility': 'collapse', 'height': '0', 'line-height': '0', 'overflow': 'hidden'
+				            });
+				            $w.find('.dataTables_scrollBody thead th, .dataTables_scrollBody thead td, .dt-scroll-body thead th, .dt-scroll-body thead td').css({
+				                'height': '0', 'padding': '0', 'margin': '0', 'border': 'none', 'line-height': '0', 'font-size': '0'
+				            });
+				            $w.find('.dataTables_scrollHead, .dt-scroll-head').css({'margin-bottom': '0', 'border-bottom': 'none', 'padding-bottom': '0'});
+				            $w.find('.dataTables_scrollBody, .dt-scroll-body').css({'margin-top': '0', 'border-top': 'none', 'padding-top': '0'});
+				            $w.find('.dataTables_scrollHead table, .dt-scroll-head table').css({'margin-bottom': '0', 'border-bottom': 'none'});
+				            $w.find('.dataTables_scrollBody table, .dt-scroll-body table').css({'margin-top': '0', 'border-top': 'none'});
 				        },
 				        rowCallback: function(row, data, index) {
 				            $(row).find('td').css({'padding': colPadding, 'font-weight': 'normal'});
