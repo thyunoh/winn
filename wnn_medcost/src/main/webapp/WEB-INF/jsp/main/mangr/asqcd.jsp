@@ -10,6 +10,8 @@
 <link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
+        .dataTables_scrollHead thead th { text-align: center !important; }
+        .dataTables_scrollBody tbody td { font-weight: normal !important; }
     </style>
 		<!-- ============================================================== -->
         <!-- Main Form start -->
@@ -24,8 +26,9 @@
                         <div class="card">                        	
                             <div class="card-body">  
 	                            <div id="topControlBar" class="form-row" style="display:none;">
- 		                            <div class="col-auto">
+ 		                            <div class="col-auto d-flex align-items-center">
  			                         <input id="hospCd1" name="hospCd1" type="text" readonly class="form-control form-control-sm is-invalid text-left" required placeholder="" style="width:80px;">
+ 			                         <label class="ml-1 mb-0" style="font-size:0.8rem; cursor:pointer; white-space:nowrap;"><input type="checkbox" id="chkHospCd1Init" onclick="fn_hospCd1Init(this)"> 전체</label>
 			                        </div>
                                     <div class="col-auto">
                                       <select id="asqGb" class="form-control form-control-sm" oninput="findField(this)" style="width:80px;">
@@ -132,7 +135,7 @@
 		                        </div>
 		                        <div style="background: #fff; border: 1px solid #d0d0d0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
 		                            <textarea id="qstnTitle2" name="qstnTitle" class="form-control" rows="1" readonly
-		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
+		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: normal; resize: vertical; color: #000; background-color: #f9f9f9;"></textarea>
 		                        </div>
 		                    </div>
 
@@ -143,7 +146,7 @@
 		                        </div>
 		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
 		                            <textarea id="qstnConts2" name="qstnConts" class="form-control" rows="4" readonly
-		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: normal; resize: vertical;"></textarea>
+		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: normal; resize: vertical; color: #000; background-color: #f9f9f9;"></textarea>
 		                        </div>
 		                    </div>
 
@@ -224,7 +227,7 @@
 		                            <select class="custom-select" name="ansrWan" id="ansrWan2"
 		                                style="height: 35px; font-size: 14px; width: 100%;">
 		                                <option value="Y">답변완료</option>
-		                                <option value="N" selected>답변진행</option>
+		                                <option value="N" selected>답변대기</option>
 		                            </select>
 		                        </div>
 		                    </div>
@@ -335,13 +338,13 @@
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 	        				// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 	        				// dt-body-center, dt-body-left, dt-body-right	        				
-	        				{ data: 'asqSeq',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyasqSeq', primaryKey: true },
-	        				{ data: 'fileGb',     visible: false, className: 'dt-body-center' , width: '100px',  name: 'keyfileGb', primaryKey: true },
-	        				{ data: 'ansrStat',   visible: true,  className: 'dt-body-left'   , width: '50px',   },
-	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '300px',  },
-	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '400px',  },
-	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-left'   , width: '300px',  },
-	        				{ data: 'userNm',     visible: true,  className: 'dt-body-left'   , width: '300px',   },
+	        				{ data: 'asqSeq',     visible: false, className: 'dt-body-center' , width: '100px' ,  name: 'keyasqSeq', primaryKey: true },
+	        				{ data: 'fileGb',     visible: false, className: 'dt-body-center' , width: '100px' ,  name: 'keyfileGb', primaryKey: true },
+	        				{ data: 'ansrStat',   visible: true,  className: 'dt-body-center' , headCenter: true  , width: '50px'},
+	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '300px'},
+	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '400px'},
+	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '400px'},
+	        				{ data: 'userNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '300px'},
 	        				{ data: 'regDttm',    visible: true,  className: 'dt-body-center' , width: '150px',  },
 	        				{ data: 'fileYn',     visible: true,  className: 'dt-body-center' , width: '50px',
 	        				    render: function (data, type, row) {
@@ -607,9 +610,21 @@
 		    			search: {
 		    	            return:     find_Enter,          	            
 		    	        },		    	        
-					    rowCallback: function(row, data, index) {
-				            $(row).find('td').css('padding',colPadding); 
-				        },				        
+					    initComplete: function() {
+				            var api = this.api();
+				            api.columns().every(function(colIdx) {
+				                if (gridColums[colIdx] && gridColums[colIdx].headCenter) {
+				                    $(api.column(colIdx).header()).css('text-align', 'center');
+				                }
+				            });
+				            // 해상도(확대/축소) 변경 시 헤더/바디 너비 재조정
+				            $(window).on('resize', function() {
+				                api.columns.adjust();
+				            });
+				        },
+				        rowCallback: function(row, data, index) {
+				            $(row).find('td').css({'padding': colPadding, 'font-weight': 'normal'});
+				        },
 				        lengthMenu: [data_Count, data_Count],
 				        pageLength: defaultCnt, 
 				        // 페이지와 버튼 넓히기  
@@ -904,6 +919,35 @@
 			$("#selectAll").prop("checked", false);
 		}
 		
+		// 새 창 없이 파일 다운로드 (iframe 방식)
+		function fn_fileDown(url) {
+		    if (!url || url === '#') return;
+		    var iframe = document.getElementById('hiddenDownFrame');
+		    if (!iframe) {
+		        iframe = document.createElement('iframe');
+		        iframe.id = 'hiddenDownFrame';
+		        iframe.style.display = 'none';
+		        document.body.appendChild(iframe);
+		    }
+		    iframe.src = url;
+		}
+
+		function fn_hospCd1Init(chk){
+			if(chk.checked){
+				$("#hospCd1").val("");
+				for(let fv of findValues){
+					if(fv.id === "hospCd1"){ fv.val = ""; break; }
+				}
+			}else{
+				let s_hospcd = getCookie("s_hospid");
+				$("#hospCd1").val(s_hospcd);
+				for(let fv of findValues){
+					if(fv.id === "hospCd1"){ fv.val = s_hospcd; break; }
+				}
+			}
+			triggerFind();
+		}
+
 		function fn_re_load(){
 			if (findValues && findValues.length > 0) {
 				fn_FindData();
@@ -1641,12 +1685,12 @@
 		                        fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
 		                    }
 		                    var row = '<tr style="border-bottom: 1px solid #eee;">';
-		                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+		                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="fn_fileDown(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
 		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
 		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
 		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
 		                    if (fileUrl !== '#') {
-		                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
+		                        row += "<a href='javascript:void(0);' onclick=\"fn_fileDown('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
 		                        row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
 		                        row += '</a>';
 		                    }
@@ -1761,7 +1805,7 @@
 		                        fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
 		                    }
 		                    var row = '<tr style="border-bottom: 1px solid #eee;">';
-		                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+		                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="fn_fileDown(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
 		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
 		                    row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
 		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
@@ -1770,7 +1814,7 @@
 		                    row += '</a></td>';
 		                    row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
 		                    if (fileUrl !== '#') {
-		                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
+		                        row += "<a href='javascript:void(0);' onclick=\"fn_fileDown('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
 		                        row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
 		                        row += '</a>';
 		                    }

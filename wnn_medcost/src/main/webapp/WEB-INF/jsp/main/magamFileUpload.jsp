@@ -209,7 +209,7 @@
 		
 					 	{ data: 'claim_no',      visible: true,  className: 'dt-body-center',  width: '100px' },
 					    { data: 'clform_ver',    visible: true,  className: 'dt-body-center',  width: '50px'  },
-					    { data: 'claim_type_nm', visible: false, className: 'dt-body-center',  width: '250px' },
+					    { data: 'claim_type_nm', visible: true, className: 'dt-body-center',   width: '80px' },
 					    { data: 'treat_type_nm', visible: true,  className: 'dt-body-center',  width: '250px' },
         				{ 
         				    data: 'js008Yn', 
@@ -220,6 +220,9 @@
         				        if (type === 'display') {
         				            if (data === 'Y') {
         				                return '<span style="font-weight:bold;">타병원</span>';
+        				            }
+        				            if (data === 'CN') {
+        				                return '<span style="font-weight:bold;">청구없음</span>';
         				            }
         				            if (data === 'N') {
         				                return '<span style="font-weight:bold;">-</span>';

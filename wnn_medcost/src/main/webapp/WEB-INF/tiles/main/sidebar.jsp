@@ -517,7 +517,7 @@
                   <div style="background: #fff; border: 1px solid #d0d0d0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
                      <textarea id="qstnTitle" name="qstnTitle" required
                         class="form-control" rows="2"
-                        style="border: 1px solid #ddd; border-radius: 6px; font-size: 12px; resize: vertical;"></textarea>
+                        style="border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-weight: normal; resize: vertical;"></textarea>
                   </div>
                </div>
 
@@ -581,7 +581,7 @@
                      style="height: 35px; font-size: 14px; width: 120px;">
                      <option value="">선택</option>
                      <option value="Y">Y. 답변완료</option>
-                     <option value="N">N. 진행중</option>
+                     <option value="N">N. 답변대기ㅣ</option>
                   </select>
                </div>
 
@@ -620,6 +620,19 @@
 </div>
 
 <script>
+// 새 창 없이 파일 다운로드 (iframe 방식)
+function fn_fileDown(url) {
+    if (!url || url === '#') return;
+    var iframe = document.getElementById('hiddenDownFrame');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'hiddenDownFrame';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+    }
+    iframe.src = url;
+}
+
 function loadFaqData(keyword) {
     // 모달 열기
     $('#faqModal').modal('show');
@@ -1253,7 +1266,7 @@ function showAsqFileList(asqSeq) {
                         fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
                     }
                     var row = '<tr style="border-bottom: 1px solid #eee;">';
-                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="fn_fileDown(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
                     row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
                     row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
                     row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
@@ -1262,7 +1275,7 @@ function showAsqFileList(asqSeq) {
                     row += '</a></td>';
                     row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
                     if (fileUrl !== '#') {
-                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
+                        row += "<a href='javascript:void(0);' onclick=\"fn_fileDown('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
                         row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
                         row += '</a>';
                     }
@@ -1377,12 +1390,12 @@ function showAnsrFileList(asqSeq) {
                         fileUrl = '/sftp/download.do?filePath=' + encodeURIComponent(data[i].filePath);
                     }
                     var row = '<tr style="border-bottom: 1px solid #eee;">';
-                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="window.open(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
+                    row += '<td style="padding:6px 8px; text-align:left;"><a href="javascript:void(0);" onclick="fn_fileDown(\'' + fileUrl + '\');" style="color:#2874A6; text-decoration:underline; font-weight:500;">' + fileTitle + '</a></td>';
                     row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:80px;">' + fileSize + ' KB</td>';
                     row += '<td style="text-align:center; padding:6px 8px; color:#555; white-space:nowrap; width:140px;">' + regDttm + '</td>';
                     row += '<td style="text-align:center; vertical-align:middle; padding:6px 4px; width:30px;">';
                     if (fileUrl !== '#') {
-                        row += "<a href='javascript:void(0);' onclick=\"window.open('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
+                        row += "<a href='javascript:void(0);' onclick=\"fn_fileDown('" + fileUrl + "');\" title='다운로드' style='color:#28a745;'>";
                         row += "<img src='/images/winct/filedown.svg' alt='다운로드' style='width:16px; height:16px; vertical-align:middle;'>";
                         row += '</a>';
                     }

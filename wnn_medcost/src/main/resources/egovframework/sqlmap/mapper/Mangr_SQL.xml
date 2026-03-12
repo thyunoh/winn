@@ -412,7 +412,7 @@
 	         AND A.HOSP_cd = #{hospCd}
 	      </if>		 
 		  <if test='asqGb != null and asqGb != "" and asqGb == "1"'>
-	         AND IFNULL(A.QSTN_WAN,'') = 'Y'
+	         AND IFNULL(A.ANSR_WAN,'') != 'Y'
 	      </if>
 		  <if test='asqGb != null and asqGb != "" and asqGb == "2"'>
 	         AND IFNULL(A.ANSR_WAN,'') = 'Y'
