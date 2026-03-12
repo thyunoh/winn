@@ -29,6 +29,13 @@
     overflow-x: hidden !important;
     height: calc(100vh - 60px) !important;
     background-color: white !important;
+    width: 280px !important;
+}
+.dashboard-wrapper {
+    margin-left: 280px !important;
+}
+.dashboard-main-wrapper .main-content {
+    margin-left: 280px !important;
 }
 .nav-left-sidebar .submenu .nav-link {
     white-space: normal !important;
