@@ -103,6 +103,51 @@
                                  <!--  
                                  <div class="loading" style="display:none;">진행중</div>
 								 -->
+								 <!-- SPECODE 필터 결과 모달 -->
+								 <div class="modal fade" id="specodeFilterModal" tabindex="-1" role="dialog">
+								     <div class="modal-dialog modal-xl" role="document">
+								         <div class="modal-content">
+								             <div class="modal-header bg-info text-white">
+								                 <h5 class="modal-title">SPECODE 필터 결과</h5>
+								                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+								             </div>
+								             <div class="modal-body" style="max-height:500px; overflow-y:auto;">
+								                 <div class="row mb-3">
+								                     <div class="col-md-4"><strong>전체 라인: </strong><span id="spFilterTotal" class="badge badge-primary">0</span></div>
+								                     <div class="col-md-4"><strong>통과 라인: </strong><span id="spFilterPass" class="badge badge-success">0</span></div>
+								                     <div class="col-md-4"><strong>제외 라인: </strong><span id="spFilterBlock" class="badge badge-danger">0</span></div>
+								                 </div>
+								                 <ul class="nav nav-tabs" id="spFilterTab" role="tablist">
+								                     <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#spBlockedTab">제외된 라인</a></li>
+								                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#spPassedTab">통과된 라인 (최대 100건)</a></li>
+								                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#spCodesTab">제외코드 목록</a></li>
+								                 </ul>
+								                 <div class="tab-content mt-2">
+								                     <div class="tab-pane fade show active" id="spBlockedTab">
+								                         <table class="table table-sm table-bordered table-striped" style="font-size:12px;">
+								                             <thead class="thead-dark"><tr><th>파일명</th><th>라인번호</th><th>매칭코드</th><th>라인내용 (앞 120자)</th></tr></thead>
+								                             <tbody id="spBlockedBody"></tbody>
+								                         </table>
+								                     </div>
+								                     <div class="tab-pane fade" id="spPassedTab">
+								                         <table class="table table-sm table-bordered table-striped" style="font-size:12px;">
+								                             <thead class="thead-dark"><tr><th>파일명</th><th>라인번호</th><th>라인내용 (앞 120자)</th></tr></thead>
+								                             <tbody id="spPassedBody"></tbody>
+								                         </table>
+								                     </div>
+								                     <div class="tab-pane fade" id="spCodesTab">
+								                         <div id="spCodesList" style="font-size:13px;"></div>
+								                     </div>
+								                 </div>
+								             </div>
+								             <div class="modal-footer">
+								                 <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+								             </div>
+								         </div>
+								     </div>
+								 </div>
+								 <!-- SPECODE 필터 결과 모달 End -->
+
 								 <div id="progress-container">
 								     <div id="progress-bar"></div>
 								     <div id="progress-text">0%</div>
@@ -1363,6 +1408,10 @@ async function handleFileSelection(event) {
 	    	                }
 	    	                
 	    	                
+	    	                // SPECODE 필터 디버깅용 수집 배열
+	    	                if (!window._spFilterBlocked) window._spFilterBlocked = [];
+	    	                if (!window._spFilterPassed)  window._spFilterPassed  = [];
+
 	    	                let data = lines
 	    	                    .map((line, index) => ({
 	    	                        hosp_cd: hospid,
@@ -1380,11 +1429,28 @@ async function handleFileSelection(event) {
 	    	                        upd_ip: '127.0.0.1',
 	    	                    }))
 	    	                    .filter((item) => {
-	    	                        return item.lineval && !specode.some(word => item.lineval.includes(word));
+	    	                    	// return item.lineval && !specode.some(word => item.lineval.includes(word)); 안되게 로직이 되어있음 원래  
+	    	                        if (!item.lineval) return false;
+	    	                        let matchedCode = specode.find(word => item.lineval.includes(word));
+	    	                        if (matchedCode) {
+	    	                            window._spFilterBlocked.push({
+	    	                                file_nm: item.file_nm,
+	    	                                line_no: item.line_no,
+	    	                                matched: matchedCode,
+	    	                                lineval: item.lineval.substring(0, 120)
+	    	                            });
+	    	                            return true;  /* true 포함   false 이면 제외  SELECT * FROM TBL_CODE_DTL WHERE  CODE_GB = 'Z' AND CODE_CD = 'SPECODE'   */     
+	    	                        }
+	    	                        window._spFilterPassed.push({
+	    	                            file_nm: item.file_nm,
+	    	                            line_no: item.line_no,
+	    	                            lineval: item.lineval.substring(0, 120)
+	    	                        });
+	    	                        return true; // false; specode 미매칭 → 제외
 	    	                    });
-	    	                
 
-							
+
+
 							resolve(data);	
 	    	            };
 	    	            reader.onerror = function (e) {
@@ -1396,8 +1462,57 @@ async function handleFileSelection(event) {
 	    	    
 	    	    Promise.all(readFilesPromises)
 	   	        	.then(allData => {
-		   	            let allDataFlat = allData.flat();   	            
-		   	      		
+
+		   	            // ===== SPECODE 필터 결과 모달 표시 =====
+		   	            (function showSpecodeFilter() {
+		   	                let blocked = window._spFilterBlocked || [];
+		   	                let passed  = window._spFilterPassed  || [];
+		   	                let total   = blocked.length + passed.length;
+
+		   	                $('#spFilterTotal').text(total);
+		   	                $('#spFilterPass').text(passed.length);
+		   	                $('#spFilterBlock').text(blocked.length);
+
+		   	                // 제외된 라인 테이블
+		   	                let blockedHtml = '';
+		   	                blocked.forEach(r => {
+		   	                    blockedHtml += '<tr>'
+		   	                        + '<td>' + r.file_nm + '</td>'
+		   	                        + '<td>' + r.line_no + '</td>'
+		   	                        + '<td><span class="badge badge-danger">' + r.matched + '</span></td>'
+		   	                        + '<td style="word-break:break-all;">' + r.lineval.replace(/</g, '&lt;') + '</td>'
+		   	                        + '</tr>';
+		   	                });
+		   	                if (blocked.length === 0) blockedHtml = '<tr><td colspan="4" class="text-center">제외된 라인 없음</td></tr>';
+		   	                $('#spBlockedBody').html(blockedHtml);
+
+		   	                // 통과된 라인 테이블 (최대 100건)
+		   	                let passedHtml = '';
+		   	                passed.slice(0, 100).forEach(r => {
+		   	                    passedHtml += '<tr>'
+		   	                        + '<td>' + r.file_nm + '</td>'
+		   	                        + '<td>' + r.line_no + '</td>'
+		   	                        + '<td style="word-break:break-all;">' + r.lineval.replace(/</g, '&lt;') + '</td>'
+		   	                        + '</tr>';
+		   	                });
+		   	                if (passed.length === 0) passedHtml = '<tr><td colspan="3" class="text-center">통과된 라인 없음</td></tr>';
+		   	                $('#spPassedBody').html(passedHtml);
+
+		   	                // SPECODE 목록
+		   	                let codesHtml = '<div class="mb-2"><strong>제외코드 목록 (' + specode.length + '건) - 이 코드가 포함된 라인은 업로드에서 제외됩니다:</strong></div>';
+		   	                codesHtml += specode.map(c => '<span class="badge badge-warning mr-1 mb-1">' + c + '</span>').join('');
+		   	                $('#spCodesList').html(codesHtml);
+
+		   	            //   $('#specodeFilterModal').modal('show');
+
+		   	                // 초기화
+		   	                window._spFilterBlocked = [];
+		   	                window._spFilterPassed  = [];
+		   	            })();
+		   	            // ===== SPECODE 필터 결과 모달 End =====
+
+		   	            let allDataFlat = allData.flat();
+
 		   	            let t_lines = allData.reduce((sum, file) => sum + file.length, 0);
 		   	      		
 		   	            if (t_lines > 0) {
