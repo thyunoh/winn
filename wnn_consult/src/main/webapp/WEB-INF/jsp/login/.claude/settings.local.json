@@ -29,7 +29,9 @@
       "Bash(python3 fix_ids.py)",
       "Bash(python fix_ids.py)",
       "Bash(node fix_ids.js)",
-      "Bash(node fix_ids2.js)"
+      "Bash(node fix_ids2.js)",
+      "Bash(python3 /tmp/asq_replace.py)",
+      "Bash(python /tmp/asq_replace.py)"
     ]
   }
 }
