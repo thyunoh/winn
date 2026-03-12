@@ -405,6 +405,7 @@
         <!-- ============================================================== -->
         <!-- modal form end -->
         <!-- ============================================================== -->
+
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 Start -->
 		<!-- ============================================================== -->
@@ -1036,9 +1037,8 @@
 		    
 		    
 		}
-		
-		
-		// DataTable에 자료 담기 Start	   
+
+		// DataTable에 자료 담기 Start
 		function fn_FindData() {
 			
 			// 조회조건이 있을 경우	
@@ -1305,11 +1305,13 @@
 		                        fn_FindData();
 		                        $("#" + modalName.id).modal('hide');
 		                        messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
+		                        if (typeof fn_loadTodayAsq === 'function') fn_loadTodayAsq();
 		                    });
 		                } else {
 		                    fn_FindData();
 		                    $("#" + modalName.id).modal('hide');
 		                    messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
+		                    if (typeof fn_loadTodayAsq === 'function') fn_loadTodayAsq();
 		                }
 		            },
 		            error: function(xhr, status, error) {
