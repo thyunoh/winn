@@ -1429,7 +1429,7 @@ async function handleFileSelection(event) {
 	    	                        upd_ip: '127.0.0.1',
 	    	                    }))
 	    	                    .filter((item) => {
-	    	                    	// return item.lineval && !specode.some(word => item.lineval.includes(word)); 안되게 로직이 되어있음 원래  
+	    	                    	// return item.lineval && !specode.some(word => item.lineval.includes(word)); 안되게 로직이 되어있음 원래  20260312일  
 	    	                        if (!item.lineval) return false;
 	    	                        let matchedCode = specode.find(word => item.lineval.includes(word));
 	    	                        if (matchedCode) {

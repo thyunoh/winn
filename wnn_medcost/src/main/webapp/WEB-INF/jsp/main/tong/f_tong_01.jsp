@@ -22,8 +22,12 @@
   <div class="container_tong">
     <h2>주요 진료지표</h2>
     <div class="filter-box">
-      <span for="endMonth">청구년월</span>
-      <input type="month" id="endMonth" value="2025-03">
+      <span>청구년월</span>
+      <div style="display:inline-flex; gap:2px;">
+        <select id="endYear" class="custom-select" style="width:95px; font-size:13px; height:32px;"></select>
+        <select id="endMonthSel" class="custom-select" style="width:78px; font-size:13px; height:32px;"></select>
+      </div>
+      <input type="hidden" id="endMonth" value="">
  	   <span for="medType">진료</span>
 	   <div style="width: 90px;">
 			<select class="custom-select" id="medType" style= "font-size:14px ;">
@@ -219,6 +223,33 @@
 </body>
 </html>
 <script>
+  // 년월 콤보 초기화
+  (function() {
+    var now = new Date();
+    var curYear = now.getFullYear();
+    var curMonth = now.getMonth() + 1;
+    var selY = document.getElementById('endYear');
+    var selM = document.getElementById('endMonthSel');
+    for (var y = curYear - 5; y <= curYear + 1; y++) {
+      var o = document.createElement('option');
+      o.value = y; o.text = y + '년';
+      if (y === curYear) o.selected = true;
+      selY.appendChild(o);
+    }
+    for (var m = 1; m <= 12; m++) {
+      var o = document.createElement('option');
+      o.value = ('0'+m).slice(-2); o.text = ('0'+m).slice(-2) + '월';
+      if (m === curMonth) o.selected = true;
+      selM.appendChild(o);
+    }
+    selY.onchange = syncEndMonth;
+    selM.onchange = syncEndMonth;
+    syncEndMonth();
+    function syncEndMonth() {
+      document.getElementById('endMonth').value = selY.value + '-' + selM.value;
+    }
+  })();
+
   let chart;
 
   function numberWithCommas(x) {

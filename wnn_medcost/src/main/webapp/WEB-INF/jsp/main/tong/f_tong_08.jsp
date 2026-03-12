@@ -23,13 +23,19 @@
   <div class="container_tong">
     <h2>정액환자 약제비율(비청구분)</h2>
     <div class="filter-box">
-		<span for="startMonth">시작년월</span>
-		<input type="month" id="startMonth" value="2025-01" 
-		       style="width: 120px; font-size: 13px; padding: 3px; text-align: center;">
-		<span></span>
-		<span for="endMonth">종료년월</span>
-		<input type="month" id="endMonth" value="2025-03" 
-		       style="width: 120px; font-size: 13px; padding: 3px; text-align: center;">
+		<span>시작년월</span>
+		<div style="display:inline-flex; gap:2px;">
+		  <select id="startYear" class="custom-select" style="width:95px; font-size:13px; height:32px;"></select>
+		  <select id="startMonthSel" class="custom-select" style="width:78px; font-size:13px; height:32px;"></select>
+		</div>
+		<span>~</span>
+		<span>종료년월</span>
+		<div style="display:inline-flex; gap:2px;">
+		  <select id="endYear" class="custom-select" style="width:95px; font-size:13px; height:32px;"></select>
+		  <select id="endMonthSel" class="custom-select" style="width:78px; font-size:13px; height:32px;"></select>
+		</div>
+		<input type="hidden" id="startMonth" value="">
+		<input type="hidden" id="endMonth" value="">
 	   <span for="inoutType">구분</span>
 	   <div style="width: 80px;">
 			<select class="custom-select" id="inoutType" style= "font-size:13px ;">
@@ -94,6 +100,43 @@
 </body>
 </html>
 <script>
+  // 년월 콤보 초기화
+  (function() {
+    var now = new Date();
+    var curYear = now.getFullYear();
+    var curMonth = now.getMonth() + 1;
+    var yearIds = ['startYear','endYear'];
+    var monthIds = ['startMonthSel','endMonthSel'];
+    var hiddenIds = ['startMonth','endMonth'];
+    var defaultMonths = [1, curMonth]; // 시작: 1월, 종료: 현재월
+    for (var k = 0; k < yearIds.length; k++) {
+      var selY = document.getElementById(yearIds[k]);
+      var selM = document.getElementById(monthIds[k]);
+      for (var y = curYear - 5; y <= curYear + 1; y++) {
+        var o = document.createElement('option');
+        o.value = y; o.text = y + '년';
+        if (y === curYear) o.selected = true;
+        selY.appendChild(o);
+      }
+      for (var m = 1; m <= 12; m++) {
+        var o = document.createElement('option');
+        o.value = ('0'+m).slice(-2); o.text = ('0'+m).slice(-2) + '월';
+        if (m === defaultMonths[k]) o.selected = true;
+        selM.appendChild(o);
+      }
+      selY.onchange = syncMonthCombos;
+      selM.onchange = syncMonthCombos;
+    }
+    syncMonthCombos();
+    function syncMonthCombos() {
+      for (var i = 0; i < yearIds.length; i++) {
+        var yv = document.getElementById(yearIds[i]).value;
+        var mv = document.getElementById(monthIds[i]).value;
+        document.getElementById(hiddenIds[i]).value = yv + '-' + mv;
+      }
+    }
+  })();
+
     let chart;
  // ✅ 3자리마다 콤마 표시 함수 (한 번만 정의)
 	  function numberWithCommas(x) {

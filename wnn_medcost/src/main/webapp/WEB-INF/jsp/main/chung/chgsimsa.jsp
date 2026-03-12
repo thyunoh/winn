@@ -50,8 +50,10 @@
                   <div class="card-body" id="ch_inputZone" style="padding-top: 0.25rem; padding-bottom: 0.20rem;">
                     <div class="form-group row mb-0">
                       <label for="Month" class="col-1 col-sm-1 col-form-label text-left">청구년월</label>
-                      <div class="col-1 col-lg-1">
-                        <input id="Month" name="Month" value='2025-02' style="font-size: 16px" type="text" class="form-control" required>
+                      <div class="col-2 col-lg-2 d-flex">
+                        <select id="selYear" name="selYear" class="custom-select mr-1" style="height: 35px; font-size: 16px;" onchange="fn_setMonth()"></select>
+                        <select id="selMonth" name="selMonth" class="custom-select" style="height: 35px; font-size: 16px; width: 80px;" onchange="fn_setMonth()"></select>
+                        <input id="Month" name="Month" type="hidden" value="" required>
                       </div>
                       <label for="cformNo" class="col-1 col-sm-1 col-form-label text-left">서식구분</label>
                       <div class="col-2 col-lg-2">
@@ -153,7 +155,7 @@
 		// 조회조건이 있으면 설정하면됨 / 조건 없으면 막으면 됨
 		// 글자수조건 있는건 1개만 설정가능 chk: true 아니면 모두 flase
 		// 조회조건은 필요한 만큼 추가사용 하면됨.
-		findValues.push({ id: "dataYm", val: "2025-02",  chk: true  });
+		findValues.push({ id: "dataYm", val: (function(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); })(),  chk: true  });
 		//Form마다 조회 조건 변경 종료
 		
 		// 초기값 설정
@@ -173,8 +175,44 @@
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting End -->
 		<!-- ============================================================== -->
-		var format_convert = ['Month'] ; //날자에서 '-' '/' 제외설정   
-		
+		var format_convert = ['Month'] ; //날자에서 '-' '/' 제외설정
+
+		// 년월 콤보박스 초기화
+		(function() {
+			var now = new Date();
+			var curYear = now.getFullYear();
+			var curMonth = now.getMonth() + 1;
+			var selYear = document.getElementById('selYear');
+			var selMonth = document.getElementById('selMonth');
+			// 년도: 현재년도 기준 -5 ~ +1
+			for (var y = curYear - 5; y <= curYear + 1; y++) {
+				var opt = document.createElement('option');
+				opt.value = y;
+				opt.text = y + '년';
+				if (y === curYear) opt.selected = true;
+				selYear.appendChild(opt);
+			}
+			// 월: 01 ~ 12
+			for (var m = 1; m <= 12; m++) {
+				var opt = document.createElement('option');
+				opt.value = ('0' + m).slice(-2);
+				opt.text = ('0' + m).slice(-2) + '월';
+				if (m === curMonth) opt.selected = true;
+				selMonth.appendChild(opt);
+			}
+			fn_setMonth();
+		})();
+		function fn_setMonth() {
+			var y = document.getElementById('selYear').value;
+			var m = document.getElementById('selMonth').value;
+			document.getElementById('Month').value = y + '-' + m;
+			// findValues 동기화
+			if (typeof findValues !== 'undefined') {
+				var idx = findValues.findIndex(function(item) { return item.id === 'dataYm'; });
+				if (idx !== -1) findValues[idx].val = y + '-' + m;
+			}
+		}
+
 		<!-- ============================================================== -->
 		<!-- Table Setting Start -->
 		<!-- ============================================================== -->

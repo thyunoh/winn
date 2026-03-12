@@ -30,6 +30,16 @@
     height: calc(100vh - 60px) !important;
     background-color: white !important;
 }
+.nav-left-sidebar .submenu .nav-link {
+    white-space: normal !important;
+    word-break: keep-all;
+    line-height: 1.2;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+}
+.dashboard-content {
+    padding: 10px 10px 60px 10px !important;
+}
 .nav-left-sidebar .fixed-sidebar-info-box {
     position: sticky;
     bottom: 0;
