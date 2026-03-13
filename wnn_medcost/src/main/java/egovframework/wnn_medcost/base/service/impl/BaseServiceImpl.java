@@ -194,6 +194,11 @@ public class BaseServiceImpl implements BaseService {
 	}
 
 	@Override
+	public List<SamverDTO> getDistinctSamver() throws Exception {
+		return mapper.getDistinctSamver();
+	}
+
+	@Override
 	public List<YakgaCdDTO> getYakgaCdList(YakgaCdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.getYakgaCdList(dto);

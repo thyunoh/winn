@@ -649,7 +649,13 @@
            AND SEQ     = #{seq}
            AND ACTION_YN = 'Y'
     ]]>
-    </select>  
+    </select>
+    <select id="getDistinctSamver" resultType="SamverDTO"><![CDATA[
+      SELECT DISTINCT SAMVER
+        FROM TBL_SAMFVER_MST
+       ORDER BY SAMVER
+    ]]>
+    </select>
 	<select id="getYakgaCdList" parameterType="YakgaCdDTO"  resultType="YakgaCdDTO"><![CDATA[
       SELECT FEE_CODE ,
  		     START_DT ,

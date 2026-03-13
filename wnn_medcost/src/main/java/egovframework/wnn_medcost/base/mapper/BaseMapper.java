@@ -43,11 +43,12 @@ public interface BaseMapper {
 	boolean           updateWvalue(WvalDTO dto)       throws Exception; 
 	boolean           copWvalueList(WvalDTO dto)      throws Exception;
 	String            WvalueDupChk(WvalDTO dto)       throws Exception; 	
-	//샘파일 
-	List<SamverDTO>   getsamverCdlist(SamverDTO dto)  throws Exception; 
-	boolean           insertsamverCd(SamverDTO dto)   throws Exception; 
-	boolean           updatesamverCd(SamverDTO dto)   throws Exception; 
-	String            samverCdDupChk(SamverDTO dto)   throws Exception; 
+	//샘파일
+	List<SamverDTO>   getsamverCdlist(SamverDTO dto)  throws Exception;
+	boolean           insertsamverCd(SamverDTO dto)   throws Exception;
+	boolean           updatesamverCd(SamverDTO dto)   throws Exception;
+	String            samverCdDupChk(SamverDTO dto)   throws Exception;
+	List<SamverDTO>   getDistinctSamver()             throws Exception;
 	
 	List<YakgaCdDTO>  getYakgaCdList(YakgaCdDTO dto)  throws Exception;
 	boolean           updateYakCdMst(YakgaCdDTO dto)  throws Exception; 

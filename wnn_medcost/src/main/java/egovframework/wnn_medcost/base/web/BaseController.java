@@ -878,7 +878,102 @@ public class BaseController {
             
         }
 	}
-	//약가관리 
+	//샘파일 버젼VER1.0 load
+	@RequestMapping(value="/samvercdV1.do")
+    public String samvercdV1(HttpServletRequest request, ModelMap model) {
+        cookie_value = ClientInfo.getCookie(request);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/base/samvercdV1";
+			} else {
+				return "";
+			}
+		} catch(Exception ex) {
+			return "";
+		}
+    }
+	//SAMVER DISTINCT 목록 조회
+	@RequestMapping(value="/samverDistinctList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> samverDistinctList(HttpServletRequest request) throws Exception {
+		cookie_value = ClientInfo.getCookie(request);
+		Map<String, Object> response = new HashMap<>();
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				List<SamverDTO> list = svc.getDistinctSamver();
+				response.put("data", list);
+				return response;
+			} else {
+				return null;
+			}
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	//샘파일 버전 복사
+	@RequestMapping(value="/samverCdCopyVersion.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseEntity<Map<String, Object>> samverCdCopyVersion(@RequestBody Map<String, Object> param, HttpServletRequest request) {
+		System.out.println("버전복사 시작");
+		Map<String, Object> result = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			if (cookie_value.get("s_hospid").trim() == null ||
+				cookie_value.get("s_hospid").trim().equals("")) {
+				result.put("result", "FAIL");
+				result.put("message", "로그인 정보가 없습니다.");
+				return ResponseEntity.status(401).body(result);
+			}
+
+			String srcVersion = (String) param.get("srcVersion");
+			String tgtVersion = (String) param.get("tgtVersion");
+			List<String> samverList = (List<String>) param.get("samverList");
+			String regUser = (String) param.get("regUser");
+			String regIp = (String) param.get("regIp");
+
+			System.out.println("원본VERSION: " + srcVersion + " → 대상VERSION: " + tgtVersion);
+
+			int copyCount = 0;
+			for (String samver : samverList) {
+				// 원본 데이터 조회
+				SamverDTO searchDto = new SamverDTO();
+				searchDto.setSamver(samver);
+				searchDto.setVersion(srcVersion);
+				searchDto.setProp1(samver);
+				List<SamverDTO> srcList = svc.getsamverCdlist(searchDto);
+
+				for (SamverDTO srcDto : srcList) {
+					if (!samver.equals(srcDto.getSamver())) continue;
+					// 대상 버전으로 변경하여 입력
+					srcDto.setVersion(tgtVersion);
+					srcDto.setRegUser(regUser);
+					srcDto.setRegIp(regIp);
+					srcDto.setUpdUser(regUser);
+					srcDto.setUpdIp(regIp);
+
+					String dupchk = svc.samverCdDupChk(srcDto);
+					if (!"Y".equals(dupchk)) {
+						svc.insertsamverCd(srcDto);
+						copyCount++;
+					}
+				}
+			}
+
+			result.put("result", "OK");
+			result.put("count", copyCount);
+			System.out.println("버전복사 완료: " + copyCount + "건");
+			return ResponseEntity.ok(result);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			result.put("result", "FAIL");
+			result.put("message", e.getMessage());
+			return ResponseEntity.status(500).body(result);
+		}
+	}
+	//약가관리
 	@RequestMapping(value="/yakgacd.do")
     public String yakgacd(HttpServletRequest request, ModelMap model) {
 

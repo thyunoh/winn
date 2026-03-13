@@ -43,9 +43,10 @@ public interface BaseService {
 	boolean           copWvalueList(WvalDTO dto)    throws Exception;
 //samfile 	
 	List<SamverDTO>   getsamverCdlist(SamverDTO dto) throws Exception;
-	boolean           insertsamverCd(SamverDTO dto)  throws Exception; 
-	boolean           updatesamverCd(SamverDTO dto)  throws Exception; 
-	String            samverCdDupChk(SamverDTO dto)  throws Exception; 	
+	boolean           insertsamverCd(SamverDTO dto)  throws Exception;
+	boolean           updatesamverCd(SamverDTO dto)  throws Exception;
+	String            samverCdDupChk(SamverDTO dto)  throws Exception;
+	List<SamverDTO>   getDistinctSamver()            throws Exception;
  //약가  	
 	List<YakgaCdDTO>  getYakgaCdList(YakgaCdDTO dto)  throws Exception;
 	boolean           updateYakCdMst(YakgaCdDTO dto)  throws Exception;	

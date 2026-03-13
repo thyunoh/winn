@@ -131,8 +131,8 @@
         table.dataTable.hover tbody tr.selected:hover > *,
         table.dataTable.display tbody tr.selected > *,
         table.dataTable.order-column tbody tr.selected > * {
-            background-color: #cde0f0 !important;
-            color: #111 !important;
+            background-color: #1a56a0 !important;
+            color: #ffffff !important;
             box-shadow: none !important;
         }
 

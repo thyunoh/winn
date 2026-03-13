@@ -217,6 +217,9 @@
                                                 <a class="nav-item nav-link"  href="/base/samvercd.do">샘파일 버전</a>
                                             </li>
                                             <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/base/samvercdV1.do">샘파일 버젼VER1.0</a>
+                                            </li>
+                                            <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/wvalcd.do">적정성지표</a>
                                             </li>
                                         </ul>
