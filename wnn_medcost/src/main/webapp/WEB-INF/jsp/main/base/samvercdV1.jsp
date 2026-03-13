@@ -26,7 +26,8 @@
 							<!-- SAMVER 체크박스 (넓게) -->
 							<div style="flex:1; min-width:0;">
 								<label class="mb-0" style="font-size:12px;"><b>SAMVER</b></label>
-								<div id="srchSamverArea" style="height:120px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px; display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start;">
+								<div id="srchSamverArea" style="height:120px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px; 
+								         display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start;">
 								</div>
 							</div>
 							<!-- VERSION + TBLINFO 세로 배치 (우측 끝) -->
@@ -55,7 +56,7 @@
 								</div>
 								<div class="btn-group" style="white-space:nowrap;">
 									<button class="btn btn-sm btn-outline-dark btn-insert" data-toggle="tooltip"
-										data-placement="top" title="신규 Data 입력" onClick="cd_modal_Open('I')">
+										data-placement="top" title="선택행 아래에 중간삽입" onClick="fn_InsertMiddle()">
 										입력 <i class="far fa-edit"></i>
 									</button>
 									<button class="btn btn-sm btn-outline-dark btn-update" data-toggle="tooltip"
@@ -65,6 +66,10 @@
 									<button class="btn btn-sm btn-outline-dark btn-delete" data-toggle="tooltip"
 										data-placement="top" title="선택 Data 삭제" onClick="cd_modal_Open('D')">
 										삭제 <i class="far fa-trash-alt"></i>
+									</button>
+									<button class="btn btn-sm btn-outline-primary" data-toggle="tooltip"
+										data-placement="top" title="변경사항 일괄저장" onClick="fn_BulkSave()">
+										일괄저장 <i class="fas fa-save"></i>
 									</button>
 								</div>
 							</div>
@@ -96,7 +101,7 @@
 	data-keyboard="false">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
 		role="dialog"
-		style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 70vh;">
+		style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 70vh;">
 		<div class="modal-content"
 			style="height: 70%; display: flex; flex-direction: column;">
 			<div class="modal-header bg-light">
@@ -130,7 +135,8 @@
 				<div class="form-group row">
 					<label class="col-3 col-form-label text-left">복사대상 SAMVER</label>
 					<div class="col-9">
-						<div id="samverCheckArea" style="max-height:250px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px; display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start;">
+						<div id="samverCheckArea" style="max-height:250px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px; 
+						          display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start;">
 							<!-- 체크박스가 동적으로 생성됨 -->
 						</div>
 					</div>
@@ -637,10 +643,9 @@ function initCdResultsTable() {
 		  	});
 	    }
 
-	    // 더블클릭시 수정모드
-	    $('#' + cd_tableName.id + ' tbody').on('dblclick', 'tr', function () {
-	        let rowData = cd_dataTable.row(this).data();
-	        cd_modal_Open('U', rowData);
+	    // 더블클릭시 인라인 편집 (셀 단위)
+	    $('#' + cd_tableName.id + ' tbody').on('dblclick', 'td', function () {
+	        fn_InlineEdit(this);
 	    });
 
 	    // datatable label→span
@@ -998,6 +1003,7 @@ function cd_validateForm() {
 
 function cd_newuptData() {
 	let cd_newData = {
+		samver:      $('#samver').val(),
 		tblinfo:     $('#tblinfo').val(),
 		version:     $('#version').val(),
 		subCodeNm:   $('#subCodeNm').val(),
@@ -1007,8 +1013,13 @@ function cd_newuptData() {
 		startPos:    $('#startPos').val(),
 		endPos:      $('#endPos').val(),
 		dataType:    $('#dataType').val(),
+		decimalPos:  $('#decimalPos').val(),
+		dataprocYn:  $('input[name="dataprocYn"]:checked').val() || '',
 		dbColnm:     $('#dbColnm').val(),
-		colSize:     $('#colSize').val()
+		dbComcolnm:  $('#dbComcolnm').val(),
+		colSize:     $('#colSize').val(),
+		startDt_one: $('#startDt_one').val(),
+		endDt_one:   $('#endDt_one').val()
 	    };
     return cd_newData;
 }
@@ -1362,3 +1373,423 @@ document.addEventListener("DOMContentLoaded", function() {
 <!-- ============================================================== -->
 <!-- 기타 정보 End -->
 <!-- ============================================================== -->
+
+<!-- ============================================================== -->
+<!-- 인라인 편집 / 자동재계산 / 중간삽입 / 일괄저장 Start -->
+<!-- ============================================================== -->
+<script type="text/javascript">
+// 편집 가능 컬럼 인덱스 (data 필드명 매핑)
+var editableColumns = {
+	3:  'seq',
+	5:  'itemNm',
+	6:  'sortSeq',
+	7:  'startPos',
+	8:  'endPos',
+	9:  'dataType',
+	10: 'decimalPos',
+	11: 'dataprocYn',
+	12: 'dbColnm',
+	13: 'colSize'
+};
+
+// ─── 변경 추적 (원본키 기반) ───
+var modifiedKeys = {};  // { "원본키": 현재데이터 }
+var newKeys = {};       // { "현재키": true }
+var _originalKeys = {}; // 수정 전 원본 키 보관 { 현재키: 원본키 }
+var _insertBusy = false;
+
+function _rowKey(rd) {
+	return (rd.samver||'') + '|' + (rd.tblinfo||'') + '|' + (rd.version||'') + '|' + (rd.seq||'');
+}
+
+// ─── 전체 데이터를 배열로 꺼내서 작업하는 유틸 ───
+function _getAllData() {
+	var arr = [];
+	cd_dataTable.rows().every(function() {
+		arr.push(JSON.parse(JSON.stringify(this.data())));
+	});
+	return arr;
+}
+
+// 배열을 테이블에 다시 넣기
+function _reloadTable(dataArr, selectSeq, selectSamver) {
+	cd_dataTable.clear();
+	cd_dataTable.rows.add(dataArr);
+	cd_dataTable.order([0, 'asc'], [3, 'asc']).draw(false);
+
+	// 지정 행 선택
+	if (selectSeq !== undefined && selectSamver) {
+		setTimeout(function() {
+			cd_dataTable.rows().every(function() {
+				var rd = this.data();
+				if (rd.samver === selectSamver && String(rd.seq) === String(selectSeq)) {
+					var node = this.node();
+					if (node) {
+						cd_dataTable.rows('.selected').nodes().each(function(r) { r.classList.remove('selected'); });
+						node.classList.add('selected');
+						node.scrollIntoView({ block: 'center' });
+						cdedit_Data = rd;
+					}
+				}
+			});
+			fn_ReapplyColors();
+		}, 50);
+	} else {
+		setTimeout(fn_ReapplyColors, 50);
+	}
+}
+
+// 같은 그룹(samver+tblinfo+version) 행만 seq순 정렬 추출
+function _getGroup(dataArr, samver, tblinfo, version) {
+	return dataArr
+		.filter(function(r) { return r.samver === samver && r.tblinfo === tblinfo && r.version === version; })
+		.sort(function(a, b) { return (parseInt(a.seq)||0) - (parseInt(b.seq)||0); });
+}
+
+// 그룹 내 startPos/endPos 연쇄 재계산 (fromSeq 이후)
+function _recalcGroup(dataArr, samver, tblinfo, version, fromSeq) {
+	var group = _getGroup(dataArr, samver, tblinfo, version);
+
+	// fromSeq 직전 행의 endPos 찾기
+	var prevEndPos = 0;
+	for (var i = 0; i < group.length; i++) {
+		var seq = parseInt(group[i].seq) || 0;
+		if (seq < fromSeq) {
+			prevEndPos = parseInt(group[i].endPos) || 0;
+		}
+	}
+
+	// fromSeq부터 연쇄 재계산
+	for (var i = 0; i < group.length; i++) {
+		var seq = parseInt(group[i].seq) || 0;
+		if (seq < fromSeq) continue;
+
+		var cs = parseInt(group[i].colSize) || 1;
+		group[i].startPos = String(prevEndPos + 1);
+		group[i].endPos = String(prevEndPos + cs);
+		prevEndPos = parseInt(group[i].endPos);
+
+		// 변경 추적
+		var k = _rowKey(group[i]);
+		if (!newKeys[k]) modifiedKeys[k] = true;
+	}
+
+	// 변경된 그룹 데이터를 원본 배열에 반영
+	for (var i = 0; i < dataArr.length; i++) {
+		if (dataArr[i].samver !== samver || dataArr[i].tblinfo !== tblinfo || dataArr[i].version !== version) continue;
+		for (var j = 0; j < group.length; j++) {
+			if (dataArr[i].seq === group[j].seq) {
+				dataArr[i] = group[j];
+				break;
+			}
+		}
+	}
+}
+
+// ─── 인라인 셀 편집 ───
+function fn_InlineEdit(td) {
+	var cell = cd_dataTable.cell(td);
+	if (!cell || !cell.node()) return;
+
+	var colIdx = cell.index().column;
+	var fieldName = editableColumns[colIdx];
+	if (!fieldName) {
+		var rowData = cd_dataTable.row($(td).closest('tr')).data();
+		if (rowData) { cdedit_Data = rowData; cd_modal_Open('U'); }
+		return;
+	}
+
+	if ($(td).find('input, select').length > 0) return;
+
+	var currentVal = cell.data() || '';
+	var rowIdx = cell.index().row;
+	var $td = $(td);
+	var tdWidth = $td.width();
+
+	if (fieldName === 'dataprocYn') {
+		var selectHtml = '<select class="inline-edit-input" style="width:' + Math.max(tdWidth, 50) + 'px; padding:0; font-size:12px; text-align:center;">' +
+			'<option value="Y"' + (currentVal === 'Y' ? ' selected' : '') + '>Y</option>' +
+			'<option value="N"' + (currentVal === 'N' ? ' selected' : '') + '>N</option></select>';
+		$td.html(selectHtml);
+		var $sel = $td.find('select');
+		$sel.focus();
+		var applied = false;
+		$sel.on('change blur', function() {
+			if (applied) return; applied = true;
+			fn_ApplyCellValue(rowIdx, colIdx, fieldName, $(this).val());
+		});
+		return;
+	}
+
+	var inputHtml = '<input type="text" class="inline-edit-input" value="' + currentVal +
+		'" style="width:' + Math.max(tdWidth, 40) + 'px; padding:0 2px; font-size:12px; text-align:' +
+		(colIdx >= 7 && colIdx <= 8 ? 'right' : 'center') + ';">';
+	$td.html(inputHtml);
+	var $input = $td.find('input');
+	$input.focus().select();
+
+	var applied = false;
+	$input.on('keydown', function(e) {
+		if (e.key === 'Enter') { e.preventDefault(); $(this).blur(); }
+		else if (e.key === 'Escape') { cell.data(currentVal).draw(false); return; }
+		else if (e.key === 'Tab') { e.preventDefault(); $(this).blur(); fn_MoveNextEditableCell(rowIdx, colIdx, e.shiftKey); }
+	});
+	$input.on('blur', function() {
+		if (applied) return; applied = true;
+		fn_ApplyCellValue(rowIdx, colIdx, fieldName, $(this).val());
+	});
+}
+
+// ─── 셀 값 적용 + 자동재계산 (배열 재구성 방식) ───
+function fn_ApplyCellValue(rowIdx, colIdx, fieldName, newVal) {
+	var dataArr = _getAllData();
+	var rowData = cd_dataTable.row(rowIdx).data();
+	if (!rowData) return;
+
+	// 배열에서 해당 행 찾기
+	var targetKey = _rowKey(rowData);
+	var target = null;
+	for (var i = 0; i < dataArr.length; i++) {
+		if (_rowKey(dataArr[i]) === targetKey) { target = dataArr[i]; break; }
+	}
+	if (!target) return;
+
+	target[fieldName] = newVal;
+
+	// startPos/endPos/colSize 변경시 현재 행 계산 + 이후 행 연쇄 재계산
+	if (fieldName === 'startPos' || fieldName === 'endPos' || fieldName === 'colSize') {
+		var sp = parseInt(target.startPos) || 0;
+		var ep = parseInt(target.endPos) || 0;
+		var cs = parseInt(target.colSize) || 0;
+
+		if (fieldName === 'startPos') {
+			if (cs > 0) target.endPos = String(sp + cs - 1);
+		} else if (fieldName === 'endPos') {
+			target.colSize = String(ep - sp + 1);
+		} else if (fieldName === 'colSize') {
+			target.endPos = String(sp + (parseInt(target.colSize)||1) - 1);
+		}
+
+		// 키 추적
+		var k = _rowKey(target);
+		if (!newKeys[k]) modifiedKeys[k] = true;
+
+		// 이후 행 연쇄 재계산
+		var nextSeq = (parseInt(target.seq) || 0) + 1;
+		_recalcGroup(dataArr, target.samver, target.tblinfo, target.version, nextSeq);
+	} else {
+		var k = _rowKey(target);
+		if (!newKeys[k]) modifiedKeys[k] = true;
+	}
+
+	_reloadTable(dataArr, target.seq, target.samver);
+}
+
+// ─── 다음 편집가능 셀로 이동 ───
+function fn_MoveNextEditableCell(rowIdx, colIdx, isShift) {
+	var editableCols = Object.keys(editableColumns).map(Number).sort(function(a,b){ return a-b; });
+	var pos = editableCols.indexOf(colIdx);
+	if (!isShift) {
+		if (pos < editableCols.length - 1) {
+			var td = cd_dataTable.cell(rowIdx, editableCols[pos + 1]).node();
+			if (td) setTimeout(function(){ fn_InlineEdit(td); }, 100);
+		}
+	} else {
+		if (pos > 0) {
+			var td = cd_dataTable.cell(rowIdx, editableCols[pos - 1]).node();
+			if (td) setTimeout(function(){ fn_InlineEdit(td); }, 100);
+		}
+	}
+}
+
+// ─── 중간삽입 (배열 재구성 방식) ───
+function fn_InsertMiddle() {
+	if (_insertBusy) return;
+	_insertBusy = true;
+	setTimeout(function() { _insertBusy = false; }, 500);
+
+	if (!cd_dataTable || cd_dataTable.rows().count() === 0) {
+		Swal.fire({title:'알림', text:'먼저 데이터를 조회해주세요.', icon:'warning',
+			timer:2000, timerProgressBar:true, showConfirmButton:false, customClass:{popup:'small-swal'}});
+		return;
+	}
+
+	var selectedRow = cd_dataTable.rows('.selected');
+	if (selectedRow.count() === 0) {
+		Swal.fire({title:'알림', text:'삽입 위치의 행을 먼저 선택해주세요.', icon:'warning',
+			timer:2000, timerProgressBar:true, showConfirmButton:false, customClass:{popup:'small-swal'}});
+		return;
+	}
+
+	// 1) 전체 데이터 배열로 꺼내기
+	var dataArr = _getAllData();
+	var selData = JSON.parse(JSON.stringify(selectedRow.data()[0]));
+	var selSeq = parseInt(selData.seq) || 0;
+	var selEndPos = parseInt(selData.endPos) || 0;
+	var selSortSeq = parseInt(selData.sortSeq) || 0;
+	var samver = selData.samver, tblinfo = selData.tblinfo, version = selData.version;
+
+	// 2) 같은 그룹에서 selSeq보다 큰 행의 seq, sortSeq +1
+	for (var i = 0; i < dataArr.length; i++) {
+		var r = dataArr[i];
+		if (r.samver === samver && r.tblinfo === tblinfo && r.version === version) {
+			var rSeq = parseInt(r.seq) || 0;
+			if (rSeq > selSeq) {
+				// 키 추적 이전
+				var oldKey = _rowKey(r);
+				r.seq = String(rSeq + 1);
+				r.sortSeq = String((parseInt(r.sortSeq)||0) + 1);
+				var nk = _rowKey(r);
+				if (newKeys[oldKey]) { delete newKeys[oldKey]; newKeys[nk] = true; }
+				else { if (modifiedKeys[oldKey]) delete modifiedKeys[oldKey]; modifiedKeys[nk] = true; }
+			}
+		}
+	}
+
+	// 3) 새 행 생성
+	var newSeq = selSeq + 1;
+	var newRowData = {
+		samver:      samver,
+		subCodeNm:   selData.subCodeNm || '',
+		tblinfo:     tblinfo,
+		seq:         String(newSeq),
+		version:     version,
+		itemNm:      '',
+		sortSeq:     String(selSortSeq + 1),
+		startPos:    String(selEndPos + 1),
+		endPos:      String(selEndPos + 1),
+		dataType:    'VARCHAR',
+		decimalPos:  '0',
+		dataprocYn:  'Y',
+		dbColnm:     '',
+		colSize:     '1',
+		dbComcolnm:  '',
+		startDt_one: selData.startDt_one || '',
+		endDt_one:   selData.endDt_one || ''
+	};
+	var newKey = _rowKey(newRowData);
+	newKeys[newKey] = true;
+	dataArr.push(newRowData);
+
+	// 4) 새 행 이후 startPos/endPos 연쇄 재계산
+	_recalcGroup(dataArr, samver, tblinfo, version, newSeq + 1);
+
+	// 5) 테이블 재구성
+	_reloadTable(dataArr, newSeq, samver);
+
+	Swal.fire({title:'알림', text:'행이 추가되었습니다.', icon:'success',
+		timer:1200, timerProgressBar:true, showConfirmButton:false, customClass:{popup:'small-swal'}});
+}
+
+// ─── 행 색상 표시 ───
+function fn_ReapplyColors() {
+	cd_dataTable.rows().every(function() {
+		var rd = this.data();
+		var node = this.node();
+		if (!node || !rd) return;
+		var key = _rowKey(rd);
+		if (newKeys[key]) {
+			$(node).css('background-color', '#d4edda');
+		} else if (modifiedKeys[key]) {
+			$(node).css('background-color', '#fff3cd');
+		}
+	});
+}
+
+// ─── 일괄저장 ───
+function fn_BulkSave() {
+	var hasModified = Object.keys(modifiedKeys).length > 0;
+	var hasNew = Object.keys(newKeys).length > 0;
+
+	if (!hasModified && !hasNew) {
+		Swal.fire({title:'알림', text:'변경된 데이터가 없습니다.', icon:'info',
+			timer:2000, timerProgressBar:true, showConfirmButton:false, customClass:{popup:'small-swal'}});
+		return;
+	}
+
+	var updateList = [];
+	var insertList = [];
+	var userId = getCookie("s_userid") || '';
+	var connIp = getCookie("s_connip") || '';
+
+	cd_dataTable.rows().every(function() {
+		var rd = this.data();
+		if (!rd) return;
+		var key = _rowKey(rd);
+
+		if (newKeys[key]) {
+			var ins = JSON.parse(JSON.stringify(rd));
+			ins.regUser = userId;
+			ins.regIp = connIp;
+			insertList.push(ins);
+		} else if (modifiedKeys[key]) {
+			var upd = JSON.parse(JSON.stringify(rd));
+			upd.updUser = userId;
+			upd.updIp = connIp;
+			upd.keysamver  = upd.samver;
+			upd.keytblinfo = upd.tblinfo;
+			upd.keyversion = upd.version;
+			upd.keyseq     = upd.seq;
+			updateList.push(upd);
+		}
+	});
+
+	Swal.fire({
+		title: '일괄저장 확인',
+		html: '<b>수정:</b> ' + updateList.length + '건, <b>신규:</b> ' + insertList.length + '건<br>저장하시겠습니까?',
+		icon: 'question', showCancelButton: true, confirmButtonText: '예', cancelButtonText: '아니오',
+		customClass: { popup: 'small-swal' }
+	}).then(function(result) {
+		if (result.isConfirmed) fn_ExecBulkSave(updateList, insertList);
+	});
+}
+
+function fn_ExecBulkSave(updateList, insertList) {
+	var promises = [];
+	if (updateList.length > 0) {
+		promises.push($.ajax({ type:"POST", url:"/base/samverCdUpdate.do",
+			data:JSON.stringify(updateList), contentType:"application/json", dataType:"json" }));
+	}
+	if (insertList.length > 0) {
+		promises.push($.ajax({ type:"POST", url:"/base/samverCdInsert.do",
+			data:JSON.stringify(insertList), contentType:"application/json", dataType:"json" }));
+	}
+	$.when.apply($, promises).done(function() {
+		Swal.fire({ title:'처리확인', text:'일괄저장이 정상처리 되었습니다.', icon:'success',
+			timer:2000, timerProgressBar:true, showConfirmButton:false, customClass:{popup:'small-swal'} });
+		modifiedKeys = {};
+		newKeys = {};
+		fn_Search();
+	}).fail(function() {
+		Swal.fire({title:'오류', text:'저장 처리 중 오류가 발생했습니다.', icon:'error',
+			confirmButtonText:'확인', customClass:{popup:'small-swal'}});
+	});
+}
+
+// DataTable draw 이벤트에 색상 재적용
+var _drawBound = false;
+var checkInterval = setInterval(function() {
+	if (cd_dataTable && !_drawBound) {
+		_drawBound = true;
+		cd_dataTable.on('draw', function() { fn_ReapplyColors(); });
+		clearInterval(checkInterval);
+	}
+}, 500);
+</script>
+<!-- ============================================================== -->
+<!-- 인라인 편집 / 자동재계산 / 중간삽입 / 일괄저장 End -->
+<!-- ============================================================== -->
+
+<style>
+.inline-edit-input {
+	border: 1px solid #80bdff;
+	border-radius: 2px;
+	outline: none;
+	height: 22px;
+	box-sizing: border-box;
+}
+.inline-edit-input:focus {
+	border-color: #007bff;
+	box-shadow: 0 0 3px rgba(0,123,255,0.5);
+}
+</style>
