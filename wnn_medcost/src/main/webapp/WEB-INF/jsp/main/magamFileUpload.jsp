@@ -1921,6 +1921,7 @@ function updateMonthsContainer(rawData) {
 // ========== 파일 검증 모달 관련 함수 ==========
 
 // 파일확장자/파일명 → jobssam 매핑 (SP 로직과 동일)
+// SAMFVER_MST에 SAMVER='M010.1','M020.1' 등 파일명 그대로 저장됨
 function fn_GetJobsSam(fileName) {
     var ext = fileName.split('.').pop().toUpperCase();
     var ghpExts = ['GHP','B00','B01','C00','C01','B60','B61','C60','C61'];
@@ -2213,42 +2214,23 @@ async function fn_ShowVerifyModal(verifyData) {
                     if (fallbackResp.error_code === "0" && fallbackResp.matchResult && fallbackResp.matchResult.length > 0) {
                         matchResp = fallbackResp;
                         matchFound = true;
-                        // fallback 매칭: 길이 불일치이므로 matched=false 유지, colsize만 설정
-                        var fbMatch = fallbackResp.matchResult[0];
-                        fileResult.samver  = fbMatch.SAMVER  || fbMatch.samver  || '';
-                        fileResult.tblinfo = fbMatch.TBLINFO || fbMatch.tblinfo || '';
-                        fileResult.matchVersion = fbMatch.VERSION || fbMatch.version || '';
-                        fileResult.matched = false;  // 길이 불일치
-                        fileResult.colsize = parseInt(fbMatch.COLSIZE || fbMatch.colsize || 0);
-
-                        // 컬럼 정의 조회 (오류 상세 표시용)
-                        var fbColResp = await $.ajax({
-                            url: '/main/getSamfverColumns.do',
-                            type: 'POST',
-                            contentType: 'application/json',
-                            data: JSON.stringify({
-                                samver:  fileResult.samver,
-                                tblinfo: fileResult.tblinfo,
-                                version: fileResult.matchVersion
-                            })
-                        });
-                        if (fbColResp.error_code === "0" && fbColResp.columns) {
-                            fileResult.columns = fbColResp.columns;
-                            fileResult.parsed = fn_ParseLine(lineval, fbColResp.columns);
-                        }
                     }
                 }
 
-                if (matchFound && fileResult.matched !== false) {
-                    var match = matchResp.matchResult[0];
-                    fileResult.samver  = match.SAMVER  || match.samver  || '';
-                    fileResult.tblinfo = match.TBLINFO || match.tblinfo || '';
-                    fileResult.matchVersion = match.VERSION || match.version || '';
-                    fileResult.matched = true;
-                    fileResult.colsize = parseInt(match.COLSIZE || match.colsize || 0);
+                // 매칭 결과 처리
+                if (matchFound) {
+                    var fMatch = matchResp.matchResult[0];
+                    var fMatchColsize = parseInt(fMatch.COLSIZE || fMatch.colsize || 0);
+                    var isExactSize = (fMatchColsize === valsize);
+
+                    fileResult.samver  = fMatch.SAMVER  || fMatch.samver  || '';
+                    fileResult.tblinfo = fMatch.TBLINFO || fMatch.tblinfo || '';
+                    fileResult.matchVersion = fMatch.VERSION || fMatch.version || '';
+                    fileResult.matched = isExactSize;
+                    fileResult.colsize = fMatchColsize;
 
                     // 컬럼 정의 조회
-                    var colResp = await $.ajax({
+                    var fbColResp2 = await $.ajax({
                         url: '/main/getSamfverColumns.do',
                         type: 'POST',
                         contentType: 'application/json',
@@ -2258,13 +2240,13 @@ async function fn_ShowVerifyModal(verifyData) {
                             version: fileResult.matchVersion
                         })
                     });
-
-                    if (colResp.error_code === "0" && colResp.columns) {
-                        fileResult.columns = colResp.columns;
-                        // JS에서 파싱
-                        fileResult.parsed = fn_ParseLine(lineval, colResp.columns);
+                    if (fbColResp2.error_code === "0" && fbColResp2.columns) {
+                        fileResult.columns = fbColResp2.columns;
+                        fileResult.parsed = fn_ParseLine(lineval, fbColResp2.columns);
                     }
                 }
+
+                // (매칭 결과 처리는 위에서 통합 수행됨)
             } catch(e) {
                 console.error('SAMVER 매칭 오류:', fileName, e);
             }
@@ -2273,52 +2255,76 @@ async function fn_ShowVerifyModal(verifyData) {
         }
 
         // 3) samver/version 기준 전체 SAMFVER 테이블 정의 조회
+        //    다중 samver 수집 (M-파일: M010, M020 등 각각 다른 samver 가능)
         var allTablesDef = [];
         var detectedSamver = '';
         var detectedVersion = '';
+        var samverSet = {};  // 중복 방지용
+        var samverList = []; // {samver, version} 배열
+
         for (var k = 0; k < fileResults.length; k++) {
-            if (fileResults[k].matched && fileResults[k].samver) {
-                detectedSamver  = fileResults[k].samver;
-                detectedVersion = fileResults[k].matchVersion;
-                break;
+            var kfr = fileResults[k];
+            var kSamver  = kfr.samver  || kfr.jobssam || '';
+            var kVersion = kfr.matchVersion || kfr.version || '';
+            if (kSamver && kVersion) {
+                var svKey = kSamver + '|' + kVersion;
+                if (!samverSet[svKey]) {
+                    samverSet[svKey] = true;
+                    samverList.push({ samver: kSamver, version: kVersion });
+                    // 첫번째 매칭된 것을 대표 samver로 설정
+                    if (!detectedSamver && kfr.matched) {
+                        detectedSamver  = kSamver;
+                        detectedVersion = kVersion;
+                    }
+                }
             }
         }
         // samver/version이 없으면 첫 파일의 jobssam/version 사용
         if (!detectedSamver && fileResults.length > 0) {
             detectedSamver  = fileResults[0].jobssam;
             detectedVersion = fileResults[0].version;
+            var svKey0 = detectedSamver + '|' + detectedVersion;
+            if (!samverSet[svKey0]) {
+                samverSet[svKey0] = true;
+                samverList.push({ samver: detectedSamver, version: detectedVersion });
+            }
         }
-        if (detectedSamver && detectedVersion) {
+
+        // 각 samver+version 조합별로 전체 테이블 정의 조회
+        var existingTbls = {};
+        for (var sv = 0; sv < samverList.length; sv++) {
             try {
                 var allTabResp = await $.ajax({
                     url: '/main/getSamfverAllTables.do',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ samver: detectedSamver, version: detectedVersion })
+                    data: JSON.stringify({ samver: samverList[sv].samver, version: samverList[sv].version })
                 });
                 if (allTabResp.error_code === "0" && allTabResp.allTables) {
-                    allTablesDef = allTabResp.allTables;
+                    for (var ati = 0; ati < allTabResp.allTables.length; ati++) {
+                        var atTbl = allTabResp.allTables[ati].TBLINFO || allTabResp.allTables[ati].tblinfo || '';
+                        if (!existingTbls[atTbl]) {
+                            existingTbls[atTbl] = true;
+                            allTablesDef.push(allTabResp.allTables[ati]);
+                        }
+                    }
                 }
             } catch(e) {
-                console.error('SAMFVER 전체 테이블 조회 오류:', e);
+                console.error('SAMFVER 전체 테이블 조회 오류(' + samverList[sv].samver + '):', e);
             }
         }
 
-        // 개별 파일별 samver가 다른 경우 (M-파일 등) allTablesDef에 추가
-        var existingTbls = {};
-        for (var at = 0; at < allTablesDef.length; at++) {
-            existingTbls[allTablesDef[at].TBLINFO || allTablesDef[at].tblinfo || ''] = true;
-        }
+        // 개별 파일별 tblinfo가 allTablesDef에 없는 경우 추가
         for (var kr = 0; kr < fileResults.length; kr++) {
-            var kfr = fileResults[kr];
-            if (kfr.tblinfo && !existingTbls[kfr.tblinfo] && kfr.colsize > 0) {
+            var krfr = fileResults[kr];
+            if (krfr.tblinfo && !existingTbls[krfr.tblinfo] && krfr.colsize > 0) {
                 allTablesDef.push({
-                    SAMVER:  kfr.samver,
-                    TBLINFO: kfr.tblinfo,
-                    VERSION: kfr.matchVersion || kfr.version,
-                    COLSIZE: kfr.colsize
+                    SAMVER:  krfr.samver,
+                    TBLINFO: krfr.tblinfo,
+                    VERSION: krfr.matchVersion || krfr.version,
+                    COLSIZE: krfr.colsize
                 });
-                existingTbls[kfr.tblinfo] = true;
+                existingTbls[krfr.tblinfo] = true;
             }
         }
 
@@ -2506,7 +2512,7 @@ function fn_RenderVerifyModal(fileResults, allTablesDef) {
             // 성공 카드 (추가오류 있으면 실패 표시)
             var borderColor = hasExtra ? '#f44336' : '#4caf50';
             var shadowColor = hasExtra ? 'rgba(244,67,54,.15)' : 'rgba(76,175,80,.15)';
-            cardsHtml += '<div class="verify-card" data-idx="' + fileResults.indexOf(fr) + '" ' +
+            cardsHtml += '<div class="verify-card" data-tbl="' + info.tbl + '" ' +
                 'style="width:155px; border:2px solid ' + borderColor + '; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px ' + shadowColor + ';">' +
                 '<div class="text-center p-3">' +
                 '<div style="font-size:22px; line-height:1;">' + (hasExtra ? '\u274C' : '\u2705') + '</div>' +
@@ -2528,7 +2534,7 @@ function fn_RenderVerifyModal(fileResults, allTablesDef) {
 
             if (isLengthOk) {
                 // 길이 일치 - 정상 카드 (초록)
-                cardsHtml += '<div class="verify-card" data-idx="' + fileResults.indexOf(fr) + '" ' +
+                cardsHtml += '<div class="verify-card" data-tbl="' + info.tbl + '" ' +
                     'style="width:155px; border:2px solid #4caf50; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(76,175,80,.15);">' +
                     '<div class="text-center p-3">' +
                     '<div style="font-size:22px; line-height:1;">\u2705</div>' +
@@ -2543,7 +2549,7 @@ function fn_RenderVerifyModal(fileResults, allTablesDef) {
             } else {
                 // 길이 불일치 또는 미정의 - 오류 카드 (빨강)
                 var errLabel = (inferExpected > 0) ? '길이오류' : '실패';
-                cardsHtml += '<div class="verify-card" data-idx="' + fileResults.indexOf(fr) + '" ' +
+                cardsHtml += '<div class="verify-card" data-tbl="' + info.tbl + '" ' +
                     'style="width:155px; border:2px solid #f44336; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(244,67,54,.15);">' +
                     '<div class="text-center p-3">' +
                     '<div style="font-size:22px; line-height:1;">\u274C</div>' +
@@ -2601,28 +2607,49 @@ function fn_RenderVerifyModal(fileResults, allTablesDef) {
     window._verifyTableMap = tableMap;
 
     $('.verify-card').off('click').on('click', function() {
-        var idx = parseInt($(this).attr('data-idx'));
-        var fr = window._verifyFileResults[idx];
+        var tbl = $(this).attr('data-tbl');
+        if (!tbl) return;
+        var fr = window._verifyTableMap[tbl];
         if (!fr) return;
 
         var titleText = fr.tblinfo ? (fr.tblinfo + ' - ' + fr.fileName) : fr.fileName;
         var hasExtraErrs = fr._extraErrors && fr._extraErrors.length > 0;
         var isFailed = !fr.matched || hasExtraErrs;
 
-        // 실패 카드인데 parsed가 없으면 가장 가까운 테이블 컬럼 정의로 파싱 시도
+        // 실패 카드인데 parsed가 없으면 해당 테이블 컬럼 정의로 파싱 시도
         var parsedData = (fr.parsed && fr.parsed.length > 0) ? fr.parsed : [];
         var usedColumns = fr.columns || [];
         if (parsedData.length === 0 && fr.lineval) {
-            // 가장 가까운 테이블 정의 찾기
+            // 카드의 tbl에 해당하는 테이블 정의 우선 찾기
             var closestDef = null;
-            var closestDiff = Infinity;
             var allDefs = window._verifyAllTablesDef || [];
             for (var cd = 0; cd < allDefs.length; cd++) {
-                var defCol = parseInt(allDefs[cd].COLSIZE || allDefs[cd].colsize || 0);
-                var diff = Math.abs(fr.valsize - defCol);
-                if (diff < closestDiff) {
-                    closestDiff = diff;
+                var defTbl = allDefs[cd].TBLINFO || allDefs[cd].tblinfo || '';
+                if (defTbl === tbl) {
                     closestDef = allDefs[cd];
+                    break;
+                }
+            }
+            // 못 찾으면 fr.tblinfo로 재시도
+            if (!closestDef && fr.tblinfo && fr.tblinfo !== tbl) {
+                for (var cd2 = 0; cd2 < allDefs.length; cd2++) {
+                    var defTbl2 = allDefs[cd2].TBLINFO || allDefs[cd2].tblinfo || '';
+                    if (defTbl2 === fr.tblinfo) {
+                        closestDef = allDefs[cd2];
+                        break;
+                    }
+                }
+            }
+            // 그래도 못 찾으면 가장 가까운 colsize로 fallback
+            if (!closestDef) {
+                var closestDiff = Infinity;
+                for (var cd3 = 0; cd3 < allDefs.length; cd3++) {
+                    var defCol = parseInt(allDefs[cd3].COLSIZE || allDefs[cd3].colsize || 0);
+                    var diff = Math.abs(fr.valsize - defCol);
+                    if (diff < closestDiff) {
+                        closestDiff = diff;
+                        closestDef = allDefs[cd3];
+                    }
                 }
             }
             if (closestDef) {
