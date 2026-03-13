@@ -96,4 +96,10 @@ public interface MagamMapper {
 	MagamDTO selGoolgleSheet(MagamDTO dto);
 	
 	String modifyPatval(PatvalDTO dto);
+
+	// 파일 검증 관련
+	List<Map<String, Object>> getFilesFirstLine(MagamDTO dto);
+	List<Map<String, Object>> getSamfverMatch(Map<String, Object> params);
+	List<Map<String, Object>> getSamfverAllTables(Map<String, Object> params);
+	List<Map<String, Object>> getSamfverColumns(Map<String, Object> params);
 }

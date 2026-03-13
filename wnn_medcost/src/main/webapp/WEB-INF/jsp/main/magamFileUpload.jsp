@@ -54,6 +54,11 @@
 							        <li class="nav-item">
 							            <a class="nav-link" id="p-tab" data-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="false" data-type="9">환자평가표</a>
 							        </li>
+							        <li class="nav-item ml-auto">
+							            <button type="button" class="btn btn-outline-primary btn-sm" id="btnDataVerifyTop" style="font-size:12px; font-weight:600; padding:4px 12px;">
+							                <i class="fa fa-clipboard-check mr-1"></i>데이터검증
+							            </button>
+							        </li>
 							    </ul>
 							    
 							    <div class="tab-content" id="mg_FlagTabContent">
@@ -147,6 +152,31 @@
 								     </div>
 								 </div>
 								 <!-- SPECODE 필터 결과 모달 End -->
+
+								 <!-- 파일 검증 결과 모달 -->
+								 <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" data-backdrop="static">
+								     <div class="modal-dialog modal-xl" role="document">
+								         <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
+								             <div class="modal-header" style="background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color:#fff; border-radius:12px 12px 0 0; padding:18px 24px;">
+								                 <h5 class="modal-title" style="font-weight:600; letter-spacing:.5px;"><i class="fa fa-clipboard-check mr-2"></i>파일 검증 결과</h5>
+								                 <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
+								             </div>
+								             <div class="modal-body" style="max-height:65vh; overflow-y:auto; padding:20px 24px;">
+								                 <!-- 요약 카드 -->
+								                 <div class="row mb-3" id="verifySummaryRow"></div>
+								                 <!-- 파일별 탭 -->
+								                 <ul class="nav nav-pills mb-3" id="verifyFileTabs" role="tablist" style="gap:6px;"></ul>
+								                 <div class="tab-content" id="verifyFileTabContent"></div>
+								             </div>
+								             <div class="modal-footer" style="border-top:1px solid #e9ecef; padding:14px 24px;">
+								                 <button type="button" class="btn btn-outline-secondary" id="btnVerifyClose" style="min-width:100px;">
+								                     <i class="fa fa-times mr-1"></i>취소
+								                 </button>
+								             </div>
+								         </div>
+								     </div>
+								 </div>
+								 <!-- 파일 검증 결과 모달 End -->
 
 								 <div id="progress-container">
 								     <div id="progress-bar"></div>
@@ -408,10 +438,22 @@ $(document).ready(function() {
     	if (e.target && e.target.getAttribute('data-action') === 'magamLock') {
     		magamLock_Open(e.target.getAttribute('data-mgmonth'));
     	}
+    	if (e.target && e.target.getAttribute('data-action') === 'dataVerify') {
+    		fn_DataVerify(e.target.getAttribute('data-mgmonth'));
+    	}
     	
     	
    	});
-    
+
+    // 상단 데이터검증 버튼
+    $('#btnDataVerifyTop').on('click', function() {
+        if (!gMonth) {
+            messageBox("4", "<h5>월을 먼저 선택해 주세요.</h5>", "", "", "");
+            return;
+        }
+        fn_DataVerify(gMonth);
+    });
+
     find_Check();
     
     comm_Check();
@@ -1547,6 +1589,7 @@ async function handleFileSelection(event) {
 				   	            }
 				   	        }, updateInterval);
 			   	            
+			   	            // === 1단계: TBL_FILES_DATA INSERT만 수행 ===
 			   	            $.ajax({
 			   	                url: '/main/uploadMagamFiles.do',
 			   	                type: 'POST',
@@ -1564,21 +1607,20 @@ async function handleFileSelection(event) {
 			   	                        errorCheck = true; // 오류 플래그 설정
 			   	                    } else {
 			   	                    	clearInterval(interval);
-				   	                    progressBar.css("width", "100%");
-				   	                    progressText.text("100%");
-				   	                  	$("#progress-container").fadeOut();
+			   	                        progressBar.css("width", "100%");
+			   	                        progressText.text("100%");
+			   	                      	$("#progress-container").fadeOut();
 			   	                        
-				   	                  	
 			   	                    	messageBox("1", "<h5>모든 파일이 정상적으로 실행 되었습니다.</h5><p></p><br>", "", "", "");
-			                            dataTable.ajax.reload();
-			                            
-			                            try {
-			                            	jobMon = gMonth; 
-			                                loadMonthsData();
-			                                
-			                            } catch (e) {
-			                                console.error("loadMonthsData 실행 중 오류 발생:", e);
-			                            }
+			   	                        dataTable.ajax.reload();
+			   	                        
+			   	                        try {
+			   	                        	jobMon = gMonth; 
+			   	                            loadMonthsData();
+			   	                            
+			   	                        } catch (e) {
+			   	                            console.error("loadMonthsData 실행 중 오류 발생:", e);
+			   	                        }
 			   	                    }
 			   	                },
 			   	                error: function (xhr, status, error) {
@@ -1598,7 +1640,7 @@ async function handleFileSelection(event) {
 			   	                    }
 			   	                },
 			   	             complete: function() {
-			   	            	 signUp = 'N';
+			   	             	 signUp = 'N';
 			                     $('.loading').fadeOut();
 			                     clearInterval(interval);
 		   	                     progressBar.css("width", "100%");
@@ -1870,13 +1912,882 @@ function updateMonthsContainer(rawData) {
 
     // if (fMonth != gMonth) {
         // gMonth = fMonth;
-        
+
         fileView_Open(jobMon);
-        
+
     // }
 }
 
+// ========== 파일 검증 모달 관련 함수 ==========
 
+// 파일확장자/파일명 → jobssam 매핑 (SP 로직과 동일)
+function fn_GetJobsSam(fileName) {
+    var ext = fileName.split('.').pop().toUpperCase();
+    var ghpExts = ['GHP','B00','B01','C00','C01','B60','B61','C60','C61'];
+    var repExts = ['L32','CXX','L01','L02','L03','L04','L05','L06','L07','L08','L09',
+                   'L10','L11','L12','L13','L14','L15','L16','L17','L18','L19','L20'];
+    if (ghpExts.indexOf(ext) >= 0) return 'GHP';
+    if (ext === 'CAR') return 'CAR';
+    if (repExts.indexOf(ext) >= 0) return 'REP';
+    return fileName.toUpperCase();
+}
+
+// EUC-KR 보정 라인 길이 계산 (SP의 valsize 계산과 유사)
+function fn_CalcValsize(lineval) {
+    var byteLen = 0;
+    for (var i = 0; i < lineval.length; i++) {
+        var code = lineval.charCodeAt(i);
+        byteLen += (code > 127) ? 2 : 1;
+    }
+    return byteLen - 1;
+}
+
+// 검증 모달 표시
+
+// 데이터 점검 (별도 버튼) - 파일선택 후 INSERT만 수행, SP 미실행
+function fn_DataVerify(mgmonth) {
+    if (signUp === 'Y') {
+        Swal.fire({title: '작업 진행 중', text: '작업 중입니다. 잠시 후 시도하세요.', icon: 'warning', timer: 800, showConfirmButton: false});
+        return;
+    }
+
+    gMonth = mgmonth;
+    findField('mgmonth', gMonth);
+
+    var folderInput = document.getElementById('folderInput');
+    var file_Select = document.getElementById("file_Select");
+
+    if (file_Select.value === "2") {
+        folderInput.setAttribute("webkitdirectory", "");
+    } else {
+        folderInput.removeAttribute("webkitdirectory");
+    }
+
+    var acceptExtensions = allowedFiles.map(function(file) {
+        if (file.startsWith('*.')) return '.' + file.slice(2);
+        return '.' + file.split('.').pop();
+    }).join(',');
+    folderInput.setAttribute('accept', acceptExtensions);
+
+    folderInput.value = '';
+    folderInput.onchange = handleVerifyFileSelection;
+    folderInput.click();
+}
+
+// 데이터 점검 전용 파일 처리 (handleFileSelection과 별도, 기존 미등록 로직 수정 안함)
+async function handleVerifyFileSelection(event) {
+    signUp = 'Y';
+    gFiles = event.target.files;
+
+    if (!gFiles || gFiles.length === 0) { signUp = 'N'; return; }
+
+    var jobs_dt = getJobDateTime();
+    var readFilesPromises = [];
+
+    for (var fi = 0; fi < gFiles.length; fi++) {
+        (function(file) {
+            readFilesPromises.push(new Promise(function(resolve) {
+                var reader = new FileReader();
+                reader.readAsText(file, 'euc-kr');
+                reader.onload = function(e) {
+                    var content = e.target.result;
+                    var fileLines = content.split('\n');
+                    var data = [];
+                    for (var idx = 0; idx < fileLines.length; idx++) {
+                        if (fileLines[idx]) {
+                            data.push({
+                                hosp_cd:  hospid,
+                                mg_year:  g_Year,
+                                mgmonth:  gMonth,
+                                mg_flag:  g_Flag,
+                                jobs_dt:  jobs_dt,
+                                chunggu:  '1',
+                                file_nm:  file.name,
+                                line_no:  idx + 1,
+                                lineval:  fileLines[idx],
+                                reg_user: userid,
+                                upd_user: userid,
+                                reg_ip:   '127.0.0.1',
+                                upd_ip:   '127.0.0.1'
+                            });
+                        }
+                    }
+                    resolve(data);
+                };
+                reader.onerror = function() { resolve([]); };
+            }));
+        })(gFiles[fi]);
+    }
+
+    try {
+        var allData = await Promise.all(readFilesPromises);
+        var allDataFlat = allData.flat();
+        var t_lines = allDataFlat.length;
+
+        if (t_lines === 0) {
+            signUp = 'N';
+            messageBox("4", "<h5>파일에 데이터가 없습니다.</h5>", "", "", "");
+            return;
+        }
+
+        allDataFlat.forEach(function(d) { d.t_lines = t_lines; });
+
+        // 로딩 표시
+        Swal.fire({
+            title: '데이터 점검 중...',
+            html: '<div style="font-size:13px;">파일을 업로드하고 검증 정보를 조회합니다.</div>',
+            allowOutsideClick: false,
+            didOpen: function() { Swal.showLoading(); }
+        });
+
+        // INSERT만 수행 (프로시저 미실행)
+        var uploadResp = await $.ajax({
+            url: '/main/uploadMagamFilesOnly.do',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(allDataFlat)
+        });
+
+        if (uploadResp.error_code !== "0") {
+            Swal.close();
+            signUp = 'N';
+            messageBox("4", "<h5>파일 업로드 중 오류: " + (uploadResp.error_mess || uploadResp.error_code) + "</h5>", "", "", "");
+            return;
+        }
+
+        // 검증 모달 표시
+        var verifyData = {
+            hosp_cd: hospid,
+            mg_year: g_Year,
+            mgmonth: gMonth,
+            mg_flag: g_Flag,
+            jobs_dt: jobs_dt,
+            t_lines: t_lines,
+            reg_user: userid,
+            upd_user: userid,
+            reg_ip: '127.0.0.1',
+            upd_ip: '127.0.0.1'
+        };
+        window._verifyMagamData = verifyData;
+
+        await fn_ShowVerifyModal(verifyData);
+        Swal.close();
+
+    } catch(e) {
+        Swal.close();
+        signUp = 'N';
+        console.error('데이터 점검 오류:', e);
+        messageBox("4", "<h5>데이터 점검 중 오류가 발생했습니다.</h5>", "", "", "");
+    }
+}
+
+async function fn_ShowVerifyModal(verifyData) {
+    try {
+        // 1) TBL_FILES_DATA에서 파일별 첫줄 조회
+        var response = await $.ajax({
+            url: '/main/verifyFilesData.do',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(verifyData)
+        });
+
+        if (response.error_code !== "0") {
+            signUp = 'N';
+            messageBox("4", "<h5>검증 데이터 조회 실패: " + response.error_mess + "</h5>", "", "", "");
+            return;
+        }
+
+        var firstLines = response.firstLines;
+        if (!firstLines || firstLines.length === 0) {
+            signUp = 'N';
+            messageBox("4", "<h5>검증할 파일 데이터가 없습니다.</h5>", "", "", "");
+            return;
+        }
+
+        // 2) 파일별 DISTINCT valsize로 SAMVER 매칭
+        // 파일명 오름차순 정렬 (가장 작은 파일명부터 검색)
+        firstLines.sort(function(a, b) {
+            var fnA = (a.FILE_NM || a.file_nm || '').toUpperCase();
+            var fnB = (b.FILE_NM || b.file_nm || '').toUpperCase();
+            return fnA.localeCompare(fnB);
+        });
+
+        // K,D,H 시작 파일: H010에서 버전 추출
+        // C,M 시작 파일: 가장 작은 파일명(정렬 후 첫번째)에서 버전 추출
+        var jobsver_H010 = '';
+        var jobsver_CM = '';
+        for (var h = 0; h < firstLines.length; h++) {
+            var hFn = (firstLines[h].FILE_NM || firstLines[h].file_nm || '').toUpperCase();
+            var hLineval = firstLines[h].LINEVAL || firstLines[h].lineval || '';
+            var hJobssam = fn_GetJobsSam(hFn);
+            var hFirstChar = hFn.charAt(0);
+            // CAR, GHP, REP는 제외
+            if (hJobssam === 'CAR' || hJobssam === 'GHP' || hJobssam === 'REP') continue;
+            // 빈 파일 제외
+            if (!hLineval || hLineval.trim() === '') continue;
+            // H010 버전 추출 (파일명이 H010으로 시작)
+            if (!jobsver_H010 && hFn.indexOf('H010') === 0) {
+                jobsver_H010 = hLineval.substring(0, 3);
+                console.log('[데이터점검] H010 버전 확정(' + hFn + '): ' + jobsver_H010);
+            }
+            // C,M으로 시작하는 파일명 중 가장 작은 파일(이미 정렬됨)에서 버전 추출
+            if (!jobsver_CM && (hFirstChar === 'C' || hFirstChar === 'M')) {
+                jobsver_CM = hLineval.substring(0, 3);
+                console.log('[데이터점검] C/M 가장작은파일(' + hFn + ') 버전 확정: ' + jobsver_CM);
+            }
+        }
+
+        var fileResults = [];
+        var prevFileName = '';
+
+        for (var i = 0; i < firstLines.length; i++) {
+            var fl = firstLines[i];
+            var fileName = fl.FILE_NM || fl.file_nm;
+            var lineval  = fl.LINEVAL || fl.lineval || '';
+            var valsize  = parseInt(fl.VALSIZE || fl.valsize || 0);
+
+            // 내용 없는 파일은 무시
+            if (!lineval || lineval.trim() === '' || valsize === 0) {
+                console.log('[데이터점검] 빈 파일 무시: ' + fileName);
+                continue;
+            }
+
+            var jobssam = fn_GetJobsSam(fileName);
+
+            if (fileName !== prevFileName) {
+                prevFileName = fileName;
+            }
+
+            // CAR,GHP,REP → LEFT(lineval,3)
+            // K,D,H로 시작하는 파일명 → H010 버전
+            // C,M으로 시작하는 파일명 → 가장 작은 C/M 파일 버전
+            var version;
+            if (jobssam === 'CAR' || jobssam === 'GHP' || jobssam === 'REP') {
+                version = lineval.substring(0, 3);
+            } else if (fileName.charAt(0).toUpperCase() === 'K' || fileName.charAt(0).toUpperCase() === 'D' || fileName.charAt(0).toUpperCase() === 'H') {
+                version = (jobsver_H010 !== '') ? jobsver_H010 : lineval.substring(0, 3);
+            } else if (fileName.charAt(0).toUpperCase() === 'C' || fileName.charAt(0).toUpperCase() === 'M') {
+                version = (jobsver_CM !== '') ? jobsver_CM : lineval.substring(0, 3);
+            } else {
+                version = lineval.substring(0, 3);
+            }
+
+            var fileResult = {
+                fileName: fileName,
+                lineval: lineval,
+                valsize: valsize,
+                jobssam: jobssam,
+                version: version,
+                samver: '',
+                tblinfo: '',
+                matchVersion: '',
+                colsize: 0,
+                columns: [],
+                parsed: [],
+                matched: false
+            };
+
+            try {
+                // SAMVER 매칭 (samver + version + valsize)
+                var matchResp = await $.ajax({
+                    url: '/main/getSamfverMatch.do',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ samver: jobssam, version: version, valsize: valsize })
+                });
+                // SP 로직: 첫 매칭 성공 시 jobsver 저장
+                if (matchResp.error_code === "0" && matchResp.matchResult && matchResp.matchResult.length > 0 && jobsver === '') {
+                    jobsver = matchResp.matchResult[0].VERSION || matchResp.matchResult[0].version || version;
+                }
+
+                var matchFound = (matchResp.error_code === "0" && matchResp.matchResult && matchResp.matchResult.length > 0);
+
+                // 정확 매칭 실패 시 valsize 없이 fallback 조회 (samver + version only)
+                if (!matchFound) {
+                    var fallbackResp = await $.ajax({
+                        url: '/main/getSamfverMatch.do',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ samver: jobssam, version: version, valsize: 0 })
+                    });
+                    if (fallbackResp.error_code === "0" && fallbackResp.matchResult && fallbackResp.matchResult.length > 0) {
+                        matchResp = fallbackResp;
+                        matchFound = true;
+                        // fallback 매칭: 길이 불일치이므로 matched=false 유지, colsize만 설정
+                        var fbMatch = fallbackResp.matchResult[0];
+                        fileResult.samver  = fbMatch.SAMVER  || fbMatch.samver  || '';
+                        fileResult.tblinfo = fbMatch.TBLINFO || fbMatch.tblinfo || '';
+                        fileResult.matchVersion = fbMatch.VERSION || fbMatch.version || '';
+                        fileResult.matched = false;  // 길이 불일치
+                        fileResult.colsize = parseInt(fbMatch.COLSIZE || fbMatch.colsize || 0);
+
+                        // 컬럼 정의 조회 (오류 상세 표시용)
+                        var fbColResp = await $.ajax({
+                            url: '/main/getSamfverColumns.do',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                samver:  fileResult.samver,
+                                tblinfo: fileResult.tblinfo,
+                                version: fileResult.matchVersion
+                            })
+                        });
+                        if (fbColResp.error_code === "0" && fbColResp.columns) {
+                            fileResult.columns = fbColResp.columns;
+                            fileResult.parsed = fn_ParseLine(lineval, fbColResp.columns);
+                        }
+                    }
+                }
+
+                if (matchFound && fileResult.matched !== false) {
+                    var match = matchResp.matchResult[0];
+                    fileResult.samver  = match.SAMVER  || match.samver  || '';
+                    fileResult.tblinfo = match.TBLINFO || match.tblinfo || '';
+                    fileResult.matchVersion = match.VERSION || match.version || '';
+                    fileResult.matched = true;
+                    fileResult.colsize = parseInt(match.COLSIZE || match.colsize || 0);
+
+                    // 컬럼 정의 조회
+                    var colResp = await $.ajax({
+                        url: '/main/getSamfverColumns.do',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            samver:  fileResult.samver,
+                            tblinfo: fileResult.tblinfo,
+                            version: fileResult.matchVersion
+                        })
+                    });
+
+                    if (colResp.error_code === "0" && colResp.columns) {
+                        fileResult.columns = colResp.columns;
+                        // JS에서 파싱
+                        fileResult.parsed = fn_ParseLine(lineval, colResp.columns);
+                    }
+                }
+            } catch(e) {
+                console.error('SAMVER 매칭 오류:', fileName, e);
+            }
+
+            fileResults.push(fileResult);
+        }
+
+        // 3) samver/version 기준 전체 SAMFVER 테이블 정의 조회
+        var allTablesDef = [];
+        var detectedSamver = '';
+        var detectedVersion = '';
+        for (var k = 0; k < fileResults.length; k++) {
+            if (fileResults[k].matched && fileResults[k].samver) {
+                detectedSamver  = fileResults[k].samver;
+                detectedVersion = fileResults[k].matchVersion;
+                break;
+            }
+        }
+        // samver/version이 없으면 첫 파일의 jobssam/version 사용
+        if (!detectedSamver && fileResults.length > 0) {
+            detectedSamver  = fileResults[0].jobssam;
+            detectedVersion = fileResults[0].version;
+        }
+        if (detectedSamver && detectedVersion) {
+            try {
+                var allTabResp = await $.ajax({
+                    url: '/main/getSamfverAllTables.do',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ samver: detectedSamver, version: detectedVersion })
+                });
+                if (allTabResp.error_code === "0" && allTabResp.allTables) {
+                    allTablesDef = allTabResp.allTables;
+                }
+            } catch(e) {
+                console.error('SAMFVER 전체 테이블 조회 오류:', e);
+            }
+        }
+
+        // 개별 파일별 samver가 다른 경우 (M-파일 등) allTablesDef에 추가
+        var existingTbls = {};
+        for (var at = 0; at < allTablesDef.length; at++) {
+            existingTbls[allTablesDef[at].TBLINFO || allTablesDef[at].tblinfo || ''] = true;
+        }
+        for (var kr = 0; kr < fileResults.length; kr++) {
+            var kfr = fileResults[kr];
+            if (kfr.tblinfo && !existingTbls[kfr.tblinfo] && kfr.colsize > 0) {
+                allTablesDef.push({
+                    SAMVER:  kfr.samver,
+                    TBLINFO: kfr.tblinfo,
+                    VERSION: kfr.matchVersion || kfr.version,
+                    COLSIZE: kfr.colsize
+                });
+                existingTbls[kfr.tblinfo] = true;
+            }
+        }
+
+        console.log('[데이터점검] samver=' + detectedSamver + ', version=' + detectedVersion);
+        console.log('[데이터점검] SAMFVER 정의 테이블:', allTablesDef);
+        console.log('[데이터점검] 파일 매칭 결과:', fileResults);
+
+        // 4) 모달 렌더링 (SAMFVER 정의 기반) - 검증 결과만 표시
+        fn_RenderVerifyModal(fileResults, allTablesDef);
+        $('#verifyModal').modal('show');
+
+    } catch(e) {
+        signUp = 'N';
+        console.error('검증 모달 표시 오류:', e);
+        messageBox("4", "<h5>검증 처리 중 오류가 발생했습니다.</h5>", "", "", "");
+    }
+}
+
+// 라인 파싱 (SP의 col_cursor 로직과 동일)
+function fn_ParseLine(lineval, columns) {
+    var result = [];
+    for (var i = 0; i < columns.length; i++) {
+        var col = columns[i];
+        var startPos = parseInt(col.START_POS || col.start_pos || 0);
+        var endPos   = parseInt(col.END_POS   || col.end_pos   || 0);
+        var colSize  = parseInt(col.COL_SIZE  || col.col_size  || 0);
+        var parsed = lineval.substring(startPos - 1, startPos - 1 + colSize);
+        result.push({
+            seq:      col.SEQ       || col.seq       || '',
+            itemNm:   col.ITEM_NM   || col.item_nm   || '',
+            startPos: startPos,
+            endPos:   endPos,
+            colSize:  colSize,
+            dataType: col.DATA_TYPE || col.data_type || '',
+            dbColnm:  col.DB_COLNM  || col.db_colnm  || '',
+            parsedVal: parsed
+        });
+    }
+    return result;
+}
+
+// 모달 렌더링 (횡 카드 레이아웃) - SAMFVER_MST 정의 기반
+function fn_RenderVerifyModal(fileResults, allTablesDef) {
+    // SAMFVER_MST 정의에서 테이블명 → 설명 매핑
+    var descMap = {
+        'TBL_CHUNG_MST': '청구서', 'TBL_MYOUNG_MST': '명세서', 'TBL_JINORD_MST': '진료내역',
+        'TBL_DISEASE_MST': '질병', 'TBL_JINOUT_MST': '진료외', 'TBL_SPECODE_MST': '특수코드'
+    };
+
+    // SAMFVER_MST 정의 기반 targetTables 구성 (없으면 기본 6개 사용)
+    var targetTables = [];
+    if (allTablesDef && allTablesDef.length > 0) {
+        for (var d = 0; d < allTablesDef.length; d++) {
+            var def = allTablesDef[d];
+            var tblName = def.TBLINFO || def.tblinfo || '';
+            var shortName = tblName.replace('TBL_', '').replace('_MST', '');
+            var defColsize = parseInt(def.COLSIZE || def.colsize || 0);
+            targetTables.push({
+                tbl: tblName, name: shortName,
+                desc: descMap[tblName] || shortName,
+                expectedColsize: defColsize
+            });
+        }
+    } else {
+        // fallback: 기본 6개 테이블
+        var defaultTbls = [
+            { tbl: 'TBL_CHUNG_MST', name: 'CHUNG', desc: '청구서' },
+            { tbl: 'TBL_MYOUNG_MST', name: 'MYOUNG', desc: '명세서' },
+            { tbl: 'TBL_JINORD_MST', name: 'JINORD', desc: '진료내역' },
+            { tbl: 'TBL_DISEASE_MST', name: 'DISEASE', desc: '질병' },
+            { tbl: 'TBL_JINOUT_MST', name: 'JINOUT', desc: '진료외' },
+            { tbl: 'TBL_SPECODE_MST', name: 'SPECODE', desc: '특수코드' }
+        ];
+        for (var dd = 0; dd < defaultTbls.length; dd++) {
+            defaultTbls[dd].expectedColsize = 0;
+            targetTables.push(defaultTbls[dd]);
+        }
+    }
+
+    // 파일 결과를 tblinfo 기준으로 매핑
+    var tableMap = {};
+    var unmapped = [];
+    for (var i = 0; i < fileResults.length; i++) {
+        var fr = fileResults[i];
+        if (fr.tblinfo && targetTables.some(function(t) { return t.tbl === fr.tblinfo; })) {
+            tableMap[fr.tblinfo] = fr;
+        } else {
+            unmapped.push(fr);
+        }
+    }
+
+    // 매핑되지 않은 파일을 SAMFVER 정의의 colsize 기준으로 가장 가까운 테이블에 추론 매칭
+    if (unmapped.length > 0 && targetTables.length > 0) {
+        // colsize 기준 내림차순 정렬 (가장 큰 것부터 매칭)
+        var sortedUnmapped = unmapped.slice().sort(function(a, b) { return b.valsize - a.valsize; });
+        var sortedTargets = targetTables.slice().filter(function(t) { return !tableMap[t.tbl]; })
+            .sort(function(a, b) { return b.expectedColsize - a.expectedColsize; });
+
+        for (var si = 0; si < sortedTargets.length && si < sortedUnmapped.length; si++) {
+            var uf = sortedUnmapped[si];
+            var tgt = sortedTargets[si];
+            tableMap[tgt.tbl] = uf;
+            uf._inferredTable = tgt.tbl;
+            uf._expectedColsize = tgt.expectedColsize;
+        }
+        // unmapped 목록에서 추론 매칭된 항목 제거
+        unmapped = unmapped.filter(function(uf) { return !uf._inferredTable; });
+
+        // 남은 unmapped 파일을 가장 가까운 기존 카드에 오류 정보로 붙임
+        for (var ui = 0; ui < unmapped.length; ui++) {
+            var umf = unmapped[ui];
+            var closestTbl = null;
+            var closestDiff = Infinity;
+            for (var ct = 0; ct < targetTables.length; ct++) {
+                var expCol = targetTables[ct].expectedColsize || 0;
+                if (expCol > 0) {
+                    var diff = Math.abs(umf.valsize - expCol);
+                    if (diff < closestDiff) {
+                        closestDiff = diff;
+                        closestTbl = targetTables[ct].tbl;
+                    }
+                }
+            }
+            if (closestTbl) {
+                if (!tableMap[closestTbl]) tableMap[closestTbl] = {};
+                if (!tableMap[closestTbl]._extraErrors) tableMap[closestTbl]._extraErrors = [];
+                tableMap[closestTbl]._extraErrors.push({ valsize: umf.valsize, fileName: umf.fileName });
+            }
+        }
+        unmapped = [];
+    }
+
+    // 요약 정보
+    var totalDef = targetTables.length;
+    var matchedCount = 0;
+    var lengthErrorCount = 0;
+    for (var m = 0; m < targetTables.length; m++) {
+        var mfr = tableMap[targetTables[m].tbl];
+        if (mfr && mfr.matched) {
+            matchedCount++;
+        } else if (mfr && mfr._inferredTable) {
+            // 추론 매칭: 길이 일치 여부 확인
+            if (mfr.valsize === mfr._expectedColsize) {
+                matchedCount++;
+            } else {
+                lengthErrorCount++;
+            }
+        } else if (mfr && mfr.tblinfo && mfr.colsize > 0) {
+            // fallback 매칭: tblinfo/colsize는 있지만 길이 불일치
+            lengthErrorCount++;
+        }
+    }
+    var unmatchedCount = totalDef - matchedCount - lengthErrorCount;
+
+    // 요약 바 (SAMFVER 정의 기반)
+    var detSamver = (allTablesDef && allTablesDef.length > 0) ? (allTablesDef[0].SAMVER || allTablesDef[0].samver || '') : '';
+    var detVersion = (allTablesDef && allTablesDef.length > 0) ? (allTablesDef[0].VERSION || allTablesDef[0].version || '') : '';
+    var summaryHtml = '<div class="col-12 mb-3">' +
+        '<div class="d-flex align-items-center justify-content-between px-3 py-2" ' +
+        'style="background:linear-gradient(135deg,#f5f7fa,#c3cfe2); border-radius:10px;">' +
+        '<div><i class="fa fa-database mr-2" style="color:#1e3c72;"></i>' +
+        '<strong style="color:#1e3c72;">파일 검증 결과</strong>' +
+        (detSamver ? ' <span class="badge badge-dark ml-2" style="font-size:11px;">' + detSamver + '</span>' : '') +
+        (detVersion ? ' <span class="badge badge-info ml-1" style="font-size:11px;">v' + detVersion + '</span>' : '') +
+        '</div>' +
+        '<div class="d-flex" style="gap:20px;">' +
+        '<span style="font-size:13px;"><i class="fa fa-th mr-1" style="color:#555;"></i>정의 <strong>' + totalDef + '</strong></span>' +
+        '<span style="font-size:13px;"><i class="fa fa-check-circle mr-1" style="color:#4caf50;"></i>정상 <strong style="color:#4caf50;">' + matchedCount + '</strong></span>' +
+        (lengthErrorCount > 0 ? '<span style="font-size:13px;"><i class="fa fa-exclamation-triangle mr-1" style="color:#f44336;"></i>길이오류 <strong style="color:#f44336;">' + lengthErrorCount + '</strong></span>' : '') +
+        '<span style="font-size:13px;"><i class="fa fa-minus-circle mr-1" style="color:#ff9800;"></i>미매칭 <strong style="color:#ff9800;">' + unmatchedCount + '</strong></span>' +
+        '</div></div></div>';
+
+    // 횡 카드 생성
+    var cardsHtml = '<div class="col-12"><div class="d-flex flex-wrap justify-content-center" style="gap:14px;">';
+
+    for (var t = 0; t < targetTables.length; t++) {
+        var info = targetTables[t];
+        var fr = tableMap[info.tbl];
+
+        // 카드에 추가 오류가 있는지 확인
+        var extraErrs = fr && fr._extraErrors ? fr._extraErrors : [];
+        var hasExtra = extraErrs.length > 0;
+
+        if (fr && fr.matched) {
+            // 성공 카드 (추가오류 있으면 실패 표시)
+            var borderColor = hasExtra ? '#f44336' : '#4caf50';
+            var shadowColor = hasExtra ? 'rgba(244,67,54,.15)' : 'rgba(76,175,80,.15)';
+            cardsHtml += '<div class="verify-card" data-idx="' + fileResults.indexOf(fr) + '" ' +
+                'style="width:155px; border:2px solid ' + borderColor + '; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px ' + shadowColor + ';">' +
+                '<div class="text-center p-3">' +
+                '<div style="font-size:22px; line-height:1;">' + (hasExtra ? '\u274C' : '\u2705') + '</div>' +
+                '<div style="font-size:11px; color:' + borderColor + '; font-weight:700; margin:4px 0;">' + (hasExtra ? '실패' : '성공') + '</div>' +
+                '<div style="font-size:15px; font-weight:800; color:' + (hasExtra ? '#b71c1c' : '#1b5e20') + '; letter-spacing:.5px;">' + info.name + '</div>' +
+                '<div style="font-size:10px; color:#888; margin-bottom:4px;">' + info.desc + '</div>' +
+                '<div style="font-size:10px; color:#555; margin-bottom:4px;"><span class="badge badge-secondary" style="font-size:9px;">' + fr.samver + '</span> <span class="badge badge-outline-dark" style="font-size:9px; border:1px solid #aaa;">v' + fr.matchVersion + '</span></div>' +
+                '<div style="font-size:11px; color:#333;">원: <strong style="color:#1565c0;">' + fr.colsize + '</strong></div>' +
+                '<div style="font-size:11px; color:#333;">실: <strong style="color:#2e7d32;">' + fr.valsize + '</strong></div>';
+            for (var ei = 0; ei < extraErrs.length; ei++) {
+                cardsHtml += '<div style="font-size:12px; color:#f44336; margin-top:3px; font-weight:700;">실: <strong style="font-size:13px;">' + extraErrs[ei].valsize + '</strong> <span style="font-size:9px;">오류</span></div>';
+            }
+            cardsHtml += '<div style="font-size:9px; color:#aaa; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="' + fr.fileName + '">' + fr.fileName + '</div>' +
+                '</div></div>';
+        } else if (fr) {
+            // 추론 매칭 또는 실패 카드
+            var inferExpected = fr._expectedColsize || info.expectedColsize || fr.colsize || 0;
+            var isLengthOk = (inferExpected > 0 && fr.valsize === inferExpected && !hasExtra);
+
+            if (isLengthOk) {
+                // 길이 일치 - 정상 카드 (초록)
+                cardsHtml += '<div class="verify-card" data-idx="' + fileResults.indexOf(fr) + '" ' +
+                    'style="width:155px; border:2px solid #4caf50; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(76,175,80,.15);">' +
+                    '<div class="text-center p-3">' +
+                    '<div style="font-size:22px; line-height:1;">\u2705</div>' +
+                    '<div style="font-size:11px; color:#4caf50; font-weight:700; margin:4px 0;">정상</div>' +
+                    '<div style="font-size:15px; font-weight:800; color:#1b5e20; letter-spacing:.5px;">' + info.name + '</div>' +
+                    '<div style="font-size:10px; color:#888; margin-bottom:4px;">' + info.desc + '</div>' +
+                    '<div style="font-size:10px; color:#555; margin-bottom:4px;"><span class="badge badge-secondary" style="font-size:9px;">' + (fr.jobssam || '-') + '</span> <span class="badge badge-outline-dark" style="font-size:9px; border:1px solid #aaa;">v' + (fr.version || '-') + '</span></div>' +
+                    '<div style="font-size:11px; color:#333;">원: <strong style="color:#1565c0;">' + inferExpected + '</strong></div>' +
+                    '<div style="font-size:11px; color:#333;">실: <strong style="color:#2e7d32;">' + fr.valsize + '</strong></div>' +
+                    '<div style="font-size:9px; color:#aaa; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="' + fr.fileName + '">' + fr.fileName + '</div>' +
+                    '</div></div>';
+            } else {
+                // 길이 불일치 또는 미정의 - 오류 카드 (빨강)
+                var errLabel = (inferExpected > 0) ? '길이오류' : '실패';
+                cardsHtml += '<div class="verify-card" data-idx="' + fileResults.indexOf(fr) + '" ' +
+                    'style="width:155px; border:2px solid #f44336; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(244,67,54,.15);">' +
+                    '<div class="text-center p-3">' +
+                    '<div style="font-size:22px; line-height:1;">\u274C</div>' +
+                    '<div style="font-size:11px; color:#f44336; font-weight:700; margin:4px 0;">' + errLabel + '</div>' +
+                    '<div style="font-size:15px; font-weight:800; color:#b71c1c; letter-spacing:.5px;">' + info.name + '</div>' +
+                    '<div style="font-size:10px; color:#888; margin-bottom:4px;">' + info.desc + '</div>' +
+                    '<div style="font-size:10px; color:#555; margin-bottom:4px;"><span class="badge badge-secondary" style="font-size:9px;">' + (fr.jobssam || '-') + '</span> <span class="badge badge-outline-dark" style="font-size:9px; border:1px solid #aaa;">v' + (fr.version || '-') + '</span></div>' +
+                    '<div style="font-size:11px; color:#333;">원: <strong style="color:#1565c0;">' + (inferExpected || '-') + '</strong></div>' +
+                    '<div style="font-size:13px; color:#333;">실: <strong style="color:#f44336; font-size:14px;">' + fr.valsize + '</strong></div>';
+                for (var ei2 = 0; ei2 < extraErrs.length; ei2++) {
+                    cardsHtml += '<div style="font-size:12px; color:#f44336; margin-top:3px; font-weight:700;">실: <strong style="font-size:13px;">' + extraErrs[ei2].valsize + '</strong> <span style="font-size:9px;">오류</span></div>';
+                }
+                cardsHtml += '<div style="font-size:9px; color:#aaa; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="' + fr.fileName + '">' + fr.fileName + '</div>' +
+                    '</div></div>';
+            }
+        } else {
+            // 데이터 없음 카드 (SAMFVER 기대 colsize 표시)
+            cardsHtml += '<div style="width:155px; border:2px dashed #ddd; border-radius:12px; background:#fafafa;">' +
+                '<div class="text-center p-3">' +
+                '<div style="font-size:22px; line-height:1; color:#ccc;">\u2796</div>' +
+                '<div style="font-size:11px; color:#bbb; font-weight:700; margin:4px 0;">데이터없음</div>' +
+                '<div style="font-size:15px; font-weight:800; color:#999; letter-spacing:.5px;">' + info.name + '</div>' +
+                '<div style="font-size:10px; color:#aaa; margin-bottom:4px;">' + info.desc + '</div>' +
+                (info.expectedColsize ? '<div style="font-size:11px; color:#999;">기대: <strong style="color:#1565c0;">' + info.expectedColsize + '</strong></div>' : '') +
+                '</div></div>';
+        }
+    }
+
+    cardsHtml += '</div></div>';
+
+    // 상세 영역 (카드 클릭 시 표시)
+    var detailHtml = '<div class="col-12 mt-3" id="verifyDetailArea" style="display:none;">' +
+        '<div class="card border-0" style="box-shadow:0 2px 12px rgba(0,0,0,.08); border-radius:10px;">' +
+        '<div class="card-header py-2 px-3" style="background:#f8f9fa; border-radius:10px 10px 0 0;">' +
+        '<span id="verifyDetailTitle" style="font-weight:600; font-size:13px;"></span>' +
+        '<button type="button" class="close" id="closeVerifyDetail" style="font-size:16px;"><span>&times;</span></button>' +
+        '</div>' +
+        '<div class="card-body p-0" id="verifyDetailBody" style="max-height:300px; overflow-y:auto;"></div>' +
+        '</div></div>';
+
+    $('#verifySummaryRow').html(summaryHtml + cardsHtml + detailHtml);
+    $('#verifyFileTabs').html('');
+    $('#verifyFileTabContent').html('');
+
+    // 카드 hover 효과
+    $('.verify-card').hover(
+        function() { $(this).css({'transform':'translateY(-3px)','box-shadow':'0 6px 20px rgba(0,0,0,.15)'}); },
+        function() { $(this).css({'transform':'translateY(0)','box-shadow':''}); }
+    );
+
+    // 카드 클릭 시 상세 파싱 결과 표시
+    window._verifyFileResults = fileResults;
+    window._verifyAllTablesDef = allTablesDef;
+    window._verifyTargetTables = targetTables;
+    window._verifyTableMap = tableMap;
+
+    $('.verify-card').off('click').on('click', function() {
+        var idx = parseInt($(this).attr('data-idx'));
+        var fr = window._verifyFileResults[idx];
+        if (!fr) return;
+
+        var titleText = fr.tblinfo ? (fr.tblinfo + ' - ' + fr.fileName) : fr.fileName;
+        var hasExtraErrs = fr._extraErrors && fr._extraErrors.length > 0;
+        var isFailed = !fr.matched || hasExtraErrs;
+
+        // 실패 카드인데 parsed가 없으면 가장 가까운 테이블 컬럼 정의로 파싱 시도
+        var parsedData = (fr.parsed && fr.parsed.length > 0) ? fr.parsed : [];
+        var usedColumns = fr.columns || [];
+        if (parsedData.length === 0 && fr.lineval) {
+            // 가장 가까운 테이블 정의 찾기
+            var closestDef = null;
+            var closestDiff = Infinity;
+            var allDefs = window._verifyAllTablesDef || [];
+            for (var cd = 0; cd < allDefs.length; cd++) {
+                var defCol = parseInt(allDefs[cd].COLSIZE || allDefs[cd].colsize || 0);
+                var diff = Math.abs(fr.valsize - defCol);
+                if (diff < closestDiff) {
+                    closestDiff = diff;
+                    closestDef = allDefs[cd];
+                }
+            }
+            if (closestDef) {
+                // 해당 테이블의 컬럼 정의 조회 (동기)
+                try {
+                    var colResp = $.ajax({
+                        url: '/main/getSamfverColumns.do', type: 'POST', async: false,
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            samver:  closestDef.SAMVER  || closestDef.samver  || '',
+                            tblinfo: closestDef.TBLINFO || closestDef.tblinfo || '',
+                            version: closestDef.VERSION || closestDef.version || ''
+                        })
+                    }).responseJSON;
+                    if (colResp && colResp.error_code === "0" && colResp.columns) {
+                        usedColumns = colResp.columns;
+                        parsedData = fn_ParseLine(fr.lineval, colResp.columns);
+                    }
+                } catch(e) { console.error('컬럼 조회 오류:', e); }
+            }
+        }
+
+        $('#verifyDetailTitle').html('<i class="fa fa-table mr-2" style="color:' + (isFailed ? '#f44336' : '#1e3c72') + ';"></i>' + titleText +
+            (isFailed ? ' <span class="badge badge-danger ml-2" style="font-size:10px;">오류</span>' : ''));
+        $('#verifyDetailArea').slideDown(200);
+
+        if (parsedData.length > 0) {
+            var lineLen = fr.lineval ? fn_CalcValsize(fr.lineval) : fr.valsize;
+            var expectedLen = fr.colsize || (usedColumns.length > 0 ? parseInt(usedColumns[usedColumns.length - 1].END_POS || usedColumns[usedColumns.length - 1].end_pos || 0) : 0);
+            var lenDiff = lineLen - expectedLen;
+
+            // 요약 정보
+            var summaryInfo = '<div class="px-3 py-2" style="background:' + (isFailed ? '#ffebee' : '#e8f5e9') + '; font-size:12px;">' +
+                '<strong>원길이:</strong> <span style="color:#1565c0;">' + expectedLen + '</span>' +
+                ' &nbsp; <strong>실길이:</strong> <span style="color:' + (lenDiff !== 0 ? '#f44336' : '#2e7d32') + ';">' + lineLen + '</span>';
+            if (lenDiff !== 0) {
+                summaryInfo += ' &nbsp; <strong style="color:#f44336;">차이: ' + (lenDiff > 0 ? '+' : '') + lenDiff + '</strong>';
+            }
+            if (hasExtraErrs) {
+                summaryInfo += ' &nbsp; | &nbsp; <strong style="color:#f44336;">미정의 데이터:</strong>';
+                for (var xe = 0; xe < fr._extraErrors.length; xe++) {
+                    summaryInfo += ' <span class="badge badge-danger" style="font-size:10px;">실:' + fr._extraErrors[xe].valsize + '</span>';
+                }
+            }
+            summaryInfo += '</div>';
+
+            var tbl = summaryInfo + '<table class="table table-sm table-bordered mb-0" style="font-size:11px;">' +
+                '<thead style="background:#1e3c72; color:#fff; position:sticky; top:0;">' +
+                '<tr><th style="width:35px; text-align:center;">#</th>' +
+                '<th>항목명</th>' +
+                '<th style="width:50px; text-align:center;">시작</th>' +
+                '<th style="width:50px; text-align:center;">종료</th>' +
+                '<th style="width:45px; text-align:center;">크기</th>' +
+                '<th style="width:55px; text-align:center;">타입</th>' +
+                '<th>파싱값</th>' +
+                '<th>DB컬럼</th>' +
+                '<th style="width:45px; text-align:center;">상태</th></tr></thead><tbody>';
+
+            var linevalLen = fr.lineval ? fr.lineval.length : 0;
+            for (var j = 0; j < parsedData.length; j++) {
+                var p = parsedData[j];
+                var isEmpty = !p.parsedVal || p.parsedVal.trim() === '';
+                var startIdx = p.startPos - 1;
+                var endIdx = startIdx + p.colSize;
+
+                // 오류 판정: 데이터가 부족하거나 넘치는 경우
+                var isOverflow = (startIdx >= linevalLen);          // 원자료보다 정의가 넘음
+                var isPartial  = (!isOverflow && endIdx > linevalLen); // 일부만 있음
+                var isNormal   = (!isOverflow && !isPartial);
+
+                var rowBg = '';
+                var statusIcon = '';
+                if (isOverflow) {
+                    rowBg = 'background:#ffcdd2;';  // 빨강 - 데이터 없음(초과)
+                    statusIcon = '<span style="color:#f44336; font-weight:700;">초과</span>';
+                } else if (isPartial) {
+                    rowBg = 'background:#fff9c4;';  // 노랑 - 데이터 부분
+                    statusIcon = '<span style="color:#ff9800; font-weight:700;">부분</span>';
+                } else if (isEmpty) {
+                    rowBg = 'background:#fff3e0;';
+                    statusIcon = '<span style="color:#888;">빈값</span>';
+                } else {
+                    statusIcon = '<span style="color:#4caf50;">정상</span>';
+                }
+
+                tbl += '<tr style="' + rowBg + '">' +
+                    '<td style="text-align:center; color:#888;">' + p.seq + '</td>' +
+                    '<td style="font-weight:500;">' + p.itemNm + '</td>' +
+                    '<td style="text-align:center;">' + p.startPos + '</td>' +
+                    '<td style="text-align:center;">' + p.endPos + '</td>' +
+                    '<td style="text-align:center;">' + p.colSize + '</td>' +
+                    '<td style="text-align:center;"><span class="badge ' +
+                    (p.dataType === 'VARCHAR' ? 'badge-info' : 'badge-warning') + '" style="font-size:10px;">' + p.dataType + '</span></td>' +
+                    '<td style="font-family:monospace; font-size:10px; background:' + (isOverflow ? '#ffcdd2' : isPartial ? '#fff9c4' : '#f5f5f5') + '; word-break:break-all;">' +
+                    (isOverflow ? '<span style="color:#f44336;">데이터없음</span>' :
+                     isPartial ? '<span style="color:#ff9800;">' + (p.parsedVal || '') + '</span><span style="color:#f44336;">|끊김</span>' :
+                     (p.parsedVal || '<span style="color:#ccc;">empty</span>')) + '</td>' +
+                    '<td style="color:#1565c0; font-size:10px;">' + p.dbColnm + '</td>' +
+                    '<td style="text-align:center; font-size:10px;">' + statusIcon + '</td></tr>';
+            }
+
+            // 원자료가 정의보다 긴 경우 남은 데이터 표시
+            if (linevalLen > 0 && usedColumns.length > 0) {
+                var lastEnd = parseInt(usedColumns[usedColumns.length - 1].END_POS || usedColumns[usedColumns.length - 1].end_pos || 0);
+                if (linevalLen > lastEnd) {
+                    var extraData = fr.lineval.substring(lastEnd);
+                    tbl += '<tr style="background:#ffcdd2;">' +
+                        '<td style="text-align:center; color:#f44336; font-weight:700;" colspan="2">초과 데이터</td>' +
+                        '<td style="text-align:center;">' + (lastEnd + 1) + '</td>' +
+                        '<td style="text-align:center;">' + linevalLen + '</td>' +
+                        '<td style="text-align:center; color:#f44336; font-weight:700;">' + (linevalLen - lastEnd) + '</td>' +
+                        '<td style="text-align:center;">-</td>' +
+                        '<td style="font-family:monospace; font-size:10px; background:#ffcdd2; word-break:break-all; color:#f44336;">' + extraData + '</td>' +
+                        '<td>-</td>' +
+                        '<td style="text-align:center;"><span style="color:#f44336; font-weight:700;">초과</span></td></tr>';
+                }
+            }
+
+            tbl += '</tbody></table>';
+            $('#verifyDetailBody').html(tbl);
+        } else {
+            $('#verifyDetailBody').html('<div class="p-3 text-center text-muted">' +
+                '<i class="fa fa-info-circle mr-1"></i>' +
+                'SAMVER: ' + fr.jobssam + ' | 버전: ' + fr.version + ' | 라인길이: ' + fr.valsize +
+                '<br><small>TBL_SAMFVER_MST에서 매칭 정의를 찾을 수 없습니다.</small></div>');
+        }
+
+        // 선택된 카드 하이라이트
+        $('.verify-card').css('outline', 'none');
+        $(this).css('outline', '3px solid #1e3c72');
+    });
+
+    // 상세 닫기
+    $('#closeVerifyDetail').off('click').on('click', function() {
+        $('#verifyDetailArea').slideUp(200);
+        $('.verify-card').css('outline', 'none');
+    });
+
+    // 하나라도 오류가 있으면 true (미매칭, 길이오류, 추가오류 모두 포함)
+    var hasExtraErr = false;
+    for (var chk = 0; chk < targetTables.length; chk++) {
+        var chkFr = tableMap[targetTables[chk].tbl];
+        if (chkFr && chkFr._extraErrors && chkFr._extraErrors.length > 0) { hasExtraErr = true; break; }
+    }
+    return (unmatchedCount > 0 || lengthErrorCount > 0 || hasExtraErr);
+}
+
+// 취소 버튼 클릭 → 모달 닫기
+$('#btnVerifyClose').on('click', function() {
+    $('#verifyModal').modal('hide');
+});
+
+// 검증 모달 닫을 때 이전 데이터 완전 초기화
+$('#verifyModal').on('hidden.bs.modal', function() {
+    signUp = 'N';
+    window._verifyMagamData = null;
+    window._verifyFileResults = null;
+    window._verifyAllTablesDef = null;
+    window._verifyTargetTables = null;
+    window._verifyTableMap = null;
+    $('#verifySummaryRow').html('');
+    $('#verifyFileTabs').html('');
+    $('#verifyFileTabContent').html('');
+    $('#verifyDetailArea').hide();
+});
 
 </script>
 <!-- ============================================================== -->

@@ -79,5 +79,12 @@ public interface MagamService {
 	MagamDTO selGoolgleSheet(MagamDTO dto) throws Exception;
 	
 	String modifyPatval(PatvalDTO dto) throws Exception;
-	
+
+	// 파일 검증 관련
+	String uploadMagamFilesOnly(List<FilesDTO> filesData) throws Exception;
+	String execMagamSP(MagamDTO magamDTO) throws Exception;
+	List<Map<String, Object>> verifyFilesData(MagamDTO dto) throws Exception;
+	List<Map<String, Object>> getSamfverMatch(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> getSamfverAllTables(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> getSamfverColumns(Map<String, Object> params) throws Exception;
 }

@@ -236,13 +236,23 @@ public class MagamController {
     			// mybits Batch
         		err_cd = svc.uploadMagamFilesMain(filesData);
     			
-    			model.addAttribute("error_code", err_cd);
-    			
-    			if        ("20000".equals(err_cd)) {
+    			// 프로시저 에러코드와 메시지 분리 (err_cd가 "40000 - 메시지" 형태일 수 있음)
+    			String errCodeOnly = err_cd;
+    			String errMessDetail = "";
+    			if (err_cd != null && err_cd.contains(" - ")) {
+    				errCodeOnly = err_cd.substring(0, err_cd.indexOf(" - "));
+    				errMessDetail = err_cd.substring(err_cd.indexOf(" - ") + 3);
+    			}
+
+    			model.addAttribute("error_code", errCodeOnly);
+
+    			if        ("20000".equals(errCodeOnly)) {
     				model.addAttribute("error_mess", "작업 2. 파일정보건수와 기초작업건수가 서로 같지 않습니다. 잠시 후 다시 시도하십시요 !!");
-    			} else if ("30000".equals(err_cd)) {
+    			} else if ("30000".equals(errCodeOnly)) {
     				model.addAttribute("error_mess", "작업 3. 기초작업건수와 업로드후 처리갯수가 서로 같지 않습니다. 잠시 후 다시 시도하십시요 !!");
-    			} else if ("50000".equals(err_cd)) {
+    			} else if ("40000".equals(errCodeOnly)) {
+    				model.addAttribute("error_mess", errMessDetail);
+    			} else if ("50000".equals(errCodeOnly)) {
     				model.addAttribute("error_mess", "작업 5. 마감정보가 마무리 되기전 오류가 발생하였습니다. 잠시 후 다시 시도하십시요 !!");
     			} else {
     				model.addAttribute("error_mess", err_cd);
@@ -268,6 +278,106 @@ public class MagamController {
 
     }
 	
+	// ========== 파일 검증 관련 엔드포인트 ==========
+
+	@RequestMapping(value="/main/uploadMagamFilesOnly.do", method = RequestMethod.POST)
+	public String uploadMagamFilesOnly(@RequestBody List<FilesDTO> filesData, ModelMap model) {
+		String err_cd = "0";
+		try {
+			System.out.println("파일 업로드 (INSERT만) 시작");
+			if (!filesData.isEmpty()) {
+				err_cd = svc.uploadMagamFilesOnly(filesData);
+				model.addAttribute("error_code", err_cd);
+				if ("20000".equals(err_cd)) {
+					model.addAttribute("error_mess", "파일정보건수와 기초작업건수가 서로 같지 않습니다.");
+				} else {
+					model.addAttribute("error_mess", err_cd);
+				}
+			} else {
+				model.addAttribute("error_code", "10000");
+				model.addAttribute("error_mess", "작업대상 파일이 존재하지 않습니다.");
+			}
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage());
+		}
+		return "jsonView";
+	}
+
+	@RequestMapping(value="/main/verifyFilesData.do", method = RequestMethod.POST)
+	public String verifyFilesData(@RequestBody MagamDTO dto, ModelMap model) {
+		try {
+			List<Map<String, Object>> firstLines = svc.verifyFilesData(dto);
+			model.addAttribute("firstLines", firstLines);
+			model.addAttribute("error_code", "0");
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage());
+		}
+		return "jsonView";
+	}
+
+	@RequestMapping(value="/main/getSamfverMatch.do", method = RequestMethod.POST)
+	public String getSamfverMatch(@RequestBody Map<String, Object> params, ModelMap model) {
+		try {
+			List<Map<String, Object>> result = svc.getSamfverMatch(params);
+			model.addAttribute("matchResult", result);
+			model.addAttribute("error_code", "0");
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage());
+		}
+		return "jsonView";
+	}
+
+	@RequestMapping(value="/main/getSamfverAllTables.do", method = RequestMethod.POST)
+	public String getSamfverAllTables(@RequestBody Map<String, Object> params, ModelMap model) {
+		try {
+			List<Map<String, Object>> allTables = svc.getSamfverAllTables(params);
+			model.addAttribute("allTables", allTables);
+			model.addAttribute("error_code", "0");
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage());
+		}
+		return "jsonView";
+	}
+
+	@RequestMapping(value="/main/getSamfverColumns.do", method = RequestMethod.POST)
+	public String getSamfverColumns(@RequestBody Map<String, Object> params, ModelMap model) {
+		try {
+			List<Map<String, Object>> columns = svc.getSamfverColumns(params);
+			model.addAttribute("columns", columns);
+			model.addAttribute("error_code", "0");
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage());
+		}
+		return "jsonView";
+	}
+
+	@RequestMapping(value="/main/execMagamSP.do", method = RequestMethod.POST)
+	public String execMagamSP(@RequestBody MagamDTO dto, ModelMap model) {
+		try {
+			System.out.println("프로시저 실행 시작");
+			String err_cd = svc.execMagamSP(dto);
+			model.addAttribute("error_code", err_cd);
+			if ("30000".equals(err_cd)) {
+				model.addAttribute("error_mess", "기초작업건수와 업로드후 처리갯수가 서로 같지 않습니다.");
+			} else if ("50000".equals(err_cd)) {
+				model.addAttribute("error_mess", "마감정보가 마무리 되기전 오류가 발생하였습니다.");
+			} else {
+				model.addAttribute("error_mess", err_cd);
+			}
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage());
+		}
+		return "jsonView";
+	}
+
+	// ========== 기존 삭제 관련 ==========
+
 	@RequestMapping(value="/main/deleteMagamClaimNo.do", method = RequestMethod.POST)
     public String delMagamClaimNo(@ModelAttribute("DTO") MagamDTO dto, Model model) {
 		

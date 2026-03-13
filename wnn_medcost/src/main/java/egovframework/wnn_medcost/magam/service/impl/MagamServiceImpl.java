@@ -443,6 +443,70 @@ public class MagamServiceImpl implements MagamService {
 	public String modifyPatval(PatvalDTO dto) {
 		return mapper.modifyPatval(dto);
 	}
-	
-	
+
+	// ========== 파일 검증 관련 ==========
+
+	@Override
+	public String uploadMagamFilesOnly(List<FilesDTO> filesData) {
+		String err_cd = "0";
+		try {
+			FilesDTO firstData = filesData.get(0);
+			int counts = mapper.uploadMagamFilesMain(filesData);
+
+			if (counts != firstData.getT_lines()) {
+				err_cd = "20000";
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+			err_cd = "90000";
+		}
+		return err_cd;
+	}
+
+	@Override
+	public String execMagamSP(MagamDTO magamDTO) {
+		String err_cd = "0";
+		try {
+			mapper.callUploadMagamSamFiles(magamDTO);
+
+			String errorCode = magamDTO.getErrcode();
+			String errorMess = magamDTO.getErrmess();
+
+			if (errorCode != null && !errorCode.isEmpty()) {
+				if ("30000".equals(errorCode)) {
+					err_cd = errorCode;
+				} else {
+					err_cd = errorCode + " - " + errorMess;
+				}
+			} else {
+				if (mapper.selectMagamCheck(magamDTO).size() != 1) {
+					err_cd = "50000";
+				}
+			}
+		} catch (Exception e) {
+			err_cd = "90000" + " - " + e.getMessage();
+		}
+		return err_cd;
+	}
+
+	@Override
+	public List<Map<String, Object>> verifyFilesData(MagamDTO dto) throws Exception {
+		return mapper.getFilesFirstLine(dto);
+	}
+
+	@Override
+	public List<Map<String, Object>> getSamfverMatch(Map<String, Object> params) throws Exception {
+		return mapper.getSamfverMatch(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> getSamfverAllTables(Map<String, Object> params) throws Exception {
+		return mapper.getSamfverAllTables(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> getSamfverColumns(Map<String, Object> params) throws Exception {
+		return mapper.getSamfverColumns(params);
+	}
+
 }

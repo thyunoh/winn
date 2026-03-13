@@ -3826,6 +3826,111 @@
          LIMIT 1
 	</select>
 	
+   <!-- 파일 검증: 파일별 DISTINCT valsize 조회 (SP의 dat_cursor와 동일 순서) -->
+   <select id="getFilesFirstLine" parameterType="MagamDTO" resultType="java.util.HashMap">
+        SELECT b.FILE_NM
+             , b.LINEVAL
+             , CAST(((CHAR_LENGTH(b.LINEVAL) + (LENGTH(b.LINEVAL) - CHAR_LENGTH(b.LINEVAL)) / 2)-1) AS UNSIGNED) AS VALSIZE
+          FROM TBL_FILES_DATA b
+         INNER JOIN (
+               SELECT s.FILE_NM AS GRP_FILE_NM
+                    , CAST(((CHAR_LENGTH(s.LINEVAL) + (LENGTH(s.LINEVAL) - CHAR_LENGTH(s.LINEVAL)) / 2)-1) AS UNSIGNED) AS GRP_VALSIZE
+                    , MIN(s.LINE_NO) AS MIN_LINE_NO
+                 FROM TBL_FILES_DATA s
+                WHERE s.HOSP_CD = #{hosp_cd}
+                  AND s.MG_YEAR = #{mg_year}
+                  AND s.MGMONTH = #{mgmonth}
+                  AND s.MG_FLAG = #{mg_flag}
+                  <choose>
+                      <when test="jobs_dt != null and jobs_dt != ''">
+                  AND s.JOBS_DT = #{jobs_dt}
+                      </when>
+                      <otherwise>
+                  AND s.JOBS_DT = (SELECT MAX(d.JOBS_DT) FROM TBL_FILES_DATA d
+                                    WHERE d.HOSP_CD = #{hosp_cd} AND d.MG_YEAR = #{mg_year}
+                                      AND d.MGMONTH = #{mgmonth} AND d.MG_FLAG = #{mg_flag})
+                      </otherwise>
+                  </choose>
+                GROUP BY s.FILE_NM,
+                         CAST(((CHAR_LENGTH(s.LINEVAL) + (LENGTH(s.LINEVAL) - CHAR_LENGTH(s.LINEVAL)) / 2)-1) AS UNSIGNED)
+               HAVING GRP_VALSIZE >= 9
+               ) g ON b.FILE_NM = g.GRP_FILE_NM
+                  AND b.LINE_NO = g.MIN_LINE_NO
+                  AND CAST(((CHAR_LENGTH(b.LINEVAL) + (LENGTH(b.LINEVAL) - CHAR_LENGTH(b.LINEVAL)) / 2)-1) AS UNSIGNED) = g.GRP_VALSIZE
+         WHERE b.HOSP_CD = #{hosp_cd}
+           AND b.MG_YEAR = #{mg_year}
+           AND b.MGMONTH = #{mgmonth}
+           AND b.MG_FLAG = #{mg_flag}
+           <choose>
+               <when test="jobs_dt != null and jobs_dt != ''">
+           AND b.JOBS_DT = #{jobs_dt}
+               </when>
+               <otherwise>
+           AND b.JOBS_DT = (SELECT MAX(d.JOBS_DT) FROM TBL_FILES_DATA d
+                             WHERE d.HOSP_CD = #{hosp_cd} AND d.MG_YEAR = #{mg_year}
+                               AND d.MGMONTH = #{mgmonth} AND d.MG_FLAG = #{mg_flag})
+               </otherwise>
+           </choose>
+         ORDER BY b.FILE_NM, VALSIZE DESC
+   </select>
+
+   <!-- 파일 검증: SAMVER 매칭 (파일길이로 매칭) -->
+   <select id="getSamfverMatch" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        SELECT f.sam_ver AS SAMVER
+             , f.tblinfo AS TBLINFO
+             , f.version AS VERSION
+             , f.colsize AS COLSIZE
+          FROM ( SELECT e.samver AS sam_ver
+                      , e.tblinfo
+                      , e.version
+                      , SUM(CASE WHEN e.db_comcolnm = 'X' THEN 0 ELSE e.col_size END) AS colsize
+                   FROM TBL_SAMFVER_MST e
+                  GROUP BY e.samver, e.tblinfo, e.version ) f
+         WHERE f.version = #{version}
+           <if test="valsize != null and valsize != 0">
+           AND f.colsize = #{valsize}
+           </if>
+           AND f.sam_ver = #{samver}
+         LIMIT 1
+   </select>
+
+   <!-- 파일 검증: samver/version 기준 전체 테이블 정의 조회 -->
+   <select id="getSamfverAllTables" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        SELECT f.sam_ver AS SAMVER
+             , f.tblinfo AS TBLINFO
+             , f.version AS VERSION
+             , f.colsize AS COLSIZE
+          FROM ( SELECT e.samver AS sam_ver
+                      , e.tblinfo
+                      , e.version
+                      , SUM(CASE WHEN e.db_comcolnm = 'X' THEN 0 ELSE e.col_size END) AS colsize
+                   FROM TBL_SAMFVER_MST e
+                  WHERE e.samver  = #{samver}
+                    AND e.version = #{version}
+                  GROUP BY e.samver, e.tblinfo, e.version ) f
+         ORDER BY f.colsize DESC
+   </select>
+
+   <!-- 파일 검증: 매칭된 SAMVER의 컬럼 정의 조회 -->
+   <select id="getSamfverColumns" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        SELECT SEQ
+             , ITEM_NM
+             , START_POS
+             , END_POS
+             , COL_SIZE
+             , DATA_TYPE
+             , DB_COLNM
+             , DECIMAL_POS
+             , DATAPROC_YN
+          FROM TBL_SAMFVER_MST
+         WHERE SAMVER    = #{samver}
+           AND TBLINFO   = #{tblinfo}
+           AND VERSION   = #{version}
+           AND DATAPROC_YN = 'Y'
+           AND ACTION_YN = 'Y'
+         ORDER BY START_POS
+   </select>
+
    <update id="modifyPatval" parameterType="PatvalDTO">
         UPDATE TBL_PATVAL_MST
            SET USE_YN    = #{useYn}

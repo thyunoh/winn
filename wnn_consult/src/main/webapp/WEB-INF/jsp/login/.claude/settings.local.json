@@ -35,7 +35,20 @@
       "Bash(xargs grep:*)",
       "Bash(ls -la \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\decorators\"\" 2>/dev/null || echo \"Directory does not exist or is empty \")",
       "Bash(find C:/Users/user -path */tomcat* -name sidebar.jsp)",
-      "Bash(find C:/Users/user -path */.metadata* -name sidebar.jsp)"
+      "Bash(find C:/Users/user -path */.metadata* -name sidebar.jsp)",
+      "Bash(grep -rn SELECT.*TBL_FILES_DATA /c/Users/user/git/winn/wnn_medcost/src/main/java/egovframework/)",
+      "Bash(python -c \":*)",
+      "Bash(ls /c/Python*)",
+      "Bash(ls /c/Users/user/AppData/Local/Programs/Python/*/python.exe)",
+      "Bash(node /tmp/new_render.js)",
+      "Bash(node C:/Users/user/git/winn/new_render.js)",
+      "Bash(node C:/Users/user/git/winn/modify_verify.js)",
+      "Bash(node C:/Users/user/git/winn/fix_duplicate.js)",
+      "Bash(node C:/Users/user/git/winn/modify_verify2.js)",
+      "Bash(mvn clean:*)",
+      "Bash(where.exe mvn:*)",
+      "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")",
+      "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/wnn_medcost-1.0.0/WEB-INF/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")"
     ]
   }
 }
