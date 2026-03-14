@@ -217,7 +217,7 @@
                                                 <a class="nav-item nav-link"  href="/base/samvercd.do">샘파일 버전</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-item nav-link"  href="/base/samvercdV1.do">샘파일 버젼VER1.0</a>
+                                                <a class="nav-item nav-link"  href="/base/samvercdV1.do">샘파일 버젼(v1.0)</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/wvalcd.do">적정성지표</a>
@@ -423,6 +423,15 @@
   </div>
 </div>
 <!-- 기존 1대1 질의응답  -->
+<style>
+#asq_main_tab .btn-outline-info:hover,
+#asq_main_tab .btn-outline-info:active,
+#asq_main_tab .btn-outline-info:focus {
+   background-color: #1a8fc4 !important;
+   border-color: #1a8fc4 !important;
+   color: #fff !important;
+}
+</style>
 <div class="modal fade" id="asq_main_tab" tabindex="-1"
    data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
    <div class="modal-dialog modal-lg modal-dialog-centered" 
@@ -446,11 +455,11 @@
                   <i class="fas fa-search" onclick="fnasq_Search();" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; font-size: 14px;"></i>
                </div>
                <div>
-                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QD');" style="font-size: 13px; padding: 5px 11px;">
+                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QD');" style="font-size: 13px; padding: 5px 11px; font-weight:600; color:#0a6ebd;">
                      <img src="/images/winct/qnst_c.svg" alt="질문취소" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">질문취소</button>
-                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QI');" style="font-size: 13px; padding: 5px 11px;">
+                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QI');" style="font-size: 13px; padding: 5px 11px; font-weight:600; color:#0a6ebd;">
                      <img src="/images/winct/qnst_i.svg" alt="질문등록" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">질문등록</button>
-                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QU');" style="font-size: 13px; padding: 5px 11px;">
+                  <button class="btn btn-outline-info btn-sm" onclick="fn_asqsave('QU');" style="font-size: 13px; padding: 5px 11px; font-weight:600; color:#0a6ebd;">
                      <img src="/images/winct/qnst_q.svg" alt="질문조회" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;">답변조회(수정)</button>
                </div>
             </div>
@@ -496,7 +505,7 @@
             </div>
          </div>
          <div class="modal-footer" style="background-color: white; padding: 5px 10px; justify-content: center;">
-            <button class="btn btn-outline-info" onclick="asqMainClose();">닫기 <i class="fas fa-times"></i></button>
+            <button class="btn btn-outline-info" onclick="asqMainClose();" style="font-weight:600; color:#0a6ebd;">닫기 <i class="fas fa-times"></i></button>
          </div>
       </div>
    </div>

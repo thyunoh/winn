@@ -18,7 +18,7 @@
  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
 
-<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
 <!-- DataTables CSS -->
 <style>
 /* 공지사항 전체 영역 */
@@ -93,7 +93,24 @@
 #modalName .modal-body { padding: 8px 18px; }
 #modalName .modal-body .form-group,
 #modalName .modal-body .form-row { margin-bottom: 1px; align-items: center; }
-#modalName .modal-body .col-form-label { font-size: 13px; font-weight: 500; padding: 1px 5px 1px 18px; }
+/* ── 풀너비 라벨(공지제목/공지내용 등): 하늘색 바 ── */
+#modalName .modal-body .col-form-label {
+	font-size: 13px; font-weight: 600; color: #333;
+	background: linear-gradient(135deg, #b3ddf0 0%, #d4ecf7 100%);
+	border-radius: 3px; padding: 4px 12px 4px 18px;
+	margin-bottom: 3px; display: block; width: 100%;
+	text-align: left;
+}
+/* ── 인라인 row: 공지제목 바와 좌측 정렬 ── */
+#modalName .modal-body .form-group.row {
+	margin-left: 0; margin-right: 0;
+}
+#modalName .modal-body .form-group.row .col-form-label {
+	display: flex; align-items: center;
+	margin-bottom: 0; width: auto;
+	padding: 4px 8px 4px 18px;
+	background: linear-gradient(135deg, #b3ddf0 0%, #d4ecf7 100%);
+}
 #modalName .modal-body .form-control,
 #modalName .modal-body .custom-select { font-size: 13px; height: 30px; padding: 1px 8px; }
 #modalName .modal-body textarea.form-control { height: auto; padding: 4px 8px; }
@@ -106,6 +123,11 @@
 #modalName #uploadForm .form-group { margin-bottom: 0; }
 #modalName .drag-area { margin-top: 0 !important; margin-bottom: 0 !important; }
 #modalName .modal-footer { padding: 2px 15px; }
+/* 파일 선택/업로드 버튼 축소 */
+#modalName #uploadForm .btn-box .btn { font-size: 13px; padding: 3px 9px; }
+/* 파일 테이블 헤더/바디 글자 축소 */
+#modalName #fileTable thead th { font-size: 13px; padding: 3px 5px; }
+#modalName #fileTable tbody td { font-size: 12px; padding: 2px 5px; }
 /* summernote-bs4 CSS와 summernote-lite CSS 중복 아이콘 방지 */
 #modalName .note-editor .note-icon-caret {
     display: none !important;
@@ -248,19 +270,17 @@
 							</select>
 						</div> 						
 					</div>
-					<div class="form-row">
-						<label for="notiTitle"
-							class="col-2 col-lg-2 col-form-label text-left">공지제목</label>
-						<div class="col-xl-10 col-lg-10 text-left mb-2">
+					<div class="form-group">
+						<label for="notiTitle" class="col-form-label">공지제목</label>
+						<div>
 							<textarea id="notiTitle" name="notiTitle" type="text"
 								data-parsley-trigger="change" placeholder="" autocomplete="off"
 								class="form-control" rows="2"></textarea>
 						</div>
 					</div>
-					<div class="form-row">
-						<label for="notiContent"
-							class="col-2 col-lg-2 col-form-label text-left">공지내용</label>
-						<div class="col-xl-10 col-lg-10 text-left mb-2">
+					<div class="form-group">
+						<label for="notiContent" class="col-form-label">공지내용</label>
+						<div>
 							<textarea id="notiContent" name="notiContent" type="text"
 								data-parsley-trigger="change" placeholder="" autocomplete="off"
 								class="form-control" rows="7"></textarea>
@@ -291,9 +311,9 @@
 					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data">
 						<input type="hidden" name="action" value="upload">
-						<div class="form-group row mb-1">
-							<label class="col-2 col-lg-2 col-form-label text-left">파일업로드</label>
-							<div class="col-10 col-lg-10">
+						<div class="form-group">
+							<label class="col-form-label">파일업로드</label>
+							<div>
 								<div class="btn-box mb-1">
 									<button type="button" id="fileSelectBtn" class="btn btn-primary custom-btn-small">파일 선택</button>
 									<button type="submit" id="uploaded" class="btn btn-success custom-btn-small">업로드</button>
@@ -302,7 +322,7 @@
 									style="display: none;" onchange="changeHandler(event)">
 								<p id="file-name-display" style="color: blue; margin: 0;"></p>
 								<div id="drag-area" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-									<p style="margin: 3px; font-size: 14px;">파일을 여기에 드래그 하세요.
+									<p style="margin: 3px; font-size: 12px;">파일을 여기에 드래그 하세요.
 										(<span style="color: red; font-weight: bold;">입력저장일 경우 선택한 파일 자동저장</span>)
 									</p>
 									<div id="file-list" class="file-list-container"></div>
@@ -312,7 +332,7 @@
 					</form>
 					<div class="table-file-container" style="width: 100%; margin-top: 5px; border: 1px solid #ddd; border-radius: 10px;">
 					    <div style="max-height: 150px; overflow-y: auto;">
-					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 14px;">
+					        <table id="fileTable" class="display nowrap table table-hover table-bordered" style="width: 100%; font-size: 13px;">
 					       </table>    
 					    </div>
 					</div>     

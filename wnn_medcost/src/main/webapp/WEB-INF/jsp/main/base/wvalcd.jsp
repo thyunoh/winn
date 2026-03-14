@@ -8,9 +8,30 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 
-<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
     <!-- DataTables CSS -->
     <style>
+/* ===== 모달 라벨 스타일 ===== */
+#modalName .modal-body .col-form-label {
+	font-size: 14px; font-weight: 500; color: #333;
+	background: linear-gradient(135deg, #b3ddf0 0%, #d4ecf7 100%);
+	border-radius: 3px; padding: 4px 8px 4px 18px;
+	display: flex; align-items: center;
+	min-height: 30px; white-space: nowrap;
+}
+#modalName .modal-body .form-group.row {
+	margin-left: 0; margin-right: 0;
+}
+#modalName .modal-body {
+	padding: 10px 18px;
+}
+#modalName .modal-body .form-group {
+	margin-bottom: 3px; align-items: center;
+}
+#modalName .modal-body .form-control,
+#modalName .modal-body .custom-select {
+	font-size: 14px; height: 30px; padding: 2px 8px;
+}
     </style>
 <!-- ============================================================== -->
         <!-- Main Form start -->

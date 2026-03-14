@@ -56,7 +56,7 @@
 							        </li>
 							        <li class="nav-item ml-auto">
 							            <button type="button" class="btn btn-outline-primary btn-sm" id="btnDataVerifyTop" style="font-size:12px; font-weight:600; padding:4px 12px;">
-							                <i class="fa fa-clipboard-check mr-1"></i>데이터검증
+							                <i class="fa fa-clipboard-check mr-1"></i>데이터검증(오류시)
 							            </button>
 							        </li>
 							    </ul>
@@ -159,7 +159,7 @@
 								         <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
 								             <div class="modal-header" style="background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color:#fff; border-radius:12px 12px 0 0; padding:18px 24px;">
 								                 <h5 class="modal-title" style="font-weight:600; letter-spacing:.5px;"><i class="fa fa-clipboard-check mr-2"></i>파일 검증 결과</h5>
-								                 <button type="button" class="close text-white" data-dismiss="modal" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
+								                 <button type="button" class="close text-white" data-dismiss="modal" id="btnVerifyX" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
 								             </div>
 								             <div class="modal-body" style="max-height:65vh; overflow-y:auto; padding:20px 24px;">
 								                 <!-- 요약 카드 -->
@@ -2123,7 +2123,9 @@ async function fn_ShowVerifyModal(verifyData) {
             var hJobssam = fn_GetJobsSam(hFn);
             var hFirstChar = hFn.charAt(0);
             // CAR, GHP, REP는 제외
-            if (hJobssam === 'CAR' || hJobssam === 'GHP' || hJobssam === 'REP') continue;
+            if (hJobssam === 'CAR' || hJobssam === 'GHP' || hJobssam === 'B00' || hJobssam === 'B01' || hJobssam === 'B00' ||
+           		hJobssam === 'C01' || hJobssam === 'B60' || hJobssam === 'B61' || hJobssam === 'C60' || hJobssam === 'C61' ||
+            	hJobssam === 'REP' || hJobssam === 'B00') continue;
             // 빈 파일 제외
             if (!hLineval || hLineval.trim() === '') continue;
             // H010 버전 추출 (파일명이 H010으로 시작)
@@ -2163,8 +2165,9 @@ async function fn_ShowVerifyModal(verifyData) {
             // K,D,H로 시작하는 파일명 → H010 버전
             // C,M으로 시작하는 파일명 → 가장 작은 C/M 파일 버전
             var version;
-            if (jobssam === 'CAR' || jobssam === 'GHP' || jobssam === 'REP') {
-                version = lineval.substring(0, 3);
+            if (jobssam === 'CAR' || jobssam === 'GHP' || jobssam === 'REP' || jobssam === 'B00' || jobssam === 'B01' || jobssam === 'C00' || 
+                jobssam === 'C01' || jobssam === 'B60' || jobssam === 'B61' || jobssam === 'C60' || jobssam === 'C61') {
+                 version = lineval.substring(0, 3);
             } else if (fileName.charAt(0).toUpperCase() === 'K' || fileName.charAt(0).toUpperCase() === 'D' || fileName.charAt(0).toUpperCase() === 'H') {
                 version = (jobsver_H010 !== '') ? jobsver_H010 : lineval.substring(0, 3);
             } else if (fileName.charAt(0).toUpperCase() === 'C' || fileName.charAt(0).toUpperCase() === 'M') {
@@ -2370,10 +2373,14 @@ function fn_ParseLine(lineval, columns) {
 function fn_RenderVerifyModal(fileResults, allTablesDef) {
     // SAMFVER_MST 정의에서 테이블명 → 설명 매핑
     var descMap = {
-        'TBL_CHUNG_MST': '청구서', 'TBL_MYOUNG_MST': '명세서', 'TBL_JINORD_MST': '진료내역',
-        'TBL_DISEASE_MST': '질병', 'TBL_JINOUT_MST': '진료외', 'TBL_SPECODE_MST': '특수코드'
+        'TBL_CHUNG_MST': '청구서', 'TBL_MYOUNG_MST': '일반내역', 'TBL_JINORD_MST': '진료내역',
+        'TBL_DISEASE_MST': '상병내역', 'TBL_JINOUT_MST': '처방내역', 'TBL_SPECODE_MST': '특정내역'
     };
 
+    var fixedOrder = [
+        'TBL_CHUNG_MST' , 'TBL_MYOUNG_MST', 'TBL_DISEASE_MST',
+        'TBL_JINORD_MST', 'TBL_JINOUT_MST', 'TBL_SPECODE_MST'
+    ];
     // SAMFVER_MST 정의 기반 targetTables 구성 (없으면 기본 6개 사용)
     var targetTables = [];
     if (allTablesDef && allTablesDef.length > 0) {
@@ -2391,18 +2398,27 @@ function fn_RenderVerifyModal(fileResults, allTablesDef) {
     } else {
         // fallback: 기본 6개 테이블
         var defaultTbls = [
-            { tbl: 'TBL_CHUNG_MST', name: 'CHUNG', desc: '청구서' },
-            { tbl: 'TBL_MYOUNG_MST', name: 'MYOUNG', desc: '명세서' },
-            { tbl: 'TBL_JINORD_MST', name: 'JINORD', desc: '진료내역' },
-            { tbl: 'TBL_DISEASE_MST', name: 'DISEASE', desc: '질병' },
-            { tbl: 'TBL_JINOUT_MST', name: 'JINOUT', desc: '진료외' },
-            { tbl: 'TBL_SPECODE_MST', name: 'SPECODE', desc: '특수코드' }
+            { tbl: 'TBL_CHUNG_MST', name: '청구서', desc: '청구서' },
+            { tbl: 'TBL_MYOUNG_MST', name: '일반내역', desc: '일반내역' },
+            { tbl: 'TBL_DISEASE_MST', name: '상병내역', desc: '상병내역' },
+            { tbl: 'TBL_JINORD_MST', name: '진료내역', desc: '진료내역' },
+            { tbl: 'TBL_JINOUT_MST', name: '처방내역', desc: '처방내역' },
+            { tbl: 'TBL_SPECODE_MST', name: '처방내역', desc: '처방내역' }
         ];
         for (var dd = 0; dd < defaultTbls.length; dd++) {
             defaultTbls[dd].expectedColsize = 0;
             targetTables.push(defaultTbls[dd]);
         }
     }
+
+    // fixedOrder 기준으로 targetTables 정렬
+    targetTables.sort(function(a, b) {
+        var idxA = fixedOrder.indexOf(a.tbl);
+        var idxB = fixedOrder.indexOf(b.tbl);
+        if (idxA === -1) idxA = fixedOrder.length;
+        if (idxB === -1) idxB = fixedOrder.length;
+        return idxA - idxB;
+    });
 
     // 파일 결과를 tblinfo 기준으로 매핑
     var tableMap = {};
@@ -2799,6 +2815,11 @@ function fn_RenderVerifyModal(fileResults, allTablesDef) {
 
 // 취소 버튼 클릭 → 모달 닫기
 $('#btnVerifyClose').on('click', function() {
+    $('#verifyModal').modal('hide');
+});
+
+// X 버튼 클릭 → 모달 닫기
+$('#btnVerifyX').on('click', function() {
     $('#verifyModal').modal('hide');
 });
 

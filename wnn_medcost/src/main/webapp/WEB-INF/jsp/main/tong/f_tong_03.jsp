@@ -7,21 +7,19 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>항목별건당진료비와 구성비</title>
+
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <link href="/css/winmc/style_comm.css?v=123" rel="stylesheet">    
+  <link href="/css/winmc/style_comm.css?v=126" rel="stylesheet">    
   <style>
   </style>
-</head>
-<body>
+
+
+  <div class="dashboard-wrapper">
   <div class="container_tong">
-    <h2>항목별건당진료비와 구성비</h2>
+    <h3>항목별건당진료비와 구성비</h3>
     <div class="filter-box">
 		<span>시작년월</span>
 		<div style="display:inline-flex; gap:2px;">
@@ -86,8 +84,8 @@
    	 </tbody>
 	</table>
   </div>  
-</body>
-</html>
+
+
 <script>
   // 년월 콤보 초기화
   (function() {
@@ -305,13 +303,15 @@
     element.style.transformOrigin = "top left";
 
     const opt = {
-      margin: [2, 10, 5, 10],
+      margin: [8, 5, 2, 5],
       filename: '항목별건당진료비와 구성비.pdf',
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    {
     html2pdf().set(opt).from(element).save().then(() => {
     }).catch(function(err) {
       console.error("PDF 생성 오류:", err);
@@ -323,6 +323,8 @@
       if (bar) bar.remove();
       pdfBtn.disabled = false;
     });
+    }
   }
 </script>
 
+</div>

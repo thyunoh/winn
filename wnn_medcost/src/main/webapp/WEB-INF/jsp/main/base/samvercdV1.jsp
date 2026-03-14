@@ -8,7 +8,7 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
 <style>
 </style>
 	<!-- ============================================================== -->
@@ -22,60 +22,77 @@
 				<div class="card">
 					<div class="card-body">
 						<!-- 조회조건 + 버튼 -->
-						<div class="d-flex align-items-start mb-2" style="gap:8px;">
-							<!-- SAMVER 체크박스 (넓게) -->
-							<div style="flex:1; min-width:0;">
-								<label class="mb-0" style="font-size:12px;"><b>SAMVER</b></label>
-								<div id="srchSamverArea" style="height:120px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px; 
-								         display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start;">
+						<div style="display:flex; gap:10px; align-items:stretch; margin-bottom:8px;">
+							<!-- [조회조건] SAMVER + VERSION + TBLINFO + 조회버튼 -->
+							<fieldset style="flex:1; min-width:0; border:1px solid #d0d7de; border-radius:6px; padding:8px 12px 8px 12px; margin:0; background:#fafbfc;">
+								<legend style="font-size:11px; font-weight:700; color:#0366d6; padding:0 6px; width:auto; margin-bottom:4px; border:none;">
+									<i class="fas fa-search mr-1"></i>조회조건
+								</legend>
+								<div style="display:flex; gap:10px; align-items:flex-start;">
+									<!-- SAMVER 체크박스 -->
+									<div style="flex:1; min-width:0;">
+										<label class="mb-0" style="font-size:11px; color:#586069;"><b>SAMVER</b></label>
+										<div id="srchSamverArea" style="height:80px; overflow-y:auto; border:1px solid #e1e4e8; border-radius:4px; padding:4px;
+										         display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start; background:#fff;">
+										</div>
+									</div>
+									<!-- VERSION + TBLINFO -->
+									<div style="width:120px; flex-shrink:0;">
+										<label class="mb-0" style="font-size:11px; color:#586069;"><b>VERSION</b></label>
+										<input id="srchVersion" type="text" class="form-control form-control-sm mb-1" placeholder="" style="height:28px; font-size:12px;">
+										<label class="mb-0" style="font-size:11px; color:#586069;"><b>TBLINFO</b></label>
+										<select id="srchTblinfo" class="custom-select custom-select-sm" style="height:30px; font-size:12px;">
+											<option value="" selected>전체</option>
+										</select>
+									</div>
+									<!-- 조회/복사 버튼 -->
+									<div class="d-flex flex-column flex-shrink-0" style="gap:4px; padding-top:13px;">
+										<button class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="top" title="조회"
+											onClick="fn_Search()" style="min-width:72px; font-size:12px;">
+											<i class="fas fa-binoculars mr-1"></i>조회
+										</button>
+										<button class="btn btn-sm btn-outline-secondary" data-toggle="tooltip" data-placement="top" title="버전복사 화면"
+											onClick="fn_OpenCopyModal()" style="min-width:72px; font-size:12px;">
+											<i class="fas fa-copy mr-1"></i>버전복사
+										</button>
+									</div>
 								</div>
-							</div>
-							<!-- VERSION + TBLINFO 세로 배치 (우측 끝) -->
-							<div style="width:130px; flex-shrink:0;">
-								<label class="mb-0" style="font-size:12px;"><b>VERSION</b></label>
-								<input id="srchVersion" type="text" class="form-control form-control-sm mb-1" placeholder="">
-								<label class="mb-0" style="font-size:12px;"><b>TBLINFO</b></label>
-								<select id="srchTblinfo" class="custom-select custom-select-sm">
-									<option value="" selected>전체</option>
-								</select>
-							</div>
-							<!-- 버튼 세로 배치 (우측 끝) -->
-							<div class="d-flex flex-column flex-shrink-0" style="gap:2px;">
-								<div class="btn-group" style="white-space:nowrap;">
-									<button class="btn btn-sm btn-outline-dark" data-toggle="tooltip" data-placement="top" title="조회"
-										onClick="fn_Search()">조회 <i class="fas fa-binoculars"></i></button>
-									<button class="btn btn-sm btn-outline-primary" data-toggle="tooltip"
-										data-placement="top" title="버전복사 화면"
-										onClick="fn_OpenCopyModal()">
-										버전복사 <i class="fas fa-copy"></i>
-									</button>
-									<button class="btn btn-sm btn-outline-dark" data-toggle="tooltip"
-										data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">
-										화면확장축소 <i class="fas fa-expand" id="fullscreenIcon"></i>
-									</button>
+							</fieldset>
+							<!-- [데이터관리] 입력/수정/삭제/저장 + 화면 -->
+							<fieldset style="flex-shrink:0; border:1px solid #d0d7de; border-radius:6px; padding:8px 12px 8px 12px; margin:0; background:#fafbfc;">
+								<legend style="font-size:11px; font-weight:700; color:#28a745; padding:0 6px; width:auto; margin-bottom:4px; border:none;">
+									<i class="fas fa-edit mr-1"></i>데이터관리
+								</legend>
+								<div class="d-flex flex-column" style="gap:6px; height:100%; justify-content:center;">
+									<div class="btn-group" style="white-space:nowrap;">
+										<button class="btn btn-sm btn-outline-success btn-insert" data-toggle="tooltip"
+											data-placement="top" title="선택행 아래에 중간삽입" onClick="fn_InsertMiddle()" style="font-size:12px;">
+											<i class="far fa-edit mr-1"></i>입력
+										</button>
+										<button class="btn btn-sm btn-outline-info btn-update" data-toggle="tooltip"
+											data-placement="top" title="선택 Data 수정" onClick="cd_modal_Open('U')" style="font-size:12px;">
+											<i class="far fa-save mr-1"></i>수정
+										</button>
+										<button class="btn btn-sm btn-outline-danger btn-delete" data-toggle="tooltip"
+											data-placement="top" title="선택 Data 삭제" onClick="cd_modal_Open('D')" style="font-size:12px;">
+											<i class="far fa-trash-alt mr-1"></i>삭제
+										</button>
+									</div>
+									<div class="btn-group" style="white-space:nowrap;">
+										<button class="btn btn-sm btn-warning" data-toggle="tooltip"
+											data-placement="top" title="변경사항 일괄저장" onClick="fn_BulkSave()" style="font-size:12px; color:#fff;">
+											<i class="fas fa-save mr-1"></i>일괄저장
+										</button>
+										<button class="btn btn-sm btn-outline-dark" data-toggle="tooltip"
+											data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle" style="font-size:12px;">
+											<i class="fas fa-expand" id="fullscreenIcon"></i>
+										</button>
+									</div>
 								</div>
-								<div class="btn-group" style="white-space:nowrap;">
-									<button class="btn btn-sm btn-outline-dark btn-insert" data-toggle="tooltip"
-										data-placement="top" title="선택행 아래에 중간삽입" onClick="fn_InsertMiddle()">
-										입력 <i class="far fa-edit"></i>
-									</button>
-									<button class="btn btn-sm btn-outline-dark btn-update" data-toggle="tooltip"
-										data-placement="top" title="선택 Data 수정" onClick="cd_modal_Open('U')">
-										수정 <i class="far fa-save"></i>
-									</button>
-									<button class="btn btn-sm btn-outline-dark btn-delete" data-toggle="tooltip"
-										data-placement="top" title="선택 Data 삭제" onClick="cd_modal_Open('D')">
-										삭제 <i class="far fa-trash-alt"></i>
-									</button>
-									<button class="btn btn-sm btn-outline-primary" data-toggle="tooltip"
-										data-placement="top" title="변경사항 일괄저장" onClick="fn_BulkSave()">
-										일괄저장 <i class="fas fa-save"></i>
-									</button>
-								</div>
-							</div>
+							</fieldset>
 						</div>
 						<!-- 그리드 -->
-						<div style="width: 100%;">
+						<div style="width: 100%; font-size:13px;">
 							<table id="cd_tableName"
 								class="display nowrap table table-striped table-bordered">
 								<!-- 테이블 내용 -->
@@ -103,39 +120,35 @@
 		role="dialog"
 		style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 70vh;">
 		<div class="modal-content"
-			style="height: 70%; display: flex; flex-direction: column;">
-			<div class="modal-header bg-light">
-				<h6 class="modal-title">버전 복사</h6>
-				<div class="form-row">
-					<div class="col-sm-12 mb-2" style="text-align: right;">
-						<button id="copy_btn_exec" type="button"
-							class="btn btn-outline-primary" onClick="fn_ExecVersionCopy()">
-							복사실행. <i class="fas fa-play"></i>
-						</button>
-						<button type="button" class="btn btn-outline-dark"
-							onClick="fn_CloseCopyModal()">
-							닫기 <i class="fas fa-times"></i>
-						</button>
-					</div>
-				</div>
+			style="height: 60%; display: flex; flex-direction: column;">
+			<div class="modal-header bg-light" style="display:flex; flex-wrap:nowrap; justify-content:flex-end; align-items:center; gap:8px;">
+				<h6 class="modal-title mb-0" style="margin-right:auto;">버전 복사</h6>
+				<button id="copy_btn_exec" type="button"
+					class="btn btn-outline-primary" onClick="fn_ExecVersionCopy()">
+					복사실행. <i class="fas fa-play"></i>
+				</button>
+				<button type="button" class="btn btn-outline-dark"
+					onClick="fn_CloseCopyModal()">
+					닫기 <i class="fas fa-times"></i>
+				</button>
 			</div>
-			<div class="modal-body" style="text-align: left; flex: 1; overflow-y: auto;">
+			<div class="modal-body" style="text-align: left; flex: 1; overflow-y: auto; padding:20px 28px;">
 				<div class="form-group row">
-					<label class="col-3 col-form-label text-left">원본 VERSION</label>
+					<label class="col-2 col-form-label text-left" style="font-weight:600; font-size:13px;">원본 VERSION</label>
 					<div class="col-9">
 						<input id="srcVersion" type="text" class="form-control" readonly style="background-color:#e9ecef;">
 					</div>
 				</div>
 				<div class="form-group row">
-					<label class="col-3 col-form-label text-left">대상 VERSION</label>
+					<label class="col-2 col-form-label text-left" style="font-weight:600; font-size:13px;">대상 VERSION</label>
 					<div class="col-9">
 						<input id="tgtVersion" type="text" class="form-control" placeholder="대상 버전 입력 (예: 093)">
 					</div>
 				</div>
 				<div class="form-group row">
-					<label class="col-3 col-form-label text-left">복사대상 SAMVER</label>
+					<label class="col-2 col-form-label text-left" style="font-weight:600; font-size:13px;">복사대상 SAMVER</label>
 					<div class="col-9">
-						<div id="samverCheckArea" style="max-height:250px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px; 
+						<div id="samverCheckArea" style="max-height:250px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px; padding:4px;
 						          display:flex; flex-wrap:wrap; gap:2px; align-content:flex-start;">
 							<!-- 체크박스가 동적으로 생성됨 -->
 						</div>

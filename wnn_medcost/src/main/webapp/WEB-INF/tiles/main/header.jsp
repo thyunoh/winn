@@ -27,7 +27,7 @@
 	<link rel="stylesheet" href="/assets/vendor/charts/c3charts/c3.css">
 	<link rel="stylesheet" href="/assets/vendor/fonts/flag-icon-css/flag-icon.min.css">	
 	<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.css" >
-	<link rel="stylesheet" href="/css/winmc/addstyle.css">
+	<link rel="stylesheet" href="/css/winmc/addstyle.css?v=100">
 	
 	
 	<!-- 맑은 고딕 정의 -->

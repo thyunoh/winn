@@ -8,7 +8,7 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=127"  rel="stylesheet">
 <style>
 </style>
 	<!-- ============================================================== -->
@@ -265,13 +265,13 @@
 								</select>
 							</div>
 							<label for="codeCd_one"
-								class="col-2 col-lg-2 col-form-label text-left">공통코드</label>
+								class="col-2 col-lg-2 form-control text-left">공통코드</label>
 							<div class="col-2 col-lg-2">
 								<input id="codeCd_one" name="codeCd_one" type="text"
 									class="form-control"  placeholder="">
 							</div>
 							<label for="subCode_one"
-								class="col-2 col-lg-2 col-form-label text-left">세부코드</label>
+								class="col-2 col-lg-2 form-control text-left">세부코드</label>
 							<div class="col-2 col-lg-2">
 								<input id="subCode_one" name="subCode_one" type="text"
 									class="form-control" placeholder="">

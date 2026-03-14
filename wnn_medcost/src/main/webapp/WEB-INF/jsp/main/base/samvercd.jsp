@@ -8,7 +8,7 @@
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 <%@ page import ="java.util.Date" %>
 <!-- Customized Bootstrap Stylesheet -->
-<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
 <style>
 </style>
 	<!-- ============================================================== -->

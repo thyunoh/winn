@@ -12,12 +12,53 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
 
-<link href="/css/winmc/style_comm.css?v=123"  rel="stylesheet">
+<link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <!-- 카카오주소검색 -->
 <!-- DataTables CSS -->
 
 <style>
+/* ===== 3개 모달 공통 라벨 스타일 ===== */
+#modalName .modal-body .col-form-label,
+#hc_modalName .modal-body .col-form-label,
+#hu_modalName .modal-body .col-form-label {
+	font-size: 14px; font-weight: 500; color: #333;
+	background: linear-gradient(135deg, #b3ddf0 0%, #d4ecf7 100%);
+	border-radius: 3px; padding: 4px 8px 4px 18px;
+	display: flex; align-items: center;
+	min-height: 30px; white-space: nowrap;
+}
+/* row 좌측 마진 리셋 (공지제목 바와 정렬) */
+#modalName .modal-body .form-group.row,
+#hc_modalName .modal-body .form-group.row,
+#hu_modalName .modal-body .form-group.row {
+	margin-left: 0; margin-right: 0;
+}
+/* 바디 간격 */
+#modalName .modal-body,
+#hc_modalName .modal-body,
+#hu_modalName .modal-body {
+	padding: 10px 18px;
+}
+#modalName .modal-body .form-group,
+#hc_modalName .modal-body .form-group,
+#hu_modalName .modal-body .form-group {
+	margin-bottom: 3px; align-items: center;
+}
+/* 입력 필드 */
+#modalName .modal-body .form-control,
+#modalName .modal-body .custom-select,
+#hc_modalName .modal-body .form-control,
+#hc_modalName .modal-body .custom-select,
+#hu_modalName .modal-body .form-control,
+#hu_modalName .modal-body .custom-select {
+	font-size: 14px; height: 30px; padding: 2px 8px;
+}
+#modalName .modal-body textarea.form-control,
+#hc_modalName .modal-body textarea.form-control,
+#hu_modalName .modal-body textarea.form-control {
+	height: auto; padding: 4px 8px;
+}
 </style>
 <!-- ============================================================== -->
 <!-- Main Form start -->

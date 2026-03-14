@@ -2,7 +2,27 @@
   "permissions": {
     "allow": [
       "Bash(xxd \"C:\\\\Users\\\\HYUN\\\\git\\\\win\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\jsp\\\\main\\\\mangr\\\\asqcd.jsp\")",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(sed -i '260s/class=\"\"form-row\"\"/class=\"\"form-group row\"\"/' noticd.jsp)",
+      "Bash(sed -i '269s/class=\"\"form-row\"\"/class=\"\"form-group row\"\"/' noticd.jsp)",
+      "Bash(sed -i 's/class=\"\"form-group row mb-1\"\"/class=\"\"form-group row\"\"/' noticd.jsp)",
+      "Bash(sed -i 's/style=\"\"height: 35px; font-size: 14px;\"\"//g' noticd.jsp)",
+      "Bash(grep -l \"<!DOCTYPE html>\" C:/Users/HYUN/git/win/wnn_medcost/src/main/webapp/WEB-INF/jsp/main/tong/f_tong_*.jsp)",
+      "Bash(grep -rn \"style_comm.css\" C:/Users/HYUN/git/win/wnn_medcost/src/main/webapp/WEB-INF/jsp/main/tong/f_tong_*.jsp)",
+      "Bash(find . -name \"*.jsp\" -exec grep -l \"style_comm.css?v=124\" {})",
+      "Bash(while read:*)",
+      "Bash(do sed:*)",
+      "Bash(done)",
+      "Bash(xargs grep:*)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/HYUN/git/win/wnn_medcost/src/main/webapp/WEB-INF/jsp/main/mangr/**)",
+      "Bash(find . -name \"*.jsp\" -exec grep -l \"style_comm.css?v=125\" {})",
+      "Bash(do)",
+      "Bash(sed -i \"s|html2canvas: { scale: 2, useCORS: true, scrollY: 0 }|html2canvas: { scale: 2, useCORS: true, scrollY: 0 },\\\\n      pagebreak: { mode: [''avoid-all'', ''css'', ''legacy''] }|\" \"$f\")",
+      "Bash(echo \"Updated: $f\")",
+      "Bash(sed -i \"s|html2canvas: { scale: 2, useCORS: true, scrollY: 0 },|html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, windowWidth: 1200 },|\" \"$f\")",
+      "Bash(sed -i \"s|pagebreak: { mode: \\\\[''avoid-all'', ''css'', ''legacy''\\\\] },||\" \"$f\")"
     ]
   }
 }
