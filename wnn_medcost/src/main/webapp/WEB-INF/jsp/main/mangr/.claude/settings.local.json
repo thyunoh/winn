@@ -22,7 +22,9 @@
       "Bash(sed -i \"s|html2canvas: { scale: 2, useCORS: true, scrollY: 0 }|html2canvas: { scale: 2, useCORS: true, scrollY: 0 },\\\\n      pagebreak: { mode: [''avoid-all'', ''css'', ''legacy''] }|\" \"$f\")",
       "Bash(echo \"Updated: $f\")",
       "Bash(sed -i \"s|html2canvas: { scale: 2, useCORS: true, scrollY: 0 },|html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, windowWidth: 1200 },|\" \"$f\")",
-      "Bash(sed -i \"s|pagebreak: { mode: \\\\[''avoid-all'', ''css'', ''legacy''\\\\] },||\" \"$f\")"
+      "Bash(sed -i \"s|pagebreak: { mode: \\\\[''avoid-all'', ''css'', ''legacy''\\\\] },||\" \"$f\")",
+      "Read(//c/Users/HYUN/git/win/**)",
+      "Bash(ls -d */)"
     ]
   }
 }

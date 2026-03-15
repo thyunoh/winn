@@ -14,10 +14,6 @@
   <link href="/css/winmc/style_comm.css?v=128" rel="stylesheet">
   <style>
   </style>
-
-
-
-
   <div class="dashboard-wrapper">
   <div class="container_tong">
     <h3>기간별 건수와 진료비 추이</h3>
