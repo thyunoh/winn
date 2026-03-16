@@ -1388,11 +1388,33 @@
 			        AND jm.CLAIM_NO = cm.CLAIM_NO
 			      WHERE cm.HOSP_CD  = #{hospCd}
 		            AND cm.DATE_YM  = #{workYm}
-					AND EXISTS (
-						    SELECT 1
-						    FROM TBL_DRUG_MST dd
-						    WHERE dd.EDI_CODE = jm.EDI_CODE
-						       AND dd.CODEFLAG IN ('C','D','M','T')) 
+			        AND 
+					  ( 
+					      EXISTS (
+			               SELECT 1
+			                 FROM TBL_DRUG_MST dd
+			                WHERE dd.EDI_CODE  = jm.EDI_CODE
+			                  AND dd.CODEFLAG IN ('C')
+			               )
+			           OR  EXISTS (
+			               SELECT 1
+			                 FROM TBL_DRUG_MST dd
+			                WHERE dd.EDI_CODE  = jm.EDI_CODE
+			                  AND dd.CODEFLAG IN ('D')
+							)
+							OR EXISTS (
+			               SELECT 1
+			                 FROM TBL_DRUG_MST dd
+			                WHERE dd.EDI_CODE  = jm.EDI_CODE
+			                  AND dd.CODEFLAG IN ('M')
+							  )				 
+			            OR  EXISTS (
+			               SELECT 1
+			                 FROM TBL_DRUG_MST dd
+			                WHERE dd.EDI_CODE  = jm.EDI_CODE
+			                  AND dd.CODEFLAG IN ('T')
+			               )
+					 )	   
 				    AND NOT EXISTS ( /* JS008 추가 */
 					       SELECT 1
 					         FROM TBL_SPECODE_MST tsm

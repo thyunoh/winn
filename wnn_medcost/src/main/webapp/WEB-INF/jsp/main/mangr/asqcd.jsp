@@ -502,7 +502,7 @@
 	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '400px'},
 	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '400px'},
 	        				{ data: 'userNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '300px'},
-	        				{ data: 'regDttm',    visible: true,  className: 'dt-body-center' , width: '150px',  },
+	        				{ data: 'updDttm',    visible: true,  className: 'dt-body-center' , width: '150px',  },
 	        				{ data: 'fileYn',     visible: true,  className: 'dt-body-center' , width: '50px',
 	        				    render: function (data, type, row) {
 	        				        if (type === 'display') {
@@ -522,10 +522,11 @@
         
 		// 초기 data Sort,  없으면 []
 		var muiltSorts = [
-							['regDttm', 'desc' ]
+							['ansrWan', 'asc' ],
+							['updDttm', 'desc' ]
         				 ];
-        // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []        				 
-		var showSortNo = ['regDttm'];                   
+        // Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
+		var showSortNo = ['ansrWan','updDttm'];                   
 		// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )	
 		var hideColums = ['asqSeq','fileGb'];             // 없으면 []; 일부 컬럼 숨길때		
 		var txt_Markln = 80;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함

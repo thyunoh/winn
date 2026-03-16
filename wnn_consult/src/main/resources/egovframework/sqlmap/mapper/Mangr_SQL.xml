@@ -212,7 +212,7 @@
 	      ]]>
 	      </if>
 	      <![CDATA[
-		     Order by A.UPD_DTTM  DESC
+		     Order by A.ANSR_WAN ASC , A.UPD_DTTM  DESC
 	      ]]>
     </select>
      <select id="getasqCdList" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
@@ -233,11 +233,11 @@
             A.UPD_DTTM, 
             A.UPD_USER, 
             A.UPD_IP, 
-            IFNULL(A.QSTN_WAN,'') QSTN_WAN  ,
-            IFNULL(A.ANSR_WAN,'') ANSR_WAN ,
-            CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
+            IFNULL(A.QSTN_WAN,'N') QSTN_WAN  ,
+            IFNULL(A.ANSR_WAN,'N') ANSR_WAN ,
+            CASE WHEN  IFNULL(A.QSTN_WAN,'N') = 'Y' THEN '질문완료'
             ELSE '질문진행' END QSTN_STAT ,
-            CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
+            CASE WHEN  IFNULL(A.ANSR_WAN,'N') = 'Y' THEN '답변완료'
             ELSE '답변대기' END ANSR_STAT   ,    
 	        CASE WHEN EXISTS (
 	            SELECT 1 FROM TBL_FILE_MST F
@@ -261,7 +261,7 @@
 	         AND IFNULL(A.ANSR_WAN,'') = 'Y'
 	      </if>	      
 	      <![CDATA[
-		     Order by A.REG_DTTM  DESC
+		     Order by A.ANSR_WAN ASC , A.REG_DTTM  DESC
 	      ]]>
     </select>       
      <!-- 질문입력  -->   

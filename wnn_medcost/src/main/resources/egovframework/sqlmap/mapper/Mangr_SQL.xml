@@ -386,12 +386,12 @@
             A.UPD_DTTM, 
             A.UPD_USER, 
             A.UPD_IP, 
-            IFNULL(A.QSTN_WAN,'') QSTN_WAN  ,
-            IFNULL(A.ANSR_WAN,'') ANSR_WAN ,
-            CASE WHEN  IFNULL(A.QSTN_WAN,'') = 'Y' THEN '질문완료'
-            ELSE '질문진행' END QSTN_STAT ,
-            CASE WHEN  IFNULL(A.ANSR_WAN,'') = 'Y' THEN '답변완료'
-            ELSE '답변대기' END ANSR_STAT  ,
+            A.QSTN_WAN  ,
+            A.ANSR_WAN  ,
+            CASE WHEN  A.QSTN_WAN = 'Y' THEN '질문완료'
+            ELSE '질문대기' END QSTN_STAT ,
+            CASE WHEN  A.ANSR_WAN = 'Y' THEN '답변완료'
+            ELSE '답변대기' END ANSR_STAT ,
 	        CASE WHEN EXISTS (
 	                SELECT 1 FROM TBL_FILE_MST F
 	                WHERE F.FILE_SEQ = A.ASQ_SEQ
@@ -423,7 +423,7 @@
 	      ]]>
 	      </if>	           
 	      <![CDATA[
-		     Order by A.REG_DTTM  DESC
+		     Order by A.ANSR_WAN ASC , A.UPD_DTTM  DESC
 	      ]]>
     </select>   
     <update id="updateasqCd" parameterType="AsqDTO" ><![CDATA[

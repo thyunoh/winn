@@ -3869,7 +3869,7 @@ function fn_todayAsqAlert(dataList) {
         var row = dataList[i];
         var ansrWan = (row.ansrWan || '').toString().trim();
         if (ansrWan === 'Y') continue;
-        var regDttm = (row.regDttm || row.updDttm || '').toString();
+        var regDttm = (row.updDttm || row.updDttm || '').toString();
         if (isRecentDate(regDttm)) {
             filtered.push(row);
         }

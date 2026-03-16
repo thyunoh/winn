@@ -800,7 +800,6 @@ function asqMainClose() {
 }   
 
 function fnasq_main() {
-         
     fnasq_Search();
     $('#asq_main_tab').modal('show') ;
     $("#asqdataArea").empty();
@@ -1494,6 +1493,7 @@ function showAnsrFileList(asqSeq) {
     animation-play-state: paused;
 }
 #todayAsqBar .asq-bar-msg {
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -1509,8 +1509,8 @@ function showAnsrFileList(asqSeq) {
     color: #90cdf4;
 }
 #todayAsqBar .asq-bar-msg .qstn-title {
-    color: #e2e8f0;
-    font-style: italic;
+    color: #fff;
+    font-weight: 600;
 }
 #todayAsqBar .asq-bar-msg .ansr-badge {
     font-size: 11px;
@@ -1583,7 +1583,8 @@ function fn_getDateStr(daysAgo) {
 
 // 페이지 로드시 질문 데이터 조회
 function fn_loadTodayAsq() {
-    var hospCd = getCookie("s_hospid") || '';
+    var wnnYn = (getCookie("s_wnn_yn") || '').trim();
+    var hospCd = (wnnYn === 'Y') ? '' : (getCookie("s_hospid") || '');
     $.ajax({
         type: "POST",
         url: "/mangr/asqCdList.do",
@@ -1624,7 +1625,7 @@ function fn_todayAsqAlert(dataList) {
         var ansrWan = (row.ansrWan || '').toString().trim();
         // 답변대기: ansrWan이 'Y'가 아닌 것
         if (ansrWan === 'Y') continue;
-        var regDttm = (row.regDttm || '').toString();
+        var regDttm = (row.updDttm || '').toString();
         if (isRecentDate(regDttm)) {
             filtered.push(row);
         }
@@ -1639,11 +1640,10 @@ function fn_todayAsqAlert(dataList) {
     var msgHtml = '';
     for (var j = 0; j < filtered.length; j++) {
         var item = filtered[j];
-        var hospNm = item.hospNm  || '';
-        var userNm = item.userNm  || '';
+        var hospNm = item.hospNm    || '';
+        var userNm = item.userNm    || '';
         var title  = item.qstnTitle || '';
-
-        msgHtml += '<span class="asq-bar-msg">';
+        msgHtml += '<span class="asq-bar-msg" onclick="fn_goAsqPage();">';
         if (j > 0) msgHtml += '<span class="sep">|</span>';
         msgHtml += '<span class="hosp-name">' + hospNm + '</span> ';
         msgHtml += '<span class="user-name">' + userNm + '</span>님 질문등록';
@@ -1678,6 +1678,12 @@ function fn_todayAsqAlert(dataList) {
         var btn = document.getElementById('asqBarToggle');
         if (btn) btn.innerHTML = '<i class="fas fa-bell"></i> 켜기';
     }
+}
+
+// 하단 메시지 클릭 → 관리자 1:1 문의하기 페이지 이동 (이미 해당 페이지면 무시)
+function fn_goAsqPage() {
+    if (location.pathname.indexOf('/mangr/asqcd.do') >= 0) return;
+    location.href = '/mangr/asqcd.do';
 }
 
 function fn_asqBarToggle() {

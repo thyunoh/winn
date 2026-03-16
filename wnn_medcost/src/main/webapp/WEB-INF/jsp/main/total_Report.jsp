@@ -804,12 +804,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 accordionHeaderText.textContent = button_Text; 
             }
 
-            let accordionBody = document.querySelector("#rounded-stylish_collapse");
-
-            if (accordionBody) {
-                accordionBody.classList.remove("show");
-            }
-            
             switch (openAccordionId) {
 	    	    case "accordion_item_1":
 	    	    	jobFlag = "01"
@@ -1633,32 +1627,48 @@ function fn_PdfExportAllPages() {
             accordionHeaderText.textContent = title;
         }
 
-        // 직접 AJAX 호출 (fn_CreateData 와 동일한 호출)
+        // 먼저 데이터 유무 확인 후 없으면 SKIP
+        var selected_Year2 = parseInt(document.getElementById("year_Select").value);
+        var selectedMonth2 = parseInt(document.getElementById("monthSelect").value);
+        var month3 = selectedMonth2, year_3 = selected_Year2;
+        var month2 = month3 - 1, month1 = month2 - 1;
+        var year_2 = year_3, year_1 = year_2;
+        if (month3 === 1) { month2 = 12; month1 = 11; year_2 = year_3 - 1; year_1 = year_2; }
+        else if (month2 === 1) { month1 = 12; year_1 = year_2 - 1; }
+        var m1 = month1 < 10 ? "0" + month1 : String(month1);
+        var m2 = month2 < 10 ? "0" + month2 : String(month2);
+        var m3 = month3 < 10 ? "0" + month3 : String(month3);
+
         $.ajax({
-            url: "/main/createTotalReport.do",
+            url: "/main/selectTotalReport.do",
             type: "POST",
             data: {
                 hosp_cd: hospid,
-                jobyymm: yearVal + monthVal,
+                fr_yymm: year_1 + m1,
+                midyymm: year_2 + m2,
+                endyymm: year_3 + m3,
                 make_fg: currentFlag
             },
-            timeout: 60000,  // 60초 타임아웃 (투석치료 등 느린 항목 대응)
             success: function(response) {
-                if (response) {
-                    var accordionBody = document.querySelector("#rounded-stylish_collapse");
-                    if (accordionBody) {
-                        accordionBody.classList.add("show");
-                    }
-                    // setMakeGrid 호출 → 내부에서 selectTotalReport.do AJAX 발생
-                    setMakeGrid();
+                // 데이터 없으면 SKIP
+                if (!response || response.error_code != "0" || response.resultSize < 1) {
+                    bIdx++;
+                    setTimeout(processNextFlag, 10);
+                    return;
                 }
 
-                // $.active 폴링 — 활성 AJAX가 0이 되면 즉시 캡처
+                // 데이터 있으면 도표 표시
+                var accordionBody = document.querySelector("#rounded-stylish_collapse");
+                if (accordionBody) {
+                    accordionBody.classList.add("show");
+                }
+                setMakeGrid();
+
+                // $.active 폴링 — 활성 AJAX가 0이 되면 캡처
                 var pollCount = 0;
                 function pollAjaxDone() {
                     pollCount++;
                     if ($.active === 0 || pollCount >= 300) {
-                        // 모든 AJAX 완료 → Chart.js 애니메이션(1000ms) 완료 대기 후 캡처
                         setTimeout(function() {
                             try {
                                 if (PDF_MAP[currentFlag]) {
@@ -1678,14 +1688,12 @@ function fn_PdfExportAllPages() {
                         setTimeout(pollAjaxDone, 50);
                     }
                 }
-                // selectTotalReport.do AJAX 시작 대기 후 폴링
                 setTimeout(pollAjaxDone, 30);
             },
-            error: function(xhr, status, error) {
-                console.error('AJAX 오류 (flag=' + currentFlag + '):', status, error);
-                // 오류 발생해도 다음 항목으로 진행
+            error: function() {
+                // 오류 시 SKIP
                 bIdx++;
-                setTimeout(processNextFlag, 50);
+                setTimeout(processNextFlag, 10);
             }
         });
     }
@@ -3181,8 +3189,10 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                    }
 		                }
 		            });
-	                
-		 	    } 
+
+		            // 특정진료비: 도표 셀 클릭 시 하단 DataTable 활성화 (다른 탭과 동일 패턴)
+
+		 	    }
 		   	}
         },
         error: function(xhr, status, error) {
@@ -3208,51 +3218,21 @@ function fn_CreateData(flag) {
     sessionStorage.setItem('totalReport_year', selected_Year);
     sessionStorage.setItem('totalReport_month', selectedMonth);
 
-    if (flag) { jobFlag = flag; }	
-    
-    
-    /*
-	messageBox("9","<h5> 자 료 생 성 ..: " + selected_Year + "년" + selectedMonth + "월 " + jobFlag + " 자료를 생성 하시겠습니까 ? </h5><p></p><br>","","","");
-	*/
-	
-   	//confirmYes.addEventListener('click', () => {
-   		$.ajax({
-   			
-   		  url: "/main/createTotalReport.do",
-              type: "POST",
-              data: { hosp_cd: hospid,
-            	      jobyymm: selected_Year + selectedMonth,
-            	      make_fg: jobFlag
-	      },
-	      success: function(response) {
-	    	 
-	    	  
-	    	if (response) { // 서버가 성공 응답을 보냈을 때 실행
-	    		  
-	    		let accordionBody = document.querySelector("#rounded-stylish_collapse");
-	            if (accordionBody) {
-	                accordionBody.classList.add("show"); 
-	            }
-	             
-            	setMakeGrid();
-        	}
-	    	 
-	      },
-	      error: function(xhr, status, error) {
-	          console.error("Error fetching data:", error);
-	      }
-	      
-		});
-   		
-   		//messageDialog.hide();
-   		
-    //});
+    if (flag) { jobFlag = flag; }
+
+    // 프로시저 실행 없이 도표만 표시 (프로시저는 fn_CreateData_all에서만 실행)
+    setMakeGrid();
+    $('#rounded-stylish_collapse').collapse('show');
 }
 //전체 처리
 function fn_CreateData_all() {
 
     let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
+
+    // 현재 선택된 년월 저장
+    sessionStorage.setItem('totalReport_year', selected_Year);
+    sessionStorage.setItem('totalReport_month', selectedMonth);
 
     const flagList = [
         '01','02','03','04','05','06',
@@ -3261,17 +3241,68 @@ function fn_CreateData_all() {
     ];
 
     let index = 0;
+    let errorList = [];
+
+    // 진행상황 표시
+    Swal.fire({
+        title: '전체 대상 점검 진행 중',
+        html: '<div style="text-align:left; margin-top:10px;">' +
+              '<div id="swalProgressBar" style="width:100%; height:22px; background:#e9ecef; border-radius:11px; overflow:hidden; margin-bottom:10px;">' +
+              '  <div id="swalProgressFill" style="width:0%; height:100%; background:linear-gradient(90deg,#28a745,#20c997); border-radius:11px; transition:width 0.3s;"></div>' +
+              '</div>' +
+              '<div id="swalProgressText" style="font-size:14px; color:#333;">준비 중...</div>' +
+              '<div id="swalProgressCount" style="font-size:12px; color:#888; margin-top:4px;">0 / ' + flagList.length + '</div>' +
+              '</div>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false
+    });
+
+    function updateProgress(idx, title, status) {
+        var pct = Math.round(((idx + 1) / flagList.length) * 100);
+        var fill = document.getElementById('swalProgressFill');
+        var text = document.getElementById('swalProgressText');
+        var cnt  = document.getElementById('swalProgressCount');
+        if (fill) fill.style.width = pct + '%';
+        if (text) {
+            if (status === 'doing') {
+                text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + title + '</b> 처리 중...';
+            } else if (status === 'done') {
+                text.innerHTML = '<i class="fa fa-check text-success mr-1"></i> <b>' + title + '</b> 완료';
+            } else if (status === 'error') {
+                text.innerHTML = '<i class="fa fa-times text-danger mr-1"></i> <b>' + title + '</b> 오류';
+            }
+        }
+        if (cnt) cnt.textContent = (idx + 1) + ' / ' + flagList.length;
+    }
 
     function runNext() {
 
         if (index >= flagList.length) {
-            alert("전체 자료 생성 완료!");
-            // 필요하면 여기서 갱신
-            // setMakeGrid();
+            // 완료 후 마지막 그리드 표시
+            let accordionBody = document.querySelector("#rounded-stylish_collapse");
+            if (accordionBody) {
+                accordionBody.classList.add("show");
+            }
+            setMakeGrid();
+
+            if (errorList.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '전체 점검 완료',
+                    html: '총 ' + flagList.length + '건 중 <b style="color:red;">' + errorList.length + '건 오류</b><br><small>' + errorList.join(', ') + '</small>'
+                });
+            } else {
+                Swal.fire({ icon: 'success', title: '전체 점검 완료', text: flagList.length + '개 항목 모두 정상 처리되었습니다.', timer: 2000, showConfirmButton: false });
+            }
             return;
         }
 
         const currentFg = flagList[index];
+        const title = PDF_MAP[currentFg] ? PDF_MAP[currentFg].title : currentFg;
+        jobFlag = currentFg;
+
+        updateProgress(index, title, 'doing');
 
         $.ajax({
             url: "/main/createTotalReport.do",
@@ -3283,13 +3314,16 @@ function fn_CreateData_all() {
             },
             success: function(response) {
                 console.log(currentFg + " success:", response);
+                updateProgress(index, title, 'done');
                 index++;
                 runNext();
             },
             error: function(xhr, status, error) {
                 console.error(currentFg + " error:", error);
+                updateProgress(index, title, 'error');
+                errorList.push(title);
                 index++;
-                runNext(); // 실패해도 다음 진행 (원하면 여기서 중단 가능)
+                runNext();
             }
         });
     }
