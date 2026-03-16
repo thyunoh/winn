@@ -183,7 +183,7 @@
 								     <div class="modal-dialog modal-xl" role="document">
 								         <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
 								             <div class="modal-header" style="background:linear-gradient(135deg,#28a745 0%,#20c997 100%); color:#fff; border-radius:12px 12px 0 0; padding:18px 24px;">
-								                 <h5 class="modal-title" style="font-weight:600;"><i class="fa fa-file-excel mr-2"></i>입원현황 엑셀 미리보기</h5>
+								                 <h5 class="modal-title" style="font-weight:600; color:#fff !important;"><i class="fa fa-file-excel mr-2"></i>입원현황 엑셀 미리보기</h5>
 								                 <button type="button" class="close text-white" id="btnExcelPreviewX" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
 								             </div>
 								             <div class="modal-body" style="max-height:65vh; overflow-y:auto; padding:20px 24px;">
@@ -1285,7 +1285,7 @@ async function handleFileSelection(event) {
 	    }
 	    
 		// 미리보기 모달 표시
-		showExcelPreview(datas, rawRows, columnMapResult, seqNumber, jumin_Cnt);
+		showExcelPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, jumin_Cnt);
 	    
 	} else {
 		
@@ -1742,7 +1742,7 @@ function fileView_Open(mgmonth) {
 
 
 // ─── 엑셀 미리보기 ───
-function showExcelPreview(datas, rawRows, columnMapResult, seqNumber, jumin_Cnt) {
+function showExcelPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, jumin_Cnt) {
 
 	if (datas.length === 0) {
 		signUp = 'N';
@@ -1756,16 +1756,41 @@ function showExcelPreview(datas, rawRows, columnMapResult, seqNumber, jumin_Cnt)
 	const mappedCols = Object.entries(columnMapResult).filter(([k, v]) => v);
 	const unmappedCols = Object.entries(columnMapResult).filter(([k, v]) => !v);
 
+	// 매핑된 DB컬럼 목록
+	const mappedDbCols = mappedCols.map(([k, v]) => v);
+	// 누락된 DB컬럼 (엑셀에 아예 없는 컬럼)
+	const missingDbCols = Object.entries(columnMapping).filter(([dbCol]) => !mappedDbCols.includes(dbCol));
+
+	// DB컬럼 → 대표 한글명 매핑
+	const dbColLabel = {};
+	for (const [dbCol, aliases] of Object.entries(columnMapping)) {
+		dbColLabel[dbCol] = aliases[0]; // 첫번째 alias를 대표명으로
+	}
+
 	html += '<div class="mb-3">';
-	html += '<h6 style="font-weight:600; margin-bottom:8px;"><i class="fa fa-columns mr-1"></i>컬럼 매핑 결과 (' + mappedCols.length + '/' + Object.keys(columnMapResult).length + '개 매핑)</h6>';
+	html += '<h6 style="font-weight:600; margin-bottom:8px;"><i class="fa fa-columns mr-1"></i>컬럼 매핑 결과 (' + mappedCols.length + '/' + Object.keys(columnMapResult).length + '개 인식)</h6>';
 	html += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
 	mappedCols.forEach(([orig, mapped]) => {
-		html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' → ' + mapped + '</span>';
+		const label = dbColLabel[mapped] || mapped;
+		html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' → ' + label + '</span>';
 	});
 	unmappedCols.forEach(([orig]) => {
-		html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' (미매핑)</span>';
+		html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' (미인식 - 등록제외)</span>';
 	});
 	html += '</div></div>';
+
+	// 1-2) 엑셀에 없는 컬럼 안내
+	if (missingDbCols.length > 0) {
+		html += '<div class="mb-3" style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px;">';
+		html += '<h6 style="font-weight:600; margin-bottom:6px; color:#856404;"><i class="fa fa-exclamation-triangle mr-1"></i>엑셀에 없는 컬럼 (인식 가능한 헤더명)</h6>';
+		html += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+		missingDbCols.forEach(([dbCol, aliases]) => {
+			html += '<span class="badge" style="background:#fff; border:1px solid #ffc107; color:#856404; padding:5px 10px; font-size:12px; border-radius:12px;">';
+			html += aliases[0] + ' (' + aliases.slice(1).join(', ') + ')';
+			html += '</span>';
+		});
+		html += '</div></div>';
+	}
 
 	// 2) 주민번호 상태
 	html += '<div class="mb-3">';
@@ -1784,13 +1809,13 @@ function showExcelPreview(datas, rawRows, columnMapResult, seqNumber, jumin_Cnt)
 	html += '<div class="mb-2"><h6 style="font-weight:600;"><i class="fa fa-table mr-1"></i>데이터 미리보기 (총 ' + seqNumber + '건)</h6></div>';
 	html += '<div style="overflow:auto; max-height:50vh;">';
 	html += '<table class="table table-bordered table-sm" style="font-size:12px; white-space:nowrap;">';
-	html += '<thead style="background:#f1f3f5; position:sticky; top:0; z-index:1;"><tr>';
+	html += '<thead style="background:#2a5298; color:#fff; position:sticky; top:0; z-index:1;"><tr>';
 	headers.forEach(h => {
 		const mapped = columnMapResult[h];
 		if (mapped) {
-			html += '<th style="padding:4px 8px;">' + h + '<br><small style="color:#28a745;">(' + mapped + ')</small></th>';
+			html += '<th style="padding:4px 8px; color:#fff;">' + h + '<br><small style="color:#90ee90;">(' + mapped + ')</small></th>';
 		} else {
-			html += '<th style="padding:4px 8px; color:#dc3545;">' + h + '<br><small>(미매핑)</small></th>';
+			html += '<th style="padding:4px 8px; color:#ff9999;">' + h + '<br><small>(미매핑)</small></th>';
 		}
 	});
 	html += '</tr></thead><tbody>';
