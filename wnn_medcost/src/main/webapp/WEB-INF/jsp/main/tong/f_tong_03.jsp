@@ -303,7 +303,7 @@
     element.style.transformOrigin = "top left";
 
     const opt = {
-      margin: [8, 5, 2, 5],
+      margin: [8, 2, 2, 2],
       filename: '항목별건당진료비와 구성비.pdf',
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, scrollY: 0 },

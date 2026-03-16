@@ -3,6 +3,7 @@ package egovframework.wnn_medcost.user.web;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -1501,60 +1502,205 @@ public class UserController extends BaseController {
 			return "";
 		}
     }		
-	//엑셀자료 미리보기  
-    @PostMapping("/previewExcel.do")
-    @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> previewExcel(@RequestParam("excelFile") MultipartFile file, HttpSession session) {
+	//엑셀자료 미리보기
+    @RequestMapping(value = "/previewExcel.do", method = RequestMethod.POST)
+    public void previewExcel(
+            @RequestParam("excelFile") MultipartFile file,
+            HttpSession session,
+            HttpServletResponse resp) throws Exception {
+
+        resp.setContentType("application/json; charset=UTF-8");
+
+        Map<String, Object> response = new LinkedHashMap<>();
         List<Map<String, Object>> dataList = new ArrayList<>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd"); // 하이픈 없는 날짜 포맷
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+
+        // 의사 양식 (순서대로, 중복 컬럼은 변환 후 기준)
+        List<String> doctorTemplate = Arrays.asList(
+            "면허종별", "의사구분", "의사형태", "성명", "주민등록번호", "근무형태",
+            "면허번호", "면허취득일자", "입사일자", "구분", "시작일자", "종료일자",
+            "대체자명", "대체시작일자", "대체종료일자", "병동명", "단위",
+            "근무시작일자", "근무종료일자", "전담여부",
+            "최종근무일", "이력조회", "인력변동", "변동이유"
+        );
+        // 간호사 양식 (순서대로)
+        List<String> nurseTemplate = Arrays.asList(
+            "면허종별", "세부종별", "근무형태", "직책", "성명", "주민등록번호",
+            "간호등급여부", "면허번호", "면허취득일자", "입사일자", "구분", "시작일자",
+            "종료일자", "대체자", "대체시작일자", "대체종료일자", "병동명", "단위",
+            "근무시작일자", "근무종료일자", "전담여부",
+            "최종근무일", "이력조회", "인력변동", "변동이유"
+        );
+        // 인식 가능한 전체 컬럼 (두 양식 합침)
+        List<String> allKnownHeaders = new ArrayList<>();
+        allKnownHeaders.addAll(doctorTemplate);
+        for (String h : nurseTemplate) {
+            if (!allKnownHeaders.contains(h)) allKnownHeaders.add(h);
+        }
+        if (!allKnownHeaders.contains("대체자")) allKnownHeaders.add("대체자");
+        if (!allKnownHeaders.contains("대체자명")) allKnownHeaders.add("대체자명");
 
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            Row headerRow = sheet.getRow(0);
-            if (headerRow == null) throw new IllegalArgumentException("엑셀 첫 행이 비어 있습니다.");
 
-            for (int i = 2; i <= sheet.getLastRowNum(); i++) { // 2번째 행부터 시작
+            // 헤더 행 자동 탐색: 키워드가 2개 이상 포함된 행을 헤더로 판단
+            int headerRowIdx = -1;
+            List<String> headerKeywords = Arrays.asList("면허종별", "성명", "면허번호", "입사일자");
+            for (int i = 0; i <= Math.min(5, sheet.getLastRowNum()); i++) {
+                Row r = sheet.getRow(i);
+                if (r == null) continue;
+                int keywordHit = 0;
+                for (int j = 0; j < r.getLastCellNum(); j++) {
+                    Cell c = r.getCell(j);
+                    if (c != null && c.getCellTypeEnum() == CellType.STRING) {
+                        String val = c.getStringCellValue().trim();
+                        if (headerKeywords.contains(val)) keywordHit++;
+                    }
+                }
+                if (keywordHit >= 2) {
+                    headerRowIdx = i;
+                    break;
+                }
+            }
+            if (headerRowIdx < 0) headerRowIdx = 0;
+            int dataStartIdx = headerRowIdx + 1;
+
+            // 헤더 위에 제목행이 있었으면 알림
+            if (headerRowIdx > 0) {
+                Row titleRow = sheet.getRow(0);
+                response.put("titleRowDetected", true);
+                response.put("titleRowText", titleRow != null && titleRow.getCell(0) != null ? titleRow.getCell(0).toString().trim() : "");
+            }
+
+            Row headerRow = sheet.getRow(headerRowIdx);
+            if (headerRow == null) throw new IllegalArgumentException("엑셀 헤더 행이 비어 있습니다.");
+
+            // 실제 헤더 추출
+            List<String> actualHeaders = new ArrayList<>();
+            boolean afterWard = false;
+            for (int j = 0; j < headerRow.getLastCellNum(); j++) {
+                Cell headerCell = headerRow.getCell(j);
+                String headerName = "Column" + j;
+                if (headerCell != null) {
+                    try {
+                        if (headerCell.getCellTypeEnum() == CellType.STRING) {
+                            headerName = headerCell.getStringCellValue().trim();
+                        } else {
+                            headerName = headerCell.toString().trim();
+                        }
+                    } catch (Exception e) {
+                        headerName = headerCell.toString().trim();
+                    }
+                }
+
+                // 병동명 이후 플래그
+                if ("병동명".equals(headerName)) afterWard = true;
+
+                // 의사 파일: 병동명 뒤의 중복 "시작일자"/"종료일자"를 "근무시작일자"/"근무종료일자"로 변환
+                if (afterWard && "시작일자".equals(headerName) && actualHeaders.contains("시작일자")) {
+                    headerName = "근무시작일자";
+                } else if (afterWard && "종료일자".equals(headerName) && actualHeaders.contains("종료일자")) {
+                    headerName = "근무종료일자";
+                }
+
+                actualHeaders.add(headerName);
+            }
+
+            // 템플릿 매칭: 의사/간호사 양식 순서대로 일치하는지 확인
+            boolean isDoctorMatch = actualHeaders.equals(doctorTemplate);
+            boolean isNurseMatch = actualHeaders.equals(nurseTemplate);
+            String matchedType = isDoctorMatch ? "의사" : (isNurseMatch ? "간호사" : "");
+
+            // 각 컬럼 인식 여부 체크
+            List<Map<String, Object>> headerValidation = new ArrayList<>();
+            int matchCount = 0;
+            for (String actual : actualHeaders) {
+                Map<String, Object> hv = new LinkedHashMap<>();
+                hv.put("name", actual);
+                boolean matched = allKnownHeaders.contains(actual);
+                hv.put("valid", matched);
+                if (matched) matchCount++;
+                headerValidation.add(hv);
+            }
+
+            // 인식 불가 컬럼
+            List<String> unknownHeaders = new ArrayList<>();
+            for (String actual : actualHeaders) {
+                if (!allKnownHeaders.contains(actual)) {
+                    unknownHeaders.add(actual);
+                }
+            }
+
+            // 양식이 정확히 일치하면 통과, 아니면 가장 가까운 양식과 비교
+            List<String> missingHeaders = new ArrayList<>();
+            boolean formatValid = isDoctorMatch || isNurseMatch;
+
+            if (!formatValid && unknownHeaders.isEmpty()) {
+                int doctorDiff = 0, nurseDiff = 0;
+                for (String h : doctorTemplate) { if (!actualHeaders.contains(h)) doctorDiff++; }
+                for (String h : nurseTemplate) { if (!actualHeaders.contains(h)) nurseDiff++; }
+                List<String> closestTemplate = (doctorDiff <= nurseDiff) ? doctorTemplate : nurseTemplate;
+                matchedType = (doctorDiff <= nurseDiff) ? "의사" : "간호사";
+
+                for (String exp : closestTemplate) {
+                    if (!actualHeaders.contains(exp)) {
+                        missingHeaders.add(exp);
+                    }
+                }
+                if (missingHeaders.isEmpty()) {
+                    formatValid = true;
+                }
+            }
+
+            response.put("headerValidation", headerValidation);
+            response.put("actualHeaders", actualHeaders);
+            response.put("missingHeaders", missingHeaders);
+            response.put("unknownHeaders", unknownHeaders);
+            response.put("matchCount", matchCount);
+            response.put("totalColumns", actualHeaders.size());
+            response.put("formatValid", formatValid);
+            response.put("matchedType", matchedType);
+
+            // 양식이 틀려도 데이터는 항상 읽어서 반환
+            for (int i = dataStartIdx; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
 
                 Map<String, Object> map = new LinkedHashMap<>();
-                for (int j = 0; j < headerRow.getLastCellNum(); j++) {
-                    Cell headerCell = headerRow.getCell(j);
+                for (int j = 0; j < actualHeaders.size(); j++) {
                     Cell cell = row.getCell(j);
-
-                    String key = headerCell != null ? headerCell.getStringCellValue().trim() : "Column" + j;
+                    String key = actualHeaders.get(j);
                     String value = "";
 
                     if (cell != null) {
-                    	try {
-                    	    if (DateUtil.isCellDateFormatted(cell)) {
-                    	        value = dateFormat.format(cell.getDateCellValue());
-                    	    } else {
-                    	        value = cell.toString().trim();
-                    	    }
-                    	} catch (Exception e) {
-                    	    value = cell.toString().trim();
-                    	}
+                        try {
+                            if (DateUtil.isCellDateFormatted(cell)) {
+                                value = dateFormat.format(cell.getDateCellValue());
+                            } else {
+                                value = cell.toString().trim();
+                            }
+                        } catch (Exception e) {
+                            value = cell.toString().trim();
+                        }
                     }
-
                     map.put(key, value);
                 }
                 dataList.add(map);
             }
 
+            response.put("data", dataList);
             session.setAttribute("previewExcel", dataList);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            response.put("error", e.getMessage() != null ? e.getMessage() : "알 수 없는 오류");
         }
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(dataList);
+        ObjectMapper mapper = new ObjectMapper();
+        resp.getWriter().write(mapper.writeValueAsString(response));
     }
   //엑셀로드 저장(cell 를 setdto 해서 처리하는 경우 ) 
     @SuppressWarnings("unchecked")
-    @PostMapping("/CellsaveExcelData.do")
+    @RequestMapping(value = "/CellsaveExcelData.do", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, Object> CellsaveExcelData(@RequestBody Map<String, Object> request) {
         Map<String, Object> result = new HashMap<>();
@@ -1610,7 +1756,12 @@ public class UserController extends BaseController {
                     dto.setVacEnd(vacEnd.replaceAll("-", ""));
                 }
 
-                dto.setVacSubnm((String) row.get("대체자"));
+                // '대체자' 또는 '대체자명' 중 하나
+                if (row.containsKey("대체자명")) {
+                    dto.setVacSubnm((String) row.get("대체자명"));
+                } else if (row.containsKey("대체자")) {
+                    dto.setVacSubnm((String) row.get("대체자"));
+                }
 
                 String vacSubStart = (String) row.get("대체시작일자");
                 if (vacSubStart != null && vacSubStart.matches("\\d{8}|\\d{4}-\\d{2}-\\d{2}")) {

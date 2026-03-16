@@ -313,7 +313,7 @@
     element.style.transformOrigin = "top left";
 
     const opt = {
-      margin: [8, 5, 2, 5],
+      margin: [8, 2, 2, 2],
       filename: '전문의별 건당진료비.pdf',
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, scrollY: 0 },

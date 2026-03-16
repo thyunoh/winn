@@ -24,7 +24,28 @@
       "Bash(sed -i \"s|html2canvas: { scale: 2, useCORS: true, scrollY: 0 },|html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, windowWidth: 1200 },|\" \"$f\")",
       "Bash(sed -i \"s|pagebreak: { mode: \\\\[''avoid-all'', ''css'', ''legacy''\\\\] },||\" \"$f\")",
       "Read(//c/Users/HYUN/git/win/**)",
-      "Bash(ls -d */)"
+      "Bash(ls -d */)",
+      "Bash(mvn compile:*)",
+      "Bash(where mvn:*)",
+      "Read(//c/Users/user/.m2/**)",
+      "Bash(ls /c/Users/user/wnn/wnn_medcost/mvnw*)",
+      "Bash(pip --version)",
+      "Bash(python -c \"print\\(''hello''\\)\")",
+      "Bash(ls /c/Python* /c/Users/user/AppData/Local/Programs/Python/)",
+      "Read(//c/Users/user/anaconda3/**)",
+      "Bash(where python:*)",
+      "Bash(/c/Users/user/AppData/Local/Microsoft/WindowsApps/python.exe -c \"print\\(''hello''\\)\")",
+      "Read(//c/Program Files/Java//**)",
+      "Bash(java -version)",
+      "Bash(powershell.exe -Command \"Get-Command python*\")",
+      "Bash(cd /tmp)",
+      "Bash(npm install:*)",
+      "Bash(node -e \":*)",
+      "Bash(find /c/Users/user -path */logs/* -name *.log -mmin -30)",
+      "Bash(find /c/Users/user -path *tomcat* -name *.log)",
+      "Bash(find /c/Users/user -path *tomcat* -type d -maxdepth 5)",
+      "Bash(find /c/Users/user/wnn -name *.log -mmin -60)",
+      "Bash(echo \"$f done\")"
     ]
   }
 }

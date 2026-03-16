@@ -178,6 +178,30 @@
 								 </div>
 								 <!-- 파일 검증 결과 모달 End -->
 
+								 <!-- 엑셀 미리보기 모달 -->
+								 <div class="modal fade" id="excelPreviewModal" tabindex="-1" role="dialog" data-backdrop="static">
+								     <div class="modal-dialog modal-xl" role="document">
+								         <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
+								             <div class="modal-header" style="background:linear-gradient(135deg,#28a745 0%,#20c997 100%); color:#fff; border-radius:12px 12px 0 0; padding:18px 24px;">
+								                 <h5 class="modal-title" style="font-weight:600;"><i class="fa fa-file-excel mr-2"></i>입원현황 엑셀 미리보기</h5>
+								                 <button type="button" class="close text-white" id="btnExcelPreviewX" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
+								             </div>
+								             <div class="modal-body" style="max-height:65vh; overflow-y:auto; padding:20px 24px;">
+								                 <div id="excelPreviewContent"></div>
+								             </div>
+								             <div class="modal-footer" style="border-top:1px solid #e9ecef; padding:14px 24px;">
+								                 <button type="button" class="btn btn-outline-secondary" id="btnExcelPreviewCancel" style="min-width:100px;">
+								                     <i class="fa fa-times mr-1"></i>취소
+								                 </button>
+								                 <button type="button" class="btn btn-success" id="btnExcelPreviewSave" style="min-width:100px;">
+								                     <i class="fa fa-save mr-1"></i>등록
+								                 </button>
+								             </div>
+								         </div>
+								     </div>
+								 </div>
+								 <!-- 엑셀 미리보기 모달 End -->
+
 								 <div id="progress-container">
 								     <div id="progress-bar"></div>
 								     <div id="progress-text">0%</div>
@@ -1149,8 +1173,10 @@ async function handleFileSelection(event) {
 		
 		const files = event.target.files;
 	    const datas = [];
+	    const rawRows = [];
+	    const columnMapResult = {};
 	    const jobdt = getJobDateTime();
-	    
+
 	    let seqNumber = 0;
 		let jumin_Cnt = 0;
 		
@@ -1211,8 +1237,16 @@ async function handleFileSelection(event) {
                             return value;
                         }
 	                	
-	                    json_Data.forEach(row => {
-	                        
+	                    json_Data.forEach((row, idx) => {
+
+	                    	// 첫 행에서 컬럼 매핑 결과 수집
+	                    	if (idx === 0) {
+	                    		for (const key of Object.keys(row)) {
+	                    			const mapped = mapColumnName(key.trim());
+	                    			columnMapResult[key] = mapped;
+	                    		}
+	                    	}
+
 	                    	const mappedRow = {};
 	                        seqNumber++;
 	                        mappedRow['hosp_cd']  = hospid;
@@ -1221,15 +1255,15 @@ async function handleFileSelection(event) {
 	                        mappedRow['file_nm']  = file.name;
 	                        mappedRow['jobs_dt']  = jobdt;
 	                        mappedRow['reg_user'] = userid;
-	                        
+
 	                        for (const [key, value] of Object.entries(row)) {
-                            	
+
 	                        	const mappedKey = mapColumnName(key.trim());
-	                        	
+
 	                        	if (mappedKey === 'juminno') {
 	                        		if (value) { jumin_Cnt++; }
-	                        	} 
-	                        	
+	                        	}
+
 	                        	if (mappedKey === 'ipwondt' || mappedKey === 'tewondt') {
 	                        		mappedRow[mappedKey] = formatDateString(value);
 	                        	} else if (mappedKey) {
@@ -1237,6 +1271,7 @@ async function handleFileSelection(event) {
                                 }
 	                        }
 	                        datas.push(mappedRow);
+	                        rawRows.push(row);
 	                    });
 	                });
 	                resolve();
@@ -1249,96 +1284,8 @@ async function handleFileSelection(event) {
 	        });
 	    }
 	    
-		if (datas.length > 0 && jumin_Cnt === seqNumber) {
-	    	$.ajax({
-                url: '/main/saveExcelDatas.do',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(datas),
-                
-                success: function(response) {
-                	signUp = 'N';
-                	if (response.error_code !== "0") {
-	                    messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
-	                } else {
-	                    messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
-	                    dataTable.ajax.reload();
-	                    
-                        try {
-                        	jobMon = gMonth; 	
-                            loadMonthsData();
-                            
-                        } catch (e) {
-                            console.error("loadMonthsData 실행 중 오류 발생:", e);
-                        }
-	                }	      	
-			    },
-			    error: function(xhr, status, error) {
-			    	signUp = 'N';
-			        console.error("Error fetching data:", error);
-			    }
-				      
-			});
-	    	
-	    } else if (datas.length > 0){
-	    	let mess = '주민번호 앞 6자리 일부 누락된 입원현황 파일';
-	    	let cnts = seqNumber - jumin_Cnt;
-	    	
-	    	if (jumin_Cnt === 0) { 
-	    		mess = '주민번호 앞 6자리 전체 누락된 입원현황 파일'; 
-	    	}
-	    	// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
-			// error:    오류나 실패를 나타내는 빨간색 X 아이콘
-			// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
-			// info:     정보를 나타내는 파란색 i 아이콘
-			// question: 질문이나 확인을 나타내는 파란색 물음표 아이콘	
-			Swal.fire({title: '등록여부',
-					   html:  '<strong> 누락정보 : ' + mess + ' : 누락건수 [' + cnts + ']건 입니다. </strong>',
-					   icon:  'question',
-					   showCancelButton: true,
-					   confirmButtonText: '등록',
-					   cancelButtonText:  '취소',
-					   customClass: {
-						   popup: 'small-swal'}
-			           }).then((result) => {
-
-			    if (result.isConfirmed) {
-				
-			    	$.ajax({
-		                url: '/main/saveExcelDatas.do',
-		                type: 'POST',
-		                contentType: 'application/json',
-		                data: JSON.stringify(datas),
-		                
-		                success: function(response) {
-		                	signUp = 'N';
-		                	if (response.error_code !== "0") {
-			                    messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
-			                } else {
-			                    messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
-			                    dataTable.ajax.reload();
-		                        try {
-		                        	jobMon = gMonth; 
-		                            loadMonthsData();
-		                        } catch (e) {
-		                            console.error("loadMonthsData 실행 중 오류 발생:", e);
-		                        }
-			                }	      	
-					    },
-					    error: function(xhr, status, error) {
-					    	signUp = 'N';
-					        console.error("Error fetching data:", error);
-					    }
-						      
-					});
-			  	} else {
-			  		signUp = 'N';
-			  	}
-	        });
-	    } else {
-	    	signUp = 'N';
-	    	messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 입원현황 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
-	    }
+		// 미리보기 모달 표시
+		showExcelPreview(datas, rawRows, columnMapResult, seqNumber, jumin_Cnt);
 	    
 	} else {
 		
@@ -1791,6 +1738,177 @@ function fileView_Open(mgmonth) {
 	gMonth = mgmonth;
 	findField('mgmonth', gMonth)
 	dataTable.ajax.reload();
+}
+
+
+// ─── 엑셀 미리보기 ───
+function showExcelPreview(datas, rawRows, columnMapResult, seqNumber, jumin_Cnt) {
+
+	if (datas.length === 0) {
+		signUp = 'N';
+		messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 입원현황 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
+		return;
+	}
+
+	let html = '';
+
+	// 1) 컬럼 매핑 결과
+	const mappedCols = Object.entries(columnMapResult).filter(([k, v]) => v);
+	const unmappedCols = Object.entries(columnMapResult).filter(([k, v]) => !v);
+
+	html += '<div class="mb-3">';
+	html += '<h6 style="font-weight:600; margin-bottom:8px;"><i class="fa fa-columns mr-1"></i>컬럼 매핑 결과 (' + mappedCols.length + '/' + Object.keys(columnMapResult).length + '개 매핑)</h6>';
+	html += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+	mappedCols.forEach(([orig, mapped]) => {
+		html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' → ' + mapped + '</span>';
+	});
+	unmappedCols.forEach(([orig]) => {
+		html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' (미매핑)</span>';
+	});
+	html += '</div></div>';
+
+	// 2) 주민번호 상태
+	html += '<div class="mb-3">';
+	if (jumin_Cnt === seqNumber) {
+		html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; font-size:13px;">주민번호: ' + jumin_Cnt + '/' + seqNumber + '건 포함</span>';
+	} else if (jumin_Cnt === 0) {
+		html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; font-size:13px;">주민번호: 전체 누락 (' + seqNumber + '건)</span>';
+	} else {
+		html += '<span class="badge" style="background:#fff3cd; color:#856404; padding:5px 10px; font-size:13px;">주민번호: ' + jumin_Cnt + '/' + seqNumber + '건 포함 (일부 누락)</span>';
+	}
+	html += '</div>';
+
+	// 3) 데이터 미리보기 테이블 (전체, 스크롤)
+	const headers = Object.keys(columnMapResult);
+
+	html += '<div class="mb-2"><h6 style="font-weight:600;"><i class="fa fa-table mr-1"></i>데이터 미리보기 (총 ' + seqNumber + '건)</h6></div>';
+	html += '<div style="overflow:auto; max-height:50vh;">';
+	html += '<table class="table table-bordered table-sm" style="font-size:12px; white-space:nowrap;">';
+	html += '<thead style="background:#f1f3f5; position:sticky; top:0; z-index:1;"><tr>';
+	headers.forEach(h => {
+		const mapped = columnMapResult[h];
+		if (mapped) {
+			html += '<th style="padding:4px 8px;">' + h + '<br><small style="color:#28a745;">(' + mapped + ')</small></th>';
+		} else {
+			html += '<th style="padding:4px 8px; color:#dc3545;">' + h + '<br><small>(미매핑)</small></th>';
+		}
+	});
+	html += '</tr></thead><tbody>';
+	rawRows.forEach(row => {
+		html += '<tr>';
+		headers.forEach(h => {
+			const val = row[h] != null ? row[h] : '';
+			html += '<td style="padding:3px 8px;">' + val + '</td>';
+		});
+		html += '</tr>';
+	});
+	html += '</tbody></table></div>';
+
+	$('#excelPreviewContent').html(html);
+
+	// 등록 버튼 이벤트
+	$('#btnExcelPreviewSave').off('click').on('click', function() {
+		$('#excelPreviewModal').modal('hide');
+		doSaveExcelDatas(datas, seqNumber, jumin_Cnt);
+	});
+
+	// X 버튼 이벤트
+	$('#btnExcelPreviewX').off('click').on('click', function() {
+		signUp = 'N';
+		$('#excelPreviewModal').modal('hide');
+	});
+
+	// 취소 버튼 이벤트
+	$('#btnExcelPreviewCancel').off('click').on('click', function() {
+		signUp = 'N';
+		$('#excelPreviewModal').modal('hide');
+	});
+
+	$('#excelPreviewModal').modal('show');
+}
+
+// ─── 엑셀 저장 실행 (기존 로직 그대로) ───
+function doSaveExcelDatas(datas, seqNumber, jumin_Cnt) {
+
+	if (datas.length > 0 && jumin_Cnt === seqNumber) {
+		$.ajax({
+			url: '/main/saveExcelDatas.do',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(datas),
+			success: function(response) {
+				signUp = 'N';
+				if (response.error_code !== "0") {
+					messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+				} else {
+					messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
+					dataTable.ajax.reload();
+					try {
+						jobMon = gMonth;
+						loadMonthsData();
+					} catch (e) {
+						console.error("loadMonthsData 실행 중 오류 발생:", e);
+					}
+				}
+			},
+			error: function(xhr, status, error) {
+				signUp = 'N';
+				console.error("Error fetching data:", error);
+			}
+		});
+
+	} else if (datas.length > 0) {
+		let mess = '주민번호 앞 6자리 일부 누락된 입원현황 파일';
+		let cnts = seqNumber - jumin_Cnt;
+
+		if (jumin_Cnt === 0) {
+			mess = '주민번호 앞 6자리 전체 누락된 입원현황 파일';
+		}
+
+		Swal.fire({
+			title: '등록여부',
+			html: '<strong> 누락정보 : ' + mess + ' : 누락건수 [' + cnts + ']건 입니다. </strong>',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '등록',
+			cancelButtonText: '취소',
+			customClass: { popup: 'small-swal' }
+		}).then((result) => {
+			if (result.isConfirmed) {
+				$.ajax({
+					url: '/main/saveExcelDatas.do',
+					type: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify(datas),
+					success: function(response) {
+						signUp = 'N';
+						if (response.error_code !== "0") {
+							messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+						} else {
+							messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
+							dataTable.ajax.reload();
+							try {
+								jobMon = gMonth;
+								loadMonthsData();
+							} catch (e) {
+								console.error("loadMonthsData 실행 중 오류 발생:", e);
+							}
+						}
+					},
+					error: function(xhr, status, error) {
+						signUp = 'N';
+						console.error("Error fetching data:", error);
+					}
+				});
+			} else {
+				signUp = 'N';
+			}
+		});
+
+	} else {
+		signUp = 'N';
+		messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 입원현황 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
+	}
 }
 
 
