@@ -92,6 +92,8 @@ public interface MagamMapper {
 	List<IndiDTO> select_HospitalMst(IndiDTO dto);
 	List<IndiDTO> select_Hosp_Indi(Map<String, Object> params);
 
+	List<MagamDTO> selectAllHospCdList();
+
 	String insGoolgleSheet(MagamDTO dto);
 	MagamDTO selGoolgleSheet(MagamDTO dto);
 	

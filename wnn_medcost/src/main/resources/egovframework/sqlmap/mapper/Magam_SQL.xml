@@ -3702,16 +3702,13 @@
 		       hm.HOSP_CD AS hosp_cd 
 		     , hm.HOSP_NM AS hosp_nm
 		  FROM TBL_HOSP_MST hm
-		 WHERE hm.JOB_SEQ = (SELECT MAX(JOB_SEQ)
-		                       FROM TBL_HOSP_MST a
-		                      WHERE a.HOSP_CD = hm.HOSP_CD)
-		   AND hm.USE_YN  = 'Y'
-		   
+		 WHERE 1=1
+		   AND hm.ACTION_YN  = 'Y' 
 		   <if test="hosp_cd != null and hosp_cd != ''">
 			   AND hm.HOSP_CD = #{hosp_cd}
 		   </if>
 		   
-         ORDER BY hm.HOSP_NM 		   
+         ORDER BY hm.HOSP_CD		   
 	</select>
     
     <select id="select_Hosp_Indi" parameterType="map" resultMap="indiMap">
@@ -3940,6 +3937,20 @@
            AND PAT_ID    = #{patId}
            AND ADMIT_DT  = #{admitDt}
            AND MED_START = #{medStart}
-    </update>  
+    </update>
+
+	<!-- 전체 병원코드 목록 조회 (W1236457 제외) -->
+	<select id="selectAllHospCdList" resultMap="magamMap">
+		SELECT DISTINCT
+		       hm.HOSP_CD AS hosp_cd
+		  FROM TBL_HOSP_MST hm
+		 WHERE hm.JOB_SEQ = (SELECT MAX(JOB_SEQ)
+		                       FROM TBL_HOSP_MST a
+		                      WHERE a.HOSP_CD = hm.HOSP_CD)
+		   AND hm.USE_YN  = 'Y'
+		   AND hm.ACTION_YN = 'Y'
+		   AND hm.HOSP_CD != 'W1236457'
+		 ORDER BY hm.HOSP_CD
+	</select>
 
 </mapper>

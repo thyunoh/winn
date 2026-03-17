@@ -42,6 +42,9 @@ public class IndiDTO {
 	private String     checknm;         // 점검지표 명칭 구분자 ','로 연결	
 	private String     fiveZone;        // 5구간 점검
 	
+	private String     errcode;         // SP 리턴 에러코드
+	private String     errmess;         // SP 리턴 에러메세지
+
 	private String     hosp_nm;         // 요양기관명칭
 	private String     hospchk;         // 병원사용여부
 	private String     indichk;         // 지표적용여부
@@ -390,6 +393,18 @@ public class IndiDTO {
 	public void setUpd_ip(String upd_ip) {
 		this.upd_ip = upd_ip;
 	}
-	
-	
+	public String getErrcode() {
+		return errcode;
+	}
+	public void setErrcode(String errcode) {
+		this.errcode = errcode;
+	}
+	public String getErrmess() {
+		return errmess;
+	}
+	public void setErrmess(String errmess) {
+		this.errmess = errmess;
+	}
+
+
 }

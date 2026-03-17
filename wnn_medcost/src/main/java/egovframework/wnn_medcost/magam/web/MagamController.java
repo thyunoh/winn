@@ -626,9 +626,60 @@ public class MagamController {
         return "jsonView";
 	}
 	
+	// 전체 병원 대상 점검 생성 (ACTION_YN='Y', W1236457 제외, 지정 월, 전체 병원 × 14플래그)
+	@RequestMapping(value="/main/createTotalReportAllHosp.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> crtTotalReportAllHosp(@ModelAttribute("DTO") MagamDTO dto, Model model) {
+
+		Map<String, Object> response = new HashMap<>();
+		int successCnt = 0;
+		int errorCnt = 0;
+		List<String> errorList = new ArrayList<>();
+		String[] flagArr = {"01","02","03","04","05","06","07","08","09","10","11","12","13","14"};
+
+		try {
+			List<MagamDTO> hospList = svc.selectAllHospCdList();
+			String jobyymm = dto.getJobyymm();
+
+			log.error("createTotalReportAllHosp 시작 - jobyymm: " + jobyymm + ", 병원수: " + hospList.size());
+
+			for (MagamDTO hosp : hospList) {
+				try {
+					for (String flag : flagArr) {
+						MagamDTO param = new MagamDTO();
+						param.setHosp_cd(hosp.getHosp_cd());
+						param.setJobyymm(jobyymm);
+						param.setMake_fg(flag);
+						svc.crtTotalReport(param);
+					}
+					successCnt++;
+				} catch (Exception ex) {
+					errorCnt++;
+					errorList.add(hosp.getHosp_cd());
+					log.error("병원 " + hosp.getHosp_cd() + " 오류: " + ex.getMessage());
+				}
+			}
+
+			response.put("totalCnt", hospList.size());
+			response.put("successCnt", successCnt);
+			response.put("errorCnt", errorCnt);
+			response.put("errorList", errorList);
+			response.put("result", "OK");
+
+			log.error("createTotalReportAllHosp 완료 - 성공: " + successCnt + ", 오류: " + errorCnt);
+
+		} catch (Exception e) {
+			response.put("result", "FAIL");
+			response.put("message", e.getMessage());
+			log.error("createTotalReportAllHosp 오류: " + e.getMessage());
+		}
+
+		return response;
+	}
+
 	@RequestMapping(value="/main/selectTotalReport.do", method = RequestMethod.POST)
     public String setTotalReport(@ModelAttribute("DTO") MagamDTO dto, Model model) {
-		
+
 		System.out.println("Select 시작했음");
 
 		// 처리 로직
@@ -852,6 +903,125 @@ public class MagamController {
         
         return "jsonView";
 	}
+	// 전체 병원 적정성평가 일괄 자료생성 (W1236457 제외, 지정 월)
+	// mode=list: 병원 목록만 조회, mode=one: 1개 병원 처리, 기본: 전체 병원 처리
+	@RequestMapping(value="/main/createEvalIndiAllHosp.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> createEvalIndiAllHosp(@ModelAttribute("DTO") IndiDTO dto, HttpServletRequest request, Model model) {
+
+		Map<String, Object> response = new HashMap<>();
+		String mode = request.getParameter("mode");
+
+		try {
+			// 병원 목록만 조회
+			if ("list".equals(mode)) {
+				List<MagamDTO> hospList = svc.selectAllHospCdList();
+				List<String> hospCdList = new ArrayList<>();
+				for (MagamDTO hosp : hospList) {
+					hospCdList.add(hosp.getHosp_cd());
+				}
+				response.put("hospList", hospCdList);
+				response.put("totalCnt", hospCdList.size());
+				response.put("result", "OK");
+				return response;
+			}
+
+			// 1개 병원만 처리
+			if ("one".equals(mode)) {
+				String err_cd = svc.create_Eval_Indi(dto);
+				response.put("result", "OK");
+				response.put("err_cd", err_cd);
+				return response;
+			}
+
+			// 기본: 전체 병원 처리
+			int successCnt = 0;
+			int errorCnt = 0;
+			List<String> errorList = new ArrayList<>();
+
+			List<MagamDTO> hospList = svc.selectAllHospCdList();
+
+			String jobyymm = dto.getJobyymm();
+			String reg_user = dto.getReg_user();
+
+			log.error("createEvalIndiAllHosp 시작 - jobyymm: " + jobyymm + ", 병원수: " + hospList.size());
+
+			for (MagamDTO hosp : hospList) {
+				try {
+					IndiDTO param = new IndiDTO();
+					param.setHosp_cd(hosp.getHosp_cd());
+					param.setJobyymm(jobyymm);
+					param.setReg_user(reg_user);
+
+					String err_cd = svc.create_Eval_Indi(param);
+
+					if ("0".equals(err_cd) || err_cd == null) {
+						successCnt++;
+					} else {
+						errorCnt++;
+						errorList.add(hosp.getHosp_cd());
+					}
+				} catch (Exception ex) {
+					errorCnt++;
+					errorList.add(hosp.getHosp_cd());
+					log.error("병원 " + hosp.getHosp_cd() + " 적정성평가 오류: " + ex.getMessage());
+				}
+			}
+
+			response.put("totalCnt", hospList.size());
+			response.put("successCnt", successCnt);
+			response.put("errorCnt", errorCnt);
+			response.put("errorList", errorList);
+			response.put("result", "OK");
+
+			log.error("createEvalIndiAllHosp 완료 - 성공: " + successCnt + ", 오류: " + errorCnt);
+
+		} catch (Exception e) {
+			response.put("result", "FAIL");
+			response.put("message", e.getMessage());
+			log.error("createEvalIndiAllHosp 오류: " + e.getMessage());
+		}
+
+		return response;
+	}
+
+	// 병원 목록 조회 (적정성평가 프론트엔드 순차 호출용)
+	@RequestMapping(value="/main/getHospListForEval.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> getHospListForEval() {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			List<MagamDTO> hospList = svc.selectAllHospCdList();
+			List<String> hospCdList = new ArrayList<>();
+			for (MagamDTO hosp : hospList) {
+				hospCdList.add(hosp.getHosp_cd());
+			}
+			response.put("hospList", hospCdList);
+			response.put("totalCnt", hospCdList.size());
+			response.put("result", "OK");
+		} catch (Exception e) {
+			response.put("result", "FAIL");
+			response.put("message", e.getMessage());
+		}
+		return response;
+	}
+
+	// 1개 병원 적정성평가 생성
+	@RequestMapping(value="/main/createEvalIndiOneHosp.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> createEvalIndiOneHosp(@ModelAttribute("DTO") IndiDTO dto, Model model) {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			String err_cd = svc.create_Eval_Indi(dto);
+			response.put("result", "OK");
+			response.put("err_cd", err_cd);
+		} catch (Exception e) {
+			response.put("result", "FAIL");
+			response.put("message", e.getMessage());
+		}
+		return response;
+	}
+
 	@RequestMapping(value="/main/select_Eval_Indi.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> select_Eval_Indi(@ModelAttribute("DTO") IndiDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

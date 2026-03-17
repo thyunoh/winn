@@ -430,6 +430,11 @@ public class MagamServiceImpl implements MagamService {
     }
 	
 	@Override
+	public List<MagamDTO> selectAllHospCdList() {
+		return mapper.selectAllHospCdList();
+	}
+
+	@Override
 	public String insGoolgleSheet(MagamDTO dto) {
 		return mapper.insGoolgleSheet(dto);
 	}

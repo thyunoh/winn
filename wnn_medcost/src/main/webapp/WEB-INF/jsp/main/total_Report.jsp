@@ -26,6 +26,7 @@
 	                                <select id="monthSelect" class="custom-select ml-left w-auto  ml-2 mr-4"></select>
 
 	                                <div class="ml-auto d-flex">
+	                                    <button id="btnCreateAllHosp" class="btn btn-outline-danger btn-sm mr-1" style="display:none;" onClick="fn_CreateData_allHosp()">전체병원 생성</button>
 	                                    <button id="btnPdfOne" class="btn btn-outline-primary btn-sm mr-1" style="display:none;" onclick="fn_PdfExportOne()"><i class="fas fa-file-pdf"></i> 개별출력</button>
 	                                    <button id="btnPdfAllPages" class="btn btn-primary btn-sm" style="display:none;" onclick="fn_PdfExportAllPages()"><i class="fas fa-file-pdf"></i> 전체출력</button>
 	                                </div>
@@ -34,7 +35,9 @@
 	                            <div class="card-body">
 								    <div class="row">
 								        <div class="col-lg-12">
-								            <button class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData_all('00')">《 전체 대상 점검 》</button>								                        
+								            <button class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData_all('00')">《 전체 대상 점검 》</button>
+								        </div>
+								        <div class="col-lg-12">
 								        </div>
 								        <div class="col-lg-6">
 								            <button data-action="FindView" data-value="accordion_item_1" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">요양병원 입원료 차등제 / 식대가산 점검</button>
@@ -3331,6 +3334,119 @@ function fn_CreateData_all() {
     runNext();
 }
 
+// WINCHECK 로그인 시 전체생성 버튼 표시
+$(document).ready(function() {
+   // if (getCookie("s_winconect") === 'Y') {
+        $('#btnCreateAllHosp').show();
+  //  }
+});
+
+// 전체 병원 일괄 점검 생성 (202507~202512, 월별 순차 호출, W1236457 제외)
+function fn_CreateData_allHosp() {
+
+    var monthList = ['202507','202508','202509','202510','202511','202512'];
+    var totalSteps = monthList.length;
+
+    Swal.fire({
+        title: '전체 병원 점검 생성',
+        html: '전체 병원 대상으로<br><b>2025년 7월 ~ 12월</b> 전체 점검을 생성합니다.<br><br><span style="color:red;">시간이 오래 걸릴 수 있습니다.</span>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '생성 시작',
+        cancelButtonText: '취소'
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+
+        var mIdx = 0;
+        var errorList = [];
+
+        Swal.fire({
+            title: '전체 병원 점검 진행 중',
+            html: '<style>' +
+                  '@keyframes progressStripe { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }' +
+                  '.swal-progress-animated { background: linear-gradient(90deg,#dc3545,#fd7e14); border-radius:11px; transition:width 0.5s; ' +
+                  'background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); ' +
+                  'background-size: 1rem 1rem; animation: progressStripe 0.5s linear infinite; }' +
+                  '</style>' +
+                  '<div style="text-align:center; margin-top:10px;">' +
+                  '<div id="swalAllHospBar" style="width:100%; height:22px; background:#e9ecef; border-radius:11px; overflow:hidden; margin-bottom:10px;">' +
+                  '  <div id="swalAllHospFill" class="swal-progress-animated" style="width:3%; height:100%;"></div>' +
+                  '</div>' +
+                  '<div id="swalAllHospText" style="font-size:14px; color:#333;"><i class="fa fa-spinner fa-spin mr-1"></i> 준비 중...</div>' +
+                  '<div id="swalAllHospCount" style="font-size:15px; color:#dc3545; margin-top:6px; font-weight:bold;">0 / ' + totalSteps + '</div>' +
+                  '<div id="swalAllHospTime" style="font-size:12px; color:#888; margin-top:4px;">경과시간: 0초</div>' +
+                  '</div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false
+        });
+
+        // 경과시간 표시 타이머
+        var startTime = new Date().getTime();
+        var timerInterval = setInterval(function() {
+            var elapsed = Math.floor((new Date().getTime() - startTime) / 1000);
+            var min = Math.floor(elapsed / 60);
+            var sec = elapsed % 60;
+            var timeEl = document.getElementById('swalAllHospTime');
+            if (timeEl) {
+                timeEl.textContent = '경과시간: ' + (min > 0 ? min + '분 ' : '') + sec + '초';
+            }
+        }, 1000);
+
+        function runNextMonth() {
+            if (mIdx >= totalSteps) {
+                clearInterval(timerInterval);
+                if (errorList.length > 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '전체 점검 완료',
+                        html: '총 ' + totalSteps + '개월 중 <b style="color:red;">' + errorList.length + '개월 오류</b><br><small>' + errorList.join(', ') + '</small>'
+                    });
+                } else {
+                    Swal.fire({ icon: 'success', title: '전체 점검 완료', text: '2025년 7월~12월 ' + totalSteps + '개월 모두 정상 처리되었습니다.' });
+                }
+                return;
+            }
+
+            var curMonth = monthList[mIdx];
+            var monthLabel = curMonth.substring(0,4) + '년 ' + curMonth.substring(4) + '월';
+            var pct = Math.round(((mIdx + 1) / totalSteps) * 100);
+            var fill = document.getElementById('swalAllHospFill');
+            var text = document.getElementById('swalAllHospText');
+            var cnt  = document.getElementById('swalAllHospCount');
+            if (fill) fill.style.width = pct + '%';
+            if (text) text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> 처리 중...';
+            if (cnt) cnt.textContent = (mIdx + 1) + ' / ' + totalSteps;
+
+            $.ajax({
+                url: "/main/createTotalReportAllHosp.do",
+                type: "POST",
+                data: {
+                    jobyymm: curMonth
+                },
+                timeout: 600000,
+                success: function(response) {
+                    if (response.result === 'OK') {
+                        if (response.errorCnt > 0) {
+                            errorList.push(monthLabel + '(' + response.errorCnt + '건 오류)');
+                        }
+                    } else {
+                        errorList.push(monthLabel);
+                    }
+                    mIdx++;
+                    runNextMonth();
+                },
+                error: function() {
+                    errorList.push(monthLabel);
+                    mIdx++;
+                    runNextMonth();
+                }
+            });
+        }
+
+        runNextMonth();
+    });
+}
 
 function fn_Update()
 {

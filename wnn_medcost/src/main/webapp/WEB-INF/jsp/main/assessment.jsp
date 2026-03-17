@@ -63,9 +63,11 @@
 								        </table>
 			                            - 항정처방률 · 지역사회 복귀율 기본 표준화 3점으로 산정됩니다.
 			                            <br>
-										- 청구명세서 미 업로드시 항정처방률 및 HbA1c 지표의 점수가 달라질 수 있습니다.
+										<div class="d-flex justify-content-between align-items-center">
+										    <span>- 청구명세서 미 업로드시 항정처방률 및 HbA1c 지표의 점수가 달라질 수 있습니다.</span>
+										    <button id="btnEvalAllHosp" class="btn btn-outline-danger btn-sm" onClick="fn_CreateEvalAllHosp()" style="display:none;">전체병원 생성</button>
+										</div>
 										<br>
-										<br>  
 										<div class="d-flex align-items-center">
 										    
 										    <button id="googleLink" onclick="google_Link()" class="btn btn-sm btn-outline-primary me-2" style="display: none;">🌐 구글</button>
@@ -456,6 +458,147 @@ function fn_CreateData(flag) {
     	    waitingCreate.style.display = 'none';
         }
 	});
+}
+
+// WINCHECK 로그인 시 전체생성 버튼 표시
+$(document).ready(function() {
+  //  if (getCookie("s_winconect") === 'Y') {
+       $('#btnEvalAllHosp').show();
+ //   }
+});
+
+// 전체 병원 일괄 적정성평가 생성 (선택 월, W1236457 제외)
+function fn_CreateEvalAllHosp() {
+
+    var monthList = ['202507','202508','202509','202510','202511','202512'];
+
+    Swal.fire({
+        title: '전체 병원 적정성평가 생성',
+        html: '전체 병원 대상으로<br><b>2025년 7월 ~ 12월</b> 적정성평가를 생성합니다.<br><br><span style="color:red;">시간이 오래 걸릴 수 있습니다.</span>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '생성 시작',
+        cancelButtonText: '취소'
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+
+        // 1단계: 병원 목록 조회 (기존 URL + mode=list)
+        $.ajax({
+            url: "/main/createEvalIndiAllHosp.do",
+            type: "POST",
+            dataType: "json",
+            data: { mode: 'list' },
+            success: function(res) {
+                if (typeof res === 'string') res = JSON.parse(res);
+                if (res.result !== 'OK') {
+                    Swal.fire({ icon: 'error', title: '오류', html: '병원 목록 조회 실패<br><small>' + JSON.stringify(res) + '</small>' });
+                    return;
+                }
+                var hospList = res.hospList;
+                var totalHosp = hospList.length;
+                var totalSteps = monthList.length * totalHosp;
+                var mIdx = 0;
+                var hIdx = 0;
+                var doneCount = 0;
+                var errorCount = 0;
+
+                Swal.fire({
+                    title: '전체 병원 적정성평가 진행 중',
+                    html: '<style>' +
+                          '@keyframes progressStripe { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }' +
+                          '.swal-progress-animated { background: linear-gradient(90deg,#dc3545,#fd7e14); border-radius:11px; transition:width 0.5s; ' +
+                          'background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); ' +
+                          'background-size: 1rem 1rem; animation: progressStripe 0.5s linear infinite; }' +
+                          '</style>' +
+                          '<div style="text-align:center; margin-top:10px;">' +
+                          '<div id="swalEvalBar" style="width:100%; height:22px; background:#e9ecef; border-radius:11px; overflow:hidden; margin-bottom:10px;">' +
+                          '  <div id="swalEvalFill" class="swal-progress-animated" style="width:1%; height:100%;"></div>' +
+                          '</div>' +
+                          '<div id="swalEvalText" style="font-size:14px; color:#333;"><i class="fa fa-spinner fa-spin mr-1"></i> 준비 중...</div>' +
+                          '<div id="swalEvalCount" style="font-size:15px; color:#dc3545; margin-top:6px; font-weight:bold;">0 / ' + totalHosp + ' 병원</div>' +
+                          '<div id="swalEvalMonth" style="font-size:13px; color:#555; margin-top:4px;">월: 1 / ' + monthList.length + '</div>' +
+                          '<div id="swalEvalTime" style="font-size:12px; color:#888; margin-top:4px;">경과시간: 0초</div>' +
+                          '</div>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+
+                var startTime = new Date().getTime();
+                var timerInterval = setInterval(function() {
+                    var elapsed = Math.floor((new Date().getTime() - startTime) / 1000);
+                    var min = Math.floor(elapsed / 60);
+                    var sec = elapsed % 60;
+                    var timeEl = document.getElementById('swalEvalTime');
+                    if (timeEl) timeEl.textContent = '경과시간: ' + (min > 0 ? min + '분 ' : '') + sec + '초';
+                }, 1000);
+
+                function runNext() {
+                    if (mIdx >= monthList.length) {
+                        clearInterval(timerInterval);
+                        if (errorCount > 0) {
+                            Swal.fire({ icon: 'warning', title: '적정성평가 완료', html: '총 ' + totalSteps + '건 중 <b style="color:red;">' + errorCount + '건 오류</b>' });
+                        } else {
+                            Swal.fire({ icon: 'success', title: '적정성평가 완료', text: '7월~12월 전체 ' + totalHosp + '개 병원 정상 처리 완료' });
+                        }
+                        return;
+                    }
+
+                    var curMonth = monthList[mIdx];
+                    var monthLabel = curMonth.substring(0,4) + '년 ' + curMonth.substring(4) + '월';
+                    var curHosp = hospList[hIdx];
+                    var pct = Math.round(((doneCount + 1) / totalSteps) * 100);
+
+                    var fill = document.getElementById('swalEvalFill');
+                    var text = document.getElementById('swalEvalText');
+                    var cnt  = document.getElementById('swalEvalCount');
+                    var mon  = document.getElementById('swalEvalMonth');
+                    if (fill) fill.style.width = Math.max(pct, 1) + '%';
+                    if (text) text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> - ' + curHosp + ' 처리 중...';
+                    if (cnt) cnt.textContent = (hIdx + 1) + ' / ' + totalHosp + ' 병원';
+                    if (mon) mon.textContent = '월: ' + (mIdx + 1) + ' / ' + monthList.length;
+
+                    $.ajax({
+                        url: "/main/createEvalIndiAllHosp.do",
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            mode: 'one',
+                            hosp_cd: curHosp,
+                            jobyymm: curMonth,
+                            reg_user: userid
+                        },
+                        timeout: 300000,
+                        success: function(response) {
+                            if (response.result !== 'OK') errorCount++;
+                            doneCount++;
+                            hIdx++;
+                            if (hIdx >= totalHosp) {
+                                hIdx = 0;
+                                mIdx++;
+                            }
+                            runNext();
+                        },
+                        error: function() {
+                            errorCount++;
+                            doneCount++;
+                            hIdx++;
+                            if (hIdx >= totalHosp) {
+                                hIdx = 0;
+                                mIdx++;
+                            }
+                            runNext();
+                        }
+                    });
+                }
+
+                runNext();
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({ icon: 'error', title: '오류', html: '병원 목록 조회 실패<br><small>상태: ' + status + '<br>코드: ' + xhr.status + '<br>' + error + '</small>' });
+            }
+        });
+    });
 }
 
 function fn_Update() {

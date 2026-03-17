@@ -1486,7 +1486,7 @@ function showAnsrFileList(asqSeq) {
     display: flex;
     align-items: center;
     white-space: nowrap;
-    animation: asqMarquee 20s linear infinite;
+    animation: asqMarquee 40s linear infinite;
     gap: 0;
 }
 #todayAsqBar .asq-bar-track:hover {
@@ -1659,8 +1659,8 @@ function fn_todayAsqAlert(dataList) {
     var trackDiv = document.getElementById('asqBarTrack');
     trackDiv.innerHTML = msgHtml + msgHtml;
 
-    // 메세지 수에 따라 애니메이션 속도 조정 (1건당 약 4초)
-    var duration = Math.max(10, filtered.length * 4);
+    // 메세지 수에 따라 애니메이션 속도 조정 (1건당 약 8초)
+    var duration = Math.max(20, filtered.length * 8);
     trackDiv.style.animationDuration = duration + 's';
 
     // 건수 표시
