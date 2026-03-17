@@ -45,7 +45,11 @@
       "Bash(find /c/Users/user -path *tomcat* -name *.log)",
       "Bash(find /c/Users/user -path *tomcat* -type d -maxdepth 5)",
       "Bash(find /c/Users/user/wnn -name *.log -mmin -60)",
-      "Bash(echo \"$f done\")"
+      "Bash(echo \"$f done\")",
+      "Bash(dir \"C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\model\\\\IndiDTO.class\")",
+      "Bash(dir \"C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\model\\\\IndiDTO.class\")",
+      "Bash(powershell -command \"\\(Get-Item ''C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\model\\\\IndiDTO.class''\\).LastWriteTime\")",
+      "Bash(powershell -command \"\\(Get-Item ''C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\web\\\\MagamController.class''\\).LastWriteTime\")"
     ]
   }
 }
