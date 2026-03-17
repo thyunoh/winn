@@ -194,6 +194,8 @@
                                 </div>
                                 <div class="asq-btn-group">
                                     <button class="asq-btn" onclick="fn_re_load()" title="조회"><i class="fas fa-binoculars"></i> 조회</button>
+                                    <button class="btn btn-outline-dark btn-delete" data-bs-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
+                                    <button class="btn btn-outline-dark btn-delete" data-bs-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">체크삭제. <i class="far fa-calendar-check"></i></button>
                                     <button class="asq-btn btn-update" onclick="modal_Open('U')" title="답변조회등록"><img src="/images/winct/qnst_q.svg" alt="" style="width:16px; height:16px; vertical-align:middle;"> 답변조회등록</button>
                                     <button class="asq-btn" id="fullscreenToggle" title="화면 Size 확대.축소" style="display:none;"><i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                 </div>

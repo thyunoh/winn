@@ -400,11 +400,11 @@
 	            ) THEN 'Y' ELSE 'N'
 	        END AS FILE_YN                          
            FROM TBL_ASQ_MST A 
-            LEFT JOIN  TBL_USER_MST B ON B.USER_ID = A.REG_USER
-                                     AND B.HOSP_CD = A.HOSP_CD 
-                                     AND B.ACTION_YN  = A.ACTION_YN  
-            LEFT JOIN  TBL_HOSP_MST C ON C.HOSP_CD = A.HOSP_CD 
-                                     AND C.ACTION_YN  = A.ACTION_YN  
+            LEFT JOIN  TBL_USER_MST B   ON B.USER_ID = A.REG_USER
+                                       AND B.HOSP_CD = A.HOSP_CD 
+                                       AND B.ACTION_YN  = A.ACTION_YN  
+            LEFT JOIN  TBL_HOSP_MST C  ON  C.HOSP_CD = A.HOSP_CD 
+                                       AND C.ACTION_YN  = A.ACTION_YN  
         WHERE 1=1  
              AND A.ACTION_YN = 'Y'
  		 ]]>

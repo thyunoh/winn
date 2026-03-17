@@ -470,11 +470,14 @@ $(document).ready(function() {
 // 전체 병원 일괄 적정성평가 생성 (선택 월, W1236457 제외)
 function fn_CreateEvalAllHosp() {
 
-    var monthList = ['202507','202508','202509','202510','202511','202512'];
+    var selYear  = document.getElementById("year_Select").value;
+    var selMonth = document.getElementById("monthSelect").value;
+    var jobMonth = selYear + selMonth;
+    var monthLabel = selYear + '년 ' + selMonth + '월';
 
     Swal.fire({
         title: '전체 병원 적정성평가 생성',
-        html: '전체 병원 대상으로<br><b>2025년 7월 ~ 12월</b> 적정성평가를 생성합니다.<br><br><span style="color:red;">시간이 오래 걸릴 수 있습니다.</span>',
+        html: '전체 병원 대상으로<br><b>' + monthLabel + '</b> 적정성평가를 생성합니다.<br><br><span style="color:red;">시간이 오래 걸릴 수 있습니다.</span>',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: '생성 시작',
@@ -496,8 +499,6 @@ function fn_CreateEvalAllHosp() {
                 }
                 var hospList = res.hospList;
                 var totalHosp = hospList.length;
-                var totalSteps = monthList.length * totalHosp;
-                var mIdx = 0;
                 var hIdx = 0;
                 var doneCount = 0;
                 var errorCount = 0;
@@ -516,7 +517,7 @@ function fn_CreateEvalAllHosp() {
                           '</div>' +
                           '<div id="swalEvalText" style="font-size:14px; color:#333;"><i class="fa fa-spinner fa-spin mr-1"></i> 준비 중...</div>' +
                           '<div id="swalEvalCount" style="font-size:15px; color:#dc3545; margin-top:6px; font-weight:bold;">0 / ' + totalHosp + ' 병원</div>' +
-                          '<div id="swalEvalMonth" style="font-size:13px; color:#555; margin-top:4px;">월: 1 / ' + monthList.length + '</div>' +
+                          '<div id="swalEvalMonth" style="font-size:13px; color:#555; margin-top:4px;">' + monthLabel + '</div>' +
                           '<div id="swalEvalTime" style="font-size:12px; color:#888; margin-top:4px;">경과시간: 0초</div>' +
                           '</div>',
                     allowOutsideClick: false,
@@ -534,29 +535,25 @@ function fn_CreateEvalAllHosp() {
                 }, 1000);
 
                 function runNext() {
-                    if (mIdx >= monthList.length) {
+                    if (hIdx >= totalHosp) {
                         clearInterval(timerInterval);
                         if (errorCount > 0) {
-                            Swal.fire({ icon: 'warning', title: '적정성평가 완료', html: '총 ' + totalSteps + '건 중 <b style="color:red;">' + errorCount + '건 오류</b>' });
+                            Swal.fire({ icon: 'warning', title: '적정성평가 완료', html: monthLabel + ' 총 ' + totalHosp + '건 중 <b style="color:red;">' + errorCount + '건 오류</b>' });
                         } else {
-                            Swal.fire({ icon: 'success', title: '적정성평가 완료', text: '7월~12월 전체 ' + totalHosp + '개 병원 정상 처리 완료' });
+                            Swal.fire({ icon: 'success', title: '적정성평가 완료', text: monthLabel + ' 전체 ' + totalHosp + '개 병원 정상 처리 완료' });
                         }
                         return;
                     }
 
-                    var curMonth = monthList[mIdx];
-                    var monthLabel = curMonth.substring(0,4) + '년 ' + curMonth.substring(4) + '월';
                     var curHosp = hospList[hIdx];
-                    var pct = Math.round(((doneCount + 1) / totalSteps) * 100);
+                    var pct = Math.round(((hIdx + 1) / totalHosp) * 100);
 
                     var fill = document.getElementById('swalEvalFill');
                     var text = document.getElementById('swalEvalText');
                     var cnt  = document.getElementById('swalEvalCount');
-                    var mon  = document.getElementById('swalEvalMonth');
                     if (fill) fill.style.width = Math.max(pct, 1) + '%';
                     if (text) text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> - ' + curHosp + ' 처리 중...';
                     if (cnt) cnt.textContent = (hIdx + 1) + ' / ' + totalHosp + ' 병원';
-                    if (mon) mon.textContent = '월: ' + (mIdx + 1) + ' / ' + monthList.length;
 
                     $.ajax({
                         url: "/main/createEvalIndiAllHosp.do",
@@ -565,7 +562,7 @@ function fn_CreateEvalAllHosp() {
                         data: {
                             mode: 'one',
                             hosp_cd: curHosp,
-                            jobyymm: curMonth,
+                            jobyymm: jobMonth,
                             reg_user: userid
                         },
                         timeout: 300000,
@@ -573,20 +570,12 @@ function fn_CreateEvalAllHosp() {
                             if (response.result !== 'OK') errorCount++;
                             doneCount++;
                             hIdx++;
-                            if (hIdx >= totalHosp) {
-                                hIdx = 0;
-                                mIdx++;
-                            }
                             runNext();
                         },
                         error: function() {
                             errorCount++;
                             doneCount++;
                             hIdx++;
-                            if (hIdx >= totalHosp) {
-                                hIdx = 0;
-                                mIdx++;
-                            }
                             runNext();
                         }
                     });

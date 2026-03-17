@@ -3344,12 +3344,14 @@ $(document).ready(function() {
 // 전체 병원 일괄 점검 생성 (202507~202512, 월별 순차 호출, W1236457 제외)
 function fn_CreateData_allHosp() {
 
-    var monthList = ['202507','202508','202509','202510','202511','202512'];
-    var totalSteps = monthList.length;
+    var selYear  = document.getElementById("year_Select").value;
+    var selMonth = document.getElementById("monthSelect").value;
+    var jobMonth = selYear + selMonth;
+    var monthLabel = selYear + '년 ' + selMonth + '월';
 
     Swal.fire({
         title: '전체 병원 점검 생성',
-        html: '전체 병원 대상으로<br><b>2025년 7월 ~ 12월</b> 전체 점검을 생성합니다.<br><br><span style="color:red;">시간이 오래 걸릴 수 있습니다.</span>',
+        html: '전체 병원 대상으로<br><b>' + monthLabel + '</b> 전체 점검을 생성합니다.<br><br><span style="color:red;">시간이 오래 걸릴 수 있습니다.</span>',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: '생성 시작',
@@ -3357,7 +3359,6 @@ function fn_CreateData_allHosp() {
     }).then(function(result) {
         if (!result.isConfirmed) return;
 
-        var mIdx = 0;
         var errorList = [];
 
         Swal.fire({
@@ -3373,7 +3374,7 @@ function fn_CreateData_allHosp() {
                   '  <div id="swalAllHospFill" class="swal-progress-animated" style="width:3%; height:100%;"></div>' +
                   '</div>' +
                   '<div id="swalAllHospText" style="font-size:14px; color:#333;"><i class="fa fa-spinner fa-spin mr-1"></i> 준비 중...</div>' +
-                  '<div id="swalAllHospCount" style="font-size:15px; color:#dc3545; margin-top:6px; font-weight:bold;">0 / ' + totalSteps + '</div>' +
+                  '<div id="swalAllHospMonth" style="font-size:13px; color:#555; margin-top:4px;">' + monthLabel + '</div>' +
                   '<div id="swalAllHospTime" style="font-size:12px; color:#888; margin-top:4px;">경과시간: 0초</div>' +
                   '</div>',
             allowOutsideClick: false,
@@ -3393,58 +3394,39 @@ function fn_CreateData_allHosp() {
             }
         }, 1000);
 
-        function runNextMonth() {
-            if (mIdx >= totalSteps) {
+        var fill = document.getElementById('swalAllHospFill');
+        var text = document.getElementById('swalAllHospText');
+        if (fill) fill.style.width = '50%';
+        if (text) text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> 처리 중...';
+
+        $.ajax({
+            url: "/main/createTotalReportAllHosp.do",
+            type: "POST",
+            data: {
+                jobyymm: jobMonth
+            },
+            timeout: 600000,
+            success: function(response) {
                 clearInterval(timerInterval);
-                if (errorList.length > 0) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '전체 점검 완료',
-                        html: '총 ' + totalSteps + '개월 중 <b style="color:red;">' + errorList.length + '개월 오류</b><br><small>' + errorList.join(', ') + '</small>'
-                    });
-                } else {
-                    Swal.fire({ icon: 'success', title: '전체 점검 완료', text: '2025년 7월~12월 ' + totalSteps + '개월 모두 정상 처리되었습니다.' });
-                }
-                return;
-            }
-
-            var curMonth = monthList[mIdx];
-            var monthLabel = curMonth.substring(0,4) + '년 ' + curMonth.substring(4) + '월';
-            var pct = Math.round(((mIdx + 1) / totalSteps) * 100);
-            var fill = document.getElementById('swalAllHospFill');
-            var text = document.getElementById('swalAllHospText');
-            var cnt  = document.getElementById('swalAllHospCount');
-            if (fill) fill.style.width = pct + '%';
-            if (text) text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> 처리 중...';
-            if (cnt) cnt.textContent = (mIdx + 1) + ' / ' + totalSteps;
-
-            $.ajax({
-                url: "/main/createTotalReportAllHosp.do",
-                type: "POST",
-                data: {
-                    jobyymm: curMonth
-                },
-                timeout: 600000,
-                success: function(response) {
-                    if (response.result === 'OK') {
-                        if (response.errorCnt > 0) {
-                            errorList.push(monthLabel + '(' + response.errorCnt + '건 오류)');
-                        }
+                if (response.result === 'OK') {
+                    if (response.errorCnt > 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '전체 점검 완료',
+                            html: monthLabel + ' <b style="color:red;">' + response.errorCnt + '건 오류</b>'
+                        });
                     } else {
-                        errorList.push(monthLabel);
+                        Swal.fire({ icon: 'success', title: '전체 점검 완료', text: monthLabel + ' 정상 처리되었습니다.' });
                     }
-                    mIdx++;
-                    runNextMonth();
-                },
-                error: function() {
-                    errorList.push(monthLabel);
-                    mIdx++;
-                    runNextMonth();
+                } else {
+                    Swal.fire({ icon: 'error', title: '오류', html: monthLabel + ' 처리 실패' });
                 }
-            });
-        }
-
-        runNextMonth();
+            },
+            error: function() {
+                clearInterval(timerInterval);
+                Swal.fire({ icon: 'error', title: '오류', html: monthLabel + ' 처리 중 오류 발생' });
+            }
+        });
     });
 }
 

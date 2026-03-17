@@ -483,6 +483,31 @@ public class MangrController {
 
         }
 	}
+	//상담문의 삭제
+	@RequestMapping(value="/asqCdDelete.do", method = RequestMethod.POST)
+    public ResponseEntity<String> asqCdDelete(@RequestBody List<AsqDTO> data) {
+
+		System.out.println("AsqCd Delete 시작했음");
+		String returnValue = "OK";
+		// 처리 로직
+        try {
+        	for (AsqDTO dto : data) {
+        		dto.setAsqSeq(String.valueOf(dto.getKeyasqSeq()));
+        		dto.setFileGb(dto.getKeyfileGb());
+        		if (dto.getUpdUser() == null) dto.setUpdUser("");
+        		if (dto.getUpdIp() == null) dto.setUpdIp("");
+        		svc.updateQstnCd(dto);
+       		    System.out.println("Key asqSeq: " + dto.getKeyasqSeq());
+
+            }
+        	return ResponseEntity.ok(returnValue);
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(500).body(e.getMessage());
+
+        }
+	}
 	/*문서화일*/
 	@RequestMapping(value= "/fileCdList.do", method = RequestMethod.POST)
 	@ResponseBody
