@@ -699,43 +699,99 @@ function bindTableEvents(idx) {
         let total = table.rows().count();
         let checked = $('input[type="checkbox"]:checked', table.rows().nodes()).length;
         $(selectAllId).prop('checked', checked === total);
-        
+        /* 기존 코드 (원복용) */
         if (tableId === 'indicatorTable') {
-	        let row     = table.row($(this).closest('tr'));
-	        let rowData = row.data();
-	        if (rowData) {
-	            
-	        	let col_Idx1 = table.column('stdweig:name').index();
-	        	let col_Idx2 = table.column('weigavg:name').index();
-	        	
-	            let rowIndex = table.rows().count() - 1;
-	            
-	            let col_Val1 = parseFloat(table.cell(rowIndex, col_Idx1).data()) || 0;
-	            let col_Val2 = parseFloat(table.cell(rowIndex, col_Idx2).data()) || 0;
-	            
-	            let row_Val1 = parseFloat(rowData.stdweig) || 0;
-	            let row_Val2 = parseFloat(rowData.weigavg) || 0;
-	            
-	            if ($(this).is(':checked')) {
-	            	col_Val1 += row_Val1;
-	            	col_Val2 += row_Val2;
-	            } else {
-	            	col_Val1 -= row_Val1;
-	            	col_Val2 -= row_Val2;
-	            }
-	            
-	            if (col_Val1 === 100.00) {
-	            	table.cell(rowIndex, col_Idx1).data(100).draw(false);
-	            } else {
-	            	table.cell(rowIndex, col_Idx1).data(col_Val1.toFixed(2)).draw(false);
-	            }
-	            if (col_Val2 === 100.00) {
-	            	table.cell(rowIndex, col_Idx2).data(100).draw(false);
-	            } else {
-	            	table.cell(rowIndex, col_Idx2).data(col_Val2.toFixed(2)).draw(false);
-	            }
-	        }
+            let row     = table.row($(this).closest('tr'));
+            let rowData = row.data();
+            if (rowData) {
+                let col_Idx1 = table.column('stdweig:name').index();
+                let col_Idx2 = table.column('weigavg:name').index();
+                let rowIndex = table.rows().count() - 1;
+                let col_Val1 = parseFloat(table.cell(rowIndex, col_Idx1).data()) || 0;
+                let col_Val2 = parseFloat(table.cell(rowIndex, col_Idx2).data()) || 0;
+                let row_Val1 = parseFloat(rowData.stdweig) || 0;
+                let row_Val2 = parseFloat(rowData.weigavg) || 0;
+                if ($(this).is(':checked')) {
+                    col_Val1 += row_Val1;
+                    col_Val2 += row_Val2;
+                } else {
+                    col_Val1 -= row_Val1;
+                    col_Val2 -= row_Val2;
+                }
+                if (col_Val1 === 100.00) {
+                    table.cell(rowIndex, col_Idx1).data(100).draw(false);
+                } else {
+                    table.cell(rowIndex, col_Idx1).data(col_Val1.toFixed(2)).draw(false);
+                }
+                if (col_Val2 === 100.00) {
+                    table.cell(rowIndex, col_Idx2).data(100).draw(false);
+                } else {
+                    table.cell(rowIndex, col_Idx2).data(col_Val2.toFixed(2)).draw(false);
+                }
+            }
         }
+ 
+        /* ===== [수정] 체크박스 합계 재계산 시작 (2026-03-18) ===== */
+    /*    if (tableId === 'indicatorTable') {
+	        let col_Idx1 = table.column('stdweig:name').index();
+	        let col_Idx2 = table.column('weigavg:name').index();
+	        let lastIdx  = table.rows().count() - 1; // 합계 행
+
+	        // 1단계: 체크된 항목의 가중치 합계 계산
+	        let checkedWeightSum = 0;
+	        let checkedWeigavgSum = 0;
+
+	        // 미체크된 하단 2개(장기입원, 지역사회복귀율) 결과값 저장
+	        let uncheckedBottom2 = [];
+
+	        table.rows().every(function (rowIdx) {
+	            if (rowIdx === lastIdx) return; // 합계 행 제외
+	            let rData = this.data();
+	            if (!rData || rData.cate_cd === '99') return;
+
+	            let rowNode  = this.node();
+	            let checkbox = $(rowNode).find('input[type="checkbox"]');
+	            let isChecked = checkbox.length > 0 && checkbox.prop('checked');
+	            let weight   = parseFloat(rData.stdweig) || 0;
+	            let wavg     = parseFloat(rData.weigavg) || 0;
+
+	            if (isChecked) {
+	                checkedWeightSum  += weight;
+	                checkedWeigavgSum += wavg;
+	            } else {
+	                // 하단 2개 (장기입원, 지역사회복귀율) 판별: 합계 바로 위 2행
+	                if (rowIdx === lastIdx - 1 || rowIdx === lastIdx - 2) {
+	                    uncheckedBottom2.push(wavg);
+	                }
+	            }
+	        });
+
+	        // 2단계: 미체크된 하단 2개 항목의 결과를 비율 적용
+	        let ratio = checkedWeightSum / 100;
+	        let adjustedSum = 0;
+	        for (let i = 0; i < uncheckedBottom2.length; i++) {
+	            adjustedSum += uncheckedBottom2[i] * ratio;
+	        }
+
+	        // 3단계: 합계 행 업데이트
+	        let totalWeigavg = checkedWeigavgSum + adjustedSum;
+
+	        if (checkedWeightSum === 100) {
+	            table.cell(lastIdx, col_Idx1).data(100).draw(false);
+	        } else {
+	            table.cell(lastIdx, col_Idx1).data(checkedWeightSum.toFixed(2)).draw(false);
+	        }
+	        if (totalWeigavg === 100) {
+	            table.cell(lastIdx, col_Idx2).data(100).draw(false);
+	        } else {
+	            table.cell(lastIdx, col_Idx2).data(totalWeigavg.toFixed(2)).draw(false);
+	        }
+        } */
+        
+        /* ===== [수정] 체크박스 합계 재계산 끝 (2026-03-18) ===== */        
+        
+
+        
     });
 
     

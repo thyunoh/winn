@@ -462,9 +462,11 @@ function fn_CreateData(flag) {
 
 // WINCHECK 로그인 시 전체생성 버튼 표시
 $(document).ready(function() {
-  //  if (getCookie("s_winconect") === 'Y') {
-       $('#btnEvalAllHosp').show();
- //   }
+    // s_wnn_yn(위너넷사용자-로그인시설정) 또는 s_winconect(병원검색후설정)
+     $('#btnEvalAllHosp').hide();
+    if (getCookie("s_wnn_yn") === 'Y' || getCookie("s_winconect") === 'Y') {
+     //  $('#btnEvalAllHosp').show();
+    }
 });
 
 // 전체 병원 일괄 적정성평가 생성 (선택 월, W1236457 제외)

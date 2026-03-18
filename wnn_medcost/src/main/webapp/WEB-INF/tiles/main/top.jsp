@@ -305,7 +305,10 @@
                  location.reload(); // 페이지 새로고침
                   return;            // reload 이후의 코드는 실행 안 되게 return
               } 
-              hospnm = getCookie("s_hospnm"); 
+              hospnm = getCookie("s_hospnm");
+              // 병원 변경 없이 재선택 시에도 버튼 표시
+            //  $('#btnCreateAllHosp').show();
+            //  $('#btnEvalAllHosp').show();
               document.getElementById('logininfo').innerHTML =
                     //  '진료비: '+ closeDt2 +'~'+ '적정성: ' + closeDt1 + '   '
                       hospnm + `  [ `

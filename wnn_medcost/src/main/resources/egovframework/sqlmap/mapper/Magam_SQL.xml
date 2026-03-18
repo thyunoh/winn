@@ -14,7 +14,6 @@
 		  <result property="treat_type"  column="treat_type" />		  
 		  <result property="claim_type_nm"  column="claim_type_nm" />
 		  <result property="treat_type_nm"  column="treat_type_nm" />
-		  <result property="date_ym"     column="date_ym" />
 		  <result property="case_cnt"    column="case_cnt" />
 		  <result property="tot_amt"     column="tot_amt" />
 		  <result property="claim_amt"   column="claim_amt" />
@@ -3697,7 +3696,7 @@
 		   
 	</select>
 	
-	<select id="select_HospitalMst" resultMap="indiMap">
+ 	<select id="select_HospitalMst" resultMap="indiMap">
 		SELECT DISTINCT
 		       hm.HOSP_CD AS hosp_cd 
 		     , hm.HOSP_NM AS hosp_nm
@@ -3708,9 +3707,9 @@
 			   AND hm.HOSP_CD = #{hosp_cd}
 		   </if>
 		   
-         ORDER BY hm.HOSP_CD		   
+         ORDER BY hm.HOSP_NM		   
 	</select>
-    
+	   
     <select id="select_Hosp_Indi" parameterType="map" resultMap="indiMap">
 	    WITH grouped_data AS (
 		    SELECT code.SUB_CODE_NM      AS cate_nm

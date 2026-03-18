@@ -629,44 +629,54 @@ public class MagamController {
 	// 전체 병원 대상 점검 생성 (ACTION_YN='Y', W1236457 제외, 지정 월, 전체 병원 × 14플래그)
 	@RequestMapping(value="/main/createTotalReportAllHosp.do", method = RequestMethod.POST)
 	@ResponseBody
-	public Map<String, Object> crtTotalReportAllHosp(@ModelAttribute("DTO") MagamDTO dto, Model model) {
+	public Map<String, Object> crtTotalReportAllHosp(@ModelAttribute("DTO") MagamDTO dto, HttpServletRequest request, Model model) {
 
 		Map<String, Object> response = new HashMap<>();
-		int successCnt = 0;
-		int errorCnt = 0;
-		List<String> errorList = new ArrayList<>();
+		String mode = request.getParameter("mode");
 		String[] flagArr = {"01","02","03","04","05","06","07","08","09","10","11","12","13","14"};
 
 		try {
-			List<MagamDTO> hospList = svc.selectAllHospCdList();
-			String jobyymm = dto.getJobyymm();
+			// 병원 목록만 조회
+			if ("list".equals(mode)) {
+				List<MagamDTO> hospList = svc.selectAllHospCdList();
+				List<String> hospCdList = new ArrayList<>();
+				for (MagamDTO hosp : hospList) {
+					hospCdList.add(hosp.getHosp_cd());
+				}
+				response.put("hospList", hospCdList);
+				response.put("totalCnt", hospCdList.size());
+				response.put("result", "OK");
+				return response;
+			}
 
-			log.error("createTotalReportAllHosp 시작 - jobyymm: " + jobyymm + ", 병원수: " + hospList.size());
-
-			for (MagamDTO hosp : hospList) {
-				try {
-					for (String flag : flagArr) {
+			// 1개 병원만 처리
+			if ("one".equals(mode)) {
+				String hospCd = request.getParameter("hosp_cd");
+				String jobyymm = request.getParameter("jobyymm");
+				log.error("[mode=one] 시작 - hospCd: " + hospCd + ", jobyymm: " + jobyymm);
+				int flagOk = 0;
+				for (String flag : flagArr) {
+					try {
 						MagamDTO param = new MagamDTO();
-						param.setHosp_cd(hosp.getHosp_cd());
+						param.setHosp_cd(hospCd);
 						param.setJobyymm(jobyymm);
 						param.setMake_fg(flag);
 						svc.crtTotalReport(param);
+						flagOk++;
+					} catch (Exception ex) {
+						log.error("[mode=one] flag=" + flag + " 오류: " + ex.getMessage());
 					}
-					successCnt++;
-				} catch (Exception ex) {
-					errorCnt++;
-					errorList.add(hosp.getHosp_cd());
-					log.error("병원 " + hosp.getHosp_cd() + " 오류: " + ex.getMessage());
 				}
+				log.error("[mode=one] 완료 - hospCd: " + hospCd + ", 성공flag: " + flagOk + "/14");
+				response.put("result", "OK");
+				response.put("flagOk", flagOk);
+				return response;
 			}
 
-			response.put("totalCnt", hospList.size());
-			response.put("successCnt", successCnt);
-			response.put("errorCnt", errorCnt);
-			response.put("errorList", errorList);
-			response.put("result", "OK");
-
-			log.error("createTotalReportAllHosp 완료 - 성공: " + successCnt + ", 오류: " + errorCnt);
+			// mode가 없으면 처리하지 않음 (mode=list 또는 mode=one만 허용)
+			response.put("result", "FAIL");
+			response.put("message", "mode 파라미터가 필요합니다 (list 또는 one)");
+			log.error("createTotalReportAllHosp - mode 없이 호출됨, 무시");
 
 		} catch (Exception e) {
 			response.put("result", "FAIL");

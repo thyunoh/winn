@@ -1598,7 +1598,7 @@ function fn_loadTodayAsq() {
     });
 }
 
-// 어제~오늘 답변대기 질문만 필터링 → 마퀴 표시
+// 답변대기 질문 필터링 → 마퀴 표시 (일자 무관, 답변대기만 체크)
 function fn_todayAsqAlert(dataList) {
     var bar = document.getElementById('todayAsqBar');
     if (!bar) return;
@@ -1608,27 +1608,14 @@ function fn_todayAsqAlert(dataList) {
         return;
     }
 
-    // 오늘, 어제 날짜 문자열
-    var today     = fn_getDateStr(0);
-    var yesterday = fn_getDateStr(1);
-
-    function isRecentDate(dtStr) {
-        var s = (dtStr || '').toString();
-        return s.indexOf(today.dash) >= 0 || s.indexOf(today.slash) >= 0 || s.indexOf(today.plain) >= 0
-            || s.indexOf(yesterday.dash) >= 0 || s.indexOf(yesterday.slash) >= 0 || s.indexOf(yesterday.plain) >= 0;
-    }
-
-    // 답변대기 + 어제~오늘 필터
+    // 답변대기 필터 (일자 조건 없이)
     var filtered = [];
     for (var i = 0; i < dataList.length; i++) {
         var row = dataList[i];
         var ansrWan = (row.ansrWan || '').toString().trim();
         // 답변대기: ansrWan이 'Y'가 아닌 것
         if (ansrWan === 'Y') continue;
-        var regDttm = (row.updDttm || '').toString();
-        if (isRecentDate(regDttm)) {
-            filtered.push(row);
-        }
+        filtered.push(row);
     }
 
     if (filtered.length === 0) {

@@ -48,7 +48,9 @@
       "Bash(mvn clean:*)",
       "Bash(where.exe mvn:*)",
       "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")",
-      "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/wnn_medcost-1.0.0/WEB-INF/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")"
+      "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/wnn_medcost-1.0.0/WEB-INF/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")",
+      "Bash(grep -r \"ajax\\\\|jQuery\\\\|$.post\\\\|$.get\" \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_consult\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\jsp\\\\login\" --include=\"*.jsp\")",
+      "Bash(find C:/Users/user/git/winn/wnn_consult/src/main/webapp -name *.jsp -type f)"
     ]
   }
 }

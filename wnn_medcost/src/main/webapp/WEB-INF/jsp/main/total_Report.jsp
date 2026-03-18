@@ -3336,13 +3336,21 @@ function fn_CreateData_all() {
 
 // WINCHECK 로그인 시 전체생성 버튼 표시
 $(document).ready(function() {
-   // if (getCookie("s_winconect") === 'Y') {
-        $('#btnCreateAllHosp').show();
-  //  }
-});
+    // s_wnn_yn(위너넷사용자-로그인시설정) 또는 s_winconect(병원검색후설정)
+    $('#btnCreateAllHosp').hide();
+    if (getCookie("s_wnn_yn") === 'Y' || getCookie("s_winconect") === 'Y') {
+      //  $('#btnCreateAllHosp').show();
+    }
+});   
 
-// 전체 병원 일괄 점검 생성 (202507~202512, 월별 순차 호출, W1236457 제외)
+// 전체 병원 일괄 점검 생성 (병원별 순차 호출, W1236457 제외)
+var _allHospRunning = false;  // 중복 실행 방지
 function fn_CreateData_allHosp() {
+
+    if (_allHospRunning) {
+        Swal.fire({ icon: 'info', title: '알림', text: '이미 진행 중입니다.' });
+        return;
+    }
 
     var selYear  = document.getElementById("year_Select").value;
     var selMonth = document.getElementById("monthSelect").value;
@@ -3358,73 +3366,107 @@ function fn_CreateData_allHosp() {
         cancelButtonText: '취소'
     }).then(function(result) {
         if (!result.isConfirmed) return;
+        _allHospRunning = true;
 
-        var errorList = [];
-
-        Swal.fire({
-            title: '전체 병원 점검 진행 중',
-            html: '<style>' +
-                  '@keyframes progressStripe { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }' +
-                  '.swal-progress-animated { background: linear-gradient(90deg,#dc3545,#fd7e14); border-radius:11px; transition:width 0.5s; ' +
-                  'background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); ' +
-                  'background-size: 1rem 1rem; animation: progressStripe 0.5s linear infinite; }' +
-                  '</style>' +
-                  '<div style="text-align:center; margin-top:10px;">' +
-                  '<div id="swalAllHospBar" style="width:100%; height:22px; background:#e9ecef; border-radius:11px; overflow:hidden; margin-bottom:10px;">' +
-                  '  <div id="swalAllHospFill" class="swal-progress-animated" style="width:3%; height:100%;"></div>' +
-                  '</div>' +
-                  '<div id="swalAllHospText" style="font-size:14px; color:#333;"><i class="fa fa-spinner fa-spin mr-1"></i> 준비 중...</div>' +
-                  '<div id="swalAllHospMonth" style="font-size:13px; color:#555; margin-top:4px;">' + monthLabel + '</div>' +
-                  '<div id="swalAllHospTime" style="font-size:12px; color:#888; margin-top:4px;">경과시간: 0초</div>' +
-                  '</div>',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false
-        });
-
-        // 경과시간 표시 타이머
-        var startTime = new Date().getTime();
-        var timerInterval = setInterval(function() {
-            var elapsed = Math.floor((new Date().getTime() - startTime) / 1000);
-            var min = Math.floor(elapsed / 60);
-            var sec = elapsed % 60;
-            var timeEl = document.getElementById('swalAllHospTime');
-            if (timeEl) {
-                timeEl.textContent = '경과시간: ' + (min > 0 ? min + '분 ' : '') + sec + '초';
-            }
-        }, 1000);
-
-        var fill = document.getElementById('swalAllHospFill');
-        var text = document.getElementById('swalAllHospText');
-        if (fill) fill.style.width = '50%';
-        if (text) text.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> 처리 중...';
-
+        // 1단계: 병원 목록 조회 (assessment.jsp와 동일)
         $.ajax({
-            url: "/main/createTotalReportAllHosp.do",
+            url: "/main/createEvalIndiAllHosp.do",
             type: "POST",
-            data: {
-                jobyymm: jobMonth
-            },
-            timeout: 600000,
-            success: function(response) {
-                clearInterval(timerInterval);
-                if (response.result === 'OK') {
-                    if (response.errorCnt > 0) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: '전체 점검 완료',
-                            html: monthLabel + ' <b style="color:red;">' + response.errorCnt + '건 오류</b>'
-                        });
-                    } else {
-                        Swal.fire({ icon: 'success', title: '전체 점검 완료', text: monthLabel + ' 정상 처리되었습니다.' });
-                    }
-                } else {
-                    Swal.fire({ icon: 'error', title: '오류', html: monthLabel + ' 처리 실패' });
+            dataType: "json",
+            data: { mode: 'list' },
+            success: function(res) {
+                if (typeof res === 'string') res = JSON.parse(res);
+                if (res.result !== 'OK') {
+                    Swal.fire({ icon: 'error', title: '오류', html: '병원 목록 조회 실패<br><small>' + JSON.stringify(res) + '</small>' });
+                    return;
                 }
+                var hospList = res.hospList;
+                var totalHosp = hospList.length;
+                var hIdx = 0;
+                var doneCount = 0;
+                var errorCount = 0;
+
+                Swal.fire({
+                    title: '전체 병원 점검 진행 중',
+                    html: '<style>' +
+                          '@keyframes progressStripe { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }' +
+                          '.swal-progress-animated { background: linear-gradient(90deg,#dc3545,#fd7e14); border-radius:11px; transition:width 0.5s; ' +
+                          'background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); ' +
+                          'background-size: 1rem 1rem; animation: progressStripe 0.5s linear infinite; }' +
+                          '</style>' +
+                          '<div style="text-align:center; margin-top:10px;">' +
+                          '<div id="swalEvalBar" style="width:100%; height:22px; background:#e9ecef; border-radius:11px; overflow:hidden; margin-bottom:10px;">' +
+                          '  <div id="swalEvalFill" class="swal-progress-animated" style="width:1%; height:100%;"></div>' +
+                          '</div>' +
+                          '<div id="swalEvalText" style="font-size:14px; color:#333;"><i class="fa fa-spinner fa-spin mr-1"></i> 준비 중...</div>' +
+                          '<div id="swalEvalCount" style="font-size:15px; color:#dc3545; margin-top:6px; font-weight:bold;">0 / ' + totalHosp + ' 병원</div>' +
+                          '<div id="swalEvalMonth" style="font-size:13px; color:#555; margin-top:4px;">' + monthLabel + '</div>' +
+                          '<div id="swalEvalTime" style="font-size:12px; color:#888; margin-top:4px;">경과시간: 0초</div>' +
+                          '</div>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+
+                var startTime = new Date().getTime();
+                var timerInterval = setInterval(function() {
+                    var elapsed = Math.floor((new Date().getTime() - startTime) / 1000);
+                    var min = Math.floor(elapsed / 60);
+                    var sec = elapsed % 60;
+                    $('#swalEvalTime').text('경과시간: ' + (min > 0 ? min + '분 ' : '') + sec + '초');
+                }, 1000);
+
+                function runNext() {
+                    if (hIdx >= totalHosp) {
+                        clearInterval(timerInterval);
+                        _allHospRunning = false;
+                        if (errorCount > 0) {
+                            Swal.fire({ icon: 'warning', title: '전체 점검 완료', html: monthLabel + ' 총 ' + totalHosp + '건 중 <b style="color:red;">' + errorCount + '건 오류</b>' });
+                        } else {
+                            Swal.fire({ icon: 'success', title: '전체 점검 완료', text: monthLabel + ' 전체 ' + totalHosp + '개 병원 정상 처리 완료' });
+                        }
+                        return;
+                    }
+
+                    var curHosp = hospList[hIdx];
+                    var pct = Math.round(((hIdx + 1) / totalHosp) * 100);
+
+                    // jQuery로 Swal 내부 요소 업데이트
+                    $('#swalEvalFill').css('width', Math.max(pct, 1) + '%');
+                    $('#swalEvalText').html('<i class="fa fa-spinner fa-spin mr-1"></i> <b>' + monthLabel + '</b> - ' + curHosp + ' 처리 중...');
+                    $('#swalEvalCount').text((hIdx + 1) + ' / ' + totalHosp + ' 병원');
+                    console.log('[전체점검] runNext hIdx=' + hIdx + ', 병원=' + curHosp);
+
+                    $.ajax({
+                        url: "/main/createTotalReportAllHosp.do",
+                        type: "POST",
+                        data: {
+                            mode: 'one',
+                            hosp_cd: curHosp,
+                            jobyymm: jobMonth
+                        },
+                        timeout: 600000,
+                        success: function(res) {
+                            console.log('[전체점검] ' + curHosp + ' 완료');
+                            doneCount++;
+                            hIdx++;
+                            runNext();
+                        },
+                        error: function(xhr, status, err) {
+                            console.error('[전체점검] ' + curHosp + ' 오류:', status, err);
+                            errorCount++;
+                            doneCount++;
+                            hIdx++;
+                            runNext();
+                        }
+                    });
+                }
+
+                runNext();
             },
-            error: function() {
-                clearInterval(timerInterval);
-                Swal.fire({ icon: 'error', title: '오류', html: monthLabel + ' 처리 중 오류 발생' });
+            error: function(xhr, status, error) {
+                _allHospRunning = false;
+                Swal.fire({ icon: 'error', title: '오류', html: '병원 목록 조회 실패<br><small>상태: ' + status + '<br>코드: ' + xhr.status + '<br>' + error + '</small>' });
             }
         });
     });
