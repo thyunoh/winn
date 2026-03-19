@@ -3803,7 +3803,40 @@
 		ORDER BY 
 		  CASE WHEN cate_cd = '99' THEN 999 ELSE CAST(cate_cd AS UNSIGNED) END
     </select>
-    
+
+    <!-- SP_LONGADM_COUNT 호출 (장기입원 CATE_CD=14) -->
+    <select id="callLongAdmCount" statementType="CALLABLE" parameterType="map">
+    	{CALL SP_LONGADM_COUNT(#{hosp_cd,    mode=IN,  jdbcType=VARCHAR},
+    	                       #{stryymm,    mode=IN,  jdbcType=VARCHAR},
+    	                       #{endyymm,    mode=IN,  jdbcType=VARCHAR},
+    	                       #{dtorvalue,  mode=OUT, jdbcType=INTEGER},
+    	                       #{ntorvalue,  mode=OUT, jdbcType=INTEGER})}
+    </select>
+
+    <!-- CATE_CD=14 장기입원 SP 결과값으로 EVALUATION_INDICATORS_VALUE + fiveZone 재계산 -->
+    <select id="calcEvalIndiValue" parameterType="map" resultType="map">
+    	SELECT ROUND(EVALUATION_INDICATORS_VALUE('1', #{cate_cd}, #{jobyymm}, #{dtorvalue}, #{ntorvalue}), 2) AS cal_avg
+    	     , ROUND(EVALUATION_INDICATORS_VALUE('2', #{cate_cd}, #{jobyymm}, #{dtorvalue}, #{ntorvalue}), 2) AS weigavg
+    	     , CASE WHEN #{dtorvalue} = 0 THEN ''
+    	            WHEN w.START_INDI > (#{ntorvalue} / #{dtorvalue} * 100)
+    	            THEN CONCAT('+', CEIL(w.START_INDI * #{dtorvalue} / 100 - #{ntorvalue}), '명')
+    	            WHEN (#{ntorvalue} / #{dtorvalue} * 100) > w.END_INDI
+    	            THEN CONCAT('-', CEIL(#{ntorvalue} - w.END_INDI * #{dtorvalue} / 100), '명')
+    	            ELSE '' END AS fiveZone
+    	  FROM (SELECT wm.START_INDI, wm.END_INDI
+    	          FROM TBL_WEVALUE_MST wm
+    	          JOIN (SELECT CATE_CODE, MAX(STD_SCORE) AS MAX_SCORE
+    	                  FROM TBL_WEVALUE_MST
+    	                 WHERE ACTION_YN = 'Y'
+    	                   AND CONCAT(#{stryymm},'01') BETWEEN START_DT AND END_DT
+    	                 GROUP BY CATE_CODE
+    	               ) maxs ON wm.CATE_CODE = maxs.CATE_CODE AND wm.STD_SCORE = maxs.MAX_SCORE
+    	         WHERE wm.ACTION_YN = 'Y'
+    	           AND wm.CATE_CODE = #{cate_cd}
+    	         LIMIT 1
+    	       ) w
+    </select>
+
     <insert id="insGoolgleSheet" parameterType="MagamDTO">
         INSERT INTO TBL_GOOGLE_ST(HOSP_CD,JOBYYMM,JOBCODE,HTTP_PH,REG_USER,UPD_USER,REG_DTTM,UPD_DTTM)
         VALUES (#{hosp_cd},#{jobyymm},#{jobcode},#{http_st},#{reg_user},#{reg_user},NOW(),NOW())

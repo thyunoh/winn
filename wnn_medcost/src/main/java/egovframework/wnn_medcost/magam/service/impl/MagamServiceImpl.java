@@ -426,7 +426,84 @@ public class MagamServiceImpl implements MagamService {
 	}
 	@Override
     public List<IndiDTO> select_Hosp_Indi(Map<String, Object> params) {
-        return mapper.select_Hosp_Indi(params);
+        List<IndiDTO> result = mapper.select_Hosp_Indi(params);
+
+        // CATE_CD=14 (장기입원) SP_LONGADM_COUNT 호출하여 분모/분자/현황값/결과 교체
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> hospCds = (List<String>) params.get("hospcds");
+            String stryymm = (String) params.get("stryymm");
+            String endyymm = (String) params.get("endyymm");
+
+            int totalDtor = 0;
+            int totalNtor = 0;
+
+            // 각 병원별 SP 호출 후 합산
+            for (String hospCd : hospCds) {
+                Map<String, Object> spParams = new HashMap<>();
+                spParams.put("hosp_cd", hospCd);
+                spParams.put("stryymm", stryymm);
+                spParams.put("endyymm", endyymm);
+                spParams.put("dtorvalue", 0);
+                spParams.put("ntorvalue", 0);
+                mapper.callLongAdmCount(spParams);
+                totalDtor += ((Number) spParams.get("dtorvalue")).intValue();
+                totalNtor += ((Number) spParams.get("ntorvalue")).intValue();
+            }
+
+            // EVALUATION_INDICATORS_VALUE + fiveZone 계산
+            Map<String, Object> evalParams = new HashMap<>();
+            evalParams.put("cate_cd", "14");
+            evalParams.put("jobyymm", endyymm);
+            evalParams.put("stryymm", stryymm);
+            evalParams.put("dtorvalue", totalDtor);
+            evalParams.put("ntorvalue", totalNtor);
+            Map<String, Object> evalResult = mapper.calcEvalIndiValue(evalParams);
+
+            java.math.BigDecimal newCalAvg  = evalResult != null && evalResult.get("cal_avg")  != null ? new java.math.BigDecimal(evalResult.get("cal_avg").toString())  : java.math.BigDecimal.ZERO;
+            java.math.BigDecimal newWeigavg = evalResult != null && evalResult.get("weigavg") != null ? new java.math.BigDecimal(evalResult.get("weigavg").toString()) : java.math.BigDecimal.ZERO;
+            String newFiveZone = evalResult != null && evalResult.get("fiveZone") != null ? evalResult.get("fiveZone").toString() : "";
+
+            // CATE_CD=14 행 찾아서 값 교체
+            java.math.BigDecimal oldWeigavg = java.math.BigDecimal.ZERO;
+            for (IndiDTO dto : result) {
+                if ("14".equals(dto.getCate_cd())) {
+                    oldWeigavg = dto.getWeigavg() != null ? dto.getWeigavg() : java.math.BigDecimal.ZERO;
+                    dto.setDtortot(new java.math.BigDecimal(totalNtor));  // dtortot컬럼 → 분자 표시
+                    dto.setNtortot(new java.math.BigDecimal(totalDtor));  // ntortot컬럼 → 분모 표시
+                    dto.setCal_avg(newCalAvg);
+                    dto.setWeigavg(newWeigavg);
+                    dto.setFiveZone(newFiveZone);
+                    break;
+                }
+            }
+
+            // 합계(cate_cd=99) 행의 weigavg 재계산
+            java.math.BigDecimal diffWeigavg = newWeigavg.subtract(oldWeigavg);
+            for (IndiDTO dto : result) {
+                if ("99".equals(dto.getCate_cd())) {
+                    java.math.BigDecimal sumWeigavg = dto.getWeigavg() != null ? dto.getWeigavg() : java.math.BigDecimal.ZERO;
+                    dto.setWeigavg(sumWeigavg.add(diffWeigavg));
+                    break;
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("SP_LONGADM_COUNT 호출 오류: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    @Override
+    public void callLongAdmCount(Map<String, Object> params) {
+        mapper.callLongAdmCount(params);
+    }
+
+    @Override
+    public Map<String, Object> calcEvalIndiValue(Map<String, Object> params) {
+        return mapper.calcEvalIndiValue(params);
     }
 	
 	@Override

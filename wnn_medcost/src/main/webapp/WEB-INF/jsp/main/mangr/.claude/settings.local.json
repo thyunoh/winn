@@ -63,7 +63,8 @@
       "Bash(git -C /c/Users/user/wnn/wnn_medcost show d2d4664:wnn_medcost/src/main/java/egovframework/wnn_medcost/magam/web/MagamController.java)",
       "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/resources/application.properties)",
       "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/resources/egovframework/spring/context-datasource.xml)",
-      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/webapp/WEB-INF/web.xml)"
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/webapp/WEB-INF/web.xml)",
+      "Bash(grep -r SP_ C:Usersuserwnnwnn_medcost --include=*.java --include=*.xml)"
     ]
   }
 }

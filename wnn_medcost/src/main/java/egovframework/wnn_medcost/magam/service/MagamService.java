@@ -73,7 +73,9 @@ public interface MagamService {
 	
 	List<IndiDTO> select_HospitalMst(IndiDTO dto) throws Exception;
 	List<IndiDTO> select_Hosp_Indi(Map<String, Object> params);
-	
+	void callLongAdmCount(Map<String, Object> params);
+	Map<String, Object> calcEvalIndiValue(Map<String, Object> params);
+
 	List<MagamDTO> selectAllHospCdList() throws Exception;
 
 	String insGoolgleSheet(MagamDTO dto) throws Exception;
