@@ -49,7 +49,21 @@
       "Bash(dir \"C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\model\\\\IndiDTO.class\")",
       "Bash(dir \"C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\model\\\\IndiDTO.class\")",
       "Bash(powershell -command \"\\(Get-Item ''C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\model\\\\IndiDTO.class''\\).LastWriteTime\")",
-      "Bash(powershell -command \"\\(Get-Item ''C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\web\\\\MagamController.class''\\).LastWriteTime\")"
+      "Bash(powershell -command \"\\(Get-Item ''C:\\\\Users\\\\user\\\\wnn\\\\wnn_medcost\\\\target\\\\classes\\\\egovframework\\\\wnn_medcost\\\\magam\\\\web\\\\MagamController.class''\\).LastWriteTime\")",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost log --oneline -20 --all)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost log --oneline --follow -10 -- src/main/webapp/WEB-INF/jsp/main/mangr/asqcd.jsp)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff HEAD~1 HEAD --stat)",
+      "Bash(grep -E \"\\\\.\\(jsp|js\\)$\")",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost log --oneline --all -30 -- src/main/webapp/WEB-INF/jsp/main/assessment.jsp)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost log --oneline --format=\"%h %ai %s\" -- src/main/webapp/WEB-INF/jsp/main/assessment.jsp)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/webapp/WEB-INF/jsp/main/assessment.jsp)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD --stat)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost show d2d4664:wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost show d2d4664:wnn_medcost/src/main/java/egovframework/wnn_medcost/magam/web/MagamController.java)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/resources/application.properties)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/resources/egovframework/spring/context-datasource.xml)",
+      "Bash(git -C /c/Users/user/wnn/wnn_medcost diff d2d4664 HEAD -- src/main/webapp/WEB-INF/web.xml)"
     ]
   }
 }

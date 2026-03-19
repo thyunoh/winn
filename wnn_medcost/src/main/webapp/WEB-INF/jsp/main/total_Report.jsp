@@ -65,7 +65,7 @@
 								        </div>
 								        <div class="col-lg-6">
 								        	<button data-action="FindView" data-value="accordion_item_C" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('11')">검사료 현황</button>
-								            <button data-action="FindView" data-value="accordion_item_D" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('12')">약제료 현황</button>
+								            <button data-action="FindView" data-value="accordion_item_D" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('12')">약제비 현황</button>
 								        </div>								        
 								        <div class="col-lg-6">
 								        	<button data-action="FindView" data-value="accordion_item_F" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('14')">특정 진료비</button>
@@ -1272,8 +1272,8 @@ function setMakeGrid() {
     	  'grid-container1',
     	  [6, 4],
     	  ["내용", yymm1, yymm2, yymm3, avg_0],
-    	  ["보험", "보호", "자보", "산재", "합계", "건당진료비"],
-    	  ["합계", "건당진료비"],
+    	  ["보험", "보호", "자보", "산재", "합계", "한방건당진료비"],
+    	  ["합계", "한방건당진료비"],
     	  [5,6],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
@@ -1282,8 +1282,8 @@ function setMakeGrid() {
     	  'grid-container1',
     	  [6, 4],
     	  ["", yymm1, yymm2, yymm3, avg_0],
-    	  ["보험", "보호", "자보", "산재", "합계", "인당평균재활치료료"],
-    	  ["합계", "인당평균재활치료료"],
+    	  ["보험", "보호", "자보", "산재", "합계", "1인당 재활치료료"],
+    	  ["합계", "1인당 재활치료료"],
     	  [5,6],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
@@ -1292,8 +1292,8 @@ function setMakeGrid() {
     	  'grid-container1',
     	  [6, 4],
     	  ["", yymm1, yymm2, yymm3, avg_0],
-    	  ["보험", "보호", "자보", "산재", "합계", "인당평균투석료"],
-    	  ["합계", "인당평균투석료"],
+    	  ["보험", "보호", "자보", "산재", "합계", "1인당 투석진료비"],
+    	  ["합계", "1인당 투석진료비"],
     	  [5,6],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
