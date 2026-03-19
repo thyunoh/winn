@@ -465,7 +465,6 @@ $(document).ready(function() {
     // s_wnn_yn(위너넷사용자-로그인시설정) 또는 s_winconect(병원검색후설정)
      $('#btnEvalAllHosp').hide();
     if (getCookie("s_wnn_yn") === 'Y' || getCookie("s_winconect") === 'Y') {
-    	https://bestmore.net/click.php?m=11st&a=A100542334&l=0000
     //	$('#btnEvalAllHosp').show();
     }
 });
