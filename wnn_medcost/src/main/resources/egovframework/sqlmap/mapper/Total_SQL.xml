@@ -1121,16 +1121,16 @@
 		           AND jsm.ITEM_NO <> 'L') 
 	       AND COALESCE(mm.DELYN,'') = ''                    
 		]]>
-		<if test='codeFg == "2"'><![CDATA[   
+		<if test='codeFg == "4"'><![CDATA[   
 		   AND gd.subCode != 'Z'
 		]]></if>		
-		<if test='codeFg == "3"'><![CDATA[
+		<if test='codeFg == "5"'><![CDATA[
 		   AND gd.subCode  = 'Z'
 		]]></if>		
-		<if test='codeFg == "5"'><![CDATA[
+		<if test='codeFg == "6"'><![CDATA[
 		   AND gd.ITEM_NO  = 'L'
 		]]></if>		
-		<if test='codeFg == "6"'><![CDATA[
+		<if test='codeFg == "7"'><![CDATA[
 		   AND gd.ITEM_NO != 'L'
 		]]></if>	                         
 	    
@@ -1210,16 +1210,16 @@
 		           AND jsm.ITEM_NO <> 'L') 
 	       AND COALESCE(mm.DELYN,'') = ''                      
 		]]>
-		<if test='codeFg == "2"'><![CDATA[   
+		<if test='codeFg == "4"'><![CDATA[   
 		   AND ad.ITEM_NO in ('03','L')  AND ad.CODE_NO IN ('01','02','83','84')
 		]]></if>		
-		<if test='codeFg == "3"'><![CDATA[
+		<if test='codeFg == "5"'><![CDATA[
 		   AND ad.ITEM_NO in ('04','L')  AND ad.CODE_NO IN ('01','02','03','06','83','84')
 		]]></if>		
-		<if test='codeFg == "5"'><![CDATA[
+		<if test='codeFg == "6"'><![CDATA[
 		   AND ad.ITEM_NO  = 'L'         AND ad.CODE_NO IN ('83','84')
 		]]></if>		
-		<if test='codeFg == "6"'><![CDATA[
+		<if test='codeFg == "7"'><![CDATA[
 		   AND ad.ITEM_NO in ('03','04') AND ad.CODE_NO IN ('01','02','03','06')
 		]]></if>	                         
 	    
