@@ -514,72 +514,18 @@
 							</div>
 							<div class="card" id="card_containerC" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">검사료 산정현황 비교 Part Ⅰ</h5> 
-							        <div class="legend-container mr-3">
-							        
-							        	<div class="legend-item">
-							                <span class="legend-box current-month"></span>
-							                <span class="legend-text">총진료비</span>
+							        <h5 class="ml-3 mb-1">월별 검사비 현황 Part Ⅰ</h5>
+							    </div>
+							    <div class="card-body11">
+							        <div style="max-height: 300px; display: flex; gap: 10px;">
+							            <div style="flex: 6; padding: 15px 20px;">
+							                <canvas id="chartC_left" style="width: 100%; height: 260px;"></canvas>
 							            </div>
-							        	<div class="legend-item">
-							                <span class="legend-box previous-month"></span>
-							                <span class="legend-text">총검사료</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box current-month4"></span>
-							                <span class="legend-text">정액금액</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box previous-month2"></span>
-							                <span class="legend-text">행위금액</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box current-month3"></span>
-							                <span class="legend-text">원내검사</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box previous-month3"></span>
-							                <span class="legend-text">위탁검사</span>
+							            <div style="flex: 4; padding: 15px 20px;">
+							                <canvas id="chartC_right" style="width: 100%; height: 260px;"></canvas>
 							            </div>
 							        </div>
 							    </div>
-							    
-							    
-							    <br>
-							    <div class="card-body11">
-								    <div class="row">
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC1" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC2" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC3" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC4" class="morris_chart_height"></div>
-								        </div>
-								   </div>     
-								</div>   
-							<!--      <br> -->
-							  	<div class="card-body11">
-								    <div class="row">
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC5" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC6" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC7" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartC8" class="morris_chart_height"></div>
-								        </div>
-								   </div>     
-								</div>   
-							    <br>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
 							    <div class="card-header11">
@@ -592,69 +538,18 @@
 							</div>
 							<div class="card" id="card_containerD" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">약재료 산정현황 비교 Part Ⅰ</h5> 
-							        <div class="legend-container mr-3">
-							           <div class="legend-item">
-							                <span class="legend-box current-month"></span>
-							                <span class="legend-text">총진료비</span>
-							            </div>							            
-							           <div class="legend-item">
-							                <span class="legend-box previous-month"></span>
-							                <span class="legend-text">총약제비</span>
+							        <h5 class="ml-3 mb-1">월별 약제비 현황 Part Ⅰ</h5>
+							    </div>
+							    <div class="card-body11">
+							        <div style="max-height: 300px; display: flex; gap: 10px;">
+							            <div style="flex: 6; padding: 15px 20px;">
+							                <canvas id="chartD_left" style="width: 100%; height: 260px;"></canvas>
 							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box current-month4"></span>
-							                <span class="legend-text">정액금액</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box previous-month2"></span>
-							                <span class="legend-text">행위금액</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box current-month3"></span>
-							                <span class="legend-text">경구약제</span>
-							            </div>
-							            <div class="legend-item">
-							                <span class="legend-box previous-month3"></span>
-							                <span class="legend-text">주사약제</span>
+							            <div style="flex: 4; padding: 15px 20px;">
+							                <canvas id="chartD_right" style="width: 100%; height: 260px;"></canvas>
 							            </div>
 							        </div>
-							    </div>
-							    <br>
-							    <div class="card-body11">
-								    <div class="row">
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD1" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD2" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD3" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD4" class="morris_chart_height"></div>
-								        </div>
-								   </div>     
-								</div>   
-							   <!--      <br> -->
-							    <div class="card-body11">
-								    <div class="row">
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD5" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD6" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD7" class="morris_chart_height"></div>
-								        </div>
-								        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-3">
-								            <div id="morris-bar-chartD8" class="morris_chart_height"></div>
-								        </div>
-								   </div>     
-								</div>   
-							    <br>	
+							    </div>	
 							    						    
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
@@ -742,6 +637,7 @@ var mixedChart2;
 var set_Table = null;
 var tableName = null;
 var _chartRespData = null;   // 차트 갱신용 response 데이터 저장 (02, 11, 12)
+var _chartLabels = { f_yymm: '', m_yymm: '', e_yymm: '' };   // 차트 월 라벨 저장
 var dataTable = new DataTable();
 dataTable.clear();
 
@@ -955,135 +851,340 @@ function fn_BuildChart02(colIdx) {
 function fn_BuildChart11(colIdx) {
     if (!_chartRespData) return;
     var d = _chartRespData;
-    var myField, taField;
-    if (colIdx === 1)      { myField = 'fr_yymm'; taField = 'ta_f_ym'; }
-    else if (colIdx === 2) { myField = 'midyymm'; taField = 'ta_m_ym'; }
-    else                   { myField = 'endyymm'; taField = 'ta_e_ym'; }
 
-    // 본원 데이터 추출
-    var totamt = replaceMulti(d[0][myField], ",");
-    var wonamt = replaceMulti(d[1][myField], ",");
-    var witamt = replaceMulti(d[2][myField], ",");
-    var onlyNo = replaceMulti(d[3][myField], ",");
-    var totgamMatch = onlyNo.match(/(\d[\d,]*)\s*$/);
-    var totgam = totgamMatch ? totgamMatch[1].replace(/,/g, '') : '0';
-    var drgamt = replaceMulti(d[4][myField], ",");
-    var hwiamt = replaceMulti(d[5][myField], ",");
+    // 3개월 데이터 추출 (총검사비, 원내, 위탁, 정액, 행위)
+    function extractVal(row, field) {
+        var v = replaceMulti(d[row][field], ",");
+        // 총검사비(row 3)는 "[ 5% ] 32,701,980" 형태 → 금액부분만 추출
+        if (row === 3) {
+            var m = String(v).match(/(\d[\d,]*)\s*$/);
+            return m ? parseFloat(m[1].replace(/,/g, '')) : 0;
+        }
+        return parseFloat(v) || 0;
+    }
 
-    var pro_01=0, pro_02=0, pro_03=0, pro_04=0, pro_05=0, pro_06=0;
-    if (totamt > 0) { pro_01 = Math.round((totgam / totamt) * 100); pro_02 = 100 - pro_01; }
-    if (wonamt*1 + witamt*1 > 0) { pro_03 = Math.round((witamt / totgam) * 100); pro_04 = 100 - pro_03; }
-    if (drgamt*1 + hwiamt*1 > 0) { pro_05 = Math.round((drgamt / totgam) * 100); pro_06 = 100 - pro_05; }
+    var fields = ['fr_yymm', 'midyymm', 'endyymm'];
+    var totgam = [], wonamt = [], witamt = [], drgamt = [], hwiamt = [];
+    for (var i = 0; i < 3; i++) {
+        totgam.push(extractVal(3, fields[i]));
+        wonamt.push(extractVal(1, fields[i]));
+        witamt.push(extractVal(2, fields[i]));
+        drgamt.push(extractVal(4, fields[i]));
+        hwiamt.push(extractVal(5, fields[i]));
+    }
 
-    // 타병원 데이터 추출
-    var totamt_t = replaceMulti(d[0][taField], ",");
-    var wonamt_t = replaceMulti(d[1][taField], ",");
-    var witamt_t = replaceMulti(d[2][taField], ",");
-    var onlyNo_t = replaceMulti(d[3][taField], ",");
-    var totgamMatch_t = onlyNo_t.match(/(\d[\d,]*)\s*$/);
-    var totgam_t = totgamMatch_t ? totgamMatch_t[1].replace(/,/g, '') : '0';
-    var drgamt_t = replaceMulti(d[4][taField], ",");
-    var hwiamt_t = replaceMulti(d[5][taField], ",");
+    // 좌측: 월별 검사비 현황 그룹 바 차트
+    if (window._chartC_left) { window._chartC_left.destroy(); }
+    var ctxL = document.getElementById('chartC_left').getContext('2d');
 
-    var pro_01_t=0, pro_02_t=0, pro_03_t=0, pro_04_t=0, pro_05_t=0, pro_06_t=0;
-    if (totamt_t > 0) { pro_01_t = Math.round((totgam_t / totamt_t) * 100); pro_02_t = 100 - pro_01_t; }
-    if (wonamt_t*1 + witamt_t*1 > 0) { pro_03_t = Math.round((witamt_t / totgam_t) * 100); pro_04_t = 100 - pro_03_t; }
-    if (drgamt_t*1 + hwiamt_t*1 > 0) { pro_05_t = Math.round((drgamt_t / totgam_t) * 100); pro_06_t = 100 - pro_05_t; }
+    window._chartC_left = new Chart(ctxL, {
+        type: 'bar',
+        data: {
+            labels: ['총검사비', '원내', '위탁', '정액', '행위'],
+            datasets: [
+                {
+                    label: _chartLabels.f_yymm,
+                    data: [totgam[0], wonamt[0], witamt[0], drgamt[0], hwiamt[0]],
+                    backgroundColor: 'rgba(66, 133, 244, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                },
+                {
+                    label: _chartLabels.m_yymm,
+                    data: [totgam[1], wonamt[1], witamt[1], drgamt[1], hwiamt[1]],
+                    backgroundColor: 'rgba(234, 67, 53, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                },
+                {
+                    label: _chartLabels.e_yymm,
+                    data: [totgam[2], wonamt[2], witamt[2], drgamt[2], hwiamt[2]],
+                    backgroundColor: 'rgba(251, 188, 4, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '월별 검사비 현황',
+                    font: { size: 14 }
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var val = context.parsed.y;
+                            return context.dataset.label + ' : ' + (val != null ? val.toLocaleString() : '');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, font: { size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
 
-    // 본원 차트
-    var c1 = document.getElementById("morris-bar-chartC1"); c1.innerHTML = ''; c1.style.height = "200px"; c1.style.width = "250px";
-    Morris.Bar({ element:'morris-bar-chartC1', data:[{y:'총진료비 대비 검사비 (백만원)', a:Math.round(totamt/1000000), b:Math.round(totgam/1000000), c:Math.round(drgamt/1000000), d:Math.round(hwiamt/1000000)}], xkey:'y', ykeys:['a','b','c','d'], labels:['총진료비','총검사비','정액금액','행위금액'], barColors:['#0B8ECA','#00B050','#C785C8','#ED7D31'], hideHover:'auto', gridLineColor:'#eef0f2', resize:true, gridTextSize:12, barSizeRatio:1, barGap:5 });
+    // 우측: 1인 검사료 비교 (본원 vs 타병원) 월별 그래프
+    var taFields = ['ta_f_ym', 'ta_m_ym', 'ta_e_ym'];
+    var myPerCost = [], taPerCost = [];
+    for (var j = 0; j < 3; j++) {
+        myPerCost.push(parseFloat(replaceMulti(d[6][fields[j]], ",")) || 0);
+        taPerCost.push(parseFloat(replaceMulti(d[6][taFields[j]], ",")) || 0);
+    }
 
-    var c2 = document.getElementById("morris-bar-chartC2"); c2.innerHTML = ''; c2.style.height = "180px"; c2.style.width = "180px";
-    var donut2 = Morris.Donut({ element:'morris-bar-chartC2', data:[{label:"\xa0 \xa0 총진료비 \xa0 \xa0",value:pro_02},{label:"\xa0 \xa0 총검사료 \xa0 \xa0",value:pro_01}], resize:true, colors:['#0B8ECA','#00B050'], formatter:function(y){return y+'%';} });
-    setTimeout(function(){ donut2.select(1); }, 50);
+    if (window._chartC_right) { window._chartC_right.destroy(); }
+    var ctxR = document.getElementById('chartC_right').getContext('2d');
 
-    var c3 = document.getElementById("morris-bar-chartC3"); c3.innerHTML = ''; c3.style.height = "180px"; c3.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartC3', data:[{label:"\xa0 \xa0 총검사료(원내) \xa0 \xa0",value:pro_04},{label:"\xa0 \xa0 총검사료(위탁) \xa0 \xa0",value:pro_03}], resize:true, colors:['#BFB500','#808080'], formatter:function(y){return y+'%';} });
-
-    var c4 = document.getElementById("morris-bar-chartC4"); c4.innerHTML = ''; c4.style.height = "180px"; c4.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartC4', data:[{label:"\xa0 \xa0 총검사료(정액) \xa0 \xa0",value:pro_05},{label:"\xa0 \xa0 총검사료(행위) \xa0 \xa0",value:pro_06}], resize:true, colors:['#C785C8','#ED7D31'], formatter:function(y){return y+'%';} });
-
-    // 타병원 차트
-    var c5 = document.getElementById("morris-bar-chartC5"); c5.innerHTML = ''; c5.style.height = "200px"; c5.style.width = "250px";
-    Morris.Bar({ element:'morris-bar-chartC5', data:[{y:'타병원 총진료비 대비 검사비 (백만원)', a:Math.round(totamt_t/1000000), b:Math.round(totgam_t/1000000), c:Math.round(drgamt_t/1000000), d:Math.round(hwiamt_t/1000000)}], xkey:'y', ykeys:['a','b','c','d'], labels:['총진료비','총검사비','정액금액','행위금액'], barColors:['#0B8ECA','#00B050','#C785C8','#ED7D31'], hideHover:'auto', gridLineColor:'#eef0f2', resize:true, gridTextSize:12, barSizeRatio:1, barGap:5 });
-
-    var c6 = document.getElementById("morris-bar-chartC6"); c6.innerHTML = ''; c6.style.height = "180px"; c6.style.width = "180px";
-    var donut6 = Morris.Donut({ element:'morris-bar-chartC6', data:[{label:"\xa0 \xa0 총진료비 \xa0 \xa0",value:pro_02_t},{label:"\xa0 \xa0 총검사료 \xa0 \xa0",value:pro_01_t}], resize:true, colors:['#0B8ECA','#00B050'], formatter:function(y){return y+'%';} });
-    setTimeout(function(){ donut6.select(1); }, 50);
-
-    var c7 = document.getElementById("morris-bar-chartC7"); c7.innerHTML = ''; c7.style.height = "180px"; c7.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartC7', data:[{label:"\xa0 \xa0 총검사료(원내) \xa0 \xa0",value:pro_04_t},{label:"\xa0 \xa0 총검사료(위탁) \xa0 \xa0",value:pro_03_t}], resize:true, colors:['#BFB500','#808080'], formatter:function(y){return y+'%';} });
-
-    var c8 = document.getElementById("morris-bar-chartC8"); c8.innerHTML = ''; c8.style.height = "180px"; c8.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartC8', data:[{label:"\xa0 \xa0 총검사료(정액) \xa0 \xa0",value:pro_05_t},{label:"\xa0 \xa0 총검사료(행위) \xa0 \xa0",value:pro_06_t}], resize:true, colors:['#C785C8','#ED7D31'], formatter:function(y){return y+'%';} });
+    window._chartC_right = new Chart(ctxR, {
+        type: 'bar',
+        data: {
+            labels: [_chartLabels.f_yymm, _chartLabels.m_yymm, _chartLabels.e_yymm],
+            datasets: [
+                {
+                    label: '타병원',
+                    data: taPerCost,
+                    backgroundColor: 'rgba(66, 133, 244, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                },
+                {
+                    label: '본원',
+                    data: myPerCost,
+                    backgroundColor: 'rgba(237, 125, 49, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '1인당 검사비 비교',
+                    font: { size: 14 }
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var val = context.parsed.y;
+                            return context.dataset.label + ' : ' + (val != null ? val.toLocaleString() : '');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, font: { size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function fn_BuildChart12(colIdx) {
     if (!_chartRespData) return;
     var d = _chartRespData;
-    var myField, taField;
-    if (colIdx === 1)      { myField = 'fr_yymm'; taField = 'ta_f_ym'; }
-    else if (colIdx === 2) { myField = 'midyymm'; taField = 'ta_m_ym'; }
-    else                   { myField = 'endyymm'; taField = 'ta_e_ym'; }
 
-    // 본원 데이터
-    var totamt = replaceMulti(d[0][myField], ",");
-    var phar03 = replaceMulti(d[1][myField], ",");
-    var phar04 = replaceMulti(d[2][myField], ",");
-    var onlyNo = replaceMulti(d[3][myField], ",");
-    var totphaMatch = onlyNo.match(/(\d[\d,]*)\s*$/);
-    var totpha = totphaMatch ? totphaMatch[1].replace(/,/g, '') : '0';
-    var drgamt = replaceMulti(d[4][myField], ",");
-    var hwiamt = replaceMulti(d[5][myField], ",");
+    // 3개월 데이터 추출 (총약제비, 경구, 주사, 정액, 행위)
+    function extractVal12(row, field) {
+        var v = replaceMulti(d[row][field], ",");
+        if (row === 3) {
+            var m = String(v).match(/(\d[\d,]*)\s*$/);
+            return m ? parseFloat(m[1].replace(/,/g, '')) : 0;
+        }
+        return parseFloat(v) || 0;
+    }
 
-    var pro_01=0, pro_02=0, pro_03=0, pro_04=0, pro_05=0, pro_06=0;
-    if (totamt > 0) { pro_01 = Math.round((totpha / totamt) * 100); pro_02 = 100 - pro_01; }
-    if (phar03*1 + phar04*1 > 0) { pro_03 = Math.round((phar03 / totpha) * 100); pro_04 = 100 - pro_03; }
-    if (drgamt*1 + hwiamt*1 > 0) { pro_05 = Math.round((drgamt / totpha) * 100); pro_06 = 100 - pro_05; }
+    var fields = ['fr_yymm', 'midyymm', 'endyymm'];
+    var taFields = ['ta_f_ym', 'ta_m_ym', 'ta_e_ym'];
+    var totpha = [], pharKg = [], pharJs = [], drgamt = [], hwiamt = [];
+    for (var i = 0; i < 3; i++) {
+        totpha.push(extractVal12(3, fields[i]));
+        pharKg.push(extractVal12(1, fields[i]));
+        pharJs.push(extractVal12(2, fields[i]));
+        drgamt.push(extractVal12(4, fields[i]));
+        hwiamt.push(extractVal12(5, fields[i]));
+    }
 
-    // 타병원 데이터
-    var totamt_t = replaceMulti(d[0][taField], ",");
-    var phar03_t = replaceMulti(d[1][taField], ",");
-    var phar04_t = replaceMulti(d[2][taField], ",");
-    var onlyNo_t = replaceMulti(d[3][taField], ",");
-    var totphaMatch_t = onlyNo_t.match(/(\d[\d,]*)\s*$/);
-    var totpha_t = totphaMatch_t ? totphaMatch_t[1].replace(/,/g, '') : '0';
-    var drgamt_t = replaceMulti(d[4][taField], ",");
-    var hwiamt_t = replaceMulti(d[5][taField], ",");
+    // 좌측: 월별 약제비 현황 그룹 바 차트
+    if (window._chartD_left) { window._chartD_left.destroy(); }
+    var ctxL = document.getElementById('chartD_left').getContext('2d');
 
-    var pro_01_t=0, pro_02_t=0, pro_03_t=0, pro_04_t=0, pro_05_t=0, pro_06_t=0;
-    if (totamt_t > 0) { pro_01_t = Math.round((totpha_t / totamt_t) * 100); pro_02_t = 100 - pro_01_t; }
-    if (phar03_t*1 + phar04_t*1 > 0) { pro_03_t = Math.round((phar03_t / totpha_t) * 100); pro_04_t = 100 - pro_03_t; }
-    if (drgamt_t*1 + hwiamt_t*1 > 0) { pro_05_t = Math.round((drgamt_t / totpha_t) * 100); pro_06_t = 100 - pro_05_t; }
+    window._chartD_left = new Chart(ctxL, {
+        type: 'bar',
+        data: {
+            labels: ['총약제비', '경구', '주사', '정액', '행위'],
+            datasets: [
+                {
+                    label: _chartLabels.f_yymm,
+                    data: [totpha[0], pharKg[0], pharJs[0], drgamt[0], hwiamt[0]],
+                    backgroundColor: 'rgba(66, 133, 244, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                },
+                {
+                    label: _chartLabels.m_yymm,
+                    data: [totpha[1], pharKg[1], pharJs[1], drgamt[1], hwiamt[1]],
+                    backgroundColor: 'rgba(234, 67, 53, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                },
+                {
+                    label: _chartLabels.e_yymm,
+                    data: [totpha[2], pharKg[2], pharJs[2], drgamt[2], hwiamt[2]],
+                    backgroundColor: 'rgba(251, 188, 4, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '월별 약제비 현황',
+                    font: { size: 14 }
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var val = context.parsed.y;
+                            return context.dataset.label + ' : ' + (val != null ? val.toLocaleString() : '');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, font: { size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
 
-    // 본원 차트
-    var c1 = document.getElementById("morris-bar-chartD1"); c1.innerHTML = ''; c1.style.height = "200px"; c1.style.width = "250px";
-    Morris.Bar({ element:'morris-bar-chartD1', data:[{y:'총진료비 대비 약제비 (백만원)', a:Math.round(totamt/1000000), b:Math.round(totpha/1000000), c:Math.round(drgamt/1000000), d:Math.round(hwiamt/1000000)}], xkey:'y', ykeys:['a','b','c','d'], labels:['총진료비','총약제비','정액금액','행위금액'], barColors:['#0B8ECA','#00B050','#C785C8','#ED7D31'], hideHover:'auto', gridLineColor:'#eef0f2', resize:true, gridTextSize:12, barSizeRatio:1, barGap:5 });
+    // 우측: 1인 약제비 비교 (본원 vs 타병원) 월별 그래프
+    var myPerCost = [], taPerCost = [];
+    for (var j = 0; j < 3; j++) {
+        myPerCost.push(parseFloat(replaceMulti(d[6][fields[j]], ",")) || 0);
+        taPerCost.push(parseFloat(replaceMulti(d[6][taFields[j]], ",")) || 0);
+    }
 
-    var c2 = document.getElementById("morris-bar-chartD2"); c2.innerHTML = ''; c2.style.height = "180px"; c2.style.width = "180px";
-    var donut2 = Morris.Donut({ element:'morris-bar-chartD2', data:[{label:"\xa0 \xa0 총진료비 \xa0 \xa0",value:pro_02},{label:"\xa0 \xa0 총약제비 \xa0 \xa0",value:pro_01}], resize:true, colors:['#0B8ECA','#00B050'], formatter:function(y){return y+'%';} });
-    setTimeout(function(){ donut2.select(1); }, 50);
+    if (window._chartD_right) { window._chartD_right.destroy(); }
+    var ctxR = document.getElementById('chartD_right').getContext('2d');
 
-    var c3 = document.getElementById("morris-bar-chartD3"); c3.innerHTML = ''; c3.style.height = "180px"; c3.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartD3', data:[{label:"\xa0 \xa0 총약제비(경구) \xa0 \xa0",value:pro_03},{label:"\xa0 \xa0 총약제비(주사) \xa0 \xa0",value:pro_04}], resize:true, colors:['#BFB500','#808080'], formatter:function(y){return y+'%';} });
-
-    var c4 = document.getElementById("morris-bar-chartD4"); c4.innerHTML = ''; c4.style.height = "180px"; c4.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartD4', data:[{label:"\xa0 \xa0 총약제비(정액) \xa0 \xa0",value:pro_05},{label:"\xa0 \xa0 총약제비(행위) \xa0 \xa0",value:pro_06}], resize:true, colors:['#C785C8','#ED7D31'], formatter:function(y){return y+'%';} });
-
-    // 타병원 차트
-    var c5 = document.getElementById("morris-bar-chartD5"); c5.innerHTML = ''; c5.style.height = "200px"; c5.style.width = "250px";
-    Morris.Bar({ element:'morris-bar-chartD5', data:[{y:'타병원 총진료비 대비 약제비 (백만원)', a:Math.round(totamt_t/1000000), b:Math.round(totpha_t/1000000), c:Math.round(drgamt_t/1000000), d:Math.round(hwiamt_t/1000000)}], xkey:'y', ykeys:['a','b','c','d'], labels:['총진료비','총약제비','정액금액','행위금액'], barColors:['#0B8ECA','#00B050','#C785C8','#ED7D31'], hideHover:'auto', gridLineColor:'#eef0f2', resize:true, gridTextSize:12, barSizeRatio:1, barGap:5 });
-
-    var c6 = document.getElementById("morris-bar-chartD6"); c6.innerHTML = ''; c6.style.height = "180px"; c6.style.width = "180px";
-    var donut6 = Morris.Donut({ element:'morris-bar-chartD6', data:[{label:"\xa0 \xa0 총진료비 \xa0 \xa0",value:pro_02_t},{label:"\xa0 \xa0 총약제비 \xa0 \xa0",value:pro_01_t}], resize:true, colors:['#0B8ECA','#00B050'], formatter:function(y){return y+'%';} });
-    setTimeout(function(){ donut6.select(1); }, 50);
-
-    var c7 = document.getElementById("morris-bar-chartD7"); c7.innerHTML = ''; c7.style.height = "180px"; c7.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartD7', data:[{label:"\xa0 \xa0 총약제비(경구) \xa0 \xa0",value:pro_03_t},{label:"\xa0 \xa0 총약제비(주사) \xa0 \xa0",value:pro_04_t}], resize:true, colors:['#BFB500','#808080'], formatter:function(y){return y+'%';} });
-
-    var c8 = document.getElementById("morris-bar-chartD8"); c8.innerHTML = ''; c8.style.height = "180px"; c8.style.width = "180px";
-    Morris.Donut({ element:'morris-bar-chartD8', data:[{label:"\xa0 \xa0 총약제비(정액) \xa0 \xa0",value:pro_05_t},{label:"\xa0 \xa0 총약제비(행위) \xa0 \xa0",value:pro_06_t}], resize:true, colors:['#C785C8','#ED7D31'], formatter:function(y){return y+'%';} });
+    window._chartD_right = new Chart(ctxR, {
+        type: 'bar',
+        data: {
+            labels: [_chartLabels.f_yymm, _chartLabels.m_yymm, _chartLabels.e_yymm],
+            datasets: [
+                {
+                    label: '타병원',
+                    data: taPerCost,
+                    backgroundColor: 'rgba(66, 133, 244, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                },
+                {
+                    label: '본원',
+                    data: myPerCost,
+                    backgroundColor: 'rgba(237, 125, 49, 0.85)',
+                    borderWidth: 0,
+                    borderRadius: 3
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '1인당 약제비 비교',
+                    font: { size: 14 }
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var val = context.parsed.y;
+                            return context.dataset.label + ' : ' + (val != null ? val.toLocaleString() : '');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, font: { size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // 도표 컬럼 클릭 시 차트 갱신 디스패처
@@ -1935,6 +2036,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
     const f_yymm = replaceMulti(rowTitles[1],"년","월");
     const m_yymm = replaceMulti(rowTitles[2],"년","월");
     const e_yymm = replaceMulti(rowTitles[3],"년","월");
+    _chartLabels = { f_yymm: f_yymm, m_yymm: m_yymm, e_yymm: e_yymm };
 
     if (mixedChart1) {
         mixedChart1.destroy();
@@ -3033,6 +3135,12 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                        }
 		                    },
 		                    scales: {
+		                        x: {
+		                            ticks: {
+		                                autoSkip: false,
+		                                maxRotation: 0
+		                            }
+		                        },
 		                        y: {
 		                            beginAtZero: true,
 		                            grid: {
