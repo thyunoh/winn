@@ -13,6 +13,7 @@ import egovframework.wnn_consult.mangr.model.AsqDTO;
 import egovframework.wnn_consult.mangr.model.FaqDTO;
 import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.wnn_consult.mangr.model.NotiDTO;
+import egovframework.wnn_consult.mangr.model.VisitAsqDTO;
 import egovframework.wnn_consult.mangr.service.MangrService;
 import egovframework.wnn_consult.mangr.mapper.MangrMapper;
 
@@ -145,6 +146,11 @@ public class MangrServiceImpl implements MangrService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public boolean insertVisitAsq(VisitAsqDTO dto) throws Exception {
+		return mapper.insertVisitAsq(dto);
 	}
 
 	@Override

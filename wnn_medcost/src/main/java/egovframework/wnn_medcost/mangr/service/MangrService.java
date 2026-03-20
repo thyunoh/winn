@@ -16,6 +16,7 @@ import egovframework.wnn_medcost.mangr.model.ChartDTO;
 import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
+import egovframework.wnn_medcost.mangr.model.VisitAsqDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 
 public interface MangrService {
@@ -54,6 +55,7 @@ public interface MangrService {
 	List<FileDTO>    getFileCdList(FileDTO dto)  throws Exception; 
 	void             deleteFile(String hospCd , String filePath, String fileSeq, String fileGb , String updUser , String  updIp );
 
-
-
+	// 사이트방문문의
+	List<VisitAsqDTO> getVisitAsqList(VisitAsqDTO dto) throws Exception;
+	boolean           updateVisitAsqComform(VisitAsqDTO dto) throws Exception;
 }

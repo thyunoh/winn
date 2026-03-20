@@ -13,6 +13,7 @@ import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
+import egovframework.wnn_medcost.mangr.model.VisitAsqDTO;
 @Mapper("mangrMapper")
 public interface MangrMapper {	
 	
@@ -48,7 +49,11 @@ public interface MangrMapper {
 	boolean           updateQstnMst(AsqDTO dto)  throws Exception;
 	boolean           updateQstnCd(AsqDTO dto)   throws Exception; 
 	
-    //문서파일 
+    //문서파일
 	List<FileDTO>     getFileCdList(FileDTO dto)  throws Exception;
 	boolean           deleteFileCd(FileDTO dto)   throws Exception;
+
+	// 사이트방문문의
+	List<VisitAsqDTO> getVisitAsqList(VisitAsqDTO dto) throws Exception;
+	boolean           updateVisitAsqComform(VisitAsqDTO dto) throws Exception;
 }

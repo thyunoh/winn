@@ -985,40 +985,19 @@ function dataLoad(data, callback, settings) {
 	    
     } else {
     	
-    	let monthList = new Array(6).fill('');  // 6개를 ''으로 초기화
-    	let str = new Date(stryymm.substring(0, 4), stryymm.substring(4, 6) - 1);
-    	let end = new Date(endyymm.substring(0, 4), endyymm.substring(4, 6) - 1);
-
-    	let cur = new Date(str);
-    	let idx = 0;
-
-    	while (cur <= end && idx < 6) {
-    	    let yy = cur.getFullYear();
-    	    let mm = String(cur.getMonth() + 1).padStart(2, '0');
-    	    monthList[idx] = yy + mm;
-    	    cur.setMonth(cur.getMonth() + 1);
-    	    idx++;
-    	}
-
     	// 디버그 출력
     	console.log("checkHosp:", checkHosp);
-    	console.log("monthList:", monthList);
+    	console.log("stryymm:", stryymm, "endyymm:", endyymm);
 
-	    
+
 	    $.ajax({
 	    	url: "/main/select_Hosp_Indi.do",
 	        type: "POST",
-	        traditional: true, 
-	        data: { 
+	        traditional: true,
+	        data: {
 	        	hosp_cd: checkHosp,
 		        stryymm: stryymm,
-		        endyymm: endyymm,
-		        month_1: monthList[0],
-		        month_2: monthList[1],
-		        month_3: monthList[2],
-		        month_4: monthList[3],
-		        month_5: monthList[4],
-		        month_6: monthList[5]
+		        endyymm: endyymm
 	    	},
 	        dataType: "json",
 	        // timeout: 10000, // 10초 후 타임아웃

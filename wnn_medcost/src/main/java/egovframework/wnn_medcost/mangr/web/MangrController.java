@@ -39,6 +39,7 @@ import egovframework.wnn_medcost.mangr.model.AsqDTO;
 import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
+import egovframework.wnn_medcost.mangr.model.VisitAsqDTO;
 import egovframework.wnn_medcost.mangr.service.MangrService;
 import egovframework.wnn_medcost.user.model.LicnumDTO;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
@@ -589,5 +590,55 @@ public class MangrController {
 			model.addAttribute("error_code", "10000");
 		}
 		return "jsonView";
+	}
+
+	/* 사이트방문문의 페이지 */
+	@RequestMapping(value="/visitasq.do")
+	public String visitasq(HttpServletRequest request, ModelMap model) {
+		cookie_value = ClientInfo.getCookie(request);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/mangr/visitasq";
+			} else {
+				return "";
+			}
+		} catch(Exception ex) {
+			return "";
+		}
+	}
+
+	/* 사이트방문문의 목록 조회 */
+	@RequestMapping(value="/visitAsqList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> visitAsqList(@ModelAttribute("DTO") VisitAsqDTO dto, HttpServletRequest request, Model model) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			List<VisitAsqDTO> resultLst = svc.getVisitAsqList(dto);
+			response.put("data", resultLst);
+			response.put("resultCnt", resultLst.size());
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/* 사이트방문문의 확인여부 저장 */
+	@RequestMapping(value="/visitAsqComform.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> visitAsqComform(@ModelAttribute("DTO") VisitAsqDTO dto, HttpServletRequest request, Model model) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			svc.updateVisitAsqComform(dto);
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
 	}
 }

@@ -215,6 +215,14 @@
 							   온라인교육센터
 							</a>
 			
+							<!-- 사이트방문문의 -->
+<!-- 							<a href="javascript:void(0);"
+							   class="nav-link consulting-menu"
+							   style="font-size: 16px; padding: 24px;"
+							   onclick="setMainActive(this); fnVisitAsqOpen();">
+							   컨설팅문의
+							</a> -->
+
 							<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
 							<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
 						</div>
@@ -706,7 +714,7 @@
 						<input type="hidden" name="iud" id="iud" />
 						<!-- 병원 코드 -->
 						<div class="mb-3">
-							<label for="hospCd" class="form-label" style="font-size: 0.9rem;"> 병원코드 <span style="color: red;"> *</span></label>
+							<label for="hospCd" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;"> 병원코드 <span style="color: red;"> *</span></label>
 							<div class="input-group">
 								<input id="hospCd" name="hospCd" type="text" class="form-control"
 									placeholder="병원코드를 입력하고 enter key를 치세요 ">
@@ -717,7 +725,7 @@
 						</div>
 						<!-- 병원명 -->
 						<div class="mb-3">
-							<label for="hospNm" class="form-label" style="font-size: 0.9rem;">병원명 <span style="color: red;"> *</span></label>
+							<label for="hospNm" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">병원명 <span style="color: red;"> *</span></label>
 							<div class="input-group">
 								<input id="hospNm" name="hospNm" type="text" class="form-control"
 									placeholder="병원명을 입력하세요">
@@ -737,7 +745,7 @@
 						
 						<!-- 이메일 -->
 						<div class="mb-3">
-							<label for="email" class="form-label" style="font-size: 0.9rem;">이메일 <span style="color: red;"> *</span></label>
+							<label for="email" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">이메일 <span style="color: red;"> *</span></label>
 							<div class="input-group">
 								<input id="email" name="email" type="text" class="form-control"
 									placeholder="이메일 주소를 입력하세요">
@@ -753,11 +761,11 @@
 						<!-- 비밀번호 -->
 						<div class="row g-2 mb-3">
 							<div class="col">
-								<label for="passWd" class="form-label" style="font-size: 0.9rem;" >비밀번호 <span style="color: red;"> *</span></label>
+								<label for="passWd" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;" >비밀번호 <span style="color: red;"> *</span></label>
 								<input type="password" id="passWd" name="passWd" class="form-control">
 							</div>
 							<div class="col">
-								<label for="afPassWd" class="form-label" style="font-size: 0.9rem;" >비밀번호확인 <span style="color: red;"> *</span></label>
+								<label for="afPassWd" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;" >비밀번호확인 <span style="color: red;"> *</span></label>
 								<input type="password" id="afPassWd" name="afPassWd" class="form-control">
 							</div>
 						</div>
@@ -765,11 +773,11 @@
 						<!-- 담당자 -->
 						<div class="row g-2 mb-3">
 							<div class="col">
-								<label for="mbrNm" class="form-label" style="font-size: 0.9rem;" >담당자명 <span style="color: red;"> *</span></label>
+								<label for="mbrNm" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;" >담당자명 <span style="color: red;"> *</span></label>
 								<input type="text" id="mbrNm" name="mbrNm" class="form-control">
 							</div>
 							<div class="col">
-								<label for="mbrTel" class="form-label" style="font-size: 0.9rem;" >전화번호 <span style="color: red;"> *</span></label>
+								<label for="mbrTel" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;" >전화번호 <span style="color: red;"> *</span></label>
 								<input type="text" id="mbrTel" name="mbrTel" class="form-control">
 							</div>
 						</div>
@@ -3944,6 +3952,219 @@ function fn_asqBarToggle() {
 </script>
 <!-- ============================================================== -->
 <!-- 하단 질문 알림 툴바 (공통) End -->
+<!-- ============================================================== -->
+
+<!-- ============================================================== -->
+<!-- 사이트방문문의 모달 Start -->
+<!-- ============================================================== -->
+<div id="visitAsqModal" class="modal fade" tabindex="-1" data-backdrop="static"
+	data-keyboard="false" aria-hidden="true" role="dialog">
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document"
+		style="max-width: 650px;">
+		<div class="modal-content rounded-3 shadow-lg">
+			<div class="modal-header bg-light">
+				<h5 class="modal-title">컨설팅 문의</h5>
+				<div class="px-3 pt-2" style="font-size: 0.8rem; color: #666;">
+					<span style="color: red;">*</span> 는 필수 입력 항목입니다.
+				</div>
+				<div class="form-row">
+					<div class="col-sm-12 mb-2" style="text-align: right;">
+						<button type="button" class="btn btn-outline-dark rounded px-2 py-1"
+							onclick="fnVisitAsqSave()">
+							문의등록 <i class="far fa-edit"></i>
+						</button>
+						<button type="button" class="btn btn-outline-dark rounded px-2 py-1"
+							onclick="fnVisitAsqClose()">
+							닫기 <i class="fas fa-times"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+			<div class="modal-body">
+				<form id="visitAsqForm" name="visitAsqForm" method="post">
+					<!-- 기관정보 -->
+					<div class="mb-3">
+						<label for="v_hospNm" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">기관명 <span style="color: red;"> *</span></label>
+						<input id="v_hospNm" name="hospNm" type="text" class="form-control" placeholder="기관명을 입력하세요">
+					</div>
+					<div class="row g-2 mb-3">
+						<div class="col">
+							<label for="v_jongNm" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">의료기관 종별</label>
+							<select id="v_jongNm" name="jongNm" class="form-select">
+								<option value="">선택</option>
+								<option value="상급종합병원">상급종합병원</option>
+								<option value="종합병원">종합병원</option>
+								<option value="병원">병원</option>
+								<option value="의원">의원</option>
+								<option value="요양병원">요양병원</option>
+								<option value="한방병원">한방병원</option>
+								<option value="치과병원">치과병원</option>
+								<option value="기타">기타</option>
+							</select>
+						</div>
+						<div class="col">
+							<label for="v_bedCnt" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">기관규모(병상수)</label>
+							<input id="v_bedCnt" name="bedCnt" type="text" class="form-control" placeholder="예: 200" maxlength="3" oninput="this.value=this.value.replace(/[^0-9]/g,'').substring(0,4);">
+						</div>
+					</div>
+
+					<!-- 컨설팅 분야 -->
+					<div class="mb-3">
+						<label class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222; background: none !important; border: none !important; padding: 0 !important;">컨설팅 분야 <span style="color: red;"> *</span> <small style="color:#888;">(복수선택 가능)</small></label>
+						<div class="d-flex flex-wrap gap-3" style="margin-left: 5px; background: transparent;">
+							<div class="form-check">
+								<input class="form-check-input visit-gb-chk" type="checkbox" id="v_consultGb1" name="consultGb1" value="Y">
+								<label class="form-check-label" style="font-weight:600; color:#222;" for="v_consultGb1">진료비분석</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input visit-gb-chk" type="checkbox" id="v_consultGb2" name="consultGb2" value="Y">
+								<label class="form-check-label" style="font-weight:600; color:#222;" for="v_consultGb2">적정성평가</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input visit-gb-chk" type="checkbox" id="v_consultGb3" name="consultGb3" value="Y">
+								<label class="form-check-label" style="font-weight:600; color:#222;" for="v_consultGb3">재청구분석</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input visit-gb-chk" type="checkbox" id="v_consultGb4" name="consultGb4" value="Y">
+								<label class="form-check-label" style="font-weight:600; color:#222;" for="v_consultGb4">인증컨설팅</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input visit-gb-chk" type="checkbox" id="v_consultGb5" name="consultGb5" value="Y">
+								<label class="form-check-label" style="font-weight:600; color:#222;" for="v_consultGb5">현지조사컨설팅</label>
+							</div>
+						</div>
+					</div>
+
+					<!-- 기타 요청사항 -->
+					<div class="mb-3">
+						<label for="v_consultGita1" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">기타 요청사항</label>
+						<textarea id="v_consultGita1" name="consultGita1" class="form-control" rows="3" placeholder="추가 요청사항을 입력하세요"></textarea>
+					</div>
+
+					<!-- 신청자 정보 -->
+					<div class="row g-2 mb-3">
+						<div class="col">
+							<label for="v_userNm" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">신청자 성함 <span style="color: red;"> *</span></label>
+							<input id="v_userNm" name="userNm" type="text" class="form-control" placeholder="성함">
+						</div>
+						<div class="col">
+							<label for="v_userPosi" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">직위</label>
+							<input id="v_userPosi" name="userPosi" type="text" class="form-control" placeholder="예: 원무과장">
+						</div>
+					</div>
+					<div class="mb-3">
+						<label for="v_userPhone" class="form-label" style="font-size: 0.9rem; font-weight: 700; color: #222;">연락처 <span style="color: red;"> *</span></label>
+						<input id="v_userPhone" name="userPhone" type="text" class="form-control" placeholder="010-0000-0000">
+					</div>
+
+					<!-- 개인정보 동의 -->
+					<div class="mt-3 mb-2 p-3" style="background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="v_accpetYn" name="accpetYn" value="Y">
+							<label class="form-check-label" for="v_accpetYn" style="font-size: 0.85rem;">
+								<strong>개인정보 수집 및 이용에 동의합니다.</strong> <span style="color: red;"> *</span>
+							</label>
+						</div>
+						<div style="font-size: 0.75rem; color: #222; font-weight: 600; margin-top: 5px; margin-left: 24px;">
+							수집항목: 기관명, 성함, 연락처 / 이용목적: 컨설팅 상담 / 보유기간: 상담 완료 후 1년
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<style>
+.swal2-sm { padding: 15px 20px !important; }
+.swal2-sm .swal2-icon { width: 50px !important; height: 50px !important; margin: 8px auto !important; }
+.swal2-sm .swal2-icon .swal2-icon-content { font-size: 30px !important; }
+.swal2-sm .swal2-icon .swal2-x-mark-line-left,
+.swal2-sm .swal2-icon .swal2-x-mark-line-right { width: 25px !important; top: 22px !important; }
+.swal2-sm .swal2-title { font-size: 18px !important; margin: 5px 0 !important; padding: 0 !important; }
+.swal2-sm #swal2-content, .swal2-sm .swal2-html-container { font-size: 13px !important; margin: 5px 0 !important; padding: 0 !important; }
+.swal2-sm .swal2-actions { margin-top: 8px !important; }
+.swal2-sm .swal2-confirm { font-size: 13px !important; padding: 6px 20px !important; }
+</style>
+<script type="text/javascript">
+/* 사이트방문문의 팝업 열기 */
+function fnVisitAsqOpen() {
+	document.getElementById('visitAsqForm').reset();
+	$('#visitAsqModal').modal('show');
+}
+/* 사이트방문문의 팝업 닫기 */
+function fnVisitAsqClose() {
+	$('#visitAsqModal').modal('hide');
+}
+/* 사이트방문문의 저장 */
+function fnVisitAsqSave() {
+	var hospNm   = $('#v_hospNm').val().trim();
+	var userNm   = $('#v_userNm').val().trim();
+	var userPhone = $('#v_userPhone').val().trim();
+	var accpetYn = $('#v_accpetYn').is(':checked') ? 'Y' : 'N';
+
+	// 필수값 체크
+	if (!hospNm) {
+		Swal.fire({title:'알림', text:'기관명을 입력하세요.', icon:'warning', width:340, customClass:{popup:'swal2-sm'}});
+		$('#v_hospNm').focus();
+		return;
+	}
+	// 컨설팅 분야 최소 1개 체크
+	var gbChecked = $('.visit-gb-chk:checked').length;
+	if (gbChecked === 0) {
+		Swal.fire({title:'알림', text:'컨설팅 분야를 1개 이상 선택하세요.', icon:'warning', width:340, customClass:{popup:'swal2-sm'}});
+		return;
+	}
+	if (!userNm) {
+		Swal.fire({title:'알림', text:'신청자 성함을 입력하세요.', icon:'warning', width:340, customClass:{popup:'swal2-sm'}});
+		$('#v_userNm').focus();
+		return;
+	}
+	if (!userPhone) {
+		Swal.fire({title:'알림', text:'연락처를 입력하세요.', icon:'warning', width:340, customClass:{popup:'swal2-sm'}});
+		$('#v_userPhone').focus();
+		return;
+	}
+	if (accpetYn !== 'Y') {
+		Swal.fire({title:'알림', text:'개인정보 수집 및 이용에 동의해 주세요.', icon:'warning', width:340, customClass:{popup:'swal2-sm'}});
+		return;
+	}
+
+	var param = {
+		hospNm:       hospNm,
+		jongNm:       $('#v_jongNm').val(),
+		bedCnt:       $('#v_bedCnt').val(),
+		consultGb1:   $('#v_consultGb1').is(':checked') ? 'Y' : 'N',
+		consultGb2:   $('#v_consultGb2').is(':checked') ? 'Y' : 'N',
+		consultGb3:   $('#v_consultGb3').is(':checked') ? 'Y' : 'N',
+		consultGb4:   $('#v_consultGb4').is(':checked') ? 'Y' : 'N',
+		consultGb5:   $('#v_consultGb5').is(':checked') ? 'Y' : 'N',
+		consultGita1: $('#v_consultGita1').val(),
+		userNm:       userNm,
+		userPosi:     $('#v_userPosi').val(),
+		userPhone:    userPhone,
+		accpetYn:     accpetYn
+	};
+
+	$.ajax({
+		type: "POST",
+		url: '${pageContext.request.contextPath}/mangr/visitAsqSave.do',
+		data: param,
+		dataType: "json",
+		success: function(res) {
+			if (res.error_code === "0") {
+				Swal.fire({title:'완료', text:'문의가 정상적으로 등록되었습니다. 담당자가 빠른 시일 내에 연락드리겠습니다.', icon:'success', width:340, customClass:{popup:'swal2-sm'}});
+				fnVisitAsqClose();
+			} else {
+				Swal.fire({title:'오류', text:'저장 중 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'swal2-sm'}});
+			}
+		},
+		error: function() {
+			Swal.fire({title:'오류', text:'서버 통신 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'swal2-sm'}});
+		}
+	});
+}
+</script>
+<!-- 사이트방문문의 모달 End -->
 <!-- ============================================================== -->
 
 	<jsp:include page="footer.jsp"></jsp:include>

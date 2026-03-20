@@ -32,6 +32,7 @@ import egovframework.wnn_medcost.mangr.model.ChartDTO;
 import egovframework.wnn_medcost.mangr.model.FaqDTO;
 import egovframework.wnn_medcost.mangr.model.FileDTO;
 import egovframework.wnn_medcost.mangr.model.NotiDTO;
+import egovframework.wnn_medcost.mangr.model.VisitAsqDTO;
 import egovframework.wnn_medcost.mangr.service.MangrService;
 import egovframework.wnn_medcost.user.model.LisenceDTO;
 
@@ -218,5 +219,15 @@ public class MangrServiceImpl implements MangrService {
 	public boolean delupdatenotiCd(NotiDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.delupdatenotiCd(dto) ;
+	}
+
+	@Override
+	public List<VisitAsqDTO> getVisitAsqList(VisitAsqDTO dto) throws Exception {
+		return mapper.getVisitAsqList(dto);
+	}
+
+	@Override
+	public boolean updateVisitAsqComform(VisitAsqDTO dto) throws Exception {
+		return mapper.updateVisitAsqComform(dto);
 	}
 }

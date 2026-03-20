@@ -522,9 +522,58 @@
             ,UPD_DTTM     = NOW()
             ,UPD_USER     = #{updUser}
             ,UPD_IP       = #{updIp}
-        WHERE ASQ_SEQ     = #{asqSeq} 
-		  AND FILE_GB     = #{fileGb} 
-          AND ACTION_YN   = 'Y' 
-    ]]>      
-    </update>                                      	   	                  
+        WHERE ASQ_SEQ     = #{asqSeq}
+		  AND FILE_GB     = #{fileGb}
+          AND ACTION_YN   = 'Y'
+    ]]>
+    </update>
+
+    <!-- 사이트방문문의 목록 조회 -->
+    <select id="getVisitAsqList" parameterType="VisitAsqDTO" resultType="VisitAsqDTO"><![CDATA[
+        SELECT
+             SEQ
+            ,HOSP_NM
+            ,JONG_NM
+            ,BED_CNT
+            ,CONSULT_GB1
+            ,CONSULT_GB2
+            ,CONSULT_GB3
+            ,CONSULT_GB4
+            ,CONSULT_GB5
+            ,CONSULT_GITA1
+            ,CONSULT_GITA2
+            ,CONSULT_GITA3
+            ,USER_NM
+            ,USER_POSI
+            ,USER_PHONE
+            ,ACCPET_YN
+            ,ACTION_YN
+            ,COMFORM_YN
+            ,REG_DTTM
+            ,UPD_DTTM
+        FROM TBL_VISITASQ_MST
+        WHERE ACTION_YN = 'Y'
+    ]]>
+    <if test='findData != null and findData != ""'>
+        <![CDATA[
+            AND (HOSP_NM LIKE CONCAT('%',#{findData},'%')
+              OR USER_NM LIKE CONCAT('%',#{findData},'%')
+              OR USER_PHONE LIKE CONCAT('%',#{findData},'%'))
+        ]]>
+    </if>
+    <![CDATA[
+        ORDER BY SEQ DESC
+    ]]>
+    </select>
+
+    <!-- 사이트방문문의 확인여부 업데이트 -->
+    <update id="updateVisitAsqComform" parameterType="VisitAsqDTO"><![CDATA[
+        UPDATE TBL_VISITASQ_MST
+        SET  COMFORM_YN = #{comformYn}
+            ,UPD_DTTM   = NOW()
+        WHERE SEQ       = #{seq}
+          AND ACTION_YN = 'Y'
+    ]]>
+    </update>
+
 </mapper>

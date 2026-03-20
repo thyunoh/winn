@@ -7,6 +7,7 @@ import egovframework.wnn_consult.mangr.model.NotiDTO;
 import egovframework.wnn_consult.mangr.model.AsqDTO;
 import egovframework.wnn_consult.mangr.model.FaqDTO;
 import egovframework.wnn_consult.mangr.model.FileDTO;
+import egovframework.wnn_consult.mangr.model.VisitAsqDTO;
 @Mapper("MangrMapper")
 public interface MangrMapper {
 	
@@ -30,6 +31,8 @@ public interface MangrMapper {
 	boolean     deleteFileCd(FileDTO dto)    throws Exception;
 
 	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception;
-	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception; 
-	
+	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception;
+
+	// 사이트방문문의
+	boolean     insertVisitAsq(VisitAsqDTO dto)  throws Exception;
 }

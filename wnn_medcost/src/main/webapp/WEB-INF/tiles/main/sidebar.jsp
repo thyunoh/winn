@@ -284,6 +284,9 @@
                     <li class="nav-item" id="adminAsqMenu" style="display:none;">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/asqcd.do"><i class="fas fa-headset"></i>관리자 1:1 문의하기</a>
                     </li>
+<!--                    <li class="nav-item" id="adminVisitAsqMenu" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/visitasq.do"><i class="fas fa-building"></i>사이트방문문의</a>
+                    </li>  -->
 
                     <!-- 진료비 분석 보고서 -->
                     <li class="nav-item menu-section" id="menu-g">
@@ -1191,6 +1194,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (winner === 'Y') {
         var adminAsq = document.getElementById("adminAsqMenu");
         if (adminAsq) adminAsq.style.display = "";
+        var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
+        if (adminVisitAsq) adminVisitAsq.style.display = "";
     }
 });
 

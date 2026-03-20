@@ -6,6 +6,7 @@ import egovframework.wnn_consult.mangr.model.AsqDTO;
 import egovframework.wnn_consult.mangr.model.FaqDTO;
 import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.wnn_consult.mangr.model.NotiDTO;
+import egovframework.wnn_consult.mangr.model.VisitAsqDTO;
 
 public interface MangrService {
 
@@ -32,4 +33,7 @@ public interface MangrService {
 			String fileGb, String notiSeq, String regUser, String regIp, String fileSize);
 	void deleteFile(String hospCd, String filePath, String fileSeq,
 			String fileGb, String updUser, String updIp);
+
+	// 사이트방문문의
+	boolean insertVisitAsq(VisitAsqDTO dto) throws Exception;
 }

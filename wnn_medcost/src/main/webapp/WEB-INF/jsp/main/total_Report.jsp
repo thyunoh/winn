@@ -280,7 +280,7 @@
 						
 							<div class="card" id="card_container4" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">타병원 대비 본원 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5> 
+							        <h5 class="ml-3 mb-1">타병원 대비 본원 장기+특정기간 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5>
 							        <div class="legend-container mr-3">
 							            <div class="legend-item">
 							                <span class="legend-box current-month2"></span>
@@ -315,7 +315,7 @@
 							</div>
 	                    	<div class="card" id="card_container5" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">타병원 대비 본원 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5> 
+							        <h5 class="ml-3 mb-1">타병원 대비 본원 특정기간(전체) 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5>
 							        <div class="legend-container mr-3">
 							            <div class="legend-item">
 							                <span class="legend-box current-month2"></span>
@@ -350,7 +350,7 @@
 							</div>
 							<div class="card" id="card_container6" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">타병원 대비 본원 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5> 
+							        <h5 class="ml-3 mb-1">타병원 대비 본원 폐렴/패혈증 특정기간 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5>
 							        <div class="legend-container mr-3">
 							            <div class="legend-item">
 							                <span class="legend-box current-month2"></span>
@@ -385,7 +385,7 @@
 							</div>
 							<div class="card" id="card_container7" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">타병원 대비 본원 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5> 
+							        <h5 class="ml-3 mb-1">타병원 대비 본원 격리실 건당진료비 비교 · 본원 3개월 일당진료비 그래프 Part Ⅰ</h5>
 							        <div class="legend-container mr-3">
 							            <div class="legend-item">
 							                <span class="legend-box current-month2"></span>
@@ -450,7 +450,7 @@
 							</div>
 							<div class="card" id="card_containerA" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">타병원 대비 본원 재활청구 비교 그래프 Part Ⅰ</h5> 
+							        <h5 class="ml-3 mb-1">타병원 대비 본원 재활청구 비교 그래프 Part Ⅰ</h5>
 							        <div class="legend-container mr-3">
 							            <div class="legend-item">
 							                <span class="legend-box current-month2"></span>
@@ -463,9 +463,13 @@
 							        </div>
 							    </div>
 							    <div class="card-body11">
-							        <div id="cchart_category" style="max-height: 300px;"> 
-							            <!-- <div id="morris-bar-chartA" ></div> -->
-							            <canvas id="mixedChartA1" style="width: 100%; height: 250px;  padding: 20px 20px; "></canvas>
+							        <div style="max-height: 300px; display: flex; gap: 10px;">
+							            <div style="flex: 5; padding: 20px 20px;">
+							                <canvas id="mixedChartA0" style="width: 100%; height: 250px;"></canvas>
+							            </div>
+							            <div style="flex: 5; padding: 20px 20px;">
+							                <canvas id="mixedChartA1" style="width: 100%; height: 250px;"></canvas>
+							            </div>
 							        </div>
 							    </div>
 							    <!-- 라인 1줄 생성 -->
@@ -2080,16 +2084,16 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            fn_BuildChart02(fn_DetectDataCol(response.resultData, 5));
 
 		 	    } else if (jobFlag === "04") {
-	                
+
 		            const ctx1 = document.getElementById('mixedChart41').getContext('2d');
 
 		            mixedChart1 = new Chart(ctx1, {
 		                type: 'line',
 		                data: {
-		                    labels: [f_yymm, [m_yymm,"건당진료비"], e_yymm],
+		                    labels: [f_yymm, [m_yymm,"장기+특정기간 건당진료"], e_yymm],
 		                    datasets: [
 		                        {
-		                            label: '건당진료비',
+		                            label: '장기+특정기간 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[4,5].ta_f_ym, ","),
@@ -2105,7 +2109,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '장기+특정기간 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[4,5].fr_yymm, ","),
@@ -2121,7 +2125,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '장기+특정기간 건당진료비',
 		                            type: 'line',
 		                            data: [
 		                                replaceMulti(response.resultData[4,5].fr_yymm, ","),
@@ -2180,7 +2184,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            ];
 		            
 		            const ctx2 = document.getElementById('mixedChart42').getContext('2d');;
-		            
+
 		            mixedChart2 = new Chart(ctx2, {
 		                type: 'bar',
 		                data: {
@@ -2190,18 +2194,18 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            label: '일당진료비',
 		                            type: 'bar',
 		                            data: setValues,
-		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%	 
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
 		                            minBarLength: 1,
 		                            order: 1,
 		                            clip: false,
-		                         
+
 		                            categoryPercentage: 0.8,
-		                            barPercentage: 0.8      
+		                            barPercentage: 0.8
 		                        },
-		                        {		                        	
+		                        {
 		                            label: '일당진료비',
 		                            type: 'line',
 		                            data: setValues,
@@ -2249,16 +2253,16 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            });
 	                
 		 	    } else if (jobFlag === "05") {
-		 	    	
+
 		            const ctx1 = document.getElementById('mixedChart51').getContext('2d');
-		            
+
 		            mixedChart1 = new Chart(ctx1, {
 		                type: 'line',
 		                data: {
-		                	labels: [f_yymm, [m_yymm,"건당진료비"], e_yymm],
+		                	labels: [f_yymm, [m_yymm,"특정기간(전체) 건당진료"], e_yymm],
 		                    datasets: [
 		                        {
-		                            label: '건당진료비',
+		                            label: '특정기간(전체) 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].ta_f_ym, ","),
@@ -2274,7 +2278,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '특정기간(전체) 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].fr_yymm, ","),
@@ -2290,7 +2294,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '특정기간(전체) 건당진료비',
 		                            type: 'line',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].fr_yymm, ","),
@@ -2349,7 +2353,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            ];
 		            
 		            const ctx2 = document.getElementById('mixedChart52').getContext('2d');;
-		            
+
 		            mixedChart2 = new Chart(ctx2, {
 		                type: 'bar',
 		                data: {
@@ -2359,18 +2363,18 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            label: '일당진료비',
 		                            type: 'bar',
 		                            data: setValues,
-		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%	 
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
 		                            minBarLength: 1,
 		                            order: 1,
 		                            clip: false,
-		                         
+
 		                            categoryPercentage: 0.8,
-		                            barPercentage: 0.8      
+		                            barPercentage: 0.8
 		                        },
-		                        {		                        	
+		                        {
 		                            label: '일당진료비',
 		                            type: 'line',
 		                            data: setValues,
@@ -2418,16 +2422,16 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            });
 	    	    	
 		 	    } else if (jobFlag === "06") {
-		 	    	
+
 		 	    	const ctx1 = document.getElementById('mixedChart61').getContext('2d');
-		            
+
 		            mixedChart1 = new Chart(ctx1, {
 		                type: 'line',
 		                data: {
-		                	labels: [f_yymm, [m_yymm,"건당진료비"], e_yymm],
+		                	labels: [f_yymm, [m_yymm,"폐렴/패혈증 건당진료"], e_yymm],
 		                    datasets: [
 		                        {
-		                            label: '건당진료비',
+		                            label: '폐렴/패혈증 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].ta_f_ym, ","),
@@ -2443,7 +2447,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '폐렴/패혈증 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].fr_yymm, ","),
@@ -2459,7 +2463,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '폐렴/패혈증 건당진료비',
 		                            type: 'line',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].fr_yymm, ","),
@@ -2518,7 +2522,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            ];
 		            
 		            const ctx2 = document.getElementById('mixedChart62').getContext('2d');;
-		            
+
 		            mixedChart2 = new Chart(ctx2, {
 		                type: 'bar',
 		                data: {
@@ -2528,18 +2532,18 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            label: '일당진료비',
 		                            type: 'bar',
 		                            data: setValues,
-		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%	 
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
 		                            minBarLength: 1,
 		                            order: 1,
 		                            clip: false,
-		                         
+
 		                            categoryPercentage: 0.8,
-		                            barPercentage: 0.8      
+		                            barPercentage: 0.8
 		                        },
-		                        {		                        	
+		                        {
 		                            label: '일당진료비',
 		                            type: 'line',
 		                            data: setValues,
@@ -2587,16 +2591,16 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            });
 		 	    	
 		 	    } else if (jobFlag === "07") {
-		 	    	
+
 		 	    	const ctx1 = document.getElementById('mixedChart71').getContext('2d');
-		            
+
 		            mixedChart1 = new Chart(ctx1, {
 		                type: 'line',
 		                data: {
-		                	labels: [f_yymm, [m_yymm,"건당진료비"], e_yymm],
+		                	labels: [f_yymm, [m_yymm,"격리실 건당진료"], e_yymm],
 		                    datasets: [
 		                        {
-		                            label: '건당진료비',
+		                            label: '격리실 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].ta_f_ym, ","),
@@ -2612,7 +2616,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '격리실 건당진료비',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].fr_yymm, ","),
@@ -2628,7 +2632,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            clip: false
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '격리실 건당진료비',
 		                            type: 'line',
 		                            data: [
 		                                replaceMulti(response.resultData[6,7].fr_yymm, ","),
@@ -2687,7 +2691,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            ];
 		            
 		            const ctx2 = document.getElementById('mixedChart72').getContext('2d');;
-		            
+
 		            mixedChart2 = new Chart(ctx2, {
 		                type: 'bar',
 		                data: {
@@ -2697,18 +2701,18 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            label: '일당진료비',
 		                            type: 'bar',
 		                            data: setValues,
-		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%	 
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
 		                            minBarLength: 1,
 		                            order: 1,
 		                            clip: false,
-		                         
+
 		                            categoryPercentage: 0.8,
-		                            barPercentage: 0.8      
+		                            barPercentage: 0.8
 		                        },
-		                        {		                        	
+		                        {
 		                            label: '일당진료비',
 		                            type: 'line',
 		                            data: setValues,
@@ -2757,23 +2761,23 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 	    	    	
 		 	    	
 		 	    } else if (jobFlag === "08") {
-		 	    	
+
 		            const ctx1 = document.getElementById('mixedChart81').getContext('2d');
-		            
+
 		            mixedChart1 = new Chart(ctx1, {
 		                type: 'line',
 		                data: {
 		                	labels: [f_yymm, [m_yymm,"건당진료비"], e_yymm],
 		                    datasets: [
 		                        {
-		                            label: '건당진료비',
+		                            label: '타병원',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[4,5].ta_f_ym, ","),
 		                                replaceMulti(response.resultData[5,5].ta_m_ym, ","),
 		                                replaceMulti(response.resultData[6,5].ta_e_ym, ",")
 		                            ],
-		                            backgroundColor: 'rgba(11, 142, 202, 1)',   // '#0B8ECA' → 투명도 80%	→ 100%로 변경
+		                            backgroundColor: 'rgba(11, 142, 202, 1)',
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
@@ -2784,14 +2788,14 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            categoryPercentage: 0.5
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '본원',
 		                            type: 'bar',
 		                            data: [
 		                                replaceMulti(response.resultData[4,5].fr_yymm, ","),
 		                                replaceMulti(response.resultData[5,5].midyymm, ","),
 		                                replaceMulti(response.resultData[6,5].endyymm, ",")
 		                            ],
-		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%	→ 100%로 변경
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
@@ -2802,7 +2806,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            categoryPercentage: 0.5
 		                        },
 		                        {
-		                            label: '건당진료비',
+		                            label: '본원',
 		                            type: 'line',
 		                            data: [
 		                                replaceMulti(response.resultData[4,5].fr_yymm, ","),
@@ -2813,8 +2817,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                            backgroundColor: '#000',
 		                            borderWidth: 1,
 		                            yAxisID: 'y',
-		                            // borderDash: [5, 5],
-		                            borderDash: [], // 실선으로 표시
+		                            borderDash: [],
 		                            fill: false,
 		                            tension: 0.4,
 		                            pointRadius: 4,
@@ -2830,6 +2833,17 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                    plugins: {
 		                        legend: {
 		                            display: false
+		                        },
+		                        tooltip: {
+		                            callbacks: {
+		                                title: function(tooltipItems) {
+		                                    return '';
+		                                },
+		                                label: function(context) {
+		                                    var val = context.parsed.y;
+		                                    return '건당진료비 : ' + (val != null ? val.toLocaleString() : '');
+		                                }
+		                            }
 		                        }
 		                    },
 		                    scales: {
@@ -2854,9 +2868,87 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            });
 		            
 		 	    } else if (jobFlag === "09") {
-		 	    	
+
+		            // 좌측: 월별 합계 그래프
+		            // "[ 65 ] 43,296,260" → 금액부분만 추출
+		            function extractAmt(val) {
+		                if (!val || val === '-') return 0;
+		                var str = String(val);
+		                if (str.indexOf(']') > -1) { str = str.substring(str.indexOf(']') + 1); }
+		                return parseFloat(str.trim().split(',').join('')) || 0;
+		            }
+
+		            var sumData_fr  = extractAmt(response.resultData[4].fr_yymm);
+		            var sumData_mid = extractAmt(response.resultData[4].midyymm);
+		            var sumData_end = extractAmt(response.resultData[4].endyymm);
+
+		            if (window.chartA0Inst) { window.chartA0Inst.destroy(); }
+		            var ctxA0 = document.getElementById('mixedChartA0').getContext('2d');
+
+		            window.chartA0Inst = new Chart(ctxA0, {
+		                type: 'bar',
+		                data: {
+		                	labels: [f_yymm, [m_yymm,"월별 합계"], e_yymm],
+		                    datasets: [
+		                        {
+		                            label: '월별 합계',
+		                            type: 'bar',
+		                            data: [sumData_fr, sumData_mid, sumData_end],
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',
+		                            borderWidth: 1,
+		                            borderRadius: 8,
+		                            yAxisID: 'y',
+		                            minBarLength: 1,
+		                            order: 1,
+		                            clip: false,
+		                            categoryPercentage: 0.8,
+		                            barPercentage: 0.8
+		                        },
+		                        {
+		                            label: '월별 합계',
+		                            type: 'line',
+		                            data: [sumData_fr, sumData_mid, sumData_end],
+		                            borderColor: '#000',
+		                            backgroundColor: '#000',
+		                            borderWidth: 1,
+		                            yAxisID: 'y',
+		                            borderDash: [],
+		                            fill: false,
+		                            tension: 0.4,
+		                            pointRadius: 4,
+		                            pointHoverRadius: 6,
+		                            order: 0,
+		                            clip: false
+		                        }
+		                    ]
+		                },
+		                options: {
+		                    maintainAspectRatio: false,
+		                    responsive: true,
+		                    plugins: {
+		                        legend: { display: false },
+		                        tooltip: {
+		                            callbacks: {
+		                                title: function() { return ''; },
+		                                label: function(context) {
+		                                    var val = context.parsed.y;
+		                                    return '월별 합계 : ' + (val != null ? val.toLocaleString() : '');
+		                                }
+		                            }
+		                        }
+		                    },
+		                    scales: {
+		                        y: {
+		                            beginAtZero: true,
+		                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+		                        }
+		                    }
+		                }
+		            });
+
+		            // 우측: 인당 재활청구액 그래프
 		 	    	const ctx1 = document.getElementById('mixedChartA1').getContext('2d');
-		            
+
 		            mixedChart1 = new Chart(ctx1, {
 		                type: 'line',
 		                data: {
@@ -2870,15 +2962,15 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                                replaceMulti(response.resultData[5,5].ta_m_ym, ","),
 		                                replaceMulti(response.resultData[6,5].ta_e_ym, ",")
 		                            ],
-		                            backgroundColor: 'rgba(11, 142, 202, 1)',   // '#0B8ECA' → 투명도 80%	→ 100%로 변경
+		                            backgroundColor: 'rgba(11, 142, 202, 1)',
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
 		                            minBarLength: 1,
 		                            order: 1,
 		                            clip: false,
-		                            barPercentage: 0.8,
-		                            categoryPercentage: 0.5
+		                            barPercentage: 0.9,
+		                            categoryPercentage: 0.75
 		                        },
 		                        {
 		                            label: '인당 재활청구액',
@@ -2888,15 +2980,15 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                                replaceMulti(response.resultData[5,5].midyymm, ","),
 		                                replaceMulti(response.resultData[6,5].endyymm, ",")
 		                            ],
-		                            backgroundColor: 'rgba(237, 125, 49, 1)',   // '#ED7D31' → 투명도 80%	→ 100%로 변경
+		                            backgroundColor: 'rgba(237, 125, 49, 1)',
 		                            borderWidth: 1,
 		                            borderRadius: 8,
 		                            yAxisID: 'y',
 		                            minBarLength: 1,
 		                            order: 2,
 		                            clip: false,
-		                            barPercentage: 0.8,
-		                            categoryPercentage: 0.5
+		                            barPercentage: 0.9,
+		                            categoryPercentage: 0.75
 		                        },
 		                        {
 		                            label: '인당 재활청구액',
@@ -2927,6 +3019,17 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                    plugins: {
 		                        legend: {
 		                            display: false
+		                        },
+		                        tooltip: {
+		                            callbacks: {
+		                                title: function(tooltipItems) {
+		                                    return '';
+		                                },
+		                                label: function(context) {
+		                                    var val = context.parsed.y;
+		                                    return '인당 재활청구액 : ' + (val != null ? val.toLocaleString() : '');
+		                                }
+		                            }
 		                        }
 		                    },
 		                    scales: {
@@ -2949,7 +3052,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                    }
 		                }
 		            });
-	    	    	
+
 		 	   } else if (jobFlag === "10") {
 		 		   
 		            const ctx1 = document.getElementById('mixedChartB1').getContext('2d');

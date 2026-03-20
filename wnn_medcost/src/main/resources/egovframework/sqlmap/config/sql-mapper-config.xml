@@ -32,6 +32,7 @@
     	<typeAlias  alias="NotiDTO"     type="egovframework.wnn_medcost.mangr.model.NotiDTO"/>
     	<typeAlias  alias="FileDTO"     type="egovframework.wnn_medcost.mangr.model.FileDTO"/>
     	<typeAlias  alias="AsqDTO"      type="egovframework.wnn_medcost.mangr.model.AsqDTO"/>
+    	<typeAlias  alias="VisitAsqDTO" type="egovframework.wnn_medcost.mangr.model.VisitAsqDTO"/>
     	
         <typeAlias  alias="TongDTO"    type="egovframework.wnn_medcost.tong.model.TongDTO"/>
         

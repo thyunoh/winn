@@ -25,6 +25,7 @@ import egovframework.wnn_consult.mangr.model.AsqDTO;
 import egovframework.wnn_consult.mangr.model.FaqDTO;
 import egovframework.wnn_consult.mangr.model.FileDTO;
 import egovframework.wnn_consult.user.model.HospMdDTO;
+import egovframework.wnn_consult.mangr.model.VisitAsqDTO;
 import egovframework.wnn_consult.user.model.UserDTO;
 
 
@@ -213,7 +214,37 @@ public class MangrController {
 	        return response;
 	}
 	
-	/*문서화일*/	
+	/* 사이트방문문의 저장 */
+	@RequestMapping(value="/mangr/visitAsqSave.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> visitAsqSave(@ModelAttribute("DTO") VisitAsqDTO dto, HttpServletRequest request, Model model) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			System.out.println("visitAsqSave 시작");
+			// null → 빈문자열 치환
+			if (dto.getConsultGita2() == null) dto.setConsultGita2("");
+			if (dto.getConsultGita3() == null) dto.setConsultGita3("");
+			if (dto.getPassWd() == null) dto.setPassWd("");
+			if (dto.getJongNm() == null) dto.setJongNm("");
+			if (dto.getBedCnt() == null) dto.setBedCnt("");
+			if (dto.getUserPosi() == null) dto.setUserPosi("");
+			if (dto.getConsultGb1() == null) dto.setConsultGb1("N");
+			if (dto.getConsultGb2() == null) dto.setConsultGb2("N");
+			if (dto.getConsultGb3() == null) dto.setConsultGb3("N");
+			if (dto.getConsultGb4() == null) dto.setConsultGb4("N");
+			if (dto.getConsultGb5() == null) dto.setConsultGb5("N");
+			if (dto.getConsultGita1() == null) dto.setConsultGita1("");
+			svc.insertVisitAsq(dto);
+			response.put("error_code", "0");
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/*문서화일*/
 	@RequestMapping(value= "/mangr/fileCdList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public List<FileDTO> getfileCdList(@ModelAttribute("DTO") FileDTO dto) {
