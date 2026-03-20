@@ -1313,22 +1313,22 @@ function setMakeGrid() {
     } else if (jobFlag === "11" ) {
     	makeGrid(
     	  'grid-container1',
-    	  [6, 4],
+    	  [7, 4],
     	  ["", yymm1, yymm2, yymm3, avg_0],
-    	  ["총진료비", "원내", "위탁", "총검사비", "정액", "행위"],
+    	  ["총진료비", "총검사비", "1인당 검사비", "원내", "위탁", "정액", "행위"],
     	  ["총진료비", "총검사비"],
-    	  [4,5],
+    	  [4, 6],
     	  ["2,2,2,6", "4,4,2,6"]
     	);
     } else if (jobFlag === "12" ) {
     	makeGrid(
-    	  'grid-container1',
-    	  [6, 4],
-    	  ["", yymm1, yymm2, yymm3, avg_0],
-    	  ["총진료비", "경구", "주사", "총약제비", "정액", "행위"],
-    	  ["총진료비", "총약제비"],
-    	  [4,5],
-    	  ["2,2,2,6", "4,4,2,6"]
+   	      'grid-container1',
+   	      [7, 4],
+   	      ["", yymm1, yymm2, yymm3, avg_0],
+   	      ["총진료비", "총약제비", "1인당 약제비", "경구", "주사", "정액", "행위"],
+   	      ["총진료비", "총약제비"],
+   	      [4, 6],
+   	      ["2,2,2,6", "4,4,2,6"]    	  
     	);
     } else if (jobFlag === "13" ) {
     	makeGrid(
@@ -1949,8 +1949,27 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
                make_fg: jobFlag
         },
         success: function(response) {
-        	
-            if(response.error_code != "0") return;	 
+
+            if(response.error_code != "0") return;
+
+            // jobFlag 11, 12: 서버 JOBCODE 순서(A,B,C,D,E,F,G)를 그리드 표시 순서(A,D,G,B,C,E,F)로 재배치
+            var _origResultData11 = null;
+            var _origResultData12 = null;
+            var emptyRow = {fr_yymm:'0', midyymm:'0', endyymm:'0', avg_val:'0', ta_f_ym:'0', ta_m_ym:'0', ta_e_ym:'0'};
+            var mapReorder = [0, 3, 6, 1, 2, 4, 5]; // A, D, G, B, C, E, F
+            if (jobFlag === "11" && response.resultData) {
+                _origResultData11 = response.resultData.slice();
+                response.resultData = mapReorder.map(function(idx) {
+                    return _origResultData11[idx] || emptyRow;
+                });
+            }
+            if (jobFlag === "12" && response.resultData) {
+                _origResultData12 = response.resultData.slice();
+                response.resultData = mapReorder.map(function(idx) {
+                    return _origResultData12[idx] || emptyRow;
+                });
+            }
+
             for (let r = 0; r <= rows; r++) {
 		   		for (let c = 0; c <= cols; c++) {
 		   	        const cell = document.createElement('div');
@@ -3030,12 +3049,16 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		            
 		            
 		 	    } else if (jobFlag === "11") {
-		            _chartRespData = response.resultData;
-		            fn_BuildChart11(fn_DetectDataCol(response.resultData, 6));
+		            // 차트는 원래 JOBCODE 순서(A,B,C,D,E,F) 데이터 사용
+		            var chartData11 = _origResultData11 || response.resultData;
+		            _chartRespData = chartData11;
+		            fn_BuildChart11(fn_DetectDataCol(chartData11, 6));
 
 		 	    } else if (jobFlag === "12") {
-		            _chartRespData = response.resultData;
-		            fn_BuildChart12(fn_DetectDataCol(response.resultData, 6));
+		            // 차트는 원래 JOBCODE 순서(A,B,C,D,E,F) 데이터 사용
+		            var chartData12 = _origResultData12 || response.resultData;
+		            _chartRespData = chartData12;
+		            fn_BuildChart12(fn_DetectDataCol(chartData12, 6));
 
 		 	    } else if (jobFlag === "13") { 
 		 	    	jobCode = '1'; 
