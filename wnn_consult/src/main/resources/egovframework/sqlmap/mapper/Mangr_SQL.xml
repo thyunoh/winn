@@ -491,4 +491,25 @@
         ]]>
     </update>
 
+    <!-- 사이트방문문의 등록 -->
+    <insert id="insertVisitAsq" parameterType="VisitAsqDTO">
+        <![CDATA[
+        INSERT INTO TBL_VISITASQ_MST (
+            HOSP_NM, JONG_NM, BED_CNT,
+            CONSULT_GB1, CONSULT_GB2, CONSULT_GB3, CONSULT_GB4, CONSULT_GB5,
+            CONSULT_GITA1, CONSULT_GITA2, CONSULT_GITA3,
+            USER_NM, USER_POSI, USER_PHONE,
+            ACCPET_YN, ACTION_YN, COMFORM_YN, PASS_WD,
+            REG_DTTM, UPD_DTTM
+        ) VALUES (
+            #{hospNm}, #{jongNm,jdbcType=VARCHAR}, #{bedCnt,jdbcType=VARCHAR},
+            #{consultGb1,jdbcType=VARCHAR}, #{consultGb2,jdbcType=VARCHAR}, #{consultGb3,jdbcType=VARCHAR}, #{consultGb4,jdbcType=VARCHAR}, #{consultGb5,jdbcType=VARCHAR},
+            #{consultGita1,jdbcType=VARCHAR}, #{consultGita2,jdbcType=VARCHAR}, #{consultGita3,jdbcType=VARCHAR},
+            #{userNm}, #{userPosi,jdbcType=VARCHAR}, #{userPhone},
+            #{accpetYn}, 'Y', 'N', #{passWd,jdbcType=VARCHAR},
+            NOW(), NOW()
+        )
+        ]]>
+    </insert>
+
 </mapper>

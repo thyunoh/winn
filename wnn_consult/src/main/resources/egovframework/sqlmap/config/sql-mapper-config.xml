@@ -17,6 +17,7 @@
         <typeAlias  alias="AsqDTO"     type="egovframework.wnn_consult.mangr.model.AsqDTO"/>
         <typeAlias  alias="FaqDTO"     type="egovframework.wnn_consult.mangr.model.FaqDTO"/>
         <typeAlias  alias="FileDTO"     type="egovframework.wnn_consult.mangr.model.FileDTO"/>
+        <typeAlias  alias="VisitAsqDTO" type="egovframework.wnn_consult.mangr.model.VisitAsqDTO"/>
 	</typeAliases>
 	
 </configuration>
