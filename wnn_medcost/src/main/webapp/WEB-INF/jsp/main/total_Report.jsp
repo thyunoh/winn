@@ -229,7 +229,7 @@
 							
 							<div class="card" id="card_container2" style="height: 1100px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        <h5 class="ml-3 mb-1">타병원 대비 환자군 비교 Part Ⅰ</h5> 
+							        <h5 class="ml-3 mb-1">타병원 대비 환자군 비교 Part Ⅰ</h5>
 							        <div class="legend-container mr-3">
 							            <div class="legend-item">
 							                <span class="legend-box current-month2"></span>
@@ -245,9 +245,10 @@
 							        <div id="cchart_category" style="max-height: 300px;">
 							            <!--  <div id="morris-bar-chart2" ></div> -->
 							            <canvas id="mixedChart21" style="width: 100%; height: 250px; padding: 20px 20px; "></canvas>						            
-							        </div>   
+							        </div>
+							        <div style="text-align: center;"><span id="chart02_yymm" style="color: #007bff; font-weight: bold; font-size: 1.0em;"></span></div>
 							    </div>
-							    <!-- 라인 1줄 생성 -->			    
+							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
 							    <div class="card-header11">
 							        <h5 class="text-left ml-3 mb-1">환자군 대상 Part Ⅱ</h5>
@@ -893,6 +894,18 @@ function fn_BuildChart02(colIdx) {
     else if (colIdx === 2) { taField = 'ta_m_ym'; myField = 'midyymm'; }
     else                   { taField = 'ta_e_ym'; myField = 'endyymm'; }
 
+    // 클릭한 년월을 타이틀에 표시
+    try {
+        var gridCells = document.querySelectorAll('#grid-container1 > div');
+        var yymmRaw = (gridCells && gridCells.length > colIdx) ? gridCells[colIdx].textContent.trim() : '';
+        if (!yymmRaw && jobyymm) {
+            yymmRaw = jobyymm.substring(0,4) + '년' + jobyymm.substring(4) + '월';
+        }
+        var yymmLabel = yymmRaw.replace(/(\d{4})년(\d{2})월/, '$1.$2월 기준');
+        var chart02Span = document.getElementById('chart02_yymm');
+        if (chart02Span) chart02Span.textContent = yymmLabel;
+    } catch(ignore) {}
+
     try {
         if (mixedChart1) { mixedChart1.destroy(); mixedChart1 = null; }
 
@@ -1152,7 +1165,7 @@ function setMakeGrid() {
     	lab_txt.textContent = "[ 입원현황 건수 ] / [ 누락대상 건수 ]";	
 	} else if (jobFlag === "14"  ) {
     	cardF.style.display = 'flex';
-    	lab_txt.textContent = "[ 건 ] / 계산총액";
+    	lab_txt.textContent = "계산총액";
 	}	
     
     
@@ -1979,7 +1992,11 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		   	             	} else if (c === 4) {
 		   	             	    value = replaceMulti(response.resultData[c,r-1].avg_val,"[ 0.00 ] 0",".00");
 		   	             	}
-		   	                
+
+		   	                if (jobFlag === "14") {
+		   	                	value = value.replace(/\[.*?\]\s*/, ''); // []숫자 제거 
+		   	                }
+
 		   	                if (value === "0") {
 	   	                		label.textContent = "-";
 		   	                } else if (value === "") {
