@@ -168,6 +168,33 @@ function fn_HospSelect() {
    	
 }
 
+
+// 진행상황 표시
+function fn_showProgress(msg) {
+	if (!document.getElementById('simuSpinStyle')) {
+		var spinStyle = document.createElement('style');
+		spinStyle.id = 'simuSpinStyle';
+		spinStyle.textContent = '@keyframes simuSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}';
+		document.head.appendChild(spinStyle);
+	}
+	var old = document.getElementById('simuProgress');
+	if (old) old.parentNode.removeChild(old);
+	var el = document.createElement('div');
+	el.id = 'simuProgress';
+	el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:20px 40px;border-radius:8px;z-index:99999;font-size:16px;box-shadow:0 4px 15px rgba(0,0,0,0.3);display:flex;align-items:center;gap:12px;';
+	var sp = document.createElement('div');
+	sp.style.cssText = 'width:22px;height:22px;border:3px solid rgba(255,255,255,0.3);border-top:3px solid #fff;border-radius:50%;animation:simuSpin 0.8s linear infinite;flex-shrink:0;';
+	el.appendChild(sp);
+	var txt = document.createElement('span');
+	txt.textContent = msg || '자료 조회 중...';
+	el.appendChild(txt);
+	document.body.appendChild(el);
+}
+function fn_hideProgress() {
+	var el = document.getElementById('simuProgress');
+	if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
 function fn_ViewData(flag) {
 	
 	if        (flag === 2){
@@ -480,6 +507,7 @@ function fn_IndiSelect() {
     	
     } else {
     	
+    	fn_showProgress();
     	table_Idx = 1;
     	
     	if (
@@ -964,7 +992,7 @@ function dataLoad(data, callback, settings) {
 	        	
 			},
 			success: function(response) {
-	        	//table.processing(false); // 처리 중 상태 종료
+	        	//table.processing(false);
 	            if (response && Object.keys(response).length > 0) {
 	            	            	
 	            	callback(response);
@@ -990,22 +1018,38 @@ function dataLoad(data, callback, settings) {
     	console.log("stryymm:", stryymm, "endyymm:", endyymm);
 
 
+    	// stryymm/endyymm으로부터 month_1~month_6 계산
+    	var monthParams = {};
+    	var sYear = parseInt(stryymm.substring(0, 4));
+    	var sMon  = parseInt(stryymm.substring(4, 6));
+    	var eYear = parseInt(endyymm.substring(0, 4));
+    	var eMon  = parseInt(endyymm.substring(4, 6));
+    	var totalMonths = (eYear - sYear) * 12 + (eMon - sMon) + 1;
+    	for (var mi = 0; mi < Math.min(totalMonths, 6); mi++) {
+    		var cm = sMon + mi;
+    		var cy = sYear;
+    		if (cm > 12) { cy += Math.floor((cm - 1) / 12); cm = (cm - 1) % 12 + 1; }
+    		monthParams['month_' + (mi + 1)] = cy.toString() + cm.toString().padStart(2, '0');
+    	}
+
+
+
 	    $.ajax({
 	    	url: "/main/select_Hosp_Indi.do",
 	        type: "POST",
 	        traditional: true,
-	        data: {
+	        data: $.extend({
 	        	hosp_cd: checkHosp,
 		        stryymm: stryymm,
 		        endyymm: endyymm
-	    	},
+	    	}, monthParams),
 	        dataType: "json",
 	        // timeout: 10000, // 10초 후 타임아웃
 	        beforeSend : function () {
 	        	
 			},
 	        success: function(response) {
-	        	//table.processing(false); // 처리 중 상태 종료
+	        	fn_hideProgress();
 	            if (response && Object.keys(response).length > 0) {
 	            	
 	            	callback(response);
@@ -1016,7 +1060,7 @@ function dataLoad(data, callback, settings) {
 	            }
 	        },
 	        error: function(jqXHR, textStatus, errorThrown) {
-	        	//table.processing(false); // 처리 중 상태 종료		                    
+	        	fn_hideProgress();
 	            callback({
 	                data: []
 	            });
