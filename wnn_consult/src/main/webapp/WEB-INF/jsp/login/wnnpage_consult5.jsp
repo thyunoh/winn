@@ -45,6 +45,7 @@
                 <section class="content-box text-center position-relative" style="display: inline-block;">				    
 			        <img src="/wnn_consult/images/winct/consult5_1.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
 			        <button type="button" class="btn overlay-btn overlay-btn-h1" onclick="fnasq_main()"></button>				        
+<!-- 				        <button type="button" class="btn overlay-btn overlay-btn-e2" onclick="fnVisitAsqOpen()"></button> -->	
 			    </section>
             </div>
         </div>

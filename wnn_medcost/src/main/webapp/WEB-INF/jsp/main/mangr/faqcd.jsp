@@ -66,7 +66,7 @@
 	    <div class="modal fade" id="modalName" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-	        <div class="modal-content" style="height: 80%;display: flex;flex-direction: column;">
+	        <div class="modal-content" style="height: 75%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 		            <h6 class="modal-title" id="modalHead"></h6> 
 	              <!-- ============================================================== -->
@@ -101,15 +101,15 @@
                     <input type="hidden" id="updIp"   name="updIp "  value= "">
                     <input type="hidden" id="useYn"   name="useYn "  value= "Y">
                     <div class="form-row">
-                        <label for="qstnConts1" class="col-2 col-lg-2 col-form-label text-left">질문제목</label>
-	                    <div class="col-xl-10 col-lg-10 text-left mb-2">
-                            <textarea id="qstnConts1" name="qstnConts1" data-parsley-trigger="change" placeholder="" 
-                                                                             autocomplete="off" class="form-control" rows="3" ></textarea>
+                        <label for="qstnConts1" class="col-form-label text-left" style="flex: 0 0 80px; max-width: 80px; padding-left: 5px;">질문제목</label>
+	                    <div class="text-left mb-2" style="flex: 1; max-width: calc(100% - 80px);">
+                            <textarea id="qstnConts1" name="qstnConts1" data-parsley-trigger="change" placeholder=""
+                                      autocomplete="off" class="form-control" rows="2" style="min-height: 80px !important; height: 80px !important;"></textarea>
                         </div>
                     </div>  
 	                 <div class="form-row">
-	                        <label for="ansrConts1" class="col-2 col-lg-2 col-form-label text-left">답변내용</label>
-		                    <div class="col-xl-10 col-lg-10 text-left mb-2">
+	                        <label for="ansrConts1" class="col-form-label text-left" style="flex: 0 0 80px; max-width: 80px; padding-left: 5px;">답변내용</label>
+		                    <div class="text-left mb-2" style="flex: 1; max-width: calc(100% - 80px);">
 	                            <textarea id="ansrConts1" name="ansrConts1" data-parsley-trigger="change" placeholder="" 
 	                                                                             autocomplete="off" class="form-control" rows="15" ></textarea>
 	                        </div>

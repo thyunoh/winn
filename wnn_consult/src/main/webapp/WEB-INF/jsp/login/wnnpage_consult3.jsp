@@ -52,7 +52,7 @@
           <button type="button" class="btn overlay-btn overlay-btn-c" onclick="openMyImagePopup('/wnn_consult/images/winct/consult3_1_3.svg')"></button>
           
           <button type="button" class="btn overlay-btn overlay-btn-d" onclick="fnasq_main()"></button>
-          
+<!-- 				        <button type="button" class="btn overlay-btn overlay-btn-e2" onclick="fnVisitAsqOpen()"></button> -->	          
         </section>
       </div>
     </div>

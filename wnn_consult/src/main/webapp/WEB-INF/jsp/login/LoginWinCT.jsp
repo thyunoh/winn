@@ -214,14 +214,6 @@
 							   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">
 							   온라인교육센터
 							</a>
-			
-							<!-- 사이트방문문의 -->
-<!-- 							<a href="javascript:void(0);"
-							   class="nav-link consulting-menu"
-							   style="font-size: 16px; padding: 24px;"
-							   onclick="setMainActive(this); fnVisitAsqOpen();">
-							   컨설팅문의
-							</a> -->
 
 							<div id="dynamicMenu_J" onclick="winCheckOpen()"></div>
 							<div id="dynamicMenu_T" onclick="winCheckOpen()"></div>
@@ -4084,6 +4076,7 @@ function fn_asqBarToggle() {
 .swal2-sm #swal2-content, .swal2-sm .swal2-html-container { font-size: 13px !important; margin: 5px 0 !important; padding: 0 !important; }
 .swal2-sm .swal2-actions { margin-top: 8px !important; }
 .swal2-sm .swal2-confirm { font-size: 13px !important; padding: 6px 20px !important; }
+.swal2-sm-btn { font-size: 13px !important; padding: 6px 20px !important; }
 </style>
 <script type="text/javascript">
 /* 사이트방문문의 팝업 열기 */
@@ -4129,38 +4122,53 @@ function fnVisitAsqSave() {
 		return;
 	}
 
-	var param = {
-		hospNm:       hospNm,
-		jongNm:       $('#v_jongNm').val(),
-		bedCnt:       $('#v_bedCnt').val(),
-		consultGb1:   $('#v_consultGb1').is(':checked') ? 'Y' : 'N',
-		consultGb2:   $('#v_consultGb2').is(':checked') ? 'Y' : 'N',
-		consultGb3:   $('#v_consultGb3').is(':checked') ? 'Y' : 'N',
-		consultGb4:   $('#v_consultGb4').is(':checked') ? 'Y' : 'N',
-		consultGb5:   $('#v_consultGb5').is(':checked') ? 'Y' : 'N',
-		consultGita1: $('#v_consultGita1').val(),
-		userNm:       userNm,
-		userPosi:     $('#v_userPosi').val(),
-		userPhone:    userPhone,
-		accpetYn:     accpetYn
-	};
+	Swal.fire({
+		title: '확인',
+		text: '등록하시겠습니까?',
+		icon: 'question',
+		showCancelButton: true,
+		confirmButtonText: '저장',
+		cancelButtonText: '취소',
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#3085d6',
+		width: 340,
+		customClass: {popup: 'swal2-sm', confirmButton: 'swal2-sm-btn', cancelButton: 'swal2-sm-btn'}
+	}).then(function(result) {
+		if (!result.isConfirmed) return;
 
-	$.ajax({
-		type: "POST",
-		url: '${pageContext.request.contextPath}/mangr/visitAsqSave.do',
-		data: param,
-		dataType: "json",
-		success: function(res) {
-			if (res.error_code === "0") {
-				Swal.fire({title:'완료', text:'문의가 정상적으로 등록되었습니다. 담당자가 빠른 시일 내에 연락드리겠습니다.', icon:'success', width:340, customClass:{popup:'swal2-sm'}});
-				fnVisitAsqClose();
-			} else {
-				Swal.fire({title:'오류', text:'저장 중 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'swal2-sm'}});
+		var param = {
+			hospNm:       hospNm,
+			jongNm:       $('#v_jongNm').val(),
+			bedCnt:       $('#v_bedCnt').val(),
+			consultGb1:   $('#v_consultGb1').is(':checked') ? 'Y' : 'N',
+			consultGb2:   $('#v_consultGb2').is(':checked') ? 'Y' : 'N',
+			consultGb3:   $('#v_consultGb3').is(':checked') ? 'Y' : 'N',
+			consultGb4:   $('#v_consultGb4').is(':checked') ? 'Y' : 'N',
+			consultGb5:   $('#v_consultGb5').is(':checked') ? 'Y' : 'N',
+			consultGita1: $('#v_consultGita1').val(),
+			userNm:       userNm,
+			userPosi:     $('#v_userPosi').val(),
+			userPhone:    userPhone,
+			accpetYn:     accpetYn
+		};
+
+		$.ajax({
+			type: "POST",
+			url: '${pageContext.request.contextPath}/mangr/visitAsqSave.do',
+			data: param,
+			dataType: "json",
+			success: function(res) {
+				if (res.error_code === "0") {
+					Swal.fire({title:'완료', text:'문의가 정상적으로 등록되었습니다. 담당자가 빠른 시일 내에 연락드리겠습니다.', icon:'success', width:340, customClass:{popup:'swal2-sm'}});
+					fnVisitAsqClose();
+				} else {
+					Swal.fire({title:'오류', text:'저장 중 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'swal2-sm'}});
+				}
+			},
+			error: function() {
+				Swal.fire({title:'오류', text:'서버 통신 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'swal2-sm'}});
 			}
-		},
-		error: function() {
-			Swal.fire({title:'오류', text:'서버 통신 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'swal2-sm'}});
-		}
+		});
 	});
 }
 </script>
