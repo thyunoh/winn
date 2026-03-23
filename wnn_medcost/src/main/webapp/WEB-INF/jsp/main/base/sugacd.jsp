@@ -248,7 +248,8 @@
 	            <h6 class="modal-title">엑셀 업로드</h6>
               <div class="form-row">
                   <div class="col-sm-12 mb-2" style="text-align:right;">
-                    <button type="button" class="btn btn-outline-success" onClick="fn_ExcelSaveSelected()">선택저장. <i class="far fa-save"></i></button>
+                    <button type="button" class="btn btn-outline-primary" onClick="fn_ExcelSaveAll()">전체저장 <i class="fas fa-save"></i></button>
+                    <button type="button" class="btn btn-outline-success" onClick="fn_ExcelSaveSelected()">선택저장 <i class="far fa-save"></i></button>
                     <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="excelUpload_Close()">닫기 <i class="fas fa-times"></i></button>
                  </div>
               </div>
@@ -1630,6 +1631,7 @@
 		var excelColumnMap = {};     // 엑셀헤더 → DB컬럼 매핑
 		var excelCachedFile = null;  // 파일 캐시 (같은 파일이면 재파싱 안함)
 		var excelModalClosable = false; // 모달 닫기 허용 플래그
+		var excelCheckedSet = new Set(); // 체크된 행 인덱스 관리 (deferRender 대응)
 
 		// ============================================
 		// 엑셀 → DB 데이터 포맷 변환 함수들
@@ -2216,10 +2218,73 @@
 
 			document.getElementById('excelRowCount').textContent = '총 ' + tableData.length + '건';
 
+			// 체크 상태 초기화
+			excelCheckedSet = new Set();
+
 			// 전체선택 체크박스
 			$('#excelSelectAll').off('click').on('click', function() {
 				var checked = this.checked;
-				$('.excel-chk').prop('checked', checked);
+				if (checked) {
+					for (var i = 0; i < tableData.length; i++) excelCheckedSet.add(i);
+				} else {
+					excelCheckedSet.clear();
+				}
+				// 현재 페이지의 체크박스만 UI 반영
+				$('.excel-chk').each(function() {
+					$(this).prop('checked', checked);
+				});
+			});
+
+			// 개별 체크박스 클릭 이벤트 (이벤트 위임)
+			$('#excelPreviewTable tbody').off('change', '.excel-chk').on('change', '.excel-chk', function() {
+				var idx = $(this).data('idx');
+				if (this.checked) {
+					excelCheckedSet.add(idx);
+				} else {
+					excelCheckedSet.delete(idx);
+					$('#excelSelectAll').prop('checked', false);
+				}
+				// 전체 체크 여부
+				if (excelCheckedSet.size === tableData.length) {
+					$('#excelSelectAll').prop('checked', true);
+				}
+			});
+
+			// 페이지 변경 시 체크 상태 복원
+			excelPreviewDT.on('draw', function() {
+				$('.excel-chk').each(function() {
+					var idx = $(this).data('idx');
+					$(this).prop('checked', excelCheckedSet.has(idx));
+				});
+			});
+		}
+
+		// 전체 저장
+		function fn_ExcelSaveAll() {
+			if (!excelPreviewDT) {
+				Swal.fire({ title: '확인', text: '먼저 미리보기를 실행하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			var totalCount = excelPreviewDT.rows().count();
+			if (totalCount === 0) {
+				Swal.fire({ title: '확인', text: '저장할 데이터가 없습니다.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			Swal.fire({
+				title: '전체저장 확인',
+				text: '총 ' + totalCount + '건을 전체 저장하시겠습니까?',
+				icon: 'question',
+				showCancelButton: true,
+				confirmButtonText: '예',
+				cancelButtonText: '아니오',
+				customClass: { popup: 'small-swal' }
+			}).then(function(result) {
+				if (result.isConfirmed) {
+					// 전체 행 체크 후 선택저장 호출
+					$('.excel-chk').prop('checked', true);
+					$('#excelSelectAll').prop('checked', true);
+					fn_ExcelSaveSelected();
+				}
 			});
 		}
 
@@ -2252,10 +2317,9 @@
 				return;
 			}
 
-			// 체크된 행 수집
+			// 체크된 행 수집 (Set 기반 - 모든 페이지 포함)
 			var selectedRows = [];
-			$('.excel-chk:checked').each(function() {
-				var idx = $(this).data('idx');
+			excelCheckedSet.forEach(function(idx) {
 				var rowData = excelPreviewDT.row(idx).data();
 				if (rowData) selectedRows.push(rowData);
 			});
@@ -2308,57 +2372,98 @@
 				customClass: { popup: 'small-swal' }
 			}).then(function(result) {
 				if (result.isConfirmed) {
-					var saveData = convertedRows;
+					fn_BatchSave(convertedRows);
+				}
+			});
+		}
 
-					// 배치 저장 AJAX
-					$.ajax({
-						type: "POST",
-						url: "/base/sugaCdExcelInsert.do",
-						data: JSON.stringify(saveData),
-						contentType: "application/json",
-						dataType: "text",
-						success: function(response) {
-							var resp = JSON.parse(response);
-							var successCnt = resp.successCnt || 0;
-							var dupCnt = resp.dupCnt || 0;
-							var failCnt = resp.failCnt || 0;
+		// 배치 분할 저장 (1000건씩)
+		function fn_BatchSave(allRows) {
+			var BATCH_SIZE = 1000;
+			var totalBatches = Math.ceil(allRows.length / BATCH_SIZE);
+			var currentBatch = 0;
+			var totalSuccess = 0, totalDup = 0, totalFail = 0;
 
-							var msg = '처리완료 - 성공: ' + successCnt + '건';
-							if (dupCnt > 0) msg += ', 중복: ' + dupCnt + '건';
-							if (failCnt > 0) msg += ', 실패: ' + failCnt + '건';
+			Swal.fire({
+				title: '저장 중...',
+				html: '<div id="saveProgress">0 / ' + allRows.length + '건 처리 중...</div>' +
+				      '<div class="progress mt-2"><div id="saveProgressBar" class="progress-bar bg-success" style="width:0%">0%</div></div>',
+				allowOutsideClick: false,
+				allowEscapeKey: false,
+				showConfirmButton: false,
+				customClass: { popup: 'small-swal' }
+			});
+
+			function sendBatch() {
+				var start = currentBatch * BATCH_SIZE;
+				var end = Math.min(start + BATCH_SIZE, allRows.length);
+				var batchData = allRows.slice(start, end);
+
+				$.ajax({
+					type: "POST",
+					url: "/base/sugaCdExcelInsert.do",
+					data: JSON.stringify(batchData),
+					contentType: "application/json",
+					dataType: "text",
+					success: function(response) {
+						var resp = JSON.parse(response);
+						totalSuccess += (resp.successCnt || 0);
+						totalDup += (resp.dupCnt || 0);
+						totalFail += (resp.failCnt || 0);
+
+						currentBatch++;
+						var processed = Math.min(end, allRows.length);
+						var pct = Math.round((processed / allRows.length) * 100);
+						$('#saveProgress').text(processed + ' / ' + allRows.length + '건 처리 중...');
+						$('#saveProgressBar').css('width', pct + '%').text(pct + '%');
+
+						if (currentBatch < totalBatches) {
+							setTimeout(sendBatch, 100);
+						} else {
+							// 완료
+							var msg = '성공: ' + totalSuccess + '건';
+							if (totalDup > 0) msg += ', 중복: ' + totalDup + '건';
+							if (totalFail > 0) msg += ', 실패: ' + totalFail + '건';
 
 							Swal.fire({
-								title: '처리결과',
+								title: '처리완료',
 								text: msg,
-								icon: failCnt > 0 ? 'warning' : 'success',
+								icon: totalFail > 0 ? 'warning' : 'success',
 								confirmButtonText: '확인',
 								customClass: { popup: 'small-swal' }
 							});
 
-							// 체크된 성공행 표시 (초록색)
-							$('.excel-chk:checked').each(function() {
-								$(this).closest('tr').css('background-color', '#d4edda');
-								$(this).prop('checked', false);
-								$(this).prop('disabled', true);
-							});
+							// 성공행은 Set에서 제거하고 UI 반영
+							excelCheckedSet.clear();
+							$('#excelSelectAll').prop('checked', false);
+							$('.excel-chk').prop('checked', false);
 
 							// 메인 테이블 새로고침
 							if (dataTable && typeof dataTable.ajax !== 'undefined') {
 								dataTable.ajax.reload();
 							}
-						},
-						error: function(xhr, status, error) {
+						}
+					},
+					error: function(xhr, status, error) {
+						totalFail += batchData.length;
+						currentBatch++;
+						if (currentBatch < totalBatches) {
+							setTimeout(sendBatch, 100);
+						} else {
+							var msg = '성공: ' + totalSuccess + '건, 실패: ' + totalFail + '건';
 							Swal.fire({
-								title: '에러',
-								text: '저장 중 문제가 발생했습니다. 잠시 후 다시 시도하세요.',
-								icon: 'error',
+								title: '처리완료 (일부 실패)',
+								text: msg,
+								icon: 'warning',
 								confirmButtonText: '확인',
 								customClass: { popup: 'small-swal' }
 							});
 						}
-					});
-				}
-			});
+					}
+				});
+			}
+
+			sendBatch();
 		}
 		</script>
 		<!-- ============================================================== -->
