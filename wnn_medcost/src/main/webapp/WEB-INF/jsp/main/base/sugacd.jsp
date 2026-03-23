@@ -46,6 +46,7 @@
                                             <button  class="btn btn-outline-dark btn-update" data-toggle="tooltip" data-placement="top" title="선택 Data 수정" onClick="modal_Open('U')">수정. <i class="far fa-save"></i></button>                                            
                                             <button  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="선택 Data 삭제" onClick="modal_Open('D')">삭제. <i class="far fa-trash-alt"></i></button>                                             
                                             <button  class="btn btn-outline-dark btn-delete" data-toggle="tooltip" data-placement="top" title="체크 Data 삭제" onClick="fn_findchk()">체크삭제. <i class="far fa-calendar-check"></i></button>
+                                            <button  class="btn btn-outline-success" data-toggle="tooltip" data-placement="top" title="엑셀 파일 업로드" onClick="excelUpload_Open()">엑셀업로드. <i class="fas fa-file-excel"></i></button>
                                             <button  class="btn btn-outline-dark" data-toggle="tooltip" data-placement="top" title="화면 Size 확대.축소" id="fullscreenToggle">화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i></button>
                                         </div>
                                     </div>
@@ -70,7 +71,7 @@
 	    <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
 	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
 	                                                   transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 60vh;">
-	        <div class="modal-content" style="height: 90%;display: flex;flex-direction: column;">
+	        <div class="modal-content" style="height: 80%;display: flex;flex-direction: column;">
 	          <div class="modal-header bg-light">
 	            <h6 class="modal-title" id="modalHead"></h6> 
               <!-- ============================================================== -->
@@ -237,6 +238,63 @@
         <!-- ============================================================== -->
         <!-- modal form end -->
         <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Excel Upload modal start -->
+        <!-- ============================================================== -->
+	    <div class="modal fade" id="excelUploadModal" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
+	      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="dialog" style="width:85vw; max-width:85vw; max-height:85vh; margin:auto;">
+	        <div class="modal-content" style="height: 95%; display: flex; flex-direction: column;">
+	          <div class="modal-header bg-light">
+	            <h6 class="modal-title">엑셀 업로드</h6>
+              <div class="form-row">
+                  <div class="col-sm-12 mb-2" style="text-align:right;">
+                    <button type="button" class="btn btn-outline-success" onClick="fn_ExcelSaveSelected()">선택저장. <i class="far fa-save"></i></button>
+                    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onClick="excelUpload_Close()">닫기 <i class="fas fa-times"></i></button>
+                 </div>
+              </div>
+	          </div>
+	          <div class="modal-body" style="text-align: left; flex: 1; overflow-y: auto;">
+                <div class="form-group row mb-2">
+                    <label class="col-1 col-form-label text-left">수가구분</label>
+                    <div class="col-2">
+                        <select id="excelFeeType" class="custom-select" style="height:35px; font-size:14px;">
+                            <option value="">선택</option>
+                        </select>
+                    </div>
+                    <label class="col-1 col-form-label text-left">엑셀파일</label>
+                    <div class="col-4">
+                        <input type="file" id="excelFileInput" class="form-control" accept=".xlsx,.xls" style="height:35px; font-size:14px;">
+                    </div>
+                    <div class="col-2">
+                        <button type="button" class="btn btn-outline-primary" onClick="fn_ExcelPreview()">미리보기 <i class="fas fa-eye"></i></button>
+                    </div>
+                    <div class="col-2">
+                        <span id="excelRowCount" class="badge badge-info" style="font-size:14px; line-height:35px;"></span>
+                    </div>
+                </div>
+                <!-- 컬럼 매핑 영역 -->
+                <div id="excelMappingZone" class="form-group row mb-2" style="display:none;">
+                    <div class="col-12">
+                        <div class="alert alert-info p-2 mb-2" style="font-size:13px;">
+                            엑셀 헤더를 DB 컬럼에 매핑하세요. 자동매핑 후 필요시 수정 가능합니다.
+                        </div>
+                        <div id="mappingFields" class="form-row" style="flex-wrap:wrap;"></div>
+                    </div>
+                </div>
+                <!-- 미리보기 테이블 -->
+                <div style="width: 100%; overflow-x: auto;">
+                    <table id="excelPreviewTable" class="display nowrap stripe hover cell-border compact" style="width:100%; font-size:12px;">
+                    </table>
+                </div>
+	          </div>
+	          <div class="modal-footer">
+	          </div>
+	        </div>
+	      </div>
+	    </div>
+        <!-- ============================================================== -->
+        <!-- Excel Upload modal end -->
+        <!-- ============================================================== -->
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 Start -->
 		<!-- ============================================================== -->
@@ -311,7 +369,7 @@
 		
 		var colPadding = '0.2px'   		// 행 높이 간격 설정
 		var data_Count = [30 , 50, 70, 100, 150, 200];  // Data 보기 설정
-		var defaultCnt = 30;                      // Data Default 갯수
+		var defaultCnt = 40;                      // Data Default 갯수
 		
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
@@ -1554,10 +1612,757 @@
 	    document.addEventListener("DOMContentLoaded", function() {
 	        applyAuthControl();
 	    });
-	    
+
 		</script>
 		<!-- ============================================================== -->
 		<!-- 기타 정보 End -->
+		<!-- ============================================================== -->
+
+		<!-- ============================================================== -->
+		<!-- 엑셀 업로드 Start -->
+		<!-- ============================================================== -->
+		<script type="text/javascript">
+		console.log('[엑셀모듈] 스크립트 블록 로드됨');
+		// 엑셀 업로드 관련 변수
+		var excelParsedData = [];    // 파싱된 엑셀 데이터
+		var excelHeaders = [];       // 엑셀 헤더
+		var excelPreviewDT = null;   // 미리보기 DataTable
+		var excelColumnMap = {};     // 엑셀헤더 → DB컬럼 매핑
+		var excelCachedFile = null;  // 파일 캐시 (같은 파일이면 재파싱 안함)
+		var excelModalClosable = false; // 모달 닫기 허용 플래그
+
+		// ============================================
+		// 엑셀 → DB 데이터 포맷 변환 함수들
+		// ============================================
+
+		// 엑셀 날짜 → yyyy/mm/dd 변환 (다양한 형식 지원)
+		// 지원: 2026-12-01, 2026/12/01, 20261201, 46023(시리얼),
+		//       10/1/22, 7/1/23, 12/1/21 (M/D/YY 2자리연도)
+		function excelDateToStr(val) {
+			if (!val && val !== 0) return '';
+			var s = String(val).trim();
+			if (!s) return '';
+
+			// 2자리 연도 → 4자리 변환 (00~49→2000~2049, 50~99→1950~1999)
+			function toFullYear(yy) {
+				var n = parseInt(yy, 10);
+				return (n <= 49 ? 2000 + n : 1900 + n);
+			}
+
+			// 1) 숫자만(엑셀 시리얼 날짜) - 예: 46023, 46023.0
+			if (/^\d{5,}$/.test(s) || /^\d+\.\d+$/.test(s)) {
+				var num = parseFloat(s);
+				if (num > 1 && num < 200000) {
+					var utcDays = Math.floor(num - 25569);
+					var utcValue = utcDays * 86400 * 1000;
+					var d = new Date(utcValue);
+					var y = d.getUTCFullYear();
+					var m = ('0' + (d.getUTCMonth() + 1)).slice(-2);
+					var dd = ('0' + d.getUTCDate()).slice(-2);
+					return y + '/' + m + '/' + dd;
+				}
+			}
+
+			// 2) yyyy-mm-dd, yyyy/mm/dd, yyyy.mm.dd → yyyy/mm/dd (4자리 연도 먼저)
+			var match = s.match(/^(\d{4})[\-\/\.](\d{1,2})[\-\/\.](\d{1,2})/);
+			if (match) {
+				return match[1] + '/' + ('0' + match[2]).slice(-2) + '/' + ('0' + match[3]).slice(-2);
+			}
+
+			// 3) yyyymmdd → yyyy/mm/dd
+			var match2 = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+			if (match2) {
+				return match2[1] + '/' + match2[2] + '/' + match2[3];
+			}
+
+			// 4) M/D/YYYY (4자리연도) → yyyy/mm/dd
+			var match3 = s.match(/^(\d{1,2})[\-\/\.](\d{1,2})[\-\/\.](\d{4})$/);
+			if (match3) {
+				return match3[3] + '/' + ('0' + match3[1]).slice(-2) + '/' + ('0' + match3[2]).slice(-2);
+			}
+
+			// 5) M/D/YY (2자리연도) → yyyy/mm/dd  예: 10/1/22 → 2022/10/01
+			var match4 = s.match(/^(\d{1,2})[\-\/\.](\d{1,2})[\-\/\.](\d{2})$/);
+			if (match4) {
+				var fullY = toFullYear(match4[3]);
+				return fullY + '/' + ('0' + match4[1]).slice(-2) + '/' + ('0' + match4[2]).slice(-2);
+			}
+
+			// 6) 그 외 → 그대로 반환
+			return s;
+		}
+
+		// 숫자값 정리 (쉼표 제거, 빈값→0)
+		function toNumericStr(val) {
+			if (!val && val !== 0) return '0';
+			var s = String(val).trim();
+			if (!s) return '0';
+			// 쉼표 제거
+			s = s.replace(/,/g, '');
+			// 숫자가 아닌 경우 0
+			if (isNaN(s)) return '0';
+			return s;
+		}
+
+		// 소수점 숫자값 (상대가치점수 등)
+		function toDecimalStr(val) {
+			if (!val && val !== 0) return '0';
+			var s = String(val).trim();
+			if (!s) return '0';
+			s = s.replace(/,/g, '');
+			if (isNaN(s)) return '0';
+			return s;
+		}
+
+		// Y/N 값 정리
+		function toYNStr(val) {
+			if (!val) return 'N';
+			var s = String(val).trim().toUpperCase();
+			if (s === 'Y' || s === 'YES' || s === '1' || s === 'O' || s === '예') return 'Y';
+			return 'N';
+		}
+
+		// 문자열 값 정리 (공백 trim, null → 빈문자)
+		function toStr(val) {
+			if (!val && val !== 0) return '';
+			return String(val).trim();
+		}
+
+		// 행 전체를 DB 포맷으로 변환
+		function convertRowToDbFormat(row) {
+			return {
+				feeCode:  toStr(row.feeCode),
+				feeType:  toStr(row.feeType),
+				startDt:  excelDateToStr(row.startDt),
+				endDt:    '2099/12/31',
+				classNo:  toStr(row.classNo),
+				korNm:    toStr(row.korNm),
+				engNm:    toStr(row.engNm),
+				divType:  toStr(row.divType) || '1',
+				surgYn:   toYNStr(row.surgYn),
+				clnPrice: toNumericStr(row.clnPrice),
+				hosPrice: toNumericStr(row.hosPrice),
+				dntPrice: toNumericStr(row.dntPrice),
+				pblPrice: toNumericStr(row.pblPrice),
+				midPrice: toNumericStr(row.midPrice),
+				orhPrice: toNumericStr(row.orhPrice),
+				yngPrice: toNumericStr(row.yngPrice),
+				rltValue: toDecimalStr(row.rltValue),
+				copay50:  toYNStr(row.copay50),
+				copay80:  toYNStr(row.copay80),
+				copay90:  toYNStr(row.copay90),
+				dupYn:    toYNStr(row.dupYn),
+				calcNm:   toStr(row.calcNm),
+				secMaj:   toStr(row.secMaj),
+				secMin:   toStr(row.secMin),
+				subCat:   toStr(row.subCat)
+			};
+		}
+
+		// DB 컬럼 정의 (매핑 대상)
+		var dbColumns = [
+			{ key: 'feeCode',  label: '수가코드',   required: true },
+			{ key: 'startDt',  label: '적용시작일자', required: true },
+			{ key: 'endDt',    label: '적용종료일자', required: false },
+			{ key: 'classNo',  label: '분류기호',   required: false },
+			{ key: 'korNm',    label: '한글명',     required: true },
+			{ key: 'engNm',    label: '영문명',     required: false },
+			{ key: 'divType',  label: '1-2구분',    required: false },
+			{ key: 'surgYn',   label: '수술여부',   required: false },
+			{ key: 'clnPrice', label: '의원단가',   required: false },
+			{ key: 'hosPrice', label: '병원단가',   required: false },
+			{ key: 'dntPrice', label: '치과단가',   required: false },
+			{ key: 'pblPrice', label: '보건기관단가', required: false },
+			{ key: 'midPrice', label: '조산원단가',  required: false },
+			{ key: 'orhPrice', label: '한방단가',   required: false },
+			{ key: 'yngPrice', label: '요양정신단가', required: false },
+			{ key: 'rltValue', label: '상대가치점수', required: false },
+			{ key: 'copay50',  label: '본인부담50',  required: false },
+			{ key: 'copay80',  label: '본인부담80',  required: false },
+			{ key: 'copay90',  label: '본인부담90',  required: false },
+			{ key: 'dupYn',    label: '중복인정',    required: false },
+			{ key: 'calcNm',   label: '산정명칭',   required: false },
+			{ key: 'secMaj',   label: '장구분',     required: false },
+			{ key: 'secMin',   label: '절구분',     required: false },
+			{ key: 'subCat',   label: '세분류',     required: false }
+		];
+
+		// 자동매핑 키워드 (엑셀 헤더 → DB 컬럼)
+		var autoMapKeywords = {
+			'feeCode':  ['수가코드','약품코드','재료코드','코드','fee_code','feecode','code'],
+			'startDt':  ['적용시작일자','적용일자','시작일자','시작일','적용시작','start_dt','startdt','적용개시'],
+			'endDt':    ['적용종료일자','종료일자','종료일','적용종료','end_dt','enddt'],
+			'classNo':  ['분류기호','분류번호','분류','class_no','classno'],
+			'korNm':    ['한글명','품명','한글','명칭','kor_nm','kornm','한글명칭','재료명'],
+			'engNm':    ['영문명','영문','eng_nm','engnm','영문명칭'],
+			'divType':  ['1-2구분','행위구분','div_type','divtype'],
+			'surgYn':   ['수술여부','수술','surg_yn','surgyn'],
+			'clnPrice': ['의원단가','의원','cln_price','clnprice'],
+			'hosPrice': ['병원단가','병원급','병원','상한금액','상한가','hos_price','hosprice'],
+			'dntPrice': ['치과단가','치과','dnt_price','dntprice'],
+			'pblPrice': ['보건기관단가','보건기관','보건','pbl_price','pblprice'],
+			'midPrice': ['조산원단가','조산원','조산','mid_price','midprice'],
+			'orhPrice': ['한방단가','한방병원','한방','orh_price','orhprice'],
+			'yngPrice': ['요양정신단가','요양정신','요양','yng_price','yngprice'],
+			'rltValue': ['상대가치','상대점수','rlt_value','rltvalue','점수'],
+			'copay50':  ['본인부담률50/100','본인부담율50/100','본인부담률50','본인부담률A','본인부담50','본인50','copay_50','copay50','50/100'],
+			'copay80':  ['본인부담률80/100','본인부담율80/100','본인부담률80','본인부담률B','본인부담80','본인80','copay_80','copay80','80/100'],
+			'copay90':  ['본인부담률90/100','본인부담율90/100','본인부담률90','본인부담90','본인90','copay_90','copay90','90/100'],
+			'dupYn':    ['중복인정','중복','dup_yn','dupyn'],
+			'calcNm':   ['산정명칭','산정','calc_nm','calcnm'],
+			'secMaj':   ['장구분','sec_maj','secmaj'],
+			'secMin':   ['절구분','sec_min','secmin'],
+			'subCat':   ['세분류','세구분','sub_cat','subcat']
+		};
+
+		// 엑셀 업로드 모달 열기
+		function excelUpload_Open() {
+			console.log('[엑셀모듈] excelUpload_Open 호출됨');
+			// 수가구분 옵션 복사
+			var srcSelect = document.getElementById('feeType1');
+			var tgtSelect = document.getElementById('excelFeeType');
+			tgtSelect.innerHTML = '<option value="">선택</option>';
+			for (var i = 0; i < srcSelect.options.length; i++) {
+				var opt = srcSelect.options[i];
+				tgtSelect.innerHTML += '<option value="' + opt.value + '">' + opt.text + '</option>';
+			}
+			// 초기화
+			document.getElementById('excelFileInput').value = '';
+			document.getElementById('excelRowCount').textContent = '';
+			document.getElementById('excelMappingZone').style.display = 'none';
+			document.getElementById('mappingFields').innerHTML = '';
+			if (excelPreviewDT) {
+				excelPreviewDT.destroy();
+				$('#excelPreviewTable').empty();
+				excelPreviewDT = null;
+			}
+			excelParsedData = [];
+			excelHeaders = [];
+			excelColumnMap = {};
+
+			// 닫기 버튼으로만 닫기 가능 (바깥 클릭, ESC 차단)
+			excelModalClosable = false;
+			$('#excelUploadModal').off('hide.bs.modal.lock').on('hide.bs.modal.lock', function(e) {
+				if (!excelModalClosable) { e.preventDefault(); e.stopImmediatePropagation(); }
+			});
+			$("#excelUploadModal").modal('show');
+		}
+
+		// 엑셀 업로드 모달 닫기
+		function excelUpload_Close() {
+			if (excelPreviewDT) {
+				excelPreviewDT.destroy();
+				$('#excelPreviewTable').empty();
+				excelPreviewDT = null;
+			}
+			excelParsedData = [];
+			excelCachedFile = null;
+			excelModalClosable = true;
+			$("#excelUploadModal").modal('hide');
+		}
+
+		// 엑셀 미리보기
+		function fn_ExcelPreview() {
+			console.log('[엑셀모듈] fn_ExcelPreview 호출됨');
+			var feeType = document.getElementById('excelFeeType').value;
+			if (!feeType) {
+				Swal.fire({ title: '확인', text: '수가구분을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			var fileInput = document.getElementById('excelFileInput');
+			if (!fileInput.files || fileInput.files.length === 0) {
+				Swal.fire({ title: '확인', text: '엑셀 파일을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+
+			var file = fileInput.files[0];
+
+			// 같은 파일이면 파싱 건너뛰고 테이블만 재생성
+			var fileKey = file.name + '_' + file.size + '_' + file.lastModified;
+			if (excelCachedFile === fileKey && excelParsedData.length > 0) {
+				autoMapColumns();
+				buildMappingUI();
+				buildPreviewTable(feeType);
+				return;
+			}
+			excelCachedFile = fileKey;
+
+			// 진행상황 표시
+			Swal.fire({
+				title: '엑셀 읽는 중...',
+				html: '<div id="excelProgress" style="font-size:14px;">파일 읽기 준비 중...</div>' +
+				      '<div class="progress mt-2" style="height:20px;">' +
+				      '<div id="excelProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width:0%">0%</div></div>',
+				allowOutsideClick: false,
+				allowEscapeKey: false,
+				showConfirmButton: false,
+				customClass: { popup: 'small-swal' }
+			});
+
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				$('#excelProgress').text('엑셀 파일 파싱 중... (대용량 파일은 시간이 걸립니다)');
+				$('#excelProgressBar').css({ 'width': '10%', 'transition': 'width 8s ease-out' }).text('파싱 중...');
+				requestAnimationFrame(function() { $('#excelProgressBar').css('width', '45%'); });
+
+				setTimeout(function() {
+					try {
+						console.log('[엑셀] XLSX.read 시작 (ArrayBuffer + dense)...');
+						var workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', dense: true });
+						console.log('[엑셀] XLSX.read 완료. 시트수:', workbook.SheetNames.length);
+
+						// 디버그: 각 시트의 상세 정보
+						for (var dbg = 0; dbg < workbook.SheetNames.length; dbg++) {
+							var dbgWs = workbook.Sheets[workbook.SheetNames[dbg]];
+							var dbgKeys = dbgWs ? Object.keys(dbgWs) : [];
+							var dbgCellKeys = dbgKeys.filter(function(k){ return k[0] !== '!'; });
+							var dbgMetaKeys = dbgKeys.filter(function(k){ return k[0] === '!'; });
+							console.log('[엑셀] 시트[' + dbg + '] "' + workbook.SheetNames[dbg] + '"',
+								'| !ref:', dbgWs ? dbgWs['!ref'] : 'null',
+								'| 전체키:', dbgKeys.length,
+								'| 셀키:', dbgCellKeys.length,
+								'| 메타키:', dbgMetaKeys,
+								'| 셀샘플:', dbgCellKeys.slice(0, 5),
+								'| !data:', dbgWs && dbgWs['!data'] ? '있음(행수:' + dbgWs['!data'].length + ')' : '없음'
+							);
+						}
+
+						// 데이터가 있는 첫 번째 시트 자동 선택
+						var ws = null;
+						var usedSheetName = '';
+
+						// 1차: !ref 있는 시트
+						for (var si = 0; si < workbook.SheetNames.length; si++) {
+							var tmpWs = workbook.Sheets[workbook.SheetNames[si]];
+							if (tmpWs && tmpWs['!ref']) {
+								ws = tmpWs;
+								usedSheetName = workbook.SheetNames[si];
+								break;
+							}
+						}
+						// 2차: !ref 없어도 셀이 있으면 사용
+						if (!ws) {
+							for (var si2 = 0; si2 < workbook.SheetNames.length; si2++) {
+								var tmpWs2 = workbook.Sheets[workbook.SheetNames[si2]];
+								if (tmpWs2) {
+									var keys = Object.keys(tmpWs2).filter(function(k){ return k[0] !== '!'; });
+									if (keys.length > 0) {
+										ws = tmpWs2;
+										usedSheetName = workbook.SheetNames[si2];
+										break;
+									}
+								}
+							}
+						}
+						// 3차: !data 배열이 있으면 사용 (dense 모드)
+						if (!ws) {
+							for (var si3 = 0; si3 < workbook.SheetNames.length; si3++) {
+								var tmpWs3 = workbook.Sheets[workbook.SheetNames[si3]];
+								if (tmpWs3 && tmpWs3['!data'] && tmpWs3['!data'].length > 0) {
+									ws = tmpWs3;
+									usedSheetName = workbook.SheetNames[si3];
+									// dense 모드 → !ref 생성
+									ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws['!data'].length - 1, c: (ws['!data'][0] || []).length - 1 } });
+									console.log('[엑셀] dense 모드 시트 발견, !ref 생성:', ws['!ref']);
+									break;
+								}
+							}
+						}
+						if (!ws) {
+							Swal.close();
+							Swal.fire({ title: '확인', text: '엑셀에 데이터가 없습니다.', icon: 'warning', timer: 2000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+							return;
+						}
+						console.log('[엑셀] 사용 시트:', usedSheetName, '| !ref:', ws['!ref']);
+
+						$('#excelProgressBar').css({ 'transition': 'none', 'width': '50%' }).text('50%');
+						$('#excelProgress').text(usedSheetName + ' 시트 변환 중...');
+
+						console.log('[엑셀] sheet_to_json 시작...');
+						var jsonData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+						console.log('[엑셀] sheet_to_json 완료. 행수:', jsonData.length);
+						ws = null; workbook = null;
+
+						// 빈 행 제거
+						var filtered = [jsonData[0]];
+						for (var i = 1; i < jsonData.length; i++) {
+							var row = jsonData[i];
+							for (var c = 0; c < row.length; c++) {
+								if (row[c] !== '' && row[c] !== null && row[c] !== undefined) { filtered.push(row); break; }
+							}
+						}
+						console.log('[엑셀] 빈행 제거 후:', filtered.length, '건');
+						jsonData = null;
+						processJsonData(filtered, feeType);
+					} catch(ex) {
+						console.error('[엑셀] 오류 발생:', ex);
+						Swal.close();
+						Swal.fire({ title: '오류', text: '파싱 실패: ' + ex.message, icon: 'error', showConfirmButton: true, customClass: { popup: 'small-swal' } });
+					}
+				}, 100);
+			};
+			reader.readAsArrayBuffer(file);
+		}
+
+		// 파싱된 jsonData를 excelParsedData로 변환 + 미리보기
+		function processJsonData(jsonData, feeType) {
+			if (jsonData.length < 2) {
+				Swal.close();
+				Swal.fire({ title: '확인', text: '데이터가 부족합니다. (최소 헤더 + 1행)', icon: 'warning', timer: 2000, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+
+			$('#excelProgress').text('데이터 변환 중... (총 ' + (jsonData.length - 1) + '건)');
+			$('#excelProgressBar').css('width', '50%').text('50%');
+
+			excelHeaders = jsonData[0].map(function(h) { return String(h).trim(); });
+			excelParsedData = [];
+			var totalData = jsonData.length - 1;
+
+			// 청크 처리 (5000건씩)
+			var chunkSize = 5000;
+			var chunkIdx = 0;
+
+			function processChunk() {
+				var start = chunkIdx * chunkSize + 1;
+				var end = Math.min(start + chunkSize, jsonData.length);
+
+				for (var i = start; i < end; i++) {
+					var row = {};
+					for (var j = 0; j < excelHeaders.length; j++) {
+						var cellVal = jsonData[i][j];
+						row[excelHeaders[j]] = (cellVal !== undefined && cellVal !== null) ? String(cellVal).trim() : '';
+					}
+					excelParsedData.push(row);
+				}
+
+				var pct = Math.round(50 + (end / jsonData.length) * 40);
+				$('#excelProgressBar').css('width', pct + '%').text(pct + '%');
+				$('#excelProgress').text('데이터 변환 중... (' + excelParsedData.length + ' / ' + totalData + '건)');
+
+				chunkIdx++;
+				if (end < jsonData.length) {
+					setTimeout(processChunk, 0);
+				} else {
+					jsonData = null;
+					finishPreview(feeType);
+				}
+			}
+
+			setTimeout(processChunk, 0);
+		}
+
+		// 미리보기 완료 처리
+		function finishPreview(feeType) {
+			$('#excelProgress').text('컬럼 자동 매핑 중...');
+			$('#excelProgressBar').css('width', '92%').text('92%');
+
+			autoMapColumns();
+			buildMappingUI();
+
+			$('#excelProgress').text('미리보기 테이블 생성 중...');
+			$('#excelProgressBar').css('width', '96%').text('96%');
+
+			setTimeout(function() {
+				buildPreviewTable(feeType);
+				$('#excelProgressBar').css('width', '100%').text('100%');
+				$('#excelProgress').text('완료! 총 ' + excelParsedData.length + '건 로드됨');
+				setTimeout(function() { Swal.close(); }, 500);
+			}, 0);
+		}
+
+		// 자동 매핑
+		function autoMapColumns() {
+			excelColumnMap = {};
+			for (var i = 0; i < excelHeaders.length; i++) {
+				var header = excelHeaders[i].toLowerCase().replace(/[\s_\-\/]/g, '');
+				for (var dbKey in autoMapKeywords) {
+					var keywords = autoMapKeywords[dbKey];
+					for (var k = 0; k < keywords.length; k++) {
+						var kw = keywords[k].toLowerCase().replace(/[\s_\-\/]/g, '');
+						if (header.indexOf(kw) !== -1 || kw.indexOf(header) !== -1) {
+							if (!excelColumnMap[dbKey]) {
+								excelColumnMap[dbKey] = excelHeaders[i];
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		// 매핑 UI 생성
+		function buildMappingUI() {
+			var zone = document.getElementById('mappingFields');
+			zone.innerHTML = '';
+			document.getElementById('excelMappingZone').style.display = '';
+
+			for (var i = 0; i < dbColumns.length; i++) {
+				var col = dbColumns[i];
+				var div = document.createElement('div');
+				div.className = 'mb-1';
+				div.style.cssText = 'flex: 0 0 14.28%; max-width: 14.28%; padding: 2px 4px;';
+
+				var label = document.createElement('label');
+				label.style.fontSize = '12px';
+				label.style.marginBottom = '0';
+				label.textContent = col.label + (col.required ? ' *' : '');
+				if (col.required) label.style.color = '#dc3545';
+
+				var select = document.createElement('select');
+				select.className = 'form-control form-control-sm';
+				select.id = 'map_' + col.key;
+				select.style.fontSize = '11px';
+				select.innerHTML = '<option value="">-- 미매핑 --</option>';
+				for (var j = 0; j < excelHeaders.length; j++) {
+					var selected = (excelColumnMap[col.key] === excelHeaders[j]) ? ' selected' : '';
+					select.innerHTML += '<option value="' + excelHeaders[j] + '"' + selected + '>' + excelHeaders[j] + '</option>';
+				}
+				// 미매핑 시 빨간색 배경
+				select.style.backgroundColor = select.value ? '' : '#ffe0e0';
+				select.onchange = function() { this.style.backgroundColor = this.value ? '' : '#ffe0e0'; };
+
+				div.appendChild(label);
+				div.appendChild(select);
+				zone.appendChild(div);
+			}
+		}
+
+		// 현재 매핑 읽기
+		function getCurrentMapping() {
+			var map = {};
+			for (var i = 0; i < dbColumns.length; i++) {
+				var sel = document.getElementById('map_' + dbColumns[i].key);
+				if (sel && sel.value) {
+					map[dbColumns[i].key] = sel.value;
+				}
+			}
+			return map;
+		}
+
+		// 미리보기 테이블 생성 (엑셀 원본 데이터 그대로 표시)
+		function buildPreviewTable(feeType) {
+			if (excelPreviewDT) {
+				excelPreviewDT.destroy();
+				$('#excelPreviewTable').empty();
+				excelPreviewDT = null;
+			}
+
+			// 엑셀 원본 헤더 기준으로 컬럼 구성
+			var previewCols = [
+				{ data: null, title: '<input type="checkbox" id="excelSelectAll">', orderable: false, searchable: false, className: 'dt-body-center', width: '30px',
+				  render: function(data, type, row, meta) {
+					return '<input type="checkbox" class="excel-chk" data-idx="' + meta.row + '">';
+				  }
+				},
+				{ data: null, title: 'No', orderable: false, className: 'dt-body-center', width: '40px',
+				  render: function(data, type, row, meta) { return meta.row + 1; }
+				}
+			];
+
+			// 엑셀 원본 헤더로 컬럼 동적 생성
+			for (var i = 0; i < excelHeaders.length; i++) {
+				(function(header) {
+					previewCols.push({
+						data: header,
+						title: header,
+						defaultContent: '',
+						className: 'dt-body-left',
+						render: function(data, type) {
+							if (type === 'display' && data && String(data).length > 100) {
+								var safe = $('<span>').text(data).html();
+								return '<span title="' + safe + '">' + $('<span>').text(String(data).substr(0, 100)).html() + '...</span>';
+							}
+							return data;
+						}
+					});
+				})(excelHeaders[i]);
+			}
+
+			// 엑셀 원본 데이터를 그대로 테이블에 표시
+			var tableData = [];
+			for (var i = 0; i < excelParsedData.length; i++) {
+				var row = $.extend({}, excelParsedData[i]);
+				row._rowIdx = i;
+				tableData.push(row);
+			}
+
+			excelPreviewDT = $('#excelPreviewTable').DataTable({
+				data: tableData,
+				columns: previewCols,
+				scrollX: true,
+				scrollY: 350,
+				paging: true,
+				pageLength: 50,
+				lengthMenu: [50, 100, 200, 500],
+				ordering: true,
+				searching: true,
+				info: true,
+				deferRender: true,
+				processing: true,
+				language: {
+					search: "검색 : ",
+					emptyTable: "데이터가 없습니다.",
+					lengthMenu: "_MENU_",
+					info: "현재 _START_ - _END_ / 총 _TOTAL_건",
+					infoEmpty: "데이터 없음",
+					processing: "처리 중...",
+					paginate: { "next": "다음", "previous": "이전" }
+				},
+				rowCallback: function(row, data, index) {
+					$(row).find('td').css('padding', '1px 4px');
+				}
+			});
+
+			document.getElementById('excelRowCount').textContent = '총 ' + tableData.length + '건';
+
+			// 전체선택 체크박스
+			$('#excelSelectAll').off('click').on('click', function() {
+				var checked = this.checked;
+				$('.excel-chk').prop('checked', checked);
+			});
+		}
+
+		// 선택된 행 저장 (저장 시에만 매핑 적용하여 DB 포맷으로 변환)
+		function fn_ExcelSaveSelected() {
+			var feeType = document.getElementById('excelFeeType').value;
+			if (!feeType) {
+				Swal.fire({ title: '확인', text: '수가구분을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			if (!excelPreviewDT) {
+				Swal.fire({ title: '확인', text: '먼저 미리보기를 실행하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+
+			// 현재 매핑 가져오기
+			var map = getCurrentMapping();
+
+			// 필수 매핑 검증
+			if (!map.feeCode) {
+				Swal.fire({ title: '확인', text: '수가코드 매핑을 선택하세요.', icon: 'warning', timer: 2000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			if (!map.startDt) {
+				Swal.fire({ title: '확인', text: '적용시작일자 매핑을 선택하세요.', icon: 'warning', timer: 2000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			if (!map.korNm) {
+				Swal.fire({ title: '확인', text: '한글명 매핑을 선택하세요.', icon: 'warning', timer: 2000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+				return;
+			}
+
+			// 체크된 행 수집
+			var selectedRows = [];
+			$('.excel-chk:checked').each(function() {
+				var idx = $(this).data('idx');
+				var rowData = excelPreviewDT.row(idx).data();
+				if (rowData) selectedRows.push(rowData);
+			});
+
+			if (selectedRows.length === 0) {
+				Swal.fire({ title: '확인', text: '저장할 행을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+
+			// 매핑 적용하여 DB 포맷 변환
+			var regUser = getCookie("s_userid") || '';
+			var regIp = getCookie("s_connip") || '';
+			var convertedRows = [];
+			for (var i = 0; i < selectedRows.length; i++) {
+				var excelRow = selectedRows[i];
+				// 엑셀 원본 → 매핑으로 DB 필드에 대입
+				var rawMapped = {};
+				for (var dbKey in map) {
+					var excelCol = map[dbKey];
+					rawMapped[dbKey] = excelRow[excelCol] !== undefined ? excelRow[excelCol] : '';
+				}
+				rawMapped.feeType = feeType;
+				// 약가, 재료대 선택 시 1-2구분 무조건 '1'
+				if (feeType !== '1') {
+					rawMapped.divType = '1';
+				}
+				// DB 포맷 변환 (날짜, 숫자, Y/N)
+				var converted = convertRowToDbFormat(rawMapped);
+				converted.feeType = feeType;
+				converted.regUser = regUser;
+				converted.regIp   = regIp;
+				converted.updUser = regUser;
+				converted.updIp   = regIp;
+
+				// 필수값 검증
+				if (!converted.feeCode || !converted.startDt || !converted.korNm) {
+					Swal.fire({ title: '확인', text: (i + 1) + '번째 행: 수가코드, 시작일자, 한글명 값이 비어있습니다.', icon: 'warning', timer: 3000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+					return;
+				}
+				convertedRows.push(converted);
+			}
+
+			Swal.fire({
+				title: '저장확인',
+				text: convertedRows.length + '건을 저장하시겠습니까?',
+				icon: 'question',
+				showCancelButton: true,
+				confirmButtonText: '예',
+				cancelButtonText: '아니오',
+				customClass: { popup: 'small-swal' }
+			}).then(function(result) {
+				if (result.isConfirmed) {
+					var saveData = convertedRows;
+
+					// 배치 저장 AJAX
+					$.ajax({
+						type: "POST",
+						url: "/base/sugaCdExcelInsert.do",
+						data: JSON.stringify(saveData),
+						contentType: "application/json",
+						dataType: "text",
+						success: function(response) {
+							var resp = JSON.parse(response);
+							var successCnt = resp.successCnt || 0;
+							var dupCnt = resp.dupCnt || 0;
+							var failCnt = resp.failCnt || 0;
+
+							var msg = '처리완료 - 성공: ' + successCnt + '건';
+							if (dupCnt > 0) msg += ', 중복: ' + dupCnt + '건';
+							if (failCnt > 0) msg += ', 실패: ' + failCnt + '건';
+
+							Swal.fire({
+								title: '처리결과',
+								text: msg,
+								icon: failCnt > 0 ? 'warning' : 'success',
+								confirmButtonText: '확인',
+								customClass: { popup: 'small-swal' }
+							});
+
+							// 체크된 성공행 표시 (초록색)
+							$('.excel-chk:checked').each(function() {
+								$(this).closest('tr').css('background-color', '#d4edda');
+								$(this).prop('checked', false);
+								$(this).prop('disabled', true);
+							});
+
+							// 메인 테이블 새로고침
+							if (dataTable && typeof dataTable.ajax !== 'undefined') {
+								dataTable.ajax.reload();
+							}
+						},
+						error: function(xhr, status, error) {
+							Swal.fire({
+								title: '에러',
+								text: '저장 중 문제가 발생했습니다. 잠시 후 다시 시도하세요.',
+								icon: 'error',
+								confirmButtonText: '확인',
+								customClass: { popup: 'small-swal' }
+							});
+						}
+					});
+				}
+			});
+		}
+		</script>
+		<!-- ============================================================== -->
+		<!-- 엑셀 업로드 End -->
 		<!-- ============================================================== -->
 
 		

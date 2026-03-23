@@ -180,9 +180,53 @@ public class BaseController {
             
         }
 	}
+	@RequestMapping(value="/sugaCdExcelInsert.do", method = RequestMethod.POST)
+	@ResponseBody
+    public ResponseEntity<Map<String, Object>> sugaExcelInsert(@RequestBody List<SugaCdDTO> data) {
+
+		System.out.println("Excel Insert 시작 - 건수: " + data.size());
+		int successCnt = 0;
+		int dupCnt = 0;
+		int failCnt = 0;
+
+        try {
+        	for (SugaCdDTO dto : data) {
+        		try {
+	        		String dupchk = svc.SugaCdMstDupChk(dto);
+	        		if ("Y".equals(dupchk)) {
+	        			dupCnt++;
+	        			continue;
+	        		}
+	        		svc.insertSugaCdMst(dto);
+	        		successCnt++;
+        		} catch (Exception e) {
+        			failCnt++;
+        			System.out.println("Excel Insert 실패 - FeeCode: " + dto.getFeeCode() + " / " + e.getMessage());
+        		}
+            }
+
+        	Map<String, Object> result = new HashMap<>();
+        	result.put("successCnt", successCnt);
+        	result.put("dupCnt", dupCnt);
+        	result.put("failCnt", failCnt);
+
+        	System.out.println("Excel Insert 완료 - 성공:" + successCnt + " 중복:" + dupCnt + " 실패:" + failCnt);
+
+        	return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+        	Map<String, Object> result = new HashMap<>();
+        	result.put("successCnt", successCnt);
+        	result.put("dupCnt", dupCnt);
+        	result.put("failCnt", failCnt);
+        	result.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+	}
+
 	@RequestMapping(value="/sugaCdUpdate.do", method = RequestMethod.POST)
     public ResponseEntity<String> sugaUpdate(@RequestBody List<SugaCdDTO> data) {
-	
+
 		System.out.println("Update 시작했음");
 		String returnValue = "OK";
 		// 처리 로직

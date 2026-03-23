@@ -50,7 +50,32 @@
       "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")",
       "Bash(cp \"C:/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/Magam_SQL.xml\" \"C:/Users/user/git/winn/wnn_medcost/target/wnn_medcost-1.0.0/WEB-INF/classes/egovframework/sqlmap/mapper/Magam_SQL.xml\")",
       "Bash(grep -r \"ajax\\\\|jQuery\\\\|$.post\\\\|$.get\" \"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_consult\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\jsp\\\\login\" --include=\"*.jsp\")",
-      "Bash(find C:/Users/user/git/winn/wnn_consult/src/main/webapp -name *.jsp -type f)"
+      "Bash(find C:/Users/user/git/winn/wnn_consult/src/main/webapp -name *.jsp -type f)",
+      "Bash(find /c/Users/user/git/winn/wnn_medcost/src/main/resources -type f -name *Mapper.xml)",
+      "Bash(grep -r \"sugacd\\\\|suga\" /c/Users/user/git/winn/wnn_medcost/src/main/resources --include=*.xml)",
+      "Bash(grep -r sugacd /c/Users/user/git/winn/wnn_medcost/src --include=*.java --include=*.xml --include=*.jsp)",
+      "Bash(grep -r suga /c/Users/user/git/winn/wnn_medcost/src/main/java --include=*.java)",
+      "Bash(grep -r \"fn_Insert\\\\|fn_Update\\\\|fn_Delete\\\\|fn_FindData\" /c/Users/user/git/winn/wnn_medcost/src/main/webapp --include=*.js)",
+      "Bash(grep -r XLSX C:Usersusergitwinnwnn_medcostsrcmainwebapp --include=*.html --include=*.jsp --include=*.js)",
+      "Read(//c/Users/user/git/winn/**)",
+      "Bash(pip install:*)",
+      "Bash(ls /c/Users/user/AppData/Local/Programs/Python/*/python.exe /c/Users/user/AppData/Local/Programs/Python/*/Scripts/pip.exe)",
+      "Bash(ls /c/Python3*/python.exe)",
+      "Bash(java -version)",
+      "Bash(java -cp \"wnn_medcost/src/main/webapp/WEB-INF/lib/*\" -Dfile.encoding=UTF-8 -e \":*)",
+      "Bash(CP=\"/c/Users/user/.m2/repository/org/apache/poi/poi/3.17/poi-3.17.jar;/c/Users/user/.m2/repository/org/apache/poi/poi-ooxml/3.17/poi-ooxml-3.17.jar;/c/Users/user/.m2/repository/org/apache/poi/poi-ooxml-schemas/3.17/poi-ooxml-schemas-3.17.jar;/c/Users/user/.m2/repository/org/apache/xmlbeans/xmlbeans/2.6.0/xmlbeans-2.6.0.jar\")",
+      "Read(//c/tmp/**)",
+      "Bash(javac -cp \"$CP\" -encoding UTF-8 ReadExcel.java)",
+      "Bash(java -cp \".:$CP\" -Dfile.encoding=UTF-8 ReadExcel)",
+      "Bash(CP=\"C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi\\\\3.17\\\\poi-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi-ooxml\\\\3.17\\\\poi-ooxml-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi-ooxml-schemas\\\\3.17\\\\poi-ooxml-schemas-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\xmlbeans\\\\xmlbeans\\\\2.6.0\\\\xmlbeans-2.6.0.jar\")",
+      "Bash(java -cp \".;$CP\" -Dfile.encoding=UTF-8 ReadExcel)",
+      "Bash(find /c/Users/user/.m2/repository -name commons-collections4*.jar)",
+      "Bash(find /c/Users/user/git/winn -name commons-collections4*.jar)",
+      "Bash(find /c/Users/user/git/winn/wnn_medcost -name *.jar -path */lib/*)",
+      "Bash(LIBDIR=\"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\lib\" CP=\"C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi\\\\3.17\\\\poi-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi-ooxml\\\\3.17\\\\poi-ooxml-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi-ooxml-schemas\\\\3.17\\\\poi-ooxml-schemas-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\xmlbeans\\\\xmlbeans\\\\2.6.0\\\\xmlbeans-2.6.0.jar;$LIBDIR\\\\commons-collections4-4.4.jar;$LIBDIR\\\\commons-codec-1.13.jar;$LIBDIR\\\\commons-compress-1.19.jar;$LIBDIR\\\\commons-math3-3.6.1.jar;$LIBDIR\\\\xmlbeans-3.1.0.jar\" cd /tmp)",
+      "Bash(java -Xmx2g -cp \".;$CP\" -Dfile.encoding=UTF-8 ReadExcel)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/dfd5c531-26dd-48b3-b065-caa98ae779be/1710df4c-55f6-4daa-b2f5-24039ad0f42c/skills/xlsx/**)",
+      "Bash(where node:*)"
     ]
   }
 }
