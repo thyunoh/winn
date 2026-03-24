@@ -2277,8 +2277,7 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 		                    }
 		                }
 		            });
-		            
-		            
+ 
 		            const setValues = [
 		                parseFloat(replaceMulti(response.resultData[7,6].fr_yymm, ",")),
 		                parseFloat(replaceMulti(response.resultData[7,6].midyymm, ",")),

@@ -179,7 +179,7 @@
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12" style="display:flex; justify-content:center;">
                         <div class="asq-popup-card">
                             <!-- 타이틀 -->
-                            <h2 class="asq-title">상담문의 목록</h2>
+                            <h2 class="asq-title">1:1 문의목록</h2>
 
                             <!-- 툴바 -->
                             <div id="topControlBar" class="asq-toolbar" style="display:none;">

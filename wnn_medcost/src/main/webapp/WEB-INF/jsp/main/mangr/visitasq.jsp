@@ -9,9 +9,23 @@
 <!-- Customized Bootstrap Stylesheet -->
 <link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
     <style>
-        .dataTables_scrollHead thead th { text-align: center !important; }
+        .small-swal .swal2-icon { transform: scale(0.65); margin: 4px auto; }
+        .small-swal .swal2-title { font-size: 15px; padding: 4px 0 0 0; margin: 0; }
+        .small-swal .swal2-html-container { font-size: 13px; margin: 4px 0; padding: 0; }
+        .small-swal .swal2-actions { margin: 6px 0 4px 0; }
+        .small-swal .swal2-actions button { font-size: 13px; padding: 5px 18px; }
+
+        .dataTables_scrollHead thead th,
+        .dataTables_scrollHead th,
+        .dt-scroll-head thead th,
+        .dt-scroll-head th,
+        .dataTables_wrapper thead th,
+        .dataTables_wrapper th,
+        #visitAsqTable th,
+        #visitAsqTable td,
+        table.dataTable thead th,
+        table.dataTable thead td { text-align: center !important; }
         .dataTables_scrollBody tbody td { font-weight: normal !important; text-align: center !important; }
-        #visitAsqTable th, #visitAsqTable td { text-align: center !important; }
 
         /* ===== 사이트방문문의 목록 컨셉 스타일 (asqcd 동일) ===== */
         .asq-popup-card {
@@ -179,8 +193,8 @@
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12" style="display:flex; justify-content:center;">
                         <div class="asq-popup-card" style="border: 1px solid #ccc; width:100%;">
                             <!-- 타이틀 -->
-                            <h2 class="asq-title" style="font-size:20px; font-weight:800; color:#000; background:#d6e4f0; margin:0; padding:16px 28px; border-bottom:1px solid #b0c4d8;">
-                                <i class="fas fa-building"></i> 사이트방문문의 목록
+                            <h2 class="asq-title" style="font-size:20px; font-weight:800; color:#000;  margin:0; padding:16px 28px; border-bottom:1px solid #b0c4d8;">
+                                1:1 상담목록
                             </h2>
 
                             <!-- 툴바 -->
@@ -307,11 +321,11 @@
                                         <div class="visit-detail-label">개인정보동의</div>
                                         <div class="visit-detail-value" id="dtl_accpetYn">-</div>
                                     </div>
-                                    <div class="col-4">
+                                    <div class="col-3">
                                         <div class="visit-detail-label">확인여부</div>
                                         <div class="visit-detail-value" id="dtl_comformYn">-</div>
                                     </div>
-                                    <div class="col-4">
+                                    <div class="col-5">
                                         <div class="visit-detail-label">등록일시</div>
                                         <div class="visit-detail-value" id="dtl_regDttm">-</div>
                                     </div>
@@ -354,11 +368,11 @@ function fnVisitSearch() {
                 visitDataList = res.data || [];
                 fnRenderVisitTable(visitDataList);
             } else {
-                Swal.fire('오류', '데이터 조회 중 오류가 발생했습니다.', 'error');
+                Swal.fire({title:'오류', text:'데이터 조회 중 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'small-swal'}});
             }
         },
         error: function() {
-            Swal.fire('오류', '서버 통신 오류가 발생했습니다.', 'error');
+            Swal.fire({title:'오류', text:'서버 통신 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'small-swal'}});
         }
     });
 }
@@ -386,9 +400,9 @@ function fnRenderVisitTable(dataList) {
               return arr.join(', ');
           }
         },
-        { title: "신청자",    data: "userNm",    className: "dt-center", width: "70px" },
+        { title: "신청자",     data: "userNm",    className: "dt-center", width: "70px" },
         { title: "직위",      data: "userPosi",  className: "dt-center", width: "70px" },
-        { title: "연락처",    data: "userPhone", className: "dt-center", width: "110px" },
+        { title: "연락처",     data: "userPhone", className: "dt-center", width: "110px" },
         { title: "확인",      data: "comformYn", className: "dt-center", width: "50px",
           render: function(data) {
               return data === 'Y'
@@ -404,13 +418,14 @@ function fnRenderVisitTable(dataList) {
     visitDataTable = $('#visitAsqTable').DataTable({
         data: dataList,
         columns: columns,
+        columnDefs: [{ className: 'dt-center', targets: '_all' }],
         paging: true,
         pageLength: 30,
         lengthMenu: [[15, 30, 50, -1], [15, 30, 50, "전체"]],
         searching: false,
         info: true,
         ordering: true,
-        order: [[0, 'desc']],
+        order: [[8, 'asc'], [0, 'desc']],
         scrollX: true,
         scrollY: "calc(100vh - 340px)",
         scrollCollapse: true,
@@ -500,6 +515,8 @@ function fnComformSave(yn) {
         title: '확인',
         text: msg,
         icon: 'question',
+        width: 340,
+        customClass: { popup: 'swal2-sm' },
         showCancelButton: true,
         confirmButtonText: '예',
         cancelButtonText: '아니오'
@@ -512,15 +529,16 @@ function fnComformSave(yn) {
                 dataType: "json",
                 success: function(res) {
                     if (res.error_code === "0") {
-                        Swal.fire('완료', '저장되었습니다.', 'success');
+                        Swal.fire({title:'완료', text:'저장되었습니다.', icon:'success', width:340, customClass:{popup:'small-swal'}});
                         $('#visitDetailModal').modal('hide');
                         fnVisitSearch();
+                        if (typeof fn_loadTodayAsq === 'function') fn_loadTodayAsq();
                     } else {
-                        Swal.fire('오류', '저장 중 오류가 발생했습니다.', 'error');
+                        Swal.fire({title:'오류', text:'저장 중 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'small-swal'}});
                     }
                 },
                 error: function() {
-                    Swal.fire('오류', '서버 통신 오류가 발생했습니다.', 'error');
+                    Swal.fire({title:'오류', text:'서버 통신 오류가 발생했습니다.', icon:'error', width:340, customClass:{popup:'small-swal'}});
                 }
             });
         }

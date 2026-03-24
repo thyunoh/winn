@@ -3955,7 +3955,7 @@ function fn_asqBarToggle() {
 		style="max-width: 650px;">
 		<div class="modal-content rounded-3 shadow-lg">
 			<div class="modal-header bg-light">
-				<h5 class="modal-title">컨설팅 문의</h5>
+				<h5 class="modal-title">1:1 문의하기</h5>
 				<div class="px-3 pt-2" style="font-size: 0.8rem; color: #666;">
 					<span style="color: red;">*</span> 는 필수 입력 항목입니다.
 				</div>

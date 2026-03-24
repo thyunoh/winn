@@ -284,10 +284,9 @@
                     <li class="nav-item" id="adminAsqMenu" style="display:none;">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/asqcd.do"><i class="fas fa-headset"></i>관리자 1:1 문의하기</a>
                     </li>
-<!--                    <li class="nav-item" id="adminVisitAsqMenu" style="display:none;">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/visitasq.do"><i class="fas fa-building"></i>사이트방문문의</a>
-                    </li>  -->
-
+                    <li class="nav-item" id="adminVisitAsqMenu" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/visitasq.do"><i class="fas fa-building"></i>관리자 1:1 상담하기</a>
+                    </li>  
                     <!-- 진료비 분석 보고서 -->
                     <li class="nav-item menu-section" id="menu-g">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
@@ -1525,6 +1524,14 @@ function showAnsrFileList(asqSeq) {
     background: linear-gradient(135deg, #f6ad55, #ed8936);
     color: #1a202c;
 }
+#todayAsqBar .asq-bar-msg .visit-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #68d391, #38a169);
+    color: #fff;
+}
 #todayAsqBar .asq-bar-msg .sep {
     color: #4a7ab5;
     margin: 0 8px;
@@ -1559,7 +1566,7 @@ function showAnsrFileList(asqSeq) {
 </style>
 <div id="todayAsqBar">
     <div class="asq-bar-label">
-        <i class="fas fa-bell"></i> 답변대기
+        <i class="fas fa-bell"></i> 알림
     </div>
     <div class="asq-bar-scroll">
         <div class="asq-bar-track" id="asqBarTrack"></div>
@@ -1586,65 +1593,107 @@ function fn_getDateStr(daysAgo) {
     };
 }
 
-// 페이지 로드시 질문 데이터 조회
+// 페이지 로드시 질문 데이터 조회 (답변대기 + 문의대기 통합)
+var _asqData = [];
+var _visitData = [];
+
 function fn_loadTodayAsq() {
     var wnnYn = (getCookie("s_wnn_yn") || '').trim();
     var hospCd = (wnnYn === 'Y') ? '' : (getCookie("s_hospid") || '');
+
+    var done = 0;
+    function checkDone() {
+        done++;
+        if (done >= 2) fn_todayAsqAlert(_asqData, _visitData);
+    }
+
+    // 1:1 문의 (답변대기)
     $.ajax({
         type: "POST",
         url: "/mangr/asqCdList.do",
         data: { hospCd: hospCd },
         dataType: "json",
         success: function(response) {
-            if (response && response.data) {
-                fn_todayAsqAlert(response.data);
-            }
-        }
+            _asqData = (response && response.data) ? response.data : [];
+            checkDone();
+        },
+        error: function() { checkDone(); }
+    });
+
+    // 사이트방문문의 (문의대기)
+    $.ajax({
+        type: "POST",
+        url: "/mangr/visitAsqList.do",
+        data: { findData: '' },
+        dataType: "json",
+        success: function(response) {
+            _visitData = (response && response.data) ? response.data : [];
+            checkDone();
+        },
+        error: function() { checkDone(); }
     });
 }
 
-// 답변대기 질문 필터링 → 마퀴 표시 (일자 무관, 답변대기만 체크)
-function fn_todayAsqAlert(dataList) {
+// 답변대기 + 문의대기 필터링 → 마퀴 표시
+function fn_todayAsqAlert(asqList, visitList) {
     var bar = document.getElementById('todayAsqBar');
     if (!bar) return;
 
-    if (!dataList || dataList.length === 0) {
+    // 답변대기 필터 (ansrWan != 'Y')
+    var asqFiltered = [];
+    if (asqList && asqList.length > 0) {
+        for (var i = 0; i < asqList.length; i++) {
+            var ansrWan = (asqList[i].ansrWan || '').toString().trim();
+            if (ansrWan !== 'Y') asqFiltered.push(asqList[i]);
+        }
+    }
+
+    // 문의대기 필터 (comformYn != 'Y')
+    var visitFiltered = [];
+    if (visitList && visitList.length > 0) {
+        for (var i = 0; i < visitList.length; i++) {
+            var comformYn = (visitList[i].comformYn || '').toString().trim();
+            if (comformYn !== 'Y') visitFiltered.push(visitList[i]);
+        }
+    }
+
+    var totalCnt = asqFiltered.length + visitFiltered.length;
+    if (totalCnt === 0) {
         bar.style.display = 'none';
         return;
     }
 
-    // 답변대기 필터 (일자 조건 없이)
-    var filtered = [];
-    for (var i = 0; i < dataList.length; i++) {
-        var row = dataList[i];
-        var ansrWan = (row.ansrWan || '').toString().trim();
-        // 답변대기: ansrWan이 'Y'가 아닌 것
-        if (ansrWan === 'Y') continue;
-        filtered.push(row);
-    }
-
-    if (filtered.length === 0) {
-        bar.style.display = 'none';
-        return;
-    }
-
-    // 마퀴 메세지 생성 (2벌 복제 → 무한 루프 효과)
+    // 마퀴 메세지 생성
     var msgHtml = '';
-    for (var j = 0; j < filtered.length; j++) {
-        var item = filtered[j];
-        var hospNm = item.hospNm    || '';
-        var userNm = item.userNm    || '';
-        var title  = item.qstnTitle || '';
+    var idx = 0;
+
+    // 답변대기 메시지 (클릭 → asqcd.do)
+    for (var j = 0; j < asqFiltered.length; j++) {
+        var item = asqFiltered[j];
         msgHtml += '<span class="asq-bar-msg" onclick="fn_goAsqPage();">';
-        if (j > 0) msgHtml += '<span class="sep">|</span>';
-        msgHtml += '<span class="hosp-name">' + hospNm + '</span> ';
-        msgHtml += '<span class="user-name">' + userNm + '</span>님 질문등록';
+        if (idx > 0) msgHtml += '<span class="sep">|</span>';
+        msgHtml += '<span class="hosp-name">' + (item.hospNm || '') + '</span> ';
+        msgHtml += '<span class="user-name">' + (item.userNm || '') + '</span>님 질문등록';
+        var title = item.qstnTitle || '';
         if (title) {
             var shortTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
             msgHtml += ' - <span class="qstn-title">' + shortTitle + '</span>';
         }
-        msgHtml += ' <span class="ansr-badge">답변대기</span>';
+        msgHtml += ' <span class="ansr-badge">문의대기</span>';
         msgHtml += '</span>';
+        idx++;
+    }
+
+    // 문의대기 메시지 (클릭 → visitAsq.do)
+    for (var k = 0; k < visitFiltered.length; k++) {
+        var vItem = visitFiltered[k];
+        msgHtml += '<span class="asq-bar-msg" onclick="fn_goVisitAsqPage();">';
+        if (idx > 0) msgHtml += '<span class="sep">|</span>';
+        msgHtml += '<span class="hosp-name">' + (vItem.hospNm || '') + '</span> ';
+        msgHtml += '<span class="user-name">' + (vItem.userNm || '') + '</span>님 방문문의';
+        msgHtml += ' <span class="visit-badge">상담대기</span>';
+        msgHtml += '</span>';
+        idx++;
     }
 
     // 2벌 복제하여 끊김없는 마퀴 효과
@@ -1652,12 +1701,20 @@ function fn_todayAsqAlert(dataList) {
     trackDiv.innerHTML = msgHtml + msgHtml;
 
     // 메세지 수에 따라 애니메이션 속도 조정 (1건당 약 8초)
-    var duration = Math.max(20, filtered.length * 8);
+    var duration = Math.max(20, totalCnt * 8);
     trackDiv.style.animationDuration = duration + 's';
 
     // 건수 표시
     var cntDiv = document.getElementById('asqBarCnt');
-    if (cntDiv) cntDiv.textContent = filtered.length + '건';
+    if (cntDiv) {
+        var cntText = '';
+        if (asqFiltered.length > 0) cntText += '답변' + asqFiltered.length + '건';
+        if (visitFiltered.length > 0) {
+            if (cntText) cntText += ' / ';
+            cntText += '문의' + visitFiltered.length + '건';
+        }
+        cntDiv.textContent = cntText;
+    }
 
     bar.style.display = 'flex';
 
@@ -1672,10 +1729,16 @@ function fn_todayAsqAlert(dataList) {
     }
 }
 
-// 하단 메시지 클릭 → 관리자 1:1 문의하기 페이지 이동 (이미 해당 페이지면 무시)
+// 하단 메시지 클릭 → 답변대기: 관리자 1:1 문의하기 페이지 이동
 function fn_goAsqPage() {
     if (location.pathname.indexOf('/mangr/asqcd.do') >= 0) return;
     location.href = '/mangr/asqcd.do';
+}
+
+// 하단 메시지 클릭 → 문의대기: 사이트방문문의 페이지 이동
+function fn_goVisitAsqPage() {
+    if (location.pathname.indexOf('/mangr/visitasq.do') >= 0) return;
+    location.href = '/mangr/visitasq.do';
 }
 
 function fn_asqBarToggle() {
