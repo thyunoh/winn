@@ -3352,6 +3352,7 @@
             // iframe으로 열기 (URL 숨김)
             document.getElementById('wincheck-iframe').src = url;
             document.getElementById('wincheck-frame-wrap').style.display = 'block';
+            document.body.classList.add('wincheck-open');
 
             document.loginForm.hospid.disabled = true;
             document.loginForm.userid.disabled = true;
@@ -4168,13 +4169,18 @@ function fnVisitAsqSave() {
 	<jsp:include page="footer.jsp"></jsp:include>
 
 <!-- WinCheck iframe 영역 -->
-<div id="wincheck-frame-wrap" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; background:#fff;">
-    <iframe id="wincheck-iframe" style="width:100%; height:100%; border:none;"></iframe>
+<div id="wincheck-frame-wrap" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; background:#fff; overflow:hidden;">
+    <iframe id="wincheck-iframe" style="width:100%; height:100%; border:none;" scrolling="auto"></iframe>
 </div>
+<style>
+/* iframe 표시 중일 때 부모 페이지 스크롤 제거 */
+body.wincheck-open { overflow: hidden !important; }
+</style>
 <script>
 function closeWinCheck() {
     document.getElementById('wincheck-iframe').src = '';
     document.getElementById('wincheck-frame-wrap').style.display = 'none';
+    document.body.classList.remove('wincheck-open');
     document.loginForm.hospid.disabled = false;
     document.loginForm.userid.disabled = false;
     document.loginForm.passwd.disabled = false;

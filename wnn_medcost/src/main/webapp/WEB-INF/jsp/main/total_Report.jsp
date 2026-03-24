@@ -948,9 +948,17 @@ function fn_BuildChart11(colIdx) {
     // 우측: 1인 검사료 비교 (본원 vs 타병원) 월별 그래프
     var taFields = ['ta_f_ym', 'ta_m_ym', 'ta_e_ym'];
     var myPerCost = [], taPerCost = [];
+    // [ 인원 ] 금액 형태에서 마지막 숫자(금액)만 추출
+    function extractAmount(val) {
+        if (!val) return 0;
+        var s = String(val);
+        var m = s.match(/\]\s*([\d,]+)\s*$/);
+        if (m) return parseFloat(m[1].replace(/,/g, '')) || 0;
+        return parseFloat(s.replace(/,/g, '')) || 0;
+    }
     for (var j = 0; j < 3; j++) {
-        myPerCost.push(parseFloat(replaceMulti(d[6][fields[j]], ",")) || 0);
-        taPerCost.push(parseFloat(replaceMulti(d[6][taFields[j]], ",")) || 0);
+        myPerCost.push(extractAmount(d[6][fields[j]]));
+        taPerCost.push(extractAmount(d[6][taFields[j]]));
     }
 
     if (window._chartC_right) { window._chartC_right.destroy(); }
@@ -1116,10 +1124,17 @@ function fn_BuildChart12(colIdx) {
     });
 
     // 우측: 1인 약제비 비교 (본원 vs 타병원) 월별 그래프
+    function extractAmount12(val) {
+        if (!val) return 0;
+        var s = String(val);
+        var m = s.match(/\]\s*([\d,]+)\s*$/);
+        if (m) return parseFloat(m[1].replace(/,/g, '')) || 0;
+        return parseFloat(s.replace(/,/g, '')) || 0;
+    }
     var myPerCost = [], taPerCost = [];
     for (var j = 0; j < 3; j++) {
-        myPerCost.push(parseFloat(replaceMulti(d[6][fields[j]], ",")) || 0);
-        taPerCost.push(parseFloat(replaceMulti(d[6][taFields[j]], ",")) || 0);
+        myPerCost.push(extractAmount12(d[6][fields[j]]));
+        taPerCost.push(extractAmount12(d[6][taFields[j]]));
     }
 
     if (window._chartD_right) { window._chartD_right.destroy(); }
