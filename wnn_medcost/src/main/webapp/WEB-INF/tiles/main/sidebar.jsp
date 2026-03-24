@@ -1690,7 +1690,7 @@ function fn_todayAsqAlert(asqList, visitList) {
         msgHtml += '<span class="asq-bar-msg" onclick="fn_goVisitAsqPage();">';
         if (idx > 0) msgHtml += '<span class="sep">|</span>';
         msgHtml += '<span class="hosp-name">' + (vItem.hospNm || '') + '</span> ';
-        msgHtml += '<span class="user-name">' + (vItem.userNm || '') + '</span>님 방문문의';
+        msgHtml += '<span class="user-name">' + (vItem.userNm || '') + '</span>님 상담문의';
         msgHtml += ' <span class="visit-badge">상담대기</span>';
         msgHtml += '</span>';
         idx++;
