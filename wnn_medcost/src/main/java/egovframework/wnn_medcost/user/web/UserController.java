@@ -74,19 +74,19 @@ public class UserController extends BaseController {
 	
 	@Resource(name = "UserService") // 서비스 선언
 	private UserService svc;
-	
+
 	//메인화면 호출
 	@RequestMapping(value = "/" , method = RequestMethod.GET) 
 	public String BlankPage(HttpServletRequest request, ModelMap model) throws Exception {
-			
-		cookie_value = ClientInfo.getCookie(request);		
+
+		cookie_value = ClientInfo.getCookie(request);
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/dashboard";				
+				return ".main/dashboard";
 			} else {
 				return "";
-			}	
+			}
 		} catch(Exception ex) {
 			return "";
 		}
@@ -95,15 +95,15 @@ public class UserController extends BaseController {
     //메인화면 호출
 	@RequestMapping(value = "/main.do" , method = RequestMethod.GET) 
 	public String MainPage(HttpServletRequest request, ModelMap model) throws Exception {
-		
-		cookie_value = ClientInfo.getCookie(request);		
+
+		cookie_value = ClientInfo.getCookie(request);
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/dashboard";				
+				return ".main/dashboard";
 			} else {
 				return "";
-			}	
+			}
 		} catch(Exception ex) {
 			return "";
 		}

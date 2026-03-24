@@ -79,8 +79,21 @@
     <!-- ============================================================== -->
     <!-- navbar -->
     <!-- ============================================================== -->
-    <div class="dashboard-header">
-        <nav class="navbar navbar-expand-lg bg-white fixed-top">
+    <div class="dashboard-header" id="dashboard-header">
+        <nav class="navbar navbar-expand-lg bg-white fixed-top" id="top-navbar">
+    <script>
+    // iframe 안에서 열리면 로고 링크만 숨김 (메뉴는 유지)
+    try {
+        if (window.self !== window.top) {
+            var brand = document.querySelector('.navbar-brand');
+            if (brand) brand.style.display = 'none';
+        }
+    } catch(e) {
+        // 크로스 오리진이면 iframe 안임
+        var brand = document.querySelector('.navbar-brand');
+        if (brand) brand.style.display = 'none';
+    }
+    </script>
             <a class="navbar-brand ml-4 mr-5" href="/user/dashboard.do">
            <img src="/images/winct/wincheck.jpg" alt="WinnerNet Logo" height="40">
          </a>
@@ -177,8 +190,13 @@
        var closeDt2 = getCookie("s_closeDt2");
       
        function closeTab() {
-           window.close(); // 현재 탭 닫기
-           self.close();   // 일부 브라우저에서 추가적으로 닫기 시도
+           // iframe 안에서 실행 중이면 부모에게 postMessage로 닫기 요청
+           if (window.parent !== window) {
+               window.parent.postMessage('closeWinCheck', '*');
+               return;
+           }
+           window.close();
+           self.close();
        }
        
        //'진료비: '+ closeDt2 +'-'+ '적정성: ' + closeDt1 + '   ' + 

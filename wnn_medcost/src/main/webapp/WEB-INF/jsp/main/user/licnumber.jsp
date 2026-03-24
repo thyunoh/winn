@@ -72,7 +72,7 @@
 				role="dialog"
 				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; max-width: 50vw; max-height: 50vh;">
 				<div class="modal-content"
-					style="height: 95%; display: flex; flex-direction: column;">
+					style="height: 85%; display: flex; flex-direction: column;">
 					<div class="modal-header bg-light">
 						<h6 class="modal-title" id="modalHead"></h6>
 						<!-- ============================================================== -->
@@ -379,7 +379,7 @@
 		<!-- ============================================================== -->
 		var gridColums = [];
 		var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
-		var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
+		var auto_Width = false;   		// 열 너비 자동 계산 - autoWidth (scrollX와 충돌 방지)
 		var page_Hight = 650;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 		var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse
 		
@@ -1038,7 +1038,7 @@
 			if (firstflag) {
 				firstflag = false;
 				tableName.style.display = 'inline-block';
-				fn_FirstGridSet();	
+				fn_FirstGridSet();
 			} else {
 				dataTable.ajax.reload();
 			}

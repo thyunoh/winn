@@ -3344,29 +3344,21 @@
     		
       	
         	hosp_conact() ;
-        	
-        //  const url = "http://localhost:8080/user/";    
+
+        //  const url = "http://localhost:8080/user/";
         //  const url = "https://winner797.co.kr/user/dashboard.do";
             const url = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                     ? "http://localhost:8080/user/"
                     : "https://winner797.co.kr/user/dashboard.do";
-        	
-            win_Check = window.open(url);            
-            
-            win_Check.addEventListener('unload', () => {
-                // 창이 닫혔을 때
-                document.loginForm.hospid.disabled = false;
-                document.loginForm.userid.disabled = false;
-                document.loginForm.passwd.disabled = false;
-                document.loginForm.blogin.disabled = false; 
-            });
-            win_Check.addEventListener('load', function() {
-                // 창이 열렸을 때
-                document.loginForm.hospid.disabled = true;
-                document.loginForm.userid.disabled = true;
-                document.loginForm.passwd.disabled = true;
-                document.loginForm.blogin.disabled = true;
-            });
+
+            // iframe으로 열기 (URL 숨김)
+            document.getElementById('wincheck-iframe').src = url;
+            document.getElementById('wincheck-frame-wrap').style.display = 'block';
+
+            document.loginForm.hospid.disabled = true;
+            document.loginForm.userid.disabled = true;
+            document.loginForm.passwd.disabled = true;
+            document.loginForm.blogin.disabled = true;
            
         }
 		function fnPasswdmanager(){ 
@@ -4176,6 +4168,28 @@ function fnVisitAsqSave() {
 <!-- ============================================================== -->
 
 	<jsp:include page="footer.jsp"></jsp:include>
+
+<!-- WinCheck iframe 영역 -->
+<div id="wincheck-frame-wrap" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; background:#fff;">
+    <iframe id="wincheck-iframe" style="width:100%; height:100%; border:none;"></iframe>
+</div>
+<script>
+function closeWinCheck() {
+    document.getElementById('wincheck-iframe').src = '';
+    document.getElementById('wincheck-frame-wrap').style.display = 'none';
+    document.loginForm.hospid.disabled = false;
+    document.loginForm.userid.disabled = false;
+    document.loginForm.passwd.disabled = false;
+    document.loginForm.blogin.disabled = false;
+}
+// iframe에서 postMessage로 닫기 요청 수신
+window.addEventListener('message', function(e) {
+    if (e.data === 'closeWinCheck') {
+        closeWinCheck();
+    }
+});
+</script>
+
 </body>
 </html>
 

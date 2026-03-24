@@ -156,6 +156,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    
-    
+    <!-- DataTable 헤더/바디 컬럼 정렬 자동 보정 (전체 페이지 공통) -->
+    <script>
+    $(document).on('init.dt', function(e, settings) {
+        setTimeout(function() {
+            $(settings.nTable).DataTable().columns.adjust();
+        }, 300);
+    });
+    </script>
+
+
     

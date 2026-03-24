@@ -949,12 +949,8 @@ function fn_BuildChart11(colIdx) {
     var taFields = ['ta_f_ym', 'ta_m_ym', 'ta_e_ym'];
     var myPerCost = [], taPerCost = [];
     for (var j = 0; j < 3; j++) {
-        var myVal = replaceMulti(d[6][fields[j]], ",");
-        var myM = String(myVal).match(/(\d[\d,]*)\s*$/);
-        myPerCost.push(myM ? parseFloat(myM[1].replace(/,/g, '')) : 0);
-        var taVal = replaceMulti(d[6][taFields[j]], ",");
-        var taM = String(taVal).match(/(\d[\d,]*)\s*$/);
-        taPerCost.push(taM ? parseFloat(taM[1].replace(/,/g, '')) : 0);
+        myPerCost.push(parseFloat(replaceMulti(d[6][fields[j]], ",")) || 0);
+        taPerCost.push(parseFloat(replaceMulti(d[6][taFields[j]], ",")) || 0);
     }
 
     if (window._chartC_right) { window._chartC_right.destroy(); }
@@ -1122,12 +1118,8 @@ function fn_BuildChart12(colIdx) {
     // 우측: 1인 약제비 비교 (본원 vs 타병원) 월별 그래프
     var myPerCost = [], taPerCost = [];
     for (var j = 0; j < 3; j++) {
-        var myVal = replaceMulti(d[6][fields[j]], ",");
-        var myM = String(myVal).match(/(\d[\d,]*)\s*$/);
-        myPerCost.push(myM ? parseFloat(myM[1].replace(/,/g, '')) : 0);
-        var taVal = replaceMulti(d[6][taFields[j]], ",");
-        var taM = String(taVal).match(/(\d[\d,]*)\s*$/);
-        taPerCost.push(taM ? parseFloat(taM[1].replace(/,/g, '')) : 0);
+        myPerCost.push(parseFloat(replaceMulti(d[6][fields[j]], ",")) || 0);
+        taPerCost.push(parseFloat(replaceMulti(d[6][taFields[j]], ",")) || 0);
     }
 
     if (window._chartD_right) { window._chartD_right.destroy(); }
