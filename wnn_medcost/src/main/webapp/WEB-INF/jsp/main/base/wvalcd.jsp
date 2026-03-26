@@ -40,43 +40,23 @@
             <div class="container-fluid  dashboard-content">
                 <div class="row">
                 <!-- 좌측 카드 : 상단 내용 (너비를 줄여서 50% 배정) -->
-               <div class="col-xl-3 col-lg-3">
+               <div class="col-xl-2 col-lg-2">
                   <div class="card">
                      <div class="card-body">
-                        <div class="form-row mb-2">
-                           <div class="col-sm-6">
-                                <div class="btn-group ml-auto ">
-                                         <button class="btn btn-outline-dark btn-block btn-sm d-flex align-items-center justify-content-center" onClick="fn_re_load()">재조회<i class="fas fa-binoculars"></i></button>
-                                         <button class="btn btn-warning text-dark  ml-3" onclick="fn_CopyData()">최종자료 복사.생성</button>
-                              </div>
-                           </div>
-                           
+                        <div class="d-flex align-items-center mb-2" style="gap:5px; flex-wrap:nowrap;">
+                            <button class="btn btn-outline-dark btn-sm" style="white-space:nowrap; font-size:13px; padding:5px 10px;" onClick="fn_re_load()">재조회<i class="fas fa-binoculars ml-1"></i></button>
+                            <button class="btn btn-warning text-dark btn-sm" style="white-space:nowrap; font-size:13px; padding:5px 8px;" onclick="fn_CopyData()">최종자료복사.생성</button>
                         </div>
-                        <div class="form-group d-flex align-items-center">
-                          <div class="form-row w-100">
-                            
-                            <!-- 연도 -->
-                            <div class="col-auto">
-                              <select id="copyDate" name="copyDate" required class="custom-select">
-                                <!-- 연도 옵션 -->
-                              </select>
-                            </div>
-                        
-                            <!-- 월 -->
-                            <div class="col-auto ml-1">
-                              <select id="copyMonth" name="copyMonth" required class="custom-select">
-                                <!-- 월 옵션 -->
-                              </select>
-                            </div>
-                        
-                            <!-- 일 -->
-                            <div class="col-auto ml-1">
-                              <select id="copyDay" name="copyDay" required class="custom-select">
-                                <!-- 일 옵션 -->
-                              </select>
-                            </div>
-                        
-                          </div>
+                        <div class="d-flex align-items-center mb-2" style="gap:4px; flex-wrap:nowrap;">
+                            <select id="copyDate" name="copyDate" required class="custom-select custom-select-sm" style="flex:1; font-size:13px; padding:4px 26px 4px 6px;">
+                              <!-- 연도 옵션 -->
+                            </select>
+                            <select id="copyMonth" name="copyMonth" required class="custom-select custom-select-sm" style="flex:1; font-size:13px; padding:4px 24px 4px 6px;">
+                              <!-- 월 옵션 -->
+                            </select>
+                            <select id="copyDay" name="copyDay" required class="custom-select custom-select-sm" style="flex:1; font-size:13px; padding:4px 24px 4px 6px;">
+                              <!-- 일 옵션 -->
+                            </select>
                         </div>
                         <div>
                            <table id="wv_tableName"
@@ -88,7 +68,7 @@
                   </div>
                </div>
                         <!-- 우측 카드 : 기존 하단의 공통세부정보 영역을 이동 -->
-               <div class="col-xl-9 col-lg-9">
+               <div class="col-xl-10 col-lg-10">
                         <div class="card">                           
                             <div class="card-body">  
                                <div class="form-row mb-2">
@@ -145,9 +125,9 @@
        <div class="modal fade" id="modalName" tabindex="-1" data-backdrop="static" role="dialog" aria-hidden="false" data-keyboard="false">
          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"   role="dialog" style="position:absolute; top:50%; left:50%; 
                                                       transform:translate(-50%, -50%); width:50vw; max-width:50vw;max-height: 50vh;">
-           <div class="modal-content" style="height: 50%;display: flex;flex-direction: column;">
+           <div class="modal-content" style="height: 45%;display: flex;flex-direction: column;">
              <div class="modal-header bg-light">
-                  <h6 class="modal-title" id="modalHead"></h6> 
+                  <h5 class="modal-title" id="modalHead"></h5> 
                  <!-- ============================================================== -->
                  <!-- button start -->
                  <!-- ============================================================== -->                  
@@ -352,7 +332,7 @@
       var gridColums = [];
       var btm_Scroll = true;         // 하단 scroll여부 - scrollX
       var auto_Width = true;         // 열 너비 자동 계산 - autoWidth
-      var page_Hight = 650;          // Page 길이보다 Data가 많으면 자동 scroll - scrollY
+      var page_Hight = 700;          // Page 길이보다 Data가 많으면 자동 scroll - scrollY
       var p_Collapse = false;        // Page 길이까지 auto size - scrollCollapse
       
       var datWaiting = true;         // Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -375,7 +355,7 @@
       
       var colPadding = '0.2px'         // 행 높이 간격 설정
       var data_Count = [30 , 50, 70, 100, 150, 200];  // Data 보기 설정
-      var defaultCnt = 30;                      // Data Default 갯수
+      var defaultCnt = 32;                      // Data Default 갯수
       
       
       //  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
@@ -1616,7 +1596,7 @@
                    lengthChange: true,
                    info:         false,
                    paging:       false,
-                   scrollY:    "650px",
+                   scrollY:      "700px",
                    fixedHeader:  true,
                    search: {
                        return:   false,
@@ -2294,15 +2274,22 @@
 				if (excelHeaders[i] === excelNoColumnName) continue;
 
 				(function(header) {
+					var hLower = header.toLowerCase().replace(/[\s_\-\/]/g, '');
+					var isNameCol = (hLower.indexOf('분류명') !== -1 || hLower.indexOf('명칭') !== -1 || hLower.indexOf('지표명') !== -1 || hLower === 'wevaluenm' || hLower === 'name');
+					var colWidth = isNameCol ? '350px' : undefined;
 					previewCols.push({
 						data: header,
 						title: header,
 						defaultContent: '',
 						className: 'dt-body-left',
-						render: function(data, type) {
-							if (type === 'display' && data && String(data).length > 100) {
-								var safe = $('<span>').text(data).html();
-								return '<span title="' + safe + '">' + $('<span>').text(String(data).substr(0, 100)).html() + '...</span>';
+						width: colWidth,
+						render: function(data, type, row, meta) {
+							if (type === 'display') {
+								var val = (data !== null && data !== undefined) ? String(data) : '';
+								var safeVal = $('<span>').text(val).html();
+								var inputStyle = 'width:100%; border:1px solid #ddd; padding:1px 3px; font-size:12px; box-sizing:border-box; background:#fff;';
+								if (isNameCol) inputStyle += ' min-width:300px;';
+								return '<input type="text" class="excel-edit-input" data-header="' + $('<span>').text(header).html() + '" value="' + safeVal + '" style="' + inputStyle + '">';
 							}
 							return data;
 						}
@@ -2378,6 +2365,23 @@
 					var idx = $(this).data('idx');
 					$(this).prop('checked', excelCheckedSet.has(idx));
 				});
+			});
+
+			// 셀 편집 시 DataTable 내부 데이터 동기화
+			$('#excelPreviewTable tbody').off('change', '.excel-edit-input').on('change', '.excel-edit-input', function() {
+				var $input = $(this);
+				var $td = $input.closest('td');
+				var $tr = $input.closest('tr');
+				var rowData = excelPreviewDT.row($tr).data();
+				var header = $input.data('header');
+				if (rowData && header) {
+					rowData[header] = $input.val();
+					// 원본 데이터도 동기화
+					var origIdx = rowData._rowIdx;
+					if (origIdx !== undefined && excelParsedData[origIdx]) {
+						excelParsedData[origIdx][header] = $input.val();
+					}
+				}
 			});
 		}
 
