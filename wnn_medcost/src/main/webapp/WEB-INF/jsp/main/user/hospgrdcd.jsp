@@ -206,9 +206,9 @@
 							
 							    <!-- 안내 문구 -->
 							    <!-- 안내 문구: 작게 표시 -->
-							    <div class="col-4 col-lg-4 d-flex align-items-center">
-							        <small class="text-muted">※ 목표점수 목표명은  해당년도 1분기에만 입력.</small>
-							    </div>
+								<div class="col-4 col-lg-4 d-flex align-items-center">
+								    <span class="text-muted" style="font-size: 0.80rem;">※ 목표점수 목표명은 해당년도 1분기에만 입력.</span>
+								</div>
 							</div>
 							<!-- ============================================================== -->
 							<!-- end form 수정해야 될 곳 -->
