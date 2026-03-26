@@ -1586,7 +1586,7 @@
         	let  s_connip = getCookie("s_connip") ;
 
 	        if (hospCd1 == '' || hospCd1 ==  null) {
-	           messageBox("4", "요양기관을 선택하고 진행하세요  !!",mainFocus,"","");
+	           messageBox("4","<h5>요양기관을 선택하고 진행하세요. !!</h5><p></p><br>",mainFocus,"","");		
 	        }
 	        if (hospCd1 !== '') {
 	            $.ajax({

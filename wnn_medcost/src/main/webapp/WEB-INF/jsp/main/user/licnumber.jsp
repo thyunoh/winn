@@ -11,6 +11,8 @@
 
     <!-- DataTables CSS -->
 <style>
+/* 하단 알림바 겹침 방지 */
+.dashboard-wrapper { padding-bottom: 45px; }
 </style>
 		<!-- ============================================================== -->
         <!-- Main Form start -->
@@ -357,8 +359,7 @@
 		// 초기값 설정
 		var mainFocus = 'findData'; // Main 화면 focus값 설정, Modal은 따로 Focus 맞춤
 		var edit_Data = null;
-		var dataTable = new DataTable();
-		dataTable.clear();
+		var dataTable = null;
 		
 		<!-- ============================================================== -->
 		<!-- 공통코드 Setting Start -->
@@ -408,30 +409,31 @@
 		
 		//  DataTable Columns 정의, c_Head_Set, columnsSet갯수는 항상 같아야함.
 		var c_Head_Set =  [
-				    { name: '병원정보',      className: 'dt-body-center' },
-				    { name: '면허번호',      className: 'dt-body-center' },
-				    { name: '성 명',        className: 'dt-body-center' },
-				    { name: '입사일자',      className: 'dt-body-center' },
-				    { name: '면허종별',      className: 'dt-body-center' },
-				    { name: '의사(간호)구분', className: 'dt-body-center' },
-				    { name: '의사형태(직책)', className: 'dt-body-center' },
-				    { name: '주민번호',      className: 'dt-body-center' },
-				    { name: '근무형태',      className: 'dt-body-center' },
-				    { name: '면허취득일자',   className: 'dt-body-center' },
-				    { name: '병동명',        className: 'dt-body-center'},
-				    { name: '근무단위',       className: 'dt-body-center'},
-				    { name: '근무시작',       className: 'dt-body-center'},
-				    { name: '근무종료',       className: 'dt-body-center'},
-				    { name: '간호등급적용',    className: 'dt-body-center'}
+				    { name: '병원정보',      className: 'dt-body-center', width: '100px' },
+				    { name: '면허번호',      className: 'dt-body-center', width: '70px' },
+				    { name: '성 명',        className: 'dt-body-center', width: '100px' },
+				    { name: '입사일자',      className: 'dt-body-center', width: '100px' },
+				    { name: '면허종별',      className: 'dt-body-center', width: '100px' },
+				    { name: '의사(간호)구분', className: 'dt-body-center', width: '70px' },
+				    { name: '의사형태(직책)', className: 'dt-body-center', width: '70px' },
+				    { name: '주민번호',      className: 'dt-body-center', width: '120px' },
+				    { name: '근무형태',      className: 'dt-body-center', width: '160px' },
+				    { name: '면허취득일자',   className: 'dt-body-center', width: '100px' },
+				    { name: '병동명',        className: 'dt-body-center', width: '120px' },
+				    { name: '근무단위',       className: 'dt-body-center', width: '100px' },
+				    { name: '근무시작',       className: 'dt-body-center', width: '100px' },
+				    { name: '근무종료',       className: 'dt-body-center', width: '100px' },
+				    { name: '간호등급적용',    className: 'dt-body-center', width: '100px' }
 		]; 
 		var columnsSet = [  // data 컬럼 id는 반드시 DTO의 컬럼,Modal id는 일치해야 함 (조회시)
 			// name 컬럼 id는 반드시 DTO의 컬럼 일치해야 함 (수정,삭제시), primaryKey로 수정, 삭제함.
 			// dt-body-center, dt-body-left, dt-body-right	        				
-			{ data: 'hospCd',    visible: false, className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
+			{ data: 'hospCd',    visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyhospCd', primaryKey: true },
 			{ data: 'licNum',    visible: true,  className: 'dt-body-center', width: '70px',   name: 'keylicNum', primaryKey: true },
 			{ data: 'name',      visible: true,  className: 'dt-body-center', width: '100px',  },
 			{ data: 'ipDt',      visible: true,  className: 'dt-body-center', width: '100px',  name: 'keyipDt'  , primaryKey: true ,
              	render: function(data, type, row) {
+				if (!data) return '';
 				if (type === 'display') {
 					return getFormat(data,'d1')
     			}
@@ -439,12 +441,13 @@
              	}
 			},
 			{ data: 'licenseGb',       visible: true,  className: 'dt-body-center', width: '100px',  },
-			{ data: 'doctorGb',        visible: true,  className: 'dt-body-center', width: '100px',  },
-			{ data: 'doctorType',      visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'doctorGb',        visible: true,  className: 'dt-body-center', width: '70px',  },
+			{ data: 'doctorType',      visible: true,  className: 'dt-body-center', width: '70px',  },
 			{ data: 'jumin',           visible: true,  className: 'dt-body-center', width: '120px',  },
-			{ data: 'workGb',          visible: true,  className: 'dt-body-center', width: '200px',  },
-			{ data: 'licDat',          visible: true,  className: 'dt-body-center', width: '100px', 
+			{ data: 'workGb',          visible: true,  className: 'dt-body-center', width: '160px',  },
+			{ data: 'licDat',          visible: true,  className: 'dt-body-center', width: '100px',
               	render: function(data, type, row) {
+				if (!data) return '';
     			if (type === 'display') {
     					return getFormat(data,'d1')
         			}
@@ -452,18 +455,20 @@
 				}
 			},
 
-			{ data: 'wardNm',       visible: true,  className: 'dt-body-center', width: '100px',  },
+			{ data: 'wardNm',       visible: true,  className: 'dt-body-center', width: '120px',  },
 			{ data: 'wardDanwi',    visible: true,  className: 'dt-body-center', width: '100px',  },
-			{ data: 'wardStrdt',    visible: true,  className: 'dt-body-center', width: '100px', 
+			{ data: 'wardStrdt',    visible: true,  className: 'dt-body-center', width: '100px',
               	render: function(data, type, row) {
+				if (!data) return '';
     			if (type === 'display') {
     					return getFormat(data,'d1')
         			}
         			return data;
 				}
 			},
-			{ data: 'wardEnddt',    visible: true,  className: 'dt-body-center', width: '100px', 
+			{ data: 'wardEnddt',    visible: true,  className: 'dt-body-center', width: '100px',
               	render: function(data, type, row) {
+				if (!data) return '';
     			if (type === 'display') {
     					return getFormat(data,'d1')
         			}
@@ -840,7 +845,7 @@
 					        {
 				            	targets: markColums,
 					            render: function(data, type, row) {
-					                return type === 'display' && data.length > txt_Markln ?
+					                if (!data) return ""; return type === 'display' && data.length > txt_Markln ?
 					                data.substr(0, txt_Markln) + '...' : data;
 					            }
 					        },				            
@@ -921,12 +926,12 @@
 			    if (row_Select) {
 				    dataTable.on('click', 'tbody tr', (e) => {
 				  	    let classList = e.currentTarget.classList;
-				  	 
+
 				  	    if (!classList.contains('selected')) {
 				  	    	dataTable.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
 				  	        classList.add('selected');
-				  	    } 
-				  	});    
+				  	    }
+				  	});
 			    }
 				//더블클릭시 수정모드  
 			    $('#' + tableName.id + ' tbody').on('dblclick', 'tr', function () {
@@ -1579,6 +1584,10 @@
 		        const th = document.createElement('th');
 		        th.textContent = header.name; // 컬럼명 설정
 		        th.classList.add(header.className); // c_Head_Set에서 정의된 className 적용
+		        if (header.width) {
+		            th.style.width = header.width;
+		            th.style.minWidth = header.width;
+		        }
 		        tr.appendChild(th);
 		    });
 		
