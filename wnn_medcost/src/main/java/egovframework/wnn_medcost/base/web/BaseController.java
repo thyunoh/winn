@@ -795,8 +795,51 @@ public class BaseController {
             return ResponseEntity.status(500).body(e.getMessage());
             
         }
-	}	
-	//샘파일 load 
+	}
+	@RequestMapping(value="/WvalueExcelInsert.do", method = RequestMethod.POST)
+	@ResponseBody
+    public ResponseEntity<Map<String, Object>> WvalueExcelInsert(@RequestBody List<WvalDTO> data) {
+
+		System.out.println("Wvalue Excel Insert 시작 - 건수: " + data.size());
+		int successCnt = 0;
+		int dupCnt = 0;
+		int failCnt = 0;
+
+        try {
+        	for (WvalDTO dto : data) {
+        		try {
+	        		String dupchk = svc.WvalueDupChk(dto);
+	        		if ("Y".equals(dupchk)) {
+	        			dupCnt++;
+	        			continue;
+	        		}
+	        		svc.insertWvalue(dto);
+	        		successCnt++;
+        		} catch (Exception e) {
+        			failCnt++;
+        			System.out.println("Wvalue Excel Insert 실패 - CateCode: " + dto.getCateCode() + " / " + e.getMessage());
+        		}
+            }
+
+        	Map<String, Object> result = new HashMap<>();
+        	result.put("successCnt", successCnt);
+        	result.put("dupCnt", dupCnt);
+        	result.put("failCnt", failCnt);
+
+        	System.out.println("Wvalue Excel Insert 완료 - 성공:" + successCnt + " 중복:" + dupCnt + " 실패:" + failCnt);
+
+        	return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+        	Map<String, Object> result = new HashMap<>();
+        	result.put("successCnt", successCnt);
+        	result.put("dupCnt", dupCnt);
+        	result.put("failCnt", failCnt);
+        	result.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+	}
+	//샘파일 load
 	@RequestMapping(value="/samvercd.do")
     public String samvercd(HttpServletRequest request, ModelMap model) {
 

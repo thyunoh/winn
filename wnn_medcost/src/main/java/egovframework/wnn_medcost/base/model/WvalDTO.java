@@ -26,6 +26,9 @@ public class WvalDTO{
     private String updDttm; // 수정일시
     private String updUser; // 수정자
     private String updIp; // 수정IP 
+    private String jobSeq; // JOB순서
+    private String actionYn; // 사용여부
+    private String applRate; // 적용율
     private String startDtTwo ;
     private String newStartDt ;
 
@@ -161,6 +164,24 @@ public class WvalDTO{
 	public void setUpdIp(String updIp) {
 		this.updIp = updIp;
 	}
+	public String getJobSeq() {
+		return jobSeq;
+	}
+	public void setJobSeq(String jobSeq) {
+		this.jobSeq = jobSeq;
+	}
+	public String getActionYn() {
+		return actionYn;
+	}
+	public void setActionYn(String actionYn) {
+		this.actionYn = actionYn;
+	}
+	public String getApplRate() {
+		return applRate;
+	}
+	public void setApplRate(String applRate) {
+		this.applRate = applRate;
+	}
 
- 
+
 }

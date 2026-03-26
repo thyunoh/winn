@@ -460,52 +460,54 @@
 	      ]]>         
     </insert>  
     <!-- 가중치 -->
-    <insert id="insertWvalue" parameterType="WvalDTO"> <![CDATA[ 
+    <insert id="insertWvalue" parameterType="WvalDTO"> <![CDATA[
         INSERT INTO TBL_WEVALUE_MST (
-             CATE_CODE 
-            ,ORDER_SEQ 
-            ,START_DT 
-            ,END_DT 
-            ,CAL_GUBUN 
-            ,WEVALUE_NM 
+             CATE_CODE
+            ,ORDER_SEQ
+            ,START_DT
+            ,END_DT
+            ,CAL_GUBUN
+            ,WEVALUE_NM
             ,START_INDI
-            ,END_INDI 
-            ,STD_SCORE 
-            ,WE_VALUE 
-            ,REG_DTTM 
-            ,REG_USER 
-            ,REG_IP 
-            ,UPD_DTTM 
-            ,UPD_USER 
-            ,UPD_IP 
-            ,JOB_SEQ 
-            ,ACTION_YN 
+            ,END_INDI
+            ,STD_SCORE
+            ,WE_VALUE
+            ,APPL_RATE
+            ,REG_DTTM
+            ,REG_USER
+            ,REG_IP
+            ,UPD_DTTM
+            ,UPD_USER
+            ,UPD_IP
+            ,JOB_SEQ
+            ,ACTION_YN
         ) VALUES (
-            #{cateCode} 
-           , #{orderSeq} 
-           , #{startDt} 
-           , #{endDt} 
-           , #{calGubun} 
-           , #{wevalueNm} 
+            #{cateCode}
+           , #{orderSeq}
+           , #{startDt}
+           , #{endDt}
+           , #{calGubun}
+           , #{wevalueNm}
            , #{startIndi}
-           , #{endIndi} 
-           , #{stdScore} 
-           , #{weValue} 
-           , NOW() 
-           , #{regUser} 
-           , #{regIp} 
-           , NOW() 
-           , #{updUser} 
+           , #{endIndi}
+           , #{stdScore}
+           , #{weValue}
+           , #{applRate}
+           , NOW()
+           , #{regUser}
+           , #{regIp}
+           , NOW()
+           , #{updUser}
            , #{updIp}
 	       , (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
-	              FROM TBL_WEVALUE_MST A 
-                 WHERE CATE_CODE = #{cateCode} 
-                   AND ORDER_SEQ = #{orderSeq} 
+	              FROM TBL_WEVALUE_MST A
+                 WHERE CATE_CODE = #{cateCode}
+                   AND ORDER_SEQ = #{orderSeq}
                    AND START_DT  = #{startDt}
-             )     
-	       ,'Y' 
+             )
+	       ,'Y'
         )
-     ]]>   
+     ]]>
     </insert>
      <update id="updateWvalue"  parameterType="WvalDTO"> <![CDATA[ 
         UPDATE TBL_WEVALUE_MST

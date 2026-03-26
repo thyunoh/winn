@@ -75,7 +75,8 @@
       "Bash(LIBDIR=\"C:\\\\Users\\\\user\\\\git\\\\winn\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\\\\lib\" CP=\"C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi\\\\3.17\\\\poi-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi-ooxml\\\\3.17\\\\poi-ooxml-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\poi\\\\poi-ooxml-schemas\\\\3.17\\\\poi-ooxml-schemas-3.17.jar;C:\\\\Users\\\\user\\\\.m2\\\\repository\\\\org\\\\apache\\\\xmlbeans\\\\xmlbeans\\\\2.6.0\\\\xmlbeans-2.6.0.jar;$LIBDIR\\\\commons-collections4-4.4.jar;$LIBDIR\\\\commons-codec-1.13.jar;$LIBDIR\\\\commons-compress-1.19.jar;$LIBDIR\\\\commons-math3-3.6.1.jar;$LIBDIR\\\\xmlbeans-3.1.0.jar\" cd /tmp)",
       "Bash(java -Xmx2g -cp \".;$CP\" -Dfile.encoding=UTF-8 ReadExcel)",
       "Read(//c/Users/user/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/dfd5c531-26dd-48b3-b065-caa98ae779be/1710df4c-55f6-4daa-b2f5-24039ad0f42c/skills/xlsx/**)",
-      "Bash(where node:*)"
+      "Bash(where node:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
