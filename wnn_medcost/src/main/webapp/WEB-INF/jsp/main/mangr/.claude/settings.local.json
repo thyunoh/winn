@@ -67,7 +67,14 @@
       "Bash(grep -r SP_ C:Usersuserwnnwnn_medcost --include=*.java --include=*.xml)",
       "Bash(grep -r \"VisitAsq\\\\|visitAsq\" C:Usersuserwnnwnn_medcostsrcmainjava --include=*.java)",
       "Bash(grep -r \"VisitAsq\\\\|visitAsq\" C:Usersuserwnnwnn_consultsrcmainjava --include=*.java)",
-      "Bash(grep -rn \"month_1\\\\|month_2\\\\|month_3\\\\|month_4\\\\|month_5\\\\|month_6\" C:UsersHYUNgitwinwnn_medcostsrcmainwebapp --include=*.jsp --include=*.js)"
+      "Bash(grep -rn \"month_1\\\\|month_2\\\\|month_3\\\\|month_4\\\\|month_5\\\\|month_6\" C:UsersHYUNgitwinwnn_medcostsrcmainwebapp --include=*.jsp --include=*.js)",
+      "Bash(ls -la \"C:\\\\Users\\\\HYUN\\\\git\\\\win\\\\wnn_medcost\\\\src\\\\main\\\\webapp\\\\WEB-INF\"\" | grep -E \"xml)",
+      "Bash(properties \")",
+      "Bash(grep -v \"\\\\.do$\")",
+      "Read(//c/Users/HYUN/**)",
+      "Read(//c//**)",
+      "Bash(find /c/Users/HYUN -maxdepth 8 -path */.metadata/.plugins/org.eclipse.wst.server.core/tmp* -name main.jsp)",
+      "Bash(ls /c/Users/HYUN/git/win/wnn_medcost/src/main/webapp/*.html /c/Users/HYUN/git/win/wnn_medcost/src/main/webapp/*.jsp)"
     ]
   }
 }

@@ -1729,19 +1729,19 @@
 				
 				if (data.resultCnt > 0) {
 					const maxLength = 30;
+					if (!window._notiData) window._notiData = [];
 
 					for (let i = 0; i < data.resultCnt; i++) {
 						const noti = data.resultList[i];
 						const notiSeq = noti.notiSeq;
 						const fileGb = noti.fileGb;
-						const notiTitle = encodeURIComponent(noti.notiTitle);
-						const notiContent = encodeURIComponent(noti.notiContent);
+						const notiTitle = encodeURIComponent(noti.notiTitle).replace(/'/g, '%27');
+						const notiContent = encodeURIComponent(noti.notiContent).replace(/'/g, '%27');
 
-						let dataTxt = '<tr onclick="showAdminModal(\'' 
-							+ notiSeq + '\', \'' 
-							+ fileGb + '\', \'' 
-							+ notiTitle + '\', \'' 
-							+ notiContent + '\')">';
+						var notiIdx = window._notiData.length;
+						window._notiData.push({seq: notiSeq, gb: fileGb, title: notiTitle, content: notiContent});
+
+						let dataTxt = '<tr onclick="showAdminModal_idx(' + notiIdx + ')">';
 
 						
 						// 분류 표시
@@ -1771,6 +1771,11 @@
 				}
 			}
 		});
+	}
+
+	function showAdminModal_idx(idx) {
+		var d = window._notiData[idx];
+		showAdminModal(d.seq, d.gb, d.title, d.content);
 	}
 
 	function showAdminModal(notiSeq, fileGb, notiTitle, notiContent) {
@@ -3344,20 +3349,29 @@
     		
       	
         	hosp_conact() ;
-
+        	
+        //  const url = "http://localhost:8080/user/";    
+        //  const url = "https://winner797.co.kr/user/dashboard.do";
             const url = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                     ? "http://localhost:8080/user/"
                     : "https://winner797.co.kr/user/dashboard.do";
-
-            // iframe으로 열기 (URL 숨김)
-            document.getElementById('wincheck-iframe').src = url;
-            document.getElementById('wincheck-frame-wrap').style.display = 'block';
-            document.body.classList.add('wincheck-open');
-
-            document.loginForm.hospid.disabled = true;
-            document.loginForm.userid.disabled = true;
-            document.loginForm.passwd.disabled = true;
-            document.loginForm.blogin.disabled = true;
+        	
+            win_Check = window.open(url);            
+            
+            win_Check.addEventListener('unload', () => {
+                // 창이 닫혔을 때
+                document.loginForm.hospid.disabled = false;
+                document.loginForm.userid.disabled = false;
+                document.loginForm.passwd.disabled = false;
+                document.loginForm.blogin.disabled = false; 
+            });
+            win_Check.addEventListener('load', function() {
+                // 창이 열렸을 때
+                document.loginForm.hospid.disabled = true;
+                document.loginForm.userid.disabled = true;
+                document.loginForm.passwd.disabled = true;
+                document.loginForm.blogin.disabled = true;
+            });
            
         }
 		function fnPasswdmanager(){ 
@@ -3946,7 +3960,7 @@ function fn_asqBarToggle() {
 		style="max-width: 650px;">
 		<div class="modal-content rounded-3 shadow-lg">
 			<div class="modal-header bg-light">
-				<h5 class="modal-title">1:1 문의하기</h5>
+				<h5 class="modal-title">컨설팅 문의</h5>
 				<div class="px-3 pt-2" style="font-size: 0.8rem; color: #666;">
 					<span style="color: red;">*</span> 는 필수 입력 항목입니다.
 				</div>
@@ -4121,7 +4135,7 @@ function fnVisitAsqSave() {
 		confirmButtonText: '저장',
 		cancelButtonText: '취소',
 		confirmButtonColor: '#3085d6',
-		cancelButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
 		width: 340,
 		customClass: {popup: 'swal2-sm', confirmButton: 'swal2-sm-btn', cancelButton: 'swal2-sm-btn'}
 	}).then(function(result) {
@@ -4167,33 +4181,6 @@ function fnVisitAsqSave() {
 <!-- ============================================================== -->
 
 	<jsp:include page="footer.jsp"></jsp:include>
-
-<!-- WinCheck iframe 영역 -->
-<div id="wincheck-frame-wrap" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; background:#fff; overflow:hidden;">
-    <iframe id="wincheck-iframe" style="width:100%; height:100%; border:none;" scrolling="auto"></iframe>
-</div>
-<style>
-/* iframe 표시 중일 때 부모 페이지 스크롤 제거 */
-body.wincheck-open { overflow: hidden !important; }
-</style>
-<script>
-function closeWinCheck() {
-    document.getElementById('wincheck-iframe').src = '';
-    document.getElementById('wincheck-frame-wrap').style.display = 'none';
-    document.body.classList.remove('wincheck-open');
-    document.loginForm.hospid.disabled = false;
-    document.loginForm.userid.disabled = false;
-    document.loginForm.passwd.disabled = false;
-    document.loginForm.blogin.disabled = false;
-}
-// iframe에서 postMessage로 닫기 요청 수신
-window.addEventListener('message', function(e) {
-    if (e.data === 'closeWinCheck') {
-        closeWinCheck();
-    }
-});
-</script>
-
 </body>
 </html>
 

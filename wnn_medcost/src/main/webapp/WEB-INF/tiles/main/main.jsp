@@ -7,7 +7,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-
+<script>
+(function(){if(location.pathname!=='/user/'){history.replaceState(null,'','/user/');}})();
+</script>
 <tiles:insertAttribute name="header" />
 
 </head>
@@ -18,8 +20,6 @@
     <tiles:insertAttribute name="content" />
 	
 <script>
-
-
 function loadPage(url) {
   
   $.ajax({
