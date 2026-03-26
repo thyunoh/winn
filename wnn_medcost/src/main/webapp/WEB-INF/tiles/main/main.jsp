@@ -8,7 +8,16 @@
 
 <head>
 <script>
-(function(){if(location.pathname!=='/user/'){history.replaceState(null,'','/user/');}})();
+(function(){
+  // 실제 경로를 저장한 후 URL을 숨김 (병원검색 등 reload 시 원래 페이지로 복귀용)
+  var realPath = location.pathname + location.search;
+  if (realPath !== '/user/' && realPath !== '/user/dashboard.do') {
+    sessionStorage.setItem('_realPath', realPath);
+    history.replaceState({_realPath: realPath}, '', '/user/');
+  } else if (!sessionStorage.getItem('_realPath')) {
+    sessionStorage.setItem('_realPath', '/user/dashboard.do');
+  }
+})();
 </script>
 <tiles:insertAttribute name="header" />
 

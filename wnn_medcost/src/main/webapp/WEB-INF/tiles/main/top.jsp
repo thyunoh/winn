@@ -191,10 +191,10 @@
       
        function closeTab() {
            // iframe 안에서 실행 중이면 부모에게 postMessage로 닫기 요청
-           if (window.parent !== window) {
+            if (window.parent !== window) {
                window.parent.postMessage('closeWinCheck', '*');
                return;
-           }
+           } 
            window.close();
            self.close();
        }
@@ -320,8 +320,10 @@
               hospid = getCookie("hospid");   // 병원아이디
               if (hospnm != getCookie("s_hospnm")){
                  //hosp_conact();
-                 location.reload(); // 페이지 새로고침
-                  return;            // reload 이후의 코드는 실행 안 되게 return
+                 // 실제 경로로 이동 (URL 숨김 때문에 location.reload() 대신 사용)
+                 var realPath = sessionStorage.getItem('_realPath') || location.pathname;
+                 location.href = realPath;
+                  return;
               } 
               hospnm = getCookie("s_hospnm");
               // 병원 변경 없이 재선택 시에도 버튼 표시
