@@ -3347,7 +3347,6 @@
         	setCookie("s_delauth", sessionStorage.getItem('s_delauth'), 1); //삭제권한  
         	setCookie("s_inqauth", sessionStorage.getItem('s_inqauth'), 1); //조회권한  
     		
-      	
         	hosp_conact() ;
         	
         //  const url = "http://localhost:8080/user/";    
