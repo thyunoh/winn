@@ -128,6 +128,11 @@
 /* 파일 테이블 헤더/바디 글자 축소 */
 #modalName #fileTable thead th { font-size: 13px; padding: 3px 5px; }
 #modalName #fileTable tbody td { font-size: 12px; padding: 2px 5px; }
+/* summernote 기본 폰트 설정 */
+#modalName .note-editable {
+    font-family: '맑은 고딕' !important;
+    font-size: 14px !important;
+}
 /* summernote-bs4 CSS와 summernote-lite CSS 중복 아이콘 방지 */
 #modalName .note-editor .note-icon-caret {
     display: none !important;
@@ -2215,6 +2220,12 @@
         applyAuthControl();
     });
 	function modalName_rich(answerText) {
+		  // 이전 에디터 완전 제거 후 textarea 재생성
+		  try { $('#notiContent').summernote('destroy'); } catch(e) {}
+		  var $parent = $('#notiContent').parent();
+		  $('#notiContent').remove();
+		  $parent.append('<textarea id="notiContent" name="notiContent" type="text" data-parsley-trigger="change" placeholder="" autocomplete="off" class="form-control" rows="7"></textarea>');
+
 		  // answerText가 null/undefined일 경우 빈 문자열로 초기화
 		  let safeAnswer = (answerText || '');
 		  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
@@ -2235,10 +2246,21 @@
 		    fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
 		    callbacks: {
 		      onInit: function () {
-		        // 폰트 크기
-		        $('#notiContent').next().find('.note-editable').css('font-size', '14px');
-		        // 줄바꿈 유지된 내용 적용
-		        $('#notiContent').summernote('code', convertedAnswer);
+		        if (convertedAnswer) {
+		          $('#notiContent').summernote('code', convertedAnswer);
+		        } else {
+		          $('#notiContent').summernote('code', '');
+		        }
+		        // 툴바에 기본 폰트 표시
+		        var $toolbar = $('#notiContent').next().find('.note-toolbar');
+		        $toolbar.find('.note-current-fontname').text('맑은 고딕');
+		        $toolbar.find('.note-current-fontsize').text('14');
+		        // 에디터 기본 폰트 CSS
+		        $('#notiContent').next().find('.note-editable').css({'font-family': '맑은 고딕', 'font-size': '14px'});
+		        // 입력 모드일 때 공지제목에 포커스
+		        if (!convertedAnswer) {
+		          setTimeout(function() { $('#notiTitle').focus(); }, 150);
+		        }
 		      }
 		    }
 		  });

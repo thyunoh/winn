@@ -76,7 +76,10 @@
       "Bash(java -Xmx2g -cp \".;$CP\" -Dfile.encoding=UTF-8 ReadExcel)",
       "Read(//c/Users/user/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/dfd5c531-26dd-48b3-b065-caa98ae779be/1710df4c-55f6-4daa-b2f5-24039ad0f42c/skills/xlsx/**)",
       "Bash(where node:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(find C:Usersusergitwinnwnn_consult -type f -name *Controller*.java)",
+      "Bash(find C:Usersusergitwinnwnn_consultsrcmainjava -type f -name *.java)",
+      "Bash(grep -r \"RequestMapping\\\\|login.do\" C:Usersusergitwinnwnn_consultsrcmainjava --include=*.java)"
     ]
   }
 }

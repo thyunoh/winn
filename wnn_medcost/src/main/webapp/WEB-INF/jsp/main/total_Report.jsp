@@ -2158,6 +2158,12 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 	   	                if (rowTitle === "평균" || colTitle === "계" || colTitle === "합계") {
 	   	                    cell.style.backgroundColor = '#DFE6F7';
 	   	                    cell.style.color = '#2E2E2E';
+	   	                    // 합계 행 클릭 가능 (jobFlag 09: 재활치료 청구현황)
+	   	                    if (colTitle === "합계" && jobFlag === "09" && label.textContent != "-") {
+	   	                    	label.style.cursor = 'pointer';
+	   	                    	label.setAttribute('data-id', [rowTitle, r, c].join(','));
+	   	                    	label.style.color = '#007bff';
+	   	                    }
 	   	                } else if (colColors.includes(colTitle)) {
 	   	                    label.style.color = '#007bff';
 	   	                } else {
