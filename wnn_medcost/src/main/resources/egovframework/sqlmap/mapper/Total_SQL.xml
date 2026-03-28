@@ -792,7 +792,7 @@
 											          AND tsm.BILL_SEQ  = jm.BILL_SEQ
 											          AND tsm.ROW_NO    = jm.ROW_NO 
 											          AND tsm.SPEC_TYPE = 'JS008')	
-									                         
+									    -- AND jm.ITEM_NO NOT IN ('L')                      
                LEFT JOIN TBL_SUGA_MST    sm ON sm.FEE_CODE IN ( SELECT DISTINCT dd.EDI_CODE
 								                                  FROM TBL_DRUG_MST dd
 									                             WHERE dd.CODEFLAG = 'M' )
@@ -892,7 +892,7 @@
 						        AND C.ROW_NO   = B.ROW_NO
 						        AND C.SPEC_TYPE = 'JS008'
 					     )  
-				AND  B.ITEM_NO NOT IN('L')       
+			--	AND  B.ITEM_NO NOT IN('L')       
 	        JOIN TBL_MYOUNG_MST D
                 ON D.HOSP_CD  = A.HOSP_CD
                AND D.CLAIM_NO = A.CLAIM_NO
