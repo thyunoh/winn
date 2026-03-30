@@ -44,6 +44,13 @@
     padding-top: 3px !important;
     padding-bottom: 3px !important;
 }
+/* 선택된 메뉴 항목 활성 스타일 */
+.nav-left-sidebar .navbar-nav .nav-link.active {
+    background-color: #e2e2eb !important;
+    color: #3d405c !important;
+    font-weight: 600 !important;
+    border-radius: 4px;
+}
 .dashboard-content {
     padding: 10px 10px 60px 10px !important;
 }
@@ -1158,32 +1165,50 @@ function hosp_conact() {
     ]);
 }
 document.addEventListener('DOMContentLoaded', function () {
-    const currentPath = window.location.pathname;    
-    // 모든 nav-link 순회
-    document.querySelectorAll('.nav-link').forEach(function (link) {
-        const href = link.getAttribute('href');
+    // URL이 /user/로 숨겨져 있으므로 sessionStorage에서 실제 경로를 가져옴
+    var currentPath = sessionStorage.getItem('_realPath') || window.location.pathname;
+    // 쿼리스트링 제거 (경로만 비교)
+    if (currentPath.indexOf('?') > -1) {
+        currentPath = currentPath.substring(0, currentPath.indexOf('?'));
+    }
 
-        if (href && currentPath.includes(href)) {
-            link.classList.add('active');
+    // 모든 nav-link 순회 — 현재 페이지 URL과 일치하는 메뉴에 active 클래스 부여
+    var matchedLink = null;
+    document.querySelectorAll('.nav-left-sidebar .nav-link').forEach(function (link) {
+        var href = link.getAttribute('href');
+        // href가 없거나, '#'이거나, 빈 문자열이면 건너뛰기
+        if (!href || href === '#' || href === '' || href.startsWith('http') || href.startsWith('javascript')) return;
 
-            // 현재 링크 기준으로 상위 submenu 모두 열기
-            let parent = link.closest('.nav-item');
-            while (parent) {
-                const submenu = parent.querySelector('.submenu');
-                if (submenu) {
-                    submenu.classList.add('show');
-                }
+        // 쿼리스트링 제거
+        if (href.indexOf('?') > -1) {
+            href = href.substring(0, href.indexOf('?'));
+        }
 
-                const toggler = parent.querySelector('[data-toggle="collapse"]');
-                if (toggler) {
-                    toggler.setAttribute('aria-expanded', 'true');
-                }
-
-                // 다음 상위로 이동
-                parent = parent.parentElement.closest('.nav-item');
-            }
+        if (currentPath === href) {
+            matchedLink = link;
         }
     });
+
+    if (matchedLink) {
+        matchedLink.classList.add('active');
+
+        // 현재 링크 기준으로 상위 submenu 모두 열기
+        var parent = matchedLink.closest('.nav-item');
+        while (parent) {
+            var submenu = parent.querySelector('.submenu');
+            if (submenu) {
+                submenu.classList.add('show');
+            }
+
+            var toggler = parent.querySelector('[data-toggle="collapse"]');
+            if (toggler) {
+                toggler.setAttribute('aria-expanded', 'true');
+            }
+
+            // 다음 상위로 이동
+            parent = parent.parentElement.closest('.nav-item');
+        }
+    }
     let s_wnn_yn = getCookie("s_wnn_yn"); //위너넷여부
     if (s_wnn_yn != 'Y') {
     	hosp_conact();
