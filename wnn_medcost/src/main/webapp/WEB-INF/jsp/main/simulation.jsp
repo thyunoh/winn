@@ -1357,8 +1357,6 @@ function dataLoad(data, callback, settings) {
     		monthParams['month_' + (mi + 1)] = cy.toString() + cm.toString().padStart(2, '0');
     	}
 
-
-
 	    $.ajax({
 	    	url: "/main/select_Hosp_Indi.do",
 	        type: "POST",
@@ -1396,8 +1394,6 @@ function dataLoad(data, callback, settings) {
     }
     
 }
-
-
 
 </script>
 <!-- ============================================================== -->
