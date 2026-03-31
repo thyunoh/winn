@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "wnn_consult (Tomcat:9090)",
+      "runtimeExecutable": "mvn",
+      "runtimeArgs": ["tomcat7:run", "-f", "C:/Users/user/git/winn/wnn_consult/pom.xml"],
+      "port": 9090
+    },
+    {
+      "name": "wnn_medcost (Tomcat:8080)",
+      "runtimeExecutable": "mvn",
+      "runtimeArgs": ["tomcat7:run", "-f", "C:/Users/user/git/winn/wnn_medcost/pom.xml"],
+      "port": 8080
+    }
+  ]
+}
