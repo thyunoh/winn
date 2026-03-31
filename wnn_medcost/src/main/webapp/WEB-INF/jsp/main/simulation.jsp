@@ -44,6 +44,7 @@
 					                <button class="btn indi-custom-btn text-white     btn-sm w-auto mr-3" onClick="fn_ViewData(1)">기간별 보기</button>
 					                <button class="btn btn-outline-primary            btn-sm w-auto mr-3" onClick="fn_ViewData(2)">상반기 보기</button>
 					                <button class="btn btn-outline-success text-green btn-sm w-auto mr-3" onClick="fn_ViewData(3)">하반기 보기</button>
+                                <button class="btn btn-outline-danger btn-sm w-auto mr-3"  style="display: none;"  onClick="fn_EvalChart()">병원별 비교분석</button>
 					            </div>
 					        </div>
 					        
@@ -54,10 +55,25 @@
 					        </div>
 					    </div>
 					</div>
-            
+
             	</div>
         	</div>
     	</div>
+
+		<!-- 병원별 평가분석 차트 모달 -->
+		<div class="modal fade" id="evalChartModal" tabindex="-1" role="dialog" aria-hidden="true">
+		    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 93vw;">
+		        <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
+		            <div class="modal-header" style="background:linear-gradient(135deg,#dc3545 0%,#fd7e14 100%); color:#fff; border-radius:12px 12px 0 0; padding:14px 24px;">
+		                <h5 class="modal-title" id="evalChartTitle" style="font-weight:600; color:#fff !important;"><i class="fa fa-chart-bar mr-2"></i>병원별 평가분석</h5>
+		                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
+		            </div>
+		            <div class="modal-body" style="height: 75vh; padding:15px 8px; overflow-x:auto; overflow-y:hidden;">
+		                <canvas id="evalChartCanvas" height="500"></canvas>
+		            </div>
+		        </div>
+		    </div>
+		</div>
     </div>
     
 
@@ -73,6 +89,7 @@ var dataTable = [];
 
 var checkHosp = null;
 var edit_Data = null;
+var evalChartInstance = null;
 
 
 <!-- ============================================================== -->
@@ -218,6 +235,314 @@ function fn_ViewData(flag) {
 	}
 	
     fn_IndiSelect();
+}
+
+// ─── 병원별 평가분석 차트 ───
+var evalHospColors = [
+	{ bg: 'rgba(54, 162, 235, 0.7)',  border: 'rgba(54, 162, 235, 1)'  },  // 파랑
+	{ bg: 'rgba(255, 99, 132, 0.7)',  border: 'rgba(255, 99, 132, 1)'  },  // 빨강
+	{ bg: 'rgba(75, 192, 192, 0.7)',  border: 'rgba(75, 192, 192, 1)'  }   // 청록
+];
+
+function fn_EvalChart() {
+
+	// 1. 기간 검증
+	if (stryymm === '199901' || endyymm === '199901') {
+		Swal.fire({ icon: 'warning', title: '알림', text: '먼저 기간을 선택하고 데이터를 조회해 주세요.' });
+		return;
+	}
+
+	// 2. 선택 병원 가져오기 (체크된 병원)
+	var checkedHosps = [];
+	if (dataTable[0]) {
+		dataTable[0].rows().every(function() {
+			var node = this.node();
+			var cb = $(node).find('input[type="checkbox"]');
+			if (cb.length > 0 && cb.prop('checked')) {
+				var rd = this.data();
+				checkedHosps.push({ hosp_cd: rd.hosp_cd, hosp_nm: rd.hosp_nm });
+			}
+		});
+	}
+
+	if (checkedHosps.length === 0) {
+		Swal.fire({ icon: 'warning', title: '알림', text: '병원을 선택해 주세요. (체크박스)' });
+		return;
+	}
+	if (checkedHosps.length > 3) {
+		Swal.fire({ icon: 'warning', title: '알림', text: '최대 3개 병원까지 비교할 수 있습니다.' });
+		return;
+	}
+
+	// 3. month 파라미터 계산
+	var sYear = parseInt(stryymm.substring(0, 4));
+	var sMon  = parseInt(stryymm.substring(4, 6));
+	var eYear = parseInt(endyymm.substring(0, 4));
+	var eMon  = parseInt(endyymm.substring(4, 6));
+	var totalMonths = (eYear - sYear) * 12 + (eMon - sMon) + 1;
+	var monthParams = {};
+	for (var mi = 0; mi < Math.min(totalMonths, 6); mi++) {
+		var cm = sMon + mi;
+		var cy = sYear;
+		if (cm > 12) { cy += Math.floor((cm - 1) / 12); cm = (cm - 1) % 12 + 1; }
+		monthParams['month_' + (mi + 1)] = cy.toString() + cm.toString().padStart(2, '0');
+	}
+
+	// 4. 각 병원별 AJAX 호출 (병렬)
+	fn_showProgress();
+	var promises = checkedHosps.map(function(hosp) {
+		return $.ajax({
+			url: "/main/select_Hosp_Indi.do",
+			type: "POST",
+			traditional: true,
+			data: $.extend({
+				hosp_cd: [hosp.hosp_cd],
+				stryymm: stryymm,
+				endyymm: endyymm
+			}, monthParams),
+			dataType: "json"
+		});
+	});
+
+	$.when.apply($, promises).done(function() {
+		fn_hideProgress();
+
+		// 결과 정리 (1개일 때와 여러개일 때 $.when 결과 구조가 다름)
+		var results = [];
+		if (checkedHosps.length === 1) {
+			results.push(arguments[0]);
+		} else {
+			for (var i = 0; i < arguments.length; i++) {
+				results.push(arguments[i][0]);
+			}
+		}
+
+		// 5. 지표명/가중치 수집 (첫 번째 병원 기준)
+		var labels = [];
+		var maxScores = [];
+		var firstData = (results[0] && results[0].data) ? results[0].data : [];
+
+		firstData.forEach(function(row) {
+			if (row.cate_cd === '99') return;
+			var nm = row.cate_nm || '';
+			// 8자 넘으면 두 줄로 나눔 (배열로 전달하면 Chart.js가 멀티라인 처리)
+			if (nm.length > 8) {
+				var mid = Math.ceil(nm.length / 2);
+				var spaceIdx = nm.indexOf(' ', mid - 3);
+				if (spaceIdx > 0 && spaceIdx < mid + 3) {
+					labels.push([nm.substring(0, spaceIdx), nm.substring(spaceIdx + 1)]);
+				} else {
+					labels.push([nm.substring(0, mid), nm.substring(mid)]);
+				}
+			} else {
+				labels.push(nm);
+			}
+			maxScores.push(parseFloat(row.stdweig) || 0);
+		});
+
+		if (labels.length === 0) {
+			Swal.fire({ icon: 'warning', title: '알림', text: '조회된 지표 데이터가 없습니다.' });
+			return;
+		}
+
+		// 6. datasets 생성 (가중치 = 뒤 큰 막대, 병원 = 안에서 좌→우 나란히)
+		var datasets = [];
+		var hospCount = checkedHosps.length;
+
+		// 6-1. 가중치(배점) 막대 - 배경 (가장 넓음)
+		datasets.push({
+			label: '배점 (가중치)',
+			data: maxScores,
+			backgroundColor: 'rgba(230, 230, 230, 0.45)',
+			borderColor: 'rgba(200, 200, 200, 0.6)',
+			borderWidth: 1,
+			barPercentage: 1.0,
+			categoryPercentage: 0.99,
+			xAxisID: 'x',
+			order: 3
+		});
+
+		// 6-2. 병원별 막대 - 가중치 막대 안에서 좌측부터 나란히
+		//      커스텀 플러그인으로 위치 조정하므로 같은 x축 사용
+		var innerBarWidth = 0.85 / (hospCount + 0.5); // 가중치 막대 안에서 균등 분할
+		checkedHosps.forEach(function(hosp, hIdx) {
+			var hospData = (results[hIdx] && results[hIdx].data) ? results[hIdx].data : [];
+			var scores = [];
+			hospData.forEach(function(row) {
+				if (row.cate_cd === '99') return;
+				scores.push(parseFloat(row.weigavg) || 0);
+			});
+			datasets.push({
+				label: hosp.hosp_nm,
+				data: scores,
+				backgroundColor: evalHospColors[hIdx].bg,
+				borderColor: evalHospColors[hIdx].border,
+				borderWidth: 1.5,
+				borderRadius: 2,
+				barPercentage: 0.9,
+				categoryPercentage: innerBarWidth,
+				xAxisID: 'x2',
+				order: 1,
+				_hospIdx: hIdx,
+				_hospCount: hospCount
+			});
+		});
+
+		// 7. 기존 차트 제거
+		if (evalChartInstance) {
+			evalChartInstance.destroy();
+			evalChartInstance = null;
+		}
+
+		// 8. 캔버스 크기: 항목수 × unitWidth (이 값으로 간격 조절)
+		var unitWidth = 90;
+		var modalBodyW = 0;
+		var modalBodyH = 0;
+
+		// 9. 모달 타이틀 및 표시
+		var titleNames = checkedHosps.map(function(h) { return h.hosp_nm; }).join(' vs ');
+		$('#evalChartTitle').html('<i class="fa fa-chart-bar mr-2"></i>' + titleNames + ' - 평가분석');
+		$('#evalChartModal').modal('show');
+
+		$('#evalChartModal').one('shown.bs.modal', function() {
+			// 캔버스를 부모에 맞춤 (responsive: true)
+			$('#evalChartCanvas').removeAttr('width').removeAttr('height').css({ width: '100%', height: '100%' });
+
+			var ctx = document.getElementById('evalChartCanvas').getContext('2d');
+
+			// 병원 막대를 가중치 막대 안에서 좌측부터 배치하는 플러그인
+			var alignLeftPlugin = {
+				id: 'alignHospBars',
+				beforeDatasetDraw: function(chart, args) {
+					var dIdx = args.index;
+					var ds = chart.data.datasets[dIdx];
+					if (ds._hospIdx === undefined) return;
+
+					var meta0 = chart.getDatasetMeta(0);
+					var metaH = chart.getDatasetMeta(dIdx);
+					var hIdx = ds._hospIdx;
+					var hCnt = ds._hospCount;
+					var gap = 2;
+
+					metaH.data.forEach(function(bar, i) {
+						var bgBar = meta0.data[i];
+						if (!bgBar) return;
+						var bgLeft = bgBar.x - bgBar.width / 2 + 2;
+						var bgInner = bgBar.width - 4;
+						var totalGap = gap * (hCnt - 1);
+						var slotW = (bgInner - totalGap) / hCnt;
+						var newX = bgLeft + slotW * hIdx + gap * hIdx + slotW / 2;
+						bar.x = newX;
+						bar.width = slotW;
+					});
+				}
+			};
+
+			evalChartInstance = new Chart(ctx, {
+				type: 'bar',
+				plugins: [alignLeftPlugin],
+				data: {
+					labels: labels,
+					datasets: datasets
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					layout: { padding: { top: 25, right: 5, left: 5 } },
+					plugins: {
+						title: {
+							display: true,
+							text: '지표별 병원 평가 비교  ( 막대 상단 숫자 = 배점 )',
+							font: { size: 15, weight: 'bold' },
+							padding: { bottom: 15 }
+						},
+						legend: {
+							position: 'top',
+							labels: { font: { size: 12 }, padding: 15 }
+						},
+						tooltip: {
+							callbacks: {
+								label: function(context) {
+									var idx = context.dataIndex;
+									var max = maxScores[idx] || 0;
+									return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '점 / 배점 ' + max + '점';
+								}
+							}
+						}
+					},
+					scales: {
+						x: {
+							stacked: true,
+							ticks: {
+								maxRotation: 0,
+								minRotation: 0,
+								font: { size: 11, weight: 'bold' },
+								color: '#333',
+								autoSkip: false,
+								padding: 2
+							},
+							grid: { display: false },
+							afterFit: function(axis) {
+								axis.paddingLeft = 0;
+								axis.paddingRight = 0;
+							}
+						},
+						x2: {
+							display: false,
+							stacked: false,
+							grid: { display: false }
+						},
+						y: {
+							stacked: false,
+							beginAtZero: true,
+							title: {
+								display: true,
+								text: '점수',
+								font: { size: 12 }
+							},
+							grid: { color: 'rgba(0,0,0,0.05)' }
+						}
+					},
+					animation: {
+						onComplete: function() {
+							var chart = this;
+							var ctxDraw = chart.ctx;
+							var numDatasets = chart.data.datasets.length;
+							ctxDraw.save();
+							ctxDraw.textAlign = 'center';
+
+							// 가중치(배점) - 막대 상단에 빨간 숫자
+							var metaW = chart.getDatasetMeta(0);
+							ctxDraw.font = 'bold 12px sans-serif';
+							ctxDraw.fillStyle = '#d00';
+							metaW.data.forEach(function(bar, idx) {
+								var val = chart.data.datasets[0].data[idx];
+								if (val > 0) ctxDraw.fillText(val, bar.x, bar.y - 6);
+							});
+
+							// 병원별 점수 - 각 막대 안쪽 상단에 검은색 표시
+							for (var d = 1; d < numDatasets; d++) {
+								var meta = chart.getDatasetMeta(d);
+								ctxDraw.font = 'bold 12px sans-serif';
+								ctxDraw.fillStyle = '#000';
+								meta.data.forEach(function(bar, idx) {
+									var val = chart.data.datasets[d].data[idx];
+									if (val > 0) {
+										ctxDraw.fillText(val.toFixed(1), bar.x, bar.y + 14);
+									}
+								});
+							}
+							ctxDraw.restore();
+						}
+					}
+				}
+			});
+		});
+
+	}).fail(function() {
+		fn_hideProgress();
+		Swal.fire({ icon: 'error', title: '오류', text: '병원 데이터를 가져오는 중 오류가 발생했습니다.' });
+	});
 }
 
 function fn_IndiSelect() {
@@ -1166,8 +1491,15 @@ $(document).ready(function() {
     	
     });
     
-    fn_HospSelect();	
-	
+    fn_HospSelect();
+
+	// 평가분석 모달 닫힘 시 차트 정리
+	$('#evalChartModal').on('hidden.bs.modal', function() {
+		if (evalChartInstance) {
+			evalChartInstance.destroy();
+			evalChartInstance = null;
+		}
+	});
 
 });
 
