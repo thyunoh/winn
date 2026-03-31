@@ -333,31 +333,31 @@
 					    { data: 'date_ym',       visible: true,  className: 'dt-body-center',  width: '100px',
 						    render: function(data, type, row) {
 		            			if (type === 'display') {
-		            				return getFormat(data,'d6')
+		            				return data != null ? getFormat(data,'d6') : '';
 		                		}
 		                		return data;
 	      			       },
 					    },
-					    { data: 'case_cnt',   visible: true,  className: 'dt-body-right',   width: '100px', 
+					    { data: 'case_cnt',   visible: true,  className: 'dt-body-right',   width: '100px',
 							render: function(data, type, row) {
 		            			if (type === 'display') {
-		            				return getFormat(data,'n1') + ' 건 '
+		            				return data != null ? getFormat(data,'n1') + ' 건 ' : '';
 		                		}
 		                		return data;
           			       },
 					    },
-						{ data: 'tot_amt',   visible: true,  className: 'dt-body-right',   width: '100px', 
+						{ data: 'tot_amt',   visible: true,  className: 'dt-body-right',   width: '100px',
 							render: function(data, type, row) {
 		            			if (type === 'display') {
-		            				return getFormat(data,'n1') + ' 원 '
+		            				return data != null ? getFormat(data,'n1') + ' 원 ' : '';
 		                		}
 		                		return data;
 	          			     },
 						},
-						{ data: 'claim_amt', visible: true,  className: 'dt-body-right',   width: '100px', 
+						{ data: 'claim_amt', visible: true,  className: 'dt-body-right',   width: '100px',
 						    render: function(data, type, row) {
 		            			if (type === 'display') {
-		            				return getFormat(data,'n1') + ' 원 '
+		            				return data != null ? getFormat(data,'n1') + ' 원 ' : '';
 		                		}
 		                		return data;
 	          			    },
@@ -748,36 +748,36 @@ $(document).ready(function() {
 	
 	//ajax 함수 정의
 	function dataLoad(data, callback, settings) {
-	
+
 		//var table = $(settings.nTable).DataTable();
 	    //table.processing(true); // 처리 중 상태 시작
-			
+
 	    let find = {};
 	   	for (let findValue of findValues) {
 	   		find[findValue.id] = findValue.val;
-	   	}	
-	   	
+	   	}
+
 	    $.ajax({
 	        type: "POST",
 	        url: "/main/magamGetFileList.do",
 	        data: find,
 	        dataType: "json",
-	        
+
 	        // timeout: 10000, // 10초 후 타임아웃
 	        beforeSend : function () {
-	        	
+
 			},
 	        success: function(response) {
 	        	//table.processing(false); // 처리 중 상태 종료
 	            if (response && Object.keys(response).length > 0) {
-	            	
+
 	            	callback(response);
 	            } else {
 	            	callback([]); // 빈 배열을 콜백으로 전달
 	            }
 	        },
 	        error: function(jqXHR, textStatus, errorThrown) {
-	        	//table.processing(false); // 처리 중 상태 종료		                    
+	        	//table.processing(false); // 처리 중 상태 종료
 	            callback({
 	                data: []
 	            });
