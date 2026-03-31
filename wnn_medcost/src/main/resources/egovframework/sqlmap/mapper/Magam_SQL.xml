@@ -1,9 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.wnn_medcost.magam.mapper.MagamMapper">
-	<!-- resultMap 제거 → resultType 사용 (SQL alias와 DTO 필드명이 동일하면 자동 매핑) -->
+	<resultMap id="magamMap" type="egovframework.wnn_medcost.magam.model.MagamDTO">	   
+          <result property="hosp_cd"     column="hosp_cd" />
+          <result property="mg_year"     column="mg_year" />
+          <result property="mgmonth"     column="mgmonth" />
+		  <result property="mg_flag"     column="mg_flag" />
+		  <result property="magamyn"     column="magamyn" />		  
+		  <result property="ipwonyn"     column="ipwonyn" />
+		  <result property="claim_no"    column="claim_no" />
+		  <result property="clform_ver"  column="clform_ver" />
+		  <result property="claim_type"  column="claim_type" />
+		  <result property="treat_type"  column="treat_type" />		  
+		  <result property="claim_type_nm"  column="claim_type_nm" />
+		  <result property="treat_type_nm"  column="treat_type_nm" />
+		  <result property="date_ym"     column="date_ym" />
+		  <result property="case_cnt"    column="case_cnt" />
+		  <result property="tot_amt"     column="tot_amt" />
+		  <result property="claim_amt"   column="claim_amt" />
+		  <result property="jobs_dt"     column="jobs_dt" />
+		  <result property="file_nm"     column="file_nm" />		  
+		  <result property="user_nm"     column="user_nm" />		  
+		  <result property="upd_dttm"    column="upd_dttm" />
+		  <result property="filenew"     column="filenew" />
+		  <result property="jobyymm"     column="jobyymm" />
+		  <result property="jobcode"     column="jobcode" />
+		  <result property="fr_yymm"     column="fr_yymm" />		  
+		  <result property="midyymm"     column="midyymm" />
+		  <result property="endyymm"     column="endyymm" />
+		  <result property="avg_val"     column="avg_val" />
+		  <result property="ta_hosp"     column="ta_hosp" />
+		  <result property="ta_f_ym"     column="ta_f_ym" />
+		  <result property="ta_m_ym"     column="ta_m_ym" />
+		  <result property="ta_e_ym"     column="ta_e_ym" />
+		  <result property="lock_yn"     column="lock_yn" />
+		  <result property="js008Yn"     column="js008Yn" />
+		  <result property="http_st"     column="http_st" />
+	</resultMap>
 	
-	<select id="getMagamYearList" parameterType="MagamDTO"  resultType="MagamDTO"><![CDATA[
+	<resultMap id="filesMap" type="egovframework.wnn_medcost.magam.model.FilesDTO">	   
+          <result property="hosp_cd"    column="hosp_cd" />
+          <result property="mg_year"    column="mg_year" />
+          <result property="mgmonth"    column="mgmonth" />
+		  <result property="mg_flag"    column="mg_flag" />
+		  <result property="jobs_dt"    column="jobs_dt" />
+		  <result property="file_nm"    column="file_nm" />
+		  <result property="line_no"    column="line_no" />
+		  <result property="lineval"    column="lineval" />
+		  <result property="reg_user"   column="reg_user" />
+		  <result property="reg_ip"     column="reg_ip" />
+		  <result property="upd_user"   column="upd_user" />
+		  <result property="upd_ip"     column="upd_ip" />
+		  <result property="ver_number" column="ver_number" />
+	</resultMap>
+	 
+	<resultMap id="ipwonMap" type="egovframework.wnn_medcost.magam.model.IpwonDTO">	   
+          <result property="hosp_cd"    column="hosp_cd" />
+          <result property="jobyymm"    column="jobyymm" />
+          <result property="seq_num"    column="seq_num" />
+          <result property="chartno"    column="chartno" />
+		  <result property="patname"    column="patname" />
+		  <result property="ipwondt"    column="ipwondt" />
+		  <result property="ipwontm"    column="ipwontm" />
+		  <result property="tewondt"    column="tewondt" />
+		  <result property="tewontm"    column="tewontm" />
+		  <result property="juminno"    column="juminno" />
+		  <result property="docname"    column="docname" />
+		  <result property="dept_nm"    column="dept_nm" />
+		  <result property="insurnm"    column="insurnm" />
+		  <result property="word_nm"    column="word_nm" />
+		  <result property="room_nm"    column="room_nm" />
+		  <result property="reg_user"   column="reg_user" />
+		  <result property="reg_ip"     column="reg_ip" />
+		  <result property="upd_user"   column="upd_user" />
+		  <result property="upd_ip"     column="upd_ip" />
+	</resultMap>
+	
+	<resultMap id="indiMap" type="egovframework.wnn_medcost.magam.model.IndiDTO">	   
+          <result property="hosp_cd"    column="hosp_cd" />
+          <result property="hosp_nm"    column="hosp_nm" />
+          <result property="jobyymm"    column="jobyymm" />
+          <result property="cate_cd"    column="cate_cd" />
+          <result property="cate_fg"    column="cate_fg" />
+		  <result property="stryymm"    column="stryymm" />
+		  <result property="endyymm"    column="endyymm" />
+		  <result property="dtorval"    column="dtorval" />
+		  <result property="ntorval"    column="ntorval" />
+		  <result property="cal_val"    column="cal_val" />
+		  <result property="max_val"    column="max_val" />
+		  <result property="stdweig"    column="stdweig" />
+		  <result property="weigval"    column="weigval" />
+		  <result property="s_score"    column="s_score" />
+		  <result property="cate_nm"    column="cate_nm" />
+		  <result property="goal_nm"    column="goal_nm" />
+		  <result property="hospgrd"    column="hospgrd" />
+		  <result property="scoreyy"    column="scoreyy" />
+		  <result property="scoremm"    column="scoremm" />
+		  <result property="scorest"    column="scorest" />
+		  <result property="scoremd"    column="scoremd" />
+		  <result property="checknm"    column="checknm" />
+		  
+		  <result property="calval1"    column="calval1" />
+		  <result property="calval2"    column="calval2" />
+		  <result property="calval3"    column="calval3" />
+		  <result property="calval4"    column="calval4" />
+		  <result property="calval5"    column="calval5" />
+		  <result property="calval6"    column="calval6" />
+		  <result property="weival1"    column="weival1" />
+		  <result property="weival2"    column="weival2" />
+		  <result property="weival3"    column="weival3" />
+		  <result property="weival4"    column="weival4" />
+		  <result property="weival5"    column="weival5" />
+		  <result property="weival6"    column="weival6" />
+		  <result property="dtortot"    column="dtortot" />
+		  <result property="ntortot"    column="ntortot" />
+		  <result property="cal_avg"    column="cal_avg" />
+		  <result property="weigavg"    column="weigavg" />
+		  
+		  <result property="reg_user"   column="reg_user" />
+		  <result property="reg_ip"     column="reg_ip" />
+		  <result property="upd_user"   column="upd_user" />
+		  <result property="upd_ip"     column="upd_ip" />
+	</resultMap>
+	
+	<select id="getMagamYearList" parameterType="MagamDTO"  resultMap="magamMap"><![CDATA[
 		WITH MONTHS AS (
 		    SELECT '01' AS MGMONTH UNION ALL
 		    SELECT '02' UNION ALL
@@ -37,7 +157,7 @@
 	]]>
 	</select>
 	
-	<select id="magamGetFileList" parameterType="MagamDTO"  resultType="MagamDTO"><![CDATA[
+	<select id="magamGetFileList" parameterType="MagamDTO"  resultMap="magamMap"><![CDATA[
 	  WITH CTE_MYOUNG AS (
 	    SELECT B.HOSP_CD
 	          ,B.CLAIM_NO
@@ -187,7 +307,7 @@
         </foreach>
 	</insert>
 	
-	<select id="selectMagamCheck" parameterType="MagamDTO" resultType="MagamDTO">
+	<select id="selectMagamCheck" parameterType="MagamDTO" resultMap="magamMap">
 		SELECT jobs_dt
 		  FROM TBL_MAGAM_INFO
 		 WHERE HOSP_CD  = #{hosp_cd}
@@ -340,7 +460,7 @@
     	                                 #{errmess,   mode=OUT, jdbcType=VARCHAR})}
 	</select>
 	
-	<select id="setTotalReport_01" parameterType="MagamDTO" resultType="MagamDTO"><![CDATA[
+	<select id="setTotalReport_01" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
 		SELECT M.JOBCODE AS jobcode,
 		       COALESCE(MAX(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN M.JOBNOTE END), 0) AS fr_yymm,
 		       COALESCE(MAX(CASE WHEN M.JOBYYMM = #{midyymm} THEN M.JOBNOTE END), 0) AS midyymm,
@@ -355,7 +475,7 @@
 	]]> 		 
     </select>
 	
-	<select id="setTotalReport_02" parameterType="MagamDTO" resultType="MagamDTO"><![CDATA[
+	<select id="setTotalReport_02" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
 		WITH ValidMonths AS (
 		    SELECT JOBCODE
 		         , COUNT(DISTINCT CASE WHEN COALESCE(J_COUNT, 0) > 0 OR COALESCE(JAMOUNT, 0) > 0 
@@ -542,7 +662,7 @@
 		 ORDER BY jobcode;
     ]]> 		 
     </select>
-    <select id="setTotalReport_03" parameterType="MagamDTO" resultType="MagamDTO"><![CDATA[
+    <select id="setTotalReport_03" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
     
     	WITH ValidMonths AS (
 		   SELECT M.JOBCODE, 
@@ -630,7 +750,7 @@
 	    
     ]]> 		 
     </select> 
-    <select id="setTotalReport_09" parameterType="MagamDTO" resultType="MagamDTO"><![CDATA[
+    <select id="setTotalReport_09" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
     
     	WITH ValidMonths AS (
 		   SELECT M.JOBCODE, 
@@ -720,7 +840,7 @@
     ]]> 		 
     
     </select>
-    <select id="setTotalReport_11" parameterType="MagamDTO" resultType="MagamDTO"><![CDATA[
+    <select id="setTotalReport_11" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
 		WITH ValidMonths AS (
 		    SELECT JOBCODE, 
 		           COUNT(DISTINCT CASE WHEN COALESCE(JAMOUNT, 0) > 0 THEN JOBYYMM END) AS month_count
@@ -907,7 +1027,7 @@
     ]]> 		 
     </select>
      
-    <select id="setTotalReport_13" parameterType="MagamDTO" resultType="MagamDTO"><![CDATA[
+    <select id="setTotalReport_13" parameterType="MagamDTO" resultMap="magamMap"><![CDATA[
 		SELECT M.JOBCODE AS jobcode,
 		       COALESCE(MAX(CASE WHEN M.JOBYYMM = #{fr_yymm} THEN CONCAT('[ ',ROUND(M.J_COUNT),' ] / [ ',M.JAMOUNT,' ]') END), 0) AS fr_yymm,
 		       COALESCE(MAX(CASE WHEN M.JOBYYMM = #{midyymm} THEN CONCAT('[ ',ROUND(M.J_COUNT),' ] / [ ',M.JAMOUNT,' ]') END), 0) AS midyymm,
@@ -996,7 +1116,7 @@
     	                                       #{errmess,   mode=OUT, jdbcType=VARCHAR})}
 	</select>
 	
-	<select id="select_Eval_Indi" parameterType="IndiDTO" resultType="IndiDTO">
+	<select id="select_Eval_Indi" parameterType="IndiDTO" resultMap="indiMap">
 		SELECT distinct 
                p.cate_cd 	as cate_cd  	          
 		     , replace(replace(replace(w.wevalue_nm,'욕창 관리 환자분율',''),'(',''),')','') as cate_nm 
@@ -3617,7 +3737,7 @@
 		   
 	</select>
 	
- 	<select id="select_HospitalMst" resultType="IndiDTO">
+ 	<select id="select_HospitalMst" resultMap="indiMap">
 		SELECT DISTINCT
 		       hm.HOSP_CD AS hosp_cd 
 		     , hm.HOSP_NM AS hosp_nm
@@ -3631,7 +3751,7 @@
          ORDER BY hm.HOSP_NM		   
 	</select>
 	   
-    <select id="select_Hosp_Indi" parameterType="map" resultType="IndiDTO">
+    <select id="select_Hosp_Indi" parameterType="map" resultMap="indiMap">
 	    WITH grouped_data AS (
 		    SELECT code.SUB_CODE_NM      AS cate_nm
 		         , MAX(main.STDWEIG)     AS stdweig
@@ -3767,7 +3887,7 @@
     </insert>
     
      
-    <select id="selGoolgleSheet" parameterType="MagamDTO" resultType="MagamDTO">
+    <select id="selGoolgleSheet" parameterType="MagamDTO" resultMap="magamMap">
 		SELECT IFNULL(a.HTTP_PH,'') as http_st
 		  FROM TBL_GOOGLE_ST a
 		 WHERE a.HOSP_CD  = #{hosp_cd}
@@ -3893,7 +4013,7 @@
     </update>
 
 	<!-- 전체 병원코드 목록 조회 (W1236457 제외) -->
-	<select id="selectAllHospCdList" resultType="MagamDTO">
+	<select id="selectAllHospCdList" resultMap="magamMap">
 		SELECT DISTINCT
 		       hm.HOSP_CD AS hosp_cd
 		  FROM TBL_HOSP_MST hm
