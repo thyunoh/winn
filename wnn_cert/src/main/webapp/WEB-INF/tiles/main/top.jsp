@@ -5,6 +5,7 @@
         <i class="fas fa-hospital-alt"></i> <span class="sidebar-brand-text">요양병원 인증평가</span>
     </a>
 
+    <div class="sidebar-menu">
     <!-- 대시보드 -->
     <a class="nav-link" href="/dashboard/dashboardMain.do">
         <i class="fas fa-tachometer-alt"></i> <span class="sidebar-text">대시보드</span>
@@ -254,6 +255,7 @@
     </div>
 
     <div style="height:50px;"></div>
+    </div><!-- /sidebar-menu -->
 </nav>
 
 <script>

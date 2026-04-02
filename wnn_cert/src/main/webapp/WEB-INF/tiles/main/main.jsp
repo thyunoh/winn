@@ -13,8 +13,10 @@ body { margin: 0; font-family: 'Malgun Gothic', sans-serif; }
 #sidebar {
     width: 250px; min-width: 250px; background: #2c3e50; color: #ecf0f1;
     transition: all 0.3s; position: fixed; top: 0; left: 0; height: 100vh;
-    overflow-y: auto; z-index: 1000;
+    display: flex; flex-direction: column; z-index: 1000;
 }
+#sidebar .sidebar-brand { flex-shrink: 0; }
+#sidebar .sidebar-menu { flex: 1; overflow-y: auto; overflow-x: hidden; }
 #sidebar.collapsed { width: 60px; min-width: 60px; }
 #sidebar.collapsed .sidebar-text,
 #sidebar.collapsed .sidebar-brand-text,
@@ -78,8 +80,10 @@ body { margin: 0; font-family: 'Malgun Gothic', sans-serif; }
 .main-footer { text-align: center; color: #999; font-size: 11px; padding: 10px; border-top: 1px solid #dee2e6; background: #fff; }
 
 /* Scrollbar */
-#sidebar::-webkit-scrollbar { width: 5px; }
-#sidebar::-webkit-scrollbar-thumb { background: #34495e; border-radius: 3px; }
+#sidebar .sidebar-menu::-webkit-scrollbar { width: 6px; }
+#sidebar .sidebar-menu::-webkit-scrollbar-track { background: #243342; }
+#sidebar .sidebar-menu::-webkit-scrollbar-thumb { background: #4a6a8a; border-radius: 3px; }
+#sidebar .sidebar-menu::-webkit-scrollbar-thumb:hover { background: #5a8ab4; }
 </style>
 </head>
 <body>
