@@ -3374,6 +3374,7 @@
            
         }
         
+        
 		function fnPasswdmanager(){ 
 		    document.getElementById('pwserchregForm').reset();
 	        $('#passserachModal').modal('show');

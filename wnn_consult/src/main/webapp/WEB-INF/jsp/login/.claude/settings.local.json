@@ -79,7 +79,8 @@
       "Bash(npm install:*)",
       "Bash(find C:Usersusergitwinnwnn_consult -type f -name *Controller*.java)",
       "Bash(find C:Usersusergitwinnwnn_consultsrcmainjava -type f -name *.java)",
-      "Bash(grep -r \"RequestMapping\\\\|login.do\" C:Usersusergitwinnwnn_consultsrcmainjava --include=*.java)"
+      "Bash(grep -r \"RequestMapping\\\\|login.do\" C:Usersusergitwinnwnn_consultsrcmainjava --include=*.java)",
+      "Bash(git credential-manager:*)"
     ]
   }
 }
