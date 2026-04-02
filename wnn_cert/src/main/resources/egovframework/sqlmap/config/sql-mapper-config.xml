@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+		<setting name="jdbcTypeForNull" value="NULL" />
+	</settings>
+    <typeAliases>
+    	<typeAlias  alias="UserDTO"         type="egovframework.wnn_cert.login.model.UserDTO"/>
+    	<typeAlias  alias="TreeDTO"         type="egovframework.wnn_cert.cert.model.TreeDTO"/>
+    	<typeAlias  alias="ItemDTO"         type="egovframework.wnn_cert.cert.model.ItemDTO"/>
+    	<typeAlias  alias="QpsDTO"          type="egovframework.wnn_cert.cert.model.QpsDTO"/>
+    	<typeAlias  alias="RptDTO"          type="egovframework.wnn_cert.cert.model.RptDTO"/>
+    	<typeAlias  alias="PatientCntDTO"   type="egovframework.wnn_cert.cert.model.PatientCntDTO"/>
+    	<typeAlias  alias="FormResultDTO"   type="egovframework.wnn_cert.cert.model.FormResultDTO"/>
+    	<typeAlias  alias="EvalDTO"         type="egovframework.wnn_cert.eval.model.EvalDTO"/>
+    	<typeAlias  alias="EvalDtlDTO"      type="egovframework.wnn_cert.eval.model.EvalDtlDTO"/>
+    	<typeAlias  alias="ImproveDTO"      type="egovframework.wnn_cert.improve.model.ImproveDTO"/>
+    	<typeAlias  alias="VaccinDTO"       type="egovframework.wnn_cert.manage.model.VaccinDTO"/>
+    	<typeAlias  alias="RestraintDTO"    type="egovframework.wnn_cert.manage.model.RestraintDTO"/>
+    	<typeAlias  alias="FireEquipDTO"    type="egovframework.wnn_cert.manage.model.FireEquipDTO"/>
+    	<typeAlias  alias="StaffEduDTO"     type="egovframework.wnn_cert.manage.model.StaffEduDTO"/>
+    	<typeAlias  alias="StaffEduAttDTO"  type="egovframework.wnn_cert.manage.model.StaffEduAttDTO"/>
+    	<typeAlias  alias="HealthChkDTO"    type="egovframework.wnn_cert.manage.model.HealthChkDTO"/>
+    	<typeAlias  alias="MedDeviceDTO"    type="egovframework.wnn_cert.manage.model.MedDeviceDTO"/>
+    	<typeAlias  alias="StaffDutyDTO"    type="egovframework.wnn_cert.manage.model.StaffDutyDTO"/>
+    	<typeAlias  alias="MealRoundDTO"    type="egovframework.wnn_cert.manage.model.MealRoundDTO"/>
+    	<typeAlias  alias="DrugManageDTO"   type="egovframework.wnn_cert.manage.model.DrugManageDTO"/>
+    	<typeAlias  alias="InfectionDTO"    type="egovframework.wnn_cert.manage.model.InfectionDTO"/>
+    	<typeAlias  alias="HandHygieneDTO"  type="egovframework.wnn_cert.manage.model.HandHygieneDTO"/>
+	</typeAliases>
+
+</configuration>
