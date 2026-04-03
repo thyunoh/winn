@@ -7,7 +7,7 @@
 	<select id="getTreeList" parameterType="TreeDTO" resultType="TreeDTO">
 		SELECT *
 		  FROM TW_TREE
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND TAB_ID = #{tabId}
 		   AND GRP_CD = #{grpCd}
 		   AND PARENT_ID = #{parentId}
@@ -18,7 +18,7 @@
 	<select id="getTreeAll" parameterType="TreeDTO" resultType="TreeDTO">
 		SELECT *
 		  FROM TW_TREE
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND TAB_ID = #{tabId}
 		   AND USE_YN = 'Y'
 		 ORDER BY NODE_ID
@@ -26,8 +26,8 @@
 
 	<insert id="insertTree" parameterType="TreeDTO">
 		INSERT INTO TW_TREE
-		       (COMP_CD, TAB_ID, GRP_CD, NODE_ID, PARENT_ID, NODE_NM, NODE_DESC, SORT_ORD, USE_YN)
-		VALUES (#{compCd}, #{tabId}, #{grpCd}, #{nodeId}, #{parentId}, #{nodeNm}, #{nodeDesc}, #{sortOrd}, 'Y')
+		       (HOSP_CD, TAB_ID, GRP_CD, NODE_ID, PARENT_ID, NODE_NM, NODE_DESC, SORT_ORD, USE_YN)
+		VALUES (#{hospCd}, #{tabId}, #{grpCd}, #{nodeId}, #{parentId}, #{nodeNm}, #{nodeDesc}, #{sortOrd}, 'Y')
 	</insert>
 
 	<update id="updateTree" parameterType="TreeDTO">
@@ -35,7 +35,7 @@
 		   SET NODE_NM = #{nodeNm}
 		     , NODE_DESC = #{nodeDesc}
 		     , SORT_ORD = #{sortOrd}
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND TAB_ID = #{tabId}
 		   AND GRP_CD = #{grpCd}
 		   AND NODE_ID = #{nodeId}
@@ -44,7 +44,7 @@
 	<update id="deleteTree" parameterType="TreeDTO">
 		UPDATE TW_TREE
 		   SET USE_YN = 'N'
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND TAB_ID = #{tabId}
 		   AND GRP_CD = #{grpCd}
 		   AND NODE_ID = #{nodeId}
@@ -54,7 +54,7 @@
 	<select id="getItemList" parameterType="ItemDTO" resultType="ItemDTO">
 		SELECT *
 		  FROM TW_FORM_D
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND USE_YN = 'Y'
 		<if test="formCd != null and formCd != ''">
 		   AND FORM_CD = #{formCd}
@@ -67,15 +67,15 @@
 
 	<insert id="insertItem" parameterType="ItemDTO">
 		INSERT INTO TW_FORM_D
-		       (COMP_CD, FORM_CD, SEC_CD, ITEM_SEQ, ITEM_NM, ITEM_DESC, USE_YN)
-		VALUES (#{compCd}, #{formCd}, #{secCd}, #{itemSeq}, #{itemNm}, #{itemDesc}, 'Y')
+		       (HOSP_CD, FORM_CD, SEC_CD, ITEM_SEQ, ITEM_NM, ITEM_DESC, USE_YN)
+		VALUES (#{hospCd}, #{formCd}, #{secCd}, #{itemSeq}, #{itemNm}, #{itemDesc}, 'Y')
 	</insert>
 
 	<update id="updateItem" parameterType="ItemDTO">
 		UPDATE TW_FORM_D
 		   SET ITEM_NM = #{itemNm}
 		     , ITEM_DESC = #{itemDesc}
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND FORM_CD = #{formCd}
 		   AND SEC_CD = #{secCd}
 		   AND ITEM_SEQ = #{itemSeq}
@@ -84,7 +84,7 @@
 	<update id="deleteItem" parameterType="ItemDTO">
 		UPDATE TW_FORM_D
 		   SET USE_YN = 'N'
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND FORM_CD = #{formCd}
 		   AND SEC_CD = #{secCd}
 		   AND ITEM_SEQ = #{itemSeq}
@@ -94,15 +94,15 @@
 	<select id="getQpsList" parameterType="QpsDTO" resultType="QpsDTO">
 		SELECT *
 		  FROM TW_QPS
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND USE_YN = 'Y'
 		 ORDER BY QPS_CD
 	</select>
 
 	<insert id="insertQps" parameterType="QpsDTO">
 		INSERT INTO TW_QPS
-		       (COMP_CD, QPS_CD, QPS_NM, NOTE, USE_YN, REG_USER)
-		VALUES (#{compCd}, #{qpsCd}, #{qpsNm}, #{note}, 'Y', #{regUser})
+		       (HOSP_CD, QPS_CD, QPS_NM, NOTE, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{qpsCd}, #{qpsNm}, #{note}, 'Y', #{regUser})
 	</insert>
 
 	<update id="updateQps" parameterType="QpsDTO">
@@ -111,7 +111,7 @@
 		     , NOTE = #{note}
 		     , UPD_DT = NOW()
 		     , UPD_USER = #{updUser}
-		 WHERE COMP_CD = #{compCd}
+		 WHERE HOSP_CD = #{hospCd}
 		   AND QPS_CD = #{qpsCd}
 	</update>
 
@@ -119,7 +119,7 @@
 	<select id="getRefGroupList" parameterType="hashMap" resultType="hashMap">
 	    SELECT REF_CD, MIN(NOTE) AS REF_NM, COUNT(*) AS CODE_CNT
 	      FROM TW_REF
-	     WHERE COMP_CD = #{compCd}
+	     WHERE HOSP_CD = #{hospCd}
 	       AND USE_YN = 'Y'
 	    <if test="refCd != null and refCd != ''">
 	       AND REF_CD LIKE CONCAT('%', #{refCd}, '%')
@@ -129,16 +129,16 @@
 	</select>
 
 	<select id="getRefList" parameterType="hashMap" resultType="hashMap">
-	    SELECT COMP_CD, REF_CD, REF_SEQ, REF_VAL, NOTE, USE_YN, REG_DT, REG_USER
+	    SELECT HOSP_CD, REF_CD, REF_SEQ, REF_VAL, NOTE, USE_YN, REG_DT, REG_USER
 	      FROM TW_REF
-	     WHERE COMP_CD = #{compCd}
+	     WHERE HOSP_CD = #{hospCd}
 	       AND REF_CD = #{refCd}
 	     ORDER BY REF_SEQ
 	</select>
 
 	<insert id="insertRef" parameterType="hashMap">
-	    INSERT INTO TW_REF (COMP_CD, REF_CD, REF_SEQ, REF_VAL, NOTE, USE_YN, REG_DT, REG_USER)
-	    VALUES (#{compCd}, #{refCd}, #{refSeq}, #{refVal}, #{note}, 'Y', NOW(), #{regUser})
+	    INSERT INTO TW_REF (HOSP_CD, REF_CD, REF_SEQ, REF_VAL, NOTE, USE_YN, REG_DT, REG_USER)
+	    VALUES (#{hospCd}, #{refCd}, #{refSeq}, #{refVal}, #{note}, 'Y', NOW(), #{regUser})
 	</insert>
 
 	<update id="updateRef" parameterType="hashMap">
@@ -148,14 +148,14 @@
 	         , USE_YN = #{useYn}
 	         , UPD_DT = NOW()
 	         , UPD_USER = #{updUser}
-	     WHERE COMP_CD = #{compCd}
+	     WHERE HOSP_CD = #{hospCd}
 	       AND REF_CD = #{refCd}
 	       AND REF_SEQ = #{refSeq}
 	</update>
 
 	<delete id="deleteRef" parameterType="hashMap">
 	    DELETE FROM TW_REF
-	     WHERE COMP_CD = #{compCd}
+	     WHERE HOSP_CD = #{hospCd}
 	       AND REF_CD = #{refCd}
 	       AND REF_SEQ = #{refSeq}
 	</delete>

@@ -8,7 +8,7 @@
 		SELECT *
 		  FROM TW_VACCIN
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="vaccinYear != null and vaccinYear != ''">
 			   AND VACCIN_YEAR = #{vaccinYear}
 			</if>
@@ -21,8 +21,8 @@
 
 	<insert id="insertVaccin" parameterType="VaccinDTO">
 		INSERT INTO TW_VACCIN
-		       (COMP_CD, VACCIN_YEAR, VACCIN_TYPE, VACCIN_NM, TARGET_CNT, COMPLETE_CNT, VACCIN_DT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{vaccinYear}, #{vaccinType}, #{vaccinNm}, #{targetCnt}, #{completeCnt}, #{vaccinDt}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, VACCIN_YEAR, VACCIN_TYPE, VACCIN_NM, TARGET_CNT, COMPLETE_CNT, VACCIN_DT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{vaccinYear}, #{vaccinType}, #{vaccinNm}, #{targetCnt}, #{completeCnt}, #{vaccinDt}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateVaccin" parameterType="VaccinDTO">
@@ -49,7 +49,7 @@
 		SELECT *
 		  FROM TW_RESTRAINT
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="patCd != null and patCd != ''">
 			   AND PAT_CD = #{patCd}
 			</if>
@@ -62,8 +62,8 @@
 
 	<insert id="insertRestraint" parameterType="RestraintDTO">
 		INSERT INTO TW_RESTRAINT
-		       (COMP_CD, PAT_CD, RESTRAINT_TYPE, RESTRAINT_REASON, START_DT, END_DT, ORDER_DR, NURSE_NM, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{patCd}, #{restraintType}, #{restraintReason}, #{startDt}, #{endDt}, #{orderDr}, #{nurseNm}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, PAT_CD, RESTRAINT_TYPE, RESTRAINT_REASON, START_DT, END_DT, ORDER_DR, NURSE_NM, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{patCd}, #{restraintType}, #{restraintReason}, #{startDt}, #{endDt}, #{orderDr}, #{nurseNm}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateRestraint" parameterType="RestraintDTO">
@@ -91,7 +91,7 @@
 		SELECT *
 		  FROM TW_FIRE_EQUIP
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="chkYear != null and chkYear != ''">
 			   AND CHK_YEAR = #{chkYear}
 			</if>
@@ -101,8 +101,8 @@
 
 	<insert id="insertFireEquip" parameterType="FireEquipDTO">
 		INSERT INTO TW_FIRE_EQUIP
-		       (COMP_CD, CHK_YEAR, BUILDING, LOCATION, EQUIP_TYPE, EQUIP_NM, INSTALL_DT, CHK_DT, CHK_RESULT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{chkYear}, #{building}, #{location}, #{equipType}, #{equipNm}, #{installDt}, #{chkDt}, #{chkResult}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, CHK_YEAR, BUILDING, LOCATION, EQUIP_TYPE, EQUIP_NM, INSTALL_DT, CHK_DT, CHK_RESULT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{chkYear}, #{building}, #{location}, #{equipType}, #{equipNm}, #{installDt}, #{chkDt}, #{chkResult}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateFireEquip" parameterType="FireEquipDTO">
@@ -131,7 +131,7 @@
 		SELECT *
 		  FROM TW_STAFF_EDU
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="eduYear != null and eduYear != ''">
 			   AND EDU_YEAR = #{eduYear}
 			</if>
@@ -144,8 +144,8 @@
 
 	<insert id="insertStaffEdu" parameterType="StaffEduDTO" useGeneratedKeys="true" keyProperty="eduId">
 		INSERT INTO TW_STAFF_EDU
-		       (COMP_CD, EDU_YEAR, EDU_TYPE, EDU_NM, EDU_DT, EDU_TIME, INSTRUCTOR, EDU_PLACE, TARGET_CNT, ATTEND_CNT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{eduYear}, #{eduType}, #{eduNm}, #{eduDt}, #{eduTime}, #{instructor}, #{eduPlace}, #{targetCnt}, #{attendCnt}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, EDU_YEAR, EDU_TYPE, EDU_NM, EDU_DT, EDU_TIME, INSTRUCTOR, EDU_PLACE, TARGET_CNT, ATTEND_CNT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{eduYear}, #{eduType}, #{eduNm}, #{eduDt}, #{eduTime}, #{instructor}, #{eduPlace}, #{targetCnt}, #{attendCnt}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateStaffEdu" parameterType="StaffEduDTO">
@@ -206,7 +206,7 @@
 		SELECT *
 		  FROM TW_HEALTH_CHK
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="chkYear != null and chkYear != ''">
 			   AND CHK_YEAR = #{chkYear}
 			</if>
@@ -219,8 +219,8 @@
 
 	<insert id="insertHealthChk" parameterType="HealthChkDTO">
 		INSERT INTO TW_HEALTH_CHK
-		       (COMP_CD, CHK_YEAR, EMP_CD, EMP_NM, DEPT_NM, CHK_DT, CHK_TYPE, CHK_RESULT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{chkYear}, #{empCd}, #{empNm}, #{deptNm}, #{chkDt}, #{chkType}, #{chkResult}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, CHK_YEAR, EMP_CD, EMP_NM, DEPT_NM, CHK_DT, CHK_TYPE, CHK_RESULT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{chkYear}, #{empCd}, #{empNm}, #{deptNm}, #{chkDt}, #{chkType}, #{chkResult}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateHealthChk" parameterType="HealthChkDTO">
@@ -248,7 +248,7 @@
 		SELECT *
 		  FROM TW_MED_DEVICE
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="category != null and category != ''">
 			   AND CATEGORY = #{category}
 			</if>
@@ -261,8 +261,8 @@
 
 	<insert id="insertMedDevice" parameterType="MedDeviceDTO">
 		INSERT INTO TW_MED_DEVICE
-		       (COMP_CD, CATEGORY, DEVICE_NM, MODEL_NM, SERIAL_NO, DEVICE_STATUS, PURCHASE_DT, INSTALL_LOCATION, CHK_CYCLE, LAST_CHK_DT, NEXT_CHK_DT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{category}, #{deviceNm}, #{modelNm}, #{serialNo}, #{deviceStatus}, #{purchaseDt}, #{installLocation}, #{chkCycle}, #{lastChkDt}, #{nextChkDt}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, CATEGORY, DEVICE_NM, MODEL_NM, SERIAL_NO, DEVICE_STATUS, PURCHASE_DT, INSTALL_LOCATION, CHK_CYCLE, LAST_CHK_DT, NEXT_CHK_DT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{category}, #{deviceNm}, #{modelNm}, #{serialNo}, #{deviceStatus}, #{purchaseDt}, #{installLocation}, #{chkCycle}, #{lastChkDt}, #{nextChkDt}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateMedDevice" parameterType="MedDeviceDTO">
@@ -293,7 +293,7 @@
 		SELECT *
 		  FROM TW_STAFF_DUTY
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="workDt != null and workDt != ''">
 			   AND WORK_DT LIKE CONCAT(#{workDt}, '%')
 			</if>
@@ -303,8 +303,8 @@
 
 	<insert id="insertStaffDuty" parameterType="StaffDutyDTO">
 		INSERT INTO TW_STAFF_DUTY
-		       (COMP_CD, WORK_DT, EMP_CD, EMP_NM, DEPT_NM, DUTY_TYPE, SHIFT_NM, START_TIME, END_TIME, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{workDt}, #{empCd}, #{empNm}, #{deptNm}, #{dutyType}, #{shiftNm}, #{startTime}, #{endTime}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, WORK_DT, EMP_CD, EMP_NM, DEPT_NM, DUTY_TYPE, SHIFT_NM, START_TIME, END_TIME, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{workDt}, #{empCd}, #{empNm}, #{deptNm}, #{dutyType}, #{shiftNm}, #{startTime}, #{endTime}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateStaffDuty" parameterType="StaffDutyDTO">
@@ -333,7 +333,7 @@
 		SELECT *
 		  FROM TW_MEAL_ROUND
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="roundDt != null and roundDt != ''">
 			   AND ROUND_DT = #{roundDt}
 			</if>
@@ -343,8 +343,8 @@
 
 	<insert id="insertMealRound" parameterType="MealRoundDTO">
 		INSERT INTO TW_MEAL_ROUND
-		       (COMP_CD, ROUND_DT, ROUND_TIME, INSPECTOR, WARD_NM, MEAL_TYPE, TEMP_CHK, HYGIENE_CHK, TASTE_CHK, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{roundDt}, #{roundTime}, #{inspector}, #{wardNm}, #{mealType}, #{tempChk}, #{hygieneChk}, #{tasteChk}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, ROUND_DT, ROUND_TIME, INSPECTOR, WARD_NM, MEAL_TYPE, TEMP_CHK, HYGIENE_CHK, TASTE_CHK, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{roundDt}, #{roundTime}, #{inspector}, #{wardNm}, #{mealType}, #{tempChk}, #{hygieneChk}, #{tasteChk}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateMealRound" parameterType="MealRoundDTO">
@@ -373,7 +373,7 @@
 		SELECT *
 		  FROM TW_DRUG_MANAGE
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="drugType != null and drugType != ''">
 			   AND DRUG_TYPE = #{drugType}
 			</if>
@@ -386,8 +386,8 @@
 
 	<insert id="insertDrugManage" parameterType="DrugManageDTO">
 		INSERT INTO TW_DRUG_MANAGE
-		       (COMP_CD, DRUG_TYPE, DRUG_CD, DRUG_NM, UNIT, STOCK_QTY, SAFE_QTY, STORAGE_LOCATION, EXPIRY_DT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{drugType}, #{drugCd}, #{drugNm}, #{unit}, #{stockQty}, #{safeQty}, #{storageLocation}, #{expiryDt}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, DRUG_TYPE, DRUG_CD, DRUG_NM, UNIT, STOCK_QTY, SAFE_QTY, STORAGE_LOCATION, EXPIRY_DT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{drugType}, #{drugCd}, #{drugNm}, #{unit}, #{stockQty}, #{safeQty}, #{storageLocation}, #{expiryDt}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateDrugManage" parameterType="DrugManageDTO">
@@ -416,7 +416,7 @@
 		SELECT *
 		  FROM TW_INFECTION
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="infectDtFrom != null and infectDtFrom != ''">
 			   AND INFECT_DT &gt;= #{infectDtFrom}
 			</if>
@@ -432,8 +432,8 @@
 
 	<insert id="insertInfection" parameterType="InfectionDTO">
 		INSERT INTO TW_INFECTION
-		       (COMP_CD, INFECT_DT, INFECT_TYPE, PAT_CD, PAT_NM, WARD_NM, SYMPTOM, ACTION_TAKEN, RESULT, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{infectDt}, #{infectType}, #{patCd}, #{patNm}, #{wardNm}, #{symptom}, #{actionTaken}, #{result}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, INFECT_DT, INFECT_TYPE, PAT_CD, PAT_NM, WARD_NM, SYMPTOM, ACTION_TAKEN, RESULT, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{infectDt}, #{infectType}, #{patCd}, #{patNm}, #{wardNm}, #{symptom}, #{actionTaken}, #{result}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateInfection" parameterType="InfectionDTO">
@@ -462,7 +462,7 @@
 		SELECT *
 		  FROM TW_HAND_HYGIENE
 		<where>
-			   COMP_CD = #{compCd}
+			   HOSP_CD = #{hospCd}
 			<if test="monitorMonth != null and monitorMonth != ''">
 			   AND MONITOR_MONTH = #{monitorMonth}
 			</if>
@@ -475,8 +475,8 @@
 
 	<insert id="insertHandHygiene" parameterType="HandHygieneDTO">
 		INSERT INTO TW_HAND_HYGIENE
-		       (COMP_CD, MONITOR_MONTH, WARD_NM, MONITOR_DT, OBSERVER, OBSERVE_CNT, COMPLY_CNT, COMPLY_RATE, REMARK, REG_ID, REG_DT)
-		VALUES (#{compCd}, #{monitorMonth}, #{wardNm}, #{monitorDt}, #{observer}, #{observeCnt}, #{complyCnt}, #{complyRate}, #{remark}, #{regId}, NOW())
+		       (HOSP_CD, MONITOR_MONTH, WARD_NM, MONITOR_DT, OBSERVER, OBSERVE_CNT, COMPLY_CNT, COMPLY_RATE, REMARK, REG_ID, REG_DT)
+		VALUES (#{hospCd}, #{monitorMonth}, #{wardNm}, #{monitorDt}, #{observer}, #{observeCnt}, #{complyCnt}, #{complyRate}, #{remark}, #{regId}, NOW())
 	</insert>
 
 	<update id="updateHandHygiene" parameterType="HandHygieneDTO">

@@ -17,8 +17,8 @@
 
 	<insert id="insertEval" parameterType="EvalDTO" useGeneratedKeys="true" keyProperty="evalId">
 		INSERT INTO TW_EVAL
-		       (COMP_CD, EVAL_YEAR, EVAL_CYCLE, EVAL_STATUS, START_DT, END_DT, REG_USER)
-		VALUES (#{compCd}, #{evalYear}, #{evalCycle}, '준비', #{startDt}, #{endDt}, #{regUser})
+		       (HOSP_CD, EVAL_YEAR, EVAL_CYCLE, EVAL_STATUS, START_DT, END_DT, REG_USER)
+		VALUES (#{hospCd}, #{evalYear}, #{evalCycle}, '준비', #{startDt}, #{endDt}, #{regUser})
 	</insert>
 
 	<update id="updateEval" parameterType="EvalDTO">

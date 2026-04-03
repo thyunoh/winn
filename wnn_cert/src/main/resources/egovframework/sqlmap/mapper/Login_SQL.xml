@@ -4,10 +4,30 @@
 <mapper namespace="egovframework.wnn_cert.login.mapper.LoginMapper">
 
 	<select id="getLoginUser" parameterType="UserDTO" resultType="UserDTO">
-		SELECT *
-		  FROM TW_USER
-		 WHERE USER_ID = #{userId}
-		   AND USER_PW = #{userPw}
+		SELECT A.USER_ID
+		     , A.HOSP_CD
+		     , A.USER_NM
+		     , A.DEPT_NM
+		     , A.ROLE_CD
+		     , A.USE_YN
+		     , A.REG_DT
+		     , B.HOSP_NM
+		  FROM TW_USER A
+		 INNER JOIN TW_COMPANY B ON B.HOSP_CD = A.HOSP_CD
+		 WHERE A.USER_ID = #{userId}
+		   AND A.USER_PW = #{userPw}
+		   AND A.HOSP_CD = #{hospCd}
+		   AND A.USE_YN = 'Y'
+		   AND B.USE_YN = 'Y'
+	</select>
+
+	<select id="getCompanyByHospCd" parameterType="String" resultType="hashmap">
+		SELECT HOSP_CD
+		     , HOSP_NM
+		     , COMP_TYPE
+		     , BED_CNT
+		  FROM TW_COMPANY
+		 WHERE HOSP_CD = #{hospCd}
 		   AND USE_YN = 'Y'
 	</select>
 
@@ -20,8 +40,8 @@
 
 	<insert id="insertUser" parameterType="UserDTO">
 		INSERT INTO TW_USER
-		       (USER_ID, USER_NM, USER_PW, DEPT_NM, ROLE_CD, USE_YN)
-		VALUES (#{userId}, #{userNm}, #{userPw}, #{deptNm}, #{roleCd}, 'Y')
+		       (USER_ID, HOSP_CD, USER_NM, USER_PW, DEPT_NM, ROLE_CD, USE_YN)
+		VALUES (#{userId}, #{hospCd}, #{userNm}, #{userPw}, #{deptNm}, #{roleCd}, 'Y')
 	</insert>
 
 	<update id="updateUser" parameterType="UserDTO">
