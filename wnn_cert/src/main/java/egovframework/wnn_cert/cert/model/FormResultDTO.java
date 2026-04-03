@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class FormResultDTO extends CommonDTO {
 
     private String resultId;
-    private String compCd;
+    private String hospCd;
     private String dischargeDt;
     private String patCd;
     private String evalRound;
@@ -29,11 +29,11 @@ public class FormResultDTO extends CommonDTO {
     }
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getDischargeDt() {

@@ -70,7 +70,7 @@
             <div class="modal-body">
                 <form id="dataForm">
                     <input type="hidden" id="modalMode" value="add">
-                    <input type="hidden" id="modalCompCd" name="compCd" value="0001">
+                    <input type="hidden" id="modalCompCd" name="hospCd" value="0001">
                     <input type="hidden" id="modalSeq" name="seq">
                     <div class="row">
                         <div class="col-md-6">
@@ -167,7 +167,7 @@ $(document).ready(function() {
 
 function loadList() {
     var param = {
-        compCd: '0001',
+        hospCd: '0001',
         vaccinYear: $('#searchVaccinYear').val().trim(),
         vaccinType: $('#searchVaccinType').val()
     };
@@ -236,7 +236,7 @@ function openModal(mode, item) {
 
 function saveData() {
     var param = {
-        compCd: $('#modalCompCd').val(),
+        hospCd: $('#modalCompCd').val(),
         seq: $('#modalSeq').val(),
         empNm: $('#modalEmpNm').val().trim(),
         deptNm: $('#modalDeptNm').val().trim(),
@@ -277,7 +277,7 @@ function deleteData(seq) {
     $.ajax({
         url: '/manage/deleteVaccin.do',
         type: 'POST',
-        data: { compCd: '0001', seq: seq },
+        data: { hospCd: '0001', seq: seq },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

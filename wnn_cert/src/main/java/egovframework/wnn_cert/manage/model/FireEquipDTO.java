@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class FireEquipDTO extends CommonDTO {
 
     private String equipId;
-    private String compCd;
+    private String hospCd;
     private String chkYear;
     private String building;
     private String location;
@@ -30,8 +30,8 @@ public class FireEquipDTO extends CommonDTO {
     public String getEquipId() { return equipId; }
     public void setEquipId(String equipId) { this.equipId = equipId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getChkYear() { return chkYear; }
     public void setChkYear(String chkYear) { this.chkYear = chkYear; }

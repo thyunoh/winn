@@ -72,7 +72,7 @@
             <div class="modal-body">
                 <form id="dataForm">
                     <input type="hidden" id="modalMode" value="add">
-                    <input type="hidden" id="modalCompCd" name="compCd" value="0001">
+                    <input type="hidden" id="modalCompCd" name="hospCd" value="0001">
                     <input type="hidden" id="modalSeq" name="seq">
                     <div class="row">
                         <div class="col-md-4">
@@ -252,7 +252,7 @@ function getMonthBadge(val) {
 
 function loadList() {
     var param = {
-        compCd: '0001',
+        hospCd: '0001',
         chkYear: $('#searchChkYear').val().trim()
     };
     $.ajax({
@@ -325,7 +325,7 @@ function openModal(mode, item) {
 
 function saveData() {
     var param = {
-        compCd: $('#modalCompCd').val(),
+        hospCd: $('#modalCompCd').val(),
         seq: $('#modalSeq').val(),
         chkYear: $('#searchChkYear').val().trim(),
         building: $('#modalBuilding').val().trim(),
@@ -365,7 +365,7 @@ function deleteData(seq) {
     $.ajax({
         url: '/manage/deleteFireEquip.do',
         type: 'POST',
-        data: { compCd: '0001', seq: seq },
+        data: { hospCd: '0001', seq: seq },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

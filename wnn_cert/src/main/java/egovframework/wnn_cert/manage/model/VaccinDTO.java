@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class VaccinDTO extends CommonDTO {
 
     private String vaccinId;
-    private String compCd;
+    private String hospCd;
     private String vaccinYear;
     private String vaccinType;
     private String empNm;
@@ -24,8 +24,8 @@ public class VaccinDTO extends CommonDTO {
     public String getVaccinId() { return vaccinId; }
     public void setVaccinId(String vaccinId) { this.vaccinId = vaccinId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getVaccinYear() { return vaccinYear; }
     public void setVaccinYear(String vaccinYear) { this.vaccinYear = vaccinYear; }

@@ -5,6 +5,7 @@ import egovframework.wnn_cert.login.service.LoginService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -23,6 +24,29 @@ public class LoginController {
     @RequestMapping("/loginPage.do")
     public String loginPage() {
         return ".login/login";
+    }
+
+    /**
+     * 요양기관기호 확인 API
+     */
+    @RequestMapping(value = "/checkHosp.do", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, Object> checkHosp(@RequestParam String hospCd) {
+        Map<String, Object> resultMap = new HashMap<>();
+        try {
+            Map<String, Object> company = loginService.getCompanyByHospCd(hospCd);
+            if (company != null) {
+                resultMap.put("result", "success");
+                resultMap.put("data", company);
+            } else {
+                resultMap.put("result", "fail");
+                resultMap.put("msg", "등록되지 않은 요양기관기호입니다.");
+            }
+        } catch (Exception e) {
+            resultMap.put("result", "fail");
+            resultMap.put("msg", e.getMessage());
+        }
+        return resultMap;
     }
 
     @RequestMapping(value = "/doLogin.do", method = RequestMethod.POST)

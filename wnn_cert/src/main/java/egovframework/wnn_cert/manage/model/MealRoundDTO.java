@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class MealRoundDTO extends CommonDTO {
 
     private String roundId;
-    private String compCd;
+    private String hospCd;
     private String roundDt;
     private String patNm;
     private String patCd;
@@ -21,8 +21,8 @@ public class MealRoundDTO extends CommonDTO {
     public String getRoundId() { return roundId; }
     public void setRoundId(String roundId) { this.roundId = roundId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getRoundDt() { return roundDt; }
     public void setRoundDt(String roundDt) { this.roundDt = roundDt; }

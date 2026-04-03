@@ -149,7 +149,7 @@ function loadTreeNodes(parentId, container, level) {
     $.ajax({
         url: '/cert/getTreeList.do',
         type: 'POST',
-        data: { compCd: '0001', tabId: 'CERT', grpCd: 'STD', parentId: parentId },
+        data: { hospCd: '0001', tabId: 'CERT', grpCd: 'STD', parentId: parentId },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {
@@ -257,7 +257,7 @@ function loadItemList(nodeId) {
     $.ajax({
         url: '/cert/getTreeList.do',
         type: 'POST',
-        data: { compCd: '0001', tabId: 'CERT', grpCd: 'STD', parentId: nodeId },
+        data: { hospCd: '0001', tabId: 'CERT', grpCd: 'STD', parentId: nodeId },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

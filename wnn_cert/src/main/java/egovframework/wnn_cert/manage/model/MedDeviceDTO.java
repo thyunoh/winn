@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class MedDeviceDTO extends CommonDTO {
 
     private String deviceId;
-    private String compCd;
+    private String hospCd;
     private String deviceNo;
     private String category;
     private String subCategory;
@@ -30,8 +30,8 @@ public class MedDeviceDTO extends CommonDTO {
     public String getDeviceId() { return deviceId; }
     public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getDeviceNo() { return deviceNo; }
     public void setDeviceNo(String deviceNo) { this.deviceNo = deviceNo; }

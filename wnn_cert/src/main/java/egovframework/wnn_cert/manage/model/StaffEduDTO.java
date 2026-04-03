@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class StaffEduDTO extends CommonDTO {
 
     private String eduId;
-    private String compCd;
+    private String hospCd;
     private String eduYear;
     private String eduType;
     private String eduTitle;
@@ -27,8 +27,8 @@ public class StaffEduDTO extends CommonDTO {
     public String getEduId() { return eduId; }
     public void setEduId(String eduId) { this.eduId = eduId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getEduYear() { return eduYear; }
     public void setEduYear(String eduYear) { this.eduYear = eduYear; }

@@ -4,7 +4,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 
 public class QpsDTO extends CommonDTO {
 
-    private String compCd;
+    private String hospCd;
     private String qpsCd;
     private String qpsNm;
     private String note;
@@ -15,11 +15,11 @@ public class QpsDTO extends CommonDTO {
     private String updUser;
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getQpsCd() {

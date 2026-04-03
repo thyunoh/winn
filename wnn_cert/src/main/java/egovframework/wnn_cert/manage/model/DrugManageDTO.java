@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class DrugManageDTO extends CommonDTO {
 
     private String drugId;
-    private String compCd;
+    private String hospCd;
     private String drugCd;
     private String drugNm;
     private String drugType;
@@ -25,8 +25,8 @@ public class DrugManageDTO extends CommonDTO {
     public String getDrugId() { return drugId; }
     public void setDrugId(String drugId) { this.drugId = drugId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getDrugCd() { return drugCd; }
     public void setDrugCd(String drugCd) { this.drugCd = drugCd; }

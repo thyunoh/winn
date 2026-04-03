@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class RptDTO extends CommonDTO {
 
     private String rptId;
-    private String compCd;
+    private String hospCd;
     private String patCd;
     private String rptDt;
     private String rptType;
@@ -32,11 +32,11 @@ public class RptDTO extends CommonDTO {
     }
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getPatCd() {

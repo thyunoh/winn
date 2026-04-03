@@ -4,7 +4,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 
 public class PatientCntDTO extends CommonDTO {
 
-    private String compCd;
+    private String hospCd;
     private String cntType;
     private String cntYear;
     private int m01;
@@ -27,11 +27,11 @@ public class PatientCntDTO extends CommonDTO {
     private String updUser;
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getCntType() {

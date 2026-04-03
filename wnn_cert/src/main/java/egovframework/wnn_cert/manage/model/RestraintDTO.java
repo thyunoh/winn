@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class RestraintDTO extends CommonDTO {
 
     private String restraintId;
-    private String compCd;
+    private String hospCd;
     private String patCd;
     private String patNm;
     private String restraintType;
@@ -27,8 +27,8 @@ public class RestraintDTO extends CommonDTO {
     public String getRestraintId() { return restraintId; }
     public void setRestraintId(String restraintId) { this.restraintId = restraintId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getPatCd() { return patCd; }
     public void setPatCd(String patCd) { this.patCd = patCd; }

@@ -4,7 +4,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 
 public class TreeDTO extends CommonDTO {
 
-    private String compCd;
+    private String hospCd;
     private String tabId;
     private String grpCd;
     private String nodeId;
@@ -19,11 +19,11 @@ public class TreeDTO extends CommonDTO {
     private int childCount;
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getTabId() {

@@ -117,8 +117,23 @@ function checkHosp() {
         $('#hospInfo').hide();
         return;
     }
-    // 데모용: 기관코드 확인 (추후 API 연동)
-    $('#hospNmDisplay').text('위너넷 요양병원 (' + hospCd + ')');
-    $('#hospInfo').slideDown(200);
+    $.ajax({
+        url: '/login/checkHosp.do',
+        type: 'POST',
+        data: { hospCd: hospCd },
+        dataType: 'json',
+        success: function(res) {
+            if (res.result === 'success') {
+                $('#hospNmDisplay').text(res.data.HOSP_NM + ' (' + hospCd + ')');
+                $('#hospInfo').slideDown(200);
+            } else {
+                $('#hospNmDisplay').text(res.msg);
+                $('#hospInfo').removeClass('hosp-info').addClass('hosp-info-error').slideDown(200);
+            }
+        },
+        error: function() {
+            $('#hospInfo').hide();
+        }
+    });
 }
 </script>

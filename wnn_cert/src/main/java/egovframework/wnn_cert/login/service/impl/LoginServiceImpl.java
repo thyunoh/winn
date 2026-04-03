@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service("LoginService")
 public class LoginServiceImpl implements LoginService {
@@ -17,6 +18,11 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public UserDTO getLoginUser(UserDTO dto) throws Exception {
         return loginMapper.getLoginUser(dto);
+    }
+
+    @Override
+    public Map<String, Object> getCompanyByHospCd(String hospCd) throws Exception {
+        return loginMapper.getCompanyByHospCd(hospCd);
     }
 
     @Override

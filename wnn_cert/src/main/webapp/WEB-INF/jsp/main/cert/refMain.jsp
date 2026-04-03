@@ -123,7 +123,7 @@
 
 <script>
 var currentRefCd = '';
-var compCd = '0001';
+var hospCd = '0001';
 
 $(document).ready(function() {
     loadGroupList();
@@ -151,7 +151,7 @@ $(document).ready(function() {
 
 /* ========== Group List ========== */
 function loadGroupList() {
-    var param = { compCd: compCd };
+    var param = { hospCd: hospCd };
     var keyword = $('#searchRefCd').val().trim();
     if (keyword) param.refCd = keyword;
 
@@ -211,7 +211,7 @@ function loadRefList(refCd) {
     $.ajax({
         url: '/cert/getRefList.do',
         type: 'POST',
-        data: { compCd: compCd, refCd: refCd },
+        data: { hospCd: hospCd, refCd: refCd },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {
@@ -301,7 +301,7 @@ function saveRef() {
     if (!refVal) { alert('코드값을 입력하세요.'); return; }
 
     var param = {
-        compCd:  compCd,
+        hospCd:  hospCd,
         refCd:   refCd,
         refSeq:  refSeq,
         refVal:  refVal,
@@ -341,7 +341,7 @@ function deleteRef(refSeq) {
     $.ajax({
         url: '/cert/deleteRef.do',
         type: 'POST',
-        data: { compCd: compCd, refCd: currentRefCd, refSeq: refSeq },
+        data: { hospCd: hospCd, refCd: currentRefCd, refSeq: refSeq },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

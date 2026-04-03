@@ -4,7 +4,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 
 public class ItemDTO extends CommonDTO {
 
-    private String compCd;
+    private String hospCd;
     private String formCd;
     private String secCd;
     private int itemSeq;
@@ -13,11 +13,11 @@ public class ItemDTO extends CommonDTO {
     private String useYn;
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getFormCd() {

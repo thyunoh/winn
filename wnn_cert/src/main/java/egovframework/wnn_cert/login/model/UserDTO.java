@@ -5,12 +5,14 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class UserDTO extends CommonDTO {
 
     private String userId;
+    private String hospCd;
     private String userNm;
     private String userPw;
     private String deptNm;
     private String roleCd;
     private String useYn;
     private String regDt;
+    private String hospNm;
 
     public String getUserId() {
         return userId;
@@ -18,6 +20,14 @@ public class UserDTO extends CommonDTO {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getHospCd() {
+        return hospCd;
+    }
+
+    public void setHospCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getUserNm() {
@@ -66,6 +76,14 @@ public class UserDTO extends CommonDTO {
 
     public void setRegDt(String regDt) {
         this.regDt = regDt;
+    }
+
+    public String getHospNm() {
+        return hospNm;
+    }
+
+    public void setHospNm(String hospNm) {
+        this.hospNm = hospNm;
     }
 
 }

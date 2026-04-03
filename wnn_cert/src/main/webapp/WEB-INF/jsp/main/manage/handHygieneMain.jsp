@@ -72,7 +72,7 @@
             <div class="modal-body">
                 <form id="dataForm">
                     <input type="hidden" id="modalMode" value="add">
-                    <input type="hidden" id="modalCompCd" name="compCd" value="0001">
+                    <input type="hidden" id="modalCompCd" name="hospCd" value="0001">
                     <input type="hidden" id="modalSeq" name="seq">
                     <div class="row">
                         <div class="col-md-4">
@@ -209,7 +209,7 @@ function calcComplyRate() {
 
 function loadList() {
     var param = {
-        compCd: '0001',
+        hospCd: '0001',
         monitorMonth: $('#searchMonitorMonth').val(),
         wardNm: $('#searchWardNm').val().trim()
     };
@@ -289,7 +289,7 @@ function openModal(mode, item) {
 
 function saveData() {
     var param = {
-        compCd: $('#modalCompCd').val(),
+        hospCd: $('#modalCompCd').val(),
         seq: $('#modalSeq').val(),
         monitorDt: $('#modalMonitorDt').val(),
         monitorMonth: $('#modalMonitorMonth').val(),
@@ -334,7 +334,7 @@ function deleteData(seq) {
     $.ajax({
         url: '/manage/deleteHandHygiene.do',
         type: 'POST',
-        data: { compCd: '0001', seq: seq },
+        data: { hospCd: '0001', seq: seq },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

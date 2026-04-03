@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class HandHygieneDTO extends CommonDTO {
 
     private String hhId;
-    private String compCd;
+    private String hospCd;
     private String monitorDt;
     private String monitorMonth;
     private String wardNm;
@@ -27,8 +27,8 @@ public class HandHygieneDTO extends CommonDTO {
     public String getHhId() { return hhId; }
     public void setHhId(String hhId) { this.hhId = hhId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getMonitorDt() { return monitorDt; }
     public void setMonitorDt(String monitorDt) { this.monitorDt = monitorDt; }

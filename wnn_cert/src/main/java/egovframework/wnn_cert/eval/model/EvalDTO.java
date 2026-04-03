@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class EvalDTO extends CommonDTO {
 
     private String evalId;
-    private String compCd;
+    private String hospCd;
     private String evalYear;
     private String evalCycle;
     private String evalStatus;
@@ -31,11 +31,11 @@ public class EvalDTO extends CommonDTO {
     }
 
     public String getCompCd() {
-        return compCd;
+        return hospCd;
     }
 
-    public void setCompCd(String compCd) {
-        this.compCd = compCd;
+    public void setCompCd(String hospCd) {
+        this.hospCd = hospCd;
     }
 
     public String getEvalYear() {

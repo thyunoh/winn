@@ -73,7 +73,7 @@
                 <form id="evalForm">
                     <div class="form-group">
                         <label for="modalCompCd">기관코드</label>
-                        <input type="text" class="form-control" id="modalCompCd" name="compCd" value="0001" required>
+                        <input type="text" class="form-control" id="modalCompCd" name="hospCd" value="0001" required>
                     </div>
                     <div class="form-group">
                         <label for="modalEvalYear">평가연도</label>
@@ -185,14 +185,14 @@ function getStatusBadge(status) {
 
 function saveEval() {
     var param = {
-        compCd: $('#modalCompCd').val().trim(),
+        hospCd: $('#modalCompCd').val().trim(),
         evalYear: $('#modalEvalYear').val().trim(),
         evalCycle: $('#modalEvalCycle').val().trim(),
         startDt: $('#modalStartDt').val(),
         endDt: $('#modalEndDt').val()
     };
 
-    if (!param.compCd || !param.evalYear || !param.startDt || !param.endDt) {
+    if (!param.hospCd || !param.evalYear || !param.startDt || !param.endDt) {
         alert('필수 항목을 입력하세요.');
         return;
     }

@@ -69,7 +69,7 @@
             <div class="modal-body">
                 <form id="dataForm">
                     <input type="hidden" id="modalMode" value="add">
-                    <input type="hidden" id="modalCompCd" name="compCd" value="0001">
+                    <input type="hidden" id="modalCompCd" name="hospCd" value="0001">
                     <input type="hidden" id="modalSeq" name="seq">
                     <h6>기본정보</h6>
                     <div class="row">
@@ -208,7 +208,7 @@ $(document).ready(function() {
 
 function loadList() {
     var param = {
-        compCd: '0001',
+        hospCd: '0001',
         chkYear: $('#searchChkYear').val().trim(),
         empNm: $('#searchEmpNm').val().trim()
     };
@@ -283,7 +283,7 @@ function openModal(mode, item) {
 
 function saveData() {
     var param = {
-        compCd: $('#modalCompCd').val(),
+        hospCd: $('#modalCompCd').val(),
         seq: $('#modalSeq').val(),
         empNm: $('#modalEmpNm').val().trim(),
         deptNm: $('#modalDeptNm').val().trim(),
@@ -331,7 +331,7 @@ function deleteData(seq) {
     $.ajax({
         url: '/manage/deleteHealthChk.do',
         type: 'POST',
-        data: { compCd: '0001', seq: seq },
+        data: { hospCd: '0001', seq: seq },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

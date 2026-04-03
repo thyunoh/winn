@@ -184,7 +184,7 @@ public class CertController {
     public Map<String, Object> getRefGroupList(@RequestParam Map<String, Object> param) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (param.get("compCd") == null || "".equals(param.get("compCd"))) param.put("compCd", "0001");
+            if (param.get("hospCd") == null || "".equals(param.get("hospCd"))) param.put("hospCd", "12345678");
             resultMap.put("result", "success");
             resultMap.put("data", certService.getRefGroupList(param));
         } catch (Exception e) {
@@ -199,7 +199,7 @@ public class CertController {
     public Map<String, Object> getRefList(@RequestParam Map<String, Object> param) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (param.get("compCd") == null || "".equals(param.get("compCd"))) param.put("compCd", "0001");
+            if (param.get("hospCd") == null || "".equals(param.get("hospCd"))) param.put("hospCd", "12345678");
             resultMap.put("result", "success");
             resultMap.put("data", certService.getRefList(param));
         } catch (Exception e) {
@@ -214,7 +214,7 @@ public class CertController {
     public Map<String, Object> saveRef(@RequestParam Map<String, Object> param) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (param.get("compCd") == null || "".equals(param.get("compCd"))) param.put("compCd", "0001");
+            if (param.get("hospCd") == null || "".equals(param.get("hospCd"))) param.put("hospCd", "12345678");
             boolean result;
             if ("U".equals(param.get("mode"))) {
                 result = certService.updateRef(param);
@@ -234,7 +234,7 @@ public class CertController {
     public Map<String, Object> deleteRef(@RequestParam Map<String, Object> param) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (param.get("compCd") == null || "".equals(param.get("compCd"))) param.put("compCd", "0001");
+            if (param.get("hospCd") == null || "".equals(param.get("hospCd"))) param.put("hospCd", "12345678");
             resultMap.put("result", certService.deleteRef(param) ? "success" : "fail");
         } catch (Exception e) {
             resultMap.put("result", "fail");

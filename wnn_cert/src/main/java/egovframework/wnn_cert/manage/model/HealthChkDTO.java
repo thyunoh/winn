@@ -5,7 +5,7 @@ import egovframework.wnn_cert.util.CommonDTO;
 public class HealthChkDTO extends CommonDTO {
 
     private String chkId;
-    private String compCd;
+    private String hospCd;
     private String empNm;
     private String chkYear;
     private String deptNm;
@@ -34,8 +34,8 @@ public class HealthChkDTO extends CommonDTO {
     public String getChkId() { return chkId; }
     public void setChkId(String chkId) { this.chkId = chkId; }
 
-    public String getCompCd() { return compCd; }
-    public void setCompCd(String compCd) { this.compCd = compCd; }
+    public String getCompCd() { return hospCd; }
+    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getEmpNm() { return empNm; }
     public void setEmpNm(String empNm) { this.empNm = empNm; }
