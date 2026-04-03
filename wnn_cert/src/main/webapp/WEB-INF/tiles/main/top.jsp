@@ -83,6 +83,7 @@
     <a class="nav-link" href="/manage/consentMain.do">
         <i class="fas fa-file-signature"></i> <span class="sidebar-text">동의서 관리</span>
     </a>
+    
 
     <!-- ====== 감염관리 ====== -->
     <div class="sidebar-divider"></div>
