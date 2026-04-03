@@ -142,7 +142,7 @@ function loadLevel1Filter() {
     $.ajax({
         url: '/cert/getTreeList.do',
         type: 'POST',
-        data: { hospCd: '0001', tabId: 'CERT', grpCd: 'STD', parentId: '00' },
+        data: { hospCd: '12345678', tabId: 'CERT', grpCd: 'STD', parentId: '00' },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {
@@ -164,7 +164,7 @@ function loadLevel2Filter(parentId) {
     $.ajax({
         url: '/cert/getTreeList.do',
         type: 'POST',
-        data: { hospCd: '0001', tabId: 'CERT', grpCd: 'STD', parentId: parentId },
+        data: { hospCd: '12345678', tabId: 'CERT', grpCd: 'STD', parentId: parentId },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

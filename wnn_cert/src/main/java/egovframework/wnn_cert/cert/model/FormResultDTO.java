@@ -28,11 +28,11 @@ public class FormResultDTO extends CommonDTO {
         this.resultId = resultId;
     }
 
-    public String getCompCd() {
+    public String getHospCd() {
         return hospCd;
     }
 
-    public void setCompCd(String hospCd) {
+    public void setHospCd(String hospCd) {
         this.hospCd = hospCd;
     }
 

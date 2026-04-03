@@ -30,11 +30,11 @@ public class EvalDTO extends CommonDTO {
         this.evalId = evalId;
     }
 
-    public String getCompCd() {
+    public String getHospCd() {
         return hospCd;
     }
 
-    public void setCompCd(String hospCd) {
+    public void setHospCd(String hospCd) {
         this.hospCd = hospCd;
     }
 

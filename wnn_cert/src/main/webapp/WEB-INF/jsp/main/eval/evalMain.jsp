@@ -72,8 +72,8 @@
             <div class="modal-body">
                 <form id="evalForm">
                     <div class="form-group">
-                        <label for="modalCompCd">기관코드</label>
-                        <input type="text" class="form-control" id="modalCompCd" name="hospCd" value="0001" required>
+                        <label for="modalHospCd">기관코드</label>
+                        <input type="text" class="form-control" id="modalHospCd" name="hospCd" value="12345678" required>
                     </div>
                     <div class="form-group">
                         <label for="modalEvalYear">평가연도</label>
@@ -113,7 +113,7 @@ $(document).ready(function() {
 
     $('#btnNewEval').on('click', function() {
         $('#evalForm')[0].reset();
-        $('#modalCompCd').val('0001');
+        $('#modalHospCd').val('12345678');
         $('#evalModal').modal('show');
     });
 
@@ -185,7 +185,7 @@ function getStatusBadge(status) {
 
 function saveEval() {
     var param = {
-        hospCd: $('#modalCompCd').val().trim(),
+        hospCd: $('#modalHospCd').val().trim(),
         evalYear: $('#modalEvalYear').val().trim(),
         evalCycle: $('#modalEvalCycle').val().trim(),
         startDt: $('#modalStartDt').val(),

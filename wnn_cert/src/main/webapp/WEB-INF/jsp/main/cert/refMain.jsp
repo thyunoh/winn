@@ -123,7 +123,7 @@
 
 <script>
 var currentRefCd = '';
-var hospCd = '0001';
+var hospCd = '12345678';
 
 $(document).ready(function() {
     loadGroupList();

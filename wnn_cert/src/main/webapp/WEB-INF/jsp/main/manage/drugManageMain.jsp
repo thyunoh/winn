@@ -74,7 +74,7 @@
             <div class="modal-body">
                 <form id="dataForm">
                     <input type="hidden" id="modalMode" value="add">
-                    <input type="hidden" id="modalCompCd" name="hospCd" value="0001">
+                    <input type="hidden" id="modalHospCd" name="hospCd" value="12345678">
                     <input type="hidden" id="modalSeq" name="seq">
                     <div class="row">
                         <div class="col-md-4">
@@ -175,7 +175,7 @@ $(document).ready(function() {
 
 function loadList() {
     var param = {
-        hospCd: '0001',
+        hospCd: '12345678',
         drugType: $('#searchDrugType').val(),
         drugNm: $('#searchDrugNm').val().trim()
     };
@@ -226,7 +226,7 @@ function openModal(mode, item) {
     if (mode === 'add') {
         $('#modalTitle').text('약품 등록');
         $('#dataForm')[0].reset();
-        $('#modalCompCd').val('0001');
+        $('#modalHospCd').val('12345678');
         $('#modalSeq').val('');
     } else {
         $('#modalTitle').text('약품 수정');
@@ -248,7 +248,7 @@ function openModal(mode, item) {
 
 function saveData() {
     var param = {
-        hospCd: $('#modalCompCd').val(),
+        hospCd: $('#modalHospCd').val(),
         seq: $('#modalSeq').val(),
         drugCd: $('#modalDrugCd').val().trim(),
         drugNm: $('#modalDrugNm').val().trim(),
@@ -290,7 +290,7 @@ function deleteData(seq) {
     $.ajax({
         url: '/manage/deleteDrugManage.do',
         type: 'POST',
-        data: { hospCd: '0001', seq: seq },
+        data: { hospCd: '12345678', seq: seq },
         dataType: 'json',
         success: function(res) {
             if (res.result === 'success') {

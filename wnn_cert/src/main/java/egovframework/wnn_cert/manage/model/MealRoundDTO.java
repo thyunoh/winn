@@ -21,8 +21,8 @@ public class MealRoundDTO extends CommonDTO {
     public String getRoundId() { return roundId; }
     public void setRoundId(String roundId) { this.roundId = roundId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getRoundDt() { return roundDt; }
     public void setRoundDt(String roundDt) { this.roundDt = roundDt; }

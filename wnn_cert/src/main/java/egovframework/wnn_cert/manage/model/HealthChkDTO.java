@@ -34,8 +34,8 @@ public class HealthChkDTO extends CommonDTO {
     public String getChkId() { return chkId; }
     public void setChkId(String chkId) { this.chkId = chkId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getEmpNm() { return empNm; }
     public void setEmpNm(String empNm) { this.empNm = empNm; }

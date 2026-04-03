@@ -27,8 +27,8 @@ public class RestraintDTO extends CommonDTO {
     public String getRestraintId() { return restraintId; }
     public void setRestraintId(String restraintId) { this.restraintId = restraintId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getPatCd() { return patCd; }
     public void setPatCd(String patCd) { this.patCd = patCd; }

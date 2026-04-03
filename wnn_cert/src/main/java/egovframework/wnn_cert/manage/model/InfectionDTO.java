@@ -27,8 +27,8 @@ public class InfectionDTO extends CommonDTO {
     public String getInfectId() { return infectId; }
     public void setInfectId(String infectId) { this.infectId = infectId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getInfectDt() { return infectDt; }
     public void setInfectDt(String infectDt) { this.infectDt = infectDt; }

@@ -27,8 +27,8 @@ public class StaffDutyDTO extends CommonDTO {
     public String getDutyId() { return dutyId; }
     public void setDutyId(String dutyId) { this.dutyId = dutyId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getWorkDt() { return workDt; }
     public void setWorkDt(String workDt) { this.workDt = workDt; }

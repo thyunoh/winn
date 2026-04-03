@@ -31,11 +31,11 @@ public class RptDTO extends CommonDTO {
         this.rptId = rptId;
     }
 
-    public String getCompCd() {
+    public String getHospCd() {
         return hospCd;
     }
 
-    public void setCompCd(String hospCd) {
+    public void setHospCd(String hospCd) {
         this.hospCd = hospCd;
     }
 

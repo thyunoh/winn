@@ -27,8 +27,8 @@ public class StaffEduDTO extends CommonDTO {
     public String getEduId() { return eduId; }
     public void setEduId(String eduId) { this.eduId = eduId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getEduYear() { return eduYear; }
     public void setEduYear(String eduYear) { this.eduYear = eduYear; }

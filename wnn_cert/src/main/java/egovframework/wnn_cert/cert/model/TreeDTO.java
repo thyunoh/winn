@@ -18,11 +18,11 @@ public class TreeDTO extends CommonDTO {
     private int nodeLevel;
     private int childCount;
 
-    public String getCompCd() {
+    public String getHospCd() {
         return hospCd;
     }
 
-    public void setCompCd(String hospCd) {
+    public void setHospCd(String hospCd) {
         this.hospCd = hospCd;
     }
 

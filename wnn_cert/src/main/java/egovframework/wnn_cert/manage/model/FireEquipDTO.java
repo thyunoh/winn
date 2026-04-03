@@ -30,8 +30,8 @@ public class FireEquipDTO extends CommonDTO {
     public String getEquipId() { return equipId; }
     public void setEquipId(String equipId) { this.equipId = equipId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getChkYear() { return chkYear; }
     public void setChkYear(String chkYear) { this.chkYear = chkYear; }

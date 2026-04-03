@@ -212,8 +212,8 @@ public class ManageController {
     public Map<String, Object> saveVaccin(VaccinDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -265,8 +265,8 @@ public class ManageController {
     public Map<String, Object> saveRestraint(RestraintDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -318,8 +318,8 @@ public class ManageController {
     public Map<String, Object> saveFireEquip(FireEquipDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -371,8 +371,8 @@ public class ManageController {
     public Map<String, Object> saveStaffEdu(StaffEduDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -474,8 +474,8 @@ public class ManageController {
     public Map<String, Object> saveHealthChk(HealthChkDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -527,8 +527,8 @@ public class ManageController {
     public Map<String, Object> saveMedDevice(MedDeviceDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -580,8 +580,8 @@ public class ManageController {
     public Map<String, Object> saveStaffDuty(StaffDutyDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -633,8 +633,8 @@ public class ManageController {
     public Map<String, Object> saveMealRound(MealRoundDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -686,8 +686,8 @@ public class ManageController {
     public Map<String, Object> saveDrugManage(DrugManageDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -739,8 +739,8 @@ public class ManageController {
     public Map<String, Object> saveInfection(InfectionDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {
@@ -792,8 +792,8 @@ public class ManageController {
     public Map<String, Object> saveHandHygiene(HandHygieneDTO dto) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
-            if (dto.getCompCd() == null || dto.getCompCd().isEmpty()) {
-                dto.setCompCd("0001");
+            if (dto.getHospCd() == null || dto.getHospCd().isEmpty()) {
+                dto.setHospCd("12345678");
             }
             boolean result;
             if ("U".equals(dto.getMode())) {

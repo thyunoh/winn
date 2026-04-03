@@ -27,8 +27,8 @@ public class HandHygieneDTO extends CommonDTO {
     public String getHhId() { return hhId; }
     public void setHhId(String hhId) { this.hhId = hhId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getMonitorDt() { return monitorDt; }
     public void setMonitorDt(String monitorDt) { this.monitorDt = monitorDt; }

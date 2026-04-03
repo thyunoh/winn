@@ -25,8 +25,8 @@ public class DrugManageDTO extends CommonDTO {
     public String getDrugId() { return drugId; }
     public void setDrugId(String drugId) { this.drugId = drugId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getDrugCd() { return drugCd; }
     public void setDrugCd(String drugCd) { this.drugCd = drugCd; }

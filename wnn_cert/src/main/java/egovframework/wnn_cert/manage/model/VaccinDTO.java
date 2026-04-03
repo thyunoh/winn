@@ -24,8 +24,8 @@ public class VaccinDTO extends CommonDTO {
     public String getVaccinId() { return vaccinId; }
     public void setVaccinId(String vaccinId) { this.vaccinId = vaccinId; }
 
-    public String getCompCd() { return hospCd; }
-    public void setCompCd(String hospCd) { this.hospCd = hospCd; }
+    public String getHospCd() { return hospCd; }
+    public void setHospCd(String hospCd) { this.hospCd = hospCd; }
 
     public String getVaccinYear() { return vaccinYear; }
     public void setVaccinYear(String vaccinYear) { this.vaccinYear = vaccinYear; }
