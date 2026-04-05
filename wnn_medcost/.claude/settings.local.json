@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -i \"menu\\\\|sidebar\" /c/Users/user/git/winn/wnn_medcost/src/main/resources/egovframework/sqlmap/mapper/*.xml)",
+      "Bash(grep -E \"\\\\.pas$|\\\\.dfm$|\\\\.dpr$|\\\\.dproj$\")",
+      "Bash(wc -l /c/Users/user/git/winn/wnn_consult/src/main/resources/egovframework/sqlmap/mapper/*.xml)",
+      "Bash(xargs ls:*)"
+    ]
+  }
+}
