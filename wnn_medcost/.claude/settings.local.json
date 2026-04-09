@@ -76,7 +76,16 @@
       "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uDTO_UserAuth.pas'\\\\'','\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uDAO_UserAuth.pas'\\\\'','\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmUserAuth.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')",
       "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uDTO_UserCd.pas'\\\\'','\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uDAO_UserCd.pas'\\\\'','\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmUserCd.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')",
       "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uDTO_Gasan.pas'\\\\'','\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uDAO_Gasan.pas'\\\\'','\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmGasan.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')",
-      "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmMagamUpload.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')"
+      "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmMagamUpload.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(winget install:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(gh auth:*)",
+      "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmExcelUploadIpwon.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')",
+      "Bash(ls -la D:/SWPROJECT/SWPROJECT/uFrmAssessment.*)",
+      "Bash(powershell -File -)",
+      "Bash(grep -l \"FN_TEWON_CHECK\\\\|ADL_SCORE_CHECK\\\\|PATIENT_CLASSIFICATION\\\\|PATIENT_CATHETER_CHECK\" D:/워너넷자료/MSSQL작업관련자료/*.sql)"
     ]
   }
 }
