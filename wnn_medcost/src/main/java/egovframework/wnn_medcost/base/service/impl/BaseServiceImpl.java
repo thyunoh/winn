@@ -73,6 +73,27 @@ public class BaseServiceImpl implements BaseService {
 		// TODO Auto-generated method stub
 		return mapper.SugaCdMstDupChk(dto);
 	}
+
+	@Override
+	public List<String> SugaCdMstDupChkList(List<SugaCdDTO> list) throws Exception {
+		if (list == null || list.isEmpty()) return Collections.emptyList();
+		return mapper.SugaCdMstDupChkList(list);
+	}
+
+	@Override
+	public int insertSugaCdMstBulk(List<SugaCdDTO> list) throws Exception {
+		if (list == null || list.isEmpty()) return 0;
+		return mapper.insertSugaCdMstBulk(list);
+	}
+
+	@Override
+	public int updateSugaCdMstBulk(Map<String, Object> params) throws Exception {
+		if (params == null) return 0;
+		@SuppressWarnings("unchecked")
+		List<SugaCdDTO> list = (List<SugaCdDTO>) params.get("list");
+		if (list == null || list.isEmpty()) return 0;
+		return mapper.updateSugaCdMstBulk(params);
+	}
 	@Override
 	public List<DiseCdDTO> getDiseCdList(DiseCdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
@@ -95,6 +116,39 @@ public class BaseServiceImpl implements BaseService {
 	public String DiseCdMstDupChk(DiseCdDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.DiseCdMstDupChk(dto);
+	}
+
+	@Override
+	public List<String> DiseCdMstDupChkList(List<DiseCdDTO> list) throws Exception {
+		if (list == null || list.isEmpty()) return Collections.emptyList();
+		return mapper.DiseCdMstDupChkList(list);
+	}
+
+	@Override
+	public int insertDiseCdMstBulk(List<DiseCdDTO> list) throws Exception {
+		if (list == null || list.isEmpty()) return 0;
+		return mapper.insertDiseCdMstBulk(list);
+	}
+
+	@Override
+	public int updateDiseCdMstBulk(Map<String, Object> params) throws Exception {
+		if (params == null) return 0;
+		@SuppressWarnings("unchecked")
+		List<DiseCdDTO> list = (List<DiseCdDTO>) params.get("list");
+		if (list == null || list.isEmpty()) return 0;
+		return mapper.updateDiseCdMstBulk(params);
+	}
+
+	@Override
+	public int deactivateAllDiseCdMst(Map<String, Object> params) throws Exception {
+		if (params == null) params = new HashMap<>();
+		return mapper.deactivateAllDiseCdMst(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectMaxJobSeqDiseCd(List<DiseCdDTO> list) throws Exception {
+		if (list == null || list.isEmpty()) return Collections.emptyList();
+		return mapper.selectMaxJobSeqDiseCd(list);
 	}
 
 	@Override

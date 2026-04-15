@@ -273,6 +273,15 @@
                         <span id="excelRowCount" class="badge badge-info" style="font-size:14px; line-height:35px;"></span>
                     </div>
                 </div>
+                <div class="form-group row mb-2">
+                    <label class="col-1 col-form-label text-left">중복시</label>
+                    <div class="col-11" style="padding-top:7px;">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="excelDupOverwrite" checked>
+                            <label class="form-check-label" for="excelDupOverwrite">덮어쓰기 (적용일자 같으면 수정, 없으면 신규 INSERT)</label>
+                        </div>
+                    </div>
+                </div>
                 <!-- 컬럼 매핑 영역 -->
                 <div id="excelMappingZone" class="form-group row mb-2" style="display:none;">
                     <div class="col-12">
@@ -280,6 +289,23 @@
                             엑셀 헤더를 DB 컬럼에 매핑하세요. 자동매핑 후 필요시 수정 가능합니다.
                         </div>
                         <div id="mappingFields" class="form-row" style="flex-wrap:wrap;"></div>
+                    </div>
+                </div>
+                <!-- 미리보기 검색 영역 -->
+                <div id="excelPreviewSearchBar" class="form-group row mb-2" style="display:none;">
+                    <label class="col-1 col-form-label text-left">검색</label>
+                    <div class="col-3">
+                        <select id="excelSearchColumn" class="custom-select" style="height:32px; font-size:13px;">
+                            <option value="">전체 컬럼</option>
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <input type="text" id="excelSearchKeyword" class="form-control" placeholder="검색어 입력 (Enter)" style="height:32px; font-size:13px;">
+                    </div>
+                    <div class="col-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onClick="fn_ExcelPreviewSearch()">검색 <i class="fas fa-search"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onClick="fn_ExcelPreviewSearchReset()">초기화</button>
+                        <span id="excelSearchResultCount" class="ml-2" style="font-size:12px; color:#666;"></span>
                     </div>
                 </div>
                 <!-- 미리보기 테이블 -->
@@ -737,7 +763,21 @@
 				        		                            ('0' + d.getSeconds()).slice(-2);
 				        		        return excelFName + formattedDate;
 				        		    },
-				        		    title: excelTitle
+				        		    title: excelTitle,
+				        		    exportOptions: {
+				        		        format: {
+				        		            body: function(data, row, column, node) {
+				        		                if (data == null) return data;
+				        		                // HTML 태그 제거 후 trim
+				        		                var v = String(data).replace(/<[^>]*>/g, '').trim();
+				        		                // 일자 형식(yyyy-mm-dd, yyyy/mm/dd, yyyy.mm.dd) → yyyymmdd
+				        		                if (/^\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}$/.test(v)) {
+				        		                    return v.replace(/[-\/.]/g, "");
+				        		                }
+				        		                return data;
+				        		            }
+				        		        }
+				        		    }
 				        		},  
 				        		{
 				        			extend: 'print',
@@ -1630,6 +1670,7 @@
 		var excelPreviewDT = null;   // 미리보기 DataTable
 		var excelColumnMap = {};     // 엑셀헤더 → DB컬럼 매핑
 		var excelCachedFile = null;  // 파일 캐시 (같은 파일이면 재파싱 안함)
+		var excelHasMultiSheet = false; // 현재 파일이 여러 시트인지 (미리보기 재클릭 시 시트 재선택 용)
 		var excelModalClosable = false; // 모달 닫기 허용 플래그
 		var excelCheckedSet = new Set(); // 체크된 행 인덱스 관리 (deferRender 대응)
 
@@ -1638,10 +1679,17 @@
 		// ============================================
 
 		// 엑셀 날짜 → yyyy/mm/dd 변환 (다양한 형식 지원)
-		// 지원: 2026-12-01, 2026/12/01, 20261201, 46023(시리얼),
+		// 지원: Date 객체, 2026-12-01, 2026/12/01, 20261201, 46023(시리얼),
 		//       10/1/22, 7/1/23, 12/1/21 (M/D/YY 2자리연도)
 		function excelDateToStr(val) {
 			if (!val && val !== 0) return '';
+			// Date 객체 처리 (cellDates:true 로 파싱된 경우)
+			if (val instanceof Date && !isNaN(val.getTime())) {
+				var dy = val.getFullYear();
+				var dm = ('0' + (val.getMonth() + 1)).slice(-2);
+				var dd0 = ('0' + val.getDate()).slice(-2);
+				return dy + '/' + dm + '/' + dd0;
+			}
 			var s = String(val).trim();
 			if (!s) return '';
 
@@ -1730,13 +1778,19 @@
 			return String(val).trim();
 		}
 
+		// 일자 문자열에서 구분자(/, -, .) 제거 → yyyymmdd
+		function stripDateSep(s) {
+			if (!s) return '';
+			return String(s).replace(/[\-\/\.]/g, '');
+		}
+
 		// 행 전체를 DB 포맷으로 변환
 		function convertRowToDbFormat(row) {
 			return {
 				feeCode:  toStr(row.feeCode),
 				feeType:  toStr(row.feeType),
-				startDt:  excelDateToStr(row.startDt),
-				endDt:    '2099/12/31',
+				startDt:  stripDateSep(excelDateToStr(row.startDt)),
+				endDt:    '20991231',
 				classNo:  toStr(row.classNo),
 				korNm:    toStr(row.korNm),
 				engNm:    toStr(row.engNm),
@@ -1793,7 +1847,7 @@
 		var autoMapKeywords = {
 			'feeCode':  ['수가코드','약품코드','재료코드','코드','fee_code','feecode','code'],
 			'startDt':  ['적용시작일자','적용일자','시작일자','시작일','적용시작','start_dt','startdt','적용개시'],
-			'endDt':    ['적용종료일자','종료일자','종료일','적용종료','end_dt','enddt'],
+			'endDt':    ['적용종료일자','종료일자','종료일','적용종료','end_dt','enddt','만료일','만료일자'],
 			'classNo':  ['분류기호','분류번호','분류','class_no','classno'],
 			'korNm':    ['한글명','품명','한글','명칭','kor_nm','kornm','한글명칭','재료명'],
 			'engNm':    ['영문명','영문','eng_nm','engnm','영문명칭'],
@@ -1841,6 +1895,24 @@
 			excelParsedData = [];
 			excelHeaders = [];
 			excelColumnMap = {};
+			excelCachedFile = null;
+			excelHasMultiSheet = false;
+			// 미리보기 검색바 숨김/초기화
+			var _searchBar = document.getElementById('excelPreviewSearchBar');
+			if (_searchBar) _searchBar.style.display = 'none';
+			var _searchKw = document.getElementById('excelSearchKeyword');
+			if (_searchKw) _searchKw.value = '';
+			var _searchCol = document.getElementById('excelSearchColumn');
+			if (_searchCol) _searchCol.innerHTML = '<option value="">전체 컬럼</option>';
+			var _searchCnt = document.getElementById('excelSearchResultCount');
+			if (_searchCnt) _searchCnt.textContent = '';
+
+			// 파일 변경 이벤트 — 새 파일 선택 시 캐시/플래그 리셋
+			$('#excelFileInput').off('change.reset').on('change.reset', function() {
+				excelCachedFile = null;
+				excelHasMultiSheet = false;
+				excelParsedData = [];
+			});
 
 			// 닫기 버튼으로만 닫기 가능 (바깥 클릭, ESC 차단)
 			excelModalClosable = false;
@@ -1879,15 +1951,24 @@
 
 			var file = fileInput.files[0];
 
-			// 같은 파일이면 파싱 건너뛰고 테이블만 재생성
+			// 같은 파일 캐시: 여러 시트가 아닌 경우에만 사용 (여러 시트는 매번 재파싱해서 시트 재선택 가능)
 			var fileKey = file.name + '_' + file.size + '_' + file.lastModified;
-			if (excelCachedFile === fileKey && excelParsedData.length > 0) {
+			console.log('[엑셀] fn_ExcelPreview - fileKey:', fileKey, 'multiSheet:', excelHasMultiSheet, 'cached:', (excelCachedFile === fileKey));
+			if (!excelHasMultiSheet && excelCachedFile === fileKey && excelParsedData.length > 0) {
+				console.log('[엑셀] 캐시 사용 (단일 시트 재사용)');
 				autoMapColumns();
 				buildMappingUI();
 				buildPreviewTable(feeType);
 				return;
 			}
-			excelCachedFile = fileKey;
+			// 재파싱 준비: 이전 상태 완전 초기화
+			excelCachedFile = null;
+			excelParsedData = [];
+			excelHeaders = [];
+			if (excelPreviewDT) {
+				try { excelPreviewDT.destroy(); $('#excelPreviewTable').empty(); } catch(e) {}
+				excelPreviewDT = null;
+			}
 
 			// 진행상황 표시
 			Swal.fire({
@@ -1909,93 +1990,135 @@
 
 				setTimeout(function() {
 					try {
-						console.log('[엑셀] XLSX.read 시작 (ArrayBuffer + dense)...');
-						var workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', dense: true });
+						console.log('[엑셀] XLSX.read 시작 (ArrayBuffer + dense + cellDates)...');
+						var workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', dense: true, cellDates: true });
 						console.log('[엑셀] XLSX.read 완료. 시트수:', workbook.SheetNames.length);
 
-						// 디버그: 각 시트의 상세 정보
-						for (var dbg = 0; dbg < workbook.SheetNames.length; dbg++) {
-							var dbgWs = workbook.Sheets[workbook.SheetNames[dbg]];
-							var dbgKeys = dbgWs ? Object.keys(dbgWs) : [];
-							var dbgCellKeys = dbgKeys.filter(function(k){ return k[0] !== '!'; });
-							var dbgMetaKeys = dbgKeys.filter(function(k){ return k[0] === '!'; });
-							console.log('[엑셀] 시트[' + dbg + '] "' + workbook.SheetNames[dbg] + '"',
-								'| !ref:', dbgWs ? dbgWs['!ref'] : 'null',
-								'| 전체키:', dbgKeys.length,
-								'| 셀키:', dbgCellKeys.length,
-								'| 메타키:', dbgMetaKeys,
-								'| 셀샘플:', dbgCellKeys.slice(0, 5),
-								'| !data:', dbgWs && dbgWs['!data'] ? '있음(행수:' + dbgWs['!data'].length + ')' : '없음'
-							);
-						}
+						// 시트 목록 — 모든 시트 노출 (데이터 유무 판정 제외, 사용자가 선택)
+						var dataSheetNames = workbook.SheetNames.slice();
+						console.log('[엑셀] 전체 시트 목록:', dataSheetNames);
+						// 여러 시트 플래그 저장 — 미리보기 재클릭 시 캐시 무효화에 사용
+						excelHasMultiSheet = (dataSheetNames.length > 1);
 
-						// 데이터가 있는 첫 번째 시트 자동 선택
-						var ws = null;
-						var usedSheetName = '';
-
-						// 1차: !ref 있는 시트
-						for (var si = 0; si < workbook.SheetNames.length; si++) {
-							var tmpWs = workbook.Sheets[workbook.SheetNames[si]];
-							if (tmpWs && tmpWs['!ref']) {
-								ws = tmpWs;
-								usedSheetName = workbook.SheetNames[si];
-								break;
-							}
-						}
-						// 2차: !ref 없어도 셀이 있으면 사용
-						if (!ws) {
-							for (var si2 = 0; si2 < workbook.SheetNames.length; si2++) {
-								var tmpWs2 = workbook.Sheets[workbook.SheetNames[si2]];
-								if (tmpWs2) {
-									var keys = Object.keys(tmpWs2).filter(function(k){ return k[0] !== '!'; });
-									if (keys.length > 0) {
-										ws = tmpWs2;
-										usedSheetName = workbook.SheetNames[si2];
-										break;
+						// 파싱 진행 내부 함수 (시트명 지정 가능)
+						var continueParse = function(forcedSheetName) {
+							try {
+								var ws = null;
+								var usedSheetName = '';
+								if (forcedSheetName) {
+									ws = workbook.Sheets[forcedSheetName];
+									usedSheetName = forcedSheetName;
+									// dense 모드 → !ref 보정
+									if (ws && !ws['!ref'] && ws['!data'] && ws['!data'].length > 0) {
+										ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws['!data'].length - 1, c: (ws['!data'][0] || []).length - 1 } });
+									}
+								} else {
+									// 자동 선택: 1차 !ref 있는 시트
+									for (var si = 0; si < workbook.SheetNames.length; si++) {
+										var tmpWs = workbook.Sheets[workbook.SheetNames[si]];
+										if (tmpWs && tmpWs['!ref']) { ws = tmpWs; usedSheetName = workbook.SheetNames[si]; break; }
+									}
+									// 2차: 셀이 있는 시트
+									if (!ws) {
+										for (var si2 = 0; si2 < workbook.SheetNames.length; si2++) {
+											var tmpWs2 = workbook.Sheets[workbook.SheetNames[si2]];
+											if (tmpWs2) {
+												var keys2 = Object.keys(tmpWs2).filter(function(k){ return k[0] !== '!'; });
+												if (keys2.length > 0) { ws = tmpWs2; usedSheetName = workbook.SheetNames[si2]; break; }
+											}
+										}
+									}
+									// 3차: !data (dense 모드)
+									if (!ws) {
+										for (var si3 = 0; si3 < workbook.SheetNames.length; si3++) {
+											var tmpWs3 = workbook.Sheets[workbook.SheetNames[si3]];
+											if (tmpWs3 && tmpWs3['!data'] && tmpWs3['!data'].length > 0) {
+												ws = tmpWs3;
+												usedSheetName = workbook.SheetNames[si3];
+												ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws['!data'].length - 1, c: (ws['!data'][0] || []).length - 1 } });
+												break;
+											}
+										}
 									}
 								}
-							}
-						}
-						// 3차: !data 배열이 있으면 사용 (dense 모드)
-						if (!ws) {
-							for (var si3 = 0; si3 < workbook.SheetNames.length; si3++) {
-								var tmpWs3 = workbook.Sheets[workbook.SheetNames[si3]];
-								if (tmpWs3 && tmpWs3['!data'] && tmpWs3['!data'].length > 0) {
-									ws = tmpWs3;
-									usedSheetName = workbook.SheetNames[si3];
-									// dense 모드 → !ref 생성
-									ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws['!data'].length - 1, c: (ws['!data'][0] || []).length - 1 } });
-									console.log('[엑셀] dense 모드 시트 발견, !ref 생성:', ws['!ref']);
-									break;
+								if (!ws) {
+									Swal.close();
+									Swal.fire({ title: '확인', text: '엑셀에 데이터가 없습니다.', icon: 'warning', timer: 2000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+									return;
 								}
+								console.log('[엑셀] 사용 시트:', usedSheetName, '| !ref:', ws['!ref']);
+								$('#excelProgressBar').css({ 'transition': 'none', 'width': '50%' }).text('50%');
+								$('#excelProgress').text(usedSheetName + ' 시트 변환 중...');
+
+								console.log('[엑셀] sheet_to_json 시작...');
+								var jsonData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+								console.log('[엑셀] sheet_to_json 완료. 행수:', jsonData.length);
+								ws = null; workbook = null;
+
+								// 빈 행 제거
+								var filtered = [jsonData[0]];
+								for (var i = 1; i < jsonData.length; i++) {
+									var row = jsonData[i];
+									for (var c = 0; c < row.length; c++) {
+										if (row[c] !== '' && row[c] !== null && row[c] !== undefined) { filtered.push(row); break; }
+									}
+								}
+								console.log('[엑셀] 빈행 제거 후:', filtered.length, '건');
+								jsonData = null;
+								processJsonData(filtered, feeType);
+							} catch(ex2) {
+								console.error('[엑셀] 파싱 오류:', ex2);
+								Swal.close();
+								Swal.fire({ title: '오류', text: '파싱 실패: ' + ex2.message, icon: 'error', showConfirmButton: true, customClass: { popup: 'small-swal' } });
 							}
-						}
-						if (!ws) {
+						};
+
+						// [VERSION-2026-04-15-B] 여러 시트 존재 시 선택 다이얼로그
+						console.log('[엑셀] >>> 시트 선택 분기 진입 체크 <<<', 'dataSheetNames.length=', dataSheetNames.length, '> 1 ?', (dataSheetNames.length > 1));
+						if (dataSheetNames.length > 1) {
+							console.log('[엑셀] ★★★ 시트 선택 다이얼로그 표시 ★★★');
 							Swal.close();
-							Swal.fire({ title: '확인', text: '엑셀에 데이터가 없습니다.', icon: 'warning', timer: 2000, showConfirmButton: true, customClass: { popup: 'small-swal' } });
+							var optsHtml = '';
+							for (var oi = 0; oi < dataSheetNames.length; oi++) {
+								optsHtml += '<option value="' + dataSheetNames[oi] + '"' + (oi === 0 ? ' selected' : '') + '>' + dataSheetNames[oi] + '</option>';
+							}
+							Swal.fire({
+								title: '시트 선택',
+								html: '엑셀 파일에 데이터 시트가 <b>' + dataSheetNames.length + '개</b> 있습니다.<br>로드할 시트를 선택하세요.<br><br>'
+								    + '<select id="sheetSelect" class="swal2-select" style="display:inline-block; min-width:200px; padding:5px;">' + optsHtml + '</select>',
+								icon: 'question',
+								showCancelButton: true,
+								confirmButtonText: '로드',
+								cancelButtonText: '취소',
+								customClass: { popup: 'small-swal' },
+								preConfirm: function() {
+									return document.getElementById('sheetSelect').value;
+								}
+							}).then(function(result) {
+								if (result.isConfirmed && result.value) {
+									Swal.fire({
+										title: '엑셀 읽는 중...',
+										html: '<div id="excelProgress" style="font-size:14px;">' + result.value + ' 시트 변환 중...</div>' +
+										      '<div class="progress mt-2" style="height:20px;">' +
+										      '<div id="excelProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width:50%">50%</div></div>',
+										allowOutsideClick: false,
+										allowEscapeKey: false,
+										showConfirmButton: false,
+										customClass: { popup: 'small-swal' }
+									});
+									setTimeout(function() { continueParse(result.value); }, 50);
+								} else {
+									excelCachedFile = null;
+									document.getElementById('excelFileInput').value = '';
+								}
+							});
 							return;
 						}
-						console.log('[엑셀] 사용 시트:', usedSheetName, '| !ref:', ws['!ref']);
 
-						$('#excelProgressBar').css({ 'transition': 'none', 'width': '50%' }).text('50%');
-						$('#excelProgress').text(usedSheetName + ' 시트 변환 중...');
+						// 단일 시트 → 자동 선택으로 바로 파싱
+						continueParse(null);
+						return;
 
-						console.log('[엑셀] sheet_to_json 시작...');
-						var jsonData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-						console.log('[엑셀] sheet_to_json 완료. 행수:', jsonData.length);
-						ws = null; workbook = null;
-
-						// 빈 행 제거
-						var filtered = [jsonData[0]];
-						for (var i = 1; i < jsonData.length; i++) {
-							var row = jsonData[i];
-							for (var c = 0; c < row.length; c++) {
-								if (row[c] !== '' && row[c] !== null && row[c] !== undefined) { filtered.push(row); break; }
-							}
-						}
-						console.log('[엑셀] 빈행 제거 후:', filtered.length, '건');
-						jsonData = null;
-						processJsonData(filtered, feeType);
 					} catch(ex) {
 						console.error('[엑셀] 오류 발생:', ex);
 						Swal.close();
@@ -2033,7 +2156,17 @@
 					var row = {};
 					for (var j = 0; j < excelHeaders.length; j++) {
 						var cellVal = jsonData[i][j];
-						row[excelHeaders[j]] = (cellVal !== undefined && cellVal !== null) ? String(cellVal).trim() : '';
+						if (cellVal === undefined || cellVal === null) {
+							row[excelHeaders[j]] = '';
+						} else if (cellVal instanceof Date && !isNaN(cellVal.getTime())) {
+							// Date 객체는 yyyy-mm-dd 형태로 변환 (cellDates:true 옵션으로 인해 Date 객체가 올 수 있음)
+							var dyy = cellVal.getFullYear();
+							var dmm = ('0' + (cellVal.getMonth() + 1)).slice(-2);
+							var ddd = ('0' + cellVal.getDate()).slice(-2);
+							row[excelHeaders[j]] = dyy + '-' + dmm + '-' + ddd;
+						} else {
+							row[excelHeaders[j]] = String(cellVal).trim();
+						}
 					}
 					excelParsedData.push(row);
 				}
@@ -2069,6 +2202,16 @@
 				buildPreviewTable(feeType);
 				$('#excelProgressBar').css('width', '100%').text('100%');
 				$('#excelProgress').text('완료! 총 ' + excelParsedData.length + '건 로드됨');
+				// 캐시 설정: 단일 시트만 캐시, 여러 시트는 캐시 안 함(다음 미리보기 클릭 시 재선택 가능하도록)
+				var fi = document.getElementById('excelFileInput');
+				if (fi && fi.files && fi.files[0] && !excelHasMultiSheet) {
+					var f = fi.files[0];
+					excelCachedFile = f.name + '_' + f.size + '_' + f.lastModified;
+					console.log('[엑셀] 캐시 설정 (단일 시트):', excelCachedFile);
+				} else {
+					excelCachedFile = null;
+					console.log('[엑셀] 캐시 안함 (여러 시트 - 다음 클릭시 재선택 가능)');
+				}
 				setTimeout(function() { Swal.close(); }, 500);
 			}, 0);
 		}
@@ -2140,6 +2283,34 @@
 				}
 			}
 			return map;
+		}
+
+		// 미리보기 검색 실행 (컬럼 지정 가능)
+		function fn_ExcelPreviewSearch() {
+			if (!excelPreviewDT) return;
+			var colIdx = document.getElementById('excelSearchColumn').value;
+			var kw     = document.getElementById('excelSearchKeyword').value || '';
+			// 먼저 전체 검색 초기화
+			excelPreviewDT.search('').columns().search('');
+			if (colIdx === '') {
+				// 전체 컬럼 검색
+				excelPreviewDT.search(kw);
+			} else {
+				// 특정 컬럼 검색
+				excelPreviewDT.column(parseInt(colIdx, 10)).search(kw);
+			}
+			excelPreviewDT.draw();
+			var cnt = excelPreviewDT.rows({ search: 'applied' }).count();
+			document.getElementById('excelSearchResultCount').textContent = '검색결과: ' + cnt + '건';
+		}
+
+		// 미리보기 검색 초기화
+		function fn_ExcelPreviewSearchReset() {
+			if (!excelPreviewDT) return;
+			document.getElementById('excelSearchColumn').value = '';
+			document.getElementById('excelSearchKeyword').value = '';
+			excelPreviewDT.search('').columns().search('').draw();
+			document.getElementById('excelSearchResultCount').textContent = '';
 		}
 
 		// 미리보기 테이블 생성 (엑셀 원본 데이터 그대로 표시)
@@ -2218,6 +2389,28 @@
 
 			document.getElementById('excelRowCount').textContent = '총 ' + tableData.length + '건';
 
+			// 검색창 노출 + 컬럼 드롭다운 구성
+			(function setupPreviewSearch() {
+				var searchBar = document.getElementById('excelPreviewSearchBar');
+				var colSelect = document.getElementById('excelSearchColumn');
+				var kwInput   = document.getElementById('excelSearchKeyword');
+				if (!searchBar || !colSelect || !kwInput) return;
+				searchBar.style.display = '';
+				// 컬럼 옵션 구성 (체크/No 제외, 엑셀 헤더만)
+				colSelect.innerHTML = '<option value="">전체 컬럼</option>';
+				for (var i = 0; i < excelHeaders.length; i++) {
+					// previewCols 에서 체크박스(0), No(1) 다음부터가 실 데이터 컬럼 → dt 컬럼 인덱스 = i + 2
+					var dtColIdx = i + 2;
+					colSelect.innerHTML += '<option value="' + dtColIdx + '">' + excelHeaders[i] + '</option>';
+				}
+				kwInput.value = '';
+				document.getElementById('excelSearchResultCount').textContent = '';
+				// Enter 키로 검색
+				$(kwInput).off('keydown.preview').on('keydown.preview', function(e) {
+					if (e.key === 'Enter') { e.preventDefault(); fn_ExcelPreviewSearch(); }
+				});
+			})();
+
 			// 체크 상태 초기화
 			excelCheckedSet = new Set();
 
@@ -2259,37 +2452,18 @@
 			});
 		}
 
-		// 전체 저장
+		// 전체 저장 (체크 무시, 모든 행 저장)
 		function fn_ExcelSaveAll() {
-			if (!excelPreviewDT) {
-				Swal.fire({ title: '확인', text: '먼저 미리보기를 실행하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
-				return;
-			}
-			var totalCount = excelPreviewDT.rows().count();
-			if (totalCount === 0) {
-				Swal.fire({ title: '확인', text: '저장할 데이터가 없습니다.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
-				return;
-			}
-			Swal.fire({
-				title: '전체저장 확인',
-				text: '총 ' + totalCount + '건을 전체 저장하시겠습니까?',
-				icon: 'question',
-				showCancelButton: true,
-				confirmButtonText: '예',
-				cancelButtonText: '아니오',
-				customClass: { popup: 'small-swal' }
-			}).then(function(result) {
-				if (result.isConfirmed) {
-					// 전체 행 체크 후 선택저장 호출
-					$('.excel-chk').prop('checked', true);
-					$('#excelSelectAll').prop('checked', true);
-					fn_ExcelSaveSelected();
-				}
-			});
+			fn_ExcelSaveCore(true);
 		}
 
-		// 선택된 행 저장 (저장 시에만 매핑 적용하여 DB 포맷으로 변환)
+		// 선택 저장 (체크된 행만 저장)
 		function fn_ExcelSaveSelected() {
+			fn_ExcelSaveCore(false);
+		}
+
+		// 저장 공통 로직 (saveAll=true: 체크 무시 전체 저장, false: 체크된 행만)
+		function fn_ExcelSaveCore(saveAll) {
 			var feeType = document.getElementById('excelFeeType').value;
 			if (!feeType) {
 				Swal.fire({ title: '확인', text: '수가구분을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
@@ -2317,16 +2491,28 @@
 				return;
 			}
 
-			// 체크된 행 수집 (Set 기반 - 모든 페이지 포함)
+			// 대상 행 수집
 			var selectedRows = [];
-			excelCheckedSet.forEach(function(idx) {
-				var rowData = excelPreviewDT.row(idx).data();
-				if (rowData) selectedRows.push(rowData);
-			});
-
-			if (selectedRows.length === 0) {
-				Swal.fire({ title: '확인', text: '저장할 행을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
-				return;
+			if (saveAll) {
+				// 전체저장: 체크 무시, 모든 행 수집
+				excelPreviewDT.rows().every(function() {
+					var rowData = this.data();
+					if (rowData) selectedRows.push(rowData);
+				});
+				if (selectedRows.length === 0) {
+					Swal.fire({ title: '확인', text: '저장할 데이터가 없습니다.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+					return;
+				}
+			} else {
+				// 선택저장: 체크된 행만 수집 (Set 기반 - 모든 페이지 포함)
+				excelCheckedSet.forEach(function(idx) {
+					var rowData = excelPreviewDT.row(idx).data();
+					if (rowData) selectedRows.push(rowData);
+				});
+				if (selectedRows.length === 0) {
+					Swal.fire({ title: '확인', text: '저장할 행을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+					return;
+				}
 			}
 
 			// 매핑 적용하여 DB 포맷 변환
@@ -2377,16 +2563,22 @@
 			});
 		}
 
-		// 배치 분할 저장 (1000건씩)
+		// 배치 분할 저장 (병렬 전송)
 		function fn_BatchSave(allRows) {
-			var BATCH_SIZE = 1000;
+			var BATCH_SIZE = 2000;        // 배치 크기 (1000→2000)
+			var CONCURRENCY = 4;          // 동시 전송 개수 (순차→4병렬)
 			var totalBatches = Math.ceil(allRows.length / BATCH_SIZE);
-			var currentBatch = 0;
-			var totalSuccess = 0, totalDup = 0, totalFail = 0;
+			var totalSuccess = 0, totalDup = 0, totalFail = 0, totalUpd = 0;
+			var finishedBatches = 0;
+			var processedRows = 0;
+			var nextBatchIdx = 0;
+			var completed = false;
+			// 중복시 모드: 체크박스 체크 시 덮어쓰기(update), 미체크 시 건너뜀(skip)
+			var dupMode = document.getElementById('excelDupOverwrite').checked ? 'update' : 'skip';
 
 			Swal.fire({
 				title: '저장 중...',
-				html: '<div id="saveProgress">0 / ' + allRows.length + '건 처리 중...</div>' +
+				html: '<div id="saveProgress">0 / ' + allRows.length + '건 처리 중... (' + CONCURRENCY + '병렬)</div>' +
 				      '<div class="progress mt-2"><div id="saveProgressBar" class="progress-bar bg-success" style="width:0%">0%</div></div>',
 				allowOutsideClick: false,
 				allowEscapeKey: false,
@@ -2394,76 +2586,85 @@
 				customClass: { popup: 'small-swal' }
 			});
 
-			function sendBatch() {
-				var start = currentBatch * BATCH_SIZE;
+			function finalize() {
+				if (completed) return;
+				completed = true;
+				var msg;
+				if (dupMode === 'update') {
+					// 덮어쓰기 Upsert: 기존(적용일자 일치)→수정, 신규→insert
+					msg = '수정: ' + totalUpd + '건';
+					if (totalSuccess > 0) msg += ', 신규: ' + totalSuccess + '건';
+					if (totalFail > 0) msg += ', 실패: ' + totalFail + '건';
+				} else {
+					// 건너뜀: 신규만 insert, 기존은 건너뜀
+					msg = '신규: ' + totalSuccess + '건';
+					if (totalDup > 0) msg += ', 중복건너뜀: ' + totalDup + '건';
+					if (totalFail > 0) msg += ', 실패: ' + totalFail + '건';
+				}
+				Swal.fire({
+					title: '처리완료',
+					text: msg,
+					icon: totalFail > 0 ? 'warning' : 'success',
+					confirmButtonText: '확인',
+					customClass: { popup: 'small-swal' }
+				});
+				excelCheckedSet.clear();
+				$('#excelSelectAll').prop('checked', false);
+				$('.excel-chk').prop('checked', false);
+				if (dataTable && typeof dataTable.ajax !== 'undefined') {
+					dataTable.ajax.reload();
+				}
+			}
+
+			function sendNext() {
+				if (nextBatchIdx >= totalBatches) return;
+				var batchIdx = nextBatchIdx++;
+				var start = batchIdx * BATCH_SIZE;
 				var end = Math.min(start + BATCH_SIZE, allRows.length);
 				var batchData = allRows.slice(start, end);
+				var batchCount = batchData.length;
 
 				$.ajax({
 					type: "POST",
-					url: "/base/sugaCdExcelInsert.do",
+					url: "/base/sugaCdExcelInsert.do?dupMode=" + encodeURIComponent(dupMode),
 					data: JSON.stringify(batchData),
 					contentType: "application/json",
 					dataType: "text",
 					success: function(response) {
-						var resp = JSON.parse(response);
-						totalSuccess += (resp.successCnt || 0);
-						totalDup += (resp.dupCnt || 0);
-						totalFail += (resp.failCnt || 0);
-
-						currentBatch++;
-						var processed = Math.min(end, allRows.length);
-						var pct = Math.round((processed / allRows.length) * 100);
-						$('#saveProgress').text(processed + ' / ' + allRows.length + '건 처리 중...');
-						$('#saveProgressBar').css('width', pct + '%').text(pct + '%');
-
-						if (currentBatch < totalBatches) {
-							setTimeout(sendBatch, 100);
-						} else {
-							// 완료
-							var msg = '성공: ' + totalSuccess + '건';
-							if (totalDup > 0) msg += ', 중복: ' + totalDup + '건';
-							if (totalFail > 0) msg += ', 실패: ' + totalFail + '건';
-
-							Swal.fire({
-								title: '처리완료',
-								text: msg,
-								icon: totalFail > 0 ? 'warning' : 'success',
-								confirmButtonText: '확인',
-								customClass: { popup: 'small-swal' }
-							});
-
-							// 성공행은 Set에서 제거하고 UI 반영
-							excelCheckedSet.clear();
-							$('#excelSelectAll').prop('checked', false);
-							$('.excel-chk').prop('checked', false);
-
-							// 메인 테이블 새로고침
-							if (dataTable && typeof dataTable.ajax !== 'undefined') {
-								dataTable.ajax.reload();
-							}
+						try {
+							var resp = JSON.parse(response);
+							totalSuccess += (resp.successCnt || 0);
+							totalDup     += (resp.dupCnt     || 0);
+							totalFail    += (resp.failCnt    || 0);
+							totalUpd     += (resp.updCnt     || 0);
+						} catch(e) {
+							totalFail += batchCount;
 						}
 					},
-					error: function(xhr, status, error) {
-						totalFail += batchData.length;
-						currentBatch++;
-						if (currentBatch < totalBatches) {
-							setTimeout(sendBatch, 100);
-						} else {
-							var msg = '성공: ' + totalSuccess + '건, 실패: ' + totalFail + '건';
-							Swal.fire({
-								title: '처리완료 (일부 실패)',
-								text: msg,
-								icon: 'warning',
-								confirmButtonText: '확인',
-								customClass: { popup: 'small-swal' }
-							});
+					error: function() {
+						totalFail += batchCount;
+					},
+					complete: function() {
+						finishedBatches++;
+						processedRows += batchCount;
+						var pct = Math.round((processedRows / allRows.length) * 100);
+						$('#saveProgress').text(processedRows + ' / ' + allRows.length + '건 처리 중... (' + CONCURRENCY + '병렬)');
+						$('#saveProgressBar').css('width', pct + '%').text(pct + '%');
+
+						if (finishedBatches >= totalBatches) {
+							finalize();
+						} else if (nextBatchIdx < totalBatches) {
+							sendNext();
 						}
 					}
 				});
 			}
 
-			sendBatch();
+			// 동시에 CONCURRENCY개 배치 시작
+			var initial = Math.min(CONCURRENCY, totalBatches);
+			for (var k = 0; k < initial; k++) {
+				sendNext();
+			}
 		}
 		</script>
 		<!-- ============================================================== -->

@@ -85,7 +85,21 @@
       "Bash(powershell -Command 'foreach \\($f in @\\('\\\\''D:\\\\SWPROJECT\\\\SWPROJECT\\\\uFrmExcelUploadIpwon.pas'\\\\''\\)\\) { $bytes = [System.IO.File]::ReadAllBytes\\($f\\); if \\($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF\\) { $bom = [byte[]]@\\(0xEF,0xBB,0xBF\\); $newBytes = $bom + $bytes; [System.IO.File]::WriteAllBytes\\($f, $newBytes\\); Write-Host \"$f : BOM added\" } else { Write-Host \"$f : already has BOM\" } }')",
       "Bash(ls -la D:/SWPROJECT/SWPROJECT/uFrmAssessment.*)",
       "Bash(powershell -File -)",
-      "Bash(grep -l \"FN_TEWON_CHECK\\\\|ADL_SCORE_CHECK\\\\|PATIENT_CLASSIFICATION\\\\|PATIENT_CATHETER_CHECK\" D:/워너넷자료/MSSQL작업관련자료/*.sql)"
+      "Bash(grep -l \"FN_TEWON_CHECK\\\\|ADL_SCORE_CHECK\\\\|PATIENT_CLASSIFICATION\\\\|PATIENT_CATHETER_CHECK\" D:/워너넷자료/MSSQL작업관련자료/*.sql)",
+      "Bash(python -c \"print\\(145+32+45+50*12+42+42+55+50+50\\)\")",
+      "Bash(ls D:/SWPROJECT/SWPROJECT/*ogin* D:/SWPROJECT/SWPROJECT/uFrmLogin*)",
+      "Bash(grep -l \"적정성평가\\\\|로그인\" D:/SWPROJECT/SWPROJECT/*.dfm)",
+      "Bash(grep -rn \"ShellExecute\\\\|ShellAPI\\\\|synpdf\\\\|QuickPDF\" D:/SWPROJECT/SWPROJECT/*.pas)",
+      "Bash(grep -n \"^end\\\\.$\\\\|procedure TfrmAssessment.sgDetailDrawCell\" D:/SWPROJECT/SWPROJECT/uFrmAssessment.pas)",
+      "Bash(grep -l \"기준정보\\\\|청구관리\\\\|license\\\\|Hospital\\\\|HospGrd\\\\|Licnum\\\\|Cost\" /d/SWPROJECT/SWPROJECT/*.dfm)",
+      "Bash(grep -l \"Chung\\\\|Claim\" /d/SWPROJECT/SWPROJECT/uFrm*.dfm)",
+      "Bash(grep -l \"TDBGrid\\\\|dbgrid\" D:/SWPROJECT/SWPROJECT/uFrm*.pas)",
+      "Bash(grep -l \"OnDrawColumnCell\\\\|FixedColor\\\\|Title.Color\" D:/SWPROJECT/SWPROJECT/uFrm*.pas D:/SWPROJECT/SWPROJECT/uFrm*.dfm)",
+      "Bash(ls D:/SWPROJECT/SWPROJECT/uFrm*.pas D:/SWPROJECT/SWPROJECT/uDBModule.pas)",
+      "Read(//d/워너넷자료/심평원수가,약가,재료대/**)",
+      "Read(//d/워너넷자료/**)",
+      "Bash(iconv -f euc-kr -t utf-8)",
+      "Bash(iconv -f cp949 -t utf-8)"
     ]
   }
 }

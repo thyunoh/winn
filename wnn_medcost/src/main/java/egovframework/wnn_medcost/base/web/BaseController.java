@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
@@ -182,43 +183,125 @@ public class BaseController {
 	}
 	@RequestMapping(value="/sugaCdExcelInsert.do", method = RequestMethod.POST)
 	@ResponseBody
-    public ResponseEntity<Map<String, Object>> sugaExcelInsert(@RequestBody List<SugaCdDTO> data) {
+    public ResponseEntity<Map<String, Object>> sugaExcelInsert(
+    		@RequestBody List<SugaCdDTO> data,
+    		@RequestParam(value="dupMode", required=false, defaultValue="skip") String dupMode) {
 
-		System.out.println("Excel Insert 시작 - 건수: " + data.size());
-		int successCnt = 0;
-		int dupCnt = 0;
-		int failCnt = 0;
+		long t0 = System.currentTimeMillis();
+		System.out.println("Excel Insert 시작 - 건수: " + data.size() + " / 중복모드: " + dupMode);
+		int successCnt = 0;   // 신규 insert
+		int updCnt     = 0;   // 덮어쓰기 update
+		int dupCnt     = 0;   // 중복 skip (insert 안 됨)
+		int failCnt    = 0;   // 실패
+		boolean isUpdateMode = "update".equalsIgnoreCase(dupMode);
+		Map<String, Object> result = new HashMap<>();
 
         try {
+        	if (data == null || data.isEmpty()) {
+        		result.put("successCnt", 0);
+        		result.put("updCnt",     0);
+        		result.put("dupCnt",     0);
+        		result.put("failCnt",    0);
+        		return ResponseEntity.ok(result);
+        	}
+
+        	// 1) 한 번의 쿼리로 기존 키 조회 (SELECT IN)
+        	List<String> existingKeys = svc.SugaCdMstDupChkList(data);
+        	java.util.Set<String> existingSet = new java.util.HashSet<>(existingKeys);
+
+        	// 2) 기존/신규 분리
+        	List<SugaCdDTO> existingList = new java.util.ArrayList<>();
+        	List<SugaCdDTO> newList      = new java.util.ArrayList<>();
         	for (SugaCdDTO dto : data) {
-        		try {
-	        		String dupchk = svc.SugaCdMstDupChk(dto);
-	        		if ("Y".equals(dupchk)) {
-	        			dupCnt++;
-	        			continue;
-	        		}
-	        		svc.insertSugaCdMst(dto);
-	        		successCnt++;
-        		} catch (Exception e) {
-        			failCnt++;
-        			System.out.println("Excel Insert 실패 - FeeCode: " + dto.getFeeCode() + " / " + e.getMessage());
+        		String key = dto.getFeeCode() + "|" + dto.getFeeType() + "|" + dto.getStartDt();
+        		if (existingSet.contains(key)) {
+        			existingList.add(dto);
+        		} else {
+        			newList.add(dto);
         		}
-            }
+        	}
 
-        	Map<String, Object> result = new HashMap<>();
+        	if (isUpdateMode) {
+        		// 덮어쓰기 모드 (Upsert): 적용일자 기준 기존 행 → UPDATE, 없는 행 → INSERT
+        		if (!existingList.isEmpty()) {
+        			try {
+        				SugaCdDTO first = existingList.get(0);
+        				Map<String, Object> params = new HashMap<>();
+        				params.put("list",    existingList);
+        				params.put("updUser", first.getUpdUser());
+        				params.put("updIp",   first.getUpdIp());
+        				updCnt = svc.updateSugaCdMstBulk(params);
+        				if (updCnt <= 0) updCnt = existingList.size(); // 일부 DB driver가 영향 행수 반환 안 함
+        			} catch (Exception bulkEx) {
+        				failCnt += existingList.size();
+        				System.out.println("Excel Bulk update 실패: " + bulkEx.getMessage());
+        			}
+        		}
+        		// 기존에 없는 행은 신규 INSERT (적용일자가 다르거나 수가코드 자체가 없는 경우)
+        		if (!newList.isEmpty()) {
+        			try {
+        				int inserted = svc.insertSugaCdMstBulk(newList);
+        				successCnt = (inserted > 0) ? inserted : newList.size();
+        			} catch (Exception bulkEx) {
+        				System.out.println("Excel Bulk insert 실패 (Upsert) → 개별 fallback: " + bulkEx.getMessage());
+        				int failLogged = 0;
+        				for (SugaCdDTO dto : newList) {
+        					try {
+        						svc.insertSugaCdMst(dto);
+        						successCnt++;
+        					} catch (Exception rowEx) {
+        						failCnt++;
+        						if (failLogged < 5) {
+        							System.out.println("  행 실패 FeeCode=" + dto.getFeeCode() + " / " + rowEx.getMessage());
+        							failLogged++;
+        						}
+        					}
+        				}
+        			}
+        		}
+        	} else {
+        		// 건너뜀 모드: 신규만 bulk insert, 기존은 dupCnt
+        		dupCnt = existingList.size();
+        		if (!newList.isEmpty()) {
+        			try {
+        				int inserted = svc.insertSugaCdMstBulk(newList);
+        				successCnt = (inserted > 0) ? inserted : newList.size();
+        			} catch (Exception bulkEx) {
+        				// bulk 실패 시 개별 insert fallback — 에러난 행만 추적
+        				System.out.println("Excel Bulk insert 실패 → 개별 fallback: " + bulkEx.getMessage());
+        				int failLogged = 0;
+        				for (SugaCdDTO dto : newList) {
+        					try {
+        						svc.insertSugaCdMst(dto);
+        						successCnt++;
+        					} catch (Exception rowEx) {
+        						failCnt++;
+        						if (failLogged < 5) {
+        							System.out.println("  행 실패 FeeCode=" + dto.getFeeCode() + " / " + rowEx.getMessage());
+        							failLogged++;
+        						}
+        					}
+        				}
+        			}
+        		}
+        	}
+
         	result.put("successCnt", successCnt);
-        	result.put("dupCnt", dupCnt);
-        	result.put("failCnt", failCnt);
+        	result.put("updCnt",     updCnt);
+        	result.put("dupCnt",     dupCnt);
+        	result.put("failCnt",    failCnt);
 
-        	System.out.println("Excel Insert 완료 - 성공:" + successCnt + " 중복:" + dupCnt + " 실패:" + failCnt);
+        	long elapsed = System.currentTimeMillis() - t0;
+        	System.out.println("Excel Insert 완료 - 신규:" + successCnt + " 수정:" + updCnt + " 중복:" + dupCnt + " 실패:" + failCnt + " (elapsed=" + elapsed + "ms)");
 
         	return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-        	Map<String, Object> result = new HashMap<>();
+        	e.printStackTrace();
         	result.put("successCnt", successCnt);
-        	result.put("dupCnt", dupCnt);
-        	result.put("failCnt", failCnt);
+        	result.put("updCnt",     updCnt);
+        	result.put("dupCnt",     dupCnt);
+        	result.put("failCnt",    failCnt);
         	result.put("error", e.getMessage());
             return ResponseEntity.status(500).body(result);
         }
@@ -347,6 +430,149 @@ public class BaseController {
             
         }
 	}
+	// 상병 엑셀 업로드 — 덮어쓰기는 "전체 비활성화 후 신규 insert", 건너뜀은 기존 insert-only
+	// 첫 배치만 전체 비활성화를 수행하도록 dupMode=updateFirst 를 클라이언트가 보냄
+	@RequestMapping(value="/diseCdExcelInsert.do", method = RequestMethod.POST)
+	@ResponseBody
+    public ResponseEntity<Map<String, Object>> diseExcelInsert(
+    		@RequestBody List<DiseCdDTO> data,
+    		@RequestParam(value="dupMode", required=false, defaultValue="skip") String dupMode) {
+
+		long t0 = System.currentTimeMillis();
+		System.out.println("Dise Excel Insert 시작 - 건수: " + data.size() + " / 중복모드: " + dupMode);
+		int successCnt = 0;   // 신규 insert
+		int updCnt     = 0;   // 덮어쓰기 = deactivated 건수
+		int dupCnt     = 0;   // 중복 skip
+		int failCnt    = 0;   // 실패
+		boolean isUpdateMode      = "update".equalsIgnoreCase(dupMode);
+		boolean isUpdateFirstMode = "updateFirst".equalsIgnoreCase(dupMode); // 첫 배치
+		Map<String, Object> result = new HashMap<>();
+
+        try {
+        	if (data == null || data.isEmpty()) {
+        		result.put("successCnt", 0);
+        		result.put("updCnt",     0);
+        		result.put("dupCnt",     0);
+        		result.put("failCnt",    0);
+        		return ResponseEntity.ok(result);
+        	}
+
+        	if (isUpdateMode || isUpdateFirstMode) {
+        		// 덮어쓰기 모드: 첫 배치에만 전체 비활성화, 이후 배치는 그냥 insert
+        		if (isUpdateFirstMode) {
+        			try {
+        				DiseCdDTO first = data.get(0);
+        				Map<String, Object> deactParams = new HashMap<>();
+        				deactParams.put("updUser", first.getUpdUser());
+        				deactParams.put("updIp",   first.getUpdIp());
+        				int deactivated = svc.deactivateAllDiseCdMst(deactParams);
+        				updCnt = deactivated;
+        				System.out.println("Dise 전체 비활성화 완료: " + deactivated + "건");
+        			} catch (Exception deEx) {
+        				System.out.println("Dise 전체 비활성화 실패: " + deEx.getMessage());
+        				deEx.printStackTrace();
+        			}
+        		}
+        		// JOB_SEQ 계산:
+        		//   - updateFirst (첫 배치): 직전에 deactivateAll만 했으므로 비활성 행이 있으나 키별 max 조회로 시작값 결정
+        		//   - update (후속 배치): 이전 배치가 이미 잘 채워둔 상태, 키별 max 조회로 안전하게 누적
+        		// JSP가 같은 키를 같은 배치에 묶어서 보내주므로 배치 내에서 카운터로만 증가시키면 됨
+        		try {
+        			List<Map<String, Object>> maxList = svc.selectMaxJobSeqDiseCd(data);
+        			java.util.Map<String, Integer> jobSeqMap = new java.util.HashMap<>();
+        			for (Map<String, Object> row : maxList) {
+        				String key = String.valueOf(row.get("diagCode")) + "|" + String.valueOf(row.get("startDt"));
+        				Object v = row.get("maxJobSeq");
+        				int max = (v == null) ? 0 : ((Number) v).intValue();
+        				jobSeqMap.put(key, max);
+        			}
+        			// DTO 각 행에 jobSeq 할당 (배치 내 동일 키 카운터 증가)
+        			for (DiseCdDTO dto : data) {
+        				String key = dto.getDiagCode() + "|" + dto.getStartDt();
+        				int next = jobSeqMap.getOrDefault(key, 0) + 1;
+        				dto.setJobSeq(next);
+        				jobSeqMap.put(key, next);
+        			}
+        		} catch (Exception seqEx) {
+        			System.out.println("Dise JOB_SEQ 사전 계산 실패: " + seqEx.getMessage());
+        			seqEx.printStackTrace();
+        			for (DiseCdDTO dto : data) dto.setJobSeq(1);
+        		}
+
+        		// 모든 행을 신규 insert (dupchk 없음, JOB_SEQ는 사전 계산된 값 사용)
+        		try {
+        			int inserted = svc.insertDiseCdMstBulk(data);
+        			successCnt = (inserted > 0) ? inserted : data.size();
+        		} catch (Exception bulkEx) {
+        			System.out.println("Dise Bulk insert 실패 → 개별 fallback: " + bulkEx.getMessage());
+        			int failLogged = 0;
+        			for (DiseCdDTO dto : data) {
+        				try {
+        					svc.insertDiseCdMst(dto);
+        					successCnt++;
+        				} catch (Exception rowEx) {
+        					failCnt++;
+        					if (failLogged < 5) {
+        						System.out.println("  행 실패 DiagCode=" + dto.getDiagCode() + " / " + rowEx.getMessage());
+        						failLogged++;
+        					}
+        				}
+        			}
+        		}
+        	} else {
+        		// 건너뜀 모드: 기존 활성 행 있는 키는 skip, 신규만 insert
+        		List<String> existingKeys = svc.DiseCdMstDupChkList(data);
+        		java.util.Set<String> existingSet = new java.util.HashSet<>(existingKeys);
+        		List<DiseCdDTO> newList = new java.util.ArrayList<>();
+        		for (DiseCdDTO dto : data) {
+        			String key = dto.getDiagCode() + "|" + dto.getStartDt();
+        			if (existingSet.contains(key)) dupCnt++;
+        			else newList.add(dto);
+        		}
+        		if (!newList.isEmpty()) {
+        			try {
+        				int inserted = svc.insertDiseCdMstBulk(newList);
+        				successCnt = (inserted > 0) ? inserted : newList.size();
+        			} catch (Exception bulkEx) {
+        				System.out.println("Dise Bulk insert 실패 → 개별 fallback: " + bulkEx.getMessage());
+        				int failLogged = 0;
+        				for (DiseCdDTO dto : newList) {
+        					try {
+        						svc.insertDiseCdMst(dto);
+        						successCnt++;
+        					} catch (Exception rowEx) {
+        						failCnt++;
+        						if (failLogged < 5) {
+        							System.out.println("  행 실패 DiagCode=" + dto.getDiagCode() + " / " + rowEx.getMessage());
+        							failLogged++;
+        						}
+        					}
+        				}
+        			}
+        		}
+        	}
+
+        	result.put("successCnt", successCnt);
+        	result.put("updCnt",     updCnt);
+        	result.put("dupCnt",     dupCnt);
+        	result.put("failCnt",    failCnt);
+
+        	long elapsed = System.currentTimeMillis() - t0;
+        	System.out.println("Dise Excel Insert 완료 - 신규:" + successCnt + " 비활성:" + updCnt + " 중복:" + dupCnt + " 실패:" + failCnt + " (elapsed=" + elapsed + "ms)");
+
+        	return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+        	e.printStackTrace();
+        	result.put("successCnt", successCnt);
+        	result.put("updCnt",     updCnt);
+        	result.put("dupCnt",     dupCnt);
+        	result.put("failCnt",    failCnt);
+        	result.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+	}
+
 	@RequestMapping(value="/diseCdUpdate.do", method = RequestMethod.POST)
     public ResponseEntity<String> diseCdUpdate(@RequestBody List<DiseCdDTO> data) {
 	

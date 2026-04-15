@@ -15,15 +15,25 @@ import egovframework.wnn_medcost.base.model.YakgaCdDTO;
 public interface BaseService {
     List<CodeMdDTO> getCommList(List<String> codeGbList, List<String> codeCdList) throws Exception;
 	
-	List<SugaCdDTO> getSugaCdList(SugaCdDTO dto)   throws Exception;	
-	boolean     insertSugaCdMst(SugaCdDTO dto)     throws Exception; 
-	boolean     updateSugaCdMst(SugaCdDTO dto)     throws Exception; 	
-	String      SugaCdMstDupChk(SugaCdDTO dto)     throws Exception; 	
+	List<SugaCdDTO> getSugaCdList(SugaCdDTO dto)   throws Exception;
+	boolean     insertSugaCdMst(SugaCdDTO dto)     throws Exception;
+	boolean     updateSugaCdMst(SugaCdDTO dto)     throws Exception;
+	String      SugaCdMstDupChk(SugaCdDTO dto)     throws Exception;
+	// Bulk ops (Excel 업로드 최적화)
+	List<String> SugaCdMstDupChkList(List<SugaCdDTO> list)     throws Exception;
+	int          insertSugaCdMstBulk(List<SugaCdDTO> list)     throws Exception;
+	int          updateSugaCdMstBulk(Map<String, Object> params) throws Exception;
 	
 	List<DiseCdDTO> getDiseCdList(DiseCdDTO dto)   throws Exception;
-	boolean     insertDiseCdMst(DiseCdDTO dto)     throws Exception; 
-	boolean     updateDiseCdMst(DiseCdDTO dto)     throws Exception; 
-	String      DiseCdMstDupChk(DiseCdDTO dto)     throws Exception; 	
+	boolean     insertDiseCdMst(DiseCdDTO dto)     throws Exception;
+	boolean     updateDiseCdMst(DiseCdDTO dto)     throws Exception;
+	String      DiseCdMstDupChk(DiseCdDTO dto)     throws Exception;
+	// Bulk ops (Excel 업로드)
+	List<String> DiseCdMstDupChkList(List<DiseCdDTO> list)     throws Exception;
+	int          insertDiseCdMstBulk(List<DiseCdDTO> list)     throws Exception;
+	int          updateDiseCdMstBulk(Map<String, Object> params) throws Exception;
+	int          deactivateAllDiseCdMst(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> selectMaxJobSeqDiseCd(List<DiseCdDTO> list) throws Exception;
 	
 	List<CodeMdDTO> getCommMstList(CodeMdDTO dto)   throws Exception;
 	boolean     insertCommMst(CodeMdDTO dto)        throws Exception; 

@@ -96,18 +96,114 @@
 	    )	
      ]]>
     </insert>	   
-    <update id = "updateSugaCdMst"  parameterType="SugaCdDTO" ><![CDATA[ 
-       UPDATE TBL_SUGA_MST  
-         SET ACTION_YN = 'N', 
-             UPD_DTTM  = NOW()       , 
-             UPD_USER  = #{updUser} , 
+    <update id = "updateSugaCdMst"  parameterType="SugaCdDTO" ><![CDATA[
+       UPDATE TBL_SUGA_MST
+         SET ACTION_YN = 'N',
+             UPD_DTTM  = NOW()       ,
+             UPD_USER  = #{updUser} ,
              UPD_IP    = #{updIp}
-       WHERE FEE_CODE  = #{feeCode}  
-         AND FEE_TYPE  = #{feeType} 
+       WHERE FEE_CODE  = #{feeCode}
+         AND FEE_TYPE  = #{feeType}
          AND START_DT  = #{startDt}
          AND ACTION_YN = 'Y'
     ]]>
-    </update>	
+    </update>
+
+    <!-- ========== Excel Bulk Ops (성능 최적화) ========== -->
+    <!-- 1) 여러 행을 한 번에 dup 체크: 존재하는 키를 "feeCode|feeType|startDt" 문자열로 반환 -->
+    <select id="SugaCdMstDupChkList" parameterType="java.util.List" resultType="String">
+        SELECT CONCAT(FEE_CODE, '|', FEE_TYPE, '|', START_DT)
+          FROM TBL_SUGA_MST
+         WHERE ACTION_YN = 'Y'
+           AND (FEE_CODE, FEE_TYPE, START_DT) IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.feeCode}, #{item.feeType}, #{item.startDt})
+        </foreach>
+    </select>
+
+    <!-- 2) 여러 행 동시 insert (JOB_SEQ=1 고정 - 신규 행만 전달됨) -->
+    <insert id="insertSugaCdMstBulk" parameterType="java.util.List">
+        INSERT INTO TBL_SUGA_MST (
+            FEE_CODE , FEE_TYPE  , START_DT  , END_DT    , CLASS_NO , KOR_NM, ENG_NM,
+            DIV_TYPE , SURG_YN   , CLN_PRICE , HOS_PRICE , DNT_PRICE, PBL_PRICE,
+            MID_PRICE, ORH_PRICE , RLT_VALUE , COPAY_50  , COPAY_80 , COPAY_90 ,
+            DUP_YN   , CALC_NM   , SEC_MAJ   , SEC_MIN   , SUB_CAT  , REG_DTTM ,
+            REG_USER , REG_IP    , UPD_DTTM  , UPD_USER  , UPD_IP   , JOB_SEQ  , ACTION_YN
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.feeCode} , #{item.feeType} , #{item.startDt} , #{item.endDt}   , #{item.classNo} , #{item.korNm}   ,
+                #{item.engNm}   , #{item.divType} , #{item.surgYn}  , #{item.clnPrice}, #{item.hosPrice}, #{item.dntPrice},
+                #{item.pblPrice}, #{item.midPrice}, #{item.orhPrice}, #{item.rltValue}, #{item.copay50} , #{item.copay80} , #{item.copay90},
+                #{item.dupYn}   , #{item.calcNm}  , #{item.secMaj}  , #{item.secMin}  , #{item.subCat}  , NOW()           ,
+                #{item.regUser} , #{item.regIp}   , NOW()           , #{item.updUser} , #{item.updIp}   , 1               , 'Y'
+            )
+        </foreach>
+    </insert>
+
+    <!-- 3) 여러 행 바로 UPDATE (엑셀 덮어쓰기 모드) — 단일 쿼리로 다건 갱신 -->
+    <!-- UNION ALL 서브쿼리 + JOIN 방식: 파싱 1회, 실행 1회 → 빠름 -->
+    <update id="updateSugaCdMstBulk" parameterType="java.util.Map">
+        UPDATE TBL_SUGA_MST t
+        INNER JOIN (
+            <foreach collection="list" item="item" separator=" UNION ALL ">
+                SELECT
+                    #{item.feeCode}  AS fee_code,
+                    #{item.feeType}  AS fee_type,
+                    #{item.startDt}  AS start_dt,
+                    #{item.endDt}    AS end_dt,
+                    #{item.classNo}  AS class_no,
+                    #{item.korNm}    AS kor_nm,
+                    #{item.engNm}    AS eng_nm,
+                    #{item.divType}  AS div_type,
+                    #{item.surgYn}   AS surg_yn,
+                    #{item.clnPrice} AS cln_price,
+                    #{item.hosPrice} AS hos_price,
+                    #{item.dntPrice} AS dnt_price,
+                    #{item.pblPrice} AS pbl_price,
+                    #{item.midPrice} AS mid_price,
+                    #{item.orhPrice} AS orh_price,
+                    #{item.rltValue} AS rlt_value,
+                    #{item.copay50}  AS copay_50,
+                    #{item.copay80}  AS copay_80,
+                    #{item.copay90}  AS copay_90,
+                    #{item.dupYn}    AS dup_yn,
+                    #{item.calcNm}   AS calc_nm,
+                    #{item.secMaj}   AS sec_maj,
+                    #{item.secMin}   AS sec_min,
+                    #{item.subCat}   AS sub_cat
+            </foreach>
+        ) src
+           ON t.FEE_CODE = src.fee_code
+          AND t.FEE_TYPE = src.fee_type
+          AND t.START_DT = src.start_dt
+           SET t.END_DT    = src.end_dt,
+               t.CLASS_NO  = src.class_no,
+               t.KOR_NM    = src.kor_nm,
+               t.ENG_NM    = src.eng_nm,
+               t.DIV_TYPE  = src.div_type,
+               t.SURG_YN   = src.surg_yn,
+               t.CLN_PRICE = src.cln_price,
+               t.HOS_PRICE = src.hos_price,
+               t.DNT_PRICE = src.dnt_price,
+               t.PBL_PRICE = src.pbl_price,
+               t.MID_PRICE = src.mid_price,
+               t.ORH_PRICE = src.orh_price,
+               t.RLT_VALUE = src.rlt_value,
+               t.COPAY_50  = src.copay_50,
+               t.COPAY_80  = src.copay_80,
+               t.COPAY_90  = src.copay_90,
+               t.DUP_YN    = src.dup_yn,
+               t.CALC_NM   = src.calc_nm,
+               t.SEC_MAJ   = src.sec_maj,
+               t.SEC_MIN   = src.sec_min,
+               t.SUB_CAT   = src.sub_cat,
+               t.UPD_DTTM  = NOW(),
+               t.UPD_USER  = #{updUser},
+               t.UPD_IP    = #{updIp}
+         WHERE t.ACTION_YN = 'Y'
+    </update>
+
     <!-- 상병코드시작  -->                              
 	<select id="getDiseCdList" parameterType="DiseCdDTO"  resultType="DiseCdDTO"><![CDATA[
 	  	 select 
@@ -181,18 +277,124 @@
      ]]>
      
     </insert>	   
-    <update id = "updateDiseCdMst"  parameterType="DiseCdDTO" ><![CDATA[ 
-       UPDATE TBL_DISE_CODE  
-         SET ACTION_YN = 'N', 
-             UPD_DTTM  = NOW()       , 
-             UPD_USER  = #{updUser} , 
+    <update id = "updateDiseCdMst"  parameterType="DiseCdDTO" ><![CDATA[
+       UPDATE TBL_DISE_CODE
+         SET ACTION_YN = 'N',
+             UPD_DTTM  = NOW()       ,
+             UPD_USER  = #{updUser} ,
              UPD_IP    = #{updIp}
-       WHERE 1=1 
-         AND DIAG_CODE  = #{diagCode}  
+       WHERE 1=1
+         AND DIAG_CODE  = #{diagCode}
          AND START_DT   = #{startDt}
          AND ACTION_YN  = 'Y'
     ]]>
-    </update>	 
+    </update>
+
+    <!-- ========== Dise Excel Bulk Ops (성능 최적화) ========== -->
+    <!-- 1) 여러 행을 한 번에 dup 체크: 존재하는 키를 "diagCode|startDt" 문자열로 반환 -->
+    <select id="DiseCdMstDupChkList" parameterType="java.util.List" resultType="String">
+        SELECT CONCAT(DIAG_CODE, '|', START_DT)
+          FROM TBL_DISE_CODE
+         WHERE ACTION_YN = 'Y'
+           AND (DIAG_CODE, START_DT) IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.diagCode}, #{item.startDt})
+        </foreach>
+    </select>
+
+    <!-- 2) 여러 행 동시 insert — JOB_SEQ는 Java가 사전 계산해서 #{item.jobSeq}로 전달 -->
+    <insert id="insertDiseCdMstBulk" parameterType="java.util.List">
+        INSERT INTO TBL_DISE_CODE (
+            DIAG_CODE,     START_DT,
+            KOR_DIAG_NAME, ENG_DIAG_NAME,
+            GENDER_TYPE,   INFECT_TYPE,
+            DIAG_TYPE,     ICD10_CODE,
+            END_DT,        MAX_AGE,
+            MIN_AGE,       VCODE,
+            DESC_INFO,     REG_DTTM,
+            REG_USER,      REG_IP,
+            UPD_DTTM,      UPD_USER,
+            UPD_IP,        JOB_SEQ,   ACTION_YN
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.diagCode},    #{item.startDt},
+                #{item.korDiagName}, #{item.engDiagName},
+                #{item.genderType},  #{item.infectType},
+                #{item.diagType},    #{item.icd10Code},
+                #{item.endDt},       #{item.maxAge},
+                #{item.minAge},      #{item.vcode},
+                #{item.descInfo},    NOW(),
+                #{item.regUser},     #{item.regIp},
+                NOW(),               #{item.updUser},
+                #{item.updIp},       #{item.jobSeq},   'Y'
+            )
+        </foreach>
+    </insert>
+
+    <!-- 2-b) 전체 활성 행 일괄 비활성화 (상병 엑셀 덮어쓰기 시 사용) -->
+    <update id="deactivateAllDiseCdMst" parameterType="java.util.Map">
+        UPDATE TBL_DISE_CODE
+           SET ACTION_YN = 'N',
+               UPD_DTTM  = NOW(),
+               UPD_USER  = #{updUser},
+               UPD_IP    = #{updIp}
+         WHERE ACTION_YN = 'Y'
+    </update>
+
+    <!-- 2-c) 배치 키 기준 기존 MAX(JOB_SEQ) 조회 — 한 번에 키별 최대값 반환 -->
+    <select id="selectMaxJobSeqDiseCd" parameterType="java.util.List" resultType="java.util.HashMap">
+        SELECT DIAG_CODE AS diagCode,
+               START_DT  AS startDt,
+               MAX(JOB_SEQ) AS maxJobSeq
+          FROM TBL_DISE_CODE
+         WHERE (DIAG_CODE, START_DT) IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.diagCode}, #{item.startDt})
+        </foreach>
+         GROUP BY DIAG_CODE, START_DT
+    </select>
+
+    <!-- 3) 여러 행 바로 UPDATE (엑셀 덮어쓰기 모드) — UNION ALL + JOIN 방식 -->
+    <update id="updateDiseCdMstBulk" parameterType="java.util.Map">
+        UPDATE TBL_DISE_CODE t
+        INNER JOIN (
+            <foreach collection="list" item="item" separator=" UNION ALL ">
+                SELECT
+                    #{item.diagCode}    AS diag_code,
+                    #{item.startDt}     AS start_dt,
+                    #{item.korDiagName} AS kor_diag_name,
+                    #{item.engDiagName} AS eng_diag_name,
+                    #{item.genderType}  AS gender_type,
+                    #{item.infectType}  AS infect_type,
+                    #{item.diagType}    AS diag_type,
+                    #{item.icd10Code}   AS icd10_code,
+                    #{item.endDt}       AS end_dt,
+                    #{item.maxAge}      AS max_age,
+                    #{item.minAge}      AS min_age,
+                    #{item.vcode}       AS vcode,
+                    #{item.descInfo}    AS desc_info
+            </foreach>
+        ) src
+           ON t.DIAG_CODE = src.diag_code
+          AND t.START_DT  = src.start_dt
+           SET t.KOR_DIAG_NAME = src.kor_diag_name,
+               t.ENG_DIAG_NAME = src.eng_diag_name,
+               t.GENDER_TYPE   = src.gender_type,
+               t.INFECT_TYPE   = src.infect_type,
+               t.DIAG_TYPE     = src.diag_type,
+               t.ICD10_CODE    = src.icd10_code,
+               t.END_DT        = src.end_dt,
+               t.MAX_AGE       = src.max_age,
+               t.MIN_AGE       = src.min_age,
+               t.VCODE         = src.vcode,
+               t.DESC_INFO     = src.desc_info,
+               t.UPD_DTTM      = NOW(),
+               t.UPD_USER      = #{updUser},
+               t.UPD_IP        = #{updIp}
+         WHERE t.ACTION_YN = 'Y'
+    </update>
+
  	<select id="getCommMstList" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
         SELECT CODE_CD 
              , CODE_NM 

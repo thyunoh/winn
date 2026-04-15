@@ -23,6 +23,7 @@ public class DiseCdDTO {
     private Integer minAge;       // 하한연령
     private String vcode;         // V코드 정보
     private String descInfo;      // 설명
+    private Integer jobSeq;       // 동일 키(DIAG_CODE+START_DT) 내 순번
 
     // Audit Fields
     private String regDttm;  // 등록일시
@@ -153,6 +154,14 @@ public class DiseCdDTO {
 
 	public void setDescInfo(String descInfo) {
 		this.descInfo = descInfo;
+	}
+
+	public Integer getJobSeq() {
+		return jobSeq;
+	}
+
+	public void setJobSeq(Integer jobSeq) {
+		this.jobSeq = jobSeq;
 	}
 
 	public String getRegDttm() {

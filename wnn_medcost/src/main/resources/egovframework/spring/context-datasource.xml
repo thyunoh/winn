@@ -15,7 +15,7 @@
 	<beans profile="local">
 	    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
 	        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-	        <property name="url" value="jdbc:mysql://114.108.153.178:3306/WNN" />
+	        <property name="url" value="jdbc:mysql://114.108.153.178:3306/WNN?allowMultiQueries=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=false" />
 	        <property name="username" value="winner"/>
 	        <property name="password" value="winnerdb_20@%"/>
 	    </bean>
@@ -25,7 +25,7 @@
 	<beans profile="prod">
 	    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
 	        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-	        <property name="url" value="jdbc:mysql://localhost:3306/WNN" />
+	        <property name="url" value="jdbc:mysql://localhost:3306/WNN?allowMultiQueries=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=false" />
 	        <property name="username" value="winner"/>
 	        <property name="password" value="winnerdb_20@%"/>
 	    </bean>
