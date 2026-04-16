@@ -1072,6 +1072,33 @@ public class MagamController {
         }
 	}
 	
+	@RequestMapping(value="/main/select_PrevMonthMissing05.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_PrevMonthMissing05(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		try {
+			List<PatvalDTO> resultdt = svc.select_PrevMonthMissing05(dto);
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", resultdt);
+			return response;
+		} catch (Exception ex) {
+			return null;
+		}
+	}
+
+	@RequestMapping(value="/main/select_ScoreCriteria.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_ScoreCriteria(@ModelAttribute("DTO") IndiDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		try {
+			dto.setJobyymm(dto.getJobyymm());
+			List<Map<String, Object>> resultdt = svc.select_ScoreCriteria(dto);
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", resultdt);
+			return response;
+		} catch (Exception ex) {
+			return null;
+		}
+	}
+
 	@RequestMapping(value="/main/select_CategoryList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> select_CategoryList(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

@@ -507,6 +507,16 @@ public class MagamServiceImpl implements MagamService {
     }
 	
 	@Override
+	public List<PatvalDTO> select_PrevMonthMissing05(PatvalDTO dto) {
+		return mapper.select_PrevMonthMissing05(dto);
+	}
+
+	@Override
+	public List<Map<String, Object>> select_ScoreCriteria(IndiDTO dto) {
+		return mapper.select_ScoreCriteria(dto);
+	}
+
+	@Override
 	public List<MagamDTO> selectAllHospCdList() {
 		return mapper.selectAllHospCdList();
 	}

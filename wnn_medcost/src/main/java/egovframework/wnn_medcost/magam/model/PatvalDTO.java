@@ -78,8 +78,9 @@ public class PatvalDTO {
 	private String errName;         // 오류내용 
 	private String jobFlag;         // 작업구분 
 	
-	private String overDay;         // 14일 초과 
-	private String indwellCath;         // 유치도뇨관 
+	private String overDay;         // 14일 초과
+	private String indwellCath;         // 유치도뇨관
+	private String prevMonth;       // 전월 대상 여부
 	
 	private String useYn;           // 사용여부
 	
@@ -458,6 +459,11 @@ public class PatvalDTO {
 	public void setDressingYn(String dressingYn) {
 		this.dressingYn = dressingYn;
 	}
-	
-	
+	public String getPrevMonth() {
+		return prevMonth;
+	}
+	public void setPrevMonth(String prevMonth) {
+		this.prevMonth = prevMonth;
+	}
+
 }

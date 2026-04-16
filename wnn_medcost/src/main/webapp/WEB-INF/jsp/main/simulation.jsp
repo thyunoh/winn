@@ -51,6 +51,13 @@
 					        <div class="card">
 					            <div class="card-body">
 					                <table id="indicatorTable" class="display nowrap stripe hover cell-border order-column responsive"></table>
+					                <!-- 구간별 대상자 수 박스 (하단 표시) -->
+					                <div id="scoreBoxArea" class="score-box-area" style="display:none;">
+					                    <div class="score-box-header">
+					                        <span id="scoreBoxTitle"></span>
+					                    </div>
+					                    <div id="scoreBoxContent" class="score-box-content"></div>
+					                </div>
 					            </div>
 					        </div>
 					    </div>
@@ -75,13 +82,129 @@
 		    </div>
 		</div>
     </div>
-    
+
+
 
 <script type="text/javascript">
 
 var jobFlag = '00';
 var stryymm = '199901';
 var endyymm = '199901';
+var scoreCriteriaData = null; // 구간 기준 데이터 캐시
+
+// 구간 기준 데이터 로드 (서버에서 TBL_WEVALUE_MST 조회)
+function loadScoreCriteria(jobyymm, callback) {
+	if (scoreCriteriaData && scoreCriteriaData._jobyymm === jobyymm) {
+		if (callback) callback(scoreCriteriaData);
+		return;
+	}
+	$.ajax({
+		url: "/main/select_ScoreCriteria.do",
+		type: "POST",
+		data: { jobyymm: jobyymm },
+		dataType: "json",
+		success: function(response) {
+			if (response && response.data) {
+				// cate_cd별 구간 배열로 변환
+				var criteria = {};
+				for (var i = 0; i < response.data.length; i++) {
+					var item = response.data[i];
+					var cd = item.cate_cd;
+					if (!criteria[cd]) criteria[cd] = [];
+					criteria[cd].push({
+						score: parseFloat(item.std_score),
+						start: parseFloat(item.start_indi),
+						end:   parseFloat(item.end_indi),
+						weight: parseFloat(item.we_value)
+					});
+				}
+				criteria._jobyymm = jobyymm;
+				scoreCriteriaData = criteria;
+				if (callback) callback(criteria);
+			}
+		},
+		error: function(xhr, status, error) {
+		}
+	});
+}
+
+// 구간별 대상자 수 하단 박스 표시
+function showScorePopup(td, rowData) {
+	var cateCd = rowData.cate_cd;
+	if (cateCd === '99') return;
+
+	// SQL: 전체 지표에서 dtortot=분자(NTORVAL), ntortot=분모(DTORVAL) 스왑
+	var dtortot = parseFloat(rowData.ntortot) || 0; // 실제 분모
+	var ntortot = parseFloat(rowData.dtortot) || 0; // 실제 분자
+	var jobyymm = endyymm;
+	loadScoreCriteria(jobyymm, function(criteria) {
+		var zones = criteria[cateCd];
+		if (!zones || zones.length === 0) return;
+
+		// 인력 지표(01~03): 구간 값이 절대값(명), 현황값=cal_avg 사용
+		var isAbsUnit = ['01','02','03'].includes(cateCd);
+		var isLower   = ['01','02','03','05','10','14'].includes(cateCd);
+		var noData    = (dtortot === 0);
+
+		// 현재값
+		var curRate = noData ? 0 : (ntortot / dtortot) * 100;
+		var curVal  = isAbsUnit ? (parseFloat(rowData.cal_avg) || 0) : curRate;
+
+		var html = '<div style="display:flex; flex-direction:row; gap:8px;">';
+
+		for (var i = 0; i < zones.length; i++) {
+			var z = zones[i];
+			var isCurrent = noData ? false : (curVal >= z.start && curVal <= z.end);
+
+			var startNm, endNm, rangeText;
+			if (isAbsUnit) {
+				startNm = z.start;
+				endNm = (z.end >= 9999) ? '∞' : z.end;
+				rangeText = startNm + '~' + endNm + '명';
+			} else if (noData) {
+				// 분모 없으면 기준만 표시 (명 단위)
+				startNm = z.start;
+				endNm = (z.end >= 100) ? 100 : z.end;
+				rangeText = startNm + '~' + endNm + '명';
+			} else {
+				startNm = Math.ceil(z.start * dtortot / 100);
+				endNm   = Math.floor(z.end * dtortot / 100);
+				if (z.end >= 100) endNm = dtortot;
+				rangeText = startNm + '~' + endNm + '명';
+			}
+
+			var needText = '';
+			if (noData) {
+				needText = '<span style="color:#999">데이터 없음</span>';
+			} else if (isCurrent) {
+				var curDisplay = isAbsUnit ? curVal : ntortot;
+				needText = '<b style="color:#1565C0">★ 현재 ' + curDisplay + '명</b>';
+			} else if (!isAbsUnit) {
+				if (isLower && curRate > z.end) {
+					var need = ntortot - (typeof endNm === 'number' ? endNm : 0);
+					if (need > 0) needText = '<b style="color:#e74c3c">-' + need + '명</b>';
+				} else if (!isLower && curRate < z.start) {
+					var need2 = startNm - ntortot;
+					if (need2 > 0) needText = '<b style="color:#e74c3c">+' + need2 + '명</b>';
+				}
+			}
+
+			var borderStyle = isCurrent ? 'border:2px solid #1565C0; background:#e3f2fd;' : 'border:1px solid #dee2e6; background:#fff;';
+			var scoreColor  = isCurrent ? 'color:#1565C0;' : 'color:#333;';
+
+			html += '<div style="flex:1; border-radius:6px; padding:10px 8px; text-align:center; ' + borderStyle + '">' +
+				'<div style="font-size:14px; font-weight:bold; margin-bottom:4px; ' + scoreColor + '">' + z.score + '점</div>' +
+				'<div style="font-size:12px; color:#666; margin-bottom:4px;">' + rangeText + '</div>' +
+				'<div style="font-size:13px; min-height:18px;">' + needText + '</div>' +
+				'</div>';
+		}
+		html += '</div>';
+
+		document.getElementById('scoreBoxTitle').textContent = rowData.cate_nm + ' 구간별 현황 (분모: ' + dtortot + '명 / 분자: ' + ntortot + '명)';
+		document.getElementById('scoreBoxContent').innerHTML = html;
+		document.getElementById('scoreBoxArea').style.display = 'block';
+	});
+}
 
 var tableName = ['hospitalTable', 'indicatorTable']; // 테이블 ID 목록
 var table_Idx = 0;
@@ -786,9 +909,13 @@ function fn_IndiSelect() {
   			    },
 			},		
 			{ data: 'fiveZone', visible: true, className: 'dt-body-center', width: '30px',
-				createdCell: function(td, cellData) {
+				createdCell: function(td, cellData, rowData) {
 					td.style.color = 'red';
-		            td.style.fontWeight = 'red';
+					td.style.fontWeight = 'bold';
+					if (rowData.cate_cd !== '99') {
+						td.style.cursor = 'pointer';
+						td.classList.add('five-zone-cell');
+					}
 			    }
 		    },
 		    { data: 'cal_avg', visible: true,  className: 'dt-body-center', width: '30px', 
@@ -1289,8 +1416,16 @@ function fn_FindDataTable() {
 	    });
 	    
 		bindTableEvents(table_Idx);
-		
-		
+
+		// indicatorTable 행 클릭 시 구간별 박스 표시
+		$(document).on('click', '#indicatorTable tbody tr', function() {
+			var tbl = $('#indicatorTable').DataTable();
+			var rowData = tbl.row(this).data();
+			if (rowData) {
+				showScorePopup(this, rowData);
+			}
+		});
+
 	})(jQuery);
 	
 }	   

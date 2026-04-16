@@ -72,6 +72,7 @@ public interface MagamMapper {
 	List<IndiDTO> select_Eval_Indi(IndiDTO dto);
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto);
+	List<PatvalDTO>  select_PrevMonthMissing05(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList07(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList09(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList10(PatvalDTO dto);
@@ -100,6 +101,8 @@ public interface MagamMapper {
 	MagamDTO selGoolgleSheet(MagamDTO dto);
 	
 	String modifyPatval(PatvalDTO dto);
+
+	List<Map<String, Object>> select_ScoreCriteria(IndiDTO dto);
 
 	// 파일 검증 관련
 	List<Map<String, Object>> getFilesFirstLine(MagamDTO dto);

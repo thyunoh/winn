@@ -1192,9 +1192,10 @@
 			        WHEN sub.dangerYn = 'N' AND sub.overdayYn = 'N' THEN 'N'
 			        ELSE ''
 			         END     AS dangerLow
-			 , indwellCath        
-			 , sub.overdayYn AS overDay 
-			
+			 , indwellCath
+			 , sub.overdayYn AS overDay
+			 , sub.prevMonth
+
 		  FROM (SELECT left(c.PAT_ID,6)             AS patId
 		             , c.PAT_NM                     AS patNm
 				     , c.ADMIT_DT                   AS admitDt
@@ -1207,7 +1208,15 @@
 				                      c.TRANSFER >= 4  AND  c.EXIT_ROOM >= 4 AND c.TOILET_USE >= 4 AND c.BEDRIDDEN >= 4) OR 
 				                     (c.PARALYSIS = '1' OR  c.ALL_LIMBS = '1' OR c.CEREBRAL_P  = '1')
 				                THEN 'Y' ELSE 'N' END ) AS dangerYn
-				     , MAX(INDWELL_CATH) AS   indwellCath           
+				     , MAX(INDWELL_CATH) AS   indwellCath
+				     , CASE WHEN EXISTS (
+				         SELECT 1 FROM TBL_PATVAL_MST prev
+				         WHERE prev.HOSP_CD = c.HOSP_CD
+				           AND prev.PAT_ID = c.PAT_ID
+				           AND prev.ADMIT_DT = c.ADMIT_DT
+				           AND prev.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm},'01'), INTERVAL 1 MONTH),'%Y%m'),'%')
+				           AND prev.INDWELL_CATH = '1'
+				       ) THEN 'Y' ELSE 'N' END AS prevMonth
 				  FROM TBL_PATVAL_MST c
 				 WHERE c.HOSP_CD = #{hospCd}
 				   AND c.MED_START LIKE CONCAT(#{jobYymm},'%')
@@ -1232,8 +1241,33 @@
 				       
 				 GROUP BY c.PAT_ID, c.PAT_NM, c.ADMIT_DT, c.MED_START, c.DOC_DT ) sub
 							
-	</select> 
-	 
+	</select>
+
+	<!-- 유치도뇨관: 전월에 있었는데 당월에 빠진 환자 조회 -->
+	<select id="select_PrevMonthMissing05" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
+		SELECT LEFT(prev.PAT_ID, 6) AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) >= 1
+		            THEN CONCAT(LEFT(COALESCE(prev.PAT_NM, ''), CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) - 1), '*')
+		            ELSE '' END AS patNm
+		     , prev.ADMIT_DT AS admitDt
+		     , prev.MED_START AS medStart
+		     , prev.DOC_DT AS docDt
+		  FROM TBL_PATVAL_MST prev
+		 WHERE prev.HOSP_CD = #{hospCd}
+		   AND prev.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm},'01'), INTERVAL 1 MONTH),'%Y%m'),'%')
+		   AND prev.INDWELL_CATH = '1'
+		   AND IFNULL(prev.PAT_CLASS,'') NOT LIKE 'A%'
+		   AND NOT EXISTS (
+		       SELECT 1 FROM TBL_PATVAL_MST cur
+		        WHERE cur.HOSP_CD = prev.HOSP_CD
+		          AND cur.PAT_ID = prev.PAT_ID
+		          AND cur.ADMIT_DT = prev.ADMIT_DT
+		          AND cur.MED_START LIKE CONCAT(#{jobYymm},'%')
+		          AND cur.INDWELL_CATH = '1'
+		   )
+		 GROUP BY prev.PAT_ID, prev.PAT_NM, prev.ADMIT_DT, prev.MED_START, prev.DOC_DT
+	</select>
+
 	<select id="select_CategoryList07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 		SELECT DISTINCT
 		       LEFT(pm.PAT_ID,6)                                  AS patId
@@ -2491,7 +2525,7 @@
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
 			   , 'H1'                                              AS errType
-			   , '유치도뇨관이 삽입된 상태이나, 소변조절상태가 조절할 수 있음으로 체크되어 있지 않은 경우' AS errName
+			   , '유치도뇨관이 삽입된 상태이나, 소변조절상태가 조절할 수 있음으로 체크되어 있는 경우 (확인필요)' AS errName
 		  FROM TBL_PATVAL_MST A
 		  JOIN (SELECT B.HOSP_CD
 		  	         , B.CHUNGSEQ
@@ -3323,7 +3357,7 @@
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
 			   , 'H1'                                              AS errType
-			   , '유치도뇨관이 삽입된 상태이나, 소변조절상태가 조절할 수 있음으로 체크되어 있지 않은 경우' AS errName
+			   , '유치도뇨관이 삽입된 상태이나, 소변조절상태가 조절할 수 있음으로 체크되어 있는 경우 (확인필요)' AS errName
 		  FROM TBL_PATVAL_MST A
 		  JOIN (SELECT B.HOSP_CD
 		  	         , B.CHUNGSEQ
@@ -4024,6 +4058,21 @@
 		   AND hm.ACTION_YN = 'Y'
 		   AND hm.HOSP_CD != 'W1236457'
 		 ORDER BY hm.HOSP_CD
+	</select>
+
+	<!-- 구간별 기준 전체 조회 (1~5점) -->
+	<select id="select_ScoreCriteria" parameterType="IndiDTO" resultType="java.util.Map">
+		SELECT
+			A.CATE_CODE  AS cate_cd,
+			A.ORDER_SEQ  AS order_seq,
+			A.START_INDI AS start_indi,
+			A.END_INDI   AS end_indi,
+			A.STD_SCORE  AS std_score,
+			A.WE_VALUE   AS we_value
+		FROM TBL_WEVALUE_MST A
+		WHERE A.ACTION_YN = 'Y'
+		  AND CONCAT(#{jobyymm},'01') BETWEEN A.START_DT AND A.END_DT
+		ORDER BY A.CATE_CODE, A.STD_SCORE DESC
 	</select>
 
 </mapper>

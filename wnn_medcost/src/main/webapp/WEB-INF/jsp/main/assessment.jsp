@@ -67,7 +67,8 @@
 										    <span>- 청구명세서 미 업로드시 항정처방률 및 HbA1c 지표의 점수가 달라질 수 있습니다.</span>
 										    <button id="btnEvalAllHosp" class="btn btn-outline-danger btn-sm" onClick="fn_CreateEvalAllHosp()" style="display:none;">전체병원 생성</button>
 										</div>
-										<br>
+										<!-- 지표 선택 시 분석 문구 표시 영역 -->
+										<div id="indiSummaryText" style="display:none; margin-top:8px; border:1px solid #b8daff; border-radius:8px; background:#f8fbff; padding:12px 16px;"></div>
 										<div class="d-flex align-items-center">
 										    
 										    <button id="googleLink" onclick="google_Link()" class="btn btn-sm btn-outline-primary me-2" style="display: none;">🌐 구글</button>
@@ -330,6 +331,7 @@
 							            }
 							        });
 								}
+
 								    async function downloadPDF() {
 								        const { jsPDF } = window.jspdf;
 								        const doc = new jsPDF('p', 'mm', 'a4');
@@ -357,9 +359,117 @@
 
 <script type="text/javascript">
 
-var jobFlag = '00'; 
+var jobFlag = '00';
 var jobYyMm = '202501';
 var jobCode = null;
+var evalIndiData = []; // 지표 데이터 저장용
+
+// 낮을수록 좋은 지표 (5점 구간이 0부터 시작)
+var LOWER_IS_BETTER = ['01','02','03','05','07','10','14'];
+
+// 5점 구간 기준 (초기값, 서버 조회 후 덮어씀)
+var FIVE_POINT_CRITERIA = {
+	'01': { start: 0,    end: 25.99, direction: 'lower',  weight: 8.5  },
+	'02': { start: 0,    end: 5.99,  direction: 'lower',  weight: 8.5  },
+	'03': { start: 0,    end: 2.99,  direction: 'lower',  weight: 7.5  },
+	'04': { start: 100,  end: 100,   direction: 'higher', weight: 5.5  },
+	'05': { start: 0,    end: 2.99,  direction: 'lower',  weight: 6.0  },
+	'07': { start: 0,    end: 9.99,  direction: 'lower',  weight: 3.0  },
+	'08': { start: 98,   end: 100,   direction: 'higher', weight: 3.0  },
+	'09': { start: 90,   end: 100,   direction: 'higher', weight: 2.0  },
+	'10': { start: 0,    end: 0.24,  direction: 'lower',  weight: 4.4  },
+	'11': { start: 60,   end: 100,   direction: 'higher', weight: 17.6 },
+	'12': { start: 45,   end: 100,   direction: 'higher', weight: 12.0 },
+	'13': { start: 98,   end: 100,   direction: 'higher', weight: 12.0 },
+	'14': { start: 0,    end: 19.99, direction: 'lower',  weight: 5.0  },
+	'15': { start: 70,   end: 100,   direction: 'higher', weight: 5.0  }
+};
+
+// 5점 구간 기준 서버 조회 (TBL_WEVALUE_MST) - 기준 변경 시 자동 반영
+function loadFivePointCriteria(jobyymm) {
+	$.ajax({
+		url: "/main/select_ScoreCriteria.do",
+		type: "POST",
+		data: { jobyymm: jobyymm },
+		dataType: "json",
+		success: function(response) {
+			if (response && response.data) {
+				for (var i = 0; i < response.data.length; i++) {
+					var item = response.data[i];
+					var cd = item.cate_cd;
+					var score = parseFloat(item.std_score);
+					if (score === 5) {
+						FIVE_POINT_CRITERIA[cd] = {
+							start: parseFloat(item.start_indi),
+							end: parseFloat(item.end_indi),
+							direction: LOWER_IS_BETTER.includes(cd) ? 'lower' : 'higher',
+							weight: parseFloat(item.we_value)
+						};
+					}
+				}
+			}
+		}
+	});
+}
+
+// 지표 선택 시 분석 문구 표시
+function showIndiSummary(data) {
+	var box = document.getElementById('indiSummaryText');
+	if (!box) return;
+	if (!data || data.cate_cd === '99') { box.style.display = 'none'; return; }
+
+	var criteria = FIVE_POINT_CRITERIA[data.cate_cd];
+	if (!criteria) { box.style.display = 'none'; return; }
+
+	var calVal   = parseFloat(data.cal_val) || 0;
+	var dtorval  = parseFloat(data.dtorval) || 0;
+	var ntorval  = parseFloat(data.ntorval) || 0;
+	var weigval  = parseFloat(data.weigval) || 0;
+	var stdweig  = parseFloat(data.stdweig) || 0;
+	var cateName = data.cate_nm;
+	var isPersonUnit = ['01','02','03'].includes(data.cate_cd);
+	var valUnit  = isPersonUnit ? '명' : '%';
+	var isFivePoint = (calVal >= criteria.start && calVal <= criteria.end);
+	var rangeText = criteria.start + ' ~ ' + criteria.end + '명';
+
+	var html = '';
+	if (isFivePoint) {
+		html = '<div class="indi-summary-good">' +
+			'<span class="indi-dot good">●</span> ' +
+			'<b>' + cateName + '</b> 현재 <b>' + calVal + valUnit + '</b>로 ' +
+			'<b class="text-primary">5점 구간 달성</b> (결과: ' + weigval + '점 / 만점: ' + stdweig + '점)' +
+			'</div>';
+	} else {
+		var targetMsg = '';
+		if (isPersonUnit) {
+			targetMsg = '5점 도달 목표: <b>' + criteria.end + '명 이하</b>';
+		} else if (dtorval > 0 && !['04','07','08'].includes(data.cate_cd)) {
+			if (criteria.direction === 'higher') {
+				var needNtor = Math.ceil(criteria.start * dtorval / 100);
+				var diff = needNtor - ntorval;
+				if (diff > 0) targetMsg = '5점 도달을 위해 추가 <b class="text-danger">' + diff + '명</b> 개선 필요 (분자 ' + ntorval + ' → ' + needNtor + ')';
+			} else {
+				var maxNtor = Math.floor(criteria.end * dtorval / 100);
+				var diff2 = ntorval - maxNtor;
+				if (diff2 > 0) targetMsg = '5점 도달을 위해 <b class="text-danger">' + diff2 + '명</b> 감소 필요 (분자 ' + ntorval + ' → ' + maxNtor + ')';
+			}
+		} else if (data.fiveZone && data.fiveZone.trim() !== '') {
+			targetMsg = '5점 도달 필요: <b>' + data.fiveZone + '</b>';
+		}
+		var scoreDiff = (stdweig - weigval).toFixed(1);
+		var detailLine = '→ 5점 구간: ' + rangeText;
+		if (targetMsg) detailLine += ' | ' + targetMsg;
+		html = '<div class="indi-summary-warn">' +
+			'<span class="indi-dot warn">▲</span> ' +
+			'<b>' + cateName + '</b> 현재 <b>' + calVal + valUnit + '</b>로 ' +
+			'결과 <b>' + weigval + '점</b> (만점 ' + stdweig + '점 대비 <b class="text-danger">' + scoreDiff + '점 부족</b>)' +
+			'<br>' +
+			'<span class="indi-summary-detail">' + detailLine + '</span>' +
+			'</div>';
+	}
+	box.innerHTML = html;
+	box.style.display = 'block';
+}
 
 var mixedChart1;
 var mixedChart2;
@@ -451,6 +561,7 @@ function fn_CreateData(flag) {
         success: function(response) { 
         	if (response) { // 서버가 성공 응답을 보냈을 때 실행
 	    		waitingCreate.style.display = 'none';
+	    		loadFivePointCriteria(selected_Year + selectedMonth);
 	    		Indicater_DataList();
 	       	}
         },
@@ -832,6 +943,10 @@ function fn_ViewData(data) {
 	const card = document.getElementById('card_container');
 	const view = document.getElementById('view_container');
 	view.style.display = 'none';
+
+	// 이전 경고 박스 제거
+	var pw = document.getElementById('prevMonthWarn'); if (pw) pw.remove();
+	var ew = document.getElementById('errCheckWarn');  if (ew) ew.remove();
 	
 	const ltxt = document.getElementById('lab_title');
 	ltxt.textContent = data.cate_cd + '. ' + data.cate_nm;
@@ -905,6 +1020,7 @@ function fn_ViewData(data) {
 			        	    { label: '입원일',           rowspan: 2 },
 			        	    { label: '개시일',           rowspan: 2 },
 			        	    { label: '작성일',           rowspan: 2 },
+			        	    { label: '전월',             rowspan: 2 },
 			        	    { label: selected_Year + '년 ' + selectedMonth + '월 (당월)', colspan: 2 },
 			        	    { label: 'foley체크',        rowspan: 2 } ,
 			        	    { label: '14일초과',          rowspan: 2 }
@@ -934,15 +1050,23 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px', 
+						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return getFormat(data,'d1')
 			            		}
 			            		return data;
 			  			    },
-						},						
-						{ data: 'dangerHi',  visible: true, className: 'dt-body-center', width: '100px', 
+						},
+						{ data: 'prevMonth', visible: true, className: 'dt-body-center', width: '40px',
+							render: function(data, type, row) {
+								if (type === 'display') {
+									return data === 'Y' ? '✔' : '';
+								}
+								return data;
+							}
+						},
+						{ data: 'dangerHi',  visible: true, className: 'dt-body-center', width: '100px',
 							
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환
@@ -2053,10 +2177,10 @@ function fn_FindDataTable() {
 	    	// 여기에 보기 로직을 구현하세요
 	        
 	    	fn_ViewData(data);
-	    	
-	        
+	    	showIndiSummary(data);
+
 	    });
-	    
+
 	    // 입력 버튼 클릭 이벤트
 	    $('#' + tableName.id + ' tbody').on('click', '.ins-btn', function() {
 	        // 여기에 입력 로직을 구현하세요
@@ -2096,6 +2220,7 @@ function fn_FindDataTable() {
 	    /* row data선택 후 value set start */
 	    dataTable.on('click', 'tbody tr', function() {
 		    edit_Data = dataTable.row(this).data();
+		    if (edit_Data) { showIndiSummary(edit_Data); }
 		});	    
 	    /* 싱글 선택 start */
 	    if (row_Select) {
@@ -2246,23 +2371,89 @@ function dataLoad(data, callback, settings) {
 	            		let hi_Count = 0;
 		                let lowCount = 0;
 		                let dayCount = 0;
-		                
 		                for (let i = 0; i < response.data.length; i++) {
-		                    
+
 		                	const item = response.data[i];
-		                	
+
 		                    if (item.overDay === 'Y') {
 		                    	dayCount += 1;
-		                    	
 		                    	if (item.dangerHi  === 'Y') { hi_Count += 1; }
 			                    if (item.dangerLow === 'Y') { lowCount += 1; }
 		                    }
 		                }
-		                
+
 		                cntNote = '[중복포함,14일초과 총:' + dayCount + '건 ]·고위험:' + hi_Count + '건·저위험:' + lowCount + '건';
-		                
+
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(35) + '<span style="color: blue;">' + cntNote + '</span>';
-	            	
+
+		                // 기존 경고 제거
+		                var existWarn = document.getElementById('prevMonthWarn');
+		                if (existWarn) existWarn.remove();
+		                var existErr = document.getElementById('errCheckWarn');
+		                if (existErr) existErr.remove();
+
+		                // 전월에 있었는데 당월에 빠진 환자 경고 조회
+		                $.ajax({
+		                    url: "/main/select_PrevMonthMissing05.do",
+		                    type: "POST",
+		                    data: { hospCd: hospid, jobYymm: jobYyMm },
+		                    dataType: "json",
+		                    success: function(res) {
+		                        var cnt = (res && res.data) ? res.data.length : 0;
+		                        var bgColor = cnt > 0 ? '#fff3cd' : '#d4edda';
+		                        var bdColor = cnt > 0 ? '#f5c6cb' : '#c3e6cb';
+		                        var txColor = cnt > 0 ? '#856404' : '#155724';
+		                        var warnHtml = '<div id="prevMonthWarn" style="margin-top:8px; padding:8px 12px; border:1px solid ' + bdColor + '; border-radius:6px; background:' + bgColor + '; font-size:12px;">' +
+		                            '<b style="color:' + txColor + ';">⚠ 전월 유치도뇨관 대상자 중 당월 미존재: ' + cnt + '건</b>';
+		                        if (cnt > 0) {
+		                            warnHtml += '<br>';
+		                            for (var k = 0; k < res.data.length; k++) {
+		                                var m = res.data[k];
+		                                warnHtml += '<span style="color:' + txColor + '; margin-right:12px;">' + m.patId + ' ' + m.patNm + ' (입원:' + m.admitDt + ')</span>';
+		                                if ((k+1) % 5 === 0) warnHtml += '<br>';
+		                            }
+		                        }
+		                        warnHtml += '</div>';
+		                        var cardCont2 = document.getElementById('card_container');
+		                        if (cardCont2) cardCont2.insertAdjacentHTML('beforeend', warnHtml);
+		                    }
+		                });
+
+		                // 평가표 오류점검 (D1/D2/E1/F1/G1/G2) 조회
+		                $.ajax({
+		                    url: "/main/select_assesCheck.do",
+		                    type: "POST",
+		                    data: { hospCd: hospid, jobYymm: jobYyMm, jobFlag: '00' },
+		                    dataType: "json",
+		                    success: function(res) {
+		                        if (!res || !res.data) return;
+		                        // 유치도뇨관 오류만 필터 (D1,D2,E1,F1,G1,G2,H1)
+		                        var cathErr = ['D1','D2','E1','F1','G1','G2','H1'];
+		                        var errors = [];
+		                        for (var e = 0; e < res.data.length; e++) {
+		                            if (cathErr.includes(res.data[e].errType)) {
+		                                errors.push(res.data[e]);
+		                            }
+		                        }
+		                        var eCnt = errors.length;
+		                        var eBg = eCnt > 0 ? '#f8d7da' : '#d4edda';
+		                        var eBd = eCnt > 0 ? '#f5c6cb' : '#c3e6cb';
+		                        var eTx = eCnt > 0 ? '#721c24' : '#155724';
+		                        var errHtml = '<div id="errCheckWarn" style="margin-top:8px; padding:8px 12px; border:1px solid ' + eBd + '; border-radius:6px; background:' + eBg + '; font-size:12px;">' +
+		                            '<b style="color:' + eTx + ';">⚠ 평가표 오류점검: ' + eCnt + '건</b>';
+		                        if (eCnt > 0) {
+		                            errHtml += '<br>';
+		                            for (var f = 0; f < errors.length; f++) {
+		                                var er = errors[f];
+		                                errHtml += '<span style="color:' + eTx + '; margin-right:8px;">[' + er.errType + '] ' + er.patId + ' ' + er.patNm + ' - ' + er.errName + '</span><br>';
+		                            }
+		                        }
+		                        errHtml += '</div>';
+		                        var cardCont3 = document.getElementById('card_container');
+		                        if (cardCont3) cardCont3.insertAdjacentHTML('beforeend', errHtml);
+		                    }
+		                });
+
 	            	} else if (jobFlag === '07') {
 
 	            	    let psyCount = 0;

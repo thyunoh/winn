@@ -1203,3 +1203,96 @@ label {
     background-color: #EDF2FF;
 }
 
+/* 적정성평가 지표 분석 문구 영역 */
+.indi-summary-box {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border: 1px solid #b8daff;
+    border-radius: 6px;
+    background-color: #f0f7ff;
+    font-size: 13px;
+    line-height: 1.7;
+}
+.indi-summary-good {
+    color: #1565C0;
+}
+.indi-summary-warn {
+    color: #333;
+}
+.indi-summary-detail {
+    display: inline-block;
+    margin-left: 18px;
+    color: #555;
+}
+.indi-dot {
+    font-size: 12px;
+    margin-right: 4px;
+}
+.indi-dot.good {
+    color: #2196F3;
+}
+.indi-dot.warn {
+    color: #e74c3c;
+}
+
+/* 구간별 대상자 수 하단 박스 */
+.score-box-area {
+    margin-top: 12px;
+    border: 1px solid #b8daff;
+    border-radius: 8px;
+    background: #f8fbff;
+    padding: 12px 16px;
+}
+.score-box-header {
+    font-size: 13px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #4a90d9;
+}
+.score-cards {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+.score-card {
+    flex: 1 1 0;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px 8px;
+    text-align: center;
+    background: #fff;
+}
+.score-card.current {
+    border: 2px solid #1565C0;
+    background: #e3f2fd;
+}
+.score-card-score {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+}
+.score-card.current .score-card-score {
+    color: #1565C0;
+}
+.score-card-range {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+.score-card-need {
+    font-size: 13px;
+    font-weight: bold;
+    color: #e74c3c;
+    min-height: 18px;
+}
+.score-card.current .score-card-need {
+    color: #1565C0;
+}
+.five-zone-cell:hover {
+    text-decoration: underline;
+}
+

@@ -84,6 +84,9 @@ public interface MagamService {
 	
 	String modifyPatval(PatvalDTO dto) throws Exception;
 
+	List<PatvalDTO>  select_PrevMonthMissing05(PatvalDTO dto) throws Exception;
+	List<Map<String, Object>> select_ScoreCriteria(IndiDTO dto) throws Exception;
+
 	// 파일 검증 관련
 	String uploadMagamFilesOnly(List<FilesDTO> filesData) throws Exception;
 	String execMagamSP(MagamDTO magamDTO) throws Exception;
