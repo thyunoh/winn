@@ -2442,10 +2442,27 @@ function dataLoad(data, callback, settings) {
 		                        var errHtml = '<div id="errCheckWarn" style="margin-top:8px; padding:8px 12px; border:1px solid ' + eBd + '; border-radius:6px; background:' + eBg + '; font-size:12px;">' +
 		                            '<b style="color:' + eTx + ';">⚠ 평가표 오류점검: ' + eCnt + '건</b>';
 		                        if (eCnt > 0) {
-		                            errHtml += '<br>';
+		                            // 오류코드별 그룹화
+		                            var grpMap = {};
+		                            var grpOrder = [];
 		                            for (var f = 0; f < errors.length; f++) {
 		                                var er = errors[f];
-		                                errHtml += '<span style="color:' + eTx + '; margin-right:8px;">[' + er.errType + '] ' + er.patId + ' ' + er.patNm + ' - ' + er.errName + '</span><br>';
+		                                if (!grpMap[er.errType]) {
+		                                    grpMap[er.errType] = { errType: er.errType, errName: er.errName, list: [] };
+		                                    grpOrder.push(er.errType);
+		                                }
+		                                grpMap[er.errType].list.push(er);
+		                            }
+		                            for (var g = 0; g < grpOrder.length; g++) {
+		                                var grp = grpMap[grpOrder[g]];
+		                                errHtml += '<div style="margin-top:4px;"><b style="color:' + eTx + ';">[' + grp.errType + '] ' + grp.errName + ' : ' + grp.list.length + '건</b></div>';
+		                                errHtml += '<div style="margin-left:10px;">';
+		                                for (var p = 0; p < grp.list.length; p++) {
+		                                    var pr = grp.list[p];
+		                                    errHtml += '<span style="color:' + eTx + '; margin-right:12px;">' + pr.patId + ' ' + pr.patNm + '</span>';
+		                                    if ((p+1) % 10 === 0 && (p+1) < grp.list.length) errHtml += '<br>';
+		                                }
+		                                errHtml += '</div>';
 		                            }
 		                        }
 		                        errHtml += '</div>';
