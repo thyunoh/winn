@@ -1754,7 +1754,10 @@
 
 				setTimeout(function() {
 					try {
-						var workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', dense: true, cellDates: true });
+						var buf = new Uint8Array(e.target.result);
+						e.target.result = null; // raw ArrayBuffer 즉시 해제
+						var workbook = XLSX.read(buf, { type: 'array', dense: true, cellDates: true });
+						buf = null; // 파싱 후 원본 바이트 해제
 						console.log('[엑셀-DISE] 시트수:', workbook.SheetNames.length);
 
 						var dataSheetNames = workbook.SheetNames.slice();
@@ -1805,16 +1808,32 @@
 								$('#excelProgressBar').css({ 'transition': 'none', 'width': '50%' }).text('50%');
 								$('#excelProgress').text(usedSheetName + ' 시트 변환 중...');
 								var jsonData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+								// 워크북/시트 전체 참조 해제
+								if (workbook && workbook.Sheets) {
+									for (var _sn in workbook.Sheets) { workbook.Sheets[_sn] = null; }
+								}
 								ws = null; workbook = null;
-								var filtered = [jsonData[0]];
+								// 빈 행을 새 배열에 복사하지 않고 원본 jsonData를 in-place 압축
+								var writeIdx = 1;
 								for (var i = 1; i < jsonData.length; i++) {
 									var row = jsonData[i];
+									var hasData = false;
 									for (var c = 0; c < row.length; c++) {
-										if (row[c] !== '' && row[c] !== null && row[c] !== undefined) { filtered.push(row); break; }
+										if (row[c] !== '' && row[c] !== null && row[c] !== undefined) { hasData = true; break; }
+									}
+									if (hasData) {
+										if (writeIdx !== i) {
+											jsonData[writeIdx] = row;
+											jsonData[i] = null; // 이동 후 원본 슬롯 해제
+										}
+										writeIdx++;
+									} else {
+										jsonData[i] = null; // 버릴 행 해제
 									}
 								}
+								jsonData.length = writeIdx;
+								processJsonData(jsonData);
 								jsonData = null;
-								processJsonData(filtered);
 							} catch(ex2) {
 								console.error('[엑셀-DISE] 파싱 오류:', ex2);
 								Swal.close();
@@ -1876,38 +1895,46 @@
 			$('#excelProgress').text('데이터 변환 중... (총 ' + (jsonData.length - 1) + '건)');
 			$('#excelProgressBar').css('width', '50%').text('50%');
 			excelHeaders = jsonData[0].map(function(h) { return String(h).trim(); });
-			excelParsedData = [];
+			jsonData[0] = null; // 헤더 행 즉시 해제
 			var totalData = jsonData.length - 1;
-			var chunkSize = 5000;
+			var headers = excelHeaders;
+			var headerLen = headers.length;
+			excelParsedData = new Array(totalData); // 사전 할당
+			var chunkSize = 2000; // 2000으로 축소 - 피크 메모리 감소
 			var chunkIdx = 0;
 
 			function processChunk() {
 				var start = chunkIdx * chunkSize + 1;
 				var end = Math.min(start + chunkSize, jsonData.length);
 				for (var i = start; i < end; i++) {
+					var src = jsonData[i];
+					if (!src) { excelParsedData[i - 1] = {}; continue; }
 					var row = {};
-					for (var j = 0; j < excelHeaders.length; j++) {
-						var cellVal = jsonData[i][j];
-						if (cellVal === undefined || cellVal === null) {
-							row[excelHeaders[j]] = '';
+					for (var j = 0; j < headerLen; j++) {
+						var cellVal = src[j];
+						if (cellVal === undefined || cellVal === null || cellVal === '') {
+							row[headers[j]] = '';
 						} else if (cellVal instanceof Date && !isNaN(cellVal.getTime())) {
 							var dyy = cellVal.getFullYear();
 							var dmm = ('0' + (cellVal.getMonth() + 1)).slice(-2);
 							var ddd = ('0' + cellVal.getDate()).slice(-2);
-							row[excelHeaders[j]] = dyy + '-' + dmm + '-' + ddd;
+							row[headers[j]] = dyy + '-' + dmm + '-' + ddd;
 						} else {
-							row[excelHeaders[j]] = String(cellVal).trim();
+							row[headers[j]] = (typeof cellVal === 'string') ? cellVal.trim() : String(cellVal).trim();
 						}
 					}
-					excelParsedData.push(row);
+					row._rowIdx = i - 1; // DataTable 인덱스 사전 부여 (tableData 복사 불필요)
+					excelParsedData[i - 1] = row;
+					jsonData[i] = null; // 원본 행 즉시 해제 → jsonData 메모리 점진적 반납
 				}
 				var pct = Math.round(50 + (end / jsonData.length) * 40);
 				$('#excelProgressBar').css('width', pct + '%').text(pct + '%');
-				$('#excelProgress').text('데이터 변환 중... (' + excelParsedData.length + ' / ' + totalData + '건)');
+				$('#excelProgress').text('데이터 변환 중... (' + end + ' / ' + totalData + '건)');
 				chunkIdx++;
 				if (end < jsonData.length) {
 					setTimeout(processChunk, 0);
 				} else {
+					jsonData.length = 0;
 					jsonData = null;
 					finishPreview();
 				}
@@ -2066,14 +2093,9 @@
 					});
 				})(excelHeaders[i]);
 			}
-			var tableData = [];
-			for (var i = 0; i < excelParsedData.length; i++) {
-				var row = $.extend({}, excelParsedData[i]);
-				row._rowIdx = i;
-				tableData.push(row);
-			}
+			// tableData 복사 제거: processJsonData에서 _rowIdx를 이미 부여했으므로 원본을 그대로 사용
 			excelPreviewDT = $('#excelPreviewTable').DataTable({
-				data: tableData, columns: previewCols,
+				data: excelParsedData, columns: previewCols,
 				scrollX: true, scrollY: 350,
 				paging: true, pageLength: 50,
 				lengthMenu: [50, 100, 200, 500],
@@ -2088,7 +2110,7 @@
 				},
 				rowCallback: function(row, data, index) { $(row).find('td').css('padding', '1px 4px'); }
 			});
-			document.getElementById('excelRowCount').textContent = '총 ' + tableData.length + '건';
+			document.getElementById('excelRowCount').textContent = '총 ' + excelParsedData.length + '건';
 
 			// 검색창 설정
 			(function setupPreviewSearch() {
@@ -2110,9 +2132,10 @@
 			})();
 
 			excelCheckedSet = new Set();
+			var totalRowCount = excelParsedData.length;
 			$('#excelSelectAll').off('click').on('click', function() {
 				var checked = this.checked;
-				if (checked) { for (var i = 0; i < tableData.length; i++) excelCheckedSet.add(i); }
+				if (checked) { for (var i = 0; i < totalRowCount; i++) excelCheckedSet.add(i); }
 				else excelCheckedSet.clear();
 				$('.excel-chk').each(function() { $(this).prop('checked', checked); });
 			});
@@ -2120,7 +2143,7 @@
 				var idx = $(this).data('idx');
 				if (this.checked) excelCheckedSet.add(idx);
 				else { excelCheckedSet.delete(idx); $('#excelSelectAll').prop('checked', false); }
-				if (excelCheckedSet.size === tableData.length) $('#excelSelectAll').prop('checked', true);
+				if (excelCheckedSet.size === totalRowCount) $('#excelSelectAll').prop('checked', true);
 			});
 			excelPreviewDT.on('draw', function() {
 				$('.excel-chk').each(function() {
@@ -2144,21 +2167,24 @@
 			// 적용시작일자는 엑셀에 없으면 '20000101'로 자동 설정되므로 매핑 강제 X
 			// 한글/영문 상병명은 빈값 허용이므로 매핑 강제 X
 
-			var selectedRows = [];
-			if (saveAll) {
-				excelPreviewDT.rows().every(function() { var rd = this.data(); if (rd) selectedRows.push(rd); });
-				if (selectedRows.length === 0) { Swal.fire({ title: '확인', text: '저장할 데이터가 없습니다.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } }); return; }
-			} else {
-				excelCheckedSet.forEach(function(idx) { var rd = excelPreviewDT.row(idx).data(); if (rd) selectedRows.push(rd); });
-				if (selectedRows.length === 0) { Swal.fire({ title: '확인', text: '저장할 행을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } }); return; }
-			}
-
+			// selectedRows 중간 복사 제거 → excelParsedData 를 직접 순회하며 변환
 			var regUser = getCookie("s_userid") || '';
 			var regIp = getCookie("s_connip") || '';
 			var convertedRows = [];
 			var skippedRows = 0;
-			for (var i = 0; i < selectedRows.length; i++) {
-				var excelRow = selectedRows[i];
+			var totalPre = excelParsedData.length;
+			if (totalPre === 0) {
+				Swal.fire({ title: '확인', text: '저장할 데이터가 없습니다.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			if (!saveAll && excelCheckedSet.size === 0) {
+				Swal.fire({ title: '확인', text: '저장할 행을 선택하세요.', icon: 'warning', timer: 1500, showConfirmButton: false, customClass: { popup: 'small-swal' } });
+				return;
+			}
+			for (var i = 0; i < totalPre; i++) {
+				if (!saveAll && !excelCheckedSet.has(i)) continue;
+				var excelRow = excelParsedData[i];
+				if (!excelRow) continue;
 				var rawMapped = {};
 				for (var dbKey in map) {
 					var excelCol = map[dbKey];
@@ -2266,6 +2292,14 @@
 				excelCheckedSet.clear();
 				$('#excelSelectAll').prop('checked', false);
 				$('.excel-chk').prop('checked', false);
+				// 저장 완료 후 프리뷰 메모리 해제 (성공 시)
+				if (totalFail === 0) {
+					if (excelPreviewDT) { try { excelPreviewDT.destroy(); } catch(e) {} $('#excelPreviewTable').empty(); excelPreviewDT = null; }
+					excelParsedData = [];
+					excelHeaders = [];
+					excelColumnMap = {};
+				}
+				allRows.length = 0;
 				if (dataTable && typeof dataTable.ajax !== 'undefined') dataTable.ajax.reload();
 			}
 
@@ -2274,11 +2308,13 @@
 				var batchData = allRows.slice(b.start, b.end);
 				var batchCount = batchData.length;
 				var sendMode = modeOverride || dupMode;
+				var payload = JSON.stringify(batchData);
+				batchData = null; // 문자열화 후 배치 객체 배열은 해제
 
 				$.ajax({
 					type: "POST",
 					url: "/base/diseCdExcelInsert.do?dupMode=" + encodeURIComponent(sendMode),
-					data: JSON.stringify(batchData),
+					data: payload,
 					contentType: "application/json",
 					dataType: "text",
 					success: function(response) {
@@ -2292,6 +2328,9 @@
 					},
 					error: function() { totalFail += batchCount; },
 					complete: function() {
+						payload = null;
+						// 전송 완료한 배치 구간의 allRows 참조 해제 → 점진적 메모리 반납
+						for (var r = b.start; r < b.end; r++) allRows[r] = null;
 						finishedBatches++;
 						processedRows += batchCount;
 						var pct = Math.round((processedRows / allRows.length) * 100);
