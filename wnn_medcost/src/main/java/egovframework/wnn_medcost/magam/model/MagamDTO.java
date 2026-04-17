@@ -52,6 +52,7 @@ public class MagamDTO{
 	// 기타 필요필드 
 	private String magamyn;    		// 청구서,평가표,월 마감여부
 	private String ipwonyn;    		// 입원현황 등록여부
+	private String spcsugayn;		// 특정수가현황 등록여부
 	private String filenew;         // 파일등록 구분 ('S 조회','I 입력','U 수정','D 삭제')
 	private String errcode;     	// 오류코드
 	private String errmess;     	// 오류메세지
@@ -604,6 +605,14 @@ public class MagamDTO{
 
 	public void setIpwonyn(String ipwonyn) {
 		this.ipwonyn = ipwonyn;
+	}
+
+	public String getSpcsugayn() {
+		return spcsugayn;
+	}
+
+	public void setSpcsugayn(String spcsugayn) {
+		this.spcsugayn = spcsugayn;
 	}
 
 	public String getFilenew() {

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import egovframework.wnn_medcost.magam.model.FilesDTO;
 import egovframework.wnn_medcost.magam.model.IpwonDTO;
+import egovframework.wnn_medcost.magam.model.SpcsugaDTO;
 import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.magam.model.IndiDTO;
 import egovframework.wnn_medcost.magam.model.PatvalDTO;
@@ -47,6 +48,8 @@ public interface MagamService {
 	String saveGasanMst(MagamDTO dto) throws Exception;
 	
 	String saveExcelDatas(List<IpwonDTO> ipwonData) throws Exception;
+
+	String saveSpcsugaDatas(List<SpcsugaDTO> spcsugaData) throws Exception;
 	
 	String create_Eval_Indi(IndiDTO dto) throws Exception;
 	

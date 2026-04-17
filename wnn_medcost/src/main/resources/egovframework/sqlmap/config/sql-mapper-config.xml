@@ -41,6 +41,7 @@
     	<typeAlias  alias="MagamDTO"    type="egovframework.wnn_medcost.magam.model.MagamDTO"/>
     	<typeAlias  alias="FilesDTO"    type="egovframework.wnn_medcost.magam.model.FilesDTO"/>
     	<typeAlias  alias="IpwonDTO"    type="egovframework.wnn_medcost.magam.model.IpwonDTO"/>
+        <typeAlias  alias="SpcsugaDTO"  type="egovframework.wnn_medcost.magam.model.SpcsugaDTO"/>
         <typeAlias  alias="IndiDTO"     type="egovframework.wnn_medcost.magam.model.IndiDTO"/>
         <typeAlias  alias="PatvalDTO"   type="egovframework.wnn_medcost.magam.model.PatvalDTO"/>
         

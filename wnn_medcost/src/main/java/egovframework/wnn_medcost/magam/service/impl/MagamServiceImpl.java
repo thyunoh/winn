@@ -21,6 +21,7 @@ import egovframework.wnn_medcost.magam.mapper.MagamMapper;
 import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.magam.model.FilesDTO;
 import egovframework.wnn_medcost.magam.model.IpwonDTO;
+import egovframework.wnn_medcost.magam.model.SpcsugaDTO;
 import egovframework.wnn_medcost.magam.model.IndiDTO;
 import egovframework.wnn_medcost.magam.model.PatvalDTO;
 
@@ -227,6 +228,19 @@ public class MagamServiceImpl implements MagamService {
 	
 	@Override
 	public String delMagamClaimNo(MagamDTO dto) {
+		// 특정수가(0000000001) 삭제 시 TBL_SPCSUGA_INFO 의 해당 월 데이터도 함께 삭제
+		if ("Z".equals(dto.getMg_flag()) && "0000000001".equals(dto.getClaim_no())) {
+			try {
+				SpcsugaDTO sp = new SpcsugaDTO();
+				sp.setHosp_cd(dto.getHosp_cd());
+				sp.setJobyymm((dto.getMg_year() == null ? "" : dto.getMg_year())
+				             + (dto.getMgmonth() == null ? "" : dto.getMgmonth()));
+				int delCnt = mapper.deleteSpcsugaInfo(sp);
+				System.out.println("특정수가현황 TBL_SPCSUGA_INFO 삭제 결과 - : " + delCnt);
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
 		return mapper.delMagamClaimNo(dto);
 	}
 	
@@ -337,6 +351,79 @@ public class MagamServiceImpl implements MagamService {
 		
         
     }	
+	@Override
+	public String saveSpcsugaDatas(List<SpcsugaDTO> spcsugaData) {
+
+		String err_cd = "0";
+		int    counts = 0;
+
+		try {
+
+			SpcsugaDTO firstData = spcsugaData.get(0);
+
+			System.out.println("특정수가현황 hosp_cd - : " + firstData.getHosp_cd());
+			System.out.println("특정수가현황 jobyymm - : " + firstData.getJobyymm());
+
+			counts = mapper.deleteSpcsugaInfo(firstData);
+
+			if (counts >= 0) {
+
+				counts = mapper.insertSpcsugaInfo(spcsugaData);
+
+				if (counts < 1) {
+					err_cd = "30000";
+				} else {
+					System.out.println("특정수가현황 spcsugaData - : " + spcsugaData.size());
+
+					// 그리드(magamGetFileList) 표시용 - 입원현황과 동일 패턴
+					// claim_no '0000000001'로 입원현황(0000000000)과 구분, 나머지는 동일하게 'Z'
+					MagamDTO dto = new MagamDTO();
+					dto.setHosp_cd(firstData.getHosp_cd());
+					dto.setMg_year(firstData.getJobyymm().substring(0, 4));
+					dto.setMgmonth(firstData.getJobyymm().substring(4, 6));
+					dto.setMg_flag("Z");
+					dto.setClaim_no("0000000001");
+					dto.setClform_ver("000");
+					dto.setClaim_type("Z");
+					dto.setTreat_type("Z");
+					dto.setDate_ym(firstData.getJobyymm());
+					dto.setCase_cnt(String.valueOf(spcsugaData.size()));
+					dto.setTot_amt("0");
+					dto.setClaim_amt("0");
+					dto.setFile_nm(firstData.getFile_nm());
+					dto.setJobs_dt(firstData.getJobs_dt());
+					dto.setReg_user(firstData.getReg_user());
+
+					System.out.println("특정수가현황 AdmMagamInsert 전 파라미터 => hosp_cd=" + dto.getHosp_cd()
+						+ ", mg_year=" + dto.getMg_year() + ", mgmonth=" + dto.getMgmonth()
+						+ ", mg_flag=" + dto.getMg_flag() + ", claim_no=" + dto.getClaim_no()
+						+ ", clform_ver=" + dto.getClform_ver() + ", claim_type=" + dto.getClaim_type()
+						+ ", treat_type=" + dto.getTreat_type() + ", date_ym=" + dto.getDate_ym()
+						+ ", case_cnt=" + dto.getCase_cnt() + ", tot_amt=" + dto.getTot_amt()
+						+ ", claim_amt=" + dto.getClaim_amt() + ", file_nm=" + dto.getFile_nm()
+						+ ", jobs_dt=" + dto.getJobs_dt() + ", reg_user=" + dto.getReg_user());
+					try {
+						int admCnt = mapper.AdmMagamInsert(dto);
+						System.out.println("특정수가현황 AdmMagamInsert 결과 - : " + admCnt + ", claim_no=0000000001");
+					} catch(Exception adex) {
+						System.out.println("특정수가현황 AdmMagamInsert 예외 발생: " + adex.getClass().getName() + " - " + adex.getMessage());
+						adex.printStackTrace();
+						throw adex;
+					}
+				}
+
+			} else { err_cd = "20000"; }
+
+		} catch(Exception e) {
+			e.printStackTrace();
+			err_cd = "90000";
+		}
+
+		System.out.println("특정수가현황 서비스 종료 : " + err_cd);
+
+		return err_cd;
+	}
+
 	@Override
 	public String create_Eval_Indi(IndiDTO dto) {
 		return mapper.create_Eval_Indi(dto);

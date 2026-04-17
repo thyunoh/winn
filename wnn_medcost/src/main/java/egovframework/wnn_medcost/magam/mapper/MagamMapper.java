@@ -10,6 +10,7 @@ import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.magam.model.PatvalDTO;
 import egovframework.wnn_medcost.magam.model.FilesDTO;
 import egovframework.wnn_medcost.magam.model.IpwonDTO;
+import egovframework.wnn_medcost.magam.model.SpcsugaDTO;
 import egovframework.wnn_medcost.magam.model.IndiDTO;
 
 
@@ -64,6 +65,9 @@ public interface MagamMapper {
 	
 	int insertIpwonInfo(List<IpwonDTO> ipwonData);
 	int deleteIpwonInfo(IpwonDTO ipwonData);
+
+	int insertSpcsugaInfo(List<SpcsugaDTO> spcsugaData);
+	int deleteSpcsugaInfo(SpcsugaDTO spcsugaData);
 	
 	int  AdmMagamInsert(MagamDTO dto);
 	

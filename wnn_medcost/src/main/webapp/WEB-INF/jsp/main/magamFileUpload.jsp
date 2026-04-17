@@ -309,7 +309,14 @@
 					 	{ data: 'claim_no',      visible: true,  className: 'dt-body-center',  width: '100px' },
 					    { data: 'clform_ver',    visible: true,  className: 'dt-body-center',  width: '50px'  },
 					    { data: 'claim_type_nm', visible: true, className: 'dt-body-center',   width: '80px' },
-					    { data: 'treat_type_nm', visible: true,  className: 'dt-body-center',  width: '250px' },
+					    { data: 'treat_type_nm', visible: true,  className: 'dt-body-center',  width: '250px',
+					      render: function(data, type, row) {
+					          if (type === 'display' && row && row.mg_flag === 'Z' && row.claim_no === '0000000001') {
+					              return '특정수가 등록자료';
+					          }
+					          return data;
+					      }
+					    },
         				{ 
         				    data: 'js008Yn', 
         				    visible: true, 
@@ -458,6 +465,9 @@ $(document).ready(function() {
 	  	}
     	if (e.target && e.target.getAttribute('data-action') === 'excelLoad') {
     		excelLoad_Open(e.target.getAttribute('data-mgmonth'));
+    	}
+    	if (e.target && e.target.getAttribute('data-action') === 'spcsugaLoad') {
+    		spcsugaLoad_Open(e.target.getAttribute('data-mgmonth'));
     	}
     	if (e.target && e.target.getAttribute('data-action') === 'magamLock') {
     		magamLock_Open(e.target.getAttribute('data-mgmonth'));
@@ -1693,10 +1703,330 @@ function excelLoad_Open(mgmonth) {
     }
 }
 
+// ─── 특정수가현황 엑셀 업로드 진입 ───
+function spcsugaLoad_Open(mgmonth) {
+	try {
+		gExcel = 'S';                 // S = 특정수가현황 엑셀 업로드 모드
+		event.stopPropagation();
+		gMonth = mgmonth;
+		findField('mgmonth', gMonth);
+
+		let folderInput = document.getElementById('folderInput');
+		if (!folderInput) {
+			console.error("folderInput 요소를 찾을 수 없습니다.");
+			return;
+		}
+
+		folderInput.removeAttribute("webkitdirectory");
+		folderInput.setAttribute("accept", ".xlsx, .xls");
+		folderInput.value    = '';
+		folderInput.onchange = handleSpcsugaFileSelection;
+		folderInput.click();
+	} catch (error) {
+		console.error("spcsugaLoad_Open 함수 실행 중 오류 발생:", error);
+	}
+}
+
+// 특정수가현황 엑셀 처리 (요양기관기호 검증 + 내원일 여러개 분해 + 입원일 년도 적용)
+async function handleSpcsugaFileSelection(event) {
+	signUp = 'Y';
+
+	// 엑셀 헤더 -> DB 컬럼 매핑
+	const columnMapping = {
+		'hosp_cd'   : ['요양기관기호','요양기호','요양기관번호','요양기호번호'],
+		'chartno'   : ['차트번호','환자id','차트 no','차트no','chart','chart number'],
+		'patname'   : ['환자성명','환자명','환자이름','이름','성명','수진자명'],
+		'med_start' : ['내원일','진료일','진료일자','방문일','방문일자'],
+		'juminno'   : ['주민번호','주민등록번호'],
+		'card_no'   : ['증번호'],
+		'insurnm'   : ['종별','보험유형','환자유형','보종','보험'],
+		// 정의코드, 수가코드 → SUGA_CD
+		'suga_cd'   : ['정의코드','수가코드'],
+		// 청구코드, 보험코드, EDI코드 → EDI_CODE (모두 동일 개념)
+		'edi_code'  : ['청구코드','보험코드','edi코드','edicode','ediCode'],
+		'kor_name'  : ['한글명칭','한글명','코드명','명칭'],
+		'comp_code' : ['제약회사'],
+		'income_gu' : ['구입거래처','구입처','거래처'],
+		'burye_code': ['분류번호','분류기호'],
+		'yong_code' : ['효능코드'],
+		'unit_price': ['단가'],
+		'total_dose': ['수량'],
+		'amount'    : ['금액'],
+		'tel_phone' : ['전화번호'],
+		'hand_phone': ['핸드폰번호','휴대폰','휴대폰번호','휴대전화'],
+		'tewondt'   : ['퇴원일','퇴원일자'],
+		'dep_name'  : ['진료과','진료과목','진료과명'],
+		'ward_nm'   : ['병동'],
+		'room_nm'   : ['병실'],
+		'item_no'   : ['항'],
+		'code_no'   : ['목'],
+		'spc_name'  : ['특이사항','특이사할'],
+		'sec_code'  : ['성분코드'],
+		'sec_name'  : ['성분명'],
+		'ipwondt'   : ['입원일','입원일자','최초입원일','실입원일'],
+		'doc_code'  : ['주치의','의사','주치의사']
+	};
+
+	function norm(s) { return (s == null ? '' : String(s)).trim().toLowerCase().replace(/\s+/g,''); }
+	function mapHeader(h) {
+		const key = norm(h);
+		for (const [db, aliases] of Object.entries(columnMapping)) {
+			if (aliases.some(a => norm(a) === key)) return db;
+		}
+		return null;
+	}
+	function formatDate(v) {
+		if (v == null || v === '') return '';
+		if (typeof v === 'string') {
+			if (v.includes(' ')) v = v.split(' ')[0];
+			if (v.includes('/')) {
+				const p = v.split('/');
+				if (p.length === 3) {
+					let [m,d,y] = p.map(x => x.trim().padStart(2,'0'));
+					if (y.length === 2) y = (parseInt(y,10) < 50 ? '20' : '19') + y;
+					return y + '-' + m + '-' + d;
+				}
+			}
+			return v;
+		}
+		if (v instanceof Date) {
+			const y = v.getFullYear();
+			const m = String(v.getMonth()+1).padStart(2,'0');
+			const d = String(v.getDate()).padStart(2,'0');
+			return y + '-' + m + '-' + d;
+		}
+		return String(v);
+	}
+	// "01-08, 02-05" / "1/8 1/15" / "01.08" 등의 MM-DD 목록에서 각 값 추출
+	function splitVisits(v) {
+		if (v == null) return [];
+		const s = String(v).trim();
+		if (!s) return [];
+		// 이미 완전한 날짜 1개이면 그대로
+		if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(s)) return [formatDate(s)];
+		return s.split(/[,;\s]+/).map(t => t.trim()).filter(Boolean);
+	}
+	// MM-DD(또는 MM/DD) + 기준년도 => YYYY-MM-DD
+	function makeFullDate(token, baseYear) {
+		if (!token) return '';
+		// 이미 완전한 날짜
+		if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(token)) return formatDate(token);
+		const m = token.match(/^(\d{1,2})[-/.](\d{1,2})$/);
+		if (m) {
+			return baseYear + '-' + m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0');
+		}
+		return token;
+	}
+	// 저장용: '/', '-', '.' 제거하여 8자리 숫자(YYYYMMDD)로
+	function stripDateSep(v) {
+		if (v == null || v === '') return '';
+		return String(v).replace(/[-\/.]/g, '');
+	}
+
+	const files = event.target.files;
+	const datas = [];
+	const rawRows = [];
+	const columnMapResult = {};
+	const jobdt = getJobDateTime();
+	let seqNumber = 0;
+	let hospMismatch = [];     // 요양기관기호 불일치 기록
+	let missingRequired = 0;   // 필수 누락 행 수
+
+	for (let file of files) {
+		const reader = new FileReader();
+		await new Promise((resolve, reject) => {
+			reader.onload = function(e) {
+				const wb = XLSX.read(e.target.result, {type:'binary', codepage:949, raw:true});
+				wb.SheetNames.forEach(sheetName => {
+					const ws = wb.Sheets[sheetName];
+					const rows = XLSX.utils.sheet_to_json(ws, { defval:'', raw:false, cellDates:true });
+
+					rows.forEach((row, idx) => {
+						if (idx === 0) {
+							for (const k of Object.keys(row)) columnMapResult[k] = mapHeader(k);
+						}
+
+						// 1) 원시 필드 수집
+						const base = { hosp_cd:'', chartno:'', patname:'', med_start:'', juminno:'', card_no:'',
+							insurnm:'', suga_cd:'', edi_code:'', kor_name:'', comp_code:'', income_gu:'',
+							burye_code:'', yong_code:'', unit_price:'', total_dose:'', amount:'',
+							tel_phone:'', hand_phone:'', tewondt:'', dep_name:'', ward_nm:'', room_nm:'',
+							item_no:'', code_no:'', spc_name:'', sec_code:'', sec_name:'', ipwondt:'', doc_code:'' };
+						for (const [k,v] of Object.entries(row)) {
+							const dbKey = mapHeader(k);
+							if (!dbKey) continue;
+							if (dbKey === 'tewondt' || dbKey === 'ipwondt') {
+								base[dbKey] = formatDate(v);
+							} else {
+								base[dbKey] = (v == null ? '' : String(v).trim());
+							}
+						}
+
+						// 2) 필수 필드 검증: 요양기관기호, 입원일, 주민번호, 성명, 보험코드(EDI), 내원일
+						const reqOk = base.hosp_cd && base.ipwondt && base.juminno && base.patname &&
+						              base.edi_code && base.med_start;
+						if (!reqOk) { missingRequired++; rawRows.push(row); return; }
+
+						// 3) 요양기관기호와 로그인 병원 일치여부
+						if (String(base.hosp_cd).trim() !== String(hospid).trim()) {
+							hospMismatch.push({ row: idx+2, xls: base.hosp_cd, login: hospid, name: base.patname });
+						}
+
+						// 4) 내원일 분해 (여러개) + 입원일 년도 적용
+						const ipwonYear = (base.ipwondt && base.ipwondt.length >= 4) ? base.ipwondt.substring(0,4) : g_Year;
+						const visits = splitVisits(base.med_start);
+						const expanded = visits.length ? visits : [''];
+
+						expanded.forEach(tok => {
+							seqNumber++;
+							const r = Object.assign({}, base);
+							r.med_start = stripDateSep(makeFullDate(tok, ipwonYear));
+							r.ipwondt   = stripDateSep(r.ipwondt);
+							r.tewondt   = stripDateSep(r.tewondt);
+							r.hosp_cd   = hospid;             // 저장 시 로그인 병원 기준
+							r.jobyymm   = g_Year + gMonth;
+							r.seq_num   = seqNumber;
+							r.file_nm   = file.name;
+							r.jobs_dt   = jobdt;
+							r.reg_user  = userid;
+							r.upd_user  = userid;
+							r.reg_ip    = '127.0.0.1';
+							r.upd_ip    = '127.0.0.1';
+							datas.push(r);
+						});
+						rawRows.push(row);
+					});
+				});
+				resolve();
+			};
+			reader.onerror = function(e) { reject(e); };
+			reader.readAsBinaryString(file);
+		});
+	}
+
+	showSpcsugaPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, hospMismatch, missingRequired);
+}
+
+function showSpcsugaPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, hospMismatch, missingRequired) {
+	if (datas.length === 0) {
+		signUp = 'N';
+		messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 특정수가 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
+		return;
+	}
+
+	let html = '';
+	const mapped   = Object.entries(columnMapResult).filter(([k,v]) => v);
+	const unmapped = Object.entries(columnMapResult).filter(([k,v]) => !v);
+	const mappedDb = mapped.map(([,v]) => v);
+	const missing  = Object.entries(columnMapping).filter(([db]) => !mappedDb.includes(db));
+
+	html += '<div class="mb-3"><h6 style="font-weight:600;"><i class="fa fa-columns mr-1"></i>컬럼 매핑 (' + mapped.length + '/' + Object.keys(columnMapResult).length + '개 인식)</h6><div style="display:flex; flex-wrap:wrap; gap:6px;">';
+	mapped.forEach(([o,m]) => { html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; border-radius:12px;">' + o + ' → ' + m + '</span>'; });
+	unmapped.forEach(([o]) => { html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; border-radius:12px;">' + o + ' (미인식)</span>'; });
+	html += '</div></div>';
+
+	if (missing.length > 0) {
+		html += '<div class="mb-3" style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px;">';
+		html += '<h6 style="font-weight:600; color:#856404;"><i class="fa fa-exclamation-triangle mr-1"></i>엑셀에 없는 컬럼</h6><div style="display:flex;flex-wrap:wrap;gap:6px;">';
+		missing.forEach(([db, aliases]) => { html += '<span class="badge" style="background:#fff;border:1px solid #ffc107;color:#856404;padding:5px 10px;border-radius:12px;">' + db + ' (' + aliases.join(', ') + ')</span>'; });
+		html += '</div></div>';
+	}
+
+	// 요양기관기호 검증 결과
+	if (hospMismatch.length > 0) {
+		html += '<div class="mb-3" style="background:#f8d7da; border:1px solid #f5c6cb; border-radius:8px; padding:10px 14px; color:#721c24;">';
+		html += '<h6 style="font-weight:600;"><i class="fa fa-times-circle mr-1"></i>요양기관기호 불일치 (' + hospMismatch.length + '건) — 로그인 병원: ' + hospid + '</h6>';
+		html += '<div style="font-size:12px; max-height:120px; overflow:auto;">';
+		hospMismatch.slice(0, 20).forEach(m => { html += '행 ' + m.row + ' · 엑셀: ' + m.xls + ' · 환자: ' + m.name + '<br>'; });
+		if (hospMismatch.length > 20) html += '... 외 ' + (hospMismatch.length - 20) + '건';
+		html += '</div></div>';
+	} else {
+		html += '<div class="mb-3"><span class="badge" style="background:#d4edda;color:#155724;padding:5px 10px;font-size:13px;"><i class="fa fa-check-circle mr-1"></i>요양기관기호 일치 (' + hospid + ')</span></div>';
+	}
+
+	if (missingRequired > 0) {
+		html += '<div class="mb-3"><span class="badge" style="background:#fff3cd;color:#856404;padding:5px 10px;font-size:13px;">필수값(요양기호/입원일/주민번호/성명/보험코드/내원일) 누락 행 제외: ' + missingRequired + '건</span></div>';
+	}
+
+	html += '<div class="mb-2"><h6 style="font-weight:600;"><i class="fa fa-table mr-1"></i>데이터 미리보기 (분해 후 총 ' + seqNumber + '건)</h6></div>';
+	html += '<div style="overflow:auto;max-height:50vh;"><table class="table table-bordered table-sm" style="font-size:12px;white-space:nowrap;"><thead style="background:#2a5298;color:#fff;position:sticky;top:0;"><tr>';
+	const previewCols = ['seq_num','hosp_cd','chartno','patname','ipwondt','med_start','juminno','insurnm','suga_cd','edi_code','kor_name','unit_price','total_dose','amount','tewondt'];
+	previewCols.forEach(c => { html += '<th style="padding:4px 8px;color:#fff;">' + c + '</th>'; });
+	html += '</tr></thead><tbody>';
+	datas.slice(0, 200).forEach(r => {
+		html += '<tr>';
+		previewCols.forEach(c => { html += '<td style="padding:3px 8px;">' + (r[c] == null ? '' : r[c]) + '</td>'; });
+		html += '</tr>';
+	});
+	html += '</tbody></table></div>';
+	if (datas.length > 200) html += '<div class="text-muted">미리보기는 200건까지 표시됩니다.</div>';
+
+	$('#excelPreviewContent').html(html);
+	// 헤더 타이틀 특정수가용으로 교체 (원 타이틀 백업 후 닫힐 때 원복)
+	const _spcOrigTitle = $('#excelPreviewModal .modal-title').html();
+	$('#excelPreviewModal .modal-title').html('<i class="fa fa-file-excel mr-2"></i>특정수가현황 엑셀 미리보기');
+	$('#excelPreviewModal').one('hidden.bs.modal', function() {
+		$('#excelPreviewModal .modal-title').html(_spcOrigTitle);
+	});
+
+	// 요양기관기호 불일치 시 저장 버튼 비활성화
+	if (hospMismatch.length > 0) {
+		$('#btnExcelPreviewSave').prop('disabled', true).addClass('disabled').attr('title', '요양기관기호 불일치로 등록 불가');
+	} else {
+		$('#btnExcelPreviewSave').prop('disabled', false).removeClass('disabled').removeAttr('title');
+	}
+
+	$('#btnExcelPreviewSave').off('click').on('click', function() {
+		if (hospMismatch.length > 0) {
+			messageBox("4", "<h5>엑셀 요양기관기호가 로그인 병원(" + hospid + ")과 일치하지 않아 등록할 수 없습니다.<br>불일치 건수: " + hospMismatch.length + "건</h5><p></p><br>", "", "", "");
+			return;
+		}
+		$('#excelPreviewModal').modal('hide');
+		doSaveSpcsugaDatas(datas);
+	});
+	$('#btnExcelPreviewX').off('click').on('click', function() {
+		signUp = 'N';
+		$('#excelPreviewModal').modal('hide');
+	});
+	$('#btnExcelPreviewCancel').off('click').on('click', function() {
+		signUp = 'N';
+		$('#excelPreviewModal').modal('hide');
+	});
+	$('#excelPreviewModal').modal('show');
+}
+
+function doSaveSpcsugaDatas(datas) {
+	$.ajax({
+		url: '/main/saveSpcsugaDatas.do',
+		type: 'POST',
+		contentType: 'application/json',
+		data: JSON.stringify(datas),
+		success: function(response) {
+			signUp = 'N';
+			if (response.error_code !== "0") {
+				messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+			} else {
+				messageBox("1", "<h5>특정수가현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
+				dataTable.ajax.reload();
+				try {
+					jobMon = gMonth;
+					loadMonthsData();
+				} catch (e) {
+					console.error("loadMonthsData 실행 중 오류 발생:", e);
+				}
+			}
+		},
+		error: function(xhr, status, error) {
+			signUp = 'N';
+			console.error("Error fetching data:", error);
+		}
+	});
+}
+
 function magamLock_Open(mgmonth) {
-	
+
 	gMonth = mgmonth;
-	
+
 	$.ajax({
 		url: "/main/updateMagamLock.do",
         type: "POST",
@@ -2016,6 +2346,16 @@ function updateMonthsContainer(rawData) {
                 buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">등록안됨</button>';
             } else {
                 buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">자료없음</button>';
+            }
+        }
+
+        if (item.spcsugayn === "Y") {
+            buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">수가현황</button>';
+        } else {
+            if (item.magamyn === "Y") {
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">수가등록안됨</button>';
+            } else {
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">수가자료없음</button>';
             }
         }
 

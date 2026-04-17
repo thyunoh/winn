@@ -8,6 +8,7 @@
 		  <result property="mg_flag"     column="mg_flag" />
 		  <result property="magamyn"     column="magamyn" />		  
 		  <result property="ipwonyn"     column="ipwonyn" />
+		  <result property="spcsugayn"   column="spcsugayn" />
 		  <result property="claim_no"    column="claim_no" />
 		  <result property="clform_ver"  column="clform_ver" />
 		  <result property="claim_type"  column="claim_type" />
@@ -76,6 +77,45 @@
 		  <result property="upd_ip"     column="upd_ip" />
 	</resultMap>
 	
+	<resultMap id="spcsugaMap" type="egovframework.wnn_medcost.magam.model.SpcsugaDTO">
+          <result property="hosp_cd"    column="hosp_cd" />
+          <result property="jobyymm"    column="jobyymm" />
+          <result property="seq_num"    column="seq_num" />
+          <result property="chartno"    column="chartno" />
+          <result property="patname"    column="patname" />
+          <result property="med_start"  column="med_start" />
+          <result property="juminno"    column="juminno" />
+          <result property="card_no"    column="card_no" />
+          <result property="insurnm"    column="insurnm" />
+          <result property="suga_cd"    column="suga_cd" />
+          <result property="edi_code"   column="edi_code" />
+          <result property="kor_name"   column="kor_name" />
+          <result property="comp_code"  column="comp_code" />
+          <result property="income_gu"  column="income_gu" />
+          <result property="burye_code" column="burye_code" />
+          <result property="yong_code"  column="yong_code" />
+          <result property="unit_price" column="unit_price" />
+          <result property="total_dose" column="total_dose" />
+          <result property="amount"     column="amount" />
+          <result property="tel_phone"  column="tel_phone" />
+          <result property="hand_phone" column="hand_phone" />
+          <result property="tewondt"    column="tewondt" />
+          <result property="dep_name"   column="dep_name" />
+          <result property="ward_nm"    column="ward_nm" />
+          <result property="room_nm"    column="room_nm" />
+          <result property="item_no"    column="item_no" />
+          <result property="code_no"    column="code_no" />
+          <result property="spc_name"   column="spc_name" />
+          <result property="sec_code"   column="sec_code" />
+          <result property="sec_name"   column="sec_name" />
+          <result property="ipwondt"    column="ipwondt" />
+          <result property="doc_code"   column="doc_code" />
+          <result property="reg_user"   column="reg_user" />
+          <result property="reg_ip"     column="reg_ip" />
+          <result property="upd_user"   column="upd_user" />
+          <result property="upd_ip"     column="upd_ip" />
+	</resultMap>
+
 	<resultMap id="indiMap" type="egovframework.wnn_medcost.magam.model.IndiDTO">	   
           <result property="hosp_cd"    column="hosp_cd" />
           <result property="hosp_nm"    column="hosp_nm" />
@@ -143,12 +183,18 @@
 		     , #{mg_flag} AS MG_FLAG
 		     , CASE WHEN A.MGMONTH IS NOT NULL THEN 'Y' ELSE 'N' END     AS MAGAMYN
 		     , IFNULL(A.LOCK_YN,'N')                                     AS LOCK_YN                                                
-		     , CASE WHEN EXISTS ( SELECT 1 
+		     , CASE WHEN EXISTS ( SELECT 1
                                     FROM TBL_IPWON_INFO B
                                    WHERE B.HOSP_CD = #{hosp_cd}
                                      AND B.JOBYYMM = CONCAT(#{mg_year}, M.MGMONTH)
-                  ) THEN 'Y' ELSE 'N' 
+                  ) THEN 'Y' ELSE 'N'
                 END AS IPWONYN
+		     , CASE WHEN EXISTS ( SELECT 1
+                                    FROM TBL_SPCSUGA_INFO S
+                                   WHERE S.HOSP_CD = #{hosp_cd}
+                                     AND S.JOBYYMM = CONCAT(#{mg_year}, M.MGMONTH)
+                  ) THEN 'Y' ELSE 'N'
+                END AS SPCSUGAYN
 		FROM MONTHS M LEFT JOIN TBL_MAGAM_INFO A ON M.MGMONTH = A.MGMONTH
 		 AND A.HOSP_CD = #{hosp_cd}
 		 AND A.MG_YEAR = #{mg_year}
@@ -249,7 +295,7 @@
 	  , CASE WHEN A.CLAIM_NO = '0000000000' OR  A.MG_FLAG = '9' THEN 'N'
 	         WHEN CM.CLAIM_NO IS NOT NULL    THEN 'N'
 	         WHEN COALESCE(NULLIF(E.TOTAL_2, 0), E.TOT_AMT, 0)
-               + COALESCE(E.NON100_COST, 0) = 0              THEN  'CN'    
+               + COALESCE(E.NON100_COST, 0) = 0              THEN  'CN'
 	         ELSE 'Y'
 	    END                                                             AS js008Yn
 	FROM  TBL_MAGAM_CHUNG A
@@ -1093,6 +1139,68 @@
         </foreach>
     </insert>
     
+    <delete id="deleteSpcsugaInfo" parameterType="SpcsugaDTO">
+        DELETE FROM TBL_SPCSUGA_INFO
+         WHERE HOSP_CD = #{hosp_cd}
+           AND JOBYYMM = #{jobyymm}
+    </delete>
+
+    <insert id="insertSpcsugaInfo" parameterType="java.util.List">
+        INSERT INTO TBL_SPCSUGA_INFO (
+            HOSP_CD, JOBYYMM, SEQ_NUM,
+            CHARTNO, PATNAME, MED_START, JUMINNO, CARD_NO, INSURNM,
+            SUGA_CD, EDI_CODE, KOR_NAME, COMP_CODE, INCOME_GU,
+            BURYE_CODE, YONG_CODE, UNIT_PRICE, TOTAL_DOSE, AMOUNT,
+            TEL_PHONE, HAND_PHONE, TEWONDT, DEP_NAME, WARD_NM, ROOM_NM,
+            ITEM_NO, CODE_NO, SPC_NAME, SEC_CODE, SEC_NAME,
+            IPWONDT, DOC_CODE,
+            REG_DTTM, REG_USER, REG_IP, UPD_DTTM, UPD_USER, UPD_IP
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.hosp_cd},
+                #{item.jobyymm},
+                #{item.seq_num},
+                COALESCE(#{item.chartno},''),
+                COALESCE(#{item.patname},''),
+                COALESCE(#{item.med_start},''),
+                COALESCE(#{item.juminno},''),
+                COALESCE(#{item.card_no},''),
+                COALESCE(#{item.insurnm},''),
+                COALESCE(#{item.suga_cd},''),
+                COALESCE(#{item.edi_code},''),
+                COALESCE(#{item.kor_name},''),
+                COALESCE(#{item.comp_code},''),
+                COALESCE(#{item.income_gu},''),
+                COALESCE(#{item.burye_code},''),
+                COALESCE(#{item.yong_code},''),
+                NULLIF(REPLACE(COALESCE(#{item.unit_price},''),',',''),''),
+                NULLIF(REPLACE(COALESCE(#{item.total_dose},''),',',''),''),
+                NULLIF(REPLACE(COALESCE(#{item.amount},''),',',''),''),
+                COALESCE(#{item.tel_phone},''),
+                COALESCE(#{item.hand_phone},''),
+                COALESCE(#{item.tewondt},''),
+                COALESCE(#{item.dep_name},''),
+                COALESCE(#{item.ward_nm},''),
+                COALESCE(#{item.room_nm},''),
+                COALESCE(#{item.item_no},''),
+                COALESCE(#{item.code_no},''),
+                COALESCE(#{item.spc_name},''),
+                COALESCE(#{item.sec_code},''),
+                COALESCE(#{item.sec_name},''),
+                COALESCE(#{item.ipwondt},''),
+                COALESCE(#{item.doc_code},''),
+                NOW(),
+                COALESCE(#{item.reg_user},''),
+                COALESCE(#{item.reg_ip},''),
+                NOW(),
+                COALESCE(#{item.upd_user},''),
+                COALESCE(#{item.upd_ip},'')
+            )
+        </foreach>
+    </insert>
+
     <insert id="AdmMagamInsert" parameterType="MagamDTO">
         INSERT INTO TBL_MAGAM_CHUNG(HOSP_CD,MG_YEAR,MGMONTH,MG_FLAG,CLAIM_NO,CLFORM_VER,CLAIM_TYPE,TREAT_TYPE,DATE_YM,CASE_CNT,TOT_AMT,CLAIM_AMT,FILE_NM,JOBS_DT,REG_USER,UPD_USER)
         VALUES (#{hosp_cd},#{mg_year},#{mgmonth},#{mg_flag},#{claim_no},#{clform_ver},#{claim_type},#{treat_type},#{date_ym},#{case_cnt},#{tot_amt},#{claim_amt},#{file_nm},#{jobs_dt},#{reg_user},#{reg_user})

@@ -45,6 +45,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import egovframework.wnn_medcost.magam.model.IpwonDTO;
+import egovframework.wnn_medcost.magam.model.SpcsugaDTO;
 import egovframework.wnn_medcost.magam.model.FilesDTO;
 import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.magam.model.IndiDTO;
@@ -841,7 +842,55 @@ public class MagamController {
         return "jsonView";
 	}
 	
-	@RequestMapping(value="/main/saveExcelDatas.do", method = RequestMethod.POST)	
+	@RequestMapping(value="/main/saveSpcsugaDatas.do", method = RequestMethod.POST)
+	public String saveSpcsugaDatas(@RequestBody List<SpcsugaDTO> spcsugaData, HttpServletRequest request, ModelMap model) {
+
+		String err_cd = "0";
+
+		try {
+
+			System.out.println("특정수가현황 업로드 컨트롤 시작");
+
+			if (spcsugaData == null || spcsugaData.isEmpty()) {
+				model.addAttribute("error_code", "10000");
+				model.addAttribute("error_mess", "작업 1. 특정수가현황 내용이 존재하지 않습니다. 담당자게 문의하십시요 !!");
+				return "jsonView";
+			}
+
+			// 요양기관기호 비교 (로그인 병원과 엑셀 요양기관기호 일치 여부)
+			Map<String, String> cv = ClientInfo.getCookie(request);
+			String sessionHospCd = (cv != null && cv.get("s_hospid") != null) ? cv.get("s_hospid").trim() : "";
+
+			for (SpcsugaDTO r : spcsugaData) {
+				String xlsHospCd = r.getHosp_cd() == null ? "" : r.getHosp_cd().trim();
+				if (!sessionHospCd.isEmpty() && !xlsHospCd.isEmpty() && !sessionHospCd.equals(xlsHospCd)) {
+					model.addAttribute("error_code", "40000");
+					model.addAttribute("error_mess", "엑셀 요양기관기호(" + xlsHospCd + ")가 로그인 병원(" + sessionHospCd + ")과 일치하지 않습니다.");
+					return "jsonView";
+				}
+				// 저장 시 세션 hosp_cd 로 강제 세팅
+				r.setHosp_cd(sessionHospCd);
+			}
+
+			err_cd = svc.saveSpcsugaDatas(spcsugaData);
+
+			if        ("20000".equals(err_cd)) {
+				model.addAttribute("error_mess", "작업 2. 특정수가현황 정리시 오류(del). 잠시 후 다시 시도하십시요 !!");
+			} else if ("30000".equals(err_cd)) {
+				model.addAttribute("error_mess", "작업 3. 특정수가현황 정리시 오류(ins). 잠시 후 다시 시도하십시요 !!");
+			} else {
+				model.addAttribute("error_code", err_cd);
+			}
+
+		} catch (Exception e) {
+			model.addAttribute("error_code", "90000");
+			model.addAttribute("error_mess", e.getMessage() + " - saveSpcsugaDatas처리시 서버 오류가 발생했습니다.");
+		}
+
+		return "jsonView";
+	}
+
+	@RequestMapping(value="/main/saveExcelDatas.do", method = RequestMethod.POST)
 	public String saveExcelDatas(@RequestBody List<IpwonDTO> ipwonData, ModelMap model ) {
 				
 		String err_cd = "0";
