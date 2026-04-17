@@ -2659,54 +2659,59 @@ $(document).ready(function() {
 	    const yearQuarter = document.getElementById('yearQuarter');
 	    const monsQuarter = document.getElementById('monsQuarter');
 	    const hospcdGrade = document.getElementById('hospcdGrade');
-	    
+
 	    const currentYear = new Date().getFullYear();
 	    const current_Mon = new Date().getMonth() + 1;
-	    
+
 	    // 기존 옵션 제거
 	    year_Select.innerHTML = '';
 	    monthSelect.innerHTML = '';
 	    yearQuarter.innerHTML = '';
 	    monsQuarter.innerHTML = '';
-	    
+
 	    const current_Year = new Date().getFullYear();
-	    
-	    
+
+
 	    if (current_Year === 2025) {
 	    	$('#goal_Jugi').val('2');
 	        $('#goal_Chasu').val('7');
-	        
+
 	    }
-	    
+
+	    // sessionStorage에 저장된 값이 있으면 그 값을, 없으면 현재 년월을 기본 선택
+	    var savedYear  = sessionStorage.getItem('assessment_year');
+	    var savedMonth = sessionStorage.getItem('assessment_month');
+	    var targetYear  = savedYear  ? parseInt(savedYear, 10)  : currentYear;
+	    var targetMonth = savedMonth ? parseInt(savedMonth, 10) : current_Mon;
+
 	    // 당해년도 포함 10년 Setting
 	    for (let i = 0; i <= 9; i++) {
-	    	
+
 	    	const year = currentYear - i;
 
 	        const option1 = document.createElement('option');
 	        option1.value = year;
 	        option1.textContent = year;
-	        if (year === currentYear) option1.selected = true;
+	        if (year === targetYear) option1.selected = true;
 	        year_Select.appendChild(option1);
 
 	        const option2 = document.createElement('option');
 	        option2.value = year;
 	        option2.textContent = year;
-	        if (year === currentYear) option2.selected = true;
+	        if (year === targetYear) option2.selected = true;
 	        yearQuarter.appendChild(option2);
 	    }
 	 	// 월 생성 로직
 	    for (let i = 1; i <= 12; i++) {
-	        let month = i < 10 ? '0' + i : i;
+	        let month = i < 10 ? '0' + i : '' + i;
 	        const option = document.createElement('option');
 	        option.value = month;
 	        option.textContent = month;
-	        
-	        // 현재 달 기준으로 당월 선택
-	        if (i === current_Mon) {
+
+	        if (i === targetMonth) {
 	            option.selected = true; // 기본 선택값 설정
 	        }
-	        
+
 	        monthSelect.appendChild(option);
 	    }
 
@@ -2738,17 +2743,19 @@ $(document).ready(function() {
 	populateYearSelect();
 	
 	$('#year_Select').on('change', function() {
+		sessionStorage.setItem('assessment_year', this.value);
 		fn_IndiSelect();
-		
+
 		const selectedYear = $(this).val(); // 선택된 연도 값
 
 	    if (selectedYear === '2025') {
 	        $('#goal_Jugi').val('2');
 	        $('#goal_Chasu').val('7');
 	    }
-		
+
     });
 	$('#monthSelect').on('change', function() {
+		sessionStorage.setItem('assessment_month', this.value);
 		fn_IndiSelect();
     });
 	$('#yearQuarter').on('change', function() {

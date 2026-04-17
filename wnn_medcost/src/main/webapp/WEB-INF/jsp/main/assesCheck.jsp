@@ -871,41 +871,45 @@ $(document).ready(function() {
 	
 	//현재 연도를 기준으로 첫 번째 옵션과 나머지 9개의 연도를 동적으로 생성
 	function populateYearSelect() {
-	    
+
 		const year_Select = document.getElementById('year_Select');
 	    const monthSelect = document.getElementById('monthSelect');
-	    
+
 	    const currentYear = new Date().getFullYear();
 	    const current_Mon = new Date().getMonth() + 1;
-	    
+
 	    // 기존 옵션 제거
 	    year_Select.innerHTML = '';
 	    monthSelect.innerHTML = '';
-	    
-	    
+
+	    // sessionStorage에 저장된 값이 있으면 그 값을, 없으면 현재 년월을 기본 선택
+	    var savedYear  = sessionStorage.getItem('assesCheck_year');
+	    var savedMonth = sessionStorage.getItem('assesCheck_month');
+	    var targetYear  = savedYear  ? parseInt(savedYear, 10)  : currentYear;
+	    var targetMonth = savedMonth ? parseInt(savedMonth, 10) : current_Mon;
+
 	    // 당해년도 포함 10년 Setting
 	    for (let i = 0; i <= 9; i++) {
-	    	
+
 	    	const year = currentYear - i;
 
 	        const option = document.createElement('option');
 	        option.value = year;
 	        option.textContent = year;
-	        if (year === currentYear) option.selected = true;
+	        if (year === targetYear) option.selected = true;
 	        year_Select.appendChild(option);
 	    }
 	 	// 월 생성 로직
 	    for (let i = 1; i <= 12; i++) {
-	        let month = i < 10 ? '0' + i : i;
+	        let month = i < 10 ? '0' + i : '' + i;
 	        const option = document.createElement('option');
 	        option.value = month;
 	        option.textContent = month;
-	        
-	        // 현재 달 기준으로 전월 선택
-	        if (i === current_Mon) {
+
+	        if (i === targetMonth) {
 	            option.selected = true; // 기본 선택값 설정
 	        }
-	        
+
 	        monthSelect.appendChild(option);
 	    }
 
@@ -915,15 +919,15 @@ $(document).ready(function() {
 	        monthSelect.value = '12';
 	    }
 	 	*/
-	}	
-	
+	}
+
 	populateYearSelect();
-	
+
 	$('#year_Select').on('change', function() {
-		
+		sessionStorage.setItem('assesCheck_year', this.value);
     });
 	$('#monthSelect').on('change', function() {
-		
+		sessionStorage.setItem('assesCheck_month', this.value);
     });
 	
 	

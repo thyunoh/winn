@@ -5022,33 +5022,40 @@ $(document).ready(function() {
 	    const monthSelect = document.getElementById('monthSelect');
 	    const currentYear = new Date().getFullYear();
 	    const current_Mon = new Date().getMonth() + 1;
-	    
+
 	    // 기존 옵션 제거
 	    year_Select.innerHTML = '';
 	    monthSelect.innerHTML = '';
-	    
+
 	    const current_Year = new Date().getFullYear();
-	    
-	    
+
+	    // sessionStorage에 저장된 값이 있으면 그 값을, 없으면 현재 년월을 기본 선택
+	    var savedYear  = sessionStorage.getItem('totalReport_year');
+	    var savedMonth = sessionStorage.getItem('totalReport_month');
+	    var targetYear  = savedYear  ? parseInt(savedYear, 10)  : current_Year;
+	    var targetMonth = savedMonth ? parseInt(savedMonth, 10) : current_Mon;
+
 	    // 당해년도 포함 10년 Setting
 	    for (let i = 0; i <= 9; i++) {
 	        const option = document.createElement('option');
 	        option.value = current_Year - i;
 	        option.textContent = current_Year - i;
+	        if ((current_Year - i) === targetYear) {
+	            option.selected = true;
+	        }
 	        year_Select.appendChild(option);
 	    }
 	 	// 월 생성 로직
 	    for (let i = 1; i <= 12; i++) {
-	        let month = i < 10 ? '0' + i : i;
+	        let month = i < 10 ? '0' + i : '' + i;
 	        const option = document.createElement('option');
 	        option.value = month;
 	        option.textContent = month;
-	        
-	        // 현재 달 기준으로 전월 선택
-	        if (i === current_Mon) {
+
+	        if (i === targetMonth) {
 	            option.selected = true; // 기본 선택값 설정
 	        }
-	        
+
 	        monthSelect.appendChild(option);
 	    }
 
@@ -5058,17 +5065,9 @@ $(document).ready(function() {
 	        monthSelect.value = '12';
 	    }
 	    */
-	}	
-	
-	populateYearSelect();
+	}
 
-	// sessionStorage에 저장된 년월 복원
-	(function restoreSavedYearMonth() {
-	    var savedYear  = sessionStorage.getItem('totalReport_year');
-	    var savedMonth = sessionStorage.getItem('totalReport_month');
-	    if (savedYear)  document.getElementById('year_Select').value = savedYear;
-	    if (savedMonth) document.getElementById('monthSelect').value = savedMonth;
-	})();
+	populateYearSelect();
 
 	$('#year_Select').on('change', function() {
 		sessionStorage.setItem('totalReport_year', this.value);
