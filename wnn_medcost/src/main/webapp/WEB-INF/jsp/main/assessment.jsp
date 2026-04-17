@@ -87,12 +87,71 @@
 						</div>	
 	                    <div class="col-lg-7">
 		                    <div class="card" id="card_container" style="display: none;">
-		                    
+
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
-							        
+
 							        <label id="lab_title" class="dsah_lab9"></label>
-							        
+
+							        <div id="cath05BtnZone" style="display:none; white-space:nowrap;">
+							            <button type="button" id="btnCath05Check" class="cath05-btn"
+							                    onclick="fn_ShowCath05Modal()">
+							                <i class="fas fa-stethoscope cath05-icon"></i>
+							                <span class="cath05-label">유치도뇨관&nbsp;&nbsp;및 오류점검</span>
+							                <span class="cath05-badge" id="badgeCath05">0</span>
+							            </button>
+							        </div>
+
 							    </div>
+							    <style>
+							        .cath05-btn {
+							            display: inline-flex;
+							            align-items: center;
+							            gap: 8px;
+							            padding: 6px 14px;
+							            border: none;
+							            border-radius: 999px;
+							            font-size: 12.5px;
+							            font-weight: 600;
+							            letter-spacing: 0.2px;
+							            color: #5a3d00;
+							            background: linear-gradient(135deg, #ffe082 0%, #ffc107 100%);
+							            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), inset 0 1px 0 rgba(255,255,255,0.5);
+							            cursor: pointer;
+							            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+							        }
+							        .cath05-btn:hover  { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 4px 10px rgba(255, 193, 7, 0.45); }
+							        .cath05-btn:active { transform: translateY(0);    filter: brightness(0.97); }
+							        .cath05-btn:focus  { outline: none; }
+							        .cath05-icon  { font-size: 13px; opacity: 0.9; }
+							        .cath05-label { line-height: 1; }
+							        .cath05-badge {
+							            display: inline-flex;
+							            align-items: center;
+							            justify-content: center;
+							            min-width: 22px;
+							            height: 22px;
+							            padding: 0 7px;
+							            border-radius: 999px;
+							            background: #fff;
+							            color: #dc3545;
+							            font-size: 11.5px;
+							            font-weight: 700;
+							            box-shadow: inset 0 0 0 1px rgba(220,53,69,0.15);
+							        }
+							        .cath05-btn.is-zero {
+							            color: #5a6268;
+							            background: linear-gradient(135deg, #e9ecef 0%, #ced4da 100%);
+							            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+							        }
+							        .cath05-btn.is-zero .cath05-badge { color: #6c757d; box-shadow: inset 0 0 0 1px rgba(108,117,125,0.2); }
+
+							        @keyframes cath05Pulse {
+							            0%   { box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 0    rgba(255, 152, 0, 0.55); }
+							            70%  { box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 10px rgba(255, 152, 0, 0);    }
+							            100% { box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 0    rgba(255, 152, 0, 0);    }
+							        }
+							        .cath05-blink { animation: cath05Pulse 1.6s ease-out infinite; }
+							    </style>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
 							    
@@ -363,6 +422,112 @@ var jobFlag = '00';
 var jobYyMm = '202501';
 var jobCode = null;
 var evalIndiData = []; // 지표 데이터 저장용
+
+// 05(유치도뇨관) 상단 버튼용 데이터 저장소
+var _prevMissingData = [];
+var _errCheckData = [];
+
+// 상단 버튼 카운트/표시 갱신 (환자 단위로 unique 카운트)
+function fn_UpdateCath05Buttons() {
+    var btnZone = document.getElementById('cath05BtnZone');
+    if (!btnZone) return;
+
+    if (jobFlag !== '05') {
+        btnZone.style.display = 'none';
+        return;
+    }
+    btnZone.style.display = 'inline-block';
+
+    var patSet = {};
+    for (var i = 0; i < _prevMissingData.length; i++) {
+        if (_prevMissingData[i].patId) patSet[_prevMissingData[i].patId] = 1;
+    }
+    for (var j = 0; j < _errCheckData.length; j++) {
+        if (_errCheckData[j].patId) patSet[_errCheckData[j].patId] = 1;
+    }
+    var total = Object.keys(patSet).length;
+
+    var badge = document.getElementById('badgeCath05');
+    if (badge) badge.textContent = total;
+
+    var btn = document.getElementById('btnCath05Check');
+    if (btn) {
+        if (total > 0) {
+            btn.classList.add('cath05-blink');
+            btn.classList.remove('is-zero');
+        } else {
+            btn.classList.remove('cath05-blink');
+            btn.classList.add('is-zero');
+        }
+    }
+}
+
+// 유치도뇨관 점검 통합 모달 (환자별로 통합된 단일 목록)
+function fn_ShowCath05Modal() {
+    // 환자별 병합: patId 기준으로 1행, 문제유형을 배지로 누적
+    var patMap = {};
+    var order = [];
+
+    function addPat(patId, patNm, admitDt, issueLabel, issueColor) {
+        if (!patId) return;
+        if (!patMap[patId]) {
+            patMap[patId] = { patId: patId, patNm: patNm || '', admitDt: admitDt || '', issues: [] };
+            order.push(patId);
+        } else {
+            if (!patMap[patId].patNm && patNm) patMap[patId].patNm = patNm;
+            if (!patMap[patId].admitDt && admitDt) patMap[patId].admitDt = admitDt;
+        }
+        patMap[patId].issues.push({ label: issueLabel, color: issueColor });
+    }
+
+    for (var i = 0; i < _prevMissingData.length; i++) {
+        var m = _prevMissingData[i];
+        addPat(m.patId, m.patNm, m.admitDt, '전월대상자 당월미존재', '#f0ad4e');
+    }
+    for (var j = 0; j < _errCheckData.length; j++) {
+        var er = _errCheckData[j];
+        var lbl = '[' + er.errType + '] ' + (er.errName || '평가표오류');
+        addPat(er.patId, er.patNm, er.admitDt, lbl, '#dc3545');
+    }
+
+    var total = order.length;
+    var html;
+
+    if (total === 0) {
+        html = '<div style="padding:20px; text-align:center; color:#155724;">점검 대상이 없습니다.</div>';
+    } else {
+        html = '<div style="text-align:left; font-size:13px; max-height:65vh; overflow:auto;">';
+        html += '<table style="width:100%; border-collapse:collapse;">' +
+                '<thead><tr style="background:#f4f4f4;">' +
+                '<th style="border:1px solid #ccc; padding:4px; width:90px;">환자ID</th>' +
+                '<th style="border:1px solid #ccc; padding:4px; width:80px;">성명</th>' +
+                '<th style="border:1px solid #ccc; padding:4px; width:100px;">입원일</th>' +
+                '<th style="border:1px solid #ccc; padding:4px;">점검항목</th>' +
+                '</tr></thead><tbody>';
+        for (var k = 0; k < order.length; k++) {
+            var p = patMap[order[k]];
+            var badges = '';
+            for (var b = 0; b < p.issues.length; b++) {
+                var iss = p.issues[b];
+                badges += '<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 8px; border-radius:10px; background:' + iss.color + '; color:#fff; font-size:11px; font-weight:bold;">' + iss.label + '</span>';
+            }
+            html += '<tr>' +
+                    '<td style="border:1px solid #ccc; padding:4px; text-align:center;">' + p.patId + '</td>' +
+                    '<td style="border:1px solid #ccc; padding:4px; text-align:center;">' + p.patNm + '</td>' +
+                    '<td style="border:1px solid #ccc; padding:4px; text-align:center;">' + p.admitDt + '</td>' +
+                    '<td style="border:1px solid #ccc; padding:4px;">' + badges + '</td>' +
+                    '</tr>';
+        }
+        html += '</tbody></table></div>';
+    }
+
+    Swal.fire({
+        title: '유치도뇨관  및 오류점검 결과 : ' + total + '명',
+        html: html,
+        width: 900,
+        confirmButtonText: '확인'
+    });
+}
 
 // 낮을수록 좋은 지표 (5점 구간이 0부터 시작)
 var LOWER_IS_BETTER = ['01','02','03','05','07','10','14'];
@@ -927,7 +1092,14 @@ function fn_ViewData(data) {
 
 	jobFlag    = data.cate_cd;
 	jobYyMm    = data.jobyymm;
-	
+
+	// jobFlag 변경 시 05 상단 버튼 재평가
+	if (jobFlag !== '05') {
+	    _prevMissingData = [];
+	    _errCheckData = [];
+	}
+	fn_UpdateCath05Buttons();
+
 	datWaiting = false;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
 	page_Navig = true;   		// 페이지 네비게이션 표시여부 
 	hd_Sorting = true;   		// Head 정렬(asc,desc) 표시여부
@@ -935,7 +1107,7 @@ function fn_ViewData(data) {
 	showButton = true;   		// Button (복사, 엑셀, 출력)) 표시여부
 	s_CheckBox = false;   		// CheckBox 표시 여부
 	s_AutoNums = false;   		// 자동순번 표시 여부
-	page_Hight = 650;
+	page_Hight = 720;
 	defaultCnt = 100;
 	colPadding = '0.2px';   	// 행 높이 간격 설정
 	searchShow = true;   		// 검색창 Show/Hide 표시여부
@@ -2386,48 +2558,33 @@ function dataLoad(data, callback, settings) {
 
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(35) + '<span style="color: blue;">' + cntNote + '</span>';
 
-		                // 기존 경고 제거
-		                var existWarn = document.getElementById('prevMonthWarn');
-		                if (existWarn) existWarn.remove();
-		                var existErr = document.getElementById('errCheckWarn');
-		                if (existErr) existErr.remove();
+		                // 상단 버튼 영역 초기화
+		                _prevMissingData = [];
+		                _errCheckData = [];
+		                fn_UpdateCath05Buttons();
+		                var cath05BtnZone = document.getElementById('cath05BtnZone');
+		                if (cath05BtnZone) cath05BtnZone.style.display = 'inline-block';
 
-		                // 전월에 있었는데 당월에 빠진 환자 경고 조회
+		                // 전월에 있었는데 당월에 빠진 환자 데이터 조회 (상단 버튼/모달용)
 		                $.ajax({
 		                    url: "/main/select_PrevMonthMissing05.do",
 		                    type: "POST",
 		                    data: { hospCd: hospid, jobYymm: jobYyMm },
 		                    dataType: "json",
 		                    success: function(res) {
-		                        var cnt = (res && res.data) ? res.data.length : 0;
-		                        var bgColor = cnt > 0 ? '#fff3cd' : '#d4edda';
-		                        var bdColor = cnt > 0 ? '#f5c6cb' : '#c3e6cb';
-		                        var txColor = cnt > 0 ? '#856404' : '#155724';
-		                        var warnHtml = '<div id="prevMonthWarn" style="margin-top:8px; padding:8px 12px; border:1px solid ' + bdColor + '; border-radius:6px; background:' + bgColor + '; font-size:12px;">' +
-		                            '<b style="color:' + txColor + ';">⚠ 전월 유치도뇨관 대상자 중 당월 미존재: ' + cnt + '건</b>';
-		                        if (cnt > 0) {
-		                            warnHtml += '<br>';
-		                            for (var k = 0; k < res.data.length; k++) {
-		                                var m = res.data[k];
-		                                warnHtml += '<span style="color:' + txColor + '; margin-right:12px;">' + m.patId + ' ' + m.patNm + ' (입원:' + m.admitDt + ')</span>';
-		                                if ((k+1) % 5 === 0) warnHtml += '<br>';
-		                            }
-		                        }
-		                        warnHtml += '</div>';
-		                        var cardCont2 = document.getElementById('card_container');
-		                        if (cardCont2) cardCont2.insertAdjacentHTML('beforeend', warnHtml);
+		                        _prevMissingData = (res && res.data) ? res.data : [];
+		                        fn_UpdateCath05Buttons();
 		                    }
 		                });
 
-		                // 평가표 오류점검 (D1/D2/E1/F1/G1/G2) 조회
+		                // 평가표 오류점검 (D1/D2/E1/F1/G1/G2) 조회 (상단 버튼/모달용)
 		                $.ajax({
 		                    url: "/main/select_assesCheck.do",
 		                    type: "POST",
 		                    data: { hospCd: hospid, jobYymm: jobYyMm, jobFlag: '00' },
 		                    dataType: "json",
 		                    success: function(res) {
-		                        if (!res || !res.data) return;
-		                        // 유치도뇨관 오류만 필터 (D1,D2,E1,F1,G1,G2,H1)
+		                        if (!res || !res.data) { _errCheckData = []; fn_UpdateCath05Buttons(); return; }
 		                        var cathErr = ['D1','D2','E1','F1','G1','G2','H1'];
 		                        var errors = [];
 		                        for (var e = 0; e < res.data.length; e++) {
@@ -2435,39 +2592,8 @@ function dataLoad(data, callback, settings) {
 		                                errors.push(res.data[e]);
 		                            }
 		                        }
-		                        var eCnt = errors.length;
-		                        var eBg = eCnt > 0 ? '#f8d7da' : '#d4edda';
-		                        var eBd = eCnt > 0 ? '#f5c6cb' : '#c3e6cb';
-		                        var eTx = eCnt > 0 ? '#721c24' : '#155724';
-		                        var errHtml = '<div id="errCheckWarn" style="margin-top:8px; padding:8px 12px; border:1px solid ' + eBd + '; border-radius:6px; background:' + eBg + '; font-size:12px;">' +
-		                            '<b style="color:' + eTx + ';">⚠ 평가표 오류점검: ' + eCnt + '건</b>';
-		                        if (eCnt > 0) {
-		                            // 오류코드별 그룹화
-		                            var grpMap = {};
-		                            var grpOrder = [];
-		                            for (var f = 0; f < errors.length; f++) {
-		                                var er = errors[f];
-		                                if (!grpMap[er.errType]) {
-		                                    grpMap[er.errType] = { errType: er.errType, errName: er.errName, list: [] };
-		                                    grpOrder.push(er.errType);
-		                                }
-		                                grpMap[er.errType].list.push(er);
-		                            }
-		                            for (var g = 0; g < grpOrder.length; g++) {
-		                                var grp = grpMap[grpOrder[g]];
-		                                errHtml += '<div style="margin-top:4px;"><b style="color:' + eTx + ';">[' + grp.errType + '] ' + grp.errName + ' : ' + grp.list.length + '건</b></div>';
-		                                errHtml += '<div style="margin-left:10px;">';
-		                                for (var p = 0; p < grp.list.length; p++) {
-		                                    var pr = grp.list[p];
-		                                    errHtml += '<span style="color:' + eTx + '; margin-right:12px;">' + pr.patId + ' ' + pr.patNm + '</span>';
-		                                    if ((p+1) % 10 === 0 && (p+1) < grp.list.length) errHtml += '<br>';
-		                                }
-		                                errHtml += '</div>';
-		                            }
-		                        }
-		                        errHtml += '</div>';
-		                        var cardCont3 = document.getElementById('card_container');
-		                        if (cardCont3) cardCont3.insertAdjacentHTML('beforeend', errHtml);
+		                        _errCheckData = errors;
+		                        fn_UpdateCath05Buttons();
 		                    }
 		                });
 
