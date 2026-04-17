@@ -83,8 +83,7 @@
                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                          <div class="card">
                              <strong class="card-header" style="color: #8b0000; font-weight: bold;">
-                             	청구서 자료등록 시 청구번호가 일치하면 기존자료는 삭제되고, 현재 등록하신 자료로 신규생성 됩니다. ( 마감, 예상시간은 네트워크 또는 서버상태에 따라 차이가 날 수 있습니다. )<br>
-                             	평가서 자료등록 시 모든자료는 신규생성 됩니다.<br>
+                             	청구서 자료등록 시 청구번호가 일치하면 기존자료는 삭제되고, 현재 등록하신 자료로 신규생성 됩니다. ( 마감, 예상시간은 네트워크 또는 서버상태에 따라 차이가 날 수 있습니다. )    평가서 자료등록 시 모든자료는 신규생성 됩니다.<br>
                              	입원현황 업로드 시 입원환자의 주민번호 앞 6자리가 부재할 경우 부재할 경우‘진료비 분석 청구 누락 대상자’ 및 ‘적정성평가 대상자 확인’의 정확도가 낮아질 수 있습니다. 
                              </strong>
                              <div class="card-body">
@@ -2329,52 +2328,52 @@ function updateMonthsContainer(rawData) {
         let buttonHTML = '';
         
         if (item.lock_yn === "N" || (winner === 'Y' && ['1', '2'].includes(mainfg))) {
-        	buttonHTML += '<button data-action="fileLoad" data-mgmonth="' + item.mgmonth + '" id="' + item.mgmonth + '" class="btn ' + buttonClass + ' btn-block btn-sm small hover-change mb-2" data-original="' + button_Text + '" data-hover="' + hovers_Text + '">' + button_Text + '</button>';
+        	buttonHTML += '<button data-action="fileLoad" data-mgmonth="' + item.mgmonth + '" id="' + item.mgmonth + '" class="btn ' + buttonClass + ' btn-block btn-sm small hover-change mb-1" data-original="' + button_Text + '" data-hover="' + hovers_Text + '">' + button_Text + '</button>';
         }
-        
+
         if (item.magamyn === "Y") {
         	fMonth = item.mgmonth;
-            buttonHTML += '<button data-action="fileView" data-mgmonth="' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">자료보기</button>';
+            buttonHTML += '<button data-action="fileView" data-mgmonth="' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">자료보기</button>';
         } else {
-            buttonHTML += '<button class="btn btn-outline-success btn-block btn-sm small text-green mb-2">보기없음</button>';
+            buttonHTML += '<button class="btn btn-outline-success btn-block btn-sm small text-green mb-1">보기없음</button>';
         }
 
         if (item.ipwonyn === "Y") {
-            buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">입원현황</button>';
+            buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-1">입원현황</button>';
         } else {
             if (item.magamyn === "Y") {
-                buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">등록안됨</button>';
+                buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-1">등록안됨</button>';
             } else {
-                buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-2">자료없음</button>';
+                buttonHTML += '<button data-action="excelLoad" data-mgmonth="' + item.mgmonth + '" id="excel_' + item.mgmonth + '" class="btn btn-outline-dark text-black btn-block btn-sm small mb-1">자료없음</button>';
             }
         }
 
         if (item.spcsugayn === "Y") {
-            buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">수가현황</button>';
+            buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가현황</button>';
         } else {
             if (item.magamyn === "Y") {
-                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">수가등록안됨</button>';
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가등록안됨</button>';
             } else {
-                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-2">수가자료없음</button>';
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가자료없음</button>';
             }
         }
 
         if ((winner === 'Y' && ['1', '2'].includes(mainfg)) && item.magamyn === "Y") {
         	if (item.lock_yn === "Y") {
-                buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-danger         text-black btn-block btn-sm small mb-2">🔒잠김</button>';
+                buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-danger         text-black btn-block btn-sm small mb-1">🔒잠김</button>';
             } else {
-                buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-outline-danger text-black btn-block btn-sm small mb-2">🔓열림</button>';
+                buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-outline-danger text-black btn-block btn-sm small mb-1">🔓열림</button>';
             }
         }
-        
-        
+
+
         const cardHTML =
-            '<div class="col-xl-1 col-lg-2 col-md-3 col-sm-4 col-6 mb-3">' +
-                '<div class="card h-100">' +
+            '<div class="col-xl-1 col-lg-2 col-md-3 col-sm-4 col-6 mb-2">' +
+                '<div class="card" style="margin-bottom:0;">' +
                     '<div class="card-header ' + headerClass + ' text-center p-1">' +
                         '<h4 class="mb-0 ' + h4headClass + '">' + item.mgmonth + '월' + '</h4>' +
                     '</div>' +
-                    '<div class="card-body text-center p-2">' +
+                    '<div class="card-body text-center p-1">' +
                         buttonHTML +
                     '</div>' +
                 '</div>' +

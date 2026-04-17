@@ -292,7 +292,7 @@
 	         )
 	         ELSE IFNULL(F.LOCK_YN, 'N')
 	    END AS lock_yn
-	  , CASE WHEN A.CLAIM_NO = '0000000000' OR  A.MG_FLAG = '9' THEN 'N'
+	  , CASE WHEN A.CLAIM_NO = '0000000000' OR A.CLAIM_NO = '0000000001' OR  A.MG_FLAG = '9' THEN 'N'
 	         WHEN CM.CLAIM_NO IS NOT NULL    THEN 'N'
 	         WHEN COALESCE(NULLIF(E.TOTAL_2, 0), E.TOT_AMT, 0)
                + COALESCE(E.NON100_COST, 0) = 0              THEN  'CN'
