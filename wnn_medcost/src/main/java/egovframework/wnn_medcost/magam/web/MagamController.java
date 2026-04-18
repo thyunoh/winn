@@ -1154,6 +1154,23 @@ public class MagamController {
 		}
 	}
 
+	// 환자평가표(TBL_PATVAL_MST) 단건 조회 — 모달 표시용
+	@RequestMapping(value="/main/select_PatvalMst.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_PatvalMst(@RequestParam Map<String, Object> params, HttpSession session) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			Map<String, Object> row = svc.select_PatvalMst(params);
+			response.put("data", row);
+			return response;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("data", null);
+			response.put("error_mess", ex.getMessage());
+			return response;
+		}
+	}
+
 	@RequestMapping(value="/main/select_ScoreCriteria.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> select_ScoreCriteria(@ModelAttribute("DTO") IndiDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

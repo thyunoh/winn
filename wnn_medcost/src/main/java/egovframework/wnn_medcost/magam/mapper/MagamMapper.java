@@ -110,6 +110,8 @@ public interface MagamMapper {
 
 	List<Map<String, Object>> select_ScoreCriteria(IndiDTO dto);
 
+	Map<String, Object> select_PatvalMst(Map<String, Object> params);
+
 	// 파일 검증 관련
 	List<Map<String, Object>> getFilesFirstLine(MagamDTO dto);
 	List<Map<String, Object>> getSamfverMatch(Map<String, Object> params);
