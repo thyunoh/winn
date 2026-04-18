@@ -160,18 +160,23 @@
 							        }
 							        .cath05-blink { animation: cath05Pulse 1.6s ease-out infinite; }
 
-							        /* 환자평가표 조회 버튼 (DataTable .dt-buttons 영역에서도 스타일 유지) */
-							        #btnPatvalView.patval-btn,
-							        .dt-buttons #btnPatvalView.patval-btn,
-							        .dt-buttons button#btnPatvalView {
+							        /* 환자평가표 조회 버튼 — 현재 히든 (협의 후 오픈) */
+							        #btnPatvalView { display: none !important; }
+							        /* 재오픈 시 아래 display:inline-flex !important 선택자 사용 예정 */
+							        #btnPatvalView.patval-btn._show,
+							        .dt-buttons #btnPatvalView.patval-btn._show,
+							        .dt-buttons button#btnPatvalView._show {
 							            display: inline-flex !important;
 							            align-items: center !important;
 							            gap: 8px !important;
-							            padding: 6px 14px !important;
+							            height: 32px !important;
+							            padding: 0 14px !important;
+							            box-sizing: border-box !important;
 							            border: none !important;
 							            border-radius: 4px !important;
 							            font-size: 12.5px !important;
 							            font-weight: 700 !important;
+							            line-height: 1 !important;
 							            letter-spacing: 0.2px !important;
 							            color: #ffffff !important;
 							            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
@@ -179,7 +184,22 @@
 							            cursor: pointer !important;
 							            text-shadow: 0 1px 1px rgba(0,0,0,0.18);
 							            margin-left: 6px !important;
+							            vertical-align: middle !important;
 							            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+							        }
+							        /* 유치도뇨관 및 오류점검 버튼 — .dt-buttons 영역에서도 높이 통일 */
+							        .dt-buttons #cath05BtnZone { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 6px; }
+							        .dt-buttons #cath05BtnZone .cath05-btn {
+							            height: 32px !important;
+							            padding: 0 12px !important;
+							            box-sizing: border-box !important;
+							            line-height: 1 !important;
+							            font-size: 12.5px !important;
+							            vertical-align: middle !important;
+							        }
+							        .dt-buttons #cath05BtnZone .cath05-badge {
+							            height: 20px !important;
+							            line-height: 20px !important;
 							        }
 							        #btnPatvalView.patval-btn:hover,
 							        .dt-buttons #btnPatvalView.patval-btn:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 4px 10px rgba(37,99,235,0.45) !important; color:#fff !important; }
@@ -3014,9 +3034,8 @@ function dataLoad(data, callback, settings) {
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(65) + '<span style="color: blue;">' + cntNote + '</span>';
 	            	
-	            	}         
+	            	}
 
-	            	
 	            	callback(response);
 	            	tableName.style.display = 'inline-block';
 	            	
@@ -3044,8 +3063,11 @@ function dataLoad(data, callback, settings) {
 //   - cath05 오류점검 데이터(_errCheckData)와 매칭되는 항목은 상단 배지로 강조
 // =====================================================================
 
+function _pvIsEmpty(v) { return v === null || v === undefined || v === ''; }
+function _pvEmptyMark() { return '<span class="pv-empty" style="color:#b0b6bf;">-</span>'; }
+
 function _pvYn(v) {
-    if (v === null || v === undefined || v === '') return '<span style="color:#b0b6bf;">-</span>';
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
     if (v === '1' || v === 'Y') return '<span style="color:#28a745;font-weight:700;">✓</span>';
     if (v === '0' || v === 'N') return '<span style="color:#6c757d;">−</span>';
     return _pvTxt(v);
@@ -3109,7 +3131,7 @@ var _PV_CODES = {
 
 // 코드값 → "코드 : 설명" 형태로 렌더 (매핑 없으면 _pvTxt 로 fallback)
 function _pvCd(codeGroup, v) {
-    if (v === null || v === undefined || v === '') return '<span style="color:#b0b6bf;">-</span>';
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
     var map = _PV_CODES[codeGroup];
     var desc = map ? map[String(v)] : null;
     if (!desc) return _pvTxt(v);
@@ -3118,11 +3140,11 @@ function _pvCd(codeGroup, v) {
     return '<span class="pv-cd"><span class="pv-cd-k">' + vHtml + '</span><span class="pv-cd-v">' + dHtml + '</span></span>';
 }
 function _pvTxt(v) {
-    if (v === null || v === undefined || v === '') return '<span style="color:#b0b6bf;">-</span>';
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
     return $('<div>').text(v).html();
 }
 function _pvDt(v) {
-    if (!v) return '<span style="color:#b0b6bf;">-</span>';
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
     var s = String(v).replace(/[^0-9]/g,'');
     if (s.length === 8) return s.substr(0,4) + '-' + s.substr(4,2) + '-' + s.substr(6,2);
     return _pvTxt(v);
@@ -3140,23 +3162,64 @@ function fn_UpdatePatvalBtnState(row) {
 // viewTable .dt-buttons 영역으로 버튼 이동 (DataTable 초기화 후 호출)
 //   DataTable destroy → 재초기화 시 .dt-buttons 컨테이너가 교체되어 버튼도 함께 사라지므로,
 //   버튼 DOM이 없는 경우 동적으로 재생성한 뒤 부착한다.
+//   cath05BtnZone(유치도뇨관 및 오류점검)도 동일 라인으로 이동.
 function fn_AttachPatvalBtnToDt() {
     var $dtBtns = $('#viewTable_wrapper .dt-buttons');
     if ($dtBtns.length === 0) return;
 
-    var btn = document.getElementById('btnPatvalView');
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'btnPatvalView';
-        btn.type = 'button';
-        btn.className = 'patval-btn';
-        btn.onclick = function() { fn_ShowPatvalModal(); };
-        btn.innerHTML = '<i class="fas fa-clipboard-list patval-icon"></i><span class="patval-label">환자평가표&nbsp;조회</span>';
+    // (1) 환자평가표 조회 버튼 — 협의 전까지 숨김. CSS `#btnPatvalView { display:none !important }` 로 히든 보장
+    //     이전 세션에 .dt-buttons 로 이동된 상태라면 헤더 원위치(card-header11)로 되돌림
+    var pvBtn = document.getElementById('btnPatvalView');
+    if (pvBtn) {
+        pvBtn.classList.remove('_show');   // 표시 클래스 제거
+        var $origHome = $('.card-header11 .dsah_lab9').closest('.card-header11');
+        if ($origHome.length && pvBtn.parentNode !== $origHome[0]) {
+            $origHome[0].appendChild(pvBtn);
+        }
     }
-    if (btn.parentNode === $dtBtns[0]) { btn.style.display = 'inline-flex'; return; }
-    $dtBtns.append(btn);
-    btn.style.display = 'inline-flex';
-    btn.style.marginLeft = '6px';
+    /* 재오픈 시: 위 블록 제거 후 아래 블록 주석 해제 (+ CSS `#btnPatvalView { display:none !important }` 제거)
+    var pvBtn = document.getElementById('btnPatvalView');
+    if (!pvBtn) {
+        pvBtn = document.createElement('button');
+        pvBtn.id = 'btnPatvalView';
+        pvBtn.type = 'button';
+        pvBtn.className = 'patval-btn _show';
+        pvBtn.onclick = function() { fn_ShowPatvalModal(); };
+        pvBtn.innerHTML = '<i class="fas fa-clipboard-list patval-icon"></i><span class="patval-label">환자평가표&nbsp;조회</span>';
+    }
+    if (pvBtn.parentNode !== $dtBtns[0]) {
+        $dtBtns.append(pvBtn);
+        pvBtn.style.marginLeft = '6px';
+    }
+    pvBtn.classList.add('_show');
+    */
+
+    // (2) 유치도뇨관 및 오류점검 버튼 — 05 카테고리에서만 .dt-buttons 영역으로 이동
+    //     DataTable destroy 로 DOM이 사라진 경우 재생성한다.
+    var cathZone = document.getElementById('cath05BtnZone');
+    if (!cathZone) {
+        cathZone = document.createElement('div');
+        cathZone.id = 'cath05BtnZone';
+        cathZone.style.whiteSpace = 'nowrap';
+        cathZone.innerHTML =
+            '<button type="button" id="btnCath05Check" class="cath05-btn">' +
+                '<i class="fas fa-stethoscope cath05-icon"></i>' +
+                '<span class="cath05-label">유치도뇨관&nbsp;&nbsp;및 오류점검</span>' +
+                '<span class="cath05-badge" id="badgeCath05">0</span>' +
+            '</button>';
+        var _innerBtn = cathZone.querySelector('#btnCath05Check');
+        if (_innerBtn) _innerBtn.onclick = function() { fn_ShowCath05Modal(); };
+    }
+    if (jobFlag === '05') {
+        if (cathZone.parentNode !== $dtBtns[0]) {
+            $dtBtns.append(cathZone);
+            cathZone.style.marginLeft = '6px';
+        }
+        cathZone.style.display = 'inline-block';
+    } else {
+        cathZone.style.display = 'none';
+    }
+    if (typeof fn_UpdateCath05Buttons === 'function') fn_UpdateCath05Buttons();
 }
 
 // 현재 viewTable에서 선택된 행 데이터 반환 (edit_Data가 비어도 .selected 행에서 복구)
@@ -3217,7 +3280,8 @@ function fn_ShowPatvalModal() {
             '.pv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:0; }' +
             '.pv-cell { display:flex; align-items:center; padding:8px 12px; border-bottom:1px solid #f0f2f6; border-right:1px solid #f0f2f6; font-size:12.5px; min-height:34px; }' +
             '.pv-cell .k { flex:0 0 48%; color:#6b7280; font-weight:500; letter-spacing:0.1px; }' +
-            '.pv-cell .v { flex:1; color:#2c3e50; font-weight:600; text-align:right; padding-left:6px; word-break:break-all; font-family:Consolas,"맑은 고딕",sans-serif; }' +
+            '.pv-cell .k.has-value { color:#1a2535; font-weight:800; }' +
+            '.pv-cell .v { flex:1; color:#2c3e50; font-weight:500; text-align:right; padding-left:6px; word-break:break-all; font-family:Consolas,"맑은 고딕",sans-serif; }' +
             '.pv-cath-tbl { width:100%; border-collapse:collapse; font-size:12.5px; }' +
             '.pv-cath-tbl th, .pv-cath-tbl td { border:1px solid #e4e7ed; padding:6px 10px; text-align:center; }' +
             '.pv-cath-tbl thead th { background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:600; }' +
@@ -3313,7 +3377,10 @@ function _pvBuildHtml(d, row) {
 function _pvSec(title, icon, items) {
     var cells = '';
     for (var i = 0; i < items.length; i++) {
-        cells += '<div class="pv-cell"><span class="k">' + items[i][0] + '</span><span class="v">' + items[i][1] + '</span></div>';
+        var vHtml = items[i][1];
+        // 값이 비어있지 않은 경우에만 라벨 진하게 (pv-empty 마커 없음 = 값 있음)
+        var kCls  = (vHtml.indexOf('class="pv-empty"') >= 0) ? 'k' : 'k has-value';
+        cells += '<div class="pv-cell"><span class="' + kCls + '">' + items[i][0] + '</span><span class="v">' + vHtml + '</span></div>';
     }
     return '<div class="pv-sec"><div class="pv-sec-hd"><i class="fas ' + (icon || 'fa-circle') + '"></i>' + title + '</div><div class="pv-grid">' + cells + '</div></div>';
 }

@@ -3895,6 +3895,7 @@
 		           OR S.KOR_NAME LIKE '%유치%카테터%'
 		           OR S.KOR_NAME LIKE '%유치도뇨%' )
 		     AND COALESCE(S.MED_START,'') != ''
+		     AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND P.PAT_ID IS NULL
 
 		UNION ALL
@@ -3920,11 +3921,28 @@
 		   WHERE P.HOSP_CD = #{hospCd}
 		     AND P.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND P.INDWELL_CATH = '1'
+		     AND IFNULL(P.PAT_CLASS,'') NOT LIKE 'A%'
+		     AND (
+		           P.EVAL_TYPE = '2'
+		           OR (
+		               P.EVAL_TYPE = '3'
+		               AND DAY(STR_TO_DATE(P.MED_START, '%Y%m%d')) = 1
+		               AND DAY(STR_TO_DATE(P.DOC_DT, '%Y%m%d')) BETWEEN 7 AND 10
+		               AND NOT EXISTS (
+		                     SELECT 1 FROM TBL_PATVAL_MST b
+		                      WHERE b.HOSP_CD            = P.HOSP_CD
+		                        AND b.PAT_ID             = P.PAT_ID
+		                        AND LEFT(b.MED_START, 6) = DATE_FORMAT(DATE_SUB(STR_TO_DATE(P.MED_START, '%Y%m%d'), INTERVAL 1 MONTH), '%Y%m')
+		                        AND b.DOC_DT             = P.DOC_DT
+		                   )
+		           )
+		         )
 		     AND (    S.EDI_CODE IN ('M0060')
 		           OR S.SUGA_CD  IN ('M0060')
 		           OR S.KOR_NAME LIKE '%유치%카테터%'
 		           OR S.KOR_NAME LIKE '%유치도뇨%' )
 		     AND COALESCE(S.MED_START,'') != ''
+		     AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND S.MED_START NOT IN (
 		           IFNULL(P.CAT_IN_1 ,'00000000'), IFNULL(P.CAT_IN_2 ,'00000000'),
 		           IFNULL(P.CAT_IN_3 ,'00000000'), IFNULL(P.CAT_IN_4 ,'00000000'),
@@ -3968,13 +3986,41 @@
 		   WHERE P.HOSP_CD = #{hospCd}
 		     AND P.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND P.INDWELL_CATH = '1'
-		     AND IFNULL(P.CAT_IN_1,'00000000') != '00000000'
+		     AND IFNULL(P.PAT_CLASS,'') NOT LIKE 'A%'
+		     AND (
+		           P.EVAL_TYPE = '2'
+		           OR (
+		               P.EVAL_TYPE = '3'
+		               AND DAY(STR_TO_DATE(P.MED_START, '%Y%m%d')) = 1
+		               AND DAY(STR_TO_DATE(P.DOC_DT, '%Y%m%d')) BETWEEN 7 AND 10
+		               AND NOT EXISTS (
+		                     SELECT 1 FROM TBL_PATVAL_MST b
+		                      WHERE b.HOSP_CD            = P.HOSP_CD
+		                        AND b.PAT_ID             = P.PAT_ID
+		                        AND LEFT(b.MED_START, 6) = DATE_FORMAT(DATE_SUB(STR_TO_DATE(P.MED_START, '%Y%m%d'), INTERVAL 1 MONTH), '%Y%m')
+		                        AND b.DOC_DT             = P.DOC_DT
+		                   )
+		           )
+		         )
+		     AND (
+		           P.CAT_IN_1  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_2  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_3  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_4  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_5  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_6  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_7  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_8  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_9  LIKE CONCAT(#{jobYymm},'%')
+		        OR P.CAT_IN_10 LIKE CONCAT(#{jobYymm},'%')
+		         )
 		     AND NOT EXISTS (
 		           SELECT 1
 		             FROM TBL_SPCSUGA_INFO S
 		            WHERE S.HOSP_CD = P.HOSP_CD
 		              AND LEFT(S.JUMINNO,6) = LEFT(P.PAT_ID,6)
 		              AND S.IPWONDT = REPLACE(P.ADMIT_DT,'-','')
+		              AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
 		              AND (    S.EDI_CODE IN ('M0060')
 		                    OR S.SUGA_CD  IN ('M0060')
 		                    OR S.KOR_NAME LIKE '%유치%카테터%'
