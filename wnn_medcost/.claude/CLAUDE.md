@@ -33,17 +33,11 @@
 - **관련파일**: assessment.jsp(fn_AttachPatvalBtnToDt, fn_ShowPatvalModal, _pvBuildHtml 등), Magam_SQL.xml(select_PatvalMst), MagamController.java(/main/select_PatvalMst.do)
 - **남아있는 기능**: Controller·SQL·모달 JS는 모두 유지됨. 버튼만 숨김
 
-### [대기/토글예정] 유치도뇨관 크로스체크 필터 — 제외 환자 보기 옵션
-- **배경(2026-04-18 적용)**: 오류점검(D3/D4/D5) 결과에 그리드(select_CategoryList05)에 없는 환자가 나와 혼선 → 그리드와 동일 필터 추가로 대상자 일치시킴
-- **현재 적용 필터 (select_CathCrossCheck 내 D4/D5)**:
-  - `IFNULL(P.PAT_CLASS,'') NOT LIKE 'A%'`    ← 환자군 A(경증군) 제외
-  - `P.EVAL_TYPE = '2'`                       ← 계속입원 평가만
-    OR `P.EVAL_TYPE = '3'` + MED_START 1일 + DOC_DT 7~10일 + 전월 동일 DOC_DT 없음
-  - `S.MED_START LIKE CONCAT(#{jobYymm},'%')` ← 당월 오더만
-  - D5는 `CAT_IN_1~10 중 하나라도 당월` 조건 (전월 이전 삽입은 제외)
-- **D3(오더O/평가표X)**: PAT_CLASS/EVAL_TYPE은 적용 안함(평가표 자체가 없으므로). `S.MED_START LIKE jobYymm%`만 적용
-- **추후 요청 대응 방향**: "제외된 환자도 보여달라"고 사용자가 요청하면
-  1. 모달/버튼에 "전체 보기" 토글 스위치 추가
-  2. AJAX data에 `includeAll=Y` 전달
-  3. SQL에서 `<if test="includeAll != 'Y'">...필터...</if>`로 감싸 선택적으로 적용
-- **관련파일**: Magam_SQL.xml(select_CathCrossCheck), assessment.jsp(fn_ShowCath05Modal), MagamController.java(select_CathCrossCheck)
+### [확정] 유치도뇨관 오류점검 — 필터 없음 + 정보 컬럼 표시 방식 (2026-04-18 최종)
+- **최종 방침**: 자동 필터링 대신 사용자가 직접 판단하도록 **모달에 정보 컬럼 표시**
+  - 컬럼: 환자ID · 성명 · 입원일 · **환자분류군(PAT_CLASS)** · **평가구분(EVAL_TYPE 코드·설명)** · **유치도뇨관 삽입(INDWELL_CATH)** · 점검항목
+  - 평가구분 포맷: "1·입원 평가" / "2·계속 입원 중인 환자 평가" / "3·이전 환자평가표를 적용하는 경우" (PDF 명세서식 2024.7.1.~)
+- **필터 상태**: select_assesCheck00/02, select_CathCrossCheck, select_PrevMonthMissing05 **모두 필터 없음** (원상태)
+- **모달 UI**: 폭 1400px, 제목바 드래그로 이동 가능
+- **관련파일**: Magam_SQL.xml, assessment.jsp (fn_ShowCath05Modal, _cath05EnableDrag, _EVAL_TYPE_MAP)
+- **재수정 주의**: 이전에 그리드 필터를 적용했다가 사용자 선택으로 철회함. 재적용 요청 시 이 방침 먼저 확인

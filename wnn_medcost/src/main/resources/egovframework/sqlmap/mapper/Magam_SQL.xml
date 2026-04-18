@@ -1357,9 +1357,12 @@
 		     , CASE WHEN CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) >= 1
 		            THEN CONCAT(LEFT(COALESCE(prev.PAT_NM, ''), CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) - 1), '*')
 		            ELSE '' END AS patNm
-		     , prev.ADMIT_DT AS admitDt
-		     , prev.MED_START AS medStart
-		     , prev.DOC_DT AS docDt
+		     , prev.ADMIT_DT    AS admitDt
+		     , prev.MED_START   AS medStart
+		     , prev.DOC_DT      AS docDt
+		     , prev.EVAL_TYPE   AS evalType
+		     , prev.PAT_CLASS   AS patClass
+		     , prev.INDWELL_CATH AS indwellCath
 		  FROM TBL_PATVAL_MST prev
 		 WHERE prev.HOSP_CD = #{hospCd}
 		   AND prev.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm},'01'), INTERVAL 1 MONTH),'%Y%m'),'%')
@@ -1373,7 +1376,7 @@
 		          AND cur.MED_START LIKE CONCAT(#{jobYymm},'%')
 		          AND cur.INDWELL_CATH = '1'
 		   )
-		 GROUP BY prev.PAT_ID, prev.PAT_NM, prev.ADMIT_DT, prev.MED_START, prev.DOC_DT
+		 GROUP BY prev.PAT_ID, prev.PAT_NM, prev.ADMIT_DT, prev.MED_START, prev.DOC_DT, prev.EVAL_TYPE, prev.PAT_CLASS, prev.INDWELL_CATH
 	</select>
 
 	<select id="select_CategoryList07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
@@ -2242,6 +2245,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'A1'                                              AS errType
 			   , '계속 입원환자 중 당월 요양 개시일이 1일이고, 작성일이 당월 7~10일 사이 작성되었으나 평가구분이 1. 입원평가 또는 3. 이전 평가 적용인 경우(2. 계속입원)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2269,6 +2274,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'A2'                                              AS errType
 			   , '요양개시일이 당월인데, 평가표 작성일이 이전월에 작성되었으나 평가구분이 2. 계속입원중인평가로 체크된 경우(3. 이전평가 적용)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2294,6 +2301,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'A3'                                              AS errType
 			   , '월말 입원하여 익월에 평가표가 1. 입원평가로 작성되었으나, 당월 환자평가표 관찰기간에 포함되는 경우(관찰기간 겹침 오류)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2328,6 +2337,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'B1'                                              AS errType
 			   , '계속입원중인 평가 중 요양개시일 이후 평가표 작성 관찰기간이 10일을 초과하여 작성된 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2350,6 +2361,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'B2'                                              AS errType
 			   , '당월 평가표 요양개시일이 1일인데, 전월 말일에 평가표가 작성되어 관찰기간 중복 가능성이 있는 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2384,6 +2397,8 @@
 		       , B.MED_START                                       AS medStart		       
 		       , A.DOC_DT                                          AS docDt
 		       , B.EVAL_TYPE                                       AS evalType
+		       , A.PAT_CLASS                                       AS patClass
+		       , A.INDWELL_CATH                                    AS indwellCath
 		       , 'B3'                                              AS errType
 		       , '당월 요양개시일에 평가구분이 1 또는 2로 작성된 대상자 중, 다른 평가표의 개시일이 다르고 평가구분이 2가 아닌 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2414,6 +2429,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'C1'                                              AS errType
 			   , '당월 환자평가표가 2개 이상 작성되었을 때 환자분류군이 다를 경우(당월 재입원대상자 제외)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2444,6 +2461,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'C2'                                              AS errType
 			   , '당월 환자평가표 개시일 1일이고, 작성일 7~10일 사이 작성되었으나 평가구분이 3. 이전평가표로 체크되어 있는 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2464,9 +2483,10 @@
 		       , A.MED_START                                       AS medStart  
 		       , A.DOC_DT                                          AS docDt
 		       , A.EVAL_TYPE                                       AS evalType
+		       , A.PAT_CLASS                                       AS patClass
+		       , A.INDWELL_CATH                                    AS indwellCath
 		       , CASE WHEN C.LAST_FG = '1' THEN 'D1' ELSE 'D2' END AS errType
-		       
-		       , CASE WHEN C.LAST_FG = '1' THEN '전월환자평가표 상 마지막 기록이 삽입일자 이나, 당월평가표에 삽입일자가 작성되어 있는 경우 (삽입일자 중복작성 오류)' 
+		       , CASE WHEN C.LAST_FG = '1' THEN '전월환자평가표 상 마지막 기록이 삽입일자 이나, 당월평가표에 삽입일자가 작성되어 있는 경우 (삽입일자 중복작성 오류)'
 		              ELSE '전월환자평가표 상 마지막 기록이 제거일자 이나, 당월평가표에 삽입일자 공란, 제거일자가 작성되어 있는 경우 (삽입일자 확인불가)' END AS errName
 		       
 		       
@@ -2510,10 +2530,10 @@
 		  WHERE A.HOSP_CD = #{hospCd}
 		    AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		    AND ((C.LAST_FG = '1' AND A.CAT_IN_1 != '00000000')
- 		         OR 
+ 		         OR
  		         (C.LAST_FG = '2' AND A.CAT_IN_1  = '00000000' AND A.CAT_OUT_1 != '00000000'))
-		    AND A.INDWELL_CATH = '1'  
-		    AND A.DOC_DT != C.DOC_DT  
+		    AND A.INDWELL_CATH = '1'
+		    AND A.DOC_DT != C.DOC_DT
 		
 		UNION ALL
 		-- [유치도뇨관 오류 3] 삽입일자 없음, 제거일자만 있음
@@ -2527,15 +2547,17 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'E1'                                              AS errType
 			   , 'g-1-1, g-2-1 삽입일자는 공란이나 g-1-2, g-2-2 제거일자에만 모두 작성되어 있는경우' AS errName
 		  FROM TBL_PATVAL_MST A
 		 WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND REPLACE(CONCAT(A.CAT_IN_1,A.CAT_IN_2),'0','') = ''
-		   AND A.CAT_OUT_1 != '00000000' 
+		   AND A.CAT_OUT_1 != '00000000'
 		   AND A.CAT_OUT_2 != '00000000'
-		   AND A.INDWELL_CATH = '1' 
+		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		-- [유치도뇨관 오류 4] 마지막 삽입,제거없이 삽입기간에 일수 있는경우
@@ -2549,6 +2571,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'F1'                                              AS errType
 			   , 'g.11 삽입기간에 삽입일수가 작성된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2556,7 +2580,7 @@
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND REPLACE(CONCAT(A.CAT_IN_10,A.CAT_OUT_10),'0','') = ''
 		   AND IFNULL(A.CAT_DUR,0) > 0
-		   AND A.INDWELL_CATH = '1' 
+		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		-- [유치도뇨관 오류 5] 첫번째 삽입,제거 없는데 두번째 삽입 또느 제거 있는경우  
@@ -2570,15 +2594,17 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'G1'                                              AS errType
 			   , '유치도뇨관 첫 줄 삽입일자/ 제거일자가 공란이나, 2번째 삽일 또는 제거일자가 기재된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
 		 WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND REPLACE(CONCAT(A.CAT_IN_1,A.CAT_OUT_1),'0','') = ''
-		   AND (A.CAT_IN_2  != '00000000' OR 
-		        A.CAT_OUT_2 != '00000000') 
-		   AND A.INDWELL_CATH = '1'     
+		   AND (A.CAT_IN_2  != '00000000' OR
+		        A.CAT_OUT_2 != '00000000')
+		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		
@@ -2592,6 +2618,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'G2'                                              AS errType
 			   , '당월 환자평가표 작성일 이후의 삽입일자 또는 제거일자가 기재된 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -2617,7 +2645,7 @@
 				  (A.CAT_OUT_8  > A.DOC_DT) OR
 				  (A.CAT_OUT_9  > A.DOC_DT) OR
 				  (A.CAT_OUT_10 > A.DOC_DT))
-			 AND A.INDWELL_CATH = '1' 	  
+			 AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		
@@ -2632,6 +2660,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'H1'                                              AS errType
 			   , '유치도뇨관이 삽입된 상태이나, 소변조절상태가 조절할 수 있음으로 체크되어 있는 경우 (확인필요)' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2689,6 +2719,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'I1'
 			   , '전월 욕창이 없고, 당월 욕창이 생겼으나 2. 새로발생한 욕창 a. 이전평가 이후 새로운 욕창 발생여부에 없음으로 체크된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2721,6 +2753,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'I2'
 			   , '전월, 당월 욕창 욕창이 있는 대상자 중 2. 새로발생한 욕창 a. 이전평가 이후 새로운 욕창 발생여부에 있음으로 체크되어 있으나 전월의 발생일자가 동일하게 작성된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2753,6 +2787,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'I3'
 			   , '전월, 당월 욕창이 없으나, a. 이전평가 이후 새로운 욕창 발생여부에 있음으로 체크되어 있고 발생일이 기록이 있는경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2786,6 +2822,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J1'
 			   , '전월 욕창이 있고, 당월욕창이 없는 경우 3. 지난 1년사이의 욕창(압박성궤양) 과거력거력에 없음으로 체크된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2818,6 +2856,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J2'                                              AS errType
 			   , '청구sam 파일에 M0121 염증성처치가 시행되었으나,  2. 피부문제에 대한 처치 중 피부궤양 드레싱에 체크가 없는 경우(점검용)' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2852,6 +2892,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J3'                                              AS errType  
 			   , '피부궤양 드레싱 실시에 체크되어 있으나, 청구 sam 파일에 M0121 염증성처치가 확인되지 않은 경우' AS errName   
 		  FROM TBL_PATVAL_MST A
@@ -2887,6 +2929,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J4'                                              AS errType  
 			   , '환자평가표 관찰기간내 체충 측정 여부' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2906,6 +2950,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J5'                                              AS errType  
 			   , '욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -2927,6 +2973,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'K1'                                              AS errType 
 			   , '전월대비 ADL 총점이 ±1점인 대상자' AS errName   
 		  FROM TBL_PATVAL_MST C
@@ -2956,6 +3004,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'K2'
 			   , '전월대비 ADL 총점이 ±3점 이상인 대상자' AS errName   
 		  FROM TBL_PATVAL_MST C
@@ -2984,6 +3034,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'K3'                                              AS errType
 			   , '행동심리증상_n.배회에 가끔, 자주, 매우자주에 체크되어 있으나 ADL항목 중 옮겨앉기, 방밖으로 나오기, 화장실사용하기가 상당한도움,전적인도움에  체크되어 있는 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3006,6 +3058,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'M1'                                              AS errType
 			   , '질병 당뇨에 체크되어 있으나, 3개월 이내 헤모글로빈 검사 실시여부 아니오로 체크 된 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3026,6 +3080,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'M2'                                              AS errType
 			   , '질병-당뇨-헤모글로빈 검사일자가 평가표 작성일 보다 이후 인 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3046,6 +3102,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'M3'                                              AS errType
 			   , '당월 7일을 기준으로 질병-당뇨-헤모글로빈 검사일자가 90일 이전인 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3071,6 +3129,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'A1'                                              AS errType
 			   , '계속 입원환자 중 당월 요양 개시일이 1일이고, 작성일이 당월 7~10일 사이 작성되었으나 평가구분이 1. 입원평가 또는 3. 이전 평가 적용인 경우(2.계속입원)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3098,6 +3158,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'A2'                                              AS errType
 			   , '요양개시일이 당월인데, 평가표 작성일이 이전월에 작성되었으나 평가구분이 2. 계속입원중인평가로 체크된 경우(3. 이전평가 적용)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3123,6 +3185,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'A3'                                              AS errType
 			   , '월말 입원하여 익월에 평가표가 1. 입원평가로 작성되었으나, 당월 환자평가표 관찰기간에 포함되는 경우(관찰기간 겹침 오류)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3157,6 +3221,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'B1'                                              AS errType
 			   , '계속입원중인 평가 중 요양개시일 이후 평가표 작성 관찰기간이 10일을 초과하여 작성된 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3179,6 +3245,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'B2'                                              AS errType
 			   , '당월 평가표 요양개시일이 1일인데, 전월 말일에 평가표가 작성되어 관찰기간 중복 가능성이 있는 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3213,6 +3281,8 @@
 		       , B.MED_START                                       AS medStart		       
 		       , A.DOC_DT                                          AS docDt
 		       , B.EVAL_TYPE                                       AS evalType
+		       , A.PAT_CLASS                                       AS patClass
+		       , A.INDWELL_CATH                                    AS indwellCath
 		       , 'B3'                                              AS errType
 		       , '당월 요양개시일에 평가구분이 1 또는 2로 작성된 대상자 중, 다른 평가표의 개시일이 다르고 평가구분이 2가 아닌 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3243,6 +3313,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'C1'                                              AS errType
 			   , '당월 환자평가표가 2개 이상 작성되었을 때 환자분류군이 다를 경우(당월 재입원대상자 제외)' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3273,6 +3345,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'C2'                                              AS errType
 			   , '당월 환자평가표 개시일 1일이고, 작성일 7~10일 사이 작성되었으나 평가구분이 3. 이전평가표로 체크되어 있는 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3296,9 +3370,10 @@
 		       , A.MED_START                                       AS medStart  
 		       , A.DOC_DT                                          AS docDt
 		       , A.EVAL_TYPE                                       AS evalType
+		       , A.PAT_CLASS                                       AS patClass
+		       , A.INDWELL_CATH                                    AS indwellCath
 		       , CASE WHEN C.LAST_FG = '1' THEN 'D1' ELSE 'D2' END AS errType
-		       
-		       , CASE WHEN C.LAST_FG = '1' THEN '전월환자평가표 상 마지막 기록이 삽입일자 이나, 당월평가표에 삽입일자가 작성되어 있는 경우 (삽입일자 중복작성 오류)' 
+		       , CASE WHEN C.LAST_FG = '1' THEN '전월환자평가표 상 마지막 기록이 삽입일자 이나, 당월평가표에 삽입일자가 작성되어 있는 경우 (삽입일자 중복작성 오류)'
 		              ELSE '전월환자평가표 상 마지막 기록이 제거일자 이나, 당월평가표에 삽입일자 공란, 제거일자가 작성되어 있는 경우 (삽입일자 확인불가)' END AS errName
 		       
 		       
@@ -3342,10 +3417,10 @@
 		  WHERE A.HOSP_CD = #{hospCd}
 		    AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		    AND ((C.LAST_FG = '1' AND A.CAT_IN_1 != '00000000')
- 		         OR 
+ 		         OR
  		         (C.LAST_FG = '2' AND A.CAT_IN_1  = '00000000' AND A.CAT_OUT_1 != '00000000'))
-		    AND A.INDWELL_CATH = '1'  
-		    AND A.DOC_DT != C.DOC_DT  
+		    AND A.INDWELL_CATH = '1'
+		    AND A.DOC_DT != C.DOC_DT
 		
 		UNION ALL
 		-- [유치도뇨관 오류 3] 삽입일자 없음, 제거일자만 있음
@@ -3359,15 +3434,17 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'E1'                                              AS errType
 			   , 'g-1-1, g-2-1 삽입일자는 공란이나 g-1-2, g-2-2 제거일자에만 모두 작성되어 있는경우' AS errName
 		  FROM TBL_PATVAL_MST A
 		 WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND REPLACE(CONCAT(A.CAT_IN_1,A.CAT_IN_2),'0','') = ''
-		   AND A.CAT_OUT_1 != '00000000' 
+		   AND A.CAT_OUT_1 != '00000000'
 		   AND A.CAT_OUT_2 != '00000000'
-		   AND A.INDWELL_CATH = '1' 
+		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		-- [유치도뇨관 오류 4] 마지막 삽입,제거없이 삽입기간에 일수 있는경우
@@ -3381,6 +3458,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'F1'                                              AS errType
 			   , 'g.11 삽입기간에 삽입일수가 작성된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3388,7 +3467,7 @@
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND REPLACE(CONCAT(A.CAT_IN_10,A.CAT_OUT_10),'0','') = ''
 		   AND IFNULL(A.CAT_DUR,0) > 0
-		   AND A.INDWELL_CATH = '1' 
+		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		-- [유치도뇨관 오류 5] 첫번째 삽입,제거 없는데 두번째 삽입 또느 제거 있는경우  
@@ -3402,15 +3481,17 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'G1'                                              AS errType
 			   , '유치도뇨관 첫 줄 삽입일자/ 제거일자가 공란이나, 2번째 삽일 또는 제거일자가 기재된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
 		 WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND REPLACE(CONCAT(A.CAT_IN_1,A.CAT_OUT_1),'0','') = ''
-		   AND (A.CAT_IN_2  != '00000000' OR 
-		        A.CAT_OUT_2 != '00000000') 
-		   AND A.INDWELL_CATH = '1'     
+		   AND (A.CAT_IN_2  != '00000000' OR
+		        A.CAT_OUT_2 != '00000000')
+		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		
@@ -3424,6 +3505,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'G2'                                              AS errType
 			   , '당월 환자평가표 작성일 이후의 삽입일자 또는 제거일자가 기재된 경우' AS errName
 		    FROM TBL_PATVAL_MST A
@@ -3449,7 +3532,7 @@
 				  (A.CAT_OUT_8  > A.DOC_DT) OR
 				  (A.CAT_OUT_9  > A.DOC_DT) OR
 				  (A.CAT_OUT_10 > A.DOC_DT))
-			 AND A.INDWELL_CATH = '1' 	  
+			 AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
 		
@@ -3464,6 +3547,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'H1'                                              AS errType
 			   , '유치도뇨관이 삽입된 상태이나, 소변조절상태가 조절할 수 있음으로 체크되어 있는 경우 (확인필요)' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3524,6 +3609,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'I1'
 			   , '전월 욕창이 없고, 당월 욕창이 생겼으나 2. 새로발생한 욕창 a. 이전평가 이후 새로운 욕창 발생여부에 없음으로 체크된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3556,6 +3643,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'I2'
 			   , '전월, 당월 욕창 욕창이 있는 대상자 중 2. 새로발생한 욕창 a. 이전평가 이후 새로운 욕창 발생여부에 있음으로 체크되어 있으나 전월의 발생일자가 동일하게 작성된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3588,6 +3677,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'I3'
 			   , '전월, 당월 욕창이 없으나, a. 이전평가 이후 새로운 욕창 발생여부에 있음으로 체크되어 있고 발생일이 기록이 있는경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3623,6 +3714,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J1'
 			   , '전월 욕창이 있고, 당월욕창이 없는 경우 3. 지난 1년사이의 욕창(압박성궤양) 과거력거력에 없음으로 체크된 경우' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3655,6 +3748,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J2'                                              AS errType
 			   , '청구sam 파일에 M0121 염증성처치가 시행되었으나,  2. 피부문제에 대한 처치 중 피부궤양 드레싱에 체크가 없는 경우(점검용)' AS errName
 		  FROM TBL_PATVAL_MST A
@@ -3689,6 +3784,8 @@
 			   , A.MED_START                                       AS medStart  
 			   , A.DOC_DT                                          AS docDt
 			   , A.EVAL_TYPE                                       AS evalType
+			   , A.PAT_CLASS                                       AS patClass
+			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'J3'                                              AS errType  
 			   , '피부궤양 드레싱 실시에 체크되어 있으나, 청구 sam 파일에 M0121 염증성처치가 확인되지 않은 경우' AS errName   
 		  FROM TBL_PATVAL_MST A
@@ -3727,6 +3824,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'K1'                                              AS errType 
 			   , '전월대비 ADL 총점이 ±1점인 대상자' AS errName   
 		  FROM TBL_PATVAL_MST C
@@ -3756,6 +3855,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'K2'
 			   , '전월대비 ADL 총점이 ±3점 이상인 대상자' AS errName   
 		  FROM TBL_PATVAL_MST C
@@ -3784,6 +3885,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'K3'                                              AS errType
 			   , '행동심리증상_n.배회에 가끔, 자주, 매우자주에 체크되어 있으나 ADL항목 중 옮겨앉기, 방밖으로 나오기, 화장실사용하기가 상당한도움,전적인도움에  체크되어 있는 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3808,6 +3911,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'M1'                                              AS errType
 			   , '질병 당뇨에 체크되어 있으나, 3개월 이내 헤모글로빈 검사 실시여부 아니오로 체크 된 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3828,6 +3933,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'M2'                                              AS errType
 			   , '질병-당뇨-헤모글로빈 검사일자가 평가표 작성일 보다 이후 인 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3848,6 +3955,8 @@
 			   , C.MED_START                                       AS medStart  
 			   , C.DOC_DT                                          AS docDt
 			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'M3'                                              AS errType
 			   , '당월 7일을 기준으로 질병-당뇨-헤모글로빈 검사일자가 90일 이전인 경우' AS errName
 		  FROM TBL_PATVAL_MST C
@@ -3880,6 +3989,8 @@
 		       , S.MED_START                                        AS medStart
 		       , ''                                                 AS docDt
 		       , ''                                                 AS evalType
+		       , ''                                                 AS patClass
+		       , ''                                                 AS indwellCath
 		       , 'D3'                                               AS errType
 		       , CONCAT('[오더O/평가표X] 오더 유치도뇨관 삽입(', S.MED_START, ') 기록 있으나 환자평가표에 반영 안됨') AS errName
 		    FROM TBL_SPCSUGA_INFO S
@@ -3895,7 +4006,6 @@
 		           OR S.KOR_NAME LIKE '%유치%카테터%'
 		           OR S.KOR_NAME LIKE '%유치도뇨%' )
 		     AND COALESCE(S.MED_START,'') != ''
-		     AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND P.PAT_ID IS NULL
 
 		UNION ALL
@@ -3911,6 +4021,8 @@
 		       , P.MED_START                                        AS medStart
 		       , P.DOC_DT                                           AS docDt
 		       , P.EVAL_TYPE                                        AS evalType
+		       , P.PAT_CLASS                                        AS patClass
+		       , P.INDWELL_CATH                                     AS indwellCath
 		       , 'D4'                                               AS errType
 		       , CONCAT('[날짜불일치] 오더 삽입일(', S.MED_START, ')이 평가표 삽입일자(g-1-1~g-10)와 일치하지 않음') AS errName
 		    FROM TBL_PATVAL_MST P
@@ -3921,28 +4033,11 @@
 		   WHERE P.HOSP_CD = #{hospCd}
 		     AND P.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND P.INDWELL_CATH = '1'
-		     AND IFNULL(P.PAT_CLASS,'') NOT LIKE 'A%'
-		     AND (
-		           P.EVAL_TYPE = '2'
-		           OR (
-		               P.EVAL_TYPE = '3'
-		               AND DAY(STR_TO_DATE(P.MED_START, '%Y%m%d')) = 1
-		               AND DAY(STR_TO_DATE(P.DOC_DT, '%Y%m%d')) BETWEEN 7 AND 10
-		               AND NOT EXISTS (
-		                     SELECT 1 FROM TBL_PATVAL_MST b
-		                      WHERE b.HOSP_CD            = P.HOSP_CD
-		                        AND b.PAT_ID             = P.PAT_ID
-		                        AND LEFT(b.MED_START, 6) = DATE_FORMAT(DATE_SUB(STR_TO_DATE(P.MED_START, '%Y%m%d'), INTERVAL 1 MONTH), '%Y%m')
-		                        AND b.DOC_DT             = P.DOC_DT
-		                   )
-		           )
-		         )
 		     AND (    S.EDI_CODE IN ('M0060')
 		           OR S.SUGA_CD  IN ('M0060')
 		           OR S.KOR_NAME LIKE '%유치%카테터%'
 		           OR S.KOR_NAME LIKE '%유치도뇨%' )
 		     AND COALESCE(S.MED_START,'') != ''
-		     AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND S.MED_START NOT IN (
 		           IFNULL(P.CAT_IN_1 ,'00000000'), IFNULL(P.CAT_IN_2 ,'00000000'),
 		           IFNULL(P.CAT_IN_3 ,'00000000'), IFNULL(P.CAT_IN_4 ,'00000000'),
@@ -3966,6 +4061,8 @@
 		       , P.MED_START                                        AS medStart
 		       , P.DOC_DT                                           AS docDt
 		       , P.EVAL_TYPE                                        AS evalType
+		       , P.PAT_CLASS                                        AS patClass
+		       , P.INDWELL_CATH                                     AS indwellCath
 		       , 'D5'                                               AS errType
 		       , CASE
 		             -- 수가현황(TBL_SPCSUGA_INFO) 자체가 없는 경우
@@ -3986,41 +4083,13 @@
 		   WHERE P.HOSP_CD = #{hospCd}
 		     AND P.MED_START LIKE CONCAT(#{jobYymm},'%')
 		     AND P.INDWELL_CATH = '1'
-		     AND IFNULL(P.PAT_CLASS,'') NOT LIKE 'A%'
-		     AND (
-		           P.EVAL_TYPE = '2'
-		           OR (
-		               P.EVAL_TYPE = '3'
-		               AND DAY(STR_TO_DATE(P.MED_START, '%Y%m%d')) = 1
-		               AND DAY(STR_TO_DATE(P.DOC_DT, '%Y%m%d')) BETWEEN 7 AND 10
-		               AND NOT EXISTS (
-		                     SELECT 1 FROM TBL_PATVAL_MST b
-		                      WHERE b.HOSP_CD            = P.HOSP_CD
-		                        AND b.PAT_ID             = P.PAT_ID
-		                        AND LEFT(b.MED_START, 6) = DATE_FORMAT(DATE_SUB(STR_TO_DATE(P.MED_START, '%Y%m%d'), INTERVAL 1 MONTH), '%Y%m')
-		                        AND b.DOC_DT             = P.DOC_DT
-		                   )
-		           )
-		         )
-		     AND (
-		           P.CAT_IN_1  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_2  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_3  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_4  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_5  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_6  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_7  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_8  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_9  LIKE CONCAT(#{jobYymm},'%')
-		        OR P.CAT_IN_10 LIKE CONCAT(#{jobYymm},'%')
-		         )
+		     AND IFNULL(P.CAT_IN_1,'00000000') != '00000000'
 		     AND NOT EXISTS (
 		           SELECT 1
 		             FROM TBL_SPCSUGA_INFO S
 		            WHERE S.HOSP_CD = P.HOSP_CD
 		              AND LEFT(S.JUMINNO,6) = LEFT(P.PAT_ID,6)
 		              AND S.IPWONDT = REPLACE(P.ADMIT_DT,'-','')
-		              AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
 		              AND (    S.EDI_CODE IN ('M0060')
 		                    OR S.SUGA_CD  IN ('M0060')
 		                    OR S.KOR_NAME LIKE '%유치%카테터%'

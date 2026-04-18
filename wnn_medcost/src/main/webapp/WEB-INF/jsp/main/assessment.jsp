@@ -530,26 +530,33 @@ function fn_ShowCath05Modal() {
     var patMap = {};
     var order = [];
 
-    function addPat(patId, patNm, admitDt, issueLabel, issueColor, errType) {
+    function addPat(patId, patNm, admitDt, patClass, evalType, indwellCath, issueLabel, issueColor, errType) {
         if (!patId) return;
         if (!patMap[patId]) {
-            patMap[patId] = { patId: patId, patNm: patNm || '', admitDt: admitDt || '', issues: [] };
+            patMap[patId] = {
+                patId: patId, patNm: patNm || '', admitDt: admitDt || '',
+                patClass: patClass || '', evalType: evalType || '', indwellCath: indwellCath || '',
+                issues: []
+            };
             order.push(patId);
         } else {
-            if (!patMap[patId].patNm   && patNm)   patMap[patId].patNm   = patNm;
-            if (!patMap[patId].admitDt && admitDt) patMap[patId].admitDt = admitDt;
+            if (!patMap[patId].patNm       && patNm)       patMap[patId].patNm       = patNm;
+            if (!patMap[patId].admitDt     && admitDt)     patMap[patId].admitDt     = admitDt;
+            if (!patMap[patId].patClass    && patClass)    patMap[patId].patClass    = patClass;
+            if (!patMap[patId].evalType    && evalType)    patMap[patId].evalType    = evalType;
+            if (!patMap[patId].indwellCath && indwellCath) patMap[patId].indwellCath = indwellCath;
         }
         patMap[patId].issues.push({ label: issueLabel, color: issueColor, errType: errType || '' });
     }
 
     for (var i = 0; i < _prevMissingData.length; i++) {
         var m = _prevMissingData[i];
-        addPat(m.patId, m.patNm, m.admitDt, '전월대상자 당월미존재', '#333333', 'PREV');
+        addPat(m.patId, m.patNm, m.admitDt, m.patClass, m.evalType, m.indwellCath, '전월대상자 당월미존재', '#333333', 'PREV');
     }
     for (var j = 0; j < _errCheckData.length; j++) {
         var er = _errCheckData[j];
         var lbl = '[' + er.errType + '] ' + (er.errName || '평가표오류');
-        addPat(er.patId, er.patNm, er.admitDt, lbl, '#dc3545', er.errType);
+        addPat(er.patId, er.patNm, er.admitDt, er.patClass, er.evalType, er.indwellCath, lbl, '#dc3545', er.errType);
     }
 
     // 엑셀 저장용 전역 저장
@@ -575,6 +582,25 @@ function fn_ShowCath05Modal() {
             '.cath05-patid { font-family:Consolas,monospace; color:#333; font-weight:600; }' +
             '.cath05-patnm { color:#2c3e50; font-weight:500; }' +
             '.cath05-date  { color:#5a6978; font-family:Consolas,monospace; font-size:12px; }' +
+            '.cath05-pclass { color:#1e3c72; font-weight:700; font-family:Consolas,monospace; font-size:12.5px; }' +
+            '.cath05-eval { color:#2c3e50; font-size:12px; }' +
+            '.cath05-indwell { font-size:14px; }' +
+            // 드래그 이동 지원
+            '.swal2-popup.cath05-draggable { cursor: default; }' +
+            '.swal2-popup.cath05-draggable .swal2-title { cursor: move; user-select: none; }' +
+            // cath05 모달에서는 Cancel 버튼(엑셀저장 슬롯) 강제 숨김 — 인라인 버튼으로 대체됨
+            '.swal2-popup.cath05-draggable .swal2-cancel { display: none !important; }' +
+            // 모달 내부 엑셀저장 버튼
+            '.cath05-inline-excel-btn {' +
+            '  display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:none;' +
+            '  border-radius:4px; font-size:13px; font-weight:600; letter-spacing:0.2px; color:#fff;' +
+            '  background:linear-gradient(135deg,#28a745 0%,#20c997 100%);' +
+            '  box-shadow:0 2px 6px rgba(40,167,69,0.25), inset 0 1px 0 rgba(255,255,255,0.25);' +
+            '  cursor:pointer; transition:filter 0.15s ease, box-shadow 0.15s ease;' +
+            '}' +
+            '.cath05-inline-excel-btn:hover  { filter:brightness(1.08); box-shadow:0 4px 10px rgba(40,167,69,0.35); }' +
+            '.cath05-inline-excel-btn:active { filter:brightness(0.95); }' +
+            '.cath05-inline-excel-btn:focus  { outline:none; }' +
             // 오류 텍스트 — 박스 제거, 인라인 color 로 각 타입별 색상 적용
             //   · 전월대상자 : 검정 (#333)
             //   · 오류 전체  : 빨강 (#dc3545)
@@ -610,16 +636,41 @@ function fn_ShowCath05Modal() {
         document.head.appendChild(st);
     }
 
+    // 평가구분 코드표 (PDF 기준)
+    var _EVAL_TYPE_MAP = {
+        '1': '입원 평가',
+        '2': '계속 입원 중인 환자 평가',
+        '3': '이전 환자평가표를 적용하는 경우'
+    };
+    function _fmtEvalType(v) {
+        if (!v) return '-';
+        var t = String(v);
+        return _EVAL_TYPE_MAP[t] ? (t + '·' + _EVAL_TYPE_MAP[t]) : t;
+    }
+    function _fmtIndwell(v) {
+        if (v === '1' || v === 'Y') return '<span style="color:#28a745;font-weight:700;">✓</span>';
+        if (!v) return '<span style="color:#b0b6bf;">-</span>';
+        return $('<div>').text(v).html();
+    }
+
     if (total === 0) {
         html = '<div style="padding:30px 20px; text-align:center; color:#155724; font-size:14px;"><i class="fas fa-check-circle" style="color:#28a745; font-size:24px; display:block; margin-bottom:8px;"></i>점검 대상이 없습니다.</div>';
     } else {
-        html = '<div style="text-align:left; max-height:65vh; overflow:auto; padding:4px;">';
+        html = '<div style="display:flex; justify-content:flex-end; margin-bottom:8px; gap:8px;">' +
+               '  <button type="button" id="btnCath05ExcelInline" class="cath05-inline-excel-btn">' +
+               '    <i class="far fa-file-excel"></i>&nbsp;엑셀저장' +
+               '  </button>' +
+               '</div>';
+        html += '<div style="text-align:left; max-height:68vh; overflow:auto; padding:4px;">';
         html += '<table class="cath05-table">' +
                 '<thead><tr>' +
                 '<th style="width:50px;">No</th>' +
                 '<th style="width:100px;">환자ID</th>' +
                 '<th style="width:90px;">성명</th>' +
                 '<th style="width:110px;">입원일</th>' +
+                '<th style="width:90px;">환자분류군</th>' +
+                '<th style="width:260px; text-align:left;">평가구분</th>' +
+                '<th style="width:140px;">유치도뇨관 삽입</th>' +
                 '<th>점검항목</th>' +
                 '</tr></thead><tbody>';
         for (var k = 0; k < order.length; k++) {
@@ -627,7 +678,6 @@ function fn_ShowCath05Modal() {
             var badges = '';
             for (var b = 0; b < p.issues.length; b++) {
                 var iss = p.issues[b];
-                // 박스 제거 — bullet + 텍스트에 색상 적용
                 badges += '<div class="cath05-badge-wrap" style="color:' + iss.color + ';"><span class="cath05-badge" style="color:' + iss.color + ';">' + $('<div>').text(iss.label).html() + '</span></div>';
             }
             html += '<tr>' +
@@ -635,6 +685,9 @@ function fn_ShowCath05Modal() {
                     '<td class="cath05-patid" style="text-align:center;">' + p.patId + '</td>' +
                     '<td class="cath05-patnm" style="text-align:center;">' + p.patNm + '</td>' +
                     '<td class="cath05-date"  style="text-align:center;">' + p.admitDt + '</td>' +
+                    '<td class="cath05-pclass" style="text-align:center;">' + ($('<div>').text(p.patClass || '-').html()) + '</td>' +
+                    '<td class="cath05-eval"   style="text-align:left; padding-left:14px;">' + ($('<div>').text(_fmtEvalType(p.evalType)).html()) + '</td>' +
+                    '<td class="cath05-indwell" style="text-align:center;">' + _fmtIndwell(p.indwellCath) + '</td>' +
                     '<td>' + badges + '</td>' +
                     '</tr>';
         }
@@ -642,22 +695,73 @@ function fn_ShowCath05Modal() {
     }
 
     Swal.fire({
-        title: '<span style="font-size:18px;"><i class="fas fa-stethoscope" style="color:#f0ad4e; margin-right:8px;"></i>유치도뇨관 및 오류점검 결과 : ' + total + '명</span>',
+        title: '<span style="font-size:18px;" title="드래그로 이동"><i class="fas fa-stethoscope" style="color:#f0ad4e; margin-right:8px;"></i>유치도뇨관 및 오류점검 결과 : ' + total + '명</span>',
         html: html,
-        width: '1100px',    // 배지 세로 배치라 너비 적당히 축소
-        showCancelButton: (total > 0),
+        width: '1600px',
+        showCancelButton: false,                              // 엑셀저장은 모달 내부 버튼으로 이동
+        showConfirmButton: true,
         confirmButtonText: '확인',
-        cancelButtonText: '<i class="far fa-file-excel"></i> 엑셀저장',
         confirmButtonColor: '#6c7bff',
-        cancelButtonColor: '#28a745',
-        reverseButtons: true
-    }).then(function(result) {
-        // "엑셀저장"(=취소 버튼 재활용) 클릭 시
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            fn_ExportCath05Excel();
-            // 저장 후 모달 재오픈 (계속 보기 편하게)
-            setTimeout(fn_ShowCath05Modal, 50);
+        allowOutsideClick: false,                             // 외부 클릭으로 닫히지 않음
+        allowEscapeKey: true,
+        customClass: { popup: 'cath05-draggable' },
+        didOpen: function() {
+            _cath05EnableDrag();
+            // 모달 내부 엑셀저장 버튼에 이벤트 연결 — 모달 유지하며 저장
+            var $excelBtn = $('#btnCath05ExcelInline');
+            if ($excelBtn.length) {
+                $excelBtn.off('click.pvExcel').on('click.pvExcel', function(e) {
+                    e.preventDefault();
+                    fn_ExportCath05Excel();
+                });
+            }
         }
+    });
+}
+
+// SweetAlert2 팝업을 제목 영역 드래그로 이동
+function _cath05EnableDrag() {
+    var popup = document.querySelector('.swal2-popup.cath05-draggable');
+    if (!popup) return;
+    var handle = popup.querySelector('.swal2-title');
+    if (!handle) return;
+
+    var startX = 0, startY = 0, originX = 0, originY = 0, dragging = false;
+
+    function onMouseMove(e) {
+        if (!dragging) return;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        popup.style.position = 'fixed';
+        popup.style.left   = (originX + dx) + 'px';
+        popup.style.top    = (originY + dy) + 'px';
+        popup.style.right  = 'auto';
+        popup.style.bottom = 'auto';
+        popup.style.margin = '0';
+    }
+    function onMouseUp() {
+        dragging = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup',   onMouseUp);
+    }
+    handle.addEventListener('mousedown', function(e) {
+        // 초기 1회 고정 위치 설정
+        var rect = popup.getBoundingClientRect();
+        popup.style.position = 'fixed';
+        popup.style.left = rect.left + 'px';
+        popup.style.top  = rect.top  + 'px';
+        popup.style.right = 'auto';
+        popup.style.bottom = 'auto';
+        popup.style.margin = '0';
+
+        startX  = e.clientX;
+        startY  = e.clientY;
+        originX = rect.left;
+        originY = rect.top;
+        dragging = true;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup',   onMouseUp);
+        e.preventDefault();
     });
 }
 
@@ -691,22 +795,33 @@ function fn_ExportCath05Excel() {
 
 function _doCath05ExcelWrite() {
 
-    // (1) 환자별 통합 시트
+    // 평가구분 코드표 (엑셀에서 재사용)
+    var _XLS_EVAL = { '1':'입원 평가', '2':'계속 입원 중인 환자 평가', '3':'이전 환자평가표를 적용하는 경우' };
+    function _xlsEvalText(v) {
+        if (!v) return '';
+        var t = String(v);
+        return _XLS_EVAL[t] ? (t + '·' + _XLS_EVAL[t]) : t;
+    }
+    function _xlsIndwell(v) { return (v === '1' || v === 'Y') ? 'O' : ''; }
+
+    // (1) 환자별 통합 시트 — 환자분류군 / 평가구분 / 유치도뇨관 삽입 추가
     var summaryRows = [];
-    var maxIssueCnt = 1;   // 행 높이 계산용
+    var maxIssueCnt = 1;
     for (var i = 0; i < _cath05Order.length; i++) {
         var p = _cath05PatMap[_cath05Order[i]];
-        // 여러 오류는 Ctrl+Enter(=\n)로 줄바꿈
         var issueText = p.issues.map(function(x) { return x.label; }).join('\n');
         var errTypes  = p.issues.map(function(x) { return x.errType; }).filter(function(v){return v;}).join(',');
         if (p.issues.length > maxIssueCnt) maxIssueCnt = p.issues.length;
         summaryRows.push({
-            '환자ID':    p.patId,
-            '성명':      p.patNm,
-            '입원일':    p.admitDt,
-            '오류개수':  p.issues.length,
-            '오류코드':  errTypes,
-            '점검항목':  issueText
+            '환자ID':        p.patId,
+            '성명':          p.patNm,
+            '입원일':        p.admitDt,
+            '환자분류군':    p.patClass   || '',
+            '평가구분':      _xlsEvalText(p.evalType),
+            '유치도뇨관 삽입': _xlsIndwell(p.indwellCath),
+            '오류개수':      p.issues.length,
+            '오류코드':      errTypes,
+            '점검항목':      issueText
         });
     }
 
@@ -717,11 +832,14 @@ function _doCath05ExcelWrite() {
         for (var b = 0; b < pp.issues.length; b++) {
             var ii = pp.issues[b];
             detailRows.push({
-                '환자ID':   pp.patId,
-                '성명':     pp.patNm,
-                '입원일':   pp.admitDt,
-                '오류코드': ii.errType || '',
-                '점검항목': ii.label
+                '환자ID':        pp.patId,
+                '성명':          pp.patNm,
+                '입원일':        pp.admitDt,
+                '환자분류군':    pp.patClass   || '',
+                '평가구분':      _xlsEvalText(pp.evalType),
+                '유치도뇨관 삽입': _xlsIndwell(pp.indwellCath),
+                '오류코드':      ii.errType || '',
+                '점검항목':      ii.label
             });
         }
     }
@@ -730,14 +848,13 @@ function _doCath05ExcelWrite() {
     var ws1 = XLSX.utils.json_to_sheet(summaryRows);
     var ws2 = XLSX.utils.json_to_sheet(detailRows);
 
-    // 컬럼 너비
-    ws1['!cols'] = [ {wch:12}, {wch:10}, {wch:12}, {wch:8}, {wch:18}, {wch:90} ];
-    ws2['!cols'] = [ {wch:12}, {wch:10}, {wch:12}, {wch:10}, {wch:90} ];
+    // 컬럼 너비 (환자ID / 성명 / 입원일 / 환자분류군 / 평가구분 / 유치도뇨관 삽입 / 오류개수 / 오류코드 / 점검항목)
+    ws1['!cols'] = [ {wch:12}, {wch:10}, {wch:12}, {wch:12}, {wch:36}, {wch:16}, {wch:8}, {wch:18}, {wch:90} ];
+    ws2['!cols'] = [ {wch:12}, {wch:10}, {wch:12}, {wch:12}, {wch:36}, {wch:16}, {wch:10}, {wch:90} ];
 
     // ── 환자별요약 시트: 점검항목 셀에 줄바꿈 + Wrap Text 스타일 적용 ──
-    //     (SheetJS Style/xlsx-js-style 지원 시 실제 반영, Community 버전에선 무시됨 — 값의 \n은 보존)
     var range = XLSX.utils.decode_range(ws1['!ref']);
-    var colIdx_chk = 5;  // '점검항목' 6번째 컬럼 (0-based)
+    var colIdx_chk = 8;  // '점검항목' 9번째 컬럼 (0-based) — 컬럼 추가로 위치 변경
     for (var R = range.s.r; R <= range.e.r; R++) {
         var addr = XLSX.utils.encode_cell({ r: R, c: colIdx_chk });
         if (ws1[addr]) {
