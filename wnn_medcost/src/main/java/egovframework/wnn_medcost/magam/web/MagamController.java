@@ -1134,6 +1134,26 @@ public class MagamController {
 		}
 	}
 
+	// 유치도뇨관 오더(TBL_SPCSUGA_INFO) ↔ 환자평가표(TBL_PATVAL_MST) 크로스체크
+	@RequestMapping(value="/main/select_CathCrossCheck.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_CathCrossCheck(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		try {
+			System.out.println("select_CathCrossCheck 시작 - hospCd: " + dto.getHospCd() + ", jobYymm: " + dto.getJobYymm());
+			List<PatvalDTO> resultdt = svc.select_CathCrossCheck(dto);
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", resultdt);
+			System.out.println("select_CathCrossCheck 완료 - 건수: " + (resultdt != null ? resultdt.size() : 0));
+			return response;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", new java.util.ArrayList<PatvalDTO>());
+			response.put("error_mess", ex.getMessage());
+			return response;
+		}
+	}
+
 	@RequestMapping(value="/main/select_ScoreCriteria.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> select_ScoreCriteria(@ModelAttribute("DTO") IndiDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

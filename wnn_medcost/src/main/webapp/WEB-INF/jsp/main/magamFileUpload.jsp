@@ -2009,8 +2009,8 @@ function excelBuildMappingUI() {
 		$div.html(
 			'<label style="font-size:11px; margin-bottom:0; font-weight:600; color:' + (col.required ? '#dc3545' : '#333') + ';">' +
 				col.label + star + '</label>' +
-			'<select id="excelMap_' + col.key + '" class="form-control form-control-sm excel-map-sel" ' +
-				'data-dbkey="' + col.key + '" style="font-size:11px; height:28px; ' + bg + '">' + options + '</select>'
+			'<select id="excelMap_' + col.key + '" class="custom-select custom-select-sm excel-map-sel" ' +
+				'data-dbkey="' + col.key + '" style="font-size:11px; height:28px; padding-right:22px; ' + bg + '">' + options + '</select>'
 		);
 		$zone.append($div);
 	}
@@ -2028,25 +2028,47 @@ function excelBuildMappingUI() {
 	});
 }
 
-// ─── 매핑 상태 배지 영역 ───
-function excelBuildMappingSummary() {
+// ─── 등록 가능 여부 판단 + 표시 ───
+function excelUpdateMappingCnt() {
 	var dbColumns = excelGetDbColumns();
 	var total = dbColumns.length;
 	var mappedCount = 0;
-	var html = '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">';
+	var missingRequired = [];
 	for (var i = 0; i < dbColumns.length; i++) {
 		var col = dbColumns[i];
-		var mapped = excelColumnMap[col.key];
-		if (mapped) {
+		if (excelColumnMap[col.key]) {
 			mappedCount++;
-			html += '<span class="badge" style="background:#d4edda; color:#155724; padding:3px 8px; font-size:11px; border-radius:10px;">' + col.label + ' ← ' + mapped + '</span>';
 		} else if (col.required) {
-			html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:3px 8px; font-size:11px; border-radius:10px;"><i class="fa fa-exclamation-triangle mr-1"></i>' + col.label + ' (필수 미매핑)</span>';
+			missingRequired.push(col.label);
 		}
 	}
-	html += '</div>';
-	html += '<small style="color:#666;">매핑 상태: ' + mappedCount + '/' + total + '개</small>';
-	return html;
+
+	var $box = $('#excelMappingCntBox');
+	var $el  = $('#excelRegistStatus');
+	if (!$el.length) return;
+
+	var text, bg, border, color;
+	if (missingRequired.length > 0) {
+		// 필수 컬럼 누락 — 등록 불가
+		text = '<i class="fa fa-times-circle mr-1"></i>등록 불가 — 필수 누락: ' + missingRequired.join(', ') +
+		       ' <span style="font-weight:normal; opacity:0.75;">(' + mappedCount + '/' + total + ')</span>';
+		bg = '#f8d7da'; border = '#dc3545'; color = '#721c24';
+	} else if (mappedCount === 0) {
+		// 매핑된 컬럼이 하나도 없음
+		text = '<i class="fa fa-exclamation-circle mr-1"></i>등록 불가 — 매핑된 컬럼 없음';
+		bg = '#fff3cd'; border = '#ffc107'; color = '#856404';
+	} else {
+		// 등록 가능
+		text = '<i class="fa fa-check-circle mr-1"></i>등록 가능 ' +
+		       '<span style="font-weight:normal; opacity:0.75;">(' + mappedCount + '/' + total + ' 매핑됨)</span>';
+		bg = '#d4edda'; border = '#28a745'; color = '#155724';
+	}
+	$el.html(text);
+	$box.css({
+		'background':  bg,
+		'border-color': border,
+		'color':       color
+	});
 }
 
 // ─── 엑셀 미리보기 (매핑 UI + 원본 헤더 그리드) ───
@@ -2057,13 +2079,14 @@ function showExcelPreview() {
 
 	// 모달 본문 HTML 구성
 	var html = '';
-	html += '<div class="alert alert-info py-2 mb-2" style="font-size:12px;">';
-	html += '<i class="fa fa-info-circle mr-1"></i>엑셀 헤더와 DB 컬럼을 매핑하세요. 자동 매핑 후 필요시 드롭다운에서 수정 가능합니다. (필수 컬럼은 <span style="color:#dc3545; font-weight:600;">*</span> 표시)';
+	html += '<div class="alert alert-info py-2 mb-2" style="font-size:12px; display:flex; justify-content:space-between; align-items:center;">';
+	html += '  <span><i class="fa fa-info-circle mr-1"></i>엑셀 헤더와 DB 컬럼을 매핑하세요. 자동 매핑 후 필요시 드롭다운에서 수정 가능합니다.엑셀에 요양기호 없으면 로그인정보로 저장됨 (필수 컬럼은 <span style="color:#dc3545; font-weight:600;">*</span> 표시)</span>';
+	html += '  <span id="excelMappingCntBox" style="white-space:nowrap; font-weight:600; background:#ffffff; padding:4px 12px; border-radius:4px; font-size:12px; box-shadow:0 1px 2px rgba(0,0,0,0.06); margin-left:12px; border:1px solid #ccc;">' +
+	        '<span id="excelRegistStatus">등록 가능 여부 확인 중...</span></span>';
 	html += '</div>';
 	html += '<div id="excelMappingZone" class="mb-2">';
 	html += '  <div id="excelMappingFields" class="form-row" style="flex-wrap:wrap;"></div>';
 	html += '</div>';
-	html += '<div id="excelMappingSummary" class="mb-2" style="padding:6px 10px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px;"></div>';
 	html += '<div class="form-row mb-2" id="excelPreviewSearchBar">';
 	html += '  <div class="col-3"><select id="excelPreviewSearchCol" class="custom-select custom-select-sm"><option value="">전체 컬럼</option></select></div>';
 	html += '  <div class="col-5"><input type="text" id="excelPreviewSearchKw" class="form-control form-control-sm" placeholder="검색어 입력 후 Enter"></div>';
@@ -2071,15 +2094,60 @@ function showExcelPreview() {
 	html += '    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExcelPreviewSearchReset">초기화</button>';
 	html += '    <span id="excelPreviewSearchCnt" class="ml-2" style="font-size:12px; color:#666;"></span></div>';
 	html += '</div>';
-	html += '<table id="excelPreviewTable" class="display nowrap stripe hover cell-border compact" style="width:100%; font-size:12px;"></table>';
+	// 테이블 외부 래퍼로 overflow 처리 (가로/세로 둘 다 이 div가 담당)
+	var tableMinWidth = Math.max(1000, (excelRawHeaders.length + 1) * 160);
+	html += '<div id="excelPreviewScrollWrap" style="width:100%; max-height:38vh; overflow:auto; border:1px solid #dee2e6; border-radius:3px; position:relative;">';
+	html += '  <table id="excelPreviewTable" class="display nowrap stripe hover cell-border compact" style="font-size:12px; width:' + tableMinWidth + 'px; min-width:' + tableMinWidth + 'px;"></table>';
+	html += '</div>';
 
 	$('#excelPreviewContent').html(html);
 
+	// 외부 래퍼 스크롤바 항상 표시 + 헤더 sticky CSS (한 번만 주입)
+	if (!document.getElementById('excelPreviewScrollStyle')) {
+		var pStyle = document.createElement('style');
+		pStyle.id = 'excelPreviewScrollStyle';
+		pStyle.innerHTML =
+			// 외부 래퍼 스크롤바 스타일
+			'#excelPreviewScrollWrap::-webkit-scrollbar { height:14px; width:10px; background:#e9ecef; }' +
+			'#excelPreviewScrollWrap::-webkit-scrollbar-thumb { background:#6c757d; border-radius:7px; border:2px solid #e9ecef; }' +
+			'#excelPreviewScrollWrap::-webkit-scrollbar-thumb:hover { background:#495057; }' +
+			'#excelPreviewScrollWrap::-webkit-scrollbar-track { background:#e9ecef; border-radius:7px; }' +
+			'#excelPreviewScrollWrap { scrollbar-width:auto; scrollbar-color:#6c757d #e9ecef; }' +
+			// 매핑 드롭다운에 ▼ 아래 화살표만 표시 (custom-select 스타일 override)
+			'.excel-map-sel {' +
+			'  appearance:none !important; -webkit-appearance:none !important; -moz-appearance:none !important;' +
+			'  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 10 6\'%3E%3Cpath fill=\'%23555\' d=\'M0 0 L10 0 L5 6 z\'/%3E%3C/svg%3E") !important;' +
+			'  background-repeat:no-repeat !important;' +
+			'  background-position:right 8px center !important;' +
+			'  background-size:10px 6px !important;' +
+			'  padding-right:24px !important;' +
+			'}' +
+			// ── 헤더 sticky: 세로 스크롤 시 헤더 고정 ──
+			'#excelPreviewTable thead th {' +
+			'  position:sticky; top:0; z-index:10;' +
+			'  background:#2a5298 !important; color:#ffffff !important;' +
+			'  border-right:1px solid rgba(255,255,255,0.1);' +
+			'  box-shadow:0 2px 4px rgba(0,0,0,0.08);' +
+			'}' +
+			// DataTables 기본 정렬 아이콘(화살표) 색상도 흰색으로 맞춤
+			'#excelPreviewTable thead th.sorting, ' +
+			'#excelPreviewTable thead th.sorting_asc, ' +
+			'#excelPreviewTable thead th.sorting_desc { color:#fff !important; }' +
+			'#excelPreviewTable thead th.sorting::before, ' +
+			'#excelPreviewTable thead th.sorting::after, ' +
+			'#excelPreviewTable thead th.sorting_asc::before, ' +
+			'#excelPreviewTable thead th.sorting_asc::after, ' +
+			'#excelPreviewTable thead th.sorting_desc::before, ' +
+			'#excelPreviewTable thead th.sorting_desc::after { color:#fff !important; opacity:0.7; }';
+		document.head.appendChild(pStyle);
+	}
+
 	// 매핑 UI 구성
 	excelBuildMappingUI();
-	$('#excelMappingSummary').html(excelBuildMappingSummary());
-	$('#excelMappingFields').off('change.sum').on('change.sum', '.excel-map-sel', function() {
-		$('#excelMappingSummary').html(excelBuildMappingSummary());
+	excelUpdateMappingCnt();
+	// 드롭다운 변경 시 매핑 카운트 갱신
+	$('#excelMappingFields').off('change.cnt').on('change.cnt', '.excel-map-sel', function() {
+		excelUpdateMappingCnt();
 	});
 
 	// DataTables 그리드 (엑셀 원본 헤더로 동적 생성)
@@ -2117,9 +2185,9 @@ function showExcelPreview() {
 	excelPreviewDT = $('#excelPreviewTable').DataTable({
 		data: excelRawRows,
 		columns: cols,
-		scrollX: true,
-		scrollY: '32vh',
-		scrollCollapse: true,
+		// DataTables 내부 scroll 완전 OFF — 외부 div 래퍼가 가로/세로 overflow 모두 담당
+		scrollX: false,
+		scrollY: false,
 		paging: false,
 		ordering: true,
 		searching: true,
@@ -2127,6 +2195,8 @@ function showExcelPreview() {
 		autoWidth: false,
 		deferRender: true,
 		processing: true,
+		// 검색창 좌측에 안내 문구 배치 (dom layout)
+		dom: '<"excel-dt-toprow d-flex justify-content-between align-items-center mb-1"<"excel-dt-notice">f>rt<"mt-1"i>',
 		language: {
 			search: '검색 : ',
 			emptyTable: '데이터가 없습니다.',
@@ -2138,6 +2208,14 @@ function showExcelPreview() {
 		},
 		rowCallback: function(row) {
 			$(row).find('td').css('padding', '2px 6px');
+		},
+		initComplete: function() {
+			// 안내 문구 HTML 주입 (dom의 "excel-dt-notice" div)
+			$(this.api().table().container()).find('.excel-dt-notice').html(
+				'<span style="display:inline-block; padding:4px 10px; background:#e7f3ff; ' +
+				'border-left:3px solid #2a5298; color:#1e3c72; font-size:12px; font-weight:600; ' +
+				'border-radius:2px;"><i class="fa fa-file-excel mr-1"></i>아래 내용은 엑셀로 로드된 원본 데이터입니다</span>'
+			);
 		}
 	});
 
@@ -2172,12 +2250,16 @@ function showExcelPreview() {
 		$('#excelPreviewModal').modal('hide');
 	});
 
-	// 모달이 완전히 표시된 후 DataTables 폭/스크롤 재계산 (좌우 스크롤 확실히 작동)
+	// 모달이 완전히 표시된 후 테이블 min-width 최종 확인
 	$('#excelPreviewModal').off('shown.bs.modal.dtadjust').on('shown.bs.modal.dtadjust', function() {
-		if (excelPreviewDT) {
-			excelPreviewDT.columns.adjust();
-			try { excelPreviewDT.draw(false); } catch (e) {}
-		}
+		setTimeout(function() {
+			var minW = Math.max(1000, (excelRawHeaders.length + 1) * 160);
+			// 테이블 폭 재확인 (DataTables가 width를 override할 가능성 대비)
+			$('#excelPreviewTable').css({
+				'width': minW + 'px',
+				'min-width': minW + 'px'
+			});
+		}, 200);
 	});
 	$('#excelPreviewModal').modal('show');
 }

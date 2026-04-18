@@ -17,7 +17,8 @@ public class PatvalDTO {
 	private String updUser;			// 최종변경자
 	private String updIp;	    	// 최종변경 ip
 	
-	private String patId;          	// 환자번호
+	private String patId;          	// 환자번호(주민번호 앞6자리)
+	private String chartNo;         // 환자번호(차트번호 - TBL_IPWON_INFO/TBL_SPCSUGA_INFO)
 	private String patNm;          	// 환자성명
 	private String admitDt;        	// 입원일자
 	private String dischDt;        	// 퇴원일자
@@ -380,6 +381,12 @@ public class PatvalDTO {
 	}
 	public void setPatId(String patId) {
 		this.patId = patId;
+	}
+	public String getChartNo() {
+		return chartNo;
+	}
+	public void setChartNo(String chartNo) {
+		this.chartNo = chartNo;
 	}
 	public String getPatNm() {
 		return patNm;

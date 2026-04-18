@@ -109,7 +109,7 @@
 							            gap: 8px;
 							            padding: 6px 14px;
 							            border: none;
-							            border-radius: 999px;
+							            border-radius: 4px;
 							            font-size: 12.5px;
 							            font-weight: 600;
 							            letter-spacing: 0.2px;
@@ -131,7 +131,7 @@
 							            min-width: 22px;
 							            height: 22px;
 							            padding: 0 7px;
-							            border-radius: 999px;
+							            border-radius: 3px;
 							            background: #fff;
 							            color: #dc3545;
 							            font-size: 11.5px;
@@ -462,71 +462,265 @@ function fn_UpdateCath05Buttons() {
     }
 }
 
+// 유치도뇨관 점검 모달용 글로벌 상태 (엑셀 저장 시 재사용)
+var _cath05PatMap = {};
+var _cath05Order  = [];
+
 // 유치도뇨관 점검 통합 모달 (환자별로 통합된 단일 목록)
 function fn_ShowCath05Modal() {
     // 환자별 병합: patId 기준으로 1행, 문제유형을 배지로 누적
     var patMap = {};
     var order = [];
 
-    function addPat(patId, patNm, admitDt, issueLabel, issueColor) {
+    function addPat(patId, patNm, admitDt, issueLabel, issueColor, errType) {
         if (!patId) return;
         if (!patMap[patId]) {
             patMap[patId] = { patId: patId, patNm: patNm || '', admitDt: admitDt || '', issues: [] };
             order.push(patId);
         } else {
-            if (!patMap[patId].patNm && patNm) patMap[patId].patNm = patNm;
+            if (!patMap[patId].patNm   && patNm)   patMap[patId].patNm   = patNm;
             if (!patMap[patId].admitDt && admitDt) patMap[patId].admitDt = admitDt;
         }
-        patMap[patId].issues.push({ label: issueLabel, color: issueColor });
+        patMap[patId].issues.push({ label: issueLabel, color: issueColor, errType: errType || '' });
     }
 
     for (var i = 0; i < _prevMissingData.length; i++) {
         var m = _prevMissingData[i];
-        addPat(m.patId, m.patNm, m.admitDt, '전월대상자 당월미존재', '#f0ad4e');
+        addPat(m.patId, m.patNm, m.admitDt, '전월대상자 당월미존재', '#333333', 'PREV');
     }
     for (var j = 0; j < _errCheckData.length; j++) {
         var er = _errCheckData[j];
         var lbl = '[' + er.errType + '] ' + (er.errName || '평가표오류');
-        addPat(er.patId, er.patNm, er.admitDt, lbl, '#dc3545');
+        addPat(er.patId, er.patNm, er.admitDt, lbl, '#dc3545', er.errType);
     }
+
+    // 엑셀 저장용 전역 저장
+    _cath05PatMap = patMap;
+    _cath05Order  = order;
 
     var total = order.length;
     var html;
 
+    // 전용 CSS (한 번만 주입)
+    if (!document.getElementById('cath05ModalStyle')) {
+        var st = document.createElement('style');
+        st.id = 'cath05ModalStyle';
+        st.innerHTML =
+            '.cath05-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; border:1px solid #e0e4ea; border-radius:4px; overflow:hidden; }' +
+            '.cath05-table thead th { background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:10px 8px; border-right:1px solid rgba(255,255,255,0.15); letter-spacing:0.2px; }' +
+            '.cath05-table thead th:last-child { border-right:none; }' +
+            '.cath05-table tbody td { padding:8px 8px; border-bottom:1px solid #eef1f5; vertical-align:middle; }' +
+            '.cath05-table tbody tr:nth-child(even) { background:#fafbfc; }' +
+            '.cath05-table tbody tr:hover { background:#f0f7ff; }' +
+            '.cath05-table tbody tr:last-child td { border-bottom:none; }' +
+            '.cath05-rowno { color:#8891a3; font-weight:500; }' +
+            '.cath05-patid { font-family:Consolas,monospace; color:#333; font-weight:600; }' +
+            '.cath05-patnm { color:#2c3e50; font-weight:500; }' +
+            '.cath05-date  { color:#5a6978; font-family:Consolas,monospace; font-size:12px; }' +
+            // 오류 텍스트 — 박스 제거, 인라인 color 로 각 타입별 색상 적용
+            //   · 전월대상자 : 검정 (#333)
+            //   · 오류 전체  : 빨강 (#dc3545)
+            '.cath05-badge { display:inline-block; padding:0; font-size:12.5px; font-weight:600; line-height:1.5; background:none !important; box-shadow:none !important; text-shadow:none !important; word-break:keep-all; white-space:normal; }' +
+            '.cath05-badge-wrap { display:block; padding:2px 0; }' +
+            '.cath05-badge-wrap::before { content:"•"; display:inline-block; width:14px; text-align:center; font-weight:bold; vertical-align:middle; }' +
+            // 하단 버튼 공통 — 기존 Swal 기본 구성과 동일한 라운드
+            '.swal2-actions .swal2-confirm, .swal2-actions .swal2-cancel {' +
+            '  min-width:120px !important; height:40px !important; font-size:14px !important;' +
+            '  font-weight:600 !important; border-radius:4px !important; border:none !important;' +
+            '  letter-spacing:0.2px !important; transition:filter 0.15s ease, box-shadow 0.15s ease;' +
+            '  display:inline-flex !important; align-items:center; justify-content:center;' +
+            '  padding:0 18px !important; margin:0 6px !important;' +
+            '}' +
+            // 확인 버튼 — 보라 그라데이션
+            '.swal2-actions .swal2-confirm {' +
+            '  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;' +
+            '  box-shadow:0 2px 6px rgba(118,75,162,0.25) !important;' +
+            '  color:#fff !important;' +
+            '}' +
+            '.swal2-actions .swal2-confirm:hover { filter:brightness(1.08); box-shadow:0 4px 10px rgba(118,75,162,0.35) !important; }' +
+            '.swal2-actions .swal2-confirm:active { filter:brightness(0.95); }' +
+            // 엑셀 버튼 — 녹색 그라데이션
+            '.swal2-actions .swal2-cancel {' +
+            '  background:linear-gradient(135deg,#28a745 0%,#20c997 100%) !important;' +
+            '  box-shadow:0 2px 6px rgba(40,167,69,0.25) !important;' +
+            '  color:#fff !important;' +
+            '}' +
+            '.swal2-actions .swal2-cancel:hover { filter:brightness(1.08); box-shadow:0 4px 10px rgba(40,167,69,0.35) !important; }' +
+            '.swal2-actions .swal2-cancel:active { filter:brightness(0.95); }' +
+            // 아이콘 여백
+            '.swal2-actions .swal2-cancel i { margin-right:6px; }';
+        document.head.appendChild(st);
+    }
+
     if (total === 0) {
-        html = '<div style="padding:20px; text-align:center; color:#155724;">점검 대상이 없습니다.</div>';
+        html = '<div style="padding:30px 20px; text-align:center; color:#155724; font-size:14px;"><i class="fas fa-check-circle" style="color:#28a745; font-size:24px; display:block; margin-bottom:8px;"></i>점검 대상이 없습니다.</div>';
     } else {
-        html = '<div style="text-align:left; font-size:13px; max-height:65vh; overflow:auto;">';
-        html += '<table style="width:100%; border-collapse:collapse;">' +
-                '<thead><tr style="background:#f4f4f4;">' +
-                '<th style="border:1px solid #ccc; padding:4px; width:90px;">환자ID</th>' +
-                '<th style="border:1px solid #ccc; padding:4px; width:80px;">성명</th>' +
-                '<th style="border:1px solid #ccc; padding:4px; width:100px;">입원일</th>' +
-                '<th style="border:1px solid #ccc; padding:4px;">점검항목</th>' +
+        html = '<div style="text-align:left; max-height:65vh; overflow:auto; padding:4px;">';
+        html += '<table class="cath05-table">' +
+                '<thead><tr>' +
+                '<th style="width:50px;">No</th>' +
+                '<th style="width:100px;">환자ID</th>' +
+                '<th style="width:90px;">성명</th>' +
+                '<th style="width:110px;">입원일</th>' +
+                '<th>점검항목</th>' +
                 '</tr></thead><tbody>';
         for (var k = 0; k < order.length; k++) {
             var p = patMap[order[k]];
             var badges = '';
             for (var b = 0; b < p.issues.length; b++) {
                 var iss = p.issues[b];
-                badges += '<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 8px; border-radius:10px; background:' + iss.color + '; color:#fff; font-size:11px; font-weight:bold;">' + iss.label + '</span>';
+                // 박스 제거 — bullet + 텍스트에 색상 적용
+                badges += '<div class="cath05-badge-wrap" style="color:' + iss.color + ';"><span class="cath05-badge" style="color:' + iss.color + ';">' + $('<div>').text(iss.label).html() + '</span></div>';
             }
             html += '<tr>' +
-                    '<td style="border:1px solid #ccc; padding:4px; text-align:center;">' + p.patId + '</td>' +
-                    '<td style="border:1px solid #ccc; padding:4px; text-align:center;">' + p.patNm + '</td>' +
-                    '<td style="border:1px solid #ccc; padding:4px; text-align:center;">' + p.admitDt + '</td>' +
-                    '<td style="border:1px solid #ccc; padding:4px;">' + badges + '</td>' +
+                    '<td class="cath05-rowno" style="text-align:center;">' + (k + 1) + '</td>' +
+                    '<td class="cath05-patid" style="text-align:center;">' + p.patId + '</td>' +
+                    '<td class="cath05-patnm" style="text-align:center;">' + p.patNm + '</td>' +
+                    '<td class="cath05-date"  style="text-align:center;">' + p.admitDt + '</td>' +
+                    '<td>' + badges + '</td>' +
                     '</tr>';
         }
         html += '</tbody></table></div>';
     }
 
     Swal.fire({
-        title: '유치도뇨관  및 오류점검 결과 : ' + total + '명',
+        title: '<span style="font-size:18px;"><i class="fas fa-stethoscope" style="color:#f0ad4e; margin-right:8px;"></i>유치도뇨관 및 오류점검 결과 : ' + total + '명</span>',
         html: html,
-        width: 900,
-        confirmButtonText: '확인'
+        width: '1100px',    // 배지 세로 배치라 너비 적당히 축소
+        showCancelButton: (total > 0),
+        confirmButtonText: '확인',
+        cancelButtonText: '<i class="far fa-file-excel"></i> 엑셀저장',
+        confirmButtonColor: '#6c7bff',
+        cancelButtonColor: '#28a745',
+        reverseButtons: true
+    }).then(function(result) {
+        // "엑셀저장"(=취소 버튼 재활용) 클릭 시
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            fn_ExportCath05Excel();
+            // 저장 후 모달 재오픈 (계속 보기 편하게)
+            setTimeout(fn_ShowCath05Modal, 50);
+        }
     });
+}
+
+// xlsx-js-style 라이브러리 동적 로드 (스타일 쓰기 지원 — SheetJS Community는 스타일 쓰기 불가)
+// - 이미 로드돼 있으면 재사용, 없으면 CDN에서 로드 후 XLSX 전역을 style-capable 버전으로 교체
+function _loadXlsxStyleLib(callback) {
+    if (window._xlsxStyleLoaded) { callback(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    s.onload = function() { window._xlsxStyleLoaded = true; callback(); };
+    s.onerror = function() {
+        console.warn('[cath05] xlsx-js-style 로드 실패 — 기본 XLSX 사용 (줄바꿈 스타일 반영 안됨)');
+        callback();
+    };
+    document.head.appendChild(s);
+}
+
+// 유치도뇨관 오류점검 결과 엑셀 저장 (xlsx-js-style 지원 시 wrapText 자동 적용)
+function fn_ExportCath05Excel() {
+    if (!_cath05Order || _cath05Order.length === 0) {
+        Swal.fire({ icon: 'info', title: '알림', text: '저장할 데이터가 없습니다.', timer: 1500, showConfirmButton: false });
+        return;
+    }
+    if (typeof XLSX === 'undefined') {
+        Swal.fire({ icon: 'error', title: '오류', text: 'XLSX 라이브러리가 로드되지 않았습니다.' });
+        return;
+    }
+    // xlsx-js-style 로드 후 실제 쓰기
+    _loadXlsxStyleLib(function() { _doCath05ExcelWrite(); });
+}
+
+function _doCath05ExcelWrite() {
+
+    // (1) 환자별 통합 시트
+    var summaryRows = [];
+    var maxIssueCnt = 1;   // 행 높이 계산용
+    for (var i = 0; i < _cath05Order.length; i++) {
+        var p = _cath05PatMap[_cath05Order[i]];
+        // 여러 오류는 Ctrl+Enter(=\n)로 줄바꿈
+        var issueText = p.issues.map(function(x) { return x.label; }).join('\n');
+        var errTypes  = p.issues.map(function(x) { return x.errType; }).filter(function(v){return v;}).join(',');
+        if (p.issues.length > maxIssueCnt) maxIssueCnt = p.issues.length;
+        summaryRows.push({
+            '환자ID':    p.patId,
+            '성명':      p.patNm,
+            '입원일':    p.admitDt,
+            '오류개수':  p.issues.length,
+            '오류코드':  errTypes,
+            '점검항목':  issueText
+        });
+    }
+
+    // (2) 상세 시트 (1행 = 1오류)
+    var detailRows = [];
+    for (var k = 0; k < _cath05Order.length; k++) {
+        var pp = _cath05PatMap[_cath05Order[k]];
+        for (var b = 0; b < pp.issues.length; b++) {
+            var ii = pp.issues[b];
+            detailRows.push({
+                '환자ID':   pp.patId,
+                '성명':     pp.patNm,
+                '입원일':   pp.admitDt,
+                '오류코드': ii.errType || '',
+                '점검항목': ii.label
+            });
+        }
+    }
+
+    var wb = XLSX.utils.book_new();
+    var ws1 = XLSX.utils.json_to_sheet(summaryRows);
+    var ws2 = XLSX.utils.json_to_sheet(detailRows);
+
+    // 컬럼 너비
+    ws1['!cols'] = [ {wch:12}, {wch:10}, {wch:12}, {wch:8}, {wch:18}, {wch:90} ];
+    ws2['!cols'] = [ {wch:12}, {wch:10}, {wch:12}, {wch:10}, {wch:90} ];
+
+    // ── 환자별요약 시트: 점검항목 셀에 줄바꿈 + Wrap Text 스타일 적용 ──
+    //     (SheetJS Style/xlsx-js-style 지원 시 실제 반영, Community 버전에선 무시됨 — 값의 \n은 보존)
+    var range = XLSX.utils.decode_range(ws1['!ref']);
+    var colIdx_chk = 5;  // '점검항목' 6번째 컬럼 (0-based)
+    for (var R = range.s.r; R <= range.e.r; R++) {
+        var addr = XLSX.utils.encode_cell({ r: R, c: colIdx_chk });
+        if (ws1[addr]) {
+            ws1[addr].s = {
+                alignment: { wrapText: true, vertical: 'top', horizontal: 'left' }
+            };
+        }
+    }
+    // 헤더 스타일
+    var headerRange = range;
+    for (var c = headerRange.s.c; c <= headerRange.e.c; c++) {
+        var hAddr = XLSX.utils.encode_cell({ r: 0, c: c });
+        if (ws1[hAddr]) {
+            ws1[hAddr].s = {
+                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+                fill: { patternType: 'solid', fgColor: { rgb: 'FF1E3C72' } },
+                alignment: { horizontal: 'center', vertical: 'center' }
+            };
+        }
+    }
+
+    // 행 높이 — 최다 오류 환자에 맞춰 여유있게 (줄당 약 15pt)
+    var rowHeights = [ { hpt: 22 } ];  // 헤더
+    for (var r = 0; r < summaryRows.length; r++) {
+        var lines = summaryRows[r]['점검항목'].split('\n').length;
+        rowHeights.push({ hpt: Math.max(18, lines * 16) });
+    }
+    ws1['!rows'] = rowHeights;
+
+    XLSX.utils.book_append_sheet(wb, ws1, '환자별요약');
+    XLSX.utils.book_append_sheet(wb, ws2, '오류상세');
+
+    // 파일명
+    var now = new Date();
+    var pad = function(n) { return String(n).padStart(2, '0'); };
+    var tsLabel = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) +
+                  '_' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+    var fname = '유치도뇨관오류_' + (jobYyMm || '') + '_' + tsLabel + '.xlsx';
+
+    // cellStyles 옵션 활성화 — xlsx-js-style 사용 시 스타일 반영
+    XLSX.writeFile(wb, fname, { cellStyles: true });
 }
 
 // 낮을수록 좋은 지표 (5점 구간이 0부터 시작)
@@ -2577,14 +2771,24 @@ function dataLoad(data, callback, settings) {
 		                    }
 		                });
 
-		                // 평가표 오류점검 (D1/D2/E1/F1/G1/G2) 조회 (상단 버튼/모달용)
+		                // 평가표 오류점검 (D1/D2/E1/F1/G1/G2/H1) + 오더↔평가표 크로스체크 (X1/X2/X3) 병렬 조회
+		                var _tmpPatvalErr = null;
+		                var _tmpCrossErr  = null;
+		                function _mergeCathErrors() {
+		                    if (_tmpPatvalErr === null || _tmpCrossErr === null) return;  // 둘 다 도착 대기
+		                    _errCheckData = _tmpPatvalErr.concat(_tmpCrossErr);
+		                    fn_UpdateCath05Buttons();
+		                }
+
+		                // (A) 평가표 오류점검
 		                $.ajax({
 		                    url: "/main/select_assesCheck.do",
 		                    type: "POST",
 		                    data: { hospCd: hospid, jobYymm: jobYyMm, jobFlag: '00' },
 		                    dataType: "json",
 		                    success: function(res) {
-		                        if (!res || !res.data) { _errCheckData = []; fn_UpdateCath05Buttons(); return; }
+		                        if (!res || !res.data) { _tmpPatvalErr = []; _mergeCathErrors(); return; }
+		                        // 기존 평가표 자체 오류 (D/E/F/G/H)
 		                        var cathErr = ['D1','D2','E1','F1','G1','G2','H1'];
 		                        var errors = [];
 		                        for (var e = 0; e < res.data.length; e++) {
@@ -2592,9 +2796,23 @@ function dataLoad(data, callback, settings) {
 		                                errors.push(res.data[e]);
 		                            }
 		                        }
-		                        _errCheckData = errors;
-		                        fn_UpdateCath05Buttons();
-		                    }
+		                        _tmpPatvalErr = errors;
+		                        _mergeCathErrors();
+		                    },
+		                    error: function() { _tmpPatvalErr = []; _mergeCathErrors(); }
+		                });
+
+		                // (B) 오더(TBL_SPCSUGA_INFO) ↔ 평가표(TBL_PATVAL_MST) 유치도뇨관 크로스체크
+		                $.ajax({
+		                    url: "/main/select_CathCrossCheck.do",
+		                    type: "POST",
+		                    data: { hospCd: hospid, jobYymm: jobYyMm },
+		                    dataType: "json",
+		                    success: function(res) {
+		                        _tmpCrossErr = (res && res.data) ? res.data : [];
+		                        _mergeCathErrors();
+		                    },
+		                    error: function() { _tmpCrossErr = []; _mergeCathErrors(); }
 		                });
 
 	            	} else if (jobFlag === '07') {

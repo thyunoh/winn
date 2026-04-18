@@ -85,6 +85,8 @@ public interface MagamMapper {
 	List<PatvalDTO>  select_CategoryList13(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList14(PatvalDTO dto);
 	
+	List<PatvalDTO>  select_CathCrossCheck(PatvalDTO dto);
+
 	List<PatvalDTO>  select_assesCheck00(PatvalDTO dto);
 	List<PatvalDTO>  select_assesCheck01(PatvalDTO dto);
 	List<PatvalDTO>  select_assesCheck02(PatvalDTO dto);

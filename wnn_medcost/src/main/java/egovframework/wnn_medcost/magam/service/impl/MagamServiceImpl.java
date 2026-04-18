@@ -475,6 +475,11 @@ public class MagamServiceImpl implements MagamService {
 	}
 	
 	@Override
+	public List<PatvalDTO> select_CathCrossCheck(PatvalDTO dto) throws Exception {
+		return mapper.select_CathCrossCheck(dto);
+	}
+
+	@Override
 	public List<PatvalDTO> select_assesCheck00(PatvalDTO dto) throws Exception {
 		return mapper.select_assesCheck00(dto);
 	}
