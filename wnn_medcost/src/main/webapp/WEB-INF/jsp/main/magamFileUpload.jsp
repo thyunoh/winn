@@ -179,16 +179,16 @@
 
 								 <!-- 엑셀 미리보기 모달 -->
 								 <div class="modal fade" id="excelPreviewModal" tabindex="-1" role="dialog" data-backdrop="static">
-								     <div class="modal-dialog modal-xl" role="document">
+								     <div class="modal-dialog modal-lg" role="document" style="max-width:1200px; width:1200px; margin:1.75rem auto;">
 								         <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
-								             <div class="modal-header" style="background:linear-gradient(135deg,#28a745 0%,#20c997 100%); color:#fff; border-radius:12px 12px 0 0; padding:18px 24px;">
+								             <div class="modal-header" style="background:linear-gradient(135deg,#28a745 0%,#20c997 100%); color:#fff; border-radius:12px 12px 0 0; padding:14px 20px;">
 								                 <h5 class="modal-title" style="font-weight:600; color:#fff !important;"><i class="fa fa-file-excel mr-2"></i>입원현황 엑셀 미리보기</h5>
 								                 <button type="button" class="close text-white" id="btnExcelPreviewX" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
 								             </div>
-								             <div class="modal-body" style="max-height:65vh; overflow-y:auto; padding:20px 24px;">
+								             <div class="modal-body" style="max-height:70vh; overflow-y:auto; padding:14px 18px;">
 								                 <div id="excelPreviewContent"></div>
 								             </div>
-								             <div class="modal-footer" style="border-top:1px solid #e9ecef; padding:14px 24px;">
+								             <div class="modal-footer" style="border-top:1px solid #e9ecef; padding:10px 20px;">
 								                 <button type="button" class="btn btn-outline-secondary" id="btnExcelPreviewCancel" style="min-width:100px;">
 								                     <i class="fa fa-times mr-1"></i>취소
 								                 </button>
@@ -1149,153 +1149,150 @@ $(document).ready(function() {
 
 <script type="text/javascript">
 
-async function handleFileSelection(event) {
-	
-	signUp = 'Y';
-	
-	if (gExcel === 'Y') {
-	
-		const columnMapping = {
-		    'chartno': ['차트번호', '환자ID', '차트 No', 'Chart', 'Chart Number'],
-		    'patname': ['수진자명', '환자명', '환자이름', '이름', '성명'],		    
-		    'ipwondt': ['입원일', '입원일자', '입원날짜', 'Admission', 'Admission Date', '최초입원일', '실입원일'],
-		    'ipwontm': ['입원시간', 'Admission Time'],
-		    'tewondt': ['퇴원일', '퇴원일자', '퇴원날짜', 'Discharge', 'Discharge Date', '실퇴원일'],
-		    'tewontm': ['퇴원시간', 'Discharge Time'],
-		    'juminno': ['주민번호', '주민등록번호'],
-		    'docname': ['의사', '진료의', '주치의', '의사성명', '의사명'],
-		    'dept_nm': ['진료과', '진료과목', '진료과명'],
-		    'insurnm': ['환자유형', '보험유형', '유형', '보험', '자격', '보종'],
-		    'word_nm': ['병동'],
-		    'room_nm': ['병실']
-		};
+// ====================================================================
+// 입원현황 업로드용 DB컬럼 정의 / 자동매핑 키워드 (sugacd.jsp 방식)
+// ====================================================================
+var ipwonDbColumns = [
+	{ key: 'hosp_cd', label: '요양기호(검증)', required: false },
+	{ key: 'chartno', label: '차트번호', required: false },
+	{ key: 'patname', label: '수진자명', required: false },
+	{ key: 'ipwondt', label: '입원일',   required: false },
+	{ key: 'ipwontm', label: '입원시간', required: false },
+	{ key: 'tewondt', label: '퇴원일',   required: false },
+	{ key: 'tewontm', label: '퇴원시간', required: false },
+	{ key: 'juminno', label: '주민번호', required: false },
+	{ key: 'docname', label: '의사',     required: false },
+	{ key: 'dept_nm', label: '진료과',   required: false },
+	{ key: 'insurnm', label: '환자유형', required: false },
+	{ key: 'word_nm', label: '병동',     required: false },
+	{ key: 'room_nm', label: '병실',     required: false }
+];
+var ipwonAutoMap = {
+	'hosp_cd': ['요양기관기호','요양기호','요양기관번호','요양기호번호'],
+	'chartno': ['차트번호','환자ID','차트No','차트 No','Chart','Chart Number','차번','환자번호'],
+	'patname': ['수진자명','환자명','환자이름','이름','성명','환자성명'],
+	'ipwondt': ['입원일','입원일자','입원날짜','Admission','Admission Date','최초입원일','실입원일'],
+	'ipwontm': ['입원시간','Admission Time'],
+	'tewondt': ['퇴원일','퇴원일자','퇴원날짜','Discharge','Discharge Date','실퇴원일'],
+	'tewontm': ['퇴원시간','Discharge Time'],
+	'juminno': ['주민번호','주민등록번호'],
+	'docname': ['의사','진료의','주치의','의사성명','의사명'],
+	'dept_nm': ['진료과','진료과목','진료과명'],
+	'insurnm': ['환자유형','보험유형','유형','보험','자격','보종'],
+	'word_nm': ['병동'],
+	'room_nm': ['병실']
+};
 
-		function mapColumnName(actualName) {
-			actualName = actualName.trim().toLowerCase().replace(/\s+/g, '');
-			for (const [standardName, aliases] of Object.entries(columnMapping)) {
-		        if (aliases.includes(actualName.trim())) {
-		            return standardName;
-		        }
-		    }
-		    return null;
+// 전역 상태 (입원/수가 공용)
+var excelRawHeaders = [];
+var excelRawRows    = [];
+var excelRawRowFile = [];   // 각 행이 어느 파일에서 나왔는지
+var excelColumnMap  = {};   // dbKey -> excelHeader
+var excelPreviewDT  = null;
+var excelCurrentMode = '';  // 'ipwon' or 'spcsuga'
+
+// 공용 헬퍼
+function excelNormHeader(s) {
+	return (s == null ? '' : String(s)).trim().toLowerCase().replace(/[\s_\-\/]/g, '');
+}
+function excelDateFmt(value) {
+	if (!value && value !== 0) return '';
+	if (value instanceof Date && !isNaN(value.getTime())) {
+		var y = value.getFullYear();
+		var m = String(value.getMonth() + 1).padStart(2, '0');
+		var d = String(value.getDate()).padStart(2, '0');
+		return y + '-' + m + '-' + d;
+	}
+	var s = String(value).trim();
+	if (!s) return '';
+	if (s.includes(' ')) s = s.split(' ')[0];
+	// YYYY-MM-DD / YYYY/MM/DD / YYYY.MM.DD
+	var m1 = s.match(/^(\d{4})[\-\/\.](\d{1,2})[\-\/\.](\d{1,2})$/);
+	if (m1) return m1[1] + '-' + m1[2].padStart(2,'0') + '-' + m1[3].padStart(2,'0');
+	// YYYYMMDD
+	var m2 = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+	if (m2) return m2[1] + '-' + m2[2] + '-' + m2[3];
+	// M/D/YY or M/D/YYYY
+	if (s.includes('/')) {
+		var p = s.split('/');
+		if (p.length === 3) {
+			var mm = p[0].trim().padStart(2,'0');
+			var dd = p[1].trim().padStart(2,'0');
+			var yy = p[2].trim();
+			if (yy.length === 2) {
+				yy = (parseInt(yy,10) < 50 ? '20' : '19') + yy;
+			} else if (yy.length === 4) {
+				// keep
+			} else {
+				yy = yy.padStart(4,'0');
+			}
+			return yy + '-' + mm + '-' + dd;
 		}
-		
+	}
+	return s;
+}
+
+async function handleFileSelection(event) {
+
+	signUp = 'Y';
+
+	if (gExcel === 'Y') {
+
 		const files = event.target.files;
-	    const datas = [];
-	    const rawRows = [];
-	    const columnMapResult = {};
-	    const jobdt = getJobDateTime();
+		const rawHeaders = [];
+		const rawRows = [];
+		const rawRowFile = [];
 
-	    let seqNumber = 0;
-		let jumin_Cnt = 0;
-		
 		for (let file of files) {
-	        const reader = new FileReader();
-	        
-	        await new Promise((resolve, reject) => {
-	            reader.onload = function (e) {
-	            	
-	                const binaryStr = e.target.result;
-	                const work_Book = XLSX.read(binaryStr, {type: 'binary',codepage: 949,raw: true});
-	                
-	                work_Book.SheetNames.forEach(sheetName => {
-	                	
-	                	const worksheet = work_Book.Sheets[sheetName];
-	                    
-	                	// const json_Data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true, cellDates: true });
-	                    
-	                	const json_Data = XLSX.utils.sheet_to_json(worksheet, {
-	                		defval: '',
-	                	    raw: false,
-	                	    cellDates: true
+			const reader = new FileReader();
+			await new Promise((resolve, reject) => {
+				reader.onload = function (e) {
+					const binaryStr = e.target.result;
+					const wb = XLSX.read(binaryStr, { type: 'binary', codepage: 949, raw: true });
+					wb.SheetNames.forEach(sheetName => {
+						const ws = wb.Sheets[sheetName];
+						const json_Data = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false, cellDates: true });
+						json_Data.forEach((row, idx) => {
+							if (idx === 0 && rawHeaders.length === 0) {
+								for (const k of Object.keys(row)) rawHeaders.push(String(k).trim());
+							}
+							// Date 객체는 ISO(YYYY-MM-DD)로 평탄화하여 저장 (그리드 표시용)
+							const r = {};
+							for (const k of Object.keys(row)) {
+								const v = row[k];
+								if (v instanceof Date && !isNaN(v.getTime())) {
+									r[String(k).trim()] = excelDateFmt(v);
+								} else {
+									r[String(k).trim()] = (v == null ? '' : String(v));
+								}
+							}
+							rawRows.push(r);
+							rawRowFile.push(file.name);
 						});
-	                	
-	                	function formatDateString(value) {
-	                		
-                            if (!value) return '';
+					});
+					resolve();
+				};
+				reader.onerror = function (e) { reject(e); };
+				reader.readAsBinaryString(file);
+			});
+		}
 
-                            // "YYYY-MM-DD HH:MM:SS"
-                            if (typeof value === 'string' && value.includes(' ')) {
-                                return value.split(' ')[0];
-                            }
-                            // "M/D/YY" or "MM/DD/YY"
-                            if (typeof value === 'string' && value.includes('/')) {
-                            	
-                                const parts = value.split('/');
-                                if (parts.length !== 3) return '';
+		// 파일 내 행이 없을 때 방어
+		if (rawRows.length === 0) {
+			signUp = 'N';
+			messageBox("4", "<h5>엑셀 데이터가 비어있습니다.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
+			return;
+		}
 
-                                let [month, day, year] = parts.map(p => p.trim().padStart(2, '0'));
-                                
-                                if (year.length === 2) {
-                                    const yearNum = parseInt(year, 10);
-                                    year = yearNum < 50 ? '20' + year : '19' + year;
-                                }
-                                
-                                return year + '-' + month + '-' + day;
-                            }
-                            // Date 객체
-                            if (value instanceof Date) {
-                            	
-                                const year = value.getFullYear();
-                                const month = (value.getMonth() + 1).toString().padStart(2, '0');
-                                const day = value.getDate().toString().padStart(2, '0');
-                                
-                                return year + '-' + month + '-' + day;
-                            }
+		excelRawHeaders = rawHeaders;
+		excelRawRows    = rawRows;
+		excelRawRowFile = rawRowFile;
+		excelCurrentMode = 'ipwon';
+		excelAutoMapColumns(ipwonAutoMap);
 
-                            return value;
-                        }
-	                	
-	                    json_Data.forEach((row, idx) => {
-
-	                    	// 첫 행에서 컬럼 매핑 결과 수집
-	                    	if (idx === 0) {
-	                    		for (const key of Object.keys(row)) {
-	                    			const mapped = mapColumnName(key.trim());
-	                    			columnMapResult[key] = mapped;
-	                    		}
-	                    	}
-
-	                    	const mappedRow = {};
-	                        seqNumber++;
-	                        mappedRow['hosp_cd']  = hospid;
-	                        mappedRow['jobyymm']  = g_Year + gMonth;
-	                        mappedRow['seq_num']  = seqNumber;
-	                        mappedRow['file_nm']  = file.name;
-	                        mappedRow['jobs_dt']  = jobdt;
-	                        mappedRow['reg_user'] = userid;
-
-	                        for (const [key, value] of Object.entries(row)) {
-
-	                        	const mappedKey = mapColumnName(key.trim());
-
-	                        	if (mappedKey === 'juminno') {
-	                        		if (value) { jumin_Cnt++; }
-	                        	}
-
-	                        	if (mappedKey === 'ipwondt' || mappedKey === 'tewondt') {
-	                        		mappedRow[mappedKey] = formatDateString(value);
-	                        	} else if (mappedKey) {
-	                        		mappedRow[mappedKey] = value;
-                                }
-	                        }
-	                        datas.push(mappedRow);
-	                        rawRows.push(row);
-	                    });
-	                });
-	                resolve();
-	            };
-	            reader.onerror = function (e) {
-	                console.error("파일 읽기 실패", e);
-	                reject(e);
-	            };
-	            reader.readAsBinaryString(file);
-	        });
-	    }
-	    
 		// 미리보기 모달 표시
-		showExcelPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, jumin_Cnt);
-	    
+		showExcelPreview();
+
 	} else {
 		
 		let lfiles = event.target.files;
@@ -1726,174 +1723,136 @@ function spcsugaLoad_Open(mgmonth) {
 	}
 }
 
-// 특정수가현황 엑셀 처리 (요양기관기호 검증 + 내원일 여러개 분해 + 입원일 년도 적용)
+// ====================================================================
+// 특정수가현황 업로드용 DB컬럼 정의 / 자동매핑 키워드
+// ====================================================================
+var spcsugaDbColumns_NEW = [
+	{ key: 'hosp_cd',    label: '요양기호',      required: false },
+	{ key: 'ipwondt',    label: '입원일',        required: false },
+	{ key: 'chartno',    label: '차트번호',      required: false },
+	{ key: 'patname',    label: '환자성명',      required: false },
+	{ key: 'juminno',    label: '주민번호',      required: false },
+	{ key: 'card_no',    label: '증번호',        required: false },
+	{ key: 'insurnm',    label: '종별',          required: false },
+	{ key: 'suga_cd',    label: '정의/수가코드', required: false },
+	{ key: 'edi_code',   label: '청구/보험코드', required: false },
+	{ key: 'kor_name',   label: '한글명칭',      required: false },
+	{ key: 'med_start',  label: '내원일',        required: false },
+	{ key: 'comp_code',  label: '제약회사',      required: false },
+	{ key: 'income_gu',  label: '구입거래처',    required: false },
+	{ key: 'burye_code', label: '분류번호',      required: false },
+	{ key: 'yong_code',  label: '효능코드',      required: false },
+	{ key: 'unit_price', label: '단가',          required: false },
+	{ key: 'total_dose', label: '수량',          required: false },
+	{ key: 'amount',     label: '금액',          required: false },
+	{ key: 'tel_phone',  label: '전화번호',      required: false },
+	{ key: 'hand_phone', label: '핸드폰번호',    required: false },
+	{ key: 'tewondt',    label: '퇴원일',        required: false },
+	{ key: 'dep_name',   label: '진료과',        required: false },
+	{ key: 'ward_nm',    label: '병동',          required: false },
+	{ key: 'room_nm',    label: '병실',          required: false },
+	{ key: 'item_no',    label: '항',            required: false },
+	{ key: 'code_no',    label: '목',            required: false },
+	{ key: 'spc_name',   label: '특이사항',      required: false },
+	{ key: 'sec_code',   label: '성분코드',      required: false },
+	{ key: 'sec_name',   label: '성분명',        required: false },
+	{ key: 'doc_code',   label: '주치의',        required: false }
+];
+var spcsugaAutoMap = {
+	'hosp_cd':    ['요양기관기호','요양기호','요양기관번호','요양기호번호'],
+	'chartno':    ['차트번호','환자ID','차트No','차트 No','Chart','Chart Number','차번','환자번호'],
+	'patname':    ['환자성명','환자명','환자이름','이름','성명','수진자명'],
+	'med_start':  ['내원일','진료일','진료일자','방문일','방문일자'],
+	'juminno':    ['주민번호','주민등록번호'],
+	'card_no':    ['증번호'],
+	'insurnm':    ['종별','보험유형','환자유형','보종','보험'],
+	'suga_cd':    ['정의코드','수가코드'],
+	'edi_code':   ['청구코드','보험코드','EDI코드','edicode','ediCode'],
+	'kor_name':   ['한글명칭','한글명','코드명','명칭'],
+	'comp_code':  ['제약회사'],
+	'income_gu':  ['구입거래처','구입처','거래처'],
+	'burye_code': ['분류번호','분류기호'],
+	'yong_code':  ['효능코드'],
+	'unit_price': ['단가'],
+	'total_dose': ['수량'],
+	'amount':     ['금액'],
+	'tel_phone':  ['전화번호'],
+	'hand_phone': ['핸드폰번호','휴대폰','휴대폰번호','휴대전화'],
+	'tewondt':    ['퇴원일','퇴원일자'],
+	'dep_name':   ['진료과','진료과목','진료과명'],
+	'ward_nm':    ['병동'],
+	'room_nm':    ['병실'],
+	'item_no':    ['항'],
+	'code_no':    ['목'],
+	'spc_name':   ['특이사항','특이사할'],
+	'sec_code':   ['성분코드'],
+	'sec_name':   ['성분명'],
+	'ipwondt':    ['입원일','입원일자','최초입원일','실입원일'],
+	'doc_code':   ['주치의','의사','주치의사']
+};
+
+// ─── 수가현황 전용 헬퍼들 (저장 시점에 사용) ───
+// "01-08, 02-05" / "1/8 1/15" / "01.08" 등의 MM-DD 목록에서 각 값 추출
+function spcsugaSplitVisits(v) {
+	if (v == null) return [];
+	var s = String(v).trim();
+	if (!s) return [];
+	// 이미 완전한 날짜 1개이면 그대로
+	if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(s)) return [excelDateFmt(s)];
+	return s.split(/[,;\s]+/).map(function(t) { return t.trim(); }).filter(Boolean);
+}
+// MM-DD(또는 MM/DD) + 기준년도 => YYYY-MM-DD
+function spcsugaMakeFullDate(token, baseYear) {
+	if (!token) return '';
+	if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(token)) return excelDateFmt(token);
+	var m = token.match(/^(\d{1,2})[-/.](\d{1,2})$/);
+	if (m) {
+		return baseYear + '-' + m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0');
+	}
+	return token;
+}
+// 저장용: '-', '/', '.' 제거하여 8자리 숫자(YYYYMMDD)로
+function spcsugaStripDateSep(v) {
+	if (v == null || v === '') return '';
+	return String(v).replace(/[-\/.]/g, '');
+}
+
+// 특정수가현황 엑셀 처리 (원본만 파싱 → 매핑 UI에서 사용자 확정 후 저장 시 비즈니스 로직 적용)
 async function handleSpcsugaFileSelection(event) {
 	signUp = 'Y';
 
-	// 엑셀 헤더 -> DB 컬럼 매핑
-	const columnMapping = {
-		'hosp_cd'   : ['요양기관기호','요양기호','요양기관번호','요양기호번호'],
-		'chartno'   : ['차트번호','환자id','차트 no','차트no','chart','chart number'],
-		'patname'   : ['환자성명','환자명','환자이름','이름','성명','수진자명'],
-		'med_start' : ['내원일','진료일','진료일자','방문일','방문일자'],
-		'juminno'   : ['주민번호','주민등록번호'],
-		'card_no'   : ['증번호'],
-		'insurnm'   : ['종별','보험유형','환자유형','보종','보험'],
-		// 정의코드, 수가코드 → SUGA_CD
-		'suga_cd'   : ['정의코드','수가코드'],
-		// 청구코드, 보험코드, EDI코드 → EDI_CODE (모두 동일 개념)
-		'edi_code'  : ['청구코드','보험코드','edi코드','edicode','ediCode'],
-		'kor_name'  : ['한글명칭','한글명','코드명','명칭'],
-		'comp_code' : ['제약회사'],
-		'income_gu' : ['구입거래처','구입처','거래처'],
-		'burye_code': ['분류번호','분류기호'],
-		'yong_code' : ['효능코드'],
-		'unit_price': ['단가'],
-		'total_dose': ['수량'],
-		'amount'    : ['금액'],
-		'tel_phone' : ['전화번호'],
-		'hand_phone': ['핸드폰번호','휴대폰','휴대폰번호','휴대전화'],
-		'tewondt'   : ['퇴원일','퇴원일자'],
-		'dep_name'  : ['진료과','진료과목','진료과명'],
-		'ward_nm'   : ['병동'],
-		'room_nm'   : ['병실'],
-		'item_no'   : ['항'],
-		'code_no'   : ['목'],
-		'spc_name'  : ['특이사항','특이사할'],
-		'sec_code'  : ['성분코드'],
-		'sec_name'  : ['성분명'],
-		'ipwondt'   : ['입원일','입원일자','최초입원일','실입원일'],
-		'doc_code'  : ['주치의','의사','주치의사']
-	};
-
-	function norm(s) { return (s == null ? '' : String(s)).trim().toLowerCase().replace(/\s+/g,''); }
-	function mapHeader(h) {
-		const key = norm(h);
-		for (const [db, aliases] of Object.entries(columnMapping)) {
-			if (aliases.some(a => norm(a) === key)) return db;
-		}
-		return null;
-	}
-	function formatDate(v) {
-		if (v == null || v === '') return '';
-		if (typeof v === 'string') {
-			if (v.includes(' ')) v = v.split(' ')[0];
-			if (v.includes('/')) {
-				const p = v.split('/');
-				if (p.length === 3) {
-					let [m,d,y] = p.map(x => x.trim().padStart(2,'0'));
-					if (y.length === 2) y = (parseInt(y,10) < 50 ? '20' : '19') + y;
-					return y + '-' + m + '-' + d;
-				}
-			}
-			return v;
-		}
-		if (v instanceof Date) {
-			const y = v.getFullYear();
-			const m = String(v.getMonth()+1).padStart(2,'0');
-			const d = String(v.getDate()).padStart(2,'0');
-			return y + '-' + m + '-' + d;
-		}
-		return String(v);
-	}
-	// "01-08, 02-05" / "1/8 1/15" / "01.08" 등의 MM-DD 목록에서 각 값 추출
-	function splitVisits(v) {
-		if (v == null) return [];
-		const s = String(v).trim();
-		if (!s) return [];
-		// 이미 완전한 날짜 1개이면 그대로
-		if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(s)) return [formatDate(s)];
-		return s.split(/[,;\s]+/).map(t => t.trim()).filter(Boolean);
-	}
-	// MM-DD(또는 MM/DD) + 기준년도 => YYYY-MM-DD
-	function makeFullDate(token, baseYear) {
-		if (!token) return '';
-		// 이미 완전한 날짜
-		if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(token)) return formatDate(token);
-		const m = token.match(/^(\d{1,2})[-/.](\d{1,2})$/);
-		if (m) {
-			return baseYear + '-' + m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0');
-		}
-		return token;
-	}
-	// 저장용: '/', '-', '.' 제거하여 8자리 숫자(YYYYMMDD)로
-	function stripDateSep(v) {
-		if (v == null || v === '') return '';
-		return String(v).replace(/[-\/.]/g, '');
-	}
+	// spcsugaDbColumns_NEW → 공용 변수로 복사 (excelGetDbColumns가 참조)
+	spcsugaDbColumns = spcsugaDbColumns_NEW;
 
 	const files = event.target.files;
-	const datas = [];
+	const rawHeaders = [];
 	const rawRows = [];
-	const columnMapResult = {};
-	const jobdt = getJobDateTime();
-	let seqNumber = 0;
-	let hospMismatch = [];     // 요양기관기호 불일치 기록
-	let missingRequired = 0;   // 필수 누락 행 수
+	const rawRowFile = [];
 
 	for (let file of files) {
 		const reader = new FileReader();
 		await new Promise((resolve, reject) => {
 			reader.onload = function(e) {
-				const wb = XLSX.read(e.target.result, {type:'binary', codepage:949, raw:true});
+				const wb = XLSX.read(e.target.result, { type:'binary', codepage:949, raw:true });
 				wb.SheetNames.forEach(sheetName => {
 					const ws = wb.Sheets[sheetName];
 					const rows = XLSX.utils.sheet_to_json(ws, { defval:'', raw:false, cellDates:true });
-
 					rows.forEach((row, idx) => {
-						if (idx === 0) {
-							for (const k of Object.keys(row)) columnMapResult[k] = mapHeader(k);
+						if (idx === 0 && rawHeaders.length === 0) {
+							for (const k of Object.keys(row)) rawHeaders.push(String(k).trim());
 						}
-
-						// 1) 원시 필드 수집
-						const base = { hosp_cd:'', chartno:'', patname:'', med_start:'', juminno:'', card_no:'',
-							insurnm:'', suga_cd:'', edi_code:'', kor_name:'', comp_code:'', income_gu:'',
-							burye_code:'', yong_code:'', unit_price:'', total_dose:'', amount:'',
-							tel_phone:'', hand_phone:'', tewondt:'', dep_name:'', ward_nm:'', room_nm:'',
-							item_no:'', code_no:'', spc_name:'', sec_code:'', sec_name:'', ipwondt:'', doc_code:'' };
-						for (const [k,v] of Object.entries(row)) {
-							const dbKey = mapHeader(k);
-							if (!dbKey) continue;
-							if (dbKey === 'tewondt' || dbKey === 'ipwondt') {
-								base[dbKey] = formatDate(v);
+						// Date 객체는 ISO로 평탄화 (그리드 표시용)
+						const r = {};
+						for (const k of Object.keys(row)) {
+							const v = row[k];
+							if (v instanceof Date && !isNaN(v.getTime())) {
+								r[String(k).trim()] = excelDateFmt(v);
 							} else {
-								base[dbKey] = (v == null ? '' : String(v).trim());
+								r[String(k).trim()] = (v == null ? '' : String(v));
 							}
 						}
-
-						// 2) 필수 필드 검증: 요양기관기호, 입원일, 주민번호, 성명, 보험코드(EDI), 내원일
-						const reqOk = base.hosp_cd && base.ipwondt && base.juminno && base.patname &&
-						              base.edi_code && base.med_start;
-						if (!reqOk) { missingRequired++; rawRows.push(row); return; }
-
-						// 3) 요양기관기호와 로그인 병원 일치여부
-						if (String(base.hosp_cd).trim() !== String(hospid).trim()) {
-							hospMismatch.push({ row: idx+2, xls: base.hosp_cd, login: hospid, name: base.patname });
-						}
-
-						// 4) 내원일 분해 (여러개) + 입원일 년도 적용
-						const ipwonYear = (base.ipwondt && base.ipwondt.length >= 4) ? base.ipwondt.substring(0,4) : g_Year;
-						const visits = splitVisits(base.med_start);
-						const expanded = visits.length ? visits : [''];
-
-						expanded.forEach(tok => {
-							seqNumber++;
-							const r = Object.assign({}, base);
-							r.med_start = stripDateSep(makeFullDate(tok, ipwonYear));
-							r.ipwondt   = stripDateSep(r.ipwondt);
-							r.tewondt   = stripDateSep(r.tewondt);
-							r.hosp_cd   = hospid;             // 저장 시 로그인 병원 기준
-							r.jobyymm   = g_Year + gMonth;
-							r.seq_num   = seqNumber;
-							r.file_nm   = file.name;
-							r.jobs_dt   = jobdt;
-							r.reg_user  = userid;
-							r.upd_user  = userid;
-							r.reg_ip    = '127.0.0.1';
-							r.upd_ip    = '127.0.0.1';
-							datas.push(r);
-						});
-						rawRows.push(row);
+						rawRows.push(r);
+						rawRowFile.push(file.name);
 					});
 				});
 				resolve();
@@ -1903,97 +1862,22 @@ async function handleSpcsugaFileSelection(event) {
 		});
 	}
 
-	showSpcsugaPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, hospMismatch, missingRequired);
-}
-
-function showSpcsugaPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, hospMismatch, missingRequired) {
-	if (datas.length === 0) {
+	if (rawRows.length === 0) {
 		signUp = 'N';
-		messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 특정수가 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
+		messageBox("4", "<h5>엑셀 데이터가 비어있습니다.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
 		return;
 	}
 
-	let html = '';
-	const mapped   = Object.entries(columnMapResult).filter(([k,v]) => v);
-	const unmapped = Object.entries(columnMapResult).filter(([k,v]) => !v);
-	const mappedDb = mapped.map(([,v]) => v);
-	const missing  = Object.entries(columnMapping).filter(([db]) => !mappedDb.includes(db));
+	excelRawHeaders = rawHeaders;
+	excelRawRows    = rawRows;
+	excelRawRowFile = rawRowFile;
+	excelCurrentMode = 'spcsuga';
+	excelAutoMapColumns(spcsugaAutoMap);
 
-	html += '<div class="mb-3"><h6 style="font-weight:600;"><i class="fa fa-columns mr-1"></i>컬럼 매핑 (' + mapped.length + '/' + Object.keys(columnMapResult).length + '개 인식)</h6><div style="display:flex; flex-wrap:wrap; gap:6px;">';
-	mapped.forEach(([o,m]) => { html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; border-radius:12px;">' + o + ' → ' + m + '</span>'; });
-	unmapped.forEach(([o]) => { html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; border-radius:12px;">' + o + ' (미인식)</span>'; });
-	html += '</div></div>';
-
-	if (missing.length > 0) {
-		html += '<div class="mb-3" style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px;">';
-		html += '<h6 style="font-weight:600; color:#856404;"><i class="fa fa-exclamation-triangle mr-1"></i>엑셀에 없는 컬럼</h6><div style="display:flex;flex-wrap:wrap;gap:6px;">';
-		missing.forEach(([db, aliases]) => { html += '<span class="badge" style="background:#fff;border:1px solid #ffc107;color:#856404;padding:5px 10px;border-radius:12px;">' + db + ' (' + aliases.join(', ') + ')</span>'; });
-		html += '</div></div>';
-	}
-
-	// 요양기관기호 검증 결과
-	if (hospMismatch.length > 0) {
-		html += '<div class="mb-3" style="background:#f8d7da; border:1px solid #f5c6cb; border-radius:8px; padding:10px 14px; color:#721c24;">';
-		html += '<h6 style="font-weight:600;"><i class="fa fa-times-circle mr-1"></i>요양기관기호 불일치 (' + hospMismatch.length + '건) — 로그인 병원: ' + hospid + '</h6>';
-		html += '<div style="font-size:12px; max-height:120px; overflow:auto;">';
-		hospMismatch.slice(0, 20).forEach(m => { html += '행 ' + m.row + ' · 엑셀: ' + m.xls + ' · 환자: ' + m.name + '<br>'; });
-		if (hospMismatch.length > 20) html += '... 외 ' + (hospMismatch.length - 20) + '건';
-		html += '</div></div>';
-	} else {
-		html += '<div class="mb-3"><span class="badge" style="background:#d4edda;color:#155724;padding:5px 10px;font-size:13px;"><i class="fa fa-check-circle mr-1"></i>요양기관기호 일치 (' + hospid + ')</span></div>';
-	}
-
-	if (missingRequired > 0) {
-		html += '<div class="mb-3"><span class="badge" style="background:#fff3cd;color:#856404;padding:5px 10px;font-size:13px;">필수값(요양기호/입원일/주민번호/성명/보험코드/내원일) 누락 행 제외: ' + missingRequired + '건</span></div>';
-	}
-
-	html += '<div class="mb-2"><h6 style="font-weight:600;"><i class="fa fa-table mr-1"></i>데이터 미리보기 (분해 후 총 ' + seqNumber + '건)</h6></div>';
-	html += '<div style="overflow:auto;max-height:50vh;"><table class="table table-bordered table-sm" style="font-size:12px;white-space:nowrap;"><thead style="background:#2a5298;color:#fff;position:sticky;top:0;"><tr>';
-	const previewCols = ['seq_num','hosp_cd','chartno','patname','ipwondt','med_start','juminno','insurnm','suga_cd','edi_code','kor_name','unit_price','total_dose','amount','tewondt'];
-	previewCols.forEach(c => { html += '<th style="padding:4px 8px;color:#fff;">' + c + '</th>'; });
-	html += '</tr></thead><tbody>';
-	datas.slice(0, 200).forEach(r => {
-		html += '<tr>';
-		previewCols.forEach(c => { html += '<td style="padding:3px 8px;">' + (r[c] == null ? '' : r[c]) + '</td>'; });
-		html += '</tr>';
-	});
-	html += '</tbody></table></div>';
-	if (datas.length > 200) html += '<div class="text-muted">미리보기는 200건까지 표시됩니다.</div>';
-
-	$('#excelPreviewContent').html(html);
-	// 헤더 타이틀 특정수가용으로 교체 (원 타이틀 백업 후 닫힐 때 원복)
-	const _spcOrigTitle = $('#excelPreviewModal .modal-title').html();
-	$('#excelPreviewModal .modal-title').html('<i class="fa fa-file-excel mr-2"></i>특정수가현황 엑셀 미리보기');
-	$('#excelPreviewModal').one('hidden.bs.modal', function() {
-		$('#excelPreviewModal .modal-title').html(_spcOrigTitle);
-	});
-
-	// 요양기관기호 불일치 시 저장 버튼 비활성화
-	if (hospMismatch.length > 0) {
-		$('#btnExcelPreviewSave').prop('disabled', true).addClass('disabled').attr('title', '요양기관기호 불일치로 등록 불가');
-	} else {
-		$('#btnExcelPreviewSave').prop('disabled', false).removeClass('disabled').removeAttr('title');
-	}
-
-	$('#btnExcelPreviewSave').off('click').on('click', function() {
-		if (hospMismatch.length > 0) {
-			messageBox("4", "<h5>엑셀 요양기관기호가 로그인 병원(" + hospid + ")과 일치하지 않아 등록할 수 없습니다.<br>불일치 건수: " + hospMismatch.length + "건</h5><p></p><br>", "", "", "");
-			return;
-		}
-		$('#excelPreviewModal').modal('hide');
-		doSaveSpcsugaDatas(datas);
-	});
-	$('#btnExcelPreviewX').off('click').on('click', function() {
-		signUp = 'N';
-		$('#excelPreviewModal').modal('hide');
-	});
-	$('#btnExcelPreviewCancel').off('click').on('click', function() {
-		signUp = 'N';
-		$('#excelPreviewModal').modal('hide');
-	});
-	$('#excelPreviewModal').modal('show');
+	showExcelPreview();
 }
 
+// 수가현황 서버 전송
 function doSaveSpcsugaDatas(datas) {
 	$.ajax({
 		url: '/main/saveSpcsugaDatas.do',
@@ -2070,118 +1954,390 @@ function fileView_Open(mgmonth) {
 }
 
 
-// ─── 엑셀 미리보기 ───
-function showExcelPreview(datas, rawRows, columnMapResult, columnMapping, seqNumber, jumin_Cnt) {
-
-	if (datas.length === 0) {
-		signUp = 'N';
-		messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 입원현황 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
-		return;
+// ─── 자동매핑 (sugacd.jsp 방식) ───
+function excelAutoMapColumns(autoMapKeywords) {
+	excelColumnMap = {};
+	for (var dbKey in autoMapKeywords) {
+		var keywords = autoMapKeywords[dbKey];
+		for (var i = 0; i < excelRawHeaders.length; i++) {
+			var h = excelNormHeader(excelRawHeaders[i]);
+			var matched = false;
+			for (var k = 0; k < keywords.length; k++) {
+				var kw = excelNormHeader(keywords[k]);
+				// 엄격 우선: 정확히 일치
+				if (h === kw) { matched = true; break; }
+				// 느슨: 포함
+				if (h.indexOf(kw) !== -1 || kw.indexOf(h) !== -1) { matched = true; break; }
+			}
+			if (matched && !excelColumnMap[dbKey]) {
+				excelColumnMap[dbKey] = excelRawHeaders[i];
+				break;
+			}
+		}
 	}
+}
 
-	let html = '';
+// 수가현황 DB 컬럼: handleSpcsugaFileSelection에서 spcsugaDbColumns_NEW를 복사
+var spcsugaDbColumns = [];
 
-	// 1) 컬럼 매핑 결과
-	const mappedCols = Object.entries(columnMapResult).filter(([k, v]) => v);
-	const unmappedCols = Object.entries(columnMapResult).filter(([k, v]) => !v);
+// ─── 현재 DB 컬럼 정의 반환 ───
+function excelGetDbColumns() {
+	return excelCurrentMode === 'spcsuga' ? spcsugaDbColumns : ipwonDbColumns;
+}
 
-	// 매핑된 DB컬럼 목록
-	const mappedDbCols = mappedCols.map(([k, v]) => v);
-	// 누락된 DB컬럼 (엑셀에 아예 없는 컬럼)
-	const missingDbCols = Object.entries(columnMapping).filter(([dbCol]) => !mappedDbCols.includes(dbCol));
-
-	// DB컬럼 → 대표 한글명 매핑
-	const dbColLabel = {};
-	for (const [dbCol, aliases] of Object.entries(columnMapping)) {
-		dbColLabel[dbCol] = aliases[0]; // 첫번째 alias를 대표명으로
-	}
-
-	html += '<div class="mb-3">';
-	html += '<h6 style="font-weight:600; margin-bottom:8px;"><i class="fa fa-columns mr-1"></i>컬럼 매핑 결과 (' + mappedCols.length + '/' + Object.keys(columnMapResult).length + '개 인식)</h6>';
-	html += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
-	mappedCols.forEach(([orig, mapped]) => {
-		const label = dbColLabel[mapped] || mapped;
-		html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' → ' + label + '</span>';
-	});
-	unmappedCols.forEach(([orig]) => {
-		html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; font-size:12px; border-radius:12px;">' + orig + ' (미인식 - 등록제외)</span>';
-	});
-	html += '</div></div>';
-
-	// 1-2) 엑셀에 없는 컬럼 안내
-	if (missingDbCols.length > 0) {
-		html += '<div class="mb-3" style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px;">';
-		html += '<h6 style="font-weight:600; margin-bottom:6px; color:#856404;"><i class="fa fa-exclamation-triangle mr-1"></i>엑셀에 없는 컬럼 (인식 가능한 헤더명)</h6>';
-		html += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
-		missingDbCols.forEach(([dbCol, aliases]) => {
-			html += '<span class="badge" style="background:#fff; border:1px solid #ffc107; color:#856404; padding:5px 10px; font-size:12px; border-radius:12px;">';
-			html += aliases[0] + ' (' + aliases.slice(1).join(', ') + ')';
-			html += '</span>';
+// ─── 매핑 UI 구성 ───
+function excelBuildMappingUI() {
+	var dbColumns = excelGetDbColumns();
+	var $zone = $('#excelMappingFields');
+	$zone.empty();
+	for (var i = 0; i < dbColumns.length; i++) {
+		var col = dbColumns[i];
+		var options = '<option value="">-- 미매핑 --</option>';
+		for (var j = 0; j < excelRawHeaders.length; j++) {
+			var h = excelRawHeaders[j];
+			var sel = (excelColumnMap[col.key] === h) ? ' selected' : '';
+			options += '<option value="' + $('<div>').text(h).html() + '"' + sel + '>' + $('<div>').text(h).html() + '</option>';
+		}
+		var star = col.required ? ' <span style="color:#dc3545;">*</span>' : '';
+		var bg = excelColumnMap[col.key] ? '' : 'background-color:#ffe0e0;';
+		var $div = $('<div>').css({
+			'flex': '0 0 14.2857%',     // 7개/행
+			'max-width': '14.2857%',
+			'padding': '1px 3px',
+			'margin-bottom': '2px'
 		});
-		html += '</div></div>';
+		$div.html(
+			'<label style="font-size:11px; margin-bottom:0; font-weight:600; color:' + (col.required ? '#dc3545' : '#333') + ';">' +
+				col.label + star + '</label>' +
+			'<select id="excelMap_' + col.key + '" class="form-control form-control-sm excel-map-sel" ' +
+				'data-dbkey="' + col.key + '" style="font-size:11px; height:28px; ' + bg + '">' + options + '</select>'
+		);
+		$zone.append($div);
 	}
-
-	// 2) 주민번호 상태
-	html += '<div class="mb-3">';
-	if (jumin_Cnt === seqNumber) {
-		html += '<span class="badge" style="background:#d4edda; color:#155724; padding:5px 10px; font-size:13px;">주민번호: ' + jumin_Cnt + '/' + seqNumber + '건 포함</span>';
-	} else if (jumin_Cnt === 0) {
-		html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:5px 10px; font-size:13px;">주민번호: 전체 누락 (' + seqNumber + '건)</span>';
-	} else {
-		html += '<span class="badge" style="background:#fff3cd; color:#856404; padding:5px 10px; font-size:13px;">주민번호: ' + jumin_Cnt + '/' + seqNumber + '건 포함 (일부 누락)</span>';
-	}
-	html += '</div>';
-
-	// 3) 데이터 미리보기 테이블 (전체, 스크롤)
-	const headers = Object.keys(columnMapResult);
-
-	html += '<div class="mb-2"><h6 style="font-weight:600;"><i class="fa fa-table mr-1"></i>데이터 미리보기 (총 ' + seqNumber + '건)</h6></div>';
-	html += '<div style="overflow:auto; max-height:50vh;">';
-	html += '<table class="table table-bordered table-sm" style="font-size:12px; white-space:nowrap;">';
-	html += '<thead style="background:#2a5298; color:#fff; position:sticky; top:0; z-index:1;"><tr>';
-	headers.forEach(h => {
-		const mapped = columnMapResult[h];
-		if (mapped) {
-			html += '<th style="padding:4px 8px; color:#fff;">' + h + '<br><small style="color:#90ee90;">(' + mapped + ')</small></th>';
+	// 변경 시 배경색 업데이트 + 내부 매핑 갱신
+	$zone.off('change.mapsel').on('change.mapsel', '.excel-map-sel', function() {
+		var dbKey = $(this).data('dbkey');
+		var v = $(this).val();
+		if (v) {
+			excelColumnMap[dbKey] = v;
+			$(this).css('background-color', '');
 		} else {
-			html += '<th style="padding:4px 8px; color:#ff9999;">' + h + '<br><small>(미매핑)</small></th>';
+			delete excelColumnMap[dbKey];
+			$(this).css('background-color', '#ffe0e0');
 		}
 	});
-	html += '</tr></thead><tbody>';
-	rawRows.forEach(row => {
-		html += '<tr>';
-		headers.forEach(h => {
-			const val = row[h] != null ? row[h] : '';
-			html += '<td style="padding:3px 8px;">' + val + '</td>';
-		});
-		html += '</tr>';
-	});
-	html += '</tbody></table></div>';
+}
+
+// ─── 매핑 상태 배지 영역 ───
+function excelBuildMappingSummary() {
+	var dbColumns = excelGetDbColumns();
+	var total = dbColumns.length;
+	var mappedCount = 0;
+	var html = '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">';
+	for (var i = 0; i < dbColumns.length; i++) {
+		var col = dbColumns[i];
+		var mapped = excelColumnMap[col.key];
+		if (mapped) {
+			mappedCount++;
+			html += '<span class="badge" style="background:#d4edda; color:#155724; padding:3px 8px; font-size:11px; border-radius:10px;">' + col.label + ' ← ' + mapped + '</span>';
+		} else if (col.required) {
+			html += '<span class="badge" style="background:#f8d7da; color:#721c24; padding:3px 8px; font-size:11px; border-radius:10px;"><i class="fa fa-exclamation-triangle mr-1"></i>' + col.label + ' (필수 미매핑)</span>';
+		}
+	}
+	html += '</div>';
+	html += '<small style="color:#666;">매핑 상태: ' + mappedCount + '/' + total + '개</small>';
+	return html;
+}
+
+// ─── 엑셀 미리보기 (매핑 UI + 원본 헤더 그리드) ───
+function showExcelPreview() {
+	var isSpcsuga = (excelCurrentMode === 'spcsuga');
+	var titleText = isSpcsuga ? '특정수가현황 엑셀 미리보기' : '입원현황 엑셀 미리보기';
+	$('#excelPreviewModal .modal-title').html('<i class="fa fa-file-excel mr-2"></i>' + titleText);
+
+	// 모달 본문 HTML 구성
+	var html = '';
+	html += '<div class="alert alert-info py-2 mb-2" style="font-size:12px;">';
+	html += '<i class="fa fa-info-circle mr-1"></i>엑셀 헤더와 DB 컬럼을 매핑하세요. 자동 매핑 후 필요시 드롭다운에서 수정 가능합니다. (필수 컬럼은 <span style="color:#dc3545; font-weight:600;">*</span> 표시)';
+	html += '</div>';
+	html += '<div id="excelMappingZone" class="mb-2">';
+	html += '  <div id="excelMappingFields" class="form-row" style="flex-wrap:wrap;"></div>';
+	html += '</div>';
+	html += '<div id="excelMappingSummary" class="mb-2" style="padding:6px 10px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px;"></div>';
+	html += '<div class="form-row mb-2" id="excelPreviewSearchBar">';
+	html += '  <div class="col-3"><select id="excelPreviewSearchCol" class="custom-select custom-select-sm"><option value="">전체 컬럼</option></select></div>';
+	html += '  <div class="col-5"><input type="text" id="excelPreviewSearchKw" class="form-control form-control-sm" placeholder="검색어 입력 후 Enter"></div>';
+	html += '  <div class="col-4"><button type="button" class="btn btn-sm btn-outline-primary" id="btnExcelPreviewSearch"><i class="fa fa-search"></i> 검색</button> ';
+	html += '    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExcelPreviewSearchReset">초기화</button>';
+	html += '    <span id="excelPreviewSearchCnt" class="ml-2" style="font-size:12px; color:#666;"></span></div>';
+	html += '</div>';
+	html += '<table id="excelPreviewTable" class="display nowrap stripe hover cell-border compact" style="width:100%; font-size:12px;"></table>';
 
 	$('#excelPreviewContent').html(html);
 
-	// 등록 버튼 이벤트
-	$('#btnExcelPreviewSave').off('click').on('click', function() {
-		$('#excelPreviewModal').modal('hide');
-		doSaveExcelDatas(datas, seqNumber, jumin_Cnt);
+	// 매핑 UI 구성
+	excelBuildMappingUI();
+	$('#excelMappingSummary').html(excelBuildMappingSummary());
+	$('#excelMappingFields').off('change.sum').on('change.sum', '.excel-map-sel', function() {
+		$('#excelMappingSummary').html(excelBuildMappingSummary());
 	});
 
-	// X 버튼 이벤트
+	// DataTables 그리드 (엑셀 원본 헤더로 동적 생성)
+	if (excelPreviewDT) {
+		try { excelPreviewDT.destroy(); } catch (e) {}
+		$('#excelPreviewTable').empty();
+		excelPreviewDT = null;
+	}
+	var cols = [
+		{ data: null, title: 'No', orderable: false, searchable: false, className: 'dt-body-center',
+		  width: '40px',
+		  render: function(data, type, row, meta) { return meta.row + 1; } }
+	];
+	for (var i = 0; i < excelRawHeaders.length; i++) {
+		(function(h) {
+			cols.push({
+				data: h,
+				title: h,
+				defaultContent: '',
+				className: 'dt-body-left',
+				width: '140px',                  // 좌우 스크롤 유도
+				render: function(data, type) {
+					if (data == null) return '';
+					var s = String(data);
+					if (type === 'display' && s.length > 120) {
+						var safe = $('<span>').text(s).html();
+						return '<span title="' + safe + '">' + $('<span>').text(s.substr(0, 120)).html() + '...</span>';
+					}
+					return s;
+				}
+			});
+		})(excelRawHeaders[i]);
+	}
+
+	excelPreviewDT = $('#excelPreviewTable').DataTable({
+		data: excelRawRows,
+		columns: cols,
+		scrollX: true,
+		scrollY: '32vh',
+		scrollCollapse: true,
+		paging: false,
+		ordering: true,
+		searching: true,
+		info: true,
+		autoWidth: false,
+		deferRender: true,
+		processing: true,
+		language: {
+			search: '검색 : ',
+			emptyTable: '데이터가 없습니다.',
+			lengthMenu: '_MENU_',
+			info: '현재 _START_ - _END_ / 총 _TOTAL_건',
+			infoEmpty: '데이터 없음',
+			processing: '처리 중...',
+			paginate: { next: '다음', previous: '이전' }
+		},
+		rowCallback: function(row) {
+			$(row).find('td').css('padding', '2px 6px');
+		}
+	});
+
+	// 미리보기 검색바 구성
+	(function() {
+		var $sel = $('#excelPreviewSearchCol');
+		for (var i = 0; i < excelRawHeaders.length; i++) {
+			// No(0) 다음부터가 실 데이터 컬럼 → dt 컬럼 인덱스 = i + 1
+			$sel.append('<option value="' + (i + 1) + '">' + $('<div>').text(excelRawHeaders[i]).html() + '</option>');
+		}
+		$('#btnExcelPreviewSearch').off('click').on('click', excelPreviewSearchRun);
+		$('#btnExcelPreviewSearchReset').off('click').on('click', excelPreviewSearchReset);
+		$('#excelPreviewSearchKw').off('keydown.preview').on('keydown.preview', function(e) {
+			if (e.key === 'Enter') { e.preventDefault(); excelPreviewSearchRun(); }
+		});
+	})();
+
+	// 저장 / 닫기 버튼
+	$('#btnExcelPreviewSave').off('click').on('click', function() {
+		if (excelCurrentMode === 'ipwon') {
+			saveIpwonWithMapping();
+		} else {
+			saveSpcsugaWithMapping();
+		}
+	});
 	$('#btnExcelPreviewX').off('click').on('click', function() {
 		signUp = 'N';
 		$('#excelPreviewModal').modal('hide');
 	});
-
-	// 취소 버튼 이벤트
 	$('#btnExcelPreviewCancel').off('click').on('click', function() {
 		signUp = 'N';
 		$('#excelPreviewModal').modal('hide');
 	});
 
+	// 모달이 완전히 표시된 후 DataTables 폭/스크롤 재계산 (좌우 스크롤 확실히 작동)
+	$('#excelPreviewModal').off('shown.bs.modal.dtadjust').on('shown.bs.modal.dtadjust', function() {
+		if (excelPreviewDT) {
+			excelPreviewDT.columns.adjust();
+			try { excelPreviewDT.draw(false); } catch (e) {}
+		}
+	});
 	$('#excelPreviewModal').modal('show');
 }
 
-// ─── 엑셀 저장 실행 (기존 로직 그대로) ───
+function excelPreviewSearchRun() {
+	if (!excelPreviewDT) return;
+	var colIdx = $('#excelPreviewSearchCol').val();
+	var kw = $('#excelPreviewSearchKw').val() || '';
+	excelPreviewDT.search('').columns().search('');
+	if (colIdx === '') {
+		excelPreviewDT.search(kw);
+	} else {
+		excelPreviewDT.column(parseInt(colIdx, 10)).search(kw);
+	}
+	excelPreviewDT.draw();
+	var cnt = excelPreviewDT.rows({ search: 'applied' }).count();
+	$('#excelPreviewSearchCnt').text('검색결과: ' + cnt + '건');
+}
+function excelPreviewSearchReset() {
+	if (!excelPreviewDT) return;
+	$('#excelPreviewSearchCol').val('');
+	$('#excelPreviewSearchKw').val('');
+	excelPreviewDT.search('').columns().search('').draw();
+	$('#excelPreviewSearchCnt').text('');
+}
+
+// ─── 현재 드롭다운에서 매핑 읽기 ───
+function excelReadCurrentMapping() {
+	var map = {};
+	$('.excel-map-sel').each(function() {
+		var dbKey = $(this).data('dbkey');
+		var v = $(this).val();
+		if (v) map[dbKey] = v;
+	});
+	return map;
+}
+
+// ─── 필수 매핑 검증 ───
+function excelValidateRequired(map) {
+	var dbColumns = excelGetDbColumns();
+	var missing = [];
+	for (var i = 0; i < dbColumns.length; i++) {
+		var c = dbColumns[i];
+		if (c.required && !map[c.key]) missing.push(c.label);
+	}
+	return missing;
+}
+
+// ─── 엑셀 합계/소계/빈 행 판별 (저장에서 제외) ───
+function excelIsSummaryOrEmptyRow(src) {
+	// 1) 합계/소계/총계 키워드가 들어간 셀이 있으면 요약 행
+	var summaryRegex = /^\[?\s*(합\s*계|소\s*계|총\s*계|합계|소계|총계|total|합\s*\s\s*계)\s*\]?\s*$/i;
+	// 2) "인원:", "건수:", "총진료일:" 같은 레이블 접두 (값 대신 설명문)
+	var labelRegex   = /^(인원|건수|총진료일|총\s*인원|합\s*계|소\s*계|총\s*계|총합|총계)\s*[:：]/;
+	var nonEmptyCount = 0;
+	for (var h in src) {
+		var v = String(src[h] == null ? '' : src[h]).trim();
+		if (!v) continue;
+		nonEmptyCount++;
+		if (summaryRegex.test(v)) return true;
+		if (labelRegex.test(v))   return true;
+	}
+	// 3) 전부 빈 행
+	if (nonEmptyCount === 0) return true;
+	return false;
+}
+
+// ─── 입원현황 저장: 매핑 적용 + 날짜 포맷 + 주민번호 카운트 ───
+//     요양기호 매핑됐으면 로그인 병원코드와 대조 (있으면 체크, 없으면 무시)
+//     합계/소계/빈 행은 저장에서 자동 제외
+function saveIpwonWithMapping() {
+	var map = excelReadCurrentMapping();
+	var missing = excelValidateRequired(map);
+	if (missing.length > 0) {
+		messageBox("4", "<h5>필수 컬럼 매핑 누락:<br>" + missing.join(', ') + "</h5><p></p><br>", "", "", "");
+		return;
+	}
+
+	var jobdt = getJobDateTime();
+	var datas = [];
+	var juminCnt = 0;
+	var seqNumber = 0;
+	var skippedSummary = 0;       // 합계/빈 행 스킵 카운터
+	var hospMismatch = [];        // 요양기호 불일치 행 기록 (매핑된 경우만)
+	var hospCheckEnabled = !!map.hosp_cd;
+
+	for (var i = 0; i < excelRawRows.length; i++) {
+		var src = excelRawRows[i];
+
+		// 합계/소계/빈 행 스킵
+		if (excelIsSummaryOrEmptyRow(src)) {
+			skippedSummary++;
+			continue;
+		}
+
+		seqNumber++;
+
+		// 요양기호 검증 (엑셀에 있고 값이 있을 때만)
+		if (hospCheckEnabled) {
+			var xlsHosp = String(src[map.hosp_cd] == null ? '' : src[map.hosp_cd]).trim();
+			if (xlsHosp && xlsHosp !== String(hospid).trim()) {
+				hospMismatch.push({ row: i + 2, xls: xlsHosp, name: (src[map.patname] || '') });
+			}
+		}
+
+		var mapped = {
+			hosp_cd:  hospid,                                    // 저장값은 항상 로그인 병원
+			jobyymm:  g_Year + gMonth,
+			seq_num:  seqNumber,
+			file_nm:  (excelRawRowFile[i] || ''),
+			jobs_dt:  jobdt,
+			reg_user: userid
+		};
+		for (var dbKey in map) {
+			if (dbKey === 'hosp_cd') continue;                   // hosp_cd는 엑셀값 저장 안 함
+			var excelCol = map[dbKey];
+			var v = (src[excelCol] == null ? '' : src[excelCol]);
+			if (dbKey === 'ipwondt' || dbKey === 'tewondt') {
+				mapped[dbKey] = excelDateFmt(v);
+			} else {
+				mapped[dbKey] = v;
+			}
+		}
+		if (mapped.juminno) juminCnt++;
+		datas.push(mapped);
+	}
+
+	if (skippedSummary > 0) {
+		console.log('[입원현황] 합계/빈 행 자동 제외: ' + skippedSummary + '건');
+	}
+
+	// 요양기호 불일치 처리
+	if (hospMismatch.length > 0) {
+		var sample = hospMismatch.slice(0, 5).map(function(m) {
+			return '• ' + m.row + '행 : ' + m.xls + (m.name ? ' (' + m.name + ')' : '');
+		}).join('<br>');
+		var moreTxt = hospMismatch.length > 5 ? '<br>... 외 ' + (hospMismatch.length - 5) + '건' : '';
+		Swal.fire({
+			title: '요양기관기호 불일치',
+			html: '<div style="text-align:left; font-size:13px;">엑셀 요양기관기호가 로그인 병원(<strong>' + hospid + '</strong>)과 다릅니다.<br>불일치 건수: <strong>' + hospMismatch.length + '건</strong><hr style="margin:6px 0;">' + sample + moreTxt + '<hr style="margin:6px 0;">계속 등록하시겠습니까?</div>',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: '등록 강행',
+			cancelButtonText: '취소',
+			customClass: { popup: 'small-swal' }
+		}).then(function(result) {
+			if (result.isConfirmed) {
+				$('#excelPreviewModal').modal('hide');
+				doSaveExcelDatas(datas, seqNumber, juminCnt);
+			}
+		});
+		return;
+	}
+
+	// 모달 닫고 저장
+	$('#excelPreviewModal').modal('hide');
+	doSaveExcelDatas(datas, seqNumber, juminCnt);
+}
+
+// ─── 엑셀 저장 실행 (입원현황) ───
 function doSaveExcelDatas(datas, seqNumber, jumin_Cnt) {
 
 	if (datas.length > 0 && jumin_Cnt === seqNumber) {
@@ -2263,6 +2419,134 @@ function doSaveExcelDatas(datas, seqNumber, jumin_Cnt) {
 		signUp = 'N';
 		messageBox("4", "<h5>매핑된 정보가 없습니다!! <br>정확한 입원현황 파일내용을 확인하세요.<br>업로드 안됨 !!</h5><p></p><br>", "", "", "");
 	}
+}
+
+// ─── 수가현황 저장: 매핑 적용 + 내원일 분해 + 입원일 연도 적용 + 요양기호 검증 + 합계/빈행 스킵 + YYYYMMDD 포맷 ───
+function saveSpcsugaWithMapping() {
+	var map = excelReadCurrentMapping();
+	var missing = excelValidateRequired(map);    // 수가현황은 필수 없음 (모두 optional)이지만 체크 유지
+	if (missing.length > 0) {
+		messageBox("4", "<h5>필수 컬럼 매핑 누락:<br>" + missing.join(', ') + "</h5><p></p><br>", "", "", "");
+		return;
+	}
+
+	var jobdt = getJobDateTime();
+	var datas = [];
+	var seqNumber = 0;
+	var skippedSummary = 0;       // 합계/빈 행 스킵
+	var skippedNoRequired = 0;    // 주요 필드 없는 행 스킵 (요양기호/환자명/내원일/주민번호/edi코드/입원일 모두 없음)
+	var hospMismatch = [];        // 요양기호 불일치 (매핑된 경우만)
+	var hospCheckEnabled = !!map.hosp_cd;
+
+	for (var i = 0; i < excelRawRows.length; i++) {
+		var src = excelRawRows[i];
+
+		// 1) 합계/소계/빈 행 스킵
+		if (excelIsSummaryOrEmptyRow(src)) {
+			skippedSummary++;
+			continue;
+		}
+
+		// 2) 매핑된 값 수집 (base 객체)
+		var base = {};
+		for (var dbKey in map) {
+			var excelCol = map[dbKey];
+			var v = (src[excelCol] == null ? '' : src[excelCol]);
+			if (dbKey === 'tewondt' || dbKey === 'ipwondt') {
+				base[dbKey] = excelDateFmt(v);   // YYYY-MM-DD로 일단 정규화
+			} else {
+				base[dbKey] = String(v).trim();
+			}
+		}
+
+		// 3) 주요 식별 정보가 전혀 없는 행 스킵 (데이터 쓰레기 방지)
+		var hasAnyKey = (base.hosp_cd || base.chartno || base.patname || base.juminno || base.edi_code || base.suga_cd || base.med_start || base.ipwondt);
+		if (!hasAnyKey) {
+			skippedNoRequired++;
+			continue;
+		}
+
+		// 4) 요양기관기호 검증 (매핑된 경우만, 값 있을 때만)
+		if (hospCheckEnabled && base.hosp_cd) {
+			if (String(base.hosp_cd).trim() !== String(hospid).trim()) {
+				hospMismatch.push({ row: i + 2, xls: base.hosp_cd, name: (base.patname || '') });
+			}
+		}
+
+		// 5) 내원일 분해 + 입원일 연도 적용
+		var ipwonYear = (base.ipwondt && base.ipwondt.length >= 4) ? base.ipwondt.substring(0, 4) : g_Year;
+		var visits = spcsugaSplitVisits(base.med_start);
+		var expanded = visits.length ? visits : [''];
+
+		for (var vi = 0; vi < expanded.length; vi++) {
+			var tok = expanded[vi];
+			seqNumber++;
+			var r = {};
+			// 매핑된 필드 복사
+			for (var k in base) { r[k] = base[k]; }
+			// 내원일: MM-DD 토큰 + 입원일 연도 → YYYYMMDD
+			r.med_start = spcsugaStripDateSep(spcsugaMakeFullDate(tok, ipwonYear));
+			// 입원일/퇴원일: YYYY-MM-DD → YYYYMMDD
+			r.ipwondt   = spcsugaStripDateSep(r.ipwondt || '');
+			r.tewondt   = spcsugaStripDateSep(r.tewondt || '');
+			// 세션/시스템 값 강제 주입
+			r.hosp_cd   = hospid;
+			r.jobyymm   = g_Year + gMonth;
+			r.seq_num   = seqNumber;
+			r.file_nm   = (excelRawRowFile[i] || '');
+			r.jobs_dt   = jobdt;
+			r.reg_user  = userid;
+			r.upd_user  = userid;
+			r.reg_ip    = '127.0.0.1';
+			r.upd_ip    = '127.0.0.1';
+			datas.push(r);
+		}
+	}
+
+	if (skippedSummary > 0)     console.log('[수가현황] 합계/빈 행 자동 제외: ' + skippedSummary + '건');
+	if (skippedNoRequired > 0)  console.log('[수가현황] 주요 식별값 없는 행 제외: ' + skippedNoRequired + '건');
+
+	if (datas.length === 0) {
+		signUp = 'N';
+		messageBox("4", "<h5>저장할 데이터가 없습니다!! <br>매핑을 확인하세요.</h5><p></p><br>", "", "", "");
+		return;
+	}
+
+	// 요양기관기호 불일치 → 등록 차단 (타 병원 자료 오염 방지)
+	if (hospMismatch.length > 0) {
+		var sample = hospMismatch.slice(0, 5).map(function(m) {
+			return '• ' + m.row + '행 : ' + m.xls + (m.name ? ' (' + m.name + ')' : '');
+		}).join('<br>');
+		var moreTxt = hospMismatch.length > 5 ? '<br>... 외 ' + (hospMismatch.length - 5) + '건' : '';
+		Swal.fire({
+			title: '등록 불가 — 요양기관기호 불일치',
+			html: '<div style="text-align:left; font-size:13px;">엑셀 요양기관기호가 로그인 병원(<strong>' + hospid + '</strong>)과 다릅니다.<br>불일치 건수: <strong>' + hospMismatch.length + '건</strong><hr style="margin:6px 0;">' + sample + moreTxt + '<hr style="margin:6px 0;"><strong style="color:#dc3545;">타 병원 자료는 등록할 수 없습니다.</strong><br>엑셀 파일을 확인 후 다시 업로드해 주세요.</div>',
+			icon: 'error',
+			confirmButtonText: '확인',
+			customClass: { popup: 'small-swal' }
+		});
+		signUp = 'N';
+		return;
+	}
+
+	// 확인 후 저장
+	var expandedInfo = (datas.length !== (excelRawRows.length - skippedSummary - skippedNoRequired))
+		? '<br><small style="color:#666;">(내원일 여러개 분해로 원본 ' + (excelRawRows.length - skippedSummary - skippedNoRequired) + '행 → 저장 ' + datas.length + '건)</small>'
+		: '';
+	Swal.fire({
+		title: '저장 확인',
+		html: '총 <strong>' + datas.length + '건</strong>을 저장하시겠습니까?' + expandedInfo,
+		icon: 'question',
+		showCancelButton: true,
+		confirmButtonText: '저장',
+		cancelButtonText: '취소',
+		customClass: { popup: 'small-swal' }
+	}).then(function(result) {
+		if (result.isConfirmed) {
+			$('#excelPreviewModal').modal('hide');
+			doSaveSpcsugaDatas(datas);
+		}
+	});
 }
 
 
