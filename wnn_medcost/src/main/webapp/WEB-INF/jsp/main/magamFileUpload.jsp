@@ -2718,9 +2718,9 @@ function updateMonthsContainer(rawData) {
             buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가현황</button>';
         } else {
             if (item.magamyn === "Y") {
-                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가등록안됨</button>';
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가안됨</button>';
             } else {
-                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가자료없음</button>';
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가없음</button>';
             }
         }
 
