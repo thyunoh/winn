@@ -590,6 +590,11 @@ function fn_ShowCath05Modal() {
             '.swal2-popup.cath05-draggable .swal2-title { cursor: move; user-select: none; }' +
             // cath05 모달에서는 Cancel 버튼(엑셀저장 슬롯) 강제 숨김 — 인라인 버튼으로 대체됨
             '.swal2-popup.cath05-draggable .swal2-cancel { display: none !important; }' +
+            // 1·입원 평가 필터 체크박스
+            '.cath05-filter-chk { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#1e3c72; cursor:pointer; user-select:none; }' +
+            '.cath05-filter-chk input[type="checkbox"] { cursor:pointer; width:15px; height:15px; }' +
+            '.cath05-filter-info { color:#5a6978; font-weight:500; font-size:12.5px; }' +
+            '.cath05-filter-info b { color:#1e3c72; font-weight:800; }' +
             // 모달 내부 엑셀저장 버튼
             '.cath05-inline-excel-btn {' +
             '  display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:none;' +
@@ -656,7 +661,13 @@ function fn_ShowCath05Modal() {
     if (total === 0) {
         html = '<div style="padding:30px 20px; text-align:center; color:#155724; font-size:14px;"><i class="fas fa-check-circle" style="color:#28a745; font-size:24px; display:block; margin-bottom:8px;"></i>점검 대상이 없습니다.</div>';
     } else {
-        html = '<div style="display:flex; justify-content:flex-end; margin-bottom:8px; gap:8px;">' +
+        // 컨트롤 바 : 필터 체크박스 + 엑셀저장
+        html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:12px;">' +
+               '  <label class="cath05-filter-chk">' +
+               '    <input type="checkbox" id="chkHideEvalAdmit">' +
+               '    <span>1·입원 평가 숨기기</span>' +
+               '    <span class="cath05-filter-info" id="cath05FilterInfo"></span>' +
+               '  </label>' +
                '  <button type="button" id="btnCath05ExcelInline" class="cath05-inline-excel-btn">' +
                '    <i class="far fa-file-excel"></i>&nbsp;엑셀저장' +
                '  </button>' +
@@ -680,13 +691,13 @@ function fn_ShowCath05Modal() {
                 var iss = p.issues[b];
                 badges += '<div class="cath05-badge-wrap" style="color:' + iss.color + ';"><span class="cath05-badge" style="color:' + iss.color + ';">' + $('<div>').text(iss.label).html() + '</span></div>';
             }
-            html += '<tr>' +
-                    '<td class="cath05-rowno" style="text-align:center;">' + (k + 1) + '</td>' +
-                    '<td class="cath05-patid" style="text-align:center;">' + p.patId + '</td>' +
-                    '<td class="cath05-patnm" style="text-align:center;">' + p.patNm + '</td>' +
-                    '<td class="cath05-date"  style="text-align:center;">' + p.admitDt + '</td>' +
-                    '<td class="cath05-pclass" style="text-align:center;">' + ($('<div>').text(p.patClass || '-').html()) + '</td>' +
-                    '<td class="cath05-eval"   style="text-align:left; padding-left:14px;">' + ($('<div>').text(_fmtEvalType(p.evalType)).html()) + '</td>' +
+            html += '<tr data-patid="' + p.patId + '" data-eval="' + (p.evalType || '') + '">' +
+                    '<td class="cath05-rowno"   style="text-align:center;"></td>' +  // 순번은 필터링 후 재계산
+                    '<td class="cath05-patid"   style="text-align:center;">' + p.patId + '</td>' +
+                    '<td class="cath05-patnm"   style="text-align:center;">' + p.patNm + '</td>' +
+                    '<td class="cath05-date"    style="text-align:center;">' + p.admitDt + '</td>' +
+                    '<td class="cath05-pclass"  style="text-align:center;">' + ($('<div>').text(p.patClass || '-').html()) + '</td>' +
+                    '<td class="cath05-eval"    style="text-align:left; padding-left:14px;">' + ($('<div>').text(_fmtEvalType(p.evalType)).html()) + '</td>' +
                     '<td class="cath05-indwell" style="text-align:center;">' + _fmtIndwell(p.indwellCath) + '</td>' +
                     '<td>' + badges + '</td>' +
                     '</tr>';
@@ -707,7 +718,7 @@ function fn_ShowCath05Modal() {
         customClass: { popup: 'cath05-draggable' },
         didOpen: function() {
             _cath05EnableDrag();
-            // 모달 내부 엑셀저장 버튼에 이벤트 연결 — 모달 유지하며 저장
+            // 엑셀저장 버튼
             var $excelBtn = $('#btnCath05ExcelInline');
             if ($excelBtn.length) {
                 $excelBtn.off('click.pvExcel').on('click.pvExcel', function(e) {
@@ -715,8 +726,43 @@ function fn_ShowCath05Modal() {
                     fn_ExportCath05Excel();
                 });
             }
+            // 1·입원 평가 숨기기 체크박스
+            var $chk = $('#chkHideEvalAdmit');
+            if ($chk.length) {
+                $chk.off('change.pvFilter').on('change.pvFilter', _cath05ApplyFilter);
+                _cath05ApplyFilter();  // 초기 적용 (기본: 체크됨 → 입원평가 숨김)
+            }
         }
     });
+}
+
+// 1·입원 평가 필터 적용 + 순번 재계산 + 카운트 갱신
+function _cath05ApplyFilter() {
+    var hideAdmit = $('#chkHideEvalAdmit').prop('checked');
+    var totalCnt = 0, hiddenCnt = 0, visibleNo = 0;
+    $('.cath05-table tbody tr').each(function() {
+        totalCnt++;
+        var ev = String($(this).attr('data-eval') || '');
+        var shouldHide = hideAdmit && ev === '1';
+        if (shouldHide) {
+            $(this).hide();
+            hiddenCnt++;
+        } else {
+            $(this).show();
+            visibleNo++;
+            $(this).find('.cath05-rowno').text(visibleNo);
+        }
+    });
+    var visibleCnt = totalCnt - hiddenCnt;
+    // 제목 및 안내 영역 갱신
+    var $info = $('#cath05FilterInfo');
+    if ($info.length) {
+        if (hideAdmit && hiddenCnt > 0) {
+            $info.html('&nbsp;·&nbsp;표시 <b>' + visibleCnt + '</b>명&nbsp;(숨김 <b>' + hiddenCnt + '</b>명)');
+        } else {
+            $info.html('&nbsp;·&nbsp;전체 <b>' + totalCnt + '</b>명');
+        }
+    }
 }
 
 // SweetAlert2 팝업을 제목 영역 드래그로 이동
@@ -804,11 +850,16 @@ function _doCath05ExcelWrite() {
     }
     function _xlsIndwell(v) { return (v === '1' || v === 'Y') ? 'O' : ''; }
 
+    // 화면 필터 상태(1·입원평가 숨기기) 반영 — 체크됨이면 EVAL_TYPE='1'은 엑셀에서도 제외
+    var hideAdmit = $('#chkHideEvalAdmit').prop('checked');
+    function _isVisible(p) { return !(hideAdmit && String(p.evalType || '') === '1'); }
+
     // (1) 환자별 통합 시트 — 환자분류군 / 평가구분 / 유치도뇨관 삽입 추가
     var summaryRows = [];
     var maxIssueCnt = 1;
     for (var i = 0; i < _cath05Order.length; i++) {
         var p = _cath05PatMap[_cath05Order[i]];
+        if (!_isVisible(p)) continue;
         var issueText = p.issues.map(function(x) { return x.label; }).join('\n');
         var errTypes  = p.issues.map(function(x) { return x.errType; }).filter(function(v){return v;}).join(',');
         if (p.issues.length > maxIssueCnt) maxIssueCnt = p.issues.length;
@@ -825,10 +876,16 @@ function _doCath05ExcelWrite() {
         });
     }
 
+    if (summaryRows.length === 0) {
+        Swal.fire({ icon: 'info', title: '알림', text: '저장할 데이터가 없습니다.', timer: 1500, showConfirmButton: false });
+        return;
+    }
+
     // (2) 상세 시트 (1행 = 1오류)
     var detailRows = [];
     for (var k = 0; k < _cath05Order.length; k++) {
         var pp = _cath05PatMap[_cath05Order[k]];
+        if (!_isVisible(pp)) continue;
         for (var b = 0; b < pp.issues.length; b++) {
             var ii = pp.issues[b];
             detailRows.push({
