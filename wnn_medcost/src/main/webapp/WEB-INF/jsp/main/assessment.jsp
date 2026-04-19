@@ -160,9 +160,7 @@
 							        }
 							        .cath05-blink { animation: cath05Pulse 1.6s ease-out infinite; }
 
-							        /* 환자평가표 조회 버튼 — 현재 히든 (협의 후 오픈) */
-							        #btnPatvalView { display: none !important; }
-							        /* 재오픈 시 아래 display:inline-flex !important 선택자 사용 예정 */
+							        /* 환자평가표 조회 버튼 */
 							        #btnPatvalView.patval-btn._show,
 							        .dt-buttons #btnPatvalView.patval-btn._show,
 							        .dt-buttons button#btnPatvalView._show {
@@ -3240,6 +3238,26 @@ function dataLoad(data, callback, settings) {
 function _pvIsEmpty(v) { return v === null || v === undefined || v === ''; }
 function _pvEmptyMark() { return '<span class="pv-empty" style="color:#b0b6bf;">-</span>'; }
 
+// 서버 응답 키가 UPPERCASE(AUTH_DOC) 또는 snake(auth_doc)로 와도 카멜(authDoc)로 접근 가능하게 정규화
+function _pvNormalizeKeys(src) {
+    if (!src || typeof src !== 'object') return src;
+    var out = {};
+    for (var k in src) {
+        if (!src.hasOwnProperty(k)) continue;
+        out[k] = src[k];
+        // snake_case/UPPER_SNAKE → camelCase 보조키 추가
+        if (k.indexOf('_') >= 0) {
+            var camel = k.toLowerCase().replace(/_([a-z0-9])/g, function(_, c) { return c.toUpperCase(); });
+            if (!(camel in out)) out[camel] = src[k];
+        } else if (k === k.toUpperCase() && k !== k.toLowerCase()) {
+            // 전부 대문자인 경우 소문자 키도 만들어 둠
+            var lower = k.toLowerCase();
+            if (!(lower in out)) out[lower] = src[k];
+        }
+    }
+    return out;
+}
+
 function _pvYn(v) {
     if (_pvIsEmpty(v)) return _pvEmptyMark();
     if (v === '1' || v === 'Y') return '<span style="color:#28a745;font-weight:700;">✓</span>';
@@ -3341,17 +3359,7 @@ function fn_AttachPatvalBtnToDt() {
     var $dtBtns = $('#viewTable_wrapper .dt-buttons');
     if ($dtBtns.length === 0) return;
 
-    // (1) 환자평가표 조회 버튼 — 협의 전까지 숨김. CSS `#btnPatvalView { display:none !important }` 로 히든 보장
-    //     이전 세션에 .dt-buttons 로 이동된 상태라면 헤더 원위치(card-header11)로 되돌림
-    var pvBtn = document.getElementById('btnPatvalView');
-    if (pvBtn) {
-        pvBtn.classList.remove('_show');   // 표시 클래스 제거
-        var $origHome = $('.card-header11 .dsah_lab9').closest('.card-header11');
-        if ($origHome.length && pvBtn.parentNode !== $origHome[0]) {
-            $origHome[0].appendChild(pvBtn);
-        }
-    }
-    /* 재오픈 시: 위 블록 제거 후 아래 블록 주석 해제 (+ CSS `#btnPatvalView { display:none !important }` 제거)
+    // (1) 환자평가표 조회 버튼 — .dt-buttons 영역에 부착
     var pvBtn = document.getElementById('btnPatvalView');
     if (!pvBtn) {
         pvBtn = document.createElement('button');
@@ -3366,7 +3374,6 @@ function fn_AttachPatvalBtnToDt() {
         pvBtn.style.marginLeft = '6px';
     }
     pvBtn.classList.add('_show');
-    */
 
     // (2) 유치도뇨관 및 오류점검 버튼 — 05 카테고리에서만 .dt-buttons 영역으로 이동
     //     DataTable destroy 로 DOM이 사라진 경우 재생성한다.
@@ -3453,8 +3460,7 @@ function fn_ShowPatvalModal() {
             '.pv-sec-hd i { color:#2a5298; font-size:12px; }' +
             '.pv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:0; }' +
             '.pv-cell { display:flex; align-items:center; padding:8px 12px; border-bottom:1px solid #f0f2f6; border-right:1px solid #f0f2f6; font-size:12.5px; min-height:34px; }' +
-            '.pv-cell .k { flex:0 0 48%; color:#6b7280; font-weight:500; letter-spacing:0.1px; }' +
-            '.pv-cell .k.has-value { color:#1a2535; font-weight:800; }' +
+            '.pv-cell .k { flex:0 0 48%; color:#1e3c72; font-weight:500; letter-spacing:0.1px; }' +
             '.pv-cell .v { flex:1; color:#2c3e50; font-weight:500; text-align:right; padding-left:6px; word-break:break-all; font-family:Consolas,"맑은 고딕",sans-serif; }' +
             '.pv-cath-tbl { width:100%; border-collapse:collapse; font-size:12.5px; }' +
             '.pv-cath-tbl th, .pv-cath-tbl td { border:1px solid #e4e7ed; padding:6px 10px; text-align:center; }' +
@@ -3492,6 +3498,7 @@ function fn_ShowPatvalModal() {
                 dataType: "json",
                 success: function(res) {
                     var d = (res && res.data) ? res.data : null;
+                    d = _pvNormalizeKeys(d);
                     Swal.update({ html: _pvBuildHtml(d, row) });
                     _pvBindTabs();
                 },
@@ -3552,9 +3559,7 @@ function _pvSec(title, icon, items) {
     var cells = '';
     for (var i = 0; i < items.length; i++) {
         var vHtml = items[i][1];
-        // 값이 비어있지 않은 경우에만 라벨 진하게 (pv-empty 마커 없음 = 값 있음)
-        var kCls  = (vHtml.indexOf('class="pv-empty"') >= 0) ? 'k' : 'k has-value';
-        cells += '<div class="pv-cell"><span class="' + kCls + '">' + items[i][0] + '</span><span class="v">' + vHtml + '</span></div>';
+        cells += '<div class="pv-cell"><span class="k">' + items[i][0] + '</span><span class="v">' + vHtml + '</span></div>';
     }
     return '<div class="pv-sec"><div class="pv-sec-hd"><i class="fas ' + (icon || 'fa-circle') + '"></i>' + title + '</div><div class="pv-grid">' + cells + '</div></div>';
 }
