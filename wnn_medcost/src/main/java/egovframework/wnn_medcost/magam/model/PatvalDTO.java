@@ -81,6 +81,7 @@ public class PatvalDTO {
 	
 	private String overDay;         // 14일 초과
 	private String indwellCath;         // 유치도뇨관
+	private String prevIndwellCath;     // 전월 유치도뇨관 (제외 규칙용: '1'=있음/Y, 그 외=제거)
 	private String prevMonth;       // 전월 대상 여부
 	
 	private String useYn;           // 사용여부
@@ -100,6 +101,12 @@ public class PatvalDTO {
 	}
 	public void setIndwellCath(String indwellCath) {
 		this.indwellCath = indwellCath;
+	}
+	public String getPrevIndwellCath() {
+		return prevIndwellCath;
+	}
+	public void setPrevIndwellCath(String prevIndwellCath) {
+		this.prevIndwellCath = prevIndwellCath;
 	}
 	public String getUseYn() {
 		return useYn;

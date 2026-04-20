@@ -41,3 +41,20 @@
 - **모달 UI**: 폭 1400px, 제목바 드래그로 이동 가능
 - **관련파일**: Magam_SQL.xml, assessment.jsp (fn_ShowCath05Modal, _cath05EnableDrag, _EVAL_TYPE_MAP)
 - **재수정 주의**: 이전에 그리드 필터를 적용했다가 사용자 선택으로 철회함. 재적용 요청 시 이 방침 먼저 확인
+
+### [대기] 유치도뇨관 오류점검 — 평가구분별 오류 추가/제외 규칙 (2026-04-?? 요청)
+- **ADD (새 오류로 잡을 케이스)**:
+  - 평가구분 1·입원평가 + **당월 입원환자가 아닌데 입원평가로 체크된 경우** (errType 예: `A1`)
+  - 평가구분 1·입원평가 + **당월 이미 입원평가가 있는데 또 입원평가로 체크된 경우** (errType 예: `A2`)
+- **EXCLUDE (오류에서 제외)**:
+  - 평가구분 2·계속입원중 환자 중 **전월 평가표 상 유치도뇨관이 제거된 대상자**
+  - **당월 평가표가 없는 대상자** (현 _prevMissingData / 전월대상자 당월미존재)
+- **3가지 대상자는 오류에서 제외** (요청자 표현)
+- **필요 서버 작업**:
+  - Magam_SQL.xml: select_assesCheck00(또는 신규) 에 A1/A2 케이스 SELECT UNION
+  - 판정 조건: (1) 당월 입원환자는 TBL_IPWON_INFO 로 체크, (2) 당월 입원평가 중복 여부는 TBL_PATVAL_MST evalType='1' 카운트로 체크
+  - select_CathCrossCheck 등에서 evalType='2' + 전월 indwellCath 제거 케이스 제외 조건 추가
+- **필요 클라이언트 작업**:
+  - assessment.jsp fn_ShowCath05Modal 의 _prevMissingData 루프 제거 또는 조건부 스킵
+  - A1/A2 errType에 대한 라벨 매핑 추가
+- **관련파일**: Magam_SQL.xml, MagamController.java, assessment.jsp
