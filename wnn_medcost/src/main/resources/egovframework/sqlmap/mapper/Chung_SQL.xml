@@ -262,13 +262,17 @@
 		JOIN WNN.TBL_CHUNG_MST B ON B.HOSP_CD  = A.HOSP_CD 
 		                        AND B.CLAIM_NO = A.CLAIM_NO  
 		                        AND B.DATE_YM  = #{dateYm}   	    
+		/* ★ 청구월 시점에 유효한 최신 SUGA 버전 매칭
+		   기존: 전체 기간 MAX 후 ON절에서 날짜 체크 → 이후 개정 버전이 있으면 매칭 실패
+		   수정: 서브쿼리 WHERE 에 START_DT <= 청구월01 먼저 걸고 그 안에서 MAX                     */
 		LEFT JOIN (SELECT FEE_CODE, MAX(START_DT) AS MAX_START_DT
 		                 FROM WNN.TBL_SUGA_MST
 		                WHERE FEE_TYPE = '1'
 		                  AND DIV_TYPE = '2'
+		                  AND START_DT <= CONCAT(#{dateYm}, '01')
 		             GROUP BY FEE_CODE
-		          ) C ON C.FEE_CODE      = A.EDI_CODE
-		             AND C.MAX_START_DT <= CONCAT(B.DATE_YM, '01')								       
+		          ) C ON C.FEE_CODE = A.EDI_CODE
+
 		LEFT JOIN WNN.TBL_CODE_DTL D 
 			ON  D.CODE_GB   = 'Z' 
 			AND D.ACTION_YN = 'Y'
