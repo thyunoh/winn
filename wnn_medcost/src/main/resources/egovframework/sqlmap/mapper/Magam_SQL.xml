@@ -722,43 +722,56 @@
 		    GROUP BY M.JOBCODE
 		)
 		SELECT M.JOBCODE AS jobcode,
-		       COALESCE(GROUP_CONCAT(CASE 
-		                               WHEN M.JOBYYMM = #{fr_yymm} AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2') 
+		       COALESCE(GROUP_CONCAT(CASE
+		                               WHEN M.JOBYYMM = #{fr_yymm} AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2')
 		                               THEN CONCAT('[ ', M.J_COUNT, ' ] ', FORMAT(M.JAMOUNT, 0))
-		                               WHEN M.JOBYYMM = #{fr_yymm} AND M.JOBCODE IN ('U', 'V', 'X', 'Y','Y1','Y2') 
+		                               WHEN M.JOBYYMM = #{fr_yymm} AND M.JOBCODE = 'V'
+		                               THEN FORMAT(M.J_COUNT, 1)
+		                               WHEN M.JOBYYMM = #{fr_yymm} AND M.JOBCODE IN ('U', 'X', 'Y','Y1','Y2')
 		                               THEN FORMAT(M.JAMOUNT, 0)
 		                             END ORDER BY M.JOBYYMM SEPARATOR ', '), 0) AS fr_yymm,
-		       COALESCE(GROUP_CONCAT(CASE 
-		                               WHEN M.JOBYYMM = #{midyymm} AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2') 
+		       COALESCE(GROUP_CONCAT(CASE
+		                               WHEN M.JOBYYMM = #{midyymm} AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2')
 		                               THEN CONCAT('[ ', M.J_COUNT, ' ] ', FORMAT(M.JAMOUNT, 0))
-		                               WHEN M.JOBYYMM = #{midyymm} AND M.JOBCODE IN ('U', 'V', 'X', 'Y','Y1','Y2') 
+		                               WHEN M.JOBYYMM = #{midyymm} AND M.JOBCODE = 'V'
+		                               THEN FORMAT(M.J_COUNT, 1)
+		                               WHEN M.JOBYYMM = #{midyymm} AND M.JOBCODE IN ('U', 'X', 'Y','Y1','Y2')
 		                               THEN FORMAT(M.JAMOUNT, 0)
 		                             END ORDER BY M.JOBYYMM SEPARATOR ', '), 0) AS midyymm,
-		       COALESCE(GROUP_CONCAT(CASE 
+		       COALESCE(GROUP_CONCAT(CASE
 		                               WHEN M.JOBYYMM = #{endyymm} AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2')
 		                               THEN CONCAT('[ ', M.J_COUNT, ' ] ', FORMAT(M.JAMOUNT, 0))
-		                               WHEN M.JOBYYMM = #{endyymm} AND M.JOBCODE IN ('U', 'V', 'X', 'Y','Y1','Y2') 
+		                               WHEN M.JOBYYMM = #{endyymm} AND M.JOBCODE = 'V'
+		                               THEN FORMAT(M.J_COUNT, 1)
+		                               WHEN M.JOBYYMM = #{endyymm} AND M.JOBCODE IN ('U', 'X', 'Y','Y1','Y2')
 		                               THEN FORMAT(M.JAMOUNT, 0)
 		                             END ORDER BY M.JOBYYMM SEPARATOR ', '), 0) AS endyymm,
 		       COALESCE(
-		           CASE 
-		               WHEN M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2') THEN 
-		                   (SELECT 
-		                       IF(VM.month_count > 0, 
+		           CASE
+		               WHEN M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2') THEN
+		                   (SELECT
+		                       IF(VM.month_count > 0,
 		                          CONCAT(
-		                              '[ ', FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) 
+		                              '[ ', FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm})
 		                                                           AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2') THEN M.J_COUNT END) / VM.month_count, 2), 0), ' ] ',
-		                                    FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) 
+		                                    FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm})
 		                                                           AND M.JOBCODE NOT IN ('U', 'V', 'X', 'Y','Y1','Y2') THEN M.JAMOUNT END) / VM.month_count, 2), 0)
 		                          ), '0')
-		                    FROM ValidMonths VM 
+		                    FROM ValidMonths VM
 		                    WHERE VM.JOBCODE = M.JOBCODE)
-		               WHEN M.JOBCODE IN ('U', 'V', 'X', 'Y','Y1','Y2') THEN 
-		                   (SELECT 
-		                       IF(VM.month_count > 0, 
-		                          FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm}) 
-		                                                 AND M.JOBCODE IN ('U', 'V', 'X', 'Y','Y1','Y2') THEN M.JAMOUNT END) / VM.month_count, 2), 0), '0')
-		                    FROM ValidMonths VM 
+		               WHEN M.JOBCODE = 'V' THEN
+		                   (SELECT
+		                       IF(VM.month_count > 0,
+		                          FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm})
+		                                                 AND M.JOBCODE = 'V' THEN M.J_COUNT END) / VM.month_count, 1), 1), '0')
+		                    FROM ValidMonths VM
+		                    WHERE VM.JOBCODE = M.JOBCODE)
+		               WHEN M.JOBCODE IN ('U', 'X', 'Y','Y1','Y2') THEN
+		                   (SELECT
+		                       IF(VM.month_count > 0,
+		                          FORMAT(ROUND(SUM(CASE WHEN M.JOBYYMM IN (#{fr_yymm}, #{midyymm}, #{endyymm})
+		                                                 AND M.JOBCODE IN ('U', 'X', 'Y','Y1','Y2') THEN M.JAMOUNT END) / VM.month_count, 2), 0), '0')
+		                    FROM ValidMonths VM
 		                    WHERE VM.JOBCODE = M.JOBCODE)
 		           END, '0') AS avg_val,
 		       ROUND(COALESCE(SUM(CASE WHEN M.JOBYYMM = #{fr_yymm} AND M.JOBCODE IN ('U', 'V', 'X', 'Y','Y1','Y2') 
