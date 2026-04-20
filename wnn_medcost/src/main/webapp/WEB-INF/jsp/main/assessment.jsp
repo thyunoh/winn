@@ -497,11 +497,22 @@ function fn_UpdateCath05Buttons() {
     btnZone.style.display = 'inline-block';
 
     var patSet = {};
-    for (var i = 0; i < _prevMissingData.length; i++) {
-        if (_prevMissingData[i].patId) patSet[_prevMissingData[i].patId] = 1;
-    }
+    // ★ [제외1] 당월 평가표 없는 대상자(_prevMissingData) 는 오류에서 제외 — 카운트 안 함
+    // for (var i = 0; i < _prevMissingData.length; i++) {
+    //     if (_prevMissingData[i].patId) patSet[_prevMissingData[i].patId] = 1;
+    // }
+
+    // _errCheckData 루프 (모달과 동일 필터 규칙 적용)
     for (var j = 0; j < _errCheckData.length; j++) {
-        if (_errCheckData[j].patId) patSet[_errCheckData[j].patId] = 1;
+        var er2 = _errCheckData[j];
+        if (!er2 || !er2.patId) continue;
+
+        // ★ [제외2] 평가구분 2·계속입원 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
+        if (String(er2.evalType || '') === '2') {
+            var prevCath2 = (er2.prevIndwellCath === undefined) ? null : String(er2.prevIndwellCath || '');
+            if (prevCath2 !== null && prevCath2 !== '1' && prevCath2 !== 'Y') continue;
+        }
+        patSet[er2.patId] = 1;
     }
     var total = Object.keys(patSet).length;
 
@@ -549,12 +560,26 @@ function fn_ShowCath05Modal() {
         patMap[patId].issues.push({ label: issueLabel, color: issueColor, errType: errType || '' });
     }
 
-    for (var i = 0; i < _prevMissingData.length; i++) {
-        var m = _prevMissingData[i];
-        addPat(m.patId, m.patNm, m.admitDt, m.patClass, m.evalType, m.indwellCath, '전월대상자 당월미존재', '#333333', 'PREV');
-    }
+    // ★ [제외1] 당월 평가표가 없는 대상자(=_prevMissingData, 전월대상자 당월미존재)는 오류에서 제외
+    //    (요청: 2026-04 유치도뇨관 오류점검 규칙 변경)
+    // for (var i = 0; i < _prevMissingData.length; i++) {
+    //     var m = _prevMissingData[i];
+    //     addPat(m.patId, m.patNm, m.admitDt, m.patClass, m.evalType, m.indwellCath, '전월대상자 당월미존재', '#333333', 'PREV');
+    // }
+
     for (var j = 0; j < _errCheckData.length; j++) {
         var er = _errCheckData[j];
+
+        // ★ [제외2] 평가구분 2·계속입원중 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
+        //    서버 필드 관례: prevIndwellCath 가 제공되면 '0' 또는 빈값 = 제거됨
+        //    prevIndwellCath 미제공 시엔 기존 동작 유지 (서버 SQL 개선 전까지)
+        if (String(er.evalType || '') === '2') {
+            var prevCath = (er.prevIndwellCath === undefined) ? null : String(er.prevIndwellCath || '');
+            if (prevCath !== null && prevCath !== '1' && prevCath !== 'Y') {
+                continue;  // 제거됨 → skip
+            }
+        }
+
         var lbl = '[' + er.errType + '] ' + (er.errName || '평가표오류');
         addPat(er.patId, er.patNm, er.admitDt, er.patClass, er.evalType, er.indwellCath, lbl, '#dc3545', er.errType);
     }
@@ -676,7 +701,7 @@ function fn_ShowCath05Modal() {
         html += '<table class="cath05-table">' +
                 '<thead><tr>' +
                 '<th style="width:50px;">No</th>' +
-                '<th style="width:100px;">환자ID</th>' +
+                '<th style="width:100px;">생년월일</th>' +
                 '<th style="width:90px;">성명</th>' +
                 '<th style="width:110px;">입원일</th>' +
                 '<th style="width:90px;">환자분류군</th>' +
@@ -732,7 +757,42 @@ function fn_ShowCath05Modal() {
                 $chk.off('change.pvFilter').on('change.pvFilter', _cath05ApplyFilter);
                 _cath05ApplyFilter();  // 초기 적용 (기본: 체크됨 → 입원평가 숨김)
             }
+            // 성명 헤더 클릭 정렬 (토글: 가나다순 ↔ 역순)
+            _cath05BindNameSort();
         }
+    });
+}
+
+// 성명 헤더 클릭 → 가나다순/역순 토글 정렬
+var _cath05NameAsc = true;
+function _cath05BindNameSort() {
+    // 성명은 thead 의 3번째 th (No / 생년월일 / 성명 / ...)
+    var $nameTh = $('.cath05-table thead th').eq(2);
+    if (!$nameTh.length) return;
+
+    // 초기 UI: 커서 포인터 + 화살표 표시
+    $nameTh.css({ 'cursor': 'pointer', 'user-select': 'none' })
+           .attr('title', '클릭 시 성명 기준 정렬');
+    if ($nameTh.text().indexOf('▲') < 0 && $nameTh.text().indexOf('▼') < 0) {
+        $nameTh.html('성명 <span class="cath05-sort-ind" style="font-size:11px;color:#6c7bff;">▲</span>');
+    }
+
+    $nameTh.off('click.nameSort').on('click.nameSort', function() {
+        var $tbody = $('.cath05-table tbody');
+        var rows = $tbody.find('tr').toArray();
+        var asc = _cath05NameAsc;
+        rows.sort(function(a, b) {
+            var ta = $(a).find('.cath05-patnm').text().trim();
+            var tb = $(b).find('.cath05-patnm').text().trim();
+            if (ta === tb) return 0;
+            return asc ? ta.localeCompare(tb, 'ko') : tb.localeCompare(ta, 'ko');
+        });
+        _cath05NameAsc = !asc;
+        $tbody.empty().append(rows);
+        // 정렬 방향 표시 업데이트
+        $nameTh.find('.cath05-sort-ind').text(_cath05NameAsc ? '▲' : '▼');
+        // 1·입원 평가 필터 및 순번 재계산
+        _cath05ApplyFilter();
     });
 }
 
@@ -1131,10 +1191,16 @@ function fn_CreateData(flag) {
 		const card = document.getElementById('card_container');
 	    card.style.display = 'none';
 	    jobFlag = '00';
-		if ($.fn.DataTable.isDataTable('#' + tableName.id)) {
-			$('#' + tableName.id).DataTable().clear().destroy();
-		}
-		$('#' + tableName.id).empty();
+
+	    // ★ tableName 이 '보기' 모드 등으로 viewTable 로 바뀌었을 수 있음
+	    //   지표 테이블(indicatorTable)을 ID로 직접 지정해 확실히 파괴
+	    if ($.fn.DataTable.isDataTable('#indicatorTable')) {
+	        $('#indicatorTable').DataTable().clear().destroy();
+	    }
+	    $('#indicatorTable').empty();
+
+	    // tableName 포인터도 지표 테이블로 복귀
+	    tableName = document.getElementById('indicatorTable');
 	}
 	
 	let selected_Year = document.getElementById("year_Select").value;
@@ -3039,7 +3105,8 @@ function dataLoad(data, callback, settings) {
 		                    success: function(res) {
 		                        if (!res || !res.data) { _tmpPatvalErr = []; _mergeCathErrors(); return; }
 		                        // 기존 평가표 자체 오류 (D/E/F/G/H)
-		                        var cathErr = ['D1','D2','E1','F1','G1','G2','H1'];
+		                        // A4: 입원평가 + 당월 입원환자 아님 / A5: 입원평가 중복
+		                        var cathErr = ['A4','A5','D1','D2','E1','F1','G1','G2','H1'];
 		                        var errors = [];
 		                        for (var e = 0; e < res.data.length; e++) {
 		                            if (cathErr.includes(res.data[e].errType)) {

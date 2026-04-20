@@ -59,8 +59,8 @@
 								            <button data-action="FindView" data-value="accordion_item_B" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('10')">투석치료 청구현황</button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_5" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">특정기간【 폐렴,패혈증,격리실,중환자실 】</button>
-								        	<button data-action="FindView" data-value="accordion_item_6" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">특정기간 현황【 폐렴, 패혈증 】</button>
+								        	<button data-action="FindView" data-value="accordion_item_5" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">특정기간【 패렴,패혈증,격리실,중환자실 】</button>
+								        	<button data-action="FindView" data-value="accordion_item_6" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">특정기간 현황【 패렴, 패혈증 】</button>
 								            
 								        </div>
 								        <div class="col-lg-6">
