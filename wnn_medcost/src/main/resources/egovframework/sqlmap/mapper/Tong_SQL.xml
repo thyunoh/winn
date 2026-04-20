@@ -584,14 +584,18 @@
 			                           AND D.SUB_CODE  = A.CFORM_NO 
 			    LEFT JOIN WNN.TBL_HOSP_MST E ON E.HOSP_CD   = A.HOSP_CD 
 			                           AND E.ACTION_YN = 'Y' 	
-			    LEFT JOIN (SELECT FEE_CODE, MAX(START_DT) AS MAX_START_DT
-			        FROM WNN.TBL_SUGA_MST
-			        WHERE FEE_TYPE = '1'
-			          AND DIV_TYPE = '2'
-			        GROUP BY FEE_CODE
-		    ) SM 
-		      ON SM.FEE_CODE = C.EDI_CODE
-		     AND SM.MAX_START_DT <= CONCAT(A.DATE_YM, '01')
+			    /* ★ 수가코드 매칭 - 행별 A.DATE_YM+'01' 기준 최신 유효 버전(MAX)
+			       상관 서브쿼리: 외부 A.DATE_YM을 참조하여 매 행마다 다른 청구월 기준으로 계산 */
+			    LEFT JOIN WNN.TBL_SUGA_MST SM
+			      ON  SM.FEE_CODE = C.EDI_CODE
+			     AND  SM.FEE_TYPE = '1'
+			     AND  SM.DIV_TYPE = '2'
+			     AND  SM.START_DT = (SELECT MAX(SM2.START_DT)
+			                           FROM WNN.TBL_SUGA_MST SM2
+			                          WHERE SM2.FEE_CODE = SM.FEE_CODE
+			                            AND SM2.FEE_TYPE = '1'
+			                            AND SM2.DIV_TYPE = '2'
+			                            AND SM2.START_DT <= CONCAT(A.DATE_YM, '01'))
 		    WHERE A.HOSP_CD       = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND IFNULL(C.AMOUNT,0) > 0
@@ -1477,14 +1481,18 @@
 			                             AND D.SUB_CODE  = A.CFORM_NO 
 			    LEFT JOIN WNN.TBL_HOSP_MST E ON E.HOSP_CD   = A.HOSP_CD 
 			                             AND E.ACTION_YN = 'Y' 			   	
-			    LEFT JOIN (SELECT FEE_CODE, MAX(START_DT) AS MAX_START_DT
-			        FROM WNN.TBL_SUGA_MST
-			        WHERE FEE_TYPE = '1'
-			          AND DIV_TYPE = '2'
-			        GROUP BY FEE_CODE
-		    ) SM 
-		      ON SM.FEE_CODE = C.EDI_CODE
-		     AND SM.MAX_START_DT <= CONCAT(A.DATE_YM, '01')
+			    /* ★ 수가코드 매칭 - 행별 A.DATE_YM+'01' 기준 최신 유효 버전(MAX)
+			       상관 서브쿼리: 외부 A.DATE_YM을 참조하여 매 행마다 다른 청구월 기준으로 계산 */
+			    LEFT JOIN WNN.TBL_SUGA_MST SM
+			      ON  SM.FEE_CODE = C.EDI_CODE
+			     AND  SM.FEE_TYPE = '1'
+			     AND  SM.DIV_TYPE = '2'
+			     AND  SM.START_DT = (SELECT MAX(SM2.START_DT)
+			                           FROM WNN.TBL_SUGA_MST SM2
+			                          WHERE SM2.FEE_CODE = SM.FEE_CODE
+			                            AND SM2.FEE_TYPE = '1'
+			                            AND SM2.DIV_TYPE = '2'
+			                            AND SM2.START_DT <= CONCAT(A.DATE_YM, '01'))
 		    WHERE A.HOSP_CD       = #{hospCd}
 		      AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
 		      AND IFNULL(C.AMOUNT,0) > 0
