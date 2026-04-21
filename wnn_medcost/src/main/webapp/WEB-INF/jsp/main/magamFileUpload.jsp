@@ -2714,13 +2714,16 @@ function updateMonthsContainer(rawData) {
             }
         }
 
-        if (item.spcsugayn === "Y") {
-            buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가현황</button>';
-        } else {
-            if (item.magamyn === "Y") {
-                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가</button>';
+        // 수가 업로드 버튼은 위너넷(winner === 'Y') 사용자에게만 노출
+        if (winner === 'Y') {
+            if (item.spcsugayn === "Y") {
+                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가현황</button>';
             } else {
-                buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가없음</button>';
+                if (item.magamyn === "Y") {
+                    buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가</button>';
+                } else {
+                    buttonHTML += '<button data-action="spcsugaLoad" data-mgmonth="' + item.mgmonth + '" id="spc_' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">수가없음</button>';
+                }
             }
         }
 
