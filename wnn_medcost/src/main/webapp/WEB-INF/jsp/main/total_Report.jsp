@@ -95,27 +95,21 @@
 	                                                    #subTable09Wrapper .dataTables_info {
 	                                                        display: none !important;
 	                                                    }
+	                                                    #tableName09Sub { table-layout: fixed; }
+	                                                    #tableName09Sub td.ediName-cell,
+	                                                    #tableName09Sub th:nth-child(2) {
+	                                                        white-space: nowrap;
+	                                                        overflow: hidden;
+	                                                        text-overflow: ellipsis;
+	                                                        max-width: 180px;
+	                                                        width: 180px;
+	                                                    }
 	                                                </style>
 	                                                <div id="subTable09Wrapper" style="display:none; margin-top:10px;">
 	                                                    <h4 class="ml-1 mb-1" style="font-weight:bold;">수가코드별 현황</h4>
-	                                                    <div style="display:flex; gap:10px;">
-	                                                        <div style="flex:1; min-width:0;">
-	                                                            <table id="tableName09SubL" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
-	                                                        </div>
-	                                                        <div style="flex:1; min-width:0;">
-	                                                            <table id="tableName09SubR" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
-	                                                        </div>
-	                                                    </div>
+	                                                    <table id="tableName09Sub" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
 	                                                    <div id="subTable09TotalInfo" style="text-align:center; padding:5px 0; font-size:13px;"></div>
 	                                                </div>
-								                    <div class="form-row">
-									                    <div class="col-xl-12 col-lg-12 text-left mb-1">
-								                  	        <div class="form-group">
-								                                <label for="textarea1"></label>
-								                                <textarea id="textarea1" name="textarea1" type="text"  data-parsley-trigger="change" placeholder="" autocomplete="off" class="form-control" rows="4"  readonly></textarea>
-								                            </div>    
-								                        </div>
-								                    </div>   
 	                                            </div>
 	                                        </div>
 	                                    </div>
@@ -4934,42 +4928,40 @@ function dataLoad(data, callback, settings) {
 
 }
 
-// 수가코드별 현황 서브 DataTable (좌/우 양분)
-var subTable09L = null;
-var subTable09R = null;
+// 수가코드별 현황 서브 DataTable (단일 그리드)
+var subTable09 = null;
 
 function fn_SubTable09(subData) {
 	// 기존 테이블 정리
-	['#tableName09SubL', '#tableName09SubR'].forEach(function(id) {
-		if ($.fn.DataTable.isDataTable(id)) {
-			$(id).DataTable().clear().destroy();
-			$(id).empty();
-		}
-	});
+	if ($.fn.DataTable.isDataTable('#tableName09Sub')) {
+		$('#tableName09Sub').DataTable().clear().destroy();
+		$('#tableName09Sub').empty();
+	}
 
 	$('#subTable09Wrapper').show();
 
-	// 데이터 양분 (금액 내림차순 정렬 후 반으로 나눔)
-	subData.sort(function(a, b) {
-		return Number(b.calcAmt) - Number(a.calcAmt);
-	});
-	var half = Math.ceil(subData.length / 2);
-	var leftData  = subData.slice(0, half);
-	var rightData = subData.slice(half);
+	var thead = '<thead><tr><th>수가코드</th><th>수가명</th><th>인원(코드별)</th><th>금액</th></tr></thead>';
+	$('#tableName09Sub').append(thead);
 
-	var thead = '<thead><tr><th>수가코드</th><th>인원(코드별)</th><th>금액</th></tr></thead>';
-	$('#tableName09SubL').append(thead);
-	$('#tableName09SubR').append(thead);
-
-	var dtOptions = {
+	subTable09 = $('#tableName09Sub').DataTable({
+		data: subData,
 		language: {
 			emptyTable: "데이터가 없습니다.",
 			info: "총 _TOTAL_건",
 			infoEmpty: "데이터 없음",
 		},
 		columns: [
-			{ data: 'ediCode', className: 'dt-body-center' },
-			{ data: 'jinDays', className: 'dt-body-right',
+			{ data: 'ediCode', className: 'dt-body-center', width: '90px' },
+			{ data: 'ediName', className: 'dt-body-left ediName-cell',
+				render: function(data, type, row) {
+					var v = (data == null ? '' : String(data));
+					if (type === 'display') {
+						return '<span title="' + v.replace(/"/g,'&quot;') + '">' + v + '</span>';
+					}
+					return v;
+				}
+			},
+			{ data: 'jinDays', className: 'dt-body-right', width: '90px',
 				render: function(data, type, row) {
 					if (type === 'display') {
 						return getFormat(data, 'n1');
@@ -4977,7 +4969,7 @@ function fn_SubTable09(subData) {
 					return data;
 				}
 			},
-			{ data: 'calcAmt', className: 'dt-body-right',
+			{ data: 'calcAmt', className: 'dt-body-right', width: '110px',
 				render: function(data, type, row) {
 					if (type === 'display') {
 						return getFormat(data, 'n1') + '원';
@@ -4989,23 +4981,12 @@ function fn_SubTable09(subData) {
 		paging: false,
 		searching: false,
 		ordering: true,
-		info: true,
-		order: [[2, 'desc']],
-		autoWidth: true
-	};
+		info: false,
+		order: [[3, 'desc']],
+		autoWidth: false
+	});
 
-	var totalCount = subData.length;
-	subTable09L = $('#tableName09SubL').DataTable($.extend(true, {}, dtOptions, {
-		data: leftData,
-		info: false
-	}));
-	subTable09R = $('#tableName09SubR').DataTable($.extend(true, {}, dtOptions, {
-		data: rightData,
-		info: false
-	}));
-
-	// 합산 건수를 좌우 테이블 아래 가운데에 표시
-	$('#subTable09TotalInfo').text('총 ' + totalCount + '건');
+	$('#subTable09TotalInfo').text('총 ' + subData.length + '건');
 }
 
 </script>
