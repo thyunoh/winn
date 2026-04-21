@@ -3036,9 +3036,19 @@ function dataLoad(data, callback, settings) {
 	        dataType: "json",
 	        // timeout: 10000, // 10초 후 타임아웃
 	        beforeSend : function () {
-	        	
+	        	if (jobFlag === '07') {
+	        		Swal.fire({
+	        			title: '<span style="font-size:17px;"><i class="fas fa-hourglass-half" style="color:#6c7bff; margin-right:8px;"></i>조회 중입니다</span>',
+	        			html: '<div style="font-size:14px; color:#555;">향정신성의약품 처방은 데이터량에 따라<br>조회 속도가 다소 늦을 수 있습니다.<br><br>잠시만 기다려 주세요...</div>',
+	        			allowOutsideClick: false,
+	        			allowEscapeKey: false,
+	        			showConfirmButton: false,
+	        			didOpen: function() { Swal.showLoading(); }
+	        		});
+	        	}
 			},
 	        success: function(response) {
+	        	if (jobFlag === '07') { Swal.close(); }
 	        	//table.processing(false); // 처리 중 상태 종료
 	            if (response && Object.keys(response).length > 0) {
 	            	
@@ -3286,7 +3296,8 @@ function dataLoad(data, callback, settings) {
 	            }
 	        },
 	        error: function(jqXHR, textStatus, errorThrown) {
-	        	//table.processing(false); // 처리 중 상태 종료		                    
+	        	if (jobFlag === '07') { Swal.close(); }
+	        	//table.processing(false); // 처리 중 상태 종료
 	            callback({
 	                data: []
 	            });
