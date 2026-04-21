@@ -507,6 +507,12 @@ function fn_UpdateCath05Buttons() {
         var er2 = _errCheckData[j];
         if (!er2 || !er2.patId) continue;
 
+        // ★ [제외3] 평가구분 1·입원평가는 A1/A2만 오류로 카운트
+        if (String(er2.evalType || '') === '1') {
+            var _et2 = String(er2.errType || '');
+            if (_et2 !== 'A1' && _et2 !== 'A2') continue;
+        }
+
         // ★ [제외2] 평가구분 2·계속입원 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
         if (String(er2.evalType || '') === '2') {
             var prevCath2 = (er2.prevIndwellCath === undefined) ? null : String(er2.prevIndwellCath || '');
@@ -569,6 +575,16 @@ function fn_ShowCath05Modal() {
 
     for (var j = 0; j < _errCheckData.length; j++) {
         var er = _errCheckData[j];
+
+        // ★ [제외3] 평가구분 1·입원평가는 A1/A2만 오류로 잡음
+        //    (요청: 2026-04 — "당월 입원환자 아닌데 입원평가" / "당월 이미 입원평가 있는데 또 입원평가"만 오류)
+        //    H1/D1~D5/E1/F1/G1/G2 등 기존 오류는 1·입원평가 대상자에서는 제외
+        if (String(er.evalType || '') === '1') {
+            var _et1 = String(er.errType || '');
+            if (_et1 !== 'A1' && _et1 !== 'A2') {
+                continue;
+            }
+        }
 
         // ★ [제외2] 평가구분 2·계속입원중 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
         //    서버 필드 관례: prevIndwellCath 가 제공되면 '0' 또는 빈값 = 제거됨
@@ -3043,7 +3059,13 @@ function dataLoad(data, callback, settings) {
 	        			allowOutsideClick: false,
 	        			allowEscapeKey: false,
 	        			showConfirmButton: false,
-	        			didOpen: function() { Swal.showLoading(); }
+	        			showCancelButton: false,
+	        			didOpen: function() {
+	        				Swal.showLoading();
+	        				var _ac = Swal.getActions();     if (_ac) _ac.style.display = 'none';
+	        				var _ok = Swal.getConfirmButton(); if (_ok) _ok.style.display = 'none';
+	        				var _cc = Swal.getCancelButton();  if (_cc) _cc.style.display = 'none';
+	        			}
 	        		});
 	        	}
 			},
