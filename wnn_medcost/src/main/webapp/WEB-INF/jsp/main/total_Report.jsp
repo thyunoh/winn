@@ -96,19 +96,51 @@
 	                                                        display: none !important;
 	                                                    }
 	                                                    #tableName09Sub { table-layout: fixed; }
+	                                                    #subTable09Wrapper table.dataTable { table-layout: fixed !important; }
 	                                                    #tableName09Sub td.ediName-cell,
-	                                                    #tableName09Sub th:nth-child(2) {
+	                                                    #tableName09Sub th:nth-child(2),
+	                                                    #subTable09Wrapper .dataTables_scrollHead th:nth-child(2) {
+	                                                        white-space: nowrap !important;
+	                                                        overflow: hidden !important;
+	                                                        text-overflow: ellipsis !important;
+	                                                        max-width: 180px !important;
+	                                                        width: 180px !important;
+	                                                    }
+	                                                    #tableName09Sub td.ediName-cell > span {
+	                                                        display: block;
+	                                                        max-width: 100%;
 	                                                        white-space: nowrap;
 	                                                        overflow: hidden;
 	                                                        text-overflow: ellipsis;
-	                                                        max-width: 180px;
-	                                                        width: 180px;
 	                                                    }
+	                                                    #tableName09Sub th,
+	                                                    #tableName09Sub td {
+	                                                        padding-top: 4px !important;
+	                                                        padding-bottom: 4px !important;
+	                                                        line-height: 1.35 !important;
+	                                                    }
+	                                                    /* sticky 헤더 보정 — 배경은 JS에서 원본 헤더 색상을 복사해 주입 */
+	                                                    #subTable09Wrapper .subTable09-scroll { position: relative; }
+	                                                    #subTable09Wrapper .subTable09-scroll #tableName09Sub thead th {
+	                                                        position: -webkit-sticky !important;
+	                                                        position: sticky !important;
+	                                                        top: 0 !important;
+	                                                        z-index: 2 !important;
+	                                                        box-shadow: 0 1px 0 #ddd;
+	                                                    }
+	                                                    #subTable09Wrapper .dataTables_scrollHead table { margin-bottom: 0 !important; }
+	                                                    #subTable09Wrapper .dataTables_scrollHeadInner,
+	                                                    #subTable09Wrapper .dataTables_scrollHeadInner table { box-sizing: border-box; }
+	                                                    /* 스크롤 모드에서 컬럼 폭 고정 유지 */
+	                                                    #subTable09Wrapper .dataTables_scrollBody #tableName09Sub,
+	                                                    #subTable09Wrapper .dataTables_scrollHead #tableName09Sub { table-layout: fixed !important; }
 	                                                </style>
 	                                                <div id="subTable09Wrapper" style="display:none; margin-top:10px;">
-	                                                    <h4 class="ml-1 mb-1" style="font-weight:bold;">수가코드별 현황</h4>
+	                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+	                                                        <h4 class="ml-1 mb-0" style="font-weight:bold;">수가코드별 현황</h4>
+	                                                        <div id="subTable09TotalInfo" style="margin-right:8px; font-size:13px; font-weight:bold;"></div>
+	                                                    </div>
 	                                                    <table id="tableName09Sub" class="display nowrap stripe hover cell-border order-column responsive mb-1" style="width:100%;"></table>
-	                                                    <div id="subTable09TotalInfo" style="text-align:center; padding:5px 0; font-size:13px;"></div>
 	                                                </div>
 	                                            </div>
 	                                        </div>
@@ -4953,11 +4985,13 @@ function fn_SubTable09(subData) {
 		},
 		columns: [
 			{ data: 'ediCode', className: 'dt-body-center', width: '90px' },
-			{ data: 'ediName', className: 'dt-body-left ediName-cell',
+			{ data: 'ediName', className: 'dt-body-left ediName-cell', width: '180px',
 				render: function(data, type, row) {
 					var v = (data == null ? '' : String(data));
 					if (type === 'display') {
-						return '<span title="' + v.replace(/"/g,'&quot;') + '">' + v + '</span>';
+						var esc = v.replace(/"/g,'&quot;');
+						var short = v.length > 22 ? v.substring(0, 22) + '…' : v;
+						return '<span title="' + esc + '">' + short + '</span>';
 					}
 					return v;
 				}
@@ -4986,6 +5020,38 @@ function fn_SubTable09(subData) {
 		order: [[3, 'desc']],
 		autoWidth: false
 	});
+
+	// 10건 초과 시 래퍼 div에 max-height + overflow 부여 (DT scrollY 미사용 → thead 복제 오버랩 원천 차단)
+	setTimeout(function () {
+		var $wrap = $('#subTable09Wrapper');
+		// 기존 커스텀 스크롤 래퍼 제거 후 재적용
+		$wrap.find('.subTable09-scroll').each(function () {
+			var $inner = $(this);
+			$inner.before($inner.children());
+			$inner.remove();
+		});
+		if (subData && subData.length > 10) {
+			var $tbl = $wrap.find('#tableName09Sub');
+			// 원본 헤더 배경색을 먼저 계산 (sticky 적용 전)
+			var origBg = '';
+			var $origTh = $tbl.find('thead th').first();
+			if ($origTh.length) {
+				var bg = $origTh.css('background-color');
+				if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+					origBg = bg;
+				} else {
+					var bg2 = $origTh.parent().css('background-color');
+					if (bg2 && bg2 !== 'rgba(0, 0, 0, 0)' && bg2 !== 'transparent') origBg = bg2;
+				}
+			}
+			if (!origBg) origBg = '#e9ecef';
+			// 테이블만 감싸는 스크롤 컨테이너 생성
+			var $scroll = $('<div class="subTable09-scroll" style="max-height:300px; overflow-y:auto; border-top:1px solid #ddd;"></div>');
+			$tbl.wrap($scroll);
+			// 헤더 고정 + 원본 배경색 유지
+			$tbl.find('thead th').css({ position: 'sticky', top: '0', 'background-color': origBg, zIndex: 2 });
+		}
+	}, 0);
 
 	$('#subTable09TotalInfo').text('총 ' + subData.length + '건');
 }

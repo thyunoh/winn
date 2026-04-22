@@ -276,14 +276,16 @@
 							<img src="/wnn_consult/images/winct/image3.svg" style="width: 100%; height: 100%; object-fit: cover;">
 						</div>
 					</div>
-					<div class="carousel-item" style="height: 540px; overflow: hidden;">
+					<!--  2025년 2주기 7차   -->
+<!-- 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
-						<!--  	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank"> -->
+						 	<a href="https://winner797.net/detail.php?number=308&category=1023" target="_blank">
 						  	    <a href="https://winner797.kr/lecture/?seq=1024&sort01=&page=1" target="_blank"> 
 								<img src="/wnn_consult/images/winct/image5.svg" style="width: 100%; height: 100%; object-fit: cover;">
 							</a>
 						</div>
 					</div>
+-->
 			
 					<!-- 왼쪽 화살표 버튼 -->
 					<button class="custom-arrow left-arrow" type="button" data-bs-target="#header-carousel" data-bs-slide="prev">
