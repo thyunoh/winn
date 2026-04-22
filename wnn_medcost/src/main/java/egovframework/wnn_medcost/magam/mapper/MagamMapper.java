@@ -78,6 +78,8 @@ public interface MagamMapper {
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto);
 	List<PatvalDTO>  select_PrevMonthMissing05(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList07(PatvalDTO dto);
+	List<PatvalDTO>  select_DiagRank07(PatvalDTO dto);
+	List<PatvalDTO>  select_DiagNames(java.util.Map<String, Object> param);
 	List<PatvalDTO>  select_CategoryList09(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList10(PatvalDTO dto);
 	List<PatvalDTO>  select_CategoryList11(PatvalDTO dto);

@@ -101,6 +101,15 @@
 							            </button>
 							        </div>
 
+							        <!-- 다빈도 상병순위별 (jobFlag=07 항정신성의약품 처방률 전용) -->
+							        <div id="diagRank07BtnZone" style="display:none; white-space:nowrap;">
+							            <button type="button" id="btnDiagRank07" class="cath05-btn"
+							                    onclick="fn_ShowDiagRank07Modal()">
+							                <i class="fas fa-notes-medical cath05-icon"></i>
+							                <span class="cath05-label">다빈도&nbsp;상병순위별조회</span>
+							            </button>
+							        </div>
+
 							        <!-- 환자평가표 조회 버튼 템플릿 (viewTable 렌더 후 .dt-buttons 영역으로 이동) -->
 							        <button type="button" id="btnPatvalView" class="patval-btn"
 							                onclick="fn_ShowPatvalModal()"
@@ -1029,6 +1038,315 @@ function _doCath05ExcelWrite() {
 
     // cellStyles 옵션 활성화 — xlsx-js-style 사용 시 스타일 반영
     XLSX.writeFile(wb, fname, { cellStyles: true });
+}
+
+// ================================================================
+// 다빈도 상병순위별 (jobFlag=07 항정신성의약품 처방률 전용)
+// - 항정신성 처방 대상자(psyOrderYn='●')의 주진단을 집계
+// - 헤더: 순번 / 진단코드 / 진단명 / 진단건수
+// - 엑셀저장: 진단코드 / 진단명 / 진단건수
+// ================================================================
+var _diagRank07Data = [];
+
+function fn_ShowDiagRank07Modal() {
+    /* 전용 CSS (한 번만 주입) */
+    if (!document.getElementById('diagRank07ModalStyle')) {
+        var st = document.createElement('style');
+        st.id = 'diagRank07ModalStyle';
+        st.innerHTML =
+            /* 모달 폭 제한 + 내부 스크롤 */
+            '.swal2-popup.diag07-popup { max-width:720px !important; width:720px !important; }' +
+            '.diag07-scroll-wrap { max-height:60vh; overflow-y:auto; overflow-x:auto; border:1px solid #e0e4ea; border-radius:4px; }' +
+            '.diag07-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }' +
+            '.diag07-table thead th { position:sticky; top:0; z-index:1; background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:10px 8px; border-right:1px solid rgba(255,255,255,0.15); letter-spacing:0.2px; }' +
+            '.diag07-table thead th:last-child { border-right:none; }' +
+            '.diag07-table tbody td { padding:7px 8px; border-bottom:1px solid #eef1f5; vertical-align:middle; }' +
+            '.diag07-table tbody tr:nth-child(even) { background:#fafbfc; }' +
+            '.diag07-table tbody tr:hover { background:#f0f7ff; }' +
+            '.diag07-rowno { color:#8891a3; font-weight:500; text-align:center; }' +
+            '.diag07-code  { font-family:Consolas,monospace; color:#1e3c72; font-weight:600; text-align:center; }' +
+            '.diag07-name  { color:#2c3e50; text-align:left; }' +
+            '.diag07-cnt   { color:#c0392b; font-weight:700; text-align:right; font-family:Consolas,monospace; }' +
+            /* 정렬 가능 헤더 — 인디케이터 고정폭 + 공백 Reserve (문자 변경 시 너비 변동 방지) */
+            '.diag07-table thead th.sortable { cursor:pointer; user-select:none; position:sticky; top:0; white-space:nowrap; }' +
+            '.diag07-table thead th.sortable:hover { background:linear-gradient(135deg,#3565b3,#264a8e); }' +
+            '.diag07-table thead th .sort-ind {' +
+            '  display:inline-block; width:12px; margin-left:6px; font-size:11px;' +
+            '  line-height:1; text-align:center; vertical-align:middle; color:#fff;' +
+            '  font-family:Arial,sans-serif;' +   /* 플랫폼 독립 기호 렌더 */
+            '}' +
+            '.diag07-table thead th .sort-ind-off { opacity:0.50; }' +
+            '.diag07-table thead th .sort-ind-on  { opacity:1; }' +
+            '.swal2-popup.diag07-popup .swal2-title {' +
+            '  cursor:move; user-select:none;' +
+            '  font-size:1.35em !important;' +   /* 한 단계 작게 (기본 ≈1.875em → 약 1.35em) */
+            '  line-height:1.35 !important;' +
+            '}' +
+            '.swal2-popup.diag07-popup .swal2-cancel { display:none !important; }' +
+            /* 인라인 엑셀저장 버튼 */
+            '.diag07-inline-excel-btn {' +
+            '  display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:none;' +
+            '  border-radius:4px; font-size:13px; font-weight:600; letter-spacing:0.2px; color:#fff;' +
+            '  background:linear-gradient(135deg,#28a745 0%,#20c997 100%);' +
+            '  box-shadow:0 2px 6px rgba(40,167,69,0.25), inset 0 1px 0 rgba(255,255,255,0.25);' +
+            '  cursor:pointer; transition:all .15s ease;' +
+            '}' +
+            '.diag07-inline-excel-btn:hover { transform:translateY(-1px); box-shadow:0 4px 10px rgba(40,167,69,0.35); }';
+        document.head.appendChild(st);
+    }
+
+    /* (1) 그리드(viewTable)에 이미 뿌려진 데이터 사용 — DB 재조회 없음 */
+    var rows = [];
+    try {
+        rows = $('#viewTable').DataTable().rows().data().toArray();
+    } catch(e) { rows = []; }
+
+    if (!rows || rows.length === 0) {
+        Swal.fire({ icon:'info', title:'알림', text:'그리드에 표시된 데이터가 없습니다.', timer:1500, showConfirmButton:false });
+        return;
+    }
+
+    /* (2) 항정신성 처방(psyOrderYn='●') 행만 골라 주진단(mainDiagCd)별 환자수 집계 */
+    var diagMap = {};   // { diagCode : { patKey : true, ... } }
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i] || {};
+        if (r.psyOrderYn !== '●') continue;
+        var code = (r.mainDiagCd || '').toString().trim();
+        if (!code) continue;
+        var key = (r.patId || r.chartNo || '') + '|' + (r.admitDt || '');
+        if (!diagMap[code]) diagMap[code] = {};
+        diagMap[code][key] = true;
+    }
+
+    var codes = Object.keys(diagMap);
+    if (codes.length === 0) {
+        _diagRank07Data = [];
+        _renderDiagRank07Modal([]);
+        /* 뱃지 제거됨 */
+        return;
+    }
+
+    /* (3) 진단코드 리스트만 서버에 보내 진단명 매칭 (가벼운 조회, 로딩 메시지 없음) */
+    $.ajax({
+        url: '/main/select_DiagNames.do',
+        type: 'POST',
+        data: { diagCodes: codes.join(',') },
+        dataType: 'json',
+        success: function(res) {
+            var nameMap = {};
+            var arr = (res && res.data) ? res.data : [];
+            for (var k = 0; k < arr.length; k++) {
+                nameMap[arr[k].diagCode] = arr[k].diagName || '';
+            }
+            _buildDiag07ListAndRender(codes, diagMap, nameMap);
+        },
+        error: function() {
+            /* 진단명 조회 실패해도 코드/건수만으로 표시 */
+            _buildDiag07ListAndRender(codes, diagMap, {});
+        }
+    });
+}
+
+function _buildDiag07ListAndRender(codes, diagMap, nameMap) {
+    var list = [];
+    for (var i = 0; i < codes.length; i++) {
+        var c = codes[i];
+        list.push({
+            diagCode: c,
+            diagName: nameMap[c] || '',
+            diagCnt:  String(Object.keys(diagMap[c]).length)
+        });
+    }
+    list.sort(function(a, b) {
+        var ca = parseInt(a.diagCnt, 10) || 0;
+        var cb = parseInt(b.diagCnt, 10) || 0;
+        if (cb !== ca) return cb - ca;
+        return (a.diagCode || '').localeCompare(b.diagCode || '');
+    });
+    _diagRank07Data = list;
+    _renderDiagRank07Modal(list);
+    /* 버튼 뱃지 제거됨 — 건수 표시 안 함 */
+}
+
+/* 정렬 상태 — 진단건수 DESC 기본 */
+var _diag07SortKey = 'diagCnt';    // 'diagCode' | 'diagCnt'
+var _diag07SortDir = 'desc';       // 'asc' | 'desc'
+
+function _sortDiag07(list) {
+    var key = _diag07SortKey, dir = _diag07SortDir;
+    var sign = (dir === 'asc') ? 1 : -1;
+    list.sort(function(a, b) {
+        var va, vb;
+        if (key === 'diagCnt') {
+            va = parseInt(a.diagCnt, 10) || 0;
+            vb = parseInt(b.diagCnt, 10) || 0;
+            if (va !== vb) return (va - vb) * sign;
+            /* 동률일 때 진단코드 ASC 고정 */
+            return (a.diagCode || '').localeCompare(b.diagCode || '');
+        } else {
+            va = (a.diagCode || '');
+            vb = (b.diagCode || '');
+            var cmp = va.localeCompare(vb);
+            if (cmp !== 0) return cmp * sign;
+            var ca = parseInt(a.diagCnt, 10) || 0;
+            var cb = parseInt(b.diagCnt, 10) || 0;
+            return cb - ca;
+        }
+    });
+    return list;
+}
+
+function _diag07TbodyHtml(list) {
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var r = list[i] || {};
+        var code = (r.diagCode || '').toString();
+        var name = (r.diagName || '').toString();
+        var cnt  = (r.diagCnt  || '0').toString();
+        html += '<tr>' +
+                '<td class="diag07-rowno">' + (i+1) + '</td>' +
+                '<td class="diag07-code">' + code + '</td>' +
+                '<td class="diag07-name">' + name + '</td>' +
+                '<td class="diag07-cnt">' + cnt + '</td>' +
+                '</tr>';
+    }
+    return html;
+}
+
+function _diag07SortInd(col) {
+    /* 인디케이터 — 3상태, 모든 상태에 문자 표시 (같은 폭 유지):
+       - 비활성 : ↕ (희미한 중립, 정렬 가능함을 암시)
+       - ASC    : ▲ (진한색)
+       - DESC   : ▼ (진한색)
+       모두 BMP 도형문자 — 플랫폼 독립 안정 렌더 */
+    if (_diag07SortKey !== col) {
+        return '<span class="sort-ind sort-ind-off">&#8597;</span>';
+    }
+    return (_diag07SortDir === 'asc')
+        ? '<span class="sort-ind sort-ind-on">&#9650;</span>'
+        : '<span class="sort-ind sort-ind-on">&#9660;</span>';
+}
+
+function _renderDiagRank07Modal(list) {
+    var total = (list || []).length;
+    var html;
+    if (total === 0) {
+        html = '<div style="padding:30px; text-align:center; color:#6c757d; font-size:14px;">' +
+               '<i class="fa fa-info-circle" style="font-size:32px; color:#95a5a6; margin-bottom:12px;"></i>' +
+               '<div>해당 월에 항정신성 처방 대상자의 진단 집계 결과가 없습니다.</div></div>';
+    } else {
+        /* 현재 정렬 상태 반영 */
+        _sortDiag07(list);
+
+        html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">' +
+                  '<span style="font-weight:600; color:#1e3c72;">총 <b style="color:#c0392b;">' + total + '</b> 건</span>' +
+                  '<button type="button" class="diag07-inline-excel-btn" id="btnDiag07ExcelInline">' +
+                      '<i class="fa fa-file-excel"></i>엑셀 저장' +
+                  '</button>' +
+               '</div>';
+        html += '<div class="diag07-scroll-wrap"><table class="diag07-table" id="diag07Table"><thead><tr>' +
+                '<th style="width:50px;">순번</th>' +
+                '<th class="sortable" data-sort="diagCode" style="width:110px;">진단코드' + _diag07SortInd('diagCode') + '</th>' +
+                '<th style="text-align:left;">진단명</th>' +
+                '<th class="sortable" data-sort="diagCnt" style="width:110px;">진단건수' + _diag07SortInd('diagCnt') + '</th>' +
+                '</tr></thead><tbody id="diag07Tbody">';
+        html += _diag07TbodyHtml(list);
+        html += '</tbody></table></div>';
+    }
+
+    Swal.fire({
+        title: '다빈도 상병순위별 (항정신성 처방 대상자)',
+        html: html,
+        width: 720,
+        showCancelButton: false,
+        confirmButtonText: '확인',
+        customClass: { popup: 'diag07-popup' },
+        didOpen: function() {
+            /* 드래그 이동 */
+            _diag07EnableDrag();
+            /* 엑셀 버튼 바인딩 */
+            var _bx = document.getElementById('btnDiag07ExcelInline');
+            if (_bx) _bx.onclick = function() { fn_ExportDiagRank07Excel(); };
+
+            /* 정렬 가능한 th 클릭 핸들러 */
+            var ths = document.querySelectorAll('#diag07Table thead th.sortable');
+            for (var t = 0; t < ths.length; t++) {
+                ths[t].addEventListener('click', function() {
+                    var key = this.getAttribute('data-sort');
+                    if (_diag07SortKey === key) {
+                        _diag07SortDir = (_diag07SortDir === 'asc') ? 'desc' : 'asc';
+                    } else {
+                        _diag07SortKey = key;
+                        /* 진단건수: 기본 DESC, 진단코드: 기본 ASC */
+                        _diag07SortDir = (key === 'diagCnt') ? 'desc' : 'asc';
+                    }
+                    _sortDiag07(_diagRank07Data);
+                    /* 헤더 인디케이터 갱신 */
+                    var hdCode = document.querySelector('#diag07Table thead th[data-sort="diagCode"]');
+                    var hdCnt  = document.querySelector('#diag07Table thead th[data-sort="diagCnt"]');
+                    if (hdCode) hdCode.innerHTML = '진단코드' + _diag07SortInd('diagCode');
+                    if (hdCnt)  hdCnt.innerHTML  = '진단건수' + _diag07SortInd('diagCnt');
+                    /* tbody 재렌더 */
+                    var tb = document.getElementById('diag07Tbody');
+                    if (tb) tb.innerHTML = _diag07TbodyHtml(_diagRank07Data);
+                });
+            }
+        }
+    });
+}
+
+function _diag07EnableDrag() {
+    var popup = document.querySelector('.swal2-popup.diag07-popup');
+    var title = popup ? popup.querySelector('.swal2-title') : null;
+    if (!popup || !title) return;
+    var dx = 0, dy = 0, sx = 0, sy = 0, dragging = false;
+    title.addEventListener('mousedown', function(e) {
+        dragging = true;
+        sx = e.clientX; sy = e.clientY;
+        var rc = popup.getBoundingClientRect();
+        dx = rc.left - sx; dy = rc.top - sy;
+        popup.style.position = 'fixed';
+        popup.style.margin = '0';
+        document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        popup.style.left = (e.clientX + dx) + 'px';
+        popup.style.top  = (e.clientY + dy) + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        dragging = false;
+        document.body.style.userSelect = '';
+    });
+}
+
+// 다빈도 상병순위 엑셀 저장 (진단코드 / 진단명 / 진단건수)
+function fn_ExportDiagRank07Excel() {
+    if (!_diagRank07Data || _diagRank07Data.length === 0) {
+        Swal.fire({ icon:'info', title:'알림', text:'저장할 데이터가 없습니다.', timer:1500, showConfirmButton:false });
+        return;
+    }
+    if (typeof XLSX === 'undefined') {
+        Swal.fire({ icon:'error', title:'오류', text:'XLSX 라이브러리가 로드되지 않았습니다.' });
+        return;
+    }
+
+    var rows = _diagRank07Data.map(function(r) {
+        return {
+            '진단코드': (r.diagCode || ''),
+            '진단명':   (r.diagName || ''),
+            '진단건수': Number(r.diagCnt || 0)
+        };
+    });
+
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [ {wch:14}, {wch:56}, {wch:12} ];
+    XLSX.utils.book_append_sheet(wb, ws, '다빈도상병순위');
+
+    var ym = (document.getElementById('year_Select').value || '') + (document.getElementById('monthSelect').value || '');
+    var fname = '다빈도상병순위_항정신성_' + ym + '.xlsx';
+    XLSX.writeFile(wb, fname);
 }
 
 // 낮을수록 좋은 지표 (5점 구간이 0부터 시작)
@@ -3514,6 +3832,37 @@ function fn_AttachPatvalBtnToDt() {
         cathZone.style.display = 'none';
     }
     if (typeof fn_UpdateCath05Buttons === 'function') fn_UpdateCath05Buttons();
+
+    /* (3) 다빈도 상병순위별 버튼 — 07 카테고리에서만 자료검색(.dataTables_filter) 뒤쪽(우측 끝)으로 부착
+           (향후 환자평가표 조회 버튼도 같은 우측 영역에 부착 예정) */
+    var diagZone = document.getElementById('diagRank07BtnZone');
+    if (!diagZone) {
+        diagZone = document.createElement('div');
+        diagZone.id = 'diagRank07BtnZone';
+        diagZone.style.whiteSpace = 'nowrap';
+        diagZone.style.display = 'inline-block';
+        diagZone.innerHTML =
+            '<button type="button" id="btnDiagRank07" class="cath05-btn">' +
+                '<i class="fas fa-notes-medical cath05-icon"></i>' +
+                '<span class="cath05-label">다빈도&nbsp;상병순위별</span>' +
+            '</button>';
+        var _dBtn = diagZone.querySelector('#btnDiagRank07');
+        if (_dBtn) _dBtn.onclick = function() { fn_ShowDiagRank07Modal(); };
+    }
+    if (jobFlag === '07') {
+        /* .dataTables_filter 의 형제(sibling)로 바로 뒤에 붙여 자료검색 입력 우측 끝에 표시 */
+        var $filter = $('#viewTable_wrapper .dataTables_filter');
+        if ($filter.length > 0) {
+            $filter.after(diagZone);
+        } else if ($dtBtns.length > 0) {
+            $dtBtns.append(diagZone);
+        }
+        diagZone.style.cssText =
+            'display:inline-block; white-space:nowrap;' +
+            ' float:right; margin-left:10px; vertical-align:middle;';
+    } else {
+        diagZone.style.display = 'none';
+    }
 }
 
 // 현재 viewTable에서 선택된 행 데이터 반환 (edit_Data가 비어도 .selected 행에서 복구)

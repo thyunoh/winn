@@ -1258,10 +1258,57 @@ public class MagamController {
 			return response;
 
         } catch (Exception ex) {
-            model.addAttribute("error_code", ex.getMessage()); 
+            model.addAttribute("error_code", ex.getMessage());
             return null;
         }
 	}
+
+	/* 다빈도 상병순위별 (항정신성 처방 대상자 기준) — jobFlag=07 모달용 */
+	@RequestMapping(value="/main/select_DiagRank07.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_DiagRank07(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		String err_cd = "0";
+		try {
+			System.out.println("select_DiagRank07 - hospCd=" + dto.getHospCd() + " jobYymm=" + dto.getJobYymm());
+			List<PatvalDTO>     resultdt = svc.select_DiagRank07(dto);
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", resultdt);
+			model.addAttribute("error_code", err_cd);
+			return response;
+		} catch (Exception ex) {
+			model.addAttribute("error_code", ex.getMessage());
+			return null;
+		}
+	}
+
+	/* 진단코드 → 진단명 경량 매핑 (클라이언트 다빈도 상병순위 집계 후 호출) */
+	@RequestMapping(value="/main/select_DiagNames.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_DiagNames(@RequestParam(value="diagCodes", required=false) String diagCodes, Model model) throws Exception {
+		String err_cd = "0";
+		try {
+			java.util.List<String> codes = new java.util.ArrayList<>();
+			if (diagCodes != null && !diagCodes.trim().isEmpty()) {
+				String[] arr = diagCodes.split(",");
+				for (String s : arr) {
+					String t = s == null ? "" : s.trim();
+					if (!t.isEmpty()) codes.add(t);
+				}
+			}
+			java.util.Map<String, Object> param = new java.util.HashMap<>();
+			param.put("codes", codes);
+
+			java.util.List<PatvalDTO>     resultdt = svc.select_DiagNames(param);
+			java.util.Map<String, Object> response = new java.util.HashMap<>();
+			response.put("data", resultdt);
+			model.addAttribute("error_code", err_cd);
+			return response;
+		} catch (Exception ex) {
+			model.addAttribute("error_code", ex.getMessage());
+			return null;
+		}
+	}
+
 	@RequestMapping(value="/main/select_assesCheck.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> select_assesCheck(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

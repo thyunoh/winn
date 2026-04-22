@@ -89,7 +89,19 @@ public class PatvalDTO {
 	private String heigYn;      // 피부궤양 드레싱
 	
 	private String weig;
-	
+
+	/* 다빈도 상병순위 (jobFlag=07 모달용) */
+	private String diagCode;        // 진단코드
+	private String diagName;        // 진단명
+	private String diagCnt;         // 진단건수
+
+	public String getDiagCode() { return diagCode; }
+	public void setDiagCode(String diagCode) { this.diagCode = diagCode; }
+	public String getDiagName() { return diagName; }
+	public void setDiagName(String diagName) { this.diagName = diagName; }
+	public String getDiagCnt() { return diagCnt; }
+	public void setDiagCnt(String diagCnt) { this.diagCnt = diagCnt; }
+
 	public String getWeig() {
 		return weig;
 	}

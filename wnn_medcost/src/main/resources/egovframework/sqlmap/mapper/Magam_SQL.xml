@@ -1449,6 +1449,86 @@
 		    ON sb.HOSP_CD = pm.HOSP_CD
 		   AND sb.PAT_ID  = pm.PAT_ID
 	</select>
+	<!-- 진단코드 → 진단명 매핑 (경량 조회, 다빈도 상병순위 클라이언트 집계 후 사용) -->
+	<select id="select_DiagNames" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
+		SELECT DIAG_CODE                            AS diagCode
+		     , MIN(KOR_DIAG_NAME)                   AS diagName
+		  FROM TBL_DISE_CODE
+		 WHERE ACTION_YN = 'Y'
+		<if test="codes != null and codes.size() > 0">
+		   AND DIAG_CODE IN
+		   <foreach collection="codes" item="c" open="(" separator="," close=")">
+		       #{c}
+		   </foreach>
+		</if>
+		 GROUP BY DIAG_CODE
+	</select>
+
+	<!-- 다빈도 상병순위별 (jobFlag=07) — 항정신성 처방 대상자(psyOrderYn='●')의 진단명 집계
+	     성능 개선:
+	       - 상관 EXISTS/NOT EXISTS 제거 → CTE 사전집계 + JOIN 기반 anti-join
+	       - psy_bills(항정 처방 있는 BILL_SEQ), js008_bills(제외 BILL_SEQ), psy_pats(대상 환자)를 1회씩만 집계
+	       - 진단명(DIAG_NAME)도 CTE로 한번만 구성
+	-->
+	<select id="select_DiagRank07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
+		WITH
+		psy_bills AS (
+		    /* 항정신성(A) 처방이 있는 BILL_SEQ 집합 — 한 번만 집계 */
+		    SELECT DISTINCT jm.HOSP_CD, jm.CLAIM_NO, jm.BILL_SEQ
+		      FROM TBL_JINORD_MST jm
+		      JOIN TBL_DRUG_MST   td ON td.EDI_CODE = jm.EDI_CODE
+		                            AND td.CODEFLAG = 'A'
+		     WHERE jm.HOSP_CD = #{hospCd}
+		),
+		js008_bills AS (
+		    /* JS008 정정 BILL_SEQ 집합 — anti-join용 */
+		    SELECT HOSP_CD, CLAIM_NO, BILL_SEQ
+		      FROM TBL_SPECODE_MST
+		     WHERE HOSP_CD = #{hospCd}
+		       AND SPEC_TYPE = 'JS008'
+		     GROUP BY HOSP_CD, CLAIM_NO, BILL_SEQ
+		),
+		psy_pats AS (
+		    /* 당월 평가구분 2 대상 환자 */
+		    SELECT DISTINCT pat.PAT_ID
+		      FROM TBL_PATVAL_MST pat FORCE INDEX (INDEX01)
+		     WHERE pat.HOSP_CD = #{hospCd}
+		       AND pat.MED_START LIKE CONCAT(#{jobYymm},'%')
+		       AND IFNULL(pat.EVAL_TYPE,'') = '2'
+		),
+		dise_nm AS (
+		    /* 진단코드별 명칭 (한번만 구성) */
+		    SELECT DIAG_CODE, MIN(KOR_DIAG_NAME) AS KOR_DIAG_NAME
+		      FROM TBL_DISE_CODE
+		     WHERE ACTION_YN = 'Y'
+		     GROUP BY DIAG_CODE
+		)
+		SELECT   dm.DIAG_CODE                                 AS diagCode
+		       , COALESCE(dn.KOR_DIAG_NAME, '')               AS diagName
+		       , CAST(COUNT(DISTINCT mm.PAT_ID) AS CHAR)      AS diagCnt
+		  FROM TBL_CHUNG_MST   cm
+		  JOIN TBL_MYOUNG_MST  mm  ON mm.HOSP_CD  = cm.HOSP_CD
+		                          AND mm.CLAIM_NO = cm.CLAIM_NO
+		  JOIN psy_bills       pb  ON pb.HOSP_CD  = mm.HOSP_CD
+		                          AND pb.CLAIM_NO = mm.CLAIM_NO
+		                          AND pb.BILL_SEQ = mm.BILL_SEQ
+		  JOIN psy_pats        pp  ON pp.PAT_ID   = mm.PAT_ID
+		  JOIN TBL_DISEASE_MST dm  ON dm.HOSP_CD  = mm.HOSP_CD
+		                          AND dm.CLAIM_NO = mm.CLAIM_NO
+		                          AND dm.BILL_SEQ = mm.BILL_SEQ
+		                          AND IFNULL(dm.DIAG_TYPE,'0') = '1'
+		  LEFT JOIN js008_bills jb ON jb.HOSP_CD  = mm.HOSP_CD
+		                          AND jb.CLAIM_NO = mm.CLAIM_NO
+		                          AND jb.BILL_SEQ = mm.BILL_SEQ
+		  LEFT JOIN dise_nm    dn  ON dn.DIAG_CODE = dm.DIAG_CODE
+		 WHERE cm.HOSP_CD = #{hospCd}
+		   AND cm.DATE_YM = #{jobYymm}
+		   AND COALESCE(mm.DELYN,'') = ''
+		   AND jb.HOSP_CD IS NULL   /* JS008 없는 것만 */
+		 GROUP BY dm.DIAG_CODE, dn.KOR_DIAG_NAME
+		 ORDER BY COUNT(DISTINCT mm.PAT_ID) DESC, dm.DIAG_CODE ASC
+	</select>
+
 <!-- 	<select id="select_CategoryList07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 		SELECT DISTINCT
 		       LEFT(pm.PAT_ID,6)                                  AS patId

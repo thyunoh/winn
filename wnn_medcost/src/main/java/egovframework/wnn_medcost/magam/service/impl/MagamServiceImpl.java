@@ -443,7 +443,17 @@ public class MagamServiceImpl implements MagamService {
 	public List<PatvalDTO> select_CategoryList07(PatvalDTO dto) throws Exception {
 		return mapper.select_CategoryList07(dto);
 	}
-	
+
+	@Override
+	public List<PatvalDTO> select_DiagRank07(PatvalDTO dto) throws Exception {
+		return mapper.select_DiagRank07(dto);
+	}
+
+	@Override
+	public List<PatvalDTO> select_DiagNames(java.util.Map<String, Object> param) throws Exception {
+		return mapper.select_DiagNames(param);
+	}
+
 	@Override
 	public List<PatvalDTO> select_CategoryList09(PatvalDTO dto) throws Exception {
 		return mapper.select_CategoryList09(dto);
