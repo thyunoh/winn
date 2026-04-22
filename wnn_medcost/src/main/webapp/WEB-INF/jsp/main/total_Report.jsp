@@ -59,7 +59,7 @@
 								            <button data-action="FindView" data-value="accordion_item_B" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('10')">투석치료 청구현황</button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_5" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">특정기간【 패렴,패혈증,격리실,중환자실 】</button>
+								        	<button data-action="FindView" data-value="accordion_item_5" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">특정기간【 패렴,패혈증,격리실,중환자실 등】</button>
 								        	<button data-action="FindView" data-value="accordion_item_6" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">특정기간 현황【 패렴, 패혈증 】</button>
 								            
 								        </div>
@@ -602,11 +602,11 @@
 							        <h5 class="text-left ml-3 mb-1">청구현황 대상 Part Ⅱ</h5>
 						        	
 						        	<table id="tableName14" class="display nowrap stripe hover cell-border  order-column responsive mb-1">
-															       
+
 									</table>
-									
+
 							    </div>
-							</div> 
+							</div>
 							   
 	                    </div>
 					</div>            
@@ -2157,8 +2157,8 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 	   	                if (rowTitle === "평균" || colTitle === "계" || colTitle === "합계") {
 	   	                    cell.style.backgroundColor = '#DFE6F7';
 	   	                    cell.style.color = '#2E2E2E';
-	   	                    // 합계 행 클릭 가능 (jobFlag 09: 재활치료 청구현황)
-	   	                    if (colTitle === "합계" && jobFlag === "09" && label.textContent != "-") {
+	   	                    // 합계 행 클릭 가능 (jobFlag 09: 재활치료 청구현황, 14: 특정 진료비)
+	   	                    if (colTitle === "합계" && (jobFlag === "09" || jobFlag === "14") && label.textContent != "-") {
 	   	                    	label.style.cursor = 'pointer';
 	   	                    	label.setAttribute('data-id', [rowTitle, r, c].join(','));
 	   	                    	label.style.color = '#007bff';
@@ -4451,9 +4451,10 @@ function total_Report_DataList() {
     else if (jobFlag === "13") { tableName  = document.getElementById('tableName13');
     	page_Hight = 880;
 		        
-        c_Head_Set = [  '생년월일','성명','입원일자','입원시간','퇴원일자','퇴원시간','입원일수','청구일수','누락정보' ];    	
+        c_Head_Set = [  '생년월일','성명','종별','입원일자','입원시간','퇴원일자','퇴원시간','입원일수','청구일수','누락정보' ];
        	columnsSet = [  { data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', render: function(data, type, row) { if (type === 'display' && data) { return String(data).substring(0, 6); } return data; } },
    						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
+   						{ data: 'medCovType', visible: true, className: 'dt-body-center', width: '80px' },
    						{ data: 'admitDt',  visible: true,  className: 'dt-body-center', width: '100px',
    			                render: function(data, type, row) {
    			       				if (type === 'display') {
@@ -4490,11 +4491,11 @@ function total_Report_DataList() {
     else if (jobFlag === "14") { tableName = document.getElementById('tableName14');
 	    page_Navig = true;
 	    page_Hight = 580;
-	    c_Head_Set = [  '환자ID','성명','종별','','명일련','EDI코드','단가','일투','일수','계산금액' ,'청구번호' ];	    
-		columnsSet = [ 	{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px', 
-			              render: function(data, type, row) 
-			              { if (type === 'display' && data) 
-			                { return String(data).substring(0, 6); } 
+	    c_Head_Set = [  '환자ID','성명','종별','','명일련','EDI코드','단가','일투','일수','계산금액' ,'청구번호' ];
+		columnsSet = [ 	{ data: 'patId',    visible: true,  className: 'dt-body-center', width: '100px',
+			              render: function(data, type, row)
+			              { if (type === 'display' && data)
+			                { return String(data).substring(0, 6); }
 			              return data; } },
 						{ data: 'patNm',    visible: true,  className: 'dt-body-center', width: '100px' },
 						{ data: 'medCovType', visible: true, className: 'dt-body-center', width: '100px' },
@@ -4908,8 +4909,8 @@ function dataLoad(data, callback, settings) {
             	console.log(response);
             	callback(response);
 
-            	// 수가코드별 현황 서브 테이블 (jobFlag 09)
-            	if (jobFlag === "09" && response.dataSub) {
+            	// 수가코드별 현황 서브 테이블 (jobFlag 09 재활, 14 특정진료비 공용)
+            	if ((jobFlag === "09" || jobFlag === "14") && response.dataSub) {
             		fn_SubTable09(response.dataSub);
             	}
 

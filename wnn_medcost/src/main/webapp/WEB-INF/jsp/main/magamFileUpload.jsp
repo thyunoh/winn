@@ -2077,17 +2077,22 @@ function showExcelPreview() {
 	var titleText = isSpcsuga ? '특정수가현황 엑셀 미리보기' : '입원현황 엑셀 미리보기';
 	$('#excelPreviewModal .modal-title').html('<i class="fa fa-file-excel mr-2"></i>' + titleText);
 
+	// 입원현황 모드에서 상단 매칭(매핑) UI는 워너넷(winner==='Y')만 노출.
+	// 비(非)워너넷은 자동매핑값으로 저장되므로 UI 구성은 그대로 수행하되 화면에서만 숨김.
+	var hideMappingUI = (!isSpcsuga && winner !== 'Y');
+	var hideStyle = hideMappingUI ? 'display:none;' : '';
+
 	// 모달 본문 HTML 구성
 	var html = '';
-	html += '<div class="alert alert-info py-2 mb-2" style="font-size:12px; display:flex; justify-content:space-between; align-items:center;">';
+	html += '<div class="alert alert-info py-2 mb-2" style="font-size:12px; display:flex; justify-content:space-between; align-items:center;' + hideStyle + '">';
 	html += '  <span><i class="fa fa-info-circle mr-1"></i>엑셀 헤더와 DB 컬럼을 매핑하세요. 자동 매핑 후 필요시 드롭다운에서 수정 가능합니다.엑셀에 요양기호 없으면 로그인정보로 저장됨 (필수 컬럼은 <span style="color:#dc3545; font-weight:600;">*</span> 표시)</span>';
 	html += '  <span id="excelMappingCntBox" style="white-space:nowrap; font-weight:600; background:#ffffff; padding:4px 12px; border-radius:4px; font-size:12px; box-shadow:0 1px 2px rgba(0,0,0,0.06); margin-left:12px; border:1px solid #ccc;">' +
 	        '<span id="excelRegistStatus">등록 가능 여부 확인 중...</span></span>';
 	html += '</div>';
-	html += '<div id="excelMappingZone" class="mb-2">';
+	html += '<div id="excelMappingZone" class="mb-2" style="' + hideStyle + '">';
 	html += '  <div id="excelMappingFields" class="form-row" style="flex-wrap:wrap;"></div>';
 	html += '</div>';
-	html += '<div class="form-row mb-2" id="excelPreviewSearchBar">';
+	html += '<div class="form-row mb-2" id="excelPreviewSearchBar" style="' + hideStyle + '">';
 	html += '  <div class="col-3"><select id="excelPreviewSearchCol" class="custom-select custom-select-sm"><option value="">전체 컬럼</option></select></div>';
 	html += '  <div class="col-5"><input type="text" id="excelPreviewSearchKw" class="form-control form-control-sm" placeholder="검색어 입력 후 Enter"></div>';
 	html += '  <div class="col-4"><button type="button" class="btn btn-sm btn-outline-primary" id="btnExcelPreviewSearch"><i class="fa fa-search"></i> 검색</button> ';

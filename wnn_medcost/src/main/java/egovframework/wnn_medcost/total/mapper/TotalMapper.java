@@ -26,5 +26,6 @@ public interface TotalMapper {
 	List<TotalDTO> total_DataList_12(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_13(TotalDTO dto) throws Exception;
 	List<TotalDTO> total_DataList_14(TotalDTO dto) throws Exception;
+	List<TotalDTO> total_DataList_14_Sub(TotalDTO dto) throws Exception;
 	
 }
