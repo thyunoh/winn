@@ -1797,8 +1797,7 @@ function spcsugaSplitVisits(v) {
 	if (v == null) return [];
 	var s = String(v).trim();
 	if (!s) return [];
-	// 이미 완전한 날짜 1개이면 그대로
-	if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(s)) return [excelDateFmt(s)];
+	// 쉼표/세미콜론/공백으로 분리 (단일/복수, YYYY-MM-DD / YYYYMMDD / MM-DD 모두 커버)
 	return s.split(/[,;\s]+/).map(function(t) { return t.trim(); }).filter(Boolean);
 }
 // MM-DD(또는 MM/DD) + 기준년도 => YYYY-MM-DD
@@ -1814,7 +1813,7 @@ function spcsugaMakeFullDate(token, baseYear) {
 // 저장용: '-', '/', '.' 제거하여 8자리 숫자(YYYYMMDD)로
 function spcsugaStripDateSep(v) {
 	if (v == null || v === '') return '';
-	return String(v).replace(/[-\/.]/g, '');
+	return String(v).replace(/[^0-9]/g, '');
 }
 
 // 특정수가현황 엑셀 처리 (원본만 파싱 → 매핑 UI에서 사용자 확정 후 저장 시 비즈니스 로직 적용)

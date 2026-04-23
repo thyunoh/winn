@@ -490,6 +490,16 @@ public class MagamServiceImpl implements MagamService {
 	}
 
 	@Override
+	public List<Map<String, Object>> select_CathPatvalByPat(Map<String, Object> params) throws Exception {
+		return mapper.select_CathPatvalByPat(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> select_CathSpcsugaByPat(Map<String, Object> params) throws Exception {
+		return mapper.select_CathSpcsugaByPat(params);
+	}
+
+	@Override
 	public List<PatvalDTO> select_assesCheck00(PatvalDTO dto) throws Exception {
 		return mapper.select_assesCheck00(dto);
 	}

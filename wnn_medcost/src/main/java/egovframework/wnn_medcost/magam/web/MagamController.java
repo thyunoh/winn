@@ -1154,6 +1154,25 @@ public class MagamController {
 		}
 	}
 
+	// 유치도뇨관 오류점검 — 환자별 상세 (평가표 CAT_IN/OUT + 수가 오더) 조회
+	@RequestMapping(value="/main/select_CathDetailByPat.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_CathDetailByPat(@RequestParam Map<String, Object> params, HttpSession session) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			List<Map<String, Object>> patval  = svc.select_CathPatvalByPat(params);
+			List<Map<String, Object>> spcsuga = svc.select_CathSpcsugaByPat(params);
+			response.put("patval",  patval);
+			response.put("spcsuga", spcsuga);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("patval",  new java.util.ArrayList<Map<String, Object>>());
+			response.put("spcsuga", new java.util.ArrayList<Map<String, Object>>());
+			response.put("error_mess", ex.getMessage());
+		}
+		return response;
+	}
+
 	// 환자평가표(TBL_PATVAL_MST) 단건 조회 — 모달 표시용
 	@RequestMapping(value="/main/select_PatvalMst.do", method = RequestMethod.POST)
 	@ResponseBody

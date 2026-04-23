@@ -69,6 +69,9 @@ public interface MagamService {
 	
 	List<PatvalDTO>  select_CathCrossCheck(PatvalDTO dto) throws Exception;
 
+	List<Map<String, Object>> select_CathPatvalByPat(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> select_CathSpcsugaByPat(Map<String, Object> params) throws Exception;
+
 	List<PatvalDTO>  select_assesCheck00(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_assesCheck01(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_assesCheck02(PatvalDTO dto) throws Exception;

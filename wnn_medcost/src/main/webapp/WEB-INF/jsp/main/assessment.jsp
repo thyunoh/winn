@@ -61,10 +61,12 @@
 								        <table id="indicatorTable" class="display nowrap stripe hover cell-border order-column responsive">
 								            
 								        </table>
-			                            - 항정처방률 · 지역사회 복귀율 기본 표준화 3점으로 산정됩니다.
+			                            - 항정처방률은 타 기관의 상병 구성 및 평균 처방률 자료 확인이 불가하여,시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용으로 활용하시기 바랍니다.
 			                            <br>
+										- 청구명세서 미업로드 시 항정처방률 대상자 확인 및 HbA1c 분모 산정에 차이가 발생하여 최종 결과와 다를 수 있습니다.
+										<br>
 										<div class="d-flex justify-content-between align-items-center">
-										    <span>- 청구명세서 미 업로드시 항정처방률 및 HbA1c 지표의 점수가 달라질 수 있습니다.</span>
+											<span>- 본 점수는 청구명세서 자료 기반의 자체 분석 결과로, 건강보험심사평가원의 공식 평가결과와 산출기준 및 결과값이 다를 수 있습니다.</span>
 										    <button id="btnEvalAllHosp" class="btn btn-outline-danger btn-sm" onClick="fn_CreateEvalAllHosp()" style="display:none;">전체병원 생성</button>
 										</div>
 										<!-- 지표 선택 시 분석 문구 표시 영역 -->
@@ -169,8 +171,7 @@
 							        }
 							        .cath05-blink { animation: cath05Pulse 1.6s ease-out infinite; }
 
-							        /* 환자평가표 조회 버튼 — 현재 히든 (협의 후 오픈) */
-							        #btnPatvalView { display: none !important; }
+							        /* 환자평가표 조회 버튼 — 활성화됨 (_show 클래스로 표시) */
 							        /* 재오픈 시 아래 display:inline-flex !important 선택자 사용 예정 */
 							        #btnPatvalView.patval-btn._show,
 							        .dt-buttons #btnPatvalView.patval-btn._show,
@@ -556,12 +557,13 @@ function fn_ShowCath05Modal() {
     var patMap = {};
     var order = [];
 
-    function addPat(patId, patNm, admitDt, patClass, evalType, indwellCath, issueLabel, issueColor, errType) {
+    function addPat(patId, patNm, admitDt, patClass, evalType, indwellCath, docDt, issueLabel, issueColor, errType) {
         if (!patId) return;
         if (!patMap[patId]) {
             patMap[patId] = {
                 patId: patId, patNm: patNm || '', admitDt: admitDt || '',
                 patClass: patClass || '', evalType: evalType || '', indwellCath: indwellCath || '',
+                docDt: docDt || '',
                 issues: []
             };
             order.push(patId);
@@ -571,6 +573,7 @@ function fn_ShowCath05Modal() {
             if (!patMap[patId].patClass    && patClass)    patMap[patId].patClass    = patClass;
             if (!patMap[patId].evalType    && evalType)    patMap[patId].evalType    = evalType;
             if (!patMap[patId].indwellCath && indwellCath) patMap[patId].indwellCath = indwellCath;
+            if (!patMap[patId].docDt       && docDt)       patMap[patId].docDt       = docDt;
         }
         patMap[patId].issues.push({ label: issueLabel, color: issueColor, errType: errType || '' });
     }
@@ -606,7 +609,7 @@ function fn_ShowCath05Modal() {
         }
 
         var lbl = '[' + er.errType + '] ' + (er.errName || '평가표오류');
-        addPat(er.patId, er.patNm, er.admitDt, er.patClass, er.evalType, er.indwellCath, lbl, '#dc3545', er.errType);
+        addPat(er.patId, er.patNm, er.admitDt, er.patClass, er.evalType, er.indwellCath, er.docDt, lbl, '#dc3545', er.errType);
     }
 
     // 엑셀 저장용 전역 저장
@@ -621,12 +624,13 @@ function fn_ShowCath05Modal() {
         var st = document.createElement('style');
         st.id = 'cath05ModalStyle';
         st.innerHTML =
-            '.cath05-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; border:1px solid #e0e4ea; border-radius:4px; overflow:hidden; }' +
-            '.cath05-table thead th { background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:10px 8px; border-right:1px solid rgba(255,255,255,0.15); letter-spacing:0.2px; }' +
+            '.cath05-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; border:1px solid #e0e4ea; border-radius:4px; }' +
+            '.cath05-table thead th { position:sticky; top:0; z-index:2; background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:10px 8px; border-right:1px solid rgba(255,255,255,0.15); letter-spacing:0.2px; }' +
             '.cath05-table thead th:last-child { border-right:none; }' +
             '.cath05-table tbody td { padding:8px 8px; border-bottom:1px solid #eef1f5; vertical-align:middle; }' +
             '.cath05-table tbody tr:nth-child(even) { background:#fafbfc; }' +
             '.cath05-table tbody tr:hover { background:#f0f7ff; }' +
+            '.cath05-table tbody tr.cath05-selected { background:#e3edfb !important; }' +
             '.cath05-table tbody tr:last-child td { border-bottom:none; }' +
             '.cath05-rowno { color:#8891a3; font-weight:500; }' +
             '.cath05-patid { font-family:Consolas,monospace; color:#333; font-weight:600; }' +
@@ -722,7 +726,7 @@ function fn_ShowCath05Modal() {
                '    <i class="far fa-file-excel"></i>&nbsp;엑셀저장' +
                '  </button>' +
                '</div>';
-        html += '<div style="text-align:left; max-height:68vh; overflow:auto; padding:4px;">';
+        html += '<div style="text-align:left; max-height:38vh; overflow:auto;">';
         html += '<table class="cath05-table">' +
                 '<thead><tr>' +
                 '<th style="width:50px;">No</th>' +
@@ -730,7 +734,8 @@ function fn_ShowCath05Modal() {
                 '<th style="width:90px;">성명</th>' +
                 '<th style="width:110px;">입원일</th>' +
                 '<th style="width:90px;">환자분류군</th>' +
-                '<th style="width:260px; text-align:left;">평가구분</th>' +
+                '<th style="width:260px;">평가구분</th>' +
+                '<th style="width:110px;">작성일</th>' +
                 '<th style="width:140px;">유치도뇨관 삽입</th>' +
                 '<th>점검항목</th>' +
                 '</tr></thead><tbody>';
@@ -741,18 +746,34 @@ function fn_ShowCath05Modal() {
                 var iss = p.issues[b];
                 badges += '<div class="cath05-badge-wrap" style="color:' + iss.color + ';"><span class="cath05-badge" style="color:' + iss.color + ';">' + $('<div>').text(iss.label).html() + '</span></div>';
             }
-            html += '<tr data-patid="' + p.patId + '" data-eval="' + (p.evalType || '') + '">' +
+            html += '<tr class="cath05-row" data-patid="' + p.patId + '" data-admitdt="' + (p.admitDt || '') + '" data-eval="' + (p.evalType || '') + '" style="cursor:pointer;">' +
                     '<td class="cath05-rowno"   style="text-align:center;"></td>' +  // 순번은 필터링 후 재계산
                     '<td class="cath05-patid"   style="text-align:center;">' + p.patId + '</td>' +
                     '<td class="cath05-patnm"   style="text-align:center;">' + p.patNm + '</td>' +
                     '<td class="cath05-date"    style="text-align:center;">' + p.admitDt + '</td>' +
                     '<td class="cath05-pclass"  style="text-align:center;">' + ($('<div>').text(p.patClass || '-').html()) + '</td>' +
                     '<td class="cath05-eval"    style="text-align:left; padding-left:14px;">' + ($('<div>').text(_fmtEvalType(p.evalType)).html()) + '</td>' +
+                    '<td class="cath05-date"    style="text-align:center;">' + (p.docDt || '-') + '</td>' +
                     '<td class="cath05-indwell" style="text-align:center;">' + _fmtIndwell(p.indwellCath) + '</td>' +
                     '<td>' + badges + '</td>' +
                     '</tr>';
         }
         html += '</tbody></table></div>';
+
+        // 하단 상세 패널 (초기 숨김 — 행 클릭 시 표시)
+        html += '<div id="cath05DetailZone" style="display:none; margin-top:10px; border-top:2px solid #1e3c72; padding-top:10px;">' +
+                '  <div id="cath05DetailHeader" style="font-size:13px; font-weight:600; color:#1e3c72; margin-bottom:6px;"></div>' +
+                '  <div style="display:flex; gap:10px;">' +
+                '    <div style="flex:1; min-width:0;">' +
+                '      <div style="font-size:12.5px; font-weight:700; color:#1e3c72; margin-bottom:4px; text-align:center;">📋 환자평가표</div>' +
+                '      <div id="cath05DetailPatval" style="max-height:26vh; overflow:auto; border:1px solid #e0e4ea; border-radius:4px;"></div>' +
+                '    </div>' +
+                '    <div style="flex:1; min-width:0;">' +
+                '      <div style="font-size:12.5px; font-weight:700; color:#1e3c72; margin-bottom:4px; text-align:center;">💊 수가 오더 (M0060)</div>' +
+                '      <div id="cath05DetailSpcsuga" style="max-height:26vh; overflow:auto; border:1px solid #e0e4ea; border-radius:4px;"></div>' +
+                '    </div>' +
+                '  </div>' +
+                '</div>';
     }
 
     Swal.fire({
@@ -784,8 +805,186 @@ function fn_ShowCath05Modal() {
             }
             // 성명 헤더 클릭 정렬 (토글: 가나다순 ↔ 역순)
             _cath05BindNameSort();
+            // 행 클릭 → 하단 상세 패널
+            _cath05BindRowClick();
         }
     });
+}
+
+// 상단 그리드 행 클릭 시 하단 상세 패널 표시 (AJAX)
+function _cath05BindRowClick() {
+    $('.cath05-table tbody').off('click.pvRow').on('click.pvRow', 'tr.cath05-row', function() {
+        $('.cath05-table tbody tr.cath05-row').removeClass('cath05-selected');
+        $(this).addClass('cath05-selected');
+        var patId   = $(this).data('patid')   || '';
+        var admitDt = $(this).data('admitdt') || '';
+        if (!patId || !admitDt) return;
+        _cath05LoadDetail(String(patId), String(admitDt).replace(/-/g, ''));
+    });
+}
+
+function _cath05LoadDetail(patId, admitDt) {
+    var $zone = $('#cath05DetailZone');
+    var $hdr  = $('#cath05DetailHeader');
+    var $pv   = $('#cath05DetailPatval');
+    var $sp   = $('#cath05DetailSpcsuga');
+    // 깜박거림 방지: 기존 내용 유지하면서 로딩중 상태만 시각적 표시(opacity)
+    $zone.show();
+    $pv.css('opacity', 0.5);
+    $sp.css('opacity', 0.5);
+
+    $.ajax({
+        url: '/main/select_CathDetailByPat.do',
+        type: 'POST',
+        data: {
+            hospCd:  hospid,
+            jobYymm: jobYyMm,
+            patId:   patId,
+            admitDt: admitDt
+        },
+        dataType: 'json',
+        success: function(res) {
+            $hdr.html('환자ID <b>' + patId + '</b> · 입원일 <b>' + admitDt + '</b>');
+            $pv.html(_cath05RenderPatval(res.patval  || []));
+            $sp.html(_cath05RenderSpcsuga(res.spcsuga || []));
+        },
+        error: function() {
+            $pv.html('<div style="padding:20px; text-align:center; color:#dc3545;">조회 실패</div>');
+            $sp.html('<div style="padding:20px; text-align:center; color:#dc3545;">조회 실패</div>');
+        },
+        complete: function() {
+            $pv.css('opacity', 1);
+            $sp.css('opacity', 1);
+        }
+    });
+}
+
+function _cath05RenderPatval(rows) {
+    if (!rows || rows.length === 0) {
+        return '<div style="padding:20px; text-align:center; color:#888;">데이터 없음</div>';
+    }
+    // 이전월 / 해당월 그룹 분리
+    var prev = [], curr = [];
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].monthType === 'curr') curr.push(rows[i]);
+        else prev.push(rows[i]);
+    }
+
+    function _renderPatvalGroup(group) {
+        var h = '';
+        var prevMedStart = null;
+        for (var i = 0; i < group.length; i++) {
+            var r = group[i];
+            var mt = r.monthType === 'curr' ? '해당월' : '이전월';
+            var mtColor = r.monthType === 'curr' ? '#1e3c72' : '#6c757d';
+            var curMedStart = r.medStart || '';
+            var groupRows = '';
+            for (var n = 1; n <= 10; n++) {
+                var ci = r['catIn'  + n] || '00000000';
+                var co = r['catOut' + n] || '00000000';
+                if (ci === '00000000' && co === '00000000') continue;
+                var ciTxt = (ci === '00000000') ? '-' : ci;
+                var coTxt = (co === '00000000') ? '-' : co;
+                groupRows +=
+                     '<tr>' +
+                     '<td style="padding:4px 6px; text-align:center; color:' + mtColor + '; font-weight:600;">' + mt + '</td>' +
+                     '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + curMedStart + '</td>' +
+                     '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.docDt || '') + '</td>' +
+                     '<td style="padding:4px 6px; text-align:center;">' + n + '</td>' +
+                     '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + ciTxt + '</td>' +
+                     '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + coTxt + '</td>' +
+                     '</tr>';
+            }
+            if (groupRows) {
+                // 진료일 바뀌면 점선 구분
+                if (prevMedStart !== null && curMedStart !== prevMedStart) {
+                    h += '<tr><td colspan="6" style="padding:0; border-top:1px dashed #b0b6bf; height:0;"></td></tr>';
+                }
+                h += groupRows;
+                prevMedStart = curMedStart;
+            }
+        }
+        return h;
+    }
+
+    var _thSt = 'background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:8px 6px; letter-spacing:0.2px; border-right:1px solid rgba(255,255,255,0.15);';
+    var html = '<table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">' +
+               '<thead><tr>' +
+               '<th style="' + _thSt + '">구분</th>' +
+               '<th style="' + _thSt + '">진료일</th>' +
+               '<th style="' + _thSt + '">작성일</th>' +
+               '<th style="' + _thSt + '">회차</th>' +
+               '<th style="' + _thSt + '">삽입일</th>' +
+               '<th style="' + _thSt + ' border-right:none;">제거일</th>' +
+               '</tr></thead><tbody>';
+    var prevHtml = _renderPatvalGroup(prev);
+    var currHtml = _renderPatvalGroup(curr);
+    html += prevHtml;
+    // 이전월 ↔ 해당월 사이 구분선 (양쪽 다 행 있을 때만)
+    if (prevHtml && currHtml) {
+        html += '<tr><td colspan="6" style="padding:0; border-top:2px dashed #1e3c72; height:0;"></td></tr>';
+    }
+    html += currHtml;
+    html += '</tbody></table>';
+    return html;
+}
+
+function _cath05RenderSpcsuga(rows) {
+    if (!rows || rows.length === 0) {
+        return '<div style="padding:20px; text-align:center; color:#888;">데이터 없음</div>';
+    }
+    // 이전월 / 해당월 그룹 분리
+    var prev = [], curr = [];
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].monthType === 'curr') curr.push(rows[i]);
+        else prev.push(rows[i]);
+    }
+
+    function _renderRow(r) {
+        var mt = r.monthType === 'curr' ? '해당월' : '이전월';
+        var mtColor = r.monthType === 'curr' ? '#1e3c72' : '#6c757d';
+        return '<tr>' +
+               '<td style="padding:4px 6px; text-align:center; color:' + mtColor + '; font-weight:600;">' + mt + '</td>' +
+               '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.jobYymm || '') + '</td>' +
+               '<td style="padding:4px 6px; text-align:center;">' + ($('<div>').text(r.patName || '').html()) + '</td>' +
+               '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.juminno || '') + '</td>' +
+               '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.medStart || '') + '</td>' +
+               '</tr>';
+    }
+    function _renderGroup(group) {
+        var h = '';
+        var prevJY = null;
+        for (var i = 0; i < group.length; i++) {
+            var r = group[i];
+            var curJY = r.jobYymm || '';
+            if (prevJY !== null && curJY !== prevJY) {
+                h += '<tr><td colspan="5" style="padding:0; border-top:1px dashed #b0b6bf; height:0;"></td></tr>';
+            }
+            h += _renderRow(r);
+            prevJY = curJY;
+        }
+        return h;
+    }
+
+    var _thSt = 'background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:8px 6px; letter-spacing:0.2px; border-right:1px solid rgba(255,255,255,0.15);';
+    var html = '<table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">' +
+               '<thead><tr>' +
+               '<th style="' + _thSt + '">구분</th>' +
+               '<th style="' + _thSt + '">적용년월</th>' +
+               '<th style="' + _thSt + '">환자명</th>' +
+               '<th style="' + _thSt + '">주민(6)</th>' +
+               '<th style="' + _thSt + ' border-right:none;">오더일</th>' +
+               '</tr></thead><tbody>';
+    var prevHtml = _renderGroup(prev);
+    var currHtml = _renderGroup(curr);
+    html += prevHtml;
+    // 이전월 ↔ 해당월 사이 구분선 (양쪽 다 있을 때만)
+    if (prevHtml && currHtml) {
+        html += '<tr><td colspan="5" style="padding:0; border-top:2px dashed #1e3c72; height:0;"></td></tr>';
+    }
+    html += currHtml;
+    html += '</tbody></table>';
+    return html;
 }
 
 // 성명 헤더 클릭 → 가나다순/역순 토글 정렬
@@ -3779,17 +3978,7 @@ function fn_AttachPatvalBtnToDt() {
     var $dtBtns = $('#viewTable_wrapper .dt-buttons');
     if ($dtBtns.length === 0) return;
 
-    // (1) 환자평가표 조회 버튼 — 협의 전까지 숨김. CSS `#btnPatvalView { display:none !important }` 로 히든 보장
-    //     이전 세션에 .dt-buttons 로 이동된 상태라면 헤더 원위치(card-header11)로 되돌림
-    var pvBtn = document.getElementById('btnPatvalView');
-    if (pvBtn) {
-        pvBtn.classList.remove('_show');   // 표시 클래스 제거
-        var $origHome = $('.card-header11 .dsah_lab9').closest('.card-header11');
-        if ($origHome.length && pvBtn.parentNode !== $origHome[0]) {
-            $origHome[0].appendChild(pvBtn);
-        }
-    }
-    /* 재오픈 시: 위 블록 제거 후 아래 블록 주석 해제 (+ CSS `#btnPatvalView { display:none !important }` 제거)
+    // (1) 환자평가표 조회 버튼 — 활성화 (DataTable 버튼 영역으로 이동 + _show 클래스 부여)
     var pvBtn = document.getElementById('btnPatvalView');
     if (!pvBtn) {
         pvBtn = document.createElement('button');
@@ -3804,7 +3993,6 @@ function fn_AttachPatvalBtnToDt() {
         pvBtn.style.marginLeft = '6px';
     }
     pvBtn.classList.add('_show');
-    */
 
     // (2) 유치도뇨관 및 오류점검 버튼 — 05 카테고리에서만 .dt-buttons 영역으로 이동
     //     DataTable destroy 로 DOM이 사라진 경우 재생성한다.
