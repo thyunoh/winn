@@ -4187,7 +4187,7 @@
 
 		-- [크로스체크 D3] 오더에 삽입 있으나 평가표에 누락 (삽입일자 관련 → D prefix)
 		-- 기간 제한: 전월 MIN(DOC_DT)+1일 ~ 당월 MAX(DOC_DT), 전월 평가표 없으면 전월 1일부터
-		-- 당월 평가표가 아예 없는 환자는 오류에서 제외
+		-- 당월 평가표가 아예 없는 환자는 오류에서 제외 (→ D7 에서 별도 커버)
 		  SELECT DISTINCT
 		         LEFT(S.JUMINNO,6)                                  AS patId
 		       , COALESCE(S.CHARTNO,'')                             AS chartNo
@@ -4234,9 +4234,9 @@
 		           OR S.KOR_NAME LIKE '%유치도뇨%' )
 		     AND COALESCE(S.MED_START,'') != ''
 		     AND P.PAT_ID IS NULL
-		     -- 오더 범위: MED_START 가 당월인 것만
-		     AND S.MED_START LIKE CONCAT(#{jobYymm},'%')
-		     -- 당월 평가표 존재 여부 (없으면 오류 제외)
+		     -- 오더 범위: JOBYYMM(청구월) 이 당월인 것만 (D4/D6 과 통일)
+		     AND COALESCE(S.JOBYYMM,'') = #{jobYymm}
+		     -- 당월 평가표 존재 여부 (없으면 오류 제외 — D7 에서 커버)
 		     AND EXISTS (
 		           SELECT 1 FROM TBL_PATVAL_MST PX
 		            WHERE PX.HOSP_CD = S.HOSP_CD
@@ -4437,6 +4437,48 @@
 		                    OR S2.KOR_NAME LIKE '%유치도뇨%' )
 		         )
 
+		UNION ALL
+
+		-- [크로스체크 D7] 수가기준 추가 — 오더(M0060) 당월 있으나 당월 환자평가표 자체가 없음
+		-- (D3는 '평가표는 있는데 INDWELL_CATH='1' 행 없음' 만 커버하므로, 평가표 아예 없음 케이스를 별도 분리)
+		  SELECT DISTINCT
+		         LEFT(S.JUMINNO,6)                                  AS patId
+		       , COALESCE(S.CHARTNO,'')                             AS chartNo
+		       , CASE WHEN CHAR_LENGTH(COALESCE(S.PATNAME, '')) >= 1
+		              THEN CONCAT(LEFT(COALESCE(S.PATNAME, ''), CHAR_LENGTH(COALESCE(S.PATNAME, '')) - 1), '*')
+		              ELSE '' END                                   AS patNm
+		       , S.IPWONDT                                          AS admitDt
+		       , S.MED_START                                        AS medStart
+		       , ''                                                 AS docDt
+		       , ''                                                 AS evalType
+		       , ''                                                 AS patClass
+		       , ''                                                 AS indwellCath
+		       , (SELECT MAX(PP.INDWELL_CATH) FROM TBL_PATVAL_MST PP
+		           WHERE PP.HOSP_CD = S.HOSP_CD
+		             AND LEFT(PP.PAT_ID,6) = LEFT(S.JUMINNO,6)
+		             AND PP.MED_START LIKE CONCAT(
+		                  DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{jobYymm},'01'),'%Y%m%d'), INTERVAL 1 MONTH),'%Y%m'),'%'))
+		                                                            AS prevIndwellCath
+		       , 'D7'                                               AS errType
+		       , CONCAT('[오더O/평가표없음] 오더 유치도뇨관 삽입(', S.MED_START, ') 기록 있으나 당월 환자평가표 자체가 없음') AS errName
+		    FROM TBL_SPCSUGA_INFO S
+		   WHERE S.HOSP_CD = #{hospCd}
+		     AND (    S.EDI_CODE IN ('M0060')
+		           OR S.SUGA_CD  IN ('M0060')
+		           OR S.KOR_NAME LIKE '%유치%카테터%'
+		           OR S.KOR_NAME LIKE '%유치도뇨%' )
+		     AND COALESCE(S.MED_START,'') != ''
+		     -- 오더 범위: JOBYYMM(청구월) 이 당월인 것만 (D3/D4/D6 과 통일)
+		     AND COALESCE(S.JOBYYMM,'') = #{jobYymm}
+		     -- 당월 평가표 자체가 없는 환자만
+		     AND NOT EXISTS (
+		           SELECT 1 FROM TBL_PATVAL_MST PX
+		            WHERE PX.HOSP_CD = S.HOSP_CD
+		              AND LEFT(PX.PAT_ID,6) = LEFT(S.JUMINNO,6)
+		              AND REPLACE(PX.ADMIT_DT,'-','') = S.IPWONDT
+		              AND PX.MED_START LIKE CONCAT(#{jobYymm},'%')
+		         )
+
 		ORDER BY errType, patId
 	</select>
 
@@ -4483,6 +4525,8 @@
 	</select>
 
 	<select id="select_CathSpcsugaByPat" parameterType="map" resultType="map">
+		-- IPWONDT 엄격 매칭 제거: 동일 환자의 당월/전월 오더를 모두 표시
+		-- (재입원 등으로 IPWONDT 가 다른 케이스를 놓치지 않도록 — 대신 화면에 IPWONDT 컬럼 표시)
 		SELECT
 		       CASE WHEN COALESCE(JOBYYMM,'') = #{jobYymm} THEN 'curr' ELSE 'prev' END AS monthType
 		     , COALESCE(JOBYYMM,'')                    AS jobYymm
@@ -4490,6 +4534,7 @@
 		            THEN CONCAT(LEFT(COALESCE(PATNAME, ''), CHAR_LENGTH(COALESCE(PATNAME, '')) - 1), '*')
 		            ELSE '' END                        AS patName
 		     , LEFT(COALESCE(JUMINNO,''),6)            AS juminno
+		     , COALESCE(IPWONDT,'')                    AS ipwonDt
 		     , MED_START                               AS medStart
 		     , COALESCE(SUGA_CD,'')                    AS sugaCd
 		     , COALESCE(EDI_CODE,'')                   AS ediCode
@@ -4497,7 +4542,6 @@
 		  FROM TBL_SPCSUGA_INFO
 		 WHERE HOSP_CD = #{hospCd}
 		   AND LEFT(JUMINNO,6) = #{patId}
-		   AND IPWONDT = #{admitDt}
 		   AND (    EDI_CODE IN ('M0060')
 		         OR SUGA_CD  IN ('M0060')
 		         OR KOR_NAME LIKE '%유치%카테터%'
@@ -4505,7 +4549,7 @@
 		   AND COALESCE(MED_START,'') != ''
 		   AND (    COALESCE(JOBYYMM,'') = #{jobYymm}
 		         OR COALESCE(JOBYYMM,'') = DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{jobYymm},'01'),'%Y%m%d'), INTERVAL 1 MONTH),'%Y%m') )
-		 ORDER BY JOBYYMM, MED_START
+		 ORDER BY JOBYYMM, IPWONDT, MED_START
 	</select>
 
 	<select id="select_assesCheck99" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">

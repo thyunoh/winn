@@ -524,9 +524,13 @@ function fn_UpdateCath05Buttons() {
         }
 
         // ★ [제외2] 평가구분 2·계속입원 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
+        //   예외: D3/D7(오더O/평가표X, 평가표없음)은 전월 상태와 무관하게 당월 오더가 있으면 오류로 잡음
         if (String(er2.evalType || '') === '2') {
-            var prevCath2 = (er2.prevIndwellCath === undefined) ? null : String(er2.prevIndwellCath || '');
-            if (prevCath2 !== null && prevCath2 !== '1' && prevCath2 !== 'Y') continue;
+            var _et2b = String(er2.errType || '');
+            if (_et2b !== 'D3' && _et2b !== 'D7') {
+                var prevCath2 = (er2.prevIndwellCath === undefined) ? null : String(er2.prevIndwellCath || '');
+                if (prevCath2 !== null && prevCath2 !== '1' && prevCath2 !== 'Y') continue;
+            }
         }
         patSet[er2.patId] = 1;
     }
@@ -601,10 +605,14 @@ function fn_ShowCath05Modal() {
         // ★ [제외2] 평가구분 2·계속입원중 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
         //    서버 필드 관례: prevIndwellCath 가 제공되면 '0' 또는 빈값 = 제거됨
         //    prevIndwellCath 미제공 시엔 기존 동작 유지 (서버 SQL 개선 전까지)
+        //    예외: D3/D7(오더O/평가표X, 평가표없음) 은 전월 상태와 무관하게 당월 오더가 있으면 오류로 잡음
         if (String(er.evalType || '') === '2') {
-            var prevCath = (er.prevIndwellCath === undefined) ? null : String(er.prevIndwellCath || '');
-            if (prevCath !== null && prevCath !== '1' && prevCath !== 'Y') {
-                continue;  // 제거됨 → skip
+            var _et2 = String(er.errType || '');
+            if (_et2 !== 'D3' && _et2 !== 'D7') {
+                var prevCath = (er.prevIndwellCath === undefined) ? null : String(er.prevIndwellCath || '');
+                if (prevCath !== null && prevCath !== '1' && prevCath !== 'Y') {
+                    continue;  // 제거됨 → skip
+                }
             }
         }
 
@@ -948,6 +956,7 @@ function _cath05RenderSpcsuga(rows) {
                '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.jobYymm || '') + '</td>' +
                '<td style="padding:4px 6px; text-align:center;">' + ($('<div>').text(r.patName || '').html()) + '</td>' +
                '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.juminno || '') + '</td>' +
+               '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.ipwonDt || '') + '</td>' +
                '<td style="padding:4px 6px; text-align:center; font-family:Consolas,monospace;">' + (r.medStart || '') + '</td>' +
                '</tr>';
     }
@@ -958,7 +967,7 @@ function _cath05RenderSpcsuga(rows) {
             var r = group[i];
             var curJY = r.jobYymm || '';
             if (prevJY !== null && curJY !== prevJY) {
-                h += '<tr><td colspan="5" style="padding:0; border-top:1px dashed #b0b6bf; height:0;"></td></tr>';
+                h += '<tr><td colspan="6" style="padding:0; border-top:1px dashed #b0b6bf; height:0;"></td></tr>';
             }
             h += _renderRow(r);
             prevJY = curJY;
@@ -973,6 +982,7 @@ function _cath05RenderSpcsuga(rows) {
                '<th style="' + _thSt + '">적용년월</th>' +
                '<th style="' + _thSt + '">환자명</th>' +
                '<th style="' + _thSt + '">주민(6)</th>' +
+               '<th style="' + _thSt + '">입원일</th>' +
                '<th style="' + _thSt + ' border-right:none;">오더일</th>' +
                '</tr></thead><tbody>';
     var prevHtml = _renderGroup(prev);
@@ -980,7 +990,7 @@ function _cath05RenderSpcsuga(rows) {
     html += prevHtml;
     // 이전월 ↔ 해당월 사이 구분선 (양쪽 다 있을 때만)
     if (prevHtml && currHtml) {
-        html += '<tr><td colspan="5" style="padding:0; border-top:2px dashed #1e3c72; height:0;"></td></tr>';
+        html += '<tr><td colspan="6" style="padding:0; border-top:2px dashed #1e3c72; height:0;"></td></tr>';
     }
     html += currHtml;
     html += '</tbody></table>';
