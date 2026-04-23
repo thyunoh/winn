@@ -27,11 +27,13 @@
   - 엑셀의 요양기관기호와 로그인 병원 일치 여부 확인, 불일치 시 경고(저장은 세션 hosp_cd로 강제)
 - **관련파일**: magamFileUpload.jsp, MagamController.java(saveSpcsugaDatas), Magam_SQL.xml, SpcsugaDTO.java, assessment.jsp
 
-### [대기/히든] 환자평가표 조회 버튼 오픈
-- **상태(2026-04-18)**: 협의 전까지 **히든 처리** — assessment.jsp `fn_AttachPatvalBtnToDt` 내 부착 블록 주석 처리됨
-- **재오픈 방법**: 해당 함수 `(1) 환자평가표 조회 버튼` 블록의 주석 해제 + `_hidePv.style.display='none'` 두 줄 제거
+### [완료] 환자평가표 조회 버튼 활성화 (2026-04-23)
+- **상태**: **활성화됨** — `viewTable` 렌더 후 DataTable 버튼 영역(.dt-buttons)에 "환자평가표 조회" 버튼 표시
+- **적용 내역**:
+  - CSS `#btnPatvalView { display:none !important }` 규칙 제거
+  - `fn_AttachPatvalBtnToDt` 의 숨김 블록 제거, 부착+`_show` 클래스 부여 블록 활성화
 - **관련파일**: assessment.jsp(fn_AttachPatvalBtnToDt, fn_ShowPatvalModal, _pvBuildHtml 등), Magam_SQL.xml(select_PatvalMst), MagamController.java(/main/select_PatvalMst.do)
-- **남아있는 기능**: Controller·SQL·모달 JS는 모두 유지됨. 버튼만 숨김
+- **재숨김이 필요할 때**: `fn_AttachPatvalBtnToDt` 의 `(1) 환자평가표 조회 버튼` 블록을 이전 숨김 로직(pvBtn 원위치 복귀)으로 되돌리고 CSS `#btnPatvalView { display:none !important }` 재추가
 
 ### [확정] 유치도뇨관 오류점검 — 필터 없음 + 정보 컬럼 표시 방식 (2026-04-18 최종)
 - **최종 방침**: 자동 필터링 대신 사용자가 직접 판단하도록 **모달에 정보 컬럼 표시**
@@ -41,6 +43,24 @@
 - **모달 UI**: 폭 1400px, 제목바 드래그로 이동 가능
 - **관련파일**: Magam_SQL.xml, assessment.jsp (fn_ShowCath05Modal, _cath05EnableDrag, _EVAL_TYPE_MAP)
 - **재수정 주의**: 이전에 그리드 필터를 적용했다가 사용자 선택으로 철회함. 재적용 요청 시 이 방침 먼저 확인
+
+### [완료] 유치도뇨관 크로스체크 D3/D4 기간 필터 + D6 신규 추가 (2026-04-23)
+- **배경**: 오더→평가표 크로스체크가 입원건 전체 기간의 오더를 다 대조해서, 당월 조회인데 다른 달 오더까지 오류로 집계되는 문제
+- **규칙 (당월 기준)**:
+  - 기간 상한 = 당월 평가표 `MAX(DOC_DT)`
+  - 기간 하한 = 전월 평가표 `MIN(DOC_DT) + 1일`, 전월 평가표 없으면 **전월 1일(YYYYMM01)**
+  - 당월 평가표 자체가 없는 환자 → 오류 제외
+- **변경내역 (Magam_SQL.xml `select_CathCrossCheck`)**:
+  - **D3 (오더O/평가표X)**: EXISTS(당월 평가표) + S.MED_START 기간 필터 추가
+  - **D4 (날짜불일치)**: S.MED_START 기간 필터 추가 (INNER JOIN이라 EXISTS는 이미 보장됨)
+  - **D6 신규 추가** (평가표O/오더X, 날짜 단위): CAT_IN_1~10 각 날짜가 오더 M0060에 없으면 오류
+    - 파생테이블 PX로 CAT_IN_1~10을 10-way UNION ALL 펼침
+    - 빈값/`00000000` 제외, 기간 필터 동일 적용
+    - 수가자료 자체가 없는 환자는 D5 영역이므로 제외 (EXISTS M0060)
+    - 메시지: `[D6] [평가표O/오더X] 평가표 삽입일(YYYYMMDD)에 해당하는 오더(M0060) 기록 없음`
+- **XML 주의**: `<=` 는 `<![CDATA[ <= ]]>` 로 감싸야 파싱됨. `>=` 는 그대로 OK
+- **클라이언트 JS**: 수정 불필요 — D6는 A1/A2가 아니므로 1·입원평가 필터에서 자동 제외됨
+- **관련파일**: Magam_SQL.xml(select_CathCrossCheck)
 
 ### [대기] 유치도뇨관 오류점검 — 평가구분별 오류 추가/제외 규칙 (2026-04-?? 요청)
 - **ADD (새 오류로 잡을 케이스)**:
