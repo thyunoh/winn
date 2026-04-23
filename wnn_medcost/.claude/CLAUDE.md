@@ -44,6 +44,20 @@
 - **관련파일**: Magam_SQL.xml, assessment.jsp (fn_ShowCath05Modal, _cath05EnableDrag, _EVAL_TYPE_MAP)
 - **재수정 주의**: 이전에 그리드 필터를 적용했다가 사용자 선택으로 철회함. 재적용 요청 시 이 방침 먼저 확인
 
+### [완료] 유치도뇨관 크로스체크 D7 신규 추가 — 수가기준 '평가표 자체 없음' (2026-04-23)
+- **배경**: D3는 "평가표는 있는데 INDWELL_CATH='1' 행 없음"만 커버 (EXISTS 당월 평가표). 수가기준으로 M0060 오더가 있는데 **당월 환자평가표 자체가 없는** 케이스는 누락되어 별도 오류로 분리
+- **D7 로직 (Magam_SQL.xml `select_CathCrossCheck`)**:
+  - FROM TBL_SPCSUGA_INFO S (M0060/유치도뇨/카테터)
+  - S.MED_START LIKE `jobYymm%`
+  - **NOT EXISTS** 당월 TBL_PATVAL_MST (patId, admitDt, 당월 MED_START 매칭)
+  - errType='D7', errName=`[오더O/평가표없음] 오더 유치도뇨관 삽입(MED_START) 기록 있으나 당월 환자평가표 자체가 없음`
+- **D3 원본 유지**: D3는 EXISTS(당월 평가표) 그대로, 즉 "평가표 있는데 INDWELL_CATH≠'1'"만 커버 (D7과 상호 배타)
+- **클라이언트 JS (2026-04-24 추가 보정)**: D3/D7 은 evalType='2' + 전월제거 필터 **예외 처리**
+  - 배경: 계속입원 환자가 전월에 유치도뇨관 제거됐어도, 당월 오더에 새 삽입이 찍혔으면 평가표 반영 누락 = D3/D7 오류가 맞음
+  - assessment.jsp 두 곳(`fn_ShowCath05Modal` L604, `fn_UpdateCath05Buttons` L527) 에 `if (errType !== 'D3' && errType !== 'D7')` 래퍼 추가
+  - 기존 skip 로직 내부는 한 글자도 수정하지 않음 (non-D3/D7 errType 처리 동작 100% 보존)
+- **관련파일**: Magam_SQL.xml(select_CathCrossCheck D7 UNION ALL 블록), assessment.jsp(L527, L604 래퍼)
+
 ### [완료] 유치도뇨관 크로스체크 D3/D4 기간 필터 + D6 신규 추가 (2026-04-23)
 - **배경**: 오더→평가표 크로스체크가 입원건 전체 기간의 오더를 다 대조해서, 당월 조회인데 다른 달 오더까지 오류로 집계되는 문제
 - **규칙 (당월 기준)**:
