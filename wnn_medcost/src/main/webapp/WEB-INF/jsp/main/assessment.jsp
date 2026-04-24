@@ -211,6 +211,15 @@
 							            height: 20px !important;
 							            line-height: 20px !important;
 							        }
+							        #diagRank07BtnZone #btnDiagRank07.cath05-btn {
+							            height: 32px !important;
+							            padding: 0 14px !important;
+							            box-sizing: border-box !important;
+							            line-height: 1 !important;
+							            font-size: 12.5px !important;
+							            font-weight: 700 !important;
+							            vertical-align: middle !important;
+							        }
 							        #btnPatvalView.patval-btn:hover,
 							        .dt-buttons #btnPatvalView.patval-btn:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 4px 10px rgba(37,99,235,0.45) !important; color:#fff !important; }
 							        #btnPatvalView.patval-btn:active { transform: translateY(0); filter: brightness(0.95); }
@@ -633,7 +642,7 @@ function fn_ShowCath05Modal() {
         st.id = 'cath05ModalStyle';
         st.innerHTML =
             '.cath05-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; border:1px solid #e0e4ea; border-radius:4px; }' +
-            '.cath05-table thead th { position:sticky; top:0; z-index:2; background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:10px 8px; border-right:1px solid rgba(255,255,255,0.15); letter-spacing:0.2px; }' +
+            '.cath05-table thead th { position:sticky; top:0; z-index:2; background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; font-weight:normal; padding:10px 8px; border-right:1px solid rgba(255,255,255,0.15); letter-spacing:0.2px; text-align:center; }' +
             '.cath05-table thead th:last-child { border-right:none; }' +
             '.cath05-table tbody td { padding:8px 8px; border-bottom:1px solid #eef1f5; vertical-align:middle; }' +
             '.cath05-table tbody tr:nth-child(even) { background:#fafbfc; }' +
@@ -716,7 +725,7 @@ function fn_ShowCath05Modal() {
     }
     function _fmtIndwell(v) {
         if (v === '1' || v === 'Y') return '<span style="color:#28a745;font-weight:700;">✓</span>';
-        if (!v) return '<span style="color:#b0b6bf;">-</span>';
+        if (!v || v === '0' || v === 0) return '<span style="color:#b0b6bf;">-</span>';
         return $('<div>').text(v).html();
     }
 
@@ -981,7 +990,7 @@ function _cath05RenderSpcsuga(rows) {
                '<th style="' + _thSt + '">구분</th>' +
                '<th style="' + _thSt + '">적용년월</th>' +
                '<th style="' + _thSt + '">환자명</th>' +
-               '<th style="' + _thSt + '">주민(6)</th>' +
+               '<th style="' + _thSt + '">주민번호</th>' +
                '<th style="' + _thSt + '">입원일</th>' +
                '<th style="' + _thSt + ' border-right:none;">오더일</th>' +
                '</tr></thead><tbody>';
