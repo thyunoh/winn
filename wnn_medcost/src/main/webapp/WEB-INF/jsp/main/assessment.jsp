@@ -1699,7 +1699,8 @@ function showIndiSummary(data) {
 		} else if (data.fiveZone && data.fiveZone.trim() !== '') {
 			targetMsg = '5점 도달 필요: <b>' + data.fiveZone + '</b>';
 		}
-		var scoreDiff = (stdweig - weigval).toFixed(1);
+		/* 만점 대비 부족 점수 — 기본 소수점 2자리, 둘째자리가 0 이면 절사 (예: 3.52→3.52, 3.50→3.5, 3.00→3.0) */
+		var scoreDiff = (stdweig - weigval).toFixed(2).replace(/0$/, '');
 		var detailLine = '→ 5점 구간: ' + rangeText;
 		if (targetMsg) detailLine += ' | ' + targetMsg;
 		html = '<div class="indi-summary-warn">' +
