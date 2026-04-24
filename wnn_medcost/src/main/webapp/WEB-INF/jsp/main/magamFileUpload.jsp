@@ -2058,7 +2058,7 @@ function excelUpdateMappingCnt() {
 		bg = '#fff3cd'; border = '#ffc107'; color = '#856404';
 	} else {
 		// 등록 가능
-		text = '<i class="fa fa-check-circle mr-1"></i>등록 가능 ' +
+		text = '<i class="fa fa-check-circle mr-1"></i>매핑된 헤더' +
 		       '<span style="font-weight:normal; opacity:0.75;">(' + mappedCount + '/' + total + ' 매핑됨)</span>';
 		bg = '#d4edda'; border = '#28a745'; color = '#155724';
 	}

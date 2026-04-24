@@ -1449,19 +1449,23 @@
 		    ON sb.HOSP_CD = pm.HOSP_CD
 		   AND sb.PAT_ID  = pm.PAT_ID
 	</select>
-	<!-- 진단코드 → 진단명 매핑 (경량 조회, 다빈도 상병순위 클라이언트 집계 후 사용) -->
+	<!-- 진단코드 → 진단명 매핑 (TBL_CODE_DTL 공통코드 3자리 prefix, f_tong_04 방식 참조)
+	     - CODE_GB='Z', CODE_CD='DISEASE_TYPE' 사전에 LEFT(DIAG_CODE,3) 이 있으면 SUB_CODE_NM 반환
+	     - 없거나 'ZZ' 이면 diagName='기타' -->
 	<select id="select_DiagNames" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
-		SELECT DIAG_CODE                            AS diagCode
-		     , MIN(KOR_DIAG_NAME)                   AS diagName
-		  FROM TBL_DISE_CODE
-		 WHERE ACTION_YN = 'Y'
-		<if test="codes != null and codes.size() > 0">
-		   AND DIAG_CODE IN
-		   <foreach collection="codes" item="c" open="(" separator="," close=")">
-		       #{c}
-		   </foreach>
-		</if>
-		 GROUP BY DIAG_CODE
+		SELECT C.DIAG_CODE                                   AS diagCode
+		     , IFNULL(M.SUB_CODE_NM, '기타')                 AS diagName
+		  FROM (
+		<foreach collection="codes" item="c" separator="UNION ALL">
+		        SELECT #{c} AS DIAG_CODE
+		</foreach>
+		       ) C
+		  LEFT JOIN TBL_CODE_DTL M
+		         ON M.CODE_GB    = 'Z'
+		        AND M.CODE_CD    = 'DISEASE_TYPE'
+		        AND M.SUB_CODE   = LEFT(C.DIAG_CODE, 3)
+		        AND M.SUB_CODE  <![CDATA[ <> ]]> 'ZZ'
+		        AND M.ACTION_YN  = 'Y'
 	</select>
 
 	<!-- 다빈도 상병순위별 (jobFlag=07) — 항정신성 처방 대상자(psyOrderYn='●')의 진단명 집계
@@ -4236,9 +4240,9 @@
 		     AND P.PAT_ID IS NULL
 		     -- 오더 범위: JOBYYMM(청구월) 이 당월인 것만 (D4/D6 과 통일)
 		     AND COALESCE(S.JOBYYMM,'') = #{jobYymm}
-		     -- 당월 평가표 존재 여부 (없으면 오류 제외 — D7 에서 커버)
-		     AND EXISTS (
-		           SELECT 1 FROM TBL_PATVAL_MST PX
+		     -- [규칙변경] 당월 평가표 MAX(DOC_DT) 이하 오더만 검증 + 당월 평가표 없으면 MAX=NULL 이 되어 자동 제외
+		     AND S.MED_START <![CDATA[ <= ]]> (
+		           SELECT MAX(PX.DOC_DT) FROM TBL_PATVAL_MST PX
 		            WHERE PX.HOSP_CD = S.HOSP_CD
 		              AND LEFT(PX.PAT_ID,6) = LEFT(S.JUMINNO,6)
 		              AND REPLACE(PX.ADMIT_DT,'-','') = S.IPWONDT
@@ -4291,6 +4295,8 @@
 		         )
 		     -- 오더 범위: JOBYYMM=당월 (우측 패널 '해당월' 기준과 동일)
 		     AND COALESCE(S.JOBYYMM,'') = #{jobYymm}
+		     -- [규칙변경] 평가표 작성일 이후 오더는 검증 제외 (차기 평가표에서 반영될 오더)
+		     AND S.MED_START <![CDATA[ <= ]]> P.DOC_DT
 
 		UNION ALL
 
@@ -4437,47 +4443,8 @@
 		                    OR S2.KOR_NAME LIKE '%유치도뇨%' )
 		         )
 
-		UNION ALL
-
-		-- [크로스체크 D7] 수가기준 추가 — 오더(M0060) 당월 있으나 당월 환자평가표 자체가 없음
-		-- (D3는 '평가표는 있는데 INDWELL_CATH='1' 행 없음' 만 커버하므로, 평가표 아예 없음 케이스를 별도 분리)
-		  SELECT DISTINCT
-		         LEFT(S.JUMINNO,6)                                  AS patId
-		       , COALESCE(S.CHARTNO,'')                             AS chartNo
-		       , CASE WHEN CHAR_LENGTH(COALESCE(S.PATNAME, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(S.PATNAME, ''), CHAR_LENGTH(COALESCE(S.PATNAME, '')) - 1), '*')
-		              ELSE '' END                                   AS patNm
-		       , S.IPWONDT                                          AS admitDt
-		       , S.MED_START                                        AS medStart
-		       , ''                                                 AS docDt
-		       , ''                                                 AS evalType
-		       , ''                                                 AS patClass
-		       , ''                                                 AS indwellCath
-		       , (SELECT MAX(PP.INDWELL_CATH) FROM TBL_PATVAL_MST PP
-		           WHERE PP.HOSP_CD = S.HOSP_CD
-		             AND LEFT(PP.PAT_ID,6) = LEFT(S.JUMINNO,6)
-		             AND PP.MED_START LIKE CONCAT(
-		                  DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{jobYymm},'01'),'%Y%m%d'), INTERVAL 1 MONTH),'%Y%m'),'%'))
-		                                                            AS prevIndwellCath
-		       , 'D7'                                               AS errType
-		       , CONCAT('[오더O/평가표없음] 오더 유치도뇨관 삽입(', S.MED_START, ') 기록 있으나 당월 환자평가표 자체가 없음') AS errName
-		    FROM TBL_SPCSUGA_INFO S
-		   WHERE S.HOSP_CD = #{hospCd}
-		     AND (    S.EDI_CODE IN ('M0060')
-		           OR S.SUGA_CD  IN ('M0060')
-		           OR S.KOR_NAME LIKE '%유치%카테터%'
-		           OR S.KOR_NAME LIKE '%유치도뇨%' )
-		     AND COALESCE(S.MED_START,'') != ''
-		     -- 오더 범위: JOBYYMM(청구월) 이 당월인 것만 (D3/D4/D6 과 통일)
-		     AND COALESCE(S.JOBYYMM,'') = #{jobYymm}
-		     -- 당월 평가표 자체가 없는 환자만
-		     AND NOT EXISTS (
-		           SELECT 1 FROM TBL_PATVAL_MST PX
-		            WHERE PX.HOSP_CD = S.HOSP_CD
-		              AND LEFT(PX.PAT_ID,6) = LEFT(S.JUMINNO,6)
-		              AND REPLACE(PX.ADMIT_DT,'-','') = S.IPWONDT
-		              AND PX.MED_START LIKE CONCAT(#{jobYymm},'%')
-		         )
+		-- [규칙변경 2026-04-24] D7 제거: 당월 평가표가 없으면 수가 있어도 오류 미검출
+		--   (D3/D4/D6 각 블록이 "당월 평가표 존재" 조건을 내포하므로 전체 제외와 동일)
 
 		ORDER BY errType, patId
 	</select>

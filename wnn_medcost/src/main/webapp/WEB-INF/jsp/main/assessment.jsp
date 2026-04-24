@@ -533,10 +533,10 @@ function fn_UpdateCath05Buttons() {
         }
 
         // ★ [제외2] 평가구분 2·계속입원 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
-        //   예외: D3/D7(오더O/평가표X, 평가표없음)은 전월 상태와 무관하게 당월 오더가 있으면 오류로 잡음
+        //   예외: D3(오더O/평가표X)는 전월 상태와 무관하게 당월 오더가 있으면 오류로 잡음
         if (String(er2.evalType || '') === '2') {
             var _et2b = String(er2.errType || '');
-            if (_et2b !== 'D3' && _et2b !== 'D7') {
+            if (_et2b !== 'D3') {
                 var prevCath2 = (er2.prevIndwellCath === undefined) ? null : String(er2.prevIndwellCath || '');
                 if (prevCath2 !== null && prevCath2 !== '1' && prevCath2 !== 'Y') continue;
             }
@@ -614,10 +614,10 @@ function fn_ShowCath05Modal() {
         // ★ [제외2] 평가구분 2·계속입원중 + 전월 유치도뇨관 제거된 대상자는 오류에서 제외
         //    서버 필드 관례: prevIndwellCath 가 제공되면 '0' 또는 빈값 = 제거됨
         //    prevIndwellCath 미제공 시엔 기존 동작 유지 (서버 SQL 개선 전까지)
-        //    예외: D3/D7(오더O/평가표X, 평가표없음) 은 전월 상태와 무관하게 당월 오더가 있으면 오류로 잡음
+        //    예외: D3(오더O/평가표X) 는 전월 상태와 무관하게 당월 오더가 있으면 오류로 잡음
         if (String(er.evalType || '') === '2') {
             var _et2 = String(er.errType || '');
-            if (_et2 !== 'D3' && _et2 !== 'D7') {
+            if (_et2 !== 'D3') {
                 var prevCath = (er.prevIndwellCath === undefined) ? null : String(er.prevIndwellCath || '');
                 if (prevCath !== null && prevCath !== '1' && prevCath !== 'Y') {
                     continue;  // 제거됨 → skip
@@ -763,7 +763,7 @@ function fn_ShowCath05Modal() {
                 var iss = p.issues[b];
                 badges += '<div class="cath05-badge-wrap" style="color:' + iss.color + ';"><span class="cath05-badge" style="color:' + iss.color + ';">' + $('<div>').text(iss.label).html() + '</span></div>';
             }
-            html += '<tr class="cath05-row" data-patid="' + p.patId + '" data-admitdt="' + (p.admitDt || '') + '" data-eval="' + (p.evalType || '') + '" style="cursor:pointer;">' +
+            html += '<tr class="cath05-row" data-patid="' + p.patId + '" data-admitdt="' + (p.admitDt || '') + '" data-eval="' + (p.evalType || '') + '" data-docdt="' + (p.docDt || '') + '" style="cursor:pointer;">' +
                     '<td class="cath05-rowno"   style="text-align:center;"></td>' +  // 순번은 필터링 후 재계산
                     '<td class="cath05-patid"   style="text-align:center;">' + p.patId + '</td>' +
                     '<td class="cath05-patnm"   style="text-align:center;">' + p.patNm + '</td>' +
@@ -835,12 +835,13 @@ function _cath05BindRowClick() {
         $(this).addClass('cath05-selected');
         var patId   = $(this).data('patid')   || '';
         var admitDt = $(this).data('admitdt') || '';
+        var docDt   = $(this).data('docdt')   || '';
         if (!patId || !admitDt) return;
-        _cath05LoadDetail(String(patId), String(admitDt).replace(/-/g, ''));
+        _cath05LoadDetail(String(patId), String(admitDt).replace(/-/g, ''), String(docDt).replace(/-/g, ''));
     });
 }
 
-function _cath05LoadDetail(patId, admitDt) {
+function _cath05LoadDetail(patId, admitDt, maxDocDt) {
     var $zone = $('#cath05DetailZone');
     var $hdr  = $('#cath05DetailHeader');
     var $pv   = $('#cath05DetailPatval');
@@ -863,7 +864,8 @@ function _cath05LoadDetail(patId, admitDt) {
         success: function(res) {
             $hdr.html('환자ID <b>' + patId + '</b> · 입원일 <b>' + admitDt + '</b>');
             $pv.html(_cath05RenderPatval(res.patval  || []));
-            $sp.html(_cath05RenderSpcsuga(res.spcsuga || []));
+            // 상단 작성일 기준으로 오더 MED_START ≤ 작성일 인 행만 표시
+            $sp.html(_cath05RenderSpcsuga(res.spcsuga || [], maxDocDt));
         },
         error: function() {
             $pv.html('<div style="padding:20px; text-align:center; color:#dc3545;">조회 실패</div>');
@@ -946,8 +948,19 @@ function _cath05RenderPatval(rows) {
     return html;
 }
 
-function _cath05RenderSpcsuga(rows) {
+function _cath05RenderSpcsuga(rows, maxDocDt) {
     if (!rows || rows.length === 0) {
+        return '<div style="padding:20px; text-align:center; color:#888;">데이터 없음</div>';
+    }
+    // 작성일(MAX DOC_DT) 이후 오더는 제외 — 차기 평가표에서 반영될 오더
+    var cutoff = (maxDocDt || '').replace(/-/g, '');
+    if (cutoff) {
+        rows = rows.filter(function(r) {
+            var ms = (r.medStart || '').replace(/-/g, '');
+            return !ms || ms <= cutoff;
+        });
+    }
+    if (rows.length === 0) {
         return '<div style="padding:20px; text-align:center; color:#888;">데이터 없음</div>';
     }
     // 이전월 / 해당월 그룹 분리
@@ -1324,27 +1337,29 @@ function fn_ShowDiagRank07Modal() {
         return;
     }
 
-    /* (2) 항정신성 처방(psyOrderYn='●') 행만 골라 주진단(mainDiagCd)별 환자수 집계 */
-    var diagMap = {};   // { diagCode : { patKey : true, ... } }
+    /* (2) 항정신성 처방(psyOrderYn='●') 행만 골라 주진단 3자리 prefix 별 환자수 집계
+           예) G819 → G81, I639 → I63 (TBL_CODE_DTL SUB_CODE 와 매칭) */
+    var diagMap = {};   // { prefix3 : { patKey : true, ... } }
     for (var i = 0; i < rows.length; i++) {
         var r = rows[i] || {};
         if (r.psyOrderYn !== '●') continue;
-        var code = (r.mainDiagCd || '').toString().trim();
+        var code = (r.mainDiagCd || '').toString().trim().toUpperCase();
         if (!code) continue;
+        var prefix = code.substr(0, 3);
+        if (!prefix) continue;
         var key = (r.patId || r.chartNo || '') + '|' + (r.admitDt || '');
-        if (!diagMap[code]) diagMap[code] = {};
-        diagMap[code][key] = true;
+        if (!diagMap[prefix]) diagMap[prefix] = {};
+        diagMap[prefix][key] = true;
     }
 
     var codes = Object.keys(diagMap);
     if (codes.length === 0) {
         _diagRank07Data = [];
         _renderDiagRank07Modal([]);
-        /* 뱃지 제거됨 */
         return;
     }
 
-    /* (3) 진단코드 리스트만 서버에 보내 진단명 매칭 (가벼운 조회, 로딩 메시지 없음) */
+    /* (3) 진단코드 리스트만 서버에 보내 진단명 매칭 (공통코드 TBL_CODE_DTL — CODE_GB='Z', CODE_CD='DISEASE_TYPE', LEFT(code,3) prefix) */
     $.ajax({
         url: '/main/select_DiagNames.do',
         type: 'POST',
@@ -1367,15 +1382,30 @@ function fn_ShowDiagRank07Modal() {
 
 function _buildDiag07ListAndRender(codes, diagMap, nameMap) {
     var list = [];
+    var zzKeys = {};   // 공통코드 미매칭 3자리는 ZZ 한 행으로 통합 (항상 맨 아래)
     for (var i = 0; i < codes.length; i++) {
         var c = codes[i];
-        list.push({
-            diagCode: c,
-            diagName: nameMap[c] || '',
-            diagCnt:  String(Object.keys(diagMap[c]).length)
-        });
+        var nm = nameMap[c];
+        if (nm && nm !== '기타' && nm !== '기타병명') {
+            list.push({
+                diagCode: c,
+                diagName: nm,
+                diagCnt:  String(Object.keys(diagMap[c]).length)
+            });
+        } else {
+            var ks = diagMap[c] || {};
+            for (var pk in ks) zzKeys[pk] = true;
+        }
+    }
+    var zzCnt = Object.keys(zzKeys).length;
+    if (zzCnt > 0) {
+        list.push({ diagCode: 'ZZ', diagName: '기타병명', diagCnt: String(zzCnt) });
     }
     list.sort(function(a, b) {
+        /* ZZ(기타병명) 은 항상 맨 아래 */
+        var aEtc = (a.diagCode === 'ZZ') ? 1 : 0;
+        var bEtc = (b.diagCode === 'ZZ') ? 1 : 0;
+        if (aEtc !== bEtc) return aEtc - bEtc;
         var ca = parseInt(a.diagCnt, 10) || 0;
         var cb = parseInt(b.diagCnt, 10) || 0;
         if (cb !== ca) return cb - ca;
@@ -1383,7 +1413,6 @@ function _buildDiag07ListAndRender(codes, diagMap, nameMap) {
     });
     _diagRank07Data = list;
     _renderDiagRank07Modal(list);
-    /* 버튼 뱃지 제거됨 — 건수 표시 안 함 */
 }
 
 /* 정렬 상태 — 진단건수 DESC 기본 */
@@ -1394,6 +1423,10 @@ function _sortDiag07(list) {
     var key = _diag07SortKey, dir = _diag07SortDir;
     var sign = (dir === 'asc') ? 1 : -1;
     list.sort(function(a, b) {
+        /* ZZ(기타병명) 은 정렬 방향과 무관하게 항상 맨 아래 */
+        var aEtc = (a.diagCode === 'ZZ') ? 1 : 0;
+        var bEtc = (b.diagCode === 'ZZ') ? 1 : 0;
+        if (aEtc !== bEtc) return aEtc - bEtc;
         var va, vb;
         if (key === 'diagCnt') {
             va = parseInt(a.diagCnt, 10) || 0;
@@ -1421,9 +1454,11 @@ function _diag07TbodyHtml(list) {
         var code = (r.diagCode || '').toString();
         var name = (r.diagName || '').toString();
         var cnt  = (r.diagCnt  || '0').toString();
+        /* ZZ 는 맨 아래 배치 효과만 유지하고 화면상 진단코드는 공백 처리 */
+        var codeDisp = (code === 'ZZ') ? '' : code;
         html += '<tr>' +
                 '<td class="diag07-rowno">' + (i+1) + '</td>' +
-                '<td class="diag07-code">' + code + '</td>' +
+                '<td class="diag07-code">' + codeDisp + '</td>' +
                 '<td class="diag07-name">' + name + '</td>' +
                 '<td class="diag07-cnt">' + cnt + '</td>' +
                 '</tr>';
@@ -1447,6 +1482,11 @@ function _diag07SortInd(col) {
 
 function _renderDiagRank07Modal(list) {
     var total = (list || []).length;
+    /* 진단건수 합계 (행 건수가 아닌, 각 행의 diagCnt 합) */
+    var sumCnt = 0;
+    for (var _si = 0; _si < (list || []).length; _si++) {
+        sumCnt += parseInt((list[_si] || {}).diagCnt, 10) || 0;
+    }
     var html;
     if (total === 0) {
         html = '<div style="padding:30px; text-align:center; color:#6c757d; font-size:14px;">' +
@@ -1457,7 +1497,7 @@ function _renderDiagRank07Modal(list) {
         _sortDiag07(list);
 
         html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">' +
-                  '<span style="font-weight:600; color:#1e3c72;">총 <b style="color:#c0392b;">' + total + '</b> 건</span>' +
+                  '<span style="font-weight:600; color:#1e3c72;">총 <b style="color:#c0392b;">' + sumCnt + '</b> 건</span>' +
                   '<button type="button" class="diag07-inline-excel-btn" id="btnDiag07ExcelInline">' +
                       '<i class="fa fa-file-excel"></i>엑셀 저장' +
                   '</button>' +
@@ -3873,7 +3913,12 @@ function dataLoad(data, callback, settings) {
 //   - cath05 오류점검 데이터(_errCheckData)와 매칭되는 항목은 상단 배지로 강조
 // =====================================================================
 
-function _pvIsEmpty(v) { return v === null || v === undefined || v === ''; }
+function _pvIsEmpty(v) {
+    if (v === null || v === undefined || v === '') return true;
+    // 전체적으로 '0' / '00' 은 '-' 로 (무의미 값)
+    var s = String(v).trim();
+    return s === '0' || s === '00';
+}
 function _pvEmptyMark() { return '<span class="pv-empty" style="color:#b0b6bf;">-</span>'; }
 
 // 서버 응답 키가 UPPERCASE(AUTH_DOC) 또는 snake(auth_doc)로 와도 카멜(authDoc)로 접근 가능하게 정규화
@@ -3971,6 +4016,9 @@ function _pvCd(codeGroup, v) {
 }
 function _pvTxt(v) {
     if (_pvIsEmpty(v)) return _pvEmptyMark();
+    var s = String(v).trim();
+    // 전체 값에서 '0' 또는 '00' 은 '-' 표시 (무의미 값)
+    if (s === '0' || s === '00') return _pvEmptyMark();
     return $('<div>').text(v).html();
 }
 function _pvDt(v) {
@@ -3978,6 +4026,13 @@ function _pvDt(v) {
     var s = String(v).replace(/[^0-9]/g,'');
     if (s.length === 8) return s.substr(0,4) + '-' + s.substr(4,2) + '-' + s.substr(6,2);
     return _pvTxt(v);
+}
+// 상단 환자ID 마스킹 (앞뒤 모두 * 처리: ******-*******)
+function _pvMaskPatId(v) {
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
+    var s = String(v).replace(/-/g,'').trim();
+    if (s.length < 7) return $('<div>').text(new Array(s.length + 1).join('*')).html();
+    return $('<div>').text('******-*******').html();
 }
 
 function fn_UpdatePatvalBtnState(row) {
@@ -4193,14 +4248,13 @@ function _pvBuildHtml(d, row) {
     d = d || {};
     var header = '' +
         '<div class="pv-head">' +
-        '  <div class="pv-head-item"><span class="lbl">환자ID</span><span class="val">' + _pvTxt(d.patId || row.patId) + '</span></div>' +
+        '  <div class="pv-head-item"><span class="lbl">환자ID</span><span class="val">' + _pvMaskPatId(d.patId || row.patId) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">성명</span><span class="val">' + _pvTxt(d.patNm || row.patNm) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">입원일</span><span class="val">' + _pvDt(d.admitDt || row.admitDt) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">요양개시일</span><span class="val">' + _pvDt(d.medStart || row.medStart) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">작성일</span><span class="val">' + _pvDt(d.docDt) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">평가구분</span><span class="val">' + (d.evalType ? $('<div>').text(d.evalType + (_PV_CODES.evalType[d.evalType] ? ' · ' + _PV_CODES.evalType[d.evalType] : '')).html() : '-') + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">서식버전</span><span class="val">' + _pvTxt(d.clformVer) + '</span></div>' +
-        '  <div class="pv-head-item"><span class="lbl">환자분류군</span><span class="val">' + _pvTxt(d.patClass) + '</span></div>' +
         '</div>';
 
     if (!d || !d.patId) {
@@ -4215,7 +4269,7 @@ function _pvBuildHtml(d, row) {
         '  <button class="pv-tab"        data-tab="t2">B·C·D. 의식/인지/신체</button>' +
         '  <button class="pv-tab"        data-tab="t3">E·F. 배설/질병진단</button>' +
         '  <button class="pv-tab"        data-tab="t4">G·H·I. 건강/영양/피부</button>' +
-        '  <button class="pv-tab"        data-tab="t5">J·K·L. 투약/특수처치/작성자</button>' +
+        '  <button class="pv-tab"        data-tab="t5">J·K·L. 투약/특수처치</button>' +
         '</div>';
 
     return '<div style="text-align:left; max-height:70vh; overflow:auto; padding:2px 4px;">' +
@@ -4235,7 +4289,7 @@ function _pvSec(title, icon, items) {
 
 function _pvTab1(d) {
     var s1 = _pvSec('A. 일반사항', 'fa-user', [
-        ['환자성명', _pvTxt(d.patNm)], ['주민등록번호', _pvTxt(d.patId)],
+        ['환자성명', _pvTxt(d.patNm)], ['주민등록번호', _pvMaskPatId(d.patId)],
         ['입원일', _pvDt(d.admitDt)], ['요양개시일', _pvDt(d.medStart)],
         ['평가구분', _pvCd('evalType', d.evalType)], ['작성일', _pvDt(d.docDt)],
         ['입원 직전 있던 곳', _pvCd('lastPlace', d.lastPlace)], ['교육수준', _pvCd('eduLevel', d.eduLevel)]
@@ -4432,11 +4486,8 @@ function _pvTab5(d) {
         ['중심정맥영양', _pvYn(d.cvNutr)],
         ['해당사항 없음', _pvYn(d.specNoa)]
     ]);
-    var s3 = _pvSec('K.2 전문재활치료 / L. 작성자', 'fa-signature', [
-        ['전문재활치료 실시일수', _pvTxt(d.vitalRehab)],
-        ['의사', _pvTxt(d.authDoc)],
-        ['간호사', _pvTxt(d.authNurse)],
-        ['환자분류군', _pvTxt(d.patClass)]
+    var s3 = _pvSec('K.2 전문재활치료', 'fa-signature', [
+        ['전문재활치료 실시일수', _pvTxt(d.vitalRehab)]
     ]);
     return '<div class="pv-pane" data-tab="t5">' + s1 + s2 + s3 + '</div>';
 }

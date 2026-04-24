@@ -44,37 +44,27 @@
 - **관련파일**: Magam_SQL.xml, assessment.jsp (fn_ShowCath05Modal, _cath05EnableDrag, _EVAL_TYPE_MAP)
 - **재수정 주의**: 이전에 그리드 필터를 적용했다가 사용자 선택으로 철회함. 재적용 요청 시 이 방침 먼저 확인
 
-### [완료] 유치도뇨관 크로스체크 D7 신규 추가 — 수가기준 '평가표 자체 없음' (2026-04-23)
-- **배경**: D3는 "평가표는 있는데 INDWELL_CATH='1' 행 없음"만 커버 (EXISTS 당월 평가표). 수가기준으로 M0060 오더가 있는데 **당월 환자평가표 자체가 없는** 케이스는 누락되어 별도 오류로 분리
-- **D7 로직 (Magam_SQL.xml `select_CathCrossCheck`)**:
-  - FROM TBL_SPCSUGA_INFO S (M0060/유치도뇨/카테터)
-  - S.MED_START LIKE `jobYymm%`
-  - **NOT EXISTS** 당월 TBL_PATVAL_MST (patId, admitDt, 당월 MED_START 매칭)
-  - errType='D7', errName=`[오더O/평가표없음] 오더 유치도뇨관 삽입(MED_START) 기록 있으나 당월 환자평가표 자체가 없음`
-- **D3 원본 유지**: D3는 EXISTS(당월 평가표) 그대로, 즉 "평가표 있는데 INDWELL_CATH≠'1'"만 커버 (D7과 상호 배타)
-- **클라이언트 JS (2026-04-24 추가 보정)**: D3/D7 은 evalType='2' + 전월제거 필터 **예외 처리**
-  - 배경: 계속입원 환자가 전월에 유치도뇨관 제거됐어도, 당월 오더에 새 삽입이 찍혔으면 평가표 반영 누락 = D3/D7 오류가 맞음
-  - assessment.jsp 두 곳(`fn_ShowCath05Modal` L604, `fn_UpdateCath05Buttons` L527) 에 `if (errType !== 'D3' && errType !== 'D7')` 래퍼 추가
-  - 기존 skip 로직 내부는 한 글자도 수정하지 않음 (non-D3/D7 errType 처리 동작 100% 보존)
-- **관련파일**: Magam_SQL.xml(select_CathCrossCheck D7 UNION ALL 블록), assessment.jsp(L527, L604 래퍼)
+### [철회] 유치도뇨관 크로스체크 D7 (2026-04-24 제거)
+- **원래 기능**: 오더(M0060) 당월 있으나 당월 평가표 자체가 없는 케이스를 D7 오류로 잡음 (2026-04-23 추가)
+- **철회 사유**: "당월 평가표가 없으면 수가가 있어도 무조건 제외" 방침 확정 (2026-04-24 사용자 요청)
+- **제거 내역**:
+  - Magam_SQL.xml `select_CathCrossCheck`: D7 UNION ALL 블록 전체 삭제
+  - assessment.jsp L527, L604: `if (errType !== 'D3' && errType !== 'D7')` → `if (errType !== 'D3')` 로 축소
+- **재부활 시 주의**: 사용자 요청으로 제거된 기능이므로, 재도입 요청이 올 때 이 방침 먼저 확인
 
-### [완료] 유치도뇨관 크로스체크 D3/D4 기간 필터 + D6 신규 추가 (2026-04-23)
-- **배경**: 오더→평가표 크로스체크가 입원건 전체 기간의 오더를 다 대조해서, 당월 조회인데 다른 달 오더까지 오류로 집계되는 문제
-- **규칙 (당월 기준)**:
-  - 기간 상한 = 당월 평가표 `MAX(DOC_DT)`
-  - 기간 하한 = 전월 평가표 `MIN(DOC_DT) + 1일`, 전월 평가표 없으면 **전월 1일(YYYYMM01)**
-  - 당월 평가표 자체가 없는 환자 → 오류 제외
-- **변경내역 (Magam_SQL.xml `select_CathCrossCheck`)**:
-  - **D3 (오더O/평가표X)**: EXISTS(당월 평가표) + S.MED_START 기간 필터 추가
-  - **D4 (날짜불일치)**: S.MED_START 기간 필터 추가 (INNER JOIN이라 EXISTS는 이미 보장됨)
-  - **D6 신규 추가** (평가표O/오더X, 날짜 단위): CAT_IN_1~10 각 날짜가 오더 M0060에 없으면 오류
-    - 파생테이블 PX로 CAT_IN_1~10을 10-way UNION ALL 펼침
-    - 빈값/`00000000` 제외, 기간 필터 동일 적용
-    - 수가자료 자체가 없는 환자는 D5 영역이므로 제외 (EXISTS M0060)
-    - 메시지: `[D6] [평가표O/오더X] 평가표 삽입일(YYYYMMDD)에 해당하는 오더(M0060) 기록 없음`
+### [완료] 유치도뇨관 크로스체크 작성일 기준 — D3/D4 오더 컷오프 + D6 기간 필터 (2026-04-24 최종)
+- **배경**: 오더→평가표 크로스체크가 "작성일 이후 오더"까지 오류로 집계 → 차기 평가표에서 반영될 오더를 현재 평가에 책임지우는 문제
+- **최종 규칙 (작성일 기준, 2026-04-24)**:
+  - **D3 (오더O/평가표X)**: `S.MED_START <= MAX(당월 PX.DOC_DT)` — MAX가 NULL(=당월 평가표 없음)이면 자동 제외 (EXISTS 블록 대체)
+  - **D4 (날짜불일치)**: `S.MED_START <= P.DOC_DT` — 해당 평가표 작성일 이후 오더는 검증 제외
+  - **D6 (평가표O/오더X, 날짜 단위)**: CAT_IN_1~10 10-way UNION ALL + 기간 필터 (상한 MAX(DOC_DT), 하한 전월 MIN(DOC_DT)+1일 또는 전월1일)
+  - 당월 평가표 없는 환자는 전 블록에서 자동 제외 (D7 철회와 일관)
+- **우측하단 수가(M0060) 패널 필터 (assessment.jsp `_cath05RenderSpcsuga`)**:
+  - 행 클릭 시 선택 행의 `data-docdt` 캡처 → `_cath05LoadDetail(patId, admitDt, docDt)` → `_cath05RenderSpcsuga(rows, maxDocDt)`
+  - `r.medStart > maxDocDt` 행은 렌더링에서 제외 (오류체크 로직과 동일 기준)
 - **XML 주의**: `<=` 는 `<![CDATA[ <= ]]>` 로 감싸야 파싱됨. `>=` 는 그대로 OK
-- **클라이언트 JS**: 수정 불필요 — D6는 A1/A2가 아니므로 1·입원평가 필터에서 자동 제외됨
-- **관련파일**: Magam_SQL.xml(select_CathCrossCheck)
+- **클라이언트 JS 동작**: D6는 A1/A2가 아니므로 1·입원평가 필터에서 자동 제외됨
+- **관련파일**: Magam_SQL.xml(select_CathCrossCheck), assessment.jsp(fn_ShowCath05Modal 행 렌더 L766, _cath05BindRowClick, _cath05LoadDetail, _cath05RenderSpcsuga)
 
 ### [대기] 유치도뇨관 오류점검 — 평가구분별 오류 추가/제외 규칙 (2026-04-?? 요청)
 - **ADD (새 오류로 잡을 케이스)**:

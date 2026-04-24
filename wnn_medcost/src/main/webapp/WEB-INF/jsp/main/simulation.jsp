@@ -45,6 +45,7 @@
 					                <button class="btn btn-outline-primary            btn-sm w-auto mr-3" onClick="fn_ViewData(2)">상반기 보기</button>
 					                <button class="btn btn-outline-success text-green btn-sm w-auto mr-3" onClick="fn_ViewData(3)">하반기 보기</button>
                                 <button class="btn btn-outline-danger btn-sm w-auto mr-3"  style="display: none;"  onClick="fn_EvalChart()">병원별 비교분석</button>
+				                <button class="btn btn-outline-secondary btn-sm w-auto ml-auto" onClick="fn_UncheckAllHosp()"><i class="fas fa-times-circle mr-1"></i>체크해제</button>
 					            </div>
 					        </div>
 					        
@@ -333,6 +334,16 @@ function fn_showProgress(msg) {
 function fn_hideProgress() {
 	var el = document.getElementById('simuProgress');
 	if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+// 좌측 병원 체크박스 전체 해제 (hospitalTable - dataTable[0])
+function fn_UncheckAllHosp() {
+	if (!dataTable[0]) return;
+	dataTable[0].rows().every(function() {
+		var cb = $(this.node()).find('input[type="checkbox"]');
+		if (cb.length > 0) cb.prop('checked', false);
+	});
+	$('#selectAll_0').prop('checked', false);
 }
 
 function fn_ViewData(flag) {
