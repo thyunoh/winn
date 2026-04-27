@@ -1028,10 +1028,10 @@
             AND ACTION_YN     = 'Y'
     ]]>    
     </update>  
-    <select id ="claimCdDupChk" parameterType="ClaimDTO"  resultType="String"><![CDATA[ 
+    <select id ="claimCdDupChk" parameterType="ClaimDTO"  resultType="String"><![CDATA[
       SELECT 'Y'
         FROM TBL_CLAIMRATE_MST
-        WHERE  HOS_GRD       = #{hosGrd} 
+        WHERE  HOS_GRD       = #{hosGrd}
            AND CFORM_NO      = #{cformNo}
            AND MED_COV_TYPE  = #{medCovType}
            AND ACC_TYPE      = #{accType}
@@ -1043,5 +1043,111 @@
            AND START_YM      = #{startYm}
            AND ACTION_YN     = 'Y'
     ]]>
-    </select>    	      	            	        		       	            	        		                              	      
+    </select>
+
+    <!-- ============================================================== -->
+    <!-- 특정코드관리 (TBL_DRUG_MST) - 항정/최면진정 약품                  -->
+    <!-- ============================================================== -->
+    <select id="getDrugMstList" parameterType="DrugMstDTO" resultType="DrugMstDTO"><![CDATA[
+        SELECT
+             EDI_CODE
+            ,ATC_CODE
+            ,CODEFLAG  AS CODE_FLAG
+            ,CASE WHEN CODEFLAG = 'A' THEN 'A.항정'
+                  WHEN CODEFLAG = 'B' THEN 'B.최면/진정'
+                  ELSE CODEFLAG END AS CODE_FLAG_NM
+            ,DRUG_ING
+            ,DRUGNAME  AS DRUG_NAME
+            ,COMPNAME  AS COMP_NAME
+            ,EDI_NAME
+            ,DRUGSIZE  AS DRUG_SIZE
+            ,CANCELDT  AS CANCEL_DT
+            ,REG_DTTM
+            ,REG_USER
+            ,REG_IP
+            ,UPD_DTTM
+            ,UPD_USER
+            ,UPD_IP
+          FROM TBL_DRUG_MST
+         WHERE 1=1
+        ]]>
+        <if test="codeFlag != null and codeFlag != ''">
+            AND CODEFLAG = #{codeFlag}
+        </if>
+        <if test="findData != null and findData != ''"><![CDATA[
+            AND ( EDI_CODE LIKE CONCAT('%', #{findData}, '%')
+               OR EDI_NAME LIKE CONCAT('%', #{findData}, '%')
+               OR DRUGNAME LIKE CONCAT('%', #{findData}, '%')
+               OR DRUG_ING LIKE CONCAT('%', #{findData}, '%')
+               OR COMPNAME LIKE CONCAT('%', #{findData}, '%') )
+        ]]></if>
+        <![CDATA[
+         ORDER BY CODEFLAG, EDI_CODE
+        ]]>
+    </select>
+
+    <insert id="insertDrugMst" parameterType="DrugMstDTO"><![CDATA[
+        INSERT INTO TBL_DRUG_MST (
+             EDI_CODE
+            ,ATC_CODE
+            ,CODEFLAG
+            ,DRUG_ING
+            ,DRUGNAME
+            ,COMPNAME
+            ,EDI_NAME
+            ,DRUGSIZE
+            ,CANCELDT
+            ,REG_DTTM
+            ,REG_USER
+            ,REG_IP
+            ,UPD_DTTM
+            ,UPD_USER
+            ,UPD_IP
+        ) VALUES (
+             #{ediCode}
+            ,#{atcCode}
+            ,#{codeFlag}
+            ,#{drugIng}
+            ,#{drugName}
+            ,#{compName}
+            ,#{ediName}
+            ,#{drugSize}
+            ,#{cancelDt}
+            ,NOW()
+            ,#{regUser}
+            ,#{regIp}
+            ,NOW()
+            ,#{updUser}
+            ,#{updIp}
+        )
+    ]]></insert>
+
+    <update id="updateDrugMst" parameterType="DrugMstDTO"><![CDATA[
+        UPDATE TBL_DRUG_MST
+           SET ATC_CODE  = #{atcCode}
+              ,DRUG_ING  = #{drugIng}
+              ,DRUGNAME  = #{drugName}
+              ,COMPNAME  = #{compName}
+              ,EDI_NAME  = #{ediName}
+              ,DRUGSIZE  = #{drugSize}
+              ,CANCELDT  = #{cancelDt}
+              ,UPD_DTTM  = NOW()
+              ,UPD_USER  = #{updUser}
+              ,UPD_IP    = #{updIp}
+         WHERE EDI_CODE  = #{ediCode}
+           AND CODEFLAG  = #{codeFlag}
+    ]]></update>
+
+    <delete id="deleteDrugMst" parameterType="DrugMstDTO"><![CDATA[
+        DELETE FROM TBL_DRUG_MST
+         WHERE EDI_CODE = #{ediCode}
+           AND CODEFLAG = #{codeFlag}
+    ]]></delete>
+
+    <select id="DrugMstDupChk" parameterType="DrugMstDTO" resultType="String"><![CDATA[
+        SELECT 'Y'
+          FROM TBL_DRUG_MST
+         WHERE EDI_CODE = #{ediCode}
+           AND CODEFLAG = #{codeFlag}
+    ]]></select>
 </mapper>

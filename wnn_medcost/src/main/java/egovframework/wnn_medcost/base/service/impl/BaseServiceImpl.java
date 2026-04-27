@@ -22,6 +22,7 @@ import egovframework.wnn_medcost.base.model.SamverDTO;
 import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
 import egovframework.wnn_medcost.base.model.YakgaCdDTO;
+import egovframework.wnn_medcost.base.model.DrugMstDTO;
 import egovframework.wnn_medcost.base.service.BaseService;
 
 @Service("BaseService")
@@ -305,5 +306,29 @@ public class BaseServiceImpl implements BaseService {
 		return mapper.copWvalueList(dto);
 	}
 
+	@Override
+	public List<DrugMstDTO> getDrugMstList(DrugMstDTO dto) throws Exception {
+		return mapper.getDrugMstList(dto);
+	}
+
+	@Override
+	public boolean insertDrugMst(DrugMstDTO dto) throws Exception {
+		return mapper.insertDrugMst(dto);
+	}
+
+	@Override
+	public boolean updateDrugMst(DrugMstDTO dto) throws Exception {
+		return mapper.updateDrugMst(dto);
+	}
+
+	@Override
+	public boolean deleteDrugMst(DrugMstDTO dto) throws Exception {
+		return mapper.deleteDrugMst(dto);
+	}
+
+	@Override
+	public String DrugMstDupChk(DrugMstDTO dto) throws Exception {
+		return mapper.DrugMstDupChk(dto);
+	}
 
 }

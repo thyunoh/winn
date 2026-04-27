@@ -229,6 +229,9 @@
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/base/wvalcd.do">적정성지표</a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link"  href="/base/specsuga.do">특정코드관리</a>
+                                            </li>
                                         </ul>
                                     </div>
                                 </li>

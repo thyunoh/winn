@@ -12,6 +12,7 @@ import egovframework.wnn_medcost.base.model.SugaCdDTO;
 import egovframework.wnn_medcost.base.model.WvalDTO;
 import egovframework.wnn_medcost.base.model.YakgaCdDTO;
 import egovframework.wnn_medcost.base.model.JearyoCdDTO;
+import egovframework.wnn_medcost.base.model.DrugMstDTO;
 @Mapper("baseMapper")
 public interface BaseMapper {	
 	
@@ -66,8 +67,15 @@ public interface BaseMapper {
 	List<JearyoCdDTO>  getJaeryoCdList(JearyoCdDTO dto)  throws Exception;
 	
 	//청구율
-	List<ClaimDTO>     getclaimCdList(ClaimDTO dto)   throws Exception; 
-	boolean            insertclaimCd(ClaimDTO dto)    throws Exception; 
-	boolean            updateclaimCd(ClaimDTO dto)    throws Exception; 
-	String             claimCdDupChk(ClaimDTO dto)    throws Exception; 
+	List<ClaimDTO>     getclaimCdList(ClaimDTO dto)   throws Exception;
+	boolean            insertclaimCd(ClaimDTO dto)    throws Exception;
+	boolean            updateclaimCd(ClaimDTO dto)    throws Exception;
+	String             claimCdDupChk(ClaimDTO dto)    throws Exception;
+
+	//특정코드관리(항정/최면진정 약품)
+	List<DrugMstDTO>   getDrugMstList(DrugMstDTO dto) throws Exception;
+	boolean            insertDrugMst(DrugMstDTO dto)  throws Exception;
+	boolean            updateDrugMst(DrugMstDTO dto)  throws Exception;
+	boolean            deleteDrugMst(DrugMstDTO dto)  throws Exception;
+	String             DrugMstDupChk(DrugMstDTO dto)  throws Exception;
 }                     

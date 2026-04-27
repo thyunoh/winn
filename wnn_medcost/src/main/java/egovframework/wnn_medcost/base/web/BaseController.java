@@ -38,6 +38,7 @@ import egovframework.wnn_medcost.base.model.YakgaCdDTO;
 import egovframework.wnn_medcost.base.model.DiseCdDTO;
 import egovframework.wnn_medcost.base.model.JearyoCdDTO;
 import egovframework.wnn_medcost.base.model.SamverDTO;
+import egovframework.wnn_medcost.base.model.DrugMstDTO;
 import egovframework.wnn_medcost.base.service.BaseService;
 import egovframework.wnn_medcost.util.ResponseObject;
 import egovframework.util.ClientInfo;
@@ -1499,12 +1500,102 @@ public class BaseController {
         		dto.setEdiFcode(dto.getKeyedifcode());
         		dto.setEdiTcode(dto.getKeyeditcode());
         		dto.setStartYm(dto.getKeystartYm());
-        		svc.updateclaimCd(dto) ; //이력관리 
+        		svc.updateclaimCd(dto) ; //이력관리
        		    System.out.println("Key CformNo: " + dto.getKeycformNo());
             }
-        	return ResponseEntity.ok(returnValue);   
+        	return ResponseEntity.ok(returnValue);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
-	}	
+	}
+
+	// ============================================================
+	// 특정코드관리 (TBL_DRUG_MST - 항정/최면진정 약품)
+	// ============================================================
+	@RequestMapping(value="/specsuga.do")
+	public String specsuga(HttpServletRequest request, ModelMap model) {
+		cookie_value = ClientInfo.getCookie(request);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/base/specsuga";
+			} else {
+				return "";
+			}
+		} catch(Exception ex) {
+			return "";
+		}
+	}
+
+	@RequestMapping(value="/drugMstList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> getDrugMstList(@ModelAttribute("DTO") DrugMstDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		cookie_value = ClientInfo.getCookie(request);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				List<DrugMstDTO> list = svc.getDrugMstList(dto);
+				Map<String, Object> response = new HashMap<>();
+				response.put("data", list);
+				return response;
+			} else {
+				return null;
+			}
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
+	@RequestMapping(value="/drugMstInsert.do", method = RequestMethod.POST)
+	public ResponseEntity<String> drugMstInsert(@RequestBody List<DrugMstDTO> data) {
+		String returnValue = "OK";
+		try {
+			for (DrugMstDTO dto : data) {
+				String dupchk = svc.DrugMstDupChk(dto);
+				if ("Y".equals(dupchk)) {
+					return ResponseEntity.status(400).body(dto.getEdiCode());
+				}
+				svc.insertDrugMst(dto);
+			}
+			return ResponseEntity.ok(returnValue);
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body(e.getMessage());
+		}
+	}
+
+	@RequestMapping(value="/drugMstUpdate.do", method = RequestMethod.POST)
+	public ResponseEntity<String> drugMstUpdate(@RequestBody List<DrugMstDTO> data) {
+		String returnValue = "OK";
+		try {
+			for (DrugMstDTO dto : data) {
+				if (dto.getKeyediCode() != null && !dto.getKeyediCode().isEmpty()) {
+					dto.setEdiCode(dto.getKeyediCode());
+				}
+				if (dto.getKeycodeFlag() != null && !dto.getKeycodeFlag().isEmpty()) {
+					dto.setCodeFlag(dto.getKeycodeFlag());
+				}
+				svc.updateDrugMst(dto);
+			}
+			return ResponseEntity.ok(returnValue);
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body(e.getMessage());
+		}
+	}
+
+	@RequestMapping(value="/drugMstDelete.do", method = RequestMethod.POST)
+	public ResponseEntity<String> drugMstDelete(@RequestBody List<DrugMstDTO> data) {
+		String returnValue = "OK";
+		try {
+			for (DrugMstDTO dto : data) {
+				dto.setEdiCode(dto.getKeyediCode());
+				dto.setCodeFlag(dto.getKeycodeFlag());
+				svc.deleteDrugMst(dto);
+			}
+			return ResponseEntity.ok(returnValue);
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body(e.getMessage());
+		}
+	}
+
 }

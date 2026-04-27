@@ -27,6 +27,7 @@
     	<typeAlias  alias="YakgaCdDTO"  type="egovframework.wnn_medcost.base.model.YakgaCdDTO"/>
     	<typeAlias  alias="JearyoCdDTO" type="egovframework.wnn_medcost.base.model.JearyoCdDTO"/>
     	<typeAlias  alias="ClaimDTO"    type="egovframework.wnn_medcost.base.model.ClaimDTO"/>
+    	<typeAlias  alias="DrugMstDTO"  type="egovframework.wnn_medcost.base.model.DrugMstDTO"/>
     	
     	<typeAlias  alias="FaqDTO"      type="egovframework.wnn_medcost.mangr.model.FaqDTO"/>
     	<typeAlias  alias="NotiDTO"     type="egovframework.wnn_medcost.mangr.model.NotiDTO"/>
