@@ -1050,39 +1050,42 @@
     <!-- ============================================================== -->
     <select id="getDrugMstList" parameterType="DrugMstDTO" resultType="DrugMstDTO"><![CDATA[
         SELECT
-             EDI_CODE
-            ,ATC_CODE
-            ,CODEFLAG  AS CODE_FLAG
-            ,CASE WHEN CODEFLAG = 'A' THEN 'A.항정'
-                  WHEN CODEFLAG = 'B' THEN 'B.최면/진정'
-                  ELSE CODEFLAG END AS CODE_FLAG_NM
-            ,DRUG_ING
-            ,DRUGNAME  AS DRUG_NAME
-            ,COMPNAME  AS COMP_NAME
-            ,EDI_NAME
-            ,DRUGSIZE  AS DRUG_SIZE
-            ,CANCELDT  AS CANCEL_DT
-            ,REG_DTTM
-            ,REG_USER
-            ,REG_IP
-            ,UPD_DTTM
-            ,UPD_USER
-            ,UPD_IP
-          FROM TBL_DRUG_MST
+             D.EDI_CODE
+            ,D.ATC_CODE
+            ,D.CODEFLAG                            AS CODE_FLAG
+            ,COALESCE(C.SUB_CODE_NM, D.CODEFLAG)   AS CODE_FLAG_NM
+            ,D.DRUG_ING
+            ,D.DRUGNAME                            AS DRUG_NAME
+            ,D.COMPNAME                            AS COMP_NAME
+            ,D.EDI_NAME
+            ,D.DRUGSIZE                            AS DRUG_SIZE
+            ,D.CANCELDT                            AS CANCEL_DT
+            ,D.REG_DTTM
+            ,D.REG_USER
+            ,D.REG_IP
+            ,D.UPD_DTTM
+            ,D.UPD_USER
+            ,D.UPD_IP
+          FROM TBL_DRUG_MST D
+          LEFT OUTER JOIN TBL_CODE_DTL C
+              ON  C.CODE_GB  = 'Z'
+              AND C.CODE_CD  = 'SEC_CODE'
+              AND C.SUB_CODE = D.CODEFLAG
+              AND NOW() BETWEEN C.START_DT AND C.END_DT
          WHERE 1=1
         ]]>
         <if test="codeFlag != null and codeFlag != ''">
-            AND CODEFLAG = #{codeFlag}
+            AND D.CODEFLAG = #{codeFlag}
         </if>
         <if test="findData != null and findData != ''"><![CDATA[
-            AND ( EDI_CODE LIKE CONCAT('%', #{findData}, '%')
-               OR EDI_NAME LIKE CONCAT('%', #{findData}, '%')
-               OR DRUGNAME LIKE CONCAT('%', #{findData}, '%')
-               OR DRUG_ING LIKE CONCAT('%', #{findData}, '%')
-               OR COMPNAME LIKE CONCAT('%', #{findData}, '%') )
+            AND ( D.EDI_CODE LIKE CONCAT('%', #{findData}, '%')
+               OR D.EDI_NAME LIKE CONCAT('%', #{findData}, '%')
+               OR D.DRUGNAME LIKE CONCAT('%', #{findData}, '%')
+               OR D.DRUG_ING LIKE CONCAT('%', #{findData}, '%')
+               OR D.COMPNAME LIKE CONCAT('%', #{findData}, '%') )
         ]]></if>
         <![CDATA[
-         ORDER BY CODEFLAG, EDI_CODE
+         ORDER BY D.CODEFLAG, D.EDI_CODE
         ]]>
     </select>
 

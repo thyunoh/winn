@@ -31,6 +31,14 @@
 #modalName .modal-body .custom-select {
 	font-size: 14px; height: 30px; padding: 2px 8px;
 }
+/* ===== disabled select 글자 선명하게 (수정/삭제 모드 코드구분) ===== */
+#modalName .modal-body .custom-select:disabled,
+#modalName .modal-body select:disabled {
+	color: #495057 !important;
+	opacity: 1 !important;
+	-webkit-text-fill-color: #495057 !important;  /* Safari/Chrome */
+	background-color: #e9ecef !important;
+}
 /* ===== DataTables 기본 페이지네이션 숨김 (수동 페이지만 사용) ===== */
 .dataTables_wrapper,
 #tableName_wrapper {
@@ -89,9 +97,6 @@ div.dt-paging {
 						<div class="form-row mb-2">
 							<div class="col-sm-2">
 								<select id="findCodeFlag" class="custom-select" oninput="findField(this)" style="height:38px;">
-									<option value="">전체</option>
-									<option value="A">A.항정</option>
-									<option value="B">B.최면/진정</option>
 								</select>
 							</div>
 							<div class="col-sm-4">
@@ -151,7 +156,8 @@ div.dt-paging {
 					<div class="form-group row">
 						<label for="codeFlag" class="col-2 col-lg-2 col-form-label text-left">코드구분</label>
 						<div class="col-4 col-lg-4">
-							<input id="codeFlag" name="codeFlag" type="text" class="form-control text-left" required maxlength="1" placeholder="A:항정, B:최면/진정 등 1글자">
+							<select id="codeFlag" name="codeFlag" class="custom-select" required>
+							</select>
 						</div>
 						<label for="ediCode" class="col-2 col-lg-2 col-form-label text-left">EDI코드</label>
 						<div class="col-4 col-lg-4">
@@ -226,11 +232,11 @@ var edit_Data = null;
 var dataTable = new DataTable();
 dataTable.clear();
 
-// 공통코드 사용 안함
-var list_flag = [];
-var list_code = [];
-var select_id = [];
-var firstnull = [];
+// 공통코드 - TBL_CODE_DTL (CODE_GB='Z', CODE_CD='SEC_CODE')
+var list_flag = ['Z'];
+var list_code = ['SEC_CODE', 'SEC_CODE'];
+var select_id = ['findCodeFlag', 'codeFlag'];
+var firstnull = ['Y', 'Y'];   // findCodeFlag → '전체', codeFlag → '선택'
 
 var format_convert = ['cancelDt'];
 
@@ -260,34 +266,27 @@ var find_Enter = false;
 var row_Select = true;
 
 var colPadding = '0.2px';
-var data_Count = [30, 50, 70, 100, 150, 200];
-var defaultCnt = 30;
+var data_Count = [35, 70, 90, 120, 150, 200];
+var defaultCnt = 35;
 
 var c_Head_Set = ['코드구분','EDI코드','ATC코드','상품명','약성분','약성분명','업체명','약품규격','취소일자'];
 var columnsSet = [
-	{ data: 'codeFlagNm', visible: true, className: 'dt-body-center', width: '90px',  name: 'keycodeFlag', primaryKey: true,
+	{ data: 'codeFlagNm', visible: true, className: 'dt-body-center', width: '90px',  name: 'keycodeFlag', primaryKey: true, orderable: true,
 	  render: function(data, type, row) {
 	      if (type === 'sort' || type === 'type') return row.codeFlag;
 	      return data || row.codeFlag || '';
 	  }
 	},
-	{ data: 'ediCode',    visible: true, className: 'dt-body-center', width: '110px',  name: 'keyediCode', primaryKey: true },
-	{ data: 'atcCode',    visible: true, className: 'dt-body-center', width: '100px' },
-	{ data: 'ediName',    visible: true, className: 'dt-body-left',   width: '400px', orderable: true,
+	{ data: 'ediCode',    visible: true, className: 'dt-body-center', width: '110px', name: 'keyediCode', primaryKey: true, orderable: true },
+	{ data: 'atcCode',    visible: true, className: 'dt-body-center', width: '100px', orderable: false },
+	{ data: 'ediName',    visible: true, className: 'dt-body-left',   width: '400px', orderable: true },
+	{ data: 'drugIng',    visible: true, className: 'dt-body-left',   width: '180px', orderable: false },
+	{ data: 'drugName',   visible: true, className: 'dt-body-left',   width: '180px', orderable: true },
+	{ data: 'compName',   visible: true, className: 'dt-body-left',   width: '350px', orderable: true },
+	{ data: 'drugSize',   visible: true, className: 'dt-body-left',   width: '130px', orderable: false },
+	{ data: 'cancelDt',   visible: true, className: 'dt-body-center', width: '110px', orderable: false,
 	  render: function(data, type, row) {
-	      if (type === 'display' && data && data.length > txt_Markln) {
-	          return data.substr(0, txt_Markln) + '...';
-	      }
-	      return data;
-	  }
-	},
-	{ data: 'drugIng',    visible: true, className: 'dt-body-left',   width: '180px' },
-	{ data: 'drugName',   visible: true, className: 'dt-body-left',   width: '180px' },
-	{ data: 'compName',   visible: true, className: 'dt-body-left',   width: '350px' },
-	{ data: 'drugSize',   visible: true, className: 'dt-body-left',   width: '130px' },
-	{ data: 'cancelDt',   visible: true, className: 'dt-body-center', width: '110px',
-	  render: function(data, type, row) {
-	      if (type === 'display') return getFormat(data, 'd1');
+	      if (type === 'display') return data ? getFormat(data, 'd1') : '';
 	      return data;
 	  }
 	}
@@ -368,13 +367,16 @@ function updateIcon() {
 function modal_key_hidden(flag) {
 	const ediCodeInput  = document.getElementById("ediCode");
 	const codeFlagInput = document.getElementById("codeFlag");
-	const inputs = [ediCodeInput, codeFlagInput];
 	const isReadOnly = (flag !== 'I');
-	inputs.forEach(input => {
-		if (!input) return;
-		input.readOnly = isReadOnly;
-		input.style.backgroundColor = isReadOnly ? '#e9ecef' : '';
-	});
+	if (ediCodeInput) {
+		ediCodeInput.readOnly = isReadOnly;
+		ediCodeInput.style.backgroundColor = isReadOnly ? '#e9ecef' : '';
+	}
+	if (codeFlagInput) {
+		// select 는 readOnly 가 동작하지 않으므로 disabled 사용
+		codeFlagInput.disabled = isReadOnly;
+		codeFlagInput.style.backgroundColor = isReadOnly ? '#e9ecef' : '';
+	}
 }
 function modal_Open(flag) {
 	let modal_OpenFlag = true;
@@ -738,8 +740,8 @@ function validateForm() {
 }
 
 function newuptData() {
-	let codeFlag = $('#codeFlag').val();
-	let codeFlagNm = (codeFlag === 'A') ? 'A.항정' : (codeFlag === 'B' ? 'B.최면/진정' : codeFlag);
+	let codeFlag    = $('#codeFlag').val();
+	let codeFlagNm  = $('#codeFlag option:selected').text() || codeFlag;
 	return {
 		codeFlag:   codeFlag,
 		codeFlagNm: codeFlagNm,
@@ -924,9 +926,30 @@ function find_Check() {
 function comm_Check() {
 	if (list_code.length > 0) {
 		$.ajax({
-			type: "POST", url: "/base/commList.do",
+			type: "POST",
+			url: "/base/commList.do",
 			data: { listGb: list_flag, listCd: list_code },
-			dataType: "json"
+			dataType: "json",
+			success: function(response) {
+				const commList = response.data || [];
+				for (var i = 0; i < select_id.length; i++) {
+					let select = $('#' + select_id[i]);
+					select.empty();
+					let filteredItems = commList.filter(item => item.codeCd === list_code[i]);
+					if (firstnull[i] === "Y") {
+						let firstLabel = (select_id[i] === 'findCodeFlag') ? '전체' : '선택';
+						select.append('<option value="">' + firstLabel + '</option>');
+					}
+					if (filteredItems.length > 0) {
+						filteredItems.forEach(function(item) {
+							select.append('<option value="' + item.subCode + '">' + item.subCodeNm + '</option>');
+						});
+					}
+				}
+			},
+			error: function(jqXHR) {
+				console.error("commList error: " + jqXHR.status + " " + jqXHR.responseText);
+			}
 		});
 	}
 }
