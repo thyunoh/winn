@@ -239,16 +239,8 @@
 							            box-sizing: border-box !important;
 							        }
 
-							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 행 배경 강조
-							           (체크표시는 prepend된 첫 컬럼의 render 함수가 담당하므로 ::before 미사용) */
-							        table#viewTable tbody tr.pv-changed-row,
-							        #viewTable_wrapper table tbody tr.pv-changed-row {
-							            background-color: rgba(227, 242, 253, 0.45) !important;
-							        }
-							        table#viewTable tbody tr.pv-changed-row.selected,
-							        #viewTable_wrapper table tbody tr.pv-changed-row.selected {
-							            background-color: rgba(187, 222, 251, 0.7) !important;
-							        }
+							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 표시는
+							           첫 컬럼 ✔ 체크박스로만 표시 (행 배경 강조 제거) */
 							    </style>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
@@ -3438,15 +3430,7 @@ function fn_FindDataTable() {
 		        ,
 	    		columns: gridColums,
 		        order: muiltSorts,
-			    // 행 생성 시 — viewTable 환자 그리드면 전월 대비 변경 환자 행에 마커 클래스 부여
-			    createdRow: function(row, data) {
-			        if (__isViewTable && data && data.patId) {
-			            var key = _pvChangedKey(data.patId, data.admitDt, data.medStart);
-			            if (_PV_CHANGED_SET[key]) {
-			                row.classList.add('pv-changed-row');
-			            }
-			        }
-			    },
+			    // 전월 대비 변경 환자 표시는 첫 컬럼 ✔ 만 사용 — 행 클래스 부여 안 함 (배경 강조 제거)
 			    columnDefs: [
 			    	// 특정 열만 정렬
 			    	{ 
@@ -4201,10 +4185,7 @@ function fn_PrependPatvalChangedColumn() {
                 var key = _pvChangedKey(row.patId, row.admitDt, row.medStart);
                 if (_PV_CHANGED_SET[key]) {
                     return '<span title="전월 대비 적정성평가 항목 변경" ' +
-                           'style="display:inline-block;width:14px;height:14px;line-height:12px;' +
-                           'text-align:center;font-size:9px;font-weight:900;color:#fff;' +
-                           'background:#1565c0;border-radius:2px;' +
-                           'box-shadow:0 1px 2px rgba(21,101,192,0.35);">&#10004;</span>';
+                           'style="color:#1565c0;font-weight:900;font-size:13px;">&#10004;</span>';
                 }
             } catch (e) {}
             return '';
@@ -4246,23 +4227,11 @@ function fn_LoadPatvalChangedList() {
     });
 }
 
-// 현재 viewTable 의 모든 행에 변경 환자 마커 적용 (재조회 시 호출)
+// 변경 환자 표시는 첫 컬럼 ✔ 로만 처리 — 행 배경 강조 제거됨.
+// 잔존 마커 클래스가 있으면 정리만 수행 (no-op 호출자 호환용)
 function fn_ApplyPatvalChangedMark() {
     if (!$.fn.DataTable.isDataTable('#viewTable')) return;
-    var dt = $('#viewTable').DataTable();
-    dt.rows().every(function() {
-        var d = this.data();
-        if (!d) return;
-        var key = _pvChangedKey(d.patId, d.admitDt, d.medStart);
-        var node = this.node();
-        if (node) {
-            if (_PV_CHANGED_SET[key]) {
-                node.classList.add('pv-changed-row');
-            } else {
-                node.classList.remove('pv-changed-row');
-            }
-        }
-    });
+    $('#viewTable tbody tr.pv-changed-row').removeClass('pv-changed-row');
 }
 
 function _pvNorm(v) {
@@ -4691,7 +4660,10 @@ function _pvTab2(d) {
         ['일어나 앉기', _pvDiffCd('adl', d.sitUp, p.sitUp, gAdl)], ['옮겨앉기', _pvDiffCd('adl', d.transfer, p.transfer, gAdl)],
         ['방밖으로 나오기', _pvDiffCd('adl', d.exitRoom, p.exitRoom, gAdl)], ['화장실 사용하기', _pvDiffCd('adl', d.toiletUse, p.toiletUse, gAdl)],
         ['와상상태', _pvDiffYn(d.bedridden, p.bedridden, gAdl)]
-    ]);
+    ]) + '<div class="pv-sec-foot" style="margin:-6px 0 14px 4px; padding:6px 10px; font-size:12px; color:#1e3c72; background:#f3f7fc; border-left:3px solid #2a5298; border-radius:3px;">' +
+         '<span style="margin-right:6px; color:#c0392b; font-weight:700;">&#8251;</span>' +
+         'D.신체기능 점수 (1 완전자립 · 2 감독필요 · 3 약간도움 · 4 상당도움 · 5 전적도움 · 5 행위 발생안함)' +
+         '</div>';
     return '<div class="pv-pane" data-tab="t2">' + s1 + s2 + s3 + s4 + '</div>';
 }
 
