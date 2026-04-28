@@ -11,10 +11,24 @@
 	Date nowTime = new Date();
 %>
 
+	<style>
+		/* 상단 점검 버튼 — 선택(.active) 상태 색 유지 */
+		button[data-flag].btn-outline-success.active {
+			color: #fff !important; background-color: #28a745 !important; border-color: #28a745 !important;
+		}
+		button[data-flag].btn-outline-primary.active {
+			color: #fff !important; background-color: #007bff !important; border-color: #007bff !important;
+		}
+		button[data-flag].btn-outline-info.active {
+			color: #fff !important; background-color: #17a2b8 !important; border-color: #17a2b8 !important;
+		}
+		button[data-flag].active span { color: #fff !important; }
+	</style>
+
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
-                <div class="ecommerce-widget">                                
+                <div class="ecommerce-widget">
                 <!-- Row starts -->
 	                <div class="row">
 			    		<div class="col-lg-5">
@@ -31,28 +45,28 @@
 	                            <div class="card-body">
 								    <div class="row">
 								        <div class="col-lg-12">
-								            <button class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('00')">《 전체 대상 점검 》</button>								                        
+								            <button data-flag="00" class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('00')">《 전체 대상 점검 》<span style="color:#dc3545; font-weight:900; margin-left:10px;">click</span></button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">【 평가 구분 점검 】</button>            
-								            <button class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('03')">【 신규 욕창 점검 】</button>
-								            
+								        	<button data-flag="01" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">【 평가 구분 점검 】</button>
+								            <button data-flag="03" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('03')">【 신규 욕창 점검 】</button>
+
 								        </div>
 								        <div class="col-lg-6">
-								        	<button class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('02')">【 유치도뇨관 점검 】</button>            
-								            <button class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('04')">【 욕창 관리 점검 】</button>
+								        	<button data-flag="02" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('02')">【 유치도뇨관 점검 】</button>
+								            <button data-flag="04" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('04')">【 욕창 관리 점검 】</button>
 								        </div>
 								        <div class="col-lg-6">
-								            <button class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">【 일상 생활 점검 】</button>
+								            <button data-flag="05" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">【 일상 생활 점검 】</button>
 								        </div>
 								        <div class="col-lg-6">
-								            <button class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">【 당뇨 환자 점검 】</button>
+								            <button data-flag="06" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">【 당뇨 환자 점검 】</button>
 								        </div>
 								        <div class="col-lg-12">
 								        	<span id="wait_Create" class="loader" style="display: none;">환자평가표 점검중...</span>
 								        </div>
 								        <div class="col-lg-12">
-								            <button id="etarget" class="btn btn-outline-info btn-block btn-sm align-items-center justify-content-center mb-2" onClick="fn_CreateData('99')" style="display: none;">《 평가 대상 보기 》</button>								                        
+								            <button id="etarget" data-flag="99" class="btn btn-outline-info btn-block btn-sm align-items-center justify-content-center mb-2" onClick="fn_CreateData('99')" style="display: none;">《 평가 대상 보기 》</button>
 								        </div>
 								    </div>
 								</div> 	                            
@@ -150,16 +164,26 @@ var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 <!-- ============================================================== -->
 
 
+function _setActiveFlagBtn(flag) {
+	// 상단 점검 버튼 영속적 active 처리 — 그리드 행 클릭 시 포커스가 빠져도 색 유지
+	document.querySelectorAll('button[data-flag]').forEach(function(b){ b.classList.remove('active'); });
+	var cur = document.querySelector('button[data-flag="' + flag + '"]');
+	if (cur) cur.classList.add('active');
+	if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); }
+}
+
 function fn_CreateData(flag) {
 
+	_setActiveFlagBtn(flag);
+
 	let chkFlag = '0';
-	
+
 	if        (flag === "99" && jobFlag !== flag) {
 		chkFlag = '1';
 	} else if (flag !== "99" && jobFlag === "99") {
 		chkFlag = '2';
 	}
-	
+
 	jobFlag = flag;
 	
 	let waitingCreate = document.getElementById("wait_Create");	

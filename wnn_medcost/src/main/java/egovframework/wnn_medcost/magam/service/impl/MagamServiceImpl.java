@@ -634,6 +634,16 @@ public class MagamServiceImpl implements MagamService {
 	}
 
 	@Override
+	public Map<String, Object> select_PatvalMstPrev(Map<String, Object> params) {
+		return mapper.select_PatvalMstPrev(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> select_PatvalChangedList(Map<String, Object> params) {
+		return mapper.select_PatvalChangedList(params);
+	}
+
+	@Override
 	public List<MagamDTO> selectAllHospCdList() {
 		return mapper.selectAllHospCdList();
 	}

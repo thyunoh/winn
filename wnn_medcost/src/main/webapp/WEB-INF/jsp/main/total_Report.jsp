@@ -10,10 +10,28 @@
 <%
 	Date nowTime = new Date();
 %>
+	<style>
+		/* 상단 점검 버튼 — 선택(.active) 상태 색 유지 (그리드/도표 클릭 시 포커스 빠져도 색 유지) */
+		button[data-flag].btn-outline-success.active {
+			color: #fff !important; background-color: #28a745 !important; border-color: #28a745 !important;
+		}
+		button[data-flag].btn-outline-primary.active {
+			color: #fff !important; background-color: #007bff !important; border-color: #007bff !important;
+		}
+		button[data-flag].btn-outline-info.active {
+			color: #fff !important; background-color: #17a2b8 !important; border-color: #17a2b8 !important;
+		}
+		button[data-flag].btn-info.active {
+			background-color: #117a8b !important; border-color: #10707f !important;
+		}
+		button[data-flag].active span,
+		button[data-flag].active .badge { color: #fff !important; }
+	</style>
+
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
-                <div class="ecommerce-widget">                                
+                <div class="ecommerce-widget">
                 <!-- Row starts -->
 	                <div class="row">
 			    		<div class="col-lg-6">
@@ -35,43 +53,43 @@
 	                            <div class="card-body">
 								    <div class="row">
 								        <div class="col-lg-12">
-								            <button class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData_all('00')">《 전체 대상 점검 》</button>
+								            <button data-flag="00" class="btn btn-outline-success btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData_all('00')">《 전체 대상 점검 》</button>
 								        </div>
 								        <div class="col-lg-12">
 								        </div>
 								        <div class="col-lg-6">
-								            <button data-action="FindView" data-value="accordion_item_1" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">요양병원 입원료 차등제 / 식대가산 점검</button>
-								            <button data-action="FindView" data-value="accordion_item_2" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('02')">월별 정액수가 분포율【 환자평가표 】</button>            
+								            <button data-flag="01" data-action="FindView" data-value="accordion_item_1" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('01')">요양병원 입원료 차등제 / 식대가산 점검</button>
+								            <button data-flag="02" data-action="FindView" data-value="accordion_item_2" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('02')">월별 정액수가 분포율【 환자평가표 】</button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_7" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('07')">특정기간 현황【 격리실 】</button>            
-								            <button data-action="FindView" data-value="accordion_item_8" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('08')">한방「입원」월별 청구현황</button>
-								            
+								        	<button data-flag="14" data-action="FindView" data-value="accordion_item_F" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('14')">특정 진료비</button>								        	
+								            <button data-flag="08" data-action="FindView" data-value="accordion_item_8" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('08')">한방「입원」월별 청구현황</button>
+
 								        </div>
 								        <div class="col-lg-6">
-								            <button data-action="FindView" data-value="accordion_item_3" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('03')">환자군별 상향 가능 대상자 명단</button>
-								            <button data-action="FindView" data-value="accordion_item_4" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('04')">월별 청구현황【 장기요양 + 특정기간 】</button>
-								            
-								            
+								            <button data-flag="03" data-action="FindView" data-value="accordion_item_3" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('03')">환자군별 상향 가능 대상자 명단</button>
+								            <button data-flag="04" data-action="FindView" data-value="accordion_item_4" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('04')">월별 청구현황【 장기요양 + 특정기간 】</button>
+
+
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_A" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('09')">재활치료 청구현황</button>
-								            <button data-action="FindView" data-value="accordion_item_B" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('10')">투석치료 청구현황</button>
+								        	<button data-flag="09" data-action="FindView" data-value="accordion_item_A" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('09')">재활치료 청구현황</button>
+								            <button data-flag="10" data-action="FindView" data-value="accordion_item_B" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('10')">투석치료 청구현황</button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_5" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">특정기간【 패렴,패혈증,격리실,중환자실 등】</button>
-								        	<button data-action="FindView" data-value="accordion_item_6" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">특정기간 현황【 패렴, 패혈증 】</button>
-								            
+								        	<button data-flag="05" data-action="FindView" data-value="accordion_item_5" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('05')">특정기간【 패렴,패혈증,격리실,중환자실 등】</button>
+								        	<button data-flag="06" data-action="FindView" data-value="accordion_item_6" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">특정기간 현황【 패렴, 패혈증 】</button>
+
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_C" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('11')">검사료 현황</button>
-								            <button data-action="FindView" data-value="accordion_item_D" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('12')">약제비 현황</button>
-								        </div>								        
-								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_F" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('14')">특정 진료비</button>
+								        	<button data-flag="11" data-action="FindView" data-value="accordion_item_C" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('11')">검사료 현황</button>
+								            <button data-flag="12" data-action="FindView" data-value="accordion_item_D" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('12')">약제비 현황</button>
 								        </div>
 								        <div class="col-lg-6">
-								        	<button data-action="FindView" data-value="accordion_item_E" data-pdf-exclude="true" class="btn btn-info text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('13')">《 입원현황기준 누락 대상자 보기 》 <span class="badge badge-light text-muted ml-1" style="font-size:9px;">PDF제외</span></button>
+								        	<button data-flag="07" data-action="FindView" data-value="accordion_item_7" class="btn btn-outline-primary text-black btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('07')">특정기간 현황【 격리실 】</button>								        	
+								        </div>
+								        <div class="col-lg-6">
+								        	<button data-flag="13" data-action="FindView" data-value="accordion_item_E" data-pdf-exclude="true" class="btn btn-info text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('13')">《 입원현황기준 누락 대상자 보기 》 <span class="badge badge-light text-muted ml-1" style="font-size:9px;">PDF제외</span></button>
 								        </div>
 								    </div>
 								    <br>
@@ -3514,7 +3532,17 @@ function makeGrid(containerId, size, rowTitles, colTitles, colColors, lineNums, 
 
 <script type="text/javascript">
 	   
+function _setActiveFlagBtn(flag) {
+	// 상단 점검 버튼 영속적 active 처리 — 그리드 행/도표 클릭 시 포커스가 빠져도 색 유지
+	document.querySelectorAll('button[data-flag]').forEach(function(b){ b.classList.remove('active'); });
+	var cur = document.querySelector('button[data-flag="' + flag + '"]');
+	if (cur) cur.classList.add('active');
+	if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); }
+}
+
 function fn_CreateData(flag) {
+
+	_setActiveFlagBtn(flag);
 
 	let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
@@ -3531,6 +3559,8 @@ function fn_CreateData(flag) {
 }
 //전체 처리
 function fn_CreateData_all() {
+
+    _setActiveFlagBtn('00');
 
     let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;

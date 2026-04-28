@@ -5087,4 +5087,105 @@
 		 LIMIT 1
 	</select>
 
+	<!-- 환자평가표 직전 행 — MED_START 가 현재보다 이전인 가장 최근 행 (전월 비교용) -->
+	<select id="select_PatvalMstPrev" parameterType="map" resultType="java.util.Map">
+		SELECT
+			  HOSP_CD AS hospCd, CHUNGSEQ AS chungseq, CLFORM_VER AS clformVer
+			, PAT_NM AS patNm, PAT_ID AS patId, ADMIT_DT AS admitDt, MED_START AS medStart
+			, EVAL_TYPE AS evalType, DOC_DT AS docDt
+			, DRESSING AS dressing, WASHING AS washing, BRUSHING AS brushing, BATHING AS bathing
+			, EATING AS eating, MOVE_POS AS movePos, SIT_UP AS sitUp, TRANSFER AS transfer
+			, EXIT_ROOM AS exitRoom, TOILET_USE AS toiletUse, BEDRIDDEN AS bedridden
+			, INDWELL_CATH AS indwellCath, CAT_DUR AS catDur
+			, CAT_IN_1 AS catIn1, CAT_OUT_1 AS catOut1, CAT_IN_2 AS catIn2, CAT_OUT_2 AS catOut2
+			, CAT_IN_3 AS catIn3, CAT_OUT_3 AS catOut3, CAT_IN_4 AS catIn4, CAT_OUT_4 AS catOut4
+			, CAT_IN_5 AS catIn5, CAT_OUT_5 AS catOut5, CAT_IN_6 AS catIn6, CAT_OUT_6 AS catOut6
+			, CAT_IN_7 AS catIn7, CAT_OUT_7 AS catOut7, CAT_IN_8 AS catIn8, CAT_OUT_8 AS catOut8
+			, CAT_IN_9 AS catIn9, CAT_OUT_9 AS catOut9, CAT_IN_10 AS catIn10, CAT_OUT_10 AS catOut10
+			, DIABETES AS diabetes, BLD_SUGAR_TEST AS bldSugarTest
+			, FASTING_SUGAR AS fastingSugar, POST2H_SUGAR AS post2hSugar
+			, HBA1C_TEST AS hba1cTest, HBA1C_VALUE AS hba1cValue, TEST_DATE AS testDate
+			, PR_ULCER1 AS prUlcer1, PR_ULCER2 AS prUlcer2, PR_ULCER3 AS prUlcer3, PR_ULCER4 AS prUlcer4
+			, CI_UL1 AS ciUl1, CI_UL2 AS ciUl2, CI_UL3 AS ciUl3, CI_UL4 AS ciUl4
+			, NEW_ULCER AS newUlcer, ULCER_DT AS ulcerDt, PAST_ULCER AS pastUlcer
+			, SKIN_PROB AS skinProb, OPEN_SKIN_LES AS openSkinLes, SURG_WOUND AS surgWound
+			, FOOT_INFEC AS footInfec, SKIN_NOA AS skinNoa
+			, PRESS_REL_DEV AS pressRelDev, POS_CHANGE AS posChange, NUTR_SKIN AS nutrSkin
+			, SKIN_ULC_DRES AS skinUlcDres, FOOT_DRES AS footDres
+			, NON_FOOT_DRES AS nonFootDres, NON_ULC_DRES AS nonUlcDres
+			, LEG AS leg, LEG_OTHER AS legOther, SUR_WND_CARE AS surWndCare
+			, BURN_TREAT AS burnTreat, FSKIN_NOA AS fskinNoa
+			, PAT_CLASS AS patClass
+		  FROM TBL_PATVAL_MST
+		 WHERE HOSP_CD = #{hospCd}
+		   AND LEFT(REPLACE(PAT_ID,'-',''), 6) = REPLACE(#{patId},'-','')
+		   AND REPLACE(ADMIT_DT, '-','') = REPLACE(#{admitDt}, '-','')
+		   AND REPLACE(MED_START,'-','') <![CDATA[ < ]]> REPLACE(#{medStart},'-','')
+		 ORDER BY REPLACE(MED_START,'-','') DESC, CLFORM_VER DESC
+		 LIMIT 1
+	</select>
+
+	<!-- 적정성평가 관련 항목 전월 대비 변경 환자 목록
+	     비교: D.ADL / E·F.유치도뇨관 / F.HbA1c / I.1~I.4 욕창 / I.5 피부문제 처치 -->
+	<select id="select_PatvalChangedList" parameterType="map" resultType="java.util.Map">
+		SELECT cur.PAT_ID AS patId, cur.ADMIT_DT AS admitDt, cur.MED_START AS medStart
+		  FROM TBL_PATVAL_MST cur
+		  JOIN TBL_PATVAL_MST prev
+		    ON prev.HOSP_CD  = cur.HOSP_CD
+		   AND prev.PAT_ID   = cur.PAT_ID
+		   AND prev.ADMIT_DT = cur.ADMIT_DT
+		   AND REPLACE(prev.MED_START,'-','') = (
+		         SELECT MAX(REPLACE(b.MED_START,'-',''))
+		           FROM TBL_PATVAL_MST b
+		          WHERE b.HOSP_CD  = cur.HOSP_CD
+		            AND b.PAT_ID   = cur.PAT_ID
+		            AND b.ADMIT_DT = cur.ADMIT_DT
+		            AND REPLACE(b.MED_START,'-','') <![CDATA[ < ]]> REPLACE(cur.MED_START,'-','')
+		       )
+		 WHERE cur.HOSP_CD = #{hospCd}
+		   AND LEFT(REPLACE(cur.MED_START,'-',''), 6) = REPLACE(#{jobYymm},'-','')
+		   AND (
+		        IFNULL(cur.DRESSING,'')      != IFNULL(prev.DRESSING,'')      OR
+		        IFNULL(cur.WASHING,'')       != IFNULL(prev.WASHING,'')       OR
+		        IFNULL(cur.BRUSHING,'')      != IFNULL(prev.BRUSHING,'')      OR
+		        IFNULL(cur.BATHING,'')       != IFNULL(prev.BATHING,'')       OR
+		        IFNULL(cur.EATING,'')        != IFNULL(prev.EATING,'')        OR
+		        IFNULL(cur.MOVE_POS,'')      != IFNULL(prev.MOVE_POS,'')      OR
+		        IFNULL(cur.SIT_UP,'')        != IFNULL(prev.SIT_UP,'')        OR
+		        IFNULL(cur.TRANSFER,'')      != IFNULL(prev.TRANSFER,'')      OR
+		        IFNULL(cur.EXIT_ROOM,'')     != IFNULL(prev.EXIT_ROOM,'')     OR
+		        IFNULL(cur.TOILET_USE,'')    != IFNULL(prev.TOILET_USE,'')    OR
+		        IFNULL(cur.BEDRIDDEN,'')     != IFNULL(prev.BEDRIDDEN,'')     OR
+		        IFNULL(cur.INDWELL_CATH,'')  != IFNULL(prev.INDWELL_CATH,'')  OR
+		        IFNULL(cur.CAT_DUR,'')       != IFNULL(prev.CAT_DUR,'')       OR
+		        IFNULL(cur.HBA1C_TEST,'')    != IFNULL(prev.HBA1C_TEST,'')    OR
+		        IFNULL(cur.HBA1C_VALUE,'')   != IFNULL(prev.HBA1C_VALUE,'')   OR
+		        IFNULL(cur.PR_ULCER1,'')     != IFNULL(prev.PR_ULCER1,'')     OR
+		        IFNULL(cur.PR_ULCER2,'')     != IFNULL(prev.PR_ULCER2,'')     OR
+		        IFNULL(cur.PR_ULCER3,'')     != IFNULL(prev.PR_ULCER3,'')     OR
+		        IFNULL(cur.PR_ULCER4,'')     != IFNULL(prev.PR_ULCER4,'')     OR
+		        IFNULL(cur.CI_UL1,'')        != IFNULL(prev.CI_UL1,'')        OR
+		        IFNULL(cur.CI_UL2,'')        != IFNULL(prev.CI_UL2,'')        OR
+		        IFNULL(cur.CI_UL3,'')        != IFNULL(prev.CI_UL3,'')        OR
+		        IFNULL(cur.CI_UL4,'')        != IFNULL(prev.CI_UL4,'')        OR
+		        IFNULL(cur.NEW_ULCER,'')     != IFNULL(prev.NEW_ULCER,'')     OR
+		        IFNULL(cur.PAST_ULCER,'')    != IFNULL(prev.PAST_ULCER,'')    OR
+		        IFNULL(cur.SKIN_PROB,'')     != IFNULL(prev.SKIN_PROB,'')     OR
+		        IFNULL(cur.OPEN_SKIN_LES,'') != IFNULL(prev.OPEN_SKIN_LES,'') OR
+		        IFNULL(cur.SURG_WOUND,'')    != IFNULL(prev.SURG_WOUND,'')    OR
+		        IFNULL(cur.FOOT_INFEC,'')    != IFNULL(prev.FOOT_INFEC,'')    OR
+		        IFNULL(cur.PRESS_REL_DEV,'') != IFNULL(prev.PRESS_REL_DEV,'') OR
+		        IFNULL(cur.POS_CHANGE,'')    != IFNULL(prev.POS_CHANGE,'')    OR
+		        IFNULL(cur.NUTR_SKIN,'')     != IFNULL(prev.NUTR_SKIN,'')     OR
+		        IFNULL(cur.SKIN_ULC_DRES,'') != IFNULL(prev.SKIN_ULC_DRES,'') OR
+		        IFNULL(cur.FOOT_DRES,'')     != IFNULL(prev.FOOT_DRES,'')     OR
+		        IFNULL(cur.NON_FOOT_DRES,'') != IFNULL(prev.NON_FOOT_DRES,'') OR
+		        IFNULL(cur.NON_ULC_DRES,'')  != IFNULL(prev.NON_ULC_DRES,'')  OR
+		        IFNULL(cur.LEG,'')           != IFNULL(prev.LEG,'')           OR
+		        IFNULL(cur.LEG_OTHER,'')     != IFNULL(prev.LEG_OTHER,'')     OR
+		        IFNULL(cur.SUR_WND_CARE,'')  != IFNULL(prev.SUR_WND_CARE,'')  OR
+		        IFNULL(cur.BURN_TREAT,'')    != IFNULL(prev.BURN_TREAT,'')
+		   )
+	</select>
+
 </mapper>

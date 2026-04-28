@@ -1173,6 +1173,23 @@ public class MagamController {
 		return response;
 	}
 
+	// 적정성평가 관련 항목 전월 대비 변경 환자 목록
+	@RequestMapping(value="/main/select_PatvalChangedList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_PatvalChangedList(@RequestParam Map<String, Object> params, HttpSession session) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			List<Map<String, Object>> rows = svc.select_PatvalChangedList(params);
+			response.put("data", rows);
+			return response;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("data", new java.util.ArrayList<Map<String, Object>>());
+			response.put("error_mess", ex.getMessage());
+			return response;
+		}
+	}
+
 	// 환자평가표(TBL_PATVAL_MST) 단건 조회 — 모달 표시용
 	@RequestMapping(value="/main/select_PatvalMst.do", method = RequestMethod.POST)
 	@ResponseBody
@@ -1181,6 +1198,13 @@ public class MagamController {
 		try {
 			Map<String, Object> row = svc.select_PatvalMst(params);
 			response.put("data", row);
+			// 전월 비교용 직전 행 동시 반환 (변경항목 파란색 표시 용도)
+			try {
+				Map<String, Object> prev = svc.select_PatvalMstPrev(params);
+				response.put("prev", prev);
+			} catch (Exception ignore) {
+				response.put("prev", null);
+			}
 			return response;
 		} catch (Exception ex) {
 			ex.printStackTrace();

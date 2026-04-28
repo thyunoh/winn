@@ -1695,19 +1695,24 @@ function fn_todayAsqAlert(asqList, visitList) {
     var msgHtml = '';
     var idx = 0;
 
+    // 위너넷 계정 여부 — 비-위너넷이면 병원명/사용자명 마스킹
+    var _isWnn = ((getCookie("s_wnn_yn") || '').trim() === 'Y');
+    function _maskHosp(nm) { return _isWnn ? (nm || '') : '**** 병원'; }
+    function _maskUser(nm) { return _isWnn ? (nm || '') : '***'; }
+
     // 답변대기 메시지 (클릭 → asqcd.do)
     for (var j = 0; j < asqFiltered.length; j++) {
         var item = asqFiltered[j];
         msgHtml += '<span class="asq-bar-msg" onclick="fn_goAsqPage();">';
         if (idx > 0) msgHtml += '<span class="sep">|</span>';
-        msgHtml += '<span class="hosp-name">' + (item.hospNm || '') + '</span> ';
-        msgHtml += '<span class="user-name">' + (item.userNm || '') + '</span>님 질문등록';
+        msgHtml += '<span class="hosp-name">' + _maskHosp(item.hospNm) + '</span> ';
+        msgHtml += '<span class="user-name">' + _maskUser(item.userNm) + '</span>님 질문등록';
         var title = item.qstnTitle || '';
-        if (title) {
+        if (title && _isWnn) {
             var shortTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
             msgHtml += ' - <span class="qstn-title">' + shortTitle + '</span>';
         }
-        msgHtml += ' <span class="ansr-badge">문의대기</span>';
+        msgHtml += ' <span class="ansr-badge">응답대기</span>';
         msgHtml += '</span>';
         idx++;
     }
@@ -1717,9 +1722,9 @@ function fn_todayAsqAlert(asqList, visitList) {
         var vItem = visitFiltered[k];
         msgHtml += '<span class="asq-bar-msg" onclick="fn_goVisitAsqPage();">';
         if (idx > 0) msgHtml += '<span class="sep">|</span>';
-        msgHtml += '<span class="hosp-name">' + (vItem.hospNm || '') + '</span> ';
-        msgHtml += '<span class="user-name">' + (vItem.userNm || '') + '</span>님 상담문의';
-        msgHtml += ' <span class="visit-badge">상담대기</span>';
+        msgHtml += '<span class="hosp-name">' + _maskHosp(vItem.hospNm) + '</span> ';
+        msgHtml += '<span class="user-name">' + _maskUser(vItem.userNm) + '</span>님 상담문의';
+        msgHtml += ' <span class="visit-badge">응답대기</span>';
         msgHtml += '</span>';
         idx++;
     }

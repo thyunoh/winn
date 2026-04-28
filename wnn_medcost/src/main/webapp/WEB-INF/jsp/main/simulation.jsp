@@ -44,8 +44,9 @@
 					                <button class="btn indi-custom-btn text-white     btn-sm w-auto mr-3" onClick="fn_ViewData(1)">기간별 보기</button>
 					                <button class="btn btn-outline-primary            btn-sm w-auto mr-3" onClick="fn_ViewData(2)">상반기 보기</button>
 					                <button class="btn btn-outline-success text-green btn-sm w-auto mr-3" onClick="fn_ViewData(3)">하반기 보기</button>
+                                    <button class="btn btn-outline-secondary btn-sm w-auto mr-3" onClick="fn_UncheckAllHosp()"><i class="fas fa-times-circle mr-1"></i>체크해제</button>
                                 <button class="btn btn-outline-danger btn-sm w-auto mr-3"  style="display: none;"  onClick="fn_EvalChart()">병원별 비교분석</button>
-				                <button class="btn btn-outline-secondary btn-sm w-auto ml-auto" onClick="fn_UncheckAllHosp()"><i class="fas fa-times-circle mr-1"></i>체크해제</button>
+		                
 					            </div>
 					        </div>
 					        

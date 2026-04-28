@@ -59,14 +59,10 @@
 																							        
 										<!-- 지표 테이블 -->
 								        <table id="indicatorTable" class="display nowrap stripe hover cell-border order-column responsive">
-								            
+
 								        </table>
-			                            - 항정처방률은 타 기관의 상병 구성 및 평균 처방률 자료 확인이 불가하여,시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용으로 활용하시기 바랍니다.
-			                            <br>
-										- 청구명세서 미업로드 시 항정처방률 대상자 확인 및 HbA1c 분모 산정에 차이가 발생하여 최종 결과와 다를 수 있습니다.
-										<br>
 										<div class="d-flex justify-content-between align-items-center">
-											<span>- 본 점수는 청구명세서 자료 기반의 자체 분석 결과로, 건강보험심사평가원의 공식 평가결과와 산출기준 및 결과값이 다를 수 있습니다.</span>
+											<span></span>
 										    <button id="btnEvalAllHosp" class="btn btn-outline-danger btn-sm" onClick="fn_CreateEvalAllHosp()" style="display:none;">전체병원 생성</button>
 										</div>
 										<!-- 지표 선택 시 분석 문구 표시 영역 -->
@@ -228,6 +224,31 @@
 							        #btnPatvalView.patval-btn .patval-icon { color: #ffffff !important; }
 							        #btnPatvalView.patval-btn.is-disabled { cursor: not-allowed; filter: grayscale(0.5); opacity: 0.75; }
 							        .patval-icon { font-size: 13px; opacity: 0.95; }
+
+							        /* viewTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
+							        #viewTable thead tr:first-child th:first-child,
+							        #viewTable thead th.pv-chk-th,
+							        #viewTable tbody td.pv-chk-cell,
+							        #viewTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
+							        #viewTable_wrapper .dataTables_scrollHead th.pv-chk-th {
+							            width: 24px !important;
+							            min-width: 24px !important;
+							            max-width: 24px !important;
+							            padding-left: 2px !important;
+							            padding-right: 2px !important;
+							            box-sizing: border-box !important;
+							        }
+
+							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 행 배경 강조
+							           (체크표시는 prepend된 첫 컬럼의 render 함수가 담당하므로 ::before 미사용) */
+							        table#viewTable tbody tr.pv-changed-row,
+							        #viewTable_wrapper table tbody tr.pv-changed-row {
+							            background-color: rgba(227, 242, 253, 0.45) !important;
+							        }
+							        table#viewTable tbody tr.pv-changed-row.selected,
+							        #viewTable_wrapper table tbody tr.pv-changed-row.selected {
+							            background-color: rgba(187, 222, 251, 0.7) !important;
+							        }
 							    </style>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
@@ -321,8 +342,14 @@
 					                    </div>
 									</div> 
 						        	<table id="viewTable" class="display nowrap stripe hover cell-border order-column responsive">
-															       
+
 									</table>
+									<!-- 분석 문구 — 모든 카테고리 그리드 하단 + 약사재직일수율(01~04) 입력폼 하단 공통 표시 -->
+									<div id="indiNoticeText" style="margin-top:12px; padding:10px 14px; font-size:13px; color:#555; line-height:1.7; background:#fafbfc; border:1px solid #e6e8eb; border-radius:6px;">
+										- 항정처방률은 타 기관의 상병 구성 및 평균 처방률 자료 확인이 불가하여,시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용으로 활용하시기 바랍니다.<br>
+										- 청구명세서 미업로드 시 항정처방률 대상자 확인 및 HbA1c 분모 산정에 차이가 발생하여 최종 결과와 다를 수 있습니다.<br>
+										- 본 점수는 청구명세서 자료 기반의 자체 분석 결과로, 건강보험심사평가원의 공식 평가결과와 산출기준 및 결과값이 다를 수 있습니다.
+									</div>
 							    </div>
 							</div>
 
@@ -2185,6 +2212,9 @@ function fn_ViewData(data) {
 	}
 	fn_UpdateCath05Buttons();
 
+	// 적정성평가 관련 항목 전월 대비 변경 환자 목록 로드 (각 카테고리 그리드 첫 셀에 ✔ 표시)
+	fn_LoadPatvalChangedList();
+
 	// 환자평가표 조회 버튼 초기화 (행 재선택 시 다시 활성화)
 	if (typeof fn_UpdatePatvalBtnState === 'function') {
 	    fn_UpdatePatvalBtnState(null);
@@ -2247,9 +2277,24 @@ function fn_ViewData(data) {
 	   		
 	   		
 	   		const hideTable = document.getElementById('viewTable');
-	   		
-    		$('#' + hideTable.id).DataTable().clear().destroy();
+
+    		// 차등제(01~04) 화면에서는 우측 그리드(viewTable) 자체를 숨김 처리
+    		// DataTable이 초기화되어 있을 때만 destroy 호출 (미초기화 상태에서 .DataTable() 호출 시
+    		// 빈 wrapper가 자동 생성되어 inputZone 하단에 "No data available in table" 표시되는 현상 방지)
+    		if ($.fn.DataTable.isDataTable('#' + hideTable.id)) {
+    			$('#' + hideTable.id).DataTable().clear().destroy();
+    		}
     		$('#' + hideTable.id).empty();
+    		// 혹시 남아있을 wrapper 처리 — 테이블을 wrapper 밖으로 빼낸 뒤 wrapper 제거
+    		// (다음 지표 클릭 시 hideTable 재사용/재초기화 안전성 확보)
+    		var _vtWrap = document.getElementById('viewTable_wrapper');
+    		if (_vtWrap && _vtWrap.parentNode) {
+    			if (hideTable.parentNode === _vtWrap || _vtWrap.contains(hideTable)) {
+    				_vtWrap.parentNode.insertBefore(hideTable, _vtWrap);
+    			}
+    			_vtWrap.parentNode.removeChild(_vtWrap);
+    		}
+    		hideTable.style.display = 'none';
     	    
     		/*
     	    if (getCookie("s_winconect") === 'Y') { 
@@ -3109,17 +3154,21 @@ function fn_ViewData(data) {
 	    if (!newTable) { return; }
 
 	    tableName = newTable; // tableName 업데이트
-        
+
 	    $('#' + tableName.id).DataTable().clear().destroy();
 	    $('#' + tableName.id).empty();
+
+	    // viewTable 환자 그리드 — 모든 카테고리(05/07/09/10/11/12/13/14) 맨앞에
+	    // "변경" 컬럼 자동 prepend (전월 대비 적정성평가 항목 변경 시 ✔)
+	    fn_PrependPatvalChangedColumn();
 
 	    fn_HeadColumnSet();
 	    fn_FindDataTable();
 
 	    tableName = document.getElementById(set_Table);
 	    dataTable = bak_Table;
-	    
-	    
+
+
 	}, 100);
 }
 
@@ -3289,7 +3338,11 @@ function fn_HeadColumnSet() {
 
 function fn_FindDataTable() {
 	(function($) {
-		 dataTable = $('#' + tableName.id).DataTable({	
+		// 현재 초기화하려는 테이블이 viewTable 인지 사전 캡처
+		// (전역 tableName 은 fn_ViewData setTimeout 종료 후 indicatorTable 로 복원되므로
+		//  createdRow 등 비동기 콜백에서는 closure 변수로 판정해야 함)
+		var __isViewTable = !!(tableName && tableName.id === 'viewTable');
+		 dataTable = $('#' + tableName.id).DataTable({
 				language : {
 					search: "&nbsp;자 료 검 색 : ",
 				    emptyTable: "데이터가 없습니다.",
@@ -3383,8 +3436,17 @@ function fn_FindDataTable() {
 		        		}]
 		             : []
 		        ,
-	    		columns: gridColums,	    		
+	    		columns: gridColums,
 		        order: muiltSorts,
+			    // 행 생성 시 — viewTable 환자 그리드면 전월 대비 변경 환자 행에 마커 클래스 부여
+			    createdRow: function(row, data) {
+			        if (__isViewTable && data && data.patId) {
+			            var key = _pvChangedKey(data.patId, data.admitDt, data.medStart);
+			            if (_PV_CHANGED_SET[key]) {
+			                row.classList.add('pv-changed-row');
+			            }
+			        }
+			    },
 			    columnDefs: [
 			    	// 특정 열만 정렬
 			    	{ 
@@ -3417,8 +3479,16 @@ function fn_FindDataTable() {
 			    ],
 		        ajax: dataLoad,
 			});
-		
-		
+
+		// viewTable draw 시 적정성평가 변경 마커 재적용 (정렬/페이지/검색 후에도 유지)
+		if (__isViewTable) {
+			dataTable.off('draw.pvMark').on('draw.pvMark', function() {
+				if (typeof fn_ApplyPatvalChangedMark === 'function') {
+					fn_ApplyPatvalChangedMark();
+				}
+			});
+		}
+
 		// 전체 선택 체크박스 기능
 	    $('#selectAll').on('click', function() {
 	        var rows = dataTable.rows({ 'search': 'applied' }).nodes();
@@ -3481,31 +3551,37 @@ function fn_FindDataTable() {
 	    
 	    /* row data선택 후 value set start */
 	    dataTable.on('click', 'tbody tr', function() {
-		    edit_Data = dataTable.row(this).data();
+		    // 클릭된 행이 속한 실제 테이블의 DataTable 인스턴스 사용
+		    var _ct = $(this).closest('table').DataTable();
+		    var _ctId = $(this).closest('table').attr('id');
+		    edit_Data = _ct.row(this).data();
 		    if (edit_Data) { showIndiSummary(edit_Data); }
 		    // 환자평가표 조회 버튼 활성/비활성 갱신 (우측 그리드일 때만)
-		    if (typeof fn_UpdatePatvalBtnState === 'function' && tableName && tableName.id === 'viewTable') {
+		    if (typeof fn_UpdatePatvalBtnState === 'function' && _ctId === 'viewTable') {
 		        fn_UpdatePatvalBtnState(edit_Data);
 		    }
 		});
 	    /* 싱글 선택 start */
 	    if (row_Select) {
 	        dataTable.on('click', 'tbody tr', (e) => {
-		    	
+
 	        	let classList = e.currentTarget.classList;
-	        	
-	        	if (!["01", "02", "03", "04"].includes(jobFlag)) {
-	        		
+
+	        	// e.currentTarget 행이 속한 실제 테이블의 DataTable 인스턴스를 사용
+	        	// (전역 dataTable 변수는 fn_ViewData setTimeout에서 복원되어 다른 테이블을 가리킬 수 있음)
+	        	let curTable = $(e.currentTarget).closest('table').DataTable();
+	        	let curTableId = $(e.currentTarget).closest('table').attr('id');
+
+	        	// viewTable 행을 클릭한 경우에만 viewTable 내부 선택을 정리
+	        	// (좌측 indicatorTable 행 클릭 시에는 viewTable 선택을 건드리지 않음)
+	        	if (curTableId === 'viewTable' && !["01", "02", "03", "04"].includes(jobFlag)) {
+
 	        		$('#viewTable tbody tr.selected').removeClass('selected');
-	        		/*
-	        		const viewTable = $('#viewTable').DataTable();
-	        		$(viewTable.rows('.selected').nodes()).removeClass('selected');
-	        		*/
 	        	}
-	        	
-	            
+
+
 	            if (!classList.contains('selected')) {
-	                dataTable.rows('.selected').nodes().each((row) => {
+	                curTable.rows('.selected').nodes().each((row) => {
 	                    row.classList.remove('selected');
 	                });
 	                classList.add('selected');
@@ -3526,6 +3602,19 @@ function fn_FindDataTable() {
 	    // viewTable이면 환자평가표 조회 버튼을 .dt-buttons 영역으로 이동
 	    if (tableName && tableName.id === 'viewTable' && typeof fn_AttachPatvalBtnToDt === 'function') {
 	        setTimeout(fn_AttachPatvalBtnToDt, 0);
+
+	        // viewTable 모든 카테고리 그리드(05/07/09/10/11/12/13/14)에서
+	        // 환자 행 더블클릭 시 환자평가표 모달 자동 열기
+	        dataTable.off('dblclick.pvOpen').on('dblclick.pvOpen', 'tbody tr', function() {
+	            var _ct = $(this).closest('table').DataTable();
+	            var rowData = _ct.row(this).data();
+	            if (!rowData || !rowData.patId || !rowData.admitDt || !rowData.medStart) return;
+	            // 행 selected 처리 + edit_Data 갱신 (fn_ShowPatvalModal 의 _pvGetSelectedRow 가 사용)
+	            edit_Data = rowData;
+	            $(this).closest('tbody').find('tr.selected').removeClass('selected');
+	            $(this).addClass('selected');
+	            if (typeof fn_ShowPatvalModal === 'function') fn_ShowPatvalModal();
+	        });
 	    } else {
 	        // 좌측 indicator 그리드일 땐 숨김
 	        var pb = document.getElementById('btnPatvalView');
@@ -4028,12 +4117,229 @@ function _pvDt(v) {
     if (s.length === 8) return s.substr(0,4) + '-' + s.substr(4,2) + '-' + s.substr(6,2);
     return _pvTxt(v);
 }
+// HbA1c — 마지막 자리가 소수점 (예: "083" → "8.3 %", "127" → "12.7 %", "100" → "10 %")
+function _pvHbA1c(v) {
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
+    var s = String(v).replace(/[^0-9]/g, '');
+    if (s === '' || s === '0' || s === '00' || s === '000') return _pvEmptyMark();
+    if (s.length < 2) return $('<div>').text(s + ' %').html();
+    var intPart = String(parseInt(s.slice(0, -1), 10));
+    var decDigit = s.slice(-1);
+    var disp = (decDigit === '0') ? intPart : (intPart + '.' + decDigit);
+    return $('<div>').text(disp + ' %').html();
+}
+// 체중/키 — 마지막 자리(4번째)가 소수점, 단위(unit) 뒤에 표시
+// (예: "0610","kg" → "61 kg", "0615","kg" → "61.5 kg", "1680","cm" → "168 cm", "1685","cm" → "168.5 cm")
+function _pvDecLast(v, unit) {
+    if (_pvIsEmpty(v)) return _pvEmptyMark();
+    var s = String(v).replace(/[^0-9]/g, '');
+    if (s === '' || /^0+$/.test(s)) return _pvEmptyMark();
+    var u = unit ? (' ' + unit) : '';
+    if (s.length < 2) return $('<div>').text(s + u).html();
+    var intPart = String(parseInt(s.slice(0, -1), 10));
+    var decDigit = s.slice(-1);
+    var disp = (decDigit === '0') ? intPart : (intPart + '.' + decDigit);
+    return $('<div>').text(disp + u).html();
+}
 // 상단 환자ID 마스킹 (앞뒤 모두 * 처리: ******-*******)
 function _pvMaskPatId(v) {
     if (_pvIsEmpty(v)) return _pvEmptyMark();
     var s = String(v).replace(/-/g,'').trim();
     if (s.length < 7) return $('<div>').text(new Array(s.length + 1).join('*')).html();
     return $('<div>').text('******-*******').html();
+}
+
+/* ============================================================
+   환자평가표 전월 비교 — 적정성평가 관련 항목 변경 시 파란색 표시
+   대상: D.신체기능(ADL), E·F 유치도뇨관 삽입/삽입기간,
+         F.당뇨 HbA1c 검사여부, I.1~I.4 욕창(압박성궤양),
+         I.5 피부문제 처치
+   ============================================================ */
+var _PV_PREV = null;
+// 전월 대비 적정성평가 관련 항목 변경 환자 키셋 ("patId|admitDt|medStart")
+var _PV_CHANGED_SET = {};
+
+function _pvChangedKey(patId, admitDt, medStart) {
+    // 그리드 SQL(select_CategoryListNN)이 LEFT(PAT_ID,6) 로 patId 를 6자리(생년월일)로
+    // 잘라 반환하므로, 비교 키도 항상 첫 6자로 정규화한다
+    var pid = String(patId || '').replace(/-/g,'').substring(0, 6);
+    return pid + '|' +
+           String(admitDt || '').replace(/-/g,'') + '|' +
+           String(medStart || '').replace(/-/g,'');
+}
+
+// viewTable 의 c_Head_Set / columnsSet 맨 앞에 "변경(✔)" 컬럼 prepend
+//   - 헤더는 공백, 폭 최소화 — 체크박스만 표시
+//   - 전월 대비 적정성평가 5개 분류(D.ADL / E·F.유치도뇨관 / F.HbA1c / I.욕창 / I.피부처치) 변경 환자에 ✔
+//   - c_Head_Set 이 1행 헤더(string[]) / 2행 헤더(object[][]) 모두 대응
+function fn_PrependPatvalChangedColumn() {
+    if (typeof c_Head_Set === 'undefined' || typeof columnsSet === 'undefined') return;
+    if (!Array.isArray(c_Head_Set) || !Array.isArray(columnsSet)) return;
+    // 이미 변경 컬럼이 prepend 되어 있으면 skip (중복 방지)
+    if (columnsSet.length > 0 && columnsSet[0] && columnsSet[0]._isPvChanged) return;
+
+    // 헤더 prepend — 공백 라벨 + 좁은 폭
+    if (c_Head_Set.length > 0 && Array.isArray(c_Head_Set[0])) {
+        var rowSpan = c_Head_Set.length;
+        c_Head_Set[0] = [{ label: '', rowspan: rowSpan, class: 'pv-chk-th' }].concat(c_Head_Set[0]);
+    } else {
+        c_Head_Set = [''].concat(c_Head_Set);
+    }
+
+    // 컬럼 정의 prepend — patId/admitDt/medStart 매칭 시 ✔ 렌더
+    columnsSet = [{
+        _isPvChanged: true,
+        data: null,
+        orderable: false,
+        searchable: false,
+        className: 'dt-body-center pv-chk-cell',
+        width: '24px',
+        render: function(data, type, row) {
+            if (type !== 'display') return '';
+            if (!row || !row.patId) return '';
+            try {
+                var key = _pvChangedKey(row.patId, row.admitDt, row.medStart);
+                if (_PV_CHANGED_SET[key]) {
+                    return '<span title="전월 대비 적정성평가 항목 변경" ' +
+                           'style="display:inline-block;width:14px;height:14px;line-height:12px;' +
+                           'text-align:center;font-size:9px;font-weight:900;color:#fff;' +
+                           'background:#1565c0;border-radius:2px;' +
+                           'box-shadow:0 1px 2px rgba(21,101,192,0.35);">&#10004;</span>';
+                }
+            } catch (e) {}
+            return '';
+        }
+    }].concat(columnsSet);
+}
+
+function fn_LoadPatvalChangedList() {
+    _PV_CHANGED_SET = {};
+    var selYear  = document.getElementById('year_Select');
+    var selMonth = document.getElementById('monthSelect');
+    if (!selYear || !selMonth) return;
+    var jobYymm = selYear.value + selMonth.value;
+    if (!hospid || !jobYymm || jobYymm.length !== 6) return;
+    $.ajax({
+        url: '/main/select_PatvalChangedList.do',
+        type: 'POST',
+        data: { hospCd: hospid, jobYymm: jobYymm },
+        dataType: 'json',
+        success: function(res) {
+            var rows = (res && res.data) ? res.data : [];
+            var set = {};
+            for (var i = 0; i < rows.length; i++) {
+                var r = rows[i];
+                set[_pvChangedKey(r.patId, r.admitDt, r.medStart)] = true;
+            }
+            _PV_CHANGED_SET = set;
+            // viewTable 이 이미 그려져 있다면 즉시 재적용 (전역 tableName 은 fn_ViewData 종료 후 indicatorTable 로
+            // 복원되므로 isDataTable 만으로 판정)
+            try {
+                if ($.fn.DataTable.isDataTable('#viewTable')) {
+                    // 첫 컬럼(변경 ✔) 셀을 다시 그리도록 invalidate + 마커 재적용
+                    $('#viewTable').DataTable().rows().invalidate('data').draw(false);
+                    fn_ApplyPatvalChangedMark();
+                }
+            } catch (e) {}
+        },
+        error: function() { _PV_CHANGED_SET = {}; }
+    });
+}
+
+// 현재 viewTable 의 모든 행에 변경 환자 마커 적용 (재조회 시 호출)
+function fn_ApplyPatvalChangedMark() {
+    if (!$.fn.DataTable.isDataTable('#viewTable')) return;
+    var dt = $('#viewTable').DataTable();
+    dt.rows().every(function() {
+        var d = this.data();
+        if (!d) return;
+        var key = _pvChangedKey(d.patId, d.admitDt, d.medStart);
+        var node = this.node();
+        if (node) {
+            if (_PV_CHANGED_SET[key]) {
+                node.classList.add('pv-changed-row');
+            } else {
+                node.classList.remove('pv-changed-row');
+            }
+        }
+    });
+}
+
+function _pvNorm(v) {
+    if (v === null || typeof v === 'undefined') return '';
+    return String(v).trim();
+}
+function _pvIsDiff(curVal, prevVal) {
+    // prev 데이터 자체가 없으면 비교 안함
+    if (!_PV_PREV) return false;
+    return _pvNorm(curVal) !== _pvNorm(prevVal);
+}
+// 변경된 값 표시 — html(현재값 렌더링 결과), prevDisp(전월 표시값), groupTitle(클릭 시 보여줄 분류명)
+function _pvDiffWrap(html, prevDisp, groupTitle) {
+    var pHtml  = $('<div>').text(_pvIsEmpty(prevDisp) ? '없음' : prevDisp).html();
+    var gHtml  = $('<div>').text(groupTitle || '').html();
+    return '<span class="pv-diff" title="전월 → ' + pHtml + ' (클릭: 이전 내용 보기)" ' +
+           'data-prev="' + pHtml + '" data-group="' + gHtml + '">' + html + '</span>';
+}
+// Y/N 비교
+function _pvDiffYn(cur, prev, groupTitle) {
+    var html = _pvYn(cur);
+    if (!_pvIsDiff(cur, prev)) return html;
+    var prevTxt = (cur === prev) ? '' : (
+        _pvIsEmpty(prev) ? '미입력' : ('값: ' + _pvNorm(prev))
+    );
+    return _pvDiffWrap(html, prevTxt, groupTitle);
+}
+// 코드 비교 (codeGroup → 매핑)
+function _pvDiffCd(codeGroup, cur, prev, groupTitle) {
+    var html = _pvCd(codeGroup, cur);
+    if (!_pvIsDiff(cur, prev)) return html;
+    var map = _PV_CODES[codeGroup] || {};
+    var prevDesc = map[String(prev)] ? (_pvNorm(prev) + ' : ' + map[String(prev)]) : (_pvIsEmpty(prev) ? '미입력' : _pvNorm(prev));
+    return _pvDiffWrap(html, prevDesc, groupTitle);
+}
+// 일반 텍스트 비교
+function _pvDiffTxt(cur, prev, groupTitle) {
+    var html = _pvTxt(cur);
+    if (!_pvIsDiff(cur, prev)) return html;
+    var prevDisp = _pvIsEmpty(prev) ? '미입력' : _pvNorm(prev);
+    return _pvDiffWrap(html, prevDisp, groupTitle);
+}
+// HbA1c 비교 (083 → 8.3 % 변환 후 비교)
+function _pvDiffHbA1c(cur, prev, groupTitle) {
+    var html = _pvHbA1c(cur);
+    if (!_pvIsDiff(cur, prev)) return html;
+    var prevDisp = _pvIsEmpty(prev) ? '미입력' : ($('<div>').html(_pvHbA1c(prev)).text() || _pvNorm(prev));
+    return _pvDiffWrap(html, prevDisp, groupTitle);
+}
+
+// 변경 표시(.pv-diff) 클릭 시 전월값 팝오버
+function _pvBindDiffClick() {
+    $(document).off('click.pvDiff').on('click.pvDiff', '.pv-diff', function(e) {
+        e.stopPropagation();
+        var prev = $(this).data('prev') || '없음';
+        var grp  = $(this).data('group') || '';
+        // 기존 팝오버 제거
+        $('.pv-diff-pop').remove();
+        var $pop = $('<div class="pv-diff-pop"></div>')
+            .css({
+                position: 'absolute', zIndex: 99999,
+                background: '#1e3c72', color: '#fff',
+                padding: '8px 12px', borderRadius: '6px',
+                fontSize: '12.5px', lineHeight: '1.5',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                maxWidth: '320px', whiteSpace: 'normal'
+            })
+            .html('<div style="font-weight:700;font-size:11.5px;opacity:0.85;margin-bottom:3px;">' + $('<div>').text(grp).html() + ' — 전월</div>' +
+                  '<div>' + $('<div>').text(prev).html() + '</div>');
+        var off = $(this).offset();
+        $pop.css({ top: (off.top + $(this).outerHeight() + 4) + 'px', left: off.left + 'px' });
+        $('body').append($pop);
+        // 다른 곳 클릭 시 닫기
+        setTimeout(function() {
+            $(document).one('click.pvDiffClose', function() { $('.pv-diff-pop').remove(); });
+        }, 0);
+    });
 }
 
 function fn_UpdatePatvalBtnState(row) {
@@ -4060,8 +4366,11 @@ function fn_AttachPatvalBtnToDt() {
         pvBtn.id = 'btnPatvalView';
         pvBtn.type = 'button';
         pvBtn.className = 'patval-btn _show';
+        pvBtn.title = '행 더블클릭으로도 열 수 있습니다';
         pvBtn.onclick = function() { fn_ShowPatvalModal(); };
         pvBtn.innerHTML = '<i class="fas fa-clipboard-list patval-icon"></i><span class="patval-label">환자평가표&nbsp;조회</span>';
+    } else {
+        pvBtn.title = '행 더블클릭으로도 열 수 있습니다';
     }
     if (pvBtn.parentNode !== $dtBtns[0]) {
         $dtBtns.append(pvBtn);
@@ -4162,6 +4471,8 @@ function fn_ShowPatvalModal() {
         Swal.fire({ icon: 'info', title: '환자 선택 필요', text: '우측 목록에서 환자(행)를 먼저 선택해 주세요.', timer: 1800, showConfirmButton: false });
         return;
     }
+    // 직전 환자 비교 데이터 초기화
+    _PV_PREV = null;
     if (!document.getElementById('patvalModalStyle')) {
         var st = document.createElement('style');
         st.id = 'patvalModalStyle';
@@ -4198,7 +4509,15 @@ function fn_ShowPatvalModal() {
             '.pv-err-chip  { display:inline-block; padding:3px 10px; background:#fff; border:1px solid #f8c4c4; border-radius:14px; font-size:12px; color:#c53030; font-weight:600; }' +
             '.pv-cd { display:inline-flex; align-items:center; gap:6px; }' +
             '.pv-cd-k { display:inline-block; min-width:20px; padding:1px 7px; border-radius:3px; background:#eef3fb; color:#1e3c72; font-weight:700; font-family:Consolas,monospace; font-size:12px; text-align:center; }' +
-            '.pv-cd-v { color:#2c3e50; font-weight:500; font-size:12.5px; }';
+            '.pv-cd-v { color:#2c3e50; font-weight:500; font-size:12.5px; }' +
+            '.pv-diff { color:#d32f2f !important; font-weight:800 !important; cursor:pointer; border-bottom:2px solid #d32f2f; padding:1px 4px; background:#fff3f3; border-radius:3px; }' +
+            '.pv-diff:hover { background:#ffebee; box-shadow:0 0 0 1px #d32f2f; }' +
+            '.pv-diff .pv-cd-k, .pv-diff .pv-cd-v, .pv-diff .pv-empty { color:#d32f2f !important; }' +
+            '.pv-diff::before { content:"\\26A0"; margin-right:4px; font-size:11px; color:#d32f2f; vertical-align:middle; }' +
+            /* 변경 항목 포함 탭 — 빨간 글자 + 우측 상단 ⚠ 배지 */
+            '.pv-tab.pv-tab-changed { color:#d32f2f !important; font-weight:800 !important; position:relative; }' +
+            '.pv-tab.pv-tab-changed::after { content:"\\26A0"; position:absolute; top:4px; right:4px; font-size:10px; color:#d32f2f; }' +
+            '.pv-tab.pv-tab-changed.active { color:#b71c1c !important; border-bottom-color:#d32f2f !important; background:#fff3f3 !important; }';
         document.head.appendChild(st);
     }
 
@@ -4224,8 +4543,12 @@ function fn_ShowPatvalModal() {
                 success: function(res) {
                     var d = (res && res.data) ? res.data : null;
                     d = _pvNormalizeKeys(d);
+                    // 전월 비교용 직전 행 (있으면 전역에 저장)
+                    var p = (res && res.prev) ? res.prev : null;
+                    _PV_PREV = _pvNormalizeKeys(p) || null;
                     Swal.update({ html: _pvBuildHtml(d, row) });
                     _pvBindTabs();
+                    _pvBindDiffClick();
                 },
                 error: function() {
                     Swal.update({ html: '<div style="padding:30px;text-align:center;color:#c53030;">데이터를 불러오지 못했습니다.</div>' });
@@ -4242,6 +4565,19 @@ function _pvBindTabs() {
         $(this).addClass('active');
         $('.pv-pane').removeClass('active');
         $('.pv-pane[data-tab="' + tgt + '"]').addClass('active');
+    });
+    // 변경 항목 포함 탭에 빨간 표시 마킹
+    _pvMarkChangedTabs();
+}
+
+// 각 탭 페인 안에 .pv-diff 엘리먼트가 있으면 해당 탭 버튼에 pv-tab-changed 클래스 부여
+function _pvMarkChangedTabs() {
+    $('.pv-tab').removeClass('pv-tab-changed');
+    $('.pv-pane').each(function() {
+        var tgt = $(this).data('tab');
+        if ($(this).find('.pv-diff').length > 0) {
+            $('.pv-tab[data-tab="' + tgt + '"]').addClass('pv-tab-changed');
+        }
     });
 }
 
@@ -4264,6 +4600,15 @@ function _pvBuildHtml(d, row) {
 
     var errBadges = _pvErrorBadges(d.patId || row.patId);
 
+    // 전월 비교 안내 (직전 행 있을 때만)
+    var prevNotice = '';
+    if (_PV_PREV && _PV_PREV.medStart) {
+        prevNotice = '<div style="margin:8px 0; padding:8px 12px; background:#fff3f3; border-left:4px solid #d32f2f; border-radius:4px; font-size:12.5px; color:#b71c1c;">' +
+                     '<i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>' +
+                     '전월(' + _pvDt(_PV_PREV.medStart) + ') 대비 적정성평가 관련 항목 변경 시 <b style="color:#d32f2f;">빨간색 ⚠</b>으로 표시됩니다. (값 클릭 시 전월 내용 표시)' +
+                     '</div>';
+    }
+
     var tabs =
         '<div class="pv-tabs">' +
         '  <button class="pv-tab active" data-tab="t1">A. 일반사항</button>' +
@@ -4274,7 +4619,7 @@ function _pvBuildHtml(d, row) {
         '</div>';
 
     return '<div style="text-align:left; max-height:70vh; overflow:auto; padding:2px 4px;">' +
-           header + errBadges + tabs +
+           header + prevNotice + errBadges + tabs +
            _pvTab1(d) + _pvTab2(d) + _pvTab3(d) + _pvTab4(d) + _pvTab5(d) +
            '</div>';
 }
@@ -4337,26 +4682,30 @@ function _pvTab2(d) {
         ['CDR 실시여부', _pvYn(d.cdrYn)],   ['CDR 점수',   _pvTxt(d.cdrScore)],  ['CDR 검사일',  _pvDt(d.cdrDt)],
         ['GDS 실시여부', _pvYn(d.gdsYn)],   ['GDS 점수',   _pvTxt(d.gdsScore)],  ['GDS 검사일',  _pvDt(d.gdsDt)]
     ]);
+    var p = _PV_PREV || {};
+    var gAdl = 'D. 신체기능(ADL)';
     var s4 = _pvSec('D. 신체기능 (0 완전자립 · 1 감독필요 · 2 약간도움 · 3 상당도움 · 4 전적도움 · 8 행위 발생안함)', 'fa-walking', [
-        ['옷벗고 입기', _pvCd('adl', d.dressing)], ['세수하기', _pvCd('adl', d.washing)],
-        ['양치질하기', _pvCd('adl', d.brushing)], ['목욕하기', _pvCd('adl', d.bathing)],
-        ['식사하기', _pvCd('adl', d.eating)], ['체위변경하기', _pvCd('adl', d.movePos)],
-        ['일어나 앉기', _pvCd('adl', d.sitUp)], ['옮겨앉기', _pvCd('adl', d.transfer)],
-        ['방밖으로 나오기', _pvCd('adl', d.exitRoom)], ['화장실 사용하기', _pvCd('adl', d.toiletUse)],
-        ['와상상태', _pvYn(d.bedridden)]
+        ['옷벗고 입기', _pvDiffCd('adl', d.dressing, p.dressing, gAdl)], ['세수하기', _pvDiffCd('adl', d.washing, p.washing, gAdl)],
+        ['양치질하기', _pvDiffCd('adl', d.brushing, p.brushing, gAdl)], ['목욕하기', _pvDiffCd('adl', d.bathing, p.bathing, gAdl)],
+        ['식사하기', _pvDiffCd('adl', d.eating, p.eating, gAdl)], ['체위변경하기', _pvDiffCd('adl', d.movePos, p.movePos, gAdl)],
+        ['일어나 앉기', _pvDiffCd('adl', d.sitUp, p.sitUp, gAdl)], ['옮겨앉기', _pvDiffCd('adl', d.transfer, p.transfer, gAdl)],
+        ['방밖으로 나오기', _pvDiffCd('adl', d.exitRoom, p.exitRoom, gAdl)], ['화장실 사용하기', _pvDiffCd('adl', d.toiletUse, p.toiletUse, gAdl)],
+        ['와상상태', _pvDiffYn(d.bedridden, p.bedridden, gAdl)]
     ]);
     return '<div class="pv-pane" data-tab="t2">' + s1 + s2 + s3 + s4 + '</div>';
 }
 
 function _pvTab3(d) {
+    var p = _PV_PREV || {};
+    var gCath = 'E·F. 유치도뇨관 삽입/삽입기간';
     var s1 = _pvSec('E. 배설기능 / 배변조절 기구 및 프로그램', 'fa-tint', [
         ['대변조절', _pvCd('bowelCtl', d.bowelCtl)], ['소변조절', _pvCd('urineCtl', d.urineCtl)],
         ['일정하게 짜여진 배뇨계획', _pvYn(d.urPlan)], ['방광 훈련 프로그램', _pvYn(d.bladTrain)],
         ['규칙적 도뇨', _pvYn(d.regCath)], ['외부(콘돔형) 카테터', _pvYn(d.extCath)],
         ['패드, 팬티형 기저귀', _pvYn(d.padDiaper)], ['인공루', _pvYn(d.artifUr)],
-        ['유치도뇨관 삽입', _pvYn(d.indwellCath)], ['해당사항 없음', _pvYn(d.catNoa)],
+        ['유치도뇨관 삽입', _pvDiffYn(d.indwellCath, p.indwellCath, gCath)], ['해당사항 없음', _pvYn(d.catNoa)],
         ['배뇨일지 작성 여부', _pvYn(d.diaryCreated)], ['배뇨일지 작성일수', _pvTxt(d.diaryDays)],
-        ['삽입기간(g-1~g-10 제외)', _pvTxt(d.catDur)]
+        ['삽입기간(g-1~g-10 제외)', _pvDiffTxt(d.catDur, p.catDur, gCath)]
     ]);
 
     var cathRows = '';
@@ -4374,10 +4723,11 @@ function _pvTab3(d) {
         '  <tbody>' + cathRows + '</tbody></table>' +
         '</div>';
 
+    var gDM = 'F.1.a 당뇨 — HbA1c 검사 실시여부';
     var s3 = _pvSec('F.1.a 당뇨 / 혈당 / HbA1c', 'fa-vial', [
         ['당뇨', _pvYn(d.diabetes)], ['혈당검사 실시여부', _pvYn(d.bldSugarTest)],
         ['공복시 혈당 (mg/dl)', _pvTxt(d.fastingSugar)], ['식후2시간 혈당 (mg/dl)', _pvTxt(d.post2hSugar)],
-        ['HbA1c검사 실시여부', _pvYn(d.hba1cTest)], ['HbA1c (%)', _pvTxt(d.hba1cValue)],
+        ['HbA1c검사 실시여부', _pvDiffYn(d.hba1cTest, p.hba1cTest, gDM)], ['HbA1c (%)', _pvDiffHbA1c(d.hba1cValue, p.hba1cValue, gDM)],
         ['검사일', _pvDt(d.testDate)]
     ]);
     var s4 = _pvSec('F.1 질병', 'fa-disease', [
@@ -4404,6 +4754,9 @@ function _pvTab3(d) {
 }
 
 function _pvTab4(d) {
+    var p = _PV_PREV || {};
+    var gUlcer = 'I.1~I.4 욕창(압박성 궤양)';
+    var gSkin  = 'I.5 피부문제에 대한 처치';
     var s1 = _pvSec('F.2 영양관련 장애 / H. 구강 및 영양상태', 'fa-apple-alt', [
         ['콰시오르코르(E40)', _pvYn(d.kwashE40)], ['영양성 소모증(E41)', _pvYn(d.nutrE41)],
         ['소모성 콰시오르코르(E42)', _pvYn(d.wasteKwE42)],
@@ -4413,9 +4766,9 @@ function _pvTab4(d) {
         ['상세불명의 단백질-에너지 영양실조(E46)', _pvYn(d.malUnkE46)],
         ['해당사항 없음', _pvYn(d.nutrNoa)],
         ['삼키기', _pvYn(d.swallow)],
-        ['체중 측정여부', _pvYn(d.weigHeigYn)], ['체중(kg)', _pvTxt(d.weig)], ['체중 측정일', _pvDt(d.weigDt)],
+        ['체중 측정여부', _pvYn(d.weigHeigYn)], ['체중(kg)', _pvDecLast(d.weig, 'kg')], ['체중 측정일', _pvDt(d.weigDt)],
         ['체중감소', _pvCd('weigLoss', d.weigLoss)], ['키 측정여부', _pvYn(d.heigYn)],
-        ['키(cm)', _pvTxt(d.heigSec)], ['키 측정일', _pvDt(d.heigDt)],
+        ['키(cm)', _pvDecLast(d.heigSec, 'cm')], ['키 측정일', _pvDt(d.heigDt)],
         ['정맥영양', _pvYn(d.ivNutri)], ['경관영양 실시여부', _pvYn(d.ivNutYn)],
         ['경관영양 실시일수', _pvTxt(d.ivNutDy)],
         ['칼로리 (6일간 1일 평균)', _pvCd('calories', d.calories)],
@@ -4437,27 +4790,27 @@ function _pvTab4(d) {
         ['말기질환', _pvYn(d.termDisease)]
     ]);
     var s4 = _pvSec('I.1 피부궤양의 수 / I.2 새로 발생한 욕창 / I.3 과거력 / I.4 기타문제', 'fa-band-aid', [
-        ['욕창(압박성 궤양) 1단계', _pvTxt(d.prUlcer1)], ['욕창(압박성 궤양) 2단계', _pvTxt(d.prUlcer2)],
-        ['욕창(압박성 궤양) 3단계', _pvTxt(d.prUlcer3)], ['욕창(압박성 궤양) 4단계', _pvTxt(d.prUlcer4)],
-        ['울혈/허혈성 궤양 1단계', _pvTxt(d.ciUl1)], ['울혈/허혈성 궤양 2단계', _pvTxt(d.ciUl2)],
-        ['울혈/허혈성 궤양 3단계', _pvTxt(d.ciUl3)], ['울혈/허혈성 궤양 4단계', _pvTxt(d.ciUl4)],
-        ['새로 발생한 욕창 유무', _pvCd('newUlcer', d.newUlcer)], ['발생일', _pvDt(d.ulcerDt)],
-        ['욕창(압박성 궤양) 과거력', _pvCd('pastUlcer', d.pastUlcer)],
-        ['2도 이상의 화상', _pvYn(d.skinProb)],
-        ['개방성 피부병변', _pvYn(d.openSkinLes)], ['수술 창상', _pvYn(d.surgWound)],
-        ['발의 감염', _pvYn(d.footInfec)], ['해당사항 없음', _pvYn(d.skinNoa)]
+        ['욕창(압박성 궤양) 1단계', _pvDiffTxt(d.prUlcer1, p.prUlcer1, gUlcer)], ['욕창(압박성 궤양) 2단계', _pvDiffTxt(d.prUlcer2, p.prUlcer2, gUlcer)],
+        ['욕창(압박성 궤양) 3단계', _pvDiffTxt(d.prUlcer3, p.prUlcer3, gUlcer)], ['욕창(압박성 궤양) 4단계', _pvDiffTxt(d.prUlcer4, p.prUlcer4, gUlcer)],
+        ['울혈/허혈성 궤양 1단계', _pvDiffTxt(d.ciUl1, p.ciUl1, gUlcer)], ['울혈/허혈성 궤양 2단계', _pvDiffTxt(d.ciUl2, p.ciUl2, gUlcer)],
+        ['울혈/허혈성 궤양 3단계', _pvDiffTxt(d.ciUl3, p.ciUl3, gUlcer)], ['울혈/허혈성 궤양 4단계', _pvDiffTxt(d.ciUl4, p.ciUl4, gUlcer)],
+        ['새로 발생한 욕창 유무', _pvDiffCd('newUlcer', d.newUlcer, p.newUlcer, gUlcer)], ['발생일', _pvDt(d.ulcerDt)],
+        ['욕창(압박성 궤양) 과거력', _pvDiffCd('pastUlcer', d.pastUlcer, p.pastUlcer, gUlcer)],
+        ['2도 이상의 화상', _pvDiffYn(d.skinProb, p.skinProb, gUlcer)],
+        ['개방성 피부병변', _pvDiffYn(d.openSkinLes, p.openSkinLes, gUlcer)], ['수술 창상', _pvDiffYn(d.surgWound, p.surgWound, gUlcer)],
+        ['발의 감염', _pvDiffYn(d.footInfec, p.footInfec, gUlcer)], ['해당사항 없음', _pvYn(d.skinNoa)]
     ]);
     var s5 = _pvSec('I.5 피부문제에 대한 처치', 'fa-hand-holding-medical', [
-        ['압력을 줄여주는 도구 사용', _pvYn(d.pressRelDev)], ['체위변경', _pvYn(d.posChange)],
-        ['피부문제 해결을 위한 영양공급', _pvYn(d.nutrSkin)],
-        ['피부궤양 드레싱', _pvYn(d.skinUlcDres)],
-        ['피부궤양 드레싱 부위 : 발', _pvYn(d.footDres)],
-        ['피부궤양 드레싱 부위 : 발 이외', _pvYn(d.nonFootDres)],
-        ['피부궤양 이외의 드레싱', _pvYn(d.nonUlcDres)],
-        ['드레싱 부위 : 발', _pvYn(d.leg)],
-        ['드레싱 부위 : 발 이외', _pvYn(d.legOther)],
-        ['수술창상 치료', _pvYn(d.surWndCare)],
-        ['화상관련 처치', _pvYn(d.burnTreat)], ['해당사항 없음', _pvYn(d.fskinNoa)]
+        ['압력을 줄여주는 도구 사용', _pvDiffYn(d.pressRelDev, p.pressRelDev, gSkin)], ['체위변경', _pvDiffYn(d.posChange, p.posChange, gSkin)],
+        ['피부문제 해결을 위한 영양공급', _pvDiffYn(d.nutrSkin, p.nutrSkin, gSkin)],
+        ['피부궤양 드레싱', _pvDiffYn(d.skinUlcDres, p.skinUlcDres, gSkin)],
+        ['피부궤양 드레싱 부위 : 발', _pvDiffYn(d.footDres, p.footDres, gSkin)],
+        ['피부궤양 드레싱 부위 : 발 이외', _pvDiffYn(d.nonFootDres, p.nonFootDres, gSkin)],
+        ['피부궤양 이외의 드레싱', _pvDiffYn(d.nonUlcDres, p.nonUlcDres, gSkin)],
+        ['드레싱 부위 : 발', _pvDiffYn(d.leg, p.leg, gSkin)],
+        ['드레싱 부위 : 발 이외', _pvDiffYn(d.legOther, p.legOther, gSkin)],
+        ['수술창상 치료', _pvDiffYn(d.surWndCare, p.surWndCare, gSkin)],
+        ['화상관련 처치', _pvDiffYn(d.burnTreat, p.burnTreat, gSkin)], ['해당사항 없음', _pvYn(d.fskinNoa)]
     ]);
     return '<div class="pv-pane" data-tab="t4">' + s1 + s2 + s3 + s4 + s5 + '</div>';
 }
