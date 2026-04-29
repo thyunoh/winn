@@ -99,7 +99,9 @@
       "Read(//d/워너넷자료/심평원수가,약가,재료대/**)",
       "Read(//d/워너넷자료/**)",
       "Bash(iconv -f euc-kr -t utf-8)",
-      "Bash(iconv -f cp949 -t utf-8)"
+      "Bash(iconv -f cp949 -t utf-8)",
+      "Bash(taskkill //F //IM WinnerProj.exe)",
+      "Bash(dotnet build *)"
     ]
   }
 }

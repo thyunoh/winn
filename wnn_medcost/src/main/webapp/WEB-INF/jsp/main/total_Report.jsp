@@ -853,10 +853,20 @@ function fn_BuildChart02(colIdx) {
     try {
         if (mixedChart1) { mixedChart1.destroy(); mixedChart1 = null; }
 
+        // 셀 값에서 퍼센트 추출 — "63 [28.64%]" → 28.64
+        function pctOf(v) {
+            if (v == null) return 0;
+            var m = String(v).match(/\[\s*([\d.]+)\s*%?\s*\]/);
+            if (m) return parseFloat(m[1]) || 0;
+            // 대괄호가 없으면 전체를 숫자로 시도 (안전망)
+            var num = parseFloat(String(v).replace(/,/g, ''));
+            return isNaN(num) ? 0 : num;
+        }
+
         var taData = [], myData = [];
         for (var i = 0; i < 5; i++) {
-            taData.push(parseFloat(String(d[i][taField] || '0').replace(/,/g, '')) || 0);
-            myData.push(parseFloat(String(d[i][myField] || '0').replace(/,/g, '')) || 0);
+            taData.push(pctOf(d[i][taField]));
+            myData.push(pctOf(d[i][myField]));
         }
         const ctx1 = document.getElementById('mixedChart21').getContext('2d');
         mixedChart1 = new Chart(ctx1, {
@@ -865,13 +875,13 @@ function fn_BuildChart02(colIdx) {
                 labels: ['의료최고도', '의료고도', '의료중도', '의료경도', '선택입원군'],
                 datasets: [
                     {
-                        label: '',
+                        label: '타병원',
                         data: taData,
                         backgroundColor: '#0B8ECA',
                         borderWidth: 1, borderRadius: 8, yAxisID: 'y', type: 'bar', minBarLength: 0
                     },
                     {
-                        label: '',
+                        label: '본원',
                         data: myData,
                         backgroundColor: '#ED7D31',
                         borderWidth: 1, borderRadius: 8, yAxisID: 'y', type: 'bar', minBarLength: 0
@@ -882,9 +892,25 @@ function fn_BuildChart02(colIdx) {
                 maintainAspectRatio: false,
                 responsive: true,
                 animation: { duration: 1000 },
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%';
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    y:  { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                    y:  {
+                        beginAtZero: true,
+                        suggestedMax: 100,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: function(v) { return v + '%'; }
+                        }
+                    },
                     y1: { beginAtZero: true, position: 'right', ticks: { display: false }, grid: { drawOnChartArea: false } }
                 }
             }

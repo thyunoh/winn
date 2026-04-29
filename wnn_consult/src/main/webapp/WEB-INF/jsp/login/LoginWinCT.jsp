@@ -826,6 +826,145 @@
 	  	<img id="popupImg_1" src="" alt="팝업 이미지">
 	</div>
 
+	<!-- ───── 위너넷 휴무 안내 팝업 — 기존 popupBox_1 + holiday_winner.png ───── -->
+	<style>
+	/* 휴무 모드 — 가운데 정렬, 크기 크게, footer 영역 분리 */
+	.popup-box_1.holiday-mode {
+	    left: 50% !important;
+	    top: 50% !important;
+	    transform: translate(-50%, -50%) !important;
+	    width: 640px !important;             /* 760 → 640 살짝 축소 */
+	    max-width: 92vw !important;
+	    height: auto !important;
+	    max-height: 88vh !important;
+	    padding: 0 0 64px 0 !important;      /* 하단 64px = 닫기·체크박스 footer 영역 */
+	    border-radius: 12px !important;
+	    box-shadow: 0 12px 40px rgba(0,0,0,0.35) !important;
+	    background: #fff !important;         /* 솔리드 흰색 — 잔상 제거 */
+	    overflow: hidden !important;
+	    border: 0 !important;
+	}
+	.popup-box_1.holiday-mode #popupImg_1 {
+	    width: 100% !important;
+	    height: auto !important;
+	    max-height: calc(88vh - 64px) !important;  /* footer 64px 제외 */
+	    object-fit: contain !important;
+	    display: block !important;
+	    border-radius: 12px 12px 0 0 !important;
+	    margin: 0 !important;
+	}
+	/* footer 닫기 버튼 — 하단 정중앙 */
+	.popup-box_1.holiday-mode .popup-close_1 {
+	    top: auto !important;
+	    right: auto !important;
+	    bottom: 14px !important;
+	    left: 50% !important;
+	    transform: translateX(-50%) !important;
+	    padding: 8px 32px !important;
+	    background: #2a5298 !important;
+	    color: #fff !important;
+	    border: 0 !important;
+	    border-radius: 6px !important;
+	    font-weight: 600 !important;
+	    font-size: 14px !important;
+	    margin: 0 !important;
+	    height: auto !important;
+	    width: auto !important;
+	    display: inline-flex !important;
+	    align-items: center !important;
+	}
+	.popup-box_1.holiday-mode .popup-close_1 .close-text_1 { color: #fff !important; font-size: 14px !important; }
+	/* footer 좌하단 "오늘 하루 보지 않기" — 배경 없음, 닫기와 같은 높이 */
+	.popup-box_1.holiday-mode .holiday-hide-label {
+	    position: absolute !important;
+	    bottom: 20px !important;
+	    left: 20px !important;
+	    font-size: 14.5px !important;             /* ← 12.5 → 14.5 키움 */
+	    font-weight: 500 !important;
+	    color: #444 !important;
+	    cursor: pointer !important;
+	    user-select: none !important;
+	    background: transparent !important;
+	    padding: 0 !important;
+	    border: 0 !important;
+	    box-shadow: none !important;
+	    margin: 0 !important;
+	    z-index: 2 !important;
+	}
+	.popup-box_1.holiday-mode .holiday-hide-label input {
+	    vertical-align: middle;
+	    margin-right: 7px;
+	    width: 16px;
+	    height: 16px;
+	    cursor: pointer;
+	}
+	</style>
+	<script>
+	(function() {
+	    // 휴무 기간 (화면 표시 X, 코드 내부에서만 사용)
+	    var HOLIDAY_START = '2026-04-29';
+	    var HOLIDAY_END   = '2026-05-05';
+	    var HOLIDAY_IMG   = '/wnn_consult/images/winct/holiday_winner.png';
+	    var STORAGE_KEY   = 'holiday_hide_' + HOLIDAY_START.replace(/-/g,'');
+
+	    function todayStr() {
+	        var d = new Date();
+	        return d.getFullYear() + '-'
+	             + String(d.getMonth()+1).padStart(2,'0') + '-'
+	             + String(d.getDate()).padStart(2,'0');
+	    }
+	    function inRange() { var t = todayStr(); return t >= HOLIDAY_START && t <= HOLIDAY_END; }
+	    function hiddenToday() {
+	        try { return localStorage.getItem(STORAGE_KEY) === todayStr(); }
+	        catch(e) { return false; }
+	    }
+
+	    document.addEventListener('DOMContentLoaded', function() {
+	        if (!inRange() || hiddenToday()) return;
+	        setTimeout(function() {
+	            if (typeof window.openMyImagePopup_1 === 'function') {
+	                window.openMyImagePopup_1(HOLIDAY_IMG);
+	                applyHolidayMode();
+	            }
+	        }, 400);
+	    });
+
+	    function applyHolidayMode() {
+	        var box = document.getElementById('popupBox_1');
+	        if (!box) return;
+	        box.classList.add('holiday-mode');
+
+	        // 좌하단 "오늘 하루 보지 않기"
+	        if (!document.getElementById('holidayHideToday')) {
+	            var lbl = document.createElement('label');
+	            lbl.className = 'holiday-hide-label';
+	            lbl.innerHTML = '<input type="checkbox" id="holidayHideToday"> 오늘 하루 보지 않기';
+	            box.appendChild(lbl);
+	        }
+
+	        // 닫기 버튼 텍스트 살짝 변경
+	        var closeTxt = box.querySelector('.popup-close_1 .close-text_1');
+	        if (closeTxt) closeTxt.textContent = '닫기';
+
+	        // 닫기 시 체크 상태 저장 + holiday-mode 정리
+	        if (!window._holidayClosePatched) {
+	            window._holidayClosePatched = true;
+	            var origClose = window.closePopup_1;
+	            window.closePopup_1 = function() {
+	                try {
+	                    var chk = document.getElementById('holidayHideToday');
+	                    if (chk && chk.checked) localStorage.setItem(STORAGE_KEY, todayStr());
+	                } catch(e) {}
+	                var b = document.getElementById('popupBox_1');
+	                if (b) b.classList.remove('holiday-mode');
+	                if (typeof origClose === 'function') origClose();
+	            };
+	        }
+	    }
+	})();
+	</script>
+	<!-- ───── 휴무 안내 팝업 끝 ───── -->
+
 	<!-- Modal 동의서 확인 -->
 	<div id="termsModal" class="modal fade" data-backdrop="static"
 		data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
