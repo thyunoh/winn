@@ -644,6 +644,7 @@
 				    END_INDI,
 				    STD_SCORE,
 				    WE_VALUE,
+				    WEVALUE_NM , 
 				    REG_DTTM,
 				    REG_USER,
 				    REG_IP,
@@ -662,6 +663,7 @@
 				    END_INDI,
 				    STD_SCORE,
 				    WE_VALUE,
+				    WEVALUE_NM , 
 				    NOW()       AS REG_DTTM,        -- 현재시간으로 등록일 갱신
 				    #{regUser}  AS REG_USER,        -- 복사 사용자
 				    #{regIp}    AS REG_IP,
