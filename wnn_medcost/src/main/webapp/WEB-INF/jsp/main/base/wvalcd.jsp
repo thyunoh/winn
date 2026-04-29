@@ -1792,8 +1792,10 @@
 			            },
 			            success: function (response) {
 			                messageBox("1", "<h6> 정상적으로 업데이트되었습니다. </h6>", mainFocus, "", "");
-		                    // ✅ 복사 후 데이터 다시 불러오기
-		                    location.reload();
+		                    // ✅ 복사 후 재조회만 (페이지 reload X)
+		                    if (typeof fn_FindData === 'function') {
+		                        fn_FindData();
+		                    }
 			            },
 			            error: function (jqXHR, textStatus, errorThrown) {
 			                console.error("에러 발생:", textStatus, errorThrown);
