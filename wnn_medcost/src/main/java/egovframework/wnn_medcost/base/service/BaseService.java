@@ -52,6 +52,7 @@ public interface BaseService {
 	boolean           updateWvalue(WvalDTO dto)     throws Exception; 
 	String            WvalueDupChk(WvalDTO dto)     throws Exception; 	
 	boolean           copWvalueList(WvalDTO dto)    throws Exception;
+	int               updPrevWvalueEndDt(WvalDTO dto) throws Exception;  // 기존 그룹 END_DT 끊기
 //samfile 	
 	List<SamverDTO>   getsamverCdlist(SamverDTO dto) throws Exception;
 	boolean           insertsamverCd(SamverDTO dto)  throws Exception;

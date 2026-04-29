@@ -932,21 +932,26 @@ public class BaseController {
 	}	
 	@RequestMapping(value="/copwvalcdList.do", method = RequestMethod.POST)
     public ResponseEntity<String> copwvalcdList(@RequestBody List<WvalDTO> data) {
-	
+
 		System.out.println("copy Update 시작했음");
 		String returnValue = "OK";
 		// 처리 로직
         try {
-    	
+
         	for (WvalDTO dto : data) {
-        		svc.copWvalueList(dto); // 이력관리
+        		// 1단계: 기존 그룹의 END_DT 를 신규 시작일 - 1일로 끊기 (UPDATE)
+        		int closed = svc.updPrevWvalueEndDt(dto);
+        		System.out.println("[copwvalcdList] 기존 END_DT 끊은 행수 = " + closed
+        				+ " (startDt=" + dto.getStartDt() + " → newStartDt=" + dto.getNewStartDt() + ")");
+        		// 2단계: 신규 START_DT 로 행 복제 INSERT
+        		svc.copWvalueList(dto);
             }
-        	return ResponseEntity.ok(returnValue);   
-        	
+        	return ResponseEntity.ok(returnValue);
+
         } catch (Exception e) {
-        	
+
             return ResponseEntity.status(500).body(e.getMessage());
-            
+
         }
 	}
 	@RequestMapping(value="/WvalueInsert.do", method = RequestMethod.POST)

@@ -620,7 +620,20 @@
 		  Order by A.START_DT , A.CATE_CODE  ,   A.ORDER_SEQ 
 	      ]]>         
     </select>  
-    <insert id="copWvalueList" parameterType="WvalDTO"><![CDATA[ 
+    <!-- [최종자료복사·생성] 1단계: 기존 그룹의 END_DT 를 신규 시작일 - 1일로 끊기 -->
+    <update id="updPrevWvalueEndDt" parameterType="WvalDTO"><![CDATA[
+        UPDATE TBL_WEVALUE_MST
+           SET END_DT   = DATE_FORMAT(DATE_SUB(STR_TO_DATE(#{newStartDt},'%Y%m%d'), INTERVAL 1 DAY), '%Y%m%d'),
+               UPD_DTTM = NOW(),
+               UPD_USER = #{updUser},
+               UPD_IP   = #{updIp}
+         WHERE START_DT = #{startDt}
+           AND ACTION_YN = 'Y'
+           AND END_DT >= DATE_FORMAT(STR_TO_DATE(#{newStartDt},'%Y%m%d'), '%Y%m%d')
+    ]]></update>
+
+    <!-- [최종자료복사·생성] 2단계: 신규 START_DT 로 행들을 복제 INSERT -->
+    <insert id="copWvalueList" parameterType="WvalDTO"><![CDATA[
 				INSERT INTO TBL_WEVALUE_MST (
 				    CATE_CODE,
 				    ORDER_SEQ,

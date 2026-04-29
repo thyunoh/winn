@@ -101,7 +101,9 @@
       "Bash(iconv -f euc-kr -t utf-8)",
       "Bash(iconv -f cp949 -t utf-8)",
       "Bash(taskkill //F //IM WinnerProj.exe)",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(rm -rf \"D:/WinnerProj/Publish\")",
+      "Bash(dotnet publish *)"
     ]
   }
 }

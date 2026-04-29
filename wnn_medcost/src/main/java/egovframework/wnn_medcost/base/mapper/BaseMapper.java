@@ -53,6 +53,7 @@ public interface BaseMapper {
 	boolean           insertWvalue(WvalDTO dto)       throws Exception; 
 	boolean           updateWvalue(WvalDTO dto)       throws Exception; 
 	boolean           copWvalueList(WvalDTO dto)      throws Exception;
+	int               updPrevWvalueEndDt(WvalDTO dto) throws Exception;   // 기존 그룹 END_DT 끊기
 	String            WvalueDupChk(WvalDTO dto)       throws Exception; 	
 	//샘파일
 	List<SamverDTO>   getsamverCdlist(SamverDTO dto)  throws Exception;

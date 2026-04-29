@@ -307,6 +307,11 @@ public class BaseServiceImpl implements BaseService {
 	}
 
 	@Override
+	public int updPrevWvalueEndDt(WvalDTO dto) throws Exception {
+		return mapper.updPrevWvalueEndDt(dto);
+	}
+
+	@Override
 	public List<DrugMstDTO> getDrugMstList(DrugMstDTO dto) throws Exception {
 		return mapper.getDrugMstList(dto);
 	}

@@ -1723,16 +1723,40 @@
 		    monthSelect.addEventListener('change', updateDays);
 		}
 		function fn_CopyData() {
+			// 모든 값은 DB 형식인 yyyymmdd (하이픈 없음) 으로 통일
+			var _ny = document.getElementById("copyDate").value;
+			var _nm = document.getElementById("copyMonth").value.padStart(2, '0');
+			var _nd = document.getElementById("copyDay").value.padStart(2, '0');
+			var _newStart = _ny + _nm + _nd;                 // 예: '20260101'
+
+			// 끊을 일자 = 신규 시작일 - 1일
+			var _nDt = new Date(parseInt(_ny), parseInt(_nm) - 1, parseInt(_nd));
+			_nDt.setDate(_nDt.getDate() - 1);
+			var _prevEnd = _nDt.getFullYear()
+				+ String(_nDt.getMonth()+1).padStart(2,'0')
+				+ String(_nDt.getDate()).padStart(2,'0');     // 예: '20251231'
+
+			// 좌측에서 선택된 startDt 도 하이픈 제거 (혹시 있으면)
+			var _origStart = String(startDt || '').replace(/-/g, '');
+
 			Swal.fire({
-			    title: '복사진행여부',
-			    text: '복사 진행 하시겠습니까 ?',
+			    title: '최종자료 복사·생성',
+			    html:
+			        '<div style="font-size:14px; line-height:1.7; text-align:left;">' +
+			        '<b>다음 두 작업이 함께 실행됩니다.</b><br><br>' +
+			        '① <b>기존 그룹 종료처리(UPDATE)</b><br>' +
+			        '&nbsp;&nbsp;&nbsp;START_DT = <span style="color:#1565c0">' + _origStart + '</span> 행들의<br>' +
+			        '&nbsp;&nbsp;&nbsp;END_DT → <span style="color:#c0392b"><b>' + _prevEnd + '</b></span> 으로 끊기<br><br>' +
+			        '② <b>신규 그룹 복제(INSERT)</b><br>' +
+			        '&nbsp;&nbsp;&nbsp;START_DT = <span style="color:#2a5298"><b>' + _newStart + '</b></span><br>' +
+			        '&nbsp;&nbsp;&nbsp;END_DT   = 20991231<br><br>' +
+			        '진행하시겠습니까?' +
+			        '</div>',
 			    icon: 'question',
 			    showCancelButton: true,
-			    confirmButtonText: '예',
+			    confirmButtonText: '예, 진행',
 			    cancelButtonText: '아니오',
-			    customClass: {
-			        popup: 'small-swal'
-			    }
+			    customClass: { popup: 'small-swal' }
 			}).then((result) => {
 			    // 사용자가 '예' 버튼을 클릭한 경우
 			    if (result.isConfirmed) {
