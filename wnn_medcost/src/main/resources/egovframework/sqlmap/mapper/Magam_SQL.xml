@@ -1266,7 +1266,8 @@
 		                 GROUP BY CATE_CODE
 		               ) maxs ON wm.CATE_CODE = maxs.CATE_CODE AND wm.STD_SCORE = maxs.MAX_SCORE
 		         WHERE wm.ACTION_YN = 'Y'
-		       ) w ON p.CATE_CD = w.CATE_CODE AND p.JOBYYMM BETWEEN w.START_DT AND w.END_DT
+		       ) w ON p.CATE_CD = w.CATE_CODE
+		          AND CONCAT(p.JOBYYMM,'01') BETWEEN w.START_DT AND w.END_DT     -- jobyymm(6자) → 8자 맞춰 비교
 		  WHERE p.HOSP_CD = #{hosp_cd}
 		    AND p.JOBYYMM = #{jobyymm}
 		    AND p.CATE_CD NOT LIKE 'M%'
@@ -4555,7 +4556,8 @@
     <select id="select_Hosp_Indi" parameterType="map" resultMap="indiMap">
 	    WITH grouped_data AS (
 		    SELECT code.SUB_CODE_NM      AS cate_nm
-		         , MAX(main.STDWEIG)     AS stdweig
+		         , MAX(w.WE_VALUE)       AS stdweig    <!-- 시뮬레이터: TBL_WEVALUE_MST 의 현재 가중치 직접 사용 (자료생성 무관) -->
+
 		         
 		         , COALESCE(ROUND(AVG(CASE WHEN main.JOBYYMM = #{month_1} THEN COALESCE(main.CAL_VAL,0) ELSE NULL END), 2),0) AS calval1
 		         , COALESCE(ROUND(AVG(CASE WHEN main.JOBYYMM = #{month_2} THEN COALESCE(main.CAL_VAL,0) ELSE NULL END), 2),0) AS calval2
@@ -4601,7 +4603,8 @@
 		                   GROUP BY CATE_CODE
 		                 ) maxs ON wm.CATE_CODE = maxs.CATE_CODE AND wm.STD_SCORE = maxs.MAX_SCORE
 		           WHERE wm.ACTION_YN = 'Y'
-		         ) w ON main.CATE_CD = w.CATE_CODE AND main.JOBYYMM BETWEEN w.START_DT AND w.END_DT
+		         ) w ON main.CATE_CD = w.CATE_CODE
+		            AND CONCAT(main.JOBYYMM,'01') BETWEEN w.START_DT AND w.END_DT   -- jobyymm(6자) → 8자 맞춰 비교
 		    LEFT JOIN TBL_CODE_DTL code
 		      ON code.CODE_GB = 'Z'
 		     AND code.CODE_CD = 'WVALUE'
