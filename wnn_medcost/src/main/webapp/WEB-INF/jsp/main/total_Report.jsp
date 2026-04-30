@@ -92,7 +92,52 @@
 								        	<button data-flag="13" data-action="FindView" data-value="accordion_item_E" data-pdf-exclude="true" class="btn btn-info text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('13')">《 입원현황기준 누락 대상자 보기 》 <span class="badge badge-light text-muted ml-1" style="font-size:9px;">PDF제외</span></button>
 								        </div>
 								    </div>
-								    <br>
+
+								    <!-- ▼ 기능설명 패널 (버튼 클릭 시 자동 갱신) ─────────────────────────── -->
+								    <style>
+								        #featureInfoPanel{
+								            position:relative;
+								            margin:3px 0 6px 0;
+								            padding:8px 12px 8px 32px;
+								            border-radius:6px;
+								            background:linear-gradient(135deg,#f5f9ff 0%, #eef4ff 100%);
+								            border:1px solid #d6e4ff;
+								            color:#2d3a55;
+								            font-size:12.5px;
+								            line-height:1.45;
+								            transition:opacity .2s ease;
+								            opacity:0;
+								        }
+								        #featureInfoPanel.is-show{ opacity:1; }
+								        #featureInfoPanel:before{
+								            content:"\f05a";
+								            font-family:"Font Awesome 5 Free","FontAwesome";
+								            font-weight:900;
+								            position:absolute;
+								            left:10px; top:50%;
+								            transform:translateY(-50%);
+								            color:#4a7dff;
+								            font-size:13px;
+								        }
+								        #featureInfoPanel .fi-desc{ display:block; color:#3d4a66; }
+								        #featureInfoPanel .fi-desc b{ color:#1f2d4a; font-weight:600; }
+								        /* 아코디언 헤더(노란 부분) 위쪽 여백 + 자체 높이 축소 */
+								        #accordion-eleven{ margin-top:0 !important; }
+								        #accordion-eleven .accordion__header{
+								            padding-top:8px !important;
+								            padding-bottom:8px !important;
+								            min-height:0 !important;
+								            line-height:1.25 !important;
+								        }
+								        #accordion-eleven .accordion__header--text{
+								            font-size:13.5px !important;
+								            line-height:1.25 !important;
+								        }
+								    </style>
+								    <div id="featureInfoPanel" role="note" aria-live="polite">
+								        <span class="fi-desc">상단 메뉴 버튼을 클릭하시면, 해당 점검 항목의 기능 설명이 이곳에 표시됩니다.</span>
+								    </div>
+
 								    <div id="accordion-eleven" class="accordion accordion-header-bg accordion-rounded-stylish accordion-header-shadow accordion-bordered">
 	                                    <div  id="accordion_item_1" class="accordion__item">
 	                                        <div class="accordion__header accordion__header--winner text-center" data-toggle="collapse" data-target="#rounded-stylish_collapse" >
@@ -1564,6 +1609,42 @@ var PDF_MAP = {
     "13": { cardId: "card_containerE", title: "입원현황기준 누락 대상자 보기" },
     "14": { cardId: "card_containerF", title: "특정 진료비" }
 };
+
+// ============================================================
+// 기능 설명 매핑 (버튼 클릭 시 안내 패널에 노출)
+// ============================================================
+var FEATURE_INFO = {
+    "00": { title: "전체 대상 점검",                                desc: "모든 점검 항목을 한 번에 일괄 생성/조회하여 종합 결과를 확인할 수 있습니다." },
+    "01": { title: "요양병원 입원료 차등제 / 식대가산 점검",        desc: "월별 <b>차등제 등급</b>, <b>인력가산 적용 여부</b>, <b>식대가산 점검 대상</b>을 확인할 수 있습니다." },
+    "02": { title: "월별 정액수가 분포율【 환자평가표 】",           desc: "<b>환자군별 분포율</b>, <b>환자 수 증감 추이</b>, <b>타병원 대비 환자군 현황</b>을 확인할 수 있습니다." },
+    "03": { title: "환자군별 상향 가능 대상자 명단",                desc: "<b>환자군 상향 가능 대상자</b>, <b>예상 증액 금액</b>, <b>청구 개선 대상</b>을 확인할 수 있습니다." },
+    "04": { title: "월별 청구현황【 장기요양 + 특정기간 】",         desc: "<b>종별 청구 건수·금액</b>, <b>건당진료비·일당진료비 추이</b>, <b>타병원 대비 청구 수준</b>을 확인할 수 있습니다." },
+    "05": { title: "특정기간【 폐렴, 패혈증, 격리실, 중환자실 등 】", desc: "특정기간 <b>청구 건수·금액</b>, <b>총진료일수</b>, <b>평균진료일수</b>, <b>건당진료비 현황</b>을 확인할 수 있습니다." },
+    "06": { title: "특정기간 현황【 폐렴, 패혈증 】",                desc: "<b>폐렴·패혈증 청구금액</b>, <b>건당진료비·일당진료비 추이</b>, <b>타병원 대비 진료비 수준</b>을 확인할 수 있습니다." },
+    "07": { title: "특정기간 현황【 격리실 】",                      desc: "<b>격리실 청구 건수·금액</b>, <b>진료일수</b>, <b>건당진료비·일당진료비 현황</b>을 확인할 수 있습니다." },
+    "08": { title: "한방「입원」월별 청구현황",                      desc: "종별 한방 <b>청구 건수·금액</b>, <b>총 청구실적</b>, <b>한방 건당진료비 현황</b>을 확인할 수 있습니다." },
+    "09": { title: "재활치료 청구현황",                             desc: "<b>재활치료 청구 건수·금액</b>, <b>1인당 재활치료료</b>, <b>수가코드별 현황</b>, <b>대상자 내역</b>을 확인할 수 있습니다." },
+    "10": { title: "투석치료 청구현황",                             desc: "<b>투석치료 청구 건수·금액</b>, <b>1인당 투석진료비</b>, <b>대상자 내역</b>을 확인할 수 있습니다." },
+    "11": { title: "검사료 현황",                                  desc: "월별 <b>총검사비 비율</b>, <b>1인당 검사비</b>, <b>원내·위탁·정액·행위별 검사비 구성</b>, <b>타병원 대비 검사비 수준</b>을 확인할 수 있습니다." },
+    "12": { title: "약제비 현황",                                  desc: "월별 <b>총약제비 비율</b>, <b>1인당 약제비</b>, <b>경구·주사·정액·행위별 약제비 구성</b>, <b>타병원 대비 약제비 수준</b>을 확인할 수 있습니다." },
+    "13": { title: "입원현황기준 누락 대상자 보기",                  desc: "<b>입원현황 대비 청구 누락 건수</b>와 <b>누락 대상자 내역</b>을 확인할 수 있습니다. <span style=\"color:#d6336c;font-weight:600;\">(PDF 출력 제외)</span>" },
+    "14": { title: "특정 진료비",                                  desc: "<b>식대</b>, <b>정액수가 외 청구 가능 항목</b> 등 <b>특정 진료비 현황</b>과 <b>진료비 추이</b>를 확인할 수 있습니다." }
+};
+
+function fn_ShowFeatureInfo(flag){
+    var info = FEATURE_INFO[flag];
+    var el   = document.getElementById('featureInfoPanel');
+    if (!el || !info) return;
+    var descEl = el.querySelector('.fi-desc');
+    // 페이드아웃 후 갱신 → 페이드인 (직관적 전환 효과)
+    el.classList.remove('is-show');
+    setTimeout(function(){
+        if (descEl) descEl.innerHTML = info.desc;
+        // 강제 reflow 후 클래스 부여 (전환 안정화)
+        void el.offsetWidth;
+        el.classList.add('is-show');
+    }, 80);
+}
 
 // ============================================================
 // 공통 함수 - 우측 카드에 차트(canvas/svg)가 있는지 확인
@@ -3570,6 +3651,9 @@ function fn_CreateData(flag) {
 
 	_setActiveFlagBtn(flag);
 
+	// 기능 설명 패널 갱신 (직관적 안내)
+	fn_ShowFeatureInfo(flag);
+
 	let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
 
@@ -3587,6 +3671,7 @@ function fn_CreateData(flag) {
 function fn_CreateData_all() {
 
     _setActiveFlagBtn('00');
+    fn_ShowFeatureInfo('00');
 
     let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
