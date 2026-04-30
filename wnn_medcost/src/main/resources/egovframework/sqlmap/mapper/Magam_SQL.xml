@@ -1360,6 +1360,11 @@
 				                              AND b.DOC_DT             = c.DOC_DT)
 				         )
 				       )
+                  --  	AND  NOT (c.COMA = 1       AND  c.DRESSING  >= 4 AND c.WASHING    >= 4  AND c.BRUSHING  >= 4 AND  
+				  --              c.BATHING  >= 4  AND  c.EATING    >= 4 AND c.MOVE_POS   >= 4  AND c.SIT_UP    >= 4 AND 
+				  --              c.TRANSFER >= 4  AND  c.EXIT_ROOM >= 4 AND c.TOILET_USE >= 4  AND c.BEDRIDDEN >= 4 
+				  --          AND c.MED_START >= '20260101'   -- 2026년 이후 개시 환자만 제외기준 적용 고위험군 
+				  --      )  
 				       
 				 GROUP BY c.PAT_ID, c.PAT_NM, c.ADMIT_DT, c.MED_START, c.DOC_DT ) sub
 							
