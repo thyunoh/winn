@@ -1398,6 +1398,95 @@
 		 GROUP BY prev.PAT_ID, prev.PAT_NM, prev.ADMIT_DT, prev.MED_START, prev.DOC_DT, prev.EVAL_TYPE, prev.PAT_CLASS, prev.INDWELL_CATH
 	</select>
 
+	<!-- 06. 배뇨관리 실시 환자분율: URINE_CTL IN ('2','3') 대상자
+	     관리여부(manageYn): 분자(배뇨계획/방광훈련/규칙적도뇨) + 제외기준 + 명세서 조건을
+	     모두 통과한 대상은 'Y' (그리드에서 ● 표시), 그 외 '' -->
+	<select id="select_CategoryList06" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
+		SELECT DISTINCT
+		       LEFT(pm.PAT_ID,6)                                  AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) >= 1
+					THEN CONCAT(LEFT(COALESCE(pm.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) - 1), '*')
+					ELSE '' END                                   AS patNm
+		     , pm.ADMIT_DT                                        AS admitDt
+		     , pm.MED_START                                       AS medStart
+		     , pm.DOC_DT                                          AS docDt
+		     , CASE WHEN IFNULL(pm.PAT_CLASS,'') = ''
+		            THEN LEFT(PATIENT_CLASSIFICATION(pm.HOSP_CD, pm.PAT_ID, pm.CHUNGSEQ, pm.CLFORM_VER, pm.ADMIT_DT, pm.MED_START),1)
+		            ELSE LEFT(pm.PAT_CLASS,1) END                 AS patClass
+		     , pm.URINE_CTL                                       AS urineCtl
+		     , CASE WHEN sb.PAT_ID IS NOT NULL THEN 'Y' ELSE '' END AS manageYn
+		  FROM TBL_PATVAL_MST pm
+		  LEFT JOIN (
+		        SELECT DISTINCT
+		               mm.HOSP_CD
+		             , mm.PAT_ID
+		        FROM TBL_PATVAL_MST  pat FORCE INDEX (INDEX01)
+		        JOIN TBL_MYOUNG_MST  mm  FORCE INDEX (INDEX01)
+		                              ON mm.HOSP_CD = pat.HOSP_CD
+		                             AND mm.PAT_ID  = pat.PAT_ID
+		        JOIN TBL_CHUNG_MST   cm  ON cm.HOSP_CD  = mm.HOSP_CD
+		                                AND cm.CLAIM_NO = mm.CLAIM_NO
+		        JOIN TBL_JINORD_MST  jm  ON jm.HOSP_CD  = mm.HOSP_CD
+		                                AND jm.CLAIM_NO = mm.CLAIM_NO
+		                                AND jm.BILL_SEQ = mm.BILL_SEQ
+		        JOIN TBL_DISEASE_MST dm  ON dm.HOSP_CD  = mm.HOSP_CD
+		                                AND dm.CLAIM_NO = mm.CLAIM_NO
+		                                AND dm.BILL_SEQ = mm.BILL_SEQ
+		                                AND dm.DIAG_TYPE = '1'
+		       WHERE pat.HOSP_CD = #{hospCd}
+		         AND pat.MED_START LIKE CONCAT(#{jobYymm}, '%')
+		         AND pat.URINE_CTL IN ('2','3')   <!-- 2.자주실금함, 3.조절못함 -->
+		         /*  분자: ① ∨ ② ∨ ③ 중 하나 이상 */
+		         AND (
+		              /* ① 일정하게 짜여진 배뇨계획 + 배뇨일지 3일이상 */
+		              ( pat.UR_PLAN        = '1'
+		                AND pat.DIARY_CREATED = '1'
+		                AND CAST(NULLIF(pat.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 )
+		              /* ② 방광훈련프로그램 + 배뇨일지 3일이상 */
+		           OR ( pat.BLAD_TRAIN     = '1'
+		                AND pat.DIARY_CREATED = '1'
+		                AND CAST(NULLIF(pat.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 )
+		              /* ③ 규칙적 도뇨 (배뇨일지 요건 없음) */
+		           OR ( pat.REG_CATH       = '1' )
+		             )
+		         /* 제외 대상  */
+		         AND LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) NOT IN ('A')   <!-- 의료최고도 -->
+		         AND NOT (
+		              LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) = 'C'     <!-- 의료중도 -->
+		              AND pat.DEMENTIA = '1'                          <!-- 치매 -->
+		              AND ( pat.DELUSION    IN ('2','3')   /* 망상 */   <!--  2.자주 3.매우자주  -->
+		                 OR pat.HALLUCIN    IN ('2','3')   /* 환각 */
+		                 OR pat.AGITATION   IN ('2','3')   /* 초조·공격성 */
+		                 OR pat.DISINHIB    IN ('2','3')   /* 탈억제 */
+		                 OR pat.CARE_RESIST IN ('2','3')   /* 케어저항 */
+		                 OR pat.WANDER      IN ('2','3') ) /* 배회 */
+		              AND pat.PSYCH_DRUG = '1'                        <!-- 약물치료 -->
+		             )
+		         AND pat.URINE_MGMT NOT IN ('1')                                  <!-- 배뇨관련 루 관리 제외 -->
+		         AND SUBSTRING(dm.DIAG_CODE, 1, 4) NOT IN ('Z935','Z936','T830')  <!-- 요로전환술 진단 제외 -->
+
+		         AND cm.DATE_YM = #{jobYymm}
+		         AND COALESCE(mm.DELYN, '') = ''
+		         AND NOT EXISTS (SELECT 1
+		                           FROM TBL_SPECODE_MST tsm
+		                          WHERE tsm.HOSP_CD   = mm.HOSP_CD
+		                            AND tsm.CLAIM_NO  = mm.CLAIM_NO
+		                            AND tsm.BILL_SEQ  = mm.BILL_SEQ
+		                            AND tsm.SPEC_TYPE = 'JS008')
+		         AND EXISTS (SELECT 1
+		                       FROM TBL_JINORD_MST jsm
+		                      WHERE jsm.HOSP_CD  = mm.HOSP_CD
+		                        AND jsm.CLAIM_NO = mm.CLAIM_NO
+		                        AND jsm.BILL_SEQ = mm.BILL_SEQ
+		                        AND jsm.ITEM_NO <![CDATA[ <> ]]> 'L')
+		     ) sb ON sb.HOSP_CD = pm.HOSP_CD
+		          AND sb.PAT_ID  = pm.PAT_ID
+		 WHERE pm.HOSP_CD = #{hospCd}
+		   AND pm.MED_START LIKE CONCAT(#{jobYymm},'%')
+		   AND pm.URINE_CTL IN ('2','3')
+	</select>
+
+
 	<select id="select_CategoryList07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 		SELECT DISTINCT
 		       LEFT(pm.PAT_ID,6)                                  AS patId

@@ -438,7 +438,12 @@ public class MagamServiceImpl implements MagamService {
 	public List<PatvalDTO> select_CategoryList05(PatvalDTO dto) throws Exception {
 		return mapper.select_CategoryList05(dto);
 	}
-	
+
+	@Override
+	public List<PatvalDTO> select_CategoryList06(PatvalDTO dto) throws Exception {
+		return mapper.select_CategoryList06(dto);
+	}
+
 	@Override
 	public List<PatvalDTO> select_CategoryList07(PatvalDTO dto) throws Exception {
 		return mapper.select_CategoryList07(dto);

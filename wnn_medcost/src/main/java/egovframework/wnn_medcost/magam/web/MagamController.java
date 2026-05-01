@@ -1254,11 +1254,16 @@ public class MagamController {
    		    List<PatvalDTO>       resultdt;
    		    Map<String, Object> response = new HashMap<>();
 			
-			if        (dto.getCateCd().equals("05")) { 
+			if        (dto.getCateCd().equals("05")) {
 				System.out.println("select_CategoryList 05 - 호출했음");
 				resultdt = svc.select_CategoryList05(dto);
 				response.put("data",resultdt);
         	    System.out.println("select_CategoryList 05 - 완료했음");
+        	} else if (dto.getCateCd().equals("06")) {
+        		System.out.println("select_CategoryList 06 - 호출했음");
+				resultdt = svc.select_CategoryList06(dto);
+				response.put("data",resultdt);
+        	    System.out.println("select_CategoryList 06 - 완료했음");
         	} else if (dto.getCateCd().equals("07")) {
         		System.out.println("select_CategoryList 07 - 호출했음");
 				resultdt = svc.select_CategoryList07(dto);

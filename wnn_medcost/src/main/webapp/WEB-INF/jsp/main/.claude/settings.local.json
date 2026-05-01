@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m markitdown \"D:/워너넷\\(병동\\)/0.EMR 전산 운영 매뉴얼_간호 EMR 신규 DB, 설치파일 생성.pptx\")",
+      "Bash(pip install *)",
+      "Read(//tmp/**)",
+      "Read(//c/Users/HYUN/AppData/Local/Temp/**)",
+      "Bash(dotnet build *)"
+    ]
+  }
+}

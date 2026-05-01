@@ -56,6 +56,7 @@ public interface MagamService {
 	List<IndiDTO>  select_Eval_Indi(IndiDTO dto) throws Exception;
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto) throws Exception;
+	List<PatvalDTO>  select_CategoryList06(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_CategoryList07(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_DiagRank07(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_DiagNames(java.util.Map<String, Object> param) throws Exception;

@@ -2415,6 +2415,79 @@ function fn_ViewData(data) {
     	txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
     	// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
     	markColums = [];
+    } else if (data.cate_cd === "06") {
+    	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','환자군','배뇨상태','관리여부'  ];
+    	columnsSet = [
+    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
+					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },
+					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '100px',
+						    render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return getFormat(data,'d1')
+			            		}
+			            		return data;
+						    },
+					    },
+					    { data: 'medStart',  visible: true,  className: 'dt-body-center', width: '100px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return getFormat(data,'d1')
+			            		}
+			            		return data;
+						    },
+					    },
+						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return getFormat(data,'d1')
+			            		}
+			            		return data;
+			  			    },
+						},
+						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '100px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				if (data === 'A') return '의료최고';
+			        				if (data === 'B') return '의료고도';
+			        				if (data === 'C') return '의료중도';
+			        				if (data === 'D') return '의료경도';
+			        				if (data === 'E') return '선택입원';
+			            		}
+			            		return data;
+						    },
+					    },
+						{ data: 'urineCtl',  visible: true,  className: 'dt-body-center', width: '120px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				if (data === '2') return '2.자주실금함';
+			        				if (data === '3') return '3.조절못함';
+			        				return data || '';
+			            		}
+			            		return data;
+						    },
+					    },
+						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '100px',
+						render: function(data, type, row) {
+							if (type === 'display') {
+								return data === 'Y' ? '●' : '';
+							}
+							return data;
+						}
+				    }
+    				 ];
+
+    	// 초기 data Sort,  없으면 []
+    	muiltSorts = [
+		             	['urineCtl', 'asc']
+	   		         ];
+    	// Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
+    	showSortNo = ['_all'];
+    	// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )
+    	hideColums = [];             // 없으면 []; 일부 컬럼 숨길때
+    	txt_Markln = 20;                       				 // 컬럼의 글자수가 설정값보다 크면, 다음은 ...로 표시함
+    	// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
+    	markColums = [];
+
     } else if (data.cate_cd === "07") {
     	page_Hight = 690;
     	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','주진단','항정신성처방여부'  ];

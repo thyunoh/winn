@@ -83,6 +83,9 @@ public class PatvalDTO {
 	private String indwellCath;         // 유치도뇨관
 	private String prevIndwellCath;     // 전월 유치도뇨관 (제외 규칙용: '1'=있음/Y, 그 외=제거)
 	private String prevMonth;       // 전월 대상 여부
+
+	private String urineCtl;        // 배뇨상태 (0:조절가능 / 1:가끔실금 / 2:자주실금 / 3:조절못함)
+	private String manageYn;        // 관리여부 (06.배뇨관리 — 추후 보완)
 	
 	private String useYn;           // 사용여부
 	
@@ -119,6 +122,18 @@ public class PatvalDTO {
 	}
 	public void setPrevIndwellCath(String prevIndwellCath) {
 		this.prevIndwellCath = prevIndwellCath;
+	}
+	public String getUrineCtl() {
+		return urineCtl;
+	}
+	public void setUrineCtl(String urineCtl) {
+		this.urineCtl = urineCtl;
+	}
+	public String getManageYn() {
+		return manageYn;
+	}
+	public void setManageYn(String manageYn) {
+		this.manageYn = manageYn;
 	}
 	public String getUseYn() {
 		return useYn;
