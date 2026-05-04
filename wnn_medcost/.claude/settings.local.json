@@ -103,7 +103,23 @@
       "Bash(taskkill //F //IM WinnerProj.exe)",
       "Bash(dotnet build *)",
       "Bash(rm -rf \"D:/WinnerProj/Publish\")",
-      "Bash(dotnet publish *)"
+      "Bash(dotnet publish *)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/dfd5c531-26dd-48b3-b065-caa98ae779be/1710df4c-55f6-4daa-b2f5-24039ad0f42c/skills/xlsx/**)",
+      "Bash(python -c ' *)",
+      "PowerShell(python --version)",
+      "PowerShell(pip --version)",
+      "Bash(unzip -p \"D:/기타자료/me_man.xlsx\" xl/sharedStrings.xml)",
+      "Bash(unzip -p \"D:/기타자료/me_man.xlsx\" xl/worksheets/sheet1.xml)",
+      "PowerShell(python -c \"import pandas as pd; xl = pd.ExcelFile\\(r'D:\\\\2.���ʳ��ڷ�\\\\���ʳ�\\(����\\)\\\\���Ǳ���.xlsx'\\); [print\\(f'Sheet: {s}'\\); print\\(pd.read_excel\\(xl, sheet_name=s, header=None\\).head\\(30\\).to_string\\(\\)\\); print\\(\\) for s in xl.sheet_names]\" 2>&1)",
+      "PowerShell($f = 'D:\\\\2.워너넷자료\\\\워너넷\\(병동\\)\\\\병실구조.xlsx'; $tmp = \"$env:TEMP\\\\xlsx_extract\"; Remove-Item $tmp -Recurse -ErrorAction SilentlyContinue; Expand-Archive $f -DestinationPath $tmp -Force; Get-ChildItem \"$tmp\\\\xl\\\\worksheets\")",
+      "Bash(cmd.exe /c \"publish.bat\")",
+      "Bash(strings -e l \"D:/기타자료/Untitled - 1.trc\")",
+      "Read(//c/tmp/**)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"D:\\\\기타자료\\\\Untitled - 1.trc\"\\); $text = [System.Text.Encoding]::Unicode.GetString\\($bytes\\); $text | Out-File -FilePath \"$env:TEMP\\\\trc_text.txt\" -Encoding utf8; \\(Get-Item \"$env:TEMP\\\\trc_text.txt\"\\).Length)",
+      "Bash(cp \"/c/Users/user/AppData/Local/Temp/trc_text.txt\" /tmp/trc.txt)",
+      "Read(//tmp/**)",
+      "PowerShell($tmp = \"$env:TEMP\\\\trc_text.txt\"; $content = Get-Content $tmp -Raw; \"\"; \"=== PB_OPTION 등장 위치 \\(B 제외\\) ===\"; [regex]::Matches\\($content, \"\\(?i\\)PB_OPTION\\\\b\"\\) | ForEach-Object { \"Pos $\\($_.Index\\): $\\($_.Value\\)\" }; \"\"; \"=== INSERT/UPDATE/DELETE 발생 여부 ===\"; [regex]::Matches\\($content, \"\\(?i\\)\\\\b\\(INSERT\\\\s+INTO|UPDATE\\\\s+\\\\w+|DELETE\\\\s+FROM\\)\\\\b\"\\) | ForEach-Object { \"Pos $\\($_.Index\\): $\\($_.Value\\)\" } | Select-Object -First 20; \"\"; \"=== YUHYUNG 등장 ===\"; [regex]::Matches\\($content, \"\\(?i\\)YUHYUNG\"\\) | ForEach-Object { \"Pos $\\($_.Index\\): $\\($_.Value\\)\" })",
+      "PowerShell($tmp = \"$env:TEMP\\\\trc_text.txt\"; $content = Get-Content $tmp -Raw; \"\"; \"=== Pos 28000~30000 영역 \\(LAB 환경설정 추정 구간\\) ===\"; $content.Substring\\(28000, [Math]::Min\\(2200, $content.Length - 28000\\)\\))"
     ]
   }
 }
