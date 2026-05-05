@@ -1709,11 +1709,14 @@ function showIndiSummary(data) {
 			if (criteria.direction === 'higher') {
 				var needNtor = Math.ceil(criteria.start * dtorval / 100);
 				var diff = needNtor - ntorval;
-				if (diff > 0) targetMsg = '5점 도달을 위해 추가 <b class="text-danger">' + diff + '명</b> 개선 필요 (분자 ' + ntorval + ' → ' + needNtor + ')';
+				/* 분자 둘 다 0 (0→0) 이면 의미 없는 표시이므로 분자 괄호 제외 */
+				var ntorRange = (ntorval === 0 && needNtor === 0) ? '' : ' (분자 ' + ntorval + ' → ' + needNtor + ')';
+				if (diff > 0) targetMsg = '5점 도달을 위해 추가 <b class="text-danger">' + diff + '명</b> 개선 필요' + ntorRange;
 			} else {
 				var maxNtor = Math.floor(criteria.end * dtorval / 100);
 				var diff2 = ntorval - maxNtor;
-				if (diff2 > 0) targetMsg = '5점 도달을 위해 <b class="text-danger">' + diff2 + '명</b> 감소 필요 (분자 ' + ntorval + ' → ' + maxNtor + ')';
+				var ntorRange2 = (ntorval === 0 && maxNtor === 0) ? '' : ' (분자 ' + ntorval + ' → ' + maxNtor + ')';
+				if (diff2 > 0) targetMsg = '5점 도달을 위해 <b class="text-danger">' + diff2 + '명</b> 감소 필요' + ntorRange2;
 			}
 		} else if (data.fiveZone && data.fiveZone.trim() !== '') {
 			targetMsg = '5점 도달 필요: <b>' + data.fiveZone + '</b>';
