@@ -1295,7 +1295,7 @@
            
 	</select>
 	
-	
+
 	<select id="select_CategoryList05" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 
 		SELECT sub.patId
