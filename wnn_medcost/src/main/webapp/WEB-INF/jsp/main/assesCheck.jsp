@@ -10,6 +10,7 @@
 <%
 	Date nowTime = new Date();
 %>
+
 	<style>
 		/* 상단 점검 버튼 — 선택(.active) 상태 색 유지 */
 		button[data-flag].btn-outline-success.active {
