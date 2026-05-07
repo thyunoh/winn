@@ -86,6 +86,9 @@ public class PatvalDTO {
 
 	private String urineCtl;        // 배뇨상태 (0:조절가능 / 1:가끔실금 / 2:자주실금 / 3:조절못함)
 	private String manageYn;        // 관리여부 (06.배뇨관리 — 추후 보완)
+	private String urPlan;          // 일정한 배뇨계획 (UR_PLAN='1')
+	private String bladTrain;       // 방광훈련 (BLAD_TRAIN='1')
+	private String regCath;         // 규칙적 도뇨 (REG_CATH='1')
 	
 	private String useYn;           // 사용여부
 	
@@ -135,6 +138,12 @@ public class PatvalDTO {
 	public void setManageYn(String manageYn) {
 		this.manageYn = manageYn;
 	}
+	public String getUrPlan() { return urPlan; }
+	public void setUrPlan(String urPlan) { this.urPlan = urPlan; }
+	public String getBladTrain() { return bladTrain; }
+	public void setBladTrain(String bladTrain) { this.bladTrain = bladTrain; }
+	public String getRegCath() { return regCath; }
+	public void setRegCath(String regCath) { this.regCath = regCath; }
 	public String getUseYn() {
 		return useYn;
 	}

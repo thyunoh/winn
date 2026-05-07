@@ -2419,7 +2419,26 @@ function fn_ViewData(data) {
     	// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
     	markColums = [];
     } else if (data.cate_cd === "06") {
-    	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','환자군','배뇨상태','관리여부'  ];
+    	// 2-row header — 관리항목 (colspan=3) 으로 일정배뇨/방광훈련/규칙적도뇨 묶음.
+    	// 폭 절약을 위해 sub-header 는 짧게 (일정/방광/규칙).
+    	c_Head_Set = [
+    		[
+    			{ label: '생년월일',     rowspan: 2 },
+    			{ label: '대상자',       rowspan: 2 },
+    			{ label: '입원일자',     rowspan: 2 },
+    			{ label: '요양개시일',   rowspan: 2 },
+    			{ label: '평가표작성일', rowspan: 2 },
+    			{ label: '환자군',       rowspan: 2 },
+    			{ label: '배뇨상태',     rowspan: 2 },
+    			{ label: '관리항목',     colspan: 3 },
+    			{ label: '관리여부',     rowspan: 2 }
+    		],
+    		[
+    			{ label: '일정 배뇨' },
+    			{ label: '방광 훈련' },
+    			{ label: '규칙 도뇨' }
+    		]
+    	];
     	columnsSet = [
     					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },
@@ -2469,10 +2488,41 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
+					    /* 관리항목 — 일정한 배뇨 (UR_PLAN='1' 인 경우 ● 검정 채움 표시) */
+					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '70px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
+			            		}
+			            		return data;
+						    },
+					    },
+					    /* 관리항목 — 방광훈련 (BLAD_TRAIN='1') */
+					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '70px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
+			            		}
+			            		return data;
+						    },
+					    },
+					    /* 관리항목 — 규칙적 도뇨 (REG_CATH='1') */
+					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '70px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
+			            		}
+			            		return data;
+						    },
+					    },
 						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '100px',
 						render: function(data, type, row) {
 							if (type === 'display') {
-								return data === 'Y' ? '●' : '';
+								// 분자(분자에 해당) → "관리" 파란색 / 그 외 → "제외" 회색
+								if (data === 'Y') {
+									return '<span style="color:#1565c0;font-weight:bold;">관리</span>';
+								}
+								return '<span style="color:#888;">제외</span>';
 							}
 							return data;
 						}

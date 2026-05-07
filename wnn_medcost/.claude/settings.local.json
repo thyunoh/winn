@@ -119,7 +119,17 @@
       "Bash(cp \"/c/Users/user/AppData/Local/Temp/trc_text.txt\" /tmp/trc.txt)",
       "Read(//tmp/**)",
       "PowerShell($tmp = \"$env:TEMP\\\\trc_text.txt\"; $content = Get-Content $tmp -Raw; \"\"; \"=== PB_OPTION 등장 위치 \\(B 제외\\) ===\"; [regex]::Matches\\($content, \"\\(?i\\)PB_OPTION\\\\b\"\\) | ForEach-Object { \"Pos $\\($_.Index\\): $\\($_.Value\\)\" }; \"\"; \"=== INSERT/UPDATE/DELETE 발생 여부 ===\"; [regex]::Matches\\($content, \"\\(?i\\)\\\\b\\(INSERT\\\\s+INTO|UPDATE\\\\s+\\\\w+|DELETE\\\\s+FROM\\)\\\\b\"\\) | ForEach-Object { \"Pos $\\($_.Index\\): $\\($_.Value\\)\" } | Select-Object -First 20; \"\"; \"=== YUHYUNG 등장 ===\"; [regex]::Matches\\($content, \"\\(?i\\)YUHYUNG\"\\) | ForEach-Object { \"Pos $\\($_.Index\\): $\\($_.Value\\)\" })",
-      "PowerShell($tmp = \"$env:TEMP\\\\trc_text.txt\"; $content = Get-Content $tmp -Raw; \"\"; \"=== Pos 28000~30000 영역 \\(LAB 환경설정 추정 구간\\) ===\"; $content.Substring\\(28000, [Math]::Min\\(2200, $content.Length - 28000\\)\\))"
+      "PowerShell($tmp = \"$env:TEMP\\\\trc_text.txt\"; $content = Get-Content $tmp -Raw; \"\"; \"=== Pos 28000~30000 영역 \\(LAB 환경설정 추정 구간\\) ===\"; $content.Substring\\(28000, [Math]::Min\\(2200, $content.Length - 28000\\)\\))",
+      "Bash(dotnet restore *)",
+      "Bash(tasklist)",
+      "Bash(findstr /I \"WinnerProj\")",
+      "Bash(tasklist /FI \"IMAGENAME eq WinnerProj.exe\")",
+      "PowerShell(Get-Process -Name WinnerProj -ErrorAction SilentlyContinue)",
+      "Bash(dir \"D:\\\\WinnerProj\\\\publish\")",
+      "Read(//d/WinnerProj/publish/**)",
+      "PowerShell($f = \"D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe\"; try { $fs = [System.IO.File]::Open\\($f, 'Open', 'ReadWrite', 'None'\\); $fs.Close\\(\\); \"unlocked\" } catch { \"locked: $\\($_.Exception.Message\\)\" })",
+      "Bash(powershell -c \"Copy-Item 'D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe' 'C:\\\\HIB70\\\\WinnerProj.exe' -Force; \\(Get-Item 'C:\\\\HIB70\\\\WinnerProj.exe'\\).LastWriteTime\")",
+      "PowerShell($f = \"D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe\"; try { $fs = [System.IO.File]::Open\\($f, 'Open', 'ReadWrite', 'None'\\); $fs.Close\\(\\); \"unlocked\" } catch { \"locked\" })"
     ]
   }
 }

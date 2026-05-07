@@ -27,6 +27,17 @@
   - 엑셀의 요양기관기호와 로그인 병원 일치 여부 확인, 불일치 시 경고(저장은 세션 hosp_cd로 강제)
 - **관련파일**: magamFileUpload.jsp, MagamController.java(saveSpcsugaDatas), Magam_SQL.xml, SpcsugaDTO.java, assessment.jsp
 
+### [완료] 06.배뇨관리 — 관리항목 컬럼 + 관리여부 색상화 (2026-05-07)
+- **내용**:
+  - 그리드 헤더: "배뇨상태 → 관리항목 → 관리여부" 순서, **관리항목**은 colspan=3 으로 [일정한 배뇨 / 방광훈련 / 규칙적 도뇨] 묶음 (2-row header)
+  - 각 sub-column: `UR_PLAN='1'` / `BLAD_TRAIN='1'` / `REG_CATH='1'` 일 때 **검정 ◯** 표시 (그 외 공란)
+  - 관리여부: `manageYn='Y'` (분자 해당) → "**관리**" 파란색 굵게 / 그 외 → "**제외**" 회색
+- **변경파일**:
+  - `assessment.jsp` cate_cd === "06" 블록: c_Head_Set 1행 → 2행(object[][]) 변환, columnsSet 에 urPlan/bladTrain/regCath 3컬럼 추가, manageYn render 수정
+  - `Magam_SQL.xml` `select_CategoryList06`: SELECT 에 `pm.UR_PLAN AS urPlan`, `pm.BLAD_TRAIN AS bladTrain`, `pm.REG_CATH AS regCath` 추가
+  - `PatvalDTO.java`: `urPlan`, `bladTrain`, `regCath` 필드 + getter/setter 추가
+- **호환성**: `fn_PrependPatvalChangedColumn` 이 1D/2D c_Head_Set 모두 지원하므로 변경 컬럼 prepend 정상 동작
+
 ### [완료] 환자평가표 조회 버튼 활성화 (2026-04-23)
 - **상태**: **활성화됨** — `viewTable` 렌더 후 DataTable 버튼 영역(.dt-buttons)에 "환자평가표 조회" 버튼 표시
 - **적용 내역**:

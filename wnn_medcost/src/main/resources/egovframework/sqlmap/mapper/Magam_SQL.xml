@@ -1414,6 +1414,9 @@
 		            THEN LEFT(PATIENT_CLASSIFICATION(pm.HOSP_CD, pm.PAT_ID, pm.CHUNGSEQ, pm.CLFORM_VER, pm.ADMIT_DT, pm.MED_START),1)
 		            ELSE LEFT(pm.PAT_CLASS,1) END                 AS patClass
 		     , pm.URINE_CTL                                       AS urineCtl
+		     , pm.UR_PLAN                                         AS urPlan
+		     , pm.BLAD_TRAIN                                      AS bladTrain
+		     , pm.REG_CATH                                        AS regCath
 		     , CASE WHEN sb.PAT_ID IS NOT NULL THEN 'Y' ELSE '' END AS manageYn
 		  FROM TBL_PATVAL_MST pm
 		  LEFT JOIN (
