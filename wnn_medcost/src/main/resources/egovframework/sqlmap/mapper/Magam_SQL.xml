@@ -1297,7 +1297,7 @@
 	
 	
 	<select id="select_CategoryList05" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
-	
+
 		SELECT sub.patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(sub.patNm, '')) >= 1 
 				    THEN CONCAT(LEFT(COALESCE(sub.patNm, ''), CHAR_LENGTH(COALESCE(sub.patNm, '')) - 1), '*')
