@@ -3,3 +3,7 @@ target
 .settings
 .classpath
 bin
+
+# Claude Code 임시 worktree (대용량, git 에 포함되면 안 됨)
+.claude/worktrees/
+.claude/projects/
