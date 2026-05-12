@@ -4346,6 +4346,17 @@
 		              AND REPLACE(PX.ADMIT_DT,'-','') = S.IPWONDT
 		              AND PX.MED_START LIKE CONCAT(#{jobYymm},'%')
 		         )
+		     -- [규칙추가] 검증 기간 하한: 전월 평가표 MAX(DOC_DT) 이후 (그 이전 오더는 전월 평가에 반영되었어야 함)
+		     --   전월 평가표 없으면 MAX=NULL → COALESCE 로 '00000000' 이 되어 하한 미적용
+		     AND S.MED_START <![CDATA[ > ]]> COALESCE(
+		           (SELECT MAX(PP.DOC_DT) FROM TBL_PATVAL_MST PP
+		             WHERE PP.HOSP_CD = S.HOSP_CD
+		               AND LEFT(PP.PAT_ID,6) = LEFT(S.JUMINNO,6)
+		               AND REPLACE(PP.ADMIT_DT,'-','') = S.IPWONDT
+		               AND PP.MED_START LIKE CONCAT(
+		                    DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{jobYymm},'01'),'%Y%m%d'), INTERVAL 1 MONTH),'%Y%m'),'%')),
+		           '00000000'
+		         )
 
 		UNION ALL
 
@@ -4395,6 +4406,17 @@
 		     AND COALESCE(S.JOBYYMM,'') = #{jobYymm}
 		     -- [규칙변경] 평가표 작성일 이후 오더는 검증 제외 (차기 평가표에서 반영될 오더)
 		     AND S.MED_START <![CDATA[ <= ]]> P.DOC_DT
+		     -- [규칙추가] 검증 기간 하한: 전월 평가표 MAX(DOC_DT) 이후 (그 이전 오더는 전월 평가에 반영되었어야 함)
+		     --   전월 평가표 없으면 MAX=NULL → COALESCE 로 '00000000' 이 되어 하한 미적용
+		     AND S.MED_START <![CDATA[ > ]]> COALESCE(
+		           (SELECT MAX(PP.DOC_DT) FROM TBL_PATVAL_MST PP
+		             WHERE PP.HOSP_CD = P.HOSP_CD
+		               AND PP.PAT_ID  = P.PAT_ID
+		               AND PP.ADMIT_DT = P.ADMIT_DT
+		               AND PP.MED_START LIKE CONCAT(
+		                    DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(#{jobYymm},'01'),'%Y%m%d'), INTERVAL 1 MONTH),'%Y%m'),'%')),
+		           '00000000'
+		         )
 
 		UNION ALL
 
@@ -4504,9 +4526,10 @@
 		              AND PC.ADMIT_DT = PX.ADMIT_DT
 		              AND PC.MED_START LIKE CONCAT(#{jobYymm},'%')
 		         )
-		     -- 기간 하한: 전월 MIN(DOC_DT)+1일, 없으면 전월 1일
+		     -- [규칙변경] 기간 하한: 전월 MAX(DOC_DT)+1일 (전월 마지막 평가 이전 catDt 는 전월 평가에 속함)
+		     --   전월 평가표 없으면 전월 1일을 하한으로 사용
 		     AND PX.catDt >= COALESCE(
-		           (SELECT DATE_FORMAT(DATE_ADD(STR_TO_DATE(MIN(PP.DOC_DT),'%Y%m%d'), INTERVAL 1 DAY), '%Y%m%d')
+		           (SELECT DATE_FORMAT(DATE_ADD(STR_TO_DATE(MAX(PP.DOC_DT),'%Y%m%d'), INTERVAL 1 DAY), '%Y%m%d')
 		              FROM TBL_PATVAL_MST PP
 		             WHERE PP.HOSP_CD = PX.HOSP_CD
 		               AND PP.PAT_ID  = PX.PAT_ID
