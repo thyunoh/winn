@@ -1709,14 +1709,11 @@ function showIndiSummary(data) {
 			if (criteria.direction === 'higher') {
 				var needNtor = Math.ceil(criteria.start * dtorval / 100);
 				var diff = needNtor - ntorval;
-				/* 분자 둘 다 0 (0→0) 이면 의미 없는 표시이므로 분자 괄호 제외 */
-				var ntorRange = (ntorval === 0 && needNtor === 0) ? '' : ' (분자 ' + ntorval + ' → ' + needNtor + ')';
-				if (diff > 0) targetMsg = '5점 도달을 위해 추가 <b class="text-danger">' + diff + '명</b> 개선 필요' + ntorRange;
+				if (diff > 0) targetMsg = '5점 도달을 위해 추가 <b class="text-danger">' + diff + '명</b> 개선 필요';
 			} else {
 				var maxNtor = Math.floor(criteria.end * dtorval / 100);
 				var diff2 = ntorval - maxNtor;
-				var ntorRange2 = (ntorval === 0 && maxNtor === 0) ? '' : ' (분자 ' + ntorval + ' → ' + maxNtor + ')';
-				if (diff2 > 0) targetMsg = '5점 도달을 위해 <b class="text-danger">' + diff2 + '명</b> 감소 필요' + ntorRange2;
+				if (diff2 > 0) targetMsg = '5점 도달을 위해 <b class="text-danger">' + diff2 + '명</b> 감소 필요';
 			}
 		} else if (data.fiveZone && data.fiveZone.trim() !== '') {
 			targetMsg = '5점 도달 필요: <b>' + data.fiveZone + '</b>';
@@ -4386,11 +4383,17 @@ function _pvDiffYn(cur, prev, groupTitle) {
     return _pvDiffWrap(html, prevTxt, groupTitle);
 }
 // 코드 비교 (codeGroup → 매핑)
-function _pvDiffCd(codeGroup, cur, prev, groupTitle) {
+// hideCode=true 이면 전월값 팝오버에 코드 숫자 없이 설명 텍스트만 표시
+function _pvDiffCd(codeGroup, cur, prev, groupTitle, hideCode) {
     var html = _pvCd(codeGroup, cur);
     if (!_pvIsDiff(cur, prev)) return html;
     var map = _PV_CODES[codeGroup] || {};
-    var prevDesc = map[String(prev)] ? (_pvNorm(prev) + ' : ' + map[String(prev)]) : (_pvIsEmpty(prev) ? '미입력' : _pvNorm(prev));
+    var prevDesc;
+    if (hideCode) {
+        prevDesc = map[String(prev)] ? map[String(prev)] : (_pvIsEmpty(prev) ? '미입력' : _pvNorm(prev));
+    } else {
+        prevDesc = map[String(prev)] ? (_pvNorm(prev) + ' : ' + map[String(prev)]) : (_pvIsEmpty(prev) ? '미입력' : _pvNorm(prev));
+    }
     return _pvDiffWrap(html, prevDesc, groupTitle);
 }
 // 일반 텍스트 비교
@@ -4577,11 +4580,15 @@ function fn_ShowPatvalModal() {
             '.pv-head-item { font-size:13px; line-height:1.5; display:flex; align-items:center; gap:8px; }' +
             '.pv-head-item .lbl { opacity:0.8; font-size:11.5px; letter-spacing:0.3px; text-transform:uppercase; }' +
             '.pv-head-item .val { font-weight:600; font-size:13.5px; background:rgba(255,255,255,0.15); padding:3px 10px; border-radius:4px; font-family:Consolas,monospace; }' +
-            '.pv-tabs { display:flex; border-bottom:2px solid #e4e7ed; margin-bottom:14px; gap:2px; flex-wrap:wrap; }' +
+            '.pv-tabs { display:flex; align-items:stretch; border-bottom:2px solid #e4e7ed; margin-bottom:14px; gap:2px; flex-wrap:wrap; }' +
             '.pv-tab  { cursor:pointer; padding:10px 18px; font-size:13px; font-weight:600; color:#6b7280; background:transparent;' +
-            '  border:none; border-bottom:3px solid transparent; transition:all 0.18s ease; border-radius:4px 4px 0 0; }' +
+            '  border:none; border-bottom:3px solid transparent; transition:all 0.18s ease; border-radius:4px 4px 0 0;' +
+            '  line-height:1.4; text-align:left; white-space:normal; }' +
             '.pv-tab:hover { color:#2a5298; background:#f5f8fc; }' +
             '.pv-tab.active { color:#1e3c72; border-bottom-color:#2a5298; background:#f5f8fc; }' +
+            '.pv-tab-break { flex-basis:100%; height:0; margin:0; padding:0; }' +
+            /* E·F 탭처럼 라벨이 긴 탭은 같은 줄의 남은 가로 공간을 모두 채우도록 flex-grow */
+            '.pv-tab-wide { flex:1 1 0; min-width:0; }' +
             '.pv-pane { display:none; padding:0 4px; }' +
             '.pv-pane.active { display:block; animation:pvFadeIn 0.18s ease; }' +
             '@keyframes pvFadeIn { from { opacity:0; transform:translateY(4px);} to { opacity:1; transform:none;} }' +
@@ -4605,6 +4612,9 @@ function fn_ShowPatvalModal() {
             '.pv-cd { display:inline-flex; align-items:center; gap:6px; }' +
             '.pv-cd-k { display:inline-block; min-width:20px; padding:1px 7px; border-radius:3px; background:#eef3fb; color:#1e3c72; font-weight:700; font-family:Consolas,monospace; font-size:12px; text-align:center; }' +
             '.pv-cd-v { color:#2c3e50; font-weight:500; font-size:12.5px; }' +
+            /* D. 신체기능(ADL) 섹션 — 코드 숫자 숨김 (변경 표시는 .pv-diff 가 텍스트 전체에 적용되므로 글자 앞에 ⚠ 표시) */
+            '.pv-adl .pv-cd-k { display:none !important; }' +
+            '.pv-adl .pv-cd { gap:0; }' +
             '.pv-diff { color:#d32f2f !important; font-weight:800 !important; cursor:pointer; border-bottom:2px solid #d32f2f; padding:1px 4px; background:#fff3f3; border-radius:3px; }' +
             '.pv-diff:hover { background:#ffebee; box-shadow:0 0 0 1px #d32f2f; }' +
             '.pv-diff .pv-cd-k, .pv-diff .pv-cd-v, .pv-diff .pv-empty { color:#d32f2f !important; }' +
@@ -4708,7 +4718,8 @@ function _pvBuildHtml(d, row) {
         '<div class="pv-tabs">' +
         '  <button class="pv-tab active" data-tab="t1">A. 일반사항</button>' +
         '  <button class="pv-tab"        data-tab="t2">B·C·D. 의식/인지/신체</button>' +
-        '  <button class="pv-tab"        data-tab="t3">E·F. 배설/질병진단</button>' +
+        '  <button class="pv-tab pv-tab-wide" data-tab="t3">E·F. 배설/진단,유치도뇨관 삽입/삽입기간 \'일정하게 짜여진 배뇨계획\', \'방광훈련프로그램\', \'규칙적도뇨\', \'배뇨일지\'<br>작성여부 및 작성일수</button>' +
+        '  <div class="pv-tab-break"></div>' +
         '  <button class="pv-tab"        data-tab="t4">G·H·I. 건강/영양/피부</button>' +
         '  <button class="pv-tab"        data-tab="t5">J·K·L. 투약/특수처치</button>' +
         '</div>';
@@ -4725,7 +4736,8 @@ function _pvSec(title, icon, items) {
         var vHtml = items[i][1];
         cells += '<div class="pv-cell"><span class="k">' + items[i][0] + '</span><span class="v">' + vHtml + '</span></div>';
     }
-    return '<div class="pv-sec"><div class="pv-sec-hd"><i class="fas ' + (icon || 'fa-circle') + '"></i>' + title + '</div><div class="pv-grid">' + cells + '</div></div>';
+    var iconHtml = icon ? '<i class="fas ' + icon + '"></i>' : '';
+    return '<div class="pv-sec"><div class="pv-sec-hd">' + iconHtml + title + '</div><div class="pv-grid">' + cells + '</div></div>';
 }
 
 function _pvTab1(d) {
@@ -4779,17 +4791,14 @@ function _pvTab2(d) {
     ]);
     var p = _PV_PREV || {};
     var gAdl = 'D. 신체기능(ADL)';
-    var s4 = _pvSec('D. 신체기능 (0 완전자립 · 1 감독필요 · 2 약간도움 · 3 상당도움 · 4 전적도움 · 8 행위 발생안함)', 'fa-walking', [
-        ['옷벗고 입기', _pvDiffCd('adl', d.dressing, p.dressing, gAdl)], ['세수하기', _pvDiffCd('adl', d.washing, p.washing, gAdl)],
-        ['양치질하기', _pvDiffCd('adl', d.brushing, p.brushing, gAdl)], ['목욕하기', _pvDiffCd('adl', d.bathing, p.bathing, gAdl)],
-        ['식사하기', _pvDiffCd('adl', d.eating, p.eating, gAdl)], ['체위변경하기', _pvDiffCd('adl', d.movePos, p.movePos, gAdl)],
-        ['일어나 앉기', _pvDiffCd('adl', d.sitUp, p.sitUp, gAdl)], ['옮겨앉기', _pvDiffCd('adl', d.transfer, p.transfer, gAdl)],
-        ['방밖으로 나오기', _pvDiffCd('adl', d.exitRoom, p.exitRoom, gAdl)], ['화장실 사용하기', _pvDiffCd('adl', d.toiletUse, p.toiletUse, gAdl)],
+    var s4 = '<div class="pv-adl">' + _pvSec('D. 신체기능 척도(1 완전자립 · 2 감독필요 · 3 약간도움 · 4 상당도움 · 5 전적도움 · 5 행위 발생안함)', '', [
+        ['옷벗고 입기', _pvDiffCd('adl', d.dressing, p.dressing, gAdl, true)], ['세수하기', _pvDiffCd('adl', d.washing, p.washing, gAdl, true)],
+        ['양치질하기', _pvDiffCd('adl', d.brushing, p.brushing, gAdl, true)], ['목욕하기', _pvDiffCd('adl', d.bathing, p.bathing, gAdl, true)],
+        ['식사하기', _pvDiffCd('adl', d.eating, p.eating, gAdl, true)], ['체위변경하기', _pvDiffCd('adl', d.movePos, p.movePos, gAdl, true)],
+        ['일어나 앉기', _pvDiffCd('adl', d.sitUp, p.sitUp, gAdl, true)], ['옮겨앉기', _pvDiffCd('adl', d.transfer, p.transfer, gAdl, true)],
+        ['방밖으로 나오기', _pvDiffCd('adl', d.exitRoom, p.exitRoom, gAdl, true)], ['화장실 사용하기', _pvDiffCd('adl', d.toiletUse, p.toiletUse, gAdl, true)],
         ['와상상태', _pvDiffYn(d.bedridden, p.bedridden, gAdl)]
-    ]) + '<div class="pv-sec-foot" style="margin:-6px 0 14px 4px; padding:6px 10px; font-size:12px; color:#1e3c72; background:#f3f7fc; border-left:3px solid #2a5298; border-radius:3px;">' +
-         '<span style="margin-right:6px; color:#c0392b; font-weight:700;">&#8251;</span>' +
-         'D.신체기능 점수 (1 완전자립 · 2 감독필요 · 3 약간도움 · 4 상당도움 · 5 전적도움 · 5 행위 발생안함)' +
-         '</div>';
+    ]) + '</div>';
     return '<div class="pv-pane" data-tab="t2">' + s1 + s2 + s3 + s4 + '</div>';
 }
 

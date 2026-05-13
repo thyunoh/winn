@@ -11,7 +11,10 @@
 (function(){
   // 실제 경로를 저장한 후 URL을 숨김 (병원검색 등 reload 시 원래 페이지로 복귀용)
   var realPath = location.pathname + location.search;
-  if (realPath !== '/user/' && realPath !== '/user/dashboard.do') {
+  if (realPath === '/user/dashboard.do') {
+    // 대시보드 진입 시: 이전 메뉴 active가 남아있지 않도록 _realPath 갱신
+    sessionStorage.setItem('_realPath', '/user/dashboard.do');
+  } else if (realPath !== '/user/') {
     sessionStorage.setItem('_realPath', realPath);
     history.replaceState({_realPath: realPath}, '', '/user/');
   } else if (!sessionStorage.getItem('_realPath')) {

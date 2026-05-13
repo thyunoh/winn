@@ -829,7 +829,7 @@ function fnasq_main() {
 }    
   
 function fnasq_Search() {
-   $("#asq_infoTable tr").attr("class", ""); 
+   $("#asq_infoTable tr").attr("class", "");
     if (document.getElementById("asq_regForm")) {
         document.getElementById("asq_regForm").reset();
     }
@@ -1168,12 +1168,25 @@ function hosp_conact() {
     ]);
 }
 document.addEventListener('DOMContentLoaded', function () {
-    // URL이 /user/로 숨겨져 있으므로 sessionStorage에서 실제 경로를 가져옴
-    var currentPath = sessionStorage.getItem('_realPath') || window.location.pathname;
+    // 실제 URL이 숨겨져 있지 않다면(/user/가 아니라면) location.pathname을 우선시한다.
+    // 그래야 대시보드(/user/dashboard.do)로 이동 시 sessionStorage에 남은
+    // 이전 메뉴 경로로 인해 잘못 강조되는 문제가 발생하지 않는다.
+    var locPath = window.location.pathname;
+    var currentPath;
+    if (locPath && locPath !== '/user/' && locPath !== '/') {
+        currentPath = locPath;
+    } else {
+        currentPath = sessionStorage.getItem('_realPath') || locPath;
+    }
     // 쿼리스트링 제거 (경로만 비교)
     if (currentPath.indexOf('?') > -1) {
         currentPath = currentPath.substring(0, currentPath.indexOf('?'));
     }
+
+    // 우선 사이드바 내 모든 nav-link에서 active 클래스 제거 (이전 페이지 상태 정리)
+    document.querySelectorAll('.nav-left-sidebar .nav-link.active').forEach(function (link) {
+        link.classList.remove('active');
+    });
 
     // 모든 nav-link 순회 — 현재 페이지 URL과 일치하는 메뉴에 active 클래스 부여
     var matchedLink = null;
@@ -1191,6 +1204,11 @@ document.addEventListener('DOMContentLoaded', function () {
             matchedLink = link;
         }
     });
+
+    // 매칭 실패 시 fallback: 대시보드 URL이면 대시보드 링크를 명시적으로 활성화
+    if (!matchedLink && (currentPath === '/user/dashboard.do' || currentPath === '/user/' || currentPath === '/')) {
+        matchedLink = document.querySelector('.nav-left-sidebar a.nav-link[href="/user/dashboard.do"]');
+    }
 
     if (matchedLink) {
         matchedLink.classList.add('active');
@@ -1524,6 +1542,11 @@ function showAnsrFileList(asqSeq) {
 #todayAsqBar .asq-bar-track:hover {
     animation-play-state: paused;
 }
+#todayAsqBar .asq-bar-spacer {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 100vw;       /* 화면 폭만큼 빈 공간을 두어 메세지가 우측 바깥에서 시작 */
+}
 #todayAsqBar .asq-bar-msg {
     cursor: pointer;
     display: inline-flex;
@@ -1588,8 +1611,9 @@ function showAnsrFileList(asqSeq) {
     white-space: nowrap;
 }
 @keyframes asqMarquee {
+    /* spacer가 우측 가시영역만큼 차지하므로 0%에서는 메세지가 우측 밖에 위치 → 좌측으로 흘러감 */
     0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    100% { transform: translateX(-100%); }
 }
 </style>
 <div id="todayAsqBar">
@@ -1626,8 +1650,8 @@ var _asqData = [];
 var _visitData = [];
 
 function fn_loadTodayAsq() {
-    var wnnYn = (getCookie("s_wnn_yn") || '').trim();
-    var hospCd = (wnnYn === 'Y') ? '' : (getCookie("s_hospid") || '');
+    // 위너넷/병원 구분 없이 전체 메세지를 받아 프론트에서 마스킹/클릭 제어
+    var hospCd = '';
 
     var done = 0;
     function checkDone() {
@@ -1695,20 +1719,27 @@ function fn_todayAsqAlert(asqList, visitList) {
     var msgHtml = '';
     var idx = 0;
 
-    // 위너넷 계정 여부 — 비-위너넷이면 병원명/사용자명 마스킹
+    // 위너넷 여부 + 현재 사용자 병원코드 (병원 사용자에서 자기 병원 메세지 구분용)
     var _isWnn = ((getCookie("s_wnn_yn") || '').trim() === 'Y');
-    function _maskHosp(nm) { return _isWnn ? (nm || '') : '**** 병원'; }
-    function _maskUser(nm) { return _isWnn ? (nm || '') : '***'; }
+    var _curHospCd = String(getCookie("s_hospid") || '').trim();
+    // 자기 병원이거나 위너넷이면 풀 노출, 아니면 마스킹
+    function _maskHosp(nm, isOwn) { return (_isWnn || isOwn) ? (nm || '') : '**** 병원'; }
+    function _maskUser(nm, isOwn) { return (_isWnn || isOwn) ? (nm || '') : '***'; }
+    // 클릭은 위너넷에서만 동작 (병원은 자기 병원 메세지여도 클릭 불가)
+    var _asqClickAttr   = _isWnn ? 'onclick="fn_goAsqPage();"'      : 'style="cursor:default;"';
+    var _visitClickAttr = _isWnn ? 'onclick="fn_goVisitAsqPage();"' : 'style="cursor:default;"';
 
-    // 답변대기 메시지 (클릭 → asqcd.do)
+    // 답변대기 메시지 (클릭 → asqcd.do, 위너넷만)
     for (var j = 0; j < asqFiltered.length; j++) {
         var item = asqFiltered[j];
-        msgHtml += '<span class="asq-bar-msg" onclick="fn_goAsqPage();">';
+        var rowHospCd = String(item.hospCd || '').trim();
+        var isOwnAsq = (rowHospCd !== '' && _curHospCd !== '' && rowHospCd === _curHospCd);
+        msgHtml += '<span class="asq-bar-msg" ' + _asqClickAttr + '>';
         if (idx > 0) msgHtml += '<span class="sep">|</span>';
-        msgHtml += '<span class="hosp-name">' + _maskHosp(item.hospNm) + '</span> ';
-        msgHtml += '<span class="user-name">' + _maskUser(item.userNm) + '</span>님 질문등록';
+        msgHtml += '<span class="hosp-name">' + _maskHosp(item.hospNm, isOwnAsq) + '</span> ';
+        msgHtml += '<span class="user-name">' + _maskUser(item.userNm, isOwnAsq) + '</span>님 질문등록';
         var title = item.qstnTitle || '';
-        if (title && _isWnn) {
+        if (title && (_isWnn || isOwnAsq)) {
             var shortTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
             msgHtml += ' - <span class="qstn-title">' + shortTitle + '</span>';
         }
@@ -1717,24 +1748,26 @@ function fn_todayAsqAlert(asqList, visitList) {
         idx++;
     }
 
-    // 문의대기 메시지 (클릭 → visitAsq.do)
+    // 문의대기 메시지 (클릭 → visitAsq.do, 위너넷만)
+    // 사이트 방문 문의는 외부 방문자가 입력한 데이터 — 병원 사용자에게는 항상 마스킹
     for (var k = 0; k < visitFiltered.length; k++) {
         var vItem = visitFiltered[k];
-        msgHtml += '<span class="asq-bar-msg" onclick="fn_goVisitAsqPage();">';
+        msgHtml += '<span class="asq-bar-msg" ' + _visitClickAttr + '>';
         if (idx > 0) msgHtml += '<span class="sep">|</span>';
-        msgHtml += '<span class="hosp-name">' + _maskHosp(vItem.hospNm) + '</span> ';
-        msgHtml += '<span class="user-name">' + _maskUser(vItem.userNm) + '</span>님 상담문의';
+        msgHtml += '<span class="hosp-name">' + _maskHosp(vItem.hospNm, false) + '</span> ';
+        msgHtml += '<span class="user-name">' + _maskUser(vItem.userNm, false) + '</span>님 상담문의';
         msgHtml += ' <span class="visit-badge">응답대기</span>';
         msgHtml += '</span>';
         idx++;
     }
 
-    // 2벌 복제하여 끊김없는 마퀴 효과
+    // 우측 가시영역 밖에서 등장 → 유일한 메세지만 한 번씩 흘러가고, 모두 지나가면 루프 (중복 없음)
     var trackDiv = document.getElementById('asqBarTrack');
-    trackDiv.innerHTML = msgHtml + msgHtml;
+    trackDiv.innerHTML = '<span class="asq-bar-spacer"></span>' + msgHtml;
 
     // 메세지 수에 따라 애니메이션 속도 조정 (1건당 약 8초)
-    var duration = Math.max(20, totalCnt * 8);
+    // 조금 더 천천히 흐르도록 조정 (최소 30초, 1건당 약 12초)
+    var duration = Math.max(30, totalCnt * 12);
     trackDiv.style.animationDuration = duration + 's';
 
     // 건수 표시
@@ -1795,11 +1828,8 @@ function fn_asqBarToggle() {
     }
 }
 
-// 로그인 상태 + s_wnn_yn='Y' 일때만 자동 조회 + 30초 주기 갱신
+// 로그인 상태이면 위너넷/병원 모두 자동 조회 + 30초 주기 갱신
 $(document).ready(function() {
-    var wnnYn = (getCookie("s_wnn_yn") || '').trim();
-    if (wnnYn !== 'Y') return;
-
     var hospId = getCookie("s_hospid");
     if (hospId && hospId !== '') {
         fn_loadTodayAsq();

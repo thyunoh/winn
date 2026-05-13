@@ -158,7 +158,7 @@ function Content_Area(flag) {
 						        </div>   
 						    </div>
 						    <div class="card-body border-top d-flex justify-content-center align-items-center p-2">
-			                    <label id="mediVal" class="dsah_lab8">각 지표별 표준화 구간은 2023년도 발표 기준을 적용되었으며,일부 지표에 따라 오차범위 ±2~3점이 발생할 수 있습니다.</label>
+			                    <label id="mediVal" class="dsah_lab8" style="color: red;">각 지표별 표준화 구간은 2024년도 발표 기준이 적용되었으며, 추후 심평원 표준화 구간 재설정 또는 기준 변경에 따라 점수 변동이 발생할 수 있습니다.</label>
 			                </div>
 			                
 		                </div>
