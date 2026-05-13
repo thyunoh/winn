@@ -399,7 +399,7 @@
 	                            ('0' + today.getDate()).slice(-2);
 	        document.getElementById('startDt').value = formattedDate;
 	    };
-		function modal_Open(flag) {	
+		function modal_Open(flag) {
 			let modal_OpenFlag = true;
 			const insertButton = document.getElementById('form_btn_ins');
 		    const updateButton = document.getElementById('form_btn_udt');
@@ -988,21 +988,9 @@
 		                });
 		
 		                dataTable.draw(false);
-			           // 3. draw 이벤트 후, 저장했던 행 다시 선택
+		                // 재조회로 최신 데이터 반영
 	                    fn_FindData();
 
-		                dataTable.on('draw', function () {
-		                    if (selectedIndex !== null) {
-		                        let row = dataTable.row(selectedIndex);
-		                        if (row.node()) {
-		                            $(row.node()).addClass('selected'); // CSS로 강조
-		                            // 선택 유지를 위한 스크롤 위치 조정도 필요 시 추가 가능
-		                        }
-		                    }
-		                    // draw 이벤트는 계속 발생하므로, 이벤트 중복 방지를 위해 off
-		                    dataTable.off('draw');
-		                });
-		                
 		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");
@@ -1468,6 +1456,10 @@
 			  applyAuthControl();
 		});
 		function modalName_rich(answerText) {
+			  // 이전 모달에서 summernote가 destroy되지 않고 남아 있으면
+			  // 재초기화 시 onInit가 호출되지 않아 내용이 갱신되지 않는다 → 방어적으로 먼저 destroy
+			  try { $('#ansrConts1').summernote('destroy'); } catch(e) {}
+
 			  // answerText가 null/undefined일 경우 빈 문자열로 초기화
 			  let safeAnswer = (answerText || '');
 			  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
@@ -1500,7 +1492,7 @@
 
 			// 모달이 닫힐 때 두 에디터 제거
 			$('#modalName').on('hidden.bs.modal', function () {
-			  $('#ansrConts1').summernote('destroy');
+			  try { $('#ansrConts1').summernote('destroy'); } catch(e) {}
 			});
 
 		</script>
