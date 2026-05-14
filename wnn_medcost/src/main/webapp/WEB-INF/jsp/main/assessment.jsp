@@ -2478,6 +2478,8 @@ function fn_ViewData(data) {
 						{ data: 'urineCtl',  visible: true,  className: 'dt-body-center', width: '120px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
+			        				if (data === '0') return '0.조절함';
+			        				if (data === '1') return '1.가끔실금';
 			        				if (data === '2') return '2.자주실금함';
 			        				if (data === '3') return '3.조절못함';
 			        				return data || '';
@@ -2514,22 +2516,34 @@ function fn_ViewData(data) {
 					    },
 						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '100px',
 						render: function(data, type, row) {
+							// 정렬용 값 — 관리(1) → 공란(2) → 제외(3)
+							if (type === 'sort' || type === 'type') {
+								if (data === 'Y')     return 1;
+								if (data === '제외')  return 3;
+								return 2;
+							}
 							if (type === 'display') {
-								// 분자(분자에 해당) → "관리" 파란색 / 그 외 → "제외" 회색
+								// SQL 3가지 상태:
+								//   'Y'   → "관리" (파란색) — 분자 매칭 환자
+								//   ''    → 공란            — 기존 분모이지만 분자 아닌 환자
+								//   '제외' → "제외" (회색)  — 추가 표시 환자 (URINE_CTL 0/1 또는 PAT_CLASS='A')
 								if (data === 'Y') {
 									return '<span style="color:#1565c0;font-weight:bold;">관리</span>';
 								}
-								return '<span style="color:#888;">제외</span>';
+								if (data === '제외') {
+									return '<span style="color:#888;">제외</span>';
+								}
+								return '';
 							}
 							return data;
 						}
 				    }
     				 ];
 
-    	// 초기 data Sort,  없으면 []
-    	muiltSorts = [
-		             	['urineCtl', 'asc']
-	   		         ];
+    	// 초기 data Sort — 빈 배열: SQL ORDER BY (관리→공란→제외, urineCtl, patId) 결과를 그대로 사용.
+    	//   DataTables 가 manageYn 을 단순 문자열로 재정렬 ('' → 'Y' → '제외') 하는 문제 회피.
+    	//   사용자가 컬럼 헤더를 클릭하면 그때부터 클라이언트 정렬이 동작 (orthogonal sort 의 1/2/3 적용).
+    	muiltSorts = [];
     	// Sort여부 표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
     	showSortNo = ['_all'];
     	// Columns 숨김 columnsSet -> visible로 대체함 hideColums 보다 먼제 처리됨 ( visible를 선언하지 않으면 hideColums컬럼 적용됨 )
