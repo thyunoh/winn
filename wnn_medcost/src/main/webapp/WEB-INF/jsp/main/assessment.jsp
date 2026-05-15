@@ -2431,9 +2431,9 @@ function fn_ViewData(data) {
     			{ label: '관리여부',     rowspan: 2 }
     		],
     		[
-    			{ label: '일정 배뇨' },
-    			{ label: '방광 훈련' },
-    			{ label: '규칙 도뇨' }
+    			{ label: '일정<br>배뇨' },
+    			{ label: '방광<br>훈련' },
+    			{ label: '규칙<br>도뇨' }
     		]
     	];
     	columnsSet = [
@@ -2488,7 +2488,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 일정한 배뇨 (UR_PLAN='1' 인 경우 ● 검정 채움 표시) */
-					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '70px',
+					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '50px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -2497,7 +2497,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 방광훈련 (BLAD_TRAIN='1') */
-					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '70px',
+					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '50px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -2506,7 +2506,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 규칙적 도뇨 (REG_CATH='1') */
-					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '70px',
+					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '50px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -3324,7 +3324,13 @@ function fn_HeadColumnSet() {
                 const tr = document.createElement('tr');
                 row.forEach(cell => {
                     const th = document.createElement('th');
-                    th.textContent = cell.label || '';
+                    const lbl = cell.label || '';
+                    // <br> 가 포함된 라벨은 줄바꿈을 살리기 위해 innerHTML 사용
+                    if (lbl.indexOf('<br>') !== -1) {
+                        th.innerHTML = lbl;
+                    } else {
+                        th.textContent = lbl;
+                    }
                     if (cell.colspan) th.colSpan = cell.colspan;
                     if (cell.rowspan) th.rowSpan = cell.rowspan;
                     if (cell.class) th.classList.add(cell.class);
