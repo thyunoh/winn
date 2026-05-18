@@ -242,12 +242,25 @@
 					 data-bs-interval="2000"
 					 style="position: absolute; top: 0; left: 0; right: 0; z-index: 0;">
 			
+					<%
+						/* 오프라인특강 + 온라인교육 배너 노출 기간: 2026-05-19 ~ 2026-05-31 (포함).
+						   인디케이터(점) 와 슬라이드 양쪽에서 사용하므로 carousel 시작 전에 한 번만 계산. */
+						Calendar promoCal = Calendar.getInstance();
+						int promoYmd = promoCal.get(Calendar.YEAR) * 10000
+						             + (promoCal.get(Calendar.MONTH) + 1) * 100
+						             + promoCal.get(Calendar.DAY_OF_MONTH);
+						boolean showPromo = (promoYmd >= 20260519 && promoYmd <= 20260531);
+						request.setAttribute("showPromoBanner", showPromo);
+					%>
 					<ol class="carousel-indicators">
 						<li data-bs-target="#header-carousel" data-bs-slide-to="0" class="active"></li>
 						<li data-bs-target="#header-carousel" data-bs-slide-to="1"></li>
 						<li data-bs-target="#header-carousel" data-bs-slide-to="2"></li>
 						<li data-bs-target="#header-carousel" data-bs-slide-to="3"></li>
-						<li data-bs-target="#header-carousel" data-bs-slide-to="4"></li>
+						<c:if test="${showPromoBanner}">
+							<li data-bs-target="#header-carousel" data-bs-slide-to="4"></li>
+							<li data-bs-target="#header-carousel" data-bs-slide-to="5"></li>
+						</c:if>
 					</ol>
 			
 					<!-- 슬라이드들 -->
@@ -277,6 +290,26 @@
 							<img src="/wnn_consult/images/winct/image3.svg" style="width: 100%; height: 100%; object-fit: cover;">
 						</div>
 					</div>
+					<c:if test="${showPromoBanner}">
+						<!--  오프라인특강 (기간한정 노출, 노출 조건 = carousel-indicators 상단 스크립틀릿) -->
+						<div class="carousel-item" style="height: 540px; overflow: hidden;">
+							<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
+							  <a href="https://docs.google.com/forms/d/e/1FAIpQLSfSZ1aNirFiIiFoCp8vhPKD_XFXSBkFfGQfs_F0SqcM6vYmvg/viewform?usp=dialog" target="_blank">
+							    <img src="/wnn_consult/images/winct/image11.svg" style="width: 100%; height: 100%; object-fit: cover;">
+							  </a>
+							</div>
+						</div>
+	
+						<!--  온라인교육 (기간한정 노출) -->
+						<div class="carousel-item" style="height: 540px; overflow: hidden;">
+							<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">
+							   <a href="https://winner797.kr/lecture/?seq=1117&sort01=&page=1" target="_blank">
+								<img src="/wnn_consult/images/winct/image12.svg" style="width: 100%; height: 100%; object-fit: cover;">
+							   </a>
+							</div>
+						</div>
+					</c:if>		
+			
 					<!--  2025년 2주기 7차   -->
 <!-- 					<div class="carousel-item" style="height: 540px; overflow: hidden;">
 						<div class="slide-image-container d-flex align-items-stretch justify-content-center w-100 h-100">

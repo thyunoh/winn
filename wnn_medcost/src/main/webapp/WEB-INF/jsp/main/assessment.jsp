@@ -241,6 +241,20 @@
 
 							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 표시는
 							           첫 컬럼 ✔ 체크박스로만 표시 (행 배경 강조 제거) */
+
+							        /* viewTable 헤더 nowrap — 90%+ 줌에서 DataTables 가 헤더 폭을 줄이려 할 때
+							           텍스트가 글자 단위로 깨지지 않도록. <br>은 명시적 줄바꿈이라 정상 동작 유지. */
+							        #viewTable thead th,
+							        #viewTable_wrapper .dataTables_scrollHead th {
+							            white-space: nowrap !important;
+							        }
+							        /* 단, <br> 포함된 sub-header 는 줄바꿈 허용 (일정\n배뇨 등) */
+							        #viewTable thead th:has(br),
+							        #viewTable_wrapper .dataTables_scrollHead th:has(br) {
+							            white-space: normal !important;
+							            word-break: keep-all !important;
+							            line-height: 1.2 !important;
+							        }
 							    </style>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
@@ -2117,7 +2131,7 @@ function Indicater_DataList() {
 	
    	columnsSet = [  { data: 'cate_nm', visible: true,  className: 'dt-body-left',   width: '100px' },
    					{ data: 'stdweig', visible: true,  className: 'dt-body-center', width: '50px' },
-   					{ data: 'dtorval', visible: true,  className: 'dt-body-center', width: '50px', 
+   					{ data: 'dtorval', visible: true,  className: 'dt-body-center', width: '50px',
 						render: function(data, type, row) {
 		        			if (type === 'display') {
 		        				if (row.cate_cd === '99') {
@@ -2128,7 +2142,7 @@ function Indicater_DataList() {
 		  			    },
 					},
 					
-					{ data: 'ntorval', visible: true,  className: 'dt-body-center', width: '50px', 
+					{ data: 'ntorval', visible: true,  className: 'dt-body-center', width: '50px',
 						render: function(data, type, row) {
 		        			if (type === 'display') {
 		        				if (row.cate_cd === '99') {
@@ -2157,7 +2171,7 @@ function Indicater_DataList() {
 				            td.style.fontWeight = 'red';
 					    }
 				    },
-					{ data: 'cal_val',  visible: true,  className: 'dt-body-center', width: '50px', 
+					{ data: 'cal_val',  visible: true,  className: 'dt-body-center', width: '50px',
 						render: function(data, type, row) {
 		        			if (type === 'display') {
 		        				if (row.cate_cd === '99') {
@@ -2488,7 +2502,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 일정한 배뇨 (UR_PLAN='1' 인 경우 ● 검정 채움 표시) */
-					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '50px',
+					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '55px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -2497,7 +2511,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 방광훈련 (BLAD_TRAIN='1') */
-					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '50px',
+					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '55px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -2506,7 +2520,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 규칙적 도뇨 (REG_CATH='1') */
-					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '50px',
+					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '55px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -2627,8 +2641,6 @@ function fn_ViewData(data) {
 			    		    { label: 'c' },
 			    		    { label: 'd' },
 			    		    { label: '체중'}
-			    		    
-			    		    
 			    	 	]
 			    	 ];
 
@@ -4295,10 +4307,39 @@ function _pvChangedKey(patId, admitDt, medStart) {
            String(medStart || '').replace(/-/g,'');
 }
 
+// 워너넷 사용자 여부 — 사이드바/대시보드/total_Report 등과 동일한 컨벤션:
+//   `s_wnn_yn` 쿠키 = 'Y'       → 위너넷 사용자(로그인 시 설정)
+//   `s_winconect` 쿠키 = 'Y'    → 병원 검색 후 위너넷처럼 연결된 상태
+// (전월 변경 ✔ 표시는 위너넷에게만 노출 — 병원 사용자에겐 의미 없는 정보이고 혼선 방지)
+//
+// 디버그: 콘솔에서 `_debugWinnerCheck()` 호출 → 쿠키 값/판별결과 출력.
+function _isWinnerUser() {
+    try {
+        var w = (getCookie("s_wnn_yn")    || '').trim();
+        var c = (getCookie("s_winconect") || '').trim();
+        return w === 'Y' || c === 'Y';
+    } catch (e) { return false; }
+}
+// 진단 — 브라우저 DevTools 콘솔에서 호출하여 현재 값 확인
+window._debugWinnerCheck = function () {
+    var w = '', c = '';
+    try { w = getCookie("s_wnn_yn")    || ''; } catch (e) { w = '(err: ' + e.message + ')'; }
+    try { c = getCookie("s_winconect") || ''; } catch (e) { c = '(err: ' + e.message + ')'; }
+    var info = {
+        cookie_s_wnn_yn:    w,
+        cookie_s_winconect: c,
+        isWinnerUser:       _isWinnerUser(),
+        meaning: _isWinnerUser() ? '위너넷(체크표시 ✔ 노출)' : '병원 사용자(체크표시 숨김)'
+    };
+    console.table(info);
+    return info;
+};
+
 // viewTable 의 c_Head_Set / columnsSet 맨 앞에 "변경(✔)" 컬럼 prepend
 //   - 헤더는 공백, 폭 최소화 — 체크박스만 표시
 //   - 전월 대비 적정성평가 5개 분류(D.ADL / E·F.유치도뇨관 / F.HbA1c / I.욕창 / I.피부처치) 변경 환자에 ✔
 //   - c_Head_Set 이 1행 헤더(string[]) / 2행 헤더(object[][]) 모두 대응
+//   - 워너넷 사용자가 아니면 ✔ 마크 렌더링 자체를 스킵 (컬럼 자리는 유지 — 헤더 폭 영향 최소화)
 function fn_PrependPatvalChangedColumn() {
     if (typeof c_Head_Set === 'undefined' || typeof columnsSet === 'undefined') return;
     if (!Array.isArray(c_Head_Set) || !Array.isArray(columnsSet)) return;
@@ -4323,6 +4364,8 @@ function fn_PrependPatvalChangedColumn() {
         width: '24px',
         render: function(data, type, row) {
             if (type !== 'display') return '';
+            // 워너넷 사용자가 아니면 ✔ 표시 안함 (s_mainfg='3'/'4' = 병원 사용자)
+            if (!_isWinnerUser()) return '';
             if (!row || !row.patId) return '';
             try {
                 var key = _pvChangedKey(row.patId, row.admitDt, row.medStart);
@@ -4338,6 +4381,8 @@ function fn_PrependPatvalChangedColumn() {
 
 function fn_LoadPatvalChangedList() {
     _PV_CHANGED_SET = {};
+    // 워너넷 사용자가 아니면 변경 ✔ 표시 안 하므로 AJAX 호출 자체 스킵 (서버 부하 절감)
+    if (!_isWinnerUser()) return;
     var selYear  = document.getElementById('year_Select');
     var selMonth = document.getElementById('monthSelect');
     if (!selYear || !selMonth) return;

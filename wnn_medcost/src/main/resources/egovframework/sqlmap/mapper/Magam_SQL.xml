@@ -1463,7 +1463,7 @@
 		         /* 제외 대상  */
 		         AND LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) NOT IN ('A')   <!-- 의료최고도 -->
 		         AND NOT (
-		              LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) = 'C'     <!-- 의료중도 -->
+		              LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) IN ('B', 'C')      <!-- 의료고도 / 의료중도 -->
 		              AND pat.DEMENTIA = '1'                          <!-- 치매 -->
 		              AND ( pat.DELUSION    IN ('2','3')   /* 망상 */   <!--  2.자주 3.매우자주  -->
 		                 OR pat.HALLUCIN    IN ('2','3')   /* 환각 */
