@@ -1663,14 +1663,19 @@
         		codeCd_one:     $('#codeCd_one').val(),
             	dtlCodeNm_one:  $('#dtlCodeNm_one').val(),
         		subCode_one:    $('#subCode_one').val(),
-        		subCodeNm_one:  $('#subCodeNm_one').val(), 
+        		subCodeNm_one:  $('#subCodeNm_one').val(),
         		startDt_one:    $('#startDt_one').val(),
         		endDt_one:      $('#endDt_one').val(),
         		sort_one:       $('#sort_one').val(),
         		useYn_one:      $('#useYn_one').val(),
+        		prop1_one:      $('#prop1_one').val(),
+        		prop2_one:      $('#prop2_one').val(),
+        		prop3_one:      $('#prop3_one').val(),
+        		prop4_one:      $('#prop4_one').val(),
+        		prop5_one:      $('#prop5_one').val(),
 			    };
 		    return cd_newData;
-		}	
+		}
 		//	
 		function initCdResultsTable() {
 		  if (!$.fn.DataTable.isDataTable('#' + cd_tableName.id)) {
@@ -2175,9 +2180,9 @@
 		                    });
 		                    this.data(rowData);
 		                });
-		
-		                dataTable.draw(false);
-		                
+
+		                cd_dataTable.draw(false);
+
 		                // 7. 모달 닫기 및 성공 메시지 표시
 		                $("#" + cd_modalName.id).modal('hide');
 		                messageBox("1", "<h5> 정상적으로 업데이트되었습니다. </h5>", mainFocus, "", "");

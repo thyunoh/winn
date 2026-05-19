@@ -1857,7 +1857,25 @@
 	        fnnotice_search(k);
 	    }
 	}
-	
+
+	// NOTI_GB 의 SUB_CODE 별 PROP_1 값을 로드 (PROP_1='Y' 이면 비로그인 열람 허용)
+	function loadNotiPropMap() {
+		window._notiPropMap = window._notiPropMap || {};
+		$.ajax({
+			url: '${pageContext.request.contextPath}' + '/base/ctl_selCommDtlInfo.do',
+			type: 'post',
+			data: { codeGb: 'Z', codeCd: 'NOTI_GB' },
+			dataType: 'json',
+			success: function(data) {
+				if (!data || data.error_code !== '0') return;
+				for (var i = 0; i < data.resultCnt; i++) {
+					var row = data.resultList[i];
+					window._notiPropMap[String(row.subCode)] = row.prop1;
+				}
+			}
+		});
+	}
+
 	function fnnotice_search(fileGb) {
 		let targetArea, targetTable;
 		switch (fileGb) {
@@ -1954,11 +1972,12 @@
 	}
 
 	function showAdminModal(notiSeq, fileGb, notiTitle, notiContent) {
-		// 로그인 여부 확인
-		if (!sessionStorage.getItem('s_hospid')) {
+		// 로그인 여부 확인 — TBL_CODE_DTL (CODE_GB='Z', CODE_CD='NOTI_GB') 의 PROP_1='Y' 인 SUB_CODE 는 비로그인 열람 허용
+		var notiProp = (window._notiPropMap || {})[String(fileGb)];
+		if (notiProp !== 'Y' && !sessionStorage.getItem('s_hospid')) {
 			messageBox("1", "<h6>로그인 하고 진행하세요.!!</h6><p></p>", "", "", "");
-			return; 
-		}  
+			return;
+		}
 	    // 디코딩 처리
 		const title = decodeURIComponent(notiTitle);
 		const content = decodeURIComponent(notiContent);
@@ -3193,7 +3212,8 @@
 	        $('#mainModal, #termsModal, #searchModal , #asq_main').on('hidden.bs.modal', function () {
 	            $('.modal-backdrop').css('background', 'rgba(0, 0, 0, 0.5)');
 	        });
-	        /*공지사항띄우기*/ 
+	        /*공지사항띄우기*/
+	        loadNotiPropMap() ;
 	        callMultipleSearch() ;
 	        //funcommlist() ;
    

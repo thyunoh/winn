@@ -234,14 +234,21 @@
           AND CODE_GB    = #{codeGb}
     ]]>
     </update>
-	<select id="selCommDtlInfo" parameterType="CodeMdDTO"  resultType="CodeMdDTO"><![CDATA[
-	   SELECT 
+	<select id="selCommDtlInfo" parameterType="CodeMdDTO"  resultType="CodeMdDTO">
+	   <![CDATA[
+	   SELECT
+          CODE_GB,
           CODE_CD,
-          SUB_CODE_NM
+          SUB_CODE,
+          SUB_CODE_NM,
+          PROP_1
 	   FROM TBL_CODE_DTL
 	   WHERE 1=1
 	    AND CODE_CD = #{codeCd}
-	 ]]>  
-	</select> 
+	   ]]>
+	   <if test="codeGb != null and codeGb != ''">
+	     AND CODE_GB = #{codeGb}
+	   </if>
+	</select>
 
 </mapper>
