@@ -167,6 +167,13 @@
 							        }
 							        .cath05-blink { animation: cath05Pulse 1.6s ease-out infinite; }
 
+							        /* 전월청구 확인 경고박스 깜박임 */
+							        @keyframes prevMonthBlink {
+							            0%, 100% { opacity: 1;   }
+							            50%      { opacity: 0.35; }
+							        }
+							        #prevMonthWarn.blink { animation: prevMonthBlink 1s ease-in-out infinite; }
+
 							        /* 환자평가표 조회 버튼 — 활성화됨 (_show 클래스로 표시) */
 							        /* 재오픈 시 아래 display:inline-flex !important 선택자 사용 예정 */
 							        #btnPatvalView.patval-btn._show,
@@ -532,6 +539,7 @@ var jobFlag = '00';
 var jobYyMm = '202501';
 var jobCode = null;
 var evalIndiData = []; // 지표 데이터 저장용
+var _curIndiDtor = 0;  // 현재 보기중인 지표의 분모(대상자수) — 우측 그리드 0건 안내 판정용
 
 // 05(유치도뇨관) 상단 버튼용 데이터 저장소
 var _prevMissingData = [];
@@ -2210,6 +2218,7 @@ function fn_ViewData(data) {
 
 	jobFlag    = data.cate_cd;
 	jobYyMm    = data.jobyymm;
+	_curIndiDtor = parseFloat(data.dtorval) || 0;  // 좌측 지표 분모(대상자수) 저장
 
 	// jobFlag 변경 시 05 상단 버튼 재평가
 	if (jobFlag !== '05') {
@@ -4090,6 +4099,32 @@ function dataLoad(data, callback, settings) {
 		                cntNote = '[중복포함,당뇨 총:' + diab_Cnt + '건 ]·적정:' + appr_Cnt + '건·다음월:' + next_Cnt + '건';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(10) + '<span style="color: blue;">' + cntNote + '</span>';
+
+	                // 좌측 지표 분모(당뇨 대상자)는 있는데 우측 그리드가 0건이면 전월청구 누락 가능성 안내
+	                // (select_CategoryList13 은 전월 청구내역 TBL_CHUNG_MST 와 INNER JOIN 하므로
+	                //  전월 청구가 없으면 당뇨 환자가 있어도 조회 결과가 0건이 됨)
+	                if (_curIndiDtor > 0 && (!response.data || response.data.length === 0)) {
+	                    // 제목 아래 인라인 경고박스(prevMonthWarn 스타일) — fn_ViewData 진입 시 자동 제거됨
+	                    var _pmOld = document.getElementById('prevMonthWarn'); if (_pmOld) _pmOld.remove();
+	                    var _pmHeader = document.getElementById('lab_title');
+	                    var _pmCard = document.getElementById('card_container');
+	                    var _pmWarn = document.createElement('div');
+	                    _pmWarn.id = 'prevMonthWarn';
+	                    _pmWarn.className = 'blink';
+	                    _pmWarn.style.cssText = 'margin:6px 12px 0; padding:8px 12px; border:1px solid #f5c2c7;'
+	                        + 'border-left:4px solid #dc3545; border-radius:4px; background:#fff5f5;'
+	                        + 'color:#842029; font-size:12.5px; line-height:1.5;';
+	                    _pmWarn.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#dc3545; margin-right:6px;"></i>'
+	                        + '좌측 분모(당뇨 대상자)는 있으나 대상자 목록이 <b>0건</b>입니다. '
+	                        + '<b style="color:#dc3545;">전월청구 여부를 확인하세요.</b>';
+	                    if (_pmHeader && _pmHeader.parentNode && _pmHeader.parentNode.parentNode) {
+	                        // card-header 다음(테이블 위)에 삽입
+	                        var _pmHdr = _pmHeader.parentNode;
+	                        _pmHdr.parentNode.insertBefore(_pmWarn, _pmHdr.nextSibling);
+	                    } else if (_pmCard) {
+	                        _pmCard.appendChild(_pmWarn);
+	                    }
+	                }
 	            	
 	            	} else if (jobFlag === '14') {
 	            		
