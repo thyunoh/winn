@@ -129,7 +129,26 @@
       "Read(//d/WinnerProj/publish/**)",
       "PowerShell($f = \"D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe\"; try { $fs = [System.IO.File]::Open\\($f, 'Open', 'ReadWrite', 'None'\\); $fs.Close\\(\\); \"unlocked\" } catch { \"locked: $\\($_.Exception.Message\\)\" })",
       "Bash(powershell -c \"Copy-Item 'D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe' 'C:\\\\HIB70\\\\WinnerProj.exe' -Force; \\(Get-Item 'C:\\\\HIB70\\\\WinnerProj.exe'\\).LastWriteTime\")",
-      "PowerShell($f = \"D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe\"; try { $fs = [System.IO.File]::Open\\($f, 'Open', 'ReadWrite', 'None'\\); $fs.Close\\(\\); \"unlocked\" } catch { \"locked\" })"
+      "PowerShell($f = \"D:\\\\WinnerProj\\\\publish\\\\WinnerProj.exe\"; try { $fs = [System.IO.File]::Open\\($f, 'Open', 'ReadWrite', 'None'\\); $fs.Close\\(\\); \"unlocked\" } catch { \"locked\" })",
+      "Bash(openssl dgst *)",
+      "Bash(openssl base64 *)",
+      "Bash(grep -v \"asset/js\\\\|bootstrap/js\\\\|asset/css\\\\|html5shiv\\\\|font-awesome\\\\|^$\")",
+      "Bash(grep -oE '/[a-zA-Z0-9_/]+\\\\.do' /tmp/url-refs.txt | sort -u > /tmp/url-set.txt && wc -l /tmp/url-set.txt && cat /tmp/url-set.txt)",
+      "Bash(ls \"C:\\\\Users\\\\user\\\\git\\\\winn\")",
+      "Bash(mvn -q -DskipTests -pl . compile)",
+      "PowerShell(\\(Get-Command mvn -ErrorAction SilentlyContinue\\).Source; \\(Get-Command javac -ErrorAction SilentlyContinue\\).Source; $env:JAVA_HOME; $env:M2_HOME)",
+      "Bash(cd /c/Users/user/git/sejong/sejong_app && echo \"=== TOP LEVEL ===\" && ls -la && echo \"=== find screens/pages ===\" && find . -type d \\\\\\( -name node_modules -o -name .git -o -name build -o -name .dart_tool \\\\\\) -prune -o -type f \\\\\\( -iname \"*.dart\" -o -iname \"*.kt\" -o -iname \"*.java\" -o -iname \"*.xml\" \\\\\\) -print 2>/dev/null | grep -iE \"screen|page|view|main|home|faq|qna|question\" | head -60)",
+      "Bash(cd /c/Users/user/git/sejong/sejong-web && echo \"=== options/faq java ===\" && find src -type f -iname \"*.java\" | grep -iE \"option|faq|noti|asq\" ; echo \"=== faq in SQL ===\" && grep -rl -iE \"T_FAQ_TRAN|getFaqList|FAQ\" src/main/resources 2>/dev/null ; echo \"=== faqPage/getFaqList mapping ===\" && grep -rn -iE \"getFaqList|faqPage|noticePage|asqMain\" src/main/java 2>/dev/null | head; echo \"=== controllers ===\" && find src/main/java -iname \"*Controller.java\")",
+      "Bash(timeout 180 mvn -o -q compile)",
+      "Bash(grep -rnE \"^\\\\s*\\(html|body\\)\\\\s*[,{]|^\\\\s*body\\\\s+\" src/main/webapp/asset/css/common.css)",
+      "Bash(sed -n '1,15p' src/main/webapp/js/layout.js)",
+      "Bash(sed -n '1,12p' src/main/webapp/js/main.js)",
+      "Bash(sed -n '1,20p' src/main/webapp/asset/js/commonUtil.js)",
+      "Bash(grep -nE \"function|jQuery|\\\\$\\\\\\(|getContextPath|callAjax\")",
+      "Bash(git mv *)",
+      "Bash(timeout 60 bash -c ' *)",
+      "Bash(awk '/\\\\.modal-fullscreen \\\\{/{f=1} f{print NR\": \"$0} /\\\\}/{if\\(f\\)c++; if\\(c>=1 && f\\){f=0;c=0}}' src/main/webapp/bootstrap/css/bootstrap.css)",
+      "Bash(grep -vE \"new bootstrap|getElementById|bs.modal|modal\\\\\\(|//|<!--\")"
     ]
   }
 }

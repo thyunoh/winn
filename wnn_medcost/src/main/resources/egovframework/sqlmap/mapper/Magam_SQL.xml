@@ -2289,8 +2289,8 @@
 	
 	<select id="select_CategoryList13" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 	    WITH
-		patient_data AS (
-		SELECT DISTINCT 
+		patient_data_main AS (
+		SELECT DISTINCT
 		       e.PAT_ID                            AS patId
 			 , e.PAT_NM                            AS patNm
 			 , e.MED_START                         AS medStart  
@@ -2337,8 +2337,45 @@
 		   	   
 		 GROUP BY  e.PAT_ID,e.PAT_NM,e.MED_START,e.DIABETES,e.HBA1C_TEST,e.HBA1C_VALUE,e.TEST_DATE,e.DOC_DT,e.ADMIT_DT 
 		)
-		SELECT distinct 
-		       LEFT(pd.patId,6) AS patId 
+		, patient_data_fb AS (
+		SELECT DISTINCT
+		       e.PAT_ID                            AS patId
+			 , e.PAT_NM                            AS patNm
+			 , e.MED_START                         AS medStart
+		     , e.DIABETES                          AS diabeYn
+		     , e.HBA1C_TEST                        AS hba1cYn
+		     , e.HBA1C_VALUE / 10                  AS eResult
+		     , STR_TO_DATE(e.TEST_DATE,  '%Y%m%d') AS examiDt
+		     , STR_TO_DATE(e.DOC_DT,     '%Y%m%d') AS docDt
+		     , STR_TO_DATE(e.ADMIT_DT,   '%Y%m%d') AS admitDt
+		     , ''                                  AS preDiag
+		  FROM TBL_PATVAL_MST e
+		 WHERE e.HOSP_CD = #{hospCd}
+		   AND e.MED_START LIKE CONCAT(#{jobYymm},'%')
+		   AND (
+		         e.EVAL_TYPE = '2'
+		         OR (
+		           e.EVAL_TYPE = '3'
+		           AND DAY(STR_TO_DATE(e.MED_START, '%Y%m%d')) = 1
+		           AND DAY(STR_TO_DATE(e.DOC_DT, '%Y%m%d')) BETWEEN 7 AND 10
+		           AND NOT EXISTS (SELECT 1
+		                             FROM TBL_PATVAL_MST b
+		                            WHERE b.HOSP_CD            = e.HOSP_CD
+		                              AND b.PAT_ID             = e.PAT_ID
+		                              AND LEFT(b.MED_START, 6) = DATE_FORMAT(DATE_SUB(STR_TO_DATE(e.MED_START, '%Y%m%d'), INTERVAL 1 MONTH), '%Y%m')
+		                              AND b.DOC_DT             = e.DOC_DT)
+		         )
+		       )
+		 GROUP BY  e.PAT_ID,e.PAT_NM,e.MED_START,e.DIABETES,e.HBA1C_TEST,e.HBA1C_VALUE,e.TEST_DATE,e.DOC_DT,e.ADMIT_DT
+		)
+		, patient_data AS (
+		    SELECT * FROM patient_data_main
+		    UNION ALL
+		    SELECT * FROM patient_data_fb
+		     WHERE NOT EXISTS (SELECT 1 FROM patient_data_main)
+		)
+		SELECT distinct
+		       LEFT(pd.patId,6) AS patId
 			 , CASE WHEN CHAR_LENGTH(COALESCE(pd.patNm, '')) >= 1 
 					THEN CONCAT(LEFT(COALESCE(pd.patNm, ''), CHAR_LENGTH(COALESCE(pd.patNm, '')) - 1), '*')
 					ELSE '' END AS patNm                        
