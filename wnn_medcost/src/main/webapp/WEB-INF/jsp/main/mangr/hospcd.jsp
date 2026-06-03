@@ -122,6 +122,9 @@
 								</div>
 							</div>
 						</div>
+						<div id="hospContractMsg" style="display: inline-block; margin-left: 16px; vertical-align: middle; color: #d32f2f; font-weight: bold; font-size: 13px; white-space: nowrap;">
+							※ 병원계약정보가 변경된 경우 사용자 로그인 시 로그아웃하고 다시 진행 부탁합니다.
+						</div>
 						<div style="width: 100%;">
 							<table id="tableName"
 								class="display nowrap stripe hover cell-border  order-column responsive">
@@ -1249,6 +1252,9 @@
 				// → 비밀번호 필드에 autocomplete="new-password" + 더미 필드로 해결
 				$('.dataTables_filter input').attr('autocomplete', 'off').val('');
 				dataTable.search('').draw();
+
+				// 안내 메시지를 자료검색 입력란 우측에 나란히 배치
+				$('#hospContractMsg').insertAfter('#' + tableName.id + '_filter');
 
 				// 전체 선택 체크박스 기능
 			    $('#selectAll').on('click', function() {

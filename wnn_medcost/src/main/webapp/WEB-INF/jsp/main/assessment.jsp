@@ -2447,11 +2447,11 @@ function fn_ViewData(data) {
     			{ label: '대상자',       rowspan: 2 },
     			{ label: '입원일자',     rowspan: 2 },
     			{ label: '요양개시일',   rowspan: 2 },
-    			{ label: '평가표작성일', rowspan: 2 },
+    			{ label: '관리여부',     rowspan: 2 },
     			{ label: '환자군',       rowspan: 2 },
     			{ label: '배뇨상태',     rowspan: 2 },
     			{ label: '관리항목',     colspan: 3 },
-    			{ label: '관리여부',     rowspan: 2 }
+    			{ label: '평가표작성일', rowspan: 2 }
     		],
     		[
     			{ label: '일정<br>배뇨' },
@@ -2478,14 +2478,30 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px',
-							render: function(data, type, row) {
-			        			if (type === 'display') {
-			        				return getFormat(data,'d1')
-			            		}
-			            		return data;
-			  			    },
-						},
+						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '100px',
+						render: function(data, type, row) {
+							// 정렬용 값 — 관리(1) → 공란(2) → 제외(3)
+							if (type === 'sort' || type === 'type') {
+								if (data === 'Y')     return 1;
+								if (data === '제외')  return 3;
+								return 2;
+							}
+							if (type === 'display') {
+								// SQL 3가지 상태:
+								//   'Y'   → "관리" (파란색) — 분자 매칭 환자
+								//   ''    → 공란            — 기존 분모이지만 분자 아닌 환자
+								//   '제외' → "제외" (회색)  — 추가 표시 환자 (URINE_CTL 0/1 또는 PAT_CLASS='A')
+								if (data === 'Y') {
+									return '<span style="color:#1565c0;font-weight:bold;">관리</span>';
+								}
+								if (data === '제외') {
+									return '<span style="color:#888;">제외</span>';
+								}
+								return '';
+							}
+							return data;
+						}
+					    },
 						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
@@ -2537,30 +2553,14 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '100px',
-						render: function(data, type, row) {
-							// 정렬용 값 — 관리(1) → 공란(2) → 제외(3)
-							if (type === 'sort' || type === 'type') {
-								if (data === 'Y')     return 1;
-								if (data === '제외')  return 3;
-								return 2;
-							}
-							if (type === 'display') {
-								// SQL 3가지 상태:
-								//   'Y'   → "관리" (파란색) — 분자 매칭 환자
-								//   ''    → 공란            — 기존 분모이지만 분자 아닌 환자
-								//   '제외' → "제외" (회색)  — 추가 표시 환자 (URINE_CTL 0/1 또는 PAT_CLASS='A')
-								if (data === 'Y') {
-									return '<span style="color:#1565c0;font-weight:bold;">관리</span>';
-								}
-								if (data === '제외') {
-									return '<span style="color:#888;">제외</span>';
-								}
-								return '';
-							}
-							return data;
+						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px',
+							render: function(data, type, row) {
+			        			if (type === 'display') {
+			        				return getFormat(data,'d1')
+			            		}
+			            		return data;
+			  			    },
 						}
-				    }
     				 ];
 
     	// 초기 data Sort — 빈 배열: SQL ORDER BY (관리→공란→제외, urineCtl, patId) 결과를 그대로 사용.

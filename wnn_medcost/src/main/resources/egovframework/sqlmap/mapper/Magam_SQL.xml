@@ -1423,7 +1423,8 @@
 		            WHEN sb.PAT_ID IS NOT NULL THEN 'Y'                /* 분자 매칭 — "관리" */
 		            WHEN pm.URINE_CTL IN ('2','3')
 		                 AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')
-		            THEN ''                                            /* 기존 분모 — 공란 */
+		            THEN ''      
+            
 		            ELSE '제외'                                        /* 추가 표시 — 제외 */
 		       END                                                AS manageYn
 		  FROM TBL_PATVAL_MST pm
