@@ -352,7 +352,17 @@
             )
         </foreach>
 	</insert>
-	
+
+	<!-- ACTION_YN='N' 으로 비활성화된 SPECODE(특정내역) 코드 목록.
+	     이 코드가 포함된 라인은 TBL_FILES_DATA 저장에서 제외한다. -->
+	<select id="getSpecodeExclCodes" resultType="String"><![CDATA[
+		SELECT SUB_CODE
+		  FROM TBL_CODE_DTL
+		 WHERE CODE_GB   = 'Z'
+		   AND CODE_CD   = 'SPECODE'
+		   AND ACTION_YN = 'N'
+	]]></select>
+
 	<select id="selectMagamCheck" parameterType="MagamDTO" resultMap="magamMap">
 		SELECT jobs_dt
 		  FROM TBL_MAGAM_INFO

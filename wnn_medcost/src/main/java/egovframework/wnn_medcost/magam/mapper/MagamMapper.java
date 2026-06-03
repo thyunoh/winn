@@ -26,7 +26,10 @@ public interface MagamMapper {
 	List<?> selectMagamCheck(MagamDTO dto);
 	
 	int  uploadMagamFilesMain(List<FilesDTO> filesList);
-	
+
+	// ACTION_YN='N' 으로 비활성화된 SPECODE(특정내역) 코드 목록 (TBL_FILES_DATA 저장 제외 대상)
+	List<String> getSpecodeExclCodes();
+
 	void callUploadMagamSamFiles(MagamDTO magamDTO);
 	void callUploadMagamPatFiles(MagamDTO magamDTO);
 	

@@ -71,7 +71,33 @@ public class MagamServiceImpl implements MagamService {
 		String err_cd = "0";
 		int    counts = 0;
 		try {
-			
+
+			// === ACTION_YN='N' SPECODE(특정내역) 코드가 포함된 라인은 TBL_FILES_DATA 저장에서 제외 ===
+			List<String> exclCodes = mapper.getSpecodeExclCodes();
+			if (exclCodes != null && !exclCodes.isEmpty()) {
+				filesData.removeIf(dto -> {
+					String lv = dto.getLineval();
+					if (lv == null) return false;
+					for (String code : exclCodes) {
+						if (code != null && !code.isEmpty() && lv.contains(code)) {
+							return true; // 제외 대상
+						}
+					}
+					return false;
+				});
+				// 제외 후 잔여 라인 수로 t_lines 재설정 (insert 건수 == t_lines 검증 정합성 유지)
+				int newTotal = filesData.size();
+				for (FilesDTO f : filesData) {
+					f.setT_lines(newTotal);
+				}
+				System.out.println("SPECODE(ACTION_YN='N') 제외 후 라인 수 : " + newTotal);
+			}
+
+			if (filesData.isEmpty()) {
+				System.out.println("저장할 파일 데이터가 없습니다(전량 제외).");
+				return "0";
+			}
+
 			FilesDTO firstData = filesData.get(0);
         	
             MagamDTO magamDTO = new MagamDTO();
