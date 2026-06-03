@@ -1329,6 +1329,9 @@
 		    	   const el = document.getElementById(id);
 		    	   if (el) el.textContent = '';  // 초기값 설정
 		    	 });
+		    	 // 계약정보 안내 메시지 색상 초기화 (이전 빨강 메시지 잔상 제거)
+		    	 const _contNameEl = document.getElementById('cont_name');
+		    	 if (_contNameEl) _contNameEl.style.color = 'blue';
 		    	document.getElementById('memregForm').reset();
 		        // 모달 표시
 		        $('#mainModal').modal('show');
@@ -1380,6 +1383,16 @@
 	        	}  
 	        	if($("#hospNm").val() == ""){
 	        		messageBox("1","<h6>요양기관명을 확인하세요.!!</h6><p></p>","hospNm","","");
+	        		return;
+	        	}
+	        	// 계약정보(체크부분) 내용이 없으면 가입 불가 — 계약기간 상관없이 표시된 계약이 없으면 차단
+	        	// ※ 날짜 영역(cont_startDt/cont_startDt1)만 검사: cont_name 에는 안내문이 들어갈 수 있어 제외
+	        	const _contDates = (
+	        		(document.getElementById('cont_startDt')?.textContent || '') +
+	        		(document.getElementById('cont_startDt1')?.textContent || '')
+	        	).trim();
+	        	if (_contDates === "") {
+	        		messageBox("1","<h6>등록된 계약 정보가 확인되지 않습니다.</h6><p>병원코드를 다시 확인해 주세요.</p>","hospCd","","");
 	        		return;
 	        	}
 	        	if($("#mbrNm").val() == ""){
@@ -1434,23 +1447,56 @@
 	        	let trimmedEmail = $("#email").val().trim();
 	        	$("#email").val(trimmedEmail);
 	        	var formData = $("form[name='memregForm']").serialize() ;
-	        	if (!confirm("회원가입 하시겠습니다?")) {
-	                return;  
-	            }
-        	
+	        	// 네이티브 confirm 대신 messageBox 스타일의 확인/취소 모달 사용
+	        	fnSignupConfirm(formData);
+	        }
+
+	        // 회원가입 확인 모달 (messageBox 와 동일한 스타일) — '확인' 클릭 시 실제 저장 실행
+	        function fnSignupConfirm(formData) {
+	        	$("#signupConfirmDialog").remove();
+	        	var html =
+	        		'<div class="modal fade" id="signupConfirmDialog" tabindex="-1" aria-hidden="true">' +
+	        		'  <div class="modal-dialog" style="margin-top: 15vh !important;">' +
+	        		'    <div class="modal-content rounded-3 overflow-hidden" style="max-width: 120%; margin: 0 auto;">' +
+	        		'      <div class="modal-header bg-blue text-white text-center w-100" style="padding: 8px;">' +
+	        		'        <h5 class="modal-title text-white mx-auto">확인</h5>' +
+	        		'      </div>' +
+	        		'      <div class="modal-body text-center" style="padding: 10px;">' +
+	        		'        <p class="m-3 fw-bold text-dark">회원가입 하시겠습니까?</p>' +
+	        		'      </div>' +
+	        		'      <div class="modal-footer border-0 d-flex justify-content-center" style="padding: 8px;">' +
+	        		'        <button type="button" class="btn btn-blue rounded-pill px-4 py-2" id="signupConfirmYes">확인</button>' +
+	        		'        <button type="button" class="btn btn-info rounded-pill px-4 py-2" id="signupConfirmNo">취소</button>' +
+	        		'      </div>' +
+	        		'    </div>' +
+	        		'  </div>' +
+	        		'</div>';
+	        	$("body").append(html);
+	        	var $dlg = $("#signupConfirmDialog");
+	        	$dlg.modal('show');
+	        	$("#signupConfirmNo").on('click', function() { $dlg.modal('hide'); });
+	        	$("#signupConfirmYes").on('click', function() {
+	        		$dlg.modal('hide');
+	        		fnMemberSaveExec(formData);
+	        	});
+	        	$dlg.on('hidden.bs.modal', function() { $dlg.remove(); });
+	        }
+
+	        // 실제 회원가입 저장 처리
+	        function fnMemberSaveExec(formData) {
 	        	$.ajax( {
-	        		type : "post" ,                      
+	        		type : "post" ,
 	        		url  : "${pageContext.request.contextPath}" + "/user/MemberSaveAct.do",
 	        		data : formData,
 	        		dataType : "json",
-	        		success : function(data) {    
+	        		success : function(data) {
 	        			if(data.error_code != "0") {
 	        			   alert(data.error_msg);
 	        			   return;
 	        			}else{
 	        		 	   modalClose();
 	                    }
-	        		}	
+	        		}
 	        	});
 	        	mainModalClose() ;
 	        }
@@ -3809,6 +3855,17 @@
 	                      setText('cont_name',  startDtVal  ? cont.name1 : '');
 	                      setText('cont_name1', startDtVal2 ? cont.name2 : '');
 
+	                      // 계약정보(체크부분)가 비어 있으면 안내 메시지 표시 — 가입 단계에서 차단됨
+	                      if (!startDtVal && !startDtVal2) {
+	                          const _noContEl = document.getElementById('cont_name');
+	                          if (_noContEl) {
+	                              _noContEl.style.color = 'red';
+	                              _noContEl.textContent = '등록된 계약 정보가 확인되지 않습니다.';
+	                          }
+	                      } else {
+	                          const _contEl = document.getElementById('cont_name');
+	                          if (_contEl) _contEl.style.color = 'blue';
+	                      }
 
 	                  }
 	              });
