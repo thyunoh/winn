@@ -1430,6 +1430,16 @@
 		     , pm.BLAD_TRAIN                                      AS bladTrain
 		     , pm.REG_CATH                                        AS regCath
 		     , CASE
+		            WHEN LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) IN ('B', 'C')   /* 분모 제외 — 치매+BPSD+향정신약 */
+		                 AND pm.DEMENTIA = '1'
+		                 AND ( pm.DELUSION    IN ('2','3')
+		                    OR pm.HALLUCIN    IN ('2','3')
+		                    OR pm.AGITATION   IN ('2','3')
+		                    OR pm.DISINHIB    IN ('2','3')
+		                    OR pm.CARE_RESIST IN ('2','3')
+		                    OR pm.WANDER      IN ('2','3') )
+		                 AND pm.PSYCH_DRUG = '1'
+		            THEN '제외'
 		            WHEN sb.PAT_ID IS NOT NULL THEN 'Y'                /* 분자 매칭 — "관리" */
 		            WHEN pm.URINE_CTL IN ('2','3')
 		                 AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')
@@ -1473,17 +1483,7 @@
 		             )
 		         /* 제외 대상  */
 		         AND LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) NOT IN ('A')   <!-- 의료최고도 -->
-		         AND NOT (
-		              LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) IN ('B', 'C')      <!-- 의료고도 / 의료중도 -->
-		              AND pat.DEMENTIA = '1'                          <!-- 치매 -->
-		              AND ( pat.DELUSION    IN ('2','3')   /* 망상 */   <!--  2.자주 3.매우자주  -->
-		                 OR pat.HALLUCIN    IN ('2','3')   /* 환각 */
-		                 OR pat.AGITATION   IN ('2','3')   /* 초조·공격성 */
-		                 OR pat.DISINHIB    IN ('2','3')   /* 탈억제 */
-		                 OR pat.CARE_RESIST IN ('2','3')   /* 케어저항 */
-		                 OR pat.WANDER      IN ('2','3') ) /* 배회 */
-		              AND pat.PSYCH_DRUG = '1'                        <!-- 약물치료 -->
-		             )
+		         <!-- 치매+BPSD+향정신약(분모 제외)은 바깥 manageYn CASE ①분기에서 '제외' 처리 → 여기(분자 sb)에서는 필터하지 않음 -->
 		         AND pat.URINE_MGMT NOT IN ('1')                                  <!-- 배뇨관련 루 관리 제외 -->
 		         AND SUBSTRING(dm.DIAG_CODE, 1, 4) NOT IN ('Z935','Z936','T830')  <!-- 요로전환술 진단 제외 -->
 

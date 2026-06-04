@@ -3637,6 +3637,32 @@ function fn_FindDataTable() {
 			});
 		}
 
+		// ─────────────────────────────────────────────────────────────
+		// scrollX 헤더 정렬 보정 — 브라우저 줌(90% 초과 등)/창 크기 변경 시
+		//   header(scrollHead) 와 body(scrollBody) 의 px 반올림 차이로
+		//   2단 colspan 헤더(관리항목 등)가 어긋나는 문제 방지.
+		//   → 모든 보이는 DataTable 의 컬럼 폭을 재계산해 헤더-본문 재동기화.
+		// ─────────────────────────────────────────────────────────────
+		var fn_AdjustAllTables = function() {
+			if (!$.fn.dataTable) return;
+			try {
+				$.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+			} catch (e) {}
+		};
+		// 초기 렌더 직후 1회 보정 (이미 줌 상태로 진입한 경우 대비)
+		setTimeout(fn_AdjustAllTables, 0);
+		// ajax 데이터가 그려진 직후에도 보정 (높은 줌으로 첫 진입 시 헤더 어긋남 방지)
+		dataTable.off('init.dtAdjust').on('init.dtAdjust', fn_AdjustAllTables);
+		dataTable.off('draw.dtAdjust').on('draw.dtAdjust', fn_AdjustAllTables);
+		// 줌/리사이즈 시 디바운스 보정 (네임스페이스로 중복 바인딩 방지)
+		$(window).off('resize.dtAdjust').on('resize.dtAdjust', (function() {
+			var _t;
+			return function() {
+				clearTimeout(_t);
+				_t = setTimeout(fn_AdjustAllTables, 150);
+			};
+		})());
+
 		// 전체 선택 체크박스 기능
 	    $('#selectAll').on('click', function() {
 	        var rows = dataTable.rows({ 'search': 'applied' }).nodes();
@@ -4818,8 +4844,7 @@ function _pvBuildHtml(d, row) {
         '<div class="pv-tabs">' +
         '  <button class="pv-tab active" data-tab="t1">A. 일반사항</button>' +
         '  <button class="pv-tab"        data-tab="t2">B·C·D. 의식/인지/신체</button>' +
-        '  <button class="pv-tab pv-tab-wide" data-tab="t3">E·F. 배설/진단,유치도뇨관 삽입/삽입기간 \'일정하게 짜여진 배뇨계획\', \'방광훈련프로그램\', \'규칙적도뇨\', \'배뇨일지\'<br>작성여부 및 작성일수</button>' +
-        '  <div class="pv-tab-break"></div>' +
+        '  <button class="pv-tab"        data-tab="t3">E·F. 배설기능/질병진단</button>' +
         '  <button class="pv-tab"        data-tab="t4">G·H·I. 건강/영양/피부</button>' +
         '  <button class="pv-tab"        data-tab="t5">J·K·L. 투약/특수처치</button>' +
         '</div>';
