@@ -2133,9 +2133,10 @@ function Indicater_DataList() {
 	showButton = false;   		// Button (복사, 엑셀, 출력)) 표시여부
 	searchShow = false;   		// 검색창 Show/Hide 표시여부
 	
+	btm_Scroll = true;          // 지표 그리드는 가로 스크롤(scrollX) 사용 — 기본값 복원 (06 뷰 진입 후 false 잔존 방지)
 	tableName  = document.getElementById('indicatorTable');
-	
-	c_Head_Set = [  '지표명칭','가중치','분모','분자','5점구간','현황값','결과','지표코드','지표구분','작업년월','적용구간'  ];   
+
+	c_Head_Set = [  '지표명칭','가중치','분모','분자','5점구간','현황값','결과','지표코드','지표구분','작업년월','적용구간'  ];
 	
    	columnsSet = [  { data: 'cate_nm', visible: true,  className: 'dt-body-left',   width: '100px' },
    					{ data: 'stdweig', visible: true,  className: 'dt-body-center', width: '50px' },
@@ -2334,6 +2335,9 @@ function fn_ViewData(data) {
     	}
     }
     
+    // 그리드 기본값: 가로 스크롤(scrollX) 사용. (06 등 일부 cate_cd 에서만 아래에서 false 로 덮어씀)
+    btm_Scroll = true;
+
     if (data.cate_cd === "05") {
     	c_Head_Set = [
         				[
@@ -2439,6 +2443,9 @@ function fn_ViewData(data) {
     	// 글자수 제한표시를 일부만 할 때 개별 id, ** 전체 적용은 '_all'하면 됩니다. ** 전체 적용 안함은 []
     	markColums = [];
     } else if (data.cate_cd === "06") {
+    	// scrollX(가로스크롤) 끔 — 2단 colspan 헤더가 줌(90% 초과)에서 본문과 어긋나는 문제를
+    	//   원천 차단 (헤더/본문 분리 테이블이 생기지 않아 px 반올림 드리프트 없음).
+    	btm_Scroll = false;
     	// 2-row header — 관리항목 (colspan=3) 으로 일정배뇨/방광훈련/규칙적도뇨 묶음.
     	// 폭 절약을 위해 sub-header 는 짧게 (일정/방광/규칙).
     	c_Head_Set = [
