@@ -2246,10 +2246,24 @@
 					                return data;
 			                }        
 					      },
-		            	{ title: "OCS회사",   data: "ocsCompany_one",     className: "text-left" },  
-		            	{ title: "OCS아이디",  data: "ocsUserId_one",     className: "text-right"},  
-		            	{ title: "OCS패스워드", data: "ocsUserPw_one",     className: "text-center"},  
-		            	{ title: "요양기관기호", data: "hospCd_one",         className: "text-center"}  
+		            	{ title: "승인일자",    data: "acceptDt_one",      className: "text-center",
+			              render: function(data, type, row) {
+			            	 if (type === 'display') {
+			            	     return getFormat(data,'d1')
+			                 }
+			                 return data;
+			              }
+			            },
+		            	{ title: "중지일자",    data: "closeDt_one",       className: "text-center",
+			              render: function(data, type, row) {
+			            	 if (type === 'display') {
+			            	     return getFormat(data,'d1')
+			                 }
+			                 return data;
+			              }
+			            },
+		            	{ title: "OCS회사",   data: "ocsCompany_one",     className: "text-left" },
+		            	{ title: "요양기관기호", data: "hospCd_one",         className: "text-center"}
 		            ],
 		            ajax: hcontLoad,   
 				});                               
