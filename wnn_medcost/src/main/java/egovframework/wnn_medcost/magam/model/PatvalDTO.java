@@ -69,6 +69,8 @@ public class PatvalDTO {
 	private String examiDt;        // 검사일자
 	private String eResult;        // 검사결과
 	private String approYn;        // 적정여부
+	private String bunmo;          // 분모 해당여부 (13.당화혈색소: 'O'=분모)
+	private String bunja;          // 분자 해당여부 (13.당화혈색소: 'O'=분자)
 	private String preDiag;        // 전월상병(당뇨)
 	private String longAdm;        // 180이상 장기입원
 	
@@ -100,6 +102,11 @@ public class PatvalDTO {
 	private String diagCode;        // 진단코드
 	private String diagName;        // 진단명
 	private String diagCnt;         // 진단건수
+
+	public String getBunmo() { return bunmo; }
+	public void setBunmo(String bunmo) { this.bunmo = bunmo; }
+	public String getBunja() { return bunja; }
+	public void setBunja(String bunja) { this.bunja = bunja; }
 
 	public String getDiagCode() { return diagCode; }
 	public void setDiagCode(String diagCode) { this.diagCode = diagCode; }

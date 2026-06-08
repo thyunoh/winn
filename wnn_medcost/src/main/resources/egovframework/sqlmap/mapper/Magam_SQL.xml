@@ -2380,10 +2380,13 @@
 		 GROUP BY  e.PAT_ID,e.PAT_NM,e.MED_START,e.DIABETES,e.HBA1C_TEST,e.HBA1C_VALUE,e.TEST_DATE,e.DOC_DT,e.ADMIT_DT
 		)
 		, patient_data AS (
+		    /* main(전월청구 있는 환자, preDiag 보유) + fb(전월청구 없어 누락된 환자) 를 환자단위로 합침
+		       └ 기존: NOT EXISTS(전체) = main이 0건일 때만 fb 사용 → 부분누락(전월청구 일부 없음) 미보충
+		       └ 변경: 환자별 보충 = main에 없는 환자만 fb에서 추가 (분모를 프로시저와 일치시킴) */
 		    SELECT * FROM patient_data_main
 		    UNION ALL
-		    SELECT * FROM patient_data_fb
-		     WHERE NOT EXISTS (SELECT 1 FROM patient_data_main)
+		    SELECT * FROM patient_data_fb fb
+		     WHERE NOT EXISTS (SELECT 1 FROM patient_data_main m WHERE m.patId = fb.patId)
 		)
 		SELECT distinct
 		       LEFT(pd.patId,6) AS patId
@@ -2454,8 +2457,21 @@
 				    ELSE '' END AS approYn
 		            
 	         ]]>  
-			 , FN_TEWON_CHECK(#{hospCd},#{jobYymm},pd.admitDt,pd.patNm) AS tewonYn     
-			   
+			 , FN_TEWON_CHECK(#{hospCd},#{jobYymm},pd.admitDt,pd.patNm) AS tewonYn
+			 <![CDATA[
+			 /* ───── 분모/분자 표시 (당뇨 + 입원 3개월 경과 = 분모, 그중 HbA1c 적정시행 = 분자) ───── */
+			 , CASE WHEN pd.diabeYn = '1'
+			             AND pd.docDt >= DATE_ADD(pd.admitDt, INTERVAL 3 MONTH)
+			        THEN 'O' ELSE '' END AS bunmo
+			 , CASE WHEN pd.diabeYn = '1'
+			             AND pd.docDt   >= DATE_ADD(pd.admitDt,  INTERVAL 3 MONTH)   /* 분모 조건 */
+			             AND pd.examiDt IS NOT NULL
+			             AND pd.eResult >= 4 AND pd.eResult < 8.5                    /* 4~8.5% 범위 */
+			             AND pd.examiDt <= pd.docDt                                  /* 검사일 <= 작성일 */
+			             AND pd.docDt   <= DATE_ADD(pd.examiDt, INTERVAL 3 MONTH)    /* 검사 3개월 이내 작성 */
+			        THEN 'O' ELSE '' END AS bunja
+			 ]]>
+
 	  	  FROM patient_data pd
 	</select>
 	

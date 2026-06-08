@@ -4112,6 +4112,8 @@ function dataLoad(data, callback, settings) {
 	            		let diab_Cnt = 0;
 	            		let appr_Cnt = 0;
 	            		let next_Cnt = 0;
+	            		let bunmo_Cnt = 0;
+	            		let bunja_Cnt = 0;
 		                
 		                for (let i = 0; i < response.data.length; i++) {
 		                    
@@ -4126,10 +4128,18 @@ function dataLoad(data, callback, settings) {
 		                    if (item.approYn === '5') {
 		                    	appr_Cnt += 1;
 		                    }
+		                    if (item.bunmo === 'O') {
+		                    	bunmo_Cnt += 1;
+		                    }
+		                    if (item.bunja === 'O') {
+		                    	bunja_Cnt += 1;
+		                    }
 		                    
 		                }
 		                
-		                cntNote = '[중복포함,당뇨 총:' + diab_Cnt + '건 ]·적정:' + appr_Cnt + '건·다음월:' + next_Cnt + '건';
+		                let rate_Txt = bunmo_Cnt > 0 ? (Math.round(bunja_Cnt / bunmo_Cnt * 1000) / 10) + '%' : '-';
+		                cntNote = '[중복포함,당뇨 총:' + diab_Cnt + '건 ]·적정:' + appr_Cnt + '건·다음월:' + next_Cnt + '건'
+		                        + '·<span style="color:#1565C0;">분모:' + bunmo_Cnt + '·분자:' + bunja_Cnt + '·분율:' + rate_Txt + '</span>';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(10) + '<span style="color: blue;">' + cntNote + '</span>';
 
@@ -4317,6 +4327,14 @@ function _pvTxt(v) {
     // 전체 값에서 '0' 또는 '00' 은 '-' 표시 (무의미 값)
     if (s === '0' || s === '00') return _pvEmptyMark();
     return $('<div>').text(v).html();
+}
+// _pvTxt 와 동일하나 '0' 점수를 유효값으로 그대로 표시 (예: K-MMSE 0점)
+// 빈 값(null/undefined/'') 과 '00' 은 '0' 으로 노출 (그 외 값은 원본 유지)
+function _pvTxt0(v) {
+    if (v === null || v === undefined || String(v).trim() === '') return '0';
+    var s = String(v).trim();
+    if (s === '00') s = '0';   // '00' → '0' 케이스만 정규화
+    return $('<div>').text(s).html();
 }
 function _pvDt(v) {
     if (_pvIsEmpty(v)) return _pvEmptyMark();
@@ -4917,7 +4935,7 @@ function _pvTab2(d) {
         ['케어에 대한 저항', _pvCd('bpsd', d.careResist)], ['배회', _pvCd('bpsd', d.wander)]
     ]);
     var s3 = _pvSec('K-MMSE(또는 MMSE-K) / 치매 척도 검사 (CDR · GDS)', 'fa-notes-medical', [
-        ['K-MMSE 실시여부', _pvYn(d.mmseYn)], ['K-MMSE 점수', _pvTxt(d.mmseScore)], ['K-MMSE 검사일', _pvDt(d.mmseDt)],
+        ['K-MMSE 실시여부', _pvYn(d.mmseYn)], ['K-MMSE 점수', _pvTxt0(d.mmseScore)], ['K-MMSE 검사일', _pvDt(d.mmseDt)],
         ['CDR 실시여부', _pvYn(d.cdrYn)],   ['CDR 점수',   _pvTxt(d.cdrScore)],  ['CDR 검사일',  _pvDt(d.cdrDt)],
         ['GDS 실시여부', _pvYn(d.gdsYn)],   ['GDS 점수',   _pvTxt(d.gdsScore)],  ['GDS 검사일',  _pvDt(d.gdsDt)]
     ]);

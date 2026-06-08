@@ -3014,8 +3014,8 @@
 		       
 		       $("#mainGu_two").val('3');
 		       
-    	       $("#bfPassWd_two").val('1234');
-		       $("#afPassWd_two").val('1234');
+    	       $("#bfPassWd_two").val('win7*');
+		       $("#afPassWd_two").val('win7*');
 		       //
 
 		    }   

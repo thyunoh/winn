@@ -2137,7 +2137,11 @@
 	                tableBody += "<tr>";
 	                tableBody += "<td>" + (index + 1) + "</td>";
 	                tableBody += "<td>" + subCodeNm + "</td>";
-	                tableBody += "<td><a href='#' class='doc-link' data-url='" + fileUrl + "' data-title='" + fileTitle + "'>" + fileTitle + "</a></td>";
+	                if (fileUrl !== "#") {
+                    tableBody += "<td><a href='" + fileUrl + "' download='" + fileTitle + "' class='doc-link file-attach' style='color:#2874A6; text-decoration:underline; cursor:pointer;'>" + fileTitle + "</a></td>";
+                } else {
+                    tableBody += "<td>" + fileTitle + "</td>";
+                }
 	                tableBody += "<td>" + fileSize + " KB</td>";
 	                tableBody += "<td>" + regDttm + "</td>";
 	                tableBody += "<td>";
@@ -2163,15 +2167,8 @@
 	    });
 	}
 
-	// ✅ 파일 미리보기 클릭 시
-	$(document).on("click", ".doc-link", function (e) {
-	    e.preventDefault();
-	    let fileUrl = $(this).data("url");
-	    let fileTitle = $(this).data("title");
-
-	    console.log("📌 파일 미리보기 실행: " + fileUrl);
-	    loadFileContent(fileUrl, fileTitle);
-	});
+	// ✅ 문서제목 클릭 시 → 다운로드 (href download 속성으로 동작, file-attach 핸들러가 경로 검증)
+	//    (이전: loadFileContent 미리보기 — #docContent 미존재로 동작 안 함 → 다운로드로 변경)
 
 	// ✅ 미리보기 로직 (PDF, 이미지만 iframe)
 	function loadFileContent(fileUrl, fileTitle) {
