@@ -868,7 +868,10 @@ function loadContentData() {
 	                mgmonth: $("#monthSelect").val()
 	            },
 	            success: function (response) {
-	                const amounts = [
+	                response = response || {};
+                // [초기화] 자료 없는 달이면 금액필드가 비어(undefined) 와서 이전 달 값이 남던 문제 → 빈 값 0 정규화(0/빈차트로 초기화)
+                ['totamt1','totamt2','yngamt1','yngamt2','jngamt1','jngamt2','hwiamt1','hwiamt2','dayamt1','dayamt2','oneamt1','oneamt2','tsuamt1','tsuamt2','hanamt1','hanamt2'].forEach(function(k){ var v = Number(response[k]); response[k] = isNaN(v) ? 0 : v; });
+                const amounts = [
 	                    { pre_base: response.totamt2, cur_base: response.totamt1, key: 'ttupdown', element1: 'totamt1', element2: 'totamt2' },
 	                    { pre_base: response.yngamt2, cur_base: response.yngamt1, key: 'ygupdown', element1: 'yngamt1', element2: 'yngamt2' },
 	                    { pre_base: response.jngamt2, cur_base: response.jngamt1, key: 'jgupdown', element1: 'jngamt1', element2: 'jngamt2' },
@@ -887,6 +890,7 @@ function loadContentData() {
 	                    const el1 = document.getElementById(element1);
 	                    const el2 = document.getElementById(element2);
 	                    el2.style.color = 'black';
+                    el1.style.color = 'black';
 	
 	                    let diff = cur_base - pre_base;
 	                    let sign = '';
