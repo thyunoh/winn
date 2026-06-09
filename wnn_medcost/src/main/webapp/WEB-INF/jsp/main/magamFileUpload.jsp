@@ -461,6 +461,9 @@ $(document).ready(function() {
     	}
     	if(e.target && e.target.getAttribute('data-action') === 'fileView') {
 	  	  	fileView_Open(e.target.getAttribute('data-mgmonth'));
+		  	}
+    	if(e.target && e.target.getAttribute('data-action') === 'fileViewNone') {
+		  	  	fileViewNone_Open(e.target.getAttribute('data-mgmonth'));
 	  	}
     	if (e.target && e.target.getAttribute('data-action') === 'excelLoad') {
     		excelLoad_Open(e.target.getAttribute('data-mgmonth'));
@@ -1945,11 +1948,31 @@ function magamLock_Open(mgmonth) {
     
 }
 
+// 월 선택 표시 — 선택된 월의 "자료보기" 버튼을 클릭(활성) 상태로 강조
+function markSelectedMonth(mgmonth) {
+	// 모든 자료보기 버튼 원상복구(초록 외곽선)
+	$('button[data-action="fileView"]')
+		.removeClass('btn-success text-white active')
+		.addClass('btn-outline-success text-green');
+	// 선택된 월의 자료보기 버튼만 채움(눌린 표시)
+	$('button[data-action="fileView"][data-mgmonth="' + mgmonth + '"]')
+		.removeClass('btn-outline-success text-green')
+		.addClass('btn-success text-white active');
+}
+
+// 보기없음 클릭 — 하단 그리드 초기화(비우기) + 선택표시
+function fileViewNone_Open(mgmonth) {
+	if (typeof event !== 'undefined' && event) event.stopPropagation();
+	try { dataTable.clear().draw(); } catch (e) {}
+	markSelectedMonth(mgmonth);
+}
+
 function fileView_Open(mgmonth) {
 	event.stopPropagation();
 	gMonth = mgmonth;
 	findField('mgmonth', gMonth)
 	dataTable.ajax.reload();
+	markSelectedMonth(mgmonth);
 }
 
 
@@ -2705,7 +2728,7 @@ function updateMonthsContainer(rawData) {
         	fMonth = item.mgmonth;
             buttonHTML += '<button data-action="fileView" data-mgmonth="' + item.mgmonth + '" class="btn btn-outline-success text-green btn-block btn-sm small mb-1">자료보기</button>';
         } else {
-            buttonHTML += '<button class="btn btn-outline-success btn-block btn-sm small text-green mb-1">보기없음</button>';
+            buttonHTML += '<button data-action="fileViewNone" data-mgmonth="' + item.mgmonth + '" class="btn btn-outline-success btn-block btn-sm small text-green mb-1">보기없음</button>';
         }
 
         if (item.ipwonyn === "Y") {
@@ -2741,7 +2764,7 @@ function updateMonthsContainer(rawData) {
 
 
         const cardHTML =
-            '<div class="col-xl-1 col-lg-2 col-md-3 col-sm-4 col-6 mb-2">' +
+            '<div class="col-xl-1 col-lg-2 col-md-3 col-sm-4 col-6 mb-2 month-card" data-month="' + item.mgmonth + '">' +
                 '<div class="card" style="margin-bottom:0;">' +
                     '<div class="card-header ' + headerClass + ' text-center p-1">' +
                         '<h4 class="mb-0 ' + h4headClass + '">' + item.mgmonth + '월' + '</h4>' +
