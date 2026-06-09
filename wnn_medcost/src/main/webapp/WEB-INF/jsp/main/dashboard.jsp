@@ -632,7 +632,9 @@ function loadContentData() {
             
         	const labels = ['7월', '8월', '9월', '10월', '11월', '12월'  ];
         	 
-        	const ctx1 = document.getElementById('mixedChart11')?.getContext('2d');
+        	// [호환성] 옵셔널 체이닝(?.) 제거 — 구버전/레거시 엣지(EdgeHTML)에서 SyntaxError로 전체 스크립트가 멈추던 문제 방어
+        	var _mixedEl11 = document.getElementById('mixedChart11');
+        	const ctx1 = _mixedEl11 ? _mixedEl11.getContext('2d') : null;
         	
             if (!ctx1) {
                 console.error("Canvas element #mixedChart11 not found!");
@@ -968,7 +970,21 @@ function loadContentData() {
     
 	
     // 다른 모듈에서 필요 시 호출할 수 있도록 window에 바인딩 (선택 사항)
-    window.loadDashbordMedExpenses = loadDashbordMedExpenses;    
+    window.loadDashbordMedExpenses = loadDashbordMedExpenses;
+
+    // [추가] 일부 PC(엣지 절전탭/백그라운드 렌더 등)에서 Morris 차트가 0-너비로 그려져
+    //        빈 화면이 되는 현상 방어 — 탭이 다시 보이거나 창 포커스/복원 시 강제 재계산(redraw).
+    //        Morris 는 resize:true 라 'resize' 이벤트를 받으면 올바른 너비로 다시 그린다.
+    //        정상 동작 PC 에는 영향 없음(차트를 한 번 더 그릴 뿐).
+    if (!window.__wnnDashRedrawBound) {
+        window.__wnnDashRedrawBound = true;
+        var __wnnFireResize = function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} };
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) __wnnFireResize(); });
+        window.addEventListener('focus',  __wnnFireResize);
+        window.addEventListener('pageshow', __wnnFireResize);
+        // 최초 로드 직후 레이아웃이 늦게 잡히는 환경 대비 — 지연 재계산 1회
+        setTimeout(__wnnFireResize, 600);
+    }    
     
 	/*
     $('#info-circle-card').circleProgress({

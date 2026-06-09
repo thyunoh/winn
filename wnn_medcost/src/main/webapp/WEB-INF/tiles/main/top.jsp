@@ -309,13 +309,15 @@
               sessionStorage.setItem('s_winconect', 'Y');
               // 쿠키 덮어쓰기 (1일 유지)
               setCookie("hospid", data.hospCd, 1);
-              setCookie("s_hospid", data.hospCd, 1);
-              setCookie("s_hospnm", data.hospNm, 1);
-              setCookie("s_conact_gb", data.conactGb, 1); // 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석 
-              setCookie("s_winconect", 'Y',1);
+              // [보안] 인증/식별 쿠키는 세션 쿠키로 — 브라우저 종료 시 자동 삭제되어
+              //        로그인하지 않은 채 직접 URL(예: /user/dashboard.do) 접근으로 화면이 뜨던 우회를 차단
+              setSessionCookie("s_hospid", data.hospCd);
+              setSessionCookie("s_hospnm", data.hospNm);
+              setSessionCookie("s_conact_gb", data.conactGb); // 메뉴설정체크 A. 전체 1.적정성 2. 진료비분석
+              setSessionCookie("s_winconect", 'Y');
 
-              setCookie("s_closeDt1", data.closeDt1, 1);
-              setCookie("s_closeDt2", data.closeDt2, 1);
+              setSessionCookie("s_closeDt1", data.closeDt1);
+              setSessionCookie("s_closeDt2", data.closeDt2);
               
               hospid = getCookie("hospid");   // 병원아이디
               if (hospnm != getCookie("s_hospnm")){
@@ -340,6 +342,10 @@
             var todayDate = new Date();
             todayDate.setDate(todayDate.getDate() + expiredays);
             document.cookie = name + "=" + escape(value) + "; path=/; expires=" + todayDate.toGMTString() + ";"
+        }
+        // [보안] 세션 쿠키(만료일 미설정) — 브라우저 종료 시 자동 삭제. 인증/식별 쿠키 전용.
+        function setSessionCookie(name, value) {
+            document.cookie = name + "=" + escape(value) + "; path=/;";
         }
       function openHospitalSearchtop(callback) {
           openCommonSearch("hospital", function (data) {
