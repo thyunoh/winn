@@ -759,7 +759,9 @@ $(document).ready(function() {
 	}	   
 	
 	//ajax 함수 정의
+	var dataLoadSeq = 0;
 	function dataLoad(data, callback, settings) {
+		var __mySeq = ++dataLoadSeq;   // [중복로드 방지] 매 로드마다 시퀀스 부여
 
 		//var table = $(settings.nTable).DataTable();
 	    //table.processing(true); // 처리 중 상태 시작
@@ -781,7 +783,10 @@ $(document).ready(function() {
 			},
 	        success: function(response) {
 	        	//table.processing(false); // 처리 중 상태 종료
-	            if (response && Object.keys(response).length > 0) {
+	            // [중복로드 방지] 이 응답보다 더 최신 로드가 시작됐으면 무시 (초기 자동로드 + reload 겹침으로 2번 들어가던 현상 방지)
+            if (__mySeq !== dataLoadSeq) { return; }
+
+            if (response && Object.keys(response).length > 0) {
 
 	            	callback(response);
 	            } else {
