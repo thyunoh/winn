@@ -79,10 +79,10 @@ public class MagamController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/magamFileUpload";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}	
     }
 	
@@ -95,10 +95,10 @@ public class MagamController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/total_Report";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	
@@ -111,10 +111,10 @@ public class MagamController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/assessment";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value="main/simulation.do")
@@ -126,10 +126,10 @@ public class MagamController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/simulation";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value="main/assesCheck.do")
@@ -141,10 +141,10 @@ public class MagamController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/assesCheck";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	

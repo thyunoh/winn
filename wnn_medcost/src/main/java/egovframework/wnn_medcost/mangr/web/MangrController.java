@@ -73,10 +73,10 @@ public class MangrController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/mangr/faqcd";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//자주하는 질문
@@ -195,10 +195,10 @@ public class MangrController {
 				model.addAttribute("noticeType", "1");
 				return ".main/mangr/noticd";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//심사방
@@ -212,10 +212,10 @@ public class MangrController {
 				model.addAttribute("noticeType", "2");
 				return ".main/mangr/noticd";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//소식지
@@ -229,10 +229,10 @@ public class MangrController {
 				model.addAttribute("noticeType", "3");
 				return ".main/mangr/noticd";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value="/notiCdList.do", method = RequestMethod.POST)
@@ -428,10 +428,10 @@ public class MangrController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/mangr/asqcd";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//질문리스트
@@ -531,10 +531,10 @@ public class MangrController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/mangr/report/filelist";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	/* 사이드바 일대일 질의응답 */
@@ -601,10 +601,10 @@ public class MangrController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/mangr/visitasq";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
 	}
 

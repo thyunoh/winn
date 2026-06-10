@@ -1,5 +1,19 @@
 # Project Memory
 
+## 장애/수정 이력
+
+### [완료] 대시보드 500 전 병원 장애 — s_hospid 세션쿠키화 회귀 + 빈 뷰 500 (2026-06-10)
+- **증상**: 전 병원에서 `dashboard.do` 가 HTTP 500(흰 화면). 콘솔 `Failed to load ... dashboard.do 500`, 서버로그 `Could not resolve view with name ''`. 개발자 PC만 정상(예전 쿠키 잔존).
+- **근본원인 1 (회귀)**: 어제 커밋 `893db73`(06-09 13:40)이 [top.jsp](src/main/webapp/WEB-INF/tiles/main/top.jsp) 에서 `s_hospid`(+s_hospnm/s_conact_gb/s_winconect/s_closeDt1/2) 를 `setCookie(...,1)`(1일 유지) → `setSessionCookie`(세션쿠키)로 변경. **브라우저 종료 시 쿠키 삭제** → 재접속 시 `s_hospid` 쿠키 없음.
+- **근본원인 2 (구조적 버그)**: 모든 화면 진입 컨트롤러가 `cookie_value.get("s_hospid").trim()` 호출 → 쿠키 null이면 **NPE → catch → `return ""`** → Spring 빈 뷰 못 찾음 → **500**. 로그인은 세션/ sessionStorage 에만 저장하고 `s_hospid` **쿠키는 top.jsp 병원선택 시에만** 생성되는 구조라, 세션쿠키화가 치명적.
+- **조치**:
+  1. [top.jsp](src/main/webapp/WEB-INF/tiles/main/top.jsp) L312~ : `setSessionCookie` → `setCookie(...,1)` **원복**(전 병원 즉시 복구)
+  2. [UserController.java](src/main/java/egovframework/wnn_medcost/user/web/UserController.java) `main1`(dashboard.do): null-safe(`String s_hospid; if(s_hospid!=null && !trim().isEmpty())`) + 쿠키 없으면 `return ".login/LoginWinCT"`(500 대신 로그인 화면)
+  3. **6개 컨트롤러 일괄**: User/Base/Tong/Mangr/Chung/Magam 의 모든 뷰 가드 `return ""`(else+catch, 총 102곳) → `return ".login/LoginWinCT"`. NPE가 나도 catch에서 로그인 화면 반환되어 500 영구 차단. (AJAX 엔드포인트는 `return ""` 미사용 — 영향 없음 확인)
+- **주의**: `s_hospid` 를 다시 세션쿠키로 바꾸지 말 것. 로그인 후 `s_hospid` 쿠키를 서버에서 직접 심거나 두 앱 공유 인증토큰을 도입하기 전에는 영구쿠키 유지가 안전. 직접 URL 우회 차단은 컨트롤러의 로그인뷰 반환으로 대체됨.
+- **배포**: 자바(.java) 변경 포함 → **WAR 재빌드 후 톰캣 재배포 필수.**
+- **후속 (jsessionid 404 / 크롬 무스타일)**: 세션쿠키(JSESSIONID) 미전송 브라우저(예: 미로그인/쿠키차단 크롬)에서 서버가 전 URL에 `;jsessionid=` 를 붙여(URL 리라이트) 정적 CSS/JS 가 `…css;jsessionid=…` → **404 → 화면 무스타일**. [web.xml](src/main/webapp/WEB-INF/web.xml) 에 `<session-config><tracking-mode>COOKIE</tracking-mode></session-config>` 추가로 URL 리라이트 차단(쿠키 전용 추적). 엣지는 세션쿠키 있어 정상, 크롬은 미로그인/쿠키차단 시 발생. 이 설정으로 쿠키 없어도 정적파일은 정상 로드되어 최소한 스타일은 깨지지 않음. **web.xml 변경도 재배포/재기동 필요.**
+
 ## 적정성평가 (assessment.jsp) 요구사항
 
 ### [대기] 유치도뇨관 전월 대상자 당월 추적 기능

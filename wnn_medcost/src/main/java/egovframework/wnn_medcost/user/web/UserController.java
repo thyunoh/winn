@@ -85,10 +85,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/dashboard";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
 	}
 	
@@ -102,10 +102,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/dashboard";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
 	}
 
@@ -119,10 +119,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/dashboard";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
 	}
 	
@@ -130,19 +130,23 @@ public class UserController extends BaseController {
 	@RequestMapping(value="/dashboard.do")
     public String main1(HttpServletRequest request, ModelMap model) throws Exception {
 		
-		cookie_value = ClientInfo.getCookie(request);		
+		cookie_value = ClientInfo.getCookie(request);
 		try {
-			if (cookie_value.get("s_hospid").trim() != null &&
-				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/dashboard";				
+			// [수정 2026-06-10] s_hospid 쿠키가 없으면 get()이 null → 기존 .trim() 호출에서
+			//   NullPointerException → catch 에서 return "" → Spring "Could not resolve view ''"
+			//   500(흰 화면) 발생. null-safe 로 점검하고, 식별값이 없으면 500 대신 로그인 화면을
+			//   반환한다(로그인 안 한 직접 URL 접근 차단 겸용).
+			String s_hospid = cookie_value.get("s_hospid");
+			if (s_hospid != null && !s_hospid.trim().isEmpty()) {
+				return ".main/dashboard";
 			} else {
-				return "";
-			}	
+				return ".login/LoginWinCT";
+			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
-		
-		
+
+
     }
 	
 
@@ -155,10 +159,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/main3";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	
@@ -302,10 +306,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/mangr/hospcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/hospCdList.do", method = RequestMethod.POST)
@@ -718,10 +722,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/dietcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	 	
 	@RequestMapping(value="/dietCdList.do", method = RequestMethod.POST)
@@ -842,10 +846,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/usercd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/puserCdList.do", method = RequestMethod.POST)
@@ -1041,10 +1045,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/license";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//면허등록관리 
@@ -1169,10 +1173,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/wardcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }		
 	@RequestMapping(value="/wardCdList.do", method = RequestMethod.POST)
@@ -1289,10 +1293,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/userauthcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/userauthCdList.do", method = RequestMethod.POST)
@@ -1431,10 +1435,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/mbrcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/membrList.do", method = RequestMethod.POST)
@@ -1480,10 +1484,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/wnnauthcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	//의사.간호사 엑셀업로드   
@@ -1496,10 +1500,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/licexcel";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }		
 	//엑셀자료 미리보기
@@ -1824,10 +1828,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/licnumber";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//인력신고현황 관리 
@@ -1978,10 +1982,10 @@ public class UserController extends BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/user/hospgrdcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value="/hospgrdList.do", method = RequestMethod.POST)

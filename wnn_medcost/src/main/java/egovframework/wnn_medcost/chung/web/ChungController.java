@@ -47,10 +47,10 @@ public class ChungController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/chung/chgsimsa";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	//청구서조회 

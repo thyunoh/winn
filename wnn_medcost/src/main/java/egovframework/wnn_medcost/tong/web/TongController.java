@@ -48,10 +48,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_00";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value= "/t_tong00List.do", method = RequestMethod.POST)
@@ -75,10 +75,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_01";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value= "/t_tong01List.do", method = RequestMethod.POST)
@@ -103,10 +103,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_02";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong02List.do", method = RequestMethod.POST)
@@ -131,10 +131,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_03";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong03List.do", method = RequestMethod.POST)
@@ -159,10 +159,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_04";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong04List.do", method = RequestMethod.POST)
@@ -187,10 +187,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_05";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong05List.do", method = RequestMethod.POST)
@@ -215,10 +215,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_06";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong06List.do", method = RequestMethod.POST)
@@ -243,10 +243,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_07";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong07List.do", method = RequestMethod.POST)
@@ -272,10 +272,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_08";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	
@@ -302,10 +302,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_081";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong081List.do", method = RequestMethod.POST)
@@ -333,10 +333,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_09";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong09List.do", method = RequestMethod.POST)
@@ -361,10 +361,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_082";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong082List.do", method = RequestMethod.POST)
@@ -390,10 +390,10 @@ public class TongController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/tong/f_tong_083";				
 			} else {  	
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value= "/t_tong083List.do", method = RequestMethod.POST)

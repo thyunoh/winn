@@ -67,10 +67,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/sugacd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	 	
 	@RequestMapping(value="/sugaCdList.do", method = RequestMethod.POST)
@@ -364,10 +364,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/disecd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/diseCdList.do", method = RequestMethod.POST)
@@ -629,10 +629,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/commcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/commMstList.do", method = RequestMethod.POST)
@@ -858,10 +858,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/wvalcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value="/selwvalcdList.do", method = RequestMethod.POST)
@@ -1081,10 +1081,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/samvercd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }		
 	@RequestMapping(value="/samverCdlist.do", method = RequestMethod.POST)
@@ -1206,10 +1206,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/samvercdV1";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	//SAMVER DISTINCT 목록 조회
@@ -1302,10 +1302,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/yakgacd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }	
 	@RequestMapping(value="/yakgaCdList.do", method = RequestMethod.POST)
@@ -1373,10 +1373,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/jaeryocd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	@RequestMapping(value="/jaeryoCdList.do", method = RequestMethod.POST)
@@ -1422,10 +1422,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/claimcd";				
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}	
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
     }
 	
@@ -1525,10 +1525,10 @@ public class BaseController {
 				cookie_value.get("s_hospid").trim() != "" ) {
 				return ".main/base/specsuga";
 			} else {
-				return "";
+				return ".login/LoginWinCT";
 			}
 		} catch(Exception ex) {
-			return "";
+			return ".login/LoginWinCT";
 		}
 	}
 
