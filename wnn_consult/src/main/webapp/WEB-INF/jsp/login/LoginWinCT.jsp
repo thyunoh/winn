@@ -3587,11 +3587,15 @@
     		
         	hosp_conact() ;
         	
-        //  const url = "http://localhost:8080/user/";    
+        //  const url = "http://localhost:8080/user/";
         //  const url = "https://winner797.co.kr/user/dashboard.do";
+            // [수정] 대시보드를 non-www 로 하드코딩하면, www 로 로그인한 경우 쿠키(host-only)가
+            //   non-www 창으로 전송되지 않아 s_hospid 누락 → 로그인화면(깨짐)이 떴음.
+            //   현재 접속한 호스트(origin) 기준으로 열어 www·non-www 둘 다 쿠키가 일치하게 함.
             const url = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                     ? "http://localhost:8080/user/dashboard.do"
-                    : "https://winner797.co.kr/user/dashboard.do";
+                    : window.location.origin + "/user/dashboard.do";
+                 //   : "https://winner797.co.kr/user/dashboard.do"; 서버일때 두개가 다충족되게
         	
             win_Check = window.open(url);            
             
