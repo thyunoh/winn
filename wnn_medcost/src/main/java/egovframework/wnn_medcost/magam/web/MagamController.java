@@ -5,45 +5,21 @@ package egovframework.wnn_medcost.magam.web;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-
 import javax.annotation.Resource;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
-import javax.servlet.http.Part;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import egovframework.wnn_medcost.magam.model.IpwonDTO;
 import egovframework.wnn_medcost.magam.model.SpcsugaDTO;
 import egovframework.wnn_medcost.magam.model.FilesDTO;
@@ -51,12 +27,7 @@ import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.magam.model.IndiDTO;
 import egovframework.wnn_medcost.magam.model.PatvalDTO;
 import egovframework.wnn_medcost.magam.service.MagamService;
-import egovframework.wnn_medcost.total.model.TotalDTO;
-import egovframework.wnn_medcost.base.model.SugaCdDTO;
-import egovframework.wnn_medcost.util.ResponseObject;
 import egovframework.util.ClientInfo;
-import egovframework.util.EgovFileScrty;
-
 import javax.servlet.annotation.MultipartConfig;
 
 
