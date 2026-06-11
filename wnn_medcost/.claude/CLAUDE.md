@@ -12,6 +12,7 @@
   3. **6개 컨트롤러 일괄**: User/Base/Tong/Mangr/Chung/Magam 의 모든 뷰 가드 `return ""`(else+catch, 총 102곳) → `return ".login/LoginWinCT"`. NPE가 나도 catch에서 로그인 화면 반환되어 500 영구 차단. (AJAX 엔드포인트는 `return ""` 미사용 — 영향 없음 확인)
 - **주의**: `s_hospid` 를 다시 세션쿠키로 바꾸지 말 것. 로그인 후 `s_hospid` 쿠키를 서버에서 직접 심거나 두 앱 공유 인증토큰을 도입하기 전에는 영구쿠키 유지가 안전. 직접 URL 우회 차단은 컨트롤러의 로그인뷰 반환으로 대체됨.
 - **배포**: 자바(.java) 변경 포함 → **WAR 재빌드 후 톰캣 재배포 필수.**
+- **[확정 2026-06-10] 직접 URL 접근 차단(로그인 강제) — 안 함**: `…/user/dashboard.do` 를 즐겨찾기로 직접 쓰는 기관/사용자가 실제로 있어, 로그인 강제 시 그들이 매번 로그인해야 함. 사용자 결정으로 **현재(영구 1일 쿠키 + 직접 .do 접근 허용) 유지**. 보안은 쿠키 1일 만료 + 로그아웃 삭제로 최소 확보. **"직접접근 막자/로그인 거쳐야만" 재요청 시 이 방침과 [s_hospid 세션쿠키 금지] 먼저 확인.** 정 강화하려면 s_hospid는 영구 유지한 채 별도 세션쿠키 게이트로만(절대 s_hospid를 세션쿠키화 금지), 로컬 테스트 후 적용.
 - **후속 (jsessionid 404 / 크롬 무스타일)**: 세션쿠키(JSESSIONID) 미전송 브라우저(예: 미로그인/쿠키차단 크롬)에서 서버가 전 URL에 `;jsessionid=` 를 붙여(URL 리라이트) 정적 CSS/JS 가 `…css;jsessionid=…` → **404 → 화면 무스타일**. [web.xml](src/main/webapp/WEB-INF/web.xml) 에 `<session-config><tracking-mode>COOKIE</tracking-mode></session-config>` 추가로 URL 리라이트 차단(쿠키 전용 추적). 엣지는 세션쿠키 있어 정상, 크롬은 미로그인/쿠키차단 시 발생. 이 설정으로 쿠키 없어도 정적파일은 정상 로드되어 최소한 스타일은 깨지지 않음. **web.xml 변경도 재배포/재기동 필요.**
 
 ## 적정성평가 (assessment.jsp) 요구사항
