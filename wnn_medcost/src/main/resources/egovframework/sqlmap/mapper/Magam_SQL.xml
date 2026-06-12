@@ -1528,7 +1528,28 @@
 		     , pm.ADMIT_DT                                        AS admitDt
 		     , pm.MED_START                                       AS medStart
 		     , pm.DOC_DT                                          AS docDt
-		     , sb.DIAG_CODE                                       AS mainDiagCd
+		       /* 향정신성 매칭(sb)이 있으면 그 상병, 없으면(상병 NULL) 주상병(DIAG_TYPE='1')으로 채움 */
+		     , COALESCE(sb.DIAG_CODE,
+		               (SELECT dm2.DIAG_CODE
+		                  FROM TBL_MYOUNG_MST  mm2
+		                  JOIN TBL_CHUNG_MST   cm2 ON cm2.HOSP_CD  = mm2.HOSP_CD
+		                                          AND cm2.CLAIM_NO = mm2.CLAIM_NO
+		                  JOIN TBL_DISEASE_MST dm2 ON dm2.HOSP_CD  = mm2.HOSP_CD
+		                                          AND dm2.CLAIM_NO = mm2.CLAIM_NO
+		                                          AND dm2.BILL_SEQ = mm2.BILL_SEQ
+		                 WHERE mm2.HOSP_CD = pm.HOSP_CD
+		                   AND mm2.PAT_ID  = pm.PAT_ID
+		                   AND cm2.DATE_YM = #{jobYymm}
+		                   AND IFNULL(dm2.DIAG_TYPE, '0') = '1'
+		                   AND COALESCE(mm2.DELYN,'') = ''
+		                   AND NOT EXISTS (SELECT 1
+		                                     FROM TBL_SPECODE_MST tsm2
+		                                    WHERE tsm2.HOSP_CD   = mm2.HOSP_CD
+		                                      AND tsm2.CLAIM_NO  = mm2.CLAIM_NO
+		                                      AND tsm2.BILL_SEQ  = mm2.BILL_SEQ
+		                                      AND tsm2.SPEC_TYPE = 'JS008')
+		                 ORDER BY dm2.DIAG_CODE
+		                 LIMIT 1))                            AS mainDiagCd
 		     , CASE WHEN sb.EDI_CODE IS NULL THEN '' ELSE '●' END AS psyOrderYn
 		  FROM (SELECT a.HOSP_CD
 		             , a.PAT_ID
@@ -1660,50 +1681,7 @@
 		 ORDER BY COUNT(DISTINCT mm.PAT_ID) DESC, dm.DIAG_CODE ASC
 	</select>
 
-<!-- 	<select id="select_CategoryList07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
-		SELECT DISTINCT
-		       LEFT(pm.PAT_ID,6)                                  AS patId
-		     , CASE WHEN CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(pm.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) - 1), '*')
-					ELSE '' END AS patNm
-					       
-		     , pm.ADMIT_DT                                        AS admitDt
-		     , pm.MED_START                                       AS medStart  
-		     , pm.DOC_DT                                          AS docDt   
-		     , sb.DIAG_CODE                                       AS mainDiagCd  
-		     , CASE WHEN sb.EDI_CODE IS NULL THEN '' ELSE '●' END AS psyOrderYn
-		  FROM (SELECT a.HOSP_CD
-		             , a.PAT_ID
-		             , a.PAT_NM
-		             , a.ADMIT_DT
-		             , a.MED_START
-		             , a.DOC_DT
-		          FROM TBL_PATVAL_MST a
-		         FORCE INDEX (INDEX01) 
-		         WHERE a.HOSP_CD = #{hospCd}
-				   AND a.MED_START LIKE CONCAT(#{jobYymm},'%')
-				   AND IFNULL(a.EVAL_TYPE,'') = '2'
-		       ) pm
-		  LEFT JOIN (SELECT DISTINCT mm.HOSP_CD, mm.PAT_ID, dm.DIAG_CODE, jm.EDI_CODE
-			           FROM TBL_CHUNG_MST   cm
-		 	           JOIN TBL_MYOUNG_MST  mm ON cm.HOSP_CD  = mm.HOSP_CD  AND cm.CLAIM_NO = mm.CLAIM_NO	          
-		 	           JOIN TBL_DISEASE_MST dm ON mm.HOSP_CD  = dm.HOSP_CD  AND mm.CLAIM_NO = dm.CLAIM_NO AND mm.BILL_SEQ = dm.BILL_SEQ
-			           JOIN TBL_JINORD_MST  jm ON mm.HOSP_CD  = jm.HOSP_CD  AND mm.CLAIM_NO = jm.CLAIM_NO AND mm.BILL_SEQ = jm.BILL_SEQ
-			           JOIN TBL_DRUG_MST    td ON jm.EDI_CODE = td.EDI_CODE
-			          WHERE cm.HOSP_CD = #{hospCd}
-			            AND cm.DATE_YM = #{jobYymm}
-			            AND IFNULL(dm.DIAG_TYPE, '0') = '1'
-			            AND td.CODEFLAG = 'A'
-			            AND COALESCE(mm.DELYN,'') = ''
-			            AND NOT EXISTS (SELECT 1
-			                              FROM TBL_SPECODE_MST tsm
-			                             WHERE tsm.HOSP_CD   = mm.HOSP_CD
-			                               AND tsm.CLAIM_NO  = mm.CLAIM_NO
-			                               AND tsm.BILL_SEQ  = mm.BILL_SEQ
-			                               AND tsm.SPEC_TYPE = 'JS008')
-			        ) sb
-			       ON sb.HOSP_CD = pm.HOSP_CD AND sb.PAT_ID = pm.PAT_ID
-	</select> -->
+
 	
 	<select id="select_CategoryList09" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 		WITH current_month AS (
