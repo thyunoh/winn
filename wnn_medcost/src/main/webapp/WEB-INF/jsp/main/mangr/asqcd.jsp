@@ -303,8 +303,8 @@
 		                            질문내용
 		                        </div>
 		                        <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 14px;">
-		                            <textarea id="qstnConts2" name="qstnConts" class="form-control" rows="4" readonly
-		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: normal; resize: vertical; color: #000; background-color: #f9f9f9;"></textarea>
+		                            <textarea id="qstnConts2" name="qstnConts" class="form-control" rows="2" readonly
+		                                style="border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: normal; resize: vertical; color: #000; background-color: #f9f9f9; height: 75px; min-height: 75px;"></textarea>
 		                        </div>
 		                    </div>
 
