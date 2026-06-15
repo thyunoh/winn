@@ -1472,11 +1472,11 @@
 		         AND (
 		              /* ① 일정하게 짜여진 배뇨계획 + 배뇨일지 3일이상 */
 		              ( pat.UR_PLAN        = '1'
-		                AND pat.DIARY_CREATED = '1'
+		          /*    AND pat.DIARY_CREATED = '1'         */
 		                AND CAST(NULLIF(pat.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 )
 		              /* ② 방광훈련프로그램 + 배뇨일지 3일이상 */
 		           OR ( pat.BLAD_TRAIN     = '1'
-		                AND pat.DIARY_CREATED = '1'
+		         /*     AND pat.DIARY_CREATED = '1'         */
 		                AND CAST(NULLIF(pat.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 )
 		              /* ③ 규칙적 도뇨 (배뇨일지 요건 없음) */
 		           OR ( pat.REG_CATH       = '1' )
