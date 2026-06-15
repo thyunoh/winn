@@ -746,7 +746,7 @@
 							<div class="input-group">
 								<input id="hospCd" name="hospCd" type="text" class="form-control"
 									placeholder="병원코드를 입력하고 enter key를 치세요 ">
-								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" onclick="fnDupchk()">
+								<button class="btn btn-outline-dark rounded px-2 py-1" type="button" onclick="hospcont_search()">
 									<i class="fas fa-search"></i> 기관체크
 								</button>
 							</div>
@@ -1395,14 +1395,6 @@
 	        		messageBox("1","<h6>등록된 계약 정보가 확인되지 않습니다.</h6><p>병원코드를 다시 확인해 주세요.</p>","hospCd","","");
 	        		return;
 	        	}
-	        	if($("#mbrNm").val() == ""){
-	        		messageBox("1","<h6>담당자명을 확인하세요.!!</h6><p></p>","mbrNm","","");
-	        		return;
-	        	}
-	        	if($("#mbrTel").val() == ""){
-	        		messageBox("1","<h6>담당전화를 확인하세요.!!</h6><p></p>","mbrTel","","");
-	        		return;
-	        	}
 	        	if($("#email").val() == ""){
 	        		messageBox("1","<h6>'이메일를 확인하세요.!!</h6><p></p>","email","","");
 	        		return;
@@ -1428,6 +1420,14 @@
 	            }
 	            if (passWd !== afPassWd) {
 	                messageBox("1", "<h6>비밀번호가 상호 상이합니다.!</h6><p></p>", "afPassWd", "", "");
+	                return;
+	            }
+	            if($("#mbrNm").val() == ""){
+	                messageBox("1","<h6>담당자명을 확인하세요.!!</h6><p></p>","mbrNm","","");
+	                return;
+	            }
+	            if($("#mbrTel").val() == ""){
+	                messageBox("1","<h6>담당전화를 확인하세요.!!</h6><p></p>","mbrTel","","");
 	                return;
 	            }
 
@@ -3862,6 +3862,7 @@
 	                          if (_noContEl) {
 	                              _noContEl.style.color = 'red';
 	                              _noContEl.textContent = '등록된 계약 정보가 확인되지 않습니다.';
+                              messageBox("1","<h6>계약정보를 확인하세요.!!</h6><p></p>","hospCd","","");
 	                          }
 	                      } else {
 	                          const _contEl = document.getElementById('cont_name');
