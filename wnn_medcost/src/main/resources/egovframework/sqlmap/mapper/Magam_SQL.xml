@@ -1537,6 +1537,9 @@
 		                  JOIN TBL_DISEASE_MST dm2 ON dm2.HOSP_CD  = mm2.HOSP_CD
 		                                          AND dm2.CLAIM_NO = mm2.CLAIM_NO
 		                                          AND dm2.BILL_SEQ = mm2.BILL_SEQ
+     		              JOIN TBL_JINORD_MST  jm  ON jm.HOSP_CD  = mm2.HOSP_CD
+                                                  AND jm.CLAIM_NO = mm2.CLAIM_NO
+                                                  AND jm.BILL_SEQ = mm2.BILL_SEQ                        
 		                 WHERE mm2.HOSP_CD = pm.HOSP_CD
 		                   AND mm2.PAT_ID  = pm.PAT_ID
 		                   AND cm2.DATE_YM = #{jobYymm}
@@ -1547,6 +1550,7 @@
 		                                    WHERE tsm2.HOSP_CD   = mm2.HOSP_CD
 		                                      AND tsm2.CLAIM_NO  = mm2.CLAIM_NO
 		                                      AND tsm2.BILL_SEQ  = mm2.BILL_SEQ
+		                                      AND tsm2.ROW_NO    = jm.ROW_NO
 		                                      AND tsm2.SPEC_TYPE = 'JS008')
 		                 ORDER BY dm2.DIAG_CODE
 		                 LIMIT 1))                            AS mainDiagCd
@@ -1560,7 +1564,7 @@
 		          FROM TBL_PATVAL_MST a FORCE INDEX (INDEX01)
 		         WHERE a.HOSP_CD = #{hospCd}
 				   AND a.MED_START LIKE CONCAT(#{jobYymm},'%')
-				   AND IFNULL(a.EVAL_TYPE,'') = '2'
+			/*	   AND IFNULL(a.EVAL_TYPE,'') = '2' */
 		       ) pm
 		  LEFT JOIN (SELECT STRAIGHT_JOIN DISTINCT
 		                    mm.HOSP_CD
@@ -1583,7 +1587,7 @@
 		                                       AND td.CODEFLAG = 'A'
 		              WHERE pat.HOSP_CD = #{hospCd}
 		                AND pat.MED_START LIKE CONCAT(#{jobYymm},'%')
-		                AND IFNULL(pat.EVAL_TYPE,'') = '2'
+		        /*        AND IFNULL(pat.EVAL_TYPE,'') = '2' */
 		                AND cm.DATE_YM  = #{jobYymm}
 		                AND IFNULL(dm.DIAG_TYPE, '0') = '1'
 		                AND COALESCE(mm.DELYN,'') = ''
@@ -1592,6 +1596,7 @@
 		                                 WHERE tsm.HOSP_CD   = mm.HOSP_CD
 		                                   AND tsm.CLAIM_NO  = mm.CLAIM_NO
 		                                   AND tsm.BILL_SEQ  = mm.BILL_SEQ
+		                                   AND tsm.ROW_NO    = jm.ROW_NO
 		                                   AND tsm.SPEC_TYPE = 'JS008')
 		            ) sb
 		    ON sb.HOSP_CD = pm.HOSP_CD
