@@ -119,6 +119,8 @@
 						</a>
                          <div id="top-menu_c"> </div>
                          <div id="top-menu_d"> </div>
+                         <!-- 2024년 표준화구간 안내 토글 (적정성평가 화면에서만 노출/연결: assessment.jsp) -->
+                         <button type="button" id="btnStdRange" class="btn btn-light btn-sm top-btn-sub border" style="display:none; padding-left:10px; padding-right:10px; color:#000 !important;">2024년 표준화구간</button>
                         </div>
                     </li>
                     <!--  
@@ -145,9 +147,9 @@
                </li>
                 </ul>    
                 <ul class="navbar-nav ml-auto">
-                   <li class="nav-item"  style="font-size: 16px;">
-                        <a id="logininfo" class="dropdown-item" href="#"></a>
-                    </li>                    
+                   <li class="nav-item"  style="font-size: 14px;">
+                        <a id="logininfo" class="dropdown-item" href="#" style="white-space: nowrap;"></a>
+                    </li>
                 </ul>
             </div>
         </nav>

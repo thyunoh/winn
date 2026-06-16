@@ -74,7 +74,12 @@ function Content_Area(flag) {
 			                    </div>
 			                </div>
 			            </div>
-			            <br>
+			            <div class="col-xl-12 col-lg-12">
+				                <div class="card-body d-flex justify-content-center align-items-center p-2">
+				                    <label id="stdNoteVal" class="dsah_lab8" style="color: red; font-size: 18px; text-align: center; width: 100%;">각 지표별 표준화 구간은 2024년도 발표 기준이 적용되었으며, 추후 심평원 표준화 구간 재설정 또는 기준 변경에 따라 점수 변동이 발생할 수 있습니다.</label>
+				                </div>
+				            </div>
+				            <br>
 			            <div class="col-xl-1 col-lg-1">
 			            </div>
 	                    <div class="col-xl-3 col-lg-3">                        
@@ -157,10 +162,6 @@ function Content_Area(flag) {
 						            <canvas id="mixedChart11" style="width: 100%; height: 350px; padding: 20px 20px; "></canvas>						            
 						        </div>   
 						    </div>
-						    <div class="card-body border-top d-flex justify-content-center align-items-center p-2">
-			                    <label id="mediVal" class="dsah_lab8" style="color: red;">각 지표별 표준화 구간은 2024년도 발표 기준이 적용되었으며, 추후 심평원 표준화 구간 재설정 또는 기준 변경에 따라 점수 변동이 발생할 수 있습니다.</label>
-			                </div>
-			                
 		                </div>
 		                
 	 		        </div>        			

@@ -84,7 +84,11 @@
 							</div>
 						</div>	
 	                    <div class="col-lg-7">
-		                    <div class="card" id="card_container" style="display: none;">
+		                    <div id="stdRangeNotice" style="display:none; border:2px solid #e74c3c; border-radius:8px; background:#fff; color:#000; font-size:1em; font-weight:bold; line-height:1.6; padding:12px 16px; margin-bottom:12px;">
+								        본 표준화 점수 구간은 2024년 평가 결과 기준입니다. 안정적인 상위등급 달성 및 유지를 위해,<br>
+								        목표값은 제시된 구간보다 10~20% 이상 여유 있게 설정하여 관리하시기 바랍니다.
+								    </div>
+								    <div class="card" id="card_container" style="display: none;">
 
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
 
@@ -5115,6 +5119,23 @@ function _pvTab5(d) {
 	
 $(document).ready(function() {
 	
+	// === 2024년 표준화구간 안내 토글 (top.jsp의 #btnStdRange 버튼을 이 화면에서만 노출/연결) ===
+	(function() {
+	    var btn = document.getElementById('btnStdRange'); // top.jsp 메뉴바에 정의됨(기본 숨김)
+	    if (!btn) return;
+	    btn.style.display = 'inline-flex'; // 적정성평가 화면에서만 노출
+	    if (!btn._stdBound) {
+	        btn._stdBound = true;
+	        btn.addEventListener('click', function() {
+	            var box = document.getElementById('stdRangeNotice');
+	            if (!box) return;
+	            var show = (box.style.display === 'none' || box.style.display === '');
+	            box.style.display = show ? 'block' : 'none';
+	            btn.classList.toggle('active', show);
+	        });
+	    }
+	})();
+
 	//현재 연도를 기준으로 첫 번째 옵션과 나머지 9개의 연도를 동적으로 생성
 	function populateYearSelect() {
 	    const year_Select = document.getElementById('year_Select');

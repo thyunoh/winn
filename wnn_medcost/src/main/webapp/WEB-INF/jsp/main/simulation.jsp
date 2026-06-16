@@ -52,8 +52,15 @@
 					        
 					        <div class="card">
 					            <div class="card-body">
+					                <!-- 구간별 현황 박스 (상단 표시: 빨강·축소) -->
+					                <div id="scoreBoxAreaTop" class="score-box-area" style="display:none; margin-top:0; margin-bottom:12px; color:#e74c3c; font-size:90%;">
+					                    <div class="score-box-header" style="color:#e74c3c; font-size:12px; border-bottom-color:#e74c3c;">
+					                        <span id="scoreBoxTitleTop"></span>
+					                    </div>
+					                    <div id="scoreBoxContentTop" class="score-box-content"></div>
+					                </div>
 					                <table id="indicatorTable" class="display nowrap stripe hover cell-border order-column responsive"></table>
-					                <!-- 구간별 대상자 수 박스 (하단 표시) -->
+					                <!-- 구간별 대상자 수 박스 (하단 표시: 원래) -->
 					                <div id="scoreBoxArea" class="score-box-area" style="display:none;">
 					                    <div class="score-box-header">
 					                        <span id="scoreBoxTitle"></span>
@@ -152,7 +159,8 @@ function showScorePopup(td, rowData) {
 		var curRate = noData ? 0 : (ntortot / dtortot) * 100;
 		var curVal  = isAbsUnit ? (parseFloat(rowData.cal_avg) || 0) : curRate;
 
-		var html = '<div style="display:flex; flex-direction:row; gap:8px;">';
+		var html    = '<div style="display:flex; flex-direction:row; gap:8px;">';
+		var htmlTop = '<div style="display:flex; flex-direction:row; gap:6px;">';
 
 		for (var i = 0; i < zones.length; i++) {
 			var z = zones[i];
@@ -194,17 +202,39 @@ function showScorePopup(td, rowData) {
 			var borderStyle = isCurrent ? 'border:2px solid #1565C0; background:#e3f2fd;' : 'border:1px solid #dee2e6; background:#fff;';
 			var scoreColor  = isCurrent ? 'color:#1565C0;' : 'color:#333;';
 
+			// 하단(원래 스타일)
 			html += '<div style="flex:1; border-radius:6px; padding:10px 8px; text-align:center; ' + borderStyle + '">' +
 				'<div style="font-size:14px; font-weight:bold; margin-bottom:4px; ' + scoreColor + '">' + z.score + '점</div>' +
 				'<div style="font-size:12px; color:#666; margin-bottom:4px;">' + rangeText + '</div>' +
 				'<div style="font-size:13px; min-height:18px;">' + needText + '</div>' +
 				'</div>';
+			// 상단(빨강·축소) — 내부 색상 모두 빨강 강제
+			var needTextTop = needText.replace(/color:#[0-9a-fA-F]{3,6}/g, 'color:#e74c3c');
+			htmlTop += '<div style="flex:1; border-radius:6px; padding:3px 6px; text-align:center; line-height:1.2; ' + borderStyle + '">' +
+				'<div style="font-size:12px; font-weight:bold; margin-bottom:0; color:#e74c3c;">' + z.score + '점</div>' +
+				'<div style="font-size:11px; color:#e74c3c; margin-bottom:0;">' + rangeText + '</div>' +
+				'<div style="font-size:11px; min-height:14px; color:#e74c3c;">' + needTextTop + '</div>' +
+				'</div>';
 		}
-		html += '</div>';
+		html    += '</div>';
+		htmlTop += '</div>';
 
-		document.getElementById('scoreBoxTitle').textContent = rowData.cate_nm + ' 구간별 현황 (분모: ' + dtortot + '명 / 분자: ' + ntortot + '명)';
+		var boxTitle = rowData.cate_nm + ' 구간별 현황 (분모: ' + dtortot + '명 / 분자: ' + ntortot + '명)';
+
+		// 하단(원래)
+		document.getElementById('scoreBoxTitle').textContent = boxTitle;
 		document.getElementById('scoreBoxContent').innerHTML = html;
 		document.getElementById('scoreBoxArea').style.display = 'block';
+
+		// 상단(빨강·축소)
+		var _topTitle   = document.getElementById('scoreBoxTitleTop');
+		var _topContent = document.getElementById('scoreBoxContentTop');
+		var _topArea    = document.getElementById('scoreBoxAreaTop');
+		if (_topArea) {
+			if (_topTitle)   _topTitle.textContent = boxTitle;
+			if (_topContent) _topContent.innerHTML = htmlTop;
+			_topArea.style.display = 'block';
+		}
 	});
 }
 
