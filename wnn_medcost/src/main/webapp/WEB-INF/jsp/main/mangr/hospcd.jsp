@@ -2229,41 +2229,41 @@
 		            columns: [
 		            	{ title: "요양기관",    data: "hospCd_one" ,    visible: false  , name: 'keyhospCd' , primaryKey: true },
 		            	{ title: "계약",       data: "conactGb_one",   visible: false  , name: 'keyconactGb' , primaryKey: true },
-		            	{ title: "계약구분",    data: "subCodeNm_one",  className: "text-center" },  
-		            	{ title: "계약시작일",   data: "startDt_one",    className: "text-center" , name: 'keystartDt', primaryKey: true,  
+		            	{ title: "계약구분",    data: "subCodeNm_one",  className: "text-center", defaultContent: '' },
+		            	{ title: "계약시작일",   data: "startDt_one",    className: "text-center" , name: 'keystartDt', primaryKey: true,  defaultContent: '',
 			              render: function(data, type, row) {
 			            	 if (type === 'display') {
-			            	     return getFormat(data,'d1')
+			            	     return data ? getFormat(data,'d1') : '';
 			                 }
 			                 return data;
-			              }  
+			              }
 			            },
-		            	{ title: "계약종료일",  data: "endDt_one",      className: "text-center" , name: 'keyendDt', primaryKey: true , 
+		            	{ title: "계약종료일",  data: "endDt_one",      className: "text-center" , name: 'keyendDt', primaryKey: true , defaultContent: '',
 			                render: function(data, type, row) {
 					            	if (type === 'display') {
-					            		return getFormat(data,'d1')
+					            		return data ? getFormat(data,'d1') : '';
 					                }
 					                return data;
-			                }        
+			                }
 					      },
-		            	{ title: "승인일자",    data: "acceptDt_one",      className: "text-center",
+		            	{ title: "승인일자",    data: "acceptDt_one",      className: "text-center", defaultContent: '',
 			              render: function(data, type, row) {
 			            	 if (type === 'display') {
-			            	     return getFormat(data,'d1')
+			            	     return data ? getFormat(data,'d1') : '';
 			                 }
 			                 return data;
 			              }
 			            },
-		            	{ title: "중지일자",    data: "closeDt_one",       className: "text-center",
+		            	{ title: "중지일자",    data: "closeDt_one",       className: "text-center", defaultContent: '',
 			              render: function(data, type, row) {
 			            	 if (type === 'display') {
-			            	     return getFormat(data,'d1')
+			            	     return data ? getFormat(data,'d1') : '';
 			                 }
 			                 return data;
 			              }
 			            },
-		            	{ title: "OCS회사",   data: "ocsCompany_one",     className: "text-left" },
-		            	{ title: "요양기관기호", data: "hospCd_one",         className: "text-center"}
+		            	{ title: "OCS회사",   data: "ocsCompany_one",     className: "text-left", defaultContent: '' },
+		            	{ title: "요양기관기호", data: "hospCd_one",         className: "text-center", defaultContent: '' }
 		            ],
 		            ajax: hcontLoad,   
 				});                               
