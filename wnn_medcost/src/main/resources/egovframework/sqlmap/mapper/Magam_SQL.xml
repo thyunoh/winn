@@ -1580,11 +1580,18 @@
 		               JOIN TBL_DISEASE_MST dm  ON dm.HOSP_CD  = mm.HOSP_CD
 		                                       AND dm.CLAIM_NO = mm.CLAIM_NO
 		                                       AND dm.BILL_SEQ = mm.BILL_SEQ
-		               JOIN TBL_JINORD_MST  jm  ON jm.HOSP_CD  = mm.HOSP_CD
+		          /*   JOIN TBL_JINORD_MST  jm  ON jm.HOSP_CD  = mm.HOSP_CD
 		                                       AND jm.CLAIM_NO = mm.CLAIM_NO
 		                                       AND jm.BILL_SEQ = mm.BILL_SEQ
 		               JOIN TBL_DRUG_MST    td  ON td.EDI_CODE = jm.EDI_CODE
 		                                       AND td.CODEFLAG = 'A'
+		          */                             
+					   JOIN TBL_DRUG_MST    td  ON td.CODEFLAG = 'A'
+					   JOIN TBL_JINORD_MST  jm  ON jm.EDI_CODE = td.EDI_CODE
+						                        AND jm.HOSP_CD  = mm.HOSP_CD
+						                        AND jm.CLAIM_NO = mm.CLAIM_NO
+						                        AND jm.BILL_SEQ = mm.BILL_SEQ
+		                                       
 		              WHERE pat.HOSP_CD = #{hospCd}
 		                AND pat.MED_START LIKE CONCAT(#{jobYymm},'%')
 		        /*        AND IFNULL(pat.EVAL_TYPE,'') = '2' */
