@@ -84,9 +84,15 @@
 							</div>
 						</div>	
 	                    <div class="col-lg-7">
-		                    <div id="stdRangeNotice" style="display:none; border:2px solid #e74c3c; border-radius:8px; background:#fff; color:#000; font-size:1em; font-weight:bold; line-height:1.6; padding:12px 16px; margin-bottom:12px;">
-								        본 표준화 점수 구간은 2024년 평가 결과 기준입니다. 안정적인 상위등급 달성 및 유지를 위해,<br>
-								        목표값은 제시된 구간보다 10~20% 이상 여유 있게 설정하여 관리하시기 바랍니다.
+		                    <style>
+									    .std-toast-title { font-size: 18px !important; font-weight: 600 !important; margin-top: 6px !important; }
+									    .std-popup { padding: 10px 16px !important; }
+									    .std-popup .swal2-icon { margin: 8px auto 4px !important; }
+									    .std-popup .swal2-timer-progress-bar-container { height: 4px !important; }
+									</style>
+									    <div id="stdRangeNotice" style="border:2px solid #e74c3c; border-radius:8px; background:#fff; color:#000; font-size:13px; font-weight:bold; line-height:1.4; padding:8px 14px; margin-bottom:12px;">
+								        본 표준화 점수 구간은 2024년 평가 결과 기준입니다. 안정적인 상위등급 달성 및 유지를 위해, 목표값은 제시된 구간보다 10~20% 이상 여유 있게<br>
+								        설정하여 관리하시기 바랍니다.
 								    </div>
 								    <div class="card" id="card_container" style="display: none;">
 
@@ -5119,20 +5125,28 @@ function _pvTab5(d) {
 	
 $(document).ready(function() {
 	
-	// === 2024년 표준화구간 안내 토글 (top.jsp의 #btnStdRange 버튼을 이 화면에서만 노출/연결) ===
+	// === 2024년 표준화구간 안내: assessment 화면 진입 시 항상 고정 표시 (버튼 토글 아님) ===
 	(function() {
-	    var btn = document.getElementById('btnStdRange'); // top.jsp 메뉴바에 정의됨(기본 숨김)
-	    if (!btn) return;
-	    btn.style.display = 'inline-flex'; // 적정성평가 화면에서만 노출
-	    if (!btn._stdBound) {
-	        btn._stdBound = true;
-	        btn.addEventListener('click', function() {
-	            var box = document.getElementById('stdRangeNotice');
-	            if (!box) return;
-	            var show = (box.style.display === 'none' || box.style.display === '');
-	            box.style.display = show ? 'block' : 'none';
-	            btn.classList.toggle('active', show);
-	        });
+	    var box = document.getElementById('stdRangeNotice');
+	    if (box) box.style.display = 'block';            // 우측 내용은 버튼과 무관하게 항상 고정 노출
+	    var btn = document.getElementById('btnStdRange'); // top.jsp 메뉴바 버튼(상단 표시용)
+	    if (btn) {
+	        btn.style.display = 'inline-flex';
+	        if (!btn._stdBound) {
+	            btn._stdBound = true;
+	            btn.addEventListener('click', function() {
+	                Swal.fire({
+	                    position: 'center',
+	                    title: '자료 준비중입니다',
+	                    icon: 'info',
+	                    showConfirmButton: false,
+	                    timer: 1500,
+	                    timerProgressBar: true,
+	                    width: 340,
+	                    customClass: { popup: 'std-popup', title: 'std-toast-title' }
+	                });
+	            });
+	        }
 	    }
 	})();
 

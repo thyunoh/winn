@@ -11,6 +11,14 @@
 	Date nowTime = new Date();
 %>
 
+	<style>
+	/* 시뮬레이터 화면 Swal 메시지 축소 (선택된 행 확인 등 공통) */
+	.swal2-popup          { font-size: 13px !important; padding: 1em !important; }
+	.swal2-title          { font-size: 1.25em !important; padding: .3em 1em 0 !important; }
+	.swal2-html-container { font-size: 1em !important; margin: .5em 1em !important; }
+	.swal2-icon           { width: 2.2em !important; height: 2.2em !important; margin: .6em auto .3em !important; }
+	.swal2-actions        { margin: .7em auto 0 !important; }
+	</style>
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
