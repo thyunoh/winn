@@ -721,6 +721,60 @@ var jobFlag = null;
 var jobyymm = null;
 var jobCode = null;
 
+/* ============================================================
+   [성명 마스킹] 요양기관 설정 DOCCNT='1' → 성(姓)만 노출(예: 박**), 뒤는 전부 *
+   - 위너넷 접속(s_wnn_yn='Y' 또는 s_winconect='Y') → 기존대로(박덕*) 미변경
+   - 일반 병원(DOCCNT!='1') → 기존대로(박덕*) 미변경
+   - 서버에서 이미 박덕*로 마스킹된 값/풀네임 모두 동일하게 박**로 정규화됨
+   ============================================================ */
+var _NAME_MASK_DOCCNT = null;   // 현 병원 DOCCNT 설정값 (마스킹 정책 플래그)
+
+function _loadDocCnt() {
+    if (_NAME_MASK_DOCCNT !== null) return;     // 1회만 조회
+    try {
+        $.ajax({
+            url: "/user/phospList.do",
+            type: "POST",
+            dataType: "json",
+            async: false,                        // 그리드 렌더 전 확정 필요
+            data: { hospCd: (typeof hospid !== 'undefined' ? hospid : getCookie("hospid")) },
+            success: function(res) {
+                var lst = res && res.resultLst;
+                if (lst && lst.length > 0 && lst[0].doccnt != null) {
+                    _NAME_MASK_DOCCNT = String(lst[0].doccnt).trim();
+                } else {
+                    _NAME_MASK_DOCCNT = '';       // 값없음 → 재조회 방지
+                }
+            },
+            error: function() { _NAME_MASK_DOCCNT = ''; }
+        });
+    } catch (e) { _NAME_MASK_DOCCNT = ''; }
+}
+
+function fn_NameMask(name) {
+    if (name === null || name === undefined) return name;
+    var s = String(name);
+    if (s.length <= 1) return s;
+    var isWnn = false;
+    try {
+        isWnn = ((getCookie("s_wnn_yn")    || '').trim() === 'Y') ||
+                ((getCookie("s_winconect") || '').trim() === 'Y');
+    } catch (e) {}
+    if (isWnn) return s;                          // 위너넷: 기존대로
+    if (_NAME_MASK_DOCCNT !== '1') return s;       // 일반 병원: 기존대로
+    return s.charAt(0) + new Array(s.length).join('*');   // 성만 노출 (박**)
+}
+
+function fn_MaskPatNmRows(resp) {
+    if (!resp) return resp;
+    var arr = Array.isArray(resp) ? resp : (Array.isArray(resp.data) ? resp.data : null);
+    if (!arr) return resp;
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] && arr[i].patNm != null) arr[i].patNm = fn_NameMask(arr[i].patNm);
+    }
+    return resp;
+}
+
 var mixedChart1;
 var mixedChart2;
 var set_Table = null;
@@ -5080,6 +5134,7 @@ function dataLoad(data, callback, settings) {
         	//table.processing(false); // 처리 중 상태 종료
             if (response && Object.keys(response).length > 0) {
             	console.log(response);
+            	fn_MaskPatNmRows(response);   // 성명 마스킹(DOCCNT='1' 병원)
             	callback(response);
 
             	// 수가코드별 현황 서브 테이블 (jobFlag 09 재활, 14 특정진료비 공용)
@@ -5207,9 +5262,9 @@ function fn_SubTable09(subData) {
 <script type="text/javascript">	
 	
 $(document).ready(function() {
-	
-	
-	
+
+	_loadDocCnt();   // 성명 마스킹 정책(DOCCNT) — 그리드 렌더 전 확정
+
 	//현재 연도를 기준으로 첫 번째 옵션과 나머지 9개의 연도를 동적으로 생성
 	function populateYearSelect() {
 	    const year_Select = document.getElementById('year_Select');

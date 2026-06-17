@@ -549,6 +549,60 @@ var jobFlag = '00';
 var jobYyMm = '202501';
 var jobCode = null;
 var evalIndiData = []; // 지표 데이터 저장용
+
+/* ============================================================
+   [성명 마스킹] 요양기관 설정 DOCCNT='1' → 성(姓)만 노출(예: 박**), 뒤는 전부 *
+   - 위너넷 접속(s_wnn_yn='Y' 또는 s_winconect='Y') → 기존대로(박덕*) 미변경
+   - 일반 병원(DOCCNT!='1') → 기존대로(박덕*) 미변경
+   - 그리드/엑셀/환자평가표조회 모두 동일 적용. 서버 박덕* / 평가표 풀네임 모두 박**로 정규화
+   ============================================================ */
+var _NAME_MASK_DOCCNT = null;   // 현 병원 DOCCNT 설정값 (마스킹 정책 플래그)
+
+function _loadDocCnt() {
+    if (_NAME_MASK_DOCCNT !== null) return;     // 1회만 조회
+    try {
+        $.ajax({
+            url: "/user/phospList.do",
+            type: "POST",
+            dataType: "json",
+            async: false,                        // 그리드 렌더 전 확정 필요
+            data: { hospCd: (typeof hospid !== 'undefined' ? hospid : getCookie("hospid")) },
+            success: function(res) {
+                var lst = res && res.resultLst;
+                if (lst && lst.length > 0 && lst[0].doccnt != null) {
+                    _NAME_MASK_DOCCNT = String(lst[0].doccnt).trim();
+                } else {
+                    _NAME_MASK_DOCCNT = '';       // 값없음 → 재조회 방지
+                }
+            },
+            error: function() { _NAME_MASK_DOCCNT = ''; }
+        });
+    } catch (e) { _NAME_MASK_DOCCNT = ''; }
+}
+
+function fn_NameMask(name) {
+    if (name === null || name === undefined) return name;
+    var s = String(name);
+    if (s.length <= 1) return s;
+    var isWnn = false;
+    try {
+        isWnn = ((getCookie("s_wnn_yn")    || '').trim() === 'Y') ||
+                ((getCookie("s_winconect") || '').trim() === 'Y');
+    } catch (e) {}
+    if (isWnn) return s;                          // 위너넷: 기존대로
+    if (_NAME_MASK_DOCCNT !== '1') return s;       // 일반 병원: 기존대로
+    return s.charAt(0) + new Array(s.length).join('*');   // 성만 노출 (박**)
+}
+
+function fn_MaskPatNmRows(resp) {
+    if (!resp) return resp;
+    var arr = Array.isArray(resp) ? resp : (Array.isArray(resp.data) ? resp.data : null);
+    if (!arr) return resp;
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] && arr[i].patNm != null) arr[i].patNm = fn_NameMask(arr[i].patNm);
+    }
+    return resp;
+}
 var _curIndiDtor = 0;  // 현재 보기중인 지표의 분모(대상자수) — 우측 그리드 0건 안내 판정용
 
 // 05(유치도뇨관) 상단 버튼용 데이터 저장소
@@ -625,14 +679,14 @@ function fn_ShowCath05Modal() {
         if (!patId) return;
         if (!patMap[patId]) {
             patMap[patId] = {
-                patId: patId, patNm: patNm || '', admitDt: admitDt || '',
+                patId: patId, patNm: fn_NameMask(patNm) || '', admitDt: admitDt || '',
                 patClass: patClass || '', evalType: evalType || '', indwellCath: indwellCath || '',
                 docDt: docDt || '',
                 issues: []
             };
             order.push(patId);
         } else {
-            if (!patMap[patId].patNm       && patNm)       patMap[patId].patNm       = patNm;
+            if (!patMap[patId].patNm       && patNm)       patMap[patId].patNm       = fn_NameMask(patNm);
             if (!patMap[patId].admitDt     && admitDt)     patMap[patId].admitDt     = admitDt;
             if (!patMap[patId].patClass    && patClass)    patMap[patId].patClass    = patClass;
             if (!patMap[patId].evalType    && evalType)    patMap[patId].evalType    = evalType;
@@ -3882,6 +3936,7 @@ function dataLoad(data, callback, settings) {
 	                }
 	            	
 	            	
+	            	fn_MaskPatNmRows(response);
 	            	callback(response);
 	            	tableName.style.display = 'inline-block';
 	            	
@@ -4202,6 +4257,7 @@ function dataLoad(data, callback, settings) {
 	            	
 	            	}
 
+	            	fn_MaskPatNmRows(response);
 	            	callback(response);
 	            	tableName.style.display = 'inline-block';
 	            	
@@ -4852,7 +4908,7 @@ function _pvBuildHtml(d, row) {
     var header = '' +
         '<div class="pv-head">' +
         '  <div class="pv-head-item"><span class="lbl">환자ID</span><span class="val">' + _pvMaskPatId(d.patId || row.patId) + '</span></div>' +
-        '  <div class="pv-head-item"><span class="lbl">성명</span><span class="val">' + _pvTxt(d.patNm || row.patNm) + '</span></div>' +
+        '  <div class="pv-head-item"><span class="lbl">성명</span><span class="val">' + _pvTxt(fn_NameMask(d.patNm || row.patNm)) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">입원일</span><span class="val">' + _pvDt(d.admitDt || row.admitDt) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">요양개시일</span><span class="val">' + _pvDt(d.medStart || row.medStart) + '</span></div>' +
         '  <div class="pv-head-item"><span class="lbl">작성일</span><span class="val">' + _pvDt(d.docDt) + '</span></div>' +
@@ -4902,7 +4958,7 @@ function _pvSec(title, icon, items) {
 
 function _pvTab1(d) {
     var s1 = _pvSec('A. 일반사항', 'fa-user', [
-        ['환자성명', _pvTxt(d.patNm)], ['주민등록번호', _pvMaskPatId(d.patId)],
+        ['환자성명', _pvTxt(fn_NameMask(d.patNm))], ['주민등록번호', _pvMaskPatId(d.patId)],
         ['입원일', _pvDt(d.admitDt)], ['요양개시일', _pvDt(d.medStart)],
         ['평가구분', _pvCd('evalType', d.evalType)], ['작성일', _pvDt(d.docDt)],
         ['입원 직전 있던 곳', _pvCd('lastPlace', d.lastPlace)], ['교육수준', _pvCd('eduLevel', d.eduLevel)]
@@ -5121,10 +5177,196 @@ function _pvTab5(d) {
 
 
 	  
-<script type="text/javascript">	
-	
+<script type="text/javascript">
+
+// =====================================================================
+// 2024년(2주기 6차) 적정성평가 지표별 표준화 점수 구간 및 가중치 — 조회 팝업
+//   상단 "2024년 표준화구간" 버튼(btnStdRange) 클릭 시 호출.
+//   엑셀(지표별_표준화점수구간_가중치) 원본을 흰바탕·검은글자 표로 표시.
+// =====================================================================
+var _STD_RANGE_TITLE = '2024년(2주기 6차) 적정성평가 지표별 표준화 점수 구간 및 가중치';
+// 양식(ver1.0) 컬럼: 구분 | 지표 | 가중치점수 | 표준화[구간 | 점수] | 산출점수
+//   - weight : 가중치 점수
+//   - rows   : [표준화구간(5~1), 점수(측정범위)]  (산출점수 = weight/5*구간 으로 계산)
+var _STD_RANGE_DATA = [
+    { gubun:'구조지표', indi:'의사 1인당 환자 수',        weight:8.5,
+      rows:[[5,'26명 미만'],[4,'26~30명'],[3,'30~34명'],[2,'34~38명'],[1,'38명 이상']] },
+    { gubun:'구조지표', indi:'간호사 1인당 환자 수',       weight:8.5,
+      rows:[[5,'6명 미만'],[4,'6~9명'],[3,'9~12명'],[2,'12~15명'],[1,'15명 이상']] },
+    { gubun:'구조지표', indi:'간호인력 1인당 환자 수',     weight:7.5,
+      rows:[[5,'3명 미만'],[4,'3~4명'],[3,'4~5명'],[2,'5~6명'],[1,'6명 이상']] },
+    { gubun:'구조지표', indi:'약사 재직일수율',            weight:5.5,
+      rows:[[5,'100%'],[4,'80~100%'],[3,'60~80%'],[2,'40~60%'],[1,'40% 미만']] },
+    { gubun:'과정지표', indi:'유치도뇨관이 있는 환자분율', weight:6,
+      rows:[[5,'0.5% 미만'],[4,'0.5~1.5%'],[3,'1.5~2.5%'],[2,'2.5~3.5%'],[1,'3.5% 이상']] },
+    { gubun:'과정지표', indi:'항정신성의약품 처방률',      weight:3,
+      rows:[[5,'0.2PI 미만'],[3,'0.2~1.6PI'],[1,'1.6PI 이상']] },
+    { gubun:'과정지표', indi:'의약품안전사용서비스(DUR) 점검률', weight:3,
+      rows:[[5,'97% 이상'],[4,'92~97%'],[3,'87~92%'],[2,'82~87%'],[1,'82% 미만']] },
+    { gubun:'과정지표', indi:'욕창 처치를 실시한 환자분율', weight:2,
+      rows:[[5,'95% 이상'],[4,'85~95%'],[3,'75~85%'],[2,'65~75%'],[1,'65% 미만']] },
+    { gubun:'결과지표', indi:'욕창이 새로 생긴 환자분율',  weight:4.4,
+      rows:[[5,'0.25% 미만'],[4,'0.25~0.5%'],[3,'0.5~0.75%'],[2,'0.75~1%'],[1,'1.0% 이상']] },
+    { gubun:'결과지표', indi:'욕창 개선 환자분율',         weight:17.6,
+      rows:[[5,'60% 이상'],[4,'45~60%'],[3,'30~45%'],[2,'15~30%'],[1,'15% 미만']] },
+    { gubun:'결과지표', indi:'일상생활수행능력(ADL) 개선 환자분율', weight:12,
+      rows:[[5,'45% 이상'],[4,'35~45%'],[3,'25~35%'],[2,'15~25%'],[1,'15% 미만']] },
+    { gubun:'결과지표', indi:'당뇨병 환자 중 HbA1c 검사결과 적정범위 환자분율', weight:12,
+      rows:[[5,'98% 이상'],[4,'92~98%'],[3,'86~92%'],[2,'80~86%'],[1,'80% 미만']] },
+    { gubun:'결과지표', indi:'장기입원(181일 이상) 환자분율', weight:5,
+      rows:[[5,'20% 미만'],[4,'20~40%'],[3,'40~60%'],[2,'60~80%'],[1,'80% 이상']] },
+    { gubun:'결과지표', indi:'지역사회 복귀율',            weight:5,
+      rows:[[5,'70% 이상'],[4,'55~70%'],[3,'40~55%'],[2,'25~40%'],[1,'25% 미만']] }
+];
+
+// 산출점수 = 가중치 / 5 × 표준화구간 (부동소수 오차 제거 위해 소수 2자리 반올림)
+function _stdCalcScore(weight, gugan) {
+    return parseFloat((weight / 5 * gugan).toFixed(2));
+}
+
+function fn_ShowStdRangeModal() {
+    /* 전용 CSS (한 번만 주입) — 흰 바탕 / 검은 글자 */
+    if (!document.getElementById('stdRangeModalStyle')) {
+        var st = document.createElement('style');
+        st.id = 'stdRangeModalStyle';
+        st.innerHTML =
+            '.swal2-popup.stdrange-popup { max-width:920px !important; width:920px !important; background:#fff !important; color:#000 !important; }' +
+            '.swal2-popup.stdrange-popup .swal2-title { cursor:move; user-select:none; color:#000 !important; font-size:1.2em !important; line-height:1.35 !important; padding:10px 8px 6px !important; }' +
+            '.stdrange-scroll-wrap { max-height:66vh; overflow-y:auto; overflow-x:auto; border:1px solid #000; }' +
+            '.stdrange-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; color:#000; }' +
+            '.stdrange-table th, .stdrange-table td { border:1px solid #000; padding:6px 9px; background:#fff; color:#000; }' +
+            '.stdrange-table thead th { position:sticky; background:#fff; color:#000; font-weight:700; text-align:center;' +
+            '  box-shadow: inset 1px 1px 0 #000, inset -1px -1px 0 #000; }' +   /* sticky+collapse 경계선 소실 방지(특히 표준화 하단선) */
+            /* 2행 헤더: 1행(표준화 등)은 top:0, 2행(구간/점수)은 1행 높이만큼 내려 고정 → 스크롤해도 표준화 행 유지 */
+            '.stdrange-table thead tr:first-child  th { top:0;    z-index:3; height:30px; }' +
+            '.stdrange-table thead tr:nth-child(2) th { top:30px; z-index:2; }' +
+            '.stdrange-table td.col-gubun  { text-align:center; font-weight:700; white-space:nowrap; }' +
+            '.stdrange-table td.col-indi   { text-align:left; }' +
+            '.stdrange-table td.col-weight { text-align:center; }' +
+            '.stdrange-table td.col-gugan  { text-align:center; font-weight:700; }' +
+            '.stdrange-table td.col-score  { text-align:center; }' +
+            '.stdrange-table td.col-calc   { text-align:center; }' +
+            '.stdrange-inline-excel-btn {' +
+            '  display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:1px solid #000;' +
+            '  border-radius:4px; font-size:13px; font-weight:600; color:#000; background:#fff; cursor:pointer; }' +
+            '.stdrange-inline-excel-btn:hover { background:#f0f0f0; }';
+        document.head.appendChild(st);
+    }
+
+    /* 표 본문 생성 — 구분/지표/가중치는 rowspan 으로 묶음 */
+    var bodyHtml = '';
+    var gubunSpan = {};
+    /* 구분별 총 행 수 선계산 (rowspan 용) */
+    for (var g = 0; g < _STD_RANGE_DATA.length; g++) {
+        var gb = _STD_RANGE_DATA[g].gubun;
+        gubunSpan[gb] = (gubunSpan[gb] || 0) + _STD_RANGE_DATA[g].rows.length;
+    }
+    var gubunPrinted = {};
+    for (var i = 0; i < _STD_RANGE_DATA.length; i++) {
+        var item = _STD_RANGE_DATA[i];
+        for (var r = 0; r < item.rows.length; r++) {
+            bodyHtml += '<tr>';
+            /* 구분 셀: 각 구분 첫 행에서만 출력 */
+            if (!gubunPrinted[item.gubun]) {
+                bodyHtml += '<td class="col-gubun" rowspan="' + gubunSpan[item.gubun] + '">' + item.gubun + '</td>';
+                gubunPrinted[item.gubun] = true;
+            }
+            /* 지표 / 가중치점수 셀: 각 지표 첫 행에서만 출력 */
+            if (r === 0) {
+                bodyHtml += '<td class="col-indi"   rowspan="' + item.rows.length + '">' + item.indi + '</td>';
+                bodyHtml += '<td class="col-weight" rowspan="' + item.rows.length + '">' + item.weight + '</td>';
+            }
+            var gugan = item.rows[r][0];
+            bodyHtml += '<td class="col-gugan">' + gugan + '</td>';
+            bodyHtml += '<td class="col-score">' + item.rows[r][1] + '</td>';
+            bodyHtml += '<td class="col-calc">'  + _stdCalcScore(item.weight, gugan) + '</td>';
+            bodyHtml += '</tr>';
+        }
+    }
+
+    var html =
+        '<div style="display:flex; justify-content:flex-end; margin-bottom:8px;">' +
+            '<button type="button" class="stdrange-inline-excel-btn" id="btnStdRangeExcel">' +
+                '<i class="fa fa-file-excel"></i>엑셀 저장</button>' +
+        '</div>' +
+        '<div class="stdrange-scroll-wrap"><table class="stdrange-table"><thead>' +
+            '<tr>' +
+                '<th rowspan="2" style="width:90px;">구분</th>' +
+                '<th rowspan="2">지표</th>' +
+                '<th rowspan="2" style="width:70px;">가중치<br>점수</th>' +
+                '<th colspan="2">표준화</th>' +
+                '<th rowspan="2" style="width:70px;">산출<br>점수</th>' +
+            '</tr>' +
+            '<tr>' +
+                '<th style="width:55px;">구간</th>' +
+                '<th style="width:130px;">점수</th>' +
+            '</tr>' +
+        '</thead><tbody>' + bodyHtml + '</tbody></table></div>';
+
+    Swal.fire({
+        title: _STD_RANGE_TITLE,
+        html: html,
+        width: 920,
+        showCancelButton: false,
+        confirmButtonText: '닫기',
+        customClass: { popup: 'stdrange-popup' },
+        didOpen: function() {
+            _stdRangeEnableDrag();
+            var bx = document.getElementById('btnStdRangeExcel');
+            if (bx) bx.onclick = function() { fn_ExportStdRangeExcel(); };
+        }
+    });
+}
+
+/* 팝업 제목 드래그로 이동 */
+function _stdRangeEnableDrag() {
+    var popup = document.querySelector('.swal2-popup.stdrange-popup');
+    var title = popup ? popup.querySelector('.swal2-title') : null;
+    if (!popup || !title) return;
+    var dx = 0, dy = 0, dragging = false;
+    title.addEventListener('mousedown', function(e) {
+        dragging = true;
+        var rc = popup.getBoundingClientRect();
+        dx = rc.left - e.clientX; dy = rc.top - e.clientY;
+        popup.style.position = 'fixed';
+        popup.style.margin = '0';
+        document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        popup.style.left = (e.clientX + dx) + 'px';
+        popup.style.top  = (e.clientY + dy) + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        dragging = false;
+        document.body.style.userSelect = '';
+    });
+}
+
+/* 표준화구간 엑셀 저장 (구분 / 지표 / 가중치점수 / 표준화구간 / 점수 / 산출점수) */
+function fn_ExportStdRangeExcel() {
+    if (typeof XLSX === 'undefined') {
+        Swal.fire({ icon:'error', title:'오류', text:'XLSX 라이브러리가 로드되지 않았습니다.' });
+        return;
+    }
+    var aoa = [['구분','지표','가중치점수','표준화구간','점수','산출점수']];
+    for (var i = 0; i < _STD_RANGE_DATA.length; i++) {
+        var item = _STD_RANGE_DATA[i];
+        for (var r = 0; r < item.rows.length; r++) {
+            var gugan = item.rows[r][0];
+            aoa.push([item.gubun, item.indi, item.weight, gugan, item.rows[r][1], _stdCalcScore(item.weight, gugan)]);
+        }
+    }
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '표준화구간');
+    XLSX.writeFile(wb, '2024년_표준화점수구간_가중치.xlsx');
+}
+
 $(document).ready(function() {
-	
+
+	_loadDocCnt();   // 성명 마스킹 정책(DOCCNT) — 그리드 렌더 전 확정
+
 	// === 2024년 표준화구간 안내: assessment 화면 진입 시 항상 고정 표시 (버튼 토글 아님) ===
 	(function() {
 	    var box = document.getElementById('stdRangeNotice');
@@ -5135,16 +5377,7 @@ $(document).ready(function() {
 	        if (!btn._stdBound) {
 	            btn._stdBound = true;
 	            btn.addEventListener('click', function() {
-	                Swal.fire({
-	                    position: 'center',
-	                    title: '자료 준비중입니다',
-	                    icon: 'info',
-	                    showConfirmButton: false,
-	                    timer: 1500,
-	                    timerProgressBar: true,
-	                    width: 340,
-	                    customClass: { popup: 'std-popup', title: 'std-toast-title' }
-	                });
+	                fn_ShowStdRangeModal();
 	            });
 	        }
 	    }
