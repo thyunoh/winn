@@ -18,6 +18,25 @@
 	        <property name="url" value="jdbc:mysql://114.108.153.178:3306/WNN?allowMultiQueries=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=false" />
 	        <property name="username" value="winner"/>
 	        <property name="password" value="winnerdb_20@%"/>
+
+	        <!-- ===== 커넥션 검증/정리 (오염·끊긴 커넥션 재사용 차단) ===== -->
+	        <!-- 빌릴 때 검사: 오염/끊긴 커넥션이면 폐기 후 새 커넥션 발급 (연속 업로드 90000 차단 핵심) -->
+	        <property name="testOnBorrow" value="true"/>
+	        <property name="validationQuery" value="SELECT 1"/>
+	        <property name="validationQueryTimeout" value="3"/>
+	        <!-- 유휴 커넥션도 주기적으로 검사·정리 -->
+	        <property name="testWhileIdle" value="true"/>
+	        <property name="timeBetweenEvictionRunsMillis" value="30000"/>
+	        <property name="minEvictableIdleTimeMillis" value="60000"/>
+	        <!-- 풀 크기: 기본(maxTotal 8)은 대량 업로드+다중 사용자에 부족 -->
+	        <property name="maxTotal" value="20"/>
+	        <property name="maxIdle" value="10"/>
+	        <property name="minIdle" value="2"/>
+	        <!-- 풀 고갈 시 무한 대기 대신 빠르게 실패 (10초) -->
+	        <property name="maxWaitMillis" value="10000"/>
+	        <!-- 반납 누락(누수) 커넥션 회수 -->
+	        <property name="removeAbandonedOnBorrow" value="true"/>
+	        <property name="removeAbandonedTimeout" value="300"/>
 	    </bean>
 	</beans>
 
@@ -28,6 +47,25 @@
 	        <property name="url" value="jdbc:mysql://localhost:3306/WNN?allowMultiQueries=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=false" />
 	        <property name="username" value="winner"/>
 	        <property name="password" value="winnerdb_20@%"/>
+
+	        <!-- ===== 커넥션 검증/정리 (오염·끊긴 커넥션 재사용 차단) ===== -->
+	        <!-- 빌릴 때 검사: 오염/끊긴 커넥션이면 폐기 후 새 커넥션 발급 (연속 업로드 90000 차단 핵심) -->
+	        <property name="testOnBorrow" value="true"/>
+	        <property name="validationQuery" value="SELECT 1"/>
+	        <property name="validationQueryTimeout" value="3"/>
+	        <!-- 유휴 커넥션도 주기적으로 검사·정리 -->
+	        <property name="testWhileIdle" value="true"/>
+	        <property name="timeBetweenEvictionRunsMillis" value="30000"/>
+	        <property name="minEvictableIdleTimeMillis" value="60000"/>
+	        <!-- 풀 크기: 기본(maxTotal 8)은 대량 업로드+다중 사용자에 부족 -->
+	        <property name="maxTotal" value="20"/>
+	        <property name="maxIdle" value="10"/>
+	        <property name="minIdle" value="2"/>
+	        <!-- 풀 고갈 시 무한 대기 대신 빠르게 실패 (10초) -->
+	        <property name="maxWaitMillis" value="10000"/>
+	        <!-- 반납 누락(누수) 커넥션 회수 -->
+	        <property name="removeAbandonedOnBorrow" value="true"/>
+	        <property name="removeAbandonedTimeout" value="300"/>
 	    </bean>
 	</beans>
 
