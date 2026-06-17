@@ -90,9 +90,10 @@
 									    .std-popup .swal2-icon { margin: 8px auto 4px !important; }
 									    .std-popup .swal2-timer-progress-bar-container { height: 4px !important; }
 									</style>
-									    <div id="stdRangeNotice" style="border:2px solid #e74c3c; border-radius:8px; background:#fff; color:#000; font-size:13px; font-weight:bold; line-height:1.4; padding:8px 14px; margin-bottom:12px;">
-								        본 표준화 점수 구간은 2024년 평가 결과 기준입니다. 안정적인 상위등급 달성 및 유지를 위해, 목표값은 제시된 구간보다 10~20% 이상 여유 있게<br>
-								        설정하여 관리하시기 바랍니다.
+									    <div id="stdRangeNotice" style="display:flex; align-items:flex-start; gap:10px; border:1px solid #f3c0bb; border-left:4px solid #e74c3c; border-radius:10px; background:linear-gradient(180deg,#fff8f7,#fdeeed); color:#7a2b22; font-size:13px; line-height:1.5; padding:11px 16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(231,76,60,0.08);">
+								        <i class="fas fa-circle-info" style="color:#e74c3c; font-size:16px; margin-top:1px;"></i>
+								        <div><b>본 표준화 점수 구간은 2024년 평가 결과 기준입니다.</b><br>
+								        안정적인 상위등급 달성 및 유지를 위해, 목표값은 제시된 구간보다 <b>10~20% 이상 여유 있게</b> 설정하여 관리하시기 바랍니다.</div>
 								    </div>
 								    <div class="card" id="card_container" style="display: none;">
 
@@ -5230,45 +5231,59 @@ function fn_ShowStdRangeModal() {
         var st = document.createElement('style');
         st.id = 'stdRangeModalStyle';
         st.innerHTML =
-            '.swal2-popup.stdrange-popup { max-width:920px !important; width:920px !important; background:#fff !important; color:#000 !important; }' +
-            '.swal2-popup.stdrange-popup .swal2-title { cursor:move; user-select:none; color:#000 !important; font-size:1.2em !important; line-height:1.35 !important; padding:10px 8px 6px !important; }' +
-            '.stdrange-scroll-wrap { max-height:66vh; overflow-y:auto; overflow-x:auto; border:1px solid #000; }' +
-            '.stdrange-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; color:#000; }' +
-            '.stdrange-table th, .stdrange-table td { border:1px solid #000; padding:6px 9px; background:#fff; color:#000; }' +
-            '.stdrange-table thead th { position:sticky; background:#fff; color:#000; font-weight:700; text-align:center;' +
-            '  box-shadow: inset 1px 1px 0 #000, inset -1px -1px 0 #000; }' +   /* sticky+collapse 경계선 소실 방지(특히 표준화 하단선) */
+            '.swal2-popup.stdrange-popup { max-width:940px !important; width:940px !important; background:#fff !important; color:#1f2937 !important; border-radius:16px !important; box-shadow:0 24px 64px rgba(15,44,82,0.28) !important; padding:20px 24px 18px !important; }' +
+            '.swal2-popup.stdrange-popup .swal2-title { cursor:move; user-select:none; color:#0f2c52 !important; font-size:1.15em !important; font-weight:700 !important; line-height:1.4 !important; padding:4px 4px 12px !important; margin-bottom:6px; border-bottom:2px solid #eef2f7; }' +
+            '.swal2-popup.stdrange-popup .swal2-confirm { background:#2d4d7a !important; border-radius:8px !important; padding:9px 30px !important; box-shadow:none !important; }' +
+            '.stdrange-scroll-wrap { max-height:66vh; overflow:auto; border:1px solid #e3e8ef; border-radius:12px; }' +
+            '.stdrange-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; background:#fff; color:#1f2937; }' +
+            '.stdrange-table th, .stdrange-table td { border-bottom:1px solid #eef1f5; border-right:1px solid #eef1f5; padding:8px 11px; }' +
+            '.stdrange-table th:last-child, .stdrange-table td:last-child { border-right:none; }' +
+            /* 헤더: 진한 네이비 + 흰 글자 */
+            '.stdrange-table thead th { position:sticky; background:#2d4d7a; color:#fff; font-weight:600; text-align:center; letter-spacing:0.3px; border-right:1px solid rgba(255,255,255,0.2); border-bottom:1px solid #213c63; }' +
             /* 2행 헤더: 1행(표준화 등)은 top:0, 2행(구간/점수)은 1행 높이만큼 내려 고정 → 스크롤해도 표준화 행 유지 */
-            '.stdrange-table thead tr:first-child  th { top:0;    z-index:3; height:30px; }' +
-            '.stdrange-table thead tr:nth-child(2) th { top:30px; z-index:2; }' +
-            '.stdrange-table td.col-gubun  { text-align:center; font-weight:700; white-space:nowrap; }' +
-            '.stdrange-table td.col-indi   { text-align:left; }' +
-            '.stdrange-table td.col-weight { text-align:center; }' +
-            '.stdrange-table td.col-gugan  { text-align:center; font-weight:700; }' +
-            '.stdrange-table td.col-score  { text-align:center; }' +
-            '.stdrange-table td.col-calc   { text-align:center; }' +
+            '.stdrange-table thead tr:first-child  th { top:0;    z-index:3; height:34px; }' +
+            '.stdrange-table thead tr:nth-child(2) th { top:34px; z-index:2; }' +
+            '.stdrange-table tbody tr:hover td { background:#f3f7fc; }' +
+            '.stdrange-table td.col-gubun  { text-align:center; font-weight:700; white-space:nowrap; font-size:12.5px; }' +
+            '.stdrange-table td.col-gubun.gb-0 { background:#eef4fb; color:#1f4e85; }' +   /* 구조지표 */
+            '.stdrange-table td.col-gubun.gb-1 { background:#eaf6f2; color:#157a5b; }' +   /* 과정지표 */
+            '.stdrange-table td.col-gubun.gb-2 { background:#f3effb; color:#5b3a99; }' +   /* 결과지표 */
+            '.stdrange-table td.col-indi   { text-align:left; font-weight:500; }' +
+            '.stdrange-table tr.indi-alt td.col-indi, .stdrange-table tr.indi-alt td.col-weight, .stdrange-table tr.indi-alt td.col-gugan, .stdrange-table tr.indi-alt td.col-score, .stdrange-table tr.indi-alt td.col-calc { background:#fafbfd; }' +
+            '.stdrange-table td.col-weight { text-align:center; color:#475569; }' +
+            '.stdrange-table td.col-gugan  { text-align:center; }' +
+            '.stdrange-table td.col-score  { text-align:center; color:#374151; }' +
+            '.stdrange-table td.col-calc   { text-align:center; font-weight:700; color:#0f2c52; }' +
+            /* 표준화 구간 점수 배지 (5=우수 … 1=미흡) */
+            '.std-badge { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; color:#fff; font-weight:700; font-size:12.5px; box-shadow:0 1px 2px rgba(0,0,0,0.18); }' +
+            '.std-b5 { background:#1e9e6a; } .std-b4 { background:#5cb85c; } .std-b3 { background:#f0ad4e; } .std-b2 { background:#ec8a3c; } .std-b1 { background:#e15554; }' +
             '.stdrange-inline-excel-btn {' +
-            '  display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:1px solid #000;' +
-            '  border-radius:4px; font-size:13px; font-weight:600; color:#000; background:#fff; cursor:pointer; }' +
-            '.stdrange-inline-excel-btn:hover { background:#f0f0f0; }';
+            '  display:inline-flex; align-items:center; gap:7px; padding:8px 18px; border:1px solid #1d7a4d;' +
+            '  border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#27ae60,#1e8e50); cursor:pointer; box-shadow:0 2px 6px rgba(30,142,80,0.3); transition:filter .15s ease, transform .15s ease; }' +
+            '.stdrange-inline-excel-btn:hover { filter:brightness(1.05); transform:translateY(-1px); }' +
+            '.stdrange-inline-excel-btn:active { transform:translateY(0); }';
         document.head.appendChild(st);
     }
 
     /* 표 본문 생성 — 구분/지표/가중치는 rowspan 으로 묶음 */
     var bodyHtml = '';
     var gubunSpan = {};
-    /* 구분별 총 행 수 선계산 (rowspan 용) */
+    var gubunOrder = {};   /* 구분 등장 순서 → 색상 클래스(gb-0/1/2) 매핑 */
+    /* 구분별 총 행 수 + 등장 순서 선계산 (rowspan / 색상용) */
     for (var g = 0; g < _STD_RANGE_DATA.length; g++) {
         var gb = _STD_RANGE_DATA[g].gubun;
         gubunSpan[gb] = (gubunSpan[gb] || 0) + _STD_RANGE_DATA[g].rows.length;
+        if (gubunOrder[gb] === undefined) gubunOrder[gb] = Object.keys(gubunOrder).length;
     }
     var gubunPrinted = {};
     for (var i = 0; i < _STD_RANGE_DATA.length; i++) {
         var item = _STD_RANGE_DATA[i];
+        var altCls = (i % 2 === 1) ? ' class="indi-alt"' : '';   /* 지표 단위 교차 음영 */
         for (var r = 0; r < item.rows.length; r++) {
-            bodyHtml += '<tr>';
+            bodyHtml += '<tr' + altCls + '>';
             /* 구분 셀: 각 구분 첫 행에서만 출력 */
             if (!gubunPrinted[item.gubun]) {
-                bodyHtml += '<td class="col-gubun" rowspan="' + gubunSpan[item.gubun] + '">' + item.gubun + '</td>';
+                bodyHtml += '<td class="col-gubun gb-' + (gubunOrder[item.gubun] % 3) + '" rowspan="' + gubunSpan[item.gubun] + '">' + item.gubun + '</td>';
                 gubunPrinted[item.gubun] = true;
             }
             /* 지표 / 가중치점수 셀: 각 지표 첫 행에서만 출력 */
@@ -5277,7 +5292,7 @@ function fn_ShowStdRangeModal() {
                 bodyHtml += '<td class="col-weight" rowspan="' + item.rows.length + '">' + item.weight + '</td>';
             }
             var gugan = item.rows[r][0];
-            bodyHtml += '<td class="col-gugan">' + gugan + '</td>';
+            bodyHtml += '<td class="col-gugan"><span class="std-badge std-b' + gugan + '">' + gugan + '</span></td>';
             bodyHtml += '<td class="col-score">' + item.rows[r][1] + '</td>';
             bodyHtml += '<td class="col-calc">'  + _stdCalcScore(item.weight, gugan) + '</td>';
             bodyHtml += '</tr>';
