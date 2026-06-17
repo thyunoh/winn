@@ -1486,7 +1486,7 @@
 		         <!-- 치매+BPSD+향정신약(분모 제외)은 바깥 manageYn CASE ①분기에서 '제외' 처리 → 여기(분자 sb)에서는 필터하지 않음 -->
 		         AND pat.URINE_MGMT NOT IN ('1')                                  <!-- 배뇨관련 루 관리 제외 -->
 		         AND SUBSTRING(dm.DIAG_CODE, 1, 4) NOT IN ('Z935','Z936','T830')  <!-- 요로전환술 진단 제외 -->
-
+             /*  AND IFNULL(pat.EVAL_TYPE,'') in('1','2') */
 		         AND cm.DATE_YM = #{jobYymm}
 		         AND COALESCE(mm.DELYN, '') = ''
 		         AND NOT EXISTS (SELECT 1
@@ -1506,6 +1506,7 @@
 		 WHERE pm.HOSP_CD = #{hospCd}
 		   AND pm.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND pm.URINE_CTL IN ('0','1','2','3')         /* 0/1 도 표시 (manageYn 에서 '제외' 표기) */
+	  /*   AND IFNULL(pm.EVAL_TYPE,'') in('1','2') */
 		   /* PAT_CLASS='A' 도 함께 표시되어 manageYn 에서 '제외' 로 표기 */
 		 ORDER BY
 		   /* SELECT DISTINCT + ORDER BY 충돌 회피 — SELECT 절의 alias(manageYn) 만 참조 */
