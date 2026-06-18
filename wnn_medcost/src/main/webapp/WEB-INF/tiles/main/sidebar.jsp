@@ -1171,9 +1171,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // 실제 URL이 숨겨져 있지 않다면(/user/가 아니라면) location.pathname을 우선시한다.
     // 그래야 대시보드(/user/dashboard.do)로 이동 시 sessionStorage에 남은
     // 이전 메뉴 경로로 인해 잘못 강조되는 문제가 발생하지 않는다.
+    // URL 숨김 주소가 '/user/dashboard.do' 이므로, 주소가 이 값일 때는 _realPath(실제 표시 중인
+    //   화면)를 기준으로 메뉴를 강조한다. (실제 대시보드일 때는 _realPath 도 dashboard.do 라 정상)
     var locPath = window.location.pathname;
     var currentPath;
-    if (locPath && locPath !== '/user/' && locPath !== '/') {
+    if (locPath && locPath !== '/user/' && locPath !== '/' && locPath !== '/user/dashboard.do') {
         currentPath = locPath;
     } else {
         currentPath = sessionStorage.getItem('_realPath') || locPath;
