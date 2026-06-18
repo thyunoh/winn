@@ -1884,7 +1884,7 @@ var mousePoint = 'pointer';                				 // row 선택시 Mouse모양
 <!-- ============================================================== -->
 
 
-function fn_CreateData(flag) {
+function fn_CreateData(flag, force) {
 
 	if (flag === 1) {
 		const card = document.getElementById('card_container');
@@ -1904,27 +1904,82 @@ function fn_CreateData(flag) {
 	
 	let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
+    let jobyymm = selected_Year + selectedMonth;
 	let waitingCreate = document.getElementById("wait_Create");
-    waitingCreate.style.display = 'flex';
-    
+
+    // 실제 생성 실행 (기존 로직)
+    function doCreate() {
+        waitingCreate.style.display = 'flex';
+        $.ajax({
+            url: "/main/create_Eval_Indi.do",
+            type: "POST",
+            data: { hosp_cd: hospid,
+                    jobyymm: jobyymm,
+                    reg_user: userid
+            },
+            success: function(response) {
+                if (response) { // 서버가 성공 응답을 보냈을 때 실행
+                    waitingCreate.style.display = 'none';
+                    loadFivePointCriteria(jobyymm);
+                    Indicater_DataList();
+                }
+            },
+            error: function(xhr, status, error) {
+                waitingCreate.style.display = 'none';
+            }
+        });
+    }
+
+    // 재생성 없이 기존 자료만 화면에 표시
+    function showExisting() {
+        waitingCreate.style.display = 'none';
+        loadFivePointCriteria(jobyymm);
+        Indicater_DataList();
+    }
+
+    // [추가] 해당 병원·년월의 적정성평가 자료가 이미 생성되어 있는지 먼저 확인.
+    //   - 이미 생성됨 → "다시 생성하시겠습니까?" 확인. 취소 시 기존 자료만 표시(재생성 안 함).
+    //   - 생성된 자료 없음 → 기존처럼 무조건 생성 실행.
+    //   ※ select_Eval_Indi 는 '99'(합계) 행을 무조건 1건 반환하므로, 실제 지표행(cate_cd!=='99')
+    //     존재 여부로 판단한다.
+    //   force=true (예: 설정 저장 후 재계산 fn_Update) 인 경우 확인 없이 바로 생성.
+    if (force) {
+        doCreate();
+        return;
+    }
+
     $.ajax({
-  		url: "/main/create_Eval_Indi.do",
+        url: "/main/select_Eval_Indi.do",
         type: "POST",
-        data: { hosp_cd: hospid,
-         	    jobyymm: selected_Year + selectedMonth,
-         	    reg_user: userid
+        data: { hosp_cd: hospid, jobyymm: jobyymm },
+        dataType: "json",
+        success: function(response) {
+            var hasData = response && response.data && response.data.some(function(r) {
+                return r.cate_cd !== '99';
+            });
+            if (hasData) {
+                Swal.fire({
+                    title: '재생성 확인',
+                    html: '<b>' + selected_Year + '년 ' + selectedMonth + '월</b> 자료가 이미 생성되어 있습니다.<br>다시 생성하시겠습니까?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: '다시 생성',
+                    cancelButtonText: '기존 자료 보기'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        doCreate();
+                    } else {
+                        showExisting();
+                    }
+                });
+            } else {
+                doCreate();   // 생성된 자료 없음 → 기존처럼 무조건 생성
+            }
         },
-        success: function(response) { 
-        	if (response) { // 서버가 성공 응답을 보냈을 때 실행
-	    		waitingCreate.style.display = 'none';
-	    		loadFivePointCriteria(selected_Year + selectedMonth);
-	    		Indicater_DataList();
-	       	}
-        },
-        error: function(xhr, status, error) {
-    	    waitingCreate.style.display = 'none';
+        error: function() {
+            doCreate();       // 확인 실패 시 안전하게 기존처럼 생성
         }
-	});
+    });
 }
 
 // WINCHECK 로그인 시 전체생성 버튼 표시
@@ -2099,7 +2154,7 @@ function fn_Update() {
                     showConfirmButton: false
                 });
                 jobFlag = "00";
-                fn_CreateData(1);
+                fn_CreateData(1, true);   // 설정 저장 후 재계산 — 확인 없이 강제 재생성
             }
         },
         error: function(xhr, status, error) {
