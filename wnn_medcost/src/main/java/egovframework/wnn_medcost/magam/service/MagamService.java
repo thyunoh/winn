@@ -54,6 +54,8 @@ public interface MagamService {
 	String create_Eval_Indi(IndiDTO dto) throws Exception;
 	
 	List<IndiDTO>  select_Eval_Indi(IndiDTO dto) throws Exception;
+
+	List<Map<String, Object>> select_EvalProgress(IndiDTO dto) throws Exception;   // 자료생성 진행상태(항목별)
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_CategoryList06(PatvalDTO dto) throws Exception;

@@ -1301,10 +1301,37 @@
            AND pi2.JOBYYMM = #{jobyymm}
            AND pi2.CATE_CD NOT LIKE 'M%'
          ORDER BY cate_cd
-           
-           
+
+
 	</select>
-	
+
+	<!-- [추가] 적정성평가 자료생성 진행상태(항목별 시작→완료) 조회.
+	     해당 기간 평가대상 지표(TBL_WEVALUE_MST) 목록을 기준으로,
+	     현재까지 생성(TBL_PAT_INDI 적재)된 항목은 done=1 로 표시한다.
+	     (생성 SP 가 autocommit 으로 항목별 적재 → 진행 중 폴링으로 즉시 조회 가능) -->
+	<select id="select_EvalProgress" parameterType="IndiDTO" resultType="java.util.HashMap">
+		SELECT m.cate_cd                                          AS cate_cd
+		     , m.cate_nm                                          AS cate_nm
+		     , CASE WHEN p.CATE_CD IS NOT NULL THEN 1 ELSE 0 END  AS done
+		  FROM (
+		        SELECT wm.CATE_CODE AS cate_cd
+		             , MAX(replace(replace(replace(wm.WEVALUE_NM,'욕창 관리 환자분율',''),'(',''),')','')) AS cate_nm
+		          FROM TBL_WEVALUE_MST wm
+		         WHERE wm.ACTION_YN = 'Y'
+		           AND CONCAT(#{jobyymm},'01') BETWEEN wm.START_DT AND wm.END_DT
+		           AND wm.CATE_CODE NOT LIKE 'M%'
+		         GROUP BY wm.CATE_CODE
+		       ) m
+		  LEFT JOIN (
+		        SELECT DISTINCT CATE_CD
+		          FROM TBL_PAT_INDI
+		         WHERE HOSP_CD = #{hosp_cd}
+		           AND JOBYYMM = #{jobyymm}
+		           AND CATE_CD NOT LIKE 'M%'
+		       ) p ON p.CATE_CD = m.cate_cd
+		 ORDER BY m.cate_cd
+	</select>
+
 
 	<select id="select_CategoryList05" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 

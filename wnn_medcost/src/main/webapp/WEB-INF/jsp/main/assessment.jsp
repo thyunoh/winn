@@ -1907,27 +1907,113 @@ function fn_CreateData(flag, force) {
     let jobyymm = selected_Year + selectedMonth;
 	let waitingCreate = document.getElementById("wait_Create");
 
-    // 실제 생성 실행 (기존 로직)
+    // 실제 생성 실행 — 기존 메시지("자료생성중입니다...") 유지 + 그 뒤에 지표를 '하나씩' 진행표시.
+    //   ※ 이 생성 프로시저는 지표를 한 번에(원자적으로) 처리해, 외부에서 항목별 진행을 관찰할 수 없다.
+    //     따라서 여기서는 [추정 기반 하나씩 애니메이션] 으로 표시한다(지루함 해소용 시각효과).
+    //     - 지표 목록: 기존 생성분(재생성 시) → 없으면 표준 지표목록(_STD_RANGE_DATA) fallback
+    //     - 경과시간에 맞춰 ✔ 를 하나씩 채우되, 마지막 1개는 실제 완료 시점까지 남겨 조기 100% 방지
+    //     - SP 완료 시 전체 ✔ 로 확정 후 결과 로드
+    //   (자바 재빌드 불필요 — 기존 엔드포인트만 사용)
     function doCreate() {
-        waitingCreate.style.display = 'flex';
+        if (waitingCreate) waitingCreate.style.display = 'flex';
+
+        // 진행 표시용 인라인 박스(최초 1회 생성, '자료생성중입니다...' 메시지 바로 뒤)
+        var box = document.getElementById('evpInline');
+        if (!box && waitingCreate && waitingCreate.parentNode) {
+            box = document.createElement('div');
+            box.id = 'evpInline';
+            box.style.cssText = 'margin-top:8px;font-size:15.5px;line-height:1.7;';
+            waitingCreate.parentNode.insertBefore(box, waitingCreate.nextSibling);
+        }
+        if (box) box.innerHTML = '<span style="color:#888;">생성 준비 중...</span>';
+
+        var finished = false;
+        var startTime = new Date().getTime();
+        var names = [];          // 예상 지표명 목록
+        var shown = 0;           // ✔ 표시된 개수(추정)
+        var revealTimer = null;
+        var PACE = 1500;         // 항목 노출 간격(ms, 추정)
+
+        function elapsedSec() { return Math.floor((new Date().getTime() - startTime) / 1000); }
+
+        // 표준 지표명 fallback (_STD_RANGE_DATA: 신규생성 등 기존자료 없을 때)
+        function fallbackNames() {
+            try { return _STD_RANGE_DATA.map(function(d){ return d.indi; }); }
+            catch (e) { return ['지표 1','지표 2','지표 3','지표 4','지표 5','지표 6','지표 7','지표 8','지표 9','지표 10','지표 11','지표 12','지표 13','지표 14']; }
+        }
+
+        function render() {
+            if (!box) return;
+            var total = names.length;
+            var idx = Math.min(shown, Math.max(0, total - 1));   // 현재 진행 중인 항목
+            var curName = total > 0 ? names[idx] : '';
+            box.innerHTML =
+                '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-weight:600;color:#1e3c72;">'
+              + '<span>▶ 지표 생성 진행 중 (' + (total > 0 ? Math.min(shown, total) + '/' + total + ', ' : '') + elapsedSec() + '초)</span>'
+              + '<span style="display:inline-flex;align-items:center;gap:6px;color:#28a745;margin-left:30px;">'
+              + '<i class="fa fa-spinner fa-spin"></i><span>' + curName + '</span></span>'
+              + '</div>';
+        }
+
+        function startReveal() {
+            render();
+            revealTimer = setInterval(function() {
+                if (finished) return;
+                if (shown < Math.max(0, names.length - 1)) shown++;   // 마지막 1개는 완료 때까지 보류
+                render();
+            }, PACE);
+        }
+
+        // 1) 예상 지표 목록 확보 → 애니메이션 시작 → 실제 생성 호출
         $.ajax({
-            url: "/main/create_Eval_Indi.do",
+            url: "/main/select_Eval_Indi.do",
             type: "POST",
-            data: { hosp_cd: hospid,
-                    jobyymm: jobyymm,
-                    reg_user: userid
-            },
-            success: function(response) {
-                if (response) { // 서버가 성공 응답을 보냈을 때 실행
-                    waitingCreate.style.display = 'none';
-                    loadFivePointCriteria(jobyymm);
-                    Indicater_DataList();
-                }
-            },
-            error: function(xhr, status, error) {
-                waitingCreate.style.display = 'none';
+            data: { hosp_cd: hospid, jobyymm: jobyymm },
+            dataType: "json",
+            complete: function(xhr) {
+                try {
+                    var res = xhr.responseJSON;
+                    var arr = (res && res.data) ? res.data.filter(function(r){ return r.cate_cd !== '99'; }) : [];
+                    names = arr.length ? arr.map(function(r){ return (r.cate_nm || r.cate_cd); }) : fallbackNames();
+                } catch (e) { names = fallbackNames(); }
+                startReveal();
+                runCreate();
             }
         });
+
+        // 2) 실제 생성(SP) 호출 — 완료 시점이 곧 '종료'
+        function runCreate() {
+            $.ajax({
+                url: "/main/create_Eval_Indi.do",
+                type: "POST",
+                data: { hosp_cd: hospid, jobyymm: jobyymm, reg_user: userid },
+                success: function(response) {
+                    finished = true;
+                    if (revealTimer) clearInterval(revealTimer);
+                    if (response) {
+                        shown = names.length; render();   // 전체 ✔ 확정
+                        if (box) box.innerHTML = '<div style="font-weight:600;color:#28a745;">'
+                            + '<i class="fa fa-check-circle"></i> 완료되었습니다 (' + elapsedSec() + '초)</div>';
+                        setTimeout(function() {
+                            if (waitingCreate) waitingCreate.style.display = 'none';
+                            if (box) box.innerHTML = '';
+                            loadFivePointCriteria(jobyymm);
+                            Indicater_DataList();
+                        }, 800);
+                    } else {
+                        if (waitingCreate) waitingCreate.style.display = 'none';
+                        if (box) box.innerHTML = '';
+                    }
+                },
+                error: function(xhr, status, error) {
+                    finished = true;
+                    if (revealTimer) clearInterval(revealTimer);
+                    if (waitingCreate) waitingCreate.style.display = 'none';
+                    if (box) box.innerHTML = '';
+                    Swal.fire({ icon: 'error', title: '오류', text: '자료생성 중 오류가 발생했습니다.' });
+                }
+            });
+        }
     }
 
     // 재생성 없이 기존 자료만 화면에 표시
@@ -1958,13 +2044,28 @@ function fn_CreateData(flag, force) {
                 return r.cate_cd !== '99';
             });
             if (hasData) {
+                if (!document.getElementById('regenConfirmStyle')) {
+                    var rst = document.createElement('style');
+                    rst.id = 'regenConfirmStyle';
+                    rst.innerHTML =
+                        '.regen-confirm-popup { padding:14px 16px !important; }' +
+                        '.regen-confirm-popup .swal2-title { font-size:1.05em !important; padding:6px 0 2px !important; }' +
+                        '.regen-confirm-popup .swal2-html-container { font-size:0.92em !important; margin:6px 0 0 !important; }' +
+                        '.regen-confirm-popup .swal2-icon { width:48px; height:48px; margin:8px auto 4px; }' +
+                        '.regen-confirm-popup .swal2-icon .swal2-icon-content { font-size:1.6em; }' +
+                        '.regen-confirm-popup .swal2-actions { margin-top:12px; }' +
+                        '.regen-confirm-popup .swal2-styled { font-size:0.9em !important; padding:7px 16px !important; }';
+                    document.head.appendChild(rst);
+                }
                 Swal.fire({
                     title: '재생성 확인',
                     html: '<b>' + selected_Year + '년 ' + selectedMonth + '월</b> 자료가 이미 생성되어 있습니다.<br>다시 생성하시겠습니까?',
                     icon: 'question',
+                    width: 380,
                     showCancelButton: true,
                     confirmButtonText: '다시 생성',
-                    cancelButtonText: '기존 자료 보기'
+                    cancelButtonText: '기존 자료 보기',
+                    customClass: { popup: 'regen-confirm-popup' }
                 }).then(function(result) {
                     if (result.isConfirmed) {
                         doCreate();

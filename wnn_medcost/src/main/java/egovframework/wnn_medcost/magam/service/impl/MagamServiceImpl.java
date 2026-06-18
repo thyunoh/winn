@@ -459,6 +459,11 @@ public class MagamServiceImpl implements MagamService {
 	public List<IndiDTO> select_Eval_Indi(IndiDTO dto) throws Exception {
 		return mapper.select_Eval_Indi(dto);
 	}
+
+	@Override
+	public List<Map<String, Object>> select_EvalProgress(IndiDTO dto) throws Exception {
+		return mapper.select_EvalProgress(dto);
+	}
 	
 	@Override
 	public List<PatvalDTO> select_CategoryList05(PatvalDTO dto) throws Exception {

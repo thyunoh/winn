@@ -1092,6 +1092,20 @@ public class MagamController {
         }
 	}
 	
+	// 적정성평가 자료생성 진행상태(항목별 시작→완료) 조회 — 생성 중 폴링용
+	@RequestMapping(value="/main/evalProgress.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> evalProgress(@ModelAttribute("DTO") IndiDTO dto, Model model) {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			List<Map<String, Object>> items = svc.select_EvalProgress(dto);
+			response.put("items", items != null ? items : new ArrayList<Map<String, Object>>());
+		} catch (Exception ex) {
+			response.put("items", new ArrayList<Map<String, Object>>());
+		}
+		return response;
+	}
+
 	@RequestMapping(value="/main/select_PrevMonthMissing05.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> select_PrevMonthMissing05(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

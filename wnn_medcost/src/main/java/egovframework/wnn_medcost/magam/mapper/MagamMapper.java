@@ -77,6 +77,8 @@ public interface MagamMapper {
 	String create_Eval_Indi(IndiDTO dto);
 	
 	List<IndiDTO> select_Eval_Indi(IndiDTO dto);
+
+	List<Map<String, Object>> select_EvalProgress(IndiDTO dto);   // 자료생성 진행상태(항목별)
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto);
 	List<PatvalDTO>  select_PrevMonthMissing05(PatvalDTO dto);
