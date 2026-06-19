@@ -1177,7 +1177,7 @@ var ipwonDbColumns = [
 ];
 var ipwonAutoMap = {
 	'hosp_cd': ['요양기관기호','요양기호','요양기관번호','요양기호번호'],
-	'chartno': ['차트번호','환자ID','차트No','차트 No','Chart','Chart Number','차번','환자번호'],
+	'chartno': ['차트번호','챠트번호','환자ID','차트No','차트 No','Chart','Chart Number','차번','환자번호'],
 	'patname': ['수진자명','환자명','환자이름','이름','성명','환자성명'],
 	'ipwondt': ['입원일','입원일자','입원날짜','Admission','Admission Date','최초입원일','실입원일'],
 	'ipwontm': ['입원시간','Admission Time'],
