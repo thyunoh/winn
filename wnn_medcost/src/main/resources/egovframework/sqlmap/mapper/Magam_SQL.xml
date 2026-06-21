@@ -1457,21 +1457,21 @@
 		     , pm.BLAD_TRAIN                                      AS bladTrain
 		     , pm.REG_CATH                                        AS regCath
 		     , CASE
-		            WHEN LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) IN ('B', 'C')   /* 분모 제외 — 치매+BPSD+향정신약 */
-		                 AND pm.DEMENTIA = '1'
-		                 AND ( pm.DELUSION    IN ('2','3')
-		                    OR pm.HALLUCIN    IN ('2','3')
-		                    OR pm.AGITATION   IN ('2','3')
-		                    OR pm.DISINHIB    IN ('2','3')
-		                    OR pm.CARE_RESIST IN ('2','3')
-		                    OR pm.WANDER      IN ('2','3') )
-		                 AND pm.PSYCH_DRUG = '1'
-		            THEN '제외'
+				   WHEN pm.URINE_CTL IN ('2','3')
+					      AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')      -- 의료최고도는 분모에서도 제외
+					      AND NOT (                                                  -- ★추가: 치매+BPSD+향정신약 분모 제외
+						      LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) IN ('B', 'C')    -- 의료고도/중도
+						      AND pm.DEMENTIA = '1'                                 -- 치매
+						      AND ( pm.DELUSION    IN ('2','3')   -- 망상
+						           OR pm.HALLUCIN    IN ('2','3')   -- 환각
+						           OR pm.AGITATION   IN ('2','3')   -- 초조·공격성
+						           OR pm.DISINHIB    IN ('2','3')   -- 탈억제
+						           OR pm.CARE_RESIST IN ('2','3')   -- 케어저항
+						           OR pm.WANDER      IN ('2','3') ) -- 배회
+						      AND pm.PSYCH_DRUG = '1'                               -- 향정신약 치료
+ 		                      )
+			        THEN ''        
 		            WHEN sb.PAT_ID IS NOT NULL THEN 'Y'                /* 분자 매칭 — "관리" */
-		            WHEN pm.URINE_CTL IN ('2','3')
-		                 AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')
-		            THEN ''      
-            
 		            ELSE '제외'                                        /* 추가 표시 — 제외 */
 		       END                                                AS manageYn
 		  FROM TBL_PATVAL_MST pm

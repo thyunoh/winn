@@ -529,9 +529,25 @@
 								
 								        const imgProps = doc.getImageProperties(imgData);
 								        const pdfWidth = doc.internal.pageSize.getWidth();
-								        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+								        const pdfPageHeight = doc.internal.pageSize.getHeight();
+				        const fullImgHeight = (imgProps.height * pdfWidth) / imgProps.width;
 								
-								        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+								        if (fullImgHeight <= pdfPageHeight) {
+				            doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, fullImgHeight);
+				        } else {
+				            // 보고서가 길면 A4 여러 페이지로 자동 분할(전체 다 보이게)
+				            const sliceHeightPx = Math.floor(canvas.width * pdfPageHeight / pdfWidth);
+				            let y = 0, page = 0;
+				            while (y < canvas.height) {
+				                const hpx = Math.min(sliceHeightPx, canvas.height - y);
+				                const pc = document.createElement('canvas');
+				                pc.width = canvas.width; pc.height = hpx;
+				                pc.getContext('2d').drawImage(canvas, 0, y, canvas.width, hpx, 0, 0, canvas.width, hpx);
+				                if (page > 0) doc.addPage();
+				                doc.addImage(pc.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, hpx * pdfWidth / canvas.width);
+				                y += hpx; page++;
+				            }
+				        }
 								        doc.save(hospnm + ' 적정성평가_종합보고서.pdf');
 								    }
 								</script>		                    
@@ -2357,6 +2373,14 @@ function Indicater_DataList() {
 	btm_Scroll = true;          // 지표 그리드는 가로 스크롤(scrollX) 사용 — 기본값 복원 (06 뷰 진입 후 false 잔존 방지)
 	tableName  = document.getElementById('indicatorTable');
 
+	// ★ 재초기화 방지 — 이미 DataTable 로 초기화된 상태면 먼저 파괴 후 재구성.
+	//   (자료생성 완료 후 재진입 / 기존자료 표시(showExisting) 등 fn_CreateData 의 destroy 를
+	//    거치지 않는 경로에서 "Cannot reinitialise DataTable" 경고가 뜨던 문제 차단)
+	if ($.fn.DataTable.isDataTable('#indicatorTable')) {
+		$('#indicatorTable').DataTable().clear().destroy();
+	}
+	$('#indicatorTable').empty();
+
 	c_Head_Set = [  '지표명칭','가중치','분모','분자','5점구간','현황값','결과','지표코드','지표구분','작업년월','적용구간'  ];
 	
    	columnsSet = [  { data: 'cate_nm', visible: true,  className: 'dt-body-left',   width: '100px' },
@@ -2671,11 +2695,12 @@ function fn_ViewData(data) {
     	// 폭 절약을 위해 sub-header 는 짧게 (일정/방광/규칙).
     	c_Head_Set = [
     		[
+    			{ label: 'No',           rowspan: 2 },
     			{ label: '생년월일',     rowspan: 2 },
     			{ label: '대상자',       rowspan: 2 },
     			{ label: '입원일자',     rowspan: 2 },
     			{ label: '요양개시일',   rowspan: 2 },
-    			{ label: '관리여부',     rowspan: 2 },
+    			{ label: '관리<br>여부', rowspan: 2 },
     			{ label: '환자군',       rowspan: 2 },
     			{ label: '배뇨상태',     rowspan: 2 },
     			{ label: '관리항목',     colspan: 3 },
@@ -2688,9 +2713,15 @@ function fn_ViewData(data) {
     		]
     	];
     	columnsSet = [
-    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
-					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },
-					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '100px',
+    					/* No — 화면 표시 순번 (정렬 시에도 보이는 순서대로 1,2,3…) */
+    					{ data: null, orderable: false, searchable: false, visible: true, className: 'dt-body-center', width: '34px',
+    						render: function(data, type, row, meta) {
+    							return meta.row + 1;
+    						},
+    					},
+    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '80px'  },
+					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '75px'  },
+					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '85px',
 						    render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return getFormat(data,'d1')
@@ -2698,7 +2729,7 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-					    { data: 'medStart',  visible: true,  className: 'dt-body-center', width: '100px',
+					    { data: 'medStart',  visible: true,  className: 'dt-body-center', width: '85px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return getFormat(data,'d1')
@@ -2706,7 +2737,7 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '100px',
+						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '50px',
 						render: function(data, type, row) {
 							// 정렬용 값 — 관리(1) → 공란(2) → 제외(3)
 							if (type === 'sort' || type === 'type') {
@@ -2730,7 +2761,7 @@ function fn_ViewData(data) {
 							return data;
 						}
 					    },
-						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '100px',
+						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '75px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				if (data === 'A') return '의료최고';
@@ -2742,7 +2773,7 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'urineCtl',  visible: true,  className: 'dt-body-center', width: '120px',
+						{ data: 'urineCtl',  visible: true,  className: 'dt-body-center', width: '95px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				if (data === '0') return '0.조절함';
@@ -2781,7 +2812,7 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px',
+						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '85px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return getFormat(data,'d1')
