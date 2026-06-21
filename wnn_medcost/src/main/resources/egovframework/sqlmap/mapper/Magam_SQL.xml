@@ -1521,6 +1521,7 @@
 		                          WHERE tsm.HOSP_CD   = mm.HOSP_CD
 		                            AND tsm.CLAIM_NO  = mm.CLAIM_NO
 		                            AND tsm.BILL_SEQ  = mm.BILL_SEQ
+		                            AND tsm.ROW_NO    = jm.ROW_NO
 		                            AND tsm.SPEC_TYPE = 'JS008')
 		         AND EXISTS (SELECT 1
 		                       FROM TBL_JINORD_MST jsm
