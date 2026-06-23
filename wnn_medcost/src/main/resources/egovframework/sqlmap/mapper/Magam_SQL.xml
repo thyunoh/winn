@@ -205,53 +205,79 @@
 	
 	<select id="magamGetFileList" parameterType="MagamDTO"  resultMap="magamMap"><![CDATA[
 	  WITH CTE_MYOUNG AS (
-	    SELECT B.HOSP_CD
-	          ,B.CLAIM_NO
-	          ,SUM(FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 1)
-	             + FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 4)
-	               )           AS MED_AMT
-	          ,SUM(FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 2)
-	             + FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 5)
-	               )           AS SELF_AMT
-	          ,SUM(FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 3)
-	             + FN_CLAIM_TAMT(B.HOSP_CD, B.CLAIM_NO, B.BILL_SEQ, 6)
-	               )           AS CLAIM_AMT
-	      FROM TBL_MYOUNG_MST B
-	      JOIN TBL_MAGAM_CHUNG MC
-	        ON  B.HOSP_CD   = #{hosp_cd} 
-	       AND  MC.HOSP_CD  = B.HOSP_CD
-	       AND  MC.CLAIM_NO = B.CLAIM_NO
-	       AND  MC.MG_YEAR  = #{mg_year}
-	       AND  MC.MGMONTH  = #{mgmonth}
- 	]]>
-	    <if test='mg_flag == "8"'><![CDATA[
-	       AND  MC.MG_FLAG IN ('8','Z')
-	    ]]></if>
-	    <if test='mg_flag == "9"'><![CDATA[
-	       AND  MC.MG_FLAG IN ('9','Z')
-	    ]]></if>
-	<![CDATA[
-	     WHERE B.HOSP_CD = #{hosp_cd}
-	       AND (
-	               SELECT COUNT(DISTINCT tsm.ROW_NO)
-	                 FROM TBL_SPECODE_MST tsm
-	                WHERE tsm.HOSP_CD   = B.HOSP_CD
-	                  AND tsm.CLAIM_NO  = B.CLAIM_NO
-	                  AND tsm.BILL_SEQ  = B.BILL_SEQ
-	                  AND tsm.SPEC_TYPE = 'JS008'
-	           )
-	           <>
-	           (
-	               SELECT COUNT(*)
-	                 FROM TBL_JINORD_MST jsm
-	                WHERE jsm.HOSP_CD  = B.HOSP_CD
-	                  AND jsm.CLAIM_NO = B.CLAIM_NO
-	                  AND jsm.BILL_SEQ = B.BILL_SEQ
-	                  AND jsm.ITEM_NO <> 'L'
-	           )
-	     GROUP BY B.HOSP_CD, B.CLAIM_NO
-	)
-	SELECT DISTINCT
+		    SELECT mb.HOSP_CD
+		          ,mb.CLAIM_NO
+		          ,SUM(IFNULL(amt.AMOUNT,0))                       AS MED_AMT
+		          ,SUM(IFNULL(amt.BONIN,0))                        AS SELF_AMT
+		          ,SUM(IFNULL(amt.AMOUNT,0) - IFNULL(amt.BONIN,0)) AS CLAIM_AMT
+		    FROM (
+		        /* <> 필터 통과 bill_seq (기존 CTE WHERE 와 동일 → CM 존재여부/그룹 보존) */
+		        SELECT A.HOSP_CD, A.CLAIM_NO, A.BILL_SEQ
+		          FROM TBL_MYOUNG_MST A
+		          JOIN TBL_MAGAM_CHUNG MC
+		            ON  MC.HOSP_CD  = A.HOSP_CD
+		           AND  MC.CLAIM_NO = A.CLAIM_NO
+		           AND  MC.MG_YEAR  = #{mg_year}
+		           AND  MC.MGMONTH  = #{mgmonth}
+		 ]]>
+		    <if test='mg_flag == "8"'><![CDATA[
+		           AND  MC.MG_FLAG IN ('8','Z')
+		    ]]></if>
+		    <if test='mg_flag == "9"'><![CDATA[
+		           AND  MC.MG_FLAG IN ('9','Z')
+		    ]]></if>
+		<![CDATA[
+		         WHERE A.HOSP_CD = #{hosp_cd}
+		           AND (
+		                   (
+		                       SELECT COUNT(DISTINCT tsm.ROW_NO)
+		                         FROM TBL_SPECODE_MST tsm
+		                        WHERE tsm.HOSP_CD   = A.HOSP_CD
+		                          AND tsm.CLAIM_NO  = A.CLAIM_NO
+		                          AND tsm.BILL_SEQ  = A.BILL_SEQ
+		                          AND tsm.SPEC_TYPE = 'JS008'
+		                   )
+		                   <>
+		                   (
+		                       SELECT COUNT(*)
+		                         FROM TBL_JINORD_MST jsm
+		                        WHERE jsm.HOSP_CD  = A.HOSP_CD
+		                          AND jsm.CLAIM_NO = A.CLAIM_NO
+		                          AND jsm.BILL_SEQ = A.BILL_SEQ
+		                          AND jsm.ITEM_NO <> 'L'
+		                   )
+		               )
+		    ) mb
+		    LEFT JOIN (
+		        /* JS008 줄 금액 (기존 FN_CLAIM_TAMT 내부 계산 = 줄단위 BASE_AMT, FN_CLAIM_RATE 행당 1회) */
+		        SELECT A2.HOSP_CD, A2.CLAIM_NO, A2.BILL_SEQ
+		             , B.AMOUNT
+		             , FLOOR((B.AMOUNT - (B.AMOUNT *
+		                   (FN_CLAIM_RATE(A2.HOSP_CD, A2.CLAIM_NO, A2.BILL_SEQ, B.ROW_NO) / 100))) / 10) * 10 AS BONIN
+		          FROM TBL_MYOUNG_MST A2
+		          JOIN TBL_JINORD_MST B
+		            ON  B.HOSP_CD  = A2.HOSP_CD
+		           AND  B.CLAIM_NO = A2.CLAIM_NO
+		           AND  B.BILL_SEQ = A2.BILL_SEQ
+		           AND  IFNULL(B.DELYN,'') = ''
+		         WHERE A2.HOSP_CD = #{hosp_cd}
+		           AND IFNULL(A2.DELYN,'') = ''
+		           AND EXISTS (
+		                 SELECT 1
+		                   FROM TBL_SPECODE_MST C
+		                  WHERE C.HOSP_CD  = A2.HOSP_CD
+		                    AND C.CLAIM_NO = A2.CLAIM_NO
+		                    AND C.BILL_SEQ = A2.BILL_SEQ
+		                    AND C.ROW_NO   = B.ROW_NO
+		                    AND C.SPEC_TYPE = 'JS008'
+		               )
+		    ) amt
+		      ON  amt.HOSP_CD  = mb.HOSP_CD
+		     AND  amt.CLAIM_NO = mb.CLAIM_NO
+		     AND  amt.BILL_SEQ = mb.BILL_SEQ
+		    GROUP BY mb.HOSP_CD, mb.CLAIM_NO
+		)
+	 SELECT DISTINCT
 	    A.CLAIM_NO        AS claim_no
 	  , A.CLFORM_VER      AS clform_ver
 	  , IFNULL(C.PROP_5,'') AS claim_type_nm
