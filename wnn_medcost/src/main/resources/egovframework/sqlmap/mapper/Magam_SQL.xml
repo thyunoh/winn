@@ -3058,7 +3058,7 @@
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND C.LAST_FG      = '1'
-		   AND A.URINE_CTL    = '0'
+		   AND A.URINE_CTL    IN('0','3')
 		   AND A.INDWELL_CATH = '1'
 		
 		UNION ALL
@@ -4002,7 +4002,7 @@
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND C.LAST_FG      = '1'
-		   AND A.URINE_CTL    = '0'
+		   AND A.URINE_CTL  IN('0','3')            --  원래 A.URINE_CTL    = '0'   3.조절못함추가 
 		   AND A.INDWELL_CATH = '1'	 	  
 		
 		ORDER BY errType
