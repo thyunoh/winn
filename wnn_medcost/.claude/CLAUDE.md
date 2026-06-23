@@ -15,6 +15,19 @@
 - **[확정 2026-06-10] 직접 URL 접근 차단(로그인 강제) — 안 함**: `…/user/dashboard.do` 를 즐겨찾기로 직접 쓰는 기관/사용자가 실제로 있어, 로그인 강제 시 그들이 매번 로그인해야 함. 사용자 결정으로 **현재(영구 1일 쿠키 + 직접 .do 접근 허용) 유지**. 보안은 쿠키 1일 만료 + 로그아웃 삭제로 최소 확보. **"직접접근 막자/로그인 거쳐야만" 재요청 시 이 방침과 [s_hospid 세션쿠키 금지] 먼저 확인.** 정 강화하려면 s_hospid는 영구 유지한 채 별도 세션쿠키 게이트로만(절대 s_hospid를 세션쿠키화 금지), 로컬 테스트 후 적용.
 - **후속 (jsessionid 404 / 크롬 무스타일)**: 세션쿠키(JSESSIONID) 미전송 브라우저(예: 미로그인/쿠키차단 크롬)에서 서버가 전 URL에 `;jsessionid=` 를 붙여(URL 리라이트) 정적 CSS/JS 가 `…css;jsessionid=…` → **404 → 화면 무스타일**. [web.xml](src/main/webapp/WEB-INF/web.xml) 에 `<session-config><tracking-mode>COOKIE</tracking-mode></session-config>` 추가로 URL 리라이트 차단(쿠키 전용 추적). 엣지는 세션쿠키 있어 정상, 크롬은 미로그인/쿠키차단 시 발생. 이 설정으로 쿠키 없어도 정적파일은 정상 로드되어 최소한 스타일은 깨지지 않음. **web.xml 변경도 재배포/재기동 필요.**
 
+### [완료] 마감 샘파일 업로드 — `SP_EXECUTE_DYNAMIC_SQL` "Query was empty" + 핸들러가 진짜오류 은폐 (2026-06-23)
+- **증상**: 특정(큰) 청구샘파일 업로드 시 `45000 - SQLSTATE 없음 - MESSAGE 없음` 팝업. 데이터는 정상인데 파일 지우면 다음 줄/파일에서 또 발생. `TBL_DISEASE_MST`, GHP, valsize=78 등에서 반복.
+- **근본원인**: [SP_EXECUTE_DYNAMIC_SQL] 이 동적SQL을 `;` 로 분리 실행하는데, **마지막 세미콜론 뒤 개행(`\n`)** 이 빈 문장으로 잡혀 `PREPARE '\n'` → **`Query was empty`(errno 1065)**. 가드가 `LENGTH(stmt_text) > 0` 이라 `"\n"`(길이 1)이 통과. 큰 파일이라 루프 중간 flush(`LENGTH(iuds_sql_nm) > max_insert_length=10MB`)가 발동하며 `;\n` 으로 끝나 노출됨. (작은 파일은 끝이 `TBL_MAGAM_INFO` INSERT의 `;` 라 안 걸림)
+- **왜 원인이 안 보였나 (중요)**: 핸들러들이 진짜 오류를 계속 변형/소실시킴.
+  1. `SP_EXECUTE_DYNAMIC_SQL` 의 EXIT HANDLER 가 `CONCAT('... ', sql_value)` 에서 **CONCAT 인자 NULL → 전체 NULL → `SIGNAL SET MESSAGE_TEXT = NULL`** → `Variable 'MESSAGE_TEXT' can't be set to the value of 'NULL'` 2차오류로 덮음.
+  2. 메인 `SP_UPLOAD_MAGAM_SAMFILES` 의 EXIT HANDLER 는 `NOT FOUND` continue 핸들러가 진단영역을 덮어 `GET DIAGNOSTICS` 가 NULL/빈값 반환 → "SQLSTATE 없음".
+- **조치 (확정)**:
+  1. **[SP_EXECUTE_DYNAMIC_SQL]** 가드를 `IF stmt_text IS NOT NULL AND stmt_text REGEXP '[^[:space:]]' THEN` 로 변경 → 공백/개행만 있는 조각 스킵(`TRIM` 은 개행 못 지워서 REGEXP 사용). **EXIT HANDLER 3개는 모두 제거(주석)** — 오류는 메인으로 그대로 전파시키는 게 안전(인너는 롤백 기능 없음, 메시지만 변형했음).
+  2. **[SP_UPLOAD_MAGAM_SAMFILES] 메인 EXIT HANDLER 복구**: `GET DIAGNOSTICS` + `errcode/errmess`(stage/colVal/lastSQL 디버그필드 포함) + `ROLLBACK`, **RESIGNAL 없음**(앱이 친절한 팝업 띄우게). `NOT FOUND` continue 핸들러는 유지.
+- **디버깅 기법(재사용)**: 원인 안 보일 때 ① 메인 errmess 에 `@dbg`(단계마커)·`@sql_val`(실패 동적문장) 추가 → 위치 특정, ② 그래도 안 보이면 **핸들러 전부 주석 + 메인에 `RESIGNAL` 임시추가** → 원본 MySQL 오류를 톰캣 로그/팝업에 그대로 노출. 정리 시 RESIGNAL 제거.
+- **주의**: `col_list`/`val_list` 는 LONGTEXT 로 확장해 둠(원래 VARCHAR(4000)). 4000 오버플로우는 이번 원인은 아니었지만 큰 테이블 대비 유지.
+- **배포**: 프로시저 2개 `DELIMITER` 재생성. (앱 변경 없음)
+
 ## 적정성평가 (assessment.jsp) 요구사항
 
 ### [대기] 유치도뇨관 전월 대상자 당월 추적 기능
