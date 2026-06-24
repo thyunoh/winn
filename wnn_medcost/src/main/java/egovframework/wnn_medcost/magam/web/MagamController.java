@@ -1403,6 +1403,11 @@ public class MagamController {
 				resultdt = svc.select_assesCheck06(dto);
 				response.put("data",resultdt);
         	    System.out.println("select_assesCheck 06 - 완료했음");
+        	}  else if (dto.getJobFlag().equals("07")) {
+        		System.out.println("select_assesCheck 07 - 호출했음");
+				resultdt = svc.select_assesCheck07(dto);
+				response.put("data",resultdt);
+        	    System.out.println("select_assesCheck 07 - 완료했음");
         	} else if (dto.getJobFlag().equals("99")) {
         		System.out.println("select_assesCheck 99 - 호출했음");
 				resultdt = svc.select_assesCheck99(dto);

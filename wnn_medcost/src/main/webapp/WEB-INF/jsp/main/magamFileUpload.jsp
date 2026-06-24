@@ -1403,7 +1403,7 @@ async function handleFileSelection(event) {
 	    	            reader.readAsText(file, 'euc-kr');
 	    	            reader.onload = function (e) {
 	    	                let content = e.target.result;
-	    	                let lines = content.split('\n');
+	    	                let lines = content.split(/\r?\n/);   // CRLF 파일의 trailing \r 제거 — 고정폭 라인 +1byte(valsize 오류) 방지
 	    	                let chunggu = '1';
 	    	                
 	    	                if (file.name != 'M010.1') { 
@@ -2875,7 +2875,7 @@ async function handleVerifyFileSelection(event) {
                 reader.readAsText(file, 'euc-kr');
                 reader.onload = function(e) {
                     var content = e.target.result;
-                    var fileLines = content.split('\n');
+                    var fileLines = content.split(/\r?\n/);   // CRLF 파일의 trailing \r 제거 — 고정폭 라인 +1byte(valsize 오류) 방지
                     var data = [];
                     for (var idx = 0; idx < fileLines.length; idx++) {
                         if (fileLines[idx]) {

@@ -3084,9 +3084,31 @@
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND C.LAST_FG      = '1'
-		   AND A.URINE_CTL    IN('0','3')
+		 --  AND A.URINE_CTL    IN('0')
+		   AND A.URINE_CTL    IN('3') -- 조절못함 
 		   AND A.INDWELL_CATH = '1'
-		
+		UNION ALL
+		-- 배변조절상태-조절가능/소변조정상태-조정가능 패드,팬티형 기저귀 체크경우
+		  
+		  SELECT DISTINCT 
+		         LEFT(C.PAT_ID,6)                                  AS patId
+		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					ELSE '' END AS patNm
+			   , C.ADMIT_DT                                        AS admitDt
+			   , C.MED_START                                       AS medStart  
+			   , C.DOC_DT                                          AS docDt
+			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
+			   , 'H2'                                              AS errType
+			   , '배변조절상태-조절가능/소변조정상태-조정가능 패드,팬티형 기저귀 체크경우' AS errName
+		  FROM TBL_PATVAL_MST C
+		WHERE C.HOSP_CD = #{hospCd}
+		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
+		   AND IFNULL(C.BOWEL_CTL,'')  = '0' AND IFNULL(C.URINE_CTL,'')  = '0'
+		   AND C.PAD_DIAPER = '1'         
+	
 		UNION ALL
 		-- [욕창 새로생긴 오류 1] 전월 욕창이 없고, 당월 욕창이 생겼으나, 이전평가 이후 새로운 욕창 발생여부에 '없음'으로 체크 
 		  SELECT DISTINCT
@@ -4028,7 +4050,7 @@
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND C.LAST_FG      = '1'
-		   AND A.URINE_CTL  IN('0','3')            --  원래 A.URINE_CTL    = '0'   3.조절못함추가 
+		   AND A.URINE_CTL  IN('3')            --  원래 A.URINE_CTL    = '0'   3.조절못함추가 
 		   AND A.INDWELL_CATH = '1'	 	  
 		
 		ORDER BY errType
@@ -4404,7 +4426,27 @@
 		
 		ORDER BY errType
 	</select>
-	
+	<select id="select_assesCheck07" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
+		  SELECT DISTINCT 
+		         LEFT(C.PAT_ID,6)                                  AS patId
+		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
+					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					ELSE '' END AS patNm
+			   , C.ADMIT_DT                                        AS admitDt
+			   , C.MED_START                                       AS medStart  
+			   , C.DOC_DT                                          AS docDt
+			   , C.EVAL_TYPE                                       AS evalType
+			   , C.PAT_CLASS                                       AS patClass
+			   , C.INDWELL_CATH                                    AS indwellCath
+			   , 'H2'                                              AS errType
+			   , '배변조절상태-조절가능/소변조정상태-조정가능 패드,팬티형 기저귀 체크경우' AS errName
+		  FROM TBL_PATVAL_MST C
+		WHERE C.HOSP_CD = #{hospCd}
+		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
+		   AND IFNULL(C.BOWEL_CTL,'')  = '0' AND IFNULL(C.URINE_CTL,'')  = '0' -- 배변조절상태-조절가능/소변조정상태-조정가능
+		   AND C.PAD_DIAPER = '1'   -- 패드,팬티형 기저귀 체크
+		ORDER BY errType
+	</select>	
 	<!-- ============================================================================
 	     유치도뇨관 오더(TBL_SPCSUGA_INFO) ↔ 환자평가표(TBL_PATVAL_MST) 크로스체크
 	     - jobyymm : 평가표 기준 조회월 (SPCSUGA 측은 전체 누적 데이터 사용)

@@ -105,6 +105,7 @@ public interface MagamMapper {
 	List<PatvalDTO>  select_assesCheck04(PatvalDTO dto);
 	List<PatvalDTO>  select_assesCheck05(PatvalDTO dto);
 	List<PatvalDTO>  select_assesCheck06(PatvalDTO dto);
+	List<PatvalDTO>  select_assesCheck07(PatvalDTO dto);
 	List<PatvalDTO>  select_assesCheck99(PatvalDTO dto);
 	
 	List<IndiDTO> select_HospitalMst(IndiDTO dto);

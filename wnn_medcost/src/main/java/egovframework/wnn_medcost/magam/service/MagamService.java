@@ -82,6 +82,7 @@ public interface MagamService {
 	List<PatvalDTO>  select_assesCheck04(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_assesCheck05(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_assesCheck06(PatvalDTO dto) throws Exception;
+	List<PatvalDTO>  select_assesCheck07(PatvalDTO dto) throws Exception;
 	List<PatvalDTO>  select_assesCheck99(PatvalDTO dto) throws Exception;
 	
 	List<IndiDTO> select_HospitalMst(IndiDTO dto) throws Exception;

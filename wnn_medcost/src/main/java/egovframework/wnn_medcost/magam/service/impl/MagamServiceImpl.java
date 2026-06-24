@@ -565,6 +565,10 @@ public class MagamServiceImpl implements MagamService {
 		return mapper.select_assesCheck06(dto);
 	}
 	@Override
+	public List<PatvalDTO> select_assesCheck07(PatvalDTO dto) throws Exception {
+		return mapper.select_assesCheck07(dto);
+	}
+	@Override
 	public List<PatvalDTO> select_assesCheck99(PatvalDTO dto) throws Exception {
 		return mapper.select_assesCheck99(dto);
 	}

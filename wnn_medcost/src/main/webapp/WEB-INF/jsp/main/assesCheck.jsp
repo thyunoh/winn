@@ -62,6 +62,9 @@
 								        <div class="col-lg-6">
 								            <button data-flag="06" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('06')">【 당뇨 환자 점검 】</button>
 								        </div>
+								        <div class="col-lg-6">
+								            <button data-flag="07" class="btn btn-outline-primary btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData('07')">【 배뇨훈련 점검 】</button>
+								        </div>
 								        <div class="col-lg-12">
 								        	<span id="wait_Create" class="loader" style="display: none;">환자평가표 점검중...</span>
 								        </div>
@@ -262,6 +265,8 @@ function fn_CreateData(flag) {
 		lab_txt.textContent = "일상 생활 점검";
     } else if (jobFlag === "06" ) {
     	lab_txt.textContent = "당뇨 환자 점검";
+    } else if (jobFlag === "07" ) {
+    	lab_txt.textContent = "배뇨훈련 점검";
     } else if (jobFlag === "99" ) {
     	lab_txt.textContent = "평가 대상 보기";
     }
@@ -398,7 +403,8 @@ function fn_CreateData(flag) {
 						            if (prefix === 'E') return '제거일자';
 						            if (prefix === 'F') return '삽입기간';
 						            if (prefix === 'G') return '삽입·제거일자';
-						            if (prefix === 'H') return '소변조절';
+						            if (data === 'H1')  return '소변조절못함';
+						            if (data === 'H2')  return '기저귀사용';
 	
 						            /* 신규욕창 */
 						            if (prefix === 'I') return '욕창 발생일 확인';
