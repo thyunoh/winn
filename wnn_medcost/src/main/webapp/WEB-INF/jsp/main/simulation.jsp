@@ -162,6 +162,8 @@ function showScorePopup(td, rowData) {
 		var isAbsUnit = ['01','02','03'].includes(cateCd);
 		var isLower   = ['01','02','03','05','10','14'].includes(cateCd);
 		var noData    = (dtortot === 0);
+		// 분모가 환자수가 아닌 지표(04 재직일수율·08 DUR)는 명 환산 부적절 → 표준 % 그대로
+		var notHeadcountDenom = ['04','08'].includes(cateCd);
 
 		// 현재값
 		var curRate = noData ? 0 : (ntortot / dtortot) * 100;
@@ -179,6 +181,11 @@ function showScorePopup(td, rowData) {
 				startNm = z.start;
 				endNm = (z.end >= 9999) ? '∞' : z.end;
 				rangeText = startNm + '~' + endNm + '명';
+			} else if (notHeadcountDenom) {
+				// 04 재직일수율·08 DUR : 표준 % 구간 그대로 (명 환산 안 함)
+				startNm = z.start;
+				endNm = (z.end >= 100) ? 100 : z.end;
+				rangeText = startNm + '~' + endNm + '%';
 			} else if (noData) {
 				// 분모 없으면 기준만 표시 (명 단위)
 				startNm = z.start;
@@ -195,9 +202,10 @@ function showScorePopup(td, rowData) {
 			if (noData) {
 				needText = '<span style="color:#999">데이터 없음</span>';
 			} else if (isCurrent) {
-				var curDisplay = isAbsUnit ? curVal : ntortot;
-				needText = '<b style="color:#1565C0">★ 현재 ' + curDisplay + '명</b>';
-			} else if (!isAbsUnit) {
+				var curDisplay = isAbsUnit ? (curVal + '명')
+				              : (notHeadcountDenom ? ((Math.round(curRate * 100) / 100) + '%') : (ntortot + '명'));
+				needText = '<b style="color:#1565C0">★ 현재 ' + curDisplay + '</b>';
+			} else if (!isAbsUnit && !notHeadcountDenom) {
 				if (isLower && curRate > z.end) {
 					var need = ntortot - (typeof endNm === 'number' ? endNm : 0);
 					if (need > 0) needText = '<b style="color:#e74c3c">-' + need + '명</b>';

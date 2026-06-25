@@ -1795,7 +1795,19 @@ function showIndiSummary(data) {
 	var isPersonUnit = ['01','02','03'].includes(data.cate_cd);
 	var valUnit  = isPersonUnit ? '명' : '%';
 	var isFivePoint = (calVal >= criteria.start && calVal <= criteria.end);
-	var rangeText = criteria.start + ' ~ ' + criteria.end + '명';
+	// 표준 구간(전 병원 공통, % 또는 명)
+	var stdRangeText = criteria.start + ' ~ ' + criteria.end + valUnit;
+	// 해당 병원 구간: % 지표는 이 병원 분모(dtorval) 기준 명수로 환산 (메인 그리드 fiveZone 과 동일 방식)
+	//   - 1인당 환자수(01·02·03) 등 명 단위 지표, 분모 0, 또는 분모가 환자수가 아닌 지표(04 재직일수율·08 DUR)는 표준 구간 그대로
+	var notHeadcountDenom = ['04','08'].includes(data.cate_cd);
+	var rangeText;
+	if (isPersonUnit || notHeadcountDenom || !(dtorval > 0)) {
+		rangeText = stdRangeText;
+	} else if (criteria.direction === 'lower') {
+		rangeText = '0 ~ ' + Math.floor(criteria.end * dtorval / 100) + '명';   // 상한 이하면 5점
+	} else {
+		rangeText = Math.ceil(criteria.start * dtorval / 100) + ' ~ ' + Math.round(dtorval) + '명';   // 하한 이상이면 5점
+	}
 
 	var html = '';
 	if (isFivePoint) {
@@ -1823,7 +1835,9 @@ function showIndiSummary(data) {
 		}
 		/* 만점 대비 부족 점수 — 기본 소수점 2자리, 둘째자리가 0 이면 절사 (예: 3.52→3.52, 3.50→3.5, 3.00→3.0) */
 		var scoreDiff = (stdweig - weigval).toFixed(2).replace(/0$/, '');
-		var detailLine = '→ 5점 구간: ' + rangeText;
+		var isConverted = (rangeText !== stdRangeText);
+		var detailLine = '→ 5점 구간' + (isConverted ? '(해당 병원)' : '') + ': ' + rangeText;
+		if (isConverted) detailLine += ' <span class="text-muted">(표준 ' + stdRangeText + ')</span>';
 		if (targetMsg) detailLine += ' | ' + targetMsg;
 		html = '<div class="indi-summary-warn">' +
 			'<span class="indi-dot warn">▲</span> ' +
