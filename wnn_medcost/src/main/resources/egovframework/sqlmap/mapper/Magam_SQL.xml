@@ -1386,8 +1386,11 @@
 				     , c.ADMIT_DT                   AS admitDt
 				     , c.MED_START                  AS medStart
 				     , c.DOC_DT                     AS docDt
+				     
 				--     , MAX(PATIENT_CATHETER_CHECK_TEST(c.HOSP_CD,c.CLFORM_VER,c.PAT_ID,c.ADMIT_DT,c.MED_START,c.EVAL_TYPE,c.INDWELL_CATH,c.PAT_CLASS)) AS overdayYn
+				
 				     , MAX(PATIENT_CATHETER_CHECK(c.HOSP_CD,c.CLFORM_VER,c.PAT_ID,c.ADMIT_DT,c.MED_START,c.EVAL_TYPE,c.INDWELL_CATH,c.PAT_CLASS)) AS overdayYn
+				     
 				     , MAX(CASE WHEN (c.BOWEL_CTL = 3)  OR (c.PR_ULCER3 + c.PR_ULCER4 > 0 ) OR 
 				                     (c.COMA      = 1  AND  c.DRESSING  >= 4 AND c.WASHING    >= 4 AND c.BRUSHING  >= 4 AND 
 				                      c.BATHING  >= 4  AND  c.EATING    >= 4 AND c.MOVE_POS   >= 4 AND c.SIT_UP    >= 4 AND 
