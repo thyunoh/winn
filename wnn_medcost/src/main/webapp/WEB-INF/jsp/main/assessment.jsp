@@ -185,6 +185,13 @@
 							        }
 							        #prevMonthWarn.blink { animation: prevMonthBlink 1s ease-in-out infinite; }
 
+							        /* '등록되지 않은 자료입니다' 안내 팝업 - 작게 */
+							        .swal-compact .swal2-icon { width: 48px; height: 48px; margin: 8px auto 6px; }
+							        .swal-compact .swal2-icon .swal2-icon-content { font-size: 1.8em; }
+							        .swal-compact-title { font-size: 1.05rem !important; margin: 4px 0 2px !important; }
+							        .swal-compact-text  { font-size: 0.82rem !important; line-height: 1.4 !important; color: #666 !important; }
+							        .swal-compact-btn   { font-size: 0.82rem !important; padding: 5px 18px !important; }
+
 							        /* 환자평가표 조회 버튼 — 활성화됨 (_show 클래스로 표시) */
 							        /* 재오픈 시 아래 display:inline-flex !important 선택자 사용 예정 */
 							        #btnPatvalView.patval-btn._show,
@@ -312,7 +319,7 @@
 											<div class="col-sm-2 col-sm-2">
 					  	   					    <button id="form_BtnSel" type="button" class="btn btm-xs btn-outline-warning mb-3"
 					  	   					    style="padding: 2px 15px; font-size: 12px; line-height: 2.6; font-weight: bold;"  
-					  	   					    onClick="fn_Select()">조회하기........· <i class="fas fa-search"></i></button>
+					  	   					    onClick="fn_Select(true)">조회하기........· <i class="fas fa-search"></i></button>
 					                        </div>
 					                        <label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
 			
@@ -2294,11 +2301,11 @@ function fn_Update() {
     });
 }
 
-function fn_Select() {
-	
+function fn_Select(showMsg) {
+
 	$.ajax({
         type: "POST",
-        url: "/user/selectHospGrd.do", 
+        url: "/user/selectHospGrd.do",
         data: {
             hospCd: hospid,
             startYy: $("#yearQuarter").val(),
@@ -2306,34 +2313,44 @@ function fn_Select() {
         },
         dataType: "json",
         success: function(response) {
-        	
-        	if (response && Object.keys(response).length > 0) {
-        		
-                $("#hospcdGrade").val(response.data.hospgrade);
-                $("#pat_Count").val(response.data.patCount);
-                $("#doc_Count").val(response.data.docCount);
-                $("#nur_Count").val(response.data.nurCount);
-                $("#nursCount").val(response.data.nurSCnt);
-                $("#pham_Days").val(response.data.phamDays);
-               // $("#total_Day").val(response.data.totalDay);
-               // $("#goal_Name").val(response.data.goalName);
-                $("#goal_Score").val(response.data.goalScore);
-                $("#goal_Jugi").val(response.data.goalJugi);
-    	        $("#goal_Chasu").val(response.data.goalChasu);
-    	        
+
+        	var d = (response && response.data) ? response.data : null;
+
+        	// 선택한 "신고분기"에 실제로 등록된 자료가 있는지 판단.
+        	// goalScore/goalJugi/goalChasu 는 연도단위(다른 분기만 저장해도 채워짐)라 판정에서 제외.
+        	// qterFlag 는 해당 분기 행(LEFT JOIN)이 있을 때만 채워지므로 분기 등록의 핵심 신호.
+        	var hasData = d && (
+        		d.qterFlag || d.hospgrade || d.patCount || d.docCount ||
+        		d.nurCount || d.nurSCnt   || d.phamDays
+        	);
+
+        	if (hasData) {
+
+                $("#hospcdGrade").val(d.hospgrade);
+                $("#pat_Count").val(d.patCount);
+                $("#doc_Count").val(d.docCount);
+                $("#nur_Count").val(d.nurCount);
+                $("#nursCount").val(d.nurSCnt);
+                $("#pham_Days").val(d.phamDays);
+               // $("#total_Day").val(d.totalDay);
+               // $("#goal_Name").val(d.goalName);
+                $("#goal_Score").val(d.goalScore);
+                $("#goal_Jugi").val(d.goalJugi);
+    	        $("#goal_Chasu").val(d.goalChasu);
+
     	        if (winner === 'Y' || mainfg === '1') {
                 	document.getElementById("formBtnSave").style.display = "flex";
     	        } else {
-    	        	
+
     	        	document.getElementById("formBtnSave").style.display = "none";
-    	        	
+
     	        	const {
     	        	    patCount,
     	        	    docCount,
     	        	    nurCount,
     	        	    nurSCnt,
     	        	    phamDays
-    	        	} = response.data || {};
+    	        	} = d || {};
 
     	        	const isAllEmpty = [patCount, docCount, nurCount, nurSCnt, phamDays].every(val => !val);
 
@@ -2341,6 +2358,29 @@ function fn_Select() {
     	        	    document.getElementById("formBtnSave").style.display = "flex";
     	        	}
     	        }
+            } else {
+
+            	// 등록된 자료 없음 → 입력값은 그대로 보존(덮어쓰지 않음), 저장 가능하도록 버튼만 노출
+            	document.getElementById("formBtnSave").style.display = "flex";
+
+            	// 사용자가 직접 조회(분기 변경 / 조회하기 버튼)한 경우에만 안내 메시지 표시
+            	if (showMsg) {
+            		Swal.fire({
+            			icon: 'info',
+            			title: '등록되지 않은 자료입니다',
+            			text: '선택한 신고분기에 저장된 자료가 없습니다. 입력 후 저장하기를 눌러주세요.',
+            			confirmButtonText: '확인',
+            			width: 360,
+            			padding: '1em',
+            			iconColor: '#3fc3ee',
+            			customClass: {
+            				popup: 'swal-compact',
+            				title: 'swal-compact-title',
+            				htmlContainer: 'swal-compact-text',
+            				confirmButton: 'swal-compact-btn'
+            			}
+            		});
+            	}
             }
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -5706,10 +5746,10 @@ $(document).ready(function() {
 		fn_IndiSelect();
     });
 	$('#yearQuarter').on('change', function() {
-		fn_Select();
+		fn_Select(true);
     });
 	$('#monsQuarter').on('change', function() {
-		fn_Select();
+		fn_Select(true);
     });
 	
 	document.getElementById('goal_Score').addEventListener('input', function () {
