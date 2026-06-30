@@ -3032,7 +3032,7 @@
 		
 		UNION ALL
 		
-		-- [유치도뇨관 오류 7] '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)'  
+		-- [유치도뇨관 오류 7] '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀에 체크되어있는 경우 (확인필요)'
 		
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
@@ -3046,7 +3046,7 @@
 			   , A.PAT_CLASS                                       AS patClass
 			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'H1'                                              AS errType
-			   , '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)' AS errName
+			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀에 체크되어있는 경우 (확인필요)' AS errName
 		  FROM TBL_PATVAL_MST A
 		  JOIN (SELECT B.HOSP_CD
 		  	         , B.CHUNGSEQ
@@ -3092,7 +3092,7 @@
 		   AND A.URINE_CTL    IN('3') -- 조절못함 
 		   AND A.INDWELL_CATH = '1'
 		UNION ALL
-		-- 배변조절상태-조절가능/소변조정상태-조정가능 패드,팬티형 기저귀 체크경우
+		-- 배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)
 		  
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
@@ -3106,7 +3106,7 @@
 			   , C.PAT_CLASS                                       AS patClass
 			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'H2'                                              AS errType
-			   , '배변조절상태-조절가능/소변조정상태-조정가능 패드,팬티형 기저귀 체크경우' AS errName
+			   , '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)' AS errName
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
@@ -3998,7 +3998,7 @@
 		
 		UNION ALL
 		
-		-- [유치도뇨관 오류 7] '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)'  
+		-- [유치도뇨관 오류 7] '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀에 체크되어있는 경우 (확인필요)'  
 		
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
@@ -4012,7 +4012,7 @@
 			   , A.PAT_CLASS                                       AS patClass
 			   , A.INDWELL_CATH                                    AS indwellCath
 			   , 'H1'                                              AS errType
-			   , '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)' AS errName
+			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀에 체크되어있는 경우 (확인필요)' AS errName
 		  FROM TBL_PATVAL_MST A
 		  JOIN (SELECT B.HOSP_CD
 		  	         , B.CHUNGSEQ
@@ -4443,7 +4443,7 @@
 			   , C.PAT_CLASS                                       AS patClass
 			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'H2'                                              AS errType
-			   , '배변조절상태-조절가능/소변조정상태-조정가능 패드,팬티형 기저귀 체크경우' AS errName
+			   , '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)' AS errName
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
