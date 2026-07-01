@@ -3341,9 +3341,18 @@
 		  FROM TBL_PATVAL_MST A
           WHERE A.HOSP_CD = #{hospCd}
             AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
-		    AND A.WEIG_DT NOT BETWEEN A.MED_START AND A.DOC_DT            
-            AND A.WEIG_HEIG_YN = '1' 
-            
+		    AND A.WEIG_DT NOT BETWEEN A.MED_START AND A.DOC_DT
+            AND A.WEIG_HEIG_YN = '1'
+            -- 같은 환자의 전월 평가표와 당월 평가표의 작성일(DOC_DT)이 같으면 J4에서 제외(표시 안 함)
+            AND NOT EXISTS (
+                    SELECT 1
+                      FROM TBL_PATVAL_MST P
+                     WHERE P.HOSP_CD = A.HOSP_CD
+                       AND P.PAT_ID  = A.PAT_ID
+                       AND P.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm},'01'), INTERVAL 1 MONTH),'%Y%m'),'%')
+                       AND P.DOC_DT  = A.DOC_DT
+                )
+
        UNION ALL
           -- 욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가  
 		  SELECT DISTINCT

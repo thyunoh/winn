@@ -121,6 +121,21 @@
         .asq-popup-card table.dataTable tbody tr:hover {
             background: #f5f9fd !important;
         }
+        /* ===== 컬럼 폭을 헤더 선언폭(width)에 고정 + 넘는 글자는 ... 처리 ===== */
+        /* 헤더/바디 테이블 모두 고정 레이아웃 → 선언한 width 그대로 유지(내용에 안 늘어남) */
+        .asq-popup-card div.dataTables_scrollHead table.dataTable,
+        .asq-popup-card div.dataTables_scrollBody table.dataTable,
+        .asq-popup-card div.dt-scroll-head table.dataTable,
+        .asq-popup-card div.dt-scroll-body table.dataTable {
+            table-layout: fixed !important;
+        }
+        /* 바디 셀: 한 줄 유지 + 폭 초과분 ... 으로 클립 */
+        .asq-popup-card div.dataTables_scrollBody table.dataTable tbody td,
+        .asq-popup-card div.dt-scroll-body table.dataTable tbody td {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
     </style>
     <style id="asq-override-styles">
         /* ===== 1. 선택 행 색상 (연한 파란색) ===== */
@@ -465,7 +480,7 @@
 		<!-- ============================================================== -->
 		var gridColums = [];
 		var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
-		var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
+		var auto_Width = false;   		// 열 너비 자동 계산 - autoWidth (false: 선언 width 고정, 내용에 안 늘어남)
 		var page_Hight = 650;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 		var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse
 		
@@ -500,10 +515,10 @@
 	        				{ data: 'asqSeq',     visible: false, className: 'dt-body-center' , width: '100px' ,  name: 'keyasqSeq', primaryKey: true },
 	        				{ data: 'fileGb',     visible: false, className: 'dt-body-center' , width: '100px' ,  name: 'keyfileGb', primaryKey: true },
 	        				{ data: 'ansrStat',   visible: true,  className: 'dt-body-center' , headCenter: true  , width: '50px'},
-	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '300px'},
-	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '400px'},
-	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '400px'},
-	        				{ data: 'userNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '300px'},
+	        				{ data: 'qstnTitle',  visible: true,  className: 'dt-body-left'   , width: '420px'},
+	        				{ data: 'qstnConts',  visible: true,  className: 'dt-body-left'   , width: '520px'},
+	        				{ data: 'hospNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '200px'},
+	        				{ data: 'userNm',     visible: true,  className: 'dt-body-center' , headCenter: true  , width: '120px'},
 	        				{ data: 'updDttm',    visible: true,  className: 'dt-body-center' , width: '150px',  },
 	        				{ data: 'fileYn',     visible: true,  className: 'dt-body-center' , width: '50px',
 	        				    render: function (data, type, row) {
@@ -797,6 +812,11 @@
 				        rowCallback: function(row, data, index) {
 				            $(row).find('td').css({'padding': colPadding, 'font-weight': 'normal'});
 				        },
+				        drawCallback: function() {
+				            // 데이터 로드(매 draw)마다 헤더-바디 컬럼 폭 재동기화 → 헤더/그리드 정렬 맞춤
+				            // (scrollX 에서 바디 컬럼이 내용에 맞춰 늘어나도 헤더가 따라오도록)
+				            try { this.api().columns.adjust(); } catch (e) {}
+				        },
 				        lengthMenu: [data_Count, data_Count],
 				        pageLength: defaultCnt, 
 				        // 페이지와 버튼 넓히기  
@@ -869,11 +889,15 @@
 				            },
 					        {
 				            	targets: markColums,
-					            render: function(data, type, row) {
-					                return type === 'display' && data.length > txt_Markln ?
-					                data.substr(0, txt_Markln) + '...' : data;
+					            render: function(data, type, row, meta) {
+					                if (type !== 'display') return data;
+					                var txt = (data && data.length > txt_Markln) ? (data.substr(0, txt_Markln) + '...') : (data || '');
+					                // 선언한 컬럼 width 로 셀 내용을 고정폭 div에 가둬 컬럼이 내용따라 늘어나지 않게 함 → 헤더와 폭 일치, 초과분 ...
+					                var w = (gridColums[meta.col] && gridColums[meta.col].width) ? gridColums[meta.col].width : '';
+					                var wstyle = w ? ('width:' + w + ';max-width:' + w + ';') : '';
+					                return '<div style="' + wstyle + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + txt + '</div>';
 					            }
-					        },				            
+					        },
 					        {
 					            targets: ['_all'], 
 					            createdCell: function (td, cellData, rowData, row, col) {
@@ -892,6 +916,8 @@
 				        topBar.style.cssText = 'display:flex !important; align-items:center; gap:5px; margin:0; margin-left:auto;';
 				        controlsDiv.appendChild(topBar);
 				    }
+				    // 카드 레이아웃이 안정된 뒤 헤더-바디 컬럼 폭 한번 더 동기화 (초기 정렬 보정)
+				    try { dataTable.columns.adjust(); } catch (e) {}
 				}, 500);
 
 				// 전체 선택 체크박스 기능
