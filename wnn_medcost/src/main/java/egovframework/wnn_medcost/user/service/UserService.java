@@ -91,6 +91,7 @@ public interface UserService {
 	boolean          saveHospGrd(HospGrdDTO dto)          throws Exception;
 	boolean          yearSaveHospGrd(HospGrdDTO dto)      throws Exception;
 	HospGrdDTO       selectHospGrd(HospGrdDTO dto)        throws Exception;
-	
+	java.util.List<HospGrdDTO> selectHospGrdList(HospGrdDTO dto) throws Exception;
+
 	void callIndicatorsStructureZone(HospGrdDTO dto)      throws Exception;
 }

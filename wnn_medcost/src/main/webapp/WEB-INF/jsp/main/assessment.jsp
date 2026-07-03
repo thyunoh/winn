@@ -83,7 +83,7 @@
 							    <!-- 추가 e -->
 							</div>
 						</div>	
-	                    <div class="col-lg-7">
+	                    <div class="col-lg-7 d-flex flex-column">
 		                    <style>
 									    .std-toast-title { font-size: 18px !important; font-weight: 600 !important; margin-top: 6px !important; }
 									    .std-popup { padding: 10px 16px !important; }
@@ -95,7 +95,7 @@
 								        <div><b>본 표준화 점수 구간은 2024년 평가 결과 기준입니다.</b><br>
 								        안정적인 상위등급 달성 및 유지를 위해, 목표값은 제시된 구간보다 <b>10~20% 이상 여유 있게</b> 설정하여 관리하시기 바랍니다.</div>
 								    </div>
-								    <div class="card" id="card_container" style="display: none;">
+								    <div class="card" id="card_container" style="display: none; flex:1 1 auto;">
 
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
 
@@ -283,8 +283,9 @@
 							    </style>
 							    <!-- 라인 1줄 생성 -->
 							    <hr style="margin: 0; border-top: 2px solid #ccc;">
-							    
-							    <div class="card-header11">							        
+
+							    <!-- flex 세로 컨테이너 — 카드가 늘어난 만큼 저장분기 그리드+안내문구를 카드 하단에 정렬 -->
+							    <div class="card-header11" style="flex:1 1 auto; display:flex; flex-direction:column;">
 						        	<div id="inputZone" style="display: none;">                
 					                	<div class="form-group row">
 					                	
@@ -375,6 +376,18 @@
 						        	<table id="viewTable" class="display nowrap stripe hover cell-border order-column responsive">
 
 									</table>
+									<!-- 저장된 분기 목록 그리드 (차등제 01~04 화면 전용) — 행 클릭 시 위 폼에 적용. 화면 넘치면 좌우 스크롤 -->
+									<div id="grdListWrap" style="display:none; overflow-x:auto; margin-top:auto; min-height:245px; border:1px solid #e6e8eb; border-radius:6px;">
+										<table id="grdList" class="table table-sm table-bordered text-center mb-0" style="width:100%; min-width:900px; font-size:14px; white-space:nowrap; table-layout:auto;">
+											<thead style="background:#f4f6f8;">
+												<tr>
+													<th>신고분기</th><th>주기</th><th>차수</th><th>목표점수</th><th>병원등급</th>
+													<th>평균환자수</th><th>의사수</th><th>간호사수</th><th>간호인력수</th><th>약사재직일수</th><th>수정일시</th><th>삭제</th>
+												</tr>
+											</thead>
+											<tbody id="grdListBody"></tbody>
+										</table>
+									</div>
 									<!-- 분석 문구 — 모든 카테고리 그리드 하단 + 약사재직일수율(01~04) 입력폼 하단 공통 표시 -->
 									<div id="indiNoticeText" style="margin-top:12px; padding:10px 14px; font-size:13px; color:#555; line-height:1.7; background:#fafbfc; border:1px solid #e6e8eb; border-radius:6px;">
 										- 항정처방률은 타 기관의 상병 구성 및 평균 처방률 자료 확인이 불가하여,시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용으로 활용하시기 바랍니다.<br>
@@ -2289,10 +2302,17 @@ function fn_Update() {
                     confirmButtonText: '확인',
                     timer: 800,
                     timerProgressBar: true,
-                    showConfirmButton: false
+                    showConfirmButton: false,
+                    width: 300,
+                    padding: '0.8em',
+                    customClass: { popup: 'swal-compact', title: 'swal-compact-title', htmlContainer: 'swal-compact-text' }
                 });
                 jobFlag = "00";
+                fn_LoadGrdList(false);     // 저장 후 하단 그리드 자동 표시·갱신
                 fn_CreateData(1, true);   // 설정 저장 후 재계산 — 확인 없이 강제 재생성
+                // fn_CreateData(1)이 우측 카드(card_container)를 숨기므로 즉시 복원 — 저장 후에도 차등제 화면 유지
+                var _cc = document.getElementById('card_container');
+                if (_cc) _cc.style.display = 'flex';
             }
         },
         error: function(xhr, status, error) {
@@ -2387,6 +2407,153 @@ function fn_Select(showMsg) {
             console.error("Error fetching data:", textStatus, errorThrown);
         }
     });
+}
+
+// ── 저장된 분기 목록 그리드 (차등제 01~04) ──────────────────────────
+var _grdAllData = [];    // 전체(전 년도) 저장 목록
+var _grdListData = [];   // 현재 그리드 표시 중(선택 년도) 목록
+function _grdEsc(v){ return (v==null?'':String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// autoLatest=true 면(조회하기) 최종(최근) 분기를 자동 선택·표시
+function fn_LoadGrdList(autoLatest) {
+    $.ajax({
+        type: "POST",
+        url: "/user/selectHospGrdList.do",
+        data: { hospCd: hospid },
+        dataType: "json",
+        success: function(response) {
+            var rows = (response && response.data) ? response.data : [];
+            // 같은 분기의 중복 행 방어 — SQL이 분기 내 최신(UPD_DTTM DESC)순이므로 첫 행만 채택
+            var seen = {}, dedup = [];
+            for (var di = 0; di < rows.length; di++) {
+                var dk = (rows[di].startYy || '') + '|' + (rows[di].qterFlag || '');
+                if (seen[dk]) continue;
+                seen[dk] = 1;
+                dedup.push(rows[di]);
+            }
+            rows = dedup;
+            _grdAllData = rows;
+            // 보기(화면 진입) → 년도 셀렉트(기본=평가년월 년도)는 그대로 두고,
+            // "해당 년도 안의" 최종(최근) 분기만 자동 선택. 그 년도에 자료 없으면 기본 분기 유지
+            if (autoLatest) {
+                var yy0 = String($("#yearQuarter").val() || '');
+                for (var li = 0; li < rows.length; li++) {
+                    if (String(rows[li].startYy || '') === yy0) { fn_ApplyGrdData(rows[li]); break; }
+                }
+                fn_Select();
+            }
+            fn_RenderGrdList();   // 선택 년도(#yearQuarter) 자료만 표시
+            var wrap = document.getElementById("grdListWrap");
+            if (wrap) wrap.style.display = 'block';
+        },
+        error: function(x, s, e) { console.error("selectHospGrdList error:", s, e); }
+    });
+}
+// 그리드 렌더 — 선택 년도(#yearQuarter)의 자료만 표시. 없으면 "해당년도 자료없음" 안내
+function fn_RenderGrdList() {
+    var tb = document.getElementById("grdListBody");
+    if (!tb) return;
+    var yy = String($("#yearQuarter").val() || '');
+    var rows = [];
+    for (var fi = 0; fi < _grdAllData.length; fi++) {
+        if (String(_grdAllData[fi].startYy || '') === yy) rows.push(_grdAllData[fi]);
+    }
+    _grdListData = rows;
+    if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="12" style="color:#999; padding:14px;">' + _grdEsc(yy) + '년 저장된 자료가 없습니다.</td></tr>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var qlabel = (r.startYy || '') + (r.qterFlag ? '-' + r.qterFlag + '분기' : '');
+        html += '<tr style="cursor:pointer;" onclick="fn_ApplyGrdRow(' + i + ')">'
+              + '<td>' + _grdEsc(qlabel)     + '</td>'
+              + '<td>' + _grdEsc(r.goalJugi) + '</td>'
+              + '<td>' + _grdEsc(r.goalChasu)+ '</td>'
+              + '<td>' + _grdEsc(r.goalScore)+ '</td>'
+              + '<td>' + _grdEsc(r.hospgrade)+ '</td>'
+              + '<td>' + _grdEsc(r.patCount) + '</td>'
+              + '<td>' + _grdEsc(r.docCount) + '</td>'
+              + '<td>' + _grdEsc(r.nurCount) + '</td>'
+              + '<td>' + _grdEsc(r.nurSCnt)  + '</td>'
+              + '<td>' + _grdEsc(r.phamDays) + '</td>'
+              + '<td style="color:#8a97a3;">' + _grdEsc(r.updDttm) + '</td>'
+              + '<td><button type="button" class="btn btn-outline-danger" style="padding:0px 8px; font-size:12.5px; line-height:1.7;" '
+              + 'onclick="event.stopPropagation(); fn_DeleteGrdRow(' + i + ')">삭제</button></td>'
+              + '</tr>';
+    }
+    tb.innerHTML = html;
+}
+// 그리드 행 삭제 — 소프트삭제(ACTION_YN='N') 후 그리드 재조회
+function fn_DeleteGrdRow(idx) {
+    var r = _grdListData[idx];
+    if (!r) return;
+    var qlabel = (r.startYy || '') + '-' + (r.qterFlag || '') + '분기';
+    Swal.fire({
+        title: '삭제 확인',
+        text: qlabel + ' 자료를 삭제하시겠습니까?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소',
+        confirmButtonColor: '#d33',
+        width: 300,
+        padding: '0.8em',
+        customClass: {
+            popup: 'swal-compact',
+            title: 'swal-compact-title',
+            htmlContainer: 'swal-compact-text',
+            confirmButton: 'swal-compact-btn',
+            cancelButton: 'swal-compact-btn'
+        }
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        $.ajax({
+            type: "POST",
+            url: "/user/deleteHospGrd.do",
+            data: { hospCd: hospid, startYy: r.startYy, qterFlag: r.qterFlag, updUser: userid },
+            dataType: "json",
+            success: function(resp) {
+                if (resp && resp.result === 'OK') {
+                    // [2026-07-03] 삭제 완료 팝업 제거 — 확인 팝업만 띄우고, 완료 시 그리드 갱신으로 대체
+                    fn_LoadGrdList(false);   // 그리드 재조회
+                } else {
+                    Swal.fire({ title: '삭제 실패', text: '삭제 처리에 실패했습니다. 관리자에게 문의해 주세요.', icon: 'error', confirmButtonText: '확인',
+                                width: 300, padding: '0.8em',
+                                customClass: { popup: 'swal-compact', title: 'swal-compact-title', htmlContainer: 'swal-compact-text', confirmButton: 'swal-compact-btn' } });
+                }
+            },
+            error: function(x, s, e) {
+                console.error("deleteHospGrd error:", s, e);
+                Swal.fire({ title: '삭제 실패', text: '통신 오류가 발생했습니다.', icon: 'error', confirmButtonText: '확인',
+                            width: 300, padding: '0.8em',
+                            customClass: { popup: 'swal-compact', title: 'swal-compact-title', htmlContainer: 'swal-compact-text', confirmButton: 'swal-compact-btn' } });
+            }
+        });
+    });
+}
+// 행 데이터 → 위 폼에 값 적용 (+ 신고분기 셀렉트 세팅)
+function fn_ApplyGrdData(r) {
+    if (!r) return;
+    $("#yearQuarter").val(r.startYy);
+    $("#monsQuarter").val(r.qterFlag);
+    $("#hospcdGrade").val(r.hospgrade);
+    $("#goal_Score").val(r.goalScore);
+    $("#goal_Jugi").val(r.goalJugi);
+    $("#goal_Chasu").val(r.goalChasu);
+    $("#pat_Count").val(r.patCount);
+    $("#doc_Count").val(r.docCount);
+    $("#nur_Count").val(r.nurCount);
+    $("#nursCount").val(r.nurSCnt);
+    $("#pham_Days").val(r.phamDays);
+}
+// 그리드 행 클릭 → 폼 적용 + 행 강조
+function fn_ApplyGrdRow(idx) {
+    var r = _grdListData[idx];
+    if (!r) return;
+    fn_ApplyGrdData(r);
+    var trs = document.querySelectorAll('#grdListBody tr');
+    for (var i = 0; i < trs.length; i++) { trs[i].style.background = (i === idx) ? '#eaf3ff' : ''; }
 }
 
 
@@ -2581,9 +2748,12 @@ function fn_ViewData(data) {
     	
     	const inputZone = document.getElementById("inputZone");
     	inputZone.style.display = 'none';
-    	
-    	
-    	
+    	// 차등제 화면이 아니면 저장분기 그리드도 숨김
+    	var _grdWrapEl = document.getElementById("grdListWrap");
+    	if (_grdWrapEl) _grdWrapEl.style.display = 'none';
+
+
+
 	   	if (["01", "02", "03", "04"].includes(data.cate_cd)) {
 	   		
 	   		ltxt.textContent = '분기별 차등제 자료등록 및 연간 목표 등록';
@@ -2628,8 +2798,10 @@ function fn_ViewData(data) {
     	   		$("#monsQuarter").val(4);
     	   	}
     	   	
-    	    fn_Select();
-    	   	
+    	    // 보기(화면 진입) → 그리드 로드 후 최종(최근) 분기 자동 선택·표시.
+    	    // 저장 자료 없으면 위의 월 기반 기본 분기 그대로 fn_Select() 만 수행됨
+    	    fn_LoadGrdList(true);
+
     	    return;
     	}
     }
@@ -5747,6 +5919,7 @@ $(document).ready(function() {
     });
 	$('#yearQuarter').on('change', function() {
 		fn_Select(true);
+		fn_RenderGrdList();   // 하단 그리드도 선택 년도 자료로 재표시
     });
 	$('#monsQuarter').on('change', function() {
 		fn_Select(true);

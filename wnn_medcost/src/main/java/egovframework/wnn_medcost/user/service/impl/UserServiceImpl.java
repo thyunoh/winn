@@ -331,7 +331,12 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public boolean saveHospGrd(HospGrdDTO dto) throws Exception {
-		// TODO Auto-generated method stub
+		// UPDATE 먼저 → 기존 분기 행이 있으면 확실히 갱신 (UNIQUE 키 유무와 무관).
+		// 0건(미등록 분기)일 때만 INSERT. — "저장해도 업데이트 안 됨"(중복행+LIMIT 1 옛값 조회) 재발 방지
+		int updated = mapper.updateHospGrdData(dto);
+		if (updated > 0) {
+			return true;
+		}
 		return mapper.saveHospGrd(dto);
 	}
 	
@@ -352,7 +357,12 @@ public class UserServiceImpl implements UserService {
 		// TODO Auto-generated method stub
 		return mapper.selectHospGrd(dto);
 	}
-	
+
+	@Override
+	public java.util.List<HospGrdDTO> selectHospGrdList(HospGrdDTO dto) throws Exception {
+		return mapper.selectHospGrdList(dto);
+	}
+
 	@Override
 	public List<HospConDTO> getHospContList(HospConDTO dto) throws Exception {
 		// TODO Auto-generated method stub

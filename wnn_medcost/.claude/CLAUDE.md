@@ -2,6 +2,12 @@
 
 ## 장애/수정 이력
 
+### [완료] 차등제(01~04) 저장 안됨 + 직전분기 자동복제 + 저장분기 그리드 신설 (2026-07-03)
+- **증상 1 (업데이트 안 됨)**: 분기 선택 후 저장해도 값이 이전 그대로. **원인**: `saveHospGrd`가 `INSERT ... ON DUPLICATE KEY UPDATE`인데 TBL_GRADE_MST에 (HOSP_CD,START_YY,QTER_FLAG) UNIQUE 키가 없으면 매 저장이 새 행 추가 → `selectHospGrd`가 `LIMIT 1`(정렬 없음)로 **옛 행**을 읽음. **조치**: [UserServiceImpl.saveHospGrd] = **UPDATE 먼저(`updateHospGrdData` 신설) → 0건이면 INSERT**, `selectHospGrd`에 `ORDER BY UPD_DTTM DESC` 추가. 기존 중복행은 다음 저장 때 전부 같은 값으로 수렴(삭제 불필요).
+- **증상 2 (하나 저장했는데 두 분기 생김)**: 컨트롤러 `saveHospGrd.do`가 저장 전에 **직전 분기에도 동일 값 자동복제 저장**(+직전분기 구조영역 재계산). 사용자 요청으로 **제거** — 한 번 저장 = 선택 분기 1건만. `callIndicatorsStructureZone`은 현재 미호출(코드 잔존, 지표 재계산은 화면 fn_CreateData가 수행).
+- **신설 (저장분기 그리드)**: assessment.jsp 차등제 폼과 하단 문구 사이에 저장된 분기 목록 그리드(`#grdListWrap`, 전 항목+수정일시, 좌우스크롤). 신규 조회 `selectHospGrdList`(/user/selectHospGrdList.do, 5계층). 동작: **보기 진입=해당년도(평가년월 년도) 내 최종분기 자동선택**(년도 셀렉트는 안 바꿈)·**조회하기=선택한 분기**·그리드는 **선택 년도만 표시**(없으면 "N년 저장된 자료가 없습니다")·행 클릭=폼 적용·저장 후 그리드 자동갱신+우측 카드 유지(fn_CreateData가 card_container 숨기는 것 즉시 복원).
+- **배포**: 자바+XML 변경 → WAR 재빌드 필수.
+
 ### [완료] 대시보드 500 전 병원 장애 — s_hospid 세션쿠키화 회귀 + 빈 뷰 500 (2026-06-10)
 - **증상**: 전 병원에서 `dashboard.do` 가 HTTP 500(흰 화면). 콘솔 `Failed to load ... dashboard.do 500`, 서버로그 `Could not resolve view with name ''`. 개발자 PC만 정상(예전 쿠키 잔존).
 - **근본원인 1 (회귀)**: 어제 커밋 `893db73`(06-09 13:40)이 [top.jsp](src/main/webapp/WEB-INF/tiles/main/top.jsp) 에서 `s_hospid`(+s_hospnm/s_conact_gb/s_winconect/s_closeDt1/2) 를 `setCookie(...,1)`(1일 유지) → `setSessionCookie`(세션쿠키)로 변경. **브라우저 종료 시 쿠키 삭제** → 재접속 시 `s_hospid` 쿠키 없음.

@@ -1609,6 +1609,31 @@
 	        UPD_IP     = #{updIp};
 	  ]]>
 	</insert>
+	<!-- 명시적 UPDATE (저장 1단계) — UNIQUE 키 유무와 무관하게 기존 분기 행을 확실히 갱신.
+	     0건이면 서비스에서 INSERT(saveHospGrd) 폴백. 중복 행이 이미 있으면 전부 같은 값으로 수렴 -->
+	<update id="updateHospGrdData" parameterType="HospGrdDTO"><![CDATA[
+	    UPDATE TBL_GRADE_MST
+	       SET HOSPGRADE  = #{hospgrade},
+	           PAT_COUNT  = #{patCount},
+	           DOC_COUNT  = #{docCount},
+	           NUR_COUNT  = #{nurCount},
+	           NUR_S_CNT  = #{nurSCnt},
+	           PHAM_DAYS  = #{phamDays},
+	           TOTAL_DAY  = #{totalDay},
+	           GOAL_SCORE = #{goalScore},
+	           GOAL_NAME  = #{goalName},
+	           GOAL_JUGI  = #{goalJugi},
+	           GOAL_CHASU = #{goalChasu},
+	           ACTION_YN  = 'Y',
+	           UPD_DTTM   = NOW(),
+	           UPD_USER   = #{updUser},
+	           UPD_IP     = #{updIp}
+	     WHERE HOSP_CD    = #{hospCd}
+	       AND START_YY   = #{startYy}
+	       AND QTER_FLAG  = #{qterFlag}
+	       AND JOB_SEQ    = 1
+	 ]]>
+	</update>
       <update id="updateHospGrd" parameterType="HospGrdDTO"><![CDATA[
         UPDATE TBL_GRADE_MST
         SET    ACTION_YN = 'N' 
@@ -1642,6 +1667,7 @@
 		      FROM TBL_GRADE_MST A
 		     WHERE A.HOSP_CD  = #{hospCd}
 		       AND A.START_YY = #{startYy}
+		       AND A.ACTION_YN = 'Y'
 		     GROUP BY A.HOSP_CD, A.START_YY
 		)
 		SELECT gt.HOSP_CD
@@ -1665,11 +1691,36 @@
 		                            AND gm.START_YY  = gt.START_YY
 		                            AND gm.QTER_FLAG = #{qterFlag}
 		                            AND gm.JOB_SEQ   = 1
+		                            AND gm.ACTION_YN = 'Y'
+		 ORDER BY gm.UPD_DTTM DESC
 		 LIMIT 1  
 		   
-	 ]]> 
-    </select>  
-	 
+	 ]]>
+    </select>
+
+	<!-- 저장된 분기 목록(그리드용) — 해당 병원의 등록된 전 분기 자료. 최근(연도·분기) 순 -->
+	<select id="selectHospGrdList" parameterType="HospGrdDTO" resultType="HospGrdDTO"><![CDATA[
+	    SELECT HOSP_CD    AS hospCd,
+	           START_YY   AS startYy,
+	           QTER_FLAG  AS qterFlag,
+	           HOSPGRADE  AS hospgrade,
+	           PAT_COUNT  AS patCount,
+	           DOC_COUNT  AS docCount,
+	           NUR_COUNT  AS nurCount,
+	           NUR_S_CNT  AS nurSCnt,
+	           PHAM_DAYS  AS phamDays,
+	           GOAL_SCORE AS goalScore,
+	           GOAL_JUGI  AS goalJugi,
+	           GOAL_CHASU AS goalChasu,
+	           DATE_FORMAT(UPD_DTTM, '%Y-%m-%d %H:%i') AS updDttm
+	      FROM TBL_GRADE_MST
+	     WHERE HOSP_CD   = #{hospCd}
+	       AND JOB_SEQ   = 1
+	       AND ACTION_YN = 'Y'
+	     ORDER BY START_YY DESC, CAST(QTER_FLAG AS UNSIGNED) DESC, UPD_DTTM DESC
+	 ]]>
+    </select>
+
 	 <update id="yearSaveHospGrd" parameterType="HospGrdDTO"><![CDATA[
         UPDATE TBL_GRADE_MST
            SET GOAL_NAME  = #{goalName}

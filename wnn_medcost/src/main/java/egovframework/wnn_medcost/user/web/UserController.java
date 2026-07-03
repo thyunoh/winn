@@ -2156,58 +2156,12 @@ public class UserController extends BaseController {
 		
 		System.out.println("saveHospGrd 호출됨");
 
+		// [수정 2026-07-03] 직전 분기 자동복제 저장 제거 — 한 번 저장 = 선택한 신고분기 1건만.
+		// (기존: 선택분기 저장 전에 직전분기에도 동일 값을 저장 + 직전분기 구조영역 재계산 →
+		//  "하나 입력했는데 두 분기가 생김" 문제. 지표 재계산은 화면(fn_CreateData)에서 수행됨)
 		try {
 	        for (HospGrdDTO dto : data) {
-	        	
-	            String originalYear = dto.getStartYy();
-	            String originalQter = dto.getQterFlag();
 
-	            int qter = Integer.parseInt(originalQter);
-	            int year = Integer.parseInt(originalYear);
-
-	            if (qter == 1) {
-	                dto.setStartYy(String.valueOf(year - 1));
-	                dto.setQterFlag("4");
-	            } else {
-	                dto.setStartYy(String.valueOf(year));
-	                dto.setQterFlag(String.valueOf(qter - 1));
-	            }
-
-	            System.out.println("1회차 호출");
-	            System.out.println("HospCd: " + dto.getHospCd());
-	            System.out.println("startYy: " + dto.getStartYy());
-	            System.out.println("qterFlag: " + dto.getQterFlag());
-	            System.out.println("goalScore: " + dto.getGoalScore());
-
-	            svc.saveHospGrd(dto);
-	            
-	            switch (dto.getQterFlag()) {
-	                case "1":
-	                	dto.setStrYm(dto.getStartYy() + "01");
-	                	dto.setEndYm(dto.getStartYy() + "03");
-	                    break;
-	                case "2":
-	                	dto.setStrYm(dto.getStartYy() + "04");
-	                	dto.setEndYm(dto.getStartYy() + "06");
-	                    break;
-	                case "3":
-	                	dto.setStrYm(dto.getStartYy() + "07");
-	                	dto.setEndYm(dto.getStartYy() + "08");
-	                    break;
-	                case "4":
-	                	dto.setStrYm(dto.getStartYy() + "10");
-	                	dto.setEndYm(dto.getStartYy() + "12");
-	                    break;
-	            }
-	            dto.setJobYm(dto.getStrYm());
-	            
-	            svc.callIndicatorsStructureZone(dto);
-	            
-	            
-	            dto.setStartYy(originalYear);
-	            dto.setQterFlag(originalQter);
-
-	            System.out.println("2회차 호출");
 	            System.out.println("HospCd: " + dto.getHospCd());
 	            System.out.println("startYy: " + dto.getStartYy());
 	            System.out.println("qterFlag: " + dto.getQterFlag());
@@ -2247,10 +2201,39 @@ public class UserController extends BaseController {
 				
 			} else {
 				return null;
-			}	
+			}
 		} catch(Exception ex) {
 			return null;
 		}
 	}
-	
+
+	// 저장분기 그리드 행 삭제 — 소프트삭제(ACTION_YN='N', 기존 updateHospGrd 재사용)
+	@RequestMapping(value="/deleteHospGrd.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> deleteHospGrd(@ModelAttribute("DTO") HospGrdDTO dto, HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			svc.updateHospGrd(dto);
+			response.put("result", "OK");
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("result", "FAIL");
+		}
+		return response;
+	}
+
+	// 저장된 분기 목록(그리드용) — 해당 병원의 등록된 전 분기 자료
+	@RequestMapping(value="/selectHospGrdList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> selectHospGrdList(@ModelAttribute("DTO") HospGrdDTO dto, HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response.put("data", svc.selectHospGrdList(dto));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("data", new java.util.ArrayList<HospGrdDTO>());
+		}
+		return response;
+	}
+
 }
