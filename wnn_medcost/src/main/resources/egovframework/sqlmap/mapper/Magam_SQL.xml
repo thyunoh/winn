@@ -2375,7 +2375,7 @@
 		   AND e.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   
 		   AND ( 
-		         e.EVAL_TYPE = '2'
+		         (e.EVAL_TYPE = '1' or e.EVAL_TYPE = '2')
 		         OR 
 		         (
 		           e.EVAL_TYPE = '3'
@@ -2413,7 +2413,7 @@
 		 WHERE e.HOSP_CD = #{hospCd}
 		   AND e.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND (
-		         e.EVAL_TYPE = '2'
+		         (e.EVAL_TYPE = '1' or e.EVAL_TYPE = '2')
 		         OR (
 		           e.EVAL_TYPE = '3'
 		           AND DAY(STR_TO_DATE(e.MED_START, '%Y%m%d')) = 1
