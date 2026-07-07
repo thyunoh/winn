@@ -23,6 +23,8 @@ public class AsqDTO {
     private String ansrWan;          // 답변 완료 여부
     private String actionYn;         // 활성 여부
     private String readCnt;         // 조회 수
+    private String ansrReadYn;      // 병원 답변확인 여부 (Y:확인, N:미확인)
+    private int    unreadCnt;       // 미확인 답변 건수 (알림용)
     private String subCodeNm;      // 공지 세부내용
     private String iud = ""; 
 
@@ -250,6 +252,18 @@ public class AsqDTO {
 	}
 	public void setUpdIp(String updIp) {
 		this.updIp = updIp;
+	}
+	public String getAnsrReadYn() {
+		return ansrReadYn;
+	}
+	public void setAnsrReadYn(String ansrReadYn) {
+		this.ansrReadYn = ansrReadYn;
+	}
+	public int getUnreadCnt() {
+		return unreadCnt;
+	}
+	public void setUnreadCnt(int unreadCnt) {
+		this.unreadCnt = unreadCnt;
 	}
 
 }

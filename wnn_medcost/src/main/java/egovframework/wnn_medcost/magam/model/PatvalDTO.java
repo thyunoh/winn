@@ -27,6 +27,7 @@ public class PatvalDTO {
 	
 	private String medStart;       	// 개시일자
 	private String docDt;          	// 작성일자
+	private String weigDt;          // 체중측정일 (J4 점검 표시용)
 	private String patClass;       	// 환자군
 	private String evalType;       	// 평가구분
 	private String adlScore;       	// ADL점수
@@ -521,6 +522,12 @@ public class PatvalDTO {
 	}
 	public void setPrevMonth(String prevMonth) {
 		this.prevMonth = prevMonth;
+	}
+	public String getWeigDt() {
+		return weigDt;
+	}
+	public void setWeigDt(String weigDt) {
+		this.weigDt = weigDt;
 	}
 
 }

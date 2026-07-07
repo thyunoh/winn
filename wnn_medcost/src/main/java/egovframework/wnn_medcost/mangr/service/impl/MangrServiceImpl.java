@@ -146,6 +146,16 @@ public class MangrServiceImpl implements MangrService {
 	}
 
 	@Override
+	public int selectAsqUnreadCnt(AsqDTO dto) throws Exception {
+		return mapper.selectAsqUnreadCnt(dto) ;
+	}
+
+	@Override
+	public int updateAsqRead(AsqDTO dto) throws Exception {
+		return mapper.updateAsqRead(dto) ;
+	}
+
+	@Override
 	public void saveFile(String fileName, String filePath, String hospCd ,  
     		      String fileGb, String notiSeq ,  String regUser, String regIp , String fileSize) {
         FileDTO dto = new FileDTO();

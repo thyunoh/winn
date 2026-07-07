@@ -146,17 +146,55 @@ public class MangrController {
 	}
 	
 	@RequestMapping(value= "/mangr/selectAnsrInfo.do")
-	public String mangr_selectAnsrInfo(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
-		try { 
+	public String mangr_selectAnsrInfo(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {
+		try {
 			//코그구분 정보 조회
 			AsqDTO  result = svc.selectqstnInfo(dto);
 			model.addAttribute("result", result);
-			model.addAttribute("error_code", "0"); 
+			// 병원이 답변을 열람하면 해당 문의 확인처리 → 로그인 알림 해제
+			if (dto.getAsqSeq() != null && !dto.getAsqSeq().trim().isEmpty()) {
+				svc.updateAsqRead(dto);
+			}
+			model.addAttribute("error_code", "0");
 		}catch(Exception ex) {
-			model.addAttribute("error_code", "10000"); 
+			model.addAttribute("error_code", "10000");
 		}
 		return "jsonView";
-	}	
+	}
+	//병원 로그인 알림용: 미확인(답변완료) 건수 조회
+	@RequestMapping(value="/mangr/asqUnreadCnt.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> asqUnreadCnt(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			int cnt = 0;
+			if (dto.getHospCd() != null && !dto.getHospCd().trim().isEmpty()) {
+				cnt = svc.selectAsqUnreadCnt(dto);
+			}
+			response.put("cnt", cnt);
+			response.put("error_code", "0");
+		} catch (Exception ex) {
+			response.put("cnt", 0);
+			response.put("error_code", "10000");
+		}
+		return response;
+	}
+	//알림 '확인' 클릭 시: 해당 병원 답변완료건 전부 확인처리(ANSR_READ_YN='Y')
+	@RequestMapping(value="/mangr/asqReadAll.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> asqReadAll(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			if (dto.getHospCd() != null && !dto.getHospCd().trim().isEmpty()) {
+				dto.setAsqSeq(null);   // 전체(해당 병원) 확인처리
+				svc.updateAsqRead(dto);
+			}
+			response.put("error_code", "0");
+		} catch (Exception ex) {
+			response.put("error_code", "10000");
+		}
+		return response;
+	}
 	@RequestMapping(value="/mangr/asqSaveAct.do")
 	public String mangr_asqSaveAct(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request, ModelMap model) throws Exception {  
 		try { 

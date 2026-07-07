@@ -3185,7 +3185,9 @@ function fn_ViewData(data) {
 									var hasPrev = row.prevStep1 !== '0' || row.prevStep2 !== '0' || row.prevStep3 !== '0' || row.prevStep4 !== '0';
 									var allCurtZero = row.curtStep1 === '0' && row.curtStep2 === '0' && row.curtStep3 === '0' && row.curtStep4 === '0';
 									var curtStep1Is1 = row.curtStep1 === '1';
-									var condMet = hasPrev && (allCurtZero || curtStep1Is1);
+									// (수정) 1단계·치유 케이스는 드레싱(d) 제외, 압력(a)+체위(b)+영양(c) 실시해야 '해당'
+									var careABC = ((Number(row.preRelDev)||0) + (Number(row.posChange)||0) + (Number(row.nutSupply)||0)) === 3;
+									var condMet = hasPrev && (allCurtZero || curtStep1Is1) && careABC;
 						        	if (data === '1') return '해당';
 						        	if (data === '2' && condMet) return '해당';
 						        	if (data === '2') return '미처치';
@@ -3198,7 +3200,8 @@ function fn_ViewData(data) {
 						    	var hasPrev = rowData.prevStep1 !== '0' || rowData.prevStep2 !== '0' || rowData.prevStep3 !== '0' || rowData.prevStep4 !== '0';
 						    	var allCurtZero = rowData.curtStep1 === '0' && rowData.curtStep2 === '0' && rowData.curtStep3 === '0' && rowData.curtStep4 === '0';
 						    	var curtStep1Is1 = rowData.curtStep1 === '1';
-						    	var condMet = hasPrev && (allCurtZero || curtStep1Is1);
+						    	var careABC = ((Number(rowData.preRelDev)||0) + (Number(rowData.posChange)||0) + (Number(rowData.nutSupply)||0)) === 3;
+						    	var condMet = hasPrev && (allCurtZero || curtStep1Is1) && careABC;
 						        if (cellData === '1' || (cellData === '2' && condMet)) {
 						            td.style.color = 'green';
 						            td.style.fontWeight = 'bold';
@@ -5853,11 +5856,12 @@ $(document).ready(function() {
 
 	    const current_Year = new Date().getFullYear();
 
-
 	    if (current_Year === 2025) {
-	    	$('#goal_Jugi').val('2');
+	        $('#goal_Jugi').val('2');
 	        $('#goal_Chasu').val('7');
-
+	    } else if (current_Year >= 2026) {
+	        $('#goal_Jugi').val('2');
+	        $('#goal_Chasu').val('8');
 	    }
 
 	    // sessionStorage에 저장된 값이 있으면 그 값을, 없으면 현재 년월을 기본 선택
@@ -5933,8 +5937,11 @@ $(document).ready(function() {
 	    if (selectedYear === '2025') {
 	        $('#goal_Jugi').val('2');
 	        $('#goal_Chasu').val('7');
+	    } else if (selectedYear >= '2026') {
+	        $('#goal_Jugi').val('2');
+	        $('#goal_Chasu').val('8');
 	    }
-
+		
     });
 	$('#monthSelect').on('change', function() {
 		sessionStorage.setItem('assessment_month', this.value);

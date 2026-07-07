@@ -22,8 +22,11 @@ public interface MangrService {
 	boolean     insertqstnMst(AsqDTO dto)       throws Exception;
 	boolean     updateqstnMst(AsqDTO dto)       throws Exception;
 	AsqDTO      selectqstnInfo(AsqDTO dto)      throws Exception;
-	boolean     updateAnsrMst(AsqDTO dto)       throws Exception;	
-	boolean     updatedelasqCd(AsqDTO dto)       throws Exception;	
+	boolean     updateAnsrMst(AsqDTO dto)       throws Exception;
+	boolean     updatedelasqCd(AsqDTO dto)       throws Exception;
+	//병원 로그인 답변완료 알림
+	int         selectAsqUnreadCnt(AsqDTO dto)  throws Exception;
+	int         updateAsqRead(AsqDTO dto)       throws Exception;
 	List<FaqDTO>  selectfaqList(FaqDTO dto)  throws Exception; 
 	FaqDTO        selectfaqInfo(FaqDTO dto)  throws Exception; 	
 	

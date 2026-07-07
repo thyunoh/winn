@@ -33,6 +33,8 @@ public class AsqDTO {
     private String ansrUpdDttm;     // 답변 변경 일자
     private String ansrUpdUser;     // 답변 변경자
     private String ansrUpdIp;       // 답변 변경 IP
+    private String ansrReadYn;      // 병원 답변확인 여부 (Y:확인, N:미확인)
+    private int    unreadCnt;       // 미확인 답변 건수 (알림용)
 
     // 기타 필드
     private String hospUuid;
@@ -227,6 +229,18 @@ public class AsqDTO {
 	}
 	public void setAnsrUpdIp(String ansrUpdIp) {
 		this.ansrUpdIp = ansrUpdIp;
+	}
+	public String getAnsrReadYn() {
+		return ansrReadYn;
+	}
+	public void setAnsrReadYn(String ansrReadYn) {
+		this.ansrReadYn = ansrReadYn;
+	}
+	public int getUnreadCnt() {
+		return unreadCnt;
+	}
+	public void setUnreadCnt(int unreadCnt) {
+		this.unreadCnt = unreadCnt;
 	}
 	public String getHospUuid() {
 		return hospUuid;

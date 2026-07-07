@@ -49,7 +49,10 @@ public interface MangrService {
 	AsqDTO            selectQstnInfo(AsqDTO dto)    throws Exception;
 	boolean           insertQstnCd(AsqDTO dto)      throws Exception;
 	boolean           updateQstnMst(AsqDTO dto)     throws Exception;
-	boolean           updateQstnCd(AsqDTO dto)      throws Exception; 
+	boolean           updateQstnCd(AsqDTO dto)      throws Exception;
+	//병원 로그인 답변완료 알림
+	int               selectAsqUnreadCnt(AsqDTO dto) throws Exception;
+	int               updateAsqRead(AsqDTO dto)      throws Exception;
 
     //문서파일 
 	List<FileDTO>    getFileCdList(FileDTO dto)  throws Exception; 

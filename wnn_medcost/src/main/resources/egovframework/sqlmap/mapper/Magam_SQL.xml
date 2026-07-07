@@ -1898,8 +1898,8 @@
 			             COALESCE(cm.posChange,0) + COALESCE(cm.nutSupply,0) + COALESCE(cm.skinDress,0) = 4 THEN '2'     
 			        ELSE '3' END AS dressingYn
 			        	    
-			 , CASE WHEN cm.curtStep1 + cm.curtStep2 + cm.curtStep3 + cm.curtStep4   = 0      THEN 'N'
-			        WHEN CONCAT(cm.curtStep1,cm.curtStep2,cm.curtStep3,cm.curtStep4) = '1000' THEN 'N'
+			 , CASE WHEN cm.curtStep1 + cm.curtStep2 + cm.curtStep3 + cm.curtStep4 = 0 THEN 'N'
+			        -- (수정) 당월 욕창 1단계(1000)도 다음월 대상자로 표시 → 'Y'
 			        ELSE 'Y' END AS nextTarget
 			         
 		  FROM current_month cm
@@ -2616,7 +2616,19 @@
 	
 	
 	<select id="select_assesCheck00" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
-	    
+
+		SELECT z.*,
+		       CASE WHEN z.errType = 'J4'
+		            THEN (SELECT MIN(w.WEIG_DT)
+		                    FROM TBL_PATVAL_MST w
+		                   WHERE w.HOSP_CD = #{hospCd}
+		                     AND LEFT(w.PAT_ID,6) = z.patId
+		                     AND w.MED_START = z.medStart
+		                     AND w.DOC_DT   = z.docDt
+		                     AND IFNULL(w.WEIG_HEIG_YN,'') = '1')
+		            ELSE NULL END AS weigDt
+		  FROM (
+
 		  -- [평가구분 오류 1] 계속입원자인데 평가구분이 1 또는 3인 경우 ( 전월대상 평가표에 평가구분이 1일면 제외 )
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
@@ -3352,9 +3364,20 @@
                        AND P.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm},'01'), INTERVAL 1 MONTH),'%Y%m'),'%')
                        AND P.DOC_DT  = A.DOC_DT
                 )
+            -- 같은 환자·같은 작성일(DOC_DT) 중 체중측정일이 관찰기간 안에 정상 기재된 평가표가 있으면 J4에서 제외
+            AND NOT EXISTS (
+                    SELECT 1
+                      FROM TBL_PATVAL_MST N
+                     WHERE N.HOSP_CD      = A.HOSP_CD
+                       AND N.PAT_ID       = A.PAT_ID
+                       AND N.DOC_DT       = A.DOC_DT
+                       AND N.WEIG_HEIG_YN = '1'
+                       AND N.MED_START LIKE CONCAT(#{jobYymm},'%')
+                       AND N.WEIG_DT BETWEEN N.MED_START AND N.DOC_DT
+                )
 
        UNION ALL
-          -- 욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가  
+          -- 욕창처치 대상자로 영양공급에 예 로 체크되어 있으나, 체중즉정에 아니오 로 기재된 경우로 필요열량 및 단백 확인 불가
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
@@ -3584,6 +3607,7 @@
 		             AND B.MED_START LIKE CONCAT(#{jobYymm},'%')
 		             AND B.EVAL_TYPE = '1') > 1
 
+		) z
 		-- ORDER BY errType
 	</select>
 

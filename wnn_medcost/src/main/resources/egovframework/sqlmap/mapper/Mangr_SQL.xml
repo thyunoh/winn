@@ -430,7 +430,8 @@
     <update id="updateasqCd" parameterType="AsqDTO" ><![CDATA[
         UPDATE TBL_ASQ_MST
         SET  ANSR_WAN     = #{ansrWan}  
-            ,ANSR_CONTS   = #{ansrConts}           
+            ,ANSR_CONTS   = #{ansrConts}
+            ,ANSR_READ_YN = CASE WHEN #{ansrWan} = 'Y' THEN 'N' ELSE IFNULL(ANSR_READ_YN,'N') END           
             ,UPD_DTTM     = NOW()
             ,UPD_USER     = #{updUser}
             ,UPD_IP       = #{updIp}
@@ -439,6 +440,29 @@
           AND ACTION_YN   = 'Y' 
     ]]>      
     </update>   
+    <!-- 병원 로그인 알림: 답변완료(ANSR_WAN='Y') + 미확인(ANSR_READ_YN!='Y') 건수 -->
+    <select id="selectAsqUnreadCnt" parameterType="AsqDTO" resultType="int"><![CDATA[
+        SELECT COUNT(*)
+          FROM TBL_ASQ_MST
+         WHERE HOSP_CD     = #{hospCd}
+           AND ANSR_WAN    = 'Y'
+           AND IFNULL(ANSR_READ_YN,'N') = 'N'
+           AND ACTION_YN   = 'Y'
+    ]]></select>
+    <!-- 병원이 질의응답 화면 열람 시 답변건 확인처리 (asqSeq 지정=단건, 없으면 해당 병원 전체) -->
+    <update id="updateAsqRead" parameterType="AsqDTO"><![CDATA[
+        UPDATE TBL_ASQ_MST
+           SET ANSR_READ_YN = 'Y'
+         WHERE HOSP_CD     = #{hospCd}
+           AND ANSR_WAN    = 'Y'
+           AND IFNULL(ANSR_READ_YN,'N') = 'N'
+           AND ACTION_YN   = 'Y'
+    ]]>
+        <if test='asqSeq != null and asqSeq != ""'>
+           AND ASQ_SEQ = #{asqSeq}
+        </if>
+    </update>
+
     <!-- 요양기관 질의문답  -->
      <select  id="selectQstnInfo" parameterType="AsqDTO" resultType="AsqDTO"> <![CDATA[ 
         SELECT 

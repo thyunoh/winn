@@ -263,7 +263,31 @@
 	      <![CDATA[
 		     Order by A.ANSR_WAN ASC , A.REG_DTTM  DESC
 	      ]]>
-    </select>       
+    </select>
+     <!-- 병원 로그인 알림: 답변완료(ANSR_WAN='Y') + 미확인(ANSR_READ_YN!='Y') 건수 -->
+     <select id="selectAsqUnreadCnt" parameterType="AsqDTO" resultType="int"><![CDATA[
+        SELECT COUNT(*)
+          FROM TBL_ASQ_MST
+         WHERE HOSP_CD     = #{hospCd}
+           AND ANSR_WAN    = 'Y'
+           AND IFNULL(ANSR_READ_YN,'N') = 'N'
+           AND ACTION_YN   = 'Y'
+     ]]></select>
+     <!-- 병원이 답변 열람 시 확인처리 (asqSeq=단건 열람, hospCd=목록 열람 전체). 컨트롤러에서 둘 중 하나는 반드시 전달 -->
+     <update id="updateAsqRead" parameterType="AsqDTO"><![CDATA[
+        UPDATE TBL_ASQ_MST
+           SET ANSR_READ_YN = 'Y'
+         WHERE ANSR_WAN    = 'Y'
+           AND IFNULL(ANSR_READ_YN,'N') = 'N'
+           AND ACTION_YN   = 'Y'
+     ]]>
+        <if test='asqSeq != null and asqSeq != ""'>
+           AND ASQ_SEQ = #{asqSeq}
+        </if>
+        <if test='hospCd != null and hospCd != ""'>
+           AND HOSP_CD = #{hospCd}
+        </if>
+     </update>
      <!-- 질문입력  -->   
      <insert id="insertqstnMst" parameterType="AsqDTO" useGeneratedKeys="true" keyProperty="asqSeq" keyColumn="ASQ_SEQ"> <![CDATA[
         INSERT INTO TBL_ASQ_MST (
