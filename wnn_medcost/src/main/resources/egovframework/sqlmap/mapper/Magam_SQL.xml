@@ -2583,8 +2583,22 @@
 		                              ) + 1 >= 181
 		                          ]]>
 		                   )
+		                   OR
+		                   /* (추가) 장기입원 입원료: TBL_JINORD_MST ITEM_NO=02, EDI_CODE 6~8자리 IN(300,400,500) - 환자군 D/E 대상자에 한해 장기입원으로 포함 */
+		                   EXISTS (
+		                       SELECT 1
+		                         FROM TBL_MYOUNG_MST  mm
+		                         JOIN TBL_CHUNG_MST   cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		                         JOIN TBL_JINORD_MST  jm ON jm.HOSP_CD = mm.HOSP_CD AND jm.CLAIM_NO = mm.CLAIM_NO AND jm.BILL_SEQ = mm.BILL_SEQ
+		                        WHERE mm.HOSP_CD = pm2.HOSP_CD
+		                          AND mm.PAT_ID  = pm2.PAT_ID
+		                          AND COALESCE(mm.DELYN,'') = ''
+		                          AND cm.DATE_YM = #{jobYymm}
+		                          AND jm.ITEM_NO = '02'
+		                          AND SUBSTRING(jm.EDI_CODE,6,3) IN ('300','400','500')
+		                   )
 		             )
-		            THEN 'Y' ELSE '' 
+		            THEN 'Y' ELSE ''
 		             END AS longAdm
 		     , CASE WHEN LEFT(IFNULL(pm2.PAT_CLASS,PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)),1) IN ('A','B','C') 
 		            THEN 'Y' ELSE '' 
