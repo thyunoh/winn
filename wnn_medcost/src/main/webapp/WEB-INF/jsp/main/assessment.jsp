@@ -4411,9 +4411,17 @@ function dataLoad(data, callback, settings) {
 	            		let hi_Count = 0;
 		                let lowCount = 0;
 		                let dayCount = 0;
+		                let hiTotal  = 0;   // 고위험 전체 인원 (●+○, 헤더 표시용)
+		                let lowTotal = 0;   // 저위험 전체 인원 (●+○, 헤더 표시용)
 		                for (let i = 0; i < response.data.length; i++) {
 
 		                	const item = response.data[i];
+
+		                    // 헤더 인원수 = 그리드 컬럼에 표시된 인원
+		                    //  - 고위험 : ●(Y, 14일초과) + ○(N, 비초과) 전체
+		                    //  - 저위험 : ○(N, 비초과)만  (●는 제외)
+		                    if (item.dangerHi  === 'Y' || item.dangerHi  === 'N') { hiTotal  += 1; }
+		                    if (item.dangerLow === 'N') { lowTotal += 1; }
 
 		                    if (item.overDay === 'Y') {
 		                    	dayCount += 1;
@@ -4423,6 +4431,21 @@ function dataLoad(data, callback, settings) {
 		                }
 
 		                cntNote = '[중복포함,14일초과 총:' + dayCount + '건 ]·고위험:' + hi_Count + '건·저위험:' + lowCount + '건';
+
+		                // 그리드 2단 헤더의 고위험/저위험 라벨에 전체 인원수 표기.
+		                //  - c_Head_Set 라벨도 갱신(다음 조회/재그리기 대비)
+		                //  - 헤더는 이미 fn_HeadColumnSet()에서 그려졌으므로, 그려진 th(스크롤 헤더 복제 포함)를
+		                //    callback(그리기) 이후 직접 갱신 (setTimeout 0 → 현재 동기 흐름 종료 후 실행)
+		                if (c_Head_Set[1] && c_Head_Set[1][0]) { c_Head_Set[1][0].label = '고위험(' + hiTotal  + ')'; }
+		                if (c_Head_Set[1] && c_Head_Set[1][1]) { c_Head_Set[1][1].label = '저위험(' + lowTotal + ')'; }
+		                setTimeout(function() {
+		                    var ths = document.querySelectorAll('#viewTable_wrapper thead th, #viewTable thead th');
+		                    for (var t = 0; t < ths.length; t++) {
+		                        var txt = (ths[t].textContent || '').trim();
+		                        if (txt === '고위험' || txt.indexOf('고위험(') === 0) { ths[t].textContent = '고위험(' + hiTotal  + ')'; }
+		                        if (txt === '저위험' || txt.indexOf('저위험(') === 0) { ths[t].textContent = '저위험(' + lowTotal + ')'; }
+		                    }
+		                }, 0);
 
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(35) + '<span style="color: blue;">' + cntNote + '</span>';
 
