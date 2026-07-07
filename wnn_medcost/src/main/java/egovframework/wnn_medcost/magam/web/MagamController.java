@@ -919,16 +919,7 @@ public class MagamController {
    		    dto.setJobyymm(dto.getJobyymm());   // 작업년월
    		    dto.setReg_user(dto.getReg_user()); // 사용자
 
-   		    // [병원 로그인 보정] 병원 계정은 클라이언트 userid(쿠키 "userid")가 비어 reg_user=null 로
-   		    //   넘어오는데, 생성 SP(SP_EVALUATION_INDICATORS_CREATE2)가 REG_USER 를 사용해
-   		    //   지표가 생성되지 않던 문제 방지 — 값이 없으면 hosp_cd 로 보정(감사용 컬럼, 기능 무관).
-   		    if (dto.getReg_user() == null
-   		            || dto.getReg_user().trim().isEmpty()
-   		            || "null".equalsIgnoreCase(dto.getReg_user().trim())) {
-   		        dto.setReg_user(dto.getHosp_cd());
-   		    }
-
-   		    System.out.println("create_Eval_Indi 호출했음 - reg_user(보정후) = " + dto.getReg_user());
+   		    System.out.println("create_Eval_Indi 호출했음");
 			err_cd = svc.create_Eval_Indi(dto);			
 			System.out.println("create_Eval_Indi 호출종료");
 			
