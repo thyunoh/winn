@@ -350,7 +350,7 @@ function fn_CreateData(flag) {
     	
     } else {
     
-	    c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','체중일자','평가구분','코드','점검내용','상세내용'  ];
+	    c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','평가구분','코드','점검내용','상세내용'  ];
 	   	columnsSet = [  
 	   					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },					    
@@ -374,18 +374,6 @@ function fn_CreateData(flag) {
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return getFormat(data,'d1')
-			            		}
-			            		return data;
-			  			    },
-						},
-						{ data: 'weigDt',    visible: true,  className: 'dt-body-center', width: '100px',
-							render: function(data, type, row) {
-			        			if (type === 'display') {
-			        				// J4(체중측정) 행에만 체중일자 표시 (평가표작성일과 동일 기본색)
-			        				if (row.errType === 'J4' && data) {
-			        					return getFormat(data,'d1');
-			        				}
-			        				return '';
 			            		}
 			            		return data;
 			  			    },
