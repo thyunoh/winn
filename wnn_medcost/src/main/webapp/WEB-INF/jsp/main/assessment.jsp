@@ -2090,17 +2090,10 @@ function fn_CreateData(flag, force) {
         data: { hosp_cd: hospid, jobyymm: jobyymm },
         dataType: "json",
         success: function(response) {
-            var rows = (response && response.data)
-                ? response.data.filter(function(r){ return r.cate_cd !== '99'; })
-                : [];
-            var hasData = rows.length > 0;
-            // '빈 화면(빈 자료)' 판정 — 구조지표(01~04) 외 환자기반 지표에 대상자(분모)가
-            //   하나라도 있으면 '실자료 있음'. 구조지표만 산출되거나 대상자 분모가 모두 0이면
-            //   '빈 화면 생성'으로 보고 재생성 확인 없이 바로 생성한다(빈화면엔 재생성 메시지 불필요).
-            var hasRealData = rows.some(function(r){
-                return ['01','02','03','04'].indexOf(r.cate_cd) === -1 && parseFloat(r.dtorval) > 0;
+            var hasData = response && response.data && response.data.some(function(r) {
+                return r.cate_cd !== '99';
             });
-            if (hasData && hasRealData) {
+            if (hasData) {
                 if (!document.getElementById('regenConfirmStyle')) {
                     var rst = document.createElement('style');
                     rst.id = 'regenConfirmStyle';
@@ -2131,7 +2124,7 @@ function fn_CreateData(flag, force) {
                     }
                 });
             } else {
-                doCreate();   // 빈 화면(실자료 없음) 또는 미생성 월 → 재생성 확인 없이 바로 생성
+                doCreate();   // 생성된 자료 없음 → 기존처럼 무조건 생성
             }
         },
         error: function() {
@@ -5823,14 +5816,6 @@ function fn_ExportStdRangeExcel() {
 
 $(document).ready(function() {
 
-	// [병원 로그인 보정] top.jsp 의 전역 userid = getCookie("userid") 인데, 병원 로그인 시
-	//   "userid" 쿠키가 없어 userid=null → 자료생성(create_Eval_Indi) reg_user=null 로 생성 실패.
-	//   로그인 시 sessionStorage('s_userid')에 사용자ID가 저장되므로 이를 폴백으로 사용해
-	//   winner/병원 구분 없이 reg_user 가 채워지도록 보정. (top.jsp 미변경 — 회귀 위험 회피)
-	if (!userid || (''+userid).trim() === '' || (''+userid).trim().toLowerCase() === 'null') {
-	    userid = sessionStorage.getItem('s_userid') || getCookie('s_userid') || getCookie('userid') || '';
-	}
-
 	_loadDocCnt();   // 성명 마스킹 정책(DOCCNT) — 그리드 렌더 전 확정
 
 	// === 2024년 표준화구간 안내: assessment 화면 진입 시 항상 고정 표시 (버튼 토글 아님) ===
@@ -5941,6 +5926,7 @@ $(document).ready(function() {
 	
 	$('#year_Select').on('change', function() {
 		sessionStorage.setItem('assessment_year', this.value);
+		fn_IndiSelect();
 
 		const selectedYear = $(this).val(); // 선택된 연도 값
 
@@ -5949,11 +5935,10 @@ $(document).ready(function() {
 	        $('#goal_Chasu').val('7');
 	    }
 
-		fn_CreateData(0);   // 년 변경 시에도 화면 진입과 동일 처리(빈 화면 생성/표시 · 실자료 월은 재생성 확인)
     });
 	$('#monthSelect').on('change', function() {
 		sessionStorage.setItem('assessment_month', this.value);
-		fn_CreateData(0);   // 월 변경 시에도 화면 진입과 동일 처리(빈 화면 생성/표시 · 실자료 월은 재생성 확인)
+		fn_IndiSelect();
     });
 	$('#yearQuarter').on('change', function() {
 		fn_Select(true);
