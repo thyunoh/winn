@@ -44,12 +44,8 @@
 	                                </select>
 	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
 	                                     ★다음주 오픈 전까지 숨기려면 이 span 에 style="display:none;" 추가(→ 무조건 기존 방식)★ -->
-	                          
-	                                <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
-	                          
-	                         <!--      
-	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="font-weight:600; color:#0c7cd5; cursor:pointer;">
-	                         -->         
+	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
+	                                 
 	                                    <input type="checkbox" id="samPickMode"> <i class="fa fa-flask mr-1"></i>신규 샘파일 작성
 	                                </label>
 
@@ -236,6 +232,14 @@
                                      #samPickModal .samPickTable th.spkStHead {
                                          position: sticky; right: 0; top: 0; z-index: 5;
                                          box-shadow: inset 1px 0 0 #dee2e6, inset 0 -1px 0 #dee2e6;
+                                     }
+                                     /* 진행 중 회전 스피너 */
+                                     @keyframes spkSpin { to { transform: rotate(360deg); } }
+                                     #samPickModal .spkSpinner {
+                                         display: inline-block; width: 11px; height: 11px;
+                                         border: 2px solid #f0932b; border-top-color: transparent;
+                                         border-radius: 50%; vertical-align: -1px; margin-right: 4px;
+                                         animation: spkSpin 0.7s linear infinite;
                                      }
                                  </style>
                                  <input type="file" id="samPickInput" webkitdirectory directory multiple style="display:none;">
@@ -1609,7 +1613,7 @@ async function handleFileSelection(event) {
 					   	        estimatedTime = ((t_lines / 25) * 1);
 					   	    }
 			   	      		$("#estimatedTime").text(estimatedTime.toFixed(1));
-				   	        $("#progress-container").show();
+				   	        $("#progress-container").stop(true,true).show();   // 직전 건 fadeOut 중이어도 즉시 표시(경쟁 방지)
 				   	     	let progressBar  = $("#progress-bar");
 		                    let progressText = $("#progress-text");
 		
@@ -1637,7 +1641,7 @@ async function handleFileSelection(event) {
 			   	                contentType: 'application/json',
 			   	                data: JSON.stringify(allDataFlat),
 				   	            beforeSend: function() {
-				                    $('.loading').show();
+				                    $('.loading').stop(true,true).show();   // 직전 건 fadeOut 중이어도 즉시 표시(경쟁 방지)
 				                    $('#estimatedTime').text(estimatedTime.toFixed(1));
 				                },
 			   	                success: function (response) {
@@ -4332,7 +4336,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 gm[key].push(f); if(i>=0) gidx[key].push(i);
             });
             // 상태 컬럼 셀 갱신
-            function setSt(idxs, txt, color){ (idxs||[]).forEach(function(i){ var c=document.getElementById('spk_st_'+i); if(c){ c.textContent=txt; c.style.color=color; c.style.fontWeight='600'; } }); }
+            function setSt(idxs, txt, color){ (idxs||[]).forEach(function(i){ var c=document.getElementById('spk_st_'+i); if(c){ c.innerHTML=txt; c.style.color=color; c.style.fontWeight='600'; } }); }
             var refreshBtn=document.getElementById('samPickRefresh'), folderBtn=document.getElementById('samPickBtn'), footEl=document.getElementById('samPickFootInfo');
             (async function runInline(){
                 // 실행 중 버튼 잠금(오조작 방지)
@@ -4343,9 +4347,17 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 order.forEach(function(key){ setSt(gidx[key], '대기', '#888'); });   // 선택 청구건 전부 '대기'
                 window._samSilent=true;   // 청구건별 성공메시지 억제(별도 창 안 뜸)
                 var removed=[], failedFiles=[], delFail=0, okCnt=0, failCnt=0;   // 성공(삭제대상)/실패(보존)/삭제실패
+                // ★jobs_dt(작업일시)는 초 단위 → 연속 업로드가 같은 초면 같은 배치키(JOBS_DT)로 라인이 섞여 SP가 오류.
+                //   각 청구건이 서로 다른 초를 쓰도록, 직전 그룹과 같은 초면 초가 바뀔 때까지 대기(getJobDateTime과 동일 포맷 비교).
+                var _jobDtNow = (typeof getJobDateTime==='function') ? getJobDateTime
+                              : function(){ var n=new Date(),p=function(x){return String(x).padStart(2,'0');}; return ''+n.getFullYear()+p(n.getMonth())+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };
+                var _lastJobDt=null;
                 for(var i=0;i<order.length;i++){
-                    setSt(gidx[order[i]], '⏳ 진행', '#f0932b');
+                    setSt(gidx[order[i]], '<span class="spkSpinner"></span>진행', '#f0932b');
                     if(footEl) footEl.textContent='업로드 중 '+(i+1)+' / '+order.length+' 건';
+                    // 직전 청구건과 같은 초면 jobs_dt 충돌 → 초가 바뀔 때까지 대기(청구건별 배치 분리 보장)
+                    while(_lastJobDt!==null && _jobDtNow()===_lastJobDt){ await new Promise(function(r){ setTimeout(r,120); }); }
+                    _lastJobDt=_jobDtNow();
                     window._samUploadedFiles=null;
                     window._samUpOk=null;   // 이번 청구건 성공여부 초기화(핸들러가 true/false 세팅)
                     await uploadGroupSeq(gm[order[i]]);   // 완료(signUp!=='Y')까지 대기
