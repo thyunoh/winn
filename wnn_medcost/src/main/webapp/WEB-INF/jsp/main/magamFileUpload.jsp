@@ -285,7 +285,7 @@
                                                  </table>
                                              </div>
                                              <div class="modal-footer" style="border-top:1px solid #e9ecef;">
-                                                 <span id="samPickFootInfo" class="mr-auto" style="font-size:18px; font-weight:700; color:#343a40;"></span>
+                                                 <span id="samPickFootInfo" class="mr-auto" style="font-size:14px; font-weight:600; color:#343a40;"></span>
                                                  <button type="button" id="samPickApply" class="btn btn-warning">선택 적용</button>
                                                  <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">닫기</button>
                                              </div>
@@ -1607,11 +1607,12 @@ async function handleFileSelection(event) {
 			   	      		allDataFlat.forEach(file => { file.t_lines = t_lines; });
 			   	            
 			   	      		let estimatedTime;
-			   	      		
+
+					   	    // 2026-07-09 SP_UPLOAD_MAGAM_SAMFILES 최적화 반영: 기존 80/25줄/초 → 약 600/120줄/초 (+기본 3초)
 					   	    if (String(g_Flag) === '8') {
-					   	        estimatedTime = ((t_lines / 80) * 1);
+					   	        estimatedTime = 3 + (t_lines / 600);
 					   	    } else {
-					   	        estimatedTime = ((t_lines / 25) * 1);
+					   	        estimatedTime = 3 + (t_lines / 120);
 					   	    }
 			   	      		$("#estimatedTime").text(estimatedTime.toFixed(1));
 				   	        $("#progress-container").stop(true,true).show();   // 직전 건 fadeOut 중이어도 즉시 표시(경쟁 방지)
@@ -3847,6 +3848,25 @@ $('#verifyModal').on('hidden.bs.modal', function() {
     function saveSigs(o){ try{ var ks=Object.keys(o); if(ks.length>1000){ ks.slice(0,ks.length-1000).forEach(function(k){ delete o[k]; }); } localStorage.setItem(upKey(), JSON.stringify(o)); }catch(e){} }
     var _upSigs = loadSigs();
     function fileSig(f){ return f.name+'|'+f.size+'|'+f.lastModified; }
+
+    // 폴더 핸들 영구저장(IndexedDB) — 브라우저를 껐다 켜도 이전 폴더 복원(FileSystemHandle 은 IndexedDB 직렬화 지원).
+    // 재방문 시 queryPermission='granted'(권한창에서 "모든 방문에서 허용" 선택)면 창 없이 바로 재스캔,
+    // 'prompt' 면 [새로고침] 클릭 한 번(허용)으로 연결 — 폴더 트리를 다시 찾아갈 필요 없음.
+    function hdlDb(){ return new Promise(function(res,rej){ try{ var rq=indexedDB.open('samPickDB',1); rq.onupgradeneeded=function(){ rq.result.createObjectStore('hdl'); }; rq.onsuccess=function(){ res(rq.result); }; rq.onerror=function(){ rej(rq.error); }; }catch(e){ rej(e); } }); }
+    function hdlKey(){ return 'dir_' + (typeof hospid!=='undefined'?hospid:''); }
+    function saveHandle(h){ return hdlDb().then(function(db){ return new Promise(function(res){ var tx=db.transaction('hdl','readwrite'); tx.objectStore('hdl').put(h, hdlKey()); tx.oncomplete=res; tx.onerror=res; }); }).catch(function(){}); }
+    function loadHandle(){ return hdlDb().then(function(db){ return new Promise(function(res){ var rq=db.transaction('hdl').objectStore('hdl').get(hdlKey()); rq.onsuccess=function(){ res(rq.result||null); }; rq.onerror=function(){ res(null); }; }); }).catch(function(){ return null; }); }
+    // 저장된 핸들 복원 시도. userGesture=true(버튼 클릭 안)에서만 requestPermission(권한창) 가능.
+    async function restoreHandle(userGesture){
+        if(_dirHandle) return true;
+        var h=await loadHandle(); if(!h) return false;
+        try{
+            var p=await h.queryPermission({mode:'readwrite'});
+            if(p!=='granted' && userGesture) p=await h.requestPermission({mode:'readwrite'});
+            if(p!=='granted') return false;
+            _dirHandle=h; return true;
+        }catch(e){ return false; }
+    }
     function isUploaded(f){ return !!_upSigs[fileSig(f)]; }
     function showUploaded(){ var c=document.getElementById('samPickShowUp'); return c && c.checked; }
 
@@ -4210,8 +4230,12 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         if(window.showDirectoryPicker){
             var h=null;
             // readwrite: 업로드 성공 후 원본 파일 삭제(개인정보 보호)를 위해 쓰기 권한까지 요청
-            try{ h=await window.showDirectoryPicker({mode:'readwrite'}); }catch(e){ return; }   // 사용자가 취소
+            // id: 브라우저가 이 id 기준으로 마지막 폴더 위치를 기억 → 다이얼로그가 지난번 폴더에서 열림
+            var opts={mode:'readwrite', id:'samPickDir'};
+            try{ var prev=await loadHandle(); if(prev) opts.startIn=prev; }catch(e){}
+            try{ h=await window.showDirectoryPicker(opts); }catch(e){ return; }   // 사용자가 취소
             _dirHandle=h;
+            saveHandle(h);   // IndexedDB 영구저장 — 다음 접속 시 복원
             await scanFromHandle();
         } else {
             document.getElementById('samPickInput').click();
@@ -4280,7 +4304,20 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         });
         fetchCodes();   // 보험구분/입외 디코드용 공통코드 로드
         // 모달 다시 열 때 폴더 핸들 유지 중이면 자동 재스캔(SamCatch 새 복사분/삭제분 반영). 핸들 없으면(드롭/폴백) 화면만 갱신
-        try{ $('#samPickModal').on('shown.bs.modal', function(){ if(typeof _dirHandle!=='undefined' && _dirHandle){ scanFromHandle(); } else { render(); } }); }catch(e){}
+        // 핸들이 메모리에 없으면 IndexedDB 저장분 복원 시도 — 권한 'granted'(모든 방문에서 허용)면 창 없이 자동 스캔,
+        // 'prompt' 면 안내문 표시([새로고침] 클릭 한 번으로 연결, 폴더 재탐색 불필요)
+        try{ $('#samPickModal').on('shown.bs.modal', function(){
+            if(typeof _dirHandle!=='undefined' && _dirHandle){ scanFromHandle(); return; }
+            restoreHandle(false).then(function(ok){
+                if(ok){ scanFromHandle(); return; }
+                render();
+                loadHandle().then(function(h){
+                    if(!h) return;
+                    var fe=document.getElementById('samPickFolder');
+                    if(fe) fe.innerHTML='이전 폴더 <b>'+esc(h.name)+'</b> 기억됨 — <span style="color:#e67e22;font-weight:600;">[새로고침] 클릭 시 자동 연결</span>';
+                });
+            });
+        }); }catch(e){}
         document.getElementById('samPickBtn').addEventListener('click', function(){ pickFolder(); });
         // 드래그&드롭 — 폴더를 모달 안으로 끌어다 놓으면 권한창 없이 바로 읽음
         var mbody=document.querySelector('#samPickModal .modal-body');
@@ -4291,7 +4328,11 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         }
         // 새로고침 — 폴더 핸들 유지 중이면 다이얼로그 없이 즉시 재스캔(SamCatch 새 복사분 반영), 없으면 폴더 선택
         var refBtn=document.getElementById('samPickRefresh');
-        if(refBtn) refBtn.addEventListener('click', function(){ if(_dirHandle) scanFromHandle(); else render(); });   // 핸들 있으면 재스캔, 없으면(폴백) 화면만 갱신(다이얼로그 X)
+        // 핸들 있으면 재스캔. 없으면 IndexedDB 저장분 복원(클릭 제스처 안이라 requestPermission 가능 — 권한창 '허용' 한 번이면 폴더 재탐색 없이 연결)
+        if(refBtn) refBtn.addEventListener('click', function(){
+            if(_dirHandle){ scanFromHandle(); return; }
+            restoreHandle(true).then(function(ok){ if(ok) scanFromHandle(); else render(); });
+        });
         // [선택 적용] — 월 카드로 열었으면(그 월 기억) 업로드 내용 확인 후 그 월로 업로드 실행
         var applyBtn=document.getElementById('samPickApply');
         if(applyBtn) applyBtn.addEventListener('click', function(){
