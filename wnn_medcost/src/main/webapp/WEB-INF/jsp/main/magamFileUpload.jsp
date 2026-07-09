@@ -44,7 +44,7 @@
 	                                </select>
 	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
 	                                     ★다음주 오픈 전까지 숨기려면 이 span 에 style="display:none;" 추가(→ 무조건 기존 방식)★ -->
-	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
+	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="font-weight:600; color:#0c7cd5; cursor:pointer;">
 	                                 
 	                                    <input type="checkbox" id="samPickMode"> <i class="fa fa-flask mr-1"></i>신규 샘파일 작성
 	                                </label>
@@ -221,50 +221,119 @@
                                      /* 스크롤해도 헤더 고정 */
                                      #samPickModal .modal-body .samPickTable thead th {
                                          position: sticky; top: 0; z-index: 3;
-                                         background: #e2e6ea; box-shadow: inset 0 -1px 0 #dee2e6;
+                                         background: #c8e2d9; color: #2c4a42; box-shadow: inset 0 -1px 0 #a9cec3;
                                      }
-                                     /* 상태 컬럼 오른쪽 고정 — 가로 스크롤해도 항상 보이게 */
+                                     /* 상태 컬럼 오른쪽 고정 — 가로 스크롤해도 항상 끝에 보이게(서식버전은 스크롤 영역) */
                                      #samPickModal .samPickTable td.spkStCell {
                                          position: sticky; right: 0; z-index: 2;
                                          background: #fff; box-shadow: inset 1px 0 0 #dee2e6;
-                                         width: 96px; min-width: 96px;
+                                         width: 110px; min-width: 110px;
                                      }
-                                     #samPickModal .samPickTable tr.samPickRepRow td.spkStCell { background: #f4f8ff; }
                                      #samPickModal .samPickTable th.spkStHead {
                                          position: sticky; right: 0; top: 0; z-index: 5;
-                                         box-shadow: inset 1px 0 0 #dee2e6, inset 0 -1px 0 #dee2e6;
+                                         background: #c8e2d9; color: #2c4a42; box-shadow: inset 1px 0 0 #a9cec3, inset 0 -1px 0 #a9cec3;
+                                         width: 110px; min-width: 110px;
                                      }
+                                     #samPickModal .samPickTable tr.samPickRepRow td.spkStCell { background: #eef7f4; }
+                                     /* 본문 글자 진하게(희미함 해소) — 비활성(X) 행만 회색 유지 */
+                                     #samPickModal .samPickTable tbody td { color: #212b29; }
+                                     #samPickModal .samPickTable tr.spkDisRow td { color: #a7b0ad; }
                                      /* 진행 중 회전 스피너 */
                                      @keyframes spkSpin { to { transform: rotate(360deg); } }
                                      #samPickModal .spkSpinner {
                                          display: inline-block; width: 11px; height: 11px;
-                                         border: 2px solid #f0932b; border-top-color: transparent;
+                                         border: 2px solid #2f9c86; border-top-color: transparent;
                                          border-radius: 50%; vertical-align: -1px; margin-right: 4px;
                                          animation: spkSpin 0.7s linear infinite;
                                      }
+                                     /* ── 밝은 세금계산서 폼 컨셉 (화이트 + 청록 accent) ── */
+                                     #samPickModal .modal-content { box-shadow: 0 18px 48px rgba(20,80,66,0.20); }
+                                     /* 방식 선택 — '미등록'처럼 아웃라인 버튼, 선택된 쪽은 채움 */
+                                     #samPickModal .spkModeLbl { font-weight: 600; margin-bottom: 0; }
+                                     #samPickModal .spkModeLbl input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+                                     #samPickModal .spkModeLbl.on { background: #2f9c86; border-color: #2f9c86; color: #fff; box-shadow: none; }
+                                     #samPickModal .spkModeLbl.on:hover { background: #27836f; border-color: #27836f; color: #fff; }
+                                     /* 버튼 — 솔리드 청록, 보조 아웃라인 */
+                                     #samPickModal .btn-primary, #samPickModal .btn-warning { background:#2f9c86; border-color:#2f9c86; color:#fff; font-weight:600; }
+                                     #samPickModal .btn-primary:hover, #samPickModal .btn-warning:hover { background:#27836f; border-color:#27836f; color:#fff; }
+                                     #samPickModal .btn-outline-primary { color:#2f9c86; border-color:#b3ddd3; }
+                                     #samPickModal .btn-outline-primary:hover { background:#ecf8f4; color:#1f7a66; border-color:#2f9c86; }
+                                     #samPickModal .btn-outline-secondary { color:#5f716c; border-color:#cdd9d5; }
+                                     #samPickModal .btn-outline-secondary:hover { background:#eef5f3; color:#20705d; border-color:#8fb9af; }
+                                     /* 세트 개수 등 강조 텍스트도 청록으로 */
+                                     #samPickModal .text-primary { color:#2f9c86 !important; }
+                                     /* 폴더 선택 / 파일 선택·추가 — 흰 바탕(청록 아웃라인) */
+                                     #samPickModal #samPickBtn,
+                                     #samPickModal #samPickManualBtn {
+                                         background:#fff; color:#2f9c86; border-color:#b3ddd3; box-shadow:none;
+                                     }
+                                     #samPickModal #samPickBtn:hover, #samPickModal #samPickBtn:focus, #samPickModal #samPickBtn:active,
+                                     #samPickModal #samPickManualBtn:hover, #samPickModal #samPickManualBtn:focus, #samPickModal #samPickManualBtn:active {
+                                         background:#ecf8f4; color:#1f7a66; border-color:#2f9c86;
+                                     }
+                                     /* 선택 적용 — 흰 바탕(청록 아웃라인) */
+                                     #samPickModal #samPickApply { background:#fff; color:#2f9c86; border-color:#b3ddd3; box-shadow:none; }
+                                     #samPickModal #samPickApply:hover, #samPickModal #samPickApply:focus, #samPickModal #samPickApply:active {
+                                         background:#ecf8f4; color:#1f7a66; border-color:#2f9c86;
+                                     }
+                                     /* 선택 초기화 — 청록 아웃라인 (전 상태 고정) */
+                                     #samPickModal #samPickManualClear,
+                                     #samPickModal #samPickManualClear:hover,
+                                     #samPickModal #samPickManualClear:focus,
+                                     #samPickModal #samPickManualClear:active {
+                                         color:#2f9c86; background:#fff; border-color:#b3ddd3; box-shadow:none;
+                                     }
+                                     #samPickModal #samPickManualClear:hover,
+                                     #samPickModal #samPickManualClear:focus,
+                                     #samPickModal #samPickManualClear:active {
+                                         color:#1f7a66; background:#ecf8f4; border-color:#2f9c86;
+                                     }
+                                     /* 작업화면 배지 — 흰 바탕이라 은은하게 페이드로 깜박(색 글자·테두리) */
+                                     @keyframes spkTabBlink { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+                                     #samPickModal #samPickTabInfo { animation: spkTabBlink 1.6s ease-in-out infinite; }
                                  </style>
                                  <input type="file" id="samPickInput" webkitdirectory directory multiple style="display:none;">
-                                 <div class="modal fade" id="samPickModal" tabindex="-1" role="dialog" data-backdrop="static">
+                                 <input type="file" id="samPickManualInput" multiple style="display:none;">
+                                 <div class="modal fade" id="samPickModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
                                      <div class="modal-dialog modal-xl" role="document">
                                          <div class="modal-content" style="border:none; border-radius:12px;">
-                                             <div class="modal-header" style="background:linear-gradient(135deg,#f0932b 0%,#eb4d4b 100%); color:#fff; border-radius:12px 12px 0 0;">
-                                                 <h5 class="modal-title" style="font-weight:600;"><i class="fa fa-folder-open mr-2"></i>청구파일 선택</h5>
-                                                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                                             <div class="modal-header" style="background:#eef7f4; color:#1f7a66; border-bottom:2px solid #2f9c86; border-radius:12px 12px 0 0;">
+                                                 <h5 class="modal-title" style="font-weight:700; letter-spacing:0.2px; color:#1f7a66;"><i class="fa fa-folder-open mr-2"></i>청구파일 선택</h5>
+                                                 <button type="button" class="close" data-dismiss="modal" style="color:#1f7a66; opacity:0.8;"><span>&times;</span></button>
                                              </div>
                                              <div class="modal-body" style="max-height:70vh; overflow:auto; padding:14px 18px;">
-                                                 <div class="mb-2">
-                                                     <button type="button" id="samPickBtn"  class="btn btn-sm btn-warning">폴더 선택</button>
-                                                     <button type="button" id="samPickRefresh" class="btn btn-sm btn-outline-primary"><i class="fa fa-sync-alt mr-1"></i>새로고침</button>
-                                                     <span id="samPickFolder" class="ml-2" style="font-weight:600; color:#8a5a00; font-size:15px;">폴더 미선택</span>
-                                                     <span id="samPickInfo" class="ml-2 text-muted" style="font-size:14px;">폴더를 선택하거나 이 창으로 폴더를 끌어다 놓으세요.</span>
+                                                 <!-- [방식 선택] 라디오: 수동선택(파일 직접 지정) / 자동생성 폴더선택(폴더 스캔) -->
+                                                 <div class="mb-3" id="samPickModeBar" style="font-size:14px;">
+                                                     <label class="btn btn-outline-primary btn-sm spkModeLbl on mr-2" id="samPickModeManualLbl" style="cursor:pointer;">
+                                                         <input type="radio" name="samPickMode2" id="samPickModeManual" value="manual" checked>🖐 샘파일수동선택
+                                                     </label>
+                                                     <label class="btn btn-outline-primary btn-sm spkModeLbl" id="samPickModeAutoLbl" style="cursor:pointer;">
+                                                         <input type="radio" name="samPickMode2" id="samPickModeAuto" value="auto">📂 자동생성 폴더선택
+                                                     </label>
+                                                     <span id="samPickTabInfo" class="float-right" style="font-weight:700; font-size:15px; padding:5px 12px; border-radius:6px;"></span>
                                                  </div>
-                                                 <div class="mb-2" style="font-size:13.5px;">
-                                                     <label class="mr-1 mb-0"><input type="checkbox" id="samPickPeriodChk"> 기간</label>
-                                                     <input type="date" id="samPickFrom" class="form-control form-control-sm d-inline-block" style="width:150px;" disabled>
-                                                     <span class="mx-1">~</span>
-                                                     <input type="date" id="samPickTo" class="form-control form-control-sm d-inline-block" style="width:150px;" disabled>
+                                                 <!-- [자동선택 영역] -->
+                                                 <div id="samPickAutoWrap">
+                                                     <div class="mb-2">
+                                                         <button type="button" id="samPickBtn"  class="btn btn-sm btn-warning">폴더 선택</button>
+                                                         <button type="button" id="samPickRefresh" class="btn btn-sm btn-outline-primary"><i class="fa fa-sync-alt mr-1"></i>새로고침</button>
+                                                         <span id="samPickFolder" class="ml-2" style="font-weight:600; color:#1f6f5c; font-size:15px;">폴더 미선택</span>
+                                                         <span id="samPickInfo" class="ml-2 text-muted" style="font-size:14px;">폴더를 선택하거나 이 창으로 폴더를 끌어다 놓으세요.</span>
+                                                     </div>
+                                                     <div class="mb-2" style="font-size:13.5px;">
+                                                         <label class="mr-1 mb-0"><input type="checkbox" id="samPickPeriodChk"> 기간</label>
+                                                         <input type="date" id="samPickFrom" class="form-control form-control-sm d-inline-block" style="width:150px;" disabled>
+                                                         <span class="mx-1">~</span>
+                                                         <input type="date" id="samPickTo" class="form-control form-control-sm d-inline-block" style="width:150px;" disabled>
+                                                     </div>
                                                  </div>
-                                                 <table class="table table-sm table-bordered table-hover mb-0 samPickTable" style="font-size:13.5px; white-space:nowrap;">
+                                                 <!-- [수동선택 영역] -->
+                                                 <div id="samPickManualWrap" class="mb-2 pt-1" style="display:none;">
+                                                     <button type="button" id="samPickManualBtn" class="btn btn-sm btn-primary"><i class="fa fa-hand-pointer mr-1"></i>파일 선택 / 추가</button>
+                                                     <button type="button" id="samPickManualClear" class="btn btn-sm btn-outline-secondary ml-1"><i class="fa fa-eraser mr-1"></i>선택 초기화</button>
+                                                     <span id="samPickManualInfo" class="ml-2 text-muted" style="font-size:14px;">올릴 샘파일을 직접 선택하세요. 여러 개(다중) 선택도 가능합니다.</span>
+                                                 </div>
+                                                 <table class="table table-sm table-bordered table-hover mb-0 samPickTable" style="font-size:14.5px; white-space:nowrap;">
                                                      <thead class="thead-light">
                                                          <tr>
                                                              <th style="width:30px;"></th>
@@ -272,13 +341,13 @@
                                                              <th>보험구분</th>
                                                              <th>입/외</th>
                                                              <th>청구구분</th>
-                                                             <th>서식버전</th>
                                                              <th>청구번호</th>
                                                              <th class="text-right">청구건수</th>
                                                              <th class="text-right">총진료비</th>
                                                              <th class="text-right">크기</th>
-                                                             <th>파일명</th>
-                                                             <th class="text-center spkStHead" style="width:96px;min-width:96px;">상태</th>
+                                                             <th style="min-width:540px;">파일명</th>
+                                                             <th class="text-center">서식버전</th>
+                                                             <th class="text-center spkStHead" style="width:110px;min-width:110px;">상태</th>
                                                          </tr>
                                                      </thead>
                                                      <tbody id="samPickTree"><tr><td colspan="12" class="text-center text-muted" style="padding:24px;">[폴더 선택] 을 누르거나 <b>이 창으로 폴더를 끌어다 놓으세요</b>.<br><span style="font-size:12px;">드래그&amp;드롭 시 브라우저 권한창·업로드확인창 없이 바로 읽습니다.</span></td></tr></tbody>
@@ -1774,7 +1843,7 @@ function fileLoad_Open(mgmonth) {
 	        var _sm = document.getElementById('samPickMode');
 	        if (_sm && _sm.checked) {
 	            window._samPickMonth = mgmonth;
-	            try { $('#samPickModal').modal('show'); return; } catch(e2){}
+	            try { $('#samPickModal').modal('show'); return; } catch(e2){}   // 외부클릭·ESC 차단은 모달의 data-backdrop="static" data-keyboard="false" 로 처리
 	        }
 	        folderInput.value    = '';
 	        folderInput.onchange = handleFileSelection;
@@ -3841,6 +3910,11 @@ $('#verifyModal').on('hidden.bs.modal', function() {
     var _meta = {};         // idx -> {version, claimNo, caseCnt, insur, treat} 파싱결과 캐시(기간 필터 재렌더 시 재파싱 방지)
     var _codeMap = {};      // INSUR_TYPE/TREAT_TYPE/TREAT_SAN_TYPE -> {code:name} (commList.do)
     var _dirHandle = null;  // showDirectoryPicker 폴더 핸들 — 유지해두면 [새로고침] 시 다이얼로그 없이 재스캔
+    var _autoFiles = [];    // 자동선택방식: 폴더 스캔/드롭으로 잡힌 파일 (독립 저장소)
+    var _manualFiles = [];  // 수동선택방식: 파일 다이얼로그로 직접 고른 파일 (독립 저장소)
+    // 현재 방식(수동 여부) + 방식별 목록으로 _files 재구성 — 두 방식의 목록을 완전 분리(전환 시 상대 방식 파일은 안 보임)
+    function curManualMode(){ var r=document.getElementById('samPickModeManual'); return !!(r && r.checked); }
+    function rebuildFiles(){ _files=(curManualMode()?_manualFiles:_autoFiles).slice(); _meta={}; }
 
     // 업로드 성공한 파일 서명(이름|크기|수정시각)을 localStorage 에 기억 → 재로그인 후에도 목록에서 숨김
     function upKey(){ return 'samPickUploaded_' + (typeof hospid!=='undefined'?hospid:''); }
@@ -3912,9 +3986,29 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         return {M:'산재 청구', C:'자보한방', K:'한방', D:'질병군', H:'요양/의료급여'}[k] || (k+' 세트');
     }
 
-    function periodActive(){ var c=document.getElementById('samPickPeriodChk'); return c && c.checked; }
+    // [탭 구분] repExts(L01~L20/L32/CXX → fn_GetJobsSam='REP') 파일은 환자평가표(9) 탭 전용, 그 외는 청구샘파일(8) 탭 전용.
+    //  현재 탭(g_Flag)과 안 맞는 파일은 체크 불가 처리(마우스오버 안내). 배지 표시는 제거함.
+    function fileFlag(name){
+        var js=(typeof fn_GetJobsSam==='function')?fn_GetJobsSam(name):'';
+        return (js==='REP')?'9':'8';
+    }
+    function curFlag(){ return String((typeof g_Flag!=='undefined' && g_Flag!=null)?g_Flag:'8'); }
+    function tabMismatch(name){ return fileFlag(name)!==curFlag(); }
+    // 현재 작업 탭(청구샘파일=8 / 환자평가표=9) 을 모드바 우측에 표시
+    function updateTabInfo(){
+        var el=document.getElementById('samPickTabInfo'); if(!el) return;
+        if(curFlag()==='9'){ el.innerHTML='📋 환자평가표 작업화면'; el.style.color='#bf6f88'; el.style.background='#fff'; el.style.border='1.5px solid #bf6f88'; }
+        else               { el.innerHTML='🧾 청구샘파일 작업화면'; el.style.color='#2f9c86'; el.style.background='#fff'; el.style.border='1.5px solid #2f9c86'; }
+    }
+
+    function periodActive(){
+        var rm=document.getElementById('samPickModeManual');
+        if(rm && rm.checked) return false;   // 수동선택방식에선 기간 필터 미적용(선택 파일 전체 표시)
+        var c=document.getElementById('samPickPeriodChk'); return c && c.checked;
+    }
     function folderDate(dir){ var m=/(\d{4}-\d{2}-\d{2})/.exec(dir||''); return m?m[1]:''; }
     function inPeriod(dir, file){
+        if(file && file._manual) return true;   // 임의선택 파일은 폴더 날짜가 없으므로 기간 필터 미적용(항상 표시)
         if(!periodActive()) return true;
         var from=(document.getElementById('samPickFrom')||{}).value||'';
         var to  =(document.getElementById('samPickTo')||{}).value||'';
@@ -3963,13 +4057,24 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             try { r.readAsText(file.slice(0, 262144), 'euc-kr'); } catch(x){ resolve([]); }
         });
     }
-    // 청구구분: 명세서 CLAIM_GRP → 1 보완/2 추가/3 분리/그외 원청구
+    // 환자평가표(REP)는 라인당 1환자라 건수 집계에 전체 파일을 읽어야 함(readHead의 256KB 슬라이스로는 잘림)
+    function readAll(file){
+        return new Promise(function(resolve){
+            var r=new FileReader();
+            r.onload=function(e){ resolve((e.target.result||'').split(/\r?\n/)); };
+            r.onerror=function(){ resolve([]); };
+            try { r.readAsText(file, 'euc-kr'); } catch(x){ resolve([]); }
+        });
+    }
+    function countLines(lines){ var c=0; for(var i=0;i<lines.length;i++){ if((lines[i]||'').trim().length>0) c++; } return c; }
+    // 파일명 …_YYYYMM.ext → 'YYYY-MM' (평가표 청구년월 유추)
+    function ymFromName(name){ var m=/_(\d{4})(\d{2})(?=\D|$)/.exec(name||''); return m?(m[1]+'-'+m[2]):''; }
+    // 청구구분(수가기준 an(1), POSITION 31): 1=보완청구 / 2=추가청구 / 그 외(0·공백·3 등)=원청구
     function claimGrpLabel(g){
         g=(g||'').trim();
         if(g==='1') return '보완청구';
         if(g==='2') return '추가청구';
-        if(g==='3') return '분리청구';
-        return '원청구';
+        return '원청구';   // 분리청구(3) 등 스펙 외 값은 모두 원청구로 처리
     }
     function post(url, obj){ return $.ajax({ url:url, type:'POST', contentType:'application/json', data:JSON.stringify(obj) }); }
     function pick(parsed, col){
@@ -3993,7 +4098,8 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         var file=_files[idx];
         var meta={version:'', claimNo:'', caseCnt:'', insur:'', treat:'', claimType:'', dateYm:'', totAmt:''};
         try{
-            var lines=await readHead(file);
+            var isEval=(fileFlag(file.name)==='9');          // 환자평가표(REP=L01~L20/L32/CXX)
+            var lines=isEval ? await readAll(file) : await readHead(file);   // 평가표는 건수 집계 위해 전체 읽기
             var line=lines[0]||'';
             if(line){
                 var jobssam=(typeof fn_GetJobsSam==='function')?fn_GetJobsSam(file.name):file.name.toUpperCase();
@@ -4004,10 +4110,27 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 if(!(m && m.error_code==='0' && m.matchResult && m.matchResult.length)){
                     m=await post('/main/getSamfverMatch.do',{samver:jobssam, version:meta.version, valsize:0});
                 }
-                if(m && m.matchResult && m.matchResult.length){
+                var matched=(m && m.matchResult && m.matchResult.length);
+                if(matched){
                     var mm=m.matchResult[0];
                     var samver=mm.SAMVER||mm.samver, tblinfo=mm.TBLINFO||mm.tblinfo, mver=mm.VERSION||mm.version;
-                    if(tblinfo==='TBL_CHUNG_MST'){   // 청구서 파일만 청구번호/건수/구분 있음
+                    if(isEval){   // ── 환자평가표: TBL_SAMFVER_MST 매칭으로 서식버전 확정 + 평가년월 + 평가건수 ──
+                        meta.version=mver||meta.version;                 // 매칭된 서식버전으로 확정
+                        meta.insur='환자평가표';                         // 유형 명칭(보험구분 칸에 표기)
+                        meta.dateYm=ymFromName(file.name);               // 청구년월: 파일명 _YYYYMM 우선
+                        if(!meta.dateYm){                                // 파일명에 없으면 작성일자(DOC_DT)에서 유추
+                            var ekey=samver+'|'+tblinfo+'|'+mver, ecols=_colCache[ekey];
+                            if(!ecols){
+                                var ecr=await post('/main/getSamfverColumns.do',{samver:samver, tblinfo:tblinfo, version:mver});
+                                ecols=(ecr && ecr.error_code==='0' && ecr.columns)?ecr.columns:[];
+                                _colCache[ekey]=ecols;
+                            }
+                            var eparsed=(typeof fn_ParseLine==='function')?fn_ParseLine(line, ecols):null;
+                            var dd=(pick(eparsed,'DOC_DT')||'').replace(/[^0-9]/g,'');
+                            if(dd.length>=6) meta.dateYm=dd.substr(0,4)+'-'+dd.substr(4,2);
+                        }
+                        meta.caseCnt=countLines(lines).toLocaleString();  // 평가건수 = 유효 라인수(환자 1명/행)
+                    } else if(tblinfo==='TBL_CHUNG_MST'){   // 청구서 파일만 청구번호/건수/구분 있음
                         var key=samver+'|'+tblinfo+'|'+mver, cols=_colCache[key];
                         if(!cols){
                             var cr=await post('/main/getSamfverColumns.do',{samver:samver, tblinfo:tblinfo, version:mver});
@@ -4041,6 +4164,10 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                             if(clt!=='') meta.claimType=claimGrpLabel(clt);
                         }
                     }
+                } else if(isEval){   // SAMFVER 미매칭 평가표 — 버전 미인식이라도 건수/평가년월은 표시
+                    meta.insur='환자평가표(미매칭)';
+                    meta.dateYm=ymFromName(file.name);
+                    meta.caseCnt=countLines(lines).toLocaleString();
                 }
             }
         }catch(e){ console.error('청구파일 파싱 오류:', file.name, e); }
@@ -4050,6 +4177,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
     function syncPicked(){
         var checked=[];
         document.querySelectorAll('#samPickTree input.samPickFile:checked').forEach(function(cb){
+            if(cb.disabled) return;   // 탭 불일치 파일은 집계 제외(안전장치)
             var idx=parseInt(cb.getAttribute('data-idx'),10); if(_files[idx]) checked.push(_files[idx]);
         });
         window.gPickedFiles=checked;
@@ -4077,29 +4205,34 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             opts=opts||{};
             var f=_files[idx]; var zero=(f.size===0)?' <span class="text-danger">(0B)</span>':'';
             var setAttr = sid ? (' data-set="'+esc(sid)+'"') : '';
-            var trCls='samPickFileRow'+(opts.rep?' samPickRepRow':'')+(opts.member?' samPickMember':'');
-            var trSty=(opts.rep?'background:#f4f8ff;':'')+(opts.hidden?'display:none;':'');
+            var mis=tabMismatch(f.name);   // 현재 탭에서 업로드 불가한 파일 → 체크 차단 + 배지
+            var trCls='samPickFileRow'+(opts.rep?' samPickRepRow':'')+(opts.member?' samPickMember':'')+(mis?' spkDisRow':'');
+            var trSty=(opts.rep?'background:#eef7f4;':'')+(opts.hidden?'display:none;':'');
             var cbCls='samPickFile'+(opts.rep?' samPickRep':'');
+            // 비활성(탭 불일치) 행: 체크박스 대신 X 표시(선택 불가). 정상 행은 체크박스
+            var cbCell=mis
+                ? '<span title="현재 탭에서 업로드할 수 없는 파일입니다." style="color:#b56b73;font-weight:700;font-size:14px;">✕</span>'
+                : '<input type="checkbox" class="'+cbCls+'" data-idx="'+idx+'" data-dir="'+esc(d)+'"'+setAttr+'>';
             var caret=opts.rep?'<span class="samPickSetCaret" style="display:inline-block;width:18px;cursor:pointer;font-weight:700;" title="펼치기/접기">▶</span> ':'';
             var cnt=opts.rep?(' <span class="text-primary" style="font-weight:600;" title="대표 체크=전체 선택 · 클릭=펼치기">· '+opts.count+'개 세트 ▸</span>'):'';
             return '<tr class="'+trCls+'" data-dir="'+esc(d)+'"'+setAttr+(trSty?(' style="'+trSty+'"'):'')+'>'
-                +'<td class="text-center"><input type="checkbox" class="'+cbCls+'" data-idx="'+idx+'" data-dir="'+esc(d)+'"'+setAttr+'></td>'
+                +'<td class="text-center">'+cbCell+'</td>'
                 +'<td class="text-center" id="spk_dateym_'+idx+'">…</td>'
                 +'<td id="spk_insur_'+idx+'">…</td>'
                 +'<td class="text-center" id="spk_treat_'+idx+'">…</td>'
                 +'<td class="text-center" id="spk_type_'+idx+'">…</td>'
-                +'<td class="text-center" id="spk_ver_'+idx+'">…</td>'
                 +'<td class="text-center" id="spk_claim_'+idx+'">…</td>'
                 +'<td class="text-right" id="spk_cnt_'+idx+'">…</td>'
                 +'<td class="text-right" id="spk_tot_'+idx+'">…</td>'
                 +'<td class="text-right">'+fmtSize(f.size)+'</td>'
                 +'<td style="padding-left:'+indent+'px;">'+caret+'📄 '+esc(f.name)+zero+cnt+'</td>'
+                +'<td class="text-center" id="spk_ver_'+idx+'">…</td>'
                 +'<td class="text-center spkStCell" id="spk_st_'+idx+'" style="color:#c0c0c0;">-</td></tr>';
         }
         dirs.forEach(function(d){
-            html+='<tr class="samPickDirRow" data-dir="'+esc(d)+'" style="background:#fff8ec; cursor:pointer;">'
+            html+='<tr class="samPickDirRow" data-dir="'+esc(d)+'" style="background:#eef7f4; cursor:pointer;">'
                 +'<td class="text-center"><input type="checkbox" class="samPickDir" data-dir="'+esc(d)+'"></td>'
-                +'<td colspan="11" style="font-weight:600;color:#8a5a00;"><span class="samPickCaret" style="display:inline-block;width:14px;">▼</span> 📁 '+esc(prettyDir(d))+' ('+groups[d].length+')</td></tr>';
+                +'<td colspan="11" style="font-weight:600;color:#1f6f5c;"><span class="samPickCaret" style="display:inline-block;width:14px;">▼</span> 📁 '+esc(prettyDir(d))+' ('+groups[d].length+')</td></tr>';
             // 폴더 내부를 청구세트(M/C/K/D/H 다중파일)와 단건(GHP/CAR 등)으로 나눔
             var sets={}, order=[];
             groups[d].forEach(function(idx){
@@ -4123,14 +4256,14 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         tb.querySelectorAll('input.samPickDir').forEach(function(cb){ cb.addEventListener('change', function(e){
             e.stopPropagation();
             var dir=cb.getAttribute('data-dir');
-            tb.querySelectorAll('input.samPickFile').forEach(function(fc){ if(fc.getAttribute('data-dir')===dir) fc.checked=cb.checked; });
+            tb.querySelectorAll('input.samPickFile').forEach(function(fc){ if(fc.getAttribute('data-dir')===dir && !fc.disabled) fc.checked=cb.checked; });
             syncPicked();
         }); });
         // 대표 체크 → 세트 전체(대표+멤버) 선택
         tb.querySelectorAll('input.samPickRep').forEach(function(cb){ cb.addEventListener('change', function(e){
             e.stopPropagation();
             var sid=cb.getAttribute('data-set');
-            tb.querySelectorAll('input.samPickFile').forEach(function(fc){ if(fc.getAttribute('data-set')===sid) fc.checked=cb.checked; });
+            tb.querySelectorAll('input.samPickFile').forEach(function(fc){ if(fc.getAttribute('data-set')===sid && !fc.disabled) fc.checked=cb.checked; });
             syncPicked();
         }); });
         // 폴더 행 클릭 → 접기/펼치기 (펼칠 때 세트 멤버는 접힌 상태 유지)
@@ -4165,8 +4298,9 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         (async function(){ for(var k=0;k<visible.length;k++){ var vi=visible[k]; if(!_meta[vi]) await parseOne(vi); } })();   // 미파싱만 첫줄 파싱(순차)
     }
     function onPick(e){   // 구형 브라우저 폴백(webkitdirectory input) 경로
-        var fl=e.target.files||[]; _files=[]; _meta={}; _dirHandle=null;
-        for(var i=0;i<fl.length;i++){ if(matchAllowed(fl[i].name)) _files.push(fl[i]); }
+        var fl=e.target.files||[]; _autoFiles=[]; _dirHandle=null;
+        for(var i=0;i<fl.length;i++){ if(matchAllowed(fl[i].name)) _autoFiles.push(fl[i]); }
+        rebuildFiles();
         var top=(fl.length && fl[0].webkitRelativePath)?fl[0].webkitRelativePath.split('/')[0]:'';
         var fe=document.getElementById('samPickFolder'); if(fe) fe.textContent = top?('선택폴더: '+top):'폴더 미선택';
         render();
@@ -4189,7 +4323,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             }
         }
         try{ await walk(_dirHandle, _dirHandle.name); }catch(e){ console.error('폴더 스캔 오류:', e); }
-        _files=list; _meta={};
+        _autoFiles=list; rebuildFiles();   // 자동선택 저장소 갱신 후 현재 방식으로 재구성
         var fe=document.getElementById('samPickFolder'); if(fe) fe.textContent='선택폴더: '+_dirHandle.name;
         render();
     }
@@ -4219,7 +4353,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         if(!roots.length){ return; }
         var list=[];
         for(var r=0;r<roots.length;r++){ await walkEntry(roots[r], '', list); }
-        _files=list; _meta={}; _dirHandle=null;
+        _autoFiles=list; _dirHandle=null; rebuildFiles();   // 드롭분 = 자동선택 저장소
         var top=(roots[0] && roots[0].isDirectory)?roots[0].name:(roots.length?'(파일)':'');
         var fe=document.getElementById('samPickFolder'); if(fe) fe.textContent = top?('선택폴더: '+top):'폴더 미선택';
         render();
@@ -4298,15 +4432,24 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         if(!document.getElementById('samPickModal')) return;
         // 모달이 카드/탭 안에 중첩되면 백드롭이 위를 덮어 클릭(닫기)이 막힘 → body 직속으로 이동
         try { $('#samPickModal').appendTo(document.body); } catch(e){}
-        // 닫기/선택적용 등 data-dismiss 보강(위임 이벤트 누락 대비 명시적 hide)
+        // [닫힘 가드] 외부 클릭/ESC로는 닫히지 않게 — [닫기]·[×] 버튼으로만 닫힘 허용(static 백드롭이 안 먹는 환경 대비)
+        window._samAllowClose=false;
+        try{
+            $('#samPickModal').on('hide.bs.modal', function(e){ if(!window._samAllowClose){ e.preventDefault(); } });
+            $('#samPickModal').on('hidden.bs.modal', function(){ window._samAllowClose=false; });
+        }catch(e){}
+        // 닫기/× 만 명시적으로 닫힘 허용
         document.querySelectorAll('#samPickModal [data-dismiss="modal"]').forEach(function(b){
-            b.addEventListener('click', function(){ try { $('#samPickModal').modal('hide'); } catch(e){} });
+            b.addEventListener('click', function(){ window._samAllowClose=true; try { $('#samPickModal').modal('hide'); } catch(e){} });
         });
         fetchCodes();   // 보험구분/입외 디코드용 공통코드 로드
         // 모달 다시 열 때 폴더 핸들 유지 중이면 자동 재스캔(SamCatch 새 복사분/삭제분 반영). 핸들 없으면(드롭/폴백) 화면만 갱신
         // 핸들이 메모리에 없으면 IndexedDB 저장분 복원 시도 — 권한 'granted'(모든 방문에서 허용)면 창 없이 자동 스캔,
         // 'prompt' 면 안내문 표시([새로고침] 클릭 한 번으로 연결, 폴더 재탐색 불필요)
         try{ $('#samPickModal').on('shown.bs.modal', function(){
+            updateTabInfo();   // 열릴 때 현재 작업 탭 표시 갱신
+            var _rm=document.getElementById('samPickModeManual');
+            if(_rm && _rm.checked){ rebuildFiles(); render(); return; }   // 수동선택방식: 폴더 자동스캔 생략, 수동 목록만 표시
             if(typeof _dirHandle!=='undefined' && _dirHandle){ scanFromHandle(); return; }
             restoreHandle(false).then(function(ok){
                 if(ok){ scanFromHandle(); return; }
@@ -4314,7 +4457,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 loadHandle().then(function(h){
                     if(!h) return;
                     var fe=document.getElementById('samPickFolder');
-                    if(fe) fe.innerHTML='이전 폴더 <b>'+esc(h.name)+'</b> 기억됨 — <span style="color:#e67e22;font-weight:600;">[새로고침] 클릭 시 자동 연결</span>';
+                    if(fe) fe.innerHTML='이전 폴더 <b>'+esc(h.name)+'</b> 기억됨 — <span style="color:#1f7a66;font-weight:600;">[새로고침] 클릭 시 자동 연결</span>';
                 });
             });
         }); }catch(e){}
@@ -4322,7 +4465,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         // 드래그&드롭 — 폴더를 모달 안으로 끌어다 놓으면 권한창 없이 바로 읽음
         var mbody=document.querySelector('#samPickModal .modal-body');
         if(mbody){
-            mbody.addEventListener('dragover', function(e){ e.preventDefault(); e.stopPropagation(); mbody.style.outline='2px dashed #f0932b'; mbody.style.outlineOffset='-6px'; });
+            mbody.addEventListener('dragover', function(e){ e.preventDefault(); e.stopPropagation(); mbody.style.outline='2px dashed #2f9c86'; mbody.style.outlineOffset='-6px'; });
             mbody.addEventListener('dragleave', function(e){ e.preventDefault(); mbody.style.outline=''; });
             mbody.addEventListener('drop', function(e){ e.preventDefault(); e.stopPropagation(); mbody.style.outline=''; onDrop(e); });
         }
@@ -4395,7 +4538,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                               : function(){ var n=new Date(),p=function(x){return String(x).padStart(2,'0');}; return ''+n.getFullYear()+p(n.getMonth())+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };
                 var _lastJobDt=null;
                 for(var i=0;i<order.length;i++){
-                    setSt(gidx[order[i]], '<span class="spkSpinner"></span>진행', '#f0932b');
+                    setSt(gidx[order[i]], '<span class="spkSpinner"></span>진행', '#475569');
                     if(footEl) footEl.textContent='업로드 중 '+(i+1)+' / '+order.length+' 건';
                     // 직전 청구건과 같은 초면 jobs_dt 충돌 → 초가 바뀔 때까지 대기(청구건별 배치 분리 보장)
                     while(_lastJobDt!==null && _jobDtNow()===_lastJobDt){ await new Promise(function(r){ setTimeout(r,120); }); }
@@ -4425,8 +4568,10 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                     }
                 }
                 window._samSilent=false;
-                // _files/_meta 에서 성공·삭제분만 제거 후 재렌더(실패건은 남김) → 재렌더 후 실패건 ❌ 재표시
+                // 성공·삭제분을 방식별 저장소에서 제거 후 재렌더(실패건은 남김) → 재렌더 후 실패건 ❌ 재표시
                 if(removed.length){
+                    _autoFiles  =_autoFiles.filter(function(f){ return removed.indexOf(f)<0; });
+                    _manualFiles=_manualFiles.filter(function(f){ return removed.indexOf(f)<0; });
                     var nf=[], nm={};
                     for(var j=0;j<_files.length;j++){ if(removed.indexOf(_files[j])<0){ var ni=nf.length; nm[ni]=_meta[j]; nf.push(_files[j]); } }
                     _files=nf; _meta=nm;
@@ -4447,8 +4592,73 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             })();
         });
         document.getElementById('samPickInput').addEventListener('change', onPick);
+        // [방식 선택] 자동선택방식(폴더 스캔)  ↔  수동선택방식(파일 직접 지정) 라디오.
+        //  - 자동: 폴더선택/새로고침/기간 컨트롤 표시. 수동: [파일 선택/추가] 버튼 + 다이얼로그 즉시 오픈.
+        //  - 목록(_files)은 두 방식의 파일을 합쳐 유지(수동분은 _manual 플래그로 기간필터 면제).
+        (function(){
+            var mbtn=document.getElementById('samPickManualBtn'),
+                mclr=document.getElementById('samPickManualClear'),
+                minp=document.getElementById('samPickManualInput'),
+                aWrap=document.getElementById('samPickAutoWrap'),
+                mWrap=document.getElementById('samPickManualWrap'),
+                rAuto=document.getElementById('samPickModeAuto'),
+                rMan =document.getElementById('samPickModeManual');
+            if(!minp) return;
+            function openDlg(){ minp.value=''; minp.click(); }
+            // 수동선택 초기화 — 수동 저장소 비우고 목록에서 제거(자동선택 폴더분은 그대로 보존)
+            function clearManual(){
+                if(!_manualFiles.length){
+                    if(typeof Swal!=='undefined'){ Swal.fire({ icon:'info', html:'<div style="font-size:14px;">초기화할 선택 파일이 없습니다.</div>', width:'340px', padding:'0.5em', heightAuto:false, timer:1600, showConfirmButton:false }); }
+                    return;
+                }
+                var n=_manualFiles.length;
+                _manualFiles=[]; window.gPickedFiles=[];
+                rebuildFiles(); render();
+                if(typeof Swal!=='undefined'){ Swal.fire({ icon:'success', html:'<div style="font-size:14px;">선택 파일 '+n+'건을 초기화했습니다.</div>', width:'340px', padding:'0.5em', heightAuto:false, timer:1600, showConfirmButton:false }); }
+            }
+            // 방식 전환: 컨트롤 표시/숨김 + 현재 방식 목록으로 _files 재구성(상대 방식 파일은 안 보임) + 재렌더
+            var mLbl=document.getElementById('samPickModeManualLbl'), aLbl=document.getElementById('samPickModeAutoLbl');
+            window.samPickApplyMode=function(openIfManual){
+                var manual=(rMan && rMan.checked);
+                if(mLbl) mLbl.classList.toggle('on', manual);    // 선택된 방식 라벨을 검게 강조
+                if(aLbl) aLbl.classList.toggle('on', !manual);
+                if(aWrap) aWrap.style.display = manual?'none':'';
+                if(mWrap) mWrap.style.display = manual?'':'none';
+                window.gPickedFiles=[];       // 방식이 바뀌면 체크 선택 초기화
+                rebuildFiles();               // 현재 방식 목록만 표시
+                render();
+                if(manual && openIfManual) openDlg();
+            };
+            //  라디오 선택은 화면(컨트롤 표시/숨김)만 전환 — 파일 다이얼로그는 [파일 선택/추가] 버튼으로만 오픈
+            if(rAuto) rAuto.addEventListener('change', function(){ window.samPickApplyMode(false); });
+            if(rMan)  rMan.addEventListener('change', function(){ window.samPickApplyMode(false); });
+            if(mbtn)  mbtn.addEventListener('click', openDlg);
+            if(mclr)  mclr.addEventListener('click', clearManual);
+            minp.addEventListener('change', function(e){
+                var fl=e.target.files||[], added=0, skipped=0, dup=0;
+                if(!curManualMode() && rMan){ rMan.checked=true; window.samPickApplyMode(false); }   // 파일 추가는 수동방식에서만
+                var sigs={}; _manualFiles.forEach(function(f){ sigs[fileSig(f)]=1; });
+                for(var i=0;i<fl.length;i++){
+                    var f=fl[i];
+                    if(!matchAllowed(f.name)){ skipped++; continue; }        // 허용 패턴 외 제외(업로드 필터와 동일)
+                    if(sigs[fileSig(f)]){ dup++; continue; }                 // 이미 목록에 있는 파일 제외
+                    try{ f._manual=true; f._relPath='(수동선택)'; }catch(x){}
+                    _manualFiles.push(f); sigs[fileSig(f)]=1; added++;
+                }
+                rebuildFiles();   // 수동 저장소 → _files 재구성
+                render();
+                if(typeof Swal!=='undefined' && (skipped||dup)){
+                    var msg='추가 '+added+'건';
+                    if(dup) msg+=' · 중복 제외 '+dup+'건';
+                    if(skipped) msg+=' · 허용 패턴 외 제외 '+skipped+'건';
+                    Swal.fire({ icon:(added?'info':'warning'), html:'<div style="font-size:14px;">'+msg+'</div>',
+                        width:'380px', padding:'0.5em', heightAuto:false, timer:2200, showConfirmButton:false });
+                }
+            });
+            window.samPickApplyMode(false);   // 초기: 자동선택방식(기본)
+        })();
         var chkAll=document.getElementById('samPickChkAll');
-        if(chkAll) chkAll.addEventListener('change', function(){ document.querySelectorAll('#samPickTree input').forEach(function(cb){cb.checked=chkAll.checked;}); syncPicked(); });
+        if(chkAll) chkAll.addEventListener('change', function(){ document.querySelectorAll('#samPickTree input').forEach(function(cb){ if(!cb.disabled) cb.checked=chkAll.checked; }); syncPicked(); });
         var upchk=document.getElementById('samPickShowUp');
         if(upchk) upchk.addEventListener('change', function(){ render(); });
         var clrup=document.getElementById('samPickClearUp');
