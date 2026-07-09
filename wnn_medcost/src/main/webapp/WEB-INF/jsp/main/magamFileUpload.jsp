@@ -44,9 +44,13 @@
 	                                </select>
 	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
 	                                     ★다음주 오픈 전까지 숨기려면 이 span 에 style="display:none;" 추가(→ 무조건 기존 방식)★ -->
-	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
-	                                 
-	                                    <input type="checkbox" id="samPickMode"> <i class="fa fa-flask mr-1"></i>신규 샘파일 작성
+	                                 <label id="samPickNewProgWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
+	                                    <input type="checkbox" id="samPickNewProg"> <i class="fa fa-flask mr-1"></i>신규프로그램 적용
+	                                </label>
+	                                <!-- [모달 진입 방식] 체크 시 자동생성 폴더선택 화면만, 해제 시 샘파일 수동선택 화면만 표시(모달 내 라디오 없음).
+	                                     '신규프로그램 적용' 이 꺼져 있으면 모달 자체를 안 쓰므로 이 체크('샘파일 자동생성선택 방식')는 아예 숨김(기본 히든). -->
+	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="font-weight:600; color:#0c7cd5; cursor:pointer; display:none;">
+	                                    <input type="checkbox" id="samPickMode"> <i class="fa fa-folder-open mr-1"></i>샘파일 자동생성선택 방식
 	                                </label>
 
 	                            </div>
@@ -288,8 +292,10 @@
                                      #samPickModal #samPickManualClear:active {
                                          color:#1f7a66; background:#ecf8f4; border-color:#2f9c86;
                                      }
-                                     /* 작업화면 배지 — 흰 바탕이라 은은하게 페이드로 깜박(색 글자·테두리) */
-                                     @keyframes spkTabBlink { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+                                     /* 진입방식이 곧 제목, 그 옆 작업화면 표기는 구분점으로 이어붙임(버튼·배지 아님) */
+                                     #samPickModal #samPickTabInfo:before { content:'·'; margin-right:8px; opacity:0.45; }
+                                     /* 작업화면은 은은한 페이드로 깜박여 현재 탭을 환기 */
+                                     @keyframes spkTabBlink { 0%,100% { opacity:1; } 50% { opacity:0.55; } }
                                      #samPickModal #samPickTabInfo { animation: spkTabBlink 1.6s ease-in-out infinite; }
                                  </style>
                                  <input type="file" id="samPickInput" webkitdirectory directory multiple style="display:none;">
@@ -298,24 +304,25 @@
                                      <div class="modal-dialog modal-xl" role="document">
                                          <div class="modal-content" style="border:none; border-radius:12px;">
                                              <div class="modal-header" style="background:#eef7f4; color:#1f7a66; border-bottom:2px solid #2f9c86; border-radius:12px 12px 0 0;">
-                                                 <h5 class="modal-title" style="font-weight:700; letter-spacing:0.2px; color:#1f7a66;"><i class="fa fa-folder-open mr-2"></i>청구파일 선택</h5>
+                                                 <h5 class="modal-title" style="font-weight:700; font-size:19px; letter-spacing:0.2px; color:#1f7a66; white-space:nowrap;">
+                                                     <!-- 제목 = 진입 방식(샘파일 수동선택 화면 / 자동생성 폴더선택 화면). 메인의 [샘파일 자동생성선택 방식] 체크가 결정 -->
+                                                     <span id="samPickModeNow"></span>
+                                                     <!-- 그 옆에 현재 작업 탭(청구샘파일/환자평가표) — 은은히 깜박임 -->
+                                                     <span id="samPickTabInfo" class="ml-2" style="font-weight:800; font-size:17px; vertical-align:middle;"></span>
+                                                 </h5>
                                                  <button type="button" class="close" data-dismiss="modal" style="color:#1f7a66; opacity:0.8;"><span>&times;</span></button>
                                              </div>
                                              <div class="modal-body" style="max-height:70vh; overflow:auto; padding:14px 18px;">
-                                                 <!-- [방식 선택] 라디오: 수동선택(파일 직접 지정) / 자동생성 폴더선택(폴더 스캔) -->
-                                                 <div class="mb-3" id="samPickModeBar" style="font-size:14px;">
-                                                     <label class="btn btn-outline-primary btn-sm spkModeLbl on mr-2" id="samPickModeManualLbl" style="cursor:pointer;">
-                                                         <input type="radio" name="samPickMode2" id="samPickModeManual" value="manual" checked>🖐 샘파일수동선택
-                                                     </label>
-                                                     <label class="btn btn-outline-primary btn-sm spkModeLbl" id="samPickModeAutoLbl" style="cursor:pointer;">
-                                                         <input type="radio" name="samPickMode2" id="samPickModeAuto" value="auto">📂 자동생성 폴더선택
-                                                     </label>
-                                                     <span id="samPickTabInfo" class="float-right" style="font-weight:700; font-size:15px; padding:5px 12px; border-radius:6px;"></span>
+                                                 <!-- [방식 선택] 라디오는 화면에서 숨김 — 모드는 메인의 [샘파일 자동생성 선택] 체크박스가 결정.
+                                                      (내부 로직 curManualMode()/rebuildFiles() 가 이 라디오를 그대로 읽으므로 hidden 으로 유지) -->
+                                                 <div id="samPickModeBar" style="display:none;">
+                                                     <input type="radio" name="samPickMode2" id="samPickModeManual" value="manual" checked>
+                                                     <input type="radio" name="samPickMode2" id="samPickModeAuto" value="auto">
                                                  </div>
                                                  <!-- [자동선택 영역] -->
                                                  <div id="samPickAutoWrap">
                                                      <div class="mb-2">
-                                                         <button type="button" id="samPickBtn"  class="btn btn-sm btn-warning">폴더 선택</button>
+                                                         <button type="button" id="samPickBtn"  class="btn btn-sm btn-warning"><i class="fa fa-folder-open mr-1"></i>폴더 선택</button>
                                                          <button type="button" id="samPickRefresh" class="btn btn-sm btn-outline-primary"><i class="fa fa-sync-alt mr-1"></i>새로고침</button>
                                                          <span id="samPickFolder" class="ml-2" style="font-weight:600; color:#1f6f5c; font-size:15px;">폴더 미선택</span>
                                                          <span id="samPickInfo" class="ml-2 text-muted" style="font-size:14px;">폴더를 선택하거나 이 창으로 폴더를 끌어다 놓으세요.</span>
@@ -329,8 +336,8 @@
                                                  </div>
                                                  <!-- [수동선택 영역] -->
                                                  <div id="samPickManualWrap" class="mb-2 pt-1" style="display:none;">
-                                                     <button type="button" id="samPickManualBtn" class="btn btn-sm btn-primary"><i class="fa fa-hand-pointer mr-1"></i>파일 선택 / 추가</button>
-                                                     <button type="button" id="samPickManualClear" class="btn btn-sm btn-outline-secondary ml-1"><i class="fa fa-eraser mr-1"></i>선택 초기화</button>
+                                                     <button type="button" id="samPickManualBtn" class="btn btn-sm btn-primary"><i class="fa fa-file-import mr-1"></i>파일 선택 / 추가</button>
+                                                     <button type="button" id="samPickManualClear" class="btn btn-sm btn-outline-secondary ml-1"><i class="fa fa-trash-alt mr-1"></i>선택 초기화</button>
                                                      <span id="samPickManualInfo" class="ml-2 text-muted" style="font-size:14px;">올릴 샘파일을 직접 선택하세요. 여러 개(다중) 선택도 가능합니다.</span>
                                                  </div>
                                                  <table class="table table-sm table-bordered table-hover mb-0 samPickTable" style="font-size:14.5px; white-space:nowrap;">
@@ -342,7 +349,7 @@
                                                              <th>입/외</th>
                                                              <th>청구구분</th>
                                                              <th>청구번호</th>
-                                                             <th class="text-right">청구건수</th>
+                                                             <th class="text-right">청구건수</th>ㄹ
                                                              <th class="text-right">총진료비</th>
                                                              <th class="text-right">크기</th>
                                                              <th style="min-width:540px;">파일명</th>
@@ -355,8 +362,8 @@
                                              </div>
                                              <div class="modal-footer" style="border-top:1px solid #e9ecef;">
                                                  <span id="samPickFootInfo" class="mr-auto" style="font-size:14px; font-weight:600; color:#343a40;"></span>
-                                                 <button type="button" id="samPickApply" class="btn btn-warning">선택 적용</button>
-                                                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">닫기</button>
+                                                 <button type="button" id="samPickApply" class="btn btn-warning"><i class="fa fa-cloud-upload-alt mr-1"></i>선택 적용</button>
+                                                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><i class="fa fa-times mr-1"></i>닫기</button>
                                              </div>
                                          </div>
                                      </div>
@@ -1839,10 +1846,18 @@ function fileLoad_Open(mgmonth) {
 	                return;
 	            } catch (e) { console.error('선택파일 업로드 오류:', e); }
 	        }
-	        // 월 카드 클릭: '신규 샘파일 작성' 체크 시 → 청구파일 선택 모달(그 월 기억 → [선택 적용] 시 업로드), 아니면 → 기존 파일 다이얼로그
-	        var _sm = document.getElementById('samPickMode');
-	        if (_sm && _sm.checked) {
+	        // 월 카드 클릭: '신규프로그램 적용' 체크 시 → 청구파일 선택 모달(그 월 기억 → [선택 적용] 시 업로드), 아니면 → 기존 파일 다이얼로그
+	        var _np = document.getElementById('samPickNewProg');
+	        if (_np && _np.checked) {
 	            window._samPickMonth = mgmonth;
+	            // 모달 진입 방식은 '샘파일 자동생성선택 방식' 체크로 결정 → 해당 영역 하나만 보이게(모달 내 라디오 없음)
+	            var _auto = document.getElementById('samPickMode');
+	            var _rA = document.getElementById('samPickModeAuto'), _rM = document.getElementById('samPickModeManual');
+	            if (_rA && _rM) {
+	                var _isAuto = !!(_auto && _auto.checked);
+	                _rA.checked = _isAuto; _rM.checked = !_isAuto;
+	                if (typeof window.samPickApplyMode === 'function') window.samPickApplyMode(false);
+	            }
 	            try { $('#samPickModal').modal('show'); return; } catch(e2){}   // 외부클릭·ESC 차단은 모달의 data-backdrop="static" data-keyboard="false" 로 처리
 	        }
 	        folderInput.value    = '';
@@ -3994,11 +4009,11 @@ $('#verifyModal').on('hidden.bs.modal', function() {
     }
     function curFlag(){ return String((typeof g_Flag!=='undefined' && g_Flag!=null)?g_Flag:'8'); }
     function tabMismatch(name){ return fileFlag(name)!==curFlag(); }
-    // 현재 작업 탭(청구샘파일=8 / 환자평가표=9) 을 모드바 우측에 표시
+    // 현재 작업 탭(청구샘파일=8 / 환자평가표=9) 을 모달 제목 옆에 글자로 표시(테두리·배경 없음)
     function updateTabInfo(){
         var el=document.getElementById('samPickTabInfo'); if(!el) return;
-        if(curFlag()==='9'){ el.innerHTML='📋 환자평가표 작업화면'; el.style.color='#bf6f88'; el.style.background='#fff'; el.style.border='1.5px solid #bf6f88'; }
-        else               { el.innerHTML='🧾 청구샘파일 작업화면'; el.style.color='#2f9c86'; el.style.background='#fff'; el.style.border='1.5px solid #2f9c86'; }
+        if(curFlag()==='9'){ el.innerHTML='📋 환자평가표 작업화면'; el.style.color='#d32f2f'; }
+        else               { el.innerHTML='🧾 청구샘파일 작업화면'; el.style.color='#d32f2f'; }
     }
 
     function periodActive(){
@@ -4525,7 +4540,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             var refreshBtn=document.getElementById('samPickRefresh'), folderBtn=document.getElementById('samPickBtn'), footEl=document.getElementById('samPickFootInfo');
             (async function runInline(){
                 // 실행 중 버튼 잠금(오조작 방지)
-                if(applyBtn){ applyBtn.disabled=true; applyBtn.textContent='업로드 중...'; }
+                if(applyBtn){ applyBtn.disabled=true; applyBtn.innerHTML='<i class="fa fa-spinner fa-spin mr-1"></i>업로드 중...'; }
                 if(folderBtn) folderBtn.disabled=true;
                 if(refreshBtn) refreshBtn.disabled=true;
                 try{ window.gMonth=mm; if(typeof findField==='function') findField('mgmonth', mm); }catch(e){}
@@ -4580,7 +4595,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 if(typeof loadMonthsData==='function'){ try{ loadMonthsData(); }catch(e){} }
                 render();   // 성공분 빠진 목록으로 갱신(체크 초기화됨)
                 failedFiles.forEach(function(f){ var ni=_files.indexOf(f); if(ni>=0) setSt([ni], '❌ 실패', '#e74c3c'); });   // 실패건 상태 재표시(원본 보존)
-                if(applyBtn){ applyBtn.disabled=false; applyBtn.textContent='선택 적용'; }
+                if(applyBtn){ applyBtn.disabled=false; applyBtn.innerHTML='<i class="fa fa-cloud-upload-alt mr-1"></i>선택 적용'; }
                 if(folderBtn) folderBtn.disabled=false;
                 if(refreshBtn) refreshBtn.disabled=false;
                 if(footEl){
@@ -4618,12 +4633,17 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             }
             // 방식 전환: 컨트롤 표시/숨김 + 현재 방식 목록으로 _files 재구성(상대 방식 파일은 안 보임) + 재렌더
             var mLbl=document.getElementById('samPickModeManualLbl'), aLbl=document.getElementById('samPickModeAutoLbl');
+            var nowBadge=document.getElementById('samPickModeNow');
             window.samPickApplyMode=function(openIfManual){
                 var manual=(rMan && rMan.checked);
                 if(mLbl) mLbl.classList.toggle('on', manual);    // 선택된 방식 라벨을 검게 강조
                 if(aLbl) aLbl.classList.toggle('on', !manual);
                 if(aWrap) aWrap.style.display = manual?'none':'';
                 if(mWrap) mWrap.style.display = manual?'':'none';
+                // 어느 방식으로 들어왔는지 항상 보이게(라디오를 없앴으므로 혼동 방지)
+                if(nowBadge) nowBadge.innerHTML = manual
+                    ? '<i class="fa fa-hand-pointer mr-1"></i>샘파일 수동선택 화면'
+                    : '<i class="fa fa-folder-open mr-1"></i>자동생성 폴더선택 화면';
                 window.gPickedFiles=[];       // 방식이 바뀌면 체크 선택 초기화
                 rebuildFiles();               // 현재 방식 목록만 표시
                 render();
@@ -4655,7 +4675,16 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                         width:'380px', padding:'0.5em', heightAuto:false, timer:2200, showConfirmButton:false });
                 }
             });
-            window.samPickApplyMode(false);   // 초기: 자동선택방식(기본)
+            window.samPickApplyMode(false);   // 초기 표시(실제 방식은 모달을 열 때 메인 체크박스로 다시 결정)
+        })();
+        // [메인 체크박스 연동] '신규프로그램 적용' 이 꺼져 있으면 모달을 안 쓰므로 '샘파일 자동생성선택 방식' 은 숨김(비활성 아님)
+        (function(){
+            var np=document.getElementById('samPickNewProg'),
+                wrap=document.getElementById('samPickModeWrap');
+            if(!np || !wrap) return;
+            function sync(){ wrap.style.display = np.checked ? '' : 'none'; }
+            np.addEventListener('change', sync);
+            sync();
         })();
         var chkAll=document.getElementById('samPickChkAll');
         if(chkAll) chkAll.addEventListener('change', function(){ document.querySelectorAll('#samPickTree input').forEach(function(cb){ if(!cb.disabled) cb.checked=chkAll.checked; }); syncPicked(); });
