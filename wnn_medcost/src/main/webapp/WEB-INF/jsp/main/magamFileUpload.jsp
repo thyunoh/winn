@@ -51,6 +51,7 @@
 
 	                            </div>
 	                        </div>
+	                        
 		                        
                             <div class="tab-regular mb-3">
 							    <ul class="nav nav-tabs" id="mg_FlagTab" role="tablist">
