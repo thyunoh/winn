@@ -44,7 +44,7 @@
 	                                </select>
 	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
 	                                     ★다음주 오픈 전까지 숨기려면 이 span 에 style="display:none;" 추가(→ 무조건 기존 방식)★ -->
-	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="font-weight:600; color:#0c7cd5; cursor:pointer;">
+	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
 	                                 
 	                                    <input type="checkbox" id="samPickMode"> <i class="fa fa-flask mr-1"></i>신규 샘파일 작성
 	                                </label>
