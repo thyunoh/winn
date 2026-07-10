@@ -45,7 +45,7 @@
 	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
 	                                     기본 히든. 위너넷 사용자(s_wnn_yn='Y') 에게만 노출 → 병원 사용자는 무조건 기존 방식. -->
 	                                 <label id="samPickNewProgWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
-	                                    <input type="checkbox" id="samPickNewProg"> <i class="fa fa-flask mr-1"></i>샘파일업로드 개선프로그램 적용     (위너넷만 보입니다 다음주 설명 들릴께요!! )
+	                                    <input type="checkbox" id="samPickNewProg"> <i class="fa fa-flask mr-1"></i>샘파일업로드 개선프로그램 적용     (위너넷만 보입니다 화요일 설명 들릴께요!! )
 	                                </label>
 	                                <!-- [모달 진입 방식] 체크 시 자동생성 폴더선택 화면만, 해제 시 샘파일 수동선택 화면만 표시(모달 내 라디오 없음).
 	                                     '신규프로그램 적용' 이 꺼져 있으면 모달 자체를 안 쓰므로 이 체크('샘파일 자동생성선택 방식')는 아예 숨김(기본 히든). -->
