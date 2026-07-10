@@ -43,9 +43,9 @@
 	                                <select id="treatType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">
 	                                </select>
 	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
-	                                     ★다음주 오픈 전까지 숨기려면 이 span 에 style="display:none;" 추가(→ 무조건 기존 방식)★ -->
+	                                     기본 히든. 위너넷 사용자(s_wnn_yn='Y') 에게만 노출 → 병원 사용자는 무조건 기존 방식. -->
 	                                 <label id="samPickNewProgWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
-	                                    <input type="checkbox" id="samPickNewProg"> <i class="fa fa-flask mr-1"></i>신규프로그램 적용
+	                                    <input type="checkbox" id="samPickNewProg"> <i class="fa fa-flask mr-1"></i>샘파일업로드 개선프로그램 적용     (위너넷만 보입니다 다음주 설명 들릴께요!! )
 	                                </label>
 	                                <!-- [모달 진입 방식] 체크 시 자동생성 폴더선택 화면만, 해제 시 샘파일 수동선택 화면만 표시(모달 내 라디오 없음).
 	                                     '신규프로그램 적용' 이 꺼져 있으면 모달 자체를 안 쓰므로 이 체크('샘파일 자동생성선택 방식')는 아예 숨김(기본 히든). -->
@@ -349,7 +349,7 @@
                                                              <th>입/외</th>
                                                              <th>청구구분</th>
                                                              <th>청구번호</th>
-                                                             <th class="text-right">청구건수</th>ㄹ
+                                                             <th class="text-right">청구건수</th>
                                                              <th class="text-right">총진료비</th>
                                                              <th class="text-right">크기</th>
                                                              <th style="min-width:540px;">파일명</th>
@@ -4676,6 +4676,21 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 }
             });
             window.samPickApplyMode(false);   // 초기 표시(실제 방식은 모달을 열 때 메인 체크박스로 다시 결정)
+        })();
+        // [노출 권한] '신규프로그램 적용' 은 위너넷 사용자에게만 보임. 병원 사용자는 계속 기존 방식.
+        //   assessment.jsp `_isWinnerUser()` 와 동일 컨벤션:
+        //   s_wnn_yn='Y'(로그인 시 설정) 또는 s_winconect='Y'(병원 검색 후 연결된 상태)
+        (function(){
+            var wrap=document.getElementById('samPickNewProgWrap');
+            if(!wrap) return;
+            var w='', c='';
+            try{
+                if(typeof getCookie==='function'){
+                    w=(getCookie('s_wnn_yn')    || '').trim();
+                    c=(getCookie('s_winconect') || '').trim();
+                }
+            }catch(e){}
+            if(w==='Y' || c==='Y') wrap.style.display='';
         })();
         // [메인 체크박스 연동] '신규프로그램 적용' 이 꺼져 있으면 모달을 안 쓰므로 '샘파일 자동생성선택 방식' 은 숨김(비활성 아님)
         (function(){
