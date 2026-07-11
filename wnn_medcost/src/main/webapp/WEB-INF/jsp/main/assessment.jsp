@@ -2724,12 +2724,20 @@ function fn_ViewData(data) {
 	
 	const ltxt = document.getElementById('lab_title');
 	ltxt.textContent = data.cate_cd + '. ' + data.cate_nm;
-	
+
     let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
-    
-    
-    
+
+	// 엑셀/복사/출력 상단 제목 — 전 지표 공통: "지표명 [병원명 · YYYY-MM]" (2026-07-11)
+	//   파일명은 "지표명_" + 저장시각(기존 filename 콜백이 시각을 덧붙임)
+	var _xhnm = (typeof hospnm !== 'undefined' && hospnm) ? hospnm
+	          : (typeof getCookie === 'function' ? (getCookie('s_hospnm') || '') : '');
+	excelTitle = data.cate_nm + ' [' + _xhnm + ' · ' + selected_Year + '-' + selectedMonth + ']';
+	printTitle = excelTitle;
+	copy_Title = excelTitle;
+	excelFName = (data.cate_nm || '').replace(/\s+/g, '') + '_';
+
+
 	if (["08", "15", "99"].includes(data.cate_cd)) {
 		
 		card.style.display = 'none';	
@@ -4063,8 +4071,22 @@ function fn_FindDataTable() {
 		        		                            ('0' + d.getSeconds()).slice(-2);
 		        		        return excelFName + formattedDate;
 		        		    },
-		        		    title: excelTitle
-		        		}, 
+		        		    title: excelTitle,
+		        		    // (2026-07-11) 엑셀 전용 방어: 셀 값이 null/undefined 면 엑셀 열너비 계산(.length)에서
+		        		    //   TypeError 로 다운로드가 통째로 실패(복사/출력은 정상인 증상) → 빈 문자열 치환 + HTML 태그 제거(✔ 등)
+		        		    exportOptions: {
+		        		        format: {
+		        		            header: function(data) {
+		        		                return (data === null || data === undefined) ? '' : String(data).replace(/<[^>]*>/g, '').trim();
+		        		            },
+		        		            body: function(data) {
+		        		                if (data === null || data === undefined) return '';
+		        		                if (typeof data !== 'string') return data;
+		        		                return data.indexOf('<') !== -1 ? data.replace(/<[^>]*>/g, '').trim() : data;
+		        		            }
+		        		        }
+		        		    }
+		        		},
 		        		{
 		        			extend: 'print',
 		        			text: printBtnnm,
