@@ -1387,8 +1387,6 @@
 				     , c.MED_START                  AS medStart
 				     , c.DOC_DT                     AS docDt
 				     
-				--     , MAX(PATIENT_CATHETER_CHECK_TEST(c.HOSP_CD,c.CLFORM_VER,c.PAT_ID,c.ADMIT_DT,c.MED_START,c.EVAL_TYPE,c.INDWELL_CATH,c.PAT_CLASS)) AS overdayYn
-				
 				     , MAX(PATIENT_CATHETER_CHECK(c.HOSP_CD,c.CLFORM_VER,c.PAT_ID,c.ADMIT_DT,c.MED_START,c.EVAL_TYPE,c.INDWELL_CATH,c.PAT_CLASS)) AS overdayYn
 				     
 				     , MAX(CASE WHEN (c.BOWEL_CTL = 3)  OR (c.PR_ULCER3 + c.PR_ULCER4 > 0 ) OR 
@@ -1880,11 +1878,19 @@
                           ((cm.curtStep1 > 0) AND CONCAT(cm.curtStep2, cm.curtStep3, cm.curtStep4) = '000') AND 
                            (COALESCE(cm.preRelDev,0) + COALESCE(cm.posChange,0) + COALESCE(cm.nutSupply,0)) = 3) THEN '1'
                            
-                    WHEN ((COALESCE(pm.prevStep1,0) + COALESCE(pm.prevStep2,0) + 
+                    WHEN ((COALESCE(pm.prevStep1,0) + COALESCE(pm.prevStep2,0) +
 					       COALESCE(pm.prevStep3,0) + COALESCE(pm.prevStep4,0) > 0) AND
-                          (CONCAT(cm.curtStep1, cm.curtStep2, cm.curtStep3, cm.curtStep4) = '0000') AND 
+                          (CONCAT(cm.curtStep1, cm.curtStep2, cm.curtStep3, cm.curtStep4) = '0000') AND
                           (COALESCE(cm.preRelDev,0) + COALESCE(cm.posChange,0) + COALESCE(cm.nutSupply,0)) = 3) THEN '1'
-                         
+
+                    -- [심평원 산식 보정 2026-07-11] 전월 욕창 있음 → 당월 1단계('1000')로 호전 + 압력·체위·영양(a+b+c) 처치 = 처치 인정
+                    --   기존 #3(전월1단계)/#4(전월2단계)만 커버 → 전월 3·4단계→당월 1단계 케이스 누락되어 '2'(미처치)로 떨어지던 것 보정
+                    --   분자 산식 SP_EVALUATION_INDICATORS_CREATE2 의 마지막 OR 블록(prevSum>0 AND curt='1000' AND a+b+c=3)과 일치
+                    WHEN ((COALESCE(pm.prevStep1,0) + COALESCE(pm.prevStep2,0) +
+					       COALESCE(pm.prevStep3,0) + COALESCE(pm.prevStep4,0) > 0) AND
+                          (CONCAT(cm.curtStep1, cm.curtStep2, cm.curtStep3, cm.curtStep4) = '1000') AND
+                          (COALESCE(cm.preRelDev,0) + COALESCE(cm.posChange,0) + COALESCE(cm.nutSupply,0)) = 3) THEN '1'
+
 			        WHEN COALESCE(cm.curtStep2,0) + COALESCE(cm.curtStep3,0) + COALESCE(cm.curtStep4,0) > 0 AND
 			             COALESCE(cm.preRelDev,0) + 
 			             COALESCE(cm.posChange,0) + COALESCE(cm.nutSupply,0) + COALESCE(cm.skinDress,0) = 4 THEN '1'
