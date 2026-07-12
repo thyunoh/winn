@@ -1087,11 +1087,11 @@ public class MagamController {
 			return response;
 
         } catch (Exception ex) {
-            model.addAttribute("error_code", ex.getMessage()); 
+            model.addAttribute("error_code", ex.getMessage());
             return null;
         }
 	}
-	
+
 	// 적정성평가 자료생성 진행상태(항목별 시작→완료) 조회 — 생성 중 폴링용
 	@RequestMapping(value="/main/evalProgress.do", method = RequestMethod.POST)
 	@ResponseBody
