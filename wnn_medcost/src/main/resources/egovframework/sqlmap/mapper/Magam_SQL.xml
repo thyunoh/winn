@@ -1484,6 +1484,18 @@
 		     , pm.UR_PLAN                                         AS urPlan
 		     , pm.BLAD_TRAIN                                      AS bladTrain
 		     , pm.REG_CATH                                        AS regCath
+		     , CASE                                                          <!-- 분모(manageYn='') 대상이지만 배뇨관리(①②③) 미실시 → 'X' -->
+		           WHEN pm.URINE_CTL IN ('2','3')
+		                AND LEFT(COALESCE(pm.PAT_CLASS,'E'),1) NOT IN ('A')                  <!-- 최고도 아님 -->
+		                AND NOT ( LEFT(COALESCE(pm.PAT_CLASS,'E'),1) IN ('B','C')            <!-- 치매+BPSD+향정신약 아님 -->
+		                          AND pm.DEMENTIA = '1'
+		                          AND ( pm.DELUSION IN('2','3') OR pm.HALLUCIN IN('2','3') OR pm.AGITATION IN('2','3')
+		                             OR pm.DISINHIB IN('2','3') OR pm.CARE_RESIST IN('2','3') OR pm.WANDER IN('2','3') )
+		                          AND pm.PSYCH_DRUG = '1' )
+		                AND NOT ( ( pm.UR_PLAN='1'    AND CAST(NULLIF(pm.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 )  <!-- ① -->
+		                       OR ( pm.BLAD_TRAIN='1' AND CAST(NULLIF(pm.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 )  <!-- ② -->
+		                       OR ( pm.REG_CATH='1' ) )                                                                   <!-- ③ -->
+		           THEN 'X' ELSE '' END                             AS planMissYn
 		     , CASE
 				   WHEN pm.URINE_CTL IN ('2','3')
 					      AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')      -- 의료최고도는 분모에서도 제외

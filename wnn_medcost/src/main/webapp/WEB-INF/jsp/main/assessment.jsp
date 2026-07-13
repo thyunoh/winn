@@ -250,12 +250,16 @@
 							        #btnPatvalView.patval-btn.is-disabled { cursor: not-allowed; filter: grayscale(0.5); opacity: 0.75; }
 							        .patval-icon { font-size: 13px; opacity: 0.95; }
 
-							        /* viewTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
+							        /* viewTable / indicatorTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
 							        #viewTable thead tr:first-child th:first-child,
 							        #viewTable thead th.pv-chk-th,
 							        #viewTable tbody td.pv-chk-cell,
 							        #viewTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
-							        #viewTable_wrapper .dataTables_scrollHead th.pv-chk-th {
+							        #viewTable_wrapper .dataTables_scrollHead th.pv-chk-th,
+							        #indicatorTable thead th.pv-chk-th,
+							        #indicatorTable tbody td.pv-chk-cell,
+							        #indicatorTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
+							        #indicatorTable_wrapper .dataTables_scrollHead th.pv-chk-th {
 							            width: 24px !important;
 							            min-width: 24px !important;
 							            max-width: 24px !important;
@@ -263,6 +267,13 @@
 							            padding-right: 2px !important;
 							            box-sizing: border-box !important;
 							        }
+
+							        /* indicatorTable — noArrow 헤더: 정렬 화살표(dt-column-order) 숨김 + 좌우 여백 축소로 폭 절약.
+							           ※ scrollY 사용 시 실제 보이는 헤더는 복제본(.dt-scroll-head 안, id 없음)이라
+							             #indicatorTable 이 아닌 #indicatorTable_wrapper 로 스코프해야 복제 헤더까지 잡힌다. */
+							        th.noArrow span.dt-column-order,
+							        th.noArrow .dt-column-order { display: none !important; }
+							        th.noArrow { padding-left: 11px !important; padding-right: 11px !important; }
 
 							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 표시는
 							           첫 컬럼 ✔ 체크박스로만 표시 (행 배경 강조 제거) */
@@ -2837,7 +2848,7 @@ function fn_ViewData(data) {
 		        	 ];
         
     	columnsSet = [  
-			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
+			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '80px'  },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },					    
 					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '100px',
 						    render: function(data, type, row) {
@@ -2925,25 +2936,28 @@ function fn_ViewData(data) {
     	// scrollX(가로스크롤) 끔 — 2단 colspan 헤더가 줌(90% 초과)에서 본문과 어긋나는 문제를
     	//   원천 차단 (헤더/본문 분리 테이블이 생기지 않아 px 반올림 드리프트 없음).
     	btm_Scroll = false;
+    	// 세로스크롤 뷰 높이 — 약 25행만 보이고 나머지는 스크롤(≈25.5px/행 → 25행이면 약 640px). 필요시 값 조정.
+    	page_Hight = 640;
     	// 2-row header — 관리항목 (colspan=3) 으로 일정배뇨/방광훈련/규칙적도뇨 묶음.
     	// 폭 절약을 위해 sub-header 는 짧게 (일정/방광/규칙).
     	c_Head_Set = [
     		[
-    			{ label: 'No',           rowspan: 2 },
+    			{ label: 'No',         rowspan: 2 },
     			{ label: '생년월일',     rowspan: 2 },
     			{ label: '대상자',       rowspan: 2 },
     			{ label: '입원일자',     rowspan: 2 },
     			{ label: '요양개시일',   rowspan: 2 },
-    			{ label: '관리<br>여부', rowspan: 2 },
+    			{ label: '관리<br>여부', rowspan: 2, class: 'noArrow' },
+    			{ label: '배뇨<br>계획', rowspan: 2, class: 'noArrow' },
     			{ label: '환자군',       rowspan: 2 },
     			{ label: '배뇨상태',     rowspan: 2 },
     			{ label: '관리항목',     colspan: 3 },
-    			{ label: '평가표작성일', rowspan: 2 }
+    			{ label: '평가표작성일', rowspan: 2 , class: 'noArrow'}
     		],
     		[
-    			{ label: '일정<br>배뇨' },
-    			{ label: '방광<br>훈련' },
-    			{ label: '규칙<br>도뇨' }
+    			{ label: '일정<br>배뇨', class: 'noArrow' },
+    			{ label: '방광<br>훈련', class: 'noArrow' },
+    			{ label: '규칙<br>도뇨', class: 'noArrow' }
     		]
     	];
     	columnsSet = [
@@ -2953,7 +2967,7 @@ function fn_ViewData(data) {
     							return meta.row + 1;
     						},
     					},
-    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '80px'  },
+    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '66px'  },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '75px'  },
 					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '85px',
 						    render: function(data, type, row) {
@@ -2971,7 +2985,7 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '50px',
+						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '36px',
 						render: function(data, type, row) {
 							// 정렬용 값 — 관리(1) → 공란(2) → 제외(3)
 							if (type === 'sort' || type === 'type') {
@@ -2995,6 +3009,15 @@ function fn_ViewData(data) {
 							return data;
 						}
 					    },
+						/* 배뇨계획 — 분모 대상이나 배뇨관리(①②③) 미실시 → ○ (관리항목 ●=실시 와 대비) */
+						{ data: 'planMissYn', visible: true,  className: 'dt-body-center', width: '36px',
+							render: function(data, type, row) {
+								if (type === 'display') {
+									return data === 'X' ? '<span style="color:#000;font-size:16px;">○</span>' : '';
+								}
+								return data;
+							},
+						},
 						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '75px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
@@ -3020,7 +3043,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 일정한 배뇨 (UR_PLAN='1' 인 경우 ● 검정 채움 표시) */
-					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '55px',
+					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -3029,7 +3052,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 방광훈련 (BLAD_TRAIN='1') */
-					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '55px',
+					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -3038,7 +3061,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 규칙적 도뇨 (REG_CATH='1') */
-					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '55px',
+					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';

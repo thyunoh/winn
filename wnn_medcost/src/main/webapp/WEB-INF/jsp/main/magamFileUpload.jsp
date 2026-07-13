@@ -4692,7 +4692,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             }catch(e){}
             
             // 신규 엑셀업로그 화면 
-          //  if(w==='Y' || c==='Y') wrap.style.display='';
+            if(w==='Y' || c==='Y') wrap.style.display='';
             
         })();
         // [메인 체크박스 연동] '신규프로그램 적용' 이 꺼져 있으면 모달을 안 쓰므로 '샘파일 자동생성선택 방식' 은 숨김(비활성 아님)
