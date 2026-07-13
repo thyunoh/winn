@@ -1,0 +1,448 @@
+<title>위너넷 문서 전산화 제안</title>
+<style>
+  :root{
+    --bg:#eef2f5; --surface:#ffffff; --surface-2:#f4f8fb;
+    --ink:#16222e; --ink-2:#516070; --ink-3:#7c8a98;
+    --line:#dbe3ea; --line-2:#c7d3dd;
+    --blue:#1f6fb0; --blue-strong:#0d5386; --blue-soft:#e9f2fa;
+    --amber:#b45309; --amber-soft:#fbf1e2;
+    --green:#1f7a52; --green-soft:#e6f3ec;
+    --shadow:0 1px 2px rgba(20,40,60,.06), 0 8px 24px rgba(20,40,60,.06);
+    --maxw:880px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d151d; --surface:#152029; --surface-2:#111b24;
+      --ink:#e7eef4; --ink-2:#a4b3c0; --ink-3:#7a8996;
+      --line:#243543; --line-2:#31465a;
+      --blue:#57a6df; --blue-strong:#8ac2ec; --blue-soft:#122839;
+      --amber:#e0a458; --amber-soft:#2a2013;
+      --green:#5cbd8c; --green-soft:#122a1e;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f5; --surface:#ffffff; --surface-2:#f4f8fb;
+    --ink:#16222e; --ink-2:#516070; --ink-3:#7c8a98;
+    --line:#dbe3ea; --line-2:#c7d3dd;
+    --blue:#1f6fb0; --blue-strong:#0d5386; --blue-soft:#e9f2fa;
+    --amber:#b45309; --amber-soft:#fbf1e2;
+    --green:#1f7a52; --green-soft:#e6f3ec;
+    --shadow:0 1px 2px rgba(20,40,60,.06), 0 8px 24px rgba(20,40,60,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d151d; --surface:#152029; --surface-2:#111b24;
+    --ink:#e7eef4; --ink-2:#a4b3c0; --ink-3:#7a8996;
+    --line:#243543; --line-2:#31465a;
+    --blue:#57a6df; --blue-strong:#8ac2ec; --blue-soft:#122839;
+    --amber:#e0a458; --amber-soft:#2a2013;
+    --green:#5cbd8c; --green-soft:#122a1e;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.65; letter-spacing:-.01em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 96px}
+
+  .doc-head{margin-bottom:36px}
+  .eyebrow{
+    font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--blue); margin:0 0 14px;
+  }
+  h1{
+    font-size:clamp(28px,4.4vw,40px); line-height:1.15; margin:0 0 12px;
+    font-weight:800; letter-spacing:-.02em; text-wrap:balance;
+  }
+  .lede{font-size:17px; color:var(--ink-2); margin:0; max-width:60ch}
+  .meta{
+    display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:22px;
+    padding-top:18px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--ink-3);
+  }
+  .meta b{color:var(--ink-2); font-weight:600}
+
+  section{margin-top:44px}
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin:0 0 6px}
+  .sec-no{
+    font-size:13px; font-weight:800; color:var(--blue);
+    font-variant-numeric:tabular-nums; letter-spacing:.02em;
+    border:1px solid var(--line-2); border-radius:6px; padding:2px 9px; white-space:nowrap;
+    background:var(--surface);
+  }
+  h2{font-size:22px; font-weight:800; letter-spacing:-.02em; margin:0; text-wrap:balance}
+  .sec-sub{color:var(--ink-2); margin:4px 0 20px; font-size:15px}
+  h3{font-size:15.5px; font-weight:700; margin:26px 0 10px; letter-spacing:-.01em}
+  h3 .kk{color:var(--ink-3); font-weight:600; font-size:13px; margin-left:6px}
+
+  p{margin:10px 0}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:22px 24px; box-shadow:var(--shadow);
+  }
+  .card + .card{margin-top:14px}
+
+  /* priority summary */
+  .prio{overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--surface); box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; font-size:13.5px}
+  .prio table{min-width:560px}
+  th,td{text-align:left; padding:12px 16px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{
+    font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3);
+    font-weight:700; background:var(--surface-2); border-bottom:1px solid var(--line-2);
+  }
+  tbody tr:last-child td{border-bottom:0}
+  td.num, th.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+
+  /* field/schema tables in scroll containers */
+  .tbl{overflow-x:auto; border:1px solid var(--line); border-radius:12px; margin:12px 0}
+  .tbl table{min-width:640px; font-size:13px}
+  .tbl code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; font-size:12px; color:var(--blue-strong)}
+  .grp-row td{background:var(--surface-2); font-weight:700; color:var(--ink); font-size:12.5px; letter-spacing:.02em}
+
+  .chip{
+    display:inline-block; font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px;
+    border:1px solid transparent; white-space:nowrap; line-height:1.5;
+  }
+  .chip.req{color:var(--blue-strong); background:var(--blue-soft); border-color:color-mix(in srgb,var(--blue) 30%,transparent)}
+  .chip.opt{color:var(--ink-2); background:var(--surface-2); border-color:var(--line-2)}
+  .chip.sens{color:var(--amber); background:var(--amber-soft); border-color:color-mix(in srgb,var(--amber) 34%,transparent)}
+  .chip.auto{color:var(--green); background:var(--green-soft); border-color:color-mix(in srgb,var(--green) 34%,transparent)}
+  .stars{color:var(--blue); letter-spacing:2px; font-size:13px}
+  .dim{color:var(--ink-3)}
+
+  ul.clean{margin:10px 0; padding-left:0; list-style:none}
+  ul.clean li{position:relative; padding-left:20px; margin:7px 0}
+  ul.clean li::before{content:""; position:absolute; left:4px; top:.62em; width:6px; height:6px; border-radius:50%; background:var(--blue)}
+  ul.clean li b{font-weight:700}
+
+  .callout{
+    border:1px solid var(--line); border-left:4px solid var(--amber); border-radius:10px;
+    background:var(--amber-soft); padding:16px 18px; margin:16px 0;
+  }
+  .callout .t{font-weight:800; color:var(--amber); font-size:13.5px; margin:0 0 8px; letter-spacing:.01em}
+  .callout ul.clean li::before{background:var(--amber)}
+
+  .flow{display:flex; flex-wrap:wrap; gap:10px; margin:14px 0}
+  .flow .step{
+    flex:1 1 150px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+  }
+  .flow .step .k{font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--blue); margin:0 0 6px}
+  .flow .step .v{font-size:14px; font-weight:600; margin:0}
+  .flow .step .d{font-size:12.5px; color:var(--ink-2); margin:5px 0 0}
+
+  hr.rule{border:0; border-top:1px solid var(--line); margin:40px 0 0}
+  footer{margin-top:30px; font-size:12.5px; color:var(--ink-3); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px}
+
+  a{color:var(--blue-strong)}
+  :focus-visible{outline:2px solid var(--blue); outline-offset:2px; border-radius:4px}
+  @media (max-width:560px){ .wrap{padding:36px 16px 72px} th,td{padding:10px 12px} }
+</style>
+
+<div class="wrap">
+
+  <header class="doc-head">
+    <p class="eyebrow">위너넷 컨설팅 · WinCheck+</p>
+    <h1>적정성평가 컨설팅 문서 전산화 제안</h1>
+    <p class="lede">종이·팩스로 오가던 컨설팅 3개 문서를 WinCheck+ 시스템 안으로 옮겨, 병원은 웹에서 작성·동의·제출하고 위너넷은 한 화면에서 관리합니다.</p>
+    <div class="meta">
+      <span><b>대상 문서</b> 의뢰서·동의서 · 견적서 · 홍보물·회사소개 · 프로그램 안내 · 연간 안내문</span>
+      <span><b>작성일</b> 2026-07-12</span>
+      <span><b>기준</b> 2026년 2주기 8차</span>
+    </div>
+  </header>
+
+  <!-- SUMMARY -->
+  <section aria-label="요약">
+    <div class="prio">
+      <table>
+        <thead>
+          <tr><th style="width:32px">#</th><th>대상 문서</th><th>전산화 형태</th><th>업무 효과</th><th>난이도</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td><b>컨설팅 의뢰서 + 동의서 2종</b><div class="dim" style="font-size:12px">[서식1·2·3]</div></td>
+            <td>온라인 접수 폼 + 전자동의 + 관리자 조회</td>
+            <td><span class="stars">★★★</span> <span class="dim">수기·팩스 접수 제거</span></td>
+            <td><span class="chip opt">중</span></td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td><b>컨설팅 견적서</b><div class="dim" style="font-size:12px">계약서 갈음</div></td>
+            <td>온라인 견적 발행 + PDF + 이력관리</td>
+            <td><span class="stars">★★★</span> <span class="dim">견적 자동생성·표준화</span></td>
+            <td><span class="chip opt">중</span></td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td><b>홍보물 · 회사소개</b><div class="dim" style="font-size:12px">전단·소개서</div></td>
+            <td>편집형 홍보 페이지 (관리자 수정)</td>
+            <td><span class="stars">★★</span> <span class="dim">문구·수치 즉시 변경</span></td>
+            <td><span class="chip opt">중</span></td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td><b>프로그램 안내</b><div class="dim" style="font-size:12px">WinCheck 사용법</div></td>
+            <td>앱 내 도움말 · 최초 로그인 온보딩</td>
+            <td><span class="stars">★</span> <span class="dim">문의 감소·자가 해결</span></td>
+            <td><span class="chip opt">하</span></td>
+          </tr>
+          <tr>
+            <td class="num">5</td>
+            <td><b>연간 진행 안내문</b><div class="dim" style="font-size:12px">교육·보고서 일정</div></td>
+            <td>공지 페이지 · 병원별 일정표</td>
+            <td><span class="stars">★</span> <span class="dim">안내 자동화</span></td>
+            <td><span class="chip opt">하</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="dim" style="font-size:13px; margin-top:12px">전산화의 핵심은 <b style="color:var(--ink)">1·2번 의뢰서·견적서</b>입니다 — 실제 수기 업무(접수·견적)를 없애고 앱 데이터와 연계됩니다. 3번 홍보물은 편집형으로, 4·5번은 게시 형태로 전환합니다.</p>
+  </section>
+
+  <!-- SECTION 1 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">1</span><h2>컨설팅 의뢰서 · 동의서 온라인 접수</h2></div>
+    <p class="sec-sub">현재는 병원이 [서식1] 의뢰서와 [서식2·3] 동의서를 인쇄·작성 후 팩스로 회신합니다. 이를 로그인 후 웹 폼으로 전환하고, 동의는 전자서명으로 처리합니다.</p>
+
+    <h3>1.1 · 입력 폼 필드 정의 <span class="kk">[서식1] 의뢰서 기준</span></h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>항목</th><th style="width:120px">타입</th><th style="width:74px">필수</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr class="grp-row"><td colspan="4">① 병원 기본정보</td></tr>
+          <tr><td>병원명</td><td>텍스트</td><td><span class="chip req">필수</span></td><td>로그인 정보로 <span class="chip auto">자동채움</span></td></tr>
+          <tr><td>요양기관기호</td><td>텍스트(8자리)</td><td><span class="chip req">필수</span></td><td>로그인 정보로 <span class="chip auto">자동채움</span></td></tr>
+          <tr><td>전화번호 · 주소 · FAX</td><td>텍스트</td><td><span class="chip opt">선택</span></td><td></td></tr>
+
+          <tr class="grp-row"><td colspan="4">② 전산프로그램 정보 (MASTER)</td></tr>
+          <tr><td>프로그램명 · ID</td><td>텍스트</td><td><span class="chip opt">선택</span></td><td>EMR/청구 프로그램</td></tr>
+          <tr><td>프로그램 PW</td><td>비밀번호</td><td><span class="chip opt">선택</span></td><td><span class="chip sens">민감</span> 암호화·마스킹 (§1.5)</td></tr>
+          <tr><td>병상수</td><td>숫자</td><td><span class="chip opt">선택</span></td><td></td></tr>
+          <tr><td>심평원 인증서 암호</td><td>비밀번호</td><td><span class="chip opt">선택</span></td><td><span class="chip sens">민감</span> 저장 최소화 권고 (§1.5)</td></tr>
+
+          <tr class="grp-row"><td colspan="4">③ PC 사용여부 · 운영</td></tr>
+          <tr><td>PC 사용여부</td><td>라디오</td><td><span class="chip opt">선택</span></td><td>단독사용가능 / 단독불가</td></tr>
+          <tr><td>가능시간 · PC사용 시작일</td><td>텍스트 · 날짜</td><td><span class="chip opt">선택</span></td><td>단독불가 선택 시 조건부</td></tr>
+          <tr><td>환자평가표 작성완료일</td><td>숫자(매월 N일)</td><td><span class="chip opt">선택</span></td><td>1~31</td></tr>
+          <tr><td>적정성평가 목표점수 · 목표등급</td><td>숫자 · 선택</td><td><span class="chip opt">선택</span></td><td><span class="chip auto">자동채움</span> TBL_GRADE_MST 연계</td></tr>
+
+          <tr class="grp-row"><td colspan="4">④ 담당자 (역할별 · 반복 입력)</td></tr>
+          <tr><td>총관리자 / 간호과 / 심사과 / 전산담당</td><td>텍스트 4세트</td><td><span class="chip opt">선택</span></td><td>각 부서·직책·전화·이메일</td></tr>
+          <tr><td>비고</td><td>여러줄 텍스트</td><td><span class="chip opt">선택</span></td><td>위너넷 전달사항</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>1.2 · 전자 동의 <span class="kk">[서식2] 원격접속·DB접근 / [서식3] 개인정보 수집·이용</span></h3>
+    <ul class="clean">
+      <li><b>약관 표시</b> — 두 동의서 전문을 화면에 노출(스크롤), 병원이 읽고 확인</li>
+      <li><b>필수 동의 체크</b> — 각 동의서 <span class="chip req">필수</span> 체크박스(둘 다 동의해야 제출 가능)</li>
+      <li><b>전자서명</b> — 요양기관명·대표자명 입력 + 서명(캔버스 서명 또는 성명 타이핑/날인 이미지 업로드)</li>
+      <li><b>증빙 기록</b> — 동의일시·접속 IP·브라우저 정보를 함께 저장해 동의 이력을 남김</li>
+    </ul>
+
+    <h3>1.3 · 저장 테이블 설계 <span class="kk">DB</span></h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th style="width:210px">테이블</th><th>주요 컬럼</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>TBL_CONSULT_REQ</code><div class="dim" style="font-size:12px">의뢰서 마스터</div></td>
+            <td><code>req_seq</code>(PK), <code>hosp_cd</code>, <code>hosp_nm</code>, <code>tel</code>, <code>addr</code>, <code>fax</code>, <code>prog_nm</code>, <code>prog_id</code>, <code>prog_pw_enc</code>, <code>bed_cnt</code>, <code>hira_cert_pw_enc</code>, <code>pc_use_gb</code>, <code>pc_use_time</code>, <code>pc_start_dt</code>, <code>patval_day</code>, <code>goal_score</code>, <code>goal_grade</code>, <code>remark</code>, <code>status</code>, <code>reg_dttm</code>, <code>reg_ip</code></td>
+            <td>병원 1건당 1행. <code>status</code> = 접수/검토/완료. 민감 컬럼은 <code>_enc</code> 암호화</td>
+          </tr>
+          <tr>
+            <td><code>TBL_CONSULT_MANAGER</code><div class="dim" style="font-size:12px">담당자</div></td>
+            <td><code>mgr_seq</code>(PK), <code>req_seq</code>(FK), <code>role_gb</code>, <code>dept</code>, <code>position</code>, <code>tel</code>, <code>email</code></td>
+            <td>역할(총관리자/간호과/심사과/전산)별 N행</td>
+          </tr>
+          <tr>
+            <td><code>TBL_CONSULT_AGREE</code><div class="dim" style="font-size:12px">동의 이력</div></td>
+            <td><code>agree_seq</code>(PK), <code>req_seq</code>(FK), <code>agree_type</code>, <code>agree_yn</code>, <code>signer_nm</code>, <code>sign_img</code>, <code>agree_dttm</code>, <code>agree_ip</code>, <code>user_agent</code></td>
+            <td>동의서별(원격접속/개인정보) 1행 · 전자서명·증빙 보관</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>1.4 · 관리자 조회 화면 <span class="kk">위너넷</span></h3>
+    <ul class="clean">
+      <li><b>접수 목록</b> — 병원명·요양기관기호·접수일·<b>상태</b>(접수/검토/완료) 필터 및 검색</li>
+      <li><b>상세 보기</b> — 의뢰서 전체 항목 + 담당자 + 동의 이력·전자서명 확인</li>
+      <li><b>상태 관리</b> — 접수 → 검토 → 완료 진행 상태 변경</li>
+      <li><b>내보내기</b> — 엑셀 다운로드, 필요 시 [서식1] PDF 재출력</li>
+    </ul>
+
+    <div class="callout">
+      <p class="t">1.5 · 민감정보 처리 원칙 (필수)</p>
+      <p style="margin:0 0 8px; font-size:13.5px">대상: <b>프로그램 PW</b>, <b>심평원 인증서 암호</b> — 유출 시 병원 시스템 접근이 가능한 고위험 정보입니다.</p>
+      <ul class="clean">
+        <li><b>저장 최소화</b> — 가능하면 저장하지 않고, 원격지원 시점에만 별도 안전채널로 수집·즉시 파기</li>
+        <li><b>부득이 저장 시 암호화</b> — AES-256 양방향 암호화, 복호화 키는 앱과 분리 보관</li>
+        <li><b>화면 마스킹</b> — 관리자 화면에서도 기본 ●●● 표시, 권한자만 일시 조회</li>
+        <li><b>접근 통제 · 감사로그</b> — 지정 담당자만 접근, 조회/복호화 이력 기록</li>
+        <li><b>전송 보안</b> — 전 구간 HTTPS, 보관기간·파기 정책 명시</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION 2 : 견적서 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">2</span><h2>컨설팅 견적서 온라인 발행</h2></div>
+    <p class="sec-sub">지금은 병원마다 견적서를 수기로 작성합니다(예: 여주병원 ₩4,400,000 VAT 포함). 표준 서식·서비스 범위를 템플릿화해, 관리자가 병원을 고르고 금액만 입력하면 견적 PDF가 즉시 발행됩니다. 견적서는 “계약서 갈음” 역할을 합니다.</p>
+
+    <h3>2.1 · 견적 입력 항목 <span class="kk">여주병원 견적서 기준</span></h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>항목</th><th style="width:140px">입력</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr class="grp-row"><td colspan="3">① 견적 헤더</td></tr>
+          <tr><td>수신처 · 건명</td><td>텍스트</td><td>병원명 <span class="chip auto">자동</span> · 건명 = ‘2026년 2주기 8차 적정성평가 컨설팅’</td></tr>
+          <tr><td>견적일자 · 담당자</td><td>날짜 · 텍스트</td><td>작성자 <span class="chip auto">자동</span></td></tr>
+          <tr><td>유효기간 · 일정</td><td>숫자 · 텍스트</td><td>기본 30일 · ‘계약일로부터 시작’</td></tr>
+          <tr class="grp-row"><td colspan="3">② 금액</td></tr>
+          <tr><td>공급가액 · 부가세 · 합계</td><td>숫자</td><td>VAT 포함/별도 선택, 합계 자동계산</td></tr>
+          <tr><td>견적 라인아이템</td><td>표(반복)</td><td>No · 품목(적정성평가 컨설팅) · 인원 · 단가 · 금액 · 비고</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>2.2 · 서비스 제공범위 <span class="kk">템플릿 자동삽입</span></h3>
+    <ul class="clean">
+      <li><b>① WinCheck 프로그램</b> — 예상 종합점수·시뮬레이터, 지표별 대상자 확인·점검</li>
+      <li><b>② 월별 점검·보고</b> — 월 분석 보고서, 지표 대상자(Foley·욕창) 점검, PC 원격분석 + 방문보고 1회</li>
+      <li><b>③ 교육</b> — 온라인 동영상, 오프라인 특강(6·10월), 병원 방문교육 1회</li>
+    </ul>
+
+    <h3>2.3 · 고정정보 자동삽입 · 발행</h3>
+    <ul class="clean">
+      <li><b>회사정보 자동</b> — 상호·대표·사업자번호(886-88-00265)·주소·업태/종목·직인</li>
+      <li><b>입금계좌 자동</b> — 기업은행 064-173516-01-035 (주)위너넷</li>
+      <li><b>PDF 발행 · 상태관리</b> — 표준 견적서 PDF 생성 → 다운로드/메일, 상태(작성 → 발송 → 계약)</li>
+    </ul>
+
+    <h3>2.4 · 저장 테이블 <span class="kk">DB</span></h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th style="width:190px">테이블</th><th>주요 컬럼</th></tr></thead>
+        <tbody>
+          <tr><td><code>TBL_QUOTE</code><div class="dim" style="font-size:12px">견적 마스터</div></td><td><code>quote_seq</code>(PK), <code>hosp_cd</code>, <code>title</code>, <code>quote_dt</code>, <code>valid_days</code>, <code>supply_amt</code>, <code>vat_amt</code>, <code>total_amt</code>, <code>vat_type</code>, <code>schedule</code>, <code>status</code>, <code>reg_user</code>, <code>reg_dttm</code></td></tr>
+          <tr><td><code>TBL_QUOTE_ITEM</code><div class="dim" style="font-size:12px">라인아이템</div></td><td><code>item_seq</code>(PK), <code>quote_seq</code>(FK), <code>no</code>, <code>product</code>, <code>qty</code>, <code>unit_price</code>, <code>amount</code>, <code>remark</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SECTION 3 : 홍보물 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">3</span><h2>홍보물 · 회사소개 콘텐츠 관리</h2></div>
+    <p class="sec-sub">전단(“프로그램 하나로 적정성 준비 끝!”, 위기 7억 손실·기회 3억 질지원금, 3대 기능, 연락처·QR)과 회사소개서를 이미지·인쇄로 관리하면 수치·문구가 바뀔 때마다 재제작해야 합니다. 이를 <b>편집형 페이지(간이 CMS)</b>로 전환해 관리자가 화면에서 직접 수정합니다.</p>
+
+    <h3>3.1 · 편집 대상 블록</h3>
+    <ul class="clean">
+      <li><b>헤드라인·슬로건</b> — “프로그램 하나로 적정성 준비 끝!”, WINCHECK</li>
+      <li><b>위기·기회 수치</b> — 하위 5% 손실 리스크(약 7억), 상위 20% 질지원금(약 3억) 등 <b>금액·비율 즉시 수정</b></li>
+      <li><b>3대 기능 설명</b> — 실시간 총점 예측 / 지표 대상자 관리 / 병원 자체 분석</li>
+      <li><b>무료제공·이벤트 안내</b> — 2026년 경영분석 프로그램 추가제공 등 시즌 문구</li>
+      <li><b>연락처·QR·검색어</b> — 전화 02-6953-2452, 네이버 ‘위너넷컨설팅’, QR</li>
+      <li><b>회사소개</b> — 사업분야(교육·컨설팅·전문프로그램), 주요 교육과정</li>
+    </ul>
+
+    <h3>3.2 · 처리(수정) 방식</h3>
+    <ul class="clean">
+      <li><b>홍보/소개 페이지</b> — 병원 대상 소개 랜딩, 로그인 화면 배너로 노출</li>
+      <li><b>관리자 편집</b> — 블록별 문구·수치·이미지·노출여부를 화면에서 수정 → <b>코드 변경·재인쇄 없이 즉시 반영</b></li>
+      <li><b>수정 이력</b> — 변경 일시·수정자 기록</li>
+    </ul>
+
+    <h3>3.3 · 저장 테이블 <span class="kk">DB</span></h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th style="width:190px">테이블</th><th>주요 컬럼</th></tr></thead>
+        <tbody>
+          <tr><td><code>TBL_PROMO_CONTENT</code><div class="dim" style="font-size:12px">홍보 블록(키-값)</div></td><td><code>block_key</code>(PK · 예: hero_title), <code>title</code>, <code>content</code>, <code>img_path</code>, <code>sort_no</code>, <code>use_yn</code>, <code>upd_user</code>, <code>upd_dttm</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="dim" style="font-size:13px">키-값 블록 방식이라, 새 홍보 항목이 생겨도 관리자가 블록만 추가하면 됩니다.</p>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">4</span><h2>프로그램 안내 → 앱 도움말</h2></div>
+    <p class="sec-sub">WinCheck+ 사용법 안내문(로그인·자료업로드·대시보드·시뮬레이션)을 앱 안의 도움말로 옮겨, 사용자가 화면에서 바로 확인하게 합니다.</p>
+    <div class="card">
+      <ul class="clean">
+        <li><b>도움말 / 사용가이드 페이지</b> — 안내문 2~5p 내용을 단계별 화면으로 구성 (로그인 → 자료업로드(SAM·환자평가표·입원현황) → 예상점수 확인 → 시뮬레이션 → 1:1문의)</li>
+        <li><b>최초 로그인 온보딩</b> — 첫 접속 시 3~4단계 간단 안내 팝업</li>
+        <li><b>화면 내 도움 아이콘</b> — 업로드·대시보드 등 주요 화면에 ‘?’ 툴팁 연결</li>
+      </ul>
+      <p class="dim" style="font-size:13px; margin:12px 0 0">난이도 <span class="chip opt">하</span> — 대부분 HTML 게시. 기존 FAQ/1:1문의 구조를 재사용할 수 있습니다.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">5</span><h2>연간 진행 안내문 → 공지 페이지</h2></div>
+    <p class="sec-sub">교육 일정·프로그램·보고서 발송 일정을 담은 연간 안내문을 앱 공지로 게시하고, 병원별 일정표로 보여줍니다.</p>
+    <div class="card">
+      <ul class="clean">
+        <li><b>공지사항 페이지</b> — 연간 진행 안내문(교육·특강·방문교육·보고서 일정)을 HTML 공지로 게시</li>
+        <li><b>연간 일정표</b> — 월별(1~12월) 진행 항목을 표로 시각화 (온라인교육·집체특강·방문교육·보고서 발송)</li>
+        <li><b>온라인 교육 링크</b> — 교육센터(winner797.kr) 안내·계정 규칙(요양기관기호) 연결</li>
+      </ul>
+      <p class="dim" style="font-size:13px; margin:12px 0 0">난이도 <span class="chip opt">하</span> — 정보성 게시. 매 주기 안내문만 갱신하면 됩니다.</p>
+    </div>
+  </section>
+
+  <!-- CONNECT -->
+  <section>
+    <div class="sec-head"><span class="sec-no">＋</span><h2>앱 데이터 연계</h2></div>
+    <p class="sec-sub">이미 시스템에 있는 정보로 병원의 입력 부담을 줄입니다.</p>
+    <div class="card">
+      <ul class="clean">
+        <li><b>요양기관기호 · 병원명</b> — 로그인 정보로 의뢰서 자동 채움</li>
+        <li><b>목표점수 · 목표등급</b> — <code style="font-size:12px">TBL_GRADE_MST</code>(차등제·연간목표 등록)에 이미 저장된 값을 의뢰서에 자동 반영</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ROLLOUT -->
+  <section>
+    <div class="sec-head"><span class="sec-no">→</span><h2>단계별 진행</h2></div>
+    <div class="flow">
+      <div class="step"><p class="k">1단계 · 핵심</p><p class="v">의뢰서 + 견적서</p><p class="d">온라인 접수·전자동의 / 견적 발행·이력 / 관리자 조회 · 민감정보 처리</p></div>
+      <div class="step"><p class="k">2단계</p><p class="v">홍보물 편집</p><p class="d">전단·회사소개 콘텐츠를 관리자가 수정</p></div>
+      <div class="step"><p class="k">3단계</p><p class="v">도움말 · 공지</p><p class="d">프로그램 안내·연간 안내문 게시</p></div>
+    </div>
+    <p class="dim" style="font-size:13px">1단계(의뢰서·견적서)로 실질 업무(수기 접수·견적)를 먼저 제거하고, 2·3단계는 편집·게시 콘텐츠로 순차 확장합니다.</p>
+  </section>
+
+  <!-- EFFECT -->
+  <section>
+    <div class="sec-head"><span class="sec-no">✓</span><h2>기대 효과</h2></div>
+    <div class="card">
+      <ul class="clean">
+        <li><b>업무 자동화</b> — 팩스·수기 접수와 <b>견적 작성</b>을 제거, 재입력·오입력 감소</li>
+        <li><b>견적 표준화</b> — 서비스 범위·회사정보·계좌를 템플릿화, 병원별 견적 즉시 발행·이력 관리</li>
+        <li><b>홍보물 즉시 수정</b> — 문구·수치(질지원금·리스크)·연락처를 재인쇄·재개발 없이 화면에서 변경</li>
+        <li><b>즉시 데이터화</b> — 제출 즉시 DB 저장, 위너넷 관리 일원화(목록·상태·검색)</li>
+        <li><b>동의 증빙</b> — 원격접속·개인정보 동의를 전자서명·일시·IP로 안전하게 보관</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="rule">
+  <footer>
+    <span>위너넷 컨설팅 사업부 · WinCheck+ 문서 전산화 제안</span>
+    <span>내부 검토용 · 2026-07-12</span>
+  </footer>
+
+</div>

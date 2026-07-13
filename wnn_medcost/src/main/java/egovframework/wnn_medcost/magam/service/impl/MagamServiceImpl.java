@@ -1,5 +1,7 @@
 package egovframework.wnn_medcost.magam.service.impl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +9,7 @@ import java.util.Map;
 import java.util.Collections;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +41,55 @@ public class MagamServiceImpl implements MagamService {
 	
 	@Autowired
 	private MagamMapper mapper;
-	
+
+	@Autowired
+	private DataSource dataSource;
+
 	private JdbcTemplate jdbcTemplate;
+
+	// TBL_FILES_DATA 대량 적재 — JDBC 배치(1000행 단위, rewriteBatchedStatements 로 multi-row 변환).
+	// 기존 MyBatis foreach 는 수만 행이면 한 문장 생성/전송이 수 분 걸려 대형 파일 업로드가 90000 으로 실패.
+	// 한 커넥션에서 마지막에 commit 하므로 기존(단일 문장)과 동일하게 전체 성공/전체 취소가 보장됨.
+	private int insertFilesDataBatch(List<FilesDTO> filesData) throws Exception {
+		final String sql = "INSERT INTO TBL_FILES_DATA "
+				+ "(HOSP_CD, MG_YEAR, MGMONTH, MG_FLAG, JOBS_DT, FILE_NM, LINE_NO, LINEVAL, CHUNGGU, REG_DTTM, REG_USER, REG_IP) "
+				+ "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,?)";
+		try (Connection conn = dataSource.getConnection()) {
+			boolean oldAutoCommit = conn.getAutoCommit();
+			conn.setAutoCommit(false);
+			try (PreparedStatement ps = conn.prepareStatement(sql)) {
+				int inBatch = 0;
+				for (FilesDTO dto : filesData) {
+					ps.setString(1,  dto.getHosp_cd());
+					ps.setString(2,  dto.getMg_year());
+					ps.setString(3,  dto.getMgmonth());
+					ps.setString(4,  dto.getMg_flag());
+					ps.setString(5,  dto.getJobs_dt());
+					ps.setString(6,  dto.getFile_nm());
+					ps.setInt(7,     dto.getLine_no());
+					ps.setString(8,  dto.getLineval());
+					ps.setString(9,  dto.getChunggu());
+					ps.setString(10, dto.getReg_user());
+					ps.setString(11, dto.getReg_ip());
+					ps.addBatch();
+					if (++inBatch >= 1000) {
+						ps.executeBatch();
+						inBatch = 0;
+					}
+				}
+				if (inBatch > 0) {
+					ps.executeBatch();
+				}
+				conn.commit();
+			} catch (Exception e) {
+				conn.rollback();
+				throw e;
+			} finally {
+				conn.setAutoCommit(oldAutoCommit);
+			}
+		}
+		return filesData.size();   // 예외 없이 commit 되면 전량 INSERT 된 것
+	}
 
 	@Override
 	public List<MagamDTO> getMagamYearList(MagamDTO dto) throws Exception {
@@ -102,11 +152,11 @@ public class MagamServiceImpl implements MagamService {
         	
             MagamDTO magamDTO = new MagamDTO();
         
-            System.out.println("파일업로드 서비스 시작 - 0 : " + firstData.getT_lines());	
-            
-            counts = mapper.uploadMagamFilesMain(filesData);
-            
-            System.out.println("파일업로드 서비스 시작 - 1 : " + counts);	
+            System.out.println("파일업로드 서비스 시작 - 0 : " + firstData.getT_lines());
+
+            counts = insertFilesDataBatch(filesData);   // 기존 mapper.uploadMagamFilesMain(foreach 단일문장) → JDBC 배치 (2026-07-09)
+
+            System.out.println("파일업로드 서비스 시작 - 1 : " + counts);
     		
 			if (counts == firstData.getT_lines()) {
 				
@@ -710,7 +760,7 @@ public class MagamServiceImpl implements MagamService {
 		String err_cd = "0";
 		try {
 			FilesDTO firstData = filesData.get(0);
-			int counts = mapper.uploadMagamFilesMain(filesData);
+			int counts = insertFilesDataBatch(filesData);   // 기존 mapper.uploadMagamFilesMain(foreach 단일문장) → JDBC 배치 (2026-07-09)
 
 			if (counts != firstData.getT_lines()) {
 				err_cd = "20000";

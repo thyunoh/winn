@@ -370,27 +370,27 @@ function fn_CreateData(flag) {
 			            		return data;
 						    },
 					    },
-						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px', 
+						{ data: 'docDt',     visible: true,  className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return getFormat(data,'d1')
 			            		}
 			            		return data;
 			  			    },
-						},  
-						{ data: 'evalType', visible: true,  className: 'dt-body-center', width: '100px'  },	
-						
-						{ data: 'errType',  visible: true, className: 'dt-body-center', width: '100px',
+						},
+						{ data: 'evalType', visible: true,  className: 'dt-body-center', width: '55px'  },
+
+						{ data: 'errType',  visible: true, className: 'dt-body-center', width: '60px',
 							render: function (data, type, row, meta) {
 							        return '<span class="tooltip-cell" title="' + row.errName + '">' + data + '</span>';
 							}
 						},
 						
-						{ data: 'errType',  visible: true, className: 'dt-body-center', width: '100px',
+						{ data: 'errType',  visible: true, className: 'dt-body-center', width: '200px',
 							render: function(data, type, row) {
 						        // 화면 출력용(type === 'display')일 때만 텍스트를 변환
 						        if (type === 'display') {
-						        	
+
 						        	const prefix = data.charAt(0);  // 첫번쨰 추출
 						        	
 						            /* 평가구분 */

@@ -426,6 +426,19 @@ public class MangrController {
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
+				// 병원 사용자가 자신의 1:1 문의 화면을 열람하면 답변 확인처리(로그인 알림 해제).
+				//   위너넷 접속(s_wnn_yn/s_winconect='Y')은 답변 작성자 측이므로 제외.
+				try {
+					String sWnn = cookie_value.get("s_wnn_yn");
+					String sWin = cookie_value.get("s_winconect");
+					boolean isWnn = "Y".equals(sWnn == null ? "" : sWnn.trim())
+							     || "Y".equals(sWin == null ? "" : sWin.trim());
+					if (!isWnn) {
+						AsqDTO rd = new AsqDTO();
+						rd.setHospCd(cookie_value.get("s_hospid").trim());
+						svc.updateAsqRead(rd);
+					}
+				} catch (Exception ignore) {}
 				return ".main/mangr/asqcd";
 			} else {
 				return ".login/LoginWinCT";
@@ -434,6 +447,52 @@ public class MangrController {
 			return ".login/LoginWinCT";
 		}
     }
+
+	//병원 로그인 알림용: 미확인(답변완료) 건수 조회
+	@RequestMapping(value="/asqUnreadCnt.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> asqUnreadCnt(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<>();
+		cookie_value = ClientInfo.getCookie(request);
+		try {
+			String hospId = (dto.getHospCd() != null && !dto.getHospCd().trim().isEmpty())
+					? dto.getHospCd().trim() : cookie_value.get("s_hospid");
+			if (hospId != null) hospId = hospId.trim();
+			int cnt = 0;
+			if (hospId != null && !hospId.isEmpty()) {
+				dto.setHospCd(hospId);
+				cnt = svc.selectAsqUnreadCnt(dto);
+			}
+			response.put("cnt", cnt);
+			response.put("error_code", "0");
+		} catch (Exception ex) {
+			response.put("cnt", 0);
+			response.put("error_code", "10000");
+		}
+		return response;
+	}
+
+	//알림 '확인' 클릭 시: 해당 병원 답변완료건 전부 확인처리(ANSR_READ_YN='Y')
+	@RequestMapping(value="/asqReadAll.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> asqReadAll(@ModelAttribute("DTO") AsqDTO dto, HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<>();
+		cookie_value = ClientInfo.getCookie(request);
+		try {
+			String hospId = (dto.getHospCd() != null && !dto.getHospCd().trim().isEmpty())
+					? dto.getHospCd().trim() : cookie_value.get("s_hospid");
+			if (hospId != null) hospId = hospId.trim();
+			if (hospId != null && !hospId.isEmpty()) {
+				dto.setHospCd(hospId);
+				dto.setAsqSeq(null);   // 전체(해당 병원) 확인처리
+				svc.updateAsqRead(dto);
+			}
+			response.put("error_code", "0");
+		} catch (Exception ex) {
+			response.put("error_code", "10000");
+		}
+		return response;
+	}
 	//질문리스트
 	@RequestMapping(value="/asqCdList.do", method = RequestMethod.POST)
 	@ResponseBody

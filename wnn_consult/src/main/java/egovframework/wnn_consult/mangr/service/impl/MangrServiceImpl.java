@@ -101,6 +101,16 @@ public class MangrServiceImpl implements MangrService {
 	}
 
 	@Override
+	public int selectAsqUnreadCnt(AsqDTO dto) throws Exception {
+		return mapper.selectAsqUnreadCnt(dto);
+	}
+
+	@Override
+	public int updateAsqRead(AsqDTO dto) throws Exception {
+		return mapper.updateAsqRead(dto);
+	}
+
+	@Override
 	public List<FaqDTO> selectfaqList(FaqDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.selectfaqList(dto);

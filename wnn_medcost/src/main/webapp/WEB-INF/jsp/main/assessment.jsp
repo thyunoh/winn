@@ -2724,12 +2724,20 @@ function fn_ViewData(data) {
 	
 	const ltxt = document.getElementById('lab_title');
 	ltxt.textContent = data.cate_cd + '. ' + data.cate_nm;
-	
+
     let selected_Year = document.getElementById("year_Select").value;
     let selectedMonth = document.getElementById("monthSelect").value;
-    
-    
-    
+
+	// 엑셀/복사/출력 상단 제목 — 전 지표 공통: "지표명 [병원명 · YYYY-MM]" (2026-07-11)
+	//   파일명은 "지표명_" + 저장시각(기존 filename 콜백이 시각을 덧붙임)
+	var _xhnm = (typeof hospnm !== 'undefined' && hospnm) ? hospnm
+	          : (typeof getCookie === 'function' ? (getCookie('s_hospnm') || '') : '');
+	excelTitle = data.cate_nm + ' [' + _xhnm + ' · ' + selected_Year + '-' + selectedMonth + ']';
+	printTitle = excelTitle;
+	copy_Title = excelTitle;
+	excelFName = (data.cate_nm || '').replace(/\s+/g, '') + '_';
+
+
 	if (["08", "15", "99"].includes(data.cate_cd)) {
 		
 		card.style.display = 'none';	
@@ -3185,7 +3193,9 @@ function fn_ViewData(data) {
 									var hasPrev = row.prevStep1 !== '0' || row.prevStep2 !== '0' || row.prevStep3 !== '0' || row.prevStep4 !== '0';
 									var allCurtZero = row.curtStep1 === '0' && row.curtStep2 === '0' && row.curtStep3 === '0' && row.curtStep4 === '0';
 									var curtStep1Is1 = row.curtStep1 === '1';
-									var condMet = hasPrev && (allCurtZero || curtStep1Is1);
+									// (수정) 1단계·치유 케이스는 드레싱(d) 제외, 압력(a)+체위(b)+영양(c) 실시해야 '해당'
+									var careABC = ((Number(row.preRelDev)||0) + (Number(row.posChange)||0) + (Number(row.nutSupply)||0)) === 3;
+									var condMet = hasPrev && (allCurtZero || curtStep1Is1) && careABC;
 						        	if (data === '1') return '해당';
 						        	if (data === '2' && condMet) return '해당';
 						        	if (data === '2') return '미처치';
@@ -3198,7 +3208,8 @@ function fn_ViewData(data) {
 						    	var hasPrev = rowData.prevStep1 !== '0' || rowData.prevStep2 !== '0' || rowData.prevStep3 !== '0' || rowData.prevStep4 !== '0';
 						    	var allCurtZero = rowData.curtStep1 === '0' && rowData.curtStep2 === '0' && rowData.curtStep3 === '0' && rowData.curtStep4 === '0';
 						    	var curtStep1Is1 = rowData.curtStep1 === '1';
-						    	var condMet = hasPrev && (allCurtZero || curtStep1Is1);
+						    	var careABC = ((Number(rowData.preRelDev)||0) + (Number(rowData.posChange)||0) + (Number(rowData.nutSupply)||0)) === 3;
+						    	var condMet = hasPrev && (allCurtZero || curtStep1Is1) && careABC;
 						        if (cellData === '1' || (cellData === '2' && condMet)) {
 						            td.style.color = 'green';
 						            td.style.fontWeight = 'bold';
@@ -4060,8 +4071,22 @@ function fn_FindDataTable() {
 		        		                            ('0' + d.getSeconds()).slice(-2);
 		        		        return excelFName + formattedDate;
 		        		    },
-		        		    title: excelTitle
-		        		}, 
+		        		    title: excelTitle,
+		        		    // (2026-07-11) 엑셀 전용 방어: 셀 값이 null/undefined 면 엑셀 열너비 계산(.length)에서
+		        		    //   TypeError 로 다운로드가 통째로 실패(복사/출력은 정상인 증상) → 빈 문자열 치환 + HTML 태그 제거(✔ 등)
+		        		    exportOptions: {
+		        		        format: {
+		        		            header: function(data) {
+		        		                return (data === null || data === undefined) ? '' : String(data).replace(/<[^>]*>/g, '').trim();
+		        		            },
+		        		            body: function(data) {
+		        		                if (data === null || data === undefined) return '';
+		        		                if (typeof data !== 'string') return data;
+		        		                return data.indexOf('<') !== -1 ? data.replace(/<[^>]*>/g, '').trim() : data;
+		        		            }
+		        		        }
+		        		    }
+		        		},
 		        		{
 		        			extend: 'print',
 		        			text: printBtnnm,
@@ -4411,9 +4436,17 @@ function dataLoad(data, callback, settings) {
 	            		let hi_Count = 0;
 		                let lowCount = 0;
 		                let dayCount = 0;
+		                let hiTotal  = 0;   // 고위험 전체 인원 (●+○, 헤더 표시용)
+		                let lowTotal = 0;   // 저위험 전체 인원 (●+○, 헤더 표시용)
 		                for (let i = 0; i < response.data.length; i++) {
 
 		                	const item = response.data[i];
+
+		                    // 헤더 인원수 = 그리드 컬럼에 표시된 인원
+		                    //  - 고위험 : ●(Y, 14일초과) + ○(N, 비초과) 전체
+		                    //  - 저위험 : ○(N, 비초과)만  (●는 제외)
+		                    if (item.dangerHi  === 'Y' || item.dangerHi  === 'N') { hiTotal  += 1; }
+		                    if (item.dangerLow === 'N') { lowTotal += 1; }
 
 		                    if (item.overDay === 'Y') {
 		                    	dayCount += 1;
@@ -4423,6 +4456,21 @@ function dataLoad(data, callback, settings) {
 		                }
 
 		                cntNote = '[중복포함,14일초과 총:' + dayCount + '건 ]·고위험:' + hi_Count + '건·저위험:' + lowCount + '건';
+
+		                // 그리드 2단 헤더의 고위험/저위험 라벨에 전체 인원수 표기.
+		                //  - c_Head_Set 라벨도 갱신(다음 조회/재그리기 대비)
+		                //  - 헤더는 이미 fn_HeadColumnSet()에서 그려졌으므로, 그려진 th(스크롤 헤더 복제 포함)를
+		                //    callback(그리기) 이후 직접 갱신 (setTimeout 0 → 현재 동기 흐름 종료 후 실행)
+		                if (c_Head_Set[1] && c_Head_Set[1][0]) { c_Head_Set[1][0].label = '고위험(' + hiTotal  + ')'; }
+		                if (c_Head_Set[1] && c_Head_Set[1][1]) { c_Head_Set[1][1].label = '저위험(' + lowTotal + ')'; }
+		                setTimeout(function() {
+		                    var ths = document.querySelectorAll('#viewTable_wrapper thead th, #viewTable thead th');
+		                    for (var t = 0; t < ths.length; t++) {
+		                        var txt = (ths[t].textContent || '').trim();
+		                        if (txt === '고위험' || txt.indexOf('고위험(') === 0) { ths[t].textContent = '고위험(' + hiTotal  + ')'; }
+		                        if (txt === '저위험' || txt.indexOf('저위험(') === 0) { ths[t].textContent = '저위험(' + lowTotal + ')'; }
+		                    }
+		                }, 0);
 
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(35) + '<span style="color: blue;">' + cntNote + '</span>';
 
@@ -5830,11 +5878,12 @@ $(document).ready(function() {
 
 	    const current_Year = new Date().getFullYear();
 
-
 	    if (current_Year === 2025) {
-	    	$('#goal_Jugi').val('2');
+	        $('#goal_Jugi').val('2');
 	        $('#goal_Chasu').val('7');
-
+	    } else if (current_Year >= 2026) {
+	        $('#goal_Jugi').val('2');
+	        $('#goal_Chasu').val('8');
 	    }
 
 	    // sessionStorage에 저장된 값이 있으면 그 값을, 없으면 현재 년월을 기본 선택
@@ -5910,8 +5959,11 @@ $(document).ready(function() {
 	    if (selectedYear === '2025') {
 	        $('#goal_Jugi').val('2');
 	        $('#goal_Chasu').val('7');
+	    } else if (selectedYear >= '2026') {
+	        $('#goal_Jugi').val('2');
+	        $('#goal_Chasu').val('8');
 	    }
-
+		
     });
 	$('#monthSelect').on('change', function() {
 		sessionStorage.setItem('assessment_month', this.value);
@@ -6056,7 +6108,8 @@ function google_Save() {
 		      
 		});
 	}
-	
+
 }
-	
-</script> 
+
+</script>
+

@@ -34,9 +34,9 @@
 	        <property name="minIdle" value="2"/>
 	        <!-- 풀 고갈 시 무한 대기 대신 빠르게 실패 (10초) -->
 	        <property name="maxWaitMillis" value="10000"/>
-	        <!-- 반납 누락(누수) 커넥션 회수 -->
+	        <!-- 반납 누락(누수) 커넥션 회수 — 대형 샘파일 업로드(수만 줄)가 300초를 넘길 수 있어 900초로 상향 (2026-07-09) -->
 	        <property name="removeAbandonedOnBorrow" value="true"/>
-	        <property name="removeAbandonedTimeout" value="300"/>
+	        <property name="removeAbandonedTimeout" value="900"/>
 	    </bean>
 	</beans>
 
@@ -63,9 +63,9 @@
 	        <property name="minIdle" value="2"/>
 	        <!-- 풀 고갈 시 무한 대기 대신 빠르게 실패 (10초) -->
 	        <property name="maxWaitMillis" value="10000"/>
-	        <!-- 반납 누락(누수) 커넥션 회수 -->
+	        <!-- 반납 누락(누수) 커넥션 회수 — 대형 샘파일 업로드(수만 줄)가 300초를 넘길 수 있어 900초로 상향 (2026-07-09) -->
 	        <property name="removeAbandonedOnBorrow" value="true"/>
-	        <property name="removeAbandonedTimeout" value="300"/>
+	        <property name="removeAbandonedTimeout" value="900"/>
 	    </bean>
 	</beans>
 

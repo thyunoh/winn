@@ -1239,9 +1239,59 @@ $(document).ready(function() {
     });
     */
     if (firstChk === 'Y') {
-    	$('#top-menu_a').trigger('click');	
+    	$('#top-menu_a').trigger('click');
     }
-	
+
+    // === 1:1 문의 답변완료 알림 ===
+    //   병원 로그인 시, 확인하지 않은(답변완료) 1:1 문의 답변이 있으면 알림.
+    //   확인 처리는 [고객지원 > 1:1 문의하기](/mangr/asqcd.do) 화면 열람 시 자동 수행됨.
+    try {
+        $.ajax({
+            url: "/mangr/asqUnreadCnt.do",
+            type: "POST",
+            data: { hospCd: getCookie('s_hospid') },
+            dataType: "json",
+            success: function (res) {
+                var cnt = (res && res.cnt) ? parseInt(res.cnt, 10) : 0;
+                if (cnt > 0) {
+                    if (typeof Swal !== 'undefined') {
+                        if (!document.getElementById('asqAlertPopupStyle')) {
+                            var _st = document.createElement('style');
+                            _st.id = 'asqAlertPopupStyle';
+                            _st.innerHTML =
+                                '.asqAlertPopup .swal2-title{font-size:1.05em;padding:0.45em 0 0;margin:0;}' +
+                                '.asqAlertPopup .swal2-html-container{font-size:0.9em;margin:0.55em 0 0;}' +
+                                '.asqAlertPopup .swal2-icon{width:2.4em;height:2.4em;margin:0.7em auto 0.4em;}' +
+                                '.asqAlertPopup .swal2-icon .swal2-icon-content{font-size:1.5em;}' +
+                                '.asqAlertPopup .swal2-actions{margin-top:0.9em;margin-bottom:0.4em;}' +
+                                '.asqAlertPopup .swal2-confirm{font-size:0.9em;padding:0.45em 1.4em;}';
+                            document.head.appendChild(_st);
+                        }
+                        Swal.fire({
+                            icon: 'info',
+                            title: '1:1 문의 답변 완료',
+                            html: '확인하지 않은 답변이 <b>' + cnt + '건</b> 있습니다.<br>[고객지원 &gt; 1:1 문의하기]에서 확인해 주세요.',
+                            confirmButtonText: '확인',
+                            width: 460,
+                            padding: '0.9em 1.8em',
+                            customClass: { popup: 'asqAlertPopup' }
+                        }).then(function (result) {
+                            if (result.isConfirmed) {
+                                // '확인' 클릭 → 해당 병원 답변 확인처리(ANSR_READ_YN='Y')
+                                $.ajax({ url: '/mangr/asqReadAll.do', type: 'POST',
+                                         data: { hospCd: getCookie('s_hospid') }, dataType: 'json' });
+                            }
+                        });
+                    } else {
+                        alert('확인하지 않은 1:1 문의 답변이 ' + cnt + '건 있습니다.\n[고객지원 > 1:1 문의하기]에서 확인해 주세요.');
+                        $.ajax({ url: '/mangr/asqReadAll.do', type: 'POST',
+                                 data: { hospCd: getCookie('s_hospid') }, dataType: 'json' });
+                    }
+                }
+            }
+        });
+    } catch (e) {}
+
 });
 
 

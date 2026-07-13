@@ -1,6 +1,23 @@
 # Project Memory
 
+## 예정 개발 (회의 후 착수)
+
+### [예정 · 2026-07-14 회의 후 착수] 컨설팅 문서 전산화 (의뢰서·견적서·홍보물·안내문)
+- **개요**: 종이·팩스로 오가던 컨설팅 문서 5종을 WinCheck+ 안으로 전산화. **1단계=의뢰서+견적서**(핵심, 수기 접수·견적 제거), 2=홍보물 편집CMS, 3=프로그램안내→도움말/온보딩·연간안내문→공지.
+- **계획·DB설계·민감정보 원칙 전부**: [docs/proposals/문서전산화_개발계획.md](docs/proposals/문서전산화_개발계획.md) — 제안 원문(시각) docs/proposals/위너넷_문서전산화_제안_2026-07-12.html · 공유 아티팩트 https://claude.ai/code/artifact/211932ce-00e8-476b-b591-6af1bff156b7 · 원자료 `D:\워너넷자료\제안내용\`(PDF 6종).
+- **이어서 작업 시(다른 PC 포함)**: 위 계획 md 읽고 **회의에서 확정된 범위대로 1단계부터** 구현 — 배경 재설명 불필요. 신규 테이블 `TBL_CONSULT_REQ/MANAGER/AGREE`·`TBL_QUOTE/QUOTE_ITEM`·`TBL_PROMO_CONTENT`. 민감정보(프로그램PW·심평원 인증서 암호) 저장최소화+AES-256+마스킹+감사로그. 요양기관기호·병원명 로그인 자동채움, 목표점수·등급 `TBL_GRADE_MST` 연계.
+
 ## 장애/수정 이력
+
+### [완료] 샘파일 업로드(TBL_FILES_DATA→각 테이블) 대폭 최적화 — SP_UPLOAD_MAGAM_SAMFILES 재작성 (2026-07-09)
+- **증상**: 청구샘파일 업로드가 너무 느림(17,254줄 = 4분16초, 평가파일 417줄 = 11.6초). 병목은 Java INSERT가 아니라 **프로시저의 라인별 처리**.
+- **원인 (라인당 반복 비용)**: ① 컬럼 커서가 컬럼(TBL_PATVAL_MST는 240개)마다 lineval 전체를 REPLACE×2+EUC-KR 변환 반복 ② mg_flag='9'는 라인마다 INFORMATION_SCHEMA로 table_update(GROUP_CONCAT) 재계산 ③ 한 줄당 INSERT 1문 → 수천 번 PREPARE/EXECUTE.
+- **조치 (DB 프로시저 교체, 앱 로직 무변경)**: [docs/sql/SP_UPLOAD_MAGAM_SAMFILES.sql] = ⓐ 라인 1회만 `@line_bin` 변환 ⓑ 명세서/평가표 라인은 커서 대신 GROUP_CONCAT 셋 기반 1쿼리로 val 목록 생성(TBL_CHUNG_MST 청구서 라인만 원본 커서 유지 — claim_no/M010.1 합계 캡처) ⓒ 같은 그룹 연속 라인 multi-row INSERT 배치(500행/2MB 상한) ⓓ table_update 루프 밖 1회 ⓔ 신규 [SP_EXECUTE_DYNAMIC_SQL2](docs/sql/SP_EXECUTE_DYNAMIC_SQL2.sql) = 기존 실행기의 stmt_text TEXT(64KB 한계) → LONGTEXT (배치 문장이 64KB 초과, **기존 SP_EXECUTE_DYNAMIC_SQL은 다른 호출자용으로 그대로 둠**).
+- **함정 2개 (재수정 시 주의)**: ① 배치 INSERT가 64KB 넘으면 구 실행기 stmt_text TEXT에서 잘려 오류 → 반드시 SQL2 사용. ② NOT FOUND 핸들러가 col_done=0/1로 콜/데이터 커서를 구분하는데, 셋 기반 경로는 col_cursor를 안 돌아 col_done=0으로 남음 → **dat FETCH 직전 `SET col_done=1` 필수** (없으면 마지막 줄 중복 처리 → total_cnt+1 → 30000 오류).
+- **검증 (가짜 HOSP_CD=99999998로 실데이터 복제, 전 테이블 COUNT+CRC32 체크섬 비교 → 4개 데이터셋 모두 완전 동일)**: GHP 4,260줄 18.0s→2.3s / REP 17,254줄 255.7s→9.3s(27.6배) / 평가 417줄 11.6s→1.7s / 산재 6파일 133줄 0.25s→0.15s.
+- **원본 백업**: [docs/sql/SP_UPLOAD_MAGAM_SAMFILES_backup_20260709.sql] (DELIMITER 감싸 실행하면 즉시 원복).
+- **부수 변경**: magamFileUpload.jsp 예상시간 공식 80/25줄/초 → 3초+600/120줄/초. (JSP만이라 WAR 재빌드 불필요하나 다음 배포에 포함할 것)
+- **후속 (2026-07-09 오후, 대형 파일 90000 실패)**: 4.9MB/2.6만줄 GHP 업로드가 진행바 100% 후 한참 돌다 `90000` 실패. **원인은 자바 쪽 TBL_FILES_DATA 적재** — MyBatis foreach가 2.6만행을 한 문장(6MB+, 파라미터 34만개)으로 생성하다 예외(+ DBCP removeAbandonedTimeout 300초 강제회수 가능성). **조치**: ① [MagamServiceImpl] `insertFilesDataBatch` 신설 = 순수 JDBC 배치(1000행 단위 executeBatch, URL의 rewriteBatchedStatements=true로 multi-row 변환, 단일 커넥션 마지막 commit이라 전체성공/전체취소 유지). `uploadMagamFilesMain`/`uploadMagamFilesOnly` 둘 다 이걸 쓰도록 교체(기존 mapper.uploadMagamFilesMain XML은 잔존·미사용) ② [context-datasource.xml] removeAbandonedTimeout 300→900 (양 프로파일). **주의**: 기존 `jdbcTemplate` 필드는 @Autowired가 없어 null(uploadMagamFilesBatch는 죽은 코드 — 호출하면 NPE) → DataSource 직접 주입 방식 사용. **자바+XML 변경 → WAR 재빌드 필수.**
 
 ### [완료] 차등제(01~04) 저장 안됨 + 직전분기 자동복제 + 저장분기 그리드 신설 (2026-07-03)
 - **증상 1 (업데이트 안 됨)**: 분기 선택 후 저장해도 값이 이전 그대로. **원인**: `saveHospGrd`가 `INSERT ... ON DUPLICATE KEY UPDATE`인데 TBL_GRADE_MST에 (HOSP_CD,START_YY,QTER_FLAG) UNIQUE 키가 없으면 매 저장이 새 행 추가 → `selectHospGrd`가 `LIMIT 1`(정렬 없음)로 **옛 행**을 읽음. **조치**: [UserServiceImpl.saveHospGrd] = **UPDATE 먼저(`updateHospGrdData` 신설) → 0건이면 INSERT**, `selectHospGrd`에 `ORDER BY UPD_DTTM DESC` 추가. 기존 중복행은 다음 저장 때 전부 같은 값으로 수렴(삭제 불필요).

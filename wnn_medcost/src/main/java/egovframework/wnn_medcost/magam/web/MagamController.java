@@ -915,10 +915,10 @@ public class MagamController {
             log.error(dto.getJobyymm());
             */
         	
-        	dto.setHosp_cd(dto.getHosp_cd());   // 요양기관번호 
+        	dto.setHosp_cd(dto.getHosp_cd());   // 요양기관번호
    		    dto.setJobyymm(dto.getJobyymm());   // 작업년월
    		    dto.setReg_user(dto.getReg_user()); // 사용자
-   		    
+
    		    System.out.println("create_Eval_Indi 호출했음");
 			err_cd = svc.create_Eval_Indi(dto);			
 			System.out.println("create_Eval_Indi 호출종료");
@@ -1087,11 +1087,11 @@ public class MagamController {
 			return response;
 
         } catch (Exception ex) {
-            model.addAttribute("error_code", ex.getMessage()); 
+            model.addAttribute("error_code", ex.getMessage());
             return null;
         }
 	}
-	
+
 	// 적정성평가 자료생성 진행상태(항목별 시작→완료) 조회 — 생성 중 폴링용
 	@RequestMapping(value="/main/evalProgress.do", method = RequestMethod.POST)
 	@ResponseBody
