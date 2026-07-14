@@ -3092,7 +3092,7 @@ function fn_ViewData(data) {
     	markColums = [];
 
     } else if (data.cate_cd === "07") {
-    	page_Hight = 563;
+    	page_Hight = 589;   // 06(2단헤더)과 바닥 맞춤 — 07은 1단헤더라 헤더가 한 줄 짧으므로 본문을 그만큼(~26px) 더 줌(563→589).
     	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','주진단','항정신성처방여부'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
