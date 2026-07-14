@@ -129,8 +129,7 @@
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" >
                         <i class="fa fa-list-ol" aria-hidden="true"></i>적정성-평가 현황</a>
                     </li>
-                    
-                            
+
                     <li class="nav-item" id="simulation">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" >
                         <i class="fa fa-cart-plus" aria-hidden="true"></i>적정성-Simulation</a>
@@ -1163,7 +1162,7 @@ function hosp_conact() {
         "hospuser3",
         "hospuser4",
         "hospuser5"
-        
+
       //  ,"simulation"
     ]);
 }

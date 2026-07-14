@@ -53,7 +53,28 @@
 								                </div>
 								            </div>
 								        </div>
-								        <button class="btn indi-custom-btn text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
+								        <div class="d-flex mb-2" style="gap:6px;">
+										    <button class="btn indi-custom-btn text-white btn-sm d-flex align-items-center justify-content-center flex-grow-1" onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
+										    <%-- ===== 월보고서 버튼 (1단계: 위너넷 전용) — magamFileUpload '신규프로그램' 체크박스와 동일 컨벤션 =====
+										         이 시스템은 로그인을 wnn_consult 에서 하고 wnn_medcost 는 쿠키로 인증을 이어받으므로(세션 공유 안 됨),
+										         판별은 s_wnn_yn 쿠키(=TBL_HOSP_MST.WINNER_YN, wnn_consult·wnn_medcost 양쪽 로그인이 매번 삭제 후 재설정)
+										         또는 s_winconect(위너넷이 병원검색으로 연결된 상태). 기본 히든 → 위너넷일 때만 JS 로 노출.
+										         [2단계·완성 후] 거래처 공개: 이 노출 조건에 승인본 존재 여부를 더해 확장. --%>
+										    <button id="btnMonthlyReport" class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center" style="white-space:nowrap; display:none;"
+										            onclick="location.href='/main/report.do?ym=' + document.getElementById('year_Select').value + document.getElementById('monthSelect').value;">📄 월보고서</button>
+										</div>
+										<script>
+										    (function(){
+										        // 판별 = s_wnn_yn 만. (s_winconect 는 위너넷 병원검색 시 심기고 wnn_consult 로그인이 안 지워서
+										        //  일반병원 재로그인 후에도 잔존 → 오노출 원인이라 제외. s_wnn_yn 은 양쪽 로그인이 매번 재설정,
+										        //  위너넷이 병원검색으로 타 병원을 봐도 'Y' 유지라 이것 하나로 충분)
+										        var b = document.getElementById('btnMonthlyReport');
+										        if(!b) return;
+										        var w='';
+										        try{ if(typeof getCookie==='function'){ w=(getCookie('s_wnn_yn')||'').trim(); } }catch(e){}
+										        if(w==='Y') b.style.display='';
+										    })();
+										</script>
 										<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
 
 																							        

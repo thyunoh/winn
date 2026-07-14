@@ -78,6 +78,20 @@ public interface MagamMapper {
 	
 	List<IndiDTO> select_Eval_Indi(IndiDTO dto);
 
+	// ===== 적정성평가 컨설팅 월보고서 (TBL_EVAL_REPORT_*) =====
+	Long selectEvalReportSeq(@Param("hospCd") String hospCd, @Param("evalYm") String evalYm);
+	Map<String, Object> selectEvalReportMst(@Param("hospCd") String hospCd, @Param("evalYm") String evalYm);
+	List<Map<String, Object>> selectEvalReportTexts(@Param("reportSeq") Long reportSeq);
+	int insertEvalReportMst(Map<String, Object> p);
+	int updateEvalReportMst(Map<String, Object> p);
+	int approveEvalReportMst(Map<String, Object> p);
+	int cancelApproveEvalReportMst(Map<String, Object> p);
+	int updateEvalReportPdf(Map<String, Object> p);
+	int deleteEvalReportTexts(@Param("reportSeq") Long reportSeq);
+	int insertEvalReportTexts(@Param("reportSeq") Long reportSeq,
+	                          @Param("texts") List<Map<String, Object>> texts,
+	                          @Param("updUser") String updUser);
+
 	List<Map<String, Object>> select_EvalProgress(IndiDTO dto);   // 자료생성 진행상태(항목별)
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto);

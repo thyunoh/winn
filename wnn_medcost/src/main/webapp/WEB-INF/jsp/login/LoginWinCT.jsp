@@ -474,6 +474,24 @@
 	        				sessionStorage.setItem('s_usernm', data.login_User); 			// sessionStorage에 로그인 사용자명
 	        				sessionStorage.setItem('s_mainfg', data.login_Main); 			// sessionStorage에 로그인 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
 	        				sessionStorage.setItem('s_use_yn', data.loginUseYN); 			// 사용여부(Y,정상사용자, N.종료사용자)
+
+	        				// [2026-07-14] 역할/병원 쿠키를 "이번 로그인 기준"으로 덮어쓰기.
+	        				// 구버전 로그인이 심어둔 잔존 쿠키(s_wnn_yn=Y 등)가 남아 있으면, 위너넷 PC에서
+	        				// 일반병원 계정으로 로그인해도 위너넷 전용 UI(샘파일업로드 개선 체크박스,
+	        				// 사이드바 관리메뉴, 월보고서 버튼 등)가 그대로 노출되는 문제 차단.
+	        				// 화면들(top/sidebar/magamFileUpload/assessment 등)은 전부 이 쿠키를 읽으므로
+	        				// 로그인에서 한 번 갱신하면 전 화면이 올바르게 동작함. (영구 1일 쿠키 — 세션쿠키 금지 방침 준수)
+	        				// ※ 위너넷 여부 = TBL_HOSP_MST.WINNER_YN (login_Wnn). s_mainfg(MAIN_GU)는 병원 내
+	        				//    관리자/담당자 구분이라 위너넷 판별에 쓰면 안 됨(일반병원 관리자도 1).
+	        				var _wnn = (String(data.login_Wnn || '').trim() === 'Y') ? 'Y' : 'N';
+	        				sessionStorage.setItem('s_wnn_yn', _wnn);
+	        				setCookie("s_wnn_yn", _wnn, 1);                                        // 위너넷 여부(병원 단위)
+	        				setCookie("s_mainfg", String(data.login_Main || '').trim(), 1);
+	        				setCookie("s_usernm", data.login_User || '', 1);
+	        				setCookie("s_use_yn", data.loginUseYN || '', 1);
+	        				setCookie("s_winconect", "", 0);                                       // 병원검색 연결상태 초기화(위너넷이 병원검색하면 top.jsp가 다시 'Y')
+	        				setCookie("s_hospid", $("#hospid").val().trim(), 1);                   // 로그인 병원으로 갱신(이전 병원검색 잔존값 제거)
+	        				setCookie("s_hospnm", data.login_Hosp || '', 1);
 	        	            
 	        	            showUserInfo(); 
 	        				

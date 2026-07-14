@@ -27,8 +27,10 @@ import egovframework.wnn_medcost.magam.model.MagamDTO;
 import egovframework.wnn_medcost.magam.model.IndiDTO;
 import egovframework.wnn_medcost.magam.model.PatvalDTO;
 import egovframework.wnn_medcost.magam.service.MagamService;
+import egovframework.wnn_medcost.ftpload.service.SftpService;
 import egovframework.util.ClientInfo;
 import javax.servlet.annotation.MultipartConfig;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @MultipartConfig
@@ -40,6 +42,9 @@ public class MagamController {
 	
 	@Resource(name = "MagamService") // 서비스 선언
 	private MagamService svc;
+
+	@Resource // 월보고서 첨부 PDF 업로드용 (기존 SFTP 인프라 재사용)
+	private SftpService sftpService;
 	
 	@RequestMapping(value="main/magamFileUpload.do")
     public String magamFileUpload(HttpServletRequest request, ModelMap model) throws Exception {
@@ -76,14 +81,46 @@ public class MagamController {
 	@RequestMapping(value="main/assessment.do")
     public String assessment(HttpServletRequest request, ModelMap model) {
 
-        cookie_value = ClientInfo.getCookie(request);		
+        cookie_value = ClientInfo.getCookie(request);
+		// 위너넷 여부 = 서버 세션(로그인 시 WINNER_YN 저장). 쿠키(잔존값 위험) 대신 세션으로 판별 → 월보고서 버튼 게이트.
+		try {
+			javax.servlet.http.HttpSession ses = request.getSession(false);
+			Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+			model.addAttribute("wnnYn", (wnn != null) ? String.valueOf(wnn) : "N");
+		} catch(Exception ignore) {
+			model.addAttribute("wnnYn", "N");
+		}
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/assessment";				
+				return ".main/assessment";
 			} else {
 				return ".login/LoginWinCT";
-			}	
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+    }
+	// 적정성평가 컨설팅 월보고서 (위너넷 편집·승인 → 거래처 열람)
+	@RequestMapping(value="main/report.do")
+    public String report(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);
+		// 위너넷 여부 = 서버 세션(로그인 시 WINNER_YN 저장). 쿠키 잔존값 대신 세션으로 판별.
+		try {
+			javax.servlet.http.HttpSession ses = request.getSession(false);
+			Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+			model.addAttribute("wnnYn", (wnn != null) ? String.valueOf(wnn) : "N");
+		} catch(Exception ignore) {
+			model.addAttribute("wnnYn", "N");
+		}
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/report";
+			} else {
+				return ".login/LoginWinCT";
+			}
 		} catch(Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -1090,6 +1127,128 @@ public class MagamController {
             model.addAttribute("error_code", ex.getMessage());
             return null;
         }
+	}
+
+	// ===== 적정성평가 컨설팅 월보고서 : 조회/저장/승인 =====
+	// 로그인 사용자명(위너넷 담당자) — 없으면 '위너넷'
+	private String cookieUser() {
+		try {
+			String u = cookie_value.get("s_usernm");
+			return (u != null && !u.trim().isEmpty()) ? u.trim() : "위너넷";
+		} catch (Exception e) {
+			return "위너넷";
+		}
+	}
+
+	// 저장된 보고서(마스터 + 편집 문구) 조회 — 없으면 mst=null(화면이 기본 문구 사용)
+	@RequestMapping(value="/main/loadEvalReport.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> loadEvalReport(@RequestParam Map<String, Object> params) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = String.valueOf(params.get("hospCd"));
+			String evalYm = String.valueOf(params.get("evalYm"));
+			res = svc.loadEvalReport(hospCd, evalYm);
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL");
+			res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	// 저장 (마스터 UPSERT + 편집 문구 전체교체)
+	@RequestMapping(value="/main/saveEvalReport.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> saveEvalReport(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			body.put("regUser", cookieUser());
+			Long seq = svc.saveEvalReport(body);
+			res.put("result", "OK");
+			res.put("reportSeq", seq);
+		} catch (Exception ex) {
+			res.put("result", "FAIL");
+			res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	// 승인/승인취소 (cancel='Y' 이면 취소) — 승인 시 수치 스냅샷 동결
+	@RequestMapping(value="/main/approveEvalReport.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> approveEvalReport(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			body.put("approveUser", cookieUser());
+			boolean cancel = "Y".equals(String.valueOf(body.get("cancel")));
+			if (cancel) {
+				svc.cancelApproveEvalReport(body);
+			} else {
+				svc.approveEvalReport(body);
+			}
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL");
+			res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	// 월보고서 첨부 PDF 업로드 (아래한글 완성본 하이브리드) — SFTP /home/winner/upload/{hospCd}/{evalYm}/EVALRPT/ 저장 후 MST.PDF_PATH 기록
+	@RequestMapping(value="/main/uploadEvalReportPdf.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> uploadEvalReportPdf(@RequestParam("pdfFile") MultipartFile pdfFile,
+	                                               @RequestParam("hospCd") String hospCd,
+	                                               @RequestParam("evalYm") String evalYm,
+	                                               HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		java.io.File temp = null;
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String orig = pdfFile.getOriginalFilename();
+			if (orig == null || !orig.toLowerCase().endsWith(".pdf")) {
+				res.put("result", "FAIL"); res.put("message", "PDF 파일만 첨부할 수 있습니다."); return res;
+			}
+			temp = java.nio.file.Files.createTempFile("evalrpt_", ".pdf").toFile();
+			pdfFile.transferTo(temp);
+			String folder = hospCd + "/" + evalYm + "/EVALRPT";
+			String fileSize = Long.toString(pdfFile.getSize() / 1024);
+			boolean ok = sftpService.uploadFile(temp.getAbsolutePath(), orig, folder,
+					hospCd, "EVALRPT", evalYm, cookieUser(), ClientInfo.getClientIP(request), fileSize);
+			if (!ok) { res.put("result", "FAIL"); res.put("message", "파일 서버 업로드 실패"); return res; }
+
+			String remotePath = "/home/winner/upload/" + folder + "/" + orig;   // SftpService BASE_DIRECTORY 규칙과 일치
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd); p.put("evalYm", evalYm);
+			p.put("pdfPath", remotePath); p.put("regUser", cookieUser());
+			svc.saveEvalReportPdf(p);
+			res.put("result", "OK"); res.put("pdfPath", remotePath);
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+		} finally {
+			if (temp != null && temp.exists()) temp.delete();
+		}
+		return res;
+	}
+
+	// 월보고서 첨부 PDF 해제 (경로만 제거, 파일은 유지)
+	@RequestMapping(value="/main/deleteEvalReportPdf.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> deleteEvalReportPdf(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			body.put("pdfPath", null);
+			body.put("regUser", cookieUser());
+			svc.saveEvalReportPdf(body);
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+		}
+		return res;
 	}
 
 	// 적정성평가 자료생성 진행상태(항목별 시작→완료) 조회 — 생성 중 폴링용
