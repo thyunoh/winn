@@ -1898,7 +1898,7 @@ dataTable.clear();
 var gridColums = [];
 var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-var page_Hight = 600;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+var page_Hight = 563;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 var p_Collapse = true;  		// Page 길이까지 auto size - scrollCollapse
 var fixed_Head = true;          // 헤더 고정 
 
@@ -2576,7 +2576,7 @@ function fn_IndiSelect() {
     let selectedMonth = document.getElementById("monthSelect").value;
     
     defaultCnt = 30;
-	page_Hight = 600;
+	page_Hight = 563;
 	colPadding = '2px';   	// 행 높이 간격 설정
 	
 	datWaiting = false;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -2591,7 +2591,7 @@ function fn_IndiSelect() {
 function Indicater_DataList() {
 	
 	defaultCnt = 30;
-	page_Hight = 600;
+	page_Hight = 563;
 	colPadding = '2px';   		// 행 높이 간격 설정
 	
 	datWaiting = false;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -2720,7 +2720,7 @@ function fn_ViewData(data) {
 	showButton = true;   		// Button (복사, 엑셀, 출력)) 표시여부
 	s_CheckBox = false;   		// CheckBox 표시 여부
 	s_AutoNums = false;   		// 자동순번 표시 여부
-	page_Hight = 720;
+	page_Hight = 563;
 	defaultCnt = 100;
 	colPadding = '0.2px';   	// 행 높이 간격 설정
 	searchShow = true;   		// 검색창 Show/Hide 표시여부
@@ -2936,8 +2936,8 @@ function fn_ViewData(data) {
     	// scrollX(가로스크롤) 끔 — 2단 colspan 헤더가 줌(90% 초과)에서 본문과 어긋나는 문제를
     	//   원천 차단 (헤더/본문 분리 테이블이 생기지 않아 px 반올림 드리프트 없음).
     	btm_Scroll = false;
-    	// 세로스크롤 뷰 높이 — 약 25행만 보이고 나머지는 스크롤(≈25.5px/행 → 25행이면 약 640px). 필요시 값 조정.
-    	page_Hight = 640;
+    	// 세로스크롤 뷰 높이 — 좌측 지표패널 높이에 맞춰 약 22행만 보이게(≈25.6px/행 → 22행 ≈ 563px). 필요시 값 조정.
+    	page_Hight = 563;
     	// 2-row header — 관리항목 (colspan=3) 으로 일정배뇨/방광훈련/규칙적도뇨 묶음.
     	// 폭 절약을 위해 sub-header 는 짧게 (일정/방광/규칙).
     	c_Head_Set = [
@@ -3092,7 +3092,7 @@ function fn_ViewData(data) {
     	markColums = [];
 
     } else if (data.cate_cd === "07") {
-    	page_Hight = 690;
+    	page_Hight = 563;
     	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','주진단','항정신성처방여부'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
@@ -3633,7 +3633,7 @@ function fn_ViewData(data) {
 		markColums = ['patNm'];
     			
     } else if (data.cate_cd === "13") {
-    	page_Hight = 690;
+    	page_Hight = 563;
     	c_Head_Set = [  '','대상자','입원일','개시일','작성일','당뇨','Hba1c','전월상병','검사일','결과','당월','다음월'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
@@ -3740,7 +3740,7 @@ function fn_ViewData(data) {
        	markColums = [];	
     	
     } else if (data.cate_cd === "14") {
-    	page_Hight = 690;
+    	page_Hight = 563;
     	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','평가군','장기입원','제외대상'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },

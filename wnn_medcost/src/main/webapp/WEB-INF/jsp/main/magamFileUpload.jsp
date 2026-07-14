@@ -242,6 +242,8 @@
                                      /* 본문 글자 진하게(희미함 해소) — 비활성(X) 행만 회색 유지 */
                                      #samPickModal .samPickTable tbody td { color: #212b29; }
                                      #samPickModal .samPickTable tr.spkDisRow td { color: #a7b0ad; }
+                                     /* 환자평가표(REP) 행 — 진하게 + 평가표 색(빨강)으로 구분. spkDisRow 회색을 덮어씀 */
+                                     #samPickModal .samPickTable tr.spkRepFile td { color: #c62828 !important; font-weight: 600; }
                                      /* 진행 중 회전 스피너 */
                                      @keyframes spkSpin { to { transform: rotate(360deg); } }
                                      #samPickModal .spkSpinner {
@@ -1807,7 +1809,11 @@ function fileLoad_Open(mgmonth) {
 
 	        gMonth = mgmonth;
 	        findField('mgmonth', gMonth);
-	
+	        // [추가] 미등록/재등록 클릭 시에도 하단 그리드를 그 월로 갱신(보기와 동일하게 월 컨텍스트 일치) —
+	        //   기존엔 gMonth 만 바꿔 업로드는 맞았으나 하단 그리드는 이전 달 그대로였음.
+	        try { markSelectedMonth(mgmonth); } catch (e) {}
+	        try { dataTable.ajax.reload(); } catch (e) {}
+
 	        let file_Select = document.getElementById("file_Select");
 	        let folderInput = document.getElementById('folderInput'); // 이 부분을 추가
 	
@@ -4221,13 +4227,13 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             var f=_files[idx]; var zero=(f.size===0)?' <span class="text-danger">(0B)</span>':'';
             var setAttr = sid ? (' data-set="'+esc(sid)+'"') : '';
             var mis=tabMismatch(f.name);   // 현재 탭에서 업로드 불가한 파일 → 체크 차단 + 배지
-            var trCls='samPickFileRow'+(opts.rep?' samPickRepRow':'')+(opts.member?' samPickMember':'')+(mis?' spkDisRow':'');
+            var trCls='samPickFileRow'+(opts.rep?' samPickRepRow':'')+(opts.member?' samPickMember':'')+(mis?' spkDisRow':'')+((typeof fileFlag==='function'&&fileFlag(f.name)==='9')?' spkRepFile':'');
             var trSty=(opts.rep?'background:#eef7f4;':'')+(opts.hidden?'display:none;':'');
             var cbCls='samPickFile'+(opts.rep?' samPickRep':'');
-            // 비활성(탭 불일치) 행: 체크박스 대신 X 표시(선택 불가). 정상 행은 체크박스
-            var cbCell=mis
-                ? '<span title="현재 탭에서 업로드할 수 없는 파일입니다." style="color:#b56b73;font-weight:700;font-size:14px;">✕</span>'
-                : '<input type="checkbox" class="'+cbCls+'" data-idx="'+idx+'" data-dir="'+esc(d)+'"'+setAttr+'>';
+            // [동시 업로드] 다른 종류(청구/평가표) 파일도 체크 가능 — 선택 적용 시 종류별로 자동 분리되어 각자(청구8/평가표9)로 저장됨.
+            //  기존 처리 로직은 그대로. 다른 종류 행은 흐리게(spkDisRow) + 안내 툴팁만 표시.
+            var cbTitle=mis?(fileFlag(f.name)==='9'?'환자평가표 파일 — 선택 시 평가표로 저장됩니다.':'청구샘파일 파일 — 선택 시 청구로 저장됩니다.'):'';
+            var cbCell='<input type="checkbox" class="'+cbCls+'" data-idx="'+idx+'" data-dir="'+esc(d)+'"'+setAttr+(cbTitle?(' title="'+esc(cbTitle)+'"'):'')+'>';
             var caret=opts.rep?'<span class="samPickSetCaret" style="display:inline-block;width:18px;cursor:pointer;font-weight:700;" title="펼치기/접기">▶</span> ':'';
             var cnt=opts.rep?(' <span class="text-primary" style="font-weight:600;" title="대표 체크=전체 선택 · 클릭=펼치기">· '+opts.count+'개 세트 ▸</span>'):'';
             return '<tr class="'+trCls+'" data-dir="'+esc(d)+'"'+setAttr+(trSty?(' style="'+trSty+'"'):'')+'>'
@@ -4527,12 +4533,13 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             }
             // 청구건 단위 그룹핑 — 선택 파일을 setKey로 묶고, 상태셀 갱신용 파일 인덱스(gidx)도 함께 보관
             var picked=(window.gPickedFiles||[]).slice();
-            var gm={}, order=[], gidx={};
+            var gm={}, order=[], gidx={}, gflag={};   // gflag: 그룹별 종류(8 청구샘파일 / 9 환자평가표)
             picked.forEach(function(f){
                 var i=_files.indexOf(f);
+                var fl=(typeof fileFlag==='function')?fileFlag(f.name):'8';   // 파일 종류(REP→9, 그 외→8)
                 var k=setKey(f.name);
-                var key=(k!=='') ? ('S|'+k+'|'+relDir(f)) : ('F|'+f.name+'|'+relDir(f));
-                if(!gm[key]){ gm[key]=[]; gidx[key]=[]; order.push(key); }
+                var key=(k!=='') ? ('S|'+fl+'|'+k+'|'+relDir(f)) : ('F|'+fl+'|'+f.name+'|'+relDir(f));   // 종류(fl) 포함 → 종류 다르면 그룹도 분리
+                if(!gm[key]){ gm[key]=[]; gidx[key]=[]; gflag[key]=fl; order.push(key); }
                 gm[key].push(f); if(i>=0) gidx[key].push(i);
             });
             // 상태 컬럼 셀 갱신
@@ -4552,6 +4559,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 var _jobDtNow = (typeof getJobDateTime==='function') ? getJobDateTime
                               : function(){ var n=new Date(),p=function(x){return String(x).padStart(2,'0');}; return ''+n.getFullYear()+p(n.getMonth())+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };
                 var _lastJobDt=null;
+                var _origFlag=g_Flag;   // 원래 활성 탭 flag 보관(루프 후 원복)
                 for(var i=0;i<order.length;i++){
                     setSt(gidx[order[i]], '<span class="spkSpinner"></span>진행', '#475569');
                     if(footEl) footEl.textContent='업로드 중 '+(i+1)+' / '+order.length+' 건';
@@ -4560,6 +4568,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                     _lastJobDt=_jobDtNow();
                     window._samUploadedFiles=null;
                     window._samUpOk=null;   // 이번 청구건 성공여부 초기화(핸들러가 true/false 세팅)
+                    try{ g_Flag = gflag[order[i]] || g_Flag; }catch(e){}   // 이 그룹 종류로 라우팅(청구8/평가표9) — handleFileSelection이 라인마다 mg_flag:g_Flag 사용
                     await uploadGroupSeq(gm[order[i]]);   // 완료(signUp!=='Y')까지 대기
                     var grp=gm[order[i]];
                     if(window._samUpOk===true){
@@ -4582,6 +4591,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                         for(var g2=0; g2<grp.length; g2++){ failedFiles.push(grp[g2]); }
                     }
                 }
+                try{ g_Flag = _origFlag; }catch(e){}   // 활성 탭 flag 원복(라우팅 종료)
                 window._samSilent=false;
                 // 성공·삭제분을 방식별 저장소에서 제거 후 재렌더(실패건은 남김) → 재렌더 후 실패건 ❌ 재표시
                 if(removed.length){
