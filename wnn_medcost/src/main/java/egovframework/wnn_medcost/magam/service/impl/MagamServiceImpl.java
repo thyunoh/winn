@@ -521,6 +521,15 @@ public class MagamServiceImpl implements MagamService {
 		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
 		List<Map<String, Object>> texts = (seq != null) ? mapper.selectEvalReportTexts(seq) : new ArrayList<Map<String, Object>>();
 		res.put("texts", texts);
+		// 차등제 등록(TBL_GRADE_MST)에서 목표점수/병원등급 조회 → 월보고서 목표값 기본소스로 내려줌
+		//   evalYm(YYYYMM) → 년도(YYYY) + 분기(월/3 올림: 1~3=1,4~6=2,7~9=3,10~12=4)
+		if (evalYm != null && evalYm.length() == 6) {
+			String startYy = evalYm.substring(0, 4);
+			int mon = Integer.parseInt(evalYm.substring(4, 6));
+			String qterFlag = String.valueOf((mon + 2) / 3);
+			Map<String, Object> goal = mapper.selectHospGoalGrade(hospCd, startYy, qterFlag);
+			res.put("goal", goal);   // {goalscore, hospgrade} 또는 null(미등록)
+		}
 		return res;
 	}
 

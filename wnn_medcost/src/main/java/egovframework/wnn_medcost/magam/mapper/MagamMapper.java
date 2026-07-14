@@ -81,6 +81,10 @@ public interface MagamMapper {
 	// ===== 적정성평가 컨설팅 월보고서 (TBL_EVAL_REPORT_*) =====
 	Long selectEvalReportSeq(@Param("hospCd") String hospCd, @Param("evalYm") String evalYm);
 	Map<String, Object> selectEvalReportMst(@Param("hospCd") String hospCd, @Param("evalYm") String evalYm);
+	// 차등제 등록(TBL_GRADE_MST) 목표점수/병원등급 — 월보고서 목표값 기본소스
+	Map<String, Object> selectHospGoalGrade(@Param("hospCd") String hospCd,
+	                                        @Param("startYy") String startYy,
+	                                        @Param("qterFlag") String qterFlag);
 	List<Map<String, Object>> selectEvalReportTexts(@Param("reportSeq") Long reportSeq);
 	int insertEvalReportMst(Map<String, Object> p);
 	int updateEvalReportMst(Map<String, Object> p);

@@ -303,7 +303,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   // 1단계: 위너넷 전용 — 위너넷이 아니면(또는 재로그인 전이라 세션이 비었으면) 적정성평가 화면으로 복귀.
   if(!allowView){
-    alert('월보고서는 준비 중입니다.\n(위너넷 계정인데 이 메시지가 보이면 로그아웃 후 다시 로그인하세요.)');
+    alert('월보고서는 준비 중입니다.');
     location.replace('/main/assessment.do');
     return;
   }
@@ -411,6 +411,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function goalScoreVal(){ var e=document.querySelector('#evalReport [data-key="cover_goal_score"]'); return e? (n(e.textContent)||78):78; }
   function goalGradeVal(){ var e=document.querySelector('#evalReport [data-key="cover_goal_grade"]'); return e? e.textContent.trim():'3등급'; }
 
+  // 차등제 등록(TBL_GRADE_MST) 목표값을 표지의 목표점수/목표등급/뱃지에 반영.
+  //   goal = { goalscore, hospgrade }(서버). 목표값은 병원이 직접 등록한 사실값이므로,
+  //   저장 override(옛 하드코딩 3등급/78 등)를 무시하고 항상 마스터값으로 덮어씀.
+  //   마스터에 값이 없는(미등록) 분기면 아무것도 안 바꿔 기존 표시 유지.
+  //   hospgrade 는 숫자('1')로 저장 → '1등급' 표기로 변환.
+  function applyGoalDefault(goal){
+    if(!goal) return;
+    var gs = (goal.goalscore!=null && goal.goalscore!=='') ? fnum(goal.goalscore) : '';
+    var hg = (goal.hospgrade!=null && String(goal.hospgrade).trim()!=='') ? String(goal.hospgrade).trim() : '';
+    // 목표등급 = 저장된 병원등급(HOSPGRADE) 우선. 등급이 비어 있으면 목표점수로부터 유도(점수/등급 일관성).
+    var gradeTxt = hg ? (hg.indexOf('등급')>=0 ? hg : hg+'등급')
+                      : (gs!=='' ? gradeOf(goal.goalscore) : '');
+    function setVal(key, val){
+      if(!val) return;
+      var e=document.querySelector('#evalReport [data-key="'+key+'"]');
+      if(e) e.textContent = val;
+    }
+    setVal('cover_goal_score', gs);
+    setVal('cover_goal_grade', gradeTxt);
+    setVal('cover_goal_badge', gradeTxt);
+  }
+
   function renderAll(){
     computeScores();
     var period = curYm.substring(0,4)+'년 '+curYm.substring(4,6)+'월';
@@ -422,21 +444,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-cardStruct').textContent=f1(scores.struct); el('er-cardCare').textContent=f1(scores.care); el('er-cardTotal').textContent=f1(scores.total);
     el('er-rateStruct').textContent = scores.struct>0? (Math.round(scores.struct/30*1000)/10)+'%' : '-';
     el('er-rateCare').textContent   = scores.care>0?   (Math.round(scores.care/70*1000)/10)+'%'   : '-';
-    var goalScore = goalScoreVal();
-    el('er-gapGoalScore').textContent = goalScore;
     el('er-curGrade').textContent = gradeOf(scores.total);
-    var gap = goalScore - scores.total;
-    el('er-gapScore').textContent = (gap>0?'+':'') + (Math.round(gap*10)/10);
     el('er-afterFrom').textContent = f1(scores.total);
-    // 등급표
-    var bands=[['1등급','88 ~ 100'],['2등급','79 ~ 87'],['3등급','71 ~ 78'],['4등급','63 ~ 70'],['5등급','63 미만']];
-    var cur=gradeOf(scores.total), goalGrade=goalGradeVal();
-    el('er-gradeBody').innerHTML = bands.map(function(b){
-      var cls = (b[0]===cur)?' class="er-cur"' : (b[0]===goalGrade?' class="er-goal"':'');
-      var mark = (b[0]===cur)?('<b class="er-num">'+f1(scores.total)+'점</b>') : (b[0]===goalGrade?'목표 구간':'');
-      var nm = b[0] + (b[0]===cur?' (현재)':(b[0]===goalGrade?' (목표)':''));
-      return '<tr'+cls+'><td class="er-l">'+nm+'</td><td class="er-num">'+b[1]+'</td><td>'+mark+'</td></tr>';
-    }).join('');
+    renderGoalSummary();   // 목표점수/등급 의존 영역(부족점수·등급표) — 목표값 변경 후 단독 재호출 가능
     // 우선지표(부족분 상위 6)
     var pri = topGaps(6);
     el('er-priBody').innerHTML = pri.length? pri.map(function(x,i){
@@ -445,6 +455,22 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     renderTable2();
     renderSec3();
     renderSec4();
+  }
+
+  // 목표점수/목표등급 의존 요약(부족점수 카드 + 등급표 하이라이트) — 목표값(DOM) 갱신 후 재호출
+  function renderGoalSummary(){
+    var goalScore = goalScoreVal();
+    el('er-gapGoalScore').textContent = goalScore;
+    var gap = goalScore - scores.total;
+    el('er-gapScore').textContent = (gap>0?'+':'') + (Math.round(gap*10)/10);
+    var bands=[['1등급','88 ~ 100'],['2등급','79 ~ 87'],['3등급','71 ~ 78'],['4등급','63 ~ 70'],['5등급','63 미만']];
+    var cur=gradeOf(scores.total), goalGrade=goalGradeVal();
+    el('er-gradeBody').innerHTML = bands.map(function(b){
+      var cls = (b[0]===cur)?' class="er-cur"' : (b[0]===goalGrade?' class="er-goal"':'');
+      var mark = (b[0]===cur)?('<b class="er-num">'+f1(scores.total)+'점</b>') : (b[0]===goalGrade?'목표 구간':'');
+      var nm = b[0] + (b[0]===cur?' (현재)':(b[0]===goalGrade?' (목표)':''));
+      return '<tr'+cls+'><td class="er-l">'+nm+'</td><td class="er-num">'+b[1]+'</td><td>'+mark+'</td></tr>';
+    }).join('');
   }
 
   function topGaps(limit){
@@ -521,6 +547,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         // 저장 문구 override 적용
         var map={}; texts.forEach(function(t){ map[t.sectkey]=t.content; });
         editables().forEach(function(e){ var k=e.getAttribute('data-key'); if(map[k]!=null) e.innerHTML=map[k]; });
+        // 목표점수/목표등급 = 차등제 등록(TBL_GRADE_MST) 값으로 항상 덮어씀(옛 저장값 무시).
+        applyGoalDefault(res && res.goal);
+        renderGoalSummary();   // 목표값 확정 후 부족점수/등급표 재계산
         setStatus(mst && mst.status ? mst.status : 'DRAFT');
         pdfPath = (mst && mst.pdfpath) ? String(mst.pdfpath) : '';
         updatePdfUi();

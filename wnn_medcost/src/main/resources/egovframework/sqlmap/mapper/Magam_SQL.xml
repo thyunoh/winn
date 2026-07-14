@@ -5632,6 +5632,21 @@
 		 LIMIT 1
 	</select>
 
+	<!-- 병원 목표점수/목표등급 조회 (차등제 등록 TBL_GRADE_MST — 병원+년도+분기 최신 1건)
+	     · 월보고서 목표등급/목표점수의 기본값 소스. 저장 override 가 있으면 화면에서 그게 우선.
+	     · startYy = 년도(YYYY), qterFlag = 분기(1~4 = 월/3 올림). ACTION_YN='Y' 유효행만, 최신 수정건. -->
+	<select id="selectHospGoalGrade" resultType="java.util.HashMap">
+		SELECT GOAL_SCORE AS goalscore,
+		       HOSPGRADE  AS hospgrade
+		  FROM TBL_GRADE_MST
+		 WHERE HOSP_CD   = #{hospCd}
+		   AND START_YY  = #{startYy}
+		   AND QTER_FLAG = #{qterFlag}
+		   AND ACTION_YN = 'Y'
+		 ORDER BY UPD_DTTM DESC, REG_DTTM DESC
+		 LIMIT 1
+	</select>
+
 	<!-- 병원별 편집 문구(override) 목록 -->
 	<select id="selectEvalReportTexts" resultType="java.util.HashMap">
 		SELECT SECT_KEY AS sectkey, CONTENT AS content
