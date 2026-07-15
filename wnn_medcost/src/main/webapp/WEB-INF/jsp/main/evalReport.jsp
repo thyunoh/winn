@@ -275,7 +275,7 @@
   <!-- ===== 툴바 (기능별 그룹 정렬) ===== -->
   <div class="er-toolbar">
     <!-- 그룹1: 제목·병원 -->
-    <span class="er-brand"><span class="er-dot"></span>적정성평가 월간 컨설팅 보고서</span>
+    <span class="er-brand"><span class="er-dot"></span>월간 컨설팅 보고서</span>
     <span id="er-roleTag" class="er-role">위너넷</span>
     <span class="er-hospnm" id="er-hospNm"></span>
     <span class="er-divider"></span>
@@ -300,6 +300,11 @@
       <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()">📎 PDF 첨부</button>
       <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;">👁 PDF 보기</a>
     </span>
+    <span class="er-divider"></span>
+    <!-- 글자 크기(문서 배율) — 가운데 % 클릭 시 100% 복원. localStorage 저장(다음 진입 유지), 인쇄에도 반영 -->
+    <button class="er-btn" onclick="erZoom(-1)" title="글자 작게">가−</button>
+    <button class="er-btn" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:52px;">100%</button>
+    <button class="er-btn" onclick="erZoom(1)" title="글자 크게">가＋</button>
     <span class="er-divider"></span>
     <button class="er-btn" onclick="erPreview()">👁 미리보기</button>
     <button class="er-btn" onclick="window.print()">🖨️ 인쇄</button>
@@ -630,6 +635,22 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('evalReport').style.paddingTop=(tb.offsetHeight)+'px';   // 고정 툴바에 본문이 가리지 않게 여백
   }
   window.addEventListener('resize', erFixToolbar);
+
+  // ===== 글자 크기(문서 배율) — .er-doc 에 CSS zoom 적용(레이아웃 유지한 채 전체 배율).
+  //   0.7~1.4, 0.1 단계. localStorage 저장으로 다음 진입에도 유지. 인쇄에도 그대로 반영됨.
+  var _erZoom = 1;
+  try{ var zv=parseFloat(localStorage.getItem('er_zoom')); if(zv>=0.7 && zv<=1.4) _erZoom=zv; }catch(e){}
+  function erApplyZoom(){
+    var d=erDoc(); if(d) d.style.zoom=_erZoom;
+    var p=el('er-zoomPct'); if(p) p.textContent=Math.round(_erZoom*100)+'%';
+    try{ localStorage.setItem('er_zoom', _erZoom); }catch(e){}
+  }
+  window.erZoom = function(dir){
+    if(dir===0) _erZoom=1;
+    else _erZoom=Math.min(1.4, Math.max(0.7, Math.round((_erZoom+dir*0.1)*10)/10));
+    erApplyZoom();
+  };
+  erApplyZoom();   // 진입 시 저장된 배율 복원
 
   // 종료 → 적정성평가 현황(assessment)으로 복귀.
   //   복귀 진입 시 "재생성 확인" 팝업 없이 기존 자료만 바로 표시하도록 1회용 마커 전달.

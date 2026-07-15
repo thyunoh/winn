@@ -320,7 +320,7 @@
                                                      <!-- 제목 = 진입 방식(샘파일 수동선택 화면 / 자동생성 폴더선택 화면). 메인의 [샘파일 자동생성선택 방식] 체크가 결정 -->
                                                      <span id="samPickModeNow"></span>
                                                      <!-- 그 옆에 현재 작업 탭(청구샘파일/환자평가표) — 은은히 깜박임 -->
-                                                     <span id="samPickTabInfo" class="ml-2" style="font-weight:800; font-size:17px; vertical-align:middle;"></span>
+                                                     <span id="samPickTabInfo" class="ml-2" style="font-weight:800; font-size:19px; vertical-align:middle;"></span>
                                                  </h5>
                                                  <button type="button" class="close" data-dismiss="modal" style="color:#1f7a66; opacity:0.8;"><span>&times;</span></button>
                                              </div>
@@ -4025,12 +4025,16 @@ $('#verifyModal').on('hidden.bs.modal', function() {
     }
     function curFlag(){ return String((typeof g_Flag!=='undefined' && g_Flag!=null)?g_Flag:'8'); }
     function tabMismatch(name){ return fileFlag(name)!==curFlag(); }
-    // [2026-07-15] 모달 제목 옆 작업탭 표시("청구샘파일/환자평가표 작업화면") 제거 —
-    //   샘파일/환자평가표 동시 선택을 허용하므로 탭 구분 표기가 오히려 혼동. 함수는 호출부 호환용으로 비움.
+    // [2026-07-15] 모달 제목 옆 표시 = 선택한 작업년월 — 어느 년월에 업로드하는지 명확히.
+    //   (기존 작업탭(청구샘파일/환자평가표) 표기는 동시 선택 허용으로 혼동돼 제거함 — 재도입 주의)
+    //   gMonth 는 월 버튼 클릭(fileLoad 등)에서 mgmonth 로 확정된 뒤 모달이 열리므로 열릴 때 값이 정확함.
     function updateTabInfo(){
         var el=document.getElementById('samPickTabInfo'); if(!el) return;
-        el.innerHTML='';
+        var y=(typeof g_Year!=='undefined' && g_Year)? String(g_Year):'';
+        var m=(typeof gMonth!=='undefined' && gMonth)? parseInt(gMonth,10):'';
+        el.innerHTML = (y && m)? esc_(y)+'년 '+m+'월 작업' : '';
     }
+    function esc_(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     function periodActive(){
         var rm=document.getElementById('samPickModeManual');
