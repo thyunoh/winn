@@ -42,15 +42,12 @@
 	                                </select>
 	                                <select id="treatType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">
 	                                </select>
-	                                <!-- [신규 방식 토글] 체크 시 월 클릭 → 청구파일 선택 모달(신규), 체크 해제 시 기존 파일 다이얼로그.
-	                                     기본 히든. 위너넷 사용자(s_wnn_yn='Y') 에게만 노출 → 병원 사용자는 무조건 기존 방식. -->
-	                                 <label id="samPickNewProgWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#0c7cd5; cursor:pointer;">
-	                                    <input type="checkbox" id="samPickNewProg"> <i class="fa fa-flask mr-1"></i>샘파일업로드 개선프로그램 적용     (위너넷만 보입니다 화요일 설명 들릴께요!! )
-	                                </label>
-	                                <!-- [모달 진입 방식] 체크 시 자동생성 폴더선택 화면만, 해제 시 샘파일 수동선택 화면만 표시(모달 내 라디오 없음).
-	                                     '신규프로그램 적용' 이 꺼져 있으면 모달 자체를 안 쓰므로 이 체크('샘파일 자동생성선택 방식')는 아예 숨김(기본 히든). -->
-	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="font-weight:600; color:#0c7cd5; cursor:pointer; display:none;">
-	                                    <input type="checkbox" id="samPickMode"> <i class="fa fa-folder-open mr-1"></i>샘파일 자동생성선택 방식
+	                                <!-- [신규 방식 상시 적용 2026-07-15] 개선프로그램(월 클릭→청구파일 선택 모달)이 '기본 동작'으로 확정 — 토글 UI 제거.
+	                                     숨김 checked 입력만 유지해 기존 분기(_np.checked)가 항상 신규 방식으로 동작. -->
+	                                 <input type="checkbox" id="samPickNewProg" checked style="display:none;">
+	                                <!-- [모달 진입 방식] '샘파일 자동생성선택 방식' — 현재 미사용: 비활성(disable)·체크 해제 고정 → 수동선택 화면 기본 -->
+	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#9aa5b1;">
+	                                    <input type="checkbox" id="samPickMode" disabled> <i class="fa fa-folder-open mr-1"></i>샘파일 자동생성선택 방식
 	                                </label>
 
 	                            </div>
@@ -242,6 +239,8 @@
                                      /* 본문 글자 진하게(희미함 해소) — 비활성(X) 행만 회색 유지 */
                                      #samPickModal .samPickTable tbody td { color: #212b29; }
                                      #samPickModal .samPickTable tr.spkDisRow td { color: #a7b0ad; }
+                                     /* 환자평가표(REP) 행 — 진하게 + 평가표 색(빨강)으로 구분. spkDisRow 회색을 덮어씀 */
+                                     #samPickModal .samPickTable tr.spkRepFile td { color: #c62828 !important; font-weight: 600; }
                                      /* 진행 중 회전 스피너 */
                                      @keyframes spkSpin { to { transform: rotate(360deg); } }
                                      #samPickModal .spkSpinner {
@@ -252,6 +251,19 @@
                                      }
                                      /* ── 밝은 세금계산서 폼 컨셉 (화이트 + 청록 accent) ── */
                                      #samPickModal .modal-content { box-shadow: 0 18px 48px rgba(20,80,66,0.20); }
+                                     /* ── 글자체 = 출고현황표(konet)와 동일: 맑은 고딕 + 굵은 톤 ── */
+                                     #samPickModal .modal-content { font-family: "Malgun Gothic", "맑은 고딕", sans-serif; color: #10161d; }
+                                     #samPickModal .modal-content, #samPickModal label, #samPickModal span, #samPickModal td { font-weight: 700; }
+                                     #samPickModal .modal-title, #samPickModal th, #samPickModal b { font-weight: 800; }
+                                     /* ── 버튼 = 출고현황표(konet) 툴바 스타일: 흰 배경+얇은 테두리+radius 6, 주요 액션만 teal 솔리드 ── */
+                                     #samPickModal .btn {
+                                         background: #fff; color: #37475a; border: 1px solid #dfe6e3; border-radius: 6px;
+                                         padding: 5px 12px; font-size: 13px; font-weight: 700; box-shadow: none; line-height: 1.5;
+                                     }
+                                     #samPickModal .btn:hover, #samPickModal .btn:focus { background: #eef3f2; border-color: #2f9c86; color: #1f7a66; box-shadow: none; }
+                                     #samPickModal #samPickApply { background: #2f9c86; border-color: #2f9c86; color: #fff; }
+                                     #samPickModal #samPickApply:hover, #samPickModal #samPickApply:focus { background: #27836f; border-color: #27836f; color: #fff; }
+                                     #samPickModal .btn:disabled { opacity: .5; }
                                      /* 방식 선택 — '미등록'처럼 아웃라인 버튼, 선택된 쪽은 채움 */
                                      #samPickModal .spkModeLbl { font-weight: 600; margin-bottom: 0; }
                                      #samPickModal .spkModeLbl input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
@@ -301,14 +313,14 @@
                                  <input type="file" id="samPickInput" webkitdirectory directory multiple style="display:none;">
                                  <input type="file" id="samPickManualInput" multiple style="display:none;">
                                  <div class="modal fade" id="samPickModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
-                                     <div class="modal-dialog modal-xl" role="document">
+                                     <div class="modal-dialog modal-xl" role="document" style="margin-top:80px;">
                                          <div class="modal-content" style="border:none; border-radius:12px;">
                                              <div class="modal-header" style="background:#eef7f4; color:#1f7a66; border-bottom:2px solid #2f9c86; border-radius:12px 12px 0 0;">
                                                  <h5 class="modal-title" style="font-weight:700; font-size:19px; letter-spacing:0.2px; color:#1f7a66; white-space:nowrap;">
                                                      <!-- 제목 = 진입 방식(샘파일 수동선택 화면 / 자동생성 폴더선택 화면). 메인의 [샘파일 자동생성선택 방식] 체크가 결정 -->
                                                      <span id="samPickModeNow"></span>
                                                      <!-- 그 옆에 현재 작업 탭(청구샘파일/환자평가표) — 은은히 깜박임 -->
-                                                     <span id="samPickTabInfo" class="ml-2" style="font-weight:800; font-size:17px; vertical-align:middle;"></span>
+                                                     <span id="samPickTabInfo" class="ml-2" style="font-weight:800; font-size:19px; vertical-align:middle;"></span>
                                                  </h5>
                                                  <button type="button" class="close" data-dismiss="modal" style="color:#1f7a66; opacity:0.8;"><span>&times;</span></button>
                                              </div>
@@ -336,9 +348,9 @@
                                                  </div>
                                                  <!-- [수동선택 영역] -->
                                                  <div id="samPickManualWrap" class="mb-2 pt-1" style="display:none;">
-                                                     <button type="button" id="samPickManualBtn" class="btn btn-sm btn-primary"><i class="fa fa-file-import mr-1"></i>파일 선택 / 추가</button>
+                                                     <button type="button" id="samPickManualBtn" class="btn btn-sm btn-primary"><i class="fa fa-file-import mr-1"></i>파일 선택</button>
                                                      <button type="button" id="samPickManualClear" class="btn btn-sm btn-outline-secondary ml-1"><i class="fa fa-trash-alt mr-1"></i>선택 초기화</button>
-                                                     <span id="samPickManualInfo" class="ml-2 text-muted" style="font-size:14px;">올릴 샘파일을 직접 선택하세요. 여러 개(다중) 선택도 가능합니다.</span>
+                                                     <span id="samPickManualInfo" class="ml-2 text-muted" style="font-size:14px;">올릴 샘파일을 직접 선택하세요. 다중 선택 및 샘파일/환자평가표 동시 선택도 가능합니다.</span>
                                                  </div>
                                                  <table class="table table-sm table-bordered table-hover mb-0 samPickTable" style="font-size:14.5px; white-space:nowrap;">
                                                      <thead class="thead-light">
@@ -1807,7 +1819,11 @@ function fileLoad_Open(mgmonth) {
 
 	        gMonth = mgmonth;
 	        findField('mgmonth', gMonth);
-	
+	        // [추가] 미등록/재등록 클릭 시에도 하단 그리드를 그 월로 갱신(보기와 동일하게 월 컨텍스트 일치) —
+	        //   기존엔 gMonth 만 바꿔 업로드는 맞았으나 하단 그리드는 이전 달 그대로였음.
+	        try { markSelectedMonth(mgmonth); } catch (e) {}
+	        try { dataTable.ajax.reload(); } catch (e) {}
+
 	        let file_Select = document.getElementById("file_Select");
 	        let folderInput = document.getElementById('folderInput'); // 이 부분을 추가
 	
@@ -4009,12 +4025,16 @@ $('#verifyModal').on('hidden.bs.modal', function() {
     }
     function curFlag(){ return String((typeof g_Flag!=='undefined' && g_Flag!=null)?g_Flag:'8'); }
     function tabMismatch(name){ return fileFlag(name)!==curFlag(); }
-    // 현재 작업 탭(청구샘파일=8 / 환자평가표=9) 을 모달 제목 옆에 글자로 표시(테두리·배경 없음)
+    // [2026-07-15] 모달 제목 옆 표시 = 선택한 작업년월 — 어느 년월에 업로드하는지 명확히.
+    //   (기존 작업탭(청구샘파일/환자평가표) 표기는 동시 선택 허용으로 혼동돼 제거함 — 재도입 주의)
+    //   gMonth 는 월 버튼 클릭(fileLoad 등)에서 mgmonth 로 확정된 뒤 모달이 열리므로 열릴 때 값이 정확함.
     function updateTabInfo(){
         var el=document.getElementById('samPickTabInfo'); if(!el) return;
-        if(curFlag()==='9'){ el.innerHTML='📋 환자평가표 작업화면'; el.style.color='#d32f2f'; }
-        else               { el.innerHTML='🧾 청구샘파일 작업화면'; el.style.color='#d32f2f'; }
+        var y=(typeof g_Year!=='undefined' && g_Year)? String(g_Year):'';
+        var m=(typeof gMonth!=='undefined' && gMonth)? parseInt(gMonth,10):'';
+        el.innerHTML = (y && m)? esc_(y)+'년 '+m+'월 작업' : '';
     }
+    function esc_(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     function periodActive(){
         var rm=document.getElementById('samPickModeManual');
@@ -4221,13 +4241,13 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             var f=_files[idx]; var zero=(f.size===0)?' <span class="text-danger">(0B)</span>':'';
             var setAttr = sid ? (' data-set="'+esc(sid)+'"') : '';
             var mis=tabMismatch(f.name);   // 현재 탭에서 업로드 불가한 파일 → 체크 차단 + 배지
-            var trCls='samPickFileRow'+(opts.rep?' samPickRepRow':'')+(opts.member?' samPickMember':'')+(mis?' spkDisRow':'');
+            var trCls='samPickFileRow'+(opts.rep?' samPickRepRow':'')+(opts.member?' samPickMember':'')+(mis?' spkDisRow':'')+((typeof fileFlag==='function'&&fileFlag(f.name)==='9')?' spkRepFile':'');
             var trSty=(opts.rep?'background:#eef7f4;':'')+(opts.hidden?'display:none;':'');
             var cbCls='samPickFile'+(opts.rep?' samPickRep':'');
-            // 비활성(탭 불일치) 행: 체크박스 대신 X 표시(선택 불가). 정상 행은 체크박스
-            var cbCell=mis
-                ? '<span title="현재 탭에서 업로드할 수 없는 파일입니다." style="color:#b56b73;font-weight:700;font-size:14px;">✕</span>'
-                : '<input type="checkbox" class="'+cbCls+'" data-idx="'+idx+'" data-dir="'+esc(d)+'"'+setAttr+'>';
+            // [동시 업로드] 다른 종류(청구/평가표) 파일도 체크 가능 — 선택 적용 시 종류별로 자동 분리되어 각자(청구8/평가표9)로 저장됨.
+            //  기존 처리 로직은 그대로. 다른 종류 행은 흐리게(spkDisRow) + 안내 툴팁만 표시.
+            var cbTitle=mis?(fileFlag(f.name)==='9'?'환자평가표 파일 — 선택 시 평가표로 저장됩니다.':'청구샘파일 파일 — 선택 시 청구로 저장됩니다.'):'';
+            var cbCell='<input type="checkbox" class="'+cbCls+'" data-idx="'+idx+'" data-dir="'+esc(d)+'"'+setAttr+(cbTitle?(' title="'+esc(cbTitle)+'"'):'')+'>';
             var caret=opts.rep?'<span class="samPickSetCaret" style="display:inline-block;width:18px;cursor:pointer;font-weight:700;" title="펼치기/접기">▶</span> ':'';
             var cnt=opts.rep?(' <span class="text-primary" style="font-weight:600;" title="대표 체크=전체 선택 · 클릭=펼치기">· '+opts.count+'개 세트 ▸</span>'):'';
             return '<tr class="'+trCls+'" data-dir="'+esc(d)+'"'+setAttr+(trSty?(' style="'+trSty+'"'):'')+'>'
@@ -4527,12 +4547,13 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             }
             // 청구건 단위 그룹핑 — 선택 파일을 setKey로 묶고, 상태셀 갱신용 파일 인덱스(gidx)도 함께 보관
             var picked=(window.gPickedFiles||[]).slice();
-            var gm={}, order=[], gidx={};
+            var gm={}, order=[], gidx={}, gflag={};   // gflag: 그룹별 종류(8 청구샘파일 / 9 환자평가표)
             picked.forEach(function(f){
                 var i=_files.indexOf(f);
+                var fl=(typeof fileFlag==='function')?fileFlag(f.name):'8';   // 파일 종류(REP→9, 그 외→8)
                 var k=setKey(f.name);
-                var key=(k!=='') ? ('S|'+k+'|'+relDir(f)) : ('F|'+f.name+'|'+relDir(f));
-                if(!gm[key]){ gm[key]=[]; gidx[key]=[]; order.push(key); }
+                var key=(k!=='') ? ('S|'+fl+'|'+k+'|'+relDir(f)) : ('F|'+fl+'|'+f.name+'|'+relDir(f));   // 종류(fl) 포함 → 종류 다르면 그룹도 분리
+                if(!gm[key]){ gm[key]=[]; gidx[key]=[]; gflag[key]=fl; order.push(key); }
                 gm[key].push(f); if(i>=0) gidx[key].push(i);
             });
             // 상태 컬럼 셀 갱신
@@ -4552,6 +4573,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 var _jobDtNow = (typeof getJobDateTime==='function') ? getJobDateTime
                               : function(){ var n=new Date(),p=function(x){return String(x).padStart(2,'0');}; return ''+n.getFullYear()+p(n.getMonth())+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };
                 var _lastJobDt=null;
+                var _origFlag=g_Flag;   // 원래 활성 탭 flag 보관(루프 후 원복)
                 for(var i=0;i<order.length;i++){
                     setSt(gidx[order[i]], '<span class="spkSpinner"></span>진행', '#475569');
                     if(footEl) footEl.textContent='업로드 중 '+(i+1)+' / '+order.length+' 건';
@@ -4560,6 +4582,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                     _lastJobDt=_jobDtNow();
                     window._samUploadedFiles=null;
                     window._samUpOk=null;   // 이번 청구건 성공여부 초기화(핸들러가 true/false 세팅)
+                    try{ g_Flag = gflag[order[i]] || g_Flag; }catch(e){}   // 이 그룹 종류로 라우팅(청구8/평가표9) — handleFileSelection이 라인마다 mg_flag:g_Flag 사용
                     await uploadGroupSeq(gm[order[i]]);   // 완료(signUp!=='Y')까지 대기
                     var grp=gm[order[i]];
                     if(window._samUpOk===true){
@@ -4582,6 +4605,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                         for(var g2=0; g2<grp.length; g2++){ failedFiles.push(grp[g2]); }
                     }
                 }
+                try{ g_Flag = _origFlag; }catch(e){}   // 활성 탭 flag 원복(라우팅 종료)
                 window._samSilent=false;
                 // 성공·삭제분을 방식별 저장소에서 제거 후 재렌더(실패건은 남김) → 재렌더 후 실패건 ❌ 재표시
                 if(removed.length){
@@ -4677,33 +4701,9 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             });
             window.samPickApplyMode(false);   // 초기 표시(실제 방식은 모달을 열 때 메인 체크박스로 다시 결정)
         })();
-        // [노출 권한] '신규프로그램 적용' 은 위너넷 사용자에게만 보임. 병원 사용자는 계속 기존 방식.
-        //   assessment.jsp `_isWinnerUser()` 와 동일 컨벤션:
-        //   s_wnn_yn='Y'(로그인 시 설정) 또는 s_winconect='Y'(병원 검색 후 연결된 상태)
-        (function(){
-            var wrap=document.getElementById('samPickNewProgWrap');
-            if(!wrap) return;
-            var w='', c='';
-            try{
-                if(typeof getCookie==='function'){
-                    w=(getCookie('s_wnn_yn')    || '').trim();
-                    c=(getCookie('s_winconect') || '').trim();
-                }
-            }catch(e){}
-            
-            // 신규 엑셀업로그 화면 
-          //  if(w==='Y' || c==='Y') wrap.style.display='';
-            
-        })();
-        // [메인 체크박스 연동] '신규프로그램 적용' 이 꺼져 있으면 모달을 안 쓰므로 '샘파일 자동생성선택 방식' 은 숨김(비활성 아님)
-        (function(){
-            var np=document.getElementById('samPickNewProg'),
-                wrap=document.getElementById('samPickModeWrap');
-            if(!np || !wrap) return;
-            function sync(){ wrap.style.display = np.checked ? '' : 'none'; }
-            np.addEventListener('change', sync);
-            sync();
-        })();
+        // [2026-07-15] 신규프로그램(청구파일 선택 모달) 상시 적용 확정 —
+        //   위너넷 전용 노출 IIFE·체크박스 연동(sync) 제거. samPickNewProg 는 숨김 checked 고정,
+        //   samPickMode(자동생성선택)는 disabled·해제 고정(수동선택 화면 기본).
         var chkAll=document.getElementById('samPickChkAll');
         if(chkAll) chkAll.addEventListener('change', function(){ document.querySelectorAll('#samPickTree input').forEach(function(cb){ if(!cb.disabled) cb.checked=chkAll.checked; }); syncPicked(); });
         var upchk=document.getElementById('samPickShowUp');

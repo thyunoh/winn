@@ -39,7 +39,20 @@
      → 일정배뇨(UR_PLAN='1') 에 체크가 있어도 배뇨일지 작성일수가 비어 있으면
        여전히 분자에 들어가지 않는다. 확인은 diag_cate06_numerator.sql 의 [B] 블록.
    - URINE_MGMT 의 NULL 안전 비교 (이미 적용된 상태)
-   - 분모 조건, 치매+BPSD+향정신약 제외 로직
+   - 최고도(PAT_CLASS='A') · URINE_MGMT · 요로전환술 제외
+
+   ---------------------------------------------------------------------------
+   추가 변경 (2026-07-13) — 치매+BPSD+향정신약 처리를 매퍼(select_CategoryList06)와 일치
+   ---------------------------------------------------------------------------
+   기존: 치매+BPSD+향정신약을 관리여부와 무관하게 분모·분자 모두에서 제외 →
+         '관리하는' 치매케이스가 인정 안 됨(매퍼는 'Y'로 관리 인정).
+   변경:
+     1) 분자(sb) 의 치매 제외 조건 삭제 → '관리하는' 치매케이스를 분자로 인정.
+     2) 분모/분자 집계를 매퍼 manageYn 3분류(Y/공란/제외)로 통일 →
+        SELECT 의 CASE 로 판정: 'Y'(sb매칭)·''(분모-비관리)·'제외'(최고도·치매비관리).
+        분모 = COUNT(DISTINCT CASE WHEN 제외아님 THEN PAT_ID) , 분자 = COUNT(DISTINCT CASE WHEN sb매칭 THEN PAT_ID).
+        바깥 WHERE 의 치매 제외 블록은 삭제(판정을 CASE 로 일원화).
+   결과: 매퍼 표시와 동일 — 치매 관리='Y'(분모·분자), 치매 비관리='제외'(둘 다 제외).
    ============================================================================ */
 
 		/* 06.배뇨관리 실시 환자분율 start */
@@ -49,8 +62,21 @@
 		     WHERE CATE_CODE = '06'
 		       AND CONCAT(str_month, '01') BETWEEN START_DT AND END_DT
 		) THEN
-			  SELECT COUNT(DISTINCT pm.PAT_ID)
-			       , COUNT(DISTINCT CASE WHEN sb.PAT_ID IS NOT NULL THEN pm.PAT_ID END)
+			  /* 분모/분자 판정을 매퍼(select_CategoryList06)의 manageYn 3분류와 동일하게:
+			       'Y'(분자=sb매칭) / ''(분모-비관리) / '제외'(최고도·치매비관리)
+			     분모 = '제외' 아닌 것(= Y + 공란), 분자 = 'Y'(sb매칭). */
+			  SELECT COUNT(DISTINCT CASE
+			                 WHEN sb.PAT_ID IS NOT NULL THEN pm.PAT_ID                          -- 'Y' 분자(관리) → 분모 포함
+			                 WHEN LEFT(COALESCE(pm.PAT_CLASS,'E'),1) NOT IN ('A')               -- '' 분모-비관리
+			                      AND NOT ( LEFT(COALESCE(pm.PAT_CLASS,'E'),1) IN ('B','C')
+			                                AND pm.DEMENTIA = '1'
+			                                AND ( pm.DELUSION IN('2','3') OR pm.HALLUCIN IN('2','3') OR pm.AGITATION IN('2','3')
+			                                   OR pm.DISINHIB IN('2','3') OR pm.CARE_RESIST IN('2','3') OR pm.WANDER IN('2','3') )
+			                                AND pm.PSYCH_DRUG = '1' )
+			                    THEN pm.PAT_ID
+			                 ELSE NULL                                                          -- '제외'(최고도·치매비관리) → 분모 제외
+			               END)
+			       , COUNT(DISTINCT CASE WHEN sb.PAT_ID IS NOT NULL THEN pm.PAT_ID END)          -- 'Y' 분자
 			      INTO dtorvalue, ntorvalue
 			  FROM TBL_PATVAL_MST pm FORCE INDEX (INDEX01)
 			  LEFT JOIN (
@@ -77,17 +103,9 @@
 			             )
 			         /* 제외 대상 */
 			         AND LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) NOT IN ('A')   -- 의료최고도
-			         AND NOT (
-			              LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) IN ('B', 'C')    -- 'B' 의료고도 ,'C' 의료중도 , 'D' 의료경도
-			              AND pat.DEMENTIA = '1'                          -- 치매
-			              AND ( pat.DELUSION    IN ('2','3')   -- 망상 2.자주 3.매우자주
-			                 OR pat.HALLUCIN    IN ('2','3')   -- 환각
-			                 OR pat.AGITATION   IN ('2','3')   -- 초조·공격성
-			                 OR pat.DISINHIB    IN ('2','3')   -- 탈억제
-			                 OR pat.CARE_RESIST IN ('2','3')   -- 케어저항
-			                 OR pat.WANDER      IN ('2','3') ) -- 배회
-			              AND pat.PSYCH_DRUG = '1'                             -- 약물치료
-			             )
+			         /* 치매+BPSD+향정신약은 분자(sb)에서 필터하지 않는다 — 매퍼(select_CategoryList06)와 동일.
+			            '관리하는' 치매케이스는 분자로 인정하고, '관리 안 하는' 치매케이스만
+			            아래 분모 WHERE 에서 제외한다. */
 			         AND COALESCE(pat.URINE_MGMT, '') <> '1'                  -- 배뇨관련 루 관리 제외
 			         AND IFNULL(pat.EVAL_TYPE,'') IN ('1','2')
 
@@ -158,17 +176,8 @@
 			   AND pm.URINE_CTL IN ('2','3')
 			   AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')      -- 의료최고도는 분모에서도 제외
 	         AND IFNULL(pm.EVAL_TYPE,'') IN ('1','2')
-			   AND NOT (                                                  -- ★추가: 치매+BPSD+향정신약 분모 제외
-			        LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) IN ('B', 'C')    -- 의료고도/중도
-			        AND pm.DEMENTIA = '1'                                 -- 치매
-			        AND ( pm.DELUSION    IN ('2','3')   -- 망상
-			           OR pm.HALLUCIN    IN ('2','3')   -- 환각
-			           OR pm.AGITATION   IN ('2','3')   -- 초조·공격성
-			           OR pm.DISINHIB    IN ('2','3')   -- 탈억제
-			           OR pm.CARE_RESIST IN ('2','3')   -- 케어저항
-			           OR pm.WANDER      IN ('2','3') ) -- 배회
-			        AND pm.PSYCH_DRUG = '1'                               -- 향정신약 치료
-			      );
+			   ;
+			   -- 최고도(위 WHERE) + 치매(비관리) '제외' 판정은 위 SELECT 의 manageYn CASE 가 처리 → 분모/분자에서 빠짐
 			SET cate_gory = '06';
 			SET cate_flag = '21';
 			CALL SP_EVALUATION_INDICATORS_REGISTER(

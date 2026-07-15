@@ -53,7 +53,30 @@
 								                </div>
 								            </div>
 								        </div>
-								        <button class="btn indi-custom-btn text-white btn-block btn-sm d-flex align-items-center justify-content-center mb-2" onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
+								        <div class="d-flex mb-2" style="gap:6px;">
+										    <button class="btn indi-custom-btn text-white btn-sm d-flex align-items-center justify-content-center flex-grow-1" onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
+										    <%-- ===== 월보고서 버튼 (1단계: 위너넷 전용) — magamFileUpload '신규프로그램' 체크박스와 동일 컨벤션 =====
+										         이 시스템은 로그인을 wnn_consult 에서 하고 wnn_medcost 는 쿠키로 인증을 이어받으므로(세션 공유 안 됨),
+										         판별은 s_wnn_yn 쿠키(=TBL_HOSP_MST.WINNER_YN, wnn_consult·wnn_medcost 양쪽 로그인이 매번 삭제 후 재설정) 하나만 —
+										         상단 병원검색 버튼(top.jsp #hospserchtop)과 동일 조건으로 노출 동기화. 기본 히든 → 위너넷일 때만 JS 로 노출.
+										         [2단계·완성 후] 거래처 공개: 이 노출 조건에 승인본 존재 여부를 더해 확장. --%>
+										    <%-- d-flex 클래스 금지: display:flex !important 라 인라인 display:none 을 이겨서 일반병원에도 항상 노출됨(2026-07-14 원인) --%>
+										    <button id="btnMonthlyReport" class="btn btn-sm btn-outline-primary align-items-center justify-content-center" style="white-space:nowrap; display:none;"
+										            onclick="location.href='/main/evalReport.do?ym=' + document.getElementById('year_Select').value + document.getElementById('monthSelect').value;">📄 월보고서</button>
+										</div>
+										<script>
+										    (function(){
+										        // 상단 병원검색 버튼(top.jsp #hospserchtop)과 노출 동기화 — 병원검색 보이면 월보고서도 보임 (2026-07-14 확정)
+										        // top.jsp 판별과 동일: s_wnn_yn(trim) === 'Y' 만. s_winconect 는 잔존 쿠키로 오노출되어 제외.
+										        var b = document.getElementById('btnMonthlyReport');
+										        if(!b) return;
+										        try{
+										            if ((getCookie("s_wnn_yn") || '').trim() === 'Y') {
+										                b.style.display='flex';
+										            }
+										        }catch(e){}
+										    })();
+										</script>
 										<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
 
 																							        
@@ -250,12 +273,16 @@
 							        #btnPatvalView.patval-btn.is-disabled { cursor: not-allowed; filter: grayscale(0.5); opacity: 0.75; }
 							        .patval-icon { font-size: 13px; opacity: 0.95; }
 
-							        /* viewTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
+							        /* viewTable / indicatorTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
 							        #viewTable thead tr:first-child th:first-child,
 							        #viewTable thead th.pv-chk-th,
 							        #viewTable tbody td.pv-chk-cell,
 							        #viewTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
-							        #viewTable_wrapper .dataTables_scrollHead th.pv-chk-th {
+							        #viewTable_wrapper .dataTables_scrollHead th.pv-chk-th,
+							        #indicatorTable thead th.pv-chk-th,
+							        #indicatorTable tbody td.pv-chk-cell,
+							        #indicatorTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
+							        #indicatorTable_wrapper .dataTables_scrollHead th.pv-chk-th {
 							            width: 24px !important;
 							            min-width: 24px !important;
 							            max-width: 24px !important;
@@ -263,6 +290,13 @@
 							            padding-right: 2px !important;
 							            box-sizing: border-box !important;
 							        }
+
+							        /* indicatorTable — noArrow 헤더: 정렬 화살표(dt-column-order) 숨김 + 좌우 여백 축소로 폭 절약.
+							           ※ scrollY 사용 시 실제 보이는 헤더는 복제본(.dt-scroll-head 안, id 없음)이라
+							             #indicatorTable 이 아닌 #indicatorTable_wrapper 로 스코프해야 복제 헤더까지 잡힌다. */
+							        th.noArrow span.dt-column-order,
+							        th.noArrow .dt-column-order { display: none !important; }
+							        th.noArrow { padding-left: 11px !important; padding-right: 11px !important; }
 
 							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 표시는
 							           첫 컬럼 ✔ 체크박스로만 표시 (행 배경 강조 제거) */
@@ -1887,7 +1921,7 @@ dataTable.clear();
 var gridColums = [];
 var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-var page_Hight = 600;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+var page_Hight = 563;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
 var p_Collapse = true;  		// Page 길이까지 auto size - scrollCollapse
 var fixed_Head = true;          // 헤더 고정 
 
@@ -2084,6 +2118,13 @@ function fn_CreateData(flag, force) {
         return;
     }
 
+    // 월보고서 종료(erExit) 복귀 마커 — 이 진입 1회는 재생성 확인 팝업 없이 기존 자료만 표시
+    var skipRegen = false;
+    try {
+        skipRegen = sessionStorage.getItem('skipRegenConfirm') === '1';
+        if (skipRegen) sessionStorage.removeItem('skipRegenConfirm');
+    } catch (e) {}
+
     $.ajax({
         url: "/main/select_Eval_Indi.do",
         type: "POST",
@@ -2093,6 +2134,10 @@ function fn_CreateData(flag, force) {
             var hasData = response && response.data && response.data.some(function(r) {
                 return r.cate_cd !== '99';
             });
+            if (hasData && skipRegen) {   // 월보고서에서 돌아온 경우: 묻지 않고 기존 자료 표시
+                showExisting();
+                return;
+            }
             if (hasData) {
                 if (!document.getElementById('regenConfirmStyle')) {
                     var rst = document.createElement('style');
@@ -2565,7 +2610,7 @@ function fn_IndiSelect() {
     let selectedMonth = document.getElementById("monthSelect").value;
     
     defaultCnt = 30;
-	page_Hight = 600;
+	page_Hight = 563;
 	colPadding = '2px';   	// 행 높이 간격 설정
 	
 	datWaiting = false;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -2580,7 +2625,7 @@ function fn_IndiSelect() {
 function Indicater_DataList() {
 	
 	defaultCnt = 30;
-	page_Hight = 600;
+	page_Hight = 563;
 	colPadding = '2px';   		// 행 높이 간격 설정
 	
 	datWaiting = false;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -2709,7 +2754,7 @@ function fn_ViewData(data) {
 	showButton = true;   		// Button (복사, 엑셀, 출력)) 표시여부
 	s_CheckBox = false;   		// CheckBox 표시 여부
 	s_AutoNums = false;   		// 자동순번 표시 여부
-	page_Hight = 720;
+	page_Hight = 563;
 	defaultCnt = 100;
 	colPadding = '0.2px';   	// 행 높이 간격 설정
 	searchShow = true;   		// 검색창 Show/Hide 표시여부
@@ -2837,7 +2882,7 @@ function fn_ViewData(data) {
 		        	 ];
         
     	columnsSet = [  
-			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
+			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '80px'  },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },					    
 					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '100px',
 						    render: function(data, type, row) {
@@ -2925,25 +2970,27 @@ function fn_ViewData(data) {
     	// scrollX(가로스크롤) 끔 — 2단 colspan 헤더가 줌(90% 초과)에서 본문과 어긋나는 문제를
     	//   원천 차단 (헤더/본문 분리 테이블이 생기지 않아 px 반올림 드리프트 없음).
     	btm_Scroll = false;
+    	// 세로스크롤 뷰 높이 — 좌측 지표패널 높이에 맞춰 약 22행만 보이게(≈25.6px/행 → 22행 ≈ 563px). 필요시 값 조정.
+    	page_Hight = 563;
     	// 2-row header — 관리항목 (colspan=3) 으로 일정배뇨/방광훈련/규칙적도뇨 묶음.
     	// 폭 절약을 위해 sub-header 는 짧게 (일정/방광/규칙).
     	c_Head_Set = [
     		[
-    			{ label: 'No',           rowspan: 2 },
+    			{ label: 'No',         rowspan: 2 },
     			{ label: '생년월일',     rowspan: 2 },
     			{ label: '대상자',       rowspan: 2 },
     			{ label: '입원일자',     rowspan: 2 },
     			{ label: '요양개시일',   rowspan: 2 },
-    			{ label: '관리<br>여부', rowspan: 2 },
+    			{ label: '관리<br>여부', rowspan: 2, class: 'noArrow' },
     			{ label: '환자군',       rowspan: 2 },
     			{ label: '배뇨상태',     rowspan: 2 },
     			{ label: '관리항목',     colspan: 3 },
-    			{ label: '평가표작성일', rowspan: 2 }
+    			{ label: '평가표작성일', rowspan: 2 , class: 'noArrow'}
     		],
     		[
-    			{ label: '일정<br>배뇨' },
-    			{ label: '방광<br>훈련' },
-    			{ label: '규칙<br>도뇨' }
+    			{ label: '일정<br>배뇨', class: 'noArrow' },
+    			{ label: '방광<br>훈련', class: 'noArrow' },
+    			{ label: '규칙<br>도뇨', class: 'noArrow' }
     		]
     	];
     	columnsSet = [
@@ -2953,7 +3000,7 @@ function fn_ViewData(data) {
     							return meta.row + 1;
     						},
     					},
-    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '80px'  },
+    					{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '66px'  },
 					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '75px'  },
 					    { data: 'admitDt',   visible: true,  className: 'dt-body-center', width: '85px',
 						    render: function(data, type, row) {
@@ -2971,7 +3018,7 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '50px',
+						{ data: 'manageYn',  visible: true,  className: 'dt-body-center', width: '36px',
 						render: function(data, type, row) {
 							// 정렬용 값 — 관리(1) → 공란(2) → 제외(3)
 							if (type === 'sort' || type === 'type') {
@@ -3019,17 +3066,22 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-					    /* 관리항목 — 일정한 배뇨 (UR_PLAN='1' 인 경우 ● 검정 채움 표시) */
-					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '55px',
+					    /* 관리항목 — 일정한 배뇨: UR_PLAN='1' → ● (실시, 검정 채움)
+					       · 분모 대상이나 배뇨관리(①②③) 미실시(planMissYn='X') → ○ (속 빈 원, 옛 배뇨계획 컬럼 통합) */
+					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
-			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
+			        				// 미실시 판정(planMissYn='X')이 우선 — UR_PLAN='1' 이어도 배뇨일지 3일 미만 등으로
+			        				// 불인정이면 X 라서, ● 분기를 먼저 타면 링이 절대 안 보임(회귀 주의)
+			        				if (row && row.planMissYn === 'X') return '<span style="display:inline-block;width:11px;height:11px;border:2px solid #000;border-radius:50%;background:#fff;vertical-align:middle;"></span>';
+			        				if (data === '1') return '<span style="color:#000;font-size:16px;">●</span>';
+			        				return '';
 			            		}
 			            		return data;
 						    },
 					    },
 					    /* 관리항목 — 방광훈련 (BLAD_TRAIN='1') */
-					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '55px',
+					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -3038,7 +3090,7 @@ function fn_ViewData(data) {
 						    },
 					    },
 					    /* 관리항목 — 규칙적 도뇨 (REG_CATH='1') */
-					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '55px',
+					    { data: 'regCath',   visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
 			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
@@ -3069,7 +3121,7 @@ function fn_ViewData(data) {
     	markColums = [];
 
     } else if (data.cate_cd === "07") {
-    	page_Hight = 690;
+    	page_Hight = 589;   // 06(2단헤더)과 바닥 맞춤 — 07은 1단헤더라 헤더가 한 줄 짧으므로 본문을 그만큼(~26px) 더 줌(563→589).
     	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','주진단','항정신성처방여부'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
@@ -3610,7 +3662,7 @@ function fn_ViewData(data) {
 		markColums = ['patNm'];
     			
     } else if (data.cate_cd === "13") {
-    	page_Hight = 690;
+    	page_Hight = 563;
     	c_Head_Set = [  '','대상자','입원일','개시일','작성일','당뇨','Hba1c','전월상병','검사일','결과','당월','다음월'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
@@ -3717,7 +3769,7 @@ function fn_ViewData(data) {
        	markColums = [];	
     	
     } else if (data.cate_cd === "14") {
-    	page_Hight = 690;
+    	page_Hight = 563;
     	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','평가군','장기입원','제외대상'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },

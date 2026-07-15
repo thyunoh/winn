@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
 
@@ -508,6 +509,81 @@ public class MagamServiceImpl implements MagamService {
 	@Override
 	public List<IndiDTO> select_Eval_Indi(IndiDTO dto) throws Exception {
 		return mapper.select_Eval_Indi(dto);
+	}
+
+	// ===== 적정성평가 컨설팅 월보고서 =====
+	@Override
+	public Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception {
+		Map<String, Object> res = new HashMap<>();
+		Map<String, Object> mst = mapper.selectEvalReportMst(hospCd, evalYm);
+		res.put("mst", mst);
+		// report_seq 는 스칼라 조회로 확정(HashMap 결과의 키 케이싱에 의존하지 않도록)
+		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
+		List<Map<String, Object>> texts = (seq != null) ? mapper.selectEvalReportTexts(seq) : new ArrayList<Map<String, Object>>();
+		res.put("texts", texts);
+		// 전사 표준문구(TPL) — 화면에서 병원별 TEXT > TPL > 내장 기본값 순으로 적용
+		res.put("tpls", mapper.selectEvalReportTpls());
+		// 차등제 등록(TBL_GRADE_MST)에서 목표점수/병원등급 조회 → 월보고서 목표값 기본소스로 내려줌
+		//   evalYm(YYYYMM) → 년도(YYYY) + 분기(월/3 올림: 1~3=1,4~6=2,7~9=3,10~12=4)
+		if (evalYm != null && evalYm.length() == 6) {
+			String startYy = evalYm.substring(0, 4);
+			int mon = Integer.parseInt(evalYm.substring(4, 6));
+			String qterFlag = String.valueOf((mon + 2) / 3);
+			Map<String, Object> goal = mapper.selectHospGoalGrade(hospCd, startYy, qterFlag);
+			res.put("goal", goal);   // {goalscore, hospgrade} 또는 null(미등록)
+		}
+		return res;
+	}
+
+	@Override
+	@Transactional
+	public Long saveEvalReport(Map<String, Object> p) throws Exception {
+		String hospCd = (String) p.get("hospCd");
+		String evalYm = (String) p.get("evalYm");
+		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
+		if (seq == null) {
+			mapper.insertEvalReportMst(p);                 // useGeneratedKeys → p["reportSeq"]
+			Object gen = p.get("reportSeq");
+			seq = (gen instanceof Number) ? ((Number) gen).longValue() : Long.valueOf(String.valueOf(gen));
+		} else {
+			p.put("reportSeq", seq);
+			mapper.updateEvalReportMst(p);
+		}
+		mapper.deleteEvalReportTexts(seq);                 // 전체교체(단일 편집자)
+		Object txObj = p.get("texts");
+		if (txObj instanceof List) {
+			@SuppressWarnings("unchecked")
+			List<Map<String, Object>> texts = (List<Map<String, Object>>) txObj;
+			if (!texts.isEmpty()) {
+				mapper.insertEvalReportTexts(seq, texts, (String) p.get("regUser"));
+			}
+		}
+		return seq;
+	}
+
+	@Override
+	@Transactional
+	public void approveEvalReport(Map<String, Object> p) throws Exception {
+		mapper.approveEvalReportMst(p);
+	}
+
+	@Override
+	@Transactional
+	public void cancelApproveEvalReport(Map<String, Object> p) throws Exception {
+		mapper.cancelApproveEvalReportMst(p);
+	}
+
+	@Override
+	@Transactional
+	public void saveEvalReportPdf(Map<String, Object> p) throws Exception {
+		String hospCd = (String) p.get("hospCd");
+		String evalYm = (String) p.get("evalYm");
+		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
+		if (seq == null) {
+			// 마스터가 아직 없으면 최소 정보로 생성 (PDF 만 먼저 첨부하는 경우)
+			mapper.insertEvalReportMst(p);
+		}
+		mapper.updateEvalReportPdf(p);
 	}
 
 	@Override

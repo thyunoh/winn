@@ -223,15 +223,17 @@ public class UserController extends BaseController {
 					session.setAttribute("s_start_dt"  , result.getStartDt());  // 시작일자
 					session.setAttribute("s_end_dt"    , result.getEndDt());    // 종료일자					
 					session.setAttribute("s_main_gu"   , result.getMainGu()); 	 // 관리자구분(1.위너넷관리자, 2.위너넷사용자, 3.병원관리자, 4.병원사용자)
-					session.setAttribute("s_use_not"   , result.getUseNot()); 	 // 사용여부(Y,정상사용자, N.종료사용자, 0.등록안된 사용자)					
+					session.setAttribute("s_use_not"   , result.getUseNot()); 	 // 사용여부(Y,정상사용자, N.종료사용자, 0.등록안된 사용자)
+					session.setAttribute("s_wnn_yn"    , result.getWinnerYn()); 	 // 위너넷 여부(TBL_HOSP_MST.WINNER_YN) — 서버 세션 기준 위너넷 전용 UI 게이트
 					session.setAttribute("s_conn_ip"   , ClientInfo.getClientIP(request));  // 접속IP 주소
 					
 					System.out.print(ClientInfo.getClientIP(request));
 					
 					response.put("login_Hosp", result.getHospNm()); // 병원명
 					response.put("login_User", result.getUserNm()); // 사용자
-					response.put("login_Main", result.getMainGu()); // 관리자구분
+					response.put("login_Main", result.getMainGu()); // 관리자구분(병원 내 관리자/담당자 구분)
 					response.put("loginUseYN", result.getUseNot()); // 사용여부
+					response.put("login_Wnn",  result.getWinnerYn()); // 위너넷 여부(TBL_HOSP_MST.WINNER_YN — s_wnn_yn 쿠키 근거)
 					
 					response.put("error_code", "00000");
 					response.put("error_mess", "정상적 처리 되었습니다.");

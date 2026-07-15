@@ -55,6 +55,13 @@ public interface MagamService {
 	
 	List<IndiDTO>  select_Eval_Indi(IndiDTO dto) throws Exception;
 
+	// ===== 적정성평가 컨설팅 월보고서 =====
+	Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception;
+	Long saveEvalReport(Map<String, Object> p) throws Exception;
+	void approveEvalReport(Map<String, Object> p) throws Exception;
+	void cancelApproveEvalReport(Map<String, Object> p) throws Exception;
+	void saveEvalReportPdf(Map<String, Object> p) throws Exception;   // 첨부 PDF 경로 저장(마스터 없으면 생성) / pdfPath=null 이면 해제
+
 	List<Map<String, Object>> select_EvalProgress(IndiDTO dto) throws Exception;   // 자료생성 진행상태(항목별)
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto) throws Exception;

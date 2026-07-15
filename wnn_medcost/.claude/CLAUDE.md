@@ -9,6 +9,21 @@
 
 ## 장애/수정 이력
 
+### [완료] 월보고서(report.jsp) 목표점수·목표등급 = 차등제(TBL_GRADE_MST) 연계 (2026-07-14)
+- **배경**: 월보고서 표지의 "목표등급 3등급 (78점)"이 HTML 하드코딩 고정값이라, 실제 병원 목표(차등제 등록 화면 `TBL_GRADE_MST`)와 따로 놀았음. 청암요양병원처럼 실제 목표가 1등급/88점인데도 보고서는 3등급/78로 오표시.
+- **소스**: `TBL_GRADE_MST` (병원+년도+분기별). `GOAL_SCORE`=목표점수(88), `HOSPGRADE`=병원등급(1). 저장/조회는 User_SQL.xml `saveHospGrd`/`selHospGrdList`, assessment.jsp 차등제 폼.
+- **조치 (4계층, evalYm→분기 변환)**:
+  - Magam_SQL.xml `selectHospGoalGrade` 신설: hosp+START_YY+QTER_FLAG, ACTION_YN='Y', UPD_DTTM DESC LIMIT 1, alias 소문자(goalscore/hospgrade)
+  - MagamMapper.java `selectHospGoalGrade(hospCd, startYy, qterFlag)` 추가
+  - MagamServiceImpl.loadEvalReport: evalYm(YYYYMM)→startYy=substr(0,4), qterFlag=(mon+2)/3 계산 → res.put("goal", ...)
+  - report.jsp: `applyGoalDefault(res.goal)` = cover_goal_score/grade/badge 를 차등제 값으로 **항상 덮어씀(저장 override 무시)** — 목표값은 병원이 직접 등록한 사실값이라 옛 하드코딩 3등급/78 저장분이 마스킹하지 못하게. 마스터 미등록 분기면 미변경. `renderGoalSummary()` 분리해 목표값 확정 후 부족점수·등급표 재계산. HOSPGRADE 빈 분기는 GOAL_SCORE로 gradeOf() 유도.
+- **동작**: 병원별 실제 목표(GOAL_SCORE/HOSPGRADE) 자동 표시. 목표를 바꾸려면 차등제 등록 화면에서 수정(월보고서에서 목표 수기수정은 저장돼도 다음 조회 때 마스터값으로 되돌아감).
+- **[중요] 형식 확인됨**: QTER_FLAG=숫자문자열("2"), START_YY="2026", HOSPGRADE=숫자("1")=1등급. assessment.jsp monsQuarter/hospcdGrade 셀렉트 value=(idx+1). 서비스 qterFlag=(mon+2)/3.
+- **[함정] 안 바뀌면**: ① WAR 재빌드 안 함(자바+XML이라 필수) ② TBL_GRADE_MST에 해당 병원·분기 행 없음(goal=null→미변경) — 둘 다 아니면 select_Eval_Indi 병원코드/분기 확인.
+- **배포**: 자바+XML 변경 → **WAR 재빌드 필수**.
+- **관련파일**: Magam_SQL.xml(selectHospGoalGrade), MagamMapper.java, MagamServiceImpl.java(loadEvalReport), report.jsp(applyGoalDefault/renderGoalSummary)
+
+
 ### [완료] 샘파일 업로드(TBL_FILES_DATA→각 테이블) 대폭 최적화 — SP_UPLOAD_MAGAM_SAMFILES 재작성 (2026-07-09)
 - **증상**: 청구샘파일 업로드가 너무 느림(17,254줄 = 4분16초, 평가파일 417줄 = 11.6초). 병목은 Java INSERT가 아니라 **프로시저의 라인별 처리**.
 - **원인 (라인당 반복 비용)**: ① 컬럼 커서가 컬럼(TBL_PATVAL_MST는 240개)마다 lineval 전체를 REPLACE×2+EUC-KR 변환 반복 ② mg_flag='9'는 라인마다 INFORMATION_SCHEMA로 table_update(GROUP_CONCAT) 재계산 ③ 한 줄당 INSERT 1문 → 수천 번 PREPARE/EXECUTE.

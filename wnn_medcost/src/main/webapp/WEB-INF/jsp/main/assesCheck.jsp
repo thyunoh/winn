@@ -405,6 +405,7 @@ function fn_CreateData(flag) {
 						            if (prefix === 'G') return '삽입·제거일자';
 						            if (data === 'H1')  return '소변조절못함';
 						            if (data === 'H2')  return '기저귀사용';
+						            if (data === 'H3')  return '배뇨계힉';
 	
 						            /* 신규욕창 */
 						            if (prefix === 'I') return '욕창 발생일 확인';

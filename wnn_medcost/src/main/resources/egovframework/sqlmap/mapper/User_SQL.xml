@@ -11,6 +11,7 @@
 	       , MAX(C.END_DT)   AS END_DT
 	       , MAX(C.MAIN_GU)  AS MAIN_GU
 	       , MAX(C.USE_NOT)  AS USE_NOT
+	       , MAX(C.WINNER_YN) AS WINNER_YN
 	    FROM (SELECT A.HOSP_CD
 			       , B.HOSP_NM
 			  	   , A.USER_ID
@@ -22,6 +23,7 @@
 			  	   , CASE WHEN NOW() BETWEEN A.START_DT AND A.END_DT THEN 'Y'
     					  ELSE 'N'
 					      END AS USE_NOT
+			  	   , IFNULL(B.WINNER_YN,'N') AS WINNER_YN     -- 위너넷 여부(병원 단위)
 			    FROM TBL_USER_MST A
 			       , TBL_HOSP_MST B
 			   WHERE A.HOSP_CD = #{hosp_cd}
@@ -38,7 +40,8 @@
 			  	   , '0' AS START_DT
 			  	   , '0' AS END_DT
 			  	   , '0' AS MAIN_GU
-			  	   , '0' AS USE_NOT) C
+			  	   , '0' AS USE_NOT
+			  	   , '0' AS WINNER_YN) C
 	]]>
 	</select>		
 		<!-- 사용자 정보 조회 -->
