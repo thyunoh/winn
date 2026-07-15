@@ -438,6 +438,17 @@
             <tbody id="er-cmpBody"><!-- JS --></tbody>
           </table>
         </div>
+
+        <!-- 총평 — 문서 맨 끝(마무리) 배치. 상세 내용(Ⅰ~Ⅴ)을 먼저 보고 마지막에 종합 논평을 읽는 참조 패턴.
+             구어체·핵심 수치만, 조회 시 자동 초안(renderSummary) 생성 후 문단별 편집 가능 -->
+        <div class="er-callout" style="margin-top:16px;">
+          <div class="er-coh">총평</div>
+          <p class="er-editable" data-key="sum_p1" style="margin:0 0 7px;"></p>
+          <p class="er-editable" data-key="sum_p2" style="margin:0 0 7px;"></p>
+          <p class="er-editable" data-key="sum_p3" style="margin:0 0 7px;"></p>
+          <p class="er-editable" data-key="sum_p4" style="margin:0 0 7px;"></p>
+          <p class="er-editable" data-key="sum_p5" style="margin:0;"></p>
+        </div>
       </div>
       <div class="er-docfoot er-editable" data-key="footer">본 보고서는 WinCheck⁺ 시스템 산출값을 근거로 작성되었으며, 목표등급은 해당 병원의 설정값 기준입니다. 실제 평가결과는 심평원 최종 산정 기준 및 자료 확정 시점에 따라 달라질 수 있습니다.</div>
     </div>
@@ -1059,6 +1070,40 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         AUTO['diag_note'] = e2.innerHTML;
       }
     }
+    renderSummary();   // 총평 5문단(sum_p1~p5) 자동 초안 — 목표값 확정 후 생성
+  }
+
+  // ===== 총평 자동 초안 (과거 월간보고서 총평 대응 — docs/reports/월간보고서_총평_작성가이드.md §3·§7) =====
+  //   문체 확정(2026-07-15 사용자): 구어체("~합니다"), 수치는 핵심(총점·등급·부족분·상승폭)만 간단히.
+  //   병원별 편집 저장분(savedKeys)이 있으면 해당 문단은 건드리지 않음. TPL(sum_p1~p5, USE_YN='Y')이
+  //   있으면 applyTpls 가 이 초안을 덮음 — 기본 시드는 USE_YN='N'(자동 초안 우선).
+  function renderSummary(){
+    if(!indicators.length) return;
+    var gs=goalScoreVal(), gg=goalGradeVal(), gap=Math.round((gs-scores.total)*10)/10;
+    var ymTxt = curYm? curYm.substring(0,4)+'년 '+parseInt(curYm.substring(4,6),10)+'월' : '이번 달';
+    var fulls = indicators.filter(function(r){ return n(r.stdweig)>0 && (n(r.stdweig)-n(r.weigval))<=0.0001; })
+                          .map(function(r){ return r.cate_nm; });
+    var tops = topGaps(2);
+    var p = {};
+    p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+gradeOf(scores.total)+'에 해당합니다. '
+             + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황입니다.'
+                      : '목표인 '+gg+'('+fnum(gs)+'점)를 달성한 수준으로, 남은 기간 동안 유지 관리가 중요합니다.');
+    p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다. 실제 점수는 차등제 신고 결과가 합산되어 확정되므로, 재원환자 수와 인력 추이가 변동되지 않도록 꾸준히 관리해 주시기 바랍니다.';
+    p.sum_p3 = '';
+    if(fulls.length) p.sum_p3 += '진료영역에서는 '+fulls.slice(0,4).join(', ')+(fulls.length>4?' 등':'')+' 지표가 잘 관리되고 있습니다. ';
+    if(tops.length){
+      var t=tops[0];
+      p.sum_p3 += '반면 '+t.nm+'은(는) 개선 여지가 가장 큰 지표로, 표준화 구간을 한 단계 올릴 때마다 약 +'+f1(t.w/5)+'점을 확보할 수 있습니다.'
+                + (tops[1]? ' '+tops[1].nm+'도 함께 관리하시면 좋겠습니다.' : '');
+    }
+    if(!p.sum_p3) p.sum_p3 = '진료영역 지표는 전반적으로 안정적으로 관리되고 있습니다.';
+    p.sum_p4 = '항정신성의약품 처방률, DUR 점검률, 지역사회복귀율은 예상값 기준으로 산출되어 최종 평가 결과에 따라 점수가 다소 달라질 수 있습니다. 해당 대상자 관리를 꾸준히 부탁드립니다.';
+    p.sum_p5 = '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 의무기록과 환자평가표가 서로 일치하는지 함께 점검해 주시기 바랍니다.';
+    Object.keys(p).forEach(function(k){
+      if(savedKeys[k]) return;   // 병원별 편집 저장분 우선
+      var e=document.querySelector('#evalReport [data-key="'+k+'"]');
+      if(e){ e.textContent = p[k]; AUTO[k] = e.innerHTML; }
+    });
   }
 
   function topGaps(limit){
@@ -1190,18 +1235,63 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   // ===== 저장된 문구/상태 로드 =====
+  // ===== 전사 표준문구(TBL_EVAL_REPORT_TPL) 적용 — 우선순위: 병원별 TEXT > TPL > JSP 내장 기본값 =====
+  //   · def_XX / dir_XX : Ⅲ·Ⅳ의 지표 정의/개선방향 기본문구(TPL_DEF/TPL_DIR)를 DB값으로 교체 → 섹션 재렌더
+  //     (renderSec3/4 가 esc() 처리하므로 DB에는 순수 텍스트로 저장 — HTML 태그 불가)
+  //   · 그 외 키 : 화면 편집영역(data-key 일치)의 기본 문구로 주입. {total}{grade}{struct}{care}
+  //     {goalGrade}{goalScore}{gap}{hosp}{ym} 자리표시자를 실제 수치로 치환.
+  //     AUTO 스냅샷을 함께 갱신하므로 미수정 시 저장 안 됨(병원별 TEXT 로 오염 방지),
+  //     savedKeys 마킹으로 자동 문구(renderGoalSummary 등)가 TPL 을 덮지 않음.
+  //   · sum_p1~p5 등 화면에 없는 키는 무시(향후 자동 총평용 예비).
+  function erFillTpl(s){
+    var gs = goalScoreVal();
+    return String(s)
+      .replace(/\{total\}/g,  f1(scores.total))
+      .replace(/\{grade\}/g,  gradeOf(scores.total))
+      .replace(/\{struct\}/g, f1(scores.struct))
+      .replace(/\{care\}/g,   f1(scores.care))
+      .replace(/\{goalGrade\}/g, goalGradeVal())
+      .replace(/\{goalScore\}/g, String(gs))
+      .replace(/\{gap\}/g,    f1(Math.max(0, gs - scores.total)))
+      .replace(/\{hosp\}/g,   esc(hospNm||''))
+      .replace(/\{ym\}/g,     curYm? curYm.substring(0,4)+'년 '+curYm.substring(4,6)+'월' : '');
+  }
+  function applyTpls(tpls){
+    if(!tpls || !tpls.length) return;
+    var editableTpls=[], reRender=false;
+    tpls.forEach(function(t){
+      var k=String(t.sectkey||''), c=t.content;
+      if(!k || c==null || String(c).trim()==='') return;
+      var m=/^(def|dir)_(\d{2})$/.exec(k);
+      if(m){
+        if(m[1]==='def') TPL_DEF[m[2]]=String(c); else TPL_DIR[m[2]]=String(c);
+        reRender=true;
+      } else {
+        editableTpls.push({ k:k, c:String(c) });
+      }
+    });
+    if(reRender){ renderSec3(); renderSec4(); captureAuto(); }   // DB 문구 반영 후 스냅샷 재확정
+    editableTpls.forEach(function(t){
+      var e=document.querySelector('#evalReport .er-editable[data-key="'+t.k+'"]');
+      if(e){ e.innerHTML=erFillTpl(t.c); AUTO[t.k]=e.innerHTML; savedKeys[t.k]=1; }
+    });
+  }
+
   function loadSavedTexts(){
     jQuery.ajax({ url: ctx+'/main/loadEvalReport.do', type:'POST', dataType:'json',
       data:{ hospCd:hospCd, evalYm:curYm },
       success:function(res){
         var mst = res && res.mst;
         var texts = (res && res.texts) || [];
-        // 저장 문구 override 적용 (+ savedKeys 갱신 — 자동 문구가 저장본을 덮지 않게)
-        var map={}; savedKeys={};
+        savedKeys={};
+        // ① 목표값 먼저(차등제 마스터) — TPL 자리표시자({goalScore} 등)가 최신 목표를 쓰도록
+        applyGoalDefault(res && res.goal);
+        // ② 전사 표준문구(TBL_EVAL_REPORT_TPL) — DB 문구가 내장 기본값을 대체
+        applyTpls((res && res.tpls) || []);
+        // ③ 병원별 저장 문구 override 적용 (+ savedKeys 갱신 — 자동 문구가 저장본을 덮지 않게)
+        var map={};
         texts.forEach(function(t){ map[t.sectkey]=t.content; savedKeys[t.sectkey]=1; });
         editables().forEach(function(e){ var k=e.getAttribute('data-key'); if(map[k]!=null) e.innerHTML=map[k]; });
-        // 목표점수/목표등급 = 차등제 등록(TBL_GRADE_MST) 값으로 항상 덮어씀(옛 저장값 무시).
-        applyGoalDefault(res && res.goal);
         renderGoalSummary();   // 목표값 확정 후 부족점수/등급표 재계산
         setStatus(mst && mst.status ? mst.status : 'DRAFT');
         pdfPath = (mst && mst.pdfpath) ? String(mst.pdfpath) : '';

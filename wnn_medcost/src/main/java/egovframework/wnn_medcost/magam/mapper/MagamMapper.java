@@ -86,6 +86,8 @@ public interface MagamMapper {
 	                                        @Param("startYy") String startYy,
 	                                        @Param("qterFlag") String qterFlag);
 	List<Map<String, Object>> selectEvalReportTexts(@Param("reportSeq") Long reportSeq);
+	// 전사 표준문구(TPL) — 병원 공통 기본 문구 (우선순위: 병원별 TEXT > TPL > JSP 내장 기본값)
+	List<Map<String, Object>> selectEvalReportTpls();
 	int insertEvalReportMst(Map<String, Object> p);
 	int updateEvalReportMst(Map<String, Object> p);
 	int approveEvalReportMst(Map<String, Object> p);

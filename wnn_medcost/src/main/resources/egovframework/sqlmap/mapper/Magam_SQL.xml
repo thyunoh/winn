@@ -5657,6 +5657,15 @@
 		 WHERE REPORT_SEQ = #{reportSeq}
 	</select>
 
+	<!-- 전사 표준문구(TPL) — 병원 공통 기본 문구. 우선순위: 병원별 TEXT > TPL > JSP 내장 기본값.
+	     시드: docs/sql/TBL_EVAL_REPORT_TPL_seed.sql -->
+	<select id="selectEvalReportTpls" resultType="java.util.HashMap">
+		SELECT SECT_KEY AS sectkey, TPL_CONTENT AS content
+		  FROM TBL_EVAL_REPORT_TPL
+		 WHERE USE_YN = 'Y'
+		 ORDER BY IFNULL(SORT_NO, 999), SECT_KEY
+	</select>
+
 	<!-- 마스터 신규 (생성키 REPORT_SEQ 를 파라미터맵에 반환) -->
 	<insert id="insertEvalReportMst" parameterType="java.util.Map"
 	        useGeneratedKeys="true" keyProperty="reportSeq" keyColumn="REPORT_SEQ">

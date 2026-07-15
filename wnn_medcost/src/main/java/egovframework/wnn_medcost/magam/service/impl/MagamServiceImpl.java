@@ -521,6 +521,8 @@ public class MagamServiceImpl implements MagamService {
 		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
 		List<Map<String, Object>> texts = (seq != null) ? mapper.selectEvalReportTexts(seq) : new ArrayList<Map<String, Object>>();
 		res.put("texts", texts);
+		// 전사 표준문구(TPL) — 화면에서 병원별 TEXT > TPL > 내장 기본값 순으로 적용
+		res.put("tpls", mapper.selectEvalReportTpls());
 		// 차등제 등록(TBL_GRADE_MST)에서 목표점수/병원등급 조회 → 월보고서 목표값 기본소스로 내려줌
 		//   evalYm(YYYYMM) → 년도(YYYY) + 분기(월/3 올림: 1~3=1,4~6=2,7~9=3,10~12=4)
 		if (evalYm != null && evalYm.length() == 6) {
