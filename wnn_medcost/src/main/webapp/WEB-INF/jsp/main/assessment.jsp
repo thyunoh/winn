@@ -62,7 +62,7 @@
 										         [2단계·완성 후] 거래처 공개: 이 노출 조건에 승인본 존재 여부를 더해 확장. --%>
 										    <%-- d-flex 클래스 금지: display:flex !important 라 인라인 display:none 을 이겨서 일반병원에도 항상 노출됨(2026-07-14 원인) --%>
 										    <button id="btnMonthlyReport" class="btn btn-sm btn-outline-primary align-items-center justify-content-center" style="white-space:nowrap; display:none;"
-										            onclick="location.href='/main/report.do?ym=' + document.getElementById('year_Select').value + document.getElementById('monthSelect').value;">📄 월보고서</button>
+										            onclick="location.href='/main/evalReport.do?ym=' + document.getElementById('year_Select').value + document.getElementById('monthSelect').value;">📄 월보고서</button>
 										</div>
 										<script>
 										    (function(){
@@ -71,9 +71,9 @@
 										        var b = document.getElementById('btnMonthlyReport');
 										        if(!b) return;
 										        try{
-										        //    if ((getCookie("s_wnn_yn") || '').trim() === 'Y') {
-										        //        b.style.display='flex';
-										        //    }
+										            if ((getCookie("s_wnn_yn") || '').trim() === 'Y') {
+										                b.style.display='flex';
+										            }
 										        }catch(e){}
 										    })();
 										</script>

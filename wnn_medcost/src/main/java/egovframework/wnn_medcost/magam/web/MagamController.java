@@ -102,8 +102,9 @@ public class MagamController {
 		}
     }
 	// 적정성평가 컨설팅 월보고서 (위너넷 편집·승인 → 거래처 열람)
-	@RequestMapping(value="main/report.do")
-    public String report(HttpServletRequest request, ModelMap model) {
+	// 적정성평가 월간 컨설팅 보고서 화면. 뷰파일 = evalReport.jsp. (URL·뷰·파일명 모두 evalReport 로 통일)
+	@RequestMapping(value="main/evalReport.do")
+    public String evalReport(HttpServletRequest request, ModelMap model) {
 
         cookie_value = ClientInfo.getCookie(request);
 		// 위너넷 여부 = 서버 세션(로그인 시 WINNER_YN 저장). 쿠키 잔존값 대신 세션으로 판별.
@@ -117,7 +118,7 @@ public class MagamController {
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
-				return ".main/report";
+				return ".main/evalReport";
 			} else {
 				return ".login/LoginWinCT";
 			}

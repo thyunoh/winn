@@ -3176,7 +3176,8 @@
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND CAST(NULLIF(C.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 
 		   AND C.DIARY_CREATED IN('0','1')   -- 배뇨일지 작성여부
-		   AND (IFNULL(C.UR_PLAN,'')  = '0' OR IFNULL(C.BLAD_TRAIN,'')  = '0') -- 일정하게 짜여진 배뇨계획 , 방광 훈련 프로그램
+           AND IFNULL(C.UR_PLAN,'')    <![CDATA[ <> ]]> '1' 
+           AND IFNULL(C.BLAD_TRAIN,'') <![CDATA[ <> ]]> '1'
 		   	
 		UNION ALL
 		-- [욕창 새로생긴 오류 1] 전월 욕창이 없고, 당월 욕창이 생겼으나, 이전평가 이후 새로운 욕창 발생여부에 '없음'으로 체크 
@@ -4556,7 +4557,8 @@
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND CAST(NULLIF(C.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 
 		   AND C.DIARY_CREATED IN('0','1')   -- 배뇨일지 작성여부
-		   AND (IFNULL(C.UR_PLAN,'')  = '0' OR IFNULL(C.BLAD_TRAIN,'')  = '0') -- 일정하게 짜여진 배뇨계획 , 방광 훈련 프로그램
+           AND IFNULL(C.UR_PLAN,'')    <![CDATA[ <> ]]> '1' 
+           AND IFNULL(C.BLAD_TRAIN,'') <![CDATA[ <> ]]> '1'
 		ORDER BY errType
 		
 	</select>	
@@ -5632,18 +5634,19 @@
 		 LIMIT 1
 	</select>
 
-	<!-- 병원 목표점수/목표등급 조회 (차등제 등록 TBL_GRADE_MST — 병원+년도+분기 최신 1건)
-	     · 월보고서 목표등급/목표점수의 기본값 소스. 저장 override 가 있으면 화면에서 그게 우선.
-	     · startYy = 년도(YYYY), qterFlag = 분기(1~4 = 월/3 올림). ACTION_YN='Y' 유효행만, 최신 수정건. -->
+	<!-- 차등제 등록(TBL_GRADE_MST)의 연간 목표점수/병원등급 — 월보고서 표지 목표값 자동 소스.
+	     평가년도(startYy) 등록분 우선(분기 무관 최신), 없으면 최근 년도 폴백 — 연간 목표라 분기 미등록이어도 표시.
+	     저장 override 가 있어도 화면(applyGoalDefault)이 마스터값으로 덮어씀. qterFlag 파라미터는 현재 미사용. -->
 	<select id="selectHospGoalGrade" resultType="java.util.HashMap">
 		SELECT GOAL_SCORE AS goalscore,
-		       HOSPGRADE  AS hospgrade
+		       HOSPGRADE  AS hospgrade,
+		       START_YY   AS startyy,
+		       QTER_FLAG  AS qterflag
 		  FROM TBL_GRADE_MST
 		 WHERE HOSP_CD   = #{hospCd}
-		   AND START_YY  = #{startYy}
-		   AND QTER_FLAG = #{qterFlag}
 		   AND ACTION_YN = 'Y'
-		 ORDER BY UPD_DTTM DESC, REG_DTTM DESC
+		   AND GOAL_SCORE IS NOT NULL
+		 ORDER BY (START_YY = #{startYy}) DESC, START_YY DESC, QTER_FLAG DESC, UPD_DTTM DESC
 		 LIMIT 1
 	</select>
 
