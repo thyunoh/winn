@@ -2118,6 +2118,13 @@ function fn_CreateData(flag, force) {
         return;
     }
 
+    // 월보고서 종료(erExit) 복귀 마커 — 이 진입 1회는 재생성 확인 팝업 없이 기존 자료만 표시
+    var skipRegen = false;
+    try {
+        skipRegen = sessionStorage.getItem('skipRegenConfirm') === '1';
+        if (skipRegen) sessionStorage.removeItem('skipRegenConfirm');
+    } catch (e) {}
+
     $.ajax({
         url: "/main/select_Eval_Indi.do",
         type: "POST",
@@ -2127,6 +2134,10 @@ function fn_CreateData(flag, force) {
             var hasData = response && response.data && response.data.some(function(r) {
                 return r.cate_cd !== '99';
             });
+            if (hasData && skipRegen) {   // 월보고서에서 돌아온 경우: 묻지 않고 기존 자료 표시
+                showExisting();
+                return;
+            }
             if (hasData) {
                 if (!document.getElementById('regenConfirmStyle')) {
                     var rst = document.createElement('style');
@@ -2971,7 +2982,6 @@ function fn_ViewData(data) {
     			{ label: '입원일자',     rowspan: 2 },
     			{ label: '요양개시일',   rowspan: 2 },
     			{ label: '관리<br>여부', rowspan: 2, class: 'noArrow' },
-    			{ label: '배뇨<br>계획', rowspan: 2, class: 'noArrow' },
     			{ label: '환자군',       rowspan: 2 },
     			{ label: '배뇨상태',     rowspan: 2 },
     			{ label: '관리항목',     colspan: 3 },
@@ -3032,15 +3042,6 @@ function fn_ViewData(data) {
 							return data;
 						}
 					    },
-						/* 배뇨계획 — 분모 대상이나 배뇨관리(①②③) 미실시 → ○ (관리항목 ●=실시 와 대비) */
-						{ data: 'planMissYn', visible: true,  className: 'dt-body-center', width: '36px',
-							render: function(data, type, row) {
-								if (type === 'display') {
-									return data === 'X' ? '<span style="color:#000;font-size:16px;">○</span>' : '';
-								}
-								return data;
-							},
-						},
 						{ data: 'patClass',  visible: true,  className: 'dt-body-center', width: '75px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
@@ -3065,11 +3066,16 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-					    /* 관리항목 — 일정한 배뇨 (UR_PLAN='1' 인 경우 ● 검정 채움 표시) */
+					    /* 관리항목 — 일정한 배뇨: UR_PLAN='1' → ● (실시, 검정 채움)
+					       · 분모 대상이나 배뇨관리(①②③) 미실시(planMissYn='X') → ○ (속 빈 원, 옛 배뇨계획 컬럼 통합) */
 					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
-			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
+			        				// 미실시 판정(planMissYn='X')이 우선 — UR_PLAN='1' 이어도 배뇨일지 3일 미만 등으로
+			        				// 불인정이면 X 라서, ● 분기를 먼저 타면 링이 절대 안 보임(회귀 주의)
+			        				if (row && row.planMissYn === 'X') return '<span style="display:inline-block;width:11px;height:11px;border:2px solid #000;border-radius:50%;background:#fff;vertical-align:middle;"></span>';
+			        				if (data === '1') return '<span style="color:#000;font-size:16px;">●</span>';
+			        				return '';
 			            		}
 			            		return data;
 						    },

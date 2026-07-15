@@ -68,6 +68,20 @@
     border-radius:6px; padding:46px 50px; }
   @media (max-width:720px){ #evalReport .er-page{ padding:28px 18px; } }
 
+  /* ===== A4 자동 페이지 분할(WYSIWYG) — 화면 = PDF. 원본 섹션(.er-srcpage)은 숨기고 A4 실측 페이지를 생성 ===== */
+  #evalReport .er-autopage{ display:none; }
+  #evalReport.er-paged .er-srcpage{ display:none !important; }
+  #evalReport.er-paged .er-autopage{ display:block; width:210mm; height:297mm; box-sizing:border-box;
+    background:var(--er-paper); box-shadow:0 6px 26px rgba(28,45,72,.14); border-radius:4px; margin:0 auto;
+    padding:14mm 15mm; overflow:hidden; }
+  #evalReport.er-paged .er-autobody{ overflow:hidden; }
+  #evalReport.er-paged .er-autopage.er-cover-page{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  #evalReport.er-paged .er-doc{ gap:16px; }
+  #evalReport.er-paged .er-autopage .er-sec{ margin-top:0; }
+  /* 같은 장에 이어지는 섹션 헤더는 넉넉한 간격, 장 맨 위 헤더는 간격 없음 */
+  #evalReport.er-paged .er-autobody > .er-eyebrow{ margin-top:34px; }
+  #evalReport.er-paged .er-autobody > .er-eyebrow:first-child{ margin-top:0; }
+
   /* 편집 */
   #evalReport .er-editable{ outline:none; border-radius:4px; transition:.12s; }
   /* 편집 모드: 연한 배경 + 어두운 글자 강제(color) — 목표 뱃지 등 흰 글자 영역이 안 보이던 문제 방지 */
@@ -165,10 +179,20 @@
   #evalReport .er-indh{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:8px; }
   #evalReport .er-indnm{ font-size:13.5px; font-weight:800; }
   #evalReport .er-indsc{ font-size:12px; font-weight:800; color:var(--er-navy2); background:var(--er-navytint); border:1px solid #d5e4f6; padding:2px 9px; border-radius:16px; }
-  #evalReport .er-analbl{ display:inline-block; background:#eef2f9; color:var(--er-navy); font-weight:800; font-size:11px; padding:2px 10px; border-radius:4px; margin-bottom:6px; }
+  /* Ⅲ 지표 블록 — 원본 PDF 양식: 헤더는 카드 밖, '분석 내용' 전체폭 바(만점=연녹/미달=연파랑) */
+  #evalReport .er-indhead{ font-size:13.5px; font-weight:800; margin:18px 0 6px; color:var(--er-ink); }
+  #evalReport .er-indbox{ border:1px solid var(--er-line); border-radius:8px; overflow:hidden; background:#fff; }
+  #evalReport .er-anabar{ text-align:center; font-weight:800; font-size:12px; padding:6px; border-bottom:1px solid var(--er-line); background:#eaf1fb; color:#2f4e8d; }
+  #evalReport .er-indbox.er-full .er-anabar{ background:#e9f6ec; color:#2e7d32; }
+  #evalReport .er-indbody{ padding:10px 14px 11px; }
+  #evalReport .er-hl-bad{ color:var(--er-bad); font-weight:800; }
+  #evalReport .er-def{ color:#7c8798; font-size:11.5px; margin:4px 0 0 13px; }
+  #evalReport .er-grplabel.er-g10{ background:var(--er-navy); }
+  #evalReport .er-grplabel.er-g21{ background:#1f7a66; }
+  #evalReport .er-grplabel.er-g22{ background:#6b3fa0; }
   #evalReport .er-ana{ font-size:12.5px; margin:0; }
   #evalReport .er-ana .er-mk{ color:var(--er-navy2); font-weight:800; margin-right:4px; }
-  #evalReport .er-plan{ font-size:12.5px; margin:7px 0 0; padding-top:8px; border-top:1px dashed var(--er-line); }
+  #evalReport .er-plan{ font-size:12.5px; margin:7px 0 0; color:var(--er-good); font-weight:700; }
   #evalReport .er-plan .er-mk{ color:var(--er-good); font-weight:800; margin-right:4px; }
   #evalReport .er-grplabel{ font-size:12px; font-weight:800; color:#fff; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); display:inline-block; padding:4px 12px; border-radius:8px; margin:20px 0 4px; }
   #evalReport .er-rec{ border:1px solid var(--er-line); border-left:4px solid var(--er-navy2); border-radius:10px; padding:13px 16px; margin-top:11px; background:#fff; }
@@ -212,11 +236,38 @@
   @media print{
     body *{ visibility:hidden !important; }
     #evalReport, #evalReport *{ visibility:visible !important; }
+    /* 배경색 인쇄 강제 — 브라우저 기본은 배경을 빼고 인쇄해 네이비 헤더가 흰 글자만 남음 */
+    #evalReport, #evalReport *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    /* 그라데이션은 인쇄에서 누락되는 경우가 있어 단색 네이비로 폴백 */
+    #evalReport table.er-tbl thead th{ background:var(--er-navy) !important; color:#fff !important; }
+    #evalReport .er-eyebrow{ background:var(--er-navy) !important; color:#fff !important; }
+    #evalReport .er-eyebrow .er-rn, #evalReport .er-eyebrow .er-stitle{ color:#fff !important; }
+    #evalReport table.er-tbl tr.er-grand td{ background:var(--er-navy) !important; color:#fff !important; }
+    #evalReport .er-grplabel{ background:var(--er-navy) !important; color:#fff !important; }
+    #evalReport .er-grplabel.er-g21{ background:#1f7a66 !important; }
+    #evalReport .er-grplabel.er-g22{ background:#6b3fa0 !important; }
+    #evalReport .er-cover-badge{ background:var(--er-navy) !important; color:#fff !important; }
+    #evalReport .er-role{ background:var(--er-navy) !important; }
     #evalReport{ position:absolute; left:0; top:0; width:100%; background:#fff; padding:0 !important; }
     #evalReport .er-toolbar, #evalReport .er-notice, #evalReport .er-toast, #evalReport .er-modal, #evalReport .er-prevbar{ display:none !important; }
     #evalReport .er-doc{ padding:0; gap:0; }
-    #evalReport .er-page{ box-shadow:none; border-radius:0; width:100%; padding:12mm 14mm; page-break-after:always; }
-    #evalReport .er-sec, #evalReport .er-ind, #evalReport .er-rec, #evalReport .er-card, #evalReport table.er-tbl, #evalReport .er-after{ page-break-inside:avoid; }
+
+    /* [기본] A4 분할 모드 — 화면에서 나눈 A4 페이지를 그대로 1시트씩 인쇄(화면=PDF) */
+    #evalReport.er-paged .er-srcpage{ display:none !important; }
+    #evalReport.er-paged .er-autopage{ display:block !important; width:auto; height:auto;
+      box-shadow:none; border-radius:0; margin:0; padding:14mm 15mm; overflow:visible; page-break-after:always; }
+    #evalReport.er-paged .er-autopage:last-child{ page-break-after:auto; }
+    #evalReport.er-paged .er-autopage.er-cover-page{ min-height:255mm; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    #evalReport.er-paged .er-autobody{ height:auto; overflow:visible; }
+
+    /* [폴백] 분할 안 된 상태(편집 중 인쇄 등) — 연속 흐름, 최소 단위만 안 쪼갬 */
+    #evalReport:not(.er-paged) .er-page{ box-shadow:none; border-radius:0; width:100%; padding:8mm 14mm 0; }
+    #evalReport:not(.er-paged) .er-page.er-cover{ page-break-after:always; padding:12mm 14mm; }
+    #evalReport .er-ind, #evalReport .er-indbox, #evalReport .er-rec, #evalReport .er-card, #evalReport .er-after, #evalReport .er-callout{ page-break-inside:avoid; }
+    #evalReport table.er-tbl thead{ display:table-header-group; }
+    #evalReport table.er-tbl tr{ page-break-inside:avoid; }
+    #evalReport .er-indhead{ page-break-after:avoid; }
+    #evalReport .er-eyebrow{ page-break-after:avoid; }
     @page{ size:A4; margin:0; }
   }
 </style>
@@ -519,10 +570,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return a.map(function(z){ return fnum(z.start)+'~'+fnum(z.end)+u+'('+z.s+'구간)'; }).join(' · ');
   }
 
-  // Ⅲ 자동 분석문 — PDF 원본 형식: "분모 X 중 분자 Y = Z% → 표준화 N구간, 가중치 W점 중 P점 산정"
-  function autoAna(r){
-    var cd=r.cate_cd, w=n(r.stdweig), got=n(r.weigval), dtor=n(r.dtorval);
-    var zone = r.s_score ? n(r.s_score)+'구간' : '-';
+  // Ⅲ 자동 분석문 — PDF 원본 형식: "분모 X 중 분자 Y = Z%로 표준화 N구간(범위), 가중치 W점 중 P점 산정"
+  //   미달 지표는 구간·점수 부분 빨강 강조, 만점 지표는 "가중치 W점 만점 산정" (원본 문구)
+  function autoAna(r, full){
+    var cd=r.cate_cd, w=n(r.stdweig), got=n(r.weigval), dtor=n(r.dtorval), s=n(r.s_score)||0;
+    var rng = s ? zoneRange(cd, s) : '';
+    var zone = s ? s+'구간'+(rng? '('+rng+')' : '') : '-';
     var lead;
     if (UNIT_PERSON.indexOf(cd)>=0)
       lead = '평균 재원환자 '+esc(fnum(r.ntorval))+'명 ÷ '+DENOM_NM[cd]+' '+esc(fnum(r.dtorval))+'명 = 1인당 <b>'+calDisp(r)+'</b>';
@@ -532,7 +585,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       lead = '대상 '+esc(fnum(r.dtorval))+'명 중 해당 '+esc(fnum(r.ntorval))+'명 = <b>'+calDisp(r)+'</b>';
     else
       lead = '현황값 <b>'+calDisp(r)+'</b>';
-    return lead+' → 표준화 '+zone+', 가중치 '+fnum(w)+'점 중 '+f1(got)+'점 산정.';
+    var conn = /[명일]\s*$/.test(String(calDisp(r))) ? '으로 ' : '로 ';
+    var zoneTxt = '표준화 '+zone+', 가중치 '+fnum(w)+(full? '점 만점 산정.' : '점 중 '+f1(got)+'점 산정.');
+    return lead + conn + (full? zoneTxt : '<span class="er-hl-bad">'+zoneTxt+'</span>');
   }
 
   // 5점 구간·도달 힌트 — assessment showIndiSummary 와 동일 계산
@@ -576,8 +631,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
   window.addEventListener('resize', erFixToolbar);
 
-  // 종료 → 적정성평가 현황(assessment)으로 복귀
-  window.erExit = function(){ location.href = ctx + '/main/assessment.do'; };
+  // 종료 → 적정성평가 현황(assessment)으로 복귀.
+  //   복귀 진입 시 "재생성 확인" 팝업 없이 기존 자료만 바로 표시하도록 1회용 마커 전달.
+  window.erExit = function(){
+    try{ sessionStorage.setItem('skipRegenConfirm','1'); }catch(e){}
+    location.href = ctx + '/main/assessment.do';
+  };
 
   // 미리보기 — 작성 중인 보고서를 인쇄 형태(A4 지면)로 화면에서 확인. 편집 중이면 끄고 진입.
   window.erPreview = function(){
@@ -586,6 +645,136 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     window.scrollTo(0,0);
   };
   window.erPreviewExit = function(){ el('evalReport').classList.remove('er-preview'); };
+
+  // ===== A4 자동 페이지 분할(WYSIWYG) =====
+  //   원본 섹션(.er-srcpage)은 편집·저장의 원본으로 그대로 두고(숨김), 그 내용을 '복제'해
+  //   A4(210×297mm) 실측 페이지(.er-autopage)에 흐름 단위로 담는다. 복제본은 id/data-key/편집속성을
+  //   제거해 저장·조회 로직과 충돌하지 않는다. 편집 중에는 분할을 끄고(자연 흐름) 편집이 편하게 한다.
+  // [원복 2026-07-15] A4 자동분할 비활성 — 경우의 수(고아페이지·간격·편집동기화)가 많아 일단 끔.
+  //   false = 이전 방식: 화면은 섹션 카드 연속, 인쇄는 표지 1장 + 연속 흐름(최소 단위만 page-break-inside:avoid).
+  //   재도입 시 true 로만 바꾸면 분할·복제편집 로직 그대로 살아남 (아래 erPaginate 일체).
+  var PAGE_ON = false;
+
+  function erDoc(){ return document.querySelector('#evalReport .er-doc'); }
+  function erTagSrcPages(){
+    var doc=erDoc(); if(!doc) return;
+    Array.prototype.forEach.call(doc.querySelectorAll(':scope > .er-page'), function(p){ p.classList.add('er-srcpage'); });
+  }
+
+  function erStrip(node){
+    if(node.nodeType!==1) return;
+    var all=[node].concat(Array.prototype.slice.call(node.querySelectorAll('*')));
+    all.forEach(function(e){
+      e.removeAttribute('id'); e.removeAttribute('contenteditable');
+      // data-key → data-ckey 로 개명: 저장 로직(editables)은 원본만 수집, 복제본은 편집 시 원본으로 동기화
+      var k=e.getAttribute('data-key');
+      if(k!=null){ e.setAttribute('data-ckey',k); e.removeAttribute('data-key'); }
+    });
+  }
+  function erClone(node){ var c=node.cloneNode(true); erStrip(c); return c; }
+
+  function erCollectUnits(doc){
+    var units=[];
+    Array.prototype.forEach.call(doc.querySelectorAll(':scope > .er-srcpage'), function(pg){
+      if(pg.classList.contains('er-cover')) return;   // 표지는 별도 처리
+      Array.prototype.forEach.call(pg.children, function(top){
+        if(!top.classList || !top.classList.contains('er-sec')){
+          units.push({ nodes:[top], keep:false });    // 섹션 밖 요소(docfoot 등)도 포함
+          return;
+        }
+        Array.prototype.forEach.call(top.children, function(ch){
+          var id=ch.id||'';
+          if(ch.classList.contains('er-eyebrow')){    // 큰 섹션(Ⅰ~Ⅴ) 헤더 = 항상 새 페이지 시작
+            units.push({ nodes:[ch], keep:true, newPage:true });
+          } else if(id==='er-sec3Body'){   // Ⅲ: 그룹라벨 / (지표제목+분석박스) 쌍 단위로 분해
+            var kids=Array.prototype.slice.call(ch.children);
+            for(var i=0;i<kids.length;i++){
+              var k=kids[i];
+              if(k.classList.contains('er-indhead')){
+                var grp=[k];
+                if(kids[i+1] && kids[i+1].classList.contains('er-indbox')){ grp.push(kids[i+1]); i++; }
+                units.push({ nodes:grp, keep:false });
+              } else {
+                units.push({ nodes:[k], keep:k.classList.contains('er-grplabel') });
+              }
+            }
+          } else if(id==='er-sec4Body'){   // Ⅳ: 권고 카드 각각
+            Array.prototype.forEach.call(ch.children, function(k){ units.push({ nodes:[k], keep:false }); });
+          } else {
+            units.push({ nodes:[ch], keep:ch.classList.contains('er-subh') });
+          }
+        });
+      });
+    });
+    return units;
+  }
+
+  function erNewPage(doc){
+    var p=document.createElement('div'); p.className='er-autopage';
+    var b=document.createElement('div'); b.className='er-autobody';
+    p.appendChild(b); doc.appendChild(p); return b;
+  }
+  // 한 페이지가 담을 수 있는 실제 콘텐츠 높이(px) = 페이지 clientHeight − 상하 패딩
+  function erCapacity(body){
+    var p=body.parentNode, cs=window.getComputedStyle(p);
+    return p.clientHeight - parseFloat(cs.paddingTop||0) - parseFloat(cs.paddingBottom||0);
+  }
+  function erAppendUnit(body,u){
+    u._clones=[];
+    u.nodes.forEach(function(nd){ var c=erClone(nd); body.appendChild(c); u._clones.push(c); });
+  }
+  function erRemoveUnit(u){ if(u._clones) u._clones.forEach(function(c){ c.remove(); }); u._clones=[]; }
+
+  window.erPaginate = function(){
+    var root=el('evalReport'), doc=erDoc(); if(!doc) return;
+    erTagSrcPages();
+    Array.prototype.forEach.call(doc.querySelectorAll('.er-autopage'), function(p){ p.remove(); });
+    if(!PAGE_ON){ root.classList.remove('er-paged'); return; }
+    root.classList.add('er-paged');
+    // 표지 페이지(가운데 정렬 그대로 복제)
+    var cover=doc.querySelector(':scope > .er-srcpage.er-cover');
+    if(cover){
+      // er-cover 클래스 유지 — 표지 전용 스타일(.er-cover .er-cover-title 등)이 복제본에도 적용되게
+      var cp=document.createElement('div'); cp.className='er-autopage er-cover-page er-cover';
+      Array.prototype.forEach.call(cover.children, function(ch){ cp.appendChild(erClone(ch)); });
+      doc.appendChild(cp);
+    }
+    // 본문 흐름 단위 → A4 실측 채우기 (섹션 헤더는 항상 새 페이지 시작)
+    var units=erCollectUnits(doc);
+    var body=erNewPage(doc), maxH=erCapacity(body);
+    units.forEach(function(u){
+      // 섹션(Ⅰ~Ⅴ) 헤더: 현재 장의 남은 공간이 45% 미만이면 새 장에서 시작,
+      // 충분히 남았으면(직전 섹션 꼬리만 있는 거의 빈 장 등) 같은 장에 간격 두고 이어붙임
+      if(u.newPage && body.children.length){
+        var remain = maxH - body.scrollHeight;
+        if(remain < maxH*0.45){ body=erNewPage(doc); maxH=erCapacity(body); }
+      }
+      erAppendUnit(body,u);
+      var overflow = body.scrollHeight > maxH+1;
+      var onlyThis = (body.children.length <= u.nodes.length);
+      if(overflow && !onlyThis){                         // 넘치면 다음 페이지로
+        erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
+      } else if(u.keep && !onlyThis && (maxH - body.scrollHeight) < 130){
+        // 라벨·소제목이 페이지 맨 아래에 홀로 남지 않게 다음 페이지로 넘김
+        erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
+      }
+    });
+    erSetCloneEditable();   // 편집 중 재분할 시 편집 가능 상태 유지
+  };
+
+  // A4 복제본 편집 지원 — 복제본([data-ckey])을 직접 편집하면 원본([data-key])에 실시간 반영.
+  //   저장(collectTexts)·자동스냅샷(AUTO)은 원본 기준 그대로라 저장 로직 무변경.
+  function erSetCloneEditable(){
+    Array.prototype.forEach.call(document.querySelectorAll('#evalReport .er-autopage [data-ckey]'), function(e){
+      e.contentEditable = editing? 'true':'false';
+    });
+  }
+  document.addEventListener('input', function(ev){
+    var t = ev.target && ev.target.closest ? ev.target.closest('[data-ckey]') : null;
+    if(!t) return;
+    var src = document.querySelector('#evalReport .er-editable[data-key="'+t.getAttribute('data-ckey')+'"]');
+    if(src) src.innerHTML = t.innerHTML;
+  });
 
   // 첨부 PDF 미리보기 — download.do 가 강제 다운로드(attachment)라 iframe 직접 불가 →
   //   fetch 로 blob 을 받아 application/pdf 로 objectURL 만들어 모달 iframe 에 표시(자바 변경 없음).
@@ -685,6 +874,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(approved){ toast('승인된 보고서는 편집할 수 없습니다. 승인 취소 후 편집하세요.'); return; }
     editing=!editing;
     el('evalReport').classList.toggle('er-editmode', editing);
+    erPaginate();   // A4 분할 유지한 채 재분할 — 편집 종료 시 고친 문구 길이에 맞게 페이지 재배치
     editables().forEach(function(e){ e.contentEditable = editing?'true':'false'; });
     var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집 끄기':'✏️ 편집 켜기'; b.classList.toggle('er-on',editing);
     if(editing) toast('편집 모드: 파란 영역의 문구를 직접 고칠 수 있습니다.');
@@ -861,15 +1051,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     order.forEach(function(fg){
       var rows=indicators.filter(function(r){ return r.cate_fg===fg; });
       if(!rows.length) return;
-      html += '<div class="er-grplabel">'+grpNm(fg)+'</div>';
+      html += '<div class="er-grplabel er-g'+fg+'">'+grpNm(fg)+'</div>';
       var topCds = topGaps(2).map(function(x){ return x.cd; });   // 최우선(부족분 상위2) — 원본 "◀ 최우선 개선" 표기
       rows.forEach(function(r){
         var w=n(r.stdweig), got=n(r.weigval), gap=w-got, cd=esc(r.cate_cd), s=n(r.s_score)||0;
         var full = gap<=0.0001;
-        // 원본 PDF 형식: * 산정문 + "지표 정의 : (표준문구)" (+만점 시 유지 문구)
-        var auto = autoAna(r)
-                 + (TPL_DEF[r.cate_cd] ? ' 지표 정의 : ' + esc(TPL_DEF[r.cate_cd]) : '')
-                 + (full ? ' 현재 최고 구간으로 추가 개선 여지 없음(유지).' : '');
+        // 원본 PDF 형식: * 산정문(미달 빨강 강조) / "지표 정의 :" 별도 회색 줄 (+만점 시 유지 문구)
+        var auto = autoAna(r, full);
+        var defTxt = (TPL_DEF[r.cate_cd] ? esc(TPL_DEF[r.cate_cd]) : '')
+                   + (full ? ' 현재 최고 구간으로 추가 개선 여지 없음(유지).' : '');
         // ▷ 개선 방향 : 원본식 "다음구간(+점수)·5구간(+점수)" 자동 + 표준 조치문구 + 필요 인원
         var ups = [];
         if(s>0 && s<5){
@@ -883,11 +1073,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var planTxt = (ups.length? ups.join('·')+'. ' : '') + (TPL_DIR[r.cate_cd]? esc(TPL_DIR[r.cate_cd]) : '') + need;
         if(!planTxt.trim()) planTxt = '기록·실시 절차를 점검하고 목표 구간을 설정하세요.';
         var topTag = (topCds.indexOf(r.cate_cd)>=0 && !full) ? ' <span style="color:var(--er-bad); font-weight:800; font-size:11.5px;">◀ 최우선 개선</span>' : '';
-        html += '<div class="er-ind">'
-              +   '<div class="er-indh"><span class="er-indnm">■ '+esc(r.cate_nm)+'</span><span class="er-indsc">'+f1(got)+' / '+fnum(w)+'점</span>'+topTag+'</div>'
-              +   '<div class="er-analbl">분석 내용</div>'
-              +   '<p class="er-ana er-editable" data-key="ana_'+cd+'">* '+auto+'</p>'
-              +   (full? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
+        html += '<div class="er-indhead">■ '+esc(r.cate_nm)+' <span class="er-indsc">'+f1(got)+' / '+fnum(w)+'점</span>'+topTag+'</div>'
+              + '<div class="er-indbox'+(full?' er-full':'')+'">'
+              +   '<div class="er-anabar">분석 내용</div>'
+              +   '<div class="er-indbody">'
+              +     '<p class="er-ana er-editable" data-key="ana_'+cd+'">* '+auto+'</p>'
+              +     (defTxt? '<p class="er-def er-editable" data-key="def_'+cd+'">지표 정의 : '+defTxt+'</p>' : '')
+              +     (full? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
+              +   '</div>'
               + '</div>';
       });
     });
@@ -995,6 +1188,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         editables().forEach(function(e){ e.contentEditable='false'; });
         editing=false; el('evalReport').classList.remove('er-editmode');
         if(isWinner){ var b=el('er-btnEdit'); b.textContent='✏️ 편집 켜기'; b.classList.remove('er-on'); }
+        erPaginate();   // 문구 확정(자동/저장 override 반영) 후 A4 분할
       },
       error:function(){ setStatus('DRAFT'); }
     });
