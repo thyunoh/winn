@@ -709,8 +709,14 @@ $(document).ready(function() {
         console.log('[gridFit v5] innerH=' + window.innerHeight + ' layoutTop=' + Math.round(layoutTop) + ' inner=' + Math.round(inner) + ' h=' + h + ' (이전실제=' + prevH + ')');
     };
     $(window).on('resize', function(){ window.fn_FitGridHeight(); });
-    // 이벤트 추적 대신 0.8초 주기로 상시 고정 — 월카드 늦은 렌더·탭 전환·DataTables 재그리기 등
-    // 어떤 레이아웃 변동이 와도 1초 안에 다시 바닥에 맞음 (측정 비용 미미)
+    // 그리드가 다시 그려지는 즉시 보정 — "짧았다가 펼쳐지는" 모습이 보이지 않게 (0.8초 주기만으로는 지연이 보임)
+    $(document).on('draw.dt', function(e) {
+        if (e.target && e.target.id === 'tableName') { window.fn_FitGridHeight(); setTimeout(window.fn_FitGridHeight, 50); }
+    });
+    window.fn_FitGridHeight();
+    setTimeout(window.fn_FitGridHeight, 100);
+    setTimeout(window.fn_FitGridHeight, 300);
+    // 백업: 0.8초 주기 상시 고정 — 월카드 늦은 렌더·탭 전환 등 어떤 레이아웃 변동이 와도 1초 안에 재맞춤
     setInterval(function(){ try { window.fn_FitGridHeight(); } catch (e) {} }, 800);
 
     console.log("준비완료");
