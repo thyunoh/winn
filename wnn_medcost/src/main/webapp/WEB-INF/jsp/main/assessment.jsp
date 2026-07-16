@@ -2993,6 +2993,17 @@ function fn_ViewData(data) {
     			{ label: '규칙<br>도뇨', class: 'noArrow' }
     		]
     	];
+    	// 관리항목(일정배뇨/방광훈련) 마크 3단계 (2026-07-16 확정):
+    	//   ●   : 해당 항목 체크 + 배뇨일지(DIARY_DAYS) 3일 이상 실시
+    	//   ○   : ① 체크했으나 일수 3일 미만(1~2일 또는 미기재)
+    	//         ② 일수는 기재됐으나 일정배뇨·방광훈련 모두 미체크 (일정배뇨 칸에 표시)
+    	//   공란 : 일수 기재도 없고 체크도 없음 — 아무것도 안 한 환자
+    	var _urDiaryDays = function (row) {
+    		var d = parseInt(row && row.diaryDays, 10);
+    		return isNaN(d) ? 0 : d;
+    	};
+    	var _UR_MARK_FULL = '<span style="color:#000;font-size:16px;">●</span>';
+    	var _UR_MARK_RING = '<span style="display:inline-block;width:11px;height:11px;border:2px solid #000;border-radius:50%;background:#fff;vertical-align:middle;"></span>';
     	columnsSet = [
     					/* No — 화면 표시 순번 (정렬 시에도 보이는 순서대로 1,2,3…) */
     					{ data: null, orderable: false, searchable: false, visible: true, className: 'dt-body-center', width: '34px',
@@ -3066,25 +3077,26 @@ function fn_ViewData(data) {
 			            		return data;
 						    },
 					    },
-					    /* 관리항목 — 일정한 배뇨: UR_PLAN='1' → ● (실시, 검정 채움)
-					       · 분모 대상이나 배뇨관리(①②③) 미실시(planMissYn='X') → ○ (속 빈 원, 옛 배뇨계획 컬럼 통합) */
+					    /* 관리항목 — 일정한 배뇨 (UR_PLAN): 체크+배뇨일지 3일이상 → ● / 체크+3일미만 → ○
+					       · 일정배뇨·방광훈련 모두 미체크인데 일수만 기재된 환자도 이 칸에 ○ (체크 누락 의심 표시 자리) */
 					    { data: 'urPlan',    visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
-			        				// 미실시 판정(planMissYn='X')이 우선 — UR_PLAN='1' 이어도 배뇨일지 3일 미만 등으로
-			        				// 불인정이면 X 라서, ● 분기를 먼저 타면 링이 절대 안 보임(회귀 주의)
-			        				if (row && row.planMissYn === 'X') return '<span style="display:inline-block;width:11px;height:11px;border:2px solid #000;border-radius:50%;background:#fff;vertical-align:middle;"></span>';
-			        				if (data === '1') return '<span style="color:#000;font-size:16px;">●</span>';
+			        				var days = _urDiaryDays(row);
+			        				if (data === '1') return days >= 3 ? _UR_MARK_FULL : _UR_MARK_RING;
+			        				// 둘 다 미체크 + 일수 기재(1일 이상) → ○ / 일수도 없으면 공란(아무것도 안 함)
+			        				if (row && row.bladTrain !== '1' && days >= 1) return _UR_MARK_RING;
 			        				return '';
 			            		}
 			            		return data;
 						    },
 					    },
-					    /* 관리항목 — 방광훈련 (BLAD_TRAIN='1') */
+					    /* 관리항목 — 방광훈련 (BLAD_TRAIN): 체크+배뇨일지 3일이상 → ● / 체크+3일미만 → ○ */
 					    { data: 'bladTrain', visible: true,  className: 'dt-body-center', width: '44px',
 							render: function(data, type, row) {
 			        			if (type === 'display') {
-			        				return data === '1' ? '<span style="color:#000;font-size:16px;">●</span>' : '';
+			        				if (data === '1') return _urDiaryDays(row) >= 3 ? _UR_MARK_FULL : _UR_MARK_RING;
+			        				return '';
 			            		}
 			            		return data;
 						    },

@@ -93,6 +93,7 @@ public class PatvalDTO {
 	private String bladTrain;       // 방광훈련 (BLAD_TRAIN='1')
 	private String regCath;         // 규칙적 도뇨 (REG_CATH='1')
 	private String planMissYn;      // 분모(관리대상)이나 배뇨관리(①②③) 미실시 → 'X'
+	private String diaryDays;       // 배뇨일지 실시 일수 (DIARY_DAYS — 관리항목 ●/○/공란 판정용)
 	
 	private String useYn;           // 사용여부
 	
@@ -155,6 +156,8 @@ public class PatvalDTO {
 	public void setRegCath(String regCath) { this.regCath = regCath; }
 	public String getPlanMissYn() { return planMissYn; }
 	public void setPlanMissYn(String planMissYn) { this.planMissYn = planMissYn; }
+	public String getDiaryDays() { return diaryDays; }
+	public void setDiaryDays(String diaryDays) { this.diaryDays = diaryDays; }
 	public String getUseYn() {
 		return useYn;
 	}

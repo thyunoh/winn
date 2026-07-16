@@ -1484,6 +1484,7 @@
 		     , pm.UR_PLAN                                         AS urPlan
 		     , pm.BLAD_TRAIN                                      AS bladTrain
 		     , pm.REG_CATH                                        AS regCath
+		     , pm.DIARY_DAYS                                      AS diaryDays  <!-- 배뇨일지 실시 일수 (관리항목 ●/○/공란 3단계 판정용) -->
 		     , CASE                                                          <!-- 분모(manageYn='') 대상이지만 배뇨관리(①②③) 미실시 → 'X' -->
 		           WHEN pm.URINE_CTL IN ('2','3')
 		                AND LEFT(COALESCE(pm.PAT_CLASS,'E'),1) NOT IN ('A')                  <!-- 최고도 아님 -->
@@ -3150,7 +3151,7 @@
 			   , C.PAT_CLASS                                       AS patClass
 			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'H2'                                              AS errType
-			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀'에 체크되어있는 경우' AS errName
+			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀 에 체크되어있는 경우' AS errName
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
@@ -4530,7 +4531,7 @@
 			   , C.PAT_CLASS                                       AS patClass
 			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'H2'                                              AS errType
-			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀'에 체크되어있는 경우' AS errName
+			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀 에 체크되어있는 경우' AS errName
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')

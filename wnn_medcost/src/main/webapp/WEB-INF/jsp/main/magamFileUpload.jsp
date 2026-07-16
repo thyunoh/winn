@@ -21,41 +21,55 @@
                         <!-- ============================================================== -->
                         <div class="col-xl-12 col-lg-12">
                         
-                            <div class="card mb-3">
-                                
-	                            <div class="card-header d-flex align-items-center">
-	                                <h3 class="card-header-title">년도</h3>
-	                                <select id="year_Select" class="custom-select ml-left w-auto  ml-2 mr-4">
-	                                </select>
-	                                <h3 class="card-header-title ml-2">구분</h3>
-	                                <select id="file_Select" class="custom-select ml-left w-auto  ml-2 mr-4">
-	                                	<option selected value="1">파일선택</option>
-				                        <option value="2">폴더선택</option>
-	                                </select> 
-	                                <select id="allowedFiles" class="custom-select ml-left w-auto ml-2 mr-4" style="display: none;">	                                	
-	                                </select>
-	                                <select id="specode" class="custom-select ml-left w-auto ml-2 mr-4"      style="display: none;">	                                	
-	                                </select>
-	                                <select id="claimType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">	                                	
-	                                </select>
-	                                <select id="insurType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">	                                	
-	                                </select>
-	                                <select id="treatType" class="custom-select ml-left w-auto ml-2 mr-4"    style="display: none;">
-	                                </select>
-	                                <!-- [신규 방식 상시 적용 2026-07-15] 개선프로그램(월 클릭→청구파일 선택 모달)이 '기본 동작'으로 확정 — 토글 UI 제거.
-	                                     숨김 checked 입력만 유지해 기존 분기(_np.checked)가 항상 신규 방식으로 동작. -->
-	                                 <input type="checkbox" id="samPickNewProg" checked style="display:none;">
-	                                <!-- [모달 진입 방식] '샘파일 자동생성선택 방식' — 현재 미사용: 비활성(disable)·체크 해제 고정 → 수동선택 화면 기본 -->
-	                                 <label id="samPickModeWrap" class="ml-3 mb-0" style="display:none; font-weight:600; color:#9aa5b1;">
-	                                    <input type="checkbox" id="samPickMode" disabled> <i class="fa fa-folder-open mr-1"></i>샘파일 자동생성선택 방식
-	                                </label>
+                            <!-- [2026-07-16] 상단 '년도/구분' 헤더 카드 제거 — 하단 그리드 공간 확보.
+                                 · 년도 셀렉트는 탭 줄 맨 앞에 고정 배치(탭 전환과 무관하게 항상 표시)
+                                 · 구분(파일선택/폴더선택)은 화면에서 삭제 — 단 file_Select 값("1"=파일선택)을
+                                   JS(월 클릭 업로드 fn_DataVerify 등 webkitdirectory 분기)가 읽으므로 숨김으로 유지 -->
+                            <div style="display:none;">
+                                <select id="file_Select">
+                                	<option selected value="1">파일선택</option>
+			                        <option value="2">폴더선택</option>
+                                </select>
+                                <select id="allowedFiles"></select>
+                                <select id="specode"></select>
+                                <select id="claimType"></select>
+                                <select id="insurType"></select>
+                                <select id="treatType"></select>
+                                <!-- [신규 방식 상시 적용 2026-07-15] 개선프로그램(월 클릭→청구파일 선택 모달)이 '기본 동작'으로 확정 — 토글 UI 제거.
+                                     숨김 checked 입력만 유지해 기존 분기(_np.checked)가 항상 신규 방식으로 동작. -->
+                                <input type="checkbox" id="samPickNewProg" checked>
+                                <!-- [모달 진입 방식] '샘파일 자동생성선택 방식' — 현재 미사용: 비활성(disable)·체크 해제 고정 → 수동선택 화면 기본 -->
+                                <label id="samPickModeWrap" class="mb-0">
+                                    <input type="checkbox" id="samPickMode" disabled> 샘파일 자동생성선택 방식
+                                </label>
+                            </div>
 
-	                            </div>
-	                        </div>
-	                        
-		                        
-                            <div class="tab-regular mb-3">
+                            <!-- [2026-07-16] 월 카드 영역 상하 여백 축소 — 테마 기본 .tab-content padding 30px → 상하 6/2px.
+                                 하단 여백은 month-card 자체 mb 로 최소만 유지. (이 페이지 한정 오버라이드) -->
+                            <style>
+                                #mg_FlagTabContent { padding: 13px 12px 12px 12px; }
+                                #months-container .month-card { margin-bottom: 6px !important; }
+                                /* 월 카드 높이 = 자기 버튼 개수만큼 (2026-07-16 사용자 확정: 빈 예약공간 없이 버튼에 맞게).
+                                   4버튼 달은 짧게, 5버튼(🔓열림·잠김) 달만 길게 — 영역 전체 높이는 가장 긴 카드가 결정하므로
+                                   하단 안내문·그리드 위치는 마감 여부와 무관하게 5버튼 기준으로 유지됨 */
+                                /* 하단 그리드 스크롤영역 — 데이터 양과 무관하게 항상 화면 바닥 근처까지 확장.
+                                   DataTables가 인라인으로 심는 height/max-height를 !important 로 덮어씀
+                                   (.dataTables_scrollBody=DT1.x / .dt-scroll-body=DT2.x 둘 다 대응. 모달 내 다른 테이블 영향 없게 #tableName_wrapper 로 한정) */
+                                #tableName_wrapper div.dataTables_scrollBody,
+                                #tableName_wrapper div.dt-scroll-body {
+                                    height: max(350px, calc(100vh - 368px)) !important;
+                                    max-height: none !important;
+                                }
+                                /* 그리드 카드가 화면 바닥까지 밀착되도록 페이지 하단 패딩 제거 (이 화면 한정) */
+                                .container-fluid.dashboard-content { padding-bottom: 0 !important; }
+                                .dashboard-wrapper, .dashboard-ecommerce { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+                            </style>
+                            <div class="tab-regular mb-2">
 							    <ul class="nav nav-tabs" id="mg_FlagTab" role="tablist">
+							        <li class="nav-item d-flex align-items-center mr-3">
+							            <h3 class="card-header-title mb-0 mr-2">년도</h3>
+							            <select id="year_Select" class="custom-select w-auto"></select>
+							        </li>
 							        <li class="nav-item">
 							            <a class="nav-link active" id="c-tab" data-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="true" data-type="8" >청구샘파일</a>
 							        </li>
@@ -89,28 +103,15 @@
                 <div class="row">
                      
                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                         <div class="card">
+                         <div class="card mb-0">
                              <strong class="card-header" style="color: #8b0000; font-weight: bold;">
                              	청구서 자료등록 시 청구번호가 일치하면 기존자료는 삭제되고, 현재 등록하신 자료로 신규생성 됩니다. ( 마감, 예상시간은 네트워크 또는 서버상태에 따라 차이가 날 수 있습니다. )    평가서 자료등록 시 모든자료는 신규생성 됩니다.<br>
                              	입원현황 업로드 시 입원환자의 주민번호 앞 6자리가 부재할 경우 부재할 경우‘진료비 분석 청구 누락 대상자’ 및 ‘적정성평가 대상자 확인’의 정확도가 낮아질 수 있습니다. 
                              </strong>
-                             <div class="card-body">
-                             	 <div class="form-row mb-2">
-	                                <input type="file" id="folderInput" multiple style="display: none;">
-	                                
-                                     
-                                    <div class="col-sm-6">                                    
-                                         <div class="btn-group ml-auto">
-                                         	<!-- 
-                                            <button id= "selectFolderBtn" class="btn btn-outline-danger  mr-2">폴더선택.</button>
-                                            <button class="btn btn-outline-danger  mr-2" data-toggle="tooltip" data-placement="top" title="체크된 자료 Delete" onClick="fn_checked_del()">선택삭제. <i class="far fa-calendar-check"></i></button>
-                                            <button class="btn btn-outline-success mr-2" data-toggle="tooltip" data-placement="top" title="등록된 자료 Upload" onClick="fn_file_upload()">서버전송. <i class="fas fa-cloud-upload-alt"></i></button>
-                                            -->
-                                        </div>
-                                    </div> 
-                                    
-                                                                       
-                                 </div>
+                             <!-- [2026-07-16] 그리드 위 여백 축소 — card-body 상단 padding 축소 + 빈 form-row(주석 버튼만 있던 줄) 제거.
+                                  folderInput(숨김)은 JS가 사용하므로 유지 -->
+                             <div class="card-body" style="padding-top:6px;">
+                             	 <input type="file" id="folderInput" multiple style="display: none;">
                                  
                                  <!--  
                                  <div class="loading" style="display:none;">진행중</div>
@@ -447,8 +448,10 @@
 	var gridColums = [];
 	var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 	var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-	var page_Hight = 400;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
-	var p_Collapse = true;  		// Page 길이까지 auto size - scrollCollapse
+	var page_Hight = 'max(350px, calc(100vh - 368px))';	// scrollY — 화면(뷰포트) 높이 기준 자동: 그리드를 화면 바닥까지 확장 (2026-07-16).
+									//   395px = 그리드 위 콘텐츠(년도탭+월카드 5버튼 기준+안내문+그리드헤더) + 아래(여백+하단바) 합 — 마감월(🔓열림) 화면 실측으로 보정.
+									//   <style>의 CSS 강제값과 함께 조정할 것. 작은 화면에서도 최소 350px 보장. 바닥이 넘치면 값을 올리고, 남으면 내릴 것.
+	var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse (2026-07-16 false: 데이터가 적어도 그리드 영역을 항상 scrollY 높이로 유지 — 하단 빈 회색띠 제거)
 	
 	var datWaiting = true;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
 	var page_Navig = false;   		// 페이지 네비게이션 표시여부 
@@ -664,13 +667,56 @@ $(document).ready(function() {
     });
 
     find_Check();
-    
+
     comm_Check();
-    
+
+    // [2026-07-16] 하단 그리드 높이 = 실측 자동 맞춤 — 그리드 스크롤영역의 실제 화면 위치(top)를 재서
+    //   창 바닥(하단바 제외)까지 정확히 채움. 고정 calc() 방식은 윈도우 배율/줌에 따라 어긋나서 교체.
+    //   draw.dt(그리드 다시 그릴 때마다)·resize 에서 재계산. GRID_BOTTOM_RESERVE = 스크롤영역 아래 여백+하단바 높이.
+    window.GRID_BOTTOM_RESERVE = 40;   // 그리드 카드 바깥 아래 여백 — 하단 고정바(질문등록 바) 위에 살짝 여유를 둔 최종값 (2026-07-16 사용자 확정 라인)
+    window._gridFitLastH = 0;
+    window.fn_FitGridHeight = function() {
+        var b = document.querySelector('#tableName_wrapper .dataTables_scrollBody, #tableName_wrapper .dt-scroll-body');
+        if (!b) return;
+        var r = b.getBoundingClientRect();
+        var card = b.closest ? b.closest('.card') : null;
+        // 스크롤영역 아래 ~ 카드 바닥까지의 높이(건수표시줄·padding)는 **최초 1회만** 측정해 고정.
+        // 매번 재측정하면 아래에서 카드 min-height를 키운 것이 inner로 되measure되어
+        // 스크롤영역이 최소값까지 쪼그라드는 순환 발생(영역만 크고 데이터는 4줄+스크롤 증상)
+        if (window._gridFitInner == null) {
+            window._gridFitInner = card ? Math.max(0, card.getBoundingClientRect().bottom - r.bottom) : 30;
+        }
+        var inner = window._gridFitInner;
+        // [v5] 문서 기준 top(= 화면기준 + 스크롤량) 사용 — 화면기준(r.top)만 쓰면 사용자가 스크롤할 때마다
+        // 그리드가 계속 자라는 피드백 루프 발생(스크롤↓ → top↓ → h↑ → 페이지 길어짐 → 더 스크롤 가능 → 반복)
+        var layoutTop = r.top + (window.pageYOffset || document.documentElement.scrollTop || 0);
+        var h = Math.round(window.innerHeight - layoutTop - inner - window.GRID_BOTTOM_RESERVE);
+        if (h < 150) h = 150;
+        // 실제 현재 높이와 비교 — DataTables 재그리기가 높이를 되돌려놔도 다음 틱에 다시 적용됨.
+        // (v3의 '목표값끼리 비교' 방식은 되돌려진 걸 감지 못해 한 번 밀리면 계속 밀리는 버그)
+        var prevH = b.offsetHeight;
+        if (Math.abs(h - prevH) < 4) return;
+        b.style.setProperty('height', h + 'px', 'important');
+        b.style.setProperty('max-height', 'none', 'important');
+        // 스크롤영역은 배경이 투명이라, 부모 카드 흰 배경이 못 따라오면 회색으로 보임 → 흰 배경 직접 지정
+        b.style.setProperty('background', '#fff', 'important');
+        // 카드가 커진 스크롤영역을 못 감싸고 위에서 끝나는 경우(모서리 그림자가 중간에 보임) → 카드 높이도 맞춤
+        if (card) {
+            var cr = card.getBoundingClientRect();
+            var need = Math.round((r.top - cr.top) + h + inner);   // 카드 상단~스크롤영역 오프셋 + 새 높이 + 하단 내부여백
+            card.style.setProperty('min-height', need + 'px', 'important');
+        }
+        console.log('[gridFit v5] innerH=' + window.innerHeight + ' layoutTop=' + Math.round(layoutTop) + ' inner=' + Math.round(inner) + ' h=' + h + ' (이전실제=' + prevH + ')');
+    };
+    $(window).on('resize', function(){ window.fn_FitGridHeight(); });
+    // 이벤트 추적 대신 0.8초 주기로 상시 고정 — 월카드 늦은 렌더·탭 전환·DataTables 재그리기 등
+    // 어떤 레이아웃 변동이 와도 1초 안에 다시 바닥에 맞음 (측정 비용 미미)
+    setInterval(function(){ try { window.fn_FitGridHeight(); } catch (e) {} }, 800);
+
     console.log("준비완료");
 
 });
-</script> 
+</script>
 
 <!-- ============================================================== -->
 <!-- DataTable 설정 Start -->

@@ -9,6 +9,26 @@
 
 ## 장애/수정 이력
 
+### [완료] 마감업로드(magamFileUpload.jsp) 상단 년도/구분 카드 제거 — 그리드 공간 확보 (2026-07-16)
+- **요청**: 년도 셀렉트를 탭(청구샘파일/환자평가표) 줄 맨 앞에 고정 배치, 의미 없는 "구분: 파일선택/폴더선택" 삭제, 상단 카드 공간 제거로 전체를 위로 올려 하단 그리드 공간 확보.
+- **조치**: 상단 `card-header` 카드 삭제 → `year_Select`는 `#mg_FlagTab` ul 첫 li로 이동(탭 전환 무관 상시 표시). **`file_Select`는 삭제 아닌 숨김 유지** — JS 2곳(월 클릭 업로드·fn_DataVerify)이 값("2"=폴더선택→webkitdirectory) 분기를 읽음, 숨김 기본값 "1"=파일선택 고정. 기타 숨김 셀렉트(allowedFiles/specode/claimType/insurType/treatType)·samPickNewProg·samPickModeWrap도 숨김 컨테이너로 이동(전부 id 참조라 무영향).
+- **추가 (월카드 영역 여백 축소)**: 테마 `.tab-regular .tab-content`의 기본 padding 30px가 월카드 위아래 큰 공백의 원인 → 페이지 한정 `<style>`로 `#mg_FlagTabContent{padding:13px 12px 12px}` + month-card `mb 6px` 오버라이드, tab-regular `mb-3→mb-2`. 하단 그리드 `page_Hight` 400→525, 그리드 카드에 `mb-3`.
+- **월카드 높이 = 버튼 개수대로 (사용자 확정)**: 마감완료 월은 버튼 5개(등록/보기/입원현황/수가/🔓열림·잠김), 미마감 월은 4개. min-height/height:100% 통일안을 시도했으나 **사용자가 "버튼에 맞게" 선택 → 카드별 자연 높이**(4버튼 달은 짧게 끝남, 바닥선 불일치 허용). 영역 전체 높이는 가장 긴 카드가 결정. **높이 통일(min-height) 재요청 시 이 확정 먼저 확인.**
+- **하단 그리드 = 실측 자동 맞춤 (v5 최종, 시행착오 3개 기록)**: `window.fn_FitGridHeight()` = `innerHeight - layoutTop(문서기준!) - 카드내부여백(실측) - GRID_BOTTOM_RESERVE(12)` 를 scrollBody에 inline !important 적용, **0.8초 setInterval 상시 고정**. `p_Collapse=false`, 그리드 카드 mb-0, dashboard-content padding-bottom 0.
+  - **[함정1] 고정 calc() 오프셋 방식 폐기** — 윈도우 배율/브라우저 줌마다 어긋남.
+  - **[함정2] top은 반드시 문서기준(r.top+scrollY)** — 화면기준(r.top)만 쓰면 스크롤 시 그리드가 계속 자라는 자가증식 루프(v4까지의 버그).
+  - **[함정3] 재적용 스킵 가드는 실제 offsetHeight와 비교** — '직전 목표값'과 비교하면 DataTables 재그리기가 높이를 되돌려도 영원히 스킵(v3 버그).
+  - 진단: 콘솔 `[gridFit v5]` 로그 잔존(의도적). 바닥 여백은 GRID_BOTTOM_RESERVE 하나로 조정.
+- **[함정] 이 화면 콘솔 소스가 dashboard.do 로 찍힘**: 자료올리기 화면인데 콘솔 준비완료/오류가 dashboard.do:NNNN 으로 표시됨(JSP 수정 시 줄번호만 이동). 반영 여부는 준비완료 줄번호 변화나 `[gridFit]` 로그로 판별.
+- **배포**: JSP만 변경 — WAR 재빌드 불필요(파일 교체로 가능), 다음 배포에 포함.
+
+### [완료] 06.배뇨관리 관리항목 마크 3단계(●/○/공란) — DIARY_DAYS 연계 (2026-07-16)
+- **요청**: 관리항목(일정배뇨/방광훈련) 표시를 3가지로 — **●**=체크+배뇨일지 3일이상(분자 인정), **○**=①체크했으나 일수 3일미만(1~2일·미기재) ②일수는 기재됐으나 둘 다 미체크(체크누락 의심, 일정배뇨 칸에 표시), **공란**=일수도 없고 체크도 없음(아무것도 안 한 환자). 기존엔 분모-비분자 전원이 ○(planMissYn='X' 링)라 "아무것도 안 한 사람"과 "부분 실시"가 구분 안 됐음.
+- **조치**: Magam_SQL.xml `select_CategoryList06`에 `pm.DIARY_DAYS AS diaryDays` 추가 · PatvalDTO `diaryDays` 필드 추가 · assessment.jsp 06블록에 `_urDiaryDays()/_UR_MARK_FULL/_UR_MARK_RING` 헬퍼 신설, urPlan/bladTrain 렌더를 일수 기반 3단계로 교체(**planMissYn 링 로직 제거** — JSP 미참조, SQL의 planMissYn 계산은 잔존·무해). 규칙도뇨(regCath)는 일수 요건 없어 기존 ● 유지.
+- **엣지 판정**: 체크+일수 미기재(0) → ○(공란 아님 — 공란은 "미체크+일수없음"만) · 미체크+일수 1~2일 → ○(일수 기재가 있으므로 공란 제외).
+- **배포**: 자바(DTO)+XML 변경 → **WAR 재빌드 필수**.
+- **관련파일**: Magam_SQL.xml(select_CategoryList06), PatvalDTO.java(diaryDays), assessment.jsp(cate_cd '06' 블록)
+
 ### [완료] 월보고서(report.jsp) 목표점수·목표등급 = 차등제(TBL_GRADE_MST) 연계 (2026-07-14)
 - **배경**: 월보고서 표지의 "목표등급 3등급 (78점)"이 HTML 하드코딩 고정값이라, 실제 병원 목표(차등제 등록 화면 `TBL_GRADE_MST`)와 따로 놀았음. 청암요양병원처럼 실제 목표가 1등급/88점인데도 보고서는 3등급/78로 오표시.
 - **소스**: `TBL_GRADE_MST` (병원+년도+분기별). `GOAL_SCORE`=목표점수(88), `HOSPGRADE`=병원등급(1). 저장/조회는 User_SQL.xml `saveHospGrd`/`selHospGrdList`, assessment.jsp 차등제 폼.
