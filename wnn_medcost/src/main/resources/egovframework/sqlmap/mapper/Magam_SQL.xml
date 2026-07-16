@@ -3150,7 +3150,7 @@
 			   , C.PAT_CLASS                                       AS patClass
 			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'H2'                                              AS errType
-			   , '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)' AS errName
+			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀'에 체크되어있는 경우' AS errName
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
@@ -4530,7 +4530,7 @@
 			   , C.PAT_CLASS                                       AS patClass
 			   , C.INDWELL_CATH                                    AS indwellCath
 			   , 'H2'                                              AS errType
-			   , '배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)' AS errName
+			   , '배변 조절상태- 조절 가능 / 소변 조절 상태 - 조절 가능에 체크 되어있으나 패드, 팬티형 기저귀'에 체크되어있는 경우' AS errName
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
