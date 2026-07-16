@@ -1025,7 +1025,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       '<tr><td class="er-l">구조영역 (30)</td><td class="er-num">'+f1(scores.struct)+'</td><td class="er-num'+(upStruct>0.0001?' er-b-good':'')+'">'+f1(scores.struct+upStruct)+'</td></tr>'
      +'<tr><td class="er-l">진료영역 (70)</td><td class="er-num">'+f1(scores.care)+'</td><td class="er-num'+(upCare>0.0001?' er-b-good':'')+'">'+f1(scores.care+upCare)+'</td></tr>'
      +'<tr class="er-tot"><td class="er-l">종합 (100)</td><td class="er-num">'+f1(scores.total)+'</td><td class="er-b-good er-num">'+f1(after)+'</td></tr>'
-     +'<tr class="er-sub"><td class="er-l">등급</td><td class="er-b-bad">'+gradeOf(scores.total)+'</td><td class="er-b-good">'+gradeOf(after)+'</td></tr>';
+     +'<tr class="er-sub"><td class="er-l">등급</td><td class="er-b-bad">'+gradeOf(scores.total)+'</td><td class="'+(parseInt(gradeOf(after),10)<parseInt(gradeOf(scores.total),10)?'er-b-good':'')+'">'+gradeOf(after)+'</td></tr>';
   }
 
   // 저장된 편집 문구 키 — 자동 문구(핵심진단·비고 등)는 override 가 없을 때만 채움
