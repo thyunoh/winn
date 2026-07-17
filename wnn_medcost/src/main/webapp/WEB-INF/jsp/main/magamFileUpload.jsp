@@ -66,7 +66,7 @@
                             </style>
                             <div class="tab-regular mb-2">
 							    <ul class="nav nav-tabs" id="mg_FlagTab" role="tablist">
-							        <li class="nav-item d-flex align-items-center mr-3">
+							        <li class="nav-item d-flex align-items-center mr-4">
 							            <h3 class="card-header-title mb-0 mr-2">년도</h3>
 							            <select id="year_Select" class="custom-select w-auto"></select>
 							        </li>
