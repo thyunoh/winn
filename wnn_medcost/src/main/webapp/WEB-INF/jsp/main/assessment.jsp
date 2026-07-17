@@ -78,8 +78,7 @@
 										    })();
 										</script>
 										<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
-
-																							        
+																						        
 										<!-- 지표 테이블 -->
 								        <table id="indicatorTable" class="display nowrap stripe hover cell-border order-column responsive">
 
