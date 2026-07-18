@@ -58,6 +58,12 @@
   #evalReport .er-group{ display:inline-flex; align-items:center; gap:7px; }
   #evalReport .er-searchbox{ display:inline-flex; align-items:center; gap:6px; padding:4px 6px 4px 8px; background:var(--er-navytint); border:1px solid #d5e4f6; border-radius:9px; }
   #evalReport .er-divider{ width:1px; align-self:stretch; min-height:22px; background:#c7d3e2; margin:0 3px; }
+  /* 서식 툴바 — 편집 모드에서만 표시. 선택한 글자에 굵게/밑줄/크기/색/형광 적용(본문 강조용, 양식·테마는 불변) */
+  #evalReport .er-fmtbar{ display:none; align-items:center; gap:4px; }
+  #evalReport.er-editmode .er-fmtbar{ display:inline-flex; }
+  #evalReport .er-fmtbar .er-fbtn{ font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; padding:5px 9px;
+    border-radius:6px; border:1px solid var(--er-line); background:#fff; color:var(--er-soft); line-height:1; }
+  #evalReport .er-fmtbar .er-fbtn:hover{ border-color:var(--er-navy2); background:var(--er-line2); }
 
   #evalReport .er-notice{ max-width:880px; margin:16px auto 0; padding:12px 16px; border-radius:10px; background:var(--er-navytint);
     border:1px solid #cfe0f4; color:var(--er-navy); font-size:12.5px; line-height:1.6; }
@@ -300,6 +306,20 @@
       <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()">📎 PDF 첨부</button>
       <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;">👁 PDF 보기</a>
     </span>
+    <!-- 서식 툴(편집 모드 전용) — 문구를 드래그로 선택한 뒤 클릭. mousedown 취소로 선택 유지 -->
+    <span class="er-fmtbar" id="er-fmtbar" title="문구를 드래그로 선택한 뒤 누르세요">
+      <span class="er-divider"></span>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('bold')" title="굵게"><b>가</b></button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('underline')" title="밑줄"><u>가</u></button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('size','4')" title="글자 크게">가＋</button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('size','2')" title="글자 작게">가−</button>
+      <button class="er-fbtn" style="color:#c0392b" onmousedown="event.preventDefault()" onclick="erFmt('color','#c0392b')" title="빨강">가</button>
+      <button class="er-fbtn" style="color:#2a5298" onmousedown="event.preventDefault()" onclick="erFmt('color','#2a5298')" title="파랑(네이비)">가</button>
+      <button class="er-fbtn" style="color:#2e7d32" onmousedown="event.preventDefault()" onclick="erFmt('color','#2e7d32')" title="초록">가</button>
+      <button class="er-fbtn" style="color:#1a2332" onmousedown="event.preventDefault()" onclick="erFmt('color','#1a2332')" title="검정(기본색)">가</button>
+      <button class="er-fbtn" style="background:#fff3b0" onmousedown="event.preventDefault()" onclick="erFmt('hilite','#fff3b0')" title="형광(노랑)">형광</button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('clear')" title="선택 부분의 굵게·색·형광·크기 제거">지우기</button>
+    </span>
     <span class="er-divider"></span>
     <!-- 글자 크기(문서 배율) — 가운데 % 클릭 시 100% 복원. localStorage 저장(다음 진입 유지), 인쇄에도 반영 -->
     <button class="er-btn" onclick="erZoom(-1)" title="글자 작게">가−</button>
@@ -505,6 +525,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   var editing = false, approved = false, curYm = '', pdfPath = '';
   var indicators = [], scores = { struct:0, care:0, total:0 };
+  var prevTotal = null;   // 전월 종합점수 — 총평 P1 전월대비용 (7월=새 평가기간 시작·자료 없음이면 null)
+  function prevYmOf(ym){ var y=+ym.substring(0,4), m=+ym.substring(4,6)-1; if(m<1){ m=12; y--; } return String(y)+('0'+m).slice(-2); }
 
   function el(id){ return document.getElementById(id); }   // 주의: jQuery $ 를 가리지 않도록 el 사용
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -528,7 +550,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '03':'간호사+간호조무사 등 간호인력 기준 1인당 환자수. 값이 작을수록 우수(3명 미만 = 5구간).',
     '04':'평가대상기간 중 약사 재직일수 비율(100% = 5구간).',
     '05':'유치도뇨관(Foley)을 보유한 환자 비율. 값이 낮을수록 우수(0.5% 미만 = 5구간).',
-    '06':'배뇨장애·유치도뇨관 대상 환자에 대한 배뇨관리(일정한 배뇨/방광훈련/규칙적 도뇨) 실시 비율.',
+    '06':'배뇨조절 저하(자주 실금·조절 못함) 환자 중 배뇨관리를 실시한 환자 비율(2026년 2주기 8차 신설). 분자 인정 = ①일정하게 짜여진 배뇨계획+배뇨일지 3일 이상 ②방광훈련프로그램+배뇨일지 3일 이상 ③규칙적 도뇨 중 하나 이상(의료최고도·배뇨관련 루 관리 등 제외).',
     '07':'항정신성의약품 처방 정도(PI, 0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용입니다.',
     '08':'매월 심사평가원의 DUR 점검 현황을 확인하여 누락 대상자 관리가 필요하며 점검 결과에 따라 추후 결과 발표 시 점수차가 발생할 수 있음. 확인경로: 요양기관업무포털(biz.hira.or.kr) > 모니터링 > DUR정보 > 기관별 DUR 점검완료현황.',
     '09':'1단계 이상 욕창 보유 환자 중 당일 피부문제 처치를 실시한 환자 비율. (처치 = 압력 줄이는 도구 사용·체위변경·욕창 해결 위한 영양 공급·욕창부위 드레싱 등 4가지 중 수행 시 해당)',
@@ -544,7 +566,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '01':'의사 인력 충원이 필요한 구조 항목으로, 우선 의사 재직·근무일수 산정 정확성을 점검.',
     '03':'간호인력 충원 및 근무일수 산정 정확성 점검.',
     '05':'불필요 유지 여부 정기 검토·조기 제거, 간헐적 도뇨(CIC) 전환. 제거 시 제거일자를 평가표에 정확히 입력(누락 시 계속 보유로 집계).',
-    '06':'대상 환자별 배뇨관리 계획 수립 후 평가표의 배뇨관리 항목(일정한 배뇨·방광훈련·규칙적 도뇨)을 체크·기록. 실제 시행 대비 기록 누락 여부 우선 점검.',
+    '06':'배뇨일지를 작성했어도 배뇨관리계획(일정하게 짜여진 배뇨계획·방광훈련프로그램) 항목 미체크 시 분자에서 누락되므로 평가표 작성기준 우선 재점검. 배뇨일지 7일 미만 작성 시 \'아니오\' 체크 후 실제 작성일수 기재, 배뇨일지에는 실시일자·요실금 여부·배뇨횟수(또는 배뇨량, mL)를 반드시 포함하고 의사·간호기록과 일치하도록 관리.',
     '11':'욕창 발생 환자의 주차별 창상 사정(PUSH tool 등)·호전 여부를 평가표에 반드시 기록. 실제 처치·드레싱은 이뤄지나 개선 기록 누락으로 낮게 산정되는 경우가 많으므로 기록 관리가 핵심.',
     '12':'재활·기능회복 대상 환자의 입원 초기 ADL과 재평가 ADL을 동일 기준으로 기록하여 호전 건 반영. 물리치료·작업치료 실적과 평가표 연동 점검.',
     '14':'퇴원계획 수립·지역연계(재가·시설) 강화로 장기입원 비중 관리.',
@@ -912,16 +934,40 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(editing) toast('편집 모드: 파란 영역의 문구를 직접 고칠 수 있습니다.');
   };
 
+  // ===== 서식 툴 (편집 모드 전용) — 선택한 글자에 굵게/밑줄/크기/색/형광. execCommand 기반(구형 브라우저 호환).
+  //   결과는 편집영역 innerHTML 에 인라인으로 남아 저장(override)·재조회·인쇄·거래처 열람에 그대로 반영됨.
+  //   편집영역(.er-editable) 밖은 contentEditable 이 아니라서 눌러도 아무 일 없음(양식·표 구조 불변).
+  window.erFmt = function(cmd, val){
+    if(!editing){ toast('편집 켜기 후, 문구를 드래그로 선택하고 누르세요.'); return; }
+    try{ document.execCommand('styleWithCSS', false, true); }catch(e){}   // <font> 대신 span style 로
+    if(cmd==='bold')           document.execCommand('bold');
+    else if(cmd==='underline') document.execCommand('underline');
+    else if(cmd==='size')      document.execCommand('fontSize', false, val);
+    else if(cmd==='color')     document.execCommand('foreColor', false, val);
+    else if(cmd==='hilite'){   if(!document.execCommand('hiliteColor', false, val)) document.execCommand('backColor', false, val); }
+    else if(cmd==='clear')     document.execCommand('removeFormat');
+  };
+
   // ===== 조회: 지표 자료 + 5점구간 기준(적정성 화면과 동일 소스) 동시 로드 → 렌더 → 저장문구 로드 =====
   window.erLoad = function(){
     curYm = el('er-year').value + el('er-month').value;
     if(!hospCd){ toast('로그인 병원 정보가 없습니다.'); return; }
     var aIndi = jQuery.ajax({ url: ctx+'/main/select_Eval_Indi.do',     type:'POST', dataType:'json', data:{ hosp_cd:hospCd, jobyymm:curYm } });
     var aCrit = jQuery.ajax({ url: ctx+'/main/select_ScoreCriteria.do', type:'POST', dataType:'json', data:{ jobyymm:curYm } });
-    jQuery.when(aIndi, aCrit).done(function(r1, r2){
+    // 전월 지표(총평 P1 전월대비) — 7월은 새 평가기간 시작이라 생략. 조회 실패는 null 로 흡수(본 조회에 영향 없음)
+    var aPrev = (curYm.substring(4,6)==='07')
+        ? jQuery.Deferred().resolve(null).promise()
+        : jQuery.ajax({ url: ctx+'/main/select_Eval_Indi.do', type:'POST', dataType:'json',
+                        data:{ hosp_cd:hospCd, jobyymm:prevYmOf(curYm) } })
+            .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+    jQuery.when(aIndi, aCrit, aPrev).done(function(r1, r2, r3){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
       buildCriteria(r2[0]);
+      prevTotal = null;
+      var pd = (r3 && r3.data) || [], pt = 0, pHas = false;
+      pd.forEach(function(r){ if(r.cate_cd!=='99'){ pt += n(r.weigval); if(n(r.weigval)>0) pHas = true; } });
+      if(pHas) prevTotal = Math.round(pt*10)/10;
       renderAll();
       loadSavedTexts();
     }).fail(function(){ toast('지표 자료 조회 중 오류가 발생했습니다.'); });
@@ -1077,6 +1123,69 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   문체 확정(2026-07-15 사용자): 구어체("~합니다"), 수치는 핵심(총점·등급·부족분·상승폭)만 간단히.
   //   병원별 편집 저장분(savedKeys)이 있으면 해당 문단은 건드리지 않음. TPL(sum_p1~p5, USE_YN='Y')이
   //   있으면 applyTpls 가 이 초안을 덮음 — 기본 시드는 USE_YN='N'(자동 초안 우선).
+  // ===== 개선 시뮬레이션 (담당자 수기 간판 문형) — "N명 추가 개선 시 %→표준화±1→가중치→종합 +Δ" =====
+  //   근거: docs/reports/담당자_수기_세밀분석 §2. 화면값(s_score·dtorval·ntorval·stdweig·CRIT_ALL)만으로 조립.
+  var IS_LOWER = {'01':1,'02':1,'03':1,'05':1,'07':1,'10':1,'14':1};   // 값이 낮을수록 우수(assessment LOWER_IS_BETTER)
+  function simStep(r){
+    var cd=r.cate_cd, w=n(r.stdweig), got=n(r.weigval), s=n(r.s_score)||0, dtor=n(r.dtorval), ntor=n(r.ntorval);
+    if(!(s>0 && s<5)) return null;                       // 미산정·이미 5점이면 시나리오 없음
+    var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s+1) band=z; });
+    if(!band) return null;
+    var dW=w/5, d={ nz:s+1, dW:dW, got:got, newGot:got+dW };
+    // 인원 환산은 '결과지표(높을수록 우수)·환자수 분모'만 — 담당자 수기가 명단위 시뮬레이션을 쓰는 범위.
+    //   낮을수록 우수(장기입원·유치도뇨관 등)는 '분모 제외/제거기록' 등 다른 서술이라 명-감소 문장 생략(일반 +Δ절만).
+    if(UNIT_PERSON.indexOf(cd)<0 && NOT_HEADCOUNT.indexOf(cd)<0 && dtor>0 && !IS_LOWER[cd]){
+      var reqN=Math.ceil(band.start*dtor/100), need=reqN-ntor;
+      if(need>0){ d.need=need; d.dir='개선'; d.newPct=fnum(Math.round(reqN/dtor*1000)/10); }
+    }
+    return d;
+  }
+  // 목표 표준화 tz 도달에 필요한 추가 개선 명수·도달선(%) — 결과지표(높을수록 우수)·환자수 분모만.
+  //   담당자 2단계 나열형("4점 = 3명 추가(총 9명, 47.37%), 5점 = 6명 추가(총 12명, 63.16%)") 재현용.
+  function simNeed(r, tz){
+    var cd=r.cate_cd, dtor=n(r.dtorval), ntor=n(r.ntorval);
+    if(UNIT_PERSON.indexOf(cd)>=0 || NOT_HEADCOUNT.indexOf(cd)>=0 || !(dtor>0) || IS_LOWER[cd]) return null;
+    var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===tz) band=z; });
+    if(!band) return null;
+    var reqN=Math.ceil(band.start*dtor/100), need=reqN-ntor;
+    if(need<=0) return null;
+    return { need:need, total:reqN, pct:fnum(Math.round(reqN/dtor*10000)/100) };   // 담당자 표기처럼 소수 2자리(47.37%)
+  }
+
+  // 총평·권고 삽입용 완결절(경어체, 앞에 지표명·문맥을 붙여 사용)
+  function simTail(r){
+    var d=simStep(r); if(!d) return null;
+    if(d.need) return d.need+'명 추가 '+d.dir+' 시 '+d.newPct+'%로 표준화 '+d.nz+'점·가중치 '+f1(d.newGot)+'점으로 종합점수가 약 +'+f1(d.dW)+'점 상승할 수 있습니다';
+    return '표준화 '+d.nz+'점 진입 시 가중치 '+f1(d.newGot)+'점으로 종합점수가 약 +'+f1(d.dW)+'점 상승할 수 있습니다';
+  }
+
+  // P2 구조영역 커트라인 경고 — 현황값이 현재 표준화 구간 경계에 근접한 구조지표(하위 구간 하락 리스크)를
+  //   1개 골라(경계 비율 최소) 담당자 문형으로: "30명 초과 시 표준화 3점(가중치 −1.7점) 하락" (가이드 §3-P2)
+  function structRiskTxt(){
+    var best=null;
+    indicators.forEach(function(r){
+      if(r.cate_fg!=='10') return;
+      var cd=r.cate_cd, s=n(r.s_score)||0, w=n(r.stdweig), val=n(r.cal_val);
+      if(s<=1) return;
+      var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s) band=z; });
+      if(!band || band.end===band.start) return;   // 단일값 구간(약사 100%=5점 등)은 상시 경계라 경고 제외
+      var width=Math.abs(band.end-band.start)||1;
+      var margin=(cd==='04') ? (val-band.start) : (band.end-val);   // 04(높을수록 우수)만 하한, 1인당 지표는 상한이 리스크
+      if(margin<0) margin=0;
+      var th=(UNIT_PERSON.indexOf(cd)>=0) ? 1 : 3;   // 절대 기준: 1인당 지표 1명 / % 지표 3%p 이내 (담당자 사례 29.13 vs 30명)
+      if(margin<=th){
+        var cand={ nm:r.cate_nm, val:val, s:s, band:band, loss:w/5, cd:cd, ratio:margin/width };
+        if(!best || cand.ratio<best.ratio) best=cand;
+      }
+    });
+    if(!best) return '';
+    var u=unitOf(best.cd);
+    var edge=(best.cd==='04') ? fnum(best.band.start)+u+' 미만' : fnum(best.band.end)+u+' 초과';
+    var uJosa=(u==='명') ? '으로' : '로';
+    return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+fnum(best.band.end)+u+') 경계에 근접해 있어, '
+         + edge+' 시 표준화 '+(best.s-1)+'점(가중치 −'+f1(best.loss)+'점)으로 하락할 수 있으므로 재원환자 수 추이에 맞춘 인력 관리가 필요합니다.';
+  }
+
   function renderSummary(){
     if(!indicators.length) return;
     var gs=goalScoreVal(), gg=goalGradeVal(), gap=Math.round((gs-scores.total)*10)/10;
@@ -1085,16 +1194,38 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
                           .map(function(r){ return r.cate_nm; });
     var tops = topGaps(2);
     var p = {};
-    p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+gradeOf(scores.total)+'에 해당합니다. '
-             + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황입니다.'
-                      : '목표인 '+gg+'('+fnum(gs)+'점)를 달성한 수준으로, 남은 기간 동안 유지 관리가 중요합니다.');
-    p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다. 실제 점수는 차등제 신고 결과가 합산되어 확정되므로, 재원환자 수와 인력 추이가 변동되지 않도록 꾸준히 관리해 주시기 바랍니다.';
+    // P1 국면 분기 — 선언 + 전월대비(상승/하락/유지) + 상위등급 격차(경계 국면) + 목표 문장
+    //   (담당자 문형: "전월대비 종합점수 4.56점 상승이 되었으며, 3등급과 점수차이는 0.14점")
+    var curG = gradeOf(scores.total);
+    p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당합니다.';
+    if(prevTotal!=null){
+      var pd = Math.round((scores.total-prevTotal)*100)/100;
+      if(Math.abs(pd)>=0.05)
+        p.sum_p1 += ' 전월('+fnum(prevTotal)+'점) 대비 종합점수가 '+fnum(Math.abs(pd))+'점 '+(pd>0?'상승하였습니다.':'하락하여 원인 지표의 재확인이 필요합니다.');
+      else
+        p.sum_p1 += ' 전월과 동일한 수준을 유지하고 있습니다.';
+    }
+    var UPCUT = { '2등급':88, '3등급':79, '4등급':71, '5등급':63 };   // 현재등급 → 상위등급 커트라인(gradeOf 기준)
+    if(UPCUT[curG]!=null){
+      var upGap = Math.round((UPCUT[curG]-scores.total)*100)/100;
+      if(upGap>0 && upGap<=5)
+        p.sum_p1 += ' 상위등급('+(parseInt(curG,10)-1)+'등급, '+UPCUT[curG]+'점)과의 점수 차이는 '+fnum(upGap)+'점입니다.';
+    }
+    p.sum_p1 += ' ' + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황입니다.'
+                             : '목표인 '+gg+'('+fnum(gs)+'점)을 달성한 수준으로, 남은 기간 동안 유지 관리가 중요합니다.');
+    p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다.'
+             + structRiskTxt()
+             + ' 실제 점수는 차등제 신고 결과가 합산되어 확정되므로, 재원환자 수와 인력 추이가 변동되지 않도록 꾸준히 관리해 주시기 바랍니다.';
     p.sum_p3 = '';
     if(fulls.length) p.sum_p3 += '진료영역에서는 '+fulls.slice(0,4).join(', ')+(fulls.length>4?' 등':'')+' 지표가 잘 관리되고 있습니다. ';
     if(tops.length){
-      var t=tops[0];
-      p.sum_p3 += '반면 '+t.nm+'은(는) 개선 여지가 가장 큰 지표로, 표준화 구간을 한 단계 올릴 때마다 약 +'+f1(t.w/5)+'점을 확보할 수 있습니다.'
-                + (tops[1]? ' '+tops[1].nm+'도 함께 관리하시면 좋겠습니다.' : '');
+      var t=tops[0], s1=simTail(t.r);
+      p.sum_p3 += '반면 \''+t.nm+'\'은(는) 개선 여지가 가장 큰 지표로, '
+                + (s1 ? s1+'. ' : '표준화 구간을 한 단계 올릴 때마다 약 +'+f1(t.w/5)+'점을 확보할 수 있습니다. ');
+      if(tops[1]){
+        var s2=simTail(tops[1].r);
+        p.sum_p3 += '\''+tops[1].nm+'\'도 '+(s2 ? s2+'.' : '함께 관리해 주시기 바랍니다.');
+      }
     }
     if(!p.sum_p3) p.sum_p3 = '진료영역 지표는 전반적으로 안정적으로 관리되고 있습니다.';
     p.sum_p4 = '항정신성의약품 처방률, DUR 점검률, 지역사회복귀율은 예상값 기준으로 산출되어 최종 평가 결과에 따라 점수가 다소 달라질 수 있습니다. 해당 대상자 관리를 꾸준히 부탁드립니다.';
@@ -1168,7 +1299,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var zones = zoneListText(x.cd);
       // 목표 : 한 구간 상승 시 +가중치/5점 (현재 → 목표)
       var step = x.w/5, nz = Math.min(5, s+1), tgt = Math.min(x.w, x.got+step);
-      var goalTxt = (s>=5) ? '' : '목표 : '+nz+'구간 진입 시 <b class="er-num">+'+f1(tgt-x.got)+'점</b> ('+f1(x.got)+' → '+f1(tgt)+')';
+      var sd = simStep(r);
+      var goalTxt = (s>=5) ? '' : '목표 : '+(sd && sd.need ? esc(sd.need)+'명 '+sd.dir+' → '+esc(sd.newPct)+'%로 ' : '')+nz+'구간 진입 시 <b class="er-num">+'+f1(tgt-x.got)+'점</b> ('+f1(x.got)+' → '+f1(tgt)+')';
+      // 5구간까지 2단계 병기(담당자 나열형) — 다음구간이 5구간이 아니면서 명수 환산이 가능한 결과지표만
+      if(goalTxt && nz<5){
+        var n5 = simNeed(r, 5);
+        if(n5) goalTxt += ' · 5구간 = '+esc(n5.need)+'명 추가(총 '+esc(n5.total)+'명, '+esc(n5.pct)+'%) 시 <b class="er-num">+'+f1(x.w-x.got)+'점</b>';
+      }
       var dirTxt = TPL_DIR[x.cd] ? esc(TPL_DIR[x.cd]) : '개선 방향과 목표 구간을 입력하세요.';
       html += '<div class="er-rec'+(isTop?' er-top':'')+'">'
             +   '<div class="er-rech">'+(CIRC[i]||(i+1))+' '+esc(x.nm)+' <span class="er-w">· 가중치 '+fnum(x.w)+' · 부족분 '+f1(x.gap)+(isTop?' · 최우선':'')+'</span></div>'
