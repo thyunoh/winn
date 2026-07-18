@@ -45,6 +45,21 @@ CREATE TABLE IF NOT EXISTS TBL_EVAL_REPORT_TEXT (
   UNIQUE KEY UK_EVAL_REPORT_TEXT (REPORT_SEQ, SECT_KEY)
 );
 
+-- ④ 저장·PDF 변경 이력 (2026-07-18 추가) — 덮어쓰기 직전 상태를 스냅샷으로 보존
+--   · TEXT : 문구 저장 직전의 병원별 override 전체를 JSON 으로 보존
+--   · PDF  : 첨부 교체·해제 직전의 PDF 경로 보존 (파일 자체는 업로드 시 타임스탬프 파일명이라 안 덮어써짐)
+CREATE TABLE IF NOT EXISTS TBL_EVAL_REPORT_HST (
+  HST_SEQ    BIGINT       NOT NULL AUTO_INCREMENT,
+  REPORT_SEQ BIGINT       NOT NULL,                    -- FK → TBL_EVAL_REPORT_MST
+  HST_TYPE   VARCHAR(10)  NOT NULL,                    -- TEXT(문구 저장) / PDF(첨부 교체·해제)
+  TEXTS_JSON LONGTEXT     NULL,                        -- TEXT: 직전 문구 전체 [{"sectkey":..,"content":..},...]
+  PDF_PATH   VARCHAR(300) NULL,                        -- PDF: 직전 첨부 경로
+  REG_USER   VARCHAR(50)  NULL,
+  REG_DTTM   DATETIME     NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (HST_SEQ),
+  KEY IX_EVAL_REPORT_HST (REPORT_SEQ, REG_DTTM)
+);
+
 -- ③ 표준양식 문구 템플릿 (전 병원 공통 · 위너넷 전역 편집) — 2단계에서 연동 예정
 CREATE TABLE IF NOT EXISTS TBL_EVAL_REPORT_TPL (
   SECT_KEY    VARCHAR(60)  NOT NULL,

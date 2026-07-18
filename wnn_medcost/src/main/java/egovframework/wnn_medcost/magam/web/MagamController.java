@@ -1217,11 +1217,16 @@ public class MagamController {
 			pdfFile.transferTo(temp);
 			String folder = hospCd + "/" + evalYm + "/EVALRPT";
 			String fileSize = Long.toString(pdfFile.getSize() / 1024);
-			boolean ok = sftpService.uploadFile(temp.getAbsolutePath(), orig, folder,
+			// 저장 파일명 = 원본명 + 타임스탬프 — 같은 이름 재업로드 시 이전 파일이 덮어써지지 않아
+			//   PDF 교체 이력(TBL_EVAL_REPORT_HST)의 경로로 이전 버전을 그대로 열람할 수 있음
+			String base = orig.substring(0, orig.length() - 4);
+			if (base.length() > 80) base = base.substring(0, 80);
+			String saveName = base + "_" + new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date()) + ".pdf";
+			boolean ok = sftpService.uploadFile(temp.getAbsolutePath(), saveName, folder,
 					hospCd, "EVALRPT", evalYm, cookieUser(), ClientInfo.getClientIP(request), fileSize);
 			if (!ok) { res.put("result", "FAIL"); res.put("message", "파일 서버 업로드 실패"); return res; }
 
-			String remotePath = "/home/winner/upload/" + folder + "/" + orig;   // SftpService BASE_DIRECTORY 규칙과 일치
+			String remotePath = "/home/winner/upload/" + folder + "/" + saveName;   // SftpService BASE_DIRECTORY 규칙과 일치
 			Map<String, Object> p = new HashMap<>();
 			p.put("hospCd", hospCd); p.put("evalYm", evalYm);
 			p.put("pdfPath", remotePath); p.put("regUser", cookieUser());

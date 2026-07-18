@@ -549,6 +549,22 @@ public class MagamServiceImpl implements MagamService {
 			p.put("reportSeq", seq);
 			mapper.updateEvalReportMst(p);
 		}
+		// 이력: 덮어쓰기 직전의 편집 문구 전체를 JSON 스냅샷으로 보존 (TBL_EVAL_REPORT_HST, HST_TYPE='TEXT')
+		//   이력 기록 실패가 저장 자체를 막지 않도록 별도 try (로그만)
+		try {
+			List<Map<String, Object>> prevTexts = mapper.selectEvalReportTexts(seq);
+			if (prevTexts != null && !prevTexts.isEmpty()) {
+				Map<String, Object> h = new HashMap<>();
+				h.put("reportSeq", seq);
+				h.put("hstType", "TEXT");
+				h.put("textsJson", new Gson().toJson(prevTexts));
+				h.put("pdfPath", null);
+				h.put("regUser", p.get("regUser"));
+				mapper.insertEvalReportHst(h);
+			}
+		} catch (Exception he) {
+			LoggerFactory.getLogger(getClass()).error("saveEvalReport history WARN: " + he.getMessage());
+		}
 		mapper.deleteEvalReportTexts(seq);                 // 전체교체(단일 편집자)
 		Object txObj = p.get("texts");
 		if (txObj instanceof List) {
@@ -580,8 +596,27 @@ public class MagamServiceImpl implements MagamService {
 		String evalYm = (String) p.get("evalYm");
 		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
 		if (seq == null) {
-			// 마스터가 아직 없으면 최소 정보로 생성 (PDF 만 먼저 첨부하는 경우)
+			// 마스터가 아직 없으면 최소 정보로 생성 (PDF 만 먼저 첨부하는 경우) — 직전 첨부가 없으니 이력 없음
 			mapper.insertEvalReportMst(p);
+		} else {
+			// 이력: 교체·해제 직전의 첨부 경로 보존 (TBL_EVAL_REPORT_HST, HST_TYPE='PDF'. 경로가 같으면 생략)
+			//   파일 실물은 업로드 시 타임스탬프 파일명이라 덮어써지지 않음 → 이력 경로로 이전 버전 열람 가능
+			try {
+				String oldPath = mapper.selectEvalReportPdfPath(seq);
+				Object np = p.get("pdfPath");
+				String newPath = (np == null) ? null : String.valueOf(np);
+				if (oldPath != null && !oldPath.trim().isEmpty() && !oldPath.equals(newPath)) {
+					Map<String, Object> h = new HashMap<>();
+					h.put("reportSeq", seq);
+					h.put("hstType", "PDF");
+					h.put("textsJson", null);
+					h.put("pdfPath", oldPath);
+					h.put("regUser", p.get("regUser"));
+					mapper.insertEvalReportHst(h);
+				}
+			} catch (Exception he) {
+				LoggerFactory.getLogger(getClass()).error("saveEvalReportPdf history WARN: " + he.getMessage());
+			}
 		}
 		mapper.updateEvalReportPdf(p);
 	}

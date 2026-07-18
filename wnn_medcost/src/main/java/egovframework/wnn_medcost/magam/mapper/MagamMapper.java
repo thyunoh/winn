@@ -97,6 +97,9 @@ public interface MagamMapper {
 	int insertEvalReportTexts(@Param("reportSeq") Long reportSeq,
 	                          @Param("texts") List<Map<String, Object>> texts,
 	                          @Param("updUser") String updUser);
+	// 저장·PDF 변경 이력(TBL_EVAL_REPORT_HST) — 덮어쓰기 직전 상태 스냅샷
+	int insertEvalReportHst(Map<String, Object> p);
+	String selectEvalReportPdfPath(@Param("reportSeq") Long reportSeq);
 
 	List<Map<String, Object>> select_EvalProgress(IndiDTO dto);   // 자료생성 진행상태(항목별)
 	

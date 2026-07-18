@@ -25,24 +25,27 @@
   #evalReport .er-num{ font-variant-numeric:tabular-nums; }
 
   /* 툴바 — 화면 상단 고정(사이드바 오른쪽·앱 헤더 아래). 흰 카드 + 좌측 포인트 보더. top/left 는 JS(erFixToolbar) 실측 */
-  #evalReport .er-toolbar{ position:fixed; top:56px; left:280px; right:0; z-index:1020; display:flex; align-items:center; gap:10px;
-    padding:9px 16px; background:#fff; border-bottom:1px solid var(--er-line); border-left:4px solid var(--er-navy2); flex-wrap:wrap; box-shadow:0 3px 10px rgba(16,22,29,.08); }
-  #evalReport .er-brand{ font-weight:800; font-size:14px; color:var(--er-ink); display:flex; align-items:center; gap:8px; }
+  /* 툴바 — 모든 컨트롤 한 줄 고정(nowrap). 화면이 좁으면 줄바꿈 대신 가로 스크롤 */
+  #evalReport .er-toolbar{ position:fixed; top:56px; left:280px; right:0; z-index:1020; display:flex; align-items:center; gap:6px;
+    padding:8px 10px; background:#fff; border-bottom:1px solid var(--er-line); border-left:4px solid var(--er-navy2);
+    flex-wrap:nowrap; overflow-x:auto; overflow-y:visible; white-space:nowrap; box-shadow:0 3px 10px rgba(16,22,29,.08); }
+  #evalReport .er-toolbar > *{ flex:0 0 auto; }
+  #evalReport .er-brand{ font-weight:800; font-size:13px; color:var(--er-ink); display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #evalReport .er-brand .er-dot{ width:9px; height:9px; border-radius:50%; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); }
-  #evalReport .er-role{ font-size:11px; font-weight:700; color:#fff; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); padding:3px 9px; border-radius:20px; }
-  #evalReport select.er-sel{ font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--er-line); border-radius:7px; background:#fff; color:var(--er-ink); font-weight:700; }
+  #evalReport .er-role{ font-size:11px; font-weight:700; color:#fff; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); padding:3px 7px; border-radius:20px; }
+  #evalReport select.er-sel{ font-family:inherit; font-size:12.5px; padding:5px 4px; border:1px solid var(--er-line); border-radius:7px; background:#fff; color:var(--er-ink); font-weight:700; }
   #evalReport select.er-sel:hover{ border-color:var(--er-navy2); }
   #evalReport .er-hospnm{ font-size:13px; font-weight:700; color:var(--er-navy); }
   #evalReport .er-sp{ flex:1 1 auto; }
-  #evalReport .er-status{ display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:20px; border:1px solid transparent; }
+  #evalReport .er-status{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 9px; border-radius:20px; border:1px solid transparent; white-space:nowrap; }
   #evalReport .er-status .er-sdot{ width:8px; height:8px; border-radius:50%; }
   #evalReport .er-status.er-draft{ background:var(--er-ambertint); color:var(--er-amber); border-color:#ead9b0; }
   #evalReport .er-status.er-draft .er-sdot{ background:var(--er-amber); }
   #evalReport .er-status.er-approved{ background:var(--er-goodtint); color:var(--er-good); border-color:#bfe0c4; }
   #evalReport .er-status.er-approved .er-sdot{ background:var(--er-good); }
   /* 버튼 — 기본=흰 아웃라인 / 주요=네이비 솔리드 */
-  #evalReport .er-btn{ font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; padding:8px 14px; border-radius:6px;
-    border:1px solid var(--er-line); background:#fff; color:var(--er-soft); transition:.15s; display:inline-flex; align-items:center; gap:6px; }
+  #evalReport .er-btn{ font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 8px; border-radius:6px;
+    border:1px solid var(--er-line); background:#fff; color:var(--er-soft); transition:.15s; display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
   #evalReport .er-btn:hover{ background:var(--er-line2); border-color:var(--er-navy2); color:var(--er-navy); }
   #evalReport .er-btn.er-primary{ background:var(--er-navy2); color:#fff; border-color:transparent; }
   #evalReport .er-btn.er-primary:hover{ background:var(--er-navy); color:#fff; }
@@ -50,20 +53,42 @@
   #evalReport .er-btn.er-good:hover{ background:#276b2a; color:#fff; }
   #evalReport .er-btn.er-on{ background:var(--er-ambertint); color:var(--er-amber); border-color:#e6cf9e; }
   #evalReport .er-btn:disabled{ opacity:.45; cursor:not-allowed; }
-  #evalReport .er-btn.er-exit{ background:#fdecea; color:var(--er-bad); border-color:#f0b6ae; padding:10px 20px; font-size:14px; font-weight:800; }
+  #evalReport .er-btn.er-exit{ background:#fdecea; color:var(--er-bad); border-color:#f0b6ae; padding:8px 12px; font-size:13px; font-weight:800; }
   #evalReport .er-btn.er-exit:hover{ background:var(--er-bad); color:#fff; border-color:var(--er-bad); }
   #evalReport .er-btn.er-search{ background:var(--er-navy2); color:#fff; border-color:transparent; }
   #evalReport .er-btn.er-search:hover{ background:var(--er-navy); color:#fff; }
   /* 툴바 그룹/구분선 — 버튼을 기능별로 묶어 정렬 */
-  #evalReport .er-group{ display:inline-flex; align-items:center; gap:7px; }
-  #evalReport .er-searchbox{ display:inline-flex; align-items:center; gap:6px; padding:4px 6px 4px 8px; background:var(--er-navytint); border:1px solid #d5e4f6; border-radius:9px; }
-  #evalReport .er-divider{ width:1px; align-self:stretch; min-height:22px; background:#c7d3e2; margin:0 3px; }
+  #evalReport .er-group{ display:inline-flex; align-items:center; gap:5px; }
+  #evalReport .er-searchbox{ display:inline-flex; align-items:center; gap:4px; padding:3px 5px 3px 6px; background:var(--er-navytint); border:1px solid #d5e4f6; border-radius:9px; }
+  #evalReport .er-divider{ width:1px; align-self:stretch; min-height:22px; background:#c7d3e2; margin:0 1px; }
   /* 서식 툴바 — 편집 모드에서만 표시. 선택한 글자에 굵게/밑줄/크기/색/형광 적용(본문 강조용, 양식·테마는 불변) */
   #evalReport .er-fmtbar{ display:none; align-items:center; gap:4px; }
   #evalReport.er-editmode .er-fmtbar{ display:inline-flex; }
   #evalReport .er-fmtbar .er-fbtn{ font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; padding:5px 9px;
     border-radius:6px; border:1px solid var(--er-line); background:#fff; color:var(--er-soft); line-height:1; }
   #evalReport .er-fmtbar .er-fbtn:hover{ border-color:var(--er-navy2); background:var(--er-line2); }
+  #evalReport .er-fmtbar .er-fsel{ font-family:inherit; font-size:12px; font-weight:700; padding:4px 3px; max-width:96px;
+    border:1px solid var(--er-line); border-radius:6px; background:#fff; color:var(--er-ink); cursor:pointer; }
+  #evalReport .er-fmtbar .er-fsel:hover{ border-color:var(--er-navy2); }
+  /* 색상 A▾ — A 버튼 밑줄 = 최근 선택 색(답변 에디터 스타일), ▾ = 팔레트 열기 */
+  #evalReport .er-fcolor{ position:relative; display:inline-flex; }
+  #evalReport .er-fmtbar .er-fA{ border-radius:6px 0 0 6px; border-right:none; }
+  #evalReport .er-fmtbar .er-fA b{ display:inline-block; line-height:1.05; border-bottom:3px solid #fff3b0; }
+  #evalReport .er-fmtbar .er-fcaret{ border-radius:0 6px 6px 0; padding:5px 5px; }
+  #evalReport .er-fpal{ display:none; position:absolute; top:calc(100% + 5px); right:0; z-index:1400; width:172px;
+    background:#fff; border:1px solid var(--er-line); border-radius:8px; padding:8px 9px; box-shadow:0 8px 24px rgba(16,22,29,.2);
+    white-space:normal; }   /* 툴바 nowrap 상속 차단 — 스와치 줄바꿈 복원 */
+  #evalReport .er-fpal.er-open{ display:block; }
+  #evalReport .er-fpal .er-fpl{ font-size:10.5px; font-weight:800; color:var(--er-soft); margin:4px 0 3px; }
+  #evalReport .er-fpal .er-fsw{ display:inline-block; width:21px; height:21px; border-radius:4px; border:1px solid var(--er-line); cursor:pointer; margin:1px 2px 1px 0; vertical-align:middle; }
+  #evalReport .er-fpal .er-fsw:hover{ outline:2px solid var(--er-navy2); }
+  /* 한 줄 유지 보조 — 화면이 좁으면 중요도 낮은 표기부터 숨김(제목 텍스트 → 병원명) */
+  @media (max-width:1760px){ #evalReport .er-brandtxt{ display:none; } }
+  @media (max-width:1560px){ #evalReport .er-hospnm{ display:none; } }
+  /* 병원(거래처) 열람 모드 — 관리 도구 전부 숨김(조회·인쇄·종료만). JS 가 isWinner 아닐 때 er-hospview 부여 */
+  #evalReport.er-hospview #er-statusBadge, #evalReport.er-hospview #er-editTools,
+  #evalReport.er-hospview .er-fmtbar, #evalReport.er-hospview .er-wnnonly,
+  #evalReport.er-hospview .er-notice{ display:none !important; }
 
   #evalReport .er-notice{ max-width:880px; margin:16px auto 0; padding:12px 16px; border-radius:10px; background:var(--er-navytint);
     border:1px solid #cfe0f4; color:var(--er-navy); font-size:12.5px; line-height:1.6; }
@@ -281,7 +306,7 @@
   <!-- ===== 툴바 (기능별 그룹 정렬) ===== -->
   <div class="er-toolbar">
     <!-- 그룹1: 제목·병원 -->
-    <span class="er-brand"><span class="er-dot"></span>월간 컨설팅 보고서</span>
+    <span class="er-brand"><span class="er-dot"></span><span class="er-brandtxt">월간 컨설팅 보고서</span></span>
     <span id="er-roleTag" class="er-role">위너넷</span>
     <span class="er-hospnm" id="er-hospNm"></span>
     <span class="er-divider"></span>
@@ -299,34 +324,72 @@
     <span id="er-editTools" class="er-group">
       <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()">✏️ 편집</button>
       <button id="er-btnSave" class="er-btn er-primary" onclick="erSave()">💾 저장</button>
-      <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()">✔ 승인·공개</button>
+      <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()" title="승인하면 수치가 동결되고 거래처에 공개됩니다">✔ 승인</button>
       <span class="er-divider"></span>
       <!-- 첨부 PDF: 첨부 전=[📎 PDF 첨부] / 첨부 후=[👁 PDF 보기] 하나만. 교체·해제는 '보기' 모달 안에 있음 -->
       <input type="file" id="er-pdfFile" accept="application/pdf,.pdf" style="display:none;">
-      <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()">📎 PDF 첨부</button>
-      <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;">👁 PDF 보기</a>
+      <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()" title="아래한글 완성본 PDF 첨부 — 첨부 시 거래처에는 그 파일이 우선 제공됩니다">📎 PDF</button>
+      <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;" title="첨부된 완성본 PDF 보기">👁 PDF</a>
     </span>
-    <!-- 서식 툴(편집 모드 전용) — 문구를 드래그로 선택한 뒤 클릭. mousedown 취소로 선택 유지 -->
+    <!-- 서식 툴(편집 모드 전용) — 답변 에디터(noticd summernote) 구성 참조: B·I·U·지우개 + 글꼴 + 크기 + 색상 A▾.
+         문구를 드래그로 선택한 뒤 클릭(버튼 mousedown 취소·select 는 선택영역 저장/복원으로 선택 유지) -->
     <span class="er-fmtbar" id="er-fmtbar" title="문구를 드래그로 선택한 뒤 누르세요">
       <span class="er-divider"></span>
-      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('bold')" title="굵게"><b>가</b></button>
-      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('underline')" title="밑줄"><u>가</u></button>
-      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('size','4')" title="글자 크게">가＋</button>
-      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('size','2')" title="글자 작게">가−</button>
-      <button class="er-fbtn" style="color:#c0392b" onmousedown="event.preventDefault()" onclick="erFmt('color','#c0392b')" title="빨강">가</button>
-      <button class="er-fbtn" style="color:#2a5298" onmousedown="event.preventDefault()" onclick="erFmt('color','#2a5298')" title="파랑(네이비)">가</button>
-      <button class="er-fbtn" style="color:#2e7d32" onmousedown="event.preventDefault()" onclick="erFmt('color','#2e7d32')" title="초록">가</button>
-      <button class="er-fbtn" style="color:#1a2332" onmousedown="event.preventDefault()" onclick="erFmt('color','#1a2332')" title="검정(기본색)">가</button>
-      <button class="er-fbtn" style="background:#fff3b0" onmousedown="event.preventDefault()" onclick="erFmt('hilite','#fff3b0')" title="형광(노랑)">형광</button>
-      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('clear')" title="선택 부분의 굵게·색·형광·크기 제거">지우기</button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('bold')" title="굵게"><b>B</b></button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('italic')" title="기울임"><i>I</i></button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('underline')" title="밑줄"><u>U</u></button>
+      <button class="er-fbtn" onmousedown="event.preventDefault()" onclick="erFmt('clear')" title="서식 지우기(굵게·색·형광·크기 제거)">⌫</button>
+      <select class="er-fsel" id="er-fontName" style="width:76px;" onchange="erFmt('font', this.value); this.selectedIndex=0;" title="글꼴">
+        <option value="">글꼴</option>
+        <option value="Malgun Gothic">맑은 고딕</option>
+        <option value="Gulim">굴림체</option>
+        <option value="Dotum">돋움체</option>
+        <option value="Batang">바탕체</option>
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+      </select>
+      <select class="er-fsel" id="er-fontSize" style="width:56px;" onchange="erFmt('sizepx', this.value); this.selectedIndex=0;" title="글자 크기(px)">
+        <option value="">크기</option>
+        <option>10</option><option>11</option><option>12</option><option>13</option><option>14</option>
+        <option>16</option><option>18</option><option>20</option><option>24</option>
+      </select>
+      <span class="er-fcolor">
+        <button class="er-fbtn er-fA" id="er-fA" onmousedown="event.preventDefault()" onclick="erFmt('color')" title="최근 색 적용"><b>A</b></button>
+        <button class="er-fbtn er-fcaret" onmousedown="event.preventDefault()" onclick="erPalToggle()" title="색 선택">▾</button>
+        <div class="er-fpal" id="er-fpal">
+          <div class="er-fpl">글자색</div>
+          <span class="er-fsw" style="background:#1a2332" onmousedown="event.preventDefault()" onclick="erFmtPick('#1a2332',false)" title="검정(기본)"></span>
+          <span class="er-fsw" style="background:#c0392b" onmousedown="event.preventDefault()" onclick="erFmtPick('#c0392b',false)" title="빨강"></span>
+          <span class="er-fsw" style="background:#e74c3c" onmousedown="event.preventDefault()" onclick="erFmtPick('#e74c3c',false)" title="밝은빨강"></span>
+          <span class="er-fsw" style="background:#d81b60" onmousedown="event.preventDefault()" onclick="erFmtPick('#d81b60',false)" title="분홍"></span>
+          <span class="er-fsw" style="background:#b7791f" onmousedown="event.preventDefault()" onclick="erFmtPick('#b7791f',false)" title="주황"></span>
+          <span class="er-fsw" style="background:#8d6e63" onmousedown="event.preventDefault()" onclick="erFmtPick('#8d6e63',false)" title="갈색"></span>
+          <span class="er-fsw" style="background:#2a5298" onmousedown="event.preventDefault()" onclick="erFmtPick('#2a5298',false)" title="네이비"></span>
+          <span class="er-fsw" style="background:#3498db" onmousedown="event.preventDefault()" onclick="erFmtPick('#3498db',false)" title="하늘파랑"></span>
+          <span class="er-fsw" style="background:#1f7a66" onmousedown="event.preventDefault()" onclick="erFmtPick('#1f7a66',false)" title="청록"></span>
+          <span class="er-fsw" style="background:#2e7d32" onmousedown="event.preventDefault()" onclick="erFmtPick('#2e7d32',false)" title="초록"></span>
+          <span class="er-fsw" style="background:#6b3fa0" onmousedown="event.preventDefault()" onclick="erFmtPick('#6b3fa0',false)" title="보라"></span>
+          <span class="er-fsw" style="background:#7c8798" onmousedown="event.preventDefault()" onclick="erFmtPick('#7c8798',false)" title="회색"></span>
+          <div class="er-fpl">형광(배경)</div>
+          <span class="er-fsw" style="background:#fff3b0" onmousedown="event.preventDefault()" onclick="erFmtPick('#fff3b0',true)" title="노랑"></span>
+          <span class="er-fsw" style="background:#ffd54f" onmousedown="event.preventDefault()" onclick="erFmtPick('#ffd54f',true)" title="진노랑"></span>
+          <span class="er-fsw" style="background:#ffe0b2" onmousedown="event.preventDefault()" onclick="erFmtPick('#ffe0b2',true)" title="주황"></span>
+          <span class="er-fsw" style="background:#fde2e2" onmousedown="event.preventDefault()" onclick="erFmtPick('#fde2e2',true)" title="분홍"></span>
+          <span class="er-fsw" style="background:#daf1db" onmousedown="event.preventDefault()" onclick="erFmtPick('#daf1db',true)" title="연두"></span>
+          <span class="er-fsw" style="background:#dbeafe" onmousedown="event.preventDefault()" onclick="erFmtPick('#dbeafe',true)" title="하늘"></span>
+          <span class="er-fsw" style="background:#e6dcf5" onmousedown="event.preventDefault()" onclick="erFmtPick('#e6dcf5',true)" title="연보라"></span>
+          <span class="er-fsw" style="background:#e8eef5" onmousedown="event.preventDefault()" onclick="erFmtPick('#e8eef5',true)" title="회색"></span>
+          <div style="margin-top:6px"><button class="er-fbtn" style="width:100%" onmousedown="event.preventDefault()" onclick="erFmtPick('transparent',true)">형광 지우기</button></div>
+        </div>
+      </span>
     </span>
-    <span class="er-divider"></span>
+    <span class="er-divider er-wnnonly"></span>
     <!-- 글자 크기(문서 배율) — 가운데 % 클릭 시 100% 복원. localStorage 저장(다음 진입 유지), 인쇄에도 반영 -->
-    <button class="er-btn" onclick="erZoom(-1)" title="글자 작게">가−</button>
-    <button class="er-btn" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:52px;">100%</button>
-    <button class="er-btn" onclick="erZoom(1)" title="글자 크게">가＋</button>
-    <span class="er-divider"></span>
-    <button class="er-btn" onclick="erPreview()">👁 미리보기</button>
+    <button class="er-btn er-wnnonly" style="padding:8px 7px;" onclick="erZoom(-1)" title="글자 작게">가−</button>
+    <button class="er-btn er-wnnonly" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:44px; padding:8px 6px;">100%</button>
+    <button class="er-btn er-wnnonly" style="padding:8px 7px;" onclick="erZoom(1)" title="글자 크게">가＋</button>
+    <span class="er-divider er-wnnonly"></span>
+    <button class="er-btn er-wnnonly" onclick="erPreview()">👁 미리보기</button>
     <button class="er-btn" onclick="window.print()">🖨️ 인쇄</button>
     <!-- 그룹4: 종료 — 인쇄 바로 옆(구분선만), 조금 크게 -->
     <span class="er-divider"></span>
@@ -521,6 +584,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     alert('월보고서는 준비 중입니다.');
     location.replace('/main/assessment.do');
     return;
+  }
+
+  // 병원(거래처) 열람 모드 — 관리 도구(상태·편집·저장·승인·PDF첨부·서식바·배율·미리보기)와 안내문을 숨겨
+  //   조회·인쇄·종료만 남김. 1단계(위너넷 전용)에선 동작 없고, 2단계 canView 공개 시 자동 적용.
+  if(!isWinner){
+    document.getElementById('evalReport').classList.add('er-hospview');
+    var _rt=document.getElementById('er-roleTag'); if(_rt) _rt.textContent='열람';
   }
 
   var editing = false, approved = false, curYm = '', pdfPath = '';
@@ -918,7 +988,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(approved){ b.className='er-status er-approved'; t.textContent='승인됨 · 거래처 공개'; }
     else { b.className='er-status er-draft'; t.textContent='작성중'; }
     if(isWinner){
-      el('er-btnApprove').textContent = approved ? '↩ 승인 취소' : '✔ 승인·거래처 공개';
+      el('er-btnApprove').textContent = approved ? '↩ 승인취소' : '✔ 승인';
+      el('er-btnApprove').title = approved ? '승인을 취소하고 다시 편집합니다' : '승인하면 수치가 동결되고 거래처에 공개됩니다';
       el('er-btnEdit').disabled = approved;
       if(approved && editing) erToggleEdit();
     }
@@ -930,23 +1001,77 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('evalReport').classList.toggle('er-editmode', editing);
     erPaginate();   // A4 분할 유지한 채 재분할 — 편집 종료 시 고친 문구 길이에 맞게 페이지 재배치
     editables().forEach(function(e){ e.contentEditable = editing?'true':'false'; });
-    var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집 끄기':'✏️ 편집 켜기'; b.classList.toggle('er-on',editing);
+    var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집끄기':'✏️ 편집켜기'; b.classList.toggle('er-on',editing);
     if(editing) toast('편집 모드: 파란 영역의 문구를 직접 고칠 수 있습니다.');
   };
 
-  // ===== 서식 툴 (편집 모드 전용) — 선택한 글자에 굵게/밑줄/크기/색/형광. execCommand 기반(구형 브라우저 호환).
-  //   결과는 편집영역 innerHTML 에 인라인으로 남아 저장(override)·재조회·인쇄·거래처 열람에 그대로 반영됨.
-  //   편집영역(.er-editable) 밖은 contentEditable 이 아니라서 눌러도 아무 일 없음(양식·표 구조 불변).
+  // ===== 서식 툴 (편집 모드 전용) — 답변 에디터(summernote) 구성 참조: B/I/U/지우개 + 글꼴 + 크기(px) + 색상 A▾.
+  //   execCommand 기반(구형 브라우저 호환). 결과는 편집영역 innerHTML 에 인라인으로 남아
+  //   저장(override)·재조회·인쇄·거래처 열람에 그대로 반영됨. 편집영역 밖은 contentEditable 이 아니라 불변.
+  //   · select(글꼴/크기) 클릭 시 본문 선택이 풀리므로 selectionchange 에서 마지막 선택영역을 저장했다가 복원.
+  var _fmtRange=null, _fmtColor='#fff3b0', _fmtColorIsBg=true;   // 기본 = 노랑 형광(답변 에디터 A 초기 표시와 동일)
+  document.addEventListener('selectionchange', function(){
+    if(!editing) return;
+    var sel=window.getSelection();
+    if(!sel || !sel.rangeCount) return;
+    var nd=sel.anchorNode; if(nd && nd.nodeType===3) nd=nd.parentNode;
+    if(nd && nd.closest && nd.closest('#evalReport .er-editable')) _fmtRange=sel.getRangeAt(0).cloneRange();
+  });
+  function _fmtRestore(){
+    try{ if(_fmtRange){ var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(_fmtRange); } }catch(e){}
+  }
   window.erFmt = function(cmd, val){
     if(!editing){ toast('편집 켜기 후, 문구를 드래그로 선택하고 누르세요.'); return; }
+    _fmtRestore();
     try{ document.execCommand('styleWithCSS', false, true); }catch(e){}   // <font> 대신 span style 로
     if(cmd==='bold')           document.execCommand('bold');
+    else if(cmd==='italic')    document.execCommand('italic');
     else if(cmd==='underline') document.execCommand('underline');
-    else if(cmd==='size')      document.execCommand('fontSize', false, val);
-    else if(cmd==='color')     document.execCommand('foreColor', false, val);
-    else if(cmd==='hilite'){   if(!document.execCommand('hiliteColor', false, val)) document.execCommand('backColor', false, val); }
+    else if(cmd==='font'){     if(val) document.execCommand('fontName', false, val); }
+    else if(cmd==='sizepx'){
+      if(val){
+        // execCommand fontSize 는 1~7 단계뿐 → 7로 찍은 뒤 <font size="7"> 를 px 스팬으로 치환
+        try{ document.execCommand('styleWithCSS', false, false); }catch(e){}
+        document.execCommand('fontSize', false, '7');
+        var fs=document.querySelectorAll('#evalReport .er-editable font[size="7"]');
+        Array.prototype.forEach.call(fs, function(f){
+          var sp=document.createElement('span'); sp.style.fontSize=val+'px';
+          while(f.firstChild) sp.appendChild(f.firstChild);
+          f.parentNode.replaceChild(sp, f);
+        });
+      }
+    }
+    else if(cmd==='color'){
+      if(_fmtColorIsBg){ if(!document.execCommand('hiliteColor', false, _fmtColor)) document.execCommand('backColor', false, _fmtColor); }
+      else document.execCommand('foreColor', false, _fmtColor);
+      erPalClose();
+    }
     else if(cmd==='clear')     document.execCommand('removeFormat');
   };
+  window.erPalToggle = function(){
+    var p=el('er-fpal'); if(!p) return;
+    if(!p.classList.contains('er-open')){
+      // 툴바가 overflow(가로 스크롤) 컨테이너라 absolute 드롭다운이 잘림 → 화면 고정 좌표로 전환해 띄움
+      var btn=document.querySelector('#evalReport .er-fcaret');
+      if(btn && btn.getBoundingClientRect){
+        var rc=btn.getBoundingClientRect();
+        p.style.position='fixed'; p.style.top=(rc.bottom+5)+'px';
+        p.style.left=Math.max(8, rc.right-172)+'px'; p.style.right='auto';
+      }
+    }
+    p.classList.toggle('er-open');
+  };
+  window.erPalClose  = function(){ var p=el('er-fpal'); if(p) p.classList.remove('er-open'); };
+  window.erFmtPick = function(color, isBg){
+    _fmtColor=color; _fmtColorIsBg=!!isBg;
+    var a=document.querySelector('#er-fA b');
+    if(a) a.style.borderBottomColor = (color==='transparent') ? '#d7dfea' : color;
+    erFmt('color');
+  };
+  document.addEventListener('mousedown', function(ev){   // 팔레트 바깥 클릭 시 닫기
+    var p=el('er-fpal');
+    if(p && p.classList.contains('er-open') && !(ev.target.closest && ev.target.closest('.er-fcolor'))) erPalClose();
+  });
 
   // ===== 조회: 지표 자료 + 5점구간 기준(적정성 화면과 동일 소스) 동시 로드 → 렌더 → 저장문구 로드 =====
   window.erLoad = function(){
@@ -1435,7 +1560,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         updatePdfUi();
         editables().forEach(function(e){ e.contentEditable='false'; });
         editing=false; el('evalReport').classList.remove('er-editmode');
-        if(isWinner){ var b=el('er-btnEdit'); b.textContent='✏️ 편집 켜기'; b.classList.remove('er-on'); }
+        if(isWinner){ var b=el('er-btnEdit'); b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }
         erPaginate();   // 문구 확정(자동/저장 override 반영) 후 A4 분할
       },
       error:function(){ setStatus('DRAFT'); }

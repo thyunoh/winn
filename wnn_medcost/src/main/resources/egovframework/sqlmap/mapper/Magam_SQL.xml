@@ -5743,4 +5743,17 @@
 		</foreach>
 	</insert>
 
+	<!-- 저장·PDF 변경 이력(TBL_EVAL_REPORT_HST) — 덮어쓰기 직전 상태 스냅샷 보존. DDL: docs/sql/TBL_EVAL_REPORT.sql ④ -->
+	<insert id="insertEvalReportHst" parameterType="java.util.Map">
+		INSERT INTO TBL_EVAL_REPORT_HST
+			(REPORT_SEQ, HST_TYPE, TEXTS_JSON, PDF_PATH, REG_USER, REG_DTTM)
+		VALUES
+			(#{reportSeq}, #{hstType}, #{textsJson}, #{pdfPath}, #{regUser}, NOW())
+	</insert>
+
+	<!-- 현재 첨부 PDF 경로 — PDF 교체 이력 기록용 -->
+	<select id="selectEvalReportPdfPath" resultType="java.lang.String">
+		SELECT PDF_PATH FROM TBL_EVAL_REPORT_MST WHERE REPORT_SEQ = #{reportSeq}
+	</select>
+
 </mapper>
