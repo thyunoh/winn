@@ -9,6 +9,13 @@
 
 ## 장애/수정 이력
 
+### [완료] 배뇨훈련 점검 H3 오탐 — 규칙적 도뇨(REG_CATH) 제외 누락 (2026-07-19)
+- **증상**: 충무요양병원 7월 하옥희 — **규칙적 도뇨 체크(REG_CATH='1') + 배뇨일지 7일**인데 H3(배뇨일지 작성했으나 배뇨훈련프로그램 미체크·분자제외 우려) 오류로 잡힘.
+- **원인**: H3 조건이 배뇨훈련 3종 중 **일정배뇨(UR_PLAN)·방광훈련(BLAD_TRAIN)만 `<> '1'` 제외**하고 **규칙적 도뇨(REG_CATH)는 확인 안 함**. 규칙적 도뇨는 분자 인정 로직(Magam_SQL.xml select_CategoryList06·L1550 `OR ( pat.REG_CATH='1' )`)에서 **일수 요건 없이** 인정되는 항목이라, 도뇨 체크 환자가 오탐.
+- **조치**: `select_assesCheck`의 H3 블록 2곳(Magam_SQL.xml, 전체 점검용·배뇨훈련 개별 점검용)에 `AND IFNULL(C.REG_CATH,'') <> '1'` 추가. UR_PLAN/BLAD_TRAIN='1'은 이미 제외되므로 일수 1~2일 케이스는 별도 조치 안 함.
+- **배포**: XML만 변경 → WAR 재빌드 불필요(파일 교체 가능)하나 MyBatis 매퍼는 기동 시 로드 → **Tomcat 재기동 필요**.
+- **관련파일**: Magam_SQL.xml(select_assesCheck, H3 두 블록)
+
 ### [완료] 마감업로드(magamFileUpload.jsp) 상단 년도/구분 카드 제거 — 그리드 공간 확보 (2026-07-16)
 - **요청**: 년도 셀렉트를 탭(청구샘파일/환자평가표) 줄 맨 앞에 고정 배치, 의미 없는 "구분: 파일선택/폴더선택" 삭제, 상단 카드 공간 제거로 전체를 위로 올려 하단 그리드 공간 확보.
 - **조치**: 상단 `card-header` 카드 삭제 → `year_Select`는 `#mg_FlagTab` ul 첫 li로 이동(탭 전환 무관 상시 표시). **`file_Select`는 삭제 아닌 숨김 유지** — JS 2곳(월 클릭 업로드·fn_DataVerify)이 값("2"=폴더선택→webkitdirectory) 분기를 읽음, 숨김 기본값 "1"=파일선택 고정. 기타 숨김 셀렉트(allowedFiles/specode/claimType/insurType/treatType)·samPickNewProg·samPickModeWrap도 숨김 컨테이너로 이동(전부 id 참조라 무영향).
