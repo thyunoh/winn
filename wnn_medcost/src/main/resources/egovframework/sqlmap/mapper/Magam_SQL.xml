@@ -3175,13 +3175,14 @@
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
-		   AND CAST(NULLIF(C.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 
+		   AND CAST(NULLIF(C.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3
 		   AND C.DIARY_CREATED IN('0','1')   -- 배뇨일지 작성여부
-           AND IFNULL(C.UR_PLAN,'')    <![CDATA[ <> ]]> '1' 
+           AND IFNULL(C.UR_PLAN,'')    <![CDATA[ <> ]]> '1'
            AND IFNULL(C.BLAD_TRAIN,'') <![CDATA[ <> ]]> '1'
-		   	
+           AND IFNULL(C.REG_CATH,'')   <![CDATA[ <> ]]> '1'   <!-- 규칙적 도뇨 체크 시 분자 인정(일수 요건 없음) → H3 제외 -->
+
 		UNION ALL
-		-- [욕창 새로생긴 오류 1] 전월 욕창이 없고, 당월 욕창이 생겼으나, 이전평가 이후 새로운 욕창 발생여부에 '없음'으로 체크 
+		-- [욕창 새로생긴 오류 1] 전월 욕창이 없고, 당월 욕창이 생겼으나, 이전평가 이후 새로운 욕창 발생여부에 '없음'으로 체크
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
@@ -4556,10 +4557,11 @@
 		  FROM TBL_PATVAL_MST C
 		WHERE C.HOSP_CD = #{hospCd}
 		   AND C.MED_START LIKE CONCAT(#{jobYymm},'%')
-		   AND CAST(NULLIF(C.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3 
+		   AND CAST(NULLIF(C.DIARY_DAYS,'') AS UNSIGNED) <![CDATA[ >= ]]> 3
 		   AND C.DIARY_CREATED IN('0','1')   -- 배뇨일지 작성여부
-           AND IFNULL(C.UR_PLAN,'')    <![CDATA[ <> ]]> '1' 
+           AND IFNULL(C.UR_PLAN,'')    <![CDATA[ <> ]]> '1'
            AND IFNULL(C.BLAD_TRAIN,'') <![CDATA[ <> ]]> '1'
+           AND IFNULL(C.REG_CATH,'')   <![CDATA[ <> ]]> '1'   <!-- 규칙적 도뇨 체크 시 분자 인정(일수 요건 없음) → H3 제외 -->
 		ORDER BY errType
 		
 	</select>	
