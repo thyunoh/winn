@@ -35,7 +35,7 @@
                 <div class="ecommerce-widget">
                 <!-- Row starts -->
 	                <div class="row">
-			    		<div class="col-lg-5">
+			    		<div class="col-lg-5 d-flex flex-column">
 	                        <div class="card" >
 	                            <div class="card-header d-flex align-items-center">
 	                            
@@ -76,10 +76,27 @@
 								            <button id="etarget" data-flag="99" class="btn btn-outline-info btn-block btn-sm align-items-center justify-content-center mb-2" onClick="fn_CreateData('99')" style="display: none;">《 평가 대상 보기 》</button>
 								        </div>
 								    </div>
-								</div> 	                            
+								</div>
+	                        </div>
+
+	                        <!-- [2026-07-20] 점검 항목별 오류 건수 요약 차트 (Chart.js v4 가로막대) — 좌측 빈 공간 활용.
+	                             데이터: 기존 select_assesCheck.do 를 flag 01~07 로 병렬 호출해 건수만 집계(백엔드 무수정).
+	                             막대 클릭 시 해당 점검(fn_CreateData)으로 이동. -->
+	                        <!-- flex:1 → 좌측 컬럼의 남는 높이를 채워 우측 그리드 카드(880px) 바닥과 자동 정렬 -->
+	                        <div class="card" id="errChartCard" style="display: none; flex:1 1 auto; min-height:280px; margin-bottom:36px;">
+	                            <div class="card-header d-flex align-items-center">
+	                                <h3 class="card-header-title">점검 항목별 오류 건수</h3>
+	                                <span id="errChartTotal" class="ml-auto" style="font-size:13px; color:#6c757d; font-weight:600; white-space:nowrap;"></span>
+	                            </div>
+	                            <div class="card-body" style="position:relative; display:flex; flex-direction:column; flex:1 1 auto; min-height:0;">
+	                                <span id="errChartWait" class="loader" style="display:none; position:absolute; top:10px; left:14px; z-index:2;">집계 중...</span>
+	                                <div style="position:relative; flex:1 1 auto; min-height:0;">
+	                                    <canvas id="errCatChart"></canvas>
+	                                </div>
+	                            </div>
 	                        </div>
 	                    </div>
-	                    
+
 	                    <div class="col-lg-7">
 		                    <div class="card" id="card_container" style="height: 880px; display: none;">
 							    <div class="card-header11 d-flex justify-content-between align-items-top">
@@ -894,8 +911,35 @@ function fn_FindDataTable() {
 
 	        });
 
-	    	// [2026-07-19] 평가 대상 보기(99)에서는 환자평가표 조회 진입 없음 — 더블클릭은 제외/포함 토글 전용.
-	    	//   (자료검색 옆 [환자평가표 조회] 버튼을 달았다가 사용자 요청으로 제거함 — 재도입 시 이력 참고)
+	    	// [2026-07-20] 평가 대상 보기(99) — 선택 행 환자평가표 조회 버튼 (더블클릭은 제외/포함 토글 유지).
+	    	//   ★함정: 99 그리드 patId 는 '전체 주민번호'다(제외/포함 modifyPatval 이 PAT_ID 전체일치로 UPDATE 하므로).
+	    	//     반면 조회쿼리 select_PatvalMst 는  LEFT(PAT_ID,6) = (넘긴 patId)  로 '6자리(생년월일)'만 매칭한다.
+	    	//     (※ JSP 주석/스크립트라도 mybatis 파라미터 표기[샵+중괄호]를 그대로 쓰면 Deferred EL 로 해석돼 변환 에러 → 빈 화면. 사용 금지)
+	    	//     화면 컬럼은 substring(0,6) 으로 6자리처럼 보이지만 row.patId 는 13자리 → 그대로 넘기면
+	    	//     6자 vs 13자 비교가 되어 항상 0건('데이터 없음')이 된다. → 앞 6자로 잘라 edit_Data 에 담아 전달.
+	    	(function fn_AttachPatval99Btn() {
+	    		var $dtBtns = $('#' + tableName.id + '_wrapper .dt-buttons');
+	    		if ($dtBtns.length === 0) return;                      // 툴바(showButton) 없으면 skip
+	    		if (document.getElementById('btnPatval99')) return;    // 중복 방지
+	    		var btn = document.createElement('button');
+	    		btn.type = 'button';
+	    		btn.id = 'btnPatval99';
+	    		btn.className = 'dt-button buttons-html5 btn-outline-info';
+	    		btn.style.marginLeft = '6px';
+	    		btn.innerHTML = '<span><i class="fas fa-clipboard-list"></i>&nbsp;환자평가표 보기</span>';
+	    		btn.onclick = function () {
+	    			var r = dataTable.row('.selected').data();
+	    			if (!r || !r.patId || !r.admitDt || !r.medStart) {
+	    				Swal.fire({ icon:'info', title:'환자 선택 필요',
+	    					text:'목록에서 환자(행)를 먼저 선택해 주세요.', timer:1800, showConfirmButton:false });
+	    				return;
+	    			}
+	    			var pid6 = String(r.patId).replace(/-/g,'').substring(0, 6);   // 전체 주민번호 → 앞 6자(생년월일)
+	    			edit_Data = $.extend({}, r, { patId: pid6 });   // fn_ShowPatvalModal 내부 _pvGetSelectedRow 폴백이 사용
+	    			if (typeof fn_ShowPatvalModal === 'function') fn_ShowPatvalModal();
+	    		};
+	    		$dtBtns.append(btn);
+	    	})();
 
         } else {
 
@@ -975,8 +1019,141 @@ function dataLoad(data, callback, settings) {
 
 
 	  
-<script type="text/javascript">	
-	
+<script type="text/javascript">
+
+/* ============================================================
+   [2026-07-20] 점검 항목별 오류 건수 요약 차트 (Chart.js v4 가로막대)
+   - 좌측 하단 빈 공간 활용. 위쪽 7개 점검 버튼과 1:1 대응(평가구분~배뇨훈련).
+   - 데이터: 기존 /main/select_assesCheck.do 를 flag 01~07 로 병렬 호출 → 행 수만 집계(백엔드 무수정).
+   - 막대 클릭 → 해당 점검(fn_CreateData)으로 이동해 상세 확인.
+   - 년/월 변경 시 자동 재집계.
+   ============================================================ */
+var errCatChart = null;
+var ERR_CATS = [
+	{ flag:'01', name:'평가구분' }, { flag:'02', name:'유치도뇨관' }, { flag:'03', name:'신규욕창' },
+	{ flag:'04', name:'욕창관리' }, { flag:'05', name:'일상생활' }, { flag:'06', name:'당뇨환자' },
+	{ flag:'07', name:'배뇨훈련' }
+];
+var ERR_COLORS = ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1'];
+
+var _evalTargetTotal = null;   // 평가대상 전체(=flag 99 건수)
+var _errTotalCnt      = null;   // 오류 합계(7개 점검)
+
+// 응답이 배열 / {data:[...]} 어느 형태여도 행 수를 안전하게 계산
+function _errRowCount(resp) {
+	if (!resp) return 0;
+	if (Array.isArray(resp)) return resp.length;
+	if (Array.isArray(resp.data)) return resp.data.length;
+	return 0;
+}
+
+// 그래프 상단 우측: '평가대상 전체 · 오류 합계' 표시 (두 값이 각각 도착할 때마다 갱신)
+function fn_UpdateChartHeaderTotal() {
+	var el = document.getElementById('errChartTotal');
+	if (!el) return;
+	var html = '';
+	if (_evalTargetTotal !== null) html += '<b style="color:#1e3c72;">평가대상 ' + _evalTargetTotal + '건</b>';
+	if (_errTotalCnt !== null)     html += (html ? '&nbsp;&nbsp;·&nbsp;&nbsp;' : '') + '오류 ' + _errTotalCnt + '건';
+	el.innerHTML = html;
+}
+
+function fn_LoadErrCatChart() {
+	var card = document.getElementById('errChartCard');
+	if (!card) return;
+	card.style.display = 'flex';
+	var wait = document.getElementById('errChartWait');
+	if (wait) wait.style.display = 'inline-block';
+
+	var yy = document.getElementById('year_Select').value;
+	var mm = document.getElementById('monthSelect').value;
+	var jobYymm = yy + mm;
+
+	// 평가대상 전체(flag 99) 건수 — 헤더 표시용
+	_evalTargetTotal = null; _errTotalCnt = null;
+	$.ajax({
+		url: '/main/select_assesCheck.do', type: 'POST', dataType: 'json',
+		data: { hospCd: hospid, jobYymm: jobYymm, jobFlag: '99' },
+		success: function(resp) { _evalTargetTotal = _errRowCount(resp); },
+		error:   function()     { _evalTargetTotal = 0; },
+		complete: function()    { fn_UpdateChartHeaderTotal(); }
+	});
+
+	var counts = new Array(ERR_CATS.length).fill(0);
+	var done = 0;
+	ERR_CATS.forEach(function(cat, idx) {
+		$.ajax({
+			url: '/main/select_assesCheck.do',
+			type: 'POST',
+			dataType: 'json',
+			data: { hospCd: hospid, jobYymm: jobYymm, jobFlag: cat.flag },
+			success: function(resp) { counts[idx] = _errRowCount(resp); },
+			error:   function()     { counts[idx] = 0; },
+			complete: function() {
+				done++;
+				if (done === ERR_CATS.length) fn_RenderErrCatChart(counts);
+			}
+		});
+	});
+}
+
+function fn_RenderErrCatChart(counts) {
+	var wait = document.getElementById('errChartWait');
+	if (wait) wait.style.display = 'none';
+
+	_errTotalCnt = counts.reduce(function(a, b) { return a + b; }, 0);
+	fn_UpdateChartHeaderTotal();
+
+	var labels = ERR_CATS.map(function(c) { return c.name; });
+	var canvas = document.getElementById('errCatChart');
+	if (!canvas || typeof Chart === 'undefined') return;
+
+	if (errCatChart) {   // 재집계 — 데이터만 교체
+		errCatChart.data.labels = labels;
+		errCatChart.data.datasets[0].data = counts;
+		errCatChart.update();
+		return;
+	}
+
+	errCatChart = new Chart(canvas.getContext('2d'), {
+		type: 'bar',
+		data: {
+			labels: labels,
+			datasets: [{
+				label: '오류 건수',
+				data: counts,
+				backgroundColor: ERR_COLORS,
+				borderRadius: 4,
+				maxBarThickness: 26
+			}]
+		},
+		options: {
+			indexAxis: 'y',                 // v4 가로막대
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: { display: false },
+				tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.x + '건'; } } }
+			},
+			scales: {
+				x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+				y: { grid: { display: false } }
+			},
+			onClick: function(evt, els) {
+				if (els && els.length) {
+					var i = els[0].index;
+					if (ERR_CATS[i]) fn_CreateData(ERR_CATS[i].flag);
+				}
+			}
+		}
+	});
+	// 막대 위 마우스 → 포인터
+	canvas.style.cursor = 'default';
+	canvas.onmousemove = function(e) {
+		var pts = errCatChart.getElementsAtEventForMode(e, 'index', { intersect: true }, false);
+		canvas.style.cursor = (pts && pts.length) ? 'pointer' : 'default';
+	};
+}
+
 $(document).ready(function() {
 
 	_loadDocCnt();   // 성명 마스킹 정책(DOCCNT) — 그리드 렌더 전 확정
@@ -1037,9 +1214,11 @@ $(document).ready(function() {
 
 	$('#year_Select').on('change', function() {
 		sessionStorage.setItem('assesCheck_year', this.value);
+		fn_LoadErrCatChart();   // 년 변경 → 오류 요약 차트 재집계
     });
 	$('#monthSelect').on('change', function() {
 		sessionStorage.setItem('assesCheck_month', this.value);
+		fn_LoadErrCatChart();   // 월 변경 → 오류 요약 차트 재집계
     });
 	
 	
@@ -1049,9 +1228,11 @@ $(document).ready(function() {
     	document.getElementById("etarget").style.display = "none";
     }
 	
-	fn_CreateData('00');	
-	
-	
+	fn_CreateData('00');
+
+	fn_LoadErrCatChart();   // 좌측 하단 '점검 항목별 오류 건수' 차트 (flag 01~07 병렬 집계)
+
+
 });
 	
 </script> 
