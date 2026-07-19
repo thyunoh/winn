@@ -432,7 +432,25 @@
 												<div class="control-group mb-2">
 													<input type="password" class="form-control" id="passwd"
 														placeholder="PassWord" style="width: 150%;" />
+													<!-- [2026-07-19] Caps Lock 켜짐 안내 — 비밀번호 입력 중에만 표시 -->
+													<div id="capsLockWarn" style="display:none; margin-top:4px; font-size:12.5px; font-weight:bold; color:#ffd54d; white-space:nowrap;">
+														<i class="fas fa-exclamation-triangle"></i> Caps Lock이 켜져 있습니다.
+													</div>
 												</div>
+												<script>
+												(function(){
+													var pw = document.getElementById('passwd'), warn = document.getElementById('capsLockWarn');
+													if(!pw || !warn) return;
+													function upd(e){
+														if(!e.getModifierState) return;
+														warn.style.display = e.getModifierState('CapsLock') ? '' : 'none';
+													}
+													pw.addEventListener('keydown', upd);    // 타이핑 중 상태 갱신(캡스락 키 자체 포함)
+													pw.addEventListener('keyup', upd);
+													pw.addEventListener('mousedown', upd);  // 클릭해서 들어올 때도 즉시 판정
+													pw.addEventListener('blur', function(){ warn.style.display = 'none'; });
+												})();
+												</script>
 												<div class="form-check mb-2"
 													style="white-space: nowrap; color: white;">
 													<input class="form-check-input" type="checkbox" id="saveyn">

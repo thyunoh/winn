@@ -26,6 +26,9 @@
 		button[data-flag].active span { color: #fff !important; }
 	</style>
 
+	<!-- [2026-07-19] 환자평가표 조회 모달 (assessment.jsp 와 공용) — 점검 그리드 행 더블클릭으로 호출 -->
+	<script type="text/javascript" src="/js/winmc/patvalModal.js?v=20260719002"></script>
+
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
@@ -406,7 +409,7 @@ function fn_CreateData(flag) {
 						            if (prefix === 'G') return '삽입·제거일자';
 						            if (data === 'H1')  return '소변조절못함';
 						            if (data === 'H2')  return '기저귀사용';
-						            if (data === 'H3')  return '배뇨계힉';
+						            if (data === 'H3')  return '배뇨계획';
 	
 						            /* 신규욕창 */
 						            if (prefix === 'I') return '욕창 발생일 확인';
@@ -831,10 +834,14 @@ function fn_FindDataTable() {
 		    
 	    }
 	    
+	    // [2026-07-19] 그리드 destroy→재생성 시 이전 dblclick 핸들러가 table 노드에 남아
+	    //   제외여부(99)와 환자평가표 조회(99 외)가 동시에 실행되는 겹침 버그 방지 — 붙이기 전 전부 제거
+	    dataTable.off('dblclick');
 	    if (jobFlag === '99') {
-        	
+
 	    	dataTable.on('dblclick', 'tr', function (e) {
-        		
+
+	    		if (jobFlag !== '99') return;   // 안전장치 — 점검 그리드에선 환자평가표 조회만 동작
         		let selData = dataTable.row(this).data();
         		let msgText = '';
         		let chnText = '';
@@ -883,10 +890,26 @@ function fn_FindDataTable() {
 						});
 				  	}
 		        });
-        		
-        		
+
+
 	        });
-        }   
+
+	    	// [2026-07-19] 평가 대상 보기(99)에서는 환자평가표 조회 진입 없음 — 더블클릭은 제외/포함 토글 전용.
+	    	//   (자료검색 옆 [환자평가표 조회] 버튼을 달았다가 사용자 요청으로 제거함 — 재도입 시 이력 참고)
+
+        } else {
+
+        	// [2026-07-19] 점검 그리드(99 외) 행 더블클릭 → 환자평가표 조회 모달 (공용 /js/winmc/patvalModal.js)
+        	//   99(평가 대상 보기)는 기존 제외/포함 토글 더블클릭을 유지하므로 제외.
+        	//   patId 는 그리드가 6자리(생년월일)여도 조회 쿼리(select_PatvalMst)가 LEFT(PAT_ID,6) 매칭이라 동작함.
+        	dataTable.on('dblclick', 'tbody tr', function () {
+        		if (jobFlag === '99') return;   // 안전장치 — 평가 대상 보기에선 제외/포함 토글만 동작
+        		var rowData = dataTable.row(this).data();
+        		if (!rowData || !rowData.patId || !rowData.admitDt || !rowData.medStart) return;
+        		edit_Data = rowData;   // fn_ShowPatvalModal 내부 _pvGetSelectedRow 폴백이 사용
+        		if (typeof fn_ShowPatvalModal === 'function') fn_ShowPatvalModal();
+        	});
+        }
 	    
 	    
 	})(jQuery);

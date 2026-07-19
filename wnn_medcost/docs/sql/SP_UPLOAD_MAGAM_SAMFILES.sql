@@ -45,8 +45,8 @@ BEGIN
     DECLARE version      VARCHAR(10) DEFAULT '';
     DECLARE tblinfo      VARCHAR(50) DEFAULT '';
     DECLARE prev_tblinfo VARCHAR(50) DEFAULT '';
-    DECLARE file_nm      VARCHAR(100) DEFAULT '';
-    DECLARE prev_file_nm VARCHAR(100) DEFAULT '';
+    DECLARE file_nm      VARCHAR(200) DEFAULT '';   -- [2026-07-19] DB 운영본 기준 200 (드리프트 정리)
+    DECLARE prev_file_nm VARCHAR(200) DEFAULT '';
     DECLARE table_column  TEXT DEFAULT '';
     DECLARE table_update TEXT DEFAULT '';
     DECLARE col_list     TEXT DEFAULT '';
@@ -140,13 +140,16 @@ BEGIN
 	BEGIN
 	    DECLARE errstat VARCHAR(5);
 	    DECLARE errtext VARCHAR(1000);
+	    DECLARE devmess VARCHAR(3000);
 
 	    GET DIAGNOSTICS CONDITION 1
 	        errstat = RETURNED_SQLSTATE,
 	        errtext = MESSAGE_TEXT;
 
 	    SET errcode = IFNULL(errstat,'45000');
-	    SET errmess = CONCAT(
+	    -- [2026-07-19] 개발 상세(원인 추적용) — 화면에 그대로 노출하지 않고 '||DEV||' 뒤에 실어 내림.
+	    --  JSP(fn_FriendlyUpErr)가 구분자 앞 안내문만 표시하고 뒷부분은 F12 콘솔에만 남김.
+	    SET devmess = CONCAT(
 	        IFNULL(errstat,'SQLSTATE 없음'), ' - ', IFNULL(errtext,'MESSAGE 없음'),
 	        ' | file=',    IFNULL(file_nm,''),
 	        ', valsize=',  IFNULL(valsize,0),
@@ -154,8 +157,17 @@ BEGIN
 	        ', line=',     LEFT(IFNULL(lineval,''), 60),
 	        ' || stage=',  IFNULL(@dbg,'(none)'),
 	        ', colVal=',   LEFT(IFNULL(col_value,''),60),
-	        ', lastSQL=',  LEFT(IFNULL(@sql_val,'(none)'),3500)
+	        ', lastSQL=',  LEFT(IFNULL(@sql_val,'(none)'),2000)
 	    );
+	    -- 사용자 안내문(제공 메시지) — 평가표(TBL_PATVAL_MST) 처리 중 오류는 작성 미완료 평가표 업로드가 대부분
+	    IF TRIM(IFNULL(tblinfo,'')) = 'TBL_PATVAL_MST' OR IFNULL(mg_flag,'') = '9' THEN
+	        SET errmess = CONCAT('작성이 완료되지 않은 평가표의 경우 업로드가 불가능 하오니, 확인 후 재 업로드 하여 주시기 바랍니다.',
+	                             CASE WHEN IFNULL(file_nm,'') = '' THEN '' ELSE CONCAT(' (파일: ', file_nm, ')') END);
+	    ELSE
+	        SET errmess = CONCAT('파일 내용을 처리하지 못했습니다. 파일을 확인 후 다시 업로드하여 주시기 바랍니다.',
+	                             CASE WHEN IFNULL(file_nm,'') = '' THEN '' ELSE CONCAT(' (파일: ', file_nm, ')') END);
+	    END IF;
+	    SET errmess = CONCAT(errmess, '||DEV||', devmess);
 
 	    ROLLBACK;
 	END;

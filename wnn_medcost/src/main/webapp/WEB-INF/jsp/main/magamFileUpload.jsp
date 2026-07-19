@@ -225,7 +225,8 @@
                                          position: sticky; top: 0; z-index: 3;
                                          background: #c8e2d9; color: #2c4a42; box-shadow: inset 0 -1px 0 #a9cec3;
                                      }
-                                     /* 상태 컬럼 오른쪽 고정 — 가로 스크롤해도 항상 끝에 보이게(서식버전은 스크롤 영역) */
+                                     /* 상태 컬럼 오른쪽 고정 — 가로 스크롤해도 항상 끝에 보이게(서식버전은 스크롤 영역)
+                                        [2026-07-19] 선택 체크박스는 원위치(맨 왼쪽) 유지 확정, 폴더 라벨만 우측 고정(spkDirSticky) */
                                      #samPickModal .samPickTable td.spkStCell {
                                          position: sticky; right: 0; z-index: 2;
                                          background: #fff; box-shadow: inset 1px 0 0 #dee2e6;
@@ -237,6 +238,12 @@
                                          width: 110px; min-width: 110px;
                                      }
                                      #samPickModal .samPickTable tr.samPickRepRow td.spkStCell { background: #eef7f4; }
+                                     /* 폴더 행 — 라벨을 서식버전+상태 2칸 폭(230px)으로 우측 고정. 긴 폴더명은 말줄임(title 툴팁) */
+                                     #samPickModal .samPickTable td.spkDirSticky {
+                                         position: sticky; right: 0; z-index: 2;
+                                         background: #eef7f4; box-shadow: inset 1px 0 0 #dee2e6;
+                                         width: 230px; min-width: 230px; max-width: 230px;
+                                     }
                                      /* 본문 글자 진하게(희미함 해소) — 비활성(X) 행만 회색 유지 */
                                      #samPickModal .samPickTable tbody td { color: #212b29; }
                                      #samPickModal .samPickTable tr.spkDisRow td { color: #a7b0ad; }
@@ -250,6 +257,13 @@
                                          border-radius: 50%; vertical-align: -1px; margin-right: 4px;
                                          animation: spkSpin 0.7s linear infinite;
                                      }
+                                     /* [올라온 목록 개별삭제] 상태칸 끝 휴지통 — 평소 옅은 회색, 올리면 빨강 */
+                                     #samPickModal .spkDelBtn {
+                                         border: none; background: transparent; color: #b6c2bd; cursor: pointer;
+                                         padding: 0 3px; margin-left: 7px; font-size: 13px; line-height: 1; vertical-align: -1px;
+                                     }
+                                     #samPickModal .spkDelBtn:hover { color: #e74c3c; }
+                                     #samPickModal .spkDelBtn:disabled { opacity: .3; cursor: default; }
                                      /* ── 밝은 세금계산서 폼 컨셉 (화이트 + 청록 accent) ── */
                                      #samPickModal .modal-content { box-shadow: 0 18px 48px rgba(20,80,66,0.20); }
                                      /* ── 글자체 = 출고현황표(konet)와 동일: 맑은 고딕 + 굵은 톤 ── */
@@ -1383,6 +1397,33 @@ $(document).ready(function() {
 <script type="text/javascript">
 
 // ====================================================================
+// [2026-07-19] 업로드 오류 사용자 안내문 변환
+//  SP(SP_UPLOAD_MAGAM_SAMFILES)가 errmess = '사용자안내문||DEV||개발상세' 형식으로 내림.
+//  화면에는 구분자 앞 안내문만 표시하고, 개발상세(SQLSTATE·lastSQL 등)는 console(F12)에만 남김.
+//  구버전 SP 등에서 개발 원문이 그대로 오는 경우도 화면에는 안내문으로 치환(원문은 콘솔).
+//  40000 계열('버전이 누락...' 등) 사용자용 안내문은 그대로 표시.
+// ====================================================================
+function fn_FriendlyUpErr(raw) {
+	raw = (raw == null) ? '' : String(raw);
+	function h(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+	var p = raw.indexOf('||DEV||');
+	if (p >= 0) {
+		console.error('업로드 오류 상세(개발용):', raw.substring(p + 7));
+		return h(raw.substring(0, p));
+	}
+	if (/SQLSTATE|lastSQL=|stage=/.test(raw)) {   // 구버전 SP: 개발 원문 그대로 → 안내문으로 치환
+		console.error('업로드 오류 원문:', raw);
+		var fm = /file=([^,|\s]+)/.exec(raw);
+		var fileTxt = fm ? (' (파일: ' + h(fm[1]) + ')') : '';
+		if (raw.indexOf('TBL_PATVAL_MST') >= 0) {
+			return '작성이 완료되지 않은 평가표의 경우 업로드가 불가능 하오니,<br>확인 후 재 업로드 하여 주시기 바랍니다.' + fileTxt;
+		}
+		return '파일 내용을 처리하지 못했습니다.<br>파일을 확인 후 다시 업로드하여 주시기 바랍니다.' + fileTxt;
+	}
+	return h(raw);
+}
+
+// ====================================================================
 // 입원현황 업로드용 DB컬럼 정의 / 자동매핑 키워드 (sugacd.jsp 방식)
 // ====================================================================
 var ipwonDbColumns = [
@@ -1790,7 +1831,7 @@ async function handleFileSelection(event) {
 			   	                	signUp = 'N';
 			   	                    if (response.error_code !== "0" & !errorCheck) {
 			   	                        // 오류 발생 시 메시지 출력 및 모든 처리 종료
-			   	                        messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+			   	                        messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + fn_FriendlyUpErr(response.error_mess) + "</h5><p></p><br>", "", "", "");
 			   	                        window._samUpOk = false; // 청구건 오류(원본 삭제 금지)
    	                        errorCheck = true; // 오류 플래그 설정
 			   	                    } else {
@@ -1820,12 +1861,9 @@ async function handleFileSelection(event) {
 			   	                    console.error('Error Message:', error);
 			   	                    if (!errorCheck) {
 			   	                        errorCheck = true;
-			
-			   	                        let errorMessage = 'Error occurred while processing files. ';
-			   	                        if (xhr.responseText) {
-			   	                            errorMessage += 'Server response: ' + xhr.responseText;
-			   	                        }
-			   	                        messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + errorMessage + "<br>" + "Status Code: " + xhr.status + "</h5><p></p><br>", "", "", "");
+
+			   	                        // 통신오류 상세(responseText·status)는 위 console.error 로만 — 화면에는 안내문만
+			   	                        messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>서버와 통신에 실패했습니다.<br>잠시 후 다시 시도해 주시고, 같은 오류가 반복되면 관리자에게 문의해 주시기 바랍니다.</h5><p></p><br>", "", "", "");
 			   	                    }
 			   	                },
 			   	             complete: function() {
@@ -2154,7 +2192,7 @@ function doSaveSpcsugaDatas(datas) {
 		success: function(response) {
 			signUp = 'N';
 			if (response.error_code !== "0") {
-				messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+				messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + fn_FriendlyUpErr(response.error_mess) + "</h5><p></p><br>", "", "", "");
 			} else {
 				messageBox("1", "<h5>특정수가현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
 				dataTable.ajax.reload();
@@ -2723,7 +2761,7 @@ function doSaveExcelDatas(datas, seqNumber, jumin_Cnt) {
 			success: function(response) {
 				signUp = 'N';
 				if (response.error_code !== "0") {
-					messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+					messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + fn_FriendlyUpErr(response.error_mess) + "</h5><p></p><br>", "", "", "");
 				} else {
 					messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
 					dataTable.ajax.reload();
@@ -2767,7 +2805,7 @@ function doSaveExcelDatas(datas, seqNumber, jumin_Cnt) {
 					success: function(response) {
 						signUp = 'N';
 						if (response.error_code !== "0") {
-							messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + response.error_mess + "</h5><p></p><br>", "", "", "");
+							messageBox("4", "<h5>전송파일 처리 중 오류가 발생했습니다. <br>" + fn_FriendlyUpErr(response.error_mess) + "</h5><p></p><br>", "", "", "");
 						} else {
 							messageBox("1", "<h5>입원현황 자료가 정상적으로 등록 되었습니다.</h5><p></p><br>", "", "", "");
 							dataTable.ajax.reload();
@@ -4314,12 +4352,20 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 +'<td class="text-right">'+fmtSize(f.size)+'</td>'
                 +'<td style="padding-left:'+indent+'px;">'+caret+'📄 '+esc(f.name)+zero+cnt+'</td>'
                 +'<td class="text-center" id="spk_ver_'+idx+'">…</td>'
-                +'<td class="text-center spkStCell" id="spk_st_'+idx+'" style="color:#c0c0c0;">-</td></tr>';
+                // 상태 텍스트는 span(id=spk_st_)에 — setSt가 innerHTML을 갈아끼워도 옆 휴지통 버튼이 보존됨
+                +'<td class="text-center spkStCell"><span id="spk_st_'+idx+'" style="color:#c0c0c0;">-</span>'
+                +'<button type="button" class="spkDelBtn" data-idx="'+idx+'"'+setAttr+' title="'+(opts.rep?('세트 '+opts.count+'개 파일을 목록에서 삭제'):'목록에서 삭제')+'"><i class="fa fa-trash-alt"></i></button></td></tr>';
         }
         dirs.forEach(function(d){
+            // [2026-07-19] 폴더 행: 전체선택 체크는 원위치(맨 앞), 라벨은 우측 끝(서식버전+상태 자리, 고정) — 스크롤과 무관하게 항상 보임
             html+='<tr class="samPickDirRow" data-dir="'+esc(d)+'" style="background:#eef7f4; cursor:pointer;">'
                 +'<td class="text-center"><input type="checkbox" class="samPickDir" data-dir="'+esc(d)+'"></td>'
-                +'<td colspan="11" style="font-weight:600;color:#1f6f5c;"><span class="samPickCaret" style="display:inline-block;width:14px;">▼</span> 📁 '+esc(prettyDir(d))+' ('+groups[d].length+')</td></tr>';
+                +'<td colspan="9"></td>'
+                +'<td colspan="2" class="spkDirSticky" style="font-weight:600;color:#1f6f5c;">'
+                +  '<div style="display:flex; align-items:center; gap:6px;">'
+                +    '<span class="samPickCaret" style="flex:0 0 14px;">▼</span>'
+                +    '<span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="'+esc(prettyDir(d))+' ('+groups[d].length+')">📁 '+esc(prettyDir(d))+' ('+groups[d].length+')</span>'
+                +  '</div></td></tr>';
             // 폴더 내부를 청구세트(M/C/K/D/H 다중파일)와 단건(GHP/CAR 등)으로 나눔
             var sets={}, order=[];
             groups[d].forEach(function(idx){
@@ -4353,6 +4399,17 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             tb.querySelectorAll('input.samPickFile').forEach(function(fc){ if(fc.getAttribute('data-set')===sid && !fc.disabled) fc.checked=cb.checked; });
             syncPicked();
         }); });
+        // [개별 삭제] 상태칸 휴지통 클릭 → 해당 파일(세트 대표행이면 세트 전체)을 목록에서 제거
+        tb.querySelectorAll('button.spkDelBtn').forEach(function(btn){ btn.addEventListener('click', function(ev){
+            ev.stopPropagation();
+            var tr=btn.closest('tr'), sid=btn.getAttribute('data-set'), idxs=[];
+            if(sid && tr && tr.classList.contains('samPickRepRow')){
+                tb.querySelectorAll('input.samPickFile').forEach(function(fc){ if(fc.getAttribute('data-set')===sid) idxs.push(parseInt(fc.getAttribute('data-idx'),10)); });
+            } else {
+                idxs.push(parseInt(btn.getAttribute('data-idx'),10));
+            }
+            removeFilesAt(idxs);
+        }); });
         // 폴더 행 클릭 → 접기/펼치기 (펼칠 때 세트 멤버는 접힌 상태 유지)
         tb.querySelectorAll('tr.samPickDirRow').forEach(function(row){
             row.addEventListener('click', function(ev){
@@ -4383,6 +4440,28 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         visible.forEach(function(idx){ applyMeta(idx); });   // 캐시된 파싱값 있으면 표시
         syncPicked();
         (async function(){ for(var k=0;k<visible.length;k++){ var vi=visible[k]; if(!_meta[vi]) await parseOne(vi); } })();   // 미파싱만 첫줄 파싱(순차)
+    }
+    // [올라온 목록 개별삭제] idx 목록의 파일을 방식별 저장소(_manualFiles/_autoFiles)와 _files/_meta에서 제거.
+    //  원본 파일은 건드리지 않음(목록 표시만). 자동선택 폴더분은 [새로고침] 재스캔 시 다시 나타남. 삭제분 외 체크 선택은 보존.
+    function removeFilesAt(idxs){
+        var rm=idxs.map(function(i){ return _files[i]; }).filter(Boolean);
+        if(!rm.length) return;
+        var keep=(window.gPickedFiles||[]).filter(function(f){ return rm.indexOf(f)<0; });
+        _autoFiles  =_autoFiles.filter(function(f){ return rm.indexOf(f)<0; });
+        _manualFiles=_manualFiles.filter(function(f){ return rm.indexOf(f)<0; });
+        var nf=[], nm={};
+        for(var j=0;j<_files.length;j++){ if(rm.indexOf(_files[j])<0){ nm[nf.length]=_meta[j]; nf.push(_files[j]); } }
+        _files=nf; _meta=nm;
+        render();
+        document.querySelectorAll('#samPickTree input.samPickFile').forEach(function(cb){   // 재렌더로 풀린 체크 복원
+            var i=parseInt(cb.getAttribute('data-idx'),10);
+            if(!cb.disabled && keep.indexOf(_files[i])>=0) cb.checked=true;
+        });
+        syncPicked();
+        if(typeof Swal!=='undefined'){
+            var nmTxt=(rm.length===1)?esc(rm[0].name):('파일 '+rm.length+'건');
+            Swal.fire({ icon:'success', html:'<div style="font-size:14px;">'+nmTxt+' — 목록에서 삭제했습니다.</div>', width:'420px', padding:'0.5em', heightAuto:false, timer:1600, showConfirmButton:false });
+        }
     }
     function onPick(e){   // 구형 브라우저 폴백(webkitdirectory input) 경로
         var fl=e.target.files||[]; _autoFiles=[]; _dirHandle=null;
@@ -4616,6 +4695,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 if(applyBtn){ applyBtn.disabled=true; applyBtn.innerHTML='<i class="fa fa-spinner fa-spin mr-1"></i>업로드 중...'; }
                 if(folderBtn) folderBtn.disabled=true;
                 if(refreshBtn) refreshBtn.disabled=true;
+                document.querySelectorAll('#samPickTree .spkDelBtn').forEach(function(b){ b.disabled=true; });   // 업로드 중 개별삭제 금지(_files 인덱스 보호). 종료 시 render()가 새 버튼으로 복구
                 try{ window.gMonth=mm; if(typeof findField==='function') findField('mgmonth', mm); }catch(e){}
                 order.forEach(function(key){ setSt(gidx[key], '대기', '#888'); });   // 선택 청구건 전부 '대기'
                 window._samSilent=true;   // 청구건별 성공메시지 억제(별도 창 안 뜸)
