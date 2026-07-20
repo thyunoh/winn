@@ -580,12 +580,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var allowView = isWinner;
 
   // 1단계: 위너넷 전용 — 위너넷이 아니면(또는 재로그인 전이라 세션이 비었으면) 적정성평가 화면으로 복귀.
-  if(!allowView){
+   if(!allowView){
     alert('월보고서는 준비 중입니다.');
     location.replace('/main/assessment.do');
     return;
   }  
-
+ 
   // 병원(거래처) 열람 모드 — 관리 도구(상태·편집·저장·승인·PDF첨부·서식바·배율·미리보기)와 안내문을 숨겨
   //   조회·인쇄·종료만 남김. 1단계(위너넷 전용)에선 동작 없고, 2단계 canView 공개 시 자동 적용.
   if(!isWinner){
@@ -1449,7 +1449,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     // P1 국면 분기 — 선언 + 전월대비(상승/하락/유지) + 상위등급 격차(경계 국면) + 목표 문장
     //   (담당자 문형: "전월대비 종합점수 4.56점 상승이 되었으며, 3등급과 점수차이는 0.14점")
     var curG = gradeOf(scores.total);
-    p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당합니다.';
+    // [C1] 당월/누적 이원 — 선언을 이원형으로 '병합'(누적 중복 진술 제거 → P1 분량 절감). 시스템 SP monthVal.
+    var moNum2 = parseInt(curYm.substring(4,6),10);
+    var mVal = _dashInd ? n(_dashInd.monthVal) : 0;
+    var mG = mVal>0 ? gradeOf(mVal) : '';
+    if(mVal>0 && mG!==curG)
+      p.sum_p1 = moNum2+'월 당월 단독 예상점수는 '+f1(mVal)+'점('+mG+')이나, 실제 평가에 반영되는 7~'+moNum2+'월 누적 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당합니다.';
+    else
+      p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당합니다.';
     if(prevTotal!=null){
       var pd = Math.round((scores.total-prevTotal)*100)/100;
       if(Math.abs(pd)>=0.05)
@@ -1465,23 +1472,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     p.sum_p1 += ' ' + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황입니다.'
                              : '목표인 '+gg+'('+fnum(gs)+'점)을 달성한 수준으로, 남은 기간 동안 유지 관리가 중요합니다.');
-    // [C1] 당월 vs 누적 이원 점수·등급 병기 — 시스템 SP(monthVal) (세밀분석 §8, 5병원 수렴)
-    var moNum2 = parseInt(curYm.substring(4,6),10);
-    var mVal = _dashInd ? n(_dashInd.monthVal) : 0;
-    if(mVal>0){
-      var mG = gradeOf(mVal);
-      p.sum_p1 += ' 당월('+moNum2+'월) 단독 예상점수는 '+f1(mVal)+'점('+mG+')'
-                + (mG!==curG ? '이나, 실제 평가에 반영되는 7~'+moNum2+'월 누적 기준으로는 '+f1(scores.total)+'점('+curG+')에 해당합니다.'
-                             : '으로, 누적과 동일한 등급 수준을 유지하고 있습니다.');
-    }
-    // [C2] 월별 종합점수 시계열 (month_07~당월) — 시스템 SP (세밀분석 §8, 전 병원 수렴)
+    // [C2] 월별 종합점수 시계열 — 3개월 이상일 때만(초기월 과밀 방지). 시스템 SP month_07~당월.
     if(_dashInd){
       var ser=[];
-      for(var mm=7; mm<=moNum2; mm++){
-        var mv=n(_dashInd['month_'+('0'+mm).slice(-2)]);
-        if(mv>0) ser.push(mm+'월 '+f1(mv)+'점');
-      }
-      if(ser.length>=2) p.sum_p1 += ' (월별 예상점수 추이 — '+ser.join(', ')+')';
+      for(var mm=7; mm<=moNum2; mm++){ var mv=n(_dashInd['month_'+('0'+mm).slice(-2)]); if(mv>0) ser.push(mm+'월 '+f1(mv)+'점'); }
+      if(ser.length>=3) p.sum_p1 += ' (월별 예상점수 추이 — '+ser.join(', ')+')';
     }
     var sq = structQuarterTxt();   // [★5] 2026 등 차등제 분기 예상/실반영 표기(연말은 '')
     p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다.'
