@@ -89,6 +89,8 @@
     <!-- 병원 선택 즉시 그 병원만 조회, '전체 병원' 선택 시 전체 (관리자). 거래처는 본인 병원 고정(disabled) -->
     <select id="erl-hosp" class="erl-sel erl-hosp" onchange="erlLoad()"><option value="">전체 병원</option></select>
     <button class="erl-btn erl-primary" onclick="erlLoad()">🔍 검색</button>
+    <!-- 위너넷 전용: 조회된 목록에서 병원코드·병원명으로 즉시 필터(전체 병원 조회 시 병원 찾기용). 거래처는 숨김 -->
+    <span id="erl-kwbox"><input id="erl-kw" type="text" class="erl-inp" placeholder="병원코드·병원명 검색" onkeyup="erlFilter()" style="width:180px;"><button class="erl-btn erl-sm" onclick="document.getElementById('erl-kw').value='';erlFilter();" title="검색어 지우기" style="margin-left:4px;">✕</button></span>
     <span class="erl-sp"></span>
     <span class="erl-count" id="erl-count"></span>
   </div>
@@ -179,6 +181,7 @@ jQuery(function(){
       sel.innerHTML='<option value="'+esc(ownHospCd)+'">'+esc(ownHospNm||ownHospCd)+'</option>';
       sel.value=ownHospCd; sel.disabled=true;
       if(ownHospCd) HOSP_NM[ownHospCd]=ownHospNm||ownHospCd;
+      var kb=el('erl-kwbox'); if(kb) kb.style.display='none';   // 거래처는 병원 검색 불필요(본인 병원만)
       return;   // 초기 조회는 하단 tail 에서(erlLoad 정의 이후)
     }
     jQuery.ajax({ url:ctx+'/main/select_HospitalMst.do', type:'POST', dataType:'json', data:{ hosp_cd:'' },
@@ -253,8 +256,23 @@ jQuery(function(){
             + '</tr>';
     });
     tb.innerHTML=html;
-    el('erl-count').innerHTML='총 <b>'+list.length+'</b>건';
+    var kw=(el('erl-kw')&&el('erl-kw').value)?el('erl-kw').value.trim():'';
+    el('erl-count').innerHTML = kw
+      ? ('검색 <b>'+list.length+'</b> / 전체 '+LAST.length+'건')
+      : ('총 <b>'+list.length+'</b>건');
   }
+
+  // 조회된 목록(LAST)에서 병원코드·병원명으로 즉시 필터(위너넷 전체병원 조회 시 병원 찾기). 서버 재조회 없음.
+  var LAST = [];
+  window.erlFilter = function(){
+    var kw=(el('erl-kw')?el('erl-kw').value:'').trim().toLowerCase();
+    if(!kw){ render(LAST); return; }
+    render(LAST.filter(function(r){
+      var cd=String(r.hospcd||'').toLowerCase();
+      var nm=String(r.hospnm||HOSP_NM[r.hospcd]||'').toLowerCase();
+      return cd.indexOf(kw)>=0 || nm.indexOf(kw)>=0;
+    }));
+  };
 
   window.erlLoad = function(){
     var yr = el('erl-year').value;              // 조회조건 = 년도만(월 무관, 그 해 전체 월 표시)
@@ -262,10 +280,10 @@ jQuery(function(){
     el('erl-body').innerHTML='<tr><td colspan="14" class="erl-empty">조회 중…</td></tr>';
     jQuery.ajax({ url:ctx+'/main/listEvalReport.do', type:'POST', dataType:'json', data:{ evalYear:yr, hospCd:hosp },
       success:function(res){
-        if(res && res.result==='OK'){ render(res.list||[]); }
-        else { el('erl-body').innerHTML='<tr><td colspan="14" class="erl-empty">조회 실패: '+esc((res&&res.message)||'')+'</td></tr>'; }
+        if(res && res.result==='OK'){ LAST = res.list||[]; erlFilter(); }   // 로드분 보관 후 현재 검색어로 필터 적용
+        else { LAST=[]; el('erl-body').innerHTML='<tr><td colspan="14" class="erl-empty">조회 실패: '+esc((res&&res.message)||'')+'</td></tr>'; }
       },
-      error:function(){ el('erl-body').innerHTML='<tr><td colspan="14" class="erl-empty">조회 중 오류가 발생했습니다.</td></tr>'; }
+      error:function(){ LAST=[]; el('erl-body').innerHTML='<tr><td colspan="14" class="erl-empty">조회 중 오류가 발생했습니다.</td></tr>'; }
     });
   };
 
