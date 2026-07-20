@@ -1036,6 +1036,38 @@ var ERR_CATS = [
 ];
 var ERR_COLORS = ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1'];
 
+// [2026-07-20] 가로막대에 건수 표시 — 외부 플러그인 없이 인라인 커스텀 플러그인(Chart.js v4).
+//   막대가 충분히 길면 '안쪽'(오른쪽 끝, 흰 글자), 짧으면(0·1건 등) '바깥'(회색 글자)에 표시.
+var errCatDataLabels = {
+	id: 'errCatDataLabels',
+	afterDatasetsDraw: function(chart) {
+		var ctx = chart.ctx, meta = chart.getDatasetMeta(0);
+		if (!meta || !meta.data) return;
+		ctx.save();
+		ctx.font = '700 12px "Malgun Gothic","맑은 고딕",sans-serif';
+		ctx.textBaseline = 'middle';
+		var zeroX = chart.scales.x ? chart.scales.x.getPixelForValue(0) : 0;
+		meta.data.forEach(function(bar, i) {
+			var v = chart.data.datasets[0].data[i];
+			if (!(v > 0)) return;   // 0건(및 빈 값)은 라벨 표시 제외
+			var txt = v + '건';
+			var tw = ctx.measureText(txt).width;
+			var base = (bar.base !== undefined && bar.base !== null) ? bar.base : zeroX;
+			var barLen = bar.x - base;
+			if (barLen >= tw + 12) {          // 막대 안쪽(오른쪽 끝) — 흰 글자
+				ctx.fillStyle = '#fff';
+				ctx.textAlign = 'right';
+				ctx.fillText(txt, bar.x - 8, bar.y);
+			} else {                           // 짧은 막대는 바깥 — 회색 글자
+				ctx.fillStyle = '#495057';
+				ctx.textAlign = 'left';
+				ctx.fillText(txt, bar.x + 6, bar.y);
+			}
+		});
+		ctx.restore();
+	}
+};
+
 var _evalTargetTotal = null;   // 평가대상 전체(=flag 99 건수)
 var _errTotalCnt      = null;   // 오류 합계(7개 점검)
 
@@ -1116,6 +1148,7 @@ function fn_RenderErrCatChart(counts) {
 
 	errCatChart = new Chart(canvas.getContext('2d'), {
 		type: 'bar',
+		plugins: [errCatDataLabels],   // 막대 끝 건수 숫자
 		data: {
 			labels: labels,
 			datasets: [{
@@ -1127,6 +1160,7 @@ function fn_RenderErrCatChart(counts) {
 			}]
 		},
 		options: {
+			layout: { padding: { right: 24 } },   // 막대 끝 숫자 잘림 방지
 			indexAxis: 'y',                 // v4 가로막대
 			responsive: true,
 			maintainAspectRatio: false,
