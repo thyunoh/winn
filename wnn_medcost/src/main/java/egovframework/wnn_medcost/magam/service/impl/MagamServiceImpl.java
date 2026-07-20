@@ -513,6 +513,11 @@ public class MagamServiceImpl implements MagamService {
 
 	// ===== 적정성평가 컨설팅 월보고서 =====
 	@Override
+	public List<Map<String, Object>> selectEvalReportList(Map<String, Object> params) throws Exception {
+		return mapper.selectEvalReportList(params);
+	}
+
+	@Override
 	public Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception {
 		Map<String, Object> res = new HashMap<>();
 		Map<String, Object> mst = mapper.selectEvalReportMst(hospCd, evalYm);

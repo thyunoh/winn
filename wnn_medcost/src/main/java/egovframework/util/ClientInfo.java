@@ -55,6 +55,9 @@ public class ClientInfo {
                 if ("s_use_yn".equals(cookie.getName())) {
                 	cookieval.put("s_use_yn", cookie.getValue());
                 }
+                if ("s_wnn_yn".equals(cookie.getName())) {           // 위너넷 여부(로그인 시 setCookie). 미추출 시 컨트롤러가 위너넷을 거래처로 오판.
+                	cookieval.put("s_wnn_yn", cookie.getValue());
+                }
             }
         }
         

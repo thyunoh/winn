@@ -126,6 +126,29 @@ public class MagamController {
 			return ".login/LoginWinCT";
 		}
     }
+	// 월보고서 목록 화면(별도 JSP). 뷰파일 = evalReportList.jsp. 위너넷=전체 병원, (2단계)거래처=본인 병원.
+	//   evalReport 툴바 '월보고 목록' 버튼에서 새 창으로 진입 → 향후 메뉴로도 편입 예정.
+	@RequestMapping(value="main/evalReportList.do")
+    public String evalReportList(HttpServletRequest request, ModelMap model) {
+        cookie_value = ClientInfo.getCookie(request);
+		try {
+			javax.servlet.http.HttpSession ses = request.getSession(false);
+			Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+			model.addAttribute("wnnYn", (wnn != null) ? String.valueOf(wnn) : "N");
+		} catch(Exception ignore) {
+			model.addAttribute("wnnYn", "N");
+		}
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/evalReportList";
+			} else {
+				return ".login/LoginWinCT";
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+    }
 	@RequestMapping(value="main/simulation.do")
     public String simulation(HttpServletRequest request, ModelMap model) {
 
@@ -1150,6 +1173,29 @@ public class MagamController {
 			String hospCd = String.valueOf(params.get("hospCd"));
 			String evalYm = String.valueOf(params.get("evalYm"));
 			res = svc.loadEvalReport(hospCd, evalYm);
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL");
+			res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	// 월보고서 목록 데이터 — 선택 년월(+선택 병원)으로 저장된 보고서(TBL_EVAL_REPORT_MST) 나열.
+	//   거래처(비위너넷)는 쿠키 s_wnn_yn≠Y → 본인 병원(s_hospid)만 강제(2단계 공개 대비 보안 기본값).
+	@RequestMapping(value="/main/listEvalReport.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> listEvalReport(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String wnnYn = "";
+			try { wnnYn = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			if (!"Y".equals(wnnYn)) {                       // 거래처: 본인 병원만
+				try { params.put("hospCd", cookie_value.get("s_hospid")); } catch(Exception ignore) {}
+			}
+			List<Map<String, Object>> list = svc.selectEvalReportList(params);
+			res.put("list", list);
 			res.put("result", "OK");
 		} catch (Exception ex) {
 			res.put("result", "FAIL");

@@ -56,6 +56,7 @@ public interface MagamService {
 	List<IndiDTO>  select_Eval_Indi(IndiDTO dto) throws Exception;
 
 	// ===== 적정성평가 컨설팅 월보고서 =====
+	List<Map<String, Object>> selectEvalReportList(Map<String, Object> params) throws Exception;   // 월보고서 목록(년월+선택 병원)
 	Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception;
 	Long saveEvalReport(Map<String, Object> p) throws Exception;
 	void approveEvalReport(Map<String, Object> p) throws Exception;

@@ -314,8 +314,11 @@
     <span class="er-searchbox">
       <select id="er-year" class="er-sel"></select>
       <select id="er-month" class="er-sel"></select>
-      <button class="er-btn er-search" onclick="erLoad()">🔍 조회</button>
+      <button id="er-btnSearch" class="er-btn er-search" onclick="erLoad()">🔍 조회</button>
     </span>
+    <!-- (월보고 목록 버튼 제거 — 좌측 사이드바 '적정성평가 월간보고서' 메뉴로 대체) -->
+    <!-- 도움말 — 클릭하면 사용법 안내 배너를 열고/닫음(토글). 마우스오버 시 요약 툴팁도 표시 -->
+    <button class="er-btn er-wnnonly" id="er-help" onclick="erHelp()" title="클릭하면 사용법 안내가 열립니다&#10;[조회] 평가년월을 고르고 조회하면 표·점수가 자동으로 채워집니다.&#10;[편집] 편집 켜기로 문구 수정 → 저장 → 승인 시 수치가 동결되어 거래처가 열람·인쇄합니다.&#10;[PDF] 아래한글 완성본이 있으면 📎 PDF로 올리세요(첨부 시 거래처에 우선 제공).">ℹ️ 도움말</button>
 
     <span class="er-sp"></span>
 
@@ -404,11 +407,8 @@
     <button class="er-btn er-exit" onclick="erPreviewExit()">✕ 미리보기 닫기</button>
   </div>
 
-  <div class="er-notice" id="er-notice">
-    상단에서 <b>평가년월</b>을 고르고 <b>조회</b>하면 해당 월 자료로 표·점수가 자동으로 채워집니다.
-    <b>편집 켜기</b>로 문구를 고친 뒤 <b>저장</b>, <b>승인</b>하면 그 시점 수치가 동결되어 거래처가 열람·인쇄합니다.
-    아래한글로 작성한 완성본이 있으면 <b>📎 PDF 첨부</b>로 올리세요 — 첨부 PDF가 있으면 거래처에는 그 파일이 우선 제공됩니다.
-  </div>
+  <!-- 안내 배너 — 평소 숨김(사용법은 툴바 'ℹ️ 도움말' 툴팁으로 이동). 초기화 오류 시 showErr 가 이 영역을 표시 -->
+  <div class="er-notice" id="er-notice" style="display:none;"></div>
 
   <div class="er-notice" id="er-pdfBanner" style="display:none; border-color:#bfe0c4; background:var(--er-goodtint); color:var(--er-good);">
     📄 <b>완성본 PDF가 첨부된 보고서입니다.</b>
@@ -569,6 +569,32 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
              : (cookie('s_hospid') || (sessionStorage.getItem('s_hospid') || '').trim());
   var hospNm = (typeof hospnm !== 'undefined' && hospnm) ? String(hospnm)
              : (cookie('s_hospnm') || sessionStorage.getItem('s_hospnm') || '');
+  // 월보고 목록(evalReportList)에서 진입한 경우 — hospCd/hospNm/ym/autoprint 를 sessionStorage 로 넘김.
+  //   ★ main.jsp 의 URL 숨김(history.replaceState → /user/dashboard.do)이 쿼리스트링을 지우므로 URL 파라미터는 못 씀.
+  //     sessionStorage 는 화면 이동에도 보존됨. 원샷(읽고 즉시 제거) — 메뉴/현황 재진입 시 재사용 방지.
+  var _erFromList = false, _erListYear = '', _erOpenYm = '', _erAutoprint = false;
+  (function(){
+    var q = location.search;
+    var sHosp='', sNm='', sYm='', sAuto='';
+    try{
+      sHosp = sessionStorage.getItem('erOpenHospCd') || '';
+      sNm   = sessionStorage.getItem('erOpenHospNm') || '';
+      sYm   = sessionStorage.getItem('erOpenYm') || '';
+      sAuto = sessionStorage.getItem('erOpenAutoprint') || '';
+      _erFromList = (sessionStorage.getItem('erFromList') === '1');
+      _erListYear = sessionStorage.getItem('erFromListYear') || '';
+      ['erOpenHospCd','erOpenHospNm','erOpenYm','erOpenAutoprint','erFromList','erFromListYear']
+        .forEach(function(k){ sessionStorage.removeItem(k); });   // 원샷 제거
+    }catch(e){}
+    // hospCd/hospNm : sessionStorage(원값) 우선, 없으면 URL 파라미터(인코딩) 폴백
+    if(sHosp){ hospCd = String(sHosp).trim(); }
+    else { var ph=(q.match(/[?&]hospCd=([^&]+)/)||[])[1]; if(ph){ try{ hospCd=decodeURIComponent(ph).trim(); }catch(e){ hospCd=ph.trim(); } } }
+    if(sNm){ hospNm = sNm; }
+    else { var pn=(q.match(/[?&]hospNm=([^&]+)/)||[])[1]; if(pn){ try{ hospNm=decodeURIComponent(pn); }catch(e){ hospNm=pn; } } }
+    _erOpenYm    = sYm || (q.match(/[?&]ym=(\d{6})/)||[])[1] || '';
+    _erAutoprint = (sAuto==='1') || /[?&]autoprint=1/.test(q);
+    if(!_erFromList && /[?&]ret=list/.test(q)) _erFromList = true;   // URL 폴백(주소 안 지워진 환경 대비)
+  })();
   // 위너넷 판별 = s_wnn_yn 쿠키 하나만 (wnn_consult/wnn_medcost 양쪽 로그인이 매번 재설정 — 잔존 없음).
   //   s_winconect 는 wnn_consult 로그인이 안 지워 일반병원 재로그인 후에도 잔존 → 오노출 원인이라 제외.
   //   이 시스템은 로그인이 wnn_consult 에서 이뤄져 wnn_medcost 세션에는 로그인 정보가 없음 → 세션(${wnnYn}) 방식 불가.
@@ -580,11 +606,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var allowView = isWinner;
 
   // 1단계: 위너넷 전용 — 위너넷이 아니면(또는 재로그인 전이라 세션이 비었으면) 적정성평가 화면으로 복귀.
-   if(!allowView){
+  if(!allowView){
     alert('월보고서는 준비 중입니다.');
     location.replace('/main/assessment.do');
     return;
-  }  
+  }   
  
   // 병원(거래처) 열람 모드 — 관리 도구(상태·편집·저장·승인·PDF첨부·서식바·배율·미리보기)와 안내문을 숨겨
   //   조회·인쇄·종료만 남김. 1단계(위너넷 전용)에선 동작 없고, 2단계 canView 공개 시 자동 적용.
@@ -725,7 +751,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 화면에 보이는 오류 표시(콘솔 못 볼 때 진단용)
   function showErr(msg){
     var nb=el('er-notice');
-    if(nb){ nb.style.background='#fdecea'; nb.style.borderColor='#f0b6ae'; nb.style.color='#a5281b';
+    if(nb){ nb.removeAttribute('data-mode'); nb.style.display=''; nb.style.background='#fdecea'; nb.style.borderColor='#f0b6ae'; nb.style.color='#a5281b';
             nb.innerHTML='⚠️ 월보고서 초기화 오류: '+esc(msg); }
   }
 
@@ -762,7 +788,34 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   복귀 진입 시 "재생성 확인" 팝업 없이 기존 자료만 바로 표시하도록 1회용 마커 전달.
   window.erExit = function(){
     try{ sessionStorage.setItem('skipRegenConfirm','1'); }catch(e){}
-    location.href = ctx + '/main/assessment.do';
+    // 월보고 목록에서 진입(_erFromList)했으면 종료 시 그 목록으로 복귀(목록 조회 년월 유지), 아니면 적정성평가 현황으로.
+    if(_erFromList){
+      var backYear = _erListYear || (curYm ? curYm.substring(0,4) : '');
+      location.href = ctx + '/main/evalReportList.do' + (backYear ? ('?year=' + encodeURIComponent(backYear)) : '');
+    } else {
+      location.href = ctx + '/main/assessment.do';
+    }
+  };
+
+  // 월보고 목록 — 저장된 보고서 목록(evalReportList.jsp)으로 이동. 다른 메뉴처럼 사이드바 우측 콘텐츠 영역에 표시(.main 타일).
+  //   현재 조회 년월을 넘겨 초기 필터로 사용. 목록에서 행 클릭 → evalReport.do?hospCd=&hospNm=&ym= 로 진입(URL 파라미터가 쿠키보다 우선).
+  window.erOpenList = function(){
+    var ym = (el('er-year') && el('er-month')) ? (el('er-year').value + el('er-month').value) : (curYm || '');
+    location.href = ctx + '/main/evalReportList.do' + (ym ? ('?ym=' + encodeURIComponent(ym)) : '');
+  };
+
+  // 도움말 — 사용법 안내 배너(er-notice) 열고/닫기 토글. (배너는 평소 숨김, 초기화 오류 표시와 공용)
+  window.erHelp = function(){
+    var nb=el('er-notice'); if(!nb) return;
+    var open = (nb.style.display!=='none' && nb.getAttribute('data-mode')==='help');
+    if(open){ nb.style.display='none'; nb.removeAttribute('data-mode'); return; }
+    nb.setAttribute('data-mode','help');
+    nb.style.display='';
+    nb.style.background='var(--er-navytint)'; nb.style.borderColor='#cfe0f4'; nb.style.color='var(--er-navy)';
+    nb.innerHTML='상단에서 <b>평가년월</b>을 고르고 <b>조회</b>하면 해당 월 자료로 표·점수가 자동으로 채워집니다. '
+      +'<b>편집 켜기</b>로 문구를 고친 뒤 <b>저장</b>, <b>승인</b>하면 그 시점 수치가 동결되어 거래처가 열람·인쇄합니다. '
+      +'아래한글로 작성한 완성본이 있으면 <b>📎 PDF</b>로 올리세요 — 첨부 PDF가 있으면 거래처에는 그 파일이 우선 제공됩니다. '
+      +'<a href="#" onclick="erHelp();return false;" style="font-weight:800;color:var(--er-navy);text-decoration:underline;">닫기</a>';
   };
 
   // 미리보기 — 작성 중인 보고서를 인쇄 형태(A4 지면)로 화면에서 확인. 편집 중이면 끄고 진입.
@@ -951,7 +1004,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   // 평가년월 결정: ①URL ?ym=YYYYMM ②적정성평가 화면 sessionStorage(assessment_year/month) ③지난달
   function defaultYm(){
-    var qm=(location.search.match(/[?&]ym=(\d{6})/)||[])[1];
+    var qm = (_erOpenYm && /^\d{6}$/.test(_erOpenYm)) ? _erOpenYm : (location.search.match(/[?&]ym=(\d{6})/)||[])[1];
     if(qm) return { y:qm.substring(0,4), m:qm.substring(4,6) };
     var sy=(sessionStorage.getItem('assessment_year')||'').trim();
     var sm=(sessionStorage.getItem('assessment_month')||'').trim();
@@ -973,10 +1026,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       ys.value=def.y; ms.value=def.m;
       el('er-hospNm').textContent = hospNm ? ('['+hospNm+']') : '';
       if(hospNm) el('er-coverHosp').textContent = hospNm;
-      if(!isWinner){                          // 거래처: 편집도구 숨김(열람·인쇄만)
+      if(!isWinner){                          // 거래처: 편집도구(편집~PDF) 숨김 + 평가년월 수정 잠금(열람·인쇄만)
         el('er-editTools').style.display='none';
         el('er-roleTag').textContent='거래처';
-        el('er-notice').textContent='승인된 보고서를 열람·인쇄할 수 있습니다.';
+        // 년월 변경 불가 — 셀렉트 비활성 + 조회 버튼 숨김(넘어온 해당 월만 열람)
+        ys.disabled = true; ms.disabled = true;
+        var bs=el('er-btnSearch'); if(bs) bs.style.display='none';
       }
       erFixToolbar();                         // 툴바 위치 확정
       setTimeout(erFixToolbar, 200);          // 앱 레이아웃(헤더/사이드바) 렌더 후 재보정
@@ -1833,5 +1888,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(hospCd){ erLoad(); }
     else { showErr('병원 정보를 찾지 못했습니다. 위너넷은 상단 병원검색으로 병원을 선택한 뒤 이용하세요.'); }
   } catch(e){ showErr((e&&e.message)||e); }
+
+  // 월보고 목록에서 '인쇄'로 진입 — 조회·렌더 완료 후 인쇄 대화상자 자동 호출(1회)
+  if(hospCd && _erAutoprint){
+    setTimeout(function(){ try{ window.print(); }catch(e){} }, 1800);
+  }
 });
 </script>

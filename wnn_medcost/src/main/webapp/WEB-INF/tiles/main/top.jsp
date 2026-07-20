@@ -257,7 +257,7 @@
 
 	      if (s_conact_gb == 'A') {
 	          $('#menu-a, #menu-b, #menu-c, #menu-d, #menu-e, #menu-f, #menu-g, #menu-h').show();
-	      }else if (s_conact_gb == '1') { //경영분석 
+	      }else if (s_conact_gb == '1') { //경영분석
 	          $('#menu-a, #menu-b, #menu-c, #menu-g, menu-h').show();
 	      }else if (s_conact_gb == '2') { //적정성평가 
 	          $('#menu-a, #menu-b, #menu-d, #menu-e, #menu-f').show();
@@ -326,11 +326,13 @@
               hospid = getCookie("hospid");   // 병원아이디
               if (hospnm != getCookie("s_hospnm")){
                  //hosp_conact();
+                 // 병원검색으로 방금 병원을 선택했다는 1회용 표식 — 월보고 목록이 콤보를 그 병원으로 세팅(그 외 진입은 전체).
+                 try{ sessionStorage.setItem('hospPicked', '1'); }catch(e){}
                  // 실제 경로로 이동 (URL 숨김 때문에 location.reload() 대신 사용)
                  var realPath = sessionStorage.getItem('_realPath') || location.pathname;
                  location.href = realPath;
                   return;
-              } 
+              }
               hospnm = getCookie("s_hospnm");
               // 병원 변경 없이 재선택 시에도 버튼 표시
             //  $('#btnCreateAllHosp').show();

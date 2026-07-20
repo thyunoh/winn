@@ -124,12 +124,18 @@
                     <li class="nav-item menu-section" id="menu-c">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/total_Report.do" ><i class="fa fa-calculator"></i>진료비-분석 현황</a>
                     </li>
-                
+
                     <li class="nav-item menu-section" id="menu-d">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assessment.do" >
                         <i class="fa fa-list-ol" aria-hidden="true"></i>적정성-평가 현황</a>
                     </li>
 
+                    <!-- 적정성평가 월간보고서 목록 — 2단계: 전원 노출(위너넷·일반병원 무관). menu-section 이 아니라 top.jsp 탭/계약 필터 영향 없음.
+                         일반병원(거래처)은 listEvalReport 컨트롤러가 hospCd 를 본인(s_hospid)으로 강제 → 본인 병원만 조회됨(위너넷만 전체). -->
+                    <li class="nav-item" id="menu-evalreport" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/evalReportList.do" ><i class="fa fa-file-text"></i>적정성평가 월간보고서</a>
+                    </li>
+                    
                     <li class="nav-item" id="simulation">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/simulation.do" >
                         <i class="fa fa-cart-plus" aria-hidden="true"></i>적정성-Simulation</a>
@@ -1237,11 +1243,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // 관리자 1:1 문의하기 메뉴 표시
     var winner = getCookie("s_wnn_yn").trim();
+    //  if (winner === 'Y' || winner != 'Y' ) {
+    	
     if (winner === 'Y') {
+
         var adminAsq = document.getElementById("adminAsqMenu");
         if (adminAsq) adminAsq.style.display = "";
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
+        // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
+        var evalRptMenu = document.getElementById("menu-evalreport");
+        if (evalRptMenu) evalRptMenu.style.display = "";
     }
 });
 
