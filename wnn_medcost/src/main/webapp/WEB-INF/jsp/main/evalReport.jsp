@@ -580,11 +580,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var allowView = isWinner;
 
   // 1단계: 위너넷 전용 — 위너넷이 아니면(또는 재로그인 전이라 세션이 비었으면) 적정성평가 화면으로 복귀.
-   if(!allowView){
+  if(!allowView){
     alert('월보고서는 준비 중입니다.');
     location.replace('/main/assessment.do');
     return;
-  } 
+  }  
 
   // 병원(거래처) 열람 모드 — 관리 도구(상태·편집·저장·승인·PDF첨부·서식바·배율·미리보기)와 안내문을 숨겨
   //   조회·인쇄·종료만 남김. 1단계(위너넷 전용)에선 동작 없고, 2단계 canView 공개 시 자동 적용.
@@ -596,6 +596,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var editing = false, approved = false, curYm = '', pdfPath = '';
   var indicators = [], scores = { struct:0, care:0, total:0 };
   var _bladderGapN = 0;   // [★6] 배뇨관리(06) '일지 작성했으나 프로그램 미체크(분자제외 우려)' 건수 — 오류점검(assesCheck flag 07) 집계
+  var _dashInd = null;    // [C1·C2] 대시보드 지표 SP(dashbordINDICATORS): monthVal(당월)·year_Val(누적)·month_07~12(월별)·hosGrade
   var prevTotal = null;   // 전월 종합점수 — 총평 P1 전월대비용 (7월=새 평가기간 시작·자료 없음이면 null)
   function prevYmOf(ym){ var y=+ym.substring(0,4), m=+ym.substring(4,6)-1; if(m<1){ m=12; y--; } return String(y)+('0'+m).slice(-2); }
 
@@ -1091,7 +1092,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var aBladder = jQuery.ajax({ url: ctx+'/main/select_assesCheck.do', type:'POST', dataType:'json',
                                  data:{ hospCd:hospCd, jobYymm:curYm, jobFlag:'07' } })
         .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
-    jQuery.when(aIndi, aCrit, aPrev, aBladder).done(function(r1, r2, r3, r4){
+    // [C1·C2] 당월/누적/월별 점수 — 시스템 SP(dashbordINDICATORS). 뺄셈 근사가 아닌 공식 산출값. 실패는 null 흡수.
+    var aDash = jQuery.ajax({ url: ctx+'/main/dashbordINDICATORS.do', type:'POST', dataType:'json',
+                              data:{ hosp_cd:hospCd, mg_year:curYm.substring(0,4), mgmonth:curYm.substring(4,6) } })
+        .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash).done(function(r1, r2, r3, r4, r5){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
       buildCriteria(r2[0]);
@@ -1102,6 +1107,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       _bladderGapN = 0;   // '분자제외' 표기된 배뇨 미체크 건만 집계(패드/기저귀 오류는 제외)
       var bd = (r4 && r4[0] && r4[0].data) || [];
       bd.forEach(function(e){ if(String(e.errName||'').indexOf('분자제외')>=0) _bladderGapN++; });
+      _dashInd = (r5 && r5[0]) ? r5[0] : null;   // [C1·C2] 당월/누적/월별 점수
       renderAll();
       loadSavedTexts();
     }).fail(function(){ toast('지표 자료 조회 중 오류가 발생했습니다.'); });
@@ -1334,6 +1340,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return best ? (' 아울러 \''+best.nm+'\'은(는) '+best.txt+'.') : '';
   }
 
+  // [C4] 복수지표 합산 상승 + 도달 절대점수 + 등급 결론 (세밀분석 §8-1, 4병원 수렴).
+  //   부족분 상위 2지표를 각각 한 단계씩 개선 시 얻는 +Δ점을 합산 → 도달점수·등급. 현재 누적값만으로 조립.
+  function sumTopSimTxt(){
+    var ts = topGaps(2).filter(function(x){ var d=simStep(x.r); return d && d.dW>0; });
+    if(ts.length<2) return '';
+    var sum=0, nms=[];
+    ts.forEach(function(x){ sum += simStep(x.r).dW; nms.push('\''+x.nm+'\''); });
+    var neo = Math.round((scores.total+sum)*10)/10;
+    return ' '+nms.join('과(와) ')+'을(를) 함께 한 단계씩 개선할 경우 종합점수는 약 +'+f1(sum)+'점 상승하여 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달할 수 있습니다.';
+  }
+
+  // [C9] %p 부족형 — 다음 구간 진입까지 남은 격차를 %p로 (세밀분석 §8-1). 높을수록 우수 %지표(s<5)만.
+  function pctShortTxt(r){
+    var cd=r.cate_cd, s=n(r.s_score)||0, val=n(r.cal_val);
+    if(UNIT_PERSON.indexOf(cd)>=0 || NOT_HEADCOUNT.indexOf(cd)>=0 || IS_LOWER[cd] || cd==='07' || !(s>=1 && s<5)) return null;
+    var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s+1) band=z; });
+    if(!band) return null;
+    var gap=Math.round((band.start - val)*100)/100;
+    if(gap<=0) return null;
+    return '표준화 '+(s+1)+'점 기준('+fnum(band.start)+'%) 대비 약 '+fnum(gap)+'%p 부족';
+  }
+
   // [★4] 전 구간 나열형 — 낮을수록 우수 & '감소가 실제 조치'인 지표(장기입원14·유치도뇨관05)만.
   //   담당자 수기(세밀분석 §6-2, 여수시립 장기입원): 현재보다 우수한 각 구간 도달에 필요한 감소 명수 전부 나열.
   //   신규욕창(10)은 되돌릴 수 없어 제외(하락 경고 simRoomLower로 처리), PI(07)·1인당(01~03)·재직/DUR 제외.
@@ -1437,6 +1465,24 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     p.sum_p1 += ' ' + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황입니다.'
                              : '목표인 '+gg+'('+fnum(gs)+'점)을 달성한 수준으로, 남은 기간 동안 유지 관리가 중요합니다.');
+    // [C1] 당월 vs 누적 이원 점수·등급 병기 — 시스템 SP(monthVal) (세밀분석 §8, 5병원 수렴)
+    var moNum2 = parseInt(curYm.substring(4,6),10);
+    var mVal = _dashInd ? n(_dashInd.monthVal) : 0;
+    if(mVal>0){
+      var mG = gradeOf(mVal);
+      p.sum_p1 += ' 당월('+moNum2+'월) 단독 예상점수는 '+f1(mVal)+'점('+mG+')'
+                + (mG!==curG ? '이나, 실제 평가에 반영되는 7~'+moNum2+'월 누적 기준으로는 '+f1(scores.total)+'점('+curG+')에 해당합니다.'
+                             : '으로, 누적과 동일한 등급 수준을 유지하고 있습니다.');
+    }
+    // [C2] 월별 종합점수 시계열 (month_07~당월) — 시스템 SP (세밀분석 §8, 전 병원 수렴)
+    if(_dashInd){
+      var ser=[];
+      for(var mm=7; mm<=moNum2; mm++){
+        var mv=n(_dashInd['month_'+('0'+mm).slice(-2)]);
+        if(mv>0) ser.push(mm+'월 '+f1(mv)+'점');
+      }
+      if(ser.length>=2) p.sum_p1 += ' (월별 예상점수 추이 — '+ser.join(', ')+')';
+    }
     var sq = structQuarterTxt();   // [★5] 2026 등 차등제 분기 예상/실반영 표기(연말은 '')
     p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다.'
              + structRiskTxt()
@@ -1455,6 +1501,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     if(!p.sum_p3) p.sum_p3 = '진료영역 지표는 전반적으로 안정적으로 관리되고 있습니다.';
     p.sum_p3 += roomRiskTxt();   // [★1] 낮을수록 우수 지표 하락 경고(여유 한도형) 병기
+    p.sum_p3 += sumTopSimTxt();  // [C4] 상위 2지표 동시개선 시 도달점수·등급 결론
+    // [C11] 연말(12월) 확정 국면 — 잔여 개선 여지 무관하게 점수 확정(세밀분석 §8, 3병원 수렴)
+    if(curYm && parseInt(curYm.substring(4,6),10)===12)
+      p.sum_p3 += ' 다만 평가가 12월 진료분까지로 종료되는 시점이므로, 남은 개선 여지와 무관하게 현재 점수 수준에서 확정되는 국면임을 감안해 주시기 바랍니다.';
     p.sum_p4 = '항정신성의약품 처방률, DUR 점검률, 지역사회복귀율은 예상값 기준으로 산출되어 최종 평가 결과에 따라 점수가 다소 달라질 수 있습니다. 해당 대상자 관리를 꾸준히 부탁드립니다.';
     // [★2] P5 신뢰도 — 연말(10~12월)은 익년 2~3월 신뢰도 점검 대비형, 그 외는 상시형 (담당자 강남수 12월 vs 평시)
     var moNum = curYm ? parseInt(curYm.substring(4,6),10) : 0;
@@ -1543,12 +1593,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var dirTxt = TPL_DIR[x.cd] ? esc(TPL_DIR[x.cd]) : '개선 방향과 목표 구간을 입력하세요.';
       var ladder = simReduceList(r);   // [★4] 장기입원·유치도뇨관: 구간별 감소 명수 나열(감소가 실질 조치)
       var roomTxt = ladder ? ('표준화 목표 : '+ladder) : simRoomLower(r);   // 없으면 [★1] 여유 한도/하락 경고
+      var pctShort = pctShortTxt(r);   // [C9] 다음 구간까지 %p 부족
       html += '<div class="er-rec'+(isTop?' er-top':'')+'">'
             +   '<div class="er-rech">'+(CIRC[i]||(i+1))+' '+esc(x.nm)+' <span class="er-w">· 가중치 '+fnum(x.w)+' · 부족분 '+f1(x.gap)+(isTop?' · 최우선':'')+'</span></div>'
             +   '<div class="er-recrow"><span class="er-lb">현황</span>'+stat+'</div>'
             +   (zones? '<div class="er-recrow"><span class="er-lb">표준화 구간</span>'+zones+'</div>' : '')
             +   '<div class="er-recrow er-editable" data-key="recdir_'+cd+'"><span class="er-lb">개선방향</span>'+dirTxt+'</div>'
-            +   (goalTxt? '<div class="er-recgoal">'+goalTxt+'</div>' : '')
+            +   (goalTxt? '<div class="er-recgoal">'+goalTxt+(pctShort? ' · '+pctShort : '')+'</div>' : (pctShort? '<div class="er-recgoal">'+pctShort+'.</div>' : ''))
             +   (roomTxt? '<div class="er-recgoal">'+roomTxt+'.</div>' : '')
             + '</div>';
     });
