@@ -65,7 +65,7 @@
 										            onclick="location.href='/main/evalReport.do?ym=' + document.getElementById('year_Select').value + document.getElementById('monthSelect').value;">📄 월보고서</button>
 										</div>
 										<script>
-										    (function(){
+ 										    (function(){
 										        // 상단 병원검색 버튼(top.jsp #hospserchtop)과 노출 동기화 — 병원검색 보이면 월보고서도 보임 (2026-07-14 확정)
 										        // top.jsp 판별과 동일: s_wnn_yn(trim) === 'Y' 만. s_winconect 는 잔존 쿠키로 오노출되어 제외.
 										        var b = document.getElementById('btnMonthlyReport');
@@ -75,7 +75,7 @@
 										                b.style.display='flex';
 										            }
 										        }catch(e){}
-										    })();
+										    })(); 
 										</script>
 										<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
 																						        
