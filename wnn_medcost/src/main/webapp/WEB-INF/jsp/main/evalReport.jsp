@@ -82,9 +82,15 @@
   #evalReport .er-fpal .er-fpl{ font-size:10.5px; font-weight:800; color:var(--er-soft); margin:4px 0 3px; }
   #evalReport .er-fpal .er-fsw{ display:inline-block; width:21px; height:21px; border-radius:4px; border:1px solid var(--er-line); cursor:pointer; margin:1px 2px 1px 0; vertical-align:middle; }
   #evalReport .er-fpal .er-fsw:hover{ outline:2px solid var(--er-navy2); }
-  /* 한 줄 유지 보조 — 화면이 좁으면 중요도 낮은 표기부터 숨김(제목 텍스트 → 병원명) */
-  @media (max-width:1760px){ #evalReport .er-brandtxt{ display:none; } }
-  @media (max-width:1560px){ #evalReport .er-hospnm{ display:none; } }
+  /* 툴바 좌측 = 병원명만 상시 표시 — '● 월간 컨설팅 보고서' 제목·역할 뱃지는 숨김(사용자 요청 2026-07-20).
+     서식바가 붙는 편집 모드에서도 좌측이 병원명만이라 잘림이 줄어듦. 병원명은 항상 표시. */
+  #evalReport .er-brand, #evalReport .er-role{ display:none; }
+  #evalReport .er-hospnm{ display:inline; }
+  /* 도움말 호버 팝오버 — position:fixed 라 아래 콘텐츠 영역을 밀지 않음(공간 미점유). 좌표는 JS(erHelpShow)가 실측 */
+  #evalReport .er-helppop{ display:none; position:fixed; z-index:1500; width:min(700px,92vw);
+    background:#fff; border:1px solid #cfe0f4; border-left:4px solid var(--er-navy2); border-radius:10px;
+    padding:12px 15px; box-shadow:0 10px 30px rgba(16,22,29,.22); font-size:12.5px; line-height:1.8; color:var(--er-navy); }
+  #evalReport .er-helppop b{ color:var(--er-navy); }
   /* 병원(거래처) 열람 모드 — 관리 도구 전부 숨김(조회·인쇄·종료만). JS 가 isWinner 아닐 때 er-hospview 부여 */
   #evalReport.er-hospview #er-statusBadge, #evalReport.er-hospview #er-editTools,
   #evalReport.er-hospview .er-fmtbar, #evalReport.er-hospview .er-wnnonly,
@@ -318,21 +324,21 @@
     </span>
     <!-- (월보고 목록 버튼 제거 — 좌측 사이드바 '적정성평가 월간보고서' 메뉴로 대체) -->
     <!-- 도움말 — 클릭하면 사용법 안내 배너를 열고/닫음(토글). 마우스오버 시 요약 툴팁도 표시 -->
-    <button class="er-btn er-wnnonly" id="er-help" onclick="erHelp()" title="클릭하면 사용법 안내가 열립니다&#10;[조회] 평가년월을 고르고 조회하면 표·점수가 자동으로 채워집니다.&#10;[편집] 편집 켜기로 문구 수정 → 저장 → 승인 시 수치가 동결되어 거래처가 열람·인쇄합니다.&#10;[PDF] 아래한글 완성본이 있으면 📎 PDF로 올리세요(첨부 시 거래처에 우선 제공).">ℹ️ 도움말</button>
+    <button class="er-btn er-wnnonly" id="er-help" onmouseenter="erHelpShow()" onmouseleave="erHelpHide()" onfocus="erHelpShow()" onblur="erHelpHide()">ℹ️ 도움말</button>
 
     <span class="er-sp"></span>
 
-    <!-- 그룹3: 상태 + 편집/저장/승인/PDF -->
+    <!-- 그룹3: 상태 + 진행순서대로 [①편집 → ②저장 → ③PDF첨부 → ④승인]. 승인이 마지막(동결·공개). -->
     <span id="er-statusBadge" class="er-status er-draft"><span class="er-sdot"></span><span id="er-statusText">작성중</span></span>
     <span id="er-editTools" class="er-group">
-      <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()">✏️ 편집</button>
-      <button id="er-btnSave" class="er-btn er-primary" onclick="erSave()">💾 저장</button>
-      <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()" title="승인하면 수치가 동결되고 거래처에 공개됩니다">✔ 승인</button>
+      <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요">✏️ 편집</button>
+      <button id="er-btnSave" class="er-btn er-primary" onclick="erSave()" title="② 수정한 문구·점수를 저장합니다(DB)">💾 저장</button>
       <span class="er-divider"></span>
-      <!-- 첨부 PDF: 첨부 전=[📎 PDF 첨부] / 첨부 후=[👁 PDF 보기] 하나만. 교체·해제는 '보기' 모달 안에 있음 -->
+      <!-- ③ 첨부 PDF: 작성중=[📎 PDF첨부](승인 앞) / 승인후=[👁 PDF보기](승인취소 뒤). 같은 슬롯 아님 — 첨부는 승인 전, 보기는 승인 후 위치. -->
       <input type="file" id="er-pdfFile" accept="application/pdf,.pdf" style="display:none;">
-      <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()" title="아래한글 완성본 PDF 첨부 — 첨부 시 거래처에는 그 파일이 우선 제공됩니다">📎 PDF</button>
-      <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;" title="첨부된 완성본 PDF 보기">👁 PDF</a>
+      <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()" title="③ 완성본 PDF 파일을 첨부(파일서버 업로드) — 아래한글이나 🖨️인쇄→PDF로 만든 PDF. 파일 고르는 순간 저장되며, 거래처엔 이 파일이 우선 제공됩니다">📎 PDF첨부</button>
+      <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()" title="④ 마지막 단계 — 승인하면 그 시점 수치가 동결되고 거래처에 공개됩니다(승인 후 편집·첨부 잠금)">✔ 승인</button>
+      <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;" title="첨부된 완성본 PDF 보기(교체는 모달 안 🔍검색 · 승인상태면 승인취소 후)">👁 PDF보기</a>
     </span>
     <!-- 서식 툴(편집 모드 전용) — 답변 에디터(noticd summernote) 구성 참조: B·I·U·지우개 + 글꼴 + 크기 + 색상 A▾.
          문구를 드래그로 선택한 뒤 클릭(버튼 mousedown 취소·select 는 선택영역 저장/복원으로 선택 유지) -->
@@ -386,24 +392,29 @@
         </div>
       </span>
     </span>
-    <span class="er-divider er-wnnonly"></span>
-    <!-- 글자 크기(문서 배율) — 가운데 % 클릭 시 100% 복원. localStorage 저장(다음 진입 유지), 인쇄에도 반영 -->
-    <button class="er-btn er-wnnonly" style="padding:8px 7px;" onclick="erZoom(-1)" title="글자 작게">가−</button>
-    <button class="er-btn er-wnnonly" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:44px; padding:8px 6px;">100%</button>
-    <button class="er-btn er-wnnonly" style="padding:8px 7px;" onclick="erZoom(1)" title="글자 크게">가＋</button>
-    <span class="er-divider er-wnnonly"></span>
-    <button class="er-btn er-wnnonly" onclick="erPreview()">👁 미리보기</button>
-    <button class="er-btn" onclick="window.print()">🖨️ 인쇄</button>
+    <span class="er-divider"></span>
+    <!-- 글자 크기(문서 배율)·미리보기 — 열람용 도구라 거래처(일반병원)에도 노출(er-wnnonly 제거). 가운데 % 클릭 시 100% 복원 -->
+    <button class="er-btn" style="padding:8px 7px;" onclick="erZoom(-1)" title="글자 작게">가−</button>
+    <button class="er-btn" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:44px; padding:8px 6px;">100%</button>
+    <button class="er-btn" style="padding:8px 7px;" onclick="erZoom(1)" title="글자 크게">가＋</button>
+    <span class="er-divider"></span>
+    <button class="er-btn" onclick="erPreview()">👁 미리보기</button>
+    <!-- 📄 한글저장(.doc 내보내기) — 사용자 협의 후 결정하기로 하여 버튼 제외(2026-07-20). 기능 erExportDoc 는 유지 → 협의 후 아래 버튼만 다시 살리면 됨:
+         <button class="er-btn" onclick="erExportDoc()" title="아래한글·워드에서 열 수 있는 문서(.doc)로 저장합니다(화면 이동 없음)">📄 한글저장</button> -->
+    <button class="er-btn" onclick="erPrint()" title="인쇄 또는 'PDF로 저장' — 인쇄창에서 'PDF로 저장'을 고르면 이 제목 형식(병원명 적정성평가 보고서(년.월) 목표N등급)으로 저장됩니다">🖨️ 인쇄</button>
     <!-- 그룹4: 종료 — 인쇄 바로 옆(구분선만), 조금 크게 -->
     <span class="er-divider"></span>
     <button class="er-btn er-exit" onclick="erExit()">✕ 종료</button>
   </div>
 
+  <!-- 도움말 호버 팝오버 — 툴바 overflow 밖·position:fixed 라 아래 영역을 차지하지 않음(레이아웃 안 밀림). JS가 좌표 실측 -->
+  <div id="er-helpPop" class="er-helppop" onmouseenter="erHelpKeep()" onmouseleave="erHelpHide()"></div>
+
   <!-- 미리보기 모드 상단 바 (평소 숨김, .er-preview 일 때만 표시) -->
   <div class="er-prevbar">
     <span class="er-prevbar-t">📄 인쇄 미리보기 <span style="font-weight:600; opacity:.8;">— 인쇄하면 이 형태로 출력됩니다</span></span>
     <span style="flex:1 1 auto;"></span>
-    <button class="er-btn" onclick="window.print()">🖨️ 인쇄</button>
+    <button class="er-btn" onclick="erPrint()">🖨️ 인쇄(PDF저장)</button>
     <button class="er-btn er-exit" onclick="erPreviewExit()">✕ 미리보기 닫기</button>
   </div>
 
@@ -606,14 +617,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var allowView = isWinner;
 
   // 1단계: 위너넷 전용 — 위너넷이 아니면(또는 재로그인 전이라 세션이 비었으면) 적정성평가 화면으로 복귀.
-  if(!allowView){
+/*   if(!allowView){
     alert('월보고서는 준비 중입니다.');
     location.replace('/main/assessment.do');
     return;
-  }   
+  }    */
  
-  // 병원(거래처) 열람 모드 — 관리 도구(상태·편집·저장·승인·PDF첨부·서식바·배율·미리보기)와 안내문을 숨겨
-  //   조회·인쇄·종료만 남김. 1단계(위너넷 전용)에선 동작 없고, 2단계 canView 공개 시 자동 적용.
+  // 병원(거래처) 열람 모드 — 관리 도구(상태·편집·저장·승인·PDF첨부·서식바)와 안내문을 숨겨 열람 위주로.
+  //   조회·글자크기(배율)·미리보기·인쇄·종료는 거래처에도 노출(열람용). 2단계 canView 공개 시 자동 적용.
   if(!isWinner){
     document.getElementById('evalReport').classList.add('er-hospview');
     var _rt=document.getElementById('er-roleTag'); if(_rt) _rt.textContent='열람';
@@ -797,6 +808,69 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
   };
 
+  // 🖨️ 인쇄 — 브라우저 인쇄→'PDF로 저장' 시 기본 파일명은 document.title 을 사용.
+  //   → 인쇄 직전 제목을 '{병원명} 적정성평가 보고서(년.월) 목표N등급' 으로 지정하고, 인쇄 종료(afterprint) 후 원복.
+  window.erPrint = function(){
+    var oldTitle = document.title;
+    try{
+      var yy=(curYm&&curYm.length>=6)?curYm.substring(0,4):'', mm=(curYm&&curYm.length>=6)?curYm.substring(4,6):'';
+      var gg=(typeof goalGradeVal==='function')?goalGradeVal():'';
+      document.title = (hospNm||'적정성평가') + ' 적정성평가 보고서' + (yy?('('+yy+'.'+mm+')'):'') + (gg?(' 목표'+gg):'');
+    }catch(e){}
+    var restore=function(){ try{ document.title=oldTitle; window.removeEventListener('afterprint',restore); }catch(e){} };
+    try{ window.addEventListener('afterprint', restore); }catch(e){}
+    window.print();
+  };
+
+  // 📄 한글저장 — 보고서를 아래한글·워드가 여는 문서(.doc, Word-HTML)로 저장. 화면 이동 없이 Blob 다운로드.
+  //   HWP(독점 포맷) 직접 생성은 불가하므로, 아래한글이 잘 여는 Word-HTML(.doc)로 내보냄. 표·문구·점수·색 대부분 유지.
+  window.erExportDoc = function(){
+    if(!curYm){ toast('먼저 평가년월을 조회하세요.'); return; }
+    var src = document.querySelector('#evalReport .er-doc');
+    if(!src){ toast('내보낼 보고서 내용이 없습니다.'); return; }
+    if(editing) erToggleEdit();                                   // 편집 표시(파란 테두리) 제거 후 내보내기
+    // 워드·아래한글은 <style> 의 복합선택자(#evalReport .er-…)·flex/grid·그라데이션을 대부분 무시.
+    //   → 라이브 DOM의 '계산된 스타일'을 클론에 인라인 style 로 옮겨(워드가 인라인은 잘 따름) 색·표 테두리·정렬 재현.
+    var clone = src.cloneNode(true);
+    var PROPS = ['color','background-color','font-weight','font-size','font-family','font-style',
+                 'text-align','vertical-align','line-height','white-space',
+                 'border-top-width','border-top-style','border-top-color',
+                 'border-bottom-width','border-bottom-style','border-bottom-color',
+                 'border-left-width','border-left-style','border-left-color',
+                 'border-right-width','border-right-style','border-right-color',
+                 'padding-top','padding-right','padding-bottom','padding-left'];
+    (function inline(s, c){
+      if(s.nodeType===1 && c.nodeType===1 && s.tagName){
+        var cs = window.getComputedStyle(s), st = c.getAttribute('style') || '';
+        PROPS.forEach(function(p){ var v=cs.getPropertyValue(p); if(v) st += p+':'+v+';'; });
+        // 그라데이션 배경(네이비 헤더·뱃지 등)은 워드 미지원 → 단색 폴백(흰 글자가 안 보이는 문제 방지)
+        var bi = cs.getPropertyValue('background-image');
+        if(bi && bi.indexOf('gradient')>=0){
+          st += 'background-color:'+(/rgb\(255, 255, 255\)/.test(cs.getPropertyValue('color')) ? '#1e3c72' : '#eef2f9')+';';
+        }
+        if(c.tagName==='TABLE'){ st += 'border-collapse:collapse;'; }
+        if(c.tagName==='IMG' || c.tagName==='SVG'){ /* 유지 */ }
+        c.setAttribute('style', st);
+        c.removeAttribute('contenteditable'); c.removeAttribute('data-key'); c.removeAttribute('id');
+      }
+      for(var i=0, sc=s.childNodes, cc=c.childNodes; i<sc.length && i<cc.length; i++) inline(sc[i], cc[i]);
+    })(src, clone);
+    var body = '<div style="background:#fff;font-family:\'Malgun Gothic\',sans-serif;">' + clone.innerHTML + '</div>';
+    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+             + '<head><meta charset="utf-8"><title>'+esc((hospNm||'적정성평가')+' 컨설팅 보고서')+'</title>'
+             + '<style>@page{size:A4;margin:15mm;} body{margin:0;}</style></head><body>'+body+'</body></html>';
+    try{
+      var blob = new Blob(['﻿'+html], { type:'application/msword' });   // ﻿ = UTF-8 BOM(한글 인코딩)
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (hospNm||'적정성평가').replace(/[\\/:*?"<>|]/g,'') + '_' + (curYm||'') + '_컨설팅보고서.doc';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+      toast('한글/워드 문서(.doc)로 저장했습니다. 아래한글에서 열어 편집하세요.');
+    }catch(e){ toast('문서 저장 중 오류: '+((e&&e.message)||e)); }
+  };
+
   // 월보고 목록 — 저장된 보고서 목록(evalReportList.jsp)으로 이동. 다른 메뉴처럼 사이드바 우측 콘텐츠 영역에 표시(.main 타일).
   //   현재 조회 년월을 넘겨 초기 필터로 사용. 목록에서 행 클릭 → evalReport.do?hospCd=&hospNm=&ym= 로 진입(URL 파라미터가 쿠키보다 우선).
   window.erOpenList = function(){
@@ -804,19 +878,29 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     location.href = ctx + '/main/evalReportList.do' + (ym ? ('?ym=' + encodeURIComponent(ym)) : '');
   };
 
-  // 도움말 — 사용법 안내 배너(er-notice) 열고/닫기 토글. (배너는 평소 숨김, 초기화 오류 표시와 공용)
-  window.erHelp = function(){
-    var nb=el('er-notice'); if(!nb) return;
-    var open = (nb.style.display!=='none' && nb.getAttribute('data-mode')==='help');
-    if(open){ nb.style.display='none'; nb.removeAttribute('data-mode'); return; }
-    nb.setAttribute('data-mode','help');
-    nb.style.display='';
-    nb.style.background='var(--er-navytint)'; nb.style.borderColor='#cfe0f4'; nb.style.color='var(--er-navy)';
-    nb.innerHTML='상단에서 <b>평가년월</b>을 고르고 <b>조회</b>하면 해당 월 자료로 표·점수가 자동으로 채워집니다. '
-      +'<b>편집 켜기</b>로 문구를 고친 뒤 <b>저장</b>, <b>승인</b>하면 그 시점 수치가 동결되어 거래처가 열람·인쇄합니다. '
-      +'아래한글로 작성한 완성본이 있으면 <b>📎 PDF</b>로 올리세요 — 첨부 PDF가 있으면 거래처에는 그 파일이 우선 제공됩니다. '
-      +'<a href="#" onclick="erHelp();return false;" style="font-weight:800;color:var(--er-navy);text-decoration:underline;">닫기</a>';
+  // 도움말 — 버튼에 마우스를 올리면 뜨는 '떠 있는' 팝오버(position:fixed). 아래 콘텐츠 영역을 차지하지 않음.
+  function erHelpContent(){
+    return '<b>진행 순서</b> <span style="font-weight:600;">(①→②→③→④ · 승인이 마지막)</span><br>'
+      +'① <b>조회</b> — 평가년월을 고르면 표·점수가 자동으로 채워집니다.<br>'
+      +'② <b>✏️ 편집 → 💾 저장</b> — 문구를 고친 뒤 저장(요약 점수·문구가 DB에 저장).<br>'
+      +'③ <b>📎 PDF첨부</b> — 완성본 <b>PDF 파일</b>을 업로드(아래한글 또는 🖨️ 인쇄→PDF로 만든 파일). 거래처에는 이 PDF가 우선 제공됩니다.<br>'
+      +'④ <b>✔ 승인</b> — <b>마지막 단계</b>. 그 시점 수치가 동결되고 거래처에 공개됩니다.<br>'
+      +'<span style="color:var(--er-soft);">※ 승인하면 편집·첨부가 잠깁니다. 고치려면 <b>↩ 승인취소</b> 후 다시 진행하세요.</span>';
+  }
+  var _erHelpTm;
+  window.erHelpShow = function(){
+    clearTimeout(_erHelpTm);
+    var pop=el('er-helpPop'), btn=el('er-help'); if(!pop || !btn) return;
+    if(pop.style.display!=='block') pop.innerHTML = erHelpContent();
+    pop.style.display='block';
+    var r=btn.getBoundingClientRect();
+    pop.style.top=(r.bottom+6)+'px';
+    pop.style.left=Math.max(8, r.left-20)+'px';
+    var pr=pop.getBoundingClientRect();                       // 오른쪽 넘침 보정
+    if(pr.right > window.innerWidth-8) pop.style.left=Math.max(8, window.innerWidth-8-pr.width)+'px';
   };
+  window.erHelpKeep = function(){ clearTimeout(_erHelpTm); };  // 팝오버 위로 마우스 이동 시 유지
+  window.erHelpHide = function(){ _erHelpTm=setTimeout(function(){ var pop=el('er-helpPop'); if(pop) pop.style.display='none'; }, 200); };
 
   // 미리보기 — 작성 중인 보고서를 인쇄 형태(A4 지면)로 화면에서 확인. 편집 중이면 끄고 진입.
   window.erPreview = function(){
@@ -1047,7 +1131,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     else { b.className='er-status er-draft'; t.textContent='작성중'; }
     if(isWinner){
       el('er-btnApprove').textContent = approved ? '↩ 승인취소' : '✔ 승인';
-      el('er-btnApprove').title = approved ? '승인을 취소하고 다시 편집합니다' : '승인하면 수치가 동결되고 거래처에 공개됩니다';
+      el('er-btnApprove').title = approved
+        ? '승인을 취소하면 다시 편집·PDF첨부가 가능합니다(거래처 공개 해제)'
+        : '④ 마지막 단계 — 승인하면 그 시점 수치가 동결되고 거래처에 공개됩니다(이후 편집·첨부 잠금)';
       el('er-btnEdit').disabled = approved;
       if(approved && editing) erToggleEdit();
     }
@@ -1889,9 +1975,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     else { showErr('병원 정보를 찾지 못했습니다. 위너넷은 상단 병원검색으로 병원을 선택한 뒤 이용하세요.'); }
   } catch(e){ showErr((e&&e.message)||e); }
 
-  // 월보고 목록에서 '인쇄'로 진입 — 조회·렌더 완료 후 인쇄 대화상자 자동 호출(1회)
+  // 월보고 목록에서 '인쇄'로 진입 — 조회·렌더 완료 후 인쇄 대화상자 자동 호출(1회). 제목 형식은 erPrint 가 지정.
   if(hospCd && _erAutoprint){
-    setTimeout(function(){ try{ window.print(); }catch(e){} }, 1800);
+    setTimeout(function(){ try{ erPrint(); }catch(e){} }, 1800);
   }
 });
 </script>
