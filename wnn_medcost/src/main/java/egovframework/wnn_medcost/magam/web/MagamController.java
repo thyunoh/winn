@@ -1204,6 +1204,30 @@ public class MagamController {
 		return res;
 	}
 
+	// 월보고서 변경이력(TBL_EVAL_REPORT_HST) — 위너넷(관리자) 전용. 해당 병원·월 보고서의 저장/PDF 변경 이력.
+	@RequestMapping(value="/main/listEvalReportHst.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> listEvalReportHst(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String wnnYn = "";
+			try { wnnYn = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			if (!"Y".equals(wnnYn)) {                       // 관리자 전용 — 거래처는 이력 조회 불가
+				res.put("result", "FAIL");
+				res.put("message", "권한이 없습니다.");
+				return res;
+			}
+			List<Map<String, Object>> list = svc.selectEvalReportHst(params);
+			res.put("list", list);
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL");
+			res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
 	// 저장 (마스터 UPSERT + 편집 문구 전체교체)
 	@RequestMapping(value="/main/saveEvalReport.do", method = RequestMethod.POST)
 	@ResponseBody

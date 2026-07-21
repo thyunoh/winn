@@ -40,6 +40,10 @@
   #evalReport .er-status{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:800; padding:5px 12px; border-radius:7px; border:1px solid transparent; white-space:nowrap; animation:erBadgeBlink 1.3s ease-in-out infinite; }
   #evalReport .er-status .er-sdot{ width:9px; height:9px; border-radius:50%; }
   @keyframes erBadgeBlink{ 0%,100%{ opacity:1; } 50%{ opacity:.75; } }
+  /* 이력 열람 표시 칩(툴바) */
+  #evalReport .er-hstinfo{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:800; padding:5px 12px; border-radius:7px;
+    background:#eef4fb; color:#1f4e79; border:1px solid #bcd4ec; white-space:nowrap; }
+  #evalReport .er-hstinfo .er-hstmeta{ font-weight:600; color:#41668c; }
   #evalReport .er-status.er-draft{ background:var(--er-ambertint); color:var(--er-amber); border-color:#ead9b0; }
   #evalReport .er-status.er-draft .er-sdot{ background:var(--er-amber); }
   #evalReport .er-status.er-approved{ background:#dff3e4; color:#1b6e2f; border-color:#93cfa2; font-weight:900; }
@@ -67,9 +71,9 @@
   @keyframes erSavePulse{ 0%,100%{ opacity:1; } 50%{ opacity:.5; } }
   /* SweetAlert2 다이얼로그 — 앱 통일(assessment '재생성 확인')용 컴팩트 스타일. body 직속이라 스코프 없음. */
   .swal2-popup.er-swal{ padding:10px 16px !important; border-radius:6px; }
-  .swal2-popup.er-swal .swal2-title{ font-size:1.05em !important; padding:3px 0 1px !important; color:#3a4250; }
-  .swal2-popup.er-swal .swal2-html-container{ font-size:.92em !important; margin:4px 0 0 !important; color:#525a68; line-height:1.5; }
-  .swal2-popup.er-swal .swal2-icon{ width:44px; height:44px; margin:4px auto 2px; }
+  .swal2-popup.er-swal .swal2-title{ font-size:1.05em !important; padding:2px 0 1px !important; margin-top:4px !important; color:#3a4250; }
+  .swal2-popup.er-swal .swal2-html-container{ font-size:.92em !important; margin:6px 0 0 !important; color:#525a68; line-height:1.5; }
+  .swal2-popup.er-swal .swal2-icon{ width:44px; height:44px; margin:6px auto 12px !important; }
   .swal2-popup.er-swal .swal2-icon .swal2-icon-content{ font-size:1.5em; }
   .swal2-popup.er-swal .swal2-actions{ margin-top:10px; gap:8px; }
   .swal2-popup.er-swal .swal2-styled{ font-size:.9em !important; padding:7px 16px !important; border-radius:5px; box-shadow:none !important; }
@@ -357,6 +361,8 @@
 
     <!-- 그룹3: 상태 + 진행순서대로 [①편집 → ②저장 → ③승인 → ④PDF첨부]. PDF첨부는 승인 후(공개본=PDF 일치). -->
     <span id="er-statusBadge" class="er-status er-draft"><span class="er-sdot"></span><span id="er-statusText">작성중</span></span>
+    <!-- 이력 열람 진입 시: 어느 이력을 보는지(유형·작성자·시각) 표시 -->
+    <span id="er-hstInfo" class="er-hstinfo" style="display:none;"></span>
     <span id="er-editTools" class="er-group">
       <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요">✏️ 편집</button>
       <button id="er-btnSave" class="er-btn er-primary" onclick="erSave()" title="② 수정한 문구·점수를 저장합니다(DB)">💾 저장</button>
@@ -615,20 +621,24 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 월보고 목록(evalReportList)에서 진입한 경우 — hospCd/hospNm/ym/autoprint 를 sessionStorage 로 넘김.
   //   ★ main.jsp 의 URL 숨김(history.replaceState → /user/dashboard.do)이 쿼리스트링을 지우므로 URL 파라미터는 못 씀.
   //     sessionStorage 는 화면 이동에도 보존됨. 원샷(읽고 즉시 제거) — 메뉴/현황 재진입 시 재사용 방지.
-  var _erFromList = false, _erListYear = '', _erOpenYm = '', _erAutoprint = false;
+  var _erFromList = false, _erListYear = '', _erOpenYm = '', _erAutoprint = false, _erReadonly = false, _erHstInfo = null;
   (function(){
     var q = location.search;
-    var sHosp='', sNm='', sYm='', sAuto='';
+    var sHosp='', sNm='', sYm='', sAuto='', sRo='', sHst='';
     try{
       sHosp = sessionStorage.getItem('erOpenHospCd') || '';
       sNm   = sessionStorage.getItem('erOpenHospNm') || '';
       sYm   = sessionStorage.getItem('erOpenYm') || '';
       sAuto = sessionStorage.getItem('erOpenAutoprint') || '';
+      sRo   = sessionStorage.getItem('erOpenReadonly') || '';
+      sHst  = sessionStorage.getItem('erOpenHstInfo') || '';
       _erFromList = (sessionStorage.getItem('erFromList') === '1');
       _erListYear = sessionStorage.getItem('erFromListYear') || '';
-      ['erOpenHospCd','erOpenHospNm','erOpenYm','erOpenAutoprint','erFromList','erFromListYear']
+      ['erOpenHospCd','erOpenHospNm','erOpenYm','erOpenAutoprint','erOpenReadonly','erOpenHstInfo','erFromList','erFromListYear']
         .forEach(function(k){ sessionStorage.removeItem(k); });   // 원샷 제거
     }catch(e){}
+    _erReadonly = (sRo==='1') || /[?&]ro=1/.test(q);   // 이력 열람 = 읽기전용(저장·승인·PDF첨부 잠금)
+    if(sHst){ try{ _erHstInfo = JSON.parse(sHst); }catch(e){ _erHstInfo = null; } }
     // hospCd/hospNm : sessionStorage(원값) 우선, 없으면 URL 파라미터(인코딩) 폴백
     if(sHosp){ hospCd = String(sHosp).trim(); }
     else { var ph=(q.match(/[?&]hospCd=([^&]+)/)||[])[1]; if(ph){ try{ hospCd=decodeURIComponent(ph).trim(); }catch(e){ hospCd=ph.trim(); } } }
@@ -1190,6 +1200,18 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         el('er-editTools').style.display='none';
         el('er-roleTag').textContent='거래처';
       }
+      if(_erReadonly){                        // 이력 열람(읽기전용): 편집·저장·승인·PDF첨부 전부 숨김 — 열람·인쇄만
+        el('er-editTools').style.display='none';
+        el('er-roleTag').textContent='이력 열람';
+        var _sb=el('er-statusBadge'); if(_sb){ _sb.className='er-status er-new'; }
+        var _st=el('er-statusText'); if(_st){ _st.textContent='읽기전용(이력 열람)'; }
+        var _hi=el('er-hstInfo');             // 어느 이력을 보는지 칩 표시(유형·작성자·시각)
+        if(_hi && _erHstInfo){
+          var _lb=esc(_erHstInfo.label||'이력'), _mu=esc(_erHstInfo.user||''), _mt=esc(_erHstInfo.time||'');
+          _hi.innerHTML = '📜 이력조회 · '+_lb+' <span class="er-hstmeta">'+((_mu||_mt)?('('+[_mu,_mt].filter(Boolean).join(' · ')+')'):'')+'</span>';
+          _hi.style.display='inline-flex';
+        }
+      }
       erFixToolbar();                         // 툴바 위치 확정
       setTimeout(erFixToolbar, 200);          // 앱 레이아웃(헤더/사이드바) 렌더 후 재보정
     }catch(e){ showErr((e&&e.message)||e); }
@@ -1201,6 +1223,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var _erSaved=false, _erDirty=false;
   function updateBadge(){
     var b=el('er-statusBadge'), t=el('er-statusText'); if(!b||!t) return;
+    if(_erReadonly){ b.className='er-status er-new'; t.textContent='읽기전용(이력 열람)'; return; }   // 이력 열람 우선
     if(approved){ b.className='er-status er-approved'; t.textContent='승인됨 · 거래처 공개'; return; }
     if(_erDirty){ b.className='er-status er-dirty';  t.textContent='수정중 · 미저장'; return; }
     if(_erSaved){ b.className='er-status er-stored'; t.textContent='저장됨'; return; }
@@ -1222,6 +1245,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   window.erToggleEdit = function(){
+    if(_erReadonly){ erSwal('info','이력 열람(읽기전용)입니다. 편집·저장·승인·PDF첨부는 목록에서 정상 진입해 주세요.'); return; }
     if(approved){ erSwal('warning','승인된 보고서는 편집할 수 없습니다. 승인 취소 후 편집하세요.'); return; }
     editing=!editing;
     el('evalReport').classList.toggle('er-editmode', editing);
@@ -1975,6 +1999,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   window.erSave = function(){
+    if(_erReadonly){ erSwal('info','읽기전용(이력 열람)입니다. 저장할 수 없습니다.'); return; }
     if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
     erConfirm('수정한 내용을 저장하시겠습니까?', _erDoSave, { title:'저장', icon:'question', yes:'저장' });
   };
@@ -1997,6 +2022,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   window.erApprove = function(){
+    if(_erReadonly){ erSwal('info','읽기전용(이력 열람)입니다. 승인할 수 없습니다.'); return; }
     if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
     if(approved){
       erConfirm('이 보고서의 승인을 취소하시겠습니까?\n취소하면 거래처 공개가 해제되고 다시 편집할 수 있습니다.',
@@ -2021,7 +2047,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
         data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'N', snapshotJson:snapshot }),
         success:function(res){
-          if(res && res.result==='OK'){ setStatus('APPROVED'); toast('승인되었습니다. 거래처가 열람·인쇄할 수 있습니다.'); }
+          if(res && res.result==='OK'){
+            setStatus('APPROVED');
+            // 승인 완료 → 이제 완성본 PDF 첨부 유도([PDF 첨부] 누르면 바로 생성·첨부 흐름)
+            erConfirm('승인되었습니다. 이제 완성본 PDF를 첨부하세요.', function(){ erPickPdf(); },
+              { title:'승인 완료', icon:'success', yes:'PDF 첨부', no:'나중에' });
+          }
           else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'});
         },
         error:function(){ erSwal('error','승인 처리 중 오류가 발생했습니다.', {title:'오류'}); }
@@ -2058,6 +2089,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   window.erPickPdf = function(){
+    if(_erReadonly){ erSwal('info','읽기전용(이력 열람)입니다. PDF첨부할 수 없습니다.'); return; }
     if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
     if(!approved){ erSwal('warning','먼저 ✔승인한 뒤 PDF를 첨부할 수 있습니다.\n(승인해야 거래처 공개본과 PDF가 일치합니다)'); return; }
     // 화면 보고서를 PDF로 생성 → 미리보기 모달로 먼저 보여줌(저장 전). 저장은 모달의 [📄 파일서버 저장] 에서.

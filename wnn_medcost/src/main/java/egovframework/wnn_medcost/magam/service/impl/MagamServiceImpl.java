@@ -518,6 +518,11 @@ public class MagamServiceImpl implements MagamService {
 	}
 
 	@Override
+	public List<Map<String, Object>> selectEvalReportHst(Map<String, Object> params) throws Exception {
+		return mapper.selectEvalReportHst(params);
+	}
+
+	@Override
 	public Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception {
 		Map<String, Object> res = new HashMap<>();
 		Map<String, Object> mst = mapper.selectEvalReportMst(hospCd, evalYm);

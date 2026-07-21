@@ -43,6 +43,28 @@
   #evalReportList .erl-st.erl-appr{ background:#eaf5ec; color:#2e7d32; border-color:#bfe0c4; }
   #evalReportList .erl-st.erl-appr .erl-sd{ background:#2e7d32; }
   #evalReportList .erl-pdf{ font-weight:800; color:#2e7d32; }
+  /* [위너넷] 기관기호 앞 이력확장 토글(+/−) + 이력 child row */
+  #evalReportList .erl-exp{ display:inline-block; width:16px; height:16px; line-height:14px; text-align:center; margin-right:5px;
+    border:1px solid #9aa4a0; border-radius:3px; background:#fff; color:#333; font-weight:800; font-size:12px; cursor:pointer; vertical-align:middle; }
+  #evalReportList .erl-exp:hover{ background:#e9f4f3; border-color:#2a7665; color:#2a7665; }
+  #evalReportList tr.erl-open > td{ background:#f2f8f6 !important; }
+  #evalReportList .erl-hstbox{ padding:9px 12px; background:#f7fbfa; border:1px solid #d9e6e2; border-radius:6px; }
+  #evalReportList .erl-hsttit{ font-size:12.5px; font-weight:800; color:#1f5a4b; margin-bottom:7px; }
+  #evalReportList .erl-hstsub{ font-weight:600; color:#6a7a75; font-size:11.5px; }
+  #evalReportList .erl-hsttbl{ width:auto; border-collapse:collapse; font-size:12px; background:#fff; }
+  #evalReportList .erl-hsttbl th, #evalReportList .erl-hsttbl td{ border:1px solid #e0e6e4; padding:5px 16px; text-align:center; white-space:nowrap; }
+  #evalReportList .erl-hsttbl thead th{ background:#eef3f1; color:#334; font-weight:700; }
+  #evalReportList .erl-hsttbl tbody{ cursor:pointer; }
+  #evalReportList .erl-hstrow:hover td{ background:#eaf5f0; }
+  #evalReportList .erl-hstrow.erl-hstsel td{ background:#fff5d6; }                 /* 돌아왔을 때 선택했던 이력 강조 */
+  #evalReportList .erl-hstrow.erl-hstsel:hover td{ background:#ffefc0; }
+  #evalReportList .erl-selmark{ color:#c47f17; font-weight:800; font-size:11px; margin-left:6px; }
+  /* 선택유지 — 돌아온(마지막 연) 행 강조 */
+  #evalReportList table.dataTable tbody tr.erl-selrow > td{ background:#fff5d6 !important; }
+  #evalReportList table.dataTable tbody tr.erl-selrow > td:first-child{ box-shadow:inset 3px 0 0 #e0a52a; }
+  #evalReportList .erl-hstempty{ color:#6a7a75; font-size:12px; }
+  #evalReportList .erl-hstlink{ color:#2a7665; font-weight:800; text-decoration:none; margin-left:6px; }
+  #evalReportList .erl-hstlink:hover{ text-decoration:underline; }
 
   /* DataTables — 표준 스킨. 헤더=연한 회색, 그리드 폰트 살짝 크게 */
   #evalReportList table.dataTable{ font-size:14px; }
@@ -179,7 +201,7 @@ jQuery(function(){
   function scoreRender(d,t){ if(t==='display'){ return (d==null||d==='')?'-':f1(d); } return (d==null||d==='')?0:n(d); }
 
   // ===== DataTable (앱 표준 그리드) =====
-  var LAST = [], DT = null;
+  var LAST = [], DT = null, _erlSel = null;   // _erlSel = 돌아왔을 때 선택유지할 행(hospcd·evalym)
   function buildGrid(){
     DT = jQuery('#erl-grid').DataTable({
       data: [],
@@ -208,7 +230,13 @@ jQuery(function(){
       ],
       columns: [
         { title:'번호', data:null, orderable:false, className:'dt-center', render:function(d,t,r,meta){ return meta.row+1; } },
-        { title:'기관기호', data:'hospcd', className:'dt-center' },
+        { title:'기관기호', data:'hospcd', className:'dt-center', render:function(d,t,r){
+            var code=esc(d||'');
+            if(t!=='display') return code;
+            // 위너넷 & 변경이력(hstcnt)이 있는 행만 기관기호 앞 [+] 확장. 이력 없으면 [+] 미표시.
+            var hasHst = isWinner && (Number(r.hstcnt)||0) > 0;
+            return hasHst ? ('<span class="erl-exp" title="변경 이력 펼치기">+</span>'+code) : code;
+          } },
         { title:'병원명', data:'hospnm', render:function(d,t,r){ var nm=d||HOSP_NM[r.hospcd]||r.hospcd||''; return (t==='display')?('<span class="erl-hospnm">'+esc(nm)+'</span>'):esc(nm); } },
         { title:'평가월', data:'evalym', className:'dt-center', render:function(d){ var ym=String(d||''); return ym.length===6?(ym.substring(0,4)+'.'+ym.substring(4,6)):esc(ym); } },
         { title:'종합점수', data:'totalscore', className:'dt-center', render:function(d,t){ if(t==='display'){ return (d==null||d==='')?'-':('<span class="erl-total">'+f1(d)+'</span> <span class="erl-grade">'+gradeOf(d)+'</span>'); } return (d==null||d==='')?0:n(d); } },
@@ -227,10 +255,100 @@ jQuery(function(){
     DT.on('draw.dt', function(){
       var info=DT.page.info();
       DT.column(0,{ order:'applied', page:'current' }).nodes().each(function(cell,i){ cell.innerHTML = info.start + i + 1; });
+      // 선택유지 — 돌아온 행 강조(정렬·페이지 바뀌어도 draw 마다 재적용)
+      jQuery('#erl-grid tbody tr').removeClass('erl-selrow');
+      if(_erlSel){
+        DT.rows({ page:'current' }).every(function(){
+          var d=this.data();
+          if(d && String(d.hospcd)===String(_erlSel.hospcd) && String(d.evalym)===String(_erlSel.evalym)) jQuery(this.node()).addClass('erl-selrow');
+        });
+      }
     });
-    // 행 더블클릭 → 해당 병원·월 보고서로 이동
+    // 행 더블클릭 → 해당 병원·월 보고서로 이동(편집 가능)
     jQuery('#erl-grid tbody').on('dblclick','tr', function(){
-      var d=DT.row(this).data(); if(d) goReport(d.hospcd, d.hospnm||HOSP_NM[d.hospcd]||d.hospcd, d.evalym, false);
+      var d=DT.row(this).data(); if(d) goReport(d.hospcd, d.hospnm||HOSP_NM[d.hospcd]||d.hospcd, d.evalym, false, false);
+    });
+    // [위너넷] 기관기호 앞 [+] → 변경이력 child row 펼침/접힘
+    jQuery('#erl-grid tbody').on('click','td .erl-exp', function(ev){
+      ev.stopPropagation();
+      var tog=jQuery(this), tr=tog.closest('tr'), row=DT.row(tr), d=row.data();
+      if(row.child.isShown()){ row.child.hide(); tr.removeClass('erl-open'); tog.text('+').attr('title','변경 이력 펼치기'); return; }
+      tog.text('…');
+      jQuery.ajax({ url:ctx+'/main/listEvalReportHst.do', type:'POST', dataType:'json',
+        data:{ hospCd:d.hospcd, evalYm:d.evalym },
+        success:function(res){
+          var list=(res&&res.result==='OK')?(res.list||[]):[];
+          row.child(hstHtml(list, d)).show(); tr.addClass('erl-open'); tog.text('−').attr('title','변경 이력 접기');
+        },
+        error:function(){ row.child('<div class="erl-hstbox erl-hstempty">이력 조회 중 오류가 발생했습니다.</div>').show(); tr.addClass('erl-open'); tog.text('−'); }
+      });
+    });
+  }
+  // 변경이력 child row 내용 — 클릭하면 그 보고서를 '읽기전용'으로 연다(저장·승인·PDF첨부 불가)
+  //   selKey(시각) 이 주어지면 그 이력 행을 강조(돌아왔을 때 어디 선택했는지 표시)
+  function hstHtml(list, d, selKey){
+    var nm = d.hospnm||HOSP_NM[d.hospcd]||d.hospcd;
+    var arg = "'"+esc(d.hospcd).replace(/'/g,"")+"','"+esc(nm).replace(/'/g,"")+"','"+esc(d.evalym)+"'";
+    if(!list || !list.length){
+      return '<div class="erl-hstbox erl-hstempty">변경 이력이 없습니다. '
+           + '<a href="#" class="erl-hstlink" onclick="erlOpenRO('+arg+');return false;">읽기전용으로 열기 ▸</a></div>';
+    }
+    // 같은 (작성자·시각) 이벤트는 한 행으로 묶고 유형(문구 저장·PDF 변경)을 합친다.
+    var groups=[], idx={};
+    for(var i=0;i<list.length;i++){
+      var h=list[i], key=(h.regdttm||'')+'|'+(h.reguser||''), isPdf=(h.hsttype==='PDF');
+      if(idx[key]==null){ idx[key]=groups.length; groups.push({ regdttm:h.regdttm, reguser:h.reguser, text:false, pdf:false }); }
+      var g=groups[idx[key]]; if(isPdf) g.pdf=true; else g.text=true;
+    }
+    var sj=function(v){ return String(v==null?'':v).replace(/[\\'"]/g,''); };   // onclick JS 문자열 안전
+    var rows='';
+    for(var j=0;j<groups.length;j++){
+      var gg=groups[j], parts=[];
+      if(gg.text) parts.push('✎ 문구 저장');
+      if(gg.pdf)  parts.push('📎 PDF 변경');
+      var label=parts.join(' · '), uu=decUser(gg.reguser)||'-';
+      var selCls = (selKey && String(gg.regdttm)===String(selKey)) ? ' erl-hstsel' : '';   // 선택했던 이력 강조
+      // 행 클릭 → 그 이력 정보(유형·작성자·시각)까지 넘겨 읽기전용으로 연다
+      var oc="erlOpenRO('"+sj(d.hospcd)+"','"+sj(nm)+"','"+sj(d.evalym)+"','"+sj(label)+"','"+sj(uu)+"','"+sj(gg.regdttm)+"')";
+      rows += '<tr class="erl-hstrow'+selCls+'" onclick="'+oc+'"><td>'+(j+1)+'</td><td>'+label+(selCls?' <span class="erl-selmark">◀ 선택</span>':'')+'</td>'
+            + '<td>'+esc(uu)+'</td><td>'+esc(gg.regdttm||'')+'</td></tr>';
+    }
+    return '<div class="erl-hstbox">'
+         + '<div class="erl-hsttit">📜 변경 이력 <span class="erl-hstsub">('+groups.length+'건) · 행을 클릭하면 <b>읽기전용</b>으로 열람(저장·승인·PDF첨부 불가)</span></div>'
+         + '<table class="erl-hsttbl"><thead><tr><th>#</th><th>유형</th><th>작성자</th><th>시각</th></tr></thead>'
+         + '<tbody>'+rows+'</tbody></table></div>';
+  }
+  // 읽기전용 열기 — 선택한 이력 정보(라벨·작성자·시각)를 sessionStorage 로 넘겨 보고서 상단에 표시.
+  //   + erlExpand: 돌아왔을 때 그 행을 다시 펼치고 선택 이력을 강조하기 위한 상태(원샷).
+  window.erlOpenRO = function(hospCd, hospNm, ym, label, user, time){
+    try{
+      sessionStorage.setItem('erOpenHstInfo', JSON.stringify({ label:label||'', user:user||'', time:time||'' }));
+      sessionStorage.setItem('erlExpand', JSON.stringify({ hospcd:hospCd, evalym:ym, selKey:time||'' }));
+    }catch(e){}
+    goReport(hospCd, hospNm, ym, false, true);
+  };
+  // 목록으로 돌아왔을 때: 저장된 펼침 상태(erlExpand)가 있으면 그 행을 다시 펼치고 선택 이력 강조(1회 소비)
+  function restoreExpand(){
+    var raw=''; try{ raw=sessionStorage.getItem('erlExpand')||''; }catch(e){}
+    if(!raw) return;
+    var st=null; try{ st=JSON.parse(raw); }catch(e){}
+    try{ sessionStorage.removeItem('erlExpand'); }catch(e){}   // 원샷
+    if(!st || !st.hospcd || !st.evalym || !DT) return;
+    var target=null;
+    DT.rows({page:'current'}).every(function(){
+      var d=this.data();
+      if(d && String(d.hospcd)===String(st.hospcd) && String(d.evalym)===String(st.evalym)){ target=this; return false; }
+    });
+    if(!target) return;
+    var tr=jQuery(target.node()), tog=tr.find('td .erl-exp');
+    if(!tog.length || target.child.isShown()) return;
+    var d=target.data();
+    jQuery.ajax({ url:ctx+'/main/listEvalReportHst.do', type:'POST', dataType:'json', data:{ hospCd:d.hospcd, evalYm:d.evalym },
+      success:function(res){
+        var list=(res&&res.result==='OK')?(res.list||[]):[];
+        target.child(hstHtml(list, d, st.selKey)).show(); tr.addClass('erl-open'); tog.text('−').attr('title','변경 이력 접기');
+        var sel = tr.next().find('.erl-hstsel')[0]; if(sel && sel.scrollIntoView){ try{ sel.scrollIntoView({block:'center'}); }catch(e){} }
+      }
     });
   }
   function _stripTags(data){
@@ -261,6 +379,7 @@ jQuery(function(){
       success:function(res){
         LAST = (res && res.result==='OK') ? (res.list||[]) : [];
         erlFilter();
+        try{ restoreExpand(); }catch(e){}   // 보고서에서 돌아온 경우 펼침 복원
       },
       error:function(){ LAST=[]; erlFilter(); }
     });
@@ -271,19 +390,21 @@ jQuery(function(){
          + '&hospNm=' + encodeURIComponent(hospNm||'')
          + '&ym=' + encodeURIComponent(ym) + '&ret=list' + (autoprint ? '&autoprint=1' : '');
   }
-  function goReport(hospCd, hospNm, ym, autoprint){
+  function goReport(hospCd, hospNm, ym, autoprint, readonly){
     if(!hospCd) return;
     try{
       sessionStorage.setItem('erOpenHospCd', hospCd);
       sessionStorage.setItem('erOpenHospNm', hospNm||'');
       sessionStorage.setItem('erOpenYm', ym||'');
       sessionStorage.setItem('erOpenAutoprint', autoprint ? '1' : '');
+      sessionStorage.setItem('erOpenReadonly', readonly ? '1' : '');   // 이력 열람 = 읽기전용(저장·승인·PDF첨부 잠금)
+      sessionStorage.setItem('erlSelRow', JSON.stringify({ hospcd:hospCd, evalym:ym }));   // 돌아왔을 때 이 행 선택유지·강조
       sessionStorage.setItem('erFromList', '1');
       sessionStorage.setItem('erFromListYear', el('erl-year').value);
     }catch(e){}
-    location.href = reportUrl(hospCd, hospNm, ym, autoprint);
+    location.href = reportUrl(hospCd, hospNm, ym, autoprint) + (readonly ? '&ro=1' : '');
   }
-  window.erlOpen = function(hospCd, hospNm, ym){ goReport(hospCd, hospNm, ym, false); };
+  window.erlOpen = function(hospCd, hospNm, ym){ goReport(hospCd, hospNm, ym, false, false); };
 
   // 레이아웃 보정 — 좌측 사이드바(fixed/absolute)가 콘텐츠를 덮을 때 그만큼 우측으로 민다.
   function erlFixLayout(){
@@ -296,9 +417,14 @@ jQuery(function(){
   }
   window.addEventListener('resize', erlFixLayout);
 
+  // 보고서에서 돌아온 경우 선택유지할 행(원샷) — buildGrid 의 draw 핸들러가 강조
+  try{ var _ssel=sessionStorage.getItem('erlSelRow'); if(_ssel){ _erlSel=JSON.parse(_ssel); sessionStorage.removeItem('erlSelRow'); } }catch(e){}
+
   // 초기화 — 그리드 생성 후 조회
   buildGrid();
   erlLoad();
+  // 선택 행으로 스크롤(로드·그리기 후)
+  if(_erlSel){ setTimeout(function(){ var n=document.querySelector('#evalReportList tr.erl-selrow'); if(n && n.scrollIntoView){ try{ n.scrollIntoView({block:'center'}); }catch(e){} } }, 400); }
   erlFixLayout(); setTimeout(erlFixLayout,200); setTimeout(erlFixLayout,600);
 });
 </script>

@@ -83,6 +83,8 @@ public interface MagamMapper {
 	Map<String, Object> selectEvalReportMst(@Param("hospCd") String hospCd, @Param("evalYm") String evalYm);
 	// 월보고서 목록 — 선택 년월(+선택 병원)으로 저장된 보고서 나열 (evalYm/hospCd 선택 조건)
 	List<Map<String, Object>> selectEvalReportList(Map<String, Object> params);
+	// 월보고서 변경이력(TBL_EVAL_REPORT_HST) — 해당 병원·월 보고서의 저장/PDF 변경 이력(최신순)
+	List<Map<String, Object>> selectEvalReportHst(Map<String, Object> params);
 	// 차등제 등록(TBL_GRADE_MST) 목표점수/병원등급 — 월보고서 목표값 기본소스
 	Map<String, Object> selectHospGoalGrade(@Param("hospCd") String hospCd,
 	                                        @Param("startYy") String startYy,
