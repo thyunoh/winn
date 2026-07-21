@@ -47,7 +47,8 @@
   /* DataTables — 표준 스킨. 헤더=연한 회색, 그리드 폰트 살짝 크게 */
   #evalReportList table.dataTable{ font-size:14px; }
   #evalReportList table.dataTable tbody tr{ cursor:pointer; }
-  #evalReportList table.dataTable tbody td{ padding-top:8px; padding-bottom:8px; }
+  #evalReportList table.dataTable tbody td{ padding-top:4px; padding-bottom:4px; }
+  #evalReportList table.dataTable thead th{ padding-top:6px; padding-bottom:6px; }
   /* 헤더색은 앱 표준(addstyle.css: table.dataTable thead th { background:#E9F4F3 })을 그대로 사용 — 오버라이드 안 함 */
   #evalReportList .erl-note{ margin-top:12px; font-size:11.5px; color:#54636c; line-height:1.6; }
   /* DataTables 컨트롤(버튼·자료검색·정보·페이징) 글자 조금 크게 — 신/구 클래스 모두 */
