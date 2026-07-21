@@ -4596,7 +4596,7 @@ function dataLoad(data, callback, settings) {
 		                    }
 		                }
 		                
-		                cntNote = '[중복포함, 처치 총:' + yesCount + '건 ]·다음월:' + next_Cnt + '건';
+		                cntNote = '다음월 처치 대상 ' + next_Cnt + '건(중복 포함)';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(60) + '<span style="color: blue;">' + cntNote + '</span>';
 	            	
@@ -4634,7 +4634,7 @@ function dataLoad(data, callback, settings) {
 		                    }
 		                }
 		                
-		                cntNote = '[중복포함,개선 총:' + impCount + '건]·다음월:' + next_Cnt + '건';
+		                cntNote = '다음월 개선 대상 ' + next_Cnt + '건(중복 포함)';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(75) + '<span style="color: blue;">' + cntNote + '</span>';
 	            	
@@ -4655,7 +4655,7 @@ function dataLoad(data, callback, settings) {
 		                    }
 		                }
 		                
-		                cntNote = '[중복포함,당월개선 총:' + impCount + '건 ]·다음월:' + next_Cnt + '건';
+		                cntNote = '다음월 개선 대상 ' + next_Cnt + '건(중복 포함)';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(65) + '<span style="color: blue;">' + cntNote + '</span>';
 	            	
@@ -4666,11 +4666,14 @@ function dataLoad(data, callback, settings) {
 	            		let next_Cnt = 0;
 	            		let bunmo_Cnt = 0;
 	            		let bunja_Cnt = 0;
-		                
+	            		// 적정범위 초과 = 그리드 '당월' 칸이 '초과'인 대상자(approYn 1·2·3).
+	            		//   '제외'(입원 3개월 미만 등, approYn='X')는 초과로 세지 않는다.
+	            		let over_Cnt = 0;
+
 		                for (let i = 0; i < response.data.length; i++) {
-		                    
+
 		                	const item = response.data[i];
-		                	
+
 		                    if (item.diabeYn === '1') {
 		                    	diab_Cnt += 1;
 		                    	if (item.nextTarget != 'Y') {
@@ -4680,20 +4683,26 @@ function dataLoad(data, callback, settings) {
 		                    if (item.approYn === '5') {
 		                    	appr_Cnt += 1;
 		                    }
+		                    if (['1','2','3'].includes(item.approYn)) {   // 당월 = '초과'
+		                    	over_Cnt += 1;
+		                    }
 		                    if (item.bunmo === 'O') {
 		                    	bunmo_Cnt += 1;
 		                    }
 		                    if (item.bunja === 'O') {
 		                    	bunja_Cnt += 1;
 		                    }
-		                    
+
 		                }
+
+		                // 헤더 문구 — 다음월 대상자 수 표기 + 적정범위 초과 환자가 1명이라도 있으면 확인 안내와 설명을 덧붙인다.
+		                cntNote = '다음월 당화혈색소 대상자 총 : ' + next_Cnt + '건'
+		                        + (over_Cnt > 0
+		                           ? '&nbsp;<span style="color:red; font-weight:bold; font-size:11px; white-space:nowrap;">[적정범위 초과환자 확인필요] * 적정범위를 초과한 대상자가 있을때 (입원 3개월미만대상자 포함)</span>'
+		                           : '');
 		                
-		                let rate_Txt = bunmo_Cnt > 0 ? (Math.round(bunja_Cnt / bunmo_Cnt * 1000) / 10) + '%' : '-';
-		                cntNote = '[중복포함,당뇨 총:' + diab_Cnt + '건 ]·적정:' + appr_Cnt + '건·다음월:' + next_Cnt + '건'
-		                        + '·<span style="color:#1565C0;">분모:' + bunmo_Cnt + '·분자:' + bunja_Cnt + '·분율:' + rate_Txt + '</span>';
-		                
-		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(10) + '<span style="color: blue;">' + cntNote + '</span>';
+		                // 제목+안내를 한 줄로 유지(줄바꿈 시 '46건'이 잘려 보이는 문제) — 앞 여백 축소 + nowrap
+		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(4) + '<span style="color: blue; white-space:nowrap;">' + cntNote + '</span>';
 
 	                // 좌측 지표 분모(당뇨 대상자)는 있는데 우측 그리드가 0건이면 전월청구 누락 가능성 안내
 	                // (select_CategoryList13 은 전월 청구내역 TBL_CHUNG_MST 와 INNER JOIN 하므로

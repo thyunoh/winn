@@ -523,6 +523,11 @@ public class MagamServiceImpl implements MagamService {
 	}
 
 	@Override
+	public Map<String, Object> selectEvalReportHstOne(Map<String, Object> params) throws Exception {
+		return mapper.selectEvalReportHstOne(params);
+	}
+
+	@Override
 	public Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception {
 		Map<String, Object> res = new HashMap<>();
 		Map<String, Object> mst = mapper.selectEvalReportMst(hospCd, evalYm);
@@ -551,6 +556,8 @@ public class MagamServiceImpl implements MagamService {
 		String hospCd = (String) p.get("hospCd");
 		String evalYm = (String) p.get("evalYm");
 		Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
+		// ★ 이력용 — MST 를 덮어쓰기 '전'의 목표등급·점수를 확보(이력 열람 시 그 시점 수치 복원에 사용)
+		Map<String, Object> prevMst = (seq != null) ? mapper.selectEvalReportMst(hospCd, evalYm) : null;
 		if (seq == null) {
 			mapper.insertEvalReportMst(p);                 // useGeneratedKeys → p["reportSeq"]
 			Object gen = p.get("reportSeq");
@@ -560,17 +567,49 @@ public class MagamServiceImpl implements MagamService {
 			mapper.updateEvalReportMst(p);
 		}
 		// 이력: 덮어쓰기 직전의 편집 문구 전체를 JSON 스냅샷으로 보존 (TBL_EVAL_REPORT_HST, HST_TYPE='TEXT')
+		//   ★ 문구가 '실제로 바뀐 경우에만' 기록 — PDF 이력(경로가 달라질 때만 기록)과 동일 기준.
+		//     승인(approve)은 내부적으로 saveEvalReport 를 한 번 더 호출하므로, 이 비교가 없으면
+		//     방금 저장한 '최종본'이 이력에 그대로 한 줄 더 쌓여 '최종것이 이력에 보이는' 현상이 생긴다.
 		//   이력 기록 실패가 저장 자체를 막지 않도록 별도 try (로그만)
 		try {
-			List<Map<String, Object>> prevTexts = mapper.selectEvalReportTexts(seq);
-			if (prevTexts != null && !prevTexts.isEmpty()) {
-				Map<String, Object> h = new HashMap<>();
-				h.put("reportSeq", seq);
-				h.put("hstType", "TEXT");
-				h.put("textsJson", new Gson().toJson(prevTexts));
-				h.put("pdfPath", null);
-				h.put("regUser", p.get("regUser"));
-				mapper.insertEvalReportHst(h);
+			// 최초 생성(기존 MST 없음)만 이력 제외. 기존 보고서면 '저장분이 없던 상태(전부 자동문구) → 생김' 도 변경이므로 기록.
+			boolean existed = (prevMst != null);
+			List<Map<String, Object>> prevTexts = existed ? mapper.selectEvalReportTexts(seq) : null;
+			// ★ 화면이 보낸 dirty(실제 편집 여부)가 true 일 때만 이력을 남긴다.
+			//   HTML 재직렬화 차이로 문자열 비교가 어긋나 '안 바뀐 저장'이 이력을 만들던 문제를 원천 차단.
+			//   (구버전 화면 호환 — dirty 가 아예 안 오면 종전처럼 내용 비교로 판단)
+			Object dirtyObj = p.get("dirty");
+			boolean dirtyKnown = (dirtyObj != null);
+			boolean clientDirty = dirtyKnown && Boolean.parseBoolean(String.valueOf(dirtyObj));
+			if (existed && (!dirtyKnown || clientDirty)) {
+				@SuppressWarnings("unchecked")
+				List<Map<String, Object>> newTexts = (p.get("texts") instanceof List)
+						? (List<Map<String, Object>>) p.get("texts") : null;
+				if (!sameEvalTexts(prevTexts, newTexts)) {          // 내용 동일하면 이력 생략
+					// 스냅샷 = 직전 문구 + '__meta'(직전 목표등급·점수). DDL 없이 TEXTS_JSON 안에 함께 보존.
+					//   이력 열람 시 화면이 현재 마스터 목표값으로 덮어쓰는 문제를 이 메타로 되돌린다.
+					List<Map<String, Object>> snap = new ArrayList<>();
+					if (prevTexts != null) snap.addAll(prevTexts);   // 비어 있으면 = 그땐 전부 자동문구였다는 뜻
+					if (prevMst != null) {
+						Map<String, Object> mv = new HashMap<>();
+						mv.put("goalgrade",   prevMst.get("goalgrade"));
+						mv.put("goalscore",   prevMst.get("goalscore"));
+						mv.put("structscore", prevMst.get("structscore"));
+						mv.put("carescore",   prevMst.get("carescore"));
+						mv.put("totalscore",  prevMst.get("totalscore"));
+						Map<String, Object> meta = new HashMap<>();
+						meta.put("sectkey", "__meta");
+						meta.put("content", new Gson().toJson(mv));
+						snap.add(meta);
+					}
+					Map<String, Object> h = new HashMap<>();
+					h.put("reportSeq", seq);
+					h.put("hstType", "TEXT");
+					h.put("textsJson", new Gson().toJson(snap));
+					h.put("pdfPath", null);
+					h.put("regUser", p.get("regUser"));
+					mapper.insertEvalReportHst(h);
+				}
 			}
 		} catch (Exception he) {
 			LoggerFactory.getLogger(getClass()).error("saveEvalReport history WARN: " + he.getMessage());
@@ -587,16 +626,84 @@ public class MagamServiceImpl implements MagamService {
 		return seq;
 	}
 
+	/** 편집 문구 동일 여부 — 같으면 이력(HST) 기록을 생략한다.
+	 *  DB 조회본은 별칭이 sectkey, 저장 요청본은 sectKey 라 키 표기를 정규화해 비교. */
+	private boolean sameEvalTexts(List<Map<String, Object>> prev, List<Map<String, Object>> next) {
+		return normalizeEvalTexts(prev).equals(normalizeEvalTexts(next));
+	}
+
+	private Map<String, String> normalizeEvalTexts(List<Map<String, Object>> list) {
+		Map<String, String> m = new HashMap<>();
+		if (list == null) return m;
+		for (Map<String, Object> t : list) {
+			if (t == null) continue;
+			Object k = t.get("sectkey");
+			if (k == null) k = t.get("sectKey");
+			if (k == null) continue;
+			m.put(String.valueOf(k), normContent(t.get("content")));
+		}
+		return m;
+	}
+
+	/** 문구 비교용 정규화 — 저장 왕복 과정에서 생기는 HTML 미세차이(&nbsp;·공백·개행)로
+	 *  '변경 없음'이 '변경됨'으로 오판되어 불필요한 이력이 쌓이는 것을 막는다. */
+	private String normContent(Object v) {
+		if (v == null) return "";
+		String s = String.valueOf(v);
+		s = s.replace("&nbsp;", " ").replace(' ', ' ');
+		s = s.replaceAll("\\s+", " ").trim();
+		return s;
+	}
+
 	@Override
 	@Transactional
 	public void approveEvalReport(Map<String, Object> p) throws Exception {
 		mapper.approveEvalReportMst(p);
+		insertApprovalHst(p, "APPROVE");     // 누가 언제 승인했는지 이력 보존(근거자료)
 	}
 
 	@Override
 	@Transactional
 	public void cancelApproveEvalReport(Map<String, Object> p) throws Exception {
 		mapper.cancelApproveEvalReportMst(p);
+		insertApprovalHst(p, "CANCEL");      // 승인취소도 이력으로 남김(취소하면 MST 기록은 사라지므로)
+	}
+
+	/** 승인/승인취소 이력(TBL_EVAL_REPORT_HST) — 그 시점 목표·점수도 __meta 로 함께 보존.
+	 *  이력 기록 실패가 승인 처리 자체를 막지 않도록 예외는 로그만 남긴다. */
+	private void insertApprovalHst(Map<String, Object> p, String type) {
+		try {
+			String hospCd = (String) p.get("hospCd");
+			String evalYm = (String) p.get("evalYm");
+			Long seq = mapper.selectEvalReportSeq(hospCd, evalYm);
+			if (seq == null) return;
+			Map<String, Object> mst = mapper.selectEvalReportMst(hospCd, evalYm);
+			String textsJson = null;
+			if (mst != null) {
+				Map<String, Object> mv = new HashMap<>();
+				mv.put("goalgrade",   mst.get("goalgrade"));
+				mv.put("goalscore",   mst.get("goalscore"));
+				mv.put("structscore", mst.get("structscore"));
+				mv.put("carescore",   mst.get("carescore"));
+				mv.put("totalscore",  mst.get("totalscore"));
+				Map<String, Object> meta = new HashMap<>();
+				meta.put("sectkey", "__meta");
+				meta.put("content", new Gson().toJson(mv));
+				List<Map<String, Object>> snap = new ArrayList<>();
+				snap.add(meta);
+				textsJson = new Gson().toJson(snap);
+			}
+			Map<String, Object> h = new HashMap<>();
+			h.put("reportSeq", seq);
+			h.put("hstType", type);                 // APPROVE / CANCEL
+			h.put("textsJson", textsJson);
+			h.put("pdfPath", null);
+			Object who = (p.get("approveUser") != null) ? p.get("approveUser") : p.get("regUser");
+			h.put("regUser", who);
+			mapper.insertEvalReportHst(h);
+		} catch (Exception e) {
+			LoggerFactory.getLogger(getClass()).error("approval history WARN: " + e.getMessage());
+		}
 	}
 
 	@Override

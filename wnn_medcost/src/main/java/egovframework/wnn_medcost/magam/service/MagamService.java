@@ -58,6 +58,7 @@ public interface MagamService {
 	// ===== 적정성평가 컨설팅 월보고서 =====
 	List<Map<String, Object>> selectEvalReportList(Map<String, Object> params) throws Exception;   // 월보고서 목록(년월+선택 병원)
 	List<Map<String, Object>> selectEvalReportHst(Map<String, Object> params) throws Exception;    // 월보고서 변경이력(병원·월)
+	Map<String, Object> selectEvalReportHstOne(Map<String, Object> params) throws Exception;       // 이력 단건 스냅샷(TEXTS_JSON)
 	Map<String, Object> loadEvalReport(String hospCd, String evalYm) throws Exception;
 	Long saveEvalReport(Map<String, Object> p) throws Exception;
 	void approveEvalReport(Map<String, Object> p) throws Exception;

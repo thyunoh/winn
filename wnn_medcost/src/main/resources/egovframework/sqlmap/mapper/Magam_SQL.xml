@@ -5655,7 +5655,8 @@
 		       m.STATUS                                      AS status,
 		       CASE WHEN IFNULL(m.PDF_PATH,'') = '' THEN 'N' ELSE 'Y' END AS haspdf,
 		       (SELECT COUNT(*) FROM TBL_EVAL_REPORT_HST h2
-		         WHERE h2.REPORT_SEQ = m.REPORT_SEQ)          AS hstcnt,   <!-- 변경이력 건수(0이면 목록 [+] 미표시) -->
+		         WHERE h2.REPORT_SEQ = m.REPORT_SEQ
+		           AND h2.HST_TYPE IN ('TEXT','PDF'))         AS hstcnt,   <!-- 표시 대상(문구·PDF) 이력 건수. 0이면 [+] 미표시 -->
 		       m.REG_USER                                    AS reguser,
 		       m.APPROVE_USER                                AS approveuser,
 		       DATE_FORMAT(m.APPROVE_DTTM, '%Y-%m-%d %H:%i') AS approvedttm,
@@ -5681,6 +5682,7 @@
 		       h.REPORT_SEQ                                  AS reportseq,
 		       h.HST_TYPE                                    AS hsttype,
 		       CASE WHEN IFNULL(h.PDF_PATH,'') = '' THEN 'N' ELSE 'Y' END AS haspdf,
+		       h.PDF_PATH                                    AS pdfpath,   <!-- 그 시점(교체 직전) 첨부 PDF 경로 — 이력 열람에서 보기 -->
 		       h.REG_USER                                    AS reguser,
 		       DATE_FORMAT(h.REG_DTTM, '%Y-%m-%d %H:%i')     AS regdttm
 		  FROM TBL_EVAL_REPORT_HST h
@@ -5688,6 +5690,21 @@
 		 WHERE m.HOSP_CD = #{hospCd}
 		   AND m.EVAL_YM = #{evalYm}
 		 ORDER BY h.REG_DTTM DESC, h.HST_SEQ DESC
+	</select>
+
+	<!-- 이력 단건 스냅샷 — 그 시점 '저장 직전' 문구 전체(TEXTS_JSON). 읽기전용 이력 열람에서 그 버전을 재현.
+	     hospCd/evalYm 을 조인 조건으로 함께 검증(다른 병원 이력 조회 방지). -->
+	<select id="selectEvalReportHstOne" parameterType="map" resultType="java.util.HashMap">
+		SELECT h.HST_SEQ                                 AS hstseq,
+		       h.HST_TYPE                                AS hsttype,
+		       h.TEXTS_JSON                              AS textsjson,
+		       h.REG_USER                                AS reguser,
+		       DATE_FORMAT(h.REG_DTTM, '%Y-%m-%d %H:%i') AS regdttm
+		  FROM TBL_EVAL_REPORT_HST h
+		  JOIN TBL_EVAL_REPORT_MST m ON m.REPORT_SEQ = h.REPORT_SEQ
+		 WHERE h.HST_SEQ = #{hstSeq}
+		   AND m.HOSP_CD = #{hospCd}
+		   AND m.EVAL_YM = #{evalYm}
 	</select>
 
 	<!-- 차등제 등록(TBL_GRADE_MST)의 연간 목표점수/병원등급 — 월보고서 표지 목표값 자동 소스.

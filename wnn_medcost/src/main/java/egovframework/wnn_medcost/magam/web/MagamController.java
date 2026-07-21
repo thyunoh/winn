@@ -1228,6 +1228,30 @@ public class MagamController {
 		return res;
 	}
 
+	// 이력 단건 스냅샷(그 시점 '저장 직전' 문구 전체) — 위너넷 전용. 읽기전용 이력 열람에서 그 버전 재현용.
+	@RequestMapping(value="/main/loadEvalReportHst.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> loadEvalReportHst(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String wnnYn = "";
+			try { wnnYn = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			if (!"Y".equals(wnnYn)) {
+				res.put("result", "FAIL");
+				res.put("message", "권한이 없습니다.");
+				return res;
+			}
+			Map<String, Object> hst = svc.selectEvalReportHstOne(params);
+			res.put("hst", hst);
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL");
+			res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
 	// 저장 (마스터 UPSERT + 편집 문구 전체교체)
 	@RequestMapping(value="/main/saveEvalReport.do", method = RequestMethod.POST)
 	@ResponseBody

@@ -1129,14 +1129,18 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //                 ③ 캐시 회피(no-store + ts 파라미터) ④ 늦게 도착한 이전 fetch 응답 무시(seq)
   var _pdfSeq = 0, _pdfObjUrl = null;
   window.erPdfPreview = function(){
-    if(!pdfPath){ toast('첨부된 PDF가 없습니다.'); return; }
+    // 이력 열람이면 그 시점 PDF(_erHstInfo.pdf) 우선, 아니면 현재 첨부(pdfPath)
+    var vpath = (_erReadonly && _erHstInfo && _erHstInfo.pdf) ? _erHstInfo.pdf : pdfPath;
+    if(!vpath){ erSwal('warning','첨부된 PDF가 없습니다.'); return; }
     var seq = ++_pdfSeq;
-    var name = pdfPath.split('/').pop();
-    var dlUrl = ctx+'/sftp/download.do?filePath='+encodeURIComponent(pdfPath)+'&_ts='+Date.now();
-    el('er-pdfModalTitle').textContent = '📄 ' + (name || '첨부 PDF');
-    // 열람 모드 버튼: 저장/파일선택 숨김, 교체검색(위너넷) 노출
+    var name = vpath.split('/').pop();
+    var dlUrl = ctx+'/sftp/download.do?filePath='+encodeURIComponent(vpath)+'&_ts='+Date.now();
+    el('er-pdfModalTitle').textContent = (_erReadonly && _erHstInfo && _erHstInfo.pdf)
+      ? ('📄 이력 PDF — ' + (name||'') + ' (' + ((_erHstInfo.time)||'') + ')')
+      : ('📄 ' + (name || '첨부 PDF'));
+    // 열람 모드 버튼: 저장/파일선택 숨김, 교체검색(위너넷·읽기전용 아님)만 노출
     el('er-pdfGenSaveBtn').style.display='none'; el('er-pdfPickBtn').style.display='none';
-    el('er-pdfModalReplace').style.display = isWinner ? '' : 'none';
+    el('er-pdfModalReplace').style.display = (isWinner && !_erReadonly) ? '' : 'none';
     // iframe 새로 교체 — 같은 노드 재사용 시 두 번째 열기부터 간헐적으로 렌더 안 되는 문제 방지
     var old = el('er-pdfFrame'), nf = old.cloneNode(false);
     nf.removeAttribute('src');
@@ -1200,15 +1204,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         el('er-editTools').style.display='none';
         el('er-roleTag').textContent='거래처';
       }
-      if(_erReadonly){                        // 이력 열람(읽기전용): 편집·저장·승인·PDF첨부 전부 숨김 — 열람·인쇄만
-        el('er-editTools').style.display='none';
+      if(_erReadonly){                        // 이력 열람(읽기전용): 편집·저장·승인·PDF첨부만 숨김 — 👁PDF보기·인쇄는 허용
+        ['er-btnEdit','er-btnSave','er-btnApprove','er-btnPdf'].forEach(function(id){ var b=el(id); if(b) b.style.display='none'; });
         el('er-roleTag').textContent='이력 열람';
         var _sb=el('er-statusBadge'); if(_sb){ _sb.className='er-status er-new'; }
         var _st=el('er-statusText'); if(_st){ _st.textContent='읽기전용(이력 열람)'; }
         var _hi=el('er-hstInfo');             // 어느 이력을 보는지 칩 표시(유형·작성자·시각)
         if(_hi && _erHstInfo){
           var _lb=esc(_erHstInfo.label||'이력'), _mu=esc(_erHstInfo.user||''), _mt=esc(_erHstInfo.time||'');
-          _hi.innerHTML = '📜 이력조회 · '+_lb+' <span class="er-hstmeta">'+((_mu||_mt)?('('+[_mu,_mt].filter(Boolean).join(' · ')+')'):'')+'</span>';
+          // 스냅샷(seq)이 없는 = 가장 최신 이력 → 그 시각의 결과물이 곧 현재 문구
+          var _sfx = _erHstInfo.seq ? '' : ' · 현재(최신) 문구';
+          _hi.innerHTML = '📜 이력 열람 · '+_lb+' <span class="er-hstmeta">'+((_mu||_mt)?('('+[_mu,_mt].filter(Boolean).join(' · ')+')'):'')+_sfx+'</span>';
           _hi.style.display='inline-flex';
         }
       }
@@ -1944,6 +1950,76 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
   }
 
+  // 표지 뱃지(cover_goal_badge)는 목표등급(cover_goal_grade)의 재표기일 뿐 —
+  //   저장 override 는 등급만 남고 뱃지는 자동값이라 '본문 1등급 / 뱃지 4등급' 처럼 어긋날 수 있어 항상 동기화한다.
+  function syncGoalBadge(){
+    var g=document.querySelector('#evalReport [data-key="cover_goal_grade"]');
+    var b=document.querySelector('#evalReport [data-key="cover_goal_badge"]');
+    if(g && b){ var t=(g.textContent||'').trim(); if(t) b.textContent=t; }
+  }
+
+  // 이력 스냅샷의 목표등급·목표점수를 화면에 되돌림 — applyGoalDefault(현재 차등제 마스터)가 덮어쓴 값을 정정.
+  //   표지 본문(cover_goal_grade/score)과 뱃지(cover_goal_badge)를 함께 맞춰 '1등급/3등급 혼재'를 없앤다.
+  function applySnapshotGoal(meta){
+    if(!meta) return;
+    var gs = (meta.goalscore!=null && String(meta.goalscore)!=='') ? String(meta.goalscore) : '';
+    var gg = (meta.goalgrade!=null && String(meta.goalgrade).trim()!=='') ? String(meta.goalgrade).trim() : '';
+    if(gg && gg.indexOf('등급')<0) gg = gg + '등급';
+    function setVal(key, val){
+      if(!val) return;
+      var e=document.querySelector('#evalReport [data-key="'+key+'"]');
+      if(e) e.textContent = val;
+    }
+    setVal('cover_goal_score', gs);
+    setVal('cover_goal_grade', gg);
+    setVal('cover_goal_badge', gg);
+    try{ renderGoalSummary(); }catch(e){}   // 그 시점 목표 기준으로 부족점수·등급표 재계산
+  }
+
+  // 이력 열람(읽기전용) + 스냅샷 SEQ 가 있으면 → 그 시점 '저장 직전' 문구(TEXTS_JSON)로 본문을 덮어써 재현.
+  //   ※ 문구만 스냅샷 대상 — 점수·표 등 수치는 현재 데이터로 계산됨(그 시점 문구 + 현재 수치).
+  function applyHstSnapshot(){
+    if(!(_erReadonly && _erHstInfo && _erHstInfo.seq)) return;
+    jQuery.ajax({ url: ctx+'/main/loadEvalReportHst.do', type:'POST', dataType:'json',
+      data:{ hstSeq:_erHstInfo.seq, hospCd:hospCd, evalYm:curYm },
+      success:function(res){
+        var h = res && res.hst;
+        if(!(res && res.result==='OK')){
+          erSwal('warning','이력 스냅샷을 불러오지 못했습니다.\n'+((res&&res.message)||'')+'\n(서버 재빌드가 필요할 수 있습니다)');
+          return;
+        }
+        if(!h || !h.textsjson){
+          erSwal('info','이 이력에는 문구 스냅샷이 없습니다(PDF 변경만 있는 이력). 현재 문구를 표시합니다.');
+          return;
+        }
+        var arr=null; try{ arr = JSON.parse(h.textsjson); }catch(e){ arr=null; }
+        if(!arr || !arr.length){ erSwal('info','이 이력의 문구 스냅샷이 비어 있습니다. 현재 문구를 표시합니다.'); return; }
+        var map={}, meta=null;
+        arr.forEach(function(t){
+          if(!t || t.sectkey==null) return;
+          if(t.sectkey==='__meta'){ try{ meta = JSON.parse(t.content); }catch(e){} return; }   // 그 시점 목표·점수
+          map[t.sectkey]=t.content;
+        });
+        // ★ 스냅샷에 있는 항목은 그 값으로, '없는 항목은 자동문구(AUTO)로 되돌린다'.
+        //   되돌리지 않으면 현재 저장문구(최종본)가 화면에 그대로 남아 '이력에 최종본이 보이는' 착시가 생긴다.
+        editables().forEach(function(e){
+          var k=e.getAttribute('data-key');
+          if(map[k]!=null)            e.innerHTML = map[k];        // 그 시점 저장 문구
+          else if(AUTO[k]!==undefined) e.innerHTML = AUTO[k];      // 그 시점엔 저장분 없음 = 자동문구 상태
+        });
+        if(meta) applySnapshotGoal(meta);              // ★ 문구 적용 뒤 목표등급·점수를 그 시점 값으로 되돌림
+        editables().forEach(function(e){ e.contentEditable='false'; });
+        erPaginate();                                  // 스냅샷 문구로 재분할
+        var hi=el('er-hstInfo');                       // 칩에 '그 시각 작업 내용' 표기
+        if(hi){ hi.innerHTML = '📜 이력 열람 · ' + esc(_erHstInfo.label||'') +
+                ' <span class="er-hstmeta">(' + esc(_erHstInfo.time||'') + ' 저장 직전 내용)</span>'; hi.style.display='inline-flex'; }
+      },
+      error:function(xhr){
+        erSwal('error','이력 스냅샷 조회 실패 (HTTP '+((xhr&&xhr.status)||'?')+').\n서버 재빌드(Java·XML) 후 다시 시도해 주세요.', {title:'오류'});
+      }
+    });
+  }
+
   function loadSavedTexts(){
     jQuery.ajax({ url: ctx+'/main/loadEvalReport.do', type:'POST', dataType:'json',
       data:{ hospCd:hospCd, evalYm:curYm },
@@ -1959,6 +2035,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var map={};
         texts.forEach(function(t){ map[t.sectkey]=t.content; savedKeys[t.sectkey]=1; });
         editables().forEach(function(e){ var k=e.getAttribute('data-key'); if(map[k]!=null) e.innerHTML=map[k]; });
+        // ★ 목표등급·목표점수는 '차등제 마스터'가 우선 — 저장된 옛 목표 문구(override)를 현재 등록값으로 정정.
+        //   (등급을 수정하면 보고서에 그 수정값이 반영되어야 함. 이력 열람은 뒤에서 스냅샷 메타가 다시 덮어씀)
+        applyGoalDefault(res && res.goal);
+        syncGoalBadge();       // 본문 목표등급과 표지 뱃지 일치(혼재 방지)
         renderGoalSummary();   // 목표값 확정 후 부족점수/등급표 재계산
         _erSaved = !!mst;      // 저장 이력(MST 행) 존재 여부 → 신규/저장됨 구분
         _erDirty = false;      // 방금 로드 = 변경 없음
@@ -1969,6 +2049,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         editing=false; el('evalReport').classList.remove('er-editmode');
         if(isWinner){ var b=el('er-btnEdit'); b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }
         erPaginate();   // 문구 확정(자동/저장 override 반영) 후 A4 분할
+        applyHstSnapshot();   // 이력 열람이면 그 시점 문구로 덮어써 재현
       },
       error:function(){ setStatus('DRAFT'); }
     });
@@ -1987,9 +2068,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   function doSave(onOk, onErr){
+    // dirty = 사용자가 실제로 편집했는지(화면이 확실히 앎). 서버는 이 값이 true 일 때만 변경이력을 남긴다.
+    //   HTML 재직렬화 차이로 서버 문자열 비교가 어긋나 '안 바뀐 저장'이 이력을 만드는 문제를 원천 차단.
     var payload = { hospCd:hospCd, evalYm:curYm, title:(hospNm||'')+' 적정성평가 컨설팅 보고서',
       goalGrade:goalGradeVal(), goalScore:goalScoreVal(),
       structScore:Math.round(scores.struct*10)/10, careScore:Math.round(scores.care*10)/10, totalScore:Math.round(scores.total*10)/10,
+      dirty: !!_erDirty,
       texts:collectTexts() };
     jQuery.ajax({ url: ctx+'/main/saveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
       data: JSON.stringify(payload),
@@ -2040,23 +2124,26 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
   }
   function _erDoApprove(){
-    // 승인: 최신 문구 저장 완료 후 → 승인(수치 스냅샷 동결)
-    doSave(function(){
-      _erSaved = true; _erDirty = false;   // 승인 전 저장 완료 반영(이후 승인취소 시 '저장됨')
-      var snapshot = JSON.stringify({ scores:scores, indicators:indicators, evalYm:curYm });
-      jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
-        data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'N', snapshotJson:snapshot }),
-        success:function(res){
-          if(res && res.result==='OK'){
-            setStatus('APPROVED');
-            // 승인 완료 → 이제 완성본 PDF 첨부 유도([PDF 첨부] 누르면 바로 생성·첨부 흐름)
-            erConfirm('승인되었습니다. 이제 완성본 PDF를 첨부하세요.', function(){ erPickPdf(); },
-              { title:'승인 완료', icon:'success', yes:'PDF 첨부', no:'나중에' });
-          }
-          else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'});
-        },
-        error:function(){ erSwal('error','승인 처리 중 오류가 발생했습니다.', {title:'오류'}); }
-      });
+    // ★ 승인 시 '미저장 변경(_erDirty)이 있을 때만' 저장한다.
+    //   무조건 저장하면 내용이 그대로여도 서버가 이력 1건을 만들 수 있고(HTML 미세차이로 비교가 어긋남),
+    //   그 이력에는 '최종본'이 담겨 이력 최신 줄이 최종본으로 보이는 문제가 생긴다.
+    if(_erDirty){ doSave(function(){ _erSaved=true; _erDirty=false; _erApproveCall(); }); }
+    else { _erApproveCall(); }
+  }
+  function _erApproveCall(){
+    var snapshot = JSON.stringify({ scores:scores, indicators:indicators, evalYm:curYm });
+    jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
+      data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'N', snapshotJson:snapshot }),
+      success:function(res){
+        if(res && res.result==='OK'){
+          setStatus('APPROVED');
+          // 승인 완료 → 이제 완성본 PDF 첨부 유도([PDF 첨부] 누르면 바로 생성·첨부 흐름)
+          erConfirm('승인되었습니다. 이제 완성본 PDF를 첨부하세요.', function(){ erPickPdf(); },
+            { title:'승인 완료', icon:'success', yes:'PDF 첨부', no:'나중에' });
+        }
+        else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'});
+      },
+      error:function(){ erSwal('error','승인 처리 중 오류가 발생했습니다.', {title:'오류'}); }
     });
   }
 
@@ -2066,7 +2153,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function updatePdfUi(){
     var has = !!pdfPath;
     var dlUrl = has ? (ctx+'/sftp/download.do?filePath='+encodeURIComponent(pdfPath)) : '#';
-    el('er-pdfView').style.display = has ? '' : 'none';                    // 첨부돼 있으면: 보기 버튼
+    var vb = el('er-pdfView');
+    vb.style.display = has ? '' : 'none';                                   // 첨부돼 있으면: 보기 버튼
+    if(_erReadonly){                                                       // 이력 열람: 첨부·교체는 잠그고 '보기'만 허용
+      var hpdf = (_erHstInfo && _erHstInfo.pdf) ? _erHstInfo.pdf : '';
+      el('er-btnPdf').style.display='none';
+      var mr0=el('er-pdfModalReplace'); if(mr0) mr0.style.display='none';
+      vb.style.display = (hpdf || has) ? '' : 'none';                      // 이력 PDF가 있으면 현재 첨부가 없어도 보기 가능
+      vb.textContent = hpdf ? '👁 이력 PDF보기' : '👁 PDF보기';
+      vb.title = hpdf ? '이 이력 시점의 첨부 PDF를 봅니다' : '현재 첨부된 PDF를 봅니다';
+      return;
+    }
     // 첨부 버튼 — 위너넷만. PDF첨부는 '승인 후'에만 활성(공개본=PDF 일치 보장). 승인 전엔 비활성+안내.
     //   첨부 전이면 '📎 PDF첨부', 이미 있으면 '📎 PDF 다시첨부' 로 라벨 전환.
     var bp=el('er-btnPdf');

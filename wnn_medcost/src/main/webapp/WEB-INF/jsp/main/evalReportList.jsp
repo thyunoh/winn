@@ -59,6 +59,8 @@
   #evalReportList .erl-hstrow.erl-hstsel td{ background:#fff5d6; }                 /* 돌아왔을 때 선택했던 이력 강조 */
   #evalReportList .erl-hstrow.erl-hstsel:hover td{ background:#ffefc0; }
   #evalReportList .erl-selmark{ color:#c47f17; font-weight:800; font-size:11px; margin-left:6px; }
+  #evalReportList .erl-hstappr{ color:#2e7d32; }   /* ✔ 승인 */
+  #evalReportList .erl-hstcncl{ color:#c0392b; }   /* ↩ 승인취소 */
   /* 선택유지 — 돌아온(마지막 연) 행 강조 */
   #evalReportList table.dataTable tbody tr.erl-selrow > td{ background:#fff5d6 !important; }
   #evalReportList table.dataTable tbody tr.erl-selrow > td:first-child{ box-shadow:inset 3px 0 0 #e0a52a; }
@@ -278,39 +280,64 @@ jQuery(function(){
         data:{ hospCd:d.hospcd, evalYm:d.evalym },
         success:function(res){
           var list=(res&&res.result==='OK')?(res.list||[]):[];
+          // 표시 대상(문구·PDF)이 없으면 펼치지 않고 [+] 자체를 제거 — 빈 박스도 안 띄움
+          if(!hstShownCnt(list)){ tog.remove(); tr.removeClass('erl-open'); return; }
           row.child(hstHtml(list, d)).show(); tr.addClass('erl-open'); tog.text('−').attr('title','변경 이력 접기');
         },
         error:function(){ row.child('<div class="erl-hstbox erl-hstempty">이력 조회 중 오류가 발생했습니다.</div>').show(); tr.addClass('erl-open'); tog.text('−'); }
       });
     });
   }
+  // 목록에 표시할 이력 건수 — 승인/취소는 제외(문구·PDF만). 0이면 [+] 자체를 없앤다.
+  function hstShownCnt(list){
+    var c=0;
+    for(var i=0;i<(list?list.length:0);i++){ var t=String(list[i].hsttype||''); if(t!=='APPROVE' && t!=='CANCEL') c++; }
+    return c;
+  }
   // 변경이력 child row 내용 — 클릭하면 그 보고서를 '읽기전용'으로 연다(저장·승인·PDF첨부 불가)
   //   selKey(시각) 이 주어지면 그 이력 행을 강조(돌아왔을 때 어디 선택했는지 표시)
   function hstHtml(list, d, selKey){
     var nm = d.hospnm||HOSP_NM[d.hospcd]||d.hospcd;
-    var arg = "'"+esc(d.hospcd).replace(/'/g,"")+"','"+esc(nm).replace(/'/g,"")+"','"+esc(d.evalym)+"'";
-    if(!list || !list.length){
-      return '<div class="erl-hstbox erl-hstempty">변경 이력이 없습니다. '
-           + '<a href="#" class="erl-hstlink" onclick="erlOpenRO('+arg+');return false;">읽기전용으로 열기 ▸</a></div>';
-    }
+    if(!list || !list.length){ return '<div class="erl-hstbox erl-hstempty">변경 이력이 없습니다.</div>'; }
     // 같은 (작성자·시각) 이벤트는 한 행으로 묶고 유형(문구 저장·PDF 변경)을 합친다.
+    // 그룹핑 규칙 — '문구 저장 + PDF 변경'은 한 저장 동작이므로 같은 시각·작성자면 한 줄로 묶는다.
+    //   반면 '승인 / 승인취소'는 각각 독립 이벤트라 절대 묶지 않는다(승인취소 → 수정 → 재승인 순서 보존).
     var groups=[], idx={};
     for(var i=0;i<list.length;i++){
-      var h=list[i], key=(h.regdttm||'')+'|'+(h.reguser||''), isPdf=(h.hsttype==='PDF');
-      if(idx[key]==null){ idx[key]=groups.length; groups.push({ regdttm:h.regdttm, reguser:h.reguser, text:false, pdf:false }); }
-      var g=groups[idx[key]]; if(isPdf) g.pdf=true; else g.text=true;
+      var h=list[i], ty=String(h.hsttype||''), key;
+      // 이력 표시 대상 = '내용(문구) 변경' + 'PDF 변경' 만. 승인/취소는 DB에는 남기되 목록에서는 제외.
+      //   (다시 보이게 하려면 아래 continue 한 줄만 제거)
+      if(ty==='APPROVE' || ty==='CANCEL') continue;
+      if(ty==='APPROVE' || ty==='CANCEL') key = ty+'#'+(h.hstseq||i);                 // 항상 개별 행
+      else                                key = 'SAVE|'+(h.regdttm||'')+'|'+(h.reguser||'');
+      if(idx[key]==null){ idx[key]=groups.length; groups.push({ regdttm:h.regdttm, reguser:h.reguser, text:false, pdf:false, appr:false, cncl:false, seq:'', pdfpath:'' }); }
+      var g=groups[idx[key]];
+      if(ty==='PDF')          { g.pdf=true;  if(!g.pdfpath) g.pdfpath=h.pdfpath||''; }  // 그 시점 PDF 경로(보기용)
+      else if(ty==='APPROVE') { g.appr=true; }                                          // 승인 이벤트
+      else if(ty==='CANCEL')  { g.cncl=true; }                                          // 승인취소 이벤트
+      else                    { g.text=true; if(!g.seq) g.seq=h.hstseq||''; }           // 문구 스냅샷 SEQ(재현용)
     }
+    // 표시 대상(문구·PDF)이 하나도 없으면 빈 표를 만들지 않는다(승인/취소만 있는 경우 등)
+    if(!groups.length){ return '<div class="erl-hstbox erl-hstempty">변경 이력이 없습니다.</div>'; }
     var sj=function(v){ return String(v==null?'':v).replace(/[\\'"]/g,''); };   // onclick JS 문자열 안전
     var rows='';
     for(var j=0;j<groups.length;j++){
-      var gg=groups[j], parts=[];
-      if(gg.text) parts.push('✎ 문구 저장');
-      if(gg.pdf)  parts.push('📎 PDF 변경');
-      var label=parts.join(' · '), uu=decUser(gg.reguser)||'-';
+      var gg=groups[j], parts=[], plain=[];   // parts=표시용(HTML) / plain=보고서 칩 전달용(순수 텍스트)
+      if(gg.text){ parts.push('✎ 문구 저장');                          plain.push('✎ 문구 저장'); }
+      if(gg.pdf) { parts.push('📎 PDF 변경');                          plain.push('📎 PDF 변경'); }
+      if(gg.appr){ parts.push('<b class="erl-hstappr">✔ 승인</b>');     plain.push('✔ 승인'); }
+      if(gg.cncl){ parts.push('<b class="erl-hstcncl">↩ 승인취소</b>'); plain.push('↩ 승인취소'); }
+      var label=plain.join(' · '), uu=decUser(gg.reguser)||'-';
       var selCls = (selKey && String(gg.regdttm)===String(selKey)) ? ' erl-hstsel' : '';   // 선택했던 이력 강조
+      // 이력 = '그 저장 직전(이전) 내용' — 그 행이 보관한 스냅샷을 그대로 사용.
+      //   (최신 행을 눌러도 마지막 저장 '직전' 내용이 나온다. 최종본은 이력이 아니라 현재 보고서에 있음)
+      var snapSeq = gg.seq || '';
+      // PDF만 바뀐 이력(문구 스냅샷 없음) → '그 시각에 유효했던 문구'는 그 이후 첫 문구저장 이력에 보관돼 있다.
+      //   (HST 는 덮어쓰기 직전 스냅샷이므로, 더 최신 행의 스냅샷 = 이 시점의 문구). 없으면 현재 문구가 그 시점 문구.
+      if(!snapSeq){ for(var k=j-1;k>=0;k--){ if(groups[k].seq){ snapSeq=groups[k].seq; break; } } }
       // 행 클릭 → 그 이력 정보(유형·작성자·시각)까지 넘겨 읽기전용으로 연다
-      var oc="erlOpenRO('"+sj(d.hospcd)+"','"+sj(nm)+"','"+sj(d.evalym)+"','"+sj(label)+"','"+sj(uu)+"','"+sj(gg.regdttm)+"')";
-      rows += '<tr class="erl-hstrow'+selCls+'" onclick="'+oc+'"><td>'+(j+1)+'</td><td>'+label+(selCls?' <span class="erl-selmark">◀ 선택</span>':'')+'</td>'
+      var oc="erlOpenRO('"+sj(d.hospcd)+"','"+sj(nm)+"','"+sj(d.evalym)+"','"+sj(label)+"','"+sj(uu)+"','"+sj(gg.regdttm)+"','"+sj(snapSeq)+"','"+sj(gg.pdfpath)+"')";
+      rows += '<tr class="erl-hstrow'+selCls+'" onclick="'+oc+'"><td>'+(j+1)+'</td><td>'+parts.join(' · ')+(selCls?' <span class="erl-selmark">◀ 선택</span>':'')+'</td>'
             + '<td>'+esc(uu)+'</td><td>'+esc(gg.regdttm||'')+'</td></tr>';
     }
     return '<div class="erl-hstbox">'
@@ -320,9 +347,10 @@ jQuery(function(){
   }
   // 읽기전용 열기 — 선택한 이력 정보(라벨·작성자·시각)를 sessionStorage 로 넘겨 보고서 상단에 표시.
   //   + erlExpand: 돌아왔을 때 그 행을 다시 펼치고 선택 이력을 강조하기 위한 상태(원샷).
-  window.erlOpenRO = function(hospCd, hospNm, ym, label, user, time){
+  window.erlOpenRO = function(hospCd, hospNm, ym, label, user, time, hstSeq, hstPdf){
     try{
-      sessionStorage.setItem('erOpenHstInfo', JSON.stringify({ label:label||'', user:user||'', time:time||'' }));
+      // hstSeq = 그 시점 문구 스냅샷 / hstPdf = 그 시점 첨부 PDF 경로(있으면 이력 열람에서 그 PDF 보기)
+      sessionStorage.setItem('erOpenHstInfo', JSON.stringify({ label:label||'', user:user||'', time:time||'', seq:hstSeq||'', pdf:hstPdf||'' }));
       sessionStorage.setItem('erlExpand', JSON.stringify({ hospcd:hospCd, evalym:ym, selKey:time||'' }));
     }catch(e){}
     goReport(hospCd, hospNm, ym, false, true);
@@ -346,6 +374,7 @@ jQuery(function(){
     jQuery.ajax({ url:ctx+'/main/listEvalReportHst.do', type:'POST', dataType:'json', data:{ hospCd:d.hospcd, evalYm:d.evalym },
       success:function(res){
         var list=(res&&res.result==='OK')?(res.list||[]):[];
+        if(!hstShownCnt(list)){ tog.remove(); return; }        // 표시할 이력 없으면 [+] 제거
         target.child(hstHtml(list, d, st.selKey)).show(); tr.addClass('erl-open'); tog.text('−').attr('title','변경 이력 접기');
         var sel = tr.next().find('.erl-hstsel')[0]; if(sel && sel.scrollIntoView){ try{ sel.scrollIntoView({block:'center'}); }catch(e){} }
       }
