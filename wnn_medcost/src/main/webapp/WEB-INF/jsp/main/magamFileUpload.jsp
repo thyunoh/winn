@@ -4358,13 +4358,13 @@ $('#verifyModal').on('hidden.bs.modal', function() {
         }
         dirs.forEach(function(d){
             // [2026-07-19] 폴더 행: 전체선택 체크는 원위치(맨 앞), 라벨은 우측 끝(서식버전+상태 자리, 고정) — 스크롤과 무관하게 항상 보임
-            html+='<tr class="samPickDirRow" data-dir="'+esc(d)+'" style="background:#eef7f4; cursor:pointer;">'
+            html+='<tr class="samPickDirRow" data-dir="'+esc(d)+'" style="background:#eef7f4;">'
                 +'<td class="text-center"><input type="checkbox" class="samPickDir" data-dir="'+esc(d)+'"></td>'
                 +'<td colspan="9"></td>'
                 +'<td colspan="2" class="spkDirSticky" style="font-weight:600;color:#1f6f5c;">'
-                +  '<div style="display:flex; align-items:center; gap:6px;">'
+                +  '<div class="samPickDirToggle" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="펼치기/접기">'
                 +    '<span class="samPickCaret" style="flex:0 0 14px;">▼</span>'
-                +    '<span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="'+esc(prettyDir(d))+' ('+groups[d].length+')">📁 '+esc(prettyDir(d))+' ('+groups[d].length+')</span>'
+                +    '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📁 '+esc(prettyDir(d))+' ('+groups[d].length+')</span>'
                 +  '</div></td></tr>';
             // 폴더 내부를 청구세트(M/C/K/D/H 다중파일)와 단건(GHP/CAR 등)으로 나눔
             var sets={}, order=[];
@@ -4410,12 +4410,13 @@ $('#verifyModal').on('hidden.bs.modal', function() {
             }
             removeFilesAt(idxs);
         }); });
-        // 폴더 행 클릭 → 접기/펼치기 (펼칠 때 세트 멤버는 접힌 상태 유지)
-        tb.querySelectorAll('tr.samPickDirRow').forEach(function(row){
-            row.addEventListener('click', function(ev){
-                if(ev.target && ev.target.classList && ev.target.classList.contains('samPickDir')) return;
+        // 접기/펼치기 → '📁 (수동선택)' 라벨(.samPickDirToggle)을 눌렀을 때만. 행의 다른 영역(빈칸·체크박스)은 무반응.
+        tb.querySelectorAll('.samPickDirToggle').forEach(function(tog){
+            tog.addEventListener('click', function(ev){
+                ev.stopPropagation();
+                var row=tog.closest('tr'); if(!row) return;
                 var dir=row.getAttribute('data-dir');
-                var caret=row.querySelector('.samPickCaret');
+                var caret=tog.querySelector('.samPickCaret');
                 var expanding = caret && caret.textContent==='▶';
                 tb.querySelectorAll('tr.samPickFileRow').forEach(function(fr){
                     if(fr.getAttribute('data-dir')!==dir) return;

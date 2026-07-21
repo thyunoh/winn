@@ -33,16 +33,24 @@
   #evalReport .er-brand{ font-weight:800; font-size:13px; color:var(--er-ink); display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #evalReport .er-brand .er-dot{ width:9px; height:9px; border-radius:50%; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); }
   #evalReport .er-role{ font-size:11px; font-weight:700; color:#fff; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); padding:3px 7px; border-radius:20px; }
-  #evalReport select.er-sel{ font-family:inherit; font-size:12.5px; padding:5px 4px; border:1px solid var(--er-line); border-radius:7px; background:#fff; color:var(--er-ink); font-weight:700; }
+  #evalReport select.er-sel{ font-family:inherit; font-size:14.5px; padding:7px 7px; border:1px solid var(--er-line); border-radius:7px; background:#fff; color:var(--er-ink); font-weight:800; }
   #evalReport select.er-sel:hover{ border-color:var(--er-navy2); }
   #evalReport .er-hospnm{ font-size:13px; font-weight:700; color:var(--er-navy); }
   #evalReport .er-sp{ flex:1 1 auto; }
-  #evalReport .er-status{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 9px; border-radius:20px; border:1px solid transparent; white-space:nowrap; }
-  #evalReport .er-status .er-sdot{ width:8px; height:8px; border-radius:50%; }
+  #evalReport .er-status{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:800; padding:5px 12px; border-radius:7px; border:1px solid transparent; white-space:nowrap; animation:erBadgeBlink 1.3s ease-in-out infinite; }
+  #evalReport .er-status .er-sdot{ width:9px; height:9px; border-radius:50%; }
+  @keyframes erBadgeBlink{ 0%,100%{ opacity:1; } 50%{ opacity:.75; } }
   #evalReport .er-status.er-draft{ background:var(--er-ambertint); color:var(--er-amber); border-color:#ead9b0; }
   #evalReport .er-status.er-draft .er-sdot{ background:var(--er-amber); }
-  #evalReport .er-status.er-approved{ background:var(--er-goodtint); color:var(--er-good); border-color:#bfe0c4; }
-  #evalReport .er-status.er-approved .er-sdot{ background:var(--er-good); }
+  #evalReport .er-status.er-approved{ background:#dff3e4; color:#1b6e2f; border-color:#93cfa2; font-weight:900; }
+  #evalReport .er-status.er-approved .er-sdot{ background:#1e8a3b; box-shadow:0 0 0 2px #cbebd4; }
+  /* 신규(미저장) = 회색 / 저장됨 = 파랑 / 수정중(미저장) = 빨강(저장 필요) */
+  #evalReport .er-status.er-new{ background:#eef1f5; color:#7a8698; border-color:#dde3ea; }
+  #evalReport .er-status.er-new .er-sdot{ background:#9aa4b2; }
+  #evalReport .er-status.er-stored{ background:var(--er-navytint); color:var(--er-navy2); border-color:#cfe0f2; }
+  #evalReport .er-status.er-stored .er-sdot{ background:var(--er-navy2); }
+  #evalReport .er-status.er-dirty{ background:var(--er-badtint); color:var(--er-bad); border-color:#f0b6ae; }
+  #evalReport .er-status.er-dirty .er-sdot{ background:var(--er-bad); }
   /* 버튼 — 기본=흰 아웃라인 / 주요=네이비 솔리드 */
   #evalReport .er-btn{ font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; padding:7px 8px; border-radius:6px;
     border:1px solid var(--er-line); background:#fff; color:var(--er-soft); transition:.15s; display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
@@ -53,6 +61,20 @@
   #evalReport .er-btn.er-good:hover{ background:#276b2a; color:#fff; }
   #evalReport .er-btn.er-on{ background:var(--er-ambertint); color:var(--er-amber); border-color:#e6cf9e; }
   #evalReport .er-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  /* 저장 진행/완료 구분 — 저장 중(호박색·점멸), 저장완료(초록·불투명) */
+  #evalReport .er-btn.er-saving{ background:var(--er-ambertint); color:var(--er-amber); border-color:#e6cf9e; opacity:1 !important; animation:erSavePulse .9s ease-in-out infinite; }
+  #evalReport .er-btn.er-saved{ background:var(--er-good); color:#fff; border-color:transparent; opacity:1 !important; }
+  @keyframes erSavePulse{ 0%,100%{ opacity:1; } 50%{ opacity:.5; } }
+  /* SweetAlert2 다이얼로그 — 앱 통일(assessment '재생성 확인')용 컴팩트 스타일. body 직속이라 스코프 없음. */
+  .swal2-popup.er-swal{ padding:10px 16px !important; border-radius:6px; }
+  .swal2-popup.er-swal .swal2-title{ font-size:1.05em !important; padding:3px 0 1px !important; color:#3a4250; }
+  .swal2-popup.er-swal .swal2-html-container{ font-size:.92em !important; margin:4px 0 0 !important; color:#525a68; line-height:1.5; }
+  .swal2-popup.er-swal .swal2-icon{ width:44px; height:44px; margin:4px auto 2px; }
+  .swal2-popup.er-swal .swal2-icon .swal2-icon-content{ font-size:1.5em; }
+  .swal2-popup.er-swal .swal2-actions{ margin-top:10px; gap:8px; }
+  .swal2-popup.er-swal .swal2-styled{ font-size:.9em !important; padding:7px 16px !important; border-radius:5px; box-shadow:none !important; }
+  /* PDF 미리보기 모달(.er-modal z-index:1300)·토스트(2000) 위로 — 확인창이 모달 뒤로 깔리지 않게 */
+  .swal2-container.er-swal-top{ z-index:3000 !important; }
   #evalReport .er-btn.er-exit{ background:#fdecea; color:var(--er-bad); border-color:#f0b6ae; padding:8px 12px; font-size:13px; font-weight:800; }
   #evalReport .er-btn.er-exit:hover{ background:var(--er-bad); color:#fff; border-color:var(--er-bad); }
   #evalReport .er-btn.er-search{ background:var(--er-navy2); color:#fff; border-color:transparent; }
@@ -124,6 +146,8 @@
   /* 편집 모드: 연한 배경 + 어두운 글자 강제(color) — 목표 뱃지 등 흰 글자 영역이 안 보이던 문제 방지 */
   #evalReport.er-editmode .er-editable{ box-shadow:inset 0 0 0 1px #bcd0ea; background:#f7fbff; color:var(--er-ink); cursor:text; }
   #evalReport.er-editmode .er-editable:focus{ box-shadow:inset 0 0 0 2px var(--er-navy2); background:#fff; color:var(--er-ink); }
+  /* PDF 캡처 중: 편집영역 파란 하이라이트 강제 제거(PDF에 파란 배경 안 찍히게) */
+  #evalReport.er-pdfcap .er-editable, #evalReport.er-pdfcap .er-editable:focus{ box-shadow:none !important; background:transparent !important; }
 
   /* ===== 표지(1페이지) — 원본 PDF 맨앞장 형식: 가운데 정렬 한 장 ===== */
   #evalReport .er-page.er-cover{ min-height:1120px; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -246,14 +270,17 @@
   #evalReport .er-after .er-from{ font-size:18px; font-weight:700; color:var(--er-soft); }
   #evalReport .er-docfoot{ font-size:11px; color:var(--er-soft); line-height:1.7; margin-top:24px; padding-top:14px; border-top:1px solid var(--er-line); }
 
-  #evalReport .er-toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:#243247; color:#fff;
-    padding:12px 22px; border-radius:10px; font-size:13px; font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.28); opacity:0; pointer-events:none; transition:.25s; z-index:90; }
-  #evalReport .er-toast.er-show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  /* 토스트 — 화면 정가운데(하단 알림바에 안 가리게). z-index 최상위 */
+  #evalReport .er-toast{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(.96); background:#243247; color:#fff;
+    padding:15px 28px; border-radius:12px; font-size:14.5px; font-weight:700; box-shadow:0 12px 40px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:.2s; z-index:2000; text-align:center; max-width:90vw; }
+  #evalReport .er-toast.er-show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
 
   /* ===== 첨부 PDF 미리보기 모달 ===== */
   #evalReport .er-modal{ position:fixed; inset:0; z-index:1300; background:rgba(16,22,29,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
-  #evalReport .er-modal-box{ width:min(1000px,96vw); height:92vh; background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
-  #evalReport .er-modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 16px; background:var(--er-navytint); border-bottom:1px solid var(--er-line); font-weight:800; color:var(--er-navy); }
+  #evalReport .er-modal-box{ width:min(1320px,98vw); height:96vh; background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
+  #evalReport .er-modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 18px; background:var(--er-navytint); border-bottom:1px solid var(--er-line); font-weight:800; color:var(--er-navy); }
+  /* 헤더 파일명 — 크게. 길면 말줄임(버튼 안 밀리게 flex 축소 허용) */
+  #evalReport #er-pdfModalTitle{ font-size:16.5px; font-weight:800; flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #evalReport .er-modal-actions{ display:flex; gap:8px; align-items:center; }
   #evalReport .er-modal-body{ flex:1 1 auto; position:relative; min-height:0; background:#525659; }
   #evalReport .er-modal-frame{ position:absolute; inset:0; width:100%; height:100%; border:none; }
@@ -317,10 +344,10 @@
     <span class="er-hospnm" id="er-hospNm"></span>
     <span class="er-divider"></span>
     <!-- 그룹2: 평가년월 조회 -->
-    <span class="er-searchbox">
-      <select id="er-year" class="er-sel"></select>
-      <select id="er-month" class="er-sel"></select>
-      <button id="er-btnSearch" class="er-btn er-search" onclick="erLoad()">🔍 조회</button>
+    <!-- 작업년월 — 들어올 때 선택한 월로 고정 표시(수정 불가). 조회 버튼은 삭제(진입 시 자동 조회). -->
+    <span class="er-searchbox" title="작업 년월(들어온 월 고정)">
+      <select id="er-year" class="er-sel" disabled></select>
+      <select id="er-month" class="er-sel" disabled></select>
     </span>
     <!-- (월보고 목록 버튼 제거 — 좌측 사이드바 '적정성평가 월간보고서' 메뉴로 대체) -->
     <!-- 도움말 — 클릭하면 사용법 안내 배너를 열고/닫음(토글). 마우스오버 시 요약 툴팁도 표시 -->
@@ -328,17 +355,17 @@
 
     <span class="er-sp"></span>
 
-    <!-- 그룹3: 상태 + 진행순서대로 [①편집 → ②저장 → ③PDF첨부 → ④승인]. 승인이 마지막(동결·공개). -->
+    <!-- 그룹3: 상태 + 진행순서대로 [①편집 → ②저장 → ③승인 → ④PDF첨부]. PDF첨부는 승인 후(공개본=PDF 일치). -->
     <span id="er-statusBadge" class="er-status er-draft"><span class="er-sdot"></span><span id="er-statusText">작성중</span></span>
     <span id="er-editTools" class="er-group">
       <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요">✏️ 편집</button>
       <button id="er-btnSave" class="er-btn er-primary" onclick="erSave()" title="② 수정한 문구·점수를 저장합니다(DB)">💾 저장</button>
+      <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()" title="③ 승인 — 그 시점 수치가 동결되고 거래처에 공개됩니다. 승인 후 ④ PDF첨부가 가능합니다.">✔ 승인</button>
       <span class="er-divider"></span>
-      <!-- ③ 첨부 PDF: 작성중=[📎 PDF첨부](승인 앞) / 승인후=[👁 PDF보기](승인취소 뒤). 같은 슬롯 아님 — 첨부는 승인 전, 보기는 승인 후 위치. -->
+      <!-- ④ 첨부 PDF: 승인 후에만 활성. 첨부 전=[📎 PDF첨부] / 첨부 후 보기=[👁 PDF보기]. -->
       <input type="file" id="er-pdfFile" accept="application/pdf,.pdf" style="display:none;">
-      <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()" title="③ 완성본 PDF 파일을 첨부(파일서버 업로드) — 아래한글이나 🖨️인쇄→PDF로 만든 PDF. 파일 고르는 순간 저장되며, 거래처엔 이 파일이 우선 제공됩니다">📎 PDF첨부</button>
-      <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()" title="④ 마지막 단계 — 승인하면 그 시점 수치가 동결되고 거래처에 공개됩니다(승인 후 편집·첨부 잠금)">✔ 승인</button>
-      <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;" title="첨부된 완성본 PDF 보기(교체는 모달 안 🔍검색 · 승인상태면 승인취소 후)">👁 PDF보기</a>
+      <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()" title="④ 승인 후 — 완성본 PDF를 첨부(화면 생성 또는 아래한글 완성본 업로드). 거래처엔 이 PDF가 우선 제공됩니다">📎 PDF첨부</button>
+      <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;" title="첨부된 완성본 PDF 보기(교체는 모달 안 🔍검색)">👁 PDF보기</a>
     </span>
     <!-- 서식 툴(편집 모드 전용) — 답변 에디터(noticd summernote) 구성 참조: B·I·U·지우개 + 글꼴 + 크기 + 색상 A▾.
          문구를 드래그로 선택한 뒤 클릭(버튼 mousedown 취소·select 는 선택영역 저장/복원으로 선택 유지) -->
@@ -398,11 +425,12 @@
     <button class="er-btn" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:44px; padding:8px 6px;">100%</button>
     <button class="er-btn" style="padding:8px 7px;" onclick="erZoom(1)" title="글자 크게">가＋</button>
     <span class="er-divider"></span>
-    <button class="er-btn" onclick="erPreview()">👁 미리보기</button>
+    <!-- 미리보기 하나로 통일 — 미리보기 진입 시 상단바에 '🖨️ 인쇄' 가 있어 툴바 인쇄 버튼은 중복이라 제거(2026-07-20). -->
+    <button class="er-btn" onclick="erPreview()" title="인쇄 형태(A4)로 화면에서 확인 — 미리보기 상단의 🖨️ 인쇄(PDF저장)로 출력/PDF저장">👁 미리보기</button>
     <!-- 📄 한글저장(.doc 내보내기) — 사용자 협의 후 결정하기로 하여 버튼 제외(2026-07-20). 기능 erExportDoc 는 유지 → 협의 후 아래 버튼만 다시 살리면 됨:
          <button class="er-btn" onclick="erExportDoc()" title="아래한글·워드에서 열 수 있는 문서(.doc)로 저장합니다(화면 이동 없음)">📄 한글저장</button> -->
-    <button class="er-btn" onclick="erPrint()" title="인쇄 또는 'PDF로 저장' — 인쇄창에서 'PDF로 저장'을 고르면 이 제목 형식(병원명 적정성평가 보고서(년.월) 목표N등급)으로 저장됩니다">🖨️ 인쇄</button>
-    <!-- 그룹4: 종료 — 인쇄 바로 옆(구분선만), 조금 크게 -->
+    <!-- (툴바 🖨️ 인쇄 버튼 제거 — 미리보기 상단바의 인쇄로 통일) -->
+    <!-- 그룹4: 종료 -->
     <span class="er-divider"></span>
     <button class="er-btn er-exit" onclick="erExit()">✕ 종료</button>
   </div>
@@ -414,7 +442,7 @@
   <div class="er-prevbar">
     <span class="er-prevbar-t">📄 인쇄 미리보기 <span style="font-weight:600; opacity:.8;">— 인쇄하면 이 형태로 출력됩니다</span></span>
     <span style="flex:1 1 auto;"></span>
-    <button class="er-btn" onclick="erPrint()">🖨️ 인쇄(PDF저장)</button>
+    <button class="er-btn" onclick="erPrint()" style="padding:9px 24px; font-size:15px; font-weight:800; background:#fff; color:#1e3c72; border-color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.25);">🖨️ 인쇄</button>
     <button class="er-btn er-exit" onclick="erPreviewExit()">✕ 미리보기 닫기</button>
   </div>
 
@@ -554,7 +582,11 @@
       <div class="er-modal-head">
         <span id="er-pdfModalTitle">📄 첨부 PDF 미리보기</span>
         <span class="er-modal-actions">
-          <button id="er-pdfModalReplace" class="er-btn" onclick="erPickPdf()" title="다른 PDF 파일을 선택하면 바로 이 화면에서 열립니다">🔍 검색</button>
+          <!-- 생성-미리보기 모드(저장 전): 파일서버 저장 + 다른 PDF 선택 -->
+          <button id="er-pdfGenSaveBtn" class="er-btn er-good" style="display:none;" onclick="erPdfGenUpload()" title="이 PDF를 파일서버에 저장·첨부합니다">📄 파일서버 저장</button>
+          <button id="er-pdfPickBtn" class="er-btn" style="display:none;" onclick="document.getElementById('er-pdfFile').click()" title="아래한글 등으로 만든 PDF 파일을 직접 선택">📁 파일 선택</button>
+          <!-- 열람 모드(첨부된 PDF 보기): 교체 검색 -->
+          <button id="er-pdfModalReplace" class="er-btn" onclick="erPickPdf()" title="다른 PDF로 다시 생성/선택합니다">🔍 검색</button>
           <button class="er-btn" onclick="erPdfClose()">✕ 닫기</button>
         </span>
       </div>
@@ -758,6 +790,41 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   function toast(m){ var t=el('er-toast'); t.textContent=m; t.classList.add('er-show'); clearTimeout(t._tm); t._tm=setTimeout(function(){t.classList.remove('er-show');},2600); }
+  // 버튼 실행 결과/오류/검증 알림 — SweetAlert2(전역 로드) 아이콘 다이얼로그. 라이브러리 없으면 toast 폴백.
+  //   icon: 'success' | 'error' | 'warning' | 'info' / opt.title, opt.timer(자동닫힘 ms), opt.done(닫힌 뒤 콜백)
+  function erSwal(icon, msg, opt){
+    opt = opt || {};
+    if(typeof Swal === 'undefined'){ toast(msg); if(opt.done) opt.done(); return; }
+    var col = (icon==='error') ? '#e0416b' : (icon==='success') ? '#2e9e5b' : (icon==='warning') ? '#e0a52a' : '#2a7665';
+    var c = { icon:icon||'info', text:msg, heightAuto:false, width:380, customClass:{ popup:'er-swal', container:'er-swal-top' },
+              confirmButtonText:'확인', confirmButtonColor:col, buttonsStyling:true, allowEnterKey:true };
+    if(opt.title) c.title = opt.title;
+    if(opt.html){ c.html = opt.html; delete c.text; }
+    if(opt.timer){ c.timer = opt.timer; c.timerProgressBar = true; c.showConfirmButton = false; }
+    var p = Swal.fire(c);
+    if(opt.done) p.then(function(){ opt.done(); });
+  }
+  // 버튼 실행 '선택(확인/취소)' 다이얼로그 — [확인] 눌렀을 때만 onYes 실행. SweetAlert2 폴백은 window.confirm.
+  //   opt: title, icon('question'|'warning'), yes/no(버튼문구), color(확인버튼색)
+  function erConfirm(msg, onYes, opt){
+    opt = opt || {};
+    if(typeof Swal === 'undefined'){ if(window.confirm(msg)){ if(onYes) onYes(); } return; }
+    Swal.fire({
+      icon: opt.icon || 'question',
+      title: opt.title || '확인',
+      text: msg,
+      heightAuto: false,
+      width: 380,
+      customClass: { popup:'er-swal', container:'er-swal-top' },
+      showCancelButton: true,
+      reverseButtons: true,                 // [취소][확인] 순 — 확인이 오른쪽
+      focusCancel: !!opt.focusCancel,
+      confirmButtonText: opt.yes || '확인',
+      cancelButtonText: opt.no || '취소',
+      confirmButtonColor: opt.color || '#2a7665',
+      cancelButtonColor: '#9aa4b2'
+    }).then(function(r){ if(r && r.isConfirmed && onYes) onYes(); });
+  }
 
   // 화면에 보이는 오류 표시(콘솔 못 볼 때 진단용)
   function showErr(msg){
@@ -880,12 +947,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   // 도움말 — 버튼에 마우스를 올리면 뜨는 '떠 있는' 팝오버(position:fixed). 아래 콘텐츠 영역을 차지하지 않음.
   function erHelpContent(){
-    return '<b>진행 순서</b> <span style="font-weight:600;">(①→②→③→④ · 승인이 마지막)</span><br>'
+    return '<b>진행 순서</b> <span style="font-weight:600;">(①→②→③→④ · PDF첨부가 마지막)</span><br>'
       +'① <b>조회</b> — 평가년월을 고르면 표·점수가 자동으로 채워집니다.<br>'
       +'② <b>✏️ 편집 → 💾 저장</b> — 문구를 고친 뒤 저장(요약 점수·문구가 DB에 저장).<br>'
-      +'③ <b>📎 PDF첨부</b> — 완성본 <b>PDF 파일</b>을 업로드(아래한글 또는 🖨️ 인쇄→PDF로 만든 파일). 거래처에는 이 PDF가 우선 제공됩니다.<br>'
-      +'④ <b>✔ 승인</b> — <b>마지막 단계</b>. 그 시점 수치가 동결되고 거래처에 공개됩니다.<br>'
-      +'<span style="color:var(--er-soft);">※ 승인하면 편집·첨부가 잠깁니다. 고치려면 <b>↩ 승인취소</b> 후 다시 진행하세요.</span>';
+      +'③ <b>✔ 승인</b> — 그 시점 수치가 동결되고 거래처에 공개됩니다(내용 확정).<br>'
+      +'④ <b>📎 PDF첨부</b> — <b>승인 후</b> 확정본을 PDF로 첨부(화면 생성 또는 아래한글 완성본 업로드). 거래처에는 이 PDF가 우선 제공됩니다.<br>'
+      +'<span style="color:var(--er-soft);">※ PDF첨부는 <b>승인해야</b> 가능합니다(공개본과 PDF 일치). 내용을 고치려면 <b>↩ 승인취소</b> 후 다시 진행하세요.</span>';
   }
   var _erHelpTm;
   window.erHelpShow = function(){
@@ -1034,10 +1101,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
   }
   document.addEventListener('input', function(ev){
-    var t = ev.target && ev.target.closest ? ev.target.closest('[data-ckey]') : null;
+    // 편집 대상은 두 형태 — 복제본([data-ckey], A4 미리보기) 또는 원본([data-key], 본문). 둘 다 감지.
+    var t = ev.target && ev.target.closest ? ev.target.closest('[data-ckey],.er-editable[data-key]') : null;
     if(!t) return;
-    var src = document.querySelector('#evalReport .er-editable[data-key="'+t.getAttribute('data-ckey')+'"]');
-    if(src) src.innerHTML = t.innerHTML;
+    var ck = t.getAttribute('data-ckey');
+    if(ck!=null){   // 복제본 편집 → 원본에 실시간 반영
+      var src = document.querySelector('#evalReport .er-editable[data-key="'+ck+'"]');
+      if(src) src.innerHTML = t.innerHTML;
+    }
+    markDirty();   // 원본·복제본 어느 쪽을 고쳐도 → '수정중 · 미저장' 표시
   });
 
   // 첨부 PDF 미리보기 — download.do 가 강제 다운로드(attachment)라 iframe 직접 불가 →
@@ -1052,6 +1124,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var name = pdfPath.split('/').pop();
     var dlUrl = ctx+'/sftp/download.do?filePath='+encodeURIComponent(pdfPath)+'&_ts='+Date.now();
     el('er-pdfModalTitle').textContent = '📄 ' + (name || '첨부 PDF');
+    // 열람 모드 버튼: 저장/파일선택 숨김, 교체검색(위너넷) 노출
+    el('er-pdfGenSaveBtn').style.display='none'; el('er-pdfPickBtn').style.display='none';
+    el('er-pdfModalReplace').style.display = isWinner ? '' : 'none';
     // iframe 새로 교체 — 같은 노드 재사용 시 두 번째 열기부터 간헐적으로 렌더 안 되는 문제 방지
     var old = el('er-pdfFrame'), nf = old.cloneNode(false);
     nf.removeAttribute('src');
@@ -1078,7 +1153,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-pdfModal').style.display = 'none';
   };
   // 오버레이(모달 바깥) 클릭 시 닫기
-  el('er-pdfModal').addEventListener('click', function(e){ if(e.target === this) erPdfClose(); });
+  // (바깥 클릭으로는 닫지 않음 — 실수로 닫히는 것 방지. 닫기는 ✕ 닫기 버튼 또는 ESC 로만)
 
   document.addEventListener('keydown', function(e){   // ESC — 미리보기/PDF모달 닫기
     if(e.key!=='Escape') return;
@@ -1108,14 +1183,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var html=''; for(var yy=maxY; yy>=minY; yy--){ html+='<option value="'+yy+'">'+yy+'</option>'; } ys.innerHTML=html;
       var mh=''; for(var mo=1;mo<=12;mo++){ var mm=('0'+mo).slice(-2); mh+='<option value="'+mm+'">'+mm+'</option>'; } ms.innerHTML=mh;
       ys.value=def.y; ms.value=def.m;
+      ys.disabled = true; ms.disabled = true;   // 작업년월은 들어온 월로 고정(수정 불가) — 조회 버튼 없음, 진입 시 자동 조회
       el('er-hospNm').textContent = hospNm ? ('['+hospNm+']') : '';
       if(hospNm) el('er-coverHosp').textContent = hospNm;
-      if(!isWinner){                          // 거래처: 편집도구(편집~PDF) 숨김 + 평가년월 수정 잠금(열람·인쇄만)
+      if(!isWinner){                          // 거래처: 편집도구(편집~PDF) 숨김(열람·인쇄만)
         el('er-editTools').style.display='none';
         el('er-roleTag').textContent='거래처';
-        // 년월 변경 불가 — 셀렉트 비활성 + 조회 버튼 숨김(넘어온 해당 월만 열람)
-        ys.disabled = true; ms.disabled = true;
-        var bs=el('er-btnSearch'); if(bs) bs.style.display='none';
       }
       erFixToolbar();                         // 툴바 위치 확정
       setTimeout(erFixToolbar, 200);          // 앱 레이아웃(헤더/사이드바) 렌더 후 재보정
@@ -1124,23 +1197,32 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   function editables(){ return document.querySelectorAll('#evalReport .er-editable[data-key]'); }
 
+  // 문서 상태 = 승인됨 / 수정중·미저장(dirty) / 저장됨(DB저장 후 변경없음) / 신규·미저장(저장이력 없음)
+  var _erSaved=false, _erDirty=false;
+  function updateBadge(){
+    var b=el('er-statusBadge'), t=el('er-statusText'); if(!b||!t) return;
+    if(approved){ b.className='er-status er-approved'; t.textContent='승인됨 · 거래처 공개'; return; }
+    if(_erDirty){ b.className='er-status er-dirty';  t.textContent='수정중 · 미저장'; return; }
+    if(_erSaved){ b.className='er-status er-stored'; t.textContent='저장됨'; return; }
+    b.className='er-status er-new'; t.textContent='신규 · 미저장';
+  }
+  function markDirty(){ if(!approved && !_erDirty){ _erDirty=true; updateBadge(); } }
   function setStatus(st){
     approved = (st==='APPROVED');
-    var b=el('er-statusBadge'), t=el('er-statusText');
-    if(approved){ b.className='er-status er-approved'; t.textContent='승인됨 · 거래처 공개'; }
-    else { b.className='er-status er-draft'; t.textContent='작성중'; }
+    updateBadge();
     if(isWinner){
       el('er-btnApprove').textContent = approved ? '↩ 승인취소' : '✔ 승인';
       el('er-btnApprove').title = approved
-        ? '승인을 취소하면 다시 편집·PDF첨부가 가능합니다(거래처 공개 해제)'
-        : '④ 마지막 단계 — 승인하면 그 시점 수치가 동결되고 거래처에 공개됩니다(이후 편집·첨부 잠금)';
+        ? '승인을 취소하면 다시 편집이 가능합니다(거래처 공개·PDF첨부 해제)'
+        : '③ 승인 — 그 시점 수치가 동결되고 거래처에 공개됩니다. 승인 후 ④ PDF첨부가 가능합니다.';
       el('er-btnEdit').disabled = approved;
       if(approved && editing) erToggleEdit();
     }
+    try{ updatePdfUi(); }catch(e){}   // 승인/승인취소에 따라 PDF첨부(재생성) 버튼 노출 갱신
   }
 
   window.erToggleEdit = function(){
-    if(approved){ toast('승인된 보고서는 편집할 수 없습니다. 승인 취소 후 편집하세요.'); return; }
+    if(approved){ erSwal('warning','승인된 보고서는 편집할 수 없습니다. 승인 취소 후 편집하세요.'); return; }
     editing=!editing;
     el('evalReport').classList.toggle('er-editmode', editing);
     erPaginate();   // A4 분할 유지한 채 재분할 — 편집 종료 시 고친 문구 길이에 맞게 페이지 재배치
@@ -1220,7 +1302,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // ===== 조회: 지표 자료 + 5점구간 기준(적정성 화면과 동일 소스) 동시 로드 → 렌더 → 저장문구 로드 =====
   window.erLoad = function(){
     curYm = el('er-year').value + el('er-month').value;
-    if(!hospCd){ toast('로그인 병원 정보가 없습니다.'); return; }
+    if(!hospCd){ erSwal('warning','로그인 병원 정보가 없습니다.'); return; }
     var aIndi = jQuery.ajax({ url: ctx+'/main/select_Eval_Indi.do',     type:'POST', dataType:'json', data:{ hosp_cd:hospCd, jobyymm:curYm } });
     var aCrit = jQuery.ajax({ url: ctx+'/main/select_ScoreCriteria.do', type:'POST', dataType:'json', data:{ jobyymm:curYm } });
     // 전월 지표(총평 P1 전월대비) — 7월은 새 평가기간 시작이라 생략. 조회 실패는 null 로 흡수(본 조회에 영향 없음)
@@ -1251,7 +1333,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       _dashInd = (r5 && r5[0]) ? r5[0] : null;   // [C1·C2] 당월/누적/월별 점수
       renderAll();
       loadSavedTexts();
-    }).fail(function(){ toast('지표 자료 조회 중 오류가 발생했습니다.'); });
+    }).fail(function(){ erSwal('error','지표 자료 조회 중 오류가 발생했습니다.', {title:'오류'}); });
   };
 
   function computeScores(){
@@ -1854,6 +1936,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         texts.forEach(function(t){ map[t.sectkey]=t.content; savedKeys[t.sectkey]=1; });
         editables().forEach(function(e){ var k=e.getAttribute('data-key'); if(map[k]!=null) e.innerHTML=map[k]; });
         renderGoalSummary();   // 목표값 확정 후 부족점수/등급표 재계산
+        _erSaved = !!mst;      // 저장 이력(MST 행) 존재 여부 → 신규/저장됨 구분
+        _erDirty = false;      // 방금 로드 = 변경 없음
         setStatus(mst && mst.status ? mst.status : 'DRAFT');
         pdfPath = (mst && mst.pdfpath) ? String(mst.pdfpath) : '';
         updatePdfUi();
@@ -1878,47 +1962,72 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return arr;
   }
 
-  function doSave(onOk){
+  function doSave(onOk, onErr){
     var payload = { hospCd:hospCd, evalYm:curYm, title:(hospNm||'')+' 적정성평가 컨설팅 보고서',
       goalGrade:goalGradeVal(), goalScore:goalScoreVal(),
       structScore:Math.round(scores.struct*10)/10, careScore:Math.round(scores.care*10)/10, totalScore:Math.round(scores.total*10)/10,
       texts:collectTexts() };
     jQuery.ajax({ url: ctx+'/main/saveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
       data: JSON.stringify(payload),
-      success:function(res){ if(res && res.result==='OK'){ if(onOk) onOk(); } else toast('저장 실패: '+((res&&res.message)||'')); },
-      error:function(){ toast('저장 중 오류가 발생했습니다.'); }
+      success:function(res){ if(res && res.result==='OK'){ if(onOk) onOk(); } else { erSwal('error','저장 실패: '+((res&&res.message)||''), {title:'오류'}); if(onErr) onErr(); } },
+      error:function(){ erSwal('error','저장 중 오류가 발생했습니다.', {title:'오류'}); if(onErr) onErr(); }
     });
   }
 
   window.erSave = function(){
-    if(!curYm){ toast('먼저 평가년월을 조회하세요.'); return; }
-    doSave(function(){ toast('저장되었습니다.'); });
+    if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
+    erConfirm('수정한 내용을 저장하시겠습니까?', _erDoSave, { title:'저장', icon:'question', yes:'저장' });
   };
+  function _erDoSave(){
+    var b = el('er-btnSave');
+    if(!b){ doSave(function(){ toast('저장되었습니다.'); }); return; }
+    if(b._saving) return;                                   // 중복 클릭 방지
+    b._saving = true; b._orig = b._orig || b.innerHTML;
+    b.disabled = true; b.classList.remove('er-saved'); b.classList.add('er-saving'); b.innerHTML = '⏳ 저장 중…';
+    function restore(){ b.innerHTML = b._orig; b.classList.remove('er-saving','er-saved'); b.disabled = false; b._saving = false; }
+    doSave(
+      function(){                                           // 완료 — 버튼 '저장완료' 표시 + 간단 토스트
+        b.classList.remove('er-saving'); b.classList.add('er-saved'); b.innerHTML = '✅ 저장완료';
+        _erSaved = true; _erDirty = false; updateBadge();   // 저장됨 → 뱃지 '저장됨'
+        toast('저장되었습니다.');
+        clearTimeout(b._rt); b._rt = setTimeout(restore, 1600);
+      },
+      function(){ restore(); }                              // 실패 → 원복(오류 다이얼로그는 doSave 가 표시)
+    );
+  }
 
   window.erApprove = function(){
-    if(!curYm){ toast('먼저 평가년월을 조회하세요.'); return; }
+    if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
     if(approved){
-      // 승인 취소
-      jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
-        data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'Y' }),
-        success:function(res){ if(res && res.result==='OK'){ setStatus('DRAFT'); toast('승인이 취소되었습니다.'); } else toast('처리 실패: '+((res&&res.message)||'')); },
-        error:function(){ toast('승인 처리 중 오류가 발생했습니다.'); }
-      });
+      erConfirm('이 보고서의 승인을 취소하시겠습니까?\n취소하면 거래처 공개가 해제되고 다시 편집할 수 있습니다.',
+        _erDoApproveCancel, { title:'승인 취소', icon:'warning', yes:'승인 취소', focusCancel:true });
       return;
     }
+    erConfirm('이 보고서를 승인하시겠습니까?\n승인하면 현재 수치가 확정되고 거래처가 열람·인쇄할 수 있습니다.',
+      _erDoApprove, { title:'승인', icon:'question', yes:'승인' });
+  };
+  function _erDoApproveCancel(){
+    jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
+      data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'Y' }),
+      success:function(res){ if(res && res.result==='OK'){ setStatus('DRAFT'); toast('승인이 취소되었습니다.'); } else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'}); },
+      error:function(){ erSwal('error','승인 처리 중 오류가 발생했습니다.', {title:'오류'}); }
+    });
+  }
+  function _erDoApprove(){
     // 승인: 최신 문구 저장 완료 후 → 승인(수치 스냅샷 동결)
     doSave(function(){
+      _erSaved = true; _erDirty = false;   // 승인 전 저장 완료 반영(이후 승인취소 시 '저장됨')
       var snapshot = JSON.stringify({ scores:scores, indicators:indicators, evalYm:curYm });
       jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
         data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'N', snapshotJson:snapshot }),
         success:function(res){
           if(res && res.result==='OK'){ setStatus('APPROVED'); toast('승인되었습니다. 거래처가 열람·인쇄할 수 있습니다.'); }
-          else toast('처리 실패: '+((res&&res.message)||''));
+          else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'});
         },
-        error:function(){ toast('승인 처리 중 오류가 발생했습니다.'); }
+        error:function(){ erSwal('error','승인 처리 중 오류가 발생했습니다.', {title:'오류'}); }
       });
     });
-  };
+  }
 
   // ===== 첨부 PDF (아래한글 완성본 하이브리드) =====
   //  · 툴바: 첨부 전 = [📎 PDF 첨부] / 첨부 후 = [👁 PDF 보기] 하나만 (헷갈림 방지)
@@ -1926,8 +2035,19 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function updatePdfUi(){
     var has = !!pdfPath;
     var dlUrl = has ? (ctx+'/sftp/download.do?filePath='+encodeURIComponent(pdfPath)) : '#';
-    el('er-pdfView').style.display = has ? '' : 'none';               // 첨부 후: 보기 버튼
-    el('er-btnPdf').style.display  = (isWinner && !has) ? '' : 'none'; // 첨부 전(위너넷): 첨부 버튼
+    el('er-pdfView').style.display = has ? '' : 'none';                    // 첨부돼 있으면: 보기 버튼
+    // 첨부 버튼 — 위너넷만. PDF첨부는 '승인 후'에만 활성(공개본=PDF 일치 보장). 승인 전엔 비활성+안내.
+    //   첨부 전이면 '📎 PDF첨부', 이미 있으면 '📎 PDF 다시첨부' 로 라벨 전환.
+    var bp=el('er-btnPdf');
+    if(isWinner){
+      bp.style.display='';
+      bp.disabled = !approved;                                            // 승인해야 첨부 가능
+      bp.title = approved ? '완성본 PDF를 생성·업로드합니다(거래처 우선 제공)'
+                          : '먼저 ✔승인한 뒤 PDF를 첨부할 수 있습니다.';
+      bp.textContent = has ? '📎 PDF 다시첨부' : '📎 PDF첨부';
+    } else {
+      bp.style.display='none';
+    }
     // 모달 안 교체(검색) = 위너넷만 노출
     var mr=el('er-pdfModalReplace');
     if(mr) mr.style.display = isWinner ? '' : 'none';
@@ -1938,16 +2058,144 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   window.erPickPdf = function(){
-    if(!curYm){ toast('먼저 평가년월을 조회하세요.'); return; }
-    if(approved){ toast('승인된 보고서는 변경할 수 없습니다. 승인 취소 후 첨부하세요.'); return; }
-    el('er-pdfFile').click();
+    if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
+    if(!approved){ erSwal('warning','먼저 ✔승인한 뒤 PDF를 첨부할 수 있습니다.\n(승인해야 거래처 공개본과 PDF가 일치합니다)'); return; }
+    // 화면 보고서를 PDF로 생성 → 미리보기 모달로 먼저 보여줌(저장 전). 저장은 모달의 [📄 파일서버 저장] 에서.
+    erPdfGenPreview();
   };
+
+  // 화면 보고서(.er-doc) → html2canvas 캡처 → jsPDF A4 PDF 생성 → '미리보기 모달'로 표시(아직 저장 안 함).
+  //   적정성 출력(assessment.downloadPDF)과 동일 라이브러리(header.jsp 전역 로드). 화면 그대로 픽셀 재현. 저장은 erPdfGenUpload.
+  var _erGenBlob = null, _erGenName = '';
+  window.erPdfGenPreview = function(){
+    if(!window.jspdf || typeof html2canvas==='undefined'){ erSwal('error','PDF 생성 라이브러리(jsPDF·html2canvas)를 불러오지 못했습니다.', {title:'오류'}); return; }
+    var doc9 = document.querySelector('#evalReport .er-doc');
+    if(!doc9){ erSwal('warning','보고서 내용이 없습니다. 먼저 조회하세요.'); return; }
+    var pages = doc9.querySelectorAll('.er-page');
+    if(!pages.length){ erSwal('warning','보고서 페이지가 없습니다.'); return; }
+    if(editing) erToggleEdit();
+    toast('PDF 생성 중… 잠시만 기다려 주세요.');
+    var _root = el('evalReport');
+    _root.classList.add('er-pdfcap');                     // 편집영역 파란 하이라이트 제거(캡처용)
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();   // 포커스 잔상 제거
+    var prevZoom = _erZoom; _erZoom = 1; erApplyZoom();   // 배율 1(html2canvas 는 CSS zoom 미지원)
+    function restore(){ _root.classList.remove('er-pdfcap'); _erZoom=prevZoom; erApplyZoom(); }
+    // ★ 각 .er-page(표지·Ⅰ·Ⅱ·…)를 따로 캡처해 A4 한 장씩 배치 → 섹션 헤더·카드가 페이지 경계에서 잘리지 않음.
+    //   페이지가 A4보다 높으면 A4에 맞춰 축소(내용 잘림 없이 전체 표시). scale 1.5 + JPEG 로 속도·용량 최적화.
+    var jsPDF = window.jspdf.jsPDF, pdf = new jsPDF('p','mm','a4');
+    var pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), mg = 6;
+    var iw = pw - mg*2, maxHmm = ph - mg*2, idx = 0;
+    // 폴백용 — 캔버스에서 target 위쪽으로 '흰 여백 행'을 찾음(DOM 후보가 없을 때만 사용). 없으면 target.
+    function _erWhiteCut(ctx, w, target, lo){
+      for(var yy=target; yy>=lo; yy--){
+        var row, white=true;
+        try{ row = ctx.getImageData(0, yy, w, 1).data; }catch(e){ return target; }
+        for(var x=0; x<w; x+=40){ var p=x*4; if(row[p]<245||row[p+1]<245||row[p+2]<245){ white=false; break; } }
+        if(white) return yy;
+      }
+      return target;
+    }
+    // ★ 페이지 내 '끊어도 되는 지점' = 주요 블록의 시작(top). 지표 제목(.er-indhead)·그룹헤더 등에서만 끊어
+    //   제목과 '분석 내용' 박스(.er-indbox)가 갈라지지 않게. sf = CSS px → 캔버스 px 배율.
+    //   ★ 헤더(eyebrow/subh/grplabel/indhead) '바로 뒤(=헤더와 다음 블록 사이)'에서는 끊지 않음 →
+    //     헤더 top 에서만 끊어 헤더가 뒤따르는 콘텐츠(표 등)와 함께 다음 페이지로 이동(섹션 제목 홀로 남김 방지).
+    function _erBreakYs(pg, sf){
+      var HEAD = ['er-eyebrow','er-subh','er-grplabel','er-indhead'];
+      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind';
+      var pTop = pg.getBoundingClientRect().top, items=[], list=pg.querySelectorAll(sel);
+      for(var i=0;i<list.length;i++){
+        var e=list[i], t=(e.getBoundingClientRect().top - pTop)*sf, isH=false;
+        for(var h=0;h<HEAD.length;h++){ if(e.classList.contains(HEAD[h])){ isH=true; break; } }
+        items.push({ top:Math.round(t), head:isH });
+      }
+      items.sort(function(a,b){ return a.top-b.top; });
+      var ys=[];
+      for(var j=0;j<items.length;j++){
+        if(items[j].top<=4) continue;
+        if(j>0 && items[j-1].head) continue;   // 직전이 헤더면 이 지점(헤더 다음)에서는 못 끊음
+        ys.push(items[j].top);
+      }
+      return ys;
+    }
+    function _erAddSlice(canvas, y0, y1){   // 캔버스 [y0,y1) 구간을 A4 한 장으로 추가(원본 폭, 자연 높이)
+      var hpx = y1 - y0; if(hpx<=0) return;
+      var pc = document.createElement('canvas'); pc.width=canvas.width; pc.height=hpx;
+      pc.getContext('2d').drawImage(canvas, 0, y0, canvas.width, hpx, 0, 0, canvas.width, hpx);
+      if(idx>0) pdf.addPage();
+      pdf.addImage(pc.toDataURL('image/jpeg',0.8), 'JPEG', mg, mg, iw, hpx*iw/canvas.width);
+      idx++;
+    }
+    var chain = Promise.resolve();
+    pages.forEach(function(pg){
+      chain = chain.then(function(){
+        var breaks = _erBreakYs(pg, 1);   // 캡처 전 CSS px 기준(sf 는 canvas 확보 후 보정)
+        return html2canvas(pg, { scale:1.3, backgroundColor:'#ffffff', useCORS:true, logging:false }).then(function(canvas){
+          var mappedH = canvas.height * iw / canvas.width;   // 전체를 폭 iw 로 놨을 때 mm 높이
+          if(mappedH <= maxHmm){                             // 한 장에 들어감 → 축소 없이 그대로
+            if(idx>0) pdf.addPage();
+            pdf.addImage(canvas.toDataURL('image/jpeg',0.8), 'JPEG', mg, mg, iw, mappedH); idx++;
+            return;
+          }
+          // 길면 → A4 여러 장. DOM 블록 시작 위치에서만 끊음(제목+박스 안 갈라짐). 후보 없으면 여백 폴백.
+          var sf = canvas.height / (pg.getBoundingClientRect().height || pg.offsetHeight);   // CSS px → canvas px
+          var bys = breaks.map(function(v){ return Math.round(v*sf); });
+          var ctx = canvas.getContext('2d'), maxHpx = Math.floor(maxHmm * canvas.width / iw), y = 0, minStep = Math.floor(maxHpx*0.25);
+          while(y < canvas.height){
+            var limit = y + maxHpx;
+            if(limit >= canvas.height){ _erAddSlice(canvas, y, canvas.height); break; }
+            var cut = -1;
+            for(var i=0;i<bys.length;i++){ var b=bys[i]; if(b>y+minStep && b<=limit) cut=b; else if(b>limit) break; }
+            if(cut<0) cut = _erWhiteCut(ctx, canvas.width, limit, Math.max(y+1, limit - Math.floor(maxHpx*0.4)));
+            _erAddSlice(canvas, y, cut); y = cut;
+          }
+        });
+      });
+    });
+    chain.then(function(){
+      restore();
+      var yy=curYm.substring(0,4), mm=curYm.substring(4,6), gg=(typeof goalGradeVal==='function')?goalGradeVal():'';
+      _erGenName = (hospNm||'적정성평가').replace(/[\\/:*?"<>|]/g,'') + ' 적정성평가 보고서('+yy+'.'+mm+') 목표'+gg+'.pdf';
+      _erGenBlob = pdf.output('blob');
+      _erShowGenPreview();   // 저장 전 미리보기
+    }).catch(function(e){ restore(); erSwal('error','PDF 생성 오류: '+((e&&e.message)||e), {title:'오류'}); });
+  };
+
+  function _erShowGenPreview(){
+    _pdfSeq++;                                             // 진행 중 서버 fetch 무효화
+    el('er-pdfModalTitle').textContent = '📄 저장 전 미리보기 — ' + _erGenName;
+    var old=el('er-pdfFrame'), nf=old.cloneNode(false); nf.removeAttribute('src'); old.parentNode.replaceChild(nf, old);
+    el('er-pdfLoading').style.display='none';
+    if(_pdfObjUrl) URL.revokeObjectURL(_pdfObjUrl);
+    _pdfObjUrl = URL.createObjectURL(_erGenBlob);
+    el('er-pdfFrame').src = _pdfObjUrl;
+    el('er-pdfGenSaveBtn').style.display=''; el('er-pdfPickBtn').style.display='';   // 저장/파일선택 노출
+    el('er-pdfModalReplace').style.display='none';                                   // 교체검색 숨김
+    el('er-pdfModal').style.display='flex';
+  }
+
+  // 미리보기에서 [파일서버 저장] → 생성해둔 PDF(_erGenBlob) 업로드(SFTP EVALRPT + PDF_PATH).
+  window.erPdfGenUpload = function(){
+    if(!_erGenBlob){ erSwal('warning','생성된 PDF가 없습니다. 다시 시도해 주세요.'); return; }
+    erConfirm('파일서버에 저장하시겠습니까?', _erDoPdfGenUpload, { title:'PDF 저장', icon:'question', yes:'저장' });
+  };
+  function _erDoPdfGenUpload(){
+    toast('파일서버에 저장 중…');
+    var fd = new FormData();
+    fd.append('pdfFile', _erGenBlob, _erGenName); fd.append('hospCd', hospCd); fd.append('evalYm', curYm);
+    jQuery.ajax({ url: ctx+'/main/uploadEvalReportPdf.do', type:'POST', data:fd, processData:false, contentType:false, dataType:'json',
+      success:function(res){
+        if(res && res.result==='OK'){ pdfPath=res.pdfPath||''; updatePdfUi(); toast('파일서버에 저장·첨부되었습니다.'); erPdfClose(); }
+        else erSwal('error','저장 실패: '+((res&&res.message)||''), {title:'오류'});
+      },
+      error:function(){ erSwal('error','업로드 중 오류가 발생했습니다.', {title:'오류'}); }
+    });
+  }
 
   el('er-pdfFile').addEventListener('change', function(){
     var f = this.files && this.files[0];
     this.value = '';
     if(!f) return;
-    if(!/\.pdf$/i.test(f.name)){ toast('PDF 파일만 첨부할 수 있습니다.'); return; }
+    if(!/\.pdf$/i.test(f.name)){ erSwal('warning','PDF 파일만 첨부할 수 있습니다.'); return; }
     var fd = new FormData();
     fd.append('pdfFile', f); fd.append('hospCd', hospCd); fd.append('evalYm', curYm);
     toast('PDF 업로드 중...');
@@ -1961,9 +2209,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
           if(el('er-pdfModal').style.display==='flex'){ erPdfPreview(); toast('교체되었습니다.'); }
           else toast('PDF가 첨부되었습니다. 거래처에는 이 파일이 우선 제공됩니다.');
         }
-        else toast('첨부 실패: '+((res&&res.message)||''));
+        else erSwal('error','첨부 실패: '+((res&&res.message)||''), {title:'오류'});
       },
-      error:function(){ toast('PDF 업로드 중 오류가 발생했습니다.'); }
+      error:function(){ erSwal('error','PDF 업로드 중 오류가 발생했습니다.', {title:'오류'}); }
     });
   });
 
