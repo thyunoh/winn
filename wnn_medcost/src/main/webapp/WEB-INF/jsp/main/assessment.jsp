@@ -1,70 +1,77 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>  
+	pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib prefix="ui" uri="http://egovframework.gov/ctl/ui"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
-<%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator" %>
-<%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
-<%@ page import ="java.util.Date" %>
+<%@ taglib prefix="decorator"
+	uri="http://www.opensymphony.com/sitemesh/decorator"%>
+<%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page"%>
+<%@ page import="java.util.Date"%>
 <%
-	Date nowTime = new Date();
-
+Date nowTime = new Date();
 %>
-	<div class="dashboard-wrapper">
-        <div class="dashboard-ecommerce">
-            <div class="container-fluid dashboard-content ">
-                <div class="ecommerce-widget">                                
-                <!-- Row starts -->
-	                <div class="row">
-			    		<div class="col-lg-5">
-    						<div class="card">				
-							    <!-- 추가 s -->
-							    <div class="container">
-								    <div class="card-body">
-								        <div class="row header-row2 gx-0">
-								            <div class="col-xl-3 col-lg-3">
-								                <div class=score-card>
-								                	<h5>평가년월</h5>
-											        <div>
-											            <select id="year_Select" class="custom-select w-100" style="text-align-last: center;"></select>
-											        </div>
-											        <div>
-											            <select id="monthSelect" class="custom-select w-100" style="text-align-last: center;"></select>
-											        </div>
-											    </div>
-								            </div>
-								            <div class="col-xl-3 col-lg-3">
-								            	<div class="score-card">
-								                    <h5>구조영역</h5>
-								                    <label id="structureScore" class="score-label"></label>
-								                </div>
-								            </div>
-								            <div class="col-xl-3 col-lg-3">
-								            	<div class="score-card">
-								                    <h5>진료영역</h5>
-								                    <label id="medicalScore" class="score-label"></label>
-								                </div>
-								            </div>
-								            <div class="col-xl-3 col-lg-3">
-								                <div class="score-card">
-								                    <h5>종합점수</h5>
-								                    <label id="totalScore" class="score-label red"></label>
-								                </div>
-								            </div>
-								        </div>
-								        <div class="d-flex mb-2" style="gap:6px;">
-										    <button class="btn indi-custom-btn text-white btn-sm d-flex align-items-center justify-content-center flex-grow-1" onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
-										    <%-- ===== 월보고서 버튼 (1단계: 위너넷 전용) — magamFileUpload '신규프로그램' 체크박스와 동일 컨벤션 =====
+<div class="dashboard-wrapper">
+	<div class="dashboard-ecommerce">
+		<div class="container-fluid dashboard-content ">
+			<div class="ecommerce-widget">
+				<!-- Row starts -->
+				<div class="row">
+					<div class="col-lg-5">
+						<div class="card">
+							<!-- 추가 s -->
+							<div class="container">
+								<div class="card-body">
+									<div class="row header-row2 gx-0">
+										<div class="col-xl-3 col-lg-3">
+											<div class=score-card>
+												<h5>평가년월</h5>
+												<div>
+													<select id="year_Select" class="custom-select w-100"
+														style="text-align-last: center;"></select>
+												</div>
+												<div>
+													<select id="monthSelect" class="custom-select w-100"
+														style="text-align-last: center;"></select>
+												</div>
+											</div>
+										</div>
+										<div class="col-xl-3 col-lg-3">
+											<div class="score-card">
+												<h5>구조영역</h5>
+												<label id="structureScore" class="score-label"></label>
+											</div>
+										</div>
+										<div class="col-xl-3 col-lg-3">
+											<div class="score-card">
+												<h5>진료영역</h5>
+												<label id="medicalScore" class="score-label"></label>
+											</div>
+										</div>
+										<div class="col-xl-3 col-lg-3">
+											<div class="score-card">
+												<h5>종합점수</h5>
+												<label id="totalScore" class="score-label red"></label>
+											</div>
+										</div>
+									</div>
+									<div class="d-flex mb-2" style="gap: 6px;">
+										<button
+											class="btn indi-custom-btn text-white btn-sm d-flex align-items-center justify-content-center flex-grow-1"
+											onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
+										<%-- ===== 월보고서 버튼 (1단계: 위너넷 전용) — magamFileUpload '신규프로그램' 체크박스와 동일 컨벤션 =====
 										         이 시스템은 로그인을 wnn_consult 에서 하고 wnn_medcost 는 쿠키로 인증을 이어받으므로(세션 공유 안 됨),
 										         판별은 s_wnn_yn 쿠키(=TBL_HOSP_MST.WINNER_YN, wnn_consult·wnn_medcost 양쪽 로그인이 매번 삭제 후 재설정) 하나만 —
 										         상단 병원검색 버튼(top.jsp #hospserchtop)과 동일 조건으로 노출 동기화. 기본 히든 → 위너넷일 때만 JS 로 노출.
 										         [2단계·완성 후] 거래처 공개: 이 노출 조건에 승인본 존재 여부를 더해 확장. --%>
-										    <%-- d-flex 클래스 금지: display:flex !important 라 인라인 display:none 을 이겨서 일반병원에도 항상 노출됨(2026-07-14 원인) --%>
-										    <button id="btnMonthlyReport" class="btn btn-sm btn-outline-primary align-items-center justify-content-center" style="white-space:nowrap; display:none;"
-										            onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;try{sessionStorage.setItem('erOpenYm',ym);}catch(e){}location.href='/main/evalReport.do?ym='+ym;})();">📄 월보고서</button>
-										</div>
-										<script>
+										<%-- d-flex 클래스 금지: display:flex !important 라 인라인 display:none 을 이겨서 일반병원에도 항상 노출됨(2026-07-14 원인) --%>
+										<button id="btnMonthlyReport"
+											class="btn btn-sm btn-outline-primary align-items-center justify-content-center"
+											style="white-space: nowrap; display: none;"
+											onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;try{sessionStorage.setItem('erOpenYm',ym);}catch(e){}location.href='/main/evalReport.do?ym='+ym;})();">📄
+											월보고서</button>
+									</div>
+									<script>
  										    (function(){
 										        // 상단 병원검색 버튼(top.jsp #hospserchtop)과 노출 동기화 — 병원검색 보이면 월보고서도 보임 (2026-07-14 확정)
 										        // top.jsp 판별과 동일: s_wnn_yn(trim) === 'Y' 만. s_winconect 는 잔존 쿠키로 오노출되어 제외.
@@ -77,383 +84,601 @@
 										        }catch(e){}
 										    })(); 
 										</script>
-										<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
-																						        
-										<!-- 지표 테이블 -->
-								        <table id="indicatorTable" class="display nowrap stripe hover cell-border order-column responsive">
+									<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
 
-								        </table>
-										<div class="d-flex justify-content-between align-items-center">
-											<span></span>
-										    <button id="btnEvalAllHosp" class="btn btn-outline-danger btn-sm" onClick="fn_CreateEvalAllHosp()" style="display:none;">전체병원 생성</button>
-										</div>
-										<!-- 지표 선택 시 분석 문구 표시 영역 -->
-										<div id="indiSummaryText" style="display:none; margin-top:8px; border:1px solid #b8daff; border-radius:8px; background:#f8fbff; padding:12px 16px;"></div>
-										<div class="d-flex align-items-center">
-										    
-										    <button id="googleLink" onclick="google_Link()" class="btn btn-sm btn-outline-primary me-2" style="display: none;">🌐 구글</button>
-										
-										    <input  id="googleHttp" type="text" class="form-control text-left mx-2" placeholder="구글시트 주소를 입력하세요 " style="max-width: 400px;display: none;">
-										
-										    <button id="googleSave" onclick="google_Save()" class="btn btn-sm btn-outline-success ms-2" style="display: none;">📝 등록</button>
-										    
-										</div>
-										
-								    </div>
+									<!-- 지표 테이블 -->
+									<table id="indicatorTable"
+										class="display nowrap stripe hover cell-border order-column responsive">
+
+									</table>
+									<div class="d-flex justify-content-between align-items-center">
+										<span></span>
+										<button id="btnEvalAllHosp"
+											class="btn btn-outline-danger btn-sm"
+											onClick="fn_CreateEvalAllHosp()" style="display: none;">전체병원
+											생성</button>
+									</div>
+									<!-- 지표 선택 시 분석 문구 표시 영역 -->
+									<div id="indiSummaryText"
+										style="display: none; margin-top: 8px; border: 1px solid #b8daff; border-radius: 8px; background: #f8fbff; padding: 12px 16px;"></div>
+									<div class="d-flex align-items-center">
+
+										<button id="googleLink" onclick="google_Link()"
+											class="btn btn-sm btn-outline-primary me-2"
+											style="display: none;">🌐 구글</button>
+
+										<input id="googleHttp" type="text"
+											class="form-control text-left mx-2"
+											placeholder="구글시트 주소를 입력하세요 "
+											style="max-width: 400px; display: none;">
+
+										<button id="googleSave" onclick="google_Save()"
+											class="btn btn-sm btn-outline-success ms-2"
+											style="display: none;">📝 등록</button>
+
+									</div>
+
 								</div>
-							
-							    <!-- 추가 e -->
 							</div>
-						</div>	
-	                    <div class="col-lg-7 d-flex flex-column">
-		                    <style>
-									    .std-toast-title { font-size: 18px !important; font-weight: 600 !important; margin-top: 6px !important; }
-									    .std-popup { padding: 10px 16px !important; }
-									    .std-popup .swal2-icon { margin: 8px auto 4px !important; }
-									    .std-popup .swal2-timer-progress-bar-container { height: 4px !important; }
-									</style>
-									    <div id="stdRangeNotice" style="display:flex; align-items:flex-start; gap:10px; border:1px solid #f3c0bb; border-left:4px solid #e74c3c; border-radius:10px; background:linear-gradient(180deg,#fff8f7,#fdeeed); color:#7a2b22; font-size:13px; line-height:1.5; padding:11px 16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(231,76,60,0.08);">
-								        <i class="fas fa-circle-info" style="color:#e74c3c; font-size:16px; margin-top:1px;"></i>
-								        <div><b>본 표준화 점수 구간은 2024년 평가 결과 기준입니다.</b><br>
-								        안정적인 상위등급 달성 및 유지를 위해, 목표값은 제시된 구간보다 <b>10~20% 이상 여유 있게</b> 설정하여 관리하시기 바랍니다.</div>
-								    </div>
-								    <div class="card" id="card_container" style="display: none; flex:1 1 auto;">
 
-							    <div class="card-header11 d-flex justify-content-between align-items-top">
+							<!-- 추가 e -->
+						</div>
+					</div>
+					<div class="col-lg-7 d-flex flex-column">
+						<style>
+.std-toast-title {
+	font-size: 18px !important;
+	font-weight: 600 !important;
+	margin-top: 6px !important;
+}
 
-							        <label id="lab_title" class="dsah_lab9"></label>
+.std-popup {
+	padding: 10px 16px !important;
+}
 
-							        <div id="cath05BtnZone" style="display:none; white-space:nowrap;">
-							            <button type="button" id="btnCath05Check" class="cath05-btn"
-							                    onclick="fn_ShowCath05Modal()">
-							                <i class="fas fa-stethoscope cath05-icon"></i>
-							                <span class="cath05-label">유치도뇨관&nbsp;&nbsp;및 오류점검</span>
-							                <span class="cath05-badge" id="badgeCath05">0</span>
-							            </button>
-							        </div>
+.std-popup .swal2-icon {
+	margin: 8px auto 4px !important;
+}
 
-							        <!-- 다빈도 상병순위별 (jobFlag=07 항정신성의약품 처방률 전용) -->
-							        <div id="diagRank07BtnZone" style="display:none; white-space:nowrap;">
-							            <button type="button" id="btnDiagRank07" class="cath05-btn"
-							                    onclick="fn_ShowDiagRank07Modal()">
-							                <i class="fas fa-notes-medical cath05-icon"></i>
-							                <span class="cath05-label">다빈도&nbsp;상병순위별조회</span>
-							            </button>
-							        </div>
+.std-popup .swal2-timer-progress-bar-container {
+	height: 4px !important;
+}
+</style>
+						<div id="stdRangeNotice"
+							style="display: flex; align-items: flex-start; gap: 10px; border: 1px solid #f3c0bb; border-left: 4px solid #e74c3c; border-radius: 10px; background: linear-gradient(180deg, #fff8f7, #fdeeed); color: #7a2b22; font-size: 13px; line-height: 1.5; padding: 11px 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.08);">
+							<i class="fas fa-circle-info"
+								style="color: #e74c3c; font-size: 16px; margin-top: 1px;"></i>
+							<div>
+								<b>본 표준화 점수 구간은 2024년 평가 결과 기준입니다.</b><br> 안정적인 상위등급 달성 및
+								유지를 위해, 목표값은 제시된 구간보다 <b>10~20% 이상 여유 있게</b> 설정하여 관리하시기 바랍니다.
+							</div>
+						</div>
+						<div class="card" id="card_container"
+							style="display: none; flex: 1 1 auto;">
 
-							        <!-- [2026-07-19] 환자평가표 조회 버튼 제거 — 행 더블클릭으로 열리므로 중복 UI 정리
+							<div
+								class="card-header11 d-flex justify-content-between align-items-top">
+
+								<label id="lab_title" class="dsah_lab9"></label>
+
+								<div id="cath05BtnZone"
+									style="display: none; white-space: nowrap;">
+									<button type="button" id="btnCath05Check" class="cath05-btn"
+										onclick="fn_ShowCath05Modal()">
+										<i class="fas fa-stethoscope cath05-icon"></i> <span
+											class="cath05-label">유치도뇨관&nbsp;&nbsp;및 오류점검</span> <span
+											class="cath05-badge" id="badgeCath05">0</span>
+									</button>
+								</div>
+
+								<!-- 다빈도 상병순위별 (jobFlag=07 항정신성의약품 처방률 전용) -->
+								<div id="diagRank07BtnZone"
+									style="display: none; white-space: nowrap;">
+									<button type="button" id="btnDiagRank07" class="cath05-btn"
+										onclick="fn_ShowDiagRank07Modal()">
+										<i class="fas fa-notes-medical cath05-icon"></i> <span
+											class="cath05-label">다빈도&nbsp;상병순위별조회</span>
+									</button>
+								</div>
+
+								<!-- [2026-07-19] 환자평가표 조회 버튼 제거 — 행 더블클릭으로 열리므로 중복 UI 정리
 							             (부착 로직도 patvalModal.js fn_AttachPatvalBtnToDt 에서 제거됨) -->
 
-							    </div>
-							    <style>
-							        .cath05-btn {
-							            display: inline-flex;
-							            align-items: center;
-							            gap: 8px;
-							            padding: 6px 14px;
-							            border: none;
-							            border-radius: 4px;
-							            font-size: 12.5px;
-							            font-weight: 600;
-							            letter-spacing: 0.2px;
-							            color: #5a3d00;
-							            background: linear-gradient(135deg, #ffe082 0%, #ffc107 100%);
-							            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), inset 0 1px 0 rgba(255,255,255,0.5);
-							            cursor: pointer;
-							            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-							        }
-							        .cath05-btn:hover  { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 4px 10px rgba(255, 193, 7, 0.45); }
-							        .cath05-btn:active { transform: translateY(0);    filter: brightness(0.97); }
-							        .cath05-btn:focus  { outline: none; }
-							        .cath05-icon  { font-size: 13px; opacity: 0.9; }
-							        .cath05-label { line-height: 1; }
-							        .cath05-badge {
-							            display: inline-flex;
-							            align-items: center;
-							            justify-content: center;
-							            min-width: 22px;
-							            height: 22px;
-							            padding: 0 7px;
-							            border-radius: 3px;
-							            background: #fff;
-							            color: #dc3545;
-							            font-size: 11.5px;
-							            font-weight: 700;
-							            box-shadow: inset 0 0 0 1px rgba(220,53,69,0.15);
-							        }
-							        .cath05-btn.is-zero {
-							            color: #5a6268;
-							            background: linear-gradient(135deg, #e9ecef 0%, #ced4da 100%);
-							            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-							        }
-							        .cath05-btn.is-zero .cath05-badge { color: #6c757d; box-shadow: inset 0 0 0 1px rgba(108,117,125,0.2); }
+							</div>
+							<style>
+.cath05-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 14px;
+	border: none;
+	border-radius: 4px;
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: 0.2px;
+	color: #5a3d00;
+	background: linear-gradient(135deg, #ffe082 0%, #ffc107 100%);
+	box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), inset 0 1px 0
+		rgba(255, 255, 255, 0.5);
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s
+		ease;
+}
 
-							        @keyframes cath05Pulse {
-							            0%   { box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 0    rgba(255, 152, 0, 0.55); }
-							            70%  { box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 10px rgba(255, 152, 0, 0);    }
-							            100% { box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 0    rgba(255, 152, 0, 0);    }
-							        }
-							        .cath05-blink { animation: cath05Pulse 1.6s ease-out infinite; }
+.cath05-btn:hover {
+	transform: translateY(-1px);
+	filter: brightness(1.05);
+	box-shadow: 0 4px 10px rgba(255, 193, 7, 0.45);
+}
 
-							        /* 전월청구 확인 경고박스 깜박임 */
-							        @keyframes prevMonthBlink {
-							            0%, 100% { opacity: 1;   }
-							            50%      { opacity: 0.35; }
-							        }
-							        #prevMonthWarn.blink { animation: prevMonthBlink 1s ease-in-out infinite; }
+.cath05-btn:active {
+	transform: translateY(0);
+	filter: brightness(0.97);
+}
 
-							        /* '등록되지 않은 자료입니다' 안내 팝업 - 작게 */
-							        .swal-compact .swal2-icon { width: 48px; height: 48px; margin: 8px auto 6px; }
-							        .swal-compact .swal2-icon .swal2-icon-content { font-size: 1.8em; }
-							        .swal-compact-title { font-size: 1.05rem !important; margin: 4px 0 2px !important; }
-							        .swal-compact-text  { font-size: 0.82rem !important; line-height: 1.4 !important; color: #666 !important; }
-							        .swal-compact-btn   { font-size: 0.82rem !important; padding: 5px 18px !important; }
+.cath05-btn:focus {
+	outline: none;
+}
 
-							        /* [2026-07-19] 환자평가표 조회 버튼 CSS 제거 — 버튼 자체가 삭제됨(행 더블클릭으로 대체) */
-							        /* 유치도뇨관 및 오류점검 버튼 — .dt-buttons 영역에서도 높이 통일 */
-							        .dt-buttons #cath05BtnZone { display: inline-flex; align-items: center; vertical-align: middle; margin-left: 6px; }
-							        .dt-buttons #cath05BtnZone .cath05-btn {
-							            height: 32px !important;
-							            padding: 0 12px !important;
-							            box-sizing: border-box !important;
-							            line-height: 1 !important;
-							            font-size: 12.5px !important;
-							            vertical-align: middle !important;
-							        }
-							        .dt-buttons #cath05BtnZone .cath05-badge {
-							            height: 20px !important;
-							            line-height: 20px !important;
-							        }
-							        #diagRank07BtnZone #btnDiagRank07.cath05-btn {
-							            height: 32px !important;
-							            padding: 0 14px !important;
-							            box-sizing: border-box !important;
-							            line-height: 1 !important;
-							            font-size: 12.5px !important;
-							            font-weight: 700 !important;
-							            vertical-align: middle !important;
-							        }
+.cath05-icon {
+	font-size: 13px;
+	opacity: 0.9;
+}
 
-							        /* viewTable / indicatorTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
-							        #viewTable thead tr:first-child th:first-child,
-							        #viewTable thead th.pv-chk-th,
-							        #viewTable tbody td.pv-chk-cell,
-							        #viewTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
-							        #viewTable_wrapper .dataTables_scrollHead th.pv-chk-th,
-							        #indicatorTable thead th.pv-chk-th,
-							        #indicatorTable tbody td.pv-chk-cell,
-							        #indicatorTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
-							        #indicatorTable_wrapper .dataTables_scrollHead th.pv-chk-th {
-							            width: 24px !important;
-							            min-width: 24px !important;
-							            max-width: 24px !important;
-							            padding-left: 2px !important;
-							            padding-right: 2px !important;
-							            box-sizing: border-box !important;
-							        }
+.cath05-label {
+	line-height: 1;
+}
 
-							        /* indicatorTable — noArrow 헤더: 정렬 화살표(dt-column-order) 숨김 + 좌우 여백 축소로 폭 절약.
+.cath05-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 7px;
+	border-radius: 3px;
+	background: #fff;
+	color: #dc3545;
+	font-size: 11.5px;
+	font-weight: 700;
+	box-shadow: inset 0 0 0 1px rgba(220, 53, 69, 0.15);
+}
+
+.cath05-btn.is-zero {
+	color: #5a6268;
+	background: linear-gradient(135deg, #e9ecef 0%, #ced4da 100%);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.cath05-btn.is-zero .cath05-badge {
+	color: #6c757d;
+	box-shadow: inset 0 0 0 1px rgba(108, 117, 125, 0.2);
+}
+
+@
+keyframes cath05Pulse { 0% {
+	box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35), 0 0 0 0
+		rgba(255, 152, 0, 0.55);
+}
+
+70
+%
+{
+box-shadow
+:
+0
+2px
+6px
+rgba(
+255
+,
+193
+,
+7
+,
+0.35
+)
+,
+0
+0
+0
+10px
+rgba(
+255
+,
+152
+,
+0
+,
+0
+);
+}
+100
+%
+{
+box-shadow
+:
+0
+2px
+6px
+rgba(
+255
+,
+193
+,
+7
+,
+0.35
+)
+,
+0
+0
+0
+0
+rgba(
+255
+,
+152
+,
+0
+,
+0
+);
+}
+}
+.cath05-blink {
+	animation: cath05Pulse 1.6s ease-out infinite;
+}
+
+/* 전월청구 확인 경고박스 깜박임 */
+@
+keyframes prevMonthBlink { 0%, 100% {
+	opacity: 1;
+}
+
+50
+%
+{
+opacity
+:
+0.35;
+}
+}
+#prevMonthWarn.blink {
+	animation: prevMonthBlink 1s ease-in-out infinite;
+}
+
+/* '등록되지 않은 자료입니다' 안내 팝업 - 작게 */
+.swal-compact .swal2-icon {
+	width: 48px;
+	height: 48px;
+	margin: 8px auto 6px;
+}
+
+.swal-compact .swal2-icon .swal2-icon-content {
+	font-size: 1.8em;
+}
+
+.swal-compact-title {
+	font-size: 1.05rem !important;
+	margin: 4px 0 2px !important;
+}
+
+.swal-compact-text {
+	font-size: 0.82rem !important;
+	line-height: 1.4 !important;
+	color: #666 !important;
+}
+
+.swal-compact-btn {
+	font-size: 0.82rem !important;
+	padding: 5px 18px !important;
+}
+
+/* [2026-07-19] 환자평가표 조회 버튼 CSS 제거 — 버튼 자체가 삭제됨(행 더블클릭으로 대체) */
+/* 유치도뇨관 및 오류점검 버튼 — .dt-buttons 영역에서도 높이 통일 */
+.dt-buttons #cath05BtnZone {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+	margin-left: 6px;
+}
+
+.dt-buttons #cath05BtnZone .cath05-btn {
+	height: 32px !important;
+	padding: 0 12px !important;
+	box-sizing: border-box !important;
+	line-height: 1 !important;
+	font-size: 12.5px !important;
+	vertical-align: middle !important;
+}
+
+.dt-buttons #cath05BtnZone .cath05-badge {
+	height: 20px !important;
+	line-height: 20px !important;
+}
+
+#diagRank07BtnZone #btnDiagRank07.cath05-btn {
+	height: 32px !important;
+	padding: 0 14px !important;
+	box-sizing: border-box !important;
+	line-height: 1 !important;
+	font-size: 12.5px !important;
+	font-weight: 700 !important;
+	vertical-align: middle !important;
+}
+
+/* viewTable / indicatorTable — 변경 ✔ 컬럼 폭 최소화 (헤더 + body 셀 모두) */
+#viewTable thead tr:first-child th:first-child, #viewTable thead th.pv-chk-th,
+	#viewTable tbody td.pv-chk-cell, #viewTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
+	#viewTable_wrapper .dataTables_scrollHead th.pv-chk-th, #indicatorTable thead th.pv-chk-th,
+	#indicatorTable tbody td.pv-chk-cell, #indicatorTable_wrapper .dataTables_scrollHead thead tr:first-child th:first-child,
+	#indicatorTable_wrapper .dataTables_scrollHead th.pv-chk-th {
+	width: 24px !important;
+	min-width: 24px !important;
+	max-width: 24px !important;
+	padding-left: 2px !important;
+	padding-right: 2px !important;
+	box-sizing: border-box !important;
+}
+
+/* indicatorTable — noArrow 헤더: 정렬 화살표(dt-column-order) 숨김 + 좌우 여백 축소로 폭 절약.
 							           ※ scrollY 사용 시 실제 보이는 헤더는 복제본(.dt-scroll-head 안, id 없음)이라
 							             #indicatorTable 이 아닌 #indicatorTable_wrapper 로 스코프해야 복제 헤더까지 잡힌다. */
-							        th.noArrow span.dt-column-order,
-							        th.noArrow .dt-column-order { display: none !important; }
-							        th.noArrow { padding-left: 11px !important; padding-right: 11px !important; }
+th.noArrow span.dt-column-order, th.noArrow .dt-column-order {
+	display: none !important;
+}
 
-							        /* viewTable — 전월 대비 적정성평가 항목 변경 환자 표시는
+th.noArrow {
+	padding-left: 11px !important;
+	padding-right: 11px !important;
+}
+
+/* viewTable — 전월 대비 적정성평가 항목 변경 환자 표시는
 							           첫 컬럼 ✔ 체크박스로만 표시 (행 배경 강조 제거) */
 
-							        /* viewTable 헤더 nowrap — 90%+ 줌에서 DataTables 가 헤더 폭을 줄이려 할 때
+/* viewTable 헤더 nowrap — 90%+ 줌에서 DataTables 가 헤더 폭을 줄이려 할 때
 							           텍스트가 글자 단위로 깨지지 않도록. <br>은 명시적 줄바꿈이라 정상 동작 유지. */
-							        #viewTable thead th,
-							        #viewTable_wrapper .dataTables_scrollHead th {
-							            white-space: nowrap !important;
-							        }
-							        /* 단, <br> 포함된 sub-header 는 줄바꿈 허용 (일정\n배뇨 등) */
-							        #viewTable thead th:has(br),
-							        #viewTable_wrapper .dataTables_scrollHead th:has(br) {
-							            white-space: normal !important;
-							            word-break: keep-all !important;
-							            line-height: 1.2 !important;
-							        }
-							    </style>
-							    <!-- 라인 1줄 생성 -->
-							    <hr style="margin: 0; border-top: 2px solid #ccc;">
+#viewTable thead th, #viewTable_wrapper .dataTables_scrollHead th {
+	white-space: nowrap !important;
+}
+/* 단, <br> 포함된 sub-header 는 줄바꿈 허용 (일정\n배뇨 등) */
+#viewTable thead th:has(br), #viewTable_wrapper .dataTables_scrollHead th:has(br)
+	{
+	white-space: normal !important;
+	word-break: keep-all !important;
+	line-height: 1.2 !important;
+}
+</style>
+							<!-- 라인 1줄 생성 -->
+							<hr style="margin: 0; border-top: 2px solid #ccc;">
 
-							    <!-- flex 세로 컨테이너 — 카드가 늘어난 만큼 저장분기 그리드+안내문구를 카드 하단에 정렬 -->
-							    <div class="card-header11" style="flex:1 1 auto; display:flex; flex-direction:column;">
-						        	<div id="inputZone" style="display: none;">                
-					                	<div class="form-group row">
-					                	
-					                	    <label class="col-2 col-sm-2 col-form-label text-right  mb-3">주기</label>											
-											<div class="col-sm-2 col-sm-2 ">
-											    <input id="goal_Jugi" type="text" class="form-control is-invalid text-center mb-3" placeholder="주기">
-											</div>
-											
-											<label class="col-2 col-sm-2 col-form-label text-right  mb-3">차수</label>											
-											<div class="col-sm-2 col-sm-2 ">
-											    <input id="goal_Chasu" type="text" class="form-control is-invalid text-center mb-3" placeholder="차수">
-											</div>
-											<label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
-					                	    
-					                	    <label class="col-2 col-sm-2 col-form-label text-right  mb-3">연간 목표 점수</label>											
-											<div class="col-sm-2 col-sm-2 ">
-											    <input id="goal_Score" type="text" class="form-control is-invalid text-center mb-3" placeholder="목표 점수">
-											</div>
-					                		<label class="col-2 col-sm-2 col-form-label text-right  mb-3">병원 등급</label>
-											<div class="col-sm-2 col-sm-2 ">
-											    <select id="hospcdGrade" class="custom-select w-100  mb-3" style="text-align-last: center;"></select>
-											</div>
-											<label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
-											
-					                		<label class="col-2 col-sm-2 col-form-label text-right  mb-3">차등제 신고분기</label>
-					                        <div class="col-sm-2 col-sm-2 ">
-											    <select id="yearQuarter" class="custom-select w-100  mb-3" style="text-align-last: center;"></select>
-											</div>
-											<div class="col-sm-2 col-sm-2 ">
-											    <select id="monsQuarter" class="custom-select w-100  mb-3" style="text-align-last: center;"></select>
-											</div>
-											<div class="col-sm-2 col-sm-2">
-					  	   					    <button id="form_BtnSel" type="button" class="btn btm-xs btn-outline-warning mb-3"
-					  	   					    style="padding: 2px 15px; font-size: 12px; line-height: 2.6; font-weight: bold;"  
-					  	   					    onClick="fn_Select(true)">조회하기........· <i class="fas fa-search"></i></button>
-					                        </div>
-					                        <label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
-			
-											
-											
-											<label class="col-2 col-sm-2 col-form-label text-right  mb-3">평균 환자 수 </label>
-											<div class="col-sm-2 col-sm-2 ">
-											    <input id="pat_Count" type="text" class="form-control is-invalid text-center mb-3" placeholder="입력하기">
-											</div>
-											<label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
-											
-											
-					                        <label class="col-2 col-sm-2 col-form-label text-right mb-3">의사 수</label>
-					                        
-					                        <div class="col-2 col-sm-2">
-					                            <input id="doc_Count" type="text" class="form-control is-invalid text-center mb-3" placeholder="입력하기">
-					                        </div>
-					                        <label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
+							<!-- flex 세로 컨테이너 — 카드가 늘어난 만큼 저장분기 그리드+안내문구를 카드 하단에 정렬 -->
+							<div class="card-header11"
+								style="flex: 1 1 auto; display: flex; flex-direction: column;">
+								<div id="inputZone" style="display: none;">
+									<div class="form-group row">
 
-					                        
-					                        <label class="col-2 col-sm-2 col-form-label text-right">간호사수</label>
-					                        <div class="col-2 col-sm-2">
-					                            <input id="nur_Count" type="text" class="form-control is-invalid text-center mb-3" placeholder="입력하기">
-					                        </div>
-					                        <label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
-					                        
-					                        
-					                        <label class="col-2 col-sm-2 col-form-label text-right mb-3">간호인력수</label>
-					                        <div class="col-2 col-sm-2">
-					                            <input id="nursCount" name="input1" type="text" class="form-control is-invalid text-center mb-3" placeholder="입력하기">
-					                        </div>
-					                        <label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
-					                        
-					                        <label class="col-2 col-sm-2 col-form-label text-right mb-3">약사재직일수</label>
-					                        <div class="col-2 col-sm-2">
-					                            <input id="pham_Days" name="input1" type="text" class="form-control is-invalid text-center mb-3" placeholder="입력하기">
-					                        </div>
-					                        <!-- 
+										<label class="col-2 col-sm-2 col-form-label text-right  mb-3">주기</label>
+										<div class="col-sm-2 col-sm-2 ">
+											<input id="goal_Jugi" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="주기">
+										</div>
+
+										<label class="col-2 col-sm-2 col-form-label text-right  mb-3">차수</label>
+										<div class="col-sm-2 col-sm-2 ">
+											<input id="goal_Chasu" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="차수">
+										</div>
+										<label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
+
+										<label class="col-2 col-sm-2 col-form-label text-right  mb-3">연간
+											목표 점수</label>
+										<div class="col-sm-2 col-sm-2 ">
+											<input id="goal_Score" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="목표 점수">
+										</div>
+										<label class="col-2 col-sm-2 col-form-label text-right  mb-3">병원
+											등급</label>
+										<div class="col-sm-2 col-sm-2 ">
+											<select id="hospcdGrade" class="custom-select w-100  mb-3"
+												style="text-align-last: center;"></select>
+										</div>
+										<label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
+
+										<label class="col-2 col-sm-2 col-form-label text-right  mb-3">차등제
+											신고분기</label>
+										<div class="col-sm-2 col-sm-2 ">
+											<select id="yearQuarter" class="custom-select w-100  mb-3"
+												style="text-align-last: center;"></select>
+										</div>
+										<div class="col-sm-2 col-sm-2 ">
+											<select id="monsQuarter" class="custom-select w-100  mb-3"
+												style="text-align-last: center;"></select>
+										</div>
+										<div class="col-sm-2 col-sm-2">
+											<button id="form_BtnSel" type="button"
+												class="btn btm-xs btn-outline-warning mb-3"
+												style="padding: 2px 15px; font-size: 12px; line-height: 2.6; font-weight: bold;"
+												onClick="fn_Select(true)">
+												조회하기........· <i class="fas fa-search"></i>
+											</button>
+										</div>
+										<label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
+
+
+
+										<label class="col-2 col-sm-2 col-form-label text-right  mb-3">평균
+											환자 수 </label>
+										<div class="col-sm-2 col-sm-2 ">
+											<input id="pat_Count" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="입력하기">
+										</div>
+										<label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
+
+
+										<label class="col-2 col-sm-2 col-form-label text-right mb-3">의사
+											수</label>
+
+										<div class="col-2 col-sm-2">
+											<input id="doc_Count" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="입력하기">
+										</div>
+										<label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
+
+
+										<label class="col-2 col-sm-2 col-form-label text-right">간호사수</label>
+										<div class="col-2 col-sm-2">
+											<input id="nur_Count" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="입력하기">
+										</div>
+										<label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
+
+
+										<label class="col-2 col-sm-2 col-form-label text-right mb-3">간호인력수</label>
+										<div class="col-2 col-sm-2">
+											<input id="nursCount" name="input1" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="입력하기">
+										</div>
+										<label class="col-8 col-sm-8 col-form-label text-left  mb-3"></label>
+
+										<label class="col-2 col-sm-2 col-form-label text-right mb-3">약사재직일수</label>
+										<div class="col-2 col-sm-2">
+											<input id="pham_Days" name="input1" type="text"
+												class="form-control is-invalid text-center mb-3"
+												placeholder="입력하기">
+										</div>
+										<!-- 
 					                        <div class="col-2 col-sm-2">
 					                            <input id="total_Day" name="input1" type="text" class="form-control is-invalid text-center mb-3" placeholder="전체 일수의 합">
 					                        </div>
 					                        -->
-					                        <label class="col-2 col-sm-2 col-form-label text-left  mb-3"></label>
-					                        <div class="col-sm-2 col-sm-2">
-					  	   					    <button id="formBtnSave" class="btn btm-xs btn-outline-primary  mb-3" 
-					  	   					    style="padding: 2px 15px; font-size: 12px; line-height: 2.3; font-weight: bold;" 
-					  	   					    onClick="fn_Update()">저장하기........· <i class="far fa-save"></i></button>
-					                        </div>
-					                        <label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
-					                        
-					                    </div>
-									</div> 
-						        	<table id="viewTable" class="display nowrap stripe hover cell-border order-column responsive">
-
-									</table>
-									<!-- 저장된 분기 목록 그리드 (차등제 01~04 화면 전용) — 행 클릭 시 위 폼에 적용. 화면 넘치면 좌우 스크롤 -->
-									<div id="grdListWrap" style="display:none; overflow-x:auto; margin-top:auto; min-height:245px; border:1px solid #e6e8eb; border-radius:6px;">
-										<table id="grdList" class="table table-sm table-bordered text-center mb-0" style="width:100%; min-width:900px; font-size:14px; white-space:nowrap; table-layout:auto;">
-											<thead style="background:#f4f6f8;">
-												<tr>
-													<th>신고분기</th><th>주기</th><th>차수</th><th>목표점수</th><th>병원등급</th>
-													<th>평균환자수</th><th>의사수</th><th>간호사수</th><th>간호인력수</th><th>약사재직일수</th><th>수정일시</th><th>삭제</th>
-												</tr>
-											</thead>
-											<tbody id="grdListBody"></tbody>
-										</table>
-									</div>
-									<!-- 분석 문구 — 모든 카테고리 그리드 하단 + 약사재직일수율(01~04) 입력폼 하단 공통 표시 -->
-									<div id="indiNoticeText" style="margin-top:12px; padding:10px 14px; font-size:13px; color:#555; line-height:1.7; background:#fafbfc; border:1px solid #e6e8eb; border-radius:6px;">
-										- 항정처방률은 타 기관의 상병 구성 및 평균 처방률 자료 확인이 불가하여,시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용으로 활용하시기 바랍니다.<br>
-										- 청구명세서 미업로드 시 항정처방률 대상자 확인 및 HbA1c 분모 산정에 차이가 발생하여 최종 결과와 다를 수 있습니다.<br>
-										- 본 점수는 청구명세서 자료 기반의 자체 분석 결과로, 건강보험심사평가원의 공식 평가결과와 산출기준 및 결과값이 다를 수 있습니다.
-									</div>
-							    </div>
-							</div>
-
-		                    <div class="card" id="view_container" style="display: none;">
-								<div class="card-header11">
-		                    	<!-- PDF 저장 버튼 -->
-									<div class="text-end me-4 mt-2">
-									    <button onclick="downloadPDF()" class="btn btn-sm btn-danger">📄 PDF 저장</button>
-									</div>
-									
-									<!-- 보고서 영역 -->
-									<div class="report-container" id="reportArea">
-									
-									    <!-- 로고 + 제목 -->
-									    <div class="d-flex justify-content-between align-items-start mb-4">
-    									    <!-- 왼쪽 로고 -->
-										    <div>
-										        <img src="/images/winct/wincheck.jpg" alt="로고" class="logo">
-										    </div>
-										    <!-- 중앙 텍스트 -->
-										    <div class="text-center">
-										        
-										        <div id="reportTitle"  class="report-title"></div>
-										        <div id="reportPeriod" class="report-period"></div>
-										        
-										    </div>
-										
-										    <!-- 오른쪽 여백 -->
-										    <div style="width:120px;"></div>
+										<label class="col-2 col-sm-2 col-form-label text-left  mb-3"></label>
+										<div class="col-sm-2 col-sm-2">
+											<button id="formBtnSave"
+												class="btn btm-xs btn-outline-primary  mb-3"
+												style="padding: 2px 15px; font-size: 12px; line-height: 2.3; font-weight: bold;"
+												onClick="fn_Update()">
+												저장하기........· <i class="far fa-save"></i>
+											</button>
 										</div>
-									
-										<div class="score-box-container d-flex justify-content-between mb-4">
-										    <div class="score-box text-center">
-										        <h3>구조영역</h3>
-										        <label id="strScore" class="score-label"></label>
-										        
-										    </div>
-										    <div class="score-box text-center">
-										        <h3>진료영역</h3>
-										        <label id="medScore" class="score-label"></label>
-										    </div>
-										    <div class="score-box text-center">
-										        <h3>종합점수</h3>
-										        <label id="totScore" class="score-label red"></label>
-										    </div>
-										</div>
-									
-									    <!-- 지표 테이블 -->
-									    <table class="data-table" id="viewIndicator">
-									        <thead>
-									        <tr>
-									            <th>지표명칭</th>
-									            <th>가중치</th>
-									            <th>분모</th>
-									            <th>분자</th>
-									            <th class="highlight-cell">현황값</th>
-									            <th class="highlight-cell">결과</th>
-									        </tr>
-									        </thead>
-									        <tbody></tbody>
-									    </table>
+										<label class="col-4 col-sm-4 col-form-label text-left  mb-3"></label>
+
 									</div>
 								</div>
-								<!-- PDF 저장 스크립트 -->
-								<script>
+								<table id="viewTable"
+									class="display nowrap stripe hover cell-border order-column responsive">
+
+								</table>
+								<!-- 저장된 분기 목록 그리드 (차등제 01~04 화면 전용) — 행 클릭 시 위 폼에 적용. 화면 넘치면 좌우 스크롤 -->
+								<div id="grdListWrap"
+									style="display: none; overflow-x: auto; margin-top: auto; min-height: 245px; border: 1px solid #e6e8eb; border-radius: 6px;">
+									<table id="grdList"
+										class="table table-sm table-bordered text-center mb-0"
+										style="width: 100%; min-width: 900px; font-size: 14px; white-space: nowrap; table-layout: auto;">
+										<thead style="background: #f4f6f8;">
+											<tr>
+												<th>신고분기</th>
+												<th>주기</th>
+												<th>차수</th>
+												<th>목표점수</th>
+												<th>병원등급</th>
+												<th>평균환자수</th>
+												<th>의사수</th>
+												<th>간호사수</th>
+												<th>간호인력수</th>
+												<th>약사재직일수</th>
+												<th>수정일시</th>
+												<th>삭제</th>
+											</tr>
+										</thead>
+										<tbody id="grdListBody"></tbody>
+									</table>
+								</div>
+								<!-- 분석 문구 — 모든 카테고리 그리드 하단 + 약사재직일수율(01~04) 입력폼 하단 공통 표시 -->
+								<div id="indiNoticeText"
+									style="margin-top: 12px; padding: 10px 14px; font-size: 13px; color: #555; line-height: 1.7; background: #fafbfc; border: 1px solid #e6e8eb; border-radius: 6px;">
+									- 항정처방률은 타 기관의 상병 구성 및 평균 처방률 자료 확인이 불가하여,시스템 산출 PI값은 실제 평가결과와
+									차이가 있을 수 있으므로 참고용으로 활용하시기 바랍니다.<br> - 청구명세서 미업로드 시 항정처방률
+									대상자 확인 및 HbA1c 분모 산정에 차이가 발생하여 최종 결과와 다를 수 있습니다.<br> - 본
+									점수는 청구명세서 자료 기반의 자체 분석 결과로, 건강보험심사평가원의 공식 평가결과와 산출기준 및 결과값이 다를
+									수 있습니다.
+								</div>
+							</div>
+						</div>
+
+						<div class="card" id="view_container" style="display: none;">
+							<div class="card-header11">
+								<!-- PDF 저장 버튼 -->
+								<div class="text-end me-4 mt-2">
+									<button onclick="downloadPDF()" class="btn btn-sm btn-danger">📄
+										PDF 저장</button>
+								</div>
+
+								<!-- 보고서 영역 -->
+								<div class="report-container" id="reportArea">
+
+									<!-- 로고 + 제목 -->
+									<div
+										class="d-flex justify-content-between align-items-start mb-4">
+										<!-- 왼쪽 로고 -->
+										<div>
+											<img src="/images/winct/wincheck.jpg" alt="로고" class="logo">
+										</div>
+										<!-- 중앙 텍스트 -->
+										<div class="text-center">
+
+											<div id="reportTitle" class="report-title"></div>
+											<div id="reportPeriod" class="report-period"></div>
+
+										</div>
+
+										<!-- 오른쪽 여백 -->
+										<div style="width: 120px;"></div>
+									</div>
+
+									<div
+										class="score-box-container d-flex justify-content-between mb-4">
+										<div class="score-box text-center">
+											<h3>구조영역</h3>
+											<label id="strScore" class="score-label"></label>
+
+										</div>
+										<div class="score-box text-center">
+											<h3>진료영역</h3>
+											<label id="medScore" class="score-label"></label>
+										</div>
+										<div class="score-box text-center">
+											<h3>종합점수</h3>
+											<label id="totScore" class="score-label red"></label>
+										</div>
+									</div>
+
+									<!-- 지표 테이블 -->
+									<table class="data-table" id="viewIndicator">
+										<thead>
+											<tr>
+												<th>지표명칭</th>
+												<th>가중치</th>
+												<th>분모</th>
+												<th>분자</th>
+												<th class="highlight-cell">현황값</th>
+												<th class="highlight-cell">결과</th>
+											</tr>
+										</thead>
+										<tbody></tbody>
+									</table>
+								</div>
+							</div>
+							<!-- PDF 저장 스크립트 -->
+							<script>
 								function loadEvaluationData() {
 							        
 							        $.ajax({
@@ -565,15 +790,15 @@
 				        }
 								        doc.save(hospnm + ' 적정성평가_종합보고서.pdf');
 								    }
-								</script>		                    
-		                    </div>
-		                </div>    
-					</div>            
-            	</div>
-        	</div>
-    	</div>
-    </div>
-    
+								</script>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 <script type="text/javascript">
 
@@ -3846,7 +4071,7 @@ function fn_ViewData(data) {
 
 
 
-</script>	
+</script>
 
 <!-- ============================================================== -->
 <!-- DataTable 설정 Start -->
@@ -4698,7 +4923,7 @@ function dataLoad(data, callback, settings) {
 		                // 헤더 문구 — 다음월 대상자 수 표기 + 적정범위 초과 환자가 1명이라도 있으면 확인 안내와 설명을 덧붙인다.
 		                cntNote = '다음월 당화혈색소 대상자 총 : ' + next_Cnt + '건'
 		                        + (over_Cnt > 0
-		                           ? '&nbsp;<span style="color:red; font-weight:bold; font-size:11px; white-space:nowrap;">[적정범위 초과환자 확인필요] * 적정범위를 초과한 대상자가 있을때 (입원 3개월미만대상자 포함)</span>'
+		                           ? '&nbsp;<span style="color:red; font-weight:bold; font-size:12px; white-space:nowrap;">[적정범위 초과환자 확인필요]*적정범위 초과한 대상자가 있을때(입원 3개월미만 대상자 포함)</span>'
 		                           : '');
 		                
 		                // 제목+안내를 한 줄로 유지(줄바꿈 시 '46건'이 잘려 보이는 문제) — 앞 여백 축소 + nowrap
@@ -4782,13 +5007,14 @@ function dataLoad(data, callback, settings) {
 
 </script>
 <!-- 환자평가표 조회 모달 (공용) — 호출은 모두 런타임이므로 이 위치 로드로 충분 -->
-<script type="text/javascript" src="/js/winmc/patvalModal.js?v=20260719002"></script>
+<script type="text/javascript"
+	src="/js/winmc/patvalModal.js?v=20260719002"></script>
 <!-- ============================================================== -->
 <!-- DataTable 설정 End -->
 <!-- ============================================================== -->
 
 
-	  
+
 <script type="text/javascript">
 
 // =====================================================================
