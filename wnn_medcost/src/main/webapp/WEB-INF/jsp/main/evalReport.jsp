@@ -73,8 +73,12 @@
   .swal2-popup.er-swal{ padding:10px 16px !important; border-radius:6px; }
   .swal2-popup.er-swal .swal2-title{ font-size:1.05em !important; padding:2px 0 1px !important; margin-top:4px !important; color:#3a4250; }
   .swal2-popup.er-swal .swal2-html-container{ font-size:.92em !important; margin:6px 0 0 !important; color:#525a68; line-height:1.5; }
-  .swal2-popup.er-swal .swal2-icon{ width:44px; height:44px; margin:6px auto 12px !important; }
-  .swal2-popup.er-swal .swal2-icon .swal2-icon-content{ font-size:1.5em; }
+  /* 아이콘 축소 — 상자(width/height)만 줄이면 안 된다.
+     swal2 아이콘은 상자만 5em(=80px)이고 내부(체크선·X선·원호)는 전부 em 좌표라
+     상자를 44px 로 줄여도 선은 80px 기준 자리에 그대로 그려진다. 그래서 원 밖으로
+     삐져나오고 두 선이 서로 겹쳐 ✕ 처럼 보였다(2026-07-22 '승인 완료' 체크표시 깨짐).
+     라이브러리가 주는 --swal2-icon-zoom 으로 내부까지 통째로 줄인다. 80px × .55 = 44px. */
+  .swal2-popup.er-swal .swal2-icon{ --swal2-icon-zoom:.55; margin:6px auto 12px !important; }
   .swal2-popup.er-swal .swal2-actions{ margin-top:10px; gap:8px; }
   .swal2-popup.er-swal .swal2-styled{ font-size:.9em !important; padding:7px 16px !important; border-radius:5px; box-shadow:none !important; }
   /* PDF 미리보기 모달(.er-modal z-index:1300)·토스트(2000) 위로 — 확인창이 모달 뒤로 깔리지 않게 */
@@ -138,6 +142,11 @@
     background:var(--er-paper); box-shadow:0 6px 26px rgba(28,45,72,.14); border-radius:4px; margin:0 auto;
     padding:14mm 15mm; overflow:hidden; }
   #evalReport.er-paged .er-autobody{ overflow:hidden; }
+  /* A4 복제본 안의 의무기록 그림 — 세로가 페이지를 넘지 않게 상한을 둔다.
+     넘치면 아래가 잘려 사라지므로, 폭 축소(erShrinkToFit)와 함께 이중으로 막는다 */
+  #evalReport.er-paged .er-autobody img{ max-height:250mm; object-fit:contain; }
+  /* 그림 사이 여백을 줄여 한 장에 더 담기게(빈 공간 낭비 방지) */
+  #evalReport.er-paged .er-autobody .er-mrbody img{ margin-bottom:6px; }
   #evalReport.er-paged .er-autopage.er-cover-page{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
   #evalReport.er-paged .er-doc{ gap:16px; }
   #evalReport.er-paged .er-autopage .er-sec{ margin-top:0; }
@@ -147,6 +156,94 @@
 
   /* 편집 */
   #evalReport .er-editable{ outline:none; border-radius:4px; transition:.12s; }
+  /* ===== Ⅵ. 의무기록 점검 결과 — 외부 문서 붙여넣기 영역 ===== */
+  /* 편집용 UI(툴바)는 화면에서만 — 인쇄·PDF·미리보기에서는 감춘다 */
+  #evalReport .er-noprint{ display:none; }
+  #evalReport.er-editmode .er-noprint{ display:block; }
+  #evalReport.er-preview .er-noprint{ display:none !important; }
+  /* ※ display:flex 를 무조건 주면 안 된다 — 위 .er-noprint{display:none} 과 우선순위가 같은데
+        이 규칙이 뒤에 있어 숨김을 항상 이겨서, 편집을 꺼도 툴바가 그대로 보였다(2026-07-22). */
+  #evalReport .er-mrbar{ display:none; align-items:center; gap:8px; flex-wrap:wrap;
+                         background:#f4f7fb; border:1px dashed #b9c9de; border-radius:8px; padding:8px 12px; margin-bottom:10px; }
+  #evalReport.er-editmode .er-mrbar{ display:flex; }
+  #evalReport.er-preview .er-mrbar{ display:none !important; }
+  #evalReport .er-mrhint{ font-size:12px; color:#5b6b80; margin-right:auto; }
+  #evalReport .er-zoom{ display:inline-flex; align-items:center; gap:2px; }
+  #evalReport .er-zoom .er-btn{ padding:3px 8px; min-width:30px; }
+  #evalReport .er-zoom .er-zoomlbl{ min-width:58px; font-variant-numeric:tabular-nums; }
+  /* 붙인 내용 — 원본 서식(표·굵기·색)은 그대로 두고 폭만 넘치지 않게 한다 */
+  #evalReport .er-mrbody{ min-height:60px; }
+  #evalReport.er-editmode .er-mrbody{ min-height:120px; border:1px dashed #cfd8e6; border-radius:8px; padding:8px; }
+  #evalReport .er-mrph{ padding:18px; text-align:center; color:#5b6b80; font-size:12.5px; line-height:1.9;
+                        background:#f7fbff; border:1px dashed #b9c9de; border-radius:8px; margin-bottom:8px; }
+  #evalReport .er-mrbody table{ max-width:100%; border-collapse:collapse; }
+  #evalReport .er-mrbody img{ max-width:100%; height:auto; display:block; margin:0 auto 10px; }
+  /* 그림 개별 크기조절 — 편집 중에만 클릭 대상임을 알린다 */
+  #evalReport.er-editmode .er-mrbody img{ cursor:pointer; }
+  #evalReport.er-editmode .er-mrbody img:hover{ outline:1px dashed #b9c9de; outline-offset:2px; }
+  /* 선택 표시도 얇게 — 손잡이가 선 위에 얹히는 편집기 느낌 */
+  #evalReport .er-mrbody img.er-imgsel{ outline:1.5px solid var(--er-navy); outline-offset:1px; }
+  /* ⤓ 새 장에서 시작 — 인쇄·PDF에서 이 그림 앞에서 페이지를 끊는다 */
+  #evalReport .er-mrbody img.er-pgbreak{ break-before:page; page-break-before:always; margin-top:14px; }
+  /* 편집 중에는 어디서 끊기는지 점선으로 보여준다(인쇄에는 안 나감) */
+  #evalReport.er-editmode .er-mrbody img.er-pgbreak{ border-top:2px dashed #c8342f; padding-top:10px; }
+  @media print { #evalReport .er-mrbody img.er-pgbreak{ border-top:none; padding-top:0; } }
+  #evalReport .er-imgbar{ position:fixed; z-index:1400; transform:translateX(-50%);
+                          display:flex; gap:3px; align-items:center; background:#fff;
+                          border:1px solid var(--er-line); border-radius:8px; padding:4px 6px;
+                          box-shadow:0 6px 20px rgba(31,42,55,.22); }
+  #evalReport .er-imgbar .er-btn{ padding:3px 8px; min-width:30px; }
+  #evalReport .er-imgbar .er-zoomlbl{ min-width:52px; text-align:center; font-variant-numeric:tabular-nums; }
+  /* 크기조절 손잡이 3개 — 모서리(비율유지) · 오른쪽(가로) · 아래(세로).
+     문서 편집기(구글독스·워드)와 같은 작고 단정한 흰 사각 점.
+     예전엔 22px 남색 덩어리 + 흰 테두리라 표 위에 얹히면 투박했다(2026-07-22). */
+  .er-hnd{ position:fixed; z-index:1600; box-sizing:border-box; width:10px; height:10px;
+           background:#fff; border:1.5px solid var(--er-navy); border-radius:2px;
+           box-shadow:0 1px 3px rgba(31,56,100,.30);
+           transition:transform .12s ease, background .12s ease; }
+  /* 보기는 10px 로 작게, 잡히는 범위는 넉넉하게 — 작아서 못 잡는 일이 없도록 */
+  .er-hnd::before{ content:''; position:absolute; inset:-7px; }
+  .er-hnd:hover, .er-hnd:active{ background:var(--er-navy); transform:scale(1.3); }
+  #er-imgHandle { cursor:nwse-resize; }
+  #er-imgHandleW{ cursor:ew-resize; }
+  #er-imgHandleH{ cursor:ns-resize; }
+  /* 편집 UI는 인쇄·PDF캡처에 절대 찍히면 안 된다 — 모든 경로를 막는다.
+     ※ er-noprint 는 평소엔 숨지만 er-editmode 에서 display:block 으로 되살아난다.
+        편집을 켠 채로 캡처·인쇄되면 그게 그대로 찍히므로 여기서 다시 눌러 둔다. */
+  @media print { .er-hnd, #er-imgBar, #er-cropModal { display:none !important; }
+                 #evalReport .er-noprint { display:none !important; } }
+  body.er-capturing #evalReport .er-noprint { display:none !important; }
+  #evalReport.er-pdfcap ~ .er-hnd, #evalReport.er-pdfcap ~ #er-imgBar { display:none !important; }
+  body.er-capturing .er-hnd, body.er-capturing #er-imgBar, body.er-capturing #er-cropModal { display:none !important; }
+  body.er-capturing #evalReport .er-mrbody img.er-imgsel{ outline:none !important; }
+  body.er-capturing #evalReport.er-editmode .er-mrbody{ border:none !important; padding:0 !important; }
+  #evalReport .er-mrbody td, #evalReport .er-mrbody th{ word-break:break-word; }
+  /* ↔ 폭맞춤 — 아래한글 표는 고정폭이라 붙이면 오른쪽이 비는데, 켜면 본문 폭까지 늘린다 */
+  #evalReport .er-mrbody.er-mrfit table{ width:100% !important; }
+  #evalReport .er-mrbody.er-mrfit img{ width:100%; }
+  #evalReport .er-btn.er-on{ background:var(--er-navy); color:#fff; border-color:var(--er-navy); }
+  /* 잘라오기 창 */
+  /* 잘라오기 창 — 배경을 덮지 않는 '떠 있는 창'. 제목줄을 잡고 끌어 옮긴다.
+     듀얼모니터·보고서와 나란히 놓고 보려면 위치를 바꿀 수 있어야 한다(2026-07-22 요청). */
+  #er-cropModal{ position:fixed; inset:auto; z-index:1500; background:none; display:none; padding:0; }
+  #er-cropModal.er-open{ display:block; }
+  #er-cropModal .er-modal-box{ position:fixed; width:min(980px,88vw); height:min(820px,86vh); margin:0;
+                               box-shadow:0 18px 60px rgba(0,0,0,.45); border:1px solid #b9c9de; }
+  /* 버튼이 많아 한 줄에 안 들어가면 잘려서 '창으로 빼기' 가 안 보인다 → 줄바꿈 허용 */
+  #er-cropModal .er-modal-head{ cursor:move; user-select:none; flex-wrap:wrap; padding:9px 12px; }
+  #er-cropModal .er-modal-head .er-btn{ cursor:pointer; padding:4px 9px; font-size:12px; }
+  #er-cropModal .er-modal-actions{ flex-wrap:wrap; gap:5px; }
+  /* 하단 상태줄 — 안내 + 가끔 쓰는 기능(전체 넣기) */
+  #er-cropModal .er-cropfoot{ flex:0 0 auto; display:flex; align-items:center; gap:10px;
+                              padding:7px 12px; background:#f4f7fb; border-top:1px solid var(--er-line); }
+  #er-cropModal .er-crophint{ margin-right:auto; font-size:12px; color:#5b6b80; }
+  #er-cropModal .er-cropfoot .er-btn{ padding:4px 9px; font-size:12px; }
+  #er-cropTitle{ font-size:12.5px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #evalReport .er-cropbody{ overflow:auto; background:#3a3f45; padding:14px; display:block; text-align:center; }
+  #evalReport .er-cropwrap{ position:relative; display:inline-block; vertical-align:top; }
+  #evalReport .er-cropwrap canvas{ display:block; box-shadow:0 4px 18px rgba(0,0,0,.45);
+                                   cursor:crosshair; user-select:none; -webkit-user-drag:none; background:#fff; }
+  #evalReport .er-croprect{ position:absolute; border:2px dashed #ffd166; background:rgba(255,209,102,.18); pointer-events:none; }
   /* 편집 모드: 연한 배경 + 어두운 글자 강제(color) — 목표 뱃지 등 흰 글자 영역이 안 보이던 문제 방지 */
   #evalReport.er-editmode .er-editable{ box-shadow:inset 0 0 0 1px #bcd0ea; background:#f7fbff; color:var(--er-ink); cursor:text; }
   #evalReport.er-editmode .er-editable:focus{ box-shadow:inset 0 0 0 2px var(--er-navy2); background:#fff; color:var(--er-ink); }
@@ -279,6 +376,7 @@
     padding:15px 28px; border-radius:12px; font-size:14.5px; font-weight:700; box-shadow:0 12px 40px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:.2s; z-index:2000; text-align:center; max-width:90vw; }
   #evalReport .er-toast.er-show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
 
+
   /* ===== 첨부 PDF 미리보기 모달 ===== */
   #evalReport .er-modal{ position:fixed; inset:0; z-index:1300; background:rgba(16,22,29,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
   #evalReport .er-modal-box{ width:min(1320px,98vw); height:96vh; background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
@@ -364,7 +462,10 @@
     <!-- 이력 열람 진입 시: 어느 이력을 보는지(유형·작성자·시각) 표시 -->
     <span id="er-hstInfo" class="er-hstinfo" style="display:none;"></span>
     <span id="er-editTools" class="er-group">
-      <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요">✏️ 편집</button>
+      <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요 (Ⅵ 의무기록 장도 이때 나타납니다)">✏️ 편집</button>
+      <!-- '🩺 의무기록' 버튼은 뺐다(2026-07-22 요청) — 누르면 탐색기가 강제로 열려,
+           파일은 안 열고 넣어둔 그림만 손보려 할 때 걸리적거렸다. 편집켜기로 창구를 하나로 모은다:
+           편집을 켜면 erMrToggleSec 이 Ⅵ 장을 띄우고, 탐색기는 그 장의 [📂 탐색기 열기]로만 연다. -->
       <button id="er-btnSave" class="er-btn er-primary" onclick="erSave()" title="② 수정한 문구·점수를 저장합니다(DB)">💾 저장</button>
       <button id="er-btnApprove" class="er-btn er-good" onclick="erApprove()" title="③ 승인 — 그 시점 수치가 동결되고 거래처에 공개됩니다. 승인 후 ④ PDF첨부가 가능합니다.">✔ 승인</button>
       <span class="er-divider"></span>
@@ -578,7 +679,105 @@
           <p class="er-editable" data-key="sum_p5" style="margin:0;"></p>
         </div>
       </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════
+           Ⅵ. 의무기록 점검 결과 — 외부 작성분 붙여넣기 (2026-07-22 신설)
+             · 담당자가 간호기록·경과기록 원문을 직접 읽고 아래한글 등으로 작성한다.
+               우리 DB(평가표)만으로는 만들 수 없어 자동 생성이 불가하다.
+             · ★점검 항목·표 양식이 병원마다 다르고, 있을 수도 없을 수도 있다
+               → 시스템에 양식을 두지 않고 '붙여넣기 영역' 하나만 둔다.
+               아래한글·워드에서 표째 복사 → Ctrl+V 하면 서식 그대로 들어온다.
+             · 저장 = data-key="mr_body" innerHTML 통째 → 기존 저장 경로 그대로(서버 무변경).
+             · 내용이 없으면 섹션째 숨긴다(erMrToggleSec) — 빈 장이 인쇄되지 않게.
+           ═══════════════════════════════════════════════════════════════════ -->
+      <div class="er-sec" id="er-sec6">
+        <div class="er-eyebrow"><span class="er-rn">Ⅵ.</span><span class="er-stitle">의무기록 점검 결과</span></div>
+        <div class="er-fn er-editable" data-key="mr_intro" style="margin:0 0 12px;">평가표와 의무기록(간호기록·경과기록)을 대조하여 확인된 작성오류입니다. 아래 내용은 <b>평가표 수정</b> 및 <b>기록 보완</b>이 필요한 건으로, 수정 시 해당 지표 점수가 회복될 수 있습니다.</div>
+
+        <!-- ★붙여넣기 영역 — 점검 항목·양식이 병원마다 달라서 시스템에 양식을 못 박는다.
+             아래한글·워드에서 표째로 복사해 그대로 Ctrl+V. 서식(표·굵기·색)이 함께 붙는다.
+             전체가 하나의 편집영역(data-key=mr_body)이라 붙인 내용이 통째로 저장·복원된다. -->
+        <div class="er-noprint er-mrbar">
+          <span class="er-mrhint">아래한글·워드에서 <b>표째 복사</b> 후 아래 영역에 <b>Ctrl+V</b> · 그림은 <b>클릭</b>해서 크기 조절</span>
+          <span class="er-zoom">
+            <button type="button" class="er-btn" onclick="erMrZoom(-1)" title="붙인 내용 축소 (Ctrl+마우스휠도 됩니다)">➖</button>
+            <button type="button" class="er-btn er-zoomlbl" id="er-mrZoomLbl" onclick="erMrZoomReset()" title="클릭 → 100%로 되돌리기">100%</button>
+            <button type="button" class="er-btn" onclick="erMrZoom(1)" title="붙인 내용 확대">➕</button>
+          </span>
+          <button type="button" class="er-btn" onclick="erMrFit()" id="er-mrFitBtn" title="붙인 표를 본문 폭에 맞춰 늘립니다(오른쪽 빈 공간 제거)">↔ 폭맞춤</button>
+          <!-- '전체 비우기'는 뺐다(2026-07-22 요청) — 한 번에 다 날아가 사고가 나기 쉽고,
+               그림별 삭제(그림 클릭 → 🗑)와 실행취소로 충분하다. erMrClear 함수는 남겨둠. -->
+          <button type="button" class="er-btn" id="er-mrUndoBtn" onclick="erMrUndo()" title="방금 한 작업을 되돌립니다 (Ctrl+Z)" disabled>↩ 실행취소</button>
+          <!-- 탐색기는 '누를 때만' 열린다 — 파일은 안 열고 넣어둔 그림만 손보는 경우가 많다 -->
+          <button type="button" class="er-btn er-good" onclick="erMrPickFile()" title="PDF·이미지 파일을 열어 필요한 부분만 잘라 넣습니다">📂 탐색기 열기</button>
+        </div>
+        <!-- 안내문은 er-mrBody 밖에 둔다 — 안에 넣으면 저장 내용(mr_body)에 섞인다 -->
+        <div id="er-mrPh" class="er-mrph er-noprint" style="display:none">
+          위 <b>📂 탐색기 열기</b> 로 PDF·이미지를 열어 필요한 부분을 잘라 넣거나,<br>
+          아래한글·워드에서 <b>표째 복사</b> 후 이 아래를 클릭하고 <b>Ctrl+V</b> 하세요.
+        </div>
+        <div id="er-mrBody" class="er-editable er-mrbody" data-key="mr_body"></div>
+      </div>
+
       <div class="er-docfoot er-editable" data-key="footer">본 보고서는 WinCheck⁺ 시스템 산출값을 근거로 작성되었으며, 목표등급은 해당 병원의 설정값 기준입니다. 실제 평가결과는 심평원 최종 산정 기준 및 자료 확정 시점에 따라 달라질 수 있습니다.</div>
+    </div>
+  </div>
+
+  <!-- 넣은 그림 크기 조절바 — 그림을 클릭하면 그 위에 떠서 개별로 줄이고 늘린다 -->
+  <div id="er-imgBar" class="er-imgbar er-noprint" style="display:none">
+    <button class="er-btn" onclick="erImgSize(-5)" title="이 그림만 축소 (5%)">➖</button>
+    <span class="er-btn er-zoomlbl" id="er-imgSzLbl">100%</span>
+    <button class="er-btn" onclick="erImgSize(5)" title="이 그림만 확대 (5%)">➕</button>
+    <button class="er-btn" onclick="erImgRatio()" title="처음 넣었을 때의 크기·비율로 되돌립니다">↺ 원래대로</button>
+    <button class="er-btn" id="er-imgBrkBtn" onclick="erImgBreak()" title="이 그림부터 새 장(페이지)에서 시작합니다">⤓ 새 장에서</button>
+    <button class="er-btn" onclick="erImgDel()" title="이 그림 삭제" style="color:#c0392b">🗑</button>
+  </div>
+  <!-- 그림 크기조절 손잡이 3개 — 오른쪽(가로) · 아래(세로) · 모서리(비율유지).
+       ※ .er-noprint 를 붙이지 않는다 — 그 규칙은 display 를 강제로 바꿔 손잡이를 숨겨버린다.
+          인쇄 숨김은 @media print 로 따로 처리. -->
+  <div id="er-imgHandle"  class="er-hnd" style="display:none" title="끌어서 가로·세로 함께 조절 (비율 유지)"></div>
+  <div id="er-imgHandleW" class="er-hnd" style="display:none" title="좌우로 끌어 가로만 조절"></div>
+  <div id="er-imgHandleH" class="er-hnd" style="display:none" title="위아래로 끌어 세로만 조절"></div>
+
+  <!-- ✂ 파일에서 잘라오기 — ★반드시 보고서(.er-doc) 밖에 둔다.
+       안에 두면 A4 자동분할이 이 영역을 복제해 같은 id 가 둘이 되고,
+       코드가 숨겨진 원본을 잡아 캔버스·드래그가 먹지 않는다(2026-07-22 수정). -->
+  <input type="file" id="er-mrFile" accept="application/pdf,image/*" style="display:none">
+
+  <!-- 잘라오기 창 — PDF/이미지를 그려놓고 마우스로 영역을 끌어 선택 → 그 부분만 삽입 -->
+  <div id="er-cropModal" class="er-modal er-noprint" style="display:none">
+    <div class="er-modal-box" style="height:94vh">
+      <div class="er-modal-head">
+        <button class="er-btn er-good" onclick="erCropPopout()"
+                title="브라우저 밖 별도 창으로 뺍니다.&#10;다른 모니터로 옮기거나 크게 키워 보고서와 나란히 놓고 작업할 수 있습니다."
+                style="flex:0 0 auto;margin-right:8px">🗗 창으로 빼기 <b style="font-weight:700">(클릭하세요)</b></button>
+        <span id="er-cropTitle" title="이 줄을 잡고 끌면 창을 옮길 수 있습니다">✥ 마우스로 끌어 선택</span>
+        <span class="er-modal-actions">
+          <span id="er-cropPager" style="display:none">
+            <span class="er-btn er-zoomlbl" id="er-cropPgLbl" style="cursor:default" title="스크롤해서 원하는 페이지로 이동하세요">1 / 1</span>
+          </span>
+          <span class="er-zoom">
+            <button class="er-btn" onclick="erCropZoom(-1)" title="축소">➖</button>
+            <button class="er-btn er-zoomlbl" id="er-cropZoomLbl" onclick="erCropZoomFit()" title="클릭 → 창 높이에 맞추기">맞춤</button>
+            <button class="er-btn" onclick="erCropZoom(1)" title="확대 — 크게 보고 정확히 자를 때 (Ctrl+휠도 됩니다)">➕</button>
+          </span>
+          <button class="er-btn er-good" id="er-cropOk" onclick="erCropInsert()" disabled title="선택한 영역만 보고서에 넣습니다. 넣어도 이 창은 열려 있어 계속 잘라 넣을 수 있습니다">✔ 선택영역 넣기</button>
+          <button class="er-btn" onclick="erMrPickFile()" title="다른 파일 열기">📂 다른 파일</button>
+          <button class="er-btn" onclick="erCropClose()">✕ 닫기</button>
+        </span>
+      </div>
+      <!-- 전 페이지를 세로로 이어 붙인 캔버스 1장 — 페이지 버튼 없이 스크롤로 오간다 -->
+      <div class="er-modal-body er-cropbody" id="er-cropStage">
+        <div class="er-cropwrap" id="er-cropWrap">
+          <canvas id="er-cropCanvas"></canvas>
+          <div class="er-croprect" id="er-cropRect" style="display:none"></div>
+        </div>
+      </div>
+      <!-- '전체 넣기'는 뺐다(2026-07-22 요청) — 필요한 부분만 잘라 넣는 게 실제 사용 흐름이고,
+           전체를 넣으면 불필요한 장까지 들어가 다시 지워야 했다. erCropAll 함수는 남겨둠. -->
+      <div class="er-cropfoot">
+        <span class="er-crophint">💡 필요한 부분을 <b>마우스로 끌어</b> 선택 → <b>✔ 선택영역 넣기</b> · 여러 번 반복할 수 있습니다</span>
+      </div>
     </div>
   </div>
 
@@ -905,7 +1104,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!curYm){ toast('먼저 평가년월을 조회하세요.'); return; }
     var src = document.querySelector('#evalReport .er-doc');
     if(!src){ toast('내보낼 보고서 내용이 없습니다.'); return; }
-    if(editing) erToggleEdit();                                   // 편집 표시(파란 테두리) 제거 후 내보내기
+    _erEditOff();                                                 // 편집 표시(파란 테두리)·툴바 제거 후 내보내기
     // 워드·아래한글은 <style> 의 복합선택자(#evalReport .er-…)·flex/grid·그라데이션을 대부분 무시.
     //   → 라이브 DOM의 '계산된 스타일'을 클론에 인라인 style 로 옮겨(워드가 인라인은 잘 따름) 색·표 테두리·정렬 재현.
     var clone = src.cloneNode(true);
@@ -981,7 +1180,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   // 미리보기 — 작성 중인 보고서를 인쇄 형태(A4 지면)로 화면에서 확인. 편집 중이면 끄고 진입.
   window.erPreview = function(){
-    if(editing) erToggleEdit();
+    _erEditOff();
     el('evalReport').classList.add('er-preview');
     window.scrollTo(0,0);
   };
@@ -1016,9 +1215,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   function erCollectUnits(doc){
     var units=[];
+    /* Ⅵ 의무기록 — 넣은 내용이 없으면 '제목·안내문까지 통째로' 빼서 그 장이 아예 안 나오게 한다.
+       화면(display:none)만으로는 부족하다 — A4 분할은 원본을 복제하므로 숨김 여부를 보지 않아
+       빈 제목만 있는 장이 인쇄된다(2026-07-22). */
+    //   단, 편집 중에는 남겨둔다 — 붙여넣을 자리가 있어야 하니까. 인쇄·PDF는 편집을 끈 상태로 만든다.
+    var skipMr = !_mrHasContent() && !editing;
     Array.prototype.forEach.call(doc.querySelectorAll(':scope > .er-srcpage'), function(pg){
       if(pg.classList.contains('er-cover')) return;   // 표지는 별도 처리
       Array.prototype.forEach.call(pg.children, function(top){
+        if(top.id==='er-sec6' && skipMr) return;      // Ⅵ 의무기록 — 넣은 내용 없으면 장째 제외
         if(!top.classList || !top.classList.contains('er-sec')){
           units.push({ nodes:[top], keep:false });    // 섹션 밖 요소(docfoot 등)도 포함
           return;
@@ -1041,6 +1246,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
             }
           } else if(id==='er-sec4Body'){   // Ⅳ: 권고 카드 각각
             Array.prototype.forEach.call(ch.children, function(k){ units.push({ nodes:[k], keep:false }); });
+          } else if(id==='er-mrBody'){
+            /* Ⅵ 의무기록 — 붙인 그림·표를 하나씩 흐름단위로 쪼갠다.
+               그래야 그림 하나가 통째로 한 장에 들어가고, '⤓ 새 장에서'(er-pgbreak) 표시가 있으면
+               그 그림부터 새 장에서 시작한다(2026-07-22). */
+            Array.prototype.forEach.call(ch.children, function(k){
+              units.push({ nodes:[k], keep:false, hardBreak:!!(k.classList && k.classList.contains('er-pgbreak')) });
+            });
           } else {
             units.push({ nodes:[ch], keep:ch.classList.contains('er-subh') });
           }
@@ -1066,6 +1278,22 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
   function erRemoveUnit(u){ if(u._clones) u._clones.forEach(function(c){ c.remove(); }); u._clones=[]; }
 
+  /* 한 장에 안 들어가는 그림을 페이지 안쪽으로 줄인다.
+     .er-autobody 는 overflow:hidden 이라 넘치는 부분이 '잘려 사라진다' —
+     잘라온 표가 반쯤 잘리면 읽을 수 없으므로, 들어갈 때까지 폭을 낮춘다.
+     ※ 복제본(A4 미리보기)만 줄인다. 원본(mr_body)의 사용자 지정 크기는 건드리지 않는다. */
+  function erShrinkToFit(body, maxH){
+    var imgs=body.querySelectorAll('img'); if(!imgs.length) return;
+    for(var step=0; step<14 && body.scrollHeight > maxH+1; step++){
+      Array.prototype.forEach.call(imgs, function(im){
+        var w=parseFloat(im.style.width);
+        if(!w){ w = im.getBoundingClientRect().width / (body.clientWidth||1) * 100; }
+        im.style.width = Math.max(12, w*0.92) + '%';
+        if(im.style.height && im.style.height!=='auto') im.style.height='auto';   // 비율 유지로 되돌림
+      });
+    }
+  }
+
   window.erPaginate = function(){
     var root=el('evalReport'), doc=erDoc(); if(!doc) return;
     erTagSrcPages();
@@ -1086,7 +1314,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     units.forEach(function(u){
       // 섹션(Ⅰ~Ⅴ) 헤더: 현재 장의 남은 공간이 45% 미만이면 새 장에서 시작,
       // 충분히 남았으면(직전 섹션 꼬리만 있는 거의 빈 장 등) 같은 장에 간격 두고 이어붙임
-      if(u.newPage && body.children.length){
+      // 사용자가 '⤓ 새 장에서' 로 지정한 것 = 남은 공간과 무관하게 무조건 새 장에서 시작
+      if(u.hardBreak && body.children.length){ body=erNewPage(doc); maxH=erCapacity(body); }
+      else if(u.newPage && body.children.length){
         var remain = maxH - body.scrollHeight;
         if(remain < maxH*0.45){ body=erNewPage(doc); maxH=erCapacity(body); }
       }
@@ -1095,10 +1325,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var onlyThis = (body.children.length <= u.nodes.length);
       if(overflow && !onlyThis){                         // 넘치면 다음 페이지로
         erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
+        onlyThis = true; overflow = body.scrollHeight > maxH+1;
       } else if(u.keep && !onlyThis && (maxH - body.scrollHeight) < 130){
         // 라벨·소제목이 페이지 맨 아래에 홀로 남지 않게 다음 페이지로 넘김
         erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
       }
+      /* ★혼자서도 한 장을 넘는 그림 = 잘려서 사라진다(.er-autobody 는 overflow:hidden).
+         페이지에 들어갈 때까지 그림을 줄인다. 잘라온 표는 통째로 보여야 읽을 수 있다(2026-07-22). */
+      if(overflow && onlyThis) erShrinkToFit(body, maxH);
     });
     erSetCloneEditable();   // 편집 중 재분할 시 편집 가능 상태 유지
   };
@@ -1154,7 +1388,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         if(seq !== _pdfSeq) return;                       // 이미 닫혔거나 새로 열림 → 무시
         if(_pdfObjUrl) URL.revokeObjectURL(_pdfObjUrl);   // 이전 URL 은 지금(새로 열 때) 정리
         _pdfObjUrl = URL.createObjectURL(new Blob([b], { type:'application/pdf' }));
-        el('er-pdfFrame').src = _pdfObjUrl;
+        _erPdfApplyZoom();                            // 배율(#zoom) 프래그먼트를 붙여 src 설정
         el('er-pdfLoading').style.display = 'none';
       })
       .catch(function(e){
@@ -1225,6 +1459,645 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   function editables(){ return document.querySelectorAll('#evalReport .er-editable[data-key]'); }
 
+  /* ── Ⅵ. 의무기록 점검 결과 — 담당자 수기 입력 (2026-07-22) ─────────────────
+     ★점검 항목은 달마다 달라진다(유치도뇨관·욕창·배뇨 외에 다른 항목이 생길 수 있음).
+       그래서 항목을 고정하지 않고 '소제목 + 표' 묶음을 추가·삭제·개명할 수 있게 했다.
+     저장 = 컨테이너(#er-mrBody[data-key=mr_body]) innerHTML 통째로 →
+       기존 경로(collectTexts/saveEvalReport)를 그대로 타므로 서버·DB 변경이 없다.
+       항목 구성 자체가 그 달 보고서에 함께 저장된다. */
+  function _mrHasContent(){
+    var b=el('er-mrBody'); if(!b) return false;
+    return !!(b.querySelector('table,img,p,div,li') || (b.textContent||'').trim());
+  }
+  /* ★내용이 있을 때만 Ⅵ 섹션을 보인다(2026-07-22 확정).
+     점검 항목·양식은 병원마다 다르고 있을 수도 없을 수도 있다 → 시스템에 양식을 두지 않는다.
+     편집 중에는 붙여넣어야 하므로 항상 보이고, 보기·인쇄에서만 숨긴다. */
+  function erMrToggleSec(){
+    var sec=el('er-sec6'); if(!sec) return;
+    var show = _mrHasContent() || editing;
+    sec.style.display = show ? '' : 'none';
+    /* 비었을 때 편집 중이면 '여기에 넣으세요' 안내를 띄운다 —
+       빈 칸만 있으면 어디에 붙여야 할지 알 수 없다. 안내는 내용이 아니므로 저장에 안 섞이게 별도 요소로 둔다. */
+    var b=el('er-mrBody'), ph=el('er-mrPh');
+    if(ph) ph.style.display = (editing && b && !_mrHasContent()) ? 'block' : 'none';
+  }
+  /* ── 되돌리기 (2026-07-22) ────────────────────────────────────────────────
+     '비우기'는 이 장을 통째로 지운다. 여러 장 넣다가 마지막 하나만 취소하고 싶을 때
+     쓸 수 없어, 넣기 직전 상태를 쌓아두고 한 단계씩 되돌린다. */
+  var _mrUndo = [];
+  function _mrSnap(){                                   // 바꾸기 직전 상태 저장
+    var b=el('er-mrBody'); if(!b) return;
+    _mrUndo.push(b.innerHTML);
+    if(_mrUndo.length>20) _mrUndo.shift();              // 오래된 것부터 버림(메모리 보호)
+    _mrUndoSync();
+  }
+  function _mrUndoSync(){
+    var u=el('er-mrUndoBtn'); if(u) u.disabled = !_mrUndo.length;
+  }
+  /* 크기조절(➖➕ 연타)용 스냅샷 — 같은 동작이 1.2초 안에 이어지면 한 단계로 묶는다.
+     클릭마다 쌓으면 ➖ 열 번에 실행취소도 열 번이라 되돌리기가 고역이고 20칸이 금방 찬다. */
+  var _mrSnapKey='', _mrSnapAt=0;
+  function _mrSnapOnce(key){
+    var now=Date.now();
+    if(key===_mrSnapKey && (now-_mrSnapAt)<1200){ _mrSnapAt=now; return; }
+    _mrSnapKey=key; _mrSnapAt=now; _mrSnap();
+  }
+  window.erMrUndo = function(){
+    if(!_mrCanEdit(false)) return;                 // 편집켜기 상태에서만 작동
+    if(!_mrUndo.length) return;
+    var b=el('er-mrBody'); if(!b) return;
+    b.innerHTML=_mrUndo.pop();
+    _mrSnapKey='';                               // 묶음 초기화 — 되돌린 직후의 조절은 새 단계로
+    _mrDeselect(); _mrUndoSync(); markDirty(); erMrToggleSec();
+    try{ erPaginate(); }catch(e){}
+    toast('되돌렸습니다.');
+  };
+  /* F5·창닫기 보호 — 편집분이 미저장(dirty)이면 브라우저 확인창을 띄운다.
+     그림을 잔뜩 넣고 저장 전에 무심코 F5 → 전부 소실되는 사고 방지(2026-07-22). */
+  window.addEventListener('beforeunload', function(ev){
+    if(!_erDirty || _erReadonly) return;
+    ev.preventDefault(); ev.returnValue='';   // 표준 — 문구는 브라우저 기본 확인창이 표시
+  });
+  // Ctrl+Z — 의무기록 영역에서만
+  document.addEventListener('keydown', function(ev){
+    if(!(ev.ctrlKey && (ev.key==='z'||ev.key==='Z'))) return;
+    var b=el('er-mrBody'); if(!b || !editing) return;
+    if(!ev.target || !ev.target.closest || !ev.target.closest('#er-mrBody, .er-mrbar')) return;
+    if(!_mrUndo.length) return;
+    ev.preventDefault(); erMrUndo();
+  });
+
+  window.erMrClear = function(){
+    var b=el('er-mrBody'); if(!b) return;
+    var n=b.querySelectorAll('img').length, t=b.querySelectorAll('table').length;
+    var what=[]; if(n) what.push('그림 '+n+'개'); if(t) what.push('표 '+t+'개');
+    if(!what.length && !(b.textContent||'').trim()){ toast('지울 내용이 없습니다.'); return; }
+    erConfirm('<b>이 장의 내용을 모두 지웁니다.</b><br>'
+      + (what.length ? '<span style="color:#c0392b">'+what.join(' · ')+'</span> 가 사라집니다.<br>' : '')
+      + '<span style="color:#8a97a3;font-size:12px">하나만 취소하려면 ↩ 실행취소를, 그림 하나만 지우려면 그림을 클릭해 🗑 을 쓰세요.</span>',
+      function(){
+        _mrSnap();                                      // 비우기도 되돌릴 수 있게
+        b.innerHTML=''; _mrDeselect(); markDirty(); erMrToggleSec();
+        try{ erPaginate(); }catch(e){}
+        toast('비웠습니다. ↩ 실행취소로 되돌릴 수 있습니다.');
+      }, { title:'전체 비우기', icon:'warning', yes:'모두 지우기' });
+  };
+
+  /* ── 붙인 내용 확대/축소 ───────────────────────────────────────────────
+     아래한글·워드에서 복사한 표는 원본 글자크기가 제각각이라 그대로 붙으면
+     너무 크거나 작다. 원본 서식은 건드리지 않고 zoom 으로만 배율을 준다
+     (transform:scale 은 뒤 여백이 남아 A4 분할이 어긋난다 — zoom 은 레이아웃도 같이 줄어든다). */
+  var _mrZoom = 100, _MR_ZMIN = 30, _MR_ZMAX = 200, _MR_ZSTEP = 5;   // 5%씩
+  function _erMrApplyZoom(){
+    var b=el('er-mrBody'); if(b) b.style.zoom = (_mrZoom/100);
+    var lb=el('er-mrZoomLbl'); if(lb) lb.textContent = _mrZoom + '%';
+    try{ erPaginate(); }catch(e){}                        // 배율이 바뀌면 A4 장수도 달라진다
+  }
+  window.erMrZoom = function(d){
+    _mrZoom=Math.min(_MR_ZMAX, Math.max(_MR_ZMIN, _mrZoom + d*_MR_ZSTEP));
+    _erMrApplyZoom(); markDirty();
+  };
+  window.erMrZoomReset = function(){ _mrZoom=100; _erMrApplyZoom(); markDirty(); };
+  // Ctrl + 휠 = 붙인 내용 확대/축소 (그 영역 위에서만)
+  document.addEventListener('wheel', function(ev){
+    if(!ev.ctrlKey) return;
+    var b=el('er-mrBody'); if(!b || !ev.target || !ev.target.closest) return;
+    if(!ev.target.closest('#er-mrBody') && !ev.target.closest('.er-mrbar')) return;
+    ev.preventDefault(); erMrZoom(ev.deltaY<0 ? 1 : -1);
+  }, { passive:false });
+
+  // 붙여넣기 직후 — 섹션 표시·페이지 재분할. 서식은 그대로 두고(원본 표 모양 유지) 폭만 넘치지 않게 한다
+  function _erMrBindPaste(){
+    var b=el('er-mrBody'); if(!b || b._mrBound) return; b._mrBound=1;
+    b.addEventListener('paste', function(){
+      _mrSnap();                                 // 붙여넣기 직전 상태 저장
+      setTimeout(function(){ markDirty(); erMrToggleSec(); try{ erPaginate(); }catch(e){} }, 30);
+    });
+    b.addEventListener('input', function(){ erMrToggleSec(); });
+  }
+  // ↔ 폭맞춤 — 아래한글 표는 고정폭이라 붙이면 오른쪽이 빈다. 켜면 본문 폭까지 늘린다
+  window.erMrFit = function(){
+    var b=el('er-mrBody'); if(!b) return;
+    var on=b.classList.toggle('er-mrfit');
+    var btn=el('er-mrFitBtn'); if(btn) btn.classList.toggle('er-on', on);
+    markDirty(); try{ erPaginate(); }catch(e){}
+  };
+
+  /* ── 📂 파일에서 잘라오기 (2026-07-22) ────────────────────────────────────
+     PDF·이미지를 화면에 그려놓고 마우스로 영역을 끌어 그 부분만 그림으로 넣는다.
+     아래한글 원본을 통째로 옮기기 어렵거나(서식 깨짐) 일부만 필요할 때 쓴다.
+     PDF 는 pdf.js 로 페이지를 캔버스에 렌더 → 같은 캔버스에서 잘라낸다(2배 확대 렌더로 선명도 확보). */
+  var _crop = { canvas:null, ctx:null, img:null, pdf:null, page:1, pages:1, sx:0, sy:0, ex:0, ey:0, on:false, has:false };
+  window.erMrPickFile = function(){
+    if(!_mrCanEdit(false)) return;                 // 편집켜기 상태에서만 — 툴바와 같은 잠금
+    el('er-mrFile').value=''; el('er-mrFile').click();
+  };
+
+  /* 상단 '🩺 의무기록' 버튼과 erMrGo 는 뺐다(2026-07-22 요청).
+     탐색기를 강제로 열어서, 파일은 안 열고 넣어둔 그림만 손보려 할 때 방해가 됐다.
+     이제 창구는 '✏️ 편집' 하나 — 편집을 켜면 erMrToggleSec 이 Ⅵ 장을 띄우고,
+     탐색기는 그 장의 [📂 탐색기 열기] 를 눌렀을 때만 열린다. */
+
+  /* 창 열기 — 위치는 지난번 자리를 기억한다(듀얼모니터에서 매번 옮기지 않게).
+     처음에는 화면 오른쪽에 붙여 띄운다: 왼쪽 보고서를 보면서 잘라 넣는 흐름. */
+  var _cropPos = null;
+  function _cropOpen(){
+    var m=el('er-cropModal'), box=m.querySelector('.er-modal-box');
+    _mrDeselect();                                   // 그림 손잡이가 창 위에 겹쳐 뜨지 않게
+    m.classList.add('er-open'); m.style.display='block';
+    if(!_cropPos){
+      var w=box.offsetWidth||900, h=box.offsetHeight||600;
+      _cropPos={ left:Math.max(8, window.innerWidth-w-24), top:Math.max(8, (window.innerHeight-h)/2) };
+    }
+    _cropClamp(); _cropPlace();
+  }
+  function _cropPlace(){
+    var box=el('er-cropModal').querySelector('.er-modal-box');
+    box.style.left=_cropPos.left+'px'; box.style.top=_cropPos.top+'px';
+  }
+  /* 창이 화면 밖으로 나가 제목줄(=이동 손잡이)과 버튼을 못 잡는 일을 막는다.
+     ★왼쪽으로는 절대 넘기지 않는다 — 넘기면 제목줄 왼쪽이 잘려 '창으로 빼기' 버튼이 사라진다. */
+  function _cropClamp(){
+    var box=el('er-cropModal').querySelector('.er-modal-box');
+    var w=box.offsetWidth||900, h=box.offsetHeight||600;
+    _cropPos.left=Math.min(Math.max(0, _cropPos.left), Math.max(0, window.innerWidth  - w));
+    _cropPos.top =Math.min(Math.max(0, _cropPos.top ), Math.max(0, window.innerHeight - h));
+  }
+  window.erCropClose = function(){
+    var m=el('er-cropModal'); m.classList.remove('er-open'); m.style.display='none';
+    _crop.pdf=null; _crop.img=null; _crop.tops=null;
+  };
+  // 제목줄 드래그 = 창 이동
+  (function bindCropDrag(){
+    var m=el('er-cropModal'); if(!m) return;
+    var head=m.querySelector('.er-modal-head'); if(!head) return;
+    var dg=false, ox=0, oy=0;
+    head.addEventListener('mousedown', function(ev){
+      if(ev.target.closest('button')) return;              // 버튼 클릭은 이동 아님
+      dg=true; ox=ev.clientX-_cropPos.left; oy=ev.clientY-_cropPos.top; ev.preventDefault();
+    });
+    document.addEventListener('mousemove', function(ev){
+      if(!dg) return; _cropPos.left=ev.clientX-ox; _cropPos.top=ev.clientY-oy; _cropClamp(); _cropPlace();
+    });
+    document.addEventListener('mouseup', function(){ dg=false; });
+    window.addEventListener('resize', function(){ if(_cropPos){ _cropClamp(); _cropPlace(); } });
+  })();
+
+  /* 표시 배율 — 캔버스 원본 픽셀은 그대로 두고 CSS 폭만 바꾼다.
+     원본을 크게 유지해야 잘라낸 그림이 선명하고, 표시만 줄이면 창 안에서 보기 편하다.
+     0 = 창 높이에 맞춤(자동). */
+  var _cropZoom = 65, _CROP_ZMIN = 20, _CROP_ZMAX = 300, _CROP_ZSTEP = 5;   // 기본 65% · 5%씩 조절
+  function _cropApplyZoom(){
+    var c=el('er-cropCanvas'), st=el('er-cropStage'); if(!c || !c.width) return;
+    var z=_cropZoom;
+    if(!z){                                                    // 맞춤 = 창 높이에 들어가는 배율
+      var avail=Math.max(120, st.clientHeight-28);
+      z=Math.max(10, Math.min(100, Math.floor(avail/c.height*100)));
+    }
+    c.style.width=Math.round(c.width*z/100)+'px'; c.style.height='auto';
+    var lb=el('er-cropZoomLbl'); if(lb) lb.textContent = _cropZoom ? (_cropZoom+'%') : '맞춤';
+    _cropReset();
+  }
+  window.erCropZoom = function(d){
+    var cur=_cropZoom||100;                                  // '맞춤' 상태에서 누르면 100% 기준으로
+    _cropZoom=Math.min(_CROP_ZMAX, Math.max(_CROP_ZMIN, cur + d*_CROP_ZSTEP));
+    _cropApplyZoom();
+  };
+  window.erCropZoomFit = function(){ _cropZoom=0; _cropApplyZoom(); };
+
+  function _cropDrawImage(img){
+    var c=el('er-cropCanvas');
+    c.width=img.width; c.height=img.height;                    // 원본 해상도 그대로 보관
+    c.getContext('2d').drawImage(img,0,0);
+    _cropApplyZoom();
+  }
+  /* PDF 전 페이지를 세로로 이어 붙여 캔버스 1장으로 만든다.
+     페이지 버튼으로 오가면 '5p 표 + 6p 표'처럼 걸친 부분을 한 번에 못 자른다.
+     한 장으로 이으면 스크롤만으로 어디든 가고, 페이지 경계를 넘겨 잘라낼 수도 있다. */
+  var _CROP_SC = 2.5, _CROP_GAP = 16;                          // 2.5배 렌더 = 잘라낸 그림이 흐리지 않게
+  function _cropRenderPdfAll(){
+    if(!_crop.pdf) return;
+    var pdf=_crop.pdf, n=pdf.numPages, vps=[], tot=0, maxW=0;
+    el('er-cropTitle').textContent='✂ 페이지를 그리는 중… ('+n+'장)';
+    var chain=Promise.resolve();
+    for(var i=1;i<=n;i++){
+      (function(pn){ chain=chain.then(function(){
+        return pdf.getPage(pn).then(function(pg){
+          var vp=pg.getViewport({ scale:_CROP_SC });
+          vps.push({ pg:pg, vp:vp, y:tot });
+          tot += Math.ceil(vp.height) + _CROP_GAP; maxW=Math.max(maxW, Math.ceil(vp.width));
+        });
+      }); })(i);
+    }
+    chain.then(function(){
+      var c=el('er-cropCanvas'); c.width=maxW; c.height=Math.max(1, tot-_CROP_GAP);
+      var g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height);
+      var seq=Promise.resolve();
+      vps.forEach(function(o, idx){
+        seq=seq.then(function(){
+          g.save(); g.translate(Math.round((maxW-o.vp.width)/2), o.y);           // 폭 다르면 가운데
+          return o.pg.render({ canvasContext:g, viewport:o.vp }).promise.then(function(){
+            g.restore();
+            if(idx < vps.length-1){                                             // 페이지 경계선
+              g.fillStyle='#c8ccd2'; g.fillRect(0, o.y+o.vp.height+_CROP_GAP/2-1, c.width, 2); g.fillStyle='#fff';
+            }
+            el('er-cropTitle').textContent='✂ 페이지를 그리는 중… ('+(idx+1)+'/'+vps.length+')';
+          });
+        });
+      });
+      return seq.then(function(){
+        _crop.tops = vps.map(function(o){ return o.y; });
+        el('er-cropPgLbl').textContent='1 / '+vps.length;
+        el('er-cropTitle').textContent='✂ '+(_crop.name||'')+' — 필요한 부분을 마우스로 끌어 선택하세요 (스크롤로 이동)';
+        _cropApplyZoom();
+        _cropBindScrollPage();
+      });
+    }).catch(function(){ erSwal('error','PDF 페이지를 그리지 못했습니다.',{title:'오류'}); });
+  }
+  // 스크롤 위치로 '몇 번째 장을 보고 있는지' 표시만 갱신
+  function _cropBindScrollPage(){
+    var st=el('er-cropStage'), c=el('er-cropCanvas');
+    if(!st || st._pgBound) return; st._pgBound=1;
+    st.addEventListener('scroll', function(){
+      if(!_crop.tops || !_crop.tops.length || !c.height) return;
+      var ratio=c.getBoundingClientRect().height/c.height;           // 표시배율
+      var mid=(st.scrollTop + st.clientHeight/2)/ratio;
+      var p=1; for(var i=0;i<_crop.tops.length;i++){ if(mid >= _crop.tops[i]) p=i+1; }
+      el('er-cropPgLbl').textContent = p+' / '+_crop.tops.length;
+    });
+  }
+  function _cropReset(){ _crop.has=false; el('er-cropRect').style.display='none'; el('er-cropOk').disabled=true; }
+
+  el('er-mrFile').addEventListener('change', function(){
+    var f=this.files && this.files[0]; if(!f) return;
+    el('er-cropPager').style.display='none';
+    if(f.type==='application/pdf'){
+      if(!window.pdfjsLib){ erSwal('error','PDF 표시 라이브러리(pdf.js)를 불러오지 못했습니다. 이미지로 저장한 뒤 시도해 주세요.',{title:'오류'}); return; }
+      f.arrayBuffer().then(function(buf){
+        pdfjsLib.getDocument({ data:buf }).promise.then(function(pdf){
+          _crop.pdf=pdf; _crop.pages=pdf.numPages; _crop.name=f.name;
+          el('er-cropPager').style.display = pdf.numPages>1 ? '' : 'none';
+          _cropOpen(); _cropRenderPdfAll();          // 전 페이지를 한 장으로 이어 그린다
+        }).catch(function(){ erSwal('error','PDF를 열지 못했습니다.',{title:'오류'}); });
+      });
+    } else if(/^image\//.test(f.type)){
+      var img=new Image();
+      img.onload=function(){ el('er-cropTitle').textContent='✂ '+f.name+' — 필요한 부분을 마우스로 끌어 선택하세요';
+                             _cropOpen(); _cropDrawImage(img); URL.revokeObjectURL(img.src); };
+      img.src=URL.createObjectURL(f);
+    } else erSwal('warning','PDF 또는 이미지 파일만 열 수 있습니다.');
+  });
+
+  // 캔버스 위에서 드래그 = 영역 선택
+  (function bindCrop(){
+    var wrap=el('er-cropWrap'), c=el('er-cropCanvas'), r=el('er-cropRect');
+    if(!wrap||!c) return;
+    function pos(ev){ var b=c.getBoundingClientRect(); return { x:ev.clientX-b.left, y:ev.clientY-b.top }; }
+    function draw(){
+      var x=Math.min(_crop.sx,_crop.ex), y=Math.min(_crop.sy,_crop.ey);
+      var w=Math.abs(_crop.ex-_crop.sx), h=Math.abs(_crop.ey-_crop.sy);
+      r.style.cssText='position:absolute;left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;'
+                    + 'border:2px dashed #ffd166;background:rgba(255,209,102,.18);pointer-events:none;display:block';
+    }
+    c.addEventListener('mousedown', function(ev){
+      ev.preventDefault();                       // 캔버스 드래그가 '이미지 끌기'로 새지 않게
+      var p=pos(ev); _crop.on=true; _crop.sx=_crop.ex=p.x; _crop.sy=_crop.ey=p.y; draw();
+    });
+    // 캔버스를 벗어나도 이어지게 document 에 건다(가장자리까지 선택할 때 필요)
+    document.addEventListener('mousemove', function(ev){
+      if(!_crop.on) return; ev.preventDefault(); var p=pos(ev); _crop.ex=p.x; _crop.ey=p.y; draw();
+    });
+    document.addEventListener('mouseup', function(){
+      if(!_crop.on) return; _crop.on=false;
+      var w=Math.abs(_crop.ex-_crop.sx), h=Math.abs(_crop.ey-_crop.sy);
+      _crop.has = (w>8 && h>8); el('er-cropOk').disabled = !_crop.has;
+      if(!_crop.has) r.style.display='none';
+    });
+    c.addEventListener('dragstart', function(ev){ ev.preventDefault(); });
+    // Ctrl + 휠 = 확대/축소
+    el('er-cropStage').addEventListener('wheel', function(ev){
+      if(!ev.ctrlKey) return; ev.preventDefault(); erCropZoom(ev.deltaY<0 ? 1 : -1);
+    }, { passive:false });
+  })();
+
+  /* 잘라낸 조각의 '실제 크기'에 맞춰 초기 폭을 정한다(2026-07-22).
+     무조건 100%로 넣으면 작게 잘라낸 조각까지 본문 폭 가득 늘어나 글자가 뭉개진다.
+     A4 본문 폭 ≒ 180mm ≒ 680px 기준으로, 원본 픽셀이 그보다 작으면 그 비율만큼만. */
+  function _mrInitWidth(px){
+    var base = 680 * (_CROP_SC/2);               // 2.5배 렌더분 보정
+    return Math.min(100, Math.max(25, Math.round(px/base*100)));
+  }
+  function _mrAppendImg(dataUrl, natW){
+    var b=el('er-mrBody'); if(!b) return null;
+    _mrSnap();                                   // 넣기 직전 상태 저장 → ↩ 실행취소로 하나씩 되돌림
+    var im=document.createElement('img');
+    im.src=dataUrl; im.alt='의무기록 점검 내용'; im.className='er-mrimg';
+    var w0=_mrInitWidth(natW||680);
+    im.style.width=w0+'%';
+    im.setAttribute('data-w0', w0);              // ↺ 원래대로 의 기준 — mr_body innerHTML 에 같이 저장된다
+    b.appendChild(im); return im;
+  }
+  function _cropInsertCanvas(cv){
+    var im=_mrAppendImg(cv.toDataURL('image/png'), cv.width);
+    markDirty(); erMrToggleSec();
+    try{ erPaginate(); }catch(e){}
+    // ★창을 닫지 않는다 — 5·6·7페이지를 이어서 잘라 넣을 때 매번 파일을 다시 고르는 불편을 없앤다
+    if(im) toast('넣었습니다 ('+_mrImgW(im)+'%). 창은 열어두었으니 이어서 잘라 넣으세요.');
+    _cropReset();
+  }
+
+  /* ── 넣은 그림 개별 크기 조절 (2026-07-22) ────────────────────────────────
+     영역 전체 배율(➖100%➕)과 별개로, 그림 하나하나를 다른 크기로 둘 수 있어야 한다
+     (표 하나는 크게, 참고 그림은 작게 등). 그림을 클릭하면 그 그림 위에 조절바가 뜬다. */
+  var _mrSelImg = null;
+  /* 그림을 만질 수 있는 상태인가 — 본문 글자와 똑같은 잠금 규칙을 적용한다.
+     승인된 보고서는 er-btnEdit 이 잠기지만 그림은 클릭만으로 조절바가 떠서
+     크기변경·삭제가 됐다(2026-07-22). 승인취소해야 손댈 수 있게 막는다. */
+  function _mrCanEdit(quiet){
+    if(_erReadonly){ if(!quiet) erSwal('info','읽기전용(이력 열람)입니다.'); return false; }
+    if(approved){ if(!quiet) erSwal('warning','승인된 보고서는 수정할 수 없습니다.\n↩ 승인취소 후 진행하세요.'); return false; }
+    if(!editing){ if(!quiet) erSwal('info','✎ 편집을 켠 뒤 수정할 수 있습니다.'); return false; }
+    return true;
+  }
+  function _mrImgW(im){ return Math.round(parseFloat(im.style.width) || 100); }
+  window.erImgSize = function(d){
+    if(!_mrSelImg) return;
+    if(!_mrCanEdit(false)) return;
+    _mrSnapOnce('size');                         // 크기조절도 ↩ 실행취소 대상(2026-07-22)
+    var w=Math.min(100, Math.max(20, _mrImgW(_mrSelImg)+d));
+    _mrSelImg.style.width=w+'%';
+    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=w+'%';
+    markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
+  };
+  /* ⤓ 새 장에서 시작 (2026-07-22) — 그림 앞에서 페이지를 끊는다.
+     표 여러 개를 넣으면 A4 경계에 걸쳐 두 장에 나뉘어 읽기 나쁘다.
+     이 표시가 있는 그림은 항상 새 장 맨 위에서 시작한다.
+     클래스로만 표시하므로 mr_body innerHTML 에 그대로 저장된다(서버 무변경). */
+  window.erImgBreak = function(){
+    if(!_mrSelImg) return;
+    if(!_mrCanEdit(false)) return;
+    _mrSnap();                                   // 되돌리기 대상
+    var on=_mrSelImg.classList.toggle('er-pgbreak');
+    var b=el('er-imgBrkBtn'); if(b) b.classList.toggle('er-on', on);
+    markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
+    toast(on ? '이 그림부터 새 장에서 시작합니다.' : '새 장 시작을 해제했습니다.');
+  };
+  /* ↺ 원래대로 — 넣었을 때의 크기·비율로 되돌린다.
+     예전엔 style.height 만 'auto' 로 지웠는데, 세로를 안 건드리고 가로만 늘린 경우에는
+     height 가 이미 auto 라 눌러도 아무 일이 없었다("비율복원 안됩니다", 2026-07-22).
+     이제 넣을 때 기록해 둔 data-w0(처음 폭 %)까지 되돌리고, 무엇을 했는지 알려준다. */
+  window.erImgRatio = function(){
+    if(!_mrSelImg) return;
+    if(!_mrCanEdit(false)) return;
+    _mrSnap();                                   // 되돌리기 대상
+    var im=_mrSelImg, changed=false;
+    if(im.style.height && im.style.height!=='auto'){ im.style.height='auto'; changed=true; }
+    im.removeAttribute('height'); im.removeAttribute('width');   // 붙여넣은 그림의 크기 속성도 정리
+    var w0=parseFloat(im.getAttribute('data-w0'));
+    if(!w0 && im.naturalWidth) w0=_mrInitWidth(im.naturalWidth); // 예전에 넣어 기록이 없는 그림
+    if(w0 && Math.abs(_mrImgW(im)-w0) >= 1){ im.style.width=Math.round(w0)+'%'; changed=true; }
+    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(im)+'%';
+    if(!changed){ _mrUndo.pop(); _mrUndoSync(); toast('이미 처음 넣었을 때의 크기입니다.'); return; }   // 방금 쌓은 무의미 스냅샷 회수
+    markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
+    toast('처음 크기('+_mrImgW(im)+'%)·비율로 되돌렸습니다.');
+  };
+  /* 그림 선택 해제 — 조절바·손잡이를 모두 감춘다.
+     잘라오기 창이나 별도 창을 띄우면 그 위에 손잡이가 겹쳐 떠 있어 방해된다(2026-07-22). */
+  function _mrDeselect(){
+    if(_mrSelImg){ _mrSelImg.classList.remove('er-imgsel'); _mrSelImg=null; }
+    var ib=el('er-imgBar'); if(ib) ib.style.display='none';
+    ['er-imgHandle','er-imgHandleW','er-imgHandleH'].forEach(function(id){
+      var h=el(id); if(h) h.style.display='none';
+    });
+  }
+  window.erImgDel = function(){
+    if(!_mrSelImg) return;
+    if(!_mrCanEdit(false)) return;
+    erConfirm('이 그림을 지우시겠습니까?', function(){
+      _mrSnap();                                 // ↩ 실행취소로 되살릴 수 있게
+      _mrSelImg.remove(); _mrDeselect();
+      markDirty(); erMrToggleSec(); try{ erPaginate(); }catch(e){}
+      toast('지웠습니다. ↩ 실행취소로 되돌릴 수 있습니다.');
+    }, { title:'그림 삭제', icon:'warning', yes:'삭제' });
+  };
+  function _mrPlaceImgBar(){
+    var bar=el('er-imgBar'); if(!bar || !_mrSelImg) return;
+    var r=_mrSelImg.getBoundingClientRect();
+    bar.style.display='flex';
+    bar.style.left=Math.round(r.left+r.width/2)+'px';
+    bar.style.top =Math.round(Math.max(8, r.top-40))+'px';
+    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(_mrSelImg)+'%';
+    var bb=el('er-imgBrkBtn');                                  // '새 장에서' 눌림 상태 반영
+    if(bb) bb.classList.toggle('er-on', _mrSelImg.classList.contains('er-pgbreak'));
+    _mrPlaceHandle();
+  }
+  /* ── 마우스로 끌어 크기 조절 (2026-07-22) ─────────────────────────────────
+     그림 오른쪽 아래에 손잡이를 띄우고 끌면 폭이 바뀐다. 버튼(➖➕)보다 직관적이고
+     원하는 크기에 한 번에 맞출 수 있다. 폭(%)만 바꾸고 높이는 auto — 비율이 유지된다. */
+  function _mrPlaceHandle(){
+    var hC=el('er-imgHandle'), hW=el('er-imgHandleW'), hH=el('er-imgHandleH');
+    if(!hC) return;
+    var hide=function(){ [hC,hW,hH].forEach(function(x){ if(x) x.style.display='none'; }); };
+    if(!_mrSelImg){ hide(); return; }
+    var r=_mrSelImg.getBoundingClientRect();
+    if(r.width<2 || r.bottom<0 || r.top>window.innerHeight){ hide(); return; }   // 화면 밖
+    /* 그림이 화면보다 길면 오른쪽 아래가 화면 밖으로 나가 손잡이를 잡을 수 없다.
+       → 보이는 범위 안으로 끌어와 항상 잡히게 한다(2026-07-22). */
+    var vb=Math.min(r.bottom, window.innerHeight-6);         // 보이는 아래끝
+    var vr=Math.min(r.right,  window.innerWidth -6);         // 보이는 오른쪽끝
+    var vmid=(Math.max(r.top,0)+vb)/2;                        // 보이는 세로 중앙
+    /* 손잡이는 10px 정사각 — 선택 테두리 '위에 걸치게' 절반(5px)만 당긴다. */
+    var HH=5;
+    hC.style.display='block';                                 // 오른쪽 아래 모서리 = 비율유지
+    hC.style.left=Math.round(Math.max(4, vr-HH))+'px';
+    hC.style.top =Math.round(Math.max(4, vb-HH))+'px';
+    // 그림이 짧으면 '오른쪽 가운데'와 '모서리'가 겹쳐 지저분해진다 → 겹칠 땐 감춘다
+    if(hW){ hW.style.display=(vb-vmid < 16) ? 'none' : 'block';
+      hW.style.left=Math.round(Math.max(4, vr-HH))+'px';
+      hW.style.top =Math.round(Math.max(4, vmid-HH))+'px'; }
+    if(hH){ hH.style.display='block';                         // 아래 가운데 = 세로 조절
+      hH.style.left=Math.round(Math.max(4, (Math.max(r.left,0)+vr)/2-HH))+'px';
+      hH.style.top =Math.round(Math.max(4, vb-HH))+'px'; }
+  }
+  /* 손잡이 3개 — 모서리(비율유지) / 오른쪽(가로만) / 아래(세로만).
+     가로는 부모 폭 대비 %, 세로는 px 로 준다(폭이 바뀌어도 지정한 높이가 유지되게).
+     mode: 'wh' | 'w' | 'h' */
+  function _bindHnd(id, mode){
+    var h=el(id); if(!h) return;
+    var on=false, x0=0, y0=0, w0=0, h0=0, box0=1;
+    h.addEventListener('mousedown', function(ev){
+      if(!_mrSelImg) return;
+      if(!_mrCanEdit(false)){ _mrDeselect(); return; }   // 승인됨/읽기전용이면 끌어도 안 바뀐다
+      _mrSnap();                                         // 드래그 한 번 = 실행취소 한 단계
+      ev.preventDefault(); ev.stopPropagation();
+      on=true; x0=ev.clientX; y0=ev.clientY;
+      var r=_mrSelImg.getBoundingClientRect(); w0=r.width; h0=r.height;
+      var p=_mrSelImg.parentNode;
+      box0=(p && p.clientWidth) ? p.clientWidth : w0;
+      document.body.style.userSelect='none';
+    });
+    document.addEventListener('mousemove', function(ev){
+      if(!on || !_mrSelImg) return;
+      if(mode!=='h'){                                        // 가로
+        var w=Math.max(40, w0 + (ev.clientX-x0));
+        var pct=Math.min(100, Math.max(15, Math.round(w/box0*100)));
+        _mrSelImg.style.width=pct+'%';
+        var lb=el('er-imgSzLbl'); if(lb) lb.textContent=pct+'%';
+        if(mode==='wh') _mrSelImg.style.height='auto';       // 모서리 = 비율 유지
+      }
+      if(mode==='h'){                                        // 세로만
+        var hh=Math.max(30, h0 + (ev.clientY-y0));
+        _mrSelImg.style.height=Math.round(hh)+'px';
+      }
+      _mrPlaceImgBar();
+    });
+    document.addEventListener('mouseup', function(){
+      if(!on) return; on=false; document.body.style.userSelect='';
+      markDirty(); try{ erPaginate(); }catch(e){}             // 크기 확정 후 A4 재분할
+    });
+  }
+  _bindHnd('er-imgHandle','wh'); _bindHnd('er-imgHandleW','w'); _bindHnd('er-imgHandleH','h');
+  function _mrBindImgSelect(){
+    var b=el('er-mrBody'); if(!b || b._imgBound) return; b._imgBound=1;
+    b.addEventListener('click', function(ev){
+      var im=(ev.target && ev.target.tagName==='IMG') ? ev.target : null;
+      // 승인·읽기전용·편집꺼짐이면 아예 선택되지 않는다(조절바·손잡이도 안 뜬다)
+      if(im && !_mrCanEdit(false)){ _mrDeselect(); return; }
+      if(_mrSelImg) _mrSelImg.classList.remove('er-imgsel');
+      _mrSelImg=im;
+      if(im){ im.classList.add('er-imgsel'); _mrPlaceImgBar(); }
+      else _mrDeselect();
+    });
+    // 스크롤·리사이즈하면 조절바 위치도 따라간다
+    window.addEventListener('scroll', function(){ if(_mrSelImg) _mrPlaceImgBar(); }, true);
+    window.addEventListener('resize', function(){ if(_mrSelImg) _mrPlaceImgBar(); });
+  }
+  window.erCropInsert = function(){
+    if(!_crop.has) return;
+    var c=el('er-cropCanvas'), b=c.getBoundingClientRect();
+    // 화면에서 끈 좌표(표시 픽셀) → 캔버스 원본 픽셀. 배율이 걸려 있으므로 반드시 보정한다
+    var rx=c.width/b.width, ry=c.height/b.height;
+    var x=Math.min(_crop.sx,_crop.ex)*rx, y=Math.min(_crop.sy,_crop.ey)*ry;
+    var w=Math.abs(_crop.ex-_crop.sx)*rx, h=Math.abs(_crop.ey-_crop.sy)*ry;
+    var out=document.createElement('canvas'); out.width=Math.max(1,Math.round(w)); out.height=Math.max(1,Math.round(h));
+    out.getContext('2d').drawImage(c, x, y, w, h, 0, 0, out.width, out.height);
+    _cropInsertCanvas(out);
+  };
+  /* 전체 넣기 — PDF 여러 장이면 '장별로 잘라' 여러 그림으로 넣는다.
+     한 장짜리 긴 그림으로 넣으면 A4 분할 때 중간이 잘려 읽을 수 없다. */
+  /* ── 🗗 창으로 빼기 (2026-07-22) ─────────────────────────────────────────
+     브라우저 안 떠 있는 창은 브라우저 영역 밖으로 못 나간다(듀얼모니터에 못 걸침).
+     그래서 window.open 으로 '진짜 별도 창'을 띄우고 캔버스를 그대로 옮겨 그린다.
+     그 창에서 영역을 끌어 선택 → postMessage 로 잘라낸 그림을 부모(이 화면)에 보낸다. */
+  var _cropWin=null;
+  window.erCropPopout = function(){
+    var c=el('er-cropCanvas'); if(!c || !c.width){ erSwal('warning','먼저 파일을 여세요.'); return; }
+    var w=window.open('', 'erCrop', 'width=1100,height=900,left=60,top=40,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes');
+    if(!w){ erSwal('warning','팝업이 차단되었습니다.<br>주소창 오른쪽의 <b>팝업 차단 아이콘</b>을 눌러 이 사이트의 팝업을 허용한 뒤 다시 시도해 주세요.',{title:'팝업 차단'}); return; }
+    _cropWin=w;
+    var tops=JSON.stringify(_crop.tops||[]), gap=_CROP_GAP, name=(_crop.name||'').replace(/</g,'');
+    w.document.write(
+      '<!doctype html><html><head><meta charset="utf-8"><title>✂ '+name+'</title><style>'
+      +'html,body{margin:0;height:100%;font-family:"맑은 고딕",Malgun Gothic,sans-serif;background:#3a3f45;color:#fff}'
+      +'#bar{position:sticky;top:0;z-index:5;display:flex;gap:6px;align-items:center;padding:8px 12px;background:#1f3864;font-size:13px}'
+      +'#bar b{margin-right:auto;font-weight:700}'
+      +'button{border:1px solid #7f93b5;background:#fff;color:#1f3864;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12.5px;font-weight:700}'
+      +'button:disabled{opacity:.45;cursor:default}'
+      +'#stage{overflow:auto;height:calc(100% - 76px);padding:12px;text-align:center}'
+      +'#foot{position:fixed;left:0;right:0;bottom:0;height:34px;display:flex;align-items:center;gap:10px;'
+      +'padding:0 12px;background:#f4f7fb;color:#5b6b80;font-size:12px;border-top:1px solid #d5dde8}'
+      +'#foot span{margin-right:auto}'
+      +'#wrap{position:relative;display:inline-block}'
+      +'canvas{display:block;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.5);cursor:crosshair;user-select:none}'
+      +'#rect{position:absolute;border:2px dashed #ffd166;background:rgba(255,209,102,.18);pointer-events:none;display:none}'
+      +'</style></head><body>'
+      +'<div id="bar"><b>✂ '+name+' — 필요한 부분을 마우스로 끌어 선택하세요</b>'
+      +'<button onclick="zoom(-1)">➖</button><span id="zl" style="min-width:52px;text-align:center">맞춤</span>'
+      +'<button onclick="zoom(1)">➕</button>'
+      +'<button id="ok" disabled onclick="sendSel()">✔ 선택영역 넣기</button>'
+      +'<button onclick="window.close()">✕ 닫기</button></div>'
+      +'<div id="stage"><div id="wrap"><canvas id="cv"></canvas><div id="rect"></div></div></div>'
+      +'<div id="foot"><span>💡 필요한 부분을 <b>마우스로 끌어</b> 선택 → <b>✔ 선택영역 넣기</b> · 여러 번 반복할 수 있습니다</span></div>'
+      +'<script>'
+      +'var TOPS='+tops+', GAP='+gap+', Z=65, ZMIN=20, ZMAX=300, ZS=5;'
+      +'var cv=document.getElementById("cv"), rc=document.getElementById("rect"), st=document.getElementById("stage");'
+      +'var sx=0,sy=0,ex=0,ey=0,on=false,has=false;'
+      +'function apply(){var z=Z; if(!z){var a=Math.max(120,st.clientHeight-24); z=Math.max(10,Math.min(100,Math.floor(a/cv.height*100)));}'
+      +'cv.style.width=Math.round(cv.width*z/100)+"px";cv.style.height="auto";'
+      +'document.getElementById("zl").textContent=Z?Z+"%":"맞춤";reset();}'
+      +'function zoom(d){Z=Math.min(ZMAX,Math.max(ZMIN,(Z||100)+d*ZS));apply();}'
+      +'function reset(){has=false;rc.style.display="none";document.getElementById("ok").disabled=true;}'
+      +'function pos(e){var b=cv.getBoundingClientRect();return{x:e.clientX-b.left,y:e.clientY-b.top};}'
+      +'function draw(){var x=Math.min(sx,ex),y=Math.min(sy,ey),w=Math.abs(ex-sx),h=Math.abs(ey-sy);'
+      +'rc.style.cssText="position:absolute;left:"+x+"px;top:"+y+"px;width:"+w+"px;height:"+h+"px;'
+      +'border:2px dashed #ffd166;background:rgba(255,209,102,.18);pointer-events:none;display:block";}'
+      +'cv.addEventListener("mousedown",function(e){e.preventDefault();var p=pos(e);on=true;sx=ex=p.x;sy=ey=p.y;draw();});'
+      +'document.addEventListener("mousemove",function(e){if(!on)return;var p=pos(e);ex=p.x;ey=p.y;draw();});'
+      +'document.addEventListener("mouseup",function(){if(!on)return;on=false;'
+      +'has=(Math.abs(ex-sx)>8&&Math.abs(ey-sy)>8);document.getElementById("ok").disabled=!has;if(!has)rc.style.display="none";});'
+      +'st.addEventListener("wheel",function(e){if(!e.ctrlKey)return;e.preventDefault();zoom(e.deltaY<0?1:-1);},{passive:false});'
+      +'function cut(x,y,w,h){var o=document.createElement("canvas");o.width=Math.max(1,Math.round(w));o.height=Math.max(1,Math.round(h));'
+      +'o.getContext("2d").drawImage(cv,x,y,w,h,0,0,o.width,o.height);return {d:o.toDataURL("image/png"),w:o.width};}'
+      +'function sendSel(){if(!has)return;var b=cv.getBoundingClientRect(),rx=cv.width/b.width,ry=cv.height/b.height;'
+      +'var o=cut(Math.min(sx,ex)*rx,Math.min(sy,ey)*ry,Math.abs(ex-sx)*rx,Math.abs(ey-sy)*ry);'
+      +'window.opener.postMessage({t:"erCrop",imgs:[o]},"*");reset();}'   /* 창은 그대로 — 이어서 잘라 넣는다 */
+      +'function sendAll(){var a=[];'
+      +'if(TOPS&&TOPS.length>1){for(var i=0;i<TOPS.length;i++){var y=TOPS[i],h=(i+1<TOPS.length?TOPS[i+1]-GAP:cv.height)-y;'
+      +'if(h>0)a.push(cut(0,y,cv.width,h));}}else a.push({d:cv.toDataURL("image/png"),w:cv.width});'
+      +'window.opener.postMessage({t:"erCrop",imgs:a},"*");}'
+      +'window.addEventListener("resize",function(){if(!Z)apply();});'
+      +'<\/script></body></html>');
+    w.document.close();
+    // 캔버스 내용을 새 창으로 복사 (문서가 준비된 뒤)
+    var tryDraw=function(){
+      var t=w.document.getElementById('cv');
+      if(!t){ setTimeout(tryDraw, 60); return; }
+      t.width=c.width; t.height=c.height;
+      t.getContext('2d').drawImage(c,0,0);
+      if(w.apply) w.apply();
+    };
+    tryDraw();
+    erCropClose();                                   // 안쪽 창은 닫는다 — 별도 창으로 옮겼으므로
+    _mrDeselect();                                   // 그림 손잡이도 정리(별도 창 위에 겹쳐 뜨지 않게)
+    toast('별도 창으로 열었습니다. 다른 모니터로 옮겨 쓰실 수 있습니다.');
+  };
+  // 별도 창에서 보낸 그림 받기 — 우리가 연 그 창에서 온 것만 받는다(다른 탭·사이트 메시지 무시)
+  window.addEventListener('message', function(ev){
+    if(!_cropWin || ev.source !== _cropWin) return;
+    var d=ev.data; if(!d || d.t!=='erCrop' || !d.imgs || !d.imgs.length) return;
+    d.imgs.forEach(function(o){ _mrAppendImg(o.d || o, o.w || 680); });   // 잘라낸 실제 폭에 맞춰 배치
+    markDirty(); erMrToggleSec(); try{ erPaginate(); }catch(e){}
+    toast(d.imgs.length+'장을 넣었습니다. 창은 열려 있으니 이어서 잘라 넣으세요.');
+  });
+
+  window.erCropAll = function(){
+    var c=el('er-cropCanvas'), tops=_crop.tops;
+    if(!tops || tops.length<2){ _cropInsertCanvas(c); return; }
+    erConfirm('전체 <b>'+tops.length+'장</b>을 각각 넣으시겠습니까?<br>'
+      + '<span style="color:#8a97a3;font-size:12px">장마다 그림 1개로 들어갑니다. 필요 없는 장은 넣은 뒤 🗑 로 지우면 됩니다.</span>',
+      function(){
+        for(var i=0;i<tops.length;i++){
+          var y=tops[i], h=(i+1<tops.length ? tops[i+1]-_CROP_GAP : c.height) - y;
+          if(h<=0) continue;
+          var out=document.createElement('canvas'); out.width=c.width; out.height=Math.round(h);
+          out.getContext('2d').drawImage(c, 0, y, c.width, h, 0, 0, out.width, out.height);
+          _mrAppendImg(out.toDataURL('image/png'), out.width);
+        }
+        markDirty(); erMrToggleSec(); erCropClose();   // 전체 넣기는 할 일이 끝났으므로 닫는다
+        try{ erPaginate(); }catch(e){}
+        toast(tops.length+'장을 넣었습니다. 그림을 클릭하면 크기 조절·삭제할 수 있습니다.');
+      }, { title:'전체 넣기', icon:'question', yes:'넣기' });
+  };
+
+  function erMrInit(){
+    _erMrBindPaste(); _mrBindImgSelect(); _mrDeselect();
+    _mrUndo=[]; _mrUndoSync();          // 다른 보고서를 열면 되돌리기 이력은 초기화
+    _erMrApplyZoom();      // 저장분이 있으면 그대로 두고 배율만 적용
+    var btn=el('er-mrFitBtn'), b=el('er-mrBody');
+    if(btn && b) btn.classList.toggle('er-on', b.classList.contains('er-mrfit'));
+    erMrToggleSec();
+  }
+
   // 문서 상태 = 승인됨 / 수정중·미저장(dirty) / 저장됨(DB저장 후 변경없음) / 신규·미저장(저장이력 없음)
   var _erSaved=false, _erDirty=false;
   function updateBadge(){
@@ -1245,20 +2118,37 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         ? '승인을 취소하면 다시 편집이 가능합니다(거래처 공개·PDF첨부 해제)'
         : '③ 승인 — 그 시점 수치가 동결되고 거래처에 공개됩니다. 승인 후 ④ PDF첨부가 가능합니다.';
       el('er-btnEdit').disabled = approved;
-      if(approved && editing) erToggleEdit();
+      if(approved) _erEditOff();   // 승인 순간 편집모드·그림 조절바·손잡이를 모두 거둔다
     }
     try{ updatePdfUi(); }catch(e){}   // 승인/승인취소에 따라 PDF첨부(재생성) 버튼 노출 갱신
   }
 
+  /* 편집 무조건 끄기 — erToggleEdit 은 맨 앞에서 approved/읽기전용이면 return 한다.
+     그래서 '승인 직후'와 'PDF 생성 직전'(PDF는 승인해야만 가능)에 erToggleEdit 을 불러도
+     편집모드가 안 꺼졌고, er-editmode 가 남은 채 캡처돼 📂파일에서 잘라오기 툴바가
+     PDF에 그대로 찍혔다(2026-07-22). 이 자리들은 이 함수를 쓴다. */
+  function _erEditOff(){
+    try{ _mrDeselect(); }catch(e){}
+    if(!editing) return;
+    editing=false;
+    el('evalReport').classList.remove('er-editmode');
+    try{ erMrToggleSec(); }catch(e){}
+    editables().forEach(function(e){ e.contentEditable='false'; });
+    var b=el('er-btnEdit'); if(b){ b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }
+    try{ erPaginate(); }catch(e){}
+  }
   window.erToggleEdit = function(){
     if(_erReadonly){ erSwal('info','이력 열람(읽기전용)입니다. 편집·저장·승인·PDF첨부는 목록에서 정상 진입해 주세요.'); return; }
     if(approved){ erSwal('warning','승인된 보고서는 편집할 수 없습니다. 승인 취소 후 편집하세요.'); return; }
     editing=!editing;
     el('evalReport').classList.toggle('er-editmode', editing);
+    erMrToggleSec();   // Ⅵ — 편집 중에는 비어 있어도 보여야 붙여넣을 수 있다
+    if(!editing) _mrDeselect();   // 편집 끄면 그림 선택·손잡이도 정리
     erPaginate();   // A4 분할 유지한 채 재분할 — 편집 종료 시 고친 문구 길이에 맞게 페이지 재배치
     editables().forEach(function(e){ e.contentEditable = editing?'true':'false'; });
     var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집끄기':'✏️ 편집켜기'; b.classList.toggle('er-on',editing);
-    if(editing) toast('편집 모드: 파란 영역의 문구를 직접 고칠 수 있습니다.');
+    // Ⅵ 는 편집을 켜야 나타난다 — 들어가는 길이 여기 하나뿐이라 안내에 같이 적는다
+    if(editing) toast('편집 모드: 파란 영역의 문구를 고치고, 맨 뒤 Ⅵ 의무기록 장에서 그림을 넣거나 크기를 조절할 수 있습니다.');
   };
 
   // ===== 서식 툴 (편집 모드 전용) — 답변 에디터(summernote) 구성 참조: B/I/U/지우개 + 글꼴 + 크기(px) + 색상 A▾.
@@ -1440,7 +2330,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var AUTO = {};
   function captureAuto(){
     AUTO = {};
-    editables().forEach(function(e){ AUTO[e.getAttribute('data-key')] = e.innerHTML; });
+    editables().forEach(function(e){
+      var k=e.getAttribute('data-key');
+      /* ★mr_body(Ⅵ 의무기록)는 절대 넣지 않는다 — 자동 생성 문구가 아니라 순수 사용자 자료다.
+         넣으면 재렌더 후 captureAuto 가 '넣어둔 그림'을 자동값으로 오인 → 저장에서 제외
+         → 서버가 DELETE 후 재INSERT 라 DB 행까지 지워져 F5 하면 통째로 사라졌다(2026-07-22). */
+      if(k==='mr_body') return;
+      AUTO[k] = e.innerHTML;
+    });
   }
 
   // Ⅴ 권장 개선 시나리오(원본 PDF 형식) — 부족분 상위 4개 자동:
@@ -2048,6 +2945,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         editables().forEach(function(e){ e.contentEditable='false'; });
         editing=false; el('evalReport').classList.remove('er-editmode');
         if(isWinner){ var b=el('er-btnEdit'); b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }
+        erMrInit();     // Ⅵ 의무기록 표 — 저장분이 없으면 '해당 없음' 안내행
         erPaginate();   // 문구 확정(자동/저장 override 반영) 후 A4 분할
         applyHstSnapshot();   // 이력 열람이면 그 시점 문구로 덮어써 재현
       },
@@ -2202,13 +3100,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!doc9){ erSwal('warning','보고서 내용이 없습니다. 먼저 조회하세요.'); return; }
     var pages = doc9.querySelectorAll('.er-page');
     if(!pages.length){ erSwal('warning','보고서 페이지가 없습니다.'); return; }
-    if(editing) erToggleEdit();
+    /* 편집 UI(툴바·그림 조절바·손잡이)가 그대로 캡처되면 PDF에 찍힌다 → 반드시 먼저 정리.
+       PDF는 승인 후에만 가능해서 erToggleEdit 은 여기서 안 먹는다 → _erEditOff 사용(2026-07-22). */
+    _erEditOff();
+    erCropClose();                                        // 잘라오기 창이 열려 있으면 닫는다
     toast('PDF 생성 중… 잠시만 기다려 주세요.');
     var _root = el('evalReport');
     _root.classList.add('er-pdfcap');                     // 편집영역 파란 하이라이트 제거(캡처용)
+    document.body.classList.add('er-capturing');          // 손잡이·조절바 숨김(보고서 밖에 있어 er-pdfcap 로는 안 잡힘)
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();   // 포커스 잔상 제거
     var prevZoom = _erZoom; _erZoom = 1; erApplyZoom();   // 배율 1(html2canvas 는 CSS zoom 미지원)
-    function restore(){ _root.classList.remove('er-pdfcap'); _erZoom=prevZoom; erApplyZoom(); }
+    function restore(){ _root.classList.remove('er-pdfcap'); document.body.classList.remove('er-capturing'); _erZoom=prevZoom; erApplyZoom(); }
     // ★ 각 .er-page(표지·Ⅰ·Ⅱ·…)를 따로 캡처해 A4 한 장씩 배치 → 섹션 헤더·카드가 페이지 경계에서 잘리지 않음.
     //   페이지가 A4보다 높으면 A4에 맞춰 축소(내용 잘림 없이 전체 표시). scale 1.5 + JPEG 로 속도·용량 최적화.
     var jsPDF = window.jspdf.jsPDF, pdf = new jsPDF('p','mm','a4');
@@ -2289,6 +3191,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }).catch(function(e){ restore(); erSwal('error','PDF 생성 오류: '+((e&&e.message)||e), {title:'오류'}); });
   };
 
+  function _erPdfApplyZoom(){ var f=el('er-pdfFrame'); if(f && _pdfObjUrl) f.src=_pdfObjUrl; }
+
   function _erShowGenPreview(){
     _pdfSeq++;                                             // 진행 중 서버 fetch 무효화
     el('er-pdfModalTitle').textContent = '📄 저장 전 미리보기 — ' + _erGenName;
@@ -2296,7 +3200,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-pdfLoading').style.display='none';
     if(_pdfObjUrl) URL.revokeObjectURL(_pdfObjUrl);
     _pdfObjUrl = URL.createObjectURL(_erGenBlob);
-    el('er-pdfFrame').src = _pdfObjUrl;
+    _erPdfApplyZoom();                                                               // 배율(#zoom) 프래그먼트를 붙여 src 설정
     el('er-pdfGenSaveBtn').style.display=''; el('er-pdfPickBtn').style.display='';   // 저장/파일선택 노출
     el('er-pdfModalReplace').style.display='none';                                   // 교체검색 숨김
     el('er-pdfModal').style.display='flex';
