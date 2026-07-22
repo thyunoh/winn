@@ -4438,13 +4438,23 @@ function fn_FindDataTable() {
 	    
 	    // 보기 버튼 클릭 이벤트
 	    $('#' + tableName.id + ' tbody').on('click', '.showbtn', function() {
-	    	
+
 	    	var data = dataTable.row($(this).parents('tr')).data();
 	    	// 여기에 보기 로직을 구현하세요
-	        
+
 	    	fn_ViewData(data);
 	    	showIndiSummary(data);
 
+	    });
+
+	    // 행 더블클릭 = 보기 (2026-07-22 요청) — 좁은 '보기' 버튼을 정확히 누르지 않아도 되게.
+	    //   보기 버튼이 없는 행(DUR 점검율·지역사회 복귀율·합계 등)은 그대로 무시.
+	    $('#' + tableName.id + ' tbody').on('dblclick', 'tr', function() {
+	    	if(!$(this).find('.showbtn').length) return;
+	    	var data = dataTable.row(this).data();
+	    	if(!data) return;
+	    	fn_ViewData(data);
+	    	showIndiSummary(data);
 	    });
 
 	    // 입력 버튼 클릭 이벤트
@@ -4923,7 +4933,7 @@ function dataLoad(data, callback, settings) {
 		                // 헤더 문구 — 다음월 대상자 수 표기 + 적정범위 초과 환자가 1명이라도 있으면 확인 안내와 설명을 덧붙인다.
 		                cntNote = '다음월 당화혈색소 대상자 총 : ' + next_Cnt + '건'
 		                        + (over_Cnt > 0
-		                           ? '&nbsp;<span style="color:red; font-weight:bold; font-size:12px; white-space:nowrap;">[적정범위 초과환자 확인필요]*적정범위 초과한 대상자가 있을때(입원 3개월미만 대상자 포함)</span>'
+		                           ? '&nbsp;<span style="color:red; font-weight:bold; font-size:13px; white-space:nowrap;">[적정범위 초과환자 확인필요](입원 3개월미만 대상자 포함)</span>'
 		                           : '');
 		                
 		                // 제목+안내를 한 줄로 유지(줄바꿈 시 '46건'이 잘려 보이는 문제) — 앞 여백 축소 + nowrap

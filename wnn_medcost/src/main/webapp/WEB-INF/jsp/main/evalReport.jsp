@@ -459,6 +459,8 @@
 
     <!-- 그룹3: 상태 + 진행순서대로 [①편집 → ②저장 → ③승인 → ④PDF첨부]. PDF첨부는 승인 후(공개본=PDF 일치). -->
     <span id="er-statusBadge" class="er-status er-draft"><span class="er-sdot"></span><span id="er-statusText">작성중</span></span>
+    <%-- 화면 코드 버전 — 브라우저가 옛 캐시를 보는지 즉시 판별용(지원 문의 시 이 값을 알려주세요) --%>
+    <span id="er-ver" style="font-size:10px;color:#b7c0cc;align-self:center;" title="화면 코드 버전">v0722i</span>
     <!-- 이력 열람 진입 시: 어느 이력을 보는지(유형·작성자·시각) 표시 -->
     <span id="er-hstInfo" class="er-hstinfo" style="display:none;"></span>
     <span id="er-editTools" class="er-group">
@@ -846,6 +848,32 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     _erOpenYm    = sYm || (q.match(/[?&]ym=(\d{6})/)||[])[1] || '';
     _erAutoprint = (sAuto==='1') || /[?&]autoprint=1/.test(q);
     if(!_erFromList && /[?&]ret=list/.test(q)) _erFromList = true;   // URL 폴백(주소 안 지워진 환경 대비)
+    /* ★F5(새로고침) 복원 — 목록이 넘긴 원샷 컨텍스트는 위에서 이미 지워졌으므로,
+       F5 를 누르면 기본값(자기 코드·지난달)으로 열려 보던 보고서가 '사라진 것처럼' 보였다.
+       새로고침으로 판정되고 명시 컨텍스트(원샷·URL)가 없으면 직전에 보던 병원·월(erCurCtx)을 복원.
+       메뉴로 정상 재진입한 경우는 navigate 판정이라 기존 동작(기본값) 그대로다(2026-07-22). */
+    /* ★마지막 보고서 복원 — F5 를 누르면 원샷 컨텍스트가 없어 기본값(지난달)로 열리며
+       보던 7월 보고서가 '사라진 것처럼' 보였다(2026-07-22).
+       처음엔 performance 의 reload 판정을 썼지만 이 앱은 URL 가림(replaceState)·내부 재이동이
+       있어 판정이 어긋난다 → 판정을 버리고 규칙으로 대체:
+         명시 컨텍스트(목록 원샷·URL 파라미터)가 없고, 병원 선택(cookie s_hospid)이
+         기억 시점과 그대로면 = 같은 흐름의 재로드 → 직전 보고서(병원·월)를 복원.
+       병원검색으로 다른 병원을 고르면 쿠키가 달라져 복원하지 않는다(기본값 유지). */
+    try{
+      var curRaw=sessionStorage.getItem('erCurCtx')||'null';
+      var ckNow=(cookie('s_hospid')||'').trim();
+      try{ console.log('[복원] 판정: sHosp="'+sHosp+'" sYm="'+sYm+'" url파라미터='+/[?&](hospCd|ym)=/.test(q)
+        +' 읽기전용='+_erReadonly+' 쿠키병원="'+ckNow+'" 기억값='+curRaw); }catch(e){}
+      if(!sHosp && !sYm && !/[?&](hospCd|ym)=/.test(q) && !_erReadonly){
+        var cur=JSON.parse(curRaw);
+        if(cur && cur.hospCd && /^\d{6}$/.test(cur.ym||'') && String(cur.ck||'')===ckNow){
+          hospCd=String(cur.hospCd).trim();
+          if(cur.hospNm) hospNm=cur.hospNm;
+          _erOpenYm=cur.ym;
+          try{ console.log('[복원] → '+hospCd+' '+cur.ym+' 보고서로 복원'); }catch(e){}
+        }
+      }
+    }catch(e){ try{ console.warn('[복원] 예외', e); }catch(e2){} }
   })();
   // 위너넷 판별 = s_wnn_yn 쿠키 하나만 (wnn_consult/wnn_medcost 양쪽 로그인이 매번 재설정 — 잔존 없음).
   //   s_winconect 는 wnn_consult 로그인이 안 지워 일반병원 재로그인 후에도 잔존 → 오노출 원인이라 제외.
@@ -1032,7 +1060,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       cancelButtonText: opt.no || '취소',
       confirmButtonColor: opt.color || '#2a7665',
       cancelButtonColor: '#9aa4b2'
-    }).then(function(r){ if(r && r.isConfirmed && onYes) onYes(); });
+    }).then(function(r){
+      if(r && r.isConfirmed){ if(onYes) onYes(); }
+      else if(opt.onNo){ opt.onNo(); }          // 취소·ESC — 초안 폐기 등 '아니오'에도 할 일이 있는 경우
+    });
   }
 
   // 화면에 보이는 오류 표시(콘솔 못 볼 때 진단용)
@@ -1518,6 +1549,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!_erDirty || _erReadonly) return;
     ev.preventDefault(); ev.returnValue='';   // 표준 — 문구는 브라우저 기본 확인창이 표시
   });
+  /* F5·Ctrl+R 차단(2026-07-22 요청) — 이 화면은 새로고침하면 보던 병원·월이 초기화되어
+     '내용이 사라진' 것처럼 보인다. 키보드 새로고침은 막고 안내한다.
+     브라우저 툴바의 새로고침 버튼까지는 못 막지만, 그 경우는 erCurCtx 복원이 받친다.
+     보고서 화면이 실제로 보일 때만 작동 — 다른 화면에서는 F5 정상. */
+  document.addEventListener('keydown', function(ev){
+    if(ev.key!=='F5' && !(ev.ctrlKey && (ev.key==='r'||ev.key==='R'))) return;
+    var er=document.getElementById('evalReport');
+    if(!er || !er.offsetParent) return;                  // 화면에 없으면(숨김 포함) 관여 안 함
+    ev.preventDefault(); ev.stopPropagation();
+    toast('이 화면에서는 새로고침(F5)을 쓰지 않습니다. 다시 조회하려면 상단 년·월을 선택하세요.');
+  }, true);
   // Ctrl+Z — 의무기록 영역에서만
   document.addEventListener('keydown', function(ev){
     if(!(ev.ctrlKey && (ev.key==='z'||ev.key==='Z'))) return;
@@ -1927,7 +1969,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var on=false, x0=0, y0=0, w0=0, h0=0, box0=1;
     h.addEventListener('mousedown', function(ev){
       if(!_mrSelImg) return;
-      if(!_mrCanEdit(false)){ _mrDeselect(); return; }   // 승인됨/읽기전용이면 끌어도 안 바뀐다
+      if(!_mrCanEdit(true)){ _mrDeselect(); return; }    // 승인됨/읽기전용이면 끌어도 안 바뀐다(조용히)
       _mrSnap();                                         // 드래그 한 번 = 실행취소 한 단계
       ev.preventDefault(); ev.stopPropagation();
       on=true; x0=ev.clientX; y0=ev.clientY;
@@ -1961,8 +2003,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var b=el('er-mrBody'); if(!b || b._imgBound) return; b._imgBound=1;
     b.addEventListener('click', function(ev){
       var im=(ev.target && ev.target.tagName==='IMG') ? ev.target : null;
-      // 승인·읽기전용·편집꺼짐이면 아예 선택되지 않는다(조절바·손잡이도 안 뜬다)
-      if(im && !_mrCanEdit(false)){ _mrDeselect(); return; }
+      // 승인·읽기전용·편집꺼짐이면 아예 선택되지 않는다(조절바·손잡이도 안 뜬다).
+      // ★조용히(quiet=true) — 보기 중에 그림을 클릭할 때마다 안내창이 떠서 성가셨다(2026-07-22)
+      if(im && !_mrCanEdit(true)){ _mrDeselect(); return; }
       if(_mrSelImg) _mrSelImg.classList.remove('er-imgsel');
       _mrSelImg=im;
       if(im){ im.classList.add('er-imgsel'); _mrPlaceImgBar(); }
@@ -2108,7 +2151,95 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(_erSaved){ b.className='er-status er-stored'; t.textContent='저장됨'; return; }
     b.className='er-status er-new'; t.textContent='신규 · 미저장';
   }
-  function markDirty(){ if(!approved && !_erDirty){ _erDirty=true; updateBadge(); } }
+  function markDirty(){
+    if(!approved && !_erDirty){ _erDirty=true; updateBadge(); }
+    _draftSave();          // 수정할 때마다 브라우저 초안 자동 보관 — F5 근본 보호(2026-07-22)
+  }
+
+  /* ── 미저장 초안 자동보관 (F5 근본해결, 2026-07-22) ─────────────────────────
+     beforeunload 경고는 무시할 수 있어 근본 보호가 못 된다. 모든 수정은 markDirty 를
+     지나므로 그때마다 편집분을 브라우저 IndexedDB 에 보관하고, 같은 보고서를 다시 열면
+     복구를 제안한다. 그림(base64)이 수 MB 라 localStorage(약 5MB)로는 부족 → IndexedDB.
+     · 키 = 병원+평가월 → 다른 보고서와 안 섞임        · 💾 저장 성공 시 초안 삭제
+     · 복구를 거절하면 초안 삭제(매번 다시 묻지 않게)   · 읽기전용(이력 열람)은 제외 */
+  var _draftDb=null, _draftTm=null;
+  function _draftOpen(cb){
+    if(_draftDb){ cb(_draftDb); return; }
+    try{
+      var rq=indexedDB.open('wnnEvalReportDraft',1);
+      rq.onupgradeneeded=function(){ rq.result.createObjectStore('drafts'); };
+      rq.onsuccess=function(){ _draftDb=rq.result; cb(_draftDb); };
+      rq.onerror=function(){ cb(null); };
+    }catch(e){ cb(null); }
+  }
+  function _draftKey(){ return hospCd+'_'+curYm; }
+  function _draftPut(key){
+    _draftOpen(function(db){
+      if(!db){ try{ console.warn('[초안] 브라우저 저장소(IndexedDB)를 열 수 없습니다'); }catch(e){} return; }
+      try{
+        var texts=collectTexts();
+        var rq=db.transaction('drafts','readwrite').objectStore('drafts').put({ ts:Date.now(), texts:texts }, key);
+        rq.onsuccess=function(){ try{ console.log('[초안] 보관됨 '+key+' ('+texts.length+'개 영역)'); }catch(e){} };
+      }catch(e){ try{ console.warn('[초안] 보관 실패', e); }catch(e2){} }
+    });
+  }
+  /* ★즉시 기록 + 마무리 기록(leading + trailing).
+     처음엔 0.8초 뒤에만 기록했는데, 그림을 넣고 곧바로 F5 하면 기록 전에 페이지가 죽어
+     초안이 안 남았다. '나가기 직전(pagehide) 기록'도 실측 결과 커밋 전에 죽어 소용없음
+     → 수정 순간 바로 한 번 쓰고(선두), 연속 수정은 0.8초 묶어 마지막 상태를 다시 쓴다. */
+  var _draftLastPut=0;
+  function _draftSave(){
+    if(_erReadonly || !curYm){ try{ console.log('[초안] 보관 생략 (읽기전용='+_erReadonly+', curYm="'+curYm+'")'); }catch(e){} return; }
+    var key=_draftKey();                                  // 예약 시점의 보고서 키로 고정 — 월 전환 직후
+    var now=Date.now();
+    if(now-_draftLastPut>1000){ _draftLastPut=now; _draftPut(key); }   // 선두 — 즉시 기록
+    clearTimeout(_draftTm);                               // 지연 실행이 다른 보고서 키에 쓰는 것 방지
+    _draftTm=setTimeout(function(){                       // 마무리 — 연타가 멎은 뒤 최종 상태 기록
+      _draftTm=null;
+      if(key!==_draftKey()) return;
+      _draftLastPut=Date.now(); _draftPut(key);
+    }, 800);
+  }
+  _draftOpen(function(){});                               // 사전열기 — 첫 기록이 즉시 커밋되게
+  function _draftClear(){
+    clearTimeout(_draftTm); _draftTm=null;
+    _draftOpen(function(db){
+      if(!db) return;
+      try{ db.transaction('drafts','readwrite').objectStore('drafts').delete(_draftKey()); }catch(e){}
+    });
+  }
+  function _draftCheck(){
+    if(_erReadonly || !curYm) return;
+    _draftOpen(function(db){
+      if(!db) return;
+      try{
+        var rq=db.transaction('drafts').objectStore('drafts').get(_draftKey());
+        rq.onsuccess=function(){
+          var d=rq.result;
+          try{ console.log('[초안] 확인 '+_draftKey()+' → '+(d?('있음('+new Date(d.ts).toLocaleTimeString()+')'):'없음')); }catch(e){}
+          if(!d || !d.texts || !d.texts.length) return;
+          var diff=d.texts.some(function(t){              // 서버 저장분과 같은 초안이면 조용히 정리
+            var e=document.querySelector('#evalReport .er-editable[data-key="'+t.sectKey+'"]');
+            return e && e.innerHTML !== t.content;
+          });
+          if(!diff){ _draftClear(); return; }
+          var w=new Date(d.ts), hh=('0'+w.getHours()).slice(-2), mm=('0'+w.getMinutes()).slice(-2);
+          erConfirm('저장하지 않은 작업분이 브라우저에 남아 있습니다.\n(마지막 수정 '+(w.getMonth()+1)+'/'+w.getDate()+' '+hh+':'+mm+')\n복구하시겠습니까?',
+            function(){
+              d.texts.forEach(function(t){
+                var e=document.querySelector('#evalReport .er-editable[data-key="'+t.sectKey+'"]');
+                if(e) e.innerHTML=t.content;
+              });
+              _erDirty=true; updateBadge();               // markDirty 를 안 거침 — 초안 재저장 불필요
+              erMrToggleSec(); try{ erPaginate(); }catch(e){}
+              toast('복구했습니다. 내용 확인 후 💾 저장을 눌러 주세요.');
+            },
+            { title:'미저장 작업분 복구', icon:'question', yes:'복구', no:'버리기',
+              onNo:function(){ _draftClear(); toast('초안을 버렸습니다.'); } });
+        };
+      }catch(e){}
+    });
+  }
   function setStatus(st){
     approved = (st==='APPROVED');
     updateBadge();
@@ -2223,6 +2354,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   window.erLoad = function(){
     curYm = el('er-year').value + el('er-month').value;
     if(!hospCd){ erSwal('warning','로그인 병원 정보가 없습니다.'); return; }
+    /* 지금 보는 보고서(병원·월) 기억 — F5 하면 목록이 넘겨준 원샷 컨텍스트가 사라져
+       기본값(자기 코드·지난달)으로 열리며 '내용이 사라진' 것처럼 보였다(2026-07-22).
+       이력 열람(읽기전용)은 일회성 화면이라 기억하지 않는다. */
+    if(!_erReadonly){
+      try{ sessionStorage.setItem('erCurCtx', JSON.stringify({ hospCd:hospCd, hospNm:hospNm, ym:curYm, ck:(cookie('s_hospid')||'').trim() }));
+           console.log('[조회] '+hospCd+' '+curYm+' — 컨텍스트 기억'); }catch(e){}
+    }
     var aIndi = jQuery.ajax({ url: ctx+'/main/select_Eval_Indi.do',     type:'POST', dataType:'json', data:{ hosp_cd:hospCd, jobyymm:curYm } });
     var aCrit = jQuery.ajax({ url: ctx+'/main/select_ScoreCriteria.do', type:'POST', dataType:'json', data:{ jobyymm:curYm } });
     // 전월 지표(총평 P1 전월대비) — 7월은 새 평가기간 시작이라 생략. 조회 실패는 null 로 흡수(본 조회에 영향 없음)
@@ -2948,8 +3086,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         erMrInit();     // Ⅵ 의무기록 표 — 저장분이 없으면 '해당 없음' 안내행
         erPaginate();   // 문구 확정(자동/저장 override 반영) 후 A4 분할
         applyHstSnapshot();   // 이력 열람이면 그 시점 문구로 덮어써 재현
+        _draftCheck();  // 미저장 초안이 남아 있으면 복구 제안 (F5 근본 보호)
       },
-      error:function(){ setStatus('DRAFT'); }
+      error:function(){ setStatus('DRAFT'); _draftCheck(); }   // 저장분 조회가 실패해도 초안 복구는 제안
     });
   }
 
@@ -2975,7 +3114,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       texts:collectTexts() };
     jQuery.ajax({ url: ctx+'/main/saveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
       data: JSON.stringify(payload),
-      success:function(res){ if(res && res.result==='OK'){ if(onOk) onOk(); } else { erSwal('error','저장 실패: '+((res&&res.message)||''), {title:'오류'}); if(onErr) onErr(); } },
+      success:function(res){ if(res && res.result==='OK'){ _draftClear(); if(onOk) onOk(); } else { erSwal('error','저장 실패: '+((res&&res.message)||''), {title:'오류'}); if(onErr) onErr(); } },
       error:function(){ erSwal('error','저장 중 오류가 발생했습니다.', {title:'오류'}); if(onErr) onErr(); }
     });
   }
