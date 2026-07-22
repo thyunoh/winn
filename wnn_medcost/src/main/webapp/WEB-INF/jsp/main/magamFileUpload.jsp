@@ -225,6 +225,8 @@
                                          position: sticky; top: 0; z-index: 3;
                                          background: #c8e2d9; color: #2c4a42; box-shadow: inset 0 -1px 0 #a9cec3;
                                      }
+                                     /* 1열(체크박스 셀) — 셀 여백 클릭도 체크 토글되므로 포인터 커서로 표시 */
+                                     #samPickModal .samPickTable tbody td:first-child { cursor: pointer; }
                                      /* 상태 컬럼 오른쪽 고정 — 가로 스크롤해도 항상 끝에 보이게(서식버전은 스크롤 영역)
                                         [2026-07-19] 선택 체크박스는 원위치(맨 왼쪽) 유지 확정, 폴더 라벨만 우측 고정(spkDirSticky) */
                                      #samPickModal .samPickTable td.spkStCell {
@@ -4438,6 +4440,18 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 caret.textContent = expanding ? '▼' : '▶';
             });
         });
+        // [체크영역 확대] 1열(체크박스 셀)은 체크박스 주변 여백을 클릭해도 체크 토글 (파일행·폴더행 공통)
+        //  tb 는 재렌더 시 innerHTML 만 교체되므로 위임 리스너는 1회만 부착
+        if(!tb._spkCellChk){
+            tb._spkCellChk=true;
+            tb.addEventListener('click', function(ev){
+                if(ev.target.closest('input,button,.samPickSetCaret,.samPickDirToggle')) return;
+                var td=ev.target.closest('td'); if(!td) return;
+                var tr=td.parentElement; if(!tr || td!==tr.cells[0]) return;
+                var cb=td.querySelector('input[type="checkbox"]');
+                if(cb && !cb.disabled){ cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); }
+            });
+        }
         visible.forEach(function(idx){ applyMeta(idx); });   // 캐시된 파싱값 있으면 표시
         syncPicked();
         (async function(){ for(var k=0;k<visible.length;k++){ var vi=visible[k]; if(!_meta[vi]) await parseOne(vi); } })();   // 미파싱만 첫줄 파싱(순차)
