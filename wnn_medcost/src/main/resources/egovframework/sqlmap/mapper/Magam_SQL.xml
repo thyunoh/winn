@@ -1498,6 +1498,7 @@
 		                       OR ( pm.REG_CATH='1' ) )                                                                   <!-- ③ -->
 		           THEN 'X' ELSE '' END                             AS planMissYn
 		     , CASE
+		           WHEN sb.PAT_ID IS NOT NULL THEN 'Y'                /* 분자 매칭 — "관리" (반드시 첫 분기: 아래 분모조건이 먼저 걸리면 'Y'가 영원히 안 나옴) */
 				   WHEN pm.URINE_CTL IN ('2','3')
 					      AND LEFT(COALESCE(pm.PAT_CLASS, 'E'), 1) NOT IN ('A')      -- 의료최고도는 분모에서도 제외
 					      AND NOT (                                                  -- ★추가: 치매+BPSD+향정신약 분모 제외
@@ -1511,8 +1512,8 @@
 						           OR pm.WANDER      IN ('2','3') ) -- 배회
 						      AND pm.PSYCH_DRUG = '1'                               -- 향정신약 치료
  		                      )
-			        THEN ''
-		            WHEN sb.PAT_ID IS NOT NULL THEN 'Y'                /* 분자 매칭 — "관리" */
+			        THEN CASE WHEN COALESCE(pm.URINE_MGMT,'') = '1' THEN '제외'   /* 배뇨관련 루 관리 — 분모이나 분자 제외 사유 */
+			                  ELSE '' END                                    /* 분모-비관리 — 공란 */
 		            ELSE '제외'                                        /* 추가 표시 — 제외 */
 		       END                                                AS manageYn
 		  FROM TBL_PATVAL_MST pm
@@ -1552,7 +1553,7 @@
 		         /* 제외 대상  */
 		         AND LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) NOT IN ('A')   <!-- 의료최고도 -->
 		         <!-- 치매+BPSD+향정신약(분모 제외)은 바깥 manageYn CASE ①분기에서 '제외' 처리 → 여기(분자 sb)에서는 필터하지 않음 -->
-		         AND pat.URINE_MGMT NOT IN ('1')                                  <!-- 배뇨관련 루 관리 제외 -->
+		         AND COALESCE(pat.URINE_MGMT,'') <![CDATA[ <> ]]> '1'             <!-- 배뇨관련 루 관리 제외 (NULL 안전) -->
 		         AND SUBSTRING(dm.DIAG_CODE, 1, 4) NOT IN ('Z935','Z936','T830')  <!-- 요로전환술 진단 제외 -->
                  AND IFNULL(pat.EVAL_TYPE,'') in('1','2')
 		         AND cm.DATE_YM = #{jobYymm}
