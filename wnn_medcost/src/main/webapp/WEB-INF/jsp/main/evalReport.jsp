@@ -632,17 +632,17 @@
         <div class="er-callout">
           <div class="er-coh">핵심 진단</div>
           <div class="er-editable" data-key="diag_core">현재 종합점수는 목표 등급 구간에 미치지 못합니다. 안정적인 목표등급 달성·유지를 위해 구간 상단 점수를 목표로 개선이 필요합니다.</div>
-          <div class="er-fn er-editable" data-key="diag_note">※ 병원 여건을 고려한 단계적 목표(목표등급) 기준으로 부족분과 개선 로드맵을 산정했습니다.</div>
+          <div class="er-fn er-editable" data-key="diag_note">※ 병원 여건을 고려한 단계적 목표(목표등급) 기준으로 부족점수와 개선 로드맵을 산정했습니다.</div>
         </div>
 
-        <div class="er-subh">2. 한눈에 보는 우선 개선지표 <span style="font-weight:600;color:var(--er-soft);font-size:11.5px;">(부족분 큰 순)</span></div>
+        <div class="er-subh">2. 한눈에 보는 우선 개선지표 <span style="font-weight:600;color:var(--er-soft);font-size:11.5px;">(진료→구조→지역사회복귀율 · 부족점수 큰 순)</span></div>
         <div class="er-tw">
           <table class="er-tbl">
-            <thead><tr><th>순위</th><th class="er-l">지표</th><th>영역</th><th>가중치</th><th>현재점수</th><th>부족분</th><th class="er-l">개선 여지</th></tr></thead>
+            <thead><tr><th>순위</th><th class="er-l">지표</th><th>영역</th><th>가중치</th><th>현재점수</th><th>부족점수</th><th class="er-l">개선 여지</th></tr></thead>
             <tbody id="er-priBody"><!-- JS --></tbody>
           </table>
         </div>
-        <div class="er-fn er-editable" data-key="pri_note">※ 부족분 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표의 실적 기록 정상화가 등급 향상의 핵심 지렛대입니다.</div>
+        <div class="er-fn er-editable" data-key="pri_note">※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표의 실적 기록 정상화가 등급 향상의 핵심 지렛대입니다.</div>
       </div>
     </div>
 
@@ -652,7 +652,7 @@
         <div class="er-eyebrow"><span class="er-rn">Ⅱ.</span><span class="er-stitle">영역별·지표별 상세 분석</span></div>
         <div class="er-tw">
           <table class="er-tbl">
-            <thead><tr><th>영역</th><th class="er-l">지표명</th><th>가중치<br>(만점)</th><th>현황값</th><th>표준화<br>구간</th><th>획득<br>점수</th><th>획득률</th><th>부족분</th></tr></thead>
+            <thead><tr><th>영역</th><th class="er-l">지표명</th><th>가중치<br>(만점)</th><th>현황값</th><th>표준화<br>구간</th><th>획득<br>점수</th><th>부족점검</th><th>부족점수</th></tr></thead>
             <tbody id="er-tbl2Body"><!-- JS --></tbody>
           </table>
         </div>
@@ -664,7 +664,7 @@
     <div class="er-page">
       <div class="er-sec" style="margin-top:0;">
         <div class="er-eyebrow"><span class="er-rn">Ⅲ.</span><span class="er-stitle">지표별 분석 내용</span></div>
-        <p class="er-fn er-editable" data-key="sec3_lead" style="margin-top:0;">각 지표의 산정 근거(분모·분자·현황값 → 표준화구간 → 획득점수)와 지표 정의, 개선 방향을 정리했습니다. 점수는 (획득점수 / 가중치 만점) 표기.</p>
+        <p class="er-fn er-editable" data-key="sec3_lead" style="margin-top:0;">각 지표별 산정근거 (분모 · 분자 · 현황값 → 표준화구간 → 획득점수), 지표의 개선방향을 정리함.</p>
         <div id="er-sec3Body"><!-- 기본 문구는 JS 가 채우고, 저장된 override 가 있으면 덮어씀 --></div>
       </div>
     </div>
@@ -795,6 +795,7 @@
             <button class="er-btn" onclick="erCropZoom(1)" title="확대 — 크게 보고 정확히 자를 때 (Ctrl+휠도 됩니다)">➕</button>
           </span>
           <button class="er-btn er-good" id="er-cropOk" onclick="erCropInsert()" disabled title="선택한 영역만 보고서에 넣습니다. 넣어도 이 창은 열려 있어 계속 잘라 넣을 수 있습니다">✔ 선택영역 넣기</button>
+          <button class="er-btn" onclick="erCropAll()" title="문서 전체를 장(페이지)마다 그림 1개씩 모두 넣습니다. 필요 없는 장은 넣은 뒤 🗑 로 지우면 됩니다">📄 전체 넣기</button>
           <button class="er-btn" onclick="erMrPickFile()" title="다른 파일 열기">📂 다른 파일</button>
           <button class="er-btn" onclick="erCropClose()">✕ 닫기</button>
         </span>
@@ -806,8 +807,7 @@
           <div class="er-croprect" id="er-cropRect" style="display:none"></div>
         </div>
       </div>
-      <!-- '전체 넣기'는 뺐다(2026-07-22 요청) — 필요한 부분만 잘라 넣는 게 실제 사용 흐름이고,
-           전체를 넣으면 불필요한 장까지 들어가 다시 지워야 했다. erCropAll 함수는 남겨둠. -->
+      <!-- '전체 넣기' 2026-07-22 제거 → 2026-07-23 사용자 요청으로 재추가(확인창 포함). -->
       <div class="er-cropfoot">
         <span class="er-crophint">💡 필요한 부분을 <b>마우스로 끌어</b> 선택 → <b>✔ 선택영역 넣기</b> · 여러 번 반복할 수 있습니다</span>
       </div>
@@ -959,7 +959,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '03':'간호사+간호조무사 등 간호인력 기준 1인당 환자수. 값이 작을수록 우수(3명 미만 = 5구간).',
     '04':'평가대상기간 중 약사 재직일수 비율(100% = 5구간).',
     '05':'유치도뇨관(Foley)을 보유한 환자 비율. 값이 낮을수록 우수(0.5% 미만 = 5구간).',
-    '06':'배뇨조절 저하(자주 실금·조절 못함) 환자 중 배뇨관리를 실시한 환자 비율(2026년 2주기 8차 신설). 분자 인정 = ①일정하게 짜여진 배뇨계획+배뇨일지 3일 이상 ②방광훈련프로그램+배뇨일지 3일 이상 ③규칙적 도뇨 중 하나 이상(의료최고도·배뇨관련 루 관리 등 제외).',
+    '06':'배뇨조절 저하(자주 실금·조절 못함) 환자 중 배뇨관리를 실시한 환자 비율. 분자 인정 = ①일정하게 짜여진 배뇨계획+배뇨일지 3일 이상 ②방광훈련프로그램+배뇨일지 3일 이상 ③규칙적 도뇨 중 하나 이상(의료최고도·배뇨관련 루 관리 등 제외).',
     '07':'항정신성의약품 처방 정도(PI, 0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용입니다.',
     '08':'매월 심사평가원의 DUR 점검 현황을 확인하여 누락 대상자 관리가 필요하며 점검 결과에 따라 추후 결과 발표 시 점수차가 발생할 수 있음. 확인경로: 요양기관업무포털(biz.hira.or.kr) > 모니터링 > DUR정보 > 기관별 DUR 점검완료현황.',
     '09':'1단계 이상 욕창 보유 환자 중 당일 피부문제 처치를 실시한 환자 비율. (처치 = 압력 줄이는 도구 사용·체위변경·욕창 해결 위한 영양 공급·욕창부위 드레싱 등 4가지 중 수행 시 해당)',
@@ -1012,10 +1012,26 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var CRIT_ALL = {};   // 전 구간(1~5) 기준 — Ⅳ 표준화 구간 나열용
 
   // "표준화 구간 : 3.5%↑(1)·2.5~3.5%(2)…(5)" 원본 형식 나열 (기준 미로드 지표는 빈 문자열)
+  // 절단형 상한(19.99·5.99·0.49·0.24 …)을 실제 경계값(20·6·0.5·0.25)으로 — '미만' 표기용 (2026-07-23 사용자 확정)
+  //   기준: 소수 2자리 값의 끝자리가 9 또는 4(경계−0.01 절단형)일 때만 +0.01. 정수·정확 경계(100, 30 등)는 그대로.
+  function bndUp(en){
+    var c = Math.round(en*100);
+    if (Math.abs(en*100 - c) > 1e-6 || c % 100 === 0) return en;   // 소수 3자리 이상·정수는 그대로
+    var d = c % 10;
+    if (d === 9 || d === 4) return Math.round((en + 0.01)*100)/100; // x.99·x.x9·x.24형 → +0.01
+    if (d === 0 && Math.floor(c/10) % 10 === 9) return Math.round((en + 0.1)*10)/10;  // x.9형(소수1자리) → +0.1 (구 enR 규칙 계승)
+    return en;
+  }
   function zoneListText(cd){
     var a = CRIT_ALL[cd]; if(!a || !a.length) return '';
     var u = unitOf(cd);
-    return a.map(function(z){ return fnum(z.start)+'~'+fnum(z.end)+u+'('+z.s+'구간)'; }).join(' · ');
+    return a.map(function(z){
+      var st=z.start, en=z.end, bnd=bndUp(en), txt;
+      if (en >= 999)        txt = fnum(st)+u+' 이상';                 // 6~9999.99명 → 6명 이상
+      else if (bnd !== en)  txt = fnum(st)+'~'+fnum(bnd)+'미만'+u;    // 0~19.99% → 0~20미만%
+      else                  txt = fnum(st)+'~'+fnum(en)+u;
+      return txt+'('+z.s+'구간)';
+    }).join(' · ');
   }
 
   // Ⅲ 자동 분석문 — PDF 원본 형식: "분모 X 중 분자 Y = Z%로 표준화 N구간(범위), 가중치 W점 중 P점 산정"
@@ -2089,6 +2105,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       +'<button onclick="zoom(-1)">➖</button><span id="zl" style="min-width:52px;text-align:center">맞춤</span>'
       +'<button onclick="zoom(1)">➕</button>'
       +'<button id="ok" disabled onclick="sendSel()">✔ 선택영역 넣기</button>'
+      +'<button onclick="sendAll()" title="문서 전체를 장마다 그림 1개씩 모두 넣습니다">📄 전체 넣기</button>'
       +'<button onclick="window.close()">✕ 닫기</button></div>'
       +'<div id="stage"><div id="wrap"><canvas id="cv"></canvas><div id="rect"></div></div></div>'
       +'<div id="foot"><span>💡 필요한 부분을 <b>마우스로 끌어</b> 선택 → <b>✔ 선택영역 넣기</b> · 여러 번 반복할 수 있습니다</span></div>'
@@ -2115,7 +2132,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       +'function sendSel(){if(!has)return;var b=cv.getBoundingClientRect(),rx=cv.width/b.width,ry=cv.height/b.height;'
       +'var o=cut(Math.min(sx,ex)*rx,Math.min(sy,ey)*ry,Math.abs(ex-sx)*rx,Math.abs(ey-sy)*ry);'
       +'window.opener.postMessage({t:"erCrop",imgs:[o]},"*");reset();}'   /* 창은 그대로 — 이어서 잘라 넣는다 */
-      +'function sendAll(){var a=[];'
+      +'function sendAll(){var n=(TOPS&&TOPS.length>1)?TOPS.length:1;'
+      +'if(!confirm("전체 "+n+"장을 각각 넣으시겠습니까?\\n장마다 그림 1개로 들어가며, 필요 없는 장은 넣은 뒤 지울 수 있습니다."))return;var a=[];'
       +'if(TOPS&&TOPS.length>1){for(var i=0;i<TOPS.length;i++){var y=TOPS[i],h=(i+1<TOPS.length?TOPS[i+1]-GAP:cv.height)-y;'
       +'if(h>0)a.push(cut(0,y,cv.width,h));}}else a.push({d:cv.toDataURL("image/png"),w:cv.width});'
       +'window.opener.postMessage({t:"erCrop",imgs:a},"*");}'
@@ -2479,13 +2497,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var room = (TPL_ROOM[x.cd]||'') + (i<2 ? ' (최우선)' : '');   // 원본 PDF "개선 여지" 문구 + 상위2 최우선
       var gapCls = i<2 ? 'er-gaphl' : 'er-b-bad';                   // 최우선(상위2) 부족분 = 연분홍 배경 강조(원본)
       return '<tr><td>'+(i+1)+'</td><td class="er-l">'+esc(x.nm)+'</td><td>'+areaNm(x.fg)+'</td><td class="er-num">'+fnum(x.w)+'</td><td class="er-num">'+f1(x.got)+'</td><td class="er-num '+gapCls+'">'+f1(x.gap)+'</td><td class="er-l">'+esc(room)+'</td></tr>';
-    }).join('') : '<tr><td colspan="7" style="color:#a7b1c0;">부족분이 있는 지표가 없습니다.</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="color:#a7b1c0;">부족점수가 있는 지표가 없습니다.</td></tr>';
     // ※ 비고(원본 문구 + 실제 수치) — 편집 저장본이 있으면 유지
     if(!savedKeys['pri_note'] && pri.length){
       var totGapAll = indicators.reduce(function(a,r){ return a + Math.max(0, n(r.stdweig)-n(r.weigval)); }, 0);
       var t2 = pri.slice(0,2), t2gap = t2.reduce(function(a,x){ return a+x.gap; }, 0);
       var pe = document.querySelector('#evalReport [data-key="pri_note"]');
-      if(pe) pe.textContent = '※ 부족분 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표('+t2.map(function(x){return x.nm;}).join('·')+') '+t2.length+'개 항목만으로 전체 부족분 '+f1(totGapAll)+'점 중 '+f1(t2gap)+'점을 차지 → '+goalGradeVal()+' 달성의 핵심 지렛대입니다.';
+      if(pe) pe.textContent = '※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표('+t2.map(function(x){return x.nm;}).join('·')+') '+t2.length+'개 항목만으로 전체 부족점수 '+f1(totGapAll)+'점 중 '+f1(t2gap)+'점을 차지 → '+goalGradeVal()+' 달성의 핵심 지렛대입니다.';
     }
     renderTable2();
     renderSec3();
@@ -2542,7 +2560,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-gapGoalScore').textContent = goalScore;
     el('er-gapGoalGrade').textContent = goalGrade;
     var gap = Math.round((goalScore - scores.total)*10)/10;
-    el('er-gapScore').textContent = (gap>0?'+':'') + gap;
+    el('er-gapScore').textContent = gap>0 ? '+'+gap : '0';   // 목표 초과 달성(음수)은 0으로 표시 (2026-07-23 사용자)
     var bands=[['1등급','88 ~ 100'],['2등급','79 ~ 87'],['3등급','71 ~ 78'],['4등급','63 ~ 70'],['5등급','63 미만']];
     var cur=gradeOf(scores.total);
     // 가로형(원본 PDF): 헤더=등급, 행1=표준화 점수구간(목표 셀 강조), 행2=병원 현황(현재 등급 칸에 점수)
@@ -2571,7 +2589,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!savedKeys['diag_note']){
       var e2=document.querySelector('#evalReport [data-key="diag_note"]');
       if(e2){
-        e2.textContent = '※ 기존 표준(1등급·88점)을 목표로 하면 부족분이 +'+f1(88-scores.total)+'점으로 과대 산정됩니다. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족분과 개선 로드맵을 재산정했습니다.';
+        e2.textContent = '※ 기존 표준(1등급·88점)을 목표로 하면 부족점수가 +'+f1(88-scores.total)+'점으로 과대 산정됩니다. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족점수와 개선 로드맵을 재산정했습니다.';
         AUTO['diag_note'] = e2.innerHTML;
       }
     }
@@ -2632,7 +2650,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(s<5 && band5){
       var max5=Math.floor(band5.end*dtor/100);
       if(ntor>max5)
-        return '누적 분모 '+esc(fnum(dtor))+'명 기준 표준화 5점('+fnum(band5.end)+u+' 미만)에는 '+max5+'명 이하가 요구되나 현재 '+esc(fnum(ntor))+'명으로 초과되어 '+s+'점에 해당하므로, 해당 건의 기록·해제(제거) 관리 강화가 필요합니다';
+        return '누적 분모 '+esc(fnum(dtor))+'명 기준 표준화 5점('+fnum(bndUp(band5.end))+u+' 미만)에는 '+max5+'명 이하가 요구되나 현재 '+esc(fnum(ntor))+'명으로 초과되어 '+s+'점에 해당하므로, 해당 건의 기록·해제(제거) 관리 강화가 필요합니다';
     }
     // (B) 현재 구간 하락 경고 — 여유 한도형
     if(s>=2 && bandS){
@@ -2691,7 +2709,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     (CRIT_ALL[cd]||[]).forEach(function(z){
       if(z.s<=s) return;                                  // 현재보다 우수(상위)한 구간만
       var reqN=Math.floor(z.end*dtor/100), cut=ntor-reqN;
-      if(cut>0) parts.push('표준화 '+z.s+'점('+fnum(z.end)+u+' 미만) = '+cut+'명 감소');
+      if(cut>0) parts.push('표준화 '+z.s+'점('+fnum(bndUp(z.end))+u+' 미만) = '+cut+'명 감소');
     });
     return parts.length ? parts.join(' · ') : null;
   }
@@ -2737,9 +2755,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
     if(!best) return '';
     var u=unitOf(best.cd);
-    var edge=(best.cd==='04') ? fnum(best.band.start)+u+' 미만' : fnum(best.band.end)+u+' 초과';
+    var edge=(best.cd==='04') ? fnum(best.band.start)+u+' 미만' : fnum(bndUp(best.band.end))+u+' 초과';
     var uJosa=(u==='명') ? '으로' : '로';
-    return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+fnum(best.band.end)+u+') 경계에 근접해 있어, '
+    var bndE=bndUp(best.band.end);
+    return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+(bndE!==best.band.end? fnum(bndE)+'미만' : fnum(best.band.end))+u+') 경계에 근접해 있어, '
          + edge+' 시 표준화 '+(best.s-1)+'점(가중치 −'+f1(best.loss)+'점)으로 하락할 수 있으므로 재원환자 수 추이에 맞춘 인력 관리가 필요합니다.';
   }
 
@@ -2834,8 +2853,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   function topGaps(limit){
+    // 순위 확정(2026-07-23 사용자): 진료영역(과정·결과) → 구조영역 → 지역사회복귀율(15) 순, 같은 묶음 안에서는 부족점수 큰 순
+    function tier(x){ return x.cd==='15' ? 2 : (x.fg==='10' ? 1 : 0); }
     return indicators.map(function(r){ return { cd:r.cate_cd, nm:r.cate_nm, fg:r.cate_fg, w:n(r.stdweig), got:n(r.weigval), gap:n(r.stdweig)-n(r.weigval), r:r }; })
-                     .filter(function(x){ return x.gap>0.0001; }).sort(function(a,b){ return b.gap-a.gap; }).slice(0, limit||99);
+                     .filter(function(x){ return x.gap>0.0001; }).sort(function(a,b){ return (tier(a)-tier(b)) || (b.gap-a.gap); }).slice(0, limit||99);
   }
 
   // Ⅲ 지표별 분석 내용 — 지표별 자동 분석문 + 편집 개선방향(저장 문구 override 는 loadSavedTexts 가 재적용)
@@ -2868,7 +2889,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         if(bg) planTxt += ' ' + esc(bg) + '.';
         if(!planTxt.trim()) planTxt = '기록·실시 절차를 점검하고 목표 구간을 설정하세요.';
         var topTag = (topCds.indexOf(r.cate_cd)>=0 && !full) ? ' <span style="color:var(--er-bad); font-weight:800; font-size:11.5px;">◀ 최우선 개선</span>' : '';
-        html += '<div class="er-indhead">■ '+esc(r.cate_nm)+' <span class="er-indsc">'+f1(got)+' / '+fnum(w)+'점</span>'+topTag+'</div>'
+        html += '<div class="er-indhead">■ '+esc(r.cate_nm)+' <span class="er-indsc"><span class="'+(full?'er-b-good':'er-b-bad')+'">'+f1(got)+'</span> / '+fnum(w)+'점</span>'+topTag+'</div>'
               + '<div class="er-indbox'+(full?' er-full':'')+'">'
               +   '<div class="er-anabar">분석 내용</div>'
               +   '<div class="er-indbody">'
@@ -2885,7 +2906,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // Ⅳ 우선 개선지표별 권고사항 — 부족분 상위 지표 자동 블록 + 편집영역
   function renderSec4(){
     var top = topGaps(6), html='';
-    if(!top.length){ el('er-sec4Body').innerHTML = '<div class="er-fn">부족분이 있는 지표가 없습니다.</div>'; return; }
+    if(!top.length){ el('er-sec4Body').innerHTML = '<div class="er-fn">부족점수가 있는 지표가 없습니다.</div>'; return; }
     var CIRC='①②③④⑤⑥⑦⑧⑨⑩';   // 원본 PDF 번호 표기
     top.forEach(function(x,i){
       var cd=esc(x.cd), isTop=(i<2), r=x.r;
@@ -2909,7 +2930,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var roomTxt = ladder ? ('표준화 목표 : '+ladder) : simRoomLower(r);   // 없으면 [★1] 여유 한도/하락 경고
       var pctShort = pctShortTxt(r);   // [C9] 다음 구간까지 %p 부족
       html += '<div class="er-rec'+(isTop?' er-top':'')+'">'
-            +   '<div class="er-rech">'+(CIRC[i]||(i+1))+' '+esc(x.nm)+' <span class="er-w">· 가중치 '+fnum(x.w)+' · 부족분 '+f1(x.gap)+(isTop?' · 최우선':'')+'</span></div>'
+            +   '<div class="er-rech">'+(CIRC[i]||(i+1))+' '+esc(x.nm)+' <span class="er-w">· 가중치 '+fnum(x.w)+' · 부족점수 '+f1(x.gap)+(isTop?' · 최우선':'')+'</span></div>'
             +   '<div class="er-recrow"><span class="er-lb">현황</span>'+stat+'</div>'
             +   (zones? '<div class="er-recrow"><span class="er-lb">표준화 구간</span>'+zones+'</div>' : '')
             +   '<div class="er-recrow er-editable" data-key="recdir_'+cd+'"><span class="er-lb">개선방향</span>'+dirTxt+'</div>'
@@ -2925,13 +2946,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var a = CRIT_ALL[cd]; if(!a) return '';
     var b = null; a.forEach(function(z){ if(z.s===s) b=z; });
     if(!b) return '';
-    var u = unitOf(cd), st = b.start, en = b.end;
-    var enR = (en % 1 >= 0.9) ? fnum(Math.round(en + 0.5)) : fnum(en);   // 5.99→6, 25.99→26
-    if (st <= 0)                          return enR + u + ' 미만';
+    var u = unitOf(cd), st = b.start, en = b.end, bnd = bndUp(en);   // 절단 상한 → 실제 경계(29.99→30, 0.49→0.5)
+    if (st <= 0)                          return fnum(bnd) + u + ' 미만';
     if (en >= 999)                        return fnum(st) + u + ' 이상';
     if (u === '%' && st >= 100)           return '100%';
     if (u === '%' && en >= 100)           return fnum(st) + '% 이상';
-    return fnum(st) + '~' + enR + u;
+    return fnum(st) + '~' + (bnd !== en ? fnum(bnd)+'미만' : fnum(en)) + u;   // 26~29.99명 → 26~30미만명 (2026-07-23 사용자)
   }
 
   function renderTable2(){
