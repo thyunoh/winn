@@ -260,7 +260,22 @@
   #evalReport .er-cover .er-cover-badge{ display:inline-block; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2));
     color:#fff; font-size:20px; font-weight:800; letter-spacing:2px; padding:16px 46px; border-radius:10px;
     box-shadow:0 6px 18px rgba(30,60,114,.28); margin-bottom:56px; }
-  #evalReport .er-cover .er-cover-foot{ font-size:12px; color:var(--er-soft); line-height:1.9; }
+  #evalReport .er-cover .er-cover-noteswrap{ width:725px; max-width:100%; margin:0 auto; }
+  #evalReport .er-cover .er-cover-notes{ width:100%; margin:0; border:1.5px solid #4a5568; border-radius:2px;
+    padding:16px 20px 18px; text-align:left; font-size:14px; font-weight:400; line-height:1.95; letter-spacing:0.3px; color:var(--er-ink); }
+  #evalReport .er-cover .er-cnotes-title{ font-weight:900; font-size:16px; color:#111; margin-bottom:8px; }
+  #evalReport .er-cover .er-cnotes-list li b{ font-weight:900; font-size:15px; color:#111; }
+  #evalReport .er-cover .er-cnotes-list{ list-style:none; margin:0 0 0 6px; padding:0; }
+  #evalReport .er-cover .er-cnotes-list li{ position:relative; padding-left:15px; margin-bottom:0; }
+  #evalReport .er-cover .er-cnotes-list li:last-child{ margin-bottom:0; }
+  #evalReport .er-cover .er-cnotes-box{ margin:18px auto 0; max-width:760px;
+    text-align:center; font-weight:900; font-size:13px; color:#111; line-height:1.8; }
+  #evalReport .er-cover .er-cover-datetop{ margin:14px 0 4px; text-align:right;
+    font-size:12.5px; font-weight:700; color:var(--er-soft); }
+  #evalReport .er-cover .er-cover-logo{ margin-top:24px; }
+  #evalReport .er-cover .er-cover-logo img{ height:30px; }
+  #evalReport .er-cover .er-cnotes-list li::before{ content:'▪'; position:absolute; left:0; top:0; }
+  #evalReport .er-cover .er-cover-foot{ margin-top:26px; font-size:12px; color:var(--er-soft); line-height:1.9; }
   @media print{ #evalReport .er-page.er-cover{ min-height:255mm; } }
 
   /* 표지 */
@@ -434,6 +449,9 @@
     #evalReport table.er-tbl tr{ page-break-inside:avoid; }
     #evalReport .er-indhead{ page-break-after:avoid; }
     #evalReport .er-eyebrow{ page-break-after:avoid; }
+    /* 구조지표/과정지표/결과지표 그룹은 각각 새 페이지에서 시작 (첫 그룹은 Ⅲ 헤더와 같은 장) */
+    #evalReport #er-sec3Body .er-grplabel{ break-before:page; page-break-before:always; }
+    #evalReport #er-sec3Body .er-grplabel:first-child{ break-before:auto; page-break-before:auto; }
     @page{ size:A4; margin:0; }
   }
 </style>
@@ -571,13 +589,26 @@
       <div class="er-cover-eyebrow er-editable" data-key="cover_top">요양병원 입원급여 적정성평가</div>
       <div class="er-cover-title">
         <span class="er-editable" data-key="cover_hosp" id="er-coverHosp">○○요양병원</span><br>
-        적정성평가 결과 및<br>등급 향상 컨설팅 보고서
+        적정성평가 월별 보고서
       </div>
       <div class="er-cover-meta1">평가대상 : <b id="er-coverPeriod">-</b></div>
-      <div class="er-cover-meta2">현재 종합점수 <b class="er-b-bad er-num" id="er-coverTotal">-</b>점
-        &nbsp;→&nbsp; 목표등급 <b><span class="er-editable" data-key="cover_goal_grade">3등급</span> (<span class="er-editable" data-key="cover_goal_score">78</span>점)</b></div>
-      <div class="er-cover-badge">목표등급 <span class="er-editable" data-key="cover_goal_badge">3등급</span></div>
-      <div class="er-cover-foot">본 보고서는 <b>WinCheck⁺</b> 산출 자료를 기준으로 작성되었습니다.<br>작성일 : <span class="er-editable" data-key="cover_date" id="er-coverDate">-</span></div>
+      <div class="er-cover-meta2">목표등급 <b><span class="er-editable" data-key="cover_goal_grade">3등급</span> (<span class="er-editable" data-key="cover_goal_score">78</span>점)</b>
+        &nbsp;→&nbsp; 현재 종합점수 <b class="er-b-bad er-num" id="er-coverTotal">-</b>점</div>
+      <div class="er-cover-noteswrap">
+      <div class="er-cover-datetop">작성일 : <span class="er-editable" data-key="cover_date" id="er-coverDate">-</span></div>
+      <div class="er-cover-notes er-editable" data-key="cover_notes">
+        <div class="er-cnotes-title">■ 보고서 산출 기준 및 유의사항</div>
+        <ul class="er-cnotes-list">
+          <li>본 보고서에서 제시하는 현황값 및 분석 결과는 병원 제공 자료를 기반으로<br>산출한 추정값으로, 심사평가원 최종 집계 결과에 따라 일부 수치는<br>변동될 수 있습니다.</li>
+          <li>예상 종합점수는 <b>‘2주기 5차 적정성평가 기준’의 지표별 표준화 구간을 적용</b>하여<br>산출한 값으로, 심사평가원 최종 집계 과정에서 표준화 구간이 재설정될 경우<br>최종 결과와 차이가 발생할 수 있습니다.</li>
+          <li>진료영역_유치도뇨관 환자분율 지표는 고‧저위험군 구성비에 따른 가중치 적용 지표로,<br>본 보고서에서는 고‧저위험군 가중치를 1:1로 가정한 추정값을 제시하였으며,<br>해당 가중치는 심사평가원 최종 집계 시 확정됨에 따라 최종 결과와 차이가<br>발생할 수 있습니다.</li>
+          <li>진료영역_항정신성의약품 처방률 지표는 2025년 7월부터 2026년 6월까지의 1년<br>평가기간을 기준으로 산출되므로, 평가기간 종료 시점까지 처방률 변동이 발생하지<br>않도록 지속적인 관리가 필요합니다.</li>
+          <li>2025년도 적정성평가 결과는 2027년 6월 발표 예정으로,<br>최종 점수 산출 시 ‘DUR 점검율’, ‘장기입원환자분율’, ‘지역사회복귀율’ 지표의<br>현황값 변동에 따라 종합점수에 일부 영향이 발생할 수 있습니다.</li>
+        </ul>
+      </div>
+      </div>
+      <div class="er-cnotes-box er-editable" data-key="cover_notes_footer">※ 본 보고서는 심사평가원 공식 결과를 대체하지 않으며,<br>적정성평가 대응을 위한 사전 분석 및 내부 검토 자료로 활용하시기 바랍니다.</div>
+      <div class="er-cover-logo"><img src="${pageContext.request.contextPath}/images/winct/wincheck.jpg" alt="위너넷 WinCheck+"></div>
     </div>
 
     <!-- PAGE 2 : Ⅰ 종합 평가 요약 (여기부터 본문 시작) -->
@@ -3174,9 +3205,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       success:function(res){
         if(res && res.result==='OK'){
           setStatus('APPROVED');
-          // 승인 완료 → 이제 완성본 PDF 첨부 유도([PDF 첨부] 누르면 바로 생성·첨부 흐름)
-          erConfirm('승인되었습니다. 이제 완성본 PDF를 첨부하세요.', function(){ erPickPdf(); },
-            { title:'승인 완료', icon:'success', yes:'PDF 첨부', no:'나중에' });
+          // 승인 완료 → 묻지 않고 바로 PDF 생성·미리보기로 진행(2026-07-23 사용자 확정)
+          //   — 미리보기 모달에 [📄 파일서버 저장]/[✕ 닫기]가 있어 저장 여부는 거기서 결정하면 된다.
+          toast('승인되었습니다.');
+          erPickPdf();
         }
         else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'});
       },
@@ -3270,29 +3302,38 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     //   ★ 헤더(eyebrow/subh/grplabel/indhead) '바로 뒤(=헤더와 다음 블록 사이)'에서는 끊지 않음 →
     //     헤더 top 에서만 끊어 헤더가 뒤따르는 콘텐츠(표 등)와 함께 다음 페이지로 이동(섹션 제목 홀로 남김 방지).
     function _erBreakYs(pg, sf){
-      var HEAD = ['er-eyebrow','er-subh','er-grplabel','er-indhead'];
-      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind';
+      /* ★er-indbox 를 후보에 넣어야 그룹라벨이 산다 — 없으면 라벨의 '직전 후보'가 지표제목(헤더)이 되어
+         '헤더 바로 뒤 분할 금지' 규칙에 라벨이 후보에서 제외됨(구조/과정/결과 분리 안 되던 원인, 2026-07-23).
+         er-ana/def/plan(문단 시작)도 후보 — 긴 분석박스가 문장 중간이 아닌 문단 사이에서 잘리게.
+         er-anabar('분석 내용' 바)는 헤더 취급 — 바로 뒤(첫 문단 앞)에서 끊겨 바만 페이지 끝에 남는 것 방지. */
+      var HEAD = ['er-eyebrow','er-subh','er-grplabel','er-indhead','er-anabar'];
+      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind, .er-indbox, .er-anabar, .er-ana, .er-def, .er-plan';
       var pTop = pg.getBoundingClientRect().top, items=[], list=pg.querySelectorAll(sel);
       for(var i=0;i<list.length;i++){
         var e=list[i], t=(e.getBoundingClientRect().top - pTop)*sf, isH=false;
         for(var h=0;h<HEAD.length;h++){ if(e.classList.contains(HEAD[h])){ isH=true; break; } }
-        items.push({ top:Math.round(t), head:isH });
+        // ★ 그룹라벨(구조지표/과정지표/결과지표)은 '강제 분할점' — 항상 새 A4 페이지에서 시작(2026-07-23)
+        items.push({ top:Math.round(t), head:isH, grp:e.classList.contains('er-grplabel') });
       }
       items.sort(function(a,b){ return a.top-b.top; });
-      var ys=[];
+      // 첫 그룹라벨(구조지표)은 Ⅲ 헤더·안내문과 같은 장에 남아야 하므로 강제 분할 제외 — 2번째부터만 강제
+      var ys=[], grpSeen=0;
       for(var j=0;j<items.length;j++){
+        var isGrp=items[j].grp; if(isGrp) grpSeen++;
         if(items[j].top<=4) continue;
         if(j>0 && items[j-1].head) continue;   // 직전이 헤더면 이 지점(헤더 다음)에서는 못 끊음
-        ys.push(items[j].top);
+        // 블록 시작보다 5px 위(위쪽 여백 구간)에서 끊음 — 정확히 top에서 끊으면 테두리·그림자 1~2px가
+        // 이전 장 끝에 얇은 선으로 남음(총평 박스 상단 선 잔상, 2026-07-23)
+        ys.push({ top:Math.max(1, items[j].top-5), force:isGrp && grpSeen>1 });
       }
       return ys;
     }
-    function _erAddSlice(canvas, y0, y1){   // 캔버스 [y0,y1) 구간을 A4 한 장으로 추가(원본 폭, 자연 높이)
+    function _erAddSlice(canvas, y0, y1, topMm){   // 캔버스 [y0,y1) 구간을 A4 한 장으로 추가(원본 폭, 자연 높이). topMm=상단 배치 위치(기본 mg)
       var hpx = y1 - y0; if(hpx<=0) return;
       var pc = document.createElement('canvas'); pc.width=canvas.width; pc.height=hpx;
       pc.getContext('2d').drawImage(canvas, 0, y0, canvas.width, hpx, 0, 0, canvas.width, hpx);
       if(idx>0) pdf.addPage();
-      pdf.addImage(pc.toDataURL('image/jpeg',0.8), 'JPEG', mg, mg, iw, hpx*iw/canvas.width);
+      pdf.addImage(pc.toDataURL('image/jpeg',0.8), 'JPEG', mg, (topMm==null? mg : topMm), iw, hpx*iw/canvas.width);
       idx++;
     }
     var chain = Promise.resolve();
@@ -3308,15 +3349,26 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
           }
           // 길면 → A4 여러 장. DOM 블록 시작 위치에서만 끊음(제목+박스 안 갈라짐). 후보 없으면 여백 폴백.
           var sf = canvas.height / (pg.getBoundingClientRect().height || pg.offsetHeight);   // CSS px → canvas px
-          var bys = breaks.map(function(v){ return Math.round(v*sf); });
+          var bys = breaks.map(function(v){ return { top:Math.round(v.top*sf), force:v.force }; });
           var ctx = canvas.getContext('2d'), maxHpx = Math.floor(maxHmm * canvas.width / iw), y = 0, minStep = Math.floor(maxHpx*0.25);
+          // ★ 이어지는 장(중간에서 잘려 넘어온 페이지)은 상단에 14mm 여백 — 대분류 시작 장처럼 답답하지 않게(2026-07-23)
+          var contMm = 14, contPx = Math.floor(contMm * canvas.width / iw);
           while(y < canvas.height){
-            var limit = y + maxHpx;
-            if(limit >= canvas.height){ _erAddSlice(canvas, y, canvas.height); break; }
+            var topMm = (y>0? mg+contMm : mg);
+            var limit = y + maxHpx - (y>0? contPx : 0);   // 여백만큼 담는 양도 줄여 하단 넘침 방지
+            // ★ 절단선을 근처 '완전한 흰 여백 줄'로 스냅 — 후보 top에서 그대로 자르면 다음 블록의
+            //   테두리·그림자 1~2px 이 이전 장 끝에 얇은 조각으로 남는다(총평 박스 잔상, 2026-07-23)
+            var snapWhite = function(t){ return _erWhiteCut(ctx, canvas.width, t, Math.max(y+1, t-60)); };
+            // ★ 그룹라벨(구조지표/과정지표/결과지표)이 이 장 범위 안에 있으면 남은 공간과 무관하게 그 앞에서 끊는다
+            var fc = -1;
+            for(var i0=0;i0<bys.length;i0++){ var b0=bys[i0]; if(b0.force && b0.top>y+8 && b0.top<limit){ fc=b0.top; break; } }
+            if(fc>=0){ fc=snapWhite(fc); _erAddSlice(canvas, y, fc, topMm); y = fc; continue; }
+            if(limit >= canvas.height){ _erAddSlice(canvas, y, canvas.height, topMm); break; }
             var cut = -1;
-            for(var i=0;i<bys.length;i++){ var b=bys[i]; if(b>y+minStep && b<=limit) cut=b; else if(b>limit) break; }
-            if(cut<0) cut = _erWhiteCut(ctx, canvas.width, limit, Math.max(y+1, limit - Math.floor(maxHpx*0.4)));
-            _erAddSlice(canvas, y, cut); y = cut;
+            for(var i=0;i<bys.length;i++){ var b=bys[i]; if(b.top>y+minStep && b.top<=limit) cut=b.top; else if(b.top>limit) break; }
+            cut = (cut<0) ? _erWhiteCut(ctx, canvas.width, limit, Math.max(y+1, limit - Math.floor(maxHpx*0.4)))
+                          : snapWhite(cut);
+            _erAddSlice(canvas, y, cut, topMm); y = cut;
           }
         });
       });
