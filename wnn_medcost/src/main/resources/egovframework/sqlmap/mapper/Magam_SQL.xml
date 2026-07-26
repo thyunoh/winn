@@ -200,6 +200,7 @@
 		 AND A.MG_YEAR = #{mg_year}
 		 AND A.MG_FLAG = #{mg_flag}
 	   ORDER BY M.MGMONTH
+	   
 	]]>
 	</select>
 	
