@@ -149,6 +149,35 @@ public class MagamController {
 			return ".login/LoginWinCT";
 		}
     }
+	/* 업무매뉴얼 (2026-07-27) — 위너넷 담당자 전용.
+	     ★위너넷 판정은 <쿠키 우선 + 세션 보조>다. 로그인을 wnn_consult 에서 하는 배치에서는 이 앱(medcost)의
+	       HttpSession 에 s_wnn_yn 이 없고 신원이 쿠키로 넘어온다 — 세션만 보면 위너넷을 거래처로 오판한다
+	       (실제로 그렇게 만들었다가 위너넷 접속인데도 차단 화면이 떴다). 사이드바 메뉴 노출과 월보고서 목록
+	       필터도 같은 이유로 쿠키를 쓴다(ClientInfo.getCookie 주석 참고). 둘 중 하나라도 'Y'면 위너넷으로 본다. */
+	@RequestMapping(value="main/manual.do")
+    public String manual(HttpServletRequest request, ModelMap model) {
+        cookie_value = ClientInfo.getCookie(request);
+		try {
+			String ck = "";
+			try { ck = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			javax.servlet.http.HttpSession ses = request.getSession(false);
+			Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+			String sv = (wnn != null) ? String.valueOf(wnn).trim() : "";
+			model.addAttribute("wnnYn", ("Y".equalsIgnoreCase(ck) || "Y".equalsIgnoreCase(sv)) ? "Y" : "N");
+		} catch(Exception ignore) {
+			model.addAttribute("wnnYn", "N");
+		}
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/manual";
+			} else {
+				return ".login/LoginWinCT";
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+    }
 	@RequestMapping(value="main/simulation.do")
     public String simulation(HttpServletRequest request, ModelMap model) {
 

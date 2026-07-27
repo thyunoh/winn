@@ -382,8 +382,13 @@
                             </ul>
                         </div>
                     </li>
+                    <%-- 업무매뉴얼 (2026-07-27) — 메뉴 구조 맨 아래. 위너넷 전용이라 기본 숨김이고
+                         적정성평가 월간보고서(menu-evalreport)와 같은 방식으로 아래 스크립트에서 위너넷일 때만 표시한다. --%>
+                    <li class="nav-item" id="menu-manual" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/manual.do"><i class="fa fa-book"></i>업무매뉴얼</a>
+                    </li>
                 </ul>
-            </div>            
+            </div>
         </nav>
         
 
@@ -1254,6 +1259,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
         var evalRptMenu = document.getElementById("menu-evalreport");
         if (evalRptMenu) evalRptMenu.style.display = "";
+        /* 업무매뉴얼 — 위너넷 담당자 전용(2026-07-27).
+           ▷ [보류 2026-07-27] 작업 중이라 메뉴를 감춰 둔다(사용자 요청). li 는 기본 display:none 이므로
+             아래 두 줄만 주석 해제하면 위너넷 계정에 다시 나타난다. 화면·컨트롤러는 그대로 살아 있어
+             주소(/main/manual.do)로는 계속 확인 가능하다.
+        var manualMenu = document.getElementById("menu-manual");
+        if (manualMenu) manualMenu.style.display = "";
+        */
     }
 });
 
