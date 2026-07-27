@@ -933,6 +933,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var editing = false, approved = false, curYm = '', pdfPath = '';
   var indicators = [], scores = { struct:0, care:0, total:0 };
   var _bladderGapN = 0;   // [★6] 배뇨관리(06) '일지 작성했으나 프로그램 미체크(분자제외 우려)' 건수 — 오류점검(assesCheck flag 07) 집계
+  /* [보완1] P5 의무기록 신뢰도 '영역별' 문구 선택용 — 오류점검 건수(라이브러리 202607 Part 4).
+     ⚠flag 번호 ≠ 지표코드: flag02→유치도뇨관(05) · flag03→신규욕창(10) · flag04→욕창관리(09·11) · flag07→배뇨관리(06). */
+  var _errFoleyN = 0;     // 유치도뇨관 오류 건수(flag 02)
+  var _errSoreN  = 0;     // 욕창 오류 건수(flag 03 신규발생 + flag 04 욕창관리)
+  var _errBladN  = 0;     // 배뇨 오류 건수(flag 07 전체 — '분자제외'뿐 아니라 패드·기저귀 오류 포함)
   var _dashInd = null;    // [C1·C2] 대시보드 지표 SP(dashbordINDICATORS): monthVal(당월)·year_Val(누적)·month_07~12(월별)·hosGrade
   var prevTotal = null;   // 전월 종합점수 — 총평 P1 전월대비용 (7월=새 평가기간 시작·자료 없음이면 null)
   function prevYmOf(ym){ var y=+ym.substring(0,4), m=+ym.substring(4,6)-1; if(m<1){ m=12; y--; } return String(y)+('0'+m).slice(-2); }
@@ -976,10 +981,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '03':'간호인력 충원 및 근무일수 산정 정확성 점검.',
     '05':'불필요 유지 여부 정기 검토·조기 제거, 간헐적 도뇨(CIC) 전환. 제거 시 제거일자를 평가표에 정확히 입력(누락 시 계속 보유로 집계).',
     '06':'배뇨일지를 작성했어도 배뇨관리계획(일정하게 짜여진 배뇨계획·방광훈련프로그램) 항목 미체크 시 분자에서 누락되므로 평가표 작성기준 우선 재점검. 배뇨일지 7일 미만 작성 시 \'아니오\' 체크 후 실제 작성일수 기재, 배뇨일지에는 실시일자·요실금 여부·배뇨횟수(또는 배뇨량, mL)를 반드시 포함하고 의사·간호기록과 일치하도록 관리.',
-    '09':'욕창(피부문제) 처치 4항목(압력분산도구·체위변경·영양공급·창상 드레싱) 중 실시분을 평가표에 정확히 기록. 특히 2단계 이상 압박성 궤양은 염증성 처치(M0121)가 동반 청구되어야 욕창처치 실시로 인정되므로 처치·청구 기록의 일치 여부를 함께 점검.',
+    '09':'욕창(피부문제) 처치 4항목(압력분산도구·체위변경·영양공급·창상 드레싱) 중 실시분을 평가표에 정확히 기록. 특히 2단계 이상 압박성 궤양은 염증성 처치(M0121)가 동반 청구되어야 욕창처치 실시로 인정되므로 처치·청구 기록의 일치 여부를 함께 점검. 미실시로 집계된 대상자 중 체중 대비 필요 열량 이상으로 영양공급이 이뤄진 사례가 있으면 평가표의 \'피부문제 해결을 위한 영양공급\' 항목을 보완하여 처치 대상자로 반영(항목 미체크만으로 분자에서 빠져 최고 점수를 놓치는 경우가 많음).',
     '11':'욕창 발생 환자의 주차별 창상 사정(PUSH tool 등)·호전 여부를 평가표에 반드시 기록. 실제 처치·드레싱은 이뤄지나 개선 기록 누락으로 낮게 산정되는 경우가 많으므로 기록 관리가 핵심.',
     '12':'재활·기능회복 대상 환자의 입원 초기 ADL과 재평가 ADL을 동일 기준으로 기록하여 호전 건 반영. 물리치료·작업치료 실적과 평가표 연동 점검.',
-    '14':'퇴원계획 수립·지역연계(재가·시설) 강화로 장기입원 비중 관리.',
+    '14':'퇴원계획 수립·지역연계(재가·시설) 강화로 장기입원 비중 관리. 아울러 의료경도 또는 선택입원군 대상자가 1개월 이상 의료중도 이상으로 산정되면 장기입원환자분율의 분모·분자에서 제외되어 점수 향상이 가능하므로, 환자군 변동 여부를 지속적으로 확인·관리.',
     '15':'퇴원 후 재가·시설 연계 실적을 정확히 기록 관리.'
   };
   // Ⅰ-2 우선지표 "개선 여지" 문구
@@ -2426,7 +2431,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var aDash = jQuery.ajax({ url: ctx+'/main/dashbordINDICATORS.do', type:'POST', dataType:'json',
                               data:{ hosp_cd:hospCd, mg_year:curYm.substring(0,4), mgmonth:curYm.substring(4,6) } })
         .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
-    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash).done(function(r1, r2, r3, r4, r5){
+    // [보완1] P5 영역별 신뢰도 문구용 — 유치도뇨관(flag02)·신규욕창(03)·욕창관리(04) 오류 건수. 서버 변경 없음(같은 엔드포인트).
+    function _aChk(flag){
+      return jQuery.ajax({ url: ctx+'/main/select_assesCheck.do', type:'POST', dataType:'json',
+                           data:{ hospCd:hospCd, jobYymm:curYm, jobFlag:flag } })
+        .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+    }
+    var aFoley=_aChk('02'), aSore1=_aChk('03'), aSore2=_aChk('04');
+    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2).done(function(r1, r2, r3, r4, r5, r6, r7, r8){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
       buildCriteria(r2[0]);
@@ -2438,6 +2450,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var bd = (r4 && r4[0] && r4[0].data) || [];
       bd.forEach(function(e){ if(String(e.errName||'').indexOf('분자제외')>=0) _bladderGapN++; });
       _dashInd = (r5 && r5[0]) ? r5[0] : null;   // [C1·C2] 당월/누적/월별 점수
+      // [보완1] 영역별 오류 건수 — 조회 실패(null)는 0으로 흡수 → 그 영역 문단은 생략된다
+      var _cnt=function(rr){ var d=(rr && rr[0] && rr[0].data) || []; return d.length; };
+      _errBladN  = bd.length;
+      _errFoleyN = _cnt(r6);
+      _errSoreN  = _cnt(r7) + _cnt(r8);
       renderAll();
       loadSavedTexts();
     }).fail(function(){ erSwal('error','지표 자료 조회 중 오류가 발생했습니다.', {title:'오류'}); });
@@ -2688,6 +2705,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return ' '+nms.join('과(와) ')+'을(를) 함께 한 단계씩 개선할 경우 종합점수는 약 +'+f1(sum)+'점 상승하여 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달할 수 있습니다.';
   }
 
+  /* [보완3] 등급 상향 '개선 우선순위' 블록 — 라이브러리 202607 Part 5-2.
+       담당자는 목표까지 부족점수가 큰 병원에 순위를 수치로 제시한다:
+         "목표까지 11.5점 부족 — 1순위 욕창개선 4점 구간 → +3.2점(최소 2명) / 2순위 ADL → +2.4점(최소 7명)
+          / 3순위 간호인력 → +1.5점 / 총 획득 가능 7.1점 → 2등급 가능(82.6점)"
+       topGaps 순위(진료영역 → 구조영역 → 지역사회복귀율)를 그대로 써서 진료지표가 앞에, 구조지표가 뒤에 온다.
+       C4(sumTopSimTxt, 상위 2지표 동시개선)와 결론이 겹치므로 이 블록이 나오면 C4는 생략한다.
+       부족점수 3점 미만이면 순위를 늘어놓을 국면이 아니라 '' 반환(기존 C4 유지). */
+  function goalRankTxt(){
+    var gs=goalScoreVal(), gap=Math.round((gs-scores.total)*10)/10;
+    if(!(gap>=3)) return '';
+    var ts=topGaps(3).filter(function(x){ var d=simStep(x.r); return d && d.dW>0; });
+    if(ts.length<2) return '';
+    var sum=0, parts=[];
+    ts.forEach(function(x,i){
+      var d=simStep(x.r); sum+=d.dW;
+      parts.push((i+1)+'순위 \''+x.nm+'\' 표준화 '+d.nz+'점 구간 진입(+'+f1(d.dW)+'점'+(d.need? ', 최소 '+d.need+'명 개선':'')+')');
+    });
+    var neo=Math.round((scores.total+sum)*10)/10;
+    return ' 목표까지 '+f1(gap)+'점이 부족한 상황으로, 개선 우선순위는 '+parts.join(' · ')
+         + '이며, 모두 확보할 경우 약 +'+f1(sum)+'점으로 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달할 수 있습니다.';
+  }
+
   // [C9] %p 부족형 — 다음 구간 진입까지 남은 격차를 %p로 (세밀분석 §8-1). 높을수록 우수 %지표(s<5)만.
   function pctShortTxt(r){
     var cd=r.cate_cd, s=n(r.s_score)||0, val=n(r.cal_val);
@@ -2734,10 +2773,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return '배뇨일지는 작성되었으나 배뇨(훈련)프로그램 계획 항목 미체크로 분자에서 누락될 우려가 있는 '+_bladderGapN+'건을 평가표에서 보완할 경우, 분자 '+newN+'명('+fnum(newPct)+'%)으로 재산정되어 '+tail+'(오류점검 결과 기준·대상자 적정성 확인 요망)';
   }
 
+  /* [보완1] P5 의무기록 신뢰도 — '영역별 일치관리' 문구 (라이브러리 202607 Part 4 · 28건 공통 구조).
+       담당자 총평은 도입문("…보완이 필요한 사례가 확인됨") 뒤에 유치도뇨관·욕창·배뇨관리 영역별 관리문을 붙인다.
+       오류점검(assesCheck)에서 실제로 오류가 잡힌 영역만 골라 넣는다 — 없는 영역까지 나열하면 사실과 어긋나고
+       분량만 늘어난다. 세 영역 모두 오류가 없거나 조회 실패면 '' → 기존 상시/연말 일반문만 남는다. */
+  function recordRelTxt(){
+    var areas=[], secs=[];
+    if(_errFoleyN>0){ areas.push('유치도뇨관');
+      secs.push('유치도뇨관은 Foley 삽입·교체·제거일과 환자평가표, 의사지시, 간호기록, M0060 및 재료대 산정 내역이 서로 일치하도록 관리해 주시기 바랍니다.'); }
+    if(_errSoreN>0){ areas.push('욕창');
+      secs.push('욕창은 상태·단계·크기, 피부문제 처치, 체위변경, 영양공급(처방 칼로리와 실제 제공 칼로리)·체중기록과 환자평가표가 의무기록과 일치하도록 관리하고, 동일 부위에 여러 병변이 있는 경우 위치를 구분하여 촬영해 사진·경과기록·간호기록·평가표가 서로 일치하는지 점검해 주시기 바랍니다.'); }
+    if(_errBladN>0){ areas.push('배뇨관리');
+      secs.push('배뇨관리는 배뇨일지를 7일 미만 작성한 경우 환자평가표의 배뇨일지 작성 여부를 \'아니오\'로 체크하고 실제 작성일수를 기재하며, 의사기록·간호기록·배뇨일지·환자평가표가 서로 일치하도록 관리해 주시기 바랍니다. 배뇨훈련 오더의 시행기간·시간 간격과 배뇨일지 작성기간을 일치시키고, 배뇨일지에 의료인 서명이 누락되지 않았는지 점검해 주시기 바랍니다.'); }
+    if(!secs.length) return '';
+    return '의무기록 신뢰도 점검 결과 '+areas.join('·')+' 관련 기록에서 일부 보완이 필요한 사례가 확인되었습니다. '+secs.join(' ')+' ';
+  }
+
   // P2 구조영역 커트라인 경고 — 현황값이 현재 표준화 구간 경계에 근접한 구조지표(하위 구간 하락 리스크)를
   //   1개 골라(경계 비율 최소) 담당자 문형으로: "30명 초과 시 표준화 3점(가중치 −1.7점) 하락" (가이드 §3-P2)
+  var _structRiskCd = null;   // [보완2] 하락경고로 이미 언급한 구조지표 — structUpTxt 가 같은 지표를 다시 쓰지 않게
   function structRiskTxt(){
     var best=null;
+    _structRiskCd = null;
     indicators.forEach(function(r){
       if(r.cate_fg!=='10') return;
       var cd=r.cate_cd, s=n(r.s_score)||0, w=n(r.stdweig), val=n(r.cal_val);
@@ -2754,12 +2811,38 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       }
     });
     if(!best) return '';
+    _structRiskCd = best.cd;
     var u=unitOf(best.cd);
     var edge=(best.cd==='04') ? fnum(best.band.start)+u+' 미만' : fnum(bndUp(best.band.end))+u+' 초과';
     var uJosa=(u==='명') ? '으로' : '로';
     var bndE=bndUp(best.band.end);
     return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+(bndE!==best.band.end? fnum(bndE)+'미만' : fnum(best.band.end))+u+') 경계에 근접해 있어, '
          + edge+' 시 표준화 '+(best.s-1)+'점(가중치 −'+f1(best.loss)+'점)으로 하락할 수 있으므로 재원환자 수 추이에 맞춘 인력 관리가 필요합니다.';
+  }
+
+  /* [보완2] P2 구조영역 '상위 구간 진입 여지' — 라이브러리 202607 Part 2-2 ③ (라온힐·청라백세 등 공통 문형).
+       structRiskTxt(하락 경고)의 반대 방향으로, 담당자 총평의 핵심 문장인데 그동안 없었다:
+         "의사 1인당 환자수는 현재 표준화 3점 구간으로, 30명 미만으로 개선할 경우 가중치 1.7점 향상이 가능함"
+       구조지표(cate_fg='10') 중 표준화 5점 미만이고 가중치 상승폭(w/5)이 가장 큰 1개를 고른다.
+        · 1인당 환자수(01~03·낮을수록 우수) → 다음 상위 구간의 상한 기준 'N명 미만'(bndUp = 구간 상한→미만 경계)
+        · 재직일수율(04·높을수록 우수)       → 다음 상위 구간의 하한 기준 'N% 이상'
+        · 하락 경고에 이미 쓰인 지표는 제외 — 같은 지표에 상반된 두 문장이 붙으면 읽기 나쁘다. */
+  function structUpTxt(){
+    var best=null;
+    indicators.forEach(function(r){
+      if(r.cate_fg!=='10') return;
+      var cd=r.cate_cd, s=n(r.s_score)||0, w=n(r.stdweig);
+      if(!(s>=1 && s<5) || !(w>0) || cd===_structRiskCd) return;
+      var nb=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s+1) nb=z; });
+      if(!nb) return;
+      var cand={ cd:cd, nm:r.cate_nm, s:s, dW:w/5, nb:nb };
+      if(!best || cand.dW>best.dW) best=cand;
+    });
+    if(!best) return '';
+    var u=unitOf(best.cd);
+    var edge = IS_LOWER[best.cd] ? (fnum(bndUp(best.nb.end))+u+' 미만으로 개선할 경우')
+                                 : (fnum(best.nb.start)+u+' 이상으로 개선할 경우');
+    return ' \''+best.nm+'\'은(는) 현재 표준화 '+best.s+'점 구간으로, '+edge+' 가중치 약 +'+f1(best.dW)+'점 향상이 가능하므로, 차등제 신고 시 인력 배치 수준을 관리하여 상위 표준화점수 구간 진입을 검토해 주시기 바랍니다.';
   }
 
   // [★5] P2 구조영역 차등제 분기 표기 — curYm 에서 분기 계산(하드코딩 없이 연도 자동 대응).
@@ -2819,6 +2902,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var sq = structQuarterTxt();   // [★5] 2026 등 차등제 분기 예상/실반영 표기(연말은 '')
     p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다.'
              + structRiskTxt()
+             + structUpTxt()      // [보완2] 상위 구간 진입 여지(하락 경고와 다른 지표에서 1개)
              + (sq || ' 실제 점수는 차등제 신고 결과가 합산되어 확정됩니다.')
              + ' 재원환자 수와 인력 추이가 변동되지 않도록 꾸준히 관리해 주시기 바랍니다.';
     p.sum_p3 = '';
@@ -2834,7 +2918,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     if(!p.sum_p3) p.sum_p3 = '진료영역 지표는 전반적으로 안정적으로 관리되고 있습니다.';
     p.sum_p3 += roomRiskTxt();   // [★1] 낮을수록 우수 지표 하락 경고(여유 한도형) 병기
-    p.sum_p3 += sumTopSimTxt();  // [C4] 상위 2지표 동시개선 시 도달점수·등급 결론
+    // [보완3] 부족점수가 크면 '개선 우선순위' 블록으로, 작으면 기존 C4(상위 2지표 동시개선)로 — 결론이 겹쳐 둘 중 하나만
+    var _rank = goalRankTxt();
+    p.sum_p3 += _rank || sumTopSimTxt();
     // [C11] 연말(12월) 확정 국면 — 잔여 개선 여지 무관하게 점수 확정(세밀분석 §8, 3병원 수렴)
     if(curYm && parseInt(curYm.substring(4,6),10)===12)
       p.sum_p3 += ' 다만 평가가 12월 진료분까지로 종료되는 시점이므로, 남은 개선 여지와 무관하게 현재 점수 수준에서 확정되는 국면임을 감안해 주시기 바랍니다.';
@@ -2855,10 +2941,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     p.sum_p4 += ' 해당 대상자 관리를 꾸준히 부탁드립니다.';
     // [★2] P5 신뢰도 — 연말(10~12월)은 익년 2~3월 신뢰도 점검 대비형, 그 외는 상시형 (담당자 강남수 12월 vs 평시)
     var moNum = curYm ? parseInt(curYm.substring(4,6),10) : 0;
+    // [보완1] 오류점검에서 잡힌 영역(유치도뇨관·욕창·배뇨관리)의 일치관리 문구를 앞에 붙인다(라이브러리 Part 4)
+    p.sum_p5 = recordRelTxt();
     if(moNum>=10)
-      p.sum_p5 = '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 다음 연도 2~3월로 예정된 신뢰도 점검에 대비하여 의무기록과 환자평가표의 불일치 사항을 미리 점검·수정해 주시기 바랍니다.';
+      p.sum_p5 += '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 다음 연도 2~3월로 예정된 신뢰도 점검에 대비하여 의무기록과 환자평가표의 불일치 사항을 미리 점검·수정해 주시기 바랍니다.';
     else
-      p.sum_p5 = '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 의무기록과 환자평가표가 서로 일치하는지 평소에 함께 점검해 주시기 바랍니다.';
+      p.sum_p5 += '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 의무기록과 환자평가표가 서로 일치하는지 평소에 함께 점검해 주시기 바랍니다.';
     Object.keys(p).forEach(function(k){
       if(savedKeys[k]) return;   // 병원별 편집 저장분 우선
       var e=document.querySelector('#evalReport [data-key="'+k+'"]');
