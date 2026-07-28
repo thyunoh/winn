@@ -337,6 +337,17 @@
   #evalReport table.er-grade td.er-curval{ color:var(--er-bad); font-weight:800; }
 
   /* Ⅱ 상세표(원본 PDF) — 좌측 영역 세로병합·구간 색상·부족분 강조·종합 진네이비 */
+  /* Ⅱ 표 열폭 — '부족점검' 열 제거(7컬럼)로 남은 폭을 전부 '지표명' 이 흡수해 표가 우측 끝까지 꽉 차게.
+     table-layout:fixed 라 thead 의 th 폭이 열폭을 결정(tbody 는 rowspan/colspan 이라 nth-child 로 잡으면 어긋남).
+     지표명(2번째)만 폭 미지정 = 나머지 폭 전부 차지. 폭 조정 시 아래 6개 px 만 손대면 된다. */
+  #evalReport table.er-tbl2{ table-layout:fixed; width:100%; }
+  #evalReport table.er-tbl2 thead th:nth-child(1){ width:46px; }
+  #evalReport table.er-tbl2 thead th:nth-child(3){ width:78px; }
+  #evalReport table.er-tbl2 thead th:nth-child(4){ width:96px; }
+  #evalReport table.er-tbl2 thead th:nth-child(5){ width:110px; }
+  #evalReport table.er-tbl2 thead th:nth-child(6){ width:74px; }
+  #evalReport table.er-tbl2 thead th:nth-child(7){ width:86px; }
+  #evalReport table.er-tbl2 td.er-l{ word-break:keep-all; }   /* 긴 지표명은 어절 단위 줄바꿈 */
   #evalReport table.er-tbl td.er-area{ background:#eef2f9; color:var(--er-navy); font-weight:800; vertical-align:middle; width:46px; line-height:1.35; }
   #evalReport table.er-tbl td.er-area.er-a21{ background:#eef8f0; color:#2e7d32; }
   #evalReport table.er-tbl td.er-area.er-a22{ background:#eef2f9; }
@@ -602,8 +613,8 @@
           <li>본 보고서에서 제시하는 현황값 및 분석 결과는 병원 제공 자료를 기반으로<br>산출한 추정값으로, 심사평가원 최종 집계 결과에 따라 일부 수치는<br>변동될 수 있습니다.</li>
           <li>예상 종합점수는 <b>‘2주기 5차 적정성평가 기준’의 지표별 표준화 구간을 적용</b>하여<br>산출한 값으로, 심사평가원 최종 집계 과정에서 표준화 구간이 재설정될 경우<br>최종 결과와 차이가 발생할 수 있습니다.</li>
           <li>진료영역_유치도뇨관 환자분율 지표는 고‧저위험군 구성비에 따른 가중치 적용 지표로,<br>본 보고서에서는 고‧저위험군 가중치를 1:1로 가정한 추정값을 제시하였으며,<br>해당 가중치는 심사평가원 최종 집계 시 확정됨에 따라 최종 결과와 차이가<br>발생할 수 있습니다.</li>
-          <li>진료영역_항정신성의약품 처방률 지표는 2025년 7월부터 2026년 6월까지의 1년<br>평가기간을 기준으로 산출되므로, 평가기간 종료 시점까지 처방률 변동이 발생하지<br>않도록 지속적인 관리가 필요합니다.</li>
-          <li>2025년도 적정성평가 결과는 2027년 6월 발표 예정으로,<br>최종 점수 산출 시 ‘DUR 점검율’, ‘장기입원환자분율’, ‘지역사회복귀율’ 지표의<br>현황값 변동에 따라 종합점수에 일부 영향이 발생할 수 있습니다.</li>
+          <li>진료영역_항정신성의약품 처방률 지표는 2026년 7월부터 2027년 6월까지의 1년<br>평가기간을 기준으로 산출되므로, 평가기간 종료 시점까지 처방률 변동이 발생하지<br>않도록 지속적인 관리가 필요합니다.</li>
+          <li>2026년도 적정성평가 결과는 2028년 6월 발표 예정으로,<br>최종 점수 산출 시 ‘DUR 점검율’, ‘장기입원환자분율’, ‘지역사회복귀율’ 지표의<br>현황값 변동에 따라 종합점수에 일부 영향이 발생할 수 있습니다.</li>
         </ul>
       </div>
       </div>
@@ -651,8 +662,10 @@
       <div class="er-sec" style="margin-top:0;">
         <div class="er-eyebrow"><span class="er-rn">Ⅱ.</span><span class="er-stitle">영역별·지표별 상세 분석</span></div>
         <div class="er-tw">
-          <table class="er-tbl">
-            <thead><tr><th>영역</th><th class="er-l">지표명</th><th>가중치<br>(만점)</th><th>현황값</th><th>표준화<br>구간</th><th>획득<br>점수</th><th>부족점검</th><th>부족점수</th></tr></thead>
+          <table class="er-tbl er-tbl2">
+            <%-- [2026-07-28 사용자 확정] '부족점검'(옛 '획득률', 값=획득/가중치 %) 열 제외 → 7컬럼.
+                 되살릴 때는 여기 th 와 renderTable2() 의 rateTd·소계 rate 칸을 함께 넣어야 칸 수가 맞는다. --%>
+            <thead><tr><th>영역</th><th class="er-l">지표명</th><th>가중치<br>(만점)</th><th>현황값</th><th>표준화<br>구간</th><th>획득<br>점수</th><th>부족점수</th></tr></thead>
             <tbody id="er-tbl2Body"><!-- JS --></tbody>
           </table>
         </div>
@@ -3057,41 +3070,41 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   function renderTable2(){
-    // 원본 PDF 형식(8컬럼): 영역(세로병합) | 지표명 | 가중치 | 현황값 | 표준화구간(2줄·색) | 획득점수 | 획득률 | 부족분
+    // 7컬럼: 영역(세로병합) | 지표명 | 가중치 | 현황값 | 표준화구간(2줄·색) | 획득점수 | 부족점수
+    //   ※ 옛 '부족점검'(획득률 %) 열은 2026-07-28 사용자 확정으로 제외. thead 도 같이 7칸이다.
     var html='';
     function grpRows(fg, label, areaCls){
       var rows=indicators.filter(function(r){ return r.cate_fg===fg; });
       rows.forEach(function(r, idx){
-        var w=n(r.stdweig), got=n(r.weigval), gap=w-got, rate=w>0?Math.round(got/w*100):0, s=n(r.s_score)||0;
+        var w=n(r.stdweig), got=n(r.weigval), gap=w-got, s=n(r.s_score)||0;
         var zcls = s>=5?'er-z5':(s<=1?'er-z1':'er-z3');
         var range = s? zoneRange(r.cate_cd, s) : '';
         var zTd = s? '<td class="er-zc '+zcls+'"><b>'+s+'구간</b>'+(range?'<span class="er-zr">('+esc(range)+')</span>':'')+'</td>' : '<td>-</td>';
         // 부족분 강조(연분홍) = 진료지표(과정·결과) 중 부족분 2점 초과 — 원본 강조 패턴
         var hl = (fg!=='10' && gap>2.0001);
         var gapTd = gap>0.0001? '<td class="er-num'+(hl?' er-gaphl':' er-b-bad')+'">'+f1(gap)+'</td>' : '<td class="er-zero er-num">0</td>';
-        var rateTd = rate>=100? '<td class="er-r100 er-num">100%</td>' : '<td class="er-num">'+rate+'%</td>';
         var cal = calDisp(r) + (r.cate_cd==='07' ? ' (PI)' : '');
         html += '<tr>'
               + (idx===0? '<td class="er-area '+areaCls+'" rowspan="'+rows.length+'">'+label+'</td>' : '')
               + '<td class="er-l">'+esc(r.cate_nm)+'</td><td class="er-num">'+fnum(w)+'</td><td class="er-num">'+cal+'</td>'
-              + zTd + '<td class="er-num">'+f1(got)+'</td>'+rateTd+gapTd+'</tr>';
+              + zTd + '<td class="er-num">'+f1(got)+'</td>'+gapTd+'</tr>';
       });
       return rows;
     }
     function sums(fgs){
       var w=0,g=0;
       indicators.forEach(function(r){ if(fgs.indexOf(r.cate_fg)>=0){ w+=n(r.stdweig); g+=n(r.weigval); } });
-      return { w:w, g:g, rate:(w>0?Math.round(g/w*1000)/10:0), gap:w-g };
+      return { w:w, g:g, gap:w-g };
     }
     grpRows('10','구조<br>지표','');
     var s10=sums(['10']);
-    html += '<tr class="er-sub"><td colspan="2">구조영역 소계</td><td class="er-num">'+fnum(s10.w)+'</td><td></td><td></td><td class="er-num">'+f1(s10.g)+'</td><td class="er-num">'+s10.rate+'%</td><td class="er-b-bad er-num">'+f1(s10.gap)+'</td></tr>';
+    html += '<tr class="er-sub"><td colspan="2">구조영역 소계</td><td class="er-num">'+fnum(s10.w)+'</td><td></td><td></td><td class="er-num">'+f1(s10.g)+'</td><td class="er-b-bad er-num">'+f1(s10.gap)+'</td></tr>';
     grpRows('21','과정<br>지표','er-a21');
     grpRows('22','결과<br>지표','er-a22');
     var sMd=sums(['21','22']);
-    html += '<tr class="er-sub"><td colspan="2">진료영역(과정+결과) 소계</td><td class="er-num">'+fnum(sMd.w)+'</td><td></td><td></td><td class="er-num">'+f1(sMd.g)+'</td><td class="er-num">'+sMd.rate+'%</td><td class="er-b-bad er-num">'+f1(sMd.gap)+'</td></tr>';
+    html += '<tr class="er-sub"><td colspan="2">진료영역(과정+결과) 소계</td><td class="er-num">'+fnum(sMd.w)+'</td><td></td><td></td><td class="er-num">'+f1(sMd.g)+'</td><td class="er-b-bad er-num">'+f1(sMd.gap)+'</td></tr>';
     var sT=sums(['10','21','22']);
-    html += '<tr class="er-grand"><td colspan="2">종 합</td><td class="er-num">'+fnum(sT.w)+'</td><td></td><td></td><td class="er-num">'+f1(sT.g)+'</td><td class="er-num">'+sT.rate+'%</td><td class="er-num">'+f1(sT.gap)+'</td></tr>';
+    html += '<tr class="er-grand"><td colspan="2">종 합</td><td class="er-num">'+fnum(sT.w)+'</td><td></td><td></td><td class="er-num">'+f1(sT.g)+'</td><td class="er-num">'+f1(sT.gap)+'</td></tr>';
     el('er-tbl2Body').innerHTML = html;
   }
 

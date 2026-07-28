@@ -1260,12 +1260,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var evalRptMenu = document.getElementById("menu-evalreport");
         if (evalRptMenu) evalRptMenu.style.display = "";
         /* 업무매뉴얼 — 위너넷 담당자 전용(2026-07-27).
-           ▷ [보류 2026-07-27] 작업 중이라 메뉴를 감춰 둔다(사용자 요청). li 는 기본 display:none 이므로
-             아래 두 줄만 주석 해제하면 위너넷 계정에 다시 나타난다. 화면·컨트롤러는 그대로 살아 있어
-             주소(/main/manual.do)로는 계속 확인 가능하다.
-        var manualMenu = document.getElementById("menu-manual");
-        if (manualMenu) manualMenu.style.display = "";
-        */
+           ▷ [숨김 2026-07-28 사용자 요청] 메뉴 노출 보류. li 는 style="display:none" 그대로라 어느 계정에도
+             안 보인다. 화면·컨트롤러는 살아 있어 주소(/main/manual.do)로는 그대로 확인 가능.
+             다시 켜려면 아래 두 줄의 주석만 해제하면 된다. */
+        // var manualMenu = document.getElementById("menu-manual");
+        // if (manualMenu) manualMenu.style.display = "";
     }
 });
 

@@ -111,16 +111,28 @@
   .wm-tiphint{ font-size:12px; color:#9aa7b3; margin:-4px 0 12px; }
   .wm-tiphint u{ border-bottom:1px dashed #7f9cc9; text-decoration:none; }
 
-  /* ── 좌: 사용법 / 우: 실제 화면 작게 보기 (2026-07-27) ─────────────────────────────
-        오른쪽은 그 단계의 실제 화면을 그대로 띄워 축소한 것이다(같은 서버·같은 로그인이라 그대로 보인다).
-        폭이 좁아지면(1200px 이하) 위아래로 쌓이게 한다. */
-  /* 좌:우 = 약 4:6 — 사용법이 화면을 다 먹지 않게 좌측을 절반 이하로 묶고, 실제 화면 쪽에 자리를 준다 */
-  /* ★두 영역을 '완전히 분리된 두 패널'로 — 각각 테두리·머리띠를 가진 별개 창처럼 보이게 한다 */
-  .wm-split{ display:flex; gap:18px; align-items:flex-start; }
-  .wm-split .lft, .wm-split .rgt{ background:#fff; border-radius:12px; overflow:hidden;
-                                  box-shadow:0 2px 10px rgba(31,59,115,.08); }
-  .wm-split .lft{ flex:0 1 40%; min-width:300px; border:2px solid #c9d8ea; }
-  .wm-split .rgt{ flex:1 1 58%; min-width:340px; position:sticky; top:10px; border:2px solid #bfdcd2; }
+  /* ── ★화면 <전체>를 좌:우 5:5 로 나눈다 (2026-07-28 사용자 확정) ───────────────────────
+        [바뀐 점] 예전에는 '사용법을 볼 때만' 반반이었고 홈(카드 목록)·검색결과는 한 폭을 다 썼다.
+                  이제 제목·검색·목록·사용법이 <전부 왼쪽 칸>으로 들어가고,
+                  오른쪽 칸은 <실제 화면 + 버튼별 기능설명> 자리로 <항상> 남는다(내용만 바뀜).
+                  아무것도 안 고른 상태에서는 오른쪽에 화면 고르기 안내가 뜬다.
+        ★flex-basis 를 0 으로 두고 grow 를 1:1 로 줘야 내용 길이와 무관하게 정확히 반반이 된다
+          (basis:50% + gap 이면 내용이 긴 쪽이 밀려 반반이 깨진다).
+        폭이 좁아지면(1200px 이하) 위아래로 쌓인다. */
+  .wm-page{ display:flex; gap:18px; align-items:flex-start; }
+  .wm-colL{ flex:1 1 0; min-width:0; }
+  /* ★오른쪽은 버튼설명표까지 붙어 화면보다 길어질 수 있다 — sticky 만 두면 아래쪽 설명에 손이
+       닿지 않으므로 패널 안에서 스크롤되게 한다(높이는 창 높이에 맞춰 자동). */
+  .wm-colR{ flex:1 1 0; min-width:0; position:sticky; top:10px;
+            background:#fff; border:2px solid #bfdcd2; border-radius:12px;
+            box-shadow:0 2px 10px rgba(31,59,115,.08);
+            max-height:calc(100vh - 24px); overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; }
+  .wm-colR .wm-panehd.rg{ position:sticky; top:0; z-index:5; }
+  /* 왼쪽 '사용법'은 카드 하나로 감싼다(예전 좌측 패널과 같은 모양) */
+  .wm-lpane{ background:#fff; border:2px solid #c9d8ea; border-radius:12px; overflow:hidden;
+             box-shadow:0 2px 10px rgba(31,59,115,.08);
+             animation:wmSlideIn .36s cubic-bezier(.22,.9,.25,1) both; }
+  .wm-lpane .wm-view{ border:0; border-radius:0; box-shadow:none; padding:13px 14px 15px; animation:none; }
   .wm-vline{ flex:0 0 3px; align-self:stretch; border-radius:2px;
              background:repeating-linear-gradient(180deg,#dfe6ef 0 8px,transparent 8px 14px); }
   /* 패널 머리띠 — 색을 채워서 두 영역이 확실히 갈리게 */
@@ -132,21 +144,62 @@
   .wm-panehd.rg{ background:#eaf6f2; color:#0f6b5c; border-bottom:1px solid #cfe6de; }
   .wm-panehd.rg span{ color:#5b978b; }
   .wm-panehd .gap{ flex:1; }
-  /* 패널 안쪽에서는 본문·미리보기 자체 테두리를 없앤다(테두리 이중으로 겹치지 않게) */
-  .wm-split .lft .wm-view{ border:0; border-radius:0; box-shadow:none; padding:13px 14px 15px; }
-  .wm-split .rgt .wm-prev{ border:0; border-radius:0; box-shadow:none; animation:none; }
-  .wm-split .rgt .wm-prev .hd{ display:none; }
+  /* 패널 안쪽에서는 미리보기 자체 테두리를 없앤다(테두리 이중으로 겹치지 않게) */
+  .wm-colR .wm-prev{ border:0; border-radius:0; box-shadow:none; animation:none; }
+  .wm-colR .wm-prev .hd{ display:none; }
   .wm-prev{ border:1px solid #dfe7ee; border-radius:12px; background:#fff; overflow:hidden;
             box-shadow:0 1px 2px rgba(31,59,115,.05); animation:wmFadeUp .45s cubic-bezier(.22,.9,.25,1) both; animation-delay:.1s; }
   .wm-prev .hd{ display:flex; align-items:center; gap:6px; padding:8px 11px; background:#f3f6fa;
                 border-bottom:1px solid #e6ebf0; font-size:12.5px; font-weight:800; color:#37475a; }
+  /* 미리보기 조절바 — 배율(−/+/맞춤)과 '메뉴·상단바 같이 보기' */
+  .wm-prev .pvbar{ display:flex; align-items:center; gap:5px; padding:6px 10px; background:#f7fbfa;
+                   border-bottom:1px solid #e6efec; font-size:11.5px; color:#5b978b; }
+  .wm-prev .pvz{ cursor:pointer; min-width:22px; text-align:center; font-weight:800; color:#0f6b5c;
+                 background:#fff; border:1px solid #cfe6de; border-radius:6px; padding:1px 6px; line-height:1.7; user-select:none; }
+  .wm-prev .pvz:hover{ background:#0f6b5c; color:#fff; border-color:#0f6b5c; }
+  .wm-prev .pvz.w{ min-width:auto; font-weight:700; }
+  .wm-prev .pvv{ min-width:64px; text-align:center; font-weight:700; color:#37475a; }
+  .wm-prev .pvchk{ display:flex; align-items:center; gap:4px; margin:0; cursor:pointer; font-size:11.5px; color:#6b7a89; }
+  .wm-prev .pvchk input{ margin:0; }
   .wm-prev .bd{ position:relative; overflow:hidden; background:#f7f9fb; }
-  .wm-prev iframe{ border:0; transform-origin:0 0; display:block; background:#fff; }
+  /* ★max-width:none 필수 — 맨 위 `.wm-wrap *{max-width:100%}` 가 iframe 의 가상 가로폭(1100px)까지
+       패널 폭으로 잘라 버린다. 그러면 안쪽 화면이 좁은 폭으로 그려진 채 또 축소돼 글씨만 작아진다.
+       (이게 '단순히 축소된 것처럼' 보이던 진짜 원인 — 2026-07-28) */
+  .wm-prev iframe{ border:0; transform-origin:0 0; display:block; background:#fff; max-width:none !important; }
   .wm-prev .none{ padding:30px 20px; text-align:center; color:#9aa7b3; font-size:12.5px; line-height:1.9; }
   .wm-prev .tipbar{ padding:7px 11px; font-size:11.5px; color:#9aa7b3; border-top:1px solid #eef2f5; background:#fcfdfe; }
+
+  /* ── 버튼별 기능설명 (2026-07-28) — 우측 패널에서 실제 화면 바로 아래에 붙는다 ──────────
+        화면에 찍히는 <버튼 글자> 그대로를 왼쪽 칸에, 하는 일을 오른쪽 칸에 적는다.
+        내용은 STEPS/EXTRA 의 btns 배열 하나로만 관리한다(여기 CSS 는 손댈 일 없음). */
+  .wm-btns{ border-top:1px solid #dbe9e3; background:#fbfdfc; }
+  .wm-btns .bhd{ display:flex; align-items:center; gap:6px; padding:9px 12px 7px; font-size:12.5px; font-weight:800; color:#0f6b5c; }
+  .wm-btns .bhd em{ font-style:normal; font-weight:400; font-size:11.5px; color:#79a89d; }
+  .wm-btns table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  .wm-btns th, .wm-btns td{ text-align:left; vertical-align:top; padding:7px 10px; font-size:12px; line-height:1.65;
+                            border-top:1px solid #e8f0ed; word-break:break-word; }
+  .wm-btns th{ width:38%; font-weight:700; color:#1f3b73; background:#f2f8f6; }
+  .wm-btns tr:hover th{ background:#e8f3ef; }
+  .wm-btns tr:hover td{ background:#f6fbf9; }
+  .wm-btns td{ color:#37475a; }
+  .wm-btns td b{ color:#1f3b73; }
+  .wm-only{ display:inline-block; margin-left:4px; font-size:10px; font-weight:700; color:#8a6414;
+            background:#fdf6e8; border:1px solid #f0dfb8; border-radius:8px; padding:0 5px; vertical-align:middle; }
+  .wm-btns .none{ padding:14px 12px 16px; font-size:12px; color:#9aa7b3; }
+
+  /* 오른쪽 칸 — 아직 아무것도 안 고른 상태의 안내 + 화면 바로 고르기 */
+  .wm-pick .ph{ padding:22px 16px 6px; text-align:center; font-size:13px; color:#6b7a89; line-height:1.9; }
+  .wm-pick .ph b{ color:#0f6b5c; }
+  .wm-pick .chips{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; padding:12px 14px 22px; }
+  .wm-pick .c{ cursor:pointer; font-size:12.5px; font-weight:700; color:#0f6b5c; background:#f2f8f6;
+               border:1px solid #cfe6de; border-radius:16px; padding:5px 12px;
+               transition:background .15s ease, color .15s ease, transform .12s ease; }
+  .wm-pick .c:hover{ background:#0f6b5c; color:#fff; border-color:#0f6b5c; transform:translateY(-2px); }
+
   @media (max-width:1200px){
-    .wm-split{ display:block; }
-    .wm-split .rgt{ margin-top:14px; position:static; min-width:0; }
+    /* 폭이 좁으면 반반을 포기하고 위아래로 쌓는다. 이때 패널 안 스크롤은 없애 페이지 스크롤만 남긴다 */
+    .wm-page{ display:block; }
+    .wm-colR{ margin-top:14px; position:static; max-height:none; overflow:visible; }
     .wm-vline{ display:none; }
   }
 
@@ -182,32 +235,45 @@
 </c:when>
 <c:otherwise>
 
+<%-- ★페이지 골격 = 좌우 두 칸 (2026-07-28).
+     왼쪽(wm-colL) 안에 제목·검색·목록·사용법이 전부 들어가고, 오른쪽(wm-colR)은 실제 화면 자리로 항상 남는다.
+     예전처럼 '사용법 볼 때만 좌우로 갈리는' 구조가 아니므로, 홈에서도 내용이 아래로 흐르지 않는다. --%>
 <div class="wm-wrap">
-  <div class="wm-head">
-    <h2>📘 업무매뉴얼</h2>
-    <span class="wm-badge">위너넷 전용</span>
-  </div>
-  <div class="wm-desc"><b>WinCheck+ 사용법</b>입니다. 로그인부터 화면 순서대로, <b>병원에서 직접 하는 일</b>을 적어 두었습니다. 카드를 누르면 그 화면 사용법이 나오고, 아래 <b>다음 단계</b>로 계속 이어집니다.</div>
-
-  <div class="wm-search">
-    <div class="rowin">
-      <input type="text" id="wmQ" placeholder="🔍 찾는 말을 넣어 보세요 — 예) 배뇨관리, 오류점검, 총평"
-             oninput="wmRender()" onkeydown="if(event.keyCode===13)wmRender()">
-      <button class="wm-btn" onclick="wmHome()">처음으로</button>
+ <div class="wm-page">
+  <div class="wm-colL">
+    <div class="wm-head">
+      <h2>📘 업무매뉴얼</h2>
+      <span class="wm-badge">위너넷 전용</span>
     </div>
-    <div class="wm-quick" id="wmQuick"></div>
-  </div>
+    <div class="wm-desc"><b>WinCheck+ 사용법</b>입니다. 로그인부터 화면 순서대로, <b>병원에서 직접 하는 일</b>을 적어 두었습니다. 왼쪽에서 카드를 누르면 <b>오른쪽에 그 화면과 버튼별 기능설명</b>이 나옵니다.</div>
 
-  <div class="wm-tiphint">💡 <u>점선이 있는 말</u>에 마우스를 대면 뜻이 나옵니다. 카드에 마우스를 대면 그 화면에서 하는 일이 미리 보입니다.</div>
-  <div class="wm-crumb" id="wmCrumb"></div>
-  <div id="wmMain"></div>
+    <div class="wm-search">
+      <div class="rowin">
+        <input type="text" id="wmQ" placeholder="🔍 찾는 말을 넣어 보세요 — 예) 배뇨관리, 오류점검, 총평"
+               oninput="wmRender()" onkeydown="if(event.keyCode===13)wmRender()">
+        <button class="wm-btn" onclick="wmHome()">처음으로</button>
+      </div>
+      <div class="wm-quick" id="wmQuick"></div>
+    </div>
+
+    <div class="wm-tiphint">💡 <u>점선이 있는 말</u>에 마우스를 대면 뜻이 나옵니다.</div>
+    <div class="wm-crumb" id="wmCrumb"></div>
+    <div id="wmMain"></div>
+  </div>
+  <div class="wm-vline"></div>
+  <div class="wm-colR" id="wmSide"></div>
+ </div>
 </div>
 
 <script>
 /* ══ 화면 흐름 — 로그인부터 순서대로. 새 화면이 생기면 이 배열에 한 줄 추가하면 된다 ══════════
      ico·nm·sub = 카드 표시 / path = 들어가는 길(왼쪽 메뉴 경로) / screen = 바로가기 주소
      use  = [{h:소제목, li:[...]}]  ← li 를 'S:' 로 시작하면 번호 단계로 그려진다
-     note = 주의문 · tags = 검색용 별칭                                                        */
+     note = 주의문 · tags = 검색용 별칭
+     btns = [[버튼이름, 하는 일], ...]  ← 오른쪽 '실제 화면' 아래 <버튼별 기능설명> 표로 그려진다.
+            · 버튼이 늘어나면 여기에 한 줄만 넣으면 된다(화면 코드는 건드릴 필요 없음).
+            · 이름은 화면에 <실제로 찍히는 글자> 그대로 적는다. 상황에 따라 글자가 바뀌는 버튼은
+              '등록완료 / 미등록' 처럼 슬래시로 나란히 적어 둔다.                                */
 var STEPS = [
  { ico:'🔑', nm:'로그인', sub:'요양기관기호 · ID · 비밀번호로 접속', tags:'로그인 접속 비밀번호 계정 요양기관기호 아이디찾기 회원가입 winner797',
    path:'<b>http://www.winner797.co.kr</b> → 로그인',
@@ -218,7 +284,12 @@ var STEPS = [
     {h:'처음이거나 기억나지 않을 때', li:[
       '<b>처음 이용하는 기관</b> — 의뢰서 회신 후 <b>회원가입</b>을 하면 로그인할 수 있습니다.',
       '예전에 <b>WinCheck 를 쓰신 적이 있으면</b> 그 계정을 그대로 쓰시면 됩니다.',
-      '아이디·비밀번호가 기억나지 않으면 로그인 화면의 <b>아이디 찾기 / 비밀번호 초기화</b>를 이용하세요.']}] },
+      '아이디·비밀번호가 기억나지 않으면 로그인 화면의 <b>아이디 찾기 / 비밀번호 초기화</b>를 이용하세요.']}],
+   btns:[
+     ['로그인','요양기관기호·ID·비밀번호를 넣고 누르면 들어갑니다.'],
+     ['아이디 찾기','가입할 때 쓴 정보로 ID(이메일 주소)를 찾아 줍니다.'],
+     ['비밀번호 초기화','임시 비밀번호를 받아 새 비밀번호로 다시 정합니다.'],
+     ['회원가입','처음 이용하는 기관이 계정을 만듭니다. 의뢰서 회신 뒤에 진행합니다.']] },
 
  { ico:'📤', nm:'자료 올리기', sub:'SAM 파일과 입원환자현황 올리기', tags:'자료올리기 업로드 SAM 청구 환자평가표 입원환자현황 검은박스',
    path:'왼쪽 메뉴 <b>자료올리기 › 청구.평가 업로드</b>', screen:'/main/magamFileUpload.do',
@@ -232,6 +303,18 @@ var STEPS = [
       '<b>환자평가표 SAM</b> → 월별·연간 <b>예상점수</b>와 <b>대상자</b>를 볼 수 있습니다.',
       '<b>청구 SAM 파일</b> → 항정신성 처방률(상병·처방률), 당뇨 HbA1c의 <b>청구명세서상 당뇨상병 기재</b>를 점검합니다.',
       '<b>입원환자현황</b> → 퇴원환자 확인과 <b>다음 월 평가 대상자</b>를 볼 수 있습니다.']}],
+   btns:[
+     ['년도 (맨 왼쪽 선택칸)','올릴 자료의 연도를 고릅니다. 탭을 바꿔도 그대로 유지됩니다.'],
+     ['청구샘파일 / 환자평가표 (탭)','올릴 자료 종류를 바꿉니다. 아래 월 카드가 그 종류 기준으로 다시 그려집니다.'],
+     ['데이터검증(오류시)','올리다 실패했거나 숫자가 이상할 때 누릅니다. 어느 파일·어느 줄이 문제인지 찾아 줍니다.'],
+     ['미등록 / 등록완료 (월 카드 첫 버튼)','그 달 자료를 올리는 버튼입니다. 마우스를 대면 <b>등록하기 / 재등록</b>으로 글자가 바뀝니다. 등록완료 상태에서 다시 누르면 새 자료로 바뀝니다.'],
+     ['자료보기 / 보기없음','그 달에 올라간 파일 목록을 봅니다. <b>보기없음</b>은 올라간 자료가 없다는 뜻입니다.'],
+     ['입원현황 / 등록안됨 / 자료없음','<b>입원환자현황</b>을 올리고 보는 자리입니다(검은색 버튼). <b>등록안됨</b>=아직 안 올림, <b>자료없음</b>=올릴 자료가 없음.'],
+     ['수가현황 / 수가 / 수가없음','특정수가현황(M0060 등)을 올리고 봅니다.'],
+     ['🔓열림 / 🔒잠김','그 달을 잠그거나 풉니다. <b>잠김</b>이면 그 달에는 자료를 더 올릴 수 없습니다.'],
+     ['폴더 선택 / 파일 선택','올릴 SAM 파일을 폴더째 또는 하나씩 고릅니다.'],
+     ['선택 적용','고른 파일을 올릴 목록에 넣습니다. 이걸 눌러야 실제로 올라갑니다.'],
+     ['삭제 (목록 오른쪽)','올린 파일 목록에서 그 파일을 지웁니다.']],
    note:'청구 SAM 과 입원환자현황은 필수는 아니지만, 올리지 않으면 점수 예측과 대상자 확인이 어렵습니다 — 세 가지 모두 올리시는 것을 권합니다.' },
 
  { ico:'📊', nm:'대시보드', sub:'당월 점수와 연간 예상점수 보기', tags:'대시보드 dashboard 첫화면 당월 연간 예상점수',
@@ -240,7 +323,10 @@ var STEPS = [
       '<b>전월·당월 자료를 올린 뒤</b> 들어오면, <b>당월 점수</b>와 <b>연간 예상점수</b>가 한 페이지에 나옵니다.',
       '이번 달에 무엇부터 챙길지 여기서 가늠하고 다음 화면으로 넘어갑니다.']},
     {h:'점수가 안 보이면', li:[
-      '자료를 아직 안 올렸거나(<b>2단계</b>), 구조영역 등록이 안 된 경우입니다(<b>4단계</b> 참고).']}] },
+      '자료를 아직 안 올렸거나(<b>2단계</b>), 구조영역 등록이 안 된 경우입니다(<b>4단계</b> 참고).']}],
+   btns:[
+     ['년도 · 월 (선택칸)','보려는 연월을 고르면 그 기준으로 점수가 다시 그려집니다. 영역마다 선택칸이 따로 있습니다.'],
+     ['(그 밖에 누를 것 없음)','이 화면은 <b>보기 전용</b>입니다. 자료를 올리면 숫자가 자동으로 채워집니다.']] },
 
  { ico:'🧾', nm:'적정성평가 현황', sub:'지표별 점수와 대상자 확인·관리', tags:'적정성평가 현황 assessment 대상자 보기 구조영역 차등제 목표점수 진료영역',
    path:'왼쪽 메뉴 <b>적정성-평가 현황</b>', screen:'/main/assessment.do',
@@ -258,7 +344,20 @@ var STEPS = [
     {h:'여기서 꼭 챙길 것', li:[
       '<b>개선 대상자</b> — 이번 달에 관리하면 점수가 오를 수 있는 환자입니다.',
       '<b>다음 월 대상자</b> — 미리 준비하면 다음 달 점수가 달라집니다.',
-      '대상자에는 있는데 인정에서 빠진 환자는 대개 <b>평가표 항목 미체크</b>입니다.']}] },
+      '대상자에는 있는데 인정에서 빠진 환자는 대개 <b>평가표 항목 미체크</b>입니다.']}],
+   btns:[
+     ['년도 · 월 (선택칸)','조회할 평가 연월을 고릅니다.'],
+     ['적정성평가 월 자료생성','고른 연월 기준으로 점수를 다시 계산합니다. <b>자료를 새로 올린 뒤에는 꼭 한 번 누르세요.</b>'],
+     ['보기 · 🔍 / 출력 (지표표 오른쪽)','그 지표의 대상자 목록을 오른쪽에 엽니다. 구조영역 줄에서는 <b>목표 점수·차등제 등록</b> 화면이 열립니다.'],
+     ['조회하기 (구조영역)','고른 년도·분기에 저장된 구조영역 값을 불러옵니다.'],
+     ['저장하기 (구조영역)','목표 점수와 차등제 신고 결과를 저장합니다. <b>저장해야 구조영역 점수가 나옵니다.</b>'],
+     ['환자평가표 조회','대상자 목록 위에 나옵니다. 고른 환자의 평가표 내용을 그대로 봅니다(환자 줄을 두 번 눌러도 열립니다).'],
+     ['유치도뇨관 및 오류점검','유치도뇨관 지표를 열었을 때만 나옵니다. 오더와 평가표가 어긋난 건을 모아 봅니다(옆 숫자=건수).'],
+     ['다빈도 상병순위별','항정신성의약품 처방률을 열었을 때만 나옵니다. 상병 순위별 처방 현황을 봅니다.'],
+     ['Excel / 엑셀 (목록 위)','지금 보이는 목록을 엑셀 파일로 내려받습니다.'],
+     ['📄 PDF 저장','오른쪽에 열린 내용을 PDF 파일로 저장합니다.'],
+     ['📄 월보고서 <span class="wm-only">위너넷 전용</span>','그 달 월간보고서 작성 화면으로 넘어갑니다.'],
+     ['전체병원 생성 <span class="wm-only">위너넷 전용</span>','모든 병원의 점수를 한 번에 다시 계산합니다.']] },
 
  { ico:'✅', nm:'평가 점검 (기록 확인)', sub:'빠진 기록 찾아 평가표 고치기', tags:'점검 assesCheck 오류 확인 평가표 수정 분자제외 배뇨 욕창 유치도뇨관',
    path:'왼쪽 메뉴 <b>적정성-평가 점검</b>', screen:'/main/assesCheck.do',
@@ -273,7 +372,19 @@ var STEPS = [
     {h:'자주 나오는 것', li:[
       '<b>배뇨관리</b> — 배뇨일지는 썼는데 ‘배뇨훈련·방광훈련프로그램’ 항목이 미체크된 경우. 일지가 7일 미만이면 작성 여부를 <b>‘아니오’</b>로 하고 실제 작성일수를 적습니다.',
       '<b>유치도뇨관</b> — 제거했는데 <b>제거일자</b>를 안 넣어 계속 보유로 잡히는 경우.',
-      '<b>욕창처치</b> — 영양공급을 했는데 평가표의 <b>‘피부문제 해결을 위한 영양공급’</b> 항목이 미체크된 경우.']}] },
+      '<b>욕창처치</b> — 영양공급을 했는데 평가표의 <b>‘피부문제 해결을 위한 영양공급’</b> 항목이 미체크된 경우.']}],
+   btns:[
+     ['년도 · 월 (선택칸)','점검할 연월을 고릅니다. 버튼을 누르기 전에 먼저 맞춰 주세요.'],
+     ['《 전체 대상 점검 》','점검 항목을 <b>한꺼번에 다</b> 돌립니다. 보통 이것부터 누릅니다.'],
+     ['【 평가 구분 점검 】','입원평가·계속입원 등 <b>평가 구분</b>이 잘못 체크된 건을 찾습니다.'],
+     ['【 신규 욕창 점검 】','이번 달에 새로 생긴 욕창 기록을 점검합니다.'],
+     ['【 유치도뇨관 점검 】','삽입·제거일자 누락, 오더와 평가표 불일치를 찾습니다.'],
+     ['【 욕창 관리 점검 】','욕창처치·영양공급 등 관리 항목 미체크를 찾습니다.'],
+     ['【 일상 생활 점검 】','일상생활 수행능력 관련 기록을 점검합니다.'],
+     ['【 당뇨 환자 점검 】','당뇨 상병 기재와 HbA1c 검사 기록을 점검합니다.'],
+     ['【 배뇨훈련 점검 】','배뇨일지는 썼는데 배뇨훈련 항목이 미체크된 건 등을 찾습니다.'],
+     ['《 평가 대상 보기 》','점검 결과가 아니라 <b>그 달 평가 대상자 전체</b>를 봅니다.'],
+     ['Excel / 엑셀','점검 결과 목록을 엑셀 파일로 내려받아 병동에 전달할 수 있습니다.']] },
 
  { ico:'🛒', nm:'적정성 Simulation', sub:'기간을 골라 종합 예상점수 보기', tags:'시뮬레이션 simulation 기간 누적 종합 예상점수 평균',
    path:'왼쪽 메뉴 <b>적정성-Simulation</b>', screen:'/main/simulation.do',
@@ -284,7 +395,14 @@ var STEPS = [
     {h:'★오해하기 쉬운 부분', li:[
       '적정성평가 점수는 <b>월별 점수의 평균이 아닙니다.</b>',
       '평가 시작월(7월)부터 <b>평가 대상자가 쌓인 비율</b>로 산출됩니다.',
-      '그래서 초반이 낮아도 이후 관리로 회복될 수 있고, 후반에 나빠지면 누적 전체가 내려갑니다.']}] },
+      '그래서 초반이 낮아도 이후 관리로 회복될 수 있고, 후반에 나빠지면 누적 전체가 내려갑니다.']}],
+   btns:[
+     ['년도 · 시작월 · 종료월 (선택칸 3개)','볼 기간을 고릅니다. 예) 2026년 7월 ~ 12월.'],
+     ['기간별 보기','고른 시작월~종료월 기준으로 누적 종합 예상점수를 냅니다.'],
+     ['상반기 보기','1월~6월 기준으로 한 번에 봅니다.'],
+     ['하반기 보기','7월~12월(평가 시작월부터) 기준으로 한 번에 봅니다.'],
+     ['체크해제','목록에서 체크해 둔 것을 모두 풉니다.'],
+     ['병원별 비교분석 <span class="wm-only">위너넷 전용</span>','여러 병원 점수를 견주어 봅니다.']] },
 
  { ico:'📄', nm:'월간보고서 보기', sub:'위너넷이 작성한 분석 보고서 확인', tags:'월간보고서 evalReport 총평 권고 열람 인쇄 보고서',
    path:'왼쪽 메뉴 <b>적정성평가 월간보고서</b>', screen:'/main/evalReportList.do',
@@ -297,6 +415,11 @@ var STEPS = [
       '<b>구조영역</b> — 인력(의사·간호사·간호인력·약사) 관련 코멘트',
       '<b>잘 관리되는 지표</b> / <b>올릴 수 있는 지표</b> — 무엇을 하면 몇 점 오르는지',
       '<b>기록 신뢰도</b> — 어떤 기록을 맞춰야 하는지']}],
+   btns:[
+     ['년도 · 평가월 · 병원 · 상태 · PDF (선택칸)','목록을 걸러 봅니다. 고르면 바로 다시 그려집니다.'],
+     ['🔍 검색','고른 조건으로 보고서 목록을 다시 불러옵니다.'],
+     ['목록의 보고서 줄','누르면 그 달 보고서가 열립니다.'],
+     ['인쇄 / PDF (보고서 안)','보고서를 인쇄하거나 PDF 파일로 저장해 원내 공유·회의 자료로 씁니다.']],
    note:'항정신성 처방률·DUR 점검률·지역사회복귀율은 예상값이라, 최종 평가 결과에 따라 종합점수가 다소 달라질 수 있습니다.' },
 
  { ico:'💬', nm:'문의하기', sub:'막히면 여기로', tags:'문의 1:1 자주하는질문 FAQ 상담 전화 답변 원격지원',
@@ -307,7 +430,11 @@ var STEPS = [
       'S:답변은 <b>근무일 기준 2일 이내</b>에 등록됩니다.']},
     {h:'급할 때', li:[
       '전화 <b>02-6953-2452</b> / <b>010-2439-7971</b> (위너넷 컨설팅 사업부)',
-      '화면을 함께 봐야 하면 <b>원격지원상담</b>을 이용할 수 있습니다.']}] }
+      '화면을 함께 봐야 하면 <b>원격지원상담</b>을 이용할 수 있습니다.']}],
+   btns:[
+     ['자주하는 질문','비슷한 사례가 이미 올라와 있는지 먼저 찾아봅니다.'],
+     ['1:1 문의하기','질문을 남깁니다. 근무일 기준 <b>2일 이내</b>에 답변이 등록됩니다.'],
+     ['원격지원상담','화면을 함께 보면서 상담합니다. 급할 때 이용하세요.']] }
 ];
 
 /* 흐름과 별개로, 필요할 때 보는 내용 */
@@ -335,7 +462,17 @@ var EXTRA = [
       '진료실적통계 — 일당·건당진료비, 진료과별·전문의별, 다빈도상병, 유형별',
       '진료대비 약제비율 — 정액환자(비청구분/전체)·행위환자·전체환자',
       '진료지표 · 항목별 건당진료비 구성']},
-    {h:'언제 보나', li:['적정성평가와 별개로 병원 진료비 구조를 살펴볼 때 이용합니다.']}] },
+    {h:'언제 보나', li:['적정성평가와 별개로 병원 진료비 구조를 살펴볼 때 이용합니다.']}],
+   btns:[
+     ['년도 · 월 (선택칸)','볼 연월을 고릅니다.'],
+     ['《 전체 대상 점검 》','아래 항목을 한꺼번에 다 뽑습니다.'],
+     ['요양병원 입원료 차등제 / 식대가산 점검','인력 등급에 따른 입원료·식대가산 적용을 점검합니다.'],
+     ['월별 정액수가 분포율【 환자평가표 】','환자군별 정액수가가 어떻게 분포하는지 봅니다.'],
+     ['환자군별 상향 가능 대상자 명단','환자군을 올릴 수 있는 대상자를 뽑아 줍니다.'],
+     ['월별 청구현황 · 재활 · 투석 · 검사료 · 약제비 등','해당 항목의 청구 현황을 각각 뽑습니다.'],
+     ['《 입원현황기준 누락 대상자 보기 》','입원현황에는 있는데 청구에서 빠진 환자를 찾습니다(PDF 출력에서는 제외됩니다).'],
+     ['📄 개별출력 / 전체출력','지금 보는 항목 하나 또는 전체를 PDF로 내려받습니다.'],
+     ['전체병원 생성 <span class="wm-only">위너넷 전용</span>','모든 병원 자료를 한 번에 만듭니다.']] },
 
  { ico:'📅', nm:'매월 이렇게 하시면 됩니다', sub:'한 달 루틴 요약', tags:'루틴 매월 순서 요약 체크리스트 월별',
    path:'참고 — 월 단위 요약',
@@ -351,7 +488,7 @@ var EXTRA = [
       '기록만 보완해도 오르는 점수가 매월 있습니다 — <b>평가 점검</b>을 습관처럼 보세요.']}] }
 ];
 
-var QUICK = ['로그인','SAM 파일','자료 올리기','구조영역','대상자','평가 점검','배뇨관리','문의'];
+var QUICK = ['로그인','SAM 파일','자료 올리기','구조영역','대상자','평가 점검','배뇨관리','자료생성','잠김','문의'];
 var ALL = [];   // STEPS + EXTRA 를 한 배열로(검색·이동 공용). isStep=흐름 단계 여부
 STEPS.forEach(function(x,i){ x.isStep=true;  x.no=i+1; ALL.push(x); });
 EXTRA.forEach(function(x)  { x.isStep=false;             ALL.push(x); });
@@ -362,6 +499,7 @@ function wmQv(){ return (document.getElementById('wmQ').value||'').trim(); }
 function wmPlain(m){
   var t=m.nm+' '+(m.sub||'')+' '+(m.tags||'')+' '+(m.path||'');
   (m.use||[]).forEach(function(s){ t+=' '+(s.h||'')+' '+((s.li||[]).join(' ')); });
+  (m.btns||[]).forEach(function(b){ t+=' '+(b[0]||'')+' '+(b[1]||''); });   // 버튼 이름·설명도 검색된다
   return (t+' '+(m.note||'')).replace(/<[^>]+>/g,' ').replace(/^S:/g,' ');
 }
 function wmHits(){
@@ -373,36 +511,51 @@ function wmHome(){ _sel=null; document.getElementById('wmQ').value=''; wmRender(
 function wmGo(i){ _sel=i; wmRender(); window.scrollTo(0,0); }
 function wmSetQ(t){ document.getElementById('wmQ').value=t; _sel=null; wmRender(); }
 
+/* ★렌더는 <왼쪽 칸>과 <오른쪽 칸>을 따로 그린다 (2026-07-28 구조 변경).
+     예전에는 사용법을 고른 순간에만 wmSplit() 로 좌우가 생겨서, 홈·검색결과에서는 내용이 아래로 흘렀다.
+     이제 오른쪽 칸(#wmSide)은 항상 있고 내용만 바뀐다 — 화면이 위아래로 밀리지 않는다. */
 function wmRender(){
   var q=wmQv(), main=document.getElementById('wmMain'), crumb=document.getElementById('wmCrumb');
-  var qk=document.getElementById('wmQuick');
+  var side=document.getElementById('wmSide'), qk=document.getElementById('wmQuick');
   if(qk && !qk.innerHTML) qk.innerHTML='<b>자주 찾는 말</b>'+QUICK.map(function(t){
       return '<span class="q" onclick="wmSetQ(\''+wmEsc(t)+'\')">'+wmEsc(t)+'</span>'; }).join('');
 
+  // 지금 오른쪽에 띄울 대상 — 검색 중이면 결과 안에 든 것만 유효
+  var cur=_sel, hits=null;
+  if(q){ hits=wmHits(); if(cur==null || hits.indexOf(cur)<0) cur=null; }
+
   var cb='<a onclick="wmHome()">🏠 처음</a>';
   if(q) cb+=' <span class="sep">›</span> <span class="cur">검색 ‘'+wmEsc(q)+'’</span>';
-  else if(_sel!=null){
-    var m=ALL[_sel];
-    cb+=' <span class="sep">›</span> <span class="cur">'+(m.isStep?('단계 '+m.no+'. '):'')+wmEsc(m.nm)+'</span>';
+  if(cur!=null){
+    var cm=ALL[cur];
+    cb+=' <span class="sep">›</span> <span class="cur">'+(cm.isStep?('단계 '+cm.no+'. '):'')+wmEsc(cm.nm)+'</span>';
   }
   crumb.innerHTML=cb;
 
+  // ── 왼쪽 칸 ──
   if(q){
-    var hits=wmHits();
-    var h='<div class="wm-hit">‘<b>'+wmEsc(q)+'</b>’ 검색 결과 <b>'+hits.length+'</b>건'+(hits.length?' — 누르면 사용법이 나옵니다':'')+'</div>';
+    var h='<div class="wm-hit">‘<b>'+wmEsc(q)+'</b>’ 검색 결과 <b>'+hits.length+'</b>건'+(hits.length?' — 누르면 오른쪽에 그 화면이 나옵니다':'')+'</div>';
     h += hits.length ? wmRowsHtml(hits)
                      : '<div class="wm-empty">찾는 내용이 없습니다.<br>더 짧은 말로 찾아보세요(예: ‘배뇨’, ‘총평’).</div>';
-    if(_sel!=null && hits.indexOf(_sel)>=0) h+='<div style="margin-top:12px">'+wmSplit(_sel, q)+'</div>';
-    main.innerHTML=h; wmPrevFit(); return;
+    if(cur!=null) h+='<div style="margin-top:12px">'+wmPaneL(cur, q)+'</div>';
+    main.innerHTML=h;
+  } else if(cur!=null){
+    main.innerHTML=wmPaneL(cur, '');
+  } else {
+    main.innerHTML=wmHomeHtml();
   }
-  if(_sel!=null){ main.innerHTML=wmSplit(_sel, ''); wmPrevFit(); return; }
 
-  // 홈 — 흐름 카드 + 필요할 때 보는 화면
+  // ── 오른쪽 칸 ── (항상 그린다)
+  side.innerHTML=wmSideHtml(cur, q);
+  wmPrevFit();
+}
+
+function wmHomeHtml(){
   var hh='<div class="wm-ask">이 순서로 진행합니다</div>'
-       + '<div class="wm-askd">카드를 누르면 그 화면 사용법이 나옵니다. 아래 <b>다음 단계</b> 버튼으로 계속 이어집니다.</div>'
+       + '<div class="wm-askd">카드를 누르면 <b>여기에 사용법</b>, <b>오른쪽에 실제 화면과 버튼별 기능설명</b>이 나옵니다.</div>'
        + '<div class="wm-flow">';
   STEPS.forEach(function(s,i){
-    // 카드에도 마우스를 대면 그 화면에서 하는 일이 뜬다(첫 묶음의 앞 두 줄 요약)
+    // 카드에도 마우스를 대면 그 화면에서 하는 일이 뜬다(첫 묶음의 앞 세 줄 요약)
     var tip=[]; ((s.use&&s.use[0]&&s.use[0].li)||[]).slice(0,3).forEach(function(x){
       tip.push('· '+String(x).replace(/^S:/,'').replace(/<[^>]+>/g,'')); });
     hh+='<div class="wm-fc wm-t" data-tip="'+wmEsc(tip.join('\n')||s.sub)+'" style="animation-delay:'+(i*55)+'ms" onclick="wmGo('+i+')">'
@@ -411,7 +564,7 @@ function wmRender(){
   });
   hh+='</div><div class="wm-ask" style="margin-top:22px">필요할 때 보는 화면</div><div class="wm-askd">흐름과 상관없이 그때그때 들어가는 곳입니다.</div>';
   var ex=[]; ALL.forEach(function(m,i){ if(!m.isStep) ex.push(i); });
-  main.innerHTML=hh+wmRowsHtml(ex);
+  return hh+wmRowsHtml(ex);
 }
 
 function wmRowsHtml(idx){
@@ -477,10 +630,105 @@ function wmPrevHtml(m){
   return '<div class="wm-prev">'
        + '<div class="hd">미리보기<span style="flex:1"></span>'
        + '<a class="go" href="'+m.screen+'" target="_blank">크게 열기 ↗</a></div>'
+       + '<div class="pvbar">'
+       +   '<span class="pvz" id="wmZoomOut" onclick="wmZoom(-1)" title="작게">−</span>'
+       +   '<span class="pvv" id="wmZoomVal">맞춤</span>'
+       +   '<span class="pvz" id="wmZoomIn" onclick="wmZoom(1)" title="크게">+</span>'
+       +   '<span class="pvz w" onclick="wmZoom(0)" title="폭에 맞추기">맞춤</span>'
+       +   '<span style="flex:1"></span>'
+       +   '<label class="pvchk"><input type="checkbox" id="wmChrome" onchange="wmSkinToggle()"> 메뉴·상단바 같이 보기</label>'
+       + '</div>'
        + '<div class="bd" id="wmPrevBd">'
-       + '<iframe id="wmPrevIf" src="'+m.screen+'" scrolling="no" sandbox="allow-same-origin allow-scripts allow-forms"></iframe>'
+       + '<iframe id="wmPrevIf" src="'+m.screen+'" scrolling="no" onload="wmPrevSkin()"'
+       +        ' sandbox="allow-same-origin allow-scripts allow-forms"></iframe>'
        + '</div>'
        + '<div class="tipbar">지금 로그인한 상태로 보이는 실제 화면입니다. 조회 조건에 따라 내용이 비어 있을 수 있습니다.</div></div>';
+}
+
+/* ══ 미리보기를 '자연스럽게' 보이게 (2026-07-28) ═══════════════════════════════════════
+     [문제] 예전에는 1440px 짜리 화면을 통째로 0.4 배로 줄여 넣어서, ①글씨가 읽을 수 없이 작고
+            ②왼쪽 메뉴·상단바가 미리보기 안에 또 나와 실제 볼 내용은 절반도 안 되는 썸네일이었다.
+     [고침] ①미리보기 안에서는 메뉴·상단바를 감춰 <일하는 영역만> 남긴다(같은 출처라 CSS 를 심을 수 있다).
+            ②그만큼 가로 기준을 1440 → 1100 으로 줄여 배율이 올라간다(글씨가 읽힌다).
+            ③높이는 고정 1080 이 아니라 <실제 내용 높이>를 재서 맞춘다 — 아래 흰 여백이 안 생긴다.
+            ④−/+/맞춤 으로 배율을 직접 바꿀 수 있고, 체크하면 메뉴·상단바까지 원래대로 볼 수 있다.
+     ※ 같은 출처가 아니거나 접근이 막히면 조용히 원래 화면 그대로 보인다(try/catch). */
+var PV_W = 1100;          // 미리보기를 그릴 가상 가로폭(메뉴를 감춘 뒤의 본문 기준)
+var _pvZoom = 0;          // 0 = 폭에 맞춤, 그 외 = 사용자가 정한 배율
+var _pvChrome = false;    // 메뉴·상단바 같이 보기
+
+function wmPrevSkin(){
+  var f=document.getElementById('wmPrevIf');
+  if(!f) return;
+  try{
+    var d=f.contentDocument;
+    if(!d || !d.head) return;
+    var st=d.getElementById('wmSkin');
+    if(!st){ st=d.createElement('style'); st.id='wmSkin'; d.head.appendChild(st); }
+    st.textContent = _pvChrome ? '' :
+        ('#dashboard-header,.dashboard-header,.nav-left-sidebar,.fixed-sidebar-info-box{display:none!important}'
+       + '.dashboard-wrapper{margin-left:0!important;min-height:0!important}'
+       + 'body{background:#fff!important;padding-top:0!important}'
+       + '.container-fluid.dashboard-content{padding-top:8px!important}');
+  }catch(e){}
+  wmPrevFit();
+}
+function wmSkinToggle(){
+  var c=document.getElementById('wmChrome');
+  _pvChrome = !!(c && c.checked);
+  wmPrevSkin();
+}
+function wmZoom(d){
+  var bd=document.getElementById('wmPrevBd');
+  var fit=(bd?bd.clientWidth:600)/wmPvW();
+  if(d===0){ _pvZoom=0; }
+  else {
+    var cur=_pvZoom || fit;
+    _pvZoom=Math.max(0.3, Math.min(1, Math.round((cur+d*0.1)*100)/100));
+  }
+  wmPrevFit();
+}
+function wmPvW(){ return _pvChrome ? 1440 : PV_W; }   // 메뉴까지 보이면 원래 폭이 필요하다
+
+function wmPrevFit(){
+  var bd=document.getElementById('wmPrevBd'), f=document.getElementById('wmPrevIf');
+  if(!bd || !f) return;
+  var c=document.getElementById('wmChrome');
+  if(c) c.checked=_pvChrome;          // 화면을 바꿔 다시 그려도 체크 상태는 그대로
+  var W=wmPvW();
+  var fit=(bd.clientWidth||600)/W;
+  var s=_pvZoom || fit;
+  s=Math.max(0.3, Math.min(1, s));
+
+  // 안쪽 내용 높이를 실제로 재서 맞춘다(못 재면 넉넉한 기본값)
+  var H=900;
+  try{
+    var d=f.contentDocument;
+    if(d && d.body){
+      H=Math.max(d.body.scrollHeight, d.documentElement?d.documentElement.scrollHeight:0);
+      H=Math.max(420, Math.min(2600, H));
+    }
+  }catch(e){}
+
+  f.style.width=W+'px'; f.style.height=H+'px'; f.style.transform='scale('+s+')';
+  bd.style.height=Math.round(H*s)+'px';
+  // 배율보다 폭이 모자라면(사용자가 키운 경우) 가로로 밀어 볼 수 있게
+  bd.style.overflowX = (W*s > bd.clientWidth+1) ? 'auto' : 'hidden';
+
+  var v=document.getElementById('wmZoomVal');
+  if(v) v.textContent = _pvZoom ? (Math.round(s*100)+'%') : ('맞춤 '+Math.round(fit*100)+'%');
+}
+/* 버튼별 기능설명 — 우측 패널에서 실제 화면 바로 아래.
+   내용은 STEPS/EXTRA 의 btns 배열에서만 온다. 버튼이 늘면 그 배열에 한 줄 추가하면 끝. */
+function wmBtnsHtml(m){
+  var bs = (m && m.btns) || [];
+  var h = '<div class="wm-btns"><div class="bhd">🔘 버튼별 기능설명 <em>— 이 화면에서 무엇을 누르면 무엇이 되는지</em></div>';
+  if(!bs.length) return h + '<div class="none">이 화면은 따로 누를 버튼이 없습니다.</div></div>';
+  h += '<table><tbody>';
+  bs.forEach(function(b){
+    h += '<tr><th>'+(b[0]||'')+'</th><td>'+(b[1]||'')+'</td></tr>';
+  });
+  return h + '</tbody></table></div>';
 }
 function wmPrevFit(){
   var bd=document.getElementById('wmPrevBd'), f=document.getElementById('wmPrevIf');
@@ -491,19 +739,30 @@ function wmPrevFit(){
   bd.style.height=Math.round(H*s)+'px';
 }
 window.addEventListener('resize', wmPrevFit);
-// 좌(사용법) + 우(실제 화면) 한 덩이로 감싼다
-function wmSplit(i, q){
-  var m=ALL[i];
-  return '<div class="wm-split">'
-       + '<div class="lft"><div class="wm-panehd lf">📖 사용법 <span>— 순서대로 따라 하세요</span></div>'
-       +   wmViewHtml(i,q)+'</div>'
-       + '<div class="wm-vline"></div>'
-       + '<div class="rgt"><div class="wm-panehd rg">🖥 실제 화면 <span>'
-       +   (m && m.screen ? '— 지금 이 화면을 작게 줄인 것입니다' : '— 이 단계는 보여줄 화면이 없습니다')+'</span>'
-       +   '<span class="gap"></span>'
-       +   (m && m.screen ? '<a class="go" href="'+m.screen+'" target="_blank">크게 열기 ↗</a>' : '')
-       +   '</div>'
-       +   wmPrevHtml(m)+'</div></div>';
+
+/* 왼쪽 칸에 들어가는 <사용법> 한 덩이 (머리띠 + 본문) */
+function wmPaneL(i, q){
+  return '<div class="wm-lpane"><div class="wm-panehd lf">📖 사용법 <span>— 순서대로 따라 하세요</span></div>'
+       + wmViewHtml(i,q)+'</div>';
+}
+
+/* 오른쪽 칸 통째 — 고른 게 없으면 화면 고르기 안내, 있으면 실제 화면 + 버튼별 기능설명 */
+function wmSideHtml(i, q){
+  var m = (i==null ? null : ALL[i]);
+  var h = '<div class="wm-panehd rg">🖥 실제 화면 <span>'
+        + (m ? (m.screen ? '— '+wmEsc(m.nm) : '— 보여줄 화면이 없는 단계입니다')
+             : '— 왼쪽에서 고르면 여기에 나옵니다')+'</span>'
+        + '<span class="gap"></span>'
+        + (m && m.screen ? '<a class="go" href="'+m.screen+'" target="_blank">크게 열기 ↗</a>' : '')
+        + '</div>';
+  if(!m) return h + wmSidePick();
+  // 버튼표에도 뜻풀이·검색강조를 왼쪽과 똑같이 입힌다
+  return h + wmPrevHtml(m) + wmHl(wmTip(wmBtnsHtml(m)), q);
+}
+function wmSidePick(){
+  var h='<div class="wm-pick"><div class="ph">👈 왼쪽에서 <b>화면</b>을 고르면<br>여기에 <b>실제 화면</b>과 <b>버튼별 기능설명</b>이 나옵니다.</div><div class="chips">';
+  ALL.forEach(function(m,i){ h+='<span class="c" onclick="wmGo('+i+')">'+m.ico+' '+wmEsc(m.nm)+'</span>'; });
+  return h+'</div></div>';
 }
 function wmHl(html, q){
   if(!q) return html;
