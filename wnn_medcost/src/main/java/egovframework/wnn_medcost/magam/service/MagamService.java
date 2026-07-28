@@ -124,4 +124,9 @@ public interface MagamService {
 	List<Map<String, Object>> getSamfverMatch(Map<String, Object> params) throws Exception;
 	List<Map<String, Object>> getSamfverAllTables(Map<String, Object> params) throws Exception;
 	List<Map<String, Object>> getSamfverColumns(Map<String, Object> params) throws Exception;
+
+	// 전체 비교 (2026-07-28) — 적정성평가 화면 [비교] 버튼
+	List<Map<String, Object>> select_EvalCmpAvg(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> select_EvalCmpHosp(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> select_EvalCmpRaw(Map<String, Object> params) throws Exception;
 }

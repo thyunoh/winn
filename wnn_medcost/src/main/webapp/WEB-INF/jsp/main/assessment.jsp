@@ -4423,6 +4423,67 @@ function fn_FindDataTable() {
 			};
 		})());
 
+		// ─────────────────────────────────────────────────────────────
+		// [📊 비교] 버튼 (2026-07-28 요청) — 지표표 머리글 **맨 오른쪽 빈 칸**(보기 버튼 열의 머리글)에 넣는다.
+		//   · 이 화면은 손대지 않는다는 전제라 머리글 칸 하나만 JS 로 채운다(공용 그리드 유틸은 안 건드림).
+		//   · 위너넷 전용 — 월보고서 버튼과 같은 판별(s_wnn_yn). 거래처 병원에는 지금처럼 빈 칸이다.
+		//   · 누르면 별도 화면(evalCompare.do)이 열린다. 안 누르면 전체 집계 쿼리는 돌지 않는다
+		//     (이 화면에 평균을 직접 붙이면 조회할 때마다 같이 돌아 느려진다 — 그래서 화면을 나눴다).
+		//   · draw 마다 다시 부른다 — DataTables 가 머리글을 다시 그리면 버튼이 날아가기 때문.
+		// ─────────────────────────────────────────────────────────────
+		var fn_EvalCmpBtn = function() {
+			try {
+				if ((getCookie("s_wnn_yn") || '').trim() !== 'Y') return;
+				/* ★[함정 1] 이 그리드는 scrollY 를 쓴다 → **화면에 보이는 머리글은 복제본**이고
+				     (.dt-scroll-head 안, id 없음) #indicatorTable 의 thead 는 숨겨진 원본이다.
+				     #indicatorTable 로 찾으면 버튼을 넣어도 화면에 안 보인다(위 noArrow CSS 주석과 같은 함정).
+				   → **#indicatorTable_wrapper** 로 스코프해 원본·복제본 머리글 줄 **모두**의 마지막 칸에 넣는다. */
+				var scope = document.getElementById('indicatorTable_wrapper')
+				         || document.getElementById('indicatorTable');
+				if (!scope) return;
+				var trs = scope.querySelectorAll('thead tr');
+				for (var i = 0; i < trs.length; i++) {
+					var ths = trs[i].querySelectorAll('th');
+					if (!ths.length) continue;
+					var th = ths[ths.length - 1];                       // 보기/출력 열의 머리글 = 원래 빈 칸
+					if (th.querySelector('.evalCmpBtn')) continue;      // 이미 넣었으면 그대로
+					if ((th.textContent || '').trim() !== '') continue; // 빈 칸이 아니면(구조가 바뀌었으면) 안 건드림
+					th.innerHTML = '<button type="button" class="btn btn-outline-primary btn-xs evalCmpBtn"'
+						/* 위아래 여백을 넉넉히 (2026-07-28 요청) — 머리글 칸 높이에 맞춰 눌리는 면적을 키운다 */
+						+ ' style="white-space:nowrap;padding:6px 10px;font-size:11.5px;font-weight:700;line-height:1.2;"'
+						+ ' title="같은 달 전체 병원의 지표별 평균과 병원 목록을 봅니다(위너넷 전용).">📊 평가비교</button>';
+					th.querySelector('.evalCmpBtn').onclick = function(ev) {
+						ev.stopPropagation();                            // 머리글 클릭이 정렬로 먹히지 않게
+						var ym = document.getElementById('year_Select').value
+						       + document.getElementById('monthSelect').value;
+						location.href = '/main/evalCompare.do?ym=' + ym;
+					};
+				}
+			} catch (e) { }
+		};
+		/* ★[함정 2] 버튼이 **보이다 사라진다**(2026-07-28). DataTables 가 다시 그릴 때마다 복제 머리글을
+		     새로 만들어 버튼이 함께 지워지는데, `dataTable` 변수는 이 화면의 여러 표가 돌려 쓰는 것이라
+		     draw 이벤트를 걸어도 지표표 재그리기에는 안 걸린다(그래서 조회할 때마다 사라졌다).
+		   → 머리글이 바뀌는 것을 지켜보다가 **비어 있으면 다시 넣는다.** fn_EvalCmpBtn 은 이미 버튼이 있으면
+		     아무 것도 하지 않으므로 반복 호출이 안전하고, 감시가 자기 수정에 다시 반응해도 무한루프가 안 된다. */
+		setTimeout(fn_EvalCmpBtn, 0);
+		setTimeout(fn_EvalCmpBtn, 400);
+		setTimeout(fn_EvalCmpBtn, 1200);
+		dataTable.off('draw.evalCmp').on('draw.evalCmp', fn_EvalCmpBtn);
+		(function(){
+			if (typeof MutationObserver === 'undefined') {          // 아주 옛 브라우저 — 주기 확인으로 대체
+				setInterval(fn_EvalCmpBtn, 1500);
+				return;
+			}
+			if (window._evalCmpObs) { try { window._evalCmpObs.disconnect(); } catch(e) {} }
+			var _t = null;
+			window._evalCmpObs = new MutationObserver(function(){
+				clearTimeout(_t);
+				_t = setTimeout(fn_EvalCmpBtn, 120);                // 몰아서 한 번만 — 그리는 도중 여러 번 안 돌게
+			});
+			try { window._evalCmpObs.observe(document.body, { childList: true, subtree: true }); } catch(e) {}
+		})();
+
 		// 전체 선택 체크박스 기능
 	    $('#selectAll').on('click', function() {
 	        var rows = dataTable.rows({ 'search': 'applied' }).nodes();

@@ -1046,4 +1046,20 @@ public class MagamServiceImpl implements MagamService {
 		return mapper.getSamfverColumns(params);
 	}
 
+	// ===== 전체 비교 (2026-07-28) — 적정성평가 화면 [비교] 버튼 =====
+	@Override
+	public List<Map<String, Object>> select_EvalCmpAvg(Map<String, Object> params) throws Exception {
+		return mapper.select_EvalCmpAvg(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> select_EvalCmpHosp(Map<String, Object> params) throws Exception {
+		return mapper.select_EvalCmpHosp(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> select_EvalCmpRaw(Map<String, Object> params) throws Exception {
+		return mapper.select_EvalCmpRaw(params);
+	}
+
 }

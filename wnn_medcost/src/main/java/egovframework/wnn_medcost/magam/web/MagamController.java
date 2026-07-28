@@ -126,6 +126,83 @@ public class MagamController {
 			return ".login/LoginWinCT";
 		}
     }
+	// 전체 비교 화면 (2026-07-28 요청) — 적정성평가 지표표 머리글의 [비교] 버튼에서 진입. 뷰파일 = evalCompare.jsp.
+	//   해당월 자료가 있는 병원들의 지표별 평균과, 대상/비대상 병원 목록을 한 화면에서 본다.
+	//   ★위너넷 전용 화면이다 — 버튼도 위너넷에만 보이지만, URL 을 직접 쳐도 들어오지 못하게 서버에서도 막는다.
+	//   ★[함정] 위너넷 판별은 **쿠키와 세션을 함께** 봐야 한다. wnn_consult 에서 로그인하고 넘어오면
+	//     HttpSession 에 s_wnn_yn 이 없고 신원이 쿠키로만 온다 — 세션만 보면 위너넷을 거래처로 오판해
+	//     화면이 적정성평가로 튕긴다(2026-07-28 실제로 그렇게 나왔다). manual.do 와 같은 방식으로 맞춘다.
+	@RequestMapping(value="main/evalCompare.do")
+	public String evalCompare(HttpServletRequest request, ModelMap model) {
+		cookie_value = ClientInfo.getCookie(request);
+		String wnnYn = "N";
+		try {
+			String ck = "";
+			try { ck = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			javax.servlet.http.HttpSession ses = request.getSession(false);
+			Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+			String sv = (wnn != null) ? String.valueOf(wnn).trim() : "";
+			wnnYn = ("Y".equalsIgnoreCase(ck) || "Y".equalsIgnoreCase(sv)) ? "Y" : "N";
+		} catch(Exception ignore) { }
+		model.addAttribute("wnnYn", wnnYn);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				if (!"Y".equals(wnnYn.trim())) return ".main/assessment";   // 위너넷이 아니면 원래 화면으로 돌려보낸다
+				return ".main/evalCompare";
+			} else {
+				return ".login/LoginWinCT";
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	// 전체 비교 ① 지표별 전체평균 — 대상(해당월 환자평가표 있고 제외기관 아닌) 병원의 현황값 단순평균
+	@RequestMapping(value="/main/select_EvalCmpAvg.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_EvalCmpAvg(@RequestParam Map<String, Object> params) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			res.put("list", svc.select_EvalCmpAvg(params));
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+			res.put("list", new ArrayList<Map<String, Object>>());
+		}
+		return res;
+	}
+
+	// 전체 비교 ② 병원 목록 — 대상·비대상을 모두 주고 사유(targetGb)로 구분한다
+	@RequestMapping(value="/main/select_EvalCmpHosp.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_EvalCmpHosp(@RequestParam Map<String, Object> params) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			res.put("list", svc.select_EvalCmpHosp(params));
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+			res.put("list", new ArrayList<Map<String, Object>>());
+		}
+		return res;
+	}
+
+	// 전체 비교 ③ 병원별 지표값 원본 — 화면에서 체크로 병원을 빼고 평균을 다시 계산한다(병원 51 × 지표 18 ≒ 900행)
+	@RequestMapping(value="/main/select_EvalCmpRaw.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_EvalCmpRaw(@RequestParam Map<String, Object> params) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			res.put("list", svc.select_EvalCmpRaw(params));
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+			res.put("list", new ArrayList<Map<String, Object>>());
+		}
+		return res;
+	}
+
 	// 월보고서 목록 화면(별도 JSP). 뷰파일 = evalReportList.jsp. 위너넷=전체 병원, (2단계)거래처=본인 병원.
 	//   evalReport 툴바 '월보고 목록' 버튼에서 새 창으로 진입 → 향후 메뉴로도 편입 예정.
 	@RequestMapping(value="main/evalReportList.do")

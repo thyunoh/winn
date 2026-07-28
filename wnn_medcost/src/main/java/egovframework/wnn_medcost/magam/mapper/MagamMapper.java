@@ -162,4 +162,11 @@ public interface MagamMapper {
 	List<Map<String, Object>> getSamfverMatch(Map<String, Object> params);
 	List<Map<String, Object>> getSamfverAllTables(Map<String, Object> params);
 	List<Map<String, Object>> getSamfverColumns(Map<String, Object> params);
+
+	// ===== 전체 비교 (2026-07-28) — 적정성평가 화면 [비교] 버튼 → evalCompare.jsp =====
+	//   ① 지표별 전체평균(대상 병원만)  ② 병원 목록(대상·비대상 전부 + 사유)
+	List<Map<String, Object>> select_EvalCmpAvg(Map<String, Object> params);
+	List<Map<String, Object>> select_EvalCmpHosp(Map<String, Object> params);
+	// ③ 병원별 지표값 원본 — 화면에서 체크로 병원을 빼고 평균을 다시 계산하기 위한 낟알 자료
+	List<Map<String, Object>> select_EvalCmpRaw(Map<String, Object> params);
 }
