@@ -66,20 +66,30 @@ Date nowTime = new Date();
 										         [2단계·완성 후] 거래처 공개: 이 노출 조건에 승인본 존재 여부를 더해 확장. --%>
 										<%-- d-flex 클래스 금지: display:flex !important 라 인라인 display:none 을 이겨서 일반병원에도 항상 노출됨(2026-07-14 원인) --%>
 										<button id="btnMonthlyReport"
-											class="btn btn-sm btn-outline-primary align-items-center justify-content-center"
-											style="white-space: nowrap; display: none;"
+											class="wnn-tbtn"
 											onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;try{sessionStorage.setItem('erOpenYm',ym);}catch(e){}location.href='/main/evalReport.do?ym='+ym;})();">📄
 											월보고서</button>
+										<%-- ===== 전체 비교 버튼 (2026-07-28) — 위너넷 전용. 월보고서 버튼과 같은 자리·같은 노출 조건.
+										         ★한때 지표표 머리글 빈 칸에 JS 로 끼워 넣었는데, 그리드가 다시 그릴 때마다 복제 머리글이
+										           새로 만들어져 버튼이 사라졌다. 감시(MutationObserver)로 되살리는 우회까지 넣었다가
+										           **툴바 버튼으로 바꿔 원인째 없앴다**(사용자 요청 스타일). 머리글에 다시 넣지 말 것.
+										         ★스타일은 평평한 툴바형 — 테두리 없이 아이콘 + 글자, 올리면 배경만 살짝. --%>
+										<button id="btnEvalCompare" type="button" class="wnn-tbtn"
+											title="같은 달 전체 병원의 지표별 평균과 병원 목록을 봅니다(위너넷 전용)."
+											onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;location.href='/main/evalCompare.do?ym='+ym;})();">📊
+											평가비교</button>
 									</div>
 									<script>
  										    (function(){
 										        // 상단 병원검색 버튼(top.jsp #hospserchtop)과 노출 동기화 — 병원검색 보이면 월보고서도 보임 (2026-07-14 확정)
 										        // top.jsp 판별과 동일: s_wnn_yn(trim) === 'Y' 만. s_winconect 는 잔존 쿠키로 오노출되어 제외.
 										        var b = document.getElementById('btnMonthlyReport');
-										        if(!b) return;
+										        var c = document.getElementById('btnEvalCompare');   // 전체 비교 — 같은 조건으로 함께 노출
 										        try{
 										            if ((getCookie("s_wnn_yn") || '').trim() === 'Y') {
-										                b.style.display='flex';
+										                // 두 버튼 모두 같은 값으로 켠다 — 하나만 flex, 하나만 inline-block 이면 높이·정렬이 미묘하게 달라진다
+										                if(b) b.style.display='inline-flex';
+										                if(c) c.style.display='inline-flex';
 										            }
 										        }catch(e){}
 										    })(); 
@@ -126,6 +136,25 @@ Date nowTime = new Date();
 					</div>
 					<div class="col-lg-7 d-flex flex-column">
 						<style>
+/* ★툴바 버튼 공통 (2026-07-28) — [월보고서]·[평가비교] 두 버튼의 모양을 하나로 맞춘다.
+     한쪽만 테두리 있는 outline 이라 나란히 두니 스타일이 어긋나 보였다(사용자 지적).
+     대시보드 상단 툴바와 같은 결 : 테두리 없이 아이콘 + 글자, 올리면 배경만 살짝.
+   ★두 버튼 모두 이 클래스만 쓴다 — 한 곳만 고쳐도 같이 바뀌게. 인라인 style 로 흩뿌리지 말 것. */
+.wnn-tbtn {
+	display: none;                     /* 기본 숨김 — 위너넷일 때만 JS 가 켠다 */
+	white-space: nowrap;
+	border: 0;
+	background: transparent;
+	color: #37475a;
+	font-weight: 700;
+	font-size: 13px;
+	padding: 6px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	align-items: center;
+}
+.wnn-tbtn:hover { background: #eef3f1; color: #1f5a4b; }
+
 .std-toast-title {
 	font-size: 18px !important;
 	font-weight: 600 !important;
@@ -4423,67 +4452,10 @@ function fn_FindDataTable() {
 			};
 		})());
 
-		// ─────────────────────────────────────────────────────────────
-		// [📊 비교] 버튼 (2026-07-28 요청) — 지표표 머리글 **맨 오른쪽 빈 칸**(보기 버튼 열의 머리글)에 넣는다.
-		//   · 이 화면은 손대지 않는다는 전제라 머리글 칸 하나만 JS 로 채운다(공용 그리드 유틸은 안 건드림).
-		//   · 위너넷 전용 — 월보고서 버튼과 같은 판별(s_wnn_yn). 거래처 병원에는 지금처럼 빈 칸이다.
-		//   · 누르면 별도 화면(evalCompare.do)이 열린다. 안 누르면 전체 집계 쿼리는 돌지 않는다
-		//     (이 화면에 평균을 직접 붙이면 조회할 때마다 같이 돌아 느려진다 — 그래서 화면을 나눴다).
-		//   · draw 마다 다시 부른다 — DataTables 가 머리글을 다시 그리면 버튼이 날아가기 때문.
-		// ─────────────────────────────────────────────────────────────
-		var fn_EvalCmpBtn = function() {
-			try {
-				if ((getCookie("s_wnn_yn") || '').trim() !== 'Y') return;
-				/* ★[함정 1] 이 그리드는 scrollY 를 쓴다 → **화면에 보이는 머리글은 복제본**이고
-				     (.dt-scroll-head 안, id 없음) #indicatorTable 의 thead 는 숨겨진 원본이다.
-				     #indicatorTable 로 찾으면 버튼을 넣어도 화면에 안 보인다(위 noArrow CSS 주석과 같은 함정).
-				   → **#indicatorTable_wrapper** 로 스코프해 원본·복제본 머리글 줄 **모두**의 마지막 칸에 넣는다. */
-				var scope = document.getElementById('indicatorTable_wrapper')
-				         || document.getElementById('indicatorTable');
-				if (!scope) return;
-				var trs = scope.querySelectorAll('thead tr');
-				for (var i = 0; i < trs.length; i++) {
-					var ths = trs[i].querySelectorAll('th');
-					if (!ths.length) continue;
-					var th = ths[ths.length - 1];                       // 보기/출력 열의 머리글 = 원래 빈 칸
-					if (th.querySelector('.evalCmpBtn')) continue;      // 이미 넣었으면 그대로
-					if ((th.textContent || '').trim() !== '') continue; // 빈 칸이 아니면(구조가 바뀌었으면) 안 건드림
-					th.innerHTML = '<button type="button" class="btn btn-outline-primary btn-xs evalCmpBtn"'
-						/* 위아래 여백을 넉넉히 (2026-07-28 요청) — 머리글 칸 높이에 맞춰 눌리는 면적을 키운다 */
-						+ ' style="white-space:nowrap;padding:6px 10px;font-size:11.5px;font-weight:700;line-height:1.2;"'
-						+ ' title="같은 달 전체 병원의 지표별 평균과 병원 목록을 봅니다(위너넷 전용).">📊 평가비교</button>';
-					th.querySelector('.evalCmpBtn').onclick = function(ev) {
-						ev.stopPropagation();                            // 머리글 클릭이 정렬로 먹히지 않게
-						var ym = document.getElementById('year_Select').value
-						       + document.getElementById('monthSelect').value;
-						location.href = '/main/evalCompare.do?ym=' + ym;
-					};
-				}
-			} catch (e) { }
-		};
-		/* ★[함정 2] 버튼이 **보이다 사라진다**(2026-07-28). DataTables 가 다시 그릴 때마다 복제 머리글을
-		     새로 만들어 버튼이 함께 지워지는데, `dataTable` 변수는 이 화면의 여러 표가 돌려 쓰는 것이라
-		     draw 이벤트를 걸어도 지표표 재그리기에는 안 걸린다(그래서 조회할 때마다 사라졌다).
-		   → 머리글이 바뀌는 것을 지켜보다가 **비어 있으면 다시 넣는다.** fn_EvalCmpBtn 은 이미 버튼이 있으면
-		     아무 것도 하지 않으므로 반복 호출이 안전하고, 감시가 자기 수정에 다시 반응해도 무한루프가 안 된다. */
-		setTimeout(fn_EvalCmpBtn, 0);
-		setTimeout(fn_EvalCmpBtn, 400);
-		setTimeout(fn_EvalCmpBtn, 1200);
-		dataTable.off('draw.evalCmp').on('draw.evalCmp', fn_EvalCmpBtn);
-		(function(){
-			if (typeof MutationObserver === 'undefined') {          // 아주 옛 브라우저 — 주기 확인으로 대체
-				setInterval(fn_EvalCmpBtn, 1500);
-				return;
-			}
-			if (window._evalCmpObs) { try { window._evalCmpObs.disconnect(); } catch(e) {} }
-			var _t = null;
-			window._evalCmpObs = new MutationObserver(function(){
-				clearTimeout(_t);
-				_t = setTimeout(fn_EvalCmpBtn, 120);                // 몰아서 한 번만 — 그리는 도중 여러 번 안 돌게
-			});
-			try { window._evalCmpObs.observe(document.body, { childList: true, subtree: true }); } catch(e) {}
-		})();
-
+		/* ★[이력] 여기 있던 '지표표 머리글에 [평가비교] 버튼 끼워넣기'는 **걷어냈다**(2026-07-28).
+		     이 그리드는 scrollY 라 보이는 머리글이 복제본이고, 조회할 때마다 새로 만들어져 버튼이 사라졌다.
+		     감시(MutationObserver)로 되살리는 우회까지 넣었다가, 화면 상단 툴바 버튼(#btnEvalCompare)으로
+		     바꿔 원인째 없앴다. 머리글에 버튼을 넣는 방식으로 되돌리지 말 것. */
 		// 전체 선택 체크박스 기능
 	    $('#selectAll').on('click', function() {
 	        var rows = dataTable.rows({ 'search': 'applied' }).nodes();

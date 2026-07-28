@@ -65,8 +65,15 @@
 
   /* 2단 — 왼쪽 지표별 비교(남는 폭 전부) / 오른쪽 병원 목록(고정폭).
      ★한쪽을 고정해 둔다. 둘 다 늘리면 창 폭에 따라 어느 한쪽이 잘린다. */
-  #evalCompare .ec-two{ display:flex; gap:12px; align-items:flex-start; flex-wrap:nowrap; max-width:100%; }
+  /* ★두 카드를 **구조적으로 같은 높이**로 만든다 (2026-07-28 요청 — 몇 px 어긋나는 것을 숫자로 밀지 말고 구조로).
+       align-items:stretch + 카드에 고정 높이 + 표 영역이 남은 자리를 flex 로 채우는 방식이다.
+       이러면 좌(15줄)·우(51줄) 줄 수와 무관하게 제목줄·표·아래줄이 모두 같은 자리에 온다.
+     ★표 높이를 각각 계산하던 방식(height/max-height)으로 되돌리지 말 것 — 줄 수에 따라 또 어긋난다. */
+  #evalCompare .ec-two{ display:flex; gap:12px; align-items:stretch; flex-wrap:nowrap; max-width:100%; }
   #evalCompare .ec-two > .ec-l{ flex:1 1 0; min-width:0; }
+  #evalCompare .ec-two > .ec-l, #evalCompare .ec-two > .ec-r{ display:flex; }
+  #evalCompare .ec-two > .ec-l > .ec-card, #evalCompare .ec-two > .ec-r > .ec-card{
+    display:flex; flex-direction:column; flex:1 1 auto; height:calc(100vh - 250px); min-height:300px; }
   /* ★flex-shrink 를 1 로 둔다(0 이면 폭이 모자랄 때 안 줄어들어 화면이 통째로 밀린다 — 2026-07-28).
      폭은 520 — 병원 목록은 5칸(병원명·구분·구조·진료·종합)이라 이만큼이면 다 들어온다(실측). */
   #evalCompare .ec-two > .ec-r{ flex:0 1 780px; min-width:0; }
@@ -87,7 +94,19 @@
     font-size:13.5px; font-weight:800; color:#20303a; }
   /* 카드 부제(우리 병원 · 전체 평균(51곳) · 차이 / 비대상도 보기) — 한 단계 크게(2026-07-28 요청) */
   #evalCompare .ec-cardtit small{ font-weight:600; color:#6a7a75; font-size:12.5px; }
-  #evalCompare .ec-tbwrap{ max-height:calc(100vh - 330px); min-height:220px; overflow:auto; border:1px solid #e6ebee; border-radius:6px; }
+  /* ★좌우 표 높이를 **같은 값으로 고정**한다 (2026-07-28 요청 — "정확하게 우측하고 맞게").
+       max-height 로 두면 줄 수에 따라 좌(15줄)·우(51줄) 높이가 달라져 아래줄이 몇 px 어긋난다.
+       height 로 못박으면 줄 수와 무관하게 같아지고, 남는 자리는 비워 둔다(우측은 넘쳐서 스크롤).
+       ★한쪽만 고정하면 안 된다 — 반드시 양쪽 같은 규칙을 써야 아래줄이 정확히 맞는다. */
+  /* 표 영역 — 카드 안에서 **남은 자리를 전부** 차지한다(제목줄·아래줄을 뺀 나머지).
+     양쪽 카드 높이가 같으므로 표 영역도 자동으로 같아진다. 높이를 직접 주지 않는 것이 요점이다. */
+  #evalCompare .ec-tbwrap{ flex:1 1 auto; min-height:0; overflow:auto;
+                           border:1px solid #e6ebee; border-radius:6px; }
+  /* ★[안 됨] 표에 height:100% + 빈 채움줄로 tfoot 을 바닥까지 밀려 했는데, **sticky 가 깨져** 고정줄이
+       칸 밖(아래 168px)으로 나갔다(2026-07-28 실측). 표 안에서 억지로 내리지 말 것.
+       → 구조·진료·종합은 표 밖 아래줄(#ec-lpager)로 옮겼다. 우측 '행수' 줄과 같은 자리다. */
+  #evalCompare #ec-lpager{ font-weight:800; color:#1f5a4b; background:#eef3f1;
+                           border:1px solid #e6ebee; border-radius:6px; padding:0 12px; }
 
   /* 표 기본 글자 — 우측 병원 목록도 한 단계 크게(2026-07-28 요청). 좌측은 아래에서 한 단계 더 키운다. */
   #evalCompare table.ec-tb{ width:100%; border-collapse:collapse; font-size:13.5px; white-space:nowrap; }
@@ -123,7 +142,12 @@
   /* 하단 정보줄(페이징 대신) */
   /* 행수 + [모두 표시] 만 두는 줄. 평균은 표 안 고정줄(tfoot)에 있다.
      ★flex 를 쓰지 않는다 — 안에 글자와 <b> 가 섞여 있어 flex 로 두면 항목마다 흩어진다. */
-  #evalCompare .ec-pager{ margin-top:7px; font-size:12.5px; color:#5a6b7a; min-height:20px; }
+  /* ★좌우 카드 바닥을 맞추려면 이 줄의 **높이가 양쪽 같아야** 한다(2026-07-28).
+       우측에는 [모두 표시] 버튼이 들어가 저절로 더 높아지고, 좌측은 빈 줄이라 낮아서 카드가 어긋났다.
+       → min-height 를 버튼이 들어갈 높이로 고정하고 가운데 정렬한다. 버튼 크기를 바꾸면 이 값도 함께 볼 것.
+     ★flex 를 써도 되는 이유 — 안쪽 내용을 항상 span 하나로 감싸서 넣는다(ecHInfo). 그냥 넣으면 항목이 흩어진다. */
+  #evalCompare .ec-pager{ margin-top:7px; font-size:13.5px; color:#5a6b7a;
+                          min-height:30px; display:flex; align-items:center; }
   /* 평균 고정줄 — 표 맨 아래에 붙어 스크롤해도 따라온다. 머리글과 같은 색으로 '기준값' 임을 보인다. */
   /* 평균 고정줄 — 머리글(6)보다 낮고 본문보다 높게. 위쪽 경계는 box-shadow 로(머리글과 같은 이유) */
   #evalCompare table.ec-tb tfoot tr.ec-favg td{ position:sticky; bottom:-1px; z-index:4;
@@ -183,6 +207,9 @@
       <div class="ec-card">
         <div class="ec-cardtit"><span>지표별 비교</span><small id="ec-sub1">우리 병원 · 전체 평균 · 차이</small></div>
         <div class="ec-tbwrap"><table class="ec-tb" id="ec-ind"></table></div>
+        <%-- 선택 병원의 구조·진료·종합 — 우측 '행수 · 모두 표시' 줄과 **같은 자리**다.
+             표 안 tfoot 으로 넣었다가 sticky 가 깨져(칸 밖으로 나감) 여기로 옮겼다(2026-07-28). --%>
+        <div class="ec-pager" id="ec-lpager"></div>
       </div>
     </div>
     <div class="ec-r">
@@ -217,7 +244,15 @@ jQuery(function(){
   function ck(nm){ try{ if(typeof getCookie==='function') return (getCookie(nm)||'').trim(); }catch(e){}
     var m=document.cookie.match('(^|;)\\s*'+nm+'\\s*=\\s*([^;]+)'); return m?decodeURIComponent(m.pop()).trim():''; }
 
+  /* 비교 기준 병원 = **병원검색으로 고른 그 병원**.
+       위너넷 관리자는 병원검색으로 병원을 바꿔가며 보므로, 로그인 계정이 아니라 고른 병원이 기준이어야 한다.
+       top.jsp 가 선택 결과를 쿠키 hospid / s_hospnm 에 넣고 전역 hospid·hospnm 으로도 노출한다
+       — 적정성평가 화면이 조회에 쓰는 그 값과 **같은 것**을 쓴다(두 화면 숫자가 어긋나지 않게).
+     ★[2026-07-28] 라벨이 '우리 병원' 으로 고정돼 있어 관리자 화면에서 어느 병원인지 알 수 없었다
+       → 표 머리글·고정줄·부제 모두 **선택한 병원 이름**으로 바꿨다. */
   var myHosp = (typeof hospid !== 'undefined' && hospid) ? String(hospid).trim() : ck('s_hospid');
+  var myHospNm = (typeof hospnm !== 'undefined' && hospnm) ? String(hospnm).trim() : ck('s_hospnm');
+  if(!myHospNm) myHospNm = myHosp || '선택 병원';
 
   /* 지표코드 → 이름. 서버 평균 응답에는 코드만 있어 화면 이름을 여기서 붙인다.
      ★적정성평가 지표표(select_Eval_Indi 의 cate_nm)와 같은 이름이어야 두 화면을 나란히 볼 수 있다.
@@ -369,7 +404,7 @@ jQuery(function(){
     el('ec-k2').textContent = nopat.toLocaleString()+' 곳';
     el('ec-k3').textContent = excl.toLocaleString()+' 곳';
     el('ec-k4').textContent = _hosp.length.toLocaleString()+' 곳';
-    el('ec-sub1').textContent = '우리 병원 · 전체 평균(' + y + '곳) · 차이';
+    el('ec-sub1').textContent = myHospNm + ' · 전체 평균(' + y + '곳) · 차이';
   }
 
   function ecRenderInd(){
@@ -377,8 +412,8 @@ jQuery(function(){
     if(!_avg.length){ t.innerHTML='<tbody><tr><td class="ec-msg">이 달에는 집계할 자료가 없습니다.</td></tr></tbody>'; return; }
     /* ★병원수 칸은 빼고 **위 요약에 한 번만** 낸다(2026-07-28 요청) — 지표마다 같은 값(51)이 줄마다 반복돼
          칸만 먹었다. 혹시 지표별로 병원수가 다르면 그 줄의 '전체 평균' 칸에 마우스를 올리면 나온다. */
-    var h='<thead><tr><th>지표명칭</th><th>우리 병원</th><th>전체 평균</th>'
-        + '<th title="우리 병원 − 전체 평균">차이</th><th>최소</th><th>최대</th></tr></thead><tbody>';
+    var h='<thead><tr><th>지표명칭</th><th>'+esc(myHospNm)+'</th><th>전체 평균</th>'
+        + '<th title="'+esc(myHospNm)+' − 전체 평균">차이</th><th>최소</th><th>최대</th></tr></thead><tbody>';
     var shown=0;
     for(var i=0;i<_avg.length;i++){
       var r=_avg[i], cd=String(r.cateCd||'');
@@ -402,6 +437,42 @@ jQuery(function(){
     }
     t.innerHTML = shown ? (h+'</tbody>')
       : '<tbody><tr><td class="ec-msg">표시할 지표가 없습니다.</td></tr></tbody>';
+    ecMyFoot();          // 구조·진료·종합 — 표 밖 아래줄에 그린다
+  }
+
+  /* 좌측 표 맨 아래 고정줄 — **우리 병원의 구조·진료·종합**.
+       · 우리 병원 점수는 병원 목록(_hosp)에 이미 들어 있다(76곳 전부를 받으므로 우리도 그 안에 있다).
+         적정성평가 화면 상단 카드와 같은 계산식이라 두 화면 숫자가 맞는다.
+       · 전체 평균은 우측 평균 고정줄과 **같은 모집단**(대상 Y · 체크 켜짐)이라 체크를 끄면 같이 바뀐다.
+       · 차이 색은 방향만 — 지표에 따라 높은 쪽이 좋을 수도, 낮은 쪽이 좋을 수도 있어 우열로 칠하지 않는다. */
+  /* ★우측 평균줄과 **같은 라인**에 놓기 위해 표 밖 div 가 아니라 **표 안 tfoot** 으로 넣는다(2026-07-28 요청).
+       우측은 표 안 고정줄이라, 좌측을 표 밖에 두면 한 줄 아래로 내려가 눈높이가 어긋났다.
+       좌측 표는 칸 구성이 달라(지표명칭·우리병원·전체평균·차이·최소·최대) 구조·진료·종합에 대응하는 칸이 없으므로
+       colspan 으로 한 칸에 펼친다. 스타일은 우측과 같은 .ec-favg 를 그대로 쓴다(색·굵기·sticky 동일). */
+  function ecMyFoot(){
+    var box=el('ec-lpager'); if(!box) return;
+    var me=null;
+    for(var i=0;i<_hosp.length;i++){ if(String(_hosp[i].hospCd||'')===String(myHosp)){ me=_hosp[i]; break; } }
+    if(!me){ box.innerHTML=''; return; }
+    var s=0, c=0, t=0, k=0;
+    for(var j=0;j<_hosp.length;j++){
+      var r=_hosp[j];
+      if(String(r.targetGb||'')!=='Y' || _excl[String(r.hospCd||'')]) continue;
+      s+=n(r.structScore); c+=n(r.careScore); t+=n(r.totalScore); k++;
+    }
+    function d(mv, av){
+      if(!k) return '';
+      var v=n(mv)-av/k, cl=(Math.abs(v)<0.005)?'ec-eq':(v>0?'ec-up':'ec-dn');
+      return ' <span class="'+cl+'">('+(v>0?'+':'')+f2(v)+')</span>';
+    }
+    /* ★'전체 평균 51곳 …' 은 붙이지 않는다(2026-07-28) — 우측 평균 고정줄과 **중복**이다.
+         괄호 안 차이값만 남기면 비교는 그대로 되고 화면은 짧아진다. 다시 붙이자는 얘기가 나오면 이 이력을 볼 것. */
+    box.innerHTML = '<span>'
+      + esc(myHospNm)
+      + ' &nbsp;구조 <b>'+f2(me.structScore)+'</b>'+d(me.structScore, s)
+      + ' &nbsp;· 진료 <b>'+f2(me.careScore)+'</b>'+d(me.careScore, c)
+      + ' &nbsp;· 종합 <b>'+f2(me.totalScore)+'</b>'+d(me.totalScore, t)
+      + '</span>';
   }
 
   window.ecRenderHosp = function(){
