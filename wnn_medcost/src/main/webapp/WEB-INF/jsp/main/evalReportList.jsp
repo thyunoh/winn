@@ -574,7 +574,8 @@ jQuery(function(){
            (2026-07-29 사용자 확정: 문서·메일 별도). 이미지 차단 시 열어도 '미확인'으로 남는 건 감수. */
         { title:'메일열람', data:null, className:'dt-center', visible:isWinner, render:function(d,t,r){
             if(t!=='display') return (r.mailreaddttm||'');
-            if((Number(r.sendcnt)||0)===0) return '<span class="erl-noread">-</span>';   // 아직 안 보냄
+            // 아직 안 보낸 건은 열람을 따질 대상이 아니므로 '발송 전'으로 분명히 구분한다
+            if((Number(r.sendcnt)||0)===0) return '<span class="erl-noread">발송 전</span>';
             if(r.mailreadyn!=='Y') return '<span class="erl-noread" title="아직 열지 않았거나, 수신자가 이미지 표시를 차단한 경우입니다">미확인</span>';
             return '<span class="erl-read">열람</span><div class="erl-sentinfo">'+esc(r.mailreaddttm||'')
                  + ((Number(r.mailreadcnt)||0)>1 ? (' ('+r.mailreadcnt+'회)') : '') + '</div>';
