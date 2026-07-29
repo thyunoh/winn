@@ -248,6 +248,12 @@
                                            <li class="nav-item">
                                                <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
                                            </li>
+                                           <%-- 이메일정보 (2026-07-30) — 적정성평가 월간보고서 메일 수신자 관리.
+                                                월보고서 목록의 '📥 메일주소 일괄등록' 모달을 이 화면으로 옮긴 것(목록에서는 제거).
+                                                ★별도 게이트 불필요 — 상위 li(hospcont)가 위너넷 외 계정에는 hosp_conact() 로 통째로 숨겨진다. --%>
+                                           <li class="nav-item">
+                                               <a class="nav-item nav-link" href="/user/hospEmail.do">이메일정보</a>
+                                           </li>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/wnnauthcd.do">위너넷권한관리</a>
                                             </li>

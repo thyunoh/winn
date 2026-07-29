@@ -314,6 +314,26 @@ public class UserController extends BaseController {
 			return ".login/LoginWinCT";
 		}
     }	
+	/* 이메일정보 (적정성평가 월간보고서 메일 수신자) 관리 화면 — 2026-07-30 신규.
+	   계약관리(/hospcd.do)와 완전히 같은 방식: 로그인 쿠키만 확인하고 타일 화면을 돌려준다.
+	   ★위너넷 전용이지만 여기서 막지 않는다 — 메뉴(사이드바 hospcont)와 화면(hospEmail.jsp)이
+	     s_wnn_yn 으로 이미 걸러낸다. 계약관리 등 기존 관리화면들과 같은 컨벤션을 그대로 따른 것.
+	   ★조회·등록·삭제는 새로 만들지 않았다 — 월보고서 목록이 쓰던 /main/evalMailAddr*.do 를 그대로 쓴다. */
+	@RequestMapping(value="/hospEmail.do")
+    public String hospEmail(HttpServletRequest request, ModelMap model) {
+
+        cookie_value = ClientInfo.getCookie(request);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/mangr/hospEmail";
+			} else {
+				return ".login/LoginWinCT";
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+    }
 	@RequestMapping(value="/hospCdList.do", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> getHospCdList(@ModelAttribute("DTO") HospMdDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {

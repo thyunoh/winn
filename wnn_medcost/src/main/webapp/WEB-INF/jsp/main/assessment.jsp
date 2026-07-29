@@ -59,13 +59,23 @@ Date nowTime = new Date();
 										<button
 											class="btn indi-custom-btn text-white btn-sm d-flex align-items-center justify-content-center flex-grow-1"
 											onClick="fn_CreateData(1)">적정성평가 월 자료생성</button>
-										<%-- ===== 월보고서 버튼 (1단계: 위너넷 전용) — magamFileUpload '신규프로그램' 체크박스와 동일 컨벤션 =====
+										<%-- ===== 월보고서·평가비교 (위너넷 전용) — ★2026-07-30 부터 아래 [관리자업무] 서브메뉴 안으로 들어갔다 =====
 										         이 시스템은 로그인을 wnn_consult 에서 하고 wnn_medcost 는 쿠키로 인증을 이어받으므로(세션 공유 안 됨),
 										         판별은 s_wnn_yn 쿠키(=TBL_HOSP_MST.WINNER_YN, wnn_consult·wnn_medcost 양쪽 로그인이 매번 삭제 후 재설정) 하나만 —
 										         상단 병원검색 버튼(top.jsp #hospserchtop)과 동일 조건으로 노출 동기화. 기본 히든 → 위너넷일 때만 JS 로 노출.
 										         [2단계·완성 후] 거래처 공개: 이 노출 조건에 승인본 존재 여부를 더해 확장. --%>
 										<%-- d-flex 클래스 금지: display:flex !important 라 인라인 display:none 을 이겨서 일반병원에도 항상 노출됨(2026-07-14 원인) --%>
-										<button id="btnMonthlyReport"
+										<%-- ===== 관리자업무 (주메뉴) + 서브메뉴 (2026-07-30) =====
+											         월보고서·평가비교처럼 '위너넷 전용' 기능이 계속 늘어나 버튼을 나란히 붙이면 툴바가 넘친다(사용자 지적).
+											         → 툴바에는 [관리자업무] 하나만 두고, 실제 기능은 그 아래 서브메뉴로 펼친다.
+											         ★기능 추가는 아래 .wnn-adm-menu 안에 버튼/링크 한 줄 추가하면 끝 — 노출조건·열고닫기는 공용이다.
+											         ★부트스트랩 dropdown 미사용(버전 의존 제거) — 아래 wnnAdmToggle/문서클릭 닫기로만 동작.
+											         ★노출 게이트는 래퍼(#wnnAdminMenu) 하나만 — 위너넷(s_wnn_yn='Y')일 때 JS 가 켠다.
+											           서브메뉴 안의 버튼은 CSS(.wnn-adm-menu .wnn-tbtn)가 항상 보이게 하므로 개별 게이트 불필요. --%>
+										<div id="wnnAdminMenu" class="wnn-adm" style="display: none;">
+											<button type="button" class="wnn-adm-btn" onclick="wnnAdmToggle(event);">🗂 관리자업무 <span class="wnn-adm-caret">▾</span></button>
+											<div class="wnn-adm-menu" id="wnnAdminMenuList">
+											<button id="btnMonthlyReport"
 											class="wnn-tbtn"
 											onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;try{sessionStorage.setItem('erOpenYm',ym);}catch(e){}location.href='/main/evalReport.do?ym='+ym;})();">📄
 											월보고서</button>
@@ -78,22 +88,55 @@ Date nowTime = new Date();
 											title="같은 달 전체 병원의 지표별 평균과 병원 목록을 봅니다(위너넷 전용)."
 											onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;location.href='/main/evalCompare.do?ym='+ym;})();">📊
 											평가비교</button>
+											</div><!-- /.wnn-adm-menu -->
+										</div><!-- /#wnnAdminMenu -->
 									</div>
 									<script>
  										    (function(){
-										        // 상단 병원검색 버튼(top.jsp #hospserchtop)과 노출 동기화 — 병원검색 보이면 월보고서도 보임 (2026-07-14 확정)
+										        // 상단 병원검색 버튼(top.jsp #hospserchtop)과 노출 동기화 — 병원검색 보이면 [관리자업무]도 보임 (2026-07-14 확정)
 										        // top.jsp 판별과 동일: s_wnn_yn(trim) === 'Y' 만. s_winconect 는 잔존 쿠키로 오노출되어 제외.
-										        var b = document.getElementById('btnMonthlyReport');
-										        var c = document.getElementById('btnEvalCompare');   // 전체 비교 — 같은 조건으로 함께 노출
+										        // [2026-07-30] 월보고서·평가비교는 [관리자업무] 서브메뉴로 이동 — 게이트는 래퍼 하나만 켠다.
+											        //             (기능이 늘어도 이 스크립트는 손댈 필요 없음 — 메뉴 안에 항목만 추가)
+											        var w = document.getElementById('wnnAdminMenu');
+										        // 서브메뉴 항목(월보고서·평가비교) 자체의 노출은 CSS(.wnn-adm-menu .wnn-tbtn)가 담당 — 개별 게이트 불필요
 										        try{
 										            if ((getCookie("s_wnn_yn") || '').trim() === 'Y') {
-										                // 두 버튼 모두 같은 값으로 켠다 — 하나만 flex, 하나만 inline-block 이면 높이·정렬이 미묘하게 달라진다
-										                if(b) b.style.display='inline-flex';
-										                if(c) c.style.display='inline-flex';
+										                // 래퍼만 켜면 그 안의 항목(월보고서·평가비교)은 CSS 로 함께 보인다
+										                if(w) w.style.display='inline-block';
+										                // (항목 노출은 CSS 담당)
 										            }
 										        }catch(e){}
 										    })(); 
 										</script>
+									<%-- ===== 이미 생성된 달 안내 (2026-07-30) =====
+										         화면 진입할 때마다 뜨던 '재생성 확인' 팝업(다시 생성 / 기존 자료 보기)을 이 문구로 대체한다.
+										         팝업으로 흐름을 끊지 않고 [적정성평가 월 자료생성] 버튼 아래에 문구로만 알린다.
+										           · 진입·월 변경(fn_CreateData(0)) + 자료 있음 → 기존 자료 그대로 표시 + 이 문구 노출
+										           · [적정성평가 월 자료생성] 클릭(fn_CreateData(1)) → 묻지 않고 바로 재생성(문구는 감춤)
+										         문구의 년·월은 fn_ShowRegenNotice() 가 선택된 셀렉트값으로 채운다(년·월 변경 시 fn_RefreshRegenNotice 로 재판단). --%>
+									<script>
+										/* ===== 관리자업무 서브메뉴 열고/닫기 (2026-07-30) =====
+										     부트스트랩 dropdown 을 쓰지 않는다(이 프로젝트는 dropdown JS 사용처가 없어 버전 의존을 만들지 않음).
+										     메뉴 밖 클릭·ESC 로 닫히고, 항목을 누르면 화면이 이동하므로 따로 닫지 않는다. */
+										function wnnAdmToggle(e) {
+										    if (e) e.stopPropagation();                       // 아래 문서 클릭(닫기) 핸들러와 겹치지 않게
+										    var m = document.getElementById('wnnAdminMenuList');
+										    if (m) m.classList.toggle('open');
+										}
+										function wnnAdmClose() {
+										    var m = document.getElementById('wnnAdminMenuList');
+										    if (m) m.classList.remove('open');
+										}
+										document.addEventListener('click', function(ev) {
+										    var wrap = document.getElementById('wnnAdminMenu');
+										    if (wrap && !wrap.contains(ev.target)) wnnAdmClose();
+										});
+										document.addEventListener('keydown', function(ev) {
+										    if (ev.keyCode === 27) wnnAdmClose();             // ESC
+										});
+										</script>
+										<div id="regenNotice"
+										style="display: none; margin: 0 0 8px; padding: 5px 10px; border: 1px solid #b8daff; border-left: 4px solid #4a90d9; border-radius: 6px; background: #f8fbff; color: #2c4a63; font-size: 13px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
 									<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
 
 									<!-- 지표 테이블 -->
@@ -154,6 +197,54 @@ Date nowTime = new Date();
 	align-items: center;
 }
 .wnn-tbtn:hover { background: #eef3f1; color: #1f5a4b; }
+
+/* ★관리자업무 주메뉴 + 서브메뉴 (2026-07-30)
+     위너넷 전용 기능이 계속 늘어나 툴바에 버튼을 나란히 붙이면 넘친다 → 주메뉴 하나에 서브메뉴로 모은다.
+     ★항목 추가는 .wnn-adm-menu 안에 <button class="wnn-tbtn"> 한 줄 추가하면 끝 — 아래 규칙이 자동으로
+       한 줄짜리 메뉴 행으로 만들어 준다(.wnn-tbtn 의 기본 display:none 도 여기서 !important 로 무력화). */
+.wnn-adm { position: relative; display: none; }      /* 기본 숨김 — 위너넷일 때만 JS 가 켠다 */
+
+.wnn-adm-btn {                                       /* 주메뉴 버튼 — 툴바형(.wnn-tbtn)과 같은 결 */
+	display: inline-flex;
+	align-items: center;
+	white-space: nowrap;
+	border: 0;
+	background: transparent;
+	color: #37475a;
+	font-weight: 700;
+	font-size: 13px;
+	padding: 6px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+}
+.wnn-adm-btn:hover { background: #eef3f1; color: #1f5a4b; }
+.wnn-adm-caret { margin-left: 4px; font-size: 11px; }
+
+.wnn-adm-menu {                                      /* 서브메뉴 패널 — .open 일 때만 보인다 */
+	display: none;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 1050;                                   /* 지표표·DataTables 헤더 위로 */
+	min-width: 168px;
+	margin-top: 2px;
+	padding: 4px 0;
+	background: #fff;
+	border: 1px solid #d7dee6;
+	border-radius: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+}
+.wnn-adm-menu.open { display: block; }
+
+.wnn-adm-menu .wnn-tbtn {                            /* 서브메뉴 항목 — 한 줄 전체를 쓰는 메뉴 행으로 */
+	display: flex !important;                        /* .wnn-tbtn 기본 display:none 무력화 (개별 게이트 제거) */
+	width: 100%;
+	justify-content: flex-start;
+	border-radius: 0;
+	padding: 7px 12px;
+	font-weight: 600;
+}
+.wnn-adm-menu .wnn-tbtn:hover { background: #eef3f1; }
 
 .std-toast-title {
 	font-size: 18px !important;
@@ -2323,21 +2414,21 @@ function fn_CreateData(flag, force) {
     }
 
     // [추가] 해당 병원·년월의 적정성평가 자료가 이미 생성되어 있는지 먼저 확인.
-    //   - 이미 생성됨 → "다시 생성하시겠습니까?" 확인. 취소 시 기존 자료만 표시(재생성 안 함).
+    //   - 이미 생성됨 → 팝업 없이 기존 자료만 표시 + 안내문구 노출.
     //   - 생성된 자료 없음 → 기존처럼 무조건 생성 실행.
     //   ※ select_Eval_Indi 는 '99'(합계) 행을 무조건 1건 반환하므로, 실제 지표행(cate_cd!=='99')
     //     존재 여부로 판단한다.
-    //   force=true (예: 설정 저장 후 재계산 fn_Update) 인 경우 확인 없이 바로 생성.
-    if (force) {
+    //   flag===1 ([적정성평가 월 자료생성] 버튼 클릭) 또는 force=true (설정 저장 후 재계산 fn_Update)
+    //   → 확인 없이 바로 생성. 즉 재생성은 '버튼을 누른 그 순간'에만 일어난다(진입만으론 절대 재생성 안 됨).
+    if (force || flag === 1) {
+        fn_HideRegenNotice();
         doCreate();
         return;
     }
 
-    // 월보고서 종료(erExit) 복귀 마커 — 이 진입 1회는 재생성 확인 팝업 없이 기존 자료만 표시
-    var skipRegen = false;
+    // 월보고서 종료(erExit) 복귀 마커 — 팝업이 없어져 동작 차이는 없지만, 잔존값이 남지 않게 여기서 비운다
     try {
-        skipRegen = sessionStorage.getItem('skipRegenConfirm') === '1';
-        if (skipRegen) sessionStorage.removeItem('skipRegenConfirm');
+        if (sessionStorage.getItem('skipRegenConfirm') === '1') sessionStorage.removeItem('skipRegenConfirm');
     } catch (e) {}
 
     $.ajax({
@@ -2349,47 +2440,58 @@ function fn_CreateData(flag, force) {
             var hasData = response && response.data && response.data.some(function(r) {
                 return r.cate_cd !== '99';
             });
-            if (hasData && skipRegen) {   // 월보고서에서 돌아온 경우: 묻지 않고 기존 자료 표시
-                showExisting();
-                return;
-            }
             if (hasData) {
-                if (!document.getElementById('regenConfirmStyle')) {
-                    var rst = document.createElement('style');
-                    rst.id = 'regenConfirmStyle';
-                    rst.innerHTML =
-                        '.regen-confirm-popup { padding:14px 16px !important; }' +
-                        '.regen-confirm-popup .swal2-title { font-size:1.05em !important; padding:6px 0 2px !important; }' +
-                        '.regen-confirm-popup .swal2-html-container { font-size:0.92em !important; margin:6px 0 0 !important; }' +
-                        '.regen-confirm-popup .swal2-icon { width:48px; height:48px; margin:8px auto 4px; }' +
-                        '.regen-confirm-popup .swal2-icon .swal2-icon-content { font-size:1.6em; }' +
-                        '.regen-confirm-popup .swal2-actions { margin-top:12px; }' +
-                        '.regen-confirm-popup .swal2-styled { font-size:0.9em !important; padding:7px 16px !important; }';
-                    document.head.appendChild(rst);
-                }
-                Swal.fire({
-                    title: '재생성 확인',
-                    html: '<b>' + selected_Year + '년 ' + selectedMonth + '월</b> 자료가 이미 생성되어 있습니다.<br>다시 생성하시겠습니까?',
-                    icon: 'question',
-                    width: 380,
-                    showCancelButton: true,
-                    confirmButtonText: '다시 생성',
-                    cancelButtonText: '기존 자료 보기',
-                    customClass: { popup: 'regen-confirm-popup' }
-                }).then(function(result) {
-                    if (result.isConfirmed) {
-                        doCreate();
-                    } else {
-                        showExisting();
-                    }
-                });
+                fn_ShowRegenNotice();   // 팝업 대신 문구
+                showExisting();         // 기존 자료 그대로 표시(재생성 안 함)
             } else {
-                doCreate();   // 생성된 자료 없음 → 기존처럼 무조건 생성
+                fn_HideRegenNotice();
+                doCreate();          // 생성된 자료 없음 → 기존처럼 무조건 생성
             }
         },
         error: function() {
+            fn_HideRegenNotice();
             doCreate();       // 확인 실패 시 안전하게 기존처럼 생성
         }
+    });
+}
+
+/* ===== '재생성 확인' 팝업 대체 안내문구 (2026-07-30) =====
+     화면 진입마다 Swal 팝업(다시 생성 / 기존 자료 보기)이 뜨던 것을 없애고,
+     [적정성평가 월 자료생성] 버튼 아래 문구(#regenNotice) 로만 알린다.
+       · 자료 있음 → "…이미 생성되어 있습니다 / 다시 생성할경우 자료생성을 실행하세요"
+       · 재생성은 사용자가 버튼을 누를 때만 실행된다(fn_CreateData(1) → 확인 없이 바로 생성).
+     ※ 년·월 셀렉트를 바꾸면 문구도 그 달 기준으로 다시 판단해야 하므로(fn_RefreshRegenNotice),
+        change 핸들러에서 함께 호출한다 — 안 하면 이전 달 문구가 그대로 남는다. */
+function fn_ShowRegenNotice() {
+    var n = document.getElementById('regenNotice');
+    if (!n) return;
+    var y = document.getElementById("year_Select").value;
+    var m = document.getElementById("monthSelect").value;
+    // 한 줄로 (2026-07-30 사용자 요청) — 두 줄(<br>)로 하면 버튼 아래 칸이 두꺼워 보임
+    n.innerHTML = '<b>' + y + '년 ' + m + '월</b> 자료가 이미 생성되어 있습니다. 다시 생성할경우 자료생성을 실행하세요';
+    n.style.display = 'block';
+}
+
+function fn_HideRegenNotice() {
+    var n = document.getElementById('regenNotice');
+    if (n) { n.style.display = 'none'; n.innerHTML = ''; }
+}
+
+// 현재 선택된 년·월 기준으로 안내문구를 다시 판단(있으면 표시 / 없으면 숨김). 자료를 건드리지 않는다.
+function fn_RefreshRegenNotice() {
+    var jobyymm = document.getElementById("year_Select").value + document.getElementById("monthSelect").value;
+    $.ajax({
+        url: "/main/select_Eval_Indi.do",
+        type: "POST",
+        data: { hosp_cd: hospid, jobyymm: jobyymm },
+        dataType: "json",
+        success: function(response) {
+            var hasData = response && response.data && response.data.some(function(r) {
+                return r.cate_cd !== '99';
+            });
+            if (hasData) fn_ShowRegenNotice(); else fn_HideRegenNotice();
+        },
+        error: function() { fn_HideRegenNotice(); }
     });
 }
 
@@ -5372,6 +5474,7 @@ $(document).ready(function() {
 	$('#year_Select').on('change', function() {
 		sessionStorage.setItem('assessment_year', this.value);
 		fn_IndiSelect();
+		fn_RefreshRegenNotice();   // 안내문구도 바뀐 년월 기준으로 갱신 (2026-07-30)
 
 		const selectedYear = $(this).val(); // 선택된 연도 값
 
@@ -5387,6 +5490,7 @@ $(document).ready(function() {
 	$('#monthSelect').on('change', function() {
 		sessionStorage.setItem('assessment_month', this.value);
 		fn_IndiSelect();
+		fn_RefreshRegenNotice();   // 안내문구도 바뀐 년월 기준으로 갱신 (2026-07-30)
     });
 	$('#yearQuarter').on('change', function() {
 		fn_Select(true);
