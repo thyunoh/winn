@@ -77,6 +77,12 @@ function loadPage(url) {
 }
 
 </script>
-	
+
+<%-- 적정성평가 Q&A 챗봇 (2026-07-29) — 전 화면 우측하단 플로팅.
+     여기 한 줄이면 .main/* 전 화면에 적용된다(컨트롤러·메뉴 등록 불필요).
+     지식 추가/수정은 qnaChat.jsp 의 WQA_KB 배열만 고치면 되고, JSP라 재빌드 없이 파일 교체로 반영된다.
+     ★2026-07-29 작업중단으로 비활성화 — 아래 include 주석만 풀면 다시 켜진다(화면·지식은 그대로 보존). --%>
+<%-- <jsp:include page="/WEB-INF/tiles/main/qnaChat.jsp" /> --%>
+
 </body>
 </html>
