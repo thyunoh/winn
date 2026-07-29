@@ -65,6 +65,18 @@ public interface MagamService {
 	void cancelApproveEvalReport(Map<String, Object> p) throws Exception;
 	void saveEvalReportPdf(Map<String, Object> p) throws Exception;   // 첨부 PDF 경로 저장(마스터 없으면 생성) / pdfPath=null 이면 해제
 
+	// 월보고서 메일발송 기록 (발송 성공 후) / 병원 열람 기록 (일반병원이 열었을 때만)
+	void saveEvalReportSend(Map<String, Object> p) throws Exception;
+	void saveEvalReportRead(Map<String, Object> p) throws Exception;
+	void saveEvalReportMailRead(Map<String, Object> p) throws Exception;   // 메일 열람(본문 추적 이미지 로드)
+
+	// 메일 수신자 주소록(병원별) — 발송창에서 체크로 고르고 그 자리에서 추가·삭제
+	List<Map<String, Object>> selectEvalMailAddr(String hospCd) throws Exception;
+	List<Map<String, Object>> selectEvalMailAddrAll(Map<String, Object> p) throws Exception;   // 전체 병원 주소록(관리)
+	List<Map<String, Object>> selectEvalMailCandidates(String hospCd) throws Exception;
+	void saveEvalMailAddr(Map<String, Object> p) throws Exception;
+	void removeEvalMailAddr(Map<String, Object> p) throws Exception;
+
 	List<Map<String, Object>> select_EvalProgress(IndiDTO dto) throws Exception;   // 자료생성 진행상태(항목별)
 	
 	List<PatvalDTO>  select_CategoryList05(PatvalDTO dto) throws Exception;

@@ -101,6 +101,13 @@
 			<version>2.5.2</version>
 		</dependency>
 		
+		<!--  메일(SMTP) 발송 — 월보고서 PDF 첨부 발송용. 로컬 저장소에 이미 있는 버전이라 오프라인 빌드 가능 -->
+		<dependency>
+		    <groupId>com.sun.mail</groupId>
+		    <artifactId>javax.mail</artifactId>
+		    <version>1.5.0</version>
+		</dependency>
+
 		<!--  sftp 설정-->
 		<dependency>
 		    <groupId>com.jcraft</groupId>

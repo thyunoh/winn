@@ -1248,9 +1248,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // 관리자 1:1 문의하기 메뉴 표시
     var winner = getCookie("s_wnn_yn").trim();
-//      if (winner === 'Y' || winner != 'Y' ) {
-    	
-    if (winner === 'Y') {
+   //   if (winner === 'Y' || winner != 'Y' ) {
+     if (winner === 'Y') {
 
         var adminAsq = document.getElementById("adminAsqMenu");
         if (adminAsq) adminAsq.style.display = "";

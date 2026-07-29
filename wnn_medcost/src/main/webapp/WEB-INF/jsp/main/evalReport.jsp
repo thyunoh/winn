@@ -526,6 +526,9 @@
       <input type="file" id="er-pdfFile" accept="application/pdf,.pdf" style="display:none;">
       <button id="er-btnPdf" class="er-btn" onclick="erPickPdf()" title="④ 승인 후 — 완성본 PDF를 첨부(화면 생성 또는 아래한글 완성본 업로드). 거래처엔 이 PDF가 우선 제공됩니다">📎 PDF첨부</button>
       <a id="er-pdfView" class="er-btn er-primary" style="display:none;" href="#" onclick="erPdfPreview(); return false;" title="첨부된 완성본 PDF 보기(교체는 모달 안 🔍검색)">👁 PDF보기</a>
+      <%-- ⑤ 메일발송 — 첨부해 둔 PDF 를 그대로 붙여 병원에 보낸다. 위너넷만, 첨부가 있을 때만 노출(updatePdfUi) --%>
+      <button id="er-btnMail" class="er-btn er-wnnonly" style="display:none;" onclick="erMailOpen()"
+              title="⑤ 첨부된 PDF를 메일로 보냅니다. 받는 사람은 발송 창에서 입력합니다">✉ 메일발송</button>
     </span>
     <!-- 서식 툴(편집 모드 전용) — 답변 에디터(noticd summernote) 구성 참조: B·I·U·지우개 + 글꼴 + 크기 + 색상 A▾.
          문구를 드래그로 선택한 뒤 클릭(버튼 mousedown 취소·select 는 선택영역 저장/복원으로 선택 유지) -->
@@ -873,6 +876,36 @@
     </div>
   </div>
 
+  <%-- 메일 발송 창 — 받는 사람은 수동 입력(이메일 별도 관리가 붙으면 여기 기본값을 그 목록에서 채우면 된다).
+       제목·본문 기본값은 표준문구(TBL_EVAL_REPORT_TPL 의 mail_subject / mail_body)에서 오고,
+       {hosp}{ym}{total}{grade}{goalGrade}{goalScore}{gap} 자리표시자가 실제 값으로 치환된다. --%>
+  <div id="er-mailModal" class="er-modal er-noprint" style="display:none;">
+    <div class="er-modal-box" style="width:min(720px,96vw); height:auto; max-height:92vh;">
+      <div class="er-modal-head">
+        <span>✉ 월보고서 메일 발송 <span id="er-mailWho" style="font-weight:600; font-size:12.5px; opacity:.8;"></span></span>
+        <span class="er-modal-actions">
+          <button id="er-mailSendBtn" class="er-btn er-good" onclick="erMailSend()">📨 보내기</button>
+          <button class="er-btn" onclick="erMailClose()">✕ 닫기</button>
+        </span>
+      </div>
+      <div style="padding:14px 18px; background:#fff; overflow:auto;">
+        <div style="font-size:12.5px; color:#5b6b80; margin-bottom:10px;">
+          첨부해 둔 <b>완성본 PDF</b>가 그대로 첨부됩니다. 여러 명에게 보내려면 주소를 <b>콤마(,)</b>로 구분하세요.
+        </div>
+        <label style="display:block; font-size:12.5px; font-weight:800; color:#37475a; margin:0 0 4px;">받는 사람</label>
+        <input id="er-mailTo" type="text" placeholder="hospital@example.com, staff@example.com"
+               style="width:100%; height:34px; padding:4px 9px; font-size:13.5px; border:1px solid #cfd8e6; border-radius:6px;">
+        <label style="display:block; font-size:12.5px; font-weight:800; color:#37475a; margin:12px 0 4px;">제목</label>
+        <input id="er-mailSubject" type="text"
+               style="width:100%; height:34px; padding:4px 9px; font-size:13.5px; border:1px solid #cfd8e6; border-radius:6px;">
+        <label style="display:block; font-size:12.5px; font-weight:800; color:#37475a; margin:12px 0 4px;">내용</label>
+        <textarea id="er-mailBody" rows="8"
+               style="width:100%; padding:7px 9px; font-size:13.5px; line-height:1.7; border:1px solid #cfd8e6; border-radius:6px; resize:vertical;"></textarea>
+        <div id="er-mailNote" style="margin-top:10px; font-size:12px; color:#8a5a00;"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="er-toast" class="er-toast"></div>
 </div>
 
@@ -1002,6 +1035,16 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       b.classList.toggle('er-on', _norLoaded && norOnly);
     }
   }
+
+  /* ===== 메일 발송 문구 =====
+     기본값은 표준문구(TBL_EVAL_REPORT_TPL: mail_subject / mail_body). DB에 없으면 아래 내장값을 쓴다.
+     담당자가 발송 창에서 그때그때 고칠 수 있고, 상시 문구를 바꾸려면 TPL 테이블 값을 고친다. */
+  var TPL_MAIL = {
+    subject: '[{hosp}] {ym} 적정성평가 월간 컨설팅 보고서',
+    body: '안녕하십니까. {hosp} 담당자님.\n\n{ym} 적정성평가 월간 컨설팅 보고서를 보내드립니다.\n'
+        + '첨부된 PDF를 확인해 주시고, 문의사항은 회신 주시기 바랍니다.\n\n'
+        + '· 현재 종합점수 : {total}점 ({grade})\n· 목표 : {goalGrade} ({goalScore}점) · 부족점수 {gap}점\n\n감사합니다.\nWinCheck⁺ 드림'
+  };
 
   var editing = false, approved = false, curYm = '', pdfPath = '';
   var indicators = [], scores = { struct:0, care:0, total:0 };
@@ -3206,6 +3249,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     tpls.forEach(function(t){
       var k=String(t.sectkey||''), c=t.content;
       if(!k || c==null || String(c).trim()==='') return;
+      // 메일 문구(mail_subject / mail_body) — 문서 편집영역이 아니라 발송 창의 기본값으로 쓴다
+      if(k==='mail_subject'){ TPL_MAIL.subject = String(c); return; }
+      if(k==='mail_body'){    TPL_MAIL.body    = String(c); return; }
       var m=/^(def|dir)_(\d{2})$/.exec(k);
       if(m){
         if(m[1]==='def') TPL_DEF[m[2]]=String(c); else TPL_DIR[m[2]]=String(c);
@@ -3326,6 +3372,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         erPaginate();   // 문구 확정(자동/저장 override 반영) 후 A4 분할
         applyHstSnapshot();   // 이력 열람이면 그 시점 문구로 덮어써 재현
         _draftCheck();  // 미저장 초안이 남아 있으면 복구 제안 (F5 근본 보호)
+        /* 문서 열람 기록 — 일반병원(거래처)이 볼 때만 남긴다(위너넷 열람은 서버에서도 SKIP).
+           저장된 보고서(mst)가 있을 때만 기록 = 아직 만들지 않은 달을 '읽음'으로 만들지 않는다. */
+        if(!isWinner && mst && !_erReadonly){
+          jQuery.ajax({ url: ctx+'/main/markEvalReportRead.do', type:'POST', dataType:'json',
+                        data:{ hospCd:hospCd, evalYm:curYm } });
+        }
       },
       error:function(){ setStatus('DRAFT'); _draftCheck(); }   // 저장분 조회가 실패해도 초안 복구는 제안
     });
@@ -3463,7 +3515,49 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!isWinner && has && norYn!=='Y'){ bn.style.display=''; el('er-pdfBannerLink').href=dlUrl; }
     else bn.style.display='none';
     if(!isWinner && norYn==='Y'){ vb.style.display='none'; }   // 👁 PDF보기 버튼도 동일 이유로 숨김
+    // ⑤ 메일발송 — 위너넷 + 승인됨 + 첨부 PDF 가 있을 때만 (작성중 문서가 병원에 나가지 않게)
+    var bm=el('er-btnMail'); if(bm) bm.style.display = (isWinner && approved && has) ? '' : 'none';
   }
+
+  /* ===== 메일 발송 (첨부 PDF 를 그대로 보냄) — 위너넷 전용 ===== */
+  window.erMailOpen = function(){
+    if(!isWinner){ return; }
+    if(!curYm){ erSwal('warning','먼저 평가년월을 조회하세요.'); return; }
+    if(!approved){ erSwal('warning','승인된 보고서만 메일로 보낼 수 있습니다.\n먼저 ✔승인하세요.'); return; }
+    if(!pdfPath){ erSwal('warning','첨부된 PDF가 없습니다.\n승인 후 [📎 PDF첨부]를 먼저 진행하세요.'); return; }
+    el('er-mailWho').textContent = '— ' + (hospNm||'') + ' ' + (curYm? curYm.substring(0,4)+'.'+curYm.substring(4,6) : '');
+    // 마지막 발송 주소가 있으면 그대로 다시 제안(이메일 별도 관리가 붙기 전까지의 수동 운용)
+    if(!el('er-mailTo').value) el('er-mailTo').value = _erLastSendEmail || '';
+    el('er-mailSubject').value = erFillTpl(TPL_MAIL.subject);
+    el('er-mailBody').value    = erFillTpl(TPL_MAIL.body);
+    el('er-mailNote').textContent = '';
+    el('er-mailModal').style.display = 'flex';
+  };
+  window.erMailClose = function(){ el('er-mailModal').style.display='none'; };
+  var _erLastSendEmail = '';
+  window.erMailSend = function(){
+    var to = (el('er-mailTo').value||'').trim();
+    if(!to){ el('er-mailNote').textContent = '받는 사람 주소를 입력하세요.'; el('er-mailTo').focus(); return; }
+    var btn = el('er-mailSendBtn');
+    btn.disabled = true; btn.textContent = '📨 보내는 중…';
+    // 본문은 줄바꿈만 <br> 로 바꿔 HTML 메일로 보낸다(태그 입력은 그대로 살림 — 담당자가 링크 등을 넣을 수 있게)
+    var html = String(el('er-mailBody').value||'').replace(/\n/g,'<br>');
+    jQuery.ajax({
+      url: ctx+'/main/sendEvalReportMail.do', type:'POST', contentType:'application/json', dataType:'json',
+      data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, to:to, subject:el('er-mailSubject').value, content:html }),
+      success:function(r){
+        btn.disabled=false; btn.textContent='📨 보내기';
+        if(r && r.result==='OK'){
+          _erLastSendEmail = to;
+          erMailClose();
+          erSwal('success','메일을 보냈습니다.\n' + to);
+        } else {
+          el('er-mailNote').textContent = (r && r.message) ? r.message : '발송에 실패했습니다.';
+        }
+      },
+      error:function(){ btn.disabled=false; btn.textContent='📨 보내기'; el('er-mailNote').textContent='서버 통신 오류로 보내지 못했습니다.'; }
+    });
+  };
 
   window.erPickPdf = function(){
     if(_erReadonly){ erSwal('info','읽기전용(이력 열람)입니다. PDF첨부할 수 없습니다.'); return; }

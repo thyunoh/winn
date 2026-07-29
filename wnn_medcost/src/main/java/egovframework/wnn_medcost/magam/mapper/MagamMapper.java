@@ -93,6 +93,17 @@ public interface MagamMapper {
 	                                        @Param("qterFlag") String qterFlag);
 	// 운영사용 여부(TBL_HOSPCONT_MST.NOR_YN, 적정성평가 계약 기준) — 월보고서 Ⅳ 이하 공개 판단
 	String selectHospNorYn(@Param("hospCd") String hospCd);
+	// 월보고서 메일발송 / 열람(읽음) 기록
+	int updateEvalReportSend(Map<String, Object> params);
+	int updateEvalReportRead(Map<String, Object> params);
+	int updateEvalReportMailRead(Map<String, Object> params);   // 메일 열람(본문 추적 이미지)
+	int insertEvalReportLog(Map<String, Object> params);
+	// 메일 수신자 주소록(병원별)
+	List<Map<String, Object>> selectEvalMailAddr(@Param("hospCd") String hospCd);
+	List<Map<String, Object>> selectEvalMailAddrAll(Map<String, Object> params);   // 전체 병원 주소록(관리 화면)
+	List<Map<String, Object>> selectEvalMailCandidates(@Param("hospCd") String hospCd);
+	int insertEvalMailAddr(Map<String, Object> params);
+	int deleteEvalMailAddr(Map<String, Object> params);
 	List<Map<String, Object>> selectEvalReportTexts(@Param("reportSeq") Long reportSeq);
 	// 전사 표준문구(TPL) — 병원 공통 기본 문구 (우선순위: 병원별 TEXT > TPL > JSP 내장 기본값)
 	List<Map<String, Object>> selectEvalReportTpls();

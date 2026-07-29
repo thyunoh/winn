@@ -5662,7 +5662,17 @@
 		       m.REG_USER                                    AS reguser,
 		       m.APPROVE_USER                                AS approveuser,
 		       DATE_FORMAT(m.APPROVE_DTTM, '%Y-%m-%d %H:%i') AS approvedttm,
-		       DATE_FORMAT(m.UPD_DTTM,     '%Y-%m-%d %H:%i') AS upddttm
+		       DATE_FORMAT(m.UPD_DTTM,     '%Y-%m-%d %H:%i') AS upddttm,
+		       <!-- 메일 발송 / 병원 열람 현황 — 목록에서 '보냈는지·읽었는지'를 바로 보기 위한 값 -->
+		       m.SEND_EMAIL                                  AS sendemail,
+		       DATE_FORMAT(m.SEND_DTTM,    '%Y-%m-%d %H:%i') AS senddttm,
+		       IFNULL(m.SEND_CNT, 0)                         AS sendcnt,
+		       IFNULL(m.READ_YN, 'N')                        AS readyn,
+		       DATE_FORMAT(m.READ_LAST_DTTM,'%Y-%m-%d %H:%i')AS readdttm,
+		       IFNULL(m.READ_CNT, 0)                         AS readcnt,
+		       IFNULL(m.MAIL_READ_YN, 'N')                   AS mailreadyn,
+		       DATE_FORMAT(m.MAIL_READ_LAST_DTTM,'%Y-%m-%d %H:%i') AS mailreaddttm,
+		       IFNULL(m.MAIL_READ_CNT, 0)                    AS mailreadcnt
 		  FROM TBL_EVAL_REPORT_MST m
 		 WHERE 1 = 1
 		<if test="evalYear != null and evalYear != ''">
@@ -5739,6 +5749,116 @@
 		          (IFNULL(NOR_YN,'N') = 'Y')                          DESC,   /* ② 그중 운영사용 체크된 행 우선 */
 		          END_DT DESC, START_DT DESC, JOB_SEQ DESC                    /* ③ 그다음 최신 계약 */
 		 LIMIT 1
+	</select>
+
+	<!-- ===== 월보고서 메일발송 / 열람(읽음) 기록 (2026-07-29) =====
+	     MST 는 '현재 상태' 요약(최종 발송·최초/최근 열람), TBL_EVAL_REPORT_LOG 는 상세 이력. -->
+
+	<!-- 메일 발송 성공 시 — 최종 수신자·일시·발송자 갱신 + 발송 횟수 누적 -->
+	<update id="updateEvalReportSend">
+		UPDATE TBL_EVAL_REPORT_MST
+		   SET SEND_EMAIL = #{sendEmail},
+		       SEND_DTTM  = NOW(),
+		       SEND_USER  = #{sendUser},
+		       SEND_CNT   = IFNULL(SEND_CNT,0) + 1
+		 WHERE HOSP_CD = #{hospCd}
+		   AND EVAL_YM = #{evalYm}
+	</update>
+
+	<!-- 병원(거래처)이 보고서를 열었을 때 — 최초 열람일시는 처음 한 번만 남기고 최근 열람은 매번 갱신 -->
+	<update id="updateEvalReportRead">
+		UPDATE TBL_EVAL_REPORT_MST
+		   SET READ_YN         = 'Y',
+		       READ_FIRST_DTTM = IFNULL(READ_FIRST_DTTM, NOW()),
+		       READ_LAST_DTTM  = NOW(),
+		       READ_CNT        = IFNULL(READ_CNT,0) + 1,
+		       READ_USER       = #{readUser}
+		 WHERE HOSP_CD = #{hospCd}
+		   AND EVAL_YM = #{evalYm}
+	</update>
+
+	<!-- 메일 열람(본문 추적 이미지 로드) — 최초 1회만 first, 이후 last/횟수만 갱신.
+	     발송 이력이 있는 건에만 올린다(무관한 호출로 값이 생기지 않게). -->
+	<update id="updateEvalReportMailRead">
+		UPDATE TBL_EVAL_REPORT_MST
+		   SET MAIL_READ_YN         = 'Y',
+		       MAIL_READ_FIRST_DTTM = IFNULL(MAIL_READ_FIRST_DTTM, NOW()),
+		       MAIL_READ_LAST_DTTM  = NOW(),
+		       MAIL_READ_CNT        = IFNULL(MAIL_READ_CNT,0) + 1
+		 WHERE HOSP_CD = #{hospCd}
+		   AND EVAL_YM = #{evalYm}
+		   AND IFNULL(SEND_CNT,0) > 0
+	</update>
+
+	<!-- 발송·열람 상세 이력 (LOG_TYPE = SEND / READ / MAILOPEN / DOWN) -->
+	<insert id="insertEvalReportLog">
+		INSERT INTO TBL_EVAL_REPORT_LOG
+		       (REPORT_SEQ, HOSP_CD, EVAL_YM, LOG_TYPE, EMAIL, ACT_USER, ACT_IP, RESULT_MSG, REG_DTTM)
+		VALUES (#{reportSeq}, #{hospCd}, #{evalYm}, #{logType}, #{email}, #{actUser}, #{actIp}, #{resultMsg}, NOW())
+	</insert>
+
+	<!-- ===== 월보고서 메일 수신자 주소록 (병원별) ===== -->
+	<select id="selectEvalMailAddr" resultType="java.util.HashMap">
+		SELECT ADDR_SEQ AS addrseq, HOSP_CD AS hospcd, EMAIL AS email,
+		       IFNULL(ADDR_NM,'') AS addrnm, IFNULL(MEMO,'') AS memo
+		  FROM TBL_EVAL_MAIL_ADDR
+		 WHERE HOSP_CD = #{hospCd}
+		   AND USE_YN  = 'Y'
+		 ORDER BY IFNULL(SORT_NO, 999), ADDR_SEQ
+	</select>
+
+	<!-- 전체 병원 주소록 (관리 화면용) — 병원명 붙여서. 검색어(findData)로 병원명·기호·이메일·이름 부분일치 -->
+	<select id="selectEvalMailAddrAll" parameterType="map" resultType="java.util.HashMap">
+		SELECT a.ADDR_SEQ AS addrseq, a.HOSP_CD AS hospcd, a.EMAIL AS email,
+		       IFNULL(a.ADDR_NM,'') AS addrnm,
+		       (SELECT h.HOSP_NM FROM TBL_HOSP_MST h
+		         WHERE h.HOSP_CD = a.HOSP_CD ORDER BY h.JOB_SEQ DESC LIMIT 1) AS hospnm,
+		       DATE_FORMAT(a.UPD_DTTM, '%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_EVAL_MAIL_ADDR a
+		 WHERE a.USE_YN = 'Y'
+		<if test="findData != null and findData != ''">
+		   AND ( a.HOSP_CD LIKE CONCAT('%',#{findData},'%')
+		      OR a.EMAIL   LIKE CONCAT('%',#{findData},'%')
+		      OR IFNULL(a.ADDR_NM,'') LIKE CONCAT('%',#{findData},'%')
+		      OR EXISTS (SELECT 1 FROM TBL_HOSP_MST h2
+		                  WHERE h2.HOSP_CD = a.HOSP_CD
+		                    AND h2.HOSP_NM LIKE CONCAT('%',#{findData},'%')) )
+		</if>
+		 ORDER BY a.HOSP_CD, IFNULL(a.SORT_NO,999), a.ADDR_SEQ
+	</select>
+
+	<!-- 주소 추가 — 같은 병원+주소가 이미 있으면(삭제된 것 포함) 되살리고 이름만 갱신 -->
+	<insert id="insertEvalMailAddr" parameterType="map">
+		INSERT INTO TBL_EVAL_MAIL_ADDR (HOSP_CD, EMAIL, ADDR_NM, USE_YN, REG_USER, REG_DTTM, UPD_USER, UPD_DTTM)
+		VALUES (#{hospCd}, #{email}, #{addrNm}, 'Y', #{regUser}, NOW(), #{regUser}, NOW())
+		ON DUPLICATE KEY UPDATE
+		       ADDR_NM  = #{addrNm},
+		       USE_YN   = 'Y',
+		       UPD_USER = #{regUser},
+		       UPD_DTTM = NOW()
+	</insert>
+
+	<!-- 주소 삭제 — 이력 대조를 위해 소프트 삭제 -->
+	<update id="deleteEvalMailAddr" parameterType="map">
+		UPDATE TBL_EVAL_MAIL_ADDR
+		   SET USE_YN = 'N', UPD_USER = #{regUser}, UPD_DTTM = NOW()
+		 WHERE ADDR_SEQ = #{addrSeq}
+	</update>
+
+	<!-- 주소 후보 — 이미 시스템에 있는 이메일을 모아 보여준다(계약담당 · 병원 사용자).
+	     주소록에 없는 것만 화면에서 '+ 추가' 로 담을 수 있게 한다. -->
+	<select id="selectEvalMailCandidates" resultType="java.util.HashMap">
+		SELECT '계약담당' AS src, TRIM(c.CON_EMAIL) AS email, IFNULL(c.CON_USER_ID,'') AS addrnm
+		  FROM TBL_HOSPCONT_MST c
+		 WHERE c.HOSP_CD = #{hospCd}
+		   AND c.ACTION_YN = 'Y'
+		   AND IFNULL(c.CON_EMAIL,'') <![CDATA[ <> ]]> ''
+		UNION
+		SELECT '사용자' AS src, TRIM(u.EMAIL) AS email, IFNULL(u.USER_NM,'') AS addrnm
+		  FROM TBL_USER_MST u
+		 WHERE u.HOSP_CD = #{hospCd}
+		   AND IFNULL(u.USE_YN,'Y') = 'Y'
+		   AND IFNULL(u.EMAIL,'') <![CDATA[ <> ]]> ''
 	</select>
 
 	<!-- 병원별 편집 문구(override) 목록 -->

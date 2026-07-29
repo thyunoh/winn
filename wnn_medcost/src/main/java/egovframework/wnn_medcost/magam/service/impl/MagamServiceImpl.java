@@ -743,6 +743,117 @@ public class MagamServiceImpl implements MagamService {
 		mapper.updateEvalReportPdf(p);
 	}
 
+	/* 월보고서 메일 발송 기록 — 발송이 성공한 뒤에만 호출한다.
+	   MST(최종 수신자·일시·횟수) 갱신 + LOG(SEND) 한 줄. 이력 기록 실패가 발송 결과를 뒤집지 않도록 분리한다. */
+	@Override
+	public void saveEvalReportSend(Map<String, Object> p) throws Exception {
+		mapper.updateEvalReportSend(p);
+		try {
+			Long seq = mapper.selectEvalReportSeq((String) p.get("hospCd"), (String) p.get("evalYm"));
+			if (seq == null) return;   // 저장된 보고서가 없으면 남길 이력도 없다(LOG.REPORT_SEQ 는 NOT NULL)
+			Map<String, Object> log = new HashMap<>();
+			log.put("reportSeq", seq);
+			log.put("hospCd",  p.get("hospCd"));
+			log.put("evalYm",  p.get("evalYm"));
+			log.put("logType", "SEND");
+			log.put("email",   p.get("sendEmail"));
+			log.put("actUser", p.get("sendUser"));
+			log.put("actIp",   p.get("actIp"));
+			log.put("resultMsg", p.get("resultMsg"));
+			mapper.insertEvalReportLog(log);
+		} catch (Exception he) {
+			LoggerFactory.getLogger(getClass()).error("saveEvalReportSend log WARN: " + he.getMessage());
+		}
+	}
+
+	/* 병원(거래처) 열람 기록 — 일반병원이 보고서를 열었을 때만 호출된다(위너넷 열람은 기록하지 않음). */
+	@Override
+	public void saveEvalReportRead(Map<String, Object> p) throws Exception {
+		mapper.updateEvalReportRead(p);
+		try {
+			Long seq = mapper.selectEvalReportSeq((String) p.get("hospCd"), (String) p.get("evalYm"));
+			if (seq == null) return;   // 저장된 보고서가 없으면 남길 이력도 없다(LOG.REPORT_SEQ 는 NOT NULL)
+			Map<String, Object> log = new HashMap<>();
+			log.put("reportSeq", seq);
+			log.put("hospCd",  p.get("hospCd"));
+			log.put("evalYm",  p.get("evalYm"));
+			log.put("logType", "READ");
+			log.put("email",   null);
+			log.put("actUser", p.get("readUser"));
+			log.put("actIp",   p.get("actIp"));
+			log.put("resultMsg", null);
+			mapper.insertEvalReportLog(log);
+		} catch (Exception he) {
+			LoggerFactory.getLogger(getClass()).error("saveEvalReportRead log WARN: " + he.getMessage());
+		}
+	}
+
+	/* 메일 열람 — 보낸 메일의 추적 이미지가 로드됐을 때. 발송 이력이 있는 건에만 값이 올라간다(SQL 조건).
+	   갱신된 행이 없으면(=발송 안 한 건에 대한 호출) 이력도 남기지 않는다. */
+	@Override
+	public void saveEvalReportMailRead(Map<String, Object> p) throws Exception {
+		int n = mapper.updateEvalReportMailRead(p);
+		if (n <= 0) return;
+		try {
+			Long seq = mapper.selectEvalReportSeq((String) p.get("hospCd"), (String) p.get("evalYm"));
+			if (seq == null) return;
+			Map<String, Object> log = new HashMap<>();
+			log.put("reportSeq", seq);
+			log.put("hospCd",  p.get("hospCd"));
+			log.put("evalYm",  p.get("evalYm"));
+			log.put("logType", "MAILOPEN");
+			log.put("email",   null);
+			log.put("actUser", null);
+			log.put("actIp",   p.get("actIp"));
+			log.put("resultMsg", p.get("agent"));   // 어떤 클라이언트가 열었는지(구글 프록시 여부 판별용)
+			mapper.insertEvalReportLog(log);
+		} catch (Exception he) {
+			LoggerFactory.getLogger(getClass()).error("saveEvalReportMailRead log WARN: " + he.getMessage());
+		}
+	}
+
+	/* 메일 수신자 주소록 — 병원별. 후보(계약담당·병원 사용자 이메일)는 이미 등록된 주소를 빼고 돌려준다. */
+	@Override
+	public List<Map<String, Object>> selectEvalMailAddr(String hospCd) throws Exception {
+		return mapper.selectEvalMailAddr(hospCd);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectEvalMailAddrAll(Map<String, Object> p) throws Exception {
+		return mapper.selectEvalMailAddrAll(p);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectEvalMailCandidates(String hospCd) throws Exception {
+		List<Map<String, Object>> cand = mapper.selectEvalMailCandidates(hospCd);
+		List<Map<String, Object>> have = mapper.selectEvalMailAddr(hospCd);
+		java.util.Set<String> saved = new java.util.HashSet<>();
+		if (have != null) for (Map<String, Object> h : have) {
+			Object e = h.get("email");
+			if (e != null) saved.add(String.valueOf(e).trim().toLowerCase());
+		}
+		List<Map<String, Object>> out = new ArrayList<>();
+		java.util.Set<String> seen = new java.util.HashSet<>();
+		if (cand != null) for (Map<String, Object> c : cand) {
+			Object e = c.get("email");
+			if (e == null) continue;
+			String key = String.valueOf(e).trim().toLowerCase();
+			if (key.isEmpty() || saved.contains(key) || !seen.add(key)) continue;   // 이미 주소록에 있거나 중복이면 제외
+			out.add(c);
+		}
+		return out;
+	}
+
+	@Override
+	public void saveEvalMailAddr(Map<String, Object> p) throws Exception {
+		mapper.insertEvalMailAddr(p);
+	}
+
+	@Override
+	public void removeEvalMailAddr(Map<String, Object> p) throws Exception {
+		mapper.deleteEvalMailAddr(p);
+	}
+
 	@Override
 	public List<Map<String, Object>> select_EvalProgress(IndiDTO dto) throws Exception {
 		return mapper.select_EvalProgress(dto);

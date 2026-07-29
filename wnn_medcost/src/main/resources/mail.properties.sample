@@ -1,0 +1,32 @@
+# ============================================================================
+#  메일(SMTP) 설정 양식 — 실제 파일은 mail.properties (git 제외)      (2026-07-29)
+#
+#  [로컬 개발]  이 파일을 mail.properties 로 복사해 값을 채운다.
+#  [운영 서버]  WAR 안에 비밀번호를 두지 말고, 서버 파일로 빼고 톰캣 옵션으로 가리킨다.
+#      1) /home/winner/conf/mail.properties 로 이 양식을 복사해 값 입력
+#      2) chmod 600 /home/winner/conf/mail.properties   (다른 계정이 못 읽게)
+#      3) setenv.sh 의 JAVA_OPTS 에 추가:
+#           -Dwnn.mail.config=/home/winner/conf/mail.properties
+#      4) 톰캣 재기동  (이 파일이 있으면 WAR 안 mail.properties 대신 이걸 읽는다)
+#
+#  ※ 값이 비었거나 mail.enabled=false 이면 발송을 시도하지 않고 화면에 안내만 띄운다.
+# ============================================================================
+
+mail.enabled=true
+
+# 구글(Gmail) — 587 + STARTTLS  /  네이버면 smtp.naver.com · 465 · ssl=true
+mail.smtp.host=smtp.gmail.com
+mail.smtp.port=587
+mail.smtp.ssl=false
+
+# 보내는 계정 — 구글은 '앱 비밀번호'(2단계 인증 후 발급, 16자리·공백 없이)만 통한다
+mail.smtp.user=
+mail.smtp.password=
+mail.from=
+mail.fromName=WinCheck+ 적정성평가
+
+mail.smtp.timeout=15000
+
+# 메일에 들어가는 외부 접속 주소 (보고서 보기 링크 + 열람 추적 이미지)
+#   비워두면 링크·추적 없이 첨부 PDF만 발송한다. 로컬 테스트는 비워 두는 것을 권장.
+mail.siteBase=https://winner797.co.kr

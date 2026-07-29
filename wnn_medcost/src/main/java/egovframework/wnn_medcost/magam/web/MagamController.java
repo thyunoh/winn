@@ -1457,6 +1457,343 @@ public class MagamController {
 		return res;
 	}
 
+	/* ===== 월보고서 메일 발송 (첨부 PDF 를 그대로 붙여 보냄) — 위너넷만 =====
+	   · 첨부 PDF(TBL_EVAL_REPORT_MST.PDF_PATH)는 SFTP 에 있으므로 임시파일로 내려받아 첨부한다.
+	   · SMTP 설정(mail.properties)이 비어 있으면 발송을 시도하지 않고 이유를 돌려준다.
+	   · 성공 시 MST 의 SEND_* 갱신 + TBL_EVAL_REPORT_LOG(SEND) 기록. */
+	@RequestMapping(value="/main/sendEvalReportMail.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> sendEvalReportMail(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		java.io.File temp = null;
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String wnnYn = "";
+			try { wnnYn = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			if (!"Y".equals(wnnYn)) { res.put("result","FAIL"); res.put("message","권한이 없습니다."); return res; }
+
+			String hospCd = String.valueOf(body.get("hospCd"));
+			String evalYm = String.valueOf(body.get("evalYm"));
+			String to      = body.get("to")      == null ? "" : String.valueOf(body.get("to")).trim();
+			String subject = body.get("subject") == null ? "" : String.valueOf(body.get("subject"));
+			String content = body.get("content") == null ? "" : String.valueOf(body.get("content"));
+			if (to.isEmpty()) { res.put("result","FAIL"); res.put("message","받는 사람 주소를 입력하세요."); return res; }
+
+			if (!egovframework.util.MailUtil.isReady()) {
+				res.put("result","FAIL");
+				res.put("message", egovframework.util.MailUtil.notReadyReason()
+						+ "\n서버의 mail.properties(또는 -Dwnn.mail.config 파일)에 SMTP 계정을 넣어 주세요.");
+				return res;
+			}
+
+			// 첨부 PDF — 승인 후 첨부해 둔 파일만 보낸다(화면과 PDF 내용을 일치시키기 위해)
+			Map<String, Object> mst = svc.loadEvalReport(hospCd, evalYm);
+			Map<String, Object> m = (mst == null) ? null : castMap(mst.get("mst"));
+			// 승인된 보고서만 발송 — 작성중(DRAFT) 문서가 병원에 나가는 것을 서버에서 막는다(사용자 확정 2026-07-29)
+			if (m == null || !"APPROVED".equals(asStr(m, "status"))) {
+				res.put("result","FAIL"); res.put("message","승인된 보고서만 메일로 보낼 수 있습니다. 먼저 ✔승인하세요."); return res;
+			}
+			String pdfPath = (m.get("PDF_PATH") == null) ? asStr(m, "pdfpath") : String.valueOf(m.get("PDF_PATH"));
+			if (pdfPath == null || pdfPath.trim().isEmpty()) {
+				res.put("result","FAIL"); res.put("message","첨부된 PDF가 없습니다. 승인 후 [PDF첨부]를 먼저 진행하세요."); return res;
+			}
+			final String BASE = "/home/winner/upload/";
+			String remoteName = pdfPath.startsWith(BASE) ? pdfPath.substring(BASE.length()) : pdfPath;
+			temp = java.nio.file.Files.createTempFile("evalmail_", ".pdf").toFile();
+			if (!sftpService.downloadFile(remoteName, temp.getAbsolutePath())) {
+				res.put("result","FAIL"); res.put("message","첨부 PDF를 파일서버에서 가져오지 못했습니다."); return res;
+			}
+			String attachNm = "적정성평가_월간보고서_" + evalYm + ".pdf";
+
+			/* 본문 끝에 '보고서 보기' 링크를 붙인다(사용자 확정 2026-07-29).
+			   메일을 열었는지는 수신자 메일서버 몫이라 알 수 없다 → 대신 링크로 들어와 보고서를 열면
+			   '문서열람'(READ_*)으로 정확히 기록된다. 외부 접속 주소(mail.siteBase)가 설정된 경우에만 붙인다. */
+			String siteBase = egovframework.util.MailUtil.config().getProperty("mail.siteBase", "").trim();
+			if (!siteBase.isEmpty()) {
+				if (siteBase.endsWith("/")) siteBase = siteBase.substring(0, siteBase.length() - 1);
+				String link = siteBase + "/main/evalReport.do?hospCd=" + java.net.URLEncoder.encode(hospCd, "UTF-8")
+				            + "&ym=" + java.net.URLEncoder.encode(evalYm, "UTF-8");
+				content = content
+				        + "<div style=\"margin-top:22px;padding-top:14px;border-top:1px solid #dfe6ef\">"
+				        + "<a href=\"" + link + "\" style=\"display:inline-block;padding:10px 18px;background:#1e3c72;"
+				        + "color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold\">📄 WinCheck⁺ 에서 보고서 보기</a>"
+				        + "<div style=\"margin-top:8px;font-size:12px;color:#6b7a89\">"
+				        + "링크를 누르면 로그인 후 해당 월 보고서를 바로 볼 수 있습니다.</div></div>";
+				// 메일 열람 추적 — 같은 외부주소(mail.siteBase)로 1×1 이미지를 붙인다. 열면 '메일열람'에 기록된다.
+				String px = siteBase + "/main/evalMailOpen.do?h=" + java.net.URLEncoder.encode(hospCd, "UTF-8")
+				          + "&y=" + java.net.URLEncoder.encode(evalYm, "UTF-8")
+				          + "&t=" + mailToken(hospCd, evalYm);
+				content = content + "<img src=\"" + px + "\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none\">";
+			}
+
+			egovframework.util.MailUtil.send(to, subject, content, temp, attachNm);
+
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd); p.put("evalYm", evalYm);
+			p.put("sendEmail", to); p.put("sendUser", cookieUser());
+			p.put("actIp", ClientInfo.getClientIP(request)); p.put("resultMsg", "OK");
+			svc.saveEvalReportSend(p);
+
+			res.put("result","OK");
+		} catch (Exception ex) {
+			res.put("result","FAIL");
+			res.put("message", (ex.getMessage()==null? ex.toString() : ex.getMessage()));
+		} finally {
+			if (temp != null && temp.exists()) temp.delete();
+		}
+		return res;
+	}
+
+	/* 월보고서 메일 기본문구 — 목록 화면에서 발송창을 열 때 쓴다.
+	   보고서 화면과 달리 목록에는 점수·표준문구가 없으므로 서버가 TPL(mail_subject/mail_body)에
+	   MST 값을 채워(치환) 완성된 제목·본문을 돌려준다. 마지막 발송 주소도 함께 준다. */
+	@RequestMapping(value="/main/evalReportMailForm.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> evalReportMailForm(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String wnnYn = "";
+			try { wnnYn = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			if (!"Y".equals(wnnYn)) { res.put("result","FAIL"); res.put("message","권한이 없습니다."); return res; }
+
+			String hospCd = String.valueOf(params.get("hospCd"));
+			String evalYm = String.valueOf(params.get("evalYm"));
+			String hospNm = params.get("hospNm") == null ? "" : String.valueOf(params.get("hospNm"));
+
+			Map<String, Object> all = svc.loadEvalReport(hospCd, evalYm);
+			Map<String, Object> m = castMap(all == null ? null : all.get("mst"));
+
+			String subject = "[{hosp}] {ym} 적정성평가 월간 컨설팅 보고서";
+			String body    = "안녕하십니까. {hosp} 담당자님.\n\n{ym} 적정성평가 월간 컨설팅 보고서를 보내드립니다.\n"
+			               + "첨부된 PDF를 확인해 주시고, 문의사항은 회신 주시기 바랍니다.\n\n감사합니다.\nWinCheck+ 드림";
+			Object tplsObj = (all == null) ? null : all.get("tpls");
+			if (tplsObj instanceof List) {
+				for (Object o : (List<?>) tplsObj) {
+					Map<String, Object> t = castMap(o);
+					if (t == null) continue;
+					String k = asStr(t, "sectkey");
+					String c = asStr(t, "content");
+					if (c == null || c.trim().isEmpty()) continue;
+					if ("mail_subject".equals(k)) subject = c;
+					else if ("mail_body".equals(k)) body = c;
+				}
+			}
+			res.put("subject", fillMailTpl(subject, m, hospNm, evalYm));
+			res.put("content", fillMailTpl(body,    m, hospNm, evalYm));
+			res.put("lastEmail", asStr(m, "sendemail"));   // 마지막 발송 주소
+			res.put("hasPdf", (asStr(m, "pdfpath") != null && !asStr(m, "pdfpath").trim().isEmpty()) ? "Y" : "N");
+			// 주소록 — 등록해 둔 수신자는 발송창에서 기본으로 전부 선택된다(수신자가 고정되는 운영 방식)
+			res.put("addrs", svc.selectEvalMailAddr(hospCd));
+			res.put("cands", svc.selectEvalMailCandidates(hospCd));   // 아직 주소록에 없는 후보(계약담당·병원 사용자)
+			res.put("result","OK");
+		} catch (Exception ex) {
+			res.put("result","FAIL"); res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	/* 메일 열람 추적 — 보낸 메일 본문의 1×1 이미지가 로드되면 여기로 요청이 온다.
+	   · 로그인 없이 열리는 경로라 토큰(hospCd+evalYm+고정키 해시)으로 무단 호출을 거른다.
+	   · 항상 1×1 투명 GIF 를 돌려준다(기록 실패해도 메일 화면이 깨지지 않게).
+	   · 한계: 수신자가 이미지를 차단하면 안 잡히고, 구글 프록시가 미리 받아가면 실제보다 빨리 잡힌다
+	     → 확실한 확인은 '보고서 보기' 링크로 들어와 남는 문서열람(READ_*). */
+	@RequestMapping(value="/main/evalMailOpen.do", method = RequestMethod.GET)
+	public void evalMailOpen(@RequestParam Map<String, Object> params,
+	                          HttpServletRequest request, javax.servlet.http.HttpServletResponse response) {
+		try {
+			String hospCd = params.get("h") == null ? "" : String.valueOf(params.get("h"));
+			String evalYm = params.get("y") == null ? "" : String.valueOf(params.get("y"));
+			String token  = params.get("t") == null ? "" : String.valueOf(params.get("t"));
+			if (mailToken(hospCd, evalYm).equals(token)) {
+				Map<String, Object> p = new HashMap<>();
+				p.put("hospCd", hospCd);
+				p.put("evalYm", evalYm);
+				p.put("actIp",  ClientInfo.getClientIP(request));
+				p.put("agent",  request.getHeader("User-Agent"));
+				svc.saveEvalReportMailRead(p);
+			}
+		} catch (Exception ignore) { /* 추적 실패가 이미지 응답을 막지 않게 */ }
+		try {
+			// 1×1 투명 GIF
+			byte[] gif = new byte[] { 0x47,0x49,0x46,0x38,0x39,0x61, 0x01,0x00, 0x01,0x00, (byte)0x80, 0x00, 0x00,
+			                          0x00,0x00,0x00, (byte)0xFF,(byte)0xFF,(byte)0xFF, 0x21,(byte)0xF9,0x04,0x01,0x00,0x00,0x00,0x00,
+			                          0x2C,0x00,0x00,0x00,0x00, 0x01,0x00,0x01,0x00,0x00, 0x02,0x02,0x44,0x01,0x00, 0x3B };
+			response.setContentType("image/gif");
+			response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+			response.setHeader("Pragma", "no-cache");
+			response.setContentLength(gif.length);
+			response.getOutputStream().write(gif);
+			response.getOutputStream().flush();
+		} catch (Exception ignore) { }
+	}
+
+	/** 추적 URL 토큰 — 보고서 키에 고정 솔트를 붙인 해시. 남의 보고서를 임의로 '열람됨' 처리하지 못하게. */
+	private String mailToken(String hospCd, String evalYm) {
+		try {
+			java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+			byte[] h = md.digest((hospCd + "|" + evalYm + "|wnnEvalMail#2026").getBytes("UTF-8"));
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < 8; i++) sb.append(String.format("%02x", h[i]));
+			return sb.toString();
+		} catch (Exception e) { return "x"; }
+	}
+
+	/* 메일 수신자 주소록 — 추가(있으면 되살림) / 삭제(소프트). 발송창 안에서 관리한다. 위너넷만. */
+	@RequestMapping(value="/main/evalMailAddrSave.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> evalMailAddrSave(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			if (!isWnnUser()) { res.put("result","FAIL"); res.put("message","권한이 없습니다."); return res; }
+			String email = params.get("email") == null ? "" : String.valueOf(params.get("email")).trim();
+			if (email.isEmpty() || email.indexOf('@') < 1) { res.put("result","FAIL"); res.put("message","이메일 형식이 올바르지 않습니다."); return res; }
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", String.valueOf(params.get("hospCd")));
+			p.put("email",  email);
+			p.put("addrNm", params.get("addrNm") == null ? "" : String.valueOf(params.get("addrNm")).trim());
+			p.put("regUser", cookieUser());
+			svc.saveEvalMailAddr(p);
+			res.put("list", svc.selectEvalMailAddr(String.valueOf(params.get("hospCd"))));
+			res.put("cands", svc.selectEvalMailCandidates(String.valueOf(params.get("hospCd"))));
+			res.put("result","OK");
+		} catch (Exception ex) { res.put("result","FAIL"); res.put("message", ex.getMessage()); }
+		return res;
+	}
+
+	/* 전체 병원 주소록 조회 (일괄등록 창의 '등록 현황' 목록) — 위너넷만. findData 로 병원명·기호·이메일·이름 검색 */
+	@RequestMapping(value="/main/evalMailAddrAll.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> evalMailAddrAll(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			if (!isWnnUser()) { res.put("result","FAIL"); res.put("message","권한이 없습니다."); return res; }
+			Map<String, Object> p = new HashMap<>();
+			p.put("findData", params.get("findData") == null ? "" : String.valueOf(params.get("findData")).trim());
+			res.put("list", svc.selectEvalMailAddrAll(p));
+			res.put("result","OK");
+		} catch (Exception ex) { res.put("result","FAIL"); res.put("message", ex.getMessage()); }
+		return res;
+	}
+
+	/* 메일 수신자 일괄 등록 — 엑셀/붙여넣기로 만든 [{hospCd,email,addrNm}...] 를 한 번에 저장.
+	   같은 병원+주소가 이미 있으면 이름만 갱신(되살림)되므로 여러 번 올려도 중복되지 않는다. 위너넷만. */
+	@RequestMapping(value="/main/evalMailAddrBulk.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> evalMailAddrBulk(@RequestBody List<Map<String, Object>> rows, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			if (!isWnnUser()) { res.put("result","FAIL"); res.put("message","권한이 없습니다."); return res; }
+
+			int ok = 0, ng = 0;
+			List<String> errs = new ArrayList<>();
+			for (Map<String, Object> r : (rows == null ? new ArrayList<Map<String, Object>>() : rows)) {
+				String hospCd = r.get("hospCd") == null ? "" : String.valueOf(r.get("hospCd")).trim();
+				String email  = r.get("email")  == null ? "" : String.valueOf(r.get("email")).trim();
+				String addrNm = r.get("addrNm") == null ? "" : String.valueOf(r.get("addrNm")).trim();
+				if (hospCd.isEmpty() || email.isEmpty() || email.indexOf('@') < 1) {
+					ng++;
+					if (errs.size() < 10) errs.add((hospCd.isEmpty()? "(기관기호 없음)" : hospCd) + " / " + email);
+					continue;
+				}
+				try {
+					Map<String, Object> p = new HashMap<>();
+					p.put("hospCd", hospCd); p.put("email", email); p.put("addrNm", addrNm);
+					p.put("regUser", cookieUser());
+					svc.saveEvalMailAddr(p);
+					ok++;
+				} catch (Exception ex) {
+					ng++;
+					if (errs.size() < 10) errs.add(hospCd + " / " + email + " — " + ex.getMessage());
+				}
+			}
+			res.put("result","OK"); res.put("okCnt", ok); res.put("ngCnt", ng); res.put("errs", errs);
+		} catch (Exception ex) {
+			res.put("result","FAIL"); res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	@RequestMapping(value="/main/evalMailAddrDel.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> evalMailAddrDel(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			if (!isWnnUser()) { res.put("result","FAIL"); res.put("message","권한이 없습니다."); return res; }
+			Map<String, Object> p = new HashMap<>();
+			p.put("addrSeq", params.get("addrSeq"));
+			p.put("regUser", cookieUser());
+			svc.removeEvalMailAddr(p);
+			res.put("list", svc.selectEvalMailAddr(String.valueOf(params.get("hospCd"))));
+			res.put("cands", svc.selectEvalMailCandidates(String.valueOf(params.get("hospCd"))));
+			res.put("result","OK");
+		} catch (Exception ex) { res.put("result","FAIL"); res.put("message", ex.getMessage()); }
+		return res;
+	}
+
+	/** 위너넷 사용자 여부 — 쿠키 s_wnn_yn (병원 판별 컨벤션) */
+	private boolean isWnnUser() {
+		try { return "Y".equals(String.valueOf(cookie_value.get("s_wnn_yn")).trim()); } catch (Exception ignore) { return false; }
+	}
+
+	/** 메일 문구 자리표시자 치환 — 화면(erFillTpl)과 같은 키를 쓴다. */
+	private String fillMailTpl(String s, Map<String, Object> m, String hospNm, String evalYm) {
+		if (s == null) return "";
+		double total = num(asStr(m, "totalscore"));
+		double goal  = num(asStr(m, "goalscore"));
+		String ymTxt = (evalYm != null && evalYm.length() == 6)
+				? (evalYm.substring(0,4) + "년 " + Integer.parseInt(evalYm.substring(4,6)) + "월") : (evalYm == null ? "" : evalYm);
+		String goalGrade = asStr(m, "goalgrade") == null ? "" : asStr(m, "goalgrade");
+		return s.replace("{hosp}", hospNm == null ? "" : hospNm)
+		        .replace("{ym}", ymTxt)
+		        .replace("{total}", fmt1(total))
+		        .replace("{grade}", gradeOfScore(total))
+		        .replace("{struct}", fmt1(num(asStr(m, "structscore"))))
+		        .replace("{care}",   fmt1(num(asStr(m, "carescore"))))
+		        .replace("{goalGrade}", goalGrade)
+		        .replace("{goalScore}", fmt1(goal))
+		        .replace("{gap}", fmt1(Math.max(0, goal - total)));
+	}
+	private double num(String s) { try { return (s == null || s.isEmpty()) ? 0 : Double.parseDouble(s); } catch (Exception e) { return 0; } }
+	private String fmt1(double d) { return new java.text.DecimalFormat("0.0").format(d); }
+	private String gradeOfScore(double t) {
+		if (t >= 88) return "1등급"; if (t >= 79) return "2등급";
+		if (t >= 71) return "3등급"; if (t >= 63) return "4등급"; return "5등급";
+	}
+
+	/* 월보고서 열람 기록 — 일반병원(거래처)이 보고서를 열었을 때만 기록한다.
+	   위너넷 담당자의 열람은 '병원이 읽었는지' 판단을 흐리므로 기록하지 않는다. */
+	@RequestMapping(value="/main/markEvalReportRead.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> markEvalReportRead(@RequestParam Map<String, Object> params, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			cookie_value = ClientInfo.getCookie(request);
+			String wnnYn = "";
+			try { wnnYn = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			if ("Y".equals(wnnYn)) { res.put("result","SKIP"); return res; }   // 위너넷 열람은 기록 제외
+
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", String.valueOf(params.get("hospCd")));
+			p.put("evalYm", String.valueOf(params.get("evalYm")));
+			p.put("readUser", cookieUser());
+			p.put("actIp", ClientInfo.getClientIP(request));
+			svc.saveEvalReportRead(p);
+			res.put("result","OK");
+		} catch (Exception ex) {
+			res.put("result","FAIL"); res.put("message", ex.getMessage());
+		}
+		return res;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> castMap(Object o) { return (o instanceof Map) ? (Map<String, Object>) o : null; }
+	private String asStr(Map<String, Object> m, String k) { return (m == null || m.get(k) == null) ? null : String.valueOf(m.get(k)); }
+
 	// 적정성평가 자료생성 진행상태(항목별 시작→완료) 조회 — 생성 중 폴링용
 	@RequestMapping(value="/main/evalProgress.do", method = RequestMethod.POST)
 	@ResponseBody

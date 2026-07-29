@@ -7,6 +7,10 @@
      · 검색(자료검색)·정렬·페이징·복사/엑셀/출력은 DataTables 담당. 행 더블클릭 → 해당 병원·월 보고서.
      · 주의: 이 파일 안에서 Deferred EL 표기(샵 + 중괄호) 금지 — 변환에러로 빈 화면(content 타일) 유발 --%>
 
+<%-- 알림·확인 공통 컴포넌트(_alertBox/_confirmBox) — konet_vsweb 로그인 화면과 같은 모양(작은 창 + 넓은 파란 버튼).
+     CSS·DOM 을 스스로 주입하므로 이 한 줄이면 된다. --%>
+<script src="/asset/js/ui-message.js"></script>
+
 <div id="evalReportList">
 <style>
   /* 글꼴은 앱 기본(body)을 상속 — 다른 화면 그리드와 통일 */
@@ -43,6 +47,128 @@
   #evalReportList .erl-st.erl-appr{ background:#eaf5ec; color:#2e7d32; border-color:#bfe0c4; }
   #evalReportList .erl-st.erl-appr .erl-sd{ background:#2e7d32; }
   #evalReportList .erl-pdf{ font-weight:800; color:#2e7d32; }
+  /* 메일발송 / 열람 현황 (위너넷 화면 전용 컬럼) */
+  #evalReportList .erl-mailbtn{ font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; padding:3px 9px;
+    border-radius:6px; border:1px solid #1e3c72; background:#1e3c72; color:#fff; line-height:1.5; white-space:nowrap; }
+  #evalReportList .erl-mailbtn:hover{ background:#16305e; }
+  #evalReportList .erl-sentinfo{ margin-top:2px; font-size:11px; color:#6b7a89; white-space:nowrap; }
+  #evalReportList .erl-nosend{ margin-top:2px; font-size:11px; color:#9aa7b3; white-space:nowrap; }
+  /* 관리자 전용 도움말 */
+  #evalReportList .erl-help{ font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer; padding:6px 12px;
+    border-radius:6px; border:1px solid #d5dbdf; background:#fff; color:#54636c; }
+  #evalReportList .erl-help:hover{ border-color:#2a7665; color:#2a7665; background:#f2f8f6; }
+  .erl-guide{ text-align:left; font-size:13px; line-height:1.75; color:#37475a; }
+  .erl-guide h4{ margin:14px 0 6px; font-size:13.5px; color:#1f5a4b; }
+  .erl-guide h4:first-child{ margin-top:0; }
+  .erl-guide ol{ margin:0; padding-left:18px; }
+  .erl-guide code{ background:#f3f6f9; border:1px solid #e2e8ef; border-radius:4px; padding:1px 5px; font-size:12px; }
+  .erl-guide .warn{ margin-top:10px; padding:8px 10px; background:#fdf6e3; border:1px solid #ecd9a8; border-radius:6px; font-size:12.5px; color:#8a5a00; }
+  /* 개발자용 상세 — 기본은 접힘 */
+  .erl-guide details.erl-dev{ margin:14px 0 6px; border:1px solid #e2e8ef; border-radius:6px; background:#fafcfe; padding:8px 10px; }
+  .erl-guide details.erl-dev > summary{ cursor:pointer; font-size:13.5px; font-weight:800; color:#1f5a4b; list-style:none; }
+  .erl-guide details.erl-dev > summary::-webkit-details-marker{ display:none; }
+  .erl-guide details.erl-dev > summary::before{ content:'▸ '; color:#7b8a99; }
+  .erl-guide details.erl-dev[open] > summary::before{ content:'▾ '; }
+  .erl-guide details.erl-dev > summary span{ font-weight:600; font-size:12px; color:#8a97a4; }
+  .erl-guide details.erl-dev[open]{ background:#fff; }
+  .erl-guide details.erl-dev > *:not(summary){ margin-top:8px; }
+  #evalReportList .erl-read{ font-weight:800; color:#2e7d32; }
+  #evalReportList .erl-noread{ color:#9aa7b3; }
+  /* 발송 창 */
+  #erl-mailModal{ position:fixed; inset:0; z-index:1400; background:rgba(16,22,29,.55); display:none; align-items:center; justify-content:center; padding:20px; }
+  #erl-mailModal .erl-mbox{ width:min(720px,96vw); max-height:92vh; background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
+  /* 글자 크기 — 발송창은 담당자가 읽고 고치는 화면이라 목록보다 한 단계 크게(2026-07-29 요청) */
+  #erl-mailModal .erl-mhead{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 18px;
+    background:#eef4fb; border-bottom:1px solid #d7e2f0; font-weight:800; color:#1e3c72; font-size:17px; }
+  #erl-mailModal .erl-mbody{ padding:14px 18px; overflow:auto; font-size:14px; }
+  /* 라벨은 안내용이라 작게, 입력 내용(실제 보낼 문장)은 진하게 — 시선이 내용으로 가게(2026-07-29 요청) */
+  #erl-mailModal label{ display:block; font-size:13.5px; font-weight:800; color:#5b6b80; margin:12px 0 4px; }
+  #erl-mailModal input[type=text], #erl-mailModal textarea{ width:100%; padding:7px 10px; font-size:15px; border:1px solid #cfd8e6; border-radius:6px; font-family:inherit; }
+  #erl-mailModal textarea{ line-height:1.75; resize:vertical; }
+  /* 제목·내용 = 실제 보낼 문장. 크기는 작게 두되 색·굵기를 올려 또렷하게 */
+  /* ★ 아래 세 줄은 위의 '#erl-mailModal input[type=text] / textarea' 규칙(우선순위가 더 높음)을 이겨야 하므로
+       반드시 #erl-mailModal 을 앞에 붙여 쓸 것. id 만 쓰면(#erl-mailSubject) 무시된다(2026-07-29 실제 발생). */
+  #erl-mailModal #erl-mailTo{ font-size:13px; color:#1b2733; font-weight:600; }
+  #erl-mailModal #erl-mailSubject{ font-size:13px; color:#1b2733; font-weight:600; }
+  #erl-mailModal #erl-mailBody{ font-size:13px; color:#1b2733; font-weight:600; min-height:250px; line-height:1.7; }
+  /* 주소록(설정 영역)과 그 아래 '실제 보낼 내용' 을 시각적으로 분리 */
+  #erl-mailModal .erl-msect{ margin-top:12px; padding:10px 12px 12px; background:#f5f8fc;
+    border:1px solid #dde6f0; border-radius:8px; }
+  /* 구분선 — 가운데 '보낼 내용' 글자를 얹은 선. 위(설정)와 아래(발송 내용)를 확실히 가른다 */
+  #erl-mailModal .erl-mdiv{ display:flex; align-items:center; gap:10px; margin:20px 0 4px; }
+  #erl-mailModal .erl-mdiv::before, #erl-mailModal .erl-mdiv::after{ content:''; flex:1 1 auto; height:2px; background:#c9d6e5; }
+  #erl-mailModal .erl-mdiv span{ flex:0 0 auto; font-size:12.5px; font-weight:800; color:#1e3c72;
+    background:#eef4fb; border:1px solid #c9d6e5; border-radius:999px; padding:2px 12px; }
+  #erl-mailModal .erl-mdiv + label{ margin-top:8px; }
+  #erl-mailModal .erl-msect .erl-addrbox{ background:#fff; }
+  /* 일괄등록 창 — 발송창과 같은 모달 스타일을 그대로 쓴다 */
+  #erl-bulkModal{ position:fixed; inset:0; z-index:1400; background:rgba(16,22,29,.55); display:none; align-items:center; justify-content:center; padding:20px; }
+  #erl-bulkModal .erl-mbox{ max-height:92vh; background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
+  #erl-bulkModal .erl-mhead{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 18px;
+    background:#eef4fb; border-bottom:1px solid #d7e2f0; font-weight:800; color:#1e3c72; font-size:17px; }
+  #erl-bulkModal .erl-mbody{ padding:14px 18px; overflow:auto; font-size:14px; }
+  #erl-bulkModal label{ display:block; font-size:13.5px; font-weight:800; color:#5b6b80; margin:12px 0 4px; }
+  #erl-bulkModal input[type=text], #erl-bulkModal textarea{ width:100%; padding:7px 10px; font-size:13px; border:1px solid #cfd8e6; border-radius:6px; font-family:inherit; }
+  #erl-bulkModal textarea{ line-height:1.6; resize:vertical; }
+  #erl-bulkModal .erl-msect{ margin-top:8px; padding:10px 12px 12px; background:#f5f8fc; border:1px solid #dde6f0; border-radius:8px; }
+  #erl-bulkModal .erl-mdiv{ display:flex; align-items:center; gap:10px; margin:18px 0 6px; }
+  #erl-bulkModal .erl-mdiv::before, #erl-bulkModal .erl-mdiv::after{ content:''; flex:1 1 auto; height:2px; background:#c9d6e5; }
+  #erl-bulkModal .erl-mdiv span{ flex:0 0 auto; font-size:12.5px; font-weight:800; color:#1e3c72;
+    background:#eef4fb; border:1px solid #c9d6e5; border-radius:999px; padding:2px 12px; }
+  #erl-bulkNote{ margin-top:8px; font-size:12.5px; color:#8a5a00; }
+  .erl-bulkprev{ max-height:230px; overflow:auto; border:1px solid #dfe6ef; border-radius:8px; background:#fbfdff; padding:6px 8px; font-size:12.5px; color:#5b6b80; }
+  table.erl-btbl{ width:100%; border-collapse:collapse; font-size:12.5px; background:#fff; }
+  table.erl-btbl th{ background:#eef3f8; color:#37475a; font-weight:800; border:1px solid #e3eaf2; padding:4px 8px; white-space:nowrap; }
+  table.erl-btbl td{ border:1px solid #eef2f7; padding:4px 8px; color:#1b2733; white-space:nowrap; }
+  table.erl-btbl tr.erl-bad td{ background:#fdf3f2; }
+  table.erl-btbl .del{ border:none; background:none; color:#c0392b; cursor:pointer; font-size:12px; padding:0 4px; }
+  table.erl-btbl .edt{ border:none; background:none; color:#1e3c72; cursor:pointer; font-size:13px; padding:0 4px; font-weight:800; }
+  table.erl-btbl .edt:hover{ color:#0f2550; }
+  /* 직접 입력 줄 — 칸마다 머리글(라벨)을 달아 무엇을 넣는지 구분되게 */
+  #erl-bulkModal .erl-btn{ white-space:nowrap; }   /* 버튼 글자가 줄바꿈되지 않게 */
+
+  /* SweetAlert 알림창 — 모양은 다른 화면(assessment 등)과 같은 SweetAlert2 기본 스타일을 그대로 쓴다.
+     여기서는 겹침만 고친다: 기본 z-index(1060)가 이 화면 모달(1400)보다 낮아 알림창이 뒤로 깔렸다.
+     ※ swal 은 body 바로 아래에 그려지므로 #evalReportList 안에 넣으면 안 먹는다(스코프 밖에 둘 것). */
+  .swal2-container{ z-index:3000 !important; }   /* 이 화면의 다른 코드가 Swal 을 쓸 때 대비(모달 1400 위로) */
+  #erl-bulkModal .erl-brow{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+  #erl-bulkModal .erl-brow label{ margin:0 0 3px; font-size:12.5px; color:#37475a; }
+  #erl-bulkModal .erl-inhospnm{ margin-top:4px; font-size:12px; color:#9aa7b3; white-space:nowrap; }
+  /* 병원 검색 팝업 — 입력칸 바로 아래 작게 뜬다 */
+  #erl-hospPop{ display:none; position:absolute; top:100%; left:0; z-index:1500; width:330px; max-width:88vw;
+    background:#fff; border:1px solid #c9d6e5; border-radius:8px; box-shadow:0 10px 26px rgba(16,22,29,.22); padding:8px; }
+  #erl-hospPop.on{ display:block; }
+  #erl-hospPop .hp-head{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:800; color:#1e3c72; margin-bottom:6px; }
+  #erl-hospPop .hp-head button{ border:none; background:none; cursor:pointer; color:#7b8a99; font-size:13px; }
+  #erl-hospPop .hp-list{ max-height:230px; overflow:auto; margin-top:6px; border-top:1px solid #eef2f7; }
+  #erl-hospPop .hp-row{ display:flex; gap:8px; align-items:center; padding:5px 4px; cursor:pointer; border-bottom:1px dashed #eef2f7; font-size:12.5px; }
+  #erl-hospPop .hp-row:hover{ background:#eef4fb; }
+  #erl-hospPop .hp-row .cd{ flex:0 0 78px; color:#6b7a89; font-variant-numeric:tabular-nums; }
+  #erl-hospPop .hp-row .nm{ flex:1 1 auto; color:#1b2733; font-weight:700; }
+  #erl-hospPop .hp-none{ padding:10px 4px; font-size:12.5px; color:#9aa7b3; }
+  #erl-bulkModal .erl-inhospnm.ok{ color:#2e7d32; font-weight:800; }
+  #erl-bulkModal .erl-inhospnm.ng{ color:#c0392b; font-weight:800; }
+  /* 대량 등록(엑셀·붙여넣기) — 기본 접힘 */
+  #erl-bulkModal details.erl-bdev{ margin-top:10px; border:1px solid #e2e8ef; border-radius:8px; background:#fafcfe; padding:8px 10px; }
+  #erl-bulkModal details.erl-bdev > summary{ cursor:pointer; font-size:13px; font-weight:800; color:#1f5a4b; list-style:none; }
+  #erl-bulkModal details.erl-bdev > summary::-webkit-details-marker{ display:none; }
+  #erl-bulkModal details.erl-bdev > summary::before{ content:'▸ '; color:#7b8a99; }
+  #erl-bulkModal details.erl-bdev[open] > summary::before{ content:'▾ '; }
+  #erl-bulkModal details.erl-bdev > summary span{ font-weight:600; font-size:12px; color:#8a97a4; }
+  #erl-mailModal .erl-btn{ font-size:14px; padding:8px 15px; }
+  #erl-mailNote{ margin-top:10px; font-size:13.5px; color:#8a5a00; white-space:pre-line; }
+  /* 주소록 */
+  #evalReportList .erl-addrbox{ border:1px solid #dfe6ef; border-radius:8px; padding:6px 10px; max-height:150px; overflow:auto; background:#fbfdff; }
+  #evalReportList .erl-addrrow{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:14.5px; border-bottom:1px dashed #eef2f7; }
+  #evalReportList .erl-addrrow:last-child{ border-bottom:none; }
+  #evalReportList .erl-addrrow .nm{ color:#37475a; font-weight:700; min-width:90px; }
+  #evalReportList .erl-addrrow .em{ color:#1e3c72; flex:1 1 auto; word-break:break-all; }
+  #evalReportList .erl-addrrow .del{ border:none; background:none; color:#c0392b; cursor:pointer; font-size:12px; padding:0 4px; }
+  #evalReportList .erl-addrempty{ font-size:13.5px; color:#9aa7b3; padding:7px 0; }
+  #evalReportList .erl-addradd{ display:flex; gap:6px; margin-top:7px; flex-wrap:wrap; }
+  #evalReportList .erl-candbox{ margin-top:7px; font-size:13px; color:#5b6b80; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  #evalReportList .erl-cand{ border:1px dashed #b9c9de; background:#fff; border-radius:999px; padding:3px 10px; cursor:pointer; color:#1e3c72; }
+  #evalReportList .erl-cand:hover{ background:#eef4fb; }
   /* [위너넷] 기관기호 앞 이력확장 토글(+/−) + 이력 child row */
   #evalReportList .erl-exp{ display:inline-block; width:16px; height:16px; line-height:14px; text-align:center; margin-right:5px;
     border:1px solid #9aa4a0; border-radius:3px; background:#fff; color:#333; font-weight:800; font-size:12px; cursor:pointer; vertical-align:middle; }
@@ -96,7 +222,8 @@
     <label style="margin-left:6px;">평가월</label>
     <select id="erl-month" class="erl-sel" onchange="erlFilter()"><option value="">전체</option></select>
     <label style="margin-left:6px;">병원</label>
-    <select id="erl-hosp" class="erl-sel erl-hosp" onchange="erlFilter()"><option value="">전체 병원</option></select>
+    <%-- 병원을 고르면 월이 '전체'로 풀린다(그 병원 연간 이력 보기) → erlHospChange --%>
+    <select id="erl-hosp" class="erl-sel erl-hosp" onchange="erlHospChange()"><option value="">전체 병원</option></select>
     <label style="margin-left:6px;">상태</label>
     <select id="erl-status" class="erl-sel" onchange="erlFilter()">
       <option value="">전체</option>
@@ -110,18 +237,145 @@
       <option value="N">없음</option>
     </select>
     <button class="erl-btn" onclick="erlLoad()">🔍 검색</button>
+    <%-- 관리자(위너넷) 전용 도움말 — 메일 발송 설정(구글 앱 비밀번호) 안내. 병원 화면에서는 JS 가 숨긴다 --%>
+    <button type="button" class="erl-help" id="erl-bulkBtn" style="margin-left:auto; display:none;"
+            onclick="erlBulkOpen()" title="병원별 수신자 메일주소를 화면 입력 또는 엑셀로 등록">📥 메일주소 일괄등록</button>
+    <button type="button" class="erl-help" id="erl-helpBtn" style="display:none;"
+            onclick="erlHelp()" title="메일 발송을 위한 구글 계정 설정 방법">ℹ️ 메일 발송 설정 도움말</button>
   </div>
 
   <table id="erl-grid" class="display nowrap stripe hover cell-border order-column" style="width:100%">
     <thead>
       <tr>
+        <%-- ★ th 개수는 아래 DataTables columns 개수와 반드시 같아야 한다(다르면 그리드가 통째로 오류) --%>
         <th>번호</th><th>기관기호</th><th>병원명</th><th>평가월</th><th>종합점수</th>
         <th>구조</th><th>진료</th><th>목표</th><th>상태</th><th>첨부</th>
+        <th>메일</th><th>메일열람</th><th>문서열람</th>
         <th>작성자</th><th>승인자</th><th>승인일시</th><th>수정일</th>
       </tr>
     </thead>
   </table>
 
+  <%-- 메일주소 일괄등록 창 — 엑셀 파일 또는 붙여넣기로 여러 병원 수신자를 한 번에 등록(관리자 전용).
+       형식: 요양기관기호 | 이메일 | 이름/직책(선택). 같은 병원+주소는 중복 등록되지 않고 이름만 갱신된다. --%>
+  <div id="erl-bulkModal">
+    <div class="erl-mbox" style="width:min(860px,96vw)">
+      <div class="erl-mhead">
+        <span>📥 메일주소 일괄등록</span>
+        <span>
+          <button id="erl-bulkSaveBtn" class="erl-btn" onclick="erlBulkSave()">💾 등록</button>
+          <button class="erl-btn" onclick="erlBulkClose()">✕ 닫기</button>
+        </span>
+      </div>
+      <div class="erl-mbody">
+        <div style="font-size:13.5px; color:#5b6b80;">
+          기관기호를 입력하면 <b>병원명이 자동으로 표시</b>됩니다. 한 건씩 <b>추가</b>한 뒤 마지막에 <b>등록</b>을 누르세요.
+        </div>
+
+        <%-- 직접 입력 — 기관기호(자동완성) · 이메일 · 성함을 칸을 나눠 받는다 --%>
+        <div class="erl-msect">
+          <div class="erl-brow">
+            <div style="flex:1 1 190px; position:relative;">
+              <label style="margin-top:0;">요양기관기호</label>
+              <div style="display:flex; gap:4px; flex-wrap:nowrap;">
+                <input id="erl-inHosp" type="text" placeholder="예) 11223344" style="flex:1 1 auto; min-width:0;"
+                       oninput="erlInHospNm()" onkeydown="if(event.keyCode===13){document.getElementById('erl-inEmail').focus();}">
+                <button type="button" class="erl-btn" style="flex:0 0 auto; padding:7px 10px;"
+                        onclick="erlHospPickOpen()" title="병원 검색">🔍</button>
+              </div>
+              <div id="erl-inHospNm" class="erl-inhospnm">기관기호 입력 또는 🔍 검색</div>
+
+              <%-- 병원 검색 팝업 — 이미 받아둔 병원 목록에서 이름·기호로 걸러 고른다(서버 조회 없음) --%>
+              <div id="erl-hospPop" class="erl-hpop">
+                <div class="hp-head">
+                  <span>병원 검색</span>
+                  <button type="button" onclick="erlHospPickClose()">✕</button>
+                </div>
+                <input id="erl-hospPopQ" type="text" placeholder="병원명 또는 기관기호" oninput="erlHospPickRender()"
+                       onkeydown="if(event.keyCode===27){erlHospPickClose();}">
+                <div id="erl-hospPopList" class="hp-list"></div>
+              </div>
+            </div>
+            <div style="flex:2 1 220px;">
+              <label style="margin-top:0;">이메일</label>
+              <input id="erl-inEmail" type="text" placeholder="name@domain.com"
+                     onkeydown="if(event.keyCode===13){document.getElementById('erl-inName').focus();}">
+            </div>
+            <div style="flex:1 1 140px;">
+              <label style="margin-top:0;">성함 / 직책</label>
+              <input id="erl-inName" type="text" placeholder="예) 김간호 팀장"
+                     onkeydown="if(event.keyCode===13){erlBulkAdd();}">
+            </div>
+            <div style="flex:0 0 auto; align-self:flex-end;">
+              <button type="button" class="erl-btn" onclick="erlBulkAdd()">＋ 추가</button>
+            </div>
+          </div>
+        </div>
+
+        <%-- 엑셀 파일 — 한 번에 많이 넣을 때만 사용(기본 접힘) --%>
+        <details class="erl-bdev">
+          <summary>엑셀 파일로 한 번에 넣기 <span>(대량 등록용 — 눌러서 펼치기)</span></summary>
+          <label>엑셀 파일 (.xlsx / .csv)
+            <span style="font-weight:600; color:#6b7a89;">— A열 기관기호 · B열 이메일 · C열 성함 순서여야 합니다</span></label>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input type="file" id="erl-bulkFile" accept=".xlsx,.xls,.csv" onchange="erlBulkFile(this)" style="font-size:13px; flex:1 1 auto;">
+            <button type="button" class="erl-btn" onclick="erlBulkSample()" title="양식 엑셀 파일을 내려받습니다">⬇ 양식 받기</button>
+          </div>
+        </details>
+
+        <div class="erl-mdiv"><span>등록할 내용</span></div>
+        <div id="erl-bulkPreview" class="erl-bulkprev">엑셀을 올리거나 붙여넣은 뒤 [확인하기]를 누르세요.</div>
+        <div id="erl-bulkNote"></div>
+
+        <div class="erl-mdiv"><span>등록 현황 (관리)</span></div>
+        <%-- 검색줄 — 버튼이 줄바꿈되지 않도록 폭 고정(flex:0 0 auto + nowrap) --%>
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:nowrap;">
+          <input id="erl-addrFind" type="text" placeholder="병원명 · 기관기호 · 이메일 검색"
+                 style="flex:1 1 auto; min-width:0;" onkeydown="if(event.keyCode===13){erlAddrAllLoad();}">
+          <button type="button" class="erl-btn" style="flex:0 0 auto; white-space:nowrap;" onclick="erlAddrAllLoad()">🔍 조회</button>
+        </div>
+        <div id="erl-addrAllBox" class="erl-bulkprev"></div>
+      </div>
+    </div>
+  </div>
+
+  <%-- 메일 발송 창 — 목록에서 바로 보낸다(승인 + 첨부 있는 건만 버튼이 뜬다).
+       제목·본문 기본값은 서버(evalReportMailForm.do)가 표준문구(TBL_EVAL_REPORT_TPL)에 점수를 채워 내려준다. --%>
+  <div id="erl-mailModal">
+    <div class="erl-mbox">
+      <div class="erl-mhead">
+        <span>✉ 월보고서 메일 발송 <span id="erl-mailWho" style="font-weight:700; font-size:15px; opacity:.85;"></span></span>
+        <span>
+          <button id="erl-mailSendBtn" class="erl-btn" onclick="erlMailSend()">📨 보내기</button>
+          <button class="erl-btn" onclick="erlMailClose()">✕ 닫기</button>
+        </span>
+      </div>
+      <div class="erl-mbody">
+        <div style="font-size:13.5px; color:#5b6b80;">승인된 보고서의 <b>첨부 PDF</b>가 그대로 첨부됩니다. 여러 명은 <b>콤마(,)</b>로 구분하세요.</div>
+
+        <%-- 주소록 — 이 병원에 등록해 둔 수신자. 창을 열면 전부 선택된 상태로 시작한다(수신자 고정 운영).
+             체크를 바꾸면 아래 '받는 사람'이 자동으로 다시 채워진다.
+             ★ 아래 '실제 보낼 내용(받는사람·제목·내용)' 과 헷갈리지 않게 회색 박스로 묶어 구분한다. --%>
+        <%-- 등록된 수신자가 2명 이상일 때만 선택 목록을 보여준다(1명이면 자동 선택).
+             주소 추가·삭제는 [📥 메일주소 일괄등록] 에서 하므로 여기엔 두지 않는다. --%>
+        <div class="erl-msect" id="erl-addrSect" style="display:none;">
+          <label style="margin-top:0;">수신자 선택 <span style="font-weight:600; color:#6b7a89;">(체크한 주소로 보냅니다)</span></label>
+          <div id="erl-addrBox" class="erl-addrbox"></div>
+        </div>
+
+        <%-- 설정(주소록) / 실제 보낼 내용 경계 — 한눈에 보이게 제목 붙은 구분선 --%>
+        <div class="erl-mdiv"><span>보낼 내용</span></div>
+
+        <label for="erl-mailTo">받는 사람</label>
+        <input id="erl-mailTo" type="text" placeholder="hospital@example.com, staff@example.com">
+        <label for="erl-mailSubject">제목</label>
+        <input id="erl-mailSubject" type="text">
+        <label for="erl-mailBody">내용</label>
+        <textarea id="erl-mailBody" rows="11"></textarea>
+        <div id="erl-mailNote"></div>
+      </div>
+    </div>
+  </div>
 
 <script>
 jQuery(function(){
@@ -131,6 +385,32 @@ jQuery(function(){
   function _ck(n){ try{ if(typeof getCookie==='function') return (getCookie(n)||'').trim(); }catch(e){} return cookie(n); }
   function el(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  /* onclick 속성 안에 넣는 JS 문자열용 — 따옴표·역슬래시 제거.
+     ※ 같은 이름(sj)의 지역 함수가 hstHtml 안에 따로 있다. 그리드 render 등 바깥에서는 반드시 이 _sj 를 쓸 것
+       (바깥에서 sj 를 부르면 ReferenceError 로 그리드가 통째로 비어 보인다 — 2026-07-29 실제 발생) */
+  function _sj(v){ return String(v==null?'':v).replace(/[\\'"]/g,''); }
+
+  /* 알림 — 보고서 화면(erSwal/erConfirm)과 같은 SweetAlert2 방식. Swal 은 header.jsp 에서 전역 로드.
+     라이브러리가 없으면 기본 alert/confirm 으로 떨어져 동작은 유지된다. */
+  /* 알림·확인 — konet_vsweb 로그인 화면과 같은 공통 컴포넌트(/asset/js/ui-message.js) 사용.
+     _alertBox(확인 1버튼) / _confirmBox(취소·확인 2버튼). 넓은 파란 버튼 · 작은 창이 이 시스템 표준.
+     라이브러리가 없으면 기본 alert/confirm 으로 떨어져 동작은 유지된다. */
+  function _erlIcon(icon){
+    return (icon==='error') ? '❌' : (icon==='success') ? '✅' : (icon==='warning') ? '⚠️' : (icon==='question') ? '❓' : 'ℹ️';
+  }
+  function erlSwal(icon, msg, opt){
+    opt = opt || {};
+    var body = opt.html ? opt.html : String(msg==null?'':msg).replace(/\n/g,'<br>');
+    if(typeof window._alertBox !== 'function'){ alert(String(msg||'').replace(/<[^>]*>/g,'')); if(opt.done) opt.done(); return; }
+    window._alertBox(body, { icon:_erlIcon(icon), okColor:(icon==='error'?'red':'blue'), onOk:opt.done });
+  }
+  function erlConfirm(msg, onYes, opt){
+    opt = opt || {};
+    var body = String(msg==null?'':msg).replace(/\n/g,'<br>');   // 줄바꿈 허용(HTML 태그도 그대로 씀)
+    if(typeof window._confirmBox !== 'function'){ if(window.confirm(String(msg||''))){ if(onYes) onYes(); } return; }
+    window._confirmBox({ msg:body, icon:_erlIcon(opt.icon||'question'), okText:(opt.yes||'확인'),
+                         okColor:'blue', onOk:onYes });
+  }
   function n(v){ var x=Number(v); return isNaN(x)?0:x; }
   function f1(v){ return (Math.round(n(v)*10)/10).toFixed(1); }
   function gradeOf(t){ t=n(t); if(t>=88)return'1등급'; if(t>=79)return'2등급'; if(t>=71)return'3등급'; if(t>=63)return'4등급'; return'5등급'; }
@@ -146,12 +426,23 @@ jQuery(function(){
   var ownHospCd = (typeof hospid !== 'undefined' && hospid) ? String(hospid).trim() : (_ck('s_hospid') || '');
   var ownHospNm = (typeof hospnm !== 'undefined' && hospnm) ? String(hospnm) : (_ck('s_hospnm') || '');
   if(!isWinner){ var rt=el('erl-role'); if(rt) rt.textContent='거래처'; }
+  // 메일 발송 설정 도움말 — 관리자(위너넷)에게만 노출
+  if(isWinner && MAIL_UI_ON){          // 메일 기능이 켜져 있을 때만 관리자 버튼 노출
+    var hb=el('erl-helpBtn'); if(hb) hb.style.display='';
+    var bb=el('erl-bulkBtn'); if(bb) bb.style.display='';
+  }
 
   var _hospPicked = false;
   try{ _hospPicked = (sessionStorage.getItem('hospPicked')==='1'); if(_hospPicked) sessionStorage.removeItem('hospPicked'); }catch(e){}
 
   var HOSP_NM = {};   // hosp_cd → hosp_nm (응답에 병원명 없을 때 폴백)
 
+  /* ★ 메일 기능 노출 스위치 — 운영 배포·검증 전까지 화면에서 감춘다(2026-07-29 요청).
+       false 이면 ① 📥 메일주소 일괄등록 버튼 ② ℹ️ 메일 발송 설정 도움말 버튼 ③ 목록의 '메일'(발송/재발송) 칸
+       세 가지가 모두 숨겨진다. 서버·DB 기능은 그대로 살아 있으므로 true 로만 바꾸면 즉시 다시 나온다. */
+  var MAIL_UI_ON = false;
+
+  var CUR_MM = ('0' + (new Date().getMonth()+1)).slice(-2);   // 당월(MM) — 평가월 기본 선택값
   function defaultYear(){
     var qy=(location.search.match(/[?&]year=(\d{4})/)||[])[1]; if(qy) return qy;
     var qm=(location.search.match(/[?&]ym=(\d{6})/)||[])[1]; if(qm) return qm.substring(0,4);
@@ -166,9 +457,20 @@ jQuery(function(){
     var mh='<option value="">전체</option>';
     for(var mo=1;mo<=12;mo++){ var mm=('0'+mo).slice(-2); mh+='<option value="'+mm+'">'+mm+'월</option>'; }
     el('erl-month').innerHTML=mh;
+    /* 평가월 기본값 = 당월. 전체 병원을 볼 때는 이번 달 것만 보는 게 기본 작업 흐름이라(2026-07-29 요청).
+       URL 로 특정 년월을 지정해 들어온 경우(ym=YYYYMM)에는 그 월을 그대로 쓴다. */
     var qm=(location.search.match(/[?&]ym=(\d{6})/)||[])[1];
-    el('erl-month').value = qm ? qm.substring(4,6) : '';
+    el('erl-month').value = qm ? qm.substring(4,6) : CUR_MM;
   })();
+
+  /* 병원 선택이 바뀔 때 — 특정 병원을 고르면 그 병원의 '그 해 전체' 를 보도록 월을 전체로 풀고,
+     전체 병원으로 돌아오면 다시 당월만 본다. */
+  window.erlHospChange = function(){
+    var hosp = el('erl-hosp') ? el('erl-hosp').value : '';
+    var mo   = el('erl-month');
+    if(mo) mo.value = hosp ? '' : CUR_MM;
+    erlFilter();
+  };
 
   // 병원 셀렉트 — 위너넷=전체 목록, 거래처=본인 병원만(고정)
   (function initHosp(){
@@ -247,6 +549,44 @@ jQuery(function(){
         { title:'목표', data:null, className:'dt-center', render:function(d,t,r){ return (r.goalgrade?esc(r.goalgrade):'')+((r.goalscore!=null&&r.goalscore!=='')?(' ('+f1(r.goalscore)+')'):''); } },
         { title:'상태', data:'status', className:'dt-center', render:function(d,t){ if(t==='display') return stCell(d); return (d==='APPROVED')?'승인됨':'작성중'; } },
         { title:'첨부', data:'haspdf', className:'dt-center', render:function(d,t){ var has=(d==='Y'); if(t==='display') return has?'<span class="erl-pdf">📎 있음</span>':'-'; return has?'있음':'-'; } },
+        /* 메일발송 — 위너넷만. 승인됨 + 첨부 있음 일 때만 보낼 수 있다(작성중 문서가 병원에 나가지 않게).
+           이미 보냈으면 보낸 일시·횟수를 보여주고, 다시 보내기도 같은 버튼으로 한다. */
+        { title:'메일', data:null, className:'dt-center', orderable:false, visible:MAIL_UI_ON, render:function(d,t,r){
+            if(t!=='display') return (r.senddttm||'');
+            var can = (r.status==='APPROVED') && (r.haspdf==='Y');
+            var sent = (Number(r.sendcnt)||0) > 0;
+            /* 병원(거래처) 화면 — 보고서가 메일로 왔는지만 알려준다.
+               발송 버튼·수신자 주소·재발송은 관리자 몫이라 보여주지 않는다. */
+            if(!isWinner){
+              if(!sent) return '<span class="erl-noread">-</span>';
+              return '<span class="erl-read">📧 발송됨</span><div class="erl-sentinfo">'+esc(r.senddttm||'')+'</div>';
+            }
+            // 보낸 건 = 보낸 일시(+횟수) / 안 보낸 건 = '미발송' 을 글자로 분명히 (버튼만 보여 보낸 걸로 오해하지 않게)
+            var info = sent
+                 ? ('<div class="erl-sentinfo" title="'+esc(r.sendemail||'')+'">'+esc(r.senddttm||'')
+                    + ((Number(r.sendcnt)||0)>1 ? (' ('+r.sendcnt+'회)') : '') + '</div>')
+                 : '<div class="erl-nosend">미발송</div>';
+            if(!can) return info;   // 승인 전이거나 첨부가 없으면 버튼 없이 상태만
+            var oc = "erlMailOpen('"+_sj(r.hospcd)+"','"+_sj(r.evalym)+"','"+_sj(r.hospnm||HOSP_NM[r.hospcd]||r.hospcd)+"')";
+            return '<button type="button" class="erl-mailbtn" onclick="'+oc+'">'+(sent?'↻ 재발송':'✉ 발송')+'</button>'+info;
+          } },
+        /* 메일열람 — 보낸 메일을 열었는지(본문 1×1 추적 이미지)만 반영한다. 문서열람과 섞지 않는다
+           (2026-07-29 사용자 확정: 문서·메일 별도). 이미지 차단 시 열어도 '미확인'으로 남는 건 감수. */
+        { title:'메일열람', data:null, className:'dt-center', visible:isWinner, render:function(d,t,r){
+            if(t!=='display') return (r.mailreaddttm||'');
+            if((Number(r.sendcnt)||0)===0) return '<span class="erl-noread">-</span>';   // 아직 안 보냄
+            if(r.mailreadyn!=='Y') return '<span class="erl-noread" title="아직 열지 않았거나, 수신자가 이미지 표시를 차단한 경우입니다">미확인</span>';
+            return '<span class="erl-read">열람</span><div class="erl-sentinfo">'+esc(r.mailreaddttm||'')
+                 + ((Number(r.mailreadcnt)||0)>1 ? (' ('+r.mailreadcnt+'회)') : '') + '</div>';
+          } },
+        /* 문서열람 — 병원이 WinCheck+ 에서 보고서 화면을 연 기록(확실). 메일 본문의 '보고서 보기' 링크로
+           들어와 열어도 여기에 남는다. 위너넷 열람은 기록하지 않는다. */
+        { title:'문서열람', data:null, className:'dt-center', visible:isWinner, render:function(d,t,r){
+            if(t!=='display') return (r.readdttm||'');
+            if(r.readyn!=='Y') return '<span class="erl-noread">미열람</span>';
+            return '<span class="erl-read">읽음</span><div class="erl-sentinfo">'+esc(r.readdttm||'')
+                 + ((Number(r.readcnt)||0)>1 ? (' ('+r.readcnt+'회)') : '') + '</div>';
+          } },
         { title:'작성자', data:'reguser', className:'dt-center', render:function(d){ return esc(decUser(d))||'-'; } },
         { title:'승인자', data:null, className:'dt-center', render:function(d,t,r){ return (r.status==='APPROVED')?(esc(decUser(r.approveuser))||'-'):'-'; } },
         { title:'승인일시', data:null, className:'dt-center', render:function(d,t,r){ return (r.status==='APPROVED')?esc(r.approvedttm||'-'):'-'; } },
@@ -411,6 +751,324 @@ jQuery(function(){
         try{ restoreExpand(); }catch(e){}   // 보고서에서 돌아온 경우 펼침 복원
       },
       error:function(){ LAST=[]; erlFilter(); }
+    });
+  };
+
+  /* ===== 메일주소 일괄등록 / 등록 현황 관리 — 위너넷 전용 =====
+     입력은 두 갈래(엑셀 파일 · 붙여넣기)지만 파싱 결과는 같은 _bulkRows 로 모아 한 번에 저장한다.
+     열 순서: 요양기관기호 | 이메일 | 이름(선택). 첫 줄이 머리글이면 자동으로 건너뛴다. */
+  var _bulkRows = [];
+  window.erlBulkOpen = function(){
+    _bulkRows = [];
+    var _bt=el('erl-bulkText'), _bf=el('erl-bulkFile');
+    if(_bt) _bt.value=''; if(_bf) _bf.value='';
+    el('erl-inHosp').value=''; el('erl-inEmail').value=''; el('erl-inName').value='';
+    el('erl-inHospNm').textContent='기관기호를 입력하세요'; el('erl-inHospNm').className='erl-inhospnm';
+    erlBulkPreview();
+    el('erl-bulkNote').textContent='';
+    erlHospPickClose();
+    el('erl-bulkModal').style.display='flex';
+    erlAddrAllLoad();
+    setTimeout(function(){ el('erl-inHosp').focus(); }, 100);
+  };
+  /* 병원 검색 팝업 — 이미 받아둔 HOSP_NM(기호→병원명) 에서 걸러 고른다. 서버 조회가 없어 즉시 반응한다. */
+  window.erlHospPickOpen = function(){
+    el('erl-hospPop').classList.add('on');
+    el('erl-hospPopQ').value = (el('erl-inHosp').value||'').trim();
+    erlHospPickRender();
+    setTimeout(function(){ el('erl-hospPopQ').focus(); }, 50);
+  };
+  window.erlHospPickClose = function(){ var p=el('erl-hospPop'); if(p) p.classList.remove('on'); };
+  window.erlHospPickRender = function(){
+    var q=((el('erl-hospPopQ').value)||'').trim().toLowerCase();
+    var codes=Object.keys(HOSP_NM).sort(function(a,b){ return (HOSP_NM[a]||'').localeCompare(HOSP_NM[b]||''); });
+    var h='', n=0;
+    codes.forEach(function(cd){
+      var nm=HOSP_NM[cd]||'';
+      if(q && cd.toLowerCase().indexOf(q)<0 && nm.toLowerCase().indexOf(q)<0) return;
+      if(n++ >= 200) return;                                  // 너무 많으면 앞부분만(검색해서 좁히도록)
+      h += '<div class="hp-row" onclick="erlHospPickSel(\''+_sj(cd)+'\')">'
+         +   '<span class="cd">'+esc(cd)+'</span><span class="nm">'+esc(nm)+'</span></div>';
+    });
+    el('erl-hospPopList').innerHTML = h || '<div class="hp-none">검색 결과가 없습니다.</div>';
+  };
+  window.erlHospPickSel = function(cd){
+    el('erl-inHosp').value = cd;
+    erlInHospNm();
+    erlHospPickClose();
+    el('erl-inEmail').focus();
+  };
+
+  /* 기관기호 → 병원명 표시. 목록에 없는 기호면 빨갛게 알려준다 */
+  window.erlInHospNm = function(){
+    var cd=(el('erl-inHosp').value||'').trim(), box=el('erl-inHospNm');
+    if(!cd){ box.textContent='기관기호를 입력하세요'; box.className='erl-inhospnm'; return; }
+    var nm=HOSP_NM[cd];
+    if(nm){ box.textContent='✔ '+nm; box.className='erl-inhospnm ok'; }
+    else   { box.textContent='등록된 병원이 아닙니다'; box.className='erl-inhospnm ng'; }
+  };
+  /* 한 건 추가 — 목록(_bulkRows)에 쌓고 입력칸을 비워 다음 건을 바로 넣게 한다 */
+  window.erlBulkAdd = function(){
+    var cd=(el('erl-inHosp').value||'').trim();
+    var em=(el('erl-inEmail').value||'').trim();
+    var nm=(el('erl-inName').value||'').trim();
+    if(!cd){ el('erl-bulkNote').textContent='요양기관기호를 입력하세요.'; el('erl-inHosp').focus(); return; }
+    if(em.indexOf('@')<1){ el('erl-bulkNote').textContent='이메일 형식이 올바르지 않습니다.'; el('erl-inEmail').focus(); return; }
+    var dup=_bulkRows.some(function(r){ return r.hospCd===cd && r.email.toLowerCase()===em.toLowerCase(); });
+    if(dup){ el('erl-bulkNote').textContent='이미 목록에 있는 주소입니다.'; return; }
+    _bulkRows.push({ hospCd:cd, email:em, addrNm:nm });
+    el('erl-inEmail').value=''; el('erl-inName').value='';   // 기관기호는 남겨 같은 병원 여러 명을 이어서 넣게
+    el('erl-bulkNote').textContent='';
+    erlBulkPreview();
+    el('erl-inEmail').focus();
+  };
+  window.erlBulkDel = function(i){ _bulkRows.splice(i,1); erlBulkPreview(); };
+  window.erlBulkClose = function(){ el('erl-bulkModal').style.display='none'; };
+
+  /* 엑셀·붙여넣기 — 화면 입력과 같은 _bulkRows 로 모아 한 번에 저장한다.
+     열 순서: 기관기호 | 이메일 | 성함. 머리글로 보이는 첫 줄은 건너뛴다. */
+  function _bulkPush(out, cd, em, nm){
+    cd=String(cd==null?'':cd).trim(); em=String(em==null?'':em).trim(); nm=String(nm==null?'':nm).trim();
+    if(!cd && !em) return;
+    if(em.indexOf('@')<1 && /기관|기호|이메일|메일|주소|이름|성함/.test(cd+em)) return;   // 머리글 줄
+    out.push({ hospCd:cd, email:em, addrNm:nm });
+  }
+  /* 양식 엑셀 내려받기 — 열 순서를 맞춘 빈 양식(예시 2줄 포함) */
+  window.erlBulkSample = function(){
+    if(typeof XLSX==='undefined'){ erlSwal('warning','엑셀 라이브러리를 불러오지 못했습니다.'); return; }
+    var aoa=[['요양기관기호','이메일','성함/직책'],
+             ['11223344','hospital@example.com','김간호 팀장'],
+             ['11282347','staff@example.com','']];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), '수신자');
+    XLSX.writeFile(wb, '메일수신자_등록양식.xlsx');
+  };
+  window.erlBulkFile = function(input){
+    var f=input.files && input.files[0]; if(!f) return;
+    if(typeof XLSX==='undefined'){ el('erl-bulkNote').textContent='엑셀 라이브러리를 불러오지 못했습니다. 붙여넣기를 이용하세요.'; return; }
+    var fr=new FileReader();
+    fr.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var aoa=XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+        var out=[]; aoa.forEach(function(r){ _bulkPush(out, r[0], r[1], r[2]); });
+        // 이메일이 하나도 없으면 양식이 다른 파일이다 — 그대로 담으면 '형식오류' 수백 건이 쌓인다
+        var mails = out.filter(function(r){ return r.email.indexOf('@')>0; }).length;
+        if(!mails){
+          input.value='';
+          erlSwal('warning','이 파일에서 이메일을 찾지 못했습니다.\nA열 기관기호 · B열 이메일 · C열 성함 순서인지 확인하세요.\n[⬇ 양식 받기] 로 양식을 내려받을 수 있습니다.', {title:'양식이 다릅니다'});
+          return;
+        }
+        out.forEach(function(r){
+          if(!_bulkRows.some(function(x){ return x.hospCd===r.hospCd && x.email.toLowerCase()===r.email.toLowerCase(); })) _bulkRows.push(r);
+        });
+        erlBulkPreview();
+      }catch(err){ el('erl-bulkNote').textContent='엑셀을 읽지 못했습니다: '+err.message; }
+    };
+    fr.readAsArrayBuffer(f);
+  };
+
+  /* 미리보기 — 등록 전에 기관기호가 실제 병원인지, 이메일 형식이 맞는지 표시한다.
+     HOSP_NM 은 병원 셀렉트를 채울 때 이미 받아둔 목록이라 추가 조회가 필요 없다. */
+  function erlBulkPreview(){
+    if(!_bulkRows.length){ el('erl-bulkPreview').innerHTML='<div class="erl-addrempty">아직 담긴 내용이 없습니다. 위에서 [＋ 추가] 하거나 엑셀 파일을 고르세요. 여기 담긴 것만 [💾 등록] 으로 저장됩니다.</div>'; return; }
+    var okN=0, ngN=0, h='<table class="erl-btbl"><thead><tr><th>기관기호</th><th>병원명</th><th>이메일</th><th>성함/직책</th><th>확인</th><th></th></tr></thead><tbody>';
+    _bulkRows.forEach(function(r, i){
+      var nm=HOSP_NM[r.hospCd]||'';
+      var bad = (!r.hospCd || r.email.indexOf('@')<1) ? '형식오류' : (nm ? '' : '기관기호 없음');
+      if(bad) ngN++; else okN++;
+      h += '<tr class="'+(bad?'erl-bad':'')+'"><td>'+esc(r.hospCd)+'</td><td>'+esc(nm||'-')+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.addrNm||'')+'</td>'
+         + '<td>'+(bad? '<span style="color:#c0392b">'+bad+'</span>' : '<span style="color:#2e7d32">확인</span>')+'</td>'
+         + '<td><button type="button" class="del" title="목록에서 빼기" onclick="erlBulkDel('+i+')">✕</button></td></tr>';
+    });
+    h += '</tbody></table>';
+    el('erl-bulkPreview').innerHTML = h;
+    el('erl-bulkNote').textContent = '총 '+_bulkRows.length+'건 · 등록 가능 '+okN+'건'
+      + (ngN? (' · 확인 필요 '+ngN+'건 (기관기호가 목록에 없거나 이메일 형식 오류)') : '');
+  }
+  window.erlBulkSave = function(){
+    if(!_bulkRows.length){ el('erl-bulkNote').textContent='등록할 자료가 없습니다. 먼저 [확인하기]를 누르세요.'; return; }
+    var valid=_bulkRows.filter(function(r){ return r.hospCd && r.email.indexOf('@')>0; });
+    if(!valid.length){ el('erl-bulkNote').textContent='형식이 맞는 행이 없습니다.'; return; }
+    erlConfirm(valid.length+'건을 주소록에 등록할까요?\n(같은 병원의 같은 주소는 중복 등록되지 않고 이름만 갱신됩니다)', function(){
+      var btn=el('erl-bulkSaveBtn'); btn.disabled=true; btn.textContent='💾 등록 중…';
+      jQuery.ajax({ url:ctx+'/main/evalMailAddrBulk.do', type:'POST', contentType:'application/json', dataType:'json',
+        data: JSON.stringify(valid),
+        success:function(r){
+          btn.disabled=false; btn.textContent='💾 등록';
+          if(!r || r.result!=='OK'){ erlSwal('error',(r&&r.message)?r.message:'등록에 실패했습니다.'); return; }
+          _bulkRows=[];
+          var _bt2=el('erl-bulkText'), _bf2=el('erl-bulkFile');
+          if(_bt2) _bt2.value=''; if(_bf2) _bf2.value='';
+          erlBulkPreview();
+          el('erl-bulkNote').textContent='';
+          erlAddrAllLoad();
+          erlSwal('success','등록 '+r.okCnt+'건'+((r.ngCnt||0)? (' · 실패 '+r.ngCnt+'건') : ''), {title:'일괄등록 완료'});
+        },
+        error:function(){ btn.disabled=false; btn.textContent='💾 등록'; erlSwal('error','서버 통신 오류로 등록하지 못했습니다.'); }
+      });
+    });
+  };
+  /* 등록 현황 — 전체 병원의 주소록. 여기서 바로 지울 수 있다(소프트 삭제) */
+  window.erlAddrAllLoad = function(){
+    var q=(el('erl-addrFind')?el('erl-addrFind').value:'')||'';
+    jQuery.ajax({ url:ctx+'/main/evalMailAddrAll.do', type:'POST', dataType:'json', data:{ findData:q },
+      success:function(r){
+        var list=(r&&r.result==='OK')?(r.list||[]):[];
+        if(!list.length){ el('erl-addrAllBox').innerHTML='<div class="erl-addrempty">등록된 주소가 없습니다.</div>'; return; }
+        var h='<table class="erl-btbl"><thead><tr><th>기관기호</th><th>병원명</th><th>이름/직책</th><th>이메일</th><th>수정일</th><th>수정</th><th>삭제</th></tr></thead><tbody>';
+        list.forEach(function(a){
+          var oc = "erlAddrEdit('"+_sj(a.hospcd)+"','"+_sj(a.email)+"','"+_sj(a.addrnm||'')+"')";
+          h += '<tr><td>'+esc(a.hospcd)+'</td><td>'+esc(a.hospnm||'-')+'</td><td>'+esc(a.addrnm||'')+'</td><td>'+esc(a.email)+'</td>'
+             + '<td>'+esc(a.upddttm||'')+'</td>'
+             + '<td><button type="button" class="edt" title="이 주소를 위 입력칸으로 불러와 고칩니다" onclick="'+oc+'">✎</button></td>'
+             + '<td><button type="button" class="del" title="삭제" onclick="erlAddrAllDel('+Number(a.addrseq)+')">✕</button></td></tr>';
+        });
+        el('erl-addrAllBox').innerHTML = h+'</tbody></table>';
+      },
+      error:function(){ el('erl-addrAllBox').innerHTML='<div class="erl-addrempty">조회 중 오류가 발생했습니다.</div>'; }
+    });
+  };
+  /* 등록된 주소 수정 — 값을 위 입력칸으로 불러온다.
+     이름/직책만 고쳐 [＋추가]→[등록] 하면 같은 병원+같은 이메일이라 새 행이 생기지 않고 이름만 갱신된다.
+     이메일 자체를 바꾸려면 기존 것을 ✕ 로 지우고 새로 등록해야 한다(이메일이 키라서). */
+  window.erlAddrEdit = function(hospCd, email, addrNm){
+    el('erl-inHosp').value = hospCd; erlInHospNm();
+    el('erl-inEmail').value = email;
+    el('erl-inName').value  = addrNm;
+    el('erl-bulkNote').textContent = '';   // 안내문 없이 값만 불러온다(사용자 요청 — 문구가 길어 화면이 복잡)
+    el('erl-inName').focus();
+    try{ el('erl-inName').select(); }catch(e){}
+  };
+  window.erlAddrAllDel = function(addrSeq){
+    erlConfirm('이 주소를 주소록에서 뺄까요?', function(){
+      jQuery.ajax({ url:ctx+'/main/evalMailAddrDel.do', type:'POST', dataType:'json', data:{ addrSeq:addrSeq, hospCd:'' },
+        success:function(){ erlAddrAllLoad(); },
+        error:function(){ erlSwal('error','삭제 중 오류가 발생했습니다.'); }
+      });
+    });
+  };
+
+  /* 메일 발송 설정 도움말 — 위너넷에게만 보인다(버튼 노출은 아래 초기화에서 처리).
+     담당자가 바뀌거나 앱 비밀번호를 다시 발급할 때 참고하도록 화면에 남겨 둔다. */
+  window.erlHelp = function(){
+    var html =
+      '<div class="erl-guide">'
+      + '<h4>1. 왜 앱 비밀번호가 필요한가</h4>'
+      + '구글은 프로그램이 계정 비밀번호로 메일 보내는 것을 막습니다. 그래서 <b>앱 비밀번호</b>(프로그램 전용 16자리)를 따로 발급받아야 합니다.'
+      + '<h4>2. 발급 방법</h4>'
+      + '<ol>'
+      +   '<li>보낼 구글 계정으로 로그인한 뒤 <b>2단계 인증</b>을 켭니다.<br><code>https://myaccount.google.com/signinoptions/twosv</code></li>'
+      +   '<li><code>https://myaccount.google.com/apppasswords</code> 접속</li>'
+      +   '<li>앱 이름은 아무거나(예: WinCheck) 입력 후 <b>만들기</b></li>'
+      +   '<li><code>abcd efgh ijkl mnop</code> 형태의 16자리가 나옵니다 → <b>공백을 빼고</b> 복사<br>'
+      +       '<span style="color:#8a5a00">이 화면을 닫으면 다시 볼 수 없습니다. 잃어버리면 새로 발급하면 됩니다.</span></li>'
+      + '</ol>'
+      // 서버 설정은 개발자·운영담당 몫이라 기본은 접어 둔다(필요할 때만 펼침)
+      + '<details class="erl-dev"><summary>3. 서버 설정 <span>(개발자용 — 눌러서 펼치기)</span></summary>'
+      +   '<code>WEB-INF/classes/mail.properties</code> 의 값을 채우고 <b>톰캣을 재시작</b>합니다.'
+      +   '<ol>'
+      +     '<li><code>mail.enabled=true</code></li>'
+      +     '<li><code>mail.smtp.user</code> = 보내는 구글 계정 주소</li>'
+      +     '<li><code>mail.smtp.password</code> = 앱 비밀번호 16자리(공백 없이)</li>'
+      +     '<li><code>mail.from</code> = user 와 같은 주소</li>'
+      +   '</ol>'
+      +   '구글 기준 <code>host=smtp.gmail.com / port=587 / ssl=false</code> 는 이미 설정돼 있습니다.'
+      + '</details>'
+      + '</div>';
+    // 도움말은 내용이 길어 넓은 창이 필요하므로 Swal 을 그대로 쓴다(알림·확인은 _alertBox/_confirmBox 사용)
+    if(typeof Swal === 'undefined'){ alert('메일 발송 설정: mail.properties 에 구글 계정·앱 비밀번호를 넣고 톰캣을 재시작하세요.'); return; }
+    Swal.fire({ title:'메일 발송 설정 도움말', html:html, width:680, heightAuto:false,
+                confirmButtonText:'닫기' });
+  };
+
+  /* ===== 메일 발송 (목록에서 바로) — 위너넷 전용 =====
+     · 대상은 '승인됨 + 첨부 있음' 뿐(버튼 자체가 그때만 그려지고, 서버에서도 다시 막는다).
+     · 제목·본문 기본값은 서버가 표준문구(mail_subject/mail_body)에 점수를 채워 내려준다.
+     · 받는 사람은 수동 입력. 마지막 발송 주소가 있으면 그대로 제안한다(이메일 별도 관리 붙기 전까지). */
+  var _erlMail = null;
+  window.erlMailOpen = function(hospCd, evalYm, hospNm){
+    _erlMail = { hospCd:hospCd, evalYm:evalYm, hospNm:hospNm };
+    el('erl-mailWho').textContent = '— ' + (hospNm||'') + ' ' + (String(evalYm).length===6 ? (evalYm.substring(0,4)+'.'+evalYm.substring(4,6)) : evalYm);
+    el('erl-mailTo').value=''; el('erl-mailSubject').value=''; el('erl-mailBody').value='';
+    el('erl-mailNote').textContent = '기본 문구를 불러오는 중…';
+    el('erl-mailModal').style.display = 'flex';
+    jQuery.ajax({ url:ctx+'/main/evalReportMailForm.do', type:'POST', dataType:'json',
+      data:{ hospCd:hospCd, evalYm:evalYm, hospNm:hospNm||'' },
+      success:function(r){
+        if(!r || r.result!=='OK'){ el('erl-mailNote').textContent = (r&&r.message)?r.message:'기본 문구를 불러오지 못했습니다.'; return; }
+        el('erl-mailSubject').value = r.subject||'';
+        el('erl-mailBody').value    = r.content||'';
+        // 주소록이 있으면 전부 선택해 '받는 사람'을 채우고, 비어 있으면 마지막 발송 주소를 제안
+        erlAddrRender(r.addrs||[], r.cands||[], true);
+        if(!(r.addrs||[]).length) el('erl-mailTo').value = r.lastEmail||'';
+        el('erl-mailNote').textContent = (r.hasPdf==='Y') ? '' : '첨부된 PDF가 없습니다. 보고서 화면에서 [📎 PDF첨부] 후 보내세요.';
+      },
+      error:function(){ el('erl-mailNote').textContent = '기본 문구 조회 중 오류가 발생했습니다.'; }
+    });
+  };
+  window.erlMailClose = function(){ el('erl-mailModal').style.display='none'; };
+
+  /* 수신자 — 등록된 주소가
+       0건 : 선택 영역 숨김. [받는 사람]에 직접 입력하거나 마지막 발송 주소를 쓴다
+       1건+: 선택 영역 표시(전부 체크된 상태 = 자동 선택). 체크를 바꾸면 [받는 사람]이 다시 만들어진다
+             ※ 1건이어도 누구에게 가는지 눈으로 확인되게 보여준다(2026-07-29 요청) */
+  function erlAddrRender(list, cands, checkAll){
+    var sect=el('erl-addrSect'), box=el('erl-addrBox');
+    if(!list.length){ sect.style.display='none'; box.innerHTML=''; return; }
+    sect.style.display='';
+    var html='';
+    list.forEach(function(a){
+      html += '<div class="erl-addrrow">'
+           +   '<input type="checkbox" class="erl-addrchk" value="'+esc(a.email)+'"'+(checkAll?' checked':'')+' onchange="erlAddrSync()">'
+           +   '<span class="nm">'+(a.addrnm? esc(a.addrnm) : '&nbsp;')+'</span>'
+           +   '<span class="em">'+esc(a.email)+'</span>'
+           + '</div>';
+    });
+    box.innerHTML = html;
+    erlAddrSync();
+  }
+  /* 체크된 주소 → '받는 사람' 입력칸 (직접 입력한 주소는 유지하지 않고 체크 기준으로 다시 만든다) */
+  window.erlAddrSync = function(){
+    var picked=[];
+    jQuery('#erl-addrBox .erl-addrchk:checked').each(function(){ picked.push(this.value); });
+    if(picked.length) el('erl-mailTo').value = picked.join(', ');
+  };
+  /* 발송창에서는 주소를 더하거나 지우지 않는다 — 관리는 [📥 메일주소 일괄등록] 창에서만(2026-07-29 확정) */
+  window.erlMailSend = function(){
+    if(!_erlMail) return;
+    var to=(el('erl-mailTo').value||'').trim();
+    if(!to){ el('erl-mailNote').textContent='받는 사람 주소를 입력하세요.'; el('erl-mailTo').focus(); return; }
+    // 실제로 나가는 작업이라 보내기 전에 '어느 병원 · 어느 주소'인지 눈으로 확인시킨다
+    var ym = String(_erlMail.evalYm||''); ym = (ym.length===6) ? (ym.substring(0,4)+'.'+ym.substring(4,6)) : ym;
+    erlConfirm('<b style="font-size:17px">' + esc(_erlMail.hospNm||'') + '</b><br>'
+             + '<span style="color:#6b7a89">' + esc(ym) + ' 월보고서</span><br><br>'
+             + esc(to) + '<br>로 보낼까요?',
+             function(){ _erlMailDoSend(to); });
+  };
+  function _erlMailDoSend(to){
+    var btn=el('erl-mailSendBtn'); btn.disabled=true; btn.textContent='📨 보내는 중…';
+    var html = String(el('erl-mailBody').value||'').replace(/\n/g,'<br>');   // 줄바꿈만 살려 HTML 메일로
+    jQuery.ajax({ url:ctx+'/main/sendEvalReportMail.do', type:'POST', contentType:'application/json', dataType:'json',
+      data: JSON.stringify({ hospCd:_erlMail.hospCd, evalYm:_erlMail.evalYm, to:to,
+                             subject:el('erl-mailSubject').value, content:html }),
+      success:function(r){
+        btn.disabled=false; btn.textContent='📨 보내기';
+        if(r && r.result==='OK'){
+          erlMailClose(); erlLoad();
+          erlSwal('success','메일을 보냈습니다.\n' + to);   // 제목 없이 본문만(사용자 요청)
+        } else {
+          var msg = (r&&r.message)?r.message:'발송에 실패했습니다.';
+          el('erl-mailNote').textContent = msg;      // 창 안에도 사유를 남겨 바로 고쳐 다시 보낼 수 있게
+          erlSwal('error', msg, {title:'발송 실패'});
+        }
+      },
+      error:function(){
+        btn.disabled=false; btn.textContent='📨 보내기';
+        el('erl-mailNote').textContent='서버 통신 오류로 보내지 못했습니다.';
+        erlSwal('error','서버 통신 오류로 보내지 못했습니다.', {title:'발송 실패'});
+      }
     });
   };
 
