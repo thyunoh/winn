@@ -59,6 +59,24 @@
 #hu_modalName .modal-body textarea.form-control {
 	height: auto; padding: 4px 8px;
 }
+/* 병원정보·계약정보·사용자정보 모달 높이 = 내용 높이 (하단 빈 공간 제거, 2026-07-29)
+   .modal-content 에 인라인 height:97%(병원)/70%(계약)/55%(사용자) 가 걸려 있어 내용과 무관하게
+   다이얼로그 높이의 비율만큼 늘어났다 → auto 로 덮어씀(인라인이라 !important 필요).
+   화면이 작을 때만 90vh 까지 쓰고, 그 안에서 본문(flex:1 + overflow:auto)이 스크롤된다. */
+#modalName .modal-content,
+#hc_modalName .modal-content,
+#hu_modalName .modal-content {
+	height: auto !important;
+	max-height: 90vh;
+}
+#hc_modalName .modal-body,
+#hu_modalName .modal-body {
+	max-height: calc(90vh - 80px);
+}
+/* 병원정보 모달은 하단에 빈 modal-footer 가 있어 그만큼 또 여백이 생긴다 → 접어둠 */
+#modalName .modal-footer {
+	display: none;
+}
 </style>
 <!-- ============================================================== -->
 <!-- Main Form start -->
@@ -504,9 +522,19 @@
 					<div class="form-group row row g-0 mb-0">
 						<label for="conContent_one"
 							class="col-2 col-sm-2 col-form-label text-left">세부내용</label>
-						<div class="col-10 col-sm-10">
+						<div class="col-6 col-sm-6">
 							<input id="conContent_one" name="conContent_one" type="text"
 								class="form-control text-left" placeholder="계약세부내용을 입력하세요">
+						</div>
+						<%-- 운영사용(TBL_HOSPCONT_MST.NOR_YN) — 체크 'Y' / 해제 'N'(기본).
+						     보고서 등 컨설팅 산출물은 받지 않고 프로그램만 사용하는 병원 표시.
+						     name 은 formValueSet(체크박스는 id 가 아니라 name 으로 값을 찾음)에 필요하므로 반드시 유지 --%>
+						<label for="norYn_one"
+							class="col-2 col-sm-2 col-form-label text-left">운영사용</label>
+						<div class="col-2 col-sm-2 d-flex align-items-center">
+							<input id="norYn_one" name="norYn_one" type="checkbox" value="Y"
+								style="width: 18px; height: 18px; cursor: pointer;"
+								title="체크하면 Y — 보고서 등은 받지 않고 프로그램만 사용하는 병원입니다. (기본 N)">
 						</div>
 					</div>
 					<div class="form-group row ">
@@ -2179,6 +2207,16 @@
 		    });
 		    return results;
 		}
+		/* 운영사용(NOR_YN) 체크박스 값 — 항상 'Y'/'N' 문자열로 통일.
+		   sendDTO 는 체크박스가 해제되면 값이 아니라 boolean false 를 담기 때문에(commons 규칙),
+		   그대로 두면 서버에 "false" 가 넘어가 varchar(1) 저장 오류가 난다. 아래 두 함수로 막는다. */
+		function norYnVal() {
+			return $('#norYn_one').is(':checked') ? 'Y' : 'N';
+		}
+		function hc_fixNorYn(dto) {
+			if (dto) dto.norYn = (dto.norYn === 'Y' || dto.norYn === true) ? 'Y' : 'N';
+			return dto;
+		}
 		//그리드상 데이타생성및 수정 작업
 		function hc_newuptData() {
         	let hc_newData = {
@@ -2188,6 +2226,7 @@
         		startDt_one:       $('#startDt_one').val(),
         		endDt_one:         $('#endDt_one').val(), 
         		useYn_one:         $('#useYn_one').val(),
+        		norYn_one:         norYnVal(),   // 운영사용 체크박스 → 'Y'/'N' (그리드도 이 값으로 표시)
                 ocsCompany_one:    $('#ocsCompany_one').val(),
                 ocsUserId_one:     $('#ocsUserId_one').val(),
                 ocsUserPw_one:     $('#ocsUserPw_one').val(),
@@ -2263,6 +2302,14 @@
 			              }
 			            },
 		            	{ title: "OCS회사",   data: "ocsCompany_one",     className: "text-left", defaultContent: '' },
+		            	{ title: "운영사용",   data: "norYn_one",          className: "text-center", defaultContent: '',
+			              render: function(data, type, row) {
+			            	 if (type === 'display') {
+			            	     return data === 'Y' ? '✔' : '';   // Y=프로그램만 사용, 그 외(N/빈값)는 공란
+			                 }
+			                 return data;
+			              }
+			            },
 		            	{ title: "요양기관기호", data: "hospCd_one",         className: "text-center", defaultContent: '' }
 		            ],
 		            ajax: hcontLoad,   
@@ -2513,7 +2560,7 @@
 		        	}	
 		        });
 		        //////////////////// ✅ sendDTO(true)의 반환값 추가 (필요한 경우)
-		        let dtoData = sendDTO(true,"_one");
+		        let dtoData = hc_fixNorYn(sendDTO(true,"_one"));
 		        Object.keys(dtoData).forEach(key => {
 		            if (format_convert.length > 0 && format_convert.includes(key)) {
 		            	dtoData[key] = replaceMulti(dtoData[key], '-', '/');  
@@ -2584,7 +2631,7 @@
   	
 		        });
 			     // ✅ sendDTO(true) 먼저 호출하여 값 가져오기
-		        let sendData = sendDTO(true,"_one"); 
+		        let sendData = hc_fixNorYn(sendDTO(true,"_one"));
 				Object.keys(sendData).forEach(key => {
 				    if (format_convert.length > 0 && format_convert.includes(key)) {
 				        sendData[key] = replaceMulti(sendData[key], '-', '/');  

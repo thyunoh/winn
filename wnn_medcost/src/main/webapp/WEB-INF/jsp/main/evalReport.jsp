@@ -129,6 +129,22 @@
   #evalReport .er-notice{ max-width:880px; margin:16px auto 0; padding:12px 16px; border-radius:10px; background:var(--er-navytint);
     border:1px solid #cfe0f4; color:var(--er-navy); font-size:12.5px; line-height:1.6; }
 
+  /* ===== 운영사용(TBL_HOSPCONT_MST.NOR_YN, 적정성평가 계약 기준) =====
+     NOR_YN='Y'(사용운영만 하는 병원)이면 마지막 장(Ⅳ 권고 + Ⅴ 로드맵 + 총평)을 통째로 감춘다.
+     위너넷 관리자 화면에도 동일 적용(사용자 확정) — 관리자가 만든 인쇄·PDF에도 안 들어가게.
+     인쇄에도 같은 규칙이 그대로 적용되고, PDF 생성은 숨은 .er-page 를 건너뛴다(erPdfGenPreview). */
+  #evalReport.er-norec #er-page4{ display:none !important; }
+  @media print{ #evalReport.er-norec #er-page4{ display:none !important; } }
+  /* '{병원명} — 사용운영만 하는 병원' 배지 — 위너넷에게만(er-wnnonly), 눈에 띄게 깜박임. 인쇄·PDF에는 안 나감 */
+  #evalReport .er-usebadge{ display:none; align-items:center; gap:5px; padding:4px 10px; border-radius:999px;
+    background:#fff3cd; border:1px solid #f0c36d; color:#8a5a00; font-size:12px; font-weight:800; white-space:nowrap;
+    animation:erUseBlink 2.2s ease-in-out infinite; }
+  #evalReport .er-usebadge.er-on{ display:inline-flex; }
+  /* 깜박임은 약하게 — 켜짐/꺼짐(steps)이 아니라 천천히 옅어졌다 돌아오는 정도(2026-07-29 사용자 요청) */
+  @keyframes erUseBlink{ 50%{ opacity:.62; } }
+  @media print{ #evalReport .er-usebadge{ display:none !important; } }
+  #evalReport.er-pdfcap .er-usebadge{ display:none !important; }
+
   /* 지면 */
   #evalReport .er-doc{ padding:22px 14px 40px; display:flex; flex-direction:column; align-items:center; gap:20px; }
   #evalReport .er-page{ width:880px; max-width:100%; background:var(--er-paper); box-shadow:0 6px 26px rgba(28,45,72,.14);
@@ -247,6 +263,8 @@
   /* 편집 모드: 연한 배경 + 어두운 글자 강제(color) — 목표 뱃지 등 흰 글자 영역이 안 보이던 문제 방지 */
   #evalReport.er-editmode .er-editable{ box-shadow:inset 0 0 0 1px #bcd0ea; background:#f7fbff; color:var(--er-ink); cursor:text; }
   #evalReport.er-editmode .er-editable:focus{ box-shadow:inset 0 0 0 2px var(--er-navy2); background:#fff; color:var(--er-ink); }
+  /* Ⅳ 권고사항의 개선방향(recdir_*)은 편집 대상이 아니다(2026-07-29) — 편집모드에서도 편집영역처럼 보이지 않게 */
+  #evalReport.er-editmode .er-editable[data-key^="recdir_"]{ box-shadow:none; background:transparent; cursor:default; }
   /* PDF 캡처 중: 편집영역 파란 하이라이트 강제 제거(PDF에 파란 배경 안 찍히게) */
   #evalReport.er-pdfcap .er-editable, #evalReport.er-pdfcap .er-editable:focus{ box-shadow:none !important; background:transparent !important; }
 
@@ -483,6 +501,10 @@
     <!-- (월보고 목록 버튼 제거 — 좌측 사이드바 '적정성평가 월간보고서' 메뉴로 대체) -->
     <!-- 도움말 — 클릭하면 사용법 안내 배너를 열고/닫음(토글). 마우스오버 시 요약 툴팁도 표시 -->
     <button class="er-btn er-wnnonly" id="er-help" onmouseenter="erHelpShow()" onmouseleave="erHelpHide()" onfocus="erHelpShow()" onblur="erHelpHide()">ℹ️ 도움말</button>
+    <%-- 사용운영만 하는 병원 — 적정성평가 계약의 NOR_YN='Y' (=Ⅳ 이하 비공개 대상)일 때 켜짐.
+         위너넷 화면에만 보이는 표시(er-wnnonly). 문구·표시 여부는 JS erApplyNorYn 에서 확정. --%>
+    <span class="er-usebadge er-wnnonly" id="er-useBadge"
+          title="계약정보의 '운영사용'이 체크된 병원입니다. 이 보고서는 Ⅳ 우선 개선지표별 권고사항 이하(Ⅴ 로드맵·총평 포함)가 화면·인쇄·PDF 어디에도 나오지 않습니다."></span>
 
     <span class="er-sp"></span>
 
@@ -682,8 +704,9 @@
       </div>
     </div>
 
-    <!-- PAGE 4 : Ⅳ 권고 + Ⅴ 로드맵 (편집 문구) -->
-    <div class="er-page">
+    <!-- PAGE 4 : Ⅳ 권고 + Ⅴ 로드맵 + 총평 (편집 문구)
+         id 는 운영사용(NOR_YN) 아닌 병원에게 이 장을 통째로 감추는 데 쓴다(.er-norec) -->
+    <div class="er-page" id="er-page4">
       <div class="er-sec" style="margin-top:0;">
         <div class="er-eyebrow"><span class="er-rn">Ⅳ.</span><span class="er-stitle">우선 개선지표별 권고사항</span></div>
         <div id="er-sec4Body"></div>
@@ -765,7 +788,9 @@
         <div id="er-mrBody" class="er-editable er-mrbody" data-key="mr_body"></div>
       </div>
 
-      <div class="er-docfoot er-editable" data-key="footer">본 보고서는 WinCheck⁺ 시스템 산출값을 근거로 작성되었으며, 목표등급은 해당 병원의 설정값 기준입니다. 실제 평가결과는 심평원 최종 산정 기준 및 자료 확정 시점에 따라 달라질 수 있습니다.</div>
+      <%-- 문서 각주(면책 문구) — 이 장(#er-page4)이 통째로 감춰지는 '사용운영만 하는 병원'에서도 남아야 하므로
+           erApplyNorYn 이 앞 장 끝으로 옮긴다(원래 자리 = 이 장의 맨 끝). --%>
+      <div class="er-docfoot er-editable" id="er-docFoot" data-key="footer">본 보고서는 WinCheck⁺ 시스템 산출값을 근거로 작성되었으며, 목표등급은 해당 병원의 설정값 기준입니다. 실제 평가결과는 심평원 최종 산정 기준 및 자료 확정 시점에 따라 달라질 수 있습니다.</div>
     </div>
   </div>
 
@@ -941,6 +966,41 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   if(!isWinner){
     document.getElementById('evalReport').classList.add('er-hospview');
     var _rt=document.getElementById('er-roleTag'); if(_rt) _rt.textContent='열람';
+    // 조회(loadEvalReport)가 실패하면 norYn 을 못 받는다 → 병원 화면은 받기 전까지 '숨김'으로 둔다(노출 사고 방지).
+    //   조회에 성공하면 erApplyNorYn 이 실제 값으로 다시 판단해 일반 계약 병원에는 그대로 보인다.
+    document.getElementById('evalReport').classList.add('er-norec');
+  }
+
+  /* ===== 운영사용(NOR_YN, 적정성평가 계약 CONACT_GB='2') =====
+     'Y' = '사용운영만 하는 병원'(계약정보의 운영사용 체크 = 보고서는 안 받고 프로그램만 사용)
+        → 마지막 장(Ⅳ 권고·Ⅴ 로드맵·총평)을 숨긴다. 화면·인쇄·PDF·문서저장 모두 동일.
+        ★ 위너넷 관리자 화면에서도 숨긴다(2026-07-29 사용자 확정) — 관리자가 만든 인쇄·PDF에도 안 들어가
+          유출 경로가 남지 않게. 대신 관리자도 그 병원의 Ⅳ 이하를 볼 수 없다.
+        + 상단에 '{병원명} — 사용운영만 하는 병원' 깜박이 배지(위너넷 화면에만).
+     'Y' 아님 = 일반 계약 → 지금까지처럼 전부 공개.
+     값은 loadEvalReport.do 응답(res.norYn). */
+  var norYn = 'N', _norLoaded = false;   // 조회 전 기본값 'N'. 배지는 값을 받은 뒤에만 띄운다
+  function erApplyNorYn(){
+    var root = el('evalReport'); if(!root) return;
+    var norOnly = (norYn === 'Y');                       // 사용운영만 하는 병원 = Ⅳ 이하 비공개 대상
+    root.classList.toggle('er-norec', norOnly);          // 위너넷·병원 구분 없이 동일 적용
+    /* 문서 각주(면책 문구)는 감출 때도 남긴다 — 원래 자리가 감춰지는 장(#er-page4)의 맨 끝이라
+       그대로 두면 같이 사라진다. 감출 때는 앞 장(Ⅲ) 끝으로 옮기고, 아니면 원위치로 되돌린다. */
+    var ft = el('er-docFoot'), p4 = el('er-page4');
+    if(ft && p4){
+      if(norOnly){
+        var prev = p4.previousElementSibling;
+        if(prev && prev.classList.contains('er-page') && ft.parentNode !== prev) prev.appendChild(ft);
+      } else if(ft.parentNode !== p4){
+        p4.appendChild(ft);                              // 원위치 = 마지막 장의 맨 끝
+      }
+    }
+    var b = el('er-useBadge');
+    if(b){
+      var nm = hospNm || (el('er-hospNm') ? el('er-hospNm').textContent.replace(/^\[|\]$/g,'') : '');
+      b.textContent = '🟠 ' + (nm ? nm + ' — ' : '') + '사용운영만 하는 병원';
+      b.classList.toggle('er-on', _norLoaded && norOnly);
+    }
   }
 
   var editing = false, approved = false, curYm = '', pdfPath = '';
@@ -1204,6 +1264,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     // 워드·아래한글은 <style> 의 복합선택자(#evalReport .er-…)·flex/grid·그라데이션을 대부분 무시.
     //   → 라이브 DOM의 '계산된 스타일'을 클론에 인라인 style 로 옮겨(워드가 인라인은 잘 따름) 색·표 테두리·정렬 재현.
     var clone = src.cloneNode(true);
+    // 화면에서 감춘 장(운영사용 아닌 병원의 Ⅳ 이하)은 문서로도 내보내지 않는다 —
+    //   아래 인라인화 목록(PROPS)에 display 가 없어 클론만 두면 숨김이 풀린 채 저장된다.
+    if(el('evalReport').classList.contains('er-norec')){
+      var _p4=clone.querySelector('#er-page4'); if(_p4 && _p4.parentNode) _p4.parentNode.removeChild(_p4);
+    }
     var PROPS = ['color','background-color','font-weight','font-size','font-family','font-style',
                  'text-align','vertical-align','line-height','white-space',
                  'border-top-width','border-top-style','border-top-color',
@@ -1554,6 +1619,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   })();
 
   function editables(){ return document.querySelectorAll('#evalReport .er-editable[data-key]'); }
+  /* Ⅳ 우선 개선지표별 권고사항의 '개선방향'(recdir_*) 은 Ⅲ 의 개선방향과 헷갈린다는 사용자 확정(2026-07-29)에 따라
+     위너넷·병원 누구도 편집하지 못한다. 저장된 문구의 표시와 수집(editables)은 그대로 두고 '편집 켜기'에서만 뺀다
+     — 지표별 기본문구는 TPL_DIR(TBL_EVAL_REPORT_TPL dir_XX)로 관리한다. */
+  function _erNoEditKey(e){ return (e.getAttribute('data-key')||'').indexOf('recdir_') === 0; }
+  function editablesEdit(){ return Array.prototype.filter.call(editables(), function(e){ return !_erNoEditKey(e); }); }
 
   /* ── Ⅵ. 의무기록 점검 결과 — 담당자 수기 입력 (2026-07-22) ─────────────────
      ★점검 항목은 달마다 달라진다(유치도뇨관·욕창·배뇨 외에 다른 항목이 생길 수 있음).
@@ -2331,7 +2401,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     editing=false;
     el('evalReport').classList.remove('er-editmode');
     try{ erMrToggleSec(); }catch(e){}
-    editables().forEach(function(e){ e.contentEditable='false'; });
+    editablesEdit().forEach(function(e){ e.contentEditable='false'; });
     var b=el('er-btnEdit'); if(b){ b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }
     try{ erPaginate(); }catch(e){}
   }
@@ -2343,7 +2413,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     erMrToggleSec();   // Ⅵ — 편집 중에는 비어 있어도 보여야 붙여넣을 수 있다
     if(!editing) _mrDeselect();   // 편집 끄면 그림 선택·손잡이도 정리
     erPaginate();   // A4 분할 유지한 채 재분할 — 편집 종료 시 고친 문구 길이에 맞게 페이지 재배치
-    editables().forEach(function(e){ e.contentEditable = editing?'true':'false'; });
+    editablesEdit().forEach(function(e){ e.contentEditable = editing?'true':'false'; });   // Ⅳ 권고(recdir_*)는 제외
     var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집끄기':'✏️ 편집켜기'; b.classList.toggle('er-on',editing);
     // Ⅵ 는 편집을 켜야 나타난다 — 들어가는 길이 여기 하나뿐이라 안내에 같이 적는다
     if(editing) toast('편집 모드: 파란 영역의 문구를 고치고, 맨 뒤 Ⅵ 의무기록 장에서 그림을 넣거나 크기를 조절할 수 있습니다.');
@@ -3228,6 +3298,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var mst = res && res.mst;
         var texts = (res && res.texts) || [];
         savedKeys={};
+        norYn = (res && res.norYn) ? String(res.norYn) : 'N';   // 운영사용 여부 → Ⅳ 이하 공개/숨김 + 배지
+        _norLoaded = true;
+        erApplyNorYn();
         // ① 목표값 먼저(차등제 마스터) — TPL 자리표시자({goalScore} 등)가 최신 목표를 쓰도록
         applyGoalDefault(res && res.goal);
         // ② 전사 표준문구(TBL_EVAL_REPORT_TPL) — DB 문구가 내장 기본값을 대체
@@ -3384,9 +3457,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var mr=el('er-pdfModalReplace');
     if(mr) mr.style.display = isWinner ? '' : 'none';
     // 거래처: 첨부 PDF 우선 안내 배너
+    //   ★ 사용운영만 하는 병원(NOR_YN='Y')은 Ⅳ 이하가 비공개다. 이 규칙이 생기기 전에 첨부된 PDF 에는
+    //     Ⅳ 이하가 들어 있을 수 있으므로 병원에게 링크를 주지 않는다(2026-07-29).
     var bn=el('er-pdfBanner');
-    if(!isWinner && has){ bn.style.display=''; el('er-pdfBannerLink').href=dlUrl; }
+    if(!isWinner && has && norYn!=='Y'){ bn.style.display=''; el('er-pdfBannerLink').href=dlUrl; }
     else bn.style.display='none';
+    if(!isWinner && norYn==='Y'){ vb.style.display='none'; }   // 👁 PDF보기 버튼도 동일 이유로 숨김
   }
 
   window.erPickPdf = function(){
@@ -3473,6 +3549,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     var chain = Promise.resolve();
     pages.forEach(function(pg){
+      // 숨긴 장(운영사용 아닌 병원의 Ⅳ 이하 = #er-page4)은 PDF에도 넣지 않는다.
+      //   display:none 이면 getClientRects() 가 비어 있다 — 캡처하면 빈 장이 한 장 더 생긴다.
+      if(!pg.getClientRects().length) return;
       chain = chain.then(function(){
         var breaks = _erBreakYs(pg, 1);   // 캡처 전 CSS px 기준(sf 는 canvas 확보 후 보정)
         return html2canvas(pg, { scale:1.3, backgroundColor:'#ffffff', useCORS:true, logging:false }).then(function(canvas){

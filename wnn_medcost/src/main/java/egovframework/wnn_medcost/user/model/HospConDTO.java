@@ -21,6 +21,7 @@ public class HospConDTO   {
     private String acceptDt;
     private String closeDt;
     private String useYn;
+    private String norYn;       // 운영사용(TBL_HOSPCONT_MST.NOR_YN) : Y=프로그램만 사용(보고서 등 미제공), N=일반계약 (기본 N)
     private String regUser;
     private String regIp;
     private String updUser;
@@ -183,6 +184,12 @@ public class HospConDTO   {
 	}
 	public void setUseYn(String useYn) {
 		this.useYn = useYn;
+	}
+	public String getNorYn() {
+		return norYn;
+	}
+	public void setNorYn(String norYn) {
+		this.norYn = norYn;
 	}
 	public String getRegUser() {
 		return regUser;

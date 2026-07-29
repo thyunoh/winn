@@ -91,6 +91,8 @@ public interface MagamMapper {
 	Map<String, Object> selectHospGoalGrade(@Param("hospCd") String hospCd,
 	                                        @Param("startYy") String startYy,
 	                                        @Param("qterFlag") String qterFlag);
+	// 운영사용 여부(TBL_HOSPCONT_MST.NOR_YN, 적정성평가 계약 기준) — 월보고서 Ⅳ 이하 공개 판단
+	String selectHospNorYn(@Param("hospCd") String hospCd);
 	List<Map<String, Object>> selectEvalReportTexts(@Param("reportSeq") Long reportSeq);
 	// 전사 표준문구(TPL) — 병원 공통 기본 문구 (우선순위: 병원별 TEXT > TPL > JSP 내장 기본값)
 	List<Map<String, Object>> selectEvalReportTpls();

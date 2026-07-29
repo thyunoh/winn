@@ -5725,6 +5725,22 @@
 		 LIMIT 1
 	</select>
 
+	<!-- 운영사용 여부(TBL_HOSPCONT_MST.NOR_YN) — 월보고서 Ⅳ 이하(권고·로드맵·총평) 공개 판단용.
+	     기준 = 적정성평가 계약(CONACT_GB='2') 의 최신 유효행. 'Y'=운영사용(전체 공개) / 그 외='N'(병원에게 Ⅳ 이하 숨김).
+	     적정성평가 계약이 없는 병원은 결과 없음 → 서비스에서 'N' 취급. 위너넷 사용자는 화면에서 이 값과 무관하게 전부 열람. -->
+	<select id="selectHospNorYn" resultType="java.lang.String">
+		SELECT IFNULL(NOR_YN,'N')
+		  FROM TBL_HOSPCONT_MST
+		 WHERE HOSP_CD   = #{hospCd}
+		   AND CONACT_GB = '2'
+		   AND ACTION_YN = 'Y'
+		 ORDER BY (CURDATE() BETWEEN STR_TO_DATE(START_DT,'%Y%m%d')
+		                        AND STR_TO_DATE(END_DT  ,'%Y%m%d')) DESC,   /* ① 지금 유효한 계약 우선 */
+		          (IFNULL(NOR_YN,'N') = 'Y')                          DESC,   /* ② 그중 운영사용 체크된 행 우선 */
+		          END_DT DESC, START_DT DESC, JOB_SEQ DESC                    /* ③ 그다음 최신 계약 */
+		 LIMIT 1
+	</select>
+
 	<!-- 병원별 편집 문구(override) 목록 -->
 	<select id="selectEvalReportTexts" resultType="java.util.HashMap">
 		SELECT SECT_KEY AS sectkey, CONTENT AS content

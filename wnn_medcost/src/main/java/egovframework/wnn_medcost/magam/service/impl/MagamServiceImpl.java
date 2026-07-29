@@ -547,6 +547,11 @@ public class MagamServiceImpl implements MagamService {
 			Map<String, Object> goal = mapper.selectHospGoalGrade(hospCd, startYy, qterFlag);
 			res.put("goal", goal);   // {goalscore, hospgrade} 또는 null(미등록)
 		}
+		// 운영사용 여부(적정성평가 계약의 NOR_YN) — 'Y' 가 아니면 병원 사용자에게 Ⅳ 이하(권고·로드맵·총평)를 숨긴다.
+		//   계약이 없어 null 이면 'N'(숨김). 위너넷 사용자는 화면에서 이 값과 무관하게 전부 열람.
+		String norYn = null;
+		try { norYn = mapper.selectHospNorYn(hospCd); } catch (Exception ignore) {}
+		res.put("norYn", "Y".equals(norYn) ? "Y" : "N");
 		return res;
 	}
 

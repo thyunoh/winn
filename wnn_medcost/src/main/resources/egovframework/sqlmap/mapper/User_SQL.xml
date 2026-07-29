@@ -312,9 +312,10 @@
             A.OCS_USER_PW, 
             A.JOIN_DT      , 
             A.ACCEPT_DT    ,  
-            A.CLOSE_DT     ,  
-            A.USE_YN       , 
-            A.REG_DTTM     , 
+            A.CLOSE_DT     ,
+            A.USE_YN       ,
+            IFNULL(A.NOR_YN,'N') AS NOR_YN ,   -- 운영사용(Y=프로그램만 사용). NULL 이면 'N' — 화면 체크박스 세팅 시 null 오류 방지
+            A.REG_DTTM     ,
             A.REG_USER     , 
             A.REG_IP       ,
             A.UPD_DTTM     , 
@@ -395,8 +396,9 @@
             CON_EMAIL,          OCS_COMPANY, 
             OCS_USER_ID,        OCS_USER_PW, 
             JOIN_DT,            ACCEPT_DT, 
-            CLOSE_DT,           USE_YN, 
-            REG_DTTM,           REG_USER, 
+            CLOSE_DT,           USE_YN,
+            NOR_YN,
+            REG_DTTM,           REG_USER,
             REG_IP ,            UPD_DTTM,            
             UPD_USER,           UPD_IP,
             JOB_SEQ,            ACTION_YN      
@@ -408,8 +410,9 @@
             #{conEmail},        #{ocsCompany}, 
             #{ocsUserId},       #{ocsUserPw}, 
             #{joinDt} ,         #{acceptDt} ,
-            #{closeDt},         #{useYn}, 
-            NOW(),              #{regUser}, 
+            #{closeDt},         #{useYn},
+            CASE WHEN #{norYn} = 'Y' THEN 'Y' ELSE 'N' END,   -- 체크박스 미체크 시 화면이 false 를 보내도 'N' 으로 저장
+            NOW(),              #{regUser},
             #{regIp} ,          NOW(),             
             #{updUser},         #{updIp} ,
             (SELECT CASE WHEN MAX(A.JOB_SEQ) IS NOT NULL THEN MAX(A.JOB_SEQ) + 1 ELSE 1 END
