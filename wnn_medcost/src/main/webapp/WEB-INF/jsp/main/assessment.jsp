@@ -108,12 +108,6 @@ Date nowTime = new Date();
 										        }catch(e){}
 										    })(); 
 										</script>
-									<%-- ===== 이미 생성된 달 안내 (2026-07-30) =====
-										         화면 진입할 때마다 뜨던 '재생성 확인' 팝업(다시 생성 / 기존 자료 보기)을 이 문구로 대체한다.
-										         팝업으로 흐름을 끊지 않고 [적정성평가 월 자료생성] 버튼 아래에 문구로만 알린다.
-										           · 진입·월 변경(fn_CreateData(0)) + 자료 있음 → 기존 자료 그대로 표시 + 이 문구 노출
-										           · [적정성평가 월 자료생성] 클릭(fn_CreateData(1)) → 묻지 않고 바로 재생성(문구는 감춤)
-										         문구의 년·월은 fn_ShowRegenNotice() 가 선택된 셀렉트값으로 채운다(년·월 변경 시 fn_RefreshRegenNotice 로 재판단). --%>
 									<script>
 										/* ===== 관리자업무 서브메뉴 열고/닫기 (2026-07-30) =====
 										     부트스트랩 dropdown 을 쓰지 않는다(이 프로젝트는 dropdown JS 사용처가 없어 버전 의존을 만들지 않음).
@@ -135,8 +129,6 @@ Date nowTime = new Date();
 										    if (ev.keyCode === 27) wnnAdmClose();             // ESC
 										});
 										</script>
-										<div id="regenNotice"
-										style="display: none; margin: 0 0 8px; padding: 5px 10px; border: 1px solid #b8daff; border-left: 4px solid #4a90d9; border-radius: 6px; background: #f8fbff; color: #2c4a63; font-size: 13px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
 									<span id="wait_Create" class="loader" style="display: none;">자료생성중입니다...</span>
 
 									<!-- 지표 테이블 -->
@@ -2414,21 +2406,21 @@ function fn_CreateData(flag, force) {
     }
 
     // [추가] 해당 병원·년월의 적정성평가 자료가 이미 생성되어 있는지 먼저 확인.
-    //   - 이미 생성됨 → 팝업 없이 기존 자료만 표시 + 안내문구 노출.
+    //   - 이미 생성됨 → "다시 생성하시겠습니까?" 확인. 취소 시 기존 자료만 표시(재생성 안 함).
     //   - 생성된 자료 없음 → 기존처럼 무조건 생성 실행.
     //   ※ select_Eval_Indi 는 '99'(합계) 행을 무조건 1건 반환하므로, 실제 지표행(cate_cd!=='99')
     //     존재 여부로 판단한다.
-    //   flag===1 ([적정성평가 월 자료생성] 버튼 클릭) 또는 force=true (설정 저장 후 재계산 fn_Update)
-    //   → 확인 없이 바로 생성. 즉 재생성은 '버튼을 누른 그 순간'에만 일어난다(진입만으론 절대 재생성 안 됨).
-    if (force || flag === 1) {
-        fn_HideRegenNotice();
+    //   force=true (예: 설정 저장 후 재계산 fn_Update) 인 경우 확인 없이 바로 생성.
+    if (force) {
         doCreate();
         return;
     }
 
-    // 월보고서 종료(erExit) 복귀 마커 — 팝업이 없어져 동작 차이는 없지만, 잔존값이 남지 않게 여기서 비운다
+    // 월보고서 종료(erExit) 복귀 마커 — 이 진입 1회는 재생성 확인 팝업 없이 기존 자료만 표시
+    var skipRegen = false;
     try {
-        if (sessionStorage.getItem('skipRegenConfirm') === '1') sessionStorage.removeItem('skipRegenConfirm');
+        skipRegen = sessionStorage.getItem('skipRegenConfirm') === '1';
+        if (skipRegen) sessionStorage.removeItem('skipRegenConfirm');
     } catch (e) {}
 
     $.ajax({
@@ -2440,58 +2432,47 @@ function fn_CreateData(flag, force) {
             var hasData = response && response.data && response.data.some(function(r) {
                 return r.cate_cd !== '99';
             });
+            if (hasData && skipRegen) {   // 월보고서에서 돌아온 경우: 묻지 않고 기존 자료 표시
+                showExisting();
+                return;
+            }
             if (hasData) {
-                fn_ShowRegenNotice();   // 팝업 대신 문구
-                showExisting();         // 기존 자료 그대로 표시(재생성 안 함)
+                if (!document.getElementById('regenConfirmStyle')) {
+                    var rst = document.createElement('style');
+                    rst.id = 'regenConfirmStyle';
+                    rst.innerHTML =
+                        '.regen-confirm-popup { padding:14px 16px !important; }' +
+                        '.regen-confirm-popup .swal2-title { font-size:1.05em !important; padding:6px 0 2px !important; }' +
+                        '.regen-confirm-popup .swal2-html-container { font-size:0.92em !important; margin:6px 0 0 !important; }' +
+                        '.regen-confirm-popup .swal2-icon { width:48px; height:48px; margin:8px auto 4px; }' +
+                        '.regen-confirm-popup .swal2-icon .swal2-icon-content { font-size:1.6em; }' +
+                        '.regen-confirm-popup .swal2-actions { margin-top:12px; }' +
+                        '.regen-confirm-popup .swal2-styled { font-size:0.9em !important; padding:7px 16px !important; }';
+                    document.head.appendChild(rst);
+                }
+                Swal.fire({
+                    title: '재생성 확인',
+                    html: '<b>' + selected_Year + '년 ' + selectedMonth + '월</b> 자료가 이미 생성되어 있습니다.<br>다시 생성하시겠습니까?',
+                    icon: 'question',
+                    width: 380,
+                    showCancelButton: true,
+                    confirmButtonText: '다시 생성',
+                    cancelButtonText: '기존 자료 보기',
+                    customClass: { popup: 'regen-confirm-popup' }
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        doCreate();
+                    } else {
+                        showExisting();
+                    }
+                });
             } else {
-                fn_HideRegenNotice();
-                doCreate();          // 생성된 자료 없음 → 기존처럼 무조건 생성
+                doCreate();   // 생성된 자료 없음 → 기존처럼 무조건 생성
             }
         },
         error: function() {
-            fn_HideRegenNotice();
             doCreate();       // 확인 실패 시 안전하게 기존처럼 생성
         }
-    });
-}
-
-/* ===== '재생성 확인' 팝업 대체 안내문구 (2026-07-30) =====
-     화면 진입마다 Swal 팝업(다시 생성 / 기존 자료 보기)이 뜨던 것을 없애고,
-     [적정성평가 월 자료생성] 버튼 아래 문구(#regenNotice) 로만 알린다.
-       · 자료 있음 → "…이미 생성되어 있습니다 / 다시 생성할경우 자료생성을 실행하세요"
-       · 재생성은 사용자가 버튼을 누를 때만 실행된다(fn_CreateData(1) → 확인 없이 바로 생성).
-     ※ 년·월 셀렉트를 바꾸면 문구도 그 달 기준으로 다시 판단해야 하므로(fn_RefreshRegenNotice),
-        change 핸들러에서 함께 호출한다 — 안 하면 이전 달 문구가 그대로 남는다. */
-function fn_ShowRegenNotice() {
-    var n = document.getElementById('regenNotice');
-    if (!n) return;
-    var y = document.getElementById("year_Select").value;
-    var m = document.getElementById("monthSelect").value;
-    // 한 줄로 (2026-07-30 사용자 요청) — 두 줄(<br>)로 하면 버튼 아래 칸이 두꺼워 보임
-    n.innerHTML = '<b>' + y + '년 ' + m + '월</b> 자료가 이미 생성되어 있습니다. 다시 생성할경우 자료생성을 실행하세요';
-    n.style.display = 'block';
-}
-
-function fn_HideRegenNotice() {
-    var n = document.getElementById('regenNotice');
-    if (n) { n.style.display = 'none'; n.innerHTML = ''; }
-}
-
-// 현재 선택된 년·월 기준으로 안내문구를 다시 판단(있으면 표시 / 없으면 숨김). 자료를 건드리지 않는다.
-function fn_RefreshRegenNotice() {
-    var jobyymm = document.getElementById("year_Select").value + document.getElementById("monthSelect").value;
-    $.ajax({
-        url: "/main/select_Eval_Indi.do",
-        type: "POST",
-        data: { hosp_cd: hospid, jobyymm: jobyymm },
-        dataType: "json",
-        success: function(response) {
-            var hasData = response && response.data && response.data.some(function(r) {
-                return r.cate_cd !== '99';
-            });
-            if (hasData) fn_ShowRegenNotice(); else fn_HideRegenNotice();
-        },
-        error: function() { fn_HideRegenNotice(); }
     });
 }
 
@@ -5474,7 +5455,6 @@ $(document).ready(function() {
 	$('#year_Select').on('change', function() {
 		sessionStorage.setItem('assessment_year', this.value);
 		fn_IndiSelect();
-		fn_RefreshRegenNotice();   // 안내문구도 바뀐 년월 기준으로 갱신 (2026-07-30)
 
 		const selectedYear = $(this).val(); // 선택된 연도 값
 
@@ -5490,7 +5470,6 @@ $(document).ready(function() {
 	$('#monthSelect').on('change', function() {
 		sessionStorage.setItem('assessment_month', this.value);
 		fn_IndiSelect();
-		fn_RefreshRegenNotice();   // 안내문구도 바뀐 년월 기준으로 갱신 (2026-07-30)
     });
 	$('#yearQuarter').on('change', function() {
 		fn_Select(true);

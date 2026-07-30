@@ -1,7 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
-<%-- hospEmail.jsp — 이메일정보 (적정성평가 월간보고서 메일 수신자) 관리 화면. 2026-07-30 신규.
+<%-- ★[사용 안 함 — 2026-07-30] 이 화면은 계약관리(mangr/hospcd.jsp) 하단 [이메일정보] 패널로 이관되어
+     사이드바 메뉴에서 빠졌다. 주소(/user/hospEmail.do)로는 아직 열리지만 정본은 hospcd.jsp 쪽이다.
+     고칠 일이 있으면 hospcd.jsp 의 he_* 함수들을 고칠 것(양쪽을 같이 관리하지 말 것).
+
+     hospEmail.jsp — 이메일정보 (적정성평가 월간보고서 메일 수신자) 관리 화면. 2026-07-30 신규.
      · 왜 만들었나 : 원래 이 기능은 [적정성평가 월간보고서] 목록의 '📥 메일주소 일괄등록' 모달이었다.
        목록 화면에 얹혀 있어 찾기 어렵고, 관리 대상(병원별 수신자)은 계약정보와 같은 '기준정보' 성격이라
        사이드바 [병원정보 관리] > [이메일정보] 로 옮겼다(계약관리 바로 아래).

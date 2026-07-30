@@ -11,6 +11,9 @@
 <!-- Customized Bootstrap Stylesheet -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /> <!-- 파일다운로드관련아이콘 -->
+<%-- 확인창 공통 컴포넌트(_confirmBox) — 월보고서 메일발송 확인창과 같은 모양(작은 창 + 취소/파란 확인).
+     이메일정보 패널의 확인창(엑셀 등록·삭제)이 이걸 쓴다(2026-07-30 요청 — Swal 큰 아이콘 창 대신). --%>
+<script src="/asset/js/ui-message.js"></script>
 
 <link href="/css/winmc/style_comm.css?v=126"  rel="stylesheet">
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
@@ -77,6 +80,67 @@
 #modalName .modal-footer {
 	display: none;
 }
+
+/* ===== 이메일정보 (2026-07-30) =====
+     ★위 라벨·입력칸 규칙(#modalName/#hc_/#hu_)과 같은 모양을 쓰려면 선택자에 #he_modalName 도 넣어야 한다.
+       위 규칙 목록에 일일이 끼워넣으면 diff 가 커지므로 여기서 같은 값으로 한 번 더 선언한다. */
+#he_modalName .modal-body .col-form-label {
+	font-size: 14px; font-weight: 500; color: #333;
+	background: linear-gradient(135deg, #b3ddf0 0%, #d4ecf7 100%);
+	border-radius: 3px; padding: 4px 8px 4px 18px;
+	display: flex; align-items: center;
+	min-height: 30px; white-space: nowrap;
+}
+#he_modalName .modal-body { padding: 10px 18px; }
+#he_modalName .modal-body .form-group { margin-bottom: 3px; align-items: center; }
+#he_modalName .modal-body .form-group.row { margin-left: 0; margin-right: 0; }
+#he_modalName .modal-body .form-control { font-size: 14px; height: 30px; padding: 2px 8px; }
+#he_modalName .modal-content { height: auto !important; max-height: 90vh; }
+/* 선택한 주소 줄 강조 — 상단 병원목록 그리드의 selected 와 같은 파란 줄 */
+#he_tableName tbody tr.selected td { background-color: #cfe2f3 !important; font-weight: 600; }
+
+/* 상단 병원목록 카드와 하단(계약정보·사용자정보·이메일정보) 사이 여백 축소 (2026-07-30 요청) —
+   템플릿 기본 .card 여백(30px)이 화면 중간에 빈 띠처럼 보였다. 조금만 좁힌다. */
+.dashboard-wrapper .card { margin-bottom: 12px; }
+.dashboard-wrapper .bottom-section { margin-top: 0 !important; }
+
+/* 하단 패널(계약정보·사용자정보·이메일정보) 머리줄 압축 (2026-07-30 요청) —
+   제목+버튼 줄의 위아래 폭이 두꺼워 표가 아래로 밀렸다. 줄 안쪽 여백(p-2=8px)과
+   버튼 세로 패딩을 줄여 세 패널이 조금씩 위로 올라오게 한다.
+   ★상단 툴바(조회·입력 등)는 .bottom-section 밖이라 영향 없다. */
+.bottom-section .d-flex.border.p-2 { padding: 3px 8px !important; }
+.bottom-section .d-flex.border.p-2 h6 { margin-bottom: 0 !important; }
+.bottom-section .d-flex.border.p-2 .btn { padding: 2px 10px; font-size: 13px; }
+/* 패널 제목(계약정보·사용자정보·이메일정보) 글자 — 줄을 얇게 하면서 작아 보였다 → 조금 크게(2026-07-30 요청) */
+.bottom-section .d-flex.border.p-2 h6 { font-size: 15px; font-weight: 700; color: #20303a; }
+.bottom-section .d-flex.border.p-2 h6 span { font-size: 13.5px; }   /* 이메일정보 옆 '— 병원명 (기호)' */
+
+/* 머리줄과 표 사이·패널과 패널 사이 틈 축소 (2026-07-30 "체크공간 좁혀" 2차) —
+   DataTables 래퍼·표의 기본 위 여백을 줄여 계약·사용자·이메일 표가 머리줄에 바짝 붙게 한다. */
+.bottom-section .dt-container { margin-top: 2px; }
+.bottom-section table.dataTable { margin-top: 2px !important; }
+.bottom-section .mt-2 { margin-top: 4px !important; }   /* 이메일정보 머리줄의 위 간격도 반으로 */
+
+/* ★★ 클래스 이름 주의 — 이 앱의 DataTables 는 **2.1.8** 이다(header.jsp CDN).
+       v2 는 클래스가 바뀌었다 :  dataTables_scrollBody → dt-scroll-body
+                                dataTables_length     → dt-length
+                                dataTables_wrapper    → dt-container
+       v1 이름으로 쓰면 **아무것도 안 잡힌다**(2026-07-30 실제로 이것 때문에 여백이 안 줄었다).
+       확인 방법 : 재현 페이지에서 wrapper 안 div 클래스를 찍어 봤다 → dt-scroll / dt-scroll-head / dt-scroll-body.
+
+   빈 공간의 원인 — scrollY(계약 300 / 사용자 110 / 이메일 145)는 스크롤 영역에 인라인으로
+   height·max-height 를 박는다. 계약 300px 은 행이 2줄뿐일 때 빈 칸이 크게 남았다.
+   ★처음엔 height:auto 로 '행 수만큼만' 줄였는데 **너무 붙고 한 줄짜리는 잘려 보였다**(2026-07-30 사용자 지적)
+     → auto 를 버리고 **세 패널 모두 같은 높이를 확보**한다. 자료가 많으면 그 안에서 스크롤.
+        130px(3행) → **100px(2행 + 약간)** 으로 한 번 더 줄임(2026-07-30 "조금만 좁혀").
+        한 줄만 있어도 잘리지 않는 최소선이니 이보다 더 줄이지 말 것.
+   ※ scrollY 값 자체는 남겨 둔다 — 지우면 DataTables 가 scroll 구조(머리글 고정)를 아예 안 만든다.
+     이 CSS 가 그 인라인 높이를 덮으므로, 높이를 바꿀 때는 **여기 100px 만** 고치면 된다. */
+.bottom-section .dt-length { display: none; }
+.bottom-section .dt-scroll-body {
+	height: 100px !important;
+	max-height: 100px !important;
+}
 </style>
 <!-- ============================================================== -->
 <!-- Main Form start -->
@@ -105,8 +169,9 @@
 									</div>
 								</div>
 							</div>
-							<div class="col-sm-6">
-								<div class="btn-group ml-auto">
+							<%-- col-sm-6 → col-sm-8 + d-flex (2026-07-30): 버튼 오른쪽에 안내문을 같은 줄로 붙이기 위함 --%>
+							<div class="col-sm-8 d-flex align-items-center">
+								<div class="btn-group">
 									<button class="btn btn-outline-dark" data-toggle="tooltip"
 										data-placement="top" title="" onClick="fn_re_load()">
 										재조회. <i class="fas fa-binoculars"></i>
@@ -138,10 +203,11 @@
 										화면확장축소. <i class="fas fa-expand" id="fullscreenIcon"></i>
 									</button>
 								</div>
+								<%-- 안내문 — 버튼 줄 오른쪽에 붙인다(2026-07-30 요청 : 따로 한 줄 차지하던 것을 올려 빈 공간 제거) --%>
+								<span id="hospContractMsg" style="margin-left: 12px; align-self: center; color: #d32f2f; font-weight: bold; font-size: 13px; white-space: nowrap;">
+									※ 병원계약정보가 변경된 경우 사용자 로그인 시 로그아웃하고 다시 진행 부탁합니다.
+								</span>
 							</div>
-						</div>
-						<div id="hospContractMsg" style="display: inline-block; margin-left: 16px; vertical-align: middle; color: #d32f2f; font-weight: bold; font-size: 13px; white-space: nowrap;">
-							※ 병원계약정보가 변경된 경우 사용자 로그인 시 로그아웃하고 다시 진행 부탁합니다.
 						</div>
 						<div style="width: 100%;">
 							<table id="tableName"
@@ -215,8 +281,104 @@
 							<table id="hu_tableName"
 								class="display nowrap table table-striped table-bordered">
 							</table>
+							<%-- ===== 이메일정보 (2026-07-30) — 적정성평가 월간보고서 메일 수신자 =====
+							         · 자리 = 사용자정보 그리드 **바로 아래**(오른쪽 반을 위아래로 나눠 씀 — 2026-07-30 요청).
+							         · 위 병원목록에서 고른 병원 기준(계약정보·사용자정보와 같은 방식 — 행을 클릭하면 같이 바뀐다).
+							         · 표(he_tableName)는 사용자정보 그리드와 같은 DataTables 설정 — 글꼴·머리글·행높이 통일.
+							         · 서버는 새로 만든 것 없음 — 월보고서가 쓰던 /main/evalMailAddr*.do 그대로.
+							         · 이메일 자체를 바꾸려면 삭제하고 새로 등록(이메일이 키라서 수정은 이름/직책만). --%>
+							<div class="d-flex justify-content-between align-items-center border p-2 rounded mt-2">
+								<h6 class="mb-1 fw-bold text-dark">이메일정보
+									<span id="he_hospNm" style="font-weight: 600; font-size: 12px; color: #6b7a89;"></span>
+								</h6>
+								<div>
+									<button class="btn btn-outline-dark btn-insert" data-toggle="tooltip"
+										data-placement="top" title="선택 병원에 수신자 메일주소 추가"
+										onClick="he_modal_Open('I')">
+										입력. <i class="far fa-edit"></i>
+									</button>
+									<button class="btn btn-outline-dark btn-update" data-toggle="tooltip"
+										data-placement="top" title="선택한 주소의 이름/직책 수정"
+										onClick="he_modal_Open('U')">
+										수정. <i class="far fa-save"></i>
+									</button>
+									<button class="btn btn-outline-dark btn-delete" data-toggle="tooltip"
+										data-placement="top" title="선택한 주소 삭제"
+										onClick="he_modal_Open('D')">
+										삭제. <i class="far fa-trash-alt"></i>
+									</button>
+									<button class="btn btn-outline-dark" data-toggle="tooltip"
+										data-placement="top" title="엑셀 파일로 여러 건 한 번에 등록 (A열 기관기호 · B열 이메일 · C열 성함)"
+										onClick="he_excelPick()">
+										엑셀업로드. <i class="fas fa-file-excel"></i>
+									</button>
+									<button class="btn btn-outline-dark" data-toggle="tooltip"
+										data-placement="top" title="엑셀 등록 양식 내려받기"
+										onClick="he_excelSample()">
+										양식받기. <i class="fas fa-download"></i>
+									</button>
+									<%-- 파일 선택창은 버튼으로 대신 연다(회색 input 이 툴바 모양을 깨뜨려서) --%>
+									<input type="file" id="he_file" accept=".xlsx,.xls,.csv"
+										style="display: none;" onchange="he_excelRead(this)">
+								</div>
+							</div>
+							<table id="he_tableName"
+								class="display nowrap table table-striped table-bordered">
+							</table>
 						</div>
 					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<%-- 이메일정보 입력·수정 창 — 계약정보(hc_modalName)와 같은 모양 --%>
+	<div class="modal fade" id="he_modalName" tabindex="-1"
+		data-backdrop="static" role="dialog" aria-hidden="true"
+		data-keyboard="false">
+		<div class="modal-dialog modal-dialog-centered" role="dialog"
+			style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40vw; max-width: 40vw;">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h6 class="modal-title" id="he_modalHead"></h6>
+					<div class="form-row">
+						<div class="col-sm-12 mb-2" style="text-align: right;">
+							<button id="he_form_btn_ins" type="button"
+								class="btn btn-outline-info btn-insert" onClick="he_fn_Save('I')">
+								입력. <i class="far fa-edit"></i>
+							</button>
+							<button id="he_form_btn_udt" type="button"
+								class="btn btn-outline-success btn-update" onClick="he_fn_Save('U')">
+								수정. <i class="far fa-save"></i>
+							</button>
+							<button type="button" class="btn btn-outline-dark"
+								data-dismiss="modal" onClick="he_modalClose()">
+								닫기 <i class="fas fa-times"></i>
+							</button>
+						</div>
+					</div>
+				</div>
+				<div class="modal-body" style="text-align: left;">
+					<div class="form-group row">
+						<label class="col-3 col-lg-3 col-form-label text-left">요양기관</label>
+						<div class="col-8 col-lg-8">
+							<input id="he_hospCd" type="text" class="form-control" readonly>
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="he_email" class="col-3 col-lg-3 col-form-label text-left">이메일</label>
+						<div class="col-8 col-lg-8">
+							<input id="he_email" type="text" class="form-control" placeholder="name@domain.com">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="he_addrNm" class="col-3 col-lg-3 col-form-label text-left">성함 / 직책</label>
+						<div class="col-8 col-lg-8">
+							<input id="he_addrNm" type="text" class="form-control" placeholder="예) 김간호 팀장">
+						</div>
+					</div>
+					<div id="he_modalNote" style="font-size: 12.5px; color: #8a5a00; padding-left: 4px;"></div>
 				</div>
 			</div>
 		</div>
@@ -807,7 +969,8 @@
 		var gridColums = [];
 		var btm_Scroll = true;   		// 하단 scroll여부 - scrollX
 		var auto_Width = true;   		// 열 너비 자동 계산 - autoWidth
-		var page_Hight = 300;// 650;    		// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+		var page_Hight = 240;// 300;// 650;  	// Page 길이보다 Data가 많으면 자동 scroll - scrollY
+		                                        // 2026-07-30: 300→240 — 병원목록을 12행까지만 보이게(행높이 약 20px), 하단 패널이 그만큼 위로
 		var p_Collapse = false;  		// Page 길이까지 auto size - scrollCollapse
 		
 		var datWaiting = true;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
@@ -1281,8 +1444,9 @@
 				$('.dataTables_filter input').attr('autocomplete', 'off').val('');
 				dataTable.search('').draw();
 
-				// 안내 메시지를 자료검색 입력란 우측에 나란히 배치
-				$('#hospContractMsg').insertAfter('#' + tableName.id + '_filter');
+				// 안내 메시지 위치 — 2026-07-30: 자료검색 우측으로 옮기던 이동을 없앰.
+				//   마크업에서 상단 버튼줄(화면확장축소 오른쪽)에 넣었으므로 여기서 옮기면 다시 아랫줄로 내려간다.
+				// $('#hospContractMsg').insertAfter('#' + tableName.id + '_filter');
 
 				// 전체 선택 체크박스 기능
 			    $('#selectAll').on('click', function() {
@@ -2820,7 +2984,7 @@
 		            lengthChange:  true, // 페이지당 개수 변경 옵션 제거
 		            info:          false,
 		            paging:        false, // 페이징 제거
-		            scrollY: "300px", // 세로 스크롤 추가
+		            scrollY: "110px", // 세로 스크롤 — 300px→150px→110px(2026-07-30 "조금만 위로"): 아래 [이메일정보]를 끌어올린다. 사용자 많으면 이 안에서 스크롤
 		            fixedHeader: true, // 헤더 고정
 	    			search: {
 	    	            return:  false,          	            
@@ -4025,6 +4189,286 @@
         });
     }
 
+
+
+	/* ============================================================
+	   이메일정보 (2026-07-30) — 적정성평가 월간보고서 메일 수신자
+	     · 자리 = 사용자정보 패널 **바로 아래**(오른쪽 반을 위아래로 나눠 씀).
+	     · 기준 병원 = 위 그리드에서 **클릭한 행**(계약정보·사용자정보와 같은 방식).
+	     · 표는 사용자정보(hu_tableName)와 **같은 DataTables 설정**을 쓴다 — 글꼴·머리글·행 높이를 맞추려고
+	       직접 그리지 않고 그리드로 만든다(2026-07-30 요청).
+	     · 알림창은 이 시스템 표준 messageBox() 를 쓴다(파란 '알림' + 확인(OK)). Swal 로 띄우지 말 것.
+	     · 서버 새로 만든 것 없음 : evalMailAddrAll(조회) / evalMailAddrSave(입력·수정)
+	       / evalMailAddrBulk(엑셀 여러 건) / evalMailAddrDel(삭제) — 월보고서가 쓰던 그대로다.
+	     · 이메일이 키라서 [수정]은 이름/직책만 바꾼다. 이메일을 바꾸려면 삭제하고 새로 등록.
+	     · 엑셀은 A열 기관기호 · B열 이메일 · C열 성함. 기관기호가 빈 줄은 **선택 병원**으로 채운다.
+	   ============================================================ */
+	var he_hospCd    = '';      // 선택한 병원 기관기호
+	var he_hospNmV   = '';      // 선택한 병원명
+	var he_dataTable = null;    // 이메일정보 그리드
+	var he_sel       = null;    // 그리드에서 고른 행(수정·삭제 대상)
+
+	/* 알림 — 이 화면 표준(js/winmc/message.js). flag 1=알림(파랑) 5=오류(빨강) */
+	function he_msg(mess, flag){
+		if(typeof messageBox === 'function') messageBox(String(flag||'1'), '<h5>'+mess+'</h5><p></p><br>', '', '', '');
+		else alert(mess);
+	}
+	/* 확인(예/아니오) — 월보고서 메일발송 확인창과 같은 공통 컴포넌트(_confirmBox, /asset/js/ui-message.js).
+	   작은 창 + [취소 | 파란 확인] 2버튼. Swal 큰 아이콘 창은 쓰지 않는다(2026-07-30 요청). */
+	function he_confirm(html, onYes){
+		if(typeof window._confirmBox === 'function'){
+			window._confirmBox({ msg: html, icon: '❓', okText: '확인', okColor: 'blue', onOk: onYes });
+		} else if(window.confirm(String(html).replace(/<[^>]*>/g,''))){ onYes(); }
+	}
+
+	/* 사용자정보(hu_) 그리드와 같은 설정으로 만든다 — 다르게 주면 글꼴·줄높이가 어긋난다 */
+	function initHeResultsTable(){
+		if ($.fn.DataTable.isDataTable('#he_tableName')) return;
+		he_dataTable = $('#he_tableName').DataTable({
+			responsive:   false,
+			autoWidth:    false,
+			ordering:     false,
+			searching:    false,
+			lengthChange: false,
+			info:         false,
+			paging:       false,
+			scrollY:      "145px",   // 2026-07-30: 150→120→145 — 우측(사용자 110 + 이메일) 아래선을 좌측 계약정보 그리드(300) 아래선에 맞춤(실화면 대조로 보정)
+			fixedHeader:  true,
+			data: [],
+			rowCallback: function(row, data, index) {
+				$(row).find('td').css('padding', colPadding);
+			},
+			language: {
+				search: "자 료 검 색 : ",
+				emptyTable: "데이터가 없습니다.",
+				lengthMenu: "_MENU_",
+				info: "현재 _START_ - _END_ / 총 _TOTAL_건",
+				infoEmpty: "데이터 없음",
+				infoFiltered: "( _MAX_건의 데이터에서 필터링됨 )",
+				loadingRecords: "대기중...",
+				processing: "잠시만 기다려 주세요...",
+				paginate: {"next": "다음", "previous": "이전"}
+			},
+			columns: [
+				{ title: "요양기관", data: "hospcd",  className: "text-center", defaultContent: '' },
+				{ title: "이름/직책", data: "addrnm",  className: "text-center", defaultContent: '' },
+				{ title: "이메일",   data: "email",   className: "text-left",   defaultContent: '' },
+				{ title: "수정일",   data: "upddttm", className: "text-center", defaultContent: '' }
+			]
+		});
+		/* 행 선택 — 사용자정보 그리드와 같은 방식(클릭한 줄만 selected) */
+		$('#he_tableName tbody').on('click', 'tr', function(){
+			he_sel = he_dataTable.row(this).data();
+			he_dataTable.$('tr.selected').removeClass('selected');
+			$(this).addClass('selected');
+		});
+		/* 더블클릭 = 수정 (다른 그리드와 같은 습관) */
+		$('#he_tableName tbody').on('dblclick', 'tr', function(){
+			he_sel = he_dataTable.row(this).data();
+			he_modal_Open('U');
+		});
+	}
+
+	/* 좌(계약정보) 표의 아래선을 우(이메일정보) 표의 아래선에 맞춘다 — 2026-07-30 요청.
+	     좌측은 표 1개, 우측은 표 2개라 높이가 다르다. 머리줄·머리글 높이는 화면·글꼴에 따라 바뀌므로
+	     px 를 손으로 계산하지 않고 **두 표의 실제 아래선 차이만큼** 좌측 스크롤영역을 늘린다.
+	     ★재현 페이지로 검증 : 차이 0px, 두 번 실행해도 값이 변하지 않는다(수렴).
+	     ★DataTables 2.x 클래스(dt-container / dt-scroll-body) 를 쓴다 — v1 이름은 안 잡힌다. */
+	function he_syncHeight(){
+		var lp = document.querySelector('.bottom-section .left-panel');
+		var lb = lp && lp.querySelector('.dt-scroll-body');
+		var lc = lp && lp.querySelector('.dt-container');
+		var he = document.getElementById('he_tableName');
+		var hw = he && he.closest ? he.closest('.dt-container') : null;
+		if(!lb || !lc || !hw) return;
+		var gap = hw.getBoundingClientRect().bottom - lc.getBoundingClientRect().bottom;
+		if(Math.abs(gap) < 2) return;                                  // 이미 맞으면 건드리지 않는다
+		var h = Math.max(100, Math.round(lb.getBoundingClientRect().height + gap));
+		lb.style.setProperty('height', h + 'px', 'important');
+		lb.style.setProperty('max-height', h + 'px', 'important');
+	}
+	/* 세 그리드 중 어느 것이든 다시 그려지면(행 클릭·조회) 높이를 다시 맞춘다 */
+	$(document).on('draw.dt', function(){ setTimeout(he_syncHeight, 0); });
+	$(window).on('resize', function(){ setTimeout(he_syncHeight, 100); });
+
+	/* 위 그리드 행 클릭 → 이 패널도 그 병원으로 바꾼다.
+	   ★document 에 위임한다 — 이 스크립트가 도는 시점에 tbody 가 아직 없을 수 있다(그리드는
+	     다른 $(function) 에서 DataTables 로 만들어진다). tbody 에 직접 걸면 클릭이 안 먹는다. */
+	$(function(){
+		initHeResultsTable();
+		$(document).on('click', '#tableName tbody tr', function(){
+			if(!$.fn.DataTable.isDataTable('#tableName')) return;
+			var d = $('#tableName').DataTable().row(this).data();
+			if(!d) return;
+			he_setHosp(d.hospCd, d.hospNm);
+		});
+	});
+
+	function he_setHosp(cd, nm){
+		he_hospCd  = String(cd||'').trim();
+		he_hospNmV = String(nm||'').trim();
+		he_sel = null;
+		var box = document.getElementById('he_hospNm');
+		if(box) box.textContent = he_hospCd ? ('— ' + (he_hospNmV || he_hospCd) + ' (' + he_hospCd + ')') : '';
+		he_load();
+	}
+
+	/* 목록 조회 — evalMailAddrAll 은 검색어(findData)로 좁히는 전체 조회다.
+	   기관기호로 좁혀 받은 뒤 **그 병원 행만** 남긴다(부분일치로 다른 병원이 섞이지 않게).
+	   ★비교는 반드시 대소문자 무시 — 위 그리드는 'W1234567', 주소록 DB 는 'w1234567' 처럼
+	     케이스가 달라서, 그대로 === 하면 자료가 있는데도 '데이터가 없습니다'가 됐다(2026-07-30 실제 발생). */
+	function he_load(){
+		initHeResultsTable();
+		if(!he_hospCd){ he_dataTable.clear().draw(); return; }
+		$.ajax({
+			url: "/main/evalMailAddrAll.do",
+			type: "POST",
+			dataType: "json",
+			data: { findData: he_hospCd },
+			beforeSend: function(){ he_dataTable.clear().draw(); },
+			success: function(r){
+				var all  = (r && r.result==='OK') ? (r.list||[]) : [];
+				var low  = he_hospCd.toLowerCase();
+				var list = all.filter(function(a){ return String(a.hospcd||'').trim().toLowerCase() === low; });
+				he_dataTable.clear();
+				if(list.length) he_dataTable.rows.add(list);
+				he_dataTable.draw();
+			},
+			error: function(){ he_dataTable.clear().draw(); he_msg('메일주소 조회 중 오류가 발생했습니다.', '5'); }
+		});
+	}
+
+	/* 입력(I) · 수정(U) · 삭제(D) — 계약정보(hc_modal_Open)와 같은 방식으로 한 함수에서 갈라진다 */
+	window.he_modal_Open = function(mode){
+		if(!he_hospCd){ he_msg('위 병원 목록에서 병원을 먼저 선택하세요. !!'); return; }
+		if((mode==='U' || mode==='D') && !he_sel){ he_msg('작업 할 Data가 선택되지 않았습니다. !!'); return; }
+		if(mode==='D'){ he_fn_Delete(); return; }
+
+		document.getElementById('he_hospCd').value = he_hospCd + (he_hospNmV ? ('  ('+he_hospNmV+')') : '');
+		if(mode==='I'){
+			document.getElementById('he_modalHead').textContent = '이메일정보 입력';
+			document.getElementById('he_email').value  = '';
+			document.getElementById('he_addrNm').value = '';
+			document.getElementById('he_email').readOnly = false;
+			document.getElementById('he_modalNote').textContent = '';
+			$('#he_form_btn_ins').show(); $('#he_form_btn_udt').hide();
+		} else {
+			document.getElementById('he_modalHead').textContent = '이메일정보 수정';
+			document.getElementById('he_email').value  = he_sel.email || '';
+			document.getElementById('he_addrNm').value = he_sel.addrnm || '';
+			document.getElementById('he_email').readOnly = true;      // 이메일이 키 — 바꾸려면 삭제 후 등록
+			document.getElementById('he_modalNote').textContent = '이메일은 바꿀 수 없습니다(키). 주소를 바꾸려면 삭제하고 새로 등록하세요.';
+			$('#he_form_btn_ins').hide(); $('#he_form_btn_udt').show();
+		}
+		$('#he_modalName').modal('show');
+		setTimeout(function(){ document.getElementById(mode==='I' ? 'he_email' : 'he_addrNm').focus(); }, 300);
+	};
+	window.he_modalClose = function(){ $('#he_modalName').modal('hide'); };
+
+	window.he_fn_Save = function(mode){
+		var email  = (document.getElementById('he_email').value||'').trim();
+		var addrNm = (document.getElementById('he_addrNm').value||'').trim();
+		if(email.indexOf('@') < 1){
+			document.getElementById('he_modalNote').textContent = '이메일 형식이 올바르지 않습니다.';
+			document.getElementById('he_email').focus();
+			return;
+		}
+		$.ajax({
+			url: "/main/evalMailAddrSave.do",
+			type: "POST",
+			dataType: "json",
+			data: { hospCd: he_hospCd, email: email, addrNm: addrNm },
+			success: function(r){
+				if(!r || r.result!=='OK'){ he_msg((r&&r.message)?r.message:'저장하지 못했습니다.', '5'); return; }
+				he_modalClose();
+				he_sel = null;
+				he_load();
+				he_msg(mode==='I' ? '등록되었습니다. !!' : '수정되었습니다. !!');
+			},
+			error: function(){ he_msg('서버 통신 오류로 저장하지 못했습니다.', '5'); }
+		});
+	};
+
+	function he_fn_Delete(){
+		he_confirm('<b>' + he_sel.email + '</b><br>이 주소를 삭제할까요?', function(){
+			$.ajax({
+				url: "/main/evalMailAddrDel.do",
+				type: "POST",
+				dataType: "json",
+				data: { addrSeq: he_sel.addrseq, hospCd: he_hospCd },
+				success: function(){ he_sel=null; he_load(); },
+				error: function(){ he_msg('삭제 중 오류가 발생했습니다.', '5'); }
+			});
+		});
+	}
+
+	/* ===== 엑셀 ===== */
+	window.he_excelPick = function(){
+		if(!he_hospCd){ he_msg('위 병원 목록에서 병원을 먼저 선택하세요. !!'); return; }
+		var f = document.getElementById('he_file'); if(f){ f.value=''; f.click(); }
+	};
+	window.he_excelSample = function(){
+		if(typeof XLSX==='undefined'){ he_msg('엑셀 라이브러리를 불러오지 못했습니다.', '5'); return; }
+		var aoa=[['요양기관기호','이메일','성함/직책'],
+		         [he_hospCd||'11223344','hospital@example.com','김간호 팀장'],
+		         ['','staff@example.com','']];
+		var wb=XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), '수신자');
+		XLSX.writeFile(wb, '메일수신자_등록양식.xlsx');
+	};
+	window.he_excelRead = function(input){
+		var f = input.files && input.files[0]; if(!f) return;
+		if(typeof XLSX==='undefined'){ he_msg('엑셀 라이브러리를 불러오지 못했습니다.', '5'); return; }
+		var fr = new FileReader();
+		fr.onload = function(e){
+			var rows = [];
+			try{
+				var wb  = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+				var ws  = wb.Sheets[wb.SheetNames[0]];
+				var aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+				aoa.forEach(function(r){
+					var cd = String(r[0]==null?'':r[0]).trim();
+					var em = String(r[1]==null?'':r[1]).trim();
+					var nm = String(r[2]==null?'':r[2]).trim();
+					if(!cd && !em) return;
+					// 머리글 줄 건너뛰기(이메일 칸에 @ 가 없고 안내 낱말이 들어있는 줄)
+					if(em.indexOf('@') < 1 && /기관|기호|이메일|메일|주소|이름|성함/.test(cd+em)) return;
+					if(em.indexOf('@') < 1) return;                 // 이메일 아닌 줄은 버린다
+					rows.push({ hospCd: (cd || he_hospCd), email: em, addrNm: nm });   // 기관기호 빈 줄 = 선택 병원
+				});
+			}catch(err){
+				he_msg('엑셀을 읽지 못했습니다. ' + err.message, '5');
+				return;
+			}
+			if(!rows.length){
+				he_msg('이 파일에서 이메일을 찾지 못했습니다.<br>A열 기관기호 · B열 이메일 · C열 성함 순서인지 확인하세요.', '5');
+				return;
+			}
+			// 선택 병원이 아닌 기관기호가 섞였는지 알려 준다(엑셀은 여러 병원 한 번에 등록할 수 있다) — 대소문자 무시
+			var others = 0, _low = he_hospCd.toLowerCase();
+			for(var i=0;i<rows.length;i++){ if(String(rows[i].hospCd).toLowerCase() !== _low) others++; }
+			he_confirm(
+				'<b>'+rows.length+'건</b>을 등록할까요?'
+				    + (others ? ('<br><span style="color:#8a5a00">다른 병원 '+others+'건이 함께 들어 있습니다(그대로 등록됩니다)</span>') : '')
+				    + '<br><span style="font-size:12.5px;color:#6b7a89">같은 병원의 같은 주소는 중복 등록되지 않고 이름만 갱신됩니다.</span>',
+				function(){
+				$.ajax({
+					url: "/main/evalMailAddrBulk.do",
+					type: "POST",
+					contentType: "application/json",
+					dataType: "json",
+					data: JSON.stringify(rows),
+					success: function(r){
+						if(!r || r.result!=='OK'){ he_msg((r&&r.message)?r.message:'등록에 실패했습니다.', '5'); return; }
+						he_load();
+						he_msg('등록 '+r.okCnt+'건' + ((r.ngCnt||0) ? (' · 실패 '+r.ngCnt+'건') : '') + ' 처리되었습니다. !!');
+					},
+					error: function(){ he_msg('서버 통신 오류로 등록하지 못했습니다.', '5'); }
+				});
+			});
+		};
+		fr.readAsArrayBuffer(f);
+	};
 
 	</script>
 <!-- ============================================================== -->

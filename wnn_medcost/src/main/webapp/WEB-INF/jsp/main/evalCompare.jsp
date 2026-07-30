@@ -7,9 +7,18 @@
      ★왜 별도 화면인가 — 적정성평가 화면에 붙이면 조회할 때마다 전체 집계가 같이 돈다.
        가끔 보는 자료라 버튼으로 열게 했다. 안 누르면 쿼리도 안 돈다(2026-07-28 사용자 확정).
 
-     ★대상 = 해당월 자료가 있고 + 해당월 환자평가표가 있는 병원 − 제외 기관기호(테스트).
-       평균은 병원별 현황값(CAL_VAL)의 단순평균이고, 현황값 0 인 병원도 포함한다.
+     ★대상 = 조회기간 자료가 있고 + 그 기간 환자평가표가 있는 병원 − 제외 기관기호(테스트).
+       평균은 병원별 값의 단순평균이고, 값이 0 인 병원도 포함한다.
        (근거는 Magam_SQL.xml 의 select_EvalCmpAvg 주석에 수치와 함께 남겨 뒀다)
+
+     ★[2026-07-30] 평가년월 → **평가년도 + 기간(시작월~종료월)**. 년도는 그대로 두고 월만 두 칸이다.
+       · 시작월 = 종료월 → 예전 한 달 조회와 값이 완전히 같다(202607 로 18개 지표 전부 대조 확인).
+       · 여러 달 → **월평균**(한 달씩 값을 구해 달수로 나눔, 2026-07-30 사용자 확정).
+         ★자료 없는 달은 달수에서 뺀다 — TBL_PAT_INDI 는 자료가 없어도 행이 생기고 값이 0 이라,
+           그냥 나누면 빈 달이 값을 끌어내린다(실측: 지표09 89.01 → 35.36 반토막). 이 처리를 빼지 말 것.
+       · 병원 목록의 구조·진료·종합 점수도 달별 점수의 평균이다(0~100 척도라 더하면 100을 넘는다).
+         ★그 달 환자평가표가 있는 달만 평균한다 — 평가표 없는 달은 진료가 기본값(7.80)이라 그대로 나누면
+           진료·종합이 실제보다 낮아진다(실측: 부산대성요양병원 진료 34.80 → 15.51). 지표값과 같은 원칙.
 
      ★주의: 이 파일 안에서 Deferred EL 표기(샵 + 중괄호) 금지 — 변환에러로 content 타일이 빈 화면이 된다 --%>
 
@@ -186,9 +195,16 @@
   </div>
 
   <div class="ec-bar">
-    <label>평가년월</label>
+    <%-- ★[2026-07-30] 한 달 → 기간(시작월~종료월) 조회. 년도는 그대로 두고 월만 두 칸으로 나눴다.
+             · 시작월 = 종료월 이면 예전 한 달 조회와 **완전히 같은 값**이다(실측 대조 확인).
+             · 여러 달을 고르면 **월평균** — 한 달씩 값을 구해 달수로 나눈다(자료 없는 달은 달수에서 제외).
+               계산 규칙과 그 근거(실측 수치)는 Magam_SQL.xml 의 evalCmpIntegrated 주석에 있다. --%>
+    <label>평가년도</label>
     <select id="ec-year" class="ec-sel" onchange="ecLoad()"></select>
-    <select id="ec-month" class="ec-sel" onchange="ecLoad()"></select>
+    <label style="margin-left:6px;">기간</label>
+    <select id="ec-month" class="ec-sel" onchange="ecMonthFix('fr')" title="시작월"></select>
+    <span style="font-weight:800; color:#54636c;">~</span>
+    <select id="ec-month2" class="ec-sel" onchange="ecMonthFix('to')" title="종료월"></select>
     <button class="ec-btn" onclick="ecLoad()">조회</button>
     <span id="ec-stat" style="font-size:12px; font-weight:700; color:#6a7a75; margin-left:6px;"></span>
 
@@ -198,7 +214,7 @@
       <div><span>평균 대상 병원</span><b id="ec-k1">—</b></div>
       <div><span>환자평가표 없음</span><b id="ec-k2" class="warn">—</b></div>
       <div><span>제외 기관기호</span><b id="ec-k3" class="excl">—</b></div>
-      <div><span>해당월 전체 병원</span><b id="ec-k4">—</b></div>
+      <div><span>기간 전체 병원</span><b id="ec-k4">—</b></div>
     </div>
   </div>
 
@@ -340,9 +356,20 @@ jQuery(function(){
     var defM = qy ? qy.substring(4,6) : ('0'+(now.getMonth()+1)).slice(-2);
     var yh=''; for(var yy=y; yy>=y-9; yy--) yh+='<option value="'+yy+'">'+yy+'</option>';
     el('ec-year').innerHTML=yh; el('ec-year').value=defY;
-    var mh=''; for(var mo=1;mo<=12;mo++){ var mm=('0'+mo).slice(-2); mh+='<option value="'+mm+'">'+mm+'</option>'; }
-    el('ec-month').innerHTML=mh; el('ec-month').value=defM;
+    var mh=''; for(var mo=1;mo<=12;mo++){ var mm=('0'+mo).slice(-2); mh+='<option value="'+mm+'">'+mm+'월</option>'; }
+    /* 시작월·종료월 둘 다 진입한 달로 시작한다 — 적정성평가에서 [평가비교] 로 들어오면
+       그 달만 보이는 게 기존 동작이고, 기간은 사용자가 넓히는 것이 자연스럽다. */
+    el('ec-month').innerHTML=mh;  el('ec-month').value=defM;
+    el('ec-month2').innerHTML=mh; el('ec-month2').value=defM;
   })();
+
+  /* 시작월 > 종료월 이 되면 방금 고른 쪽을 기준으로 다른 쪽을 맞춰 준다(오류창을 띄우지 않는다).
+     which = 'fr'(시작월을 바꿨다) / 'to'(종료월을 바꿨다) */
+  window.ecMonthFix = function(which){
+    var fr=el('ec-month'), to=el('ec-month2');
+    if(fr.value > to.value){ if(which==='fr') to.value = fr.value; else fr.value = to.value; }
+    ecLoad();
+  };
 
   /* [← 적정성평가로] — ★돌아갈 때 '재생성 확인' 팝업이 뜨지 않게 한다(2026-07-28 요청).
        적정성평가 화면은 진입 시 자료가 있으면 "다시 생성하시겠습니까?"를 묻는데, 보던 화면으로
@@ -360,32 +387,69 @@ jQuery(function(){
     location.href = ctx + '/main/assessment.do?ym=' + yy + mm;
   };
 
+  /* 기간의 달 목록 — 시작월~종료월 (같으면 한 달) */
+  function ecMonths(){
+    var yy=el('ec-year').value, mf=el('ec-month').value, mt=el('ec-month2').value;
+    if(mf > mt){ var t=mf; mf=mt; mt=t; }
+    var out=[];
+    for(var mo=parseInt(mf,10); mo<=parseInt(mt,10); mo++) out.push(yy+('0'+mo).slice(-2));
+    return out;
+  }
+
+  /* 기준 병원(선택 병원)의 기간값 — **서버(Magam_SQL.xml evalCmpIntegrated)와 똑같은 규칙**이어야 한다.
+       · 월평균 : 달마다의 현황값을 더해 달수로 나눈다(분자합/분모합 아님 — 2026-07-30 사용자 확정).
+       · **자료 없는 달은 달수에서 뺀다** : 자료가 없어도 행은 생기고 값이 0 이라, 그냥 나누면 값이 꺼진다.
+         '자료 있는 달' = 분모가 있거나(dtorval>0), 분모 없이 값만 정해지는 지표(07·08·15)라 값이 0 이 아닌 달.
+       · 모든 달이 빈 달이면 0.
+     ★서버 조회(select_Eval_Indi)가 한 달 단위라 달마다 부른 뒤 여기서 합친다. 규칙이 어긋나면
+       왼쪽(선택 병원)과 오른쪽(전체 평균)의 기준이 달라지므로, 한쪽만 고치지 말 것. */
+  function ecMergeMine(perMonthRows){
+    var acc = {};
+    perMonthRows.forEach(function(rows){
+      (rows||[]).forEach(function(r){
+        var cd = String(r.cate_cd||r.cateCd||''); if(!cd) return;
+        var a = acc[cd] || (acc[cd] = { sum:0, cnt:0 });
+        var d = n(r.dtorval), v = n(r.cal_val);
+        if(d > 0 || v !== 0){ a.sum += v; a.cnt++; }      // 자료 있는 달만 센다
+      });
+    });
+    var out = {};
+    Object.keys(acc).forEach(function(cd){
+      var a = acc[cd];
+      out[cd] = a.cnt ? Math.round(a.sum/a.cnt*100)/100 : 0;
+    });
+    return out;
+  }
+
   window.ecLoad = function(){
-    var ym = el('ec-year').value + el('ec-month').value;
+    var months = ecMonths();
+    var ymFr = months[0], ymTo = months[months.length-1];
     el('ec-stat').textContent = '조회 중…';
     el('ec-ind').innerHTML  = '<tbody><tr><td class="ec-msg">읽는 중…</td></tr></tbody>';
     el('ec-hosp').innerHTML = '<tbody><tr><td class="ec-msg">읽는 중…</td></tr></tbody>';
 
-    /* 세 가지를 함께 읽는다 — ①전체평균 ②병원목록 ③우리 병원 지표(비교 기준).
-       ③은 적정성평가 화면이 쓰는 그 조회를 그대로 재사용한다(같은 값이 나와야 하므로 새로 만들지 않는다). */
-    var pAvg  = jQuery.ajax({ url:ctx+'/main/select_EvalCmpRaw.do',  type:'POST', dataType:'json', data:{ jobyymm:ym } });
-    var pHosp = jQuery.ajax({ url:ctx+'/main/select_EvalCmpHosp.do', type:'POST', dataType:'json', data:{ jobyymm:ym } });
-    var pMine = jQuery.ajax({ url:ctx+'/main/select_Eval_Indi.do',   type:'POST', dataType:'json', data:{ hosp_cd:myHosp, jobyymm:ym } });
+    /* ①전체평균(낟알) ②병원목록 은 기간 파라미터를 그대로 넘긴다 — 서버가 기간 통합으로 계산한다.
+         jobyymm 도 같이 보낸다(기간 파라미터를 모르는 예전 쿼리와의 호환 — 값은 시작월).
+       ③기준 병원 지표는 적정성평가 화면이 쓰는 그 조회를 달마다 재사용한다(같은 값이 나와야 하므로 새로 만들지 않는다). */
+    var prm   = { jobyymm:ymFr, jobyymmFr:ymFr, jobyymmTo:ymTo };
+    var pAvg  = jQuery.ajax({ url:ctx+'/main/select_EvalCmpRaw.do',  type:'POST', dataType:'json', data:prm });
+    var pHosp = jQuery.ajax({ url:ctx+'/main/select_EvalCmpHosp.do', type:'POST', dataType:'json', data:prm });
+    var pMine = months.map(function(ym){
+      return jQuery.ajax({ url:ctx+'/main/select_Eval_Indi.do', type:'POST', dataType:'json',
+                           data:{ hosp_cd:myHosp, jobyymm:ym } });
+    });
 
-    jQuery.when(pAvg, pHosp, pMine).done(function(a, h, m){
+    jQuery.when.apply(jQuery, [pAvg, pHosp].concat(pMine)).done(function(){
+      var args = Array.prototype.slice.call(arguments);
+      var a = args[0], h = args[1], mine = args.slice(2);
       _raw  = ((a[0]&&a[0].list) || []);   // 병원별 지표값(낟알) — 평균은 이걸로 화면에서 낸다
-      _excl = {};                          // 달을 바꾸면 제외 체크는 초기화한다
+      _excl = {};                          // 기간을 바꾸면 제외 체크는 초기화한다
       _hosp = ((h[0]&&h[0].list) || []);
-      _mine = {};
-      var mrows = (m[0] && (m[0].data || m[0].list || m[0])) || [];
-      if(mrows && mrows.length){
-        for(var i=0;i<mrows.length;i++){
-          var r=mrows[i], cd=String(r.cate_cd||r.cateCd||'');
-          if(cd) _mine[cd] = r.cal_val;
-        }
-      }
+      _mine = ecMergeMine(mine.map(function(m){ return (m[0] && (m[0].data || m[0].list || m[0])) || []; }));
       ecCalcAvg(); ecRenderKpi(); ecRenderInd(); ecRenderHosp();
-      el('ec-stat').textContent = '';
+      el('ec-stat').textContent = (months.length > 1)
+            ? (ymFr.substring(0,4)+'.'+ymFr.substring(4,6)+' ~ '+ymTo.substring(4,6)+'월 · '+months.length+'개월 월평균')
+            : '';
     }).fail(function(){
       el('ec-stat').textContent = '조회에 실패했습니다.';
       el('ec-ind').innerHTML  = '<tbody><tr><td class="ec-msg">자료를 읽지 못했습니다.</td></tr></tbody>';
@@ -409,7 +473,7 @@ jQuery(function(){
 
   function ecRenderInd(){
     var t=el('ec-ind');
-    if(!_avg.length){ t.innerHTML='<tbody><tr><td class="ec-msg">이 달에는 집계할 자료가 없습니다.</td></tr></tbody>'; return; }
+    if(!_avg.length){ t.innerHTML='<tbody><tr><td class="ec-msg">이 기간에는 집계할 자료가 없습니다.</td></tr></tbody>'; return; }
     /* ★병원수 칸은 빼고 **위 요약에 한 번만** 낸다(2026-07-28 요청) — 지표마다 같은 값(51)이 줄마다 반복돼
          칸만 먹었다. 혹시 지표별로 병원수가 다르면 그 줄의 '전체 평균' 칸에 마우스를 올리면 나온다. */
     var h='<thead><tr><th>지표명칭</th><th>'+esc(myHospNm)+'</th><th>전체 평균</th>'

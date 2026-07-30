@@ -248,12 +248,9 @@
                                            <li class="nav-item">
                                                <a class="nav-item nav-link" href="/user/hospcd.do">계약관리</a>
                                            </li>
-                                           <%-- 이메일정보 (2026-07-30) — 적정성평가 월간보고서 메일 수신자 관리.
-                                                월보고서 목록의 '📥 메일주소 일괄등록' 모달을 이 화면으로 옮긴 것(목록에서는 제거).
-                                                ★별도 게이트 불필요 — 상위 li(hospcont)가 위너넷 외 계정에는 hosp_conact() 로 통째로 숨겨진다. --%>
-                                           <li class="nav-item">
-                                               <a class="nav-item nav-link" href="/user/hospEmail.do">이메일정보</a>
-                                           </li>
+                                           <%-- 이메일정보 메뉴는 2026-07-30 제거 — 계약관리 화면(hospcd.jsp) 하단
+                                                [이메일정보] 패널로 들어갔다(선택한 병원 기준, 계약정보·사용자정보와 같은 자리).
+                                                별도 화면(mangr/hospEmail.jsp, /user/hospEmail.do)은 남아 있지만 메뉴에서 빠져 쓰지 않는다. --%>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link"  href="/user/wnnauthcd.do">위너넷권한관리</a>
                                             </li>

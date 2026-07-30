@@ -5968,94 +5968,162 @@
 
 	<!-- ============================================================
 	     전체 비교 (2026-07-28 요청) — 적정성평가 화면 [📊 비교] 버튼 → evalCompare.jsp
-	       "기관기호 w1234567·11223344 를 빼고, 해당월 환자평가표가 있는 병원의 TBL_PAT_INDI 현황값 평균"
+	       "기관기호 w1234567·11223344 를 빼고, 조회기간 환자평가표가 있는 병원의 TBL_PAT_INDI 현황값 비교"
 
-	     [대상 병원]  해당월 TBL_PAT_INDI 가 있고 + 해당월 환자평가표(TBL_PATVAL_MST)가 있는 병원.
-	       · 환자평가표 '해당월' 판정은 이 시스템의 기존 규칙 그대로 MED_START(진료시작월) 로 본다.
-	       · 제외 2곳은 테스트 계정이라 평균을 왜곡시킨다. 늘어나면 여기 IN 목록에 추가할 것.
+	     ★[2026-07-30] 한 달 조회 → **기간(시작월~종료월) 조회** 로 확장(사용자 요청).
+	       · 파라미터 : jobyymmFr·jobyymmTo (둘 다 오면 기간). 없으면 예전처럼 jobyymm 한 달만 본다.
+	       · 기간 계산 기준 = **월평균**(사용자 확정) — 한 달씩 값을 구해 달수로 나눈다. 달마다 한 표씩 동등.
+	         단 **자료 없는 달은 달수에서 뺀다**(아래 evalCmpIntegrated 주석 참고 — 안 빼면 값이 반토막).
+	       · 자바 수정 없음 — 컨트롤러가 파라미터 Map 을 그대로 넘긴다. 이 XML 만 바뀌면 된다(톰캣 재기동은 필요).
+
+	     [대상 병원]  조회기간에 TBL_PAT_INDI 가 있고 + 그 기간 환자평가표(TBL_PATVAL_MST)가 있는 병원.
+	       · 환자평가표 판정은 이 시스템의 기존 규칙 그대로 MED_START(진료시작월) 로 본다.
+	       · 제외 2곳은 테스트 계정이라 평균을 왜곡시킨다. 늘어나면 아래 IN 목록에 추가할 것.
 	       · 2026-07 기준 : 전체 76곳 − 제외 2 − 환자평가표 없음 23 = 51곳
 
 	     ★[성능] 환자평가표 유무를 EXISTS 상관 서브쿼리로 확인하면 **행마다 140,108행을 뒤져** 1.4초가 걸린다.
 	       병원 목록을 파생표로 **한 번만** 뽑아 조인하면 82ms 다(17배). 결과는 완전히 같다.
-	       → 아래 두 쿼리 모두 EXISTS 를 쓰지 말 것.
+	       → 아래 쿼리 모두 EXISTS 를 쓰지 말 것.
 
-	     ★[평균 규칙] 병원별 현황값(CAL_VAL)의 **단순평균**이다. 분자합/분모합 재계산은 쓰지 않는다 —
-	       01~03(의사·간호사 1인당 환자수)은 비율이 아니라 '명' 이고, 07·08·15 는 분모·분자를 쓰지 않아
-	       재계산하면 각각 2921.08 / 0 처럼 깨진 값이 나온다(2026-07 실측으로 확인).
+	     ★[계산 순서 — 2단]
+	       ① 병원마다 기간값을 하나로 만든다 : **자료 있는 달의 CAL_VAL 평균**(evalCmpIntegrated).
+	       ② 그 값들을 **병원 사이에서** 단순평균한다(전체 평균·최소·최대).
+	     ★[분자합/분모합은 쓰지 않는다 — 2026-07 실측]
+	       재계산은 지표마다 정의가 달라 깨진다. 01~03 은 '명' 이라 ×100 하면 29.34 가 2933.83 이 되고,
+	       07(분모 378·분자 0 인데 값 30)·08·15 는 분모·분자를 아예 쓰지 않는다.
+	       → 저장된 CAL_VAL 을 그대로 쓰고, 달 사이에서만 평균한다. 이 원칙을 되돌리지 말 것.
 	     ★현황값이 0 인 병원도 **평균에 포함**한다. 05(유치도뇨관)·10(욕창 새로생김)은 낮을수록 좋은 지표라
 	       0 이 실제 값이고, 빼면 평균이 0.41→1.49 처럼 3배 부풀어 실제보다 나쁘게 보인다.
 	     ============================================================ -->
 
-	<!-- 대상 병원(파생표) — 두 쿼리가 같이 쓴다. 조건이 바뀌면 반드시 양쪽을 함께 고칠 것 -->
+	<!-- 조회기간 조건 (TBL_PAT_INDI) — 기간이 오면 BETWEEN, 아니면 예전처럼 한 달 -->
+	<sql id="evalCmpPeriodP">
+		<choose>
+			<when test="jobyymmFr != null and jobyymmFr != '' and jobyymmTo != null and jobyymmTo != ''">
+				p.JOBYYMM BETWEEN #{jobyymmFr} AND #{jobyymmTo}
+			</when>
+			<otherwise>
+				p.JOBYYMM = #{jobyymm}
+			</otherwise>
+		</choose>
+	</sql>
+
+	<!-- 조회기간 조건 (TBL_PATVAL_MST · 환자평가표) — MED_START 는 YYYYMMDD 문자열이라 문자 범위비교로 자른다
+	     (LIKE 를 범위로 바꿔도 앞자리 비교라 색인은 그대로 쓴다. '99' 는 어떤 일자표기도 덮는 상한값) -->
+	<sql id="evalCmpPeriodV">
+		<choose>
+			<when test="jobyymmFr != null and jobyymmFr != '' and jobyymmTo != null and jobyymmTo != ''">
+				MED_START &gt;= CONCAT(#{jobyymmFr},'01') AND MED_START &lt;= CONCAT(#{jobyymmTo},'99')
+			</when>
+			<otherwise>
+				MED_START LIKE CONCAT(#{jobyymm},'%')
+			</otherwise>
+		</choose>
+	</sql>
+
+	<!-- 대상 병원(파생표) — 아래 쿼리들이 같이 쓴다. 조건이 바뀌면 반드시 함께 고칠 것 -->
 	<sql id="evalCmpTarget">
 		  JOIN ( SELECT DISTINCT HOSP_CD
 		           FROM TBL_PATVAL_MST
-		          WHERE MED_START LIKE CONCAT(#{jobyymm},'%')
+		          WHERE <include refid="evalCmpPeriodV"/>
 		       ) v ON v.HOSP_CD = p.HOSP_CD
-		 WHERE p.JOBYYMM = #{jobyymm}
+		 WHERE <include refid="evalCmpPeriodP"/>
 		   AND p.HOSP_CD NOT IN ('w1234567','11223344')
 	</sql>
 
-	<!-- ① 지표별 전체 평균 — 화면의 지표표와 CATE_CD 로 맞춰 붙인다 -->
-	<select id="select_EvalCmpAvg" parameterType="java.util.Map" resultType="java.util.HashMap">
-		SELECT p.CATE_CD                            AS cateCd
-		     , COUNT(DISTINCT p.HOSP_CD)            AS hospCnt
-		     , ROUND(AVG(p.CAL_VAL), 2)             AS avgVal
-		     , ROUND(MIN(p.CAL_VAL), 2)             AS minVal
-		     , ROUND(MAX(p.CAL_VAL), 2)             AS maxVal
-		     , ROUND(AVG(p.WEIGVAL), 2)             AS avgWeig
+	<!-- 병원별 지표값(기간) — ①③ 이 같이 쓴다.
+	     ★[2026-07-30 사용자 확정] **월평균** — 달마다의 현황값을 더해 달수로 나눈다. 달마다 한 표씩 동등하다.
+	       · 분자합/분모합(가중평균)이 아니다. 처음엔 그렇게 만들었다가 사용자 확인 후 이 방식으로 바꿨다.
+	       · **자료 없는 달은 달수에서 뺀다** — 여기가 핵심이다. TBL_PAT_INDI 는 자료가 없어도 행이 생기고
+	         값이 0 이라, 그냥 달수로 나누면 빈 달이 값을 끌어내린다(실측: 지표09 가 89.01 → 35.36 으로 반토막).
+	       · '자료 있는 달' = 분모(DTORVAL)가 있거나, 분모 없이 값만 정해지는 지표(07·08·15)라 값이 0 이 아닌 달.
+	         → 07(분모 378·분자 0 인데 값 30)·08·15 도 그 달이 정상으로 세어진다.
+	       · 모든 달이 빈 달이면 0 (그 지표는 실제로 0 이다 — 05·10 처럼 0 이 정상값인 지표가 있어 빼지 않는다).
+	     ★한 달만 고르면 그 달 CAL_VAL 그대로다 → **예전 화면 숫자와 완전히 동일**(202607 로 18개 지표
+	       평균·최소·최대 전부 대조 확인). -->
+	<sql id="evalCmpIntegrated">
+		SELECT p.HOSP_CD                                AS HOSP_CD
+		     , p.CATE_CD                                AS CATE_CD
+		     , ROUND(IFNULL(AVG(CASE WHEN p.DTORVAL &gt; 0 OR p.CAL_VAL &lt;&gt; 0
+		                             THEN p.CAL_VAL END), 0), 2)  AS CAL_VAL
+		     , ROUND(AVG(p.WEIGVAL), 2)                 AS WEIGVAL
 		  FROM TBL_PAT_INDI p
 		<include refid="evalCmpTarget"/>
-		 GROUP BY p.CATE_CD
-		 ORDER BY p.CATE_CD
+		 GROUP BY p.HOSP_CD, p.CATE_CD
+	</sql>
+
+	<!-- ① 지표별 전체 평균 — 화면의 지표표와 CATE_CD 로 맞춰 붙인다.
+	         병원별 기간통합값을 먼저 구한 뒤(파생표) 병원 사이에서 평균·최소·최대를 낸다. -->
+	<select id="select_EvalCmpAvg" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT t.CATE_CD                            AS cateCd
+		     , COUNT(DISTINCT t.HOSP_CD)            AS hospCnt
+		     , ROUND(AVG(t.CAL_VAL), 2)             AS avgVal
+		     , ROUND(MIN(t.CAL_VAL), 2)             AS minVal
+		     , ROUND(MAX(t.CAL_VAL), 2)             AS maxVal
+		     , ROUND(AVG(t.WEIGVAL), 2)             AS avgWeig
+		  FROM ( <include refid="evalCmpIntegrated"/> ) t
+		 GROUP BY t.CATE_CD
+		 ORDER BY t.CATE_CD
 	</select>
 
 	<!-- ③ 병원별 지표값 원본 (2026-07-28) — 화면에서 **평균을 다시 계산**하기 위한 낟알 자료.
 	         병원 목록의 체크를 끄면 그 병원을 빼고 평균을 다시 내야 하는데, 그때마다 서버를 부르면 느리다.
 	         (병원 51곳 × 지표 18개 ≒ 900행) 한 번 받아 화면에서 계산한다 — 체크는 즉시 반응한다.
-	       ★대상 판정 규칙은 ①과 **똑같아야** 한다 → 같은 evalCmpTarget 을 쓴다.
-	         ①(select_EvalCmpAvg)은 전체 평균을 서버에서 내는 쪽으로 남겨 두었다(같은 값이 나오는지 대조용). -->
+	       ★대상 판정·계산 규칙은 ①과 **똑같아야** 한다 → 같은 evalCmpIntegrated 를 쓴다. -->
 	<select id="select_EvalCmpRaw" parameterType="java.util.Map" resultType="java.util.HashMap">
-		SELECT p.HOSP_CD                            AS hospCd
-		     , p.CATE_CD                            AS cateCd
-		     , p.CAL_VAL                            AS calVal
-		  FROM TBL_PAT_INDI p
-		<include refid="evalCmpTarget"/>
-		 ORDER BY p.CATE_CD, p.HOSP_CD
+		SELECT t.HOSP_CD                            AS hospCd
+		     , t.CATE_CD                            AS cateCd
+		     , t.CAL_VAL                            AS calVal
+		  FROM ( <include refid="evalCmpIntegrated"/> ) t
+		 ORDER BY t.CATE_CD, t.HOSP_CD
 	</select>
 
 	<!-- ② 병원 목록 — **대상·비대상을 모두** 준다(2026-07-28 보완 요청).
 	         평균에서 빠진 병원과 그 사유가 같이 보여야 "이 병원도 빼야 하나"를 눈으로 판단할 수 있다.
 	           targetGb  Y     = 평균에 들어간 병원
-	                     NOPAT = 해당월 환자평가표가 없어 빠짐
+	                     NOPAT = 조회기간 환자평가표가 없어 빠짐
 	                     EXCL  = 제외 기관기호(테스트 계정)
 	         구조·진료·종합은 assessment.jsp 상단 카드와 **같은 계산식**이다.
 	           구조 = CATE_FG '10' / 진료 = '21','22' / 둘 다 합계행(CATE_CD '99')은 제외.
+	         ★[기간조회] 점수는 0~100 척도라 여러 달을 **더하면 안 된다** → 달마다 점수를 낸 뒤(파생표 s)
+	           그 달들의 평균을 쓴다. 한 달만 고르면 예전과 완전히 같은 값이다.
+	         ★[2026-07-30] 평균에 넣는 달은 **그 달 환자평가표가 있는 달만**(사용자 확정) — 지표값의
+	           '자료 있는 달만' 규칙과 같은 원칙이다. 평가표가 없는 달은 진료가 기본값(7.80)으로 깔려
+	           그대로 나누면 진료·종합이 실제보다 낮아진다(실측: 부산대성요양병원 진료 34.80 → 15.51).
+	           그래서 환자평가표를 **월별(vm)** 로 붙인다. 평가표가 한 달도 없는 병원(NOPAT·EXCL)은
+	           점수 칸이 비면 안 되므로 그때만 전체 달 평균으로 떨어뜨린다(IFNULL).
 	         ★TBL_HOSP_MST 는 같은 HOSP_CD 가 여러 행인 경우가 있어(강남수요양병원·강남수재활요양병원)
 	           그냥 조인하면 병원이 두 번 세어진다 → 미리 GROUP BY 로 접어서 붙인다.
 	         ★여기서는 환자평가표 유무를 '조건'이 아니라 '표시값'으로 쓰므로 LEFT JOIN 이다(①과 다름). -->
 	<select id="select_EvalCmpHosp" parameterType="java.util.Map" resultType="java.util.HashMap">
-		SELECT p.HOSP_CD                            AS hospCd
+		SELECT s.HOSP_CD                            AS hospCd
 		     , MIN(h.HOSP_NM)                       AS hospNm
-		     , CASE WHEN p.HOSP_CD IN ('w1234567','11223344') THEN 'EXCL'
-		            WHEN MAX(v.HOSP_CD) IS NULL                THEN 'NOPAT'
+		     , CASE WHEN s.HOSP_CD IN ('w1234567','11223344') THEN 'EXCL'
+		            WHEN SUM(vm.PAT_CNT) IS NULL                 THEN 'NOPAT'
 		            ELSE 'Y' END                    AS targetGb
-		     , IFNULL(MAX(v.PAT_CNT), 0)            AS patCnt
-		     , ROUND(SUM(CASE WHEN p.CATE_FG = '10'            AND p.CATE_CD &lt;&gt; '99' THEN p.WEIGVAL ELSE 0 END), 2) AS structScore
-		     , ROUND(SUM(CASE WHEN p.CATE_FG IN ('21','22')    AND p.CATE_CD &lt;&gt; '99' THEN p.WEIGVAL ELSE 0 END), 2) AS careScore
-		     , ROUND(SUM(p.WEIGVAL), 2)             AS totalScore
-		  FROM TBL_PAT_INDI p
-		  LEFT JOIN ( SELECT HOSP_CD, COUNT(*) AS PAT_CNT
+		     , IFNULL(SUM(vm.PAT_CNT), 0)           AS patCnt
+		     , ROUND(IFNULL(AVG(CASE WHEN vm.PAT_CNT &gt; 0 THEN s.STRUCT_SCORE END), AVG(s.STRUCT_SCORE)), 2) AS structScore
+		     , ROUND(IFNULL(AVG(CASE WHEN vm.PAT_CNT &gt; 0 THEN s.CARE_SCORE   END), AVG(s.CARE_SCORE)),   2) AS careScore
+		     , ROUND(IFNULL(AVG(CASE WHEN vm.PAT_CNT &gt; 0 THEN s.TOTAL_SCORE  END), AVG(s.TOTAL_SCORE)),  2) AS totalScore
+		  FROM ( SELECT p.HOSP_CD
+		              , p.JOBYYMM
+		              , SUM(CASE WHEN p.CATE_FG = '10'         AND p.CATE_CD &lt;&gt; '99' THEN p.WEIGVAL ELSE 0 END) AS STRUCT_SCORE
+		              , SUM(CASE WHEN p.CATE_FG IN ('21','22') AND p.CATE_CD &lt;&gt; '99' THEN p.WEIGVAL ELSE 0 END) AS CARE_SCORE
+		              , SUM(p.WEIGVAL)                                                                            AS TOTAL_SCORE
+		           FROM TBL_PAT_INDI p
+		          WHERE <include refid="evalCmpPeriodP"/>
+		          GROUP BY p.HOSP_CD, p.JOBYYMM
+		       ) s
+		  LEFT JOIN ( SELECT HOSP_CD, LEFT(MED_START, 6) AS YM, COUNT(*) AS PAT_CNT
 		                FROM TBL_PATVAL_MST
-		               WHERE MED_START LIKE CONCAT(#{jobyymm},'%')
-		               GROUP BY HOSP_CD
-		            ) v ON v.HOSP_CD = p.HOSP_CD
+		               WHERE <include refid="evalCmpPeriodV"/>
+		               GROUP BY HOSP_CD, LEFT(MED_START, 6)
+		            ) vm ON vm.HOSP_CD = s.HOSP_CD AND vm.YM = s.JOBYYMM
 		  LEFT JOIN ( SELECT HOSP_CD, MIN(HOSP_NM) AS HOSP_NM
 		                FROM TBL_HOSP_MST
 		               GROUP BY HOSP_CD
-		            ) h ON h.HOSP_CD = p.HOSP_CD
-		 WHERE p.JOBYYMM = #{jobyymm}
-		 GROUP BY p.HOSP_CD
+		            ) h ON h.HOSP_CD = s.HOSP_CD
+		 GROUP BY s.HOSP_CD
 		 ORDER BY targetGb ASC, totalScore DESC
 	</select>
 
