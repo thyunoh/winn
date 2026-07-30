@@ -9,6 +9,12 @@
 
 ## 장애/수정 이력
 
+### [완료] 월보고서 목록(evalReportList.jsp) — 첨부 PDF 미리보기 (2026-07-31)
+- **요청**: 관리자가 메일 보내기 전에 첨부 PDF 내용을 확인할 수 있게.
+- **동작 2곳**: ① 목록 첨부 칸 `📎 있음` 클릭(밑줄 표시, 행 클릭=보고서 열기와는 위임 핸들러 `stopPropagation` 으로 분리) ② 메일 발송창 상단 [📄 첨부 PDF 확인] 버튼 — 둘 다 모달(`#erl-pdfModal`, z-index 1500 = 메일창 1400 위)로 PDF 표시.
+- **수법**: 목록 응답에는 경로가 없어(haspdf Y/N 뿐) `loadEvalReport.do` 로 `mst.pdfpath` 를 받고, `/sftp/download.do` 가 attachment 강제라 **fetch blob→objectURL→iframe** (evalReport.jsp `erPdfPreview` 와 동일 — iframe 새 노드 교체·revoke 는 다음 열기·seq 가드 포함). `loadEvalReport.do` 는 문서열람(READ) 기록을 안 남기므로 관리자 미리보기가 '읽음'으로 오기록되지 않음(확인).
+- **배포**: JSP만 — WAR 재빌드 불필요.
+
 ### [완료] 월보고서(evalReport.jsp) 요약장 확정 3건 — 부족점수 0표시·지표순위·용어 (2026-07-23)
 - **부족점수 카드**: 목표 초과 달성으로 gap이 음수면 `0` 표시(renderGoalSummary, `er-gapScore`). 양수만 `+N.N`.
 - **우선 개선지표 순위(topGaps) 확정**: 부족분 큰 순 단일정렬 → **진료영역(과정·결과) → 구조영역 → 지역사회복귀율('15')** 3단계 tier, 각 tier 안에서 부족점수 큰 순. topGaps가 Ⅰ-2 도표·Ⅲ 최우선 태그(상위2)·Ⅳ 권고·Ⅴ 시나리오에 공통 사용되므로 전 섹션 순위 일괄 변경됨(최우선 2개도 진료영역에서만 선정).

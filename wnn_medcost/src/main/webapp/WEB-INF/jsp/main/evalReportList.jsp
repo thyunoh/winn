@@ -47,6 +47,20 @@
   #evalReportList .erl-st.erl-appr{ background:#eaf5ec; color:#2e7d32; border-color:#bfe0c4; }
   #evalReportList .erl-st.erl-appr .erl-sd{ background:#2e7d32; }
   #evalReportList .erl-pdf{ font-weight:800; color:#2e7d32; }
+  /* 첨부 '📎 있음' 클릭 = PDF 미리보기 (2026-07-31 — 발송 전 관리자 확인용) */
+  #evalReportList .erl-pdfview{ cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  #evalReportList .erl-pdfview:hover{ color:#1e3c72; }
+  /* 첨부 PDF 미리보기 모달 — 메일창(z-index 1400) 위에서도 열리게 1500 */
+  #erl-pdfModal{ position:fixed; inset:0; z-index:1500; background:rgba(16,22,29,.55); display:none; align-items:center; justify-content:center; padding:16px; }
+  #erl-pdfModal .erl-pbox{ width:min(1000px,96vw); height:min(92vh,1000px); background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
+  #erl-pdfModal .erl-phead{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; background:#eef4fb; border-bottom:1px solid #d7e2f0; font-weight:800; color:#1e3c72; font-size:16px; }
+  /* ★기본 .erl-btn 이 teal 배경+흰 글자라, 흰 배경으로 바꿀 땐 글자색을 반드시 함께 지정
+       (안 하면 흰 글자 그대로 남아 '빈 버튼'으로 보임 — 2026-07-31 실제 발생) */
+  #erl-pdfModal .erl-phead .erl-btn{ font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; padding:7px 14px; border-radius:6px; border:1px solid #cfd8e6; background:#fff; color:#1e3c72; }
+  #erl-pdfModal .erl-phead .erl-btn:hover{ background:#eef4fb; color:#1e3c72; }
+  #erl-pdfModal .erl-pbody{ position:relative; flex:1 1 auto; background:#565a5e; }
+  #erl-pdfModal iframe{ width:100%; height:100%; border:0; display:block; }
+  #erl-pdfLoading{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700; }
   /* 메일발송 / 열람 현황 (위너넷 화면 전용 컬럼) */
   #evalReportList .erl-mailbtn{ font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; padding:3px 9px;
     border-radius:6px; border:1px solid #1e3c72; background:#1e3c72; color:#fff; line-height:1.5; white-space:nowrap; }
@@ -109,6 +123,10 @@
   .swal2-container{ z-index:3000 !important; }   /* 이 화면의 다른 코드가 Swal 을 쓸 때 대비(모달 1400 위로) */
 
   #erl-mailModal .erl-btn{ font-size:14px; padding:8px 15px; }
+  /* 머리줄 버튼(첨부 PDF 확인·보내기·닫기)은 한 줄 고정 (2026-07-31 요청 — 제목이 길면 닫기가 둘째 줄로 접혔음)
+     제목 쪽이 줄어들고(min-width:0), 버튼 묶음은 줄바꿈 없이 항상 오른쪽 한 줄 */
+  #erl-mailModal .erl-mhead > span:first-child{ flex:1 1 auto; min-width:0; }
+  #erl-mailModal .erl-mhead > span:last-child{ flex:0 0 auto; display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #erl-mailNote{ margin-top:10px; font-size:13.5px; color:#8a5a00; white-space:pre-line; }
   /* 주소록 */
   #evalReportList .erl-addrbox{ border:1px solid #dfe6ef; border-radius:8px; padding:6px 10px; max-height:150px; overflow:auto; background:#fbfdff; }
@@ -220,6 +238,8 @@
       <div class="erl-mhead">
         <span>✉ 월보고서 메일 발송 <span id="erl-mailWho" style="font-weight:700; font-size:15px; opacity:.85;"></span></span>
         <span>
+          <%-- 발송 전 첨부 내용 확인(2026-07-31) — 실제로 붙어 나갈 PDF 를 그대로 미리 본다 --%>
+          <button type="button" class="erl-btn" onclick="erlMailPdfView()" title="이 메일에 첨부되어 나갈 PDF를 미리 봅니다">📄 첨부 PDF</button>
           <button id="erl-mailSendBtn" class="erl-btn" onclick="erlMailSend()">📨 보내기</button>
           <button class="erl-btn" onclick="erlMailClose()">✕ 닫기</button>
         </span>
@@ -247,6 +267,22 @@
         <label for="erl-mailBody">내용</label>
         <textarea id="erl-mailBody" rows="11"></textarea>
         <div id="erl-mailNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <%-- 첨부 PDF 미리보기 모달 (2026-07-31) — 발송 전 관리자가 첨부 내용을 확인.
+       목록 응답에는 경로가 없어(haspdf Y/N 뿐) loadEvalReport.do 로 pdfpath 를 받고,
+       /sftp/download.do 는 강제 다운로드라 blob→objectURL 로 iframe 에 표시(evalReport.jsp 미리보기와 동일 수법). --%>
+  <div id="erl-pdfModal">
+    <div class="erl-pbox">
+      <div class="erl-phead">
+        <span id="erl-pdfTitle">📄 첨부 PDF</span>
+        <button type="button" class="erl-btn" onclick="erlPdfClose()">✕ 닫기</button>
+      </div>
+      <div class="erl-pbody">
+        <iframe id="erl-pdfFrame" title="첨부 PDF 미리보기"></iframe>
+        <div id="erl-pdfLoading">PDF를 불러오는 중입니다…</div>
       </div>
     </div>
   </div>
@@ -428,7 +464,13 @@ jQuery(function(){
         { title:'진료', data:'carescore', className:'dt-center', render:scoreRender },
         { title:'목표', data:null, className:'dt-center', render:function(d,t,r){ return (r.goalgrade?esc(r.goalgrade):'')+((r.goalscore!=null&&r.goalscore!=='')?(' ('+f1(r.goalscore)+')'):''); } },
         { title:'상태', data:'status', className:'dt-center', render:function(d,t){ if(t==='display') return stCell(d); return (d==='APPROVED')?'승인됨':'작성중'; } },
-        { title:'첨부', data:'haspdf', className:'dt-center', render:function(d,t){ var has=(d==='Y'); if(t==='display') return has?'<span class="erl-pdf">📎 있음</span>':'-'; return has?'있음':'-'; } },
+        { title:'첨부', data:'haspdf', className:'dt-center', render:function(d,t,r){ var has=(d==='Y');
+            if(t==='display'){
+              if(!has) return '-';
+              // 클릭 = 첨부 PDF 미리보기(발송 전 확인, 2026-07-31). 행 클릭(보고서 열기)과는 위임 핸들러의 stopPropagation 으로 분리.
+              return '<span class="erl-pdf erl-pdfview" data-hosp="'+esc(r.hospcd)+'" data-ym="'+esc(r.evalym)+'" data-nm="'+esc(r.hospnm||HOSP_NM[r.hospcd]||'')+'" title="클릭하면 첨부된 PDF를 미리 봅니다">📎 있음</span>';
+            }
+            return has?'있음':'-'; } },
         /* 메일발송 — 위너넷만. 승인됨 + 첨부 있음 일 때만 보낼 수 있다(작성중 문서가 병원에 나가지 않게).
            이미 보냈으면 보낸 일시·횟수를 보여주고, 다시 보내기도 같은 버튼으로 한다. */
         { title:'메일', data:null, className:'dt-center', orderable:false, visible:MAIL_UI_ON, render:function(d,t,r){
@@ -490,6 +532,12 @@ jQuery(function(){
     // 행 더블클릭 → 해당 병원·월 보고서로 이동(편집 가능)
     jQuery('#erl-grid tbody').on('dblclick','tr', function(){
       var d=DT.row(this).data(); if(d) goReport(d.hospcd, d.hospnm||HOSP_NM[d.hospcd]||d.hospcd, d.evalym, false, false);
+    });
+    // 첨부 '📎 있음' 클릭 → 첨부 PDF 미리보기 (행 클릭=보고서 열기 와 분리, 2026-07-31)
+    jQuery('#erl-grid tbody').on('click','td .erl-pdfview', function(ev){
+      ev.stopPropagation();
+      var t=jQuery(this);
+      erlPdfView(t.attr('data-hosp'), t.attr('data-ym'), t.attr('data-nm'));
     });
     // [위너넷] 기관기호 앞 [+] → 변경이력 child row 펼침/접힘
     jQuery('#erl-grid tbody').on('click','td .erl-exp', function(ev){
@@ -678,6 +726,46 @@ jQuery(function(){
      · 대상은 '승인됨 + 첨부 있음' 뿐(버튼 자체가 그때만 그려지고, 서버에서도 다시 막는다).
      · 제목·본문 기본값은 서버가 표준문구(mail_subject/mail_body)에 점수를 채워 내려준다.
      · 받는 사람은 수동 입력. 마지막 발송 주소가 있으면 그대로 제안한다(이메일 별도 관리 붙기 전까지). */
+  /* ── 첨부 PDF 미리보기 (2026-07-31) — 발송 전 관리자 확인용 ──
+     목록 응답에는 경로가 없어(haspdf Y/N 뿐) loadEvalReport.do 로 pdfpath 를 받아
+     /sftp/download.do 를 blob 으로 받아 iframe 에 표시(evalReport.jsp erPdfPreview 와 동일 수법 —
+     download.do 가 강제 다운로드(attachment)라 iframe 에 직접 못 건다).
+     재열기 안정화도 동일: iframe 새 노드 교체 · objectURL revoke 는 다음 열기에서 · seq 로 늦은 응답 무시. */
+  var _erlPdfSeq = 0, _erlPdfUrl = null;
+  window.erlPdfView = function(hospCd, evalYm, hospNm){
+    var seq = ++_erlPdfSeq;
+    var ymTxt = (String(evalYm||'').length===6) ? (String(evalYm).substring(0,4)+'.'+String(evalYm).substring(4,6)) : String(evalYm||'');
+    el('erl-pdfTitle').textContent = '📄 첨부 PDF — ' + (hospNm||hospCd||'') + ' ' + ymTxt;
+    var old = el('erl-pdfFrame'), nf = old.cloneNode(false);
+    nf.removeAttribute('src');
+    old.parentNode.replaceChild(nf, old);
+    el('erl-pdfLoading').style.display = 'flex';
+    el('erl-pdfLoading').textContent = 'PDF를 불러오는 중입니다…';
+    el('erl-pdfModal').style.display = 'flex';
+    jQuery.ajax({ url: ctx+'/main/loadEvalReport.do', type:'POST', dataType:'json', data:{ hospCd:hospCd, evalYm:evalYm } })
+      .done(function(res){
+        if(seq !== _erlPdfSeq) return;
+        var mst = res && res.mst;
+        var p = (mst && mst.pdfpath) ? String(mst.pdfpath) : '';
+        if(!p){ el('erl-pdfLoading').textContent = '첨부된 PDF가 없습니다.'; return; }
+        fetch(ctx+'/sftp/download.do?filePath='+encodeURIComponent(p)+'&_ts='+Date.now(), { credentials:'same-origin', cache:'no-store' })
+          .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.blob(); })
+          .then(function(b){
+            if(seq !== _erlPdfSeq) return;
+            if(_erlPdfUrl) URL.revokeObjectURL(_erlPdfUrl);
+            _erlPdfUrl = URL.createObjectURL(new Blob([b], { type:'application/pdf' }));
+            el('erl-pdfFrame').src = _erlPdfUrl;
+            el('erl-pdfLoading').style.display = 'none';
+          })
+          .catch(function(e){ if(seq === _erlPdfSeq) el('erl-pdfLoading').textContent = 'PDF를 불러오지 못했습니다('+((e&&e.message)||'오류')+'). 닫고 다시 시도해 주세요.'; });
+      })
+      .fail(function(){ if(seq === _erlPdfSeq) el('erl-pdfLoading').textContent = '보고서 정보를 불러오지 못했습니다. 닫고 다시 시도해 주세요.'; });
+  };
+  window.erlPdfClose = function(){ _erlPdfSeq++; el('erl-pdfModal').style.display='none'; };
+  jQuery('#erl-pdfModal').on('click', function(e){ if(e.target === this) erlPdfClose(); });   // 바깥 클릭 = 닫기
+  // 메일 발송창에서 바로 확인 — 보내기 전 첨부 내용 점검
+  window.erlMailPdfView = function(){ if(_erlMail) erlPdfView(_erlMail.hospCd, _erlMail.evalYm, _erlMail.hospNm); };
+
   var _erlMail = null;
   window.erlMailOpen = function(hospCd, evalYm, hospNm){
     _erlMail = { hospCd:hospCd, evalYm:evalYm, hospNm:hospNm };

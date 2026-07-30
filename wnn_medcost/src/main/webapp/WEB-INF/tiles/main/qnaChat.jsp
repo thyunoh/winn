@@ -50,7 +50,9 @@
              background:#f4f7fb; border:1px solid #d3dfef; border-radius:14px; overflow:hidden;
              box-shadow:0 18px 44px rgba(20,40,80,.28); color:#28323c;
              font-family:"Noto Sans KR","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;
-             font-size:15px; }   /* ★기준 글자크기 — 안쪽은 전부 em 이라 이 값만 바뀌면 같이 커진다 */
+             font-size:12px; }   /* ★기준 글자크기 — 안쪽은 전부 em 이라 이 값만 바뀌면 같이 커진다
+                                    (2026-07-31 사용자 요청: 기본을 "가－ 로 줄여 본 상태"보다도 작게 — 종전 15px → 12px.
+                                     아래 JS RZ_BASE_F 와 반드시 같은 값이어야 가－/가＋·원위치가 맞다) */
   #wqaPanel input, #wqaPanel button{ font-family:inherit; }
 
   /* ── 크기 조절 = 테두리 드래그 ────────────────────────────
@@ -848,7 +850,7 @@
        · 창을 넓히면 글자는 그대로 두고 <넓어진 폭만큼 글이 채워진다>(줄바꿈만 달라짐).
        · 글자 크기는 헤더의 가－ / 가＋ 로만 바꾼다.
        (예전엔 폭에 비례해 글자가 커져서, 넓히면 글자만 커지고 담기는 양은 그대로였다) */
-  var RZ_BASE_F = 15, RZ_MIN_F = 11, RZ_MAX_F = 30;
+  var RZ_BASE_F = 12, RZ_MIN_F = 9, RZ_MAX_F = 30;   /* 기본 12px (2026-07-31, CSS #wqaPanel font-size 와 동일값 유지). 하한도 9px 로 내림(가－ 여지 확보) */
   var FZ = 1, FZ_MIN = 0.7, FZ_MAX = 1.8, FZ_STEP = 0.1;
 
   function applyFont(){
@@ -867,7 +869,7 @@
     applyFont();
     try{ sessionStorage.setItem('wqaFz', String(FZ)); }catch(ignore){}
   };
-  /* 창 크기·글자크기를 처음 상태(560×780, 15px)로 되돌린다 */
+  /* 창 크기·글자크기를 처음 상태(560×780, 12px)로 되돌린다 */
   window.wqaReset = function(){
     var p = document.getElementById('wqaPanel');
     p.style.width = ''; p.style.height = ''; p.style.fontSize = '';
