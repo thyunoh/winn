@@ -4778,26 +4778,13 @@ function dataLoad(data, callback, settings) {
 	   		},
 	        dataType: "json",
 	        // timeout: 10000, // 10초 후 타임아웃
-	        beforeSend : function () {
-	        	if (jobFlag === '07') {
-	        		Swal.fire({
-	        			title: '<span style="font-size:17px;"><i class="fas fa-hourglass-half" style="color:#6c7bff; margin-right:8px;"></i>조회 중입니다</span>',
-	        			html: '<div style="font-size:14px; color:#555;">향정신성의약품 처방은 데이터량에 따라<br>조회 속도가 다소 늦을 수 있습니다.<br><br>잠시만 기다려 주세요...</div>',
-	        			allowOutsideClick: false,
-	        			allowEscapeKey: false,
-	        			showConfirmButton: false,
-	        			showCancelButton: false,
-	        			didOpen: function() {
-	        				Swal.showLoading();
-	        				var _ac = Swal.getActions();     if (_ac) _ac.style.display = 'none';
-	        				var _ok = Swal.getConfirmButton(); if (_ok) _ok.style.display = 'none';
-	        				var _cc = Swal.getCancelButton();  if (_cc) _cc.style.display = 'none';
-	        			}
-	        		});
-	        	}
-			},
+	        /* ★[2026-07-30] 07(항정신성) '조회 중입니다' 대기팝업 제거 — 쿼리를 고쳐 더 필요 없어졌다.
+	             느렸던 진짜 원인은 건수가 아니라 Magam_SQL.xml select_CategoryList07 의 주진단 상관 서브쿼리
+	             (결과 행마다 TBL_JINORD_MST 607만행을 다시 훑음)였다. 환자별 1회 집계로 바꿔 실측
+	             24.1초 → 0.06초(366행 병원)가 되어, 팝업이 뜨자마자 닫혀 깜박이기만 했다.
+	             beforeSend 콜백 자체를 없앴다(success·error 의 Swal.close() 도 함께).
+	           ※ 다시 느려지면 팝업을 되살리기 전에 그 쿼리부터 확인할 것. */
 	        success: function(response) {
-	        	if (jobFlag === '07') { Swal.close(); }
 	        	//table.processing(false); // 처리 중 상태 종료
 	            if (response && Object.keys(response).length > 0) {
 	            	
@@ -5114,7 +5101,6 @@ function dataLoad(data, callback, settings) {
 	            }
 	        },
 	        error: function(jqXHR, textStatus, errorThrown) {
-	        	if (jobFlag === '07') { Swal.close(); }
 	        	//table.processing(false); // 처리 중 상태 종료
 	            callback({
 	                data: []

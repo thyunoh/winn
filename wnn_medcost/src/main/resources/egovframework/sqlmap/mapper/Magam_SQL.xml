@@ -1600,32 +1600,14 @@
 		     , pm.ADMIT_DT                                        AS admitDt
 		     , pm.MED_START                                       AS medStart
 		     , pm.DOC_DT                                          AS docDt
-		       /* 향정신성 매칭(sb)이 있으면 그 상병, 없으면(상병 NULL) 주상병(DIAG_TYPE='1')으로 채움 */
-		     , COALESCE(sb.DIAG_CODE,
-		               (SELECT dm2.DIAG_CODE
-		                  FROM TBL_MYOUNG_MST  mm2
-		                  JOIN TBL_CHUNG_MST   cm2 ON cm2.HOSP_CD  = mm2.HOSP_CD
-		                                          AND cm2.CLAIM_NO = mm2.CLAIM_NO
-		                  JOIN TBL_DISEASE_MST dm2 ON dm2.HOSP_CD  = mm2.HOSP_CD
-		                                          AND dm2.CLAIM_NO = mm2.CLAIM_NO
-		                                          AND dm2.BILL_SEQ = mm2.BILL_SEQ
-     		              JOIN TBL_JINORD_MST  jm  ON jm.HOSP_CD  = mm2.HOSP_CD
-                                                  AND jm.CLAIM_NO = mm2.CLAIM_NO
-                                                  AND jm.BILL_SEQ = mm2.BILL_SEQ                        
-		                 WHERE mm2.HOSP_CD = pm.HOSP_CD
-		                   AND mm2.PAT_ID  = pm.PAT_ID
-		                   AND cm2.DATE_YM = #{jobYymm}
-		                   AND IFNULL(dm2.DIAG_TYPE, '0') = '1'
-		                   AND COALESCE(mm2.DELYN,'') = ''
-		                   AND NOT EXISTS (SELECT 1
-		                                     FROM TBL_SPECODE_MST tsm2
-		                                    WHERE tsm2.HOSP_CD   = mm2.HOSP_CD
-		                                      AND tsm2.CLAIM_NO  = mm2.CLAIM_NO
-		                                      AND tsm2.BILL_SEQ  = mm2.BILL_SEQ
-		                                      AND tsm2.ROW_NO    = jm.ROW_NO
-		                                      AND tsm2.SPEC_TYPE = 'JS008')
-		                 ORDER BY dm2.DIAG_CODE
-		                 LIMIT 1))                            AS mainDiagCd
+		       /* 향정신성 매칭(sb)이 있으면 그 상병, 없으면(상병 NULL) 주상병(md = DIAG_TYPE='1')으로 채움
+		          ★[2026-07-30 성능개선] 종전에는 이 자리에 **상관 서브쿼리**(행마다 4테이블 조인)를 두었다.
+		            결과 행마다 TBL_JINORD_MST(607만행)를 다시 훑어 화면이 몇 초씩 멈췄다 —
+		            실측(운영DB): 55행 병원 1,474ms / 371행 병원 **9,140ms**.
+		            → 환자별 주상병을 **한 번에 집계**해(아래 md) LEFT JOIN 으로 붙인다 : 55행 15ms / 371행 **22ms**.
+		            상관 서브쿼리의 `ORDER BY DIAG_CODE LIMIT 1` = 환자별 `MIN(DIAG_CODE)` 이므로 값이 같다
+		            (두 병원 모두 결과 문자열 전체를 대조해 **완전히 같음** 확인). 되돌리지 말 것. */
+		     , COALESCE(sb.DIAG_CODE, md.DIAG_CODE)              AS mainDiagCd
 		     , CASE WHEN sb.EDI_CODE IS NULL THEN '' ELSE '●' END AS psyOrderYn
 		  FROM (SELECT a.HOSP_CD
 		             , a.PAT_ID
@@ -1680,6 +1662,41 @@
 		            ) sb
 		    ON sb.HOSP_CD = pm.HOSP_CD
 		   AND sb.PAT_ID  = pm.PAT_ID
+		  /* md = 환자별 주상병 1건 (2026-07-30 신설 — 위 mainDiagCd 주석 참고).
+		         조건은 옛 상관 서브쿼리와 **글자 그대로 같게** 두고, 환자별로 한 번만 집계한다.
+		         MIN(DIAG_CODE) = 옛 `ORDER BY DIAG_CODE LIMIT 1`.
+		       ★조건을 고칠 일이 생기면 이 블록만 고치면 된다(옛 서브쿼리는 없어졌다). */
+		  LEFT JOIN (SELECT mm2.HOSP_CD
+		                  , mm2.PAT_ID
+		                  , MIN(dm2.DIAG_CODE)                    AS DIAG_CODE
+		               FROM TBL_PATVAL_MST  p2  FORCE INDEX (INDEX01)
+		               JOIN TBL_MYOUNG_MST  mm2 FORCE INDEX (INDEX01)
+		                                     ON mm2.HOSP_CD = p2.HOSP_CD
+		                                    AND mm2.PAT_ID  = p2.PAT_ID
+		               JOIN TBL_CHUNG_MST   cm2 ON cm2.HOSP_CD  = mm2.HOSP_CD
+		                                       AND cm2.CLAIM_NO = mm2.CLAIM_NO
+		               JOIN TBL_DISEASE_MST dm2 ON dm2.HOSP_CD  = mm2.HOSP_CD
+		                                       AND dm2.CLAIM_NO = mm2.CLAIM_NO
+		                                       AND dm2.BILL_SEQ = mm2.BILL_SEQ
+		               JOIN TBL_JINORD_MST  jm2 ON jm2.HOSP_CD  = mm2.HOSP_CD
+		                                       AND jm2.CLAIM_NO = mm2.CLAIM_NO
+		                                       AND jm2.BILL_SEQ = mm2.BILL_SEQ
+		              WHERE p2.HOSP_CD = #{hospCd}
+		                AND p2.MED_START LIKE CONCAT(#{jobYymm},'%')
+		                AND cm2.DATE_YM = #{jobYymm}
+		                AND IFNULL(dm2.DIAG_TYPE, '0') = '1'
+		                AND COALESCE(mm2.DELYN,'') = ''
+		                AND NOT EXISTS (SELECT 1
+		                                  FROM TBL_SPECODE_MST tsm2
+		                                 WHERE tsm2.HOSP_CD   = mm2.HOSP_CD
+		                                   AND tsm2.CLAIM_NO  = mm2.CLAIM_NO
+		                                   AND tsm2.BILL_SEQ  = mm2.BILL_SEQ
+		                                   AND tsm2.ROW_NO    = jm2.ROW_NO
+		                                   AND tsm2.SPEC_TYPE = 'JS008')
+		              GROUP BY mm2.HOSP_CD, mm2.PAT_ID
+		            ) md
+		    ON md.HOSP_CD = pm.HOSP_CD
+		   AND md.PAT_ID  = pm.PAT_ID
 	</select>
 	<!-- 진단코드 → 진단명 매핑 (TBL_CODE_DTL 공통코드 3자리 prefix, f_tong_04 방식 참조)
 	     - CODE_GB='Z', CODE_CD='DISEASE_TYPE' 사전에 LEFT(DIAG_CODE,3) 이 있으면 SUB_CODE_NM 반환
