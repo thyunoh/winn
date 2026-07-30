@@ -2965,10 +2965,13 @@ function saveSpcsugaWithMapping() {
 
 
 function getJobDateTime() {
-	
+
     let now     = new Date();
     let year    = now.getFullYear();
-    let month   = String(now.getMonth()).padStart(2, '0');
+    // ★[2026-07-30] getMonth() 는 0부터라 +1 — 종전엔 7월 업로드의 작업일시(jobs_dt)가 '202606…' 으로
+    //   한 달 전으로 찍혔다(실측: 07-30 업로드 배치의 JOBS_DT=20260630…). 배치키 유일성에는 지장이
+    //   없었지만 화면 작업일시가 틀리게 보였다. 기존 배치키는 그대로 두면 된다(키 충돌 없음).
+    let month   = String(now.getMonth() + 1).padStart(2, '0');
     let day     = String(now.getDate()).padStart(2, '0');
     let hours   = String(now.getHours()).padStart(2, '0');
     let minutes = String(now.getMinutes()).padStart(2, '0');
@@ -4718,7 +4721,7 @@ $('#verifyModal').on('hidden.bs.modal', function() {
                 // ★jobs_dt(작업일시)는 초 단위 → 연속 업로드가 같은 초면 같은 배치키(JOBS_DT)로 라인이 섞여 SP가 오류.
                 //   각 청구건이 서로 다른 초를 쓰도록, 직전 그룹과 같은 초면 초가 바뀔 때까지 대기(getJobDateTime과 동일 포맷 비교).
                 var _jobDtNow = (typeof getJobDateTime==='function') ? getJobDateTime
-                              : function(){ var n=new Date(),p=function(x){return String(x).padStart(2,'0');}; return ''+n.getFullYear()+p(n.getMonth())+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };
+                              : function(){ var n=new Date(),p=function(x){return String(x).padStart(2,'0');}; return ''+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };   // getMonth()+1 — getJobDateTime 과 동일(2026-07-30)
                 var _lastJobDt=null;
                 var _origFlag=g_Flag;   // 원래 활성 탭 flag 보관(루프 후 원복)
                 for(var i=0;i<order.length;i++){
