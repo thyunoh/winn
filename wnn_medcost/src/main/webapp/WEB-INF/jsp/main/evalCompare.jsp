@@ -13,9 +13,9 @@
 
      ★[2026-07-30] 평가년월 → **평가년도 + 기간(시작월~종료월)**. 년도는 그대로 두고 월만 두 칸이다.
        · 시작월 = 종료월 → 예전 한 달 조회와 값이 완전히 같다(202607 로 18개 지표 전부 대조 확인).
-       · 여러 달 → **월평균**(한 달씩 값을 구해 달수로 나눔, 2026-07-30 사용자 확정).
-         ★자료 없는 달은 달수에서 뺀다 — TBL_PAT_INDI 는 자료가 없어도 행이 생기고 값이 0 이라,
-           그냥 나누면 빈 달이 값을 끌어내린다(실측: 지표09 89.01 → 35.36 반토막). 이 처리를 빼지 말 것.
+       · 여러 달 → **분자합/분모합 통합**(2026-07-30 최종 — 같은 날 합산→월평균→합산 왕복 끝 확정).
+         분자·분모를 기간 전체로 합한 뒤 마지막에 한 번 나눈다. 계산 규칙·예외는 ecMergeMine 주석과
+         Magam_SQL.xml evalCmpIntegrated 주석 참고.
        · 병원 목록의 구조·진료·종합 점수도 달별 점수의 평균이다(0~100 척도라 더하면 100을 넘는다).
          ★그 달 환자평가표가 있는 달만 평균한다 — 평가표 없는 달은 진료가 기본값(7.80)이라 그대로 나누면
            진료·종합이 실제보다 낮아진다(실측: 부산대성요양병원 진료 34.80 → 15.51). 지표값과 같은 원칙.
@@ -197,7 +197,7 @@
   <div class="ec-bar">
     <%-- ★[2026-07-30] 한 달 → 기간(시작월~종료월) 조회. 년도는 그대로 두고 월만 두 칸으로 나눴다.
              · 시작월 = 종료월 이면 예전 한 달 조회와 **완전히 같은 값**이다(실측 대조 확인).
-             · 여러 달을 고르면 **월평균** — 한 달씩 값을 구해 달수로 나눈다(자료 없는 달은 달수에서 제외).
+             · 여러 달을 고르면 **분자합/분모합 통합** — 분자·분모를 기간 전체로 합해 마지막에 한 번 나눈다.
                계산 규칙과 그 근거(실측 수치)는 Magam_SQL.xml 의 evalCmpIntegrated 주석에 있다. --%>
     <label>평가년도</label>
     <select id="ec-year" class="ec-sel" onchange="ecLoad()"></select>
@@ -397,26 +397,32 @@ jQuery(function(){
   }
 
   /* 기준 병원(선택 병원)의 기간값 — **서버(Magam_SQL.xml evalCmpIntegrated)와 똑같은 규칙**이어야 한다.
-       · 월평균 : 달마다의 현황값을 더해 달수로 나눈다(분자합/분모합 아님 — 2026-07-30 사용자 확정).
-       · **자료 없는 달은 달수에서 뺀다** : 자료가 없어도 행은 생기고 값이 0 이라, 그냥 나누면 값이 꺼진다.
-         '자료 있는 달' = 분모가 있거나(dtorval>0), 분모 없이 값만 정해지는 지표(07·08·15)라 값이 0 이 아닌 달.
-       · 모든 달이 빈 달이면 0.
+       [2026-07-30 최종 확정 — 같은 날 합산→월평균→합산 왕복] **분자합/분모합** :
+       ① 분자(해당 환자)·분모(월 대상자)를 기간 전체로 합한 뒤 마지막에 한 번 나눈다.
+       ② 01~03(1인당 환자수)은 '명' 이라 ×100 하지 않는다.
+       ③ 어느 달이든 (분자/분모)가 그 달 현황값과 안 맞으면(07·08·15 처럼 분모·분자를 안 쓰는 지표)
+          → 달별 현황값 평균으로 떨어뜨린다. 빈 달은 0/0 이라 합산에 해가 없다.
      ★서버 조회(select_Eval_Indi)가 한 달 단위라 달마다 부른 뒤 여기서 합친다. 규칙이 어긋나면
        왼쪽(선택 병원)과 오른쪽(전체 평균)의 기준이 달라지므로, 한쪽만 고치지 말 것. */
   function ecMergeMine(perMonthRows){
+    var mult = function(cd){ return (cd==='01'||cd==='02'||cd==='03') ? 1 : 100; };
     var acc = {};
     perMonthRows.forEach(function(rows){
       (rows||[]).forEach(function(r){
         var cd = String(r.cate_cd||r.cateCd||''); if(!cd) return;
-        var a = acc[cd] || (acc[cd] = { sum:0, cnt:0 });
-        var d = n(r.dtorval), v = n(r.cal_val);
-        if(d > 0 || v !== 0){ a.sum += v; a.cnt++; }      // 자료 있는 달만 센다
+        var a = acc[cd] || (acc[cd] = { d:0, n:0, vals:[], bad:0 });
+        var d = n(r.dtorval), nu = n(r.ntorval), v = n(r.cal_val);
+        a.d += d; a.n += nu; a.vals.push(v);
+        if(d > 0){ if(Math.abs(v - nu/d*mult(cd)) > 0.06) a.bad++; }
+        else if(v !== 0){ a.bad++; }
       });
     });
     var out = {};
     Object.keys(acc).forEach(function(cd){
-      var a = acc[cd];
-      out[cd] = a.cnt ? Math.round(a.sum/a.cnt*100)/100 : 0;
+      var a = acc[cd], val;
+      if(a.d > 0 && a.bad === 0) val = a.n / a.d * mult(cd);
+      else { var s=0; for(var i=0;i<a.vals.length;i++) s += a.vals[i]; val = a.vals.length ? s/a.vals.length : 0; }
+      out[cd] = Math.round(val*100)/100;
     });
     return out;
   }
@@ -448,7 +454,7 @@ jQuery(function(){
       _mine = ecMergeMine(mine.map(function(m){ return (m[0] && (m[0].data || m[0].list || m[0])) || []; }));
       ecCalcAvg(); ecRenderKpi(); ecRenderInd(); ecRenderHosp();
       el('ec-stat').textContent = (months.length > 1)
-            ? (ymFr.substring(0,4)+'.'+ymFr.substring(4,6)+' ~ '+ymTo.substring(4,6)+'월 · '+months.length+'개월 월평균')
+            ? (ymFr.substring(0,4)+'.'+ymFr.substring(4,6)+' ~ '+ymTo.substring(4,6)+'월 · '+months.length+'개월 통합(분자합/분모합)')
             : '';
     }).fail(function(){
       el('ec-stat').textContent = '조회에 실패했습니다.';

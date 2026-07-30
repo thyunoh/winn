@@ -14,16 +14,16 @@
 
 mail.enabled=true
 
-# 구글(Gmail) — 587 + STARTTLS  /  네이버면 smtp.naver.com · 465 · ssl=true
+# 구글(Gmail) — 587 + STARTTLS  /  네이버면 smtp.naver.com · 465 · ssl=true  ※구글(587)은 반드시 ssl=false — true 면 접속 자체가 실패한다(2026-07-30 실제 발생)
 mail.smtp.host=smtp.gmail.com
 mail.smtp.port=587
 mail.smtp.ssl=false
 
 # 보내는 계정 — 구글은 '앱 비밀번호'(2단계 인증 후 발급, 16자리·공백 없이)만 통한다
-mail.smtp.user=
-mail.smtp.password=
-mail.from=
-mail.fromName=WinCheck+ 적정성평가
+mail.smtp.user=winnernet7@gmail.com
+mail.smtp.password=sulbwesqiyrvztjl
+mail.from=winnernet7@gmail.com
+mail.fromName=위너넷 컨설팅
 
 mail.smtp.timeout=15000
 

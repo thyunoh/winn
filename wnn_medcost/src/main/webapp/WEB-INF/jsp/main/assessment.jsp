@@ -692,9 +692,25 @@ th.noArrow {
 								<!-- 저장된 분기 목록 그리드 (차등제 01~04 화면 전용) — 행 클릭 시 위 폼에 적용. 화면 넘치면 좌우 스크롤 -->
 								<div id="grdListWrap"
 									style="display: none; overflow-x: auto; margin-top: auto; min-height: 245px; border: 1px solid #e6e8eb; border-radius: 6px;">
+									<%-- 2026-07-30: 표는 우측 끝까지(100%) 쓰되, 남는 폭은 전부 **수정자(11번째) 칸**이 갖는다.
+									       숫자 칸들은 width:1% + nowrap 로 내용 폭에 딱 붙는다(종전엔 남는 폭이 숫자 칸에 배분돼 벌어져 보였음).
+									       ※열을 넣고 빼면 nth-child(11) 번호도 같이 바꿔야 한다(신고분기1 … 약사재직일수10, 수정자11, 수정일시12, 삭제13). --%>
+									<style>
+									/* 숫자 칸은 머리글 글자 폭이 최소폭이라, 더 좁히려면 여백·머리글 글자를 줄여야 한다(2026-07-30 "체크부분 공간 축소") */
+									#grdList th, #grdList td { padding: 4px 6px !important; width: 1%; }
+									#grdList thead th { font-size: 12.5px; }
+									/* 남는 폭 배분(2026-07-30 왕복 조정): 수정자 3 : 수정일시 1 —
+									     혼자 다 주면 수정자가 너무 넓고, 반반이면 수정일시가 너무 넓다(둘 다 사용자 지적).
+									   수정자 값은 왼쪽 정렬(앞부분 정렬) — 넓은 칸 가운데 떠 있지 않고 앞에 붙어 읽힌다.
+									   수정일시도 값이 칸 가운데 떠 보이지 않게 왼쪽 정렬. */
+									#grdList th:nth-child(11), #grdList td:nth-child(11) { width: 24%; }
+									#grdList td:nth-child(11) { text-align: left; padding-left: 14px !important; }
+									#grdList th:nth-child(12), #grdList td:nth-child(12) { width: 16%; }   /* 수정일시 — 날짜가 오른쪽에 눌려 잘려 보여 좌측으로 넓힘(10→16%) */
+									#grdList td:nth-child(12) { text-align: left; padding-left: 14px !important; }
+									</style>
 									<table id="grdList"
 										class="table table-sm table-bordered text-center mb-0"
-										style="width: 100%; min-width: 900px; font-size: 14px; white-space: nowrap; table-layout: auto;">
+										style="width: 100%; font-size: 13.5px; white-space: nowrap; table-layout: auto;">
 										<thead style="background: #f4f6f8;">
 											<tr>
 												<th>신고분기</th>
@@ -707,6 +723,7 @@ th.noArrow {
 												<th>간호사수</th>
 												<th>간호인력수</th>
 												<th>약사재직일수</th>
+												<th>수정자</th>
 												<th>수정일시</th>
 												<th>삭제</th>
 											</tr>
@@ -2802,7 +2819,7 @@ function fn_RenderGrdList() {
     }
     _grdListData = rows;
     if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="12" style="color:#999; padding:14px;">' + _grdEsc(yy) + '년 저장된 자료가 없습니다.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="13" style="color:#999; padding:14px;">' + _grdEsc(yy) + '년 저장된 자료가 없습니다.</td></tr>';   // 수정자 열 추가로 12→13 (2026-07-30)
         return;
     }
     var html = '';
@@ -2820,6 +2837,7 @@ function fn_RenderGrdList() {
               + '<td>' + _grdEsc(r.nurCount) + '</td>'
               + '<td>' + _grdEsc(r.nurSCnt)  + '</td>'
               + '<td>' + _grdEsc(r.phamDays) + '</td>'
+              + '<td style="color:#8a97a3;">' + _grdEsc(r.updUser || '') + '</td>'   /* 수정자(UPD_USER) — 2026-07-30 추가 */
               + '<td style="color:#8a97a3;">' + _grdEsc(r.updDttm) + '</td>'
               + '<td><button type="button" class="btn btn-outline-danger" style="padding:0px 8px; font-size:12.5px; line-height:1.7;" '
               + 'onclick="event.stopPropagation(); fn_DeleteGrdRow(' + i + ')">삭제</button></td>'
@@ -5476,13 +5494,14 @@ $(document).ready(function() {
 		  }
 
 		  let grade;
-		  if        (score >= 88 && score <= 100) {
+		  // 등급 구간(2026-07-30 변경: 87/79/74/64) — evalReport·evalReportList 의 gradeOf, MagamController.gradeOfScore 와 한 몸
+		  if        (score >= 87 && score <= 100) {
 		    grade = "1";
-		  } else if (score >= 79 && score < 88) {
+		  } else if (score >= 79 && score < 87) {
 		    grade = "2";
-		  } else if (score >= 71 && score < 79) {
+		  } else if (score >= 74 && score < 79) {
 		    grade = "3";
-		  } else if (score >= 63 && score < 71) {
+		  } else if (score >= 64 && score < 74) {
 		    grade = "4";
 		  } else {
 		    grade = "5";

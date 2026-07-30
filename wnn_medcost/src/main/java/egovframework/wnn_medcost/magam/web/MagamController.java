@@ -1505,20 +1505,13 @@ public class MagamController {
 			}
 			String attachNm = "적정성평가_월간보고서_" + evalYm + ".pdf";
 
-			/* 본문 끝에 '보고서 보기' 링크를 붙인다(사용자 확정 2026-07-29).
-			   메일을 열었는지는 수신자 메일서버 몫이라 알 수 없다 → 대신 링크로 들어와 보고서를 열면
-			   '문서열람'(READ_*)으로 정확히 기록된다. 외부 접속 주소(mail.siteBase)가 설정된 경우에만 붙인다. */
+			/* ★[2026-07-30] '보고서 보기' 버튼 제거(사용자 요청) — 첨부 PDF만 보내는 것으로 확정.
+			     (2026-07-29 에 붙였던 버튼+안내문을 하루 만에 뺐다. 되살리자는 얘기가 나오면 이 이력 확인.)
+			   메일 열람 추적(1×1 이미지)은 그대로 둔다 — 목록의 '메일열람' 칸이 이걸로 기록된다.
+			   외부 접속 주소(mail.siteBase)가 설정된 경우에만 붙는다(비우면 추적도 없이 순수 첨부 발송). */
 			String siteBase = egovframework.util.MailUtil.config().getProperty("mail.siteBase", "").trim();
 			if (!siteBase.isEmpty()) {
 				if (siteBase.endsWith("/")) siteBase = siteBase.substring(0, siteBase.length() - 1);
-				String link = siteBase + "/main/evalReport.do?hospCd=" + java.net.URLEncoder.encode(hospCd, "UTF-8")
-				            + "&ym=" + java.net.URLEncoder.encode(evalYm, "UTF-8");
-				content = content
-				        + "<div style=\"margin-top:22px;padding-top:14px;border-top:1px solid #dfe6ef\">"
-				        + "<a href=\"" + link + "\" style=\"display:inline-block;padding:10px 18px;background:#1e3c72;"
-				        + "color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold\">📄 WinCheck⁺ 에서 보고서 보기</a>"
-				        + "<div style=\"margin-top:8px;font-size:12px;color:#6b7a89\">"
-				        + "링크를 누르면 로그인 후 해당 월 보고서를 바로 볼 수 있습니다.</div></div>";
 				// 메일 열람 추적 — 같은 외부주소(mail.siteBase)로 1×1 이미지를 붙인다. 열면 '메일열람'에 기록된다.
 				String px = siteBase + "/main/evalMailOpen.do?h=" + java.net.URLEncoder.encode(hospCd, "UTF-8")
 				          + "&y=" + java.net.URLEncoder.encode(evalYm, "UTF-8")
@@ -1760,9 +1753,10 @@ public class MagamController {
 	}
 	private double num(String s) { try { return (s == null || s.isEmpty()) ? 0 : Double.parseDouble(s); } catch (Exception e) { return 0; } }
 	private String fmt1(double d) { return new java.text.DecimalFormat("0.0").format(d); }
+	/* 등급 구간(2026-07-30 변경: 87/79/74/64) — evalReport.jsp·evalReportList.jsp 의 gradeOf 와 한 몸(같이 고칠 것) */
 	private String gradeOfScore(double t) {
-		if (t >= 88) return "1등급"; if (t >= 79) return "2등급";
-		if (t >= 71) return "3등급"; if (t >= 63) return "4등급"; return "5등급";
+		if (t >= 87) return "1등급"; if (t >= 79) return "2등급";
+		if (t >= 74) return "3등급"; if (t >= 64) return "4등급"; return "5등급";
 	}
 
 	/* 월보고서 열람 기록 — 일반병원(거래처)이 보고서를 열었을 때만 기록한다.

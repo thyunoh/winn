@@ -1718,6 +1718,7 @@
 	           GOAL_SCORE AS goalScore,
 	           GOAL_JUGI  AS goalJugi,
 	           GOAL_CHASU AS goalChasu,
+	           UPD_USER   AS updUser,
 	           DATE_FORMAT(UPD_DTTM, '%Y-%m-%d %H:%i') AS updDttm
 	      FROM TBL_GRADE_MST
 	     WHERE HOSP_CD   = #{hospCd}

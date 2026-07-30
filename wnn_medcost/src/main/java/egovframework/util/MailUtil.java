@@ -30,19 +30,21 @@ public class MailUtil {
 
 	private MailUtil() { }
 
-	/** 설정 로드 — 서버 파일(-Dwnn.mail.config) 우선, 없으면 클래스패스 mail.properties */
+	/** 설정 로드 — 서버 파일(-Dwnn.mail.config) 우선, 없으면 클래스패스 mail.properties.
+	 *  ★반드시 UTF-8 Reader 로 읽는다(2026-07-30) — Properties.load(InputStream) 는 ISO-8859-1 고정이라
+	 *    mail.fromName 의 한글('적정성평가')이 깨져 보낸사람 이름이 'ì...' 로 나갔다(실제 발생). */
 	public static Properties config() {
 		Properties p = new Properties();
 		String ext = System.getProperty("wnn.mail.config");
 		if (ext != null && ext.trim().length() > 0) {
 			File f = new File(ext.trim());
 			if (f.isFile()) {
-				try (InputStream in = new FileInputStream(f)) { p.load(in); return p; }
+				try (java.io.Reader in = new java.io.InputStreamReader(new FileInputStream(f), java.nio.charset.StandardCharsets.UTF_8)) { p.load(in); return p; }
 				catch (Exception ignore) { /* 못 읽으면 클래스패스로 폴백 */ }
 			}
 		}
 		try (InputStream in = MailUtil.class.getClassLoader().getResourceAsStream("mail.properties")) {
-			if (in != null) p.load(in);
+			if (in != null) p.load(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
 		} catch (Exception ignore) { }
 		return p;
 	}

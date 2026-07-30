@@ -398,7 +398,7 @@
   #evalReport .er-grplabel.er-g22{ background:#6b3fa0; }
   #evalReport .er-ana{ font-size:12.5px; margin:0; }
   #evalReport .er-ana .er-mk{ color:var(--er-navy2); font-weight:800; margin-right:4px; }
-  #evalReport .er-plan{ font-size:12.5px; margin:7px 0 0; color:var(--er-good); font-weight:700; }
+  #evalReport .er-plan{ font-size:12.5px; margin:7px 0 0; color:var(--er-good); font-weight:700; line-height:160%; }   /* 줄간격 160% (2026-07-30 요청) */
   #evalReport .er-plan .er-mk{ color:var(--er-good); font-weight:800; margin-right:4px; }
   #evalReport .er-grplabel{ font-size:12px; font-weight:800; color:#fff; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2)); display:inline-block; padding:4px 12px; border-radius:8px; margin:20px 0 4px; }
   #evalReport .er-rec{ border:1px solid var(--er-line); border-left:4px solid var(--er-navy2); border-radius:10px; padding:13px 16px; margin-top:11px; background:#fff; }
@@ -671,7 +671,10 @@
           <div class="er-fn er-editable" data-key="diag_note">※ 병원 여건을 고려한 단계적 목표(목표등급) 기준으로 부족점수와 개선 로드맵을 산정했습니다.</div>
         </div>
 
-        <div class="er-subh">2. 한눈에 보는 우선 개선지표 <span style="font-weight:600;color:var(--er-soft);font-size:11.5px;">(진료→구조→지역사회복귀율 · 부족점수 큰 순)</span></div>
+        <%-- 순서 설명은 제목과 한 줄로(2026-07-30) — 다 적으면 두 줄로 꺾여 '우선 개선지표' 제목이 갈라져 보였다.
+             자세한 순서는 hover(title)로. --%>
+        <div class="er-subh" style="white-space:nowrap;">2. 한눈에 보는 우선 개선지표 <span style="font-weight:600;color:var(--er-soft);font-size:11px;"
+          title="욕창개선 → ADL → HbA1c → 배뇨관리 → 유치도뇨관 → 구조영역(다음 표준화 구간 근접순) → 장기입원 → 항정 → 지역사회복귀">(욕창개선→ADL→HbA1c→배뇨관리→유치도뇨관→구조→장기입원→항정→지역사회복귀)</span></div>
         <div class="er-tw">
           <table class="er-tbl">
             <thead><tr><th>순위</th><th class="er-l">지표</th><th>영역</th><th>가중치</th><th>현재점수</th><th>부족점수</th><th class="er-l">개선 여지</th></tr></thead>
@@ -694,7 +697,8 @@
             <tbody id="er-tbl2Body"><!-- JS --></tbody>
           </table>
         </div>
-        <div class="er-fn er-editable" data-key="tbl2_note">※ 표준화 구간은 2024년(2주기 6차) 평가결과 기준(1구간 미흡 ~ 5구간 우수). 획득점수 = 가중치 ÷ 5 × 표준화구간.<br>※ 항정신성의약품 처방률은 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값이 실제 평가결과와 차이가 있을 수 있습니다(참고용, 기본 표준화 3구간 산정).<br>※ 유치도뇨관 관련 의무기록(환자별 Foley 삽입·제거 대사)은 병원 EMR/OCS 정보 확인이 필요하여 본 보고서에서는 제외했습니다.</div>
+        <%-- 2026-07-30 사용자 요청: '유치도뇨관 관련 의무기록(Foley) 제외' 문구 삭제 (종전 세 번째 ※ 줄) --%>
+        <div class="er-fn er-editable" data-key="tbl2_note">※ 표준화 구간은 2024년(2주기 6차) 평가결과 기준(1구간 미흡 ~ 5구간 우수). 획득점수 = 가중치 ÷ 5 × 표준화구간.<br>※ 항정신성의약품 처방률은 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값이 실제 평가결과와 차이가 있을 수 있습니다(참고용, 기본 표준화 3구간 산정).</div>
       </div>
     </div>
 
@@ -1063,7 +1067,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function n(v){ var x = Number(v); return isNaN(x)?0:x; }
   function f1(v){ var x=n(v); return (Math.round(x*10)/10).toFixed(1); }
   function fnum(v){ var x=n(v); return (Math.abs(x-Math.round(x))<0.001)? String(Math.round(x)) : (Math.round(x*100)/100).toString(); }
-  function gradeOf(t){ t=n(t); if(t>=88)return'1등급'; if(t>=79)return'2등급'; if(t>=71)return'3등급'; if(t>=63)return'4등급'; return'5등급'; }
+  /* 등급 구간(2026-07-30 사용자 확정): 87↑=1 / 79~87미만=2 / 74~79미만=3 / 64~74미만=4 / 64미만=5
+     (종전 88/79/71/63 에서 변경 — evalReportList.jsp·MagamController.gradeOfScore 와 반드시 같이 고칠 것) */
+  function gradeOf(t){ t=n(t); if(t>=87)return'1등급'; if(t>=79)return'2등급'; if(t>=74)return'3등급'; if(t>=64)return'4등급'; return'5등급'; }
   function areaNm(fg){ return fg==='10'?'구조':(fg==='21'?'과정':(fg==='22'?'결과':'')); }
   function grpNm(fg){ return fg==='10'?'구조지표':(fg==='21'?'과정지표':(fg==='22'?'결과지표':'기타')); }
 
@@ -1083,7 +1089,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '06':'배뇨조절 저하(자주 실금·조절 못함) 환자 중 배뇨관리를 실시한 환자 비율. 분자 인정 = ①일정하게 짜여진 배뇨계획+배뇨일지 3일 이상 ②방광훈련프로그램+배뇨일지 3일 이상 ③규칙적 도뇨 중 하나 이상(의료최고도·배뇨관련 루 관리 등 제외).',
     '07':'항정신성의약품 처방 정도(PI, 0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용입니다.',
     '08':'매월 심사평가원의 DUR 점검 현황을 확인하여 누락 대상자 관리가 필요하며 점검 결과에 따라 추후 결과 발표 시 점수차가 발생할 수 있음. 확인경로: 요양기관업무포털(biz.hira.or.kr) > 모니터링 > DUR정보 > 기관별 DUR 점검완료현황.',
-    '09':'1단계 이상 욕창 보유 환자 중 당일 피부문제 처치를 실시한 환자 비율. (처치 = 압력 줄이는 도구 사용·체위변경·욕창 해결 위한 영양 공급·욕창부위 드레싱 등 4가지 중 수행 시 해당)',
+    '09':'전월 평가표 상 1단계 이상 욕창 보유 환자 중 당월 피부문제 처치를 실시한 환자 비율. (처치 = 압력 줄이는 도구 사용·체위변경·욕창 해결 위한 영양 공급·욕창부위 드레싱 등 4가지 중 수행 시 해당)',   /* 2026-07-30 문구 확정: 당일→전월 평가표/당월 */
     '10':'당일·전월 모두 고위험군에 해당하는 환자 중 당일 2단계 이상 욕창이 새로 생긴 환자를 확인하는 지표. 값이 낮을수록 우수(0.25% 미만 = 5구간).',
     '11':'2단계 이상 욕창 보유 환자 중 당일 개선된 환자 비율(개선 = 욕창 단계 수가 줄거나 최고단계가 낮아진 경우).',
     '12':'입원 시점 대비 재평가에서 일상생활수행능력이 호전된 환자 비율.',
@@ -1106,7 +1112,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // Ⅰ-2 우선지표 "개선 여지" 문구
   var TPL_ROOM = {
     '01':'인력 구조 개선 필요', '02':'인력 구조 개선 필요', '03':'인력 구조 개선 필요',
-    '05':'감염관리·제거관리', '06':'배뇨관리 기록·실시',
+    '05':'연속적인 14일이 되지 않도록 관리',   /* 종전 '감염관리·제거관리' — 2026-07-30 사용자 확정(14일 초과 산정규칙과 연결) */
+    '06':'배뇨관리 기록·실시',
     '11':'최대 개선 여지', '12':'최대 개선 여지',
     '14':'퇴원계획·지역연계 강화', '15':'재가·시설 연계 기록'
   };
@@ -2603,8 +2610,18 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   저장 override(옛 하드코딩 3등급/78 등)를 무시하고 항상 마스터값으로 덮어씀.
   //   마스터에 값이 없는(미등록) 분기면 아무것도 안 바꿔 기존 표시 유지.
   //   hospgrade 는 숫자('1')로 저장 → '1등급' 표기로 변환.
+  /* 구조영역 라벨 옆 '신고 기준' 표기(2026-07-30) — 차등제 마스터의 신고년도·분기.
+     renderSec3 가 goal 도착 전에 먼저 그려질 수 있어, 자리(id)만 만들고 여기서 채운다. */
+  var _erGoal = null;
+  function _erQtagTxt(){
+    if(!_erGoal) return '';
+    var y=String(_erGoal.startyy||'').trim(), q=String(_erGoal.qterflag||'').trim();
+    return (y && q) ? ('*'+y+'년 '+q+'분기 신고 기준 산출') : '';
+  }
   function applyGoalDefault(goal){
     if(!goal) return;
+    _erGoal = goal;
+    var _tg=document.getElementById('erG10Qtag'); if(_tg) _tg.textContent=_erQtagTxt();
     var gs = (goal.goalscore!=null && goal.goalscore!=='') ? fnum(goal.goalscore) : '';
     var hg = (goal.hospgrade!=null && String(goal.hospgrade).trim()!=='') ? String(goal.hospgrade).trim() : '';
     // 목표등급 = 저장된 병원등급(HOSPGRADE) 우선. 등급이 비어 있으면 목표점수로부터 유도(점수/등급 일관성).
@@ -2637,7 +2654,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     // 우선지표(부족분 상위 6)
     var pri = topGaps(6);
     el('er-priBody').innerHTML = pri.length? pri.map(function(x,i){
-      var room = (TPL_ROOM[x.cd]||'') + (i<2 ? ' (최우선)' : '');   // 원본 PDF "개선 여지" 문구 + 상위2 최우선
+      // 구조지표는 필요 인력 수치(staffNeed)를 우선 표기 — 「57일 추가 인력 필요(최소 1인 이상)」(2026-07-30)
+      var room = (x.fg==='10' ? (staffNeed(x) || TPL_ROOM[x.cd] || '') : (TPL_ROOM[x.cd]||'')) + (i<2 ? ' (최우선)' : '');
       var gapCls = i<2 ? 'er-gaphl' : 'er-b-bad';                   // 최우선(상위2) 부족분 = 연분홍 배경 강조(원본)
       return '<tr><td>'+(i+1)+'</td><td class="er-l">'+esc(x.nm)+'</td><td>'+areaNm(x.fg)+'</td><td class="er-num">'+fnum(x.w)+'</td><td class="er-num">'+f1(x.got)+'</td><td class="er-num '+gapCls+'">'+f1(x.gap)+'</td><td class="er-l">'+esc(room)+'</td></tr>';
     }).join('') : '<tr><td colspan="7" style="color:#a7b1c0;">부족점수가 있는 지표가 없습니다.</td></tr>';
@@ -2704,7 +2722,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-gapGoalGrade').textContent = goalGrade;
     var gap = Math.round((goalScore - scores.total)*10)/10;
     el('er-gapScore').textContent = gap>0 ? '+'+gap : '0';   // 목표 초과 달성(음수)은 0으로 표시 (2026-07-23 사용자)
-    var bands=[['1등급','88 ~ 100'],['2등급','79 ~ 87'],['3등급','71 ~ 78'],['4등급','63 ~ 70'],['5등급','63 미만']];
+    var bands=[['1등급','87 ~ 100'],['2등급','79 ~ 87 미만'],['3등급','74 ~ 79 미만'],['4등급','64 ~ 74 미만'],['5등급','64 미만']];   // 2026-07-30 구간 변경
     var cur=gradeOf(scores.total);
     // 가로형(원본 PDF): 헤더=등급, 행1=표준화 점수구간(목표 셀 강조), 행2=병원 현황(현재 등급 칸에 점수)
     el('er-gradeHead').innerHTML = '<tr><th class="er-l">등급</th>'+bands.map(function(b){
@@ -2732,7 +2750,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!savedKeys['diag_note']){
       var e2=document.querySelector('#evalReport [data-key="diag_note"]');
       if(e2){
-        e2.textContent = '※ 기존 표준(1등급·88점)을 목표로 하면 부족점수가 +'+f1(88-scores.total)+'점으로 과대 산정됩니다. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족점수와 개선 로드맵을 재산정했습니다.';
+        e2.textContent = '※ 기존 표준(1등급·87점)을 목표로 하면 부족점수가 +'+f1(87-scores.total)+'점으로 과대 산정됩니다. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족점수와 개선 로드맵을 재산정했습니다.';
         AUTO['diag_note'] = e2.innerHTML;
       }
     }
@@ -3011,7 +3029,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       else
         p.sum_p1 += ' 전월과 동일한 수준을 유지하고 있습니다.';
     }
-    var UPCUT = { '2등급':88, '3등급':79, '4등급':71, '5등급':63 };   // 현재등급 → 상위등급 커트라인(gradeOf 기준)
+    var UPCUT = { '2등급':87, '3등급':79, '4등급':74, '5등급':64 };   // 현재등급 → 상위등급 커트라인(gradeOf 기준 · 2026-07-30 구간 변경)
     if(UPCUT[curG]!=null){
       var upGap = Math.round((UPCUT[curG]-scores.total)*100)/100;
       if(upGap>0 && upGap<=5)
@@ -3080,11 +3098,66 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
   }
 
+  /* ★구조영역 '개선 여지' 를 수치로(2026-07-30 사용자 요청 — "몇 명을 충원해야 하는지 92일 기준으로").
+       표기 확정: 「57일 추가 인력 필요(최소 1인 이상)」 형태.
+     [산출 — 병원 담당자가 GPT 로 검산하던 그 계산을 그대로 구현]
+       01~03(환자수÷인력수, 낮을수록 좋음 · 분기 92일 기준):
+         총재원일수   = 평균재원환자수(ntorval) × 92
+         목표근무일수 = 총재원일수 ÷ 다음구간 경계 B   (예: 30명 미만 → B=30)
+         추가일수     = ⌈목표근무일수 − 현재인력수(dtorval)×92⌉ · 인원 = ⌈추가일수÷92⌉
+         검산: 재원 201.18명·의사 6.09명·B=30 → 616.95−560.28 = 56.67 → 「57일 추가 인력 필요(최소 1인 이상)」 ✓
+       04(약사재직일수율 %, 높을수록 좋음): 추가재직일수 = ⌈(다음구간 하한% − 현황%)÷100 × 재직대상일수(dtorval)⌉
+     계산 불가(만점·기준 미로드·분모 0)면 '' 를 돌려 기존 문구(TPL_ROOM)로 폴백한다. */
+  function staffNeed(x){
+    var r=x.r, s=n(r.s_score)||0, zones=CRIT_ALL[x.cd];
+    if(x.fg!=='10' || !zones || s<=0 || s>=5) return '';
+    var nz=null; zones.forEach(function(z){ if(z.s===s+1) nz=z; });
+    if(!nz) return '';
+    var DAYS=92;   // 분기 기준일수(사용자 지정 — SP 의 분기 산정과 동일한 92일)
+    if(x.cd==='04'){
+      var tgt=n(r.dtorval), got04=n(r.ntorval), B4=n(nz.start);
+      if(!(tgt>0) || !(B4>0)) return '';
+      var addDays4=Math.ceil(B4/100*tgt - got04);
+      if(addDays4<=0) return '';
+      return addDays4+'일 추가 재직 필요';
+    }
+    var P=n(r.ntorval), S=n(r.dtorval), B=bndUp(n(nz.end));
+    if(!(P>0) || !(S>0) || !(B>0)) return '';
+    var addDays=Math.ceil(P*DAYS/B - S*DAYS);
+    if(addDays<=0) return '';
+    var ppl=Math.max(1, Math.ceil(addDays/DAYS));
+    return addDays+'일 추가 인력 필요(최소 '+ppl+'인 이상)';
+  }
+
   function topGaps(limit){
-    // 순위 확정(2026-07-23 사용자): 진료영역(과정·결과) → 구조영역 → 지역사회복귀율(15) 순, 같은 묶음 안에서는 부족점수 큰 순
-    function tier(x){ return x.cd==='15' ? 2 : (x.fg==='10' ? 1 : 0); }
+    /* ★순위 고정(2026-07-30 사용자 확정 — 2026-07-23 의 '진료→구조→지역사회·부족점수 큰 순' 을 대체):
+         1 욕창개선(11) → 2 ADL(12) → 3 당뇨HbA1c(13) → 4 배뇨관리(06) → 5 유치도뇨관(05)
+         → 6 구조영역(01~04) → 7 장기입원(14) → 8 항정처방률(07) → 9 지역사회복귀율(15)
+       · 구조영역 안에서는 **다음 표준화 구간에 가장 근접한 지표부터**(사용자: "실질적으로 먼저 올릴 수 있는
+         지표 우선"). 근접도 = 현황값에서 다음 구간 경계까지의 거리 ÷ 현황값(단위가 명·%로 섞여 있어 상대거리로 비교).
+       · 목록에 없는 지표(08 DUR · 09 욕창처치 · 10 욕창새로생김)는 맨 뒤에 부족점수 큰 순으로 붙는다. */
+    var RANK = { '11':1, '12':2, '13':3, '06':4, '05':5, '14':7, '07':8, '15':9 };   // 구조(01~04)=6, 미지정=10
+    var LOW2 = { '01':1, '02':1, '03':1, '05':1, '07':1, '10':1, '14':1 };           // 값이 낮을수록 좋은 지표
+    function rankOf(x){ return RANK[x.cd] || (x.fg==='10' ? 6 : 10); }
+    // 구조지표 근접도 — 다음 구간(s+1) 경계까지 얼마나 가까운가. 계산 불가(만점·기준 없음)는 맨 뒤.
+    function structProx(x){
+      var s = n(x.r.s_score)||0, val = n(x.r.cal_val);
+      var zones = CRIT_ALL[x.cd];
+      if (!zones || s<=0 || s>=5) return 9e9;
+      var nz=null; zones.forEach(function(z){ if(z.s===s+1) nz=z; });
+      if (!nz) return 9e9;
+      var dist = LOW2[x.cd] ? (val - nz.end) : (nz.start - val);   // 낮을수록 좋은 지표는 다음 구간 상한까지 내려갈 거리
+      if (!(dist > 0)) return 0;                                    // 이미 경계 위 = 가장 근접
+      return dist / Math.max(Math.abs(val), 0.01);
+    }
     return indicators.map(function(r){ return { cd:r.cate_cd, nm:r.cate_nm, fg:r.cate_fg, w:n(r.stdweig), got:n(r.weigval), gap:n(r.stdweig)-n(r.weigval), r:r }; })
-                     .filter(function(x){ return x.gap>0.0001; }).sort(function(a,b){ return (tier(a)-tier(b)) || (b.gap-a.gap); }).slice(0, limit||99);
+                     .filter(function(x){ return x.gap>0.0001; })
+                     .sort(function(a,b){
+                       var ra=rankOf(a), rb=rankOf(b);
+                       if (ra!==rb) return ra-rb;
+                       if (ra===6){ var d=structProx(a)-structProx(b); if (d) return d; }   // 구조끼리 = 근접순
+                       return b.gap-a.gap;                                                  // 그 외 동순위 = 부족점수 큰 순
+                     }).slice(0, limit||99);
   }
 
   // Ⅲ 지표별 분석 내용 — 지표별 자동 분석문 + 편집 개선방향(저장 문구 override 는 loadSavedTexts 가 재적용)
@@ -3094,6 +3167,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var rows=indicators.filter(function(r){ return r.cate_fg===fg; });
       if(!rows.length) return;
       html += '<div class="er-grplabel er-g'+fg+'">'+grpNm(fg)+'</div>';
+      /* 구조영역 라벨 옆 = 차등제 신고 기준(2026-07-30 요청) — 예) *2026년 3분기 신고 기준 산출.
+         값은 차등제 마스터(goal.startyy/qterflag)에서. 로드 순서상 renderSec3 가 먼저 돌 수 있어
+         id 를 달아 두고 applyGoalDefault 가 값 도착 시 채운다. */
+      if(fg==='10') html += ' <span id="erG10Qtag" style="font-size:11.5px;font-weight:700;color:var(--er-soft);">'+_erQtagTxt()+'</span>';
       var topCds = topGaps(2).map(function(x){ return x.cd; });   // 최우선(부족분 상위2) — 원본 "◀ 최우선 개선" 표기
       rows.forEach(function(r){
         var w=n(r.stdweig), got=n(r.weigval), gap=w-got, cd=esc(r.cate_cd), s=n(r.s_score)||0;
@@ -3116,14 +3193,24 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var bg = bladderGapTxt(r);   // [★6] 배뇨관리(06) 오류점검 연계 보완문(있으면) — 편집영역이라 수기 수정 가능
         if(bg) planTxt += ' ' + esc(bg) + '.';
         if(!planTxt.trim()) planTxt = '기록·실시 절차를 점검하고 목표 구간을 설정하세요.';
+        /* [2026-07-30 사용자 요청 묶음]
+           · 구조영역(fg 10) = 지표정의·개선방향 줄 삭제 — 분기(신고) 단위라 3개월 내내 같아 매월 반복이 무의미.
+             라벨 옆 '*{년} {분기} 신고 기준 산출' 표기가 그 자리를 대신한다.
+           · DUR(08) = 분석 문구를 확정 문구로 교체(100% 가정 산정 + 점검 안내 + 확인 경로). 정의·개선방향 없음. */
+        var noDefPlan = (fg==='10') || (cd==='08');
+        if (cd==='08'){
+          auto = 'DUR 점검률을 100%로 가정하여 가중치 '+fnum(w)+'점을 산정함.<br>'
+               + '다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.<br>'
+               + '• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소';
+        }
         var topTag = (topCds.indexOf(r.cate_cd)>=0 && !full) ? ' <span style="color:var(--er-bad); font-weight:800; font-size:11.5px;">◀ 최우선 개선</span>' : '';
         html += '<div class="er-indhead">■ '+esc(r.cate_nm)+' <span class="er-indsc"><span class="'+(full?'er-b-good':'er-b-bad')+'">'+f1(got)+'</span> / '+fnum(w)+'점</span>'+topTag+'</div>'
               + '<div class="er-indbox'+(full?' er-full':'')+'">'
               +   '<div class="er-anabar">분석 내용</div>'
               +   '<div class="er-indbody">'
               +     '<p class="er-ana er-editable" data-key="ana_'+cd+'">* '+auto+'</p>'
-              +     (defTxt? '<p class="er-def er-editable" data-key="def_'+cd+'">지표 정의 : '+defTxt+'</p>' : '')
-              +     (full? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
+              +     ((defTxt && !noDefPlan)? '<p class="er-def er-editable" data-key="def_'+cd+'">지표 정의 : '+defTxt+'</p>' : '')
+              +     ((full || noDefPlan)? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
               +   '</div>'
               + '</div>';
       });

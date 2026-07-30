@@ -287,7 +287,8 @@ jQuery(function(){
   }
   function n(v){ var x=Number(v); return isNaN(x)?0:x; }
   function f1(v){ return (Math.round(n(v)*10)/10).toFixed(1); }
-  function gradeOf(t){ t=n(t); if(t>=88)return'1등급'; if(t>=79)return'2등급'; if(t>=71)return'3등급'; if(t>=63)return'4등급'; return'5등급'; }
+  /* 등급 구간(2026-07-30): 87/79/74/64 — evalReport.jsp gradeOf·MagamController.gradeOfScore 와 한 몸(같이 고칠 것) */
+  function gradeOf(t){ t=n(t); if(t>=87)return'1등급'; if(t>=79)return'2등급'; if(t>=74)return'3등급'; if(t>=64)return'4등급'; return'5등급'; }
   // 사용자명 디코딩 — escape() 방식(%uXXXX) 한글. unescape 는 %XX·%uXXXX 둘 다 처리(decodeURIComponent 는 %uXXXX 불가).
   function decUser(v){
     if(v==null || v==='') return '';
