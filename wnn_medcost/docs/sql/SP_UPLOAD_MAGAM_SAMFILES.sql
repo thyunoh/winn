@@ -193,6 +193,16 @@ BEGIN
                              WHERE TABLE_SCHEMA  = DATABASE()
                                AND TABLE_NAME   = 'TBL_PATVAL_MST'
                                AND IS_NULLABLE  = 'YES');
+        /* ★[2026-07-30 버그수정] CHUNGSEQ(배치키=jobs_dt)도 반드시 갱신 목록에 넣는다.
+             위 목록은 IS_NULLABLE='YES' 컬럼만이라 NOT NULL 인 CHUNGSEQ 가 빠졌고,
+             그 결과 **재업로드(upsert)된 환자 행이 옛 업로드의 CHUNGSEQ 를 그대로 물고 있었다**
+             (실측 202607: 14개 병원, 예: 11282231 은 230행 중 222행이 옛 배치 소속).
+             그 상태에서 화면 목록의 **옛 평가표 배치를 삭제**하면
+             SP_DELETE_MAGAM_CLAIMNO2 가 `DELETE FROM TBL_PATVAL_MST WHERE CHUNGSEQ=옛 jobs_dt` 라
+             방금 재업로드한 행까지 통째로 지워져 → 적정성평가 자료생성 시 분모·분자가 0 으로 나왔다
+             ("가끔" 재현되던 그 증상 — 옛 배치를 지웠을 때만 터진다. 청구(8)는 DELETE+INSERT 라 무관).
+             CHUNGSEQ 를 새 배치로 갱신하면 옛 배치 삭제는 진짜 옛 행(이번 파일에 없는 환자)만 지운다. */
+        SET table_update = CONCAT(' CHUNGSEQ = VALUES(CHUNGSEQ), ', table_update);
     END IF;
 
     OPEN dat_cursor;
