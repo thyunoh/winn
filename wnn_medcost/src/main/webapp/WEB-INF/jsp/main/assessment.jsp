@@ -2453,6 +2453,17 @@ function fn_CreateData(flag, force) {
                 showExisting();
                 return;
             }
+            /* ★위너넷(s_wnn_yn='Y')은 '재생성 확인' 팝업을 띄우지 않는다 (2026-07-30 요청).
+                 여러 병원을 돌아다니며 조회하는 관리자 흐름이라 진입마다 팝업이 걸리적거림.
+                 · 진입·월 변경(flag 0)                 → 묻지 않고 기존 자료 표시
+                 · [적정성평가 월 자료생성] 버튼(flag 1) → 묻지 않고 바로 재생성
+               일반병원(거래처)은 종전 그대로 팝업으로 확인한다. */
+            var _isWnn = false;
+            try { _isWnn = (getCookie('s_wnn_yn') || '').trim() === 'Y'; } catch (e) {}
+            if (hasData && _isWnn) {
+                if (flag === 1) { doCreate(); } else { showExisting(); }
+                return;
+            }
             if (hasData) {
                 if (!document.getElementById('regenConfirmStyle')) {
                     var rst = document.createElement('style');
