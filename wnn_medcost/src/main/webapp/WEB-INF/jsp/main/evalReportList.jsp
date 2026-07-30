@@ -467,7 +467,10 @@ jQuery(function(){
         { title:'첨부', data:'haspdf', className:'dt-center', render:function(d,t,r){ var has=(d==='Y');
             if(t==='display'){
               if(!has) return '-';
-              // 클릭 = 첨부 PDF 미리보기(발송 전 확인, 2026-07-31). 행 클릭(보고서 열기)과는 위임 핸들러의 stopPropagation 으로 분리.
+              // 클릭 = 첨부 PDF 미리보기(발송 전 확인, 2026-07-31) — ★위너넷(관리자)만.
+              //   일반병원은 클릭 없이 '있음' 표시만(2026-07-31 사용자 요청 — 병원은 보고서 화면에서 보면 됨).
+              //   행 클릭(보고서 열기)과는 위임 핸들러의 stopPropagation 으로 분리.
+              if(!isWinner) return '<span class="erl-pdf">📎 있음</span>';
               return '<span class="erl-pdf erl-pdfview" data-hosp="'+esc(r.hospcd)+'" data-ym="'+esc(r.evalym)+'" data-nm="'+esc(r.hospnm||HOSP_NM[r.hospcd]||'')+'" title="클릭하면 첨부된 PDF를 미리 봅니다">📎 있음</span>';
             }
             return has?'있음':'-'; } },

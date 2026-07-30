@@ -12,6 +12,8 @@
 ### [완료] 월보고서 목록(evalReportList.jsp) — 첨부 PDF 미리보기 (2026-07-31)
 - **요청**: 관리자가 메일 보내기 전에 첨부 PDF 내용을 확인할 수 있게.
 - **동작 2곳**: ① 목록 첨부 칸 `📎 있음` 클릭(밑줄 표시, 행 클릭=보고서 열기와는 위임 핸들러 `stopPropagation` 으로 분리) ② 메일 발송창 상단 [📄 첨부 PDF 확인] 버튼 — 둘 다 모달(`#erl-pdfModal`, z-index 1500 = 메일창 1400 위)로 PDF 표시.
+- **★위너넷(관리자)만**: 일반병원 화면에서는 첨부 칸이 클릭 안 되는 '📎 있음' 표시만(2026-07-31 사용자 확정 — 병원은 보고서 화면에서 열람). 발송창 확인 버튼은 발송창 자체가 관리자 전용이라 별도 분기 불필요.
+- **다듬기**: 닫기 버튼 흰배경 전환 시 글자색 미지정으로 '빈 버튼'(흰 글자) — `#erl-pdfModal .erl-phead .erl-btn` 에 color 지정. 메일창 머리줄 버튼 3개는 한 줄 고정(제목 min-width:0, 버튼묶음 nowrap).
 - **수법**: 목록 응답에는 경로가 없어(haspdf Y/N 뿐) `loadEvalReport.do` 로 `mst.pdfpath` 를 받고, `/sftp/download.do` 가 attachment 강제라 **fetch blob→objectURL→iframe** (evalReport.jsp `erPdfPreview` 와 동일 — iframe 새 노드 교체·revoke 는 다음 열기·seq 가드 포함). `loadEvalReport.do` 는 문서열람(READ) 기록을 안 남기므로 관리자 미리보기가 '읽음'으로 오기록되지 않음(확인).
 - **배포**: JSP만 — WAR 재빌드 불필요.
 
