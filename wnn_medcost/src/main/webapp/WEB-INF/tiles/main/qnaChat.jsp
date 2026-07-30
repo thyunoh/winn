@@ -85,10 +85,12 @@
   #wqaLog::-webkit-scrollbar{ width:8px; }
   #wqaLog::-webkit-scrollbar-thumb{ background:#cbd8e8; border-radius:4px; }
 
-  .wqa-row{ display:flex; margin-bottom:11px; animation:wqaIn .24s ease both; }
-  .wqa-row.me{ justify-content:flex-end; }
+  /* ★질문·답변 좌우 배치 (2026-07-30 사용자 확정: **질문 왼쪽 · 답변 오른쪽**) —
+       말풍선 폭이 97%면 한 줄을 다 먹어 어느 쪽 정렬인지 안 보인다 → 86%로 줄여 방향이 읽히게 유지. */
+  .wqa-row{ display:flex; justify-content:flex-end; margin-bottom:11px; animation:wqaIn .24s ease both; }   /* 답변 = 오른쪽 */
+  .wqa-row.me{ justify-content:flex-start; }                                                                 /* 질문 = 왼쪽 */
   @keyframes wqaIn{ from{ opacity:0; transform:translateY(7px);} to{ opacity:1; transform:none;} }
-  .wqa-bub{ max-width:97%; padding:10px 13px; border-radius:13px; font-size:1em; line-height:1.8;
+  .wqa-bub{ max-width:86%; padding:10px 13px; border-radius:13px; font-size:1em; line-height:1.8;
             background:#fff; border:1px solid #dfe8f3; color:#28323c; box-shadow:0 1px 2px rgba(23,70,162,.05);
             overflow-wrap:anywhere; word-break:break-word; }
   .wqa-row.me .wqa-bub{ background:#1f6feb; border-color:#1f6feb; color:#fff; font-weight:600; }
@@ -101,10 +103,11 @@
   .wqa-hist .arw{ flex:0 0 auto; color:#8ba0bb; font-weight:800; }
   .wqa-hist .q{ flex:1; min-width:0; font-weight:700; color:#37475a;
                 white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  /* 질문 개별 삭제 ✕ — 접힌 줄에서는 오른쪽 끝, 최근 질문에서는 말풍선 왼쪽 */
+  /* 질문 개별 삭제 ✕ — 접힌 줄에서는 오른쪽 끝, 최근 질문에서는 말풍선 **오른쪽**(질문이 왼쪽 배치로 바뀌어 ✕도 뒤로) */
   .wqa-hist .del{ flex:0 0 auto; color:#adbcce; font-weight:700; padding:0 2px 0 6px; }
   .wqa-hist .del:hover{ color:#e2564a; }
   .wqa-row.me{ align-items:center; gap:7px; }
+  .wqa-row.me .wqa-qdel{ order:2; }   /* 마크업(✕ 먼저)은 그대로 두고 순서만 뒤로 — 왼쪽 말풍선 뒤에 ✕ */
   .wqa-qdel{ flex:0 0 auto; width:1.55em; height:1.55em; line-height:1.5em; text-align:center; cursor:pointer;
              border-radius:50%; background:#fff; border:1px solid #dfe8f3; color:#9aabc0; font-size:.8em; font-weight:700;
              opacity:.5; transition:opacity .15s ease, color .15s ease, border-color .15s ease; }
