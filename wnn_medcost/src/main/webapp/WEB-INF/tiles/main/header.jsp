@@ -13,7 +13,9 @@
 
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> </meta>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"> </meta>
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<%-- maximum-scale=1 을 뺐다(2026-08-02) — 태블릿에서 손가락 확대(핀치줌)가 막혀 있었다.
+	     표가 넓은 화면이 많아 확대는 사실상 유일한 탈출구다. 데스크탑에는 아무 영향 없다. --%>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<title>위너넷 분석.평가 </title>    
 
@@ -28,6 +30,10 @@
 	<link rel="stylesheet" href="/assets/vendor/fonts/flag-icon-css/flag-icon.min.css">	
 	<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.css" >
 	<link rel="stylesheet" href="/css/winmc/addstyle.css?v=100">
+	<%-- 노트북(1366×768·1440×900)·태블릿 대응 — 2026-08-02 추가.
+	     ★반드시 addstyle.css 뒤(=마지막 CSS)에 둘 것. 같은 특이성이면 나중 것이 이긴다.
+	     되돌리려면 이 한 줄만 지우면 종전 데스크탑 화면 그대로다(파일 안에서 폭·높이 조건으로만 동작). --%>
+	<link rel="stylesheet" href="/css/winmc/winn-notebook.css?v=1">
 	
 	
 	<!-- 맑은 고딕 정의 -->

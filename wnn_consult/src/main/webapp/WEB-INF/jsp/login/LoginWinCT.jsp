@@ -12,8 +12,12 @@
 <head>
 
 <meta charset="UTF-8" />
-<!--  <meta content="width=device-width, initial-scale=1.0" name="viewport"> --> 
-  <meta content="width=1280" name="viewport"> 
+<%-- 2026-08-02 : width=1280 고정 → device-width 로 전환.
+     종전에는 태블릿이 이 페이지를 **1280px 로 그린 뒤 화면 크기에 맞춰 통째로 축소**해서
+     비율은 맞지만 글자가 작아졌다. 이제 기기 실제 폭으로 배치하고,
+     좁은 폭(≤1279.98px)은 아래 </head> 직전의 반응형 블록이 받는다.
+     ★데스크탑 브라우저는 viewport 메타를 무시하므로 PC 화면은 이 변경과 무관하다. --%>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <!-- Google Web Fonts -->
 <!-- JavaScript Libraries -->
 <!-- wnnnet 설정시작 -->
@@ -72,6 +76,62 @@
 <!-- wnnnet 설정끝 -->
 <!-- DataTables JS 추가 -->
 
+<%-- ══════════════════════════════════════════════════════════════════════════
+     노트북·태블릿 대응 (2026-08-02) — 실제 브라우저로 폭을 재 가며 잡은 값이다.
+     ★적용 구간은 폭 1279.98px 이하 뿐이다. 그 위(1366 노트북·데스크탑)는 한 줄도 안 바뀐다.
+       → 되돌리기 = 이 <style> 블록과 위 viewport 한 줄만 원복.
+
+     왜 1280 이 경계인가 (실측)
+       · 이 페이지는 [로그인 725px] + [배너 590px] 을 `flex-wrap:nowrap` 으로 한 줄에 둔다 → 최소 1315px 필요.
+       · 1440px : 로그인 상자 x=23  → 정상
+       · 1366px : 로그인 칸은 넘치지만 **안의 상자는 x=23 로 화면 안** → 실사용상 정상
+       · 1280px : 상자가 x=-13 부터 왼쪽으로 잘리기 시작
+       · 1024px : x=-170 (170px 잘림) + 헤더 장식이 오른쪽 94px 삐져나가 가로 스크롤 발생
+       그래서 1366 노트북은 손대지 않고, 1280 이하만 세로로 쌓는다.
+
+     여기서 고친 것 (전부 인라인 style 을 이겨야 해서 !important 가 필요하다)
+       ① html,body 가 `height:100%` + 세로 스크롤 잠김이라, 쌓고 나면 아래(공지사항)가
+          **스크롤도 못 하고 잘렸다** → 이 구간에서만 스크롤을 푼다. 이게 없으면 반쪽짜리다.
+       ② 725px·590px 고정 블록을 폭 100%(최대 원본 크기)로 바꾸고 줄바꿈 허용
+       ③ 배너(.image-btn-wrap)는 그 위 버튼들이 % 좌표라 **비율을 반드시 지켜야** 한다 → aspect-ratio 590/225
+       ④ 헤더 장식 이미지(381px)가 가로 스크롤의 주범이라 이 구간에서는 숨긴다
+       ⑤ 상단 메뉴의 `margin-left:-50px` / 로고의 `margin-left:49%` 같은 데스크탑 전용 보정값 해제
+     ══════════════════════════════════════════════════════════════════════════ --%>
+<style>
+@media screen and (max-width:1279.98px){
+  /* ① 세로 스크롤 풀기 — 이 페이지는 원래 '한 화면 고정' 이라 쌓으면 아래가 잘린다 */
+  html, body{ height:auto !important; min-height:100% !important; overflow-x:hidden !important; overflow-y:auto !important; }
+  #carouselContainer{ overflow:visible !important; }
+
+  /* ④ 헤더 장식 — 가로 스크롤의 주범 */
+  .headerRightImg{ display:none !important; }
+
+  /* ⑤ 데스크탑 전용 보정값 해제
+       ★로고는 max-width 와 이미지 높이를 반드시 같이 준다 —
+         `width:auto` 만 주면 이 앵커가 d-flex 블록이라 부모 폭(743px)을 다 먹고,
+         그 안 이미지(원본 300×80)가 741×198 로 부풀어 화면을 덮는다(실측으로 확인). */
+  .container-fluid_act .col-lg-3 > a.btn{ margin-left:10px !important; width:auto !important; max-width:200px !important; }
+  .container-fluid_act .col-lg-3 > a.btn img{ height:30px !important; width:auto !important; }
+  #navbarMenuArea{ margin-left:0 !important; flex-wrap:wrap !important; }
+  #navbarMenuArea .nav-link{ padding:10px 14px !important; }
+  .container-fluid_act .navbar{ height:auto !important; }
+
+  /* ⑥ 캐러셀 위로 로그인을 겹쳐 놓으려고 준 `margin-top:400px` —
+       좁은 화면에서는 그 400px 이 통째로 빈 공간이 된다(상단바 아래 400px 공백). */
+  .col-lg-10[style*="margin-top"]{ margin-top:16px !important; }
+
+  /* ② 로그인·공지 줄을 세로로 쌓는다 */
+  #login_line{ padding-left:0 !important; }
+  #login_line > .row, .noti-section{ flex-wrap:wrap !important; row-gap:14px; justify-content:center !important; }
+  #login_line .col-lg-auto, .noti-section .col-lg-auto{
+    width:100% !important; min-width:0 !important; max-width:725px; flex:0 1 auto !important;
+  }
+  #login_line .contact-form, .noti-section .bg-light{ margin-left:0 !important; }
+
+  /* ③ 배너 — 위에 얹힌 버튼들이 % 좌표라 비율을 깨면 클릭 위치가 어긋난다 */
+  .image-btn-wrap{ width:100% !important; max-width:590px; height:auto !important; aspect-ratio:590/225; }
+}
+</style>
 </head>
 <style>
 /* 팝업 배경 오버레이 */
@@ -432,11 +492,26 @@
 												<div class="control-group mb-2">
 													<input type="password" class="form-control" id="passwd"
 														placeholder="PassWord" style="width: 150%;" />
-													<!-- [2026-07-19] Caps Lock 켜짐 안내 — 비밀번호 입력 중에만 표시 -->
-													<div id="capsLockWarn" style="display:none; margin-top:4px; font-size:12.5px; font-weight:bold; color:#ffd54d; white-space:nowrap;">
-														<i class="fas fa-exclamation-triangle"></i> Caps Lock이 켜져 있습니다.
-													</div>
 												</div>
+												<%-- position:relative — 아래 Caps Lock 안내(absolute)의 기준점.
+												     ★안내를 이 줄에 그냥 inline 으로 넣으면 줄 높이가 20↔24 로 흔들려 로그인 상자가 4px 씩 늘었다 줄었다 한다. --%>
+												<div class="form-check mb-2"
+													style="white-space: nowrap; color: white; position: relative;">
+													<input class="form-check-input" type="checkbox" id="saveyn">
+													<span class="form-check-label font-weight-bold"
+														for="saveyn" style="font-size: 13px;">아이디저장</span>
+														<%-- Caps Lock 안내 — '아이디저장' 과 같은 줄에 둔다(2026-08-02 요청).
+														     종전에는 비밀번호 칸 바로 아래에 있어, 켜질 때마다 로그인 상자가
+														     세로로 늘어나 아래 내용이 통째로 밀렸다.
+														     ★div 가 아니라 span 이어야 한다 — JS 가 display 를 ''(빈값)으로 되돌리는데,
+														       div 면 block 이라 줄이 바뀌어 결국 같은 문제가 난다. --%>
+														<span id="capsLockWarn" style="display:none; position:absolute; left:90px; top:1px; font-size:12.5px; font-weight:bold; color:#ffd54d; white-space:nowrap;">
+															<i class="fas fa-exclamation-triangle"></i> Caps Lock 켜짐
+														</span>
+												</div>
+											<%-- ★이 스크립트는 반드시 #capsLockWarn 뒤에 와야 한다 —
+											     위에 두면 파싱 시점에 그 span 이 아직 없어 getElementById 가 null 이고,
+											     맨 앞 가드(if(!pw || !warn) return)에 걸려 기능이 조용히 죽는다. --%>
 												<script>
 												(function(){
 													var pw = document.getElementById('passwd'), warn = document.getElementById('capsLockWarn');
@@ -451,12 +526,6 @@
 													pw.addEventListener('blur', function(){ warn.style.display = 'none'; });
 												})();
 												</script>
-												<div class="form-check mb-2"
-													style="white-space: nowrap; color: white;">
-													<input class="form-check-input" type="checkbox" id="saveyn">
-													<span class="form-check-label font-weight-bold"
-														for="saveyn" style="font-size: 13px;">아이디저장</span>
-												</div>
 											</div>
 
 											<!-- 로그인 버튼 + 링크 -->

@@ -1,0 +1,94 @@
+@charset "UTF-8";
+/* ============================================================================
+   WinCheck+ 노트북·태블릿 대응 — 2026-08-02 신설
+   대상 : 1366×768 · 1440×900 노트북 / iPad 가로·세로
+
+   왜 안 맞았나 (실측)
+     ① tiles/main/sidebar.jsp 가 `.nav-left-sidebar{ width:280px !important }` 와
+        `.dashboard-wrapper{ margin-left:280px !important }` 로 못 박아 두었다.
+        → 테마(style.css)가 갖고 있던 **≤768px 사이드바 접기 규칙까지 무력화**되어,
+          태블릿·좁은 노트북에서도 280px 를 그대로 밀고 있었다. 이게 제일 큰 원인이다.
+     ② 본문 여백이 `.dashboard-content{ padding:30px 30px 60px }` 로 넉넉해
+        세로 768px 화면에서 표가 몇 줄 안 들어온다.
+
+   원칙
+     · 화면을 새로 짜지 않는다 — 폭·여백·컨트롤 높이만 줄인다.
+     · 데스크탑(폭>1500 & 높이>900)에서는 이 파일의 규칙이 하나도 적용되지 않는다.
+     · 되돌리기 = tiles/main/header.jsp 의 <link> 한 줄 제거.
+     · @media screen 한정 — 미디어타입을 안 쓰면 인쇄(A4)에도 걸린다(월보고서·일계장 등 인쇄 화면 있음).
+
+   ★선택자에 `body` 를 붙인 이유
+     sidebar.jsp 의 규칙이 `!important` 라, 같은 특이성으로는 순서를 어떻게 해도 못 이긴다.
+     `body .nav-left-sidebar`(0,1,1) 로 한 단계 올려야 `!important` 끼리의 싸움에서 이긴다.
+     → 레이아웃(폭·여백)만 이렇게 하고, 밀도(글자·패딩)는 !important 없이 얌전히 둔다.
+       화면 자체 <style> 이 있는 곳은 그 화면 값이 그대로 유지된다(의도).
+   ========================================================================== */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   노트북 가로 (≤1500px) — 좌측 메뉴 280 → 216. 본문이 64px 넓어진다.
+   ───────────────────────────────────────────────────────────────────────── */
+@media screen and (max-width:1500px){
+  body .nav-left-sidebar{ width:216px !important; }
+  body .dashboard-wrapper{ margin-left:216px !important; }
+  body .dashboard-main-wrapper .main-content{ margin-left:216px !important; }
+  body .dashboard-content{ padding:14px 14px 24px !important; }
+
+  /* 메뉴 글자도 같이 줄이지 않으면 긴 항목이 두 줄로 접힌다 */
+  .nav-left-sidebar .navbar-nav .nav-link{ padding:7px 14px; font-size:13.5px; }
+  .nav-left-sidebar .submenu .nav .nav-item .nav-link{ padding-left:30px; font-size:13px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   노트북 세로 (≤900px) — 한 줄이라도 더 보이게 위아래를 걷어낸다.
+   ★!important 를 쓰지 않는다 — 화면마다 자기 <style> 로 정해 둔 크기가 있으면 그쪽을 존중한다.
+   ───────────────────────────────────────────────────────────────────────── */
+@media screen and (max-height:900px){
+  body .dashboard-content{ padding:12px 14px 20px !important; }
+
+  .page-header{ margin-bottom:10px; }
+  .page-header h2, .page-header .pageheader-title{ font-size:18px; }
+  .card{ margin-bottom:12px; }
+  .card-header{ padding:9px 14px; }
+  .card-body{ padding:12px 14px; }
+
+  /* 입력·버튼 — height 를 박으면 Bootstrap 의 줄맞춤이 깨진다. padding 으로 줄인다. */
+  .form-control, .custom-select{ padding:.25rem .5rem; font-size:13px; height:calc(1.5em + .5rem + 2px); }
+  textarea.form-control{ height:auto; }          /* 위 height 가 여러 줄 입력칸을 뭉갠다 */
+  .btn{ padding:.28rem .6rem; font-size:13px; }
+  .input-group-text{ padding:.25rem .5rem; font-size:13px; }
+
+  /* DataTables — 이 앱 화면 대부분이 이 표다. 여기서 가장 많이 벌린다. */
+  table.dataTable thead th, table.dataTable tbody td{ padding:5px 8px; font-size:12.5px; }
+  .dataTables_wrapper .dt-buttons .btn{ padding:.2rem .5rem; font-size:12.5px; }
+  .dataTables_wrapper .dataTables_filter input,
+  .dataTables_wrapper .dataTables_length select{ padding:.2rem .4rem; font-size:12.5px; }
+  .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate{ padding-top:4px; font-size:12.5px; }
+
+  /* 탭 — .tab-regular .tab-content 기본 padding 30px 가 세로를 크게 먹는다 */
+  .tab-regular .tab-content{ padding:12px 12px; }
+  .nav-tabs .nav-link{ padding:.35rem .8rem; font-size:13px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   태블릿 (≤991.98px) — 좌측 메뉴를 접는다.
+   테마는 ≤768px 에서만 접게 되어 있는데, 정작 마크업은 `navbar-expand-lg`(=992px)라
+   769~991px 구간에서 **토글 버튼은 나오는데 메뉴는 280px 로 남아 있는** 어긋난 구간이 있었다.
+   Bootstrap 브레이크포인트(991.98px)에 맞춰 CSS 를 같이 접어 준다.
+   ───────────────────────────────────────────────────────────────────────── */
+@media screen and (max-width:991.98px){
+  body .nav-left-sidebar{
+    width:100% !important; position:relative !important; top:0 !important;
+    height:auto !important; overflow:visible !important;
+  }
+  body .dashboard-wrapper{ margin-left:0 !important; }
+  body .dashboard-main-wrapper .main-content{ margin-left:0 !important; }
+  body .dashboard-content{ padding:10px 10px 20px !important; }
+}
+
+/* 손가락으로 누르는 기기에서만 크기를 키운다 — 창을 좁힌 데스크탑 사용자는 그대로 촘촘하게 */
+@media screen and (max-width:991.98px) and (pointer:coarse){
+  .btn{ min-height:38px; }
+  .form-control, .custom-select{ min-height:38px; }
+  .nav-left-sidebar .navbar-nav .nav-link{ padding:11px 16px; font-size:14px; }
+  table.dataTable tbody td{ padding:8px 8px; }
+}
