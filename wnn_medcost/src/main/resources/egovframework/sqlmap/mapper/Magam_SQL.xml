@@ -1546,6 +1546,7 @@
 		        SELECT DISTINCT
 		               mm.HOSP_CD
 		             , mm.PAT_ID
+		             , pat.ADMIT_DT   <!-- [2026-08-03] 입원 건 식별 — 재입원(별개 입원)은 별건으로 판정 -->
 		        FROM TBL_PATVAL_MST  pat FORCE INDEX (INDEX01)
 		        JOIN TBL_MYOUNG_MST  mm  FORCE INDEX (INDEX01)
 		                              ON mm.HOSP_CD = pat.HOSP_CD
@@ -1598,6 +1599,11 @@
 		                        AND jsm.ITEM_NO <![CDATA[ <> ]]> 'L')
 		     ) sb ON sb.HOSP_CD = pm.HOSP_CD
 		          AND sb.PAT_ID  = pm.PAT_ID
+		          <!-- [2026-08-03 사용자 확정] 같은 '입원 건'에서 충족했을 때만 '관리' —
+		               종전엔 환자번호로만 매칭해, 퇴원 후 재입원(별개 입원 건)의 새 입원평가까지
+		               직전 입원 건의 충족을 물려받아 '관리'로 떴다(600722: 6/8 입원분 충족이
+		               7/8 재입원 행에 전이). 재입원 행은 자기 평가표 기준으로 다시 판정 → '제외'. -->
+		          AND sb.ADMIT_DT = pm.ADMIT_DT
 		 WHERE pm.HOSP_CD = #{hospCd}
 		   AND pm.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND pm.URINE_CTL IN ('0','1','2','3')         /* 0/1 도 표시 (manageYn 에서 '제외' 표기) */

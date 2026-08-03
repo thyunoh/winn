@@ -130,7 +130,7 @@
     border:1px solid #cfe0f4; color:var(--er-navy); font-size:12.5px; line-height:1.6; }
 
   /* ===== 운영사용(TBL_HOSPCONT_MST.NOR_YN, 적정성평가 계약 기준) =====
-     NOR_YN='Y'(사용운영만 하는 병원)이면 마지막 장(Ⅳ 권고 + Ⅴ 로드맵 + 총평)을 통째로 감춘다.
+     NOR_YN='Y'(사용운영만 하는 병원)이면 마지막 장(Ⅳ 로드맵 + 총평)을 통째로 감춘다.
      위너넷 관리자 화면에도 동일 적용(사용자 확정) — 관리자가 만든 인쇄·PDF에도 안 들어가게.
      인쇄에도 같은 규칙이 그대로 적용되고, PDF 생성은 숨은 .er-page 를 건너뛴다(erPdfGenPreview). */
   #evalReport.er-norec #er-page4{ display:none !important; }
@@ -169,6 +169,27 @@
   /* 같은 장에 이어지는 섹션 헤더는 넉넉한 간격, 장 맨 위 헤더는 간격 없음 */
   #evalReport.er-paged .er-autobody > .er-eyebrow{ margin-top:34px; }
   #evalReport.er-paged .er-autobody > .er-eyebrow:first-child{ margin-top:0; }
+  /* ★편집 중(2026-08-03): 화면엔 원본(자연 흐름)을 그대로 두고 A4 복제본은 화면 밖에서 레이아웃만 유지 —
+       복제본에서 계산한 장 경계를 원본 위에 'N장 시작' 표지로 띄우기 위함(_erGuideSync) */
+  #evalReport.er-paged.er-editmode .er-srcpage{ display:block !important; }
+  #evalReport.er-paged.er-editmode .er-autopage{ position:absolute !important; left:-99999px !important; top:0 !important;
+    visibility:hidden !important; box-shadow:none !important; }
+  /* 새 장 지정 줄의 '전체 폭 점선'(2026-08-03) — 요소 테두리로는 좁은 라벨(결과지표 등)에서 점선이
+     안 보여서, 페이지 폭만큼 오버레이로 그린다. 알약과 함께 생성·제거(_mrSyncPgMarks) */
+  .er-pgdash{ position:fixed; z-index:1388; height:0; border-top:2px dashed #c8342f; pointer-events:none; opacity:.9; }
+  @media print{ .er-pgdash{ display:none !important; } }
+  body.er-capturing .er-pgdash{ display:none !important; }
+  /* 장 경계 표지(파란 알약) — 편집 중에만. 저장·인쇄에 안 섞인다(body 직속 fixed) */
+  .er-pgline{ position:fixed; z-index:1385; background:#1746a2; color:#fff; font-size:11px; font-weight:800;
+              padding:2px 9px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.25);
+              pointer-events:none; white-space:nowrap; opacity:.92; }
+  @media print{ .er-pgline{ display:none !important; } }
+  body.er-capturing .er-pgline{ display:none !important; }
+  /* '⤒ 여기부터 새 장' 알약의 ✕ 취소(2026-08-03) — 알약을 눌러 바로 해제.
+     기본 정의(아래쪽)가 pointer-events:none 이라 !important 로 눌러 쓴다 */
+  .er-pgmark{ pointer-events:auto !important; cursor:pointer; }
+  .er-pgmark .x{ margin-left:6px; font-weight:900; opacity:.85; }
+  .er-pgmark:hover{ background:#a72a25; }
 
   /* 편집 */
   #evalReport .er-editable{ outline:none; border-radius:4px; transition:.12s; }
@@ -201,6 +222,10 @@
   #evalReport .er-mrbody img.er-imgsel{ outline:1.5px solid var(--er-navy); outline-offset:1px; }
   /* ⤓ 새 장에서 시작 — 인쇄·PDF에서 이 그림 앞에서 페이지를 끊는다 */
   #evalReport .er-mrbody img.er-pgbreak{ break-before:page; page-break-before:always; margin-top:14px; }
+  /* 본문 블록(지표 제목·소제목·장 제목)에도 새 장 지정 가능(2026-08-03) — 편집 중 Alt+클릭 토글 */
+  #evalReport .er-doc .er-pgbreak{ break-before:page; page-break-before:always; }
+  #evalReport.er-editmode .er-doc .er-pgbreak:not(img){ border-top:2px dashed #c8342f; padding-top:6px; }
+  @media print { #evalReport .er-doc .er-pgbreak:not(img){ border-top:none !important; padding-top:0 !important; } }
   /* '여기부터 새 장' 표지 알약 — 편집 중 er-pgbreak 그림 위에 띄워 눈으로 확인(2026-08-03 요청).
      body 직속(저장 대상인 mr_body 밖)이라 문서에 안 섞이고, 인쇄·캡처에서는 숨긴다. */
   .er-pgmark{ position:fixed; z-index:1390; background:#c8342f; color:#fff; font-size:11px; font-weight:800;
@@ -289,13 +314,15 @@
   #evalReport .er-cover .er-cover-badge{ display:inline-block; background:linear-gradient(135deg,var(--er-navy),var(--er-navy2));
     color:#fff; font-size:20px; font-weight:800; letter-spacing:2px; padding:16px 46px; border-radius:10px;
     box-shadow:0 6px 18px rgba(30,60,114,.28); margin-bottom:56px; }
-  #evalReport .er-cover .er-cover-noteswrap{ width:725px; max-width:100%; margin:0 auto; }
+  /* 위 여백 확보(2026-08-03 요청, "조금만 밑으로" 재조정 28→42px) — 목표등급 줄과 유의사항 박스 사이 */
+  #evalReport .er-cover .er-cover-noteswrap{ width:725px; max-width:100%; margin:42px auto 0; }
   #evalReport .er-cover .er-cover-notes{ width:100%; margin:0; border:1.5px solid #4a5568; border-radius:2px;
     padding:16px 20px 18px; text-align:left; font-size:14px; font-weight:400; line-height:1.95; letter-spacing:0.3px; color:var(--er-ink); }
   #evalReport .er-cover .er-cnotes-title{ font-weight:900; font-size:16px; color:#111; margin-bottom:8px; }
   #evalReport .er-cover .er-cnotes-list li b{ font-weight:900; font-size:15px; color:#111; }
   #evalReport .er-cover .er-cnotes-list{ list-style:none; margin:0 0 0 6px; padding:0; }
-  #evalReport .er-cover .er-cnotes-list li{ position:relative; padding-left:15px; margin-bottom:0; }
+  /* 항목 사이 한 칸 간격(2026-08-03 요청) — <br> 를 걷어내니 다닥다닥 붙어 보여 구분마다 띄운다 */
+  #evalReport .er-cover .er-cnotes-list li{ position:relative; padding-left:15px; margin-bottom:11px; }
   #evalReport .er-cover .er-cnotes-list li:last-child{ margin-bottom:0; }
   #evalReport .er-cover .er-cnotes-box{ margin:18px auto 0; max-width:760px;
     text-align:center; font-weight:900; font-size:13px; color:#111; line-height:1.8; }
@@ -419,6 +446,8 @@
   #evalReport .er-recrow{ font-size:12.5px; margin:4px 0; }
   #evalReport .er-recrow .er-lb{ display:inline-block; min-width:62px; font-weight:800; color:var(--er-navy2); }
   #evalReport .er-recgoal{ margin-top:6px; padding-top:6px; border-top:1px dashed var(--er-line); font-size:12.5px; color:var(--er-good); font-weight:700; }
+  /* Ⅲ 분석내용 안 '목표 :' 줄 — Ⅳ 권고 통합분(2026-08-03). er-recgoal 과 같은 모양 */
+  #evalReport .er-indbody .er-goal{ margin:6px 0 0; padding-top:6px; border-top:1px dashed var(--er-line); font-size:12.5px; color:var(--er-good); font-weight:700; }
   #evalReport .er-after{ margin-top:15px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
     padding:16px; border-radius:12px; background:var(--er-goodtint); border:1px solid #bfe0c4; }
   #evalReport .er-after .er-lbl{ font-size:12.5px; font-weight:700; color:var(--er-soft); }
@@ -542,7 +571,7 @@
     <%-- 사용운영만 하는 병원 — 적정성평가 계약의 NOR_YN='Y' (=Ⅳ 이하 비공개 대상)일 때 켜짐.
          위너넷 화면에만 보이는 표시(er-wnnonly). 문구·표시 여부는 JS erApplyNorYn 에서 확정. --%>
     <span class="er-usebadge er-wnnonly" id="er-useBadge"
-          title="계약정보의 '운영사용'이 체크된 병원입니다. 이 보고서는 Ⅳ 우선 개선지표별 권고사항 이하(Ⅴ 로드맵·총평 포함)가 화면·인쇄·PDF 어디에도 나오지 않습니다."></span>
+          title="계약정보의 '운영사용'이 체크된 병원입니다. 이 보고서는 Ⅳ 목표등급 달성 로드맵 이하(총평 포함)가 화면·인쇄·PDF 어디에도 나오지 않습니다."></span>
 
     <span class="er-sp"></span>
 
@@ -553,7 +582,7 @@
     <!-- 이력 열람 진입 시: 어느 이력을 보는지(유형·작성자·시각) 표시 -->
     <span id="er-hstInfo" class="er-hstinfo" style="display:none;"></span>
     <span id="er-editTools" class="er-group">
-      <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요 (Ⅵ 의무기록 장도 이때 나타납니다)">✏️ 편집</button>
+      <button id="er-btnEdit" class="er-btn" onclick="erToggleEdit()" title="① 문구를 고치려면 편집을 켜세요 (Ⅴ 의무기록 장도 이때 나타납니다)">✏️ 편집</button>
       <!-- '🩺 의무기록' 버튼은 뺐다(2026-07-22 요청) — 누르면 탐색기가 강제로 열려,
            파일은 안 열고 넣어둔 그림만 손보려 할 때 걸리적거렸다. 편집켜기로 창구를 하나로 모은다:
            편집을 켜면 erMrToggleSec 이 Ⅵ 장을 띄우고, 탐색기는 그 장의 [📂 탐색기 열기]로만 연다. -->
@@ -673,11 +702,12 @@
       <div class="er-cover-notes er-editable" data-key="cover_notes">
         <div class="er-cnotes-title">■ 보고서 산출 기준 및 유의사항</div>
         <ul class="er-cnotes-list">
-          <li>본 보고서에서 제시하는 현황값 및 분석 결과는 병원 제공 자료를 기반으로<br>산출한 추정값으로, 심사평가원 최종 집계 결과에 따라 일부 수치는<br>변동될 수 있습니다.</li>
-          <li>예상 종합점수는 <b>‘2주기 6차 적정성평가 기준’의 지표별 표준화 구간을 적용</b>하여<br>산출한 값으로, 심사평가원 최종 집계 과정에서 표준화 구간이 재설정될 경우<br>최종 결과와 차이가 발생할 수 있습니다.</li>
-          <li>진료영역_유치도뇨관 환자분율 지표는 고‧저위험군 구성비에 따른 가중치 적용 지표로,<br>본 보고서에서는 고‧저위험군 가중치를 1:1로 가정한 추정값을 제시하였으며,<br>해당 가중치는 심사평가원 최종 집계 시 확정됨에 따라 최종 결과와 차이가<br>발생할 수 있습니다.</li>
-          <li>진료영역_항정신성의약품 처방률 지표는 2026년 7월부터 2027년 6월까지의 1년<br>평가기간을 기준으로 산출되므로, 평가기간 종료 시점까지 처방률 변동이 발생하지<br>않도록 지속적인 관리가 필요합니다.</li>
-          <li>2026년도 적정성평가 결과는 2028년 6월 발표 예정으로,<br>최종 점수 산출 시 ‘DUR 점검율’, ‘장기입원환자분율’, ‘지역사회복귀율’ 지표의<br>현황값 변동에 따라 종합점수에 일부 영향이 발생할 수 있습니다.</li>
+          <%-- 수동 <br> 제거(2026-08-03 요청 "우측 빈 공간 채우기") — 줄을 손으로 끊으니 오른쪽이 비었다. 폭에 맞춰 자연 줄바꿈 --%>
+          <li>본 보고서에서 제시하는 현황값 및 분석 결과는 병원 제공 자료를 기반으로 산출한 추정값으로, 심사평가원 최종 집계 결과에 따라 일부 수치는 변동될 수 있습니다.</li>
+          <li>예상 종합점수는 <b>‘2주기 6차 적정성평가 기준’의 지표별 표준화 구간을 적용</b>하여 산출한 값으로, 심사평가원 최종 집계 과정에서 표준화 구간이 재설정될 경우 최종 결과와 차이가 발생할 수 있습니다.</li>
+          <li>진료영역_유치도뇨관 환자분율 지표는 고‧저위험군 구성비에 따른 가중치 적용 지표로, 본 보고서에서는 고‧저위험군 가중치를 1:1로 가정한 추정값을 제시하였으며, 해당 가중치는 심사평가원 최종 집계 시 확정됨에 따라 최종 결과와 차이가 발생할 수 있습니다.</li>
+          <li>진료영역_항정신성의약품 처방률 지표는 2026년 7월부터 2027년 6월까지의 1년 평가기간을 기준으로 산출되므로, 평가기간 종료 시점까지 처방률 변동이 발생하지 않도록 지속적인 관리가 필요합니다.</li>
+          <li>2026년도 적정성평가 결과는 2028년 6월 발표 예정으로, 최종 점수 산출 시 ‘DUR 점검율’, ‘장기입원환자분율’, ‘지역사회복귀율’ 지표의 현황값 변동에 따라 종합점수에 일부 영향이 발생할 수 있습니다.</li>
         </ul>
       </div>
       </div>
@@ -711,8 +741,9 @@
 
         <%-- 순서 설명은 제목과 한 줄로(2026-07-30) — 다 적으면 두 줄로 꺾여 '우선 개선지표' 제목이 갈라져 보였다.
              자세한 순서는 hover(title)로. --%>
-        <div class="er-subh" style="white-space:nowrap;">2. 한눈에 보는 우선 개선지표 <span style="font-weight:600;color:var(--er-soft);font-size:11px;"
-          title="욕창개선 → ADL → HbA1c → 배뇨관리 → 유치도뇨관 → 구조영역(다음 표준화 구간 근접순) → 장기입원 → 항정 → 지역사회복귀">(욕창개선→ADL→HbA1c→배뇨관리→유치도뇨관→구조→장기입원→항정→지역사회복귀)</span></div>
+        <%-- 순서 나열 괄호는 뺐다(2026-08-03 요청) — 표 자체가 순위순이라 중복 정보. 근거는 툴팁으로만 남긴다 --%>
+        <div class="er-subh" style="white-space:nowrap;"
+          title="우선순위: 욕창개선 → ADL → HbA1c → 배뇨관리 → 유치도뇨관 → 구조영역(다음 표준화 구간 근접순) → 장기입원 → 항정 → 지역사회복귀">2. 한눈에 보는 우선 개선지표</div>
         <div class="er-tw">
           <table class="er-tbl">
             <thead><tr><th>순위</th><th class="er-l">지표</th><th>영역</th><th>가중치</th><th>현재점수</th><th>부족점수</th><th class="er-l">개선 여지</th></tr></thead>
@@ -749,15 +780,12 @@
       </div>
     </div>
 
-    <!-- PAGE 4 : Ⅳ 권고 + Ⅴ 로드맵 + 총평 (편집 문구)
+    <!-- PAGE 4 : Ⅳ 로드맵 + 총평 (편집 문구)
+         ※ 종전의 'Ⅳ 우선 개선지표별 권고사항' 장은 2026-08-03 삭제 — 고유 내용(목표 줄)은 Ⅲ 분석내용에 통합됨.
          id 는 운영사용(NOR_YN) 아닌 병원에게 이 장을 통째로 감추는 데 쓴다(.er-norec) -->
     <div class="er-page" id="er-page4">
       <div class="er-sec" style="margin-top:0;">
-        <div class="er-eyebrow"><span class="er-rn">Ⅳ.</span><span class="er-stitle">우선 개선지표별 권고사항</span></div>
-        <div id="er-sec4Body"></div>
-      </div>
-      <div class="er-sec">
-        <div class="er-eyebrow"><span class="er-rn">Ⅴ.</span><span class="er-stitle">목표등급 달성 로드맵</span></div>
+        <div class="er-eyebrow"><span class="er-rn">Ⅳ.</span><span class="er-stitle">목표등급 달성 로드맵</span></div>
 
         <div class="er-subh">권장 개선 시나리오</div>
         <div class="er-tw">
@@ -805,7 +833,7 @@
              · 내용이 없으면 섹션째 숨긴다(erMrToggleSec) — 빈 장이 인쇄되지 않게.
            ═══════════════════════════════════════════════════════════════════ -->
       <div class="er-sec" id="er-sec6">
-        <div class="er-eyebrow"><span class="er-rn">Ⅵ.</span><span class="er-stitle">의무기록 점검 결과</span></div>
+        <div class="er-eyebrow"><span class="er-rn">Ⅴ.</span><span class="er-stitle">의무기록 점검 결과</span></div>
         <div class="er-fn er-editable" data-key="mr_intro" style="margin:0 0 12px;">평가표와 의무기록(간호기록·경과기록)을 대조하여 확인된 작성오류임. 아래 내용은 <b>평가표 수정</b> 및 <b>기록 보완</b>이 필요한 건으로, 수정 시 해당 지표 점수가 회복될 수 있음.</div>
 
         <!-- ★붙여넣기 영역 — 점검 항목·양식이 병원마다 달라서 시스템에 양식을 못 박는다.
@@ -1054,7 +1082,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
 
   /* ===== 운영사용(NOR_YN, 적정성평가 계약 CONACT_GB='2') =====
      'Y' = '사용운영만 하는 병원'(계약정보의 운영사용 체크 = 보고서는 안 받고 프로그램만 사용)
-        → 마지막 장(Ⅳ 권고·Ⅴ 로드맵·총평)을 숨긴다. 화면·인쇄·PDF·문서저장 모두 동일.
+        → 마지막 장(Ⅳ 로드맵·총평)을 숨긴다. 화면·인쇄·PDF·문서저장 모두 동일.
         ★ 위너넷 관리자 화면에서도 숨긴다(2026-07-29 사용자 확정) — 관리자가 만든 인쇄·PDF에도 안 들어가
           유출 경로가 남지 않게. 대신 관리자도 그 병원의 Ⅳ 이하를 볼 수 없다.
         + 상단에 '{병원명} — 사용운영만 하는 병원' 깜박이 배지(위너넷 화면에만).
@@ -1449,10 +1477,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   원본 섹션(.er-srcpage)은 편집·저장의 원본으로 그대로 두고(숨김), 그 내용을 '복제'해
   //   A4(210×297mm) 실측 페이지(.er-autopage)에 흐름 단위로 담는다. 복제본은 id/data-key/편집속성을
   //   제거해 저장·조회 로직과 충돌하지 않는다. 편집 중에는 분할을 끄고(자연 흐름) 편집이 편하게 한다.
-  // [원복 2026-07-15] A4 자동분할 비활성 — 경우의 수(고아페이지·간격·편집동기화)가 많아 일단 끔.
-  //   false = 이전 방식: 화면은 섹션 카드 연속, 인쇄는 표지 1장 + 연속 흐름(최소 단위만 page-break-inside:avoid).
-  //   재도입 시 true 로만 바꾸면 분할·복제편집 로직 그대로 살아남 (아래 erPaginate 일체).
-  var PAGE_ON = false;
+  /* [재가동 2026-08-03 사용자 요청 "A4에 맞게 잘려서 보여지기"] — 화면 = A4 = 인쇄/PDF(WYSIWYG).
+       7/15에 껐던 사유(편집동기화 경우의 수)는 '편집 중엔 분할 해제'로 회피한다:
+         · 보기 모드  = A4 실측 페이지로 잘라 표시 (인쇄·PDF도 이 장들을 1:1로 씀)
+         · 편집 켜면 = 자연 흐름으로 풀림(원본 직접 편집 — 그림 조절·서식툴 전부 종전대로)
+         · 편집 끄면 = 다시 A4 로 잘림
+       복제본 실시간 편집(data-ckey 동기화) 경로는 남아 있으나 이 구성에선 쓰이지 않는다. */
+  var PAGE_ON = true;
 
   function erDoc(){ return document.querySelector('#evalReport .er-doc'); }
   function erTagSrcPages(){
@@ -1479,8 +1510,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
        빈 제목만 있는 장이 인쇄된다(2026-07-22). */
     //   단, 편집 중에는 남겨둔다 — 붙여넣을 자리가 있어야 하니까. 인쇄·PDF는 편집을 끈 상태로 만든다.
     var skipMr = !_mrHasContent() && !editing;
+    // 운영사용 아닌 병원(.er-norec)의 마지막 장(#er-page4 = 로드맵·총평) — 복제하면 id 가 벗겨져
+    // 숨김 CSS(#er-page4)가 안 먹으므로, 아예 흐름 단위에서 제외한다(2026-08-03 A4 재가동 대비)
+    var skipRec = document.getElementById('evalReport').classList.contains('er-norec');
     Array.prototype.forEach.call(doc.querySelectorAll(':scope > .er-srcpage'), function(pg){
       if(pg.classList.contains('er-cover')) return;   // 표지는 별도 처리
+      if(skipRec && pg.id==='er-page4') return;       // 로드맵·총평 비공개 병원
       Array.prototype.forEach.call(pg.children, function(top){
         if(top.id==='er-sec6' && skipMr) return;      // Ⅵ 의무기록 — 넣은 내용 없으면 장째 제외
         if(!top.classList || !top.classList.contains('er-sec')){
@@ -1516,6 +1551,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
             units.push({ nodes:[ch], keep:ch.classList.contains('er-subh') });
           }
         });
+      });
+    });
+    // Alt+클릭 '새 장' 표시(er-pgbreak)가 붙은 블록 = 화면 A4 분할에서도 강제 새 장(2026-08-03)
+    units.forEach(function(u){
+      if(!u.hardBreak) u.hardBreak = u.nodes.some(function(nd){
+        return nd.classList && nd.classList.contains('er-pgbreak');
       });
     });
     return units;
@@ -1557,6 +1598,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var root=el('evalReport'), doc=erDoc(); if(!doc) return;
     erTagSrcPages();
     Array.prototype.forEach.call(doc.querySelectorAll('.er-autopage'), function(p){ p.remove(); });
+    /* 편집 중에도 분할 계산은 돌린다(2026-08-03 "어디까지 A4인지 사용자는 몰라서") —
+         화면은 원본(자연 흐름)을 보여주되(아래 er-editmode CSS 가 A4 복제본을 화면 밖으로 치움),
+         복제본 레이아웃에서 얻은 '장 시작 블록' 목록(_erPageStarts)으로 원본 위에 경계 표지를 띄운다. */
     if(!PAGE_ON){ root.classList.remove('er-paged'); return; }
     root.classList.add('er-paged');
     // 표지 페이지(가운데 정렬 그대로 복제)
@@ -1569,31 +1613,36 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     // 본문 흐름 단위 → A4 실측 채우기 (섹션 헤더는 항상 새 페이지 시작)
     var units=erCollectUnits(doc);
+    _erPageStarts=[];                                  // [경계 표지] 각 장의 '첫 원본 블록' 기록
+    var _markStart=true;
     var body=erNewPage(doc), maxH=erCapacity(body);
     units.forEach(function(u){
       // 섹션(Ⅰ~Ⅴ) 헤더: 현재 장의 남은 공간이 45% 미만이면 새 장에서 시작,
       // 충분히 남았으면(직전 섹션 꼬리만 있는 거의 빈 장 등) 같은 장에 간격 두고 이어붙임
       // 사용자가 '⤓ 새 장에서' 로 지정한 것 = 남은 공간과 무관하게 무조건 새 장에서 시작
-      if(u.hardBreak && body.children.length){ body=erNewPage(doc); maxH=erCapacity(body); }
+      if(u.hardBreak && body.children.length){ body=erNewPage(doc); maxH=erCapacity(body); _markStart=true; }
       else if(u.newPage && body.children.length){
         var remain = maxH - body.scrollHeight;
-        if(remain < maxH*0.45){ body=erNewPage(doc); maxH=erCapacity(body); }
+        if(remain < maxH*0.45){ body=erNewPage(doc); maxH=erCapacity(body); _markStart=true; }
       }
       erAppendUnit(body,u);
       var overflow = body.scrollHeight > maxH+1;
       var onlyThis = (body.children.length <= u.nodes.length);
       if(overflow && !onlyThis){                         // 넘치면 다음 페이지로
         erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
-        onlyThis = true; overflow = body.scrollHeight > maxH+1;
+        onlyThis = true; overflow = body.scrollHeight > maxH+1; _markStart=true;
       } else if(u.keep && !onlyThis && (maxH - body.scrollHeight) < 130){
         // 라벨·소제목이 페이지 맨 아래에 홀로 남지 않게 다음 페이지로 넘김
         erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
+        _markStart=true;
       }
+      if(_markStart){ _erPageStarts.push(u.nodes[0]); _markStart=false; }
       /* ★혼자서도 한 장을 넘는 그림 = 잘려서 사라진다(.er-autobody 는 overflow:hidden).
          페이지에 들어갈 때까지 그림을 줄인다. 잘라온 표는 통째로 보여야 읽을 수 있다(2026-07-22). */
       if(overflow && onlyThis) erShrinkToFit(body, maxH);
     });
     erSetCloneEditable();   // 편집 중 재분할 시 편집 가능 상태 유지
+    try{ _erGuideSync(); }catch(e){}                   // [경계 표지] 편집 중이면 원본 위에 'N장 시작' 표시
   };
 
   // A4 복제본 편집 지원 — 복제본([data-ckey])을 직접 편집하면 원본([data-key])에 실시간 반영.
@@ -1641,6 +1690,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-pdfLoading').style.display = 'flex';
     el('er-pdfLoading').textContent = 'PDF를 불러오는 중입니다…';
     el('er-pdfModal').style.display = 'flex';
+    try{ _mrSyncPgMarks(); }catch(e){}   // 모달 위로 새 장·경계 표지가 겹치지 않게 걷음
     fetch(dlUrl, { credentials:'same-origin', cache:'no-store' })
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.blob(); })
       .then(function(b){
@@ -1658,6 +1708,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   window.erPdfClose = function(){
     _pdfSeq++;                                            // 진행 중 fetch 무효화 (revoke 는 다음 열기에서)
     el('er-pdfModal').style.display = 'none';
+    try{ _mrSyncPgMarks(); }catch(e){}                    // 모달 닫힘 → 새 장·경계 표지 복원
   };
   // 오버레이(모달 바깥) 클릭 시 닫기
   // (바깥 클릭으로는 닫지 않음 — 실수로 닫히는 것 방지. 닫기는 ✕ 닫기 버튼 또는 ESC 로만)
@@ -2187,21 +2238,121 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   /* '여기부터 새 장' 표지 알약 — 편집 중 화면에서 er-pgbreak 그림마다 위에 띄운다.
        mr_body 안에 넣으면 저장 HTML 에 섞이므로 body 직속 + position:fixed 로 띄우고
        스크롤·리사이즈·토글 때마다 다시 그린다(조절바와 같은 방식). */
-  var _pgMarks=[];
+  var _pgMarks=[], _erPageStarts=[], _erGuides=[];
+  // PDF 미리보기 등 모달이 떠 있으면 표지·점선을 걷는다 — fixed 라 모달 '위에' 겹쳐 보였다(2026-08-03)
+  function _erOverlayBlocked(){
+    var pm=el('er-pdfModal'), cm=el('er-cropModal');
+    return (pm && pm.style.display==='flex') || (cm && cm.style.display==='flex');
+  }
   function _mrSyncPgMarks(){
     _pgMarks.forEach(function(m){ m.remove(); }); _pgMarks=[];
-    if(!editing) return;
-    var b=el('er-mrBody'); if(!b) return;
-    Array.prototype.forEach.call(b.querySelectorAll('img.er-pgbreak'), function(im){
+    if(!editing || _erOverlayBlocked()) return;
+    // Ⅵ 그림뿐 아니라 본문 블록(지표 제목 등)의 새 장 표시도 함께(2026-08-03 "이미지 말고 이 내용도")
+    Array.prototype.forEach.call(document.querySelectorAll('#evalReport .er-doc .er-pgbreak'), function(im){
+      if(im.closest && im.closest('.er-autopage')) return;   // 화면 밖 A4 복제본(클래스가 복사됨)은 제외
       var r=im.getBoundingClientRect();
-      if(r.width<2 || r.bottom<0 || r.top>window.innerHeight) return;   // 화면 밖이면 안 그림
-      var m=document.createElement('div'); m.className='er-pgmark'; m.textContent='⤒ 여기부터 새 장';
+      if(r.width<2 || r.top<0 || r.top>window.innerHeight) return;   // 앵커(블록 위 변)가 화면 밖이면 숨김 — 종전 bottom 기준은 위로 스크롤되면 클램프로 창 맨 위에 들러붙었다(2026-08-03)
+      var m=document.createElement('div'); m.className='er-pgmark';
+      m.innerHTML='⤒ 여기부터 새 장<span class="x">✕</span>';
+      m.title='클릭하면 새 장 지정이 해제됩니다';
+      // ✕ 취소(2026-08-03 요청) — 알약을 눌러 바로 해제(그림·글 블록 공통)
+      m.addEventListener('click', function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        im.classList.remove('er-pgbreak');
+        _mrBrkBtnSync(false);
+        toast('새 장 시작을 해제했습니다.');
+        _mrSyncPgMarks(); try{ erPaginate(); }catch(e){}
+      });
       document.body.appendChild(m);
-      m.style.left=Math.round(Math.max(4, r.left + r.width/2 - m.offsetWidth/2))+'px';
+      /* 점선·알약을 '페이지 폭' 기준으로 — 좁은 라벨(결과지표 등)도 넓은 박스와 같은 모양(2026-08-03).
+         조상 탐색은 수동 루프(+.er-doc 폴백)로 — closest 가 못 찾는 경우에도 반드시 전체 폭이 잡히게 */
+      var pg=null, anc=im.parentElement;
+      while(anc && anc!==document.body){
+        if(anc.classList && (anc.classList.contains('er-srcpage') || anc.classList.contains('er-page'))){ pg=anc; break; }
+        anc=anc.parentElement;
+      }
+      if(!pg) pg=document.querySelector('#evalReport .er-doc');
+      var pr = pg ? pg.getBoundingClientRect() : r;
+      var lx = Math.round(pr.left + 24), lw = Math.max(60, Math.round(pr.width - 48));
+      var dash=document.createElement('div'); dash.className='er-pgdash';
+      dash.style.left = lx+'px'; dash.style.width = lw+'px';
+      dash.style.top  = Math.round(Math.max(4, r.top-1))+'px';
+      document.body.appendChild(dash); _pgMarks.push(dash);
+      m.style.left=Math.round(Math.max(4, pr.left + pr.width/2 - m.offsetWidth/2))+'px';
       m.style.top =Math.round(Math.max(4, r.top-9))+'px';
       _pgMarks.push(m);
     });
+    try{ _erGuideSync(); }catch(e){}
   }
+  /* [경계 표지] 편집 중 '몇 장에서 시작하는 블록인지'를 원본 위에 파란 알약으로 표시(2026-08-03).
+       erPaginate 가 화면 밖 A4 복제본을 채우며 기록한 _erPageStarts(각 장의 첫 원본 블록)를 그대로 쓰므로
+       보이는 위치 = 실제 인쇄·PDF의 장 시작과 동일하다. 사용자는 이걸 보고 Alt+클릭/⤓ 로 조정하면 된다. */
+  function _erGuideSync(){
+    _erGuides.forEach(function(g){ g.remove(); }); _erGuides=[];
+    if(!editing || !PAGE_ON || _erOverlayBlocked()) return;
+    var root=el('evalReport'); if(!root || !root.classList.contains('er-paged')) return;
+    var coverN = document.querySelector('#evalReport .er-doc > .er-srcpage.er-cover') ? 1 : 0;
+    _erPageStarts.forEach(function(nd, i){
+      if(!nd || !nd.getBoundingClientRect) return;
+      var r=nd.getBoundingClientRect();
+      if(r.width<2 || r.top<0 || r.top>window.innerHeight) return;
+      var g=document.createElement('div'); g.className='er-pgline';
+      g.textContent='📄 '+(i+1+coverN)+'장 시작';
+      document.body.appendChild(g);
+      g.style.left=Math.round(Math.max(4, r.left+8))+'px';
+      g.style.top =Math.round(Math.max(4, r.top-9))+'px';
+      _erGuides.push(g);
+    });
+  }
+  /* ★본문 블록에도 '새 장에서' (2026-08-03 요청) — 편집 중 지표 제목(■)·소제목·장 제목을
+       Alt+클릭 하면 그 블록부터 새 장에서 시작/해제 토글. 인쇄(break-before)와 PDF(강제 분할) 모두 적용.
+       ※그림과 달리 저장 대상(innerHTML 오버라이드)이 아니라서 재조회하면 풀린다 —
+         인쇄·PDF 직전에 지정해 쓰는 용도. */
+  document.addEventListener('click', function(ev){
+    if(!editing || !ev.altKey) return;
+    /* 아무 데서나 지정 가능(2026-08-03) — 클릭 지점에서 '분할 단위 블록'까지 거슬러 올라가 표시한다.
+         분할 단위 = 섹션(er-sec)·Ⅲ목록(er-sec3Body)·의무기록(er-mrBody)·페이지의 '직계 자식' 블록.
+         문단 안 어디를 눌러도 그 문단이 속한 블록(지표 박스 등) 단위로 새 장이 걸린다. 표지는 제외. */
+    if(!(ev.target && ev.target.closest)) return;
+    var t = ev.target.closest('#evalReport .er-srcpage *');
+    if(!t || ev.target.closest('#evalReport .er-cover')) return;
+    while(t && t !== document.body){
+      var p = t.parentElement;
+      if(p && (p.classList.contains('er-sec') || p.id === 'er-sec3Body' || p.id === 'er-mrBody'
+               || p.classList.contains('er-srcpage'))) break;
+      t = p;
+    }
+    if(!t || t === document.body) return;
+    /* 클릭이 블록 사이 '여백'에 떨어지면 t 가 컨테이너 자체가 된다(er-sec3Body 등) —
+       그대로 표시하면 목록 전체 위 변에 알약이 붙어 엉뚱해 보인다(2026-08-03 "과정지표 눌렀는데 위에 뜸").
+       → 컨테이너면 클릭한 세로 위치에 걸치는(없으면 바로 아래) 자식 블록으로 내려서 건다. */
+    if(t.id === 'er-sec3Body' || t.id === 'er-mrBody' || t.classList.contains('er-sec') || t.classList.contains('er-srcpage')){
+      /* 판정은 엄격하게(오차 없음) — 블록 '안'을 눌렀을 때만 그 블록. 블록 사이 여백이면 무조건
+         '아래' 블록에 건다: '새 장' = "이 블록부터 새 장" 이므로 여백 클릭의 의도는 다음 블록이다
+         (2026-08-03 "과정지표 위를 클릭했는데 그 위(약사 박스)로 감" — ±6px 오차가 위 블록을 잡던 것). */
+      var pick = null, below = null;
+      Array.prototype.forEach.call(t.children, function(ch){
+        var rc = ch.getBoundingClientRect();
+        if(ev.clientY >= rc.top && ev.clientY <= rc.bottom) pick = pick || ch;
+        else if(!below && rc.top > ev.clientY) below = ch;
+      });
+      t = pick || below;
+      if(!t) return;
+    }
+    ev.preventDefault(); ev.stopPropagation();
+    var on = t.classList.toggle('er-pgbreak');
+    _mrSyncPgMarks(); try{ erPaginate(); }catch(e){}
+    toast(on ? '이 블록부터 새 장에서 시작합니다. (알약 ✕ 또는 Alt+클릭으로 해제)' : '새 장 시작을 해제했습니다.');
+  }, true);
+  /* 문구를 타이핑으로 고치면 길이가 변해 장 경계가 밀리는데, 종전에는 재계산이 안 돌아
+     파란 'N장 시작' 표지가 실제와 어긋났다("매칭 안 됨") — 입력 멈춘 뒤 0.6초에 재분할·표지 갱신 */
+  var _erRepagT = null;
+  document.addEventListener('input', function(ev){
+    if(!editing || !PAGE_ON) return;
+    if(!(ev.target && ev.target.closest && ev.target.closest('#evalReport .er-srcpage'))) return;
+    clearTimeout(_erRepagT);
+    _erRepagT = setTimeout(function(){ try{ erPaginate(); }catch(e){} }, 600);
+  });
   // 버튼 화살표 = 현재 상태(2026-08-03 요청): 지정됨 = ⤒(위, "이미 새 장") / 미지정 = ⤓(아래, "누르면 새 장으로")
   function _mrBrkBtnSync(on){
     var b=el('er-imgBrkBtn'); if(!b) return;
@@ -2877,7 +3028,6 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     renderTable2();
     renderSec3();
-    renderSec4();
     renderSec5();
     captureAuto();   // 자동 생성 문구 스냅샷 — 저장 시 "실제 편집분"만 걸러내는 기준
   }
@@ -3418,6 +3568,23 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
                + '다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.<br>'
                + '• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소';
         }
+        /* [2026-08-03] Ⅳ 권고사항 통합 — 별도 장이던 권고의 고유 내용(목표 완결문·5구간 병기·%p부족·
+             감소 사다리/여유 한도)을 분석내용 박스 안 '목표 :' 줄로 옮기고 Ⅳ장은 삭제했다(사용자 요청).
+             현황·개선방향은 이 박스에 이미 있어 중복이라 목표 줄만 가져온다. 만점·구조(fg10)·DUR(08)은 제외. */
+        var goalHtml='';
+        if(!full && !noDefPlan){
+          var s4=(s||1), step4=w/5, nz4=Math.min(5, s4+1), tgt4=Math.min(w, got+step4);
+          var sd4=simStep(r);
+          var gTxt=(s>=5)?'':('목표 : '+(sd4&&sd4.need? esc(sd4.need)+'명 '+sd4.dir+' → '+esc(sd4.newPct)+'%로 ' : '')+nz4+'구간 진입 시 <b class="er-num">+'+f1(tgt4-got)+'점</b> ('+f1(got)+' → '+f1(tgt4)+')');
+          if(gTxt && nz4<5){
+            var n54=simNeed(r,5);
+            if(n54) gTxt+=' · 5구간 = '+esc(n54.need)+'명 추가(총 '+esc(n54.total)+'명, '+esc(n54.pct)+'%) 시 <b class="er-num">+'+f1(w-got)+'점</b>';
+          }
+          var lad4=simReduceList(r), room4=lad4?('표준화 목표 : '+lad4):simRoomLower(r);
+          var ps4=pctShortTxt(r);
+          if(gTxt||ps4) goalHtml+='<p class="er-goal">'+(gTxt? gTxt+(ps4?' · '+ps4:'') : ps4+'.')+'</p>';
+          if(room4) goalHtml+='<p class="er-goal">'+room4+'.</p>';
+        }
         var topTag = (topCds.indexOf(r.cate_cd)>=0 && !full) ? ' <span style="color:var(--er-bad); font-weight:800; font-size:11.5px;">◀ 최우선 개선</span>' : '';
         html += '<div class="er-indhead">■ '+esc(r.cate_nm)+' <span class="er-indsc"><span class="'+(full?'er-b-good':'er-b-bad')+'">'+f1(got)+'</span> / '+fnum(w)+'점</span>'+topTag+'</div>'
               + '<div class="er-indbox'+(full?' er-full':'')+'">'
@@ -3426,6 +3593,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
               +     '<p class="er-ana er-editable" data-key="ana_'+cd+'">* '+auto+'</p>'
               +     ((defTxt && !noDefPlan)? '<p class="er-def er-editable" data-key="def_'+cd+'">지표 정의 : '+defTxt+'</p>' : '')
               +     ((full || noDefPlan)? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
+              +     goalHtml
               +   '</div>'
               + '</div>';
       });
@@ -3433,43 +3601,6 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-sec3Body').innerHTML = html;
   }
 
-  // Ⅳ 우선 개선지표별 권고사항 — 부족분 상위 지표 자동 블록 + 편집영역
-  function renderSec4(){
-    var top = topGaps(6), html='';
-    if(!top.length){ el('er-sec4Body').innerHTML = '<div class="er-fn">부족점수가 있는 지표가 없음.</div>'; return; }
-    var CIRC='①②③④⑤⑥⑦⑧⑨⑩';   // 원본 PDF 번호 표기
-    top.forEach(function(x,i){
-      var cd=esc(x.cd), isTop=(i<2), r=x.r;
-      var dtor=n(r.dtorval), s=n(r.s_score)||1;
-      // 현황 : 8.7% (46명 중 4명) → 1구간(0.6점)  — 원본 형식
-      var stat = '<b class="er-num">'+calDisp(r)+'</b>'
-               + (dtor>0? ' ('+esc(fnum(r.dtorval))+' 중 '+esc(fnum(r.ntorval))+')' : '')
-               + ' → '+s+'구간(<span class="er-num">'+f1(x.got)+'점</span> / '+fnum(x.w)+'점)';
-      var zones = zoneListText(x.cd);
-      // 목표 : 한 구간 상승 시 +가중치/5점 (현재 → 목표)
-      var step = x.w/5, nz = Math.min(5, s+1), tgt = Math.min(x.w, x.got+step);
-      var sd = simStep(r);
-      var goalTxt = (s>=5) ? '' : '목표 : '+(sd && sd.need ? esc(sd.need)+'명 '+sd.dir+' → '+esc(sd.newPct)+'%로 ' : '')+nz+'구간 진입 시 <b class="er-num">+'+f1(tgt-x.got)+'점</b> ('+f1(x.got)+' → '+f1(tgt)+')';
-      // 5구간까지 2단계 병기(담당자 나열형) — 다음구간이 5구간이 아니면서 명수 환산이 가능한 결과지표만
-      if(goalTxt && nz<5){
-        var n5 = simNeed(r, 5);
-        if(n5) goalTxt += ' · 5구간 = '+esc(n5.need)+'명 추가(총 '+esc(n5.total)+'명, '+esc(n5.pct)+'%) 시 <b class="er-num">+'+f1(x.w-x.got)+'점</b>';
-      }
-      var dirTxt = TPL_DIR[x.cd] ? esc(TPL_DIR[x.cd]) : '개선 방향과 목표 구간을 입력하세요.';
-      var ladder = simReduceList(r);   // [★4] 장기입원·유치도뇨관: 구간별 감소 명수 나열(감소가 실질 조치)
-      var roomTxt = ladder ? ('표준화 목표 : '+ladder) : simRoomLower(r);   // 없으면 [★1] 여유 한도/하락 경고
-      var pctShort = pctShortTxt(r);   // [C9] 다음 구간까지 %p 부족
-      html += '<div class="er-rec'+(isTop?' er-top':'')+'">'
-            +   '<div class="er-rech">'+(CIRC[i]||(i+1))+' '+esc(x.nm)+' <span class="er-w">· 가중치 '+fnum(x.w)+' · 부족점수 '+f1(x.gap)+(isTop?' · 최우선':'')+'</span></div>'
-            +   '<div class="er-recrow"><span class="er-lb">현황</span>'+stat+'</div>'
-            +   (zones? '<div class="er-recrow"><span class="er-lb">표준화 구간</span>'+zones+'</div>' : '')
-            +   '<div class="er-recrow er-editable" data-key="recdir_'+cd+'"><span class="er-lb">개선방향</span>'+dirTxt+'</div>'
-            +   (goalTxt? '<div class="er-recgoal">'+goalTxt+(pctShort? ' · '+pctShort : '')+'</div>' : (pctShort? '<div class="er-recgoal">'+pctShort+'.</div>' : ''))
-            +   (roomTxt? '<div class="er-recgoal">'+roomTxt+'.</div>' : '')
-            + '</div>';
-    });
-    el('er-sec4Body').innerHTML = html;
-  }
 
   // 해당 표준화구간(s)의 범위 표기 — 원본 PDF: "(30~34명)" "(6명 미만)" "(3.5% 이상)" "(100%)" 형식
   function zoneRange(cd, s){
@@ -3562,7 +3693,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         editableTpls.push({ k:k, c:String(c) });
       }
     });
-    if(reRender){ renderSec3(); renderSec4(); captureAuto(); }   // DB 문구 반영 후 스냅샷 재확정
+    if(reRender){ renderSec3(); captureAuto(); }   // DB 문구 반영 후 스냅샷 재확정
     editableTpls.forEach(function(t){
       var e=document.querySelector('#evalReport .er-editable[data-key="'+t.k+'"]');
       if(e){ e.innerHTML=erFillTpl(t.c); AUTO[t.k]=e.innerHTML; savedKeys[t.k]=1; }
@@ -3876,12 +4007,16 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!window.jspdf || typeof html2canvas==='undefined'){ erSwal('error','PDF 생성 라이브러리(jsPDF·html2canvas)를 불러오지 못했습니다.', {title:'오류'}); return; }
     var doc9 = document.querySelector('#evalReport .er-doc');
     if(!doc9){ erSwal('warning','보고서 내용이 없습니다. 먼저 조회하세요.'); return; }
-    var pages = doc9.querySelectorAll('.er-page');
-    if(!pages.length){ erSwal('warning','보고서 페이지가 없습니다.'); return; }
     /* 편집 UI(툴바·그림 조절바·손잡이)가 그대로 캡처되면 PDF에 찍힌다 → 반드시 먼저 정리.
        PDF는 승인 후에만 가능해서 erToggleEdit 은 여기서 안 먹는다 → _erEditOff 사용(2026-07-22). */
     _erEditOff();
     erCropClose();                                        // 잘라오기 창이 열려 있으면 닫는다
+    /* A4 분할 모드(er-paged)면 화면의 A4 장(.er-autopage)을 그대로 1:1 캡처 — 화면 = PDF.
+       ★반드시 _erEditOff 뒤에서 잡는다 — 편집을 끄는 순간 erPaginate 가 분할을 켜며 원본(.er-page)이
+         숨겨지므로, 앞에서 잡으면 숨은 원본을 캡처해 빈 PDF 가 된다(2026-08-03 A4 재가동). */
+    var _paged9 = el('evalReport').classList.contains('er-paged');
+    var pages = doc9.querySelectorAll(_paged9 ? '.er-autopage' : '.er-page');
+    if(!pages.length){ erSwal('warning','보고서 페이지가 없습니다.'); return; }
     toast('PDF 생성 중… 잠시만 기다려 주세요.');
     var _root = el('evalReport');
     _root.classList.add('er-pdfcap');                     // 편집영역 파란 하이라이트 제거(캡처용)
@@ -3918,7 +4053,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
            종전 목록에 없어서 ① 긴 Ⅵ 페이지는 '흰 여백 폴백'으로 그림 한복판이 잘리고,
            ② '⤓ 새 장에서'(er-pgbreak)를 지정해도 PDF(화면 생성=html2canvas 경로)에서는
            아무 효과가 없었다 — 인쇄 CSS(break-before:page)는 window.print() 에만 적용되기 때문. */
-      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind, .er-indbox, .er-anabar, .er-ana, .er-def, .er-plan, .er-mrbody > img, .er-mrbody > table, .er-mrbody > p, .er-mrbody > div';
+      /* ★er-ana/def/plan(박스 안 문단)을 후보에서 제외(2026-08-03) — 문단 사이를 자르게 두니
+           지표 박스가 테두리째 두 장으로 갈라져 보기 흉했다(지역사회복귀율 하단 고아 블록).
+           이제 절단은 '지표 박스 사이'에서만 — 박스 하나가 통째로 다음 장으로 넘어간다. */
+      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind, .er-indbox, .er-anabar, .er-mrbody > img, .er-mrbody > table, .er-mrbody > p, .er-mrbody > div';
       var pTop = pg.getBoundingClientRect().top, items=[], list=pg.querySelectorAll(sel);
       for(var i=0;i<list.length;i++){
         var e=list[i], t=(e.getBoundingClientRect().top - pTop)*sf, isH=false;
@@ -4009,7 +4147,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var chain = html2canvas(doc9, { scale:capScale, backgroundColor:'#ffffff', useCORS:true, logging:false,
       onclone:function(d){
         var dd=d.querySelector('#evalReport .er-doc'); if(dd) dd.style.background='#ffffff';
-        Array.prototype.forEach.call(d.querySelectorAll('#evalReport .er-page'), function(p){
+        Array.prototype.forEach.call(d.querySelectorAll('#evalReport .er-page, #evalReport .er-autopage'), function(p){
           p.style.boxShadow='none'; p.style.borderRadius='0';
         });
       }
@@ -4057,6 +4195,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     el('er-pdfGenSaveBtn').style.display=''; el('er-pdfPickBtn').style.display='';   // 저장/파일선택 노출
     el('er-pdfModalReplace').style.display='none';                                   // 교체검색 숨김
     el('er-pdfModal').style.display='flex';
+    try{ _mrSyncPgMarks(); }catch(e){}   // 모달 위 표지 걷음(2026-08-03)
   }
 
   // 미리보기에서 [파일서버 저장] → 생성해둔 PDF(_erGenBlob) 업로드(SFTP EVALRPT + PDF_PATH).
