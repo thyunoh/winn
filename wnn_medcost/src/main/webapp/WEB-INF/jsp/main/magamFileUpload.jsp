@@ -1039,6 +1039,17 @@ $(document).ready(function() {
 
             if (response && Object.keys(response).length > 0) {
 
+	            	/* [2026-08-03] 일반병원 계정에는 '자료없음'(실데이터 0건) 유령 이력 줄을 그리드에서 아예 뺀다.
+	            	     이력만 남고 자료가 없는 줄은 내부 진단용이라 병원에는 혼동만 준다(여수시립 202607 사고).
+	            	     위너넷(winner==='Y')은 배지와 함께 그대로 본다 — 진단·정리용.
+	            	     ★응답은 배열이 아니라 {data:[…]} 묶음이다(컨트롤러 response.put("data",…)) —
+	            	       처음에 response 에 바로 filter 를 걸어 헛돌았다(일반병원에서 그대로 보이던 원인).
+	            	     data_cnt 가 안 내려오는 경우(서버 구버전)는 숨기지 않는다(오탐 방지). */
+	            	if (winner !== 'Y' && response && Array.isArray(response.data)) {
+	            		response.data = response.data.filter(function(r){
+	            			return !(r && r.data_cnt != null && Number(r.data_cnt) === 0);
+	            		});
+	            	}
 	            	callback(response);
 	            } else {
 	            	callback([]); // 빈 배열을 콜백으로 전달
