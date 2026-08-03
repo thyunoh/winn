@@ -210,7 +210,10 @@
   body.er-capturing .er-pgmark{ display:none !important; }
   /* 편집 중에는 어디서 끊기는지 점선으로 보여준다(인쇄에는 안 나감) */
   #evalReport.er-editmode .er-mrbody img.er-pgbreak{ border-top:2px dashed #c8342f; padding-top:10px; }
-  @media print { #evalReport .er-mrbody img.er-pgbreak{ border-top:none; padding-top:0; } }
+  /* ★편집을 켠 채 브라우저 메뉴(Ctrl+P)로 바로 인쇄하는 경우까지 방어 — er-editmode 규칙이
+       특이도가 더 높아 아래 무력화가 지려면 editmode 셀렉터로도 한 번 더 꺼야 한다(2026-08-03 PDF 점선 유출) */
+  @media print { #evalReport .er-mrbody img.er-pgbreak,
+                 #evalReport.er-editmode .er-mrbody img.er-pgbreak{ border-top:none !important; padding-top:0 !important; } }
   #evalReport .er-imgbar{ position:fixed; z-index:1400; transform:translateX(-50%);
                           display:flex; gap:3px; align-items:center; background:#fff;
                           border:1px solid var(--er-line); border-radius:8px; padding:4px 6px;
@@ -811,9 +814,9 @@
         <div class="er-noprint er-mrbar">
           <span class="er-mrhint">아래한글·워드에서 <b>표째 복사</b> 후 아래 영역에 <b>Ctrl+V</b> · 그림은 <b>클릭</b>해서 크기 조절 · 여러 장은 <b>Ctrl+클릭</b>으로 함께 선택</span>
           <span class="er-zoom">
-            <button type="button" class="er-btn" onclick="erMrZoom(-1)" title="붙인 내용 축소 (그림을 아무것도 고르지 않았을 때는 Ctrl+마우스휠로도 됩니다)">➖</button>
-            <button type="button" class="er-btn er-zoomlbl" id="er-mrZoomLbl" onclick="erMrZoomReset()" title="클릭 → 100%로 되돌리기">100%</button>
-            <button type="button" class="er-btn" onclick="erMrZoom(1)" title="붙인 내용 확대">➕</button>
+            <button type="button" class="er-btn" onclick="erMrZoomStep(event,-1)" title="붙인 내용 축소 5% — Shift+클릭 = 1% 미세조절 (그림을 아무것도 고르지 않았을 때는 Ctrl+마우스휠도 됩니다)">➖</button>
+            <button type="button" class="er-btn er-zoomlbl" id="er-mrZoomLbl" onclick="erMrZoomInput()" title="클릭 → 배율(%)을 숫자로 직접 입력 (100 = 원래 크기)">100%</button>
+            <button type="button" class="er-btn" onclick="erMrZoomStep(event,1)" title="붙인 내용 확대 5% — Shift+클릭 = 1% 미세조절">➕</button>
           </span>
           <button type="button" class="er-btn" onclick="erMrFit()" id="er-mrFitBtn" title="붙인 표를 본문 폭에 맞춰 늘립니다(오른쪽 빈 공간 제거)">↔ 폭맞춤</button>
           <!-- '전체 비우기'는 뺐다(2026-07-22 요청) — 한 번에 다 날아가 사고가 나기 쉽고,
@@ -838,13 +841,16 @@
 
   <!-- 넣은 그림 크기 조절바 — 그림을 클릭하면 그 위에 떠서 개별로 줄이고 늘린다 -->
   <div id="er-imgBar" class="er-imgbar er-noprint" style="display:none">
-    <button class="er-btn" onclick="erImgSize(-5)" title="이 그림만 축소 (5%)">➖</button>
-    <span class="er-btn er-zoomlbl" id="er-imgSzLbl">100%</span>
-    <button class="er-btn" onclick="erImgSize(5)" title="이 그림만 확대 (5%)">➕</button>
+    <button class="er-btn" onclick="erImgSize(event.shiftKey?-1:-5)" title="그림 축소 5% — Shift+클릭 = 1% 미세조절">➖</button>
+    <button class="er-btn er-zoomlbl" id="er-imgSzLbl" onclick="erImgSizeInput()" title="클릭 → 크기(%)를 숫자로 직접 입력 · 여러 장 선택 중이면 전부 같은 크기로 맞춰집니다">100%</button>
+    <button class="er-btn" onclick="erImgSize(event.shiftKey?1:5)" title="그림 확대 5% — Shift+클릭 = 1% 미세조절">➕</button>
     <button class="er-btn" onclick="erImgRatio()" title="처음 넣었을 때의 크기·비율로 되돌립니다">↺ 원래대로</button>
     <!-- 화살표 = 현재 상태(2026-08-03 요청): ⤓(아래) = 미지정 / ⤒(위) = 지정됨. _mrBrkBtnSync 가 갱신 -->
     <button class="er-btn" id="er-imgBrkBtn" onclick="erImgBreak()" title="이 그림부터 새 장(페이지)에서 시작합니다. 지정된 그림에서 다시 누르면 해제됩니다">⤓ 새 장에서</button>
     <button class="er-btn" onclick="erImgDel()" title="이 그림 삭제" style="color:#c0392b">🗑</button>
+    <!-- ✕ 닫기 (2026-08-03 요청) — 선택 해제 = 조절바·손잡이 닫힘. 빈 곳 클릭과 같은 동작을 버튼으로 제공
+         (조절바가 위 편집 툴바를 가리는 위치에 뜨면 '빈 곳'을 찾기 번거로웠다) -->
+    <button class="er-btn" onclick="erImgBarClose()" title="조절바 닫기 (그림 선택 해제)" style="font-weight:800">✕</button>
   </div>
   <!-- 그림 크기조절 손잡이 3개 — 오른쪽(가로) · 아래(세로) · 모서리(비율유지).
        ※ .er-noprint 를 붙이지 않는다 — 그 규칙은 display 를 강제로 바꿔 손잡이를 숨겨버린다.
@@ -1331,6 +1337,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 🖨️ 인쇄 — 브라우저 인쇄→'PDF로 저장' 시 기본 파일명은 document.title 을 사용.
   //   → 인쇄 직전 제목을 '{병원명} 적정성평가 보고서(년.월) 목표N등급' 으로 지정하고, 인쇄 종료(afterprint) 후 원복.
   window.erPrint = function(){
+    /* ★인쇄 전 편집 강제 종료 (2026-08-03) — 편집 켠 채 인쇄하면 편집 전용 표시
+         (er-pgbreak 빨간 점선, '⤒ 여기부터 새 장' 알약, 파란 편집영역 테두리)가 PDF 에 그대로 찍혔다.
+         PDF 화면생성(erPdfGenPreview)은 이미 _erEditOff 를 타는데 인쇄 버튼만 빠져 있었다. */
+    _erEditOff();
     var oldTitle = document.title;
     try{
       var yy=(curYm&&curYm.length>=6)?curYm.substring(0,4):'', mm=(curYm&&curYm.length>=6)?curYm.substring(4,6):'';
@@ -1823,6 +1833,27 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     _erMrApplyZoom(); markDirty();
   };
   window.erMrZoomReset = function(){ _mrZoom=100; _erMrApplyZoom(); markDirty(); };
+  /* 단위가 5%뿐이라 "미세하게 안 맞는" 경우를 못 잡았다(2026-08-03) —
+     ① Shift+클릭 = 1% 미세조절  ② % 라벨 클릭 = 숫자로 직접 입력 */
+  window.erMrZoomStep = function(ev, sign){
+    var step = (ev && ev.shiftKey) ? 1 : _MR_ZSTEP;
+    _mrZoom = Math.min(_MR_ZMAX, Math.max(_MR_ZMIN, _mrZoom + sign*step));
+    _erMrApplyZoom(); markDirty();
+  };
+  // 숫자 입력 공통 — SweetAlert2 입력창(없으면 prompt 폴백). cb(정수) 는 유효값일 때만 호출
+  function _erAskNum(title, cur, min, max, cb){
+    var apply=function(v){ var n=parseInt(v,10); if(isFinite(n)){ cb(Math.min(max, Math.max(min, n))); } };
+    if(typeof Swal==='undefined'){ var r=window.prompt(title+' ('+min+'~'+max+')', cur); if(r!=null) apply(r); return; }
+    Swal.fire({ title:title, input:'number', inputValue:cur, inputAttributes:{min:min, max:max, step:1},
+                heightAuto:false, width:380, customClass:{ popup:'er-swal', container:'er-swal-top' },
+                showCancelButton:true, confirmButtonText:'적용', cancelButtonText:'취소', confirmButtonColor:'#2a7665' })
+        .then(function(res){ if(res.isConfirmed && res.value!=null && res.value!=='') apply(res.value); });
+  }
+  window.erMrZoomInput = function(){
+    _erAskNum('붙인 내용 배율(%)', _mrZoom, _MR_ZMIN, _MR_ZMAX, function(n){
+      _mrZoom=n; _erMrApplyZoom(); markDirty();
+    });
+  };
   // Ctrl + 휠 = 붙인 내용 확대/축소 (그 영역 위에서만)
   document.addEventListener('wheel', function(ev){
     if(!ev.ctrlKey) return;
@@ -2034,11 +2065,35 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       ev.preventDefault();                       // 캔버스 드래그가 '이미지 끌기'로 새지 않게
       var p=pos(ev); _crop.on=true; _crop.sx=_crop.ex=p.x; _crop.sy=_crop.ey=p.y; draw();
     });
+    /* ★드래그 중 가장자리 자동 스크롤 (2026-08-03 "선택하고 아래로 내리면 스크롤되면서 선택되게").
+         종전에는 보이는 범위까지만 선택됐다 — 커서가 뷰어(er-cropStage) 아래·위 가장자리(36px 안)에
+         닿으면 그 방향으로 계속 스크롤하며 선택을 늘린다. 가장자리에 가까울수록 빠르게(4~28px/frame).
+         좌표(_crop.sx…)는 캔버스 기준이라 스크롤돼도 어긋나지 않는다 — 매 프레임 pos() 재계산만 하면 된다. */
+    var _acEv=null, _acRAF=0;
+    function _autoScrollTick(){
+      _acRAF=0;
+      if(!_crop.on || !_acEv) return;
+      var st=el('er-cropStage'); if(!st) return;
+      var b=st.getBoundingClientRect(), E=36, dy=0, dx=0;
+      if(_acEv.clientY > b.bottom-E) dy = Math.min(28, 4 + (_acEv.clientY-(b.bottom-E)));
+      else if(_acEv.clientY < b.top+E) dy = -Math.min(28, 4 + ((b.top+E)-_acEv.clientY));
+      if(_acEv.clientX > b.right-E)  dx = Math.min(28, 4 + (_acEv.clientX-(b.right-E)));
+      else if(_acEv.clientX < b.left+E) dx = -Math.min(28, 4 + ((b.left+E)-_acEv.clientX));
+      if(dy){ var t0=st.scrollTop;  st.scrollTop  = t0+dy; if(st.scrollTop===t0)  dy=0; }   // 끝에 닿으면 정지
+      if(dx){ var l0=st.scrollLeft; st.scrollLeft = l0+dx; if(st.scrollLeft===l0) dx=0; }
+      if(dy || dx){
+        var p=pos(_acEv); _crop.ex=p.x; _crop.ey=p.y; draw();   // 스크롤로 캔버스가 움직였으니 좌표 갱신
+        _acRAF=requestAnimationFrame(_autoScrollTick);
+      }
+    }
     // 캔버스를 벗어나도 이어지게 document 에 건다(가장자리까지 선택할 때 필요)
     document.addEventListener('mousemove', function(ev){
       if(!_crop.on) return; ev.preventDefault(); var p=pos(ev); _crop.ex=p.x; _crop.ey=p.y; draw();
+      _acEv=ev;
+      if(!_acRAF) _acRAF=requestAnimationFrame(_autoScrollTick);
     });
     document.addEventListener('mouseup', function(){
+      _acEv=null; if(_acRAF){ cancelAnimationFrame(_acRAF); _acRAF=0; }
       if(!_crop.on) return; _crop.on=false;
       var w=Math.abs(_crop.ex-_crop.sx), h=Math.abs(_crop.ey-_crop.sy);
       _crop.has = (w>8 && h>8); el('er-cropOk').disabled = !_crop.has;
@@ -2112,6 +2167,19 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(_mrSelImg||sel[0])+'%';
     markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
   };
+  /* % 라벨 클릭 = 정확한 크기 직접 입력 (2026-08-03 "조절이 너무 미세하게 안 맞는다").
+     여러 장을 Ctrl+클릭으로 잡고 입력하면 전부 같은 폭이 되어 '두 그림 크기 맞추기'가 한 번에 끝난다. */
+  window.erImgSizeInput = function(){
+    var sel=_mrSel(); if(!sel.length) return;
+    if(!_mrCanEdit(false)) return;
+    _erAskNum(sel.length>1 ? ('그림 '+sel.length+'장 크기(%) — 전부 같은 크기로') : '그림 크기(%)',
+              _mrImgW(_mrSelImg||sel[0]), 15, 100, function(n){
+      _mrSnapOnce('size');
+      sel.forEach(function(im){ im.style.width=n+'%'; if(im.style.height && im.style.height!=='auto') im.style.height='auto'; });
+      var lb=el('er-imgSzLbl'); if(lb) lb.textContent=n+'%';
+      markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
+    });
+  };
   /* ⤓ 새 장에서 시작 (2026-07-22) — 그림 앞에서 페이지를 끊는다.
      표 여러 개를 넣으면 A4 경계에 걸쳐 두 장에 나뉘어 읽기 나쁘다.
      이 표시가 있는 그림은 항상 새 장 맨 위에서 시작한다.
@@ -2177,6 +2245,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   };
   /* 그림 선택 해제 — 조절바·손잡이를 모두 감춘다.
      잘라오기 창이나 별도 창을 띄우면 그 위에 손잡이가 겹쳐 떠 있어 방해된다(2026-07-22). */
+  // Ctrl+P(브라우저 메뉴 인쇄)는 erPrint 를 안 거친다 — 인쇄 직전 이벤트에서 '새 장' 알약을 확실히 걷는다
+  window.addEventListener('beforeprint', function(){
+    try{ Array.prototype.forEach.call(document.querySelectorAll('.er-pgmark'), function(m){ m.remove(); }); _pgMarks=[]; }catch(e){}
+  });
+  // ✕ 닫기 버튼 — 선택 해제와 동일(조절바·손잡이·새장 표지 정리). Esc 키로도 닫힌다.
+  window.erImgBarClose = function(){ _mrDeselect(); };
+  document.addEventListener('keydown', function(ev){
+    if(ev.key==='Escape' && _mrSelImg) _mrDeselect();
+  });
   function _mrDeselect(){
     _mrSelClear();
     if(_mrSelImg){ _mrSelImg.classList.remove('er-imgsel'); _mrSelImg=null; }
@@ -2598,8 +2675,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     editablesEdit().forEach(function(e){ e.contentEditable = editing?'true':'false'; });   // Ⅳ 권고(recdir_*)는 제외
     var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집끄기':'✏️ 편집켜기'; b.classList.toggle('er-on',editing);
     try{ _mrSyncPgMarks(); }catch(e){}   // 편집 켜면 '⤒ 여기부터 새 장' 표지 표시, 끄면 걷힘
-    // Ⅵ 는 편집을 켜야 나타난다 — 들어가는 길이 여기 하나뿐이라 안내에 같이 적는다
-    if(editing) toast('편집 모드: 파란 영역의 문구를 고치고, 맨 뒤 Ⅵ 의무기록 장에서 그림을 넣거나 크기를 조절할 수 있습니다.');
+    // 편집켜기 안내 토스트는 뺐다(2026-08-03 요청) — 매번 떠서 성가심. 사용법은 버튼 툴팁·mrbar 힌트로 충분.
   };
 
   // ===== 서식 툴 (편집 모드 전용) — 답변 에디터(summernote) 구성 참조: B/I/U/지우개 + 글꼴 + 크기(px) + 색상 A▾.
@@ -3986,7 +4062,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 미리보기에서 [파일서버 저장] → 생성해둔 PDF(_erGenBlob) 업로드(SFTP EVALRPT + PDF_PATH).
   window.erPdfGenUpload = function(){
     if(!_erGenBlob){ erSwal('warning','생성된 PDF가 없습니다. 다시 시도해 주세요.'); return; }
-    erConfirm('파일서버에 저장하시겠습니까?', _erDoPdfGenUpload, { title:'PDF 저장', icon:'question', yes:'저장' });
+    /* [2026-08-03] "저장하시겠습니까?" 확인창 제거 — 승인→생성→미리보기→저장 사슬에서 마지막 군더더기.
+         [📄 파일서버 저장] 버튼을 누른 것 자체가 의사표시고, 미리보기로 내용도 이미 확인한 뒤다.
+         잘못 저장해도 다시 생성·교체(🔍 검색)가 되고 이전 파일은 이력으로 남는다(HST). */
+    _erDoPdfGenUpload();
   };
   function _erDoPdfGenUpload(){
     toast('파일서버에 저장 중…');
