@@ -50,8 +50,9 @@
              background:#f4f7fb; border:1px solid #d3dfef; border-radius:14px; overflow:hidden;
              box-shadow:0 18px 44px rgba(20,40,80,.28); color:#28323c;
              font-family:"Noto Sans KR","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;
-             font-size:12px; }   /* ★기준 글자크기 — 안쪽은 전부 em 이라 이 값만 바뀌면 같이 커진다
-                                    (2026-07-31 사용자 요청: 기본을 "가－ 로 줄여 본 상태"보다도 작게 — 종전 15px → 12px.
+             font-size:13.2px; } /* ★기준 글자크기 — 안쪽은 전부 em 이라 이 값만 바뀌면 같이 커진다
+                                    (2026-08-03 사용자 요청: 기본을 한 단계(가＋ 1회 = 10%) 크게 — 12px → 13.2px.
+                                     이력: 2026-07-31 15px → 12px 축소 후 재조정.
                                      아래 JS RZ_BASE_F 와 반드시 같은 값이어야 가－/가＋·원위치가 맞다) */
   #wqaPanel input, #wqaPanel button{ font-family:inherit; }
 
@@ -156,16 +157,19 @@
   .wqa-in button:hover{ background:#1655c0; }
   /* 질문 유형(분류) 줄 */
   .wqa-cats{ display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
-  .wqa-cats span{ font-size:.87em; font-weight:700; color:#1746a2; background:#fff; border:1px solid #cfdcec;
+  /* 칩 글자 .87em → .97em (2026-08-03 요청 "체크도 크게") — 입력창과 같은 크기로. em 이라 가－/가＋ 조절도 그대로 따라간다 */
+  .wqa-cats span{ font-size:.97em; font-weight:700; color:#1746a2; background:#fff; border:1px solid #cfdcec;
                   border-radius:13px; padding:4px 12px; cursor:pointer; }
   .wqa-cats span:hover{ background:#e8f0fd; }
   .wqa-cats span.on{ background:#1746a2; color:#fff; border-color:#1746a2; }
   .wqa-cats span .n{ opacity:.65; font-weight:600; margin-left:4px; }
   /* 선택한 분류의 질문 목록 — 길면 이 영역만 스크롤 */
-  .wqa-chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; max-height:8.6em; overflow-y:auto; }
+  /* 질문 칩 목록 — 종전 max-height 8.6em(≈4줄)이라 글자를 키우자 잘려 보였다(2026-08-03 "안 늘어남").
+     14.5em(≈7줄)까지 늘려 보이게 하고, 그 이상은 스크롤. em 이라 가＋/가－ 배율도 같이 따라간다. */
+  .wqa-chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; max-height:14.5em; overflow-y:auto; }
   .wqa-chips::-webkit-scrollbar{ width:7px; }
   .wqa-chips::-webkit-scrollbar-thumb{ background:#cbd8e8; border-radius:4px; }
-  .wqa-chips span{ font-size:.87em; font-weight:600; color:#37475a; background:#f4f7fb; border:1px solid #dfe8f3;
+  .wqa-chips span{ font-size:.97em; font-weight:600; color:#37475a; background:#f4f7fb; border:1px solid #dfe8f3;
                    border-radius:13px; padding:4px 11px; cursor:pointer; }
   .wqa-chips span:hover{ background:#1f6feb; color:#fff; border-color:#1f6feb; }
   .wqa-chips span.on{ background:#1746a2; color:#fff; border-color:#1746a2; }
@@ -850,7 +854,7 @@
        · 창을 넓히면 글자는 그대로 두고 <넓어진 폭만큼 글이 채워진다>(줄바꿈만 달라짐).
        · 글자 크기는 헤더의 가－ / 가＋ 로만 바꾼다.
        (예전엔 폭에 비례해 글자가 커져서, 넓히면 글자만 커지고 담기는 양은 그대로였다) */
-  var RZ_BASE_F = 12, RZ_MIN_F = 9, RZ_MAX_F = 30;   /* 기본 12px (2026-07-31, CSS #wqaPanel font-size 와 동일값 유지). 하한도 9px 로 내림(가－ 여지 확보) */
+  var RZ_BASE_F = 13.2, RZ_MIN_F = 9, RZ_MAX_F = 30;   /* 기본 13.2px (2026-08-03 한 단계 상향, CSS #wqaPanel font-size 와 동일값 유지). 하한 9px(가－ 여지) */
   var FZ = 1, FZ_MIN = 0.7, FZ_MAX = 1.8, FZ_STEP = 0.1;
 
   function applyFont(){
