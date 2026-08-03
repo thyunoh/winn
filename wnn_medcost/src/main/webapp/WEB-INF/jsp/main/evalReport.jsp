@@ -10,6 +10,19 @@
      모든 스타일/클래스는 #evalReport 하위로 스코프(er- 접두)해 앱 화면과 충돌 방지 --%>
 
 <div id="evalReport">
+<%-- ★ 이 스크립트는 반드시 본문 markup 보다 '먼저' 와야 한다(2026-08-03).
+     아래쪽 초기화 스크립트에서 er-pdfonly 를 붙이면 브라우저가 이미 본문을 한 번 그린 뒤라
+     거래처 화면에 편집화면(본문)이 번쩍 스쳤다 사라진다. 여기서 첫 페인트 전에 붙여 깜박임을 없앤다.
+     정본=승인 PDF 기준이라 거래처는 본문 화면 자체를 보지 않는다. --%>
+<script>
+  (function(){
+    try{
+      var m=document.cookie.match(/(?:^|;\s*)s_wnn_yn=([^;]*)/);
+      var wnn=(m?decodeURIComponent(m[1]):'');
+      if(wnn!=='Y'){ document.getElementById('evalReport').classList.add('er-hospview','er-pdfonly'); }
+    }catch(e){}
+  })();
+</script>
 <style>
   #evalReport{
     /* ===== 네이비 테마 — 원본 컨설팅 PDF 컨셉(고객 확정 2026-07-15). 변수값만 교체하면 카드·표·섹션·콜아웃 일괄 반영 =====
@@ -124,7 +137,29 @@
   /* 병원(거래처) 열람 모드 — 관리 도구 전부 숨김(조회·인쇄·종료만). JS 가 isWinner 아닐 때 er-hospview 부여 */
   #evalReport.er-hospview #er-statusBadge, #evalReport.er-hospview #er-editTools,
   #evalReport.er-hospview .er-fmtbar, #evalReport.er-hospview .er-wnnonly,
-  #evalReport.er-hospview .er-notice{ display:none !important; }
+  /* 위너넷용 안내문만 숨긴다 — 거래처에게 필요한 두 가지(PDF 배너 · 거래처 안내문)는 예외.
+     ★ 예외를 빼먹으면 본문(er-pdfonly)까지 감춘 뒤 화면이 통째로 비어 버린다(2026-08-03 수정). */
+  #evalReport.er-hospview .er-notice:not(#er-pdfBanner):not(.er-hospmsg){ display:none !important; }
+  /* 거래처 = '승인 시점 PDF'만 제공(2026-08-03 확정). 본문 화면은 열 때마다 최신 재계산이라
+     승인본과 달라질 수 있어 아예 감춘다 → 남는 건 PDF 보기·다운로드 배너와 안내문뿐. */
+  #evalReport.er-pdfonly .er-doc{ display:none !important; }
+  #evalReport.er-pdfonly #er-notice.er-hospmsg{ display:block !important; }
+  /* 뷰어가 화면을 꽉 채우므로 배너는 한 줄로 얇게(다운로드 링크만 남기는 용도) */
+  /* PDF 가 화면에 그대로 펼쳐지므로 안내 배너는 뺀다(2026-08-03 요청) — '화면에서 보기'는 이미 보고 있고,
+     다운로드·인쇄는 PDF 뷰어 자체 툴바(우측 ⬇·🖨)에 있어 중복이다. 뷰어가 화면을 더 넓게 쓴다. */
+  #evalReport.er-pdfonly #er-pdfBanner{ display:none !important; }
+  #evalReport.er-pdfonly .er-doconly{ display:none !important; }   /* 본문이 없으니 배율·미리보기도 숨김 */
+  /* 거래처 인라인 PDF 뷰어 — 화면 높이를 채워 바로 읽히게(모달·클릭 없이) */
+  /* 폭은 width:100% 대신 '좌우 여백'으로 잡는다 — 100% + 테두리·부모 패딩이면 가로가 넘쳐
+     화면이 옆으로 밀리고 좌측 메뉴 스크롤바가 문서 위로 끼어 보인다(2026-08-03). */
+  #evalReport.er-pdfonly{ overflow-x:hidden; }
+  #er-hospPdfWrap{ margin:6px 10px 0; }
+  /* 배너를 뺐으니 뷰어가 툴바 바로 아래부터 시작한다 — 높이도 그만큼 되찾는다 */
+  #evalReport.er-pdfonly #er-hospPdfFrame{ height:calc(100vh - 96px); }
+  #er-hospPdfMsg{ padding:14px; text-align:center; color:#5b6b7f; font-size:14px; }
+  #er-hospPdfFrame{ display:none; width:100%; box-sizing:border-box; height:calc(100vh - 130px);
+                    min-height:560px; border:1px solid #d8dfe8; background:#fff; }
+  @media print{ #er-hospPdfWrap{ display:none !important; } }
 
   #evalReport .er-notice{ max-width:880px; margin:16px auto 0; padding:12px 16px; border-radius:10px; background:var(--er-navytint);
     border:1px solid #cfe0f4; color:var(--er-navy); font-size:12.5px; line-height:1.6; }
@@ -154,9 +189,15 @@
   /* ===== A4 자동 페이지 분할(WYSIWYG) — 화면 = PDF. 원본 섹션(.er-srcpage)은 숨기고 A4 실측 페이지를 생성 ===== */
   #evalReport .er-autopage{ display:none; }
   #evalReport.er-paged .er-srcpage{ display:none !important; }
-  #evalReport.er-paged .er-autopage{ display:block; width:210mm; height:297mm; box-sizing:border-box;
+  #evalReport.er-paged .er-autopage{ display:block; width:210mm; height:297mm; box-sizing:border-box; position:relative;
     background:var(--er-paper); box-shadow:0 6px 26px rgba(28,45,72,.14); border-radius:4px; margin:0 auto;
     padding:14mm 15mm; overflow:hidden; }
+  /* 장 번호표(보기 모드) — 각 A4 오른쪽 위 'N장'. 인쇄·PDF캡처·편집(화면밖 복제) 어디에도 안 찍힘 */
+  .er-pgnum{ position:absolute; top:5mm; right:7mm; font-size:11px; font-weight:800; color:#7c8a99;
+             background:#eef2f7; border:1px solid #dbe3ec; border-radius:999px; padding:1px 9px; pointer-events:none; }
+  @media print{ .er-pgnum{ display:none !important; } }
+  body.er-capturing .er-pgnum{ display:none !important; }
+  #evalReport.er-preview .er-pgnum{ display:none !important; }   /* 인쇄 미리보기 화면에서도 숨김 */
   #evalReport.er-paged .er-autobody{ overflow:hidden; }
   /* A4 복제본 안의 의무기록 그림 — 세로가 페이지를 넘지 않게 상한을 둔다.
      넘치면 아래가 잘려 사라지므로, 폭 축소(erShrinkToFit)와 함께 이중으로 막는다 */
@@ -462,7 +503,9 @@
 
 
   /* ===== 첨부 PDF 미리보기 모달 ===== */
-  #evalReport .er-modal{ position:fixed; inset:0; z-index:1300; background:rgba(16,22,29,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
+  /* z-index 1300→1700 (2026-08-03) — 새 장 알약(1390)·장 경계 표지(1385)·그림 조절바(1400)·손잡이(1600)가
+     전부 fixed 라 모달 '위로' 뚫고 올라왔다(편집 중 PDF보기에 표시 겹침). 모달은 항상 최상위. */
+  #evalReport .er-modal{ position:fixed; inset:0; z-index:1700; background:rgba(16,22,29,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
   #evalReport .er-modal-box{ width:min(1320px,98vw); height:96vh; background:#fff; border-radius:12px; box-shadow:0 14px 46px rgba(0,0,0,.38); display:flex; flex-direction:column; overflow:hidden; }
   #evalReport .er-modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 18px; background:var(--er-navytint); border-bottom:1px solid var(--er-line); font-weight:800; color:var(--er-navy); }
   /* 헤더 파일명 — 크게. 길면 말줄임(버튼 안 밀리게 flex 축소 허용) */
@@ -651,12 +694,13 @@
     </span>
     <span class="er-divider"></span>
     <!-- 글자 크기(문서 배율)·미리보기 — 열람용 도구라 거래처(일반병원)에도 노출(er-wnnonly 제거). 가운데 % 클릭 시 100% 복원 -->
-    <button class="er-btn" style="padding:8px 7px;" onclick="erZoom(-1)" title="글자 작게">가−</button>
-    <button class="er-btn" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:44px; padding:8px 6px;">100%</button>
-    <button class="er-btn" style="padding:8px 7px;" onclick="erZoom(1)" title="글자 크게">가＋</button>
-    <span class="er-divider"></span>
+    <%-- er-doconly = 본문 화면이 있어야 뜻이 있는 도구. 거래처(er-pdfonly, 본문 감춤)에서는 숨긴다. --%>
+    <button class="er-btn er-doconly" style="padding:8px 7px;" onclick="erZoom(-1)" title="글자 작게">가−</button>
+    <button class="er-btn er-doconly" id="er-zoomPct" onclick="erZoom(0)" title="클릭=100% 복원" style="min-width:44px; padding:8px 6px;">100%</button>
+    <button class="er-btn er-doconly" style="padding:8px 7px;" onclick="erZoom(1)" title="글자 크게">가＋</button>
+    <span class="er-divider er-doconly"></span>
     <!-- 미리보기 하나로 통일 — 미리보기 진입 시 상단바에 '🖨️ 인쇄' 가 있어 툴바 인쇄 버튼은 중복이라 제거(2026-07-20). -->
-    <button class="er-btn" onclick="erPreview()" title="인쇄 형태(A4)로 화면에서 확인 — 미리보기 상단의 🖨️ 인쇄(PDF저장)로 출력/PDF저장">👁 미리보기</button>
+    <button class="er-btn er-doconly" onclick="erPreview()" title="인쇄 형태(A4)로 화면에서 확인 — 미리보기 상단의 🖨️ 인쇄(PDF저장)로 출력/PDF저장">👁 미리보기</button>
     <!-- 📄 한글저장(.doc 내보내기) — 사용자 협의 후 결정하기로 하여 버튼 제외(2026-07-20). 기능 erExportDoc 는 유지 → 협의 후 아래 버튼만 다시 살리면 됨:
          <button class="er-btn" onclick="erExportDoc()" title="아래한글·워드에서 열 수 있는 문서(.doc)로 저장합니다(화면 이동 없음)">📄 한글저장</button> -->
     <!-- (툴바 🖨️ 인쇄 버튼 제거 — 미리보기 상단바의 인쇄로 통일) -->
@@ -679,10 +723,21 @@
   <!-- 안내 배너 — 평소 숨김(사용법은 툴바 'ℹ️ 도움말' 툴팁으로 이동). 초기화 오류 시 showErr 가 이 영역을 표시 -->
   <div class="er-notice" id="er-notice" style="display:none;"></div>
 
+  <!-- [승인본 불일치 경고] 운영 기준(2026-08-03): 정본 = 승인 시점 PDF · 화면 = 최신 진단치.
+       승인 후 수치가 달라지면 담당자가 먼저 알도록 여기 경고를 띄운다(같으면 안 뜸). -->
+  <div class="er-notice" id="er-apprDiff" style="display:none; border-color:#f0c36d; background:#fff8e6; color:#8a5a00;"></div>
+
   <div class="er-notice" id="er-pdfBanner" style="display:none; border-color:#bfe0c4; background:var(--er-goodtint); color:var(--er-good);">
     📄 <b>완성본 PDF가 첨부된 보고서입니다.</b>
     <a href="#" onclick="erPdfPreview(); return false;" style="font-weight:800; color:var(--er-good); text-decoration:underline;">화면에서 보기</a> ·
     <a id="er-pdfBannerLink" href="#" style="font-weight:800; color:var(--er-good); text-decoration:underline;">다운로드</a>
+  </div>
+
+  <%-- 거래처 전용 인라인 PDF 뷰어 — 클릭 없이 승인 확정본을 바로 펼쳐 준다(2026-08-03).
+       본문(.er-doc)은 er-pdfonly 로 감춰져 있으므로 병원 화면에는 이 뷰어가 문서 자리를 대신한다. --%>
+  <div id="er-hospPdfWrap" style="display:none;">
+    <div id="er-hospPdfMsg">PDF를 불러오는 중입니다…</div>
+    <iframe id="er-hospPdfFrame" title="적정성평가 월간 컨설팅 보고서(승인 확정본)"></iframe>
   </div>
 
   <!-- ===== 지면 ===== -->
@@ -1074,6 +1129,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   조회·글자크기(배율)·미리보기·인쇄·종료는 거래처에도 노출(열람용). 2단계 canView 공개 시 자동 적용.
   if(!isWinner){
     document.getElementById('evalReport').classList.add('er-hospview');
+    // 거래처는 본문 화면을 안 준다(정본=승인 PDF). ★조회가 끝난 뒤 감추면 본문이 잠깐 보였다 사라져
+    //   깜박임이 생기므로 여기서 '처음부터' 감춘다(2026-08-03).
+    document.getElementById('evalReport').classList.add('er-pdfonly');
     var _rt=document.getElementById('er-roleTag'); if(_rt) _rt.textContent='열람';
     // 조회(loadEvalReport)가 실패하면 norYn 을 못 받는다 → 병원 화면은 받기 전까지 '숨김'으로 둔다(노출 사고 방지).
     //   조회에 성공하면 erApplyNorYn 이 실제 값으로 다시 판단해 일반 계약 병원에는 그대로 보인다.
@@ -1562,10 +1620,18 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return units;
   }
 
+  // 장 번호표(2026-08-03 "편집 끄기 해도 페이지 표시") — 보기 모드 A4 장마다 'N장' 칩. 인쇄·PDF캡처엔 안 찍힘
+  function _erPgNum(p, doc){
+    var no = doc.querySelectorAll('.er-autopage').length;   // appendChild 후 호출 → 자기 자신 포함 개수 = 장 번호
+    /* er-noprint 를 붙이면 안 된다 — 그 클래스는 '편집 모드에서만 표시'라 보기 모드에서 숨는다(2026-08-03).
+       인쇄·캡처 숨김은 .er-pgnum 자체 규칙(@media print · body.er-capturing)으로 처리 */
+    var t=document.createElement('div'); t.className='er-pgnum'; t.textContent=no+'장';
+    p.appendChild(t);
+  }
   function erNewPage(doc){
     var p=document.createElement('div'); p.className='er-autopage';
     var b=document.createElement('div'); b.className='er-autobody';
-    p.appendChild(b); doc.appendChild(p); return b;
+    p.appendChild(b); doc.appendChild(p); _erPgNum(p, doc); return b;
   }
   // 한 페이지가 담을 수 있는 실제 콘텐츠 높이(px) = 페이지 clientHeight − 상하 패딩
   function erCapacity(body){
@@ -1609,33 +1675,50 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       // er-cover 클래스 유지 — 표지 전용 스타일(.er-cover .er-cover-title 등)이 복제본에도 적용되게
       var cp=document.createElement('div'); cp.className='er-autopage er-cover-page er-cover';
       Array.prototype.forEach.call(cover.children, function(ch){ cp.appendChild(erClone(ch)); });
-      doc.appendChild(cp);
+      doc.appendChild(cp); _erPgNum(cp, doc);
     }
     // 본문 흐름 단위 → A4 실측 채우기 (섹션 헤더는 항상 새 페이지 시작)
     var units=erCollectUnits(doc);
     _erPageStarts=[];                                  // [경계 표지] 각 장의 '첫 원본 블록' 기록
     var _markStart=true;
     var body=erNewPage(doc), maxH=erCapacity(body);
+    var curUnits=[];                                   // 현재 장에 실린 흐름 단위(고아 헤더 판정용)
     units.forEach(function(u){
       // 섹션(Ⅰ~Ⅴ) 헤더: 현재 장의 남은 공간이 45% 미만이면 새 장에서 시작,
       // 충분히 남았으면(직전 섹션 꼬리만 있는 거의 빈 장 등) 같은 장에 간격 두고 이어붙임
       // 사용자가 '⤓ 새 장에서' 로 지정한 것 = 남은 공간과 무관하게 무조건 새 장에서 시작
-      if(u.hardBreak && body.children.length){ body=erNewPage(doc); maxH=erCapacity(body); _markStart=true; }
+      if(u.hardBreak && body.children.length){ body=erNewPage(doc); maxH=erCapacity(body); curUnits=[]; _markStart=true; }
       else if(u.newPage && body.children.length){
         var remain = maxH - body.scrollHeight;
-        if(remain < maxH*0.45){ body=erNewPage(doc); maxH=erCapacity(body); _markStart=true; }
+        if(remain < maxH*0.45){ body=erNewPage(doc); maxH=erCapacity(body); curUnits=[]; _markStart=true; }
       }
       erAppendUnit(body,u);
       var overflow = body.scrollHeight > maxH+1;
       var onlyThis = (body.children.length <= u.nodes.length);
       if(overflow && !onlyThis){                         // 넘치면 다음 페이지로
-        erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
-        onlyThis = true; overflow = body.scrollHeight > maxH+1; _markStart=true;
+        /* ★고아 헤더 방지(2026-08-03 다온 3장 실사고) — 장에 '헤더류(keep)'만 실린 상태에서
+             첫 본문(큰 표 등)이 넘치면, 종전에는 본문만 다음 장으로 가고 Ⅱ 제목이 홀로 남아
+             '제목만 있고 텅 빈 장'이 생겼다 → 헤더까지 함께 다음 장으로 옮기고 빈 장은 지운다. */
+        var onlyHeaders = curUnits.length>0 && curUnits.every(function(x){ return x.keep; });
+        erRemoveUnit(u);
+        if(onlyHeaders){
+          var hdrs=curUnits.slice(); hdrs.forEach(erRemoveUnit);
+          var emptyPg=body.parentNode; if(emptyPg && emptyPg.parentNode) emptyPg.parentNode.removeChild(emptyPg);
+          if(_erPageStarts.length) _erPageStarts.pop();          // 지운 빈 장의 시작 기록 회수
+          body=erNewPage(doc); maxH=erCapacity(body); curUnits=[];
+          hdrs.forEach(function(h){ erAppendUnit(body,h); curUnits.push(h); });
+          _erPageStarts.push(hdrs[0].nodes[0]); _markStart=false;
+        } else {
+          body=erNewPage(doc); maxH=erCapacity(body); curUnits=[]; _markStart=true;
+        }
+        erAppendUnit(body,u);
+        onlyThis = (body.children.length <= u.nodes.length); overflow = body.scrollHeight > maxH+1;
       } else if(u.keep && !onlyThis && (maxH - body.scrollHeight) < 130){
         // 라벨·소제목이 페이지 맨 아래에 홀로 남지 않게 다음 페이지로 넘김
-        erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); erAppendUnit(body,u);
+        erRemoveUnit(u); body=erNewPage(doc); maxH=erCapacity(body); curUnits=[]; erAppendUnit(body,u);
         _markStart=true;
       }
+      curUnits.push(u);
       if(_markStart){ _erPageStarts.push(u.nodes[0]); _markStart=false; }
       /* ★혼자서도 한 장을 넘는 그림 = 잘려서 사라진다(.er-autobody 는 overflow:hidden).
          페이지에 들어갈 때까지 그림을 줄인다. 잘라온 표는 통째로 보여야 읽을 수 있다(2026-07-22). */
@@ -1705,6 +1788,30 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         el('er-pdfLoading').textContent = 'PDF를 불러오지 못했습니다('+(e&&e.message||'오류')+'). 닫고 다시 시도해 주세요.';
       });
   };
+  /* 거래처 화면: 승인 확정본 PDF 를 클릭 없이 화면에 바로 펼친다(2026-08-03).
+     모달(erPdfPreview)과 달리 페이지 안에 심어 두므로 닫아서 백지가 되는 일이 없다.
+     다운로드와 같은 경로를 blob 으로 받아 objectURL 로 띄운다(자바·권한 로직 변경 없음). */
+  var _hospPdfUrl = null;
+  function _erHospPdfShow(){
+    var wrap = el('er-hospPdfWrap'); if(!wrap) return;
+    var fr = el('er-hospPdfFrame'), msg = el('er-hospPdfMsg');
+    if(!pdfPath || norYn==='Y'){ wrap.style.display='none'; return; }   // 미첨부·PDF 미제공 병원 → 안내문만
+    wrap.style.display='block'; fr.style.display='none';
+    msg.style.display='block'; msg.textContent='보고서를 불러오는 중입니다…';
+    fetch(ctx+'/sftp/download.do?filePath='+encodeURIComponent(pdfPath)+'&_ts='+Date.now(),
+          { credentials:'same-origin', cache:'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.blob(); })
+      .then(function(b){
+        if(_hospPdfUrl) URL.revokeObjectURL(_hospPdfUrl);
+        _hospPdfUrl = URL.createObjectURL(new Blob([b], { type:'application/pdf' }));
+        fr.src = _hospPdfUrl + '#zoom=page-width';
+        fr.style.display='block'; msg.style.display='none';
+      })
+      .catch(function(e){
+        msg.textContent = '보고서를 불러오지 못했습니다('+((e&&e.message)||'오류')+'). 위 [다운로드]로 받아 보시거나 잠시 후 다시 시도해 주세요.';
+      });
+  }
+
   window.erPdfClose = function(){
     _pdfSeq++;                                            // 진행 중 fetch 무효화 (revoke 는 다음 열기에서)
     el('er-pdfModal').style.display = 'none';
@@ -3770,6 +3877,84 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
   }
 
+  /* [승인본 불일치 경고] 운영 기준(2026-08-03 확정): 정본 = 승인 시점 PDF, 화면 = 최신 진단치.
+       승인 후 평가표 추가·자료 재생성으로 수치가 달라지면, 담당자가 병원 응대 전에 알 수 있게
+       승인 스냅샷(snapshotjson.scores.total)과 현재 계산을 비교해 경고를 띄운다. 같으면 안 뜸.
+       갱신 절차 = 승인취소 → 재승인 → PDF 재생성(화면생성) → 저장. */
+  function _erApproveDiff(mst){
+    var bn=el('er-apprDiff'); if(!bn) return;
+    bn.style.display='none'; bn.innerHTML='';
+    try{
+      if(!isWinner || !mst || mst.status!=='APPROVED' || !mst.snapshotjson || !scores) return;
+      var snap=JSON.parse(mst.snapshotjson);
+      if(!snap || !snap.scores) return;
+      var r2=function(v){ return Math.round(n(v)*100)/100; };
+      var oT=r2(snap.scores.total), cT=r2(scores.total);
+      var oS=r2(snap.scores.struct), cS=r2(scores.struct);
+      var oC=r2(snap.scores.care),   cC=r2(scores.care);
+      if(!(oT>0)) return;
+
+      /* 지표별 대조 — 승인 당시 스냅샷의 indicators 와 현재 indicators 를 지표코드로 맞춰본다.
+         점수(weigval)뿐 아니라 산출값(calDisp)도 같이 보여야 '무엇이 왜 바뀌었는지'가 보인다.
+         승인 후 새로 생긴/사라진 지표도 잡는다(자료 재적재로 지표가 통째로 생기는 경우가 있음). */
+      var oM={}, seen={}, rows=[];
+      (snap.indicators||[]).forEach(function(r){ if(r && r.cate_cd!=null) oM[String(r.cate_cd)]=r; });
+      var calOf=function(r){ try{ return r? String(calDisp(r)) : '-'; }catch(e){ return '-'; } };
+      (indicators||[]).forEach(function(cr){
+        var cd=String(cr.cate_cd); seen[cd]=1;
+        var or_=oM[cd];
+        var ov=or_? r2(or_.weigval) : null, cv=r2(cr.weigval);
+        var oc=calOf(or_), cc=calOf(cr);
+        if(or_ && Math.abs(ov-cv)<0.005 && oc===cc) return;      // 점수·산출값 둘 다 같으면 표시 안 함
+        rows.push({ nm:(cr.cate_nm||cd), oc:(or_?oc:'-'), cc:cc, ov:ov, cv:cv, add:!or_ });
+      });
+      Object.keys(oM).forEach(function(cd){
+        if(seen[cd]) return;
+        var or_=oM[cd];
+        rows.push({ nm:(or_.cate_nm||cd), oc:calOf(or_), cc:'-', ov:r2(or_.weigval), cv:null, del:true });
+      });
+
+      if(Math.abs(cT-oT)<0.05 && !rows.length) return;           // 완전 동일 → 배너 없음
+
+      var dT=r2(cT-oT), sgn=function(d){ return (d>0?'▲ +':(d<0?'▼ ':'')) + f1(Math.abs(d)); };
+      var h = '⚠️ <b>승인('+esc(mst.approvedttm||'')+') 이후 수치가 달라졌습니다</b> — 종합 '
+            + '<b>'+f1(oT)+'점('+gradeOf(oT)+')</b> → <b>'+f1(cT)+'점('+gradeOf(cT)+')</b>'
+            + (Math.abs(dT)>=0.005 ? ' <b>('+sgn(dT)+'점)</b>' : '')
+            + (gradeOf(oT)!==gradeOf(cT) ? ' <b>· 등급 변동</b>' : '')
+            + ' <a href="#" id="er-apprMore" style="color:#8a5a00;text-decoration:underline;font-weight:800;">변경내용 보기</a>';
+      h += '<div id="er-apprDetail" style="display:none;margin-top:8px;">'
+         + '<div style="margin-bottom:4px;">구조 '+f1(oS)+' → '+f1(cS)+'점 · 의료(과정·결과) '+f1(oC)+' → '+f1(cC)+'점</div>';
+      if(rows.length){
+        h += '<table style="width:100%;border-collapse:collapse;font-size:.92em;">'
+           + '<tr style="background:#fdf0d0;"><th style="border:1px solid #e2c589;padding:3px 6px;text-align:left;">지표</th>'
+           + '<th style="border:1px solid #e2c589;padding:3px 6px;">승인 당시</th>'
+           + '<th style="border:1px solid #e2c589;padding:3px 6px;">현재</th>'
+           + '<th style="border:1px solid #e2c589;padding:3px 6px;">증감</th></tr>';
+        rows.forEach(function(x){
+          var tag = x.add? ' <b>(승인 후 생성)</b>' : (x.del? ' <b>(사라짐)</b>' : '');
+          var d = (x.ov!=null && x.cv!=null)? r2(x.cv-x.ov) : null;
+          h += '<tr><td style="border:1px solid #e2c589;padding:3px 6px;">'+esc(x.nm)+tag+'</td>'
+             + '<td style="border:1px solid #e2c589;padding:3px 6px;text-align:center;">'+esc(x.oc)+(x.ov!=null?' · '+f1(x.ov)+'점':'')+'</td>'
+             + '<td style="border:1px solid #e2c589;padding:3px 6px;text-align:center;">'+esc(x.cc)+(x.cv!=null?' · '+f1(x.cv)+'점':'')+'</td>'
+             + '<td style="border:1px solid #e2c589;padding:3px 6px;text-align:center;">'+(d==null?'-':(Math.abs(d)<0.005?'-':sgn(d)+'점'))+'</td></tr>';
+        });
+        h += '</table>';
+      } else {
+        h += '<div>지표별 점수는 그대로이고 합계만 달라졌습니다(반올림·가중치 확인 필요).</div>';
+      }
+      h += '<div style="margin-top:6px;">거래처에는 <b>승인 당시 PDF</b>가 제공되고 있습니다. 현재 수치로 갱신하려면 '
+         + '<b>승인취소 → 재승인 → PDF 재생성(화면생성) → 저장</b> 순으로 진행하십시오.</div></div>';
+      bn.innerHTML=h;
+      bn.style.display='block';
+      var mo=el('er-apprMore');
+      if(mo) mo.onclick=function(ev){ ev.preventDefault();
+        var d=el('er-apprDetail'); if(!d) return;
+        var on=(d.style.display==='none'); d.style.display=on?'block':'none';
+        mo.textContent=on?'변경내용 닫기':'변경내용 보기';
+      };
+    }catch(e){}
+  }
+
   function loadSavedTexts(){
     jQuery.ajax({ url: ctx+'/main/loadEvalReport.do', type:'POST', dataType:'json',
       data:{ hospCd:hospCd, evalYm:curYm },
@@ -3798,6 +3983,21 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         setStatus(mst && mst.status ? mst.status : 'DRAFT');
         pdfPath = (mst && mst.pdfpath) ? String(mst.pdfpath) : '';
         updatePdfUi();
+        _erApproveDiff(mst);   // [정본=PDF 기준] 승인 후 수치 변동 시 위너넷에 경고 배너
+        /* [정본=PDF 기준 · 2026-08-03 사용자 확정] 병원(거래처)에는 본문 '화면'을 주지 않는다 —
+             화면은 열 때마다 최신 재계산이라 승인 PDF 와 달라질 수 있고, 그 차이가 그대로 병원에
+             보이면 "보고서와 다르다" 혼선이 된다. 거래처는 승인 시점 PDF(👁 PDF보기)만 본다.
+             편집은 이미 er-hospview 로 막혀 있고, 여기서 본문 자체를 감춰 열람 권한도 주지 않는다.
+             ※ NOR_YN='Y'(사용운영만) 병원은 PDF 도 안 주므로(2026-07-29 규칙) 안내만 남긴다.
+             ※ 1단계는 위너넷만 진입하므로 지금은 동작 없음 — 2단계 공개 시 자동 적용되는 안전장치. */
+        if(!isWinner){
+          var _nb9 = el('er-notice');
+          if(_nb9 && !(pdfPath && norYn!=='Y')){
+            _nb9.classList.add('er-hospmsg');                     // er-hospview 의 .er-notice 숨김을 이 건만 해제
+            _nb9.textContent = '승인 확정본(PDF) 준비 중입니다. 준비되면 이 화면에서 열람하실 수 있습니다.';
+          } else if(_nb9){ _nb9.classList.remove('er-hospmsg'); }
+          _erHospPdfShow();                                       // 첨부본이 있으면 클릭 없이 바로 펼침
+        }
         editables().forEach(function(e){ e.contentEditable='false'; });
         editing=false; el('evalReport').classList.remove('er-editmode');
         if(isWinner){ var b=el('er-btnEdit'); b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }

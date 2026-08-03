@@ -17,6 +17,12 @@
   #evalReportList{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 50px; font-family:inherit; }
   #evalReportList table.dataTable, #evalReportList .erl-search, #evalReportList select.erl-sel{ font-family:inherit; }
   #evalReportList *{ box-sizing:border-box; }
+  /* ★가로 넘침 가두기(2026-08-03) — 컬럼이 많아 표가 화면보다 넓어지면 '페이지'가 옆으로 밀리는데,
+       좌측 메뉴는 고정(fixed)이라 같이 안 밀려서 표가 메뉴 위로 올라탄 것처럼 보였다(간헐 발생).
+       → 넘침을 표 영역 안에서만 처리한다: 페이지는 안 밀리고 표만 자체 가로스크롤. */
+  #evalReportList{ max-width:100%; overflow-x:hidden; }
+  #evalReportList .dataTables_wrapper, #evalReportList div.dt-container{ max-width:100%; overflow-x:auto; }
+  #evalReportList .erl-search{ max-width:100%; }
 
   /* 헤더 */
   #evalReportList .erl-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
@@ -404,8 +410,11 @@ jQuery(function(){
        그 다음이 사용자가 직접 고른 기억값('' = 전체 도 유효한 선택이므로 null 과 구분해서 본다). */
     var qm=(location.search.match(/[?&]ym=(\d{6})/)||[])[1];
     var pk=erlPickGet();
+    /* ★거래처(일반병원)는 처음부터 '그 해 전체'를 본다(2026-08-03 요청) — 병원은 본인 것 한 곳뿐이라
+         당월만 걸어 두면 지난달 보고서를 보려고 매번 월을 바꿔야 한다. 위너넷은 종전대로 당월. */
+    var defM = isWinner ? CUR_MM : '';
     el('erl-month').value = qm ? qm.substring(4,6)
-                          : (pk && pk.m != null ? pk.m : CUR_MM);
+                          : (pk && pk.m != null ? pk.m : defM);
   })();
 
   /* 병원 선택이 바뀔 때 — 특정 병원을 고르면 그 병원의 '그 해 전체' 를 보도록 월을 전체로 풀고,
@@ -417,7 +426,7 @@ jQuery(function(){
     // ★여기서 바꾼 값은 erlPickSet 하지 않는다 — 코드가 바꾼 것이지 사용자가 고른 게 아니다.
     if(mo){
       if(hosp) mo.value = '';
-      else { var pk=erlPickGet(); mo.value = (pk && pk.m != null) ? pk.m : CUR_MM; }
+      else { var pk=erlPickGet(); mo.value = (pk && pk.m != null) ? pk.m : (isWinner ? CUR_MM : ''); }
     }
     erlFilter();
   };
