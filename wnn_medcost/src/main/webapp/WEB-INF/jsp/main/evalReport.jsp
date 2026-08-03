@@ -201,6 +201,13 @@
   #evalReport .er-mrbody img.er-imgsel{ outline:1.5px solid var(--er-navy); outline-offset:1px; }
   /* ⤓ 새 장에서 시작 — 인쇄·PDF에서 이 그림 앞에서 페이지를 끊는다 */
   #evalReport .er-mrbody img.er-pgbreak{ break-before:page; page-break-before:always; margin-top:14px; }
+  /* '여기부터 새 장' 표지 알약 — 편집 중 er-pgbreak 그림 위에 띄워 눈으로 확인(2026-08-03 요청).
+     body 직속(저장 대상인 mr_body 밖)이라 문서에 안 섞이고, 인쇄·캡처에서는 숨긴다. */
+  .er-pgmark{ position:fixed; z-index:1390; background:#c8342f; color:#fff; font-size:11px; font-weight:800;
+              padding:2px 9px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.25);
+              pointer-events:none; white-space:nowrap; }
+  @media print{ .er-pgmark{ display:none !important; } }
+  body.er-capturing .er-pgmark{ display:none !important; }
   /* 편집 중에는 어디서 끊기는지 점선으로 보여준다(인쇄에는 안 나감) */
   #evalReport.er-editmode .er-mrbody img.er-pgbreak{ border-top:2px dashed #c8342f; padding-top:10px; }
   @media print { #evalReport .er-mrbody img.er-pgbreak{ border-top:none; padding-top:0; } }
@@ -222,6 +229,7 @@
   .er-hnd:hover, .er-hnd:active{ background:var(--er-navy); transform:scale(1.3); }
   #er-imgHandle { cursor:nwse-resize; }
   #er-imgHandleW{ cursor:ew-resize; }
+  #er-imgHandleL{ cursor:ew-resize; }
   #er-imgHandleH{ cursor:ns-resize; }
   /* 편집 UI는 인쇄·PDF캡처에 절대 찍히면 안 된다 — 모든 경로를 막는다.
      ※ er-noprint 는 평소엔 숨지만 er-editmode 에서 display:block 으로 되살아난다.
@@ -474,8 +482,35 @@
     #evalReport:not(.er-paged) .er-page{ box-shadow:none; border-radius:0; width:100%; padding:8mm 14mm 0; }
     #evalReport:not(.er-paged) .er-page.er-cover{ page-break-after:always; padding:12mm 14mm; }
     #evalReport .er-ind, #evalReport .er-indbox, #evalReport .er-rec, #evalReport .er-card, #evalReport .er-after, #evalReport .er-callout{ page-break-inside:avoid; }
-    #evalReport table.er-tbl thead{ display:table-header-group; }
-    #evalReport table.er-tbl tr{ page-break-inside:avoid; }
+    /* ★표 행이 페이지 경계에서 반 토막 나는 것 방지 (2026-08-03)
+         종전에는 선택자가 `table.er-tbl` 이라 **보고서가 직접 만든 표 5개에만** 걸렸다.
+         Ⅵ 의무기록에 아래한글·워드에서 복사해 붙인 표에는 er-tbl 클래스가 없어 무방비였고,
+         그래서 대상자 한 행의 윗줄만 앞장에 남고 나머지가 뒷장으로 넘어가 읽을 수 없었다.
+         → 선택자를 보고서 안 '모든 표'로 넓힌다. 표 자체는 계속 쪼개져야 하므로(여러 장짜리 표)
+           table 은 break-inside:auto, 자르지 말아야 할 최소 단위인 tr 에만 avoid 를 건다.
+         ※ thead/tfoot 이 있는 표만 머리행이 장마다 반복된다. 워드·아래한글에서 붙인 표는
+           보통 thead 없이 tr 만 오므로 머리행 반복은 안 된다(행 잘림은 이 규칙으로 해결됨). */
+    #evalReport table{ page-break-inside:auto; break-inside:auto; }
+    #evalReport table thead{ display:table-header-group; }
+    #evalReport table tfoot{ display:table-footer-group; }
+    #evalReport table tr{ page-break-inside:avoid; break-inside:avoid; }
+    #evalReport table td, #evalReport table th{ page-break-inside:avoid; break-inside:avoid; }
+
+    /* ★★인쇄 컨테이너를 flex 에서 block 으로 (2026-08-03) — '⤓ 새 장에서'가 안 듣던 진짜 원인.
+         .er-doc 는 화면 가운데 정렬 때문에 display:flex 인데(위 149行), 인쇄 CSS 에서 padding·gap 만
+         고치고 flex 는 그대로 뒀다. 브라우저는 **flex 컨테이너 안에서는 페이지 나눔 지정을 무시**한다
+         (break-before/after/inside 전부). 그래서 img.er-pgbreak 의 break-before:page 도,
+         Ⅲ 그룹라벨의 break-before:page 도, 카드의 page-break-inside:avoid 도 다 무시되고 있었다.
+         인쇄에서는 .er-page 가 width:100% 라 가운데 정렬이 필요 없으므로 block 으로 되돌리면 된다. */
+    #evalReport .er-doc{ display:block !important; }
+
+    /* ★붙인 그림이 한 장보다 길면 페이지 경계에서 그대로 썰린다(2026-08-03 사용자 확인).
+         화면용 규칙(199行)은 max-width 만 있고 세로 제한이 없다. 높이 제한 로직(erShrinkToFit·
+         .er-autobody img{max-height:250mm})은 A4 자동분할(PAGE_ON) 전용이라 지금은 동작하지 않는다.
+         → 인쇄에서만 한 장 높이로 상한을 둔다. max-width 와 함께 걸려 비율은 그대로 유지된다.
+         ※ 아주 긴 표 그림은 글씨가 작아지므로, 그런 경우는 표를 나눠 캡처해 각각 붙이고
+           '⤓ 새 장에서'를 지정하는 편이 읽기 좋다. */
+    #evalReport .er-mrbody img{ max-height:250mm; break-inside:avoid; page-break-inside:avoid; }
     #evalReport .er-indhead{ page-break-after:avoid; }
     #evalReport .er-eyebrow{ page-break-after:avoid; }
     /* 구조지표/과정지표/결과지표 그룹은 각각 새 페이지에서 시작 (첫 그룹은 Ⅲ 헤더와 같은 장) */
@@ -667,8 +702,8 @@
         </div>
         <div class="er-callout">
           <div class="er-coh">핵심 진단</div>
-          <div class="er-editable" data-key="diag_core">현재 종합점수는 목표 등급 구간에 미치지 못합니다. 안정적인 목표등급 달성·유지를 위해 구간 상단 점수를 목표로 개선이 필요합니다.</div>
-          <div class="er-fn er-editable" data-key="diag_note">※ 병원 여건을 고려한 단계적 목표(목표등급) 기준으로 부족점수와 개선 로드맵을 산정했습니다.</div>
+          <div class="er-editable" data-key="diag_core">현재 종합점수는 목표 등급 구간에 미치지 못함. 안정적인 목표등급 달성·유지를 위해 구간 상단 점수를 목표로 개선이 필요함.</div>
+          <div class="er-fn er-editable" data-key="diag_note">※ 병원 여건을 고려한 단계적 목표(목표등급) 기준으로 부족점수와 개선 로드맵을 산정함.</div>
         </div>
 
         <%-- 순서 설명은 제목과 한 줄로(2026-07-30) — 다 적으면 두 줄로 꺾여 '우선 개선지표' 제목이 갈라져 보였다.
@@ -681,7 +716,7 @@
             <tbody id="er-priBody"><!-- JS --></tbody>
           </table>
         </div>
-        <div class="er-fn er-editable" data-key="pri_note">※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표의 실적 기록 정상화가 등급 향상의 핵심 지렛대입니다.</div>
+        <div class="er-fn er-editable" data-key="pri_note">※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표의 실적 기록 정상화가 등급 향상의 핵심 지렛대임.</div>
       </div>
     </div>
 
@@ -732,7 +767,7 @@
 
         <div class="er-callout">
           <div class="er-coh">결론</div>
-          <div class="er-editable" data-key="concl">가중치가 큰 결과지표(예: 욕창·ADL 개선)의 실적 기록 정상화만으로 큰 폭의 점수 확보가 가능합니다. 실제 진료·재활은 이뤄지나 개선 판정이 평가표에 기록되지 않아 낮게 산정되는 경우가 많으므로, 추가 인력·비용 없이 기록·평가 절차 개선으로 목표 달성 가능성이 높습니다.</div>
+          <div class="er-editable" data-key="concl">가중치가 큰 결과지표(예: 욕창·ADL 개선)의 실적 기록 정상화만으로 큰 폭의 점수 확보가 가능함. 실제 진료·재활은 이뤄지나 개선 판정이 평가표에 기록되지 않아 낮게 산정되는 경우가 많으므로, 추가 인력·비용 없이 기록·평가 절차 개선으로 목표 달성 가능성이 높음.</div>
           <div class="er-fn er-editable" data-key="concl_note">※ 단기 실행 우선순위: (1) 결과지표 재평가 기록 절차 정비 → (2) 과정지표 기록 → (3) 퇴원계획(지역연계) 강화.</div>
         </div>
 
@@ -768,15 +803,15 @@
            ═══════════════════════════════════════════════════════════════════ -->
       <div class="er-sec" id="er-sec6">
         <div class="er-eyebrow"><span class="er-rn">Ⅵ.</span><span class="er-stitle">의무기록 점검 결과</span></div>
-        <div class="er-fn er-editable" data-key="mr_intro" style="margin:0 0 12px;">평가표와 의무기록(간호기록·경과기록)을 대조하여 확인된 작성오류입니다. 아래 내용은 <b>평가표 수정</b> 및 <b>기록 보완</b>이 필요한 건으로, 수정 시 해당 지표 점수가 회복될 수 있습니다.</div>
+        <div class="er-fn er-editable" data-key="mr_intro" style="margin:0 0 12px;">평가표와 의무기록(간호기록·경과기록)을 대조하여 확인된 작성오류임. 아래 내용은 <b>평가표 수정</b> 및 <b>기록 보완</b>이 필요한 건으로, 수정 시 해당 지표 점수가 회복될 수 있음.</div>
 
         <!-- ★붙여넣기 영역 — 점검 항목·양식이 병원마다 달라서 시스템에 양식을 못 박는다.
              아래한글·워드에서 표째로 복사해 그대로 Ctrl+V. 서식(표·굵기·색)이 함께 붙는다.
              전체가 하나의 편집영역(data-key=mr_body)이라 붙인 내용이 통째로 저장·복원된다. -->
         <div class="er-noprint er-mrbar">
-          <span class="er-mrhint">아래한글·워드에서 <b>표째 복사</b> 후 아래 영역에 <b>Ctrl+V</b> · 그림은 <b>클릭</b>해서 크기 조절</span>
+          <span class="er-mrhint">아래한글·워드에서 <b>표째 복사</b> 후 아래 영역에 <b>Ctrl+V</b> · 그림은 <b>클릭</b>해서 크기 조절 · 여러 장은 <b>Ctrl+클릭</b>으로 함께 선택</span>
           <span class="er-zoom">
-            <button type="button" class="er-btn" onclick="erMrZoom(-1)" title="붙인 내용 축소 (Ctrl+마우스휠도 됩니다)">➖</button>
+            <button type="button" class="er-btn" onclick="erMrZoom(-1)" title="붙인 내용 축소 (그림을 아무것도 고르지 않았을 때는 Ctrl+마우스휠로도 됩니다)">➖</button>
             <button type="button" class="er-btn er-zoomlbl" id="er-mrZoomLbl" onclick="erMrZoomReset()" title="클릭 → 100%로 되돌리기">100%</button>
             <button type="button" class="er-btn" onclick="erMrZoom(1)" title="붙인 내용 확대">➕</button>
           </span>
@@ -807,7 +842,8 @@
     <span class="er-btn er-zoomlbl" id="er-imgSzLbl">100%</span>
     <button class="er-btn" onclick="erImgSize(5)" title="이 그림만 확대 (5%)">➕</button>
     <button class="er-btn" onclick="erImgRatio()" title="처음 넣었을 때의 크기·비율로 되돌립니다">↺ 원래대로</button>
-    <button class="er-btn" id="er-imgBrkBtn" onclick="erImgBreak()" title="이 그림부터 새 장(페이지)에서 시작합니다">⤓ 새 장에서</button>
+    <!-- 화살표 = 현재 상태(2026-08-03 요청): ⤓(아래) = 미지정 / ⤒(위) = 지정됨. _mrBrkBtnSync 가 갱신 -->
+    <button class="er-btn" id="er-imgBrkBtn" onclick="erImgBreak()" title="이 그림부터 새 장(페이지)에서 시작합니다. 지정된 그림에서 다시 누르면 해제됩니다">⤓ 새 장에서</button>
     <button class="er-btn" onclick="erImgDel()" title="이 그림 삭제" style="color:#c0392b">🗑</button>
   </div>
   <!-- 그림 크기조절 손잡이 3개 — 오른쪽(가로) · 아래(세로) · 모서리(비율유지).
@@ -815,6 +851,8 @@
           인쇄 숨김은 @media print 로 따로 처리. -->
   <div id="er-imgHandle"  class="er-hnd" style="display:none" title="끌어서 가로·세로 함께 조절 (비율 유지)"></div>
   <div id="er-imgHandleW" class="er-hnd" style="display:none" title="좌우로 끌어 가로만 조절"></div>
+  <!-- 왼쪽 손잡이(2026-08-03 요청) — 그림이 가운데 정렬이라 끌면 양쪽이 함께 늘고 줄어든다 -->
+  <div id="er-imgHandleL" class="er-hnd" style="display:none" title="좌우로 끌어 가로만 조절 (가운데 정렬이라 양쪽이 함께 늘고 줄어듭니다)"></div>
   <div id="er-imgHandleH" class="er-hnd" style="display:none" title="위아래로 끌어 세로만 조절"></div>
 
   <!-- ✂ 파일에서 잘라오기 — ★반드시 보고서(.er-doc) 밖에 둔다.
@@ -1087,7 +1125,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '04':'평가대상기간 중 약사 재직일수 비율(100% = 5구간).',
     '05':'유치도뇨관(Foley)을 보유한 환자 비율. 값이 낮을수록 우수(0.5% 미만 = 5구간).',
     '06':'배뇨조절 저하(자주 실금·조절 못함) 환자 중 배뇨관리를 실시한 환자 비율. 분자 인정 = ①일정하게 짜여진 배뇨계획+배뇨일지 3일 이상 ②방광훈련프로그램+배뇨일지 3일 이상 ③규칙적 도뇨 중 하나 이상(의료최고도·배뇨관련 루 관리 등 제외).',
-    '07':'항정신성의약품 처방 정도(PI, 0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용입니다.',
+    '07':'항정신성의약품 처방 정도(PI, 0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용임.',
     '08':'매월 심사평가원의 DUR 점검 현황을 확인하여 누락 대상자 관리가 필요하며 점검 결과에 따라 추후 결과 발표 시 점수차가 발생할 수 있음. 확인경로: 요양기관업무포털(biz.hira.or.kr) > 모니터링 > DUR정보 > 기관별 DUR 점검완료현황.',
     '09':'전월 평가표 상 1단계 이상 욕창 보유 환자 중 당월 피부문제 처치를 실시한 환자 비율. (처치 = 압력 줄이는 도구 사용·체위변경·욕창 해결 위한 영양 공급·욕창부위 드레싱 등 4가지 중 수행 시 해당)',   /* 2026-07-30 문구 확정: 당일→전월 평가표/당월 */
     '10':'당일·전월 모두 고위험군에 해당하는 환자 중 당일 2단계 이상 욕창이 새로 생긴 환자를 확인하는 지표. 값이 낮을수록 우수(0.25% 미만 = 5구간).',
@@ -1788,6 +1826,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // Ctrl + 휠 = 붙인 내용 확대/축소 (그 영역 위에서만)
   document.addEventListener('wheel', function(ev){
     if(!ev.ctrlKey) return;
+    /* ★그림을 골라 둔 상태에서는 Ctrl+휠을 확대/축소로 쓰지 않는다 (2026-08-03).
+         Ctrl 은 그림 여러 장 고르기(Ctrl+클릭)에도 쓰인다. 그래서 Ctrl 을 누른 채 휠을 굴려
+         다음 그림으로 내려가면 확대/축소가 걸려 "글자가 커졌다 작아졌다" 했다.
+         고른 그림이 있으면 = 지금 고르는 중이라는 뜻이므로 휠은 그냥 스크롤로 흘려보낸다.
+         (확대/축소는 조절바 ➖ ➕ 로 그대로 가능하고, 빈 곳을 눌러 선택을 풀면 Ctrl+휠도 되살아난다) */
+    if(_mrSelImg || _mrSelSet.length) return;
     var b=el('er-mrBody'); if(!b || !ev.target || !ev.target.closest) return;
     if(!ev.target.closest('#er-mrBody') && !ev.target.closest('.er-mrbar')) return;
     ev.preventDefault(); erMrZoom(ev.deltaY<0 ? 1 : -1);
@@ -2036,7 +2080,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   /* ── 넣은 그림 개별 크기 조절 (2026-07-22) ────────────────────────────────
      영역 전체 배율(➖100%➕)과 별개로, 그림 하나하나를 다른 크기로 둘 수 있어야 한다
      (표 하나는 크게, 참고 그림은 작게 등). 그림을 클릭하면 그 그림 위에 조절바가 뜬다. */
-  var _mrSelImg = null;
+  /* 그림 선택 — _mrSelImg 는 '대표'(마지막에 누른 것, 조절바·손잡이 기준),
+     _mrSelSet 은 함께 선택된 전체다. 종전에는 대표 하나뿐이라 새로 누르면 앞엣것이 그냥 풀렸다
+     ("연속선택이 아니고 이전 것 무시하고 진행됨", 2026-08-03).
+     · 그냥 클릭 = 하나만 선택(기존 동작 그대로)
+     · Ctrl(⌘)·Shift + 클릭 = 선택에 더하기/빼기 → 스크롤해 내려가며 여러 장을 모을 수 있다
+     · 조절바 버튼(➖ ➕ ↺ ⤓ 🗑)은 선택된 전체에 한 번에 적용된다
+     · 2장 이상일 때 끌기 손잡이는 감춘다 — 어느 그림 기준인지 모호해지므로 버튼으로만 조절 */
+  var _mrSelImg = null, _mrSelSet = [];
+  function _mrSel(){ return _mrSelSet.length ? _mrSelSet : (_mrSelImg ? [_mrSelImg] : []); }
+  function _mrSelAdd(im){ if(im && _mrSelSet.indexOf(im)<0){ _mrSelSet.push(im); im.classList.add('er-imgsel'); } }
+  function _mrSelClear(){ _mrSelSet.forEach(function(x){ x.classList.remove('er-imgsel'); }); _mrSelSet=[]; }
   /* 그림을 만질 수 있는 상태인가 — 본문 글자와 똑같은 잠금 규칙을 적용한다.
      승인된 보고서는 er-btnEdit 이 잠기지만 그림은 클릭만으로 조절바가 떠서
      크기변경·삭제가 됐다(2026-07-22). 승인취소해야 손댈 수 있게 막는다. */
@@ -2048,84 +2102,132 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
   function _mrImgW(im){ return Math.round(parseFloat(im.style.width) || 100); }
   window.erImgSize = function(d){
-    if(!_mrSelImg) return;
+    var sel=_mrSel(); if(!sel.length) return;
     if(!_mrCanEdit(false)) return;
     _mrSnapOnce('size');                         // 크기조절도 ↩ 실행취소 대상(2026-07-22)
-    var w=Math.min(100, Math.max(20, _mrImgW(_mrSelImg)+d));
-    _mrSelImg.style.width=w+'%';
-    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=w+'%';
+    var w=100;
+    sel.forEach(function(im){                    // 선택된 전체에 같은 증감폭 적용(각자 현재 크기 기준)
+      w=Math.min(100, Math.max(20, _mrImgW(im)+d)); im.style.width=w+'%';
+    });
+    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(_mrSelImg||sel[0])+'%';
     markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
   };
   /* ⤓ 새 장에서 시작 (2026-07-22) — 그림 앞에서 페이지를 끊는다.
      표 여러 개를 넣으면 A4 경계에 걸쳐 두 장에 나뉘어 읽기 나쁘다.
      이 표시가 있는 그림은 항상 새 장 맨 위에서 시작한다.
      클래스로만 표시하므로 mr_body innerHTML 에 그대로 저장된다(서버 무변경). */
+  /* '여기부터 새 장' 표지 알약 — 편집 중 화면에서 er-pgbreak 그림마다 위에 띄운다.
+       mr_body 안에 넣으면 저장 HTML 에 섞이므로 body 직속 + position:fixed 로 띄우고
+       스크롤·리사이즈·토글 때마다 다시 그린다(조절바와 같은 방식). */
+  var _pgMarks=[];
+  function _mrSyncPgMarks(){
+    _pgMarks.forEach(function(m){ m.remove(); }); _pgMarks=[];
+    if(!editing) return;
+    var b=el('er-mrBody'); if(!b) return;
+    Array.prototype.forEach.call(b.querySelectorAll('img.er-pgbreak'), function(im){
+      var r=im.getBoundingClientRect();
+      if(r.width<2 || r.bottom<0 || r.top>window.innerHeight) return;   // 화면 밖이면 안 그림
+      var m=document.createElement('div'); m.className='er-pgmark'; m.textContent='⤒ 여기부터 새 장';
+      document.body.appendChild(m);
+      m.style.left=Math.round(Math.max(4, r.left + r.width/2 - m.offsetWidth/2))+'px';
+      m.style.top =Math.round(Math.max(4, r.top-9))+'px';
+      _pgMarks.push(m);
+    });
+  }
+  // 버튼 화살표 = 현재 상태(2026-08-03 요청): 지정됨 = ⤒(위, "이미 새 장") / 미지정 = ⤓(아래, "누르면 새 장으로")
+  function _mrBrkBtnSync(on){
+    var b=el('er-imgBrkBtn'); if(!b) return;
+    b.classList.toggle('er-on', on);
+    b.textContent = (on ? '⤒' : '⤓') + ' 새 장에서';
+  }
   window.erImgBreak = function(){
-    if(!_mrSelImg) return;
+    var sel=_mrSel(); if(!sel.length) return;
     if(!_mrCanEdit(false)) return;
     _mrSnap();                                   // 되돌리기 대상
-    var on=_mrSelImg.classList.toggle('er-pgbreak');
-    var b=el('er-imgBrkBtn'); if(b) b.classList.toggle('er-on', on);
-    markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
-    toast(on ? '이 그림부터 새 장에서 시작합니다.' : '새 장 시작을 해제했습니다.');
+    // 대표의 상태를 뒤집어 전체를 그 상태로 맞춘다(섞여 있어도 한 번에 정리됨)
+    var on=!(_mrSelImg||sel[0]).classList.contains('er-pgbreak');
+    sel.forEach(function(im){ im.classList.toggle('er-pgbreak', on); });
+    _mrBrkBtnSync(on);
+    markDirty(); _mrPlaceImgBar(); _mrSyncPgMarks(); try{ erPaginate(); }catch(e){}
+    var n=sel.length>1 ? ('그림 '+sel.length+'장을 ') : '이 그림부터 ';
+    toast(on ? (n+'새 장에서 시작합니다.') : '새 장 시작을 해제했습니다.');
   };
   /* ↺ 원래대로 — 넣었을 때의 크기·비율로 되돌린다.
      예전엔 style.height 만 'auto' 로 지웠는데, 세로를 안 건드리고 가로만 늘린 경우에는
      height 가 이미 auto 라 눌러도 아무 일이 없었다("비율복원 안됩니다", 2026-07-22).
      이제 넣을 때 기록해 둔 data-w0(처음 폭 %)까지 되돌리고, 무엇을 했는지 알려준다. */
   window.erImgRatio = function(){
-    if(!_mrSelImg) return;
+    var sel=_mrSel(); if(!sel.length) return;
     if(!_mrCanEdit(false)) return;
     _mrSnap();                                   // 되돌리기 대상
-    var im=_mrSelImg, changed=false;
-    if(im.style.height && im.style.height!=='auto'){ im.style.height='auto'; changed=true; }
-    im.removeAttribute('height'); im.removeAttribute('width');   // 붙여넣은 그림의 크기 속성도 정리
-    var w0=parseFloat(im.getAttribute('data-w0'));
-    if(!w0 && im.naturalWidth) w0=_mrInitWidth(im.naturalWidth); // 예전에 넣어 기록이 없는 그림
-    if(w0 && Math.abs(_mrImgW(im)-w0) >= 1){ im.style.width=Math.round(w0)+'%'; changed=true; }
-    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(im)+'%';
+    var changed=false;
+    sel.forEach(function(im){
+      if(im.style.height && im.style.height!=='auto'){ im.style.height='auto'; changed=true; }
+      im.removeAttribute('height'); im.removeAttribute('width');   // 붙여넣은 그림의 크기 속성도 정리
+      var w0=parseFloat(im.getAttribute('data-w0'));
+      if(!w0 && im.naturalWidth) w0=_mrInitWidth(im.naturalWidth); // 예전에 넣어 기록이 없는 그림
+      if(w0 && Math.abs(_mrImgW(im)-w0) >= 1){ im.style.width=Math.round(w0)+'%'; changed=true; }
+    });
+    var rep=_mrSelImg||sel[0];
+    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(rep)+'%';
     if(!changed){ _mrUndo.pop(); _mrUndoSync(); toast('이미 처음 넣었을 때의 크기입니다.'); return; }   // 방금 쌓은 무의미 스냅샷 회수
     markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
-    toast('처음 크기('+_mrImgW(im)+'%)·비율로 되돌렸습니다.');
+    toast(sel.length>1 ? ('그림 '+sel.length+'장을 처음 크기·비율로 되돌렸습니다.')
+                       : ('처음 크기('+_mrImgW(rep)+'%)·비율로 되돌렸습니다.'));
   };
   /* 그림 선택 해제 — 조절바·손잡이를 모두 감춘다.
      잘라오기 창이나 별도 창을 띄우면 그 위에 손잡이가 겹쳐 떠 있어 방해된다(2026-07-22). */
   function _mrDeselect(){
+    _mrSelClear();
     if(_mrSelImg){ _mrSelImg.classList.remove('er-imgsel'); _mrSelImg=null; }
     var ib=el('er-imgBar'); if(ib) ib.style.display='none';
-    ['er-imgHandle','er-imgHandleW','er-imgHandleH'].forEach(function(id){
+    ['er-imgHandle','er-imgHandleW','er-imgHandleL','er-imgHandleH'].forEach(function(id){
       var h=el(id); if(h) h.style.display='none';
     });
   }
   window.erImgDel = function(){
-    if(!_mrSelImg) return;
+    var sel=_mrSel(); if(!sel.length) return;
     if(!_mrCanEdit(false)) return;
-    erConfirm('이 그림을 지우시겠습니까?', function(){
+    var n=sel.length;
+    erConfirm(n>1 ? ('선택한 그림 '+n+'장을 지우시겠습니까?') : '이 그림을 지우시겠습니까?', function(){
       _mrSnap();                                 // ↩ 실행취소로 되살릴 수 있게
-      _mrSelImg.remove(); _mrDeselect();
+      sel.forEach(function(im){ im.remove(); });
+      _mrDeselect();
       markDirty(); erMrToggleSec(); try{ erPaginate(); }catch(e){}
-      toast('지웠습니다. ↩ 실행취소로 되돌릴 수 있습니다.');
+      toast((n>1 ? (n+'장을 지웠습니다.') : '지웠습니다.')+' ↩ 실행취소로 되돌릴 수 있습니다.');
     }, { title:'그림 삭제', icon:'warning', yes:'삭제' });
   };
   function _mrPlaceImgBar(){
     var bar=el('er-imgBar'); if(!bar || !_mrSelImg) return;
     var r=_mrSelImg.getBoundingClientRect();
+    /* ★선택한 그림이 스크롤로 화면 밖에 나가면 조절바를 감춘다 (2026-08-03 "스크롤 하면서 선택이 안 됨").
+         종전에는 display:flex 를 무조건 켜고 top 을 Math.max(8,…) 로만 눌렀다. 그래서 그림이 위로
+         사라져도 조절바가 화면 맨 위(8px)에 계속 떠 있었고, position:fixed · z-index 1400 이라
+         그 아래에 있는 그림·본문이 클릭으로 잡히지 않았다(조절바가 클릭을 가로챔).
+         손잡이(_mrPlaceHandle)는 이미 같은 조건으로 숨고 있었는데 조절바만 빠져 있었다. */
+    if(r.width<2 || r.bottom<0 || r.top>window.innerHeight){ bar.style.display='none'; _mrPlaceHandle(); return; }
     bar.style.display='flex';
-    bar.style.left=Math.round(r.left+r.width/2)+'px';
+    /* 가로도 화면 안으로 당긴다 — transform:translateX(-50%) 라 좌우 끝에서는 절반이 잘려 나간다 */
+    var halfW=(bar.offsetWidth||160)/2;
+    var cx=Math.min(window.innerWidth-halfW-6, Math.max(halfW+6, r.left+r.width/2));
+    bar.style.left=Math.round(cx)+'px';
     bar.style.top =Math.round(Math.max(8, r.top-40))+'px';
-    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(_mrSelImg)+'%';
-    var bb=el('er-imgBrkBtn');                                  // '새 장에서' 눌림 상태 반영
-    if(bb) bb.classList.toggle('er-on', _mrSelImg.classList.contains('er-pgbreak'));
+    // 2장 이상 골랐으면 개수를 함께 보여준다 — 버튼이 전체에 적용된다는 신호
+    var _n=_mrSelSet.length;
+    var lb=el('er-imgSzLbl'); if(lb) lb.textContent=(_n>1 ? (_n+'장 · ') : '')+_mrImgW(_mrSelImg)+'%';
+    _mrBrkBtnSync(_mrSelImg.classList.contains('er-pgbreak'));  // '새 장에서' 눌림 상태·화살표(⤓/⤒) 반영
     _mrPlaceHandle();
   }
   /* ── 마우스로 끌어 크기 조절 (2026-07-22) ─────────────────────────────────
      그림 오른쪽 아래에 손잡이를 띄우고 끌면 폭이 바뀐다. 버튼(➖➕)보다 직관적이고
      원하는 크기에 한 번에 맞출 수 있다. 폭(%)만 바꾸고 높이는 auto — 비율이 유지된다. */
   function _mrPlaceHandle(){
-    var hC=el('er-imgHandle'), hW=el('er-imgHandleW'), hH=el('er-imgHandleH');
+    var hC=el('er-imgHandle'), hW=el('er-imgHandleW'), hL=el('er-imgHandleL'), hH=el('er-imgHandleH');
     if(!hC) return;
-    var hide=function(){ [hC,hW,hH].forEach(function(x){ if(x) x.style.display='none'; }); };
+    var hide=function(){ [hC,hW,hL,hH].forEach(function(x){ if(x) x.style.display='none'; }); };
     if(!_mrSelImg){ hide(); return; }
+    // 2장 이상 선택 = 어느 그림 기준으로 끄는지 모호하므로 손잡이는 감춘다(버튼으로만 조절)
+    if(_mrSelSet.length>1){ hide(); return; }
     var r=_mrSelImg.getBoundingClientRect();
     if(r.width<2 || r.bottom<0 || r.top>window.innerHeight){ hide(); return; }   // 화면 밖
     /* 그림이 화면보다 길면 오른쪽 아래가 화면 밖으로 나가 손잡이를 잡을 수 없다.
@@ -2142,6 +2244,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(hW){ hW.style.display=(vb-vmid < 16) ? 'none' : 'block';
       hW.style.left=Math.round(Math.max(4, vr-HH))+'px';
       hW.style.top =Math.round(Math.max(4, vmid-HH))+'px'; }
+    // 왼쪽 가운데 — 오른쪽과 같은 규칙으로 배치. 그림 왼쪽이 화면 밖이면 보이는 범위로 당긴다.
+    if(hL){ var vl=Math.max(r.left, 6);
+      hL.style.display=(vb-vmid < 16 || vr-vl < 40) ? 'none' : 'block';   // 너무 좁으면 좌우가 붙어 지저분
+      hL.style.left=Math.round(Math.max(4, vl-HH))+'px';
+      hL.style.top =Math.round(Math.max(4, vmid-HH))+'px'; }
     if(hH){ hH.style.display='block';                         // 아래 가운데 = 세로 조절
       hH.style.left=Math.round(Math.max(4, (Math.max(r.left,0)+vr)/2-HH))+'px';
       hH.style.top =Math.round(Math.max(4, vb-HH))+'px'; }
@@ -2166,7 +2273,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     document.addEventListener('mousemove', function(ev){
       if(!on || !_mrSelImg) return;
       if(mode!=='h'){                                        // 가로
-        var w=Math.max(40, w0 + (ev.clientX-x0));
+        /* 왼쪽 손잡이(wl): 그림이 가운데 정렬(margin:0 auto)이라 폭이 Δ 늘면 왼쪽 변은 Δ/2 만 움직인다.
+           손잡이가 커서를 그대로 따라오게 하려면 폭 변화를 2배로 잡고 부호를 뒤집어야 한다.
+           (왼쪽으로 끌면 clientX 가 줄고 → 폭은 늘어야 하므로 −2배) */
+        var dx=(ev.clientX-x0);
+        var w=(mode==='wl') ? Math.max(40, w0 - dx*2) : Math.max(40, w0 + dx);
         var pct=Math.min(100, Math.max(15, Math.round(w/box0*100)));
         _mrSelImg.style.width=pct+'%';
         var lb=el('er-imgSzLbl'); if(lb) lb.textContent=pct+'%';
@@ -2183,7 +2294,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       markDirty(); try{ erPaginate(); }catch(e){}             // 크기 확정 후 A4 재분할
     });
   }
-  _bindHnd('er-imgHandle','wh'); _bindHnd('er-imgHandleW','w'); _bindHnd('er-imgHandleH','h');
+  _bindHnd('er-imgHandle','wh'); _bindHnd('er-imgHandleW','w'); _bindHnd('er-imgHandleL','wl'); _bindHnd('er-imgHandleH','h');
+  /* ★안전장치 — 손잡이를 끄는 동안 body 에 user-select:none 을 걸어 두는데(위 mousedown),
+       창 밖에서 버튼을 떼거나 Alt+Tab 으로 빠져나가면 mouseup 을 못 받아 그 상태가 그대로 남는다.
+       그러면 이후로 본문을 드래그해도 선택이 안 잡혀 '복사가 안 되는' 것처럼 보인다.
+       창이 포커스를 잃거나 탭이 가려질 때 무조건 풀어 준다. */
+  window.addEventListener('blur', function(){ document.body.style.userSelect=''; });
+  document.addEventListener('visibilitychange', function(){ if(document.hidden) document.body.style.userSelect=''; });
   function _mrBindImgSelect(){
     var b=el('er-mrBody'); if(!b || b._imgBound) return; b._imgBound=1;
     b.addEventListener('click', function(ev){
@@ -2191,14 +2308,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       // 승인·읽기전용·편집꺼짐이면 아예 선택되지 않는다(조절바·손잡이도 안 뜬다).
       // ★조용히(quiet=true) — 보기 중에 그림을 클릭할 때마다 안내창이 떠서 성가셨다(2026-07-22)
       if(im && !_mrCanEdit(true)){ _mrDeselect(); return; }
-      if(_mrSelImg) _mrSelImg.classList.remove('er-imgsel');
-      _mrSelImg=im;
-      if(im){ im.classList.add('er-imgsel'); _mrPlaceImgBar(); }
-      else _mrDeselect();
+      if(!im){ _mrDeselect(); return; }
+      var add = ev.ctrlKey || ev.metaKey || ev.shiftKey;      // 더하기 선택
+      if(add){
+        var i=_mrSelSet.indexOf(im);
+        if(i>=0){                                            // 이미 골라둔 것 → 빼기
+          im.classList.remove('er-imgsel'); _mrSelSet.splice(i,1);
+          if(_mrSelImg===im) _mrSelImg=_mrSelSet[_mrSelSet.length-1] || null;
+          if(!_mrSelSet.length){ _mrDeselect(); return; }
+        } else {
+          if(!_mrSelSet.length && _mrSelImg) _mrSelAdd(_mrSelImg);   // 앞서 하나만 잡혀 있던 것도 집합에 편입
+          _mrSelAdd(im); _mrSelImg=im;
+        }
+      } else {
+        _mrSelClear();
+        if(_mrSelImg) _mrSelImg.classList.remove('er-imgsel');
+        _mrSelImg=im; im.classList.add('er-imgsel');
+      }
+      _mrPlaceImgBar();
     });
-    // 스크롤·리사이즈하면 조절바 위치도 따라간다
-    window.addEventListener('scroll', function(){ if(_mrSelImg) _mrPlaceImgBar(); }, true);
-    window.addEventListener('resize', function(){ if(_mrSelImg) _mrPlaceImgBar(); });
+    // 스크롤·리사이즈하면 조절바·'새 장' 표지 위치도 따라간다
+    window.addEventListener('scroll', function(){ if(_mrSelImg) _mrPlaceImgBar(); _mrSyncPgMarks(); }, true);
+    window.addEventListener('resize', function(){ if(_mrSelImg) _mrPlaceImgBar(); _mrSyncPgMarks(); });
   }
   window.erCropInsert = function(){
     if(!_crop.has) return;
@@ -2454,6 +2585,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     editablesEdit().forEach(function(e){ e.contentEditable='false'; });
     var b=el('er-btnEdit'); if(b){ b.textContent='✏️ 편집켜기'; b.classList.remove('er-on'); }
     try{ erPaginate(); }catch(e){}
+    try{ _mrSyncPgMarks(); }catch(e){}   // '새 장' 표지 제거(편집 꺼짐 → editing=false 라 전부 걷힘)
   }
   window.erToggleEdit = function(){
     if(_erReadonly){ erSwal('info','이력 열람(읽기전용)입니다. 편집·저장·승인·PDF첨부는 목록에서 정상 진입해 주세요.'); return; }
@@ -2465,6 +2597,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     erPaginate();   // A4 분할 유지한 채 재분할 — 편집 종료 시 고친 문구 길이에 맞게 페이지 재배치
     editablesEdit().forEach(function(e){ e.contentEditable = editing?'true':'false'; });   // Ⅳ 권고(recdir_*)는 제외
     var b=el('er-btnEdit'); b.textContent=editing?'✏️ 편집끄기':'✏️ 편집켜기'; b.classList.toggle('er-on',editing);
+    try{ _mrSyncPgMarks(); }catch(e){}   // 편집 켜면 '⤒ 여기부터 새 장' 표지 표시, 끄면 걷힘
     // Ⅵ 는 편집을 켜야 나타난다 — 들어가는 길이 여기 하나뿐이라 안내에 같이 적는다
     if(editing) toast('편집 모드: 파란 영역의 문구를 고치고, 맨 뒤 Ⅵ 의무기록 장에서 그림을 넣거나 크기를 조절할 수 있습니다.');
   };
@@ -2658,13 +2791,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var room = (x.fg==='10' ? (staffNeed(x) || TPL_ROOM[x.cd] || '') : (TPL_ROOM[x.cd]||'')) + (i<2 ? ' (최우선)' : '');
       var gapCls = i<2 ? 'er-gaphl' : 'er-b-bad';                   // 최우선(상위2) 부족분 = 연분홍 배경 강조(원본)
       return '<tr><td>'+(i+1)+'</td><td class="er-l">'+esc(x.nm)+'</td><td>'+areaNm(x.fg)+'</td><td class="er-num">'+fnum(x.w)+'</td><td class="er-num">'+f1(x.got)+'</td><td class="er-num '+gapCls+'">'+f1(x.gap)+'</td><td class="er-l">'+esc(room)+'</td></tr>';
-    }).join('') : '<tr><td colspan="7" style="color:#a7b1c0;">부족점수가 있는 지표가 없습니다.</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="color:#a7b1c0;">부족점수가 있는 지표가 없음.</td></tr>';
     // ※ 비고(원본 문구 + 실제 수치) — 편집 저장본이 있으면 유지
     if(!savedKeys['pri_note'] && pri.length){
       var totGapAll = indicators.reduce(function(a,r){ return a + Math.max(0, n(r.stdweig)-n(r.weigval)); }, 0);
       var t2 = pri.slice(0,2), t2gap = t2.reduce(function(a,x){ return a+x.gap; }, 0);
       var pe = document.querySelector('#evalReport [data-key="pri_note"]');
-      if(pe) pe.textContent = '※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표('+t2.map(function(x){return x.nm;}).join('·')+') '+t2.length+'개 항목만으로 전체 부족점수 '+f1(totGapAll)+'점 중 '+f1(t2gap)+'점을 차지 → '+goalGradeVal()+' 달성의 핵심 지렛대입니다.';
+      if(pe) pe.textContent = '※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표('+t2.map(function(x){return x.nm;}).join('·')+') '+t2.length+'개 항목만으로 전체 부족점수 '+f1(totGapAll)+'점 중 '+f1(t2gap)+'점을 차지 → '+goalGradeVal()+' 달성의 핵심 지렛대임.';
     }
     renderTable2();
     renderSec3();
@@ -2700,7 +2833,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
             + '<td class="er-l">'+esc(x.nm)+'</td><td class="er-num">'+calDisp(r)+'</td><td>'+tz+'구간</td>'
             + '<td class="er-num">'+f1(x.got)+'</td><td class="er-num">'+f1(tgt)+'</td><td class="er-b-good er-num">+'+f1(up)+'</td></tr>';
     });
-    el('er-roadBody').innerHTML = rows || '<tr><td colspan="7" style="color:#a7b1c0;">개선 대상 지표가 없습니다.</td></tr>';
+    el('er-roadBody').innerHTML = rows || '<tr><td colspan="7" style="color:#a7b1c0;">개선 대상 지표가 없음.</td></tr>';
     var totalUp = upStruct + upCare, after = scores.total + totalUp;
     var afterEl = document.querySelector('#evalReport [data-key="after_score"]');
     if(afterEl) afterEl.textContent = f1(after);
@@ -2742,15 +2875,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var e1=document.querySelector('#evalReport [data-key="diag_core"]');
       if(e1){
         e1.innerHTML = (gap>0)
-          ? '현재 종합점수 <b class="er-num">'+f1(scores.total)+'점</b>은 <b>'+cur+' 구간('+curRange+')</b>에 해당합니다. 안정적인 <b>'+esc(goalGrade)+' 달성·유지</b>를 위해서는 구간 상단인 <b>'+goalScore+'점</b>을 목표로 하며, 이는 현재 대비 <b class="er-b-bad">+'+gap+'점</b> 향상이 필요합니다.'
-          : '현재 종합점수 <b class="er-num">'+f1(scores.total)+'점</b>으로 목표('+esc(goalGrade)+'·'+goalScore+'점) 수준을 충족하고 있습니다. 유지 관리와 상위 등급 도약 여지를 점검하세요.';
+          ? '현재 종합점수 <b class="er-num">'+f1(scores.total)+'점</b>은 <b>'+cur+' 구간('+curRange+')</b>에 해당함. 안정적인 <b>'+esc(goalGrade)+' 달성·유지</b>를 위해서는 구간 상단인 <b>'+goalScore+'점</b>을 목표로 하며, 이는 현재 대비 <b class="er-b-bad">+'+gap+'점</b> 향상이 필요함.'
+          : '현재 종합점수 <b class="er-num">'+f1(scores.total)+'점</b>으로 목표('+esc(goalGrade)+'·'+goalScore+'점) 수준을 충족하고 있음. 유지 관리와 상위 등급 도약 여지에 대한 점검이 필요함.';
         AUTO['diag_core'] = e1.innerHTML;
       }
     }
     if(!savedKeys['diag_note']){
       var e2=document.querySelector('#evalReport [data-key="diag_note"]');
       if(e2){
-        e2.textContent = '※ 기존 표준(1등급·87점)을 목표로 하면 부족점수가 +'+f1(87-scores.total)+'점으로 과대 산정됩니다. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족점수와 개선 로드맵을 재산정했습니다.';
+        e2.textContent = '※ 기존 표준(1등급·87점)을 목표로 하면 부족점수가 +'+f1(87-scores.total)+'점으로 과대 산정됨. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족점수와 개선 로드맵을 재산정함.';
         AUTO['diag_note'] = e2.innerHTML;
       }
     }
@@ -2793,8 +2926,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 총평·권고 삽입용 완결절(경어체, 앞에 지표명·문맥을 붙여 사용)
   function simTail(r){
     var d=simStep(r); if(!d) return null;
-    if(d.need) return d.need+'명 추가 '+d.dir+' 시 '+d.newPct+'%로 표준화 '+d.nz+'점·가중치 '+f1(d.newGot)+'점으로 종합점수가 약 +'+f1(d.dW)+'점 상승할 수 있습니다';
-    return '표준화 '+d.nz+'점 진입 시 가중치 '+f1(d.newGot)+'점으로 종합점수가 약 +'+f1(d.dW)+'점 상승할 수 있습니다';
+    if(d.need) return d.need+'명 추가 '+d.dir+' 시 '+d.newPct+'%로 표준화 '+d.nz+'점·가중치 '+f1(d.newGot)+'점으로 종합점수가 약 +'+f1(d.dW)+'점 상승 가능함';
+    return '표준화 '+d.nz+'점 진입 시 가중치 '+f1(d.newGot)+'점으로 종합점수가 약 +'+f1(d.dW)+'점 상승 가능함';
   }
 
   // [★1] '여유 한도 / 하락 경고' 문형 — 낮을수록 우수 %지표(유치도뇨관05·신규욕창10·장기입원14).
@@ -2811,15 +2944,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(s<5 && band5){
       var max5=Math.floor(band5.end*dtor/100);
       if(ntor>max5)
-        return '누적 분모 '+esc(fnum(dtor))+'명 기준 표준화 5점('+fnum(bndUp(band5.end))+u+' 미만)에는 '+max5+'명 이하가 요구되나 현재 '+esc(fnum(ntor))+'명으로 초과되어 '+s+'점에 해당하므로, 해당 건의 기록·해제(제거) 관리 강화가 필요합니다';
+        return '누적 분모 '+esc(fnum(dtor))+'명 기준 표준화 5점('+fnum(bndUp(band5.end))+u+' 미만)에는 '+max5+'명 이하가 요구되나 현재 '+esc(fnum(ntor))+'명으로 초과되어 '+s+'점에 해당하므로, 해당 건의 기록·해제(제거) 관리 강화가 필요함';
     }
     // (B) 현재 구간 하락 경고 — 여유 한도형
     if(s>=2 && bandS){
       var maxStay=Math.floor(bandS.end*dtor/100), room=maxStay-ntor, loss=f1(w/5);
       if(room<=0)
-        return '현황 '+calDisp(r)+'로 표준화 '+s+'점 구간 상한('+fnum(bandS.end)+u+')에 도달해 있어, 1건만 추가로 발생해도 표준화 '+(s-1)+'점(가중치 −'+loss+'점)으로 하락할 수 있습니다';
+        return '현황 '+calDisp(r)+'로 표준화 '+s+'점 구간 상한('+fnum(bandS.end)+u+')에 도달해 있어, 1건만 추가로 발생해도 표준화 '+(s-1)+'점(가중치 −'+loss+'점)으로 하락할 수 있음';
       var nextPct=fnum(Math.round((maxStay+1)/dtor*10000)/100);
-      return '누적 분모 '+esc(fnum(dtor))+'명 기준 '+maxStay+'명까지 표준화 '+s+'점 유지가 가능하나(현재 '+esc(fnum(ntor))+'명, 여유 '+room+'명), '+(room+1)+'건째 발생 시 '+nextPct+'%로 표준화 '+(s-1)+'점(가중치 −'+loss+'점) 하락할 수 있습니다';
+      return '누적 분모 '+esc(fnum(dtor))+'명 기준 '+maxStay+'명까지 표준화 '+s+'점 유지가 가능하나(현재 '+esc(fnum(ntor))+'명, 여유 '+room+'명), '+(room+1)+'건째 발생 시 '+nextPct+'%로 표준화 '+(s-1)+'점(가중치 −'+loss+'점) 하락할 수 있음';
     }
     return null;
   }
@@ -2846,7 +2979,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var sum=0, nms=[];
     ts.forEach(function(x){ sum += simStep(x.r).dW; nms.push('\''+x.nm+'\''); });
     var neo = Math.round((scores.total+sum)*10)/10;
-    return ' '+nms.join('과(와) ')+'을(를) 함께 한 단계씩 개선할 경우 종합점수는 약 +'+f1(sum)+'점 상승하여 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달할 수 있습니다.';
+    return ' '+nms.join('과(와) ')+'을(를) 함께 한 단계씩 개선할 경우 종합점수는 약 +'+f1(sum)+'점 상승하여 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달 가능함.';
   }
 
   /* [보완3] 등급 상향 '개선 우선순위' 블록 — 라이브러리 202607 Part 5-2.
@@ -2868,7 +3001,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
     var neo=Math.round((scores.total+sum)*10)/10;
     return ' 목표까지 '+f1(gap)+'점이 부족한 상황으로, 개선 우선순위는 '+parts.join(' · ')
-         + '이며, 모두 확보할 경우 약 +'+f1(sum)+'점으로 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달할 수 있습니다.';
+         + '이며, 모두 확보할 경우 약 +'+f1(sum)+'점으로 '+f1(neo)+'점('+gradeOf(neo)+') 수준까지 도달 가능함.';
   }
 
   // [C9] %p 부족형 — 다음 구간 진입까지 남은 격차를 %p로 (세밀분석 §8-1). 높을수록 우수 %지표(s<5)만.
@@ -2913,7 +3046,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0;
     if(!(dtor>0)) return null;
     var newN=ntor+_bladderGapN, newPct=Math.round(newN/dtor*10000)/100, nz=zoneOfValHigher('06', newPct);   // 담당자 표기와 동일 소수 2자리(92.75%)
-    var tail=(nz!=null && nz>s) ? ('표준화 '+nz+'점으로 상향이 기대됩니다') : '분자 반영률이 개선됩니다';
+    var tail=(nz!=null && nz>s) ? ('표준화 '+nz+'점으로 상향이 기대됨') : '분자 반영률이 개선됨';
     return '배뇨일지는 작성되었으나 배뇨(훈련)프로그램 계획 항목 미체크로 분자에서 누락될 우려가 있는 '+_bladderGapN+'건을 평가표에서 보완할 경우, 분자 '+newN+'명('+fnum(newPct)+'%)으로 재산정되어 '+tail+'(오류점검 결과 기준·대상자 적정성 확인 요망)';
   }
 
@@ -2924,13 +3057,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function recordRelTxt(){
     var areas=[], secs=[];
     if(_errFoleyN>0){ areas.push('유치도뇨관');
-      secs.push('유치도뇨관은 Foley 삽입·교체·제거일과 환자평가표, 의사지시, 간호기록, M0060 및 재료대 산정 내역이 서로 일치하도록 관리해 주시기 바랍니다.'); }
+      secs.push('유치도뇨관은 Foley 삽입·교체·제거일과 환자평가표, 의사지시, 간호기록, M0060 및 재료대 산정 내역이 서로 일치하도록 관리가 필요함.'); }
     if(_errSoreN>0){ areas.push('욕창');
-      secs.push('욕창은 상태·단계·크기, 피부문제 처치, 체위변경, 영양공급(처방 칼로리와 실제 제공 칼로리)·체중기록과 환자평가표가 의무기록과 일치하도록 관리하고, 동일 부위에 여러 병변이 있는 경우 위치를 구분하여 촬영해 사진·경과기록·간호기록·평가표가 서로 일치하는지 점검해 주시기 바랍니다.'); }
+      secs.push('욕창은 상태·단계·크기, 피부문제 처치, 체위변경, 영양공급(처방 칼로리와 실제 제공 칼로리)·체중기록과 환자평가표가 의무기록과 일치하도록 관리하고, 동일 부위에 여러 병변이 있는 경우 위치를 구분하여 촬영해 사진·경과기록·간호기록·평가표가 서로 일치하는지 점검이 필요함.'); }
     if(_errBladN>0){ areas.push('배뇨관리');
-      secs.push('배뇨관리는 배뇨일지를 7일 미만 작성한 경우 환자평가표의 배뇨일지 작성 여부를 \'아니오\'로 체크하고 실제 작성일수를 기재하며, 의사기록·간호기록·배뇨일지·환자평가표가 서로 일치하도록 관리해 주시기 바랍니다. 배뇨훈련 오더의 시행기간·시간 간격과 배뇨일지 작성기간을 일치시키고, 배뇨일지에 의료인 서명이 누락되지 않았는지 점검해 주시기 바랍니다.'); }
+      secs.push('배뇨관리는 배뇨일지를 7일 미만 작성한 경우 환자평가표의 배뇨일지 작성 여부를 \'아니오\'로 체크하고 실제 작성일수를 기재하며, 의사기록·간호기록·배뇨일지·환자평가표가 서로 일치하도록 관리가 필요함. 배뇨훈련 오더의 시행기간·시간 간격과 배뇨일지 작성기간을 일치시키고, 배뇨일지에 의료인 서명이 누락되지 않았는지 점검이 필요함.'); }
     if(!secs.length) return '';
-    return '의무기록 신뢰도 점검 결과 '+areas.join('·')+' 관련 기록에서 일부 보완이 필요한 사례가 확인되었습니다. '+secs.join(' ')+' ';
+    return '의무기록 신뢰도 점검 결과 '+areas.join('·')+' 관련 기록에서 일부 보완이 필요한 사례가 확인됨. '+secs.join(' ')+' ';
   }
 
   // P2 구조영역 커트라인 경고 — 현황값이 현재 표준화 구간 경계에 근접한 구조지표(하위 구간 하락 리스크)를
@@ -2961,7 +3094,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var uJosa=(u==='명') ? '으로' : '로';
     var bndE=bndUp(best.band.end);
     return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+(bndE!==best.band.end? fnum(bndE)+'미만' : fnum(best.band.end))+u+') 경계에 근접해 있어, '
-         + edge+' 시 표준화 '+(best.s-1)+'점(가중치 −'+f1(best.loss)+'점)으로 하락할 수 있으므로 재원환자 수 추이에 맞춘 인력 관리가 필요합니다.';
+         + edge+' 시 표준화 '+(best.s-1)+'점(가중치 −'+f1(best.loss)+'점)으로 하락할 수 있으므로 재원환자 수 추이에 맞춘 인력 관리가 필요함.';
   }
 
   /* [보완2] P2 구조영역 '상위 구간 진입 여지' — 라이브러리 202607 Part 2-2 ③ (라온힐·청라백세 등 공통 문형).
@@ -2986,7 +3119,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var u=unitOf(best.cd);
     var edge = IS_LOWER[best.cd] ? (fnum(bndUp(best.nb.end))+u+' 미만으로 개선할 경우')
                                  : (fnum(best.nb.start)+u+' 이상으로 개선할 경우');
-    return ' \''+best.nm+'\'은(는) 현재 표준화 '+best.s+'점 구간으로, '+edge+' 가중치 약 +'+f1(best.dW)+'점 향상이 가능하므로, 차등제 신고 시 인력 배치 수준을 관리하여 상위 표준화점수 구간 진입을 검토해 주시기 바랍니다.';
+    return ' \''+best.nm+'\'은(는) 현재 표준화 '+best.s+'점 구간으로, '+edge+' 가중치 약 +'+f1(best.dW)+'점 향상이 가능하므로, 차등제 신고 시 인력 배치 수준을 관리하여 상위 표준화점수 구간 진입 검토가 필요함.';
   }
 
   // [★5] P2 구조영역 차등제 분기 표기 — curYm 에서 분기 계산(하드코딩 없이 연도 자동 대응).
@@ -3000,7 +3133,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var q=Math.ceil(mo/3);
     var q1=q+1, y1=y; if(q1>4){ q1-=4; y1+=1; }
     var q2=q+2, y2=y; if(q2>4){ q2-=4; y2+=1; }
-    return ' 구조영역 점수는 '+y+'년 '+q+'분기 차등제 신고내역으로 예상 산정되며, 실제 반영은 '+y1+'년 '+q1+'분기·'+y2+'년 '+q2+'분기 신고 결과로 확정됩니다.';
+    return ' 구조영역 점수는 '+y+'년 '+q+'분기 차등제 신고내역으로 예상 산정되며, 실제 반영은 '+y1+'년 '+q1+'분기·'+y2+'년 '+q2+'분기 신고 결과로 확정됨.';
   }
 
   function renderSummary(){
@@ -3019,56 +3152,59 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var mVal = _dashInd ? n(_dashInd.monthVal) : 0;
     var mG = mVal>0 ? gradeOf(mVal) : '';
     if(mVal>0 && mG!==curG)
-      p.sum_p1 = moNum2+'월 당월 단독 예상점수는 '+f1(mVal)+'점('+mG+')이나, 실제 평가에 반영되는 7~'+moNum2+'월 누적 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당합니다.';
+      p.sum_p1 = moNum2+'월 당월 단독 예상점수는 '+f1(mVal)+'점('+mG+')이나, 실제 평가에 반영되는 7~'+moNum2+'월 누적 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당함.';
     else
-      p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당합니다.';
+      p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당함.';
     if(prevTotal!=null){
       var pd = Math.round((scores.total-prevTotal)*100)/100;
       if(Math.abs(pd)>=0.05)
-        p.sum_p1 += ' 전월('+fnum(prevTotal)+'점) 대비 종합점수가 '+fnum(Math.abs(pd))+'점 '+(pd>0?'상승하였습니다.':'하락하여 원인 지표의 재확인이 필요합니다.');
+        p.sum_p1 += ' 전월('+fnum(prevTotal)+'점) 대비 종합점수가 '+fnum(Math.abs(pd))+'점 '+(pd>0?'상승함.':'하락하여 원인 지표의 재확인이 필요함.');
       else
-        p.sum_p1 += ' 전월과 동일한 수준을 유지하고 있습니다.';
+        p.sum_p1 += ' 전월과 동일한 수준을 유지하고 있음.';
     }
     var UPCUT = { '2등급':87, '3등급':79, '4등급':74, '5등급':64 };   // 현재등급 → 상위등급 커트라인(gradeOf 기준 · 2026-07-30 구간 변경)
     if(UPCUT[curG]!=null){
       var upGap = Math.round((UPCUT[curG]-scores.total)*100)/100;
       if(upGap>0 && upGap<=5)
-        p.sum_p1 += ' 상위등급('+(parseInt(curG,10)-1)+'등급, '+UPCUT[curG]+'점)과의 점수 차이는 '+fnum(upGap)+'점입니다.';
+        p.sum_p1 += ' 상위등급('+(parseInt(curG,10)-1)+'등급, '+UPCUT[curG]+'점)과의 점수 차이는 '+fnum(upGap)+'점으로 확인됨.';
     }
-    p.sum_p1 += ' ' + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황입니다.'
-                             : '목표인 '+gg+'('+fnum(gs)+'점)을 달성한 수준으로, 남은 기간 동안 유지 관리가 중요합니다.');
-    // [C2] 월별 종합점수 시계열 — 3개월 이상일 때만(초기월 과밀 방지). 시스템 SP month_07~당월.
-    if(_dashInd){
+    p.sum_p1 += ' ' + (gap>0 ? '목표인 '+gg+'('+fnum(gs)+'점)까지는 '+f1(gap)+'점이 더 필요한 상황임.'
+                             : '목표인 '+gg+'('+fnum(gs)+'점)을 달성한 수준으로, 남은 기간 동안 유지 관리가 필요함.');
+    /* [C2] 월별 종합점수 시계열 — ★8~9월에만 표시(2026-08-03, 2025 정답지 318건 전수 근거).
+         종전에는 '3개월 이상이면 항상' 이라 10~12월에도 붙었는데, 정답지는 10월부터 전 병원이
+         이 나열을 버리고 누적 단문으로 축약한다(4개 그룹 독립 확인 — 8~9월 집중, 10월 이후 소멸).
+         누적 개월이 2~3개일 때만 월별 등락을 보여줄 실익이 있다는 담당자 판단으로 보인다. */
+    if(_dashInd && moNum2>=8 && moNum2<=9){
       var ser=[];
       for(var mm=7; mm<=moNum2; mm++){ var mv=n(_dashInd['month_'+('0'+mm).slice(-2)]); if(mv>0) ser.push(mm+'월 '+f1(mv)+'점'); }
-      if(ser.length>=3) p.sum_p1 += ' (월별 예상점수 추이 — '+ser.join(', ')+')';
+      if(ser.length>=2) p.sum_p1 += ' (월별 예상점수 추이 — '+ser.join(', ')+')';
     }
     var sq = structQuarterTxt();   // [★5] 2026 등 차등제 분기 예상/실반영 표기(연말은 '')
-    p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점입니다.'
+    p.sum_p2 = '구조영역은 '+f1(scores.struct)+'점으로 확인됨.'
              + structRiskTxt()
              + structUpTxt()      // [보완2] 상위 구간 진입 여지(하락 경고와 다른 지표에서 1개)
-             + (sq || ' 실제 점수는 차등제 신고 결과가 합산되어 확정됩니다.')
-             + ' 재원환자 수와 인력 추이가 변동되지 않도록 꾸준히 관리해 주시기 바랍니다.';
+             + (sq || ' 실제 점수는 차등제 신고 결과가 합산되어 확정됨.')
+             + ' 재원환자 수와 인력 추이가 변동되지 않도록 꾸준한 관리가 필요함.';
     p.sum_p3 = '';
-    if(fulls.length) p.sum_p3 += '진료영역에서는 '+fulls.slice(0,4).join(', ')+(fulls.length>4?' 등':'')+' 지표가 잘 관리되고 있습니다. ';
+    if(fulls.length) p.sum_p3 += '진료영역에서는 '+fulls.slice(0,4).join(', ')+(fulls.length>4?' 등':'')+' 지표가 잘 관리되고 있음. ';
     if(tops.length){
       var t=tops[0], s1=simTail(t.r);
       p.sum_p3 += '반면 \''+t.nm+'\'은(는) 개선 여지가 가장 큰 지표로, '
-                + (s1 ? s1+'. ' : '표준화 구간을 한 단계 올릴 때마다 약 +'+f1(t.w/5)+'점을 확보할 수 있습니다. ');
+                + (s1 ? s1+'. ' : '표준화 구간을 한 단계 올릴 때마다 약 +'+f1(t.w/5)+'점 확보가 가능함. ');
       if(tops[1]){
         var s2=simTail(tops[1].r);
-        p.sum_p3 += '\''+tops[1].nm+'\'도 '+(s2 ? s2+'.' : '함께 관리해 주시기 바랍니다.');
+        p.sum_p3 += '\''+tops[1].nm+'\'도 '+(s2 ? s2+'.' : '함께 관리가 필요함.');
       }
     }
-    if(!p.sum_p3) p.sum_p3 = '진료영역 지표는 전반적으로 안정적으로 관리되고 있습니다.';
+    if(!p.sum_p3) p.sum_p3 = '진료영역 지표는 전반적으로 안정적으로 관리되고 있음.';
     p.sum_p3 += roomRiskTxt();   // [★1] 낮을수록 우수 지표 하락 경고(여유 한도형) 병기
     // [보완3] 부족점수가 크면 '개선 우선순위' 블록으로, 작으면 기존 C4(상위 2지표 동시개선)로 — 결론이 겹쳐 둘 중 하나만
     var _rank = goalRankTxt();
     p.sum_p3 += _rank || sumTopSimTxt();
     // [C11] 연말(12월) 확정 국면 — 잔여 개선 여지 무관하게 점수 확정(세밀분석 §8, 3병원 수렴)
     if(curYm && parseInt(curYm.substring(4,6),10)===12)
-      p.sum_p3 += ' 다만 평가가 12월 진료분까지로 종료되는 시점이므로, 남은 개선 여지와 무관하게 현재 점수 수준에서 확정되는 국면임을 감안해 주시기 바랍니다.';
-    p.sum_p4 = '항정신성의약품 처방률, DUR 점검률, 지역사회복귀율은 예상값 기준으로 산출되어 최종 평가 결과에 따라 점수가 다소 달라질 수 있습니다.';
+      p.sum_p3 += ' 다만 평가가 12월 진료분까지로 종료되는 시점이므로, 남은 개선 여지와 무관하게 현재 점수 수준에서 확정되는 국면임.';
+    p.sum_p4 = '항정신성의약품 처방률, DUR 점검률, 지역사회복귀율은 예상값 기준으로 산출되어 최종 평가 결과에 따라 점수가 다소 달라질 수 있음.';
     // [P4 항정 리스크 2026-07-24] 가이드 §3-P4 line63/95 명시 문형 — 지표07(항정신성) 화면값(s_score·stdweig)만으로
     //   "40% 초과 시 표준화 1점 구간 하락 → 가중치 약 −(W/5×(S−1))점 감소" 조립(청구% 불필요, draft 안전).
     //   정답지 검증: 07=표준화3구간·가중치3점 → −1.2점(계요 47.88% 6월 → 1점구간 가중치 1.2점 감소와 일치).
@@ -3079,18 +3215,21 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var aDrop=f1(aW/5*(aS-1));                 // 1점 구간 하락 시 감소 가중치
         var aBoot=topGaps(1)[0];                    // 보완 우선(부족점수 최대) 지표
         p.sum_p4 += ' 특히 항정신성의약품 처방률은 전국 기관 기준으로 최종 산정되는 지표로, 처방률이 40%를 초과하여 표준화 1점 구간으로 산정될 경우 가중치 약 −'+aDrop+'점 하락이 예상되므로, 불필요한 장기·중복 처방을 정기적으로 점검하고'
-                  + (aBoot ? ' \''+aBoot.nm+'\' 등 부족점수가 큰 지표를 우선 관리하여 점수 감소를 보완할 필요가 있습니다.' : ' 처방 적정성을 지속적으로 관리할 필요가 있습니다.');
+                  + (aBoot ? ' \''+aBoot.nm+'\' 등 부족점수가 큰 지표를 우선 관리하여 점수 감소 보완이 필요함.' : ' 처방 적정성의 지속적인 관리가 필요함.');
       }
     }
-    p.sum_p4 += ' 해당 대상자 관리를 꾸준히 부탁드립니다.';
-    // [★2] P5 신뢰도 — 연말(10~12월)은 익년 2~3월 신뢰도 점검 대비형, 그 외는 상시형 (담당자 강남수 12월 vs 평시)
+    p.sum_p4 += ' 해당 대상자에 대한 지속적인 관리가 요구됨.';
+    /* [★2] P5 신뢰도 — ★12월에만 '익년 2~3월 점검 대비형', 그 외(7~11월)는 상시형.
+         종전 기준은 10~12월이었으나 2025 정답지 318건에서 대비형은 12월 전용이다
+         (12월 보고서 9/9·8/8·5/5·5/5 전건, 10~11월은 상시형 유지 — 4개 그룹 독립 확인).
+         10·11월에 미리 붙이면 담당자 문서보다 두 달 이른 안내가 된다. */
     var moNum = curYm ? parseInt(curYm.substring(4,6),10) : 0;
     // [보완1] 오류점검에서 잡힌 영역(유치도뇨관·욕창·배뇨관리)의 일치관리 문구를 앞에 붙인다(라이브러리 Part 4)
     p.sum_p5 = recordRelTxt();
-    if(moNum>=10)
-      p.sum_p5 += '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 다음 연도 2~3월로 예정된 신뢰도 점검에 대비하여 의무기록과 환자평가표의 불일치 사항을 미리 점검·수정해 주시기 바랍니다.';
+    if(moNum===12)
+      p.sum_p5 += '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 다음 연도 2~3월로 예정된 신뢰도 점검에 대비하여 의무기록과 환자평가표의 불일치 사항을 미리 점검·수정하여야 함.';
     else
-      p.sum_p5 += '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 의무기록과 환자평가표가 서로 일치하는지 평소에 함께 점검해 주시기 바랍니다.';
+      p.sum_p5 += '신뢰도 점검 결과는 적정성평가에 그대로 반영되므로, 의무기록과 환자평가표가 서로 일치하는지 평소에 함께 점검이 필요함.';
     Object.keys(p).forEach(function(k){
       if(savedKeys[k]) return;   // 병원별 편집 저장분 우선
       var e=document.querySelector('#evalReport [data-key="'+k+'"]');
@@ -3221,7 +3360,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // Ⅳ 우선 개선지표별 권고사항 — 부족분 상위 지표 자동 블록 + 편집영역
   function renderSec4(){
     var top = topGaps(6), html='';
-    if(!top.length){ el('er-sec4Body').innerHTML = '<div class="er-fn">부족점수가 있는 지표가 없습니다.</div>'; return; }
+    if(!top.length){ el('er-sec4Body').innerHTML = '<div class="er-fn">부족점수가 있는 지표가 없음.</div>'; return; }
     var CIRC='①②③④⑤⑥⑦⑧⑨⑩';   // 원본 PDF 번호 표기
     top.forEach(function(x,i){
       var cd=esc(x.cd), isTop=(i<2), r=x.r;
@@ -3699,13 +3838,19 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
          er-ana/def/plan(문단 시작)도 후보 — 긴 분석박스가 문장 중간이 아닌 문단 사이에서 잘리게.
          er-anabar('분석 내용' 바)는 헤더 취급 — 바로 뒤(첫 문단 앞)에서 끊겨 바만 페이지 끝에 남는 것 방지. */
       var HEAD = ['er-eyebrow','er-subh','er-grplabel','er-indhead','er-anabar'];
-      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind, .er-indbox, .er-anabar, .er-ana, .er-def, .er-plan';
+      /* ★Ⅵ 의무기록에 붙인 그림·표(.er-mrbody 직계)도 분할 후보에 넣는다(2026-08-03).
+           종전 목록에 없어서 ① 긴 Ⅵ 페이지는 '흰 여백 폴백'으로 그림 한복판이 잘리고,
+           ② '⤓ 새 장에서'(er-pgbreak)를 지정해도 PDF(화면 생성=html2canvas 경로)에서는
+           아무 효과가 없었다 — 인쇄 CSS(break-before:page)는 window.print() 에만 적용되기 때문. */
+      var sel = '.er-eyebrow, .er-subh, .er-cards, .er-tw, .er-callout, .er-grplabel, .er-indhead, .er-rec, .er-after, .er-fn, .er-docfoot, .er-ind, .er-indbox, .er-anabar, .er-ana, .er-def, .er-plan, .er-mrbody > img, .er-mrbody > table, .er-mrbody > p, .er-mrbody > div';
       var pTop = pg.getBoundingClientRect().top, items=[], list=pg.querySelectorAll(sel);
       for(var i=0;i<list.length;i++){
         var e=list[i], t=(e.getBoundingClientRect().top - pTop)*sf, isH=false;
         for(var h=0;h<HEAD.length;h++){ if(e.classList.contains(HEAD[h])){ isH=true; break; } }
         // ★ 그룹라벨(구조지표/과정지표/결과지표)은 '강제 분할점' — 항상 새 A4 페이지에서 시작(2026-07-23)
-        items.push({ top:Math.round(t), head:isH, grp:e.classList.contains('er-grplabel') });
+        //   '⤓ 새 장에서'(er-pgbreak) 그림도 강제 분할점 — 단 grp 의 '첫 번째 제외' 규칙과 무관해야 하므로 brk 로 따로 든다
+        items.push({ top:Math.round(t), head:isH, grp:e.classList.contains('er-grplabel'),
+                     brk:e.classList.contains('er-pgbreak') });
       }
       items.sort(function(a,b){ return a.top-b.top; });
       // 첫 그룹라벨(구조지표)은 Ⅲ 헤더·안내문과 같은 장에 남아야 하므로 강제 분할 제외 — 2번째부터만 강제
@@ -3716,7 +3861,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         if(j>0 && items[j-1].head) continue;   // 직전이 헤더면 이 지점(헤더 다음)에서는 못 끊음
         // 블록 시작보다 5px 위(위쪽 여백 구간)에서 끊음 — 정확히 top에서 끊으면 테두리·그림자 1~2px가
         // 이전 장 끝에 얇은 선으로 남음(총평 박스 상단 선 잔상, 2026-07-23)
-        ys.push({ top:Math.max(1, items[j].top-5), force:isGrp && grpSeen>1 });
+        // '⤓ 새 장에서' 그림(brk)은 위치와 무관하게 강제 분할 — 그룹라벨의 '첫 번째 제외' 규칙과 별개
+        ys.push({ top:Math.max(1, items[j].top-5), force:(isGrp && grpSeen>1) || !!items[j].brk });
       }
       return ys;
     }
@@ -3728,45 +3874,90 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       pdf.addImage(pc.toDataURL('image/jpeg',0.8), 'JPEG', mg, (topMm==null? mg : topMm), iw, hpx*iw/canvas.width);
       idx++;
     }
-    var chain = Promise.resolve();
-    pages.forEach(function(pg){
-      // 숨긴 장(운영사용 아닌 병원의 Ⅳ 이하 = #er-page4)은 PDF에도 넣지 않는다.
-      //   display:none 이면 getClientRects() 가 비어 있다 — 캡처하면 빈 장이 한 장 더 생긴다.
-      if(!pg.getClientRects().length) return;
-      chain = chain.then(function(){
-        var breaks = _erBreakYs(pg, 1);   // 캡처 전 CSS px 기준(sf 는 canvas 확보 후 보정)
-        return html2canvas(pg, { scale:1.3, backgroundColor:'#ffffff', useCORS:true, logging:false }).then(function(canvas){
-          var mappedH = canvas.height * iw / canvas.width;   // 전체를 폭 iw 로 놨을 때 mm 높이
-          if(mappedH <= maxHmm){                             // 한 장에 들어감 → 축소 없이 그대로
-            if(idx>0) pdf.addPage();
-            pdf.addImage(canvas.toDataURL('image/jpeg',0.8), 'JPEG', mg, mg, iw, mappedH); idx++;
-            return;
-          }
-          // 길면 → A4 여러 장. DOM 블록 시작 위치에서만 끊음(제목+박스 안 갈라짐). 후보 없으면 여백 폴백.
-          var sf = canvas.height / (pg.getBoundingClientRect().height || pg.offsetHeight);   // CSS px → canvas px
-          var bys = breaks.map(function(v){ return { top:Math.round(v.top*sf), force:v.force }; });
-          var ctx = canvas.getContext('2d'), maxHpx = Math.floor(maxHmm * canvas.width / iw), y = 0, minStep = Math.floor(maxHpx*0.25);
-          // ★ 이어지는 장(중간에서 잘려 넘어온 페이지)은 상단에 14mm 여백 — 대분류 시작 장처럼 답답하지 않게(2026-07-23)
-          var contMm = 14, contPx = Math.floor(contMm * canvas.width / iw);
-          while(y < canvas.height){
-            var topMm = (y>0? mg+contMm : mg);
-            var limit = y + maxHpx - (y>0? contPx : 0);   // 여백만큼 담는 양도 줄여 하단 넘침 방지
-            // ★ 절단선을 근처 '완전한 흰 여백 줄'로 스냅 — 후보 top에서 그대로 자르면 다음 블록의
-            //   테두리·그림자 1~2px 이 이전 장 끝에 얇은 조각으로 남는다(총평 박스 잔상, 2026-07-23)
-            var snapWhite = function(t){ return _erWhiteCut(ctx, canvas.width, t, Math.max(y+1, t-60)); };
-            // ★ 그룹라벨(구조지표/과정지표/결과지표)이 이 장 범위 안에 있으면 남은 공간과 무관하게 그 앞에서 끊는다
-            var fc = -1;
-            for(var i0=0;i0<bys.length;i0++){ var b0=bys[i0]; if(b0.force && b0.top>y+8 && b0.top<limit){ fc=b0.top; break; } }
-            if(fc>=0){ fc=snapWhite(fc); _erAddSlice(canvas, y, fc, topMm); y = fc; continue; }
-            if(limit >= canvas.height){ _erAddSlice(canvas, y, canvas.height, topMm); break; }
-            var cut = -1;
-            for(var i=0;i<bys.length;i++){ var b=bys[i]; if(b.top>y+minStep && b.top<=limit) cut=b.top; else if(b.top>limit) break; }
-            cut = (cut<0) ? _erWhiteCut(ctx, canvas.width, limit, Math.max(y+1, limit - Math.floor(maxHpx*0.4)))
-                          : snapWhite(cut);
-            _erAddSlice(canvas, y, cut, topMm); y = cut;
-          }
+    /* ★진행속도 개선 (2026-08-03) — 종전에는 장(.er-page)마다 html2canvas 를 따로 불렀다.
+         html2canvas 는 호출할 때마다 '문서 전체'를 복제한 뒤 그 요소만 그리므로, 장이 10개면
+         (붙여넣은 대용량 그림까지 포함한) 문서 복제 + 이미지 디코드가 10번 반복됐다 — 이게 느림의 주범.
+         → 보고서 전체(.er-doc)를 '한 번만' 캡처하고, 큰 캔버스에서 장별 영역을 잘라 쓴다.
+           복제·렌더 1회라 장 수가 늘어도 캡처 비용이 거의 늘지 않는다. 장별 처리 로직은 종전 그대로.
+         · onclone: 장의 그림자·둥근모서리를 지우고 배경 흰색 — 장 경계를 정확히 잘라도 종전
+           per-page 캡처(backgroundColor 흰색)와 같은 결과가 되게.
+         · capScale: 캔버스 한 변 상한(~32,767px) 보호 — 문서가 아주 길면 배율을 그만큼만 낮춘다. */
+    // 캡처된 '장 캔버스' → A4 배치(종전 per-page 로직 그대로 함수로 묶음 — 전체캡처/폴백 양쪽에서 공용)
+    function _erProcPage(pg, canvas){
+      var breaks = _erBreakYs(pg, 1);
+      var mappedH = canvas.height * iw / canvas.width;   // 전체를 폭 iw 로 놨을 때 mm 높이
+      if(mappedH <= maxHmm){                             // 한 장에 들어감 → 축소 없이 그대로
+        if(idx>0) pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/jpeg',0.8), 'JPEG', mg, mg, iw, mappedH); idx++;
+        return;
+      }
+      // 길면 → A4 여러 장. DOM 블록 시작 위치에서만 끊음(제목+박스 안 갈라짐). 후보 없으면 여백 폴백.
+      var sf = canvas.height / (pg.getBoundingClientRect().height || pg.offsetHeight);   // CSS px → canvas px
+      var bys = breaks.map(function(v){ return { top:Math.round(v.top*sf), force:v.force }; });
+      var ctx = canvas.getContext('2d'), maxHpx = Math.floor(maxHmm * canvas.width / iw), y = 0, minStep = Math.floor(maxHpx*0.25);
+      // ★ 이어지는 장(중간에서 잘려 넘어온 페이지)은 상단에 14mm 여백 — 대분류 시작 장처럼 답답하지 않게(2026-07-23)
+      var contMm = 14, contPx = Math.floor(contMm * canvas.width / iw);
+      while(y < canvas.height){
+        var topMm = (y>0? mg+contMm : mg);
+        var limit = y + maxHpx - (y>0? contPx : 0);   // 여백만큼 담는 양도 줄여 하단 넘침 방지
+        // ★ 절단선을 근처 '완전한 흰 여백 줄'로 스냅 — 후보 top에서 그대로 자르면 다음 블록의
+        //   테두리·그림자 1~2px 이 이전 장 끝에 얇은 조각으로 남는다(총평 박스 잔상, 2026-07-23)
+        var snapWhite = function(t){ return _erWhiteCut(ctx, canvas.width, t, Math.max(y+1, t-60)); };
+        // ★ 그룹라벨(구조지표/과정지표/결과지표)이 이 장 범위 안에 있으면 남은 공간과 무관하게 그 앞에서 끊는다
+        var fc = -1;
+        for(var i0=0;i0<bys.length;i0++){ var b0=bys[i0]; if(b0.force && b0.top>y+8 && b0.top<limit){ fc=b0.top; break; } }
+        if(fc>=0){ fc=snapWhite(fc); _erAddSlice(canvas, y, fc, topMm); y = fc; continue; }
+        if(limit >= canvas.height){ _erAddSlice(canvas, y, canvas.height, topMm); break; }
+        var cut = -1;
+        for(var i=0;i<bys.length;i++){ var b=bys[i]; if(b.top>y+minStep && b.top<=limit) cut=b.top; else if(b.top>limit) break; }
+        cut = (cut<0) ? _erWhiteCut(ctx, canvas.width, limit, Math.max(y+1, limit - Math.floor(maxHpx*0.4)))
+                      : snapWhite(cut);
+        _erAddSlice(canvas, y, cut, topMm); y = cut;
+      }
+    }
+    // [폴백] 종전 '장별 캡처' — 전체 캡처가 실패하면 이 길로 자동 전환(느리지만 확실)
+    function _erLegacyCapture(){
+      pdf = new jsPDF('p','mm','a4'); idx = 0;   // 실패 도중 담긴 장이 있을 수 있어 처음부터 다시
+      var c2 = Promise.resolve();
+      pages.forEach(function(pg){
+        if(!pg.getClientRects().length) return;
+        c2 = c2.then(function(){
+          return html2canvas(pg, { scale:1.3, backgroundColor:'#ffffff', useCORS:true, logging:false })
+            .then(function(cv){ _erProcPage(pg, cv); });
         });
       });
+      return c2;
+    }
+    var docRect = doc9.getBoundingClientRect();
+    var capScale = Math.min(1.3, 30000 / Math.max(1, doc9.scrollHeight));
+    var chain = html2canvas(doc9, { scale:capScale, backgroundColor:'#ffffff', useCORS:true, logging:false,
+      onclone:function(d){
+        var dd=d.querySelector('#evalReport .er-doc'); if(dd) dd.style.background='#ffffff';
+        Array.prototype.forEach.call(d.querySelectorAll('#evalReport .er-page'), function(p){
+          p.style.boxShadow='none'; p.style.borderRadius='0';
+        });
+      }
+    }).then(function(big){
+      // 캔버스 한계를 넘으면 브라우저가 '빈(0×0 또는 그리기 실패) 캔버스'를 조용히 돌려준다 → 폴백으로
+      if(!big || !(big.width>10) || !(big.height>10)) throw new Error('전체 캡처 캔버스가 비어 있음');
+      var sfX = big.width / (docRect.width||1), sfY = big.height / (docRect.height||1);
+      pages.forEach(function(pg){
+        // 숨긴 장(운영사용 아닌 병원의 Ⅳ 이하 = #er-page4)은 PDF에도 넣지 않는다.
+        if(!pg.getClientRects().length) return;
+        var pr = pg.getBoundingClientRect();
+        var sx=Math.max(0, Math.round((pr.left-docRect.left)*sfX)),
+            sy=Math.max(0, Math.round((pr.top -docRect.top )*sfY)),
+            sw=Math.min(big.width -sx, Math.round(pr.width *sfX)),
+            sh=Math.min(big.height-sy, Math.round(pr.height*sfY));
+        if(sw<=0 || sh<=0) return;
+        var canvas=document.createElement('canvas'); canvas.width=sw; canvas.height=sh;
+        canvas.getContext('2d').drawImage(big, sx, sy, sw, sh, 0, 0, sw, sh);
+        _erProcPage(pg, canvas);
+      });
+    }).catch(function(e){
+      console.warn('[PDF] 전체 캡처 실패 → 종전 장별 캡처로 폴백:', e);
+      toast('PDF 생성 중… (호환 모드)');
+      return _erLegacyCapture();
     });
     chain.then(function(){
       restore();

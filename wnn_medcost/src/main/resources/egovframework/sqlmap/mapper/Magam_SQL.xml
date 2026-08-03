@@ -401,6 +401,21 @@
          LIMIT 1
 	</select>
 	
+	<!-- [2026-08-03] 평가표(9) 삭제 후 '남은 업로드 이력' 목록 — 재반영(원본 TBL_FILES_DATA → 재적재)용.
+	     과거→최근 순으로 돌려야 마지막 재반영이 최신 업로드가 되어 '나중에 올린 값이 최신' 의미가 유지된다. -->
+	<select id="selectPatvalBatchList" parameterType="MagamDTO" resultMap="magamMap">
+		SELECT CLAIM_NO AS claim_no
+		     , JOBS_DT  AS jobs_dt
+		     , CASE_CNT AS case_cnt
+		     , FILE_NM  AS file_nm
+		  FROM TBL_MAGAM_CHUNG
+		 WHERE HOSP_CD = #{hosp_cd}
+		   AND MG_YEAR = #{mg_year}
+		   AND MGMONTH = #{mgmonth}
+		   AND MG_FLAG = '9'
+		 ORDER BY JOBS_DT
+	</select>
+
 	<update id="updateMagamInfo" parameterType="MagamDTO">
         UPDATE TBL_MAGAM_INFO
            SET JOBS_DT  = #{jobs_dt}

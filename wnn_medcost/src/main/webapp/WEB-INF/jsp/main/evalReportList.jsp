@@ -189,9 +189,9 @@
 
   <div class="erl-search">
     <label>평가년도</label>
-    <select id="erl-year" class="erl-sel" onchange="erlLoad()"></select>
+    <select id="erl-year" class="erl-sel" onchange="erlYearPick()"></select>
     <label style="margin-left:6px;">평가월</label>
-    <select id="erl-month" class="erl-sel" onchange="erlFilter()"><option value="">전체</option></select>
+    <select id="erl-month" class="erl-sel" onchange="erlMonthPick()"><option value="">전체</option></select>
     <label style="margin-left:6px;">병원</label>
     <%-- 병원을 고르면 월이 '전체'로 풀린다(그 병원 연간 이력 보기) → erlHospChange --%>
     <select id="erl-hosp" class="erl-sel erl-hosp" onchange="erlHospChange()"><option value="">전체 병원</option></select>
@@ -359,9 +359,35 @@ jQuery(function(){
 
 
   var CUR_MM = ('0' + (new Date().getMonth()+1)).slice(-2);   // 당월(MM) — 평가월 기본 선택값
+
+  /* ★평가년도·평가월 '사용자 선택 기억' (2026-08-03 요청 — "최초는 현재달이지만 사용자 변경하면 유지")
+       종전에는 화면이 뜰 때마다 무조건 올해·당월로 되돌아갔다. 보고서를 열었다 목록으로 돌아오면
+       (erExit 는 ?year= 만 넘긴다) 월이 당월로 리셋돼, 8월에 3월분을 훑던 중이면 매번 다시 골라야 했다.
+       · 저장 시점 = 사용자가 셀렉트를 '직접' 바꿨을 때만. 병원 선택 때 코드가 월을 바꾸는 것(erlHospChange)은
+         저장하지 않는다 — 그래야 전체 병원으로 돌아왔을 때 사용자가 고른 월이 되살아난다.
+       · 우선순위 = URL 지정(year=/ym=) > 기억값 > 올해·당월.  URL 은 '이 년월을 보라'는 명시적 지시라 가장 세다.
+       · sessionStorage 라 탭을 새로 열면(=최초) 다시 당월에서 시작한다. */
+  var ERL_SEL_KEY = 'erlYmPick';
+  function erlPickGet(){
+    try{ var r=sessionStorage.getItem(ERL_SEL_KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; }
+  }
+  function erlPickSet(y, m){
+    try{ sessionStorage.setItem(ERL_SEL_KEY, JSON.stringify({ y:String(y||''), m:String(m||'') })); }catch(e){}
+  }
+  // 셀렉트 직접 변경 — 기억해 두고 기존 동작(년=서버 재조회 / 월=클라 필터) 수행
+  window.erlYearPick = function(){
+    erlPickSet(el('erl-year').value, el('erl-month') ? el('erl-month').value : '');
+    erlLoad();
+  };
+  window.erlMonthPick = function(){
+    erlPickSet(el('erl-year').value, el('erl-month').value);
+    erlFilter();
+  };
+
   function defaultYear(){
     var qy=(location.search.match(/[?&]year=(\d{4})/)||[])[1]; if(qy) return qy;
     var qm=(location.search.match(/[?&]ym=(\d{6})/)||[])[1]; if(qm) return qm.substring(0,4);
+    var p=erlPickGet(); if(p && /^\d{4}$/.test(p.y)) return p.y;
     return String(new Date().getFullYear());
   }
 
@@ -374,9 +400,12 @@ jQuery(function(){
     for(var mo=1;mo<=12;mo++){ var mm=('0'+mo).slice(-2); mh+='<option value="'+mm+'">'+mm+'월</option>'; }
     el('erl-month').innerHTML=mh;
     /* 평가월 기본값 = 당월. 전체 병원을 볼 때는 이번 달 것만 보는 게 기본 작업 흐름이라(2026-07-29 요청).
-       URL 로 특정 년월을 지정해 들어온 경우(ym=YYYYMM)에는 그 월을 그대로 쓴다. */
+       URL 로 특정 년월을 지정해 들어온 경우(ym=YYYYMM)에는 그 월을 그대로 쓴다.
+       그 다음이 사용자가 직접 고른 기억값('' = 전체 도 유효한 선택이므로 null 과 구분해서 본다). */
     var qm=(location.search.match(/[?&]ym=(\d{6})/)||[])[1];
-    el('erl-month').value = qm ? qm.substring(4,6) : CUR_MM;
+    var pk=erlPickGet();
+    el('erl-month').value = qm ? qm.substring(4,6)
+                          : (pk && pk.m != null ? pk.m : CUR_MM);
   })();
 
   /* 병원 선택이 바뀔 때 — 특정 병원을 고르면 그 병원의 '그 해 전체' 를 보도록 월을 전체로 풀고,
@@ -384,7 +413,12 @@ jQuery(function(){
   window.erlHospChange = function(){
     var hosp = el('erl-hosp') ? el('erl-hosp').value : '';
     var mo   = el('erl-month');
-    if(mo) mo.value = hosp ? '' : CUR_MM;
+    // 전체 병원으로 돌아올 때는 당월이 아니라 '사용자가 직접 고른 월'로 되살린다(기억값 없으면 당월).
+    // ★여기서 바꾼 값은 erlPickSet 하지 않는다 — 코드가 바꾼 것이지 사용자가 고른 게 아니다.
+    if(mo){
+      if(hosp) mo.value = '';
+      else { var pk=erlPickGet(); mo.value = (pk && pk.m != null) ? pk.m : CUR_MM; }
+    }
     erlFilter();
   };
 

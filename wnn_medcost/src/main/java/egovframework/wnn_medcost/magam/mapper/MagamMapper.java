@@ -34,6 +34,9 @@ public interface MagamMapper {
 	void callUploadMagamPatFiles(MagamDTO magamDTO);
 	
 	String delMagamClaimNo(MagamDTO dto);
+
+	// [2026-08-03] 평가표(9) 삭제 후 재반영용 — 해당 월의 남은 업로드 배치 목록(JOBS_DT 오름차순)
+	List<MagamDTO> selectPatvalBatchList(MagamDTO dto);
 	
 	String updateMagamLock(MagamDTO dto);
 	

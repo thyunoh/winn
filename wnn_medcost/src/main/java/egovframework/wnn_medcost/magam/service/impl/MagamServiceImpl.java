@@ -318,9 +318,45 @@ public class MagamServiceImpl implements MagamService {
 				e.printStackTrace();
 			}
 		}
-		return mapper.delMagamClaimNo(dto);
+		String ret = mapper.delMagamClaimNo(dto);
+
+		/* [2026-08-03] 평가표(9) 삭제 후 '남은 업로드 이력 재반영' — 여수시립 202607 실사고 대응.
+		     병원 EMR 이 어떤 묶음을 뽑든 같은 파일명(L01)으로 내보내므로, 같은 파일을 두 번 선택해 올리면
+		     나중 배치가 같은 환자들의 소속(CHUNGSEQ)을 가져간다. 그 상태에서 목록의 '중복' 이력을 지우면
+		     그 배치 소속이 된 환자평가표가 통째로 사라졌다(109건 소실, TBL_MAGAM_DEL_HIS 17:04:48 확인).
+		     원본 줄은 TBL_FILES_DATA 에 배치(JOBS_DT)별로 그대로 남아 있으므로, 삭제 직후 남은 배치들을
+		     과거→최근 순으로 업로드 SP(SP_UPLOAD_MAGAM_SAMFILES)에 다시 태워 평가표를 재구성한다.
+		     → 몇 개를 어떤 순서로 올리고 어떤 이력을 지워도, 목록에 남아 있는 이력의 자료는 항상 존재한다.
+		     재반영 실패는 삭제를 되돌리지 않는다(로그만) — 그 경우에도 해당 파일 재업로드로 복구 가능. */
+		if ("9".equals(dto.getMg_flag())) {
+			try {
+				List<MagamDTO> remain = mapper.selectPatvalBatchList(dto);
+				System.out.println("평가표 삭제 후 재반영 시작 - 남은 배치 " + (remain == null ? 0 : remain.size()) + "건");
+				if (remain != null) {
+					for (MagamDTO b : remain) {
+						MagamDTO re = new MagamDTO();
+						re.setHosp_cd(dto.getHosp_cd());
+						re.setMg_year(dto.getMg_year());
+						re.setMgmonth(dto.getMgmonth());
+						re.setMg_flag("9");
+						re.setJobs_dt(b.getJobs_dt());
+						re.setReg_user(dto.getReg_user());
+						re.setUpd_user(dto.getReg_user());
+						int tl = 0;
+						try { tl = Integer.parseInt(b.getCase_cnt()); } catch (Exception ign) {}
+						re.setT_lines(tl);
+						mapper.callUploadMagamSamFiles(re);
+						System.out.println("평가표 삭제 후 재반영 - jobs_dt " + b.getJobs_dt()
+						                 + " (" + b.getFile_nm() + ", " + b.getCase_cnt() + "건) errcode=" + re.getErrcode());
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return ret;
 	}
-	
+
 	@Override
 	public String updateMagamLock(MagamDTO dto) {
 		return mapper.updateMagamLock(dto);

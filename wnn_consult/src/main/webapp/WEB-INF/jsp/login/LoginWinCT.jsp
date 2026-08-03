@@ -96,6 +96,25 @@
        ③ 배너(.image-btn-wrap)는 그 위 버튼들이 % 좌표라 **비율을 반드시 지켜야** 한다 → aspect-ratio 590/225
        ④ 헤더 장식 이미지(381px)가 가로 스크롤의 주범이라 이 구간에서는 숨긴다
        ⑤ 상단 메뉴의 `margin-left:-50px` / 로고의 `margin-left:49%` 같은 데스크탑 전용 보정값 해제
+       ⑦ 캐러셀을 흐름 안으로 되돌린다 (2026-08-03 — ⑥이 남긴 겹침을 마무리)
+
+     ⑦ 를 왜 넣었나 (2026-08-03 실측)
+       · 캐러셀(#header-carousel)이 `position:absolute` 라 문서 흐름에서 높이가 0 이다.
+         컨테이너의 `min-height:540px` 는 컨테이너 자기 높이만 잡아 줄 뿐, 그 안의 로그인 블록은
+         여전히 맨 위에서 시작한다 → 데스크탑에서 로그인이 배너를 안 덮게 막는 받침은
+         `.col-lg-10` 의 `margin-top:400px` 그거 하나뿐이었다(540-400=140px 만 일부러 겹침).
+       · ⑥ 이 그 400px 을 16px 로 낮추므로, 이 구간에서는 받침이 사라져 로그인·WinCheck 배너·공지가
+         통째로 배너 그림 위에 올라탔다(1200px 실측: 로그인이 배너와 540px 전면 겹침, 공지도 57px).
+         브라우저 확대는 CSS 폭이 줄어드는 것과 같아서 1920 모니터 175% 부터 이 증상이 나온다.
+       · 그래서 `position:relative` 로 흐름에 돌려놓는다. static 이 아니라 relative 인 이유는
+         인디케이터(점)가 `position:absolute` 라, static 으로 두면 기준 조상이 #carouselContainer 로
+         밀려 점이 공지사항 아래에 찍히기 때문이다.
+       · `display:flow-root` 도 같이 준다 — 이 캐러셀은 `.carousel-inner` 래퍼가 없어서 슬라이드가
+         `float:left` 인 채 부모 직계다. 지금은 absolute 가 float 을 담아 주고 있어서, 그것만 풀면
+         높이가 0 으로 무너진다. BFC 를 새로 만들어 줘야 한다.
+       · 높이는 고정 540px 대신 원본 비율(1920×550 = 3.49:1)로 준다. 데스크탑은 이 그림을 540px
+         상자에 `object-fit:cover` 로 좌우를 잘라 쓰는데, 좁은 화면에서는 비율대로 두면 폭 따라
+         높이가 줄고(1185px→340px) 잘림도 없어져 로그인이 첫 화면에 남는다.
      ══════════════════════════════════════════════════════════════════════════ --%>
 <style>
 @media screen and (max-width:1279.98px){
@@ -130,6 +149,12 @@
 
   /* ③ 배너 — 위에 얹힌 버튼들이 % 좌표라 비율을 깨면 클릭 위치가 어긋난다 */
   .image-btn-wrap{ width:100% !important; max-width:590px; height:auto !important; aspect-ratio:590/225; }
+
+  /* ⑦ 캐러셀을 흐름 안으로 — 위 주석 참고. relative(인디케이터 기준) + flow-root(float 담기)를 함께 줘야 한다 */
+  #header-carousel{ position:relative !important; display:flow-root !important; }
+  #header-carousel .carousel-item{ height:auto !important; aspect-ratio:1920/550; }
+  /* 540px 은 흐름에서 빠진 캐러셀 자리를 대신 잡아 주던 값이라, 캐러셀이 돌아오면 필요 없다 */
+  #carouselContainer{ min-height:0 !important; }
 }
 </style>
 </head>
