@@ -539,7 +539,17 @@
 					    { data: 'case_cnt',   visible: true,  className: 'dt-body-right',   width: '100px',
 							render: function(data, type, row) {
 		            			if (type === 'display') {
-		            				return data != null ? getFormat(data,'n1') + ' 건 ' : '';
+		            				var t = data != null ? getFormat(data,'n1') + ' 건 ' : '';
+		            				/* [2026-08-03] 유령 이력 표시 — 이력은 남았는데 실제 자료가 0건인 줄
+		            				     (여수시립 202607: 중복 업로드 삭제로 자료만 소실, 이력은 '109건'으로 남아 혼동).
+		            				     이 표시가 붙은 줄은 지워도 자료 손실이 없다 — 안심하고 정리 가능.
+		            				     ★위너넷(winner==='Y')에게만 표시(2026-08-03 요청) — 병원 사용자에게는
+		            				       내부 상태라 불안만 주므로 숨긴다. 진단이 필요하면 위너넷이 접속해 확인. */
+		            				if (winner === 'Y' && row && row.data_cnt != null && Number(row.data_cnt) === 0)
+		            					t += ' <span style="display:inline-block;padding:1px 7px;border-radius:9px;'
+		            					   + 'background:#fdecea;color:#c0392b;border:1px solid #f5b7b1;'
+		            					   + 'font-size:11px;font-weight:700;" title="업로드 이력만 남고 실제 저장된 자료가 없습니다. 지워도 자료 손실이 없는 줄입니다.">자료없음</span>';
+		            				return t;
 		                		}
 		                		return data;
           			       },

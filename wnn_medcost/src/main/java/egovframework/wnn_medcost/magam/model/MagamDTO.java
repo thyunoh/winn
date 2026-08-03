@@ -41,6 +41,7 @@ public class MagamDTO{
 	private String treat_type_nm;
 	private String date_ym;
 	private String case_cnt;
+	private String data_cnt;    // 실데이터 건수(유령 이력 표시용, 2026-08-03) — 9:평가표 행수 / 8:청구 행수 / Z:입퇴원 행수
 	private String tot_amt;
 	private String claim_amt;
 	private String file_nm;     	// 파일명
@@ -533,6 +534,14 @@ public class MagamDTO{
 
 	public void setCase_cnt(String case_cnt) {
 		this.case_cnt = case_cnt;
+	}
+
+	public String getData_cnt() {
+		return data_cnt;
+	}
+
+	public void setData_cnt(String data_cnt) {
+		this.data_cnt = data_cnt;
 	}
 
 	public String getTot_amt() {

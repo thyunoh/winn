@@ -17,6 +17,7 @@
 		  <result property="treat_type_nm"  column="treat_type_nm" />
 		  <result property="date_ym"     column="date_ym" />
 		  <result property="case_cnt"    column="case_cnt" />
+		  <result property="data_cnt"    column="data_cnt" />
 		  <result property="tot_amt"     column="tot_amt" />
 		  <result property="claim_amt"   column="claim_amt" />
 		  <result property="jobs_dt"     column="jobs_dt" />
@@ -301,6 +302,14 @@
            + COALESCE(E.DISABLED_AMT, 0)
            - COALESCE(CM.CLAIM_AMT, 0)  END                               AS claim_amt
 	  , A.FILE_NM         AS file_nm
+	  /* [2026-08-03] 실데이터 건수 — 이력(껍데기)은 남았는데 실제 자료가 없는 '유령 이력'을 화면에서 표시하기 위함.
+	       여수시립 202607 사고: 중복 업로드 삭제로 다른 배치 자료까지 소실됐는데 이력은 '109건 성공'으로 남아
+	       원인 파악이 어려웠다. 평가표(9)=CHUNGSEQ 소속 행수, 청구서(8)=청구번호 행수, 입퇴원(Z)=해당 월 행수. */
+	  , CASE A.MG_FLAG
+	         WHEN '9' THEN (SELECT COUNT(*) FROM TBL_PATVAL_MST p9 WHERE p9.HOSP_CD = A.HOSP_CD AND p9.CHUNGSEQ = A.CLAIM_NO)
+	         WHEN '8' THEN (SELECT COUNT(*) FROM TBL_CHUNG_MST  c8 WHERE c8.HOSP_CD = A.HOSP_CD AND c8.CLAIM_NO = A.CLAIM_NO)
+	         ELSE          (SELECT COUNT(*) FROM TBL_IPWON_INFO iz WHERE iz.HOSP_CD = A.HOSP_CD AND iz.JOBYYMM = CONCAT(A.MG_YEAR, A.MGMONTH))
+	    END               AS data_cnt
 	  , A.JOBS_DT         AS jobs_dt
 	  , A.UPD_DTTM        AS upd_dttm
 	  , B.USER_NM         AS user_nm
