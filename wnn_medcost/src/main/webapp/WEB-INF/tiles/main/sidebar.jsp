@@ -390,11 +390,6 @@
                             </ul>
                         </div>
                     </li>
-                    <%-- 업무매뉴얼 (2026-07-27) — 메뉴 구조 맨 아래. 위너넷 전용이라 기본 숨김이고
-                         적정성평가 월간보고서(menu-evalreport)와 같은 방식으로 아래 스크립트에서 위너넷일 때만 표시한다. --%>
-                    <li class="nav-item" id="menu-manual" style="display:none;">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/main/manual.do"><i class="fa fa-book"></i>업무매뉴얼</a>
-                    </li>
                 </ul>
             </div>
         </nav>
@@ -1263,18 +1258,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (adminAsq) adminAsq.style.display = "";
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
+        
         // 적정성평가 Q&A 자료 — 위너넷 담당자 전용(2026-08-04)
         var adminQna = document.getElementById("adminQnaMenu");
         if (adminQna) adminQna.style.display = "";
+        
         // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
         var evalRptMenu = document.getElementById("menu-evalreport");
         if (evalRptMenu) evalRptMenu.style.display = "";
-        /* 업무매뉴얼 — 위너넷 담당자 전용(2026-07-27).
-           ▷ [숨김 2026-07-28 사용자 요청] 메뉴 노출 보류. li 는 style="display:none" 그대로라 어느 계정에도
-             안 보인다. 화면·컨트롤러는 살아 있어 주소(/main/manual.do)로는 그대로 확인 가능.
-             다시 켜려면 아래 두 줄의 주석만 해제하면 된다. */
-        // var manualMenu = document.getElementById("menu-manual");
-        // if (manualMenu) manualMenu.style.display = "";
     }
 });
 
