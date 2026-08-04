@@ -117,10 +117,23 @@
   #qnaDoc .rel span:hover{ background:#1746a2; color:#fff; border-color:#1746a2; }
   #qnaDoc .guide{ color:#8494a8; }
 
+  /* ── 칸 사이 경계 끌기 (2026-08-05 요청) — [분류|목록] · [목록|답변] 폭을 손으로 맞춘다 ──
+       손잡이 자체는 <폭 0> 이고 양옆 12px 틈(gap) 한가운데에 선다.
+       · margin -6px 두 번 = 손잡이가 끼어들며 늘어난 gap 한 벌(12px)을 되돌린 것 → 칸 간격은 그대로 12px.
+       · 실제로 잡히는 자리는 :before 로 넓혀 둔 12px (폭 0 짜리는 못 집는다).
+       · :after = 평소에 보이는 흐린 세로선. 있는 줄 알아야 끌어 본다. */
+  #qnaWrap .qsplit{ flex:0 0 0; width:0; margin:0 -6px; position:relative; cursor:col-resize; z-index:3; }
+  #qnaWrap .qsplit:before{ content:''; position:absolute; top:0; bottom:0; left:-6px; width:12px; }
+  #qnaWrap .qsplit:after{ content:''; position:absolute; top:14px; bottom:14px; left:-1.5px; width:3px;
+                          border-radius:2px; background:#e3ebf5; transition:background .12s; }
+  #qnaWrap .qsplit:hover:after, #qnaWrap .qsplit.on:after{ background:#1f6feb; }
+
   @media (max-width:1100px){
     #qnaWrap{ flex-wrap:wrap; height:auto; }
-    #qnaCatCard, #qnaListCard{ flex:1 1 100%; max-height:300px; }
-    #qnaDocCard{ flex:1 1 100%; min-height:420px; }
+    /* !important = 끌어서 저장해 둔 폭(인라인 flex)이 세로로 쌓이는 배치를 깨지 않게 */
+    #qnaCatCard, #qnaListCard{ flex:1 1 100% !important; max-height:300px; }
+    #qnaDocCard{ flex:1 1 100% !important; min-height:420px; }
+    #qnaWrap .qsplit{ display:none; }
   }
 </style>
 
@@ -133,6 +146,9 @@
         <div class="qbody" id="qnaCats"></div>
       </div>
 
+      <%-- 칸 폭 조절 손잡이 (2026-08-05 요청) — 끌면 왼쪽 칸의 폭이 바뀌고 답변칸이 나머지를 받는다 --%>
+      <div class="qsplit" data-col="cat" title="끌면 좌우 폭이 바뀝니다 · 두 번 누르면 원래 폭"></div>
+
       <div class="qcard" id="qnaListCard">
         <div id="qnaSearchBox">
           <input type="text" id="qnaQ" placeholder="검색어를 입력하세요… 예) 배뇨일지" autocomplete="off"
@@ -142,6 +158,8 @@
         <div class="qhd"><span class="t" id="qnaListTt">질문 목록</span><span class="c" id="qnaListCnt"></span></div>
         <div class="qbody" id="qnaList"></div>
       </div>
+
+      <div class="qsplit" data-col="list" title="끌면 좌우 폭이 바뀝니다 · 두 번 누르면 원래 폭"></div>
 
       <div class="qcard" id="qnaDocCard">
         <div class="qhd">
@@ -398,6 +416,63 @@
   fitHeight();
   setTimeout(fitHeight, 200);      /* 상단 메뉴·알림바가 늦게 잡히는 경우 대비 */
   setTimeout(fitHeight, 800);
+
+  /* ── 칸 폭 조절 : [분류|목록] · [목록|답변] 경계 끌기 (2026-08-05 요청) ──────────
+       · 폭은 <왼쪽 칸>에만 준다(flex-basis). 답변칸은 flex:1 이라 남는 폭을 알아서 받는다.
+         두 칸을 같이 건드리면 합이 안 맞아 답변칸이 튄다.
+       · 고른 폭은 localStorage 에 남는다(브라우저별) — 다음에 들어와도 그대로.
+       · 답변칸이 MIN_DOC 아래로 눌리지 않게 끄는 동안 막고, 창을 줄였을 때도 다시 앉힌다
+         (좁은 창에서 저장해 둔 폭을 그대로 쓰면 답변칸이 사라진다).
+       · 두 번 누르면(dblclick) 그 칸만 처음 폭으로 되돌린다. */
+  var COL_KEY = 'qnaColW', MIN_COL = 180, MIN_DOC = 320, COL_GAP = 24;   /* gap 12px × 2 */
+  function colLoad(){ try{ var v = JSON.parse(localStorage.getItem(COL_KEY) || '{}'); return (v && typeof v === 'object') ? v : {}; }catch(ignore){ return {}; } }
+  function colSave(o){ try{ localStorage.setItem(COL_KEY, JSON.stringify(o)); }catch(ignore){} }
+  function colCard(k){ return el(k === 'cat' ? 'qnaCatCard' : 'qnaListCard'); }
+  function colLayout(){
+    var wrap = el('qnaWrap'); if (!wrap) return;
+    var cat = el('qnaCatCard'), lst = el('qnaListCard'), o = colLoad();
+    cat.style.flex = o.cat  ? '0 0 ' + o.cat  + 'px' : '';        /* 저장값 없으면 CSS 기본 폭 */
+    lst.style.flex = o.list ? '0 0 ' + o.list + 'px' : '';
+    if (window.innerWidth <= 1100) return;                        /* 세로로 쌓이는 폭 — CSS 에 맡긴다 */
+    var cw = cat.getBoundingClientRect().width, lw = lst.getBoundingClientRect().width;
+    var room = wrap.clientWidth - COL_GAP - MIN_DOC;
+    if (cw + lw <= room) return;
+    var over = cw + lw - room;                                    /* 넘친 만큼 목록 → 분류 순으로 줄인다 */
+    var nl = Math.max(MIN_COL, lw - over); over -= (lw - nl);
+    var nc = Math.max(MIN_COL, cw - over);
+    lst.style.flex = '0 0 ' + Math.round(nl) + 'px';
+    cat.style.flex = '0 0 ' + Math.round(nc) + 'px';
+  }
+  function colDrag(sp){
+    var key = sp.getAttribute('data-col'), t = colCard(key);
+    sp.addEventListener('pointerdown', function(e){
+      if (window.innerWidth <= 1100) return;
+      e.preventDefault();
+      var x0 = e.clientX, w0 = t.getBoundingClientRect().width;
+      var max = w0 + el('qnaDocCard').getBoundingClientRect().width - MIN_DOC;   /* 답변칸이 버틸 만큼까지 */
+      try{ sp.setPointerCapture(e.pointerId); }catch(ignore){}   /* 못 걸어도 끌기는 되게 */
+      sp.classList.add('on');
+      document.body.style.userSelect = 'none'; document.body.style.cursor = 'col-resize';
+      function mv(ev){
+        t.style.flex = '0 0 ' + Math.max(MIN_COL, Math.min(Math.round(w0 + ev.clientX - x0), Math.round(max))) + 'px';
+      }
+      function up(){
+        sp.removeEventListener('pointermove', mv);
+        sp.removeEventListener('pointerup', up);
+        sp.removeEventListener('pointercancel', up);
+        sp.classList.remove('on');
+        document.body.style.userSelect = ''; document.body.style.cursor = '';
+        var o = colLoad(); o[key] = Math.round(t.getBoundingClientRect().width); colSave(o);
+      }
+      sp.addEventListener('pointermove', mv);
+      sp.addEventListener('pointerup', up);
+      sp.addEventListener('pointercancel', up);
+    });
+    sp.addEventListener('dblclick', function(){ var o = colLoad(); delete o[key]; colSave(o); colLayout(); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#qnaWrap .qsplit'), colDrag);
+  colLayout();
+  window.addEventListener('resize', colLayout);
 
   /* ── 글자 크기 (가－ / 가＋ / ↺) ────────────────────────────
        #qnaWrap 의 기준 크기만 바꾼다 — 안쪽은 전부 em 이라 화면 전체가 따라 커진다.
