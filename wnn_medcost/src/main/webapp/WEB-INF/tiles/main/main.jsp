@@ -78,17 +78,11 @@ function loadPage(url) {
 
 </script>
 
-<%-- 적정성평가 Q&A 챗봇 (2026-07-29) — 전 화면 우측하단 플로팅.
-     여기 한 줄이면 .main/* 전 화면에 적용된다(컨트롤러·메뉴 등록 불필요).
-     지식 추가/수정은 qnaChat.jsp 의 WQA_KB 배열만 고치면 되고, JSP라 재빌드 없이 파일 교체로 반영된다.
-     ★위너넷 전용(2026-07-30) — 판별은 다른 화면들과 동일하게 s_wnn_yn 쿠키(=TBL_HOSP_MST.WINNER_YN,
-       로그인 때마다 Y/N 재설정) 하나만 본다. JS로 숨기는 게 아니라 서버에서 include 자체를 건너뛰므로
-       일반병원(거래처)에는 챗봇 HTML·지식(WQA_KB)이 아예 내려가지 않는다.
-       전원 노출로 바꾸려면 아래 c:if 만 벗기면 된다. --%>
-       
-	<c:if test="${cookie.s_wnn_yn != null and cookie.s_wnn_yn.value.trim() eq 'Y'}">
-	 <jsp:include page="/WEB-INF/tiles/main/qnaChat.jsp" />  
-	</c:if>
+<%-- 적정성평가 Q&A — 우측하단 플로팅 챗은 2026-08-04 <제거>했다(사용자 요청).
+     같은 지식(TBL_QNA_KB)을 화면 전체로 펼쳐 보는 메뉴 화면으로 대체됨:
+       사이드바 [적정성평가 Q&A 자료] → /mangr/qnacd.do (위너넷 전용, sidebar.jsp #adminQnaMenu)
+     종전 플로팅 파일 tiles/main/qnaChat.jsp 도 함께 삭제했다(되살리려면 git 이력에서 꺼내
+     여기에 include 한 줄을 다시 넣으면 된다 — 서버 API 는 그대로 살아 있다). --%>
 
 </body>
 </html>

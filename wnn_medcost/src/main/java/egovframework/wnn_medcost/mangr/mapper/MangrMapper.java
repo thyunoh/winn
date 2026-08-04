@@ -59,4 +59,16 @@ public interface MangrMapper {
 	// 사이트방문문의
 	List<VisitAsqDTO> getVisitAsqList(VisitAsqDTO dto) throws Exception;
 	boolean           updateVisitAsqComform(VisitAsqDTO dto) throws Exception;
+
+	/* 적정성평가 Q&A 챗봇 (2026-08-04) — 지식은 TBL_QNA_KB 에 있고 화면은 조회만 한다.
+	   DTO 대신 Map 을 쓰는 이유: 화면에 그대로 JSON 으로 내려보내는 조회 전용이라
+	   컬럼이 늘어도 DTO·별칭 등록을 손대지 않아도 된다. */
+	List<Map<String,Object>> selectQnaCatList()                              throws Exception;
+	List<Map<String,Object>> selectQnaTopList(Map<String,Object> p)          throws Exception;
+	List<Map<String,Object>> selectQnaKbList(Map<String,Object> p)           throws Exception;
+	Map<String,Object>       selectQnaKb(Map<String,Object> p)               throws Exception;
+	List<Map<String,Object>> selectQnaRelList(Map<String,Object> p)          throws Exception;
+	List<Map<String,Object>> selectQnaSearch(Map<String,Object> p)           throws Exception;
+	int                      updateQnaHit(Map<String,Object> p)              throws Exception;
+	int                      insertQnaLog(Map<String,Object> p)              throws Exception;
 }

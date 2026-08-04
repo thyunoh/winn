@@ -700,4 +700,113 @@ public class MangrController {
 		}
 		return response;
 	}
+
+	/* ====================================================================
+	   적정성평가 Q&A (qnacd.jsp) — 지식 조회 (2026-08-04)
+	     · 아래 4개는 AJAX 전용이다(화면 진입은 위 qnacd.do 하나뿐).
+	     · 뷰를 돌려주지 않으므로 s_hospid 쿠키가 없어도 500 이 아니라 빈 결과가 나가게 둔다
+	       (쿠키 가드는 뷰 반환 메서드에만 필요 — 2026-06-10 대시보드 500 장애 참조).
+	   ==================================================================== */
+
+	/** 적정성평가 Q&A 자료 — 관리자(위너넷) 메뉴 화면. 플로팅 챗과 같은 지식·같은 조회 API 를 쓴다. */
+	@RequestMapping(value="/qnacd.do")
+	public String qnacd(HttpServletRequest request, ModelMap model) {
+		cookie_value = ClientInfo.getCookie(request);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				return ".main/mangr/qnacd";
+			} else {
+				return ".login/LoginWinCT";
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	/** 화면 열 때 1회 — 카테고리(대·중분류, 건수) + 자주하는 질문 순위 */
+	@RequestMapping(value="/qnaInit.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaInit(@RequestParam(value="topCnt", required=false, defaultValue="12") int topCnt,
+	                                   HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response.putAll(svc.qnaInit(topCnt));
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/** 카테고리를 눌렀을 때 — 그 안의 질문 목록 */
+	@RequestMapping(value="/qnaList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaList(@RequestParam(value="catId", required=false) String catId,
+	                                   @RequestParam(value="subId", required=false) String subId,
+	                                   HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response.put("list", svc.qnaList(catId, subId));
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/** 질문 한 건의 답변 (조회수 +1 · 질문로그 기록) */
+	@RequestMapping(value="/qnaGet.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaGet(@RequestParam(value="kbId",    required=false) String kbId,
+	                                  @RequestParam(value="kbCode",  required=false) String kbCode,
+	                                  @RequestParam(value="askType", required=false) String askType,
+	                                  @RequestParam(value="qText",   required=false) String qText,
+	                                  HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response.putAll(svc.qnaGet(kbId, kbCode, askType, qnaHospCd(request), qnaUserId(request), qText));
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/** 직접 입력한 질문 검색 (질문로그 기록 — 못 찾은 질문이 지식 보강 목록이 된다) */
+	@RequestMapping(value="/qnaSearch.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaSearch(@RequestParam(value="q") String q,
+	                                     @RequestParam(value="listCnt", required=false, defaultValue="8") int listCnt,
+	                                     HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response.putAll(svc.qnaSearch(q, listCnt, qnaHospCd(request), qnaUserId(request)));
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/* 로그용 — 쿠키가 없어도 예외 없이 null 로 넘긴다 */
+	private String qnaCookie(HttpServletRequest request, String key) {
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String v = (ck == null) ? null : ck.get(key);
+			return (v == null || v.trim().isEmpty()) ? null : v.trim();
+		} catch(Exception ex) {
+			return null;
+		}
+	}
+	private String qnaHospCd(HttpServletRequest request) { return qnaCookie(request, "s_hospid"); }
+	private String qnaUserId(HttpServletRequest request) { return qnaCookie(request, "s_userid"); }
 }

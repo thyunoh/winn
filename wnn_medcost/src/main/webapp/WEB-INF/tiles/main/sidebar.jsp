@@ -304,7 +304,12 @@
                     </li>
                     <li class="nav-item" id="adminVisitAsqMenu" style="display:none;">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/visitasq.do"><i class="fas fa-building"></i>관리자 1:1 상담하기</a>
-                    </li>  
+                    </li>
+                    <%-- 적정성평가 Q&A 자료 (2026-08-04) — 위너넷 담당자 전용.
+                         우측하단 플로팅 챗과 같은 지식(TBL_QNA_KB)을 화면 전체로 펼쳐 찾아보는 화면이다. --%>
+                    <li class="nav-item" id="adminQnaMenu" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/qnacd.do"><i class="fas fa-book-open"></i>적정성평가 Q&amp;A 자료</a>
+                    </li>
                     <!-- 진료비 분석 보고서 -->
                     <li class="nav-item menu-section" id="menu-g">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
@@ -1258,6 +1263,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (adminAsq) adminAsq.style.display = "";
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
+        // 적정성평가 Q&A 자료 — 위너넷 담당자 전용(2026-08-04)
+        var adminQna = document.getElementById("adminQnaMenu");
+        if (adminQna) adminQna.style.display = "";
         // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
         var evalRptMenu = document.getElementById("menu-evalreport");
         if (evalRptMenu) evalRptMenu.style.display = "";

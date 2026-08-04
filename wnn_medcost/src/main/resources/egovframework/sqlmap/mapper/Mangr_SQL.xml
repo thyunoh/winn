@@ -601,4 +601,176 @@
     ]]>
     </update>
 
+    <!-- ====================================================================
+         적정성평가 Q&A 챗봇 (qnaChat.jsp) — 지식베이스 조회 (2026-08-04)
+           · 테이블 : TBL_QNA_CAT(카테고리) · TBL_QNA_KB(지식) · TBL_QNA_LOG(질문로그)
+           · 생성   : docs/sql/TBL_QNA.sql → docs/sql/TBL_QNA_seed.sql
+           · 지식을 고치려면 TBL_QNA_KB 를 수정하면 된다(JSP 배포 불필요).
+         ==================================================================== -->
+
+    <!-- 카테고리 목록 (대분류 + 중분류, 각 질문 건수 포함) -->
+    <select id="selectQnaCatList" resultType="java.util.HashMap"><![CDATA[
+        SELECT  C.CAT_ID     AS catId
+               ,C.P_CAT_ID   AS pCatId
+               ,C.CAT_NM     AS catNm
+               ,C.CAT_DESC   AS catDesc
+               ,C.SRC_TYPE   AS srcType
+               ,C.SORT_NO    AS sortNo
+               ,( SELECT COUNT(*) FROM TBL_QNA_KB K
+                   WHERE K.USE_YN = 'Y'
+                     AND ( (C.P_CAT_ID IS NULL AND K.CAT_ID = C.CAT_ID)
+                        OR (C.P_CAT_ID IS NOT NULL AND K.SUB_ID = C.CAT_ID) ) ) AS qCnt
+          FROM  TBL_QNA_CAT C
+         WHERE  C.USE_YN = 'Y'
+         ORDER BY IFNULL(C.P_CAT_ID,C.CAT_ID), (C.P_CAT_ID IS NOT NULL), C.SORT_NO
+    ]]>
+    </select>
+
+    <!-- 자주하는 질문 순위 — 조회수 누적(HIT_CNT) 기준. 아직 아무도 안 물어본 초기에는
+         가중치(사내 확정지식 우선)로 채워 빈 목록이 되지 않게 한다. -->
+    <select id="selectQnaTopList" parameterType="java.util.HashMap" resultType="java.util.HashMap"><![CDATA[
+        SELECT  K.KB_ID    AS kbId
+               ,K.KB_CODE  AS kbCode
+               ,IFNULL(NULLIF(K.SHORT_TITLE,''),K.TITLE) AS title
+               ,K.CAT_ID   AS catId
+               ,K.SRC_TYPE AS srcType
+               ,K.HIT_CNT  AS hitCnt
+               ,C.CAT_NM   AS catNm
+          FROM  TBL_QNA_KB K
+          LEFT JOIN TBL_QNA_CAT C ON C.CAT_ID = K.CAT_ID
+         WHERE  K.USE_YN = 'Y'
+         ORDER BY K.HIT_CNT DESC, K.WEIGHT DESC, K.SORT_NO
+         LIMIT #{topCnt}
+    ]]>
+    </select>
+
+    <!-- 선택한 카테고리의 질문 목록 (본문은 빼고 제목만 — 목록이 가벼워야 한다) -->
+    <select id="selectQnaKbList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT  K.KB_ID    AS kbId
+               ,K.KB_CODE  AS kbCode
+               ,K.TITLE    AS title
+               ,IFNULL(NULLIF(K.SHORT_TITLE,''),K.TITLE) AS shortTitle
+               ,K.SRC_TYPE AS srcType
+               ,K.KIND     AS kind
+               ,K.SUB_ID   AS subId
+               ,K.HIT_CNT  AS hitCnt
+          FROM  TBL_QNA_KB K
+         WHERE  K.USE_YN = 'Y'
+        ]]>
+        <if test='catId != null and catId != ""'>
+            AND K.CAT_ID = #{catId}
+        </if>
+        <if test='subId != null and subId != ""'>
+            AND K.SUB_ID = #{subId}
+        </if>
+        <![CDATA[
+         ORDER BY K.SORT_NO, K.KB_ID
+        ]]>
+    </select>
+
+    <!-- 지식 한 건(답변 본문 포함) -->
+    <select id="selectQnaKb" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT  K.KB_ID    AS kbId
+               ,K.KB_CODE  AS kbCode
+               ,K.CAT_ID   AS catId
+               ,K.SUB_ID   AS subId
+               ,K.SRC_TYPE AS srcType
+               ,K.KIND     AS kind
+               ,K.TITLE    AS title
+               ,K.BODY     AS body
+               ,K.GO_JSON  AS goJson
+               ,K.REL_IDS  AS relIds
+               ,K.SRC_NM   AS srcNm
+               ,K.DOC_PAGE AS docPage
+               ,K.HIT_CNT  AS hitCnt
+               ,C.CAT_NM   AS catNm
+               ,S.CAT_NM   AS subNm
+          FROM  TBL_QNA_KB K
+          LEFT JOIN TBL_QNA_CAT C ON C.CAT_ID = K.CAT_ID
+          LEFT JOIN TBL_QNA_CAT S ON S.CAT_ID = K.SUB_ID
+         WHERE  K.USE_YN = 'Y'
+        ]]>
+        <if test='kbId != null and kbId != ""'>
+            AND K.KB_ID = #{kbId}
+        </if>
+        <if test='kbCode != null and kbCode != ""'>
+            AND K.KB_CODE = #{kbCode}
+        </if>
+        LIMIT 1
+    </select>
+
+    <!-- 연관 질문(REL_IDS 의 KB_CODE 들) -->
+    <select id="selectQnaRelList" parameterType="java.util.HashMap" resultType="java.util.HashMap"><![CDATA[
+        SELECT  K.KB_ID   AS kbId
+               ,K.KB_CODE AS kbCode
+               ,K.TITLE   AS title
+          FROM  TBL_QNA_KB K
+         WHERE  K.USE_YN = 'Y'
+           AND  FIND_IN_SET(K.KB_CODE, #{relIds}) > 0
+         ORDER BY FIND_IN_SET(K.KB_CODE, #{relIds})
+    ]]>
+    </select>
+
+    <!-- 질문 검색
+         · ngram 전문색인(MATCH…AGAINST)으로 뽑고, 짧은 검색어·조사 변형에 대비해 LIKE 를 함께 건다.
+         · 점수 = 전문색인 + 문장 전체 적중 + <낱말별> 제목/키워드 적중 + 가중치 + 조회수 약간.
+           ★ 낱말별 가산이 핵심이다. "유치도뇨관 14일" 처럼 두 낱말로 물으면 문장 전체 LIKE 는
+             아무 데도 안 걸리고 전문색인 점수만 남아, 본문에 그 말이 많이 나오는 <엉뚱한 항목>이
+             1등이 되곤 했다. 낱말이 제목에 있는 항목을 확실히 끌어올린다.
+         · 가중치는 사내 확정지식 20 · 원문 3~10 — 같은 값이면 위너넷이 확정한 답을 먼저 보여준다. -->
+    <select id="selectQnaSearch" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT  K.KB_ID    AS kbId
+               ,K.KB_CODE  AS kbCode
+               ,K.TITLE    AS title
+               ,IFNULL(NULLIF(K.SHORT_TITLE,''),K.TITLE) AS shortTitle
+               ,K.CAT_ID   AS catId
+               ,K.SRC_TYPE AS srcType
+               ,K.KIND     AS kind
+               ,K.DOC_PAGE AS docPage
+               ,C.CAT_NM   AS catNm
+               ,(   MATCH(K.TITLE,K.KEYWORDS,K.BODY) AGAINST (#{q} IN NATURAL LANGUAGE MODE)
+                  + CASE WHEN K.TITLE     LIKE CONCAT('%',#{q},'%') THEN 14 ELSE 0 END
+                  + CASE WHEN K.KEYWORDS  LIKE CONCAT('%',#{q},'%') THEN  6 ELSE 0 END
+                  + CASE WHEN K.BODY      LIKE CONCAT('%',#{q},'%') THEN  3 ELSE 0 END
+        ]]>
+        <if test="words != null">
+            <foreach collection="words" item="w">
+                <![CDATA[
+                  + CASE WHEN K.TITLE    LIKE CONCAT('%',#{w},'%') THEN 10 ELSE 0 END
+                  + CASE WHEN K.KEYWORDS LIKE CONCAT('%',#{w},'%') THEN  5 ELSE 0 END
+                ]]>
+            </foreach>
+        </if>
+        <![CDATA[
+                  + (K.WEIGHT / 2)
+                  + LEAST(K.HIT_CNT,20) / 10
+                ) AS score
+          FROM  TBL_QNA_KB K
+          LEFT JOIN TBL_QNA_CAT C ON C.CAT_ID = K.CAT_ID
+         WHERE  K.USE_YN = 'Y'
+           AND  ( MATCH(K.TITLE,K.KEYWORDS,K.BODY) AGAINST (#{q} IN NATURAL LANGUAGE MODE)
+               OR K.TITLE    LIKE CONCAT('%',#{q},'%')
+               OR K.KEYWORDS LIKE CONCAT('%',#{q},'%')
+               OR K.BODY     LIKE CONCAT('%',#{q},'%') )
+         ORDER BY score DESC, K.WEIGHT DESC, K.HIT_CNT DESC
+         LIMIT #{listCnt}
+        ]]>
+    </select>
+
+    <!-- 조회수 +1 (자주하는 질문 순위의 근거) -->
+    <update id="updateQnaHit" parameterType="java.util.HashMap"><![CDATA[
+        UPDATE TBL_QNA_KB SET HIT_CNT = HIT_CNT + 1 WHERE KB_ID = #{kbId}
+    ]]>
+    </update>
+
+    <!-- 질문 로그 — MATCH_YN='N' 이 곧 <지식에 없어서 못 답한 질문> 목록이다 -->
+    <insert id="insertQnaLog" parameterType="java.util.HashMap"><![CDATA[
+        INSERT INTO TBL_QNA_LOG (HOSP_CD,USER_ID,Q_TEXT,KB_ID,MATCH_YN,ASK_TYPE)
+        VALUES (#{hospCd},#{userId},#{qText},#{kbId},#{matchYn},#{askType})
+    ]]>
+    </insert>
+
 </mapper>

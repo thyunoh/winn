@@ -61,4 +61,11 @@ public interface MangrService {
 	// 사이트방문문의
 	List<VisitAsqDTO> getVisitAsqList(VisitAsqDTO dto) throws Exception;
 	boolean           updateVisitAsqComform(VisitAsqDTO dto) throws Exception;
+
+	/* 적정성평가 Q&A 챗봇 (2026-08-04) */
+	Map<String,Object>       qnaInit(int topCnt)                                            throws Exception;
+	List<Map<String,Object>> qnaList(String catId, String subId)                            throws Exception;
+	Map<String,Object>       qnaGet(String kbId, String kbCode, String askType,
+	                                String hospCd, String userId, String qText)             throws Exception;
+	Map<String,Object>       qnaSearch(String q, int listCnt, String hospCd, String userId) throws Exception;
 }
