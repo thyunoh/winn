@@ -76,6 +76,20 @@
 							        <li class="nav-item">
 							            <a class="nav-link" id="p-tab" data-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="false" data-type="9">환자평가표</a>
 							        </li>
+							        <%-- 적정성평가 바로가기 (2026-08-05 요청) — 샘파일 올린 뒤 바로 평가 화면으로. 사이드바 <적정성-평가 현황>과 같은 주소 --%>
+							        <style>
+							            /* 누르거나 올렸을 때 진한 초록 채움(btn-outline-success 기본)이 과해서 연한 초록으로 (2026-08-05) */
+							            #btnGoAssessment:hover, #btnGoAssessment:focus, #btnGoAssessment:active{
+							                background:#e6f6ec !important; color:#212529 !important;
+							                border-color:#28a745 !important; box-shadow:none !important;
+							            }
+							        </style>
+							        <li class="nav-item ml-4 d-flex align-items-center">
+							            <a href="/main/assessment.do" class="btn btn-outline-success" id="btnGoAssessment"
+							               style="font-size:13px; font-weight:700; color:#212529; padding:7px 16px;">
+							                <i class="fas fa-clipboard-check mr-1"></i>적정성평가 바로가기
+							            </a>
+							        </li>
 							        <li class="nav-item ml-auto">
 							            <button type="button" class="btn btn-outline-primary btn-sm" id="btnDataVerifyTop" style="font-size:12px; font-weight:600; padding:4px 12px;">
 							                <i class="fa fa-clipboard-check mr-1"></i>데이터검증(오류시)
@@ -645,7 +659,9 @@ $(document).ready(function() {
         loadMonthsData();
     });
 
-    $('#mg_FlagTab a').on('click', function (e) {
+    /* ★탭 전용으로 한정 — '#mg_FlagTab a' 전체로 잡으면 <적정성평가 바로가기> 링크까지
+         preventDefault 로 먹혀서 이동이 안 된다(2026-08-05 실제로 발생, "새로고침만 됨") */
+    $('#mg_FlagTab a[data-toggle="tab"]').on('click', function (e) {
         e.preventDefault();
         $(this).tab('show');
         g_Flag = $(this).data('type');

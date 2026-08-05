@@ -12,7 +12,7 @@
 --%>
 <%-- 빌드 표식 — 화면에 안 보인다(주석). 브라우저에서 Ctrl+U 로 소스를 열어 이 글자를 찾으면
      지금 뜬 화면이 <새 파일인지 옛 화면인지> 바로 안다. 확인이 끝나면 지워도 된다. --%>
-<!-- qnacd-build 2026-08-05g : 검색창 하늘색+ime-mode, IN분류 통합 -->
+<!-- qnacd-build 2026-08-05i : 검색창 실시간 영타→한글 -->
 <link href="/css/winmc/style_comm.css?v=126" rel="stylesheet">
 <script>
   /* 말풍선으로 열렸으면 <그리기 전에> 표시를 붙인다 — 늦게 붙이면 껍데기가 번쩍 보였다 사라진다.
@@ -195,6 +195,7 @@
       <div class="qcard" id="qnaListCard">
         <div id="qnaSearchBox">
           <input type="text" id="qnaQ" placeholder="검색어를 입력하세요… 예) 배뇨일지" autocomplete="off"
+                 oninput="qnaTypeKo(this, event)"
                  onkeydown="if(event.keyCode===13){qnaSearch();return false;}">
           <button type="button" onclick="qnaSearch()">검색</button>
         </div>
@@ -414,7 +415,90 @@
       for (var i=0;i<TOP.length;i++) if (String(TOP[i].kbId) === String(kbId)) TOP[i].hitCnt = (TOP[i].hitCnt||0) + 1;
     }, function(){ el('qnaDoc').innerHTML = '<h3>내용을 불러오지 못했습니다</h3>'; });
   };
-  window.qnaSearch = function(){
+  /* ── 영타 → 한글(두벌식) 자동 변환 (2026-08-05 요청 "클릭하면 한글로 변환") ──
+       크롬은 보안상 웹페이지가 한/영 키 상태를 바꿀 수 없다(ime-mode 미지원, 실제 확인).
+       대신 <영문 그대로 검색해서 결과가 없으면> 두벌식 자판 기준으로 한글로 바꿔 다시 찾는다.
+       예) qosy → 배뇨 · dyrckd → 욕창.  DUR·ADL 같은 진짜 영문 검색은 1차에서 잡히므로 그대로 둔다. */
+  var E2K={q:'ㅂ',Q:'ㅃ',w:'ㅈ',W:'ㅉ',e:'ㄷ',E:'ㄸ',r:'ㄱ',R:'ㄲ',t:'ㅅ',T:'ㅆ',a:'ㅁ',s:'ㄴ',d:'ㅇ',f:'ㄹ',g:'ㅎ',z:'ㅋ',x:'ㅌ',c:'ㅊ',v:'ㅍ',
+           k:'ㅏ',o:'ㅐ',i:'ㅑ',O:'ㅒ',j:'ㅓ',p:'ㅔ',u:'ㅕ',P:'ㅖ',h:'ㅗ',y:'ㅛ',n:'ㅜ',b:'ㅠ',m:'ㅡ',l:'ㅣ'};
+  var CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ',
+      JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ',
+      JONG=' ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+  var VMIX={'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ'};
+  var JMIX={'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ'};
+  var JSPLIT={'ㄳ':'ㄱㅅ','ㄵ':'ㄴㅈ','ㄶ':'ㄴㅎ','ㄺ':'ㄹㄱ','ㄻ':'ㄹㅁ','ㄼ':'ㄹㅂ','ㄽ':'ㄹㅅ','ㄾ':'ㄹㅌ','ㄿ':'ㄹㅍ','ㅀ':'ㄹㅎ','ㅄ':'ㅂㅅ'};
+  function engToKor(s){
+    var out='', cho=-1, jung=-1, jong=0, i, ch, ja;
+    function flush(){
+      if (cho>=0 && jung>=0) out += String.fromCharCode(0xAC00 + (cho*21+jung)*28 + jong);
+      else if (cho>=0) out += CHO.charAt(cho);
+      else if (jung>=0) out += JUNG.charAt(jung);
+      cho=-1; jung=-1; jong=0;
+    }
+    for (i=0;i<s.length;i++){
+      ch = s.charAt(i); ja = E2K[ch] || E2K[ch.toLowerCase()];
+      if (!ja){ flush(); out += ch; continue; }
+      var ci = CHO.indexOf(ja), vi = JUNG.indexOf(ja);
+      if (ci >= 0){                                       /* 자음 */
+        if (cho >= 0 && jung >= 0){                       /* 받침 자리 */
+          if (jong === 0){
+            var gi = JONG.indexOf(ja);
+            if (gi > 0) jong = gi; else { flush(); cho = ci; }   /* ㄸㅃㅉ 는 받침 불가 */
+          } else {
+            var mix = JMIX[JONG.charAt(jong) + ja];
+            if (mix) jong = JONG.indexOf(mix); else { flush(); cho = ci; }
+          }
+        } else { flush(); cho = ci; }                     /* 새 초성 */
+      } else {                                            /* 모음 */
+        if (cho >= 0 && jung >= 0 && jong > 0){           /* 받침을 다음 글자 초성으로 넘긴다 */
+          var jc = JONG.charAt(jong), sp = JSPLIT[jc], mv;
+          if (sp){ jong = JONG.indexOf(sp.charAt(0)); mv = sp.charAt(1); }
+          else { jong = 0; mv = jc; }
+          flush(); cho = CHO.indexOf(mv); jung = vi;
+        } else if (jung >= 0 && jong === 0){              /* 복모음 시도 */
+          var vm = VMIX[JUNG.charAt(jung) + ja];
+          if (vm) jung = JUNG.indexOf(vm); else { flush(); jung = vi; }
+        } else jung = vi;                                 /* 초성 뒤 or 첫 모음 */
+      }
+    }
+    flush();
+    return out;
+  }
+  /* 한글 → 영타 (역변환) — 실시간 변환 때문에 DUR·ADL 같은 영문 검색어가 한글로 바뀌어 버린다.
+       검색 결과가 없으면 이걸로 되돌려 한 번 더 찾는다(예: '역' → 'dur' → DUR 자료 검색됨). */
+  var K2E = {}; (function(){ for (var k in E2K){ if (E2K.hasOwnProperty(k)) K2E[E2K[k]] = k; } })();
+  var VSPLIT = {}; (function(){ for (var v in VMIX){ if (VMIX.hasOwnProperty(v)) VSPLIT[VMIX[v]] = v; } })();
+  function korToEng(s){
+    var out = '', i, c, cd;
+    function jamo(j){
+      if (VSPLIT[j]) { out += K2E[VSPLIT[j].charAt(0)] + K2E[VSPLIT[j].charAt(1)]; }
+      else if (JSPLIT[j]) { out += K2E[JSPLIT[j].charAt(0)] + K2E[JSPLIT[j].charAt(1)]; }
+      else out += (K2E[j] || j);
+    }
+    for (i=0;i<s.length;i++){
+      c = s.charAt(i); cd = s.charCodeAt(i);
+      if (cd >= 0xAC00 && cd <= 0xD7A3){
+        cd -= 0xAC00;
+        jamo(CHO.charAt(Math.floor(cd/588)));
+        jamo(JUNG.charAt(Math.floor(cd%588/28)));
+        if (cd%28) jamo(JONG.charAt(cd%28));
+      } else jamo(c);
+    }
+    return out;
+  }
+  /* ★입력하는 즉시 변환 (2026-08-05 "한글로 안바뀝니다") —
+       검색할 때가 아니라 <칠 때> 바뀌어야 한다. 이 칸에서는 한/영 상태와 무관하게 영타가 한글이 된다.
+       · 진짜 한글 IME 로 치는 중(isComposing)에는 손대지 않는다 — 조합이 깨진다.
+       · DUR 같은 영문 검색은 위 korToEng 되돌림 재검색이 받아 준다. */
+  window.qnaTypeKo = function(inp, ev){
+    if (ev && ev.isComposing) return;
+    var v = inp.value;
+    if (!/[A-Za-z]/.test(v)) return;
+    var k = engToKor(v);
+    if (k !== v) inp.value = k;
+  };
+
+  window.qnaSearch = function(_retry){
     var q = el('qnaQ').value.replace(/^\s+|\s+$/g,'');
     if (!q){ qnaCat(CUR.cat); return; }
     MODE = 'search';
@@ -422,6 +506,15 @@
     el('qnaList').innerHTML = '<div class="empty">찾는 중…</div>';
     post(API.search, { q:q, listCnt:30 }, function(j){
       LIST = j.list || [];
+      /* 못 찾았으면 자판 반대편으로 한 번 더 (재시도 1회 한정 — _retry 로 무한 반복 차단)
+           · 영문뿐 → 두벌식 한글로 (qosy → 배뇨)
+           · 한글 → 영타로 되돌려 (역 → dur : 실시간 한글 변환 때문에 영문 검색어가 바뀐 경우) */
+      if (!LIST.length && !_retry){
+        var alt = '';
+        if (/^[A-Za-z][A-Za-z ]*$/.test(q)) alt = engToKor(q);
+        else if (/[가-힣]/.test(q)) alt = korToEng(q);
+        if (alt && alt !== q){ el('qnaQ').value = alt; window.qnaSearch(1); return; }
+      }
       renderList();
       if (LIST.length) qnaOpen(LIST[0].kbId);       /* 검색은 1등을 바로 펼쳐 준다 */
       else el('qnaDoc').innerHTML = '<h3>등록된 내용에서는 답을 찾지 못했습니다</h3>'

@@ -86,9 +86,13 @@ function loadPage(url) {
        JS로 숨기는 게 아니라 서버에서 include 자체를 건너뛰므로 일반병원에는 버튼이 아예 안 내려간다.
        전원 노출로 바꾸려면 아래 c:if 만 벗기면 된다. --%>
 
-	<c:if test="${cookie.s_wnn_yn != null and cookie.s_wnn_yn.value.trim() eq 'Y'}">
+<%-- 전원 노출로 변경(2026-08-05) — 위너넷 전용으로 되돌리려면 아래 c:if 주석을 벗기면 된다
+<c:if test="${cookie.s_wnn_yn != null and cookie.s_wnn_yn.value.trim() eq 'Y'}">
+--%>
 	 <jsp:include page="/WEB-INF/tiles/main/qnaFloat.jsp" />
+<%--
 	</c:if>
+--%>
 
 </body>
 </html>

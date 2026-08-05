@@ -89,7 +89,10 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav flex-column">
+                <%-- 자주 쓰는 메뉴 (2026-08-05 최종 확정) — 사이드바 탭이 아니라 <화면과 별개의 상단 고정 가로 바>.
+                     관리자(위너넷)에게만 보이고, 접기(›) 상태·클릭수 모두 localStorage(PC별, DB 없음).
+                     아래 #wnnFavBar 마크업·스크립트 참조. 사이드바는 종전 그대로. --%>
+                <ul class="navbar-nav flex-column" id="sbAllMenu">
                     <li class="nav-divider">
                         Menu
                     </li>
@@ -1273,8 +1276,137 @@ document.addEventListener('DOMContentLoaded', function () {
         // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
         var evalRptMenu = document.getElementById("menu-evalreport");
         if (evalRptMenu) evalRptMenu.style.display = "";
+
+        // 자주 쓰는 메뉴 상단 고정 바 — 관리자만 (2026-08-05 최종)
+        sbFavInit();
     }
 });
+
+/* ══ 자주 쓰는 메뉴 — 상단 고정 가로 바 (관리자 전용, 2026-08-05 최종) ══════════
+     · 사이드바 탭 방식은 "클릭해서 선택하기 불편" 하다 하여 폐기 — 화면과 별개로 상단에 <고정> 노출.
+     · 저장 : localStorage 'wnnFavMenu' = { href:{nm,n,t} } / 접기 'wnnFavBarFold' — PC별, DB 없음.
+     · 표시 : 클릭수 많은 순 → 최근 클릭 순 최대 7개. 시딩 없음(실제로 쓴 메뉴만).
+     · 접기 : › 단추로 바를 접으면 동그란 ‹ 단추만 남는다(참고 이미지의 접힘 화살표와 동일 발상). */
+var SB_FAV_KEY = 'wnnFavMenu', SB_FAV_MAX = 5;
+/* ★고정 규칙 (2026-08-05 확정) — <먼저 들어온 5개가 고정>.
+     5칸이 차면 새 메뉴를 아무리 써도 안 들어온다. 관리자가 × 로 빼서 자리를 비워야 다음 메뉴가 들어온다.
+     자리 순서도 등록순 그대로 고정(사용횟수로 자리가 안 바뀜) — 횟수는 툴팁 참고용으로만 계속 센다. */
+function sbFavLoad(){ try{ return JSON.parse(localStorage.getItem(SB_FAV_KEY)) || null; }catch(e){ return null; } }
+function sbFavSave(m){ try{ localStorage.setItem(SB_FAV_KEY, JSON.stringify(m)); }catch(e){} }
+/* 메뉴 사용 반영 — 이미 등록된 건 횟수만 +1, 빈자리가 있을 때만 새로 등록 */
+function sbFavHit(href, nm){
+    var mm = sbFavLoad() || {}, k, cnt = 0, maxOrd = 0;
+    if (mm[href]){ mm[href].nm = nm || mm[href].nm; mm[href].n = (mm[href].n||0) + 1; mm[href].t = Date.now(); sbFavSave(mm); return; }
+    for (k in mm){ if (mm.hasOwnProperty(k)){ cnt++; if ((mm[k].o||0) > maxOrd) maxOrd = mm[k].o||0; } }
+    if (cnt >= SB_FAV_MAX) return;                 /* 꽉 참 — 고정, 새로 안 들어옴 */
+    mm[href] = { nm:nm, n:1, t:Date.now(), o:maxOrd + 1 };
+    sbFavSave(mm);
+}
+function sbFavInit(){
+    /* 저장값 정돈 — 옛(순위 변동) 방식 데이터를 고정 방식으로 1회 이행:
+         n=0 잔재 제거 → 많이 쓴 순으로 5개만 남기고 등록순번(o) 부여 */
+    var m0 = sbFavLoad();
+    if (m0){
+        var arr0 = [], k0, needOrd = false;
+        for (k0 in m0){ if (m0.hasOwnProperty(k0)){
+            if (!(m0[k0].n > 0)){ continue; }
+            if (!m0[k0].o) needOrd = true;
+            arr0.push({ href:k0, v:m0[k0] });
+        } }
+        if (needOrd || arr0.length > SB_FAV_MAX){
+            arr0.sort(function(a,b){ return (a.v.o||999) - (b.v.o||999) || (b.v.n-a.v.n) || (b.v.t-a.v.t); });
+            arr0 = arr0.slice(0, SB_FAV_MAX);
+            var nm0 = {};
+            for (var i0=0;i0<arr0.length;i0++){ arr0[i0].v.o = i0+1; nm0[arr0[i0].href] = arr0[i0].v; }
+            sbFavSave(nm0);
+        } else if (arr0.length !== Object.keys(m0).length){
+            var nm1 = {}; for (var j0=0;j0<arr0.length;j0++) nm1[arr0[j0].href] = arr0[j0].v;
+            sbFavSave(nm1);
+        }
+    }
+    /* 사이드바 메뉴 클릭 반영 — 진짜 화면 이동 링크(href가 /로 시작)만 */
+    document.querySelectorAll('#sbAllMenu a.nav-link').forEach(function(a){
+        var href = a.getAttribute('href') || '';
+        if (href.charAt(0) !== '/') return;
+        a.addEventListener('click', function(){
+            sbFavHit(href, (a.textContent || '').replace(/\s+/g,' ').trim());
+        });
+    });
+    /* 바 골격을 body 에 직접 붙인다 — 어떤 화면 컨테이너의 영향도 받지 않게(fixed) */
+    var bar = document.createElement('div');
+    bar.id = 'wnnFavBar';
+    bar.innerHTML =
+        '<style>'
+      + '#wnnFavBar{ position:fixed; top:66px; right:14px; z-index:11000;'   /* 우측 끝 고정(2026-08-05 요청) */
+      + '  display:flex; align-items:center; gap:4px; padding:4px 6px 4px 10px; background:#fff;'
+      + '  border:1px solid #bcd3f2; border-radius:20px; box-shadow:0 2px 8px rgba(23,70,162,.13);'
+      + '  font-family:"Noto Sans KR","Malgun Gothic",sans-serif; white-space:nowrap; }'
+      + '#wnnFavBar .fv-tt{ font-size:11.5px; font-weight:800; color:#1746a2; margin-right:2px; }'
+      + '#wnnFavBar a.fv{ display:inline-block; padding:3px 10px; border-radius:14px; font-size:12.5px; font-weight:700;'
+      + '  color:#3b4a5c; text-decoration:none; background:#f4f8fd; border:1px solid #e3ebf5; }'
+      + '#wnnFavBar a.fv:hover{ background:#e8f1fd; color:#1746a2; border-color:#5b8def; }'
+      + '#wnnFavBar a.fv.on{ background:#e8f1fd; color:#1746a2; border-color:#1746a2; }'
+      + '#wnnFavBar .fv-x{ display:inline-block; margin-left:5px; color:#c0ccdb; font-weight:800; cursor:pointer; }'
+      + '#wnnFavBar .fv-x:hover{ color:#e2564a; }'
+      + '#wnnFavBar .fv-hint{ font-size:12px; color:#a3b2c5; padding:2px 6px; }'
+      + '#wnnFavBar .fv-fold{ flex:0 0 auto; width:22px; height:22px; border:none; border-radius:50%;'
+      + '  background:#1f6feb; color:#fff; font-weight:800; cursor:pointer; line-height:1; font-size:12px; }'
+      + '#wnnFavBar.fold{ padding:4px; left:auto; right:14px; transform:none; }'   /* 접으면 우측 구석의 단추만 */
+      + '#wnnFavBar.fold .fv-tt, #wnnFavBar.fold a.fv, #wnnFavBar.fold .fv-hint{ display:none; }'
+      + '</style>'
+      + '<span class="fv-tt">★ 자주 쓰는 메뉴</span>'
+      + '<span id="wnnFavItems"></span>'
+      + '<button type="button" class="fv-fold" id="wnnFavFold" title="자주 쓰는 메뉴 접기">›</button>';
+    document.body.appendChild(bar);
+    document.getElementById('wnnFavFold').addEventListener('click', function(){
+        var fold = bar.className.indexOf('fold') < 0;
+        bar.className = fold ? 'fold' : '';
+        this.innerHTML = fold ? '‹' : '›';
+        /* 접힌 동그라미가 뭔지 알 수 있게 툴팁으로 알려준다 (2026-08-05 요청 "팁으로 자주쓰는메뉴도 추가") */
+        this.title = fold ? '자주 쓰는 메뉴 펼치기' : '자주 쓰는 메뉴 접기';
+        try{ localStorage.setItem('wnnFavBarFold', fold ? 'Y' : 'N'); }catch(e){}
+    });
+    var f = '';
+    try{ f = localStorage.getItem('wnnFavBarFold') || ''; }catch(e){}
+    if (f === 'Y'){ bar.className = 'fold';
+        var fb = document.getElementById('wnnFavFold');
+        fb.innerHTML = '‹'; fb.title = '자주 쓰는 메뉴 펼치기';
+    }
+    sbFavRender();
+}
+function sbFavRender(){
+    var m = sbFavLoad() || {}, arr = [], k;
+    for (k in m){ if (m.hasOwnProperty(k)) arr.push({ href:k, nm:m[k].nm, n:m[k].n||0, t:m[k].t||0, o:m[k].o||999 }); }
+    arr.sort(function(a,b){ return a.o - b.o; });   /* 등록순 고정 — 사용횟수로 자리 안 바뀜 */
+    arr = arr.slice(0, SB_FAV_MAX);
+    /* 지금 떠 있는 화면 표시(on) — 주소는 dashboard.do 로 숨겨지므로 _realPath 로 판별(메모리 규칙) */
+    var cur = '';
+    try{ cur = (sessionStorage.getItem('_realPath') || location.pathname).split('?')[0]; }catch(e){}
+    var h = '';
+    if (!arr.length) h = '<span class="fv-hint">메뉴를 사용하면 여기에 자동으로 쌓입니다</span>';
+    for (var i=0;i<arr.length;i++){
+        h += '<a class="fv' + (cur === arr[i].href ? ' on' : '') + '" href="' + arr[i].href + '"'
+           + ' onclick="sbFavGo(this)" title="' + (arr[i].n||0) + '회 사용">' + arr[i].nm
+           + '<span class="fv-x" title="자주 쓰는 메뉴에서 빼기" onclick="return sbFavDel(event, this)">×</span></a>';
+    }
+    var box = document.getElementById('wnnFavItems');
+    if (box) box.innerHTML = h;
+}
+/* 바에서 실행 — 클릭수만 쌓고 href 기본 동작으로 자연스럽게 이동 */
+function sbFavGo(a){
+    var href = a.getAttribute('href') || '';
+    var mm = sbFavLoad() || {};
+    if (mm[href]){ mm[href].n = (mm[href].n||0) + 1; mm[href].t = Date.now(); sbFavSave(mm); }
+}
+/* × 로 해당 메뉴 빼기 — 이동은 막고 저장에서 지운 뒤 다시 그린다 (2026-08-05 요청) */
+function sbFavDel(e, x){
+    if (e){ e.preventDefault(); e.stopPropagation(); }
+    var a = x.parentNode, href = a.getAttribute('href') || '';
+    var mm = sbFavLoad() || {};
+    if (mm[href]){ delete mm[href]; sbFavSave(mm); }
+    sbFavRender();
+    return false;
+}
 
 // ====== 파일업로드 관련 함수 ======
 var asqSelectedFiles = new DataTransfer();

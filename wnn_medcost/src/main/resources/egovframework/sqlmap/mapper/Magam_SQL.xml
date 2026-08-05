@@ -3657,33 +3657,10 @@
 
 		UNION ALL
 
-		  -- [평가구분 오류 A4] 평가구분 1·입원평가인데 당월 입원환자가 아닌 경우
-		  --   TBL_IPWON_INFO 에 당월(JOBYYMM) 입원 기록 없음 + evalType='1'
-		  SELECT DISTINCT
-		         LEFT(A.PAT_ID,6)                                  AS patId
-		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
-		              ELSE '' END                                 AS patNm
-		       , A.ADMIT_DT                                        AS admitDt
-		       , A.MED_START                                       AS medStart
-		       , A.DOC_DT                                          AS docDt
-		       , A.EVAL_TYPE                                       AS evalType
-		       , A.PAT_CLASS                                       AS patClass
-		       , A.INDWELL_CATH                                    AS indwellCath
-		       , 'A4'                                              AS errType
-		       , '평가구분이 1·입원평가이나 당월 입원환자 명단(TBL_IPWON_INFO)에 해당 환자가 없는 경우 (입원 사실 확인 필요)' AS errName
-		    FROM TBL_PATVAL_MST A
-		   WHERE A.HOSP_CD = #{hospCd}
-		     AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
-		     AND A.EVAL_TYPE = '1'
-		     AND NOT EXISTS (
-		           SELECT 1 FROM TBL_IPWON_INFO I
-		            WHERE I.HOSP_CD = A.HOSP_CD
-		              AND I.JOBYYMM = #{jobYymm}
-		              AND LEFT(COALESCE(I.JUMINNO,''),6) = LEFT(A.PAT_ID,6)
-		         )
+		  <!-- [평가구분 오류 A4] 는 2026-08-05 삭제 —
+		       "입원평가인데 입원현황 명단에 없음" 점검인데, 입원환자명단을 안 올리고 평가표만 올리는
+		       기관에서 전부 A4 로 떠서 문의 전화가 몰림(위너넷 담당자 요청). 되살리려면 git 이력 참조. -->
 
-		UNION ALL
 
 		  -- [평가구분 오류 A5] 평가구분 1·입원평가인데 당월 이미 입원평가(evalType='1')가 존재 → 중복 체크
 		  --   같은 환자(PAT_ID, ADMIT_DT)에 대해 당월 evalType='1' 행이 2건 이상
