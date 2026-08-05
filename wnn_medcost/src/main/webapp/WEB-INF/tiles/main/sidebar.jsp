@@ -311,11 +311,10 @@
                     <li class="nav-item" id="adminVisitAsqMenu" style="display:none;">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/visitasq.do"><i class="fas fa-building"></i>관리자 1:1 상담하기</a>
                     </li>
-                    <%-- 적정성평가 Q&A 자료 (2026-08-04) — 위너넷 담당자 전용.
-                         우측하단 플로팅 챗과 같은 지식(TBL_QNA_KB)을 화면 전체로 펼쳐 찾아보는 화면이다. --%>
-                    <li class="nav-item" id="adminQnaMenu" style="display:none;">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/mangr/qnacd.do"><i class="fas fa-book-open"></i>적정성평가 Q&amp;A 자료</a>
-                    </li>
+                    <%-- [적정성평가 Q&A 자료] 메뉴는 2026-08-05 사용자 요청으로 <내렸다> —
+                         종전처럼 우측하단 <말풍선>(tiles/main/qnaChat.jsp, main.jsp 에서 include)으로 되돌렸다.
+                         화면(/mangr/qnacd.do)과 서버 API 는 그대로 살아 있어 주소로는 들어갈 수 있다.
+                         메뉴를 되살리려면 이 자리에 li#adminQnaMenu 를 다시 넣고 아래 표시 스크립트도 같이 살린다. --%>
                     <!-- 진료비 분석 보고서 -->
                     <li class="nav-item menu-section" id="menu-g">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#management" aria-controls="management">
@@ -1265,11 +1264,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
         
-        // 적정성평가 Q&A 자료 — 위너넷 담당자 전용(2026-08-04)
-        var adminQna = document.getElementById("adminQnaMenu");
-        if (adminQna) adminQna.style.display = "";
+        // [적정성평가 Q&A 자료] 메뉴 표시 처리는 2026-08-05 제거 — 말풍선(qnaChat.jsp)으로 되돌아갔다.
 
-        // 청구·평가 업로드(현황) — 위너넷 담당자 전용(2026-08-05)
+        // 샘파일 업로드 현황 — 위너넷 담당자 전용(2026-08-05)
         var adminUpStat = document.getElementById("adminUploadStatMenu");
         if (adminUpStat) adminUpStat.style.display = "";
         

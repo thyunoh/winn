@@ -10,16 +10,56 @@
     · 메뉴: 사이드바 <적정성평가 Q&A 자료> — 위너넷(s_wnn_yn='Y') 에게만 보인다.
     · 지식을 고치려면 TBL_QNA_KB 를 수정하면 된다(화면 배포 불필요).
 --%>
+<%-- 빌드 표식 — 화면에 안 보인다(주석). 브라우저에서 Ctrl+U 로 소스를 열어 이 글자를 찾으면
+     지금 뜬 화면이 <새 파일인지 옛 화면인지> 바로 안다. 확인이 끝나면 지워도 된다. --%>
+<!-- qnacd-build 2026-08-05e : pop mode by window.name -->
 <link href="/css/winmc/style_comm.css?v=126" rel="stylesheet">
+<script>
+  /* 말풍선으로 열렸으면 <그리기 전에> 표시를 붙인다 — 늦게 붙이면 껍데기가 번쩍 보였다 사라진다.
+     ★판별은 location.search 로 하면 안 된다 (2026-08-05 실제로 당함) —
+       head.jsp 의 <주소 숨김> 스크립트가 본문보다 먼저 돌면서 주소를 /user/dashboard.do 로
+       바꿔 버려, 여기서는 ?pop=1 이 이미 지워져 있다. 대신 두 가지를 본다:
+       ① window.name — 말풍선이 창 이름을 'wnnQnaDoc' 으로 고정해 연다. 주소 숨김의 영향을 안 받는다.
+       ② sessionStorage._realPath — 주소 숨김 스크립트가 지우기 <전의 진짜 주소>를 저장해 둔 값. */
+  try{
+    var _rp = '';
+    try{ _rp = sessionStorage.getItem('_realPath') || ''; }catch(ig){}
+    if (window.name === 'wnnQnaDoc' || /[?&]pop=1/.test(location.search) || /[?&]pop=1/.test(_rp))
+      document.body.className += ' qna-pop';
+  }catch(e){}
+</script>
 <style>
   /* 화면 높이를 꽉 채운다 — 목록이 길어 스크롤이 화면 안에서 돌아야 한다 */
   /* ★기준 글자크기 — 안쪽 글자는 전부 em 이라 이 값만 바꾸면 화면 전체가 같이 커진다.
        2026-08-04 사용자 요청 "표시화면 조금만 확대" 로 13.5px → 14.6px.
        더 키우거나 줄이는 것은 답변 머리줄의 가－ / 가＋ 로 (아래 QNA_FS 와 같은 값 유지). */
   /* height 는 아래 fitHeight() 가 <실측>으로 다시 잡는다. 여기 값은 그 전까지 쓰는 초기값.
-     margin-right 음수 = 감싸는 컨테이너(.dashboard-content)의 우측 여백을 그만큼 파고들어
-     표시 영역을 오른쪽으로 넓힌 것(2026-08-04 사용자 요청 "우측 0.3cm 확대"). 이 화면에만 적용된다. */
-  #qnaWrap{ display:flex; gap:12px; height:calc(100vh - 165px); min-height:360px; margin-right:-12px;
+     ★우측 여백 제거는 <이 style 블록에서 !important 로> 해야 한다 (2026-08-05) —
+       winn-notebook.css 가 `body .dashboard-content{ padding:… !important }` 를 폭 ≤1500px·높이 ≤900px 에
+       걸어 두었다. inline style 은 !important 선언을 <이기지 못한다> — 그래서 컨테이너에 직접 써 넣어도
+       팝업(1500×950)에서는 그대로 여백이 남았다(실제로 겪음). 같은 특이성이라도 나중에 선언한 쪽이 이기므로
+       화면 자체 style 에 !important 로 적는다.
+     ★우측 여백은 <감싸는 컨테이너에서> 없앤다 (2026-08-05 요청 "우측까지 꽉차야 합니다") —
+       .dashboard-content 의 padding-right(기본 30px · 노트북 14px · 좁은 화면 10px)가 남아 답변 칸
+       오른쪽에 흰 띠가 생겼다. 종전엔 margin-right:-12px 로 그만큼만 파고들었는데(2026-08-04 "우측 0.3cm 확대"),
+       화면 폭에 따라 여백 값이 달라져 딱 맞지 않는다. 아래 컨테이너 inline style 에 padding-right:0 을 주고
+       여기 음수 마진은 0 으로 되돌렸다 — 어느 폭에서도 오른쪽 끝까지 찬다. */
+  /* 이 화면에서만 오른쪽 여백 0 — 위 주석대로 !important 가 필요하다(노트북 CSS 를 이겨야 한다) */
+  body .container-fluid.dashboard-content{ padding-right:0 !important; }
+
+  /* ── 팝업(말풍선)으로 열렸을 때 : Q&A 만 꽉 차게 (2026-08-05 요청 "해당 화면만 떠야") ──
+       말풍선이 ?pop=1 을 붙여 연다. 그때 body 에 qna-pop 클래스가 붙고(아래 스크립트),
+       상단바·좌측메뉴·하단 알림바를 감춰 <이 화면 하나>만 전폭·전高로 쓴다.
+       ★tiles 레이아웃(자바·뷰정의)은 건드리지 않았다 — 같은 화면이 메뉴로도(주소 직접) 열릴 수 있어
+         화면 쪽에서 모드만 가르는 것이 안전하다. !important 는 테마가 margin-left 를 세게 잡고 있어서다. */
+  body.qna-pop .dashboard-header, body.qna-pop #dashboard-header,
+  body.qna-pop .nav-left-sidebar,
+  body.qna-pop #todayAsqBar{ display:none !important; }   /* 하단 질문등록 알림바 */
+  body.qna-pop .dashboard-wrapper, body.qna-pop .dashboard-main-wrapper .main-content{ margin-left:0 !important; }
+  body.qna-pop .container-fluid.dashboard-content{ padding:10px 0 8px 12px !important; }
+  /* 높이는 !important 를 붙이지 않는다 — 실측(fitHeight)이 inline 으로 다시 잡는데, !important 면 그걸 이겨 버린다 */
+  body.qna-pop #qnaWrap{ height:calc(100vh - 60px); }   /* 첫 그림용 초기값 */
+  #qnaWrap{ display:flex; gap:12px; height:calc(100vh - 165px); min-height:360px; margin-right:0;
             font-family:"Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif; color:#28323c; font-size:14.6px; }
   #qnaWrap .qcard{ background:#fff; border:1px solid #e3ebf5; border-radius:12px; display:flex; flex-direction:column;
                    min-height:0; overflow:hidden; box-shadow:0 1px 3px rgba(23,70,162,.05); }
@@ -138,7 +178,8 @@
 </style>
 
 <div class="dashboard-wrapper">
-  <div class="container-fluid dashboard-content" style="padding-bottom:8px;">
+  <%-- padding-right:0 = 3단이 화면 오른쪽 끝까지 차게 (2026-08-05). 이 화면에만 준다 --%>
+  <div class="container-fluid dashboard-content" style="padding-bottom:8px; padding-right:0;">
     <div id="qnaWrap">
 
       <div class="qcard" id="qnaCatCard">

@@ -78,11 +78,17 @@ function loadPage(url) {
 
 </script>
 
-<%-- 적정성평가 Q&A — 우측하단 플로팅 챗은 2026-08-04 <제거>했다(사용자 요청).
-     같은 지식(TBL_QNA_KB)을 화면 전체로 펼쳐 보는 메뉴 화면으로 대체됨:
-       사이드바 [적정성평가 Q&A 자료] → /mangr/qnacd.do (위너넷 전용, sidebar.jsp #adminQnaMenu)
-     종전 플로팅 파일 tiles/main/qnaChat.jsp 도 함께 삭제했다(되살리려면 git 이력에서 꺼내
-     여기에 include 한 줄을 다시 넣으면 된다 — 서버 API 는 그대로 살아 있다). --%>
+<%-- 적정성평가 Q&A — 전 화면 우측하단 <말풍선>. 여기 한 줄이면 .main/* 전 화면에 붙는다.
+     ★2026-08-05 정리 : 말풍선을 되살리되 <누르면 Q&A 자료 화면(/mangr/qnacd.do)이 뜬다>(사용자 확정).
+       종전 채팅 UI(qnaChat.jsp)는 쓰지 않는다 — 파일은 남겨 두었으니 되살리려면 아래 include 만 바꾸면 된다.
+       사이드바의 [적정성평가 Q&A 자료] 메뉴는 같은 날 내렸다(말풍선과 두 벌이 되지 않게).
+     ★위너넷 전용 — 판별은 다른 화면들과 같이 s_wnn_yn 쿠키(=TBL_HOSP_MST.WINNER_YN) 하나만 본다.
+       JS로 숨기는 게 아니라 서버에서 include 자체를 건너뛰므로 일반병원에는 버튼이 아예 안 내려간다.
+       전원 노출로 바꾸려면 아래 c:if 만 벗기면 된다. --%>
+
+	<c:if test="${cookie.s_wnn_yn != null and cookie.s_wnn_yn.value.trim() eq 'Y'}">
+	 <jsp:include page="/WEB-INF/tiles/main/qnaFloat.jsp" />
+	</c:if>
 
 </body>
 </html>

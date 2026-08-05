@@ -97,6 +97,8 @@
   #usTable .gb2{ color:#c2410c; font-weight:800; }
   #usTable .gb3{ color:#1f5a4b; font-weight:800; }
   #usTable td.hosp{ font-weight:800; color:#1f5a4b; }
+  /* 월(·병원)이 바뀌는 줄 — 굵은 선으로 끊어 준다 (2026-08-05 요청 "월별 구분 표시") */
+  #usTable tbody tr.us-mline > td{ border-top:2px solid #b9cfc8 !important; }
   #usTable td.num{ text-align:right; }
   #usTable td.file{ text-align:left; color:#54636c; }
   /* 두 번 이상 올린 달 — 이력과 실제 건수가 어긋나 보이는 자리라 눈에 띄게 */
@@ -359,17 +361,23 @@
          ★그릴 때마다 다시 계산한다 — 정렬·검색으로 차례가 바뀌어도 묶음이 어긋나지 않는다.
          ★내려받기(복사·엑셀·출력)는 화면이 아니라 <자료>를 쓰므로 병원명이 모든 줄에 그대로 들어간다. */
       drawCallback: function(){
-        var api = this.api(), prev = null;
+        var api = this.api(), prev = null, prevYm = null;
         /* ★반드시 <자료>에서 이름을 다시 읽어 넣는다. 화면 글자를 보고 판단하면,
              한 번 비운 칸이 그대로 남아 있어(그리드가 줄을 다시 만들지 않는다)
              정렬을 바꾸는 순간 병원명이 통째로 사라진다 — 실제로 겪었다(2026-08-05). */
         usFit();                                      /* 그릴 때마다 표 높이를 화면에 맞춘다 */
         api.rows({ page:'current', order:'applied', search:'applied' }).every(function(){
-          var d = this.data() || {}, nm = String(d.hospNm || d.hospCd || '');
-          var td = $(this.node()).find('td.hosp').first();
+          var d = this.data() || {}, nm = String(d.hospNm || d.hospCd || ''), ymv = String(d.ym || '');
+          var tr = $(this.node()), td = tr.find('td.hosp').first();
           if (!td.length) return;
-          if (nm === prev) td.text('').addClass('hosp-cont');
-          else { td.text(nm).removeClass('hosp-cont'); prev = nm; }
+          /* 월(또는 병원)이 바뀌는 첫 줄에 구분선 — 한 병원에서 월이 여러 개 이어질 때
+             어디서 달이 바뀌는지 눈으로 끊어 보게 한다(2026-08-05 요청 "월별 구분 표시").
+             맨 첫 줄에는 선을 긋지 않는다(머리글과 붙어 두 줄로 보인다). */
+          var newHosp = (nm !== prev), newYm = (newHosp || ymv !== prevYm);
+          tr.toggleClass('us-mline', !!(newYm && prevYm !== null));
+          if (newHosp){ td.text(nm).removeClass('hosp-cont'); prev = nm; }
+          else        { td.text('').addClass('hosp-cont'); }
+          prevYm = ymv;
         });
       }
     });
