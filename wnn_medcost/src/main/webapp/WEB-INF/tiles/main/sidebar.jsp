@@ -105,6 +105,12 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/main/magamFileUpload.do">청구.평가 업로드</a>
                                 </li>
+                                <%-- 청구·평가 업로드(현황) — 위너넷 관리자 전용(2026-08-05 요청).
+                                     기본은 숨김(display:none), 아래 스크립트가 s_wnn_yn='Y' 일 때만 보인다.
+                                     ※ 메뉴만 감추면 주소를 직접 쳐서 들어올 수 있어 컨트롤러에서도 막아 두었다. --%>
+                                <li class="nav-item" id="adminUploadStatMenu" style="display:none;">
+                                    <a class="nav-item nav-link"  href="/main/uploadStat.do">샘파일 업로드 현황</a>
+                                </li>
                                 <li class="nav-item">
                               <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" 
                                 data-target="#lic_excel" aria-controls="lic_excel">기타.자료 업로드
@@ -1262,6 +1268,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // 적정성평가 Q&A 자료 — 위너넷 담당자 전용(2026-08-04)
         var adminQna = document.getElementById("adminQnaMenu");
         if (adminQna) adminQna.style.display = "";
+
+        // 청구·평가 업로드(현황) — 위너넷 담당자 전용(2026-08-05)
+        var adminUpStat = document.getElementById("adminUploadStatMenu");
+        if (adminUpStat) adminUpStat.style.display = "";
         
         // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
         var evalRptMenu = document.getElementById("menu-evalreport");

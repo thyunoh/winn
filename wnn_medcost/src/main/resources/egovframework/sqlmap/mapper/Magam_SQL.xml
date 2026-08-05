@@ -6185,4 +6185,149 @@
 		 ORDER BY targetGb ASC, totalScore DESC
 	</select>
 
+	<!-- ══ 청구·평가 업로드(현황) — 2026-08-05 요청 ═══════════════════════════════
+	     위너넷 관리자용. <병원 · 월 · 유형 · 구분 · 건수 · 청구금액>으로 본다.
+	       · 병원 전체 : 연도(+월)로 걸러 <병원별로 한 줄씩> 준다. ★합산이 아니다 —
+	                     "그 병원이 얼마나 올렸는지"를 보는 화면이라 병원을 뭉치면 안 된다(2026-08-05 지적).
+	       · 병원 지정 : 그 병원의 그 해 자료를 최근 월부터
+	     ★기준은 <지금 살아 있는 자료>다(업로드 이력이 아니다).
+	       재업로드하면 청구서는 옛 자료가 지워지는데, 이력(TBL_MAGAM_CHUNG)에는 지운 것도 남아 있어
+	       202605 를 예로 이력 7,432건 / 실제 7,246건으로 어긋난다(2026-08-05 실측). 현황이므로 실제를 쓴다.
+	     · 청구서   : TBL_CHUNG_MST — 진료년월 DATE_YM, 건수 SUM(CASE_CNT), 금액 SUM(CLAIM_AMT).
+	                  유형은 INSUR_TYPE(공통코드 INSUR_TYPE) — 4=건강보험 / 1·2=의료급여.
+	     · 환자평가표: TBL_PATVAL_MST 를 업로드묶음(TBL_MAGAM_CHUNG MG_FLAG='9')에 작업키로 붙여
+	                  <진료년월>을 얻는다. PATVAL 자체에는 진료년월이 없다(MED_START 는 요양개시일이라 다른 값).
+	                  보험유형이 없는 자료라 유형은 '-', 금액도 없다.
+	                  (묶음이 사라진 옛 행 1,429/142,441 은 월을 알 수 없어 빠진다 — 2026-08-05 실측)
+	     · 입퇴원현황: TBL_IPWON_INFO — 작업년월 JOBYYMM, 건수 COUNT(*), 금액 없음.
+	                  유형은 병원이 적어 보낸 글자(INSURNM)라 표기가 제각각이다 → 건강보험/의료급여/기타로 모은다.
+	     ※ hospCd 가 오면 그 병원만. mgMonth('01'~'12')가 오면 그 달만(전체 병원을 한 달로 훑을 때 쓴다).
+	     ※ 병원명은 스칼라 하위조회로 붙인다 — TBL_HOSP_MST 는 한 병원에 계약 이력이 여러 줄이라
+	       (120줄/89병원, 최대 9줄) 그냥 조인하면 줄이 불어난다. 활성행(ACTION_YN='Y') 우선, 없으면 최신 JOB_SEQ. -->
+	<select id="select_UploadStat" parameterType="map" resultType="java.util.HashMap">
+		<!-- ══ 바깥 껍데기 : 집계된 줄에 <업로드 이력 정보>를 붙인다 (2026-08-05 요청 "자료올리기 내용 그대로") ══
+		     건수·금액은 <살아 있는 자료>(191건 기준) 그대로 두고, 그 자료가 <언제·누가·무슨 파일로> 올라왔는지만 얹는다.
+		     · 올린횟수 : 그 달에 같은 종류로 올린 묶음 수 (강남수 2026-07 평가표라면 4회)
+		     · 최근작업 : 마지막 묶음의 작업일시·작업자·파일명
+		     ★종류별 MG_FLAG — 8:청구서 / 9:평가표 / Z:엑셀류.
+		       Z 는 입퇴원(CLAIM_NO='0000000000')과 수가(…'0000000001')가 섞여 있어 입퇴원만 골라낸다(실측 확인). -->
+		<!-- ★업로드 이력은 <한 번에 모아> 붙인다. 줄마다 상관 서브쿼리를 돌리면 병원 수만큼 곱해져 느려진다.
+		       '마지막 묶음의 값'은 GROUP_CONCAT(… ORDER BY REG_DTTM DESC) 의 첫 조각으로 꺼낸다
+		       (MAX 로는 '가장 늦은 줄의 파일명'을 집을 수 없다 — 글자 크기 비교가 되어 버린다). -->
+		SELECT g.*
+		     , IFNULL(up.upCnt, 0)                        AS upCnt
+		     , up.lastDt                                  AS lastDt
+		     , up.lastVer                                 AS lastVer
+		     , up.lastKey                                 AS lastKey
+		     , up.lastFile                                AS lastFile
+		     <!-- ★작업자 이름은 <조인하지 말 것>. TBL_USER_MST 는 (병원 × 아이디) 라 'admin' 처럼 여러 병원에
+		            같은 아이디가 있어, 조인하면 줄이 통째로 불어난다(2026-06 전체가 225줄 → 728줄 되는 것을 실측).
+		            같은 병원 사용자를 먼저 찾고, 없으면 아무 병원에서나, 그것도 없으면 아이디를 그대로 보여 준다. -->
+		     , IFNULL( ( SELECT s.USER_NM FROM TBL_USER_MST s
+		                  WHERE s.USER_ID = up.lastUserId
+		                  ORDER BY (s.HOSP_CD = g.hospCd) DESC LIMIT 1 ), up.lastUserId ) AS lastUser
+		  FROM (
+		SELECT t.HOSP_CD     AS hospCd
+		     , ( SELECT h.HOSP_NM FROM TBL_HOSP_MST h
+		          WHERE h.HOSP_CD = t.HOSP_CD
+		          ORDER BY (h.ACTION_YN = 'Y') DESC, h.JOB_SEQ DESC LIMIT 1 ) AS hospNm
+		     , t.YM          AS ym
+		     , t.GB_ORD      AS gbOrd
+		     , t.GUBUN       AS gubun
+		     , t.INSUR_NM    AS insurNm
+		     , SUM(t.CNT)    AS cnt
+		     , SUM(t.TOT)    AS totAmt
+		     , SUM(t.AMT)    AS amt
+		  FROM (
+		        <![CDATA[
+		        /* ① 청구서 */
+		        SELECT c.HOSP_CD, c.DATE_YM AS YM, 1 AS GB_ORD, '청구서' AS GUBUN
+		             , CASE WHEN c.INSUR_TYPE = '4'            THEN '건강보험'
+		                    WHEN c.INSUR_TYPE IN ('1','2')     THEN '의료급여'
+		                    WHEN c.INSUR_TYPE = '7'            THEN '보훈'
+		                    WHEN c.INSUR_TYPE = '8'            THEN '자동차보험'
+		                    WHEN c.INSUR_TYPE = '9'            THEN '산재보험'
+		                    ELSE '기타' END                    AS INSUR_NM
+		             , SUM(c.CASE_CNT)  AS CNT
+		             , SUM(c.TOT_AMT)   AS TOT   /* 총진료비 — 자료올리기 그리드의 그 값과 같은 칸(실측 대조 완료) */
+		             , SUM(c.CLAIM_AMT) AS AMT
+		          FROM TBL_CHUNG_MST c
+		         WHERE LEFT(c.DATE_YM, 4) = #{mgYear}
+		           AND (c.DEL_YN <> 'Y' OR c.DEL_YN IS NULL)
+		        ]]>
+		        <if test="hospCd != null and hospCd != ''"> AND c.HOSP_CD = #{hospCd} </if>
+		        <if test="mgMonth != null and mgMonth != ''"> AND c.DATE_YM = CONCAT(#{mgYear}, #{mgMonth}) </if>
+		         GROUP BY c.HOSP_CD, c.DATE_YM, INSUR_NM
+
+		         UNION ALL
+
+		        /* ② 환자평가표 — 업로드묶음에 붙여 진료년월을 얻는다 */
+		        SELECT p.HOSP_CD, m.DATE_YM AS YM, 2 AS GB_ORD, '환자평가표' AS GUBUN
+		             , '-' AS INSUR_NM
+		             , COUNT(*) AS CNT
+		             , 0        AS TOT      /* 평가표는 금액이 없는 자료 */
+		             , 0        AS AMT
+		          FROM TBL_PATVAL_MST p
+		          JOIN TBL_MAGAM_CHUNG m
+		            ON m.MG_FLAG  = '9'
+		           AND m.HOSP_CD  = p.HOSP_CD
+		           AND m.CLAIM_NO = p.CHUNGSEQ
+		         WHERE LEFT(m.DATE_YM, 4) = #{mgYear}
+		        <if test="hospCd != null and hospCd != ''"> AND p.HOSP_CD = #{hospCd} </if>
+		        <if test="mgMonth != null and mgMonth != ''"> AND m.DATE_YM = CONCAT(#{mgYear}, #{mgMonth}) </if>
+		         GROUP BY p.HOSP_CD, m.DATE_YM
+
+		         UNION ALL
+
+		        /* ③ 입퇴원현황
+		           ★유형으로 쪼개지 않는다(2026-08-05 지적) — 이 자료의 보험유형(INSURNM)은 병원이 적어 보낸
+		             글자라 '보험'·'00.건강보험'·'보훈60%(건강보험)'처럼 제각각이고, 빈 값도 8천 줄이 넘는다.
+		             억지로 갈라 놓으면 '기타' 줄만 늘어 오히려 읽기 어렵다. 한 줄로 모으고 유형은 '-' 로 둔다. */
+		        SELECT i.HOSP_CD, i.JOBYYMM AS YM, 3 AS GB_ORD, '입퇴원현황' AS GUBUN
+		             , '-'      AS INSUR_NM
+		             , COUNT(*) AS CNT
+		             , 0        AS TOT
+		             , 0        AS AMT
+		          FROM TBL_IPWON_INFO i
+		         WHERE LEFT(i.JOBYYMM, 4) = #{mgYear}
+		        <if test="hospCd != null and hospCd != ''"> AND i.HOSP_CD = #{hospCd} </if>
+		        <if test="mgMonth != null and mgMonth != ''"> AND i.JOBYYMM = CONCAT(#{mgYear}, #{mgMonth}) </if>
+		         GROUP BY i.HOSP_CD, i.JOBYYMM
+		       ) t
+		 GROUP BY t.HOSP_CD, t.YM, t.GB_ORD, t.GUBUN, t.INSUR_NM
+		       ) g
+		  LEFT JOIN (
+		        SELECT u.HOSP_CD, u.DATE_YM
+		             , CASE u.MG_FLAG WHEN '8' THEN 1 WHEN '9' THEN 2 ELSE 3 END AS GB_ORD
+		             , COUNT(*)          AS upCnt
+		             <!-- ★'작업일시'는 UPD_DTTM 이다 — 자료올리기 그리드(magamGetFileList)가 그 칸을 쓴다.
+		                    REG_DTTM 을 쓰면 값이 어긋난다(전체 8,157줄 중 764줄이 서로 다름 — 2026-08-05 실측).
+		                  ★날짜는 <문자열로 만들어> 내려준다. 그냥 MAX(…) 면 LocalDateTime 으로 와서
+		                    화면 JSON 에 객체로 실리고 [object Object] 로 찍힌다(2026-08-05 실제 발생). -->
+		             , DATE_FORMAT(MAX(u.UPD_DTTM), '%Y-%m-%d %H:%i:%s') AS lastDt
+		             , SUBSTRING_INDEX(GROUP_CONCAT(u.CLFORM_VER ORDER BY u.UPD_DTTM DESC SEPARATOR '|~|'), '|~|', 1) AS lastVer
+		             , SUBSTRING_INDEX(GROUP_CONCAT(u.JOBS_DT    ORDER BY u.UPD_DTTM DESC SEPARATOR '|~|'), '|~|', 1) AS lastKey
+		             , SUBSTRING_INDEX(GROUP_CONCAT(u.FILE_NM    ORDER BY u.UPD_DTTM DESC SEPARATOR '|~|'), '|~|', 1) AS lastFile
+		             , SUBSTRING_INDEX(GROUP_CONCAT(u.REG_USER   ORDER BY u.UPD_DTTM DESC SEPARATOR '|~|'), '|~|', 1) AS lastUserId
+		          FROM TBL_MAGAM_CHUNG u
+		         WHERE LEFT(u.DATE_YM, 4) = #{mgYear}
+		           AND ( u.MG_FLAG IN ('8','9')
+		                 OR (u.MG_FLAG = 'Z' AND u.CLAIM_NO = '0000000000') )   <!-- Z 중 입퇴원만(…0001 은 수가) -->
+		        <if test="hospCd != null and hospCd != ''"> AND u.HOSP_CD = #{hospCd} </if>
+		        <if test="mgMonth != null and mgMonth != ''"> AND u.DATE_YM = CONCAT(#{mgYear}, #{mgMonth}) </if>
+		         GROUP BY u.HOSP_CD, u.DATE_YM, GB_ORD
+		       ) up
+		    ON up.HOSP_CD = g.hospCd AND up.DATE_YM = g.ym AND up.GB_ORD = g.gbOrd
+		 ORDER BY g.ym DESC, g.hospNm, g.gbOrd, g.insurNm   <!-- 최근 월부터 · 그 안에서 병원명 순 -->
+	</select>
+
+	<!-- 위 화면의 병원 고르기 목록 — 올린 자료가 있는 병원만 (없는 병원까지 늘어놓으면 고르기 어렵다) -->
+	<select id="select_UploadStatHosp" parameterType="map" resultType="java.util.HashMap">
+		SELECT h.HOSP_CD AS hospCd
+		     , h.HOSP_NM AS hospNm
+		  FROM TBL_HOSP_MST h
+		 WHERE h.ACTION_YN = 'Y'
+		 ORDER BY h.HOSP_NM
+	</select>
+
 </mapper>

@@ -158,6 +158,66 @@ public class MagamController {
 		}
 	}
 
+	/* ══ 청구·평가 업로드(현황) — 2026-08-05 요청 ══════════════════════════════
+	     사이드바 [자료올리기 ▸ 청구.평가 업로드] 바로 아래 메뉴. <위너넷 관리자 전용>이다.
+	     ★메뉴를 감추는 것만으로는 막히지 않는다(주소를 직접 치면 열린다) — 여기서도 막는다.
+	       위너넷이 아니면 원래 업로드 화면으로 돌려보낸다(evalCompare 와 같은 방식). */
+	@RequestMapping(value="main/uploadStat.do")
+	public String uploadStat(HttpServletRequest request, ModelMap model) {
+		cookie_value = ClientInfo.getCookie(request);
+		String wnnYn = "N";
+		try {
+			String ck = "";
+			try { ck = String.valueOf(cookie_value.get("s_wnn_yn")).trim(); } catch(Exception ignore) {}
+			javax.servlet.http.HttpSession ses = request.getSession(false);
+			Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+			String sv = (wnn != null) ? String.valueOf(wnn).trim() : "";
+			wnnYn = ("Y".equalsIgnoreCase(ck) || "Y".equalsIgnoreCase(sv)) ? "Y" : "N";
+		} catch(Exception ignore) { }
+		model.addAttribute("wnnYn", wnnYn);
+		try {
+			if (cookie_value.get("s_hospid").trim() != null &&
+				cookie_value.get("s_hospid").trim() != "" ) {
+				if (!"Y".equals(wnnYn.trim())) return ".main/magamFileUpload";   // 위너넷이 아니면 업로드 화면으로
+				return ".main/mangr/uploadStat";
+			} else {
+				return ".login/LoginWinCT";
+			}
+		} catch(Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	// 업로드 현황 목록 — 연도(mgYear) 필수, 병원(hospCd) 없으면 전체 병원을 월별로 모은다
+	@RequestMapping(value="/main/select_UploadStat.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_UploadStat(@RequestParam Map<String, Object> params) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			res.put("list", svc.select_UploadStat(params));
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+			res.put("list", new ArrayList<Map<String, Object>>());
+		}
+		return res;
+	}
+
+	// 업로드 현황 : 병원 고르기 목록
+	@RequestMapping(value="/main/select_UploadStatHosp.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_UploadStatHosp(@RequestParam Map<String, Object> params) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			res.put("list", svc.select_UploadStatHosp(params));
+			res.put("result", "OK");
+		} catch (Exception ex) {
+			res.put("result", "FAIL"); res.put("message", ex.getMessage());
+			res.put("list", new ArrayList<Map<String, Object>>());
+		}
+		return res;
+	}
+
 	// 전체 비교 ① 지표별 전체평균 — 대상(해당월 환자평가표 있고 제외기관 아닌) 병원의 현황값 단순평균
 	@RequestMapping(value="/main/select_EvalCmpAvg.do", method = RequestMethod.POST)
 	@ResponseBody

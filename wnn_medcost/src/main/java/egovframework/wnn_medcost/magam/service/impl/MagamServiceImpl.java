@@ -1214,4 +1214,15 @@ public class MagamServiceImpl implements MagamService {
 		return mapper.select_EvalCmpRaw(params);
 	}
 
+	// 청구·평가 업로드(현황) (2026-08-05)
+	@Override
+	public List<Map<String, Object>> select_UploadStat(Map<String, Object> params) throws Exception {
+		return mapper.select_UploadStat(params);
+	}
+
+	@Override
+	public List<Map<String, Object>> select_UploadStatHosp(Map<String, Object> params) throws Exception {
+		return mapper.select_UploadStatHosp(params);
+	}
+
 }

@@ -141,4 +141,8 @@ public interface MagamService {
 	List<Map<String, Object>> select_EvalCmpAvg(Map<String, Object> params) throws Exception;
 	List<Map<String, Object>> select_EvalCmpHosp(Map<String, Object> params) throws Exception;
 	List<Map<String, Object>> select_EvalCmpRaw(Map<String, Object> params) throws Exception;
+
+	// 청구·평가 업로드(현황) (2026-08-05) — 위너넷 관리자
+	List<Map<String, Object>> select_UploadStat(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> select_UploadStatHosp(Map<String, Object> params) throws Exception;
 }

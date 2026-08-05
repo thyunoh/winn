@@ -185,4 +185,9 @@ public interface MagamMapper {
 	List<Map<String, Object>> select_EvalCmpHosp(Map<String, Object> params);
 	// ③ 병원별 지표값 원본 — 화면에서 체크로 병원을 빼고 평균을 다시 계산하기 위한 낟알 자료
 	List<Map<String, Object>> select_EvalCmpRaw(Map<String, Object> params);
+
+	// ===== 청구·평가 업로드(현황) (2026-08-05) — 위너넷 관리자 화면 uploadStat.jsp =====
+	//   월 · 유형 · 구분(청구서/환자평가표/입퇴원현황) · 건수 · 청구금액
+	List<Map<String, Object>> select_UploadStat(Map<String, Object> params);
+	List<Map<String, Object>> select_UploadStatHosp(Map<String, Object> params);
 }
