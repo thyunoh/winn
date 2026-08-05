@@ -1189,6 +1189,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var _errSoreN  = 0;     // 욕창 오류 건수(flag 03 신규발생 + flag 04 욕창관리)
   var _errBladN  = 0;     // 배뇨 오류 건수(flag 07 전체 — '분자제외'뿐 아니라 패드·기저귀 오류 포함)
   var _dashInd = null;    // [C1·C2] 대시보드 지표 SP(dashbordINDICATORS): monthVal(당월)·year_Val(누적)·month_07~12(월별)·hosGrade
+  /* [N1 2026-08-05] 항정신성(07) <전월 실측 처방률> — 2026-07 정답지 27건 중 10곳 이상이
+       "7월 청구자료 미업로드로 표준화 3점 가정하였으나, 6월 처방률은 56.16%로 표준화 1점 구간" 문형을 쓴다.
+       당월 처방률은 청구(SAM) 업로드 전이라 알 수 없어 3점 가정인데, <전월 실측>으로 방향을 미리 알려주는 것.
+       원천 = select_CategoryList.do cateCd='07'(전월) — 환자별 psyOrderYn('●') 비율. 실패·0명이면 null(문장 생략). */
+  var _psyPrev = null;    // { ym:'202606', n:●수, d:전체, rate:% }
   var prevTotal = null;   // 전월 종합점수 — 총평 P1 전월대비용 (7월=새 평가기간 시작·자료 없음이면 null)
   function prevYmOf(ym){ var y=+ym.substring(0,4), m=+ym.substring(4,6)-1; if(m<1){ m=12; y--; } return String(y)+('0'+m).slice(-2); }
 
@@ -3038,7 +3043,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
     }
     var aFoley=_aChk('02'), aSore1=_aChk('03'), aSore2=_aChk('04');
-    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2).done(function(r1, r2, r3, r4, r5, r6, r7, r8){
+    /* [N1] 항정(07) 전월 실측 처방률 — 전월 환자 목록에서 ● 비율. 7월도 전월(6월)을 본다(정답지 동일). 실패는 null 흡수. */
+    var aPsy = jQuery.ajax({ url: ctx+'/main/select_CategoryList.do', type:'POST', dataType:'json',
+                             data:{ hospCd:hospCd, jobYymm:prevYmOf(curYm), cateCd:'07' } })
+        .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2, aPsy).done(function(r1, r2, r3, r4, r5, r6, r7, r8, r9){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
       buildCriteria(r2[0]);
@@ -3055,6 +3064,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       _errBladN  = bd.length;
       _errFoleyN = _cnt(r6);
       _errSoreN  = _cnt(r7) + _cnt(r8);
+      /* [N1] 전월 항정 처방률 — jQuery.when 은 성공 ajax 를 [data,status,xhr] 배열로 주고,
+           null 흡수(then)된 경우는 값 그대로 온다 → 두 모양 다 받는다. 대상 0명이면 null(문장 생략). */
+      _psyPrev = null;
+      var pv = (r9 && r9[0] && r9[0].data) ? r9[0].data : ((r9 && r9.data) ? r9.data : null);
+      if (pv && pv.length){
+        var pn=0; pv.forEach(function(e){ if(String(e.psyOrderYn||'')==='●') pn++; });
+        _psyPrev = { ym: prevYmOf(curYm), n: pn, d: pv.length, rate: Math.round(pn/pv.length*10000)/100 };
+      }
       renderAll();
       loadSavedTexts();
     }).fail(function(){ erSwal('error','지표 자료 조회 중 오류가 발생했습니다.', {title:'오류'}); });
@@ -3534,6 +3551,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     // [보완3] 부족점수가 크면 '개선 우선순위' 블록으로, 작으면 기존 C4(상위 2지표 동시개선)로 — 결론이 겹쳐 둘 중 하나만
     var _rank = goalRankTxt();
     p.sum_p3 += _rank || sumTopSimTxt();
+    /* [N12 2026-08-05] 2024 구간 기준 산정 유보 + 10~20% 여유 관리 권장 — 2026-07 정답지 27건 중 15곳+ 반복(세밀분석 §9).
+         배뇨관리(06)는 2026 신설이라 2024 구간이 없어 "…을 제외한 지표에" 를 붙인다(서온·중화·청암·전남제일 동일).
+         12월은 확정 국면이라 생략(아래 C11 확정문과 상충). */
+    if(!(curYm && parseInt(curYm.substring(4,6),10)===12))
+      p.sum_p3 += ' 현재 예상점수는 배뇨관리 실시 환자분율을 제외한 지표에 2024년도 결과발표 표준화 구간을 적용하여 산정한 결과이므로, 향후 표준화 구간 변동 가능성을 고려하여 상위 등급을 안정적으로 확보하기 위해서는 주요 지표를 해당 구간보다 약 10~20% 이상 여유 있게 관리하는 것을 권장함.';
     // [C11] 연말(12월) 확정 국면 — 잔여 개선 여지 무관하게 점수 확정(세밀분석 §8, 3병원 수렴)
     if(curYm && parseInt(curYm.substring(4,6),10)===12)
       p.sum_p3 += ' 다만 평가가 12월 진료분까지로 종료되는 시점이므로, 남은 개선 여지와 무관하게 현재 점수 수준에서 확정되는 국면임.';
@@ -3544,7 +3566,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var api07 = indicators.filter(function(r){ return r.cate_cd==='07'; })[0];
     if(api07){
       var aS=n(api07.s_score)||0, aW=n(api07.stdweig);
-      if(aS>1 && aW>0){
+      /* [N1 2026-08-05] 전월 <실측> 처방률이 있으면 가정문 대신 실측 문형 — 2026-07 정답지 27건 수렴 1위.
+           표준화 구간: 10% 미만=5점 / 10~40%=3점 / 40% 이상=1점 (정답지 전건 동일 명기).
+           방향별 문형(정답지 그대로):
+             1점 구간 → "동일 수준 산정 시 −Δ점 감소 예상 … 장기·중복 처방 검토"(중화·태종대·청암·무지개·시흥더봄·이푸른)
+             5점 구간 → "해당 수준 유지 시 +Δ점 추가 상승 가능"(강동스마일)
+             3점 구간 → 현 가정과 같아 수치만 병기.  Δ = W/5 × |실측구간 − 현재구간|. */
+      if(_psyPrev && aW>0 && aS>=1){
+        var pBand = (_psyPrev.rate < 10) ? 5 : (_psyPrev.rate < 40 ? 3 : 1);
+        var pmLbl = parseInt(_psyPrev.ym.substring(4,6),10)+'월';
+        var pHead = ' 항정신성의약품 처방률은 당월 청구자료 확정 전으로 표준화 '+aS+'점 구간으로 예상하여 산정하였으나, '
+                  + _psyPrev.ym.substring(0,4)+'년 '+pmLbl+' 처방률은 '+f1(_psyPrev.rate)+'%로 표준화 '+pBand+'점 구간에 해당함.';
+        var pDelta = f1(aW/5*Math.abs(pBand-aS));
+        if(pBand < aS){
+          var aBoot2=topGaps(1)[0];
+          p.sum_p4 += pHead+' 동일한 수준으로 산정될 경우 가중치점수 약 −'+pDelta+'점 감소 가능성이 있으므로, 불필요한 장기·중복 처방 여부와 처방의 적정성을 지속적으로 검토하여 처방률을 관리할 필요가 있음.'
+                    + (aBoot2 ? ' 아울러 점수 감소 가능성을 고려하여 \''+aBoot2.nm+'\' 등 실제 개선 가능한 지표의 점수를 추가 확보하는 것이 중요함.' : '');
+        } else if(pBand > aS){
+          p.sum_p4 += pHead+' 해당 수준을 유지할 경우 가중치점수 약 +'+pDelta+'점 추가 상승이 가능함.';
+        } else {
+          p.sum_p4 += pHead;
+        }
+      } else if(aS>1 && aW>0){
         var aDrop=f1(aW/5*(aS-1));                 // 1점 구간 하락 시 감소 가중치
         var aBoot=topGaps(1)[0];                    // 보완 우선(부족점수 최대) 지표
         p.sum_p4 += ' 특히 항정신성의약품 처방률은 전국 기관 기준으로 최종 산정되는 지표로, 처방률이 40%를 초과하여 표준화 1점 구간으로 산정될 경우 가중치 약 −'+aDrop+'점 하락이 예상되므로, 불필요한 장기·중복 처방을 정기적으로 점검하고'
