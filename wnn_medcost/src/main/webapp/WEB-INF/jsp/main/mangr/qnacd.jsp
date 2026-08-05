@@ -286,7 +286,7 @@
       h += '<div class="qi' + (String(CUR.kb)===String(x.kbId) ? ' on' : '') + '" onclick="qnaOpen(' + x.kbId + ')">'
          +   '<span class="no' + (MODE==='hot' ? ' rank' : '') + '">' + (i+1) + '</span>'
          +   '<span class="tx">' + esc(x.shortTitle || x.title) + '</span>'
-         +   (x.hitCnt ? '<span class="hc">' + x.hitCnt + '회</span>' : '')
+         /* 「n회」 조회수 표기는 내리기로 확정(2026-08-05 사용자 요청) — 순위 계산(HIT_CNT)은 그대로 쓰고 숫자만 안 보인다 */
          + '</div>';
     }
     box.innerHTML = h;

@@ -112,6 +112,30 @@ public class SftpController {
         Session session = null;
         ChannelSftp channelSftp = null;
 
+        /* ★속도 개선(2026-08-05) — 운영 서버는 파일서버가 <자기 자신>(Linux 에서 SFTP_HOST=localhost).
+             매 요청마다 SSH 연결·인증을 거치던 것을, 디스크에 파일이 있으면 바로 스트리밍한다
+             (월보고서 PDF 미리보기·다운로드가 이 경로를 쓴다). 없으면(개발 PC 등) 종전 SFTP 로 폴백.
+             ※ getCanonicalPath 검사 = ../ 따위로 업로드 폴더 밖 파일을 꺼내 가지 못하게(경로 탈출 차단). */
+        try {
+            String cleaned0 = filePath.startsWith(BASE_DIRECTORY) ? filePath.substring(BASE_DIRECTORY.length()) : filePath;
+            java.io.File lf = new java.io.File(BASE_DIRECTORY + cleaned0);
+            if (lf.isFile()
+                && lf.getCanonicalPath().startsWith(new java.io.File(BASE_DIRECTORY).getCanonicalPath())) {
+                String fileName0 = filePath.substring(filePath.lastIndexOf("/") + 1);
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + java.net.URLEncoder.encode(fileName0, "UTF-8") + "\"");
+                response.setContentType("application/octet-stream");
+                response.setContentLengthLong(lf.length());
+                try (OutputStream out = response.getOutputStream();
+                     InputStream in = new java.io.FileInputStream(lf)) {
+                    byte[] buf = new byte[8192]; int n;
+                    while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                }
+                return;
+            }
+        } catch (Exception e) {
+            System.err.println("로컬 직접 읽기 실패 — SFTP 폴백: " + e.getMessage());
+        }
+
         try {
             JSch jsch = new JSch();
             session = jsch.getSession(SFTP_USER, SFTP_HOST, SFTP_PORT);

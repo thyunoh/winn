@@ -1559,10 +1559,24 @@ public class MagamController {
 			}
 			final String BASE = "/home/winner/upload/";
 			String remoteName = pdfPath.startsWith(BASE) ? pdfPath.substring(BASE.length()) : pdfPath;
-			temp = java.nio.file.Files.createTempFile("evalmail_", ".pdf").toFile();
-			if (!sftpService.downloadFile(remoteName, temp.getAbsolutePath())) {
-				res.put("result","FAIL"); res.put("message","첨부 PDF를 파일서버에서 가져오지 못했습니다."); return res;
+			/* ★속도 개선(2026-08-05, 사용자 "메일 보내기 느림") —
+			     운영 서버는 파일서버가 <자기 자신>(SftpService 도 Linux 에서 localhost 접속)이다.
+			     그런데도 매 발송마다 SSH 연결→인증→채널→임시파일 복사를 거치고 있었다(순수 낭비, 매번 수 초).
+			     디스크에 파일이 그대로 있으면 바로 첨부하고, 없을 때만(개발 PC 등) 종전 SFTP 로 내려받는다.
+			     ※ 원본 파일은 절대 지우지 않는다 — finally 는 temp(SFTP 폴백 때만 생성)만 지운다. */
+			/* 구간별 소요시간 로그(2026-08-05 "느리다" 진단용) — 어디서 몇 ms 가는지 catalina 로그에 남긴다.
+			     실측(2026-08-05 로컬): 첨부 확보 0.5~1.2초 / 나머지 대부분이 SMTP(첨부 업로드) 구간. */
+			long tAtt0 = System.currentTimeMillis();
+			java.io.File attach = new java.io.File(BASE + remoteName);
+			boolean attLocal = attach.isFile();
+			if (!attLocal) {
+				temp = java.nio.file.Files.createTempFile("evalmail_", ".pdf").toFile();
+				if (!sftpService.downloadFile(remoteName, temp.getAbsolutePath())) {
+					res.put("result","FAIL"); res.put("message","첨부 PDF를 파일서버에서 가져오지 못했습니다."); return res;
+				}
+				attach = temp;
 			}
+			long tAtt = System.currentTimeMillis() - tAtt0;
 			String attachNm = "적정성평가_월간보고서_" + evalYm + ".pdf";
 
 			/* ★[2026-07-30] '보고서 보기' 버튼 제거(사용자 요청) — 첨부 PDF만 보내는 것으로 확정.
@@ -1579,7 +1593,11 @@ public class MagamController {
 				content = content + "<img src=\"" + px + "\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none\">";
 			}
 
-			egovframework.util.MailUtil.send(to, subject, content, temp, attachNm);
+			long tSmtp0 = System.currentTimeMillis();
+			egovframework.util.MailUtil.send(to, subject, content, attach, attachNm);
+			System.out.println("[월보고서메일] " + hospCd + " " + evalYm
+				+ " 첨부확보 " + tAtt + "ms(" + (attLocal ? "로컬" : "SFTP") + ", " + (attach.length()/1024) + "KB)"
+				+ " / SMTP전송 " + (System.currentTimeMillis() - tSmtp0) + "ms");
 
 			Map<String, Object> p = new HashMap<>();
 			p.put("hospCd", hospCd); p.put("evalYm", evalYm);
