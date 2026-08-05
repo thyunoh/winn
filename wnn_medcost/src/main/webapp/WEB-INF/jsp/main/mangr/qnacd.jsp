@@ -337,7 +337,10 @@
     } else {
       h += fmtDoc(body);
     }
-    if (kb.srcNm) h += '<div class="src"><b>근거</b> · ' + esc(kb.srcNm) + '</div>';
+    /* 근거 표기는 <심평원 원문(PDF)에만> 붙인다 (2026-08-05 사용자 요청) —
+         위너넷 확정 답변(IN)의 근거는 내부 출처(카톡 정리 등)라 병원에 보일 필요가 없다.
+         DB(SRC_NM)는 지우지 않고 화면에서만 가린다 — 출처 기록은 관리용으로 남긴다. */
+    if (doc && kb.srcNm) h += '<div class="src"><b>근거</b> · ' + esc(kb.srcNm) + '</div>';
 
     var go = [];
     try { go = kb.goJson ? JSON.parse(kb.goJson) : []; } catch(ignore){ go = []; }

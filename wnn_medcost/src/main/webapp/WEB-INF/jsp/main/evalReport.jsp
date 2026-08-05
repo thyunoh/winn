@@ -1193,7 +1193,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
        "7월 청구자료 미업로드로 표준화 3점 가정하였으나, 6월 처방률은 56.16%로 표준화 1점 구간" 문형을 쓴다.
        당월 처방률은 청구(SAM) 업로드 전이라 알 수 없어 3점 가정인데, <전월 실측>으로 방향을 미리 알려주는 것.
        원천 = select_CategoryList.do cateCd='07'(전월) — 환자별 psyOrderYn('●') 비율. 실패·0명이면 null(문장 생략). */
-  var _psyPrev = null;    // { ym:'202606', n:●수, d:전체, rate:% }
+  var _psyPrev = null;    // { from:'202607', to:'202611', n:●수, d:인월합, rate:% } — 7월 보고서만 전월 단월
   var prevTotal = null;   // 전월 종합점수 — 총평 P1 전월대비용 (7월=새 평가기간 시작·자료 없음이면 null)
   function prevYmOf(ym){ var y=+ym.substring(0,4), m=+ym.substring(4,6)-1; if(m<1){ m=12; y--; } return String(y)+('0'+m).slice(-2); }
 
@@ -3043,10 +3043,31 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
     }
     var aFoley=_aChk('02'), aSore1=_aChk('03'), aSore2=_aChk('04');
-    /* [N1] 항정(07) 전월 실측 처방률 — 전월 환자 목록에서 ● 비율. 7월도 전월(6월)을 본다(정답지 동일). 실패는 null 흡수. */
-    var aPsy = jQuery.ajax({ url: ctx+'/main/select_CategoryList.do', type:'POST', dataType:'json',
-                             data:{ hospCd:hospCd, jobYymm:prevYmOf(curYm), cateCd:'07' } })
+    /* [N1] 항정(07) 실측 처방률 — 환자 목록(●=처방)에서 비율. 실패는 null 흡수.
+         ★기간 = 다른 지표와 <동일한 기준>, 7월부터 누적 (2026-08-05 사용자 확정 "항정만 평가기간도 동일한 기준으로 이야기").
+           · 7월 보고서 : 평가기간 자료가 아직 없어 전월(6월) 단월 — 정답지 27건 전부 이 방식
+           · 8월~12월  : 당해 7월 ~ 전월을 월별로 모두 조회해 합산(분자·분모 인월 합) — 누적 처방률 */
+    var _psyMonths = (function(){
+      var mo = parseInt(curYm.substring(4,6),10), y = curYm.substring(0,4), a = [];
+      if (mo <= 7) a.push(prevYmOf(curYm));
+      else for (var m=7; m<mo; m++) a.push(y+('0'+m).slice(-2));
+      return a;
+    })();
+    function _psyFetch(ym){
+      return jQuery.ajax({ url: ctx+'/main/select_CategoryList.do', type:'POST', dataType:'json',
+                           data:{ hospCd:hospCd, jobYymm:ym, cateCd:'07' } })
         .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+    }
+    var aPsy = jQuery.when.apply(jQuery, _psyMonths.map(_psyFetch)).then(function(){
+      var args = Array.prototype.slice.call(arguments);   // 값만 온다(위 then 이 이미 벗겼다) — 1개든 여러 개든 같은 모양
+      var pn=0, pd=0;
+      args.forEach(function(res){
+        var data = (res && res.data) ? res.data : null;
+        if (data) data.forEach(function(e){ pd++; if(String(e.psyOrderYn||'')==='●') pn++; });
+      });
+      return (pd>0) ? { from:_psyMonths[0], to:_psyMonths[_psyMonths.length-1],
+                        n:pn, d:pd, rate:Math.round(pn/pd*10000)/100 } : null;
+    });
     jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2, aPsy).done(function(r1, r2, r3, r4, r5, r6, r7, r8, r9){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
@@ -3064,14 +3085,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       _errBladN  = bd.length;
       _errFoleyN = _cnt(r6);
       _errSoreN  = _cnt(r7) + _cnt(r8);
-      /* [N1] 전월 항정 처방률 — jQuery.when 은 성공 ajax 를 [data,status,xhr] 배열로 주고,
-           null 흡수(then)된 경우는 값 그대로 온다 → 두 모양 다 받는다. 대상 0명이면 null(문장 생략). */
-      _psyPrev = null;
-      var pv = (r9 && r9[0] && r9[0].data) ? r9[0].data : ((r9 && r9.data) ? r9.data : null);
-      if (pv && pv.length){
-        var pn=0; pv.forEach(function(e){ if(String(e.psyOrderYn||'')==='●') pn++; });
-        _psyPrev = { ym: prevYmOf(curYm), n: pn, d: pv.length, rate: Math.round(pn/pv.length*10000)/100 };
-      }
+      /* [N1] 항정 실측 처방률 — aPsy 가 이미 {from,to,n,d,rate} 로 합산해 준다(대상 0명이면 null → 문장 생략) */
+      _psyPrev = r9 || null;
       renderAll();
       loadSavedTexts();
     }).fail(function(){ erSwal('error','지표 자료 조회 중 오류가 발생했습니다.', {title:'오류'}); });
@@ -3574,9 +3589,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
              3점 구간 → 현 가정과 같아 수치만 병기.  Δ = W/5 × |실측구간 − 현재구간|. */
       if(_psyPrev && aW>0 && aS>=1){
         var pBand = (_psyPrev.rate < 10) ? 5 : (_psyPrev.rate < 40 ? 3 : 1);
-        var pmLbl = parseInt(_psyPrev.ym.substring(4,6),10)+'월';
+        /* 기간 표기 — 7월 보고서는 "6월", 8월은 "7월", 9월~ 는 "7~N월"(같은 해라 연도 표기는 앞에 한 번) */
+        var pmF = parseInt(_psyPrev.from.substring(4,6),10), pmT = parseInt(_psyPrev.to.substring(4,6),10);
+        var pmLbl = (pmF===pmT) ? pmF+'월' : pmF+'~'+pmT+'월';
         var pHead = ' 항정신성의약품 처방률은 당월 청구자료 확정 전으로 표준화 '+aS+'점 구간으로 예상하여 산정하였으나, '
-                  + _psyPrev.ym.substring(0,4)+'년 '+pmLbl+' 처방률은 '+f1(_psyPrev.rate)+'%로 표준화 '+pBand+'점 구간에 해당함.';
+                  + _psyPrev.from.substring(0,4)+'년 '+pmLbl+' 처방률은 '+f1(_psyPrev.rate)+'%로 표준화 '+pBand+'점 구간에 해당함.';
         var pDelta = f1(aW/5*Math.abs(pBand-aS));
         if(pBand < aS){
           var aBoot2=topGaps(1)[0];
