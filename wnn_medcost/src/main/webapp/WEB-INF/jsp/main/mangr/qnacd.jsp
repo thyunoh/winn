@@ -12,7 +12,7 @@
 --%>
 <%-- 빌드 표식 — 화면에 안 보인다(주석). 브라우저에서 Ctrl+U 로 소스를 열어 이 글자를 찾으면
      지금 뜬 화면이 <새 파일인지 옛 화면인지> 바로 안다. 확인이 끝나면 지워도 된다. --%>
-<!-- qnacd-build 2026-08-05e : pop mode by window.name -->
+<!-- qnacd-build 2026-08-05g : 검색창 하늘색+ime-mode, IN분류 통합 -->
 <link href="/css/winmc/style_comm.css?v=126" rel="stylesheet">
 <script>
   /* 말풍선으로 열렸으면 <그리기 전에> 표시를 붙인다 — 늦게 붙이면 껍데기가 번쩍 보였다 사라진다.
@@ -101,8 +101,10 @@
   /* ── 가운데: 질문 목록 ── */
   #qnaListCard{ flex:0 0 clamp(340px, 27%, 500px); }
   #qnaSearchBox{ padding:9px 12px; border-bottom:1px solid #eef3f9; display:flex; gap:6px; }
-  #qnaSearchBox input{ flex:1; height:2.7em; border:1px solid #cfdcec; border-radius:9px; padding:0 12px; font-size:.97em; }
-  #qnaSearchBox input:focus{ outline:none; border-color:#1f6feb; box-shadow:0 0 0 3px rgba(31,111,235,.13); }
+  /* 검색창 배경 연한 하늘색 + 클릭(포커스) 시 한글 입력모드(ime-mode 지원 브라우저) — 2026-08-05 요청 */
+  #qnaSearchBox input{ flex:1; height:2.7em; border:1px solid #cfdcec; border-radius:9px; padding:0 12px; font-size:.97em;
+                       background:#eaf6ff; ime-mode:active; }
+  #qnaSearchBox input:focus{ outline:none; border-color:#1f6feb; box-shadow:0 0 0 3px rgba(31,111,235,.13); background:#eaf6ff; }
   #qnaSearchBox button{ flex:0 0 auto; height:2.7em; padding:0 15px; border:none; border-radius:9px;
                         background:#1f6feb; color:#fff; font-weight:800; cursor:pointer; }
   #qnaSearchBox button:hover{ background:#1655c0; }
@@ -249,13 +251,14 @@
     var h = '<div class="g">많이 찾는 것</div>'
           + '<div class="it hot' + (CUR.cat==='__HOT__' ? ' on' : '') + '" onclick="qnaCat(\'__HOT__\')">'
           +   '<span class="nm">🔥 자주하는 질문</span><span class="n">' + TOP.length + '</span></div>', i, j;
-    var grp = [['IN','위너넷 확정 답변'], ['PDF','심사평가원 원문']];
+    /* IN(사내 확정답변) 분류는 별도 그룹 제목 없이 "많이 찾는 것" 아래로 통합(2026-08-05 사용자 요청) */
+    var grp = [['IN',''], ['PDF','심사평가원 원문']];
     for (j=0;j<grp.length;j++){
       var any = false;
       for (i=0;i<CATS.length;i++){
         var c = CATS[i];
         if (c.srcType !== grp[j][0] || !c.qCnt) continue;
-        if (!any){ h += '<div class="g">' + grp[j][1] + '</div>'; any = true; }
+        if (!any){ if (grp[j][1]) h += '<div class="g">' + grp[j][1] + '</div>'; any = true; }
         var hasSub = !!(c.subs && c.subs.length);
         var open = (CUR.cat === c.catId && !CUR.fold);
         h += '<div class="it' + (c.srcType==='PDF' ? ' doc' : '') + (CUR.cat===c.catId ? ' on' : '') + '"'
