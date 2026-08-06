@@ -159,6 +159,16 @@
   #qnaDoc .rel span:hover{ background:#1746a2; color:#fff; border-color:#1746a2; }
   #qnaDoc .guide{ color:#8494a8; }
 
+  /* ── AI 참고답변 (2026-08-06) — 등록된 자료에서 못 찾았을 때만 나온다 ──
+       ★확정 답변과 <한눈에 구별>돼야 한다. 위너넷 확정 답변은 파랑, 심평원 원문은 초록,
+         AI 는 주황이다. 색·배지·꼬리말 셋 다 빼지 말 것 — 병원이 이걸 확정답으로 알고
+         청구·평가에 반영하면 실제 손해가 난다. */
+  #qnaDoc .cat.ai{ color:#a35a00; background:#fff6ea; border-color:#f0d3ac; }
+  #qnaDoc .aitx{ margin-top:4px; white-space:pre-wrap; }
+  #qnaDoc .aiwarn{ margin-top:14px; padding:9px 12px; background:#fff8ef; border:1px solid #f0d3ac;
+                   border-radius:8px; font-size:.88em; color:#8a5a1a; line-height:1.75; }
+  #qnaDoc .aiwarn b{ color:#a35a00; }
+
   /* ── 칸 사이 경계 끌기 (2026-08-05 요청) — [분류|목록] · [목록|답변] 폭을 손으로 맞춘다 ──
        손잡이 자체는 <폭 0> 이고 양옆 12px 틈(gap) 한가운데에 선다.
        · margin -6px 두 번 = 손잡이가 끼어들며 늘어난 gap 한 벌(12px)을 되돌린 것 → 칸 간격은 그대로 12px.
@@ -195,7 +205,6 @@
       <div class="qcard" id="qnaListCard">
         <div id="qnaSearchBox">
           <input type="text" id="qnaQ" placeholder="검색어를 입력하세요… 예) 배뇨일지" autocomplete="off"
-                 oninput="qnaTypeKo(this, event)"
                  onkeydown="if(event.keyCode===13){qnaSearch();return false;}">
           <button type="button" onclick="qnaSearch()">검색</button>
         </div>
@@ -229,7 +238,8 @@
      · 전역 이름은 모두 qna* 로 통일한다(사이드바·다른 화면 스크립트와 겹치지 않게).
    ===================================================================== */
 (function(){
-  var API = { init:'/mangr/qnaInit.do', list:'/mangr/qnaList.do', get:'/mangr/qnaGet.do', search:'/mangr/qnaSearch.do' };
+  var API = { init:'/mangr/qnaInit.do', list:'/mangr/qnaList.do', get:'/mangr/qnaGet.do',
+              search:'/mangr/qnaSearch.do', ask:'/mangr/qnaAsk.do' };
   var CATS = [], TOP = [], LIST = [], CUR = { cat:'__HOT__', sub:'', kb:0, fold:false }, MODE = 'cat';
 
   function post(url, params, ok, fail){
@@ -362,6 +372,12 @@
         rr += '<span onclick="qnaOpen(' + kb.rel[j].kbId + ')">' + esc(kb.rel[j].title) + '</span>';
       if (rr) h += '<div class="rel">' + rr + '</div>';
     }
+    /* 검색으로 들어온 답변에는 <빠져나갈 길>을 준다 (2026-08-06) —
+         낱말이 걸려 그럴듯한 항목이 1등으로 잡혔지만 실제로는 딴 얘기인 경우가 있다.
+         그때 사용자가 직접 AI 참고답변으로 넘어갈 수 있어야 한다. */
+    if (MODE === 'search' && el('qnaQ').value.replace(/^\s+|\s+$/g,''))
+      h += '<div class="go" style="margin-top:12px">'
+         + '<a onclick="qnaAskCur()">찾는 답이 아닌가요? AI에게 물어보기</a></div>';
     el('qnaDoc').innerHTML = h;
     el('qnaDoc').parentNode.scrollTop = 0;
   }
@@ -464,64 +480,98 @@
     flush();
     return out;
   }
-  /* 한글 → 영타 (역변환) — 실시간 변환 때문에 DUR·ADL 같은 영문 검색어가 한글로 바뀌어 버린다.
-       검색 결과가 없으면 이걸로 되돌려 한 번 더 찾는다(예: '역' → 'dur' → DUR 자료 검색됨). */
-  var K2E = {}; (function(){ for (var k in E2K){ if (E2K.hasOwnProperty(k)) K2E[E2K[k]] = k; } })();
-  var VSPLIT = {}; (function(){ for (var v in VMIX){ if (VMIX.hasOwnProperty(v)) VSPLIT[VMIX[v]] = v; } })();
-  function korToEng(s){
-    var out = '', i, c, cd;
-    function jamo(j){
-      if (VSPLIT[j]) { out += K2E[VSPLIT[j].charAt(0)] + K2E[VSPLIT[j].charAt(1)]; }
-      else if (JSPLIT[j]) { out += K2E[JSPLIT[j].charAt(0)] + K2E[JSPLIT[j].charAt(1)]; }
-      else out += (K2E[j] || j);
-    }
-    for (i=0;i<s.length;i++){
-      c = s.charAt(i); cd = s.charCodeAt(i);
-      if (cd >= 0xAC00 && cd <= 0xD7A3){
-        cd -= 0xAC00;
-        jamo(CHO.charAt(Math.floor(cd/588)));
-        jamo(JUNG.charAt(Math.floor(cd%588/28)));
-        if (cd%28) jamo(JONG.charAt(cd%28));
-      } else jamo(c);
-    }
-    return out;
-  }
-  /* ★입력하는 즉시 변환 (2026-08-05 "한글로 안바뀝니다") —
-       검색할 때가 아니라 <칠 때> 바뀌어야 한다. 이 칸에서는 한/영 상태와 무관하게 영타가 한글이 된다.
-       · 진짜 한글 IME 로 치는 중(isComposing)에는 손대지 않는다 — 조합이 깨진다.
-       · DUR 같은 영문 검색은 위 korToEng 되돌림 재검색이 받아 준다. */
-  window.qnaTypeKo = function(inp, ev){
-    if (ev && ev.isComposing) return;
-    var v = inp.value;
-    if (!/[A-Za-z]/.test(v)) return;
-    var k = engToKor(v);
-    if (k !== v) inp.value = k;
-  };
+  /* ★<입력칸을 고쳐 쓰지 않는다> (2026-08-06 사용자 확정) —
+       종전에는 치는 즉시 영타를 한글로 바꿔 칸에 써 넣었다(qnaTypeKo). 두 가지가 문제였다.
+         · 사용자가 친 글자를 화면에서 몰래 바꾸는 셈이라 보안·신뢰상 좋지 않다.
+         · 그 때문에 되돌림(한글→영타) 재검색이 필요했고, 그게 <한글로 제대로 친 질문>까지
+           뒤집어 버렸다 — "오늘날씨" 가 'dhsmf skfTlsms' 로 검색된 사고.
+       이제 칸은 친 그대로 두고, <검색할 때만> 영타를 한글로 바꿔 한 번 더 찾는다.
+       그래서 한/영 상태를 안 바꾸고 영어로 쳐도 한글 자료가 나온다(qosy → 배뇨).
+       ★한글→영타 역변환(korToEng)은 필요 없어져 제거했다. 되살리지 말 것. */
 
-  window.qnaSearch = function(_retry){
-    var q = el('qnaQ').value.replace(/^\s+|\s+$/g,'');
+  /* _q    = 이번에 실제로 찾을 말(비우면 입력칸 그대로)
+     _orig = 사용자가 처음 친 질문. AI 에는 반드시 이걸 넘긴다 —
+             자판을 바꿔 찾은 말을 넘기면 AI 가 알아볼 수 없는 글자를 받는다. */
+  window.qnaSearch = function(_q, _retry, _orig){
+    var typed = el('qnaQ').value.replace(/^\s+|\s+$/g,'');
+    var q = _q || typed;
     if (!q){ qnaCat(CUR.cat); return; }
+    var qAI = _orig || typed || q;
     MODE = 'search';
-    el('qnaListTt').innerHTML = '검색 · ' + esc(q);
+    el('qnaListTt').innerHTML = '검색 · ' + esc(q)
+      + (q === typed ? '' : ' <span style="font-weight:400;color:#8494a8">(' + esc(typed) + ' 로 입력)</span>');
     el('qnaList').innerHTML = '<div class="empty">찾는 중…</div>';
     post(API.search, { q:q, listCnt:30 }, function(j){
       LIST = j.list || [];
-      /* 못 찾았으면 자판 반대편으로 한 번 더 (재시도 1회 한정 — _retry 로 무한 반복 차단)
-           · 영문뿐 → 두벌식 한글로 (qosy → 배뇨)
-           · 한글 → 영타로 되돌려 (역 → dur : 실시간 한글 변환 때문에 영문 검색어가 바뀐 경우) */
-      if (!LIST.length && !_retry){
-        var alt = '';
-        if (/^[A-Za-z][A-Za-z ]*$/.test(q)) alt = engToKor(q);
-        else if (/[가-힣]/.test(q)) alt = korToEng(q);
-        if (alt && alt !== q){ el('qnaQ').value = alt; window.qnaSearch(1); return; }
+      /* 영어로 친 것을 두벌식 한글로 바꿔 한 번 더 (재시도 1회 한정 — _retry 로 무한 반복 차단).
+           · 먼저 <친 그대로> 찾는다 — DUR·ADL 처럼 자료에 진짜 영문으로 적힌 말이 있기 때문.
+           · 그래도 없으면 자판을 바꿔 본다 (qosy → 배뇨).
+           ★입력칸은 건드리지 않는다. 무엇으로 찾았는지는 목록 제목에 보여 준다. */
+      if (!LIST.length && !_retry && /^[A-Za-z0-9 ]+$/.test(q)){
+        var alt = engToKor(q);
+        if (alt && alt !== q){ window.qnaSearch(alt, 1, qAI); return; }
       }
       renderList();
-      if (LIST.length) qnaOpen(LIST[0].kbId);       /* 검색은 1등을 바로 펼쳐 준다 */
-      else el('qnaDoc').innerHTML = '<h3>등록된 내용에서는 답을 찾지 못했습니다</h3>'
-           + '<ul><li><b>짧은 낱말</b>로 다시 찾아보세요. 예) "배뇨일지", "욕창 처치", "격리실"</li>'
-           + '<li>물어보신 내용은 기록으로 남아 다음 지식 보완에 반영됩니다.</li></ul>';
+      /* ★1등을 펼칠지, AI 로 넘길지는 <서버의 weak 판정>을 따른다 (2026-08-06).
+           "0건이면 AI" 로는 AI 가 영영 안 뜬다 — ngram 이 '오래'·'점수' 같은 조각에도 걸려
+           엉뚱한 항목이 수십 건 잡히기 때문(실제로 겪은 것: "소변줄 오래 꽂으면 점수 깎이나요"
+           → 30건, 1등이 '업로드가 너무 오래 걸립니다'). 목록은 그대로 두어 사용자가 직접 고를 수도 있게 한다. */
+      if (LIST.length && !j.weak) qnaOpen(LIST[0].kbId);
+      else qnaAskAI(qAI);
     }, function(){ el('qnaList').innerHTML = '<div class="empty">검색하지 못했습니다.</div>'; });
   };
+
+  /* ── 등록된 자료에서 못 찾았을 때 : AI 참고답변 (2026-08-06) ──────────────
+       sejong_app 혈당 Q&A 와 같은 방식 — <KB 검색 0건일 때만> 서버가 LLM 을 부른다.
+       · 서버가 가까운 지식 몇 건을 근거로 넣어 주고, 자료 밖 창작은 막아 둔다.
+       · 키 미설정·호출 실패·타임아웃이면 <조용히> 종전 안내문구로 돌아간다 — 오류창 금지.
+       · 같은 질문은 다시 안 부른다(캐시). 무료 등급 호출수·응답시간 아끼기. */
+  var ASKED = {};
+  function askGuideHtml(){
+    return '<h3>등록된 내용에서는 답을 찾지 못했습니다</h3>'
+         + '<ul><li><b>짧은 낱말</b>로 다시 찾아보세요. 예) "배뇨일지", "욕창 처치", "격리실"</li>'
+         + '<li>물어보신 내용은 기록으로 남아 다음 지식 보완에 반영됩니다.</li></ul>';
+  }
+  function renderAI(q, r){
+    var h = '<span class="cat ai">AI 참고답변</span>'
+          + '<h3>' + esc(q) + '</h3>'
+          + '<div class="aitx">' + esc(r.answer) + '</div>';
+    if (r.refs && r.refs.length){                    /* 근거로 삼은 자료 — 눌러서 원문 확인 */
+      var rr = '';
+      for (var i=0;i<r.refs.length;i++)
+        rr += '<span onclick="qnaOpen(' + r.refs[i].kbId + ')">' + esc(r.refs[i].title) + '</span>';
+      h += '<div class="rel">' + rr + '</div>';
+    }
+    h += '<div class="aiwarn"><b>※ 확정 답변이 아닙니다.</b> 등록된 자료에 없는 질문이라 '
+       + 'AI 가 참고용으로 정리한 내용입니다. 청구·평가에 반영하기 전에 반드시 '
+       + '<b>위너넷 1:1 문의</b>로 확인하세요.</div>'
+       + '<div class="go">';
+    /* 현장 용어를 공식 용어로 바꿔 본 결과 — 그 말로 <자료를 직접> 다시 찾아볼 수 있게 한다.
+       (예: '소변줄' 로 물으면 '유치도뇨관 유지기간 배뇨관리' 가 온다) */
+    if (r.alt) h += '<a onclick="qnaReSearch(\'' + esc(r.alt).replace(/'/g,'') + '\')">'
+                  + '이 용어로 자료 찾기 · ' + esc(r.alt) + '</a>';
+    h += '<a onclick="qnaGo(\'asq\',1)">1:1 문의하기</a></div>';
+    el('qnaDoc').innerHTML = h;
+    el('qnaDoc').parentNode.scrollTop = 0;
+  }
+  /* AI 가 바꿔 준 공식 용어로 <자료를 직접> 다시 찾는다 (KB 검색이지 AI 호출이 아니다) */
+  window.qnaReSearch = function(alt){
+    el('qnaQ').value = alt;
+    window.qnaSearch();
+  };
+  /* 답변칸의 [찾는 답이 아닌가요?] 버튼용 — 검색칸에 있는 질문 그대로 AI 에 넘긴다 */
+  window.qnaAskCur = function(){
+    var qq = el('qnaQ').value.replace(/^\s+|\s+$/g,'');
+    if (qq) qnaAskAI(qq);
+  };
+  function qnaAskAI(q){
+    if (ASKED[q]){ renderAI(q, ASKED[q]); return; }
+    el('qnaDoc').innerHTML = '<div class="guide">등록된 자료에 없는 질문입니다. AI 가 정리하는 중…</div>';
+    post(API.ask, { q:q }, function(j){
+      if (j && j.ok && j.answer){ ASKED[q] = j; renderAI(q, j); }
+      else el('qnaDoc').innerHTML = askGuideHtml();       /* 미설정·실패 → 종전 안내 */
+    }, function(){ el('qnaDoc').innerHTML = askGuideHtml(); });
+  }
   /* 관련화면 열기
        ★이 화면을 떠나지 않는다 (2026-08-04 사용자 요청) —
          종전엔 location.href 로 넘어가 버려서, 안내대로 화면을 열어 보고 나면

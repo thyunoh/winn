@@ -69,6 +69,8 @@ public interface MangrMapper {
 	Map<String,Object>       selectQnaKb(Map<String,Object> p)               throws Exception;
 	List<Map<String,Object>> selectQnaRelList(Map<String,Object> p)          throws Exception;
 	List<Map<String,Object>> selectQnaSearch(Map<String,Object> p)           throws Exception;
+	/* AI 참고답변에 근거로 넘길 후보 (2026-08-06) — 낱말 하나라도 걸리면 가져온다 */
+	List<Map<String,Object>> selectQnaGround(Map<String,Object> p)           throws Exception;
 	int                      updateQnaHit(Map<String,Object> p)              throws Exception;
 	int                      insertQnaLog(Map<String,Object> p)              throws Exception;
 }

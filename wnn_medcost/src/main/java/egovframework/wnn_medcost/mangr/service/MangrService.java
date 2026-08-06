@@ -68,4 +68,6 @@ public interface MangrService {
 	Map<String,Object>       qnaGet(String kbId, String kbCode, String askType,
 	                                String hospCd, String userId, String qText)             throws Exception;
 	Map<String,Object>       qnaSearch(String q, int listCnt, String hospCd, String userId) throws Exception;
+	/* 등록된 자료에서 못 찾았을 때 — LLM(Gemini) 참고답변 (2026-08-06) */
+	Map<String,Object>       qnaAsk(String q, String hospCd, String userId)                 throws Exception;
 }

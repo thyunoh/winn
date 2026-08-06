@@ -797,6 +797,27 @@ public class MangrController {
 		return response;
 	}
 
+	/** 등록된 자료에서 못 찾은 질문 → LLM(Gemini) 참고답변 (2026-08-06)
+	 *  · 화면이 qnaSearch 0건일 때만 부른다.
+	 *  · 키 미설정·호출 실패도 error_code '0' + ok=false 로 조용히 내려보낸다
+	 *    (화면은 종전 안내문구로 폴백 — 오류창을 띄우지 않는다). */
+	@RequestMapping(value="/qnaAsk.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaAsk(@RequestParam(value="q") String q,
+	                                  HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			response.putAll(svc.qnaAsk(q, qnaHospCd(request), qnaUserId(request)));
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("ok", false);
+			response.put("reason", "호출 오류");
+			response.put("error_code", "0");
+		}
+		return response;
+	}
+
 	/* 로그용 — 쿠키가 없어도 예외 없이 null 로 넘긴다 */
 	private String qnaCookie(HttpServletRequest request, String key) {
 		try {
