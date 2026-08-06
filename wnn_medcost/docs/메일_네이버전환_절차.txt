@@ -1,0 +1,124 @@
+========================================================================
+ 월보고서 메일 발송 : 지메일 → 네이버 전환 절차
+ 작성일 : 2026-08-06 (적용 예정 : 다음 주)
+
+ 배경
+   운영서버(114.108.153.178)에서 구글 대역이 차단되어 smtp.gmail.com:587 로
+   접속이 안 됨 → 메일 발송 중단. 네이버(smtp.naver.com:465)는 연결 정상 확인.
+   가비아 방화벽이 열리면 구글 그대로 써도 되지만, 대기가 길어지면 이 절차로 전환.
+
+ ★ 재배포(WAR 재빌드) 필요 없음. 서버 파일 + setenv.sh 한 줄 + 톰캣 재기동.
+========================================================================
+
+
+[사전 준비 — 네이버 메일]
+
+1. 발송에 쓸 네이버 계정 준비 (개인 계정보다 업무용 권장.
+   이 계정 주소가 병원에 '보낸사람'으로 표시됨)
+
+2. 네이버 메일 로그인 → 환경설정 → POP3/IMAP 설정
+   → "IMAP/SMTP 사용함" 체크 후 저장
+   ※ 이걸 안 켜면 인증이 거부되어 발송 실패
+
+3. 네이버 계정에 2단계 인증을 쓰는 경우
+   → 네이버 > 내정보 > 보안설정 > 애플리케이션 비밀번호 발급
+   → 그 값을 아래 password 에 사용 (일반 비밀번호는 거부됨)
+
+
+[1단계] 서버에 설정 파일 생성
+
+  아래를 그대로 실행하되, 대괄호 부분만 실제 값으로 바꿀 것.
+
+    mkdir -p /home/winner/conf
+    vi /home/winner/conf/mail.properties
+
+  파일 내용:
+
+    # 월보고서 PDF 첨부 발송용 SMTP 설정 (네이버)
+    mail.enabled=true
+
+    # 네이버 = 465 + SSL
+    mail.smtp.host=smtp.naver.com
+    mail.smtp.port=465
+    mail.smtp.ssl=true
+
+    # 보내는 계정
+    #  · user 는 [아이디만] 넣는다. 주소(@naver.com)를 넣으면 인증 실패한다.
+    #  · password 는 네이버 비밀번호. 2단계 인증 사용 시 애플리케이션 비밀번호.
+    #  · from 은 그 계정의 [전체 주소]. user 와 다른 주소를 넣으면 네이버가 발송을 막는다.
+    mail.smtp.user=[네이버아이디]
+    mail.smtp.password=[네이버비밀번호 또는 애플리케이션비밀번호]
+    mail.from=[네이버아이디]@naver.com
+    mail.fromName=위너넷 컨설팅
+
+    # 연결/응답 대기(ms)
+    mail.smtp.timeout=15000
+
+    # 메일 열람 추적(1x1 이미지)에 쓰는 외부 접속 주소. 비우면 추적 없이 첨부만 발송.
+    mail.siteBase=https://winner797.co.kr
+
+  저장 후 권한 정리 (비밀번호가 든 파일이므로 톰캣만 읽게 한다):
+
+    chown tomcat:tomcat /home/winner/conf/mail.properties
+    chmod 600 /home/winner/conf/mail.properties
+
+
+[2단계] 톰캣이 그 파일을 읽도록 설정
+
+  /usr/share/tomcat9/bin/setenv.sh 에 아래 한 줄 추가
+  (기존 JAVA_OPTS 줄들 아래에 넣는다)
+
+    export JAVA_OPTS="$JAVA_OPTS -Dwnn.mail.config=/home/winner/conf/mail.properties"
+
+  ※ 이 옵션이 있으면 WAR 안의 mail.properties 대신 이 파일을 읽는다.
+    (MailUtil.config() 가 시스템 프로퍼티를 우선 확인 — 소스 수정 불필요)
+
+
+[3단계] 재기동
+
+    systemctl restart tomcat9
+
+  전달 확인:
+
+    tr '\0' '\n' < /proc/$(pgrep -f catalina | head -1)/environ | grep -i java_opts
+
+
+[4단계] 발송 테스트
+
+  화면에서 월보고서 메일을 1건 발송한 뒤, 로그로 소요시간 확인:
+
+    grep "월보고서메일" /usr/share/tomcat9/logs/catalina.out | tail -3
+
+  출력 예)
+    [월보고서메일] 11223344 202607 첨부확보 8ms(로컬, 1506KB) / SMTP전송 2100ms
+
+  · 첨부확보 (로컬) = 정상. (SFTP) 로 나오면 파일서버를 거친 것(느림, 원인 미해결 상태)
+  · SMTP전송 이 수 초 이내면 정상
+
+
+========================================================================
+[되돌리기] 방화벽이 열려 구글로 복귀할 때
+
+  /home/winner/conf/mail.properties 에서 아래 3줄과 계정만 구글 것으로 바꾸고 재기동.
+
+    mail.smtp.host=smtp.gmail.com
+    mail.smtp.port=587
+    mail.smtp.ssl=false
+    mail.smtp.user=[전체주소@gmail.com]        ← 구글은 [전체 주소]
+    mail.smtp.password=[앱 비밀번호 16자리]     ← 2단계 인증 후 발급. 일반 비밀번호 불가
+    mail.from=[전체주소@gmail.com]
+
+  ※ 구글/네이버 차이 요약
+      구글  : 587 / ssl=false(STARTTLS) / user=전체주소 / 앱 비밀번호
+      네이버 : 465 / ssl=true(SSL)      / user=아이디만 / (2단계 인증 시)앱 비밀번호
+
+
+[참고 — 안 될 때 확인 순서]
+
+ 1. 화면에 "메일 설정이 비어 있습니다" → 설정 파일의 user/password/from 이 빈 것
+ 2. 15초쯤 후 타임아웃 오류        → 서버에서 SMTP 서버로 못 나가는 것(방화벽)
+    확인: timeout 10 openssl s_client -4 -connect smtp.naver.com:465 -brief </dev/null
+ 3. 인증 실패(535 등)              → IMAP/SMTP 사용함 미설정, 또는 일반 비밀번호 사용,
+                                     또는 user 에 주소를 넣음(네이버는 아이디만)
+ 4. 보낸사람 이름이 깨짐            → 설정 파일을 UTF-8 로 저장했는지 확인
+========================================================================
