@@ -1,6 +1,10 @@
 # ============================================================================
 #  메일(SMTP) 설정 양식 — 실제 파일은 mail.properties (git 제외)      (2026-07-29)
 #
+#  ★★이 파일은 git 에 올라간다 — 실제 비밀번호를 절대 적지 말 것.★★
+#     (2026-08-07: 여기에 구글 앱 비밀번호가 그대로 적혀 GitHub 에 올라갔던 적이 있다.
+#      값은 mail.properties / 서버 파일에만 넣고, 이 양식에는 자리표시자만 남긴다.)
+#
 #  [로컬 개발]  이 파일을 mail.properties 로 복사해 값을 채운다.
 #  [운영 서버]  WAR 안에 비밀번호를 두지 말고, 서버 파일로 빼고 톰캣 옵션으로 가리킨다.
 #      1) /home/winner/conf/mail.properties 로 이 양식을 복사해 값 입력
@@ -10,20 +14,37 @@
 #      4) 톰캣 재기동  (이 파일이 있으면 WAR 안 mail.properties 대신 이걸 읽는다)
 #
 #  ※ 값이 비었거나 mail.enabled=false 이면 발송을 시도하지 않고 화면에 안내만 띄운다.
+#  ※ 코드(MailUtil)는 네이버·구글을 가리지 않는다 — 바뀌는 건 host·port·ssl 뿐이다.
 # ============================================================================
 
 mail.enabled=true
 
-# 구글(Gmail) — 587 + STARTTLS  /  네이버면 smtp.naver.com · 465 · ssl=true  ※구글(587)은 반드시 ssl=false — true 면 접속 자체가 실패한다(2026-07-30 실제 발생)
-mail.smtp.host=smtp.gmail.com
-mail.smtp.port=587
-mail.smtp.ssl=false
+# ── 네이버 (현재 운영 방식, 2026-08-07 전환) ─────────────────────────────────
+#   465 + SSL.  보내기 전에 네이버 메일에서 켜 둬야 하는 것 :
+#     메일 > 환경설정 > POP3/IMAP 설정 > 'IMAP/SMTP 사용' 을 [사용함] 으로
+mail.smtp.host=smtp.naver.com
+mail.smtp.port=465
+mail.smtp.ssl=true
 
-# 보내는 계정 — 구글은 '앱 비밀번호'(2단계 인증 후 발급, 16자리·공백 없이)만 통한다
-mail.smtp.user=winnernet7@gmail.com
-mail.smtp.password=sulbwesqiyrvztjl
-mail.from=winnernet7@gmail.com
+# 보내는 계정
+#   · user 는 <아이디만> 적는다 (예: winnernet7). @naver.com 을 붙이면 인증이 막힌다.
+#   · password 는 로그인 비밀번호가 아니라 '애플리케이션 비밀번호' 12자리
+#     (내정보 > 보안설정 > 2단계 인증 > 애플리케이션 비밀번호 관리 에서 발급)
+#   · from 은 아이디@naver.com — 보내는 계정과 달라지면 네이버가 거부한다.
+mail.smtp.user=네이버아이디
+mail.smtp.password=애플리케이션비밀번호12자리
+mail.from=네이버아이디@naver.com
 mail.fromName=위너넷 컨설팅
+
+# ── 구글(Gmail) 로 되돌릴 때 — 위 네이버 6줄을 주석 처리하고 아래 # 을 지운다 ──
+#   ※구글(587)은 반드시 ssl=false — true 면 접속 자체가 실패한다(2026-07-30 실제 발생)
+#   ※구글은 user 에 전체 주소(...@gmail.com)를 적고, 앱 비밀번호는 16자리·공백 없이
+# mail.smtp.host=smtp.gmail.com
+# mail.smtp.port=587
+# mail.smtp.ssl=false
+# mail.smtp.user=보내는계정@gmail.com
+# mail.smtp.password=앱비밀번호16자리
+# mail.from=보내는계정@gmail.com
 
 mail.smtp.timeout=15000
 
