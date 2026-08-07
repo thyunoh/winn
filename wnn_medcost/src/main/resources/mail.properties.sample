@@ -48,6 +48,12 @@ mail.fromName=위너넷 컨설팅
 
 mail.smtp.timeout=15000
 
+# TLS 버전 — 비워두면 코드가 TLSv1.2 를 쓴다. 보통 건드릴 일 없다.
+#   javax.mail 1.5.0 은 구버전 프로토콜을 지정하는데 Java 11 이 그걸 막아서,
+#   명시하지 않으면 "Could not connect to SMTP host" 로 발송이 통째로 실패한다
+#   (2026-08-07 실제 발생. 서버에서 openssl 로는 붙는데 앱만 안 붙으면 이것이다).
+# mail.smtp.ssl.protocols=TLSv1.2 TLSv1.3
+
 # 메일에 들어가는 외부 접속 주소 (보고서 보기 링크 + 열람 추적 이미지)
 #   비워두면 링크·추적 없이 첨부 PDF만 발송한다. 로컬 테스트는 비워 두는 것을 권장.
 mail.siteBase=https://winner797.co.kr
