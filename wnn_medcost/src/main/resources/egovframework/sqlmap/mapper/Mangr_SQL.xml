@@ -748,6 +748,23 @@
                   + (K.WEIGHT / 2)
                   + LEAST(K.HIT_CNT,20) / 10
                 ) AS score
+               /* 검색어 낱말 중 [제목·키워드에 실제로 걸린 개수] (2026-08-06)
+                  ★순위용이 아니라 [제대로 찾았는지] 판정용이다.
+                    ngram 전문색인은 '오래'·'점수' 같은 조각에도 걸려서 엉뚱한 항목이
+                    30건씩 잡히고 0건이 안 난다. 그래서 "0건일 때만 AI" 로는 AI 가 영영 안 뜬다.
+                    낱말이 절반도 안 걸렸으면 [못 찾은 것]으로 보고 AI 참고답변으로 넘긴다. */
+               ,( 0
+        ]]>
+        <if test="words != null">
+            <foreach collection="words" item="w">
+                <![CDATA[
+                  + CASE WHEN K.TITLE    LIKE CONCAT('%',#{w},'%')
+                           OR K.KEYWORDS LIKE CONCAT('%',#{w},'%') THEN 1 ELSE 0 END
+                ]]>
+            </foreach>
+        </if>
+        <![CDATA[
+                ) AS wHit
           FROM  TBL_QNA_KB K
           LEFT JOIN TBL_QNA_CAT C ON C.CAT_ID = K.CAT_ID
          WHERE  K.USE_YN = 'Y'
@@ -755,6 +772,57 @@
                OR K.TITLE    LIKE CONCAT('%',#{q},'%')
                OR K.KEYWORDS LIKE CONCAT('%',#{q},'%')
                OR K.BODY     LIKE CONCAT('%',#{q},'%') )
+         ORDER BY score DESC, K.WEIGHT DESC, K.HIT_CNT DESC
+         LIMIT #{listCnt}
+        ]]>
+    </select>
+
+    <!-- AI 참고답변의 <근거 자료> 후보 (2026-08-06)
+         · 위 selectQnaSearch 는 WHERE 가 <검색어 문장 전체> 기준이라 말이 조금만 달라도 0건이 난다.
+           여기서는 <낱말 하나라도> 걸리면 가져온다 — 등록된 자료 중 그나마 가까운 것을 찾아
+           그 본문만 LLM 에 근거로 넘기기 위한 것이다(자료 밖 창작 방지).
+         · 본문은 앞 1200자만 — 프롬프트가 길어지면 느려지고 비싸진다. 근거로는 이 정도면 충분하다.
+         · 이 조회 결과는 화면 목록에 안 뿌린다. 답변 아래 <근거> 줄에 제목만 나온다. -->
+    <select id="selectQnaGround" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT  K.KB_ID   AS kbId
+               ,K.TITLE   AS title
+               ,C.CAT_NM  AS catNm
+               ,LEFT(K.BODY, 1200) AS body
+               ,(   MATCH(K.TITLE,K.KEYWORDS,K.BODY) AGAINST (#{q} IN NATURAL LANGUAGE MODE)
+                  + CASE WHEN K.TITLE    LIKE CONCAT('%',#{q},'%') THEN 14 ELSE 0 END
+                  + CASE WHEN K.KEYWORDS LIKE CONCAT('%',#{q},'%') THEN  6 ELSE 0 END
+        ]]>
+        <if test="words != null">
+            <foreach collection="words" item="w">
+                <![CDATA[
+                  + CASE WHEN K.TITLE    LIKE CONCAT('%',#{w},'%') THEN 10 ELSE 0 END
+                  + CASE WHEN K.KEYWORDS LIKE CONCAT('%',#{w},'%') THEN  5 ELSE 0 END
+                  + CASE WHEN K.BODY     LIKE CONCAT('%',#{w},'%') THEN  2 ELSE 0 END
+                ]]>
+            </foreach>
+        </if>
+        <![CDATA[
+                  + (K.WEIGHT / 2)
+                ) AS score
+          FROM  TBL_QNA_KB K
+          LEFT JOIN TBL_QNA_CAT C ON C.CAT_ID = K.CAT_ID
+         WHERE  K.USE_YN = 'Y'
+           AND  ( MATCH(K.TITLE,K.KEYWORDS,K.BODY) AGAINST (#{q} IN NATURAL LANGUAGE MODE)
+               OR K.TITLE    LIKE CONCAT('%',#{q},'%')
+               OR K.KEYWORDS LIKE CONCAT('%',#{q},'%')
+        ]]>
+        <if test="words != null">
+            <foreach collection="words" item="w">
+                <![CDATA[
+               OR K.TITLE    LIKE CONCAT('%',#{w},'%')
+               OR K.KEYWORDS LIKE CONCAT('%',#{w},'%')
+               OR K.BODY     LIKE CONCAT('%',#{w},'%')
+                ]]>
+            </foreach>
+        </if>
+        <![CDATA[
+                )
          ORDER BY score DESC, K.WEIGHT DESC, K.HIT_CNT DESC
          LIMIT #{listCnt}
         ]]>

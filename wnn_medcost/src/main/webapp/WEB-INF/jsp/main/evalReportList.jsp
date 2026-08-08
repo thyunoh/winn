@@ -741,29 +741,31 @@ jQuery(function(){
     var html =
       '<div class="erl-guide">'
       + '<h4>1. 왜 앱 비밀번호가 필요한가</h4>'
-      + '구글은 프로그램이 계정 비밀번호로 메일 보내는 것을 막습니다. 그래서 <b>앱 비밀번호</b>(프로그램 전용 16자리)를 따로 발급받아야 합니다.'
-      + '<h4>2. 발급 방법</h4>'
+      + '네이버는 프로그램이 계정 비밀번호로 메일 보내는 것을 막습니다. 그래서 <b>애플리케이션 비밀번호</b>(프로그램 전용 12자리)를 따로 발급받아야 합니다.'
+      + '<h4>2. 준비 — 메일에서 SMTP 켜기</h4>'
+      + '네이버 <b>메일 &gt; 환경설정 &gt; POP3/IMAP 설정</b> 에서 <b>IMAP/SMTP 사용</b> 을 [사용함] 으로 바꿉니다. (이걸 안 켜면 인증이 막힙니다)'
+      + '<h4>3. 발급 방법</h4>'
       + '<ol>'
-      +   '<li>보낼 구글 계정으로 로그인한 뒤 <b>2단계 인증</b>을 켭니다.<br><code>https://myaccount.google.com/signinoptions/twosv</code></li>'
-      +   '<li><code>https://myaccount.google.com/apppasswords</code> 접속</li>'
-      +   '<li>앱 이름은 아무거나(예: WinCheck) 입력 후 <b>만들기</b></li>'
-      +   '<li><code>abcd efgh ijkl mnop</code> 형태의 16자리가 나옵니다 → <b>공백을 빼고</b> 복사<br>'
+      +   '<li>보낼 네이버 계정으로 로그인한 뒤 <b>내정보 &gt; 보안설정</b> 에서 <b>2단계 인증</b>을 켭니다.<br><code>https://nid.naver.com/user2/help/myInfo</code></li>'
+      +   '<li>같은 보안설정 화면의 <b>애플리케이션 비밀번호 관리</b> 로 들어갑니다.</li>'
+      +   '<li>앱 이름은 아무거나(예: WinCheck) 입력 후 <b>확인</b></li>'
+      +   '<li><code>a1b2c3d4e5f6</code> 형태의 12자리가 나옵니다 → 그대로 복사<br>'
       +       '<span style="color:#8a5a00">이 화면을 닫으면 다시 볼 수 없습니다. 잃어버리면 새로 발급하면 됩니다.</span></li>'
       + '</ol>'
       // 서버 설정은 개발자·운영담당 몫이라 기본은 접어 둔다(필요할 때만 펼침)
-      + '<details class="erl-dev"><summary>3. 서버 설정 <span>(개발자용 — 눌러서 펼치기)</span></summary>'
+      + '<details class="erl-dev"><summary>4. 서버 설정 <span>(개발자용 — 눌러서 펼치기)</span></summary>'
       +   '<code>WEB-INF/classes/mail.properties</code> 의 값을 채우고 <b>톰캣을 재시작</b>합니다.'
       +   '<ol>'
       +     '<li><code>mail.enabled=true</code></li>'
-      +     '<li><code>mail.smtp.user</code> = 보내는 구글 계정 주소</li>'
-      +     '<li><code>mail.smtp.password</code> = 앱 비밀번호 16자리(공백 없이)</li>'
-      +     '<li><code>mail.from</code> = user 와 같은 주소</li>'
+      +     '<li><code>mail.smtp.user</code> = 네이버 <b>아이디만</b> (예: <code>hyun_otech</code> — <code>@naver.com</code> 을 붙이면 인증이 막힙니다)</li>'
+      +     '<li><code>mail.smtp.password</code> = 애플리케이션 비밀번호 12자리</li>'
+      +     '<li><code>mail.from</code> = 아이디@naver.com (보내는 계정과 같아야 합니다)</li>'
       +   '</ol>'
-      +   '구글 기준 <code>host=smtp.gmail.com / port=587 / ssl=false</code> 는 이미 설정돼 있습니다.'
+      +   '네이버 기준 <code>host=smtp.naver.com / port=465 / ssl=true</code> 는 이미 설정돼 있습니다.'
       + '</details>'
       + '</div>';
     // 도움말은 내용이 길어 넓은 창이 필요하므로 Swal 을 그대로 쓴다(알림·확인은 _alertBox/_confirmBox 사용)
-    if(typeof Swal === 'undefined'){ alert('메일 발송 설정: mail.properties 에 구글 계정·앱 비밀번호를 넣고 톰캣을 재시작하세요.'); return; }
+    if(typeof Swal === 'undefined'){ alert('메일 발송 설정: mail.properties 에 네이버 아이디·애플리케이션 비밀번호를 넣고 톰캣을 재시작하세요.'); return; }
     Swal.fire({ title:'메일 발송 설정 도움말', html:html, width:680, heightAuto:false,
                 confirmButtonText:'닫기' });
   };

@@ -108,6 +108,15 @@ public class MailUtil {
 		String from     = s(c, "mail.from", "");
 		String fromName = s(c, "mail.fromName", "WinCheck+");
 		String timeout  = s(c, "mail.smtp.timeout", "15000");
+		// ★TLS 버전을 반드시 명시한다(2026-08-07) — 없으면 발송이 통째로 실패한다.
+		//   javax.mail 1.5.0(2013) 은 SSL 소켓에 켤 프로토콜을 구버전(SSLv3/TLSv1) 위주로 지정하는데,
+		//   Java 11 은 java.security 의 jdk.tls.disabledAlgorithms 로 그것들을 막아 둔다.
+		//   → 쓸 수 있는 프로토콜이 하나도 안 남아 핸드셰이크 시작 전에 죽고,
+		//     JavaMail 이 그걸 "Could not connect to SMTP host" 로 감싸 버려 원인이 안 보인다
+		//     (실제 원인은 SSLHandshakeException: No appropriate protocol).
+		//   ※ 서버에서 openssl s_client 로는 붙는데 앱만 안 붙으면 십중팔구 이것이다.
+		//   TLSv1.3 을 쓰려면 mail.properties 에 mail.smtp.ssl.protocols=TLSv1.2 TLSv1.3 으로 덮어쓴다.
+		String sslProt  = s(c, "mail.smtp.ssl.protocols", "TLSv1.2");
 
 		InternetAddress[] to = parseAddresses(toCsv);
 		if (to.length == 0) throw new IllegalArgumentException("수신자 주소가 없습니다.");
@@ -119,6 +128,7 @@ public class MailUtil {
 		p.put("mail.smtp.connectiontimeout", timeout);
 		p.put("mail.smtp.timeout", timeout);
 		p.put("mail.smtp.writetimeout", timeout);
+		p.put("mail.smtp.ssl.protocols", sslProt);   // 465·587 양쪽 다 필요 (위 주석 참고)
 		if (ssl) {                                   // 465 — 처음부터 SSL
 			p.put("mail.smtp.ssl.enable", "true");
 			p.put("mail.smtp.socketFactory.port", port);

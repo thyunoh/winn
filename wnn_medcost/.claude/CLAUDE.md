@@ -9,6 +9,20 @@
 
 ## 장애/수정 이력
 
+### [완료] 메일 발송 네이버 전환 + TLS 핸드셰이크 실패 (2026-08-07)
+- **한 일**: 발송계정을 구글(587/STARTTLS) → **네이버(465/SSL)** 로 전환. 서버는 **WAR 밖 외부 설정파일** 방식으로 정리 — `/home/winner/conf/mail.properties`(권한 600) + `/usr/share/tomcat9/bin/setenv.sh` 의 `-Dwnn.mail.config=...`. 이후 계정 교체는 **이 파일 3줄(user·password·from) 고치고 재기동**이면 끝, WAR 재빌드 불필요.
+- **★핵심 함정 — `mail.smtp.ssl.protocols` 를 반드시 명시해야 한다**: 안 주면 발송이 통째로 실패하고 화면엔 `Could not connect to SMTP host: smtp.naver.com, port: 465` 만 뜬다. 진짜 원인은 `SSLHandshakeException: No appropriate protocol`. `javax.mail 1.5.0`(2013) 이 SSL 소켓에 켤 프로토콜을 구버전(SSLv3/TLSv1) 위주로 지정하는데 **Java 11 이 java.security 의 jdk.tls.disabledAlgorithms 로 그걸 막아** 쓸 프로토콜이 하나도 안 남는다. → [MailUtil.java](src/main/java/egovframework/util/MailUtil.java) 에 `mail.smtp.ssl.protocols`(기본 TLSv1.2, 설정파일로 덮어쓰기 가능) 추가, 465·587 양쪽 적용.
+  - **판별법**: 서버에서 `openssl s_client -connect smtp.naver.com:465` 는 붙는데 앱만 안 붙으면 십중팔구 이것. (cacerts·방화벽·IPv6 를 먼저 의심했지만 전부 정상이었다)
+  - **진짜 원인이 안 보이는 이유**: [MagamController.java](src/main/java/egovframework/wnn_medcost/magam/web/MagamController.java) 의 catch 가 `ex.getMessage()` 만 화면에 돌려주고 **스택트레이스를 로그에 안 찍는다** → catalina.out 에 아무것도 없다. 원인 추적은 서버에서 JavaMail 로 직접 재현(`java -cp <WEB-INF/lib jar> Test.java`, `session.setDebug(true)`)해야 나온다. **서버에 JDK 가 있어 단일파일 실행이 된다.**
+- **[함정] setenv.sh 에 `>>` 로 옵션 추가 금지**: 파일 끝에 개행이 없어 앞줄에 그대로 붙는다. 실제로 `-Dspring.profiles.active=prod` 가 `prodJAVA_OPTS=-Xms1024m` 이 되어 **prod 프로파일이 깨진 채로 기동**됐다. 반드시 `cat -A` 로 줄 끝(`$`)을 확인하고 편집할 것.
+- **[함정] 서비스 인스턴스가 어느 쪽인지**: 톰캣이 2개 떠 있다. 실사용은 **`catalina.base=/usr/share/tomcat9`**(443·8080 보유, root 실행, `bin/shutdown.sh`+`startup.sh` 로 재기동). `/var/lib/tomcat9` 쪽은 빈 ROOT 만 있는 유령 — **`systemctl restart tomcat9` 를 쓰면 엉뚱한 걸 건드린다.**
+- **[함정] webapps 에 같은 앱이 2벌**: `ROOT` 와 `wnn_medcost-1.0.0` 둘 다 클래스를 갖고 있고 **실제 서비스는 `wnn_medcost-1.0.0`**. ROOT 만 고치면 아무 변화가 없다(이걸로 한 번 헛돌았다).
+- **[참고] 서버는 아웃바운드 HTTPS 차단** — maven 저장소에서 jar 를 못 받는다(SMTP 465 는 열림). 급히 자바 수정분을 반영해야 하면 `.java` 를 서버로 올려 `javac -encoding UTF-8 -cp <WEB-INF/lib jar> -d ...` 로 컴파일해 **`.class` 만 교체**하는 방법이 있다(2026-08-07 실제 사용, `/root/MailUtil.class*.bak` 백업). 어디까지나 임시 — 다음 배포에 덮인다.
+- **네이버 계정 조건**: 메일>환경설정>POP3/IMAP 에서 **IMAP/SMTP 사용함**, 2단계 인증 후 **애플리케이션 비밀번호 12자리**, `mail.smtp.user` 는 **아이디만**(@naver.com 붙이면 인증 실패), `mail.from` 은 그 계정과 동일해야 함. 구글은 반대로 전체주소 + 앱비번 16자리 + **587 은 ssl=false 필수**.
+- **외부 도메인 첫 발송이 느릴 수 있다**: 네이버끼리는 5초, 아웃룩 첫 발송은 몇 분 끌다 타임아웃 났다가 이후 정상. 재발하면 설정파일의 `mail.smtp.timeout` 만 올리면 된다(코드 수정 불필요).
+- **[보안] `mail.properties.sample` 은 git 에 올라간다** — 여기 실제 앱 비밀번호를 적었다가 GitHub 에 노출됐다(커밋 `0c99f13`, winnernet7@gmail.com). 자리표시자로 정리했고, 노출된 구글 앱 비밀번호는 폐기 필요.
+- **배포**: 자바(MailUtil) 변경 → **WAR 재빌드 필수.** JSP(evalReportList 도움말 네이버 기준 교체)는 파일 교체로 가능.
+
 ### [완료] 적정성평가 Q&A 챗봇 — 지식 DB 전환 + 심평원 교육자료 원문 적재 (2026-08-04)
 - **요청**: 「요양병원 수가 실무교육자료」(심평원, 2022 · PDF 339쪽, `D:\워너넷자료\요양병원실무업무자료.pdf`)를 Q&A 답변 자료로 쓰고 **DB에 저장**, **질문 가능**하게. 추가로 ①**질문내용을 카테고리로 나눠 보여주기** ②**어떤 내용이 있고 어떻게 질문할지 가이드** ③**자주하는 질문 순위**.
 - **DB 3종 신설** [docs/sql/TBL_QNA.sql] · 데이터 [docs/sql/TBL_QNA_seed.sql] (운영DB 적재 완료, 336건):
