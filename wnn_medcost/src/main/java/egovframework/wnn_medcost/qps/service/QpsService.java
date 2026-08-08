@@ -1,0 +1,45 @@
+package egovframework.wnn_medcost.qps.service;
+
+import java.util.List;
+import java.util.Map;
+
+import egovframework.wnn_medcost.qps.model.QpsCensusDTO;
+import egovframework.wnn_medcost.qps.model.QpsIncidentDTO;
+import egovframework.wnn_medcost.qps.model.QpsMonitorDTO;
+
+public interface QpsService {
+
+	/** 조회 대상 병원 — 화면 배지에 서버 기준 병원을 찍기 위한 것. */
+	Map<String, Object> selectHospInfo(String hospCd) throws Exception;
+
+	/** 지표 마스터 1건 — 화면 제목·사고구분을 서버에서 정하기 위한 것. */
+	Map<String, Object> selectQpsIndi(String hospCd, String indiCd) throws Exception;
+
+	/** 환자 입력검색 — 위너넷 입원환자(TBL_IPWON_INFO)에서 고른다. QPS 는 환자를 따로 등록하지 않는다. */
+	List<Map<String, Object>> selectPatientList(String hospCd, String keyword, String baseDt) throws Exception;
+
+	List<Map<String, Object>> selectIncidentList(QpsIncidentDTO dto) throws Exception;
+	int saveIncident(QpsIncidentDTO dto) throws Exception;
+	int deleteIncident(QpsIncidentDTO dto) throws Exception;
+
+	/** 관찰형 기록(손위생 등) — 관찰건수·수행건수 건별 입력. */
+	List<Map<String, Object>> selectMonitorList(QpsMonitorDTO dto) throws Exception;
+	int saveMonitor(QpsMonitorDTO dto) throws Exception;
+	int deleteMonitor(QpsMonitorDTO dto) throws Exception;
+	Map<String, Object> selectMonitorBreakdown(String hospCd, String indiCd, String fromDt, String toDt) throws Exception;
+
+	Map<String, Object> selectCensus(String hospCd, String censusGb, String inYear) throws Exception;
+
+	/** 재원일수 자동산출 — 입퇴원 자료(TBL_IPWON_INFO)로 월별 재원일수를 계산한다(저장은 안 함). */
+	Map<String, Object> calcCensusFromIpwon(String hospCd, String inYear) throws Exception;
+	int saveCensus(QpsCensusDTO dto) throws Exception;
+
+	/** 지표 산출 — 월별 분자/분모/율 + 분기 집계 + 지표정의를 한 번에 돌려준다. */
+	Map<String, Object> calcIndicator(String hospCd, String indiCd, String inYear) throws Exception;
+
+	/** 분류별 집계 — 분자와 같은 등급 필터(minLevel)를 적용한다(SUNWOO 실물: 분류표 합계 = 분자). */
+	Map<String, Object> selectBreakdown(String hospCd, String incidGb, String fromDt, String toDt, String minLevel) throws Exception;
+
+	Map<String, Object> selectReport(String hospCd, String indiCd, String prdGb, String prdKey) throws Exception;
+	int saveReport(Map<String, Object> param) throws Exception;
+}

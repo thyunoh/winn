@@ -154,7 +154,51 @@
                     <li class="nav-item menu-section" id="menu-e">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do"><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
                     </li>
-                   
+
+                    <!-- ===== QPS(질향상·환자안전) — 적정성평가와 별개 업무 (2026-08-08) =====
+                         ★기본 숨김. 위너넷(s_wnn_yn='Y') 이면서 개발자 플래그가 켜져 있을 때만 보인다.
+                           여는 법 = 핫키 Ctrl+Alt+Q (아래 스크립트, 어느 화면에서든 동작).
+                         ★menu-section 이 아니다 — top.jsp 탭/계약 필터의 영향을 받지 않게.
+                         ★정식 오픈 시 : style 의 display:none 과 아래 qpsDev 게이트만 걷어내면 된다. -->
+                    <li class="nav-item" id="menu-qps" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
+                           aria-expanded="false" data-target="#qps-sub" aria-controls="qps-sub">
+                        <i class="fa fa-heartbeat" aria-hidden="true"></i>QPS-환자안전</a>
+                        <div id="qps-sub" class="collapse submenu" style="background-color: white;">
+                            <ul class="nav flex-column">
+                                <%-- ★★지표 추가는 아래 <li> 한 줄 복사 — 화면·자바는 안 고친다.
+                                       /main/qpsFall.do?indi=코드  형태로 지표코드만 바꾸면
+                                       제목·산식·단위·분모구분이 TBL_QPS_INDI_MST 에서 자동으로 따라온다.
+                                       코드는 시드 18종 참고: FALL/BEDSORE/HANDWASH/RESTRAINT/STAFFSAFE/
+                                       PTSAFE/TATIMG/TATLAB/MEDICATION/ABUSE/HOMERET/SUICIDE/ISOLATION/
+                                       SECLUSION/UTI/INFEXP/CLAIM/SATISFY
+                                       ※ 산식(분자·분모)이 채록된 지표만 올린다 — 미채록 지표를 올리면
+                                         화면은 뜨지만 수치가 안 나와 오히려 혼란스럽다. --%>
+                                <%-- 메뉴명 = 지표 정식 명칭(TBL_QPS_INDI_MST.INDI_NM 과 동일) —
+                                     '낙상' 처럼 짧으면 무슨 지표인지 안 보인다(2026-08-08 지적). --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsFall.do?indi=FALL">낙상 발생 보고율</a>
+                                </li>
+                                <%-- 욕창 = 환자평가표(신규발생) 자동 집계 — 사고 입력 없이 지표만 나온다.
+                                     산식은 잠정(지표정의서 채록 후 확정) — 정의 박스에 명시돼 있다. --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsFall.do?indi=BEDSORE">욕창 발생률</a>
+                                </li>
+                                <%-- 관찰형(수행률) — 관찰 입력 탭에서 관찰/수행 건수 등록 --%>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=HANDWASH">손위생 수행률</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=ISOLATION">격리지침 수행률</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=SECLUSION">강박지침 수행률</a></li>
+                                <%-- 사고보고형(발생률) — 사고 입력 탭 + 재원일수 --%>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=PTSAFE">환자안전사고 발생 보고율</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=MEDICATION">투약오류 발생 보고율</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=ABUSE">환자 학대 및 폭력사건 보고율</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=SUICIDE">자살·자해 발생 보고율</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=STAFFSAFE">직원안전사고 발생률</a></li>
+                                <%-- 참고: 신체보호대·재택복귀·불만고충·만족도는 정의문구 확정 후 순차 개방 --%>
+                            </ul>
+                        </div>
+                    </li>
+
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
                                                                                       <i class="fa fa-building" aria-hidden="true"></i></i>요양기관등록</a>
@@ -1188,7 +1232,12 @@ function hosp_conact() {
       //  ,"simulation"
     ]);
 }
-document.addEventListener('DOMContentLoaded', function () {
+/* ★[2026-08-08] DOMContentLoaded 대기 → 즉시 실행으로 변경 — 메뉴 강조 깜박임의 원인.
+     문서 '전체'(콘텐츠 JSP·차트·그리드까지) 파싱이 끝나야 강조가 붙어서, 무거운 화면일수록
+     "강조 없음 → 강조" 가 눈에 띄게 깜박였다. 이 스크립트는 사이드바 마크업보다 아래에 있으므로
+     즉시 실행해도 필요한 DOM 은 전부 있고, 같은 <script> 안의 함수(sbFavInit·hosp_conact)는
+     호이스팅되어 안전하다. getCookie 는 top.jsp(먼저 로드) 정의분. */
+(function () {
     // 실제 URL이 숨겨져 있지 않다면(/user/가 아니라면) location.pathname을 우선시한다.
     // 그래야 대시보드(/user/dashboard.do)로 이동 시 sessionStorage에 남은
     // 이전 메뉴 경로로 인해 잘못 강조되는 문제가 발생하지 않는다.
@@ -1197,11 +1246,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var locPath = window.location.pathname;
     var currentPath;
     if (locPath && locPath !== '/user/' && locPath !== '/' && locPath !== '/user/dashboard.do') {
-        currentPath = locPath;
+        currentPath = locPath + (window.location.search || '');
     } else {
         currentPath = sessionStorage.getItem('_realPath') || locPath;
     }
-    // 쿼리스트링 제거 (경로만 비교)
+    // ★쿼리 포함 전체 주소도 남겨 둔다 — qpsFall.do?indi=FALL / ?indi=BEDSORE 처럼
+    //   경로는 같고 쿼리로만 갈리는 메뉴는 쿼리까지 맞아야 강조된다.
+    //   (2026-08-08 실제: 경로만 비교해 마지막 링크가 이겨 낙상을 열어도 욕창이 강조됐다)
+    var currentFull = currentPath;
+    // 쿼리스트링 제거 (경로만 비교용)
     if (currentPath.indexOf('?') > -1) {
         currentPath = currentPath.substring(0, currentPath.indexOf('?'));
     }
@@ -1212,11 +1265,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // 모든 nav-link 순회 — 현재 페이지 URL과 일치하는 메뉴에 active 클래스 부여
-    var matchedLink = null;
+    var matchedLink = null, exactMatched = false;
     document.querySelectorAll('.nav-left-sidebar .nav-link').forEach(function (link) {
         var href = link.getAttribute('href');
         // href가 없거나, '#'이거나, 빈 문자열이면 건너뛰기
         if (!href || href === '#' || href === '' || href.startsWith('http') || href.startsWith('javascript')) return;
+        // 쿼리까지 정확히 일치하면 그 링크가 최우선 — 이후 경로만 일치하는 링크가 덮지 못한다
+        if (currentFull === href) { matchedLink = link; exactMatched = true; return; }
+        if (exactMatched) return;
 
         // 쿼리스트링 제거
         if (href.indexOf('?') > -1) {
@@ -1280,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // 자주 쓰는 메뉴 상단 고정 바 — 관리자만 (2026-08-05 최종)
         sbFavInit();
     }
-});
+})();
 
 /* ══ 자주 쓰는 메뉴 — 상단 고정 가로 바 (관리자 전용, 2026-08-05 최종) ══════════
      · 사이드바 탭 방식은 "클릭해서 선택하기 불편" 하다 하여 폐기 — 화면과 별개로 상단에 <고정> 노출.
@@ -2004,6 +2060,101 @@ $(document).ready(function() {
 <!-- ============================================================== -->
 <!-- 하단 질문 알림 툴바 (공통) End -->
 <!-- ============================================================== -->
+
+<script>
+/* ══ QPS 메뉴 표시 토글 — 키워드 'qps' 타이핑 (2026-08-08) ═══════════════════
+     사용자 지시: "적정성평가 말고 별도 QPS 메뉴로, 핫키는 동일하게 저만 보이게".
+     ★[2026-08-08 변경] 종전 Ctrl+Alt+Q 는 **다른 프로그램이 먼저 가로채서** 엉뚱하게 동작했다
+       (윈도우에서 Ctrl+Alt 조합은 캡처도구·원격툴·메신저 등이 전역 단축키로 자주 점유한다.
+        게다가 한글 키보드에서 Ctrl+Alt 는 AltGr 로 해석되기도 한다).
+       → **조합키를 아예 쓰지 않는다.** 입력칸 밖에서 `q` `p` `s` 를 이어서 치면 토글된다.
+         브라우저·OS 가 가로챌 수 없는 방식이라 어디서든 확실히 먹는다.
+     · 안전장치 : 입력칸(input/textarea/select/contenteditable) 안에서는 절대 반응하지 않는다.
+                  Ctrl·Alt·Meta 가 눌린 상태도 무시(다른 단축키와 섞이지 않게).
+     · 사이드바에 두었으므로 **어느 화면에서든** 먹는다.
+     · 저장 = localStorage('qpsDev') — 이 PC 이 브라우저에서만 켜진다(서버·DB 무관, 다른 사람에겐 안 보임).
+     · 이중 게이트 : 위너넷(s_wnn_yn='Y') 이 아니면 쳐도 메뉴가 안 나온다.
+     · 정식 오픈 시 : 이 스크립트와 li 의 display:none 만 지우면 된다.                        */
+(function(){
+    // ★[2026-08-08 변경] localStorage → sessionStorage.
+    //   localStorage 는 브라우저를 닫아도 남아서 "qps 를 안 쳐도 메뉴가 계속 보였다"(사용자 지적).
+    //   sessionStorage 는 그 탭/세션에서만 유효 → 브라우저를 닫으면 자동으로 꺼진다 = "qps 칠 때만 작동".
+    //   ↓ 옛 localStorage 잔재 제거(안 지우면 apply 가 계속 켜진 것으로 본다).
+    var KEY = 'qpsDev';
+    try { localStorage.removeItem(KEY); } catch(e){}
+    function flagOn(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
+    function flagSet(v){ try { sessionStorage.setItem(KEY, v); } catch(e){} }
+    var WORD = 'qps', buf = '', bufTimer = null;
+    function isWnn(){
+        // getCookie 는 top.jsp 정의분. 못 찾으면 직접 읽는다 —
+        // 여기서 조용히 false 가 되면 '핫키를 눌러도 아무 일이 없다'가 되어 원인을 못 찾는다.
+        try { if (typeof getCookie === 'function') return (getCookie("s_wnn_yn") || '').trim() === 'Y'; } catch(e){}
+        try {
+            var m = ('; ' + document.cookie).match(/;\s*s_wnn_yn=([^;]*)/);
+            return m ? decodeURIComponent(m[1]).trim() === 'Y' : false;
+        } catch(e){ return false; }
+    }
+    function apply(){
+        var li = document.getElementById('menu-qps');
+        if (!li) return;
+        li.style.display = (flagOn() && isWnn()) ? '' : 'none';
+    }
+    function toggle(){
+        if (!isWnn()) return;                           // 위너넷 아니면 아무 일도 없다
+        var on = false;
+        try {
+            on = flagOn();
+            flagSet(on ? 'N' : 'Y');
+        } catch(e){}
+        apply();
+        // 안내는 넉넉히 보여준다 — 1.4초는 "떴다 사라졌다"는 지적을 받았다(2026-08-08).
+        // 마우스를 올리면 멈추고, 진행바로 남은 시간이 보인다.
+        try {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast:true, position:'top-end', width:380, timer:4000,
+                            timerProgressBar:true, showConfirmButton:false, icon:'info',
+                            title:'QPS 메뉴 ' + (on ? '숨김' : '표시'),
+                            text: on ? '다시 보려면 qps 를 치세요.' : '좌측 메뉴 하단 [QPS-환자안전]',
+                            didOpen: function(el){
+                                el.addEventListener('mouseenter', Swal.stopTimer);
+                                el.addEventListener('mouseleave', Swal.resumeTimer);
+                            } });
+            }
+        } catch(e){}
+    }
+    function inField(t){
+        if (!t) return false;
+        var tag = (t.tagName || '').toUpperCase();
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable === true;
+    }
+    document.addEventListener('keydown', function(ev){
+        if (ev.ctrlKey || ev.altKey || ev.metaKey) { buf = ''; return; }   // 조합키는 남의 단축키
+        if (inField(ev.target)) { buf = ''; return; }                      // 입력 중에는 절대 반응 안 함
+        // 물리키(code)로 본다 — 한/영 모드가 한글이어도 KeyQ 는 KeyQ 다
+        var ch = (ev.code && ev.code.indexOf('Key') === 0) ? ev.code.charAt(3).toLowerCase()
+                                                          : (ev.key || '').toLowerCase();
+        if (ch.length !== 1 || ch < 'a' || ch > 'z') { buf = ''; return; }
+        buf += ch;
+        if (WORD.indexOf(buf) !== 0) buf = (ch === WORD.charAt(0)) ? ch : '';   // 어긋나면 처음부터
+        if (bufTimer) clearTimeout(bufTimer);
+        bufTimer = setTimeout(function(){ buf = ''; }, 1500);                   // 천천히 치면 초기화
+        if (buf === WORD) { buf = ''; toggle(); }
+    });
+    /* 확실한 뒷문 — 키 입력이 어떤 이유로든 안 먹을 때를 위한 URL 스위치.
+       예) /main/assessment.do?qpsdev=y  (끄기는 qpsdev=n)
+       ★main.jsp 가 주소를 /user/dashboard.do 로 숨기므로 location.search 가 이미 지워졌을 수 있다
+         → 원래 경로를 담아 둔 sessionStorage('_realPath') 도 함께 본다. */
+    (function(){
+        var s = '';
+        try { s = (location.search || '') + '|' + (sessionStorage.getItem('_realPath') || ''); } catch(e){}
+        var m = s.toLowerCase().match(/qpsdev=([yn])/);
+        if (m) flagSet(m[1] === 'y' ? 'Y' : 'N');
+    })();
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+})();
+</script>
 
 <!-- ============================================================== -->
 <!-- sidebar end -->

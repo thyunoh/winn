@@ -88,6 +88,8 @@ Date nowTime = new Date();
 											title="같은 달 전체 병원의 지표별 평균과 병원 목록을 봅니다(위너넷 전용)."
 											onclick="(function(){var ym=document.getElementById('year_Select').value+document.getElementById('monthSelect').value;location.href='/main/evalCompare.do?ym='+ym;})();">📊
 											평가비교</button>
+										<%-- [2026-08-08] QPS 는 적정성평가와 별개 업무라 여기서 뺐다 — 좌측 사이드바의
+										     [QPS-환자안전] 메뉴(sidebar.jsp #menu-qps)로 이동. 핫키(Ctrl+Alt+Q)도 사이드바가 갖는다. --%>
 											</div><!-- /.wnn-adm-menu -->
 										</div><!-- /#wnnAdminMenu -->
 									</div>
@@ -106,7 +108,7 @@ Date nowTime = new Date();
 										                // (항목 노출은 CSS 담당)
 										            }
 										        }catch(e){}
-										    })(); 
+										    })();
 										</script>
 									<script>
 										/* ===== 관리자업무 서브메뉴 열고/닫기 (2026-07-30) =====

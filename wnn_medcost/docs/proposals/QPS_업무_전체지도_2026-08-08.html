@@ -1,0 +1,299 @@
+<title>QPS 업무 — 전체 지도</title>
+<style>
+  :root {
+    --bg: #f3f5f4;
+    --surface: #ffffff;
+    --surface-2: #f7faf8;
+    --ink: #1b2622;
+    --ink-soft: #55645e;
+    --ink-faint: #84948d;
+    --line: #e2e8e5;
+    --line-strong: #cdd8d3;
+    --accent: #1f5a4b;
+    --accent-soft: #e7f2ee;
+    --accent-line: #bfdcd2;
+    --done: #1f7a52;
+    --done-bg: #e4f3ea;
+    --pilot: #b5701a;
+    --pilot-bg: #f8eede;
+    --todo: #6f7d86;
+    --todo-bg: #eceef0;
+    --shadow: 0 1px 2px rgba(20,40,32,.04), 0 8px 24px rgba(20,40,32,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101512;
+      --surface: #171e1a;
+      --surface-2: #1c2521;
+      --ink: #e8efeb;
+      --ink-soft: #a3b1ab;
+      --ink-faint: #6f7d77;
+      --line: #263029;
+      --line-strong: #33403a;
+      --accent: #64c4a4;
+      --accent-soft: #16261f;
+      --accent-line: #2c4238;
+      --done: #57c489;
+      --done-bg: #14251b;
+      --pilot: #d79a4e;
+      --pilot-bg: #2a2013;
+      --todo: #8a97a0;
+      --todo-bg: #20272b;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101512; --surface: #171e1a; --surface-2: #1c2521;
+    --ink: #e8efeb; --ink-soft: #a3b1ab; --ink-faint: #6f7d77;
+    --line: #263029; --line-strong: #33403a;
+    --accent: #64c4a4; --accent-soft: #16261f; --accent-line: #2c4238;
+    --done: #57c489; --done-bg: #14251b; --pilot: #d79a4e; --pilot-bg: #2a2013;
+    --todo: #8a97a0; --todo-bg: #20272b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f5f4; --surface: #ffffff; --surface-2: #f7faf8;
+    --ink: #1b2622; --ink-soft: #55645e; --ink-faint: #84948d;
+    --line: #e2e8e5; --line-strong: #cdd8d3;
+    --accent: #1f5a4b; --accent-soft: #e7f2ee; --accent-line: #bfdcd2;
+    --done: #1f7a52; --done-bg: #e4f3ea; --pilot: #b5701a; --pilot-bg: #f8eede;
+    --todo: #6f7d86; --todo-bg: #eceef0;
+    --shadow: 0 1px 2px rgba(20,40,32,.04), 0 8px 24px rgba(20,40,32,.06);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 22px 72px; }
+
+  /* header */
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 0 0 12px;
+    letter-spacing: -.01em; text-wrap: balance; font-weight: 800;
+  }
+  .lede { font-size: 16px; color: var(--ink-soft); margin: 0; max-width: 62ch; }
+  .stamp {
+    margin-top: 18px; font-size: 12.5px; color: var(--ink-faint);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .stamp b { color: var(--ink-soft); font-weight: 600; }
+  .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--line-strong); }
+
+  section { margin-top: 44px; }
+  h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0 0 16px; display: flex; align-items: baseline; gap: 10px;
+  }
+  h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  /* progress tiles */
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 16px 15px; box-shadow: var(--shadow);
+  }
+  .tile .n { font-size: 30px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .tile .n small { font-size: 15px; font-weight: 600; color: var(--ink-faint); }
+  .tile .k { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+  .tile.accent .n { color: var(--accent); }
+
+  /* architecture: 3 types */
+  .types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .type {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .type::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--accent); }
+  .type h3 { margin: 0 0 4px; font-size: 15.5px; font-weight: 750; }
+  .type .code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--accent);
+    background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 5px; padding: 1px 6px; }
+  .type .formula { margin: 12px 0 10px; font-size: 13px; color: var(--ink-soft);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .type ul { margin: 0; padding-left: 0; list-style: none; }
+  .type li { font-size: 13px; color: var(--ink-soft); padding: 3px 0 3px 16px; position: relative; }
+  .type li::before { content: ""; position: absolute; left: 3px; top: 11px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--accent-line); }
+
+  /* indicator table */
+  .tablecard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: var(--shadow); overflow: hidden; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 560px; }
+  thead th { text-align: left; font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--ink-faint); padding: 12px 16px; border-bottom: 1px solid var(--line-strong); background: var(--surface-2); }
+  tbody td { padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.name { font-weight: 650; color: var(--ink); }
+  td.formula { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700;
+    padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+  .pill.done { color: var(--done); background: var(--done-bg); }
+  .pill.done::before { background: var(--done); }
+  .pill.pilot { color: var(--pilot); background: var(--pilot-bg); }
+  .pill.pilot::before { background: var(--pilot); }
+  .pill.todo { color: var(--todo); background: var(--todo-bg); }
+  .pill.todo::before { background: var(--todo); }
+  .tag { font-size: 11px; color: var(--ink-faint); font-family: ui-monospace, Menlo, monospace; }
+
+  /* roadmap */
+  .road { display: grid; gap: 12px; }
+  .phase { display: grid; grid-template-columns: 128px 1fr; gap: 18px; align-items: start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .phase .when { font-size: 12px; font-weight: 700; color: var(--ink-faint); letter-spacing: .03em; padding-top: 2px; }
+  .phase .when .badge { display: inline-block; margin-top: 6px; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; }
+  .badge.now { color: var(--done); background: var(--done-bg); }
+  .badge.next { color: var(--pilot); background: var(--pilot-bg); }
+  .badge.later { color: var(--todo); background: var(--todo-bg); }
+  .phase h3 { margin: 0 0 5px; font-size: 15px; font-weight: 700; }
+  .phase p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  .foot { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 12.5px; color: var(--ink-faint); }
+  .foot b { color: var(--ink-soft); font-weight: 600; }
+
+  .callout { margin-top: 16px; background: var(--accent-soft); border: 1px solid var(--accent-line);
+    border-radius: 12px; padding: 15px 18px; }
+  .callout p { margin: 0; font-size: 13.5px; color: var(--ink); }
+  .callout b { color: var(--accent); }
+
+  @media (max-width: 720px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .types { grid-template-columns: 1fr; }
+    .phase { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">SUNWOO 인증솔루션 → 위너넷 이식</p>
+    <h1>QPS 업무 — 전체 지도</h1>
+    <p class="lede">병원 인증평가의 질향상·환자안전(QPS) 서식을 위너넷(WinCheck+)으로 옮기는 일.
+      SUNWOO는 담당자가 서식마다 수치를 손으로 적었지만, 여기서는 원천 데이터만 넣으면 지표가 자동으로 산출된다.</p>
+    <div class="stamp">
+      <span><b>기준일</b> 2026-08-08</span><span class="dot"></span>
+      <span>대상 서식 <b>203종</b></span><span class="dot"></span>
+      <span>관리 지표 <b>18종</b></span><span class="dot"></span>
+      <span>현재 <b>시작 단계 · 지표 자동집계 골격 검증 완료</b></span>
+    </div>
+  </header>
+
+  <section>
+    <h2>지금까지</h2>
+    <div class="tiles">
+      <div class="tile accent"><div class="n">10<small> / 18</small></div><div class="k">가동 지표 (마스터·화면 연결)</div></div>
+      <div class="tile accent"><div class="n">3<small> / 3</small></div><div class="k">지표 유형 실데이터 검증</div></div>
+      <div class="tile"><div class="n">6</div><div class="k">DB 테이블 (원천·집계)</div></div>
+      <div class="tile"><div class="n">1</div><div class="k">공용 화면 (지표코드로 분기)</div></div>
+    </div>
+    <div class="callout">
+      <p><b>검증된 것.</b> 낙상 0.67‰·욕창 실데이터·손위생 수행률 — 세 유형 모두 화면 값이 독립 검산과 일치했다.
+      즉 <b>“원천만 입력 → 지표 자동 산출”</b>이라는 골격은 실데이터로 증명됐다. 지표를 늘리는 건 이제 마스터 한 줄 + 사이드바 한 줄이다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>구조 — 지표 유형 3종</h2>
+    <div class="types">
+      <div class="type">
+        <h3>사고보고형 <span class="code">INCIDENT</span></h3>
+        <div class="formula">발생건수 ÷ 재원일수 × 1,000 = ‰</div>
+        <ul>
+          <li>사고를 건별로 입력</li>
+          <li>낙상·환자안전·투약·학대폭력·자살자해·직원안전</li>
+          <li>재원일수(분모)는 입퇴원 자료로 자동계산</li>
+        </ul>
+      </div>
+      <div class="type">
+        <h3>평가표 직결형 <span class="code">PATVAL</span></h3>
+        <div class="formula">신규발생 ÷ 재원일수 × 1,000 = ‰</div>
+        <ul>
+          <li>입력이 필요 없다</li>
+          <li>기존 환자평가표에서 자동 집계</li>
+          <li>욕창</li>
+        </ul>
+      </div>
+      <div class="type">
+        <h3>관찰형 <span class="code">MONITOR</span></h3>
+        <div class="formula">수행건수 ÷ 관찰(시행)건수 × 100 = %</div>
+        <ul>
+          <li>관찰·수행 건수를 건별로 입력</li>
+          <li>손위생·격리지침·강박지침</li>
+          <li>재원일수를 쓰지 않는다</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>지표 18종 현황</h2>
+    <div class="tablecard"><div class="scroll">
+      <table>
+        <thead>
+          <tr><th>지표</th><th>산식</th><th>유형</th><th>상태</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">낙상 발생 보고율</td><td class="formula">Level2↑ ÷ 재원일수 ×1000‰</td><td><span class="tag">INCIDENT</span></td><td><span class="pill done">가동·검산</span></td></tr>
+          <tr><td class="name">욕창 발생 보고율</td><td class="formula">신규발생 ÷ 재원일수 ×1000‰</td><td><span class="tag">PATVAL</span></td><td><span class="pill done">가동·검산</span></td></tr>
+          <tr><td class="name">손위생 수행률</td><td class="formula">수행 ÷ 관찰 ×100%</td><td><span class="tag">MONITOR</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">격리지침 수행률</td><td class="formula">수행 ÷ 시행 ×100%</td><td><span class="tag">MONITOR</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">강박지침 수행률</td><td class="formula">수행 ÷ 시행 ×100%</td><td><span class="tag">MONITOR</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">환자안전사고 발생 보고율</td><td class="formula">발생건수 ÷ 재원일수 ×1000‰</td><td><span class="tag">INCIDENT</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">투약오류 발생 보고율</td><td class="formula">발생건수 ÷ 재원일수 ×1000‰</td><td><span class="tag">INCIDENT</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">환자 학대·폭력사건 보고율</td><td class="formula">보고건수 ÷ 재원일수 ×1000‰</td><td><span class="tag">INCIDENT</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">자살·자해 발생 보고율</td><td class="formula">발생건수 ÷ 재원일수 ×1000‰</td><td><span class="tag">INCIDENT</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">직원안전사고 발생률</td><td class="formula">안전사고 ÷ 직원수 ×100%</td><td><span class="tag">INCIDENT</span></td><td><span class="pill done">가동</span></td></tr>
+          <tr><td class="name">신체보호대 적용 건수율</td><td class="formula">적용건수 ÷ 재원일수 ×1000‰</td><td><span class="tag">—</span></td><td><span class="pill todo">정의문구 대기</span></td></tr>
+          <tr><td class="name">재택 복귀율</td><td class="formula">복귀 ÷ 회복기퇴원 ×100%</td><td><span class="tag">MANUAL</span></td><td><span class="pill todo">정의문구 대기</span></td></tr>
+          <tr><td class="name">불만 및 고충처리 처리율</td><td class="formula">처리 ÷ 접수 ×100% (반기)</td><td><span class="tag">MANUAL</span></td><td><span class="pill pilot">산식 확정</span></td></tr>
+          <tr><td class="name">환자만족도 (의료서비스)</td><td class="formula">설문 기반 ×100% (연)</td><td><span class="tag">SURVEY</span></td><td><span class="pill todo">설계 대기</span></td></tr>
+          <tr><td class="name">영상 / 검체 TAT 충족 비율</td><td class="formula">충족 ÷ 전체 ×100%</td><td><span class="tag">MANUAL</span></td><td><span class="pill pilot">산식 확정</span></td></tr>
+          <tr><td class="name">요로감염 · 직원 감염노출</td><td class="formula">발생 ÷ 재원(직원) 기준</td><td><span class="tag">—</span></td><td><span class="pill todo">정의문구 대기</span></td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </section>
+
+  <section>
+    <h2>남은 길 — 지표에서 모듈로</h2>
+    <div class="road">
+      <div class="phase">
+        <div class="when">지금<div class="badge now">완료·검증</div></div>
+        <div><h3>지표 자동집계 골격</h3>
+          <p>세 유형(사고·평가표·관찰) 실데이터 검증. 지표 10종 가동. 병원 연계·개인정보·자동산출까지 실운영 수준.</p></div>
+      </div>
+      <div class="phase">
+        <div class="when">다음<div class="badge next">인증 제출용</div></div>
+        <div><h3>결재선 · 인쇄 레이아웃</h3>
+          <p>SUNWOO는 담당·팀장·부서장·이사장 4단계 결재. 인증 심사에 실제로 제출하려면 결재선과 A4 인쇄(PDF)가 먼저 필요하다.</p></div>
+      </div>
+      <div class="phase">
+        <div class="when">다음<div class="badge next">병원 입력</div></div>
+        <div><h3>지표정의서 편집 화면</h3>
+          <p>SUNWOO 정의서는 병원이 채우는 빈 양식. 분자·분모 문구를 병원이 직접 편집·저장하는 화면으로 그 서식을 대체한다.</p></div>
+      </div>
+      <div class="phase">
+        <div class="when">이후<div class="badge later">확장</div></div>
+        <div><h3>서술형 서식 · 공통코드 · 마감</h3>
+          <p>계획서·회의록·FMEA·RCA 등 서술 서식(203종의 다수), 위해등급·직군 공통코드화, 기간 확정(스냅샷 동결).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <p><b>정직한 위치.</b> “지표 자동집계” 한 갈래는 골격이 견고하고 실데이터로 검증됐다.
+    다만 QPS 모듈 전체로 보면 아직 시작 단계 — 203개 서식 중 지표 계열(18종)을 다뤘고, 결재·인쇄·서술형 서식은 다음 단계다.
+    상세 기록은 <b>wnn_medcost/docs/proposals/QPS_*.md</b>에 있다.</p>
+  </div>
+</div>

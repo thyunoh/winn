@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ============================================================================
+     QPS (질향상·환자안전) — 낙상 파일럿
+       · 근거: SUNWOO DB 실측 (docs/proposals/QPS_*.md), DDL: docs/sql/QPS_DDL_2026-08-08.sql
+       · ★수치는 저장하지 않고 집계 SQL 로 산출한다 (TBL_EVAL_REPORT 와 같은 사상).
+         SUNWOO 는 사람이 '0.67‰' 를 타이핑했지만 여기서는 서버가 계산한다 — 이게 이식의 핵심 차이.
+       · 결과는 HashMap + 소문자 별칭 (이 프로젝트 관용구)
+       · XML 안의 부등호는 CDATA 필수
+     ============================================================================ -->
+<mapper namespace="egovframework.wnn_medcost.qps.mapper.QpsMapper">
+
+	<!-- ===================== 지표 마스터 ===================== -->
+	<!-- 병원 전용 정의가 있으면 그것을, 없으면 공통정의('*')를 준다 -->
+	<select id="selectQpsIndi" resultType="java.util.HashMap">
+		SELECT INDI_CD      AS indicd,
+		       INDI_NM      AS indinm,
+		       DEFINITION   AS definition,
+		       NUMER_DESC   AS numerdesc,
+		       DENOM_DESC   AS denomdesc,
+		       DENOM_GB     AS denomgb,
+		       <!-- ★이 3개를 빠뜨리면 등급 필터가 통째로 사라진다 —
+		            서비스가 minlevel 을 못 읽어 빈 값이 되고, 매퍼의 <if> 가 꺼져
+		            **Level 1 까지 분자에 잡힌다**(2026-08-08 실측으로 발견). -->
+		       NUMER_SRC    AS numersrc,
+		       INCID_GB     AS incidgb,
+		       MIN_LEVEL    AS minlevel,
+		       MULTIPLIER   AS multiplier,
+		       UNIT         AS unit,
+		       DECIMALS     AS decimals,
+		       CYCLE_GB     AS cyclegb,
+		       SOURCE_NM    AS sourcenm,
+		       METHOD_NM    AS methodnm,
+		       OWNER_NM     AS ownernm,
+		       TARGET_VAL   AS targetval
+		  FROM TBL_QPS_INDI_MST
+		 WHERE INDI_CD = #{indiCd}
+		   AND USE_YN  = 'Y'
+		   AND HOSP_CD IN (#{hospCd}, '*')
+		 ORDER BY CASE WHEN HOSP_CD = '*' THEN 1 ELSE 0 END
+		 LIMIT 1
+	</select>
+
+	<!-- 조회 대상 병원 확인용 — 화면 배지에 '서버가 실제로 쓰는' 병원을 찍는다.
+	     쿠키를 브라우저에서 읽어 표시하면 "서버는 A 를 보는데 화면엔 B" 가 되어 원인을 못 찾는다. -->
+	<select id="selectHospInfo" resultType="java.util.HashMap">
+		SELECT h.HOSP_CD AS hospcd,
+		       h.HOSP_NM AS hospnm,
+		       (SELECT COUNT(*) FROM TBL_IPWON_INFO i WHERE i.HOSP_CD = h.HOSP_CD) AS ipwoncnt
+		  FROM TBL_HOSP_MST h
+		 WHERE h.HOSP_CD = #{hospCd}
+		 LIMIT 1
+	</select>
+
+	<!-- ===================== 환자 연계 (입력검색) =====================
+	     원천 = TBL_IPWON_INFO(입원환자, 위너넷 기존 자료). QPS 는 환자 자료를 따로 만들지 않는다.
+	     ★개인정보: JUMINNO 는 이 SQL 안에서만 쓰고 **밖으로 내보내지 않는다** —
+	       성별(7번째 자리 홀짝)·나이(출생연도 파생)만 계산해 돌려준다.
+	       1·2·5·6 → 19xx / 3·4·7·8 → 20xx / 9·0 → 18xx (실측 분포로 확인).
+	     ★한 환자가 월(JOBYYMM)마다 행을 가지므로 서브쿼리로 최신 1건만 남긴다.
+	     ★정렬: 사고 발생일에 재원 중이던 환자를 맨 위로 → 오입력을 줄인다. -->
+	<select id="selectPatientList" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT i.CHARTNO                                AS ptno,
+		       i.PATNAME                                AS ptnm,
+		       NULLIF(TRIM(i.WORD_NM),'')               AS wardnm,
+		       NULLIF(TRIM(i.ROOM_NM),'')               AS roomnm,
+		       LEFT(REPLACE(i.IPWONDT,'-',''),8)        AS ipwondt,
+		       LEFT(REPLACE(i.TEWONDT,'-',''),8)        AS tewondt,
+		       i.DEPT_NM                                AS deptnm,
+		       CASE WHEN LENGTH(REPLACE(i.JUMINNO,'-','')) = 13
+		            THEN CASE WHEN MOD(CAST(SUBSTRING(REPLACE(i.JUMINNO,'-',''),7,1) AS UNSIGNED),2) = 1
+		                      THEN 'M' ELSE 'F' END END AS ptsex,
+		       CASE WHEN LENGTH(REPLACE(i.JUMINNO,'-','')) = 13
+		            THEN CAST(LEFT(#{baseDt},4) AS SIGNED) -
+		                 ( CASE WHEN SUBSTRING(REPLACE(i.JUMINNO,'-',''),7,1) IN ('1','2','5','6') THEN 1900
+		                        WHEN SUBSTRING(REPLACE(i.JUMINNO,'-',''),7,1) IN ('3','4','7','8') THEN 2000
+		                        ELSE 1800 END
+		                   + CAST(SUBSTRING(REPLACE(i.JUMINNO,'-',''),1,2) AS UNSIGNED) ) END AS ptage,
+		       CASE WHEN LEFT(REPLACE(i.IPWONDT,'-',''),8) <= #{baseDt}
+		             AND ( i.TEWONDT IS NULL OR TRIM(i.TEWONDT) = ''
+		                   OR LEFT(REPLACE(i.TEWONDT,'-',''),8) >= #{baseDt} )
+		            THEN 'Y' ELSE 'N' END                AS inhospyn
+		  FROM TBL_IPWON_INFO i
+		  JOIN ( SELECT HOSP_CD, CHARTNO,
+		                MAX(CONCAT(JOBYYMM,'|',LPAD(SEQ_NUM,8,'0'))) k
+		           FROM TBL_IPWON_INFO
+		          WHERE HOSP_CD = #{hospCd}
+		          GROUP BY HOSP_CD, CHARTNO ) m
+		    ON  m.HOSP_CD = i.HOSP_CD
+		    AND m.CHARTNO = i.CHARTNO
+		    AND m.k = CONCAT(i.JOBYYMM,'|',LPAD(i.SEQ_NUM,8,'0'))
+		 WHERE i.HOSP_CD = #{hospCd}
+		   AND i.CHARTNO IS NOT NULL AND i.CHARTNO <> ''
+		   AND ( i.CHARTNO LIKE CONCAT(#{keyword}, '%')
+		         OR i.PATNAME LIKE CONCAT(#{keyword}, '%') )
+		 ORDER BY inhospyn DESC, i.IPWONDT DESC
+		 LIMIT 20
+		]]>
+	</select>
+
+	<!-- ===================== 사고 보고 (분자 원천) =====================
+	     ★성명(ptnm)은 저장하지 않고 표시 시점에 입원환자 자료에서 가져온다(2026-08-08 요청) —
+	       사고 테이블에는 등록번호(PT_NO)만 남긴다(개인정보 최소수집). 직접 입력한 번호가
+	       입원자료에 없으면 성명은 빈 칸으로 나온다(정상). -->
+	<select id="selectIncidentList" parameterType="egovframework.wnn_medcost.qps.model.QpsIncidentDTO" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT INCID_SEQ                          AS incidseq,
+		       nm.PATNAME                         AS ptnm,
+		       OCCUR_DT                           AS occurdt,
+		       DATE_FORMAT(STR_TO_DATE(OCCUR_DT,'%Y%m%d'),'%Y-%m-%d') AS occurdtfmt,
+		       OCCUR_TM                           AS occurtm,
+		       WARD_CD                            AS wardcd,
+		       RPT_DEPT                           AS rptdept,
+		       PT_NO                              AS ptno,
+		       PT_SEX                             AS ptsex,
+		       PT_AGE                             AS ptage,
+		       LEVEL_CD                           AS levelcd,
+		       TYPE_CD                            AS typecd,
+		       SUBTYPE_CD                         AS subtypecd,
+		       PLACE_CD                           AS placecd,
+		       DAMAGE_CD                          AS damagecd,
+		       CAUSE_TXT                          AS causetxt,
+		       ACTION_TXT                         AS actiontxt,
+		       RPT_USER                           AS rptuser,
+		       STATUS                             AS status,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_INCIDENT t
+		  LEFT JOIN ( SELECT HOSP_CD, CHARTNO, MAX(PATNAME) PATNAME
+		                FROM TBL_IPWON_INFO
+		               WHERE HOSP_CD = #{hospCd}
+		               GROUP BY HOSP_CD, CHARTNO ) nm
+		    ON nm.HOSP_CD = t.HOSP_CD AND nm.CHARTNO = t.PT_NO
+		 WHERE t.HOSP_CD  = #{hospCd}
+		   AND t.INCID_GB = #{incidGb}
+		   AND t.USE_YN   = 'Y'
+		   AND t.OCCUR_DT >= #{fromDt}
+		   AND t.OCCUR_DT <= #{toDt}
+		 ORDER BY t.OCCUR_DT DESC, t.INCID_SEQ DESC
+		]]>
+	</select>
+
+	<insert id="insertIncident" parameterType="egovframework.wnn_medcost.qps.model.QpsIncidentDTO"
+	        useGeneratedKeys="true" keyProperty="incidSeq">
+		INSERT INTO TBL_QPS_INCIDENT
+		 (HOSP_CD, INCID_GB, OCCUR_DT, OCCUR_TM, WARD_CD, RPT_DEPT, PT_NO, PT_SEX, PT_AGE,
+		  LEVEL_CD, TYPE_CD, SUBTYPE_CD, PLACE_CD, DAMAGE_CD, CAUSE_TXT, ACTION_TXT,
+		  RPT_USER, STATUS, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{incidGb}, REPLACE(#{occurDt},'-',''), #{occurTm}, #{wardCd}, #{rptDept},
+		  #{ptNo}, #{ptSex}, #{ptAge}, #{levelCd}, #{typeCd}, #{subtypeCd}, #{placeCd}, #{damageCd},
+		  #{causeTxt}, #{actionTxt}, #{rptUser}, IFNULL(#{status},'DRAFT'), 'Y', #{regUser})
+	</insert>
+
+	<update id="updateIncident" parameterType="egovframework.wnn_medcost.qps.model.QpsIncidentDTO">
+		UPDATE TBL_QPS_INCIDENT
+		   SET OCCUR_DT   = REPLACE(#{occurDt},'-',''),
+		       OCCUR_TM   = #{occurTm},
+		       WARD_CD    = #{wardCd},
+		       RPT_DEPT   = #{rptDept},
+		       PT_NO      = #{ptNo},
+		       PT_SEX     = #{ptSex},
+		       PT_AGE     = #{ptAge},
+		       LEVEL_CD   = #{levelCd},
+		       TYPE_CD    = #{typeCd},
+		       SUBTYPE_CD = #{subtypeCd},
+		       PLACE_CD   = #{placeCd},
+		       DAMAGE_CD  = #{damageCd},
+		       CAUSE_TXT  = #{causeTxt},
+		       ACTION_TXT = #{actionTxt},
+		       RPT_USER   = #{rptUser},
+		       UPD_USER   = #{updUser}
+		 WHERE INCID_SEQ = #{incidSeq}
+		   AND HOSP_CD   = #{hospCd}
+	</update>
+
+	<!-- 소프트 삭제 (위너넷 관용구) -->
+	<update id="deleteIncident" parameterType="egovframework.wnn_medcost.qps.model.QpsIncidentDTO">
+		UPDATE TBL_QPS_INCIDENT
+		   SET USE_YN = 'N', UPD_USER = #{updUser}
+		 WHERE INCID_SEQ = #{incidSeq}
+		   AND HOSP_CD   = #{hospCd}
+	</update>
+
+	<!-- ★분모 자동산출용 — 입원 '건' 목록 (TBL_IPWON_INFO 에서 중복 제거).
+	     같은 입원건이 월 스냅샷(JOBYYMM)마다 반복 등장한다(경도 실측: 1,213행 → 455건, 건당 최대 3행)
+	     → (CHARTNO, 입원일) 로 묶고, 퇴원일은 스냅샷 중 채워진 값(MAX)을 쓴다.
+	     날짜는 REGEXP 로 8자리만 인정('입원일자' 같은 머리글 오염행 실측 존재). 재원일수 계산은 서비스(Java)가 한다. -->
+	<select id="selectStaysForYear" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT indt, outdt
+		  FROM ( SELECT CHARTNO,
+		                LEFT(REPLACE(IPWONDT,'-',''),8) AS indt,
+		                MAX(CASE WHEN LEFT(REPLACE(TEWONDT,'-',''),8) REGEXP '^[0-9]{8}$'
+		                         THEN LEFT(REPLACE(TEWONDT,'-',''),8) ELSE '' END) AS outdt
+		           FROM TBL_IPWON_INFO
+		          WHERE HOSP_CD = #{hospCd}
+		            AND LEFT(REPLACE(IPWONDT,'-',''),8) REGEXP '^[0-9]{8}$'
+		            AND LEFT(REPLACE(IPWONDT,'-',''),8) <= #{yearEnd}
+		          GROUP BY CHARTNO, LEFT(REPLACE(IPWONDT,'-',''),8) ) s
+		 WHERE ( s.outdt = '' OR s.outdt >= #{yearStart} )
+		]]>
+	</select>
+
+	<!-- ===================== 관찰형 지표 (손위생 등, NUMER_SRC='MONITOR') =====================
+	     분자=수행건수(PASS_CNT), 분모=관찰건수(OBS_CNT) — 둘 다 관찰기록에서 나온다(재원일수 안 씀). -->
+	<select id="selectMonitorList" parameterType="egovframework.wnn_medcost.qps.model.QpsMonitorDTO" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT MON_SEQ                            AS monseq,
+		       OBS_DT                             AS obsdt,
+		       DATE_FORMAT(STR_TO_DATE(OBS_DT,'%Y%m%d'),'%Y-%m-%d') AS obsdtfmt,
+		       WARD_CD                            AS wardcd,
+		       JOB_GB                             AS jobgb,
+		       MOMENT_CD                          AS momentcd,
+		       OBS_CNT                            AS obscnt,
+		       PASS_CNT                           AS passcnt,
+		       CASE WHEN OBS_CNT > 0 THEN ROUND(PASS_CNT*100/OBS_CNT, 1) END AS ratepct,
+		       OBSERVER                           AS observer,
+		       NOTE                               AS note,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_MONITOR
+		 WHERE HOSP_CD = #{hospCd}
+		   AND INDI_CD = #{indiCd}
+		   AND USE_YN  = 'Y'
+		   AND OBS_DT >= #{fromDt}
+		   AND OBS_DT <= #{toDt}
+		 ORDER BY OBS_DT DESC, MON_SEQ DESC
+		]]>
+	</select>
+
+	<insert id="insertMonitor" parameterType="egovframework.wnn_medcost.qps.model.QpsMonitorDTO"
+	        useGeneratedKeys="true" keyProperty="monSeq">
+		INSERT INTO TBL_QPS_MONITOR
+		 (HOSP_CD, INDI_CD, OBS_DT, WARD_CD, JOB_GB, MOMENT_CD, OBS_CNT, PASS_CNT, OBSERVER, NOTE, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{indiCd}, REPLACE(#{obsDt},'-',''), #{wardCd}, #{jobGb}, #{momentCd},
+		  IFNULL(#{obsCnt},0), IFNULL(#{passCnt},0), #{observer}, #{note}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateMonitor" parameterType="egovframework.wnn_medcost.qps.model.QpsMonitorDTO">
+		UPDATE TBL_QPS_MONITOR
+		   SET OBS_DT   = REPLACE(#{obsDt},'-',''),
+		       WARD_CD  = #{wardCd},
+		       JOB_GB   = #{jobGb},
+		       MOMENT_CD= #{momentCd},
+		       OBS_CNT  = IFNULL(#{obsCnt},0),
+		       PASS_CNT = IFNULL(#{passCnt},0),
+		       OBSERVER = #{observer},
+		       NOTE     = #{note},
+		       UPD_USER = #{updUser}
+		 WHERE MON_SEQ = #{monSeq}
+		   AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteMonitor" parameterType="egovframework.wnn_medcost.qps.model.QpsMonitorDTO">
+		UPDATE TBL_QPS_MONITOR SET USE_YN='N', UPD_USER=#{updUser}
+		 WHERE MON_SEQ = #{monSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<!-- 월별 분자(수행건수)·분모(관찰건수) 동시 산출 — 관찰형 전용 -->
+	<select id="selectMonthlyMonitor" resultType="java.util.HashMap">
+		SELECT SUBSTRING(OBS_DT, 5, 2) AS mm,
+		       SUM(PASS_CNT)           AS numer,
+		       SUM(OBS_CNT)            AS denom
+		  FROM TBL_QPS_MONITOR
+		 WHERE HOSP_CD = #{hospCd}
+		   AND INDI_CD = #{indiCd}
+		   AND USE_YN  = 'Y'
+		   AND SUBSTRING(OBS_DT, 1, 4) = #{inYear}
+		 GROUP BY SUBSTRING(OBS_DT, 5, 2)
+	</select>
+
+	<!-- 분류별 집계(직군·병동·moment) — 손위생 분석보고서의 세부 표 -->
+	<select id="selectMonitorBreakdown" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT 'JOB'    AS axis, IFNULL(NULLIF(TRIM(JOB_GB),''),'미상')    AS code,
+		       SUM(PASS_CNT) AS numer, SUM(OBS_CNT) AS denom
+		  FROM TBL_QPS_MONITOR
+		 WHERE HOSP_CD=#{hospCd} AND INDI_CD=#{indiCd} AND USE_YN='Y'
+		   AND OBS_DT >= #{fromDt} AND OBS_DT <= #{toDt}
+		 GROUP BY IFNULL(NULLIF(TRIM(JOB_GB),''),'미상')
+		UNION ALL
+		SELECT 'WARD'   AS axis, IFNULL(NULLIF(TRIM(WARD_CD),''),'미상')  AS code,
+		       SUM(PASS_CNT), SUM(OBS_CNT)
+		  FROM TBL_QPS_MONITOR
+		 WHERE HOSP_CD=#{hospCd} AND INDI_CD=#{indiCd} AND USE_YN='Y'
+		   AND OBS_DT >= #{fromDt} AND OBS_DT <= #{toDt}
+		 GROUP BY IFNULL(NULLIF(TRIM(WARD_CD),''),'미상')
+		UNION ALL
+		SELECT 'MOMENT' AS axis, IFNULL(NULLIF(TRIM(MOMENT_CD),''),'미상') AS code,
+		       SUM(PASS_CNT), SUM(OBS_CNT)
+		  FROM TBL_QPS_MONITOR
+		 WHERE HOSP_CD=#{hospCd} AND INDI_CD=#{indiCd} AND USE_YN='Y'
+		   AND OBS_DT >= #{fromDt} AND OBS_DT <= #{toDt}
+		 GROUP BY IFNULL(NULLIF(TRIM(MOMENT_CD),''),'미상')
+		]]>
+	</select>
+
+	<!-- ===================== 분모 (재원일수) ===================== -->
+	<select id="selectCensus" resultType="java.util.HashMap">
+		SELECT CENSUS_SEQ AS censusseq, CENSUS_GB AS censusgb, IN_YEAR AS inyear,
+		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04, M05 AS m05, M06 AS m06,
+		       M07 AS m07, M08 AS m08, M09 AS m09, M10 AS m10, M11 AS m11, M12 AS m12
+		  FROM TBL_QPS_CENSUS
+		 WHERE HOSP_CD   = #{hospCd}
+		   AND CENSUS_GB = #{censusGb}
+		   AND IN_YEAR   = #{inYear}
+		   AND USE_YN    = 'Y'
+		 LIMIT 1
+	</select>
+
+	<!-- upsert — 병원·구분·년도가 UNIQUE 라 MERGE 대신 ON DUPLICATE KEY (MySQL) -->
+	<insert id="saveCensus" parameterType="egovframework.wnn_medcost.qps.model.QpsCensusDTO">
+		INSERT INTO TBL_QPS_CENSUS
+		 (HOSP_CD, CENSUS_GB, IN_YEAR, M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{censusGb}, #{inYear},
+		  #{m01},#{m02},#{m03},#{m04},#{m05},#{m06},#{m07},#{m08},#{m09},#{m10},#{m11},#{m12},
+		  'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  M01=VALUES(M01), M02=VALUES(M02), M03=VALUES(M03), M04=VALUES(M04),
+		  M05=VALUES(M05), M06=VALUES(M06), M07=VALUES(M07), M08=VALUES(M08),
+		  M09=VALUES(M09), M10=VALUES(M10), M11=VALUES(M11), M12=VALUES(M12),
+		  USE_YN='Y', UPD_USER=#{updUser}
+	</insert>
+
+	<!-- ===================== 집계 (분자) =====================
+	     ★낙상 분자 = Level 2 이상. 등급코드는 'LV1','LV2'... 형태이므로 뒤 숫자로 비교한다.
+	       minLevel 이 비어 있으면(정의 미채록 지표) 전건을 센다. -->
+	<select id="selectMonthlyNumer" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT SUBSTRING(OCCUR_DT, 5, 2) AS mm,
+		       COUNT(*)                  AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD  = #{hospCd}
+		   AND INCID_GB = #{incidGb}
+		   AND USE_YN   = 'Y'
+		   AND SUBSTRING(OCCUR_DT, 1, 4) = #{inYear}
+		]]>
+		<if test="minLevel != null and minLevel != ''">
+			AND CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) &gt;= #{minLevel}
+		</if>
+		GROUP BY SUBSTRING(OCCUR_DT, 5, 2)
+	</select>
+
+	<!-- ★분자(월별) — 환자평가표 원천 (NUMER_SRC='PATVAL', 욕창 등).
+	     사고보고 입력 없이 기존 환자평가표의 '신규발생' 항목을 그대로 센다 — 이 지표는 입력이 공짜다.
+	     · NEW_ULCER='1' 이 신규 발생, ULCER_DT 가 발생일(YYYYMMDD — 전 병원 형식이상 0건 실측).
+	     · TBL_PATVAL_MST 의 USE_YN 은 전 행 'N' 이라(실측) 필터하지 않는다 — 걸면 전부 사라진다. -->
+	<select id="selectMonthlyNumerPatval" resultType="java.util.HashMap">
+		SELECT SUBSTRING(ULCER_DT, 5, 2) AS mm,
+		       COUNT(*)                  AS cnt
+		  FROM TBL_PATVAL_MST
+		 WHERE HOSP_CD = #{hospCd}
+		   AND NEW_ULCER = '1'
+		   AND SUBSTRING(ULCER_DT, 1, 4) = #{inYear}
+		 GROUP BY SUBSTRING(ULCER_DT, 5, 2)
+	</select>
+
+	<!-- 분류별 집계 — 지표분석보고서의 세부 표(연령/장소/시간/유형/손상/부서) 한 방에.
+	     SUNWOO 는 이 숫자들도 손입력이었다.
+	     ★분자와 같은 등급 필터(minLevel)를 건다 — SUNWOO 실물에서 분류표 합계 = 분자였다
+	       (낙상 1/4분기: 분자 2 = accidenttypeRet 2 = edtPlaceRet 2 = edtTimeRet 2).
+	       안 걸면 "분자 0 인데 분류표엔 1" 로 어긋난다(2026-08-08 실측 발견).
+	       CDATA 안이라 <if> 를 못 쓰므로 IFNULL(#{minLevel},'')='' OR ... 순수 SQL 로 처리. -->
+	<select id="selectBreakdown" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT 'PLACE'  AS axis, IFNULL(NULLIF(TRIM(PLACE_CD),''),'미상') AS code, COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY IFNULL(NULLIF(TRIM(PLACE_CD),''),'미상')
+		UNION ALL
+		SELECT 'DAMAGE' AS axis, IFNULL(NULLIF(TRIM(DAMAGE_CD),''),'미상') AS code, COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY IFNULL(NULLIF(TRIM(DAMAGE_CD),''),'미상')
+		UNION ALL
+		SELECT 'TYPE'   AS axis, IFNULL(NULLIF(TRIM(TYPE_CD),''),'미상') AS code, COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY IFNULL(NULLIF(TRIM(TYPE_CD),''),'미상')
+		UNION ALL
+		SELECT 'DEPT'   AS axis, IFNULL(NULLIF(TRIM(RPT_DEPT),''),'미상') AS code, COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY IFNULL(NULLIF(TRIM(RPT_DEPT),''),'미상')
+		UNION ALL
+		SELECT 'AGE'    AS axis,
+		       CASE WHEN PT_AGE IS NULL THEN '미상'
+		            WHEN PT_AGE < 40 THEN '30대이하'
+		            WHEN PT_AGE < 50 THEN '40대'
+		            WHEN PT_AGE < 60 THEN '50대'
+		            WHEN PT_AGE < 70 THEN '60대'
+		            WHEN PT_AGE < 80 THEN '70대'
+		            ELSE '80대이상' END AS code,
+		       COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY 2
+		UNION ALL
+		SELECT 'TIME'   AS axis,
+		       CASE WHEN OCCUR_TM IS NULL OR OCCUR_TM = '' THEN '미상'
+		            WHEN CAST(SUBSTRING(OCCUR_TM,1,2) AS UNSIGNED) < 6  THEN '00-06'
+		            WHEN CAST(SUBSTRING(OCCUR_TM,1,2) AS UNSIGNED) < 12 THEN '06-12'
+		            WHEN CAST(SUBSTRING(OCCUR_TM,1,2) AS UNSIGNED) < 18 THEN '12-18'
+		            ELSE '18-24' END AS code,
+		       COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY 2
+		]]>
+	</select>
+
+	<!-- ===================== 지표분석보고서 (서술만 저장) ===================== -->
+	<select id="selectReport" resultType="java.util.HashMap">
+		SELECT RPT_SEQ AS rptseq, TITLE AS title,
+		       ANALYSIS_TXT AS analysistxt, PLAN_TXT AS plantxt,
+		       ACT1_TXT AS act1txt, ACT2_TXT AS act2txt, ACT3_TXT AS act3txt, ACT4_TXT AS act4txt,
+		       STATUS AS status,
+		       SIGN1_USER AS sign1user, DATE_FORMAT(SIGN1_DTTM,'%Y-%m-%d %H:%i') AS sign1dttm,
+		       SIGN2_USER AS sign2user, DATE_FORMAT(SIGN2_DTTM,'%Y-%m-%d %H:%i') AS sign2dttm,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_REPORT
+		 WHERE HOSP_CD = #{hospCd}
+		   AND INDI_CD = #{indiCd}
+		   AND PRD_GB  = #{prdGb}
+		   AND PRD_KEY = #{prdKey}
+		 LIMIT 1
+	</select>
+
+	<insert id="saveReport" parameterType="map">
+		INSERT INTO TBL_QPS_REPORT
+		 (HOSP_CD, INDI_CD, PRD_GB, PRD_KEY, TITLE, ANALYSIS_TXT, PLAN_TXT,
+		  ACT1_TXT, ACT2_TXT, ACT3_TXT, ACT4_TXT, STATUS, REG_USER)
+		VALUES
+		 (#{hospCd}, #{indiCd}, #{prdGb}, #{prdKey}, #{title}, #{analysisTxt}, #{planTxt},
+		  #{act1Txt}, #{act2Txt}, #{act3Txt}, #{act4Txt}, IFNULL(#{status},'DRAFT'), #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  TITLE=VALUES(TITLE), ANALYSIS_TXT=VALUES(ANALYSIS_TXT), PLAN_TXT=VALUES(PLAN_TXT),
+		  ACT1_TXT=VALUES(ACT1_TXT), ACT2_TXT=VALUES(ACT2_TXT),
+		  ACT3_TXT=VALUES(ACT3_TXT), ACT4_TXT=VALUES(ACT4_TXT),
+		  STATUS=VALUES(STATUS), UPD_USER=#{regUser}
+	</insert>
+
+</mapper>
