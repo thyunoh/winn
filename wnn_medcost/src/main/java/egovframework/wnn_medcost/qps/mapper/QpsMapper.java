@@ -31,6 +31,13 @@ public interface QpsMapper {
 	int deletePlanItems(@Param("planSeq") long planSeq);
 	int insertPlanItems(Map<String, Object> param);
 
+	// 서식 3호: 라운딩 점검표 (병원+년월 1부, 항목행 통째 교체)
+	Map<String, Object> selectRound(@Param("hospCd") String hospCd, @Param("roundYm") String roundYm);
+	int upsertRound(Map<String, Object> param);
+	List<Map<String, Object>> selectRoundItems(@Param("rndSeq") long rndSeq);
+	int deleteRoundItems(@Param("rndSeq") long rndSeq);
+	int insertRoundItems(Map<String, Object> param);
+
 	// 서식 1호: 위원회 회의록 (서식빌더 결정 근거용 파일럿)
 	List<Map<String, Object>> selectMinutesList(@Param("hospCd") String hospCd,
 	                                            @Param("inYear") String inYear);

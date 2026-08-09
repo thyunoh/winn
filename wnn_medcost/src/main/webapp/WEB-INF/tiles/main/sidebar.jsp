@@ -189,6 +189,9 @@
                                     <a class="nav-item nav-link" href="/main/qpsPlan.do">연간 활동계획서 <span style="color:#a8b4bb;">(서식 2호)</span></a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsRound.do">라운딩 점검표 <span style="color:#a8b4bb;">(서식 3호)</span></a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a>
                                 </li>
                             </ul>
