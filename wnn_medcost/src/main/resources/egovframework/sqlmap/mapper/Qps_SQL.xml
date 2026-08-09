@@ -3,9 +3,9 @@
 
 <!-- ============================================================================
      QPS (질향상·환자안전) — 낙상 파일럿
-       · 근거: SUNWOO DB 실측 (docs/proposals/QPS_*.md), DDL: docs/sql/QPS_DDL_2026-08-08.sql
+       · 근거: 기존 프로그램 DB 실측 (docs/proposals/QPS_*.md), DDL: docs/sql/QPS_DDL_2026-08-08.sql
        · ★수치는 저장하지 않고 집계 SQL 로 산출한다 (TBL_EVAL_REPORT 와 같은 사상).
-         SUNWOO 는 사람이 '0.67‰' 를 타이핑했지만 여기서는 서버가 계산한다 — 이게 이식의 핵심 차이.
+         기존 프로그램은 사람이 '0.67‰' 를 타이핑했지만 여기서는 서버가 계산한다 — 이게 이식의 핵심 차이.
        · 결과는 HashMap + 소문자 별칭 (이 프로젝트 관용구)
        · XML 안의 부등호는 CDATA 필수
      ============================================================================ -->
@@ -40,6 +40,96 @@
 		   AND HOSP_CD IN (#{hospCd}, '*')
 		 ORDER BY CASE WHEN HOSP_CD = '*' THEN 1 ELSE 0 END
 		 LIMIT 1
+	</select>
+
+	<!-- ===================== 지표정의서 =====================
+	     ★병원 행이 있으면 그것을, 없으면 공통('*')을 보여준다. 저장은 **항상 병원 행**에 한다 —
+	       한 병원이 고친 값이 공통을 덮으면 전 병원 정의서가 바뀐다(절대 안 된다).
+	     own = 'Y' 면 이 병원이 직접 채운 정의서, 'N' 이면 아직 공통 기본값을 보고 있다는 뜻. -->
+	<select id="selectIndiDef" resultType="java.util.HashMap">
+		SELECT INDI_CD AS indicd, INDI_NM AS indinm, AREA_NM AS areanm,
+		       DEFINITION AS definition, NUMER_DESC AS numerdesc, DENOM_DESC AS denomdesc,
+		       MULTIPLIER AS multiplier, UNIT AS unit, DECIMALS AS decimals, CYCLE_GB AS cyclegb,
+		       SOURCE_NM AS sourcenm, METHOD_NM AS methodnm, OWNER_NM AS ownernm, DEPT_NM AS deptnm,
+		       BACKGROUND AS background, INCLUDE_TXT AS includetxt, EXCLUDE_TXT AS excludetxt,
+		       TARGET_VAL AS targetval, PREV_VAL AS prevval, TARGET_BASE AS targetbase,
+		       RPT_CYCLE AS rptcycle, RPT_SCOPE AS rptscope, SHARE_TXT AS sharetxt, NOTE AS note,
+		       NUMER_SRC AS numersrc, DENOM_GB AS denomgb,
+		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_INDI_MST
+		 WHERE INDI_CD = #{indiCd}
+		   AND USE_YN  = 'Y'
+		   AND HOSP_CD IN (#{hospCd}, '*')
+		 ORDER BY CASE WHEN HOSP_CD = '*' THEN 1 ELSE 0 END
+		 LIMIT 1
+	</select>
+
+	<!-- 정의서 저장 — 병원 행 upsert.
+	     ★산식을 이루는 값(NUMER_SRC·INCID_GB·DENOM_GB·MULTIPLIER·MIN_LEVEL)은 여기서 안 건드린다.
+	       병원이 문구를 고치다 집계 방식까지 바꾸면 지표가 조용히 틀어진다 — 그건 우리가 관리한다.
+	       INSERT 때만 공통 행에서 복사해 온다(그래야 병원 행 단독으로도 집계가 성립한다). -->
+	<insert id="saveIndiDef" parameterType="map">
+		INSERT INTO TBL_QPS_INDI_MST
+		 (HOSP_CD, INDI_CD, INDI_NM, AREA_NM, AREA_NO, DEFINITION, NUMER_DESC, DENOM_DESC,
+		  DENOM_GB, NUMER_SRC, INCID_GB, MIN_LEVEL, MULTIPLIER, UNIT, DECIMALS, CYCLE_GB,
+		  SOURCE_NM, METHOD_NM, OWNER_NM, DEPT_NM, BACKGROUND, INCLUDE_TXT, EXCLUDE_TXT,
+		  TARGET_VAL, PREV_VAL, TARGET_BASE, RPT_CYCLE, RPT_SCOPE, SHARE_TXT, NOTE,
+		  SORT_NO, USE_YN, REG_USER)
+		SELECT #{hospCd}, m.INDI_CD, #{indiNm}, m.AREA_NM, m.AREA_NO,
+		       #{definition}, #{numerDesc}, #{denomDesc},
+		       m.DENOM_GB, m.NUMER_SRC, m.INCID_GB, m.MIN_LEVEL, m.MULTIPLIER, m.UNIT, m.DECIMALS, m.CYCLE_GB,
+		       #{sourceNm}, #{methodNm}, #{ownerNm}, #{deptNm}, #{background}, #{includeTxt}, #{excludeTxt},
+		       #{targetVal}, #{prevVal}, #{targetBase}, #{rptCycle}, #{rptScope}, #{shareTxt}, #{note},
+		       m.SORT_NO, 'Y', #{regUser}
+		  FROM TBL_QPS_INDI_MST m
+		 WHERE m.INDI_CD = #{indiCd} AND m.HOSP_CD = '*'
+		ON DUPLICATE KEY UPDATE
+		  INDI_NM=VALUES(INDI_NM), DEFINITION=VALUES(DEFINITION),
+		  NUMER_DESC=VALUES(NUMER_DESC), DENOM_DESC=VALUES(DENOM_DESC),
+		  SOURCE_NM=VALUES(SOURCE_NM), METHOD_NM=VALUES(METHOD_NM), OWNER_NM=VALUES(OWNER_NM),
+		  DEPT_NM=VALUES(DEPT_NM), BACKGROUND=VALUES(BACKGROUND),
+		  INCLUDE_TXT=VALUES(INCLUDE_TXT), EXCLUDE_TXT=VALUES(EXCLUDE_TXT),
+		  TARGET_VAL=VALUES(TARGET_VAL), PREV_VAL=VALUES(PREV_VAL), TARGET_BASE=VALUES(TARGET_BASE),
+		  RPT_CYCLE=VALUES(RPT_CYCLE), RPT_SCOPE=VALUES(RPT_SCOPE), SHARE_TXT=VALUES(SHARE_TXT),
+		  NOTE=VALUES(NOTE), USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+	<!-- 병원 정의서 되돌리기 — 병원 행을 지우면 공통 기본값으로 돌아간다 -->
+	<delete id="deleteIndiDef">
+		DELETE FROM TBL_QPS_INDI_MST WHERE HOSP_CD = #{hospCd} AND INDI_CD = #{indiCd} AND HOSP_CD &lt;&gt; '*'
+	</delete>
+
+	<!-- 지표 현황 화면(qpsIndex) — 영역별 18종 목록 + **그 병원의 입력 자료 유무**.
+	     ★건수는 원천이 4갈래라 서브쿼리로 각각 센다. 값(율)까지 계산하면 지표마다 집계 SQL 이
+	       돌아 화면이 무거워지므로, 여기서는 '입력이 있느냐'만 본다 — 담당자가 가장 알고 싶은 것도 그것이다. -->
+	<select id="selectIndiList" resultType="java.util.HashMap">
+		SELECT m.INDI_CD    AS indicd,
+		       m.INDI_NM    AS indinm,
+		       IFNULL(m.AREA_NM,'기타') AS areanm,
+		       IFNULL(m.AREA_NO, 99)    AS areano,
+		       m.NUMER_SRC  AS numersrc,
+		       m.DENOM_GB   AS denomgb,
+		       m.MULTIPLIER AS multiplier,
+		       m.UNIT       AS unit,
+		       m.CYCLE_GB   AS cyclegb,
+		       m.DEFINITION AS definition,
+		       m.SORT_NO    AS sortno,
+		       ( SELECT COUNT(*) FROM TBL_QPS_INCIDENT i
+		          WHERE i.HOSP_CD = #{hospCd} AND i.USE_YN='Y'
+		            AND i.INCID_GB = IFNULL(m.INCID_GB, m.INDI_CD)
+		            AND SUBSTRING(i.OCCUR_DT,1,4) = #{inYear} ) AS incidcnt,
+		       ( SELECT COUNT(*) FROM TBL_QPS_MONITOR o
+		          WHERE o.HOSP_CD = #{hospCd} AND o.USE_YN='Y'
+		            AND o.INDI_CD = m.INDI_CD
+		            AND SUBSTRING(o.OBS_DT,1,4) = #{inYear} ) AS moncnt,
+		       ( SELECT COUNT(*) FROM TBL_QPS_MANUAL u
+		          WHERE u.HOSP_CD = #{hospCd} AND u.USE_YN='Y'
+		            AND u.INDI_CD = m.INDI_CD AND u.IN_YEAR = #{inYear} ) AS mancnt
+		  FROM TBL_QPS_INDI_MST m
+		 WHERE m.USE_YN = 'Y'
+		   AND m.HOSP_CD IN (#{hospCd}, '*')
+		 ORDER BY IFNULL(m.AREA_NO,99), m.SORT_NO
 	</select>
 
 	<!-- 조회 대상 병원 확인용 — 화면 배지에 '서버가 실제로 쓰는' 병원을 찍는다.
@@ -325,6 +415,38 @@
 		  USE_YN='Y', UPD_USER=#{updUser}
 	</insert>
 
+	<!-- ===================== 수기입력형 (NUMER_SRC='MANUAL') =====================
+	     원천이 위너넷 안에 없는 지표(신체보호대·TAT·재택복귀·불만고충·만족도).
+	     병원이 대장을 보고 월별 분자·분모를 적는다. VAL_GB 로 분자/분모를 가른다. -->
+	<select id="selectManual" resultType="java.util.HashMap">
+		SELECT MAN_SEQ AS manseq, INDI_CD AS indicd, IN_YEAR AS inyear, VAL_GB AS valgb,
+		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04, M05 AS m05, M06 AS m06,
+		       M07 AS m07, M08 AS m08, M09 AS m09, M10 AS m10, M11 AS m11, M12 AS m12
+		  FROM TBL_QPS_MANUAL
+		 WHERE HOSP_CD = #{hospCd}
+		   AND INDI_CD = #{indiCd}
+		   AND IN_YEAR = #{inYear}
+		   AND VAL_GB  = #{valGb}
+		   AND USE_YN  = 'Y'
+		 LIMIT 1
+	</select>
+
+	<!-- upsert — (병원,지표,년도,구분) UNIQUE(UK_QPS_MANUAL) 전제.
+	     ★키가 없으면 저장할 때마다 행이 쌓이고 조회가 옛 행을 집는다(차등제에서 겪은 사고). -->
+	<insert id="saveManual" parameterType="egovframework.wnn_medcost.qps.model.QpsManualDTO">
+		INSERT INTO TBL_QPS_MANUAL
+		 (HOSP_CD, INDI_CD, IN_YEAR, VAL_GB, M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{indiCd}, #{inYear}, #{valGb},
+		  #{m01},#{m02},#{m03},#{m04},#{m05},#{m06},#{m07},#{m08},#{m09},#{m10},#{m11},#{m12},
+		  'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  M01=VALUES(M01), M02=VALUES(M02), M03=VALUES(M03), M04=VALUES(M04),
+		  M05=VALUES(M05), M06=VALUES(M06), M07=VALUES(M07), M08=VALUES(M08),
+		  M09=VALUES(M09), M10=VALUES(M10), M11=VALUES(M11), M12=VALUES(M12),
+		  USE_YN='Y', UPD_USER=#{updUser}
+	</insert>
+
 	<!-- ===================== 집계 (분자) =====================
 	     ★낙상 분자 = Level 2 이상. 등급코드는 'LV1','LV2'... 형태이므로 뒤 숫자로 비교한다.
 	       minLevel 이 비어 있으면(정의 미채록 지표) 전건을 센다. -->
@@ -348,19 +470,42 @@
 	     사고보고 입력 없이 기존 환자평가표의 '신규발생' 항목을 그대로 센다 — 이 지표는 입력이 공짜다.
 	     · NEW_ULCER='1' 이 신규 발생, ULCER_DT 가 발생일(YYYYMMDD — 전 병원 형식이상 0건 실측).
 	     · TBL_PATVAL_MST 의 USE_YN 은 전 행 'N' 이라(실측) 필터하지 않는다 — 걸면 전부 사라진다. -->
+	<!-- 욕창 분자 — ★(환자, 발생일) 중복 제거가 반드시 필요하다.
+	     같은 평가표가 두 번 적재된 행이 실재한다(경도요양 실측: 962행 → 실제 779건, 6월 22 → 19).
+	     COUNT(*) 로 세면 그만큼 부풀어 지표가 과대평가된다(2026-08-09 발견).
+	     DOC_DT/ULCER_DT 에 머리글 오염행이 섞이므로 8자리 숫자만 인정한다. -->
 	<select id="selectMonthlyNumerPatval" resultType="java.util.HashMap">
-		SELECT SUBSTRING(ULCER_DT, 5, 2) AS mm,
-		       COUNT(*)                  AS cnt
+		SELECT SUBSTRING(ULCER_DT, 5, 2)         AS mm,
+		       COUNT(DISTINCT PAT_ID, ULCER_DT)  AS cnt
 		  FROM TBL_PATVAL_MST
 		 WHERE HOSP_CD = #{hospCd}
 		   AND NEW_ULCER = '1'
+		   AND ULCER_DT REGEXP '^[0-9]{8}$'
 		   AND SUBSTRING(ULCER_DT, 1, 4) = #{inYear}
 		 GROUP BY SUBSTRING(ULCER_DT, 5, 2)
 	</select>
 
+	<!-- 요로감염 분자 — ★욕창과 셈법이 다르다.
+	     평가표의 UTI 는 발생일 컬럼이 없고 '현재 요로감염 있음'을 뜻하는 유병 플래그다.
+	     그래서 매달 평가표마다 다시 켜진다(실측: 2,228행 = 725명, 한 환자가 최대 10회 이상).
+	     그대로 세면 발생률이 아니라 유병 연인원이 된다 → **환자별 최초 평가표의 달**에 1건으로 센다.
+	     (전년도에 이미 켜져 있던 환자는 올해 분자에 안 들어간다 = '신규'의 정의) -->
+	<select id="selectMonthlyNumerPatvalUti" resultType="java.util.HashMap">
+		SELECT SUBSTRING(t.firstdt, 5, 2) AS mm,
+		       COUNT(*)                   AS cnt
+		  FROM ( SELECT PAT_ID, MIN(DOC_DT) AS firstdt
+		           FROM TBL_PATVAL_MST
+		          WHERE HOSP_CD = #{hospCd}
+		            AND UTI = '1'
+		            AND DOC_DT REGEXP '^[0-9]{8}$'
+		          GROUP BY PAT_ID ) t
+		 WHERE SUBSTRING(t.firstdt, 1, 4) = #{inYear}
+		 GROUP BY SUBSTRING(t.firstdt, 5, 2)
+	</select>
+
 	<!-- 분류별 집계 — 지표분석보고서의 세부 표(연령/장소/시간/유형/손상/부서) 한 방에.
-	     SUNWOO 는 이 숫자들도 손입력이었다.
-	     ★분자와 같은 등급 필터(minLevel)를 건다 — SUNWOO 실물에서 분류표 합계 = 분자였다
+	     기존 프로그램은 이 숫자들도 손입력이었다.
+	     ★분자와 같은 등급 필터(minLevel)를 건다 — 기존 프로그램 실물에서 분류표 합계 = 분자였다
 	       (낙상 1/4분기: 분자 2 = accidenttypeRet 2 = edtPlaceRet 2 = edtTimeRet 2).
 	       안 걸면 "분자 0 인데 분류표엔 1" 로 어긋난다(2026-08-08 실측 발견).
 	       CDATA 안이라 <if> 를 못 쓰므로 IFNULL(#{minLevel},'')='' OR ... 순수 SQL 로 처리. -->
@@ -435,7 +580,7 @@
 		SELECT RPT_SEQ AS rptseq, TITLE AS title,
 		       ANALYSIS_TXT AS analysistxt, PLAN_TXT AS plantxt,
 		       ACT1_TXT AS act1txt, ACT2_TXT AS act2txt, ACT3_TXT AS act3txt, ACT4_TXT AS act4txt,
-		       STATUS AS status,
+		       STATUS AS status, CUR_STEP AS curstep,
 		       SIGN1_USER AS sign1user, DATE_FORMAT(SIGN1_DTTM,'%Y-%m-%d %H:%i') AS sign1dttm,
 		       SIGN2_USER AS sign2user, DATE_FORMAT(SIGN2_DTTM,'%Y-%m-%d %H:%i') AS sign2dttm,
 		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
@@ -458,7 +603,60 @@
 		  TITLE=VALUES(TITLE), ANALYSIS_TXT=VALUES(ANALYSIS_TXT), PLAN_TXT=VALUES(PLAN_TXT),
 		  ACT1_TXT=VALUES(ACT1_TXT), ACT2_TXT=VALUES(ACT2_TXT),
 		  ACT3_TXT=VALUES(ACT3_TXT), ACT4_TXT=VALUES(ACT4_TXT),
-		  STATUS=VALUES(STATUS), UPD_USER=#{regUser}
+		  UPD_USER=#{regUser}
+		<!-- ★STATUS 를 여기서 갱신하지 않는다 — 서술을 저장할 때마다 결재 상태가 DRAFT 로 되돌아갔다.
+		     결재 상태는 결재 API(updateReportAppr)만 바꾼다. -->
+	</insert>
+
+	<!-- ===================== 결재선 =====================
+	     ★단계 수를 코드에 박지 않는다 — 병원 행이 있으면 그것을, 없으면 공통('*') 기본 4단계를 쓴다.
+	       "2단계로 줄여 달라"가 오면 그 병원 행만 넣으면 되고 코드는 안 고친다. -->
+	<select id="selectApprLine" resultType="java.util.HashMap">
+		SELECT STEP_NO AS stepno, STEP_NM AS stepnm
+		  FROM TBL_QPS_APPR_LINE
+		 WHERE USE_YN = 'Y'
+		   AND HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                            SELECT 1 FROM TBL_QPS_APPR_LINE x
+		                             WHERE x.HOSP_CD = #{hospCd} AND x.USE_YN = 'Y' )
+		                          THEN #{hospCd} ELSE '*' END )
+		 ORDER BY STEP_NO
+	</select>
+
+	<delete id="deleteApprLine">
+		DELETE FROM TBL_QPS_APPR_LINE WHERE HOSP_CD = #{hospCd}
+	</delete>
+
+	<insert id="insertApprLine" parameterType="map">
+		INSERT INTO TBL_QPS_APPR_LINE (HOSP_CD, STEP_NO, STEP_NM, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{stepNo}, #{stepNm}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE STEP_NM=VALUES(STEP_NM), USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+	<!-- ===================== 결재 이력·상태 ===================== -->
+	<select id="selectApprHist" resultType="java.util.HashMap">
+		SELECT APPR_SEQ AS apprseq, STEP_NO AS stepno, STEP_NM AS stepnm,
+		       ACT_GB AS actgb, ACT_USER AS actuser, ACT_NM AS actnm,
+		       DATE_FORMAT(ACT_DTTM,'%Y-%m-%d %H:%i') AS actdttm, NOTE AS note
+		  FROM TBL_QPS_APPR
+		 WHERE HOSP_CD = #{hospCd} AND INDI_CD = #{indiCd}
+		   AND PRD_GB = #{prdGb} AND PRD_KEY = #{prdKey}
+		   AND USE_YN = 'Y'
+		 ORDER BY APPR_SEQ
+	</select>
+
+	<insert id="insertAppr" parameterType="map">
+		INSERT INTO TBL_QPS_APPR
+		 (HOSP_CD, INDI_CD, PRD_GB, PRD_KEY, STEP_NO, STEP_NM, ACT_GB, ACT_USER, ACT_NM, NOTE, USE_YN)
+		VALUES
+		 (#{hospCd}, #{indiCd}, #{prdGb}, #{prdKey}, #{stepNo}, #{stepNm},
+		  #{actGb}, #{actUser}, #{actNm}, #{note}, 'Y')
+	</insert>
+
+	<!-- 결재 상태 갱신 — 문서가 아직 없으면(서술 저장 전 상신) 행을 만들어 준다 -->
+	<insert id="updateReportAppr" parameterType="map">
+		INSERT INTO TBL_QPS_REPORT (HOSP_CD, INDI_CD, PRD_GB, PRD_KEY, STATUS, CUR_STEP, REG_USER)
+		VALUES (#{hospCd}, #{indiCd}, #{prdGb}, #{prdKey}, #{status}, #{curStep}, #{updUser})
+		ON DUPLICATE KEY UPDATE STATUS=VALUES(STATUS), CUR_STEP=VALUES(CUR_STEP), UPD_USER=#{updUser}
 	</insert>
 
 </mapper>

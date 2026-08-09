@@ -155,50 +155,37 @@
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/main/assesCheck.do"><i class="fa fa-check-circle"></i>적정성-평가 점검</a>
                     </li>
 
-                    <!-- ===== QPS(질향상·환자안전) — 적정성평가와 별개 업무 (2026-08-08) =====
-                         ★기본 숨김. 위너넷(s_wnn_yn='Y') 이면서 개발자 플래그가 켜져 있을 때만 보인다.
-                           여는 법 = 핫키 Ctrl+Alt+Q (아래 스크립트, 어느 화면에서든 동작).
+                    <!-- ===== QPS(질향상·환자안전) — 적정성평가와 별개 업무 =====
+                         ★2026-08-09 메뉴 정리: 지표 18종을 여기 늘어놓지 않는다.
+                           [지표 현황] 화면 하나로 모으고 그 안에서 영역별로 고르게 했다 —
+                           지표를 늘려도 메뉴는 그대로이고, 정의서·분석보고서·서식이 들어갈 자리가 생긴다.
+                         ★기본 숨김. 위너넷(s_wnn_yn='Y') + 개발자 플래그일 때만 보인다(입력칸 밖에서 q·p·s 타이핑).
                          ★menu-section 이 아니다 — top.jsp 탭/계약 필터의 영향을 받지 않게.
-                         ★정식 오픈 시 : style 의 display:none 과 아래 qpsDev 게이트만 걷어내면 된다. -->
+                         ★정식 오픈 시 : style 의 display:none 과 아래 qpsDev 게이트를 걷어내고
+                           계약구분(s_conact_gb)에 QPS 코드를 추가해 top.jsp 탭으로 태운다. -->
                     <li class="nav-item" id="menu-qps" style="display:none;">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
                            aria-expanded="false" data-target="#qps-sub" aria-controls="qps-sub">
                         <i class="fa fa-heartbeat" aria-hidden="true"></i>QPS-환자안전</a>
                         <div id="qps-sub" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
-                                <%-- ★★지표 추가는 아래 <li> 한 줄 복사 — 화면·자바는 안 고친다.
-                                       /main/qpsFall.do?indi=코드  형태로 지표코드만 바꾸면
-                                       제목·산식·단위·분모구분이 TBL_QPS_INDI_MST 에서 자동으로 따라온다.
-                                       코드는 시드 18종 참고: FALL/BEDSORE/HANDWASH/RESTRAINT/STAFFSAFE/
-                                       PTSAFE/TATIMG/TATLAB/MEDICATION/ABUSE/HOMERET/SUICIDE/ISOLATION/
-                                       SECLUSION/UTI/INFEXP/CLAIM/SATISFY
-                                       ※ 산식(분자·분모)이 채록된 지표만 올린다 — 미채록 지표를 올리면
-                                         화면은 뜨지만 수치가 안 나와 오히려 혼란스럽다. --%>
-                                <%-- 메뉴명 = 지표 정식 명칭(TBL_QPS_INDI_MST.INDI_NM 과 동일) —
-                                     '낙상' 처럼 짧으면 무슨 지표인지 안 보인다(2026-08-08 지적). --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsFall.do?indi=FALL">낙상 발생 보고율</a>
+                                    <a class="nav-item nav-link" href="/main/qpsIndex.do">지표 현황</a>
                                 </li>
-                                <%-- 욕창 = 환자평가표(신규발생) 자동 집계 — 사고 입력 없이 지표만 나온다.
-                                     산식은 잠정(지표정의서 채록 후 확정) — 정의 박스에 명시돼 있다. --%>
+                                <%-- 아래 셋은 다음 단계에서 화면이 붙는다. 지금은 지표 현황으로 보낸다
+                                     (없는 주소로 두면 404 가 나고, 링크를 빼면 로드맵이 안 보인다). --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsFall.do?indi=BEDSORE">욕창 발생률</a>
+                                    <a class="nav-item nav-link" href="/main/qpsDef.do">지표정의서</a>
                                 </li>
-                                <%-- 관찰형(수행률) — 관찰 입력 탭에서 관찰/수행 건수 등록 --%>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=HANDWASH">손위생 수행률</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=ISOLATION">격리지침 수행률</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=SECLUSION">강박지침 수행률</a></li>
-                                <%-- 사고보고형(발생률) — 사고 입력 탭 + 재원일수 --%>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=PTSAFE">환자안전사고 발생 보고율</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=MEDICATION">투약오류 발생 보고율</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=ABUSE">환자 학대 및 폭력사건 보고율</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=SUICIDE">자살·자해 발생 보고율</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=STAFFSAFE">직원안전사고 발생률</a></li>
-                                <%-- 참고: 신체보호대·재택복귀·불만고충·만족도는 정의문구 확정 후 순차 개방 --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsIndex.do" title="준비 중">지표분석보고서 <span style="color:#a8b4bb;">(준비 중)</span></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsIndex.do" title="준비 중">서식 <span style="color:#a8b4bb;">(준비 중)</span></a>
+                                </li>
                             </ul>
                         </div>
                     </li>
-
                     <li class="nav-item menu-section" id="menu-a">
                         <a class="nav-item nav-link"  href="#" data-toggle="collapse" aria-expanded="false" data-target="#user-info" aria-controls="user-info">
                                                                                       <i class="fa fa-building" aria-hidden="true"></i></i>요양기관등록</a>
@@ -2094,10 +2081,16 @@ $(document).ready(function() {
             return m ? decodeURIComponent(m[1]).trim() === 'Y' : false;
         } catch(e){ return false; }
     }
+    // ★게이트 판정을 밖에서도 쓸 수 있게 노출한다(top.jsp 의 QPS 탭 복원 로직이 본다).
+    //   안 그러면 '마지막 선택 탭' 복원이 게이트를 무시하고 QPS 메뉴를 다시 펼친다 — 게이트가 새는 길.
+    window.qpsMenuOn = function(){ return flagOn() && isWnn(); };
     function apply(){
+        var on = (flagOn() && isWnn());
         var li = document.getElementById('menu-qps');
-        if (!li) return;
-        li.style.display = (flagOn() && isWnn()) ? '' : 'none';
+        if (li) li.style.display = on ? '' : 'none';
+        // 상단 QPS 탭도 같은 게이트를 쓴다(2026-08-09) — 사이드바만 켜면 탭이 없어 들어갈 길이 없다
+        var tab = document.getElementById('top-menu_qps');
+        if (tab) tab.style.display = on ? '' : 'none';
     }
     function toggle(){
         if (!isWnn()) return;                           // 위너넷 아니면 아무 일도 없다
@@ -2114,7 +2107,7 @@ $(document).ready(function() {
                 Swal.fire({ toast:true, position:'top-end', width:380, timer:4000,
                             timerProgressBar:true, showConfirmButton:false, icon:'info',
                             title:'QPS 메뉴 ' + (on ? '숨김' : '표시'),
-                            text: on ? '다시 보려면 qps 를 치세요.' : '좌측 메뉴 하단 [QPS-환자안전]',
+                            text: on ? '다시 보려면 qps 를 치세요.' : '상단 [QPS] 탭 · 좌측 [QPS-환자안전]',
                             didOpen: function(el){
                                 el.addEventListener('mouseenter', Swal.stopTimer);
                                 el.addEventListener('mouseleave', Swal.resumeTimer);

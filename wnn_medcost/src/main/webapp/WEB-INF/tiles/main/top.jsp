@@ -119,6 +119,13 @@
 						</a>
                          <div id="top-menu_c"> </div>
                          <div id="top-menu_d"> </div>
+                         <%-- QPS(질향상·환자안전) — 적정성평가와 별개 업무라 탭을 따로 둔다(2026-08-09).
+                              ★기본 숨김. 사이드바 #menu-qps 와 같은 게이트(위너넷 + 개발자 플래그)를 쓰며,
+                                sidebar.jsp 의 qpsDev 스크립트가 이 버튼도 함께 켠다.
+                              ★정식 오픈 시 : 계약구분(s_conact_gb)에 QPS 코드를 추가해 hosp_conact() 에서 그리면 된다. --%>
+                         <a href="/main/qpsIndex.do" id="top-menu_qps"
+                            class="btn btn-light btn-sm top-menu-btn border" style="display:none;"
+                            data-type="qps"><i class="fas fa-heartbeat"></i> QPS</a>
                          <!-- 2024년 표준화구간 안내 토글 (적정성평가 화면에서만 노출/연결: assessment.jsp) -->
                          <button type="button" id="btnStdRange" class="btn btn-light btn-sm top-btn-sub border" style="display:none; padding-left:10px; padding-right:10px; color:#000 !important;">2024년 표준화구간</button>
                         </div>
@@ -420,6 +427,29 @@
        // 메뉴 활성화 및 클릭 이벤트 실행
        $('.top-menu-btn').removeClass('active');
        $('#' + selectedTopMenu).addClass('active').trigger('click');
+   });
+
+   // QPS 탭 — 누르면 좌측 메뉴가 QPS 전용이 된다(다른 업무 메뉴는 감춘다).
+   // ★menu-qps 는 menu-section 이 아니라 .menu-section 일괄 hide 로는 안 사라진다 → 따로 다룬다.
+   $(document).on('click', '#top-menu_qps', function () {
+       // ★게이트 재확인 — '마지막 선택 탭' 복원(localStorage)이 새 세션에서 이 클릭을 자동으로 일으킨다.
+       //   그때 게이트를 안 보면 qps 를 치지 않았는데도 QPS 메뉴가 펼쳐진다.
+       if (typeof qpsMenuOn === 'function' && !qpsMenuOn()) {
+           localStorage.removeItem('selectedTopMenu');
+           $('#top-menu_a').trigger('click');
+           return false;
+       }
+       $('.top-menu-btn').removeClass('active');
+       $(this).addClass('active');
+       $('.menu-section').hide();
+       $('#menu-evalreport, #simulation').hide();
+       $('#menu-qps').show();
+       $('#qps-sub').addClass('show');       // 서브메뉴를 펼친 채로 — 탭을 눌렀으면 그 안을 보려는 것이다
+   });
+   // 다른 탭을 누르면 QPS 메뉴는 숨긴다(단, 게이트가 켜져 있을 때만 다시 나타난다)
+   $(document).on('click', '#top-menu_a, #top-menu_b, #top-menu_c_btn, #top-menu_d_btn', function () {
+       $('#menu-qps').hide();
+       $('#qps-sub').removeClass('show');
    });
 
    // 메뉴 클릭 시 처리

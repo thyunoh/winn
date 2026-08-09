@@ -3,16 +3,16 @@ package egovframework.wnn_medcost.qps.model;
 /**
  * QPS 사고 건별 보고 (TBL_QPS_INCIDENT).
  *
- * SUNWOO 「04 보고서」 8종(환자안전·욕창·직원안전·감염노출·유해물질·보안·학대폭력)의 입력을
+ * 기존 프로그램 「04 보고서」 8종(환자안전·욕창·직원안전·감염노출·유해물질·보안·학대폭력)의 입력을
  * INCID_GB 하나로 통합한 것. 낙상 파일럿에서는 INCID_GB='FALL' 만 쓴다.
  *
  * ★분자 산정 규칙: 낙상 지표의 분자는 '낙상 발생 보고 건수(Level 2 이상)' 이므로
- *   levelCd 가 분자 포함 여부를 가른다(SUNWOO 실측 지표정의 — QPS_지표정의서_산식채록 문서).
+ *   levelCd 가 분자 포함 여부를 가른다(기존 프로그램 실측 지표정의 — QPS_지표정의서_산식채록 문서).
  */
 public class QpsIncidentDTO {
 
 	private Long   incidSeq;
-	private String hospCd;      // 요양기관기호 (SUNWOO COMPANY 대체)
+	private String hospCd;      // 요양기관기호 (기존 프로그램 COMPANY 대체)
 	private String incidGb;     // FALL/BEDSORE/PTSAFE/STAFFSAFE/ABUSE/SECURITY/HAZMAT/INFEXP
 	private String occurDt;     // YYYYMMDD
 	private String occurTm;     // HHMM

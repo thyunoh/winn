@@ -2,8 +2,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <%-- qpsFall.jsp — QPS 낙상 지표 파일럿 (2026-08-08)
-     · 근거: SUNWOO DB 실측. 산식 = 낙상보고건수(Level2 이상) ÷ 총재원일수 × 1,000 (‰)
-     · SUNWOO 는 지표분석보고서에 사람이 '0.67‰' 를 타이핑했다. 여기서는 서버가 계산한다.
+     · 근거: 기존 프로그램 DB 실측. 산식 = 낙상보고건수(Level2 이상) ÷ 총재원일수 × 1,000 (‰)
+     · 기존 프로그램은 지표분석보고서에 사람이 '0.67‰' 를 타이핑했다. 여기서는 서버가 계산한다.
      · 탭 3개: ①사고보고 입력 ②재원일수(분모) ③지표분석(자동집계+차트+서술)
      · 라이브러리는 header.jsp 전역 로드분(jQuery/DataTables/ECharts) 사용
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 — 변환에러로 content 타일이 빈 화면이 된다 --%>
@@ -105,13 +105,30 @@
   #qpsFall .qf-badge{ background:#e7f3ee; color:#1f5a4b; font-size:11px; font-weight:700; border-radius:10px; padding:1px 7px; }
   #qpsFall .qf-mfoot{ padding:9px 16px; border-top:1px solid #eef2f5; font-size:12px; color:#7b8b95; }
 
-  /* 지표 정의 박스 */
-  #qpsFall .qf-def{ background:#f7fbf9; border:1px solid #d9e8e2; border-radius:8px; padding:10px 12px; font-size:13px; line-height:1.7; }
+  /* 지표 정의 박스 — ★2줄 고정(2026-08-09 요청). 5줄짜리는 화면 위쪽을 너무 먹어
+       정작 봐야 할 월별 집계·분기표가 밀렸다. 첫 줄=지표명·정의, 둘째 줄=분자·분모·산식·주기 한 줄. */
+  #qpsFall .qf-def{ background:#f7fbf9; border:1px solid #d9e8e2; border-radius:8px; padding:7px 11px; font-size:13px; line-height:1.55; }
   #qpsFall .qf-def b{ color:#1f5a4b; }
+  #qpsFall .qf-def .qf-d1{ font-size:13.5px; }
+  #qpsFall .qf-def .qf-d2{ color:#4a5c66; font-size:12.5px; margin-top:2px; }
+  #qpsFall .qf-def .qf-d2 b{ color:#6b7c86; font-weight:700; margin-right:3px; }
+  #qpsFall .qf-def .qf-sep{ color:#c3d3da; margin:0 7px; }
   #qpsFall .qf-def .qf-formula{ font-family:Consolas,monospace; background:#fff; border:1px solid #d9e8e2;
-      border-radius:5px; padding:2px 7px; display:inline-block; }
+      border-radius:5px; padding:0 5px; display:inline-block; }
   #qpsFall .qf-warn{ background:#fff8f0; border:1px solid #f0dcc0; color:#8a5a20; border-radius:8px;
       padding:9px 12px; font-size:13px; margin-bottom:12px; }
+
+  /* 결재 — 상태 배지와 서명칸 */
+  #qpsFall .qf-badge{ font-size:12px; font-weight:800; border-radius:12px; padding:3px 12px; }
+  #qpsFall .qf-badge.st-draft  { background:#eef2f5; color:#6b7c86; }
+  #qpsFall .qf-badge.st-submit { background:#fdf3e2; color:#a2701f; }
+  #qpsFall .qf-badge.st-reject { background:#fdeaea; color:#b23b3b; }
+  #qpsFall .qf-badge.st-confirm{ background:#e4f3ea; color:#1f7a52; }
+  #qpsFall #qfApprTbl td.sign{ height:56px; vertical-align:middle; line-height:1.45; }
+  #qpsFall #qfApprTbl td.sign .nm{ font-weight:800; color:#20303a; font-size:13px; }
+  #qpsFall #qfApprTbl td.sign .dt{ font-size:11px; color:#8a99a3; }
+  #qpsFall #qfApprTbl td.sign.wait{ background:#fffdf7; }
+  #qpsFall #qfApprTbl td.sign.wait .nm{ color:#b58a3a; font-weight:700; font-size:12px; }
   #qpsFall #qfChart{ width:100%; height:300px; }
 
   /* ★저장 안내(_toast) 위치 — 이 화면에서만 화면 '중앙'으로 올린다(2026-08-08 요청).
@@ -122,12 +139,15 @@
          ok/warn/err/info 뿐이라 'success' 는 배경색이 안 붙어 흰 글자만 떴다(=안 보였다). */
   .toast-wrap{ top:50% !important; bottom:auto !important; transform:translate(-50%,-50%) !important; }
   .toast-item{ font-size:16px !important; padding:14px 26px !important; }
+
+  /* 인쇄물 CSS 는 JS 상수(PRINT_CSS)로 옮겼다 — 인쇄를 '별도 창'에서 하기 때문(아래 doPrint 주석 참고) */
 </style>
 
 <div class="qf-head">
   <div class="qf-title"><span class="qf-dot"></span>QPS
     <c:out value="${indiNm}" default="지표"/></div>
-  <div class="qf-sub">사고보고 → 재원일수 → 분기 지표 자동산출</div>
+  <%-- 흐름 안내는 지표 유형마다 다르다(관찰형은 재원일수를 안 쓴다) → indiLoad 에서 다시 쓴다 --%>
+  <div class="qf-sub" id="qfFlow">사고보고 → 재원일수 → 분기 지표 자동산출</div>
   <%-- 대상 병원 — ★서버가 실제로 조회하는 병원을 그대로 찍는다(컨트롤러가 쿠키 s_hospid 로 조회).
        브라우저에서 쿠키를 읽어 표시하면 서버 기준과 어긋나도 알 수가 없다(2026-08-08 실제로 헤맸다).
        입원환자 건수까지 같이 보여주므로 '자료가 없어서 안 나오는 것'인지 한눈에 구분된다. --%>
@@ -141,16 +161,41 @@
 </div>
 
 <div class="qf-tabs">
-  <div class="qf-tab on" data-pane="p1" onclick="qfTab('p1');">📋 낙상 사고보고</div>
+  <%-- 탭·폼 문구는 지표마다 다르다(낙상/투약오류/자살자해…) → incidSetupUi 가 지표코드로 바꿔 쓴다.
+       여기 적힌 '낙상'은 마스터를 못 읽었을 때의 최후 기본값일 뿐이다. --%>
+  <div class="qf-tab on" data-pane="p1" onclick="qfTab('p1');" id="qfTabIncid">📋 낙상 사고보고</div>
   <div class="qf-tab"    data-pane="p4" onclick="qfTab('p4');" style="display:none;">🧼 관찰 입력</div>
+  <div class="qf-tab"    data-pane="p5" onclick="qfTab('p5');" style="display:none;">✍ 월별 입력</div>
   <div class="qf-tab"    data-pane="p2" onclick="qfTab('p2');">🛏 재원일수(분모)</div>
   <div class="qf-tab"    data-pane="p3" onclick="qfTab('p3');">📈 지표분석</div>
+</div>
+
+<!-- ================= 탭5 : 월별 수기입력 (MANUAL 지표) =================
+     원천이 위너넷 안에 없는 지표 — 병원이 대장(신체보호대 사용대장·TAT 관리대장·
+     불만고충 처리대장·설문결과)을 보고 월별 숫자를 옮겨 적는다. -->
+<div class="qf-pane" id="p5">
+  <div class="qf-card">
+    <h4 id="qfManTitle">월별 입력 <span class="qf-hint">— 대장·설문 결과를 월별로 옮겨 적는다</span></h4>
+    <div class="qf-scroll">
+      <table class="qf-grid" style="min-width:860px;">
+        <thead><tr id="qfManHead"></tr></thead>
+        <tbody>
+          <tr id="qfManNumer"></tr>
+          <tr id="qfManDenom"></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button type="button" class="qf-btn" onclick="qfManualSave();">저장</button>
+      <span class="qf-sub" id="qfManHint">비워두면 그 달은 '자료 없음'(지표 '-', 0과 구분).</span>
+    </div>
+  </div>
 </div>
 
 <!-- ================= 탭1 : 사고보고 ================= -->
 <div class="qf-pane on" id="p1">
   <div class="qf-card">
-    <h4>낙상 사고 등록 <span class="qf-hint">— 위해등급 Level 2 이상만 지표 분자에 들어간다</span></h4>
+    <h4 id="qfIncidTitle">낙상 사고 등록 <span class="qf-hint">— 위해등급 Level 2 이상만 지표 분자에 들어간다</span></h4>
     <input type="hidden" id="f_incidSeq" value="">
     <div class="qf-form">
       <%-- 달력 선택(2026-08-08 요청) — 브라우저 내장 date. 값이 YYYY-MM-DD 라 저장(REPLACE '-')·
@@ -163,12 +208,13 @@
       <%-- 환자 = 위너넷 입원환자(TBL_IPWON_INFO) 입력검색. 등록번호·성명 아무거나 치면 후보가 뜬다.
            고르면 성명·성별·나이·병동이 자동으로 채워진다. 목록에 없는 대상(외래 등)은 직접 입력해도 된다. --%>
       <div style="position:relative;">
-        <label>환자 (등록번호·성명)</label>
+        <%-- 직원안전사고는 대상이 환자가 아니다 → 라벨을 바꾸고 입원환자 [찾기]는 감춘다(incidSetupUi) --%>
+        <label id="qfPtLab">환자 (등록번호·성명)</label>
         <div style="display:flex; gap:5px;">
           <input type="text" id="f_ptNo" maxlength="30" autocomplete="off" style="flex:1; min-width:0;"
                  placeholder="직접 입력 또는 [찾기]"
                  onkeydown="qfPatKey(event);" oninput="qfPatSearch();" onfocus="qfPatSearch(true);">
-          <button type="button" class="qf-btn ghost" style="padding:5px 10px; white-space:nowrap;"
+          <button type="button" class="qf-btn ghost" id="qfPtFindBtn" style="padding:5px 10px; white-space:nowrap;"
                   onclick="qfPatOpen();">🔍 찾기</button>
         </div>
         <div id="qfPatBox" class="qf-pick"></div>
@@ -177,7 +223,7 @@
       <div><label>성별</label>
         <select id="f_ptSex"><option value="">선택</option><option value="M">남</option><option value="F">여</option></select></div>
       <div><label>나이</label><input type="number" id="f_ptAge" min="0" max="120"></div>
-      <div><label>위해등급 (분자기준)</label>
+      <div><label id="qfLevelLab">위해등급 (분자기준)</label>
         <select id="f_levelCd">
           <option value="">선택</option>
           <option value="LV1">Level 1 (위해없음)</option>
@@ -187,7 +233,8 @@
           <option value="LV5">Level 5 (사망)</option>
         </select></div>
 
-      <div><label>낙상유형</label>
+      <%-- 하위유형 목록은 지표마다 다르다 → incidSetupUi 가 통째로 갈아 끼운다(여기 값은 낙상 기본) --%>
+      <div><label id="qfSubLab">낙상유형</label>
         <select id="f_subtypeCd"><option value="">선택</option>
           <option>침대</option><option>보행중</option><option>휠체어</option><option>화장실</option><option>의자</option><option>기타</option></select></div>
       <div><label>발생장소</label>
@@ -252,7 +299,9 @@
 <!-- ================= 탭4 : 관찰 입력 (손위생 등 MONITOR 지표) ================= -->
 <div class="qf-pane" id="p4">
   <div class="qf-card">
-    <h4>관찰 기록 등록 <span class="qf-hint">— 분자=수행건수, 분모=관찰건수(수행률 = 수행÷관찰 ×100)</span></h4>
+    <%-- ★'순간(moment)'은 손위생(WHO 5 moments) 전용이다 — 격리·강박에서는 칸도 분류표도 감춘다.
+         분모의 이름도 다르다: 손위생=관찰건수 / 격리·강박=시행건수(마스터 DENOM_DESC 와 맞춘다). --%>
+    <h4>관찰 기록 등록 <span class="qf-hint" id="qfMonFormHint">— 분자=수행건수, 분모=관찰건수(수행률 = 수행÷관찰 ×100)</span></h4>
     <input type="hidden" id="m_monSeq" value="">
     <div class="qf-form">
       <div><label>관찰일 *</label><input type="date" id="m_obsDt"></div>
@@ -260,11 +309,11 @@
       <div><label>직군</label>
         <select id="m_jobGb"><option value="">선택</option>
           <option>의사</option><option>간호사</option><option>간호조무사</option><option>물리치료사</option><option>기타</option></select></div>
-      <div><label>순간(moment)</label>
+      <div id="m_momentWrap"><label>순간(moment)</label>
         <select id="m_momentCd"><option value="">선택</option>
           <option>환자 접촉 전</option><option>청결/무균 처치 전</option><option>체액 노출 후</option>
           <option>환자 접촉 후</option><option>환자 주변 접촉 후</option></select></div>
-      <div><label>관찰건수 (분모) *</label><input type="number" id="m_obsCnt" min="0"></div>
+      <div><label id="m_obsCntLab">관찰건수 (분모) *</label><input type="number" id="m_obsCnt" min="0"></div>
       <div><label>수행건수 (분자) *</label><input type="number" id="m_passCnt" min="0"></div>
       <div><label>관찰자</label><input type="text" id="m_observer" maxlength="50"></div>
       <div class="full"><label>비고</label><textarea id="m_note" style="min-height:56px;"></textarea></div>
@@ -279,7 +328,7 @@
     <h4>관찰 목록 <span class="qf-hint">— 행을 클릭하면 위 폼에 불러온다</span></h4>
     <div class="qf-scroll">
       <table id="qfMonTbl" class="display compact" style="width:100%">
-        <thead><tr><th>관찰일</th><th>병동</th><th>직군</th><th>순간</th><th>관찰</th><th>수행</th><th>수행률</th><th>관찰자</th><th>수정일시</th></tr></thead>
+        <thead><tr><th>관찰일</th><th>병동</th><th>직군</th><th>순간</th><th id="qfMonThObs">관찰</th><th>수행</th><th>수행률</th><th>관찰자</th><th>수정일시</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -289,7 +338,10 @@
 <!-- ================= 탭2 : 분모 ================= -->
 <div class="qf-pane" id="p2">
   <div class="qf-card">
-    <h4>월별 총재원일수 <span class="qf-hint">— 지표의 분모(해당 월 일일 재원환자 수의 합)</span></h4>
+    <%-- ★분모의 종류는 지표마다 다르다(마스터 DENOM_GB): INDAYS=총재원일수 / STAFF=직원수.
+         제목·라벨·저장구분을 지표에 맞춰 바꾸지 않으면 직원안전사고처럼 STAFF 분모를 쓰는 지표는
+         재원일수 칸에 저장돼 **영원히 분모 0(지표 '-')** 이 된다(2026-08-09 발견). --%>
+    <h4 id="qfCensusTitle">월별 총재원일수 <span class="qf-hint">— 지표의 분모(해당 월 일일 재원환자 수의 합)</span></h4>
     <div class="qf-scroll">
       <table class="qf-grid" style="min-width:760px;">
         <thead><tr id="qfCensusHead"></tr></thead>
@@ -300,7 +352,7 @@
       <button type="button" class="qf-btn" onclick="qfCensusSave();">저장</button>
       <%-- 자동산출(2026-08-08) — 칸만 채우고 저장은 사람이 한다. 재원중 환자는 오늘까지만 세므로
            자료 마지막 월 이후는 부풀 수 있다 → 확인 후 저장이 전제. --%>
-      <button type="button" class="qf-btn ghost" onclick="qfCensusCalc();">⚙ 입퇴원 자료로 자동계산</button>
+      <button type="button" class="qf-btn ghost" id="qfCensusCalcBtn" onclick="qfCensusCalc();">⚙ 입퇴원 자료로 자동계산</button>
       <span class="qf-sub" id="qfCensusHint">비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분).
         자동계산 기준: 입원일 포함·퇴원일 제외, 재원중은 오늘까지 — 값 확인 후 [저장].</span>
     </div>
@@ -336,7 +388,7 @@
     <h4>분기·반기·연간</h4>
     <div class="qf-scroll">
       <table class="qf-grid" style="min-width:600px;">
-        <thead><tr><th>구분</th><th>분자(건)</th><th>분모(재원일수)</th><th>발생률</th></tr></thead>
+        <thead><tr id="qfQtrHead"></tr></thead>
         <tbody id="qfQtrBody"></tbody>
       </table>
     </div>
@@ -348,7 +400,7 @@
   </div>
 
   <div class="qf-card">
-    <h4>분류별 집계 <span class="qf-hint">— 사고보고에서 자동 집계(분자와 같은 기준)</span></h4>
+    <h4>분류별 집계 <span class="qf-hint" id="qfBreakHint">— 사고보고에서 자동 집계(분자와 같은 기준)</span></h4>
     <div id="qfBreak" class="qf-scroll" style="display:flex; gap:14px; flex-wrap:wrap;"></div>
   </div>
 
@@ -371,8 +423,45 @@
       <div class="full"><label>개선계획</label><textarea id="r_plan"></textarea></div>
     </div>
     <div style="margin-top:12px; display:flex; align-items:center; gap:10px;">
-      <button type="button" class="qf-btn" onclick="qfReportSave();">서술 저장</button>
+      <button type="button" class="qf-btn" id="qfRptSaveBtn" onclick="qfReportSave();">서술 저장</button>
       <span class="qf-sub">분석·개선계획을 남겨둘 때만 누르면 됩니다. 안 눌러도 지표 수치에는 영향이 없습니다.</span>
+    </div>
+  </div>
+
+  <%-- ================= 결재 =================
+       ★'결재'는 승인 절차다(決裁) — 요금 결제(決濟)가 아니다.
+       ★단계 수는 마스터(TBL_QPS_APPR_LINE)가 정한다. 기본 4단계(담당·팀장·부서장·이사장)이고
+         병원이 줄이면 그 병원 행만 바꾸면 된다 — 화면·자바는 안 고친다. --%>
+  <div class="qf-card">
+    <h4>결재 <span class="qf-hint" id="qfApprHint">— 상신하면 단계별로 승인합니다. 결재 중에는 서술을 고칠 수 없습니다.</span></h4>
+
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+      <span id="qfApprStatus" class="qf-badge">작성중</span>
+      <span class="qf-sub" id="qfApprGuide"></span>
+      <div class="qf-spacer" style="flex:1;"></div>
+      <button type="button" class="qf-btn"       id="qfBtnSubmit"  onclick="qfApprAct('SUBMIT');">상신</button>
+      <button type="button" class="qf-btn ghost" id="qfBtnCancel"  onclick="qfApprAct('CANCEL');">상신 회수</button>
+      <button type="button" class="qf-btn"       id="qfBtnApprove" onclick="qfApprAct('APPROVE');">승인</button>
+      <button type="button" class="qf-btn warn"  id="qfBtnReject"  onclick="qfApprAct('REJECT');">반려</button>
+      <button type="button" class="qf-btn ghost" id="qfBtnLine"    onclick="qfApprLineEdit();">결재선 설정</button>
+      <button type="button" class="qf-btn ghost" id="qfBtnPrint"   onclick="qfPrint();">🖨 인쇄(A4)</button>
+    </div>
+
+    <div class="qf-scroll">
+      <table class="qf-grid" id="qfApprTbl" style="min-width:520px; max-width:760px;">
+        <thead><tr id="qfApprHead"></tr></thead>
+        <tbody><tr id="qfApprBody"></tr></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div class="qf-sub" style="margin-bottom:4px;">결재 이력</div>
+      <div class="qf-scroll">
+        <table class="qf-grid" style="min-width:620px;">
+          <thead><tr><th style="width:150px;">일시</th><th style="width:90px;">단계</th><th style="width:90px;">동작</th><th style="width:110px;">처리자</th><th>사유·비고</th></tr></thead>
+          <tbody id="qfApprHist"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -383,10 +472,14 @@
   var HOSP_CD = $root.getAttribute('data-hospcd') || '';
   var INDI_CD = $root.getAttribute('data-indicd')  || 'FALL';
   var INCID_GB= $root.getAttribute('data-incidgb') || INDI_CD;
+  var WNN_YN  = $root.getAttribute('data-wnn')     || 'N';   // 위너넷 여부 — 결재선 설정 버튼 노출에 쓴다
+  // ★인쇄물에 찍을 병원명 — 화면 로드값이 아니라 **매 조회마다 서버 응답(indiCalc.hosp)** 으로 갱신한다.
+  //   로드 시점 값을 쓰면 병원을 바꾼 뒤 새로고침 없이 인쇄할 때 옛 병원명이 찍힌다.
+  var HOSP_NM = '';
   var MONTHS  = ['01','02','03','04','05','06','07','08','09','10','11','12'];
   // ★incidRaw 는 모듈 스코프여야 한다 — 행 클릭 핸들러는 한 번만 붙는데,
   //   목록을 다시 불러올 때마다 새 배열을 지역변수에 담으면 핸들러가 낡은 배열을 계속 본다(선택 시 옛 자료).
-  var dtIncid = null, chart = null, curDef = null, incidRaw = [];
+  var dtIncid = null, chart = null, curDef = null, incidRaw = [], lastCalc = null;
   var dtMon = null, monRaw = [];   // 관찰형(손위생) 목록
 
   // ---------- 공통 ----------
@@ -402,7 +495,7 @@
       return res;
     });
   }
-  function err(e){ _alertBox((e && e.message) ? e.message : '처리 중 오류가 발생했습니다.', {icon:'error'}); }
+  function err(e){ _alertBox((e && e.message) ? e.message : '처리 중 오류가 발생했습니다.', {icon:'❌'}); }
   function val(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; }
   function set(id, v){ var el = document.getElementById(id); if (el) el.value = (v == null ? '' : v); }
   function year(){ return document.getElementById('qfYear').value; }
@@ -432,6 +525,59 @@
   };
 
   // ---------- 탭1 : 사고보고 ----------
+  // ★사고보고형은 낙상 말고도 5종이 더 있다(환자안전·투약·학대폭력·자살자해·직원안전).
+  //   화면이 '낙상'으로 하드코딩돼 있으면 투약오류를 열어도 '낙상 사고 등록 / 낙상유형 : 침대·휠체어'가
+  //   나온다 — 관찰형에서 겪은 것과 같은 문제라 같은 방식으로 지표코드에 따라 갈아 끼운다.
+  //   ※등급 정책(2026-08-09 확정): 낙상만 Level 2 이상, 나머지는 전건. 판정은 서버(마스터 MIN_LEVEL)가
+  //     하고 여기서는 '무엇이 분자에 들어가는지'를 안내만 한다.
+  var INCID_UI = {
+    FALL:       { nm:'낙상',          subLab:'낙상유형', tab:'낙상 사고보고', title:'낙상 사고 등록',
+                  subs:['침대','보행중','휠체어','화장실','의자','기타'] },
+    PTSAFE:     { nm:'환자안전사고',  subLab:'사고유형',
+                  subs:['낙상','투약','자살·자해','수혈','검사·시술','감염','질식','탈원','기타'] },
+    MEDICATION: { nm:'투약오류',      subLab:'오류유형',
+                  subs:['처방','조제','투여','모니터링','기타'] },
+    ABUSE:      { nm:'학대·폭력사건', subLab:'사건유형',
+                  subs:['신체적','언어적·정서적','성적','방임','환자간','보호자','기타'] },
+    SUICIDE:    { nm:'자살·자해',     subLab:'유형',
+                  subs:['자해','자살시도','자살','기타'] },
+    STAFFSAFE:  { nm:'직원안전사고',  subLab:'사고유형', person:'직원',
+                  subs:['주사침 자상','감염노출','낙상','근골격계','폭행·폭언','화학물질','기타'] }
+  };
+  function incidSetupUi(def){
+    var u = INCID_UI[INDI_CD] || { nm: (def && def.indinm) ? def.indinm : '사고', subLab:'유형', subs:['기타'] };
+    var minLv  = (def && def.minlevel != null && String(def.minlevel) !== '') ? String(def.minlevel) : '';
+    var isStaff = (u.person === '직원');
+
+    var tab = document.getElementById('qfTabIncid');
+    if (tab) tab.textContent = '📋 ' + (u.tab || (u.nm + ' 보고'));
+    var ttl = document.getElementById('qfIncidTitle');
+    if (ttl) ttl.innerHTML = esc(u.title || (u.nm + ' 등록')) + ' <span class="qf-hint">— ' +
+      (minLv ? ('위해등급 Level ' + esc(minLv) + ' 이상만 지표 분자에 들어간다')
+             : '보고된 전건이 지표 분자에 들어간다(위해등급은 분석용)') + '</span>';
+    var lvLab = document.getElementById('qfLevelLab');
+    if (lvLab) lvLab.textContent = minLv ? '위해등급 (분자기준)' : '위해등급';
+
+    var subLab = document.getElementById('qfSubLab');
+    if (subLab) subLab.textContent = u.subLab;
+    var sub = document.getElementById('f_subtypeCd');
+    if (sub) {
+      var keep = sub.value;                       // 수정 중이던 값은 지키고 목록만 교체
+      sub.innerHTML = '<option value="">선택</option>' +
+        u.subs.map(function(s){ return '<option>' + esc(s) + '</option>'; }).join('');
+      if (keep) {
+        var has = u.subs.indexOf(keep) >= 0;
+        if (!has) sub.insertAdjacentHTML('beforeend', '<option>' + esc(keep) + '</option>');
+        sub.value = keep;
+      }
+    }
+    // 직원안전사고는 대상이 직원이라 입원환자 검색이 성립하지 않는다
+    var ptLab = document.getElementById('qfPtLab');
+    if (ptLab) ptLab.textContent = isStaff ? '대상 직원 (성명·사번)' : '환자 (등록번호·성명)';
+    show('#qfPtFindBtn', !isStaff);
+    var ptIn = document.getElementById('f_ptNo');
+    if (ptIn) ptIn.placeholder = isStaff ? '직접 입력' : '직접 입력 또는 [찾기]';
+  }
   function incidLoad(){
     return post('/qps/incidentList.do', { incidGb: INCID_GB, inYear: year() }).then(function(res){
       var rows = (res.list || []).map(function(r){
@@ -478,6 +624,8 @@
   // onFocus=true 로 부르면 빈 칸이어도 최근 입원환자를 바로 펼친다
   //   — "무엇을 쳐야 하는지" 몰라 검색이 안 되는 것처럼 보였던 문제(2026-08-08 사용자 지적) 대응.
   window.qfPatSearch = function(onFocus){
+    // 직원안전사고의 대상은 입원환자가 아니다 — 입력검색 자체를 돌리지 않는다(엉뚱한 환자가 뜬다)
+    if (INDI_CD === 'STAFFSAFE') return;
     patInfo('');
     var kw = val('f_ptNo');
     if (patTimer) clearTimeout(patTimer);
@@ -651,7 +799,7 @@
     patClose(); patInfo('');
   };
   window.qfIncidentSave = function(){
-    if (!val('f_occurDt')) { _alertBox('발생일자를 입력해 주세요.', {icon:'warning'}); return; }
+    if (!val('f_occurDt')) { _alertBox('발생일자를 입력해 주세요.', {icon:'⚠️'}); return; }
     post('/qps/incidentSave.do', {
       incidGb: INCID_GB, incidSeq: val('f_incidSeq'),
       occurDt: val('f_occurDt'), occurTm: val('f_occurTm'), wardCd: val('f_wardCd'),
@@ -666,8 +814,8 @@
     }).then(indiLoad).catch(err);
   };
   window.qfIncidentDelete = function(){
-    if (!val('f_incidSeq')) { _alertBox('목록에서 삭제할 사고를 먼저 선택해 주세요.', {icon:'warning'}); return; }
-    _confirmBox({ msg:'선택한 사고 보고를 삭제할까요?', icon:'warning', okText:'삭제', okColor:'#b23b3b',
+    if (!val('f_incidSeq')) { _alertBox('목록에서 삭제할 사고를 먼저 선택해 주세요.', {icon:'⚠️'}); return; }
+    _confirmBox({ msg:'선택한 사고 보고를 삭제할까요?', icon:'⚠️', okText:'삭제', okColor:'#b23b3b',
       onOk: function(){
         post('/qps/incidentDelete.do', { incidSeq: val('f_incidSeq') }).then(function(){
           _toast('삭제되었습니다.', 'ok');
@@ -678,20 +826,54 @@
   };
 
   // ---------- 탭2 : 분모 ----------
+  // ★분모 구분은 지표 마스터(DENOM_GB)가 정한다 — INDAYS(총재원일수) / STAFF(직원수).
+  //   이 함수는 indiLoad 뒤에 돌아야 curDef 를 볼 수 있다(qfReload 순서 주의).
+  function denomGb(){ return (curDef && curDef.denomgb) ? curDef.denomgb : 'INDAYS'; }
+  function denomNm(){ return denomGb() === 'STAFF' ? '직원수' : '재원일수'; }
   function censusLoad(){
+    var gb = denomGb(), isStaff = (gb === 'STAFF');
     var head = document.getElementById('qfCensusHead'), body = document.getElementById('qfCensusBody');
+    var ttl = document.getElementById('qfCensusTitle');
+    if (ttl) ttl.innerHTML = isStaff
+      ? '월별 직원수 <span class="qf-hint">— 지표의 분모(해당 월 재직 직원 수)</span>'
+      : '월별 총재원일수 <span class="qf-hint">— 지표의 분모(해당 월 일일 재원환자 수의 합)</span>';
+    // 직원수는 입퇴원 자료로 계산할 수 없다 → 자동계산 버튼·안내를 감춘다
+    show('#qfCensusCalcBtn', !isStaff);
+    var hint = document.getElementById('qfCensusHint');
+    if (hint) hint.textContent = isStaff
+      ? "비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분). 직원수는 인사자료 기준으로 직접 입력합니다."
+      : "비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분). 자동계산 기준: 입원일 포함·퇴원일 제외, 재원중은 오늘까지 — 값 확인 후 [저장].";
+    var tab = document.querySelector('#qpsFall .qf-tab[data-pane="p2"]');
+    if (tab) tab.textContent = isStaff ? '👥 직원수(분모)' : '🛏 재원일수(분모)';
+
     head.innerHTML = '<th style="width:90px;">구분</th>' + MONTHS.map(function(m){ return '<th>' + Number(m) + '월</th>'; }).join('');
-    body.innerHTML = '<td style="background:#f2f6f8; font-weight:700;">재원일수</td>' +
+    body.innerHTML = '<td style="background:#f2f6f8; font-weight:700;">' + denomNm() + '</td>' +
       MONTHS.map(function(m){
         return '<td><input type="number" id="c_m' + m + '" min="0" style="width:100%; text-align:right;"></td>';
       }).join('');
-    return post('/qps/censusGet.do', { censusGb:'INDAYS', inYear: year() }).then(function(res){
+    return post('/qps/censusGet.do', { censusGb: gb, inYear: year() }).then(function(res){
       var c = res.census || {};
       MONTHS.forEach(function(m){ set('c_m' + m, c['m' + m]); });
     });
   }
   // ---------- 탭4 : 관찰 입력 (손위생 등 MONITOR) ----------
+  // ★같은 관찰형이라도 손위생과 격리·강박은 말이 다르다.
+  //   손위생 = WHO 5 moments 를 '관찰'한다 / 격리·강박 = 지침대로 '시행'했는지를 본다.
+  //   순간(moment) 칸을 격리·강박에 그대로 두면 늘 빈 값이라 분류표에 '미상' 축만 생긴다(2026-08-09 확인).
+  var USE_MOMENT = (INDI_CD === 'HANDWASH');
+  var DENOM_WORD = USE_MOMENT ? '관찰건수' : '시행건수';
+  function monitorSetupUi(){
+    show('#m_momentWrap', USE_MOMENT);
+    var lab = document.getElementById('m_obsCntLab');
+    if (lab) lab.textContent = DENOM_WORD + ' (분모) *';
+    var th = document.getElementById('qfMonThObs');
+    if (th) th.textContent = USE_MOMENT ? '관찰' : '시행';
+    var hint = document.getElementById('qfMonFormHint');
+    if (hint) hint.textContent = '— 분자=수행건수, 분모=' + DENOM_WORD +
+      '(수행률 = 수행÷' + (USE_MOMENT ? '관찰' : '시행') + ' ×100)';
+  }
   function monitorLoad(){
+    monitorSetupUi();
     return post('/qps/monitorList.do', { indiCd: INDI_CD, inYear: year() }).then(function(res){
       monRaw = res.list || [];
       var rows = monRaw.map(function(r){
@@ -711,6 +893,8 @@
           if (idx != null && monRaw[idx]) monFill(monRaw[idx]);
         });
       }
+      // 순간 열은 손위생에서만 — 폭 재계산까지 시켜야 머리글이 어긋나지 않는다(2번째 인자 생략)
+      if (dtMon) dtMon.column(3).visible(USE_MOMENT);
     });
   }
   function monFill(r){
@@ -723,8 +907,16 @@
       .forEach(function(id){ set(id, ''); });
   };
   window.qfMonitorSave = function(){
-    if (!val('m_obsDt')) { _alertBox('관찰일자를 입력해 주세요.', {icon:'warning'}); return; }
-    if (!val('m_obsCnt')) { _alertBox('관찰건수(분모)를 입력해 주세요.', {icon:'warning'}); return; }
+    if (!val('m_obsDt')) { _alertBox('관찰일자를 입력해 주세요.', {icon:'⚠️'}); return; }
+    if (!val('m_obsCnt')) { _alertBox(DENOM_WORD + '(분모)를 입력해 주세요.', {icon:'⚠️'}); return; }
+    // ★수행 > 관찰(시행)이면 수행률이 100%를 넘는다 — 오타를 여기서 잡는다(서버에도 같은 가드가 있다).
+    var obsN = Number(val('m_obsCnt')), passN = Number(val('m_passCnt') || 0);
+    if (!(obsN > 0)) { _alertBox(DENOM_WORD + '(분모)는 1 이상이어야 합니다.', {icon:'⚠️'}); return; }
+    if (passN > obsN) {
+      _alertBox('수행건수(' + passN + ')가 ' + DENOM_WORD + '(' + obsN + ')보다 많습니다. 다시 확인해 주세요.',
+                {icon:'⚠️'});
+      return;
+    }
     post('/qps/monitorSave.do', {
       indiCd: INDI_CD, monSeq: val('m_monSeq'), obsDt: val('m_obsDt'), wardCd: val('m_wardCd'),
       jobGb: val('m_jobGb'), momentCd: val('m_momentCd'), obsCnt: val('m_obsCnt'),
@@ -735,14 +927,72 @@
     }).then(indiLoad).catch(err);
   };
   window.qfMonitorDelete = function(){
-    if (!val('m_monSeq')) { _alertBox('목록에서 삭제할 기록을 먼저 선택해 주세요.', {icon:'warning'}); return; }
-    _confirmBox({ msg:'선택한 관찰 기록을 삭제할까요?', icon:'warning', okText:'삭제', okColor:'#b23b3b',
+    if (!val('m_monSeq')) { _alertBox('목록에서 삭제할 기록을 먼저 선택해 주세요.', {icon:'⚠️'}); return; }
+    _confirmBox({ msg:'선택한 관찰 기록을 삭제할까요?', icon:'⚠️', okText:'삭제', okColor:'#b23b3b',
       onOk: function(){
         post('/qps/monitorDelete.do', { monSeq: val('m_monSeq') }).then(function(){
           _toast('삭제되었습니다.', 'ok'); qfMonitorClear();
           return monitorLoad();
         }).then(indiLoad).catch(err);
       }});
+  };
+
+  // ---------- 탭5 : 월별 수기입력 (MANUAL) ----------
+  // 분자는 늘 수기다. 분모는 지표에 따라 갈린다 —
+  //   DENOM_GB 가 있으면(신체보호대=재원일수) 분모 줄을 감추고 [재원일수] 탭을 쓰게 하고,
+  //   없으면(TAT·재택복귀·불만고충·만족도) 분모도 여기서 같이 적는다.
+  function manualDenomIsManual(){ return !(curDef && curDef.denomgb); }
+  function manualLoad(){
+    var d = curDef || {};
+    var numNm = d.numerdesc || '분자', denNm = d.denomdesc || '분모';
+    var ttl = document.getElementById('qfManTitle');
+    if (ttl) ttl.innerHTML = esc(d.indinm || '월별 입력') +
+      ' <span class="qf-hint">— ' + esc(d.sourcenm || '대장·설문 결과') + '을(를) 보고 월별로 옮겨 적는다</span>';
+    var hint = document.getElementById('qfManHint');
+    if (hint) hint.textContent = manualDenomIsManual()
+      ? "비워두면 그 달은 '자료 없음'(지표 '-', 0과 구분). 분자·분모를 함께 저장합니다."
+      : "비워두면 그 달은 '자료 없음'. 이 지표의 분모는 재원일수라 [재원일수(분모)] 탭에서 관리합니다.";
+
+    document.getElementById('qfManHead').innerHTML =
+      '<th style="width:210px;">구분</th>' + MONTHS.map(function(m){ return '<th>' + Number(m) + '월</th>'; }).join('');
+    document.getElementById('qfManNumer').innerHTML =
+      '<td style="background:#f2f6f8; font-weight:700; text-align:left;">분자 · ' + esc(numNm) + '</td>' +
+      MONTHS.map(function(m){
+        return '<td><input type="number" id="n_m' + m + '" min="0" style="width:100%; text-align:right;"></td>';
+      }).join('');
+    var denRow = document.getElementById('qfManDenom');
+    if (manualDenomIsManual()) {
+      denRow.style.display = '';
+      denRow.innerHTML =
+        '<td style="background:#f2f6f8; font-weight:700; text-align:left;">분모 · ' + esc(denNm) + '</td>' +
+        MONTHS.map(function(m){
+          return '<td><input type="number" id="d_m' + m + '" min="0" style="width:100%; text-align:right;"></td>';
+        }).join('');
+    } else {
+      denRow.style.display = 'none';
+      denRow.innerHTML = '';
+    }
+    return post('/qps/manualGet.do', { indiCd: INDI_CD, inYear: year() }).then(function(res){
+      var n = res.numer || {}, dm = res.denom || {};
+      MONTHS.forEach(function(m){
+        set('n_m' + m, n['m' + m]);
+        if (manualDenomIsManual()) set('d_m' + m, dm['m' + m]);
+      });
+    });
+  }
+  window.qfManualSave = function(){
+    // 분자를 먼저 저장하고, 분모가 수기인 지표면 이어서 분모를 저장한다(두 행이라 두 번 부른다)
+    var pn = { indiCd: INDI_CD, inYear: year(), valGb: 'NUMER' };
+    MONTHS.forEach(function(m){ pn['m' + m] = val('n_m' + m); });
+    post('/qps/manualSave.do', pn).then(function(){
+      if (!manualDenomIsManual()) return null;
+      var pd = { indiCd: INDI_CD, inYear: year(), valGb: 'DENOM' };
+      MONTHS.forEach(function(m){ pd['m' + m] = val('d_m' + m); });
+      return post('/qps/manualSave.do', pd);
+    }).then(function(){
+      _toast('저장되었습니다.', 'ok');
+      return indiLoad();
+    }).catch(err);
   };
 
   // 자동산출 — 서버가 입퇴원 자료로 계산한 값을 칸에 채운다. 저장은 사람이 [저장]으로.
@@ -754,7 +1004,7 @@
   };
 
   window.qfCensusSave = function(){
-    var p = { censusGb:'INDAYS', inYear: year() };
+    var p = { censusGb: denomGb(), inYear: year() };   // ★지표가 쓰는 분모 구분으로 저장(INDAYS/STAFF)
     MONTHS.forEach(function(m){ p['m' + m] = val('c_m' + m); });
     post('/qps/censusSave.do', p).then(function(){
       _toast('저장되었습니다.', 'ok');
@@ -769,6 +1019,15 @@
       fromDt: year() + '0101', toDt: year() + '1231'
     }).then(function(res){
       curDef = res.indi || {};
+      lastCalc = res;                 // 인쇄물이 이 값을 그대로 쓴다(다시 계산하지 않는다)
+      // ★병원 배지를 매번 서버 응답으로 다시 쓴다 — 상단 [병원검색]으로 병원을 바꾸면
+      //   숫자는 바로 새 병원 것이 되는데 배지·인쇄물만 옛 병원으로 남는 문제가 있었다(2026-08-09).
+      if (res.hosp) {
+        HOSP_NM = res.hosp.hospnm || '';
+        var badge = document.getElementById('qfHospNm');
+        if (badge) badge.innerHTML = '🏥 ' + esc(HOSP_NM) + ' (' + esc(res.hosp.hospcd || '') + ')' +
+                   ' · 입원자료 ' + num(res.hosp.ipwoncnt || 0) + '건';
+      }
       // ★지표 유형(numersrc)에 따라 탭 구성이 다르다:
       //   INCIDENT(낙상) = 사고보고 + 재원일수 + 지표분석
       //   PATVAL(욕창)   = 재원일수 + 지표분석 (입력 없음)
@@ -776,16 +1035,35 @@
       var src = curDef.numersrc || 'INCIDENT';
       var isPatval  = (src === 'PATVAL');
       var isMonitor = (src === 'MONITOR');
+      var isManual  = (src === 'MANUAL');
+      // 분모 탭은 '재원일수·직원수를 쓰는 지표'에만 필요하다 —
+      // 관찰형은 분모가 관찰건수이고, 수기형도 DENOM_GB 가 없으면 분모를 월별 입력 탭에서 적는다.
+      var needCensus = !isMonitor && !(isManual && !curDef.denomgb);
       show('#qpsFall .qf-tab[data-pane="p1"]', src === 'INCIDENT');   // 사고보고
       show('#qpsFall .qf-tab[data-pane="p4"]', isMonitor);           // 관찰입력
-      show('#qpsFall .qf-tab[data-pane="p2"]', !isMonitor);          // 재원일수(관찰형은 불필요)
+      show('#qpsFall .qf-tab[data-pane="p5"]', isManual);            // 월별 수기입력
+      show('#qpsFall .qf-tab[data-pane="p2"]', needCensus);          // 재원일수·직원수
+      // 분류별 집계는 '사고 행'이 있어야 성립한다 — 평가표형·수기형은 빈 표 6개가 고장처럼 보인다
       var bkCard = document.getElementById('qfBreak');
-      if (bkCard) bkCard.closest('.qf-card').style.display = isPatval ? 'none' : '';
+      if (bkCard) bkCard.closest('.qf-card').style.display = (isPatval || isManual) ? 'none' : '';
+      // 화면 머리 흐름 안내·분류표 설명도 유형에 맞춘다(관찰형은 재원일수를 안 쓴다)
+      var flow = document.getElementById('qfFlow');
+      if (flow) flow.textContent = isMonitor ? '관찰 입력 → 분기 지표 자동산출 (수행 ÷ 관찰)'
+                                 : isPatval  ? '환자평가표에서 자동집계 → 분기 지표 자동산출'
+                                 : isManual  ? '월별 입력(대장·설문) → 분기 지표 자동산출'
+                                             : '사고보고 → 재원일수 → 분기 지표 자동산출';
+      var bkHint = document.getElementById('qfBreakHint');
+      if (bkHint) bkHint.textContent = isMonitor ? '— 관찰기록에서 자동 집계(직군·병동·순간별 수행률)'
+                                                 : '— 사고보고에서 자동 집계(분자와 같은 기준)';
       // 첫 탭이 자기 유형과 안 맞으면 알맞은 탭으로 이동
       if (isMonitor && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p4"]')
                     && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p4');
       if (isPatval  &&  document.querySelector('#qpsFall .qf-tab.on[data-pane="p1"]')) qfTab('p3');
+      if (isManual && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p5"]')
+                   && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p5');
       if (isMonitor) monitorLoad();
+      if (isManual)  manualLoad();
+      if (src === 'INCIDENT') incidSetupUi(curDef);   // 탭·제목·유형목록·대상 라벨을 지표에 맞춘다
       renderDef(curDef);
       renderMonths(res.months || [], curDef);
       renderRollup(res.quarters || [], res.halves || [], res.year, curDef);
@@ -796,15 +1074,32 @@
       if (warn) {
         if (isMonitor) {
           warn.style.display = (res.hasCensus === 'Y') ? 'none' : 'block';
-          warn.innerHTML = '관찰 기록이 없습니다. <b>[관찰 입력]</b> 탭에서 먼저 등록해 주세요.';
-        } else {
+          warn.innerHTML = (USE_MOMENT ? '관찰' : '시행') + ' 기록이 없습니다. <b>[관찰 입력]</b> 탭에서 먼저 등록해 주세요.';
+        } else if (isManual && !curDef.denomgb) {
           warn.style.display = (res.hasCensus === 'Y') ? 'none' : 'block';
-          warn.innerHTML = '재원일수(분모)가 등록되지 않았습니다. <b>[재원일수(분모)]</b> 탭에서 먼저 입력해 주세요.';
+          warn.innerHTML = '월별 값이 등록되지 않았습니다. <b>[월별 입력]</b> 탭에서 분자·분모를 먼저 적어 주세요.';
+        } else {
+          var dn = (curDef && curDef.denomgb === 'STAFF') ? '직원수' : '재원일수';
+          warn.style.display = (res.hasCensus === 'Y') ? 'none' : 'block';
+          warn.innerHTML = dn + '(분모)가 등록되지 않았습니다. <b>[' + dn + '(분모)]</b> 탭에서 먼저 입력해 주세요.';
         }
       }
     });
   }
   function unit(def){ return (def && def.unit) ? def.unit : '‰'; }
+  // ★지표 유형별 표 라벨 — 관찰형(손위생·격리·강박)은 분자=수행건수, 분모=관찰건수, 값=수행률이다.
+  //   낙상 라벨을 그대로 두면 손위생 화면에 '분모(재원일수)'·'발생률'이 찍혀 전혀 다른 지표로 읽힌다.
+  function labelsOf(def){
+    if (def && def.numersrc === 'MONITOR')
+      return { numer:'분자(수행건수)', denom:'분모(' + DENOM_WORD + ')', rate:'수행률',
+               bar: DENOM_WORD, barKey:'denom' };
+    // 수기형은 지표마다 분자·분모의 정체가 달라(충족건수/전체건수, 복귀자/퇴원자…) 이름을 박지 않는다
+    if (def && def.numersrc === 'MANUAL' && !def.denomgb)
+      return { numer:'분자', denom:'분모', rate:(def.unit === '%' ? '비율' : '발생률'),
+               bar:'분모', barKey:'denom' };
+    var dn = (def && def.denomgb === 'STAFF') ? '직원수' : '재원일수';
+    return { numer:'분자(건)', denom:'분모(' + dn + ')', rate:'발생률', bar:'건수', barKey:'numer' };
+  }
   // 발생률은 소수자리를 고정해 찍는다 — JSON 숫자 1.00 은 JS 에서 1 이 되어 '1‰' 로 보였다(2026-08-08).
   function fmtRate(v, def){
     if (v == null) return '-';
@@ -814,41 +1109,57 @@
   function renderDef(d){
     var box = document.getElementById('qfDef');
     if (!d || !d.indinm) {
-      box.innerHTML = '지표 마스터(TBL_QPS_INDI_MST)에 <b>FALL</b> 행이 없습니다. DDL 시드를 먼저 적용해 주세요.';
+      box.innerHTML = '지표 마스터(TBL_QPS_INDI_MST)에 <b>' + esc(INDI_CD) + '</b> 행이 없습니다. DDL 시드를 먼저 적용해 주세요.';
       return;
     }
+    // ★2줄 — 첫 줄은 '무엇을 재는 지표인가', 둘째 줄은 '어떻게 재는가'. 나머지는 줄바꿈으로 흘린다.
+    var cyc = d.cyclegb === 'Q' ? '분기별' : (d.cyclegb === 'H' ? '반기별' : (d.cyclegb === 'Y' ? '연 1회' : (d.cyclegb || '')));
+    var p = [];
+    p.push('<b>분자</b>' + esc(d.numerdesc || '-'));
+    p.push('<b>분모</b>' + esc(d.denomdesc || '-'));
+    p.push('<span class="qf-formula">분자÷분모×' + num(d.multiplier || 1000) + ' = ' + esc(unit(d)) + '</span>');
+    if (d.targetval != null && d.targetval !== '')
+      p.push('<b>목표</b>' + esc(String(Number(d.targetval))) + esc(unit(d)));
+    if (cyc)         p.push(esc(cyc));
+    if (d.sourcenm)  p.push(esc(d.sourcenm));
+    if (d.ownernm)   p.push(esc(d.ownernm));
     box.innerHTML =
-      '<div><b>' + esc(d.indinm) + '</b> — ' + esc(d.definition || '') + '</div>' +
-      '<div>분자 : ' + esc(d.numerdesc || '-') + '</div>' +
-      '<div>분모 : ' + esc(d.denomdesc || '-') + '</div>' +
-      '<div>산식 : <span class="qf-formula">분자 ÷ 분모 × ' + num(d.multiplier || 1000) + ' = ' + esc(unit(d)) + '</span></div>' +
-      '<div>주기 : ' + esc(d.cyclegb === 'Q' ? '분기별' : (d.cyclegb || '')) +
-        ' · 자료원 : ' + esc(d.sourcenm || '-') + ' · 담당 : ' + esc(d.ownernm || '-') + '</div>';
+      '<div class="qf-d1"><b>' + esc(d.indinm) + '</b>' +
+        (d.definition ? ' — ' + esc(d.definition) : '') + '</div>' +
+      '<div class="qf-d2">' + p.join('<span class="qf-sep">·</span>') + '</div>';
   }
   function renderMonths(ms, def){
+    var lab = labelsOf(def);
     document.getElementById('qfMonHead').innerHTML =
       '<th style="width:130px;">구분</th>' + ms.map(function(m){ return '<th>' + Number(m.mm) + '월</th>'; }).join('');
+    // ★관찰형은 관찰을 안 한 달의 분자 0 이 '수행 0건'으로 읽힌다 — 분모가 없으면 분자도 '-'.
+    //   (사고형은 반대다. 재원일수만 있고 사고가 없으면 '0건'이 사실이므로 0 을 그대로 찍는다.)
+    var monZeroDash = (def && def.numersrc === 'MONITOR');
     document.getElementById('qfMonNumer').innerHTML =
-      '<td style="background:#f2f6f8; font-weight:700;">분자(건)</td>' +
-      ms.map(function(m){ return '<td class="num">' + num(m.numer) + '</td>'; }).join('');
+      '<td style="background:#f2f6f8; font-weight:700;">' + lab.numer + '</td>' +
+      ms.map(function(m){
+        return '<td class="num">' + ((monZeroDash && !m.denom) ? '-' : num(m.numer)) + '</td>'; }).join('');
     document.getElementById('qfMonDenom').innerHTML =
-      '<td style="background:#f2f6f8; font-weight:700;">분모(재원일수)</td>' +
+      '<td style="background:#f2f6f8; font-weight:700;">' + lab.denom + '</td>' +
       ms.map(function(m){ return '<td class="num">' + (m.denom ? num(m.denom) : '-') + '</td>'; }).join('');
     document.getElementById('qfMonRate').innerHTML =
-      '<td style="background:#f2f6f8; font-weight:700;">발생률(' + esc(unit(def)) + ')</td>' +
+      '<td style="background:#f2f6f8; font-weight:700;">' + lab.rate + '(' + esc(unit(def)) + ')</td>' +
       ms.map(function(m){ return '<td class="num">' + fmtRate(m.rate, def) + '</td>'; }).join('');
   }
   function renderRollup(qs, hs, yr, def){
+    var lab = labelsOf(def);
+    document.getElementById('qfQtrHead').innerHTML =
+      '<th>구분</th><th>' + lab.numer + '</th><th>' + lab.denom + '</th><th>' + lab.rate + '</th>';
     var rows = [];
     qs.forEach(function(q, i){ rows.push([(i+1) + '/4 분기', q]); });
     if (hs[0]) rows.push(['상반기', hs[0]]);
     if (hs[1]) rows.push(['하반기', hs[1]]);
     if (yr)    rows.push(['연간',   yr]);
     document.getElementById('qfQtrBody').innerHTML = rows.map(function(r){
-      var o = r[1];
+      var o = r[1], mz = (def && def.numersrc === 'MONITOR' && !o.denom);   // 관찰 없는 기간은 분자도 '-'
       return '<tr' + (r[0] === '연간' ? ' class="qf-sum"' : '') + '>' +
              '<td>' + esc(r[0]) + '</td>' +
-             '<td class="num">' + num(o.numer) + '</td>' +
+             '<td class="num">' + (mz ? '-' : num(o.numer)) + '</td>' +
              '<td class="num">' + (o.denom ? num(o.denom) : '-') + '</td>' +
              '<td class="num"><b>' + (o.rate == null ? '-' : (fmtRate(o.rate, def) + ' ' + esc(unit(def)))) + '</b></td></tr>';
     }).join('');
@@ -857,21 +1168,23 @@
     var el = document.getElementById('qfChart');
     if (typeof echarts === 'undefined' || !el) return;
     if (!chart) chart = echarts.init(el);
+    // 관찰형은 막대가 '수행건수'면 수행률과 같은 이야기를 두 번 하는 셈이라 **관찰건수(분모)**를 세운다.
+    var lab = labelsOf(def), rateNm = lab.rate + '(' + unit(def) + ')';
     chart.setOption({
       tooltip: { trigger:'axis' },
-      legend:  { data:['발생률(' + unit(def) + ')','건수'] },
+      legend:  { data:[rateNm, lab.bar] },
       grid:    { left:50, right:50, top:40, bottom:30 },
       xAxis:   { type:'category', data: ms.map(function(m){ return Number(m.mm) + '월'; }) },
       yAxis: [ { type:'value', name: unit(def) }, { type:'value', name:'건' } ],
       series: [
-        { name:'발생률(' + unit(def) + ')', type:'line', smooth:true, connectNulls:false,
+        { name: rateNm, type:'line', smooth:true, connectNulls:false,
           data: ms.map(function(m){ return m.rate == null ? null : Number(m.rate); }),
           itemStyle:{ color:'#1f5a4b' } },
-        { name:'건수', type:'bar', yAxisIndex:1, barWidth:14,
-          data: ms.map(function(m){ return m.numer; }),
+        { name: lab.bar, type:'bar', yAxisIndex:1, barWidth:14,
+          data: ms.map(function(m){ return m[lab.barKey]; }),
           itemStyle:{ color:'rgba(42,118,101,.35)' } }
       ]
-    });
+    }, true);   // notMerge — 지표를 바꿔 legend 이름이 달라질 때 옛 계열이 남지 않게
   }
   var AXIS_NM = { PLACE:'발생장소', DAMAGE:'손상유형', TYPE:'사고유형', DEPT:'보고부서', AGE:'연령대', TIME:'시간대' };
   var AXIS_MON = { JOB:'직군', WARD:'병동', MOMENT:'순간(moment)' };
@@ -880,6 +1193,7 @@
     var isMon = (curDef && curDef.numersrc === 'MONITOR');
     var axes = isMon ? AXIS_MON : AXIS_NM;
     Object.keys(axes).forEach(function(k){
+      if (isMon && k === 'MOMENT' && !USE_MOMENT) return;   // 격리·강박엔 순간 개념이 없다('미상' 축만 생긴다)
       var list = bd[k] || [];
       var cols = isMon ? 3 : 2;
       html += '<table class="qf-grid" style="width:auto; min-width:' + (isMon ? 240 : 180) + 'px;">' +
@@ -889,8 +1203,10 @@
       if (!list.length) html += '<tr><td colspan="' + cols + '" style="color:#8a99a3;">자료 없음</td></tr>';
       else list.forEach(function(r){
         if (isMon) {
+          // ★소수자리를 고정하지 않으면 90.0 이 '90%', 87.8 은 '87.8%' 로 섞여 찍힌다
+          //   (JSON 의 90.0 이 JS 에서 90 이 되는 것 — 낙상 때 겪은 것과 같은 함정)
           html += '<tr><td>' + esc(r.code) + '</td><td class="num">' + num(r.numer) + ' / ' + num(r.denom) + '</td>' +
-                  '<td class="num">' + (r.rate == null ? '-' : r.rate + '%') + '</td></tr>';
+                  '<td class="num">' + (r.rate == null ? '-' : fmtRate(r.rate, curDef) + '%') + '</td></tr>';
         } else {
           html += '<tr><td>' + esc(r.code) + '</td><td class="num">' + num(r.cnt) + '</td></tr>';
         }
@@ -916,6 +1232,7 @@
       set('r_act1', r.act1txt); set('r_act2', r.act2txt); set('r_act3', r.act3txt); set('r_act4', r.act4txt);
       set('r_analysis', r.analysistxt); set('r_plan', r.plantxt);
       document.getElementById('qfRptStat').textContent = r.upddttm ? ('최종수정 ' + r.upddttm) : '작성 전';
+      return apprLoad();   // 기간이 바뀌면 결재 상태도 그 기간 것으로 바뀐다
     }).catch(err);
   };
   window.qfReportSave = function(){
@@ -928,9 +1245,304 @@
     }).then(function(){ _toast('보고서가 저장되었습니다.', 'ok'); qfReportLoad(); }).catch(err);
   };
 
+  // ---------- 결재 ----------
+  // ★결재(決裁) = 승인 절차. 요금 결제(決濟)가 아니다.
+  //   단계 수는 서버(TBL_QPS_APPR_LINE)가 정한다 — 화면은 받은 만큼 칸을 그린다.
+  var apprState = null;
+  var ST_NM = { DRAFT:'작성중', SUBMIT:'결재중', REJECT:'반려', CONFIRM:'최종승인' };
+
+  function apprLoad(){
+    var p = prdOf();
+    return post('/qps/apprGet.do', { indiCd: INDI_CD, prdGb: p.gb, prdKey: p.key }).then(function(res){
+      apprState = res;
+      renderAppr(res);
+    });
+  }
+  function renderAppr(s){
+    var line = s.line || [], cur = Number(s.curStep || 0), last = Number(s.lastStep || line.length);
+    var st = s.status || 'DRAFT';
+    var hist = s.hist || [];
+
+    var badge = document.getElementById('qfApprStatus');
+    badge.className = 'qf-badge st-' + st.toLowerCase();
+    badge.textContent = ST_NM[st] || st;
+
+    var guide = document.getElementById('qfApprGuide');
+    guide.textContent =
+        st === 'DRAFT'   ? '작성이 끝나면 [상신]을 누르세요.'
+      : st === 'SUBMIT'  ? ((cur + 1) + '단계 ' + (stepNm(line, cur + 1) || '') + ' 결재 차례입니다.')
+      : st === 'REJECT'  ? '반려되었습니다. 수정 후 다시 상신하세요.'
+      :                    '모든 단계가 승인되었습니다.';
+
+    // 결재선 칸 — 단계별 서명(이름·일시). 승인 이력에서 채운다.
+    var signBy = {};
+    hist.forEach(function(h){ if (h.actgb === 'APPROVE') signBy[Number(h.stepno)] = h; });
+    document.getElementById('qfApprHead').innerHTML =
+      line.map(function(r){ return '<th>' + esc(r.stepnm) + '</th>'; }).join('') || '<th>결재선 없음</th>';
+    document.getElementById('qfApprBody').innerHTML =
+      line.map(function(r){
+        var n = Number(r.stepno), h = signBy[n];
+        if (h) return '<td class="sign"><div class="nm">' + esc(h.actnm || h.actuser || '') + '</div>' +
+                      '<div class="dt">' + esc(h.actdttm || '') + '</div></td>';
+        var waiting = (st === 'SUBMIT' && n === cur + 1);
+        return '<td class="sign' + (waiting ? ' wait' : '') + '">' +
+               (waiting ? '<div class="nm">결재 대기</div>' : '') + '</td>';
+      }).join('') || '<td class="sign">결재선이 설정되어 있지 않습니다.</td>';
+
+    // 버튼 — 상태에 맞는 것만 보인다(할 수 없는 걸 눌러 오류를 보는 일이 없게)
+    show('#qfBtnSubmit',  st === 'DRAFT' || st === 'REJECT');
+    show('#qfBtnCancel',  st === 'SUBMIT' && cur === 0);
+    show('#qfBtnApprove', st === 'SUBMIT');
+    show('#qfBtnReject',  st === 'SUBMIT');
+    show('#qfBtnLine',    WNN_YN === 'Y');          // 결재선 설정은 관리자(위너넷)만
+
+    // 결재 중·최종승인이면 서술 저장을 막는다(서버에도 같은 가드가 있다)
+    var lock = (st === 'SUBMIT' || st === 'CONFIRM');
+    var sb = document.getElementById('qfRptSaveBtn');
+    if (sb) { sb.disabled = lock; sb.style.opacity = lock ? .45 : 1; sb.style.cursor = lock ? 'not-allowed' : 'pointer'; }
+    var hint = document.getElementById('qfApprHint');
+    if (hint) hint.textContent = lock
+      ? '— ' + (st === 'SUBMIT' ? '결재 중이라 서술을 고칠 수 없습니다(회수하면 가능).' : '최종 승인된 문서는 수정할 수 없습니다.')
+      : '— 상신하면 단계별로 승인합니다. 결재 중에는 서술을 고칠 수 없습니다.';
+
+    document.getElementById('qfApprHist').innerHTML = hist.length
+      ? hist.map(function(h){
+          var act = h.actgb === 'SUBMIT' ? '상신' : h.actgb === 'APPROVE' ? '승인'
+                  : h.actgb === 'REJECT' ? '반려' : h.actgb === 'CANCEL' ? '회수' : esc(h.actgb);
+          return '<tr><td>' + esc(h.actdttm || '') + '</td>' +
+                 '<td>' + (h.stepno > 0 ? (h.stepno + '. ' + esc(h.stepnm || '')) : '-') + '</td>' +
+                 '<td>' + act + '</td>' +
+                 '<td>' + esc(h.actnm || h.actuser || '') + '</td>' +
+                 '<td style="text-align:left;">' + esc(h.note || '') + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="5" style="color:#8a99a3;">결재 이력이 없습니다.</td></tr>';
+  }
+  function stepNm(line, no){
+    for (var i = 0; i < line.length; i++) if (Number(line[i].stepno) === no) return line[i].stepnm;
+    return '';
+  }
+
+  window.qfApprAct = function(act){
+    var p = prdOf(), s = apprState || {};
+    var cur = Number(s.curStep || 0);
+    var msg = act === 'SUBMIT'  ? '이 보고서를 결재 상신할까요? 상신 후에는 서술을 고칠 수 없습니다.'
+            : act === 'CANCEL'  ? '상신을 회수할까요? 다시 수정할 수 있게 됩니다.'
+            : act === 'APPROVE' ? ((cur + 1) + '단계 ' + (stepNm(s.line || [], cur + 1) || '') + ' 승인할까요?')
+            :                     '반려할까요? 처음부터 다시 결재해야 합니다.';
+    var doIt = function(note){
+      post('/qps/apprAct.do', {
+        indiCd: INDI_CD, prdGb: p.gb, prdKey: p.key,
+        actGb: act, stepNo: (act === 'APPROVE' ? (cur + 1) : ''), note: note || ''
+      }).then(function(){
+        _toast(act === 'SUBMIT' ? '상신되었습니다.' : act === 'APPROVE' ? '승인되었습니다.'
+             : act === 'REJECT' ? '반려되었습니다.' : '회수되었습니다.', 'ok');
+        return apprLoad();
+      }).then(qfReportLoad).catch(err);
+    };
+    if (act === 'REJECT') {
+      // 반려는 사유가 남아야 다음 사람이 무엇을 고칠지 안다
+      var note = window.prompt('반려 사유를 입력해 주세요.', '');
+      if (note === null) return;
+      if (!note.trim()) { _alertBox('반려 사유를 입력해 주세요.', {icon:'⚠️'}); return; }
+      doIt(note.trim());
+      return;
+    }
+    _confirmBox({ msg: msg, icon: (act === 'CANCEL' ? '⚠️' : '❓'),
+      okText: (act === 'SUBMIT' ? '상신' : act === 'APPROVE' ? '승인' : '회수'),
+      onOk: function(){ doIt(''); } });
+  };
+
+  // 결재선 설정 — 단계 이름을 순서대로. 비우면 그 단계는 사라진다(2단계로 줄이려면 뒤 둘을 비운다).
+  window.qfApprLineEdit = function(){
+    var line = (apprState && apprState.line) || [];
+    var cur = line.map(function(r){ return r.stepnm; }).join(', ');
+    var v = window.prompt(
+      '결재 단계를 순서대로 쉼표로 구분해 입력하세요.\n' +
+      '예) 담당, 팀장, 부서장, 이사장\n' +
+      '2단계로 줄이려면  담당, 승인  처럼 적으면 됩니다.', cur || '담당, 팀장, 부서장, 이사장');
+    if (v === null) return;
+    var arr = v.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    if (!arr.length) { _alertBox('단계를 1개 이상 입력해 주세요.', {icon:'⚠️'}); return; }
+    if (arr.length > 10) { _alertBox('단계는 최대 10개까지입니다.', {icon:'⚠️'}); return; }
+    var p = {};
+    arr.forEach(function(nm, i){ p['step' + (i + 1)] = nm; });
+    post('/qps/apprLineSave.do', p).then(function(){
+      _toast('결재선이 저장되었습니다(' + arr.length + '단계).', 'ok');
+      return apprLoad();
+    }).catch(err);
+  };
+
+  // ---------- 인쇄(A4) ----------
+  // ★인쇄는 **별도 창**에서 한다(2026-08-09 확정). 화면 안에서 print CSS 로 앱을 숨기는 방식은
+  //   ①종이 아래에 `localhost:8080/user/dashboard.do` 같은 **주소 바닥글**이 그대로 찍히고
+  //   ②앱 CSS 가 인쇄물에 스며든다. 빈 문서(about:blank)에 우리 서식만 써 넣으면 둘 다 사라진다.
+  //   (날짜·페이지번호까지 없애려면 인쇄 창의 [머리글 및 바닥글] 체크를 끄면 된다 — 브라우저 설정)
+  var PRINT_CSS =
+    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
+    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '.qp-h1{ font-size:19px; font-weight:800; text-align:center; letter-spacing:-.3px; margin:0 0 3px; }' +
+    '.qp-h2{ font-size:12.5px; text-align:center; color:#333; margin:0 0 12px; }' +
+    '.qp-sec{ font-size:13px; font-weight:800; margin:14px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #333; }' +
+    'table{ width:100%; border-collapse:collapse; font-size:11px; }' +
+    'th,td{ border:1px solid #666; padding:3px 4px; text-align:center; }' +
+    'th{ background:#eee; font-weight:700; }' +
+    'td.l{ text-align:left; }' +
+    '.qp-def td{ text-align:left; }' +
+    '.qp-def th{ width:78px; background:#f2f2f2; }' +
+    '.qp-appr{ float:right; width:auto; border-collapse:collapse; font-size:10px; margin:0 0 6px 8px; }' +
+    '.qp-appr th{ background:#f2f2f2; padding:2px 6px; font-size:10px; }' +
+    '.qp-appr td{ height:46px; width:62px; vertical-align:middle; padding:2px; }' +
+    '.qp-appr td .nm{ font-size:11px; font-weight:700; }' +
+    '.qp-appr td .dt{ font-size:8.5px; color:#444; }' +
+    '.qp-txt{ border:1px solid #666; padding:6px 8px; font-size:11px; min-height:56px;' +
+    '         white-space:pre-wrap; line-height:1.6; text-align:left; }' +
+    '.qp-foot{ margin-top:16px; font-size:11px; text-align:center; }' +
+    '.qp-chart{ width:100%; max-height:230px; object-fit:contain; }' +
+    /* ★강제 페이지 나눔을 쓰지 않는다 — 1장 아래가 통째로 비는 원인이었다(2026-08-09 지적).
+         내용이 자연스럽게 흐르다 넘칠 때만 다음 장으로 가고, 표·분석박스만 잘리지 않게 잡는다. */
+    '.qp-nobreak{ page-break-inside:avoid; }' +
+    'table{ page-break-inside:avoid; }' +
+    '.qp-txt{ page-break-inside:avoid; }';
+
+  function prdLabel(){
+    var k = document.getElementById('qfPrdKey').value;
+    return year() + '년 ' + (k.charAt(0) === 'Q' ? (k.charAt(1) + '/4 분기')
+                           : (k === 'H1' ? '상반기(중간)' : '하반기(최종)'));
+  }
+  // 제목·파일명용 — '/' 가 파일명에 못 쓰는 글자라 '1/4 분기' 를 '1분기' 로 쓴다
+  // (그냥 지우면 '14 분기' 가 되어 이상해진다 — 2026-08-09 실제 발생)
+  function prdLabelPlain(){
+    var k = document.getElementById('qfPrdKey').value;
+    return year() + '년 ' + (k.charAt(0) === 'Q' ? (k.charAt(1) + '분기')
+                           : (k === 'H1' ? '상반기' : '하반기'));
+  }
+  function today(){
+    var d = new Date();
+    return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + '.';
+  }
+  window.qfPrint = function(){
+    if (!lastCalc || !curDef || !curDef.indinm) { _alertBox('지표를 먼저 불러온 뒤 인쇄해 주세요.', {icon:'⚠️'}); return; }
+    var d = curDef, lab = labelsOf(d), ms = lastCalc.months || [];
+
+    // 결재란 — 결재선 단계만큼 칸을 만들고 승인 이력에서 이름·일시를 채운다
+    var s = apprState || {}, line = s.line || [], hist = s.hist || [];
+    var signBy = {};
+    hist.forEach(function(h){ if (h.actgb === 'APPROVE') signBy[Number(h.stepno)] = h; });
+    var apprHtml = '';
+    if (line.length) {
+      apprHtml = '<table class="qp-appr"><thead><tr>' +
+        line.map(function(r){ return '<th>' + esc(r.stepnm) + '</th>'; }).join('') +
+        '</tr></thead><tbody><tr>' +
+        line.map(function(r){
+          var h = signBy[Number(r.stepno)];
+          return '<td>' + (h ? ('<div class="nm">' + esc(h.actnm || h.actuser || '') + '</div>' +
+                                '<div class="dt">' + esc((h.actdttm || '').substring(0, 10)) + '</div>') : '') + '</td>';
+        }).join('') + '</tr></tbody></table>';
+    }
+
+    // 월별 집계
+    var mHtml = '<table><thead><tr><th style="width:86px;">구분</th>' +
+      ms.map(function(m){ return '<th>' + Number(m.mm) + '월</th>'; }).join('') + '</tr></thead><tbody>' +
+      '<tr><th>' + lab.numer + '</th>' + ms.map(function(m){
+          return '<td>' + ((d.numersrc === 'MONITOR' && !m.denom) ? '-' : num(m.numer)) + '</td>'; }).join('') + '</tr>' +
+      '<tr><th>' + lab.denom + '</th>' + ms.map(function(m){ return '<td>' + (m.denom ? num(m.denom) : '-') + '</td>'; }).join('') + '</tr>' +
+      '<tr><th>' + lab.rate + '(' + esc(unit(d)) + ')</th>' + ms.map(function(m){ return '<td>' + fmtRate(m.rate, d) + '</td>'; }).join('') + '</tr>' +
+      '</tbody></table>';
+
+    // 분기·반기·연간
+    var rows = [];
+    (lastCalc.quarters || []).forEach(function(q, i){ rows.push([(i + 1) + '/4 분기', q]); });
+    if ((lastCalc.halves || [])[0]) rows.push(['상반기', lastCalc.halves[0]]);
+    if ((lastCalc.halves || [])[1]) rows.push(['하반기', lastCalc.halves[1]]);
+    if (lastCalc.year) rows.push(['연간', lastCalc.year]);
+    var qHtml = '<table><thead><tr><th>구분</th><th>' + lab.numer + '</th><th>' + lab.denom + '</th><th>' + lab.rate + '</th></tr></thead><tbody>' +
+      rows.map(function(r){
+        var o = r[1], mz = (d.numersrc === 'MONITOR' && !o.denom);
+        return '<tr><td>' + esc(r[0]) + '</td><td>' + (mz ? '-' : num(o.numer)) + '</td>' +
+               '<td>' + (o.denom ? num(o.denom) : '-') + '</td>' +
+               '<td><b>' + (o.rate == null ? '-' : (fmtRate(o.rate, d) + ' ' + esc(unit(d)))) + '</b></td></tr>';
+      }).join('') + '</tbody></table>';
+
+    // 차트 — 캔버스를 이미지로 떠서 넣는다(숨긴 영역에서는 다시 그릴 수 없다)
+    var chartHtml = '';
+    try {
+      if (chart) chartHtml = '<img class="qp-chart" src="' + chart.getDataURL({ pixelRatio: 2, backgroundColor: '#fff' }) + '">';
+    } catch (e) { chartHtml = ''; }
+
+    var acts = [val('r_act1'), val('r_act2'), val('r_act3'), val('r_act4')].filter(function(a){ return a; });
+    // ★병원명은 배지 글자를 긁지 않고 서버 응답값(HOSP_NM)을 쓴다 —
+    //   배지를 파싱하면 병원코드·입원건수까지 딸려 오고, 무엇보다 화면 로드 시점 값이라 병원을 바꾸면 틀린다.
+    var hosp = HOSP_NM || (lastCalc.hosp && lastCalc.hosp.hospnm) || '';
+
+    var body =
+      '<div>' +
+        apprHtml +
+        '<div class="qp-h1">' + esc(d.indinm) + ' 지표분석보고서</div>' +
+        '<div class="qp-h2">' + esc(hosp) + ' · ' + esc(prdLabel()) + '</div>' +
+        '<div style="clear:both;"></div>' +
+
+        '<div class="qp-sec">Ⅰ. 지표 정의</div>' +
+        '<table class="qp-def qp-nobreak"><tbody>' +
+          '<tr><th>지표명</th><td colspan="3">' + esc(d.indinm) + '</td></tr>' +
+          '<tr><th>지표정의</th><td colspan="3">' + esc(d.definition || '-') + '</td></tr>' +
+          '<tr><th>분자</th><td colspan="3">' + esc(d.numerdesc || '-') + '</td></tr>' +
+          '<tr><th>분모</th><td colspan="3">' + esc(d.denomdesc || '-') + '</td></tr>' +
+          '<tr><th>산식</th><td>분자 ÷ 분모 × ' + num(d.multiplier || 1000) + ' = ' + esc(unit(d)) + '</td>' +
+              '<th>주기</th><td>' + esc(d.cyclegb === 'Q' ? '분기별' : (d.cyclegb === 'H' ? '반기별' : (d.cyclegb === 'Y' ? '연 1회' : (d.cyclegb || '-')))) + '</td></tr>' +
+          '<tr><th>자료원</th><td>' + esc(d.sourcenm || '-') + '</td><th>담당</th><td>' + esc(d.ownernm || '-') + '</td></tr>' +
+        '</tbody></table>' +
+
+        '<div class="qp-sec">Ⅱ. 월별 집계</div>' + mHtml +
+        '<div class="qp-sec">Ⅲ. 분기 · 반기 · 연간</div>' + qHtml +
+        (chartHtml ? ('<div class="qp-sec">Ⅳ. 추이</div><div class="qp-nobreak">' + chartHtml + '</div>') : '') +
+      '</div>' +
+
+      '<div>' +
+        '<div class="qp-sec">Ⅴ. 분석</div>' +
+        '<div class="qp-txt">' + esc(val('r_analysis') || '') + '</div>' +
+        '<div class="qp-sec">Ⅵ. 개선계획</div>' +
+        '<div class="qp-txt">' + esc(val('r_plan') || '') + '</div>' +
+        (acts.length ? ('<div class="qp-sec">Ⅶ. 개선활동</div><table><tbody>' +
+            acts.map(function(a, i){ return '<tr><th style="width:70px;">' + (i + 1) + '</th><td class="l">' + esc(a) + '</td></tr>'; }).join('') +
+          '</tbody></table>') : '') +
+        '<div class="qp-foot">작성일 : ' + today() + '</div>' +
+      '</div>';
+
+    // ★제출물이라 어느 병원으로 나가는지 한 번 확인시킨다 —
+    //   위너넷 계정은 여러 병원을 오가므로 "병원을 안 바꾸고 인쇄"가 실제로 일어난다(2026-08-09 지적).
+    _confirmBox({
+      msg: '<b>' + esc(hosp || '(병원 미확인)') + '</b> 기준으로 인쇄합니다.<br>' +
+           esc(d.indinm) + ' · ' + esc(prdLabel()) + '<br><br>' +
+           '<span style="color:#6b7c86;font-size:12px;">다른 병원이면 상단 [병원검색]에서 바꾼 뒤 다시 인쇄하세요.<br>' +
+           '인쇄창이 새 창으로 열립니다. 종이 위·아래의 <b>날짜·페이지번호</b>까지 없애려면<br>' +
+           '인쇄 설정의 <b>[추가 설정] → [머리글 및 바닥글]</b> 체크를 끄세요.</span>',
+      icon: '🖨', okText: '인쇄',
+      onOk: function(){ doPrint(body, (d.indinm || '지표') + ' 지표분석보고서_' + (hosp || '') + '_' + prdLabelPlain()); }
+    });
+  };
+
+  // 별도 창에서 인쇄 — 제목(머리글)은 우리가 정하고, 주소 바닥글은 about:blank 라 사라진다.
+  // 'PDF로 저장' 을 고르면 이 제목이 **파일명 기본값**이 된다.
+  function doPrint(bodyHtml, title){
+    var w = window.open('', '_blank', 'width=900,height=1000');
+    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
+    var safe = String(title).replace(/[\\\/:*?"<>|]/g, '-');   // 파일명에 못 쓰는 글자
+    w.document.open();
+    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
+      '<title>' + esc(safe) + '</title><style>' + PRINT_CSS + '</style></head><body>' + bodyHtml + '</body></html>');
+    w.document.close();
+    w.focus();
+    // 차트 이미지가 붙은 뒤에 인쇄 — 바로 부르면 그림이 빈 채로 나갈 수 있다
+    setTimeout(function(){
+      try { w.print(); } catch (e) { }
+    }, 400);
+  }
+
   // ---------- 초기 로드 ----------
+  // ★indiLoad 를 맨 앞에 둔다 — 분모 탭(censusLoad)이 지표 마스터의 DENOM_GB(INDAYS/STAFF)를
+  //   봐야 하기 때문. 순서를 되돌리면 직원안전사고가 다시 재원일수 칸에 저장된다(2026-08-09).
   window.qfReload = function(){
-    incidLoad().then(censusLoad).then(indiLoad).then(qfReportLoad).catch(err);
+    indiLoad().then(censusLoad).then(incidLoad).then(qfReportLoad).catch(err);
   };
   $(function(){ qfReload(); });
 })();

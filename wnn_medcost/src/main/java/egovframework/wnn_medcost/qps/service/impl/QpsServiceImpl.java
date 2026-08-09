@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import egovframework.wnn_medcost.qps.mapper.QpsMapper;
 import egovframework.wnn_medcost.qps.model.QpsCensusDTO;
 import egovframework.wnn_medcost.qps.model.QpsIncidentDTO;
+import egovframework.wnn_medcost.qps.model.QpsManualDTO;
 import egovframework.wnn_medcost.qps.model.QpsMonitorDTO;
 import egovframework.wnn_medcost.qps.service.QpsService;
 
@@ -22,11 +23,11 @@ import egovframework.wnn_medcost.qps.service.QpsService;
  * QPS 서비스 — 낙상 파일럿.
  *
  * ★이 클래스가 이식의 핵심이다.
- *   SUNWOO 에서는 사람이 지표분석보고서에 '0.67‰' 를 직접 타이핑했다(실물 확인).
+ *   기존 프로그램에서는 사람이 지표분석보고서에 '0.67‰' 를 직접 타이핑했다(실물 확인).
  *   여기서는 사고 건수(분자)와 재원일수(분모)에서 서버가 계산한다.
  *   산식·상수·단위는 코드가 아니라 TBL_QPS_INDI_MST 행에서 온다 — 지표가 늘어도 이 코드는 안 고친다.
  *
- *   검산 근거(SUNWOO 실측): 낙상 2건 / 재원일수 3,000일 × 1,000 = 0.67‰
+ *   검산 근거(기존 프로그램 실측): 낙상 2건 / 재원일수 3,000일 × 1,000 = 0.67‰
  */
 @Service("QpsService")
 public class QpsServiceImpl implements QpsService {
@@ -113,6 +114,172 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public Map<String, Object> selectCensus(String hospCd, String censusGb, String inYear) throws Exception {
 		return mapper.selectCensus(hospCd, censusGb, inYear);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectIndiList(String hospCd, String inYear) throws Exception {
+		return mapper.selectIndiList(hospCd, inYear);
+	}
+
+	// ===================== 지표정의서 =====================
+
+	@Override
+	public Map<String, Object> selectIndiDef(String hospCd, String indiCd) throws Exception {
+		return mapper.selectIndiDef(hospCd, indiCd);
+	}
+
+	@Override
+	public int saveIndiDef(Map<String, Object> param) throws Exception {
+		return mapper.saveIndiDef(param);
+	}
+
+	@Override
+	public int deleteIndiDef(String hospCd, String indiCd) throws Exception {
+		return mapper.deleteIndiDef(hospCd, indiCd);
+	}
+
+	// ===================== 결재 =====================
+
+	@Override
+	public List<Map<String, Object>> selectApprLine(String hospCd) throws Exception {
+		return mapper.selectApprLine(hospCd);
+	}
+
+	@Override
+	public int saveApprLine(String hospCd, List<String> stepNames, String userId) throws Exception {
+		// 통째로 교체 — 단계를 줄이면 뒤 단계 행이 남지 않아야 한다(남으면 결재가 끝나지 않는다)
+		mapper.deleteApprLine(hospCd);
+		int n = 0;
+		if (stepNames != null) {
+			for (int i = 0; i < stepNames.size(); i++) {
+				String nm = stepNames.get(i) == null ? "" : stepNames.get(i).trim();
+				if (nm.isEmpty()) continue;
+				Map<String, Object> p = new HashMap<>();
+				p.put("hospCd", hospCd);
+				p.put("stepNo", n + 1);      // 빈 칸을 건너뛰므로 번호는 다시 매긴다
+				p.put("stepNm", nm);
+				p.put("regUser", userId);
+				mapper.insertApprLine(p);
+				n++;
+			}
+		}
+		return n;
+	}
+
+	@Override
+	public Map<String, Object> selectApprState(String hospCd, String indiCd, String prdGb, String prdKey)
+			throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		List<Map<String, Object>> line = mapper.selectApprLine(hospCd);
+		Map<String, Object> rpt = mapper.selectReport(hospCd, indiCd, prdGb, prdKey);
+		String status = (rpt == null) ? "DRAFT" : str(rpt.get("status"));
+		if (status.isEmpty()) status = "DRAFT";
+		int curStep = (rpt == null) ? 0 : intOf(rpt.get("curstep"), 0);
+
+		out.put("line", line);
+		out.put("status", status);
+		out.put("curStep", curStep);
+		out.put("lastStep", (line == null) ? 0 : line.size());
+		out.put("hist", mapper.selectApprHist(hospCd, indiCd, prdGb, prdKey));
+		return out;
+	}
+
+	@Override
+	public Map<String, Object> actAppr(Map<String, Object> param) throws Exception {
+		String hospCd = str(param.get("hospCd"));
+		String indiCd = str(param.get("indiCd"));
+		String prdGb  = str(param.get("prdGb"));
+		String prdKey = str(param.get("prdKey"));
+		String actGb  = str(param.get("actGb"));
+
+		List<Map<String, Object>> line = mapper.selectApprLine(hospCd);
+		int lastStep = (line == null) ? 0 : line.size();
+		if (lastStep == 0) throw new Exception("결재선이 설정되어 있지 않습니다.");
+
+		Map<String, Object> rpt = mapper.selectReport(hospCd, indiCd, prdGb, prdKey);
+		String status = (rpt == null) ? "DRAFT" : str(rpt.get("status"));
+		if (status.isEmpty()) status = "DRAFT";
+		int curStep = (rpt == null) ? 0 : intOf(rpt.get("curstep"), 0);
+
+		String newStatus;
+		int    newStep;
+		int    actStep;      // 이력에 남길 단계
+		String actStepNm = "";
+
+		if ("SUBMIT".equals(actGb)) {
+			// 작성중·반려 상태에서만 올릴 수 있다
+			if (!("DRAFT".equals(status) || "REJECT".equals(status)))
+				throw new Exception("이미 상신된 문서입니다.");
+			newStatus = "SUBMIT"; newStep = 0; actStep = 0;
+
+		} else if ("CANCEL".equals(actGb)) {
+			// 아무도 승인하지 않았을 때만 회수할 수 있다
+			if (!"SUBMIT".equals(status)) throw new Exception("상신 상태가 아닙니다.");
+			if (curStep > 0) throw new Exception("이미 결재가 진행되어 회수할 수 없습니다.");
+			newStatus = "DRAFT"; newStep = 0; actStep = 0;
+
+		} else if ("APPROVE".equals(actGb)) {
+			if (!"SUBMIT".equals(status)) throw new Exception("상신된 문서가 아닙니다.");
+			int want = curStep + 1;
+			// ★두 사람이 동시에 눌렀을 때 순서가 꼬이는 것을 막는다 — 화면이 보낸 단계와 서버 상태를 대조
+			int given = intOf(param.get("stepNo"), want);
+			if (given != want)
+				throw new Exception((want) + "단계 차례입니다. 화면을 새로고침해 주세요.");
+			actStep = want;
+			actStepNm = stepNmOf(line, want);
+			newStep = want;
+			newStatus = (want >= lastStep) ? "CONFIRM" : "SUBMIT";   // 마지막 단계면 최종 승인
+
+		} else if ("REJECT".equals(actGb)) {
+			if (!"SUBMIT".equals(status)) throw new Exception("상신된 문서가 아닙니다.");
+			actStep = curStep + 1;
+			actStepNm = stepNmOf(line, actStep);
+			newStatus = "REJECT"; newStep = 0;                        // 반려하면 처음부터 다시
+
+		} else {
+			throw new Exception("알 수 없는 결재 동작입니다.");
+		}
+
+		Map<String, Object> h = new HashMap<>();
+		h.put("hospCd", hospCd); h.put("indiCd", indiCd);
+		h.put("prdGb", prdGb);   h.put("prdKey", prdKey);
+		h.put("stepNo", actStep); h.put("stepNm", actStepNm);
+		h.put("actGb", actGb);
+		h.put("actUser", param.get("actUser"));
+		h.put("actNm",   param.get("actNm"));
+		h.put("note",    param.get("note"));
+		mapper.insertAppr(h);
+
+		Map<String, Object> u = new HashMap<>();
+		u.put("hospCd", hospCd); u.put("indiCd", indiCd);
+		u.put("prdGb", prdGb);   u.put("prdKey", prdKey);
+		u.put("status", newStatus); u.put("curStep", newStep);
+		u.put("updUser", param.get("actUser"));
+		mapper.updateReportAppr(u);
+
+		Map<String, Object> res = new LinkedHashMap<>();
+		res.put("status", newStatus);
+		res.put("curStep", newStep);
+		res.put("lastStep", lastStep);
+		return res;
+	}
+
+	private String stepNmOf(List<Map<String, Object>> line, int stepNo) {
+		if (line == null) return "";
+		for (Map<String, Object> r : line) {
+			if (intOf(r.get("stepno"), -1) == stepNo) return str(r.get("stepnm"));
+		}
+		return "";
+	}
+
+	@Override
+	public Map<String, Object> selectManual(String hospCd, String indiCd, String inYear, String valGb) throws Exception {
+		return mapper.selectManual(hospCd, indiCd, inYear, valGb);
+	}
+
+	@Override
+	public int saveManual(QpsManualDTO dto) throws Exception {
+		return mapper.saveManual(dto);
 	}
 
 	@Override
@@ -204,7 +371,7 @@ public class QpsServiceImpl implements QpsService {
 	 * 지표 산출 — 월 → 분기 → 반기 → 연 순서로 누적한다.
 	 *
 	 * ★분기 율은 '월별 율의 평균'이 아니라 '분기 분자합 ÷ 분기 분모합' 이다.
-	 *   SUNWOO 실측값이 그 방식이었다(1분기 2건/3,000일 = 0.67‰. 월별 2.00/0/0 의 산술평균 0.67 과
+	 *   기존 프로그램 실측값이 그 방식이었다(1분기 2건/3,000일 = 0.67‰. 월별 2.00/0/0 의 산술평균 0.67 과
 	 *   우연히 같아 보이지만, 월별 재원일수가 다르면 갈라진다 — 분모합 방식이 맞다).
 	 */
 	@Override
@@ -215,8 +382,11 @@ public class QpsServiceImpl implements QpsService {
 
 		int multiplier = intOf(indi.get("multiplier"), 1000);
 		int decimals   = intOf(indi.get("decimals"), 2);
+		// ★MANUAL 은 분모도 수기일 수 있어 빈 값을 'INDAYS' 로 메우면 안 된다 —
+		//   TAT·재택복귀·불만고충·만족도는 분모가 재원일수가 아니라 '전체 건수'다.
 		String denomGb = str(indi.get("denomgb"));
-		if (denomGb.isEmpty()) denomGb = "INDAYS";
+		String numerSrcTmp = str(indi.get("numersrc"));
+		if (denomGb.isEmpty() && !"MANUAL".equals(numerSrcTmp)) denomGb = "INDAYS";
 		String incidGb = str(indi.get("incidgb"));
 		if (incidGb.isEmpty()) incidGb = indiCd;
 		String minLevel = str(indi.get("minlevel"));   // 비면 전건
@@ -225,11 +395,31 @@ public class QpsServiceImpl implements QpsService {
 		//   INCIDENT = 사고보고 입력분(분자) + 재원일수(분모)
 		//   PATVAL   = 환자평가표 자동집계(분자) + 재원일수(분모)
 		//   MONITOR  = 관찰기록에서 분자(수행)·분모(관찰)를 동시에 — 재원일수를 안 쓴다(손위생 등)
+		//   MANUAL   = 병원이 대장을 보고 월별로 적은 값(TBL_QPS_MANUAL). 분모는 지표에 따라
+		//              재원일수/직원수(DENOM_GB 있음)이거나 역시 수기(DENOM_GB 없음)다.
 		String numerSrc = str(indi.get("numersrc"));
 		List<Map<String, Object>> months = new ArrayList<>();
 		boolean hasDenom;
 
-		if ("MONITOR".equals(numerSrc)) {
+		if ("MANUAL".equals(numerSrc)) {
+			Map<String, Object> mNumer = mapper.selectManual(hospCd, indiCd, inYear, "NUMER");
+			// 분모: DENOM_GB 가 있으면 기존 분모 마스터(재원일수·직원수), 없으면 수기 DENOM 행
+			boolean denomFromCensus = !denomGb.isEmpty();
+			Map<String, Object> mDenom = denomFromCensus
+					? mapper.selectCensus(hospCd, denomGb, inYear)
+					: mapper.selectManual(hospCd, indiCd, inYear, "DENOM");
+			for (String mm : MM) {
+				int numer = (mNumer == null) ? 0 : intOf(mNumer.get("m" + mm), 0);
+				int denom = (mDenom == null) ? 0 : intOf(mDenom.get("m" + mm), 0);
+				Map<String, Object> m = new LinkedHashMap<>();
+				m.put("mm", mm);
+				m.put("numer", numer);
+				m.put("denom", denom);
+				m.put("rate", rate(numer, denom, multiplier, decimals));
+				months.add(m);
+			}
+			hasDenom = (mDenom != null);
+		} else if ("MONITOR".equals(numerSrc)) {
 			Map<String, int[]> byMm = new HashMap<>();   // mm -> [numer, denom]
 			List<Map<String, Object>> mrows = mapper.selectMonthlyMonitor(hospCd, indiCd, inYear);
 			if (mrows != null) for (Map<String, Object> r : mrows) {
@@ -249,9 +439,16 @@ public class QpsServiceImpl implements QpsService {
 			hasDenom = denomTot > 0;
 		} else {
 			Map<String, Integer> numerByMm = new HashMap<>();
-			List<Map<String, Object>> nrows = "PATVAL".equals(numerSrc)
-					? mapper.selectMonthlyNumerPatval(hospCd, inYear)
-					: mapper.selectMonthlyNumer(hospCd, incidGb, inYear, minLevel);
+			// PATVAL 안에서도 지표마다 원천 항목이 다르다 — INCID_GB 로 가른다
+			//   BEDSORE = 신규발생(NEW_ULCER)+발생일 / UTI = 유병 플래그라 '환자별 최초'로 센다
+			List<Map<String, Object>> nrows;
+			if ("PATVAL".equals(numerSrc)) {
+				nrows = "UTI".equals(incidGb)
+						? mapper.selectMonthlyNumerPatvalUti(hospCd, inYear)
+						: mapper.selectMonthlyNumerPatval(hospCd, inYear);
+			} else {
+				nrows = mapper.selectMonthlyNumer(hospCd, incidGb, inYear, minLevel);
+			}
 			if (nrows != null) for (Map<String, Object> r : nrows) {
 				numerByMm.put(str(r.get("mm")), intOf(r.get("cnt"), 0));
 			}

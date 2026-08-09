@@ -1,31 +1,38 @@
 package egovframework.wnn_medcost.qps.model;
 
 /**
- * QPS 분모 마스터 (TBL_QPS_CENSUS) — 월별 총재원일수·직원수.
+ * QPS 수기입력형 지표의 월별 값 (TBL_QPS_MANUAL).
  *
- * 기존 프로그램 `T_PATIENTCNT`(GUBUN, IN_YEAR, M01~M12) 구조 그대로 옮긴 것.
- * 낙상 지표의 분모 '재원환자 연인원수' = 해당 기간 M01~M12 합.
+ * 원천이 위너넷 안에 없는 지표 — 신체보호대 사용대장 · TAT 관리대장 · 퇴원자료 ·
+ * 불만고충 처리대장 · 만족도 설문 — 은 병원이 대장을 보고 월별 숫자를 옮겨 적는다.
+ *
+ * 분자·분모를 한 테이블에 담고 {@code valGb} 로 가른다(NUMER/DENOM).
+ * 분모가 재원일수·직원수인 지표(신체보호대 등)는 DENOM 행을 쓰지 않고
+ * 마스터의 DENOM_GB 를 따라 {@link QpsCensusDTO}(TBL_QPS_CENSUS) 를 그대로 쓴다.
  */
-public class QpsCensusDTO {
+public class QpsManualDTO {
 
-	private Long    censusSeq;
+	private Long    manSeq;
 	private String  hospCd;
-	private String  censusGb;   // INDAYS(총재원일수) / STAFF(월별직원수) / PATCNT(재원환자수)
+	private String  indiCd;
 	private String  inYear;     // YYYY
+	private String  valGb;      // NUMER(분자) / DENOM(분모)
 	private Integer m01, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12;
 	private String  note;
 	private String  useYn;
 	private String  regUser;
 	private String  updUser;
 
-	public Long getCensusSeq() { return censusSeq; }
-	public void setCensusSeq(Long censusSeq) { this.censusSeq = censusSeq; }
+	public Long getManSeq() { return manSeq; }
+	public void setManSeq(Long manSeq) { this.manSeq = manSeq; }
 	public String getHospCd() { return hospCd; }
 	public void setHospCd(String hospCd) { this.hospCd = hospCd; }
-	public String getCensusGb() { return censusGb; }
-	public void setCensusGb(String censusGb) { this.censusGb = censusGb; }
+	public String getIndiCd() { return indiCd; }
+	public void setIndiCd(String indiCd) { this.indiCd = indiCd; }
 	public String getInYear() { return inYear; }
 	public void setInYear(String inYear) { this.inYear = inYear; }
+	public String getValGb() { return valGb; }
+	public void setValGb(String valGb) { this.valGb = valGb; }
 	public Integer getM01() { return m01; }
 	public void setM01(Integer m01) { this.m01 = m01; }
 	public Integer getM02() { return m02; }
