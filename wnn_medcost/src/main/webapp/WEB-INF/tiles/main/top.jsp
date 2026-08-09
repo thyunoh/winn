@@ -442,12 +442,20 @@
        $('.top-menu-btn').removeClass('active');
        $(this).addClass('active');
        $('.menu-section').hide();
-       $('#menu-evalreport, #simulation').hide();
+       // ★QPS 만 남기고 전부 걷어낸다(2026-08-09 지시 "QPS만 넣고 다 제외") — 항목을 나열하지 않고
+       //   사이드바 목록(#sbAllMenu)의 QPS 외 전부를 숨긴다. 그래야 메뉴가 새로 생겨도 QPS 탭에 안 샌다.
+       //   · '지금 보이는 것'만 qps-tab-hid 로 표시 후 숨긴다 — 권한 게이트로 숨겨져 있던 메뉴(관리자 1:1 등)를
+       //     다른 탭에서 무조건 show 로 복원하면 일반 계정에도 떠 버린다.
+       //   · .menu-section 은 표시하지 않고 그냥 숨긴다 — 저 그룹은 각 탭 핸들러가 계약구분으로
+       //     보임/숨김을 다시 정하므로, 우리가 복원하면 계약 필터와 싸운다.
+       $('#sbAllMenu > li').not('#menu-qps').not('.menu-section').not('.nav-divider')
+           .filter(':visible').addClass('qps-tab-hid').hide();
        $('#menu-qps').show();
        $('#qps-sub').addClass('show');       // 서브메뉴를 펼친 채로 — 탭을 눌렀으면 그 안을 보려는 것이다
    });
-   // 다른 탭을 누르면 QPS 메뉴는 숨긴다(단, 게이트가 켜져 있을 때만 다시 나타난다)
+   // 다른 탭을 누르면 QPS 메뉴는 숨기고, QPS 탭이 걷어냈던 항목을 원래대로 되살린다
    $(document).on('click', '#top-menu_a, #top-menu_b, #top-menu_c_btn, #top-menu_d_btn', function () {
+       $('.qps-tab-hid').removeClass('qps-tab-hid').show();
        $('#menu-qps').hide();
        $('#qps-sub').removeClass('show');
    });

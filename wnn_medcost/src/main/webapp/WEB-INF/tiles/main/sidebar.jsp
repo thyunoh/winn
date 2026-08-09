@@ -96,8 +96,9 @@
                     <li class="nav-divider">
                         Menu
                     </li>
-                    <li class="nav-item ">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>                        
+                    <%-- id 는 QPS 탭이 숨겼다 복원하는 데 쓴다(top.jsp) — QPS 화면에서는 대시보드가 무관하다 --%>
+                    <li class="nav-item " id="menu-dashboard">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/user/dashboard.do"><i class="fas fa-chart-bar"></i>DashBoard</a>
                     </li>
                     
                     <li class="nav-item menu-section" id="menu-b">
