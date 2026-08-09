@@ -1039,6 +1039,41 @@
     }).catch(err);
   };
 
+  // ---------- 확정값(동결) 병합 ----------
+  // ★최종승인된 기간은 **화면 표·차트·인쇄물 모두 동결값**으로 보여준다(2026-08-09).
+  //   인쇄만 동결값이면 화면과 인쇄물이 서로 다른 숫자를 보여 "어느 쪽이 맞느냐"가 된다.
+  //   동결이 없는 기간·달은 실시간 산출값 그대로다.
+  function frozenMap(){
+    var m = {};
+    if (apprState && apprState.frozen === 'Y') {
+      (apprState.stat || []).forEach(function(s){ m[s.prdgb + '|' + s.prdkey] = s; });
+    }
+    return m;
+  }
+  function mergedMonths(fb){
+    var ms = (lastCalc && lastCalc.months) || [];
+    return ms.map(function(m){
+      var f = fb['M|' + year() + m.mm];
+      return f ? { mm: m.mm, numer: f.numer, denom: f.denom, rate: f.rate } : m;
+    });
+  }
+  function mergedRollup(fb, gb, key, o){
+    var f = fb[gb + '|' + key];
+    return f ? { key: (o && o.key), numer: f.numer, denom: f.denom, rate: f.rate } : o;
+  }
+  // 결재 상태가 확정이면 분석 표·차트를 동결값으로 다시 그린다(기간을 바꾸면 반대 방향으로도 되돌린다)
+  function applyFrozenToView(){
+    if (!lastCalc || !curDef) return;
+    var fb = frozenMap();
+    var ms = mergedMonths(fb);
+    renderMonths(ms, curDef);
+    var qs = (lastCalc.quarters || []).map(function(q, i){ return mergedRollup(fb, 'Q', year() + 'Q' + (i + 1), q); });
+    var hs = (lastCalc.halves || []).map(function(h, i){ return mergedRollup(fb, 'H', year() + 'H' + (i + 1), h); });
+    var yr = mergedRollup(fb, 'Y', year(), lastCalc.year);
+    renderRollup(qs, hs, yr, curDef);
+    renderChart(ms, curDef);
+  }
+
   // 축별 집계표(분석 탭) — 정규/응급 각 축의 분기·연간 율을 상세 행에서 계산해 분류 카드 자리에 그린다
   function renderManualAxisBreak(){
     var box = document.getElementById('qfBreak');
@@ -1369,6 +1404,7 @@
     return post('/qps/apprGet.do', { indiCd: INDI_CD, prdGb: p.gb, prdKey: p.key }).then(function(res){
       apprState = res;
       renderAppr(res);
+      applyFrozenToView();   // 확정 기간이면 표·차트를 동결값으로(아니면 실시간값으로 되돌림)
     });
   }
   function renderAppr(s){
@@ -1387,7 +1423,7 @@
       : st === 'REJECT'  ? '반려되었습니다. 수정 후 다시 상신하세요.'
       // ★최종승인 시점에 수치를 동결한다 — 이후 원천이 바뀌어도 제출한 값은 안 변한다.
       :                    ('모든 단계가 승인되었습니다.' + (s.frozen === 'Y'
-                              ? ' <b style="color:#1f7a52;">이 기간 수치는 확정(동결)되었습니다</b> — 인쇄물은 확정값으로 나갑니다.'
+                              ? ' <b style="color:#1f7a52;">이 기간 수치는 확정(동결)되었습니다</b> — 화면 표·인쇄물 모두 확정값으로 표시됩니다.'
                               : ''));
 
     // 결재선 칸 — 단계별 서명(이름·일시). **현재 회차**의 승인만 채운다.
@@ -1550,19 +1586,13 @@
     if (!lastCalc || !curDef || !curDef.indinm) { _alertBox('지표를 먼저 불러온 뒤 인쇄해 주세요.', {icon:'⚠️'}); return; }
     var d = curDef, lab = labelsOf(d), ms = lastCalc.months || [];
 
-    // ★확정(동결)된 기간이면 실시간 산출값이 아니라 **동결된 값**으로 찍는다.
-    //   결재까지 끝난 보고서인데 원천이 나중에 고쳐지면 제출한 종이와 화면이 어긋난다 — 그걸 막는 장치.
-    var frozen = (apprState && apprState.frozen === 'Y') ? (apprState.stat || []) : [];
-    var frozenBy = {};
-    frozen.forEach(function(s){ frozenBy[s.prdgb + '|' + s.prdkey] = s; });
-    var useFrozen = frozen.length > 0;
-    if (useFrozen) {
-      // 월별 표: 동결된 달만 갈아 끼운다(그 기간 밖의 달은 참고용이라 실시간값 그대로)
-      ms = ms.map(function(m){
-        var f = frozenBy['M|' + year() + m.mm];
-        return f ? { mm:m.mm, numer:f.numer, denom:f.denom, rate:f.rate } : m;
-      });
-    }
+    // ★확정(동결)된 기간이면 동결값으로 찍는다 — 화면 표(applyFrozenToView)와 같은 헬퍼를 쓴다
+    var fb = frozenMap();
+    var useFrozen = Object.keys(fb).length > 0;
+    ms = mergedMonths(fb);
+
+    // TAT 는 정규/응급 상세가 있으면 인쇄물에도 축별 표를 싣는다 — 자료를 받아온 뒤 본문을 만든다
+    var goPrint = function(axesRows){
 
     // 결재란 — 결재선 단계만큼 칸을 만들고 **현재 회차** 승인에서 이름·일시를 채운다(화면과 같은 규칙)
     var s = apprState || {}, line = s.line || [], hist = s.hist || [];
@@ -1590,16 +1620,37 @@
 
     // 분기·반기·연간
     var rows = [];
-    // 동결값이 있는 줄만 갈아 끼운다(없으면 실시간 산출값 그대로)
-    function pick(gb, key, o){
-      var f = frozenBy[gb + '|' + key];
-      return f ? { numer:f.numer, denom:f.denom, rate:f.rate } : o;
-    }
     (lastCalc.quarters || []).forEach(function(q, i){
-      rows.push([(i + 1) + '/4 분기', pick('Q', year() + 'Q' + (i + 1), q)]); });
-    if ((lastCalc.halves || [])[0]) rows.push(['상반기', pick('H', year() + 'H1', lastCalc.halves[0])]);
-    if ((lastCalc.halves || [])[1]) rows.push(['하반기', pick('H', year() + 'H2', lastCalc.halves[1])]);
-    if (lastCalc.year) rows.push(['연간', pick('Y', year(), lastCalc.year)]);
+      rows.push([(i + 1) + '/4 분기', mergedRollup(fb, 'Q', year() + 'Q' + (i + 1), q)]); });
+    if ((lastCalc.halves || [])[0]) rows.push(['상반기', mergedRollup(fb, 'H', year() + 'H1', lastCalc.halves[0])]);
+    if ((lastCalc.halves || [])[1]) rows.push(['하반기', mergedRollup(fb, 'H', year() + 'H2', lastCalc.halves[1])]);
+    if (lastCalc.year) rows.push(['연간', mergedRollup(fb, 'Y', year(), lastCalc.year)]);
+
+    // 축별(정규/응급) 표 — 상세가 있을 때만 Ⅲ 표 아래 덧붙는다(화면 축별 집계와 같은 계산)
+    var axisHtml = '';
+    (function(){
+      var byAxis = {};
+      (axesRows || []).forEach(function(r){
+        var a = byAxis[r.axiscd] || (byAxis[r.axiscd] = { n:[], d:[] });
+        var arr = (r.valgb === 'DENOM') ? a.d : a.n;
+        MONTHS.forEach(function(m, i){ arr[i] = Number(r['m' + m] || 0); });
+      });
+      var axes = manualAxes().filter(function(ax){ return byAxis[ax]; });
+      if (!axes.length) return;
+      function sum(arr, from, to){ var s = 0; for (var i = from; i < to; i++) s += (arr[i] || 0); return s; }
+      var COLS = [['1/4 분기', 0, 3], ['2/4 분기', 3, 6], ['3/4 분기', 6, 9], ['4/4 분기', 9, 12], ['연간', 0, 12]];
+      axisHtml = '<div style="margin-top:8px; font-size:10.5px; font-weight:700;">▪ 정규·응급별 집계</div>' +
+        '<table class="qp-nobreak"><thead><tr><th style="width:70px;">구분</th>' +
+        COLS.map(function(c){ return '<th>' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        axes.map(function(ax){
+          var a = byAxis[ax];
+          return '<tr><th>' + esc(ax) + '</th>' + COLS.map(function(c){
+            var n = sum(a.n, c[1], c[2]), dd = sum(a.d, c[1], c[2]);
+            return '<td>' + (dd > 0 ? (num(n) + '/' + num(dd) + ' = ' +
+                   fmtRate(n * Number(d.multiplier || 100) / dd, d) + esc(unit(d))) : '-') + '</td>';
+          }).join('') + '</tr>';
+        }).join('') + '</tbody></table>';
+    })();
     var qHtml = '<table><thead><tr><th>구분</th><th>' + lab.numer + '</th><th>' + lab.denom + '</th><th>' + lab.rate + '</th></tr></thead><tbody>' +
       rows.map(function(r){
         var o = r[1], mz = (d.numersrc === 'MONITOR' && !o.denom);
@@ -1638,7 +1689,7 @@
         '</tbody></table>' +
 
         '<div class="qp-sec">Ⅱ. 월별 집계</div>' + mHtml +
-        '<div class="qp-sec">Ⅲ. 분기 · 반기 · 연간</div>' + qHtml +
+        '<div class="qp-sec">Ⅲ. 분기 · 반기 · 연간</div>' + qHtml + axisHtml +
         (chartHtml ? ('<div class="qp-sec">Ⅳ. 추이</div><div class="qp-nobreak">' + chartHtml + '</div>') : '') +
       '</div>' +
 
@@ -1665,6 +1716,16 @@
       icon: '🖨', okText: '인쇄',
       onOk: function(){ doPrint(body, (d.indinm || '지표') + ' 지표분석보고서_' + (hosp || '') + '_' + prdLabelPlain()); }
     });
+    };   // /goPrint
+
+    // 축 상세가 있는 지표만 자료를 받아온다(실패해도 축 표 없이 인쇄는 진행)
+    if (curDef.numersrc === 'MANUAL' && manualAxes().length > 0) {
+      post('/qps/manualGet.do', { indiCd: INDI_CD, inYear: year() })
+        .then(function(r){ goPrint(r.axes || []); })
+        .catch(function(){ goPrint([]); });
+    } else {
+      goPrint([]);
+    }
   };
 
   // 별도 창에서 인쇄 — 제목(머리글)은 우리가 정하고, 주소 바닥글은 about:blank 라 사라진다.
