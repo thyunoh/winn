@@ -24,6 +24,22 @@ public interface QpsMapper {
 	Map<String, Object> selectQpsIndi(@Param("hospCd") String hospCd,
 	                                  @Param("indiCd") String indiCd);
 
+	// 서식 2호: 연간 활동계획서 (병원+년도 1부, 항목행 통째 교체)
+	Map<String, Object> selectPlan(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	int upsertPlan(Map<String, Object> param);
+	List<Map<String, Object>> selectPlanItems(@Param("planSeq") long planSeq);
+	int deletePlanItems(@Param("planSeq") long planSeq);
+	int insertPlanItems(Map<String, Object> param);
+
+	// 서식 1호: 위원회 회의록 (서식빌더 결정 근거용 파일럿)
+	List<Map<String, Object>> selectMinutesList(@Param("hospCd") String hospCd,
+	                                            @Param("inYear") String inYear);
+	Map<String, Object> selectMinutes(@Param("hospCd") String hospCd,
+	                                  @Param("minSeq") long minSeq);
+	int insertMinutes(Map<String, Object> param);
+	int updateMinutes(Map<String, Object> param);
+	int deleteMinutes(Map<String, Object> param);
+
 	// 보고서 현황판 — 기간별 18종 전부의 서술·결재 상태
 	List<Map<String, Object>> selectRptStatus(@Param("hospCd") String hospCd,
 	                                          @Param("prdGb")  String prdGb,

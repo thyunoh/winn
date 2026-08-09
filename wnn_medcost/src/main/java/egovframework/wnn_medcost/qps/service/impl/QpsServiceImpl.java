@@ -131,6 +131,78 @@ public class QpsServiceImpl implements QpsService {
 		return mapper.selectRptStatus(hospCd, prdGb, prdKey);
 	}
 
+	// ===================== 서식 2호: 연간 활동계획서 =====================
+
+	@Override
+	public Map<String, Object> selectPlanWithItems(String hospCd, String inYear) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> plan = mapper.selectPlan(hospCd, inYear);
+		out.put("plan", plan);
+		if (plan != null && plan.get("planseq") != null) {
+			out.put("items", mapper.selectPlanItems(Long.parseLong(String.valueOf(plan.get("planseq")))));
+		} else {
+			out.put("items", new ArrayList<>());
+		}
+		return out;
+	}
+
+	@Override
+	public long savePlan(String hospCd, String inYear, String submitDt,
+	                     List<Map<String, Object>> items, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("inYear", inYear);
+		p.put("submitDt", submitDt);
+		p.put("regUser", userId);
+		mapper.upsertPlan(p);
+		long planSeq = Long.parseLong(String.valueOf(p.get("planSeq")));
+
+		// 항목행 통째 교체 — 섹션별 부분 수정 API 를 두지 않는다(연 1부 문서, 단순함이 우선)
+		mapper.deletePlanItems(planSeq);
+		if (items != null && !items.isEmpty()) {
+			// ★한 번에 몰아 넣되 행이 아주 많으면 나눈다(파라미터 수 제한 대비 — 27컬럼 × 행수)
+			int CHUNK = 200;
+			for (int i = 0; i < items.size(); i += CHUNK) {
+				Map<String, Object> ip = new HashMap<>();
+				ip.put("planSeq", planSeq);
+				ip.put("items", items.subList(i, Math.min(i + CHUNK, items.size())));
+				mapper.insertPlanItems(ip);
+			}
+		}
+		return planSeq;
+	}
+
+	// ===================== 서식 1호: 회의록 =====================
+
+	@Override
+	public List<Map<String, Object>> selectMinutesList(String hospCd, String inYear) throws Exception {
+		return mapper.selectMinutesList(hospCd, inYear);
+	}
+
+	@Override
+	public Map<String, Object> selectMinutes(String hospCd, long minSeq) throws Exception {
+		return mapper.selectMinutes(hospCd, minSeq);
+	}
+
+	@Override
+	public long saveMinutes(Map<String, Object> param) throws Exception {
+		Object seq = param.get("minSeq");
+		long minSeq = (seq == null || String.valueOf(seq).trim().isEmpty()) ? 0L
+				: Long.parseLong(String.valueOf(seq).trim());
+		if (minSeq > 0) {
+			mapper.updateMinutes(param);
+			return minSeq;
+		}
+		mapper.insertMinutes(param);
+		Object gen = param.get("minSeq");   // useGeneratedKeys 가 채워 준다
+		return (gen == null) ? 0L : Long.parseLong(String.valueOf(gen));
+	}
+
+	@Override
+	public int deleteMinutes(Map<String, Object> param) throws Exception {
+		return mapper.deleteMinutes(param);
+	}
+
 	// ===================== 지표정의서 =====================
 
 	@Override

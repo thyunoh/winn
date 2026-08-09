@@ -42,6 +42,96 @@
 		 LIMIT 1
 	</select>
 
+	<!-- ===================== 서식 2호: 연간 활동계획서 =====================
+	     연 1부(병원+년도 UNIQUE). 항목행은 저장 때 통째 교체 — 부분 수정 API 를 만들지 않는다(단순함이 우선). -->
+	<select id="selectPlan" resultType="java.util.HashMap">
+		SELECT PLAN_SEQ AS planseq, IN_YEAR AS inyear,
+		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_PLAN
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertPlan" parameterType="map" useGeneratedKeys="true" keyProperty="planSeq">
+		INSERT INTO TBL_QPS_PLAN (HOSP_CD, IN_YEAR, SUBMIT_DT, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{inYear}, REPLACE(#{submitDt},'-',''), 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE SUBMIT_DT=VALUES(SUBMIT_DT), USE_YN='Y', UPD_USER=#{regUser},
+		  PLAN_SEQ = LAST_INSERT_ID(PLAN_SEQ)   <!-- ★upsert 로 갱신돼도 planSeq 를 돌려받는 관용구 -->
+	</insert>
+
+	<select id="selectPlanItems" resultType="java.util.HashMap">
+		SELECT SECT_CD AS sect, SORT AS sort, GRP AS grp,
+		       C1 AS c1, C2 AS c2, C3 AS c3, C4 AS c4,
+		       S1 AS s1, S2 AS s2, S3 AS s3, S4 AS s4, S5 AS s5, S6 AS s6,
+		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04, M05 AS m05, M06 AS m06,
+		       M07 AS m07, M08 AS m08, M09 AS m09, M10 AS m10, M11 AS m11, M12 AS m12,
+		       AMT AS amt
+		  FROM TBL_QPS_PLAN_ITEM
+		 WHERE PLAN_SEQ = #{planSeq}
+		 ORDER BY SECT_CD, SORT, IT_SEQ
+	</select>
+
+	<delete id="deletePlanItems">
+		DELETE FROM TBL_QPS_PLAN_ITEM WHERE PLAN_SEQ = #{planSeq}
+	</delete>
+
+	<insert id="insertPlanItems" parameterType="map">
+		INSERT INTO TBL_QPS_PLAN_ITEM
+		 (PLAN_SEQ, SECT_CD, SORT, GRP, C1, C2, C3, C4,
+		  S1,S2,S3,S4,S5,S6, M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12, AMT)
+		VALUES
+		<foreach item="it" collection="items" separator=",">
+		 (#{planSeq}, #{it.sect}, #{it.sort}, #{it.grp}, #{it.c1}, #{it.c2}, #{it.c3}, #{it.c4},
+		  #{it.s1},#{it.s2},#{it.s3},#{it.s4},#{it.s5},#{it.s6},
+		  #{it.m01},#{it.m02},#{it.m03},#{it.m04},#{it.m05},#{it.m06},
+		  #{it.m07},#{it.m08},#{it.m09},#{it.m10},#{it.m11},#{it.m12}, #{it.amt})
+		</foreach>
+	</insert>
+
+	<!-- ===================== 서식 1호: 위원회 회의록 =====================
+	     서술형 서식 203종의 첫 파일럿(서식빌더 결정 근거용). 전자결재 없음 — 인쇄 결재란(빈칸)만. -->
+	<select id="selectMinutesList" resultType="java.util.HashMap">
+		SELECT MIN_SEQ AS minseq,
+		       DATE_FORMAT(STR_TO_DATE(MEET_DT,'%Y%m%d'),'%Y-%m-%d') AS meetdt,
+		       TITLE AS title, PLACE AS place,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_MINUTES
+		 WHERE HOSP_CD = #{hospCd}
+		   AND USE_YN  = 'Y'
+		   AND MEET_DT LIKE CONCAT(#{inYear}, '%')
+		 ORDER BY MEET_DT DESC, MIN_SEQ DESC
+	</select>
+
+	<select id="selectMinutes" resultType="java.util.HashMap">
+		SELECT MIN_SEQ AS minseq,
+		       DATE_FORMAT(STR_TO_DATE(MEET_DT,'%Y%m%d'),'%Y-%m-%d') AS meetdt,
+		       TITLE AS title, PLACE AS place, ATTENDEES AS attendees,
+		       AGENDA AS agenda, CONTENT AS content, DECISION AS decision, NEXT_TXT AS nexttxt
+		  FROM TBL_QPS_MINUTES
+		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertMinutes" parameterType="map" useGeneratedKeys="true" keyProperty="minSeq">
+		INSERT INTO TBL_QPS_MINUTES
+		 (HOSP_CD, MEET_DT, TITLE, PLACE, ATTENDEES, AGENDA, CONTENT, DECISION, NEXT_TXT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, REPLACE(#{meetDt},'-',''), #{title}, #{place}, #{attendees},
+		  #{agenda}, #{content}, #{decision}, #{nextTxt}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateMinutes" parameterType="map">
+		UPDATE TBL_QPS_MINUTES
+		   SET MEET_DT = REPLACE(#{meetDt},'-',''), TITLE = #{title}, PLACE = #{place},
+		       ATTENDEES = #{attendees}, AGENDA = #{agenda}, CONTENT = #{content},
+		       DECISION = #{decision}, NEXT_TXT = #{nextTxt}, UPD_USER = #{regUser}
+		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteMinutes" parameterType="map">
+		UPDATE TBL_QPS_MINUTES SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
 	<!-- ===================== 보고서 현황판 (qpsRpt) =====================
 	     선택 기간의 18종 전부 × 보고서(서술·결재) 상태. 보고서 행이 없으면 '작성 전'.
 	     ★지표당 한 줄 — 병원 정의서 행이 있으면 그것(selectIndiList 와 같은 중복 제거). -->

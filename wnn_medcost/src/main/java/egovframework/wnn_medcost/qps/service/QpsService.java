@@ -35,6 +35,17 @@ public interface QpsService {
 	Map<String, Object> calcCensusFromIpwon(String hospCd, String inYear) throws Exception;
 	int saveCensus(QpsCensusDTO dto) throws Exception;
 
+	// 서식 2호: 연간 활동계획서
+	Map<String, Object> selectPlanWithItems(String hospCd, String inYear) throws Exception;
+	long savePlan(String hospCd, String inYear, String submitDt,
+	              List<Map<String, Object>> items, String userId) throws Exception;
+
+	// 서식 1호: 위원회 회의록
+	List<Map<String, Object>> selectMinutesList(String hospCd, String inYear) throws Exception;
+	Map<String, Object> selectMinutes(String hospCd, long minSeq) throws Exception;
+	long saveMinutes(Map<String, Object> param) throws Exception;
+	int deleteMinutes(Map<String, Object> param) throws Exception;
+
 	/** 보고서 현황판 — 기간별 18종 전부의 서술·결재 상태. */
 	List<Map<String, Object>> selectRptStatus(String hospCd, String prdGb, String prdKey) throws Exception;
 

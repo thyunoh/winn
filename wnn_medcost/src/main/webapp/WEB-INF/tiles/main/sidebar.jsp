@@ -181,8 +181,12 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsRpt.do">지표분석보고서</a>
                                 </li>
+                                <%-- 서식 — 서술형 203종을 개별 방식으로 하나씩(1호 실측: 종당 반나절) --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsIndex.do" title="준비 중">서식 <span style="color:#a8b4bb;">(준비 중)</span></a>
+                                    <a class="nav-item nav-link" href="/main/qpsMinutes.do">회의록 <span style="color:#a8b4bb;">(서식 1호)</span></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsPlan.do">연간 활동계획서 <span style="color:#a8b4bb;">(서식 2호)</span></a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a>

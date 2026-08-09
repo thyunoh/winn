@@ -186,6 +186,164 @@ public class QpsController {
 		return res;
 	}
 
+	/** 서식 2호: 연간 활동계획서(질향상·환자안전) — 인증 심사 필수 문서. 연 1부. */
+	@RequestMapping(value = "main/qpsPlan.do")
+	public String qpsPlan(HttpServletRequest request, ModelMap model) {
+		Map<String, String> ck = ClientInfo.getCookie(request);
+		try {
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			model.addAttribute("hospCd", hospId);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			model.addAttribute("wnnYn", wnn);
+			try {
+				Map<String, Object> h = svc.selectHospInfo(hospId);
+				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
+			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
+			return ".main/qpsPlan";
+		} catch (Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	@RequestMapping(value = "/qps/planGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> planGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			res.putAll(svc.selectPlanWithItems(hospCd, inYear));
+			res.put("line", svc.selectApprLine(hospCd));
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 저장 — 항목행은 items(JSON 배열 문자열)로 받아 통째 교체한다. */
+	@RequestMapping(value = "/qps/planSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> planSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+
+			java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+			String json = str(p.get("items"), "");
+			if (!json.isEmpty()) {
+				com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+				items = om.readValue(json,
+					new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});
+			}
+			long seq = svc.savePlan(hospCd, inYear, str(p.get("submitDt"), ""), items, userId(request));
+			res.put("planSeq", seq);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 서식 1호: 위원회 회의록 — 서술형 서식 203종의 첫 파일럿(서식빌더 결정 근거용). */
+	@RequestMapping(value = "main/qpsMinutes.do")
+	public String qpsMinutes(HttpServletRequest request, ModelMap model) {
+		Map<String, String> ck = ClientInfo.getCookie(request);
+		try {
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			model.addAttribute("hospCd", hospId);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			model.addAttribute("wnnYn", wnn);
+			try {
+				Map<String, Object> h = svc.selectHospInfo(hospId);
+				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
+			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
+			return ".main/qpsMinutes";
+		} catch (Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	@RequestMapping(value = "/qps/minutesList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> minutesList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			res.put("list", svc.selectMinutesList(hospCd, inYear));
+			res.put("line", svc.selectApprLine(hospCd));   // 인쇄 결재란(빈칸)용
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/minutesGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> minutesGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			long seq = longOf(p.get("minSeq")) == null ? 0L : longOf(p.get("minSeq"));
+			if (seq <= 0) return fail(res, "문서 번호가 필요합니다.");
+			res.put("doc", svc.selectMinutes(hospCd, seq));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/minutesSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> minutesSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("minSeq", str(p.get("minSeq"), ""));
+			m.put("meetDt", str(p.get("meetDt"), ""));
+			m.put("title",  str(p.get("title"), ""));
+			m.put("place",  str(p.get("place"), ""));
+			m.put("attendees", str(p.get("attendees"), ""));
+			m.put("agenda",  str(p.get("agenda"), ""));
+			m.put("content", str(p.get("content"), ""));
+			m.put("decision", str(p.get("decision"), ""));
+			m.put("nextTxt", str(p.get("nextTxt"), ""));
+			m.put("regUser", userId(request));
+			if (String.valueOf(m.get("meetDt")).isEmpty()) return fail(res, "회의일을 입력해 주세요.");
+			if (String.valueOf(m.get("title")).isEmpty())  return fail(res, "회의명을 입력해 주세요.");
+			res.put("minSeq", svc.saveMinutes(m));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/minutesDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> minutesDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("minSeq", longOf(p.get("minSeq")));
+			m.put("regUser", userId(request));
+			svc.deleteMinutes(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/** 사용 안내(도움말) — 정적 화면. 내용 수정은 qpsHelp.jsp 교체로 끝난다(재기동 불필요). */
 	@RequestMapping(value = "main/qpsHelp.do")
 	public String qpsHelp(HttpServletRequest request, ModelMap model) {
