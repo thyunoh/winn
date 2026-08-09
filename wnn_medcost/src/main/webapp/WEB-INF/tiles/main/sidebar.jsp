@@ -179,7 +179,7 @@
                                     <a class="nav-item nav-link" href="/main/qpsDef.do">지표정의서</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsIndex.do" title="준비 중">지표분석보고서 <span style="color:#a8b4bb;">(준비 중)</span></a>
+                                    <a class="nav-item nav-link" href="/main/qpsRpt.do">지표분석보고서</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsIndex.do" title="준비 중">서식 <span style="color:#a8b4bb;">(준비 중)</span></a>
