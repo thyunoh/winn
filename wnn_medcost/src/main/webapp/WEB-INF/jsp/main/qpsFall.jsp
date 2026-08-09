@@ -443,6 +443,7 @@
       <button type="button" class="qf-btn ghost" id="qfBtnCancel"  onclick="qfApprAct('CANCEL');">상신 회수</button>
       <button type="button" class="qf-btn"       id="qfBtnApprove" onclick="qfApprAct('APPROVE');">승인</button>
       <button type="button" class="qf-btn warn"  id="qfBtnReject"  onclick="qfApprAct('REJECT');">반려</button>
+      <button type="button" class="qf-btn warn"  id="qfBtnReopen"  onclick="qfApprAct('REOPEN');">확정 취소</button>
       <button type="button" class="qf-btn ghost" id="qfBtnLine"    onclick="qfApprLineEdit();">결재선 설정</button>
       <button type="button" class="qf-btn ghost" id="qfBtnPrint"   onclick="qfPrint();">🖨 인쇄(A4)</button>
     </div>
@@ -1250,6 +1251,27 @@
   //   단계 수는 서버(TBL_QPS_APPR_LINE)가 정한다 — 화면은 받은 만큼 칸을 그린다.
   var apprState = null;
   var ST_NM = { DRAFT:'작성중', SUBMIT:'결재중', REJECT:'반려', CONFIRM:'최종승인' };
+  // ★이미 DB 에 %uB9C8%uC2A4%uD130 형태로 저장된 옛 이력이 있다(서버는 고쳤지만 과거 행은 그대로).
+  //   화면에서 한 번 더 풀어 준다 — escape()(%uXXXX)와 표준(%XX) 모두.
+  function decNm(s){
+    if (s == null) return '';
+    s = String(s);
+    if (s.indexOf('%') < 0) return s;
+    try { if (/%u[0-9a-f]{4}/i.test(s)) return unescape(s); } catch(e){}
+    try { return decodeURIComponent(s); } catch(e){ return s; }
+  }
+  // ★서명칸에는 **현재 회차의 승인만** 찍는다 — 이력에는 지난 회차(반려·확정취소 전)의 승인도
+  //   다 남아 있어서, 그대로 그리면 재상신 직후인데 서명 4개가 이미 차 있는 것처럼 보인다
+  //   ("1단계 차례입니다" 와 어긋남 — 2026-08-09 실사용 지적).
+  //   이력은 시간순이므로, 승인이 아닌 동작(상신·반려·회수·확정취소)이 나올 때마다 새 회차로 비운다.
+  function signMapOf(hist){
+    var m = {};
+    (hist || []).forEach(function(h){
+      if (h.actgb === 'APPROVE') m[Number(h.stepno)] = h;
+      else m = {};
+    });
+    return m;
+  }
 
   function apprLoad(){
     var p = prdOf();
@@ -1268,21 +1290,29 @@
     badge.textContent = ST_NM[st] || st;
 
     var guide = document.getElementById('qfApprGuide');
-    guide.textContent =
+    guide.innerHTML =
         st === 'DRAFT'   ? '작성이 끝나면 [상신]을 누르세요.'
-      : st === 'SUBMIT'  ? ((cur + 1) + '단계 ' + (stepNm(line, cur + 1) || '') + ' 결재 차례입니다.')
+      : st === 'SUBMIT'  ? ((cur + 1) + '단계 ' + esc(stepNm(line, cur + 1) || '') + ' 결재 차례입니다.')
       : st === 'REJECT'  ? '반려되었습니다. 수정 후 다시 상신하세요.'
-      :                    '모든 단계가 승인되었습니다.';
+      // ★최종승인 시점에 수치를 동결한다 — 이후 원천이 바뀌어도 제출한 값은 안 변한다.
+      :                    ('모든 단계가 승인되었습니다.' + (s.frozen === 'Y'
+                              ? ' <b style="color:#1f7a52;">이 기간 수치는 확정(동결)되었습니다</b> — 인쇄물은 확정값으로 나갑니다.'
+                              : ''));
 
-    // 결재선 칸 — 단계별 서명(이름·일시). 승인 이력에서 채운다.
-    var signBy = {};
-    hist.forEach(function(h){ if (h.actgb === 'APPROVE') signBy[Number(h.stepno)] = h; });
+    // 결재선 칸 — 단계별 서명(이름·일시). **현재 회차**의 승인만 채운다.
+    var signBy = signMapOf(hist);
+    // 머리글에 단계 번호 + 진행 표시(✔완료 · ▶차례) — "어디까지 했는지"가 칸을 안 읽어도 보이게
     document.getElementById('qfApprHead').innerHTML =
-      line.map(function(r){ return '<th>' + esc(r.stepnm) + '</th>'; }).join('') || '<th>결재선 없음</th>';
+      line.map(function(r){
+        var n = Number(r.stepno);
+        var mark = signBy[n] ? ' <span style="color:#1f7a52;">✔</span>'
+                 : (st === 'SUBMIT' && n === cur + 1) ? ' <span style="color:#b58a3a;">▶</span>' : '';
+        return '<th>' + n + '. ' + esc(r.stepnm) + mark + '</th>';
+      }).join('') || '<th>결재선 없음</th>';
     document.getElementById('qfApprBody').innerHTML =
       line.map(function(r){
         var n = Number(r.stepno), h = signBy[n];
-        if (h) return '<td class="sign"><div class="nm">' + esc(h.actnm || h.actuser || '') + '</div>' +
+        if (h) return '<td class="sign"><div class="nm">' + esc(decNm(h.actnm) || h.actuser || '') + '</div>' +
                       '<div class="dt">' + esc(h.actdttm || '') + '</div></td>';
         var waiting = (st === 'SUBMIT' && n === cur + 1);
         return '<td class="sign' + (waiting ? ' wait' : '') + '">' +
@@ -1294,6 +1324,7 @@
     show('#qfBtnCancel',  st === 'SUBMIT' && cur === 0);
     show('#qfBtnApprove', st === 'SUBMIT');
     show('#qfBtnReject',  st === 'SUBMIT');
+    show('#qfBtnReopen',  st === 'CONFIRM');        // 최종승인 뒤 되돌리는 유일한 길 — 사유 필수, 이력에 남는다
     show('#qfBtnLine',    WNN_YN === 'Y');          // 결재선 설정은 관리자(위너넷)만
 
     // 결재 중·최종승인이면 서술 저장을 막는다(서버에도 같은 가드가 있다)
@@ -1308,11 +1339,12 @@
     document.getElementById('qfApprHist').innerHTML = hist.length
       ? hist.map(function(h){
           var act = h.actgb === 'SUBMIT' ? '상신' : h.actgb === 'APPROVE' ? '승인'
-                  : h.actgb === 'REJECT' ? '반려' : h.actgb === 'CANCEL' ? '회수' : esc(h.actgb);
+                  : h.actgb === 'REJECT' ? '반려' : h.actgb === 'CANCEL' ? '회수'
+                  : h.actgb === 'REOPEN' ? '확정취소' : esc(h.actgb);
           return '<tr><td>' + esc(h.actdttm || '') + '</td>' +
                  '<td>' + (h.stepno > 0 ? (h.stepno + '. ' + esc(h.stepnm || '')) : '-') + '</td>' +
                  '<td>' + act + '</td>' +
-                 '<td>' + esc(h.actnm || h.actuser || '') + '</td>' +
+                 '<td>' + esc(decNm(h.actnm) || h.actuser || '') + '</td>' +
                  '<td style="text-align:left;">' + esc(h.note || '') + '</td></tr>';
         }).join('')
       : '<tr><td colspan="5" style="color:#8a99a3;">결재 이력이 없습니다.</td></tr>';
@@ -1328,6 +1360,7 @@
     var msg = act === 'SUBMIT'  ? '이 보고서를 결재 상신할까요? 상신 후에는 서술을 고칠 수 없습니다.'
             : act === 'CANCEL'  ? '상신을 회수할까요? 다시 수정할 수 있게 됩니다.'
             : act === 'APPROVE' ? ((cur + 1) + '단계 ' + (stepNm(s.line || [], cur + 1) || '') + ' 승인할까요?')
+            : act === 'REOPEN'  ? '최종승인을 취소할까요? 확정(동결)된 수치가 풀리고 처음부터 다시 결재해야 합니다.'
             :                     '반려할까요? 처음부터 다시 결재해야 합니다.';
     var doIt = function(note){
       post('/qps/apprAct.do', {
@@ -1335,15 +1368,17 @@
         actGb: act, stepNo: (act === 'APPROVE' ? (cur + 1) : ''), note: note || ''
       }).then(function(){
         _toast(act === 'SUBMIT' ? '상신되었습니다.' : act === 'APPROVE' ? '승인되었습니다.'
-             : act === 'REJECT' ? '반려되었습니다.' : '회수되었습니다.', 'ok');
+             : act === 'REJECT' ? '반려되었습니다.'
+             : act === 'REOPEN' ? '최종승인이 취소되었습니다. 수정 후 다시 상신하세요.' : '회수되었습니다.', 'ok');
         return apprLoad();
       }).then(qfReportLoad).catch(err);
     };
-    if (act === 'REJECT') {
-      // 반려는 사유가 남아야 다음 사람이 무엇을 고칠지 안다
-      var note = window.prompt('반려 사유를 입력해 주세요.', '');
+    if (act === 'REJECT' || act === 'REOPEN') {
+      // 반려·확정취소는 사유가 남아야 한다 — 확정본을 되돌리는 일은 특히 근거가 필요하다
+      var q = act === 'REJECT' ? '반려 사유를 입력해 주세요.' : '확정 취소 사유를 입력해 주세요.';
+      var note = window.prompt(q, '');
       if (note === null) return;
-      if (!note.trim()) { _alertBox('반려 사유를 입력해 주세요.', {icon:'⚠️'}); return; }
+      if (!note.trim()) { _alertBox(q, {icon:'⚠️'}); return; }
       doIt(note.trim());
       return;
     }
@@ -1424,10 +1459,23 @@
     if (!lastCalc || !curDef || !curDef.indinm) { _alertBox('지표를 먼저 불러온 뒤 인쇄해 주세요.', {icon:'⚠️'}); return; }
     var d = curDef, lab = labelsOf(d), ms = lastCalc.months || [];
 
-    // 결재란 — 결재선 단계만큼 칸을 만들고 승인 이력에서 이름·일시를 채운다
+    // ★확정(동결)된 기간이면 실시간 산출값이 아니라 **동결된 값**으로 찍는다.
+    //   결재까지 끝난 보고서인데 원천이 나중에 고쳐지면 제출한 종이와 화면이 어긋난다 — 그걸 막는 장치.
+    var frozen = (apprState && apprState.frozen === 'Y') ? (apprState.stat || []) : [];
+    var frozenBy = {};
+    frozen.forEach(function(s){ frozenBy[s.prdgb + '|' + s.prdkey] = s; });
+    var useFrozen = frozen.length > 0;
+    if (useFrozen) {
+      // 월별 표: 동결된 달만 갈아 끼운다(그 기간 밖의 달은 참고용이라 실시간값 그대로)
+      ms = ms.map(function(m){
+        var f = frozenBy['M|' + year() + m.mm];
+        return f ? { mm:m.mm, numer:f.numer, denom:f.denom, rate:f.rate } : m;
+      });
+    }
+
+    // 결재란 — 결재선 단계만큼 칸을 만들고 **현재 회차** 승인에서 이름·일시를 채운다(화면과 같은 규칙)
     var s = apprState || {}, line = s.line || [], hist = s.hist || [];
-    var signBy = {};
-    hist.forEach(function(h){ if (h.actgb === 'APPROVE') signBy[Number(h.stepno)] = h; });
+    var signBy = signMapOf(hist);
     var apprHtml = '';
     if (line.length) {
       apprHtml = '<table class="qp-appr"><thead><tr>' +
@@ -1435,7 +1483,7 @@
         '</tr></thead><tbody><tr>' +
         line.map(function(r){
           var h = signBy[Number(r.stepno)];
-          return '<td>' + (h ? ('<div class="nm">' + esc(h.actnm || h.actuser || '') + '</div>' +
+          return '<td>' + (h ? ('<div class="nm">' + esc(decNm(h.actnm) || h.actuser || '') + '</div>' +
                                 '<div class="dt">' + esc((h.actdttm || '').substring(0, 10)) + '</div>') : '') + '</td>';
         }).join('') + '</tr></tbody></table>';
     }
@@ -1451,10 +1499,16 @@
 
     // 분기·반기·연간
     var rows = [];
-    (lastCalc.quarters || []).forEach(function(q, i){ rows.push([(i + 1) + '/4 분기', q]); });
-    if ((lastCalc.halves || [])[0]) rows.push(['상반기', lastCalc.halves[0]]);
-    if ((lastCalc.halves || [])[1]) rows.push(['하반기', lastCalc.halves[1]]);
-    if (lastCalc.year) rows.push(['연간', lastCalc.year]);
+    // 동결값이 있는 줄만 갈아 끼운다(없으면 실시간 산출값 그대로)
+    function pick(gb, key, o){
+      var f = frozenBy[gb + '|' + key];
+      return f ? { numer:f.numer, denom:f.denom, rate:f.rate } : o;
+    }
+    (lastCalc.quarters || []).forEach(function(q, i){
+      rows.push([(i + 1) + '/4 분기', pick('Q', year() + 'Q' + (i + 1), q)]); });
+    if ((lastCalc.halves || [])[0]) rows.push(['상반기', pick('H', year() + 'H1', lastCalc.halves[0])]);
+    if ((lastCalc.halves || [])[1]) rows.push(['하반기', pick('H', year() + 'H2', lastCalc.halves[1])]);
+    if (lastCalc.year) rows.push(['연간', pick('Y', year(), lastCalc.year)]);
     var qHtml = '<table><thead><tr><th>구분</th><th>' + lab.numer + '</th><th>' + lab.denom + '</th><th>' + lab.rate + '</th></tr></thead><tbody>' +
       rows.map(function(r){
         var o = r[1], mz = (d.numersrc === 'MONITOR' && !o.denom);
@@ -1505,7 +1559,8 @@
         (acts.length ? ('<div class="qp-sec">Ⅶ. 개선활동</div><table><tbody>' +
             acts.map(function(a, i){ return '<tr><th style="width:70px;">' + (i + 1) + '</th><td class="l">' + esc(a) + '</td></tr>'; }).join('') +
           '</tbody></table>') : '') +
-        '<div class="qp-foot">작성일 : ' + today() + '</div>' +
+        '<div class="qp-foot">작성일 : ' + today() +
+          (useFrozen ? ' · 이 수치는 최종승인 시점에 확정(동결)된 값입니다' : '') + '</div>' +
       '</div>';
 
     // ★제출물이라 어느 병원으로 나가는지 한 번 확인시킨다 —

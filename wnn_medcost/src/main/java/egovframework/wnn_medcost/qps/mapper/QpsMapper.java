@@ -104,6 +104,11 @@ public interface QpsMapper {
 	                                 @Param("prdKey") String prdKey);
 	int saveReport(Map<String, Object> param);
 
+	// 확정 스냅샷 — 최종승인 시 그 기간 수치를 동결한다(원천이 바뀌어도 제출값이 안 변하게)
+	List<Map<String, Object>> selectStat(Map<String, Object> param);
+	int saveStat(Map<String, Object> param);
+	int deleteStat(Map<String, Object> param);
+
 	// 결재선 (병원 행이 있으면 그것, 없으면 공통 '*')
 	List<Map<String, Object>> selectApprLine(@Param("hospCd") String hospCd);
 	int deleteApprLine(@Param("hospCd") String hospCd);

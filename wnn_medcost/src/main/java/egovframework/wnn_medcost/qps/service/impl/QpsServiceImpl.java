@@ -181,6 +181,20 @@ public class QpsServiceImpl implements QpsService {
 		out.put("curStep", curStep);
 		out.put("lastStep", (line == null) ? 0 : line.size());
 		out.put("hist", mapper.selectApprHist(hospCd, indiCd, prdGb, prdKey));
+
+		// 확정 스냅샷 — 최종승인된 기간이면 동결된 수치를 함께 준다(인쇄물이 이 값을 쓴다)
+		try {
+			Map<String, Object> sp = new HashMap<>();
+			sp.put("hospCd", hospCd); sp.put("indiCd", indiCd); sp.put("prdKey", prdKey);
+			List<String> mms = monthsOfPeriod(prdGb, prdKey);
+			if (mms.isEmpty()) mms.add("-");
+			sp.put("months", mms);
+			List<Map<String, Object>> stat = mapper.selectStat(sp);
+			out.put("stat", stat);
+			out.put("frozen", (stat != null && !stat.isEmpty()) ? "Y" : "N");
+		} catch (Exception ignore) {
+			out.put("frozen", "N");
+		}
 		return out;
 	}
 
@@ -236,6 +250,14 @@ public class QpsServiceImpl implements QpsService {
 			actStepNm = stepNmOf(line, actStep);
 			newStatus = "REJECT"; newStep = 0;                        // 반려하면 처음부터 다시
 
+		} else if ("REOPEN".equals(actGb)) {
+			// ★확정 취소 — 최종승인 뒤에도 되돌릴 길이 있어야 한다("이사장까지 하면 취소가 안 되나요", 2026-08-09).
+			//   수정하려면 처음(작성중)으로 돌아가 다시 결재를 밟는다. 동결도 함께 푼다.
+			//   누가 언제 왜 취소했는지는 이력에 남는다 — 사유 필수.
+			if (!"CONFIRM".equals(status)) throw new Exception("최종 승인된 문서가 아닙니다.");
+			if (str(param.get("note")).isEmpty()) throw new Exception("확정 취소 사유를 입력해 주세요.");
+			actStep = 0; newStatus = "DRAFT"; newStep = 0;
+
 		} else {
 			throw new Exception("알 수 없는 결재 동작입니다.");
 		}
@@ -257,11 +279,103 @@ public class QpsServiceImpl implements QpsService {
 		u.put("updUser", param.get("actUser"));
 		mapper.updateReportAppr(u);
 
+		// ★수치 동결 — 최종승인되면 그 기간 값을 붙잡아 두고, 결재가 풀리면 놓아 준다.
+		//   (결재 이력·상태 갱신이 끝난 뒤에 한다 — 동결이 실패해도 결재는 남아야 한다)
+		if ("CONFIRM".equals(newStatus)) {
+			freezeStat(hospCd, indiCd, prdGb, prdKey, str(param.get("actUser")));
+		} else if ("REJECT".equals(newStatus)
+				|| ("DRAFT".equals(newStatus) && ("CANCEL".equals(actGb) || "REOPEN".equals(actGb)))) {
+			unfreezeStat(hospCd, indiCd, prdGb, prdKey);
+		}
+
 		Map<String, Object> res = new LinkedHashMap<>();
 		res.put("status", newStatus);
 		res.put("curStep", newStep);
 		res.put("lastStep", lastStep);
 		return res;
+	}
+
+	/**
+	 * 기간(prdGb+prdKey)에 속한 월 목록 — '2026Q1' → [202601,202602,202603].
+	 * 스냅샷의 월별 행과 조회 조건에 함께 쓴다.
+	 */
+	private List<String> monthsOfPeriod(String prdGb, String prdKey) {
+		List<String> out = new ArrayList<>();
+		if (prdKey == null || prdKey.length() < 4) return out;
+		String yy = prdKey.substring(0, 4);
+		int from = 1, to = 12;
+		if ("Q".equals(prdGb) && prdKey.length() >= 6) {
+			int q = Integer.parseInt(prdKey.substring(5, 6));
+			from = (q - 1) * 3 + 1; to = from + 2;
+		} else if ("H".equals(prdGb) && prdKey.length() >= 6) {
+			boolean h1 = prdKey.charAt(5) == '1';
+			from = h1 ? 1 : 7; to = h1 ? 6 : 12;
+		}
+		for (int m = from; m <= to; m++) out.add(yy + (m < 10 ? ("0" + m) : String.valueOf(m)));
+		return out;
+	}
+
+	/** 그 기간의 rollup 한 덩어리를 골라온다(Q1~Q4 / H1·H2 / 연간). */
+	private Map<String, Object> rollupOf(Map<String, Object> calc, String prdGb, String prdKey) {
+		String key = (prdKey.length() > 4) ? prdKey.substring(4) : prdKey;   // 2026Q1 → Q1
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> qs = (List<Map<String, Object>>) calc.get("quarters");
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> hs = (List<Map<String, Object>>) calc.get("halves");
+		if ("Q".equals(prdGb) && qs != null) {
+			for (Map<String, Object> q : qs) if (key.equals(str(q.get("key")))) return q;
+		} else if ("H".equals(prdGb) && hs != null) {
+			for (Map<String, Object> h : hs) if (key.equals(str(h.get("key")))) return h;
+		}
+		@SuppressWarnings("unchecked")
+		Map<String, Object> y = (Map<String, Object>) calc.get("year");
+		return y;
+	}
+
+	/**
+	 * 최종승인 시 수치 동결 — 그 기간의 합계 1행 + 그 기간에 속한 월행을 저장한다.
+	 * ★실패해도 결재 자체는 되돌리지 않는다(동결은 부가 기능이고, 결재가 더 중요하다).
+	 */
+	private void freezeStat(String hospCd, String indiCd, String prdGb, String prdKey, String user) {
+		try {
+			String yy = prdKey.substring(0, 4);
+			Map<String, Object> calc = calcIndicator(hospCd, indiCd, yy);
+			List<String> mms = monthsOfPeriod(prdGb, prdKey);
+
+			Map<String, Object> roll = rollupOf(calc, prdGb, prdKey);
+			if (roll != null) saveOneStat(hospCd, indiCd, prdGb, prdKey,
+					roll.get("numer"), roll.get("denom"), roll.get("rate"), user);
+
+			@SuppressWarnings("unchecked")
+			List<Map<String, Object>> months = (List<Map<String, Object>>) calc.get("months");
+			if (months != null) for (Map<String, Object> m : months) {
+				String key = yy + str(m.get("mm"));
+				if (!mms.contains(key)) continue;
+				saveOneStat(hospCd, indiCd, "M", key, m.get("numer"), m.get("denom"), m.get("rate"), user);
+			}
+		} catch (Exception ignore) { }
+	}
+
+	private void saveOneStat(String hospCd, String indiCd, String prdGb, String prdKey,
+	                         Object numer, Object denom, Object rate, String user) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("indiCd", indiCd);
+		p.put("prdGb", prdGb);   p.put("prdKey", prdKey);
+		p.put("numer", numer);   p.put("denom", denom);   p.put("rate", rate);
+		p.put("confirmUser", user);
+		mapper.saveStat(p);
+	}
+
+	/** 결재가 풀리면(반려·회수) 동결도 푼다 — 확정 안 된 값이 확정본처럼 남으면 안 된다. */
+	private void unfreezeStat(String hospCd, String indiCd, String prdGb, String prdKey) {
+		try {
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd); p.put("indiCd", indiCd); p.put("prdKey", prdKey);
+			List<String> mms = monthsOfPeriod(prdGb, prdKey);
+			if (mms.isEmpty()) mms.add("-");     // IN () 는 문법오류라 더미를 넣는다
+			p.put("months", mms);
+			mapper.deleteStat(p);
+		} catch (Exception ignore) { }
 	}
 
 	private String stepNmOf(List<Map<String, Object>> line, int stepNo) {

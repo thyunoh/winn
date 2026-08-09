@@ -721,10 +721,45 @@ public class QpsController {
 	private String userNm(HttpServletRequest request) {
 		try {
 			Map<String, String> ck = ClientInfo.getCookie(request);
-			String n = ck.get("s_usernm");
+			String n = cookieDecode(ck.get("s_usernm"));
 			if (n != null && !n.trim().isEmpty()) return n.trim();
 		} catch (Exception ignore) { }
 		return userId(request);
+	}
+
+	/**
+	 * 쿠키 한글 복원 — 로그인 화면이 `escape()`(비표준, %uB9C8 형태)로 저장한 값이라
+	 * URLDecoder 로는 안 풀린다('마스터'가 결재란에 %uB9C8%uC2A4%uD130 으로 찍혔다, 2026-08-09).
+	 * %uXXXX 와 표준 %XX 를 모두 처리한다.
+	 */
+	private static String cookieDecode(String s) {
+		if (s == null || s.indexOf('%') < 0) return s;
+		StringBuilder sb = new StringBuilder(s.length());
+		for (int i = 0; i < s.length(); ) {
+			char c = s.charAt(i);
+			try {
+				if (c == '%' && i + 5 < s.length() && (s.charAt(i + 1) == 'u' || s.charAt(i + 1) == 'U')) {
+					sb.append((char) Integer.parseInt(s.substring(i + 2, i + 6), 16));
+					i += 6; continue;
+				}
+				if (c == '%' && i + 2 < s.length()) {
+					// 연속된 %XX 를 모아 UTF-8 로 푼다(한 바이트씩 char 로 만들면 한글이 깨진다)
+					int j = i;
+					java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+					while (j + 2 < s.length() && s.charAt(j) == '%' && s.charAt(j + 1) != 'u' && s.charAt(j + 1) != 'U') {
+						bos.write(Integer.parseInt(s.substring(j + 1, j + 3), 16));
+						j += 3;
+					}
+					if (bos.size() > 0) {
+						sb.append(new String(bos.toByteArray(), java.nio.charset.StandardCharsets.UTF_8));
+						i = j; continue;
+					}
+				}
+			} catch (Exception badSeq) { /* 형식이 아니면 글자 그대로 둔다 */ }
+			sb.append(c);
+			i++;
+		}
+		return sb.toString();
 	}
 
 	/** 병원코드 — 위너넷이면 화면에서 고른 병원, 아니면 로그인 병원으로 강제(거래처 격리). */

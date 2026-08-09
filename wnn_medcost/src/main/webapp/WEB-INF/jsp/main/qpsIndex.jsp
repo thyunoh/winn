@@ -95,12 +95,14 @@
 
   var SRC_NM = { INCIDENT:'사고보고', PATVAL:'평가표 자동', MONITOR:'관찰기록', MANUAL:'월별 수기' };
 
-  // 입력 상태 — 원천마다 '자료가 있다'의 뜻이 다르다
+  // 입력 상태 — 원천마다 '자료가 있다'의 뜻이 다르다.
+  //   ★수기형은 한 해에 분자·분모 두 행뿐이라 건수를 찍으면 '입력됨 2' 처럼 뜻 없는 숫자가 된다
+  //     → 수기형은 숫자 없이 '입력됨' 만(2026-08-09).
   function stateOf(r){
     if (r.numersrc === 'PATVAL')   return { cls:'auto', txt:'자동집계' };
-    var n = (r.numersrc === 'MONITOR') ? Number(r.moncnt||0)
-          : (r.numersrc === 'MANUAL')  ? Number(r.mancnt||0)
-          :                              Number(r.incidcnt||0);
+    if (r.numersrc === 'MANUAL')   return Number(r.mancnt||0) > 0
+                                        ? { cls:'on', txt:'입력됨' } : { cls:'off', txt:'입력 전' };
+    var n = (r.numersrc === 'MONITOR') ? Number(r.moncnt||0) : Number(r.incidcnt||0);
     return n > 0 ? { cls:'on', txt:'입력됨 ' + n } : { cls:'off', txt:'입력 전' };
   }
 
@@ -122,12 +124,18 @@
         }
         var st = stateOf(r);
         var mul = Number(r.multiplier || 1000).toLocaleString();
+        // 목표값이 있으면 산식 옆에 — 담당자가 현황에서 바로 "우리 목표가 얼마였지"를 본다
+        var tgt = (r.targetval == null || r.targetval === '') ? ''
+                : ' · 목표 ' + Number(r.targetval) + esc(r.unit || '');
         html += '<div class="qi-card" onclick="qiGo(\'' + esc(r.indicd) + '\');">' +
                 '<div class="qi-nm">' + esc(r.indinm) + '</div>' +
-                '<div class="qi-formula">분자 ÷ 분모 × ' + mul + ' = ' + esc(r.unit || '') + '</div>' +
+                '<div class="qi-formula">분자 ÷ 분모 × ' + mul + ' = ' + esc(r.unit || '') + tgt + '</div>' +
                 '<div class="qi-foot">' +
                   '<span class="qi-tag">' + esc(SRC_NM[r.numersrc] || r.numersrc || '-') + '</span>' +
                   '<span class="qi-tag">' + (r.cyclegb === 'Q' ? '분기' : (r.cyclegb === 'H' ? '반기' : (r.cyclegb === 'Y' ? '연간' : esc(r.cyclegb||'')))) + '</span>' +
+                  // 정의서를 아직 안 채운 지표는 표시해 준다 — 인증 제출 전에 병원이 채워야 할 목록이 된다
+                  (r.defown === 'Y' ? '<span class="qi-tag" style="background:#e4f3ea;color:#1f7a52;">정의서 작성</span>'
+                                    : '<span class="qi-tag" style="color:#b58a3a;background:#fdf3e2;">정의서 미작성</span>') +
                   '<span class="qi-state ' + st.cls + '">' + esc(st.txt) + '</span>' +
                 '</div></div>';
       });

@@ -1257,9 +1257,12 @@ function hosp_conact() {
         var href = link.getAttribute('href');
         // href가 없거나, '#'이거나, 빈 문자열이면 건너뛰기
         if (!href || href === '#' || href === '' || href.startsWith('http') || href.startsWith('javascript')) return;
-        // 쿼리까지 정확히 일치하면 그 링크가 최우선 — 이후 경로만 일치하는 링크가 덮지 못한다
-        if (currentFull === href) { matchedLink = link; exactMatched = true; return; }
+        // 쿼리까지 정확히 일치하면 그 링크가 최우선 — 이후 경로만 일치하는 링크가 덮지 못한다.
+        // ★exactMatched 검사가 먼저다 — 뒤에 두면 **같은 주소를 가진 뒤 링크가 계속 덮어써서**
+        //   첫 링크가 아니라 마지막 링크가 강조된다(2026-08-09 실제: QPS '지표 현황'을 열었는데
+        //   같은 주소를 임시로 가리키던 '서식(준비 중)'이 강조됐다).
         if (exactMatched) return;
+        if (currentFull === href) { matchedLink = link; exactMatched = true; return; }
 
         // 쿼리스트링 제거
         if (href.indexOf('?') > -1) {
