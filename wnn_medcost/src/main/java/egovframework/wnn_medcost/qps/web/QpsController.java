@@ -2,9 +2,11 @@ package egovframework.wnn_medcost.qps.web;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -30,10 +32,13 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260808-2240";
+	private static final String BUILD = "20260810-0830";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
+
+	@Resource // 공통 첨부 — 파일서버(SFTP) 전송 재사용(월보고서 PDF 와 같은 인프라)
+	private egovframework.wnn_medcost.ftpload.service.SftpService sftpService;
 
 	/**
 	 * 화면 진입 — 뷰파일 = /WEB-INF/jsp/main/qpsFall.jsp (타일즈 .main/* 와일드카드)
@@ -1085,6 +1090,90 @@ public class QpsController {
 			i++;
 		}
 		return sb.toString();
+	}
+
+	// ===================== 공통 첨부 (회의록·계획서·라운딩·자료실 공용) =====================
+
+	/** 첨부 목록 — refGb(문서종류) + refKey(문서키) 로 조회. */
+	@RequestMapping(value = "/qps/fileList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> fileList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.selectQpsFileList(hospCd, str(p.get("refGb"), ""), str(p.get("refKey"), "")));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 첨부 업로드(멀티파트) — SFTP 전송 후 TBL_QPS_FILE 에 메타 저장.
+	 * 저장 경로 = QPS/{병원}/{문서종류}/{문서키}/ — 월보고서와 같은 파일서버, 폴더만 분리.
+	 */
+	@RequestMapping(value = "/qps/fileUpload.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> fileUpload(@RequestParam("file") MultipartFile[] files,
+	                                      @RequestParam Map<String, Object> p,
+	                                      HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String refGb  = str(p.get("refGb"), "");
+			String refKey = str(p.get("refKey"), "");
+			if (refGb.isEmpty() || refKey.isEmpty()) return fail(res, "먼저 문서를 저장한 뒤 첨부해 주세요.");
+			if (files == null || files.length == 0) return fail(res, "파일을 선택해 주세요.");
+
+			String folder = "QPS/" + hospCd + "/" + refGb + "/" + refKey;
+			int saved = 0;
+			for (MultipartFile f : files) {
+				if (f == null || f.isEmpty()) continue;
+				String origNm = f.getOriginalFilename();
+				// 파일서버에는 충돌 방지용 UUID 접두어로 저장하고, 화면 표시는 원본명(FILE_NM)으로 한다.
+				String remoteNm = UUID.randomUUID() + "_" + origNm;
+				java.io.File tmp = java.nio.file.Files.createTempFile("qpsatt_", ".bin").toFile();
+				try {
+					f.transferTo(tmp);
+					String remotePath = sftpService.putFile(tmp.getAbsolutePath(), folder, remoteNm);
+					if (remotePath == null) return fail(res, "파일서버 전송에 실패했습니다: " + origNm);
+					egovframework.wnn_medcost.qps.model.QpsFileDTO dto = new egovframework.wnn_medcost.qps.model.QpsFileDTO();
+					dto.setHospCd(hospCd);
+					dto.setRefGb(refGb);
+					dto.setRefKey(refKey);
+					dto.setFileNm(origNm);
+					dto.setFilePath(remotePath);
+					dto.setFileSize(f.getSize());
+					dto.setRegUser(userId(request));
+					svc.insertQpsFile(dto);
+					saved++;
+				} finally {
+					if (tmp.exists()) tmp.delete();
+				}
+			}
+			res.put("saved", saved);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 첨부 삭제(소프트) — 본인 병원 것만. 파일 실체는 파일서버에 남긴다. */
+	@RequestMapping(value = "/qps/fileDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> fileDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			egovframework.wnn_medcost.qps.model.QpsFileDTO dto = new egovframework.wnn_medcost.qps.model.QpsFileDTO();
+			dto.setHospCd(hospCd);
+			dto.setFileSeq(longOf(p.get("fileSeq")));
+			dto.setUpdUser(userId(request));
+			svc.deleteQpsFile(dto);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
 	}
 
 	/** 병원코드 — 위너넷이면 화면에서 고른 병원, 아니면 로그인 병원으로 강제(거래처 격리). */

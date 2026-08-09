@@ -780,6 +780,24 @@ public class QpsServiceImpl implements QpsService {
 				.divide(new BigDecimal(denom), decimals, RoundingMode.HALF_UP);
 	}
 
+	// ===================== 공통 첨부 =====================
+	@Override
+	public java.util.List<Map<String, Object>> selectQpsFileList(String hospCd, String refGb, String refKey) throws Exception {
+		return mapper.selectQpsFileList(hospCd, refGb, refKey);
+	}
+	@Override
+	public int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception {
+		return mapper.insertQpsFile(dto);
+	}
+	@Override
+	public int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception {
+		return mapper.deleteQpsFile(dto);
+	}
+	@Override
+	public Map<String, Object> selectQpsFileOne(Long fileSeq, String hospCd) throws Exception {
+		return mapper.selectQpsFileOne(fileSeq, hospCd);
+	}
+
 	private static String str(Object o) { return (o == null) ? "" : String.valueOf(o).trim(); }
 
 	private static int intOf(Object o, int def) {

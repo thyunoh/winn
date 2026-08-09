@@ -7,6 +7,8 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<%-- 공통 첨부 위젯 — window.qpsFileBox 정의(회의록·계획서·라운딩 공용) --%>
+<%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
 <div id="qpsMin" data-wnn="<c:out value='${wnnYn}'/>">
@@ -97,6 +99,7 @@
           <div style="font-size:11.5px; color:#8a99a3; margin-top:2px;">인쇄물의 「참석자 명단」 표가 이 줄들로 만들어집니다(직책 구성은 병원마다 달라 자유 기재).</div></div>
         <div class="lb">참석 요약</div>  <div class="full"><input type="text" id="m_attendees" maxlength="1000" placeholder="(선택) 목록 화면용 한 줄 요약"></div>
         <div class="lb">특이사항</div>   <div class="full"><input type="text" id="m_specialTxt" maxlength="500"></div>
+        <div class="lb">첨부파일</div>   <div class="full"><div id="qmFileBox"></div></div>
       </div>
       <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
         <button type="button" class="qm-btn" onclick="qmSave();">저장</button>
@@ -110,6 +113,9 @@
 <script>
 (function(){
   var HOSP_NM = '', apprLine = [], curSeq = 0;
+  // 공통 첨부 위젯 — 회의록(MINUTES) 문서키 = 회의록 SEQ. 문서 저장 전엔 업로드 잠김.
+  var fileBox = window.qpsFileBox({ mount:'qmFileBox', refGb:'MINUTES',
+      hint:'이 회의록에 붙는 사진·파일', needSaveMsg:'회의록을 먼저 저장하면 첨부할 수 있습니다.' });
 
   // ★hospCd 를 보내지 않는다(서버가 쿠키를 본다) · dataType:'json' 필수 — QPS 화면 공통 원칙
   function post(url, data){
@@ -169,6 +175,7 @@
       set('m_attachTxt', d.attachtxt); set('m_specialTxt', d.specialtxt);
       document.getElementById('qmStat').textContent = '— 저장된 문서 #' + d.minseq;
       document.getElementById('qmDelBtn').style.display = '';
+      if (fileBox) fileBox.setKey(d.minseq);
       qmList();
     }).catch(err);
   };
@@ -181,6 +188,7 @@
     setGb('');
     document.getElementById('qmStat').textContent = '— 새 문서';
     document.getElementById('qmDelBtn').style.display = 'none';
+    if (fileBox) fileBox.setKey('');   // 새 문서 = 아직 첨부 불가(저장 후 열림)
     qmList();
   };
 
@@ -199,7 +207,8 @@
       curSeq = Number(res.minSeq || 0);
       set('m_minSeq', curSeq || '');
       if (curSeq) { document.getElementById('qmStat').textContent = '— 저장된 문서 #' + curSeq;
-                    document.getElementById('qmDelBtn').style.display = ''; }
+                    document.getElementById('qmDelBtn').style.display = '';
+                    if (fileBox) fileBox.setKey(curSeq); }   // 저장 직후부터 첨부 가능
       return qmList();
     }).catch(err);
   };

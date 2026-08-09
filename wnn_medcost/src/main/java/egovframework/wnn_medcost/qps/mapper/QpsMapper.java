@@ -157,4 +157,12 @@ public interface QpsMapper {
 	                                         @Param("prdKey") String prdKey);
 	int insertAppr(Map<String, Object> param);
 	int updateReportAppr(Map<String, Object> param);
+
+	// 공통 첨부 (TBL_QPS_FILE — REF_GB+REF_KEY)
+	List<Map<String, Object>> selectQpsFileList(@Param("hospCd") String hospCd,
+	                                            @Param("refGb")  String refGb,
+	                                            @Param("refKey") String refKey);
+	int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto);
+	int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto);
+	Map<String, Object> selectQpsFileOne(@Param("fileSeq") Long fileSeq, @Param("hospCd") String hospCd);
 }

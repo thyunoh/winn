@@ -99,4 +99,10 @@ public interface QpsService {
 
 	Map<String, Object> selectReport(String hospCd, String indiCd, String prdGb, String prdKey) throws Exception;
 	int saveReport(Map<String, Object> param) throws Exception;
+
+	// 공통 첨부 (회의록·계획서·라운딩·자료실 공용)
+	java.util.List<Map<String, Object>> selectQpsFileList(String hospCd, String refGb, String refKey) throws Exception;
+	int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception;
+	int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception;
+	Map<String, Object> selectQpsFileOne(Long fileSeq, String hospCd) throws Exception;
 }

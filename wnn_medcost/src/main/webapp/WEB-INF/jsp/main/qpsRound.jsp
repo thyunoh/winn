@@ -8,6 +8,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
 <div id="qpsRound" data-wnn="<c:out value='${wnnYn}'/>">
@@ -60,11 +61,18 @@
   </tr></thead><tbody id="rdBody"></tbody></table>
   <button type="button" class="qr-btn mini" style="margin-top:6px;" onclick="rdAdd();">＋ 행 추가</button>
   <span class="qr-sub" style="margin-left:8px;">양호/불량을 다시 누르면 해제됩니다(미점검).</span>
+  <div style="margin-top:14px; border-top:1px solid #eef2f5; padding-top:12px;">
+    <div style="font-size:13px; font-weight:800; color:#20303a; margin-bottom:6px;">첨부파일 <span style="font-weight:500;font-size:11.5px;color:#8a99a3;">— 라운딩 사진 등</span></div>
+    <div id="rdFileBox"></div>
+  </div>
 </div>
 
 <script>
 (function(){
   var HOSP_NM = '', rowIdx = 0;
+  // 공통 첨부 — 라운딩(ROUND) 문서키 = 년월(자연키).
+  var fileBox = window.qpsFileBox({ mount:'rdFileBox', refGb:'ROUND',
+      hint:'라운딩 사진·파일', needSaveMsg:'년월을 선택하면 첨부할 수 있습니다.' });
   function post(url, data){
     return $.ajax({ url:url, type:'POST', data:data, dataType:'json' }).then(function(res){
       if (res && res.result === 'FAIL') { throw new Error(res.message || '처리에 실패했습니다.'); }
@@ -151,6 +159,7 @@
   }
 
   window.rdLoad = function(){
+    if (fileBox) fileBox.setKey(ym());   // 년월 = 첨부 키
     return post('/qps/roundGet.do', { roundYm: ym() }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('rdHosp').textContent = '🏥 ' + HOSP_NM; }

@@ -8,6 +8,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
 <div id="qpsPlan" data-wnn="<c:out value='${wnnYn}'/>">
@@ -106,9 +107,16 @@
   <button type="button" class="qp-btn mini" style="margin-top:6px;" onclick="plAdd('BUDGET');">＋ 행 추가</button>
 </div>
 
+<div class="qp-card"><h4>첨부파일 <span class="hint">— 연간계획서에 붙는 사진·파일(조직도·근거자료 등)</span></h4>
+  <div id="plFileBox"></div>
+</div>
+
 <script>
 (function(){
   var HOSP_NM = '';
+  // 공통 첨부 — 계획서(PLAN) 문서키 = 년도(자연키, 저장 전에도 존재).
+  var fileBox = window.qpsFileBox({ mount:'plFileBox', refGb:'PLAN',
+      hint:'연간계획서에 붙는 사진·파일', needSaveMsg:'년도를 선택하면 첨부할 수 있습니다.' });
   function post(url, data){
     return $.ajax({ url:url, type:'POST', data:data, dataType:'json' }).then(function(res){
       if (res && res.result === 'FAIL') { throw new Error(res.message || '처리에 실패했습니다.'); }
@@ -251,6 +259,7 @@
   }
 
   window.plLoad = function(){
+    if (fileBox) fileBox.setKey(document.getElementById('plYear').value);   // 년도 = 첨부 키
     return post('/qps/planGet.do', { inYear: document.getElementById('plYear').value }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('plHosp').textContent = '🏥 ' + HOSP_NM; }
