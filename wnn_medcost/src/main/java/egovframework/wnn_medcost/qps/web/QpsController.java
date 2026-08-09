@@ -248,6 +248,65 @@ public class QpsController {
 		return res;
 	}
 
+	/** 서식 3호: 환자안전 관리 라운딩 점검표 — 월 1부. [전월 복사]는 화면이 전월 roundGet 으로 채운다. */
+	@RequestMapping(value = "main/qpsRound.do")
+	public String qpsRound(HttpServletRequest request, ModelMap model) {
+		Map<String, String> ck = ClientInfo.getCookie(request);
+		try {
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			model.addAttribute("hospCd", hospId);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			model.addAttribute("wnnYn", wnn);
+			try {
+				Map<String, Object> h = svc.selectHospInfo(hospId);
+				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
+			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
+			return ".main/qpsRound";
+		} catch (Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	@RequestMapping(value = "/qps/roundGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> roundGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("roundYm"), "").replace("-", "");
+			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
+			res.putAll(svc.selectRoundWithItems(hospCd, ym));
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/roundSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> roundSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("roundYm"), "").replace("-", "");
+			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
+
+			java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+			String json = str(p.get("items"), "");
+			if (!json.isEmpty()) {
+				com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+				items = om.readValue(json,
+					new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});
+			}
+			res.put("rndSeq", svc.saveRound(hospCd, ym, str(p.get("checker"), ""), items, userId(request)));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/** 서식 1호: 위원회 회의록 — 서술형 서식 203종의 첫 파일럿(서식빌더 결정 근거용). */
 	@RequestMapping(value = "main/qpsMinutes.do")
 	public String qpsMinutes(HttpServletRequest request, ModelMap model) {
@@ -266,6 +325,23 @@ public class QpsController {
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
+	}
+
+	/** 기간의 전 지표 요약(JSON) — 회의록 [지표 요약 넣기]. 무거우니 버튼 클릭 시에만 부른다. */
+	@RequestMapping(value = "/qps/indiSummary.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> indiSummary(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String prdKey = str(p.get("prdKey"), "");
+			if (prdKey.length() < 5) return fail(res, "기간이 필요합니다.");
+			String prdGb = prdKey.length() == 4 ? "Y" : prdKey.substring(4, 5);
+			res.put("list", svc.selectIndiSummary(hospCd, prdGb, prdKey));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
 	}
 
 	@RequestMapping(value = "/qps/minutesList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -312,12 +388,17 @@ public class QpsController {
 			m.put("minSeq", str(p.get("minSeq"), ""));
 			m.put("meetDt", str(p.get("meetDt"), ""));
 			m.put("title",  str(p.get("title"), ""));
+			m.put("meetGb", str(p.get("meetGb"), ""));       // R=정기 / T=임시
 			m.put("place",  str(p.get("place"), ""));
+			m.put("personnel", str(p.get("personnel"), ""));
 			m.put("attendees", str(p.get("attendees"), ""));
+			m.put("members",   str(p.get("members"), ""));   // 직책: 이름 (줄바꿈 구분)
 			m.put("agenda",  str(p.get("agenda"), ""));
 			m.put("content", str(p.get("content"), ""));
 			m.put("decision", str(p.get("decision"), ""));
 			m.put("nextTxt", str(p.get("nextTxt"), ""));
+			m.put("attachTxt",  str(p.get("attachTxt"), ""));
+			m.put("specialTxt", str(p.get("specialTxt"), ""));
 			m.put("regUser", userId(request));
 			if (String.valueOf(m.get("meetDt")).isEmpty()) return fail(res, "회의일을 입력해 주세요.");
 			if (String.valueOf(m.get("title")).isEmpty())  return fail(res, "회의명을 입력해 주세요.");

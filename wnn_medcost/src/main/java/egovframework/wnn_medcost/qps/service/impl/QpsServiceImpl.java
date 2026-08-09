@@ -172,6 +172,76 @@ public class QpsServiceImpl implements QpsService {
 		return planSeq;
 	}
 
+	/**
+	 * 기간의 전 지표 요약 — 회의록 [지표 요약 넣기]용.
+	 * 이전 시스템의 [지표조회] 버튼(회의록 본문에 지표 표 삽입)을 옮긴 것 — 다만 저쪽은 손입력 값을
+	 * 불러오고, 우리는 **산출값을 그대로** 넣는다. 18종 각각 calcIndicator 를 돌므로 가벼운 호출은 아니다
+	 * — 버튼을 눌렀을 때 한 번만 부른다(화면 로드마다 부르지 말 것).
+	 */
+	@Override
+	public List<Map<String, Object>> selectIndiSummary(String hospCd, String prdGb, String prdKey) throws Exception {
+		List<Map<String, Object>> out = new ArrayList<>();
+		if (prdKey == null || prdKey.length() < 4) return out;
+		String inYear = prdKey.substring(0, 4);
+		List<Map<String, Object>> list = mapper.selectIndiList(hospCd, inYear);
+		if (list == null) return out;
+		for (Map<String, Object> ind : list) {
+			String cd = str(ind.get("indicd"));
+			try {
+				Map<String, Object> calc = calcIndicator(hospCd, cd, inYear);
+				Map<String, Object> roll = rollupOf(calc, prdGb, prdKey);
+				Map<String, Object> r = new LinkedHashMap<>();
+				r.put("indinm", ind.get("indinm"));
+				r.put("unit",   ind.get("unit"));
+				r.put("rate",   roll == null ? null : roll.get("rate"));
+				r.put("numer",  roll == null ? null : roll.get("numer"));
+				r.put("denom",  roll == null ? null : roll.get("denom"));
+				Object dec = ((Map<String, Object>) calc.get("indi")).get("decimals");
+				r.put("decimals", dec == null ? 2 : dec);
+				out.add(r);
+			} catch (Exception skip) { /* 한 지표가 실패해도 나머지는 나간다 */ }
+		}
+		return out;
+	}
+
+	// ===================== 서식 3호: 라운딩 점검표 =====================
+
+	@Override
+	public Map<String, Object> selectRoundWithItems(String hospCd, String roundYm) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> rnd = mapper.selectRound(hospCd, roundYm);
+		out.put("round", rnd);
+		if (rnd != null && rnd.get("rndseq") != null) {
+			out.put("items", mapper.selectRoundItems(Long.parseLong(String.valueOf(rnd.get("rndseq")))));
+		} else {
+			out.put("items", new ArrayList<>());
+		}
+		return out;
+	}
+
+	@Override
+	public long saveRound(String hospCd, String roundYm, String checker,
+	                      List<Map<String, Object>> items, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("roundYm", roundYm);
+		p.put("checker", checker);
+		p.put("regUser", userId);
+		mapper.upsertRound(p);
+		long rndSeq = Long.parseLong(String.valueOf(p.get("rndSeq")));
+		mapper.deleteRoundItems(rndSeq);
+		if (items != null && !items.isEmpty()) {
+			int CHUNK = 300;
+			for (int i = 0; i < items.size(); i += CHUNK) {
+				Map<String, Object> ip = new HashMap<>();
+				ip.put("rndSeq", rndSeq);
+				ip.put("items", items.subList(i, Math.min(i + CHUNK, items.size())));
+				mapper.insertRoundItems(ip);
+			}
+		}
+		return rndSeq;
+	}
+
 	// ===================== 서식 1호: 회의록 =====================
 
 	@Override

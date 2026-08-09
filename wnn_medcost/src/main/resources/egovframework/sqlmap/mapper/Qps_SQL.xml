@@ -88,6 +88,41 @@
 		</foreach>
 	</insert>
 
+	<!-- ===================== 서식 3호: 라운딩 점검표 =====================
+	     월 1부(병원+년월 UNIQUE). 항목행 통째 교체. [전월 복사]는 화면이 전월을 조회해 채운다(서버 API 없음). -->
+	<select id="selectRound" resultType="java.util.HashMap">
+		SELECT RND_SEQ AS rndseq, ROUND_YM AS roundym, CHECKER AS checker,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_ROUND
+		 WHERE HOSP_CD = #{hospCd} AND ROUND_YM = #{roundYm} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertRound" parameterType="map" useGeneratedKeys="true" keyProperty="rndSeq">
+		INSERT INTO TBL_QPS_ROUND (HOSP_CD, ROUND_YM, CHECKER, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{roundYm}, #{checker}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE CHECKER=VALUES(CHECKER), USE_YN='Y', UPD_USER=#{regUser},
+		  RND_SEQ = LAST_INSERT_ID(RND_SEQ)
+	</insert>
+
+	<select id="selectRoundItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort, GRP AS grp, C1 AS c1, C2 AS c2, EVAL_GB AS evalgb, C3 AS c3
+		  FROM TBL_QPS_ROUND_ITEM
+		 WHERE RND_SEQ = #{rndSeq}
+		 ORDER BY SORT, IT_SEQ
+	</select>
+
+	<delete id="deleteRoundItems">
+		DELETE FROM TBL_QPS_ROUND_ITEM WHERE RND_SEQ = #{rndSeq}
+	</delete>
+
+	<insert id="insertRoundItems" parameterType="map">
+		INSERT INTO TBL_QPS_ROUND_ITEM (RND_SEQ, SORT, GRP, C1, C2, EVAL_GB, C3)
+		VALUES
+		<foreach item="it" collection="items" separator=",">
+		 (#{rndSeq}, #{it.sort}, #{it.grp}, #{it.c1}, #{it.c2}, #{it.evalgb}, #{it.c3})
+		</foreach>
+	</insert>
+
 	<!-- ===================== 서식 1호: 위원회 회의록 =====================
 	     서술형 서식 203종의 첫 파일럿(서식빌더 결정 근거용). 전자결재 없음 — 인쇄 결재란(빈칸)만. -->
 	<select id="selectMinutesList" resultType="java.util.HashMap">
@@ -105,25 +140,31 @@
 	<select id="selectMinutes" resultType="java.util.HashMap">
 		SELECT MIN_SEQ AS minseq,
 		       DATE_FORMAT(STR_TO_DATE(MEET_DT,'%Y%m%d'),'%Y-%m-%d') AS meetdt,
-		       TITLE AS title, PLACE AS place, ATTENDEES AS attendees,
-		       AGENDA AS agenda, CONTENT AS content, DECISION AS decision, NEXT_TXT AS nexttxt
+		       TITLE AS title, MEET_GB AS meetgb, PLACE AS place, PERSONNEL AS personnel,
+		       ATTENDEES AS attendees, MEMBERS AS members,
+		       AGENDA AS agenda, CONTENT AS content, DECISION AS decision, NEXT_TXT AS nexttxt,
+		       ATTACH_TXT AS attachtxt, SPECIAL_TXT AS specialtxt
 		  FROM TBL_QPS_MINUTES
 		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
 	</select>
 
 	<insert id="insertMinutes" parameterType="map" useGeneratedKeys="true" keyProperty="minSeq">
 		INSERT INTO TBL_QPS_MINUTES
-		 (HOSP_CD, MEET_DT, TITLE, PLACE, ATTENDEES, AGENDA, CONTENT, DECISION, NEXT_TXT, USE_YN, REG_USER)
+		 (HOSP_CD, MEET_DT, TITLE, MEET_GB, PLACE, PERSONNEL, ATTENDEES, MEMBERS,
+		  AGENDA, CONTENT, DECISION, NEXT_TXT, ATTACH_TXT, SPECIAL_TXT, USE_YN, REG_USER)
 		VALUES
-		 (#{hospCd}, REPLACE(#{meetDt},'-',''), #{title}, #{place}, #{attendees},
-		  #{agenda}, #{content}, #{decision}, #{nextTxt}, 'Y', #{regUser})
+		 (#{hospCd}, REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{personnel},
+		  #{attendees}, #{members}, #{agenda}, #{content}, #{decision}, #{nextTxt},
+		  #{attachTxt}, #{specialTxt}, 'Y', #{regUser})
 	</insert>
 
 	<update id="updateMinutes" parameterType="map">
 		UPDATE TBL_QPS_MINUTES
-		   SET MEET_DT = REPLACE(#{meetDt},'-',''), TITLE = #{title}, PLACE = #{place},
-		       ATTENDEES = #{attendees}, AGENDA = #{agenda}, CONTENT = #{content},
-		       DECISION = #{decision}, NEXT_TXT = #{nextTxt}, UPD_USER = #{regUser}
+		   SET MEET_DT = REPLACE(#{meetDt},'-',''), TITLE = #{title}, MEET_GB = #{meetGb},
+		       PLACE = #{place}, PERSONNEL = #{personnel},
+		       ATTENDEES = #{attendees}, MEMBERS = #{members}, AGENDA = #{agenda}, CONTENT = #{content},
+		       DECISION = #{decision}, NEXT_TXT = #{nextTxt},
+		       ATTACH_TXT = #{attachTxt}, SPECIAL_TXT = #{specialTxt}, UPD_USER = #{regUser}
 		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd}
 	</update>
 

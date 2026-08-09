@@ -73,13 +73,30 @@
       <input type="hidden" id="m_minSeq" value="">
       <div class="qm-form">
         <div class="lb">회의일 *</div>   <div><input type="date" id="m_meetDt"></div>
-        <div class="lb">장소</div>       <div><input type="text" id="m_place" maxlength="100" placeholder="예) 2층 회의실"></div>
+        <div class="lb">회의 구분</div>  <div style="padding-top:7px;">
+          <label style="font-size:13px; margin-right:14px;"><input type="radio" name="m_meetGb" value="R"> 정기 회의</label>
+          <label style="font-size:13px;"><input type="radio" name="m_meetGb" value="T"> 임시 회의</label></div>
         <div class="lb">회의명 *</div>   <div class="full"><input type="text" id="m_title" maxlength="200" placeholder="예) 2026년 2차 QPS위원회"></div>
-        <div class="lb">참석자</div>     <div class="full"><input type="text" id="m_attendees" maxlength="1000" placeholder="쉼표로 구분 — 예) 홍길동(이사장), 김담당(QPS팀), …"></div>
-        <div class="lb">안건</div>       <div class="full"><textarea id="m_agenda" placeholder="1. 2분기 지표 결과 보고&#10;2. 손위생 개선활동 경과"></textarea></div>
-        <div class="lb">논의 내용</div>  <div class="full"><textarea id="m_content" style="min-height:110px;"></textarea></div>
-        <div class="lb">결정 사항</div>  <div class="full"><textarea id="m_decision"></textarea></div>
+        <div class="lb">장소</div>       <div><input type="text" id="m_place" maxlength="100" placeholder="예) 2층 회의실"></div>
+        <div class="lb">인원</div>       <div><input type="text" id="m_personnel" maxlength="30" placeholder="예) 11명"></div>
+        <div class="lb">회의안건</div>   <div class="full"><textarea id="m_agenda" placeholder="1. 2분기 지표 결과 보고&#10;2. 손위생 개선활동 경과"></textarea></div>
+        <div class="lb">회의내용</div>   <div class="full">
+          <textarea id="m_content" style="min-height:110px;"></textarea>
+          <div style="margin-top:4px;">
+            <button type="button" class="qm-btn mini" style="padding:3px 10px; font-size:11.5px; background:#fff; color:#1f5a4b;"
+                    onclick="qmInsertIndi();">📊 지표 요약 넣기</button>
+            <span style="font-size:11.5px; color:#8a99a3;">— 회의일이 속한 분기의 지표 18종 산출값을 본문에 붙입니다
+              (이전 시스템의 [지표조회]와 같되, 손입력이 아니라 자동 산출값)</span>
+          </div>
+        </div>
+        <div class="lb">회의결과<br>(결정사항)</div> <div class="full"><textarea id="m_decision"></textarea></div>
+        <div class="lb">첨부자료</div>   <div class="full"><input type="text" id="m_attachTxt" maxlength="500" placeholder="예) 2분기 지표분석보고서 5부"></div>
         <div class="lb">차기 일정</div>  <div class="full"><input type="text" id="m_nextTxt" maxlength="500" placeholder="예) 차기 회의 9월 둘째 주 · 낙상 개선안 보고"></div>
+        <div class="lb">참석자 명단</div><div class="full">
+          <textarea id="m_members" style="min-height:96px;" placeholder="한 줄에 하나 — 직책: 이름&#10;위원장(병원장): 홍길동&#10;간사(QPS담당자): 김담당&#10;위원(진료과장): 이과장"></textarea>
+          <div style="font-size:11.5px; color:#8a99a3; margin-top:2px;">인쇄물의 「참석자 명단」 표가 이 줄들로 만들어집니다(직책 구성은 병원마다 달라 자유 기재).</div></div>
+        <div class="lb">참석 요약</div>  <div class="full"><input type="text" id="m_attendees" maxlength="1000" placeholder="(선택) 목록 화면용 한 줄 요약"></div>
+        <div class="lb">특이사항</div>   <div class="full"><input type="text" id="m_specialTxt" maxlength="500"></div>
       </div>
       <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
         <button type="button" class="qm-btn" onclick="qmSave();">저장</button>
@@ -131,14 +148,25 @@
     }).catch(err);
   };
 
+  function setGb(v){
+    document.querySelectorAll('input[name="m_meetGb"]').forEach(function(r){ r.checked = (r.value === v); });
+  }
+  function getGb(){
+    var r = document.querySelector('input[name="m_meetGb"]:checked');
+    return r ? r.value : '';
+  }
+
   window.qmOpen = function(seq){
     post('/qps/minutesGet.do', { minSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.minseq || 0);
       set('m_minSeq', d.minseq); set('m_meetDt', d.meetdt); set('m_title', d.title);
-      set('m_place', d.place); set('m_attendees', d.attendees);
+      setGb(d.meetgb || '');
+      set('m_place', d.place); set('m_personnel', d.personnel);
+      set('m_attendees', d.attendees); set('m_members', d.members);
       set('m_agenda', d.agenda); set('m_content', d.content);
       set('m_decision', d.decision); set('m_nextTxt', d.nexttxt);
+      set('m_attachTxt', d.attachtxt); set('m_specialTxt', d.specialtxt);
       document.getElementById('qmStat').textContent = '— 저장된 문서 #' + d.minseq;
       document.getElementById('qmDelBtn').style.display = '';
       qmList();
@@ -147,8 +175,10 @@
 
   window.qmNew = function(){
     curSeq = 0;
-    ['m_minSeq','m_meetDt','m_title','m_place','m_attendees','m_agenda','m_content','m_decision','m_nextTxt']
+    ['m_minSeq','m_meetDt','m_title','m_place','m_personnel','m_attendees','m_members',
+     'm_agenda','m_content','m_decision','m_nextTxt','m_attachTxt','m_specialTxt']
       .forEach(function(id){ set(id, ''); });
+    setGb('');
     document.getElementById('qmStat').textContent = '— 새 문서';
     document.getElementById('qmDelBtn').style.display = 'none';
     qmList();
@@ -158,9 +188,12 @@
     if (!val('m_meetDt')) { _alertBox('회의일을 입력해 주세요.', {icon:'⚠️'}); return; }
     if (!val('m_title'))  { _alertBox('회의명을 입력해 주세요.', {icon:'⚠️'}); return; }
     post('/qps/minutesSave.do', {
-      minSeq: val('m_minSeq'), meetDt: val('m_meetDt'), title: val('m_title'), place: val('m_place'),
-      attendees: val('m_attendees'), agenda: val('m_agenda'), content: val('m_content'),
-      decision: val('m_decision'), nextTxt: val('m_nextTxt')
+      minSeq: val('m_minSeq'), meetDt: val('m_meetDt'), title: val('m_title'), meetGb: getGb(),
+      place: val('m_place'), personnel: val('m_personnel'),
+      attendees: val('m_attendees'), members: val('m_members'),
+      agenda: val('m_agenda'), content: val('m_content'),
+      decision: val('m_decision'), nextTxt: val('m_nextTxt'),
+      attachTxt: val('m_attachTxt'), specialTxt: val('m_specialTxt')
     }).then(function(res){
       _toast('저장되었습니다.', 'ok');
       curSeq = Number(res.minSeq || 0);
@@ -182,6 +215,31 @@
       }});
   };
 
+  // ---------- 지표 요약 넣기 ----------
+  // 회의일이 속한 분기의 18종 산출값을 본문에 텍스트 표로 붙인다.
+  // ★서버가 지표 18종을 전부 계산하는 무거운 호출 — 버튼 클릭 때만 부른다.
+  window.qmInsertIndi = function(){
+    var dt = val('m_meetDt');
+    if (!dt) { _alertBox('회의일을 먼저 입력해 주세요 — 그 날짜가 속한 분기의 지표를 가져옵니다.', {icon:'⚠️'}); return; }
+    var yy = dt.substring(0, 4), q = Math.floor((Number(dt.substring(5, 7)) - 1) / 3) + 1;
+    var prdKey = yy + 'Q' + q;
+    _toast('지표를 계산하는 중…', 'info');
+    post('/qps/indiSummary.do', { prdKey: prdKey }).then(function(res){
+      var list = res.list || [];
+      if (!list.length) { _alertBox('지표 자료가 없습니다.', {icon:'⚠️'}); return; }
+      var lines = ['── ' + yy + '년 ' + q + '/4분기 지표 요약 (자동 산출) ──'];
+      list.forEach(function(r){
+        var v = (r.rate == null) ? '-' :
+          (Number(r.rate).toFixed(Number(r.decimals == null ? 2 : r.decimals)) + (r.unit || ''));
+        var nd = (r.rate == null) ? '' : ' (' + (r.numer == null ? '-' : r.numer) + '/' + (r.denom == null ? '-' : r.denom) + ')';
+        lines.push('· ' + r.indinm + ' : ' + v + nd);
+      });
+      var ta = document.getElementById('m_content');
+      ta.value = (ta.value ? (ta.value.replace(/\s+$/, '') + '\n\n') : '') + lines.join('\n') + '\n';
+      _toast('지표 ' + list.length + '종을 붙였습니다. 필요 없는 줄은 지우면 됩니다.', 'ok');
+    }).catch(err);
+  };
+
   // ---------- 인쇄(A4 1장) — 별도 창 방식(주소 바닥글·앱 CSS 가 안 붙는다) ----------
   var PRINT_CSS =
     '@page{ size:A4 portrait; margin:14mm 14mm 16mm; }' +
@@ -200,26 +258,51 @@
 
   window.qmPrint = function(){
     if (!val('m_title')) { _alertBox('회의록을 먼저 불러오거나 작성해 주세요.', {icon:'⚠️'}); return; }
+    // 원본 서식: 제목 옆 상단에 결재란 4단(담당~이사장 = 결재선 그대로)
     var appr = apprLine.length
       ? ('<table class="appr"><thead><tr>' + apprLine.map(function(r){ return '<th>' + esc(r.stepnm) + '</th>'; }).join('') +
          '</tr></thead><tbody><tr>' + apprLine.map(function(){ return '<td></td>'; }).join('') + '</tr></tbody></table>')
       : '';
-    function row(l, v, pre){ return '<tr><th>' + esc(l) + '</th><td' + (pre ? ' class="pre"' : '') + '>' + esc(v || '') + '</td></tr>'; }
+    var gb = getGb();
+    var gbHtml = (gb === 'R' ? '☑' : '☐') + ' 정기 회의&nbsp;&nbsp;&nbsp;' + (gb === 'T' ? '☑' : '☐') + ' 임시 회의';
+
+    // 참석자 명단 — "직책: 이름" 줄들을 2열 표로(원본 3쪽). 콜론이 없으면 이름만 칸에.
+    var lines = val('m_members').split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    var memHtml = '';
+    if (lines.length) {
+      var cells = lines.map(function(ln){
+        var i = ln.indexOf(':');
+        var role = i > -1 ? ln.substring(0, i).trim() : '';
+        var nm   = i > -1 ? ln.substring(i + 1).trim() : ln;
+        return '<th style="width:110px;">' + esc(role) + '</th><td style="width:150px;">' + esc(nm) + '</td>';
+      });
+      var trs = '';
+      for (var i = 0; i < cells.length; i += 2) {
+        trs += '<tr>' + cells[i] + (cells[i + 1] || '<th style="width:110px;"></th><td></td>') + '</tr>';
+      }
+      trs += '<tr><th>특이사항</th><td colspan="3">' + esc(val('m_specialTxt')) + '</td></tr>';
+      memHtml = '<div class="sec" style="margin-top:14px; font-size:13px; font-weight:800;">참석자 명단</div>' +
+                '<table><tbody>' + trs + '</tbody></table>';
+    }
+
+    function row(l, v, pre){ return '<tr><th>' + esc(l) + '</th><td colspan="3"' + (pre ? ' class="pre"' : '') + '>' + esc(v || '') + '</td></tr>'; }
     var body =
       appr +
-      '<div class="h1">회의록</div>' +
-      '<div class="h2">' + esc(HOSP_NM) + '</div>' +
+      '<div class="h1">QPS위원회 회의록</div>' +
+      '<div class="h2">' + esc(HOSP_NM) + (val('m_title') ? (' · ' + esc(val('m_title'))) : '') + '</div>' +
       '<div style="clear:both;"></div>' +
       '<table><tbody>' +
-        row('회의명', val('m_title')) +
-        row('회의일', val('m_meetDt')) +
-        row('장소',   val('m_place')) +
-        row('참석자', val('m_attendees'), true) +
-        row('안건',   val('m_agenda'), true) +
-        row('논의 내용', val('m_content'), true) +
-        row('결정 사항', val('m_decision'), true) +
-        row('차기 일정', val('m_nextTxt')) +
+        '<tr><th>일 시</th><td style="width:34%;">' + esc(val('m_meetDt')) + '</td>' +
+            '<th style="width:70px;">회의 구분</th><td>' + gbHtml + '</td></tr>' +
+        '<tr><th>장 소</th><td>' + esc(val('m_place')) + '</td>' +
+            '<th>인 원</th><td>' + esc(val('m_personnel')) + '</td></tr>' +
+        row('회의안건', val('m_agenda'), true) +
+        row('회의내용', val('m_content'), true) +
+        row('회의결과(결정사항)', val('m_decision'), true) +
+        row('첨부자료', val('m_attachTxt')) +
+        (val('m_nextTxt') ? row('차기 일정', val('m_nextTxt')) : '') +
       '</tbody></table>' +
+      memHtml +
       '<div class="foot">작성일 : ' + (function(){ var t = new Date();
           return t.getFullYear() + '. ' + (t.getMonth() + 1) + '. ' + t.getDate() + '.'; })() + '</div>';
 

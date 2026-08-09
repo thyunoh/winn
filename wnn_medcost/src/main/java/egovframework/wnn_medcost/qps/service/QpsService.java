@@ -40,6 +40,14 @@ public interface QpsService {
 	long savePlan(String hospCd, String inYear, String submitDt,
 	              List<Map<String, Object>> items, String userId) throws Exception;
 
+	/** 기간(2026Q1 등)의 전 지표 요약 — 회의록 [지표 요약 넣기]용. {indinm, unit, rate, numer, denom} 목록. */
+	List<Map<String, Object>> selectIndiSummary(String hospCd, String prdGb, String prdKey) throws Exception;
+
+	// 서식 3호: 라운딩 점검표
+	Map<String, Object> selectRoundWithItems(String hospCd, String roundYm) throws Exception;
+	long saveRound(String hospCd, String roundYm, String checker,
+	               List<Map<String, Object>> items, String userId) throws Exception;
+
 	// 서식 1호: 위원회 회의록
 	List<Map<String, Object>> selectMinutesList(String hospCd, String inYear) throws Exception;
 	Map<String, Object> selectMinutes(String hospCd, long minSeq) throws Exception;
