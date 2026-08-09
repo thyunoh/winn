@@ -184,6 +184,9 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsIndex.do" title="준비 중">서식 <span style="color:#a8b4bb;">(준비 중)</span></a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a>
+                                </li>
                             </ul>
                         </div>
                     </li>

@@ -42,6 +42,52 @@
 		 LIMIT 1
 	</select>
 
+	<!-- ===================== 보고서 현황판 (qpsRpt) =====================
+	     선택 기간의 18종 전부 × 보고서(서술·결재) 상태. 보고서 행이 없으면 '작성 전'.
+	     ★지표당 한 줄 — 병원 정의서 행이 있으면 그것(selectIndiList 와 같은 중복 제거). -->
+	<select id="selectRptStatus" resultType="java.util.HashMap">
+		SELECT m.INDI_CD   AS indicd,
+		       m.INDI_NM   AS indinm,
+		       IFNULL(m.AREA_NM,'기타') AS areanm,
+		       IFNULL(m.AREA_NO,99)     AS areano,
+		       m.NUMER_SRC AS numersrc,
+		       r.STATUS    AS status,
+		       IFNULL(r.CUR_STEP,0) AS curstep,
+		       CASE WHEN IFNULL(r.ANALYSIS_TXT,'') <![CDATA[<>]]> '' OR IFNULL(r.PLAN_TXT,'') <![CDATA[<>]]> ''
+		            THEN 'Y' ELSE 'N' END AS writeyn,
+		       DATE_FORMAT(r.UPD_DTTM,'%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_INDI_MST m
+		  LEFT JOIN TBL_QPS_REPORT r
+		         ON r.HOSP_CD = #{hospCd} AND r.INDI_CD = m.INDI_CD
+		        AND r.PRD_GB = #{prdGb}  AND r.PRD_KEY = #{prdKey}
+		 WHERE m.USE_YN = 'Y'
+		   AND m.HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                         SELECT 1 FROM TBL_QPS_INDI_MST x
+		                          WHERE x.INDI_CD = m.INDI_CD
+		                            AND x.HOSP_CD = #{hospCd}
+		                            AND x.USE_YN  = 'Y' )
+		                       THEN #{hospCd} ELSE '*' END )
+		 ORDER BY IFNULL(m.AREA_NO,99), m.SORT_NO
+	</select>
+
+	<!-- ===================== 공통코드 =====================
+	     화면의 selectbox 목록(위해등급·유형·직군 등, CODE_GB='Q') — 기준정보 화면에서 행 추가로 항목이 는다.
+	     ★비어 있어도 화면은 하드코딩 폴백으로 동작한다(코드 미적재가 장애가 되지 않게). -->
+	<select id="selectQpsCodes" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT CODE_CD  AS codecd,
+		       SUB_CODE AS subcode,
+		       RTRIM(SUB_CODE_NM) AS subcodenm
+		  FROM TBL_CODE_DTL
+		 WHERE CODE_GB   = 'Q'
+		   AND CODE_CD  LIKE 'QPS\_%'
+		   AND USE_YN    = 'Y'
+		   AND ACTION_YN = 'Y'
+		   AND DATE_FORMAT(NOW(),'%Y%m%d') BETWEEN IFNULL(START_DT,'00000101') AND IFNULL(END_DT,'99991231')
+		 ORDER BY CODE_CD, IFNULL(SORT,99), SUB_CODE
+		]]>
+	</select>
+
 	<!-- ===================== 지표정의서 =====================
 	     ★병원 행이 있으면 그것을, 없으면 공통('*')을 보여준다. 저장은 **항상 병원 행**에 한다 —
 	       한 병원이 고친 값이 공통을 덮으면 전 병원 정의서가 바뀐다(절대 안 된다).
@@ -430,8 +476,9 @@
 	<!-- ===================== 수기입력형 (NUMER_SRC='MANUAL') =====================
 	     원천이 위너넷 안에 없는 지표(신체보호대·TAT·재택복귀·불만고충·만족도).
 	     병원이 대장을 보고 월별 분자·분모를 적는다. VAL_GB 로 분자/분모를 가른다. -->
+	<!-- axisCd '' = 총계 행(지표 산출이 읽는 행). '정규'/'응급' 등은 상세 행 — 분석 탭 축별 표에만 쓴다. -->
 	<select id="selectManual" resultType="java.util.HashMap">
-		SELECT MAN_SEQ AS manseq, INDI_CD AS indicd, IN_YEAR AS inyear, VAL_GB AS valgb,
+		SELECT MAN_SEQ AS manseq, INDI_CD AS indicd, IN_YEAR AS inyear, VAL_GB AS valgb, AXIS_CD AS axiscd,
 		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04, M05 AS m05, M06 AS m06,
 		       M07 AS m07, M08 AS m08, M09 AS m09, M10 AS m10, M11 AS m11, M12 AS m12
 		  FROM TBL_QPS_MANUAL
@@ -439,17 +486,34 @@
 		   AND INDI_CD = #{indiCd}
 		   AND IN_YEAR = #{inYear}
 		   AND VAL_GB  = #{valGb}
+		   AND AXIS_CD = IFNULL(#{axisCd}, '')
 		   AND USE_YN  = 'Y'
 		 LIMIT 1
+	</select>
+
+	<!-- 축 상세 행 전부(정규·응급 …) — 분석 탭의 축별 집계표용 -->
+	<select id="selectManualAxes" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT VAL_GB AS valgb, AXIS_CD AS axiscd,
+		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04, M05 AS m05, M06 AS m06,
+		       M07 AS m07, M08 AS m08, M09 AS m09, M10 AS m10, M11 AS m11, M12 AS m12
+		  FROM TBL_QPS_MANUAL
+		 WHERE HOSP_CD = #{hospCd}
+		   AND INDI_CD = #{indiCd}
+		   AND IN_YEAR = #{inYear}
+		   AND AXIS_CD <> ''
+		   AND USE_YN  = 'Y'
+		 ORDER BY AXIS_CD, VAL_GB
+		]]>
 	</select>
 
 	<!-- upsert — (병원,지표,년도,구분) UNIQUE(UK_QPS_MANUAL) 전제.
 	     ★키가 없으면 저장할 때마다 행이 쌓이고 조회가 옛 행을 집는다(차등제에서 겪은 사고). -->
 	<insert id="saveManual" parameterType="egovframework.wnn_medcost.qps.model.QpsManualDTO">
 		INSERT INTO TBL_QPS_MANUAL
-		 (HOSP_CD, INDI_CD, IN_YEAR, VAL_GB, M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12, USE_YN, REG_USER)
+		 (HOSP_CD, INDI_CD, IN_YEAR, VAL_GB, AXIS_CD, M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12, USE_YN, REG_USER)
 		VALUES
-		 (#{hospCd}, #{indiCd}, #{inYear}, #{valGb},
+		 (#{hospCd}, #{indiCd}, #{inYear}, #{valGb}, IFNULL(#{axisCd},''),
 		  #{m01},#{m02},#{m03},#{m04},#{m05},#{m06},#{m07},#{m08},#{m09},#{m10},#{m11},#{m12},
 		  'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE

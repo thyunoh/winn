@@ -24,6 +24,14 @@ public interface QpsMapper {
 	Map<String, Object> selectQpsIndi(@Param("hospCd") String hospCd,
 	                                  @Param("indiCd") String indiCd);
 
+	// 보고서 현황판 — 기간별 18종 전부의 서술·결재 상태
+	List<Map<String, Object>> selectRptStatus(@Param("hospCd") String hospCd,
+	                                          @Param("prdGb")  String prdGb,
+	                                          @Param("prdKey") String prdKey);
+
+	// 공통코드(CODE_GB='Q') — 화면 selectbox 목록. 기준정보 화면에서 항목을 늘린다.
+	List<Map<String, Object>> selectQpsCodes();
+
 	// 지표정의서 (병원 행 우선, 없으면 공통 '*')
 	Map<String, Object> selectIndiDef(@Param("hospCd") String hospCd,
 	                                  @Param("indiCd") String indiCd);
@@ -59,11 +67,16 @@ public interface QpsMapper {
 	                                 @Param("inYear")   String inYear);
 	int saveCensus(QpsCensusDTO dto);
 
-	// 수기입력형(NUMER_SRC='MANUAL') — 월별 분자·분모를 병원이 직접 적는 지표
+	// 수기입력형(NUMER_SRC='MANUAL') — 월별 분자·분모를 병원이 직접 적는 지표.
+	// axisCd '' = 총계(지표 산출이 읽는 행), '정규'/'응급' = 상세(TAT 축별 표)
 	Map<String, Object> selectManual(@Param("hospCd") String hospCd,
 	                                 @Param("indiCd") String indiCd,
 	                                 @Param("inYear") String inYear,
-	                                 @Param("valGb")  String valGb);
+	                                 @Param("valGb")  String valGb,
+	                                 @Param("axisCd") String axisCd);
+	List<Map<String, Object>> selectManualAxes(@Param("hospCd") String hospCd,
+	                                           @Param("indiCd") String indiCd,
+	                                           @Param("inYear") String inYear);
 	int saveManual(QpsManualDTO dto);
 
 	// 집계

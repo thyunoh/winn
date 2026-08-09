@@ -35,6 +35,12 @@ public interface QpsService {
 	Map<String, Object> calcCensusFromIpwon(String hospCd, String inYear) throws Exception;
 	int saveCensus(QpsCensusDTO dto) throws Exception;
 
+	/** 보고서 현황판 — 기간별 18종 전부의 서술·결재 상태. */
+	List<Map<String, Object>> selectRptStatus(String hospCd, String prdGb, String prdKey) throws Exception;
+
+	/** 공통코드(CODE_GB='Q') — 화면 selectbox 목록. */
+	List<Map<String, Object>> selectQpsCodes() throws Exception;
+
 	/** 지표정의서 — 병원 행이 있으면 그것, 없으면 공통 기본값(own='N'). */
 	Map<String, Object> selectIndiDef(String hospCd, String indiCd) throws Exception;
 	/** 지표정의서 저장 — 항상 그 병원 행에 쓴다(공통값은 건드리지 않는다). */
@@ -60,8 +66,10 @@ public interface QpsService {
 	/** 지표 현황 — 영역별 전체 지표 + 병원의 입력 자료 유무. */
 	List<Map<String, Object>> selectIndiList(String hospCd, String inYear) throws Exception;
 
-	/** 수기입력형 지표의 월별 값 — valGb = NUMER(분자) / DENOM(분모). */
-	Map<String, Object> selectManual(String hospCd, String indiCd, String inYear, String valGb) throws Exception;
+	/** 수기입력형 지표의 월별 값 — valGb = NUMER/DENOM, axisCd '' = 총계, '정규'/'응급' = 상세. */
+	Map<String, Object> selectManual(String hospCd, String indiCd, String inYear, String valGb, String axisCd) throws Exception;
+	/** 축 상세 행 전부 — 분석 탭의 축별 집계표용. */
+	List<Map<String, Object>> selectManualAxes(String hospCd, String indiCd, String inYear) throws Exception;
 	int saveManual(QpsManualDTO dto) throws Exception;
 
 	/** 지표 산출 — 월별 분자/분모/율 + 분기 집계 + 지표정의를 한 번에 돌려준다. */

@@ -17,6 +17,7 @@ public class QpsManualDTO {
 	private String  indiCd;
 	private String  inYear;     // YYYY
 	private String  valGb;      // NUMER(분자) / DENOM(분모)
+	private String  axisCd;     // 축('' = 총계, '정규'/'응급' = 상세 — TAT 등)
 	private Integer m01, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12;
 	private String  note;
 	private String  useYn;
@@ -33,6 +34,8 @@ public class QpsManualDTO {
 	public void setInYear(String inYear) { this.inYear = inYear; }
 	public String getValGb() { return valGb; }
 	public void setValGb(String valGb) { this.valGb = valGb; }
+	public String getAxisCd() { return axisCd; }
+	public void setAxisCd(String axisCd) { this.axisCd = axisCd; }
 	public Integer getM01() { return m01; }
 	public void setM01(Integer m01) { this.m01 = m01; }
 	public Integer getM02() { return m02; }

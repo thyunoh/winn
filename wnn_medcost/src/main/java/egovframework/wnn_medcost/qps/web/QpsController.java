@@ -56,6 +56,11 @@ public class QpsController {
 			indiCd = indiCd.trim().toUpperCase();
 			model.addAttribute("indiCd", indiCd);
 
+			// 기간 딥링크(현황판→지표 이동용, 예: prd=Q2·H1). 주소 숨김이 location.search 를 지우므로
+			// 쿼리를 JS 에서 읽지 않고 서버가 모델로 내려준다.
+			String prd = request.getParameter("prd");
+			model.addAttribute("prdKey", (prd == null) ? "" : prd.trim().toUpperCase());
+
 			String indiNm = "", incidGb = indiCd;
 			try {
 				Map<String, Object> ind = svc.selectQpsIndi(hospId, indiCd);
@@ -133,6 +138,64 @@ public class QpsController {
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
 			return ".main/qpsDef";
+		} catch (Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	/**
+	 * 지표분석보고서 현황판 — 선택 기간의 18종 전부를 작성·결재 상태와 함께 보여준다.
+	 * QPS 담당자는 "어느 보고서가 안 됐나", 결재자는 "내가 승인할 문서가 있나"를 여기서 본다.
+	 */
+	@RequestMapping(value = "main/qpsRpt.do")
+	public String qpsRpt(HttpServletRequest request, ModelMap model) {
+		Map<String, String> ck = ClientInfo.getCookie(request);
+		try {
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			model.addAttribute("hospCd", hospId);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			model.addAttribute("wnnYn", wnn);
+			try {
+				Map<String, Object> h = svc.selectHospInfo(hospId);
+				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
+			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
+			return ".main/qpsRpt";
+		} catch (Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	/** 현황판 목록(JSON) — 18종 × 선택 기간의 상태 + 결재선 단계 수. */
+	@RequestMapping(value = "/qps/rptStatusList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> rptStatusList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String prdKey = str(p.get("prdKey"), "");
+			if (prdKey.length() < 5) return fail(res, "기간이 필요합니다.");
+			String prdGb = prdKey.substring(4, 5);          // 2026Q1 → Q
+			res.put("list", svc.selectRptStatus(hospCd, prdGb, prdKey));
+			res.put("line", svc.selectApprLine(hospCd));    // 단계 수 — '2/4 단계' 표시용
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 사용 안내(도움말) — 정적 화면. 내용 수정은 qpsHelp.jsp 교체로 끝난다(재기동 불필요). */
+	@RequestMapping(value = "main/qpsHelp.do")
+	public String qpsHelp(HttpServletRequest request, ModelMap model) {
+		Map<String, String> ck = ClientInfo.getCookie(request);
+		try {
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			model.addAttribute("wnnYn", wnn);
+			return ".main/qpsHelp";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -230,6 +293,27 @@ public class QpsController {
 			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
 			res.put("list", svc.selectIndiList(hospCd, inYear));
 			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 공통코드 목록 — 화면 selectbox(위해등급·유형·직군 등). 세트별로 묶어 돌려준다. */
+	@RequestMapping(value = "/qps/codeList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> codeList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, java.util.List<Map<String, Object>>> byCd = new java.util.LinkedHashMap<>();
+			java.util.List<Map<String, Object>> rows = svc.selectQpsCodes();
+			if (rows != null) for (Map<String, Object> r : rows) {
+				String cd = String.valueOf(r.get("codecd"));
+				byCd.computeIfAbsent(cd, k -> new java.util.ArrayList<>()).add(r);
+			}
+			res.put("codes", byCd);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -502,8 +586,9 @@ public class QpsController {
 			String indiCd = str(p.get("indiCd"), "");
 			String inYear = str(p.get("inYear"), "");
 			if (indiCd.isEmpty() || inYear.length() != 4) return fail(res, "지표와 년도가 필요합니다.");
-			res.put("numer", svc.selectManual(hospCd, indiCd, inYear, "NUMER"));
-			res.put("denom", svc.selectManual(hospCd, indiCd, inYear, "DENOM"));
+			res.put("numer", svc.selectManual(hospCd, indiCd, inYear, "NUMER", ""));
+			res.put("denom", svc.selectManual(hospCd, indiCd, inYear, "DENOM", ""));
+			res.put("axes",  svc.selectManualAxes(hospCd, indiCd, inYear));   // 정규/응급 상세(있으면)
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -525,6 +610,7 @@ public class QpsController {
 			String valGb = str(p.get("valGb"), "NUMER");
 			if (!"DENOM".equals(valGb)) valGb = "NUMER";
 			dto.setValGb(valGb);
+			dto.setAxisCd(str(p.get("axisCd"), ""));   // '' = 총계, '정규'/'응급' = 상세
 			dto.setM01(intOf(p.get("m01"))); dto.setM02(intOf(p.get("m02")));
 			dto.setM03(intOf(p.get("m03"))); dto.setM04(intOf(p.get("m04")));
 			dto.setM05(intOf(p.get("m05"))); dto.setM06(intOf(p.get("m06")));

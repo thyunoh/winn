@@ -21,7 +21,8 @@
 <div class="dashboard-wrapper">
 <%-- data-indicd / data-incidgb : 지표를 URL(?indi=CODE)로 받는다 — 지표가 늘어도 화면은 이 하나다 --%>
 <div id="qpsFall" data-hospcd="<c:out value='${hospCd}'/>" data-wnn="<c:out value='${wnnYn}'/>"
-     data-indicd="<c:out value='${indiCd}' default='FALL'/>" data-incidgb="<c:out value='${incidGb}' default='FALL'/>">
+     data-indicd="<c:out value='${indiCd}' default='FALL'/>" data-incidgb="<c:out value='${incidGb}' default='FALL'/>"
+     data-prd="<c:out value='${prdKey}'/>">
 <style>
   #qpsFall{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 50px; font-family:inherit; max-width:100%; overflow-x:hidden; }
   #qpsFall *{ box-sizing:border-box; }
@@ -563,11 +564,15 @@
     if (subLab) subLab.textContent = u.subLab;
     var sub = document.getElementById('f_subtypeCd');
     if (sub) {
+      // 유형 목록: 공통코드(QPS_SUB_지표코드)가 있으면 그것, 없으면 하드코딩 폴백(u.subs)
+      var rows = codeRows('QPS_SUB_' + INDI_CD);
+      var items = rows.length ? rows
+                : u.subs.map(function(s){ return { subcode: s, subcodenm: s }; });
       var keep = sub.value;                       // 수정 중이던 값은 지키고 목록만 교체
       sub.innerHTML = '<option value="">선택</option>' +
-        u.subs.map(function(s){ return '<option>' + esc(s) + '</option>'; }).join('');
+        items.map(function(r){ return '<option value="' + esc(r.subcode) + '">' + esc(r.subcodenm) + '</option>'; }).join('');
       if (keep) {
-        var has = u.subs.indexOf(keep) >= 0;
+        var has = items.some(function(r){ return String(r.subcode) === keep; });
         if (!has) sub.insertAdjacentHTML('beforeend', '<option>' + esc(keep) + '</option>');
         sub.value = keep;
       }
@@ -943,6 +948,10 @@
   //   DENOM_GB 가 있으면(신체보호대=재원일수) 분모 줄을 감추고 [재원일수] 탭을 쓰게 하고,
   //   없으면(TAT·재택복귀·불만고충·만족도) 분모도 여기서 같이 적는다.
   function manualDenomIsManual(){ return !(curDef && curDef.denomgb); }
+  // ★TAT 는 정규/응급을 나눠 본다(이전 시스템 보고서 실물이 그랬다). 축 상세는 **선택 입력** —
+  //   지표 산출은 총계 행만 읽으므로, 상세를 안 적어도 지표는 그대로 나온다.
+  var MANUAL_AXES = { TATIMG:['정규','응급'], TATLAB:['정규','응급'] };
+  function manualAxes(){ return MANUAL_AXES[INDI_CD] || []; }
   function manualLoad(){
     var d = curDef || {};
     var numNm = d.numerdesc || '분자', denNm = d.denomdesc || '분모';
@@ -973,28 +982,100 @@
       denRow.style.display = 'none';
       denRow.innerHTML = '';
     }
+    // 축 상세 행(정규/응급 × 분자/분모) — 총계 행 아래에 붙인다. 기존 행은 지우고 다시 그린다.
+    var tb = denRow.parentNode;
+    Array.prototype.slice.call(tb.querySelectorAll('tr.qf-axrow')).forEach(function(tr){ tr.remove(); });
+    manualAxes().forEach(function(ax, ai){
+      ['n', 'd'].forEach(function(kind){
+        var tr = document.createElement('tr');
+        tr.className = 'qf-axrow';
+        tr.innerHTML =
+          '<td style="background:#fbfcfd; text-align:left; padding-left:18px; color:#5b6b74;">└ ' +
+            esc(ax) + ' · ' + (kind === 'n' ? '분자' : '분모') + ' <span class="qf-hint">(선택)</span></td>' +
+          MONTHS.map(function(m){
+            return '<td><input type="number" id="ax' + ai + kind + '_m' + m + '" min="0"' +
+                   ' style="width:100%; text-align:right; background:#fbfcfd;"></td>';
+          }).join('');
+        tb.appendChild(tr);
+      });
+    });
     return post('/qps/manualGet.do', { indiCd: INDI_CD, inYear: year() }).then(function(res){
       var n = res.numer || {}, dm = res.denom || {};
       MONTHS.forEach(function(m){
         set('n_m' + m, n['m' + m]);
         if (manualDenomIsManual()) set('d_m' + m, dm['m' + m]);
       });
+      (res.axes || []).forEach(function(r){
+        var ai = manualAxes().indexOf(r.axiscd);
+        if (ai < 0) return;
+        var kind = (r.valgb === 'DENOM') ? 'd' : 'n';
+        MONTHS.forEach(function(m){ set('ax' + ai + kind + '_m' + m, r['m' + m]); });
+      });
     });
   }
   window.qfManualSave = function(){
-    // 분자를 먼저 저장하고, 분모가 수기인 지표면 이어서 분모를 저장한다(두 행이라 두 번 부른다)
+    // 총계(분자→분모) 저장 후 축 상세를 순서대로 저장한다 — upsert 라 몇 번을 불러도 행은 하나씩이다
+    var calls = [];
     var pn = { indiCd: INDI_CD, inYear: year(), valGb: 'NUMER' };
     MONTHS.forEach(function(m){ pn['m' + m] = val('n_m' + m); });
-    post('/qps/manualSave.do', pn).then(function(){
-      if (!manualDenomIsManual()) return null;
+    calls.push(pn);
+    if (manualDenomIsManual()) {
       var pd = { indiCd: INDI_CD, inYear: year(), valGb: 'DENOM' };
       MONTHS.forEach(function(m){ pd['m' + m] = val('d_m' + m); });
-      return post('/qps/manualSave.do', pd);
-    }).then(function(){
+      calls.push(pd);
+    }
+    manualAxes().forEach(function(ax, ai){
+      [['n', 'NUMER'], ['d', 'DENOM']].forEach(function(k){
+        var p = { indiCd: INDI_CD, inYear: year(), valGb: k[1], axisCd: ax };
+        MONTHS.forEach(function(m){ p['m' + m] = val('ax' + ai + k[0] + '_m' + m); });
+        calls.push(p);
+      });
+    });
+    var chain = Promise.resolve();
+    calls.forEach(function(p){ chain = chain.then(function(){ return post('/qps/manualSave.do', p); }); });
+    chain.then(function(){
       _toast('저장되었습니다.', 'ok');
       return indiLoad();
     }).catch(err);
   };
+
+  // 축별 집계표(분석 탭) — 정규/응급 각 축의 분기·연간 율을 상세 행에서 계산해 분류 카드 자리에 그린다
+  function renderManualAxisBreak(){
+    var box = document.getElementById('qfBreak');
+    if (!box) return;
+    post('/qps/manualGet.do', { indiCd: INDI_CD, inYear: year() }).then(function(res){
+      var byAxis = {};   // axis -> { n:[12], d:[12] }
+      (res.axes || []).forEach(function(r){
+        var a = byAxis[r.axiscd] || (byAxis[r.axiscd] = { n:[], d:[] });
+        var arr = (r.valgb === 'DENOM') ? a.d : a.n;
+        MONTHS.forEach(function(m, i){ arr[i] = Number(r['m' + m] || 0); });
+      });
+      function sum(arr, from, to){ var s = 0; for (var i = from; i < to; i++) s += (arr[i] || 0); return s; }
+      var COLS = [['1/4', 0, 3], ['2/4', 3, 6], ['3/4', 6, 9], ['4/4', 9, 12], ['연간', 0, 12]];
+      var axes = manualAxes().filter(function(ax){ return byAxis[ax]; });
+      if (!axes.length) {
+        box.innerHTML = '<div class="qf-sub">정규·응급 상세가 아직 없습니다 — <b>[월별 입력]</b> 탭의 상세(선택) 행에 적으면 여기에 집계됩니다.</div>';
+        return;
+      }
+      var html = '<div class="qf-scroll"><table class="qf-grid" style="min-width:560px;"><thead><tr>' +
+        '<th style="width:90px;">구분</th>' +
+        COLS.map(function(c){ return '<th>' + c[0] + (c[0] === '연간' ? '' : ' 분기') + '</th>'; }).join('') +
+        '</tr></thead><tbody>' +
+        axes.map(function(ax){
+          var a = byAxis[ax];
+          return '<tr><td style="background:#f2f6f8; font-weight:700;">' + esc(ax) + '</td>' +
+            COLS.map(function(c){
+              var n = sum(a.n, c[1], c[2]), d = sum(a.d, c[1], c[2]);
+              var cell = d > 0
+                ? (num(n) + ' / ' + num(d) + ' = <b>' + fmtRate(n * Number(curDef.multiplier || 100) / d, curDef) + esc(unit(curDef)) + '</b>')
+                : '-';
+              return '<td class="num">' + cell + '</td>';
+            }).join('') + '</tr>';
+        }).join('') +
+        '</tbody></table></div>';
+      box.innerHTML = html;
+    }).catch(function(){ box.innerHTML = ''; });
+  }
 
   // 자동산출 — 서버가 입퇴원 자료로 계산한 값을 칸에 채운다. 저장은 사람이 [저장]으로.
   window.qfCensusCalc = function(){
@@ -1044,9 +1125,16 @@
       show('#qpsFall .qf-tab[data-pane="p4"]', isMonitor);           // 관찰입력
       show('#qpsFall .qf-tab[data-pane="p5"]', isManual);            // 월별 수기입력
       show('#qpsFall .qf-tab[data-pane="p2"]', needCensus);          // 재원일수·직원수
-      // 분류별 집계는 '사고 행'이 있어야 성립한다 — 평가표형·수기형은 빈 표 6개가 고장처럼 보인다
+      // 분류별 집계는 '사고 행'이 있어야 성립한다 — 평가표형·수기형은 빈 표 6개가 고장처럼 보인다.
+      // 단 TAT 처럼 축(정규/응급)이 있는 수기형은 이 카드를 **축별 집계표**로 재활용한다.
+      var hasAxes = isManual && manualAxes().length > 0;
       var bkCard = document.getElementById('qfBreak');
-      if (bkCard) bkCard.closest('.qf-card').style.display = (isPatval || isManual) ? 'none' : '';
+      if (bkCard) bkCard.closest('.qf-card').style.display = ((isPatval || isManual) && !hasAxes) ? 'none' : '';
+      if (hasAxes) {
+        var bkHint2 = document.getElementById('qfBreakHint');
+        if (bkHint2) bkHint2.textContent = '— 정규·응급별 집계(월별 입력 탭의 상세 행에서 계산. 상세 미입력 시 빈 표)';
+        renderManualAxisBreak();
+      }
       // 화면 머리 흐름 안내·분류표 설명도 유형에 맞춘다(관찰형은 재원일수를 안 쓴다)
       var flow = document.getElementById('qfFlow');
       if (flow) flow.textContent = isMonitor ? '관찰 입력 → 분기 지표 자동산출 (수행 ÷ 관찰)'
@@ -1224,6 +1312,9 @@
       var nm = k.charAt(0) === 'Q' ? (k.charAt(1) + '/4 분기') : (k === 'H1' ? '중간(상반기)' : '최종(하반기)');
       sel.add(new Option(nm, k));
     });
+    // 기간 딥링크(?prd=Q2) — 현황판에서 넘어올 때 그 기간이 바로 열리게. 잘못된 값이면 무시.
+    var prd = ($root.getAttribute('data-prd') || '').toUpperCase();
+    if (prd && ['Q1','Q2','Q3','Q4','H1','H2'].indexOf(prd) >= 0) sel.value = prd;
   })();
   function prdOf(){ var k = document.getElementById('qfPrdKey').value; return { gb: k.charAt(0), key: year() + k }; }
   window.qfReportLoad = function(){
@@ -1593,13 +1684,46 @@
     }, 400);
   }
 
+  // ---------- 공통코드 ----------
+  // selectbox 목록(위해등급·유형·직군·순간)은 공통코드(CODE_GB='Q')에서 온다 —
+  // 기준정보 화면에서 행을 추가하면 배포 없이 항목이 는다.
+  // ★코드가 비어 있거나 조회가 실패해도 화면은 **기존 하드코딩 목록으로 그대로 동작**한다(폴백).
+  var CODES = {};
+  function codeRows(cd){ return CODES[cd] || []; }
+  // 값 보존 재구성 — 수정 중이던 값이 목록에 없으면 항목으로 덧붙인다(옛 자료가 조용히 지워지지 않게)
+  function fillSel(id, rows){
+    var sel = document.getElementById(id);
+    if (!sel || !rows.length) return;
+    var keep = sel.value;
+    sel.innerHTML = '<option value="">선택</option>' +
+      rows.map(function(r){ return '<option value="' + esc(r.subcode) + '">' + esc(r.subcodenm) + '</option>'; }).join('');
+    if (keep) {
+      var has = rows.some(function(r){ return String(r.subcode) === keep; });
+      if (!has) sel.insertAdjacentHTML('beforeend', '<option>' + esc(keep) + '</option>');
+      sel.value = keep;
+    }
+  }
+  function applyCodes(){
+    fillSel('f_levelCd',  codeRows('QPS_LEVEL'));
+    fillSel('f_placeCd',  codeRows('QPS_PLACE'));
+    fillSel('f_damageCd', codeRows('QPS_DAMAGE'));
+    fillSel('m_jobGb',    codeRows('QPS_JOB'));
+    fillSel('m_momentCd', codeRows('QPS_MOMENT'));
+  }
+
   // ---------- 초기 로드 ----------
   // ★indiLoad 를 맨 앞에 둔다 — 분모 탭(censusLoad)이 지표 마스터의 DENOM_GB(INDAYS/STAFF)를
   //   봐야 하기 때문. 순서를 되돌리면 직원안전사고가 다시 재원일수 칸에 저장된다(2026-08-09).
+  // ★공통코드를 그보다 먼저 받는다 — incidSetupUi(유형 목록)·관찰 폼이 코드를 본다.
+  //   실패해도 catch 로 삼키고 진행한다(코드는 폴백이 있는 부가물이라 화면을 막으면 안 된다).
   window.qfReload = function(){
     indiLoad().then(censusLoad).then(incidLoad).then(qfReportLoad).catch(err);
   };
-  $(function(){ qfReload(); });
+  $(function(){
+    post('/qps/codeList.do', {}).then(function(res){ CODES = res.codes || {}; applyCodes(); })
+      .catch(function(){ CODES = {}; })
+      .then(function(){ qfReload(); });
+  });
 })();
 </script>
 </div><%-- /#qpsFall --%>

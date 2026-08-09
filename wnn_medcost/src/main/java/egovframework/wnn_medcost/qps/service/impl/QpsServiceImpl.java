@@ -121,6 +121,16 @@ public class QpsServiceImpl implements QpsService {
 		return mapper.selectIndiList(hospCd, inYear);
 	}
 
+	@Override
+	public List<Map<String, Object>> selectQpsCodes() throws Exception {
+		return mapper.selectQpsCodes();
+	}
+
+	@Override
+	public List<Map<String, Object>> selectRptStatus(String hospCd, String prdGb, String prdKey) throws Exception {
+		return mapper.selectRptStatus(hospCd, prdGb, prdKey);
+	}
+
 	// ===================== 지표정의서 =====================
 
 	@Override
@@ -387,8 +397,13 @@ public class QpsServiceImpl implements QpsService {
 	}
 
 	@Override
-	public Map<String, Object> selectManual(String hospCd, String indiCd, String inYear, String valGb) throws Exception {
-		return mapper.selectManual(hospCd, indiCd, inYear, valGb);
+	public Map<String, Object> selectManual(String hospCd, String indiCd, String inYear, String valGb, String axisCd) throws Exception {
+		return mapper.selectManual(hospCd, indiCd, inYear, valGb, axisCd);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectManualAxes(String hospCd, String indiCd, String inYear) throws Exception {
+		return mapper.selectManualAxes(hospCd, indiCd, inYear);
 	}
 
 	@Override
@@ -516,12 +531,13 @@ public class QpsServiceImpl implements QpsService {
 		boolean hasDenom;
 
 		if ("MANUAL".equals(numerSrc)) {
-			Map<String, Object> mNumer = mapper.selectManual(hospCd, indiCd, inYear, "NUMER");
+			// 산출은 늘 **총계 행(axis='')** 만 읽는다 — 정규/응급 상세는 분석 탭 표에만 쓴다
+			Map<String, Object> mNumer = mapper.selectManual(hospCd, indiCd, inYear, "NUMER", "");
 			// 분모: DENOM_GB 가 있으면 기존 분모 마스터(재원일수·직원수), 없으면 수기 DENOM 행
 			boolean denomFromCensus = !denomGb.isEmpty();
 			Map<String, Object> mDenom = denomFromCensus
 					? mapper.selectCensus(hospCd, denomGb, inYear)
-					: mapper.selectManual(hospCd, indiCd, inYear, "DENOM");
+					: mapper.selectManual(hospCd, indiCd, inYear, "DENOM", "");
 			for (String mm : MM) {
 				int numer = (mNumer == null) ? 0 : intOf(mNumer.get("m" + mm), 0);
 				int denom = (mDenom == null) ? 0 : intOf(mDenom.get("m" + mm), 0);
