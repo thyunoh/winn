@@ -60,6 +60,9 @@
   <div class="qd-spacer"></div>
   <select id="qdIndi" style="width:auto; min-width:230px;" onchange="qdLoad();"></select>
   <span id="qdOwn" class="qd-own n">공통 기본값</span>
+  <%-- 저장·인쇄는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정) --%>
+  <button type="button" class="qd-btn" onclick="qdSave();">저장</button>
+  <button type="button" class="qd-btn ghost" onclick="qdPrint();">🖨 인쇄(A4)</button>
 </div>
 
 <div id="qdBody" style="display:none;">
@@ -106,8 +109,7 @@
     </div>
 
     <div style="margin-top:14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <button type="button" class="qd-btn" onclick="qdSave();">저장</button>
-      <button type="button" class="qd-btn ghost" onclick="qdPrint();">🖨 인쇄(A4)</button>
+      <%-- 저장·인쇄는 상단으로 옮겼다(2026-08-10). 아래에는 이 화면 고유 동작만 남긴다. --%>
       <button type="button" class="qd-btn ghost" onclick="qdGoIndi();">지표 화면으로</button>
       <button type="button" class="qd-btn warn" id="qdResetBtn" onclick="qdReset();">공통값으로 되돌리기</button>
       <span class="qd-sub" id="qdSaveHint">저장하면 이 병원 전용 정의서가 만들어집니다(다른 병원에 영향 없음).</span>

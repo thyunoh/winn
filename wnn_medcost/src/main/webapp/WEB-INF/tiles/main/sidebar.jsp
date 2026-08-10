@@ -191,6 +191,21 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsRound.do">라운딩 점검표 <span style="color:#a8b4bb;">(서식 3호)</span></a>
                                 </li>
+                                <%-- 감염병환자 월별 리스트 / 감염관리 전담자 --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsInfPat.do">감염병환자</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsInfStaff.do">감염관리 전담자</a>
+                                </li>
+                                <%-- 감염관리 우선순위 사정 도구 — 기준표+집계표를 한 화면에(자동계산) --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsInfRisk.do">감염 우선순위 사정</a>
+                                </li>
+                                <%-- 감염종합보고 — 원본 3종(계획수립·수행·손위생 교육결과)을 한 서식으로 --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsInfRpt.do">감염종합보고</a>
+                                </li>
                                 <%-- 자료실 — 서식이 아니라 보관물(조직도·내규). 분류별 첨부만 있다 --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a>

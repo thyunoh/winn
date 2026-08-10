@@ -46,9 +46,14 @@
 </style>
 
 <div class="qp-head">
-  <div class="qp-title"><span class="qp-dot"></span>질향상및 환자안전 활동계획서 <span class="qp-sub">서식 2호 · 연 1부</span></div>
+  <div class="qp-title"><span class="qp-dot"></span><span id="plTitle">질향상및 환자안전 활동계획서</span> <span class="qp-sub">서식 2호 · 연 1부</span></div>
   <span class="qp-hosp" id="plHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qp-spacer"></div>
+  <%-- 서식구분(2026-08-10 감염관리 포함) — 같은 년도라도 질향상용·감염관리용이 <각각 1부> 존재한다 --%>
+  <select id="plGb" style="width:auto;" onchange="plLoad();">
+    <option value="Q">질향상·환자안전</option>
+    <option value="I">감염관리</option>
+  </select>
   <label class="qp-sub">제출일</label> <input type="date" id="plSubmitDt" style="width:auto;">
   <select id="plYear" style="width:auto;" onchange="plLoad();"></select>
   <button type="button" class="qp-btn" onclick="plSave();">저장</button>
@@ -114,6 +119,9 @@
 <script>
 (function(){
   var HOSP_NM = '';
+    /** 서식구분 — Q=질향상·환자안전, I=감염관리 (2026-08-10) */
+  function plGb(){ var e=document.getElementById("plGb"); return e ? e.value : "Q"; }
+
   // 공통 첨부 — 계획서(PLAN) 문서키 = 년도(자연키, 저장 전에도 존재).
   var fileBox = window.qpsFileBox({ mount:'plFileBox', refGb:'PLAN',
       hint:'연간계획서에 붙는 사진·파일', needSaveMsg:'년도를 선택하면 첨부할 수 있습니다.' });
@@ -259,8 +267,11 @@
   }
 
   window.plLoad = function(){
-    if (fileBox) fileBox.setKey(document.getElementById('plYear').value);   // 년도 = 첨부 키
-    return post('/qps/planGet.do', { inYear: document.getElementById('plYear').value }).then(function(res){
+    /* 첨부 키 = 년도|구분. ★구분을 빼면 감염 계획서 첨부가 질향상 것과 섞인다(2026-08-10). */
+    if (fileBox) fileBox.setKey(document.getElementById('plYear').value + '|' + plGb());
+    var t = document.getElementById('plTitle');
+    if (t) t.textContent = (plGb()==='I') ? '감염관리 활동계획서' : '질향상및 환자안전 활동계획서';
+    return post('/qps/planGet.do', { formGb: plGb(), inYear: document.getElementById('plYear').value }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('plHosp').textContent = '🏥 ' + HOSP_NM; }
       var plan = res.plan, items = res.items || [];
@@ -279,6 +290,7 @@
 
   window.plSave = function(){
     post('/qps/planSave.do', {
+      formGb: plGb(),
       inYear: document.getElementById('plYear').value,
       submitDt: document.getElementById('plSubmitDt').value,
       items: JSON.stringify(collect())

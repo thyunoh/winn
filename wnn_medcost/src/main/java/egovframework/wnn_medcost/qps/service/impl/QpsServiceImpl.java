@@ -134,9 +134,9 @@ public class QpsServiceImpl implements QpsService {
 	// ===================== 서식 2호: 연간 활동계획서 =====================
 
 	@Override
-	public Map<String, Object> selectPlanWithItems(String hospCd, String inYear) throws Exception {
+	public Map<String, Object> selectPlanWithItems(String hospCd, String formGb, String inYear) throws Exception {
 		Map<String, Object> out = new LinkedHashMap<>();
-		Map<String, Object> plan = mapper.selectPlan(hospCd, inYear);
+		Map<String, Object> plan = mapper.selectPlan(hospCd, formGb, inYear);
 		out.put("plan", plan);
 		if (plan != null && plan.get("planseq") != null) {
 			out.put("items", mapper.selectPlanItems(Long.parseLong(String.valueOf(plan.get("planseq")))));
@@ -147,10 +147,11 @@ public class QpsServiceImpl implements QpsService {
 	}
 
 	@Override
-	public long savePlan(String hospCd, String inYear, String submitDt,
+	public long savePlan(String hospCd, String formGb, String inYear, String submitDt,
 	                     List<Map<String, Object>> items, String userId) throws Exception {
 		Map<String, Object> p = new HashMap<>();
 		p.put("hospCd", hospCd);
+		p.put("formGb", formGb);
 		p.put("inYear", inYear);
 		p.put("submitDt", submitDt);
 		p.put("regUser", userId);
@@ -207,9 +208,9 @@ public class QpsServiceImpl implements QpsService {
 	// ===================== 서식 3호: 라운딩 점검표 =====================
 
 	@Override
-	public Map<String, Object> selectRoundWithItems(String hospCd, String roundYm) throws Exception {
+	public Map<String, Object> selectRoundWithItems(String hospCd, String formGb, String roundYm) throws Exception {
 		Map<String, Object> out = new LinkedHashMap<>();
-		Map<String, Object> rnd = mapper.selectRound(hospCd, roundYm);
+		Map<String, Object> rnd = mapper.selectRound(hospCd, formGb, roundYm);
 		out.put("round", rnd);
 		if (rnd != null && rnd.get("rndseq") != null) {
 			out.put("items", mapper.selectRoundItems(Long.parseLong(String.valueOf(rnd.get("rndseq")))));
@@ -220,10 +221,11 @@ public class QpsServiceImpl implements QpsService {
 	}
 
 	@Override
-	public long saveRound(String hospCd, String roundYm, String checker,
+	public long saveRound(String hospCd, String formGb, String roundYm, String checker,
 	                      List<Map<String, Object>> items, String userId) throws Exception {
 		Map<String, Object> p = new HashMap<>();
 		p.put("hospCd", hospCd);
+		p.put("formGb", formGb);
 		p.put("roundYm", roundYm);
 		p.put("checker", checker);
 		p.put("regUser", userId);
@@ -245,8 +247,8 @@ public class QpsServiceImpl implements QpsService {
 	// ===================== 서식 1호: 회의록 =====================
 
 	@Override
-	public List<Map<String, Object>> selectMinutesList(String hospCd, String inYear) throws Exception {
-		return mapper.selectMinutesList(hospCd, inYear);
+	public List<Map<String, Object>> selectMinutesList(String hospCd, String formGb, String inYear) throws Exception {
+		return mapper.selectMinutesList(hospCd, formGb, inYear);
 	}
 
 	@Override
@@ -843,5 +845,186 @@ public class QpsServiceImpl implements QpsService {
 		if (o == null) return def;
 		try { return new BigDecimal(String.valueOf(o).trim().replace(",", "")).intValue(); }
 		catch (Exception e) { return def; }
+	}
+
+	// ===================== 감염종합보고 (3종 통합) =====================
+
+	@Override
+	public List<Map<String, Object>> selectInfRptList(String hospCd, String rptGb, String inYear) throws Exception {
+		return mapper.selectInfRptList(hospCd, rptGb, inYear);
+	}
+
+	@Override
+	public Map<String, Object> selectInfRptWithMem(String hospCd, long rptSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectInfRpt(hospCd, rptSeq);
+		out.put("doc", doc);
+		out.put("members", doc == null ? new ArrayList<>() : mapper.selectInfRptMem(rptSeq));
+		return out;
+	}
+
+	/** 저장 — 새 문서면 insert, 있으면 update. 명단은 통째 교체(부분 수정 API 를 두지 않는다). */
+	@Override
+	public long saveInfRpt(Map<String, Object> p, List<Map<String, Object>> members) throws Exception {
+		long seq = 0;
+		Object s = p.get("rptSeq");
+		if (s != null && !String.valueOf(s).trim().isEmpty()) {
+			try { seq = Long.parseLong(String.valueOf(s).trim()); } catch (Exception ignore) { seq = 0; }
+		}
+		if (seq > 0) { mapper.updateInfRpt(p); }
+		else { mapper.insertInfRpt(p); seq = Long.parseLong(String.valueOf(p.get("rptSeq"))); }
+
+		mapper.deleteInfRptMem(seq);
+		if (members != null && !members.isEmpty()) {
+			Map<String, Object> mp = new HashMap<>();
+			mp.put("rptSeq", seq);
+			mp.put("items", members);
+			mapper.insertInfRptMem(mp);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteInfRpt(Map<String, Object> param) throws Exception {
+		return mapper.deleteInfRpt(param);
+	}
+
+	// ============ 감염관리 우선순위 사정 도구 ============
+
+	@Override
+	public List<Map<String, Object>> selectInfRiskList(String hospCd, String inYear) throws Exception {
+		return mapper.selectInfRiskList(hospCd, inYear);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectInfRiskDef() throws Exception {
+		return mapper.selectInfRiskDef();
+	}
+
+	@Override
+	public Map<String, Object> selectInfRiskWithItems(String hospCd, long riskSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectInfRisk(hospCd, riskSeq);
+		out.put("doc", doc);
+		List<Map<String, Object>> items = (doc == null) ? null : mapper.selectInfRiskItems(riskSeq);
+		// 항목이 없으면 기본 31행을 깔아 준다 — 화면이 빈 표로 시작하지 않게
+		if (items == null || items.isEmpty()) items = mapper.selectInfRiskDef();
+		out.put("items", items);
+		return out;
+	}
+
+	/**
+	 * 저장 — 위험점수는 <서버가> 계산해 넣는다.
+	 * ★화면에서 온 score 를 믿지 않는다. 원본은 사람이 곱셈을 손으로 해 틀릴 수 있었고,
+	 *   여기서는 그 계산을 옮겨오는 것이 이식의 핵심이다. 세 값 중 하나라도 비면 점수는 null.
+	 */
+	@Override
+	public long saveInfRisk(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		mapper.insertInfRisk(p);
+		long seq = Long.parseLong(String.valueOf(p.get("riskSeq")));
+
+		mapper.deleteInfRiskItems(seq);
+		if (items != null && !items.isEmpty()) {
+			for (Map<String, Object> it : items) {
+				Integer pv = intOrNull(it.get("pval")), sv = intOrNull(it.get("sval")), rv = intOrNull(it.get("rval"));
+				it.put("pval", pv); it.put("sval", sv); it.put("rval", rv);
+				it.put("score", (pv == null || sv == null || rv == null) ? null : (pv * sv * rv));
+			}
+			int CHUNK = 100;
+			for (int i = 0; i < items.size(); i += CHUNK) {
+				Map<String, Object> ip = new HashMap<>();
+				ip.put("riskSeq", seq);
+				ip.put("items", items.subList(i, Math.min(i + CHUNK, items.size())));
+				mapper.insertInfRiskItems(ip);
+			}
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteInfRisk(Map<String, Object> param) throws Exception {
+		return mapper.deleteInfRisk(param);
+	}
+
+	// ============ 감염병환자 월별 리스트 ============
+
+	@Override
+	public Map<String, Object> selectInfPatWithItems(String hospCd, String ipatYm) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectInfPat(hospCd, ipatYm);
+		out.put("doc", doc);
+		out.put("items", (doc == null || doc.get("ipatseq") == null)
+				? new ArrayList<>()
+				: mapper.selectInfPatItems(Long.parseLong(String.valueOf(doc.get("ipatseq")))));
+		return out;
+	}
+
+	@Override
+	public long saveInfPat(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		mapper.upsertInfPat(p);
+		long seq = Long.parseLong(String.valueOf(p.get("ipatSeq")));
+		mapper.deleteInfPatItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("ipatSeq", seq);
+			ip.put("items", items);
+			mapper.insertInfPatItems(ip);
+		}
+		return seq;
+	}
+
+	// ============ 감염관리 전담자 ============
+
+	@Override
+	public List<Map<String, Object>> selectInfStaffList(String hospCd) throws Exception {
+		return mapper.selectInfStaffList(hospCd);
+	}
+
+	@Override
+	public Map<String, Object> selectInfStaffAll(String hospCd, long stfSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectInfStaff(hospCd, stfSeq);
+		out.put("doc", doc);
+		out.put("edus",   doc == null ? new ArrayList<>() : mapper.selectInfStaffEdu(stfSeq));
+		out.put("duties", doc == null ? new ArrayList<>() : mapper.selectInfStaffDuty(stfSeq));
+		return out;
+	}
+
+	@Override
+	public long saveInfStaff(Map<String, Object> p,
+	                         List<Map<String, Object>> edus,
+	                         List<Map<String, Object>> duties) throws Exception {
+		long seq = 0;
+		Object s = p.get("stfSeq");
+		if (s != null && !String.valueOf(s).trim().isEmpty()) {
+			try { seq = Long.parseLong(String.valueOf(s).trim()); } catch (Exception ignore) { seq = 0; }
+		}
+		if (seq > 0) { mapper.updateInfStaff(p); }
+		else { mapper.insertInfStaff(p); seq = Long.parseLong(String.valueOf(p.get("stfSeq"))); }
+
+		mapper.deleteInfStaffEdu(seq);
+		if (edus != null && !edus.isEmpty()) {
+			Map<String, Object> ep = new HashMap<>(); ep.put("stfSeq", seq); ep.put("items", edus);
+			mapper.insertInfStaffEdu(ep);
+		}
+		mapper.deleteInfStaffDuty(seq);
+		if (duties != null && !duties.isEmpty()) {
+			Map<String, Object> dp = new HashMap<>(); dp.put("stfSeq", seq); dp.put("items", duties);
+			mapper.insertInfStaffDuty(dp);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteInfStaff(Map<String, Object> param) throws Exception {
+		return mapper.deleteInfStaff(param);
+	}
+
+	/** 빈 칸은 0 이 아니라 null 이다 — '평가 안 함'과 '1점'을 구별해야 한다. */
+	private static Integer intOrNull(Object o) {
+		if (o == null) return null;
+		String s = String.valueOf(o).trim();
+		if (s.isEmpty()) return null;
+		try { return Integer.valueOf(new BigDecimal(s).intValue()); } catch (Exception e) { return null; }
 	}
 }

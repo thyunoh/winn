@@ -53,11 +53,22 @@
 </style>
 
 <div class="qm-head">
-  <div class="qm-title"><span class="qm-dot"></span>위원회 회의록 <span class="qm-sub">서식 1호</span></div>
+  <div class="qm-title"><span class="qm-dot"></span><span id="qmTitle">위원회 회의록</span> <span class="qm-sub">서식 1호</span></div>
   <div class="qm-sub">회의록을 등록하고 A4 로 인쇄합니다 (결재란 포함)</div>
   <span class="qm-hosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qm-spacer"></div>
+  <%-- 위원회 구분(2026-08-10 감염관리 포함) — MEET_GB(정기/임시)와는 다른 축이다.
+       목록·저장 모두 이 구분을 타므로 QPS 회의와 감염 회의가 섞이지 않는다. --%>
+  <select id="qmGb" style="width:auto;" onchange="qmList();">
+    <option value="Q">질향상·환자안전</option>
+    <option value="I">감염관리</option>
+  </select>
   <select id="qmYear" style="width:auto;" onchange="qmList();"></select>
+  <%-- 저장·인쇄·삭제는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정).
+       종전에는 폼 맨 아래라 회의록이 길면 끝까지 내려가야 했다. --%>
+  <button type="button" class="qm-btn" onclick="qmSave();">저장</button>
+  <button type="button" class="qm-btn ghost" onclick="qmPrint();">🖨 인쇄(A4)</button>
+  <button type="button" class="qm-btn warn" id="qmDelBtn" onclick="qmDel();" style="display:none;">삭제</button>
 </div>
 
 <div class="qm-wrap">
@@ -101,11 +112,6 @@
         <div class="lb">특이사항</div>   <div class="full"><input type="text" id="m_specialTxt" maxlength="500"></div>
         <div class="lb">첨부파일</div>   <div class="full"><div id="qmFileBox"></div></div>
       </div>
-      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-        <button type="button" class="qm-btn" onclick="qmSave();">저장</button>
-        <button type="button" class="qm-btn ghost" onclick="qmPrint();">🖨 인쇄(A4)</button>
-        <button type="button" class="qm-btn warn" id="qmDelBtn" onclick="qmDel();" style="display:none;">삭제</button>
-      </div>
     </div>
   </div>
 </div>
@@ -113,6 +119,8 @@
 <script>
 (function(){
   var HOSP_NM = '', apprLine = [], curSeq = 0;
+  /** 위원회 구분 — Q=질향상·환자안전, I=감염관리 (2026-08-10) */
+  function qmGb(){ var e=document.getElementById('qmGb'); return e ? e.value : 'Q'; }
   // 공통 첨부 위젯 — 회의록(MINUTES) 문서키 = 회의록 SEQ. 문서 저장 전엔 업로드 잠김.
   var fileBox = window.qpsFileBox({ mount:'qmFileBox', refGb:'MINUTES',
       hint:'이 회의록에 붙는 사진·파일', needSaveMsg:'회의록을 먼저 저장하면 첨부할 수 있습니다.' });
@@ -137,7 +145,9 @@
   })();
 
   window.qmList = function(){
-    return post('/qps/minutesList.do', { inYear: document.getElementById('qmYear').value }).then(function(res){
+    var t = document.getElementById('qmTitle');
+    if (t) t.textContent = (qmGb()==='I') ? '감염관리위원회 회의록' : '위원회 회의록';
+    return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value }).then(function(res){
       apprLine = res.line || [];
       if (res.hosp) HOSP_NM = res.hosp.hospnm || '';
       var hb = document.querySelector('#qpsMin .qm-hosp');
@@ -196,6 +206,7 @@
     if (!val('m_meetDt')) { _alertBox('회의일을 입력해 주세요.', {icon:'⚠️'}); return; }
     if (!val('m_title'))  { _alertBox('회의명을 입력해 주세요.', {icon:'⚠️'}); return; }
     post('/qps/minutesSave.do', {
+      formGb: qmGb(),
       minSeq: val('m_minSeq'), meetDt: val('m_meetDt'), title: val('m_title'), meetGb: getGb(),
       place: val('m_place'), personnel: val('m_personnel'),
       attendees: val('m_attendees'), members: val('m_members'),

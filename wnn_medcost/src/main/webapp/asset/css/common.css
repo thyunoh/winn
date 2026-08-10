@@ -1195,5 +1195,6 @@ label.critical::after {
    그 아래로 들어가 가린다. QPS 화면 전체에 오른쪽 여백을 줘서 한 번에 피한다.
    ★#qpsXxx 각 화면이 자기 padding 을 갖고 있어(ID 선택자) !important 가 필요하다. */
 .dashboard-wrapper div[id^="qps"] {
-  padding-right: 56px !important;
+  /* 56px 로는 우측 상단 선택상자가 여전히 잘려 80px 로 넓힘(2026-08-10 2차 요청) */
+  padding-right: 80px !important;
 }

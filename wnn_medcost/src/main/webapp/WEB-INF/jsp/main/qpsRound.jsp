@@ -42,9 +42,14 @@
 </style>
 
 <div class="qr-head">
-  <div class="qr-title"><span class="qr-dot"></span>환자안전 관리 라운딩 점검표 <span class="qr-sub">서식 3호 · 월 1부</span></div>
+  <div class="qr-title"><span class="qr-dot"></span><span id="rdTitle">환자안전 관리 라운딩 점검표</span> <span class="qr-sub">서식 3호 · 월 1부</span></div>
   <span class="qr-hosp" id="rdHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qr-spacer"></div>
+  <%-- 서식구분(2026-08-10 감염관리 포함) — 같은 달이라도 질향상용·감염관리용이 각각 1부 --%>
+  <select id="rdGb" style="width:auto;" onchange="rdLoad();">
+    <option value="Q">질향상·환자안전</option>
+    <option value="I">감염관리</option>
+  </select>
   <label class="qr-sub">점검자</label> <input type="text" id="rdChecker" maxlength="50" style="width:110px;">
   <input type="month" id="rdYm" style="width:auto;" onchange="rdLoad();">
   <button type="button" class="qr-btn ghost" onclick="rdCopyPrev();">⧉ 전월 복사</button>
@@ -89,6 +94,8 @@
     document.getElementById('rdYm').value = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
   })();
   function ym(){ return document.getElementById('rdYm').value.replace('-', ''); }
+  /** 서식구분 — Q=질향상·환자안전, I=감염관리 (2026-08-10) */
+  function rdGb(){ var e=document.getElementById("rdGb"); return e ? e.value : "Q"; }
 
   // 새 문서 기본 틀 — 원본 1쪽의 구분 묶음(항목·내용은 병원이 채우고 [전월 복사]로 재사용)
   var DEFAULTS = [];
@@ -160,8 +167,10 @@
   }
 
   window.rdLoad = function(){
-    if (fileBox) fileBox.setKey(ym());   // 년월 = 첨부 키
-    return post('/qps/roundGet.do', { roundYm: ym() }).then(function(res){
+    if (fileBox) fileBox.setKey(ym() + '|' + rdGb());   /* 년월|구분 = 첨부 키(감염 것과 안 섞이게) */
+    var t = document.getElementById('rdTitle');
+    if (t) t.textContent = (rdGb()==='I') ? '감염관리 라운딩 점검표' : '환자안전 관리 라운딩 점검표';
+    return post('/qps/roundGet.do', { formGb: rdGb(), roundYm: ym() }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('rdHosp').textContent = '🏥 ' + HOSP_NM; }
       var rnd = res.round;
@@ -176,7 +185,7 @@
     var v = document.getElementById('rdYm').value.split('-');
     var d = new Date(Number(v[0]), Number(v[1]) - 2, 1);   // 전월
     var prevYm = d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2);
-    post('/qps/roundGet.do', { roundYm: prevYm }).then(function(res){
+    post('/qps/roundGet.do', { formGb: rdGb(), roundYm: prevYm }).then(function(res){
       var items = res.items || [];
       if (!items.length) { _alertBox('전월(' + prevYm.substring(0,4) + '-' + prevYm.substring(4) + ') 점검표가 없습니다.', {icon:'⚠️'}); return; }
       _confirmBox({ msg:'전월 점검표의 <b>항목·내용 ' + items.length + '행</b>을 가져올까요?<br>' +
@@ -188,7 +197,7 @@
 
   window.rdSave = function(){
     post('/qps/roundSave.do', {
-      roundYm: ym(), checker: document.getElementById('rdChecker').value.trim(),
+      formGb: rdGb(), roundYm: ym(), checker: document.getElementById('rdChecker').value.trim(),
       items: JSON.stringify(collect())
     }).then(function(){
       _toast('저장되었습니다.', 'ok');

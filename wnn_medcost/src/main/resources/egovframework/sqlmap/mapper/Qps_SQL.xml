@@ -49,12 +49,13 @@
 		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
 		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
 		  FROM TBL_QPS_PLAN
-		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		 <!-- formGb: Q=질향상 I=감염관리 (2026-08-10 감염 포함). 안 오면 기존 동작대로 Q -->
+		 WHERE HOSP_CD = #{hospCd} AND FORM_GB = IFNULL(#{formGb},'Q') AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
 	</select>
 
 	<insert id="upsertPlan" parameterType="map" useGeneratedKeys="true" keyProperty="planSeq">
-		INSERT INTO TBL_QPS_PLAN (HOSP_CD, IN_YEAR, SUBMIT_DT, USE_YN, REG_USER)
-		VALUES (#{hospCd}, #{inYear}, REPLACE(#{submitDt},'-',''), 'Y', #{regUser})
+		INSERT INTO TBL_QPS_PLAN (HOSP_CD, FORM_GB, IN_YEAR, SUBMIT_DT, USE_YN, REG_USER)
+		VALUES (#{hospCd}, IFNULL(#{formGb},'Q'), #{inYear}, REPLACE(#{submitDt},'-',''), 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE SUBMIT_DT=VALUES(SUBMIT_DT), USE_YN='Y', UPD_USER=#{regUser},
 		  PLAN_SEQ = LAST_INSERT_ID(PLAN_SEQ)   <!-- ★upsert 로 갱신돼도 planSeq 를 돌려받는 관용구 -->
 	</insert>
@@ -94,12 +95,13 @@
 		SELECT RND_SEQ AS rndseq, ROUND_YM AS roundym, CHECKER AS checker,
 		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
 		  FROM TBL_QPS_ROUND
-		 WHERE HOSP_CD = #{hospCd} AND ROUND_YM = #{roundYm} AND USE_YN = 'Y'
+		 <!-- formGb: Q=질향상 I=감염관리 (2026-08-10 감염 포함). 안 오면 기존 동작대로 Q -->
+		 WHERE HOSP_CD = #{hospCd} AND FORM_GB = IFNULL(#{formGb},'Q') AND ROUND_YM = #{roundYm} AND USE_YN = 'Y'
 	</select>
 
 	<insert id="upsertRound" parameterType="map" useGeneratedKeys="true" keyProperty="rndSeq">
-		INSERT INTO TBL_QPS_ROUND (HOSP_CD, ROUND_YM, CHECKER, USE_YN, REG_USER)
-		VALUES (#{hospCd}, #{roundYm}, #{checker}, 'Y', #{regUser})
+		INSERT INTO TBL_QPS_ROUND (HOSP_CD, FORM_GB, ROUND_YM, CHECKER, USE_YN, REG_USER)
+		VALUES (#{hospCd}, IFNULL(#{formGb},'Q'), #{roundYm}, #{checker}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE CHECKER=VALUES(CHECKER), USE_YN='Y', UPD_USER=#{regUser},
 		  RND_SEQ = LAST_INSERT_ID(RND_SEQ)
 	</insert>
@@ -132,6 +134,8 @@
 		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
 		  FROM TBL_QPS_MINUTES
 		 WHERE HOSP_CD = #{hospCd}
+		   <!-- formGb: Q=질향상위원회 I=감염관리위원회 (2026-08-10). 안 오면 기존대로 Q -->
+		   AND FORM_GB = IFNULL(#{formGb},'Q')
 		   AND USE_YN  = 'Y'
 		   AND MEET_DT LIKE CONCAT(#{inYear}, '%')
 		 ORDER BY MEET_DT DESC, MIN_SEQ DESC
@@ -150,10 +154,10 @@
 
 	<insert id="insertMinutes" parameterType="map" useGeneratedKeys="true" keyProperty="minSeq">
 		INSERT INTO TBL_QPS_MINUTES
-		 (HOSP_CD, MEET_DT, TITLE, MEET_GB, PLACE, PERSONNEL, ATTENDEES, MEMBERS,
+		 (HOSP_CD, FORM_GB, MEET_DT, TITLE, MEET_GB, PLACE, PERSONNEL, ATTENDEES, MEMBERS,
 		  AGENDA, CONTENT, DECISION, NEXT_TXT, ATTACH_TXT, SPECIAL_TXT, USE_YN, REG_USER)
 		VALUES
-		 (#{hospCd}, REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{personnel},
+		 (#{hospCd}, IFNULL(#{formGb},'Q'), REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{personnel},
 		  #{attendees}, #{members}, #{agenda}, #{content}, #{decision}, #{nextTxt},
 		  #{attachTxt}, #{specialTxt}, 'Y', #{regUser})
 	</insert>
@@ -996,5 +1000,239 @@
 		 WHERE HOSP_CD = #{hospCd} AND REF_GB = #{refGb} AND USE_YN = 'Y'
 		 GROUP BY REF_KEY
 	</select>
+
+
+	<!-- ═══ 감염종합보고 (3종 통합: P 계획수립 / D 수행 / E 손위생 교육결과) ═══
+	     골격이 같아 한 서식으로 묶었다(2026-08-10 확정). 칸이 남는 서식은 비워 둔다. -->
+	<select id="selectInfRptList" resultType="java.util.HashMap">
+		SELECT RPT_SEQ AS rptseq, RPT_GB AS rptgb, TITLE AS title,
+		       DATE_FORMAT(STR_TO_DATE(RPT_DT,'%Y%m%d'),'%Y-%m-%d') AS rptdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_INFRPT
+		 WHERE HOSP_CD = #{hospCd} AND RPT_GB = #{rptGb} AND USE_YN = 'Y'
+		   AND RPT_DT LIKE CONCAT(#{inYear}, '%')
+		 ORDER BY RPT_DT DESC, RPT_SEQ DESC
+	</select>
+
+	<select id="selectInfRpt" resultType="java.util.HashMap">
+		SELECT RPT_SEQ AS rptseq, RPT_GB AS rptgb,
+		       DATE_FORMAT(STR_TO_DATE(RPT_DT,'%Y%m%d'),'%Y-%m-%d') AS rptdt, TITLE AS title,
+		       DOC_CLS AS doccls, DOC_NO AS docno,
+		       DATE_FORMAT(STR_TO_DATE(DRAFT_DT,'%Y%m%d'),'%Y-%m-%d') AS draftdt,
+		       DRAFTER AS drafter, DEPT_NM AS deptnm, CHAIR_NM AS chairnm, ROOM_NM AS roomnm,
+		       COOP_NM AS coopnm, RECV_NM AS recvnm, REF_NM AS refnm,
+		       DATE_FORMAT(STR_TO_DATE(SEND_DT,'%Y%m%d'),'%Y-%m-%d') AS senddt,
+		       BODY AS body, EDU_DT AS edudt, EDU_TEACHER AS eduteacher,
+		       EDU_TARGET AS edutarget, EDU_TOPIC AS edutopic, EDU_BODY AS edubody, NOTE AS note
+		  FROM TBL_QPS_INFRPT
+		 WHERE RPT_SEQ = #{rptSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertInfRpt" parameterType="map" useGeneratedKeys="true" keyProperty="rptSeq">
+		INSERT INTO TBL_QPS_INFRPT
+		 (HOSP_CD, RPT_GB, RPT_DT, TITLE, DOC_CLS, DOC_NO, DRAFT_DT, DRAFTER, DEPT_NM,
+		  CHAIR_NM, ROOM_NM, COOP_NM, RECV_NM, REF_NM, SEND_DT, BODY,
+		  EDU_DT, EDU_TEACHER, EDU_TARGET, EDU_TOPIC, EDU_BODY, NOTE, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{rptGb}, REPLACE(#{rptDt},'-',''), #{title}, #{docCls}, #{docNo},
+		  REPLACE(#{draftDt},'-',''), #{drafter}, #{deptNm}, #{chairNm}, #{roomNm},
+		  #{coopNm}, #{recvNm}, #{refNm}, REPLACE(#{sendDt},'-',''), #{body},
+		  #{eduDt}, #{eduTeacher}, #{eduTarget}, #{eduTopic}, #{eduBody}, #{note}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateInfRpt" parameterType="map">
+		UPDATE TBL_QPS_INFRPT SET
+		  RPT_DT = REPLACE(#{rptDt},'-',''), TITLE = #{title}, DOC_CLS = #{docCls}, DOC_NO = #{docNo},
+		  DRAFT_DT = REPLACE(#{draftDt},'-',''), DRAFTER = #{drafter}, DEPT_NM = #{deptNm},
+		  CHAIR_NM = #{chairNm}, ROOM_NM = #{roomNm}, COOP_NM = #{coopNm}, RECV_NM = #{recvNm},
+		  REF_NM = #{refNm}, SEND_DT = REPLACE(#{sendDt},'-',''), BODY = #{body},
+		  EDU_DT = #{eduDt}, EDU_TEACHER = #{eduTeacher}, EDU_TARGET = #{eduTarget},
+		  EDU_TOPIC = #{eduTopic}, EDU_BODY = #{eduBody}, NOTE = #{note}, UPD_USER = #{regUser}
+		 WHERE RPT_SEQ = #{rptSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteInfRpt" parameterType="map">
+		UPDATE TBL_QPS_INFRPT SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE RPT_SEQ = #{rptSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectInfRptMem" resultType="java.util.HashMap">
+		SELECT SORT AS sort, ROLE_NM AS rolenm, DEPT_NM AS deptnm, MEM_NM AS memnm
+		  FROM TBL_QPS_INFRPT_MEM WHERE RPT_SEQ = #{rptSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteInfRptMem">
+		DELETE FROM TBL_QPS_INFRPT_MEM WHERE RPT_SEQ = #{rptSeq}
+	</delete>
+
+	<insert id="insertInfRptMem" parameterType="map">
+		INSERT INTO TBL_QPS_INFRPT_MEM (RPT_SEQ, SORT, ROLE_NM, DEPT_NM, MEM_NM) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{rptSeq}, #{it.sort}, #{it.rolenm}, #{it.deptnm}, #{it.memnm})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ 감염관리 우선순위 사정 도구 ═══
+	     위험점수 = 발생가능성(1~5) × 심각성(1~5) × 준비·대처(1~4). 최대 100.
+	     ★점수는 계산값이지만 저장한다 — 집계표가 SQL 정렬로 끝나고, 기준이 바뀌어도 그때 값이 남는다. -->
+	<select id="selectInfRiskList" resultType="java.util.HashMap">
+		SELECT RISK_SEQ AS riskseq, EVALUATOR AS evaluator,
+		       DATE_FORMAT(STR_TO_DATE(EVAL_DT,'%Y%m%d'),'%Y-%m-%d') AS evaldt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_INFRISK
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y' AND EVAL_DT LIKE CONCAT(#{inYear}, '%')
+		 ORDER BY EVAL_DT DESC, RISK_SEQ DESC
+	</select>
+
+	<select id="selectInfRisk" resultType="java.util.HashMap">
+		SELECT RISK_SEQ AS riskseq, EVALUATOR AS evaluator,
+		       DATE_FORMAT(STR_TO_DATE(EVAL_DT,'%Y%m%d'),'%Y-%m-%d') AS evaldt
+		  FROM TBL_QPS_INFRISK
+		 WHERE RISK_SEQ = #{riskSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertInfRisk" parameterType="map" useGeneratedKeys="true" keyProperty="riskSeq">
+		INSERT INTO TBL_QPS_INFRISK (HOSP_CD, EVAL_DT, EVALUATOR, USE_YN, REG_USER)
+		VALUES (#{hospCd}, REPLACE(#{evalDt},'-',''), #{evaluator}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE EVALUATOR=VALUES(EVALUATOR), USE_YN='Y', UPD_USER=#{regUser},
+		  RISK_SEQ = LAST_INSERT_ID(RISK_SEQ)
+	</insert>
+
+	<update id="deleteInfRisk" parameterType="map">
+		UPDATE TBL_QPS_INFRISK SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE RISK_SEQ = #{riskSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectInfRiskItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort, GRP_NM AS grpnm, SEC_CD AS seccd, SEC_NM AS secnm,
+		       ITEM_NO AS itemno, ITEM_NM AS itemnm,
+		       P_VAL AS pval, S_VAL AS sval, R_VAL AS rval, SCORE AS score, NOTE AS note
+		  FROM TBL_QPS_INFRISK_ITEM WHERE RISK_SEQ = #{riskSeq} ORDER BY SORT
+	</select>
+
+	<!-- 기본 위험항목 31종 — 새 평가를 만들 때 이 표로 초기 행을 깐다 -->
+	<select id="selectInfRiskDef" resultType="java.util.HashMap">
+		SELECT SORT AS sort, GRP_NM AS grpnm, SEC_CD AS seccd, SEC_NM AS secnm,
+		       ITEM_NO AS itemno, ITEM_NM AS itemnm
+		  FROM TBL_QPS_INFRISK_DEF WHERE USE_YN = 'Y' ORDER BY SORT
+	</select>
+
+	<delete id="deleteInfRiskItems">
+		DELETE FROM TBL_QPS_INFRISK_ITEM WHERE RISK_SEQ = #{riskSeq}
+	</delete>
+
+	<insert id="insertInfRiskItems" parameterType="map">
+		INSERT INTO TBL_QPS_INFRISK_ITEM
+		 (RISK_SEQ, SORT, GRP_NM, SEC_CD, SEC_NM, ITEM_NO, ITEM_NM, P_VAL, S_VAL, R_VAL, SCORE, NOTE) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{riskSeq}, #{it.sort}, #{it.grpnm}, #{it.seccd}, #{it.secnm}, #{it.itemno}, #{it.itemnm},
+			 #{it.pval}, #{it.sval}, #{it.rval}, #{it.score}, #{it.note})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ 감염병환자 월별 리스트 ═══ 병원+년월 1부, 행 통째 교체 -->
+	<select id="selectInfPat" resultType="java.util.HashMap">
+		SELECT IPAT_SEQ AS ipatseq, IPAT_YM AS ipatym,
+		       ST_BLOOD AS stblood, ST_MDRO AS stmdro, ST_TB AS sttb
+		  FROM TBL_QPS_INFPAT WHERE HOSP_CD = #{hospCd} AND IPAT_YM = #{ipatYm} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertInfPat" parameterType="map" useGeneratedKeys="true" keyProperty="ipatSeq">
+		INSERT INTO TBL_QPS_INFPAT (HOSP_CD, IPAT_YM, ST_BLOOD, ST_MDRO, ST_TB, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{ipatYm}, #{stBlood}, #{stMdro}, #{stTb}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE ST_BLOOD=VALUES(ST_BLOOD), ST_MDRO=VALUES(ST_MDRO), ST_TB=VALUES(ST_TB),
+		  USE_YN='Y', UPD_USER=#{regUser}, IPAT_SEQ = LAST_INSERT_ID(IPAT_SEQ)
+	</insert>
+
+	<select id="selectInfPatItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort,
+		       DATE_FORMAT(STR_TO_DATE(IN_DT,'%Y%m%d'),'%Y-%m-%d') AS indt,
+		       DATE_FORMAT(STR_TO_DATE(CHK_DT,'%Y%m%d'),'%Y-%m-%d') AS chkdt,
+		       DISEASE AS disease, PAT_NO AS patno, PAT_NM AS patnm, SEX_NM AS sexnm,
+		       AGE_VAL AS ageval, IN_HOSP AS inhosp, ACT_TXT AS acttxt
+		  FROM TBL_QPS_INFPAT_ITEM WHERE IPAT_SEQ = #{ipatSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteInfPatItems">DELETE FROM TBL_QPS_INFPAT_ITEM WHERE IPAT_SEQ = #{ipatSeq}</delete>
+
+	<insert id="insertInfPatItems" parameterType="map">
+		INSERT INTO TBL_QPS_INFPAT_ITEM
+		 (IPAT_SEQ, SORT, IN_DT, CHK_DT, DISEASE, PAT_NO, PAT_NM, SEX_NM, AGE_VAL, IN_HOSP, ACT_TXT) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{ipatSeq}, #{it.sort}, REPLACE(#{it.indt},'-',''), REPLACE(#{it.chkdt},'-',''),
+			 #{it.disease}, #{it.patno}, #{it.patnm}, #{it.sexnm}, #{it.ageval}, #{it.inhosp}, #{it.acttxt})
+		</foreach>
+	</insert>
+
+	<!-- ═══ 감염관리 전담자 (임명장·자격경력·직무기술서 한 벌) ═══ -->
+	<select id="selectInfStaffList" resultType="java.util.HashMap">
+		SELECT STF_SEQ AS stfseq, STF_NM AS stfnm, DEPT_NM AS deptnm, POSITION AS position,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_INFSTAFF WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		 ORDER BY STF_SEQ DESC
+	</select>
+
+	<select id="selectInfStaff" resultType="java.util.HashMap">
+		SELECT STF_SEQ AS stfseq, STF_NM AS stfnm, DEPT_NM AS deptnm, POSITION AS position,
+		       DATE_FORMAT(STR_TO_DATE(APPT_DT,'%Y%m%d'),'%Y-%m-%d') AS apptdt,
+		       JOB_KIND AS jobkind, CAREER_TXT AS careertxt,
+		       DATE_FORMAT(STR_TO_DATE(JOIN_DT,'%Y%m%d'),'%Y-%m-%d') AS joindt, RANK_NM AS ranknm,
+		       DATE_FORMAT(STR_TO_DATE(DEPT_DT,'%Y%m%d'),'%Y-%m-%d') AS deptdt,
+		       DATE_FORMAT(STR_TO_DATE(DUTY_DT,'%Y%m%d'),'%Y-%m-%d') AS dutydt,
+		       DATE_FORMAT(STR_TO_DATE(WRITE_DT,'%Y%m%d'),'%Y-%m-%d') AS writedt,
+		       EDU_LEVEL AS edulevel, MAJOR_TXT AS majortxt, LICENSE_TXT AS licensetxt, CAREER_REQ AS careerreq
+		  FROM TBL_QPS_INFSTAFF WHERE STF_SEQ = #{stfSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertInfStaff" parameterType="map" useGeneratedKeys="true" keyProperty="stfSeq">
+		INSERT INTO TBL_QPS_INFSTAFF
+		 (HOSP_CD, STF_NM, DEPT_NM, POSITION, APPT_DT, JOB_KIND, CAREER_TXT, JOIN_DT, RANK_NM,
+		  DEPT_DT, DUTY_DT, WRITE_DT, EDU_LEVEL, MAJOR_TXT, LICENSE_TXT, CAREER_REQ, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{stfNm}, #{deptNm}, #{position}, REPLACE(#{apptDt},'-',''), #{jobKind}, #{careerTxt},
+		  REPLACE(#{joinDt},'-',''), #{rankNm}, REPLACE(#{deptDt},'-',''), REPLACE(#{dutyDt},'-',''),
+		  REPLACE(#{writeDt},'-',''), #{eduLevel}, #{majorTxt}, #{licenseTxt}, #{careerReq}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateInfStaff" parameterType="map">
+		UPDATE TBL_QPS_INFSTAFF SET
+		  STF_NM=#{stfNm}, DEPT_NM=#{deptNm}, POSITION=#{position}, APPT_DT=REPLACE(#{apptDt},'-',''),
+		  JOB_KIND=#{jobKind}, CAREER_TXT=#{careerTxt}, JOIN_DT=REPLACE(#{joinDt},'-',''), RANK_NM=#{rankNm},
+		  DEPT_DT=REPLACE(#{deptDt},'-',''), DUTY_DT=REPLACE(#{dutyDt},'-',''),
+		  WRITE_DT=REPLACE(#{writeDt},'-',''), EDU_LEVEL=#{eduLevel}, MAJOR_TXT=#{majorTxt},
+		  LICENSE_TXT=#{licenseTxt}, CAREER_REQ=#{careerReq}, UPD_USER=#{regUser}
+		 WHERE STF_SEQ=#{stfSeq} AND HOSP_CD=#{hospCd}
+	</update>
+
+	<update id="deleteInfStaff" parameterType="map">
+		UPDATE TBL_QPS_INFSTAFF SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE STF_SEQ=#{stfSeq} AND HOSP_CD=#{hospCd}
+	</update>
+
+	<select id="selectInfStaffEdu" resultType="java.util.HashMap">
+		SELECT SORT AS sort, ORG_NM AS orgnm, CRS_NM AS crsnm, EDU_DT AS edudt, EDU_TERM AS eduterm
+		  FROM TBL_QPS_INFSTAFF_EDU WHERE STF_SEQ = #{stfSeq} ORDER BY SORT
+	</select>
+	<delete id="deleteInfStaffEdu">DELETE FROM TBL_QPS_INFSTAFF_EDU WHERE STF_SEQ = #{stfSeq}</delete>
+	<insert id="insertInfStaffEdu" parameterType="map">
+		INSERT INTO TBL_QPS_INFSTAFF_EDU (STF_SEQ, SORT, ORG_NM, CRS_NM, EDU_DT, EDU_TERM) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{stfSeq}, #{it.sort}, #{it.orgnm}, #{it.crsnm}, #{it.edudt}, #{it.eduterm})
+		</foreach>
+	</insert>
+
+	<select id="selectInfStaffDuty" resultType="java.util.HashMap">
+		SELECT SORT AS sort, DUTY_NM AS dutynm, DUTY_TXT AS dutytxt, DUTY_CYC AS dutycyc
+		  FROM TBL_QPS_INFSTAFF_DUTY WHERE STF_SEQ = #{stfSeq} ORDER BY SORT
+	</select>
+	<delete id="deleteInfStaffDuty">DELETE FROM TBL_QPS_INFSTAFF_DUTY WHERE STF_SEQ = #{stfSeq}</delete>
+	<insert id="insertInfStaffDuty" parameterType="map">
+		INSERT INTO TBL_QPS_INFSTAFF_DUTY (STF_SEQ, SORT, DUTY_NM, DUTY_TXT, DUTY_CYC) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{stfSeq}, #{it.sort}, #{it.dutynm}, #{it.dutytxt}, #{it.dutycyc})
+		</foreach>
+	</insert>
 
 </mapper>
