@@ -8,6 +8,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
 <div id="qpsRound" data-wnn="<c:out value='${wnnYn}'/>">
@@ -41,9 +42,14 @@
 </style>
 
 <div class="qr-head">
-  <div class="qr-title"><span class="qr-dot"></span>환자안전 관리 라운딩 점검표 <span class="qr-sub">서식 3호 · 월 1부</span></div>
+  <div class="qr-title"><span class="qr-dot"></span><span id="rdTitle">환자안전 관리 라운딩 점검표</span> <span class="qr-sub">서식 3호 · 월 1부</span></div>
   <span class="qr-hosp" id="rdHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qr-spacer"></div>
+  <%-- 서식구분(2026-08-10 감염관리 포함) — 같은 달이라도 질향상용·감염관리용이 각각 1부 --%>
+  <select id="rdGb" style="width:auto;" onchange="rdLoad();">
+    <option value="Q">질향상·환자안전</option>
+    <option value="I">감염관리</option>
+  </select>
   <label class="qr-sub">점검자</label> <input type="text" id="rdChecker" maxlength="50" style="width:110px;">
   <input type="month" id="rdYm" style="width:auto;" onchange="rdLoad();">
   <button type="button" class="qr-btn ghost" onclick="rdCopyPrev();">⧉ 전월 복사</button>
@@ -54,17 +60,25 @@
 
 <div class="qr-card">
   <table class="ed"><thead><tr>
-    <th style="width:96px;">구분</th><th style="width:190px;">점검 항목</th><th>점검 내용</th>
+    <%-- 구분: '각실 관리(공통)' 처럼 괄호 달린 이름이 잘리지 않을 폭 --%>
+    <th style="width:150px;">구분</th><th style="width:190px;">점검 항목</th><th>점검 내용</th>
     <th style="width:46px;">양호</th><th style="width:46px;">불량</th>
     <th style="width:240px;">불량 내용 및 개선사항</th><th style="width:26px;"></th>
   </tr></thead><tbody id="rdBody"></tbody></table>
   <button type="button" class="qr-btn mini" style="margin-top:6px;" onclick="rdAdd();">＋ 행 추가</button>
   <span class="qr-sub" style="margin-left:8px;">양호/불량을 다시 누르면 해제됩니다(미점검).</span>
+  <div style="margin-top:14px; border-top:1px solid #eef2f5; padding-top:12px;">
+    <div style="font-size:13px; font-weight:800; color:#20303a; margin-bottom:6px;">첨부파일 <span style="font-weight:500;font-size:11.5px;color:#8a99a3;">— 라운딩 사진 등</span></div>
+    <div id="rdFileBox"></div>
+  </div>
 </div>
 
 <script>
 (function(){
   var HOSP_NM = '', rowIdx = 0;
+  // 공통 첨부 — 라운딩(ROUND) 문서키 = 년월(자연키).
+  var fileBox = window.qpsFileBox({ mount:'rdFileBox', refGb:'ROUND',
+      hint:'라운딩 사진·파일', needSaveMsg:'년월을 선택하면 첨부할 수 있습니다.' });
   function post(url, data){
     return $.ajax({ url:url, type:'POST', data:data, dataType:'json' }).then(function(res){
       if (res && res.result === 'FAIL') { throw new Error(res.message || '처리에 실패했습니다.'); }
@@ -80,6 +94,8 @@
     document.getElementById('rdYm').value = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
   })();
   function ym(){ return document.getElementById('rdYm').value.replace('-', ''); }
+  /** 서식구분 — Q=질향상·환자안전, I=감염관리 (2026-08-10) */
+  function rdGb(){ var e=document.getElementById("rdGb"); return e ? e.value : "Q"; }
 
   // 새 문서 기본 틀 — 원본 1쪽의 구분 묶음(항목·내용은 병원이 채우고 [전월 복사]로 재사용)
   var DEFAULTS = [];
@@ -151,7 +167,10 @@
   }
 
   window.rdLoad = function(){
-    return post('/qps/roundGet.do', { roundYm: ym() }).then(function(res){
+    if (fileBox) fileBox.setKey(ym() + '|' + rdGb());   /* 년월|구분 = 첨부 키(감염 것과 안 섞이게) */
+    var t = document.getElementById('rdTitle');
+    if (t) t.textContent = (rdGb()==='I') ? '감염관리 라운딩 점검표' : '환자안전 관리 라운딩 점검표';
+    return post('/qps/roundGet.do', { formGb: rdGb(), roundYm: ym() }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('rdHosp').textContent = '🏥 ' + HOSP_NM; }
       var rnd = res.round;
@@ -166,7 +185,7 @@
     var v = document.getElementById('rdYm').value.split('-');
     var d = new Date(Number(v[0]), Number(v[1]) - 2, 1);   // 전월
     var prevYm = d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2);
-    post('/qps/roundGet.do', { roundYm: prevYm }).then(function(res){
+    post('/qps/roundGet.do', { formGb: rdGb(), roundYm: prevYm }).then(function(res){
       var items = res.items || [];
       if (!items.length) { _alertBox('전월(' + prevYm.substring(0,4) + '-' + prevYm.substring(4) + ') 점검표가 없습니다.', {icon:'⚠️'}); return; }
       _confirmBox({ msg:'전월 점검표의 <b>항목·내용 ' + items.length + '행</b>을 가져올까요?<br>' +
@@ -178,7 +197,7 @@
 
   window.rdSave = function(){
     post('/qps/roundSave.do', {
-      roundYm: ym(), checker: document.getElementById('rdChecker').value.trim(),
+      formGb: rdGb(), roundYm: ym(), checker: document.getElementById('rdChecker').value.trim(),
       items: JSON.stringify(collect())
     }).then(function(){
       _toast('저장되었습니다.', 'ok');
@@ -216,7 +235,7 @@
       '<div class="h2"><span>' + esc(HOSP_NM) + '</span>' +
       '<span>' + esc(v[0]) + '년 ' + Number(v[1]) + '월 &nbsp;&nbsp; 점검자 : ' +
         esc(document.getElementById('rdChecker').value) + '</span></div>' +
-      '<table><thead><tr><th style="width:70px;">구분</th><th style="width:150px;">점검 항목</th><th>점검 내용</th>' +
+      '<table><thead><tr><th style="width:96px;">구분</th><th style="width:140px;">점검 항목</th><th>점검 내용</th>' +
       '<th style="width:34px;">양호</th><th style="width:34px;">불량</th><th style="width:170px;">불량 내용 및 개선사항</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table>';
 

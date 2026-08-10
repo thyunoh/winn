@@ -471,6 +471,8 @@
   #evalReport .er-indbox.er-full .er-anabar{ background:#e9f6ec; color:#2e7d32; }
   #evalReport .er-indbody{ padding:10px 14px 11px; }
   #evalReport .er-hl-bad{ color:var(--er-bad); font-weight:800; }
+  /* 평가기간 누적 실적(2026-08-10) — 당월 문장과 <같은 줄이되 구분>되게. 인쇄에서도 남는 옅은 회색. */
+  #evalReport .er-cum{ display:inline-block; margin-top:2px; color:#4a5a66; }
   #evalReport .er-def{ color:#7c8798; font-size:11.5px; margin:4px 0 0 13px; }
   #evalReport .er-grplabel.er-g10{ background:var(--er-navy); }
   #evalReport .er-grplabel.er-g21{ background:#1f7a66; }
@@ -1213,6 +1215,37 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   var DENOM_NM = { '01':'의사', '02':'간호사', '03':'간호인력' };
   var NOT_HEADCOUNT = ['04','08'];                            // 분모가 환자수가 아닌 지표(재직일수율·DUR)
 
+  /* ── 산정근거 문장의 분모·분자 이름 (2026-08-10 요청) ───────────────────────
+     종전 "대상 43명 중 해당 3명" 은 무엇이 대상이고 무엇이 해당인지 알 수 없었다.
+     지표마다 분모·분자의 뜻이 다르므로 이름을 지표코드별로 붙인다.
+     ★개선형(11 욕창개선·12 ADL개선)은 "…중 N명 개선되어" 로 말이 달라진다. */
+  var DEN_NM2 = {
+    '05':'평가대상자', '06':'배뇨관리 대상자', '09':'욕창 보유 환자',
+    '10':'욕창 고위험군 환자', '11':'욕창 개선대상자', '12':'ADL 개선대상자',
+    '13':'당뇨병 상병 환자', '14':'평가대상자', '15':'퇴원 환자'
+  };
+  var NUM_NM2 = {
+    '05':'유치도뇨관 14일 초과 대상자', '06':'배뇨관리 실시 환자', '09':'욕창 처치 실시 환자',
+    '10':'2단계 이상 욕창이 새로 발생한 환자', '11':'개선', '12':'개선',
+    '13':'적정범위 환자', '14':'181일 이상 장기입원 환자', '15':'지역사회 복귀 환자'
+  };
+  var IS_IMPROVE = { '11':1, '12':1 };                        // "…중 N명 개선되어" 형식
+
+  /** 보고서 대상 월 — "7월". 산정근거 문장 앞에 붙여 어느 달 실적인지 드러낸다. */
+  function ymLabel(){
+    var y = String(curYm || '');
+    return (y.length >= 6) ? parseInt(y.substring(4,6),10) + '월' : '';
+  }
+  var _cum = null;     // { from:'202607', to:'202609', map:{ '05':{dtor,ntor,cal,weig} } } — 평가기간 누적
+  /** 누적 기간 표기 — "7~9월" (같은 해라 연도는 생략) */
+  function cumLabel(){
+    if (!_cum) return '';
+    var a = parseInt(_cum.from.substring(4,6),10), b = parseInt(_cum.to.substring(4,6),10);
+    return (a===b) ? a+'월' : a+'~'+b+'월';
+  }
+  /** 가중치점수 → 표준화점수. 구간 한 칸 = 가중치/5 이므로 되짚을 수 있다(01~15 공통). */
+  function zoneOfWeig(w, got){ return (w>0) ? Math.round(got/(w/5)) : 0; }
+
   // ===== 원본 컨설팅 PDF 표준 문구 (지표코드별) — "양식 그대로" 기본값. 편집으로 병원별 덮어쓰기 가능 =====
   // 지표 정의 (Ⅲ 분석 문단에 이어붙음)
   var TPL_DEF = {
@@ -1220,29 +1253,34 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '02':'값이 작을수록 우수(6명 미만 = 5구간).',
     '03':'간호사+간호조무사 등 간호인력 기준 1인당 환자수. 값이 작을수록 우수(3명 미만 = 5구간).',
     '04':'평가대상기간 중 약사 재직일수 비율(100% = 5구간).',
-    '05':'유치도뇨관(Foley)을 보유한 환자 비율. 값이 낮을수록 우수(0.5% 미만 = 5구간).',
-    '06':'배뇨조절 저하(자주 실금·조절 못함) 환자 중 배뇨관리를 실시한 환자 비율. 분자 인정 = ①일정하게 짜여진 배뇨계획+배뇨일지 3일 이상 ②방광훈련프로그램+배뇨일지 3일 이상 ③규칙적 도뇨 중 하나 이상(의료최고도·배뇨관련 루 관리 등 제외).',
-    '07':'항정신성의약품 처방 정도(PI, 0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성·평균 처방률 확인이 불가하여 시스템 산출 PI값은 실제 평가결과와 차이가 있을 수 있으므로 참고용임.',
+    /* 2026-08-10 문구 확정(요구사항 185~198행) — 지표 정의에는 기관별 분석 결과(현재 점수·구간·개선 여지)를 넣지 않는다. */
+    '05':'전월 평가표 작성일로부터 유치도뇨관 삽입기간이 연속 14일을 초과한 대상자의 비율로, 연속 14일을 초과하지 않도록 관리함. 불필요한 유치도뇨관은 조기 제거하고, 재삽입이 필요한 경우 제거 후 2일이 지난 뒤 재삽입될 수 있도록 관리가 필요함.',
+    '06':'배뇨조절이 저하된 환자(자주 실금함·조절 못함) 중 배뇨관리를 실시한 환자의 비율. ① 일정하게 짜여진 배뇨계획에 따른 배뇨일지 3일 이상 작성, ② 방광훈련프로그램 시행 및 배뇨일지 3일 이상 작성, ③ 규칙적 도뇨 시행 중 1개 이상을 충족한 경우 분자로 인정함. 단, 의료최고도 및 배뇨 관련 루 관리 대상 등은 제외함.',
+    '07':'환자의 상병 구성을 보정하여 타 기관 대비 항정신성의약품 처방 수준을 평가하는 지표(PI)로, 값이 낮을수록 우수함(0.2 미만 = 5구간 / 1.6 이상 = 1구간). ※ 타 기관의 상병 구성 및 평균 처방률을 확인할 수 없어 WinCheck에서 산출된 PI값은 실제 평가결과와 차이가 있을 수 있으며 참고용으로 활용함. 기관 자체 처방률 기준으로는 10% 이하 시 5구간, 40% 이상 시 1구간 수준으로 참고하여 관리함.',
     '08':'매월 심사평가원의 DUR 점검 현황을 확인하여 누락 대상자 관리가 필요하며 점검 결과에 따라 추후 결과 발표 시 점수차가 발생할 수 있음. 확인경로: 요양기관업무포털(biz.hira.or.kr) > 모니터링 > DUR정보 > 기관별 DUR 점검완료현황.',
-    '09':'전월 평가표 상 1단계 이상 욕창 보유 환자 중 당월 피부문제 처치를 실시한 환자 비율. (처치 = 압력 줄이는 도구 사용·체위변경·욕창 해결 위한 영양 공급·욕창부위 드레싱 등 4가지 중 수행 시 해당)',   /* 2026-07-30 문구 확정: 당일→전월 평가표/당월 */
-    '10':'당일·전월 모두 고위험군에 해당하는 환자 중 당일 2단계 이상 욕창이 새로 생긴 환자를 확인하는 지표. 값이 낮을수록 우수(0.25% 미만 = 5구간).',
+    '09':'1단계 이상 욕창을 보유한 환자 중 피부문제 처치를 적절히 실시한 환자의 비율. 압력을 줄이는 도구 사용, 체위변경, 욕창 해결을 위한 영양공급, 욕창부위 드레싱의 4개 항목을 모두 충족한 경우 처치 실시로 인정함. 단, 1단계 욕창은 드레싱을 시행하지 않아도 드레싱을 실시한 것으로 간주하여 평가함.',
+    '10':'해당 월 평가와 전월 평가를 모두 받은 욕창 고위험군 환자 중 전월에 비해 2단계 이상의 욕창이 새로 발생한 환자의 비율을 평가하는 지표.',
     '11':'2단계 이상 욕창 보유 환자 중 당일 개선된 환자 비율(개선 = 욕창 단계 수가 줄거나 최고단계가 낮아진 경우).',
-    '12':'입원 시점 대비 재평가에서 일상생활수행능력이 호전된 환자 비율.',
-    '13':'당뇨병 상병 환자 중 HbA1c 검사결과가 적정범위(98% 이상 = 5구간)인 환자 비율.',
-    '14':'재원환자 중 181일 이상 장기입원 비율. 값이 낮을수록 우수(20% 미만 = 5구간).',
-    '15':'퇴원 환자 중 지역사회(가정 등)로 복귀한 비율. 값이 높을수록 우수(70% 이상 = 5구간).'
+    '12':'전월과 당월 의료최고도·선택입원군 및 10개 항목이 완전 자립이거나 감독 필요인 경우는 제외한 대상자 중, 전월 대비 10개 항목의 기능 정도가 2점 이상 개선된 환자의 비율.',
+    '13':'당뇨병 상병 환자 중 HbA1c 검사결과가 적정범위(4% 이상 ~ 8.5% 미만)에 해당하는 환자의 비율을 평가하는 지표임.',
+    '14':'평가 대상기간 동안 입원 중인 환자 중 입원기간이 181일 이상인 환자의 비율을 평가하는 지표로, 값이 낮을수록 우수함. 단, 평가기간(7~12월) 중 1개월이라도 의료최고도·의료고도·의료중도에 해당하는 환자는 평가대상에서 제외함.',
+    '15':'지역사회 복귀율은 심평원 및 행정안전부 자료 등을 연계하여 산출되는 지표로, 기관 자체 자료만으로는 정확한 결과값을 산출하기 어려워 WinCheck에서는 임의로 표준화 3점, 가중치 3점으로 적용함.'
   };
+  /* 지표명 표기 교정 (2026-08-10) — DB 지표명이 줄임말이라 보고서에서만 바로잡는다. */
+  var NM_FIX = { '12':'일상생활수행능력(ADL) 개선환자분율' };
+  function indiNm(r){ return NM_FIX[r.cate_cd] || r.cate_nm; }
   // ▷ 개선 방향 (Ⅲ·Ⅳ 기본 문구)
   var TPL_DIR = {
     '01':'의사 인력 충원이 필요한 구조 항목으로, 우선 의사 재직·근무일수 산정 정확성을 점검.',
     '03':'간호인력 충원 및 근무일수 산정 정확성 점검.',
     '05':'불필요 유지 여부 정기 검토·조기 제거, 간헐적 도뇨(CIC) 전환. 제거 시 제거일자를 평가표에 정확히 입력(누락 시 계속 보유로 집계).',
-    '06':'배뇨일지를 작성했어도 배뇨관리계획(일정하게 짜여진 배뇨계획·방광훈련프로그램) 항목 미체크 시 분자에서 누락되므로 평가표 작성기준 우선 재점검. 배뇨일지 7일 미만 작성 시 \'아니오\' 체크 후 실제 작성일수 기재, 배뇨일지에는 실시일자·요실금 여부·배뇨횟수(또는 배뇨량, mL)를 반드시 포함하고 의사·간호기록과 일치하도록 관리.',
+    '06':'배뇨관리계획(일정하게 짜여진 배뇨계획·방광훈련프로그램) 체크 여부와 배뇨일지 작성 여부를 우선 점검하고, 배뇨일지의 실시일자·요실금 여부·배뇨횟수 또는 배뇨량을 의사·간호기록과 일치하도록 관리함.',
     '09':'욕창(피부문제) 처치 4항목(압력분산도구·체위변경·영양공급·창상 드레싱) 중 실시분을 평가표에 정확히 기록. 특히 2단계 이상 압박성 궤양은 염증성 처치(M0121)가 동반 청구되어야 욕창처치 실시로 인정되므로 처치·청구 기록의 일치 여부를 함께 점검. 미실시로 집계된 대상자 중 체중 대비 필요 열량 이상으로 영양공급이 이뤄진 사례가 있으면 평가표의 \'피부문제 해결을 위한 영양공급\' 항목을 보완하여 처치 대상자로 반영(항목 미체크만으로 분자에서 빠져 최고 점수를 놓치는 경우가 많음).',
-    '11':'욕창 발생 환자의 주차별 창상 사정(PUSH tool 등)·호전 여부를 평가표에 반드시 기록. 실제 처치·드레싱은 이뤄지나 개선 기록 누락으로 낮게 산정되는 경우가 많으므로 기록 관리가 핵심.',
-    '12':'재활·기능회복 대상 환자의 입원 초기 ADL과 재평가 ADL을 동일 기준으로 기록하여 호전 건 반영. 물리치료·작업치료 실적과 평가표 연동 점검.',
-    '14':'퇴원계획 수립·지역연계(재가·시설) 강화로 장기입원 비중 관리. 아울러 의료경도 또는 선택입원군 대상자가 1개월 이상 의료중도 이상으로 산정되면 장기입원환자분율의 분모·분자에서 제외되어 점수 향상이 가능하므로, 환자군 변동 여부를 지속적으로 확인·관리.',
-    '15':'퇴원 후 재가·시설 연계 실적을 정확히 기록 관리.'
+    '11':'욕창 단계 및 개수의 변화를 지속적으로 확인하고, 욕창 처치 및 경과관리를 통해 개선될 수 있도록 관리함. 전월 대비 욕창 단계 수 감소 또는 최고단계 하향 여부를 평가표에 정확히 반영하여 실제 개선 대상자가 누락되지 않도록 점검함.',
+    /* '12'(ADL) 개선방향은 2026-08-10 요청으로 <내렸다> — "재활·기능회복…물리치료·작업치료 연동" 문구가 나오지 않게. */
+    '13':'당뇨병 상병 환자의 HbA1c 검사 시행 여부 및 검사결과를 지속적으로 확인하고, 검사 누락 및 평가표 미반영 대상자가 발생하지 않도록 관리함. 적정범위를 벗어난 환자는 혈당관리 및 추적검사를 통해 적정범위 유지 여부를 점검함.',
+    '14':'장기입원 환자의 퇴원 가능 여부 및 지역사회 연계 가능성을 지속적으로 검토하고, 환자 상태를 정확하게 평가하여 의료필요도에 따른 환자분류가 적정하게 반영되도록 관리함.',
+    '15':'퇴원 환자 중 타 의료기관으로 전원·이송한 경우에는 퇴원수납 및 청구심사 시 진료결과를 ‘이송’ 또는 ‘회송’으로 정확히 입력하고, 사망한 경우에는 ‘사망’으로 입력하여 실제 퇴원결과가 정확하게 반영되도록 관리가 필요함.'
   };
   // Ⅰ-2 우선지표 "개선 여지" 문구
   var TPL_ROOM = {
@@ -1297,24 +1335,58 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }).join(' · ');
   }
 
-  // Ⅲ 자동 분석문 — PDF 원본 형식: "분모 X 중 분자 Y = Z%로 표준화 N구간(범위), 가중치 W점 중 P점 산정"
-  //   미달 지표는 구간·점수 부분 빨강 강조, 만점 지표는 "가중치 W점 만점 산정" (원본 문구)
+  /* Ⅲ 자동 분석문 (2026-08-10 형식 확정)
+       "7월 평가대상자 43명 중 유치도뇨관 14일 초과 대상자 3명으로 6.98%,
+        표준화 1구간(3.5% 이상)에 해당하여 가중치 3점 중 0.6점 산정."
+     ★바뀐 점 두 가지
+       ① 분모·분자에 <이름>을 붙인다 — 종전 "대상 N명 중 해당 N명"은 뜻이 드러나지 않았다.
+       ② 가중치는 <언제나> "W점 중 P점" — 5점 구간이라도 '만점'이라는 말을 쓰지 않는다(표기 통일). */
   function autoAna(r, full){
     var cd=r.cate_cd, w=n(r.stdweig), got=n(r.weigval), dtor=n(r.dtorval), s=n(r.s_score)||0;
     var rng = s ? zoneRange(cd, s) : '';
-    var zone = s ? s+'구간'+(rng? '('+rng+')' : '') : '-';
-    var lead;
-    if (UNIT_PERSON.indexOf(cd)>=0)
-      lead = '평균 재원환자 '+esc(fnum(r.ntorval))+'명 ÷ '+DENOM_NM[cd]+' '+esc(fnum(r.dtorval))+'명 = 1인당 <b>'+calDisp(r)+'</b>';
-    else if (cd==='04')
-      lead = '재직대상 '+esc(fnum(r.dtorval))+'일 중 재직 '+esc(fnum(r.ntorval))+'일 = <b>'+calDisp(r)+'</b>';
-    else if (dtor>0)
-      lead = '대상 '+esc(fnum(r.dtorval))+'명 중 해당 '+esc(fnum(r.ntorval))+'명 = <b>'+calDisp(r)+'</b>';
-    else
-      lead = '현황값 <b>'+calDisp(r)+'</b>';
-    var conn = /[명일]\s*$/.test(String(calDisp(r))) ? '으로 ' : '로 ';
-    var zoneTxt = '표준화 '+zone+', 가중치 '+fnum(w)+(full? '점 만점 산정.' : '점 중 '+f1(got)+'점 산정.');
-    return lead + conn + (full? zoneTxt : '<span class="er-hl-bad">'+zoneTxt+'</span>');
+    var zone = s ? s+'점 구간'+(rng? '('+rng+')' : '') : '-';   /* 표기 통일: '표준화 2점 구간(60~80미만%)' (2026-08-10) */
+    var ym = ymLabel(), pre = ym ? ym+' ' : '';
+    var lead, conn;
+    if (UNIT_PERSON.indexOf(cd)>=0) {
+      lead = pre+'평균 재원환자 '+esc(fnum(r.ntorval))+'명 ÷ '+DENOM_NM[cd]+' '+esc(fnum(r.dtorval))+'명 = 1인당 <b>'+calDisp(r)+'</b>';
+      conn = '으로 ';
+    } else if (cd==='04') {
+      lead = pre+'재직대상 '+esc(fnum(r.dtorval))+'일 중 재직 '+esc(fnum(r.ntorval))+'일 = <b>'+calDisp(r)+'</b>';
+      conn = '로 ';
+    } else if (dtor>0) {
+      var dn = DEN_NM2[cd] || '대상', nn = NUM_NM2[cd] || '해당';
+      if (IS_IMPROVE[cd])
+        lead = pre+dn+' '+esc(fnum(r.dtorval))+'명 중 '+esc(fnum(r.ntorval))+'명 개선되어 <b>'+calDisp(r)+'</b>';
+      else
+        lead = pre+dn+' '+esc(fnum(r.dtorval))+'명 중 '+nn+' '+esc(fnum(r.ntorval))+'명으로 <b>'+calDisp(r)+'</b>';
+      conn = ', ';
+    } else {
+      lead = pre+'현황값 <b>'+calDisp(r)+'</b>';
+      conn = '로 ';
+    }
+    var zoneTxt = '표준화 '+zone+'에 해당하여 가중치 '+fnum(w)+'점 중 '+f1(got)+'점 산정.';
+    return lead + conn + (full? zoneTxt : '<span class="er-hl-bad">'+zoneTxt+'</span>') + cumAna(r);
+  }
+
+  /* 평가기간 누적 실적 한 줄 (2026-08-10 요청) — 당월 문장 뒤에 <별도 산출값>으로 붙는다.
+       "7~9월 누적 평가대상자 120명 중 유치도뇨관 14일 초과 대상자 5명으로 4.17%,
+        표준화 2구간에 해당하여 가중치 3점 중 1.2점 산정."
+     ★당월과 분모·분자·현황값·표준화구간·가중치를 <각각> 계산한다(당월 점수를 누적에 쓰지 않는다).
+       7월 보고서는 누적=당월이라 붙이지 않는다. */
+  function cumAna(r){
+    if (!_cum) return '';
+    var cd=r.cate_cd, c=_cum.map[cd];
+    if (!c || !(c.dtor>0)) return '';
+    if (UNIT_PERSON.indexOf(cd)>=0 || cd==='04' || cd==='07' || cd==='08') return '';   // 인력·항정·DUR 은 누적 개념이 다르다
+    var w = n(r.stdweig), s = zoneOfWeig(w, c.weig);
+    var rng = s ? zoneRange(cd, s) : '';
+    var zone = s ? s+'점 구간'+(rng? '('+rng+')' : '') : '-';   /* 표기 통일: '표준화 2점 구간(60~80미만%)' (2026-08-10) */
+    var dn = DEN_NM2[cd] || '대상', nn = NUM_NM2[cd] || '해당';
+    var val = fnum(c.cal) + unitOf(cd);
+    var body = IS_IMPROVE[cd]
+      ? cumLabel()+' 누적 '+dn+' '+esc(fnum(c.dtor))+'명 중 '+esc(fnum(c.ntor))+'명 개선되어 <b>'+esc(val)+'</b>, '
+      : cumLabel()+' 누적 '+dn+' '+esc(fnum(c.dtor))+'명 중 '+nn+' '+esc(fnum(c.ntor))+'명으로 <b>'+esc(val)+'</b>, ';
+    return ' <span class="er-cum">'+body+'표준화 '+zone+'에 해당하여 가중치 '+fnum(w)+'점 중 '+f1(c.weig)+'점 산정.</span>';
   }
 
   // 5점 구간·도달 힌트 — assessment showIndiSummary 와 동일 계산
@@ -3058,6 +3130,19 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
                            data:{ hospCd:hospCd, jobYymm:ym, cateCd:'07' } })
         .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
     }
+    /* [누적] 평가기간(당해 7월 ~ 당월) 누적 실적 — 2026-08-10 요청
+         ★당월 표준화점수를 누적값에 그대로 쓰면 안 된다. 당월이 5점이어도 누적은 4점 이하일 수 있다.
+           그래서 <분모·분자를 기간 합산>해 현황값·표준화구간·가중치를 따로 산출한다.
+         select_Hosp_Indi 가 이미 SUM(DTORVAL)/SUM(NTORVAL) 기준으로 cal_avg·weigavg 를 돌려준다
+         (EVALUATION_INDICATORS_VALUE — 월별 평균이 아니라 합산 기준. 새 쿼리를 만들지 않는다).
+         7월 보고서는 누적=당월이라 조회하지 않는다. */
+    var _cumFrom = curYm.substring(0,4)+'07';
+    var aCum = (parseInt(curYm.substring(4,6),10) <= 7)
+        ? jQuery.Deferred().resolve(null).promise()
+        : jQuery.ajax({ url: ctx+'/main/select_Hosp_Indi.do', type:'POST', dataType:'json', traditional:true,
+                        data:{ hosp_cd:[hospCd], stryymm:_cumFrom, endyymm:curYm } })
+            .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+
     var aPsy = jQuery.when.apply(jQuery, _psyMonths.map(_psyFetch)).then(function(){
       var args = Array.prototype.slice.call(arguments);   // 값만 온다(위 then 이 이미 벗겼다) — 1개든 여러 개든 같은 모양
       var pn=0, pd=0;
@@ -3068,7 +3153,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       return (pd>0) ? { from:_psyMonths[0], to:_psyMonths[_psyMonths.length-1],
                         n:pn, d:pd, rate:Math.round(pn/pd*10000)/100 } : null;
     });
-    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2, aPsy).done(function(r1, r2, r3, r4, r5, r6, r7, r8, r9){
+    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2, aPsy, aCum).done(function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
       buildCriteria(r2[0]);
@@ -3087,6 +3172,19 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       _errSoreN  = _cnt(r7) + _cnt(r8);
       /* [N1] 항정 실측 처방률 — aPsy 가 이미 {from,to,n,d,rate} 로 합산해 준다(대상 0명이면 null → 문장 생략) */
       _psyPrev = r9 || null;
+      /* [누적] 지표코드별 누적 실적을 담아 둔다 — autoAna 가 당월 문장 뒤에 한 줄 더 붙인다 */
+      _cum = null;
+      var cdData = (r10 && r10[0] && r10[0].data) || (r10 && r10.data) || null;
+      if (cdData && cdData.length){
+        _cum = { from:_cumFrom, to:curYm, map:{} };
+        cdData.forEach(function(e){
+          if (!e || !e.cate_cd || e.cate_cd==='99') return;
+          /* ★함정: select_Hosp_Indi 의 dtortot·ntortot 은 <이름과 반대>다.
+             01~04(인력)만 이름대로이고, 나머지 지표는 dtortot=분자합·ntortot=분모합이다
+             (매퍼 CASE 문에서 뒤집어 담는다 — 2026-08-10 실데이터로 확인). 여기서 바로잡아 담는다. */
+          _cum.map[e.cate_cd] = { dtor:n(e.ntortot), ntor:n(e.dtortot), cal:n(e.cal_avg), weig:n(e.weigavg) };
+        });
+      }
       renderAll();
       loadSavedTexts();
     }).fail(function(){ erSwal('error','지표 자료 조회 중 오류가 발생했습니다.', {title:'오류'}); });
@@ -3378,6 +3476,83 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var gap=Math.round((band.start - val)*100)/100;
     if(gap<=0) return null;
     return '표준화 '+(s+1)+'점 기준('+fnum(band.start)+'%) 대비 약 '+fnum(gap)+'%p 부족';
+  }
+
+  /* ▷ 점수 상향 목표 (2026-08-10 확정) — 종전 '목표 :' + '표준화 목표 :' 두 줄이 겹쳐 한 줄로 합쳤다.
+       "14일 초과 대상자 2명 감소(3명→1명, 2.33%) 시 3점 구간 진입 → 가중치 +1.2점(0.6→1.8점), …"
+     ★분자의 뜻에 맞는 말을 쓴다 — 개선/추가/실시/감소/제외를 지표마다 달리한다(’○명 개선’ 일괄 금지).
+     ★장기입원(14)은 대상자가 빠지면 <분모·분자에서 함께> 빠진다. 분자만 빼면 현황값이 틀린다. */
+  var GOAL_VERB = {
+    '05':{ noun:'14일 초과 대상자', act:'감소', lower:true },
+    '06':{ noun:'',                 act:'실시', lower:false },
+    '09':{ noun:'욕창 처치 실시 환자', act:'추가', lower:false },
+    '10':{ noun:'신규 발생 환자',   act:'감소', lower:true },
+    '11':{ noun:'개선 대상자',      act:'추가 개선', lower:false },
+    '12':{ noun:'개선 대상자',      act:'추가 개선', lower:false },
+    '13':{ noun:'적정범위 환자',    act:'추가', lower:false },
+    '14':{ noun:'장기입원 대상자',  act:'제외', lower:true, both:true }
+  };
+  var NO_GOAL = { '07':1, '08':1, '15':1 };   // 고정값·참고용 지표는 목표를 적지 않는다(188·189·198행)
+
+  /** 목표 구간 band 에 닿는 데 필요한 인원. 닿을 수 없거나 이미 넘었으면 null.
+      ★구간 경계는 '미만/이상'이라 등호를 넣으면 한 명이 모자란다 — ceil-1 / ceil 로 맞춘다.
+      ★both(장기입원)은 대상자가 <분모·분자에서 함께> 빠져 비율이 같이 움직인다.
+        (분자−c)/(분모−c) < 상한 을 c 에 대해 풀어야 한다. 분모를 고정해 두고 계산하면
+        3명이어야 할 것이 1명으로 나온다(2026-08-10 검토 중 발견). */
+  function reqCnt(v, band, dtor, ntor){
+    var c, E = 1e-9;
+    if(v.both){
+      var p = band.end/100;
+      if(!(p < 1)) return null;
+      c = Math.floor((ntor - p*dtor)/(1-p) + E) + 1;
+      if(c > ntor) return null;                                    // 분자를 넘겨 뺄 수는 없다
+    } else if(v.lower){
+      var maxN = Math.ceil(band.end*dtor/100 - E) - 1;             // 그 구간에 남길 수 있는 최대 분자
+      c = ntor - maxN;
+    } else {
+      var needN = Math.ceil(band.start*dtor/100 - E);              // 그 구간에 들려면 필요한 최소 분자
+      if(needN > dtor) return null;                                // 분모를 넘길 수 없다
+      c = needN - ntor;
+    }
+    return (c>0) ? c : null;
+  }
+
+  function goalUp(r){
+    var cd=r.cate_cd, v=GOAL_VERB[cd];
+    if(!v || NO_GOAL[cd]) return '';
+    var dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0, w=n(r.stdweig), got=n(r.weigval);
+    if(!(dtor>0) || !(s>=1 && s<5)) return '';
+    var step=w/5, parts=[];
+    /* ★상위 구간을 <전부> 따져 보고, 같은 인원으로 여러 구간에 닿으면 <가장 높은 구간>으로 합친다
+       (2026-08-10 비고: "동일한 개선 인원으로 여러 구간 진입이 가능하면 도달 가능한 가장 높은 구간으로 통합 표기").
+       예) 3명 감소로 4점·5점에 모두 닿으면 "3명 감소 … 5점 구간" 한 번만 적는다. */
+    var byCnt = {};
+    (CRIT_ALL[cd]||[]).forEach(function(z){
+      if(!(z.s>s && z.s<=5)) return;
+      var c = reqCnt(v, z, dtor, ntor);
+      if(c==null) return;
+      if(byCnt[c]==null || z.s > byCnt[c]) byCnt[c] = z.s;
+    });
+    var targets = Object.keys(byCnt).map(Number).sort(function(a,b){ return a-b; });
+    targets.forEach(function(cntKey){
+      var tz = byCnt[cntKey], band=null;
+      (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===tz) band=z; });
+      if(!band) return;
+      var cnt = cntKey, newD = dtor, newN;
+      if(v.lower){
+        newN = ntor - cnt;
+        if(v.both) newD = dtor - cnt;                    // ★장기입원: 분모에서도 같이 제외
+      } else {
+        newN = ntor + cnt;
+      }
+      var pct = (newD>0) ? Math.round(newN/newD*10000)/100 : 0;
+      var newGot = Math.min(w, got + step*(tz-s));
+      var head = (v.noun ? v.noun+' ' : '') + fnum(cnt) + '명 ' + v.act;
+      var mid  = v.both ? '('+fnum(ntor)+'/'+fnum(dtor)+' → '+fnum(newN)+'/'+fnum(newD)+', '+fnum(pct)+'%)'
+                        : '('+fnum(ntor)+'명→'+fnum(newN)+'명, '+fnum(pct)+'%)';
+      parts.push(head+mid+' 시 '+tz+'점 구간 진입 → 가중치 +'+f1(newGot-got)+'점('+f1(got)+'→'+f1(newGot)+'점)');
+    });
+    return parts.length ? parts.join(', ')+'.' : '';
   }
 
   // [★4] 전 구간 나열형 — 낮을수록 우수 & '감소가 실제 조치'인 지표(장기입원14·유치도뇨관05)만.
@@ -3709,57 +3884,50 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var full = gap<=0.0001;
         // 원본 PDF 형식: * 산정문(미달 빨강 강조) / "지표 정의 :" 별도 회색 줄 (+만점 시 유지 문구)
         var auto = autoAna(r, full);
-        var defTxt = (TPL_DEF[r.cate_cd] ? esc(TPL_DEF[r.cate_cd]) : '')
-                   + (full ? ' 현재 최고 구간으로 추가 개선 여지 없음(유지).' : '');
-        // ▷ 개선 방향 : 원본식 "다음구간(+점수)·5구간(+점수)" 자동 + 표준 조치문구 + 필요 인원
-        var ups = [];
-        if(s>0 && s<5){
-          var nz=s+1, rz=zoneRange(r.cate_cd,nz);
-          if(rz) ups.push(rz+'('+nz+'구간, +'+f1(w/5)+'점)');
-          if(nz<5){ var r5=zoneRange(r.cate_cd,5); if(r5) ups.push(r5+'(5구간, +'+f1(w/5*(5-s))+'점)'); }
-        }
-        var need='', fz=String(r.fiveZone||'').trim();
-        if (fz.charAt(0)==='+') need=' 5점 도달까지 '+esc(fz.substring(1))+' 추가 필요.';
-        else if (fz.charAt(0)==='-') need=' 5점 도달까지 '+esc(fz.substring(1))+' 감소 필요.';
-        var planTxt = (ups.length? ups.join('·')+'. ' : '') + (TPL_DIR[r.cate_cd]? esc(TPL_DIR[r.cate_cd]) : '') + need;
+        /* 지표 정의에는 기관별 분석 결과(현재 점수·구간·개선 여지)를 넣지 않는다(2026-08-10 요청).
+           "현재 최고 구간으로 추가 개선 여지 없음"은 아래 <점수 상향 목표> 줄로 옮겼다. */
+        var defTxt = (TPL_DEF[r.cate_cd] ? esc(TPL_DEF[r.cate_cd]) : '');
+        /* ▷ 개선 방향 = <관리해야 할 내용>만. 구간·점수·필요 인원은 점수 상향 목표 줄이 맡는다
+           (종전에는 개선 방향에도 "2구간 +0.6점 … 5점 도달까지 3명" 이 붙어 목표 줄과 겹쳤다). */
+        var planTxt = (TPL_DIR[r.cate_cd]? esc(TPL_DIR[r.cate_cd]) : '');
         var bg = bladderGapTxt(r);   // [★6] 배뇨관리(06) 오류점검 연계 보완문(있으면) — 편집영역이라 수기 수정 가능
         if(bg) planTxt += ' ' + esc(bg) + '.';
-        if(!planTxt.trim()) planTxt = '기록·실시 절차를 점검하고 목표 구간을 설정하세요.';
+        /* 항정(07)·ADL(12)은 개선 방향을 <내리기로> 확정했다(188·194행).
+           기본 안내문으로 되채우면 내린 뜻이 사라지므로, 되채움 대상에서 뺀다. */
+        var noPlan = (cd==='07') || (cd==='12');
+        if(!planTxt.trim() && !noPlan) planTxt = '기록·실시 절차를 점검하고 목표 구간을 설정하세요.';
         /* [2026-07-30 사용자 요청 묶음]
            · 구조영역(fg 10) = 지표정의·개선방향 줄 삭제 — 분기(신고) 단위라 3개월 내내 같아 매월 반복이 무의미.
              라벨 옆 '*{년} {분기} 신고 기준 산출' 표기가 그 자리를 대신한다.
            · DUR(08) = 분석 문구를 확정 문구로 교체(100% 가정 산정 + 점검 안내 + 확인 경로). 정의·개선방향 없음. */
         var noDefPlan = (fg==='10') || (cd==='08');
         if (cd==='08'){
-          auto = 'DUR 점검률을 100%로 가정하여 가중치 '+fnum(w)+'점을 산정함.<br>'
-               + '다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.<br>'
-               + '• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소';
+          /* DUR(08) 고정문 — 2026-08-10 서식 요청: 첫 줄만 굵게, '다만,'부터 빨간 글씨. */
+          auto = '<b>DUR 점검률을 100%로 가정하여 가중치 '+fnum(w)+'점을 산정함.</b><br>'
+               + '<span class="er-hl-bad" style="font-weight:400;">다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.</span><br>'
+               + '<span style="font-weight:400; color:var(--er-soft);">• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소</span>';   /* 확인 경로 — 빨강 아님, 진하지 않게(2026-08-10) */
         }
         /* [2026-08-03] Ⅳ 권고사항 통합 — 별도 장이던 권고의 고유 내용(목표 완결문·5구간 병기·%p부족·
              감소 사다리/여유 한도)을 분석내용 박스 안 '목표 :' 줄로 옮기고 Ⅳ장은 삭제했다(사용자 요청).
              현황·개선방향은 이 박스에 이미 있어 중복이라 목표 줄만 가져온다. 만점·구조(fg10)·DUR(08)은 제외. */
+        /* ▷ 점수 상향 목표 — 한 줄로 통합(2026-08-10). 5점 지표는 '유지' 한 줄만 남긴다. */
         var goalHtml='';
-        if(!full && !noDefPlan){
-          var s4=(s||1), step4=w/5, nz4=Math.min(5, s4+1), tgt4=Math.min(w, got+step4);
-          var sd4=simStep(r);
-          var gTxt=(s>=5)?'':('목표 : '+(sd4&&sd4.need? esc(sd4.need)+'명 '+sd4.dir+' → '+esc(sd4.newPct)+'%로 ' : '')+nz4+'구간 진입 시 <b class="er-num">+'+f1(tgt4-got)+'점</b> ('+f1(got)+' → '+f1(tgt4)+')');
-          if(gTxt && nz4<5){
-            var n54=simNeed(r,5);
-            if(n54) gTxt+=' · 5구간 = '+esc(n54.need)+'명 추가(총 '+esc(n54.total)+'명, '+esc(n54.pct)+'%) 시 <b class="er-num">+'+f1(w-got)+'점</b>';
+        if(!noDefPlan && !NO_GOAL[cd]){
+          if(full){
+            goalHtml = '<p class="er-goal er-editable" data-key="goal_'+cd+'"><span class="er-mk">▷ 점수 상향 목표 :</span> 현재 최고 구간으로 추가 개선 여지 없음(유지).</p>';
+          } else {
+            var gUp = goalUp(r);
+            if(gUp) goalHtml = '<p class="er-goal er-editable" data-key="goal_'+cd+'"><span class="er-mk">▷ 점수 상향 목표 :</span> '+gUp+'</p>';
           }
-          var lad4=simReduceList(r), room4=lad4?('표준화 목표 : '+lad4):simRoomLower(r);
-          var ps4=pctShortTxt(r);
-          if(gTxt||ps4) goalHtml+='<p class="er-goal">'+(gTxt? gTxt+(ps4?' · '+ps4:'') : ps4+'.')+'</p>';
-          if(room4) goalHtml+='<p class="er-goal">'+room4+'.</p>';
         }
         var topTag = (topCds.indexOf(r.cate_cd)>=0 && !full) ? ' <span style="color:var(--er-bad); font-weight:800; font-size:11.5px;">◀ 최우선 개선</span>' : '';
-        html += '<div class="er-indhead">■ '+esc(r.cate_nm)+' <span class="er-indsc"><span class="'+(full?'er-b-good':'er-b-bad')+'">'+f1(got)+'</span> / '+fnum(w)+'점</span>'+topTag+'</div>'
+        html += '<div class="er-indhead">■ '+esc(indiNm(r))+' <span class="er-indsc"><span class="'+(full?'er-b-good':'er-b-bad')+'">'+f1(got)+'</span> / '+fnum(w)+'점</span>'+topTag+'</div>'
               + '<div class="er-indbox'+(full?' er-full':'')+'">'
               +   '<div class="er-anabar">분석 내용</div>'
               +   '<div class="er-indbody">'
               +     '<p class="er-ana er-editable" data-key="ana_'+cd+'">* '+auto+'</p>'
               +     ((defTxt && !noDefPlan)? '<p class="er-def er-editable" data-key="def_'+cd+'">지표 정의 : '+defTxt+'</p>' : '')
-              +     ((full || noDefPlan)? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
+              +     ((full || noDefPlan || !planTxt.trim())? '' : '<p class="er-plan er-editable" data-key="plan_'+cd+'"><span class="er-mk">▷ 개선 방향 :</span> '+planTxt+'</p>')
               +     goalHtml
               +   '</div>'
               + '</div>';
@@ -3799,7 +3967,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var cal = calDisp(r) + (r.cate_cd==='07' ? ' (PI)' : '');
         html += '<tr>'
               + (idx===0? '<td class="er-area '+areaCls+'" rowspan="'+rows.length+'">'+label+'</td>' : '')
-              + '<td class="er-l">'+esc(r.cate_nm)+'</td><td class="er-num">'+fnum(w)+'</td><td class="er-num">'+cal+'</td>'
+              + '<td class="er-l">'+esc(indiNm(r))+'</td><td class="er-num">'+fnum(w)+'</td><td class="er-num">'+cal+'</td>'
               + zTd + '<td class="er-num">'+f1(got)+'</td>'+gapTd+'</tr>';
       });
       return rows;

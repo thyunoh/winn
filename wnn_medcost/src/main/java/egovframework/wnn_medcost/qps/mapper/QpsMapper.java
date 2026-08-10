@@ -25,21 +25,21 @@ public interface QpsMapper {
 	                                  @Param("indiCd") String indiCd);
 
 	// 서식 2호: 연간 활동계획서 (병원+년도 1부, 항목행 통째 교체)
-	Map<String, Object> selectPlan(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	Map<String, Object> selectPlan(@Param("hospCd") String hospCd, @Param("formGb") String formGb, @Param("inYear") String inYear);
 	int upsertPlan(Map<String, Object> param);
 	List<Map<String, Object>> selectPlanItems(@Param("planSeq") long planSeq);
 	int deletePlanItems(@Param("planSeq") long planSeq);
 	int insertPlanItems(Map<String, Object> param);
 
 	// 서식 3호: 라운딩 점검표 (병원+년월 1부, 항목행 통째 교체)
-	Map<String, Object> selectRound(@Param("hospCd") String hospCd, @Param("roundYm") String roundYm);
+	Map<String, Object> selectRound(@Param("hospCd") String hospCd, @Param("formGb") String formGb, @Param("roundYm") String roundYm);
 	int upsertRound(Map<String, Object> param);
 	List<Map<String, Object>> selectRoundItems(@Param("rndSeq") long rndSeq);
 	int deleteRoundItems(@Param("rndSeq") long rndSeq);
 	int insertRoundItems(Map<String, Object> param);
 
 	// 서식 1호: 위원회 회의록 (서식빌더 결정 근거용 파일럿)
-	List<Map<String, Object>> selectMinutesList(@Param("hospCd") String hospCd,
+	List<Map<String, Object>> selectMinutesList(@Param("hospCd") String hospCd, @Param("formGb") String formGb,
 	                                            @Param("inYear") String inYear);
 	Map<String, Object> selectMinutes(@Param("hospCd") String hospCd,
 	                                  @Param("minSeq") long minSeq);
@@ -157,4 +157,87 @@ public interface QpsMapper {
 	                                         @Param("prdKey") String prdKey);
 	int insertAppr(Map<String, Object> param);
 	int updateReportAppr(Map<String, Object> param);
+
+	// 공통 첨부 (TBL_QPS_FILE — REF_GB+REF_KEY)
+	List<Map<String, Object>> selectQpsFileList(@Param("hospCd") String hospCd,
+	                                            @Param("refGb")  String refGb,
+	                                            @Param("refKey") String refKey);
+	int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto);
+	int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto);
+	Map<String, Object> selectQpsFileOne(@Param("fileSeq") Long fileSeq, @Param("hospCd") String hospCd);
+	List<Map<String, Object>> selectQpsFileCounts(@Param("hospCd") String hospCd, @Param("refGb") String refGb);
+
+	/* QPS 담당자(자료실 수정 권한) */
+	List<Map<String, Object>> selectHospUsers(@Param("hospCd") String hospCd);
+	String selectUserMainGu(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int selectQpsMgrCount(@Param("hospCd") String hospCd);
+	int selectQpsMgrYn(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int deleteQpsMgrAll(@Param("hospCd") String hospCd);
+	int insertQpsMgr(@Param("hospCd") String hospCd, @Param("userId") String userId, @Param("regUser") String regUser);
+
+	/* 감염종합보고 (P 계획수립 / D 수행 / E 손위생 교육결과 — 골격이 같아 한 서식) */
+	List<Map<String, Object>> selectInfRptList(@Param("hospCd") String hospCd,
+	                                           @Param("rptGb")  String rptGb,
+	                                           @Param("inYear") String inYear);
+	Map<String, Object> selectInfRpt(@Param("hospCd") String hospCd, @Param("rptSeq") long rptSeq);
+	int insertInfRpt(Map<String, Object> param);
+	int updateInfRpt(Map<String, Object> param);
+	int deleteInfRpt(Map<String, Object> param);
+	List<Map<String, Object>> selectInfRptMem(@Param("rptSeq") long rptSeq);
+	int deleteInfRptMem(@Param("rptSeq") long rptSeq);
+	int insertInfRptMem(Map<String, Object> param);
+
+	/* 감염관리 우선순위 사정 도구 */
+	List<Map<String, Object>> selectInfRiskList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	Map<String, Object> selectInfRisk(@Param("hospCd") String hospCd, @Param("riskSeq") long riskSeq);
+	int insertInfRisk(Map<String, Object> param);
+	int deleteInfRisk(Map<String, Object> param);
+	List<Map<String, Object>> selectInfRiskItems(@Param("riskSeq") long riskSeq);
+	List<Map<String, Object>> selectInfRiskDef();
+	int deleteInfRiskItems(@Param("riskSeq") long riskSeq);
+	int insertInfRiskItems(Map<String, Object> param);
+
+	/* 감염병환자 월별 리스트 */
+	Map<String, Object> selectInfPat(@Param("hospCd") String hospCd, @Param("ipatYm") String ipatYm);
+	int upsertInfPat(Map<String, Object> param);
+	List<Map<String, Object>> selectInfPatItems(@Param("ipatSeq") long ipatSeq);
+	int deleteInfPatItems(@Param("ipatSeq") long ipatSeq);
+	int insertInfPatItems(Map<String, Object> param);
+
+	/* 감염관리 전담자 */
+	List<Map<String, Object>> selectInfStaffList(@Param("hospCd") String hospCd);
+	Map<String, Object> selectInfStaff(@Param("hospCd") String hospCd, @Param("stfSeq") long stfSeq);
+	int insertInfStaff(Map<String, Object> param);
+	int updateInfStaff(Map<String, Object> param);
+	int deleteInfStaff(Map<String, Object> param);
+	List<Map<String, Object>> selectInfStaffEdu(@Param("stfSeq") long stfSeq);
+	int deleteInfStaffEdu(@Param("stfSeq") long stfSeq);
+	int insertInfStaffEdu(Map<String, Object> param);
+	List<Map<String, Object>> selectInfStaffDuty(@Param("stfSeq") long stfSeq);
+	int deleteInfStaffDuty(@Param("stfSeq") long stfSeq);
+	int insertInfStaffDuty(Map<String, Object> param);
+
+	// ── 환자만족도 조사 : 설문 ──────────────────────────────────────
+	List<Map<String, Object>> selectSrvDef();
+
+	List<Map<String, Object>> selectSurveyList(Map<String, Object> param);
+	Map<String, Object> selectSurvey(Map<String, Object> param);
+	int selectSurveyNextSeq(Map<String, Object> param);
+	int insertSurvey(Map<String, Object> param);
+	int updateSurvey(Map<String, Object> param);
+
+	List<Map<String, Object>> selectSurveyAnsList(Map<String, Object> param);
+	List<Map<String, Object>> selectSurveyAnsItem(@Param("ansId") long ansId);
+	int selectSurveyNextAnsNo(Map<String, Object> param);
+	int insertSurveyAns(Map<String, Object> param);
+	int updateSurveyAns(Map<String, Object> param);
+	int deleteSurveyAns(Map<String, Object> param);
+	int deleteSurveyAnsItem(@Param("ansId") long ansId);
+	int insertSurveyAnsItem(Map<String, Object> param);
+
+	List<Map<String, Object>> selectSrvStatItem(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvStatArea(Map<String, Object> param);
+	Map<String, Object> selectSrvStatTotal(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvStatProfile(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvOpinion(Map<String, Object> param);
 }

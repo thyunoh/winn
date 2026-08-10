@@ -972,7 +972,7 @@
 	  	<img id="popupImg_1" src="" alt="팝업 이미지">
 	</div>
 
-	<!-- ───── 위너넷 휴무 안내 팝업 — 기존 popupBox_1 + holiday_winner.png ───── -->
+	<!-- ───── 로그인 공지 팝업 — popupBox_1 재사용. 이미지·기간은 아래 스크립트 상단 3줄에서 바꾼다 ───── -->
 	<style>
 	/* 휴무 모드 — 가운데 정렬, 크기 크게, footer 영역 분리 */
 	.popup-box_1.holiday-mode {
@@ -1047,10 +1047,15 @@
 	</style>
 	<script>
 	(function() {
-	    // 휴무 기간 (화면 표시 X, 코드 내부에서만 사용)
-	    var HOLIDAY_START = '2026-04-29';
-	    var HOLIDAY_END   = '2026-05-05';
-	    var HOLIDAY_IMG   = '/wnn_consult/images/winct/holiday_winner.png';
+	    /* 공지 팝업 기간·이미지 (화면 표시 X, 코드 내부에서만 사용)
+	       ★다음 공지로 바꿀 때는 아래 3줄만 고치면 된다(START·END·IMG).
+	         END 는 그날까지 포함이다 — '2026-08-17' 이면 8/17 24:00 까지 뜬다.
+	       2026-08-10 : 휴무 안내(holiday_winner.png, 4/29~5/5, 종료)를 NLD 공지로 교체.
+	         안내 기간은 8/11~8/17 이나, 확인을 위해 <시작일만> 8/10 로 앞당겨 둠.
+	         → 확인 끝나면 START 를 '2026-08-11' 로 되돌릴 것. */
+	    var HOLIDAY_START = '2026-08-11';
+	    var HOLIDAY_END   = '2026-08-17';
+	    var HOLIDAY_IMG   = '/wnn_consult/images/winct/NLD.jpg';
 	    var STORAGE_KEY   = 'holiday_hide_' + HOLIDAY_START.replace(/-/g,'');
 
 	    function todayStr() {
@@ -1109,7 +1114,7 @@
 	    }
 	})();
 	</script>
-	<!-- ───── 휴무 안내 팝업 끝 ───── -->
+	<!-- ───── 로그인 공지 팝업 끝 ───── -->
 
 	<!-- Modal 동의서 확인 -->
 	<div id="termsModal" class="modal fade" data-backdrop="static"

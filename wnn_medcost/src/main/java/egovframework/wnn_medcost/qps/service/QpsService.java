@@ -36,20 +36,20 @@ public interface QpsService {
 	int saveCensus(QpsCensusDTO dto) throws Exception;
 
 	// 서식 2호: 연간 활동계획서
-	Map<String, Object> selectPlanWithItems(String hospCd, String inYear) throws Exception;
-	long savePlan(String hospCd, String inYear, String submitDt,
+	Map<String, Object> selectPlanWithItems(String hospCd, String formGb, String inYear) throws Exception;
+	long savePlan(String hospCd, String formGb, String inYear, String submitDt,
 	              List<Map<String, Object>> items, String userId) throws Exception;
 
 	/** 기간(2026Q1 등)의 전 지표 요약 — 회의록 [지표 요약 넣기]용. {indinm, unit, rate, numer, denom} 목록. */
 	List<Map<String, Object>> selectIndiSummary(String hospCd, String prdGb, String prdKey) throws Exception;
 
 	// 서식 3호: 라운딩 점검표
-	Map<String, Object> selectRoundWithItems(String hospCd, String roundYm) throws Exception;
-	long saveRound(String hospCd, String roundYm, String checker,
+	Map<String, Object> selectRoundWithItems(String hospCd, String formGb, String roundYm) throws Exception;
+	long saveRound(String hospCd, String formGb, String roundYm, String checker,
 	               List<Map<String, Object>> items, String userId) throws Exception;
 
 	// 서식 1호: 위원회 회의록
-	List<Map<String, Object>> selectMinutesList(String hospCd, String inYear) throws Exception;
+	List<Map<String, Object>> selectMinutesList(String hospCd, String formGb, String inYear) throws Exception;
 	Map<String, Object> selectMinutes(String hospCd, long minSeq) throws Exception;
 	long saveMinutes(Map<String, Object> param) throws Exception;
 	int deleteMinutes(Map<String, Object> param) throws Exception;
@@ -99,4 +99,61 @@ public interface QpsService {
 
 	Map<String, Object> selectReport(String hospCd, String indiCd, String prdGb, String prdKey) throws Exception;
 	int saveReport(Map<String, Object> param) throws Exception;
+
+	// 공통 첨부 (회의록·계획서·라운딩·자료실 공용)
+	java.util.List<Map<String, Object>> selectQpsFileList(String hospCd, String refGb, String refKey) throws Exception;
+	int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception;
+	int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception;
+	Map<String, Object> selectQpsFileOne(Long fileSeq, String hospCd) throws Exception;
+	java.util.List<Map<String, Object>> selectQpsFileCounts(String hospCd, String refGb) throws Exception;
+
+	/* QPS 담당자(자료실 수정 권한) */
+	java.util.List<Map<String, Object>> selectHospUsers(String hospCd) throws Exception;
+	String selectUserMainGu(String hospCd, String userId) throws Exception;
+	int selectQpsMgrCount(String hospCd) throws Exception;
+	int selectQpsMgrYn(String hospCd, String userId) throws Exception;
+	int saveQpsMgr(String hospCd, java.util.List<String> userIds, String regUser) throws Exception;
+
+	/* 감염종합보고 (3종 통합 — P 계획수립 / D 수행 / E 손위생 교육결과) */
+	List<Map<String, Object>> selectInfRptList(String hospCd, String rptGb, String inYear) throws Exception;
+	Map<String, Object> selectInfRptWithMem(String hospCd, long rptSeq) throws Exception;
+	long saveInfRpt(Map<String, Object> param, List<Map<String, Object>> members) throws Exception;
+	int deleteInfRpt(Map<String, Object> param) throws Exception;
+
+	/* 감염관리 우선순위 사정 도구 */
+	List<Map<String, Object>> selectInfRiskList(String hospCd, String inYear) throws Exception;
+	/** 평가 1건 + 항목. 항목이 없으면(새 평가) 기본 31행을 깔아 돌려준다. */
+	Map<String, Object> selectInfRiskWithItems(String hospCd, long riskSeq) throws Exception;
+	/** 새 평가용 기본 항목표(31종). */
+	List<Map<String, Object>> selectInfRiskDef() throws Exception;
+	long saveInfRisk(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	int deleteInfRisk(Map<String, Object> param) throws Exception;
+
+	/* 감염병환자 월별 리스트 */
+	Map<String, Object> selectInfPatWithItems(String hospCd, String ipatYm) throws Exception;
+	long saveInfPat(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+
+	/* 감염관리 전담자 (임명장·자격경력·직무기술서 한 벌) */
+	List<Map<String, Object>> selectInfStaffList(String hospCd) throws Exception;
+	Map<String, Object> selectInfStaffAll(String hospCd, long stfSeq) throws Exception;
+	long saveInfStaff(Map<String, Object> param,
+	                  List<Map<String, Object>> edus,
+	                  List<Map<String, Object>> duties) throws Exception;
+	int deleteInfStaff(Map<String, Object> param) throws Exception;
+
+	// ── 환자만족도 조사 : 설문 ──────────────────────────────────────
+	/** 설문 화면 초기 로드 — 문항표 + 회차목록 + 코드 */
+	Map<String, Object> selectSurveyBase(String hospCd, String inYear) throws Exception;
+	/** 회차 1건 + 응답 목록 */
+	Map<String, Object> selectSurveyOne(Map<String, Object> param) throws Exception;
+	/** 응답 1건의 문항점수 */
+	List<Map<String, Object>> selectSurveyAnsItem(long ansId) throws Exception;
+	/** 회차 저장(신규/수정) — surveyId 반환 */
+	long saveSurvey(Map<String, Object> param) throws Exception;
+	/** 응답 1건 저장(문항점수 포함) — ansId 반환 */
+	long saveSurveyAns(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	/** 응답 삭제(문항점수 함께) */
+	int deleteSurveyAns(Map<String, Object> param) throws Exception;
+	/** 집계 일체 — 문항별/영역별/전체/분포/기타의견 */
+	Map<String, Object> selectSurveyStat(Map<String, Object> param) throws Exception;
 }

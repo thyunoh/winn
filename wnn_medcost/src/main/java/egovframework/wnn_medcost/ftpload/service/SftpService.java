@@ -25,6 +25,41 @@ public class SftpService {
     @Resource(name = "MangrService") // DB 저장을 위한 서비스
     private MangrService svc;
 
+    /**
+     * ★전송 전용 업로드 (2026-08-10, QPS 공통 첨부용).
+     *   uploadFile 은 TBL_FILE_MST(공지·FAQ 전용) 에 자동 저장하지만, QPS 첨부는 TBL_QPS_FILE 로 가야 하므로
+     *   여기서는 SFTP 전송만 하고 DB 저장은 호출측(QpsService)이 한다. 반환값 = 저장된 원격 경로(실패 시 null).
+     *   기존 uploadFile 은 그대로 둔다(월보고서·공지 업로드가 쓰고 있어 건드리지 않는다).
+     */
+    public String putFile(String localFilePath, String remoteFolder, String remoteFileName) {
+        Session session = null;
+        ChannelSftp channelSftp = null;
+        try {
+            JSch jsch = new JSch();
+            session = jsch.getSession(SFTP_USER, SFTP_HOST, SFTP_PORT);
+            session.setPassword(SFTP_PASSWORD);
+            Properties config = new Properties();
+            config.put("StrictHostKeyChecking", "no");
+            session.setConfig(config);
+            session.connect();
+            channelSftp = (ChannelSftp) session.openChannel("sftp");
+            channelSftp.connect();
+
+            String fullRemotePath = BASE_DIRECTORY + remoteFolder + "/";
+            createDirectory(channelSftp, fullRemotePath);
+            String remoteFilePath = fullRemotePath + remoteFileName;
+            try (InputStream in = new FileInputStream(localFilePath)) {
+                channelSftp.put(in, remoteFilePath);
+            }
+            return remoteFilePath;
+        } catch (Exception e) {
+            System.err.println("❌ QPS 첨부 SFTP 전송 실패: " + e.getMessage());
+            return null;
+        } finally {
+            disconnectSftp(session, channelSftp);
+        }
+    }
+
     // ✅ SFTP 파일 업로드 기능 + DB 저장
     @Transactional
     public boolean uploadFile(String localFilePath, String remoteFileName, String remoteFolder,
