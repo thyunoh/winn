@@ -290,9 +290,14 @@
     el('qnaCats').innerHTML = h;
   }
 
-  /* ── 가운데: 질문 목록 ── */
-  function renderList(){
+  /* ── 가운데: 질문 목록 ──
+       keepScroll=true 면 스크롤 위치를 그대로 둔다.
+       ★질문을 고를 때도 목록을 다시 그리는데(선택 표시 갱신), 그때마다 맨 위로 튀어
+         "아래쪽 질문을 누르면 목록이 위로 올라가는" 현상이 있었다(2026-08-10 지적).
+         맨 위로 가야 하는 건 <목록 자체가 바뀔 때>(분류 변경·검색)뿐이다. */
+  function renderList(keepScroll){
     var box = el('qnaList'), h = '', i;
+    var keep = keepScroll ? box.scrollTop : 0;
     el('qnaListCnt').innerHTML = LIST.length ? LIST.length + '건' : '';
     if (!LIST.length){ box.innerHTML = '<div class="empty">해당하는 질문이 없습니다.</div>'; return; }
     for (i=0;i<LIST.length;i++){
@@ -304,7 +309,7 @@
          + '</div>';
     }
     box.innerHTML = h;
-    box.scrollTop = 0;
+    box.scrollTop = keep;
   }
 
   /* 원문 본문 → 단계별 들여쓰기 (법령 조판 원칙)
@@ -423,7 +428,7 @@
   };
   window.qnaOpen = function(kbId){
     CUR.kb = kbId;
-    renderList();
+    renderList(true);   // 선택 표시만 갱신 — 보고 있던 자리를 지킨다
     el('qnaDoc').innerHTML = '<div class="guide">불러오는 중…</div>';
     post(API.get, { kbId:kbId, askType:(MODE==='search' ? 'TYPE' : 'PICK') }, function(j){
       if (!j || !j.found || !j.kb){ el('qnaDoc').innerHTML = '<h3>내용을 찾지 못했습니다</h3>'; return; }
