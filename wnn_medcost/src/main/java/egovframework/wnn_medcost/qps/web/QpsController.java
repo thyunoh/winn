@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260810-0830";
+	private static final String BUILD = "20260810-1200";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -443,6 +443,132 @@ public class QpsController {
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
+	}
+
+	/**
+	 * 자료실 — 조직도·내규처럼 "문서라기보다 보관물"인 자료를 분류별로 모아 둔다.
+	 * 서식(회의록·계획서·라운딩)과 달리 본문 입력이 없다. 분류(QPS_LIB 코드)가 곧 첨부의 문서키다.
+	 */
+	@RequestMapping(value = "main/qpsLib.do")
+	public String qpsLib(HttpServletRequest request, ModelMap model) {
+		Map<String, String> ck = ClientInfo.getCookie(request);
+		try {
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			model.addAttribute("hospCd", hospId);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			model.addAttribute("wnnYn", wnn);
+			try {
+				Map<String, Object> h = svc.selectHospInfo(hospId);
+				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
+			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
+			return ".main/qpsLib";
+		} catch (Exception ex) {
+			return ".login/LoginWinCT";
+		}
+	}
+
+	/**
+	 * 자료실을 고칠 수 있는 사람인가 — 보기·내려받기는 전원, 올리기·지우기만 이 판정을 탄다.
+	 *   ① 위너넷 계정(지원 목적) → 항상 가능
+	 *   ② TBL_QPS_MGR 에 지정된 담당자 → 가능
+	 *   ③ 담당자가 한 명도 없으면 → 병원관리자(MAIN_GU 1·2·3)가 대신한다(신규 병원 락아웃 방지)
+	 *   ④ 그 외 → 불가
+	 * 등급은 쿠키(s_mainfg)를 믿지 않고 TBL_USER_MST 에서 직접 읽는다 — 쿠키는 화면에서 바꿀 수 있다.
+	 */
+	private String libPermWhy(HttpServletRequest request, String hospCd) {
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			if ("Y".equals(wnn)) return "WNN";                        // ①
+			String uid = userId(request);
+			if (uid == null || uid.trim().isEmpty()) return "NONE";
+			if (svc.selectQpsMgrYn(hospCd, uid) > 0) return "MGR";    // ②
+			if (svc.selectQpsMgrCount(hospCd) == 0) {                 // ③
+				String gu = svc.selectUserMainGu(hospCd, uid);
+				if ("1".equals(gu) || "2".equals(gu) || "3".equals(gu)) return "ADMIN";
+				return "NOMGR";   // 담당자도 없고 관리자도 아님 — 지정해 달라고 안내한다
+			}
+			return "NONE";                                            // ④
+		} catch (Exception ex) {
+			return "NONE";   // 판정이 안 되면 막는 쪽으로 — 규정 파일이 들어가는 곳이다
+		}
+	}
+
+	private boolean canEditLib(HttpServletRequest request, String hospCd) {
+		String why = libPermWhy(request, hospCd);
+		return "WNN".equals(why) || "MGR".equals(why) || "ADMIN".equals(why);
+	}
+
+	/** 담당자 명단 자체를 고칠 수 있는 사람 — 병원관리자(1·2·3) 또는 위너넷. 담당자가 스스로를 늘리진 못한다. */
+	private boolean canEditMgr(HttpServletRequest request, String hospCd) {
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			if ("Y".equals(wnn)) return true;
+			String gu = svc.selectUserMainGu(hospCd, userId(request));
+			return "1".equals(gu) || "2".equals(gu) || "3".equals(gu);
+		} catch (Exception ex) {
+			return false;
+		}
+	}
+
+	/** 자료실 권한 + 담당자 지정 화면 자료(병원 사용자 목록). */
+	@RequestMapping(value = "/qps/mgrList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> mgrList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String why = libPermWhy(request, hospCd);
+			res.put("why",     why);                           // WNN/MGR/ADMIN/NOMGR/NONE — 화면 안내 문구용
+			res.put("canEdit", "WNN".equals(why) || "MGR".equals(why) || "ADMIN".equals(why));
+			res.put("canMgr",  canEditMgr(request, hospCd));   // 담당자 명단을 고칠 수 있는가
+			res.put("mgrCnt",  svc.selectQpsMgrCount(hospCd));
+			res.put("users",   svc.selectHospUsers(hospCd));
+			res.put("result",  "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 담당자 명단 저장 — 체크한 목록이 곧 최종 명단(통째 교체). */
+	@RequestMapping(value = "/qps/mgrSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> mgrSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!canEditMgr(request, hospCd)) return fail(res, "담당자 지정은 병원 관리자만 할 수 있습니다.");
+			String ids = str(p.get("userIds"), "");   // 콤마로 이어 보낸다
+			java.util.List<String> list = new java.util.ArrayList<>();
+			if (!ids.isEmpty()) for (String s : ids.split(",")) if (!s.trim().isEmpty()) list.add(s.trim());
+			svc.saveQpsMgr(hospCd, list, userId(request));
+			res.put("saved", list.size());
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 분류별 첨부 건수 — 자료실 왼쪽 목록의 (n) 배지. 분류마다 목록을 부르지 않으려고 한 번에 센다. */
+	@RequestMapping(value = "/qps/fileCounts.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> fileCounts(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String refGb = str(p.get("refGb"), "");
+			Map<String, Object> cnt = new HashMap<>();
+			java.util.List<Map<String, Object>> rows = svc.selectQpsFileCounts(hospCd, refGb);
+			if (rows != null) for (Map<String, Object> r : rows) {
+				cnt.put(String.valueOf(r.get("refkey")), r.get("cnt"));
+			}
+			res.put("counts", cnt);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
 	}
 
 	/** 지표정의서 조회 — 병원 행이 없으면 공통 기본값(own='N')을 준다. */
@@ -1125,6 +1251,9 @@ public class QpsController {
 			String refKey = str(p.get("refKey"), "");
 			if (refGb.isEmpty() || refKey.isEmpty()) return fail(res, "먼저 문서를 저장한 뒤 첨부해 주세요.");
 			if (files == null || files.length == 0) return fail(res, "파일을 선택해 주세요.");
+			// 자료실(규정·내규)만 담당자 제한. 서식(회의록·계획서·라운딩)은 실무 입력자가 쓰므로 그대로 둔다.
+			if ("LIBRARY".equals(refGb) && !canEditLib(request, hospCd))
+				return fail(res, "자료실에 파일을 올릴 권한이 없습니다. QPS 담당자에게 요청해 주세요.");
 
 			String folder = "QPS/" + hospCd + "/" + refGb + "/" + refKey;
 			int saved = 0;
@@ -1166,9 +1295,15 @@ public class QpsController {
 		try {
 			String hospCd = hospCd(request, p);
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("fileSeq"));
+			// 어느 문서의 첨부인지 먼저 확인한다 — 자료실(규정·내규)이면 담당자만 지울 수 있다.
+			Map<String, Object> one = svc.selectQpsFileOne(seq, hospCd);
+			if (one == null) return fail(res, "이미 삭제되었거나 없는 파일입니다.");
+			if ("LIBRARY".equals(String.valueOf(one.get("refgb"))) && !canEditLib(request, hospCd))
+				return fail(res, "자료실 파일을 지울 권한이 없습니다. QPS 담당자에게 요청해 주세요.");
 			egovframework.wnn_medcost.qps.model.QpsFileDTO dto = new egovframework.wnn_medcost.qps.model.QpsFileDTO();
 			dto.setHospCd(hospCd);
-			dto.setFileSeq(longOf(p.get("fileSeq")));
+			dto.setFileSeq(seq);
 			dto.setUpdUser(userId(request));
 			svc.deleteQpsFile(dto);
 			res.put("result", "OK");

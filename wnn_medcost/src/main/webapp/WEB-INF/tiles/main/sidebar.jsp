@@ -191,6 +191,10 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsRound.do">라운딩 점검표 <span style="color:#a8b4bb;">(서식 3호)</span></a>
                                 </li>
+                                <%-- 자료실 — 서식이 아니라 보관물(조직도·내규). 분류별 첨부만 있다 --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a>
+                                </li>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a>
                                 </li>

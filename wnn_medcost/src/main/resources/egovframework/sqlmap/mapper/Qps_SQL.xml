@@ -938,10 +938,63 @@
 
 	<!-- 삭제 전 경로 확인용(권한·존재 확인) -->
 	<select id="selectQpsFileOne" resultType="java.util.HashMap">
-		SELECT FILE_SEQ AS fileseq, FILE_PATH AS filepath, FILE_NM AS filenm
+		SELECT FILE_SEQ AS fileseq, FILE_PATH AS filepath, FILE_NM AS filenm,
+		       REF_GB AS refgb, REF_KEY AS refkey   <!-- refgb: 자료실 여부 판정(삭제 권한) -->
+
 		  FROM TBL_QPS_FILE
 		 WHERE FILE_SEQ = #{fileSeq} AND HOSP_CD = #{hospCd} AND USE_YN='Y'
 		 LIMIT 1
+	</select>
+
+	<!-- ══ QPS 담당자(자료실 수정 권한) ══════════════════════════════════
+	     보기·내려받기는 병원 전원, 올리기·지우기는 담당자만. 지정이 0명이면 병원관리자가 대신한다(락아웃 방지). -->
+
+	<!-- 병원 사용자 목록 — 담당자 지정 화면의 후보. MGR_YN 으로 지정 여부를 같이 준다. -->
+	<select id="selectHospUsers" resultType="java.util.HashMap">
+		SELECT u.USER_ID AS userid,
+		       RTRIM(u.USER_NM) AS usernm,
+		       u.MAIN_GU AS maingu,
+		       CASE WHEN m.USER_ID IS NULL THEN 'N' ELSE 'Y' END AS mgryn
+		  FROM TBL_USER_MST u
+		  LEFT JOIN TBL_QPS_MGR m
+		         ON m.HOSP_CD = u.HOSP_CD AND m.USER_ID = u.USER_ID AND m.USE_YN = 'Y'
+		 WHERE u.HOSP_CD = #{hospCd} AND u.ACTION_YN = 'Y'
+		 ORDER BY u.MAIN_GU, u.USER_ID
+	</select>
+
+	<!-- 로그인한 사람의 병원 내 등급(1·2 위너넷, 3 병원관리자, 4 병원사용자) — 쿠키를 믿지 않고 서버가 직접 본다. -->
+	<select id="selectUserMainGu" resultType="java.lang.String">
+		SELECT MAIN_GU FROM TBL_USER_MST
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId} AND ACTION_YN = 'Y'
+		 LIMIT 1
+	</select>
+
+	<select id="selectQpsMgrCount" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM TBL_QPS_MGR WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<select id="selectQpsMgrYn" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM TBL_QPS_MGR
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId} AND USE_YN = 'Y'
+	</select>
+
+	<!-- 지정은 '통째로 갈아끼우기' — 화면이 체크한 목록이 곧 최종 명단이다(부분 수정보다 어긋날 여지가 적다). -->
+	<delete id="deleteQpsMgrAll">
+		DELETE FROM TBL_QPS_MGR WHERE HOSP_CD = #{hospCd}
+	</delete>
+
+	<insert id="insertQpsMgr">
+		INSERT INTO TBL_QPS_MGR (HOSP_CD, USER_ID, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{userId}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+	<!-- 문서키별 첨부 건수 — 자료실 왼쪽 분류 목록의 (n) 배지. 분류마다 목록을 부르지 않으려고 한 방에 센다. -->
+	<select id="selectQpsFileCounts" resultType="java.util.HashMap">
+		SELECT REF_KEY AS refkey, COUNT(*) AS cnt
+		  FROM TBL_QPS_FILE
+		 WHERE HOSP_CD = #{hospCd} AND REF_GB = #{refGb} AND USE_YN = 'Y'
+		 GROUP BY REF_KEY
 	</select>
 
 </mapper>

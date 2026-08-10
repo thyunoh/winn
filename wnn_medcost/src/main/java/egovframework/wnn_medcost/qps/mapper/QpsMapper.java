@@ -165,4 +165,13 @@ public interface QpsMapper {
 	int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto);
 	int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto);
 	Map<String, Object> selectQpsFileOne(@Param("fileSeq") Long fileSeq, @Param("hospCd") String hospCd);
+	List<Map<String, Object>> selectQpsFileCounts(@Param("hospCd") String hospCd, @Param("refGb") String refGb);
+
+	/* QPS 담당자(자료실 수정 권한) */
+	List<Map<String, Object>> selectHospUsers(@Param("hospCd") String hospCd);
+	String selectUserMainGu(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int selectQpsMgrCount(@Param("hospCd") String hospCd);
+	int selectQpsMgrYn(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int deleteQpsMgrAll(@Param("hospCd") String hospCd);
+	int insertQpsMgr(@Param("hospCd") String hospCd, @Param("userId") String userId, @Param("regUser") String regUser);
 }

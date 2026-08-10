@@ -794,6 +794,45 @@ public class QpsServiceImpl implements QpsService {
 		return mapper.deleteQpsFile(dto);
 	}
 	@Override
+	public java.util.List<Map<String, Object>> selectQpsFileCounts(String hospCd, String refGb) throws Exception {
+		return mapper.selectQpsFileCounts(hospCd, refGb);
+	}
+
+	/* ── QPS 담당자(자료실 수정 권한) ────────────────────────────── */
+
+	@Override
+	public java.util.List<Map<String, Object>> selectHospUsers(String hospCd) throws Exception {
+		return mapper.selectHospUsers(hospCd);
+	}
+
+	@Override
+	public String selectUserMainGu(String hospCd, String userId) throws Exception {
+		return mapper.selectUserMainGu(hospCd, userId);
+	}
+
+	@Override
+	public int selectQpsMgrCount(String hospCd) throws Exception {
+		return mapper.selectQpsMgrCount(hospCd);
+	}
+
+	@Override
+	public int selectQpsMgrYn(String hospCd, String userId) throws Exception {
+		return mapper.selectQpsMgrYn(hospCd, userId);
+	}
+
+	/** 명단 통째 교체 — 지운 뒤 다시 넣는다. 화면이 체크한 목록이 곧 최종 명단. */
+	@Override
+	public int saveQpsMgr(String hospCd, java.util.List<String> userIds, String regUser) throws Exception {
+		mapper.deleteQpsMgrAll(hospCd);
+		int n = 0;
+		if (userIds != null) for (String u : userIds) {
+			if (u == null || u.trim().isEmpty()) continue;
+			n += mapper.insertQpsMgr(hospCd, u.trim(), regUser);
+		}
+		return n;
+	}
+
+	@Override
 	public Map<String, Object> selectQpsFileOne(Long fileSeq, String hospCd) throws Exception {
 		return mapper.selectQpsFileOne(fileSeq, hospCd);
 	}

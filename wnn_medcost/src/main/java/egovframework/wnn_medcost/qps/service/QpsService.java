@@ -105,4 +105,12 @@ public interface QpsService {
 	int insertQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception;
 	int deleteQpsFile(egovframework.wnn_medcost.qps.model.QpsFileDTO dto) throws Exception;
 	Map<String, Object> selectQpsFileOne(Long fileSeq, String hospCd) throws Exception;
+	java.util.List<Map<String, Object>> selectQpsFileCounts(String hospCd, String refGb) throws Exception;
+
+	/* QPS 담당자(자료실 수정 권한) */
+	java.util.List<Map<String, Object>> selectHospUsers(String hospCd) throws Exception;
+	String selectUserMainGu(String hospCd, String userId) throws Exception;
+	int selectQpsMgrCount(String hospCd) throws Exception;
+	int selectQpsMgrYn(String hospCd, String userId) throws Exception;
+	int saveQpsMgr(String hospCd, java.util.List<String> userIds, String regUser) throws Exception;
 }

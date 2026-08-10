@@ -55,7 +55,8 @@
 
 <div class="qr-card">
   <table class="ed"><thead><tr>
-    <th style="width:96px;">구분</th><th style="width:190px;">점검 항목</th><th>점검 내용</th>
+    <%-- 구분: '각실 관리(공통)' 처럼 괄호 달린 이름이 잘리지 않을 폭 --%>
+    <th style="width:150px;">구분</th><th style="width:190px;">점검 항목</th><th>점검 내용</th>
     <th style="width:46px;">양호</th><th style="width:46px;">불량</th>
     <th style="width:240px;">불량 내용 및 개선사항</th><th style="width:26px;"></th>
   </tr></thead><tbody id="rdBody"></tbody></table>
@@ -225,7 +226,7 @@
       '<div class="h2"><span>' + esc(HOSP_NM) + '</span>' +
       '<span>' + esc(v[0]) + '년 ' + Number(v[1]) + '월 &nbsp;&nbsp; 점검자 : ' +
         esc(document.getElementById('rdChecker').value) + '</span></div>' +
-      '<table><thead><tr><th style="width:70px;">구분</th><th style="width:150px;">점검 항목</th><th>점검 내용</th>' +
+      '<table><thead><tr><th style="width:96px;">구분</th><th style="width:140px;">점검 항목</th><th>점검 내용</th>' +
       '<th style="width:34px;">양호</th><th style="width:34px;">불량</th><th style="width:170px;">불량 내용 및 개선사항</th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table>';
 
