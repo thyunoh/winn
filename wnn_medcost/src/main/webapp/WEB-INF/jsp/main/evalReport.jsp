@@ -3494,11 +3494,26 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   };
   var NO_GOAL = { '07':1, '08':1, '15':1 };   // 고정값·참고용 지표는 목표를 적지 않는다(188·189·198행)
 
-  /** 목표 구간 z 에 닿는 데 필요한 인원. 닿을 수 없거나 이미 넘었으면 null. */
+  /** 목표 구간 band 에 닿는 데 필요한 인원. 닿을 수 없거나 이미 넘었으면 null.
+      ★구간 경계는 '미만/이상'이라 등호를 넣으면 한 명이 모자란다 — ceil-1 / ceil 로 맞춘다.
+      ★both(장기입원)은 대상자가 <분모·분자에서 함께> 빠져 비율이 같이 움직인다.
+        (분자−c)/(분모−c) < 상한 을 c 에 대해 풀어야 한다. 분모를 고정해 두고 계산하면
+        3명이어야 할 것이 1명으로 나온다(2026-08-10 검토 중 발견). */
   function reqCnt(v, band, dtor, ntor){
-    var c;
-    if(v.lower) c = ntor - Math.floor(band.end*dtor/100);      // 줄여야 하는 수
-    else        c = Math.ceil(band.start*dtor/100) - ntor;     // 늘려야 하는 수
+    var c, E = 1e-9;
+    if(v.both){
+      var p = band.end/100;
+      if(!(p < 1)) return null;
+      c = Math.floor((ntor - p*dtor)/(1-p) + E) + 1;
+      if(c > ntor) return null;                                    // 분자를 넘겨 뺄 수는 없다
+    } else if(v.lower){
+      var maxN = Math.ceil(band.end*dtor/100 - E) - 1;             // 그 구간에 남길 수 있는 최대 분자
+      c = ntor - maxN;
+    } else {
+      var needN = Math.ceil(band.start*dtor/100 - E);              // 그 구간에 들려면 필요한 최소 분자
+      if(needN > dtor) return null;                                // 분모를 넘길 수 없다
+      c = needN - ntor;
+    }
     return (c>0) ? c : null;
   }
 
