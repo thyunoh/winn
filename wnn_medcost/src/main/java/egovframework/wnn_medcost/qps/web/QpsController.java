@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260810-1900";
+	private static final String BUILD = "20260810-2340-SURVEY2";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -805,6 +805,125 @@ public class QpsController {
 	@RequestMapping(value = "main/qpsInfStaff.do")
 	public String qpsInfStaff(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsInfStaff"); }
 
+	/* ═══ 환자만족도 조사 — 설문 ═══ */
+	@RequestMapping(value = "main/qpsSurvey.do")
+	public String qpsSurvey(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSurvey"); }
+
+	/** 화면 초기 로드 : 문항표 + 회차 목록 */
+	@RequestMapping(value = "/qps/surveyBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveyBase(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectSurveyBase(hospCd, str(p.get("inYear"), "")));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 회차 1건 + 응답 목록 */
+	@RequestMapping(value = "/qps/surveyGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveyGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> q = new HashMap<>(p);
+			q.put("hospCd", hospCd);
+			res.putAll(svc.selectSurveyOne(q));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 회차 저장 */
+	@RequestMapping(value = "/qps/surveySave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveySave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> q = new HashMap<>(p);
+			q.put("hospCd", hospCd);
+			q.put("regUser", hospCd);
+			q.put("updUser", hospCd);
+			if (str(q.get("seq"), "").isEmpty()) q.put("seq", 1);
+			res.put("surveyId", svc.saveSurvey(q));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 응답 1건 저장 — 문항점수는 items(JSON)로 함께 온다 */
+	@RequestMapping(value = "/qps/surveyAnsSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveyAnsSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> q = new HashMap<>(p);
+			q.put("hospCd", hospCd);
+			q.put("regUser", hospCd);
+			res.put("ansId", svc.saveSurveyAns(q, jsonRows(p.get("items"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 응답 1건 조회(문항점수) */
+	@RequestMapping(value = "/qps/surveyAnsGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveyAnsGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			long ansId = Long.parseLong(str(p.get("ansId"), "0"));
+			res.put("items", svc.selectSurveyAnsItem(ansId));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 응답 삭제 */
+	@RequestMapping(value = "/qps/surveyAnsDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveyAnsDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> q = new HashMap<>(p);
+			q.put("hospCd", hospCd);
+			svc.deleteSurveyAns(q);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 집계 — 조사결과·지표분석 보고서가 쓰는 수치 일체 */
+	@RequestMapping(value = "/qps/surveyStat.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> surveyStat(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> q = new HashMap<>(p);
+			q.put("hospCd", hospCd);
+			res.putAll(svc.selectSurveyStat(q));
+			res.put("def", svc.selectSurveyBase(hospCd, "").get("def"));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	@RequestMapping(value = "/qps/infStaffList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public Map<String, Object> infStaffList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
@@ -889,6 +1008,13 @@ public class QpsController {
 	private java.util.List<Map<String, Object>> jsonRows(Object o) throws Exception {
 		String json = str(o, "");
 		if (json.isEmpty()) return new java.util.ArrayList<>();
+		// ★XSS 필터가 파라미터의 따옴표를 &quot; 로 바꿔 보낸다. 그대로 파싱하면
+		//   Unexpected character ('&') 로 깨진다. 파싱 전에 되돌린다.
+		if (json.indexOf("&quot;") >= 0 || json.indexOf("&#34;") >= 0 || json.indexOf("&amp;") >= 0) {
+			json = json.replace("&quot;", "\"").replace("&#34;", "\"")
+			           .replace("&lt;", "<").replace("&gt;", ">")
+			           .replace("&#39;", "'").replace("&amp;", "&");
+		}
 		com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
 		return om.readValue(json,
 			new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});

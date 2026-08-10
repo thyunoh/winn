@@ -206,6 +206,11 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsInfRpt.do">감염종합보고</a>
                                 </li>
+                                <%-- 환자만족도 조사 — 이 화면만 저장 단위가 다르다(응답자 1인 = 1건).
+                                     설문 응답을 쌓아 조사결과·지표분석 보고서를 계산으로 뽑는다. --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsSurvey.do">환자만족도 조사</a>
+                                </li>
                                 <%-- 자료실 — 서식이 아니라 보관물(조직도·내규). 분류별 첨부만 있다 --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a>

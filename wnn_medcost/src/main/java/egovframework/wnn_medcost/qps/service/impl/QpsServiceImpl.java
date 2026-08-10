@@ -1027,4 +1027,116 @@ public class QpsServiceImpl implements QpsService {
 		if (s.isEmpty()) return null;
 		try { return Integer.valueOf(new BigDecimal(s).intValue()); } catch (Exception e) { return null; }
 	}
+
+	// ═══ 환자만족도 조사 : 설문 ═══════════════════════════════════════
+	//  ★배점은 SCORE 에 그대로 저장한다(5=매우만족 … 1=매우불만족).
+	//    설문지의 보기번호와 역순이라 화면이 뒤집어 보내야 하고,
+	//    여기서 한 번 더 범위를 막아 잘못된 값이 들어가지 않게 한다.
+
+	@Override
+	public Map<String, Object> selectSurveyBase(String hospCd, String inYear) throws Exception {
+		Map<String, Object> out = new HashMap<>();
+		out.put("def", mapper.selectSrvDef());
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("inYear", inYear);
+		out.put("list", mapper.selectSurveyList(p));
+		return out;
+	}
+
+	@Override
+	public Map<String, Object> selectSurveyOne(Map<String, Object> param) throws Exception {
+		Map<String, Object> out = new HashMap<>();
+		Map<String, Object> doc = mapper.selectSurvey(param);
+		out.put("doc", doc);
+		out.put("ans", doc == null ? new ArrayList<>() : mapper.selectSurveyAnsList(param));
+		return out;
+	}
+
+	@Override
+	public List<Map<String, Object>> selectSurveyAnsItem(long ansId) throws Exception {
+		return mapper.selectSurveyAnsItem(ansId);
+	}
+
+	@Override
+	public long saveSurvey(Map<String, Object> param) throws Exception {
+		Object sid = param.get("surveyId");
+		boolean isNew = (sid == null || String.valueOf(sid).trim().isEmpty() || "0".equals(String.valueOf(sid)));
+		if (isNew) {
+			// ★차수를 1 로 고정하면 UNIQUE(HOSP_CD, IN_YEAR, SEQ) 에 걸린다.
+			//   같은 해에 두 번째 조사를 만들 수 있어야 하므로 max+1 로 채번한다.
+			param.put("seq", mapper.selectSurveyNextSeq(param));
+			mapper.insertSurvey(param);                 // useGeneratedKeys → param 에 surveyId 채워짐
+			Object k = param.get("surveyId");
+			return k == null ? 0L : Long.parseLong(String.valueOf(k));
+		}
+		mapper.updateSurvey(param);
+		return Long.parseLong(String.valueOf(sid));
+	}
+
+	@Override
+	public long saveSurveyAns(Map<String, Object> param, List<Map<String, Object>> items) throws Exception {
+		Object aid = param.get("ansId");
+		boolean isNew = (aid == null || String.valueOf(aid).trim().isEmpty() || "0".equals(String.valueOf(aid)));
+		long ansId;
+		if (isNew) {
+			// ★번호는 서버가 매긴다. 화면이 비워 보내도 저장이 막히지 않게 한다.
+			Integer no = intOrNull(param.get("ansno"));
+			if (no == null || no <= 0) param.put("ansno", mapper.selectSurveyNextAnsNo(param));
+			mapper.insertSurveyAns(param);
+			Object k = param.get("ansId");
+			ansId = (k == null ? 0L : Long.parseLong(String.valueOf(k)));
+		} else {
+			ansId = Long.parseLong(String.valueOf(aid));
+			mapper.updateSurveyAns(param);
+		}
+		if (ansId <= 0) throw new Exception("응답 저장에 실패했습니다.");
+
+		// 문항점수는 통째로 갈아끼운다(부분수정 없음).
+		mapper.deleteSurveyAnsItem(ansId);
+		List<Map<String, Object>> rows = new ArrayList<>();
+		if (items != null) {
+			for (Map<String, Object> it : items) {
+				Integer q = intOrNull(it.get("qsort"));
+				if (q == null) continue;                        // 문항번호 없으면 버린다
+				Integer sc = intOrNull(it.get("score"));
+				if (sc != null && (sc < 1 || sc > 5)) sc = null; // ★배점 범위 밖은 무응답 처리
+				Map<String, Object> r = new HashMap<>();
+				r.put("qsort", q);
+				r.put("score", sc);
+				rows.add(r);
+			}
+		}
+		if (!rows.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("ansId", ansId);
+			ip.put("items", rows);
+			mapper.insertSurveyAnsItem(ip);
+		}
+		return ansId;
+	}
+
+	@Override
+	public int deleteSurveyAns(Map<String, Object> param) throws Exception {
+		long ansId = Long.parseLong(String.valueOf(param.get("ansId")));
+		mapper.deleteSurveyAnsItem(ansId);
+		return mapper.deleteSurveyAns(param);
+	}
+
+	@Override
+	public Map<String, Object> selectSurveyStat(Map<String, Object> param) throws Exception {
+		Map<String, Object> out = new HashMap<>();
+		out.put("item",  mapper.selectSrvStatItem(param));
+		out.put("area",  mapper.selectSrvStatArea(param));
+		out.put("total", mapper.selectSrvStatTotal(param));
+
+		// 분포 3종은 같은 쿼리에 축만 바꿔 부른다.
+		for (String gb : new String[] { "SEX", "AGE", "WRITER" }) {
+			Map<String, Object> p = new HashMap<>(param);
+			p.put("gb", gb);
+			out.put("prof" + gb, mapper.selectSrvStatProfile(p));
+		}
+		out.put("opinion", mapper.selectSrvOpinion(param));
+		return out;
+	}
 }

@@ -1272,6 +1272,12 @@
 		 WHERE SURVEY_ID = #{surveyId} AND HOSP_CD = #{hospCd}
 	</select>
 
+	<!-- 그 해의 다음 차수. ★신규 저장 시 seq 를 1 로 고정하면 UNIQUE(HOSP_CD,IN_YEAR,SEQ) 에 걸린다. -->
+	<select id="selectSurveyNextSeq" resultType="int">
+		SELECT IFNULL(MAX(SEQ),0)+1 FROM TBL_QPS_SURVEY
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear}
+	</select>
+
 	<insert id="insertSurvey" parameterType="map" useGeneratedKeys="true" keyProperty="surveyId">
 		INSERT INTO TBL_QPS_SURVEY
 		  (HOSP_CD, IN_YEAR, SEQ, SURVEY_NM, PURPOSE, GOAL, FR_DT, TO_DT,
@@ -1303,6 +1309,11 @@
 	<select id="selectSurveyAnsItem" resultType="map">
 		SELECT Q_SORT AS qsort, SCORE AS score
 		  FROM TBL_QPS_SURVEY_ITEM WHERE ANS_ID = #{ansId}
+	</select>
+
+	<!-- 응답 번호 채번. ★화면이 번호를 못 넣어도 저장이 되도록 서버에서 매긴다. -->
+	<select id="selectSurveyNextAnsNo" resultType="int">
+		SELECT IFNULL(MAX(ANS_NO),0)+1 FROM TBL_QPS_SURVEY_ANS WHERE SURVEY_ID = #{surveyId}
 	</select>
 
 	<insert id="insertSurveyAns" parameterType="map" useGeneratedKeys="true" keyProperty="ansId">

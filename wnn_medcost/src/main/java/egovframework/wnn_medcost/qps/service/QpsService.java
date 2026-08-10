@@ -140,4 +140,20 @@ public interface QpsService {
 	                  List<Map<String, Object>> edus,
 	                  List<Map<String, Object>> duties) throws Exception;
 	int deleteInfStaff(Map<String, Object> param) throws Exception;
+
+	// ── 환자만족도 조사 : 설문 ──────────────────────────────────────
+	/** 설문 화면 초기 로드 — 문항표 + 회차목록 + 코드 */
+	Map<String, Object> selectSurveyBase(String hospCd, String inYear) throws Exception;
+	/** 회차 1건 + 응답 목록 */
+	Map<String, Object> selectSurveyOne(Map<String, Object> param) throws Exception;
+	/** 응답 1건의 문항점수 */
+	List<Map<String, Object>> selectSurveyAnsItem(long ansId) throws Exception;
+	/** 회차 저장(신규/수정) — surveyId 반환 */
+	long saveSurvey(Map<String, Object> param) throws Exception;
+	/** 응답 1건 저장(문항점수 포함) — ansId 반환 */
+	long saveSurveyAns(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	/** 응답 삭제(문항점수 함께) */
+	int deleteSurveyAns(Map<String, Object> param) throws Exception;
+	/** 집계 일체 — 문항별/영역별/전체/분포/기타의견 */
+	Map<String, Object> selectSurveyStat(Map<String, Object> param) throws Exception;
 }

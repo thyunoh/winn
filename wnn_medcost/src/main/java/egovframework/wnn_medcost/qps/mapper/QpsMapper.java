@@ -216,4 +216,28 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectInfStaffDuty(@Param("stfSeq") long stfSeq);
 	int deleteInfStaffDuty(@Param("stfSeq") long stfSeq);
 	int insertInfStaffDuty(Map<String, Object> param);
+
+	// ── 환자만족도 조사 : 설문 ──────────────────────────────────────
+	List<Map<String, Object>> selectSrvDef();
+
+	List<Map<String, Object>> selectSurveyList(Map<String, Object> param);
+	Map<String, Object> selectSurvey(Map<String, Object> param);
+	int selectSurveyNextSeq(Map<String, Object> param);
+	int insertSurvey(Map<String, Object> param);
+	int updateSurvey(Map<String, Object> param);
+
+	List<Map<String, Object>> selectSurveyAnsList(Map<String, Object> param);
+	List<Map<String, Object>> selectSurveyAnsItem(@Param("ansId") long ansId);
+	int selectSurveyNextAnsNo(Map<String, Object> param);
+	int insertSurveyAns(Map<String, Object> param);
+	int updateSurveyAns(Map<String, Object> param);
+	int deleteSurveyAns(Map<String, Object> param);
+	int deleteSurveyAnsItem(@Param("ansId") long ansId);
+	int insertSurveyAnsItem(Map<String, Object> param);
+
+	List<Map<String, Object>> selectSrvStatItem(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvStatArea(Map<String, Object> param);
+	Map<String, Object> selectSrvStatTotal(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvStatProfile(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvOpinion(Map<String, Object> param);
 }
