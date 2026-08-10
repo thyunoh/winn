@@ -78,10 +78,19 @@
 							        </li>
 							        <%-- 적정성평가 바로가기 (2026-08-05 요청) — 샘파일 올린 뒤 바로 평가 화면으로. 사이드바 <적정성-평가 현황>과 같은 주소 --%>
 							        <style>
-							            /* 누르거나 올렸을 때 진한 초록 채움(btn-outline-success 기본)이 과해서 연한 초록으로 (2026-08-05) */
-							            #btnGoAssessment:hover, #btnGoAssessment:focus, #btnGoAssessment:active{
+							            /* 평소에도 연두 바탕, 올리면 조금 진하게, 누르면 한 단계 더 진하게 (2026-08-10 요청)
+							               ※ btn-outline-success 의 기본 채움(진한 초록)이 과해서 단계만 낮춰 쓴다 */
+							            #btnGoAssessment{
 							                background:#e6f6ec !important; color:#212529 !important;
+							                border-color:#28a745 !important;
+							            }
+							            #btnGoAssessment:hover, #btnGoAssessment:focus{
+							                background:#cdebd8 !important; color:#212529 !important;
 							                border-color:#28a745 !important; box-shadow:none !important;
+							            }
+							            #btnGoAssessment:active{
+							                background:#b4e0c4 !important; color:#212529 !important;
+							                border-color:#1e7e34 !important; box-shadow:none !important;
 							            }
 							        </style>
 							        <li class="nav-item ml-4 d-flex align-items-center">
