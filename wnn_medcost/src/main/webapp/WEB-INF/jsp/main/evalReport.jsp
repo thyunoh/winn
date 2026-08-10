@@ -1344,7 +1344,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function autoAna(r, full){
     var cd=r.cate_cd, w=n(r.stdweig), got=n(r.weigval), dtor=n(r.dtorval), s=n(r.s_score)||0;
     var rng = s ? zoneRange(cd, s) : '';
-    var zone = s ? s+'구간'+(rng? '('+rng+')' : '') : '-';
+    var zone = s ? s+'점 구간'+(rng? '('+rng+')' : '') : '-';   /* 표기 통일: '표준화 2점 구간(60~80미만%)' (2026-08-10) */
     var ym = ymLabel(), pre = ym ? ym+' ' : '';
     var lead, conn;
     if (UNIT_PERSON.indexOf(cd)>=0) {
@@ -1380,7 +1380,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if (UNIT_PERSON.indexOf(cd)>=0 || cd==='04' || cd==='07' || cd==='08') return '';   // 인력·항정·DUR 은 누적 개념이 다르다
     var w = n(r.stdweig), s = zoneOfWeig(w, c.weig);
     var rng = s ? zoneRange(cd, s) : '';
-    var zone = s ? s+'구간'+(rng? '('+rng+')' : '') : '-';
+    var zone = s ? s+'점 구간'+(rng? '('+rng+')' : '') : '-';   /* 표기 통일: '표준화 2점 구간(60~80미만%)' (2026-08-10) */
     var dn = DEN_NM2[cd] || '대상', nn = NUM_NM2[cd] || '해당';
     var val = fnum(c.cal) + unitOf(cd);
     var body = IS_IMPROVE[cd]
@@ -3494,26 +3494,41 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   };
   var NO_GOAL = { '07':1, '08':1, '15':1 };   // 고정값·참고용 지표는 목표를 적지 않는다(188·189·198행)
 
+  /** 목표 구간 z 에 닿는 데 필요한 인원. 닿을 수 없거나 이미 넘었으면 null. */
+  function reqCnt(v, band, dtor, ntor){
+    var c;
+    if(v.lower) c = ntor - Math.floor(band.end*dtor/100);      // 줄여야 하는 수
+    else        c = Math.ceil(band.start*dtor/100) - ntor;     // 늘려야 하는 수
+    return (c>0) ? c : null;
+  }
+
   function goalUp(r){
     var cd=r.cate_cd, v=GOAL_VERB[cd];
     if(!v || NO_GOAL[cd]) return '';
     var dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0, w=n(r.stdweig), got=n(r.weigval);
     if(!(dtor>0) || !(s>=1 && s<5)) return '';
-    var step=w/5, seen={}, targets=[], parts=[];
-    [s+1, 5].forEach(function(tz){ if(tz>s && tz<=5 && !seen[tz]){ seen[tz]=1; targets.push(tz); } });
-    targets.forEach(function(tz){
-      var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===tz) band=z; });
+    var step=w/5, parts=[];
+    /* ★상위 구간을 <전부> 따져 보고, 같은 인원으로 여러 구간에 닿으면 <가장 높은 구간>으로 합친다
+       (2026-08-10 비고: "동일한 개선 인원으로 여러 구간 진입이 가능하면 도달 가능한 가장 높은 구간으로 통합 표기").
+       예) 3명 감소로 4점·5점에 모두 닿으면 "3명 감소 … 5점 구간" 한 번만 적는다. */
+    var byCnt = {};
+    (CRIT_ALL[cd]||[]).forEach(function(z){
+      if(!(z.s>s && z.s<=5)) return;
+      var c = reqCnt(v, z, dtor, ntor);
+      if(c==null) return;
+      if(byCnt[c]==null || z.s > byCnt[c]) byCnt[c] = z.s;
+    });
+    var targets = Object.keys(byCnt).map(Number).sort(function(a,b){ return a-b; });
+    targets.forEach(function(cntKey){
+      var tz = byCnt[cntKey], band=null;
+      (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===tz) band=z; });
       if(!band) return;
-      var cnt, newN, newD=dtor;
+      var cnt = cntKey, newD = dtor, newN;
       if(v.lower){
-        var okN=Math.floor(band.end*dtor/100);          // 그 구간에 들어가려면 남길 수 있는 최대 분자
-        cnt = ntor - okN; if(!(cnt>0)) return;
         newN = ntor - cnt;
-        if(v.both) newD = dtor - cnt;                    // ★분모에서도 같이 제외
+        if(v.both) newD = dtor - cnt;                    // ★장기입원: 분모에서도 같이 제외
       } else {
-        var needN=Math.ceil(band.start*dtor/100);
-        cnt = needN - ntor; if(!(cnt>0)) return;
-        newN = needN;
+        newN = ntor + cnt;
       }
       var pct = (newD>0) ? Math.round(newN/newD*10000)/100 : 0;
       var newGot = Math.min(w, got + step*(tz-s));
