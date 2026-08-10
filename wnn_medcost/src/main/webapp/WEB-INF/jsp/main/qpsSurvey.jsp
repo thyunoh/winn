@@ -23,7 +23,8 @@
     <button type="button" class="btn-nw" id="btnSvNew">새 조사</button>
     <button type="button" class="btn-sv" id="btnSvSave">조사정보 저장</button>
     <button type="button" class="btn-sv" id="btnAnsSaveTop" style="display:none">이 응답 저장</button>
-    <button type="button" class="btn-pr" id="btnSvPrint">인쇄</button>
+    <button type="button" class="btn-pr" id="btnSvPrint">🖨 조사결과 보고서</button>
+    <button type="button" class="btn-pr" id="btnSvPrint2">🖨 지표분석 보고서</button>
   </div>
 
   <!-- 탭 -->
@@ -48,6 +49,23 @@
       <tr><th>조사의 활용</th><td colspan="3"><textarea id="f_useplan" class="ipt" rows="3" style="width:100%"></textarea></td></tr>
     </table>
     <p class="hint">※ 만족지수 산출기준 — 매우만족 5점 / 만족 4점 / 보통 3점 / 불만족 2점 / 매우불만족 1점</p>
+
+    <%-- 보고서 서술 — 집계 9면은 자동이고, 보고서에서 사람이 쓰는 칸은 이것뿐이다.
+         개선사항은 한 줄 = 구분|문제점|처리결과 (인쇄에서 3열 표로 조립) --%>
+    <h4 style="margin:16px 0 6px;font-size:14px;background:#eef3f8;padding:7px 10px;border-left:3px solid #1a73e8;">
+      보고서 서술 <span style="font-weight:400;font-size:12px;color:#888;">— 조사결과·지표분석 보고서 인쇄에 실립니다</span></h4>
+    <table class="svtbl">
+      <colgroup><col style="width:170px"><col></colgroup>
+      <tr><th>개선사항<br><span style="font-weight:400;font-size:11px;color:#888;">줄당: 구분|문제점|처리결과</span></th>
+          <td><textarea id="f_imprtxt" class="ipt" rows="3" style="width:100%"
+              placeholder="시설 및 환경|주차공간 부족 불만|외부 주차장 계약(3월)&#10;간병 서비스|호출 응답 지연|병동별 응답시간 모니터링"></textarea></td></tr>
+      <tr><th>개선 전략 및 실행<br><span style="font-weight:400;font-size:11px;color:#888;">지표분석 보고서</span></th>
+          <td><textarea id="f_strategytxt" class="ipt" rows="3" style="width:100%"></textarea></td></tr>
+      <tr><th>결론 및 제언<br><span style="font-weight:400;font-size:11px;color:#888;">지표분석 보고서</span></th>
+          <td><textarea id="f_concltxt" class="ipt" rows="3" style="width:100%"></textarea></td></tr>
+      <tr><th>증진활동 평가 및<br>추후 활동계획<br><span style="font-weight:400;font-size:11px;color:#888;">지표분석 보고서</span></th>
+          <td><textarea id="f_nextacttxt" class="ipt" rows="3" style="width:100%"></textarea></td></tr>
+    </table>
   </div>
 
   <!-- ── 설문 응답 ─────────────────────────────────────────────── -->
@@ -307,6 +325,8 @@
       gel('f_target').value = d.target||'';     gel('f_method').value = d.method||'';
       gel('f_staff').value = d.staff||'';       gel('f_statmethod').value = d.statmethod||'';
       gel('f_frdt').value = fmtDt(d.frdt);      gel('f_todt').value = fmtDt(d.todt);
+      gel('f_imprtxt').value = d.imprtxt||'';   gel('f_strategytxt').value = d.strategytxt||'';
+      gel('f_concltxt').value = d.concltxt||''; gel('f_nextacttxt').value = d.nextacttxt||'';
       drawAnsList(r.ans||[]);
       var onStat = gel('pane-stat') && gel('pane-stat').style.display !== 'none';
       if (onStat) loadStat();
@@ -315,7 +335,8 @@
   function fmtDt(s){ return (s&&s.length===8) ? s.substr(0,4)+'-'+s.substr(4,2)+'-'+s.substr(6,2) : ''; }
   function rawDt(s){ return (s||'').replace(/-/g,''); }
   function clearInfo(){
-    ['f_surveynm','f_purpose','f_goal','f_useplan','f_target','f_method','f_staff','f_statmethod','f_frdt','f_todt']
+    ['f_surveynm','f_purpose','f_goal','f_useplan','f_target','f_method','f_staff','f_statmethod','f_frdt','f_todt',
+     'f_imprtxt','f_strategytxt','f_concltxt','f_nextacttxt']
       .forEach(function(id){ gel(id).value=''; });
   }
 
@@ -327,7 +348,10 @@
      드롭다운에 남은 값 때문에 기존 조사 수정으로 새는 일이 생긴다.
      먼저 만들어 목록에 띄우면 차수(2026-N)가 바로 눈에 보이고 상태가 꼬이지 않는다. */
   HAND.btnSvNew = function(){
-    ask('올해(' + gel('svYear').value + '년) 새 조사를 만들까요?', function(){
+    // ★"입력한 게 없어졌다" 오인 방지 — 새 조사는 빈 화면으로 시작하는 게 정상이고,
+    //   이전 조사는 상단 드롭다운에 그대로 남아 언제든 다시 열 수 있다는 것을 분명히 알린다.
+    ask('올해(' + gel('svYear').value + '년) 새 조사를 만들까요?<br>' +
+        '<span style="color:#6b7c86;font-size:12px;">지금 보던 조사와 응답은 지워지지 않습니다 — 상단 목록에서 다시 열 수 있습니다.</span>', function(){
       post('<c:url value="/qps/surveySave.do"/>',
            { surveyId:'', inYear:gel('svYear').value, surveynm:'(제목 없음)' },
            function(r){
@@ -346,7 +370,9 @@
       surveynm:gel('f_surveynm').value, purpose:gel('f_purpose').value, goal:gel('f_goal').value,
       useplan:gel('f_useplan').value, target:gel('f_target').value, method:gel('f_method').value,
       staff:gel('f_staff').value, statmethod:gel('f_statmethod').value,
-      frdt:rawDt(gel('f_frdt').value), todt:rawDt(gel('f_todt').value) };
+      frdt:rawDt(gel('f_frdt').value), todt:rawDt(gel('f_todt').value),
+      imprtxt:gel('f_imprtxt').value, strategytxt:gel('f_strategytxt').value,
+      concltxt:gel('f_concltxt').value, nextacttxt:gel('f_nextacttxt').value };
     post('<c:url value="/qps/surveySave.do"/>', p, function(r){
       curSurvey = r.surveyId; say('저장되었습니다.'); loadBase();
     });
@@ -426,16 +452,30 @@
          (방금 저장한 내용은 왼쪽 목록에서 눌러 다시 볼 수 있다.) */
       clearAnsForm();
       say('저장되었습니다. 이어서 다음 응답을 입력하세요.');
-      post('<c:url value="/qps/surveyGet.do"/>', {surveyId:curSurvey}, function(r2){ drawAnsList(r2.ans||[]); });
+      post('<c:url value="/qps/surveyGet.do"/>', {surveyId:curSurvey}, function(r2){
+        drawAnsList(r2.ans||[]);
+        refreshListCaption((r2.ans||[]).length);
+      });
     });
   };
+
+  /* ★상단 드롭다운의 「(N건)」을 응답 저장·삭제 때 같이 갱신한다.
+     캡션은 loadBase 때 박힌 글자라, 안 고치면 응답을 저장해도 「(0건)」이 남아
+     **저장이 안 된 것처럼 보인다**(2026-08-10 실사용 지적 — "입력한 게 없어짐" 오인의 원인). */
+  function refreshListCaption(cnt){
+    var o = root.querySelector('#svList option[value="' + curSurvey + '"]');
+    if (o) o.text = o.text.replace(/\(\d+건\)\s*$/, '(' + cnt + '건)');
+  }
 
   HAND.btnAnsDel = function(){
     if (!curAns) return say('삭제할 응답을 선택하세요.');
     ask('선택한 응답을 삭제하시겠습니까?', function(){
       post('<c:url value="/qps/surveyAnsDelete.do"/>', {ansId:curAns}, function(){
         curAns = 0;
-        post('<c:url value="/qps/surveyGet.do"/>', {surveyId:curSurvey}, function(r2){ drawAnsList(r2.ans||[]); });
+        post('<c:url value="/qps/surveyGet.do"/>', {surveyId:curSurvey}, function(r2){
+          drawAnsList(r2.ans||[]);
+          refreshListCaption((r2.ans||[]).length);
+        });
       });
     });
   };
@@ -526,7 +566,210 @@
   }
 
   HAND.chkScore = loadStat;
-  HAND.btnSvPrint = function(){ window.print(); };
+
+  /* ── 인쇄 2종 — 별도 창 방식(앱 CSS·주소 바닥글이 안 붙는다. QPS 공통 패턴) ──
+     조사결과 보고서(원본 12p) / 지표분석 보고서(원본 10p).
+     ★집계 수치는 인쇄 직전에 서버에서 새로 받는다 — 화면 DOM 을 긁지 않는다(어긋남 방지).
+     ★결재란은 결재선(apprGet, 지표 SATISFY·연간)에서, 지표 프레임은 정의서(indiDefGet)에서 가져온다. */
+  var PRINT_CSS =
+    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
+    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '.cover{ text-align:center; padding-top:45mm; page-break-after:always; }' +
+    '.cover .t{ font-size:24px; font-weight:800; line-height:1.5; }' +
+    '.cover .h{ font-size:14px; margin-top:14mm; }' +
+    '.h1{ font-size:17px; font-weight:800; margin:0 0 8px; }' +
+    '.sec{ font-size:13px; font-weight:800; margin:12px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #333; }' +
+    'table{ width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:6px; }' +
+    'th,td{ border:1px solid #666; padding:4px 5px; text-align:center; vertical-align:middle; line-height:1.55; }' +
+    'th{ background:#efefef; font-weight:700; }' +
+    'td.l{ text-align:left; }' +
+    'td.pre{ text-align:left; white-space:pre-wrap; }' +
+    '.appr{ float:right; width:auto; margin:0 0 6px 8px; font-size:10px; }' +
+    '.appr th{ padding:2px 6px; } .appr td{ height:44px; width:60px; }' +
+    '.bar{ display:inline-block; height:9px; background:#555; vertical-align:middle; }' +
+    '.barbox{ display:inline-block; width:90px; background:#e5e5e5; vertical-align:middle; }' +
+    'tr{ page-break-inside:avoid; } .qarea{ page-break-inside:avoid; }';
+
+  function pShow(v){ return (v==null||v==='') ? '-' : v; }
+  function pBar(pct){
+    if (pct == null || pct === '') return '-';
+    var w = Math.max(0, Math.min(100, Number(pct)));
+    return '<span class="barbox"><span class="bar" style="width:'+w+'%"></span></span>';
+  }
+  function doPrintWin(title, body){
+    var w = window.open('', '_blank', 'width=900,height=1000');
+    if (!w) { say('팝업이 차단되어 인쇄창을 열지 못했습니다. 주소창 오른쪽의 팝업 차단을 허용해 주세요.', '⚠️'); return; }
+    w.document.open();
+    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' +
+      esc(title.replace(/[\\\/:*?"<>|]/g, '-')) + '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
+    w.document.close();
+    w.focus();
+    setTimeout(function(){ try { w.print(); } catch(e){} }, 300);
+  }
+  function apprHtml(line){
+    if (!line || !line.length) return '';
+    var h = '<table class="appr"><thead><tr>';
+    line.forEach(function(r){ h += '<th>' + esc(r.stepnm) + '</th>'; });
+    h += '</tr></thead><tbody><tr>';
+    line.forEach(function(){ h += '<td></td>'; });
+    return h + '</tr></tbody></table>';
+  }
+  // 응답자 분포 표(빈도/비율) — 성별·연령·작성자 공용
+  function profHtml(title, rows, codeCd){
+    var L = rows || []; if (!L.length) return '';
+    var sum = 0; L.forEach(function(x){ sum += Number(x.cnt||0); });
+    var h = '<table><tr><th style="width:90px;">' + esc(title) + '</th>';
+    L.forEach(function(x){ h += '<th>' + esc(codeNm(codeCd, x.cd)) + '</th>'; });
+    h += '<th>합계</th></tr><tr><td>빈도(명)</td>';
+    L.forEach(function(x){ h += '<td>' + x.cnt + '</td>'; });
+    h += '<td>' + sum + '</td></tr><tr><td>비율(%)</td>';
+    L.forEach(function(x){ h += '<td>' + (sum ? (Math.round(Number(x.cnt)/sum*1000)/10) : '-') + '</td>'; });
+    return h + '<td>' + (sum ? 100 : '-') + '</td></tr></table>';
+  }
+  // 영역별 문항 집계 블록(DEF 순회 — 하드코딩 없음)
+  function areaBlocksHtml(r){
+    var byQ = {}; (r.item||[]).forEach(function(x){ byQ[x.qsort] = x; });
+    var h = '';
+    Object.keys(AREA).sort().forEach(function(ac){
+      var a = AREA[ac];
+      h += '<div class="qarea"><div class="sec">' + esc(ac) + '. ' + esc(a.nm||'') + '</div>' +
+           '<table><tr><th class="l">문항</th>';
+      SCALE.forEach(function(s){ h += '<th style="width:44px;">' + s.nm + '<br>(' + s.v + ')</th>'; });
+      h += '<th style="width:40px;">응답</th><th style="width:52px;">백분율</th><th style="width:44px;">만족도</th><th style="width:100px;">분포</th></tr>';
+      a.qs.forEach(function(q){
+        var s = byQ[q.sort] || {};
+        h += '<tr><td class="l">' + q.qno + ') ' + esc(q.qnm) + '</td>';
+        [s.n5,s.n4,s.n3,s.n2,s.n1].forEach(function(n){ h += '<td>' + Number(n||0) + '</td>'; });
+        h += '<td>' + pShow(s.cnt) + '</td><td><b>' + pShow(s.pct) + '</b>%</td>' +
+             '<td>' + pShow(s.avgp) + '점</td><td>' + pBar(s.pct) + '</td></tr>';
+      });
+      h += '</table></div>';
+    });
+    return h;
+  }
+  // 개선사항 표 — 줄당 "구분|문제점|처리결과"
+  function imprHtml(){
+    var lines = (gel('f_imprtxt').value||'').split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    if (!lines.length) return '';
+    var h = '<div class="sec">의료서비스 만족도 조사 개선사항</div>' +
+      '<table><tr><th style="width:110px;">구분</th><th>문제점</th><th>처리결과</th></tr>';
+    lines.forEach(function(ln){
+      var p = ln.split('|');
+      h += '<tr><td>' + esc(p[0]||'') + '</td><td class="l">' + esc(p[1]||'') + '</td><td class="l">' + esc(p[2]||'') + '</td></tr>';
+    });
+    return h + '</table>';
+  }
+  function scaleHtml(){
+    return '<table><tr><th style="width:90px;">구분</th>' +
+      SCALE.map(function(s){ return '<th>' + s.nm + '</th>'; }).join('') + '</tr><tr><td>배점</td>' +
+      SCALE.map(function(s){ return '<td><b>' + s.v + '점</b></td>'; }).join('') + '</tr></table>';
+  }
+  // [조사의 내용] — 영역|관련 문항(자동 생성: 문항표에서)
+  function contentHtml(){
+    var h = '<table><tr><th style="width:200px;">구분</th><th>관련 문항</th></tr>';
+    Object.keys(AREA).sort().forEach(function(ac){
+      var a = AREA[ac], qs = a.qs || [];
+      var rng = qs.length ? (qs[0].qno + '번 ~ ' + qs[qs.length-1].qno + '번 (' + qs.length + '문항)') : '-';
+      h += '<tr><td class="l">' + esc(ac) + '. ' + esc(a.nm||'') + '</td><td class="l">' + rng + '</td></tr>';
+    });
+    return h + '</table>';
+  }
+  function ov(id){ return esc(gel(id).value || ''); }
+  function period(){ return (gel('f_frdt').value||'') + ' ~ ' + (gel('f_todt').value||''); }
+  function hospNm(){ return '${hospNm}'; }
+
+  // 인쇄 공통 준비 — 집계 + 결재선을 받아 cb(stat, line)
+  function prepPrint(cb){
+    ensureSurvey();
+    if (!curSurvey) { say('조사를 먼저 선택해 주세요.', '⚠️'); return; }
+    post('<c:url value="/qps/surveyStat.do"/>', {surveyId:curSurvey}, function(r){
+      post('<c:url value="/qps/apprGet.do"/>', {indiCd:'SATISFY', prdGb:'Y', prdKey:gel('svYear').value}, function(a){
+        cb(r, (a && a.line) || []);
+      });
+    });
+  }
+
+  /* ① 조사결과 보고서 (원본 12p) — 표지 / 목적·개요·산출기준 / 내용·활용 / 분포 / 문항 집계 / 개선사항 */
+  HAND.btnSvPrint = function(){
+    prepPrint(function(r, line){
+      var yy = gel('svYear').value;
+      var body =
+        '<div class="cover"><div class="t">' + esc(yy) + ' 년도<br>' +
+          (ov('f_surveynm') || '의료서비스 만족도') + '<br>조사 결과 보고서</div>' +
+          '<div class="h">' + esc(hospNm()) + '</div></div>' +
+        apprHtml(line) +
+        '<div class="h1">' + esc(yy) + '년 ' + (ov('f_surveynm') || '의료서비스 만족도') + ' 조사 결과 보고서</div>' +
+        '<div style="clear:both;"></div>' +
+        '<div class="sec">조사의 목적</div><div class="pre" style="border:1px solid #666;padding:5px 7px;font-size:10.5px;white-space:pre-wrap;text-align:left;">' + ov('f_purpose') + '</div>' +
+        '<div class="sec">조사의 목표</div><div style="border:1px solid #666;padding:5px 7px;font-size:10.5px;white-space:pre-wrap;text-align:left;">' + ov('f_goal') + '</div>' +
+        '<div class="sec">조사 개요</div>' +
+        '<table>' +
+          '<tr><th style="width:110px;">조사기간</th><td class="l">' + esc(period()) + '</td><th style="width:110px;">조사대상 및 인원</th><td class="l">' + ov('f_target') + '</td></tr>' +
+          '<tr><th>조사방법</th><td class="l">' + ov('f_method') + '</td><th>조사요원</th><td class="l">' + ov('f_staff') + '</td></tr>' +
+          '<tr><th>통계방법</th><td class="l" colspan="3">' + ov('f_statmethod') + '</td></tr>' +
+        '</table>' +
+        '<div class="sec">만족지수 산출기준</div>' + scaleHtml() +
+        '<div class="sec">조사의 내용</div>' + contentHtml() +
+        '<div class="sec">조사의 활용</div><div style="border:1px solid #666;padding:5px 7px;font-size:10.5px;white-space:pre-wrap;text-align:left;">' + ov('f_useplan') + '</div>' +
+        '<div class="sec">응답자 분포</div>' +
+        profHtml('성별', r.profSEX, 'QPS_SRV_SEX') +
+        profHtml('연령대', r.profAGE, 'QPS_SRV_AGE') +
+        profHtml('작성자', r.profWRITER, 'QPS_SRV_WRITER') +
+        '<table><tr><th style="width:140px;">전체 응답</th><td>' + pShow((r.total||{}).anscnt) + ' 명</td>' +
+        '<th style="width:170px;">의료서비스 만족도 전체 평균</th><td><b>' + pShow((r.total||{}).pct) + '</b> % / <b>' +
+        pShow((r.total||{}).avgp) + '</b> 점</td></tr></table>' +
+        areaBlocksHtml(r) +
+        imprHtml();
+      doPrintWin(yy + '_만족도조사결과보고서_' + hospNm(), body);
+    });
+  };
+
+  /* ② 지표분석 보고서 (원본 10p) — 지표 프레임(정의서 재사용) + 현황·영역요약 + 집계 + 서술 3칸 + 개선사항 */
+  HAND.btnSvPrint2 = function(){
+    prepPrint(function(r, line){
+      post('<c:url value="/qps/indiDefGet.do"/>', {indiCd:'SATISFY'}, function(dr){
+        var d = (dr && dr.def) || {};
+        var yy = gel('svYear').value, t = r.total || {};
+        var byA = {}; (r.area||[]).forEach(function(x){ byA[x.areacd] = x; });
+        var areaSum = '<table><tr><th style="width:90px;">구분</th>';
+        Object.keys(AREA).sort().forEach(function(ac){ areaSum += '<th>' + esc(AREA[ac].nm||ac) + '</th>'; });
+        areaSum += '</tr><tr><td>평균점수</td>';
+        Object.keys(AREA).sort().forEach(function(ac){
+          var a = byA[ac] || {};
+          areaSum += '<td><b>' + pShow(a.pct) + '</b> %<br>' + pShow(a.avgp) + ' 점</td>';
+        });
+        areaSum += '</tr></table>';
+        function txt(id){ return '<div style="border:1px solid #666;padding:5px 7px;font-size:10.5px;white-space:pre-wrap;text-align:left;min-height:40px;">' + ov(id) + '</div>'; }
+        var body =
+          apprHtml(line) +
+          '<div class="h1">' + esc(yy) + '년 의료서비스 만족도 지표분석 보고서</div>' +
+          '<div style="clear:both;"></div>' +
+          '<div class="sec">지표 정의</div>' +
+          '<table>' +
+            '<tr><th style="width:90px;">지표명</th><td class="l" colspan="3">' + esc(d.indinm||'환자만족도(의료서비스)') + '</td></tr>' +
+            '<tr><th>지표정의</th><td class="l" colspan="3">' + esc(d.definition||'') + '</td></tr>' +
+            '<tr><th>분자정의</th><td class="l" colspan="3">' + esc(d.numerdesc||'') + '</td></tr>' +
+            '<tr><th>분모정의</th><td class="l" colspan="3">' + esc(d.denomdesc||'') + '</td></tr>' +
+            '<tr><th>목표</th><td class="l">의료서비스 만족도 ' + (d.targetval != null && d.targetval !== '' ? (Number(d.targetval) + esc(d.unit||'%')) : '____') + ' 이상</td>' +
+            '<th style="width:90px;">기간</th><td class="l">' + esc(period()) + '</td></tr>' +
+            '<tr><th>지표관리자</th><td class="l">' + esc(d.ownernm||'') + '</td><th>모니터링 주기</th><td class="l">' + esc(d.rptcycle||'연 1회') + '</td></tr>' +
+            '<tr><th>자료수집</th><td class="l">' + (ov('f_method') || esc(d.sourcenm||'')) + '</td><th>통계기법과 도구</th><td class="l">' + ov('f_statmethod') + '</td></tr>' +
+          '</table>' +
+          '<div class="sec">현황</div>' +
+          '<table><tr><th style="width:90px;">년</th><th>응답 수</th><th>의료서비스 만족도 평균</th></tr>' +
+          '<tr><td>' + esc(yy) + '</td><td>' + pShow(t.anscnt) + ' 명</td><td><b>' + pShow(t.pct) + '</b> % / <b>' + pShow(t.avgp) + '</b> 점</td></tr></table>' +
+          '<div class="sec">지표 분석 — 영역별 평균</div>' + areaSum +
+          profHtml('성별', r.profSEX, 'QPS_SRV_SEX') +
+          profHtml('연령대', r.profAGE, 'QPS_SRV_AGE') +
+          areaBlocksHtml(r) +
+          '<div class="sec">개선 전략 및 실행</div>' + txt('f_strategytxt') +
+          '<div class="sec">결론 및 제언</div>' + txt('f_concltxt') +
+          '<div class="sec">증진활동 평가 및 추후 활동계획</div>' + txt('f_nextacttxt') +
+          imprHtml();
+        doPrintWin(yy + '_만족도지표분석보고서_' + hospNm(), body);
+      });
+    });
+  };
 
   /* ── 이벤트 위임 ────────────────────────────────────────────────
      ★버튼마다 onclick 을 걸면, 화면 사본이 여럿일 때 「등록된 버튼」과
