@@ -27,8 +27,10 @@
   #wqaFab.wqa-hide{ display:none; }
 </style>
 
-<button id="wqaFab" type="button" onclick="wqaGo()" title="적정성평가 Q&amp;A 자료 열기">
-  <span class="ic">💬</span><span>적정성평가 Q&amp;A</span>
+<%-- 명칭 2026-08-10 변경: '적정성평가 Q&A' → 'WinCheck 실무 Q&A'
+     적정성평가로 한정되지 않고 요양병원 자료·프로그램 사용까지 다루기 때문(사용자 요청). --%>
+<button id="wqaFab" type="button" onclick="wqaGo()" title="WinCheck 실무 Q&amp;A 자료 열기">
+  <span class="ic">💬</span><span>WinCheck 실무 Q&amp;A</span>
 </button>
 
 <script>
