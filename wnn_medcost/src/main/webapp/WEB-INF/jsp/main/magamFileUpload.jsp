@@ -89,7 +89,7 @@
 							                border-color:#28a745 !important; box-shadow:none !important;
 							            }
 							            #btnGoAssessment:active{
-							                background:#b4e0c4 !important; color:#212529 !important;
+							                background:#3aa663 !important; color:#ffffff !important;
 							                border-color:#1e7e34 !important; box-shadow:none !important;
 							            }
 							        </style>
