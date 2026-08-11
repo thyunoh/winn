@@ -1775,20 +1775,26 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var overflow = body.scrollHeight > maxH+1;
       var onlyThis = (body.children.length <= u.nodes.length);
       if(overflow && !onlyThis){                         // 넘치면 다음 페이지로
-        /* ★고아 헤더 방지(2026-08-03 다온 3장 실사고) — 장에 '헤더류(keep)'만 실린 상태에서
-             첫 본문(큰 표 등)이 넘치면, 종전에는 본문만 다음 장으로 가고 Ⅱ 제목이 홀로 남아
-             '제목만 있고 텅 빈 장'이 생겼다 → 헤더까지 함께 다음 장으로 옮기고 빈 장은 지운다. */
-        var onlyHeaders = curUnits.length>0 && curUnits.every(function(x){ return x.keep; });
+        /* ★고아 헤더 방지(2026-08-03 다온 3장 실사고 / 2026-08-11 확장)
+             '헤더류(keep = 그룹라벨·소제목·섹션제목)' 뒤에 올 본문이 안 들어가면, 종전에는 본문만
+             다음 장으로 가고 헤더가 홀로 남았다. 실제로 4장 끝에 <과정지표> 라벨만 덩그러니 남고
+             유치도뇨관 지표는 5장으로 넘어갔다(2026-08-11 보고).
+             → 장 <끝에 매달린 헤더들>을 본문과 함께 다음 장으로 옮긴다. 헤더뿐이던 장은 지운다.
+             ※종전 코드는 '장 전체가 헤더일 때'만 처리해, 앞에 다른 지표가 실린 장의 꼬리 라벨은 못 잡았다. */
         erRemoveUnit(u);
-        if(onlyHeaders){
-          var hdrs=curUnits.slice(); hdrs.forEach(erRemoveUnit);
+        var tail=[];
+        while(curUnits.length && curUnits[curUnits.length-1].keep) tail.unshift(curUnits.pop());
+        tail.forEach(erRemoveUnit);
+        if(curUnits.length===0 && tail.length){                  // 그 장이 통째로 헤더뿐이었다 → 빈 장 제거
           var emptyPg=body.parentNode; if(emptyPg && emptyPg.parentNode) emptyPg.parentNode.removeChild(emptyPg);
           if(_erPageStarts.length) _erPageStarts.pop();          // 지운 빈 장의 시작 기록 회수
-          body=erNewPage(doc); maxH=erCapacity(body); curUnits=[];
-          hdrs.forEach(function(h){ erAppendUnit(body,h); curUnits.push(h); });
-          _erPageStarts.push(hdrs[0].nodes[0]); _markStart=false;
+        }
+        body=erNewPage(doc); maxH=erCapacity(body); curUnits=[];
+        if(tail.length){
+          tail.forEach(function(h){ erAppendUnit(body,h); curUnits.push(h); });
+          _erPageStarts.push(tail[0].nodes[0]); _markStart=false;
         } else {
-          body=erNewPage(doc); maxH=erCapacity(body); curUnits=[]; _markStart=true;
+          _markStart=true;
         }
         erAppendUnit(body,u);
         onlyThis = (body.children.length <= u.nodes.length); overflow = body.scrollHeight > maxH+1;
@@ -2486,7 +2492,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       g.textContent='📄 '+(i+1+coverN)+'장 시작';
       document.body.appendChild(g);
       g.style.left=Math.round(Math.max(4, r.left+8))+'px';
-      g.style.top =Math.round(Math.max(4, r.top-9))+'px';
+      /* 블록 <위쪽 여백>에 얹는다 — 종전 `r.top-9` 는 알약이 블록에 절반쯤 걸쳐
+         '■ 유치도뇨관이 있는 환자분율' 같은 제목 글자를 가렸다(2026-08-11 지적). */
+      g.style.top =Math.round(Math.max(4, r.top - g.offsetHeight - 2))+'px';
       _erGuides.push(g);
     });
   }
