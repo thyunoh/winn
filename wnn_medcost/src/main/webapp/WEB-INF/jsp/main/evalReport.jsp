@@ -3339,6 +3339,21 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 저장된 편집 문구 키 — 자동 문구(핵심진단·비고 등)는 override 가 없을 때만 채움
   var savedKeys = {};
 
+  /* 저장된 편집 문구가 <옛 수치를 박제하고 있는지> 판정 (2026-08-11)
+       — 저장본이 있으면 자동 문구를 안 만드는데, 그 문장에 점수가 적혀 있으면 값이 바뀌어도 그대로 남는다.
+         실제로 카드는 73.4점(4등급)인데 핵심 진단은 "종합점수 75.2점은 3등급" 이라고 말했다(보고서 28).
+     ★판정은 <그 수치를 말하고 있을 때만> 한다:
+        · 문장에 `종합점수 NN점` 같은 표현이 아예 없으면  → 손대지 않는다(점수를 뺀 채 다듬은 문장 보존)
+        · 있는데 지금 값과 다르면                        → 옛 값 박제로 보고 자동 문구로 다시 만든다
+        · 있고 값도 같으면                               → 다듬은 문장 그대로 둔다
+     ※0.05 이내 차이는 같은 값으로 본다(소수 첫째 자리 반올림 표기 때문). */
+  function _staleNum(el, re, val){
+    if(!el) return false;
+    var m = re.exec(el.textContent || '');
+    if(!m) return false;
+    return Math.abs(parseFloat(m[1]) - n(val)) > 0.05;
+  }
+
   // 목표점수/목표등급 의존 요약(부족 카드 + 가로 등급표 + 핵심진단 자동문구) — 목표값(DOM) 갱신 후 재호출
   function renderGoalSummary(){
     var goalScore = goalScoreVal(), goalGrade = goalGradeVal();
@@ -3360,10 +3375,16 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
      +'<tr><td class="er-l"><b>'+esc(hospNm||'병원')+' 현황</b></td>'+bands.map(function(b){
         return '<td class="er-num'+(b[0]===cur?' er-curval':'')+'">'+(b[0]===cur? f1(scores.total)+'점' : '')+'</td>';
       }).join('')+'</tr>';
-    // 핵심 진단 — 원본 문구에 실제 수치 자동 채움 (편집 저장본이 있으면 유지)
+    /* 핵심 진단 — 원본 문구에 실제 수치 자동 채움.
+       ★2026-08-11: 편집 저장본이 있어도 <문장 속 종합점수가 지금 값과 다르면> 다시 만든다.
+         점수는 병원이 고칠 성질의 값이 아니라 산출된 사실값이다. 종전에는 저장본을 그대로 둬서
+         카드는 73.4점(4등급)인데 문장은 75.2점(3등급)이라고 말하는 일이 생겼다(실제 보고서 28).
+         문장을 다듬어 저장한 경우라도 <점수만 맞으면> 그 문장을 그대로 둔다. */
     var curRange = (bands.filter(function(b){ return b[0]===cur; })[0]||['',''])[1];
-    if(!savedKeys['diag_core']){
-      var e1=document.querySelector('#evalReport [data-key="diag_core"]');
+    var _dcEl = document.querySelector('#evalReport [data-key="diag_core"]');
+    var _dcStale = !!(!approved && savedKeys['diag_core'] && _staleNum(_dcEl, /종합점수\s*([\d.]+)\s*점/, scores.total));
+    if(!savedKeys['diag_core'] || _dcStale){
+      var e1=_dcEl;
       if(e1){
         e1.innerHTML = (gap>0)
           ? '현재 종합점수 <b class="er-num">'+f1(scores.total)+'점</b>은 <b>'+cur+' 구간('+curRange+')</b>에 해당함. 안정적인 <b>'+esc(goalGrade)+' 달성·유지</b>를 위해서는 구간 상단인 <b>'+goalScore+'점</b>을 목표로 하며, 이는 현재 대비 <b class="er-b-bad">+'+gap+'점</b> 향상이 필요함.'
@@ -3371,8 +3392,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         AUTO['diag_core'] = e1.innerHTML;
       }
     }
-    if(!savedKeys['diag_note']){
-      var e2=document.querySelector('#evalReport [data-key="diag_note"]');
+    /* 같은 이유로 각주(부족점수)도 수치가 어긋나면 다시 만든다 */
+    var _dnEl = document.querySelector('#evalReport [data-key="diag_note"]');
+    var _dnStale = !!(!approved && savedKeys['diag_note'] && _staleNum(_dnEl, /\+\s*([\d.]+)\s*점/, 87-scores.total));
+    if(!savedKeys['diag_note'] || _dnStale){
+      var e2=_dnEl;
       if(e2){
         e2.textContent = '※ 기존 표준(1등급·87점)을 목표로 하면 부족점수가 +'+f1(87-scores.total)+'점으로 과대 산정됨. 본 보고서는 병원 여건을 고려한 단계적 목표('+goalGrade+') 기준으로 부족점수와 개선 로드맵을 재산정함.';
         AUTO['diag_note'] = e2.innerHTML;
@@ -4321,6 +4345,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         //   (등급을 수정하면 보고서에 그 수정값이 반영되어야 함. 이력 열람은 뒤에서 스냅샷 메타가 다시 덮어씀)
         applyGoalDefault(res && res.goal);
         syncGoalBadge();       // 본문 목표등급과 표지 뱃지 일치(혼재 방지)
+        /* ★승인 여부를 <renderGoalSummary 앞에서> 확정한다 (2026-08-11) —
+             핵심 진단의 '옛 점수 자동 갱신'(_staleNum)이 이 값을 본다. setStatus 는 아래(배지·버튼까지
+             함께 갱신)에서 다시 부르지만, 그때는 이미 문구가 만들어진 뒤라 승인본이 덮여 버린다.
+           ※승인본은 확정본이므로 수치가 달라져도 문장을 손대지 않는다 —
+             달라진 사실은 _erApproveDiff 배너가 위너넷에게 따로 알려 준다. */
+        approved = !!(mst && mst.status === 'APPROVED');
         renderGoalSummary();   // 목표값 확정 후 부족점수/등급표 재계산
         _erSaved = !!mst;      // 저장 이력(MST 행) 존재 여부 → 신규/저장됨 구분
         _erDirty = false;      // 방금 로드 = 변경 없음
