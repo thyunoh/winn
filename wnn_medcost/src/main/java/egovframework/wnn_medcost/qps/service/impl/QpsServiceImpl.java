@@ -630,6 +630,33 @@ public class QpsServiceImpl implements QpsService {
 		return out;
 	}
 
+	/**
+	 * 분류별 집계를 분기 4벌로 — QI 최종보고서 활동효과(v2).
+	 *
+	 * ★새 SQL 을 만들지 않는다. 지표 화면이 쓰는 분류 집계를 <b>분기 기간으로 네 번</b> 부를 뿐이다.
+	 *   축을 새로 짜면 지표 화면과 QI 보고서가 다른 숫자를 낼 수 있다 — 같은 쿼리를 써야 어긋나지 않는다.
+	 * ★사고형이면 위해등급·사고분류가, 관찰형이면 직종·시점이 그대로 나온다(원본 요구가 정확히 이것).
+	 */
+	@Override
+	public List<Map<String, Object>> selectBreakdownQuarters(String hospCd, String indiCd, String incidGb,
+	                                                         String inYear, String numerSrc, String minLevel) throws Exception {
+		String[][] Q = { {"1/4 분기","0101","0331"}, {"2/4 분기","0401","0630"},
+		                 {"3/4 분기","0701","0930"}, {"4/4 분기","1001","1231"} };
+		List<Map<String, Object>> out = new ArrayList<>();
+		boolean isMon = "MONITOR".equals(numerSrc);
+		// 사고 행이 없는 원천은 분류 축이 성립하지 않는다 — 빈 목록을 준다(화면이 표를 안 그린다)
+		if (!isMon && !"INCIDENT".equals(numerSrc)) return out;
+		for (String[] q : Q) {
+			String fr = inYear + q[1], to = inYear + q[2];
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put("prd", q[0]);
+			row.put("bd", isMon ? selectMonitorBreakdown(hospCd, indiCd, fr, to)
+			                    : selectBreakdown(hospCd, incidGb, fr, to, minLevel));
+			out.add(row);
+		}
+		return out;
+	}
+
 	@Override
 	public Map<String, Object> selectReport(String hospCd, String indiCd, String prdGb, String prdKey) throws Exception {
 		return mapper.selectReport(hospCd, indiCd, prdGb, prdKey);
@@ -659,8 +686,9 @@ public class QpsServiceImpl implements QpsService {
 		//   TAT·재택복귀·불만고충·만족도는 분모가 재원일수가 아니라 '전체 건수'다.
 		String denomGb = str(indi.get("denomgb"));
 		String numerSrcTmp = str(indi.get("numersrc"));
-		// ★CMPL 도 마찬가지다 — 분모가 처리대장의 접수건수라 재원일수를 쓰면 안 된다.
-		if (denomGb.isEmpty() && !"MANUAL".equals(numerSrcTmp) && !"CMPL".equals(numerSrcTmp)) denomGb = "INDAYS";
+		// ★CMPL·SRV 도 마찬가지다 — 분모가 각각 처리대장의 접수건수·설문 만점합이라 재원일수를 쓰면 안 된다.
+		if (denomGb.isEmpty() && !"MANUAL".equals(numerSrcTmp)
+		 && !"CMPL".equals(numerSrcTmp) && !"SRV".equals(numerSrcTmp)) denomGb = "INDAYS";
 		String incidGb = str(indi.get("incidgb"));
 		if (incidGb.isEmpty()) incidGb = indiCd;
 		String minLevel = str(indi.get("minlevel"));   // 비면 전건
@@ -721,6 +749,29 @@ public class QpsServiceImpl implements QpsService {
 				months.add(m);
 			}
 			// 접수 건이 하나도 없으면 분모가 없는 것 — 지표는 '-' 로 나간다(0% 가 아니다).
+			hasDenom = denomTot > 0;
+		} else if ("SRV".equals(numerSrc)) {
+			// 만족도 설문에서 직접 — 분자=점수합, 분모=만점합(응답문항수×5). 재원일수를 안 쓴다.
+			// ★조사가 끝난 달(TO_DT)에 값을 세운다. 만족도는 연 1~2회라 조사 없는 달은 분모가 0 이고,
+			//   그 달·그 분기는 '-' 로 나간다(0% 가 아니다 — 조사를 안 한 것과 만족도 0 은 다르다).
+			// ★분기·연 누계는 '월별 율의 평균'이 아니라 점수합÷만점합이다. 조사가 두 번이면
+			//   응답이 많은 쪽이 더 무겁게 반영된다 — 보고서의 전체평균과 같은 셈법이다.
+			Map<String, int[]> byMm = new HashMap<>();   // mm -> [점수합, 만점합]
+			List<Map<String, Object>> srows = mapper.selectSrvStatMonth(hospCd, inYear);
+			if (srows != null) for (Map<String, Object> r : srows) {
+				byMm.put(str(r.get("mm")), new int[]{ intOf(r.get("sumscore"), 0), intOf(r.get("totscore"), 0) });
+			}
+			int denomTot = 0;
+			for (String mm : MM) {
+				int[] v = byMm.containsKey(mm) ? byMm.get(mm) : new int[]{0, 0};
+				denomTot += v[1];
+				Map<String, Object> m = new LinkedHashMap<>();
+				m.put("mm", mm);
+				m.put("numer", v[0]);
+				m.put("denom", v[1]);
+				m.put("rate", rate(v[0], v[1], multiplier, decimals));
+				months.add(m);
+			}
 			hasDenom = denomTot > 0;
 		} else if ("MONITOR".equals(numerSrc)) {
 			Map<String, int[]> byMm = new HashMap<>();   // mm -> [numer, denom]
@@ -1657,5 +1708,151 @@ public class QpsServiceImpl implements QpsService {
 		}
 		out.put("opinion", mapper.selectSrvOpinion(param));
 		return out;
+	}
+
+	/* ═══════════════════════════════════════════════════════════════════
+	   점검표 엔진 (2026-08-11)
+	   ★서식은 데이터다. 새 점검표를 만드는 데 자바를 고칠 일이 없어야 한다.
+	   ═══════════════════════════════════════════════════════════════════ */
+
+	@Override
+	public List<Map<String, Object>> selectChkFormList(String hospCd, String cateCd, String deptCd, String onlyUse) throws Exception {
+		return mapper.selectChkFormList(hospCd, cateCd, deptCd, onlyUse);
+	}
+
+	@Override
+	public void saveChkUse(String hospCd, List<Map<String, Object>> uses, String regUser) throws Exception {
+		mapper.deleteChkUse(hospCd);
+		if (uses == null || uses.isEmpty()) return;   // 전부 끄면 지정 없음 = 기본 열림으로 돌아간다
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("uses", uses); p.put("regUser", regUser);
+		mapper.insertChkUse(p);
+	}
+
+	/**
+	 * 서식 복제 — ★130종을 손으로 만들 수 없어서 넣은 것이다.
+	 *   비슷한 점검표가 대부분이라 「복제 → 항목만 손보기」가 새로 짜는 것보다 훨씬 빠르다.
+	 *   원본이 공통('*')이든 병원 것이든 상관없이 **이 병원 것**으로 만들어진다.
+	 */
+	@Override
+	public void copyChkForm(String hospCd, String srcFormId, String newFormId, String newFormNm,
+	                        String regUser) throws Exception {
+		Map<String, Object> src = mapper.selectChkForm(hospCd, srcFormId);
+		if (src == null) throw new Exception("복제할 원본 서식을 찾지 못했습니다.");
+		String owner = str(src.get("hospcd"));
+		if (owner.isEmpty()) owner = "*";
+
+		Map<String, Object> m = new HashMap<>();
+		m.put("formId", newFormId);  m.put("hospCd", hospCd);
+		m.put("formNm", newFormNm);  m.put("cateCd", str(src.get("catecd")));
+		m.put("axisGb", str(src.get("axisgb")));  m.put("prdGb", str(src.get("prdgb")));
+		m.put("equipCnt", src.get("equipcnt"));
+		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
+		m.put("signerYn", str(src.get("signeryn")));  m.put("noteYn", str(src.get("noteyn")));
+		m.put("fixYn", str(src.get("fixyn")));        m.put("signLine", str(src.get("signline")));
+		m.put("footTxt", str(src.get("foottxt")));    m.put("sortNo", src.get("sortno"));
+		m.put("regUser", regUser);
+
+		List<Map<String, Object>> items = mapper.selectChkItems(owner, srcFormId);
+		saveChkForm(m, items);
+	}
+
+	@Override
+	public Map<String, Object> selectChkFormOne(String hospCd, String formId) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> form = mapper.selectChkForm(hospCd, formId);
+		out.put("form", form);
+		// ★항목은 **그 서식 행이 있는 병원코드**로 읽는다. 화면의 hospCd 로 읽으면
+		//   공통서식을 보고 있는 병원에서 항목이 0건이 된다(서식은 '*' 인데 항목을 병원코드로 찾게 되므로).
+		String owner = (form == null) ? "*" : str(form.get("hospcd"));
+		if (owner.isEmpty()) owner = "*";
+		out.put("items", form == null ? new ArrayList<>() : mapper.selectChkItems(owner, formId));
+		return out;
+	}
+
+	@Override
+	public void saveChkForm(Map<String, Object> form, List<Map<String, Object>> items) throws Exception {
+		mapper.saveChkForm(form);
+		String hospCd = str(form.get("hospCd")), formId = str(form.get("formId"));
+		mapper.deleteChkItems(hospCd, formId);
+		if (items != null && !items.isEmpty()) {
+			int sort = 0;
+			List<Map<String, Object>> keep = new ArrayList<>();
+			for (Map<String, Object> r : items) {
+				if (str(r.get("itemnm")).isEmpty()) continue;   // 빈 줄은 버린다
+				r.put("sort", ++sort);
+				keep.add(r);
+			}
+			if (!keep.isEmpty()) {
+				Map<String, Object> p = new HashMap<>();
+				p.put("hospCd", hospCd); p.put("formId", formId); p.put("items", keep);
+				mapper.insertChkItems(p);
+			}
+		}
+	}
+
+	@Override
+	public void deleteChkForm(Map<String, Object> param) throws Exception {
+		mapper.deleteChkForm(param);
+	}
+
+	@Override
+	public Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>(selectChkFormOne(hospCd, formId));
+		out.put("list", mapper.selectChkDocList(hospCd, formId, inYear));
+		return out;
+	}
+
+	@Override
+	public Map<String, Object> selectChkDocOne(String hospCd, long chkSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectChkDoc(hospCd, chkSeq);
+		out.put("doc", doc);
+		out.put("vals", doc == null ? new ArrayList<>() : mapper.selectChkVals(chkSeq));
+		out.put("rows", doc == null ? new ArrayList<>() : mapper.selectChkRows(chkSeq));
+		return out;
+	}
+
+	@Override
+	public long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
+	                       List<Map<String, Object>> rows) throws Exception {
+		long seq = longOfObj(doc.get("chkSeq"));
+		if (seq > 0) { mapper.updateChkDoc(doc); }
+		else { mapper.insertChkDoc(doc); seq = Long.parseLong(String.valueOf(doc.get("chkSeq"))); }
+
+		// ★통째 교체다. 셀은 딸린 상세가 없어 SEQ 가 바뀌어도 미아가 생기지 않는다
+		//   (불만고충 처리결과처럼 1:1 로 매달린 것이 있으면 통째 교체하면 안 된다 — 여기는 아니다).
+		mapper.deleteChkVals(seq);
+		if (vals != null && !vals.isEmpty()) {
+			List<Map<String, Object>> keep = new ArrayList<>();
+			for (Map<String, Object> v : vals) {
+				if (str(v.get("val")).isEmpty()) continue;   // 빈 칸은 저장하지 않는다 — 31×16 을 다 넣으면 낭비다
+				keep.add(v);
+			}
+			if (!keep.isEmpty()) {
+				Map<String, Object> p = new HashMap<>();
+				p.put("chkSeq", seq); p.put("vals", keep);
+				mapper.insertChkVals(p);
+			}
+		}
+		mapper.deleteChkRows(seq);
+		if (rows != null && !rows.isEmpty()) {
+			List<Map<String, Object>> keep = new ArrayList<>();
+			for (Map<String, Object> r : rows) {
+				if (str(r.get("rownm")).isEmpty()) continue;
+				keep.add(r);
+			}
+			if (!keep.isEmpty()) {
+				Map<String, Object> p = new HashMap<>();
+				p.put("chkSeq", seq); p.put("rows", keep);
+				mapper.insertChkRows(p);
+			}
+		}
+		return seq;
+	}
+
+	@Override
+	public void deleteChkDoc(Map<String, Object> param) throws Exception {
+		mapper.deleteChkDoc(param);
 	}
 }

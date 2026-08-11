@@ -97,6 +97,10 @@ public interface QpsService {
 	/** 분류별 집계 — 분자와 같은 등급 필터(minLevel)를 적용한다(기존 프로그램 실물: 분류표 합계 = 분자). */
 	Map<String, Object> selectBreakdown(String hospCd, String incidGb, String fromDt, String toDt, String minLevel) throws Exception;
 
+	/** 분류별 집계를 <b>분기 4벌</b>로 — QI 최종보고서 활동효과(v2). 기존 분류 집계를 분기마다 부를 뿐이다. */
+	List<Map<String, Object>> selectBreakdownQuarters(String hospCd, String indiCd, String incidGb,
+	                                                  String inYear, String numerSrc, String minLevel) throws Exception;
+
 	Map<String, Object> selectReport(String hospCd, String indiCd, String prdGb, String prdKey) throws Exception;
 	int saveReport(Map<String, Object> param) throws Exception;
 
@@ -214,4 +218,25 @@ public interface QpsService {
 	int deleteSurveyAns(Map<String, Object> param) throws Exception;
 	/** 집계 일체 — 문항별/영역별/전체/분포/기타의견 */
 	Map<String, Object> selectSurveyStat(Map<String, Object> param) throws Exception;
+
+	/* ═══ 점검표 엔진 ═══ */
+	/** 서식 목록(+항목수·작성건수). onlyUse='Y' 면 그 병원이 켠 것만(작성 화면용) */
+	List<Map<String, Object>> selectChkFormList(String hospCd, String cateCd, String deptCd, String onlyUse) throws Exception;
+	/** 병원별 사용 서식 저장 — 통째 교체 */
+	void saveChkUse(String hospCd, List<Map<String, Object>> uses, String regUser) throws Exception;
+	/** 서식 복제 — 원본 서식+항목을 새 코드로 이 병원 것으로 베낀다 */
+	void copyChkForm(String hospCd, String srcFormId, String newFormId, String newFormNm, String regUser) throws Exception;
+	/** 서식 1건 + 항목 */
+	Map<String, Object> selectChkFormOne(String hospCd, String formId) throws Exception;
+	/** 서식 저장 — 병원 전용 행으로만 쓴다(공통 '*' 는 안 건드린다) */
+	void saveChkForm(Map<String, Object> form, List<Map<String, Object>> items) throws Exception;
+	void deleteChkForm(Map<String, Object> param) throws Exception;
+	/** 작성 화면 기초 — 서식 + 항목 + 그 해 작성목록 */
+	Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception;
+	/** 작성 문서 1건 — 머리 + 셀값 + 기기행 */
+	Map<String, Object> selectChkDocOne(String hospCd, long chkSeq) throws Exception;
+	/** 작성 문서 저장 — chkSeq 반환 */
+	long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
+	                List<Map<String, Object>> rows) throws Exception;
+	void deleteChkDoc(Map<String, Object> param) throws Exception;
 }

@@ -33,6 +33,11 @@
 		       SOURCE_NM    AS sourcenm,
 		       METHOD_NM    AS methodnm,
 		       OWNER_NM     AS ownernm,
+		       <!-- 인쇄물의 「모니터링」 블록 · 「목표 충족」 판정에 쓴다(2026-08-11 인쇄 보강) -->
+		       DEPT_NM      AS deptnm,
+		       RPT_CYCLE    AS rptcycle,
+		       RPT_SCOPE    AS rptscope,
+		       IFNULL(GOAL_DIR,'L') AS goaldir,
 		       TARGET_VAL   AS targetval
 		  FROM TBL_QPS_INDI_MST
 		 WHERE INDI_CD = #{indiCd}
@@ -234,6 +239,7 @@
 		       SOURCE_NM AS sourcenm, METHOD_NM AS methodnm, OWNER_NM AS ownernm, DEPT_NM AS deptnm,
 		       BACKGROUND AS background, INCLUDE_TXT AS includetxt, EXCLUDE_TXT AS excludetxt,
 		       TARGET_VAL AS targetval, PREV_VAL AS prevval, TARGET_BASE AS targetbase,
+		       IFNULL(GOAL_DIR,'L') AS goaldir,
 		       RPT_CYCLE AS rptcycle, RPT_SCOPE AS rptscope, SHARE_TXT AS sharetxt, NOTE AS note,
 		       NUMER_SRC AS numersrc, DENOM_GB AS denomgb,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own,
@@ -255,13 +261,13 @@
 		 (HOSP_CD, INDI_CD, INDI_NM, AREA_NM, AREA_NO, DEFINITION, NUMER_DESC, DENOM_DESC,
 		  DENOM_GB, NUMER_SRC, INCID_GB, MIN_LEVEL, MULTIPLIER, UNIT, DECIMALS, CYCLE_GB,
 		  SOURCE_NM, METHOD_NM, OWNER_NM, DEPT_NM, BACKGROUND, INCLUDE_TXT, EXCLUDE_TXT,
-		  TARGET_VAL, PREV_VAL, TARGET_BASE, RPT_CYCLE, RPT_SCOPE, SHARE_TXT, NOTE,
+		  TARGET_VAL, PREV_VAL, TARGET_BASE, GOAL_DIR, RPT_CYCLE, RPT_SCOPE, SHARE_TXT, NOTE,
 		  SORT_NO, USE_YN, REG_USER)
 		SELECT #{hospCd}, m.INDI_CD, #{indiNm}, m.AREA_NM, m.AREA_NO,
 		       #{definition}, #{numerDesc}, #{denomDesc},
 		       m.DENOM_GB, m.NUMER_SRC, m.INCID_GB, m.MIN_LEVEL, m.MULTIPLIER, m.UNIT, m.DECIMALS, m.CYCLE_GB,
 		       #{sourceNm}, #{methodNm}, #{ownerNm}, #{deptNm}, #{background}, #{includeTxt}, #{excludeTxt},
-		       #{targetVal}, #{prevVal}, #{targetBase}, #{rptCycle}, #{rptScope}, #{shareTxt}, #{note},
+		       #{targetVal}, #{prevVal}, #{targetBase}, #{goalDir}, #{rptCycle}, #{rptScope}, #{shareTxt}, #{note},
 		       m.SORT_NO, 'Y', #{regUser}
 		  FROM TBL_QPS_INDI_MST m
 		 WHERE m.INDI_CD = #{indiCd} AND m.HOSP_CD = '*'
@@ -272,6 +278,7 @@
 		  DEPT_NM=VALUES(DEPT_NM), BACKGROUND=VALUES(BACKGROUND),
 		  INCLUDE_TXT=VALUES(INCLUDE_TXT), EXCLUDE_TXT=VALUES(EXCLUDE_TXT),
 		  TARGET_VAL=VALUES(TARGET_VAL), PREV_VAL=VALUES(PREV_VAL), TARGET_BASE=VALUES(TARGET_BASE),
+		  GOAL_DIR=VALUES(GOAL_DIR),
 		  RPT_CYCLE=VALUES(RPT_CYCLE), RPT_SCOPE=VALUES(RPT_SCOPE), SHARE_TXT=VALUES(SHARE_TXT),
 		  NOTE=VALUES(NOTE), USE_YN='Y', UPD_USER=#{regUser}
 	</insert>
@@ -314,7 +321,14 @@
 		            화면이 NUMER_SRC='CMPL' 인 행에서만 이 값을 본다(2026-08-11). -->
 		       ( SELECT COUNT(*) FROM TBL_QPS_CMPL c
 		          WHERE c.HOSP_CD = #{hospCd} AND c.USE_YN='Y'
-		            AND c.IN_YEAR = #{inYear} ) AS cmplcnt
+		            AND c.IN_YEAR = #{inYear} ) AS cmplcnt,
+		       <!-- 설문형(SRV) 응답자 수 — 만족도. 대장형과 같은 뜻(원천에 자료가 있는가)이다.
+		            ★조사 종료일(TO_DT)이 있는 조사만 센다 — 지표 집계가 TO_DT 로 달을 정하므로
+		              종료일이 비면 집계에서도 빠진다. 여기서 세어 버리면 '자동집계 N' 인데 지표는 '-' 가 된다. -->
+		       ( SELECT COUNT(*) FROM TBL_QPS_SURVEY_ANS a
+		          JOIN TBL_QPS_SURVEY s ON s.SURVEY_ID = a.SURVEY_ID
+		          WHERE s.HOSP_CD = #{hospCd} AND s.IN_YEAR = #{inYear}
+		            AND s.TO_DT IS NOT NULL AND LENGTH(s.TO_DT) = 8 ) AS srvcnt
 		  FROM TBL_QPS_INDI_MST m
 		 WHERE m.USE_YN = 'Y'
 		   <!-- ★지표당 한 줄만 — 병원 정의서가 있으면 그 행, 없으면 공통('*') 행.
@@ -781,6 +795,25 @@
 		            WHEN CAST(SUBSTRING(OCCUR_TM,1,2) AS UNSIGNED) < 12 THEN '06-12'
 		            WHEN CAST(SUBSTRING(OCCUR_TM,1,2) AS UNSIGNED) < 18 THEN '12-18'
 		            ELSE '18-24' END AS code,
+		       COUNT(*) AS cnt
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
+		   AND OCCUR_DT >= #{fromDt} AND OCCUR_DT <= #{toDt}
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) >= CAST(#{minLevel} AS UNSIGNED) )
+		 GROUP BY 2
+		UNION ALL
+		/* 사고분류(위해등급) — 지표분석보고서 인쇄물의 「사고분류」 표.
+		   ★원본 보고서가 Level 을 낱개로 세지 않고 셋으로 묶어 보여준다 :
+		     LV1=근접오류(위해없음) / LV2~4=위해사건 / LV5=적신호사건.
+		   ★코드에서 묶지 않고 여기서 묶는 이유 — 화면·인쇄물이 각자 묶으면 둘이 갈릴 수 있다.
+		   ⚠minLevel 이 걸린 지표(분자가 LV2 이상 등)는 이 표도 같은 기준으로 걸러진다.
+		     분자와 다른 모수를 보여주면 「분자 3건인데 분류 합이 7건」이 되어 더 헷갈린다. */
+		SELECT 'HARM'   AS axis,
+		       CASE WHEN CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) = 5 THEN '적신호사건(LV5)'
+		            WHEN CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) BETWEEN 2 AND 4 THEN '위해사건(LV2~4)'
+		            WHEN CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) = 1 THEN '근접오류(LV1)'
+		            ELSE '미상' END AS code,
 		       COUNT(*) AS cnt
 		  FROM TBL_QPS_INCIDENT
 		 WHERE HOSP_CD=#{hospCd} AND INCID_GB=#{incidGb} AND USE_YN='Y'
@@ -2133,6 +2166,26 @@
 		 ORDER BY d.AREA_CD
 	</select>
 
+	<!-- ═══ 지표 SATISFY 자동집계 — 설문에서 직접 (2026-08-11, 수기입력에서 전환) ═══
+	     ★어느 달에 넣을 것인가 = **조사 종료월(TO_DT)**.
+	       만족도는 연 1~2회라 조사가 끝나야 값이 생긴다. 시작월에 넣으면 아직 없는 값을 그 달에 세우게 된다.
+	     ★분자 = 점수합, 분모 = 만점합(응답문항수 × 5). 지표 MULTIPLIER=100 이라 그대로 만족도(%)가 된다.
+	       조사결과·지표분석 보고서의 selectSrvStatTotal.pct 와 **같은 식**이라 두 화면이 어긋날 수 없다.
+	     ※무응답(SCORE NULL)은 COUNT(SCORE) 에서 빠지므로 분모에도 안 들어간다. -->
+	<select id="selectSrvStatMonth" resultType="java.util.HashMap">
+		SELECT SUBSTR(s.TO_DT,5,2) AS mm,
+		       SUM(i.SCORE)     AS sumscore,
+		       COUNT(i.SCORE)*5 AS totscore,
+		       COUNT(DISTINCT a.ANS_ID) AS anscnt
+		  FROM TBL_QPS_SURVEY      s
+		  JOIN TBL_QPS_SURVEY_ANS  a ON a.SURVEY_ID = s.SURVEY_ID
+		  JOIN TBL_QPS_SURVEY_ITEM i ON i.ANS_ID    = a.ANS_ID
+		 WHERE s.HOSP_CD = #{hospCd} AND s.IN_YEAR = #{inYear}
+		   AND s.TO_DT IS NOT NULL AND LENGTH(s.TO_DT) = 8
+		 GROUP BY SUBSTR(s.TO_DT,5,2)
+		 ORDER BY mm
+	</select>
+
 	<!-- 전체 평균 — 지표분석 보고서 「의료 서비스 만족도 전체 평균」 -->
 	<select id="selectSrvStatTotal" resultType="map">
 		SELECT COUNT(DISTINCT a.ANS_ID) AS anscnt,
@@ -2169,5 +2222,171 @@
 		   AND ETC_OPN IS NOT NULL AND TRIM(ETC_OPN) &lt;&gt; ''
 		 ORDER BY ANS_NO, ANS_ID
 	</select>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     점검표 엔진 (2026-08-11) — 서식정의 + 격자기록
+	     ★서식이 코드가 아니라 **데이터**다. 새 점검표는 화면에서 등록한다.
+	       간호/병동 130여 종을 화면 130개로 만들지 않으려고 만든 구조다.
+	     ★셀은 (행,열,값) 하나로만 담는다 — 축(AXIS_GB)이 바뀌어도 저장구조는 그대로.
+	     ═══════════════════════════════════════════════════════════════════ -->
+
+	<!-- 서식 목록 — ★지표정의서와 같은 방식으로 **서식당 한 줄**만 준다.
+	     병원 전용 정의가 있으면 그것, 없으면 공통('*'). `HOSP_CD IN (병원,'*')` 로 두면 두 줄이 나온다. -->
+	<select id="selectChkFormList" resultType="java.util.HashMap">
+		SELECT f.FORM_ID AS formid, f.HOSP_CD AS hospcd, f.FORM_NM AS formnm, f.CATE_CD AS catecd,
+		       f.DEPT_CD AS deptcd,
+		       f.AXIS_GB AS axisgb, f.PRD_GB AS prdgb, f.EQUIP_CNT AS equipcnt, f.SORT_NO AS sortno,
+		       CASE WHEN f.HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own,
+		       ( SELECT COUNT(*) FROM TBL_QPS_CHK_ITEM i
+		          WHERE i.FORM_ID = f.FORM_ID AND i.HOSP_CD = f.HOSP_CD AND i.USE_YN='Y' ) AS itemcnt,
+		       ( SELECT COUNT(*) FROM TBL_QPS_CHK_DOC d
+		          WHERE d.FORM_ID = f.FORM_ID AND d.HOSP_CD = #{hospCd} AND d.USE_YN='Y' ) AS doccnt,
+		       <!-- 이 병원이 쓰기로 켠 서식인가. 지정이 하나도 없는 병원은 전부 'Y'(기본 열림) -->
+		       CASE WHEN NOT EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u0 WHERE u0.HOSP_CD = #{hospCd}) THEN 'Y'
+		            WHEN EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u1
+		                          WHERE u1.HOSP_CD = #{hospCd} AND u1.FORM_ID = f.FORM_ID AND u1.USE_YN='Y') THEN 'Y'
+		            ELSE 'N' END AS useyn
+		  FROM TBL_QPS_CHK_FORM f
+		 WHERE f.USE_YN = 'Y'
+		   <if test="cateCd != null and cateCd != ''"> AND f.CATE_CD = #{cateCd} </if>
+		   <if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
+		   <!-- ★작성 화면은 켠 것만(onlyUse='Y'), 서식 관리 화면은 전부 본다 -->
+		   <if test="onlyUse == 'Y'">
+		     AND ( NOT EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u2 WHERE u2.HOSP_CD = #{hospCd})
+		           OR EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u3
+		                       WHERE u3.HOSP_CD = #{hospCd} AND u3.FORM_ID = f.FORM_ID AND u3.USE_YN='Y') )
+		   </if>
+		   AND f.HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                         SELECT 1 FROM TBL_QPS_CHK_FORM x
+		                          WHERE x.FORM_ID = f.FORM_ID AND x.HOSP_CD = #{hospCd} AND x.USE_YN='Y')
+		                       THEN #{hospCd} ELSE '*' END )
+		 ORDER BY f.SORT_NO, f.FORM_NM
+	</select>
+
+	<!-- 병원별 사용 서식 저장 — 통째 교체. ★한 번이라도 저장하면 그 뒤로는 켠 것만 보인다. -->
+	<delete id="deleteChkUse">DELETE FROM TBL_QPS_CHK_USE WHERE HOSP_CD = #{hospCd}</delete>
+	<insert id="insertChkUse" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_USE (HOSP_CD, FORM_ID, USE_YN, REG_USER) VALUES
+		<foreach item="u" collection="uses" separator=",">
+		 (#{hospCd}, #{u.formid}, 'Y', #{regUser})
+		</foreach>
+	</insert>
+
+	<select id="selectChkForm" resultType="java.util.HashMap">
+		SELECT FORM_ID AS formid, HOSP_CD AS hospcd, FORM_NM AS formnm, CATE_CD AS catecd,
+		       DEPT_CD AS deptcd,
+		       AXIS_GB AS axisgb, PRD_GB AS prdgb, EQUIP_CNT AS equipcnt, GUIDE_TXT AS guidetxt,
+		       HEAD_NMS AS headnms, SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
+		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
+		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
+		  FROM TBL_QPS_CHK_FORM
+		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD IN (#{hospCd}, '*')
+		 ORDER BY CASE WHEN HOSP_CD = '*' THEN 1 ELSE 0 END
+		 LIMIT 1
+	</select>
+
+	<select id="selectChkItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, INPUT_GB AS inputgb, UNIT_NM AS unitnm
+		  FROM TBL_QPS_CHK_ITEM
+		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD = #{hospCd}
+		 ORDER BY SORT
+	</select>
+
+	<!-- 서식 저장 — 병원 행 upsert. ★공통('*') 행은 절대 안 건드린다.
+	     한 병원이 고친 항목이 공통을 덮으면 전 병원 서식이 바뀐다. -->
+	<insert id="saveChkForm" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_FORM
+		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, EQUIP_CNT, GUIDE_TXT, HEAD_NMS,
+		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
+		VALUES
+		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{equipCnt}, #{guideTxt}, #{headNms},
+		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD), AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB),
+		  EQUIP_CNT=VALUES(EQUIP_CNT), GUIDE_TXT=VALUES(GUIDE_TXT), HEAD_NMS=VALUES(HEAD_NMS),
+		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
+		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
+		  USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+	<update id="deleteChkForm" parameterType="map">
+		UPDATE TBL_QPS_CHK_FORM SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE FORM_ID = #{formId} AND HOSP_CD = #{hospCd} AND HOSP_CD &lt;&gt; '*'
+	</update>
+
+	<delete id="deleteChkItems">
+		DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID = #{formId} AND HOSP_CD = #{hospCd}
+	</delete>
+
+	<insert id="insertChkItems" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, INPUT_GB, UNIT_NM, USE_YN) VALUES
+		<foreach item="it" collection="items" separator=",">
+		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.inputgb}, #{it.unitnm}, 'Y')
+		</foreach>
+	</insert>
+
+	<!-- ── 작성 문서 ────────────────────────────────────────────────────── -->
+	<select id="selectChkDocList" resultType="java.util.HashMap">
+		SELECT CHK_SEQ AS chkseq, IN_YEAR AS inyear, IN_MM AS inmm, WARD_NM AS wardnm,
+		       HEAD1 AS head1, HEAD2 AS head2,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_CHK_DOC
+		 WHERE HOSP_CD = #{hospCd} AND FORM_ID = #{formId} AND IN_YEAR = #{inYear} AND USE_YN='Y'
+		 ORDER BY IFNULL(IN_MM,'00'), CHK_SEQ
+	</select>
+
+	<select id="selectChkDoc" resultType="java.util.HashMap">
+		SELECT CHK_SEQ AS chkseq, FORM_ID AS formid, IN_YEAR AS inyear, IN_MM AS inmm, WARD_NM AS wardnm,
+		       HEAD1 AS head1, HEAD2 AS head2, HEAD3 AS head3, HEAD4 AS head4,
+		       NOTE_TXT AS notetxt, FIX_TXT AS fixtxt
+		  FROM TBL_QPS_CHK_DOC
+		 WHERE CHK_SEQ = #{chkSeq} AND HOSP_CD = #{hospCd} AND USE_YN='Y'
+	</select>
+
+	<insert id="insertChkDoc" parameterType="map" useGeneratedKeys="true" keyProperty="chkSeq">
+		INSERT INTO TBL_QPS_CHK_DOC
+		 (HOSP_CD, FORM_ID, IN_YEAR, IN_MM, WARD_NM, HEAD1, HEAD2, HEAD3, HEAD4, NOTE_TXT, FIX_TXT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{formId}, #{inYear}, #{inMm}, #{wardNm}, #{head1}, #{head2}, #{head3}, #{head4},
+		  #{noteTxt}, #{fixTxt}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateChkDoc" parameterType="map">
+		UPDATE TBL_QPS_CHK_DOC SET
+		  IN_YEAR=#{inYear}, IN_MM=#{inMm}, WARD_NM=#{wardNm},
+		  HEAD1=#{head1}, HEAD2=#{head2}, HEAD3=#{head3}, HEAD4=#{head4},
+		  NOTE_TXT=#{noteTxt}, FIX_TXT=#{fixTxt}, UPD_USER=#{regUser}
+		 WHERE CHK_SEQ = #{chkSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteChkDoc" parameterType="map">
+		UPDATE TBL_QPS_CHK_DOC SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE CHK_SEQ = #{chkSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<!-- ── 셀 값 · 기기행 ──────────────────────────────────────────────── -->
+	<select id="selectChkVals" resultType="java.util.HashMap">
+		SELECT ROW_NO AS rowno, COL_NO AS colno, VAL AS val
+		  FROM TBL_QPS_CHK_VAL WHERE CHK_SEQ = #{chkSeq}
+	</select>
+	<delete id="deleteChkVals">DELETE FROM TBL_QPS_CHK_VAL WHERE CHK_SEQ = #{chkSeq}</delete>
+	<insert id="insertChkVals" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_VAL (CHK_SEQ, ROW_NO, COL_NO, VAL) VALUES
+		<foreach item="v" collection="vals" separator=",">
+		 (#{chkSeq}, #{v.rowno}, #{v.colno}, #{v.val})
+		</foreach>
+	</insert>
+
+	<select id="selectChkRows" resultType="java.util.HashMap">
+		SELECT ROW_NO AS rowno, ROW_NM AS rownm
+		  FROM TBL_QPS_CHK_ROW WHERE CHK_SEQ = #{chkSeq} ORDER BY ROW_NO
+	</select>
+	<delete id="deleteChkRows">DELETE FROM TBL_QPS_CHK_ROW WHERE CHK_SEQ = #{chkSeq}</delete>
+	<insert id="insertChkRows" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_ROW (CHK_SEQ, ROW_NO, ROW_NM) VALUES
+		<foreach item="r" collection="rows" separator=",">
+		 (#{chkSeq}, #{r.rowno}, #{r.rownm})
+		</foreach>
+	</insert>
 
 </mapper>

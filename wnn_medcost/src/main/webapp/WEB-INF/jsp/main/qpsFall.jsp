@@ -1156,9 +1156,12 @@
       // CMPL = 불만고충 처리대장에서 분자·분모를 통째로 집계한다(2026-08-11 수기입력에서 전환).
       // 이 화면에는 입력 탭이 없다 — 자료는 [불만고충 ▸ 처리대장] 에서 적는다.
       var isCmpl    = (src === 'CMPL');
+      // SRV = 만족도 설문에서 분자(점수합)·분모(만점합)를 통째로 집계한다(2026-08-11 수기입력에서 전환).
+      // 이 화면에도 입력 탭이 없다 — 자료는 [환자만족도 조사 ▸ 설문지·조사결과] 에서 적는다.
+      var isSrv     = (src === 'SRV');
       // 분모 탭은 '재원일수·직원수를 쓰는 지표'에만 필요하다 —
-      // 관찰형은 분모가 관찰건수, 대장형은 접수건수, 수기형도 DENOM_GB 가 없으면 월별 입력 탭에서 적는다.
-      var needCensus = !isMonitor && !isCmpl && !(isManual && !curDef.denomgb);
+      // 관찰형은 분모가 관찰건수, 대장형은 접수건수, 설문형은 만점합, 수기형도 DENOM_GB 가 없으면 월별 입력 탭에서 적는다.
+      var needCensus = !isMonitor && !isCmpl && !isSrv && !(isManual && !curDef.denomgb);
       show('#qpsFall .qf-tab[data-pane="p1"]', src === 'INCIDENT');   // 사고보고
       show('#qpsFall .qf-tab[data-pane="p4"]', isMonitor);           // 관찰입력
       show('#qpsFall .qf-tab[data-pane="p5"]', isManual);            // 월별 수기입력
@@ -1168,7 +1171,7 @@
       var hasAxes = isManual && manualAxes().length > 0;
       var bkCard = document.getElementById('qfBreak');
       if (bkCard) bkCard.closest('.qf-card').style.display =
-          (((isPatval || isManual) && !hasAxes) || isCmpl) ? 'none' : '';
+          (((isPatval || isManual) && !hasAxes) || isCmpl || isSrv) ? 'none' : '';
       if (hasAxes) {
         var bkHint2 = document.getElementById('qfBreakHint');
         if (bkHint2) bkHint2.textContent = '— 정규·응급별 집계(월별 입력 탭의 상세 행에서 계산. 상세 미입력 시 빈 표)';
@@ -1179,6 +1182,7 @@
       if (flow) flow.textContent = isMonitor ? '관찰 입력 → 분기 지표 자동산출 (수행 ÷ 관찰)'
                                  : isPatval  ? '환자평가표에서 자동집계 → 분기 지표 자동산출'
                                  : isCmpl    ? '불만고충 처리대장에서 자동집계 → 분기 지표 자동산출 (처리 ÷ 접수)'
+                                 : isSrv     ? '만족도 설문 응답에서 자동집계 → 조사 종료월에 반영 (점수합 ÷ 만점합)'
                                  : isManual  ? '월별 입력(대장·설문) → 분기 지표 자동산출'
                                              : '사고보고 → 재원일수 → 분기 지표 자동산출';
       var bkHint = document.getElementById('qfBreakHint');
@@ -1191,7 +1195,7 @@
       if (isManual && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p5"]')
                    && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p5');
       // 대장형은 입력 탭이 아예 없다 — 바로 지표분석으로 보낸다(빈 탭에 떨어지면 고장처럼 보인다)
-      if (isCmpl && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p3');
+      if ((isCmpl || isSrv) && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p3');
       if (isMonitor) monitorLoad();
       if (isManual)  manualLoad();
       if (src === 'INCIDENT') incidSetupUi(curDef);   // 탭·제목·유형목록·대상 라벨을 지표에 맞춘다
@@ -1206,6 +1210,11 @@
         if (isMonitor) {
           warn.style.display = (res.hasCensus === 'Y') ? 'none' : 'block';
           warn.innerHTML = (USE_MOMENT ? '관찰' : '시행') + ' 기록이 없습니다. <b>[관찰 입력]</b> 탭에서 먼저 등록해 주세요.';
+        } else if (isSrv) {
+          warn.style.display = (res.hasCensus === 'Y') ? 'none' : 'block';
+          warn.innerHTML = '집계할 만족도 응답이 없습니다. <b>[환자만족도 조사 ▸ 설문지·조사결과]</b>' +
+                           ' 에서 응답을 등록하고, <b>조사 종료일</b>이 채워져 있는지 확인해 주세요' +
+                           ' — 종료월 기준으로 지표에 반영됩니다.';
         } else if (isManual && !curDef.denomgb) {
           warn.style.display = (res.hasCensus === 'Y') ? 'none' : 'block';
           warn.innerHTML = '월별 값이 등록되지 않았습니다. <b>[월별 입력]</b> 탭에서 분자·분모를 먼저 적어 주세요.';
@@ -1228,6 +1237,11 @@
     if (def && def.numersrc === 'CMPL')
       return { numer:'분자(처리건수)', denom:'분모(접수건수)', rate:'처리율',
                bar:'접수건수', barKey:'denom' };
+    // 설문형(만족도)도 분자·분모가 확실하다. ★분모는 '응답자 수'가 아니라 만점합(응답문항수×5)이다 —
+    //   이름을 안 박으면 담당자가 응답자 수로 읽고 숫자가 이상하다고 본다.
+    if (def && def.numersrc === 'SRV')
+      return { numer:'분자(점수합)', denom:'분모(만점합)', rate:'만족도',
+               bar:'만점합', barKey:'denom' };
     // 수기형은 지표마다 분자·분모의 정체가 달라(충족건수/전체건수, 복귀자/퇴원자…) 이름을 박지 않는다
     if (def && def.numersrc === 'MANUAL' && !def.denomgb)
       return { numer:'분자', denom:'분모', rate:(def.unit === '%' ? '비율' : '발생률'),
@@ -1321,7 +1335,10 @@
       ]
     }, true);   // notMerge — 지표를 바꿔 legend 이름이 달라질 때 옛 계열이 남지 않게
   }
-  var AXIS_NM = { PLACE:'발생장소', DAMAGE:'손상유형', TYPE:'사고유형', DEPT:'보고부서', AGE:'연령대', TIME:'시간대' };
+  // ★HARM(사고분류)은 위해등급을 셋으로 묶은 것 — 원본 지표분석보고서의 「사고분류」 표다.
+  //   묶음은 서버(selectBreakdown)에서 한다. 화면·인쇄물이 각자 묶으면 둘이 갈릴 수 있다.
+  var AXIS_NM = { PLACE:'발생장소', DAMAGE:'손상유형', TYPE:'사고유형', DEPT:'보고부서', AGE:'연령대', TIME:'시간대',
+                  HARM:'사고분류(위해등급)' };
   var AXIS_MON = { JOB:'직군', WARD:'병동', MOMENT:'순간(moment)' };
   function renderBreak(bd){
     var wrap = document.getElementById('qfBreak'), html = '';
@@ -1662,13 +1679,57 @@
           }).join('') + '</tr>';
         }).join('') + '</tbody></table>';
     })();
-    var qHtml = '<table><thead><tr><th>구분</th><th>' + lab.numer + '</th><th>' + lab.denom + '</th><th>' + lab.rate + '</th></tr></thead><tbody>' +
+    // ★목표 충족 판정 — 목표값(TARGET_VAL) + 목표방향(GOAL_DIR)이 둘 다 있어야 셈한다.
+    //   방향이 없으면 절반이 거꾸로 판정된다(낙상은 이하가 충족, 손위생은 이상이 충족).
+    //   목표가 비어 있으면 열 자체를 내지 않는다 — 빈 칸만 있는 열은 「판정을 못 했다」를 숨긴다.
+    var tgt = (d.targetval == null || d.targetval === '') ? null : Number(d.targetval);
+    var dirH = (d.goaldir === 'H');
+    var hasTgt = (tgt != null && !isNaN(tgt));
+    function judge(rate){
+      if (!hasTgt || rate == null) return '-';
+      var ok = dirH ? (Number(rate) >= tgt) : (Number(rate) <= tgt);
+      return ok ? '<b>충족</b>' : '미충족';
+    }
+    var tgtHead = hasTgt
+      ? ('<th style="width:78px;">목표 ' + (dirH ? '≥' : '≤') + ' ' + fmtRate(tgt, d) + esc(unit(d)) + '</th>')
+      : '';
+    var qHtml = '<table><thead><tr><th>구분</th><th>' + lab.numer + '</th><th>' + lab.denom + '</th><th>' + lab.rate + '</th>' +
+      tgtHead + '</tr></thead><tbody>' +
       rows.map(function(r){
         var o = r[1], mz = (d.numersrc === 'MONITOR' && !o.denom);
         return '<tr><td>' + esc(r[0]) + '</td><td>' + (mz ? '-' : num(o.numer)) + '</td>' +
                '<td>' + (o.denom ? num(o.denom) : '-') + '</td>' +
-               '<td><b>' + (o.rate == null ? '-' : (fmtRate(o.rate, d) + ' ' + esc(unit(d)))) + '</b></td></tr>';
-      }).join('') + '</tbody></table>';
+               '<td><b>' + (o.rate == null ? '-' : (fmtRate(o.rate, d) + ' ' + esc(unit(d)))) + '</b></td>' +
+               (hasTgt ? ('<td>' + judge(o.rate) + '</td>') : '') + '</tr>';
+      }).join('') + '</tbody></table>' +
+      (hasTgt ? '' : '<div style="font-size:9px;color:#666;">※ 목표값이 등록되지 않아 충족 여부를 표시하지 않았습니다 ' +
+                     '— [지표정의서]에서 목표값과 목표방향을 먼저 등록하세요.</div>');
+
+    // 분류별 집계 — 화면의 6축 + 사고분류. ★사고보고형에만 성립한다(평가표형·대장형은 사고 행이 없다).
+    var brkHtml = '', harmHtml = '';
+    (function(){
+      if (d.numersrc !== 'INCIDENT') return;
+      var bd = (lastCalc && lastCalc.breakdown) || {};
+      function axTbl(key, nm){
+        var list = bd[key] || [];
+        if (!list.length) return '';
+        var tot = list.reduce(function(s, r){ return s + Number(r.cnt || 0); }, 0);
+        return '<table class="qp-nobreak" style="width:32%; float:left; margin:0 1% 6px 0;">' +
+               '<thead><tr><th colspan="3">' + esc(nm) + '</th></tr>' +
+               '<tr><th>구분</th><th style="width:34px;">건수</th><th style="width:40px;">비율</th></tr></thead><tbody>' +
+               list.map(function(r){
+                 var c = Number(r.cnt || 0);
+                 return '<tr><td class="l">' + esc(r.code) + '</td><td>' + num(c) + '</td>' +
+                        '<td>' + (tot ? (Math.round(c / tot * 1000) / 10) + '%' : '-') + '</td></tr>';
+               }).join('') +
+               '<tr><td class="l"><b>계</b></td><td><b>' + num(tot) + '</b></td><td></td></tr>' +
+               '</tbody></table>';
+      }
+      harmHtml = axTbl('HARM', '사고분류(위해등급)');
+      var six = ['TYPE','PLACE','TIME','DAMAGE','AGE','DEPT'].map(function(k){ return axTbl(k, AXIS_NM[k]); }).join('');
+      if (six) brkHtml = six + '<div style="clear:both;"></div>';
+      if (harmHtml) harmHtml = harmHtml + '<div style="clear:both;"></div>';
+    })();
 
     // 차트 — 캔버스를 이미지로 떠서 넣는다(숨긴 영역에서는 다시 그릴 수 없다)
     var chartHtml = '';
@@ -1681,6 +1742,13 @@
     //   배지를 파싱하면 병원코드·입원건수까지 딸려 오고, 무엇보다 화면 로드 시점 값이라 병원을 바꾸면 틀린다.
     var hosp = HOSP_NM || (lastCalc.hosp && lastCalc.hosp.hospnm) || '';
 
+    // ★절 번호는 세어서 붙인다 — 섹션이 조건부로 빠지는데(분류표·추이) 번호를 손으로 박으면
+    //   'Ⅲ 다음에 Ⅴ' 같은 구멍이 생긴다.
+    var RN = ['','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ'], secNo = 0;
+    function sec(t){ secNo++; return '<div class="qp-sec">' + (RN[secNo] || secNo) + '. ' + t + '</div>'; }
+
+    var cyc = (d.cyclegb === 'Q') ? '분기별' : (d.cyclegb === 'H') ? '반기별' : (d.cyclegb === 'Y') ? '연 1회' : (d.cyclegb || '-');
+
     var body =
       '<div>' +
         apprHtml +
@@ -1688,28 +1756,45 @@
         '<div class="qp-h2">' + esc(hosp) + ' · ' + esc(prdLabel()) + '</div>' +
         '<div style="clear:both;"></div>' +
 
-        '<div class="qp-sec">Ⅰ. 지표 정의</div>' +
+        sec('지표 정의') +
         '<table class="qp-def qp-nobreak"><tbody>' +
           '<tr><th>지표명</th><td colspan="3">' + esc(d.indinm) + '</td></tr>' +
           '<tr><th>지표정의</th><td colspan="3">' + esc(d.definition || '-') + '</td></tr>' +
           '<tr><th>분자</th><td colspan="3">' + esc(d.numerdesc || '-') + '</td></tr>' +
           '<tr><th>분모</th><td colspan="3">' + esc(d.denomdesc || '-') + '</td></tr>' +
           '<tr><th>산식</th><td>분자 ÷ 분모 × ' + num(d.multiplier || 1000) + ' = ' + esc(unit(d)) + '</td>' +
-              '<th>주기</th><td>' + esc(d.cyclegb === 'Q' ? '분기별' : (d.cyclegb === 'H' ? '반기별' : (d.cyclegb === 'Y' ? '연 1회' : (d.cyclegb || '-')))) + '</td></tr>' +
-          '<tr><th>자료원</th><td>' + esc(d.sourcenm || '-') + '</td><th>담당</th><td>' + esc(d.ownernm || '-') + '</td></tr>' +
+              '<th>목표값</th><td>' + (hasTgt ? ((dirH ? '≥ ' : '≤ ') + fmtRate(tgt, d) + ' ' + esc(unit(d))) : '-') + '</td></tr>' +
         '</tbody></table>' +
 
-        '<div class="qp-sec">Ⅱ. 월별 집계</div>' + mHtml +
-        '<div class="qp-sec">Ⅲ. 분기 · 반기 · 연간</div>' + qHtml + axisHtml +
-        (chartHtml ? ('<div class="qp-sec">Ⅳ. 추이</div><div class="qp-nobreak">' + chartHtml + '</div>') : '') +
+        // ★모니터링 블록 — 원본 보고서가 「누가·얼마나 자주·무엇으로 모으고 어디에 보고하는가」를
+        //   한 덩어리로 보여준다. 정의서에 흩어져 있던 필드를 여기 모았다.
+        sec('모니터링') +
+        '<table class="qp-def qp-nobreak"><tbody>' +
+          '<tr><th>자료수집원</th><td>' + esc(d.sourcenm || '-') + '</td>' +
+              '<th>수집·분석방법</th><td>' + esc(d.methodnm || '-') + '</td></tr>' +
+          '<tr><th>측정주기</th><td>' + esc(cyc) + '</td>' +
+              '<th>보고주기</th><td>' + esc(d.rptcycle || '-') + '</td></tr>' +
+          '<tr><th>관리담당자</th><td>' + esc(d.ownernm || '-') + '</td>' +
+              '<th>담당부서</th><td>' + esc(d.deptnm || '-') + '</td></tr>' +
+          '<tr><th>보고범위</th><td colspan="3">' + esc(d.rptscope || '-') + '</td></tr>' +
+        '</tbody></table>' +
+
+        sec('월별 집계') + mHtml +
+        sec('분기 · 반기 · 연간') + qHtml + axisHtml +
+        (harmHtml ? (sec('사고분류') + harmHtml) : '') +
+        (chartHtml ? (sec('추이') + '<div class="qp-nobreak">' + chartHtml + '</div>') : '') +
       '</div>' +
 
+      (brkHtml ? ('<div>' + sec('분류별 집계') +
+                  '<div style="font-size:9px;color:#555;margin-bottom:4px;">※ 기간 내 보고 건을 기준으로 집계 ' +
+                  '— 분자와 같은 기준입니다.</div>' + brkHtml + '</div>') : '') +
+
       '<div>' +
-        '<div class="qp-sec">Ⅴ. 분석</div>' +
+        sec('분석') +
         '<div class="qp-txt">' + esc(val('r_analysis') || '') + '</div>' +
-        '<div class="qp-sec">Ⅵ. 개선계획</div>' +
+        sec('개선계획') +
         '<div class="qp-txt">' + esc(val('r_plan') || '') + '</div>' +
-        (acts.length ? ('<div class="qp-sec">Ⅶ. 개선활동</div><table><tbody>' +
+        (acts.length ? (sec('개선활동') + '<table><tbody>' +
             acts.map(function(a, i){ return '<tr><th style="width:70px;">' + (i + 1) + '</th><td class="l">' + esc(a) + '</td></tr>'; }).join('') +
           '</tbody></table>') : '') +
         '<div class="qp-foot">작성일 : ' + today() +

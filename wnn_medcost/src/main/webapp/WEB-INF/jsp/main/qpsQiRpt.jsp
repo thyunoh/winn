@@ -193,7 +193,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', APPR_LINE = [], INDI = [], curSeq = 0, CALC = null;
+  // QBD = 분기별 분류집계(활동효과 v2). 사고형이면 위해등급·사고분류, 관찰형이면 직종·시점이 들어온다.
+  var HOSP_NM = '', APPR_LINE = [], INDI = [], curSeq = 0, CALC = null, QBD = [];
 
   var fileBox = window.qpsFileBox({ mount:'qrFileBox', refGb:'QIRPT',
       hint:'개선활동 사진', needSaveMsg:'보고서를 먼저 저장하면 사진을 붙일 수 있습니다.' });
@@ -272,14 +273,20 @@
      ★수치는 저장하지 않는다 — 볼 때마다 다시 센다(지표 화면과 어긋날 수 없게). */
   window.qrPickIndi = function(){
     var cd = val('f_indiCd');
-    if (!cd) { CALC = null; renderStat(); return; }
+    if (!cd) { CALC = null; QBD = []; renderStat(); return; }
     var d = null;
     for (var i = 0; i < INDI.length; i++) if (String(INDI[i].indicd) === cd) { d = INDI[i]; break; }
     if (d && !val('f_topicNm')) set('f_topicNm', d.indinm);
-    post('<c:url value="/qps/indiCalc.do"/>', { indiCd: cd, inYear: gel('qrYear').value }).then(function(res){
+    var yy = gel('qrYear').value;
+    post('<c:url value="/qps/indiCalc.do"/>', { indiCd: cd, inYear: yy }).then(function(res){
       CALC = res || null;
-      renderStat();
-    }).catch(function(){ CALC = null; renderStat(); });
+      renderStat();                       // 먼저 그린다 — 분류집계는 늦게 와도 표가 비어 보이지 않게
+      // 활동효과 v2 — 분기별 분류집계. ★실패해도 본 표는 그대로 둔다(있으면 좋은 것이지 없으면 안 되는 게 아니다)
+      return post('<c:url value="/qps/indiBreakQtr.do"/>', { indiCd: cd, inYear: yy }).then(function(r2){
+        QBD = (r2 && r2.quarters) || [];
+        renderStat();
+      }).catch(function(){ QBD = []; });
+    }).catch(function(){ CALC = null; QBD = []; renderStat(); });
   };
 
   function fmt(v, dec){
@@ -318,17 +325,83 @@
     e += '<th>연간</th><th style="width:110px;">목표값 달성여부</th></tr></thead><tbody>';
     e += '<tr><td class="l">' + esc(ind.indinm || '') + ' (' + esc(unit) + ')</td>';
     quarters.forEach(function(q){ e += '<td>' + fmt(q.rate, dec) + '</td>'; });
-    e += '<td><b>' + fmt(yr.rate, dec) + '</b></td><td>' + goalMet(yr.rate, goal, unit) + '</td></tr>';
+    e += '<td><b>' + fmt(yr.rate, dec) + '</b></td><td>' + goalMet(yr.rate, goal, ind) + '</td></tr>';
     e += '<tr><td class="l">보고건수(분자)</td>';
     quarters.forEach(function(q){ e += '<td>' + (q.numer == null ? '-' : q.numer) + '</td>'; });
-    e += '<td>' + (yr.numer == null ? '-' : yr.numer) + '</td><td>—</td></tr></tbody>';
+    e += '<td>' + (yr.numer == null ? '-' : yr.numer) + '</td><td>—</td></tr>';
+    // ★v2 — 원본이 요구하는 축을 분기 4벌로 덧붙인다.
+    //   사고형 = 위해등급(level 3·4)·사고분류 / 관찰형 = 직종별·시점별.
+    //   자료는 QBD(분기별 분류집계)에 이미 들어와 있다 — 지표 화면과 같은 쿼리다.
+    e += effAxisRows(ind);
+    e += '</tbody>';
     eff.innerHTML = e;
   }
-  /** 목표는 문장이라 숫자만 뽑아 비교한다. 발생률(‰)은 낮을수록, 수행률(%)은 높을수록 달성. */
-  function goalMet(rate, goal, unit){
+
+  /** 활동효과 v2 — 분기별 분류집계(QBD)를 표 행으로. 자료가 없으면 아무것도 안 붙인다. */
+  function effAxisRows(ind){
+    if (!QBD || !QBD.length) return '';
+    var isMon = (String(ind.numersrc) === 'MONITOR');
+    // 사고형은 위해등급(LEVEL 3·4)과 사고분류, 관찰형은 직종·시점
+    var axes = isMon ? [['JOB','직종별'], ['MOMENT','시점별']]
+                     : [['HARM','사고분류']];
+    var out = '';
+    function cell(bd, axis, code){
+      var list = (bd && bd[axis]) || [];
+      for (var i = 0; i < list.length; i++) if (String(list[i].code) === code) return list[i];
+      return null;
+    }
+    axes.forEach(function(ax){
+      // 그 해에 실제로 나온 구분만 행으로 만든다 — 코드표를 박으면 안 쓰는 구분이 빈 줄로 남는다
+      var codes = [];
+      QBD.forEach(function(q){
+        ((q.bd && q.bd[ax[0]]) || []).forEach(function(r){
+          if (codes.indexOf(String(r.code)) < 0) codes.push(String(r.code));
+        });
+      });
+      if (!codes.length) return;
+      codes.sort();
+      out += '<tr><td class="l" style="background:#f2f6f8;"><b>' + esc(ax[1]) + '</b></td>' +
+             '<td colspan="' + (QBD.length + 2) + '" style="background:#f2f6f8;"></td></tr>';
+      codes.forEach(function(cd){
+        var tot = 0, tds = '';
+        QBD.forEach(function(q){
+          var r = cell(q.bd, ax[0], cd);
+          if (isMon) {
+            // 관찰형은 수행/관찰 → 수행률
+            tds += '<td>' + (r ? (fmt(r.rate, ind.decimals) + '%') : '-') + '</td>';
+          } else {
+            var c = r ? Number(r.cnt || 0) : 0;
+            tot += c;
+            tds += '<td>' + (r ? c : '-') + '</td>';
+          }
+        });
+        out += '<tr><td class="l">　' + esc(cd) + '</td>' + tds +
+               '<td>' + (isMon ? '—' : tot) + '</td><td>—</td></tr>';
+      });
+    });
+    // 사고형은 원본이 「위해등급 level 3·4 건수」를 따로 본다 — 사고분류만으로는 3·4 가 안 보인다
+    if (!isMon) {
+      var lv34 = '', any = false, tot34 = 0;
+      QBD.forEach(function(q){
+        var list = (q.bd && q.bd.HARM) || [], c = 0;
+        list.forEach(function(r){ if (String(r.code).indexOf('위해사건') === 0) c += Number(r.cnt || 0); });
+        if (list.length) any = true;
+        tot34 += c;
+        lv34 += '<td>' + c + '</td>';
+      });
+      if (any) out += '<tr><td class="l"><b>위해사건(Level 2~4)</b></td>' + lv34 +
+                      '<td><b>' + tot34 + '</b></td><td>—</td></tr>';
+    }
+    return out;
+  }
+  /** 목표는 문장이라 숫자만 뽑아 비교한다.
+   *  ★방향은 지표정의서의 목표방향(GOAL_DIR)을 쓴다 — 단위로 가르면 틀린다(2026-08-11 수정).
+   *    종전에는 `unit==='%'` 면 높을수록 좋다고 봤는데, 직원감염노출·직원안전사고 **발생률**도 단위가 % 라
+   *    그 둘이 거꾸로 판정됐다. 지표분석보고서 인쇄물과 같은 기준을 쓴다. */
+  function goalMet(rate, goal, ind){
     if (rate == null || !goal) return '—';
     var g = Number(goal[1]), r = Number(rate);
-    var ok = (unit === '%') ? (r >= g) : (r <= g);
+    var ok = ((ind && ind.goaldir) === 'H') ? (r >= g) : (r <= g);
     return ok ? '<b style="color:#1f5a4b;">충족</b>' : '<b style="color:#b23b3b;">미충족</b>';
   }
 
@@ -387,7 +460,7 @@
   };
 
   window.qrNew = function(){
-    curSeq = 0; CALC = null;
+    curSeq = 0; CALC = null; QBD = [];
     ['f_qirSeq','f_indiCd','f_topicNm','f_deptNm','f_submitDt','f_background','f_surveyTarget',
      'f_surveyFrMm','f_surveyToMm','f_surveyMethod','f_analysis','f_goalTxt','f_actTxt',
      'f_planTxt','f_note','f_effectTxt','f_conclTxt'].forEach(function(id){ set(id, ''); });

@@ -1005,6 +1005,260 @@ public class QpsController {
 		return res;
 	}
 
+	/* ═══════════════════════════════════════════════════════════════════
+	   점검표 엔진 (2026-08-11)
+	   ★화면은 둘뿐이다 — 「서식 관리(템플릿)」와 「작성」.
+	     간호/병동 130여 종은 코드가 아니라 서식 데이터로 들어간다.
+	   ═══════════════════════════════════════════════════════════════════ */
+	/**
+	 * ★서식 관리는 <b>위너넷 전용</b>이다 (사용자 확정 2026-08-11 :
+	 *   "서식이 너무 많은데 사용자는 못 만들고 개발자 단위 템플릿이 필요할 것 같습니다").
+	 *   축을 고르고 항목을 짜는 것은 병원 담당자가 할 일이 아니다.
+	 *   ⇒ 사이드바에서도 감추고, 여기서도 막는다(주소를 직접 쳐도 못 들어온다).
+	 */
+	private boolean isWnn(HttpServletRequest request) {
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			return "Y".equals(ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim());
+		} catch (Exception e) { return false; }
+	}
+
+	@RequestMapping(value = "main/qpsChkForm.do")
+	public String qpsChkForm(HttpServletRequest request, ModelMap model) {
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsChk");   // 병원 계정은 작성 화면으로
+		return qpsScreen(request, model, ".main/qpsChkForm");
+	}
+
+	@RequestMapping(value = "main/qpsChk.do")
+	public String qpsChk(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsChk"); }
+
+	/** 서식 목록 */
+	@RequestMapping(value = "/qps/chkFormList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkFormList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			res.put("list", svc.selectChkFormList(hospCd, str(p.get("cateCd"), ""), str(p.get("deptCd"), ""), "N"));
+			// 분류 셀렉트 — 공통코드 전체에서 이 세트만 걸러 준다(코드 조회는 한 곳뿐이라 그대로 쓴다)
+			java.util.List<Map<String, Object>> cate = new java.util.ArrayList<>();
+			java.util.List<Map<String, Object>> dept = new java.util.ArrayList<>();
+			java.util.List<Map<String, Object>> all = svc.selectQpsCodes();
+			if (all != null) for (Map<String, Object> r : all) {
+				String cd = String.valueOf(r.get("codecd"));
+				if ("QPS_CHK_CATE".equals(cd)) cate.add(r);
+				if ("QPS_CHK_DEPT".equals(cd)) dept.add(r);
+			}
+			res.put("cate", cate);
+			res.put("dept", dept);
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 서식 1건 + 항목 */
+	@RequestMapping(value = "/qps/chkFormGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkFormGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String formId = str(p.get("formId"), "");
+			if (formId.isEmpty()) return fail(res, "서식을 선택해 주세요.");
+			res.putAll(svc.selectChkFormOne(hospCd, formId));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 서식 저장 — ★병원 전용 행으로만 쓴다. 공통('*')은 어떤 경우에도 안 건드린다. */
+	@RequestMapping(value = "/qps/chkFormSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkFormSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			String formId = str(p.get("formId"), "").trim().toUpperCase();
+			if (formId.isEmpty()) return fail(res, "서식코드를 입력해 주세요.");
+			if (!formId.matches("[A-Z0-9_]{2,30}")) return fail(res, "서식코드는 영문 대문자·숫자·_ 로 2~30자입니다.");
+			if (str(p.get("formNm"), "").isEmpty()) return fail(res, "서식명을 입력해 주세요.");
+			// 아는 축만 통과시킨다 — 엉뚱한 값이 들어오면 화면이 표를 못 그린다
+			String axisGb = str(p.get("axisGb"), "ITEM_DAY");
+			if (!"EQUIP_DAY".equals(axisGb) && !"ITEM_DAY".equals(axisGb)
+			 && !"DAY_ITEM".equals(axisGb) && !"ITEM_MONTH".equals(axisGb)) axisGb = "ITEM_DAY";
+
+			Map<String, Object> m = new HashMap<>();
+			m.put("formId", formId);
+			m.put("hospCd", hospCd);                       // ★'*' 로 들어올 수 없다
+			m.put("formNm", str(p.get("formNm"), ""));
+			m.put("cateCd", str(p.get("cateCd"), ""));
+			m.put("deptCd", str(p.get("deptCd"), ""));
+			m.put("axisGb", axisGb);
+			// 연단위 축은 월 셀렉트가 뜻이 없다 — 축이 주기를 정한다
+			m.put("prdGb", "ITEM_MONTH".equals(axisGb) ? "Y" : "M");
+			Integer eq = intOf(p.get("equipCnt"));
+			m.put("equipCnt", (eq == null || eq < 1 || eq > 50) ? Integer.valueOf(10) : eq);
+			m.put("guideTxt", str(p.get("guideTxt"), ""));
+			m.put("headNms",  str(p.get("headNms"), ""));
+			m.put("signerYn", "Y".equals(str(p.get("signerYn"), "")) ? "Y" : "N");
+			m.put("noteYn",   "Y".equals(str(p.get("noteYn"), ""))   ? "Y" : "N");
+			m.put("fixYn",    "Y".equals(str(p.get("fixYn"), ""))    ? "Y" : "N");
+			m.put("signLine", str(p.get("signLine"), ""));
+			m.put("footTxt",  str(p.get("footTxt"), ""));
+			Integer so = intOf(p.get("sortNo"));
+			m.put("sortNo",   so == null ? Integer.valueOf(0) : so);
+			m.put("regUser",  userId(request));
+			svc.saveChkForm(m, jsonRows(p.get("items")));
+			res.put("formId", formId);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 서식 되돌리기 — 병원 전용 행을 지우면 공통 기본서식으로 돌아간다 */
+	@RequestMapping(value = "/qps/chkFormDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkFormDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("formId", str(p.get("formId"), "")); m.put("regUser", userId(request));
+			svc.deleteChkForm(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 서식 복제 — ★130종을 손으로 못 만든다. 비슷한 서식이 대부분이라 복제가 가장 빠른 길이다. */
+	@RequestMapping(value = "/qps/chkFormCopy.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkFormCopy(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			String src = str(p.get("srcFormId"), "");
+			String neo = str(p.get("newFormId"), "").trim().toUpperCase();
+			String nm  = str(p.get("newFormNm"), "");
+			if (src.isEmpty()) return fail(res, "복제할 서식을 선택해 주세요.");
+			if (!neo.matches("[A-Z0-9_]{2,30}")) return fail(res, "새 서식코드는 영문 대문자·숫자·_ 로 2~30자입니다.");
+			if (nm.isEmpty()) return fail(res, "새 서식명을 입력해 주세요.");
+			if (neo.equals(src)) return fail(res, "원본과 다른 서식코드를 써 주세요.");
+			svc.copyChkForm(hospCd, src, neo, nm, userId(request));
+			res.put("formId", neo);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 병원별 사용 서식 저장 — 켠 것만 작성 화면에 나온다(정신 폴더 on/off 도 이걸로 푼다). */
+	@RequestMapping(value = "/qps/chkUseSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkUseSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			svc.saveChkUse(hospCd, jsonRows(p.get("uses")), userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 작성 화면 기초 — 서식 + 항목 + 그 해 작성목록 */
+	@RequestMapping(value = "/qps/chkBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkBase(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			// ★작성 화면은 그 병원이 켠 서식만 본다 — 130종을 다 보여주면 못 쓴다
+			res.put("forms", svc.selectChkFormList(hospCd, "", str(p.get("deptCd"), ""), "Y"));
+			String formId = str(p.get("formId"), "");
+			if (!formId.isEmpty()) res.putAll(svc.selectChkBase(hospCd, formId, inYear));
+			res.put("line", svc.selectApprLine(hospCd));
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/chkGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("chkSeq"));
+			if (seq == null || seq <= 0) return fail(res, "문서를 선택해 주세요.");
+			res.putAll(svc.selectChkDocOne(hospCd, seq));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/chkSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String formId = str(p.get("formId"), "");
+			String inYear = str(p.get("inYear"), "");
+			if (formId.isEmpty()) return fail(res, "서식을 선택해 주세요.");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("chkSeq", str(p.get("chkSeq"), ""));
+			m.put("formId", formId);
+			m.put("inYear", inYear);
+			// 연단위 서식은 월이 없다 — 빈 문자열을 넣으면 '00' 같은 값이 남아 목록이 헷갈린다
+			String inMm = str(p.get("inMm"), "");
+			m.put("inMm", inMm.isEmpty() ? null : inMm);
+			m.put("wardNm", str(p.get("wardNm"), ""));
+			m.put("head1", str(p.get("head1"), "")); m.put("head2", str(p.get("head2"), ""));
+			m.put("head3", str(p.get("head3"), "")); m.put("head4", str(p.get("head4"), ""));
+			m.put("noteTxt", str(p.get("noteTxt"), ""));
+			m.put("fixTxt",  str(p.get("fixTxt"), ""));
+			m.put("regUser", userId(request));
+			res.put("chkSeq", svc.saveChkDoc(m, jsonRows(p.get("vals")), jsonRows(p.get("rows"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/chkDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("chkSeq", longOf(p.get("chkSeq"))); m.put("regUser", userId(request));
+			svc.deleteChkDoc(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/* ═══ RCA 근본원인 분석 보고서 ═══
 	   ★RCA 회의록은 여기 없다 — 서식 1호(회의록)에 FORM_GB='R' 로 흡수했다. */
 	@RequestMapping(value = "main/qpsRca.do")
@@ -1924,6 +2178,9 @@ public class QpsController {
 			m.put("targetVal",  decOf(p.get("targetVal")));
 			m.put("prevVal",    decOf(p.get("prevVal")));
 			m.put("targetBase", str(p.get("targetBase"), ""));
+			// 목표방향 — 아는 값만 통과시킨다. 엉뚱한 값이 들어오면 보고서의 충족 판정이 통째로 뒤집힌다.
+			String goalDir = str(p.get("goalDir"), "L").trim().toUpperCase();
+			m.put("goalDir",    "H".equals(goalDir) ? "H" : "L");
 			m.put("rptCycle",   str(p.get("rptCycle"), ""));
 			m.put("rptScope",   str(p.get("rptScope"), ""));
 			m.put("shareTxt",   str(p.get("shareTxt"), ""));
@@ -2336,8 +2593,10 @@ public class QpsController {
 			//   MONITOR = 직군·병동·moment 별 수행률 / PATVAL = 없음(사고행 없음) / INCIDENT = 장소·손상·유형 등
 			if ("MONITOR".equals(numerSrc)) {
 				res.put("breakdown", svc.selectMonitorBreakdown(hospCd, indiCd, fromDt, toDt));
-			} else if ("PATVAL".equals(numerSrc) || "MANUAL".equals(numerSrc)) {
-				// 사고 행이 없는 원천 — 분류 축이 성립하지 않는다(화면도 카드를 감춘다)
+			} else if ("PATVAL".equals(numerSrc) || "MANUAL".equals(numerSrc)
+			        || "CMPL".equals(numerSrc)   || "SRV".equals(numerSrc)) {
+				// 사고 행이 없는 원천 — 분류 축이 성립하지 않는다(화면도 카드를 감춘다).
+				// ★대장형·설문형을 여기 넣지 않으면 빈 결과를 얻으려고 7-way UNION 을 매번 돌린다.
 				res.put("breakdown", new HashMap<String, Object>());
 			} else {
 				res.put("breakdown", svc.selectBreakdown(hospCd, str(p.get("incidGb"), indiCd), fromDt, toDt, minLevel));
@@ -2346,6 +2605,33 @@ public class QpsController {
 		} catch (Exception ex) {
 			fail(res, ex.getMessage());
 		}
+		return res;
+	}
+
+	/** 분류별 집계 — 분기 4벌. QI 최종보고서 「활동효과」 v2 가 쓴다.
+	 *  ★지표 화면과 <b>같은 쿼리</b>를 분기마다 부른다. 축을 새로 짜면 두 화면 숫자가 갈린다. */
+	@RequestMapping(value = "/qps/indiBreakQtr.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> indiBreakQtr(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String indiCd = str(p.get("indiCd"), "");
+			String inYear = str(p.get("inYear"), "");
+			if (indiCd.isEmpty() || inYear.length() != 4) return fail(res, "지표와 년도가 필요합니다.");
+
+			// 등급 필터·원천은 지표정의에서 읽는다 — 화면이 보내는 값을 믿지 않는다(분자와 기준이 갈리면 안 된다)
+			Map<String, Object> indi = svc.selectQpsIndi(hospCd, indiCd);
+			String numerSrc = (indi == null) ? "" : str(indi.get("numersrc"), "");
+			String minLevel = (indi == null) ? "" : str(indi.get("minlevel"), "");
+			String incidGb  = (indi == null) ? "" : str(indi.get("incidgb"), "");
+			if (incidGb.isEmpty()) incidGb = indiCd;
+
+			res.put("numerSrc", numerSrc);
+			res.put("quarters", svc.selectBreakdownQuarters(hospCd, indiCd, incidGb, inYear, numerSrc, minLevel));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
 	}
 

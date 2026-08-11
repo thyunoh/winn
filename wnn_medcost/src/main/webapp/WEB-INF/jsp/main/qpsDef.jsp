@@ -96,6 +96,18 @@
       <div class="lb">목표값</div>        <div><input type="number" id="d_targetVal" step="0.01" placeholder="예) 95"></div>
       <div class="lb">이전값</div>        <div><input type="number" id="d_prevVal" step="0.01" placeholder="예) 88.4"></div>
 
+      <%-- ★목표방향 — 이게 없으면 「목표 충족」 판정의 절반이 거꾸로 나온다.
+           낙상 발생률은 목표 이하가 충족, 손위생 수행률은 목표 이상이 충족이다.
+           단위(%/‰)로는 못 가른다 — 같은 % 안에 발생률과 수행률이 함께 있다. --%>
+      <div class="lb">목표방향</div>
+      <div class="full" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <select id="d_goalDir" style="width:auto;">
+          <option value="L">낮을수록 좋음 — 실적이 목표 이하면 충족 (발생률·오류율)</option>
+          <option value="H">높을수록 좋음 — 실적이 목표 이상이면 충족 (수행률·만족도·충족비율)</option>
+        </select>
+        <span style="font-size:11.5px; color:#8a99a3;">지표분석보고서의 「목표 충족/미충족」 판정에 쓰입니다.</span>
+      </div>
+
       <div class="lb">목표값 근거</div>   <div class="full"><input type="text" id="d_targetBase" maxlength="100" placeholder="의료기관인증 / 학회 권고 / 전년도 실적 / 타기관 비교 / 기타"></div>
 
       <div class="lb">자료출처</div>      <div><input type="text" id="d_sourceNm" maxlength="100" placeholder="예) 손위생 모니터링 점검표"></div>
@@ -168,6 +180,7 @@
       set('d_includeTxt', d.includetxt); set('d_excludeTxt', d.excludetxt);
       set('d_targetVal', d.targetval);   set('d_prevVal', d.prevval);
       set('d_targetBase', d.targetbase);
+      set('d_goalDir', (d.goaldir === 'H') ? 'H' : 'L');
       set('d_sourceNm', d.sourcenm);     set('d_methodNm', d.methodnm);
       set('d_rptCycle', d.rptcycle);     set('d_rptScope', d.rptscope);
       set('d_shareTxt', d.sharetxt);     set('d_note', d.note);
@@ -215,6 +228,7 @@
       ownerNm: val('d_ownerNm'), deptNm: val('d_deptNm'),
       background: val('d_background'), includeTxt: val('d_includeTxt'), excludeTxt: val('d_excludeTxt'),
       targetVal: val('d_targetVal'), prevVal: val('d_prevVal'), targetBase: val('d_targetBase'),
+      goalDir: val('d_goalDir'),
       rptCycle: val('d_rptCycle'), rptScope: val('d_rptScope'),
       shareTxt: val('d_shareTxt'), note: val('d_note')
     }).then(function(){

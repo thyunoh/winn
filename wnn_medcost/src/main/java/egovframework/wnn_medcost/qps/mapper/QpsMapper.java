@@ -288,6 +288,9 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectCmplStatTerm(Map<String, Object> param);
 	List<Map<String, Object>> selectCmplStatHalf(Map<String, Object> param);
 
+	/** 지표 SATISFY 자동집계 — 설문에서 월별(조사 종료월) 점수합·만점합. */
+	List<Map<String, Object>> selectSrvStatMonth(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+
 	/* 감염관리 우선순위 사정 도구 */
 	List<Map<String, Object>> selectInfRiskList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
 	Map<String, Object> selectInfRisk(@Param("hospCd") String hospCd, @Param("riskSeq") long riskSeq);
@@ -341,4 +344,31 @@ public interface QpsMapper {
 	Map<String, Object> selectSrvStatTotal(Map<String, Object> param);
 	List<Map<String, Object>> selectSrvStatProfile(Map<String, Object> param);
 	List<Map<String, Object>> selectSrvOpinion(Map<String, Object> param);
+
+	/* ═══ 점검표 엔진 — 서식이 코드가 아니라 데이터다 ═══ */
+	List<Map<String, Object>> selectChkFormList(@Param("hospCd") String hospCd, @Param("cateCd") String cateCd,
+	                                            @Param("deptCd") String deptCd,
+	                                            @Param("onlyUse") String onlyUse);
+	int deleteChkUse(@Param("hospCd") String hospCd);
+	int insertChkUse(Map<String, Object> param);
+	Map<String, Object> selectChkForm(@Param("hospCd") String hospCd, @Param("formId") String formId);
+	List<Map<String, Object>> selectChkItems(@Param("hospCd") String hospCd, @Param("formId") String formId);
+	int saveChkForm(Map<String, Object> param);
+	int deleteChkForm(Map<String, Object> param);
+	int deleteChkItems(@Param("hospCd") String hospCd, @Param("formId") String formId);
+	int insertChkItems(Map<String, Object> param);
+
+	List<Map<String, Object>> selectChkDocList(@Param("hospCd") String hospCd, @Param("formId") String formId,
+	                                           @Param("inYear") String inYear);
+	Map<String, Object> selectChkDoc(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq);
+	int insertChkDoc(Map<String, Object> param);
+	int updateChkDoc(Map<String, Object> param);
+	int deleteChkDoc(Map<String, Object> param);
+
+	List<Map<String, Object>> selectChkVals(@Param("chkSeq") long chkSeq);
+	int deleteChkVals(@Param("chkSeq") long chkSeq);
+	int insertChkVals(Map<String, Object> param);
+	List<Map<String, Object>> selectChkRows(@Param("chkSeq") long chkSeq);
+	int deleteChkRows(@Param("chkSeq") long chkSeq);
+	int insertChkRows(Map<String, Object> param);
 }

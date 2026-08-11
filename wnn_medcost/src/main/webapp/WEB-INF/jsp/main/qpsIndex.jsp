@@ -93,7 +93,8 @@
     sel.value = y;
   })();
 
-  var SRC_NM = { INCIDENT:'사고보고', PATVAL:'평가표 자동', MONITOR:'관찰기록', MANUAL:'월별 수기' };
+  var SRC_NM = { INCIDENT:'사고보고', PATVAL:'평가표 자동', MONITOR:'관찰기록', MANUAL:'월별 수기',
+                 CMPL:'처리대장 자동', SRV:'설문 자동' };
 
   // 입력 상태 — 원천마다 '자료가 있다'의 뜻이 다르다.
   //   ★수기형은 한 해에 분자·분모 두 행뿐이라 건수를 찍으면 '입력됨 2' 처럼 뜻 없는 숫자가 된다
@@ -103,6 +104,9 @@
     // 대장형 — 불만고충 처리대장에서 자동집계. 대장이 비어 있으면 지표가 '-' 라 그 사실을 알려준다.
     if (r.numersrc === 'CMPL')     return Number(r.cmplcnt||0) > 0
                                         ? { cls:'auto', txt:'자동집계 ' + Number(r.cmplcnt) } : { cls:'off', txt:'대장 비었음' };
+    // 설문형 — 만족도 조사 응답에서 자동집계. 조사가 없거나 종료일이 비면 지표가 '-' 라 그 사실을 알려준다.
+    if (r.numersrc === 'SRV')      return Number(r.srvcnt||0) > 0
+                                        ? { cls:'auto', txt:'자동집계 ' + Number(r.srvcnt) } : { cls:'off', txt:'응답 없음' };
     if (r.numersrc === 'MANUAL')   return Number(r.mancnt||0) > 0
                                         ? { cls:'on', txt:'입력됨' } : { cls:'off', txt:'입력 전' };
     var n = (r.numersrc === 'MONITOR') ? Number(r.moncnt||0) : Number(r.incidcnt||0);
