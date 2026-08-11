@@ -471,8 +471,9 @@
   #evalReport .er-indbox.er-full .er-anabar{ background:#e9f6ec; color:#2e7d32; }
   #evalReport .er-indbody{ padding:10px 14px 11px; }
   #evalReport .er-hl-bad{ color:var(--er-bad); font-weight:800; }
-  /* 평가기간 누적 실적(2026-08-10) — 당월 문장과 <같은 줄이되 구분>되게. 인쇄에서도 남는 옅은 회색. */
-  #evalReport .er-cum{ display:inline-block; margin-top:2px; color:#4a5a66; }
+  /* 평가기간 누적 실적(2026-08-10) — 당월 문장과 <같은 줄이되 구분>되게.
+     2026-08-11 검수: 편집 없이 자동 산출되는 고정 문장이라 당월 문장과 확실히 구분되게 '*' + 파랑 + 굵게. */
+  #evalReport .er-cum{ display:inline-block; margin-top:2px; color:var(--er-navy2); font-weight:700; }
   #evalReport .er-def{ color:#7c8798; font-size:11.5px; margin:4px 0 0 13px; }
   #evalReport .er-grplabel.er-g10{ background:var(--er-navy); }
   #evalReport .er-grplabel.er-g21{ background:#1f7a66; }
@@ -1266,8 +1267,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '14':'평가 대상기간 동안 입원 중인 환자 중 입원기간이 181일 이상인 환자의 비율을 평가하는 지표로, 값이 낮을수록 우수함. 단, 평가기간(7~12월) 중 1개월이라도 의료최고도·의료고도·의료중도에 해당하는 환자는 평가대상에서 제외함.',
     '15':'지역사회 복귀율은 심평원 및 행정안전부 자료 등을 연계하여 산출되는 지표로, 기관 자체 자료만으로는 정확한 결과값을 산출하기 어려워 WinCheck에서는 임의로 표준화 3점, 가중치 3점으로 적용함.'
   };
-  /* 지표명 표기 교정 (2026-08-10) — DB 지표명이 줄임말이라 보고서에서만 바로잡는다. */
-  var NM_FIX = { '12':'일상생활수행능력(ADL) 개선환자분율' };
+  /* 지표명 표기 교정 (2026-08-10, 2026-08-11 '14' 추가) — DB 지표명이 줄임말이고 괄호가 지워져
+     ('장기입원(181일 이상)'→'장기입원181일 이상') 읽기 나쁘다. 보고서에서만 바로잡는다. */
+  var NM_FIX = { '12':'일상생활수행능력(ADL) 개선환자분율', '14':'장기입원 환자분율' };
   function indiNm(r){ return NM_FIX[r.cate_cd] || r.cate_nm; }
   // ▷ 개선 방향 (Ⅲ·Ⅳ 기본 문구)
   var TPL_DIR = {
@@ -1329,7 +1331,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return a.map(function(z){
       var st=z.start, en=z.end, bnd=bndUp(en), txt;
       if (en >= 999)        txt = fnum(st)+u+' 이상';                 // 6~9999.99명 → 6명 이상
-      else if (bnd !== en)  txt = fnum(st)+'~'+fnum(bnd)+'미만'+u;    // 0~19.99% → 0~20미만%
+      else if (bnd !== en)  txt = fnum(st)+'~'+fnum(bnd)+u+' 미만';   // 0~19.99% → '0~20% 미만' (2026-08-11 검수: 단위를 '미만' 앞으로)
       else                  txt = fnum(st)+'~'+fnum(en)+u;
       return txt+'('+z.s+'구간)';
     }).join(' · ');
@@ -1386,7 +1388,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var body = IS_IMPROVE[cd]
       ? cumLabel()+' 누적 '+dn+' '+esc(fnum(c.dtor))+'명 중 '+esc(fnum(c.ntor))+'명 개선되어 <b>'+esc(val)+'</b>, '
       : cumLabel()+' 누적 '+dn+' '+esc(fnum(c.dtor))+'명 중 '+nn+' '+esc(fnum(c.ntor))+'명으로 <b>'+esc(val)+'</b>, ';
-    return ' <span class="er-cum">'+body+'표준화 '+zone+'에 해당하여 가중치 '+fnum(w)+'점 중 '+f1(c.weig)+'점 산정.</span>';
+    return ' <span class="er-cum">* '+body+'표준화 '+zone+'에 해당하여 가중치 '+fnum(w)+'점 중 '+f1(c.weig)+'점 산정.</span>';
   }
 
   // 5점 구간·도달 힌트 — assessment showIndiSummary 와 동일 계산
@@ -3143,6 +3145,16 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
                         data:{ hosp_cd:[hospCd], stryymm:_cumFrom, endyymm:curYm } })
             .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
 
+    /* [전월 누적] 2026-08-11 — 종합점수를 누적 기준으로 바꿨으므로 전월 대비 비교도 <전월 누적>이라야 맞다.
+         (종전엔 '전월 단월 합' 과 비교해, 누적으로 바꾸면 매달 큰 폭 상승/하락으로 잘못 읽힌다.)
+       전월이 7월보다 앞이면(=당월 7월) 누적 자체가 없다. */
+    var _prevYm = prevYmOf(curYm);
+    var aPrevCum = (parseInt(curYm.substring(4,6),10) <= 7)
+        ? jQuery.Deferred().resolve(null).promise()
+        : jQuery.ajax({ url: ctx+'/main/select_Hosp_Indi.do', type:'POST', dataType:'json', traditional:true,
+                        data:{ hosp_cd:[hospCd], stryymm:_cumFrom, endyymm:_prevYm } })
+            .then(function(d){ return d; }, function(){ return jQuery.Deferred().resolve(null).promise(); });
+
     var aPsy = jQuery.when.apply(jQuery, _psyMonths.map(_psyFetch)).then(function(){
       var args = Array.prototype.slice.call(arguments);   // 값만 온다(위 then 이 이미 벗겼다) — 1개든 여러 개든 같은 모양
       var pn=0, pd=0;
@@ -3153,13 +3165,28 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       return (pd>0) ? { from:_psyMonths[0], to:_psyMonths[_psyMonths.length-1],
                         n:pn, d:pd, rate:Math.round(pn/pd*10000)/100 } : null;
     });
-    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2, aPsy, aCum).done(function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10){
+    jQuery.when(aIndi, aCrit, aPrev, aBladder, aDash, aFoley, aSore1, aSore2, aPsy, aCum, aPrevCum).done(function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11){
       var res = r1[0];
       indicators = (res && res.data)? res.data.filter(function(r){ return r.cate_cd!=='99'; }) : [];
       buildCriteria(r2[0]);
+      /* 전월 종합점수 — 당월과 <같은 잣대>로 만든다(2026-08-11):
+           누적 대상 지표는 전월까지의 누적 가중치, 누적을 안 쓰는 지표(인력·약사·항정·DUR)는 전월 단월 가중치. */
       prevTotal = null;
+      var pcMap = {};
+      var pcData = (r11 && r11[0] && r11[0].data) || (r11 && r11.data) || null;
+      if (pcData && pcData.length){
+        pcData.forEach(function(e){
+          if (!e || !e.cate_cd || e.cate_cd==='99') return;
+          pcMap[e.cate_cd] = { dtor:n(e.ntortot), ntor:n(e.dtortot), weig:n(e.weigavg) };   // ★dtortot·ntortot 은 이름과 반대
+        });
+      }
       var pd = (r3 && r3.data) || [], pt = 0, pHas = false;
-      pd.forEach(function(r){ if(r.cate_cd!=='99'){ pt += n(r.weigval); if(n(r.weigval)>0) pHas = true; } });
+      pd.forEach(function(r){
+        if(r.cate_cd==='99') return;
+        var pc = (cumApplies(r.cate_cd) && pcMap[r.cate_cd] && pcMap[r.cate_cd].dtor>0) ? pcMap[r.cate_cd] : null;
+        var v = pc ? n(pc.weig) : n(r.weigval);
+        pt += v; if(v>0) pHas = true;
+      });
       if(pHas) prevTotal = Math.round(pt*10)/10;
       _bladderGapN = 0;   // '분자제외' 표기된 배뇨 미체크 건만 집계(패드/기저귀 오류는 제외)
       var bd = (r4 && r4[0] && r4[0].data) || [];
@@ -3190,10 +3217,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }).fail(function(){ erSwal('error','지표 자료 조회 중 오류가 발생했습니다.', {title:'오류'}); });
   };
 
+  /* 종합·구조·진료 점수 — 2026-08-11 부터 <평가기간 누적> 기준(gotOf). 표지 예상 종합점수·등급의 원천이다. */
   function computeScores(){
     var st=0,md=0,tot=0;
     indicators.forEach(function(r){
-      var w=n(r.weigval); tot+=w;
+      var w=gotOf(r); tot+=w;
       if(r.cate_fg==='10') st+=w; else if(r.cate_fg==='21'||r.cate_fg==='22') md+=w;
     });
     scores={ struct:st, care:md, total:tot };
@@ -3258,7 +3286,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }).join('') : '<tr><td colspan="7" style="color:#a7b1c0;">부족점수가 있는 지표가 없음.</td></tr>';
     // ※ 비고(원본 문구 + 실제 수치) — 편집 저장본이 있으면 유지
     if(!savedKeys['pri_note'] && pri.length){
-      var totGapAll = indicators.reduce(function(a,r){ return a + Math.max(0, n(r.stdweig)-n(r.weigval)); }, 0);
+      var totGapAll = indicators.reduce(function(a,r){ return a + Math.max(0, n(r.stdweig)-gotOf(r)); }, 0);
       var t2 = pri.slice(0,2), t2gap = t2.reduce(function(a,x){ return a+x.gap; }, 0);
       var pe = document.querySelector('#evalReport [data-key="pri_note"]');
       if(pe) pe.textContent = '※ 부족점수 = 가중치(만점) − 현재 획득점수. 가중치가 큰 결과지표('+t2.map(function(x){return x.nm;}).join('·')+') '+t2.length+'개 항목만으로 전체 부족점수 '+f1(totGapAll)+'점 중 '+f1(t2gap)+'점을 차지 → '+goalGradeVal()+' 달성의 핵심 지렛대임.';
@@ -3289,11 +3317,11 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function renderSec5(){
     var top = topGaps(4), rows='', upStruct=0, upCare=0;
     top.forEach(function(x,i){
-      var r=x.r, s=n(r.s_score)||1, tz=Math.min(5, s+(i<2?2:1));
+      var r=x.r, s=sOf(r)||1, tz=Math.min(5, s+(i<2?2:1));
       var tgt=Math.min(x.w, x.w/5*tz), up=Math.max(0, tgt-x.got);
       if(r.cate_fg==='10') upStruct+=up; else upCare+=up;
       rows += '<tr><td>'+(i+1)+(i<2?' <span style="font-size:10px;">핵심</span>':'')+'</td>'
-            + '<td class="er-l">'+esc(x.nm)+'</td><td class="er-num">'+calDisp(r)+'</td><td>'+tz+'구간</td>'
+            + '<td class="er-l">'+esc(x.nm)+'</td><td class="er-num">'+calDispOf(r)+'</td><td>'+tz+'구간</td>'
             + '<td class="er-num">'+f1(x.got)+'</td><td class="er-num">'+f1(tgt)+'</td><td class="er-b-good er-num">+'+f1(up)+'</td></tr>';
     });
     el('er-roadBody').innerHTML = rows || '<tr><td colspan="7" style="color:#a7b1c0;">개선 대상 지표가 없음.</td></tr>';
@@ -3361,7 +3389,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   근거: docs/reports/담당자_수기_세밀분석 §2. 화면값(s_score·dtorval·ntorval·stdweig·CRIT_ALL)만으로 조립.
   var IS_LOWER = {'01':1,'02':1,'03':1,'05':1,'07':1,'10':1,'14':1};   // 값이 낮을수록 우수(assessment LOWER_IS_BETTER)
   function simStep(r){
-    var cd=r.cate_cd, w=n(r.stdweig), got=n(r.weigval), s=n(r.s_score)||0, dtor=n(r.dtorval), ntor=n(r.ntorval);
+    /* 누적 기준(2026-08-11) — 총평·권고의 "N명 개선 시 +Δ점" 도 평가에 반영되는 누적 분모·분자로 따진다 */
+    var cd=r.cate_cd, w=n(r.stdweig), got=gotOf(r), s=sOf(r), c=cumOf(r);
+    var dtor=c? n(c.dtor) : n(r.dtorval), ntor=c? n(c.ntor) : n(r.ntorval);
     if(!(s>0 && s<5)) return null;                       // 미산정·이미 5점이면 시나리오 없음
     var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s+1) band=z; });
     if(!band) return null;
@@ -3377,7 +3407,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   // 목표 표준화 tz 도달에 필요한 추가 개선 명수·도달선(%) — 결과지표(높을수록 우수)·환자수 분모만.
   //   담당자 2단계 나열형("4점 = 3명 추가(총 9명, 47.37%), 5점 = 6명 추가(총 12명, 63.16%)") 재현용.
   function simNeed(r, tz){
-    var cd=r.cate_cd, dtor=n(r.dtorval), ntor=n(r.ntorval);
+    var cd=r.cate_cd, _c=cumOf(r);
+    var dtor=_c? n(_c.dtor) : n(r.dtorval), ntor=_c? n(_c.ntor) : n(r.ntorval);   // 누적 기준(2026-08-11)
     if(UNIT_PERSON.indexOf(cd)>=0 || NOT_HEADCOUNT.indexOf(cd)>=0 || !(dtor>0) || IS_LOWER[cd]) return null;
     var band=null; (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===tz) band=z; });
     if(!band) return null;
@@ -3399,7 +3430,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   //   · 여수시립 신규욕창   "1명 추가 발생 시 누적 0.31%로 4점 하락"                    → (B) 현재 구간 하락 경고형
   //   화면값(dtorval·ntorval·CRIT_ALL[end]=구간 상한·stdweig)만으로 조립. PI(07)·1인당(01~03)·재직/DUR(04·08)은 제외.
   function simRoomLower(r){
-    var cd=r.cate_cd, dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0, w=n(r.stdweig);
+    var cd=r.cate_cd, _c=cumOf(r), s=sOf(r), w=n(r.stdweig);                       // 누적 기준(2026-08-11)
+    var dtor=_c? n(_c.dtor) : n(r.dtorval), ntor=_c? n(_c.ntor) : n(r.ntorval);
     if(!IS_LOWER[cd] || UNIT_PERSON.indexOf(cd)>=0 || NOT_HEADCOUNT.indexOf(cd)>=0 || cd==='07' || !(dtor>0) || !(s>=1)) return null;
     var u=unitOf(cd), bandS=null, band5=null;
     (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s) bandS=z; if(z.s===5) band5=z; });
@@ -3413,7 +3445,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(s>=2 && bandS){
       var maxStay=Math.floor(bandS.end*dtor/100), room=maxStay-ntor, loss=f1(w/5);
       if(room<=0)
-        return '현황 '+calDisp(r)+'로 표준화 '+s+'점 구간 상한('+fnum(bandS.end)+u+')에 도달해 있어, 1건만 추가로 발생해도 표준화 '+(s-1)+'점(가중치 −'+loss+'점)으로 하락할 수 있음';
+        return '현황 '+calDispOf(r)+'로 표준화 '+s+'점 구간 상한('+fnum(bandS.end)+u+')에 도달해 있어, 1건만 추가로 발생해도 표준화 '+(s-1)+'점(가중치 −'+loss+'점)으로 하락할 수 있음';
       var nextPct=fnum(Math.round((maxStay+1)/dtor*10000)/100);
       return '누적 분모 '+esc(fnum(dtor))+'명 기준 '+maxStay+'명까지 표준화 '+s+'점 유지가 가능하나(현재 '+esc(fnum(ntor))+'명, 여유 '+room+'명), '+(room+1)+'건째 발생 시 '+nextPct+'%로 표준화 '+(s-1)+'점(가중치 −'+loss+'점) 하락할 수 있음';
     }
@@ -3425,11 +3457,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var best=null;
     indicators.forEach(function(r){
       var t=simRoomLower(r); if(!t) return;
-      var cd=r.cate_cd, dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0, bandS=null;
+      var cd=r.cate_cd, _c=cumOf(r), s=sOf(r), bandS=null;                          // 누적 기준(2026-08-11)
+      var dtor=_c? n(_c.dtor) : n(r.dtorval), ntor=_c? n(_c.ntor) : n(r.ntorval);
       (CRIT_ALL[cd]||[]).forEach(function(z){ if(z.s===s) bandS=z; });
       var room = bandS ? (Math.floor(bandS.end*dtor/100)-ntor) : 999;
       if(room<0) room=0;
-      if(!best || room<best.room) best={ room:room, nm:r.cate_nm, txt:t };
+      if(!best || room<best.room) best={ room:room, nm:indiNm(r), txt:t };
     });
     return best ? (' 아울러 \''+best.nm+'\'은(는) '+best.txt+'.') : '';
   }
@@ -3478,18 +3511,22 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return '표준화 '+(s+1)+'점 기준('+fnum(band.start)+'%) 대비 약 '+fnum(gap)+'%p 부족';
   }
 
-  /* ▷ 점수 상향 목표 (2026-08-10 확정) — 종전 '목표 :' + '표준화 목표 :' 두 줄이 겹쳐 한 줄로 합쳤다.
-       "14일 초과 대상자 2명 감소(3명→1명, 2.33%) 시 3점 구간 진입 → 가중치 +1.2점(0.6→1.8점), …"
+  /* ▷ 점수 상향 목표 (2026-08-10 확정 / 2026-08-11 서술 보강) — 종전 '목표 :' + '표준화 목표 :' 두 줄이 겹쳐 한 줄로 합쳤다.
+       "14일 초과 대상자 2명 감소(분모 129명, 분자 3명→1명, 2.33%→0.78%) 시 표준화 2점→3점 구간 진입 → 가중치 +1.2점(0.6→1.8점), …"
+     ★2026-08-11 검수(박혜련) 지시 — 결과만 축약하지 말고 <현황(분모·분자·현황값) → 목표 표준화점수 →
+       추가 개선 인원 → 개선 후 분모·분자·현황값 → 가중치 상승분> 이 한 줄에 모두 드러나게 쓴다.
      ★분자의 뜻에 맞는 말을 쓴다 — 개선/추가/실시/감소/제외를 지표마다 달리한다(’○명 개선’ 일괄 금지).
      ★장기입원(14)은 대상자가 빠지면 <분모·분자에서 함께> 빠진다. 분자만 빼면 현황값이 틀린다. */
+  /* did/more = 여력 안내문용 (2026-08-11) — "…명이 <did>되어 있어 추가 <more> 가능한 대상자는 최대 N명".
+     act('추가 개선')를 그대로 쓰면 "추가 개선되어 있어 추가 추가 개선" 이 된다. 개선·실시형(lower:false)만 필요. */
   var GOAL_VERB = {
     '05':{ noun:'14일 초과 대상자', act:'감소', lower:true },
-    '06':{ noun:'',                 act:'실시', lower:false },
-    '09':{ noun:'욕창 처치 실시 환자', act:'추가', lower:false },
+    '06':{ noun:'',                 act:'실시', lower:false, did:'실시', more:'실시' },
+    '09':{ noun:'욕창 처치 실시 환자', act:'추가', lower:false, did:'실시', more:'실시' },
     '10':{ noun:'신규 발생 환자',   act:'감소', lower:true },
-    '11':{ noun:'개선 대상자',      act:'추가 개선', lower:false },
-    '12':{ noun:'개선 대상자',      act:'추가 개선', lower:false },
-    '13':{ noun:'적정범위 환자',    act:'추가', lower:false },
+    '11':{ noun:'개선 대상자',      act:'추가 개선', lower:false, did:'개선', more:'개선' },
+    '12':{ noun:'개선 대상자',      act:'추가 개선', lower:false, did:'개선', more:'개선' },
+    '13':{ noun:'적정범위 환자',    act:'추가', lower:false, did:'적정범위에 해당', more:'적정범위 도달' },
     '14':{ noun:'장기입원 대상자',  act:'제외', lower:true, both:true }
   };
   var NO_GOAL = { '07':1, '08':1, '15':1 };   // 고정값·참고용 지표는 목표를 적지 않는다(188·189·198행)
@@ -3517,21 +3554,60 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return (c>0) ? c : null;
   }
 
+  /* 누적 실적(있으면) — 평가는 평가기간 합산으로 산정되므로 목표 계산의 기준자료다.
+       cumAna 와 같은 제외 규칙: 인력(01~03)·약사(04)·항정(07)·DUR(08)은 누적 개념이 달라 당월을 쓴다.
+       7월 보고서는 _cum 자체가 없다(누적=당월). */
+  function cumApplies(cd){
+    return !(UNIT_PERSON.indexOf(cd)>=0 || cd==='04' || cd==='07' || cd==='08');
+  }
+  function cumOf(r){
+    if(!_cum) return null;
+    if(!cumApplies(r.cate_cd)) return null;
+    var c=_cum.map[r.cate_cd];
+    return (c && c.dtor>0) ? c : null;
+  }
+
+  /* ★★2026-08-11 검수 확정 — 보고서의 <점수 기준>은 평가기간 누적이다 ★★
+       적정성평가 점수는 7월~당월 합산으로 정해진다. 종전에는 지표 획득점수·종합점수·등급을 <당월> 기준으로
+       보여 줘, ADL 처럼 당월 12.0/12(5구간)인데 누적은 9.6/12(4구간)인 지표가 만점으로 보였다.
+       (검수표: "ADL 개선환자분율 12.0 / 12점" → "9.6 / 12점")
+       아래 4개가 그 <기준 전환>의 창구다 — 화면 어디든 이 함수만 쓰면 누적 기준이 된다.
+     ※누적 개념이 다른 인력(01~03)·약사(04)·항정(07)·DUR(08) 과 7월 보고서(누적=당월)는
+       cumOf 가 null 이라 자동으로 당월값이 쓰인다. */
+  function gotOf(r){ var c=cumOf(r); return c? n(c.weig) : n(r.weigval); }
+  function sOf(r){   var c=cumOf(r); return c? zoneOfWeig(n(r.stdweig), n(c.weig)) : (n(r.s_score)||0); }
+  function calValOf(r){ var c=cumOf(r); return c? n(c.cal) : n(r.cal_val); }
+  function calDispOf(r){ return fnum(calValOf(r)) + unitOf(r.cate_cd); }
+
+  /* ★2026-08-11 검수(박혜련): "점수 상향 목표는 해당월 기준이 아니라 <누적값에서의 상향값>으로 계산".
+       평가 점수는 평가기간(7월~당월) 합산으로 정해지므로, 필요 인원·진입 구간·가중치를 전부 누적 분모·분자로 따진다.
+       예) 당월 17명 중 4명(23.53%)이라도 누적은 32명 중 5명(15.63%) — 목표는 누적 32명 기준으로 잡아야 한다.
+     ★한 달에 할 수 있는 양에는 한계가 있다 — 당월 남은 대상자(분모−분자)를 <상한>으로 함께 안내한다.
+       상한을 넘는 구간은 이번 달에 닿을 수 없으므로 나열에서 뺀다(못 할 목표를 적지 않는다). */
   function goalUp(r){
     var cd=r.cate_cd, v=GOAL_VERB[cd];
     if(!v || NO_GOAL[cd]) return '';
-    var dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0, w=n(r.stdweig), got=n(r.weigval);
+    var w=n(r.stdweig), c=cumOf(r);
+    var mD=n(r.dtorval), mN=n(r.ntorval);                       // 당월 분모·분자
+    var dtor, ntor, s, got, cumYn=false;
+    if(c){ dtor=c.dtor; ntor=c.ntor; got=c.weig; s=zoneOfWeig(w, c.weig); cumYn=true; }
+    else { dtor=mD; ntor=mN; got=n(r.weigval); s=n(r.s_score)||0; }
     if(!(dtor>0) || !(s>=1 && s<5)) return '';
+    var nm = cumYn ? '누적 ' : '';
+    /* 이번 달에 더 할 수 있는 최대치 — 개선·실시형만 센다(감소형은 '이미 발생한 건'이라 여력 개념이 다르다) */
+    var cap = (!v.lower && mD>0) ? Math.max(0, mD-mN) : null;
     var step=w/5, parts=[];
     /* ★상위 구간을 <전부> 따져 보고, 같은 인원으로 여러 구간에 닿으면 <가장 높은 구간>으로 합친다
        (2026-08-10 비고: "동일한 개선 인원으로 여러 구간 진입이 가능하면 도달 가능한 가장 높은 구간으로 통합 표기").
        예) 3명 감소로 4점·5점에 모두 닿으면 "3명 감소 … 5점 구간" 한 번만 적는다. */
-    var byCnt = {};
+    var byCnt = {}, over=null;
     (CRIT_ALL[cd]||[]).forEach(function(z){
       if(!(z.s>s && z.s<=5)) return;
-      var c = reqCnt(v, z, dtor, ntor);
-      if(c==null) return;
-      if(byCnt[c]==null || z.s > byCnt[c]) byCnt[c] = z.s;
+      var q = reqCnt(v, z, dtor, ntor);
+      if(q==null) return;
+      /* 당월 여력을 넘는 구간은 이번 달에 못 닿는다 — 나열에서 빼고, '최대 얼마까지 가능한지'만 따로 적는다 */
+      if(cap!=null && q>cap){ if(over==null || z.s<over) over=z.s; return; }
+      if(byCnt[q]==null || z.s > byCnt[q]) byCnt[q] = z.s;
     });
     var targets = Object.keys(byCnt).map(Number).sort(function(a,b){ return a-b; });
     targets.forEach(function(cntKey){
@@ -3546,26 +3622,62 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         newN = ntor + cnt;
       }
       var pct = (newD>0) ? Math.round(newN/newD*10000)/100 : 0;
+      var curPct = Math.round(ntor/dtor*10000)/100;
       var newGot = Math.min(w, got + step*(tz-s));
-      var head = (v.noun ? v.noun+' ' : '') + fnum(cnt) + '명 ' + v.act;
-      var mid  = v.both ? '('+fnum(ntor)+'/'+fnum(dtor)+' → '+fnum(newN)+'/'+fnum(newD)+', '+fnum(pct)+'%)'
-                        : '('+fnum(ntor)+'명→'+fnum(newN)+'명, '+fnum(pct)+'%)';
-      parts.push(head+mid+' 시 '+tz+'점 구간 진입 → 가중치 +'+f1(newGot-got)+'점('+f1(got)+'→'+f1(newGot)+'점)');
+      var head = nm + (v.noun ? v.noun+' ' : '') + fnum(cnt) + '명 ' + v.act;
+      var mid  = v.both ? '(분자/분모 '+fnum(ntor)+'/'+fnum(dtor)+'명 → '+fnum(newN)+'/'+fnum(newD)+'명, '+fnum(curPct)+'%→'+fnum(pct)+'%)'
+                        : '(분모 '+fnum(dtor)+'명, 분자 '+fnum(ntor)+'명→'+fnum(newN)+'명, '+fnum(curPct)+'%→'+fnum(pct)+'%)';
+      parts.push(head+mid+' 시 표준화 '+s+'점→'+tz+'점 구간 진입 → 가중치 +'+f1(newGot-got)+'점('+f1(got)+'→'+f1(newGot)+'점)');
     });
-    return parts.length ? parts.join(', ')+'.' : '';
+    /* 여력 안내 — "이번 달 대상자 N명 중 M명은 이미 …되어 있어 더 할 수 있는 건 최대 K명" +
+       그 K명을 다 했을 때 닿는 누적 구간·가중치. 검수 요청 문형(2026-08-11). */
+    var lead='';
+    if(cap!=null && mD>0 && v.did){
+      var capN = ntor + cap, capPct = (dtor>0)? Math.round(capN/dtor*10000)/100 : 0;
+      var capZ = zoneOfValFor(cd, capPct), capGot = (capZ!=null)? Math.min(w, got + step*Math.max(0, capZ-s)) : got;
+      var subj = nm + (v.noun || NUM_NM2[cd] || '분자');
+      lead = ymLabel()+' '+(DEN_NM2[cd]||'대상')+' '+fnum(mD)+'명 중 현재 '+fnum(mN)+'명이 '+v.did
+           + '되어 있어 추가 '+v.more+' 가능한 대상자는 최대 '+fnum(cap)+'명임.';
+      if(cap>0 && capZ!=null && capZ>s)
+        lead += ' '+fnum(cap)+'명 전원 추가 '+v.more+' 시 '+subj+'는 '+fnum(ntor)+'명→'+fnum(capN)+'명('+fnum(capPct)+'%)으로 상승하여 '
+             +  '표준화 '+capZ+'점 구간에 해당하며, 가중치 '+f1(capGot)+'점까지 상승 가능(+'+f1(capGot-got)+'점)함.';
+      else if(cap===0) lead += ' 당월 대상자는 모두 반영되어 있어 추가 상승은 다음 달 실적으로 가능함.';
+      else if(over!=null) lead += ' 남은 여력으로는 표준화 '+over+'점 구간에 닿지 않아, 다음 달 실적과 함께 관리가 필요함.';
+    }
+    if(!parts.length) return lead || '';
+    return (lead? lead+' ' : '') + parts.join(', ')+'.';
+  }
+  /* 현황값 → 표준화 구간(지표 방향 자동) — 개선·실시형은 '이상', 감소형은 '이하'로 판정 */
+  function zoneOfValFor(cd, val){
+    var a=CRIT_ALL[cd]; if(!a) return null;
+    var best=null;
+    a.forEach(function(z){ if(val>=z.start-1e-9 && val<=z.end+1e-9){ best=z.s; } });
+    return best;
   }
 
-  // [★4] 전 구간 나열형 — 낮을수록 우수 & '감소가 실제 조치'인 지표(장기입원14·유치도뇨관05)만.
-  //   담당자 수기(세밀분석 §6-2, 여수시립 장기입원): 현재보다 우수한 각 구간 도달에 필요한 감소 명수 전부 나열.
-  //   신규욕창(10)은 되돌릴 수 없어 제외(하락 경고 simRoomLower로 처리), PI(07)·1인당(01~03)·재직/DUR 제외.
+  /* [★4] 전 구간 나열형 — 낮을수록 우수 & '감소가 실제 조치'인 지표(장기입원14·유치도뇨관05)만.
+       담당자 수기(세밀분석 §6-2, 여수시립 장기입원): 현재보다 우수한 각 구간 도달에 필요한 감소 명수 전부 나열.
+       신규욕창(10)은 되돌릴 수 없어 제외(하락 경고 simRoomLower로 처리), PI(07)·1인당(01~03)·재직/DUR 제외.
+     ※현재 <미사용> — 2026-08-10 에 '목표 :' + '표준화 목표 :' 두 줄을 goalUp() 한 줄로 합치면서 호출이 빠졌다.
+       되살릴 때를 대비해 계산만 goalUp 과 같은 reqCnt() 로 맞춰 둔다(아래 2026-08-11 수정 참고).
+     ★2026-08-11 검수(박혜련): 장기입원은 <분자에서만 빼면 안 된다>. 의료중도 이상으로 전환되면
+       그 환자는 분모·분자에서 함께 빠지므로 현황값·표준화점수를 다시 산출해야 한다.
+       종전 `floor(end*분모/100)` 은 분모를 고정해 필요 인원이 적게 나왔다(35명 중 22명 → 3점 2명·4점 9명·5점 16명,
+       실제로는 3명·14명·19명). GOAL_VERB 의 both 플래그를 쓰는 reqCnt() 로 교체한다. */
   function simReduceList(r){
-    var cd=r.cate_cd, dtor=n(r.dtorval), ntor=n(r.ntorval), s=n(r.s_score)||0;
+    var cd=r.cate_cd, _c=cumOf(r), s=sOf(r);                                        // 누적 기준(2026-08-11)
+    var dtor=_c? n(_c.dtor) : n(r.dtorval), ntor=_c? n(_c.ntor) : n(r.ntorval);
     if(['05','14'].indexOf(cd)<0 || !(dtor>0) || !(s>=1 && s<5)) return null;
+    var v=GOAL_VERB[cd]; if(!v) return null;
     var u=unitOf(cd), parts=[];
     (CRIT_ALL[cd]||[]).forEach(function(z){
       if(z.s<=s) return;                                  // 현재보다 우수(상위)한 구간만
-      var reqN=Math.floor(z.end*dtor/100), cut=ntor-reqN;
-      if(cut>0) parts.push('표준화 '+z.s+'점('+fnum(bndUp(z.end))+u+' 미만) = '+cut+'명 감소');
+      var cut=reqCnt(v, z, dtor, ntor);
+      if(cut==null) return;
+      var newN=ntor-cut, newD=v.both? (dtor-cut) : dtor;  // ★both(장기입원) = 분모에서도 같이 제외
+      var pct=(newD>0)? Math.round(newN/newD*10000)/100 : 0;
+      parts.push('표준화 '+z.s+'점('+fnum(bndUp(z.end))+u+' 미만) = '+cut+'명 '+v.act
+               + '(' + fnum(newN)+'/'+fnum(newD)+'명, '+fnum(pct)+'%)');
     });
     return parts.length ? parts.join(' · ') : null;
   }
@@ -3633,7 +3745,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var edge=(best.cd==='04') ? fnum(best.band.start)+u+' 미만' : fnum(bndUp(best.band.end))+u+' 초과';
     var uJosa=(u==='명') ? '으로' : '로';
     var bndE=bndUp(best.band.end);
-    return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+(bndE!==best.band.end? fnum(bndE)+'미만' : fnum(best.band.end))+u+') 경계에 근접해 있어, '
+    return ' 다만 \''+best.nm+'\'가 현황 '+fnum(best.val)+u+uJosa+' 표준화 '+best.s+'점 구간('+fnum(best.band.start)+'~'+(bndE!==best.band.end? fnum(bndE)+u+' 미만' : fnum(best.band.end)+u)+') 경계에 근접해 있어, '
          + edge+' 시 표준화 '+(best.s-1)+'점(가중치 −'+f1(best.loss)+'점)으로 하락할 수 있으므로 재원환자 수 추이에 맞춘 인력 관리가 필요함.';
   }
 
@@ -3680,8 +3792,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if(!indicators.length) return;
     var gs=goalScoreVal(), gg=goalGradeVal(), gap=Math.round((gs-scores.total)*10)/10;
     var ymTxt = curYm? curYm.substring(0,4)+'년 '+parseInt(curYm.substring(4,6),10)+'월' : '이번 달';
-    var fulls = indicators.filter(function(r){ return n(r.stdweig)>0 && (n(r.stdweig)-n(r.weigval))<=0.0001; })
-                          .map(function(r){ return r.cate_nm; });
+    var fulls = indicators.filter(function(r){ return n(r.stdweig)>0 && (n(r.stdweig)-gotOf(r))<=0.0001; })
+                          .map(function(r){ return indiNm(r); });
     var tops = topGaps(2);
     var p = {};
     // P1 국면 분기 — 선언 + 전월대비(상승/하락/유지) + 상위등급 격차(경계 국면) + 목표 문장
@@ -3848,7 +3960,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     function rankOf(x){ return RANK[x.cd] || (x.fg==='10' ? 6 : 10); }
     // 구조지표 근접도 — 다음 구간(s+1) 경계까지 얼마나 가까운가. 계산 불가(만점·기준 없음)는 맨 뒤.
     function structProx(x){
-      var s = n(x.r.s_score)||0, val = n(x.r.cal_val);
+      var s = sOf(x.r), val = calValOf(x.r);
       var zones = CRIT_ALL[x.cd];
       if (!zones || s<=0 || s>=5) return 9e9;
       var nz=null; zones.forEach(function(z){ if(z.s===s+1) nz=z; });
@@ -3857,7 +3969,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       if (!(dist > 0)) return 0;                                    // 이미 경계 위 = 가장 근접
       return dist / Math.max(Math.abs(val), 0.01);
     }
-    return indicators.map(function(r){ return { cd:r.cate_cd, nm:r.cate_nm, fg:r.cate_fg, w:n(r.stdweig), got:n(r.weigval), gap:n(r.stdweig)-n(r.weigval), r:r }; })
+    return indicators.map(function(r){ return { cd:r.cate_cd, nm:indiNm(r), fg:r.cate_fg, w:n(r.stdweig), got:gotOf(r), gap:n(r.stdweig)-gotOf(r), r:r }; })
                      .filter(function(x){ return x.gap>0.0001; })
                      .sort(function(a,b){
                        var ra=rankOf(a), rb=rankOf(b);
@@ -3880,10 +3992,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       if(fg==='10') html += ' <span id="erG10Qtag" style="font-size:11.5px;font-weight:700;color:var(--er-soft);">'+_erQtagTxt()+'</span>';
       var topCds = topGaps(2).map(function(x){ return x.cd; });   // 최우선(부족분 상위2) — 원본 "◀ 최우선 개선" 표기
       rows.forEach(function(r){
-        var w=n(r.stdweig), got=n(r.weigval), gap=w-got, cd=esc(r.cate_cd), s=n(r.s_score)||0;
+        /* 점수·구간·만점 판정은 <누적> 기준(2026-08-11 검수). 단 분석문 첫 줄은 '당월 실적' 문장이므로
+           빨강 강조 여부(fullM)만 당월 만점으로 따진다 — 누적으로 판단하면 당월 만점인 달도 빨갛게 나온다. */
+        var w=n(r.stdweig), got=gotOf(r), gap=w-got, cd=esc(r.cate_cd), s=sOf(r);
         var full = gap<=0.0001;
+        var fullM = (w - n(r.weigval))<=0.0001;
         // 원본 PDF 형식: * 산정문(미달 빨강 강조) / "지표 정의 :" 별도 회색 줄 (+만점 시 유지 문구)
-        var auto = autoAna(r, full);
+        var auto = autoAna(r, fullM);
         /* 지표 정의에는 기관별 분석 결과(현재 점수·구간·개선 여지)를 넣지 않는다(2026-08-10 요청).
            "현재 최고 구간으로 추가 개선 여지 없음"은 아래 <점수 상향 목표> 줄로 옮겼다. */
         var defTxt = (TPL_DEF[r.cate_cd] ? esc(TPL_DEF[r.cate_cd]) : '');
@@ -3947,7 +4062,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     if (en >= 999)                        return fnum(st) + u + ' 이상';
     if (u === '%' && st >= 100)           return '100%';
     if (u === '%' && en >= 100)           return fnum(st) + '% 이상';
-    return fnum(st) + '~' + (bnd !== en ? fnum(bnd)+'미만' : fnum(en)) + u;   // 26~29.99명 → 26~30미만명 (2026-07-23 사용자)
+    // 26~29.99명 → '26~30명 미만' (2026-07-23 '미만' 통일 / 2026-08-11 검수: 단위를 '미만' 앞에 둔다 — '30~34미만명' 은 오타처럼 읽힌다)
+    return fnum(st) + '~' + (bnd !== en ? fnum(bnd)+u+' 미만' : fnum(en)+u);
   }
 
   function renderTable2(){
@@ -3957,14 +4073,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     function grpRows(fg, label, areaCls){
       var rows=indicators.filter(function(r){ return r.cate_fg===fg; });
       rows.forEach(function(r, idx){
-        var w=n(r.stdweig), got=n(r.weigval), gap=w-got, s=n(r.s_score)||0;
+        var w=n(r.stdweig), got=gotOf(r), gap=w-got, s=sOf(r);   // 누적 기준(2026-08-11)
         var zcls = s>=5?'er-z5':(s<=1?'er-z1':'er-z3');
         var range = s? zoneRange(r.cate_cd, s) : '';
         var zTd = s? '<td class="er-zc '+zcls+'"><b>'+s+'구간</b>'+(range?'<span class="er-zr">('+esc(range)+')</span>':'')+'</td>' : '<td>-</td>';
         // 부족분 강조(연분홍) = 진료지표(과정·결과) 중 부족분 2점 초과 — 원본 강조 패턴
         var hl = (fg!=='10' && gap>2.0001);
         var gapTd = gap>0.0001? '<td class="er-num'+(hl?' er-gaphl':' er-b-bad')+'">'+f1(gap)+'</td>' : '<td class="er-zero er-num">0</td>';
-        var cal = calDisp(r) + (r.cate_cd==='07' ? ' (PI)' : '');
+        var cal = calDispOf(r) + (r.cate_cd==='07' ? ' (PI)' : '');
         html += '<tr>'
               + (idx===0? '<td class="er-area '+areaCls+'" rowspan="'+rows.length+'">'+label+'</td>' : '')
               + '<td class="er-l">'+esc(indiNm(r))+'</td><td class="er-num">'+fnum(w)+'</td><td class="er-num">'+cal+'</td>'
@@ -3974,7 +4090,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     }
     function sums(fgs){
       var w=0,g=0;
-      indicators.forEach(function(r){ if(fgs.indexOf(r.cate_fg)>=0){ w+=n(r.stdweig); g+=n(r.weigval); } });
+      indicators.forEach(function(r){ if(fgs.indexOf(r.cate_fg)>=0){ w+=n(r.stdweig); g+=gotOf(r); } });
       return { w:w, g:g, gap:w-g };
     }
     grpRows('10','구조<br>지표','');
@@ -4134,12 +4250,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var ov=or_? r2(or_.weigval) : null, cv=r2(cr.weigval);
         var oc=calOf(or_), cc=calOf(cr);
         if(or_ && Math.abs(ov-cv)<0.005 && oc===cc) return;      // 점수·산출값 둘 다 같으면 표시 안 함
-        rows.push({ nm:(cr.cate_nm||cd), oc:(or_?oc:'-'), cc:cc, ov:ov, cv:cv, add:!or_ });
+        rows.push({ nm:(indiNm(cr)||cd), oc:(or_?oc:'-'), cc:cc, ov:ov, cv:cv, add:!or_ });
       });
       Object.keys(oM).forEach(function(cd){
         if(seen[cd]) return;
         var or_=oM[cd];
-        rows.push({ nm:(or_.cate_nm||cd), oc:calOf(or_), cc:'-', ov:r2(or_.weigval), cv:null, del:true });
+        rows.push({ nm:(indiNm(or_)||cd), oc:calOf(or_), cc:'-', ov:r2(or_.weigval), cv:null, del:true });
       });
 
       if(Math.abs(cT-oT)<0.05 && !rows.length) return;           // 완전 동일 → 배너 없음

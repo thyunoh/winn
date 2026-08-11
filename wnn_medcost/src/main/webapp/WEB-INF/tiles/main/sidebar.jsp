@@ -1480,12 +1480,47 @@ function hosp_conact() {
      · 저장 : localStorage 'wnnFavMenu' = { href:{nm,n,t} } / 접기 'wnnFavBarFold' — PC별, DB 없음.
      · 표시 : 클릭수 많은 순 → 최근 클릭 순 최대 7개. 시딩 없음(실제로 쓴 메뉴만).
      · 접기 : › 단추로 바를 접으면 동그란 ‹ 단추만 남는다(참고 이미지의 접힘 화살표와 동일 발상). */
-var SB_FAV_KEY = 'wnnFavMenu', SB_FAV_MAX = 5;
+var SB_FAV_KEY = 'wnnFavMenu', SB_FAV_MAX = 4;   /* 2026-08-11 사용자 요청: 5 → 4건 */
+
+/* ── 저장 계층 (2026-08-11) ────────────────────────────────────────────────
+     [증상] 바는 뜨는데 ①옮긴 자리가 페이지를 넘기면 원위치로 돌아가고 ②메뉴가 하나도 안 쌓였다.
+     [원인] 둘 다 localStorage 에만 저장했는데, 이 브라우저에서 <사이트 데이터가 차단>돼 있으면
+       setItem 이 예외를 던지거나 조용히 버려진다(try/catch 로 삼켜져 아무 표시도 안 났다).
+       크롬에서 쿠키/사이트데이터를 막아 두면 이 상태가 된다(JSESSIONID 미전송 건과 같은 뿌리).
+     [조치] <쓰고 바로 되읽어> 실제로 저장됐는지 확인하고, 안 되면 쿠키로 대신 저장한다.
+       쿠키는 이 시스템이 이미 로그인·병원선택에 쓰고 있어 확실히 동작한다(getCookie/setCookie: top.jsp).
+     ※값에 한글·세미콜론이 들어가므로 쿠키에는 반드시 encodeURIComponent 로 담는다. */
+function sbStoreSet(k, v){
+    try{
+        localStorage.setItem(k, v);
+        if (localStorage.getItem(k) === v){ return true; }   // 되읽어 확인 — 조용한 실패까지 잡는다
+    }catch(e){}
+    try{
+        var d = new Date(); d.setDate(d.getDate() + 365);
+        document.cookie = k + '=' + encodeURIComponent(v) + '; path=/; expires=' + d.toGMTString() + ';';
+        return true;
+    }catch(e2){ return false; }
+}
+function sbStoreGet(k){
+    try{
+        var v = localStorage.getItem(k);
+        if (v !== null && v !== undefined) return v;
+    }catch(e){}
+    try{
+        var m = ('; ' + document.cookie).split('; ' + k + '=');
+        if (m.length === 2) return decodeURIComponent(m.pop().split(';').shift());
+    }catch(e2){}
+    return null;
+}
+function sbStoreDel(k){
+    try{ localStorage.removeItem(k); }catch(e){}
+    try{ document.cookie = k + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;'; }catch(e2){}
+}
 /* ★고정 규칙 (2026-08-05 확정) — <먼저 들어온 5개가 고정>.
      5칸이 차면 새 메뉴를 아무리 써도 안 들어온다. 관리자가 × 로 빼서 자리를 비워야 다음 메뉴가 들어온다.
      자리 순서도 등록순 그대로 고정(사용횟수로 자리가 안 바뀜) — 횟수는 툴팁 참고용으로만 계속 센다. */
-function sbFavLoad(){ try{ return JSON.parse(localStorage.getItem(SB_FAV_KEY)) || null; }catch(e){ return null; } }
-function sbFavSave(m){ try{ localStorage.setItem(SB_FAV_KEY, JSON.stringify(m)); }catch(e){} }
+function sbFavLoad(){ try{ return JSON.parse(sbStoreGet(SB_FAV_KEY)) || null; }catch(e){ return null; } }
+function sbFavSave(m){ try{ sbStoreSet(SB_FAV_KEY, JSON.stringify(m)); }catch(e){} }
 /* 메뉴 사용 반영 — 이미 등록된 건 횟수만 +1, 빈자리가 있을 때만 새로 등록 */
 function sbFavHit(href, nm){
     var mm = sbFavLoad() || {}, k, cnt = 0, maxOrd = 0;
@@ -1496,6 +1531,13 @@ function sbFavHit(href, nm){
     sbFavSave(mm);
 }
 function sbFavInit(){
+    /* ★두 번 불려도 바가 겹치지 않게 먼저 치운다 (2026-08-11) —
+         겹치면 <나중에 생긴 빈 바>가 위를 덮어, 사용자 눈에는
+         "메뉴가 잠깐 보였다가 사라지고 자리도 원위치로 돌아간" 것처럼 보인다.
+         (뒤 바는 메뉴가 안 채워진 채 CSS 기본 자리 top:66px/right:14px 에 뜬다) */
+    var _old = document.getElementById('wnnFavBar');
+    if (_old && _old.parentNode) _old.parentNode.removeChild(_old);
+
     /* 저장값 정돈 — 옛(순위 변동) 방식 데이터를 고정 방식으로 1회 이행:
          n=0 잔재 제거 → 많이 쓴 순으로 5개만 남기고 등록순번(o) 부여 */
     var m0 = sbFavLoad();
@@ -1511,20 +1553,32 @@ function sbFavInit(){
             arr0 = arr0.slice(0, SB_FAV_MAX);
             var nm0 = {};
             for (var i0=0;i0<arr0.length;i0++){ arr0[i0].v.o = i0+1; nm0[arr0[i0].href] = arr0[i0].v; }
-            sbFavSave(nm0);
+            /* ★빈 결과로는 절대 덮어쓰지 않는다 — 한 번이라도 비면 쌓아 둔 메뉴가 통째로 날아가
+               "보였다가 사라지는" 꼴이 된다. 정돈은 어디까지나 다듬기지 초기화가 아니다. */
+            if (Object.keys(nm0).length) sbFavSave(nm0);
         } else if (arr0.length !== Object.keys(m0).length){
             var nm1 = {}; for (var j0=0;j0<arr0.length;j0++) nm1[arr0[j0].href] = arr0[j0].v;
-            sbFavSave(nm1);
+            if (Object.keys(nm1).length) sbFavSave(nm1);
         }
     }
-    /* 사이드바 메뉴 클릭 반영 — 진짜 화면 이동 링크(href가 /로 시작)만 */
-    document.querySelectorAll('#sbAllMenu a.nav-link').forEach(function(a){
+    /* 사이드바 메뉴 클릭 반영 — 진짜 화면 이동 링크(href가 /로 시작)만.
+       ★2026-08-11: 링크마다 리스너를 다는 대신 <document 에 한 번만> 달아 위임한다.
+         종전 방식은 sbFavInit 이 도는 순간 화면에 있던 #sbAllMenu 링크만 잡아서,
+         QPS 탭 전환 등으로 나중에 만들어지거나 그 밖에 있는 메뉴는 눌러도 안 쌓였다. */
+    if (!window._sbFavClickBound){          /* 두 번 불려도 리스너는 하나만(클릭수 이중 집계 방지) */
+    window._sbFavClickBound = true;
+    document.addEventListener('click', function(ev){
+        var a = ev.target && ev.target.closest ? ev.target.closest('a') : null;
+        if (!a) return;
+        if (!a.closest('.nav-left-sidebar, #sbAllMenu')) return;      // 사이드바 안의 링크만
         var href = a.getAttribute('href') || '';
-        if (href.charAt(0) !== '/') return;
-        a.addEventListener('click', function(){
-            sbFavHit(href, (a.textContent || '').replace(/\s+/g,' ').trim());
-        });
-    });
+        if (href.charAt(0) !== '/') return;                           // '#'(펼침 토글)·외부링크 제외
+        sbFavHit(href, (a.textContent || '').replace(/\s+/g,' ').trim());
+        /* 바를 <그 자리에서> 다시 그린다 — 종전에는 다음 화면이 로드될 때만 반영돼,
+           새 창·모달로 열리는 메뉴를 누르면 눌러도 바가 그대로라 "안 쌓인다"고 보였다. */
+        sbFavRender();
+    }, true);
+    }
     /* 바 골격을 body 에 직접 붙인다 — 어떤 화면 컨테이너의 영향도 받지 않게(fixed) */
     var bar = document.createElement('div');
     bar.id = 'wnnFavBar';
@@ -1534,7 +1588,10 @@ function sbFavInit(){
       + '  display:flex; align-items:center; gap:4px; padding:4px 6px 4px 10px; background:#fff;'
       + '  border:1px solid #bcd3f2; border-radius:20px; box-shadow:0 2px 8px rgba(23,70,162,.13);'
       + '  font-family:"Noto Sans KR","Malgun Gothic",sans-serif; white-space:nowrap; }'
-      + '#wnnFavBar .fv-tt{ font-size:11.5px; font-weight:800; color:#1746a2; margin-right:2px; }'
+      /* 제목표(★ 자주 쓰는 메뉴) = 끌어서 옮기는 손잡이 (2026-08-11 요청 — 월간보고서 편집 툴바를 가림) */
+      + '#wnnFavBar .fv-tt{ font-size:15px; font-weight:800; color:#1746a2; margin-right:1px; line-height:1;'
+      + '  cursor:move; user-select:none; -webkit-user-select:none; }'   /* 별표 하나 = 끌기 손잡이 */
+      + '#wnnFavBar .fv-tt:hover{ color:#e8a400; }'                      /* 잡을 수 있는 곳임을 눈으로 */
       + '#wnnFavBar a.fv{ display:inline-block; padding:3px 10px; border-radius:14px; font-size:12.5px; font-weight:700;'
       + '  color:#3b4a5c; text-decoration:none; background:#f4f8fd; border:1px solid #e3ebf5; }'
       + '#wnnFavBar a.fv:hover{ background:#e8f1fd; color:#1746a2; border-color:#5b8def; }'
@@ -1547,7 +1604,9 @@ function sbFavInit(){
       + '#wnnFavBar.fold{ padding:4px; left:auto; right:14px; transform:none; }'   /* 접으면 우측 구석의 단추만 */
       + '#wnnFavBar.fold .fv-tt, #wnnFavBar.fold a.fv, #wnnFavBar.fold .fv-hint{ display:none; }'
       + '</style>'
-      + '<span class="fv-tt">★ 자주 쓰는 메뉴</span>'
+      /* ★글자('자주 쓰는 메뉴')는 2026-08-11 요청으로 뺐다 — 메뉴가 늘면 바가 너무 길어진다.
+           단 이 자리는 <끌어서 옮기는 손잡이>라 통째로 없애면 이동이 안 된다 → 별표만 남긴다. */
+      + '<span class="fv-tt" title="자주 쓰는 메뉴 — 끌어서 옮기세요 (두 번 누르면 처음 자리로)">★</span>'
       + '<span id="wnnFavItems"></span>'
       + '<button type="button" class="fv-fold" id="wnnFavFold" title="자주 쓰는 메뉴 접기">›</button>';
     document.body.appendChild(bar);
@@ -1557,15 +1616,125 @@ function sbFavInit(){
         this.innerHTML = fold ? '‹' : '›';
         /* 접힌 동그라미가 뭔지 알 수 있게 툴팁으로 알려준다 (2026-08-05 요청 "팁으로 자주쓰는메뉴도 추가") */
         this.title = fold ? '자주 쓰는 메뉴 펼치기' : '자주 쓰는 메뉴 접기';
-        try{ localStorage.setItem('wnnFavBarFold', fold ? 'Y' : 'N'); }catch(e){}
+        sbStoreSet('wnnFavBarFold', fold ? 'Y' : 'N');
+        /* 왼쪽 좌표로 고정해 둔 상태에서 펼치면 폭이 늘어 화면 밖으로 나갈 수 있다 — 안으로 끌어들인다.
+           (오른쪽 여백 기준으로 붙여 둔 경우는 폭이 변해도 알아서 안쪽이라 손대지 않는다) */
+        if (bar.style.left && bar.style.left !== 'auto'){ var r = bar.getBoundingClientRect(); sbFavPosSet(bar, r.left, r.top); }
     });
-    var f = '';
-    try{ f = localStorage.getItem('wnnFavBarFold') || ''; }catch(e){}
+    var f = sbStoreGet('wnnFavBarFold') || '';
     if (f === 'Y'){ bar.className = 'fold';
         var fb = document.getElementById('wnnFavFold');
         fb.innerHTML = '‹'; fb.title = '자주 쓰는 메뉴 펼치기';
     }
+    /* ★★순서가 중요하다 (2026-08-11 — 옮긴 자리가 계속 원위치로 돌아가던 원인) ★★
+         자리 복원(sbFavPosApply)은 화면 밖으로 나가지 않게 clamp 하는데, 그 계산에 <바의 폭>을 쓴다.
+         메뉴를 채우기 전에 복원하면 바가 '제목 + 단추' 뿐이라 폭이 150px 남짓 → 오른쪽 한계가
+         실제보다 훨씬 왼쪽으로 잡혀, 저장해 둔 1198 이 1050 근처로 당겨졌다(눈에는 원위치로 보인다).
+         그래서 <메뉴를 먼저 그려 폭을 확정한 뒤> 자리를 잡는다. */
     sbFavRender();
+    sbFavPosApply(bar);      /* 저장해 둔 자리 복원 — 반드시 sbFavRender 뒤 */
+    sbFavDragBind(bar);      /* 제목표를 잡고 끌어 옮기기 */
+    /* 화면의 다른 스크립트가 늦게 레이아웃을 바꾸는 경우까지 대비해 로드 완료 후 한 번 더 자리를 잡는다 */
+    if (document.readyState !== 'complete'){
+        window.addEventListener('load', function(){ sbFavRender(); sbFavPosApply(bar); });
+    }
+}
+/* ── 바 위치 옮기기 (2026-08-11 요청) ─────────────────────────────────────────
+     월간보고서 편집 툴바(글꼴·크기)와 겹쳐 가려서 쓰기 불편하다 → 제목표(★ 자주 쓰는 메뉴)를 잡고 끌면 옮겨진다.
+     · 자리는 localStorage 'wnnFavBarPos'(PC별) 에 남아 다음 접속에도 그대로.
+     · 제목표를 <두 번 누르면> 처음 자리(우측 위)로 되돌린다.
+     · 창 크기가 줄어 화면 밖으로 나가면 안으로 다시 끌어들인다(sbFavPosClamp).
+     ★접힘(.fold) CSS 가 right:14px 를 주므로, 옮긴 뒤에는 반드시 inline right:auto 를 함께 둬야
+       접었다 펼 때 자리가 우측으로 튀지 않는다. */
+var SB_FAV_POS_KEY = 'wnnFavBarPos';
+function sbFavPosClamp(bar, l, t){
+    var w = bar.offsetWidth, h = bar.offsetHeight;
+    var maxL = Math.max(0, (window.innerWidth  || 0) - w);
+    var maxT = Math.max(0, (window.innerHeight || 0) - h);
+    return { l: Math.min(Math.max(0, l), maxL), t: Math.min(Math.max(0, t), maxT) };
+}
+function sbFavPosSet(bar, l, t){
+    var p = sbFavPosClamp(bar, l, t);
+    bar.style.left = p.l + 'px'; bar.style.top = p.t + 'px'; bar.style.right = 'auto';
+    return p;
+}
+/* ★붙여 둔 <쪽>을 기억한다 (2026-08-11) — 왼쪽 좌표로만 기억하면, 창 폭이 달라졌을 때
+     '화면 밖으로 나가지 않게' 하는 보정에 걸려 왼쪽으로 확 당겨진다(= 원위치로 돌아간 것처럼 보임).
+     바가 화면 오른쪽 절반에 있으면 <오른쪽 여백>으로, 왼쪽에 있으면 <왼쪽 좌표>로 저장한다. */
+function sbFavPosSave(bar){
+    var r = bar.getBoundingClientRect(), W = window.innerWidth || 0;
+    var v = ((r.left + r.width/2) > W/2)
+          ? { r: Math.max(0, Math.round(W - r.right)), t: Math.round(r.top) }
+          : { l: Math.round(r.left),                   t: Math.round(r.top) };
+    sbStoreSet(SB_FAV_POS_KEY, JSON.stringify(v));
+}
+function sbFavPosApply(bar){
+    var p = null;
+    try{ p = JSON.parse(sbStoreGet(SB_FAV_POS_KEY)); }catch(e){}
+    if (!p || typeof p.t !== 'number') return;
+    if (typeof p.r === 'number'){ bar.style.right = p.r + 'px'; bar.style.left = 'auto'; }
+    else if (typeof p.l === 'number'){ bar.style.left = p.l + 'px'; bar.style.right = 'auto'; }
+    else return;
+    bar.style.top = p.t + 'px';
+    /* 세로만 화면 안으로 보정한다. 가로는 위에서 붙인 쪽 기준이라 알아서 안쪽에 있다.
+       ★이 시점엔 바 안의 <style> 이 아직 안 먹어 높이가 실제와 다를 수 있어 다음 프레임에 잰다. */
+    var fix = function(){
+        var h = bar.offsetHeight, maxT = Math.max(0, (window.innerHeight||0) - h);
+        var t = Math.min(Math.max(0, p.t), maxT);
+        if (t !== p.t) bar.style.top = t + 'px';
+    };
+    if (window.requestAnimationFrame) window.requestAnimationFrame(fix); else setTimeout(fix, 0);
+}
+function sbFavPosReset(bar){
+    sbStoreDel(SB_FAV_POS_KEY);
+    bar.style.left = ''; bar.style.top = ''; bar.style.right = '';
+}
+function sbFavDragBind(bar){
+    var tt = bar.querySelector('.fv-tt'); if (!tt) return;
+    var drag = null, saveTm = null;
+    function pt(e){ return (e.touches && e.touches[0]) ? e.touches[0] : e; }
+    /* 끄는 도중에도 저장해 둔다 — 마우스를 <iframe(PDF 미리보기 등) 위에서> 놓으면
+       document 의 mouseup 이 안 와 up() 이 안 돌고, 그러면 자리가 통째로 날아갔다. */
+    function saveSoon(){ if (saveTm) clearTimeout(saveTm);
+        saveTm = setTimeout(function(){ saveTm = null; sbFavPosSave(bar); }, 150); }
+    function down(e){
+        var q = pt(e), r = bar.getBoundingClientRect();
+        drag = { dx: q.clientX - r.left, dy: q.clientY - r.top };
+        sbFavPosSet(bar, r.left, r.top);                 /* right 기준 → left 기준으로 전환 */
+        document.body.style.userSelect = 'none';
+        if (e.preventDefault) e.preventDefault();
+    }
+    function move(e){
+        if (!drag) return;
+        var q = pt(e);
+        sbFavPosSet(bar, q.clientX - drag.dx, q.clientY - drag.dy);
+        saveSoon();
+        if (e.cancelable) e.preventDefault();
+    }
+    function up(){
+        if (!drag) return;
+        drag = null;
+        document.body.style.userSelect = '';
+        sbFavPosSave(bar);
+    }
+    tt.addEventListener('mousedown', down);
+    tt.addEventListener('touchstart', down, { passive:false });
+    document.addEventListener('mousemove', move);
+    document.addEventListener('touchmove', move, { passive:false });
+    document.addEventListener('mouseup', up);
+    document.addEventListener('touchend', up);
+    tt.addEventListener('dblclick', function(){ sbFavPosReset(bar); });
+    /* 화면을 떠나기 직전 한 번 더 — 좌측 메뉴를 눌러 바로 이동하는 경우까지 자리를 붙든다 */
+    window.addEventListener('beforeunload', function(){
+        if (bar.style.left && bar.style.left !== 'auto') sbFavPosSave(bar);
+        else if (bar.style.right && bar.style.right !== 'auto') sbFavPosSave(bar);
+    });
+    window.addEventListener('resize', function(){
+        if (!bar.style.left || bar.style.left === 'auto') return;   /* 기본 자리·우측 고정은 손대지 않는다 */
+        var r = bar.getBoundingClientRect();
+        sbFavPosSet(bar, r.left, r.top);
+        sbFavPosSave(bar);
+    });
 }
 function sbFavRender(){
     var m = sbFavLoad() || {}, arr = [], k;
@@ -1576,7 +1745,7 @@ function sbFavRender(){
     var cur = '';
     try{ cur = (sessionStorage.getItem('_realPath') || location.pathname).split('?')[0]; }catch(e){}
     var h = '';
-    if (!arr.length) h = '<span class="fv-hint">메뉴를 사용하면 여기에 자동으로 쌓입니다</span>';
+    if (!arr.length) h = '<span class="fv-hint">자주 쓰는 메뉴 — 메뉴를 사용하면 여기에 자동으로 쌓입니다</span>';
     for (var i=0;i<arr.length;i++){
         h += '<a class="fv' + (cur === arr[i].href ? ' on' : '') + '" href="' + arr[i].href + '"'
            + ' onclick="sbFavGo(this)" title="' + (arr[i].n||0) + '회 사용">' + arr[i].nm
