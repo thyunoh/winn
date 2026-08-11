@@ -4462,7 +4462,18 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function _erDoApproveCancel(){
     jQuery.ajax({ url: ctx+'/main/approveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
       data: JSON.stringify({ hospCd:hospCd, evalYm:curYm, cancel:'Y' }),
-      success:function(res){ if(res && res.result==='OK'){ setStatus('DRAFT'); toast('승인이 취소되었습니다.'); } else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'}); },
+      success:function(res){ if(res && res.result==='OK'){
+          /* 승인이 풀렸으니 '승인본은 건드리지 않는다'로 막아 뒀던 자동 갱신(핵심 진단의 옛 종합점수)을
+             <그 자리에서> 반영한다. 안 그러면 화면을 나갔다 다시 들어와야 바뀐다(2026-08-11 확인).
+             ★알림은 <실제로 바뀐 게 있을 때만> 그렇게 말한다 — 안 바뀌었는데 '갱신했다'고 하면 거짓말이 된다. */
+          var _dcTxt = function(){ var e=document.querySelector('#evalReport [data-key="diag_core"]'); return e? (e.textContent||'') : ''; };
+          var _before = _dcTxt();
+          setStatus('DRAFT');
+          try{ renderGoalSummary(); }catch(e){}
+          toast(_dcTxt() !== _before
+                ? '승인이 취소되었습니다. 종합점수가 달라져 핵심 진단 문구를 현재 값으로 갱신했습니다.'
+                : '승인이 취소되었습니다.');
+        } else erSwal('error','처리 실패: '+((res&&res.message)||''), {title:'오류'}); },
       error:function(){ erSwal('error','승인 처리 중 오류가 발생했습니다.', {title:'오류'}); }
     });
   }
