@@ -100,6 +100,9 @@
   //     → 수기형은 숫자 없이 '입력됨' 만(2026-08-09).
   function stateOf(r){
     if (r.numersrc === 'PATVAL')   return { cls:'auto', txt:'자동집계' };
+    // 대장형 — 불만고충 처리대장에서 자동집계. 대장이 비어 있으면 지표가 '-' 라 그 사실을 알려준다.
+    if (r.numersrc === 'CMPL')     return Number(r.cmplcnt||0) > 0
+                                        ? { cls:'auto', txt:'자동집계 ' + Number(r.cmplcnt) } : { cls:'off', txt:'대장 비었음' };
     if (r.numersrc === 'MANUAL')   return Number(r.mancnt||0) > 0
                                         ? { cls:'on', txt:'입력됨' } : { cls:'off', txt:'입력 전' };
     var n = (r.numersrc === 'MONITOR') ? Number(r.moncnt||0) : Number(r.incidcnt||0);

@@ -659,7 +659,8 @@ public class QpsServiceImpl implements QpsService {
 		//   TAT·재택복귀·불만고충·만족도는 분모가 재원일수가 아니라 '전체 건수'다.
 		String denomGb = str(indi.get("denomgb"));
 		String numerSrcTmp = str(indi.get("numersrc"));
-		if (denomGb.isEmpty() && !"MANUAL".equals(numerSrcTmp)) denomGb = "INDAYS";
+		// ★CMPL 도 마찬가지다 — 분모가 처리대장의 접수건수라 재원일수를 쓰면 안 된다.
+		if (denomGb.isEmpty() && !"MANUAL".equals(numerSrcTmp) && !"CMPL".equals(numerSrcTmp)) denomGb = "INDAYS";
 		String incidGb = str(indi.get("incidgb"));
 		if (incidGb.isEmpty()) incidGb = indiCd;
 		String minLevel = str(indi.get("minlevel"));   // 비면 전건
@@ -693,6 +694,34 @@ public class QpsServiceImpl implements QpsService {
 				months.add(m);
 			}
 			hasDenom = (mDenom != null);
+		} else if ("CMPL".equals(numerSrc)) {
+			// 불만고충 처리대장에서 직접 — 분자=처리(회신)건수, 분모=접수건수. 재원일수를 안 쓴다.
+			// ★같은 것을 두 번 적게 만들지 않으려고 수기입력(MANUAL)에서 옮겼다(2026-08-11).
+			//   '처리 = 회신날짜가 있는 건' 의 정의는 지표분석보고서와 **같은 쿼리**를 써서
+			//   두 화면의 숫자가 어긋날 수 없게 한다.
+			Map<String, Object> cp = new HashMap<>();
+			cp.put("hospCd", hospCd);
+			cp.put("inYear", inYear);
+			cp.put("frMm", "01");
+			cp.put("toMm", "12");
+			Map<String, int[]> byMm = new HashMap<>();   // mm -> [분자(처리), 분모(접수)]
+			List<Map<String, Object>> crows = mapper.selectCmplStatMonth(cp);
+			if (crows != null) for (Map<String, Object> r : crows) {
+				byMm.put(str(r.get("mm")), new int[]{ intOf(r.get("done"), 0), intOf(r.get("tot"), 0) });
+			}
+			int denomTot = 0;
+			for (String mm : MM) {
+				int[] v = byMm.containsKey(mm) ? byMm.get(mm) : new int[]{0, 0};
+				denomTot += v[1];
+				Map<String, Object> m = new LinkedHashMap<>();
+				m.put("mm", mm);
+				m.put("numer", v[0]);
+				m.put("denom", v[1]);
+				m.put("rate", rate(v[0], v[1], multiplier, decimals));
+				months.add(m);
+			}
+			// 접수 건이 하나도 없으면 분모가 없는 것 — 지표는 '-' 로 나간다(0% 가 아니다).
+			hasDenom = denomTot > 0;
 		} else if ("MONITOR".equals(numerSrc)) {
 			Map<String, int[]> byMm = new HashMap<>();   // mm -> [numer, denom]
 			List<Map<String, Object>> mrows = mapper.selectMonthlyMonitor(hospCd, indiCd, inYear);
@@ -887,6 +916,339 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public int deleteInfRpt(Map<String, Object> param) throws Exception {
 		return mapper.deleteInfRpt(param);
+	}
+
+	// ============ QI 활동 계획서 ============
+
+	@Override
+	public List<Map<String, Object>> selectQiPlanList(String hospCd, String inYear) throws Exception {
+		return mapper.selectQiPlanList(hospCd, inYear);
+	}
+
+	@Override
+	public Map<String, Object> selectQiPlanWithItems(String hospCd, long qipSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectQiPlan(hospCd, qipSeq);
+		out.put("doc", doc);
+		out.put("items", doc == null ? new ArrayList<>() : mapper.selectQiPlanItems(qipSeq));
+		return out;
+	}
+
+	/** 저장 — 새 문서면 insert, 있으면 update. 팀구성·활동일정은 통째 교체(연간계획서와 같은 방식). */
+	@Override
+	public long saveQiPlan(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		long seq = 0;
+		Object s = p.get("qipSeq");
+		if (s != null && !String.valueOf(s).trim().isEmpty()) {
+			try { seq = Long.parseLong(String.valueOf(s).trim()); } catch (Exception ignore) { seq = 0; }
+		}
+		if (seq > 0) { mapper.updateQiPlan(p); }
+		else { mapper.insertQiPlan(p); seq = Long.parseLong(String.valueOf(p.get("qipSeq"))); }
+
+		mapper.deleteQiPlanItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("qipSeq", seq);
+			ip.put("items", items);
+			mapper.insertQiPlanItems(ip);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteQiPlan(Map<String, Object> param) throws Exception {
+		return mapper.deleteQiPlan(param);
+	}
+
+	// ============ FMEA 계획서·보고서 ============
+
+	@Override
+	public Map<String, Object> selectFmeaBase(String hospCd, String inYear, String docGb) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("scale", mapper.selectFmeaScale());   // 척도표 — 화면 안내와 인쇄물에 그대로 낸다
+		out.put("list",  mapper.selectFmeaList(hospCd, inYear, docGb));
+		return out;
+	}
+
+	@Override
+	public Map<String, Object> selectFmeaOne(String hospCd, long fmeSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectFmea(hospCd, fmeSeq);
+		out.put("doc", doc);
+		out.put("items", doc == null ? new ArrayList<>() : mapper.selectFmeaItems(fmeSeq));
+		out.put("sheet", doc == null ? new ArrayList<>() : mapper.selectFmeaSheet(fmeSeq));
+		return out;
+	}
+
+	/**
+	 * 저장 — ★점수는 서버에서 다시 셈한다(화면이 잘못 보내도 값이 오염되지 않게).
+	 *   위험도점수 = 발생가능성 × 심각성
+	 *   RPN        = 심각성 × 발생가능성 × 발견가능성
+	 *   CI         = 심각성 × 발생가능성   ← ★추정 산식. 원본 확인 전이며 화면에도 그렇게 표시한다.
+	 * 순위는 RPN 내림차순(동점이면 같은 순위).
+	 */
+	@Override
+	public long saveFmea(Map<String, Object> p, List<Map<String, Object>> items,
+	                     List<Map<String, Object>> sheet) throws Exception {
+		long seq = longOfObj(p.get("fmeSeq"));
+		if (seq > 0) { mapper.updateFmea(p); }
+		else { mapper.insertFmea(p); seq = Long.parseLong(String.valueOf(p.get("fmeSeq"))); }
+
+		mapper.deleteFmeaItems(seq);
+		if (items != null && !items.isEmpty()) {
+			for (Map<String, Object> r : items) {
+				for (String k : new String[]{ "n1","n2","n3","n4" }) r.put(k, intOrNull(r.get(k)));
+				// 위험도평가 행은 위험도점수를 다시 셈한다
+				if ("RISK".equals(str(r.get("sect")))) {
+					Integer o = (Integer) r.get("n2"), s = (Integer) r.get("n3");
+					r.put("n4", (o == null || s == null) ? null : Integer.valueOf(o * s));
+				}
+			}
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("fmeSeq", seq); ip.put("items", items);
+			mapper.insertFmeaItems(ip);
+		}
+
+		mapper.deleteFmeaSheet(seq);
+		if (sheet != null && !sheet.isEmpty()) {
+			for (Map<String, Object> r : sheet) {
+				for (String k : new String[]{ "aoccur","asever","adetect","boccur","bsever","bdetect" }) {
+					r.put(k, intOrNull(r.get(k)));
+				}
+				r.put("arpn", rpn(r.get("asever"), r.get("aoccur"), r.get("adetect")));
+				r.put("aci",  ci(r.get("asever"), r.get("aoccur")));
+				r.put("brpn", rpn(r.get("bsever"), r.get("boccur"), r.get("bdetect")));
+				r.put("bci",  ci(r.get("bsever"), r.get("boccur")));
+			}
+			// 순위 — 사전 RPN 내림차순, 동점이면 같은 순위
+			List<Map<String, Object>> sorted = new ArrayList<>(sheet);
+			sorted.sort((a, b) -> intOf(b.get("arpn"), 0) - intOf(a.get("arpn"), 0));
+			int rank = 0, prev = Integer.MIN_VALUE, seen = 0;
+			for (Map<String, Object> r : sorted) {
+				int v = intOf(r.get("arpn"), 0);
+				seen++;
+				if (v != prev) { rank = seen; prev = v; }
+				r.put("arank", v > 0 ? Integer.valueOf(rank) : null);
+			}
+			Map<String, Object> sp = new HashMap<>();
+			sp.put("fmeSeq", seq); sp.put("items", sheet);
+			mapper.insertFmeaSheet(sp);
+		}
+		return seq;
+	}
+
+	/** RPN = 심각성 × 발생가능성 × 발견가능성. 하나라도 비면 null(0 이 아니다 — '미평가'와 구별). */
+	private static Integer rpn(Object sever, Object occur, Object detect) {
+		Integer s = intOrNull(sever), o = intOrNull(occur), d = intOrNull(detect);
+		return (s == null || o == null || d == null) ? null : Integer.valueOf(s * o * d);
+	}
+	/** ★CI — 산식이 원본 인쇄물에 없다. 심각성 × 발생가능성으로 추정한다(화면에 그렇게 표시). */
+	private static Integer ci(Object sever, Object occur) {
+		Integer s = intOrNull(sever), o = intOrNull(occur);
+		return (s == null || o == null) ? null : Integer.valueOf(s * o);
+	}
+
+	@Override
+	public int deleteFmea(Map<String, Object> param) throws Exception { return mapper.deleteFmea(param); }
+
+	// ============ RCA 근본원인 분석 보고서 ============
+
+	@Override
+	public List<Map<String, Object>> selectRcaList(String hospCd, String inYear) throws Exception {
+		return mapper.selectRcaList(hospCd, inYear);
+	}
+
+	@Override
+	public Map<String, Object> selectRca(String hospCd, long rcaSeq) throws Exception {
+		return mapper.selectRca(hospCd, rcaSeq);
+	}
+
+	@Override
+	public long saveRca(Map<String, Object> p) throws Exception {
+		long seq = longOfObj(p.get("rcaSeq"));
+		if (seq > 0) { mapper.updateRca(p); }
+		else { mapper.insertRca(p); seq = Long.parseLong(String.valueOf(p.get("rcaSeq"))); }
+		return seq;
+	}
+
+	@Override
+	public int deleteRca(Map<String, Object> param) throws Exception { return mapper.deleteRca(param); }
+
+	// ============ 사고 유형별 보고서 ============
+
+	/** 화면 초기 로드 — ★항목표(DEF)를 함께 준다. 화면은 이걸 순회해 체크박스를 그린다(유형별 하드코딩 없음). */
+	@Override
+	public Map<String, Object> selectSafeRptBase(String hospCd, String inYear, String rptGb) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("def",  mapper.selectSafeRptDef(rptGb));
+		out.put("list", mapper.selectSafeRptList(hospCd, inYear, rptGb));
+		return out;
+	}
+
+	@Override
+	public Map<String, Object> selectSafeRptOne(String hospCd, long srpSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectSafeRpt(hospCd, srpSeq);
+		out.put("doc", doc);
+		out.put("chks", doc == null ? new ArrayList<>() : mapper.selectSafeRptChk(srpSeq));
+		return out;
+	}
+
+	/** 저장 — 체크는 통째 교체. 무엇을 골랐는지만 남기면 되므로 부분 수정이 필요 없다. */
+	@Override
+	public long saveSafeRpt(Map<String, Object> p, List<Map<String, Object>> chks) throws Exception {
+		long seq = longOfObj(p.get("srpSeq"));
+		if (seq > 0) { mapper.updateSafeRpt(p); }
+		else { mapper.insertSafeRpt(p); seq = Long.parseLong(String.valueOf(p.get("srpSeq"))); }
+		mapper.deleteSafeRptChk(seq);
+		if (chks != null && !chks.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("srpSeq", seq); ip.put("items", chks);
+			mapper.insertSafeRptChk(ip);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteSafeRpt(Map<String, Object> param) throws Exception { return mapper.deleteSafeRpt(param); }
+
+	// ============ QI 중간·최종보고서 ============
+
+	@Override
+	public List<Map<String, Object>> selectQiRptList(String hospCd, String inYear, String rptGb) throws Exception {
+		return mapper.selectQiRptList(hospCd, inYear, rptGb);
+	}
+
+	@Override
+	public Map<String, Object> selectQiRptWithItems(String hospCd, long qirSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectQiRpt(hospCd, qirSeq);
+		out.put("doc", doc);
+		out.put("items", doc == null ? new ArrayList<>() : mapper.selectQiRptItems(qirSeq));
+		return out;
+	}
+
+	@Override
+	public long saveQiRpt(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		long seq = longOfObj(p.get("qirSeq"));
+		if (seq > 0) { mapper.updateQiRpt(p); }
+		else { mapper.insertQiRpt(p); seq = Long.parseLong(String.valueOf(p.get("qirSeq"))); }
+		mapper.deleteQiRptItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("qirSeq", seq); ip.put("items", items);
+			mapper.insertQiRptItems(ip);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteQiRpt(Map<String, Object> param) throws Exception { return mapper.deleteQiRpt(param); }
+
+	// ============ QI 주제선정 기준표 + 우선순위 집계표 ============
+
+	@Override
+	public List<Map<String, Object>> selectQiTopicList(String hospCd, String inYear) throws Exception {
+		return mapper.selectQiTopicList(hospCd, inYear);
+	}
+
+	@Override
+	public Map<String, Object> selectQiTopicWithItems(String hospCd, long qitSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectQiTopic(hospCd, qitSeq);
+		out.put("doc", doc);
+		out.put("items", doc == null ? new ArrayList<>() : mapper.selectQiTopicItems(qitSeq));
+		return out;
+	}
+
+	/** 저장 — 총점은 서버에서 다시 셈한다(화면이 잘못 보내도 집계가 오염되지 않게). */
+	@Override
+	public long saveQiTopic(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		long seq = longOfObj(p.get("qitSeq"));
+		if (seq > 0) { mapper.updateQiTopic(p); }
+		else { mapper.insertQiTopic(p); seq = Long.parseLong(String.valueOf(p.get("qitSeq"))); }
+		mapper.deleteQiTopicItems(seq);
+		if (items != null && !items.isEmpty()) {
+			for (Map<String, Object> r : items) {
+				int t = 0;
+				for (String k : new String[]{ "s1","s2","s3","s4","s5","s6" }) {
+					Integer v = intOrNull(r.get(k));
+					r.put(k, v);
+					if (v != null) t += v;
+				}
+				r.put("totscore", t);
+			}
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("qitSeq", seq); ip.put("items", items);
+			mapper.insertQiTopicItems(ip);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteQiTopic(Map<String, Object> param) throws Exception { return mapper.deleteQiTopic(param); }
+
+	/**
+	 * 우선순위 집계표 — ★저장하지 않는다. 그 해 기준표(평가위원별)를 주제로 묶어 합산한다.
+	 * 원본 [생성] 버튼이 하던 일이다. 순위는 총점 내림차순(동점이면 같은 순위).
+	 */
+	@Override
+	public Map<String, Object> selectQiTopicRollup(String hospCd, String inYear) throws Exception {
+		List<Map<String, Object>> rows = mapper.selectQiTopicRollup(hospCd, inYear);
+		int rank = 0, prev = Integer.MIN_VALUE, seen = 0;
+		if (rows != null) for (Map<String, Object> r : rows) {
+			int t = intOf(r.get("totscore"), 0);
+			seen++;
+			if (t != prev) { rank = seen; prev = t; }   // 동점이면 같은 순위, 다음은 건너뛴다
+			r.put("rank", rank);
+		}
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("rollup", rows);
+		out.put("cross", mapper.selectQiTopicCross(hospCd, inYear));   // 주제 × 평가위원 총점
+		out.put("evaluators", mapper.selectQiTopicList(hospCd, inYear));
+		return out;
+	}
+
+	// ============ QI 활동 자원지원 내역 ============
+
+	@Override
+	public Map<String, Object> selectQiFundWithItems(String hospCd, String inYear) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectQiFund(hospCd, inYear);
+		out.put("doc", doc);
+		out.put("items", (doc == null || doc.get("qifseq") == null)
+				? new ArrayList<>()
+				: mapper.selectQiFundItems(Long.parseLong(String.valueOf(doc.get("qifseq")))));
+		return out;
+	}
+
+	/** 저장 — 총지원비는 세부항목 합으로 서버가 다시 셈한다. */
+	@Override
+	public long saveQiFund(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		long tot = 0;
+		if (items != null) for (Map<String, Object> r : items) {
+			Integer v = intOrNull(r.get("amt"));
+			r.put("amt", v);
+			if (v != null) tot += v;
+		}
+		p.put("totAmt", tot);
+		mapper.upsertQiFund(p);
+		long seq = Long.parseLong(String.valueOf(p.get("qifSeq")));
+		mapper.deleteQiFundItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("qifSeq", seq); ip.put("items", items);
+			mapper.insertQiFundItems(ip);
+		}
+		return seq;
+	}
+
+	/** 화면이 보낸 seq 문자열 → long. 비었거나 못 읽으면 0(=새 문서). */
+	private static long longOfObj(Object o) {
+		if (o == null) return 0;
+		String s = String.valueOf(o).trim();
+		if (s.isEmpty()) return 0;
+		try { return Long.parseLong(s); } catch (Exception e) { return 0; }
 	}
 
 	// ============ 불만고충 (처리대장 · 건별 처리결과 · 지표분석보고서) ============

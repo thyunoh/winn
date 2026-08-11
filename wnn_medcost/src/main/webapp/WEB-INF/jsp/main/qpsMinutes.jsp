@@ -59,9 +59,17 @@
   <div class="qm-spacer"></div>
   <%-- 위원회 구분(2026-08-10 감염관리 포함) — MEET_GB(정기/임시)와는 다른 축이다.
        목록·저장 모두 이 구분을 타므로 QPS 회의와 감염 회의가 섞이지 않는다. --%>
-  <select id="qmGb" style="width:auto;" onchange="qmList();">
+  <%-- 초기값은 서버가 정한다 — 감염 메뉴(?gb=I)로 들어오면 감염관리위원회로 열린다 --%>
+  <select id="qmGb" style="width:auto;" onchange="qmList();" data-init="<c:out value='${formGb}' default='Q'/>">
     <option value="Q">질향상·환자안전</option>
     <option value="I">감염관리</option>
+    <%-- QI 활동 회의록 — 원본은 별도 서식처럼 보이지만 틀이 같다(1~6차 실물 대조).
+         주제·차수는 회의명에 적는다(예: "낙상 3차"). --%>
+    <option value="J">QI 활동</option>
+    <%-- RCA 회의록 — 1차·2차 실물 대조 결과 QI 회의록과 골격이 같다(차수별 차이 없음) --%>
+    <option value="R">RCA</option>
+    <%-- FMEA 회의록 — 골격이 같다. 차수는 회의명에 적는다(예: "낙상 FMEA 3차") --%>
+    <option value="F">FMEA</option>
   </select>
   <select id="qmYear" style="width:auto;" onchange="qmList();"></select>
   <%-- 저장·인쇄·삭제는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정).
@@ -92,6 +100,8 @@
         <div class="lb">회의명 *</div>   <div class="full"><input type="text" id="m_title" maxlength="200" placeholder="예) 2026년 2차 QPS위원회"></div>
         <div class="lb">장소</div>       <div><input type="text" id="m_place" maxlength="100" placeholder="예) 2층 회의실"></div>
         <div class="lb">인원</div>       <div><input type="text" id="m_personnel" maxlength="30" placeholder="예) 11명"></div>
+        <%-- 간사 — QI 회의록에 있는 칸. 다른 구분에서는 비워 두면 인쇄물에도 안 나온다 --%>
+        <div class="lb">간사</div>       <div><input type="text" id="m_clerkNm" maxlength="50"></div>
         <div class="lb">회의안건</div>   <div class="full"><textarea id="m_agenda" placeholder="1. 2분기 지표 결과 보고&#10;2. 손위생 개선활동 경과"></textarea></div>
         <div class="lb">회의내용</div>   <div class="full">
           <textarea id="m_content" style="min-height:110px;"></textarea>
@@ -146,7 +156,10 @@
 
   window.qmList = function(){
     var t = document.getElementById('qmTitle');
-    if (t) t.textContent = (qmGb()==='I') ? '감염관리위원회 회의록' : '위원회 회의록';
+    if (t) t.textContent = (qmGb()==='I') ? '감염관리위원회 회의록'
+                         : (qmGb()==='J') ? '질향상활동(QI) 회의록'
+                         : (qmGb()==='R') ? 'RCA 회의록'
+                         : (qmGb()==='F') ? 'FMEA 회의록' : '위원회 회의록';
     return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value }).then(function(res){
       apprLine = res.line || [];
       if (res.hosp) HOSP_NM = res.hosp.hospnm || '';
@@ -178,7 +191,7 @@
       curSeq = Number(d.minseq || 0);
       set('m_minSeq', d.minseq); set('m_meetDt', d.meetdt); set('m_title', d.title);
       setGb(d.meetgb || '');
-      set('m_place', d.place); set('m_personnel', d.personnel);
+      set('m_place', d.place); set('m_personnel', d.personnel); set('m_clerkNm', d.clerknm);
       set('m_attendees', d.attendees); set('m_members', d.members);
       set('m_agenda', d.agenda); set('m_content', d.content);
       set('m_decision', d.decision); set('m_nextTxt', d.nexttxt);
@@ -192,7 +205,7 @@
 
   window.qmNew = function(){
     curSeq = 0;
-    ['m_minSeq','m_meetDt','m_title','m_place','m_personnel','m_attendees','m_members',
+    ['m_minSeq','m_meetDt','m_title','m_place','m_clerkNm','m_personnel','m_attendees','m_members',
      'm_agenda','m_content','m_decision','m_nextTxt','m_attachTxt','m_specialTxt']
       .forEach(function(id){ set(id, ''); });
     setGb('');
@@ -208,7 +221,7 @@
     post('/qps/minutesSave.do', {
       formGb: qmGb(),
       minSeq: val('m_minSeq'), meetDt: val('m_meetDt'), title: val('m_title'), meetGb: getGb(),
-      place: val('m_place'), personnel: val('m_personnel'),
+      place: val('m_place'), clerkNm: val('m_clerkNm'), personnel: val('m_personnel'),
       attendees: val('m_attendees'), members: val('m_members'),
       agenda: val('m_agenda'), content: val('m_content'),
       decision: val('m_decision'), nextTxt: val('m_nextTxt'),
@@ -315,7 +328,9 @@
         '<tr><th>일 시</th><td style="width:34%;">' + esc(val('m_meetDt')) + '</td>' +
             '<th style="width:70px;">회의 구분</th><td>' + gbHtml + '</td></tr>' +
         '<tr><th>장 소</th><td>' + esc(val('m_place')) + '</td>' +
-            '<th>인 원</th><td>' + esc(val('m_personnel')) + '</td></tr>' +
+            // QI 회의록은 이 자리가 「간사」다. 간사를 적으면 그것을, 아니면 인원을 낸다.
+            '<th>' + (val('m_clerkNm') ? '간 사' : '인 원') + '</th><td>' +
+            esc(val('m_clerkNm') || val('m_personnel')) + '</td></tr>' +
         row('회의안건', val('m_agenda'), true) +
         row('회의내용', val('m_content'), true) +
         row('회의결과(결정사항)', val('m_decision'), true) +
@@ -337,7 +352,11 @@
     setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
   };
 
-  $(function(){ qmList(); });
+  $(function(){
+    var g = document.getElementById('qmGb');
+    if (g) { var init = g.getAttribute('data-init'); if (init) g.value = init; }
+    qmList();
+  });
 })();
 </script>
 </div><%-- /#qpsMin --%>

@@ -120,6 +120,48 @@ public interface QpsService {
 	long saveInfRpt(Map<String, Object> param, List<Map<String, Object>> members) throws Exception;
 	int deleteInfRpt(Map<String, Object> param) throws Exception;
 
+	/* QI 활동 계획서 */
+	List<Map<String, Object>> selectQiPlanList(String hospCd, String inYear) throws Exception;
+	Map<String, Object> selectQiPlanWithItems(String hospCd, long qipSeq) throws Exception;
+	long saveQiPlan(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	int deleteQiPlan(Map<String, Object> param) throws Exception;
+
+	/* FMEA 계획서·보고서 */
+	Map<String, Object> selectFmeaBase(String hospCd, String inYear, String docGb) throws Exception;
+	Map<String, Object> selectFmeaOne(String hospCd, long fmeSeq) throws Exception;
+	long saveFmea(Map<String, Object> param, List<Map<String, Object>> items,
+	              List<Map<String, Object>> sheet) throws Exception;
+	int deleteFmea(Map<String, Object> param) throws Exception;
+
+	/* RCA 근본원인 분석 보고서 */
+	List<Map<String, Object>> selectRcaList(String hospCd, String inYear) throws Exception;
+	Map<String, Object> selectRca(String hospCd, long rcaSeq) throws Exception;
+	long saveRca(Map<String, Object> param) throws Exception;
+	int deleteRca(Map<String, Object> param) throws Exception;
+
+	/* 사고 유형별 보고서 */
+	Map<String, Object> selectSafeRptBase(String hospCd, String inYear, String rptGb) throws Exception;
+	Map<String, Object> selectSafeRptOne(String hospCd, long srpSeq) throws Exception;
+	long saveSafeRpt(Map<String, Object> param, List<Map<String, Object>> chks) throws Exception;
+	int deleteSafeRpt(Map<String, Object> param) throws Exception;
+
+	/* QI 중간·최종보고서 */
+	List<Map<String, Object>> selectQiRptList(String hospCd, String inYear, String rptGb) throws Exception;
+	Map<String, Object> selectQiRptWithItems(String hospCd, long qirSeq) throws Exception;
+	long saveQiRpt(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	int deleteQiRpt(Map<String, Object> param) throws Exception;
+
+	/* QI 주제선정 기준표 + 우선순위 집계표 */
+	List<Map<String, Object>> selectQiTopicList(String hospCd, String inYear) throws Exception;
+	Map<String, Object> selectQiTopicWithItems(String hospCd, long qitSeq) throws Exception;
+	long saveQiTopic(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	int deleteQiTopic(Map<String, Object> param) throws Exception;
+	Map<String, Object> selectQiTopicRollup(String hospCd, String inYear) throws Exception;
+
+	/* QI 활동 자원지원 내역 */
+	Map<String, Object> selectQiFundWithItems(String hospCd, String inYear) throws Exception;
+	long saveQiFund(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+
 	/* 불만고충 — 처리대장 · 건별 처리결과 · 지표분석보고서 */
 	List<Map<String, Object>> selectCmplList(String hospCd, String inYear) throws Exception;
 	long saveCmplRows(String hospCd, String inYear, List<Map<String, Object>> rows, String regUser) throws Exception;

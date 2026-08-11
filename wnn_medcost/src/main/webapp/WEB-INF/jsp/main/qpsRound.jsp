@@ -46,7 +46,8 @@
   <span class="qr-hosp" id="rdHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qr-spacer"></div>
   <%-- 서식구분(2026-08-10 감염관리 포함) — 같은 달이라도 질향상용·감염관리용이 각각 1부 --%>
-  <select id="rdGb" style="width:auto;" onchange="rdLoad();">
+  <%-- 초기값은 서버가 정한다 — 감염 메뉴(?gb=I)로 들어오면 감염라운딩으로 열린다 --%>
+  <select id="rdGb" style="width:auto;" onchange="rdLoad();" data-init="<c:out value='${formGb}' default='Q'/>">
     <option value="Q">질향상·환자안전</option>
     <option value="I">감염관리</option>
   </select>
@@ -250,7 +251,11 @@
     setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
   };
 
-  $(function(){ rdLoad(); });
+  $(function(){
+    var g = document.getElementById('rdGb');
+    if (g) { var init = g.getAttribute('data-init'); if (init) g.value = init; }
+    rdLoad();
+  });
 })();
 </script>
 </div><%-- /#qpsRound --%>

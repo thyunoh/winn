@@ -197,6 +197,80 @@ public interface QpsMapper {
 	int deleteSrvImprItems(@Param("imprSeq") long imprSeq);
 	int insertSrvImprItems(Map<String, Object> param);
 
+	/* QI 활동 계획서 — 서식 하나 + 주제(지표)별 여러 장 */
+	List<Map<String, Object>> selectQiPlanList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	Map<String, Object> selectQiPlan(@Param("hospCd") String hospCd, @Param("qipSeq") long qipSeq);
+	int insertQiPlan(Map<String, Object> param);
+	int updateQiPlan(Map<String, Object> param);
+	int deleteQiPlan(Map<String, Object> param);
+	List<Map<String, Object>> selectQiPlanItems(@Param("qipSeq") long qipSeq);
+	int deleteQiPlanItems(@Param("qipSeq") long qipSeq);
+	int insertQiPlanItems(Map<String, Object> param);
+
+	/* FMEA 계획서·보고서 (한 표 + DOC_GB) */
+	List<Map<String, Object>> selectFmeaScale();
+	List<Map<String, Object>> selectFmeaList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
+	                                         @Param("docGb") String docGb);
+	Map<String, Object> selectFmea(@Param("hospCd") String hospCd, @Param("fmeSeq") long fmeSeq);
+	int insertFmea(Map<String, Object> param);
+	int updateFmea(Map<String, Object> param);
+	int deleteFmea(Map<String, Object> param);
+	List<Map<String, Object>> selectFmeaItems(@Param("fmeSeq") long fmeSeq);
+	int deleteFmeaItems(@Param("fmeSeq") long fmeSeq);
+	int insertFmeaItems(Map<String, Object> param);
+	List<Map<String, Object>> selectFmeaSheet(@Param("fmeSeq") long fmeSeq);
+	int deleteFmeaSheet(@Param("fmeSeq") long fmeSeq);
+	int insertFmeaSheet(Map<String, Object> param);
+
+	/* RCA 근본원인 분석 보고서 — 항목 고정, 표 하나 */
+	List<Map<String, Object>> selectRcaList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	Map<String, Object> selectRca(@Param("hospCd") String hospCd, @Param("rcaSeq") long rcaSeq);
+	int insertRca(Map<String, Object> param);
+	int updateRca(Map<String, Object> param);
+	int deleteRca(Map<String, Object> param);
+
+	/* 사고 유형별 보고서 — 체크 묶음은 항목표(DEF)에서 온다 */
+	List<Map<String, Object>> selectSafeRptDef(@Param("rptGb") String rptGb);
+	List<Map<String, Object>> selectSafeRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
+	                                            @Param("rptGb") String rptGb);
+	Map<String, Object> selectSafeRpt(@Param("hospCd") String hospCd, @Param("srpSeq") long srpSeq);
+	int insertSafeRpt(Map<String, Object> param);
+	int updateSafeRpt(Map<String, Object> param);
+	int deleteSafeRpt(Map<String, Object> param);
+	List<Map<String, Object>> selectSafeRptChk(@Param("srpSeq") long srpSeq);
+	int deleteSafeRptChk(@Param("srpSeq") long srpSeq);
+	int insertSafeRptChk(Map<String, Object> param);
+
+	/* QI 중간·최종보고서 (한 표 + RPT_GB) */
+	List<Map<String, Object>> selectQiRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
+	                                          @Param("rptGb") String rptGb);
+	Map<String, Object> selectQiRpt(@Param("hospCd") String hospCd, @Param("qirSeq") long qirSeq);
+	int insertQiRpt(Map<String, Object> param);
+	int updateQiRpt(Map<String, Object> param);
+	int deleteQiRpt(Map<String, Object> param);
+	List<Map<String, Object>> selectQiRptItems(@Param("qirSeq") long qirSeq);
+	int deleteQiRptItems(@Param("qirSeq") long qirSeq);
+	int insertQiRptItems(Map<String, Object> param);
+
+	/* QI 주제선정 기준표(평가위원 1명=1장) + 우선순위 집계(저장 안 함, 계산) */
+	List<Map<String, Object>> selectQiTopicList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	Map<String, Object> selectQiTopic(@Param("hospCd") String hospCd, @Param("qitSeq") long qitSeq);
+	int insertQiTopic(Map<String, Object> param);
+	int updateQiTopic(Map<String, Object> param);
+	int deleteQiTopic(Map<String, Object> param);
+	List<Map<String, Object>> selectQiTopicItems(@Param("qitSeq") long qitSeq);
+	int deleteQiTopicItems(@Param("qitSeq") long qitSeq);
+	int insertQiTopicItems(Map<String, Object> param);
+	List<Map<String, Object>> selectQiTopicRollup(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	List<Map<String, Object>> selectQiTopicCross(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+
+	/* QI 활동 자원지원 내역 (연 1부) */
+	Map<String, Object> selectQiFund(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	int upsertQiFund(Map<String, Object> param);
+	List<Map<String, Object>> selectQiFundItems(@Param("qifSeq") long qifSeq);
+	int deleteQiFundItems(@Param("qifSeq") long qifSeq);
+	int insertQiFundItems(Map<String, Object> param);
+
 	/* 불만고충 — 처리대장(급소) · 건별 처리결과 · 지표분석보고서 */
 	List<Map<String, Object>> selectCmplList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
 	int insertCmpl(Map<String, Object> param);

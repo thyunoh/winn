@@ -144,7 +144,7 @@
 	<select id="selectMinutes" resultType="java.util.HashMap">
 		SELECT MIN_SEQ AS minseq,
 		       DATE_FORMAT(STR_TO_DATE(MEET_DT,'%Y%m%d'),'%Y-%m-%d') AS meetdt,
-		       TITLE AS title, MEET_GB AS meetgb, PLACE AS place, PERSONNEL AS personnel,
+		       TITLE AS title, MEET_GB AS meetgb, PLACE AS place, CLERK_NM AS clerknm, PERSONNEL AS personnel,
 		       ATTENDEES AS attendees, MEMBERS AS members,
 		       AGENDA AS agenda, CONTENT AS content, DECISION AS decision, NEXT_TXT AS nexttxt,
 		       ATTACH_TXT AS attachtxt, SPECIAL_TXT AS specialtxt
@@ -154,10 +154,10 @@
 
 	<insert id="insertMinutes" parameterType="map" useGeneratedKeys="true" keyProperty="minSeq">
 		INSERT INTO TBL_QPS_MINUTES
-		 (HOSP_CD, FORM_GB, MEET_DT, TITLE, MEET_GB, PLACE, PERSONNEL, ATTENDEES, MEMBERS,
+		 (HOSP_CD, FORM_GB, MEET_DT, TITLE, MEET_GB, PLACE, CLERK_NM, PERSONNEL, ATTENDEES, MEMBERS,
 		  AGENDA, CONTENT, DECISION, NEXT_TXT, ATTACH_TXT, SPECIAL_TXT, USE_YN, REG_USER)
 		VALUES
-		 (#{hospCd}, IFNULL(#{formGb},'Q'), REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{personnel},
+		 (#{hospCd}, IFNULL(#{formGb},'Q'), REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{clerkNm}, #{personnel},
 		  #{attendees}, #{members}, #{agenda}, #{content}, #{decision}, #{nextTxt},
 		  #{attachTxt}, #{specialTxt}, 'Y', #{regUser})
 	</insert>
@@ -165,7 +165,7 @@
 	<update id="updateMinutes" parameterType="map">
 		UPDATE TBL_QPS_MINUTES
 		   SET MEET_DT = REPLACE(#{meetDt},'-',''), TITLE = #{title}, MEET_GB = #{meetGb},
-		       PLACE = #{place}, PERSONNEL = #{personnel},
+		       PLACE = #{place}, CLERK_NM = #{clerkNm}, PERSONNEL = #{personnel},
 		       ATTENDEES = #{attendees}, MEMBERS = #{members}, AGENDA = #{agenda}, CONTENT = #{content},
 		       DECISION = #{decision}, NEXT_TXT = #{nextTxt},
 		       ATTACH_TXT = #{attachTxt}, SPECIAL_TXT = #{specialTxt}, UPD_USER = #{regUser}
@@ -309,7 +309,12 @@
 		            AND SUBSTRING(o.OBS_DT,1,4) = #{inYear} ) AS moncnt,
 		       ( SELECT COUNT(*) FROM TBL_QPS_MANUAL u
 		          WHERE u.HOSP_CD = #{hospCd} AND u.USE_YN='Y'
-		            AND u.INDI_CD = m.INDI_CD AND u.IN_YEAR = #{inYear} ) AS mancnt
+		            AND u.INDI_CD = m.INDI_CD AND u.IN_YEAR = #{inYear} ) AS mancnt,
+		       <!-- 대장형(CMPL) 건수 — 불만고충 처리대장. 지표와 무관하게 세지만 현재 대장형은 CLAIM 하나뿐이라
+		            화면이 NUMER_SRC='CMPL' 인 행에서만 이 값을 본다(2026-08-11). -->
+		       ( SELECT COUNT(*) FROM TBL_QPS_CMPL c
+		          WHERE c.HOSP_CD = #{hospCd} AND c.USE_YN='Y'
+		            AND c.IN_YEAR = #{inYear} ) AS cmplcnt
 		  FROM TBL_QPS_INDI_MST m
 		 WHERE m.USE_YN = 'Y'
 		   <!-- ★지표당 한 줄만 — 병원 정의서가 있으면 그 행, 없으면 공통('*') 행.
@@ -1129,6 +1134,510 @@
 		INSERT INTO TBL_QPS_SRVIMPR_ITEM (IMPR_SEQ, SORT, TYPE_NM, PROBLEM, ACTION_TXT) VALUES
 		<foreach item="it" collection="items" separator=",">
 			(#{imprSeq}, #{it.sort}, #{it.typenm}, #{it.problem}, #{it.actiontxt})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ QI 활동 계획서 ═══
+	     서식 하나 + 주제(지표)별 여러 장. 핵심지표 블록은 지표정의서에서 채우되
+	     ★이 문서의 스냅샷으로 저장한다 — 결재가 찍히는 문서라 나중에 정의서를 고쳐도
+	       그때 결재한 내용이 남아야 한다. -->
+	<select id="selectQiPlanList" resultType="java.util.HashMap">
+		SELECT QIP_SEQ AS qipseq, INDI_CD AS indicd, TOPIC_NM AS topicnm, INDI_NM AS indinm,
+		       DEPT_NM AS deptnm,
+		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_QIPLAN
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		 ORDER BY QIP_SEQ
+	</select>
+
+	<select id="selectQiPlan" resultType="java.util.HashMap">
+		SELECT QIP_SEQ AS qipseq, IN_YEAR AS inyear, INDI_CD AS indicd, TOPIC_NM AS topicnm,
+		       DEPT_NM AS deptnm,
+		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
+		       BACKGROUND AS background, INDI_NM AS indinm, NUMER_DESC AS numerdesc,
+		       DENOM_DESC AS denomdesc, INCLUDE_TXT AS includetxt, EXCLUDE_TXT AS excludetxt,
+		       TARGET_VAL AS targetval, MULTIPLIER AS multiplier, UNIT AS unit,
+		       SRC_TXT AS srctxt, STRATEGY_TXT AS strategytxt, EXPECT_TXT AS expecttxt
+		  FROM TBL_QPS_QIPLAN
+		 WHERE QIP_SEQ = #{qipSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertQiPlan" parameterType="map" useGeneratedKeys="true" keyProperty="qipSeq">
+		INSERT INTO TBL_QPS_QIPLAN
+		 (HOSP_CD, IN_YEAR, INDI_CD, TOPIC_NM, DEPT_NM, SUBMIT_DT, BACKGROUND,
+		  INDI_NM, NUMER_DESC, DENOM_DESC, INCLUDE_TXT, EXCLUDE_TXT, TARGET_VAL,
+		  MULTIPLIER, UNIT, SRC_TXT, STRATEGY_TXT, EXPECT_TXT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{indiCd}, #{topicNm}, #{deptNm}, REPLACE(#{submitDt},'-',''), #{background},
+		  #{indiNm}, #{numerDesc}, #{denomDesc}, #{includeTxt}, #{excludeTxt}, #{targetVal},
+		  #{multiplier}, #{unit}, #{srcTxt}, #{strategyTxt}, #{expectTxt}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateQiPlan" parameterType="map">
+		UPDATE TBL_QPS_QIPLAN SET
+		  IN_YEAR = #{inYear}, INDI_CD = #{indiCd}, TOPIC_NM = #{topicNm}, DEPT_NM = #{deptNm},
+		  SUBMIT_DT = REPLACE(#{submitDt},'-',''), BACKGROUND = #{background},
+		  INDI_NM = #{indiNm}, NUMER_DESC = #{numerDesc}, DENOM_DESC = #{denomDesc},
+		  INCLUDE_TXT = #{includeTxt}, EXCLUDE_TXT = #{excludeTxt}, TARGET_VAL = #{targetVal},
+		  MULTIPLIER = #{multiplier}, UNIT = #{unit}, SRC_TXT = #{srcTxt},
+		  STRATEGY_TXT = #{strategyTxt}, EXPECT_TXT = #{expectTxt}, UPD_USER = #{regUser}
+		 WHERE QIP_SEQ = #{qipSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteQiPlan" parameterType="map">
+		UPDATE TBL_QPS_QIPLAN SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE QIP_SEQ = #{qipSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectQiPlanItems" resultType="java.util.HashMap">
+		SELECT SECT_CD AS sect, SORT AS sort, GRP AS grp, C1 AS c1,
+		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04, M05 AS m05, M06 AS m06,
+		       M07 AS m07, M08 AS m08, M09 AS m09, M10 AS m10, M11 AS m11, M12 AS m12
+		  FROM TBL_QPS_QIPLAN_ITEM
+		 WHERE QIP_SEQ = #{qipSeq} ORDER BY SECT_CD, SORT
+	</select>
+
+	<delete id="deleteQiPlanItems">
+		DELETE FROM TBL_QPS_QIPLAN_ITEM WHERE QIP_SEQ = #{qipSeq}
+	</delete>
+
+	<insert id="insertQiPlanItems" parameterType="map">
+		INSERT INTO TBL_QPS_QIPLAN_ITEM
+		 (QIP_SEQ, SECT_CD, SORT, GRP, C1, M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12)
+		VALUES
+		<foreach item="it" collection="items" separator=",">
+		 (#{qipSeq}, #{it.sect}, #{it.sort}, #{it.grp}, #{it.c1},
+		  #{it.m01},#{it.m02},#{it.m03},#{it.m04},#{it.m05},#{it.m06},
+		  #{it.m07},#{it.m08},#{it.m09},#{it.m10},#{it.m11},#{it.m12})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ FMEA 계획서·보고서 (한 표 + DOC_GB) ═══
+	     ★보고서가 계획서를 포함한다. 보고서면 뒤 섹션이 더 열릴 뿐이다. -->
+	<select id="selectFmeaScale" resultType="java.util.HashMap">
+		SELECT SCALE_GB AS scalegb, SCORE AS score, DESC_TXT AS desctxt
+		  FROM TBL_QPS_FMEA_SCALE WHERE USE_YN='Y' ORDER BY SCALE_GB, SORT, SCORE
+	</select>
+
+	<select id="selectFmeaList" resultType="java.util.HashMap">
+		SELECT FME_SEQ AS fmeseq, DOC_GB AS docgb, INDI_CD AS indicd, TOPIC_NM AS topicnm,
+		       DATE_FORMAT(STR_TO_DATE(WRITE_DT,'%Y%m%d'),'%Y-%m-%d') AS writedt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_FMEA
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND DOC_GB = #{docGb} AND USE_YN = 'Y'
+		 ORDER BY FME_SEQ
+	</select>
+
+	<select id="selectFmea" resultType="java.util.HashMap">
+		SELECT FME_SEQ AS fmeseq, IN_YEAR AS inyear, DOC_GB AS docgb, INDI_CD AS indicd,
+		       TOPIC_NM AS topicnm,
+		       DATE_FORMAT(STR_TO_DATE(WRITE_DT,'%Y%m%d'),'%Y-%m-%d') AS writedt,
+		       WRITER_NM AS writernm, PURPOSE AS purpose, PRD_HEAD AS prdhead,
+		       STEP_TXT AS steptxt, RCA_DIFF AS rcadiff, HIRISK_TXT AS hirisktxt, GOAL_TXT AS goaltxt,
+		       PROCMAP_TXT AS procmaptxt, ROOT_STEP AS rootstep, ROOT_HR AS roothr,
+		       ROOT_ENV AS rootenv, ROOT_SYS AS rootsys, FISHBONE_TXT AS fishbonetxt,
+		       IMPR_TXT AS imprtxt, VERIFY_TXT AS verifytxt, CONCL_TXT AS concltxt,
+		       NEXT_TXT AS nexttxt, SHARE_TXT AS sharetxt
+		  FROM TBL_QPS_FMEA
+		 WHERE FME_SEQ = #{fmeSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertFmea" parameterType="map" useGeneratedKeys="true" keyProperty="fmeSeq">
+		INSERT INTO TBL_QPS_FMEA
+		 (HOSP_CD, IN_YEAR, DOC_GB, INDI_CD, TOPIC_NM, WRITE_DT, WRITER_NM, PURPOSE, PRD_HEAD,
+		  STEP_TXT, RCA_DIFF, HIRISK_TXT, GOAL_TXT, PROCMAP_TXT, ROOT_STEP, ROOT_HR, ROOT_ENV,
+		  ROOT_SYS, FISHBONE_TXT, IMPR_TXT, VERIFY_TXT, CONCL_TXT, NEXT_TXT, SHARE_TXT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{docGb}, #{indiCd}, #{topicNm}, REPLACE(#{writeDt},'-',''), #{writerNm},
+		  #{purpose}, #{prdHead}, #{stepTxt}, #{rcaDiff}, #{hiriskTxt}, #{goalTxt}, #{procmapTxt},
+		  #{rootStep}, #{rootHr}, #{rootEnv}, #{rootSys}, #{fishboneTxt}, #{imprTxt}, #{verifyTxt},
+		  #{conclTxt}, #{nextTxt}, #{shareTxt}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateFmea" parameterType="map">
+		UPDATE TBL_QPS_FMEA SET
+		  IN_YEAR=#{inYear}, DOC_GB=#{docGb}, INDI_CD=#{indiCd}, TOPIC_NM=#{topicNm},
+		  WRITE_DT=REPLACE(#{writeDt},'-',''), WRITER_NM=#{writerNm}, PURPOSE=#{purpose}, PRD_HEAD=#{prdHead},
+		  STEP_TXT=#{stepTxt}, RCA_DIFF=#{rcaDiff}, HIRISK_TXT=#{hiriskTxt}, GOAL_TXT=#{goalTxt},
+		  PROCMAP_TXT=#{procmapTxt}, ROOT_STEP=#{rootStep}, ROOT_HR=#{rootHr}, ROOT_ENV=#{rootEnv},
+		  ROOT_SYS=#{rootSys}, FISHBONE_TXT=#{fishboneTxt}, IMPR_TXT=#{imprTxt}, VERIFY_TXT=#{verifyTxt},
+		  CONCL_TXT=#{conclTxt}, NEXT_TXT=#{nextTxt}, SHARE_TXT=#{shareTxt}, UPD_USER=#{regUser}
+		 WHERE FME_SEQ = #{fmeSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteFmea" parameterType="map">
+		UPDATE TBL_QPS_FMEA SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE FME_SEQ = #{fmeSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectFmeaItems" resultType="java.util.HashMap">
+		SELECT SECT_CD AS sect, SORT AS sort, GRP AS grp, C1 AS c1, C2 AS c2,
+		       N1 AS n1, N2 AS n2, N3 AS n3, N4 AS n4,
+		       M01 AS m01, M02 AS m02, M03 AS m03, M04 AS m04,
+		       M05 AS m05, M06 AS m06, M07 AS m07, M08 AS m08
+		  FROM TBL_QPS_FMEA_ITEM WHERE FME_SEQ = #{fmeSeq} ORDER BY SECT_CD, SORT
+	</select>
+
+	<delete id="deleteFmeaItems">
+		DELETE FROM TBL_QPS_FMEA_ITEM WHERE FME_SEQ = #{fmeSeq}
+	</delete>
+
+	<insert id="insertFmeaItems" parameterType="map">
+		INSERT INTO TBL_QPS_FMEA_ITEM
+		 (FME_SEQ, SECT_CD, SORT, GRP, C1, C2, N1,N2,N3,N4, M01,M02,M03,M04,M05,M06,M07,M08) VALUES
+		<foreach item="it" collection="items" separator=",">
+		 (#{fmeSeq}, #{it.sect}, #{it.sort}, #{it.grp}, #{it.c1}, #{it.c2},
+		  #{it.n1},#{it.n2},#{it.n3},#{it.n4},
+		  #{it.m01},#{it.m02},#{it.m03},#{it.m04},#{it.m05},#{it.m06},#{it.m07},#{it.m08})
+		</foreach>
+	</insert>
+
+	<select id="selectFmeaSheet" resultType="java.util.HashMap">
+		SELECT SORT AS sort, STEP_NM AS stepnm, MODE_NM AS modenm, CAUSE_NM AS causenm,
+		       EFFECT_NM AS effectnm,
+		       A_OCCUR AS aoccur, A_SEVER AS asever, A_DETECT AS adetect,
+		       A_RPN AS arpn, A_CI AS aci, A_RANK AS arank,
+		       B_OCCUR AS boccur, B_SEVER AS bsever, B_DETECT AS bdetect, B_RPN AS brpn, B_CI AS bci
+		  FROM TBL_QPS_FMEA_SHEET WHERE FME_SEQ = #{fmeSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteFmeaSheet">
+		DELETE FROM TBL_QPS_FMEA_SHEET WHERE FME_SEQ = #{fmeSeq}
+	</delete>
+
+	<insert id="insertFmeaSheet" parameterType="map">
+		INSERT INTO TBL_QPS_FMEA_SHEET
+		 (FME_SEQ, SORT, STEP_NM, MODE_NM, CAUSE_NM, EFFECT_NM,
+		  A_OCCUR, A_SEVER, A_DETECT, A_RPN, A_CI, A_RANK,
+		  B_OCCUR, B_SEVER, B_DETECT, B_RPN, B_CI) VALUES
+		<foreach item="it" collection="items" separator=",">
+		 (#{fmeSeq}, #{it.sort}, #{it.stepnm}, #{it.modenm}, #{it.causenm}, #{it.effectnm},
+		  #{it.aoccur}, #{it.asever}, #{it.adetect}, #{it.arpn}, #{it.aci}, #{it.arank},
+		  #{it.boccur}, #{it.bsever}, #{it.bdetect}, #{it.brpn}, #{it.bci})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ RCA 근본원인 분석 보고서 ═══
+	     1면짜리 표 하나. 항목이 고정이라 항목표(DEF)가 없다 — 사고 보고서와 다른 점. -->
+	<select id="selectRcaList" resultType="java.util.HashMap">
+		SELECT RCA_SEQ AS rcaseq, PAT_NM AS patnm, OCCUR_PL AS occurpl,
+		       DATE_FORMAT(STR_TO_DATE(OCCUR_DT,'%Y%m%d'),'%Y-%m-%d') AS occurdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_RCA
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		 ORDER BY IFNULL(OCCUR_DT,'') DESC, RCA_SEQ DESC
+	</select>
+
+	<select id="selectRca" resultType="java.util.HashMap">
+		SELECT RCA_SEQ AS rcaseq, IN_YEAR AS inyear, INCID_SEQ AS incidseq,
+		       ROOM_NM AS roomnm, PAT_NM AS patnm, PAT_NO AS patno, SEX_AGE AS sexage,
+		       DATE_FORMAT(STR_TO_DATE(OCCUR_DT,'%Y%m%d'),'%Y-%m-%d') AS occurdt, OCCUR_TM AS occurtm,
+		       OCCUR_PL AS occurpl, PROBLEM AS problem, PROCESS_TXT AS processtxt,
+		       HR_PERSON AS hrperson, HR_EDU AS hredu, SY_PROC AS syproc, SY_EQUIP AS syequip,
+		       SY_ENV AS syenv, SY_COMM AS sycomm, SY_ETC AS syetc,
+		       ACT_HR AS acthr, ACT_SY AS actsy, ACT_ETC AS actetc, RESULT_TXT AS resulttxt,
+		       DATE_FORMAT(STR_TO_DATE(WRITE_DT,'%Y%m%d'),'%Y-%m-%d') AS writedt, WRITER_NM AS writernm
+		  FROM TBL_QPS_RCA
+		 WHERE RCA_SEQ = #{rcaSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertRca" parameterType="map" useGeneratedKeys="true" keyProperty="rcaSeq">
+		INSERT INTO TBL_QPS_RCA
+		 (HOSP_CD, IN_YEAR, INCID_SEQ, ROOM_NM, PAT_NM, PAT_NO, SEX_AGE,
+		  OCCUR_DT, OCCUR_TM, OCCUR_PL, PROBLEM, PROCESS_TXT,
+		  HR_PERSON, HR_EDU, SY_PROC, SY_EQUIP, SY_ENV, SY_COMM, SY_ETC,
+		  ACT_HR, ACT_SY, ACT_ETC, RESULT_TXT, WRITE_DT, WRITER_NM, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{incidSeq}, #{roomNm}, #{patNm}, #{patNo}, #{sexAge},
+		  REPLACE(#{occurDt},'-',''), #{occurTm}, #{occurPl}, #{problem}, #{processTxt},
+		  #{hrPerson}, #{hrEdu}, #{syProc}, #{syEquip}, #{syEnv}, #{syComm}, #{syEtc},
+		  #{actHr}, #{actSy}, #{actEtc}, #{resultTxt}, REPLACE(#{writeDt},'-',''), #{writerNm}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateRca" parameterType="map">
+		UPDATE TBL_QPS_RCA SET
+		  IN_YEAR=#{inYear}, INCID_SEQ=#{incidSeq}, ROOM_NM=#{roomNm}, PAT_NM=#{patNm},
+		  PAT_NO=#{patNo}, SEX_AGE=#{sexAge}, OCCUR_DT=REPLACE(#{occurDt},'-',''), OCCUR_TM=#{occurTm},
+		  OCCUR_PL=#{occurPl}, PROBLEM=#{problem}, PROCESS_TXT=#{processTxt},
+		  HR_PERSON=#{hrPerson}, HR_EDU=#{hrEdu}, SY_PROC=#{syProc}, SY_EQUIP=#{syEquip},
+		  SY_ENV=#{syEnv}, SY_COMM=#{syComm}, SY_ETC=#{syEtc},
+		  ACT_HR=#{actHr}, ACT_SY=#{actSy}, ACT_ETC=#{actEtc}, RESULT_TXT=#{resultTxt},
+		  WRITE_DT=REPLACE(#{writeDt},'-',''), WRITER_NM=#{writerNm}, UPD_USER=#{regUser}
+		 WHERE RCA_SEQ = #{rcaSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteRca" parameterType="map">
+		UPDATE TBL_QPS_RCA SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE RCA_SEQ = #{rcaSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+
+	<!-- ═══ 사고 유형별 보고서 (한 서식 + 유형) ═══
+	     ★체크박스 묶음은 코드가 아니라 **항목표(DEF)** 다. 서식이 늘어도 행만 넣으면 된다.
+	       화면은 「이 서식이 쓰는 묶음(USE)」 을 순회해 그린다 — 유형별 하드코딩 없음. -->
+	<select id="selectSafeRptDef" resultType="java.util.HashMap">
+		<!-- 공유 묶음('*')과 그 유형 전용 묶음을 함께 준다. USE 에 등록된 것만. -->
+		SELECT u.SORT AS grpsort, d.GRP_CD AS grpcd, d.GRP_NM AS grpnm,
+		       d.ITEM_NM AS itemnm, d.MULTI_YN AS multiyn, d.ETC_YN AS etcyn, d.SORT AS sort
+		  FROM TBL_QPS_SAFERPT_USE u
+		  JOIN TBL_QPS_SAFERPT_DEF d
+		    ON d.GRP_CD = u.GRP_CD AND d.USE_YN = 'Y'
+		   AND d.RPT_GB IN (u.RPT_GB, '*')
+		 WHERE u.RPT_GB = #{rptGb} AND u.USE_YN = 'Y'
+		 ORDER BY u.SORT, d.GRP_CD, d.SORT, d.ITEM_NM
+	</select>
+
+	<select id="selectSafeRptList" resultType="java.util.HashMap">
+		SELECT SRP_SEQ AS srpseq, RPT_GB AS rptgb, TARGET_NM AS targetnm, DEPT_NM AS deptnm,
+		       DATE_FORMAT(STR_TO_DATE(OCCUR_DT,'%Y%m%d'),'%Y-%m-%d') AS occurdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_SAFERPT
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND RPT_GB = #{rptGb} AND USE_YN = 'Y'
+		 ORDER BY IFNULL(OCCUR_DT,'') DESC, SRP_SEQ DESC
+	</select>
+
+	<select id="selectSafeRpt" resultType="java.util.HashMap">
+		SELECT SRP_SEQ AS srpseq, IN_YEAR AS inyear, RPT_GB AS rptgb, INCID_SEQ AS incidseq,
+		       DATE_FORMAT(STR_TO_DATE(OCCUR_DT,'%Y%m%d'),'%Y-%m-%d') AS occurdt, OCCUR_TM AS occurtm,
+		       DATE_FORMAT(STR_TO_DATE(RPT_DT,'%Y%m%d'),'%Y-%m-%d') AS rptdt,
+		       PLACE AS place, TARGET_NM AS targetnm, TARGET_NO AS targetno, DEPT_NM AS deptnm,
+		       POSITION_NM AS positionnm,
+		       DATE_FORMAT(STR_TO_DATE(ADMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS admitdt, DIAG_NM AS diagnm,
+		       W_WHEN AS wwhen, W_WHO AS wwho, W_WHAT AS wwhat, W_HOW AS whow, W_WHY AS wwhy, W_WHERE AS wwhere,
+		       SUMMARY AS summary, VITAL_TXT AS vitaltxt, INJURY_TXT AS injurytxt, TREAT_TXT AS treattxt,
+		       CAUSE_TXT AS causetxt, PLAN_TXT AS plantxt, NOTE AS note
+		  FROM TBL_QPS_SAFERPT
+		 WHERE SRP_SEQ = #{srpSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertSafeRpt" parameterType="map" useGeneratedKeys="true" keyProperty="srpSeq">
+		INSERT INTO TBL_QPS_SAFERPT
+		 (HOSP_CD, IN_YEAR, RPT_GB, INCID_SEQ, OCCUR_DT, OCCUR_TM, RPT_DT, PLACE,
+		  TARGET_NM, TARGET_NO, DEPT_NM, POSITION_NM, ADMIT_DT, DIAG_NM,
+		  W_WHEN, W_WHO, W_WHAT, W_HOW, W_WHY, W_WHERE,
+		  SUMMARY, VITAL_TXT, INJURY_TXT, TREAT_TXT, CAUSE_TXT, PLAN_TXT, NOTE, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{rptGb}, #{incidSeq}, REPLACE(#{occurDt},'-',''), #{occurTm},
+		  REPLACE(#{rptDt},'-',''), #{place},
+		  #{targetNm}, #{targetNo}, #{deptNm}, #{positionNm}, REPLACE(#{admitDt},'-',''), #{diagNm},
+		  #{wWhen}, #{wWho}, #{wWhat}, #{wHow}, #{wWhy}, #{wWhere},
+		  #{summary}, #{vitalTxt}, #{injuryTxt}, #{treatTxt}, #{causeTxt}, #{planTxt}, #{note}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateSafeRpt" parameterType="map">
+		UPDATE TBL_QPS_SAFERPT SET
+		  IN_YEAR=#{inYear}, RPT_GB=#{rptGb}, INCID_SEQ=#{incidSeq},
+		  OCCUR_DT=REPLACE(#{occurDt},'-',''), OCCUR_TM=#{occurTm}, RPT_DT=REPLACE(#{rptDt},'-',''),
+		  PLACE=#{place}, TARGET_NM=#{targetNm}, TARGET_NO=#{targetNo}, DEPT_NM=#{deptNm},
+		  POSITION_NM=#{positionNm}, ADMIT_DT=REPLACE(#{admitDt},'-',''), DIAG_NM=#{diagNm},
+		  W_WHEN=#{wWhen}, W_WHO=#{wWho}, W_WHAT=#{wWhat}, W_HOW=#{wHow}, W_WHY=#{wWhy}, W_WHERE=#{wWhere},
+		  SUMMARY=#{summary}, VITAL_TXT=#{vitalTxt}, INJURY_TXT=#{injuryTxt}, TREAT_TXT=#{treatTxt},
+		  CAUSE_TXT=#{causeTxt}, PLAN_TXT=#{planTxt}, NOTE=#{note}, UPD_USER=#{regUser}
+		 WHERE SRP_SEQ = #{srpSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteSafeRpt" parameterType="map">
+		UPDATE TBL_QPS_SAFERPT SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE SRP_SEQ = #{srpSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectSafeRptChk" resultType="java.util.HashMap">
+		SELECT GRP_CD AS grpcd, ITEM_NM AS itemnm, ETC_TXT AS etctxt
+		  FROM TBL_QPS_SAFERPT_CHK WHERE SRP_SEQ = #{srpSeq}
+	</select>
+
+	<delete id="deleteSafeRptChk">
+		DELETE FROM TBL_QPS_SAFERPT_CHK WHERE SRP_SEQ = #{srpSeq}
+	</delete>
+
+	<insert id="insertSafeRptChk" parameterType="map">
+		INSERT INTO TBL_QPS_SAFERPT_CHK (SRP_SEQ, GRP_CD, ITEM_NM, ETC_TXT) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{srpSeq}, #{it.grpcd}, #{it.itemnm}, #{it.etctxt})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ QI 중간·최종보고서 ═══
+	     ★최종이 중간의 상위집합이라 한 표에 담고 RPT_GB 로 가른다(M=중간 F=최종).
+	       활동효과·결론은 최종에서만 쓴다 — 칸이 비는 것이 표를 늘리는 것보다 낫다. -->
+	<select id="selectQiRptList" resultType="java.util.HashMap">
+		SELECT QIR_SEQ AS qirseq, RPT_GB AS rptgb, INDI_CD AS indicd, TOPIC_NM AS topicnm,
+		       DEPT_NM AS deptnm,
+		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_QIRPT
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND RPT_GB = #{rptGb} AND USE_YN = 'Y'
+		 ORDER BY QIR_SEQ
+	</select>
+
+	<select id="selectQiRpt" resultType="java.util.HashMap">
+		SELECT QIR_SEQ AS qirseq, IN_YEAR AS inyear, RPT_GB AS rptgb, INDI_CD AS indicd,
+		       TOPIC_NM AS topicnm, DEPT_NM AS deptnm,
+		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
+		       BACKGROUND AS background, SURVEY_TARGET AS surveytarget,
+		       SURVEY_FR_MM AS surveyfrmm, SURVEY_TO_MM AS surveytomm, SURVEY_METHOD AS surveymethod,
+		       ANALYSIS AS analysis, GOAL_TXT AS goaltxt, ACT_TXT AS acttxt, PLAN_TXT AS plantxt,
+		       NOTE AS note, EFFECT_TXT AS effecttxt, CONCL_TXT AS concltxt
+		  FROM TBL_QPS_QIRPT
+		 WHERE QIR_SEQ = #{qirSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertQiRpt" parameterType="map" useGeneratedKeys="true" keyProperty="qirSeq">
+		INSERT INTO TBL_QPS_QIRPT
+		 (HOSP_CD, IN_YEAR, RPT_GB, INDI_CD, TOPIC_NM, DEPT_NM, SUBMIT_DT, BACKGROUND,
+		  SURVEY_TARGET, SURVEY_FR_MM, SURVEY_TO_MM, SURVEY_METHOD, ANALYSIS, GOAL_TXT,
+		  ACT_TXT, PLAN_TXT, NOTE, EFFECT_TXT, CONCL_TXT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{rptGb}, #{indiCd}, #{topicNm}, #{deptNm}, REPLACE(#{submitDt},'-',''), #{background},
+		  #{surveyTarget}, #{surveyFrMm}, #{surveyToMm}, #{surveyMethod}, #{analysis}, #{goalTxt},
+		  #{actTxt}, #{planTxt}, #{note}, #{effectTxt}, #{conclTxt}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateQiRpt" parameterType="map">
+		UPDATE TBL_QPS_QIRPT SET
+		  IN_YEAR = #{inYear}, RPT_GB = #{rptGb}, INDI_CD = #{indiCd}, TOPIC_NM = #{topicNm},
+		  DEPT_NM = #{deptNm}, SUBMIT_DT = REPLACE(#{submitDt},'-',''), BACKGROUND = #{background},
+		  SURVEY_TARGET = #{surveyTarget}, SURVEY_FR_MM = #{surveyFrMm}, SURVEY_TO_MM = #{surveyToMm},
+		  SURVEY_METHOD = #{surveyMethod}, ANALYSIS = #{analysis}, GOAL_TXT = #{goalTxt},
+		  ACT_TXT = #{actTxt}, PLAN_TXT = #{planTxt}, NOTE = #{note},
+		  EFFECT_TXT = #{effectTxt}, CONCL_TXT = #{conclTxt}, UPD_USER = #{regUser}
+		 WHERE QIR_SEQ = #{qirSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteQiRpt" parameterType="map">
+		UPDATE TBL_QPS_QIRPT SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE QIR_SEQ = #{qirSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectQiRptItems" resultType="java.util.HashMap">
+		SELECT SECT_CD AS sect, SORT AS sort, GRP AS grp, C1 AS c1, C2 AS c2
+		  FROM TBL_QPS_QIRPT_ITEM WHERE QIR_SEQ = #{qirSeq} ORDER BY SECT_CD, SORT
+	</select>
+
+	<delete id="deleteQiRptItems">
+		DELETE FROM TBL_QPS_QIRPT_ITEM WHERE QIR_SEQ = #{qirSeq}
+	</delete>
+
+	<insert id="insertQiRptItems" parameterType="map">
+		INSERT INTO TBL_QPS_QIRPT_ITEM (QIR_SEQ, SECT_CD, SORT, GRP, C1, C2) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{qirSeq}, #{it.sect}, #{it.sort}, #{it.grp}, #{it.c1}, #{it.c2})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ QI 주제선정 기준표 (평가위원 1명 = 1장) + 우선순위 집계표 ═══ -->
+	<select id="selectQiTopicList" resultType="java.util.HashMap">
+		SELECT QIT_SEQ AS qitseq, EVALUATOR AS evaluator,
+		       DATE_FORMAT(STR_TO_DATE(EVAL_DT,'%Y%m%d'),'%Y-%m-%d') AS evaldt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_QITOPIC
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		 ORDER BY QIT_SEQ
+	</select>
+
+	<select id="selectQiTopic" resultType="java.util.HashMap">
+		SELECT QIT_SEQ AS qitseq, IN_YEAR AS inyear, EVALUATOR AS evaluator,
+		       DATE_FORMAT(STR_TO_DATE(EVAL_DT,'%Y%m%d'),'%Y-%m-%d') AS evaldt
+		  FROM TBL_QPS_QITOPIC
+		 WHERE QIT_SEQ = #{qitSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertQiTopic" parameterType="map" useGeneratedKeys="true" keyProperty="qitSeq">
+		INSERT INTO TBL_QPS_QITOPIC (HOSP_CD, IN_YEAR, EVAL_DT, EVALUATOR, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{inYear}, REPLACE(#{evalDt},'-',''), #{evaluator}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateQiTopic" parameterType="map">
+		UPDATE TBL_QPS_QITOPIC SET IN_YEAR = #{inYear}, EVAL_DT = REPLACE(#{evalDt},'-',''),
+		       EVALUATOR = #{evaluator}, UPD_USER = #{regUser}
+		 WHERE QIT_SEQ = #{qitSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteQiTopic" parameterType="map">
+		UPDATE TBL_QPS_QITOPIC SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE QIT_SEQ = #{qitSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectQiTopicItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort, DEPT_NM AS deptnm, TOPIC_NM AS topicnm,
+		       S1 AS s1, S2 AS s2, S3 AS s3, S4 AS s4, S5 AS s5, S6 AS s6, TOT_SCORE AS totscore
+		  FROM TBL_QPS_QITOPIC_ITEM WHERE QIT_SEQ = #{qitSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteQiTopicItems">
+		DELETE FROM TBL_QPS_QITOPIC_ITEM WHERE QIT_SEQ = #{qitSeq}
+	</delete>
+
+	<insert id="insertQiTopicItems" parameterType="map">
+		INSERT INTO TBL_QPS_QITOPIC_ITEM (QIT_SEQ, SORT, DEPT_NM, TOPIC_NM, S1,S2,S3,S4,S5,S6, TOT_SCORE) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{qitSeq}, #{it.sort}, #{it.deptnm}, #{it.topicnm},
+			 #{it.s1},#{it.s2},#{it.s3},#{it.s4},#{it.s5},#{it.s6}, #{it.totscore})
+		</foreach>
+	</insert>
+
+	<!-- ★우선순위 집계표 — 저장하지 않는다. 그 해 기준표(평가위원별)를 주제로 묶어 합산한다.
+	     원본 [생성] 버튼이 하던 일. 주제명이 같은 행을 한 주제로 본다(부서는 첫 값). -->
+	<select id="selectQiTopicRollup" resultType="java.util.HashMap">
+		SELECT i.TOPIC_NM AS topicnm,
+		       MIN(i.DEPT_NM) AS deptnm,
+		       COUNT(DISTINCT t.QIT_SEQ) AS evalcnt,          <!-- 몇 명이 매겼나 -->
+		       SUM(IFNULL(i.TOT_SCORE,0)) AS totscore,        <!-- 평가위원 총점의 합 -->
+		       ROUND(AVG(IFNULL(i.TOT_SCORE,0)),1) AS avgscore
+		  FROM TBL_QPS_QITOPIC_ITEM i
+		  JOIN TBL_QPS_QITOPIC t ON t.QIT_SEQ = i.QIT_SEQ
+		 WHERE t.HOSP_CD = #{hospCd} AND t.IN_YEAR = #{inYear} AND t.USE_YN = 'Y'
+		   AND IFNULL(i.TOPIC_NM,'') &lt;&gt; ''
+		 GROUP BY i.TOPIC_NM
+		 ORDER BY totscore DESC, i.TOPIC_NM
+	</select>
+
+	<!-- 집계표 우측 「번호」 칸 = 평가위원별 총점. 주제 × 평가위원 교차. -->
+	<select id="selectQiTopicCross" resultType="java.util.HashMap">
+		SELECT i.TOPIC_NM AS topicnm, t.QIT_SEQ AS qitseq, t.EVALUATOR AS evaluator,
+		       IFNULL(i.TOT_SCORE,0) AS totscore
+		  FROM TBL_QPS_QITOPIC_ITEM i
+		  JOIN TBL_QPS_QITOPIC t ON t.QIT_SEQ = i.QIT_SEQ
+		 WHERE t.HOSP_CD = #{hospCd} AND t.IN_YEAR = #{inYear} AND t.USE_YN = 'Y'
+		   AND IFNULL(i.TOPIC_NM,'') &lt;&gt; ''
+		 ORDER BY t.QIT_SEQ, i.SORT
+	</select>
+
+
+	<!-- ═══ QI 활동 자원지원 내역 (연 1부) ═══ -->
+	<select id="selectQiFund" resultType="java.util.HashMap">
+		SELECT QIF_SEQ AS qifseq, IN_YEAR AS inyear, TOT_AMT AS totamt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_QIFUND
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertQiFund" parameterType="map" useGeneratedKeys="true" keyProperty="qifSeq">
+		INSERT INTO TBL_QPS_QIFUND (HOSP_CD, IN_YEAR, TOT_AMT, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{inYear}, #{totAmt}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE TOT_AMT=VALUES(TOT_AMT), USE_YN='Y', UPD_USER=#{regUser},
+		  QIF_SEQ = LAST_INSERT_ID(QIF_SEQ)   <!-- upsert 로 갱신돼도 seq 를 돌려받는 관용구 -->
+	</insert>
+
+	<select id="selectQiFundItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort, ACT_NO AS actno, ACT_NM AS actnm, DETAIL_NM AS detailnm, AMT AS amt
+		  FROM TBL_QPS_QIFUND_ITEM WHERE QIF_SEQ = #{qifSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteQiFundItems">
+		DELETE FROM TBL_QPS_QIFUND_ITEM WHERE QIF_SEQ = #{qifSeq}
+	</delete>
+
+	<insert id="insertQiFundItems" parameterType="map">
+		INSERT INTO TBL_QPS_QIFUND_ITEM (QIF_SEQ, SORT, ACT_NO, ACT_NM, DETAIL_NM, AMT) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{qifSeq}, #{it.sort}, #{it.actno}, #{it.actnm}, #{it.detailnm}, #{it.amt})
 		</foreach>
 	</insert>
 

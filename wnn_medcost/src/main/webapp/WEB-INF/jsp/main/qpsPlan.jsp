@@ -50,7 +50,8 @@
   <span class="qp-hosp" id="plHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qp-spacer"></div>
   <%-- 서식구분(2026-08-10 감염관리 포함) — 같은 년도라도 질향상용·감염관리용이 <각각 1부> 존재한다 --%>
-  <select id="plGb" style="width:auto;" onchange="plLoad();">
+  <%-- 초기값은 서버가 정한다 — 감염 메뉴(?gb=I)로 들어오면 감염관리계획서로 열린다 --%>
+  <select id="plGb" style="width:auto;" onchange="plLoad();" data-init="<c:out value='${formGb}' default='Q'/>">
     <option value="Q">질향상·환자안전</option>
     <option value="I">감염관리</option>
   </select>
@@ -398,7 +399,11 @@
     setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
   };
 
-  $(function(){ plLoad(); });
+  $(function(){
+    var g = document.getElementById('plGb');
+    if (g) { var init = g.getAttribute('data-init'); if (init) g.value = init; }
+    plLoad();
+  });
 })();
 </script>
 </div><%-- /#qpsPlan --%>

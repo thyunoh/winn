@@ -168,75 +168,148 @@
                         <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
                            aria-expanded="false" data-target="#qps-sub" aria-controls="qps-sub">
                         <i class="fa fa-heartbeat" aria-hidden="true"></i>QPS-환자안전</a>
+                        <%-- ★2026-08-11 메뉴 2단화 — 기존 시스템의 업무 폴더 구조를 그대로 따른다.
+                             (사용자 제공 원본 트리: QI / QPS / 감염 / 보고서 / 환자만족도 조사 / 불만고충 / QPS공유)
+                             평면 18줄이 한계에 달해 갈랐다. 그룹 하나가 원본 폴더 하나다 —
+                             ***항목 이름도 원본 폴더의 문서명을 쓴다***(우리 화면 이름이 아니라).
+                             그래야 병원 담당자가 종이 서식 이름으로 메뉴를 찾는다.
+                             ★한 화면이 여러 폴더에 걸리는 것이 있다(계획서·회의록·라운딩은 구분값으로 갈린다)
+                               — 그래서 감염 그룹의 링크에는 ?gb=I 가 붙는다. 붙이지 않으면 감염 메뉴로
+                               들어가도 질향상 문서가 열린다.
+                             ★QPS공유는 여기 없다 — 하위가 「간호」·「방사선」이라 계정 공유가 아니라
+                               ***부서별 공유 폴더***다(2026-08-11 확인). 부서 업무는 2차 범위라 그때 붙인다. --%>
                         <div id="qps-sub" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
+
+                                <%-- ── QI (원본 6종) — 통째로 미구현. 링크를 걸면 404 라 안내만 둔다 ── --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsIndex.do">지표 현황</a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-qi" aria-controls="qps-g-qi"
+                                       style="font-weight:600;">▸ QI</a>
+                                    <div id="qps-g-qi" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiPlan.do">QI 계획서</a></li>
+                                            <%-- QI 회의록 — 서식 1호(회의록)에 구분 J 로 흡수했다. 주제·차수는 회의명에 적는다 --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=J">QI 회의록</a></li>
+                                            <%-- 중간·최종보고서는 한 화면이다(최종이 중간의 상위집합) --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiRpt.do">QI 중간·최종보고서</a></li>
+                                            <%-- 주제선정 기준표 + 우선순위 집계표 = 한 화면 두 탭.
+                                                 원본의 (전년도)/(당해년도)는 연도 셀렉트로 덮인다 --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiTopic.do">QI 주제선정 · 우선순위</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiFund.do">활동 자원지원 내역</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
-                                <%-- 아래 셋은 다음 단계에서 화면이 붙는다. 지금은 지표 현황으로 보낸다
-                                     (없는 주소로 두면 404 가 나고, 링크를 빼면 로드맵이 안 보인다). --%>
+
+                                <%-- ── QPS (원본 8종) ── --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsDef.do">지표정의서</a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-qps" aria-controls="qps-g-qps"
+                                       style="font-weight:600;">▸ QPS</a>
+                                    <div id="qps-g-qps" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPlan.do">연간 활동계획서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do">QPS 위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsIndex.do">지표 현황</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRpt.do">지표분석목록</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsDef.do">지표정의서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRound.do">환자안전관리 라운딩 점검표</a></li>
+                                            <%-- RCA — 근본원인 분석 보고서. 회의록은 서식 1호에 구분 R 로 흡수 --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRca.do">RCA 근본원인 분석</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=R">RCA 회의록</a></li>
+                                            <%-- FMEA — 계획서·보고서가 한 화면(문서구분). 회의록은 서식 1호에 구분 F 로 흡수 --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFmea.do">FMEA 계획서·보고서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=F">FMEA 회의록</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
+
+                                <%-- ── 감염 (원본 10종 — 전부 커버됨) ──
+                                     계획서·위원회·라운딩은 QPS 와 같은 화면이고 구분(FORM_GB)만 I 다. --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsRpt.do">지표분석보고서</a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-inf" aria-controls="qps-g-inf"
+                                       style="font-weight:600;">▸ 감염</a>
+                                    <div id="qps-g-inf" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPlan.do?gb=I">감염관리계획서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=I">감염관리위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRound.do?gb=I">감염라운딩</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=INFEXP">직원감염노출사고분석보고서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=HANDWASH">손위생수행률</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=UTI">요로감염</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRisk.do">감염관리 우선순위 사정 도구</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfStaff.do">감염관리 전담자(담당)</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfPat.do">감염병환자</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRpt.do">감염종합보고</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
-                                <%-- 서식 — 서술형 203종을 개별 방식으로 하나씩(1호 실측: 종당 반나절) --%>
+
+                                <%-- ── 보고서 (원본 11종) — 미구현. 다음 작업 후보 1순위 ── --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsMinutes.do">회의록 <span style="color:#a8b4bb;">(서식 1호)</span></a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-rpt" aria-controls="qps-g-rpt"
+                                       style="font-weight:600;">▸ 보고서</a>
+                                    <div id="qps-g-rpt" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <%-- 사고 유형별 보고서 — 한 화면 + 유형(체크 묶음은 항목표에서 온다) --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 유형별 보고서</a></li>
+                                            <%-- ★원본은 이 폴더에도 「환자안전관리 라운딩 점검표」를 두지만 링크를 또 걸지 않는다.
+                                                 QPS 그룹의 그것과 <같은 문서>이고, 같은 주소를 두 번 걸면
+                                                 사이드바 강조가 뒤 링크에 붙는 함정이 있다(2026-08-09 실제로 겪음). --%>
+                                            <li class="nav-item">
+                                                <span class="nav-item nav-link" style="color:#a8b4bb; font-size:12px; cursor:default;">
+                                                    ※ 환자안전관리 라운딩 점검표는 [QPS] 그룹에 있습니다
+                                                </span>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </li>
+
+                                <%-- ── 환자만족도 조사 (원본 6종 → 우리 화면 3개) ──
+                                     안내문은 조사 계획서 화면의 카드, 조사결과·지표분석 보고서는 설문 화면의 인쇄다. --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsPlan.do">연간 활동계획서 <span style="color:#a8b4bb;">(서식 2호)</span></a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-srv" aria-controls="qps-g-srv"
+                                       style="font-weight:600;">▸ 환자만족도 조사</a>
+                                    <div id="qps-g-srv" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSrvPlan.do">안내문 · 조사 계획서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSurvey.do">설문지 · 조사결과 · 지표분석</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSrvImpr.do">개선활동결과보고서</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
+
+                                <%-- ── 불만고충 (원본 3종 → 우리 화면 3개) ──
+                                     처리대장과 개선활동처리결과는 목록↔상세라 한 화면 두 탭이다. --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsRound.do">라운딩 점검표 <span style="color:#a8b4bb;">(서식 3호)</span></a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-cmpl" aria-controls="qps-g-cmpl"
+                                       style="font-weight:600;">▸ 불만고충</a>
+                                    <div id="qps-g-cmpl" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCmplPlan.do">처리계획서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCmpl.do">처리대장 · 개선활동처리결과</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCmplRpt.do">지표분석보고서</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
-                                <%-- 감염병환자 월별 리스트 / 감염관리 전담자 --%>
+
+                                <%-- ── 공통 — 원본에 없는 우리 화면 ── --%>
                                 <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsInfPat.do">감염병환자</a>
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-etc" aria-controls="qps-g-etc"
+                                       style="font-weight:600;">▸ 공통</a>
+                                    <div id="qps-g-etc" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsInfStaff.do">감염관리 전담자</a>
-                                </li>
-                                <%-- 감염관리 우선순위 사정 도구 — 기준표+집계표를 한 화면에(자동계산) --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsInfRisk.do">감염 우선순위 사정</a>
-                                </li>
-                                <%-- 감염종합보고 — 원본 3종(계획수립·수행·손위생 교육결과)을 한 서식으로 --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsInfRpt.do">감염종합보고</a>
-                                </li>
-                                <%-- 환자만족도 조사 — 이 화면만 저장 단위가 다르다(응답자 1인 = 1건).
-                                     설문 응답을 쌓아 조사결과·지표분석 보고서를 계산으로 뽑는다. --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsSurvey.do">환자만족도 조사</a>
-                                </li>
-                                <%-- 만족도 조사 계획서 — 설문 앞단(PDCA 의 P). 자료는 연간계획서와 같은 표(FORM_GB='S') --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsSrvPlan.do">만족도 조사 계획서</a>
-                                </li>
-                                <%-- 만족도 개선활동 결과보고서 — 원본 4종은 <부서 × 유형> 조합일 뿐 같은 서식 --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsSrvImpr.do">만족도 개선활동 결과</a>
-                                </li>
-                                <%-- 불만고충 — 급소는 처리대장이다(보고서의 모든 수치가 거기서 집계된다).
-                                     처리대장과 개선활동 처리결과는 목록↔상세라 한 화면 두 탭으로 뒀다. --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsCmplPlan.do">불만고충 처리계획서</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsCmpl.do">불만고충 처리대장</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsCmplRpt.do">불만고충 지표분석</a>
-                                </li>
-                                <%-- 자료실 — 서식이 아니라 보관물(조직도·내규). 분류별 첨부만 있다 --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a>
-                                </li>
+
                             </ul>
                         </div>
                     </li>

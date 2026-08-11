@@ -1153,9 +1153,12 @@
       var isPatval  = (src === 'PATVAL');
       var isMonitor = (src === 'MONITOR');
       var isManual  = (src === 'MANUAL');
+      // CMPL = 불만고충 처리대장에서 분자·분모를 통째로 집계한다(2026-08-11 수기입력에서 전환).
+      // 이 화면에는 입력 탭이 없다 — 자료는 [불만고충 ▸ 처리대장] 에서 적는다.
+      var isCmpl    = (src === 'CMPL');
       // 분모 탭은 '재원일수·직원수를 쓰는 지표'에만 필요하다 —
-      // 관찰형은 분모가 관찰건수이고, 수기형도 DENOM_GB 가 없으면 분모를 월별 입력 탭에서 적는다.
-      var needCensus = !isMonitor && !(isManual && !curDef.denomgb);
+      // 관찰형은 분모가 관찰건수, 대장형은 접수건수, 수기형도 DENOM_GB 가 없으면 월별 입력 탭에서 적는다.
+      var needCensus = !isMonitor && !isCmpl && !(isManual && !curDef.denomgb);
       show('#qpsFall .qf-tab[data-pane="p1"]', src === 'INCIDENT');   // 사고보고
       show('#qpsFall .qf-tab[data-pane="p4"]', isMonitor);           // 관찰입력
       show('#qpsFall .qf-tab[data-pane="p5"]', isManual);            // 월별 수기입력
@@ -1164,7 +1167,8 @@
       // 단 TAT 처럼 축(정규/응급)이 있는 수기형은 이 카드를 **축별 집계표**로 재활용한다.
       var hasAxes = isManual && manualAxes().length > 0;
       var bkCard = document.getElementById('qfBreak');
-      if (bkCard) bkCard.closest('.qf-card').style.display = ((isPatval || isManual) && !hasAxes) ? 'none' : '';
+      if (bkCard) bkCard.closest('.qf-card').style.display =
+          (((isPatval || isManual) && !hasAxes) || isCmpl) ? 'none' : '';
       if (hasAxes) {
         var bkHint2 = document.getElementById('qfBreakHint');
         if (bkHint2) bkHint2.textContent = '— 정규·응급별 집계(월별 입력 탭의 상세 행에서 계산. 상세 미입력 시 빈 표)';
@@ -1174,6 +1178,7 @@
       var flow = document.getElementById('qfFlow');
       if (flow) flow.textContent = isMonitor ? '관찰 입력 → 분기 지표 자동산출 (수행 ÷ 관찰)'
                                  : isPatval  ? '환자평가표에서 자동집계 → 분기 지표 자동산출'
+                                 : isCmpl    ? '불만고충 처리대장에서 자동집계 → 분기 지표 자동산출 (처리 ÷ 접수)'
                                  : isManual  ? '월별 입력(대장·설문) → 분기 지표 자동산출'
                                              : '사고보고 → 재원일수 → 분기 지표 자동산출';
       var bkHint = document.getElementById('qfBreakHint');
@@ -1185,6 +1190,8 @@
       if (isPatval  &&  document.querySelector('#qpsFall .qf-tab.on[data-pane="p1"]')) qfTab('p3');
       if (isManual && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p5"]')
                    && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p5');
+      // 대장형은 입력 탭이 아예 없다 — 바로 지표분석으로 보낸다(빈 탭에 떨어지면 고장처럼 보인다)
+      if (isCmpl && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p3');
       if (isMonitor) monitorLoad();
       if (isManual)  manualLoad();
       if (src === 'INCIDENT') incidSetupUi(curDef);   // 탭·제목·유형목록·대상 라벨을 지표에 맞춘다
@@ -1217,6 +1224,10 @@
     if (def && def.numersrc === 'MONITOR')
       return { numer:'분자(수행건수)', denom:'분모(' + DENOM_WORD + ')', rate:'수행률',
                bar: DENOM_WORD, barKey:'denom' };
+    // 대장형(불만고충)은 분자·분모가 무엇인지 확실하다 — 이름을 박아 준다
+    if (def && def.numersrc === 'CMPL')
+      return { numer:'분자(처리건수)', denom:'분모(접수건수)', rate:'처리율',
+               bar:'접수건수', barKey:'denom' };
     // 수기형은 지표마다 분자·분모의 정체가 달라(충족건수/전체건수, 복귀자/퇴원자…) 이름을 박지 않는다
     if (def && def.numersrc === 'MANUAL' && !def.denomgb)
       return { numer:'분자', denom:'분모', rate:(def.unit === '%' ? '비율' : '발생률'),
