@@ -294,7 +294,7 @@
 							</div>
 			
 							<!-- 온라인 교육센터 링크 -->
-							<a href="https://winner797.net/"
+							<a href="https://winner797.kr/"
 							   class="nav-link consulting-menu"
 							   style="font-size: 16px; padding: 24px;"
 							   target="_blank" rel="noopener noreferrer" onclick="setMainActive(this)">

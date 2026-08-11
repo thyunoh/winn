@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260810-2340-SURVEY2";
+	private static final String BUILD = "20260811-SRVCYCLE";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -210,6 +210,17 @@ public class QpsController {
 			return ".login/LoginWinCT";
 		}
 	}
+
+	/**
+	 * 만족도 조사 계획서 (만족도 사이클 #2) — 화면만 따로, 자료는 계획서와 같은 표를 쓴다.
+	 *
+	 * ★새 테이블·새 엔드포인트를 만들지 않았다. TBL_QPS_PLAN 의 서식구분(FORM_GB)에 'S' 를 하나 더 얹었을 뿐이다
+	 *   (Q=질향상 · I=감염관리 · S=만족도 조사). 유니크 키가 이미 (병원, 구분, 년도)라 서로 안 부딪히고,
+	 *   항목표(TBL_QPS_PLAN_ITEM)는 SECT_CD 로 갈리는 범용 표라 섹션만 다르게 쓰면 된다.
+	 *   → planGet/planSave 가 formGb 를 그대로 받으므로 이 매핑 한 줄이면 끝난다.
+	 */
+	@RequestMapping(value = "main/qpsSrvPlan.do")
+	public String qpsSrvPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSrvPlan"); }
 
 	@RequestMapping(value = "/qps/planGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -796,6 +807,256 @@ public class QpsController {
 			m.put("stTb",    str(p.get("stTb"), ""));
 			m.put("regUser", userId(request));
 			res.put("ipatSeq", svc.saveInfPat(m, jsonRows(p.get("items"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 불만고충 ═══
+	   처리계획서는 여기 없다 — TBL_QPS_PLAN 의 FORM_GB='C' 로 계획서 엔드포인트를 그대로 쓴다. */
+
+	/** 처리대장 + 개선활동 처리결과. 한 화면 두 탭 — 대장이 목록, 처리결과가 그 건의 상세다. */
+	@RequestMapping(value = "main/qpsCmpl.do")
+	public String qpsCmpl(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsCmpl"); }
+
+	/** 불만고충 처리계획서 — 화면만 따로, 자료는 연간 활동계획서와 같은 표(FORM_GB='C'). */
+	@RequestMapping(value = "main/qpsCmplPlan.do")
+	public String qpsCmplPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsCmplPlan"); }
+
+	/** 불만고충 지표분석보고서 — 한 화면 + 반기 구분으로 원본 3종을 덮는다. */
+	@RequestMapping(value = "main/qpsCmplRpt.do")
+	public String qpsCmplRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsCmplRpt"); }
+
+	@RequestMapping(value = "/qps/cmplList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			res.put("list", svc.selectCmplList(hospCd, inYear));
+			res.put("line", svc.selectApprLine(hospCd));
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 대장 저장 — ★행별 upsert. 통째 교체하면 각 건에 매달린 처리결과가 미아가 된다. */
+	@RequestMapping(value = "/qps/cmplSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			res.put("saved", svc.saveCmplRows(hospCd, inYear, jsonRows(p.get("rows")), userId(request)));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/cmplDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("cmplSeq", longOf(p.get("cmplSeq")));
+			m.put("regUser", userId(request));
+			svc.deleteCmpl(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 건별 처리결과 조회 — 아직 안 쓴 건이면 act 가 null 로 온다(새 문서). */
+	@RequestMapping(value = "/qps/cmplActGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplActGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("cmplSeq"));
+			if (seq == null || seq <= 0) return fail(res, "대장에서 건을 먼저 고르세요.");
+			res.put("act", svc.selectCmplAct(hospCd, seq));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/cmplActSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplActSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("cmplSeq"));
+			if (seq == null || seq <= 0) return fail(res, "대장에서 건을 먼저 고르세요.");
+			// ★남의 병원 건에 상세를 붙이지 못하게 — 대장 행이 이 병원 것인지 먼저 확인한다.
+			boolean mine = false;
+			for (Map<String, Object> r : svc.selectCmplList(hospCd, str(p.get("inYear"), ""))) {
+				if (seq.equals(longOf(r.get("cmplseq")))) { mine = true; break; }
+			}
+			if (!mine) return fail(res, "이 병원의 대장에 없는 건입니다.");
+
+			Map<String, Object> m = new HashMap<>();
+			m.put("cmplSeq", seq);
+			m.put("rptDt",    str(p.get("rptDt"), ""));
+			m.put("deptNm",   str(p.get("deptNm"), ""));
+			m.put("imprDt",   str(p.get("imprDt"), ""));
+			m.put("place",    str(p.get("place"), ""));
+			m.put("problem",  str(p.get("problem"), ""));
+			m.put("analysis", str(p.get("analysis"), ""));
+			m.put("planTxt",  str(p.get("planTxt"), ""));
+			m.put("actTxt",   str(p.get("actTxt"), ""));
+			m.put("cause",    str(p.get("cause"), ""));
+			m.put("answer",   str(p.get("answer"), ""));
+			m.put("prevent",  str(p.get("prevent"), ""));
+			m.put("regUser",  userId(request));
+			svc.saveCmplAct(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 지표분석보고서 — 서술칸(저장분) + 수치(대장 집계)를 함께 돌려준다. */
+	@RequestMapping(value = "/qps/cmplRptGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplRptGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			String halfGb = str(p.get("halfGb"), "1");
+			res.put("doc",  svc.selectCmplRpt(hospCd, inYear, halfGb));
+			res.put("stat", svc.selectCmplStat(hospCd, inYear, halfGb));
+			res.put("line", svc.selectApprLine(hospCd));
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/cmplRptSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cmplRptSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("inYear", inYear);
+			m.put("halfGb",      str(p.get("halfGb"), "1"));
+			m.put("submitDt",    str(p.get("submitDt"), ""));
+			m.put("goalVal",     str(p.get("goalVal"), ""));
+			m.put("strategyTxt", str(p.get("strategyTxt"), ""));
+			m.put("conclTxt",    str(p.get("conclTxt"), ""));
+			m.put("imprTxt",     str(p.get("imprTxt"), ""));
+			m.put("regUser",     userId(request));
+			svc.saveCmplRpt(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 만족도 개선활동 결과보고서 (만족도 사이클 #6) ═══
+	   원본 (원무)(원무2)(간호)(영양) 4종은 같은 서식이고 <부서 × 유형> 조합만 다르다. */
+	@RequestMapping(value = "main/qpsSrvImpr.do")
+	public String qpsSrvImpr(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSrvImpr"); }
+
+	@RequestMapping(value = "/qps/srvImprList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> srvImprList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			res.put("list", svc.selectSrvImprList(hospCd, inYear));
+			res.put("line", svc.selectApprLine(hospCd));   // 인쇄물 결재란(빈칸) — 종이 결재와 같은 모양
+			res.put("hosp", svc.selectHospInfo(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/srvImprGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> srvImprGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("imprSeq"));
+			if (seq == null || seq <= 0) return fail(res, "보고서를 선택해 주세요.");
+			res.putAll(svc.selectSrvImprWithItems(hospCd, seq));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/srvImprSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> srvImprSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			if (str(p.get("deptNm"), "").isEmpty()) return fail(res, "부서명을 입력해 주세요.");
+
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("imprSeq",  str(p.get("imprSeq"), ""));
+			m.put("inYear",   inYear);
+			m.put("deptNm",   str(p.get("deptNm"), ""));
+			// ★유형은 코드 고정이 아니다 — 비어 있어도 저장한다((영양) 버전이 그렇다).
+			m.put("typeNm",   str(p.get("typeNm"), ""));
+			m.put("topic",    str(p.get("topic"), ""));
+			m.put("problem",  str(p.get("problem"), ""));
+			m.put("analysis", str(p.get("analysis"), ""));
+			m.put("planTxt",  str(p.get("planTxt"), ""));
+			m.put("imprDt",   str(p.get("imprDt"), ""));
+			m.put("rptDt",    str(p.get("rptDt"), ""));
+			m.put("regUser",  userId(request));
+			res.put("imprSeq", svc.saveSrvImpr(m, jsonRows(p.get("items"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/srvImprDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> srvImprDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("imprSeq", longOf(p.get("imprSeq")));
+			m.put("regUser", userId(request));
+			svc.deleteSrvImpr(m);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

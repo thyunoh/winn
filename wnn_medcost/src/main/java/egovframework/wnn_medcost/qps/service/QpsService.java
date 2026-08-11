@@ -120,6 +120,22 @@ public interface QpsService {
 	long saveInfRpt(Map<String, Object> param, List<Map<String, Object>> members) throws Exception;
 	int deleteInfRpt(Map<String, Object> param) throws Exception;
 
+	/* 불만고충 — 처리대장 · 건별 처리결과 · 지표분석보고서 */
+	List<Map<String, Object>> selectCmplList(String hospCd, String inYear) throws Exception;
+	long saveCmplRows(String hospCd, String inYear, List<Map<String, Object>> rows, String regUser) throws Exception;
+	int deleteCmpl(Map<String, Object> param) throws Exception;
+	Map<String, Object> selectCmplAct(String hospCd, long cmplSeq) throws Exception;
+	int saveCmplAct(Map<String, Object> param) throws Exception;
+	Map<String, Object> selectCmplRpt(String hospCd, String inYear, String halfGb) throws Exception;
+	int saveCmplRpt(Map<String, Object> param) throws Exception;
+	Map<String, Object> selectCmplStat(String hospCd, String inYear, String halfGb) throws Exception;
+
+	/* 만족도 개선활동 결과보고서 (만족도 사이클 #6) */
+	List<Map<String, Object>> selectSrvImprList(String hospCd, String inYear) throws Exception;
+	Map<String, Object> selectSrvImprWithItems(String hospCd, long imprSeq) throws Exception;
+	long saveSrvImpr(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+	int deleteSrvImpr(Map<String, Object> param) throws Exception;
+
 	/* 감염관리 우선순위 사정 도구 */
 	List<Map<String, Object>> selectInfRiskList(String hospCd, String inYear) throws Exception;
 	/** 평가 1건 + 항목. 항목이 없으면(새 평가) 기본 31행을 깔아 돌려준다. */

@@ -211,6 +211,25 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsSurvey.do">환자만족도 조사</a>
                                 </li>
+                                <%-- 만족도 조사 계획서 — 설문 앞단(PDCA 의 P). 자료는 연간계획서와 같은 표(FORM_GB='S') --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsSrvPlan.do">만족도 조사 계획서</a>
+                                </li>
+                                <%-- 만족도 개선활동 결과보고서 — 원본 4종은 <부서 × 유형> 조합일 뿐 같은 서식 --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsSrvImpr.do">만족도 개선활동 결과</a>
+                                </li>
+                                <%-- 불만고충 — 급소는 처리대장이다(보고서의 모든 수치가 거기서 집계된다).
+                                     처리대장과 개선활동 처리결과는 목록↔상세라 한 화면 두 탭으로 뒀다. --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsCmplPlan.do">불만고충 처리계획서</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsCmpl.do">불만고충 처리대장</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="/main/qpsCmplRpt.do">불만고충 지표분석</a>
+                                </li>
                                 <%-- 자료실 — 서식이 아니라 보관물(조직도·내규). 분류별 첨부만 있다 --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a>

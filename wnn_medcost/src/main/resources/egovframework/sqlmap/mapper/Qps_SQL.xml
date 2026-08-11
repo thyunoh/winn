@@ -1073,6 +1073,240 @@
 	</insert>
 
 
+	<!-- ═══ 만족도 개선활동 결과보고서 (만족도 사이클 #6) ═══
+	     원본 4종((원무)(원무2)(간호)(영양))은 같은 서식이고 <부서 × 유형> 조합만 다르다.
+	     ★유형은 코드 고정이 아니다 — (영양) 은 비어 있고 자유 문구를 쓴다. -->
+	<select id="selectSrvImprList" resultType="java.util.HashMap">
+		SELECT IMPR_SEQ AS imprseq, DEPT_NM AS deptnm, TYPE_NM AS typenm, TOPIC AS topic,
+		       DATE_FORMAT(STR_TO_DATE(RPT_DT,'%Y%m%d'),'%Y-%m-%d') AS rptdt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_SRVIMPR
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		 ORDER BY DEPT_NM, TYPE_NM, IMPR_SEQ
+	</select>
+
+	<select id="selectSrvImpr" resultType="java.util.HashMap">
+		SELECT IMPR_SEQ AS imprseq, IN_YEAR AS inyear, DEPT_NM AS deptnm, TYPE_NM AS typenm,
+		       TOPIC AS topic, PROBLEM AS problem, ANALYSIS AS analysis, PLAN_TXT AS plantxt,
+		       DATE_FORMAT(STR_TO_DATE(IMPR_DT,'%Y%m%d'),'%Y-%m-%d') AS imprdt,
+		       DATE_FORMAT(STR_TO_DATE(RPT_DT,'%Y%m%d'),'%Y-%m-%d')  AS rptdt
+		  FROM TBL_QPS_SRVIMPR
+		 WHERE IMPR_SEQ = #{imprSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertSrvImpr" parameterType="map" useGeneratedKeys="true" keyProperty="imprSeq">
+		INSERT INTO TBL_QPS_SRVIMPR
+		 (HOSP_CD, IN_YEAR, DEPT_NM, TYPE_NM, TOPIC, PROBLEM, ANALYSIS, PLAN_TXT,
+		  IMPR_DT, RPT_DT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{deptNm}, #{typeNm}, #{topic}, #{problem}, #{analysis}, #{planTxt},
+		  REPLACE(#{imprDt},'-',''), REPLACE(#{rptDt},'-',''), 'Y', #{regUser})
+	</insert>
+
+	<update id="updateSrvImpr" parameterType="map">
+		UPDATE TBL_QPS_SRVIMPR SET
+		  IN_YEAR = #{inYear}, DEPT_NM = #{deptNm}, TYPE_NM = #{typeNm}, TOPIC = #{topic},
+		  PROBLEM = #{problem}, ANALYSIS = #{analysis}, PLAN_TXT = #{planTxt},
+		  IMPR_DT = REPLACE(#{imprDt},'-',''), RPT_DT = REPLACE(#{rptDt},'-',''), UPD_USER = #{regUser}
+		 WHERE IMPR_SEQ = #{imprSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteSrvImpr" parameterType="map">
+		UPDATE TBL_QPS_SRVIMPR SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE IMPR_SEQ = #{imprSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<select id="selectSrvImprItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort, TYPE_NM AS typenm, PROBLEM AS problem, ACTION_TXT AS actiontxt
+		  FROM TBL_QPS_SRVIMPR_ITEM WHERE IMPR_SEQ = #{imprSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteSrvImprItems">
+		DELETE FROM TBL_QPS_SRVIMPR_ITEM WHERE IMPR_SEQ = #{imprSeq}
+	</delete>
+
+	<insert id="insertSrvImprItems" parameterType="map">
+		INSERT INTO TBL_QPS_SRVIMPR_ITEM (IMPR_SEQ, SORT, TYPE_NM, PROBLEM, ACTION_TXT) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{imprSeq}, #{it.sort}, #{it.typenm}, #{it.problem}, #{it.actiontxt})
+		</foreach>
+	</insert>
+
+
+	<!-- ═══ 불만고충 처리대장 ═══
+	     이 폴더의 급소. 지표분석보고서의 모든 수치가 여기 한 곳에서 집계된다.
+
+	     ★★대장은 「통째 교체」로 저장하지 않는다 — 다른 서식과 다른 점이다.
+	       계획서·라운딩은 항목행을 지우고 다시 넣지만, 대장의 각 건에는
+	       개선활동 처리결과(TBL_QPS_CMPL_ACT)가 CMPL_SEQ 로 1:1 매달려 있다.
+	       통째 교체하면 SEQ 가 새로 발급되어 ***그 상세가 통째로 미아가 된다.***
+	       그래서 행별 upsert(seq 있으면 UPDATE, 없으면 INSERT) + 명시적 소프트삭제로 간다. -->
+	<select id="selectCmplList" resultType="java.util.HashMap">
+		SELECT CMPL_SEQ AS cmplseq, RECV_MM AS recvmm,
+		       DATE_FORMAT(STR_TO_DATE(RECV_DT,'%Y%m%d'),'%Y-%m-%d') AS recvdt,
+		       RECV_CD AS recvcd, PERSON_NM AS personnm, PERSON_CD AS personcd,
+		       TERM_DAYS AS termdays, TYPE_CD AS typecd, CONTENT AS content,
+		       RESULT_TXT AS resulttxt,
+		       DATE_FORMAT(STR_TO_DATE(REPLY_DT,'%Y%m%d'),'%Y-%m-%d') AS replydt,
+		       REPLY_CD AS replycd, NOREPLY_CD AS noreplycd,
+		       (SELECT COUNT(*) FROM TBL_QPS_CMPL_ACT a WHERE a.CMPL_SEQ = c.CMPL_SEQ) AS hasact
+		  FROM TBL_QPS_CMPL c
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		 ORDER BY IFNULL(RECV_MM,'99'), IFNULL(RECV_DT,''), CMPL_SEQ
+	</select>
+
+	<insert id="insertCmpl" parameterType="map" useGeneratedKeys="true" keyProperty="cmplSeq">
+		INSERT INTO TBL_QPS_CMPL
+		 (HOSP_CD, IN_YEAR, RECV_MM, RECV_DT, RECV_CD, PERSON_NM, PERSON_CD, TERM_DAYS,
+		  TYPE_CD, CONTENT, RESULT_TXT, REPLY_DT, REPLY_CD, NOREPLY_CD, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{recvMm}, REPLACE(#{recvDt},'-',''), #{recvCd}, #{personNm},
+		  #{personCd}, #{termDays}, #{typeCd}, #{content}, #{resultTxt},
+		  REPLACE(#{replyDt},'-',''), #{replyCd}, #{noreplyCd}, 'Y', #{regUser})
+	</insert>
+
+	<update id="updateCmpl" parameterType="map">
+		UPDATE TBL_QPS_CMPL SET
+		  RECV_MM = #{recvMm}, RECV_DT = REPLACE(#{recvDt},'-',''), RECV_CD = #{recvCd},
+		  PERSON_NM = #{personNm}, PERSON_CD = #{personCd}, TERM_DAYS = #{termDays},
+		  TYPE_CD = #{typeCd}, CONTENT = #{content}, RESULT_TXT = #{resultTxt},
+		  REPLY_DT = REPLACE(#{replyDt},'-',''), REPLY_CD = #{replyCd}, NOREPLY_CD = #{noreplyCd},
+		  UPD_USER = #{regUser}
+		 WHERE CMPL_SEQ = #{cmplSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<update id="deleteCmpl" parameterType="map">
+		UPDATE TBL_QPS_CMPL SET USE_YN='N', UPD_USER=#{regUser}
+		 WHERE CMPL_SEQ = #{cmplSeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<!-- 개선활동 처리결과 — 대장 1건의 상세(1:1).
+	     ★접수방법·민원인·내용·회신방법은 대장에 있으므로 여기서 다시 받지 않는다. -->
+	<select id="selectCmplAct" resultType="java.util.HashMap">
+		SELECT a.CMPL_SEQ AS cmplseq,
+		       DATE_FORMAT(STR_TO_DATE(a.RPT_DT,'%Y%m%d'),'%Y-%m-%d')  AS rptdt,
+		       a.DEPT_NM AS deptnm,
+		       DATE_FORMAT(STR_TO_DATE(a.IMPR_DT,'%Y%m%d'),'%Y-%m-%d') AS imprdt,
+		       a.PLACE AS place, a.PROBLEM AS problem, a.ANALYSIS AS analysis,
+		       a.PLAN_TXT AS plantxt, a.ACT_TXT AS acttxt, a.CAUSE AS cause,
+		       a.ANSWER AS answer, a.PREVENT AS prevent
+		  FROM TBL_QPS_CMPL_ACT a
+		  JOIN TBL_QPS_CMPL c ON c.CMPL_SEQ = a.CMPL_SEQ AND c.HOSP_CD = #{hospCd}
+		 WHERE a.CMPL_SEQ = #{cmplSeq}
+	</select>
+
+	<insert id="upsertCmplAct" parameterType="map">
+		INSERT INTO TBL_QPS_CMPL_ACT
+		 (CMPL_SEQ, RPT_DT, DEPT_NM, IMPR_DT, PLACE, PROBLEM, ANALYSIS, PLAN_TXT,
+		  ACT_TXT, CAUSE, ANSWER, PREVENT, REG_USER)
+		VALUES
+		 (#{cmplSeq}, REPLACE(#{rptDt},'-',''), #{deptNm}, REPLACE(#{imprDt},'-',''), #{place},
+		  #{problem}, #{analysis}, #{planTxt}, #{actTxt}, #{cause}, #{answer}, #{prevent}, #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  RPT_DT=VALUES(RPT_DT), DEPT_NM=VALUES(DEPT_NM), IMPR_DT=VALUES(IMPR_DT),
+		  PLACE=VALUES(PLACE), PROBLEM=VALUES(PROBLEM), ANALYSIS=VALUES(ANALYSIS),
+		  PLAN_TXT=VALUES(PLAN_TXT), ACT_TXT=VALUES(ACT_TXT), CAUSE=VALUES(CAUSE),
+		  ANSWER=VALUES(ANSWER), PREVENT=VALUES(PREVENT), UPD_USER=#{regUser}
+	</insert>
+
+	<!-- 지표분석보고서 — 사람이 쓰는 칸만. 수치는 전부 아래 집계에서 나온다. -->
+	<select id="selectCmplRpt" resultType="java.util.HashMap">
+		SELECT RPT_SEQ AS rptseq, IN_YEAR AS inyear, HALF_GB AS halfgb,
+		       DATE_FORMAT(STR_TO_DATE(SUBMIT_DT,'%Y%m%d'),'%Y-%m-%d') AS submitdt,
+		       GOAL_VAL AS goalval, STRATEGY_TXT AS strategytxt, CONCL_TXT AS concltxt,
+		       IMPR_TXT AS imprtxt,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_CMPL_RPT
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND HALF_GB = #{halfGb} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertCmplRpt" parameterType="map">
+		INSERT INTO TBL_QPS_CMPL_RPT
+		 (HOSP_CD, IN_YEAR, HALF_GB, SUBMIT_DT, GOAL_VAL, STRATEGY_TXT, CONCL_TXT, IMPR_TXT, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{inYear}, #{halfGb}, REPLACE(#{submitDt},'-',''), #{goalVal},
+		  #{strategyTxt}, #{conclTxt}, #{imprTxt}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  SUBMIT_DT=VALUES(SUBMIT_DT), GOAL_VAL=VALUES(GOAL_VAL),
+		  STRATEGY_TXT=VALUES(STRATEGY_TXT), CONCL_TXT=VALUES(CONCL_TXT),
+		  IMPR_TXT=VALUES(IMPR_TXT), USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+
+	<!-- ═══ 불만고충 집계 — 전부 처리대장 한 곳에서 나온다 ═══
+	     ★처리 = 회신날짜가 있는 건. 처리율 = 처리건수 ÷ 고충건수 × 100.
+	     ★비율은 여기서 계산하지 않고 건수만 돌려준다 — 0건일 때 '-' 로 찍을지는 화면이 정한다
+	       (원본은 서식마다 NAN·0.0 이 뒤섞여 있었다. 우리는 '-' 로 통일한다). -->
+	<sql id="cmplWhere">
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		   AND IFNULL(RECV_MM,'') BETWEEN #{frMm} AND #{toMm}
+	</sql>
+
+	<!-- 월별 : 고충건수 · 처리건수 (1p [지표분석] (1)반기 표 + 1) 월별 표) -->
+	<select id="selectCmplStatMonth" resultType="java.util.HashMap">
+		SELECT RECV_MM AS mm, COUNT(*) AS tot,
+		       SUM(CASE WHEN IFNULL(REPLY_DT,'') &lt;&gt; '' THEN 1 ELSE 0 END) AS done
+		  FROM TBL_QPS_CMPL
+		<include refid="cmplWhere"/>
+		 GROUP BY RECV_MM ORDER BY RECV_MM
+	</select>
+
+	<!-- 축별 건수 — gb 로 축을 바꾼다(유형/접수유형/회신방법/미회신사유).
+	     ★미회신사유는 <회신날짜가 없는 건>만 센다. 회신한 건에 남아 있는 옛 사유가 섞이면 안 된다. -->
+	<select id="selectCmplStatAxis" resultType="java.util.HashMap">
+		SELECT
+		<choose>
+			<when test="gb == 'RECV'">   RECV_CD    AS cd </when>
+			<when test="gb == 'REPLY'">  REPLY_CD   AS cd </when>
+			<when test="gb == 'NOREPLY'">NOREPLY_CD AS cd </when>
+			<otherwise>                  TYPE_CD    AS cd </otherwise>
+		</choose>
+		       , COUNT(*) AS cnt
+		  FROM TBL_QPS_CMPL
+		<include refid="cmplWhere"/>
+		<if test="gb == 'NOREPLY'"> AND IFNULL(REPLY_DT,'') = '' </if>
+		<if test="gb == 'REPLY'">   AND IFNULL(REPLY_DT,'') &lt;&gt; '' </if>
+		 GROUP BY cd ORDER BY cd
+	</select>
+
+	<!-- 월 × 유형 교차표 (2p) — 화면이 월과 유형으로 펼친다 -->
+	<select id="selectCmplStatTypeMonth" resultType="java.util.HashMap">
+		SELECT RECV_MM AS mm, TYPE_CD AS cd, COUNT(*) AS cnt
+		  FROM TBL_QPS_CMPL
+		<include refid="cmplWhere"/>
+		 GROUP BY RECV_MM, TYPE_CD ORDER BY RECV_MM, TYPE_CD
+	</select>
+
+	<!-- 처리기간 구간 (2p 5) — 대장엔 일수로 들어가고 보고서에서 구간으로 묶인다.
+	     구간 코드 QPS_CMPL_TERM : 01=1~3일 02=4~7일 03=7일 이후 -->
+	<select id="selectCmplStatTerm" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT CASE WHEN TERM_DAYS IS NULL THEN ''
+		            WHEN TERM_DAYS <= 3 THEN '01'
+		            WHEN TERM_DAYS <= 7 THEN '02'
+		            ELSE '03' END AS cd,
+		       COUNT(*) AS cnt
+		  FROM TBL_QPS_CMPL
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		   AND IFNULL(RECV_MM,'') BETWEEN #{frMm} AND #{toMm}
+		 GROUP BY cd ORDER BY cd
+		]]>
+	</select>
+
+	<!-- 반기 현황 (1p [현황] 표) — 전반기·후반기를 한 번에. 연간 평균은 화면이 계산한다. -->
+	<select id="selectCmplStatHalf" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT CASE WHEN RECV_MM <= '06' THEN '1' ELSE '2' END AS half,
+		       COUNT(*) AS tot,
+		       SUM(CASE WHEN IFNULL(REPLY_DT,'') <> '' THEN 1 ELSE 0 END) AS done
+		  FROM TBL_QPS_CMPL
+		 WHERE HOSP_CD = #{hospCd} AND IN_YEAR = #{inYear} AND USE_YN = 'Y'
+		   AND IFNULL(RECV_MM,'') <> ''
+		 GROUP BY half ORDER BY half
+		]]>
+	</select>
+
+
 	<!-- ═══ 감염관리 우선순위 사정 도구 ═══
 	     위험점수 = 발생가능성(1~5) × 심각성(1~5) × 준비·대처(1~4). 최대 100.
 	     ★점수는 계산값이지만 저장한다 — 집계표가 SQL 정렬로 끝나고, 기준이 바뀌어도 그때 값이 남는다. -->

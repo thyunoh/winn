@@ -889,6 +889,163 @@ public class QpsServiceImpl implements QpsService {
 		return mapper.deleteInfRpt(param);
 	}
 
+	// ============ 불만고충 (처리대장 · 건별 처리결과 · 지표분석보고서) ============
+
+	@Override
+	public List<Map<String, Object>> selectCmplList(String hospCd, String inYear) throws Exception {
+		return mapper.selectCmplList(hospCd, inYear);
+	}
+
+	/**
+	 * 처리대장 저장 — ★행별 upsert 다. 「통째 교체」가 아니다.
+	 *
+	 * 계획서·라운딩은 항목행을 지우고 다시 넣지만, 대장의 각 건에는 개선활동 처리결과가
+	 * CMPL_SEQ 로 1:1 매달려 있다. 통째 교체하면 SEQ 가 새로 발급되어 <b>그 상세가 통째로 미아</b>가 된다.
+	 * 삭제는 화면에서 명시적으로(소프트삭제) 한다.
+	 *
+	 * @return 저장한 행 수
+	 */
+	@Override
+	public long saveCmplRows(String hospCd, String inYear, List<Map<String, Object>> rows, String regUser)
+			throws Exception {
+		if (rows == null || rows.isEmpty()) return 0;
+		long n = 0;
+		for (Map<String, Object> r : rows) {
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd);
+			p.put("inYear", inYear);
+			p.put("recvDt",  str(r.get("recvdt")));
+			// ★접수월은 접수일에서 채운다 — 둘이 어긋나면 월별 집계가 통째로 틀어진다.
+			//   화면이 월을 직접 준 경우(접수일 없이 월만 아는 건)에는 그 값을 쓴다.
+			String mm = str(r.get("recvmm"));
+			String dt = str(r.get("recvdt")).replace("-", "");
+			if (dt.length() == 8) mm = dt.substring(4, 6);
+			p.put("recvMm", mm.isEmpty() ? null : mm);
+			p.put("recvCd",    nz(r.get("recvcd")));
+			p.put("personNm",  str(r.get("personnm")));
+			p.put("personCd",  nz(r.get("personcd")));
+			p.put("termDays",  intOrNull(r.get("termdays")));
+			p.put("typeCd",    nz(r.get("typecd")));
+			p.put("content",   str(r.get("content")));
+			p.put("resultTxt", str(r.get("resulttxt")));
+			p.put("replyDt",   str(r.get("replydt")));
+			p.put("replyCd",   nz(r.get("replycd")));
+			p.put("noreplyCd", nz(r.get("noreplycd")));
+			p.put("regUser",   regUser);
+
+			long seq = 0;
+			Object sq = r.get("cmplseq");
+			if (sq != null && !String.valueOf(sq).trim().isEmpty()) {
+				try { seq = Long.parseLong(String.valueOf(sq).trim()); } catch (Exception ignore) { seq = 0; }
+			}
+			if (seq > 0) { p.put("cmplSeq", seq); mapper.updateCmpl(p); }
+			else { mapper.insertCmpl(p); }
+			n++;
+		}
+		return n;
+	}
+
+	@Override
+	public int deleteCmpl(Map<String, Object> param) throws Exception {
+		return mapper.deleteCmpl(param);
+	}
+
+	@Override
+	public Map<String, Object> selectCmplAct(String hospCd, long cmplSeq) throws Exception {
+		return mapper.selectCmplAct(hospCd, cmplSeq);
+	}
+
+	@Override
+	public int saveCmplAct(Map<String, Object> param) throws Exception {
+		return mapper.upsertCmplAct(param);
+	}
+
+	@Override
+	public Map<String, Object> selectCmplRpt(String hospCd, String inYear, String halfGb) throws Exception {
+		return mapper.selectCmplRpt(hospCd, inYear, halfGb);
+	}
+
+	@Override
+	public int saveCmplRpt(Map<String, Object> param) throws Exception {
+		return mapper.upsertCmplRpt(param);
+	}
+
+	/**
+	 * 지표분석보고서 수치 — <b>전부 처리대장에서 집계</b>한다(저장하지 않는다).
+	 * halfGb 1=전반기(01~06) · 2=후반기(07~12) · 그 밖이면 연간(01~12).
+	 */
+	@Override
+	public Map<String, Object> selectCmplStat(String hospCd, String inYear, String halfGb) throws Exception {
+		String frMm = "1".equals(halfGb) ? "01" : "2".equals(halfGb) ? "07" : "01";
+		String toMm = "1".equals(halfGb) ? "06" : "2".equals(halfGb) ? "12" : "12";
+
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("inYear", inYear);
+		p.put("frMm", frMm);     p.put("toMm", toMm);
+
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("frMm", frMm);
+		out.put("toMm", toMm);
+		out.put("months", mapper.selectCmplStatMonth(p));
+		out.put("typeMonth", mapper.selectCmplStatTypeMonth(p));
+		out.put("term", mapper.selectCmplStatTerm(p));
+		out.put("half", mapper.selectCmplStatHalf(p));   // 반기는 연간 기준(범위 무관)
+		for (String gb : new String[] { "TYPE", "RECV", "REPLY", "NOREPLY" }) {
+			Map<String, Object> q = new HashMap<>(p);
+			q.put("gb", gb);
+			out.put("ax" + gb, mapper.selectCmplStatAxis(q));
+		}
+		return out;
+	}
+
+	/** 빈 문자열은 코드칸에 넣지 않는다 — 집계에서 '' 축이 하나 더 생긴다. */
+	private static String nz(Object o) {
+		String v = str(o);
+		return v.isEmpty() ? null : v;
+	}
+
+	// ============ 만족도 개선활동 결과보고서 ============
+
+	@Override
+	public List<Map<String, Object>> selectSrvImprList(String hospCd, String inYear) throws Exception {
+		return mapper.selectSrvImprList(hospCd, inYear);
+	}
+
+	@Override
+	public Map<String, Object> selectSrvImprWithItems(String hospCd, long imprSeq) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectSrvImpr(hospCd, imprSeq);
+		out.put("doc", doc);
+		out.put("items", doc == null ? new ArrayList<>() : mapper.selectSrvImprItems(imprSeq));
+		return out;
+	}
+
+	/** 저장 — 새 문서면 insert, 있으면 update. 표는 통째 교체(감염종합보고 명단과 같은 방식). */
+	@Override
+	public long saveSrvImpr(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		long seq = 0;
+		Object s = p.get("imprSeq");
+		if (s != null && !String.valueOf(s).trim().isEmpty()) {
+			try { seq = Long.parseLong(String.valueOf(s).trim()); } catch (Exception ignore) { seq = 0; }
+		}
+		if (seq > 0) { mapper.updateSrvImpr(p); }
+		else { mapper.insertSrvImpr(p); seq = Long.parseLong(String.valueOf(p.get("imprSeq"))); }
+
+		mapper.deleteSrvImprItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> mp = new HashMap<>();
+			mp.put("imprSeq", seq);
+			mp.put("items", items);
+			mapper.insertSrvImprItems(mp);
+		}
+		return seq;
+	}
+
+	@Override
+	public int deleteSrvImpr(Map<String, Object> param) throws Exception {
+		return mapper.deleteSrvImpr(param);
+	}
+
 	// ============ 감염관리 우선순위 사정 도구 ============
 
 	@Override

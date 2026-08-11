@@ -187,6 +187,33 @@ public interface QpsMapper {
 	int deleteInfRptMem(@Param("rptSeq") long rptSeq);
 	int insertInfRptMem(Map<String, Object> param);
 
+	/* 만족도 개선활동 결과보고서 — 원본 4종은 <부서 × 유형> 조합일 뿐 같은 서식이다 */
+	List<Map<String, Object>> selectSrvImprList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	Map<String, Object> selectSrvImpr(@Param("hospCd") String hospCd, @Param("imprSeq") long imprSeq);
+	int insertSrvImpr(Map<String, Object> param);
+	int updateSrvImpr(Map<String, Object> param);
+	int deleteSrvImpr(Map<String, Object> param);
+	List<Map<String, Object>> selectSrvImprItems(@Param("imprSeq") long imprSeq);
+	int deleteSrvImprItems(@Param("imprSeq") long imprSeq);
+	int insertSrvImprItems(Map<String, Object> param);
+
+	/* 불만고충 — 처리대장(급소) · 건별 처리결과 · 지표분석보고서 */
+	List<Map<String, Object>> selectCmplList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
+	int insertCmpl(Map<String, Object> param);
+	int updateCmpl(Map<String, Object> param);
+	int deleteCmpl(Map<String, Object> param);
+	Map<String, Object> selectCmplAct(@Param("hospCd") String hospCd, @Param("cmplSeq") long cmplSeq);
+	int upsertCmplAct(Map<String, Object> param);
+	Map<String, Object> selectCmplRpt(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
+	                                  @Param("halfGb") String halfGb);
+	int upsertCmplRpt(Map<String, Object> param);
+	/* 집계 — 전부 처리대장에서. frMm~toMm 은 반기 범위('01'~'06' / '07'~'12') */
+	List<Map<String, Object>> selectCmplStatMonth(Map<String, Object> param);
+	List<Map<String, Object>> selectCmplStatAxis(Map<String, Object> param);
+	List<Map<String, Object>> selectCmplStatTypeMonth(Map<String, Object> param);
+	List<Map<String, Object>> selectCmplStatTerm(Map<String, Object> param);
+	List<Map<String, Object>> selectCmplStatHalf(Map<String, Object> param);
+
 	/* 감염관리 우선순위 사정 도구 */
 	List<Map<String, Object>> selectInfRiskList(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
 	Map<String, Object> selectInfRisk(@Param("hospCd") String hospCd, @Param("riskSeq") long riskSeq);
