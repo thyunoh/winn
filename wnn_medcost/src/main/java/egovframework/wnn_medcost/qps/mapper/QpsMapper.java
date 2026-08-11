@@ -351,6 +351,11 @@ public interface QpsMapper {
 	                                            @Param("onlyUse") String onlyUse);
 	int deleteChkUse(@Param("hospCd") String hospCd);
 	int insertChkUse(Map<String, Object> param);
+	/** 서식 화면에서 부서·분류 코드 추가 — 추가만(지우기는 공통코드 화면에서). */
+	int insertChkCode(Map<String, Object> param);
+	/** 서식코드 중복 검사 — 새 서식 저장 전 필수(안 하면 남의 서식을 덮는다). */
+	int countChkForm(@Param("formId") String formId);
+	int selectChkCodeMax(@Param("prefix") String prefix);
 	Map<String, Object> selectChkForm(@Param("hospCd") String hospCd, @Param("formId") String formId);
 	List<Map<String, Object>> selectChkItems(@Param("hospCd") String hospCd, @Param("formId") String formId);
 	int saveChkForm(Map<String, Object> param);
@@ -371,4 +376,8 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectChkRows(@Param("chkSeq") long chkSeq);
 	int deleteChkRows(@Param("chkSeq") long chkSeq);
 	int insertChkRows(Map<String, Object> param);
+
+	/** 데이터 추출 — 평면 한 줄씩(엑셀/집계용). 축을 되돌려 일자·항목으로 준다. */
+	List<Map<String, Object>> selectChkExtract(Map<String, Object> param);
+	List<Map<String, Object>> selectChkSummary(Map<String, Object> param);
 }

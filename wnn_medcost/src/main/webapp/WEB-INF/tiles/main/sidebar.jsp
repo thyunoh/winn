@@ -297,6 +297,23 @@
                                     </div>
                                 </li>
 
+                                <%-- ── 점검표 (2차 — 간호/병동·약국·영양·시설 공용 엔진) ──
+                                     ★서식은 코드가 아니라 데이터다. 새 점검표는 [서식 관리]에서 등록한다.
+                                     ★[서식 관리]는 위너넷 전용 — 아래 스크립트가 s_wnn_yn='Y' 일 때만 보인다.
+                                       (컨트롤러에서도 막는다. 주소를 직접 쳐도 병원 계정은 작성 화면으로 간다.) --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-chk" aria-controls="qps-g-chk"
+                                       style="font-weight:600;">▸ 점검표</a>
+                                    <div id="qps-g-chk" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do">점검표 작성</a></li>
+                                            <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+
                                 <%-- ── 공통 — 원본에 없는 우리 화면 ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
@@ -1437,6 +1454,9 @@ function hosp_conact() {
 
         var adminAsq = document.getElementById("adminAsqMenu");
         if (adminAsq) adminAsq.style.display = "";
+        // 점검표 [서식 관리] — 위너넷 전용(사용자 확정 2026-08-11 : 병원은 서식을 못 만든다)
+        var chkForm = document.getElementById("qpsChkFormMenu");
+        if (chkForm) chkForm.style.display = "";
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
         

@@ -80,6 +80,7 @@
   <div class="ck-spacer"></div>
   <button type="button" class="ck-btn" onclick="ckSave();">저장</button>
   <button type="button" class="ck-btn ghost" onclick="ckPrint();">🖨 인쇄(A4 가로)</button>
+  <button type="button" class="ck-btn ghost" onclick="ckExtract();">📊 데이터 추출</button>
   <button type="button" class="ck-btn warn" id="ckDelBtn" onclick="ckDel();" style="display:none;">삭제</button>
   <span class="ck-sub" id="ckStat"></span>
   <span style="flex:0 0 60px;"></span>
@@ -87,8 +88,13 @@
 
 <div class="ck-card">
   <div class="ck-bar">
+    <%-- ★부서 먼저 — 서식이 130종이 되면 부서로 걸러야 고를 수 있다 --%>
+    <span style="font-size:12.5px; font-weight:700; color:#43555f;">부서</span>
+    <select id="ckDept" style="width:auto;" onchange="ckPickDept();"><option value="">전체</option></select>
     <span style="font-size:12.5px; font-weight:700; color:#43555f;">서식</span>
-    <select id="ckForm" style="min-width:300px;" onchange="ckPickForm();"></select>
+    <%-- data-init = [서식 관리]에서 「작성 화면에서 보기」로 넘어온 서식코드(서버가 내려준다) --%>
+    <select id="ckForm" style="min-width:300px;" onchange="ckPickForm();"
+            data-init="<c:out value='${chkFormId}'/>"></select>
     <span style="font-size:12.5px; font-weight:700; color:#43555f; margin-left:6px;">연도</span>
     <select id="ckYear" style="width:auto;" onchange="ckBase();"></select>
     <span id="ckMmWrap"><span style="font-size:12.5px; font-weight:700; color:#43555f;">월</span>
@@ -281,16 +287,20 @@
 
   window.ckBase = function(){
     return post('<c:url value="/qps/chkBase.do"/>', {
-      inYear: gel('ckYear').value, formId: val('ckForm')
+      inYear: gel('ckYear').value, formId: val('ckForm'), deptCd: val('ckDept')
     }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('ckHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
-      if (!FORMS.length) {
-        FORMS = res.forms || [];
-        var sel = gel('ckForm');
-        sel.innerHTML = '';
-        if (!FORMS.length) sel.add(new Option('— 등록된 서식이 없습니다 —', ''));
-        FORMS.forEach(function(f){ sel.add(new Option(f.formnm, f.formid)); });
+      // ★부서를 바꾸면 서식 목록이 통째로 바뀐다 — 캐시하면 안 된다
+      FORMS = res.forms || [];
+      var sel = gel('ckForm'), keep = sel.value;
+      sel.innerHTML = '';
+      if (!FORMS.length) sel.add(new Option('— 쓸 수 있는 서식이 없습니다 —', ''));
+      FORMS.forEach(function(f){ sel.add(new Option(f.formnm, f.formid)); });
+      // 부서를 바꿔도 고르던 서식이 그 부서에 있으면 그대로 둔다
+      if (keep && FORMS.some(function(f){ return f.formid === keep; })) sel.value = keep;
+      if (gel('ckDept').options.length <= 1) {
+        (res.dept || []).forEach(function(c){ gel('ckDept').add(new Option(c.subcodenm || c.subcode, c.subcode)); });
       }
       FORM = res.form || null;
       ITEMS = res.items || [];
@@ -306,6 +316,16 @@
       applyFormUi();
       if (!curSeq) renderGrid([], []);
     }).catch(err);
+  };
+
+  /** 부서를 바꾸면 서식 목록이 갈린다 — 고르던 서식이 그 부서에 없으면 첫 서식으로 옮긴다. */
+  window.ckPickDept = function(){
+    ckBase().then(function(){
+      if (FORMS.length && !FORMS.some(function(f){ return f.formid === val('ckForm'); })) {
+        gel('ckForm').value = FORMS[0].formid;
+      }
+      ckPickForm();
+    });
   };
 
   window.ckPickForm = function(){
@@ -460,6 +480,55 @@
     setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
   };
 
+  /**
+   * ★★데이터 추출 — 점검표를 전산화한 뜻이 여기 있다.
+   *   격자를 **평면 한 줄씩** 받아 CSV 로 내려준다. 축이 무엇이든 열은 늘 같다 :
+   *     서식 · 부서 · 연 · 월 · 병동 · 항목 · 묶음 · 일 · 값
+   *   ⇒ 엑셀 피벗으로 「이 달 부적합 건수」·「항목별 미점검」이 바로 나온다.
+   *   ★값이 O/X 로 정규화되어 저장되기 때문에 세어진다(서버 normChk).
+   */
+  window.ckExtract = function(){
+    var yy = gel('ckYear').value;
+    _confirmBox({
+      msg: '<b>' + esc(yy) + '년</b> 점검 자료를 CSV 로 내려받습니다.<br><br>' +
+           '<div style="text-align:left;font-size:12.5px;">' +
+           '<label><input type="radio" name="exsc" value="F" checked> 지금 고른 서식만' +
+           (FORM ? (' <span style="color:#6b7c86;">(' + esc(FORM.formnm) + ')</span>') : '') + '</label><br>' +
+           '<label><input type="radio" name="exsc" value="D"> 이 부서 전체</label><br>' +
+           '<label><input type="radio" name="exsc" value="A"> 전 서식</label></div>',
+      icon:'📊', okText:'내려받기',
+      onOk: function(){
+        var sc = (document.querySelector('input[name=exsc]:checked') || {}).value || 'F';
+        var q = { inYear: yy };
+        if (sc === 'F') { if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; } q.formId = FORM.formid; }
+        if (sc === 'D') q.deptCd = val('ckDept');
+        post('<c:url value="/qps/chkExtract.do"/>', q).then(function(res){
+          var rows = res.rows || [];
+          if (!rows.length) { _alertBox('내려받을 자료가 없습니다.<br>먼저 점검표를 저장해 주세요.', {icon:'⚠️'}); return; }
+          var head = ['서식코드','서식명','부서','연도','월','병동','항목','묶음','단위','일','값'];
+          function c(v){
+            var s = (v == null) ? '' : String(v);
+            return /[",\n]/.test(s) ? ('"' + s.replace(/"/g, '""') + '"') : s;
+          }
+          var csv = head.join(',') + '\n' + rows.map(function(r){
+            return [r.formid, r.formnm, r.deptcd, r.inyear, r.inmm, r.wardnm,
+                    r.itemnm, r.grpnm, r.unitnm, r.dayno, r.val].map(c).join(',');
+          }).join('\n');
+          // ★엑셀이 UTF-8 CSV 를 못 알아보고 한글을 깬다 — BOM 을 붙여야 한다
+          var blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = ('점검표_' + yy + '_' + (sc === 'F' ? FORM.formnm : (sc === 'D' ? '부서' : '전체')) +
+                        '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-') + '.csv';
+          document.body.appendChild(a); a.click();
+          setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+          var s = res.summary || [];
+          var ng = s.reduce(function(t, x){ return t + Number(x.ngcnt || 0); }, 0);
+          _toast(rows.length + '줄을 내려받았습니다.' + (ng ? (' 부적합(X) ' + ng + '건.') : ''), 'ok');
+        }).catch(err);
+      } });
+  };
+
   // 월을 바꾸면 날 수가 달라진다 — 값은 지우지 않고 표만 다시 그린다
   gel('ckMm').addEventListener('change', function(){
     var c = collect();
@@ -467,8 +536,16 @@
   });
 
   $(function(){
+    // ★[서식 관리]에서 넘어왔으면 그 서식으로 연다. 사용 목록에서 꺼져 있으면 못 고르므로 안내한다.
+    var want = (gel('ckForm').getAttribute('data-init') || '').trim();
     ckBase().then(function(){
-      if (FORMS.length && !val('ckForm')) { gel('ckForm').value = FORMS[0].formid; }
+      var sel = gel('ckForm');
+      if (want && FORMS.some(function(f){ return f.formid === want; })) sel.value = want;
+      else if (want) {
+        _alertBox('그 서식은 <b>이 병원 사용 목록에 꺼져</b> 있어 작성 화면에 나오지 않습니다.<br>' +
+                  '[서식 관리]의 체크를 켜고 <b>[사용 저장]</b> 을 눌러 주세요.', {icon:'⚠️'});
+      }
+      if (FORMS.length && !sel.value) sel.value = FORMS[0].formid;
       return ckBase();
     }).then(function(){ renderHead({}); renderGrid([], []); });
   });

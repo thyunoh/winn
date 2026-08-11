@@ -87,10 +87,15 @@
     <span class="cf-sub">— 여기에 등록하면 [점검표 작성]에 새 서식이 생깁니다</span></div>
   <span class="cf-hosp" id="cfHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="cf-spacer"></div>
-  <select id="cfCate" style="width:auto;" onchange="cfList();">
+  <%-- 목록 필터. ★새 서식을 쓰는 중이면 아래 폼의 부서·분류도 따라간다(cfFilterChange) --%>
+  <select id="cfDept" style="width:auto;" onchange="cfFilterChange();">
+    <option value="">전체 부서</option>
+  </select>
+  <select id="cfCate" style="width:auto;" onchange="cfFilterChange();">
     <option value="">전체 분류</option>
   </select>
   <button type="button" class="cf-btn" onclick="cfSave();">저장</button>
+  <button type="button" class="cf-btn ghost" onclick="cfCopy();">📋 복제</button>
   <button type="button" class="cf-btn warn" id="cfDelBtn" onclick="cfDel();" style="display:none;">기본으로 되돌리기</button>
   <span class="cf-sub" id="cfStat"></span>
   <span style="flex:0 0 60px;"></span>
@@ -100,6 +105,14 @@
   <div class="cf-left">
     <div class="cf-card">
       <h4>서식 목록 <span class="hint" id="cfCnt"></span></h4>
+      <%-- ★체크 = 이 병원이 쓰는 서식. 켠 것만 [점검표 작성]에 나온다.
+           130종을 모든 병원에 다 보여주면 못 쓴다(정신 폴더 on/off 도 이걸로 푼다). --%>
+      <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
+        <span class="cf-sub" id="cfUseHint" style="flex:1;">체크 = 이 병원이 쓰는 서식</span>
+        <button type="button" class="cf-btn mini" onclick="cfUseAll(true);">전체 켬</button>
+        <button type="button" class="cf-btn mini" onclick="cfUseAll(false);">전체 끔</button>
+        <button type="button" class="cf-btn mini" onclick="cfUseSave();">사용 저장</button>
+      </div>
       <div class="cf-list" id="cfListBox"><div class="cf-empty">불러오는 중…</div></div>
       <button type="button" class="cf-btn ghost" style="width:100%; margin-top:6px;" onclick="cfNew();">＋ 새 서식</button>
     </div>
@@ -108,12 +121,44 @@
   <div class="cf-right">
     <div class="cf-card">
       <h4>서식 정의</h4>
+      <%-- ★서식을 만들 때 지켜야 하는 것 — 사용자 지시 2026-08-11 :
+           "서식 생성시 주의사항은 데이터 추출 가능이어야 함". 그림처럼 만들면 뽑을 수 없다. --%>
+      <div class="warnbox">
+        <b>⚠ 서식을 만들 때 — 「나중에 뽑을 수 있는가」를 먼저 보세요.</b><br>
+        ① <b>한 칸에 한 가지</b>만 적게 하세요. 「온도/습도」를 한 칸에 받으면 둘 다 못 셉니다 — 항목을 나누세요.<br>
+        ② <b>입력 종류를 맞추세요.</b> O/X 칸은 <b>O / X</b> 로 저장됩니다(○·V·1 을 적어도 자동으로 맞춥니다).
+        숫자는 <b>숫자</b>, 이름은 <b>글자</b>로 두어야 집계가 됩니다.<br>
+        ③ 항목 문구는 <b>원본 그대로</b> — 뽑은 자료의 열 이름이 됩니다.<br>
+        <span style="color:#6b7c86;">추출은 [점검표 작성 ▸ 📊 데이터 추출]에서 CSV 로 나옵니다
+        (서식·부서·연·월·병동·<b>항목</b>·일·값).</span>
+      </div>
       <div class="infobox" id="cfOwnMsg" style="display:none;"></div>
       <div class="cf-form">
+        <%-- ★서식코드는 기계용 열쇠다 — 사람은 서식명으로 본다.
+             한 번 정하면 **못 바꾼다**(바꾸면 이미 작성한 점검표와 끊긴다) → 고를 때만 readOnly.
+             ★새 서식에서 이미 있는 코드를 치면 서버가 막는다(안 막으면 남의 서식을 덮어쓴다). --%>
         <div class="lb">서식코드 *</div>
-        <div><input type="text" id="f_formId" maxlength="30" placeholder="영문 대문자·숫자·_ (예: O2TANK)"></div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="f_formId" maxlength="30" style="flex:1;"
+                 placeholder="영문 대문자·숫자·_ (예: O2TANK)">
+          <button type="button" class="cf-btn mini" id="cfAutoBtn" onclick="cfAutoId();"
+                  title="자동으로 코드 만들기">자동</button>
+        </div>
+        <%-- ★부서·분류가 없으면 여기서 바로 추가한다(공통코드 화면으로 나갔다 오지 않게).
+             추가만 — 이름 바꾸기·지우기는 공통코드 화면에서(딸린 서식을 봐야 판단할 수 있다). --%>
+        <div class="lb">부서 *</div>
+        <div style="display:flex; gap:6px;">
+          <select id="f_deptCd" style="flex:1;"><option value="">— 선택 —</option></select>
+          <button type="button" class="cf-btn mini" onclick="cfCodeAdd('QPS_CHK_DEPT','부서');"
+                  title="부서 추가">＋</button>
+        </div>
+
         <div class="lb">분류</div>
-        <div><select id="f_cateCd"><option value="">— 선택 —</option></select></div>
+        <div class="full" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <select id="f_cateCd" style="width:auto; min-width:200px;"><option value="">— 선택 —</option></select>
+          <button type="button" class="cf-btn mini" onclick="cfCodeAdd('QPS_CHK_CATE','분류');"
+                  title="분류 추가">＋</button>
+          <span class="cf-sub">부서 = 누가 쓰나 · 분류 = 무엇을 점검하나</span></div>
 
         <div class="lb">서식명 *</div>
         <div class="full"><input type="text" id="f_formNm" maxlength="200" placeholder="원본 문서명 그대로 (예: O2탱크 점검대장)"></div>
@@ -165,11 +210,51 @@
         <th style="width:26px;"></th>
       </tr></thead><tbody id="tbITEM"></tbody></table>
       <button type="button" class="cf-btn mini" style="margin-top:6px;" onclick="cfAddItem();">＋ 항목 추가</button>
+      <button type="button" class="cf-btn mini" onclick="cfPasteOpen();">📥 일괄 붙여넣기</button>
+      <button type="button" class="cf-btn mini" onclick="cfExport();">💾 시드 SQL 내보내기</button>
       <span class="cf-sub" style="margin-left:8px;">빈 줄은 저장할 때 버려집니다.</span>
+
+      <%-- ★일괄 붙여넣기 — 130종을 한 줄씩 손으로 넣을 수 없다.
+           원본 서식이나 엑셀에서 항목을 복사해 그대로 붙인다. --%>
+      <div id="cfPasteBox" style="display:none; margin-top:8px; border:1px solid #dfe4ea; border-radius:6px; padding:10px;">
+        <div style="font-size:12.5px; color:#43555f; margin-bottom:6px;">
+          <b>한 줄에 항목 하나</b>씩 붙여넣으세요. 엑셀에서 세로로 복사하면 그대로 들어갑니다.<br>
+          <span style="color:#8a99a3;">탭이나 <b>|</b> 로 나누면 <b>항목 ▸ 열묶음 ▸ 입력(CHECK/TEXT/NUM) ▸ 단위</b> 로 읽습니다.</span>
+        </div>
+        <textarea id="cfPasteTxt" rows="8" placeholder="전원 상태&#10;외관 및 내부청결 상태 점검&#10;온도|치료실 환경|NUM|℃"></textarea>
+        <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12.5px;"><input type="checkbox" id="cfPasteAppend" style="vertical-align:-2px;"> 기존 항목 뒤에 덧붙이기(기본은 교체)</label>
+          <span style="flex:1;"></span>
+          <button type="button" class="cf-btn mini" onclick="cfPasteApply();">넣기</button>
+          <button type="button" class="cf-btn mini" onclick="document.getElementById('cfPasteBox').style.display='none';">닫기</button>
+        </div>
+      </div>
+
+      <%-- ★시드 SQL — 개발 PC 에서 만든 서식을 docs/sql 에 넣어 다른 환경으로 옮긴다 --%>
+      <div id="cfSqlBox" style="display:none; margin-top:8px; border:1px solid #dfe4ea; border-radius:6px; padding:10px;">
+        <div style="font-size:12.5px; color:#43555f; margin-bottom:6px;">
+          아래를 복사해 <b>docs/sql</b> 의 시드 파일에 붙이면 다른 환경에도 같은 서식이 생깁니다.
+          <span style="color:#8a99a3;">(HOSP_CD 를 <b>'*'</b> 로 두면 공통 표준 서식이 됩니다)</span>
+        </div>
+        <textarea id="cfSqlTxt" rows="10" style="font-family:Consolas,monospace; font-size:11.5px;"></textarea>
+        <div style="margin-top:6px; display:flex; gap:8px;">
+          <span style="flex:1;"></span>
+          <button type="button" class="cf-btn mini" onclick="cfSqlCopy();">복사</button>
+          <button type="button" class="cf-btn mini" onclick="document.getElementById('cfSqlBox').style.display='none';">닫기</button>
+        </div>
+      </div>
     </div>
 
     <div class="cf-card">
-      <h4>미리보기 <span class="hint">— 실제 작성 화면과 같은 모양(앞 5칸만)</span></h4>
+      <h4>미리보기 <span class="hint" id="cfPrevHint">— 실제 작성 화면과 같은 모양(앞 5칸만)</span></h4>
+      <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+        <button type="button" class="cf-btn mini" id="cfPrevWideBtn" onclick="cfPrevWide();">↔ 한 달 전체 보기</button>
+        <%-- ★서식 관리와 작성 화면을 오갈 길이 없으면, 만든 서식의 실물을 보려고
+             메뉴를 다시 찾아 서식을 또 골라야 한다(2026-08-11 사용자 지적).
+             ★새 창으로 연다 — QPS 공통(보고 나서 서식 관리로 돌아와야 한다). --%>
+        <button type="button" class="cf-btn ghost" onclick="cfOpenWrite();">🔎 작성 화면에서 보기(새 창)</button>
+        <span class="cf-sub" style="align-self:center;">저장한 뒤에 눌러야 바뀐 내용이 보입니다.</span>
+      </div>
       <div class="prev" id="cfPrev"></div>
     </div>
   </div>
@@ -177,7 +262,7 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', CATE = [], LIST = [], curId = '', curOwn = 'N';
+  var HOSP_NM = '', CATE = [], DEPT = [], LIST = [], curId = '', curOwn = 'N';
 
   function gel(id){ return document.getElementById(id); }
   function post(url, data){
@@ -255,29 +340,50 @@
     return out;
   }
 
+  var PREV_WIDE = false;
+  window.cfPrevWide = function(){
+    PREV_WIDE = !PREV_WIDE;
+    gel('cfPrevWideBtn').textContent = PREV_WIDE ? '↤ 앞 5칸만' : '↔ 한 달 전체 보기';
+    gel('cfPrevHint').textContent = PREV_WIDE ? '— 실제 작성 화면과 같은 모양(31칸 전체 · 옆으로 밉니다)'
+                                              : '— 실제 작성 화면과 같은 모양(앞 5칸만)';
+    renderPrev();
+  };
+  /** 저장한 서식을 작성 화면(실물)에서 본다 — ★새 창(돌아와야 하므로). */
+  window.cfOpenWrite = function(){
+    var id = val('f_formId');
+    if (!id) { _alertBox('서식을 먼저 고르거나 저장하세요.', {icon:'⚠️'}); return; }
+    window.open('<c:url value="/main/qpsChk.do"/>?form=' + encodeURIComponent(id.toUpperCase()), '_blank');
+  };
+
   /** ★미리보기 — 작성 화면과 **같은 규칙**으로 그린다. 여기서 모양이 이상하면 작성 화면도 이상하다. */
   function renderPrev(){
     var a = axis(), items = readItems(), box = gel('cfPrev');
-    var DAYS = [1,2,3,4,5], MONS = [1,2,3,4,5];
+    var DAYS = [], MONS = [1,2,3,4,5,6,7,8,9,10,11,12];
+    var nd = PREV_WIDE ? 31 : 5;
+    for (var k = 1; k <= nd; k++) DAYS.push(k);
+    if (!PREV_WIDE) MONS = [1,2,3,4,5];
+    // 「…」 칸 — 전체 보기에서는 뒤가 잘리지 않으므로 없앤다.
+    // ★머리글과 몸통을 함께 없애야 한다. 한쪽만 빼면 칸 수가 어긋나 표가 밀린다.
+    var ELLTD = PREV_WIDE ? '' : '<td></td>';
     var h = '';
     if (a === 'EQUIP_DAY') {
       var n = Math.min(3, Math.max(1, Number(val('f_equipCnt') || 10)));
       h += items.length ? ('<div style="font-size:10.5px;color:#43555f;margin-bottom:4px;">점검항목 : ' +
             items.map(function(r, i){ return (i + 1) + '.' + esc(r.itemnm); }).join(' &nbsp; ') + '</div>') : '';
       h += '<table><thead><tr><th style="min-width:120px;">의료기기</th>' +
-           DAYS.map(function(d){ return '<th style="width:26px;">' + d + '</th>'; }).join('') + '<th>…</th></tr></thead><tbody>';
-      for (var i = 1; i <= n; i++) h += '<tr><td class="l">의료기기 ' + i + '</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + '<td></td></tr>';
-      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 확인란</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + '<td></td></tr>';
+           DAYS.map(function(d){ return '<th style="width:26px;">' + d + '</th>'; }).join('') + (PREV_WIDE ? '' : '<th>…</th>') + '</tr></thead><tbody>';
+      for (var i = 1; i <= n; i++) h += '<tr><td class="l">의료기기 ' + i + '</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 확인란</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       h += '</tbody></table>';
     } else if (a === 'ITEM_DAY' || a === 'ITEM_MONTH') {
       var cols = (a === 'ITEM_MONTH') ? MONS : DAYS, suf = (a === 'ITEM_MONTH') ? '월' : '';
       h += '<table><thead><tr><th style="min-width:180px;">' + (a === 'ITEM_MONTH' ? '시설 점검' : '일') + '</th>' +
-           cols.map(function(d){ return '<th style="width:30px;">' + d + suf + '</th>'; }).join('') + '<th>…</th></tr></thead><tbody>';
-      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + cols.map(function(){ return '<td></td>'; }).join('') + '<td></td></tr>';
+           cols.map(function(d){ return '<th style="width:30px;">' + d + suf + '</th>'; }).join('') + (PREV_WIDE ? '' : '<th>…</th>') + '</tr></thead><tbody>';
+      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       items.forEach(function(r){
-        h += '<tr><td class="l">' + esc(r.itemnm) + '</td>' + cols.map(function(){ return '<td></td>'; }).join('') + '<td></td></tr>';
+        h += '<tr><td class="l">' + esc(r.itemnm) + '</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       });
-      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 사인</td>' + cols.map(function(){ return '<td></td>'; }).join('') + '<td></td></tr>';
+      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 사인</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       h += '</tbody></table>';
     } else { // DAY_ITEM
       var grps = [], last = null;
@@ -299,7 +405,7 @@
       DAYS.forEach(function(d){
         h += '<tr><td>' + d + '</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
       });
-      h += '<tr><td>…</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      if (!PREV_WIDE) h += '<tr><td>…</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
       h += '</tbody></table>';
     }
     if (chk('f_noteYn') === 'Y') h += '<div style="font-size:10.5px;color:#43555f;margin-top:4px;">특이사항 칸이 표 아래 붙습니다.</div>';
@@ -315,24 +421,40 @@
     if (e.target.closest('#tbITEM') || (e.target.id || '').indexOf('f_') === 0) renderPrev();
   });
 
+  function codeNm(list, cd){
+    for (var i = 0; i < list.length; i++) if (String(list[i].subcode) === String(cd)) return list[i].subcodenm || cd;
+    return cd || '';
+  }
+
   window.cfList = function(){
-    return post('<c:url value="/qps/chkFormList.do"/>', { cateCd: val('cfCate') }).then(function(res){
+    return post('<c:url value="/qps/chkFormList.do"/>', { cateCd: val('cfCate'), deptCd: val('cfDept') }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('cfHosp').textContent = '🏥 ' + HOSP_NM; }
       if (!CATE.length) {
         CATE = res.cate || [];
         [gel('cfCate'), gel('f_cateCd')].forEach(function(sel){
-          CATE.forEach(function(c){ sel.add(new Option(c.subcodenm || c.codenm || c.subcode, c.subcode)); });
+          CATE.forEach(function(c){ sel.add(new Option(c.subcodenm || c.subcode, c.subcode)); });
+        });
+      }
+      if (!DEPT.length) {
+        DEPT = res.dept || [];
+        [gel('cfDept'), gel('f_deptCd')].forEach(function(sel){
+          DEPT.forEach(function(c){ sel.add(new Option(c.subcodenm || c.subcode, c.subcode)); });
         });
       }
       LIST = res.list || [];
       gel('cfCnt').textContent = LIST.length ? ('· ' + LIST.length + '종') : '';
+      var onCnt = LIST.filter(function(r){ return r.useyn === 'Y'; }).length;
+      gel('cfUseHint').innerHTML = '체크 = 이 병원이 쓰는 서식 <b>' + onCnt + '/' + LIST.length + '</b>';
       var box = gel('cfListBox');
       box.innerHTML = LIST.length
         ? LIST.map(function(r){
             return '<div class="cf-item' + (r.formid === curId ? ' on' : '') + '" onclick="cfOpen(\'' + esc(r.formid) + '\');">' +
-                   '<div class="t">' + esc(r.formnm) + '</div>' +
-                   '<div class="d"><span class="tag axis">' + esc(AXIS_NM[r.axisgb] || r.axisgb) + '</span>' +
+                   '<div class="t"><input type="checkbox" class="cfuse" data-id="' + esc(r.formid) + '"' +
+                     (r.useyn === 'Y' ? ' checked' : '') + ' onclick="event.stopPropagation();"' +
+                     ' style="vertical-align:-2px; margin-right:6px;">' + esc(r.formnm) + '</div>' +
+                   '<div class="d" style="padding-left:20px;"><span class="tag axis">' + esc(AXIS_NM[r.axisgb] || r.axisgb) + '</span>' +
                    '<span class="tag ' + (r.own === 'Y' ? 'own">병원 서식' : 'std">기본 서식') + '</span>' +
+                   (r.deptcd ? ('<span>' + esc(codeNm(DEPT, r.deptcd)) + '</span>') : '') +
                    '<span>항목 ' + Number(r.itemcnt || 0) + '</span>' +
                    '<span>작성 ' + Number(r.doccnt || 0) + '건</span></div></div>';
           }).join('')
@@ -340,11 +462,183 @@
     }).catch(err);
   };
 
+  /**
+   * 상단 필터를 바꾸면 목록을 다시 받고, ***새 서식을 쓰는 중이면 폼의 부서·분류도 따라간다.***
+   * 「약국」으로 걸러 놓고 새 서식을 만드는데 부서를 또 고르게 하면 빠뜨린다(2026-08-11 사용자 지적).
+   *
+   * ★★단, <b>저장된 서식을 보고 있을 때는 절대 따라가지 않는다</b> —
+   *   목록을 걸러 보려고 필터를 만졌을 뿐인데 <b>그 서식의 부서가 바뀌어</b> 저장되면 사고다.
+   * ★'전체'로 되돌릴 때도 폼을 비우지 않는다 — 고르던 값을 지우는 게 더 나쁘다.
+   */
+  window.cfFilterChange = function(){
+    var isNew = !curId;
+    var d = val('cfDept'), c = val('cfCate');
+    cfList().then(function(){
+      if (!isNew) return;
+      if (d) set('f_deptCd', d);
+      if (c) set('f_cateCd', c);
+    });
+  };
+
+  /** 자동 서식코드 — 부서 접두어 + 3자리. 사람이 130종의 코드를 지을 수 없다. */
+  var DEPT_PRE = { NURSE:'NUR', PHARM:'PHA', NUTRI:'NUT', FACIL:'FAC', LAB:'LAB', INFECT:'INF', COMMON:'CHK' };
+  window.cfAutoId = function(){
+    if (gel('f_formId').readOnly) { _alertBox('이미 저장된 서식의 코드는 바꿀 수 없습니다.<br>' +
+        '<span style="color:#6b7c86;font-size:12px;">바꾸면 이미 작성한 점검표와 끊깁니다.</span>', {icon:'⚠️'}); return; }
+    var pre = DEPT_PRE[val('f_deptCd')] || 'CHK';
+    post('<c:url value="/qps/chkCodeNext.do"/>', { prefix: pre }).then(function(res){
+      set('f_formId', res.formId);
+      _toast('서식코드 ' + res.formId + ' 를 만들었습니다.', 'ok');
+    }).catch(err);
+  };
+
+  /** 부서·분류 코드 추가 — ★서식을 만들다 없으면 여기서 바로. 추가한 값이 곧바로 골라진다. */
+  window.cfCodeAdd = function(codeCd, what){
+    _confirmBox({
+      msg: '<b>' + esc(what) + '</b> 를 새로 추가합니다.<br><br>' +
+           '<div style="text-align:left;font-size:12.5px;">코드값 <span style="color:#8a99a3;">(영문 대문자·숫자·_)</span><br>' +
+           '<input id="ccCd" style="width:100%;padding:5px 7px;border:1px solid #cfd8e0;border-radius:5px;" ' +
+           'placeholder="예) RADIO"><br><br>이름<br>' +
+           '<input id="ccNm" style="width:100%;padding:5px 7px;border:1px solid #cfd8e0;border-radius:5px;" ' +
+           'placeholder="예) 방사선"></div>' +
+           '<div style="text-align:left;font-size:11.5px;color:#8a99a3;margin-top:8px;">' +
+           '※ 이름 바꾸기·지우기는 [기준정보 ▸ 공통코드]에서 하세요 —<br>' +
+           '&nbsp;&nbsp;&nbsp;이미 그 코드를 쓰는 서식이 있으면 지우면 안 됩니다.</div>',
+      icon:'🏷', okText:'추가',
+      onOk: function(){
+        var cd = ((document.getElementById('ccCd') || {}).value || '').trim().toUpperCase();
+        var nm = ((document.getElementById('ccNm') || {}).value || '').trim();
+        post('<c:url value="/qps/chkCodeAdd.do"/>', { codeCd: codeCd, subCode: cd, subCodeNm: nm })
+          .then(function(res){
+            var list = res.list || [];
+            // 셀렉트를 다시 그린다 — 화면 필터·서식 폼 둘 다
+            var pair = (codeCd === 'QPS_CHK_DEPT') ? ['cfDept','f_deptCd','전체 부서'] : ['cfCate','f_cateCd','전체 분류'];
+            if (codeCd === 'QPS_CHK_DEPT') DEPT = list; else CATE = list;
+            var keepF = val(pair[0]), keepS = val(pair[1]);
+            [[pair[0], pair[2]], [pair[1], '— 선택 —']].forEach(function(x){
+              var sel = gel(x[0]);
+              sel.innerHTML = '<option value="">' + x[1] + '</option>';
+              list.forEach(function(c){ sel.add(new Option(c.subcodenm || c.subcode, c.subcode)); });
+            });
+            gel(pair[0]).value = keepF;
+            gel(pair[1]).value = cd || keepS;   // ★방금 넣은 값이 골라지게 — 다시 찾게 하지 않는다
+            _toast(what + ' 「' + nm + '」 를 추가했습니다.', 'ok');
+          }).catch(err);
+      } });
+  };
+
+  window.cfUseAll = function(on){
+    document.querySelectorAll('#cfListBox .cfuse').forEach(function(el){ el.checked = !!on; });
+  };
+  /** ★사용 목록은 **화면에 보이는 것만** 담으면 안 된다 — 부서·분류로 걸러 놓고 저장하면
+   *    안 보이던 서식이 통째로 꺼진다. 걸러진 것은 지금 값을 그대로 유지한다. */
+  window.cfUseSave = function(){
+    var shown = {};
+    document.querySelectorAll('#cfListBox .cfuse').forEach(function(el){
+      shown[el.getAttribute('data-id')] = el.checked;
+    });
+    var uses = [];
+    LIST.forEach(function(r){
+      var on = (r.formid in shown) ? shown[r.formid] : (r.useyn === 'Y');
+      if (on) uses.push({ formid: r.formid });
+    });
+    // 화면에 안 뜬 서식(부서 필터로 걸러진 것)도 켜져 있으면 지켜야 한다 → 전체를 다시 받아 합친다
+    post('<c:url value="/qps/chkFormList.do"/>', { cateCd:'', deptCd:'' }).then(function(res){
+      var all = res.list || [], keep = {};
+      uses.forEach(function(u){ keep[u.formid] = true; });
+      all.forEach(function(r){
+        if (r.formid in shown) return;              // 지금 화면에서 정한 것은 위에서 이미 반영
+        if (r.useyn === 'Y') keep[r.formid] = true; // 안 보이던 것은 그대로 둔다
+      });
+      var body = Object.keys(keep).map(function(k){ return { formid: k }; });
+      return post('<c:url value="/qps/chkUseSave.do"/>', { uses: JSON.stringify(body) });
+    }).then(function(){
+      _toast('사용 서식을 저장했습니다.', 'ok');
+      cfList();
+    }).catch(err);
+  };
+
+  /** 서식 복제 — 비슷한 점검표가 대부분이라 새로 짜는 것보다 훨씬 빠르다. */
+  window.cfCopy = function(){
+    if (!curId) { _alertBox('복제할 서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
+    var src = curId, srcNm = val('f_formNm');
+    _confirmBox({
+      msg: '<b>' + esc(srcNm) + '</b> 을(를) 복제합니다.<br><br>' +
+           '<div style="text-align:left;font-size:12.5px;">새 서식코드<br>' +
+           '<input id="cpId" style="width:100%;padding:5px 7px;border:1px solid #cfd8e0;border-radius:5px;" ' +
+           'placeholder="영문 대문자·숫자·_" value="' + esc(src) + '_2"><br><br>새 서식명<br>' +
+           '<input id="cpNm" style="width:100%;padding:5px 7px;border:1px solid #cfd8e0;border-radius:5px;" ' +
+           'value="' + esc(srcNm) + ' (복사)"></div>',
+      icon:'📋', okText:'복제',
+      onOk: function(){
+        var id = (document.getElementById('cpId') || {}).value || '';
+        var nm = (document.getElementById('cpNm') || {}).value || '';
+        post('<c:url value="/qps/chkFormCopy.do"/>', { srcFormId: src, newFormId: id, newFormNm: nm })
+          .then(function(res){ _toast('복제했습니다.', 'ok'); cfOpen(res.formId); }).catch(err);
+      } });
+  };
+
+  window.cfPasteOpen = function(){
+    gel('cfPasteBox').style.display = '';
+    gel('cfPasteTxt').focus();
+  };
+  window.cfPasteApply = function(){
+    var txt = String(gel('cfPasteTxt').value || '');
+    var lines = txt.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    if (!lines.length) { _alertBox('붙여넣을 내용이 없습니다.', {icon:'⚠️'}); return; }
+    if (!gel('cfPasteAppend').checked) gel('tbITEM').innerHTML = '';
+    lines.forEach(function(ln){
+      // 탭 또는 | 로 나눈다 — 엑셀에서 여러 칸을 복사하면 탭이 들어온다
+      var p = ln.split(/\t|\|/).map(function(s){ return s.trim(); });
+      var ig = (p[2] || '').toUpperCase();
+      itemRow({ itemnm: p[0], grpnm: p[1] || '',
+                inputgb: (ig === 'TEXT' || ig === 'NUM') ? ig : 'CHECK',
+                unitnm: p[3] || '' });
+    });
+    renumber(); cfAxisChange();
+    gel('cfPasteBox').style.display = 'none';
+    gel('cfPasteTxt').value = '';
+    _toast(lines.length + '개 항목을 넣었습니다. 저장을 눌러야 반영됩니다.', 'ok');
+  };
+
+  /** 시드 SQL 내보내기 — 개발 PC 에서 만든 서식을 docs/sql 로 옮긴다(운영은 아웃바운드가 막혀 있다). */
+  function q(s){ return (s == null || s === '') ? 'NULL' : ("'" + String(s).replace(/'/g, "''") + "'"); }
+  window.cfExport = function(){
+    if (!val('f_formId')) { _alertBox('서식을 먼저 고르거나 만드세요.', {icon:'⚠️'}); return; }
+    var id = val('f_formId').toUpperCase(), items = readItems();
+    var sql =
+      '-- ' + val('f_formNm') + ' (' + id + ') — ' + AXIS_NM[axis()] + '\n' +
+      "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
+      "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
+      'INSERT INTO TBL_QPS_CHK_FORM\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,EQUIP_CNT,GUIDE_TXT,HEAD_NMS,\n' +
+      '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
+      ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
+        q(axis()) + ',' + q(axis() === 'ITEM_MONTH' ? 'Y' : 'M') + ',' + (Number(val('f_equipCnt')) || 10) + ',' +
+        q(val('f_guideTxt')) + ',' + q(val('f_headNms')) + ',\n  ' +
+        q(chk('f_signerYn')) + ',' + q(chk('f_noteYn')) + ',' + q(chk('f_fixYn')) + ',' +
+        q(val('f_signLine')) + ',' + q(val('f_footTxt')) + ',' + (Number(val('f_sortNo')) || 0) + ",'Y','system');\n" +
+      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
+      items.map(function(r, i){
+        return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' +
+               q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ",'Y')";
+      }).join(',\n') + ';\n';
+    gel('cfSqlTxt').value = sql;
+    gel('cfSqlBox').style.display = '';
+  };
+  window.cfSqlCopy = function(){
+    var t = gel('cfSqlTxt');
+    t.select(); t.setSelectionRange(0, 999999);
+    try { document.execCommand('copy'); _toast('복사했습니다.', 'ok'); }
+    catch (e) { _alertBox('복사에 실패했습니다. 직접 선택해 복사해 주세요.', {icon:'⚠️'}); }
+  };
+
   window.cfOpen = function(id){
     post('<c:url value="/qps/chkFormGet.do"/>', { formId: id }).then(function(res){
       var d = res.form || {};
       curId = d.formid || ''; curOwn = d.own || 'N';
-      set('f_formId', d.formid); set('f_formNm', d.formnm); set('f_cateCd', d.catecd || '');
+      set('f_formId', d.formid); set('f_formNm', d.formnm);
+      set('f_cateCd', d.catecd || ''); set('f_deptCd', d.deptcd || '');
       set('f_axisGb', d.axisgb || 'ITEM_DAY'); set('f_equipCnt', d.equipcnt || 10);
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
       setChk('f_signerYn', d.signeryn); setChk('f_noteYn', d.noteyn); setChk('f_fixYn', d.fixyn);
@@ -375,7 +669,9 @@
   window.cfNew = function(){
     curId = ''; curOwn = 'N';
     ['f_formId','f_formNm','f_guideTxt','f_headNms','f_signLine','f_footTxt'].forEach(function(id){ set(id, ''); });
-    set('f_cateCd', ''); set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0);
+    // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
+    set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
+    set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0);
     setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N');
     gel('f_formId').readOnly = false;
     gel('tbITEM').innerHTML = ''; [{},{},{}].forEach(itemRow);
@@ -391,15 +687,19 @@
   window.cfSave = function(){
     if (!val('f_formId')) { _alertBox('서식코드를 입력해 주세요.', {icon:'⚠️'}); return; }
     if (!val('f_formNm')) { _alertBox('서식명을 입력해 주세요.', {icon:'⚠️'}); return; }
+    if (!val('f_deptCd')) { _alertBox('부서를 고르세요 — 부서가 없으면 작성 화면에서 서식이 뒤섞입니다.', {icon:'⚠️'}); return; }
     var items = readItems();
     if (!items.length) { _alertBox('점검항목을 하나 이상 등록해 주세요.', {icon:'⚠️'}); return; }
     var go = function(){
       post('<c:url value="/qps/chkFormSave.do"/>', {
-        formId: val('f_formId'), formNm: val('f_formNm'), cateCd: val('f_cateCd'),
+        formId: val('f_formId'), formNm: val('f_formNm'),
+        cateCd: val('f_cateCd'), deptCd: val('f_deptCd'),
         axisGb: axis(), equipCnt: val('f_equipCnt'),
         guideTxt: val('f_guideTxt'), headNms: val('f_headNms'),
         signerYn: chk('f_signerYn'), noteYn: chk('f_noteYn'), fixYn: chk('f_fixYn'),
         signLine: val('f_signLine'), footTxt: val('f_footTxt'), sortNo: val('f_sortNo'),
+        // ★새 서식이면 서버가 중복을 막는다 — 안 막으면 남의 서식을 덮어쓴다
+        newYn: curId ? 'N' : 'Y',
         items: JSON.stringify(items)
       }).then(function(res){
         _toast('저장되었습니다.', 'ok');

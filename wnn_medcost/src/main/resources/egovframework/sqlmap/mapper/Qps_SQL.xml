@@ -2251,7 +2251,10 @@
 		   <if test="cateCd != null and cateCd != ''"> AND f.CATE_CD = #{cateCd} </if>
 		   <if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
 		   <!-- ★작성 화면은 켠 것만(onlyUse='Y'), 서식 관리 화면은 전부 본다 -->
-		   <if test="onlyUse == 'Y'">
+		   <!-- ★★작은따옴표로 쓰지 말 것 : test="onlyUse == 'Y'" 는 OGNL 이 'Y' 를 **문자(char)** 로 읽어
+		        문자열 "N" 을 숫자로 바꾸려다 NumberFormatException 으로 죽는다(2026-08-11 실제 발생).
+		        한 글자 비교는 반드시 **큰따옴표** 로 — 속성은 작은따옴표로 감싼다. -->
+		   <if test='onlyUse == "Y"'>
 		     AND ( NOT EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u2 WHERE u2.HOSP_CD = #{hospCd})
 		           OR EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u3
 		                       WHERE u3.HOSP_CD = #{hospCd} AND u3.FORM_ID = f.FORM_ID AND u3.USE_YN='Y') )
@@ -2262,6 +2265,22 @@
 		                       THEN #{hospCd} ELSE '*' END )
 		 ORDER BY f.SORT_NO, f.FORM_NM
 	</select>
+
+	<!-- ═══ 서식 화면에서 부서·분류 코드 바로 추가 (2026-08-11) ═══
+	     ★사용자 지시 : "서식에 관련 공통코드는 여기에서 관리하게".
+	       서식을 만들다 부서가 없으면 공통코드 화면으로 나갔다 와야 했다.
+	     ★★<b>추가만</b> 한다. 이름 바꾸기·지우기는 공통코드 화면에서 —
+	       ***이미 그 코드를 쓰는 서식이 있는데 지우면 그 서식이 미아가 된다.***
+	       무엇이 딸려 있는지는 공통코드 화면에서 봐야 판단할 수 있다. -->
+	<insert id="insertChkCode" parameterType="map">
+		INSERT INTO TBL_CODE_DTL
+		 (CODE_GB, CODE_CD, SUB_CODE, JOB_SEQ, SUB_CODE_NM, START_DT, END_DT, USE_YN, SORT, ACTION_YN, REG_USER)
+		SELECT 'Q', #{codeCd}, #{subCode}, 1, #{subCodeNm}, '20000101', '99991231', 'Y',
+		       ( SELECT IFNULL(MAX(x.SORT),0) + 1 FROM TBL_CODE_DTL x WHERE x.CODE_CD = #{codeCd} ),
+		       'Y', #{regUser}
+		 WHERE NOT EXISTS ( SELECT 1 FROM TBL_CODE_DTL y
+		                     WHERE y.CODE_CD = #{codeCd} AND y.SUB_CODE = #{subCode} )
+	</insert>
 
 	<!-- 병원별 사용 서식 저장 — 통째 교체. ★한 번이라도 저장하면 그 뒤로는 켠 것만 보인다. -->
 	<delete id="deleteChkUse">DELETE FROM TBL_QPS_CHK_USE WHERE HOSP_CD = #{hospCd}</delete>
@@ -2290,6 +2309,22 @@
 		  FROM TBL_QPS_CHK_ITEM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD = #{hospCd}
 		 ORDER BY SORT
+	</select>
+
+	<!-- ★서식코드 중복 검사 — 새 서식을 만들 때 **반드시** 부른다.
+	     저장이 `ON DUPLICATE KEY UPDATE` 라 이미 있는 코드를 치면 **그 서식을 조용히 덮어쓴다.**
+	     130 종을 만들다 보면 반드시 생기는 사고다.
+	     ★USE_YN='N'(지운 것)도 센다 — 같은 코드를 되살리면 옛 항목이 섞인다. -->
+	<select id="countChkForm" resultType="int">
+		SELECT COUNT(*) FROM TBL_QPS_CHK_FORM WHERE FORM_ID = #{formId}
+	</select>
+
+	<!-- 자동 코드 제안 — 접두어 + 3자리. 이미 쓰는 번호는 건너뛴다. -->
+	<select id="selectChkCodeMax" resultType="int">
+		SELECT IFNULL(MAX(CAST(SUBSTRING(FORM_ID, LENGTH(#{prefix}) + 1) AS UNSIGNED)), 0)
+		  FROM TBL_QPS_CHK_FORM
+		 WHERE FORM_ID LIKE CONCAT(#{prefix}, '%')
+		   AND SUBSTRING(FORM_ID, LENGTH(#{prefix}) + 1) REGEXP '^[0-9]+$'
 	</select>
 
 	<!-- 서식 저장 — 병원 행 upsert. ★공통('*') 행은 절대 안 건드린다.
@@ -2376,6 +2411,78 @@
 		 (#{chkSeq}, #{v.rowno}, #{v.colno}, #{v.val})
 		</foreach>
 	</insert>
+
+	<!-- ═══ 데이터 추출 ═══
+	     ★★사용자 지시(2026-08-11) : "서식 생성시 주의사항은 데이터 추출 가능이어야 함".
+	       격자에 채운 값이 **평면 한 줄씩** 나와야 엑셀·집계로 쓸 수 있다.
+	     ★축마다 행·열의 뜻이 다르므로 여기서 **일자와 항목으로 되돌린다** —
+	       화면이 아니라 SQL 이 하는 이유는, 화면마다 따로 풀면 뽑는 곳마다 뜻이 갈리기 때문이다.
+	         DAY_ITEM  : ROW=일  COL=항목
+	         그 외      : ROW=항목(또는 기기)  COL=일(또는 월)
+	     ★예약 900 = 점검자 사인 행/열. 항목명이 없으므로 '점검자'로 붙인다. -->
+	<select id="selectChkExtract" resultType="java.util.HashMap">
+		SELECT f.FORM_ID  AS formid,
+		       f.FORM_NM  AS formnm,
+		       f.AXIS_GB  AS axisgb,
+		       f.DEPT_CD  AS deptcd,
+		       d.CHK_SEQ  AS chkseq,
+		       d.IN_YEAR  AS inyear,
+		       d.IN_MM    AS inmm,
+		       IFNULL(d.WARD_NM,'') AS wardnm,
+		       CASE WHEN f.AXIS_GB = 'DAY_ITEM' THEN v.ROW_NO ELSE v.COL_NO END AS dayno,
+		       CASE WHEN f.AXIS_GB = 'DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END AS itemno,
+		       CASE
+		         WHEN (CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END) = 900 THEN '점검자'
+		         WHEN f.AXIS_GB = 'EQUIP_DAY' THEN IFNULL(r.ROW_NM,
+		              CONCAT('의료기기 ', CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END))
+		         ELSE IFNULL(i.ITEM_NM, '(항목없음)')
+		       END AS itemnm,
+		       IFNULL(i.GRP_NM,'')  AS grpnm,
+		       IFNULL(i.UNIT_NM,'') AS unitnm,
+		       v.VAL AS val
+		  FROM TBL_QPS_CHK_DOC  d
+		  JOIN TBL_QPS_CHK_FORM f
+		    ON f.FORM_ID = d.FORM_ID
+		   AND f.HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                         SELECT 1 FROM TBL_QPS_CHK_FORM x
+		                          WHERE x.FORM_ID = d.FORM_ID AND x.HOSP_CD = d.HOSP_CD AND x.USE_YN='Y')
+		                       THEN d.HOSP_CD ELSE '*' END )
+		  JOIN TBL_QPS_CHK_VAL  v ON v.CHK_SEQ = d.CHK_SEQ
+		  LEFT JOIN TBL_QPS_CHK_ITEM i
+		    ON i.FORM_ID = f.FORM_ID AND i.HOSP_CD = f.HOSP_CD
+		   AND i.SORT = (CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END)
+		  LEFT JOIN TBL_QPS_CHK_ROW r
+		    ON r.CHK_SEQ = d.CHK_SEQ
+		   AND r.ROW_NO = (CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END)
+		 WHERE d.HOSP_CD = #{hospCd} AND d.USE_YN = 'Y' AND d.IN_YEAR = #{inYear}
+		<if test="formId != null and formId != ''"> AND d.FORM_ID = #{formId} </if>
+		<if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
+		<if test="inMm  != null and inMm  != ''"> AND d.IN_MM   = #{inMm}   </if>
+		 ORDER BY f.SORT_NO, d.IN_MM, d.CHK_SEQ, itemno, dayno
+	</select>
+
+	<!-- 점검 이행 요약 — ★병원이 실제로 알고 싶은 것은 「빠짐없이 했는가」다.
+	     정규화(O/X) 덕분에 셀 수 있다. 값이 제각각이면 이 집계가 성립하지 않는다. -->
+	<select id="selectChkSummary" resultType="java.util.HashMap">
+		SELECT f.FORM_ID AS formid, f.FORM_NM AS formnm, f.DEPT_CD AS deptcd,
+		       d.IN_MM AS inmm, IFNULL(d.WARD_NM,'') AS wardnm,
+		       COUNT(v.VAL) AS wrote,
+		       SUM(CASE WHEN v.VAL = 'O' THEN 1 ELSE 0 END) AS okcnt,
+		       SUM(CASE WHEN v.VAL = 'X' THEN 1 ELSE 0 END) AS ngcnt,
+		       SUM(CASE WHEN v.VAL NOT IN ('O','X') THEN 1 ELSE 0 END) AS etccnt
+		  FROM TBL_QPS_CHK_DOC d
+		  JOIN TBL_QPS_CHK_FORM f
+		    ON f.FORM_ID = d.FORM_ID
+		   AND f.HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                         SELECT 1 FROM TBL_QPS_CHK_FORM x
+		                          WHERE x.FORM_ID = d.FORM_ID AND x.HOSP_CD = d.HOSP_CD AND x.USE_YN='Y')
+		                       THEN d.HOSP_CD ELSE '*' END )
+		  LEFT JOIN TBL_QPS_CHK_VAL v ON v.CHK_SEQ = d.CHK_SEQ
+		 WHERE d.HOSP_CD = #{hospCd} AND d.USE_YN='Y' AND d.IN_YEAR = #{inYear}
+		<if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
+		 GROUP BY f.FORM_ID, f.FORM_NM, f.DEPT_CD, d.IN_MM, d.WARD_NM
+		 ORDER BY f.SORT_NO, d.IN_MM
+	</select>
 
 	<select id="selectChkRows" resultType="java.util.HashMap">
 		SELECT ROW_NO AS rowno, ROW_NM AS rownm

@@ -1729,6 +1729,49 @@ public class QpsServiceImpl implements QpsService {
 		mapper.insertChkUse(p);
 	}
 
+	@Override
+	public boolean existsChkForm(String formId) throws Exception {
+		return mapper.countChkForm(formId) > 0;
+	}
+
+	/**
+	 * 자동 서식코드 — 접두어 + 3자리. ★130 종을 지어 내다 보면 사람이 코드를 못 짓는다.
+	 * ★이미 쓰는 번호 다음을 준다. 지운 서식(USE_YN='N')의 번호도 건너뛴다 —
+	 *   같은 코드를 되살리면 옛 항목이 섞인다.
+	 */
+	@Override
+	public String nextChkFormId(String prefix) throws Exception {
+		String p = (prefix == null) ? "" : prefix.trim().toUpperCase();
+		if (p.isEmpty()) p = "CHK";
+		for (int i = mapper.selectChkCodeMax(p) + 1; i <= 999; i++) {
+			String cand = p + String.format("%03d", i);
+			if (mapper.countChkForm(cand) == 0) return cand;
+		}
+		throw new Exception("자동 코드를 만들지 못했습니다. 접두어를 바꿔 주세요.");
+	}
+
+	/**
+	 * 서식 화면에서 부서·분류 코드 추가 (2026-08-11) —
+	 * "서식에 관련 공통코드는 여기에서 관리하게".
+	 * ★★<b>추가만</b> 한다. 이름 바꾸기·지우기는 공통코드 화면에서 —
+	 *   ***이미 그 코드를 쓰는 서식이 있는데 지우면 그 서식이 미아가 된다.***
+	 */
+	@Override
+	public List<Map<String, Object>> addChkCode(String codeCd, String subCode, String subCodeNm,
+	                                            String regUser) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("codeCd", codeCd); p.put("subCode", subCode);
+		p.put("subCodeNm", subCodeNm); p.put("regUser", regUser);
+		mapper.insertChkCode(p);
+		// 갱신된 그 세트만 돌려준다 — 화면이 셀렉트를 바로 다시 그린다
+		List<Map<String, Object>> out = new ArrayList<>();
+		List<Map<String, Object>> all = mapper.selectQpsCodes();
+		if (all != null) for (Map<String, Object> r : all) {
+			if (codeCd.equals(String.valueOf(r.get("codecd")))) out.add(r);
+		}
+		return out;
+	}
+
 	/**
 	 * 서식 복제 — ★130종을 손으로 만들 수 없어서 넣은 것이다.
 	 *   비슷한 점검표가 대부분이라 「복제 → 항목만 손보기」가 새로 짜는 것보다 훨씬 빠르다.
@@ -1827,6 +1870,7 @@ public class QpsServiceImpl implements QpsService {
 			List<Map<String, Object>> keep = new ArrayList<>();
 			for (Map<String, Object> v : vals) {
 				if (str(v.get("val")).isEmpty()) continue;   // 빈 칸은 저장하지 않는다 — 31×16 을 다 넣으면 낭비다
+				v.put("val", normChk(str(v.get("val"))));    // ★값 정규화 — 아래 주석
 				keep.add(v);
 			}
 			if (!keep.isEmpty()) {
@@ -1854,5 +1898,32 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public void deleteChkDoc(Map<String, Object> param) throws Exception {
 		mapper.deleteChkDoc(param);
+	}
+
+	@Override
+	public Map<String, Object> selectChkExtract(Map<String, Object> param) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("rows",    mapper.selectChkExtract(param));
+		out.put("summary", mapper.selectChkSummary(param));
+		return out;
+	}
+
+	/**
+	 * ★★값 정규화 — <b>이게 없으면 점검표를 전산화한 뜻이 없다</b>(사용자 지시 2026-08-11 :
+	 * "서식 생성시 주의사항은 데이터 추출 가능이어야 함").
+	 *
+	 * 사람은 같은 뜻을 제각각으로 적는다 — `O · ○ · ㅇ · o · V · v · 1 · Y` 가 전부 「양호」다.
+	 * 그대로 담으면 <b>세어 볼 수가 없다</b>. 「이 달 부적합 몇 건」이 안 나온다.
+	 * ⇒ 담을 때 <b>O / X</b> 두 글자로 맞춘다. 사람 입력은 관대하게 받고, 저장은 엄격하게.
+	 *
+	 * ⚠글자·숫자 칸(TEXT·NUM — 점검자 이름, 온도)은 손대지 않는다. 「V」라는 이름도 있을 수 있고
+	 *   온도 1 을 O 로 바꾸면 자료가 망가진다. 그래서 <b>한 글자짜리 표시만</b> 바꾼다.
+	 */
+	private static String normChk(String v) {
+		String s = v.trim();
+		if (s.length() != 1) return s;              // 두 글자 이상은 사람이 적은 글 — 건드리지 않는다
+		if ("O○◯ㅇoＯ０Vv√✓✔1Y y".indexOf(s) >= 0 && !" ".equals(s)) return "O";
+		if ("XxＸ×✗✘0Nn".indexOf(s) >= 0) return "X";
+		return s;                                   // △ 같은 제3의 표시는 그대로 둔다
 	}
 }

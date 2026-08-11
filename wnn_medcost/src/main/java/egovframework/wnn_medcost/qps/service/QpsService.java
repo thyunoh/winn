@@ -224,6 +224,12 @@ public interface QpsService {
 	List<Map<String, Object>> selectChkFormList(String hospCd, String cateCd, String deptCd, String onlyUse) throws Exception;
 	/** 병원별 사용 서식 저장 — 통째 교체 */
 	void saveChkUse(String hospCd, List<Map<String, Object>> uses, String regUser) throws Exception;
+	/** 서식 화면에서 부서·분류 코드 추가 → 갱신된 코드목록을 돌려준다. */
+	List<Map<String, Object>> addChkCode(String codeCd, String subCode, String subCodeNm, String regUser) throws Exception;
+	/** 서식코드가 이미 있는가 — 새 서식 저장 전 검사. */
+	boolean existsChkForm(String formId) throws Exception;
+	/** 자동 서식코드 제안 — 접두어 + 3자리 순번. */
+	String nextChkFormId(String prefix) throws Exception;
 	/** 서식 복제 — 원본 서식+항목을 새 코드로 이 병원 것으로 베낀다 */
 	void copyChkForm(String hospCd, String srcFormId, String newFormId, String newFormNm, String regUser) throws Exception;
 	/** 서식 1건 + 항목 */
@@ -239,4 +245,6 @@ public interface QpsService {
 	long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
 	                List<Map<String, Object>> rows) throws Exception;
 	void deleteChkDoc(Map<String, Object> param) throws Exception;
+	/** 데이터 추출 — 평면 목록 + 이행 요약. ★점검표를 전산화한 뜻이 여기 있다. */
+	Map<String, Object> selectChkExtract(Map<String, Object> param) throws Exception;
 }

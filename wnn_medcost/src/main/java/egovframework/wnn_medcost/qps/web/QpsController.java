@@ -1029,8 +1029,20 @@ public class QpsController {
 		return qpsScreen(request, model, ".main/qpsChkForm");
 	}
 
+	/**
+	 * 점검표 작성.
+	 * ★`?form=코드` 로 들어오면 그 서식이 골라진 채 열린다 — [서식 관리]에서 「작성 화면에서 보기」로 온 경우.
+	 *   ***주소 숨김이 location.search 를 지우므로 화면이 쿼리를 직접 못 읽는다*** — 서버가 모델로 내린다
+	 *   (감염 메뉴 `?gb=I` · 지표 딥링크 prdKey 와 같은 방식).
+	 */
 	@RequestMapping(value = "main/qpsChk.do")
-	public String qpsChk(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsChk"); }
+	public String qpsChk(HttpServletRequest request, ModelMap model) {
+		String f = request.getParameter("form");
+		f = (f == null) ? "" : f.trim().toUpperCase();
+		// 아는 모양만 통과 — 엉뚱한 값이 셀렉트에 들어가면 목록에 없는 값이 골라진 것처럼 보인다
+		model.addAttribute("chkFormId", f.matches("[A-Z0-9_]{2,30}") ? f : "");
+		return qpsScreen(request, model, ".main/qpsChk");
+	}
 
 	/** 서식 목록 */
 	@RequestMapping(value = "/qps/chkFormList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -1089,6 +1101,11 @@ public class QpsController {
 			if (formId.isEmpty()) return fail(res, "서식코드를 입력해 주세요.");
 			if (!formId.matches("[A-Z0-9_]{2,30}")) return fail(res, "서식코드는 영문 대문자·숫자·_ 로 2~30자입니다.");
 			if (str(p.get("formNm"), "").isEmpty()) return fail(res, "서식명을 입력해 주세요.");
+			// ★★새 서식일 때 중복 검사 — 저장이 ON DUPLICATE KEY UPDATE 라 검사를 안 하면
+			//   이미 있는 코드를 쳤을 때 **그 서식을 조용히 덮어쓴다.** 130 종을 만들다 보면 반드시 생긴다.
+			if ("Y".equals(str(p.get("newYn"), "")) && svc.existsChkForm(formId))
+				return fail(res, "서식코드 " + formId + " 는 이미 있습니다.<br>"
+				               + "다른 코드를 쓰거나, 왼쪽 목록에서 그 서식을 골라 고쳐 주세요.");
 			// 아는 축만 통과시킨다 — 엉뚱한 값이 들어오면 화면이 표를 못 그린다
 			String axisGb = str(p.get("axisGb"), "ITEM_DAY");
 			if (!"EQUIP_DAY".equals(axisGb) && !"ITEM_DAY".equals(axisGb)
@@ -1133,6 +1150,50 @@ public class QpsController {
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("formId", str(p.get("formId"), "")); m.put("regUser", userId(request));
 			svc.deleteChkForm(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 서식 화면에서 부서·분류 코드 추가 — ★"서식에 관련 공통코드는 여기에서 관리하게"(2026-08-11).
+	 * 서식을 만들다 부서가 없으면 공통코드 화면으로 나갔다 와야 했다.
+	 * ★추가만 — 이름 바꾸기·지우기는 공통코드 화면에서(딸린 서식을 봐야 판단할 수 있다).
+	 */
+	@RequestMapping(value = "/qps/chkCodeAdd.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkCodeAdd(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			// ★아는 세트만 — 여기서 아무 코드군이나 손대게 두면 안 된다
+			String codeCd = str(p.get("codeCd"), "");
+			if (!"QPS_CHK_DEPT".equals(codeCd) && !"QPS_CHK_CATE".equals(codeCd))
+				return fail(res, "부서·분류만 여기서 추가할 수 있습니다.");
+			String sub = str(p.get("subCode"), "").trim().toUpperCase();
+			String nm  = str(p.get("subCodeNm"), "").trim();
+			if (!sub.matches("[A-Z0-9_]{2,20}")) return fail(res, "코드값은 영문 대문자·숫자·_ 로 2~20자입니다.");
+			if (nm.isEmpty()) return fail(res, "이름을 입력해 주세요.");
+			res.put("list", svc.addChkCode(codeCd, sub, nm, userId(request)));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 자동 서식코드 제안 — 접두어 + 3자리. 130종을 지어 내다 보면 사람이 코드를 못 짓는다. */
+	@RequestMapping(value = "/qps/chkCodeNext.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkCodeNext(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			String pre = str(p.get("prefix"), "").trim().toUpperCase();
+			if (!pre.isEmpty() && !pre.matches("[A-Z0-9_]{1,10}"))
+				return fail(res, "접두어는 영문 대문자·숫자·_ 로 10자 이내입니다.");
+			res.put("formId", svc.nextChkFormId(pre));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1189,6 +1250,13 @@ public class QpsController {
 			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
 			// ★작성 화면은 그 병원이 켠 서식만 본다 — 130종을 다 보여주면 못 쓴다
 			res.put("forms", svc.selectChkFormList(hospCd, "", str(p.get("deptCd"), ""), "Y"));
+			// 부서 셀렉트 이름표 — 코드값('NURSE')이 그대로 보이면 안 된다
+			java.util.List<Map<String, Object>> dept = new java.util.ArrayList<>();
+			java.util.List<Map<String, Object>> allc = svc.selectQpsCodes();
+			if (allc != null) for (Map<String, Object> r : allc) {
+				if ("QPS_CHK_DEPT".equals(String.valueOf(r.get("codecd")))) dept.add(r);
+			}
+			res.put("dept", dept);
 			String formId = str(p.get("formId"), "");
 			if (!formId.isEmpty()) res.putAll(svc.selectChkBase(hospCd, formId, inYear));
 			res.put("line", svc.selectApprLine(hospCd));
@@ -1239,6 +1307,31 @@ public class QpsController {
 			m.put("fixTxt",  str(p.get("fixTxt"), ""));
 			m.put("regUser", userId(request));
 			res.put("chkSeq", svc.saveChkDoc(m, jsonRows(p.get("vals")), jsonRows(p.get("rows"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 데이터 추출 — ★사용자 지시(2026-08-11) : "서식 생성시 주의사항은 데이터 추출 가능이어야 함".
+	 * 격자를 <b>평면 한 줄씩</b> 돌려준다(엑셀·집계용) + 이행 요약(점검 O/X 건수).
+	 */
+	@RequestMapping(value = "/qps/chkExtract.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkExtract(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("inYear", inYear);
+			m.put("formId", str(p.get("formId"), ""));
+			m.put("deptCd", str(p.get("deptCd"), ""));
+			m.put("inMm",   str(p.get("inMm"), ""));
+			res.putAll(svc.selectChkExtract(m));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
