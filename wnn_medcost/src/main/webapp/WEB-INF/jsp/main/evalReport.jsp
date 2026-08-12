@@ -4032,7 +4032,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         // 원본 PDF 형식: * 산정문(미달 빨강 강조) / "지표 정의 :" 별도 회색 줄 (+만점 시 유지 문구)
         var auto = autoAna(r, fullM);
         /* 지표 정의에는 기관별 분석 결과(현재 점수·구간·개선 여지)를 넣지 않는다(2026-08-10 요청).
-           "현재 최고 구간으로 추가 개선 여지 없음"은 아래 <점수 상향 목표> 줄로 옮겼다. */
+           ※ 2026-08-10 에는 "현재 최고 구간으로 추가 개선 여지 없음" 을 <점수 상향 목표> 줄로 옮겼으나,
+             2026-08-12 검수로 **그 줄 자체를 없앴다**(만점이면 목표 줄을 안 낸다). 아래 goalHtml 참조. */
         var defTxt = (TPL_DEF[r.cate_cd] ? esc(TPL_DEF[r.cate_cd]) : '');
         /* ▷ 개선 방향 = <관리해야 할 내용>만. 구간·점수·필요 인원은 점수 상향 목표 줄이 맡는다
            (종전에는 개선 방향에도 "2구간 +0.6점 … 5점 도달까지 3명" 이 붙어 목표 줄과 겹쳤다). */
@@ -4061,7 +4062,12 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var goalHtml='';
         if(!noDefPlan && !NO_GOAL[cd]){
           if(full){
-            goalHtml = '<p class="er-goal er-editable" data-key="goal_'+cd+'"><span class="er-mk">▷ 점수 상향 목표 :</span> 현재 최고 구간으로 추가 개선 여지 없음(유지).</p>';
+            /* ★만점 지표는 <점수 상향 목표> 줄을 아예 내보내지 않는다 (2026-08-12 검수 반영).
+               경위 : 2026-08-10 에 "현재 최고 구간으로 추가 개선 여지 없음(유지)" 를 지표 정의에서
+               빼서 이 줄로 옮겼는데, 만점 지표가 여럿이면 같은 문장이 그만큼 반복된다.
+               ★담당자가 실제로 매번 지우고 있었다 — 저장분 goal_09 의 내용이 `<br>` 이었다.
+               ⇒ 올릴 목표가 없으면 목표 줄도 없다. 만점이라는 사실은 위 분석문(autoAna)이 이미 말한다. */
+            goalHtml = '';
           } else {
             var gUp = goalUp(r);
             if(gUp) goalHtml = '<p class="er-goal er-editable" data-key="goal_'+cd+'"><span class="er-mk">▷ 점수 상향 목표 :</span> '+gUp+'</p>';

@@ -8,11 +8,15 @@
        그런데 그 이름 대부분이 `…점검표 / 점검대장 / 점검일지 / 관리대장`이다 — 같은 격자다.
        ⇒ ***화면을 130개 만들 일이 아니라, 여기서 서식을 등록하면 새 점검표가 생긴다.***
 
-     ★축(AXIS_GB)이 표의 모양을 정한다 — 실물에서 관찰된 4가지만 둔다(추측으로 늘리지 않는다):
+     ★축(AXIS_GB)이 표의 모양을 정한다 — 실물에서 관찰된 것만 둔다(추측으로 늘리지 않는다):
        EQUIP_DAY  기기 N행 × 1~31일    (원심분리기·인퓨전펌프·EKG모니터)
        ITEM_DAY   점검항목 행 × 1~31일  (EKG 일일·E.O gas 일상·네블라이저)
        DAY_ITEM   1~31일 행 × 점검항목 열 (Biological Dry Incubator·의료기기일일)
        ITEM_MONTH 점검항목 행 × 1~12월  (낙상 시설,환경 관리일지)
+       LIST       항목 열 × 자유행 대장 (2026-08-12 추가 — 영양초기평가 불량환자 리스트·회수확인서 계열)
+                  ★앞의 넷은 「날짜 격자」다. 대장은 날짜 칸이 아예 없고 행이 몇 줄인지도
+                    그 달에 가 봐야 안다 — 그래서 행 수를 **문서**가 정한다.
+                  ★DDL 은 안 바뀌었다. 셀이 (행,열,값) 하나로 담기기 때문이다.
 
      ★공통서식('*')은 여기서 못 고친다 — 고치면 **병원 전용 사본**이 만들어진다.
        한 병원이 고친 항목이 공통을 덮으면 전 병원 서식이 바뀐다.
@@ -170,16 +174,48 @@
             <option value="DAY_ITEM">1~31일(행) × 점검항목(열)</option>
             <option value="EQUIP_DAY">기기 N대(행) × 1~31일(열) — 항목은 표 위 안내로</option>
             <option value="ITEM_MONTH">점검항목(행) × 1~12월(열) — 연 1장</option>
+            <option value="LIST">대장 — 항목(열) × 자유행 · 작성자가 행을 늘린다</option>
+            <option value="ITEM_COL">점검항목(행) × 고정 열 — 날짜가 없는 점검표(Y/N·결과/조치 …)</option>
           </select>
           <span id="f_equipWrap" style="display:none; font-size:12.5px; color:#43555f;">
-            기기 행 수 <input type="number" id="f_equipCnt" min="1" max="50" value="10" style="width:70px;">
+            <span id="f_equipLb">기기 행 수</span>
+            <input type="number" id="f_equipCnt" min="1" max="50" value="10" style="width:70px;">
           </span>
+          <%-- ★대장만 주기를 고른다 — 날짜 격자는 축이 이미 정한다.
+               달마다 새로 쓰는 대장(잔여마약류 반납)과 한 해를 이어 쓰는 대장(조제 전/후 감사)이 둘 다 있다 --%>
+          <span id="f_prdWrap" style="display:none; font-size:12.5px; color:#43555f;">
+            주기 <select id="f_prdGb" style="width:auto;">
+                   <option value="M">월 1장 — 연·월로 나눠 씀</option>
+                   <option value="Y">연 1장 — 한 해를 이어 씀</option>
+                   <option value="H">반기 1장 — 상/하반기</option>
+                   <option value="Q">분기 1장 — 1~4분기</option>
+                   <option value="W">주 1장 — 월 안에서 1~5주차</option>
+                   <option value="D">일 1장 — 날마다 한 장</option>
+                 </select>
+          </span>
+          <%-- ★인쇄만 나눈다. 화면은 한 표 그대로 — 편집은 한 표가 편하고 종이만 원본을 따라간다 --%>
+          <label id="f_halfWrap" style="display:none; font-size:12.5px; color:#43555f;">
+            <input type="checkbox" id="f_halfYn" style="vertical-align:-2px;" onchange="cfAxisChange();">
+            반달 접기 <span class="cf-sub">인쇄를 1~15 / 16~31 두 블록으로</span>
+          </label>
+        </div>
+
+        <%-- ★ITEM_COL 전용 — 이 축은 열을 축이 안 정하므로 서식이 적어야 한다 --%>
+        <div class="lb" id="f_colLb" style="display:none;">고정 열 *</div>
+        <div class="full" id="f_colWrap" style="display:none;">
+          <input type="text" id="f_colNms" maxlength="600" placeholder="쉼표로. 예) Y,N,비고"
+                 oninput="cfAxisChange();"><%-- cfAxisChange 가 cfColHint + renderPrev 를 함께 돈다 --%>
+          <div class="cf-sub" id="cfColHint" style="margin-top:3px;"></div>
         </div>
 
         <div class="lb">표 위 안내</div>
         <div class="full"><input type="text" id="f_guideTxt" maxlength="200" placeholder="예) 정상 : O 비정상 : X"></div>
         <div class="lb">상단 자유칸</div>
-        <div class="full"><input type="text" id="f_headNms" maxlength="300" placeholder="쉼표로. 예) 장비명,모델명,사용부서,점검주기"></div>
+        <div class="full">
+          <input type="text" id="f_headNms" maxlength="600" placeholder="쉼표로. 예) 장비명,모델명,사용부서,점검주기"
+                 oninput="cfHeadCount();">
+          <div class="cf-sub" id="cfHeadCnt" style="margin-top:3px;">최대 8칸까지. 넘으면 뒤는 안 나옵니다.</div>
+        </div>
 
         <div class="lb">덧붙일 칸</div>
         <div class="full" style="display:flex; gap:16px; flex-wrap:wrap; padding-top:6px;">
@@ -203,7 +239,8 @@
       <table class="ed"><thead><tr>
         <th style="width:34px;">순번</th>
         <th>점검항목</th>
-        <th style="width:130px;">열 묶음</th>
+        <%-- ★뜻이 축에 따라 갈린다 — 항목이 열이면 「열 묶음」, 행이면 「행 묶음」. cfAxisChange 가 고쳐 쓴다 --%>
+        <th style="width:130px;" id="thGrpNm">묶음</th>
         <th style="width:90px;">입력</th>
         <th style="width:56px;">단위</th>
         <th style="width:44px;">이동</th>
@@ -280,22 +317,104 @@
   function setChk(id, v){ var e = gel(id); if (e) e.checked = (v === 'Y'); }
   function axis(){ return val('f_axisGb') || 'ITEM_DAY'; }
 
-  var AXIS_NM = { ITEM_DAY:'항목 × 일', DAY_ITEM:'일 × 항목', EQUIP_DAY:'기기 × 일', ITEM_MONTH:'항목 × 월' };
+  var AXIS_NM = { ITEM_DAY:'항목 × 일', DAY_ITEM:'일 × 항목', EQUIP_DAY:'기기 × 일',
+                  ITEM_MONTH:'항목 × 월', LIST:'대장 (자유행)' };
+  // ★항목이 **열**이 되는 축 — 열 묶음(2단 머리글)이 성립하는 곳이 정확히 여기다
+  function itemIsCol(a){ return a === 'DAY_ITEM' || a === 'LIST'; }
+  // 반달 접기는 일이 열인 축에서만. 체크가 켜져 있어도 다른 축이면 꺼진 것으로 본다(서버도 같게 막는다)
+  function halfOn(){
+    var a = axis();
+    return (a === 'ITEM_DAY' || a === 'EQUIP_DAY') && chk('f_halfYn') === 'Y';
+  }
+
+  var HEAD_MAX = 8;   // ★DB 컬럼 HEAD1~HEAD8 · 작성 화면의 HEAD_MAX 와 반드시 같아야 한다
+
+  /**
+   * 상단 자유칸 수를 세어 보여 준다.
+   * ***★넘치면 조용히 버려지는 것이 가장 나쁘다*** — 등록한 사람은 8칸까지만 나온다는 걸 모르고,
+   * 병원은 「칸이 사라졌다」고 본다. 그래서 적는 자리에서 바로 알려 준다.
+   */
+  window.cfHeadCount = function(){
+    var n = String(val('f_headNms') || '').split(',')
+              .map(function(s){ return s.trim(); }).filter(function(s){ return s; }).length;
+    var e = gel('cfHeadCnt');
+    if (!e) return;
+    if (n > HEAD_MAX) {
+      e.style.color = '#b23b3b';
+      e.innerHTML = '★<b>' + n + '칸</b>을 적었습니다 — 앞 ' + HEAD_MAX + '칸만 나오고 <b>나머지는 버려집니다.</b>';
+    } else {
+      e.style.color = '';
+      e.textContent = '최대 ' + HEAD_MAX + '칸까지' + (n ? (' · 지금 ' + n + '칸') : '');
+    }
+  };
+
+  /**
+   * ★ITEM_COL 의 고정 열 목록을 푼다. `묶음>열,묶음>열,열` 형태.
+   *   작성 화면(qpsChk.jsp)의 colDefs() 와 **같은 규칙**이어야 한다 — 갈리면 미리보기가 거짓말을 한다.
+   */
+  function colDefs(){
+    return String(val('f_colNms') || '').split(',')
+      .map(function(s){ return s.trim(); }).filter(function(s){ return s; })
+      .map(function(s){
+        var i = s.indexOf('>');
+        return (i >= 0) ? { g:s.slice(0,i).trim(), n:s.slice(i+1).trim() } : { g:'', n:s };
+      });
+  }
+
+  /** 고정 열을 적는 자리에서 바로 몇 칸인지·묶음이 어떻게 잡히는지 보여 준다. */
+  window.cfColHint = function(){
+    var e = gel('cfColHint'); if (!e) return;
+    var cd = colDefs();
+    if (!cd.length) {
+      e.style.color = '#b23b3b';
+      e.innerHTML = '★<b>비어 있습니다.</b> 이 축은 열을 축이 안 정합니다 — 적지 않으면 「점검결과」 한 칸만 나옵니다.<br>' +
+                    '예) <b>Y,N,비고</b> · <b>예,아니오,해당없음</b> · <b>결과,조치사항</b><br>' +
+                    '2단 머리글이 필요하면 <b>묶음&gt;열</b> — 예) 점검 및 조치&gt;점검결과,점검 및 조치&gt;조치 사항';
+      return;
+    }
+    var gs = [], last = null;
+    cd.forEach(function(c){ if (last && last.g === c.g && c.g) last.n++; else { last = {g:c.g,n:1}; gs.push(last); } });
+    var grp = gs.filter(function(x){ return x.g; })
+                .map(function(x){ return x.g + '(' + x.n + '칸)'; }).join(' · ');
+    e.style.color = '';
+    e.innerHTML = '열 <b>' + cd.length + '칸</b> : ' +
+                  cd.map(function(c){ return esc(c.n); }).join(' | ') +
+                  (grp ? ('<br>묶음 : ' + esc(grp)) : '');
+  };
 
   /** 축이 바뀌면 뜻이 달라지는 칸을 안내한다 — 안 하면 「열 묶음」이 왜 안 보이는지 모른다. */
   window.cfAxisChange = function(){
     var a = axis();
-    gel('f_equipWrap').style.display = (a === 'EQUIP_DAY') ? '' : 'none';
+    // 행 수 칸은 EQUIP_DAY(기기 대수)와 LIST(처음에 깔아 줄 빈 행 수) 둘 다 쓴다 — 이름만 갈린다
+    gel('f_equipWrap').style.display = (a === 'EQUIP_DAY' || a === 'LIST') ? '' : 'none';
+    gel('f_equipLb').textContent = (a === 'LIST') ? '기본 행 수' : '기기 행 수';
     var h = gel('cfItemHint');
     h.textContent = (a === 'EQUIP_DAY') ? '— 이 축에서는 항목이 표 위 안내박스로만 나옵니다(셀은 기기별 일별)'
                   : (a === 'DAY_ITEM')  ? '— 항목이 표의 **열**이 됩니다. 「열 묶음」을 적으면 2단 머리글이 생깁니다'
                   : (a === 'ITEM_MONTH')? '— 항목이 행, 1~12월이 열입니다(연 1장)'
+                  : (a === 'LIST')      ? '— 항목이 표의 **열**, 행은 작성자가 늘립니다(날짜 칸이 없는 대장). ' +
+                                          '이름·사유는 입력종류를 글(TEXT)로 두세요 — 표시(CHECK)로 두면 한 글자가 O/X 로 바뀝니다'
+                  : (a === 'ITEM_COL')  ? '— 항목이 **행**, 열은 아래 「고정 열」에 적은 대로입니다(날짜가 없는 점검표). ' +
+                                          '「묶음」을 적으면 2단 행 머리글이 생깁니다'
                                         : '— 항목이 표의 **행**이 됩니다';
-    // 열 묶음은 DAY_ITEM 에서만 뜻이 있다
+    // ★묶음의 뜻이 축에 따라 갈린다 — 항목이 열이면 「열 묶음」(2단 열 머리글),
+    //   항목이 행이면 「행 묶음」(2단 행 머리글). EQUIP_DAY 만 항목이 셀에 없어 쓸 데가 없다.
+    var useGrp = (a !== 'EQUIP_DAY');
+    gel('thGrpNm').textContent = itemIsCol(a) ? '열 묶음' : (useGrp ? '행 묶음' : '묶음');
     document.querySelectorAll('#tbITEM [data-f="grpnm"]').forEach(function(el){
-      el.disabled = (a !== 'DAY_ITEM');
-      el.placeholder = (a === 'DAY_ITEM') ? '예) 치료실 환경' : '(이 축에선 안 씀)';
+      el.disabled = !useGrp;
+      el.placeholder = !useGrp ? '(이 축에선 안 씀)'
+                     : itemIsCol(a) ? '예) 치료실 환경' : '예) 엘리베이터';
     });
+    // 반달 접기는 **일이 가로로 뻗는 축**에서만 뜻이 있다(1~15 / 16~31 두 블록으로 인쇄)
+    gel('f_halfWrap').style.display = (a === 'ITEM_DAY' || a === 'EQUIP_DAY') ? '' : 'none';
+    // ★주기는 **격자에 기간이 없는 축**만 고른다(LIST·ITEM_COL) — 날짜 격자축은 축이 정한다
+    //   (ITEM_MONTH=연 1장, ITEM_DAY/DAY_ITEM/EQUIP_DAY=월 1장).
+    gel('f_prdWrap').style.display = (a === 'LIST' || a === 'ITEM_COL') ? '' : 'none';
+    // 고정 열은 ITEM_COL 만 — 다른 축은 열을 축이 정한다
+    gel('f_colLb').style.display   = (a === 'ITEM_COL') ? '' : 'none';
+    gel('f_colWrap').style.display = (a === 'ITEM_COL') ? '' : 'none';
+    if (a === 'ITEM_COL') cfColHint();
     renderPrev();
   };
 
@@ -375,16 +494,97 @@
       for (var i = 1; i <= n; i++) h += '<tr><td class="l">의료기기 ' + i + '</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 확인란</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       h += '</tbody></table>';
+      if (halfOn()) h += '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">' +
+                         '✂ 인쇄하면 <b>1~15 / 16~31</b> 두 블록으로 나뉘어 찍힙니다(화면은 한 표 그대로).</div>';
     } else if (a === 'ITEM_DAY' || a === 'ITEM_MONTH') {
       var cols = (a === 'ITEM_MONTH') ? MONS : DAYS, suf = (a === 'ITEM_MONTH') ? '월' : '';
-      h += '<table><thead><tr><th style="min-width:180px;">' + (a === 'ITEM_MONTH' ? '시설 점검' : '일') + '</th>' +
+      // 행 묶음(2단 행 머리글) — 이어지는 항목의 묶음 이름이 같으면 왼쪽 칸을 합친다
+      var rg = [], rl = null;
+      items.forEach(function(r){
+        var gname = r.grpnm || '';
+        if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
+      });
+      var hasRg = rg.some(function(x){ return x.g; });
+      h += '<table><thead><tr>' + (hasRg ? '<th style="width:70px;">묶음</th>' : '') +
+           '<th style="min-width:180px;">' + (a === 'ITEM_MONTH' ? '시설 점검' : '일') + '</th>' +
            cols.map(function(d){ return '<th style="width:30px;">' + d + suf + '</th>'; }).join('') + (PREV_WIDE ? '' : '<th>…</th>') + '</tr></thead><tbody>';
       if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+      var gi = 0, gpos = 0;
       items.forEach(function(r){
-        h += '<tr><td class="l">' + esc(r.itemnm) + '</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+        h += '<tr>';
+        if (hasRg && gpos === 0) h += '<td class="l" rowspan="' + rg[gi].n + '" style="background:#f6f8f9;font-weight:700;">' + esc(rg[gi].g) + '</td>';
+        h += '<td class="l">' + esc(r.itemnm) + '</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+        if (hasRg) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
-      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 사인</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+      if (chk('f_signerYn') === 'Y') h += '<tr>' + (hasRg ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       h += '</tbody></table>';
+      if (halfOn()) h += '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">' +
+                         '✂ 인쇄하면 <b>1~15 / 16~31</b> 두 블록으로 나뉘어 찍힙니다(화면은 한 표 그대로).</div>';
+    } else if (a === 'ITEM_COL') {
+      // 항목 행 × 고정 열. 행 묶음 + 열 묶음 둘 다 그린다(작성 화면과 같은 규칙).
+      var cd2 = colDefs(); if (!cd2.length) cd2 = [{ g:'', n:'(열을 적으세요)' }];
+      var cg2 = [], cl2 = null;
+      cd2.forEach(function(c){ if (cl2 && cl2.g === c.g && c.g) cl2.n++; else { cl2 = {g:c.g,n:1}; cg2.push(cl2); } });
+      var hasCg2 = cg2.some(function(x){ return x.g; });
+      var ig2 = [], il2 = null;
+      items.forEach(function(r){ var gn = r.grpnm || '';
+        if (il2 && il2.g === gn) il2.n++; else { il2 = {g:gn,n:1}; ig2.push(il2); } });
+      var hasIg2 = ig2.some(function(x){ return x.g; });
+      var colTh2 = cd2.map(function(c){ return '<th style="min-width:60px;">' + esc(c.n) + '</th>'; }).join('');
+
+      h += '<table><thead>';
+      if (hasCg2) {
+        h += '<tr>' + (hasIg2 ? '<th rowspan="2" style="width:70px;">묶음</th>' : '') +
+             '<th rowspan="2" style="min-width:160px;">점검 항목</th>' +
+             cg2.map(function(x){ return '<th colspan="' + x.n + '">' + esc(x.g) + '</th>'; }).join('') +
+             '</tr><tr>' + colTh2 + '</tr>';
+      } else {
+        h += '<tr>' + (hasIg2 ? '<th style="width:70px;">묶음</th>' : '') +
+             '<th style="min-width:160px;">점검 항목</th>' + colTh2 + '</tr>';
+      }
+      h += '</thead><tbody>';
+      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' +
+                              cd2.map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      var ci2 = 0, cp2 = 0;
+      items.forEach(function(r){
+        h += '<tr>';
+        if (hasIg2 && cp2 === 0) h += '<td class="l" rowspan="' + ig2[ci2].n + '" style="background:#f6f8f9;font-weight:700;">' + esc(ig2[ci2].g) + '</td>';
+        h += '<td class="l">' + esc(r.itemnm) + '</td>' + cd2.map(function(){ return '<td></td>'; }).join('') + '</tr>';
+        if (hasIg2) { cp2++; if (cp2 >= ig2[ci2].n) { ci2++; cp2 = 0; } }
+      });
+      if (chk('f_signerYn') === 'Y')
+        h += '<tr>' + (hasIg2 ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' +
+             cd2.map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      h += '</tbody></table>';
+
+    } else if (a === 'LIST') {
+      // 대장 — 날짜 칸이 없다. 번호 + 항목 열들, 행은 작성 화면에서 늘린다.
+      var nr = Math.min(4, Math.max(1, Number(val('f_equipCnt') || 10)));
+      var gL = [], lL = null;
+      items.forEach(function(r){
+        var g = r.grpnm || '';
+        if (lL && lL.g === g) lL.n++; else { lL = { g:g, n:1 }; gL.push(lL); }
+      });
+      var thL = items.map(function(r){
+        return '<th style="min-width:80px;">' + esc(r.itemnm) + (r.unitnm ? ('(' + esc(r.unitnm) + ')') : '') + '</th>';
+      }).join('');
+      h += '<table><thead>';
+      if (gL.some(function(g){ return g.g; })) {
+        h += '<tr><th rowspan="2" style="width:34px;">번호</th>' +
+             gL.map(function(g){ return '<th colspan="' + g.n + '">' + esc(g.g) + '</th>'; }).join('') +
+             '</tr><tr>' + thL + '</tr>';
+      } else {
+        h += '<tr><th style="width:34px;">번호</th>' +
+             (items.length ? thL : '<th style="color:#8a99a3;">항목을 추가하세요</th>') + '</tr>';
+      }
+      h += '</thead><tbody>';
+      for (var q = 1; q <= nr; q++) {
+        h += '<tr><td>' + q + '</td>' +
+             (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      }
+      h += '</tbody></table>' +
+           '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">' +
+           '＋ 행은 작성 화면에서 더 늘립니다. 여기 「기본 행 수」는 새 대장을 열 때 깔아 줄 빈 줄 수입니다.</div>';
     } else { // DAY_ITEM
       var grps = [], last = null;
       items.forEach(function(r){
@@ -595,7 +795,7 @@
                 inputgb: (ig === 'TEXT' || ig === 'NUM') ? ig : 'CHECK',
                 unitnm: p[3] || '' });
     });
-    renumber(); cfAxisChange();
+    renumber(); cfAxisChange(); cfHeadCount();
     gel('cfPasteBox').style.display = 'none';
     gel('cfPasteTxt').value = '';
     _toast(lines.length + '개 항목을 넣었습니다. 저장을 눌러야 반영됩니다.', 'ok');
@@ -611,11 +811,16 @@
       "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
-      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,EQUIP_CNT,GUIDE_TXT,HEAD_NMS,\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,EQUIP_CNT,HALF_YN,GUIDE_TXT,HEAD_NMS,COL_NMS,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
-        q(axis()) + ',' + q(axis() === 'ITEM_MONTH' ? 'Y' : 'M') + ',' + (Number(val('f_equipCnt')) || 10) + ',' +
-        q(val('f_guideTxt')) + ',' + q(val('f_headNms')) + ',\n  ' +
+        q(axis()) + ',' +
+        q(axis() === 'ITEM_MONTH' ? 'Y'
+          : ((axis() === 'LIST' || axis() === 'ITEM_COL') ? val('f_prdGb') : 'M')) + ',' +
+        (Number(val('f_equipCnt')) || 10) + ',' +
+        q(halfOn() ? 'Y' : 'N') + ',' +
+        q(val('f_guideTxt')) + ',' + q(val('f_headNms')) + ',' +
+        q(axis() === 'ITEM_COL' ? val('f_colNms') : '') + ',\n  ' +
         q(chk('f_signerYn')) + ',' + q(chk('f_noteYn')) + ',' + q(chk('f_fixYn')) + ',' +
         q(val('f_signLine')) + ',' + q(val('f_footTxt')) + ',' + (Number(val('f_sortNo')) || 0) + ",'Y','system');\n" +
       'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
@@ -640,6 +845,9 @@
       set('f_formId', d.formid); set('f_formNm', d.formnm);
       set('f_cateCd', d.catecd || ''); set('f_deptCd', d.deptcd || '');
       set('f_axisGb', d.axisgb || 'ITEM_DAY'); set('f_equipCnt', d.equipcnt || 10);
+      setChk('f_halfYn', d.halfyn);
+      set('f_prdGb', ('YHQMWD'.indexOf(d.prdgb) >= 0 && String(d.prdgb).length === 1) ? d.prdgb : 'M');
+      set('f_colNms', d.colnms);
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
       setChk('f_signerYn', d.signeryn); setChk('f_noteYn', d.noteyn); setChk('f_fixYn', d.fixyn);
       set('f_signLine', d.signline); set('f_footTxt', d.foottxt); set('f_sortNo', d.sortno || 0);
@@ -648,7 +856,7 @@
       gel('tbITEM').innerHTML = '';
       (res.items || []).forEach(itemRow);
       if (!(res.items || []).length) itemRow({});
-      renumber(); cfAxisChange();
+      renumber(); cfAxisChange(); cfHeadCount();
 
       var msg = gel('cfOwnMsg');
       if (curOwn === 'Y') {
@@ -668,14 +876,15 @@
 
   window.cfNew = function(){
     curId = ''; curOwn = 'N';
-    ['f_formId','f_formNm','f_guideTxt','f_headNms','f_signLine','f_footTxt'].forEach(function(id){ set(id, ''); });
+    ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_signLine','f_footTxt'].forEach(function(id){ set(id, ''); });
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
     set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0);
-    setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N');
+    setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N'); setChk('f_halfYn', 'N');
+    set('f_prdGb', 'M');
     gel('f_formId').readOnly = false;
     gel('tbITEM').innerHTML = ''; [{},{},{}].forEach(itemRow);
-    renumber(); cfAxisChange();
+    renumber(); cfAxisChange(); cfHeadCount();
     gel('cfOwnMsg').style.display = '';
     gel('cfOwnMsg').innerHTML = '새 서식은 <b>우리 병원 전용</b>으로 만들어집니다. ' +
       '원본 종이 서식의 <b>점검항목을 그대로 적으면</b> 바로 쓸 수 있는 점검표가 됩니다.';
@@ -694,7 +903,9 @@
       post('<c:url value="/qps/chkFormSave.do"/>', {
         formId: val('f_formId'), formNm: val('f_formNm'),
         cateCd: val('f_cateCd'), deptCd: val('f_deptCd'),
-        axisGb: axis(), equipCnt: val('f_equipCnt'),
+        axisGb: axis(), equipCnt: val('f_equipCnt'), halfYn: halfOn() ? 'Y' : 'N',
+        prdGb: val('f_prdGb'),   // 서버가 LIST 일 때만 쓴다(다른 축은 축이 정한다)
+        colNms: val('f_colNms'), // 서버가 ITEM_COL 일 때만 쓴다
         guideTxt: val('f_guideTxt'), headNms: val('f_headNms'),
         signerYn: chk('f_signerYn'), noteYn: chk('f_noteYn'), fixYn: chk('f_fixYn'),
         signLine: val('f_signLine'), footTxt: val('f_footTxt'), sortNo: val('f_sortNo'),

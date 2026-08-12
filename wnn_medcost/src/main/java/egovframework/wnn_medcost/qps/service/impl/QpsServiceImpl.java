@@ -1788,9 +1788,15 @@ public class QpsServiceImpl implements QpsService {
 		Map<String, Object> m = new HashMap<>();
 		m.put("formId", newFormId);  m.put("hospCd", hospCd);
 		m.put("formNm", newFormNm);  m.put("cateCd", str(src.get("catecd")));
+		// ★부서를 빠뜨리고 있었다(2026-08-12) — 복제본의 DEPT_CD 가 비면 작성 화면의
+		//   부서 셀렉트에서 **그 서식이 안 보인다.** 복제는 「비슷한 것을 빨리 만드는」 길인데
+		//   가장 비슷해야 할 부서가 날아갔다.
+		m.put("deptCd", str(src.get("deptcd")));
 		m.put("axisGb", str(src.get("axisgb")));  m.put("prdGb", str(src.get("prdgb")));
 		m.put("equipCnt", src.get("equipcnt"));
+		m.put("halfYn", str(src.get("halfyn")).isEmpty() ? "N" : str(src.get("halfyn")));
 		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
+		m.put("colNms",  str(src.get("colnms")));     // ITEM_COL 의 고정 열 — 복제할 때 빠지면 표가 안 그려진다
 		m.put("signerYn", str(src.get("signeryn")));  m.put("noteYn", str(src.get("noteyn")));
 		m.put("fixYn", str(src.get("fixyn")));        m.put("signLine", str(src.get("signline")));
 		m.put("footTxt", str(src.get("foottxt")));    m.put("sortNo", src.get("sortno"));
@@ -1867,10 +1873,16 @@ public class QpsServiceImpl implements QpsService {
 		//   (불만고충 처리결과처럼 1:1 로 매달린 것이 있으면 통째 교체하면 안 된다 — 여기는 아니다).
 		mapper.deleteChkVals(seq);
 		if (vals != null && !vals.isEmpty()) {
+			// ★★정규화는 **체크 칸에만** 한다 (2026-08-12).
+			//   normChk 는 한 글자면 O/X 로 맞추는데, 그것만으로는 **숫자·글자 칸이 망가진다** —
+			//   온도 「1」이 「O」가 되고, 대장의 「1」호실·「V」라는 이름도 마찬가지다.
+			//   ⇒ 그 칸의 INPUT_GB 를 보고 CHECK 일 때만 맞춘다. LIST(자유행 대장)는 글자 칸이
+			//     대부분이라 이 구분이 없으면 축을 붙이는 순간 자료가 깨진다.
+			ChkNorm norm = chkNorm(str(doc.get("hospCd")), str(doc.get("formId")));
 			List<Map<String, Object>> keep = new ArrayList<>();
 			for (Map<String, Object> v : vals) {
 				if (str(v.get("val")).isEmpty()) continue;   // 빈 칸은 저장하지 않는다 — 31×16 을 다 넣으면 낭비다
-				v.put("val", normChk(str(v.get("val"))));    // ★값 정규화 — 아래 주석
+				v.put("val", norm.apply(v));
 				keep.add(v);
 			}
 			if (!keep.isEmpty()) {
@@ -1918,6 +1930,11 @@ public class QpsServiceImpl implements QpsService {
 	 *
 	 * ⚠글자·숫자 칸(TEXT·NUM — 점검자 이름, 온도)은 손대지 않는다. 「V」라는 이름도 있을 수 있고
 	 *   온도 1 을 O 로 바꾸면 자료가 망가진다. 그래서 <b>한 글자짜리 표시만</b> 바꾼다.
+	 *
+	 * ★★2026-08-12 — <b>「한 글자만 바꾼다」만으로는 그 약속이 지켜지지 않았다.</b>
+	 *   온도 「1」·이름 「V」가 한 글자라 <b>그대로 O 로 바뀌었다.</b> 오류가 나지 않아 티도 안 난다.
+	 *   ⇒ 이제 그 칸이 어느 항목의 칸인지 보고 <b>INPUT_GB 가 CHECK 일 때만</b> 맞춘다({@link ChkNorm}).
+	 *   LIST(자유행 대장)는 글자 칸이 대부분이라 이 구분 없이는 축을 붙이는 순간 자료가 깨진다.
 	 */
 	private static String normChk(String v) {
 		String s = v.trim();
@@ -1925,5 +1942,56 @@ public class QpsServiceImpl implements QpsService {
 		if ("O○◯ㅇoＯ０Vv√✓✔1Y y".indexOf(s) >= 0 && !" ".equals(s)) return "O";
 		if ("XxＸ×✗✘0Nn".indexOf(s) >= 0) return "X";
 		return s;                                   // △ 같은 제3의 표시는 그대로 둔다
+	}
+
+	/** 점검자 사인 행/열 예약번호 — 항목이 아니라 사람 이름이 들어간다. */
+	private static final int CHK_SIGN_NO = 900;
+
+	/**
+	 * 셀 하나가 <b>어느 항목의 칸인지</b> 알아야 정규화 여부를 정할 수 있다. 그 대응은 축이 정한다 —
+	 * DAY_ITEM·LIST 는 항목이 <b>열</b>, 나머지는 <b>행</b>이다.
+	 */
+	private static final class ChkNorm {
+		private final boolean legacy;      // 서식을 못 읽었다 → 예전처럼 전부 맞춘다(저장을 막지는 않는다)
+		private final boolean allCheck;    // EQUIP_DAY — 셀에 항목이 없다. 전부 표시칸이다
+		private final boolean itemIsCol;   // 항목이 열인가(DAY_ITEM·LIST)
+		private final Map<Integer, String> inputGb;
+
+		ChkNorm(boolean legacy, boolean allCheck, boolean itemIsCol, Map<Integer, String> inputGb) {
+			this.legacy = legacy; this.allCheck = allCheck; this.itemIsCol = itemIsCol; this.inputGb = inputGb;
+		}
+
+		String apply(Map<String, Object> v) {
+			String s = str(v.get("val"));
+			if (legacy || allCheck) return normChk(s);
+			int no = intOf(v.get(itemIsCol ? "colno" : "rowno"), 0);
+			if (no == CHK_SIGN_NO) return s;   // 사인칸 — 「1」이라는 서명을 O 로 바꾸면 안 된다
+			String gb = inputGb.get(no);
+			// ★모르는 항목이면 건드리지 않는다. 원본 그대로가 언제나 되돌릴 수 있는 쪽이다.
+			return "CHECK".equals(gb) ? normChk(s) : s;
+		}
+	}
+
+	/** 그 서식의 축 + 항목별 입력종류를 한 번만 읽어 둔다(셀마다 조회하면 31×16 번 돈다). */
+	@SuppressWarnings("unchecked")
+	private ChkNorm chkNorm(String hospCd, String formId) {
+		Map<Integer, String> gb = new HashMap<>();
+		String axisGb = "";
+		try {
+			Map<String, Object> one = selectChkFormOne(hospCd, formId);
+			Object fo = one.get("form");
+			if (fo instanceof Map) axisGb = str(((Map<String, Object>) fo).get("axisgb"));
+			Object its = one.get("items");
+			if (its instanceof List) {
+				for (Object o : (List<Object>) its) {
+					if (!(o instanceof Map)) continue;
+					Map<String, Object> it = (Map<String, Object>) o;
+					gb.put(intOf(it.get("sort"), 0), str(it.get("inputgb")));
+				}
+			}
+		} catch (Exception ignore) { axisGb = ""; }
+		if (axisGb.isEmpty()) return new ChkNorm(true, false, false, gb);
+		boolean itemIsCol = "DAY_ITEM".equals(axisGb) || "LIST".equals(axisGb);
+		return new ChkNorm(false, "EQUIP_DAY".equals(axisGb), itemIsCol, gb);
 	}
 }

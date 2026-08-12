@@ -2294,8 +2294,10 @@
 	<select id="selectChkForm" resultType="java.util.HashMap">
 		SELECT FORM_ID AS formid, HOSP_CD AS hospcd, FORM_NM AS formnm, CATE_CD AS catecd,
 		       DEPT_CD AS deptcd,
-		       AXIS_GB AS axisgb, PRD_GB AS prdgb, EQUIP_CNT AS equipcnt, GUIDE_TXT AS guidetxt,
-		       HEAD_NMS AS headnms, SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
+		       AXIS_GB AS axisgb, PRD_GB AS prdgb, EQUIP_CNT AS equipcnt, HALF_YN AS halfyn,
+		       GUIDE_TXT AS guidetxt,
+		       HEAD_NMS AS headnms, COL_NMS AS colnms,
+		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
 		  FROM TBL_QPS_CHK_FORM
@@ -2331,14 +2333,15 @@
 	     한 병원이 고친 항목이 공통을 덮으면 전 병원 서식이 바뀐다. -->
 	<insert id="saveChkForm" parameterType="map">
 		INSERT INTO TBL_QPS_CHK_FORM
-		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, EQUIP_CNT, GUIDE_TXT, HEAD_NMS,
+		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, EQUIP_CNT, HALF_YN, GUIDE_TXT, HEAD_NMS, COL_NMS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
-		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{equipCnt}, #{guideTxt}, #{headNms},
+		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{equipCnt}, #{halfYn}, #{guideTxt}, #{headNms}, #{colNms},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
 		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD), AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB),
-		  EQUIP_CNT=VALUES(EQUIP_CNT), GUIDE_TXT=VALUES(GUIDE_TXT), HEAD_NMS=VALUES(HEAD_NMS),
+		  EQUIP_CNT=VALUES(EQUIP_CNT), HALF_YN=VALUES(HALF_YN), GUIDE_TXT=VALUES(GUIDE_TXT),
+		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
@@ -2362,17 +2365,23 @@
 
 	<!-- ── 작성 문서 ────────────────────────────────────────────────────── -->
 	<select id="selectChkDocList" resultType="java.util.HashMap">
-		SELECT CHK_SEQ AS chkseq, IN_YEAR AS inyear, IN_MM AS inmm, WARD_NM AS wardnm,
+		SELECT CHK_SEQ AS chkseq, IN_YEAR AS inyear, IN_MM AS inmm,
+		       PRD_GB AS prdgb, PRD_NO AS prdno,
+		       WARD_NM AS wardnm,
 		       HEAD1 AS head1, HEAD2 AS head2,
 		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
 		  FROM TBL_QPS_CHK_DOC
 		 WHERE HOSP_CD = #{hospCd} AND FORM_ID = #{formId} AND IN_YEAR = #{inYear} AND USE_YN='Y'
-		 ORDER BY IFNULL(IN_MM,'00'), CHK_SEQ
+		 <!-- ★주 단위는 같은 달에 5장이 생긴다 — 번호까지 정렬해야 「1주,2주,…」 순으로 보인다 -->
+		 ORDER BY IFNULL(IN_MM,'00'), IFNULL(PRD_NO,0), CHK_SEQ
 	</select>
 
 	<select id="selectChkDoc" resultType="java.util.HashMap">
-		SELECT CHK_SEQ AS chkseq, FORM_ID AS formid, IN_YEAR AS inyear, IN_MM AS inmm, WARD_NM AS wardnm,
+		SELECT CHK_SEQ AS chkseq, FORM_ID AS formid, IN_YEAR AS inyear, IN_MM AS inmm,
+		       PRD_GB AS prdgb, PRD_NO AS prdno,
+		       WARD_NM AS wardnm,
 		       HEAD1 AS head1, HEAD2 AS head2, HEAD3 AS head3, HEAD4 AS head4,
+		       HEAD5 AS head5, HEAD6 AS head6, HEAD7 AS head7, HEAD8 AS head8,
 		       NOTE_TXT AS notetxt, FIX_TXT AS fixtxt
 		  FROM TBL_QPS_CHK_DOC
 		 WHERE CHK_SEQ = #{chkSeq} AND HOSP_CD = #{hospCd} AND USE_YN='Y'
@@ -2380,16 +2389,19 @@
 
 	<insert id="insertChkDoc" parameterType="map" useGeneratedKeys="true" keyProperty="chkSeq">
 		INSERT INTO TBL_QPS_CHK_DOC
-		 (HOSP_CD, FORM_ID, IN_YEAR, IN_MM, WARD_NM, HEAD1, HEAD2, HEAD3, HEAD4, NOTE_TXT, FIX_TXT, USE_YN, REG_USER)
+		 (HOSP_CD, FORM_ID, IN_YEAR, IN_MM, PRD_GB, PRD_NO, WARD_NM,
+		  HEAD1, HEAD2, HEAD3, HEAD4, HEAD5, HEAD6, HEAD7, HEAD8, NOTE_TXT, FIX_TXT, USE_YN, REG_USER)
 		VALUES
-		 (#{hospCd}, #{formId}, #{inYear}, #{inMm}, #{wardNm}, #{head1}, #{head2}, #{head3}, #{head4},
+		 (#{hospCd}, #{formId}, #{inYear}, #{inMm}, #{prdGb}, #{prdNo}, #{wardNm},
+		  #{head1}, #{head2}, #{head3}, #{head4}, #{head5}, #{head6}, #{head7}, #{head8},
 		  #{noteTxt}, #{fixTxt}, 'Y', #{regUser})
 	</insert>
 
 	<update id="updateChkDoc" parameterType="map">
 		UPDATE TBL_QPS_CHK_DOC SET
-		  IN_YEAR=#{inYear}, IN_MM=#{inMm}, WARD_NM=#{wardNm},
+		  IN_YEAR=#{inYear}, IN_MM=#{inMm}, PRD_GB=#{prdGb}, PRD_NO=#{prdNo}, WARD_NM=#{wardNm},
 		  HEAD1=#{head1}, HEAD2=#{head2}, HEAD3=#{head3}, HEAD4=#{head4},
+		  HEAD5=#{head5}, HEAD6=#{head6}, HEAD7=#{head7}, HEAD8=#{head8},
 		  NOTE_TXT=#{noteTxt}, FIX_TXT=#{fixTxt}, UPD_USER=#{regUser}
 		 WHERE CHK_SEQ = #{chkSeq} AND HOSP_CD = #{hospCd}
 	</update>
@@ -2417,8 +2429,13 @@
 	       격자에 채운 값이 **평면 한 줄씩** 나와야 엑셀·집계로 쓸 수 있다.
 	     ★축마다 행·열의 뜻이 다르므로 여기서 **일자와 항목으로 되돌린다** —
 	       화면이 아니라 SQL 이 하는 이유는, 화면마다 따로 풀면 뽑는 곳마다 뜻이 갈리기 때문이다.
-	         DAY_ITEM  : ROW=일  COL=항목
+	         DAY_ITEM  : ROW=일    COL=항목
+	         LIST      : ROW=행번호 COL=항목   ← ★대장은 '일'이 아니라 '행'이다(2026-08-12)
+	         ITEM_COL  : ROW=항목  COL=**열번호** ← ★날짜가 아니다(2026-08-12). 아래 colnm 참조
 	         그 외      : ROW=항목(또는 기기)  COL=일(또는 월)
+	     ★LIST 를 DAY_ITEM 과 같은 편에 두는 이유 : 둘 다 **항목이 열**이다. 여기를 안 넓히면
+	       대장이 「항목=행번호 · 일=항목SORT」로 뒤집혀 나온다 — 오류 없이 조용히 틀린 CSV 가 된다.
+	     ★dayno 는 축에 따라 뜻이 갈린다(일 / 월 / 행번호). CSV 머리글도 그렇게 적어야 한다.
 	     ★예약 900 = 점검자 사인 행/열. 항목명이 없으므로 '점검자'로 붙인다. -->
 	<select id="selectChkExtract" resultType="java.util.HashMap">
 		SELECT f.FORM_ID  AS formid,
@@ -2429,12 +2446,20 @@
 		       d.IN_YEAR  AS inyear,
 		       d.IN_MM    AS inmm,
 		       IFNULL(d.WARD_NM,'') AS wardnm,
-		       CASE WHEN f.AXIS_GB = 'DAY_ITEM' THEN v.ROW_NO ELSE v.COL_NO END AS dayno,
-		       CASE WHEN f.AXIS_GB = 'DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END AS itemno,
+		       CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.ROW_NO ELSE v.COL_NO END AS dayno,
+		       CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END AS itemno,
+		       <!-- ★ITEM_COL 은 COL_NO 가 「일」이 아니라 **열 번호**다. 번호만 뽑으면 뜻이 없다.
+		            서식의 COL_NMS(쉼표 목록)에서 그 번호의 이름을 떼어 준다.
+		            ★`묶음>열` 문법이므로 '>' 뒤만 남긴다. 다른 축은 빈 값. -->
+		       CASE WHEN f.AXIS_GB = 'ITEM_COL'
+		            THEN SUBSTRING_INDEX(
+		                   SUBSTRING_INDEX(SUBSTRING_INDEX(IFNULL(f.COL_NMS,''), ',', v.COL_NO), ',', -1),
+		                 '>', -1)
+		            ELSE '' END AS colnm,
 		       CASE
-		         WHEN (CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END) = 900 THEN '점검자'
+		         WHEN (CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END) = 900 THEN '점검자'
 		         WHEN f.AXIS_GB = 'EQUIP_DAY' THEN IFNULL(r.ROW_NM,
-		              CONCAT('의료기기 ', CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END))
+		              CONCAT('의료기기 ', v.ROW_NO))
 		         ELSE IFNULL(i.ITEM_NM, '(항목없음)')
 		       END AS itemnm,
 		       IFNULL(i.GRP_NM,'')  AS grpnm,
@@ -2450,10 +2475,11 @@
 		  JOIN TBL_QPS_CHK_VAL  v ON v.CHK_SEQ = d.CHK_SEQ
 		  LEFT JOIN TBL_QPS_CHK_ITEM i
 		    ON i.FORM_ID = f.FORM_ID AND i.HOSP_CD = f.HOSP_CD
-		   AND i.SORT = (CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END)
+		   AND i.SORT = (CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END)
+		  <!-- 기기명은 EQUIP_DAY 에서만 쓴다 — 그 축은 ROW 가 곧 기기번호다 -->
 		  LEFT JOIN TBL_QPS_CHK_ROW r
-		    ON r.CHK_SEQ = d.CHK_SEQ
-		   AND r.ROW_NO = (CASE WHEN f.AXIS_GB='DAY_ITEM' THEN v.COL_NO ELSE v.ROW_NO END)
+		    ON r.CHK_SEQ = d.CHK_SEQ AND f.AXIS_GB = 'EQUIP_DAY'
+		   AND r.ROW_NO = v.ROW_NO
 		 WHERE d.HOSP_CD = #{hospCd} AND d.USE_YN = 'Y' AND d.IN_YEAR = #{inYear}
 		<if test="formId != null and formId != ''"> AND d.FORM_ID = #{formId} </if>
 		<if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>

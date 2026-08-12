@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260811-SRVCYCLE";
+	private static final String BUILD = "20260812-PRD";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1107,28 +1107,48 @@ public class QpsController {
 				return fail(res, "서식코드 " + formId + " 는 이미 있습니다.<br>"
 				               + "다른 코드를 쓰거나, 왼쪽 목록에서 그 서식을 골라 고쳐 주세요.");
 			// 아는 축만 통과시킨다 — 엉뚱한 값이 들어오면 화면이 표를 못 그린다
+			// ★LIST(자유행 대장) 추가 2026-08-12 — 행이 고정이 아니라 작성자가 늘린다.
+			//   열은 항목, 행은 자유. 저장은 (행,열,값) 그대로라 표 구조는 안 바뀐다.
+			// ★ITEM_COL(항목 행 × 날짜 아닌 고정 열) 추가 2026-08-12 — 네 부서에서 23종. 단일 최대다.
 			String axisGb = str(p.get("axisGb"), "ITEM_DAY");
 			if (!"EQUIP_DAY".equals(axisGb) && !"ITEM_DAY".equals(axisGb)
-			 && !"DAY_ITEM".equals(axisGb) && !"ITEM_MONTH".equals(axisGb)) axisGb = "ITEM_DAY";
+			 && !"DAY_ITEM".equals(axisGb) && !"ITEM_MONTH".equals(axisGb)
+			 && !"LIST".equals(axisGb)   && !"ITEM_COL".equals(axisGb)) axisGb = "ITEM_DAY";
 
+			// ★글자 칸은 unesc() 로 받는다 — XSS 필터가 바꿔 놓은 것을 되돌린다.
+			//   안 되돌리면 `묶음>열` 이 `묶음&gt;열` 로 남아 **오류 없이 구분자만 사라진다.**
 			Map<String, Object> m = new HashMap<>();
 			m.put("formId", formId);
 			m.put("hospCd", hospCd);                       // ★'*' 로 들어올 수 없다
-			m.put("formNm", str(p.get("formNm"), ""));
+			m.put("formNm", unesc(p.get("formNm")));
 			m.put("cateCd", str(p.get("cateCd"), ""));
 			m.put("deptCd", str(p.get("deptCd"), ""));
 			m.put("axisGb", axisGb);
-			// 연단위 축은 월 셀렉트가 뜻이 없다 — 축이 주기를 정한다
-			m.put("prdGb", "ITEM_MONTH".equals(axisGb) ? "Y" : "M");
+			// 날짜 격자는 축이 주기를 정한다 — ITEM_MONTH 는 1~12월이라 연 1장, 나머지는 월 1장.
+			// ★격자에 기간이 없는 축(LIST·ITEM_COL)만 주기를 고른다(2026-08-12) —
+			//   달마다 새로 쓰는 대장(잔여마약류 반납)과 한 해를 이어 쓰는 대장(조제 전/후 감사)이 둘 다 있고,
+			//   ITEM_COL 은 일(발전기 운전 점검일지)·반기(유해화학물질 모니터링)까지 나온다.
+			String prdGb;
+			if ("ITEM_MONTH".equals(axisGb))                                 prdGb = "Y";
+			else if ("LIST".equals(axisGb) || "ITEM_COL".equals(axisGb))     prdGb = prdOf(p.get("prdGb"));
+			else                                                             prdGb = "M";
+			m.put("prdGb", prdGb);
+			// EQUIP_DAY = 기기 행 수 / ★LIST = 새 문서를 열 때 깔아 줄 빈 행 수(작성 화면에서 더 늘릴 수 있다)
 			Integer eq = intOf(p.get("equipCnt"));
 			m.put("equipCnt", (eq == null || eq < 1 || eq > 50) ? Integer.valueOf(10) : eq);
-			m.put("guideTxt", str(p.get("guideTxt"), ""));
-			m.put("headNms",  str(p.get("headNms"), ""));
+			// 반달 접기 — 일이 **열**인 축에서만 뜻이 있다. 다른 축에 켜 두면 인쇄가 이상해지므로 여기서 끈다.
+			boolean halfOk = "ITEM_DAY".equals(axisGb) || "EQUIP_DAY".equals(axisGb);
+			m.put("halfYn", (halfOk && "Y".equals(str(p.get("halfYn"), ""))) ? "Y" : "N");
+			m.put("guideTxt", unesc(p.get("guideTxt")));
+			m.put("headNms",  unesc(p.get("headNms")));
+			// ★ITEM_COL 의 고정 열 이름. 다른 축은 열을 축이 정하므로 비운다 —
+			//   남겨 두면 축을 바꿨을 때 안 쓰는 값이 따라다니며 헷갈린다.
+			m.put("colNms", "ITEM_COL".equals(axisGb) ? unesc(p.get("colNms")) : "");
 			m.put("signerYn", "Y".equals(str(p.get("signerYn"), "")) ? "Y" : "N");
 			m.put("noteYn",   "Y".equals(str(p.get("noteYn"), ""))   ? "Y" : "N");
 			m.put("fixYn",    "Y".equals(str(p.get("fixYn"), ""))    ? "Y" : "N");
-			m.put("signLine", str(p.get("signLine"), ""));
-			m.put("footTxt",  str(p.get("footTxt"), ""));
+			m.put("signLine", unesc(p.get("signLine")));
+			m.put("footTxt",  unesc(p.get("footTxt")));
 			Integer so = intOf(p.get("sortNo"));
 			m.put("sortNo",   so == null ? Integer.valueOf(0) : so);
 			m.put("regUser",  userId(request));
@@ -1297,14 +1317,38 @@ public class QpsController {
 			m.put("chkSeq", str(p.get("chkSeq"), ""));
 			m.put("formId", formId);
 			m.put("inYear", inYear);
-			// 연단위 서식은 월이 없다 — 빈 문자열을 넣으면 '00' 같은 값이 남아 목록이 헷갈린다
-			String inMm = str(p.get("inMm"), "");
+
+			// ★★주기는 **서식이 정한다**(2026-08-12). 화면이 보낸 값을 그대로 믿으면
+			//   서식과 어긋난 문서가 생기고, 목록·추출이 그걸 못 읽는다.
+			//   ⇒ 서버가 서식을 읽어 주기를 정하고, 화면은 **번호만** 보낸다.
+			String prdGb = "M";
+			try {
+				Object fo = svc.selectChkFormOne(hospCd, formId).get("form");
+				if (fo instanceof Map) prdGb = prdOf(((Map<?, ?>) fo).get("prdgb"));
+			} catch (Exception ignore) { }
+			m.put("prdGb", prdGb);
+
+			// 연·반기·분기 문서는 월이 없다 — 빈 문자열을 넣으면 '00' 같은 값이 남아 목록이 헷갈린다
+			// ★주(W)·일(D)은 「연 + 월 + 번호」라 월을 쓴다.
+			boolean useMm = "M".equals(prdGb) || "W".equals(prdGb) || "D".equals(prdGb);
+			String inMm = useMm ? str(p.get("inMm"), "") : "";
 			m.put("inMm", inMm.isEmpty() ? null : inMm);
-			m.put("wardNm", str(p.get("wardNm"), ""));
-			m.put("head1", str(p.get("head1"), "")); m.put("head2", str(p.get("head2"), ""));
-			m.put("head3", str(p.get("head3"), "")); m.put("head4", str(p.get("head4"), ""));
-			m.put("noteTxt", str(p.get("noteTxt"), ""));
-			m.put("fixTxt",  str(p.get("fixTxt"), ""));
+
+			// 번호 — 그 주기가 쓰는 범위로 자른다. 안 쓰는 주기(Y·M)는 null.
+			int pmax = prdMax(prdGb);
+			Integer pno = null;
+			if (pmax > 0) {
+				Integer v = intOf(p.get("prdNo"));
+				pno = (v == null || v < 1 || v > pmax) ? Integer.valueOf(1) : v;
+			}
+			m.put("prdNo", pno);
+			// ★글자 칸은 unesc() — 특이사항·수리내용에 `&`·`>` 가 들어가면 그대로 깨진다
+			m.put("wardNm", unesc(p.get("wardNm")));
+			// 상단 자유칸 — 4 → 8 (2026-08-12). ★네 부서에서 9종이 오직 이 칸 때문에 밀려났다.
+			//   낱개로 늘어놓으면 늘 때마다 줄이 늘어난다. 번호로 돈다.
+			for (int h = 1; h <= 8; h++) m.put("head" + h, unesc(p.get("head" + h)));
+			m.put("noteTxt", unesc(p.get("noteTxt")));
+			m.put("fixTxt",  unesc(p.get("fixTxt")));
 			m.put("regUser", userId(request));
 			res.put("chkSeq", svc.saveChkDoc(m, jsonRows(p.get("vals")), jsonRows(p.get("rows"))));
 			res.put("result", "OK");
@@ -2204,6 +2248,47 @@ public class QpsController {
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
 			return view;
 		} catch (Exception ex) { return ".login/LoginWinCT"; }
+	}
+
+	/**
+	 * ★★XSS 필터가 파라미터의 `&lt; &gt; &amp; " '` 를 실체참조로 바꿔 보낸다.
+	 * <b>글자 칸은 그대로 저장하면 안 된다</b> — 사람이 적은 `묶음&gt;열` 이 `묶음&amp;gt;열` 로 남고,
+	 * 그 뒤로 <b>구분자를 못 찾아 조용히 갈리지 않는다.</b>
+	 * (2026-08-12 `ITEM_COL` 의 COL_NMS 에서 실제로 겪었다 — 오류 없이 열 묶음만 사라졌다.)
+	 *
+	 * ⚠<b>저장은 원본, 출력은 이스케이프</b>가 이 화면들의 방식이다(JSP 가 esc() 로 내보낸다).
+	 *   {@link #jsonRows(Object)} 도 같은 판단으로 이미 되돌리고 있다 — 여기는 그 문자열 판이다.
+	 */
+	/**
+	 * 문서 단위(주기) — <b>Y</b>연 <b>H</b>반기 <b>Q</b>분기 <b>M</b>월 <b>W</b>주 <b>D</b>일.
+	 * ***아는 값만 통과시킨다*** — 엉뚱한 값이 들어오면 화면이 기간 셀렉트를 못 그린다.
+	 * ★칸을 낱개로 늘리지 않으려고 (주기 종류 + 번호) 한 쌍으로 뒀다(2026-08-12).
+	 *   주차 칸만 더했다면 반기·분기가 나올 때 또 더해야 했다.
+	 */
+	private static String prdOf(Object o) {
+		String s = str(o, "M").trim().toUpperCase();
+		return (s.length() == 1 && "YHQMWD".indexOf(s) >= 0) ? s : "M";
+	}
+
+	/**
+	 * 그 주기에서 <b>번호가 몇까지</b>인가. 0 이면 번호를 안 쓴다(연·월).
+	 * ★일(D)은 그 달의 날 수가 28~31 로 달라 여기서는 최대만 본다 — 실제 날 수는 화면이 그린다.
+	 */
+	private static int prdMax(String prdGb) {
+		if ("H".equals(prdGb)) return 2;
+		if ("Q".equals(prdGb)) return 4;
+		if ("W".equals(prdGb)) return 5;
+		if ("D".equals(prdGb)) return 31;
+		return 0;                      // Y · M
+	}
+
+	private static String unesc(Object o) {
+		String s = str(o, "");
+		if (s.isEmpty()) return s;
+		if (s.indexOf('&') < 0) return s;              // 바꿀 것이 없으면 손대지 않는다
+		return s.replace("&quot;", "\"").replace("&#34;", "\"")
+		        .replace("&lt;", "<").replace("&gt;", ">")
+		        .replace("&#39;", "'").replace("&amp;", "&");   // ★&amp; 는 반드시 마지막
 	}
 
 	/** 화면이 JSON 으로 보낸 행 목록 → List<Map>. 비어 있으면 빈 목록. */
