@@ -150,7 +150,7 @@
     <button type="button" class="ck-btn ghost" onclick="ckNew();">＋ 새로 작성</button>
     <%-- ★전월 복사 — **틀만** 가져온다(기기명·열 이름·상단 칸). 점검 결과는 안 가져온다.
          저장도 안 한다 — 깔아 주기만 하고 [저장]은 사람이 누른다. --%>
-    <button type="button" class="ck-btn ghost" onclick="ckPrevSeed();" title="지난 문서의 기기명·열 이름·상단 칸만 가져옵니다(점검 결과는 가져오지 않습니다)">⧉ 전월 복사</button>
+    <button type="button" class="ck-btn ghost" onclick="ckPrevSeed();" title="지난 문서의 기기명·열 이름·상단 칸과 서식이 지정한 자산 열만 가져옵니다(점검 결과는 가져오지 않습니다)">⧉ 전월 복사</button>
     <%-- ★월 생성 — 일 단위 서식만. 없으면 한 달에 [새로 작성]을 31번 눌러야 한다. --%>
     <button type="button" class="ck-btn ghost" id="ckMonthBtn" onclick="ckMonthGen();" style="display:none;">📅 이 달 전체 만들기</button>
   </div>
@@ -1067,11 +1067,21 @@
       var d = res.doc || {};
       // ★지금 화면의 격자 값은 **건드리지 않는다** — 적다 말고 눌렀을 때 날아가면 안 된다.
       var c = collect();
+      // ★자산 열 값 합치기(2026-08-12) — 서버가 서식이 지목한 열(CARRY_YN='Y')만 골라 준다.
+      //   ⚠**빈 칸에만 채운다.** 이미 친 글자를 덮으면 되돌릴 길이 없다 —
+      //     collect() 가 값 있는 칸만 담으므로, 거기 없는 자리만 넣으면 된다.
+      var have = {};
+      c.vals.forEach(function(v){ have[v.rowno + '_' + v.colno] = true; });
+      var got = 0;
+      (res.vals || []).forEach(function(v){
+        if (have[v.rowno + '_' + v.colno]) return;
+        c.vals.push(v); got++;
+      });
       renderHead(d);                       // 상단 자유칸
       if (!val('f_wardNm')) set('f_wardNm', d.wardnm || '');
       renderGrid(c.vals, res.rows || [], res.cols || []);
-      _toast('지난 점검표의 틀을 가져왔습니다 — 기기명·열 이름·상단 칸. ' +
-             '점검 결과는 가져오지 않습니다.', 'ok');
+      _toast('지난 점검표의 틀을 가져왔습니다 — 기기명·열 이름·상단 칸' +
+             (got ? (' + 자산 ' + got + '칸') : '') + '. 점검 결과는 가져오지 않습니다.', 'ok');
     }).catch(err);
   };
 

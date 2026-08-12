@@ -1851,6 +1851,10 @@ public class QpsServiceImpl implements QpsService {
 			for (Map<String, Object> r : items) {
 				if (str(r.get("itemnm")).isEmpty()) continue;   // 빈 줄은 버린다
 				r.put("sort", ++sort);
+				// ★전월복사에서 가져올 열인가 — NOT NULL 컬럼이라 **빠진 키를 여기서 메꾼다.**
+				//   복제(copyChkForm)는 selectChkItems 가 읽어 온 맵을 그대로 넘기므로 값이 이미 있다.
+				//   ⚠기본은 'N' — ***켜지 않으면 지난달 점검 결과가 따라오지 않는다.*** 안전한 쪽이 기본이다.
+				r.put("carryyn", "Y".equals(str(r.get("carryyn"))) ? "Y" : "N");
 				keep.add(r);
 			}
 			if (!keep.isEmpty()) {
@@ -1961,14 +1965,22 @@ public class QpsServiceImpl implements QpsService {
 	 *   · 병동
 	 *   · 기기 행 이름 (TBL_QPS_CHK_ROW) — 소화기·냉난방기의 자산 목록
 	 *   · 열 이름 (TBL_QPS_CHK_COL) — MSDS 물질명 · 소방 층·병동
+	 *   · <b>대장(LIST)의 자산 열</b> — 서식이 {@code ITEM.CARRY_YN='Y'} 로 <b>지목한 열만</b>(2026-08-12)
 	 *
 	 * ★복사하지 않는 것 = <b>그 달에 일어난 일</b>
-	 *   · 격자 값 전부 (TBL_QPS_CHK_VAL) — 앞/뒤 열(예산·조치사항·수량)도 여기 산다.
-	 *     ⚠수량처럼 「자산에 가까운」 것이 섞여 있지만 ***칸마다 갈라 줄 근거가 없다.***
-	 *       근거 없이 반만 복사하면 어느 칸이 복사됐는지 아무도 모른다 ⇒ 전부 안 한다.
+	 *   · 나머지 격자 값 전부 (TBL_QPS_CHK_VAL) — 앞/뒤 열(예산·조치사항)·사인 행 포함
 	 *   · 특이사항 · 수리내용
 	 *
-	 * @return {@code {found, head1..8, wardNm, rows[], cols[]}} — ***저장하지 않는다.***
+	 * ★★2026-08-12 — <b>「칸마다 갈라 줄 근거가 없다」던 것이 생겼다.</b>
+	 *   냉/난방기 점검표는 행이 <b>60줄</b>(지하 전체·201·202…옥상환기구)이고 소화기 관리 대장도
+	 *   자산이 수십 줄이다. 자유행이라 <b>매달 다시 친다</b> — 이 기능 없이는 못 쓰는 서식이다.
+	 *   ⇒ 근거 없이 반만 복사하는 대신 <b>서식이 열을 지목하게</b> 했다({@code CARRY_YN}).
+	 *     어느 칸이 복사됐는지 서식 관리 화면에 적혀 있으므로 「아무도 모른다」가 성립하지 않는다.
+	 *   ⚠<b>{@code LIST} 축만</b>이다. 다른 축은 격자 칸이 그 달의 점검 결과뿐이라 가져올 자산이 없다.
+	 *   ⚠사인 행(900)·앞뒤 열(1000/2000대)은 지목과 무관하게 <b>안 가져온다</b> —
+	 *     열 번호가 항목 순번과 겹치지 않으므로 아래 필터가 자연히 걸러낸다.
+	 *
+	 * @return {@code {found, head1..8, wardNm, rows[], cols[], vals[]}} — ***저장하지 않는다.***
 	 *         화면에 깔아 주기만 하고, 저장은 사람이 [저장]을 눌러야 일어난다.
 	 */
 	@Override
@@ -1984,7 +1996,38 @@ public class QpsServiceImpl implements QpsService {
 		out.put("doc", prev);
 		out.put("rows", mapper.selectChkRows(seq));
 		out.put("cols", mapper.selectChkCols(seq));
+		out.put("vals", carryVals(hospCd, formId, seq));
 		return out;
+	}
+
+	/**
+	 * 전월복사로 가져올 <b>자산 열</b>의 값만 골라 온다 — {@code LIST} 축 + {@code ITEM.CARRY_YN='Y'}.
+	 * ★대장은 <b>항목이 열</b>이라 「어느 열인가」는 {@code COL_NO == ITEM.SORT} 다.
+	 * ★하나도 안 지목했으면 <b>빈 목록</b>이다 — 지금까지와 똑같이 동작한다(기본이 안전한 쪽).
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Map<String, Object>> carryVals(String hospCd, String formId, long seq) {
+		List<Map<String, Object>> none = new ArrayList<>();
+		try {
+			Map<String, Object> one = selectChkFormOne(hospCd, formId);
+			Object fo = one.get("form");
+			if (!(fo instanceof Map)) return none;
+			if (!"LIST".equals(str(((Map<String, Object>) fo).get("axisgb")))) return none;
+			Set<Integer> carry = new HashSet<>();
+			for (Map<String, Object> it : (List<Map<String, Object>>) one.get("items")) {
+				if ("Y".equals(str(it.get("carryyn")))) carry.add(Integer.valueOf(intOf(it.get("sort"), 0)));
+			}
+			if (carry.isEmpty()) return none;
+			List<Map<String, Object>> keep = new ArrayList<>();
+			for (Map<String, Object> v : mapper.selectChkVals(seq)) {
+				if (intOf(v.get("rowno"), 0) == CHK_SIGN_NO) continue;       // 사인 행은 사람 이름이다
+				if (carry.contains(Integer.valueOf(intOf(v.get("colno"), 0)))) keep.add(v);
+			}
+			return keep;
+		} catch (Exception ignore) {
+			// ★못 읽으면 **안 가져온다.** 전월복사가 실패하는 것보다 자산을 다시 치는 쪽이 안전하다.
+			return none;
+		}
 	}
 
 	/**

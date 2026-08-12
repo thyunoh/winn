@@ -2321,7 +2321,7 @@
 	<select id="selectChkItems" resultType="java.util.HashMap">
 		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, BLK_NM AS blknm,
 		       DESC_TXT AS desctxt, SPAN_TXT AS spantxt,
-		       INPUT_GB AS inputgb, UNIT_NM AS unitnm
+		       INPUT_GB AS inputgb, UNIT_NM AS unitnm, CARRY_YN AS carryyn
 		  FROM TBL_QPS_CHK_ITEM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD = #{hospCd}
 		 ORDER BY SORT
@@ -2381,9 +2381,9 @@
 	</delete>
 
 	<insert id="insertChkItems" parameterType="map">
-		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, BLK_NM, DESC_TXT, SPAN_TXT, INPUT_GB, UNIT_NM, USE_YN) VALUES
+		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, BLK_NM, DESC_TXT, SPAN_TXT, INPUT_GB, UNIT_NM, CARRY_YN, USE_YN) VALUES
 		<foreach item="it" collection="items" separator=",">
-		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.blknm}, #{it.desctxt}, #{it.spantxt}, #{it.inputgb}, #{it.unitnm}, 'Y')
+		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.blknm}, #{it.desctxt}, #{it.spantxt}, #{it.inputgb}, #{it.unitnm}, #{it.carryyn}, 'Y')
 		</foreach>
 	</insert>
 

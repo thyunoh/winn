@@ -339,6 +339,9 @@
         <th style="width:140px;" id="thSpanTxt" hidden>고정 띠 문구</th>
         <th style="width:90px;">입력</th>
         <th style="width:56px;">단위</th>
+        <%-- ★전월복사에서 가져올 열(2026-08-12) — 대장(LIST)만. 자산 목록은 가져오고 점검 결과는 비운다.
+             ***켜지 않으면 안 가져온다*** — 지난달 결과가 남으면 「점검했다」로 보이기 때문이다. --%>
+        <th style="width:64px;" id="thCarry" hidden>전월<br>복사</th>
         <th style="width:44px;">이동</th>
         <th style="width:26px;"></th>
       </tr></thead><tbody id="tbITEM"></tbody></table>
@@ -352,7 +355,7 @@
       <div id="cfPasteBox" style="display:none; margin-top:8px; border:1px solid #dfe4ea; border-radius:6px; padding:10px;">
         <div style="font-size:12.5px; color:#43555f; margin-bottom:6px;">
           <b>한 줄에 항목 하나</b>씩 붙여넣으세요. 엑셀에서 세로로 복사하면 그대로 들어갑니다.<br>
-          <span style="color:#8a99a3;">탭이나 <b>|</b> 로 나누면 <b>항목 ▸ 열묶음 ▸ 입력(CHECK/TEXT/NUM) ▸ 단위</b> 로 읽습니다.</span>
+          <span style="color:#8a99a3;">탭이나 <b>|</b> 로 나누면 <b>항목 ▸ 열묶음 ▸ 입력(CHECK/TEXT/NUM) ▸ 단위 ▸ 전월복사(Y)</b> 로 읽습니다.</span>
         </div>
         <textarea id="cfPasteTxt" rows="8" placeholder="전원 상태&#10;외관 및 내부청결 상태 점검&#10;온도|치료실 환경|NUM|℃"></textarea>
         <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
@@ -687,6 +690,9 @@
     // ★기간 열 머리글 입력 행 — 기간이 **열**이고 항목이 **행**인 두 축만(서버 prdHeadOk 와 같은 판단)
     var phAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH');
     gel('f_prdHeadWrap').style.display = phAx ? '' : 'none';
+    // ★전월복사에서 가져올 열 — 대장(LIST)만. 다른 축은 격자가 그 달의 결과뿐이라 가져올 자산이 없다.
+    gel('thCarry').hidden = !isList;
+    document.querySelectorAll('#tbITEM [data-cell="carryyn"]').forEach(function(td){ td.hidden = !isList; });
     // ★격자 옆 칸 — 항목이 행인 세 축만(서버 QpsController.sideOk 와 같은 판단이어야 한다)
     var sideAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL');
     gel('f_sideLb').style.display   = sideAx ? '' : 'none';
@@ -727,6 +733,8 @@
         '<option value="NUM"' + (r.inputgb === 'NUM' ? ' selected' : '') + '>숫자</option>' +
       '</select></td>' +
       '<td><input data-f="unitnm" value="' + esc(r.unitnm) + '" placeholder="℃"></td>' +
+      '<td data-cell="carryyn" hidden style="text-align:center;">' +
+        '<input type="checkbox" data-f="carryyn"' + (r.carryyn === 'Y' ? ' checked' : '') + '></td>' +
       '<td class="movebtn" onclick="cfMove(this,-1);">▲<br>' +
           '<span onclick="event.stopPropagation();cfMove(this.parentNode,1);">▼</span></td>' +
       '<td class="rowdel" onclick="this.closest(\'tr\').remove(); renumber(); renderPrev();">✕</td>';
@@ -748,7 +756,11 @@
     var out = [];
     document.querySelectorAll('#tbITEM tr').forEach(function(tr){
       var r = {};
-      tr.querySelectorAll('[data-f]').forEach(function(el){ r[el.getAttribute('data-f')] = String(el.value).trim(); });
+      tr.querySelectorAll('[data-f]').forEach(function(el){
+        // ★체크박스는 value 가 늘 'on' 이다 — 그대로 담으면 CARRY_YN 이 전부 켜진다
+        r[el.getAttribute('data-f')] = (el.type === 'checkbox') ? (el.checked ? 'Y' : 'N')
+                                                                : String(el.value).trim();
+      });
       if (!r.itemnm) return;
       out.push(r);
     });
@@ -952,8 +964,10 @@
         var g = r.grpnm || '';
         if (lL && lL.g === g) lL.n++; else { lL = { g:g, n:1 }; gL.push(lL); }
       });
+      // ★전월복사로 가져오는 열은 머리글에 표시한다 — 어느 칸이 따라오는지 **보여야** 한다
       var thL = items.map(function(r){
-        return '<th style="min-width:80px;">' + esc(r.itemnm) + (r.unitnm ? ('(' + esc(r.unitnm) + ')') : '') + '</th>';
+        return '<th style="min-width:80px;">' + esc(r.itemnm) + (r.unitnm ? ('(' + esc(r.unitnm) + ')') : '') +
+               (r.carryyn === 'Y' ? '<br><span style="font-weight:400;color:#2c7a7b;">↩전월</span>' : '') + '</th>';
       }).join('');
       h += '<table><thead>';
       if (gL.some(function(g){ return g.g; })) {
@@ -1194,7 +1208,7 @@
       var ig = (p[2] || '').toUpperCase();
       itemRow({ itemnm: p[0], grpnm: p[1] || '',
                 inputgb: (ig === 'TEXT' || ig === 'NUM') ? ig : 'CHECK',
-                unitnm: p[3] || '' });
+                unitnm: p[3] || '', carryyn: (p[4] || '').toUpperCase() === 'Y' ? 'Y' : 'N' });
     });
     renumber(); cfAxisChange(); cfHeadCount();
     gel('cfPasteBox').style.display = 'none';
@@ -1240,10 +1254,11 @@
         q(val('f_noteNm')) + ',\n  ' +
         q(chk('f_signerYn')) + ',' + q(chk('f_noteYn')) + ',' + q(chk('f_fixYn')) + ',' +
         q(val('f_signLine')) + ',' + q(val('f_footTxt')) + ',' + (Number(val('f_sortNo')) || 0) + ",'Y','system');\n" +
-      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,BLK_NM,DESC_TXT,SPAN_TXT,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
+      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,BLK_NM,DESC_TXT,SPAN_TXT,INPUT_GB,UNIT_NM,CARRY_YN,USE_YN) VALUES\n' +
       items.map(function(r, i){
         return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' + q(r.blknm) + ',' +
-               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ",'Y')";
+               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ',' +
+               q(axis() === 'LIST' && r.carryyn === 'Y' ? 'Y' : 'N') + ",'Y')";
       }).join(',\n') + ';\n';
     gel('cfSqlTxt').value = sql;
     gel('cfSqlBox').style.display = '';
