@@ -2434,6 +2434,7 @@ $(document).ready(function() {
             }
         } catch(e){}
     }
+    
     function inField(t){
         if (!t) return false;
         var tag = (t.tagName || '').toUpperCase();
