@@ -1,2 +1,8 @@
 # Claude Code local settings (개인 로컬 설정 — 버전관리 제외)
 **/.claude/settings.local.json
+
+# Claude Code 임시 worktree — ★반드시 제외할 것 (2026-08-12)
+#   여기가 추적되면 git worktree 폴더가 **SHA 가 전부 0 인 gitlink** 로 인덱스에 박히고,
+#   그 뒤로 status·commit·push 가 전부 `cache entry has null sha1` 로 막힌다.
+#   (한 번 커밋되면 HEAD 에도 남아 걷어낼 때까지 계속 재발한다)
+**/.claude/worktrees/
