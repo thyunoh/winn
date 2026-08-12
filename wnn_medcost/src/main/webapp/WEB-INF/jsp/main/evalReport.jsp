@@ -3831,12 +3831,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     // P1 국면 분기 — 선언 + 전월대비(상승/하락/유지) + 상위등급 격차(경계 국면) + 목표 문장
     //   (담당자 문형: "전월대비 종합점수 4.56점 상승이 되었으며, 3등급과 점수차이는 0.14점")
     var curG = gradeOf(scores.total);
-    // [C1] 당월/누적 이원 — 선언을 이원형으로 '병합'(누적 중복 진술 제거 → P1 분량 절감). 시스템 SP monthVal.
+    /* [C1] 당월/누적 이원 선언 (2026-08-11 문형 확정)
+         "적정성평가 예상점수는 8월 75.2점이며, 7~8월 누적 기준 예상 종합점수는 73.4점으로 4등급에 해당함."
+       ★종합점수는 이제 <누적> 기준이므로, 당월 단독 점수를 함께 밝혀 둘을 구분해 준다.
+         당월 점수는 지표별 당월 가중치 합으로 직접 낸다 — 화면(Ⅱ·Ⅲ)과 같은 자료라 값이 어긋나지 않는다.
+         (종전엔 대시보드 SP 의 monthVal 을 썼는데, 값이 없으면 이원 문장 자체가 안 나왔다.)
+       누적이 없는 달(7월 보고서)은 당월=누적이라 종전 한 줄 문장 그대로. */
     var moNum2 = parseInt(curYm.substring(4,6),10);
-    var mVal = _dashInd ? n(_dashInd.monthVal) : 0;
-    var mG = mVal>0 ? gradeOf(mVal) : '';
-    if(mVal>0 && mG!==curG)
-      p.sum_p1 = moNum2+'월 당월 단독 예상점수는 '+f1(mVal)+'점('+mG+')이나, 실제 평가에 반영되는 7~'+moNum2+'월 누적 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당함.';
+    var monTot = 0; indicators.forEach(function(r){ monTot += n(r.weigval); });
+    monTot = Math.round(monTot*10)/10;
+    if(_cum)
+      p.sum_p1 = '적정성평가 예상점수는 '+moNum2+'월 '+f1(monTot)+'점이며, '+cumLabel()+' 누적 기준 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당함.';
     else
       p.sum_p1 = ymTxt+' 예상 종합점수는 '+f1(scores.total)+'점으로 '+curG+'에 해당함.';
     if(prevTotal!=null){
