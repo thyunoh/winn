@@ -2305,7 +2305,7 @@
 		       EQUIP_CNT AS equipcnt, HALF_YN AS halfyn, SPLIT_N AS splitn, SPLIT_DIR AS splitdir,
 		       GUIDE_TXT AS guidetxt,
 		       HEAD_NMS AS headnms, COL_NMS AS colnms, COL_SRC AS colsrc,
-		       ROW_BLK_GB AS rowblkgb, ROW_BLKS AS rowblks,
+		       ROW_BLK_GB AS rowblkgb, ROW_BLKS AS rowblks, ROW_SRC AS rowsrc,
 		       DESC_NM AS descnm, PRE_COLS AS precols, POST_COLS AS postcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
@@ -2345,12 +2345,12 @@
 	<insert id="saveChkForm" parameterType="map">
 		INSERT INTO TBL_QPS_CHK_FORM
 		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, EQUIP_CNT,
-		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS,
+		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS, ROW_SRC,
 		  DESC_NM, PRE_COLS, POST_COLS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
 		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{equipCnt},
-		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks},
+		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks}, #{rowSrc},
 		  #{descNm}, #{preCols}, #{postCols},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
@@ -2359,7 +2359,7 @@
 		  EQUIP_CNT=VALUES(EQUIP_CNT), HALF_YN=VALUES(HALF_YN),
 		  SPLIT_N=VALUES(SPLIT_N), SPLIT_DIR=VALUES(SPLIT_DIR), GUIDE_TXT=VALUES(GUIDE_TXT),
 		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS), COL_SRC=VALUES(COL_SRC),
-		  ROW_BLK_GB=VALUES(ROW_BLK_GB), ROW_BLKS=VALUES(ROW_BLKS),
+		  ROW_BLK_GB=VALUES(ROW_BLK_GB), ROW_BLKS=VALUES(ROW_BLKS), ROW_SRC=VALUES(ROW_SRC),
 		  DESC_NM=VALUES(DESC_NM), PRE_COLS=VALUES(PRE_COLS), POST_COLS=VALUES(POST_COLS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
@@ -2498,10 +2498,20 @@
 		       CASE WHEN f.AXIS_GB NOT IN ('DAY_ITEM','LIST') AND v.COL_NO &gt;= 1000 THEN NULL
 		            WHEN f.AXIS_GB = 'LIST' AND v.ROW_NO &gt;= 1000 THEN v.ROW_NO MOD 1000
 		            WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.ROW_NO ELSE v.COL_NO END AS dayno,
-		       CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END AS itemno,
-		       <!-- 블록 이름. 블록을 안 쓰는 서식·사인 행(900)은 빈 값.
-		            ★ROW_NO &lt; 1000 은 블록 1 로 본다 — 블록 없이 쓰던 서식에 나중에 블록을 붙여도 살아 있게. -->
-		       CASE WHEN f.AXIS_GB = 'LIST' AND IFNULL(f.ROW_BLKS,'') &lt;&gt; '' AND v.ROW_NO &lt;&gt; 900
+		       <!-- ★행 묶음을 **문서가 정하는** 서식(ROW_SRC='D')도 ROW_NO 가 `묶음×1000 + 항목` 이다.
+		            ⇒ 항목 번호는 `MOD 1000` 으로 되돌린다. ***안 되돌리면 항목 이름이 통째로 안 붙는다*** —
+		              아래 ITEM 조인이 `i.SORT = itemno` 라서 3001 을 찾다가 못 찾고 「(항목없음)」이 된다.
+		              오류가 안 나므로 CSV 를 열어 보기 전에는 모른다. -->
+		       CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO
+		            WHEN f.ROW_SRC = 'D' AND v.ROW_NO &gt;= 1000 THEN v.ROW_NO MOD 1000
+		            ELSE v.ROW_NO END AS itemno,
+		       <!-- 묶음 이름 —
+		            · `LIST` + 행 블록 : 서식의 ROW_BLKS 에서 떼어 온다
+		            · `ROW_SRC='D'`    : **문서**가 적은 것(TBL_QPS_CHK_ROW)
+		            ★둘 다 「몇 번째 묶음인가」는 `FLOOR(ROW_NO/1000)` 로 같다. 규칙이 하나다. -->
+		       CASE WHEN f.ROW_SRC = 'D' AND v.ROW_NO &lt;&gt; 900
+		            THEN IFNULL(r.ROW_NM, CONCAT(GREATEST(FLOOR(v.ROW_NO / 1000), 1), '번 묶음'))
+		            WHEN f.AXIS_GB = 'LIST' AND IFNULL(f.ROW_BLKS,'') &lt;&gt; '' AND v.ROW_NO &lt;&gt; 900
 		            THEN SUBSTRING_INDEX(
 		                   SUBSTRING_INDEX(SUBSTRING_INDEX(f.ROW_BLKS, ',',
 		                       GREATEST(FLOOR(v.ROW_NO / 1000), 1)), ',', -1),
@@ -2545,11 +2555,19 @@
 		  JOIN TBL_QPS_CHK_VAL  v ON v.CHK_SEQ = d.CHK_SEQ
 		  LEFT JOIN TBL_QPS_CHK_ITEM i
 		    ON i.FORM_ID = f.FORM_ID AND i.HOSP_CD = f.HOSP_CD
-		   AND i.SORT = (CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END)
+		   <!-- ★itemno 와 **같은 식**이어야 한다. 여기만 안 고치면 항목 이름이 통째로 「(항목없음)」이 되고
+		        오류는 안 난다. 축을 넓힐 때 화면보다 추출을 먼저 보라는 이유가 이것이다. -->
+		   AND i.SORT = (CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO
+		                      WHEN f.ROW_SRC = 'D' AND v.ROW_NO &gt;= 1000 THEN v.ROW_NO MOD 1000
+		                      ELSE v.ROW_NO END)
 		  <!-- 기기명은 EQUIP_DAY 에서만 쓴다 — 그 축은 ROW 가 곧 기기번호다 -->
+		  <!-- 문서가 적은 **행 이름**. 쓰이는 데가 둘이고 **번호의 뜻이 다르다** —
+		       · EQUIP_DAY : ROW_NO 가 곧 기기 번호
+		       · ROW_SRC='D' : ROW_NO 가 `묶음×1000 + 항목` 이라 **묶음 번호**로 찾아야 한다 -->
 		  LEFT JOIN TBL_QPS_CHK_ROW r
-		    ON r.CHK_SEQ = d.CHK_SEQ AND f.AXIS_GB = 'EQUIP_DAY'
-		   AND r.ROW_NO = v.ROW_NO
+		    ON r.CHK_SEQ = d.CHK_SEQ
+		   AND ( (f.AXIS_GB = 'EQUIP_DAY' AND r.ROW_NO = v.ROW_NO)
+		      OR (f.ROW_SRC = 'D' AND r.ROW_NO = GREATEST(FLOOR(v.ROW_NO / 1000), 1)) )
 		  <!-- 열 이름은 COL_SRC='D' 인 서식에서만 쓴다 — CHK_ROW 를 EQUIP_DAY 로 좁힌 것과 같은 이유다 -->
 		  LEFT JOIN TBL_QPS_CHK_COL c
 		    ON c.CHK_SEQ = d.CHK_SEQ AND f.COL_SRC = 'D'

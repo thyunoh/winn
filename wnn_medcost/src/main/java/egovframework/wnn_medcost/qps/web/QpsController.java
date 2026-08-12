@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260812-COMMON";
+	private static final String BUILD = "20260812-ROWSRC";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1187,6 +1187,11 @@ public class QpsController {
 			//     · EQUIP_DAY 는 행이 항목이 아니라 **기기**다 — 항목의 설명을 걸 자리가 없다.
 			//       (기기별 규격 칸은 실물 근거가 없다. ***없는 근거로 칸을 열지 않는다.***)
 			boolean sideOk = "ITEM_DAY".equals(axisGb) || "ITEM_MONTH".equals(axisGb) || "ITEM_COL".equals(axisGb);
+			// ★행 묶음을 **문서가 정하는** 서식(2026-08-12) — 응급 약품 점검 기록부 · 소화기 관리대장 등 3종.
+			//   판정 문서가 `EQUIP_MONTH` 라 부르던 것인데 ***새 축이 아니라 조각 하나였다*** :
+			//   12월 열은 ITEM_MONTH 에, 하위 항목은 행 그룹에 이미 있고, 없던 것은 **묶음 이름의 출처**뿐이다.
+			//   ⇒ COL_SRC 의 대칭. 범위도 앞/뒤 열과 같다(항목이 행인 세 축).
+			m.put("rowSrc", (sideOk && "D".equals(str(p.get("rowSrc"), ""))) ? "D" : "F");
 			m.put("descNm",   sideOk ? unesc(p.get("descNm"))   : "");
 			m.put("preCols",  sideOk ? unesc(p.get("preCols"))  : "");
 			m.put("postCols", sideOk ? unesc(p.get("postCols")) : "");

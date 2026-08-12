@@ -1812,6 +1812,7 @@ public class QpsServiceImpl implements QpsService {
 		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
 		m.put("colNms",  str(src.get("colnms")));     // ITEM_COL 의 고정 열 — 복제할 때 빠지면 표가 안 그려진다
 		m.put("colSrc",  str(src.get("colsrc")));     // 열 이름을 서식이 정하나 문서가 정하나
+		m.put("rowSrc",  str(src.get("rowsrc")));     // 행 묶음을 서식이 정하나 문서가 정하나
 		m.put("signerYn", str(src.get("signeryn")));  m.put("noteYn", str(src.get("noteyn")));
 		m.put("fixYn", str(src.get("fixyn")));        m.put("signLine", str(src.get("signline")));
 		m.put("footTxt", str(src.get("foottxt")));    m.put("sortNo", src.get("sortno"));

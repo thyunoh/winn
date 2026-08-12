@@ -244,6 +244,21 @@
   /** 격자 양옆에 몇 칸이 붙나 — 빈 줄·사인 행의 `colspan` 을 맞추는 데 쓴다. */
   function sideCnt(){ return (descNm() ? 1 : 0) + preCols().length + postCols().length; }
 
+  /* ═══ 행 묶음을 **문서가 정하는** 서식 (2026-08-12) ═══
+     응급 약품 점검 기록부 · 소화기 관리대장(연) · 월별비치의약품 — 3종.
+     판정 문서가 `EQUIP_MONTH` 라 부르던 것인데 ***새 축이 아니었다*** :
+       12월 열은 ITEM_MONTH 에, 하위 항목(수량·유효기간·파손유무)은 **행 그룹**에 이미 있고,
+       없던 것은 **묶음 이름을 누가 정하나** 하나뿐이었다. ⇒ `ROW_SRC='D'`.
+     ★행 번호는 **행 블록과 같은 규칙** — `묶음×1000 + 항목`. 규칙이 하나면 기억할 것도 하나다.
+     ★묶음 이름은 `TBL_QPS_CHK_ROW`(기기명과 같은 표)에 담는다 — 세 번째로 뒤집어 쓰는 장치다. */
+  function docRow(){
+    if (!FORM || FORM.rowsrc !== 'D') return false;
+    var a = axis();
+    return a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL';
+  }
+  /** 묶음을 몇 개 깔까 — 서식의 EQUIP_CNT. ⚠이 칸은 축마다 뜻이 넷이다(기기·행·열·**묶음**). */
+  function docGrpCnt(){ return Math.max(1, Math.min(50, Number((FORM && FORM.equipcnt) || 10))); }
+
   var SIGN_NO = 900;   // 예약 — 점검자 사인 행(또는 열)
   var HEAD_MAX = 8;    // 상단 자유칸 최대 수. ★DB 컬럼 HEAD1~HEAD8 과 반드시 같아야 한다
   // ★대장의 현재 행 수. 서식이 아니라 **문서**가 정하므로 화면이 들고 있는다(저장은 값이 있는 행만).
@@ -365,16 +380,20 @@
    * ★설명 칸은 **입력이 아니다.** 항목의 속성이라 여기서 고치면 이 달만 달라진다 —
    *   서식 관리에서 고쳐야 모든 달이 같이 바뀐다. 그래서 글자로만 찍는다.
    */
-  function sideTd(r, g, back){
+  function sideTd(r, g, back, rowNo){
+    // ⚠**행 번호를 밖에서 받아야 한다.** `r.sort` 로 두면 묶음을 문서가 정하는 서식에서
+    //   묶음이 열여섯이어도 앞/뒤 칸이 **전부 같은 행 번호**를 써서 ***한 칸에 겹쳐 쓴다.***
+    //   (2026-08-12 검증에서 실제로 잡았다 — 「비치량」이 16개 약품 모두 row 1 이었다)
+    var rw = (rowNo == null) ? (r ? r.sort : 0) : rowNo;
     if (back) {
       return postCols().map(function(nm, j){
-        return r ? cell(r.sort, POST_BASE + j + 1, g(r.sort, POST_BASE + j + 1), 'ltxt') : '<td></td>';
+        return r ? cell(rw, POST_BASE + j + 1, g(rw, POST_BASE + j + 1), 'ltxt') : '<td></td>';
       }).join('');
     }
     var out = '';
     if (descNm()) out += '<td class="sidetxt">' + (r ? esc(r.desctxt || '') : '') + '</td>';
     return out + preCols().map(function(nm, j){
-      return r ? cell(r.sort, PRE_BASE + j + 1, g(r.sort, PRE_BASE + j + 1), 'ltxt') : '<td></td>';
+      return r ? cell(rw, PRE_BASE + j + 1, g(rw, PRE_BASE + j + 1), 'ltxt') : '<td></td>';
     }).join('');
   }
 
@@ -589,8 +608,9 @@
         if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
       });
       // ★같은 GRP_NM 을 **가로 띠**로 그릴 수도 있다(ROW_BLK_GB='B') — ITEM_COL 과 같은 장치다
-      var rband = (FORM.rowblkgb === 'B') && rg.some(function(x){ return x.g; });
-      var hasRg = !rband && rg.some(function(x){ return x.g; });
+      var rband = !docRow() && (FORM.rowblkgb === 'B') && rg.some(function(x){ return x.g; });
+      // ★묶음을 문서가 정하면 묶음 칸은 **언제나 있다**(거기에 이름을 적는다)
+      var hasRg = docRow() || (!rband && rg.some(function(x){ return x.g; }));
       h += '<table class="gr' + (hasRg ? ' hasrg' : '') + '"><thead><tr>' +
            (hasRg ? '<th class="rgrp">묶음</th>' : '') +
            '<th class="hd">점검 항목</th>' + sideTh();
@@ -600,6 +620,23 @@
       h += sideTh(true) + '</tr></thead><tbody>';
       if (!ITEMS.length) h += '<tr><td class="hd" style="color:#8a99a3;">이 서식에 점검항목이 없습니다 — [서식 관리]에서 등록하세요.</td>' +
                               '<td colspan="' + (nCol + sideCnt()) + '"></td></tr>';
+      if (docRow()) {
+        // ★묶음 이름을 문서가 적는다 — 묶음 칸이 **입력칸**이고, 그 아래로 서식의 항목이 되풀이된다.
+        //   행 번호는 `묶음×1000 + 항목` (행 블록과 같은 규칙).
+        for (var db = 1; db <= docGrpCnt(); db++) {
+          ITEMS.forEach(function(r, k){
+            h += '<tr>';
+            if (k === 0) h += '<th class="rgrp" rowspan="' + Math.max(ITEMS.length, 1) + '">' +
+                              '<input data-rn="' + db + '" value="' + esc(RN[db] || '') +
+                              '" placeholder="' + db + '번"></th>';
+            var drw = blkRowNo(db, r.sort);
+            h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
+            h += sideTd(r, g, false, drw);
+            PC.forEach(function(pc){ h += cell(drw, pc.no, g(drw, pc.no), '', pc.no); });
+            h += sideTd(r, g, true, drw) + '</tr>';
+          });
+        }
+      } else {
       var gi = 0, gpos = 0;   // 지금 몇 번째 묶음인지 / 그 묶음 안에서 몇 번째 행인지
       ITEMS.forEach(function(r){
         if (rband && gpos === 0 && rg[gi].g) h += '<tr class="blk"><td colspan="' + (1 + nCol + sideCnt()) + '">' + esc(rg[gi].g) + '</td></tr>';
@@ -613,6 +650,7 @@
         h += '</tr>';
         if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
+      }
       if (FORM.signeryn === 'Y') {
         // 사인 행은 어느 묶음에도 속하지 않는다 — 빈 묶음 칸을 하나 둬야 칸 수가 맞는다
         h += '<tr class="sign">' + (hasRg ? '<th class="rgrp"></th>' : '') + '<th class="hd">점검자 사인</th>' +

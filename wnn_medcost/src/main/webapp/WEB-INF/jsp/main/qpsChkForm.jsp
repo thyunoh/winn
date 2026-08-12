@@ -249,7 +249,12 @@
             <option value="S">왼쪽 세로 칸</option>
             <option value="B">가로 띠 (표를 가로지르는 머리 행)</option>
           </select>
-          <span class="cf-sub" id="cfBandHint"></span>
+          <%-- ★묶음 이름을 **문서**가 정하는 서식이 있다(응급 약품 점검 기록부 · 소화기 관리대장 등). --%>
+          <select id="f_rowSrc" style="width:auto; margin-left:6px;" onchange="cfAxisChange();">
+            <option value="F">묶음 이름을 서식이 정함</option>
+            <option value="D">묶음 이름을 문서가 정함 (약품·소화기처럼 병원마다 다름)</option>
+          </select>
+          <div class="cf-sub" id="cfBandHint" style="margin-top:3px;"></div>
         </div>
 
         <%-- ★격자 옆에 붙는 칸(2026-08-12) — ***둘로 갈린다.***
@@ -524,6 +529,11 @@
 
   /** 열 이름을 문서가 정하나 — `ITEM_COL` 만이다(서버 QpsController 와 같은 판단). */
   function docCol(){ return axis() === 'ITEM_COL' && val('f_colSrc') === 'D'; }
+  /** 행 **묶음** 이름을 문서가 정하나 — 항목이 행인 세 축(서버와 같은 판단). */
+  function docGrp(){
+    var a = axis();
+    return (a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL') && val('f_rowSrc') === 'D';
+  }
 
   /** 고정 열을 적는 자리에서 바로 몇 칸인지·묶음이 어떻게 잡히는지 보여 준다. */
   window.cfColHint = function(){
@@ -560,9 +570,11 @@
     // 행 수 칸은 EQUIP_DAY(기기 대수)와 LIST(처음에 깔아 줄 빈 행 수) 둘 다 쓴다 — 이름만 갈린다
     // ★한 칸(EQUIP_CNT)이 축마다 뜻이 갈린다 — 기기 행 수 / 기본 행 수 / **기본 열 수**.
     //   ***라벨을 안 바꾸면 「기기 행 수」로 읽혀 열 수를 아무도 못 찾는다.***
-    var useCnt = (a === 'EQUIP_DAY' || a === 'LIST' || docCol());
+    var useCnt = (a === 'EQUIP_DAY' || a === 'LIST' || docCol() || docGrp());
     gel('f_equipWrap').style.display = useCnt ? '' : 'none';
-    gel('f_equipLb').textContent = docCol() ? '기본 열 수' : (a === 'LIST') ? '기본 행 수' : '기기 행 수';
+    gel('f_equipLb').textContent = docGrp() ? '기본 묶음 수'
+                                : docCol()  ? '기본 열 수'
+                                : (a === 'LIST') ? '기본 행 수' : '기기 행 수';
     var h = gel('cfItemHint');
     h.textContent = (a === 'EQUIP_DAY') ? '— 이 축에서는 항목이 표 위 안내박스로만 나옵니다(셀은 기기별 일별)'
                   : (a === 'DAY_ITEM')  ? '— 항목이 표의 **열**이 됩니다. 「열 묶음」을 적으면 2단 머리글이 생깁니다'
@@ -613,10 +625,17 @@
     gel('f_bandWrap').style.display = itemRowAx ? '' : 'none';
     if (itemRowAx) {
       var hasG = readItems().some(function(r){ return (r.grpnm || '').trim(); });
-      gel('cfBandHint').textContent = hasG
-        ? (val('f_rowBlkGb') === 'B' ? '묶음 이름이 표를 가로지르는 머리 행으로 나옵니다(시설물 정기점검처럼).'
-                                     : '묶음 이름이 왼쪽 세로 칸으로 나옵니다(지금까지와 같음).')
-        : '아래 항목의 「행 묶음」을 적어야 뜻이 있습니다 — 비어 있으면 어느 쪽이든 같습니다.';
+      // 묶음 이름을 문서가 정하면 표시 방법·항목의 「묶음」 칸은 쓸 데가 없다 — 아예 숨긴다
+      var dRow = (val('f_rowSrc') === 'D');
+      gel('f_rowBlkGb').style.display = dRow ? 'none' : '';
+      gel('cfBandHint').innerHTML = dRow
+        ? ('아래 <b>항목</b>이 <b>묶음마다 되풀이</b>됩니다 — 작성 화면의 <b>묶음 칸이 입력칸</b>이 되어 ' +
+           '병원이 약품명·소화기 번호를 적습니다.<br>몇 묶음을 깔지는 위 <b>기본 묶음 수</b>가 정합니다(지금 <b>' +
+           (Number(val('f_equipCnt')) || 10) + '묶음</b>). 항목의 「묶음」 칸은 쓰지 않습니다.')
+        : (hasG
+          ? (val('f_rowBlkGb') === 'B' ? '묶음 이름이 표를 가로지르는 머리 행으로 나옵니다(시설물 정기점검처럼).'
+                                       : '묶음 이름이 왼쪽 세로 칸으로 나옵니다(지금까지와 같음).')
+          : '아래 항목의 「행 묶음」을 적어야 뜻이 있습니다 — 비어 있으면 어느 쪽이든 같습니다.');
     }
     // ★격자 옆 칸 — 항목이 행인 세 축만(서버 QpsController.sideOk 와 같은 판단이어야 한다)
     var sideAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL');
@@ -759,14 +778,27 @@
         var gname = r.grpnm || '';
         if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
       });
-      var rband = bandOn() && rg.some(function(x){ return x.g; });
-      var hasRg = !rband && rg.some(function(x){ return x.g; });
+      var rband = !docGrp() && bandOn() && rg.some(function(x){ return x.g; });
+      var hasRg = docGrp() || (!rband && rg.some(function(x){ return x.g; }));
       var rspan = 1 + cols.length + pvSideCnt() + (TRUNC ? 1 : 0);
       h += '<table><thead><tr>' + (hasRg ? '<th style="width:70px;">묶음</th>' : '') +
            '<th style="min-width:180px;">점검 항목</th>' + pvSideTh() +
            cols.map(function(d){ return '<th style="width:30px;">' + esc(d) + '</th>'; }).join('') + ELLTH +
            pvSideTh(true) + '</tr></thead><tbody>';
       if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + pvSideTd(null) + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(null, true) + '</tr>';
+      if (docGrp() && items.length) {
+        // 묶음 이름을 문서가 적는다 — 미리보기는 앞 2묶음만 보여 준다
+        var gcnt = Math.max(1, Number(val('f_equipCnt')) || 10);
+        for (var gb = 1; gb <= Math.min(2, gcnt); gb++) {
+          items.forEach(function(r, k){
+            h += '<tr>';
+            if (k === 0) h += '<td class="l" rowspan="' + items.length + '" style="background:#f6f8f9;color:#8a99a3;">( ' + gb + '번 )</td>';
+            h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r) +
+                 cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(r, true) + '</tr>';
+          });
+        }
+        if (gcnt > 2) h += '<tr><td colspan="' + rspan + '" class="l" style="color:#8a99a3;">… 모두 ' + gcnt + '묶음</td></tr>';
+      } else {
       var gi = 0, gpos = 0;
       items.forEach(function(r){
         if (rband && gpos === 0 && rg[gi].g) h += bandTr(rg[gi].g, rspan);
@@ -776,6 +808,7 @@
              cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(r, true) + '</tr>';
         if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
+      }
       if (chk('f_signerYn') === 'Y') h += '<tr>' + (hasRg ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' + pvSideTd(null) + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(null, true) + '</tr>';
       h += '</tbody></table>';
       h += splitNote();
@@ -1094,7 +1127,7 @@
       "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
-      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,DESC_NM,PRE_COLS,POST_COLS,\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
         q(axis()) + ',' +
@@ -1110,6 +1143,7 @@
         q(docCol() ? 'D' : 'F') + ',' +
         (bandOn() ? "'B'" : 'NULL') + ',' +
         q(axis() === 'LIST' ? val('f_rowBlks') : '') + ',' +
+        q(docGrp() ? 'D' : 'F') + ',' +
         q(sideAxOn() ? val('f_descNm') : '') + ',' +
         q(sideAxOn() ? val('f_preCols') : '') + ',' +
         q(sideAxOn() ? val('f_postCols') : '') + ',\n  ' +
@@ -1147,6 +1181,7 @@
                        : ((d.axisgb === 'ITEM_MONTH') ? 'M' : 'D'));
       set('f_colNms', d.colnms);
       set('f_colSrc', (d.colsrc === 'D') ? 'D' : 'F');
+      set('f_rowSrc', (d.rowsrc === 'D') ? 'D' : 'F');
       set('f_rowBlks', d.rowblks);
       set('f_rowBlkGb', (d.rowblkgb === 'B') ? 'B' : 'S');
       set('f_descNm', d.descnm); set('f_preCols', d.precols); set('f_postCols', d.postcols);
@@ -1181,7 +1216,7 @@
     ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_rowBlks',
      'f_descNm','f_preCols','f_postCols','f_signLine','f_footTxt']
       .forEach(function(id){ set(id, ''); });
-    set('f_rowBlkGb', 'S'); set('f_colSrc', 'F');
+    set('f_rowBlkGb', 'S'); set('f_colSrc', 'F'); set('f_rowSrc', 'F');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
     set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D');
@@ -1215,6 +1250,7 @@
         prdKind: kindOf(),         // 격자 기간 칸 — 서버가 격자 있는 축에서만 쓴다
         colNms: val('f_colNms'),   // 서버가 ITEM_COL 일 때만 쓴다
         colSrc: val('f_colSrc'),   // 열 이름을 서식이 정하나(F) 문서가 정하나(D)
+        rowSrc: val('f_rowSrc'),   // 행 묶음 이름을 서식이 정하나(F) 문서가 정하나(D)
         rowBlks: val('f_rowBlks'), // 서버가 LIST 일 때만 쓴다
         rowBlkGb: val('f_rowBlkGb'),
         // 격자 옆 칸 — 서버가 항목이 행인 세 축에서만 쓴다
