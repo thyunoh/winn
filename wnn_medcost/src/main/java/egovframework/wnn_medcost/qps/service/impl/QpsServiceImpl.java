@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
@@ -1809,6 +1811,7 @@ public class QpsServiceImpl implements QpsService {
 		m.put("postCols", str(src.get("postcols")));  //   뒤에 붙는 입력 열
 		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
 		m.put("colNms",  str(src.get("colnms")));     // ITEM_COL 의 고정 열 — 복제할 때 빠지면 표가 안 그려진다
+		m.put("colSrc",  str(src.get("colsrc")));     // 열 이름을 서식이 정하나 문서가 정하나
 		m.put("signerYn", str(src.get("signeryn")));  m.put("noteYn", str(src.get("noteyn")));
 		m.put("fixYn", str(src.get("fixyn")));        m.put("signLine", str(src.get("signline")));
 		m.put("footTxt", str(src.get("foottxt")));    m.put("sortNo", src.get("sortno"));
@@ -1871,12 +1874,13 @@ public class QpsServiceImpl implements QpsService {
 		out.put("doc", doc);
 		out.put("vals", doc == null ? new ArrayList<>() : mapper.selectChkVals(chkSeq));
 		out.put("rows", doc == null ? new ArrayList<>() : mapper.selectChkRows(chkSeq));
+		out.put("cols", doc == null ? new ArrayList<>() : mapper.selectChkCols(chkSeq));
 		return out;
 	}
 
 	@Override
 	public long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
-	                       List<Map<String, Object>> rows) throws Exception {
+	                       List<Map<String, Object>> rows, List<Map<String, Object>> cols) throws Exception {
 		long seq = longOfObj(doc.get("chkSeq"));
 		if (seq > 0) { mapper.updateChkDoc(doc); }
 		else { mapper.insertChkDoc(doc); seq = Long.parseLong(String.valueOf(doc.get("chkSeq"))); }
@@ -1916,12 +1920,116 @@ public class QpsServiceImpl implements QpsService {
 				mapper.insertChkRows(p);
 			}
 		}
+		// 문서가 정하는 **열** 이름 — 바로 위 행 이름과 **같은 차례로** 처리한다(2026-08-12)
+		mapper.deleteChkCols(seq);
+		if (cols != null && !cols.isEmpty()) {
+			List<Map<String, Object>> keep = new ArrayList<>();
+			for (Map<String, Object> c : cols) {
+				if (str(c.get("colnm")).isEmpty()) continue;
+				keep.add(c);
+			}
+			if (!keep.isEmpty()) {
+				Map<String, Object> p = new HashMap<>();
+				p.put("chkSeq", seq); p.put("cols", keep);
+				mapper.insertChkCols(p);
+			}
+		}
 		return seq;
 	}
 
 	@Override
 	public void deleteChkDoc(Map<String, Object> param) throws Exception {
 		mapper.deleteChkDoc(param);
+	}
+
+	/**
+	 * ═══ 전월 복사 — <b>무엇을 복사할지</b>가 이 기능의 전부다 (2026-08-12, v3 순서 9) ═══
+	 *
+	 * ★★***점검 결과는 절대 복사하지 않는다.***
+	 *   원본 화면 여럿에 「전월복사」 버튼이 있는 것은 실제로 많이 쓴다는 뜻이지만,
+	 *   ***지난달 O 가 남아 있으면 화면은 「점검했다」로 보인다.*** 아무도 안 한 점검이 기록이 된다.
+	 *   ⇒ 안 하는 쪽이 언제나 되돌릴 수 있는 쪽이다. 값은 사람이 다시 찍는다.
+	 *
+	 * ★복사하는 것 = <b>문서의 틀</b>. 달이 바뀌어도 같은 것들이다.
+	 *   · 상단 자유칸 HEAD1~8 (장비명·모델명·사용부서·점검주기)
+	 *   · 병동
+	 *   · 기기 행 이름 (TBL_QPS_CHK_ROW) — 소화기·냉난방기의 자산 목록
+	 *   · 열 이름 (TBL_QPS_CHK_COL) — MSDS 물질명 · 소방 층·병동
+	 *
+	 * ★복사하지 않는 것 = <b>그 달에 일어난 일</b>
+	 *   · 격자 값 전부 (TBL_QPS_CHK_VAL) — 앞/뒤 열(예산·조치사항·수량)도 여기 산다.
+	 *     ⚠수량처럼 「자산에 가까운」 것이 섞여 있지만 ***칸마다 갈라 줄 근거가 없다.***
+	 *       근거 없이 반만 복사하면 어느 칸이 복사됐는지 아무도 모른다 ⇒ 전부 안 한다.
+	 *   · 특이사항 · 수리내용
+	 *
+	 * @return {@code {found, head1..8, wardNm, rows[], cols[]}} — ***저장하지 않는다.***
+	 *         화면에 깔아 주기만 하고, 저장은 사람이 [저장]을 눌러야 일어난다.
+	 */
+	@Override
+	public Map<String, Object> selectChkPrevSeed(String hospCd, String formId, String prdKey,
+	                                             String wardNm) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("formId", formId); p.put("prdKey", prdKey); p.put("wardNm", wardNm);
+		Map<String, Object> prev = mapper.selectChkDocPrev(p);
+		if (prev == null) { out.put("found", "N"); return out; }
+		long seq = longOfObj(prev.get("chkseq"));
+		out.put("found", "Y");
+		out.put("doc", prev);
+		out.put("rows", mapper.selectChkRows(seq));
+		out.put("cols", mapper.selectChkCols(seq));
+		return out;
+	}
+
+	/**
+	 * ═══ 월 생성 — <b>일 단위 서식</b>의 한 달치 빈 문서를 미리 깐다 (v3 순서 9) ═══
+	 *
+	 * 근거 2종(고위험 병실 순회 · 병동 순회일지). 문서 단위에 「일」을 넣어 놓고 이게 없으면
+	 * ***한 달에 [새로 작성]을 31번 눌러야 한다.***
+	 *
+	 * ★틀은 {@link #selectChkPrevSeed} 와 <b>같은 규칙</b>으로 가져온다 — 값은 하나도 안 넣는다.
+	 * ★이미 있는 날은 건너뛴다. ***다시 만들면 그날 적어 둔 것이 둘로 갈린다.***
+	 */
+	@Override
+	public Map<String, Object> makeChkMonth(Map<String, Object> param) throws Exception {
+		String hospCd = str(param.get("hospCd")), formId = str(param.get("formId"));
+		String inYear = str(param.get("inYear")), inMm = str(param.get("inMm"));
+		String wardNm = str(param.get("wardNm"));
+		int days = intOf(param.get("days"), 0);
+
+		Map<String, Object> q = new HashMap<>();
+		q.put("hospCd", hospCd); q.put("formId", formId);
+		q.put("inYear", inYear); q.put("inMm", inMm); q.put("wardNm", wardNm);
+		Set<Integer> have = new HashSet<>();
+		List<Integer> nos = mapper.selectChkDocNos(q);
+		if (nos != null) have.addAll(nos);
+
+		// 틀은 이 달 **첫날 앞**의 문서에서 가져온다
+		Map<String, Object> seed = selectChkPrevSeed(hospCd, formId, inYear + inMm + "000", wardNm);
+		Map<String, Object> sd = (Map<String, Object>) seed.get("doc");
+		List<Map<String, Object>> sr = (List<Map<String, Object>>) seed.get("rows");
+		List<Map<String, Object>> sc = (List<Map<String, Object>>) seed.get("cols");
+
+		int made = 0;
+		for (int d = 1; d <= days; d++) {
+			if (have.contains(d)) continue;
+			Map<String, Object> doc = new HashMap<>();
+			doc.put("hospCd", hospCd);   doc.put("formId", formId);
+			doc.put("inYear", inYear);   doc.put("inMm", inMm);
+			doc.put("prdGb", "D");       doc.put("prdNo", Integer.valueOf(d));
+			doc.put("wardNm", wardNm.isEmpty() ? (sd == null ? null : sd.get("wardnm")) : wardNm);
+			for (int h = 1; h <= 8; h++) doc.put("head" + h, sd == null ? null : sd.get("head" + h));
+			doc.put("noteTxt", null);    doc.put("fixTxt", null);   // ★그 달에 일어난 일은 안 옮긴다
+			doc.put("chkSeq", "");
+			doc.put("regUser", str(param.get("regUser")));
+			saveChkDoc(doc, null, sr, sc);                          // ★vals 는 null — 값은 하나도 안 넣는다
+			made++;
+		}
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("made", made);
+		out.put("skipped", days - made);
+		out.put("seeded", sd == null ? "N" : "Y");
+		return out;
 	}
 
 	@Override

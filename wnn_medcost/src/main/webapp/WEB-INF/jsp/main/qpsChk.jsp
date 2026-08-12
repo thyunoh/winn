@@ -84,6 +84,12 @@
       white-space:normal; line-height:1.4; }
   #qpsChk table.gr td input{ width:100%; min-width:30px; border:none; background:transparent;
       text-align:center; padding:4px 2px; font-size:12px; }
+  <%-- ★문서가 열 이름을 정하는 서식은 **머리글이 입력칸**이다(MSDS 물질명 · 소방 층·병동).
+       머리글인 티가 나야 값 칸과 헷갈리지 않는다 — 굵게 + 밑줄만. --%>
+  #qpsChk table.gr th input{ width:100%; min-width:60px; border:none; border-bottom:1px dashed #9fb4bd;
+      background:transparent; text-align:center; padding:3px 2px; font-size:12px; font-weight:700;
+      color:#1f3d4d; }
+  #qpsChk table.gr th input:focus{ background:#eaf5f0; outline:1px solid #8fc3b2; }
   #qpsChk table.gr td input:focus{ background:#eaf5f0; outline:1px solid #8fc3b2; }
   #qpsChk table.gr td.hd input{ text-align:left; }
   <%-- 대장(LIST)의 글자 칸 — 이름·사유가 들어가므로 가운데 정렬이면 읽기 나쁘다 --%>
@@ -134,6 +140,11 @@
       <option value="">— 저장된 점검표 —</option>
     </select>
     <button type="button" class="ck-btn ghost" onclick="ckNew();">＋ 새로 작성</button>
+    <%-- ★전월 복사 — **틀만** 가져온다(기기명·열 이름·상단 칸). 점검 결과는 안 가져온다.
+         저장도 안 한다 — 깔아 주기만 하고 [저장]은 사람이 누른다. --%>
+    <button type="button" class="ck-btn ghost" onclick="ckPrevSeed();" title="지난 문서의 기기명·열 이름·상단 칸만 가져옵니다(점검 결과는 가져오지 않습니다)">⧉ 전월 복사</button>
+    <%-- ★월 생성 — 일 단위 서식만. 없으면 한 달에 [새로 작성]을 31번 눌러야 한다. --%>
+    <button type="button" class="ck-btn ghost" id="ckMonthBtn" onclick="ckMonthGen();" style="display:none;">📅 이 달 전체 만들기</button>
   </div>
   <div id="ckHeadWrap" class="ck-form" style="margin-bottom:10px;"></div>
   <div class="ck-guide" id="ckGuide" style="display:none;"></div>
@@ -368,13 +379,15 @@
   }
 
   /** ★표를 그리는 곳은 여기 하나다. 서식이 늘어도 여기만 돈다. */
-  function renderGrid(vals, rows){
+  function renderGrid(vals, rows, cols){
     var box = gel('ckGridWrap');
     if (!FORM) { box.innerHTML = '<div class="ck-empty">서식을 고르세요.</div>'; return; }
     var V = {};
     (vals || []).forEach(function(v){ V[v.rowno + '_' + v.colno] = v.val; });
     var RN = {};
     (rows || []).forEach(function(r){ RN[r.rowno] = r.rownm; });
+    var CN = {};
+    (cols || []).forEach(function(c){ CN[c.colno] = c.colnm; });
     function g(r, c){ return V[r + '_' + c] || ''; }
 
     var a = axis(), h = '', i, d;
@@ -384,7 +397,16 @@
     if (a === 'ITEM_COL') {
       // ★항목 행 × 날짜가 아닌 고정 열. 열 이름은 서식이 정한다(COL_NMS).
       //   행 그룹은 ITEM_DAY 와 같은 장치를 그대로 쓴다 — 이 축의 서식은 대부분 묶음이 있다.
+      // ★열 이름을 **문서가 정하는** 서식이 있다(2026-08-12) — MSDS 물질명 · 소방 층·병동.
+      //   `EQUIP_DAY` 의 기기명과 같은 일이 열에서 벌어진 것이라 장치를 뒤집어 쓴다.
+      //   이 경우 서식의 COL_NMS 는 안 쓴다 — 칸 수만 서식(EQUIP_CNT)이 정한다.
+      var docCol = (FORM.colsrc === 'D');
       var cd = colDefs();
+      if (docCol) {
+        var nc = Math.max(1, Math.min(50, Number(FORM.equipcnt || 10)));
+        cd = [];
+        for (i = 1; i <= nc; i++) cd.push({ g:'', n:'' });
+      }
       if (!cd.length) cd = [{ g:'', n:'점검결과' }];   // 열을 안 적었으면 한 칸이라도 그린다
       var cg = [], cl = null;
       cd.forEach(function(c){
@@ -403,7 +425,12 @@
       var hasIg = !band && ig.some(function(x){ return x.g; });
 
       var colTh = function(){
-        return cd.map(function(c){ return '<th style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>'; }).join('');
+        return cd.map(function(c, k){
+          // 문서가 정하는 열이면 머리글 자체가 **입력칸**이다(기기명 칸과 같은 자리)
+          if (docCol) return '<th style="min-width:96px;"><input data-cn="' + (k + 1) + '" value="' +
+                             esc(CN[k + 1] || '') + '" placeholder="' + (k + 1) + '번"></th>';
+          return '<th style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>';
+        }).join('');
       };
       h += '<table class="gr' + (hasIg ? ' hasrg' : '') + '"><thead>';
       if (hasCg) {
@@ -632,6 +659,8 @@
     var lb = gel('ckListBar');
     lb.style.display = (FORM && FORM.axisgb === 'LIST') ? '' : 'none';
     if (FORM && FORM.axisgb === 'LIST') lb.innerHTML = listBarHtml();
+    // 월 생성은 **일 단위 서식**만 — 다른 주기에 31개를 깔면 목록이 통째로 망가진다(서버도 막는다)
+    gel('ckMonthBtn').style.display = (FORM && FORM.prdgb === 'D') ? '' : 'none';
     gel('ckNoteWrap').style.display = (FORM && FORM.noteyn === 'Y') ? '' : 'none';
     gel('ckFixWrap').style.display  = (FORM && FORM.fixyn === 'Y') ? '' : 'none';
     var ft = gel('ckFoot');
@@ -746,7 +775,7 @@
     if (!FORM || FORM.axisgb !== 'LIST') return;
     var c = collect(), k = Number(b) || 1;
     LIST_ROWS[k] = (LIST_ROWS[k] || 0) + (Number(n) || 1);
-    renderGrid(c.vals, c.rows);
+    renderGrid(c.vals, c.rows, c.cols);
   };
 
   /**
@@ -774,7 +803,7 @@
       return (v.rowno === SIGN_NO) ? v : { rowno: map[v.rowno], colno: v.colno, val: v.val };
     });
     LIST_ROWS = {};                                  // Math.max 가 옛 행 수를 붙잡지 않도록
-    renderGrid(moved, c.rows);
+    renderGrid(moved, c.rows, c.cols);
     // ★「몇 줄 지웠다」로 적지 않는다 — 기본 행 수 아래로는 안 줄어들어 숫자가 사실과 어긋난다.
     _toast('빈 행을 정리했습니다. 값 있는 행 ' + kept + '.', 'ok');
   };
@@ -793,7 +822,7 @@
       if (d.prdno) set('ckPrdNo', String(d.prdno));
       set('f_wardNm', d.wardnm); set('f_noteTxt', d.notetxt); set('f_fixTxt', d.fixtxt);
       renderHead(d);
-      renderGrid(res.vals || [], res.rows || []);
+      renderGrid(res.vals || [], res.rows || [], res.cols || []);
       gel('ckStat').textContent = '— 저장분 #' + d.chkseq;
       gel('ckDelBtn').style.display = '';
     }).catch(err);
@@ -822,7 +851,14 @@
       if (!v) return;
       rows.push({ rowno: Number(el.getAttribute('data-rn')), rownm: v });
     });
-    return { vals: vals, rows: rows };
+    // 문서가 정하는 **열** 이름 — 위 행 이름과 같은 방식(2026-08-12)
+    var cols = [];
+    document.querySelectorAll('#ckGridWrap input[data-cn]').forEach(function(el){
+      var v = String(el.value).trim();
+      if (!v) return;
+      cols.push({ colno: Number(el.getAttribute('data-cn')), colnm: v });
+    });
+    return { vals: vals, rows: rows, cols: cols };
   }
 
   window.ckSave = function(){
@@ -834,7 +870,8 @@
               prdNo: prdNos().length ? gel('ckPrdNo').value : '',
               wardNm: val('f_wardNm'),
               noteTxt: val('f_noteTxt'), fixTxt: val('f_fixTxt'),
-              vals: JSON.stringify(c.vals), rows: JSON.stringify(c.rows) };
+              vals: JSON.stringify(c.vals), rows: JSON.stringify(c.rows),
+              cols: JSON.stringify(c.cols) };
     // 상단 자유칸 — 없는 칸은 빈 값으로 보낸다(서버가 8개를 다 받는다)
     for (var hi = 1; hi <= HEAD_MAX; hi++) m['head' + hi] = val('f_head' + hi);
     post('<c:url value="/qps/chkSave.do"/>', m).then(function(res){
@@ -842,6 +879,54 @@
       curSeq = Number(res.chkSeq);
       ckBase().then(function(){ gel('ckDoc').value = String(curSeq); ckPickDoc(); });
     }).catch(err);
+  };
+
+  /* ═══ 전월 복사 · 월 생성 (2026-08-12, v3 순서 9) ═══
+     ★원본 화면 여럿에 「전월복사」가 있다 — 실제로 많이 쓴다는 뜻이다.
+     ★★***그런데 무엇을 복사하느냐가 이 기능의 전부다.***
+       지난달 O 가 남아 있으면 화면은 **「점검했다」로 보인다.** 아무도 안 한 점검이 기록이 된다.
+       ⇒ **틀만** 가져온다 — 기기 행 이름 · 열 이름 · 상단 자유칸 · 병동.
+         격자 값·특이사항·수리내용은 하나도 안 가져온다. 무엇을 가져오는지는 **서버 한 곳**에 적혀 있다.
+     ★저장하지 않는다 — 화면에 깔아 주기만 한다. 사람이 보고 [저장]을 눌러야 문서가 생긴다. */
+  window.ckPrevSeed = function(){
+    if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
+    post('<c:url value="/qps/chkPrevSeed.do"/>', {
+      formId: FORM.formid, inYear: gel('ckYear').value,
+      inMm: usesMm() ? gel('ckMm').value : '',
+      prdNo: prdNos().length ? gel('ckPrdNo').value : '',
+      wardNm: val('f_wardNm')
+    }).then(function(res){
+      if (res.found !== 'Y') { _alertBox('가져올 지난 점검표가 없습니다.', {icon:'ℹ️'}); return; }
+      var d = res.doc || {};
+      // ★지금 화면의 격자 값은 **건드리지 않는다** — 적다 말고 눌렀을 때 날아가면 안 된다.
+      var c = collect();
+      renderHead(d);                       // 상단 자유칸
+      if (!val('f_wardNm')) set('f_wardNm', d.wardnm || '');
+      renderGrid(c.vals, res.rows || [], res.cols || []);
+      _toast('지난 점검표의 틀을 가져왔습니다 — 기기명·열 이름·상단 칸. ' +
+             '점검 결과는 가져오지 않습니다.', 'ok');
+    }).catch(err);
+  };
+
+  /** 월 생성 — ⚠**이건 저장을 한다.** 그래서 먼저 물어본다. */
+  window.ckMonthGen = function(){
+    if (!FORM || FORM.prdgb !== 'D') return;
+    var yy = gel('ckYear').value, mm = gel('ckMm').value;
+    _confirmBox({
+      msg: yy + '년 ' + Number(mm) + '월 한 달치 빈 점검표를 만들까요?<br>' +
+           '<span style="font-size:12px;color:#6b7c86;">이미 있는 날은 그대로 둡니다. ' +
+           '기기명·열 이름·상단 칸은 지난 점검표에서 가져오고, <b>점검 결과는 비어 있습니다.</b></span>',
+      icon:'📅', okText:'만들기',
+      onOk: function(){
+        post('<c:url value="/qps/chkMonthGen.do"/>', {
+          formId: FORM.formid, inYear: yy, inMm: mm, wardNm: val('f_wardNm')
+        }).then(function(res){
+          _toast(res.made + '건을 만들었습니다' +
+                 (res.skipped ? (' (이미 있던 ' + res.skipped + '건은 그대로).') : '.') +
+                 (res.seeded === 'N' ? ' 가져올 지난 점검표가 없어 틀은 비어 있습니다.' : ''), 'ok');
+          ckBase();
+        }).catch(err);
+      } });
   };
 
   window.ckDel = function(){
@@ -975,8 +1060,10 @@
       var td = el.parentNode, isHd = td.classList.contains('hd');
       // 대장의 글자 칸은 종이에서도 왼쪽 정렬 — 이름·사유가 가운데 오면 읽기 나쁘다
       var isTxt = el.classList.contains('ltxt');
+      // ★열 이름 칸(문서가 정하는 열)은 **머리글**이다 — 왼쪽 정렬로 눕히면 안 된다
+      var isCn = el.hasAttribute('data-cn');
       td.textContent = String(el.value || '');
-      if (isHd || isTxt) td.className = 'l';
+      if (!isCn && (isHd || isTxt)) td.className = 'l';
     });
     t.querySelectorAll('th.hd').forEach(function(el){ el.className = 'l'; });
 
@@ -1097,7 +1184,7 @@
   // 월을 바꾸면 날 수가 달라진다 — 값은 지우지 않고 표만 다시 그린다
   gel('ckMm').addEventListener('change', function(){
     var c = collect();
-    renderGrid(c.vals, c.rows);
+    renderGrid(c.vals, c.rows, c.cols);
   });
 
   $(function(){

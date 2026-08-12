@@ -377,6 +377,16 @@ public interface QpsMapper {
 	int deleteChkRows(@Param("chkSeq") long chkSeq);
 	int insertChkRows(Map<String, Object> param);
 
+	/** 전월 복사·월 생성이 <b>틀</b>을 가져올 직전 문서(2026-08-12, v3 순서 9). */
+	Map<String, Object> selectChkDocPrev(Map<String, Object> param);
+	/** 그 달에 이미 있는 문서 번호들 — 월 생성이 같은 날을 또 만들지 않도록. */
+	List<Integer> selectChkDocNos(Map<String, Object> param);
+
+	/** 문서가 정하는 <b>열</b> 이름 — 바로 위 CHK_ROW 의 대칭(2026-08-12, v3 순서 8). */
+	List<Map<String, Object>> selectChkCols(@Param("chkSeq") long chkSeq);
+	int deleteChkCols(@Param("chkSeq") long chkSeq);
+	int insertChkCols(Map<String, Object> param);
+
 	/** 데이터 추출 — 평면 한 줄씩(엑셀/집계용). 축을 되돌려 일자·항목으로 준다. */
 	List<Map<String, Object>> selectChkExtract(Map<String, Object> param);
 	List<Map<String, Object>> selectChkSummary(Map<String, Object> param);

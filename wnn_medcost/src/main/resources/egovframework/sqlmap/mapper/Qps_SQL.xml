@@ -2249,7 +2249,14 @@
 		  FROM TBL_QPS_CHK_FORM f
 		 WHERE f.USE_YN = 'Y'
 		   <if test="cateCd != null and cateCd != ''"> AND f.CATE_CD = #{cateCd} </if>
-		   <if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
+		   <!-- ★★부서를 고르면 **그 부서 + 공통**이 나온다(2026-08-12).
+		        MSDS보관소 점검표·직원 교육 결과 보고서처럼 **두 부서 목록에 똑같이 있는 서식**이 있다.
+		        서식을 부서마다 복제하면 같은 것이 둘이 되어 추출이 겹치므로 `COMMON` 하나로 둔다.
+		        ⚠그러면 정확히 일치로 거를 때 ***「시설」을 고른 사람에게 공통 서식이 안 보인다.***
+		          오류가 안 나서 「원래 없는 서식」으로 읽힌다 — 실제로 등록하기 전에 고쳐 둔다. -->
+		   <if test="deptCd != null and deptCd != ''">
+		      AND (f.DEPT_CD = #{deptCd} OR f.DEPT_CD = 'COMMON')
+		   </if>
 		   <!-- ★작성 화면은 켠 것만(onlyUse='Y'), 서식 관리 화면은 전부 본다 -->
 		   <!-- ★★작은따옴표로 쓰지 말 것 : test="onlyUse == 'Y'" 는 OGNL 이 'Y' 를 **문자(char)** 로 읽어
 		        문자열 "N" 을 숫자로 바꾸려다 NumberFormatException 으로 죽는다(2026-08-11 실제 발생).
@@ -2297,7 +2304,7 @@
 		       AXIS_GB AS axisgb, PRD_GB AS prdgb, PRD_KIND AS prdkind,
 		       EQUIP_CNT AS equipcnt, HALF_YN AS halfyn, SPLIT_N AS splitn, SPLIT_DIR AS splitdir,
 		       GUIDE_TXT AS guidetxt,
-		       HEAD_NMS AS headnms, COL_NMS AS colnms,
+		       HEAD_NMS AS headnms, COL_NMS AS colnms, COL_SRC AS colsrc,
 		       ROW_BLK_GB AS rowblkgb, ROW_BLKS AS rowblks,
 		       DESC_NM AS descnm, PRE_COLS AS precols, POST_COLS AS postcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
@@ -2338,12 +2345,12 @@
 	<insert id="saveChkForm" parameterType="map">
 		INSERT INTO TBL_QPS_CHK_FORM
 		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, EQUIP_CNT,
-		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, ROW_BLK_GB, ROW_BLKS,
+		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS,
 		  DESC_NM, PRE_COLS, POST_COLS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
 		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{equipCnt},
-		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{rowBlkGb}, #{rowBlks},
+		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks},
 		  #{descNm}, #{preCols}, #{postCols},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
@@ -2351,7 +2358,7 @@
 		  AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB), PRD_KIND=VALUES(PRD_KIND),
 		  EQUIP_CNT=VALUES(EQUIP_CNT), HALF_YN=VALUES(HALF_YN),
 		  SPLIT_N=VALUES(SPLIT_N), SPLIT_DIR=VALUES(SPLIT_DIR), GUIDE_TXT=VALUES(GUIDE_TXT),
-		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS),
+		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS), COL_SRC=VALUES(COL_SRC),
 		  ROW_BLK_GB=VALUES(ROW_BLK_GB), ROW_BLKS=VALUES(ROW_BLKS),
 		  DESC_NM=VALUES(DESC_NM), PRE_COLS=VALUES(PRE_COLS), POST_COLS=VALUES(POST_COLS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
@@ -2397,6 +2404,32 @@
 		       NOTE_TXT AS notetxt, FIX_TXT AS fixtxt
 		  FROM TBL_QPS_CHK_DOC
 		 WHERE CHK_SEQ = #{chkSeq} AND HOSP_CD = #{hospCd} AND USE_YN='Y'
+	</select>
+
+	<!-- ★「직전 문서」 찾기 — 전월 복사·월 생성이 **틀을 가져올** 문서 하나(2026-08-12, v3 순서 9).
+	     ★***만든 순서가 아니라 기간 순서***로 고른다. CHK_SEQ 로 고르면 지난달을 나중에 고친 순간
+	       그게 「직전」이 되어, 8월 복사가 3월 틀을 가져오는 일이 생긴다.
+	     ★병동이 다르면 딴 문서다 — 병동별로 문서를 따로 쓰는 서식이 있으므로 같은 병동에서만 찾는다.
+	     ⚠여기서 **값(TBL_QPS_CHK_VAL)은 건드리지 않는다.** 무엇을 복사하는지는 서비스가 정한다. -->
+	<select id="selectChkDocPrev" resultType="java.util.HashMap">
+		SELECT CHK_SEQ AS chkseq, IN_YEAR AS inyear, IN_MM AS inmm, PRD_NO AS prdno,
+		       WARD_NM AS wardnm,
+		       HEAD1 AS head1, HEAD2 AS head2, HEAD3 AS head3, HEAD4 AS head4,
+		       HEAD5 AS head5, HEAD6 AS head6, HEAD7 AS head7, HEAD8 AS head8
+		  FROM TBL_QPS_CHK_DOC
+		 WHERE HOSP_CD = #{hospCd} AND FORM_ID = #{formId} AND USE_YN='Y'
+		   AND CONCAT(IN_YEAR, IFNULL(IN_MM,'00'), LPAD(IFNULL(PRD_NO,0), 3, '0')) &lt; #{prdKey}
+		<if test="wardNm != null and wardNm != ''"> AND IFNULL(WARD_NM,'') = #{wardNm} </if>
+		 ORDER BY CONCAT(IN_YEAR, IFNULL(IN_MM,'00'), LPAD(IFNULL(PRD_NO,0), 3, '0')) DESC, CHK_SEQ DESC
+		 LIMIT 1
+	</select>
+
+	<!-- 월 생성이 **이미 있는 날을 다시 만들지 않도록** 그 달에 있는 번호를 먼저 본다 -->
+	<select id="selectChkDocNos" resultType="int">
+		SELECT IFNULL(PRD_NO, 0) FROM TBL_QPS_CHK_DOC
+		 WHERE HOSP_CD = #{hospCd} AND FORM_ID = #{formId} AND USE_YN='Y'
+		   AND IN_YEAR = #{inYear} AND IFNULL(IN_MM,'') = #{inMm}
+		<if test="wardNm != null and wardNm != ''"> AND IFNULL(WARD_NM,'') = #{wardNm} </if>
 	</select>
 
 	<insert id="insertChkDoc" parameterType="map" useGeneratedKeys="true" keyProperty="chkSeq">
@@ -2484,6 +2517,9 @@
 		                SUBSTRING_INDEX(IFNULL(f.POST_COLS,''), ',', v.COL_NO - 2000), ',', -1)
 		         WHEN v.COL_NO >= 1000 THEN SUBSTRING_INDEX(
 		                SUBSTRING_INDEX(IFNULL(f.PRE_COLS,''),  ',', v.COL_NO - 1000), ',', -1)
+		         <!-- ★열 이름을 **문서가 정하는** 서식(MSDS 물질명 · 소방 층·병동)은 CHK_COL 에서 온다.
+		              여기서 안 붙이면 CSV 에 열 번호만 남아 「2번 물질」이 무엇인지 사라진다. -->
+		         WHEN f.COL_SRC = 'D' THEN IFNULL(c.COL_NM, CONCAT(v.COL_NO, '번 열'))
 		         WHEN f.AXIS_GB = 'ITEM_COL'
 		            THEN SUBSTRING_INDEX(
 		                   SUBSTRING_INDEX(SUBSTRING_INDEX(IFNULL(f.COL_NMS,''), ',', v.COL_NO), ',', -1),
@@ -2514,9 +2550,15 @@
 		  LEFT JOIN TBL_QPS_CHK_ROW r
 		    ON r.CHK_SEQ = d.CHK_SEQ AND f.AXIS_GB = 'EQUIP_DAY'
 		   AND r.ROW_NO = v.ROW_NO
+		  <!-- 열 이름은 COL_SRC='D' 인 서식에서만 쓴다 — CHK_ROW 를 EQUIP_DAY 로 좁힌 것과 같은 이유다 -->
+		  LEFT JOIN TBL_QPS_CHK_COL c
+		    ON c.CHK_SEQ = d.CHK_SEQ AND f.COL_SRC = 'D'
+		   AND c.COL_NO = v.COL_NO
 		 WHERE d.HOSP_CD = #{hospCd} AND d.USE_YN = 'Y' AND d.IN_YEAR = #{inYear}
 		<if test="formId != null and formId != ''"> AND d.FORM_ID = #{formId} </if>
-		<if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
+		<!-- 부서 = 그 부서 + 공통. ★목록과 **같은 규칙**이어야 한다 — 갈리면 화면에 보이는데
+		     추출에서만 빠져 「뽑았더니 몇 건이 없다」가 된다. -->
+		<if test="deptCd != null and deptCd != ''"> AND (f.DEPT_CD = #{deptCd} OR f.DEPT_CD = 'COMMON') </if>
 		<if test="inMm  != null and inMm  != ''"> AND d.IN_MM   = #{inMm}   </if>
 		<!-- ★dayno 로 정렬하면 안 된다 — 블록 서식에서 `MOD 1000` 이라 블록끼리 섞인다.
 		     원래 번호(v.ROW_NO)로 줄 세우면 축과 상관없이 화면에 보이던 차례 그대로 나온다. -->
@@ -2541,7 +2583,8 @@
 		                       THEN d.HOSP_CD ELSE '*' END )
 		  LEFT JOIN TBL_QPS_CHK_VAL v ON v.CHK_SEQ = d.CHK_SEQ
 		 WHERE d.HOSP_CD = #{hospCd} AND d.USE_YN='Y' AND d.IN_YEAR = #{inYear}
-		<if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
+		<!-- 이행 요약도 목록·추출과 **같은 규칙** — 셋이 갈리면 숫자가 서로 안 맞는다 -->
+		<if test="deptCd != null and deptCd != ''"> AND (f.DEPT_CD = #{deptCd} OR f.DEPT_CD = 'COMMON') </if>
 		 GROUP BY f.FORM_ID, f.FORM_NM, f.DEPT_CD, d.IN_MM, d.WARD_NM
 		 ORDER BY f.SORT_NO, d.IN_MM
 	</select>
@@ -2555,6 +2598,21 @@
 		INSERT INTO TBL_QPS_CHK_ROW (CHK_SEQ, ROW_NO, ROW_NM) VALUES
 		<foreach item="r" collection="rows" separator=",">
 		 (#{chkSeq}, #{r.rowno}, #{r.rownm})
+		</foreach>
+	</insert>
+
+	<!-- ★문서가 정하는 **열** 이름(2026-08-12, v3 순서 8) — 바로 위 CHK_ROW 를 뒤집은 것이다.
+	     MSDS 관리대장의 물질명 · 소방시설 월점검표의 층·병동처럼 **병원마다 다른** 열.
+	     ⚠둘은 나란히 있어야 한다 — 한쪽만 고치면 대칭이 조용히 깨진다. -->
+	<select id="selectChkCols" resultType="java.util.HashMap">
+		SELECT COL_NO AS colno, COL_NM AS colnm
+		  FROM TBL_QPS_CHK_COL WHERE CHK_SEQ = #{chkSeq} ORDER BY COL_NO
+	</select>
+	<delete id="deleteChkCols">DELETE FROM TBL_QPS_CHK_COL WHERE CHK_SEQ = #{chkSeq}</delete>
+	<insert id="insertChkCols" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_COL (CHK_SEQ, COL_NO, COL_NM) VALUES
+		<foreach item="c" collection="cols" separator=",">
+		 (#{chkSeq}, #{c.colno}, #{c.colnm})
 		</foreach>
 	</insert>
 

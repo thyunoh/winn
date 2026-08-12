@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260812-SIDECOL";
+	private static final String BUILD = "20260812-COMMON";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1165,6 +1165,10 @@ public class QpsController {
 			// ★ITEM_COL 의 고정 열 이름. 다른 축은 열을 축이 정하므로 비운다 —
 			//   남겨 두면 축을 바꿨을 때 안 쓰는 값이 따라다니며 헷갈린다.
 			m.put("colNms", "ITEM_COL".equals(axisGb) ? unesc(p.get("colNms")) : "");
+			// ★열 이름을 **문서가 정하는** 서식(2026-08-12, v3 순서 8) — MSDS 물질명 · 소방 층·병동.
+			//   `EQUIP_DAY` 의 기기명(CHK_ROW)과 대칭이라 장치를 뒤집어 쓴다.
+			//   ⚠ITEM_COL 만이다 — 다른 축은 열이 일·월·항목이라 병원이 이름을 정할 것이 없다.
+			m.put("colSrc", ("ITEM_COL".equals(axisGb) && "D".equals(str(p.get("colSrc"), ""))) ? "D" : "F");
 			// ═══ 행 블록 — 한 문서에 표가 여럿, ***열은 같다*** (2026-08-12, v3 순서 5) ═══
 			//   ★근거 6종이 **둘로 갈린다.** 여기가 이 기능의 전부다.
 			//     ⓐ 항목이 행인 축(시설 4종) : 블록 이름이 **이미 항목의 GRP_NM 에 있다.**
@@ -1392,7 +1396,8 @@ public class QpsController {
 			m.put("noteTxt", unesc(p.get("noteTxt")));
 			m.put("fixTxt",  unesc(p.get("fixTxt")));
 			m.put("regUser", userId(request));
-			res.put("chkSeq", svc.saveChkDoc(m, jsonRows(p.get("vals")), jsonRows(p.get("rows"))));
+			res.put("chkSeq", svc.saveChkDoc(m, jsonRows(p.get("vals")),
+			                                jsonRows(p.get("rows")), jsonRows(p.get("cols"))));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1433,6 +1438,76 @@ public class QpsController {
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("chkSeq", longOf(p.get("chkSeq"))); m.put("regUser", userId(request));
 			svc.deleteChkDoc(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 전월 복사 — ★***틀만 돌려준다. 저장하지 않는다.***
+	 *
+	 * 원본 화면 여럿에 「전월복사」가 있어 실제로 많이 쓰지만, ***지난달 점검 결과가 남으면
+	 * 화면이 「점검했다」로 보인다.*** 그래서 값은 하나도 안 담고, 저장도 사람이 [저장]을 눌러야 한다.
+	 * 무엇을 복사하는지는 {@code QpsServiceImpl.selectChkPrevSeed} 한 곳에만 적혀 있다.
+	 */
+	@RequestMapping(value = "/qps/chkPrevSeed.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkPrevSeed(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String formId = str(p.get("formId"), "").trim().toUpperCase();
+			if (!formId.matches("[A-Z0-9_]{2,30}")) return fail(res, "서식이 필요합니다.");
+			// 「어디보다 앞」인가 — 연 + 월 + 번호를 한 줄로 이어 비교한다(매퍼와 같은 규칙)
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "연도가 필요합니다.");
+			String inMm = str(p.get("inMm"), "");
+			int no = intOf(p.get("prdNo")) == null ? 0 : intOf(p.get("prdNo")).intValue();
+			String prdKey = inYear + (inMm.isEmpty() ? "00" : inMm) + String.format("%03d", no);
+			res.putAll(svc.selectChkPrevSeed(hospCd, formId, prdKey, unesc(p.get("wardNm"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 월 생성 — 일 단위 서식의 한 달치 <b>빈</b> 문서를 만든다(고위험 병실 순회 · 병동 순회일지).
+	 * ⚠이건 **저장을 한다** — 화면에서 먼저 물어봐야 한다.
+	 */
+	@RequestMapping(value = "/qps/chkMonthGen.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkMonthGen(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String formId = str(p.get("formId"), "").trim().toUpperCase();
+			if (!formId.matches("[A-Z0-9_]{2,30}")) return fail(res, "서식이 필요합니다.");
+			String inYear = str(p.get("inYear"), ""), inMm = str(p.get("inMm"), "");
+			if (inYear.length() != 4 || inMm.length() != 2) return fail(res, "연·월이 필요합니다.");
+
+			// ★★주기는 **서식이 정한다**(화면 값을 믿지 않는다 — chkSave 와 같은 규칙).
+			//   일 단위가 아닌 서식에 31개를 깔면 목록이 통째로 망가진다.
+			String prdGb = "M";
+			Object fo = svc.selectChkFormOne(hospCd, formId).get("form");
+			if (fo instanceof Map) prdGb = prdOf(((Map<?, ?>) fo).get("prdgb"));
+			if (!"D".equals(prdGb)) return fail(res, "일 단위 서식만 월 생성을 할 수 있습니다.");
+
+			// 그 달의 날 수 — ★31 로 고정하면 2월에 없는 날짜 문서가 생긴다
+			int y = Integer.parseInt(inYear), mm = Integer.parseInt(inMm);
+			if (mm < 1 || mm > 12) return fail(res, "월이 올바르지 않습니다.");
+			int days = java.time.YearMonth.of(y, mm).lengthOfMonth();
+
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);  m.put("formId", formId);
+			m.put("inYear", inYear);  m.put("inMm", inMm);
+			m.put("wardNm", unesc(p.get("wardNm")));
+			m.put("days", Integer.valueOf(days));
+			m.put("regUser", userId(request));
+			res.putAll(svc.makeChkMonth(m));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

@@ -222,6 +222,12 @@
         <%-- ★ITEM_COL 전용 — 이 축은 열을 축이 안 정하므로 서식이 적어야 한다 --%>
         <div class="lb" id="f_colLb" style="display:none;">고정 열 *</div>
         <div class="full" id="f_colWrap" style="display:none;">
+          <%-- ★열 이름을 **문서가 정하는** 서식이 있다(MSDS 물질명 · 소방 층·병동, 2종).
+               EQUIP_DAY 의 기기명과 같은 일이라 고르는 자리를 열 칸 바로 위에 둔다. --%>
+          <select id="f_colSrc" style="width:auto; margin-bottom:4px;" onchange="cfAxisChange();">
+            <option value="F">열 이름을 서식이 정함</option>
+            <option value="D">열 이름을 문서가 정함 (물질명·층·병동처럼 병원마다 다름)</option>
+          </select>
           <input type="text" id="f_colNms" maxlength="600" placeholder="쉼표로. 예) Y,N,비고"
                  oninput="cfAxisChange();"><%-- cfAxisChange 가 cfColHint + renderPrev 를 함께 돈다 --%>
           <div class="cf-sub" id="cfColHint" style="margin-top:3px;"></div>
@@ -516,9 +522,20 @@
       ' — 적는 사람이 표마다 행을 더 늘릴 수 있습니다.';
   };
 
+  /** 열 이름을 문서가 정하나 — `ITEM_COL` 만이다(서버 QpsController 와 같은 판단). */
+  function docCol(){ return axis() === 'ITEM_COL' && val('f_colSrc') === 'D'; }
+
   /** 고정 열을 적는 자리에서 바로 몇 칸인지·묶음이 어떻게 잡히는지 보여 준다. */
   window.cfColHint = function(){
     var e = gel('cfColHint'); if (!e) return;
+    if (docCol()) {
+      e.style.color = '';
+      e.innerHTML = '작성 화면의 <b>머리글이 입력칸</b>이 됩니다 — 병원이 물질명·층·병동을 적습니다.<br>' +
+                    '몇 칸을 깔지는 위 <b>기본 열 수</b>가 정합니다(지금 <b>' +
+                    (Number(val('f_equipCnt')) || 10) + '칸</b>). ' +
+                    '<b>추출 CSV 에는 병원이 적은 이름</b>이 나옵니다.';
+      return;
+    }
     var cd = colDefs();
     if (!cd.length) {
       e.style.color = '#b23b3b';
@@ -541,8 +558,11 @@
   window.cfAxisChange = function(){
     var a = axis();
     // 행 수 칸은 EQUIP_DAY(기기 대수)와 LIST(처음에 깔아 줄 빈 행 수) 둘 다 쓴다 — 이름만 갈린다
-    gel('f_equipWrap').style.display = (a === 'EQUIP_DAY' || a === 'LIST') ? '' : 'none';
-    gel('f_equipLb').textContent = (a === 'LIST') ? '기본 행 수' : '기기 행 수';
+    // ★한 칸(EQUIP_CNT)이 축마다 뜻이 갈린다 — 기기 행 수 / 기본 행 수 / **기본 열 수**.
+    //   ***라벨을 안 바꾸면 「기기 행 수」로 읽혀 열 수를 아무도 못 찾는다.***
+    var useCnt = (a === 'EQUIP_DAY' || a === 'LIST' || docCol());
+    gel('f_equipWrap').style.display = useCnt ? '' : 'none';
+    gel('f_equipLb').textContent = docCol() ? '기본 열 수' : (a === 'LIST') ? '기본 행 수' : '기기 행 수';
     var h = gel('cfItemHint');
     h.textContent = (a === 'EQUIP_DAY') ? '— 이 축에서는 항목이 표 위 안내박스로만 나옵니다(셀은 기기별 일별)'
                   : (a === 'DAY_ITEM')  ? '— 항목이 표의 **열**이 됩니다. 「열 묶음」을 적으면 2단 머리글이 생깁니다'
@@ -580,6 +600,8 @@
     // 고정 열은 ITEM_COL 만 — 다른 축은 열을 축이 정한다
     gel('f_colLb').style.display   = (a === 'ITEM_COL') ? '' : 'none';
     gel('f_colWrap').style.display = (a === 'ITEM_COL') ? '' : 'none';
+    // 문서가 열 이름을 정하면 서식의 열 목록은 쓸 데가 없다 — 남겨 두면 「어느 쪽이 이기나」로 헷갈린다
+    gel('f_colNms').style.display = docCol() ? 'none' : '';
     if (a === 'ITEM_COL') cfColHint();
     // ★행 블록 — LIST 는 서식이 블록을 적고, 항목이 행인 축은 이미 있는 묶음을 어떻게 그릴지만 고른다.
     //   ***둘을 한 자리에 몰면 「내 축에 없는 칸」이 늘 하나 보인다.*** 그래서 자리를 갈랐다.
@@ -759,7 +781,15 @@
       h += splitNote();
     } else if (a === 'ITEM_COL') {
       // 항목 행 × 고정 열. 행 묶음 + 열 묶음 둘 다 그린다(작성 화면과 같은 규칙).
-      var cd2 = colDefs(); if (!cd2.length) cd2 = [{ g:'', n:'(열을 적으세요)' }];
+      var cd2 = colDefs();
+      // 문서가 정하는 열 — 이름 대신 **적을 자리**를 보여 준다(작성 화면에서 머리글이 입력칸이 된다)
+      if (docCol()) {
+        var ncd = Math.max(1, Math.min(50, Number(val('f_equipCnt')) || 10));
+        cd2 = [];
+        for (var z = 1; z <= Math.min(6, ncd); z++) cd2.push({ g:'', n:'( ' + z + '번 )' });
+        if (ncd > 6) cd2.push({ g:'', n:'… ' + ncd + '칸' });
+      }
+      if (!cd2.length) cd2 = [{ g:'', n:'(열을 적으세요)' }];
       var cg2 = [], cl2 = null;
       cd2.forEach(function(c){ if (cl2 && cl2.g === c.g && c.g) cl2.n++; else { cl2 = {g:c.g,n:1}; cg2.push(cl2); } });
       var hasCg2 = cg2.some(function(x){ return x.g; });
@@ -932,7 +962,9 @@
   };
 
   /** 자동 서식코드 — 부서 접두어 + 3자리. 사람이 130종의 코드를 지을 수 없다. */
-  var DEPT_PRE = { NURSE:'NUR', PHARM:'PHA', NUTRI:'NUT', FACIL:'FAC', LAB:'LAB', INFECT:'INF', COMMON:'CHK' };
+  //   ★[등록 대장](docs/proposals/QPS_서식등록_대장_2026-08-12.md)의 접두어와 **같아야 한다** —
+  //     대장은 COM 으로 세어 두고 화면은 CHK 를 붙이면 대조가 안 된다.
+  var DEPT_PRE = { NURSE:'NUR', PHARM:'PHA', NUTRI:'NUT', FACIL:'FAC', LAB:'LAB', INFECT:'INF', COMMON:'COM' };
   window.cfAutoId = function(){
     if (gel('f_formId').readOnly) { _alertBox('이미 저장된 서식의 코드는 바꿀 수 없습니다.<br>' +
         '<span style="color:#6b7c86;font-size:12px;">바꾸면 이미 작성한 점검표와 끊깁니다.</span>', {icon:'⚠️'}); return; }
@@ -1062,7 +1094,7 @@
       "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
-      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,ROW_BLK_GB,ROW_BLKS,DESC_NM,PRE_COLS,POST_COLS,\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,DESC_NM,PRE_COLS,POST_COLS,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
         q(axis()) + ',' +
@@ -1075,6 +1107,7 @@
         (splitOf() ? q(splitOf().dir) : 'NULL') + ',' +
         q(val('f_guideTxt')) + ',' + q(val('f_headNms')) + ',' +
         q(axis() === 'ITEM_COL' ? val('f_colNms') : '') + ',' +
+        q(docCol() ? 'D' : 'F') + ',' +
         (bandOn() ? "'B'" : 'NULL') + ',' +
         q(axis() === 'LIST' ? val('f_rowBlks') : '') + ',' +
         q(sideAxOn() ? val('f_descNm') : '') + ',' +
@@ -1113,6 +1146,7 @@
       set('f_prdKind', (d.prdkind && 'DWNMQ'.indexOf(d.prdkind) >= 0) ? d.prdkind
                        : ((d.axisgb === 'ITEM_MONTH') ? 'M' : 'D'));
       set('f_colNms', d.colnms);
+      set('f_colSrc', (d.colsrc === 'D') ? 'D' : 'F');
       set('f_rowBlks', d.rowblks);
       set('f_rowBlkGb', (d.rowblkgb === 'B') ? 'B' : 'S');
       set('f_descNm', d.descnm); set('f_preCols', d.precols); set('f_postCols', d.postcols);
@@ -1147,7 +1181,7 @@
     ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_rowBlks',
      'f_descNm','f_preCols','f_postCols','f_signLine','f_footTxt']
       .forEach(function(id){ set(id, ''); });
-    set('f_rowBlkGb', 'S');
+    set('f_rowBlkGb', 'S'); set('f_colSrc', 'F');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
     set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D');
@@ -1180,6 +1214,7 @@
         prdGb: val('f_prdGb'),     // 서버가 LIST·ITEM_COL 일 때만 쓴다(다른 축은 축이 정한다)
         prdKind: kindOf(),         // 격자 기간 칸 — 서버가 격자 있는 축에서만 쓴다
         colNms: val('f_colNms'),   // 서버가 ITEM_COL 일 때만 쓴다
+        colSrc: val('f_colSrc'),   // 열 이름을 서식이 정하나(F) 문서가 정하나(D)
         rowBlks: val('f_rowBlks'), // 서버가 LIST 일 때만 쓴다
         rowBlkGb: val('f_rowBlkGb'),
         // 격자 옆 칸 — 서버가 항목이 행인 세 축에서만 쓴다

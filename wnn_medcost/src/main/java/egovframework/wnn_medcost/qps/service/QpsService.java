@@ -241,10 +241,22 @@ public interface QpsService {
 	Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception;
 	/** 작성 문서 1건 — 머리 + 셀값 + 기기행 */
 	Map<String, Object> selectChkDocOne(String hospCd, long chkSeq) throws Exception;
-	/** 작성 문서 저장 — chkSeq 반환 */
+	/**
+	 * 작성 문서 저장 — chkSeq 반환.
+	 * @param rows 문서가 정하는 <b>행</b> 이름(EQUIP_DAY 의 기기명)
+	 * @param cols 문서가 정하는 <b>열</b> 이름(MSDS 물질명 · 소방 층·병동) — 2026-08-12
+	 */
 	long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
-	                List<Map<String, Object>> rows) throws Exception;
+	                List<Map<String, Object>> rows, List<Map<String, Object>> cols) throws Exception;
 	void deleteChkDoc(Map<String, Object> param) throws Exception;
+	/**
+	 * 전월 복사용 <b>틀</b>만 돌려준다 — ★***점검 결과는 담지 않는다.***
+	 * 저장도 하지 않는다(화면에 깔아 주기만 한다).
+	 */
+	Map<String, Object> selectChkPrevSeed(String hospCd, String formId, String prdKey, String wardNm)
+			throws Exception;
+	/** 월 생성 — 일 단위 서식의 한 달치 <b>빈</b> 문서를 만든다. 이미 있는 날은 건너뛴다. */
+	Map<String, Object> makeChkMonth(Map<String, Object> param) throws Exception;
 	/** 데이터 추출 — 평면 목록 + 이행 요약. ★점검표를 전산화한 뜻이 여기 있다. */
 	Map<String, Object> selectChkExtract(Map<String, Object> param) throws Exception;
 }
