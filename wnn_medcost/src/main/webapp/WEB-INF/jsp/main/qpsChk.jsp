@@ -342,6 +342,29 @@
     for (i = 1; i <= daysInMonth(); i++) out.push({ no:i, label:String(i), cls:dowCls(i).trim() });
     return out;
   }
+  /* ═══ 기간 세분 — 기간 칸 **안**의 하위 칸 (2026-08-12) ═══
+     근거 8종. `D·E·N`(근무조) · `10시·15시` · `상·중·하` · `15일·30일` — ***값이 제각각이라
+     고정 목록으로는 안 된다.*** 그래서 서식이 이름을 정한다(`PRD_SUB`).
+     ★`PRD_KIND` 가 「기간이 무엇인가」를 정했듯 `PRD_SUB` 는 「그 안을 몇으로 쪼개나」를 정한다.
+     ★번호는 **기간×10 + 쪽** — 쪼개지는 쪽이 열이든 행이든 규칙은 하나다.
+       ⚠최대 9쪽. 그리고 ***쓰던 서식에 나중에 켜면 옛 값이 어긋난다***(11 이 「11일」에서 「1일 2쪽」이 된다). */
+  function prdSubs(){
+    if (!FORM || !FORM.prdsub) return [];
+    return String(FORM.prdsub).split(',').map(function(s){ return s.trim(); })
+             .filter(function(s){ return s; }).slice(0, 9);
+  }
+  /** 쪼갠 칸까지 펼친 목록. `prd` 는 원래 기간 번호(인쇄 나누기가 이걸 본다). */
+  function prdFlat(){
+    var base = prdCells(), sub = prdSubs(), out = [];
+    if (!sub.length) return base.map(function(c){ return { no:c.no, prd:c.no, label:c.label, cls:c.cls, sub:'' }; });
+    base.forEach(function(c){
+      sub.forEach(function(s, j){
+        out.push({ no: c.no * 10 + (j + 1), prd: c.no, label: c.label, cls: c.cls, sub: s });
+      });
+    });
+    return out;
+  }
+
   /** 기간 축의 머리글 이름 — 표 왼쪽 위 모서리에 적는다. */
   function prdHeadNm(){
     var k = kind();
@@ -560,20 +583,35 @@
         return ITEMS.map(function(r){ return '<th style="min-width:88px;white-space:normal;">' + esc(r.itemnm) +
                (r.unitnm ? ('<br>(' + esc(r.unitnm) + ')') : '') + '</th>'; }).join('');
       };
+      // 기간 세분이 있으면 왼쪽에 쪽 칸이 하나 더 선다 — 머리글도 그만큼 덮어야 칸수가 맞는다
+      var dcs = prdSubs().length ? ' colspan="2"' : '';
       h += '<table class="gr"><thead>';
       if (hasGrp) {
-        h += '<tr><th class="hd" rowspan="2" style="min-width:52px;">' + prdHeadNm() + '</th>' +
+        h += '<tr><th class="hd" rowspan="2"' + dcs + ' style="min-width:52px;">' + prdHeadNm() + '</th>' +
              grps.map(function(x){ return '<th colspan="' + x.n + '">' + esc(x.g) + '</th>'; }).join('') +
              '</tr><tr>' + itemTh() + '</tr>';
       } else {
-        h += '<tr><th class="hd" style="min-width:52px;">' + prdHeadNm() + '</th>' + itemTh() + '</tr>';
+        h += '<tr><th class="hd"' + dcs + ' style="min-width:52px;">' + prdHeadNm() + '</th>' + itemTh() + '</tr>';
       }
       h += '</thead><tbody>';
+      // ★기간 세분 — 기간이 **행**인 축에서는 행이 쪼개진다(냉장고 기록지의 요일 × 10시/15시).
+      //   기간 칸은 첫 쪽에서만 나오고 rowspan 으로 덮는다. 쪽 이름 칸이 그 옆에 선다.
+      var DPF = prdFlat(), dSub = prdSubs().length;
+      if (dSub) {
+        DPF.forEach(function(pf, ix){
+          h += '<tr>';
+          if (ix % dSub === 0) h += '<td class="hd ' + pf.cls + '" style="text-align:center;" rowspan="' + dSub + '">' + esc(pf.label) + '</td>';
+          h += '<td class="hd" style="text-align:center;min-width:44px;">' + esc(pf.sub) + '</td>';
+          ITEMS.forEach(function(r){ h += cell(pf.no, r.sort, g(pf.no, r.sort)); });
+          h += '</tr>';
+        });
+      } else {
       PC.forEach(function(pc){
         h += '<tr><td class="hd ' + pc.cls + '" style="text-align:center;">' + esc(pc.label) + '</td>';
         ITEMS.forEach(function(r){ h += cell(pc.no, r.sort, g(pc.no, r.sort)); });
         h += '</tr>';
       });
+      }
       h += '</tbody></table>';
 
     } else if (a === 'EQUIP_DAY') {
@@ -611,15 +649,30 @@
       var rband = !docRow() && (FORM.rowblkgb === 'B') && rg.some(function(x){ return x.g; });
       // ★묶음을 문서가 정하면 묶음 칸은 **언제나 있다**(거기에 이름을 적는다)
       var hasRg = docRow() || (!rband && rg.some(function(x){ return x.g; }));
+      // ★기간 세분 — 기간 칸이 쪼개지면 머리글이 2단이 된다(날짜 줄 + 쪽 이름 줄)
+      var PF = prdFlat(), hasSub = prdSubs().length > 0;
       h += '<table class="gr' + (hasRg ? ' hasrg' : '') + '"><thead><tr>' +
-           (hasRg ? '<th class="rgrp">묶음</th>' : '') +
-           '<th class="hd">점검 항목</th>' + sideTh();
-      PC.forEach(function(pc){
-        h += '<th class="' + pc.cls + '" data-day="' + pc.no + '" style="min-width:32px;">' + esc(pc.label) + '</th>';
-      });
-      h += sideTh(true) + '</tr></thead><tbody>';
+           (hasRg ? '<th class="rgrp"' + (hasSub ? ' rowspan="2"' : '') + '>묶음</th>' : '') +
+           '<th class="hd"' + (hasSub ? ' rowspan="2"' : '') + '>점검 항목</th>' + sideTh(false, hasSub ? 2 : 1);
+      if (hasSub) {
+        // 윗줄 = 기간(colspan), 아랫줄 = 쪽 이름. data-day 는 **원래 기간 번호** — 인쇄 나누기가 이걸 본다
+        PC.forEach(function(pc){
+          h += '<th class="' + pc.cls + '" data-day="' + pc.no + '" colspan="' + prdSubs().length + '">' + esc(pc.label) + '</th>';
+        });
+        h += sideTh(true, 2) + '</tr><tr>';
+        PF.forEach(function(pf){
+          h += '<th class="' + pf.cls + '" data-day="' + pf.prd + '" style="min-width:30px;">' + esc(pf.sub) + '</th>';
+        });
+        h += '</tr>';
+      } else {
+        PC.forEach(function(pc){
+          h += '<th class="' + pc.cls + '" data-day="' + pc.no + '" style="min-width:32px;">' + esc(pc.label) + '</th>';
+        });
+        h += sideTh(true) + '</tr>';
+      }
+      h += '</thead><tbody>';
       if (!ITEMS.length) h += '<tr><td class="hd" style="color:#8a99a3;">이 서식에 점검항목이 없습니다 — [서식 관리]에서 등록하세요.</td>' +
-                              '<td colspan="' + (nCol + sideCnt()) + '"></td></tr>';
+                              '<td colspan="' + (PF.length + sideCnt()) + '"></td></tr>';
       if (docRow()) {
         // ★묶음 이름을 문서가 적는다 — 묶음 칸이 **입력칸**이고, 그 아래로 서식의 항목이 되풀이된다.
         //   행 번호는 `묶음×1000 + 항목` (행 블록과 같은 규칙).
@@ -632,7 +685,7 @@
             var drw = blkRowNo(db, r.sort);
             h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
             h += sideTd(r, g, false, drw);
-            PC.forEach(function(pc){ h += cell(drw, pc.no, g(drw, pc.no), '', pc.no); });
+            PF.forEach(function(pf){ h += cell(drw, pf.no, g(drw, pf.no), '', pf.prd); });
             h += sideTd(r, g, true, drw) + '</tr>';
           });
         }
@@ -645,7 +698,7 @@
         if (hasRg && gpos === 0) h += '<th class="rgrp" rowspan="' + rg[gi].n + '">' + esc(rg[gi].g) + '</th>';
         h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
         h += sideTd(r, g);
-        (function(rw){ PC.forEach(function(pc){ h += cell(rw, pc.no, g(rw, pc.no), '', pc.no); }); })(r.sort);
+        (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), '', pf.prd); }); })(r.sort);
         h += sideTd(r, g, true);
         h += '</tr>';
         if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
@@ -655,7 +708,7 @@
         // 사인 행은 어느 묶음에도 속하지 않는다 — 빈 묶음 칸을 하나 둬야 칸 수가 맞는다
         h += '<tr class="sign">' + (hasRg ? '<th class="rgrp"></th>' : '') + '<th class="hd">점검자 사인</th>' +
              sideTd(null, g);
-        PC.forEach(function(pc){ h += cell(SIGN_NO, pc.no, g(SIGN_NO, pc.no), '', pc.no); });
+        PF.forEach(function(pf){ h += cell(SIGN_NO, pf.no, g(SIGN_NO, pf.no), '', pf.prd); });
         h += sideTd(null, g, true) + '</tr>';
       }
       h += '</tbody></table>';

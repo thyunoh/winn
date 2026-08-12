@@ -1,6 +1,8 @@
 package egovframework.wnn_medcost.qps.web;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260812-ROWSRC";
+	private static final String BUILD = "20260812-PRDSUB";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1140,6 +1142,21 @@ public class QpsController {
 			//   ⚠격자에 기간이 없는 축(LIST·ITEM_COL)은 이 칸을 안 쓴다. 남겨 두면 헷갈린다.
 			boolean gridHasPrd = !"LIST".equals(axisGb) && !"ITEM_COL".equals(axisGb);
 			m.put("prdKind", gridHasPrd ? kindOf(p.get("prdKind"), axisGb) : null);
+			// ★기간 세분(2026-08-12) — 기간 칸 **안**을 쪼개는 이름들. D·E·N / 10시·15시 / 상·중·하.
+			//   ***고정 목록으로는 안 된다*** — 값이 서식마다 다르다. 그래서 서식이 이름을 정한다.
+			//   ⚠최대 9쪽. 번호가 `기간×10 + 쪽` 이라 열이면 10 이상이 두 자리를 먹는다.
+			String prdSub = "";
+			if (gridHasPrd) {
+				List<String> ss = new ArrayList<>();
+				for (String s : unesc(p.get("prdSub")).split(",")) {
+					String t = s.trim();
+					if (!t.isEmpty()) ss.add(t);
+					if (ss.size() >= 9) break;
+				}
+				// 한 쪽뿐이면 안 쪼갠 것과 같다 — 빈 값으로 둔다(머리글이 괜히 2단이 되지 않게)
+				if (ss.size() >= 2) prdSub = String.join(",", ss);
+			}
+			m.put("prdSub", prdSub);
 			// EQUIP_DAY = 기기 행 수 / ★LIST = 새 문서를 열 때 깔아 줄 빈 행 수(작성 화면에서 더 늘릴 수 있다)
 			Integer eq = intOf(p.get("equipCnt"));
 			m.put("equipCnt", (eq == null || eq < 1 || eq > 50) ? Integer.valueOf(10) : eq);

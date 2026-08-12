@@ -191,6 +191,11 @@
                       <option value="M">1~12월</option>
                       <option value="Q">분기 4칸 (1~4분기)</option>
                     </select>
+            <%-- ★기간 세분(2026-08-12) — 기간 칸 안을 쪼갠다. D,E,N / 10시,15시 / 상,중,하.
+                 값이 서식마다 달라 고정 목록으로는 안 된다 — 서식이 이름을 정한다. --%>
+            칸 나누기 <input type="text" id="f_prdSub" maxlength="200" style="width:150px;"
+                   placeholder="쉼표로. 예) D,E,N" oninput="cfAxisChange();">
+            <span class="cf-sub" id="cfSubHint"></span>
           </span>
           <%-- ★대장만 주기를 고른다 — 날짜 격자는 축이 이미 정한다.
                달마다 새로 쓰는 대장(잔여마약류 반납)과 한 해를 이어 쓰는 대장(조제 전/후 감사)이 둘 다 있다 --%>
@@ -596,6 +601,17 @@
     // ★기간 칸은 격자에 기간이 있는 축만 고른다(LIST·ITEM_COL 은 기간이 없다)
     var gridPrd = (a !== 'LIST' && a !== 'ITEM_COL');
     gel('f_kindWrap').style.display = gridPrd ? '' : 'none';
+    // 기간 세분 안내 — 몇 쪽이 되는지 + ⚠쓰던 서식에 켜면 옛 값이 어긋난다는 경고
+    if (gridPrd) {
+      var subs = String(val('f_prdSub') || '').split(',').map(function(s){ return s.trim(); })
+                   .filter(function(s){ return s; });
+      var eS = gel('cfSubHint');
+      if (!subs.length) eS.textContent = '';
+      else if (subs.length === 1) eS.innerHTML = '<span style="color:#b23b3b;">한 쪽이면 안 나눈 것과 같습니다 — 둘 이상 적으세요.</span>';
+      else if (subs.length > 9) eS.innerHTML = '<span style="color:#b23b3b;">최대 9쪽입니다.</span>';
+      else eS.innerHTML = '기간마다 <b>' + subs.length + '쪽</b>씩. ' +
+        '<span style="color:#b26a00;">⚠이미 기록이 있는 서식에서 나누기를 바꾸면 옛 값이 어긋납니다 — 그때는 새 서식으로 만드세요.</span>';
+    }
     // ★인쇄 나누기는 **어느 축에서나** 뜻이 있다 — 열 끊기는 기간 칸이 있는 축, 행 끊기는 전부.
     //   (종전 「반달 접기」는 ITEM_DAY·EQUIP_DAY + 「일」에서만 보였다.)
     gel('f_splitWrap').style.display = '';
@@ -1127,13 +1143,14 @@
       "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
-      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,PRD_SUB,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
         q(axis()) + ',' +
         q(axis() === 'ITEM_MONTH' ? 'Y'
           : ((axis() === 'LIST' || axis() === 'ITEM_COL') ? val('f_prdGb') : 'M')) + ',' +
         (kindOf() ? q(kindOf()) : 'NULL') + ',' +
+        q(val('f_prdSub')) + ',' +
         (Number(val('f_equipCnt')) || 10) + ',' +
         "'N'," +                                                   // HALF_YN 은 더 이상 쓰지 않는다
         (splitOf() ? splitOf().n : 'NULL') + ',' +
@@ -1177,6 +1194,7 @@
       set('f_splitDir', sd); set('f_splitN', sn);
       set('f_prdGb', ('YHQMWD'.indexOf(d.prdgb) >= 0 && String(d.prdgb).length === 1) ? d.prdgb : 'M');
       // ★비어 있으면 축에서 유추 — 옛 서식(2026-08-11 12종)이 값 없이도 그대로 그려진다
+      set('f_prdSub', d.prdsub);
       set('f_prdKind', (d.prdkind && 'DWNMQ'.indexOf(d.prdkind) >= 0) ? d.prdkind
                        : ((d.axisgb === 'ITEM_MONTH') ? 'M' : 'D'));
       set('f_colNms', d.colnms);
@@ -1219,7 +1237,7 @@
     set('f_rowBlkGb', 'S'); set('f_colSrc', 'F'); set('f_rowSrc', 'F');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
-    set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D');
+    set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D'); set('f_prdSub', '');
     setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N');
     set('f_splitDir', ''); set('f_splitN', 15);
     set('f_prdGb', 'M');
@@ -1248,6 +1266,7 @@
         splitDir: (splitOf() ? splitOf().dir : ''), splitN: (splitOf() ? splitOf().n : ''),
         prdGb: val('f_prdGb'),     // 서버가 LIST·ITEM_COL 일 때만 쓴다(다른 축은 축이 정한다)
         prdKind: kindOf(),         // 격자 기간 칸 — 서버가 격자 있는 축에서만 쓴다
+        prdSub: val('f_prdSub'),   // 기간 세분 — 서버가 격자 있는 축에서만 쓴다
         colNms: val('f_colNms'),   // 서버가 ITEM_COL 일 때만 쓴다
         colSrc: val('f_colSrc'),   // 열 이름을 서식이 정하나(F) 문서가 정하나(D)
         rowSrc: val('f_rowSrc'),   // 행 묶음 이름을 서식이 정하나(F) 문서가 정하나(D)

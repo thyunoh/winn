@@ -1802,6 +1802,7 @@ public class QpsServiceImpl implements QpsService {
 		//   복제본만 「모양이 왜 다르지」가 된다. 실제로 DEPT_CD 가 그렇게 날아갔었다.
 		//   ⇒ ***서식에 칸을 더할 때마다 이 줄들도 같이 더한다.*** (saveChkForm 의 컬럼 목록과 짝이다)
 		m.put("prdKind",  src.get("prdkind"));        // 격자의 기간 종류 D·W·N·M·Q
+		m.put("prdSub",   str(src.get("prdsub")));    // 기간 안을 쪼개는 이름들
 		m.put("splitN",   src.get("splitn"));         // 인쇄를 몇 칸씩 끊나
 		m.put("splitDir", src.get("splitdir"));       //   그 방향 C·R
 		m.put("rowBlkGb", src.get("rowblkgb"));       // 행 묶음을 세로 칸으로 그리나 가로 띠로 그리나
