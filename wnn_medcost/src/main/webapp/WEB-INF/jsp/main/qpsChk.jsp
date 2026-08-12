@@ -73,6 +73,15 @@
       padding:4px 6px; vertical-align:middle; }
   #qpsChk table.gr thead th.rgrp{ top:0; z-index:6; }
   #qpsChk table.gr.hasrg th.hd, #qpsChk table.gr.hasrg td.hd{ left:92px; }
+  <%-- ★행 블록의 띠 — 표 폭을 가로지르는 머리 행(▶병원 근무자 / ▶약국 …).
+       왼쪽 세로 칸(rgrp)과 **같은 자료(GRP_NM·ROW_BLKS)를 다르게 그린 것**이라 색을 맞춰 둔다. --%>
+  #qpsChk table.gr tr.blk > td{ background:#e3edf2; color:#28414c; font-weight:800; text-align:left;
+      padding:5px 8px; letter-spacing:-0.2px; position:sticky; left:0; }
+  <%-- ★격자 옆에 붙는 칸(항목 설명·예산·조치사항). 날짜 칸과 **눈으로 갈려야** 한다 —
+       한 줄로 이어지면 「1일」 옆의 예산이 1일 값처럼 읽힌다. --%>
+  #qpsChk table.gr th.side{ background:#eef2f4; color:#33474f; }
+  #qpsChk table.gr td.sidetxt{ text-align:left; padding:4px 7px; color:#43555f; background:#fafcfd;
+      white-space:normal; line-height:1.4; }
   #qpsChk table.gr td input{ width:100%; min-width:30px; border:none; background:transparent;
       text-align:center; padding:4px 2px; font-size:12px; }
   #qpsChk table.gr td input:focus{ background:#eaf5f0; outline:1px solid #8fc3b2; }
@@ -131,12 +140,8 @@
   <div class="ck-legend" id="ckLegend" style="display:none;"></div>
   <%-- ★대장(LIST) 전용 — 행이 자유라 늘리고 줄이는 손잡이가 필요하다.
        ★표 **밖**에 둔다. 표 안에 두면 인쇄가 격자를 그대로 복사하므로 종이에 버튼이 찍힌다. --%>
-  <div id="ckListBar" class="ck-bar" style="display:none; margin-bottom:6px;">
-    <button type="button" class="ck-btn mini" onclick="ckRowAdd(1);">＋ 행 추가</button>
-    <button type="button" class="ck-btn mini" onclick="ckRowAdd(5);">＋ 5행</button>
-    <button type="button" class="ck-btn mini" onclick="ckRowTrim();">− 빈 행 정리</button>
-    <span class="ck-sub">대장은 행을 자유롭게 늘립니다. 가운데 행을 없애려면 <b>그 행을 비우고</b> [빈 행 정리].</span>
-  </div>
+  <%-- ★블록이 있으면 이 자리에 **블록마다** 손잡이가 깔린다(ckListBar 를 다시 그린다). --%>
+  <div id="ckListBar" class="ck-bar" style="display:none; margin-bottom:6px;"></div>
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
 
   <div id="ckNoteWrap" style="display:none; margin-top:10px;">
@@ -182,10 +187,58 @@
                                 : { g: '', n: s };
               });
   }
+  /* ═══ 행 블록 — 한 문서에 표가 여럿, ***열은 같다*** (2026-08-12, v3 순서 5) ═══
+     근거 6종이 둘로 갈린다 :
+       ⓐ 항목이 행인 축(시설 4종) — 블록 이름이 **이미 항목의 GRP_NM 에 있다.**
+          저장할 것이 없고 그리는 방법만 다르다 ⇒ `ROW_BLK_GB='B'` 면 왼쪽 세로 칸 대신 **가로 띠**.
+       ⓑ LIST(영양 2종) — 행이 사람·품목이라 담을 곳이 없다 ⇒ 서식의 `ROW_BLKS` 가 정한다. */
+
+  /** `이름>기본행수,이름>기본행수` 를 푼다. 숫자가 없으면 기본 5행. */
+  function blkDefs(){
+    var raw = (FORM && FORM.rowblks) ? String(FORM.rowblks) : '';
+    return raw.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; })
+              .map(function(s){
+                var i = s.indexOf('>'), nm = (i >= 0) ? s.slice(0, i).trim() : s, n = (i >= 0) ? Number(s.slice(i + 1)) : 0;
+                return { nm: nm, n: (n >= 1 && n <= 999) ? Math.floor(n) : 5 };
+              });
+  }
+  /**
+   * 블록 b(1부터)의 i 번째 행 번호 = **b*1000 + i**.
+   * ⚠***붙여서 매기면 안 된다.*** 1블록이 17행이라 2블록을 18부터 매기면, 병원이 1블록에
+   *   한 사람을 더하는 순간 2블록 전체가 한 칸씩 밀려 **지난달 자료가 어긋난다.**
+   * ★읽을 때 1000 미만은 블록 1 로 본다 — 블록 없이 쓰던 서식에 나중에 블록을 붙여도 살아 있게.
+   */
+  function blkRowNo(b, i){ return b * 1000 + i; }
+  function blkOfRow(rn){ return (rn >= 1000) ? Math.floor(rn / 1000) : 1; }
+
+  /* ═══ 항목 앞/뒤 열 — 격자 옆에 붙는 칸 (2026-08-12, v3 순서 7) ═══
+     근거 10종이 **둘로 갈린다.** 뭉치면 병원이 매달 같은 글을 다시 친다 :
+       ⓐ 항목마다 늘 같은 글(청소방법·항목 설명·설치 위치) → **항목의 속성** `DESC_TXT`.
+          그 열의 머리글만 서식이 정한다(`DESC_NM`). 문서는 이 칸을 적지 않는다.
+       ⓑ 문서가 적는 값(예산·조치사항·수량·Su/Rt/Lt) → `PRE_COLS`·`POST_COLS` 가 이름을,
+          값은 `CHK_VAL` 이 가진다.
+     ★열 번호는 **1000 단위로 띄운다** — 앞 열 j = 1000+j, 뒤 열 j = 2000+j.
+       ⚠일(1~31) 뒤에 이어 붙이면 2월(28칸)과 3월(31칸)의 「29번 열」이 서로 다른 것을 뜻해
+         ***달을 바꾸는 순간 값이 옆으로 옮겨 간다.*** */
+  var PRE_BASE = 1000, POST_BASE = 2000;
+  /** 앞/뒤 열은 **항목이 행인 세 축**만 — 서버(QpsController.sideOk)와 같은 판단이어야 한다. */
+  function sideOk(){ var a = axis(); return a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL'; }
+  function nameList(s){
+    return String(s || '').split(',').map(function(x){ return x.trim(); })
+                          .filter(function(x){ return x; });
+  }
+  function descNm(){ return (sideOk() && FORM && FORM.descnm) ? String(FORM.descnm).trim() : ''; }
+  function preCols(){  return sideOk() && FORM ? nameList(FORM.precols)  : []; }
+  function postCols(){ return sideOk() && FORM ? nameList(FORM.postcols) : []; }
+  /** 격자 양옆에 몇 칸이 붙나 — 빈 줄·사인 행의 `colspan` 을 맞추는 데 쓴다. */
+  function sideCnt(){ return (descNm() ? 1 : 0) + preCols().length + postCols().length; }
+
   var SIGN_NO = 900;   // 예약 — 점검자 사인 행(또는 열)
   var HEAD_MAX = 8;    // 상단 자유칸 최대 수. ★DB 컬럼 HEAD1~HEAD8 과 반드시 같아야 한다
   // ★대장의 현재 행 수. 서식이 아니라 **문서**가 정하므로 화면이 들고 있는다(저장은 값이 있는 행만).
-  var LIST_ROWS = 0;
+  //   ★블록마다 따로 센다 — `{블록번호: 행 수}`. 블록이 없는 서식은 `{1: n}` 하나뿐이다.
+  //   하나의 숫자로 두면 블록이 생기는 순간 「어느 표의 행 수인가」가 사라진다.
+  var LIST_ROWS = {};
 
   (function(){
     var y = new Date().getFullYear(), sy = gel('ckYear');
@@ -235,6 +288,40 @@
    */
   function isMonthly(){ return axis() !== 'ITEM_MONTH'; }
 
+  /* ═══ 격자의 기간 칸 종류(PRD_KIND) — D일 W요일 N주차 M월 Q분기 (2026-08-12) ═══
+     ★★축 이름을 늘리지 않고 **(방향 × 기간 종류)** 로 푼다.
+       DAY_ITEM + 'M' 이면 「1~12월 행 × 항목 열」이 되어 MONTH_ITEM 이라는 새 축이 필요 없다.
+     ★비면 축에서 유추 — ITEM_MONTH→'M', 그 외→'D'. **없으면 기본값이 아니라 「옛 뜻」이다.**
+       그래야 2026-08-11 에 만든 서식 12종이 값 없이도 지금과 똑같이 그려진다. */
+  function kind(){
+    var k = FORM && FORM.prdkind ? String(FORM.prdkind).toUpperCase() : '';
+    if (k && 'DWNMQ'.indexOf(k) >= 0) return k;
+    return (axis() === 'ITEM_MONTH') ? 'M' : 'D';
+  }
+  var WDAY = ['월','화','수','목','금','토','일'];
+  /**
+   * 기간 칸 목록 → [{no, label, cls}]. ***표를 그리는 곳은 전부 이걸 쓴다*** —
+   * 머리글·셀·인쇄가 따로 세면 칸 수가 어긋난다(반달 접기가 그래서 `data-day` 를 쓴다).
+   */
+  function prdCells(){
+    var k = kind(), out = [], i;
+    if (k === 'W') {           // 요일 7칸 — 토·일은 색을 준다(날짜 격자와 같은 규칙)
+      for (i = 0; i < 7; i++) out.push({ no:i+1, label:WDAY[i], cls:(i===5?'sat':(i===6?'sun':'')) });
+      return out;
+    }
+    if (k === 'N') { for (i=1;i<=5;i++) out.push({ no:i, label:i+'주', cls:'' }); return out; }
+    if (k === 'M') { for (i=1;i<=12;i++) out.push({ no:i, label:i+'월', cls:'' }); return out; }
+    if (k === 'Q') { for (i=1;i<=4;i++) out.push({ no:i, label:i+'분기', cls:'' }); return out; }
+    // D — 그 달의 날 수. ★31 로 고정하면 2월에 없는 날짜 칸이 생긴다
+    for (i = 1; i <= daysInMonth(); i++) out.push({ no:i, label:String(i), cls:dowCls(i).trim() });
+    return out;
+  }
+  /** 기간 축의 머리글 이름 — 표 왼쪽 위 모서리에 적는다. */
+  function prdHeadNm(){
+    var k = kind();
+    return k === 'W' ? '요일' : k === 'N' ? '주차' : k === 'M' ? '월' : k === 'Q' ? '분기' : '일';
+  }
+
   /**
    * 셀 하나. day 를 주면 `data-day` 를 단다 — ★인쇄에서 **반달 접기**가 이걸 보고 열을 가른다.
    * 표를 다시 그리지 않고 화면 격자를 복사해 쓰기 때문에, 어느 칸이 며칠인지 표에 적혀 있어야 한다.
@@ -243,6 +330,41 @@
     return '<td' + (day ? (' data-day="' + day + '"') : '') + '><input' +
            (cls ? (' class="' + cls + '"') : '') +
            ' data-r="' + r + '" data-c="' + c + '" value="' + esc(v) + '"></td>';
+  }
+
+  /**
+   * 격자 옆 칸의 **머리글**. `back=true` 면 뒤쪽(POST) 것만.
+   * @param rs 2단 머리글 표에서 이 칸이 덮어야 할 줄 수(없으면 1줄)
+   */
+  function sideTh(back, rs){
+    var sp = (rs > 1) ? (' rowspan="' + rs + '"') : '';
+    if (back) {
+      return postCols().map(function(nm){
+        return '<th class="side"' + sp + ' style="min-width:96px;white-space:normal;">' + esc(nm) + '</th>';
+      }).join('');
+    }
+    var out = '';
+    if (descNm()) out += '<th class="side"' + sp + ' style="min-width:110px;white-space:normal;">' + esc(descNm()) + '</th>';
+    return out + preCols().map(function(nm){
+      return '<th class="side"' + sp + ' style="min-width:80px;white-space:normal;">' + esc(nm) + '</th>';
+    }).join('');
+  }
+  /**
+   * 격자 옆 칸의 **몸통**. `r` 이 없으면 사인 행 — 앞/뒤 칸은 비운다.
+   * ★설명 칸은 **입력이 아니다.** 항목의 속성이라 여기서 고치면 이 달만 달라진다 —
+   *   서식 관리에서 고쳐야 모든 달이 같이 바뀐다. 그래서 글자로만 찍는다.
+   */
+  function sideTd(r, g, back){
+    if (back) {
+      return postCols().map(function(nm, j){
+        return r ? cell(r.sort, POST_BASE + j + 1, g(r.sort, POST_BASE + j + 1), 'ltxt') : '<td></td>';
+      }).join('');
+    }
+    var out = '';
+    if (descNm()) out += '<td class="sidetxt">' + (r ? esc(r.desctxt || '') : '') + '</td>';
+    return out + preCols().map(function(nm, j){
+      return r ? cell(r.sort, PRE_BASE + j + 1, g(r.sort, PRE_BASE + j + 1), 'ltxt') : '<td></td>';
+    }).join('');
   }
 
   /** ★표를 그리는 곳은 여기 하나다. 서식이 늘어도 여기만 돈다. */
@@ -256,8 +378,8 @@
     function g(r, c){ return V[r + '_' + c] || ''; }
 
     var a = axis(), h = '', i, d;
-    var nCol = isMonthly() ? daysInMonth() : 12;
-    var suf  = isMonthly() ? '' : '월';
+    // ★기간 칸은 한 곳(prdCells)에서만 센다 — 머리글·셀이 따로 세면 칸 수가 어긋난다
+    var PC = prdCells(), nCol = PC.length;
 
     if (a === 'ITEM_COL') {
       // ★항목 행 × 날짜가 아닌 고정 열. 열 이름은 서식이 정한다(COL_NMS).
@@ -275,50 +397,66 @@
         var gn = r.grpnm || '';
         if (il && il.g === gn) il.n++; else { il = { g:gn, n:1 }; ig.push(il); }
       });
-      var hasIg = ig.some(function(x){ return x.g; });
+      // ★행 묶음을 **가로 띠**로 그리는 서식이 있다(시설물 정기점검의 「약국」·「조리실」 등, 4종).
+      //   담긴 자료는 똑같다 — GRP_NM 이다. ***그리는 방법만 다르다.***
+      var band = (FORM.rowblkgb === 'B') && ig.some(function(x){ return x.g; });
+      var hasIg = !band && ig.some(function(x){ return x.g; });
 
       var colTh = function(){
         return cd.map(function(c){ return '<th style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>'; }).join('');
       };
       h += '<table class="gr' + (hasIg ? ' hasrg' : '') + '"><thead>';
       if (hasCg) {
+        // ★2단 머리글에서는 옆 칸도 두 줄을 덮어야 한다 — 안 그러면 아랫줄이 한 칸씩 밀린다
         h += '<tr>' + (hasIg ? '<th class="rgrp" rowspan="2">묶음</th>' : '') +
-             '<th class="hd" rowspan="2">점검 항목</th>' +
+             '<th class="hd" rowspan="2">점검 항목</th>' + sideTh(false, 2) +
              cg.map(function(x){ return '<th colspan="' + x.n + '">' + esc(x.g) + '</th>'; }).join('') +
-             '</tr><tr>' + colTh() + '</tr>';
+             sideTh(true, 2) + '</tr><tr>' + colTh() + '</tr>';
       } else {
         h += '<tr>' + (hasIg ? '<th class="rgrp">묶음</th>' : '') +
-             '<th class="hd">점검 항목</th>' + colTh() + '</tr>';
+             '<th class="hd">점검 항목</th>' + sideTh() + colTh() + sideTh(true) + '</tr>';
       }
       h += '</thead><tbody>';
       if (!ITEMS.length) h += '<tr><td class="hd" style="color:#8a99a3;">이 서식에 점검항목이 없습니다 — [서식 관리]에서 등록하세요.</td>' +
-                              '<td colspan="' + cd.length + '"></td></tr>';
+                              '<td colspan="' + (cd.length + sideCnt()) + '"></td></tr>';
       var ci = 0, cp = 0;
       ITEMS.forEach(function(r){
+        // 띠 표시 — 묶음이 바뀌는 자리에 표 폭을 가로지르는 머리 행을 넣는다
+        if (band && cp === 0 && ig[ci].g) h += '<tr class="blk"><td colspan="' + (1 + cd.length + sideCnt()) + '">' + esc(ig[ci].g) + '</td></tr>';
         h += '<tr>';
         if (hasIg && cp === 0) h += '<th class="rgrp" rowspan="' + ig[ci].n + '">' + esc(ig[ci].g) + '</th>';
         h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
+        h += sideTd(r, g);
         cd.forEach(function(c, k){ h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt'); });
-        h += '</tr>';
-        if (hasIg) { cp++; if (cp >= ig[ci].n) { ci++; cp = 0; } }
+        h += sideTd(r, g, true) + '</tr>';
+        if (hasIg || band) { cp++; if (cp >= ig[ci].n) { ci++; cp = 0; } }
       });
       if (FORM.signeryn === 'Y') {
-        h += '<tr class="sign">' + (hasIg ? '<th class="rgrp"></th>' : '') + '<th class="hd">점검자 사인</th>';
+        h += '<tr class="sign">' + (hasIg ? '<th class="rgrp"></th>' : '') + '<th class="hd">점검자 사인</th>' +
+             sideTd(null, g);
         cd.forEach(function(c, k){ h += cell(SIGN_NO, k + 1, g(SIGN_NO, k + 1)); });
-        h += '</tr>';
+        h += sideTd(null, g, true) + '</tr>';
       }
       h += '</tbody></table>';
 
     } else if (a === 'LIST') {
       // ★대장 — 항목이 열, 행은 자유. 「1일~31일」이 아니라 「1번째 사람/건」이다.
       //   ⇒ 행 수를 서식이 못 정한다. 저장분에 들어 있는 가장 큰 행번호부터 다시 그린다.
-      var maxR = 0;
+      //   ★행 블록이 있으면 **블록마다** 따로 센다(2026-08-12).
+      var BD = blkDefs(), nblk = BD.length || 1;
+      var maxIn = {};                                  // 블록 → 저장분의 가장 큰 순번
       Object.keys(V).forEach(function(k){
         var rn = Number(k.split('_')[0]);
-        if (rn !== SIGN_NO && rn > maxR) maxR = rn;
+        if (rn === SIGN_NO) return;
+        var b = BD.length ? blkOfRow(rn) : 1;
+        var seq = (BD.length && rn >= 1000) ? (rn % 1000) : rn;
+        if (b >= 1 && b <= nblk && seq > (maxIn[b] || 0)) maxIn[b] = seq;
       });
-      // 서식의 기본 행 수(EQUIP_CNT 를 대장에서는 「기본 행 수」로 쓴다)보다 적게 그리지 않는다
-      LIST_ROWS = Math.max(maxR, LIST_ROWS, Number(FORM.equipcnt || 10), 1);
+      // 서식의 기본 행 수(블록이 있으면 `이름>수`, 없으면 EQUIP_CNT)보다 적게 그리지 않는다
+      for (var b = 1; b <= nblk; b++) {
+        var base = BD.length ? BD[b - 1].n : Number(FORM.equipcnt || 10);
+        LIST_ROWS[b] = Math.max(maxIn[b] || 0, LIST_ROWS[b] || 0, base, 1);
+      }
       // 열 묶음(GRP_NM)은 DAY_ITEM 과 똑같이 성립한다 — 대장도 **항목이 열**이기 때문이다
       var lg = [], ll = null;
       ITEMS.forEach(function(r){
@@ -345,62 +483,70 @@
                              '이 서식에 항목이 없습니다 — [서식 관리]에서 등록하세요.</th>') + '</tr>';
       }
       h += '</thead><tbody>';
-      for (i = 1; i <= LIST_ROWS; i++) {
-        h += '<tr><td class="hd" style="text-align:center;min-width:46px;max-width:46px;">' + i + '</td>';
-        if (!ITEMS.length) h += '<td></td>';
-        // ★표시칸(CHECK)만 가운데 정렬. 이름·사유가 가운데 오면 읽기 나쁘다
-        ITEMS.forEach(function(r){
-          h += cell(i, r.sort, g(i, r.sort), (r.inputgb === 'CHECK') ? '' : 'ltxt');
-        });
-        h += '</tr>';
+      var span = 1 + Math.max(ITEMS.length, 1);        // 띠 행이 가로지를 칸 수
+      for (var bi = 1; bi <= nblk; bi++) {
+        // ★블록 머리 = **표 폭을 가로지르는 띠**. 원본이 그렇게 생겼다(▶병원 근무자 / ▶배송기사).
+        if (BD.length) h += '<tr class="blk"><td colspan="' + span + '">' + esc(BD[bi - 1].nm) + '</td></tr>';
+        for (i = 1; i <= LIST_ROWS[bi]; i++) {
+          var rno = BD.length ? blkRowNo(bi, i) : i;   // 블록이 없으면 옛 번호 그대로
+          h += '<tr><td class="hd" style="text-align:center;min-width:46px;max-width:46px;">' + i + '</td>';
+          if (!ITEMS.length) h += '<td></td>';
+          // ★표시칸(CHECK)만 가운데 정렬. 이름·사유가 가운데 오면 읽기 나쁘다
+          ITEMS.forEach(function(r){
+            h += cell(rno, r.sort, g(rno, r.sort), (r.inputgb === 'CHECK') ? '' : 'ltxt');
+          });
+          h += '</tr>';
+        }
       }
       h += '</tbody></table>';
 
     } else if (a === 'DAY_ITEM') {
-      // 1~31일 행 × 항목 열. 열 묶음(GRP_NM)이 있으면 2단 머리글.
+      // ★기간 행 × 항목 열. 기간이 무엇인지는 PRD_KIND 가 정한다 —
+      //   'D'면 1~31일(원래), 'M'이면 **1~12월 행**(냉·난방 필터 청소 점검일지),
+      //   'W'면 월~일, 'N'이면 1~5주차. ***MONTH_ITEM 이라는 새 축이 필요 없다.***
       var grps = [], last = null;
       ITEMS.forEach(function(r){
         var gname = r.grpnm || '';
         if (last && last.g === gname) last.n++; else { last = { g:gname, n:1 }; grps.push(last); }
       });
       var hasGrp = grps.some(function(x){ return x.g; });
+      var itemTh = function(){
+        return ITEMS.map(function(r){ return '<th style="min-width:88px;white-space:normal;">' + esc(r.itemnm) +
+               (r.unitnm ? ('<br>(' + esc(r.unitnm) + ')') : '') + '</th>'; }).join('');
+      };
       h += '<table class="gr"><thead>';
       if (hasGrp) {
-        h += '<tr><th class="hd" rowspan="2" style="min-width:44px;">일</th>' +
-             grps.map(function(x){ return '<th colspan="' + x.n + '">' + esc(x.g) + '</th>'; }).join('') + '</tr><tr>';
-        ITEMS.forEach(function(r){ h += '<th style="min-width:88px;white-space:normal;">' + esc(r.itemnm) +
-            (r.unitnm ? ('<br>(' + esc(r.unitnm) + ')') : '') + '</th>'; });
-        h += '</tr>';
+        h += '<tr><th class="hd" rowspan="2" style="min-width:52px;">' + prdHeadNm() + '</th>' +
+             grps.map(function(x){ return '<th colspan="' + x.n + '">' + esc(x.g) + '</th>'; }).join('') +
+             '</tr><tr>' + itemTh() + '</tr>';
       } else {
-        h += '<tr><th class="hd" style="min-width:44px;">일</th>';
-        ITEMS.forEach(function(r){ h += '<th style="min-width:88px;white-space:normal;">' + esc(r.itemnm) +
-            (r.unitnm ? ('<br>(' + esc(r.unitnm) + ')') : '') + '</th>'; });
-        h += '</tr>';
+        h += '<tr><th class="hd" style="min-width:52px;">' + prdHeadNm() + '</th>' + itemTh() + '</tr>';
       }
       h += '</thead><tbody>';
-      for (d = 1; d <= nCol; d++) {
-        h += '<tr><td class="hd' + dowCls(d) + '" style="text-align:center;">' + d + suf + '</td>';
-        ITEMS.forEach(function(r){ h += cell(d, r.sort, g(d, r.sort)); });
+      PC.forEach(function(pc){
+        h += '<tr><td class="hd ' + pc.cls + '" style="text-align:center;">' + esc(pc.label) + '</td>';
+        ITEMS.forEach(function(r){ h += cell(pc.no, r.sort, g(pc.no, r.sort)); });
         h += '</tr>';
-      }
+      });
       h += '</tbody></table>';
 
     } else if (a === 'EQUIP_DAY') {
       // 기기 N행 × 1~31일. ★기기명은 문서마다 다르다(병동마다 장비가 다르다).
       var n = Number(FORM.equipcnt || 10);
       h += '<table class="gr"><thead><tr><th class="hd">의료기기</th>';
-      for (d = 1; d <= nCol; d++)
-        h += '<th class="' + dowCls(d).trim() + '" data-day="' + d + '" style="min-width:32px;">' + d + suf + '</th>';
+      PC.forEach(function(pc){
+        h += '<th class="' + pc.cls + '" data-day="' + pc.no + '" style="min-width:32px;">' + esc(pc.label) + '</th>';
+      });
       h += '</tr></thead><tbody>';
       for (i = 1; i <= n; i++) {
         h += '<tr><td class="hd"><input data-rn="' + i + '" value="' + esc(RN[i] || '') +
              '" placeholder="의료기기 ' + i + '"></td>';
-        for (d = 1; d <= nCol; d++) h += cell(i, d, g(i, d), '', d);
+        (function(rw){ PC.forEach(function(pc){ h += cell(rw, pc.no, g(rw, pc.no), '', pc.no); }); })(i);
         h += '</tr>';
       }
       if (FORM.signeryn === 'Y') {
         h += '<tr class="sign"><th class="hd">점검자 확인란</th>';
-        for (d = 1; d <= nCol; d++) h += cell(SIGN_NO, d, g(SIGN_NO, d), '', d);
+        PC.forEach(function(pc){ h += cell(SIGN_NO, pc.no, g(SIGN_NO, pc.no), '', pc.no); });
         h += '</tr>';
       }
       h += '</tbody></table>';
@@ -415,30 +561,37 @@
         var gname = r.grpnm || '';
         if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
       });
-      var hasRg = rg.some(function(x){ return x.g; });
+      // ★같은 GRP_NM 을 **가로 띠**로 그릴 수도 있다(ROW_BLK_GB='B') — ITEM_COL 과 같은 장치다
+      var rband = (FORM.rowblkgb === 'B') && rg.some(function(x){ return x.g; });
+      var hasRg = !rband && rg.some(function(x){ return x.g; });
       h += '<table class="gr' + (hasRg ? ' hasrg' : '') + '"><thead><tr>' +
            (hasRg ? '<th class="rgrp">묶음</th>' : '') +
-           '<th class="hd">' + (a === 'ITEM_MONTH' ? '점검 항목' : '일') + '</th>';
-      for (d = 1; d <= nCol; d++)
-        h += '<th class="' + dowCls(d).trim() + '" data-day="' + d + '" style="min-width:32px;">' + d + suf + '</th>';
-      h += '</tr></thead><tbody>';
+           '<th class="hd">점검 항목</th>' + sideTh();
+      PC.forEach(function(pc){
+        h += '<th class="' + pc.cls + '" data-day="' + pc.no + '" style="min-width:32px;">' + esc(pc.label) + '</th>';
+      });
+      h += sideTh(true) + '</tr></thead><tbody>';
       if (!ITEMS.length) h += '<tr><td class="hd" style="color:#8a99a3;">이 서식에 점검항목이 없습니다 — [서식 관리]에서 등록하세요.</td>' +
-                              '<td colspan="' + nCol + '"></td></tr>';
+                              '<td colspan="' + (nCol + sideCnt()) + '"></td></tr>';
       var gi = 0, gpos = 0;   // 지금 몇 번째 묶음인지 / 그 묶음 안에서 몇 번째 행인지
       ITEMS.forEach(function(r){
+        if (rband && gpos === 0 && rg[gi].g) h += '<tr class="blk"><td colspan="' + (1 + nCol + sideCnt()) + '">' + esc(rg[gi].g) + '</td></tr>';
         h += '<tr>';
         // 묶음 칸은 그 묶음의 **첫 행에서만** 나오고 나머지 행을 rowspan 으로 덮는다
         if (hasRg && gpos === 0) h += '<th class="rgrp" rowspan="' + rg[gi].n + '">' + esc(rg[gi].g) + '</th>';
         h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
-        for (d = 1; d <= nCol; d++) h += cell(r.sort, d, g(r.sort, d), '', d);
+        h += sideTd(r, g);
+        (function(rw){ PC.forEach(function(pc){ h += cell(rw, pc.no, g(rw, pc.no), '', pc.no); }); })(r.sort);
+        h += sideTd(r, g, true);
         h += '</tr>';
-        if (hasRg) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
+        if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
       if (FORM.signeryn === 'Y') {
         // 사인 행은 어느 묶음에도 속하지 않는다 — 빈 묶음 칸을 하나 둬야 칸 수가 맞는다
-        h += '<tr class="sign">' + (hasRg ? '<th class="rgrp"></th>' : '') + '<th class="hd">점검자 사인</th>';
-        for (d = 1; d <= nCol; d++) h += cell(SIGN_NO, d, g(SIGN_NO, d), '', d);
-        h += '</tr>';
+        h += '<tr class="sign">' + (hasRg ? '<th class="rgrp"></th>' : '') + '<th class="hd">점검자 사인</th>' +
+             sideTd(null, g);
+        PC.forEach(function(pc){ h += cell(SIGN_NO, pc.no, g(SIGN_NO, pc.no), '', pc.no); });
+        h += sideTd(null, g, true) + '</tr>';
       }
       h += '</tbody></table>';
     }
@@ -476,7 +629,9 @@
     gel('ckMmWrap').style.display = usesMm() ? '' : 'none';
     ckPrdNoFill();
     // 대장만 행 손잡이가 보인다 — 다른 축은 행 수를 서식이 정하므로 늘릴 일이 없다
-    gel('ckListBar').style.display = (FORM && FORM.axisgb === 'LIST') ? '' : 'none';
+    var lb = gel('ckListBar');
+    lb.style.display = (FORM && FORM.axisgb === 'LIST') ? '' : 'none';
+    if (FORM && FORM.axisgb === 'LIST') lb.innerHTML = listBarHtml();
     gel('ckNoteWrap').style.display = (FORM && FORM.noteyn === 'Y') ? '' : 'none';
     gel('ckFixWrap').style.display  = (FORM && FORM.fixyn === 'Y') ? '' : 'none';
     var ft = gel('ckFoot');
@@ -559,18 +714,38 @@
 
   window.ckPickForm = function(){
     curSeq = 0;
-    LIST_ROWS = 0;           // ★서식이 바뀌면 행 수도 처음부터 — 안 그러면 앞 대장의 행 수가 따라온다
+    LIST_ROWS = {};           // ★서식이 바뀌면 행 수도 처음부터 — 안 그러면 앞 대장의 행 수가 따라온다
     gel('ckStat').textContent = '';
     gel('ckDelBtn').style.display = 'none';
     set('f_wardNm', ''); set('f_noteTxt', ''); set('f_fixTxt', '');
     ckBase().then(function(){ renderHead({}); renderGrid([], []); });
   };
 
+  /**
+   * 대장 행 손잡이 — ★블록이 있으면 **블록마다** 나온다.
+   * ⚠표 **밖**에 둔다. 표 안에 두면 인쇄가 격자를 그대로 복사하므로 종이에 버튼이 찍힌다.
+   */
+  function listBarHtml(){
+    var BD = blkDefs();
+    if (!BD.length) {
+      return '<button type="button" class="ck-btn mini" onclick="ckRowAdd(1);">＋ 행 추가</button>' +
+             '<button type="button" class="ck-btn mini" onclick="ckRowAdd(5);">＋ 5행</button>' +
+             '<button type="button" class="ck-btn mini" onclick="ckRowTrim();">− 빈 행 정리</button>' +
+             '<span class="ck-sub">대장은 행을 자유롭게 늘립니다. 가운데 행을 없애려면 <b>그 행을 비우고</b> [빈 행 정리].</span>';
+    }
+    return BD.map(function(b, i){
+             return '<button type="button" class="ck-btn mini" onclick="ckRowAdd(1,' + (i + 1) + ');">＋ ' +
+                    esc(b.nm) + '</button>';
+           }).join('') +
+           '<button type="button" class="ck-btn mini" onclick="ckRowTrim();">− 빈 행 정리</button>' +
+           '<span class="ck-sub">표가 ' + BD.length + '개입니다. 늘릴 표의 이름을 누르세요.</span>';
+  }
+
   /** 대장 행 늘리기 — ★값은 지우지 않는다. 지금 화면의 입력을 걷어 다시 그린다. */
-  window.ckRowAdd = function(n){
+  window.ckRowAdd = function(n, b){
     if (!FORM || FORM.axisgb !== 'LIST') return;
-    var c = collect();
-    LIST_ROWS = LIST_ROWS + (Number(n) || 1);
+    var c = collect(), k = Number(b) || 1;
+    LIST_ROWS[k] = (LIST_ROWS[k] || 0) + (Number(n) || 1);
     renderGrid(c.vals, c.rows);
   };
 
@@ -581,21 +756,27 @@
    */
   window.ckRowTrim = function(){
     if (!FORM || FORM.axisgb !== 'LIST') return;
-    var c = collect(), seen = {}, order = [];
+    // ★블록이 있으면 **블록 안에서만** 다시 매긴다 — 블록을 넘겨 당기면 사람이 다른 표로 옮겨 간다
+    var BD = blkDefs(), c = collect(), seen = {}, byBlk = {};
     c.vals.forEach(function(v){
       if (v.rowno === SIGN_NO || seen[v.rowno]) return;
-      seen[v.rowno] = true; order.push(v.rowno);
+      seen[v.rowno] = true;
+      var b = BD.length ? blkOfRow(v.rowno) : 1;
+      (byBlk[b] = byBlk[b] || []).push(v.rowno);
     });
-    order.sort(function(a, b){ return a - b; });
-    var map = {};
-    order.forEach(function(r, i){ map[r] = i + 1; });
+    var map = {}, kept = 0;
+    Object.keys(byBlk).forEach(function(b){
+      byBlk[b].sort(function(x, y){ return x - y; });
+      byBlk[b].forEach(function(r, i){ map[r] = BD.length ? blkRowNo(Number(b), i + 1) : (i + 1); });
+      kept += byBlk[b].length;
+    });
     var moved = c.vals.map(function(v){
       return (v.rowno === SIGN_NO) ? v : { rowno: map[v.rowno], colno: v.colno, val: v.val };
     });
-    LIST_ROWS = 0;                                   // Math.max 가 옛 행 수를 붙잡지 않도록
+    LIST_ROWS = {};                                  // Math.max 가 옛 행 수를 붙잡지 않도록
     renderGrid(moved, c.rows);
     // ★「몇 줄 지웠다」로 적지 않는다 — 기본 행 수 아래로는 안 줄어들어 숫자가 사실과 어긋난다.
-    _toast('빈 행을 정리했습니다. 지금 ' + LIST_ROWS + '행 (값 있는 행 ' + order.length + ').', 'ok');
+    _toast('빈 행을 정리했습니다. 값 있는 행 ' + kept + '.', 'ok');
   };
 
   window.ckPickDoc = function(){
@@ -604,7 +785,7 @@
     post('<c:url value="/qps/chkGet.do"/>', { chkSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.chkseq || 0);
-      LIST_ROWS = 0;   // ★행 수는 이 문서가 정한다 — 앞 문서의 행 수를 물려받으면 빈 행이 딸려 온다
+      LIST_ROWS = {};   // ★행 수는 이 문서가 정한다 — 앞 문서의 행 수를 물려받으면 빈 행이 딸려 온다
       set('ckYear', d.inyear || gel('ckYear').value);
       if (d.inmm) set('ckMm', d.inmm);
       // ★번호는 목록을 다시 채운 **뒤에** 넣는다 — 먼저 넣으면 채우면서 지워진다
@@ -620,7 +801,7 @@
 
   window.ckNew = function(){
     curSeq = 0;
-    LIST_ROWS = 0;
+    LIST_ROWS = {};
     gel('ckDoc').value = '';
     set('f_noteTxt', ''); set('f_fixTxt', '');
     renderHead({});
@@ -689,7 +870,11 @@
     '.box{ border:1px solid #666; padding:4px 6px; font-size:9.5px; margin-top:4px;' +
     '      white-space:pre-wrap; text-align:left; min-height:24px; }' +
     '.sig{ margin-top:8px; font-size:10px; text-align:right; }' +
-    '.sig span{ display:inline-block; margin-left:26px; }';
+    '.sig span{ display:inline-block; margin-left:26px; }' +
+    /* 행을 끊어 좌우로 놓을 때 — 조각을 가로로 나란히. ★조각이 3개 이상이면 줄바꿈해 이어 붙는다 */
+    '.splitrow{ display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; }' +
+    '.splitcol{ flex:1 1 0; min-width:0; }' +
+    '.splitcol table{ width:100%; }';
 
   function apprHtml(){
     if (!APPR_LINE.length) return '';
@@ -697,12 +882,46 @@
            '</tr></thead><tbody><tr>' + APPR_LINE.map(function(){ return '<td></td>'; }).join('') + '</tr></tbody></table>';
   }
 
+  /* ═══ 인쇄 배치 — 「N칸씩 + 방향」 (2026-08-12, v3 순서 6) ═══
+     ★종전 「반달 접기」는 1~15 / 16~31 하나만 됐다. 실물은 넷이다 —
+       15칸(카트및엘리베이터) · 6칸(U.P.S 1~6월) · 7칸(욕창예방 **5쪽**) · 행을 좌우로(의료가스).
+     ⇒ **끊는 수와 방향만** 서식이 정하면 넷이 한 장치로 풀린다.
+     ★표를 다시 그리지 않고 **복사해서 잘라낸다** — 따로 만들면 화면과 종이가 갈린다. */
+
+  /** 끊는 설정 → {n, dir} 또는 null. ★옛 `HALF_YN='Y'` 는 「15칸 · 열」과 같다. */
+  function splitOf(){
+    if (!FORM) return null;
+    var n = Number(FORM.splitn || 0), dir = (FORM.splitdir || '').toUpperCase();
+    if (!(n >= 2) || (dir !== 'C' && dir !== 'R')) {
+      if (FORM.halfyn === 'Y') { n = 15; dir = 'C'; }   // 옛 서식 호환
+      else return null;
+    }
+    // 열을 끊으려면 격자에 기간 칸(data-day)이 있어야 한다 — LIST·ITEM_COL 은 자를 기준이 없다
+    if (dir === 'C' && (FORM.axisgb === 'LIST' || FORM.axisgb === 'ITEM_COL')) return null;
+    return { n:n, dir:dir };
+  }
+
   /**
-   * ★반달 접기 — 표를 복사해 지정한 날짜 범위 **밖의 열만 떼어낸다.**
-   *   표를 다시 그리지 않는 이유는 인쇄 원칙과 같다 : 따로 만들면 화면과 종이가 갈린다.
-   *   `data-day` 가 머리글·몸통에 함께 붙어 있어 한쪽만 지워져 칸이 어긋날 일이 없다.
+   * total 칸을 n 칸씩 끊은 **조각 경계**. → `[{from,to}, ...]`
+   *
+   * ★***자투리가 1칸이면 앞 조각에 붙인다.*** 31일을 15칸씩 끊으면 15·15·**1** 이 되는데,
+   *   1칸짜리 종이는 어떤 서식에서도 쓸모가 없다. 붙이면 `1~15 / 16~31` — 원본 그대로다.
+   *   (7칸씩은 자투리가 3칸이라 그대로 둔다 → 욕창예방 **5쪽**이 맞다.)
+   * ★작성 화면과 서식 관리 화면이 **같은 답**을 내야 한다 — 미리보기의 「몇 조각」이 종이와 갈리면
+   *   적는 사람이 숫자를 못 믿는다. 관리 화면 `splitParts()` 와 규칙이 같다.
    */
-  function halfCut(src, from, to){
+  function splitRanges(total, n){
+    var out = [], from;
+    for (from = 1; from <= total; from += n) out.push({ from:from, to:Math.min(from + n - 1, total) });
+    if (out.length > 1 && out[out.length - 1].to - out[out.length - 1].from === 0) {
+      out[out.length - 2].to = out[out.length - 1].to;
+      out.pop();
+    }
+    return out;
+  }
+
+  /** 표를 복사해 **기간 열**을 [from..to] 만 남긴다. 머리글·몸통에 함께 붙은 `data-day` 로 자른다. */
+  function cutCols(src, from, to){
     var c = src.cloneNode(true);
     c.querySelectorAll('[data-day]').forEach(function(el){
       var d = Number(el.getAttribute('data-day'));
@@ -710,10 +929,39 @@
     });
     return c;
   }
-  /** 이 서식을 반으로 접어 찍을 것인가 — 일이 **열**인 축에서만 뜻이 있다. */
-  function halfOn(){
-    return FORM && FORM.halfyn === 'Y' && isMonthly() &&
-           (FORM.axisgb === 'ITEM_DAY' || FORM.axisgb === 'EQUIP_DAY');
+  /**
+   * 표를 복사해 **몸통 행**을 [from..to](1부터) 만 남긴다. 머리글은 그대로 둔다.
+   * ⚠rowspan 이 걸린 묶음 칸은 잘리면 칸 수가 어긋난다 — 자른 조각에서는 rowspan 을 접는다.
+   */
+  function cutRows(src, from, to){
+    var c = src.cloneNode(true);
+    var body = c.querySelector('tbody'); if (!body) return c;
+    var rows = Array.prototype.slice.call(body.rows);
+    // ★조각이 블록 **중간**에서 시작하면 그 조각에 블록 이름이 없다 — 「어느 표의 행인지」가 사라진다.
+    //   ⇒ 이 조각 앞쪽에서 가장 가까운 띠를 찾아 **맨 위에 다시 얹는다.**
+    var carry = null;
+    for (var k = 0; k < from - 1 && k < rows.length; k++) {
+      if (rows[k].classList.contains('blk')) carry = rows[k];
+    }
+    if (carry && !rows[from - 1].classList.contains('blk')) {
+      body.insertBefore(carry.cloneNode(true), rows[from - 1]);
+      rows = Array.prototype.slice.call(body.rows);
+      to++; // 얹은 줄만큼 뒤로 민다 — 안 밀면 조각마다 한 줄씩 사라진다
+    }
+    rows.forEach(function(tr, i){ if (i + 1 < from || i + 1 > to) tr.parentNode.removeChild(tr); });
+    // ★조각 **끝**에 남은 띠는 걷어낸다 — 아래에 아무 행도 없는 블록 머리만 찍힌다(빈 제목).
+    //   다음 조각이 그 띠를 다시 얹으므로 잃는 것은 없다.
+    while (body.rows.length && body.rows[body.rows.length - 1].classList.contains('blk')) {
+      body.deleteRow(body.rows.length - 1);
+    }
+    // 남은 조각 안에서 넘치는 rowspan 을 줄인다
+    var left = body.rows.length;
+    Array.prototype.forEach.call(body.rows, function(tr, i){
+      Array.prototype.forEach.call(tr.cells, function(td){
+        if (td.rowSpan > 1 && i + td.rowSpan > left) td.rowSpan = left - i;
+      });
+    });
+    return c;
   }
 
   window.ckPrint = function(){
@@ -732,15 +980,21 @@
     });
     t.querySelectorAll('th.hd').forEach(function(el){ el.className = 'l'; });
 
-    // ★반달 접기 — 1~15 / 16~말일 두 블록으로 나눠 찍는다. 2월이면 뒤 블록이 16~28 이다.
-    //   ***끊는 자리를 날 수의 절반이 아니라 15로 고정한다*** — 원본이 1~15 / 16~31 이다.
-    var CUT = 15, grid;
-    if (halfOn() && daysInMonth() > CUT) {
-      grid = halfCut(t, 1, CUT).outerHTML +
-             '<div style="height:7px;"></div>' +
-             halfCut(t, CUT + 1, daysInMonth()).outerHTML;
-    } else {
+    // ★인쇄 배치 — N칸(행)씩 끊는다. 조각이 2개일 수도, 5개일 수도 있다(욕창예방은 7일씩 5쪽).
+    var sp = splitOf(), grid;
+    if (!sp) {
       grid = t.outerHTML;
+    } else if (sp.dir === 'C') {
+      // 열을 끊어 **위아래**로. 마지막 조각은 남는 만큼만(2월이면 16~28).
+      grid = splitRanges(prdCells().length, sp.n).map(function(r){
+        return cutCols(t, r.from, r.to).outerHTML;
+      }).join('<div style="height:7px;"></div>');
+    } else {
+      // 행을 끊어 **좌우**로. 머리글은 조각마다 복사된다(cutRows 가 thead 를 남긴다).
+      var nrow = t.querySelectorAll('tbody tr').length;
+      grid = '<div class="splitrow">' + splitRanges(nrow, sp.n).map(function(r){
+        return '<div class="splitcol">' + cutRows(t, r.from, r.to).outerHTML + '</div>';
+      }).join('') + '</div>';
     }
 
     // ★기간 표기는 주기를 따른다 — 「2026년 8월 3주차」·「2026년 하반기」
@@ -814,14 +1068,16 @@
           //   ITEM_COL=**열번호**. 머리글에 '일/행/열'로 적고 「축」열을 함께 내린다.
           //   안 그러면 대장의 1,2,3 을 1일,2일,3일로 읽는다(엑셀에서는 되돌릴 길이 없다).
           // ★ITEM_COL 은 번호만으로는 뜻이 없어 서버가 **열 이름**을 함께 준다(colnm).
-          var head = ['서식코드','서식명','부서','축','연도','월','병동','항목','묶음','단위','열','일/행/열','값'];
+          // ★「표」 = 행 블록 이름(대장에 표가 여럿일 때). 이게 없으면 「3번째 사람」이
+          //   어느 표의 3번째인지 CSV 에서 사라진다 — 오류 없이 조용히 뜻만 잃는다.
+          var head = ['서식코드','서식명','부서','축','연도','월','병동','표','항목','묶음','설명','단위','열','일/행/열','값'];
           function c(v){
             var s = (v == null) ? '' : String(v);
             return /[",\n]/.test(s) ? ('"' + s.replace(/"/g, '""') + '"') : s;
           }
           var csv = head.join(',') + '\n' + rows.map(function(r){
             return [r.formid, r.formnm, r.deptcd, (AXIS_NM[r.axisgb] || r.axisgb), r.inyear, r.inmm, r.wardnm,
-                    r.itemnm, r.grpnm, r.unitnm, r.colnm, r.dayno, r.val].map(c).join(',');
+                    r.blknm, r.itemnm, r.grpnm, r.desctxt, r.unitnm, r.colnm, r.dayno, r.val].map(c).join(',');
           }).join('\n');
           // ★엑셀이 UTF-8 CSV 를 못 알아보고 한글을 깬다 — BOM 을 붙여야 한다
           var blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8;' });

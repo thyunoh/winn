@@ -1794,7 +1794,19 @@ public class QpsServiceImpl implements QpsService {
 		m.put("deptCd", str(src.get("deptcd")));
 		m.put("axisGb", str(src.get("axisgb")));  m.put("prdGb", str(src.get("prdgb")));
 		m.put("equipCnt", src.get("equipcnt"));
-		m.put("halfYn", str(src.get("halfyn")).isEmpty() ? "N" : str(src.get("halfyn")));
+		m.put("halfYn", "N");                         // 더 이상 쓰지 않는다(SPLIT_N·SPLIT_DIR 로 옮겼다)
+		// ⚠***여기는 서식 정의를 하나라도 빠뜨리면 조용히 다른 서식이 된다.***
+		//   파라미터가 Map 이라 없는 키는 예외가 아니라 **null** 이다 — 화면도 로그도 아무 말이 없고,
+		//   복제본만 「모양이 왜 다르지」가 된다. 실제로 DEPT_CD 가 그렇게 날아갔었다.
+		//   ⇒ ***서식에 칸을 더할 때마다 이 줄들도 같이 더한다.*** (saveChkForm 의 컬럼 목록과 짝이다)
+		m.put("prdKind",  src.get("prdkind"));        // 격자의 기간 종류 D·W·N·M·Q
+		m.put("splitN",   src.get("splitn"));         // 인쇄를 몇 칸씩 끊나
+		m.put("splitDir", src.get("splitdir"));       //   그 방향 C·R
+		m.put("rowBlkGb", src.get("rowblkgb"));       // 행 묶음을 세로 칸으로 그리나 가로 띠로 그리나
+		m.put("rowBlks",  str(src.get("rowblks")));   // LIST 의 행 블록 정의
+		m.put("descNm",   str(src.get("descnm")));    // 항목 설명 열의 머리글
+		m.put("preCols",  str(src.get("precols")));   // 격자 앞에 붙는 입력 열
+		m.put("postCols", str(src.get("postcols")));  //   뒤에 붙는 입력 열
 		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
 		m.put("colNms",  str(src.get("colnms")));     // ITEM_COL 의 고정 열 — 복제할 때 빠지면 표가 안 그려진다
 		m.put("signerYn", str(src.get("signeryn")));  m.put("noteYn", str(src.get("noteyn")));

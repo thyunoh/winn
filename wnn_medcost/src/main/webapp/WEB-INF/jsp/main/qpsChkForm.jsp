@@ -181,6 +181,17 @@
             <span id="f_equipLb">기기 행 수</span>
             <input type="number" id="f_equipCnt" min="1" max="50" value="10" style="width:70px;">
           </span>
+          <%-- ★격자의 기간 칸이 무엇인가 — 축은 「방향」만 말하고 여기가 「무엇」을 말한다.
+               DAY_ITEM + 월 이면 「1~12월 행 × 항목 열」이 되어 새 축이 필요 없다 --%>
+          <span id="f_kindWrap" style="display:none; font-size:12.5px; color:#43555f;">
+            기간 칸 <select id="f_prdKind" style="width:auto;" onchange="cfAxisChange();">
+                      <option value="D">1~31일 (그 달의 날 수)</option>
+                      <option value="W">요일 7칸 (월~일)</option>
+                      <option value="N">주차 5칸 (1~5주)</option>
+                      <option value="M">1~12월</option>
+                      <option value="Q">분기 4칸 (1~4분기)</option>
+                    </select>
+          </span>
           <%-- ★대장만 주기를 고른다 — 날짜 격자는 축이 이미 정한다.
                달마다 새로 쓰는 대장(잔여마약류 반납)과 한 해를 이어 쓰는 대장(조제 전/후 감사)이 둘 다 있다 --%>
           <span id="f_prdWrap" style="display:none; font-size:12.5px; color:#43555f;">
@@ -193,11 +204,19 @@
                    <option value="D">일 1장 — 날마다 한 장</option>
                  </select>
           </span>
-          <%-- ★인쇄만 나눈다. 화면은 한 표 그대로 — 편집은 한 표가 편하고 종이만 원본을 따라간다 --%>
-          <label id="f_halfWrap" style="display:none; font-size:12.5px; color:#43555f;">
-            <input type="checkbox" id="f_halfYn" style="vertical-align:-2px;" onchange="cfAxisChange();">
-            반달 접기 <span class="cf-sub">인쇄를 1~15 / 16~31 두 블록으로</span>
-          </label>
+          <%-- ★인쇄만 나눈다. 화면은 한 표 그대로 — 편집은 한 표가 편하고 종이만 원본을 따라간다.
+               ★「반으로」가 아니라 「N칸씩 + 방향」이다(2026-08-12) — 15칸·6칸·7칸·좌우가 다 이 하나로 --%>
+          <span id="f_splitWrap" style="display:none; font-size:12.5px; color:#43555f;">
+            인쇄 나누기
+            <select id="f_splitDir" style="width:auto;" onchange="cfAxisChange();">
+              <option value="">안 나눔</option>
+              <option value="C">열을 끊어 위아래로</option>
+              <option value="R">행을 끊어 좌우로</option>
+            </select>
+            <input type="number" id="f_splitN" min="2" max="99" value="15" style="width:64px;"
+                   onchange="cfAxisChange();" oninput="cfAxisChange();"> 칸씩
+            <span class="cf-sub" id="cfSplitHint"></span>
+          </span>
         </div>
 
         <%-- ★ITEM_COL 전용 — 이 축은 열을 축이 안 정하므로 서식이 적어야 한다 --%>
@@ -206,6 +225,41 @@
           <input type="text" id="f_colNms" maxlength="600" placeholder="쉼표로. 예) Y,N,비고"
                  oninput="cfAxisChange();"><%-- cfAxisChange 가 cfColHint + renderPrev 를 함께 돈다 --%>
           <div class="cf-sub" id="cfColHint" style="margin-top:3px;"></div>
+        </div>
+
+        <%-- ★행 블록 — 한 문서에 표가 여럿, ***열은 같다***(2026-08-12).
+             LIST 는 행이 자유라 서식이 블록을 적어야 하고, 항목이 행인 축은 이미 있는
+             항목의 「묶음」을 **가로 띠로 그릴지**만 고르면 된다. 그래서 자리가 둘로 갈린다. --%>
+        <div class="lb" id="f_blkLb" style="display:none;">행 블록</div>
+        <div class="full" id="f_blkWrap" style="display:none;">
+          <input type="text" id="f_rowBlks" maxlength="600"
+                 placeholder="쉼표로. 예) 병원 근무자&gt;17,배송기사&gt;3,대체인력&gt;3"
+                 oninput="cfAxisChange();">
+          <div class="cf-sub" id="cfBlkHint" style="margin-top:3px;"></div>
+        </div>
+        <div class="lb" id="f_bandLb" style="display:none;">묶음 표시</div>
+        <div class="full" id="f_bandWrap" style="display:none;">
+          <select id="f_rowBlkGb" style="width:auto;" onchange="cfAxisChange();">
+            <option value="S">왼쪽 세로 칸</option>
+            <option value="B">가로 띠 (표를 가로지르는 머리 행)</option>
+          </select>
+          <span class="cf-sub" id="cfBandHint"></span>
+        </div>
+
+        <%-- ★격자 옆에 붙는 칸(2026-08-12) — ***둘로 갈린다.***
+             「설명」은 항목마다 늘 같은 글이라 **항목 표**에서 적고, 여기서는 그 열의 이름만 정한다.
+             「앞/뒤 칸」은 문서가 달마다 적는 값이라 이름만 여기서 정한다. --%>
+        <div class="lb" id="f_sideLb" style="display:none;">격자 옆 칸</div>
+        <div class="full" id="f_sideWrap" style="display:none;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <input type="text" id="f_descNm" maxlength="60" style="flex:1 1 150px;"
+                   placeholder="항목 설명 열 이름. 예) 청소방법" oninput="cfAxisChange();">
+            <input type="text" id="f_preCols" maxlength="300" style="flex:1 1 150px;"
+                   placeholder="앞 칸(쉼표). 예) 수량" oninput="cfAxisChange();">
+            <input type="text" id="f_postCols" maxlength="300" style="flex:1 1 150px;"
+                   placeholder="뒤 칸(쉼표). 예) 예산,조치사항" oninput="cfAxisChange();">
+          </div>
+          <div class="cf-sub" id="cfSideHint" style="margin-top:3px;"></div>
         </div>
 
         <div class="lb">표 위 안내</div>
@@ -241,6 +295,8 @@
         <th>점검항목</th>
         <%-- ★뜻이 축에 따라 갈린다 — 항목이 열이면 「열 묶음」, 행이면 「행 묶음」. cfAxisChange 가 고쳐 쓴다 --%>
         <th style="width:130px;" id="thGrpNm">묶음</th>
+        <%-- ★항목마다 늘 같은 글(청소방법·설치 위치). 서식의 「항목 설명 열」을 켜야 보인다 --%>
+        <th style="width:150px;" id="thDescTxt" hidden>설명</th>
         <th style="width:90px;">입력</th>
         <th style="width:56px;">단위</th>
         <th style="width:44px;">이동</th>
@@ -322,9 +378,79 @@
   // ★항목이 **열**이 되는 축 — 열 묶음(2단 머리글)이 성립하는 곳이 정확히 여기다
   function itemIsCol(a){ return a === 'DAY_ITEM' || a === 'LIST'; }
   // 반달 접기는 일이 열인 축에서만. 체크가 켜져 있어도 다른 축이면 꺼진 것으로 본다(서버도 같게 막는다)
-  function halfOn(){
+  /** 인쇄 나누기 설정 → {n, dir} 또는 null. 작성 화면(splitOf)과 **같은 규칙**이어야 한다. */
+  function splitOf(){
+    var dir = val('f_splitDir'), n = Number(val('f_splitN') || 0), a = axis();
+    if ((dir !== 'C' && dir !== 'R') || !(n >= 2)) return null;
+    // 열 끊기는 격자에 기간 칸이 있어야 뜻이 있다 — LIST·ITEM_COL 은 자를 기준이 없다
+    if (dir === 'C' && (a === 'LIST' || a === 'ITEM_COL')) return null;
+    return { n:n, dir:dir };
+  }
+  /**
+   * 몇 조각이 되나 — ***작성 화면 `splitRanges()` 와 규칙이 같아야 한다.***
+   * 자투리가 1칸이면 앞 조각에 붙는다(31일 15칸씩 → 3조각이 아니라 `1~15 / 16~31` 2조각).
+   */
+  function splitParts(total, n){
+    if (!(total > 0) || !(n >= 2)) return 0;
+    var c = Math.ceil(total / n);
+    if (c > 1 && total % n === 1) c -= 1;
+    return c;
+  }
+  /**
+   * 끊는 대상이 몇 칸인가 — 열이면 기간 칸, 행이면 행 수.
+   * ⚠***대장(LIST)의 행은 항목이 아니다*** — 항목은 열이다. 항목 수로 세면
+   *   「10칸씩」이 실제 행 수와 아무 상관 없는 숫자가 되어 미리보기가 거짓말을 한다.
+   */
+  function splitTotal(dir){
+    if (dir === 'C') return prevCells(true).length;
+    if (axis() === 'LIST') {
+      var bd = blkDefs();
+      return bd.length ? bd.reduce(function(s, b){ return s + b.n; }, 0)
+                       : Math.max(1, Number(val('f_equipCnt') || 10));
+    }
+    return readItems().length + (chk('f_signerYn') === 'Y' ? 1 : 0);
+  }
+
+  /** 미리보기 아래에 붙이는 한 줄 — **화면은 한 표, 종이만 나뉜다**는 것을 알려 준다. */
+  function splitNote(){
+    var sp = splitOf(); if (!sp) return '';
+    var cnt = splitParts(splitTotal(sp.dir), sp.n);
+    return '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">✂ 인쇄하면 ' +
+           (sp.dir === 'C' ? '열' : '행') + ' <b>' + sp.n + '칸씩</b> ' +
+           (cnt ? ('<b>' + cnt + '조각</b>으로 ') : '') +
+           (sp.dir === 'C' ? '위아래' : '좌우') + '로 나뉘어 찍힙니다(화면은 한 표 그대로).</div>';
+  }
+
+  /** 몇 조각이 되는지 적어 준다 — ***「7칸씩」이 5쪽이 된다는 걸 적는 자리에서 알아야 한다.*** */
+  window.cfSplitHint = function(){
+    var e = gel('cfSplitHint'); if (!e) return;
+    var sp = splitOf();
+    if (!sp) { e.textContent = ''; return; }
+    var total = splitTotal(sp.dir), cnt = splitParts(total, sp.n);
+    e.textContent = cnt ? ('→ ' + cnt + '조각 (' + (sp.dir === 'C' ? '기간 칸 ' : '행 ') + total + '개)') : '';
+  };
+  /** 격자 기간 칸 종류 — 작성 화면(qpsChk.jsp)의 kind() 와 **같은 규칙**이어야 한다. */
+  function kindOf(){
     var a = axis();
-    return (a === 'ITEM_DAY' || a === 'EQUIP_DAY') && chk('f_halfYn') === 'Y';
+    if (a === 'LIST' || a === 'ITEM_COL') return '';       // 격자에 기간이 없다
+    var k = val('f_prdKind') || '';
+    return ('DWNMQ'.indexOf(k) >= 0 && k) ? k : (a === 'ITEM_MONTH' ? 'M' : 'D');
+  }
+  /** 미리보기용 기간 칸 — 좁게 보여 준다(전체 보기 토글이 켜지면 다 그린다). */
+  function prevCells(wide){
+    var k = kindOf(), i, out = [];
+    if (k === 'W') { ['월','화','수','목','금','토','일'].forEach(function(t,ix){ out.push(t); }); return out; }
+    if (k === 'N') { for (i=1;i<=5;i++) out.push(i+'주'); return out; }
+    if (k === 'M') { for (i=1;i<=(wide?12:5);i++) out.push(i+'월'); return out; }
+    if (k === 'Q') { for (i=1;i<=4;i++) out.push(i+'분기'); return out; }
+    for (i=1;i<=(wide?31:5);i++) out.push(String(i));
+    return out;
+  }
+  /** 미리보기에서 「…」 칸을 붙일까 — 다 그리면 안 붙인다. 요일·주차·분기는 원래 짧아 안 붙인다. */
+  function prevTrunc(wide){
+    var k = kindOf();
+    if (k === 'W' || k === 'N' || k === 'Q') return false;
+    return !wide;
   }
 
   var HEAD_MAX = 8;   // ★DB 컬럼 HEAD1~HEAD8 · 작성 화면의 HEAD_MAX 와 반드시 같아야 한다
@@ -360,6 +486,35 @@
         return (i >= 0) ? { g:s.slice(0,i).trim(), n:s.slice(i+1).trim() } : { g:'', n:s };
       });
   }
+
+  /**
+   * ★LIST 의 행 블록을 푼다. `이름>기본행수,이름>기본행수`.
+   *   작성 화면(qpsChk.jsp)의 blkDefs() 와 **같은 규칙**이어야 한다 — 갈리면 미리보기가 거짓말을 한다.
+   */
+  function blkDefs(){
+    return String(val('f_rowBlks') || '').split(',')
+      .map(function(s){ return s.trim(); }).filter(function(s){ return s; })
+      .map(function(s){
+        var i = s.indexOf('>'), nm = (i >= 0) ? s.slice(0, i).trim() : s, n = (i >= 0) ? Number(s.slice(i + 1)) : 0;
+        return { nm:nm, n:(n >= 1 && n <= 999) ? Math.floor(n) : 5 };
+      });
+  }
+  /** 행 블록을 적는 자리에서 바로 표가 몇 개·몇 행인지 보여 준다. */
+  window.cfBlkHint = function(){
+    var e = gel('cfBlkHint'); if (!e) return;
+    var bd = blkDefs();
+    if (!bd.length) {
+      e.style.color = '';
+      e.innerHTML = '비워 두면 표가 <b>하나</b>입니다(지금까지와 같음). ' +
+                    '한 장에 표가 여럿이면 <b>이름&gt;기본행수</b> 로 적으세요 — 예) ' +
+                    '<b>병원 근무자&gt;17,배송기사&gt;3,대체인력&gt;3</b>';
+      return;
+    }
+    e.style.color = '';
+    e.innerHTML = '표 <b>' + bd.length + '개</b> : ' +
+      bd.map(function(b){ return '<b>' + esc(b.nm) + '</b>(' + b.n + '행)'; }).join(' · ') +
+      ' — 적는 사람이 표마다 행을 더 늘릴 수 있습니다.';
+  };
 
   /** 고정 열을 적는 자리에서 바로 몇 칸인지·묶음이 어떻게 잡히는지 보여 준다. */
   window.cfColHint = function(){
@@ -406,8 +561,19 @@
       el.placeholder = !useGrp ? '(이 축에선 안 씀)'
                      : itemIsCol(a) ? '예) 치료실 환경' : '예) 엘리베이터';
     });
-    // 반달 접기는 **일이 가로로 뻗는 축**에서만 뜻이 있다(1~15 / 16~31 두 블록으로 인쇄)
-    gel('f_halfWrap').style.display = (a === 'ITEM_DAY' || a === 'EQUIP_DAY') ? '' : 'none';
+    // ★기간 칸은 격자에 기간이 있는 축만 고른다(LIST·ITEM_COL 은 기간이 없다)
+    var gridPrd = (a !== 'LIST' && a !== 'ITEM_COL');
+    gel('f_kindWrap').style.display = gridPrd ? '' : 'none';
+    // ★인쇄 나누기는 **어느 축에서나** 뜻이 있다 — 열 끊기는 기간 칸이 있는 축, 행 끊기는 전부.
+    //   (종전 「반달 접기」는 ITEM_DAY·EQUIP_DAY + 「일」에서만 보였다.)
+    gel('f_splitWrap').style.display = '';
+    // 「열을 끊어」는 **기간 칸이 있는 축**만 — LIST·ITEM_COL 은 자를 기준이 없다.
+    //   고를 수 있게 두면 저장은 되는데 인쇄만 그대로라 「안 먹는다」로 오해한다 ⇒ 아예 막는다
+    var cOpt = gel('f_splitDir').querySelector('option[value="C"]');
+    var noCol = (a === 'LIST' || a === 'ITEM_COL');
+    cOpt.disabled = noCol; cOpt.style.display = noCol ? 'none' : '';
+    if (noCol && val('f_splitDir') === 'C') set('f_splitDir', '');
+    cfSplitHint();
     // ★주기는 **격자에 기간이 없는 축**만 고른다(LIST·ITEM_COL) — 날짜 격자축은 축이 정한다
     //   (ITEM_MONTH=연 1장, ITEM_DAY/DAY_ITEM/EQUIP_DAY=월 1장).
     gel('f_prdWrap').style.display = (a === 'LIST' || a === 'ITEM_COL') ? '' : 'none';
@@ -415,8 +581,44 @@
     gel('f_colLb').style.display   = (a === 'ITEM_COL') ? '' : 'none';
     gel('f_colWrap').style.display = (a === 'ITEM_COL') ? '' : 'none';
     if (a === 'ITEM_COL') cfColHint();
+    // ★행 블록 — LIST 는 서식이 블록을 적고, 항목이 행인 축은 이미 있는 묶음을 어떻게 그릴지만 고른다.
+    //   ***둘을 한 자리에 몰면 「내 축에 없는 칸」이 늘 하나 보인다.*** 그래서 자리를 갈랐다.
+    var isList = (a === 'LIST'), itemRowAx = (a !== 'LIST' && a !== 'DAY_ITEM' && a !== 'EQUIP_DAY');
+    gel('f_blkLb').style.display   = isList ? '' : 'none';
+    gel('f_blkWrap').style.display = isList ? '' : 'none';
+    if (isList) cfBlkHint();
+    gel('f_bandLb').style.display   = itemRowAx ? '' : 'none';
+    gel('f_bandWrap').style.display = itemRowAx ? '' : 'none';
+    if (itemRowAx) {
+      var hasG = readItems().some(function(r){ return (r.grpnm || '').trim(); });
+      gel('cfBandHint').textContent = hasG
+        ? (val('f_rowBlkGb') === 'B' ? '묶음 이름이 표를 가로지르는 머리 행으로 나옵니다(시설물 정기점검처럼).'
+                                     : '묶음 이름이 왼쪽 세로 칸으로 나옵니다(지금까지와 같음).')
+        : '아래 항목의 「행 묶음」을 적어야 뜻이 있습니다 — 비어 있으면 어느 쪽이든 같습니다.';
+    }
+    // ★격자 옆 칸 — 항목이 행인 세 축만(서버 QpsController.sideOk 와 같은 판단이어야 한다)
+    var sideAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL');
+    gel('f_sideLb').style.display   = sideAx ? '' : 'none';
+    gel('f_sideWrap').style.display = sideAx ? '' : 'none';
+    // 「설명」 칸은 그 열을 켰을 때만 항목 표에 나온다 — 늘 띄우면 안 쓰는 칸이 한 줄 늘 보인다
+    var descOn = sideAx && !!val('f_descNm');
+    gel('thDescTxt').hidden = !descOn;
+    document.querySelectorAll('#tbITEM [data-cell="desctxt"]').forEach(function(td){ td.hidden = !descOn; });
+    if (sideAx) {
+      var pre = nameList(val('f_preCols')), post = nameList(val('f_postCols'));
+      gel('cfSideHint').innerHTML = (descOn || pre.length || post.length)
+        ? ('격자 <b>앞</b> ' + (descOn ? ('설명 1칸(<b>' + esc(val('f_descNm')) + '</b>) + ') : '') +
+           '입력 ' + pre.length + '칸 · <b>뒤</b> 입력 ' + post.length + '칸' +
+           (descOn ? ' — <b>설명</b>은 아래 항목 표에서 적습니다(달마다 다시 치지 않습니다).' : ''))
+        : '비워 두면 격자만 나옵니다. <b>설명</b>은 항목마다 늘 같은 글, <b>앞/뒤 칸</b>은 문서가 달마다 적는 값입니다.';
+    }
     renderPrev();
   };
+
+  function nameList(s){
+    return String(s || '').split(',').map(function(x){ return x.trim(); })
+                          .filter(function(x){ return x; });
+  }
 
   function itemRow(r){
     r = r || {};
@@ -425,6 +627,7 @@
       '<td style="text-align:center;color:#8a99a3;" data-no></td>' +
       '<td><input data-f="itemnm" value="' + esc(r.itemnm) + '" placeholder="점검항목 문구"></td>' +
       '<td><input data-f="grpnm" value="' + esc(r.grpnm) + '"></td>' +
+      '<td data-cell="desctxt" hidden><input data-f="desctxt" value="' + esc(r.desctxt) + '" placeholder="예) 물걸레 소독"></td>' +
       '<td><select data-f="inputgb">' +
         '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' ? '' : ' selected') + '>O / X</option>' +
         '<option value="TEXT"' + (r.inputgb === 'TEXT' ? ' selected' : '') + '>글자</option>' +
@@ -474,6 +677,35 @@
     window.open('<c:url value="/main/qpsChk.do"/>?form=' + encodeURIComponent(id.toUpperCase()), '_blank');
   };
 
+  /** 묶음을 가로 띠로 그리나 — 항목이 행인 축에서만 뜻이 있다(LIST 는 블록이 있으면 언제나 띠). */
+  function bandOn(){
+    var a = axis();
+    return (a !== 'LIST' && a !== 'DAY_ITEM' && a !== 'EQUIP_DAY') && val('f_rowBlkGb') === 'B';
+  }
+  /** 격자 옆 칸 — 미리보기용. 작성 화면의 sideTh/sideTd 와 **같은 차례**여야 한다. */
+  function sideAxOn(){ var a = axis(); return a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL'; }
+  function pvDescNm(){ return sideAxOn() ? val('f_descNm') : ''; }
+  function pvPre(){  return sideAxOn() ? nameList(val('f_preCols'))  : []; }
+  function pvPost(){ return sideAxOn() ? nameList(val('f_postCols')) : []; }
+  function pvSideCnt(){ return (pvDescNm() ? 1 : 0) + pvPre().length + pvPost().length; }
+  function pvSideTh(back, rs){
+    var sp = (rs > 1) ? (' rowspan="' + rs + '"') : '';
+    if (back) return pvPost().map(function(n){ return '<th' + sp + ' style="min-width:64px;">' + esc(n) + '</th>'; }).join('');
+    return (pvDescNm() ? ('<th' + sp + ' style="min-width:74px;">' + esc(pvDescNm()) + '</th>') : '') +
+           pvPre().map(function(n){ return '<th' + sp + ' style="min-width:56px;">' + esc(n) + '</th>'; }).join('');
+  }
+  function pvSideTd(r, back){
+    if (back) return pvPost().map(function(){ return '<td></td>'; }).join('');
+    return (pvDescNm() ? ('<td class="l" style="color:#6b7c86;">' + esc(r ? (r.desctxt || '') : '') + '</td>') : '') +
+           pvPre().map(function(){ return '<td></td>'; }).join('');
+  }
+
+  /** 표 폭을 가로지르는 블록 머리 행. 작성 화면의 `tr.blk` 와 같은 자리다. */
+  function bandTr(nm, span){
+    return '<tr><td colspan="' + span + '" class="l" ' +
+           'style="background:#e3edf2;font-weight:800;color:#28414c;">' + esc(nm) + '</td></tr>';
+  }
+
   /** ★미리보기 — 작성 화면과 **같은 규칙**으로 그린다. 여기서 모양이 이상하면 작성 화면도 이상하다. */
   function renderPrev(){
     var a = axis(), items = readItems(), box = gel('cfPrev');
@@ -483,43 +715,48 @@
     if (!PREV_WIDE) MONS = [1,2,3,4,5];
     // 「…」 칸 — 전체 보기에서는 뒤가 잘리지 않으므로 없앤다.
     // ★머리글과 몸통을 함께 없애야 한다. 한쪽만 빼면 칸 수가 어긋나 표가 밀린다.
-    var ELLTD = PREV_WIDE ? '' : '<td></td>';
+    // ★기간 칸은 종류에 따라 다르다(2026-08-12) — 일/요일/주차/월/분기. 한 곳에서만 센다.
+    var PCELL = prevCells(PREV_WIDE), TRUNC = prevTrunc(PREV_WIDE);
+    var ELLTH = TRUNC ? '<th>…</th>' : '', ELLTD = TRUNC ? '<td></td>' : '';
     var h = '';
     if (a === 'EQUIP_DAY') {
       var n = Math.min(3, Math.max(1, Number(val('f_equipCnt') || 10)));
       h += items.length ? ('<div style="font-size:10.5px;color:#43555f;margin-bottom:4px;">점검항목 : ' +
             items.map(function(r, i){ return (i + 1) + '.' + esc(r.itemnm); }).join(' &nbsp; ') + '</div>') : '';
       h += '<table><thead><tr><th style="min-width:120px;">의료기기</th>' +
-           DAYS.map(function(d){ return '<th style="width:26px;">' + d + '</th>'; }).join('') + (PREV_WIDE ? '' : '<th>…</th>') + '</tr></thead><tbody>';
-      for (var i = 1; i <= n; i++) h += '<tr><td class="l">의료기기 ' + i + '</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
-      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 확인란</td>' + DAYS.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+           PCELL.map(function(d){ return '<th style="width:26px;">' + esc(d) + '</th>'; }).join('') + ELLTH + '</tr></thead><tbody>';
+      for (var i = 1; i <= n; i++) h += '<tr><td class="l">의료기기 ' + i + '</td>' + PCELL.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+      if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 확인란</td>' + PCELL.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       h += '</tbody></table>';
-      if (halfOn()) h += '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">' +
-                         '✂ 인쇄하면 <b>1~15 / 16~31</b> 두 블록으로 나뉘어 찍힙니다(화면은 한 표 그대로).</div>';
+      h += splitNote();
     } else if (a === 'ITEM_DAY' || a === 'ITEM_MONTH') {
-      var cols = (a === 'ITEM_MONTH') ? MONS : DAYS, suf = (a === 'ITEM_MONTH') ? '월' : '';
+      var cols = PCELL;
       // 행 묶음(2단 행 머리글) — 이어지는 항목의 묶음 이름이 같으면 왼쪽 칸을 합친다
       var rg = [], rl = null;
       items.forEach(function(r){
         var gname = r.grpnm || '';
         if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
       });
-      var hasRg = rg.some(function(x){ return x.g; });
+      var rband = bandOn() && rg.some(function(x){ return x.g; });
+      var hasRg = !rband && rg.some(function(x){ return x.g; });
+      var rspan = 1 + cols.length + pvSideCnt() + (TRUNC ? 1 : 0);
       h += '<table><thead><tr>' + (hasRg ? '<th style="width:70px;">묶음</th>' : '') +
-           '<th style="min-width:180px;">' + (a === 'ITEM_MONTH' ? '시설 점검' : '일') + '</th>' +
-           cols.map(function(d){ return '<th style="width:30px;">' + d + suf + '</th>'; }).join('') + (PREV_WIDE ? '' : '<th>…</th>') + '</tr></thead><tbody>';
-      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+           '<th style="min-width:180px;">점검 항목</th>' + pvSideTh() +
+           cols.map(function(d){ return '<th style="width:30px;">' + esc(d) + '</th>'; }).join('') + ELLTH +
+           pvSideTh(true) + '</tr></thead><tbody>';
+      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + pvSideTd(null) + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(null, true) + '</tr>';
       var gi = 0, gpos = 0;
       items.forEach(function(r){
+        if (rband && gpos === 0 && rg[gi].g) h += bandTr(rg[gi].g, rspan);
         h += '<tr>';
         if (hasRg && gpos === 0) h += '<td class="l" rowspan="' + rg[gi].n + '" style="background:#f6f8f9;font-weight:700;">' + esc(rg[gi].g) + '</td>';
-        h += '<td class="l">' + esc(r.itemnm) + '</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
-        if (hasRg) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
+        h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r) +
+             cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(r, true) + '</tr>';
+        if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
-      if (chk('f_signerYn') === 'Y') h += '<tr>' + (hasRg ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
+      if (chk('f_signerYn') === 'Y') h += '<tr>' + (hasRg ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' + pvSideTd(null) + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(null, true) + '</tr>';
       h += '</tbody></table>';
-      if (halfOn()) h += '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">' +
-                         '✂ 인쇄하면 <b>1~15 / 16~31</b> 두 블록으로 나뉘어 찍힙니다(화면은 한 표 그대로).</div>';
+      h += splitNote();
     } else if (a === 'ITEM_COL') {
       // 항목 행 × 고정 열. 행 묶음 + 열 묶음 둘 다 그린다(작성 화면과 같은 규칙).
       var cd2 = colDefs(); if (!cd2.length) cd2 = [{ g:'', n:'(열을 적으세요)' }];
@@ -529,32 +766,35 @@
       var ig2 = [], il2 = null;
       items.forEach(function(r){ var gn = r.grpnm || '';
         if (il2 && il2.g === gn) il2.n++; else { il2 = {g:gn,n:1}; ig2.push(il2); } });
-      var hasIg2 = ig2.some(function(x){ return x.g; });
+      var band2 = bandOn() && ig2.some(function(x){ return x.g; });
+      var hasIg2 = !band2 && ig2.some(function(x){ return x.g; });
       var colTh2 = cd2.map(function(c){ return '<th style="min-width:60px;">' + esc(c.n) + '</th>'; }).join('');
 
       h += '<table><thead>';
       if (hasCg2) {
         h += '<tr>' + (hasIg2 ? '<th rowspan="2" style="width:70px;">묶음</th>' : '') +
-             '<th rowspan="2" style="min-width:160px;">점검 항목</th>' +
+             '<th rowspan="2" style="min-width:160px;">점검 항목</th>' + pvSideTh(false, 2) +
              cg2.map(function(x){ return '<th colspan="' + x.n + '">' + esc(x.g) + '</th>'; }).join('') +
-             '</tr><tr>' + colTh2 + '</tr>';
+             pvSideTh(true, 2) + '</tr><tr>' + colTh2 + '</tr>';
       } else {
         h += '<tr>' + (hasIg2 ? '<th style="width:70px;">묶음</th>' : '') +
-             '<th style="min-width:160px;">점검 항목</th>' + colTh2 + '</tr>';
+             '<th style="min-width:160px;">점검 항목</th>' + pvSideTh() + colTh2 + pvSideTh(true) + '</tr>';
       }
       h += '</thead><tbody>';
-      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' +
-                              cd2.map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + pvSideTd(null) +
+                              cd2.map(function(){ return '<td></td>'; }).join('') + pvSideTd(null, true) + '</tr>';
       var ci2 = 0, cp2 = 0;
       items.forEach(function(r){
+        if (band2 && cp2 === 0 && ig2[ci2].g) h += bandTr(ig2[ci2].g, 1 + cd2.length + pvSideCnt());
         h += '<tr>';
         if (hasIg2 && cp2 === 0) h += '<td class="l" rowspan="' + ig2[ci2].n + '" style="background:#f6f8f9;font-weight:700;">' + esc(ig2[ci2].g) + '</td>';
-        h += '<td class="l">' + esc(r.itemnm) + '</td>' + cd2.map(function(){ return '<td></td>'; }).join('') + '</tr>';
-        if (hasIg2) { cp2++; if (cp2 >= ig2[ci2].n) { ci2++; cp2 = 0; } }
+        h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r) +
+             cd2.map(function(){ return '<td></td>'; }).join('') + pvSideTd(r, true) + '</tr>';
+        if (hasIg2 || band2) { cp2++; if (cp2 >= ig2[ci2].n) { ci2++; cp2 = 0; } }
       });
       if (chk('f_signerYn') === 'Y')
-        h += '<tr>' + (hasIg2 ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' +
-             cd2.map(function(){ return '<td></td>'; }).join('') + '</tr>';
+        h += '<tr>' + (hasIg2 ? '<td></td>' : '') + '<td class="l">점검자 사인</td>' + pvSideTd(null) +
+             cd2.map(function(){ return '<td></td>'; }).join('') + pvSideTd(null, true) + '</tr>';
       h += '</tbody></table>';
 
     } else if (a === 'LIST') {
@@ -578,13 +818,22 @@
              (items.length ? thL : '<th style="color:#8a99a3;">항목을 추가하세요</th>') + '</tr>';
       }
       h += '</thead><tbody>';
-      for (var q = 1; q <= nr; q++) {
-        h += '<tr><td>' + q + '</td>' +
-             (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
-      }
+      // ★행 블록 — 한 장에 표가 여럿(열은 같다). 미리보기는 블록마다 앞 몇 줄만 보여 준다.
+      var BD = blkDefs(), spanL = 1 + Math.max(items.length, 1);
+      (BD.length ? BD : [null]).forEach(function(b){
+        if (b) h += bandTr(b.nm, spanL);
+        var cnt = b ? Math.min(3, b.n) : nr;
+        for (var q = 1; q <= cnt; q++) {
+          h += '<tr><td>' + q + '</td>' +
+               (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
+        }
+        if (b && b.n > cnt) h += '<tr><td colspan="' + spanL + '" style="color:#8a99a3;">… ' + b.n + '행</td></tr>';
+      });
       h += '</tbody></table>' +
            '<div style="font-size:10.5px;color:#8a99a3;margin-top:4px;">' +
-           '＋ 행은 작성 화면에서 더 늘립니다. 여기 「기본 행 수」는 새 대장을 열 때 깔아 줄 빈 줄 수입니다.</div>';
+           (BD.length ? '＋ 행은 작성 화면에서 <b>표마다</b> 늘립니다. 위 숫자는 새 대장을 열 때 깔아 줄 빈 줄 수입니다.'
+                      : '＋ 행은 작성 화면에서 더 늘립니다. 여기 「기본 행 수」는 새 대장을 열 때 깔아 줄 빈 줄 수입니다.') +
+           '</div>' + splitNote();
     } else { // DAY_ITEM
       var grps = [], last = null;
       items.forEach(function(r){
@@ -593,19 +842,21 @@
       });
       var hasGrp = grps.some(function(g){ return g.g; });
       h += '<table><thead>';
+      // ★기간이 행이다. 무엇인지는 기간 칸 종류가 정한다 — 'M' 이면 「1~12월 행 × 항목 열」
+      var prdNm = { W:'요일', N:'주차', M:'월', Q:'분기' }[kindOf()] || '일';
       if (hasGrp) {
-        h += '<tr><th rowspan="2" style="width:34px;">일</th>' +
+        h += '<tr><th rowspan="2" style="width:42px;">' + prdNm + '</th>' +
              grps.map(function(g){ return '<th colspan="' + g.n + '">' + esc(g.g) + '</th>'; }).join('') + '</tr><tr>';
       } else {
-        h += '<tr><th style="width:34px;">일</th>';
+        h += '<tr><th style="width:42px;">' + prdNm + '</th>';
       }
       if (!items.length) h += '<th style="color:#8a99a3;">항목을 추가하세요</th>';
       items.forEach(function(r){ h += '<th style="min-width:70px;">' + esc(r.itemnm) + (r.unitnm ? ('(' + esc(r.unitnm) + ')') : '') + '</th>'; });
       h += '</tr></thead><tbody>';
-      DAYS.forEach(function(d){
-        h += '<tr><td>' + d + '</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      PCELL.forEach(function(d){
+        h += '<tr><td>' + esc(d) + '</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
       });
-      if (!PREV_WIDE) h += '<tr><td>…</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
+      if (TRUNC) h += '<tr><td>…</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
       h += '</tbody></table>';
     }
     if (chk('f_noteYn') === 'Y') h += '<div style="font-size:10.5px;color:#43555f;margin-top:4px;">특이사항 칸이 표 아래 붙습니다.</div>';
@@ -811,22 +1062,30 @@
       "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
-      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,EQUIP_CNT,HALF_YN,GUIDE_TXT,HEAD_NMS,COL_NMS,\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,ROW_BLK_GB,ROW_BLKS,DESC_NM,PRE_COLS,POST_COLS,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
         q(axis()) + ',' +
         q(axis() === 'ITEM_MONTH' ? 'Y'
           : ((axis() === 'LIST' || axis() === 'ITEM_COL') ? val('f_prdGb') : 'M')) + ',' +
+        (kindOf() ? q(kindOf()) : 'NULL') + ',' +
         (Number(val('f_equipCnt')) || 10) + ',' +
-        q(halfOn() ? 'Y' : 'N') + ',' +
+        "'N'," +                                                   // HALF_YN 은 더 이상 쓰지 않는다
+        (splitOf() ? splitOf().n : 'NULL') + ',' +
+        (splitOf() ? q(splitOf().dir) : 'NULL') + ',' +
         q(val('f_guideTxt')) + ',' + q(val('f_headNms')) + ',' +
-        q(axis() === 'ITEM_COL' ? val('f_colNms') : '') + ',\n  ' +
+        q(axis() === 'ITEM_COL' ? val('f_colNms') : '') + ',' +
+        (bandOn() ? "'B'" : 'NULL') + ',' +
+        q(axis() === 'LIST' ? val('f_rowBlks') : '') + ',' +
+        q(sideAxOn() ? val('f_descNm') : '') + ',' +
+        q(sideAxOn() ? val('f_preCols') : '') + ',' +
+        q(sideAxOn() ? val('f_postCols') : '') + ',\n  ' +
         q(chk('f_signerYn')) + ',' + q(chk('f_noteYn')) + ',' + q(chk('f_fixYn')) + ',' +
         q(val('f_signLine')) + ',' + q(val('f_footTxt')) + ',' + (Number(val('f_sortNo')) || 0) + ",'Y','system');\n" +
-      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
+      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,DESC_TXT,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
       items.map(function(r, i){
         return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' +
-               q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ",'Y')";
+               q(r.desctxt) + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ",'Y')";
       }).join(',\n') + ';\n';
     gel('cfSqlTxt').value = sql;
     gel('cfSqlBox').style.display = '';
@@ -845,9 +1104,18 @@
       set('f_formId', d.formid); set('f_formNm', d.formnm);
       set('f_cateCd', d.catecd || ''); set('f_deptCd', d.deptcd || '');
       set('f_axisGb', d.axisgb || 'ITEM_DAY'); set('f_equipCnt', d.equipcnt || 10);
-      setChk('f_halfYn', d.halfyn);
+      // ★옛 `HALF_YN='Y'` 는 「15칸 · 열」과 같다 — 읽는 쪽에서만 물러난다
+      var sd = (d.splitdir === 'C' || d.splitdir === 'R') ? d.splitdir : (d.halfyn === 'Y' ? 'C' : '');
+      var sn = Number(d.splitn || 0) >= 2 ? d.splitn : (d.halfyn === 'Y' ? 15 : 15);
+      set('f_splitDir', sd); set('f_splitN', sn);
       set('f_prdGb', ('YHQMWD'.indexOf(d.prdgb) >= 0 && String(d.prdgb).length === 1) ? d.prdgb : 'M');
+      // ★비어 있으면 축에서 유추 — 옛 서식(2026-08-11 12종)이 값 없이도 그대로 그려진다
+      set('f_prdKind', (d.prdkind && 'DWNMQ'.indexOf(d.prdkind) >= 0) ? d.prdkind
+                       : ((d.axisgb === 'ITEM_MONTH') ? 'M' : 'D'));
       set('f_colNms', d.colnms);
+      set('f_rowBlks', d.rowblks);
+      set('f_rowBlkGb', (d.rowblkgb === 'B') ? 'B' : 'S');
+      set('f_descNm', d.descnm); set('f_preCols', d.precols); set('f_postCols', d.postcols);
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
       setChk('f_signerYn', d.signeryn); setChk('f_noteYn', d.noteyn); setChk('f_fixYn', d.fixyn);
       set('f_signLine', d.signline); set('f_footTxt', d.foottxt); set('f_sortNo', d.sortno || 0);
@@ -876,11 +1144,15 @@
 
   window.cfNew = function(){
     curId = ''; curOwn = 'N';
-    ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_signLine','f_footTxt'].forEach(function(id){ set(id, ''); });
+    ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_rowBlks',
+     'f_descNm','f_preCols','f_postCols','f_signLine','f_footTxt']
+      .forEach(function(id){ set(id, ''); });
+    set('f_rowBlkGb', 'S');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
-    set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0);
-    setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N'); setChk('f_halfYn', 'N');
+    set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D');
+    setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N');
+    set('f_splitDir', ''); set('f_splitN', 15);
     set('f_prdGb', 'M');
     gel('f_formId').readOnly = false;
     gel('tbITEM').innerHTML = ''; [{},{},{}].forEach(itemRow);
@@ -903,9 +1175,15 @@
       post('<c:url value="/qps/chkFormSave.do"/>', {
         formId: val('f_formId'), formNm: val('f_formNm'),
         cateCd: val('f_cateCd'), deptCd: val('f_deptCd'),
-        axisGb: axis(), equipCnt: val('f_equipCnt'), halfYn: halfOn() ? 'Y' : 'N',
-        prdGb: val('f_prdGb'),   // 서버가 LIST 일 때만 쓴다(다른 축은 축이 정한다)
-        colNms: val('f_colNms'), // 서버가 ITEM_COL 일 때만 쓴다
+        axisGb: axis(), equipCnt: val('f_equipCnt'),
+        splitDir: (splitOf() ? splitOf().dir : ''), splitN: (splitOf() ? splitOf().n : ''),
+        prdGb: val('f_prdGb'),     // 서버가 LIST·ITEM_COL 일 때만 쓴다(다른 축은 축이 정한다)
+        prdKind: kindOf(),         // 격자 기간 칸 — 서버가 격자 있는 축에서만 쓴다
+        colNms: val('f_colNms'),   // 서버가 ITEM_COL 일 때만 쓴다
+        rowBlks: val('f_rowBlks'), // 서버가 LIST 일 때만 쓴다
+        rowBlkGb: val('f_rowBlkGb'),
+        // 격자 옆 칸 — 서버가 항목이 행인 세 축에서만 쓴다
+        descNm: val('f_descNm'), preCols: val('f_preCols'), postCols: val('f_postCols'),
         guideTxt: val('f_guideTxt'), headNms: val('f_headNms'),
         signerYn: chk('f_signerYn'), noteYn: chk('f_noteYn'), fixYn: chk('f_fixYn'),
         signLine: val('f_signLine'), footTxt: val('f_footTxt'), sortNo: val('f_sortNo'),

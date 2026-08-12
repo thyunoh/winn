@@ -2294,9 +2294,12 @@
 	<select id="selectChkForm" resultType="java.util.HashMap">
 		SELECT FORM_ID AS formid, HOSP_CD AS hospcd, FORM_NM AS formnm, CATE_CD AS catecd,
 		       DEPT_CD AS deptcd,
-		       AXIS_GB AS axisgb, PRD_GB AS prdgb, EQUIP_CNT AS equipcnt, HALF_YN AS halfyn,
+		       AXIS_GB AS axisgb, PRD_GB AS prdgb, PRD_KIND AS prdkind,
+		       EQUIP_CNT AS equipcnt, HALF_YN AS halfyn, SPLIT_N AS splitn, SPLIT_DIR AS splitdir,
 		       GUIDE_TXT AS guidetxt,
 		       HEAD_NMS AS headnms, COL_NMS AS colnms,
+		       ROW_BLK_GB AS rowblkgb, ROW_BLKS AS rowblks,
+		       DESC_NM AS descnm, PRE_COLS AS precols, POST_COLS AS postcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
@@ -2307,7 +2310,8 @@
 	</select>
 
 	<select id="selectChkItems" resultType="java.util.HashMap">
-		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, INPUT_GB AS inputgb, UNIT_NM AS unitnm
+		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, DESC_TXT AS desctxt,
+		       INPUT_GB AS inputgb, UNIT_NM AS unitnm
 		  FROM TBL_QPS_CHK_ITEM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD = #{hospCd}
 		 ORDER BY SORT
@@ -2333,15 +2337,23 @@
 	     한 병원이 고친 항목이 공통을 덮으면 전 병원 서식이 바뀐다. -->
 	<insert id="saveChkForm" parameterType="map">
 		INSERT INTO TBL_QPS_CHK_FORM
-		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, EQUIP_CNT, HALF_YN, GUIDE_TXT, HEAD_NMS, COL_NMS,
+		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, EQUIP_CNT,
+		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, ROW_BLK_GB, ROW_BLKS,
+		  DESC_NM, PRE_COLS, POST_COLS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
-		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{equipCnt}, #{halfYn}, #{guideTxt}, #{headNms}, #{colNms},
+		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{equipCnt},
+		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{rowBlkGb}, #{rowBlks},
+		  #{descNm}, #{preCols}, #{postCols},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
-		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD), AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB),
-		  EQUIP_CNT=VALUES(EQUIP_CNT), HALF_YN=VALUES(HALF_YN), GUIDE_TXT=VALUES(GUIDE_TXT),
+		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD),
+		  AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB), PRD_KIND=VALUES(PRD_KIND),
+		  EQUIP_CNT=VALUES(EQUIP_CNT), HALF_YN=VALUES(HALF_YN),
+		  SPLIT_N=VALUES(SPLIT_N), SPLIT_DIR=VALUES(SPLIT_DIR), GUIDE_TXT=VALUES(GUIDE_TXT),
 		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS),
+		  ROW_BLK_GB=VALUES(ROW_BLK_GB), ROW_BLKS=VALUES(ROW_BLKS),
+		  DESC_NM=VALUES(DESC_NM), PRE_COLS=VALUES(PRE_COLS), POST_COLS=VALUES(POST_COLS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
@@ -2357,9 +2369,9 @@
 	</delete>
 
 	<insert id="insertChkItems" parameterType="map">
-		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, INPUT_GB, UNIT_NM, USE_YN) VALUES
+		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, DESC_TXT, INPUT_GB, UNIT_NM, USE_YN) VALUES
 		<foreach item="it" collection="items" separator=",">
-		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.inputgb}, #{it.unitnm}, 'Y')
+		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.desctxt}, #{it.inputgb}, #{it.unitnm}, 'Y')
 		</foreach>
 	</insert>
 
@@ -2446,12 +2458,33 @@
 		       d.IN_YEAR  AS inyear,
 		       d.IN_MM    AS inmm,
 		       IFNULL(d.WARD_NM,'') AS wardnm,
-		       CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.ROW_NO ELSE v.COL_NO END AS dayno,
+		       <!-- ★LIST 에 **행 블록**이 있으면 ROW_NO 는 `블록×1000 + 순번` 이다(2026-08-12).
+		            그대로 뽑으면 `2003` 이 나와 「3번째 사람」인지 「2003행」인지 알 수 없다.
+		            ⇒ 여기서 **블록 이름과 블록 안 순번으로 되돌린다.** 화면이 아니라 SQL 이 하는 이유는
+		              뽑는 곳마다 따로 풀면 뜻이 갈리기 때문이다(위 축 되돌리기와 같은 이유). -->
+		       CASE WHEN f.AXIS_GB NOT IN ('DAY_ITEM','LIST') AND v.COL_NO &gt;= 1000 THEN NULL
+		            WHEN f.AXIS_GB = 'LIST' AND v.ROW_NO &gt;= 1000 THEN v.ROW_NO MOD 1000
+		            WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.ROW_NO ELSE v.COL_NO END AS dayno,
 		       CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END AS itemno,
+		       <!-- 블록 이름. 블록을 안 쓰는 서식·사인 행(900)은 빈 값.
+		            ★ROW_NO &lt; 1000 은 블록 1 로 본다 — 블록 없이 쓰던 서식에 나중에 블록을 붙여도 살아 있게. -->
+		       CASE WHEN f.AXIS_GB = 'LIST' AND IFNULL(f.ROW_BLKS,'') &lt;&gt; '' AND v.ROW_NO &lt;&gt; 900
+		            THEN SUBSTRING_INDEX(
+		                   SUBSTRING_INDEX(SUBSTRING_INDEX(f.ROW_BLKS, ',',
+		                       GREATEST(FLOOR(v.ROW_NO / 1000), 1)), ',', -1),
+		                 '&gt;', 1)
+		            ELSE '' END AS blknm,
 		       <!-- ★ITEM_COL 은 COL_NO 가 「일」이 아니라 **열 번호**다. 번호만 뽑으면 뜻이 없다.
 		            서식의 COL_NMS(쉼표 목록)에서 그 번호의 이름을 떼어 준다.
 		            ★`묶음>열` 문법이므로 '>' 뒤만 남긴다. 다른 축은 빈 값. -->
-		       CASE WHEN f.AXIS_GB = 'ITEM_COL'
+		       <!-- ★1000·2000 대는 **격자 앞/뒤에 붙는 열**이다(2026-08-12, v3 순서 7).
+		            일도 월도 아니므로 이름을 안 붙이면 CSV 에 「1001일」이 찍힌다. -->
+		       CASE
+		         WHEN v.COL_NO >= 2000 THEN SUBSTRING_INDEX(
+		                SUBSTRING_INDEX(IFNULL(f.POST_COLS,''), ',', v.COL_NO - 2000), ',', -1)
+		         WHEN v.COL_NO >= 1000 THEN SUBSTRING_INDEX(
+		                SUBSTRING_INDEX(IFNULL(f.PRE_COLS,''),  ',', v.COL_NO - 1000), ',', -1)
+		         WHEN f.AXIS_GB = 'ITEM_COL'
 		            THEN SUBSTRING_INDEX(
 		                   SUBSTRING_INDEX(SUBSTRING_INDEX(IFNULL(f.COL_NMS,''), ',', v.COL_NO), ',', -1),
 		                 '>', -1)
@@ -2463,6 +2496,7 @@
 		         ELSE IFNULL(i.ITEM_NM, '(항목없음)')
 		       END AS itemnm,
 		       IFNULL(i.GRP_NM,'')  AS grpnm,
+		       IFNULL(i.DESC_TXT,'') AS desctxt,   <!-- 항목 설명 열(청소방법·설치 위치) — 항목의 속성이다 -->
 		       IFNULL(i.UNIT_NM,'') AS unitnm,
 		       v.VAL AS val
 		  FROM TBL_QPS_CHK_DOC  d
@@ -2484,7 +2518,9 @@
 		<if test="formId != null and formId != ''"> AND d.FORM_ID = #{formId} </if>
 		<if test="deptCd != null and deptCd != ''"> AND f.DEPT_CD = #{deptCd} </if>
 		<if test="inMm  != null and inMm  != ''"> AND d.IN_MM   = #{inMm}   </if>
-		 ORDER BY f.SORT_NO, d.IN_MM, d.CHK_SEQ, itemno, dayno
+		<!-- ★dayno 로 정렬하면 안 된다 — 블록 서식에서 `MOD 1000` 이라 블록끼리 섞인다.
+		     원래 번호(v.ROW_NO)로 줄 세우면 축과 상관없이 화면에 보이던 차례 그대로 나온다. -->
+		 ORDER BY f.SORT_NO, d.IN_MM, d.CHK_SEQ, itemno, v.ROW_NO, v.COL_NO
 	</select>
 
 	<!-- 점검 이행 요약 — ★병원이 실제로 알고 싶은 것은 「빠짐없이 했는가」다.

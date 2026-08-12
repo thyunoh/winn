@@ -32,7 +32,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260812-PRD";
+	private static final String BUILD = "20260812-SIDECOL";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1133,17 +1133,59 @@ public class QpsController {
 			else if ("LIST".equals(axisGb) || "ITEM_COL".equals(axisGb))     prdGb = prdOf(p.get("prdGb"));
 			else                                                             prdGb = "M";
 			m.put("prdGb", prdGb);
+
+			// ★격자의 기간 칸 종류 — D일 W요일 N주차 M월 Q분기 (2026-08-12).
+			//   ***축 이름을 늘리지 않고 (방향 × 기간 종류)로 푼다*** —
+			//   DAY_ITEM + 'M' 이면 「1~12월 행 × 항목 열」이라 MONTH_ITEM 이라는 새 축이 필요 없다.
+			//   ⚠격자에 기간이 없는 축(LIST·ITEM_COL)은 이 칸을 안 쓴다. 남겨 두면 헷갈린다.
+			boolean gridHasPrd = !"LIST".equals(axisGb) && !"ITEM_COL".equals(axisGb);
+			m.put("prdKind", gridHasPrd ? kindOf(p.get("prdKind"), axisGb) : null);
 			// EQUIP_DAY = 기기 행 수 / ★LIST = 새 문서를 열 때 깔아 줄 빈 행 수(작성 화면에서 더 늘릴 수 있다)
 			Integer eq = intOf(p.get("equipCnt"));
 			m.put("equipCnt", (eq == null || eq < 1 || eq > 50) ? Integer.valueOf(10) : eq);
-			// 반달 접기 — 일이 **열**인 축에서만 뜻이 있다. 다른 축에 켜 두면 인쇄가 이상해지므로 여기서 끈다.
-			boolean halfOk = "ITEM_DAY".equals(axisGb) || "EQUIP_DAY".equals(axisGb);
-			m.put("halfYn", (halfOk && "Y".equals(str(p.get("halfYn"), ""))) ? "Y" : "N");
+			// ═══ 인쇄 배치 — 「N칸씩 + 방향」(2026-08-12, v3 순서 6) ═══
+			//   종전 halfYn 은 「1~15 / 16~31」 하나만 됐다. 실물은 넷이다 —
+			//   15칸(카트및엘리베이터) · 6칸(U.P.S 1~6월) · 7칸(욕창예방 5쪽) · 행을 좌우로(의료가스).
+			//   ⇒ 끊는 수(splitN)와 방향(splitDir)만 서식이 정한다.
+			String splitDir = str(p.get("splitDir"), "").trim().toUpperCase();
+			if (!"C".equals(splitDir) && !"R".equals(splitDir)) splitDir = "";
+			Integer splitN = intOf(p.get("splitN"));
+			if (splitN == null || splitN < 2 || splitN > 99) splitN = null;   // 1칸씩 끊는 것은 뜻이 없다
+			if (splitN == null || splitDir.isEmpty()) { splitN = null; splitDir = null; }
+			// ★열을 끊는 것(C)은 격자에 기간 칸이 있어야 뜻이 있다 —
+			//   LIST·ITEM_COL 은 `data-day` 가 없어 자를 기준이 없다. 행 끊기(R)는 어디서나 된다.
+			if ("C".equals(splitDir) && !gridHasPrd) { splitN = null; splitDir = null; }
+			m.put("splitN", splitN);
+			m.put("splitDir", splitDir);
+			// ⚠halfYn 은 **더 이상 쓰지 않는다.** 컬럼은 남겨 두되(옛 WAR 호환) 늘 'N' 으로 적는다 —
+			//   두 곳이 같은 것을 말하면 언젠가 어긋난다.
+			m.put("halfYn", "N");
 			m.put("guideTxt", unesc(p.get("guideTxt")));
 			m.put("headNms",  unesc(p.get("headNms")));
 			// ★ITEM_COL 의 고정 열 이름. 다른 축은 열을 축이 정하므로 비운다 —
 			//   남겨 두면 축을 바꿨을 때 안 쓰는 값이 따라다니며 헷갈린다.
 			m.put("colNms", "ITEM_COL".equals(axisGb) ? unesc(p.get("colNms")) : "");
+			// ═══ 행 블록 — 한 문서에 표가 여럿, ***열은 같다*** (2026-08-12, v3 순서 5) ═══
+			//   ★근거 6종이 **둘로 갈린다.** 여기가 이 기능의 전부다.
+			//     ⓐ 항목이 행인 축(시설 4종) : 블록 이름이 **이미 항목의 GRP_NM 에 있다.**
+			//        저장할 것이 없고 **그리는 방법**만 다르다 — 왼쪽 세로 칸 → 가로 띠.
+			//     ⓑ LIST(영양 2종) : 행이 사람·품목이라 담을 곳이 없다 ⇒ 서식이 블록을 정한다.
+			boolean itemRow = !"LIST".equals(axisGb) && !"DAY_ITEM".equals(axisGb);
+			m.put("rowBlkGb", (itemRow && "B".equals(str(p.get("rowBlkGb"), ""))) ? "B" : null);
+			// `이름>기본행수,…`. LIST 가 아니면 비운다 — 축을 바꿨을 때 안 쓰는 값이 따라다니면 헷갈린다.
+			m.put("rowBlks", "LIST".equals(axisGb) ? unesc(p.get("rowBlks")) : "");
+			// ═══ 항목 앞/뒤 열 (2026-08-12, v3 순서 7) ═══
+			//   ★근거 10종이 **둘로 갈린다** — 뭉치면 병원이 매달 같은 글을 다시 친다.
+			//     ⓐ 항목마다 늘 같은 글(청소방법·설치 위치) → 항목의 속성 `DESC_TXT`, 머리글만 서식이 정한다
+			//     ⓑ 문서가 적는 값(예산·조치사항·수량)   → 서식이 열 이름을, 문서가 값을 가진다
+			//   ⚠**항목이 행인 세 축만**이다.
+			//     · DAY_ITEM·LIST 는 항목이 **열**이라 칸이 필요하면 항목을 하나 더 넣으면 된다.
+			//     · EQUIP_DAY 는 행이 항목이 아니라 **기기**다 — 항목의 설명을 걸 자리가 없다.
+			//       (기기별 규격 칸은 실물 근거가 없다. ***없는 근거로 칸을 열지 않는다.***)
+			boolean sideOk = "ITEM_DAY".equals(axisGb) || "ITEM_MONTH".equals(axisGb) || "ITEM_COL".equals(axisGb);
+			m.put("descNm",   sideOk ? unesc(p.get("descNm"))   : "");
+			m.put("preCols",  sideOk ? unesc(p.get("preCols"))  : "");
+			m.put("postCols", sideOk ? unesc(p.get("postCols")) : "");
 			m.put("signerYn", "Y".equals(str(p.get("signerYn"), "")) ? "Y" : "N");
 			m.put("noteYn",   "Y".equals(str(p.get("noteYn"), ""))   ? "Y" : "N");
 			m.put("fixYn",    "Y".equals(str(p.get("fixYn"), ""))    ? "Y" : "N");
@@ -2280,6 +2322,21 @@ public class QpsController {
 		if ("W".equals(prdGb)) return 5;
 		if ("D".equals(prdGb)) return 31;
 		return 0;                      // Y · M
+	}
+
+	/**
+	 * 격자의 <b>기간 칸 종류</b> — <b>D</b>일(1~그달 날수) <b>W</b>요일(월~일) <b>N</b>주차(1~5)
+	 * <b>M</b>월(1~12) <b>Q</b>분기(1~4).
+	 *
+	 * ★★<b>비어 있으면 축에서 유추한다</b> — 그래야 2026-08-11 에 만든 기존 서식 12종이
+	 *   값을 안 넣어도 지금과 똑같이 그려진다. 「없으면 기본값」이 아니라 <b>「없으면 옛 뜻」</b>이다.
+	 * ★문서 단위({@link #prdOf(Object)})와 다른 물음이다 —
+	 *   그쪽은 「이 문서가 얼마 동안의 것인가」, 이쪽은 「격자의 기간 칸이 무엇인가」.
+	 */
+	private static String kindOf(Object o, String axisGb) {
+		String s = str(o, "").trim().toUpperCase();
+		if (s.length() == 1 && "DWNMQ".indexOf(s) >= 0) return s;
+		return "ITEM_MONTH".equals(axisGb) ? "M" : "D";   // 옛 서식의 뜻을 그대로
 	}
 
 	private static String unesc(Object o) {
