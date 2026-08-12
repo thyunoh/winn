@@ -1212,6 +1212,18 @@ public class QpsController {
 			m.put("descNm",   sideOk ? unesc(p.get("descNm"))   : "");
 			m.put("preCols",  sideOk ? unesc(p.get("preCols"))  : "");
 			m.put("postCols", sideOk ? unesc(p.get("postCols")) : "");
+			// ★고정 띠(항목의 SPAN_TXT)가 **뒤 칸까지** 덮는가(2026-08-12) — 근거 3종이 둘로 갈린다 :
+			//   연간 시설물·소방 계획은 예산 칸을 남기고, 소방시설 월 점검표는 상태 칸까지 덮는다.
+			//   고정 띠 자체가 항목이 행인 축의 것이라 범위도 sideOk 와 같다.
+			m.put("spanAllYn", (sideOk && "Y".equals(str(p.get("spanAllYn"), ""))) ? "Y" : "N");
+			// ★기간 열 머리글 입력 행(2026-08-12) — CCTV·가스보일러의 주차 밑 「-」 칸, 소화기 연대장의 월별 점검자.
+			//   기간이 **열**이고 항목이 **행**인 두 축만. EQUIP_DAY 는 제외 —
+			//   근거 실물이 없고, 그 축은 전 칸을 O/X 로 맞춰(allCheck) 「8/1-8/7」이 O 로 바뀐다.
+			boolean prdHeadOk = "ITEM_DAY".equals(axisGb) || "ITEM_MONTH".equals(axisGb);
+			m.put("prdHeadYn", (prdHeadOk && "Y".equals(str(p.get("prdHeadYn"), ""))) ? "Y" : "N");
+			m.put("prdHeadNm", prdHeadOk ? unesc(p.get("prdHeadNm")) : "");
+			// ★특이사항 칸 이름을 서식이 정한다(2026-08-12) — 조치사항·기타 이상내용. 비면 「특이사항」.
+			m.put("noteNm", unesc(p.get("noteNm")));
 			m.put("signerYn", "Y".equals(str(p.get("signerYn"), "")) ? "Y" : "N");
 			m.put("noteYn",   "Y".equals(str(p.get("noteYn"), ""))   ? "Y" : "N");
 			m.put("fixYn",    "Y".equals(str(p.get("fixYn"), ""))    ? "Y" : "N");

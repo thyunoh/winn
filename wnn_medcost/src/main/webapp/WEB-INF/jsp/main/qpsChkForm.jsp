@@ -196,6 +196,15 @@
             칸 나누기 <input type="text" id="f_prdSub" maxlength="200" style="width:150px;"
                    placeholder="쉼표로. 예) D,E,N" oninput="cfAxisChange();">
             <span class="cf-sub" id="cfSubHint"></span>
+            <%-- ★기간 열 머리글 입력 행(2026-08-12) — CCTV·가스보일러의 주차 밑 「-」 칸.
+                 서식이 아니라 **문서가 값을 적는** 한 줄이라 켜고 끄기만 서식이 정한다.
+                 기간이 열이고 항목이 행인 두 축만(ITEM_DAY·ITEM_MONTH) — cfAxisChange 가 가린다. --%>
+            <span id="f_prdHeadWrap" style="display:none;">
+              <label style="margin-left:10px;"><input type="checkbox" id="f_prdHeadYn" style="vertical-align:-2px;"
+                     onchange="cfAxisChange();"> 기간마다 문서가 적는 머리글 한 줄</label>
+              <input type="text" id="f_prdHeadNm" maxlength="60" style="width:130px;"
+                     placeholder="줄 이름. 예) 점검자" oninput="cfAxisChange();">
+            </span>
           </span>
           <%-- ★대장만 주기를 고른다 — 날짜 격자는 축이 이미 정한다.
                달마다 새로 쓰는 대장(잔여마약류 반납)과 한 해를 이어 쓰는 대장(조제 전/후 감사)이 둘 다 있다 --%>
@@ -276,6 +285,12 @@
                    placeholder="뒤 칸(쉼표). 예) 예산,조치사항" oninput="cfAxisChange();">
           </div>
           <div class="cf-sub" id="cfSideHint" style="margin-top:3px;"></div>
+          <%-- ★고정 띠(항목의 「고정 띠 문구」)가 뒤 칸까지 덮는가 — 근거 3종이 둘로 갈린다 :
+               연간 시설물·소방 계획은 예산 칸을 남기고, 소방시설 월 점검표는 상태 칸까지 덮는다. --%>
+          <label id="f_spanAllWrap" style="display:none; font-size:12px; margin-top:4px;">
+            <input type="checkbox" id="f_spanAllYn" style="vertical-align:-2px;" onchange="cfAxisChange();">
+            고정 띠 문구가 뒤 칸까지 덮음 (소방시설 월 점검표처럼)
+          </label>
         </div>
 
         <div class="lb">표 위 안내</div>
@@ -291,6 +306,9 @@
         <div class="full" style="display:flex; gap:16px; flex-wrap:wrap; padding-top:6px;">
           <label style="font-size:12.5px;"><input type="checkbox" id="f_signerYn" style="vertical-align:-2px;"> 점검자 사인 행</label>
           <label style="font-size:12.5px;"><input type="checkbox" id="f_noteYn" style="vertical-align:-2px;"> 특이사항</label>
+          <%-- ★칸 이름을 서식이 정한다(2026-08-12) — 조치사항·기타 이상내용. 비면 「특이사항」. --%>
+          <input type="text" id="f_noteNm" maxlength="60" style="width:150px;" placeholder="칸 이름(비면 특이사항)">
+
           <label style="font-size:12.5px;"><input type="checkbox" id="f_fixYn" style="vertical-align:-2px;"> 수리날짜·고장내용</label>
         </div>
 
@@ -311,8 +329,14 @@
         <th>점검항목</th>
         <%-- ★뜻이 축에 따라 갈린다 — 항목이 열이면 「열 묶음」, 행이면 「행 묶음」. cfAxisChange 가 고쳐 쓴다 --%>
         <th style="width:130px;" id="thGrpNm">묶음</th>
+        <%-- ★블록 띠(2026-08-12) — 묶음 위의 **가로 띠** 한 단(혼합형 공기조화설비의 자연환기/기계환기).
+             항목이 행인 세 축만. 이어지는 같은 이름이 한 띠가 된다 --%>
+        <th style="width:110px;" id="thBlkNm" hidden>블록 띠</th>
         <%-- ★항목마다 늘 같은 글(청소방법·설치 위치). 서식의 「항목 설명 열」을 켜야 보인다 --%>
         <th style="width:150px;" id="thDescTxt" hidden>설명</th>
+        <%-- ★고정 띠 문구(2026-08-12) — 값이 있으면 그 행의 격자가 입력칸이 아니라 이 글 한 칸이 된다
+             (「매월 1회 실시」·「자동화재탐지 설비와 연동」) --%>
+        <th style="width:140px;" id="thSpanTxt" hidden>고정 띠 문구</th>
         <th style="width:90px;">입력</th>
         <th style="width:56px;">단위</th>
         <th style="width:44px;">이동</th>
@@ -653,6 +677,16 @@
                                        : '묶음 이름이 왼쪽 세로 칸으로 나옵니다(지금까지와 같음).')
           : '아래 항목의 「행 묶음」을 적어야 뜻이 있습니다 — 비어 있으면 어느 쪽이든 같습니다.');
     }
+    // ★블록 띠·고정 띠 문구 — 항목이 행인 세 축만(작성 화면 renderGrid 와 같은 판단).
+    //   숨길 때는 머리글과 몸통 칸을 **같이** 숨긴다 — 한쪽만 빼면 표가 밀린다(설명 칸과 같은 규칙).
+    gel('thBlkNm').hidden = !itemRowAx;
+    document.querySelectorAll('#tbITEM [data-cell="blknm"]').forEach(function(td){ td.hidden = !itemRowAx; });
+    gel('thSpanTxt').hidden = !itemRowAx;
+    document.querySelectorAll('#tbITEM [data-cell="spantxt"]').forEach(function(td){ td.hidden = !itemRowAx; });
+    gel('f_spanAllWrap').style.display = itemRowAx ? '' : 'none';
+    // ★기간 열 머리글 입력 행 — 기간이 **열**이고 항목이 **행**인 두 축만(서버 prdHeadOk 와 같은 판단)
+    var phAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH');
+    gel('f_prdHeadWrap').style.display = phAx ? '' : 'none';
     // ★격자 옆 칸 — 항목이 행인 세 축만(서버 QpsController.sideOk 와 같은 판단이어야 한다)
     var sideAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH' || a === 'ITEM_COL');
     gel('f_sideLb').style.display   = sideAx ? '' : 'none';
@@ -684,7 +718,9 @@
       '<td style="text-align:center;color:#8a99a3;" data-no></td>' +
       '<td><input data-f="itemnm" value="' + esc(r.itemnm) + '" placeholder="점검항목 문구"></td>' +
       '<td><input data-f="grpnm" value="' + esc(r.grpnm) + '"></td>' +
+      '<td data-cell="blknm" hidden><input data-f="blknm" value="' + esc(r.blknm) + '" placeholder="예) 자연환기"></td>' +
       '<td data-cell="desctxt" hidden><input data-f="desctxt" value="' + esc(r.desctxt) + '" placeholder="예) 물걸레 소독"></td>' +
+      '<td data-cell="spantxt" hidden><input data-f="spantxt" value="' + esc(r.spantxt) + '" placeholder="예) 매월 1회 실시"></td>' +
       '<td><select data-f="inputgb">' +
         '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' ? '' : ' selected') + '>O / X</option>' +
         '<option value="TEXT"' + (r.inputgb === 'TEXT' ? ' selected' : '') + '>글자</option>' +
@@ -789,18 +825,27 @@
     } else if (a === 'ITEM_DAY' || a === 'ITEM_MONTH') {
       var cols = PCELL;
       // 행 묶음(2단 행 머리글) — 이어지는 항목의 묶음 이름이 같으면 왼쪽 칸을 합친다
+      // ★블록(BLK_NM)이 갈리면 묶음도 끊는다 — 작성 화면과 같은 규칙
       var rg = [], rl = null;
       items.forEach(function(r){
-        var gname = r.grpnm || '';
-        if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
+        var gname = r.grpnm || '', bname = r.blknm || '';
+        if (rl && rl.g === gname && rl.b === bname) rl.n++; else { rl = { g:gname, b:bname, n:1 }; rg.push(rl); }
       });
-      var rband = !docGrp() && bandOn() && rg.some(function(x){ return x.g; });
+      // ★블록 두 단계 — BLK_NM 이 있으면 그것이 띠, GRP_NM 은 세로 칸(작성 화면 renderGrid 와 같다)
+      var hasBk = !docGrp() && items.some(function(r){ return (r.blknm || '').trim(); });
+      var rband = !docGrp() && !hasBk && bandOn() && rg.some(function(x){ return x.g; });
       var hasRg = docGrp() || (!rband && rg.some(function(x){ return x.g; }));
-      var rspan = 1 + cols.length + pvSideCnt() + (TRUNC ? 1 : 0);
+      var rspan = (hasRg ? 1 : 0) + 1 + cols.length + pvSideCnt() + (TRUNC ? 1 : 0);
       h += '<table><thead><tr>' + (hasRg ? '<th style="width:70px;">묶음</th>' : '') +
            '<th style="min-width:180px;">점검 항목</th>' + pvSideTh() +
            cols.map(function(d){ return '<th style="width:30px;">' + esc(d) + '</th>'; }).join('') + ELLTH +
            pvSideTh(true) + '</tr></thead><tbody>';
+      // ★기간 열 머리글 입력 행 — 작성 화면의 890 행. 미리보기는 빈 칸으로 자리만 보여 준다.
+      if (chk('f_prdHeadYn') === 'Y') {
+        h += '<tr>' + (hasRg ? '<td></td>' : '') +
+             '<td class="l" style="color:#6b7c86;background:#f7fafb;">' + esc(val('f_prdHeadNm')) + '</td>' + pvSideTd(null) +
+             cols.map(function(){ return '<td style="background:#f7fafb;"></td>'; }).join('') + ELLTD + pvSideTd(null, true) + '</tr>';
+      }
       if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + pvSideTd(null) + cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(null, true) + '</tr>';
       if (docGrp() && items.length) {
         // 묶음 이름을 문서가 적는다 — 미리보기는 앞 2묶음만 보여 준다
@@ -815,13 +860,24 @@
         }
         if (gcnt > 2) h += '<tr><td colspan="' + rspan + '" class="l" style="color:#8a99a3;">… 모두 ' + gcnt + '묶음</td></tr>';
       } else {
-      var gi = 0, gpos = 0;
+      var gi = 0, gpos = 0, pvBk = null;
       items.forEach(function(r){
+        var bn = (r.blknm || '').trim();
+        if (hasBk && bn && bn !== pvBk) h += bandTr(bn, rspan);
+        pvBk = bn;
         if (rband && gpos === 0 && rg[gi].g) h += bandTr(rg[gi].g, rspan);
         h += '<tr>';
         if (hasRg && gpos === 0) h += '<td class="l" rowspan="' + rg[gi].n + '" style="background:#f6f8f9;font-weight:700;">' + esc(rg[gi].g) + '</td>';
-        h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r) +
-             cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(r, true) + '</tr>';
+        h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r);
+        // ★고정 띠 문구 — 격자를 그 글 한 칸으로 덮는다(작성 화면과 같은 규칙)
+        var sp = (r.spantxt || '').trim();
+        if (sp) {
+          h += '<td colspan="' + (cols.length + (TRUNC ? 1 : 0) + (chk('f_spanAllYn') === 'Y' ? pvPost().length : 0)) +
+               '" style="background:#f4f6f8;color:#43555f;">' + esc(sp) + '</td>' +
+               (chk('f_spanAllYn') === 'Y' ? '' : pvSideTd(r, true)) + '</tr>';
+        } else {
+          h += cols.map(function(){ return '<td></td>'; }).join('') + ELLTD + pvSideTd(r, true) + '</tr>';
+        }
         if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
       }
@@ -843,9 +899,11 @@
       cd2.forEach(function(c){ if (cl2 && cl2.g === c.g && c.g) cl2.n++; else { cl2 = {g:c.g,n:1}; cg2.push(cl2); } });
       var hasCg2 = cg2.some(function(x){ return x.g; });
       var ig2 = [], il2 = null;
-      items.forEach(function(r){ var gn = r.grpnm || '';
-        if (il2 && il2.g === gn) il2.n++; else { il2 = {g:gn,n:1}; ig2.push(il2); } });
-      var band2 = bandOn() && ig2.some(function(x){ return x.g; });
+      items.forEach(function(r){ var gn = r.grpnm || '', bn2 = r.blknm || '';
+        if (il2 && il2.g === gn && il2.b === bn2) il2.n++; else { il2 = {g:gn,b:bn2,n:1}; ig2.push(il2); } });
+      // ★블록 두 단계 — BLK_NM 이 있으면 그것이 띠, GRP_NM 은 세로 칸(작성 화면과 같은 규칙)
+      var hasBk2 = items.some(function(r){ return (r.blknm || '').trim(); });
+      var band2 = !hasBk2 && bandOn() && ig2.some(function(x){ return x.g; });
       var hasIg2 = !band2 && ig2.some(function(x){ return x.g; });
       var colTh2 = cd2.map(function(c){ return '<th style="min-width:60px;">' + esc(c.n) + '</th>'; }).join('');
 
@@ -862,13 +920,23 @@
       h += '</thead><tbody>';
       if (!items.length) h += '<tr><td class="l" style="color:#8a99a3;">항목을 추가하세요</td>' + pvSideTd(null) +
                               cd2.map(function(){ return '<td></td>'; }).join('') + pvSideTd(null, true) + '</tr>';
-      var ci2 = 0, cp2 = 0;
+      var ci2 = 0, cp2 = 0, pvBk2 = null;
       items.forEach(function(r){
+        var bn = (r.blknm || '').trim();
+        if (hasBk2 && bn && bn !== pvBk2) h += bandTr(bn, (hasIg2 ? 1 : 0) + 1 + cd2.length + pvSideCnt());
+        pvBk2 = bn;
         if (band2 && cp2 === 0 && ig2[ci2].g) h += bandTr(ig2[ci2].g, 1 + cd2.length + pvSideCnt());
         h += '<tr>';
         if (hasIg2 && cp2 === 0) h += '<td class="l" rowspan="' + ig2[ci2].n + '" style="background:#f6f8f9;font-weight:700;">' + esc(ig2[ci2].g) + '</td>';
-        h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r) +
-             cd2.map(function(){ return '<td></td>'; }).join('') + pvSideTd(r, true) + '</tr>';
+        h += '<td class="l">' + esc(r.itemnm) + '</td>' + pvSideTd(r);
+        var sp2 = (r.spantxt || '').trim();
+        if (sp2) {
+          h += '<td colspan="' + (cd2.length + (chk('f_spanAllYn') === 'Y' ? pvPost().length : 0)) +
+               '" style="background:#f4f6f8;color:#43555f;">' + esc(sp2) + '</td>' +
+               (chk('f_spanAllYn') === 'Y' ? '' : pvSideTd(r, true)) + '</tr>';
+        } else {
+          h += cd2.map(function(){ return '<td></td>'; }).join('') + pvSideTd(r, true) + '</tr>';
+        }
         if (hasIg2 || band2) { cp2++; if (cp2 >= ig2[ci2].n) { ci2++; cp2 = 0; } }
       });
       if (chk('f_signerYn') === 'Y')
@@ -938,7 +1006,8 @@
       if (TRUNC) h += '<tr><td>…</td>' + (items.length ? items : [0]).map(function(){ return '<td></td>'; }).join('') + '</tr>';
       h += '</tbody></table>';
     }
-    if (chk('f_noteYn') === 'Y') h += '<div style="font-size:10.5px;color:#43555f;margin-top:4px;">특이사항 칸이 표 아래 붙습니다.</div>';
+    if (chk('f_noteYn') === 'Y') h += '<div style="font-size:10.5px;color:#43555f;margin-top:4px;">' +
+      esc(val('f_noteNm') || '특이사항') + ' 칸이 표 아래 붙습니다.</div>';
     if (chk('f_fixYn') === 'Y')  h += '<div style="font-size:10.5px;color:#43555f;">수리날짜 및 고장 발생 내용 칸이 붙습니다.</div>';
     if (val('f_signLine'))       h += '<div style="font-size:10.5px;color:#43555f;">하단 서명란 : ' + esc(val('f_signLine')) + '</div>';
     box.innerHTML = h;
@@ -1144,6 +1213,7 @@
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
       ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,PRD_SUB,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
+      '  SPAN_ALL_YN,PRD_HEAD_YN,PRD_HEAD_NM,NOTE_NM,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
         q(axis()) + ',' +
@@ -1164,12 +1234,16 @@
         q(sideAxOn() ? val('f_descNm') : '') + ',' +
         q(sideAxOn() ? val('f_preCols') : '') + ',' +
         q(sideAxOn() ? val('f_postCols') : '') + ',\n  ' +
+        q(sideAxOn() ? chk('f_spanAllYn') : 'N') + ',' +
+        q((axis() === 'ITEM_DAY' || axis() === 'ITEM_MONTH') ? chk('f_prdHeadYn') : 'N') + ',' +
+        q((axis() === 'ITEM_DAY' || axis() === 'ITEM_MONTH') ? val('f_prdHeadNm') : '') + ',' +
+        q(val('f_noteNm')) + ',\n  ' +
         q(chk('f_signerYn')) + ',' + q(chk('f_noteYn')) + ',' + q(chk('f_fixYn')) + ',' +
         q(val('f_signLine')) + ',' + q(val('f_footTxt')) + ',' + (Number(val('f_sortNo')) || 0) + ",'Y','system');\n" +
-      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,DESC_TXT,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
+      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,BLK_NM,DESC_TXT,SPAN_TXT,INPUT_GB,UNIT_NM,USE_YN) VALUES\n' +
       items.map(function(r, i){
-        return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' +
-               q(r.desctxt) + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ",'Y')";
+        return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' + q(r.blknm) + ',' +
+               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ",'Y')";
       }).join(',\n') + ';\n';
     gel('cfSqlTxt').value = sql;
     gel('cfSqlBox').style.display = '';
@@ -1203,6 +1277,8 @@
       set('f_rowBlks', d.rowblks);
       set('f_rowBlkGb', (d.rowblkgb === 'B') ? 'B' : 'S');
       set('f_descNm', d.descnm); set('f_preCols', d.precols); set('f_postCols', d.postcols);
+      setChk('f_spanAllYn', d.spanallyn); setChk('f_prdHeadYn', d.prdheadyn);
+      set('f_prdHeadNm', d.prdheadnm); set('f_noteNm', d.notenm);
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
       setChk('f_signerYn', d.signeryn); setChk('f_noteYn', d.noteyn); setChk('f_fixYn', d.fixyn);
       set('f_signLine', d.signline); set('f_footTxt', d.foottxt); set('f_sortNo', d.sortno || 0);
@@ -1232,9 +1308,10 @@
   window.cfNew = function(){
     curId = ''; curOwn = 'N';
     ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_rowBlks',
-     'f_descNm','f_preCols','f_postCols','f_signLine','f_footTxt']
+     'f_descNm','f_preCols','f_postCols','f_prdHeadNm','f_noteNm','f_signLine','f_footTxt']
       .forEach(function(id){ set(id, ''); });
     set('f_rowBlkGb', 'S'); set('f_colSrc', 'F'); set('f_rowSrc', 'F');
+    setChk('f_spanAllYn', 'N'); setChk('f_prdHeadYn', 'N');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
     set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D'); set('f_prdSub', '');
@@ -1274,6 +1351,9 @@
         rowBlkGb: val('f_rowBlkGb'),
         // 격자 옆 칸 — 서버가 항목이 행인 세 축에서만 쓴다
         descNm: val('f_descNm'), preCols: val('f_preCols'), postCols: val('f_postCols'),
+        spanAllYn: chk('f_spanAllYn'),   // 고정 띠가 뒤 칸까지 덮나
+        prdHeadYn: chk('f_prdHeadYn'), prdHeadNm: val('f_prdHeadNm'),  // 기간 열 머리글 입력 행
+        noteNm: val('f_noteNm'),         // 특이사항 칸의 이름(비면 특이사항)
         guideTxt: val('f_guideTxt'), headNms: val('f_headNms'),
         signerYn: chk('f_signerYn'), noteYn: chk('f_noteYn'), fixYn: chk('f_fixYn'),
         signLine: val('f_signLine'), footTxt: val('f_footTxt'), sortNo: val('f_sortNo'),

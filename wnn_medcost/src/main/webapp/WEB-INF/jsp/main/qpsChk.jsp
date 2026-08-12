@@ -82,6 +82,14 @@
   #qpsChk table.gr th.side{ background:#eef2f4; color:#33474f; }
   #qpsChk table.gr td.sidetxt{ text-align:left; padding:4px 7px; color:#43555f; background:#fafcfd;
       white-space:normal; line-height:1.4; }
+  <%-- ★고정 띠(SPAN_TXT) — 격자를 대신하는 미리 찍힌 문구(「매월 1회 실시」). 입력칸이 아니다.
+       입력칸과 **눈으로 갈려야** 한다 — 흐린 바탕 + 가운데 글. --%>
+  #qpsChk table.gr td.spanfix{ background:#f4f6f8; color:#43555f; text-align:center;
+      padding:4px 8px; letter-spacing:-0.2px; white-space:normal; }
+  <%-- ★기간 열 머리글 입력 행(890) — 주차 날짜·월별 점검자. 머리글과 몸통 사이의 한 줄이라
+       살짝 다른 바탕으로 「서식의 일부」처럼 보이게 한다. --%>
+  #qpsChk table.gr tr.prdh > td{ background:#f7fafb; }
+  #qpsChk table.gr tr.prdh input{ font-size:11px; color:#33474f; }
   #qpsChk table.gr td input{ width:100%; min-width:30px; border:none; background:transparent;
       text-align:center; padding:4px 2px; font-size:12px; }
   <%-- ★문서가 열 이름을 정하는 서식은 **머리글이 입력칸**이다(MSDS 물질명 · 소방 층·병동).
@@ -156,7 +164,8 @@
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
 
   <div id="ckNoteWrap" style="display:none; margin-top:10px;">
-    <div style="font-size:12.5px; font-weight:700; color:#43555f; margin-bottom:4px;">특이사항</div>
+    <%-- ★칸 이름은 서식이 정한다(NOTE_NM) — 조치사항·기타 이상내용. 비면 「특이사항」. --%>
+    <div id="ckNoteTitle" style="font-size:12.5px; font-weight:700; color:#43555f; margin-bottom:4px;">특이사항</div>
     <textarea id="f_noteTxt" rows="2"></textarea>
   </div>
   <div id="ckFixWrap" style="display:none; margin-top:8px;">
@@ -241,6 +250,25 @@
   function descNm(){ return (sideOk() && FORM && FORM.descnm) ? String(FORM.descnm).trim() : ''; }
   function preCols(){  return sideOk() && FORM ? nameList(FORM.precols)  : []; }
   function postCols(){ return sideOk() && FORM ? nameList(FORM.postcols) : []; }
+  /* ═══ 고정 띠 — 격자를 대신하는 미리 찍힌 문구 (2026-08-12) ═══
+     연간 시설물·소방 계획의 「매월 1회 실시」, 소방시설 월 점검표의 「자동화재탐지 설비와 연동」.
+     항목의 SPAN_TXT 에 글이 있으면 그 행의 격자가 **입력칸이 아니라 그 글 한 칸**이 된다 —
+     12칸을 열어 두면 원본에 없던 「점검할 칸」이 생기고, ***「매월 실시」라고 못 박은 것을
+     병원이 매달 O 를 찍어야 하는 것으로 바꾼다.*** 뜻을 지키는 장치다.
+     ★SPAN_ALL_YN='Y' 면 띠가 **뒤 칸(POST_COLS)까지** 덮는다 — 소방시설 월 점검표는 상태 칸도 덮고,
+       연간 계획 둘은 예산 칸을 남긴다. 근거 3종이 정확히 둘로 갈렸다. */
+  function spanAll(){ return FORM && FORM.spanallyn === 'Y'; }
+  /** 특이사항 칸의 이름 — 서식이 정한다(조치사항·기타 이상내용). 비면 지금까지처럼 「특이사항」. */
+  function noteNm(){ return (FORM && String(FORM.notenm || '').trim()) || '특이사항'; }
+  /* ═══ 기간 열 머리글 입력 행 (2026-08-12) ═══
+     CCTV·가스보일러의 주차 밑 「-」 칸(주차 날짜 범위), 소화기 연대장의 월별 「점검자」.
+     서식이 아니라 **문서가 값을 적는** 한 줄이라 셀로 저장한다 — 예약 행 890(사인 900 바로 앞).
+     ★기간이 **열**이고 항목이 **행**인 두 축만(서버 chkFormSave 의 prdHeadOk 와 같은 판단). */
+  var PRDH_NO = 890;
+  function prdHeadOn(){
+    var a = axis();
+    return FORM && FORM.prdheadyn === 'Y' && (a === 'ITEM_DAY' || a === 'ITEM_MONTH');
+  }
   /** 격자 양옆에 몇 칸이 붙나 — 빈 줄·사인 행의 `colspan` 을 맞추는 데 쓴다. */
   function sideCnt(){ return (descNm() ? 1 : 0) + preCols().length + postCols().length; }
 
@@ -455,15 +483,20 @@
         if (cl && cl.g === c.g && c.g) cl.n++; else { cl = { g:c.g, n:1 }; cg.push(cl); }
       });
       var hasCg = cg.some(function(x){ return x.g; });
-      // 행 묶음
+      // 행 묶음 — ★블록(BLK_NM)이 갈리면 묶음도 같이 끊는다. 안 끊으면 이웃 블록의
+      //   같은 이름 묶음이 rowspan 으로 이어져 **묶음 칸이 띠를 뚫고 내려간다.**
       var ig = [], il = null;
       ITEMS.forEach(function(r){
-        var gn = r.grpnm || '';
-        if (il && il.g === gn) il.n++; else { il = { g:gn, n:1 }; ig.push(il); }
+        var gn = r.grpnm || '', bn = r.blknm || '';
+        if (il && il.g === gn && il.b === bn) il.n++; else { il = { g:gn, b:bn, n:1 }; ig.push(il); }
       });
+      // ★블록 두 단계(2026-08-12) — 항목의 BLK_NM 이 있으면 **그것이 가로 띠**가 되고
+      //   GRP_NM 은 왼쪽 세로 칸으로 남는다(혼합형 공기조화설비 : 자연환기/기계환기 띠 + 환기시설 묶음).
+      //   BLK_NM 이 없으면 옛 방식 그대로 — ROW_BLK_GB='B' 가 GRP_NM 을 띠로 그린다.
+      var hasBk = ITEMS.some(function(r){ return String(r.blknm || '').trim(); });
       // ★행 묶음을 **가로 띠**로 그리는 서식이 있다(시설물 정기점검의 「약국」·「조리실」 등, 4종).
       //   담긴 자료는 똑같다 — GRP_NM 이다. ***그리는 방법만 다르다.***
-      var band = (FORM.rowblkgb === 'B') && ig.some(function(x){ return x.g; });
+      var band = !hasBk && (FORM.rowblkgb === 'B') && ig.some(function(x){ return x.g; });
       var hasIg = !band && ig.some(function(x){ return x.g; });
 
       var colTh = function(){
@@ -488,16 +521,29 @@
       h += '</thead><tbody>';
       if (!ITEMS.length) h += '<tr><td class="hd" style="color:#8a99a3;">이 서식에 점검항목이 없습니다 — [서식 관리]에서 등록하세요.</td>' +
                               '<td colspan="' + (cd.length + sideCnt()) + '"></td></tr>';
-      var ci = 0, cp = 0;
+      var ci = 0, cp = 0, prevBk = null;
       ITEMS.forEach(function(r){
+        // ★블록 띠 — BLK_NM 이 바뀌는 자리에 표 폭을 가로지르는 머리 행. 묶음 칸까지 덮는다.
+        var bn = String(r.blknm || '').trim();
+        if (hasBk && bn && bn !== prevBk)
+          h += '<tr class="blk"><td colspan="' + ((hasIg ? 1 : 0) + 1 + cd.length + sideCnt()) + '">' + esc(bn) + '</td></tr>';
+        prevBk = bn;
         // 띠 표시 — 묶음이 바뀌는 자리에 표 폭을 가로지르는 머리 행을 넣는다
         if (band && cp === 0 && ig[ci].g) h += '<tr class="blk"><td colspan="' + (1 + cd.length + sideCnt()) + '">' + esc(ig[ci].g) + '</td></tr>';
         h += '<tr>';
         if (hasIg && cp === 0) h += '<th class="rgrp" rowspan="' + ig[ci].n + '">' + esc(ig[ci].g) + '</th>';
         h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
         h += sideTd(r, g);
-        cd.forEach(function(c, k){ h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt'); });
-        h += sideTd(r, g, true) + '</tr>';
+        // ★고정 띠 — 문구가 있으면 격자(필요하면 뒤 칸까지)를 그 글 한 칸으로 덮는다. 입력칸이 아니다.
+        var sp = String(r.spantxt || '').trim();
+        if (sp) {
+          h += '<td class="spanfix" colspan="' + (cd.length + (spanAll() ? postCols().length : 0)) + '">' + esc(sp) + '</td>';
+          if (!spanAll()) h += sideTd(r, g, true);
+          h += '</tr>';
+        } else {
+          cd.forEach(function(c, k){ h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt'); });
+          h += sideTd(r, g, true) + '</tr>';
+        }
         if (hasIg || band) { cp++; if (cp >= ig[ci].n) { ci++; cp = 0; } }
       });
       if (FORM.signeryn === 'Y') {
@@ -642,11 +688,14 @@
       //   ***DAY_ITEM 의 열 묶음과 같은 자료(GRP_NM)를 쓴다*** — 축이 눕히기만 할 뿐 뜻은 하나다.
       var rg = [], rl = null;
       ITEMS.forEach(function(r){
-        var gname = r.grpnm || '';
-        if (rl && rl.g === gname) rl.n++; else { rl = { g:gname, n:1 }; rg.push(rl); }
+        var gname = r.grpnm || '', bname = r.blknm || '';
+        // ★블록이 갈리면 묶음도 끊는다(ITEM_COL 과 같은 이유 — rowspan 이 띠를 뚫으면 안 된다)
+        if (rl && rl.g === gname && rl.b === bname) rl.n++; else { rl = { g:gname, b:bname, n:1 }; rg.push(rl); }
       });
+      // ★블록 두 단계(BLK_NM) — 있으면 그것이 띠, GRP_NM 은 세로 칸(ITEM_COL 과 같은 장치)
+      var hasBk = !docRow() && ITEMS.some(function(r){ return String(r.blknm || '').trim(); });
       // ★같은 GRP_NM 을 **가로 띠**로 그릴 수도 있다(ROW_BLK_GB='B') — ITEM_COL 과 같은 장치다
-      var rband = !docRow() && (FORM.rowblkgb === 'B') && rg.some(function(x){ return x.g; });
+      var rband = !docRow() && !hasBk && (FORM.rowblkgb === 'B') && rg.some(function(x){ return x.g; });
       // ★묶음을 문서가 정하면 묶음 칸은 **언제나 있다**(거기에 이름을 적는다)
       var hasRg = docRow() || (!rband && rg.some(function(x){ return x.g; }));
       // ★기간 세분 — 기간 칸이 쪼개지면 머리글이 2단이 된다(날짜 줄 + 쪽 이름 줄)
@@ -671,6 +720,18 @@
         h += sideTh(true) + '</tr>';
       }
       h += '</thead><tbody>';
+      // ★기간 열 머리글 입력 행(890) — 주차의 날짜 범위·월별 점검자를 **문서가** 적는다.
+      //   기간 세분이 있으면 한 기간이 여러 칸이므로 colspan 으로 덮는다(값은 기간마다 하나).
+      //   data-day 를 달아야 인쇄 열-끊기가 이 행도 같이 자른다.
+      if (prdHeadOn()) {
+        h += '<tr class="prdh">' + (hasRg ? '<th class="rgrp"></th>' : '') +
+             '<th class="hd">' + esc(String(FORM.prdheadnm || '').trim()) + '</th>' + sideTd(null, g);
+        PC.forEach(function(pc){
+          h += '<td data-day="' + pc.no + '"' + (hasSub ? (' colspan="' + prdSubs().length + '"') : '') + '>' +
+               '<input data-r="' + PRDH_NO + '" data-c="' + pc.no + '" value="' + esc(g(PRDH_NO, pc.no)) + '"></td>';
+        });
+        h += sideTd(null, g, true) + '</tr>';
+      }
       if (!ITEMS.length) h += '<tr><td class="hd" style="color:#8a99a3;">이 서식에 점검항목이 없습니다 — [서식 관리]에서 등록하세요.</td>' +
                               '<td colspan="' + (PF.length + sideCnt()) + '"></td></tr>';
       if (docRow()) {
@@ -690,16 +751,30 @@
           });
         }
       } else {
-      var gi = 0, gpos = 0;   // 지금 몇 번째 묶음인지 / 그 묶음 안에서 몇 번째 행인지
+      var gi = 0, gpos = 0, rPrevBk = null;   // 지금 몇 번째 묶음인지 / 그 묶음 안에서 몇 번째 행인지
       ITEMS.forEach(function(r){
+        // ★블록 띠(BLK_NM) — 바뀌는 자리에 표 폭을 가로지르는 머리 행. 묶음 칸까지 덮는다.
+        var bn = String(r.blknm || '').trim();
+        if (hasBk && bn && bn !== rPrevBk)
+          h += '<tr class="blk"><td colspan="' + ((hasRg ? 1 : 0) + 1 + PF.length + sideCnt()) + '">' + esc(bn) + '</td></tr>';
+        rPrevBk = bn;
         if (rband && gpos === 0 && rg[gi].g) h += '<tr class="blk"><td colspan="' + (1 + nCol + sideCnt()) + '">' + esc(rg[gi].g) + '</td></tr>';
         h += '<tr>';
         // 묶음 칸은 그 묶음의 **첫 행에서만** 나오고 나머지 행을 rowspan 으로 덮는다
         if (hasRg && gpos === 0) h += '<th class="rgrp" rowspan="' + rg[gi].n + '">' + esc(rg[gi].g) + '</th>';
         h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
         h += sideTd(r, g);
-        (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), '', pf.prd); }); })(r.sort);
-        h += sideTd(r, g, true);
+        // ★고정 띠 — 문구가 있으면 격자(필요하면 뒤 칸까지)를 그 글 한 칸으로 덮는다. 입력칸이 아니다.
+        //   ⚠인쇄 열-끊기(SPLIT_DIR='C')와는 같이 못 쓴다 — 띠 칸에 data-day 가 없어 조각마다 통째로 남는다.
+        //     근거 서식(연간 계획 2·소방시설 월)은 전부 끊지 않는 판이라 지금은 부딪히지 않는다.
+        var sp = String(r.spantxt || '').trim();
+        if (sp) {
+          h += '<td class="spanfix" colspan="' + (PF.length + (spanAll() ? postCols().length : 0)) + '">' + esc(sp) + '</td>';
+          if (!spanAll()) h += sideTd(r, g, true);
+        } else {
+          (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), '', pf.prd); }); })(r.sort);
+          h += sideTd(r, g, true);
+        }
         h += '</tr>';
         if (hasRg || rband) { gpos++; if (gpos >= rg[gi].n) { gi++; gpos = 0; } }
       });
@@ -753,6 +828,7 @@
     // 월 생성은 **일 단위 서식**만 — 다른 주기에 31개를 깔면 목록이 통째로 망가진다(서버도 막는다)
     gel('ckMonthBtn').style.display = (FORM && FORM.prdgb === 'D') ? '' : 'none';
     gel('ckNoteWrap').style.display = (FORM && FORM.noteyn === 'Y') ? '' : 'none';
+    gel('ckNoteTitle').textContent = noteNm();   // 서식이 정한 칸 이름(조치사항 등)
     gel('ckFixWrap').style.display  = (FORM && FORM.fixyn === 'Y') ? '' : 'none';
     var ft = gel('ckFoot');
     if (FORM && FORM.foottxt) { ft.style.display = ''; ft.textContent = FORM.foottxt; } else ft.style.display = 'none';
@@ -1195,7 +1271,7 @@
     var guide = FORM.guidetxt ? ('<div style="font-size:10px;text-align:right;margin-bottom:3px;">' + esc(FORM.guidetxt) + '</div>') : '';
 
     var tail = '';
-    if (FORM.noteyn === 'Y') tail += '<div class="box"><b>특이사항</b><br>' + esc(val('f_noteTxt')) + '</div>';
+    if (FORM.noteyn === 'Y') tail += '<div class="box"><b>' + esc(noteNm()) + '</b><br>' + esc(val('f_noteTxt')) + '</div>';
     if (FORM.fixyn === 'Y')  tail += '<div class="box"><b>수리날짜 및 고장 발생 내용</b><br>' + esc(val('f_fixTxt')) + '</div>';
     if (FORM.foottxt)        tail += '<div style="font-size:9px;margin-top:4px;text-align:left;">' + esc(FORM.foottxt) + '</div>';
     if (FORM.signline) {

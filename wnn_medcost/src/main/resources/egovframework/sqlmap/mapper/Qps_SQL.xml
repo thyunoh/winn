@@ -2307,6 +2307,8 @@
 		       HEAD_NMS AS headnms, COL_NMS AS colnms, COL_SRC AS colsrc,
 		       ROW_BLK_GB AS rowblkgb, ROW_BLKS AS rowblks, ROW_SRC AS rowsrc,
 		       DESC_NM AS descnm, PRE_COLS AS precols, POST_COLS AS postcols,
+		       SPAN_ALL_YN AS spanallyn, PRD_HEAD_YN AS prdheadyn, PRD_HEAD_NM AS prdheadnm,
+		       NOTE_NM AS notenm,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
@@ -2317,7 +2319,8 @@
 	</select>
 
 	<select id="selectChkItems" resultType="java.util.HashMap">
-		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, DESC_TXT AS desctxt,
+		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, BLK_NM AS blknm,
+		       DESC_TXT AS desctxt, SPAN_TXT AS spantxt,
 		       INPUT_GB AS inputgb, UNIT_NM AS unitnm
 		  FROM TBL_QPS_CHK_ITEM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD = #{hospCd}
@@ -2346,12 +2349,12 @@
 		INSERT INTO TBL_QPS_CHK_FORM
 		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, PRD_SUB, EQUIP_CNT,
 		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS, ROW_SRC,
-		  DESC_NM, PRE_COLS, POST_COLS,
+		  DESC_NM, PRE_COLS, POST_COLS, SPAN_ALL_YN, PRD_HEAD_YN, PRD_HEAD_NM, NOTE_NM,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
 		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{prdSub}, #{equipCnt},
 		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks}, #{rowSrc},
-		  #{descNm}, #{preCols}, #{postCols},
+		  #{descNm}, #{preCols}, #{postCols}, #{spanAllYn}, #{prdHeadYn}, #{prdHeadNm}, #{noteNm},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
 		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD),
@@ -2361,6 +2364,8 @@
 		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS), COL_SRC=VALUES(COL_SRC),
 		  ROW_BLK_GB=VALUES(ROW_BLK_GB), ROW_BLKS=VALUES(ROW_BLKS), ROW_SRC=VALUES(ROW_SRC),
 		  DESC_NM=VALUES(DESC_NM), PRE_COLS=VALUES(PRE_COLS), POST_COLS=VALUES(POST_COLS),
+		  SPAN_ALL_YN=VALUES(SPAN_ALL_YN), PRD_HEAD_YN=VALUES(PRD_HEAD_YN),
+		  PRD_HEAD_NM=VALUES(PRD_HEAD_NM), NOTE_NM=VALUES(NOTE_NM),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
@@ -2376,9 +2381,9 @@
 	</delete>
 
 	<insert id="insertChkItems" parameterType="map">
-		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, DESC_TXT, INPUT_GB, UNIT_NM, USE_YN) VALUES
+		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, BLK_NM, DESC_TXT, SPAN_TXT, INPUT_GB, UNIT_NM, USE_YN) VALUES
 		<foreach item="it" collection="items" separator=",">
-		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.desctxt}, #{it.inputgb}, #{it.unitnm}, 'Y')
+		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.blknm}, #{it.desctxt}, #{it.spantxt}, #{it.inputgb}, #{it.unitnm}, 'Y')
 		</foreach>
 	</insert>
 
@@ -2531,7 +2536,9 @@
 		                   SUBSTRING_INDEX(SUBSTRING_INDEX(f.ROW_BLKS, ',',
 		                       GREATEST(FLOOR(v.ROW_NO / 1000), 1)), ',', -1),
 		                 '&gt;', 1)
-		            ELSE '' END AS blknm,
+		            <!-- ★항목이 행인 축의 **가로 띠**(ITEM.BLK_NM, 2026-08-12) — 혼합형 공기조화설비의
+		                 자연환기/기계환기. 여기 안 붙이면 「환기시설」이 어느 설비 것인지 CSV 에서 사라진다. -->
+		            ELSE IFNULL(i.BLK_NM,'') END AS blknm,
 		       <!-- ★ITEM_COL 은 COL_NO 가 「일」이 아니라 **열 번호**다. 번호만 뽑으면 뜻이 없다.
 		            서식의 COL_NMS(쉼표 목록)에서 그 번호의 이름을 떼어 준다.
 		            ★`묶음>열` 문법이므로 '>' 뒤만 남긴다. 다른 축은 빈 값. -->
@@ -2552,6 +2559,9 @@
 		            ELSE '' END AS colnm,
 		       CASE
 		         WHEN (CASE WHEN f.AXIS_GB IN ('DAY_ITEM','LIST') THEN v.COL_NO ELSE v.ROW_NO END) = 900 THEN '점검자'
+		         <!-- ★890 = 기간 열 머리글 입력 행(PRD_HEAD, 2026-08-12) — 주차 날짜·월별 점검자.
+		              안 붙이면 「(항목없음)」으로 나온다(오류는 안 난다). -->
+		         WHEN v.ROW_NO = 890 THEN IFNULL(NULLIF(f.PRD_HEAD_NM,''), '기간 머리글')
 		         WHEN f.AXIS_GB = 'EQUIP_DAY' THEN IFNULL(r.ROW_NM,
 		              CONCAT('의료기기 ', v.ROW_NO))
 		         ELSE IFNULL(i.ITEM_NM, '(항목없음)')

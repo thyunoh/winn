@@ -1810,6 +1810,10 @@ public class QpsServiceImpl implements QpsService {
 		m.put("descNm",   str(src.get("descnm")));    // 항목 설명 열의 머리글
 		m.put("preCols",  str(src.get("precols")));   // 격자 앞에 붙는 입력 열
 		m.put("postCols", str(src.get("postcols")));  //   뒤에 붙는 입력 열
+		m.put("spanAllYn", "Y".equals(str(src.get("spanallyn"))) ? "Y" : "N");  // 고정 띠가 뒤 칸까지 덮나
+		m.put("prdHeadYn", "Y".equals(str(src.get("prdheadyn"))) ? "Y" : "N"); // 기간 열 머리글 입력 행
+		m.put("prdHeadNm", str(src.get("prdheadnm")));                          //   그 줄의 이름
+		m.put("noteNm",   str(src.get("notenm")));    // 특이사항 칸의 이름(조치사항 등)
 		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
 		m.put("colNms",  str(src.get("colnms")));     // ITEM_COL 의 고정 열 — 복제할 때 빠지면 표가 안 그려진다
 		m.put("colSrc",  str(src.get("colsrc")));     // 열 이름을 서식이 정하나 문서가 정하나
