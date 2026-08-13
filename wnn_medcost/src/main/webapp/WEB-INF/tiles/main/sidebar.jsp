@@ -246,6 +246,25 @@
                                     </div>
                                 </li>
 
+                                <%-- ── 부서 위원회 (2026-08-12) ──────────────────────────────
+                                     ★***회의록은 화면 하나다.*** 약사·영양관리·소방안전관리 회의록이
+                                     우리 회의록 화면과 **판박이**라 구분(FORM_GB)만 다르다 —
+                                     ***새 화면이 아니라 링크 세 줄이 전부다***
+                                     (약국 판정 §3-2 · 영양 판정 §1-4 · 시설 판정 §5).
+                                     ⚠조직도·내규는 여기가 아니다 — **그림·자유 문서**라 자료실로 간다. --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-cmt" aria-controls="qps-g-cmt"
+                                       style="font-weight:600;">▸ 부서 위원회</a>
+                                    <div id="qps-g-cmt" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=P">약사위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=N">영양관리위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=S">소방안전관리위원회</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+
                                 <%-- ── 보고서 (원본 11종) — 미구현. 다음 작업 후보 1순위 ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"

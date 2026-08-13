@@ -70,6 +70,13 @@
     <option value="R">RCA</option>
     <%-- FMEA 회의록 — 골격이 같다. 차수는 회의명에 적는다(예: "낙상 FMEA 3차") --%>
     <option value="F">FMEA</option>
+    <%-- ★위원회 3형제(2026-08-12) — 약사 · 영양관리 · 소방안전관리.
+         원본 회의록이 우리 화면과 **판박이**라 ***코드값 하나면 끝난다***
+         (약국 판정 §3-2 · 영양 판정 §1-4). 조직도·내규는 자료실이다.
+         ⚠소방안전관리만 원본에 **하단 조치표**가 하나 더 있다 → 아래 #qmActWrap --%>
+    <option value="P">약사</option>
+    <option value="N">영양관리</option>
+    <option value="S">소방안전관리</option>
   </select>
   <select id="qmYear" style="width:auto;" onchange="qmList();"></select>
   <%-- 저장·인쇄·삭제는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정).
@@ -113,6 +120,23 @@
           </div>
         </div>
         <div class="lb">회의결과<br>(결정사항)</div> <div class="full"><textarea id="m_decision"></textarea></div>
+        <%-- ★소방안전관리위원회 원본에만 있는 하단 조치표 한 줄(2026-08-12) —
+             원본이 「회의구분 | 조치책임부서 | 조치기한 | 사 업 비」 네 칸이다.
+             ⚠**위쪽 「회의 구분」(정기/임시)과 다른 칸**이다. 원본이 이름을 겹쳐 쓴 것뿐 —
+               합치면 서로를 덮어쓴다. 그래서 라벨에 (조치표)를 붙여 화면에서 갈라 둔다.
+             ★다른 위원회 원본에는 이 표가 없으므로 **S 에서만 보인다** —
+               ***원본에 없던 칸을 만들지 않는다***(시드에서 지켜 온 규칙 그대로). --%>
+        <div class="lb" id="qmActLb" style="display:none;">조치사항</div>
+        <div class="full" id="qmActWrap" style="display:none;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <input type="text" id="m_actGb"   maxlength="100" style="flex:2 1 160px;" placeholder="회의구분">
+            <input type="text" id="m_actDept" maxlength="100" style="flex:2 1 140px;" placeholder="조치책임부서">
+            <input type="text" id="m_actDue"  maxlength="50"  style="flex:1 1 110px;" placeholder="조치기한">
+            <input type="text" id="m_actCost" maxlength="50"  style="flex:1 1 110px;" placeholder="사 업 비">
+          </div>
+          <div style="font-size:11.5px; color:#8a99a3; margin-top:2px;">
+            소방안전관리위원회 원본의 표입니다 — 위쪽 <b>회의 구분(정기/임시)</b>과는 다른 칸입니다.</div>
+        </div>
         <div class="lb">첨부자료</div>   <div class="full"><input type="text" id="m_attachTxt" maxlength="500" placeholder="예) 2분기 지표분석보고서 5부"></div>
         <div class="lb">차기 일정</div>  <div class="full"><input type="text" id="m_nextTxt" maxlength="500" placeholder="예) 차기 회의 9월 둘째 주 · 낙상 개선안 보고"></div>
         <div class="lb">참석자 명단</div><div class="full">
@@ -159,7 +183,11 @@
     if (t) t.textContent = (qmGb()==='I') ? '감염관리위원회 회의록'
                          : (qmGb()==='J') ? '질향상활동(QI) 회의록'
                          : (qmGb()==='R') ? 'RCA 회의록'
-                         : (qmGb()==='F') ? 'FMEA 회의록' : '위원회 회의록';
+                         : (qmGb()==='F') ? 'FMEA 회의록'
+                         : (qmGb()==='P') ? '약사위원회 회의록'
+                         : (qmGb()==='N') ? '영양관리위원회 회의록'
+                         : (qmGb()==='S') ? '소방안전관리위원회 회의록' : '위원회 회의록';
+    qmActToggle();   // 위원회를 바꾸면 하단 조치표가 붙거나 사라진다
     return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value }).then(function(res){
       apprLine = res.line || [];
       if (res.hosp) HOSP_NM = res.hosp.hospnm || '';
@@ -177,6 +205,18 @@
     }).catch(err);
   };
 
+  /* ★하단 조치표는 **소방안전관리위원회(S)에만** 있다(2026-08-12).
+     다른 위원회 원본에는 없는 표라 ***원본에 없던 칸을 만들지 않는다.***
+     ⚠뒤에 같은 표를 가진 위원회가 나오면 이 목록에 값을 더한다 — 판단이 한 곳에만 있게. */
+  var ACT_GBS = ['S'];
+  function qmHasAct(){ return ACT_GBS.indexOf(qmGb()) >= 0; }
+  function qmActToggle(){
+    var on = qmHasAct();
+    var lb = document.getElementById('qmActLb'), wp = document.getElementById('qmActWrap');
+    if (lb) lb.style.display = on ? '' : 'none';
+    if (wp) wp.style.display = on ? '' : 'none';
+  }
+
   function setGb(v){
     document.querySelectorAll('input[name="m_meetGb"]').forEach(function(r){ r.checked = (r.value === v); });
   }
@@ -189,6 +229,15 @@
     post('/qps/minutesGet.do', { minSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.minseq || 0);
+      // ★★문서의 위원회로 셀렉트를 맞춘다(2026-08-12) — 셀렉트는 **목록 필터도 겸한다.**
+      //   맞추지 않으면 「S 문서를 열어 둔 채 셀렉트를 바꾸고 저장」할 때
+      //   ***그 위원회에만 있는 칸(조치표)이 조용히 지워진다.*** 검증 중에 실제로 잡았다.
+      //   (저장은 `FORM_GB` 를 안 고치므로 문서는 늘 만든 위원회에 남는다 — 화면만 어긋났던 것)
+      if (d.formgb) {
+        var gsel = document.getElementById('qmGb');
+        if (gsel && gsel.value !== d.formgb) { gsel.value = d.formgb; }
+      }
+      qmActToggle();
       set('m_minSeq', d.minseq); set('m_meetDt', d.meetdt); set('m_title', d.title);
       setGb(d.meetgb || '');
       set('m_place', d.place); set('m_personnel', d.personnel); set('m_clerkNm', d.clerknm);
@@ -196,6 +245,8 @@
       set('m_agenda', d.agenda); set('m_content', d.content);
       set('m_decision', d.decision); set('m_nextTxt', d.nexttxt);
       set('m_attachTxt', d.attachtxt); set('m_specialTxt', d.specialtxt);
+      set('m_actGb', d.actgb); set('m_actDept', d.actdept);
+      set('m_actDue', d.actdue); set('m_actCost', d.actcost);
       document.getElementById('qmStat').textContent = '— 저장된 문서 #' + d.minseq;
       document.getElementById('qmDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.minseq);
@@ -206,7 +257,8 @@
   window.qmNew = function(){
     curSeq = 0;
     ['m_minSeq','m_meetDt','m_title','m_place','m_clerkNm','m_personnel','m_attendees','m_members',
-     'm_agenda','m_content','m_decision','m_nextTxt','m_attachTxt','m_specialTxt']
+     'm_agenda','m_content','m_decision','m_nextTxt','m_attachTxt','m_specialTxt',
+     'm_actGb','m_actDept','m_actDue','m_actCost']
       .forEach(function(id){ set(id, ''); });
     setGb('');
     document.getElementById('qmStat').textContent = '— 새 문서';
@@ -225,7 +277,13 @@
       attendees: val('m_attendees'), members: val('m_members'),
       agenda: val('m_agenda'), content: val('m_content'),
       decision: val('m_decision'), nextTxt: val('m_nextTxt'),
-      attachTxt: val('m_attachTxt'), specialTxt: val('m_specialTxt')
+      attachTxt: val('m_attachTxt'), specialTxt: val('m_specialTxt'),
+      // ★하단 조치표 — 표가 안 보이는 위원회에서는 **빈 값으로 보낸다**.
+      //   화면에 없는 칸의 옛 값이 남아 있으면 위원회를 바꿔 저장할 때 조용히 따라간다.
+      actGb:   qmHasAct() ? val('m_actGb')   : '',
+      actDept: qmHasAct() ? val('m_actDept') : '',
+      actDue:  qmHasAct() ? val('m_actDue')  : '',
+      actCost: qmHasAct() ? val('m_actCost') : ''
     }).then(function(res){
       _toast('저장되었습니다.', 'ok');
       curSeq = Number(res.minSeq || 0);
@@ -321,7 +379,9 @@
     function row(l, v, pre){ return '<tr><th>' + esc(l) + '</th><td colspan="3"' + (pre ? ' class="pre"' : '') + '>' + esc(v || '') + '</td></tr>'; }
     var body =
       appr +
-      '<div class="h1">QPS위원회 회의록</div>' +
+      // ★제목은 **고른 위원회**를 따른다(2026-08-12). 종전에는 「QPS위원회 회의록」이 박혀 있어
+      //   감염·QI·RCA·FMEA 를 인쇄해도 전부 QPS위원회로 찍혔다. 위원회 3형제를 더하며 같이 고쳤다.
+      '<div class="h1">' + esc((document.getElementById('qmTitle') || {}).textContent || '위원회 회의록') + '</div>' +
       '<div class="h2">' + esc(HOSP_NM) + (val('m_title') ? (' · ' + esc(val('m_title'))) : '') + '</div>' +
       '<div style="clear:both;"></div>' +
       '<table><tbody>' +
@@ -337,6 +397,18 @@
         row('첨부자료', val('m_attachTxt')) +
         (val('m_nextTxt') ? row('차기 일정', val('m_nextTxt')) : '') +
       '</tbody></table>' +
+      // ★소방안전관리위원회의 하단 조치표 — 원본이 **네 칸 한 줄**이라 그대로 옮긴다.
+      //   표가 없는 위원회에서는 아예 안 찍는다.
+      (qmHasAct()
+        ? ('<table style="margin-top:8px;"><thead><tr>' +
+             '<th style="width:auto;text-align:center;">회의구분</th>' +
+             '<th style="width:auto;text-align:center;">조치책임부서</th>' +
+             '<th style="width:auto;text-align:center;">조치기한</th>' +
+             '<th style="width:auto;text-align:center;">사 업 비</th></tr></thead><tbody><tr>' +
+             '<td>' + esc(val('m_actGb'))   + '</td><td>' + esc(val('m_actDept')) + '</td>' +
+             '<td>' + esc(val('m_actDue'))  + '</td><td>' + esc(val('m_actCost')) + '</td>' +
+           '</tr></tbody></table>')
+        : '') +
       memHtml +
       '<div class="foot">작성일 : ' + (function(){ var t = new Date();
           return t.getFullYear() + '. ' + (t.getMonth() + 1) + '. ' + t.getDate() + '.'; })() + '</div>';

@@ -149,10 +149,17 @@
 	<select id="selectMinutes" resultType="java.util.HashMap">
 		SELECT MIN_SEQ AS minseq,
 		       DATE_FORMAT(STR_TO_DATE(MEET_DT,'%Y%m%d'),'%Y-%m-%d') AS meetdt,
+		       <!-- ★문서가 **어느 위원회 것인지**(2026-08-12). 화면 위 셀렉트는 「목록 필터」도 겸하므로
+		            그것만 믿으면 안 된다 — 셀렉트를 바꾼 채 저장하면 그 위원회에만 있는 칸(조치표)이
+		            ***조용히 지워진다.*** 실제로 검증 중에 잡았다. -->
+		       FORM_GB AS formgb,
 		       TITLE AS title, MEET_GB AS meetgb, PLACE AS place, CLERK_NM AS clerknm, PERSONNEL AS personnel,
 		       ATTENDEES AS attendees, MEMBERS AS members,
 		       AGENDA AS agenda, CONTENT AS content, DECISION AS decision, NEXT_TXT AS nexttxt,
-		       ATTACH_TXT AS attachtxt, SPECIAL_TXT AS specialtxt
+		       ATTACH_TXT AS attachtxt, SPECIAL_TXT AS specialtxt,
+		       <!-- ★소방안전관리위원회(FORM_GB='S')에만 있는 하단 조치표 한 줄(2026-08-12).
+		            ⚠ACT_GB 는 머리의 MEET_GB 와 **다른 칸**이다 — 원본이 둘 다 「회의구분」이라 부른다. -->
+		       ACT_GB AS actgb, ACT_DEPT AS actdept, ACT_DUE AS actdue, ACT_COST AS actcost
 		  FROM TBL_QPS_MINUTES
 		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
 	</select>
@@ -160,11 +167,13 @@
 	<insert id="insertMinutes" parameterType="map" useGeneratedKeys="true" keyProperty="minSeq">
 		INSERT INTO TBL_QPS_MINUTES
 		 (HOSP_CD, FORM_GB, MEET_DT, TITLE, MEET_GB, PLACE, CLERK_NM, PERSONNEL, ATTENDEES, MEMBERS,
-		  AGENDA, CONTENT, DECISION, NEXT_TXT, ATTACH_TXT, SPECIAL_TXT, USE_YN, REG_USER)
+		  AGENDA, CONTENT, DECISION, NEXT_TXT, ATTACH_TXT, SPECIAL_TXT,
+		  ACT_GB, ACT_DEPT, ACT_DUE, ACT_COST, USE_YN, REG_USER)
 		VALUES
 		 (#{hospCd}, IFNULL(#{formGb},'Q'), REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{clerkNm}, #{personnel},
 		  #{attendees}, #{members}, #{agenda}, #{content}, #{decision}, #{nextTxt},
-		  #{attachTxt}, #{specialTxt}, 'Y', #{regUser})
+		  #{attachTxt}, #{specialTxt},
+		  #{actGb}, #{actDept}, #{actDue}, #{actCost}, 'Y', #{regUser})
 	</insert>
 
 	<update id="updateMinutes" parameterType="map">
@@ -173,7 +182,9 @@
 		       PLACE = #{place}, CLERK_NM = #{clerkNm}, PERSONNEL = #{personnel},
 		       ATTENDEES = #{attendees}, MEMBERS = #{members}, AGENDA = #{agenda}, CONTENT = #{content},
 		       DECISION = #{decision}, NEXT_TXT = #{nextTxt},
-		       ATTACH_TXT = #{attachTxt}, SPECIAL_TXT = #{specialTxt}, UPD_USER = #{regUser}
+		       ATTACH_TXT = #{attachTxt}, SPECIAL_TXT = #{specialTxt},
+		       ACT_GB = #{actGb}, ACT_DEPT = #{actDept}, ACT_DUE = #{actDue}, ACT_COST = #{actCost},
+		       UPD_USER = #{regUser}
 		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd}
 	</update>
 

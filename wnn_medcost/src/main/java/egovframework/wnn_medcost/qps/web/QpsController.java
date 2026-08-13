@@ -410,6 +410,10 @@ public class QpsController {
 			m.put("meetDt", str(p.get("meetDt"), ""));
 			m.put("title",  str(p.get("title"), ""));
 			// Q=질향상위원회 / I=감염관리위원회(2026-08-10) / J=QI 활동(2026-08-11)
+			// R=RCA / F=FMEA
+			// ★위원회 3형제 추가(2026-08-12) — P=약사 · N=영양관리 · S=소방안전관리.
+			//   원본 회의록이 우리 화면과 **판박이**라 ***코드값과 사이드바 링크만 더하면 끝난다***
+			//   (약국 판정 §3-2 · 영양 판정 §1-4 · 시설 판정 §5).
 			m.put("formGb", str(p.get("formGb"), "Q"));
 			m.put("meetGb", str(p.get("meetGb"), ""));       // R=정기 / T=임시
 			m.put("place",  str(p.get("place"), ""));
@@ -423,6 +427,14 @@ public class QpsController {
 			m.put("nextTxt", str(p.get("nextTxt"), ""));
 			m.put("attachTxt",  str(p.get("attachTxt"), ""));
 			m.put("specialTxt", str(p.get("specialTxt"), ""));
+			// ★하단 조치표 한 줄 — **소방안전관리위원회(S) 원본에만 있는 표**다(2026-08-12).
+			//   ⚠`actGb` 는 머리의 `meetGb`(정례/임시 체크)와 **다른 칸**이다 —
+			//     원본이 둘 다 「회의구분」이라 부를 뿐이다. 합치면 서로를 덮어쓴다.
+			//   ★다른 위원회에서는 화면이 이 표를 아예 안 그리므로 빈 값이 들어온다.
+			m.put("actGb",   str(p.get("actGb"), ""));
+			m.put("actDept", str(p.get("actDept"), ""));
+			m.put("actDue",  str(p.get("actDue"), ""));
+			m.put("actCost", str(p.get("actCost"), ""));
 			m.put("regUser", userId(request));
 			if (String.valueOf(m.get("meetDt")).isEmpty()) return fail(res, "회의일을 입력해 주세요.");
 			if (String.valueOf(m.get("title")).isEmpty())  return fail(res, "회의명을 입력해 주세요.");
@@ -2380,9 +2392,16 @@ public class QpsController {
 		String gb = request.getParameter("gb");
 		gb = (gb == null) ? "" : gb.trim().toUpperCase();
 		// 아는 값만 통과시킨다 — 엉뚱한 값이 들어오면 저장 키가 오염된다.
-		// I=감염관리 · S=만족도 · C=불만고충 · J=QI 활동 · R=RCA · F=FMEA (뒤 셋은 회의록에서만 쓴다)
+		// ★***뜻은 화면마다 다르다.*** 이 헬퍼는 계획서·라운딩·회의록 셋이 함께 쓴다 —
+		//   여기 없는 값은 조용히 `Q` 가 되므로, 링크를 더할 때 **반드시 여기도 더한다.**
+		//   (2026-08-12 : `P`·`N` 을 빠뜨려 약사·영양관리 링크가 질향상위원회로 열렸다)
+		//   I=감염관리 · C=불만고충
+		//   회의록에서만 : J=QI 활동 · R=RCA · F=FMEA · P=약사 · N=영양관리 · S=소방안전관리
+		//   ⚠`S` 는 옛 주석이 「만족도」라 적어 두었으나 만족도(qpsSurvey)·불만고충(qpsCmpl)은
+		//     **이 헬퍼를 쓰지 않는다**(자기 주소가 따로 있다). 실제로 `gb=S` 를 보내는 곳은 소방안전관리뿐이다.
 		if (!"I".equals(gb) && !"S".equals(gb) && !"C".equals(gb)
-		 && !"J".equals(gb) && !"R".equals(gb) && !"F".equals(gb)) gb = "Q";
+		 && !"J".equals(gb) && !"R".equals(gb) && !"F".equals(gb)
+		 && !"P".equals(gb) && !"N".equals(gb)) gb = "Q";
 		model.addAttribute("formGb", gb);
 	}
 
