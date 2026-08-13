@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260812-FACSEED";
+	private static final String BUILD = "20260813-SUBCOL";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -435,6 +435,9 @@ public class QpsController {
 			m.put("actDept", str(p.get("actDept"), ""));
 			m.put("actDue",  str(p.get("actDue"), ""));
 			m.put("actCost", str(p.get("actCost"), ""));
+			// ★격리 및 강박 시행시간 — **다학제 개최에 따른 회의록(K) 원본에만 있는 칸**(2026-08-13).
+			//   조치표와 같은 규칙 : 다른 위원회 화면은 이 칸을 안 그리므로 빈 값이 들어온다.
+			m.put("secTime", str(p.get("secTime"), ""));
 			m.put("regUser", userId(request));
 			if (String.valueOf(m.get("meetDt")).isEmpty()) return fail(res, "회의일을 입력해 주세요.");
 			if (String.valueOf(m.get("title")).isEmpty())  return fail(res, "회의명을 입력해 주세요.");
@@ -1236,6 +1239,12 @@ public class QpsController {
 			m.put("prdHeadNm", prdHeadOk ? unesc(p.get("prdHeadNm")) : "");
 			// ★특이사항 칸 이름을 서식이 정한다(2026-08-12) — 조치사항·기타 이상내용. 비면 「특이사항」.
 			m.put("noteNm", unesc(p.get("noteNm")));
+			// ═══ 격자 아래 자유행 표 (2026-08-13) — 서식이 열 이름을, 문서가 행을 늘린다 ═══
+			//   근거 6종(멸균기 2 「문제 발생시」 · U.P.S 경보조치사항 · 학대폭력·음용수 · 병동 안전점검 업무사항).
+			//   ★근거 전부가 **항목이 행인 축**이다 — 앞/뒤 열과 같은 범위(sideOk)로 제한한다.
+			//   값 자리 = 행 9000+i / 열 j (예약대. 전월복사는 이 표를 안 가져온다 — 그 달의 일이다)
+			m.put("subNm",   sideOk ? unesc(p.get("subNm"))   : "");
+			m.put("subCols", sideOk ? unesc(p.get("subCols")) : "");
 			m.put("signerYn", "Y".equals(str(p.get("signerYn"), "")) ? "Y" : "N");
 			m.put("noteYn",   "Y".equals(str(p.get("noteYn"), ""))   ? "Y" : "N");
 			m.put("fixYn",    "Y".equals(str(p.get("fixYn"), ""))    ? "Y" : "N");
@@ -2397,11 +2406,13 @@ public class QpsController {
 		//   (2026-08-12 : `P`·`N` 을 빠뜨려 약사·영양관리 링크가 질향상위원회로 열렸다)
 		//   I=감염관리 · C=불만고충
 		//   회의록에서만 : J=QI 활동 · R=RCA · F=FMEA · P=약사 · N=영양관리 · S=소방안전관리
+		//                 M=다학제 평가팀(정기/임시) · K=다학제 개최에 따른 회의록(격리·강박) — 2026-08-13
 		//   ⚠`S` 는 옛 주석이 「만족도」라 적어 두었으나 만족도(qpsSurvey)·불만고충(qpsCmpl)은
 		//     **이 헬퍼를 쓰지 않는다**(자기 주소가 따로 있다). 실제로 `gb=S` 를 보내는 곳은 소방안전관리뿐이다.
 		if (!"I".equals(gb) && !"S".equals(gb) && !"C".equals(gb)
 		 && !"J".equals(gb) && !"R".equals(gb) && !"F".equals(gb)
-		 && !"P".equals(gb) && !"N".equals(gb)) gb = "Q";
+		 && !"P".equals(gb) && !"N".equals(gb)
+		 && !"M".equals(gb) && !"K".equals(gb)) gb = "Q";
 		model.addAttribute("formGb", gb);
 	}
 

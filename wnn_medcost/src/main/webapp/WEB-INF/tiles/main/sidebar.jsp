@@ -261,6 +261,10 @@
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=P">약사위원회</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=N">영양관리위원회</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=S">소방안전관리위원회</a></li>
+                                            <%-- ★다학제 평가팀(2026-08-13) — 간호/병동 캡처 246·248(정기/임시=M)·292(개최에 따른=K).
+                                                 K 는 원본에만 있는 「격리 및 강박 시행시간」 칸이 있다(SEC_TIME). --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=M">다학제 평가팀</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=K">다학제(개최)</a></li>
                                         </ul>
                                     </div>
                                 </li>

@@ -2012,7 +2012,23 @@ public class QpsServiceImpl implements QpsService {
 			Map<String, Object> one = selectChkFormOne(hospCd, formId);
 			Object fo = one.get("form");
 			if (!(fo instanceof Map)) return none;
-			if (!"LIST".equals(str(((Map<String, Object>) fo).get("axisgb")))) return none;
+			String axis = str(((Map<String, Object>) fo).get("axisgb"));
+			// ═══ EQUIP_DAY — 앞 열(1000대) 값을 가져온다 (2026-08-13) ═══
+			//   행 이름(기기·품목)은 원래부터 틀로 왔지만 **그 행의 속성 칸**(수량·유효기간)은 안 왔다 —
+			//   근거 4종(물품 Count·위해도구 일일·응급약품 및 기구관리·일회용 소독 물품)이 전부
+			//   PRE_COLS 가 자산값이라 매달 다시 쳐야 했다. ⇒ 앞 열은 **행 이름의 연장**으로 본다.
+			//   ⚠뒤 열(2000대)은 안 가져온다 — 비고·조치 등 그 달의 결과다.
+			//   ⚠자유행 표(9000대)도 안 가져온다 — 문제 발생 기록은 그 달의 일이다.
+			if ("EQUIP_DAY".equals(axis)) {
+				List<Map<String, Object>> keepPre = new ArrayList<>();
+				for (Map<String, Object> v : mapper.selectChkVals(seq)) {
+					int rn = intOf(v.get("rowno"), 0), cn = intOf(v.get("colno"), 0);
+					if (rn == CHK_SIGN_NO || rn >= CHK_SUB_ROW_BASE) continue;
+					if (cn >= 1000 && cn < 2000) keepPre.add(v);
+				}
+				return keepPre;
+			}
+			if (!"LIST".equals(axis)) return none;
 			Set<Integer> carry = new HashSet<>();
 			for (Map<String, Object> it : (List<Map<String, Object>>) one.get("items")) {
 				if ("Y".equals(str(it.get("carryyn")))) carry.add(Integer.valueOf(intOf(it.get("sort"), 0)));
@@ -2021,6 +2037,7 @@ public class QpsServiceImpl implements QpsService {
 			List<Map<String, Object>> keep = new ArrayList<>();
 			for (Map<String, Object> v : mapper.selectChkVals(seq)) {
 				if (intOf(v.get("rowno"), 0) == CHK_SIGN_NO) continue;       // 사인 행은 사람 이름이다
+				if (intOf(v.get("rowno"), 0) >= CHK_SUB_ROW_BASE) continue;  // 자유행 표는 그 달의 일이다
 				if (carry.contains(Integer.valueOf(intOf(v.get("colno"), 0)))) keep.add(v);
 			}
 			return keep;
@@ -2115,6 +2132,9 @@ public class QpsServiceImpl implements QpsService {
 
 	/** 점검자 사인 행/열 예약번호 — 항목이 아니라 사람 이름이 들어간다. */
 	private static final int CHK_SIGN_NO = 900;
+	/** 격자 아래 자유행 표(SUB_COLS)의 행 예약대(2026-08-13) — 9000+i.
+	 *  LIST 행 블록이 블록×1000+항목(2000·3000대…)을 쓰므로 멀리 떨어뜨렸다. */
+	private static final int CHK_SUB_ROW_BASE = 9000;
 
 	/**
 	 * 셀 하나가 <b>어느 항목의 칸인지</b> 알아야 정규화 여부를 정할 수 있다. 그 대응은 축이 정한다 —
@@ -2132,8 +2152,19 @@ public class QpsServiceImpl implements QpsService {
 
 		String apply(Map<String, Object> v) {
 			String s = str(v.get("val"));
-			if (legacy || allCheck) return normChk(s);
-			int no = intOf(v.get(itemIsCol ? "colno" : "rowno"), 0);
+			int rn = intOf(v.get("rowno"), 0), cn = intOf(v.get("colno"), 0);
+			// ★자유행 표(9000대)는 전부 사람이 적는 글이다 — 어느 축이든 안 맞춘다(2026-08-13)
+			if (rn >= CHK_SUB_ROW_BASE) return s;
+			if (legacy) return normChk(s);
+			if (allCheck) {
+				// ★EQUIP_DAY 도 **격자 칸만** 표시칸이다(2026-08-13) — 앞뒤 열(1000/2000대)은
+				//   수량·유효기간·비고라 「1」을 O 로 바꾸면 수량이 사라진다. 사인 행(900)도 사람 이름이다.
+				//   (종전에는 전 칸을 맞춰 수량 1 → O 가 되는 잠복 결함이 있었다 — PRE_COLS 를
+				//    EQUIP_DAY 에 얹은 2026-08-12 부터 밟을 수 있던 지뢰다)
+				if (rn == CHK_SIGN_NO || cn >= 1000) return s;
+				return normChk(s);
+			}
+			int no = itemIsCol ? cn : rn;
 			if (no == CHK_SIGN_NO) return s;   // 사인칸 — 「1」이라는 서명을 O 로 바꾸면 안 된다
 			String gb = inputGb.get(no);
 			// ★모르는 항목이면 건드리지 않는다. 원본 그대로가 언제나 되돌릴 수 있는 쪽이다.

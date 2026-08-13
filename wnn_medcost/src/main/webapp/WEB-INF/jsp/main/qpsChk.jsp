@@ -563,6 +563,7 @@
       Object.keys(V).forEach(function(k){
         var rn = Number(k.split('_')[0]);
         if (rn === SIGN_NO) return;
+        if (rn >= SUB_ROW_BASE) return;   // ★격자 아래 자유행 표(9000대)는 대장 행 수와 무관하다
         var b = BD.length ? blkOfRow(rn) : 1;
         var seq = (BD.length && rn >= 1000) ? (rn % 1000) : rn;
         if (b >= 1 && b <= nblk && seq > (maxIn[b] || 0)) maxIn[b] = seq;
@@ -788,8 +789,53 @@
       }
       h += '</tbody></table>';
     }
+    /* ═══ 격자 아래 자유행 표 (2026-08-13) — 서식이 열 이름을, 문서가 행을 늘린다 ═══
+       근거 6종 : 멸균기 2(문제 발생시) · U.P.S(경보조치사항) · 학대폭력·음용수(문제 발생시) ·
+                 병동 시설/환자 안전 점검 일지(근무시간별 업무사항).
+       ★값 자리 = **행 9000+i / 열 j** — 9000대는 이 표의 예약대다.
+         LIST 행 블록이 블록×1000+항목을 쓰므로(2000·3000대…) 멀리 떨어뜨렸다.
+       ★전월복사는 이 표를 **안 가져온다** — 그 달에 일어난 일이다(서버 carryVals 가 거른다). */
+    h += subTableHtml(g);
     box.innerHTML = h;
   }
+
+  var SUB_ROW_BASE = 9000;   // 예약 — 격자 아래 자유행 표(2026-08-13). 890·900·1000/2000대와 한 표에 산다
+  function subCols(){
+    return (FORM && FORM.subcols) ? String(FORM.subcols).split(',').map(function(s){ return s.trim(); })
+                                                        .filter(function(s){ return s; }) : [];
+  }
+  function subTableHtml(g){
+    var sc = subCols();
+    if (!sc.length) return '';
+    // 저장분의 가장 큰 행번호까지 그리되, 기본 3행 밑으로는 안 내려간다(원본들이 3줄 안팎)
+    var maxR = 3;
+    for (var r = 1; r <= 30; r++) {
+      for (var c = 1; c <= sc.length; c++) if (g(SUB_ROW_BASE + r, c)) { if (r > maxR) maxR = r; break; }
+    }
+    var h = '<table class="gr sub" style="margin-top:7px;"><thead><tr>';
+    if (FORM.subnm) h += '<th rowspan="' + (maxR + 1) + '" style="width:70px;">' + esc(FORM.subnm) + '</th>';
+    sc.forEach(function(nm){ h += '<th>' + esc(nm) + '</th>'; });
+    h += '</tr></thead><tbody>';
+    for (var i = 1; i <= maxR; i++) {
+      h += '<tr>';
+      sc.forEach(function(nm, j){ h += cell(SUB_ROW_BASE + i, j + 1, g(SUB_ROW_BASE + i, j + 1), 'ltxt'); });
+      h += '</tr>';
+    }
+    h += '</tbody></table>' +
+         '<div style="margin-top:3px;"><button type="button" class="ck-btn ghost" style="padding:2px 10px;font-size:11.5px;"' +
+         ' onclick="ckSubRowAdd();">＋ 줄 추가</button></div>';
+    return h;
+  }
+  /** 자유행 표에 빈 줄 하나 — 화면만 늘린다. 값 없는 줄은 collect() 가 어차피 안 담는다. */
+  window.ckSubRowAdd = function(){
+    var t = document.querySelector('#ckGridWrap table.sub tbody');
+    if (!t) return;
+    var sc = subCols(), n = t.querySelectorAll('tr').length + 1, h = '';
+    sc.forEach(function(nm, j){ h += cell(SUB_ROW_BASE + n, j + 1, '', 'ltxt'); });
+    var tr = document.createElement('tr'); tr.innerHTML = h; t.appendChild(tr);
+    var th = document.querySelector('#ckGridWrap table.sub thead th[rowspan]');
+    if (th) th.setAttribute('rowspan', String(n + 1));
+  };
 
   function renderHead(doc){
     doc = doc || {};
@@ -955,7 +1001,7 @@
     // ★블록이 있으면 **블록 안에서만** 다시 매긴다 — 블록을 넘겨 당기면 사람이 다른 표로 옮겨 간다
     var BD = blkDefs(), c = collect(), seen = {}, byBlk = {};
     c.vals.forEach(function(v){
-      if (v.rowno === SIGN_NO || seen[v.rowno]) return;
+      if (v.rowno === SIGN_NO || v.rowno >= SUB_ROW_BASE || seen[v.rowno]) return;   // 9000대=자유행 표
       seen[v.rowno] = true;
       var b = BD.length ? blkOfRow(v.rowno) : 1;
       (byBlk[b] = byBlk[b] || []).push(v.rowno);
@@ -967,7 +1013,8 @@
       kept += byBlk[b].length;
     });
     var moved = c.vals.map(function(v){
-      return (v.rowno === SIGN_NO) ? v : { rowno: map[v.rowno], colno: v.colno, val: v.val };
+      return (v.rowno === SIGN_NO || v.rowno >= SUB_ROW_BASE)
+             ? v : { rowno: map[v.rowno], colno: v.colno, val: v.val };
     });
     LIST_ROWS = {};                                  // Math.max 가 옛 행 수를 붙잡지 않도록
     renderGrid(moved, c.rows, c.cols);
@@ -1281,6 +1328,26 @@
     var guide = FORM.guidetxt ? ('<div style="font-size:10px;text-align:right;margin-bottom:3px;">' + esc(FORM.guidetxt) + '</div>') : '';
 
     var tail = '';
+    // ★격자 아래 자유행 표(2026-08-13) — 화면 표를 그대로 옮기되 값 있는 줄만 찍는다
+    (function(){
+      var st = document.querySelector('#ckGridWrap table.sub');
+      var sc = subCols();
+      if (!st || !sc.length) return;
+      var rows = [];
+      st.querySelectorAll('tbody tr').forEach(function(tr){
+        var cells = [], has = false;
+        tr.querySelectorAll('input').forEach(function(el){
+          var v = String(el.value || '').trim();
+          if (v) has = true;
+          cells.push('<td class="l">' + esc(v) + '</td>');
+        });
+        if (has) rows.push('<tr>' + cells.join('') + '</tr>');
+      });
+      if (!rows.length) return;
+      var hh = '<tr>' + (FORM.subnm ? ('<th rowspan="' + (rows.length + 1) + '">' + esc(FORM.subnm) + '</th>') : '') +
+               sc.map(function(nm){ return '<th>' + esc(nm) + '</th>'; }).join('') + '</tr>';
+      tail += '<table style="margin-top:6px;"><thead>' + hh + '</thead><tbody>' + rows.join('') + '</tbody></table>';
+    })();
     if (FORM.noteyn === 'Y') tail += '<div class="box"><b>' + esc(noteNm()) + '</b><br>' + esc(val('f_noteTxt')) + '</div>';
     if (FORM.fixyn === 'Y')  tail += '<div class="box"><b>수리날짜 및 고장 발생 내용</b><br>' + esc(val('f_fixTxt')) + '</div>';
     if (FORM.foottxt)        tail += '<div style="font-size:9px;margin-top:4px;text-align:left;">' + esc(FORM.foottxt) + '</div>';

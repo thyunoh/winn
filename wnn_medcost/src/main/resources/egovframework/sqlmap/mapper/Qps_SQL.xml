@@ -159,7 +159,9 @@
 		       ATTACH_TXT AS attachtxt, SPECIAL_TXT AS specialtxt,
 		       <!-- ★소방안전관리위원회(FORM_GB='S')에만 있는 하단 조치표 한 줄(2026-08-12).
 		            ⚠ACT_GB 는 머리의 MEET_GB 와 **다른 칸**이다 — 원본이 둘 다 「회의구분」이라 부른다. -->
-		       ACT_GB AS actgb, ACT_DEPT AS actdept, ACT_DUE AS actdue, ACT_COST AS actcost
+		       ACT_GB AS actgb, ACT_DEPT AS actdept, ACT_DUE AS actdue, ACT_COST AS actcost,
+		       <!-- ★다학제 개최에 따른 회의록(FORM_GB='K')에만 있는 「격리 및 강박 시행시간」(2026-08-13) -->
+		       SEC_TIME AS sectime
 		  FROM TBL_QPS_MINUTES
 		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
 	</select>
@@ -168,12 +170,12 @@
 		INSERT INTO TBL_QPS_MINUTES
 		 (HOSP_CD, FORM_GB, MEET_DT, TITLE, MEET_GB, PLACE, CLERK_NM, PERSONNEL, ATTENDEES, MEMBERS,
 		  AGENDA, CONTENT, DECISION, NEXT_TXT, ATTACH_TXT, SPECIAL_TXT,
-		  ACT_GB, ACT_DEPT, ACT_DUE, ACT_COST, USE_YN, REG_USER)
+		  ACT_GB, ACT_DEPT, ACT_DUE, ACT_COST, SEC_TIME, USE_YN, REG_USER)
 		VALUES
 		 (#{hospCd}, IFNULL(#{formGb},'Q'), REPLACE(#{meetDt},'-',''), #{title}, #{meetGb}, #{place}, #{clerkNm}, #{personnel},
 		  #{attendees}, #{members}, #{agenda}, #{content}, #{decision}, #{nextTxt},
 		  #{attachTxt}, #{specialTxt},
-		  #{actGb}, #{actDept}, #{actDue}, #{actCost}, 'Y', #{regUser})
+		  #{actGb}, #{actDept}, #{actDue}, #{actCost}, #{secTime}, 'Y', #{regUser})
 	</insert>
 
 	<update id="updateMinutes" parameterType="map">
@@ -184,6 +186,7 @@
 		       DECISION = #{decision}, NEXT_TXT = #{nextTxt},
 		       ATTACH_TXT = #{attachTxt}, SPECIAL_TXT = #{specialTxt},
 		       ACT_GB = #{actGb}, ACT_DEPT = #{actDept}, ACT_DUE = #{actDue}, ACT_COST = #{actCost},
+		       SEC_TIME = #{secTime},
 		       UPD_USER = #{regUser}
 		 WHERE MIN_SEQ = #{minSeq} AND HOSP_CD = #{hospCd}
 	</update>
@@ -2320,6 +2323,7 @@
 		       DESC_NM AS descnm, PRE_COLS AS precols, POST_COLS AS postcols,
 		       SPAN_ALL_YN AS spanallyn, PRD_HEAD_YN AS prdheadyn, PRD_HEAD_NM AS prdheadnm,
 		       NOTE_NM AS notenm,
+		       SUB_NM AS subnm, SUB_COLS AS subcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
@@ -2361,11 +2365,13 @@
 		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, PRD_SUB, EQUIP_CNT,
 		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS, ROW_SRC,
 		  DESC_NM, PRE_COLS, POST_COLS, SPAN_ALL_YN, PRD_HEAD_YN, PRD_HEAD_NM, NOTE_NM,
+		  SUB_NM, SUB_COLS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
 		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{prdSub}, #{equipCnt},
 		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks}, #{rowSrc},
 		  #{descNm}, #{preCols}, #{postCols}, #{spanAllYn}, #{prdHeadYn}, #{prdHeadNm}, #{noteNm},
+		  #{subNm}, #{subCols},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
 		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD),
@@ -2377,6 +2383,7 @@
 		  DESC_NM=VALUES(DESC_NM), PRE_COLS=VALUES(PRE_COLS), POST_COLS=VALUES(POST_COLS),
 		  SPAN_ALL_YN=VALUES(SPAN_ALL_YN), PRD_HEAD_YN=VALUES(PRD_HEAD_YN),
 		  PRD_HEAD_NM=VALUES(PRD_HEAD_NM), NOTE_NM=VALUES(NOTE_NM),
+		  SUB_NM=VALUES(SUB_NM), SUB_COLS=VALUES(SUB_COLS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}

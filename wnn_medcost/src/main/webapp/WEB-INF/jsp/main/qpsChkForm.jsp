@@ -284,6 +284,14 @@
             <input type="text" id="f_postCols" maxlength="300" style="flex:1 1 150px;"
                    placeholder="뒤 칸(쉼표). 예) 예산,조치사항" oninput="cfAxisChange();">
           </div>
+          <%-- ★격자 아래 자유행 표(2026-08-13) — 열 이름은 서식이, 행은 문서가 늘린다.
+               멸균기·음용수의 「문제 발생시」 표가 이것이다. 왼쪽 이름 칸은 비우면 안 그린다. --%>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+            <input type="text" id="f_subNm" maxlength="60" style="flex:1 1 150px;"
+                   placeholder="아래 표 이름 칸(선택). 예) 문제 발생시">
+            <input type="text" id="f_subCols" maxlength="300" style="flex:2 1 220px;"
+                   placeholder="아래 자유행 표 열 이름(쉼표). 예) 발생일자,관리번호,문제 발생 내용,처리 결과 보고">
+          </div>
           <div class="cf-sub" id="cfSideHint" style="margin-top:3px;"></div>
           <%-- ★고정 띠(항목의 「고정 띠 문구」)가 뒤 칸까지 덮는가 — 근거 3종이 둘로 갈린다 :
                연간 시설물·소방 계획은 예산 칸을 남기고, 소방시설 월 점검표는 상태 칸까지 덮는다. --%>
@@ -1292,6 +1300,7 @@
       set('f_rowBlks', d.rowblks);
       set('f_rowBlkGb', (d.rowblkgb === 'B') ? 'B' : 'S');
       set('f_descNm', d.descnm); set('f_preCols', d.precols); set('f_postCols', d.postcols);
+      set('f_subNm', d.subnm); set('f_subCols', d.subcols);
       setChk('f_spanAllYn', d.spanallyn); setChk('f_prdHeadYn', d.prdheadyn);
       set('f_prdHeadNm', d.prdheadnm); set('f_noteNm', d.notenm);
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
@@ -1323,7 +1332,7 @@
   window.cfNew = function(){
     curId = ''; curOwn = 'N';
     ['f_formId','f_formNm','f_guideTxt','f_headNms','f_colNms','f_rowBlks',
-     'f_descNm','f_preCols','f_postCols','f_prdHeadNm','f_noteNm','f_signLine','f_footTxt']
+     'f_descNm','f_preCols','f_postCols','f_subNm','f_subCols','f_prdHeadNm','f_noteNm','f_signLine','f_footTxt']
       .forEach(function(id){ set(id, ''); });
     set('f_rowBlkGb', 'S'); set('f_colSrc', 'F'); set('f_rowSrc', 'F');
     setChk('f_spanAllYn', 'N'); setChk('f_prdHeadYn', 'N');
@@ -1366,6 +1375,7 @@
         rowBlkGb: val('f_rowBlkGb'),
         // 격자 옆 칸 — 서버가 항목이 행인 세 축에서만 쓴다
         descNm: val('f_descNm'), preCols: val('f_preCols'), postCols: val('f_postCols'),
+        subNm: val('f_subNm'), subCols: val('f_subCols'),   // 격자 아래 자유행 표(2026-08-13)
         spanAllYn: chk('f_spanAllYn'),   // 고정 띠가 뒤 칸까지 덮나
         prdHeadYn: chk('f_prdHeadYn'), prdHeadNm: val('f_prdHeadNm'),  // 기간 열 머리글 입력 행
         noteNm: val('f_noteNm'),         // 특이사항 칸의 이름(비면 특이사항)

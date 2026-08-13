@@ -77,6 +77,12 @@
     <option value="P">약사</option>
     <option value="N">영양관리</option>
     <option value="S">소방안전관리</option>
+    <%-- ★다학제 평가팀(2026-08-13) — 간호/병동 캡처 246·248·292 대조 결과.
+         M = 정기/임시 회의록 : 우리 화면과 판박이(MEET_GB 가 이미 정기/임시 체크다). 코드값 하나로 끝.
+         K = 「개최에 따른 회의록」 : 칸 구성이 다르다 — 회의 내용과 결과가 **한 칸**이고(CONTENT 만 쓴다),
+             원본에만 있는 「격리 및 강박 시행시간」 칸이 있다 → 아래 #qmSecWrap (S 의 조치표와 같은 규칙) --%>
+    <option value="M">다학제 평가팀</option>
+    <option value="K">다학제(개최)</option>
   </select>
   <select id="qmYear" style="width:auto;" onchange="qmList();"></select>
   <%-- 저장·인쇄·삭제는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정).
@@ -110,7 +116,8 @@
         <%-- 간사 — QI 회의록에 있는 칸. 다른 구분에서는 비워 두면 인쇄물에도 안 나온다 --%>
         <div class="lb">간사</div>       <div><input type="text" id="m_clerkNm" maxlength="50"></div>
         <div class="lb">회의안건</div>   <div class="full"><textarea id="m_agenda" placeholder="1. 2분기 지표 결과 보고&#10;2. 손위생 개선활동 경과"></textarea></div>
-        <div class="lb">회의내용</div>   <div class="full">
+        <%-- K(다학제 개최)에서는 원본이 「회의 내용 및 결과」 **한 칸**이라 라벨을 바꿔 단다(qmActToggle) --%>
+        <div class="lb" id="qmContentLb">회의내용</div>   <div class="full">
           <textarea id="m_content" style="min-height:110px;"></textarea>
           <div style="margin-top:4px;">
             <button type="button" class="qm-btn mini" style="padding:3px 10px; font-size:11.5px; background:#fff; color:#1f5a4b;"
@@ -119,7 +126,8 @@
               (이전 시스템의 [지표조회]와 같되, 손입력이 아니라 자동 산출값)</span>
           </div>
         </div>
-        <div class="lb">회의결과<br>(결정사항)</div> <div class="full"><textarea id="m_decision"></textarea></div>
+        <%-- K(다학제 개최)에서는 숨긴다 — 원본이 내용·결과 한 칸이라 **원본에 없던 칸을 만들지 않는다** --%>
+        <div class="lb" id="qmDecLb">회의결과<br>(결정사항)</div> <div class="full" id="qmDecWrap"><textarea id="m_decision"></textarea></div>
         <%-- ★소방안전관리위원회 원본에만 있는 하단 조치표 한 줄(2026-08-12) —
              원본이 「회의구분 | 조치책임부서 | 조치기한 | 사 업 비」 네 칸이다.
              ⚠**위쪽 「회의 구분」(정기/임시)과 다른 칸**이다. 원본이 이름을 겹쳐 쓴 것뿐 —
@@ -136,6 +144,12 @@
           </div>
           <div style="font-size:11.5px; color:#8a99a3; margin-top:2px;">
             소방안전관리위원회 원본의 표입니다 — 위쪽 <b>회의 구분(정기/임시)</b>과는 다른 칸입니다.</div>
+        </div>
+        <%-- ★다학제 개최에 따른 회의록(K) 원본에만 있는 칸(2026-08-13) — 원본 서식이 `- - : ~ - - :` 다.
+             조치표와 같은 규칙 : K 에서만 보이고, 다른 위원회에서는 빈 값으로 저장한다. --%>
+        <div class="lb" id="qmSecLb" style="display:none;">격리 및 강박<br>시행시간</div>
+        <div class="full" id="qmSecWrap" style="display:none;">
+          <input type="text" id="m_secTime" maxlength="50" placeholder="예) 08-13 10:20 ~ 08-13 11:05">
         </div>
         <div class="lb">첨부자료</div>   <div class="full"><input type="text" id="m_attachTxt" maxlength="500" placeholder="예) 2분기 지표분석보고서 5부"></div>
         <div class="lb">차기 일정</div>  <div class="full"><input type="text" id="m_nextTxt" maxlength="500" placeholder="예) 차기 회의 9월 둘째 주 · 낙상 개선안 보고"></div>
@@ -186,7 +200,9 @@
                          : (qmGb()==='F') ? 'FMEA 회의록'
                          : (qmGb()==='P') ? '약사위원회 회의록'
                          : (qmGb()==='N') ? '영양관리위원회 회의록'
-                         : (qmGb()==='S') ? '소방안전관리위원회 회의록' : '위원회 회의록';
+                         : (qmGb()==='S') ? '소방안전관리위원회 회의록'
+                         : (qmGb()==='M') ? '다학제 평가팀 회의록'
+                         : (qmGb()==='K') ? '다학제 평가팀 개최에 따른 회의록' : '위원회 회의록';
     qmActToggle();   // 위원회를 바꾸면 하단 조치표가 붙거나 사라진다
     return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value }).then(function(res){
       apprLine = res.line || [];
@@ -210,11 +226,25 @@
      ⚠뒤에 같은 표를 가진 위원회가 나오면 이 목록에 값을 더한다 — 판단이 한 곳에만 있게. */
   var ACT_GBS = ['S'];
   function qmHasAct(){ return ACT_GBS.indexOf(qmGb()) >= 0; }
+  /* ★격리 및 강박 시행시간은 **다학제 개최에 따른 회의록(K)에만** 있다(2026-08-13) — 조치표와 같은 규칙. */
+  var SEC_GBS = ['K'];
+  function qmHasSec(){ return SEC_GBS.indexOf(qmGb()) >= 0; }
   function qmActToggle(){
     var on = qmHasAct();
     var lb = document.getElementById('qmActLb'), wp = document.getElementById('qmActWrap');
     if (lb) lb.style.display = on ? '' : 'none';
     if (wp) wp.style.display = on ? '' : 'none';
+    var sec = qmHasSec();
+    var sl = document.getElementById('qmSecLb'), sw = document.getElementById('qmSecWrap');
+    if (sl) sl.style.display = sec ? '' : 'none';
+    if (sw) sw.style.display = sec ? '' : 'none';
+    // ★K 는 원본이 「회의 내용 및 결과」 **한 칸**이다 — CONTENT 만 쓰고 결정사항 칸은 숨긴다
+    //   (둘로 나누면 원본에 없는 칸이 생긴다 — 간호/병동 판독 §회의록 짝 대조 ⓑ).
+    var cl = document.getElementById('qmContentLb');
+    if (cl) cl.textContent = sec ? '회의 내용 및 결과' : '회의내용';
+    var dl = document.getElementById('qmDecLb'), dw = document.getElementById('qmDecWrap');
+    if (dl) dl.style.display = sec ? 'none' : '';
+    if (dw) dw.style.display = sec ? 'none' : '';
   }
 
   function setGb(v){
@@ -247,6 +277,7 @@
       set('m_attachTxt', d.attachtxt); set('m_specialTxt', d.specialtxt);
       set('m_actGb', d.actgb); set('m_actDept', d.actdept);
       set('m_actDue', d.actdue); set('m_actCost', d.actcost);
+      set('m_secTime', d.sectime);
       document.getElementById('qmStat').textContent = '— 저장된 문서 #' + d.minseq;
       document.getElementById('qmDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.minseq);
@@ -258,7 +289,7 @@
     curSeq = 0;
     ['m_minSeq','m_meetDt','m_title','m_place','m_clerkNm','m_personnel','m_attendees','m_members',
      'm_agenda','m_content','m_decision','m_nextTxt','m_attachTxt','m_specialTxt',
-     'm_actGb','m_actDept','m_actDue','m_actCost']
+     'm_actGb','m_actDept','m_actDue','m_actCost','m_secTime']
       .forEach(function(id){ set(id, ''); });
     setGb('');
     document.getElementById('qmStat').textContent = '— 새 문서';
@@ -283,7 +314,9 @@
       actGb:   qmHasAct() ? val('m_actGb')   : '',
       actDept: qmHasAct() ? val('m_actDept') : '',
       actDue:  qmHasAct() ? val('m_actDue')  : '',
-      actCost: qmHasAct() ? val('m_actCost') : ''
+      actCost: qmHasAct() ? val('m_actCost') : '',
+      // ★격리 및 강박 시행시간(K 전용) — 조치표와 같은 규칙으로 다른 위원회에선 빈 값
+      secTime: qmHasSec() ? val('m_secTime') : ''
     }).then(function(res){
       _toast('저장되었습니다.', 'ok');
       curSeq = Number(res.minSeq || 0);
@@ -392,8 +425,11 @@
             '<th>' + (val('m_clerkNm') ? '간 사' : '인 원') + '</th><td>' +
             esc(val('m_clerkNm') || val('m_personnel')) + '</td></tr>' +
         row('회의안건', val('m_agenda'), true) +
-        row('회의내용', val('m_content'), true) +
-        row('회의결과(결정사항)', val('m_decision'), true) +
+        // ★K(다학제 개최)는 원본이 「회의 내용 및 결과」 한 칸 — 라벨을 따르고 결정사항 행은 안 찍는다
+        row(qmHasSec() ? '회의 내용 및 결과' : '회의내용', val('m_content'), true) +
+        (qmHasSec() ? '' : row('회의결과(결정사항)', val('m_decision'), true)) +
+        // ★격리 및 강박 시행시간(K 전용) — 원본 서식의 그 칸
+        (qmHasSec() ? row('격리 및 강박 시행시간', val('m_secTime')) : '') +
         row('첨부자료', val('m_attachTxt')) +
         (val('m_nextTxt') ? row('차기 일정', val('m_nextTxt')) : '') +
       '</tbody></table>' +
