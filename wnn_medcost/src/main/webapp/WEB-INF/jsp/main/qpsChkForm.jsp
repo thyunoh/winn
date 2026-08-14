@@ -495,9 +495,26 @@
     var k = val('f_prdKind') || '';
     return ('DWNMQ'.indexOf(k) >= 0 && k) ? k : (a === 'ITEM_MONTH' ? 'M' : 'D');
   }
-  /** 미리보기용 기간 칸 — 좁게 보여 준다(전체 보기 토글이 켜지면 다 그린다). */
-  function prevCells(wide){
-    var k = kindOf(), i, out = [];
+  /* ═══ 주기 복합 (2026-08-14) — 묶음마다 기간 축이 다르다 ═══
+     작성 화면(qpsChk.jsp)의 grpPrdList/grpPrdOn 과 **같은 규칙**이어야 한다 — 갈리면 미리보기가 거짓말을 한다. */
+  function grpPrdOf(){
+    var s = val('f_grpPrd') || '';
+    if (!s) return [];
+    return s.split(',').map(function(t){
+      var p = t.split('>'), nm = String(p[0] || '').trim(), k = String(p[1] || '').trim().toUpperCase();
+      if ('DWNMQ1'.indexOf(k) < 0) k = 'D';
+      return nm ? { g: nm, k: k } : null;
+    }).filter(function(x){ return x; });
+  }
+  function grpPrdPrevOn(){
+    var a = axis();
+    return (a === 'ITEM_DAY' || a === 'ITEM_MONTH') && !docGrp() && grpPrdOf().length > 0;
+  }
+  /** 미리보기용 기간 칸 — 좁게 보여 준다(전체 보기 토글이 켜지면 다 그린다).
+   *  ★`kk` 를 주면 그 축으로 — 주기 복합의 구간마다 다른 축을 그릴 때 쓴다. */
+  function prevCells(wide, kk){
+    var k = kk || kindOf(), i, out = [];
+    if (k === '1') return [''];                 // 한 칸 — 주기 복합의 「매월」
     if (k === 'W') { ['월','화','수','목','금','토','일'].forEach(function(t,ix){ out.push(t); }); return out; }
     if (k === 'N') { for (i=1;i<=5;i++) out.push(i+'주'); return out; }
     if (k === 'M') { for (i=1;i<=(wide?12:5);i++) out.push(i+'월'); return out; }
@@ -506,9 +523,9 @@
     return out;
   }
   /** 미리보기에서 「…」 칸을 붙일까 — 다 그리면 안 붙인다. 요일·주차·분기는 원래 짧아 안 붙인다. */
-  function prevTrunc(wide){
-    var k = kindOf();
-    if (k === 'W' || k === 'N' || k === 'Q') return false;
+  function prevTrunc(wide, kk){
+    var k = kk || kindOf();
+    if (k === 'W' || k === 'N' || k === 'Q' || k === '1') return false;
     return !wide;
   }
 
@@ -878,6 +895,51 @@
       if (chk('f_signerYn') === 'Y') h += '<tr><td class="l">점검자 확인란</td>' + PCELL.map(function(){ return '<td></td>'; }).join('') + ELLTD + '</tr>';
       h += '</tbody></table>';
       h += splitNote();
+    } else if (grpPrdPrevOn()) {
+      // ═══ 주기 복합 — 구간마다 표를 한 벌씩 (2026-08-14) ═══
+      //   작성 화면 grpPrdHtml 과 같은 규칙 : 서식에 적힌 순서대로, N 구간엔 날짜 줄, 사인은 맨 아래 한 줄.
+      var secs = grpPrdOf(), usedG = {}, drew = 0;
+      secs.forEach(function(s){ usedG[s.g] = 1; });
+      var secTbl = function(gnm, kk, rows){
+        var C = prevCells(PREV_WIDE, kk), tr = prevTrunc(PREV_WIDE, kk);
+        var eth = tr ? '<th>…</th>' : '', etd = tr ? '<td></td>' : '';
+        var t = '<table style="margin-top:' + (drew++ ? 5 : 0) + 'px;"><thead><tr>' +
+                (gnm ? '<th style="width:52px;">구분</th>' : '') +
+                '<th style="min-width:180px;">점검 항목</th>' + pvSideTh() +
+                C.map(function(d){ return '<th style="width:' + (kk === '1' ? 90 : 30) + 'px;">' + esc(d) + '</th>'; }).join('') +
+                eth + pvSideTh(true) + '</tr></thead><tbody>';
+        // ★N(주차) 구간은 주마다 날짜 적는 줄이 늘 있다 — 작성 화면과 같은 규칙
+        if (kk === 'N') {
+          t += '<tr>' + (gnm ? '<td></td>' : '') +
+               '<td class="l" style="color:#6b7c86;background:#f7fafb;">' + esc(val('f_prdHeadNm')) + '</td>' + pvSideTd(null) +
+               C.map(function(){ return '<td style="background:#f7fafb;"></td>'; }).join('') + etd + pvSideTd(null, true) + '</tr>';
+        }
+        if (!rows.length) {
+          t += '<tr><td class="l" style="color:#b23b3b;">이 묶음의 항목이 없습니다 — 항목표의 묶음 이름을 확인하세요</td>' +
+               '<td colspan="' + (C.length + (tr ? 1 : 0) + pvSideCnt() + (gnm ? 1 : 0)) + '"></td></tr>';
+        }
+        rows.forEach(function(r, i){
+          t += '<tr>';
+          if (gnm && i === 0) t += '<td class="l" rowspan="' + rows.length + '" style="background:#f4f8fa;">' + esc(gnm) + '</td>';
+          t += '<td class="l">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</td>' + pvSideTd(r) +
+               C.map(function(){ return '<td></td>'; }).join('') + etd + pvSideTd(r, true) + '</tr>';
+        });
+        return t + '</tbody></table>';
+      };
+      secs.forEach(function(s){
+        h += secTbl(s.g, s.k, items.filter(function(r){ return String(r.grpnm || '').trim() === s.g; }));
+      });
+      // ★GRP_PRD 에 없는 묶음은 버리지 않는다(작성 화면과 같다) — 서식 축으로 뒤에 붙인다
+      var restI = items.filter(function(r){ return !usedG[String(r.grpnm || '').trim()]; });
+      if (restI.length) h += secTbl('', kindOf(), restI);
+      if (chk('f_signerYn') === 'Y') {
+        var SC = prevCells(PREV_WIDE, secs.length ? secs[0].k : kindOf());
+        h += '<table style="margin-top:5px;"><tbody><tr><td class="l" style="min-width:150px;">점검자 확인란</td>' +
+             SC.map(function(){ return '<td></td>'; }).join('') +
+             (prevTrunc(PREV_WIDE, secs.length ? secs[0].k : kindOf()) ? '<td></td>' : '') + '</tr></tbody></table>';
+      }
+      h += splitNote();
+
     } else if (a === 'ITEM_DAY' || a === 'ITEM_MONTH') {
       var cols = PCELL;
       // 행 묶음(2단 행 머리글) — 이어지는 항목의 묶음 이름이 같으면 왼쪽 칸을 합친다
