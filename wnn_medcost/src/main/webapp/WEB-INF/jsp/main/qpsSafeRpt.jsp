@@ -66,6 +66,16 @@
       width:15px !important; height:15px !important; margin:0 !important; display:inline-block !important;
       opacity:1 !important; visibility:visible !important; position:static !important; cursor:pointer; }
   #qpsSafeRpt .grp input.etc{ width:130px; padding:2px 6px; font-size:12px; }
+
+  /* 반복행 표 (SUB_COLS, 2026-08-14) — 서식이 열 이름을 정하고 행은 문서가 늘린다 */
+  #qpsSafeRpt .rowtbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  #qpsSafeRpt .rowtbl th, #qpsSafeRpt .rowtbl td{ border:1px solid #e0e7ec; padding:4px 6px; }
+  #qpsSafeRpt .rowtbl th{ background:#f5f8fa; font-weight:700; color:#43555f; font-size:12px; }
+  #qpsSafeRpt .rowtbl td{ padding:3px 4px; }
+  #qpsSafeRpt .rowtbl input{ width:100%; border:0; padding:3px 4px; font-size:12.5px; background:transparent; }
+  #qpsSafeRpt .rowtbl input:focus{ outline:1px solid #8fc3b2; border-radius:3px; background:#fff; }
+  #qpsSafeRpt .rowtbl td.del{ width:34px; text-align:center; padding:0; }
+  #qpsSafeRpt .rowtbl td.del button{ border:0; background:none; color:#b23b3b; cursor:pointer; font-size:13px; padding:4px 6px; }
 </style>
 
 <div class="sr-head">
@@ -123,6 +133,14 @@
       <div id="srChkBox"></div>
     </div>
 
+    <%-- ★반복행 표 — 서식(TBL_QPS_SAFERPT_FORM.SUB_COLS)이 열 이름을 정하고 행은 문서가 늘린다.
+         SUB_COLS 가 없는 유형이 대부분이라 이 카드는 기본으로 숨어 있다. --%>
+    <div class="sr-card" id="cardRow" style="display:none;">
+      <h4><span id="srRowNm">품목</span> <span class="hint">— 줄이 모자라면 [＋ 행 추가]</span></h4>
+      <div id="srRowBox"></div>
+      <button type="button" class="sr-btn ghost" style="margin-top:8px;" onclick="srRowAdd();">＋ 행 추가</button>
+    </div>
+
     <div class="sr-card">
       <h4>사건개요 (육하원칙) <span class="hint">— 안 쓰는 서식은 비워 두면 인쇄물에도 안 나옵니다</span></h4>
       <div class="sr-form">
@@ -157,7 +175,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', APPR_LINE = [], DEF = [], GBS = [], curSeq = 0;
+  // FORM = 유형별 설정(반복행 표·서명란·정형문구). 설정이 없는 유형이 대부분이라 {} 가 정상이다.
+  var HOSP_NM = '', APPR_LINE = [], DEF = [], GBS = [], curSeq = 0, FORM = {};
 
   var fileBox = window.qpsFileBox({ mount:'srFileBox', refGb:'SAFERPT',
       hint:'사고 관련 사진·자료', needSaveMsg:'보고서를 먼저 저장하면 첨부할 수 있습니다.' });
@@ -250,13 +269,74 @@
     return sel;
   }
 
+  /* ───── 반복행 표 (2026-08-14) ─────────────────────────────────────────
+     서식이 열 이름(SUB_COLS, 쉼표)을 정하고 행은 문서가 늘린다 — 점검표 엔진과 같은 규칙.
+     ★값 자리는 전용 표(TBL_QPS_SAFERPT_ROW)의 ROW_NO/COL_NO 다. 9000 예약대를 안 쓴다
+       (점검표 엔진이 9000+i 를 쓰는 건 격자 값과 한 표를 공유하기 때문이다). */
+  var MIN_ROWS = 3;
+  function subCols(){
+    var s = (FORM && FORM.subcols) ? String(FORM.subcols) : '';
+    if (!s.trim()) return [];
+    return s.split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x; });
+  }
+  /** @param vals 서버가 준 [{rowno,colno,val}] — 없으면 빈 표를 그린다. */
+  function renderRows(vals){
+    var cols = subCols();
+    if (!cols.length) { gel('cardRow').style.display = 'none'; gel('srRowBox').innerHTML = ''; return; }
+    gel('srRowNm').textContent = (FORM && FORM.subnm) ? FORM.subnm : '품목';
+    var grid = {}, maxRow = 0;
+    (vals || []).forEach(function(v){
+      var r = Number(v.rowno) || 0; if (!grid[r]) grid[r] = {};
+      grid[r][Number(v.colno)] = v.val == null ? '' : v.val;
+      if (r > maxRow) maxRow = r;
+    });
+    var n = Math.max(maxRow, MIN_ROWS);
+    var h = '<table class="rowtbl"><thead><tr>' +
+            cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
+            '<th class="del"></th></tr></thead><tbody>';
+    for (var r = 1; r <= n; r++) h += rowHtml(cols.length, grid[r] || {});
+    gel('srRowBox').innerHTML = h + '</tbody></table>';
+    gel('cardRow').style.display = '';
+  }
+  function rowHtml(nCol, v){
+    var h = '<tr>';
+    for (var c = 1; c <= nCol; c++) h += '<td><input type="text" maxlength="500" value="' + esc(v[c] || '') + '"></td>';
+    return h + '<td class="del"><button type="button" onclick="srRowDel(this);" title="이 행 지우기">✕</button></td></tr>';
+  }
+  window.srRowAdd = function(){
+    var tb = document.querySelector('#srRowBox tbody');
+    if (!tb) return;
+    tb.insertAdjacentHTML('beforeend', rowHtml(subCols().length, {}));
+  };
+  window.srRowDel = function(btn){
+    var tr = btn.closest('tr'), tb = tr.parentNode;
+    if (tb.rows.length <= 1) {   // 마지막 한 줄은 지우지 않고 비운다 — 표가 통째로 사라지면 다시 못 넣는다
+      tr.querySelectorAll('input').forEach(function(i){ i.value = ''; });
+      return;
+    }
+    tr.remove();
+  };
+  /** 빈 행은 버린다 — 안 그러면 눈에 안 보이는 빈 줄이 그대로 저장된다. 번호는 다시 매긴다. */
+  function collectRows(){
+    var out = [], n = 0;
+    document.querySelectorAll('#srRowBox tbody tr').forEach(function(tr){
+      var cells = [].map.call(tr.querySelectorAll('input'), function(i){ return String(i.value).trim(); });
+      if (!cells.some(function(x){ return x; })) return;
+      n++;
+      cells.forEach(function(v, i){ if (v) out.push({ rowno:n, colno:i + 1, val:v }); });
+    });
+    return out;
+  }
+
   window.srLoad = function(){
     return post('<c:url value="/qps/safeRptBase.do"/>', { inYear: gel('srYear').value, rptGb: gb() }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('srHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       DEF = res.def || [];
+      FORM = res.form || {};   // 유형이 바뀌면 반복행 표의 열 구성도 통째로 갈린다
       applyLabels();
       renderChk({});
+      renderRows([]);
       var list = res.list || [], box = gel('srListBox');
       gel('srCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       box.innerHTML = list.length
@@ -286,6 +366,7 @@
       set('f_note', d.note);
       gel('srIncidMsg').textContent = d.incidseq ? ('사고 #' + d.incidseq + ' 와 연결됨') : '';
       renderChk(chkToSel(res.chks));
+      renderRows(res.rows);
       gel('srStat').textContent = '— 저장된 보고서 #' + d.srpseq;
       gel('srDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.srpseq);
@@ -306,6 +387,7 @@
      'f_planTxt','f_note'].forEach(function(id){ set(id, ''); });
     gel('srIncidMsg').textContent = '';
     renderChk({});
+    renderRows([]);
     gel('srStat').textContent = '— 새 보고서';
     gel('srDelBtn').style.display = 'none';
     if (fileBox) fileBox.setKey('');
@@ -354,7 +436,8 @@
       wWhat: val('f_wWhat'), wHow: val('f_wHow'), wWhy: val('f_wWhy'),
       summary: val('f_summary'), vitalTxt: val('f_vitalTxt'), injuryTxt: val('f_injuryTxt'),
       treatTxt: val('f_treatTxt'), causeTxt: val('f_causeTxt'), planTxt: val('f_planTxt'), note: val('f_note'),
-      chks: JSON.stringify(collectChk())
+      chks: JSON.stringify(collectChk()),
+      rows: JSON.stringify(collectRows())
     }).then(function(res){
       _toast('저장되었습니다.', 'ok');
       return srLoad().then(function(){ srOpen(res.srpSeq); });
@@ -382,7 +465,11 @@
     'td.l{ text-align:left; } td.pre{ text-align:left; white-space:pre-wrap; }' +
     '.appr{ float:right; width:auto; margin:0 0 4px 8px; font-size:9.5px; }' +
     '.appr th{ padding:2px 6px; } .appr td{ height:42px; width:58px; }' +
-    'tr{ page-break-inside:avoid; }';
+    'tr{ page-break-inside:avoid; }' +
+    /* 하단 서명란·정형문구 — qpsChk.jsp 와 같은 모양으로 맞춘다(두 엔진이 달라 보이면 안 된다) */
+    '.foot{ font-size:9.5px; margin:6px 0 2px; text-align:left; }' +
+    '.sig{ margin-top:10px; text-align:right; font-size:10.5px; }' +
+    '.sig span{ margin-left:22px; white-space:nowrap; }';
 
   function apprHtml(){
     if (!APPR_LINE.length) return '';
@@ -391,6 +478,29 @@
     h += '</tr></thead><tbody><tr>';
     APPR_LINE.forEach(function(){ h += '<td></td>'; });
     return h + '</tr></tbody></table>';
+  }
+
+  /** 인쇄용 반복행 표. 화면과 달리 **빈 행은 빼고** 찍는다 — 종이에 빈 줄이 남으면 서식이 지저분해진다.
+      SUB_NM 이 있으면 왼쪽 이름 칸을 rowspan 으로 세운다(qpsChk.jsp 의 자유행 표와 같은 모양). */
+  function rowTblHtml(){
+    var cols = subCols();
+    if (!cols.length) return '';
+    var data = {}, maxRow = 0;
+    collectRows().forEach(function(v){
+      if (!data[v.rowno]) data[v.rowno] = {};
+      data[v.rowno][v.colno] = v.val;
+      if (v.rowno > maxRow) maxRow = v.rowno;
+    });
+    if (!maxRow) return '';
+    var body = '';
+    for (var r = 1; r <= maxRow; r++) {
+      body += '<tr>' + (FORM.subnm && r === 1 ? '<th style="width:110px;" rowspan="' + maxRow + '">' + esc(FORM.subnm) + '</th>' : '');
+      for (var c = 1; c <= cols.length; c++) body += '<td class="l">' + esc((data[r] || {})[c] || '') + '</td>';
+      body += '</tr>';
+    }
+    return '<table><thead><tr>' + (FORM.subnm ? '<th style="width:110px;"></th>' : '') +
+           cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
+           '</tr></thead><tbody>' + body + '</tbody></table>';
   }
 
   window.srPrint = function(){
@@ -439,12 +549,19 @@
             return (i === 0 ? '' : '<tr>') + '<th style="width:70px;">' + x[0] + '</th><td class="l" colspan="2">' +
                    esc(x[1]) + '</td>' + (i === 0 ? '</tr>' : '</tr>');
           }).join('') + '</tbody></table>' : '') +
+      rowTblHtml() +
       '<table><tbody>' +
         row('사건경위', val('f_summary')) + row('활력징후', val('f_vitalTxt')) +
         row('신체손상정도·결과', val('f_injuryTxt')) + row('치료내용·진료내역', val('f_treatTxt')) +
         row('문제원인·발생원인', val('f_causeTxt')) + row('개선방안·처리결과', val('f_planTxt')) +
         row('비고', val('f_note')) +
-      '</tbody></table>';
+      '</tbody></table>' +
+      // 정형문구·서명란은 값이 없다 — 서식이 정한 글자를 그대로 찍는 인쇄 전용 요소다
+      (FORM.foottxt ? '<div class="foot">' + esc(FORM.foottxt) + '</div>' : '') +
+      (FORM.signline
+        ? '<div class="sig">' + String(FORM.signline).split(',').map(function(s){
+            return '<span>' + esc(s.trim()) + ' _____________ (인)</span>'; }).join('') + '</div>'
+        : '');
 
     var title = (gbNm() + '_' + val('f_occurDt') + '_' + val('f_targetNm') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
     var w = window.open('', '_blank', 'width=900,height=1000');

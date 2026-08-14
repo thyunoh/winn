@@ -146,7 +146,9 @@ public interface QpsService {
 	/* 사고 유형별 보고서 */
 	Map<String, Object> selectSafeRptBase(String hospCd, String inYear, String rptGb) throws Exception;
 	Map<String, Object> selectSafeRptOne(String hospCd, long srpSeq) throws Exception;
-	long saveSafeRpt(Map<String, Object> param, List<Map<String, Object>> chks) throws Exception;
+	/** @param rows 반복행 표(SUB_COLS) 값. 쓰지 않는 유형이 대부분이라 null 이어도 된다. */
+	long saveSafeRpt(Map<String, Object> param, List<Map<String, Object>> chks,
+	                 List<Map<String, Object>> rows) throws Exception;
 	int deleteSafeRpt(Map<String, Object> param) throws Exception;
 
 	/* QI 중간·최종보고서 */

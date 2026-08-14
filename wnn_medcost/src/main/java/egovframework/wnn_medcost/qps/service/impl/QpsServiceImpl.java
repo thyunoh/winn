@@ -1135,6 +1135,8 @@ public class QpsServiceImpl implements QpsService {
 		Map<String, Object> out = new LinkedHashMap<>();
 		out.put("def",  mapper.selectSafeRptDef(rptGb));
 		out.put("list", mapper.selectSafeRptList(hospCd, inYear, rptGb));
+		// 유형별 설정(반복행 표·서명란·정형문구). 설정이 없는 유형이 대부분이라 null 이 정상이다.
+		out.put("form", mapper.selectSafeRptForm(rptGb));
 		return out;
 	}
 
@@ -1144,12 +1146,14 @@ public class QpsServiceImpl implements QpsService {
 		Map<String, Object> doc = mapper.selectSafeRpt(hospCd, srpSeq);
 		out.put("doc", doc);
 		out.put("chks", doc == null ? new ArrayList<>() : mapper.selectSafeRptChk(srpSeq));
+		out.put("rows", doc == null ? new ArrayList<>() : mapper.selectSafeRptRow(srpSeq));
 		return out;
 	}
 
-	/** 저장 — 체크는 통째 교체. 무엇을 골랐는지만 남기면 되므로 부분 수정이 필요 없다. */
+	/** 저장 — 체크·반복행 모두 통째 교체. 무엇을 골랐는지만 남기면 되므로 부분 수정이 필요 없다. */
 	@Override
-	public long saveSafeRpt(Map<String, Object> p, List<Map<String, Object>> chks) throws Exception {
+	public long saveSafeRpt(Map<String, Object> p, List<Map<String, Object>> chks,
+	                        List<Map<String, Object>> rows) throws Exception {
 		long seq = longOfObj(p.get("srpSeq"));
 		if (seq > 0) { mapper.updateSafeRpt(p); }
 		else { mapper.insertSafeRpt(p); seq = Long.parseLong(String.valueOf(p.get("srpSeq"))); }
@@ -1158,6 +1162,12 @@ public class QpsServiceImpl implements QpsService {
 			Map<String, Object> ip = new HashMap<>();
 			ip.put("srpSeq", seq); ip.put("items", chks);
 			mapper.insertSafeRptChk(ip);
+		}
+		mapper.deleteSafeRptRow(seq);
+		if (rows != null && !rows.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("srpSeq", seq); ip.put("items", rows);
+			mapper.insertSafeRptRow(ip);
 		}
 		return seq;
 	}

@@ -240,6 +240,11 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectSafeRptChk(@Param("srpSeq") long srpSeq);
 	int deleteSafeRptChk(@Param("srpSeq") long srpSeq);
 	int insertSafeRptChk(Map<String, Object> param);
+	// 반복행 표 · 서명란 · 정형문구 (2026-08-14) — 저장이 필요한 건 반복행뿐(나머지 둘은 인쇄 전용)
+	Map<String, Object> selectSafeRptForm(@Param("rptGb") String rptGb);
+	List<Map<String, Object>> selectSafeRptRow(@Param("srpSeq") long srpSeq);
+	int deleteSafeRptRow(@Param("srpSeq") long srpSeq);
+	int insertSafeRptRow(Map<String, Object> param);
 
 	/* QI 중간·최종보고서 (한 표 + RPT_GB) */
 	List<Map<String, Object>> selectQiRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,

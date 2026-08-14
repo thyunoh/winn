@@ -1508,6 +1508,38 @@
 		</foreach>
 	</insert>
 
+	<!-- ─── 반복행 표 · 서명란 · 정형문구 (2026-08-14) ───────────────────
+	     설계 : docs/proposals/QPS_safeRpt_반복행서명_설계_2026-08-14.md
+	     ★이름은 점검표 엔진(TBL_QPS_CHK_FORM)에서 그대로 가져왔다 — SUB_NM·SUB_COLS·SIGN_LINE·FOOT_TXT.
+	     ★SIGN_LINE·FOOT_TXT 는 **인쇄 전용**이라 값을 받지 않는다(qpsChk.jsp 와 같은 방식).
+	       저장이 필요한 것은 반복행 표(ROW)뿐이다. -->
+
+	<!-- 설정이 없는 유형이 대부분이다 — 없으면 null 이 와서 화면이 표를 안 그린다(지금과 동일 동작). -->
+	<select id="selectSafeRptForm" resultType="java.util.HashMap">
+		SELECT RPT_GB AS rptgb, SUB_NM AS subnm, SUB_COLS AS subcols,
+		       SIGN_LINE AS signline, FOOT_TXT AS foottxt
+		  FROM TBL_QPS_SAFERPT_FORM
+		 WHERE RPT_GB = #{rptGb} AND USE_YN = 'Y'
+	</select>
+
+	<select id="selectSafeRptRow" resultType="java.util.HashMap">
+		SELECT ROW_NO AS rowno, COL_NO AS colno, VAL AS val
+		  FROM TBL_QPS_SAFERPT_ROW
+		 WHERE SRP_SEQ = #{srpSeq}
+		 ORDER BY ROW_NO, COL_NO
+	</select>
+
+	<delete id="deleteSafeRptRow">
+		DELETE FROM TBL_QPS_SAFERPT_ROW WHERE SRP_SEQ = #{srpSeq}
+	</delete>
+
+	<insert id="insertSafeRptRow" parameterType="map">
+		INSERT INTO TBL_QPS_SAFERPT_ROW (SRP_SEQ, ROW_NO, COL_NO, VAL) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{srpSeq}, #{it.rowno}, #{it.colno}, #{it.val})
+		</foreach>
+	</insert>
+
 
 	<!-- ═══ QI 중간·최종보고서 ═══
 	     ★최종이 중간의 상위집합이라 한 표에 담고 RPT_GB 로 가른다(M=중간 F=최종).

@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260813-SUBCOL";
+	private static final String BUILD = "20260814-SRPROW";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1722,7 +1722,8 @@ public class QpsController {
 			m.put("causeTxt",  str(p.get("causeTxt"), ""));  m.put("planTxt",  str(p.get("planTxt"), ""));
 			m.put("note",      str(p.get("note"), ""));
 			m.put("regUser",   userId(request));
-			res.put("srpSeq", svc.saveSafeRpt(m, jsonRows(p.get("chks"))));
+			// rows = 반복행 표(SUB_COLS). 쓰지 않는 유형이 대부분이라 비어 있는 것이 정상이다.
+			res.put("srpSeq", svc.saveSafeRpt(m, jsonRows(p.get("chks")), jsonRows(p.get("rows"))));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
