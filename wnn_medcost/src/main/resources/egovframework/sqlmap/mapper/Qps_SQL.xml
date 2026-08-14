@@ -1529,6 +1529,15 @@
 		 ORDER BY ROW_NO, COL_NO
 	</select>
 
+	<!-- 반복행 표 「여러 벌」(2026-08-15) — 벌이 있으면 FORM 의 단벌 정의를 이긴다.
+	     값은 같은 ROW 표에 ROW_NO=벌×1000+행 으로 담긴다(단벌은 종전대로 1~999). -->
+	<select id="selectSafeRptSub" resultType="java.util.HashMap">
+		SELECT SUB_NO AS subno, SUB_NM AS subnm, SUB_COLS AS subcols
+		  FROM TBL_QPS_SAFERPT_SUB
+		 WHERE RPT_GB = #{rptGb} AND USE_YN = 'Y'
+		 ORDER BY SUB_NO
+	</select>
+
 	<delete id="deleteSafeRptRow">
 		DELETE FROM TBL_QPS_SAFERPT_ROW WHERE SRP_SEQ = #{srpSeq}
 	</delete>

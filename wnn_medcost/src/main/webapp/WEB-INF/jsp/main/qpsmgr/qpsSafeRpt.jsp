@@ -76,6 +76,12 @@
   #qpsSafeRpt .rowtbl input:focus{ outline:1px solid #8fc3b2; border-radius:3px; background:#fff; }
   #qpsSafeRpt .rowtbl td.del{ width:34px; text-align:center; padding:0; }
   #qpsSafeRpt .rowtbl td.del button{ border:0; background:none; color:#b23b3b; cursor:pointer; font-size:13px; padding:4px 6px; }
+  /* 반복행 표 여러 벌(2026-08-15) — 벌마다 이름 띠 + 자기 [행 추가] */
+  #qpsSafeRpt .rowset{ margin-bottom:12px; }
+  #qpsSafeRpt .rowset:last-child{ margin-bottom:0; }
+  #qpsSafeRpt .rs-h{ font-size:12.5px; font-weight:800; color:#1f5a4b; background:#f0f7f4;
+      border:1px solid #dcebe4; border-bottom:0; border-radius:7px 7px 0 0; padding:5px 10px; }
+  #qpsSafeRpt .rs-add{ margin-top:6px; padding:3px 10px; font-size:12px; }
 
   /* 사진첨부 (PHOTO_YN, 2026-08-14) — 2×2 고정 칸. 칸을 누르면 올리고, 같은 칸에 또 올리면 교체 */
   #qpsSafeRpt .ph-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:560px; }
@@ -150,12 +156,12 @@
       <div id="srChkBox"></div>
     </div>
 
-    <%-- ★반복행 표 — 서식(TBL_QPS_SAFERPT_FORM.SUB_COLS)이 열 이름을 정하고 행은 문서가 늘린다.
-         SUB_COLS 가 없는 유형이 대부분이라 이 카드는 기본으로 숨어 있다. --%>
+    <%-- ★반복행 표 — 서식이 열 이름을 정하고 행은 문서가 늘린다.
+         단벌 = FORM.SUB_COLS(종전) · 여러 벌 = TBL_QPS_SAFERPT_SUB(2026-08-15, 인사기록카드 9벌 등).
+         정의가 없는 유형이 대부분이라 이 카드는 기본으로 숨어 있다. --%>
     <div class="sr-card" id="cardRow" style="display:none;">
-      <h4><span id="srRowNm">품목</span> <span class="hint">— 줄이 모자라면 [＋ 행 추가]</span></h4>
+      <h4><span id="srRowNm">품목</span> <span class="hint">— 줄이 모자라면 각 표의 [＋ 행 추가]</span></h4>
       <div id="srRowBox"></div>
-      <button type="button" class="sr-btn ghost" style="margin-top:8px;" onclick="srRowAdd();">＋ 행 추가</button>
     </div>
 
     <div class="sr-card" id="cardSix">
@@ -202,7 +208,8 @@
 <script>
 (function(){
   // FORM = 유형별 설정(반복행 표·서명란·정형문구). 설정이 없는 유형이 대부분이라 {} 가 정상이다.
-  var HOSP_NM = '', APPR_LINE = [], DEF = [], GBS = [], curSeq = 0, FORM = {};
+  // SUBS = 반복행 표 여러 벌 정의(2026-08-15). 빈 배열이면 FORM 단벌 규칙 그대로.
+  var HOSP_NM = '', APPR_LINE = [], DEF = [], GBS = [], curSeq = 0, FORM = {}, SUBS = [];
 
   var fileBox = window.qpsFileBox({ mount:'srFileBox', refGb:'SAFERPT',
       hint:'사고 관련 사진·자료', needSaveMsg:'보고서를 먼저 저장하면 첨부할 수 있습니다.' });
@@ -319,33 +326,60 @@
     return sel;
   }
 
-  /* ───── 반복행 표 (2026-08-14) ─────────────────────────────────────────
-     서식이 열 이름(SUB_COLS, 쉼표)을 정하고 행은 문서가 늘린다 — 점검표 엔진과 같은 규칙.
-     ★값 자리는 전용 표(TBL_QPS_SAFERPT_ROW)의 ROW_NO/COL_NO 다. 9000 예약대를 안 쓴다
-       (점검표 엔진이 9000+i 를 쓰는 건 격자 값과 한 표를 공유하기 때문이다). */
+  /* ───── 반복행 표 (2026-08-14 · 2026-08-15 여러 벌) ──────────────────────
+     서식이 열 이름을 정하고 행은 문서가 늘린다 — 점검표 엔진과 같은 규칙.
+     ★여러 벌(TBL_QPS_SAFERPT_SUB)이 있으면 그것이 FORM 단벌(SUB_COLS)을 이긴다.
+       값 자리 = ***ROW_NO = 벌번호×1000 + 행번호***(1001·2001…). 단벌은 종전대로 1~999 —
+       LIST 의 블록 규칙(블록×1000)과 같은 발상이라 옛 문서·옛 유형이 하나도 안 바뀐다. */
   var MIN_ROWS = 3;
   function subCols(){
     var s = (FORM && FORM.subcols) ? String(FORM.subcols) : '';
     if (!s.trim()) return [];
     return s.split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x; });
   }
+  /** 벌 정의 [{no,nm,cols[]}] — no=0 은 단벌(옛 규칙, 값 1~999) */
+  function subDefs(){
+    if (SUBS && SUBS.length) {
+      return SUBS.map(function(s){
+        var cols = String(s.subcols || '').split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x; });
+        return { no: Number(s.subno) || 0, nm: s.subnm || '', cols: cols };
+      }).filter(function(s){ return s.no >= 1 && s.no <= 9 && s.cols.length; });
+    }
+    var c = subCols();
+    return c.length ? [{ no: 0, nm: (FORM && FORM.subnm) ? FORM.subnm : '', cols: c }] : [];
+  }
+  /** 값을 벌별로 가른다 — 1000대의 몫이 벌, 나머지가 행(0~999 는 단벌) */
+  function splitRowVals(vals){
+    var byset = {};
+    (vals || []).forEach(function(v){
+      var rn = Number(v.rowno) || 0, s = Math.floor(rn / 1000), r = s ? (rn % 1000) : rn;
+      if (!byset[s]) byset[s] = {};
+      if (!byset[s][r]) byset[s][r] = {};
+      byset[s][r][Number(v.colno)] = v.val == null ? '' : v.val;
+    });
+    return byset;
+  }
   /** @param vals 서버가 준 [{rowno,colno,val}] — 없으면 빈 표를 그린다. */
   function renderRows(vals){
-    var cols = subCols();
-    if (!cols.length) { gel('cardRow').style.display = 'none'; gel('srRowBox').innerHTML = ''; return; }
-    gel('srRowNm').textContent = (FORM && FORM.subnm) ? FORM.subnm : '품목';
-    var grid = {}, maxRow = 0;
-    (vals || []).forEach(function(v){
-      var r = Number(v.rowno) || 0; if (!grid[r]) grid[r] = {};
-      grid[r][Number(v.colno)] = v.val == null ? '' : v.val;
-      if (r > maxRow) maxRow = r;
+    var defs = subDefs();
+    if (!defs.length) { gel('cardRow').style.display = 'none'; gel('srRowBox').innerHTML = ''; return; }
+    gel('srRowNm').textContent = (defs.length === 1 && defs[0].nm) ? defs[0].nm : '세부 내역';
+    var byset = splitRowVals(vals);
+    var h = '';
+    defs.forEach(function(d){
+      var grid = byset[d.no] || {}, maxRow = 0;
+      Object.keys(grid).forEach(function(r){ r = Number(r); if (r > maxRow) maxRow = r; });
+      var n = Math.max(maxRow, MIN_ROWS);
+      h += '<div class="rowset" data-sub="' + d.no + '">' +
+           (defs.length > 1 ? '<div class="rs-h">' + esc(d.nm || ('표 ' + d.no)) + '</div>' : '') +
+           '<table class="rowtbl"><thead><tr>' +
+           d.cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
+           '<th class="del"></th></tr></thead><tbody>';
+      for (var r = 1; r <= n; r++) h += rowHtml(d.cols.length, grid[r] || {});
+      h += '</tbody></table>' +
+           '<button type="button" class="sr-btn ghost rs-add" onclick="srRowAdd(this);">＋ 행 추가</button></div>';
     });
-    var n = Math.max(maxRow, MIN_ROWS);
-    var h = '<table class="rowtbl"><thead><tr>' +
-            cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
-            '<th class="del"></th></tr></thead><tbody>';
-    for (var r = 1; r <= n; r++) h += rowHtml(cols.length, grid[r] || {});
-    gel('srRowBox').innerHTML = h + '</tbody></table>';
+    gel('srRowBox').innerHTML = h;
     gel('cardRow').style.display = '';
   }
   function rowHtml(nCol, v){
@@ -353,10 +387,12 @@
     for (var c = 1; c <= nCol; c++) h += '<td><input type="text" maxlength="500" value="' + esc(v[c] || '') + '"></td>';
     return h + '<td class="del"><button type="button" onclick="srRowDel(this);" title="이 행 지우기">✕</button></td></tr>';
   }
-  window.srRowAdd = function(){
-    var tb = document.querySelector('#srRowBox tbody');
+  window.srRowAdd = function(btn){
+    var box = (btn && btn.closest) ? btn.closest('.rowset') : null;   // 자기 벌의 표에만 행을 더한다
+    var tb = box ? box.querySelector('tbody') : document.querySelector('#srRowBox tbody');
     if (!tb) return;
-    tb.insertAdjacentHTML('beforeend', rowHtml(subCols().length, {}));
+    var nCol = tb.parentNode.querySelectorAll('thead th').length - 1;  // 마지막 칸은 ✕ 열
+    tb.insertAdjacentHTML('beforeend', rowHtml(nCol, {}));
   };
   window.srRowDel = function(btn){
     var tr = btn.closest('tr'), tb = tr.parentNode;
@@ -366,14 +402,18 @@
     }
     tr.remove();
   };
-  /** 빈 행은 버린다 — 안 그러면 눈에 안 보이는 빈 줄이 그대로 저장된다. 번호는 다시 매긴다. */
+  /** 빈 행은 버린다 — 안 그러면 눈에 안 보이는 빈 줄이 그대로 저장된다. 번호는 벌별로 다시 매긴다. */
   function collectRows(){
-    var out = [], n = 0;
-    document.querySelectorAll('#srRowBox tbody tr').forEach(function(tr){
-      var cells = [].map.call(tr.querySelectorAll('input'), function(i){ return String(i.value).trim(); });
-      if (!cells.some(function(x){ return x; })) return;
-      n++;
-      cells.forEach(function(v, i){ if (v) out.push({ rowno:n, colno:i + 1, val:v }); });
+    var out = [];
+    document.querySelectorAll('#srRowBox .rowset').forEach(function(box){
+      var sub = Number(box.getAttribute('data-sub')) || 0, n = 0;
+      box.querySelectorAll('tbody tr').forEach(function(tr){
+        var cells = [].map.call(tr.querySelectorAll('input'), function(i){ return String(i.value).trim(); });
+        if (!cells.some(function(x){ return x; })) return;
+        n++;
+        var rn = sub ? (sub * 1000 + n) : n;
+        cells.forEach(function(v, i){ if (v) out.push({ rowno:rn, colno:i + 1, val:v }); });
+      });
     });
     return out;
   }
@@ -462,6 +502,7 @@
       APPR_LINE = res.line || [];
       DEF = res.def || [];
       FORM = res.form || {};   // 유형이 바뀌면 반복행 표의 열 구성도 통째로 갈린다
+      SUBS = res.subs || [];   // 반복행 표 여러 벌(있으면 FORM 단벌을 이긴다)
       applyLabels();
       renderChk({});
       renderRows([]);
@@ -614,27 +655,28 @@
     return h + '</tr></tbody></table>';
   }
 
-  /** 인쇄용 반복행 표. 화면과 달리 **빈 행은 빼고** 찍는다 — 종이에 빈 줄이 남으면 서식이 지저분해진다.
-      SUB_NM 이 있으면 왼쪽 이름 칸을 rowspan 으로 세운다(qpsChk.jsp 의 자유행 표와 같은 모양). */
+  /** 인쇄용 반복행 표 — 벌마다 한 표씩, 화면과 달리 **빈 행·빈 벌은 빼고** 찍는다.
+      벌 이름은 왼쪽 이름 칸을 rowspan 으로 세운다(qpsChk.jsp 의 자유행 표와 같은 모양). */
   function rowTblHtml(){
-    var cols = subCols();
-    if (!cols.length) return '';
-    var data = {}, maxRow = 0;
-    collectRows().forEach(function(v){
-      if (!data[v.rowno]) data[v.rowno] = {};
-      data[v.rowno][v.colno] = v.val;
-      if (v.rowno > maxRow) maxRow = v.rowno;
-    });
-    if (!maxRow) return '';
-    var body = '';
-    for (var r = 1; r <= maxRow; r++) {
-      body += '<tr>' + (FORM.subnm && r === 1 ? '<th style="width:110px;" rowspan="' + maxRow + '">' + esc(FORM.subnm) + '</th>' : '');
-      for (var c = 1; c <= cols.length; c++) body += '<td class="l">' + esc((data[r] || {})[c] || '') + '</td>';
-      body += '</tr>';
-    }
-    return '<table><thead><tr>' + (FORM.subnm ? '<th style="width:110px;"></th>' : '') +
-           cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
+    var defs = subDefs();
+    if (!defs.length) return '';
+    var byset = splitRowVals(collectRows());
+    var h = '';
+    defs.forEach(function(d){
+      var grid = byset[d.no] || {}, maxRow = 0;
+      Object.keys(grid).forEach(function(r){ r = Number(r); if (r > maxRow) maxRow = r; });
+      if (!maxRow) return;   // 안 쓴 벌은 종이에 안 나온다
+      var body = '';
+      for (var r = 1; r <= maxRow; r++) {
+        body += '<tr>' + (d.nm && r === 1 ? '<th style="width:110px;" rowspan="' + maxRow + '">' + esc(d.nm) + '</th>' : '');
+        for (var c = 1; c <= d.cols.length; c++) body += '<td class="l">' + esc((grid[r] || {})[c] || '') + '</td>';
+        body += '</tr>';
+      }
+      h += '<table><thead><tr>' + (d.nm ? '<th style="width:110px;"></th>' : '') +
+           d.cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
            '</tr></thead><tbody>' + body + '</tbody></table>';
+    });
+    return h;
   }
 
   /** 인쇄용 사진 2×2 — 있는 칸만 줄 단위로 찍는다(3·4번이 비면 아랫줄 없음).

@@ -245,6 +245,8 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectSafeRptRow(@Param("srpSeq") long srpSeq);
 	int deleteSafeRptRow(@Param("srpSeq") long srpSeq);
 	int insertSafeRptRow(Map<String, Object> param);
+	// 반복행 표 여러 벌 (2026-08-15) — 벌이 있으면 FORM 단벌 정의를 이긴다
+	List<Map<String, Object>> selectSafeRptSub(@Param("rptGb") String rptGb);
 	// 사진첨부 (2026-08-14) — 칸(1~4) 고정, 같은 칸 재업로드=교체(UPSERT)
 	List<Map<String, Object>> selectSafeRptFile(@Param("srpSeq") long srpSeq);
 	int upsertSafeRptFile(Map<String, Object> param);

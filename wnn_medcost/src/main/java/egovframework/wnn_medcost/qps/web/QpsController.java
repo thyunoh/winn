@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260814-SRPHOTO";
+	private static final String BUILD = "20260815-SRSUBS";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;

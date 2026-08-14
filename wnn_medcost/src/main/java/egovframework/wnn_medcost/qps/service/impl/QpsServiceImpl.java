@@ -1137,6 +1137,8 @@ public class QpsServiceImpl implements QpsService {
 		out.put("list", mapper.selectSafeRptList(hospCd, inYear, rptGb));
 		// 유형별 설정(반복행 표·서명란·정형문구). 설정이 없는 유형이 대부분이라 null 이 정상이다.
 		out.put("form", mapper.selectSafeRptForm(rptGb));
+		// 반복행 표 여러 벌(2026-08-15) — 있으면 화면이 FORM 단벌 대신 이걸 그린다(빈 배열 = 종전 동작)
+		out.put("subs", mapper.selectSafeRptSub(rptGb));
 		return out;
 	}
 
