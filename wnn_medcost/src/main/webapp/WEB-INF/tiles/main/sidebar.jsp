@@ -265,6 +265,11 @@
                                                  K 는 원본에만 있는 「격리 및 강박 시행시간」 칸이 있다(SEC_TIME). --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=M">다학제 평가팀</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=K">다학제(개최)</a></li>
+                                            <%-- ★원무총무 3형제(2026-08-14) — w01~06 운영위 여섯 판이 한 판(월은 회의 일시가 담는다).
+                                                 ⚠인사위원회 gb=H — 'P' 는 약사위원회가 먼저 쓴다(코드 충돌 정정 이력). --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=W">운영위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=C">중독연구소 운영위</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=H">인사위원회</a></li>
                                         </ul>
                                     </div>
                                 </li>

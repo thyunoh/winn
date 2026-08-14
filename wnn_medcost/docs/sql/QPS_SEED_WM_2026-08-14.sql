@@ -41,9 +41,10 @@ DELETE FROM TBL_QPS_CHK_FORM WHERE HOSP_CD='*' AND FORM_ID BETWEEN 'ADM005' AND 
 -- ═══ ① 회의록 위원회 코드 3건 (엔진 변경 없음) ══════════════════════════════
 INSERT INTO TBL_CODE_DTL
  (CODE_GB, CODE_CD, SUB_CODE, JOB_SEQ, SUB_CODE_NM, START_DT, END_DT, USE_YN, SORT, ACTION_YN, REG_USER) VALUES
+ -- ⚠인사위원회는 'P' 가 아니다 — 회의록 화면(qpsMinutes)의 약사위원회가 이미 P 를 쓴다(2026-08-14 정정)
  ('Q','QPS_FORM_GB','W',1,'운영위원회'      ,'20000101','99991231','Y',3,'Y','system'),
  ('Q','QPS_FORM_GB','C',1,'중독연구소 운영위원회','20000101','99991231','Y',4,'Y','system'),
- ('Q','QPS_FORM_GB','P',1,'인사위원회'      ,'20000101','99991231','Y',5,'Y','system')
+ ('Q','QPS_FORM_GB','H',1,'인사위원회'      ,'20000101','99991231','Y',5,'Y','system')
 ON DUPLICATE KEY UPDATE SUB_CODE_NM=VALUES(SUB_CODE_NM), SORT=VALUES(SORT), USE_YN='Y', ACTION_YN='Y';
 
 -- ═══ ② 점검표 8종 (LIST 6 · ITEM_DAY 1 · EQUIP_DAY 1) ═══════════════════════

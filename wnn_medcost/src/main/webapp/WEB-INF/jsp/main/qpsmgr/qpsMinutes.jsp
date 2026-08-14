@@ -83,6 +83,13 @@
              원본에만 있는 「격리 및 강박 시행시간」 칸이 있다 → 아래 #qmSecWrap (S 의 조치표와 같은 규칙) --%>
     <option value="M">다학제 평가팀</option>
     <option value="K">다학제(개최)</option>
+    <%-- ★원무총무 3형제(2026-08-14) — 운영위원회(w01~06 여섯 판 = 한 판) · 중독연구소 · 인사위원회.
+         원본 칸(정기/임시·간사·의안·의결·참석자 서명·첨부)이 이 화면에 이미 다 있다 — 코드값이면 끝.
+         ⚠인사위원회는 'P' 가 아니다 — 약사가 P 를 먼저 쓴다. 'H' 로 정했다(코드 충돌 실사고 방지).
+         차수(중독연구소 「2026년 __차」)는 회의명에 적는다(다학제 M/K 전례). --%>
+    <option value="W">운영위원회</option>
+    <option value="C">중독연구소</option>
+    <option value="H">인사위원회</option>
   </select>
   <select id="qmYear" style="width:auto;" onchange="qmList();"></select>
   <%-- 저장·인쇄·삭제는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정).
@@ -202,7 +209,10 @@
                          : (qmGb()==='N') ? '영양관리위원회 회의록'
                          : (qmGb()==='S') ? '소방안전관리위원회 회의록'
                          : (qmGb()==='M') ? '다학제 평가팀 회의록'
-                         : (qmGb()==='K') ? '다학제 평가팀 개최에 따른 회의록' : '위원회 회의록';
+                         : (qmGb()==='K') ? '다학제 평가팀 개최에 따른 회의록'
+                         : (qmGb()==='W') ? '운영위원회 회의록'
+                         : (qmGb()==='C') ? '중독연구소 운영위원회 회의록'
+                         : (qmGb()==='H') ? '인사위원회 회의록' : '위원회 회의록';
     qmActToggle();   // 위원회를 바꾸면 하단 조치표가 붙거나 사라진다
     return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value }).then(function(res){
       apprLine = res.line || [];
