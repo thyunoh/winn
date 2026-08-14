@@ -1517,7 +1517,7 @@
 	<!-- 설정이 없는 유형이 대부분이다 — 없으면 null 이 와서 화면이 표를 안 그린다(지금과 동일 동작). -->
 	<select id="selectSafeRptForm" resultType="java.util.HashMap">
 		SELECT RPT_GB AS rptgb, SUB_NM AS subnm, SUB_COLS AS subcols,
-		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, PHOTO_YN AS photoyn
+		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, PHOTO_YN AS photoyn, LBL_JSON AS lbljson
 		  FROM TBL_QPS_SAFERPT_FORM
 		 WHERE RPT_GB = #{rptGb} AND USE_YN = 'Y'
 	</select>

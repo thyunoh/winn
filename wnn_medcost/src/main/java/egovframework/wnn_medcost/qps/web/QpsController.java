@@ -1156,7 +1156,12 @@ public class QpsController {
 			//   DAY_ITEM + 'M' 이면 「1~12월 행 × 항목 열」이라 MONTH_ITEM 이라는 새 축이 필요 없다.
 			//   ⚠격자에 기간이 없는 축(LIST·ITEM_COL)은 이 칸을 안 쓴다. 남겨 두면 헷갈린다.
 			boolean gridHasPrd = !"LIST".equals(axisGb) && !"ITEM_COL".equals(axisGb);
-			m.put("prdKind", gridHasPrd ? kindOf(p.get("prdKind"), axisGb) : null);
+			String prdKind = gridHasPrd ? kindOf(p.get("prdKind"), axisGb) : null;
+			m.put("prdKind", prdKind);
+			// ★기간 칸이 월(M)인 날짜 격자는 **연 문서**다 — 1~12월이 한 장에 온다(혈당측정기,
+			//   2026-08-14 연간격자 설계 §②). ITEM_MONTH 가 이미 그랬듯, 문서 단위는 축이 아니라
+			//   「격자가 담는 기간」이 정한다. (ITEM_MONTH 는 위에서 이미 'Y' — 여기선 변화 없음)
+			if (gridHasPrd && "M".equals(prdKind) && "M".equals(prdGb)) { prdGb = "Y"; m.put("prdGb", prdGb); }
 			// ★기간 세분(2026-08-12) — 기간 칸 **안**을 쪼개는 이름들. D·E·N / 10시·15시 / 상·중·하.
 			//   ***고정 목록으로는 안 된다*** — 값이 서식마다 다르다. 그래서 서식이 이름을 정한다.
 			//   ⚠최대 9쪽. 번호가 `기간×10 + 쪽` 이라 열이면 10 이상이 두 자리를 먹는다.

@@ -128,17 +128,19 @@
         <button type="button" class="sr-btn ghost" onclick="srUseIncid();">↧ 가져오기</button>
         <span class="sr-sub" id="srIncidMsg"></span>
       </div>
+      <%-- ★data-lbl = 라벨 오버라이드 키(FORM.LBL_JSON, 2026-08-14) — 값 '-' 는 그 칸을 화면·인쇄에서 숨긴다.
+           교육 보고서(EDURPT)·상담일지 계열이 사고 라벨을 제 이름으로 바꿔 쓴다. 비면 지금 그대로. --%>
       <div class="sr-form">
-        <div class="lb">발생일 *</div>  <div><input type="date" id="f_occurDt"></div>
-        <div class="lb">발생시각</div>  <div><input type="text" id="f_occurTm" maxlength="5" placeholder="14:30"></div>
-        <div class="lb">보고일</div>    <div><input type="date" id="f_rptDt"></div>
-        <div class="lb">발생장소</div>  <div><input type="text" id="f_place" maxlength="200"></div>
-        <div class="lb" id="lbTargetNm">성명</div>  <div><input type="text" id="f_targetNm" maxlength="60"></div>
-        <div class="lb" id="lbTargetNo">등록번호</div> <div><input type="text" id="f_targetNo" maxlength="40"></div>
-        <div class="lb">부서</div>      <div><input type="text" id="f_deptNm" maxlength="60"></div>
-        <div class="lb">직위</div>      <div><input type="text" id="f_positionNm" maxlength="60"></div>
-        <div class="lb" id="lbAdmit">입원일</div> <div><input type="date" id="f_admitDt"></div>
-        <div class="lb" id="lbDiag">진단명</div>  <div><input type="text" id="f_diagNm" maxlength="200"></div>
+        <div class="lb" data-lbl="occurDt">발생일 *</div>  <div><input type="date" id="f_occurDt"></div>
+        <div class="lb" data-lbl="occurTm">발생시각</div>  <div><input type="text" id="f_occurTm" maxlength="5" placeholder="14:30"></div>
+        <div class="lb" data-lbl="rptDt">보고일</div>    <div><input type="date" id="f_rptDt"></div>
+        <div class="lb" data-lbl="place">발생장소</div>  <div><input type="text" id="f_place" maxlength="200"></div>
+        <div class="lb" id="lbTargetNm" data-lbl="targetNm">성명</div>  <div><input type="text" id="f_targetNm" maxlength="60"></div>
+        <div class="lb" id="lbTargetNo" data-lbl="targetNo">등록번호</div> <div><input type="text" id="f_targetNo" maxlength="40"></div>
+        <div class="lb" data-lbl="deptNm">부서</div>      <div><input type="text" id="f_deptNm" maxlength="60"></div>
+        <div class="lb" data-lbl="positionNm">직위</div>      <div><input type="text" id="f_positionNm" maxlength="60"></div>
+        <div class="lb" id="lbAdmit" data-lbl="admitDt">입원일</div> <div><input type="date" id="f_admitDt"></div>
+        <div class="lb" id="lbDiag" data-lbl="diagNm">진단명</div>  <div><input type="text" id="f_diagNm" maxlength="200"></div>
       </div>
     </div>
 
@@ -156,28 +158,28 @@
       <button type="button" class="sr-btn ghost" style="margin-top:8px;" onclick="srRowAdd();">＋ 행 추가</button>
     </div>
 
-    <div class="sr-card">
+    <div class="sr-card" id="cardSix">
       <h4>사건개요 (육하원칙) <span class="hint">— 안 쓰는 서식은 비워 두면 인쇄물에도 안 나옵니다</span></h4>
       <div class="sr-form">
-        <div class="lb">언제</div>   <div><input type="text" id="f_wWhen" maxlength="300"></div>
-        <div class="lb">누가</div>   <div><input type="text" id="f_wWho" maxlength="300"></div>
-        <div class="lb">어디서</div> <div><input type="text" id="f_wWhere" maxlength="300"></div>
-        <div class="lb">무엇을</div> <div><input type="text" id="f_wWhat" maxlength="500"></div>
-        <div class="lb">어떻게</div> <div class="full"><input type="text" id="f_wHow" maxlength="500"></div>
-        <div class="lb">왜</div>     <div class="full"><input type="text" id="f_wWhy" maxlength="500"></div>
+        <div class="lb" data-lbl="wWhen">언제</div>   <div><input type="text" id="f_wWhen" maxlength="300"></div>
+        <div class="lb" data-lbl="wWho">누가</div>   <div><input type="text" id="f_wWho" maxlength="300"></div>
+        <div class="lb" data-lbl="wWhere">어디서</div> <div><input type="text" id="f_wWhere" maxlength="300"></div>
+        <div class="lb" data-lbl="wWhat">무엇을</div> <div><input type="text" id="f_wWhat" maxlength="500"></div>
+        <div class="lb" data-lbl="wHow">어떻게</div> <div class="full"><input type="text" id="f_wHow" maxlength="500"></div>
+        <div class="lb" data-lbl="wWhy">왜</div>     <div class="full"><input type="text" id="f_wWhy" maxlength="500"></div>
       </div>
     </div>
 
     <div class="sr-card">
       <h4>서술</h4>
       <div class="sr-form">
-        <div class="lb">사건경위</div>   <div class="full"><textarea id="f_summary" rows="3"></textarea></div>
-        <div class="lb">활력징후</div>   <div class="full"><textarea id="f_vitalTxt" rows="2"></textarea></div>
-        <div class="lb">신체손상정도<br>· 결과</div> <div class="full"><textarea id="f_injuryTxt" rows="2"></textarea></div>
-        <div class="lb">치료내용<br>· 진료내역</div> <div class="full"><textarea id="f_treatTxt" rows="3"></textarea></div>
-        <div class="lb">문제원인<br>· 발생원인</div> <div class="full"><textarea id="f_causeTxt" rows="3"></textarea></div>
-        <div class="lb">개선방안<br>· 처리결과</div> <div class="full"><textarea id="f_planTxt" rows="3"></textarea></div>
-        <div class="lb">비고</div>       <div class="full"><textarea id="f_note" rows="2"></textarea></div>
+        <div class="lb" data-lbl="summary">사건경위</div>   <div class="full"><textarea id="f_summary" rows="3"></textarea></div>
+        <div class="lb" data-lbl="vitalTxt">활력징후</div>   <div class="full"><textarea id="f_vitalTxt" rows="2"></textarea></div>
+        <div class="lb" data-lbl="injuryTxt">신체손상정도<br>· 결과</div> <div class="full"><textarea id="f_injuryTxt" rows="2"></textarea></div>
+        <div class="lb" data-lbl="treatTxt">치료내용<br>· 진료내역</div> <div class="full"><textarea id="f_treatTxt" rows="3"></textarea></div>
+        <div class="lb" data-lbl="causeTxt">문제원인<br>· 발생원인</div> <div class="full"><textarea id="f_causeTxt" rows="3"></textarea></div>
+        <div class="lb" data-lbl="planTxt">개선방안<br>· 처리결과</div> <div class="full"><textarea id="f_planTxt" rows="3"></textarea></div>
+        <div class="lb" data-lbl="note">비고</div>       <div class="full"><textarea id="f_note" rows="2"></textarea></div>
       </div>
     </div>
 
@@ -226,13 +228,37 @@
     sel.value = y;
   })();
 
-  /** 직원 대상 서식이면 라벨을 바꾼다 — 환자 등록번호를 직원에게 물으면 안 된다. */
+  /* ── 라벨 오버라이드 (FORM.LBL_JSON, 2026-08-14) ──────────────────────────
+       본문 26칸의 <이름>만 서식이 바꾼다 — 교육 보고서·상담일지 계열은 칸은 맞는데 이름이 사고 서식이다.
+       키 = data-lbl. 값 '-' = 그 칸을 화면·인쇄에서 숨긴다. 비면 기본 라벨 그대로(기존 유형 무영향). */
+  var DEF_LBL = null;
+  function lblMap(){ try { return (FORM && FORM.lbljson) ? (JSON.parse(FORM.lbljson) || {}) : {}; } catch(e){ return {}; } }
+  function L(key, dv){ var v = lblMap()[key]; return (v && v !== '-') ? v : dv; }
+  function lblHidden(key){ return lblMap()[key] === '-'; }
+
+  /** 라벨 일괄 적용 — 직원 대상 서식 보정(환자 등록번호를 직원에게 물으면 안 된다) + LBL_JSON 오버라이드 */
   function applyLabels(){
     var staff = (gb() === 'STAFF' || gb() === 'INFEXP' || gb() === 'HAZMAT' || gb() === 'HARASS' || gb() === 'SECU');
-    gel('lbTargetNm').textContent = staff ? '직원 성명' : '환자 성명';
-    gel('lbTargetNo').textContent = staff ? '사번' : '등록번호';
+    /* 첫 호출 때 원본 라벨을 담아 둔다 — 유형을 오가면 기본으로 되돌아와야 한다 */
+    if (!DEF_LBL){ DEF_LBL = {}; document.querySelectorAll('#qpsSafeRpt .lb[data-lbl]').forEach(function(e){
+      DEF_LBL[e.getAttribute('data-lbl')] = e.innerHTML; }); }
+    var m = lblMap();
+    document.querySelectorAll('#qpsSafeRpt .lb[data-lbl]').forEach(function(e){
+      var k = e.getAttribute('data-lbl'), v = m[k];
+      e.innerHTML = (v && v !== '-') ? esc(v) : DEF_LBL[k];
+      var hide = (v === '-'), sib = e.nextElementSibling;   // 라벨 뒤 값 칸도 같이 숨긴다
+      e.style.display = hide ? 'none' : '';
+      if (sib) sib.style.display = hide ? 'none' : '';
+    });
+    if (staff){   // LBL_JSON 이 그 칸을 정하지 않았을 때만 — 서식이 정한 이름이 우선이다
+      if (!m.targetNm) gel('lbTargetNm').textContent = '직원 성명';
+      if (!m.targetNo) gel('lbTargetNo').textContent = '사번';
+    }
     gel('lbAdmit').style.opacity = staff ? '.4' : '1';
     gel('lbDiag').style.opacity  = staff ? '.4' : '1';
+    /* 사건개요 — 여섯 칸을 전부 숨긴 서식(교육 등)은 카드째 걷는다 */
+    var six = ['wWhen','wWho','wWhere','wWhat','wHow','wWhy'];
+    gel('cardSix').style.display = six.every(function(k){ return m[k] === '-'; }) ? 'none' : '';
     gel('srTitle').textContent = gbNm();
   }
 
@@ -646,24 +672,40 @@
     }).join('');
 
     function row(lb, v){ return v ? ('<tr><th style="width:110px;">' + lb + '</th><td class="pre" colspan="3">' + esc(v) + '</td></tr>') : ''; }
-    var six = [['언제', val('f_wWhen')], ['누가', val('f_wWho')], ['어디서', val('f_wWhere')],
-               ['무엇을', val('f_wWhat')], ['어떻게', val('f_wHow')], ['왜', val('f_wWhy')]]
+    /* 서술 칸 — 라벨 오버라이드를 따르고, 숨긴 칸('-')은 값이 있어도 찍지 않는다 */
+    function rowL(key, dv, id){ return lblHidden(key) ? '' : row(esc(L(key, dv)), val(id)); }
+    var six = [[L('wWhen','언제'), val('f_wWhen')], [L('wWho','누가'), val('f_wWho')], [L('wWhere','어디서'), val('f_wWhere')],
+               [L('wWhat','무엇을'), val('f_wWhat')], [L('wHow','어떻게'), val('f_wHow')], [L('wWhy','왜'), val('f_wWhy')]]
               .filter(function(x){ return x[1]; });
+
+    /* 머리표 — [라벨,값] 짝을 모아 한 줄에 둘씩. 숨긴 칸은 짝 자체를 안 만든다(LBL_JSON '-') */
+    var lm = lblMap(), hp = [];
+    if (!lblHidden('occurDt'))
+      hp.push([L('occurDt','발생일시'), (val('f_occurDt') + ' ' + val('f_occurTm')).trim()]);
+    if (!lblHidden('rptDt'))    hp.push([L('rptDt','보고일'), val('f_rptDt')]);
+    if (!lblHidden('targetNm')) hp.push([gel('lbTargetNm').textContent, val('f_targetNm')]);
+    if (!lblHidden('targetNo')) hp.push([gel('lbTargetNo').textContent, val('f_targetNo')]);
+    if (!lm.deptNm && !lm.positionNm)   // 기본 서식은 종전대로 '부서 / 직위' 한 칸
+      hp.push(['부서 / 직위', (val('f_deptNm') + ' ' + val('f_positionNm')).trim()]);
+    else {
+      if (!lblHidden('deptNm'))     hp.push([L('deptNm','부서'), val('f_deptNm')]);
+      if (!lblHidden('positionNm')) hp.push([L('positionNm','직위'), val('f_positionNm')]);
+    }
+    if (!lblHidden('place')) hp.push([L('place','발생장소'), val('f_place')]);
+    if (!lblHidden('admitDt') && val('f_admitDt')) hp.push([L('admitDt','입원일'), val('f_admitDt')]);
+    if (!lblHidden('diagNm') && val('f_diagNm'))   hp.push([L('diagNm','진단명'), val('f_diagNm')]);
+    var headRows = '';
+    for (var hi = 0; hi < hp.length; hi += 2) {
+      var ha = hp[hi], hb = hp[hi + 1];
+      headRows += '<tr><th style="width:110px;">' + esc(ha[0]) + '</th>' +
+                  (hb ? '<td class="l" style="width:32%;">' + esc(ha[1]) + '</td>' +
+                        '<th style="width:90px;">' + esc(hb[0]) + '</th><td class="l">' + esc(hb[1]) + '</td>'
+                      : '<td class="l" colspan="3">' + esc(ha[1]) + '</td>') + '</tr>';
+    }
 
     var body = apprHtml() +
       '<div class="h1">' + esc(gbNm()) + '</div><div style="clear:both;"></div>' +
-      '<table><tbody>' +
-        '<tr><th style="width:110px;">발생일시</th><td class="l" style="width:32%;">' +
-          esc(val('f_occurDt')) + ' ' + esc(val('f_occurTm')) + '</td>' +
-          '<th style="width:90px;">보고일</th><td class="l">' + esc(val('f_rptDt')) + '</td></tr>' +
-        '<tr><th>' + esc(gel('lbTargetNm').textContent) + '</th><td class="l">' + esc(val('f_targetNm')) + '</td>' +
-          '<th>' + esc(gel('lbTargetNo').textContent) + '</th><td class="l">' + esc(val('f_targetNo')) + '</td></tr>' +
-        '<tr><th>부서 / 직위</th><td class="l">' + esc(val('f_deptNm')) + ' ' + esc(val('f_positionNm')) + '</td>' +
-          '<th>발생장소</th><td class="l">' + esc(val('f_place')) + '</td></tr>' +
-        (val('f_admitDt') || val('f_diagNm')
-          ? '<tr><th>입원일</th><td class="l">' + esc(val('f_admitDt')) + '</td>' +
-            '<th>진단명</th><td class="l">' + esc(val('f_diagNm')) + '</td></tr>' : '') +
-      '</tbody></table>' +
+      '<table><tbody>' + headRows + '</tbody></table>' +
       (chkRows ? '<table><tbody>' + chkRows + '</tbody></table>' : '') +
       (six.length ? '<table><tbody><tr><th style="width:110px;" rowspan="' + six.length + '">사건개요</th>' +
           six.map(function(x, i){
@@ -672,10 +714,10 @@
           }).join('') + '</tbody></table>' : '') +
       rowTblHtml() +
       '<table><tbody>' +
-        row('사건경위', val('f_summary')) + row('활력징후', val('f_vitalTxt')) +
-        row('신체손상정도·결과', val('f_injuryTxt')) + row('치료내용·진료내역', val('f_treatTxt')) +
-        row('문제원인·발생원인', val('f_causeTxt')) + row('개선방안·처리결과', val('f_planTxt')) +
-        row('비고', val('f_note')) +
+        rowL('summary','사건경위','f_summary') + rowL('vitalTxt','활력징후','f_vitalTxt') +
+        rowL('injuryTxt','신체손상정도·결과','f_injuryTxt') + rowL('treatTxt','치료내용·진료내역','f_treatTxt') +
+        rowL('causeTxt','문제원인·발생원인','f_causeTxt') + rowL('planTxt','개선방안·처리결과','f_planTxt') +
+        rowL('note','비고','f_note') +
       '</tbody></table>' +
       photoTblHtml() +
       // 정형문구·서명란은 값이 없다 — 서식이 정한 글자를 그대로 찍는 인쇄 전용 요소다
