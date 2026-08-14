@@ -245,6 +245,10 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectSafeRptRow(@Param("srpSeq") long srpSeq);
 	int deleteSafeRptRow(@Param("srpSeq") long srpSeq);
 	int insertSafeRptRow(Map<String, Object> param);
+	// 사진첨부 (2026-08-14) — 칸(1~4) 고정, 같은 칸 재업로드=교체(UPSERT)
+	List<Map<String, Object>> selectSafeRptFile(@Param("srpSeq") long srpSeq);
+	int upsertSafeRptFile(Map<String, Object> param);
+	int deleteSafeRptFile(@Param("srpSeq") long srpSeq, @Param("fileSeq") int fileSeq);
 
 	/* QI 중간·최종보고서 (한 표 + RPT_GB) */
 	List<Map<String, Object>> selectQiRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,

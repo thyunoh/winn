@@ -1517,7 +1517,7 @@
 	<!-- 설정이 없는 유형이 대부분이다 — 없으면 null 이 와서 화면이 표를 안 그린다(지금과 동일 동작). -->
 	<select id="selectSafeRptForm" resultType="java.util.HashMap">
 		SELECT RPT_GB AS rptgb, SUB_NM AS subnm, SUB_COLS AS subcols,
-		       SIGN_LINE AS signline, FOOT_TXT AS foottxt
+		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, PHOTO_YN AS photoyn
 		  FROM TBL_QPS_SAFERPT_FORM
 		 WHERE RPT_GB = #{rptGb} AND USE_YN = 'Y'
 	</select>
@@ -1539,6 +1539,27 @@
 			(#{srpSeq}, #{it.rowno}, #{it.colno}, #{it.val})
 		</foreach>
 	</insert>
+
+	<!-- ─── 사진첨부 (2026-08-14) ───────────────────────────────────────
+	     설계 : docs/proposals/QPS_사진첨부_연간격자_설계_2026-08-14.md §①
+	     칸(FILE_SEQ 1~4)이 2×2 격자의 고정 자리다 — 같은 칸에 다시 올리면 교체(UPSERT).
+	     파일 실체는 sftp 파일서버(공통첨부와 같은 장치), 여기는 경로 메타만 담는다. -->
+	<select id="selectSafeRptFile" resultType="java.util.HashMap">
+		SELECT FILE_SEQ AS fileseq, FILE_PATH AS filepath, ORG_NM AS orgnm
+		  FROM TBL_QPS_SAFERPT_FILE
+		 WHERE SRP_SEQ = #{srpSeq}
+		 ORDER BY FILE_SEQ
+	</select>
+
+	<insert id="upsertSafeRptFile" parameterType="map">
+		INSERT INTO TBL_QPS_SAFERPT_FILE (SRP_SEQ, FILE_SEQ, FILE_PATH, ORG_NM, REG_USER)
+		VALUES (#{srpSeq}, #{fileSeq}, #{filePath}, #{orgNm}, #{regUser})
+		ON DUPLICATE KEY UPDATE FILE_PATH=#{filePath}, ORG_NM=#{orgNm}, REG_USER=#{regUser}, REG_DTTM=NOW()
+	</insert>
+
+	<delete id="deleteSafeRptFile">
+		DELETE FROM TBL_QPS_SAFERPT_FILE WHERE SRP_SEQ = #{srpSeq} AND FILE_SEQ = #{fileSeq}
+	</delete>
 
 
 	<!-- ═══ QI 중간·최종보고서 ═══

@@ -66,7 +66,11 @@
   **관리자 모듈 위너넷 중복 확인**(대기).
 - 확장 2건 설계 완료 : [사진첨부·연간격자 설계](docs/proposals/QPS_사진첨부_연간격자_설계_2026-08-14.md) —
   ★연간 격자는 **새 조각 불필요**(항목×월 = 기존 `ITEM_MONTH` · 혈당측정기만 서버 한 줄). 재캡처 2장도 완료.
-  다음 일감 : 사진첨부 구현(DDL+매퍼+화면) → `EDURPT` 공통 유형 시드 → 보건관리자·원무총무 **시드**
+- ✅**[2026-08-14 심야·집 PC] 사진첨부 구현 완료** — DDL(`PHOTO_YN`+`TBL_QPS_SAFERPT_FILE`) **운영 적용**,
+  매퍼 3쿼리·자바 4개(`safeRptPhotoUpload/Delete.do`)·qpsSafeRpt.jsp(2×2 칸·개인정보 안내·인쇄).
+  `build=`**`20260814-SRPHOTO`**. ⚠`<img>` 직결 불가(`download.do` attachment 강제) → **fetch→blob→objectURL**.
+  ⛔남은 것 : Eclipse 빌드·재기동 후 화면 왕복 검증(설정표 0행 — 임시 `PHOTO_YN='Y'` 걸고 확인 후 삭제).
+  상세 = 인수인계 §5-4 완료 블록. 다음 일감 : `EDURPT` 공통 유형 시드 → 보건관리자·원무총무 **시드**
   (회의록 신형 `FORM_GB` 설계 먼저).
 - ★★**SUNWOO 캡처는 이 PC 에서도 된다**(2026-08-14 실측으로 정정 — 「그 노트북에서만」이 아니다).
   computer-use MCP 없이 **PowerShell `CopyFromScreen` + `user32 mouse_event`** 로 몬다.

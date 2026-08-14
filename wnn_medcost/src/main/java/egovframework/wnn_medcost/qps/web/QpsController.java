@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260814-QPSDIR";
+	private static final String BUILD = "20260814-SRPHOTO";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1746,6 +1746,73 @@ public class QpsController {
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("srpSeq", longOf(p.get("srpSeq"))); m.put("regUser", userId(request));
 			svc.deleteSafeRpt(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ─── 사진첨부 (2026-08-14 · 설계 §①) ─────────────────────────────────
+	   칸(fileSeq 1~4)이 2×2 격자의 고정 자리다 — 같은 칸에 다시 올리면 교체.
+	   파일 실체는 공통첨부와 같은 sftp 파일서버, 폴더만 SAFERPT_PHOTO 로 가른다.
+	   ★남의 병원 문서에 못 붙이게 문서 소유를 먼저 확인한다(selectSafeRptOne 의 doc). */
+	@RequestMapping(value = "/qps/safeRptPhotoUpload.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> safeRptPhotoUpload(@RequestParam("file") MultipartFile file,
+	                                              @RequestParam Map<String, Object> p,
+	                                              HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("srpSeq"));
+			int slot = (int) Math.max(0, longOf(p.get("fileSeq")) == null ? 0 : longOf(p.get("fileSeq")));
+			if (seq == null || seq <= 0) return fail(res, "보고서를 먼저 저장한 뒤 사진을 붙일 수 있습니다.");
+			if (slot < 1 || slot > 4) return fail(res, "사진 칸 번호가 올바르지 않습니다.");
+			if (file == null || file.isEmpty()) return fail(res, "사진 파일을 선택해 주세요.");
+			// 그림 파일만 — 인쇄물에 <img> 로 박히므로 그 밖의 형식은 여기서 거른다(문서류는 공통첨부로).
+			String ct = String.valueOf(file.getContentType());
+			if (!ct.startsWith("image/")) return fail(res, "그림 파일(JPG·PNG 등)만 올릴 수 있습니다. 문서는 아래 [사진 · 첨부파일]에 올려 주세요.");
+			Object doc = svc.selectSafeRptOne(hospCd, seq).get("doc");
+			if (doc == null) return fail(res, "보고서를 찾을 수 없습니다.");
+
+			String origNm = file.getOriginalFilename();
+			String remoteNm = UUID.randomUUID() + "_" + origNm;
+			String folder = "QPS/" + hospCd + "/SAFERPT_PHOTO/" + seq;   // 병원별 폴더(개인정보 격리 — 설계 §①)
+			java.io.File tmp = java.nio.file.Files.createTempFile("qpsph_", ".bin").toFile();
+			String remotePath;
+			try {
+				file.transferTo(tmp);
+				remotePath = sftpService.putFile(tmp.getAbsolutePath(), folder, remoteNm);
+			} finally {
+				if (tmp.exists()) tmp.delete();
+			}
+			if (remotePath == null) return fail(res, "파일서버 전송에 실패했습니다: " + origNm);
+
+			Map<String, Object> m = new HashMap<>();
+			m.put("srpSeq", seq); m.put("fileSeq", slot);
+			m.put("filePath", remotePath); m.put("orgNm", origNm); m.put("regUser", userId(request));
+			svc.saveSafeRptPhoto(m);
+			res.put("fileseq", slot);
+			res.put("filepath", remotePath);
+			res.put("orgnm", origNm);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 사진 칸 비우기 — 메타만 지운다. 파일 실체는 파일서버에 남는다(공통첨부 삭제와 같은 정책). */
+	@RequestMapping(value = "/qps/safeRptPhotoDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> safeRptPhotoDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("srpSeq"));
+			int slot = (int) Math.max(0, longOf(p.get("fileSeq")) == null ? 0 : longOf(p.get("fileSeq")));
+			if (seq == null || seq <= 0 || slot < 1 || slot > 4) return fail(res, "지울 사진 칸이 올바르지 않습니다.");
+			if (svc.selectSafeRptOne(hospCd, seq).get("doc") == null) return fail(res, "보고서를 찾을 수 없습니다.");
+			svc.deleteSafeRptPhoto(seq, slot);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

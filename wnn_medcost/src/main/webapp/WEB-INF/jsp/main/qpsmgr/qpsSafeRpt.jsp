@@ -76,6 +76,21 @@
   #qpsSafeRpt .rowtbl input:focus{ outline:1px solid #8fc3b2; border-radius:3px; background:#fff; }
   #qpsSafeRpt .rowtbl td.del{ width:34px; text-align:center; padding:0; }
   #qpsSafeRpt .rowtbl td.del button{ border:0; background:none; color:#b23b3b; cursor:pointer; font-size:13px; padding:4px 6px; }
+
+  /* 사진첨부 (PHOTO_YN, 2026-08-14) — 2×2 고정 칸. 칸을 누르면 올리고, 같은 칸에 또 올리면 교체 */
+  #qpsSafeRpt .ph-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:560px; }
+  #qpsSafeRpt .ph-cell{ position:relative; border:1.5px dashed #cfd8e0; border-radius:8px; background:#fafcfd;
+      min-height:150px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
+  #qpsSafeRpt .ph-cell:hover{ border-color:#8fc3b2; background:#f7fbf9; }
+  #qpsSafeRpt .ph-cell.has{ border-style:solid; background:#fff; }
+  #qpsSafeRpt .ph-cell img{ max-width:100%; max-height:210px; display:block; }  /* 원본 비율 유지 — 칸에 안 맞춘다 */
+  #qpsSafeRpt .ph-cell .empty{ color:#9aa7ae; font-size:12.5px; text-align:center; line-height:1.7; }
+  #qpsSafeRpt .ph-cell .no{ position:absolute; left:6px; top:5px; font-size:11px; font-weight:800; color:#8a99a3;
+      background:rgba(255,255,255,.85); border-radius:8px; padding:1px 7px; }
+  #qpsSafeRpt .ph-cell .rm{ position:absolute; right:5px; top:5px; border:1px solid #e0b4b4; background:#fff;
+      color:#b23b3b; border-radius:6px; font-size:11.5px; padding:2px 8px; cursor:pointer; }
+  #qpsSafeRpt .ph-note{ font-size:11.5px; color:#a06a2c; background:#fdf6ec; border:1px solid #f0dfc4;
+      border-radius:7px; padding:6px 10px; margin-bottom:9px; }
 </style>
 
 <div class="sr-head">
@@ -164,6 +179,15 @@
         <div class="lb">개선방안<br>· 처리결과</div> <div class="full"><textarea id="f_planTxt" rows="3"></textarea></div>
         <div class="lb">비고</div>       <div class="full"><textarea id="f_note" rows="2"></textarea></div>
       </div>
+    </div>
+
+    <%-- ★사진첨부 — 서식(TBL_QPS_SAFERPT_FORM.PHOTO_YN='Y')이 켠 유형에서만 보인다.
+         칸(1~4)이 인쇄물 2×2 의 고정 자리다. 상담일지 계열·직원 교육 결과 보고서가 쓴다(설계 §①). --%>
+    <div class="sr-card" id="cardPhoto" style="display:none;">
+      <h4>사진첨부 <span class="hint">— 칸을 누르면 사진을 올립니다 · 인쇄물에 2×2로 실립니다</span></h4>
+      <div class="ph-note">⚠ 환자·직원의 얼굴 등 개인정보가 식별되는 사진은 동의 없이 올리지 마세요.</div>
+      <div class="ph-grid" id="srPhotoGrid"></div>
+      <input type="file" id="srPhotoInp" accept="image/*" style="display:none;">
     </div>
 
     <div class="sr-card">
@@ -328,6 +352,84 @@
     return out;
   }
 
+  /* ───── 사진첨부 (2026-08-14 · 설계 §①) ─────────────────────────────────
+     서식(PHOTO_YN='Y')이 켠 유형에서만 카드가 보인다. 칸(1~4) = 인쇄물 2×2 의 고정 자리.
+     ★표시는 fetch→blob→objectURL 로 한다 — /sftp/download.do 가 attachment 강제라
+       <img src> 로 바로 걸면 안 보인다(월보고서 PDF 미리보기와 같은 사정·같은 해법). */
+  var PHOTOS = {}, _phSlot = 0;
+  function photoOn(){ return FORM && FORM.photoyn === 'Y'; }
+  function renderPhotos(){
+    var card = gel('cardPhoto');
+    if (!photoOn()) { card.style.display = 'none'; gel('srPhotoGrid').innerHTML = ''; return; }
+    card.style.display = '';
+    var h = '';
+    for (var i = 1; i <= 4; i++) {
+      var ph = PHOTOS[i];
+      h += '<div class="ph-cell' + (ph ? ' has' : '') + '" onclick="srPhotoPick(' + i + ');" title="' +
+           (ph ? '누르면 이 칸의 사진을 바꿉니다' : '누르면 사진을 올립니다') + '">' +
+           '<span class="no">' + i + '</span>' +
+           (ph
+             ? (ph.url ? '<img src="' + ph.url + '" alt="">' : '<span class="empty">불러오는 중…</span>') +
+               '<button type="button" class="rm" onclick="srPhotoDel(event,' + i + ');">✕ 지우기</button>'
+             : '<span class="empty">＋ 사진 올리기</span>') +
+           '</div>';
+    }
+    gel('srPhotoGrid').innerHTML = h;
+  }
+  /** 서버 목록([{fileseq,filepath,orgnm}]) → 상태 반영 + 표시용 blob 로드 */
+  function setPhotos(files){
+    Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
+    PHOTOS = {};
+    (files || []).forEach(function(f){
+      var s = Number(f.fileseq);
+      if (s >= 1 && s <= 4) PHOTOS[s] = { filepath:f.filepath, orgnm:f.orgnm, url:'' };
+    });
+    renderPhotos();
+    if (!photoOn()) return;
+    Object.keys(PHOTOS).forEach(function(s){ loadPhotoUrl(Number(s)); });
+  }
+  function loadPhotoUrl(slot){
+    var ph = PHOTOS[slot];
+    if (!ph || !ph.filepath) return;
+    fetch('/sftp/download.do?filePath=' + encodeURIComponent(ph.filepath))
+      .then(function(r){ if (!r.ok) throw new Error(); return r.blob(); })
+      .then(function(b){ if (PHOTOS[slot] !== ph) return; ph.url = URL.createObjectURL(b); renderPhotos(); })
+      .catch(function(){ /* 못 불러와도 칸은 남긴다 — 다시 열면 재시도된다 */ });
+  }
+  window.srPhotoPick = function(slot){
+    if (!curSeq) { _alertBox('보고서를 먼저 저장한 뒤 사진을 붙일 수 있습니다.', {icon:'⚠️'}); return; }
+    _phSlot = slot;
+    gel('srPhotoInp').click();
+  };
+  gel('srPhotoInp').onchange = function(){
+    var f = this.files && this.files[0];
+    this.value = '';
+    if (!f || !_phSlot || !curSeq) return;
+    var fd = new FormData();
+    fd.append('srpSeq', curSeq); fd.append('fileSeq', _phSlot); fd.append('file', f);
+    $.ajax({ url:'<c:url value="/qps/safeRptPhotoUpload.do"/>', type:'POST', data:fd,
+             processData:false, contentType:false, dataType:'json' })
+      .then(function(res){
+        if (res && res.result === 'FAIL') { _alertBox(res.message || '업로드에 실패했습니다.', {icon:'❌'}); return; }
+        PHOTOS[Number(res.fileseq)] = { filepath:res.filepath, orgnm:res.orgnm, url:'' };
+        renderPhotos();
+        loadPhotoUrl(Number(res.fileseq));
+        _toast('사진을 올렸습니다.', 'ok');
+      })
+      .fail(function(){ _alertBox('업로드 중 오류가 발생했습니다.', {icon:'❌'}); });
+  };
+  window.srPhotoDel = function(ev, slot){
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }   // 칸 클릭(업로드)으로 번지지 않게
+    _confirmBox({ msg:'이 칸의 사진을 지울까요?', icon:'⚠️', okText:'지우기', okColor:'#b23b3b',
+      onOk: function(){
+        post('<c:url value="/qps/safeRptPhotoDelete.do"/>', { srpSeq:curSeq, fileSeq:slot }).then(function(){
+          if (PHOTOS[slot]) { try { URL.revokeObjectURL(PHOTOS[slot].url); } catch(e){} delete PHOTOS[slot]; }
+          renderPhotos();
+          _toast('지웠습니다.', 'ok');
+        }).catch(err);
+      } });
+  };
+
   window.srLoad = function(){
     return post('<c:url value="/qps/safeRptBase.do"/>', { inYear: gel('srYear').value, rptGb: gb() }).then(function(res){
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('srHosp').textContent = '🏥 ' + HOSP_NM; }
@@ -337,6 +439,7 @@
       applyLabels();
       renderChk({});
       renderRows([]);
+      setPhotos([]);           // 유형이 바뀌면 사진 카드도 서식(PHOTO_YN)에 맞춰 켜고 끈다
       var list = res.list || [], box = gel('srListBox');
       gel('srCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       box.innerHTML = list.length
@@ -367,6 +470,7 @@
       gel('srIncidMsg').textContent = d.incidseq ? ('사고 #' + d.incidseq + ' 와 연결됨') : '';
       renderChk(chkToSel(res.chks));
       renderRows(res.rows);
+      setPhotos(res.files);
       gel('srStat').textContent = '— 저장된 보고서 #' + d.srpseq;
       gel('srDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.srpseq);
@@ -388,6 +492,7 @@
     gel('srIncidMsg').textContent = '';
     renderChk({});
     renderRows([]);
+    setPhotos([]);
     gel('srStat').textContent = '— 새 보고서';
     gel('srDelBtn').style.display = 'none';
     if (fileBox) fileBox.setKey('');
@@ -469,7 +574,10 @@
     /* 하단 서명란·정형문구 — qpsChk.jsp 와 같은 모양으로 맞춘다(두 엔진이 달라 보이면 안 된다) */
     '.foot{ font-size:9.5px; margin:6px 0 2px; text-align:left; }' +
     '.sig{ margin-top:10px; text-align:right; font-size:10.5px; }' +
-    '.sig span{ margin-left:22px; white-space:nowrap; }';
+    '.sig span{ margin-left:22px; white-space:nowrap; }' +
+    /* 사진첨부 2×2 — 원본 비율 유지·칸 안 맞춤(원본 서식이 그렇다). 칸 하나가 A4 반 폭이라 78mm 상한 */
+    '.ph td{ width:50%; height:60mm; text-align:center; vertical-align:middle; }' +
+    '.ph img{ max-width:100%; max-height:58mm; }';
 
   function apprHtml(){
     if (!APPR_LINE.length) return '';
@@ -501,6 +609,19 @@
     return '<table><thead><tr>' + (FORM.subnm ? '<th style="width:110px;"></th>' : '') +
            cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
            '</tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  /** 인쇄용 사진 2×2 — 있는 칸만 줄 단위로 찍는다(3·4번이 비면 아랫줄 없음).
+      ★blob URL 을 그대로 쓴다 — 인쇄창은 이 창이 연 같은 출처 창이라 접근된다. */
+  function photoTblHtml(){
+    if (!photoOn()) return '';
+    var cell = function(s){ var p = PHOTOS[s]; return '<td>' + (p && p.url ? '<img src="' + p.url + '" alt="">' : '') + '</td>'; };
+    var top = PHOTOS[1] || PHOTOS[2], bot = PHOTOS[3] || PHOTOS[4];
+    if (!top && !bot) return '';
+    var body = '';
+    if (top) body += '<tr><th style="width:110px;" rowspan="' + (bot ? 2 : 1) + '">사진첨부</th>' + cell(1) + cell(2) + '</tr>';
+    if (bot) body += '<tr>' + (top ? '' : '<th style="width:110px;">사진첨부</th>') + cell(3) + cell(4) + '</tr>';
+    return '<table class="ph"><tbody>' + body + '</tbody></table>';
   }
 
   window.srPrint = function(){
@@ -556,6 +677,7 @@
         row('문제원인·발생원인', val('f_causeTxt')) + row('개선방안·처리결과', val('f_planTxt')) +
         row('비고', val('f_note')) +
       '</tbody></table>' +
+      photoTblHtml() +
       // 정형문구·서명란은 값이 없다 — 서식이 정한 글자를 그대로 찍는 인쇄 전용 요소다
       (FORM.foottxt ? '<div class="foot">' + esc(FORM.foottxt) + '</div>' : '') +
       (FORM.signline
@@ -571,7 +693,16 @@
       '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    /* 사진(blob)이 다 그려진 뒤 인쇄창을 띄운다 — 300ms 고정 대기로는 사진이 빈 채 찍힐 수 있다.
+       6초(40×150ms)를 넘기면 그냥 연다(사진 하나 못 불러왔다고 인쇄를 막지 않는다). */
+    var tries = 0;
+    (function waitImg(){
+      var ok = true, imgs = [];
+      try { imgs = w.document.images || []; } catch (e) {}
+      for (var i = 0; i < imgs.length; i++) if (!imgs[i].complete) ok = false;
+      if (ok || tries++ > 40) { try { w.print(); } catch (e) {} }
+      else setTimeout(waitImg, 150);
+    })();
   };
 
   // 유형 목록은 공통코드에서 — 유형이 늘어도 화면을 안 고친다

@@ -1147,6 +1147,7 @@ public class QpsServiceImpl implements QpsService {
 		out.put("doc", doc);
 		out.put("chks", doc == null ? new ArrayList<>() : mapper.selectSafeRptChk(srpSeq));
 		out.put("rows", doc == null ? new ArrayList<>() : mapper.selectSafeRptRow(srpSeq));
+		out.put("files", doc == null ? new ArrayList<>() : mapper.selectSafeRptFile(srpSeq));   // 사진첨부(칸 1~4)
 		return out;
 	}
 
@@ -1174,6 +1175,13 @@ public class QpsServiceImpl implements QpsService {
 
 	@Override
 	public int deleteSafeRpt(Map<String, Object> param) throws Exception { return mapper.deleteSafeRpt(param); }
+
+	/** 사진첨부 — 같은 칸(1~4)에 다시 올리면 교체(UPSERT). 파일 실체는 파일서버에 남는다(공통첨부와 같은 정책). */
+	@Override
+	public int saveSafeRptPhoto(Map<String, Object> param) throws Exception { return mapper.upsertSafeRptFile(param); }
+
+	@Override
+	public int deleteSafeRptPhoto(long srpSeq, int fileSeq) throws Exception { return mapper.deleteSafeRptFile(srpSeq, fileSeq); }
 
 	// ============ QI 중간·최종보고서 ============
 

@@ -150,6 +150,9 @@ public interface QpsService {
 	long saveSafeRpt(Map<String, Object> param, List<Map<String, Object>> chks,
 	                 List<Map<String, Object>> rows) throws Exception;
 	int deleteSafeRpt(Map<String, Object> param) throws Exception;
+	/* 사진첨부 — 칸(1~4) 고정 자리. 파일 실체는 sftp 파일서버, 여기는 경로 메타만. */
+	int saveSafeRptPhoto(Map<String, Object> param) throws Exception;
+	int deleteSafeRptPhoto(long srpSeq, int fileSeq) throws Exception;
 
 	/* QI 중간·최종보고서 */
 	List<Map<String, Object>> selectQiRptList(String hospCd, String inYear, String rptGb) throws Exception;
