@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260814-GRPPRD";
+	private static final String BUILD = "20260814-QPSDIR";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -94,7 +94,7 @@ public class QpsController {
 			} catch (Exception ignore) { }
 			model.addAttribute("hospNm", hospNm);
 			model.addAttribute("ipwonCnt", ipwonCnt);
-			return ".main/qpsFall";
+			return ".main/qpsmgr/qpsFall";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -119,7 +119,7 @@ public class QpsController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
-			return ".main/qpsIndex";
+			return ".main/qpsmgr/qpsIndex";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -144,7 +144,7 @@ public class QpsController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
-			return ".main/qpsDef";
+			return ".main/qpsmgr/qpsDef";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -167,7 +167,7 @@ public class QpsController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
-			return ".main/qpsRpt";
+			return ".main/qpsmgr/qpsRpt";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -208,7 +208,7 @@ public class QpsController {
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
 			putFormGb(request, model);   // 감염 메뉴에서 ?gb=I 로 들어오면 감염관리계획서로 열린다
-			return ".main/qpsPlan";
+			return ".main/qpsmgr/qpsPlan";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -223,7 +223,7 @@ public class QpsController {
 	 *   → planGet/planSave 가 formGb 를 그대로 받으므로 이 매핑 한 줄이면 끝난다.
 	 */
 	@RequestMapping(value = "main/qpsSrvPlan.do")
-	public String qpsSrvPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSrvPlan"); }
+	public String qpsSrvPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSrvPlan"); }
 
 	@RequestMapping(value = "/qps/planGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -282,7 +282,7 @@ public class QpsController {
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
 			putFormGb(request, model);   // 감염 메뉴에서 ?gb=I → 감염라운딩
-			return ".main/qpsRound";
+			return ".main/qpsmgr/qpsRound";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -342,7 +342,7 @@ public class QpsController {
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
 			putFormGb(request, model);   // 감염 메뉴에서 ?gb=I → 감염관리위원회
-			return ".main/qpsMinutes";
+			return ".main/qpsmgr/qpsMinutes";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -473,7 +473,7 @@ public class QpsController {
 			if (hospId.isEmpty()) return ".login/LoginWinCT";
 			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
 			model.addAttribute("wnnYn", wnn);
-			return ".main/qpsHelp";
+			return ".main/qpsmgr/qpsHelp";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -496,7 +496,7 @@ public class QpsController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
-			return ".main/qpsLib";
+			return ".main/qpsmgr/qpsLib";
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
@@ -619,7 +619,7 @@ public class QpsController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
-			return ".main/qpsInfRpt";
+			return ".main/qpsmgr/qpsInfRpt";
 		} catch (Exception ex) { return ".login/LoginWinCT"; }
 	}
 
@@ -713,7 +713,7 @@ public class QpsController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
-			return ".main/qpsInfRisk";
+			return ".main/qpsmgr/qpsInfRisk";
 		} catch (Exception ex) { return ".login/LoginWinCT"; }
 	}
 
@@ -796,7 +796,7 @@ public class QpsController {
 
 	/* ═══ 감염병환자 월별 리스트 ═══ */
 	@RequestMapping(value = "main/qpsInfPat.do")
-	public String qpsInfPat(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsInfPat"); }
+	public String qpsInfPat(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsInfPat"); }
 
 	@RequestMapping(value = "/qps/infPatGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -838,7 +838,7 @@ public class QpsController {
 	   원본 10장(낙상·손위생·신체보호대·욕창·불만고충·영양실·근접오류·투약오류·학대및폭력·재택복귀율)
 	   대조 결과 서식은 하나이고 <주제별로 한 장>이다. */
 	@RequestMapping(value = "main/qpsQiPlan.do")
-	public String qpsQiPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsQiPlan"); }
+	public String qpsQiPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsQiPlan"); }
 
 	@RequestMapping(value = "/qps/qiPlanList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -934,7 +934,7 @@ public class QpsController {
 	/* ═══ FMEA 계획서·보고서 (한 서식 + 문서구분) ═══
 	   ★FMEA 회의록은 여기 없다 — 서식 1호(회의록)에 FORM_GB='F' 로 흡수했다. */
 	@RequestMapping(value = "main/qpsFmea.do")
-	public String qpsFmea(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsFmea"); }
+	public String qpsFmea(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsFmea"); }
 
 	@RequestMapping(value = "/qps/fmeaBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1042,8 +1042,8 @@ public class QpsController {
 
 	@RequestMapping(value = "main/qpsChkForm.do")
 	public String qpsChkForm(HttpServletRequest request, ModelMap model) {
-		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsChk");   // 병원 계정은 작성 화면으로
-		return qpsScreen(request, model, ".main/qpsChkForm");
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsmgr/qpsChk");   // 병원 계정은 작성 화면으로
+		return qpsScreen(request, model, ".main/qpsmgr/qpsChkForm");
 	}
 
 	/**
@@ -1058,7 +1058,7 @@ public class QpsController {
 		f = (f == null) ? "" : f.trim().toUpperCase();
 		// 아는 모양만 통과 — 엉뚱한 값이 셀렉트에 들어가면 목록에 없는 값이 골라진 것처럼 보인다
 		model.addAttribute("chkFormId", f.matches("[A-Z0-9_]{2,30}") ? f : "");
-		return qpsScreen(request, model, ".main/qpsChk");
+		return qpsScreen(request, model, ".main/qpsmgr/qpsChk");
 	}
 
 	/** 서식 목록 */
@@ -1578,7 +1578,7 @@ public class QpsController {
 	/* ═══ RCA 근본원인 분석 보고서 ═══
 	   ★RCA 회의록은 여기 없다 — 서식 1호(회의록)에 FORM_GB='R' 로 흡수했다. */
 	@RequestMapping(value = "main/qpsRca.do")
-	public String qpsRca(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsRca"); }
+	public String qpsRca(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsRca"); }
 
 	@RequestMapping(value = "/qps/rcaList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1665,7 +1665,7 @@ public class QpsController {
 	/* ═══ 사고 유형별 보고서 (한 서식 + 유형) ═══
 	   ★체크박스 묶음은 항목표(TBL_QPS_SAFERPT_DEF)에서 온다 — 유형이 늘어도 코드를 안 고친다. */
 	@RequestMapping(value = "main/qpsSafeRpt.do")
-	public String qpsSafeRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSafeRpt"); }
+	public String qpsSafeRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSafeRpt"); }
 
 	@RequestMapping(value = "/qps/safeRptBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1753,7 +1753,7 @@ public class QpsController {
 
 	/* ═══ QI 중간·최종보고서 (한 서식 + 종류 구분) ═══ */
 	@RequestMapping(value = "main/qpsQiRpt.do")
-	public String qpsQiRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsQiRpt"); }
+	public String qpsQiRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsQiRpt"); }
 
 	@RequestMapping(value = "/qps/qiRptList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1845,7 +1845,7 @@ public class QpsController {
 
 	/* ═══ QI 주제선정 기준표 + 우선순위 집계표 (한 화면 두 탭) ═══ */
 	@RequestMapping(value = "main/qpsQiTopic.do")
-	public String qpsQiTopic(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsQiTopic"); }
+	public String qpsQiTopic(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsQiTopic"); }
 
 	@RequestMapping(value = "/qps/qiTopicList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1922,7 +1922,7 @@ public class QpsController {
 
 	/* ═══ QI 활동 자원지원 내역 (연 1부) ═══ */
 	@RequestMapping(value = "main/qpsQiFund.do")
-	public String qpsQiFund(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsQiFund"); }
+	public String qpsQiFund(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsQiFund"); }
 
 	@RequestMapping(value = "/qps/qiFundGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1964,15 +1964,15 @@ public class QpsController {
 
 	/** 처리대장 + 개선활동 처리결과. 한 화면 두 탭 — 대장이 목록, 처리결과가 그 건의 상세다. */
 	@RequestMapping(value = "main/qpsCmpl.do")
-	public String qpsCmpl(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsCmpl"); }
+	public String qpsCmpl(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsCmpl"); }
 
 	/** 불만고충 처리계획서 — 화면만 따로, 자료는 연간 활동계획서와 같은 표(FORM_GB='C'). */
 	@RequestMapping(value = "main/qpsCmplPlan.do")
-	public String qpsCmplPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsCmplPlan"); }
+	public String qpsCmplPlan(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsCmplPlan"); }
 
 	/** 불만고충 지표분석보고서 — 한 화면 + 반기 구분으로 원본 3종을 덮는다. */
 	@RequestMapping(value = "main/qpsCmplRpt.do")
-	public String qpsCmplRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsCmplRpt"); }
+	public String qpsCmplRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsCmplRpt"); }
 
 	@RequestMapping(value = "/qps/cmplList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -2126,7 +2126,7 @@ public class QpsController {
 	/* ═══ 만족도 개선활동 결과보고서 (만족도 사이클 #6) ═══
 	   원본 (원무)(원무2)(간호)(영양) 4종은 같은 서식이고 <부서 × 유형> 조합만 다르다. */
 	@RequestMapping(value = "main/qpsSrvImpr.do")
-	public String qpsSrvImpr(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSrvImpr"); }
+	public String qpsSrvImpr(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSrvImpr"); }
 
 	@RequestMapping(value = "/qps/srvImprList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -2211,11 +2211,11 @@ public class QpsController {
 
 	/* ═══ 감염관리 전담자 (임명장·자격경력·직무기술서 한 벌) ═══ */
 	@RequestMapping(value = "main/qpsInfStaff.do")
-	public String qpsInfStaff(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsInfStaff"); }
+	public String qpsInfStaff(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsInfStaff"); }
 
 	/* ═══ 환자만족도 조사 — 설문 ═══ */
 	@RequestMapping(value = "main/qpsSurvey.do")
-	public String qpsSurvey(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsSurvey"); }
+	public String qpsSurvey(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSurvey"); }
 
 	/** 화면 초기 로드 : 문항표 + 회차 목록 */
 	@RequestMapping(value = "/qps/surveyBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -3337,3 +3337,6 @@ public class QpsController {
 		try { return Long.valueOf(s); } catch (Exception e) { return null; }
 	}
 }
+
+
+
