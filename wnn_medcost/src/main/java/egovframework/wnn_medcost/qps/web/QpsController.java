@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260814-SRPROW";
+	private static final String BUILD = "20260814-GRPPRD";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1237,6 +1237,13 @@ public class QpsController {
 			boolean prdHeadOk = "ITEM_DAY".equals(axisGb) || "ITEM_MONTH".equals(axisGb);
 			m.put("prdHeadYn", (prdHeadOk && "Y".equals(str(p.get("prdHeadYn"), ""))) ? "Y" : "N");
 			m.put("prdHeadNm", prdHeadOk ? unesc(p.get("prdHeadNm")) : "");
+			// ═══ 주기 복합 — 묶음마다 기간 축이 다른 격자 (2026-08-14, 진단검사 근거 10종) ═══
+			//   `묶음명>기간축,…` 예 '매일>D,매주>N,매월>1'. 묶음 이름은 이미 항목의 GRP_NM 에 있고,
+			//   없던 것은 「그 묶음이 어떤 기간으로 뻗는가」 하나뿐이라 그것만 서식이 정한다.
+			//   ⚠기간이 **열**이고 항목이 **행**인 두 축만 — 다른 축은 묶음이 기간을 가질 자리가 없다.
+			//     (범위를 prdHeadOk 와 같이 둔 이유 : 둘 다 「기간 열 × 항목 행」이 전제다)
+			//   비우면 지금과 똑같이 서식의 PRD_KIND 로 격자 한 벌을 그린다.
+			m.put("grpPrd", prdHeadOk ? unesc(p.get("grpPrd")) : "");
 			// ★특이사항 칸 이름을 서식이 정한다(2026-08-12) — 조치사항·기타 이상내용. 비면 「특이사항」.
 			m.put("noteNm", unesc(p.get("noteNm")));
 			// ═══ 격자 아래 자유행 표 (2026-08-13) — 서식이 열 이름을, 문서가 행을 늘린다 ═══

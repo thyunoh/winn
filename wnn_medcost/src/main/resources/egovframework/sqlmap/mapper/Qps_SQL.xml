@@ -2348,6 +2348,7 @@
 		SELECT FORM_ID AS formid, HOSP_CD AS hospcd, FORM_NM AS formnm, CATE_CD AS catecd,
 		       DEPT_CD AS deptcd,
 		       AXIS_GB AS axisgb, PRD_GB AS prdgb, PRD_KIND AS prdkind, PRD_SUB AS prdsub,
+		       GRP_PRD AS grpprd,
 		       EQUIP_CNT AS equipcnt, HALF_YN AS halfyn, SPLIT_N AS splitn, SPLIT_DIR AS splitdir,
 		       GUIDE_TXT AS guidetxt,
 		       HEAD_NMS AS headnms, COL_NMS AS colnms, COL_SRC AS colsrc,
@@ -2394,13 +2395,13 @@
 	     한 병원이 고친 항목이 공통을 덮으면 전 병원 서식이 바뀐다. -->
 	<insert id="saveChkForm" parameterType="map">
 		INSERT INTO TBL_QPS_CHK_FORM
-		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, PRD_SUB, EQUIP_CNT,
+		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, PRD_SUB, GRP_PRD, EQUIP_CNT,
 		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS, ROW_SRC,
 		  DESC_NM, PRE_COLS, POST_COLS, SPAN_ALL_YN, PRD_HEAD_YN, PRD_HEAD_NM, NOTE_NM,
 		  SUB_NM, SUB_COLS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
-		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{prdSub}, #{equipCnt},
+		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{prdSub}, #{grpPrd}, #{equipCnt},
 		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks}, #{rowSrc},
 		  #{descNm}, #{preCols}, #{postCols}, #{spanAllYn}, #{prdHeadYn}, #{prdHeadNm}, #{noteNm},
 		  #{subNm}, #{subCols},
@@ -2408,6 +2409,7 @@
 		ON DUPLICATE KEY UPDATE
 		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD),
 		  AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB), PRD_KIND=VALUES(PRD_KIND), PRD_SUB=VALUES(PRD_SUB),
+		  GRP_PRD=VALUES(GRP_PRD),
 		  EQUIP_CNT=VALUES(EQUIP_CNT), HALF_YN=VALUES(HALF_YN),
 		  SPLIT_N=VALUES(SPLIT_N), SPLIT_DIR=VALUES(SPLIT_DIR), GUIDE_TXT=VALUES(GUIDE_TXT),
 		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS), COL_SRC=VALUES(COL_SRC),

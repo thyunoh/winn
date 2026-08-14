@@ -196,6 +196,14 @@
             칸 나누기 <input type="text" id="f_prdSub" maxlength="200" style="width:150px;"
                    placeholder="쉼표로. 예) D,E,N" oninput="cfAxisChange();">
             <span class="cf-sub" id="cfSubHint"></span>
+            <%-- ★주기 복합(2026-08-14) — 묶음마다 기간 축이 다른 격자. 진단검사 기기 점검표 10종.
+                 「매일 1~31일 / 매주 1~5주 / 매월 한 칸」이 한 장에 세로로 붙은 판이다.
+                 묶음 이름은 **항목표의 묶음(GRP_NM)** 을 그대로 쓴다 — 여기서는 축만 정한다. --%>
+            <span id="f_grpPrdWrap" style="display:none;">
+              주기 복합 <input type="text" id="f_grpPrd" maxlength="300" style="width:230px;"
+                     placeholder="묶음&gt;축. 예) 매일&gt;D,매주&gt;N,매월&gt;1" oninput="cfAxisChange();">
+              <span class="cf-sub" id="cfGrpPrdHint"></span>
+            </span>
             <%-- ★기간 열 머리글 입력 행(2026-08-12) — CCTV·가스보일러의 주차 밑 「-」 칸.
                  서식이 아니라 **문서가 값을 적는** 한 줄이라 켜고 끄기만 서식이 정한다.
                  기간이 열이고 항목이 행인 두 축만(ITEM_DAY·ITEM_MONTH) — cfAxisChange 가 가린다. --%>
@@ -646,6 +654,34 @@
       else if (subs.length > 9) eS.innerHTML = '<span style="color:#b23b3b;">최대 9쪽입니다.</span>';
       else eS.innerHTML = '기간마다 <b>' + subs.length + '쪽</b>씩. ' +
         '<span style="color:#b26a00;">⚠이미 기록이 있는 서식에서 나누기를 바꾸면 옛 값이 어긋납니다 — 그때는 새 서식으로 만드세요.</span>';
+    }
+    // ★주기 복합(2026-08-14) — 기간이 **열**이고 항목이 **행**인 두 축만(서버 grpPrd 범위와 같다)
+    var grpPrdOk = (a === 'ITEM_DAY' || a === 'ITEM_MONTH');
+    gel('f_grpPrdWrap').style.display = grpPrdOk ? '' : 'none';
+    if (grpPrdOk) {
+      var secs = String(val('f_grpPrd') || '').split(',').map(function(s){ return s.trim(); })
+                   .filter(function(s){ return s; });
+      var eG = gel('cfGrpPrdHint'), KN = { D:'1~31일', W:'요일 7칸', N:'주차 5칸', M:'1~12월', Q:'분기 4칸', '1':'한 칸' };
+      if (!secs.length) eG.textContent = '';
+      else {
+        var bad = [], txt = secs.map(function(s){
+          var t = s.split('>'), nm = String(t[0] || '').trim(), k = String(t[1] || '').trim().toUpperCase();
+          if (!nm || !KN[k]) bad.push(s);
+          return nm + '=' + (KN[k] || '?');
+        }).join(' · ');
+        // ★묶음 이름은 **항목표에 그대로 있어야** 그 구간이 그려진다 — 오타가 제일 흔한 사고다
+        var have = {};
+        Array.prototype.forEach.call(document.querySelectorAll('#tbITEM [data-f="grpnm"]'), function(el){
+          if (String(el.value || '').trim()) have[String(el.value).trim()] = 1;
+        });
+        var miss = secs.map(function(s){ return String(s.split('>')[0] || '').trim(); })
+                       .filter(function(nm){ return nm && !have[nm]; });
+        eG.innerHTML = (bad.length
+              ? '<span style="color:#b23b3b;">축을 못 알아봅니다 : ' + bad.join(', ') + ' (D·W·N·M·Q·1)</span>'
+              : '구간 <b>' + secs.length + '</b>벌 — ' + txt)
+          + (miss.length ? '<br><span style="color:#b23b3b;">⚠항목표에 없는 묶음 : ' + miss.join(', ') +
+                           ' — 이름이 어긋나면 그 구간이 안 그려집니다.</span>' : '');
+      }
     }
     // ★인쇄 나누기는 **어느 축에서나** 뜻이 있다 — 열 끊기는 기간 칸이 있는 축, 행 끊기는 전부.
     //   (종전 「반달 접기」는 ITEM_DAY·EQUIP_DAY + 「일」에서만 보였다.)
@@ -1234,7 +1270,7 @@
       "DELETE FROM TBL_QPS_CHK_ITEM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
-      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,PRD_SUB,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
+      ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,PRD_SUB,GRP_PRD,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
       '  SPAN_ALL_YN,PRD_HEAD_YN,PRD_HEAD_NM,NOTE_NM,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
@@ -1243,6 +1279,8 @@
           : ((axis() === 'LIST' || axis() === 'ITEM_COL') ? val('f_prdGb') : 'M')) + ',' +
         (kindOf() ? q(kindOf()) : 'NULL') + ',' +
         q(val('f_prdSub')) + ',' +
+        // 주기 복합 — 기간이 열이고 항목이 행인 두 축만(서버 grpPrd 범위와 같게 맞춘다)
+        q((axis() === 'ITEM_DAY' || axis() === 'ITEM_MONTH') ? val('f_grpPrd') : '') + ',' +
         (Number(val('f_equipCnt')) || 10) + ',' +
         "'N'," +                                                   // HALF_YN 은 더 이상 쓰지 않는다
         (splitOf() ? splitOf().n : 'NULL') + ',' +
@@ -1292,6 +1330,7 @@
       set('f_prdGb', ('YHQMWD'.indexOf(d.prdgb) >= 0 && String(d.prdgb).length === 1) ? d.prdgb : 'M');
       // ★비어 있으면 축에서 유추 — 옛 서식(2026-08-11 12종)이 값 없이도 그대로 그려진다
       set('f_prdSub', d.prdsub);
+      set('f_grpPrd', d.grpprd);   // 주기 복합 — 비면 종전대로 격자 한 벌(2026-08-14)
       set('f_prdKind', (d.prdkind && 'DWNMQ'.indexOf(d.prdkind) >= 0) ? d.prdkind
                        : ((d.axisgb === 'ITEM_MONTH') ? 'M' : 'D'));
       set('f_colNms', d.colnms);
@@ -1339,6 +1378,7 @@
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
     set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D'); set('f_prdSub', '');
+    set('f_grpPrd', '');
     setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N');
     set('f_splitDir', ''); set('f_splitN', 15);
     set('f_prdGb', 'M');
@@ -1368,6 +1408,7 @@
         prdGb: val('f_prdGb'),     // 서버가 LIST·ITEM_COL 일 때만 쓴다(다른 축은 축이 정한다)
         prdKind: kindOf(),         // 격자 기간 칸 — 서버가 격자 있는 축에서만 쓴다
         prdSub: val('f_prdSub'),   // 기간 세분 — 서버가 격자 있는 축에서만 쓴다
+        grpPrd: val('f_grpPrd'),   // 주기 복합 — 서버가 ITEM_DAY·ITEM_MONTH 에서만 쓴다
         colNms: val('f_colNms'),   // 서버가 ITEM_COL 일 때만 쓴다
         colSrc: val('f_colSrc'),   // 열 이름을 서식이 정하나(F) 문서가 정하나(D)
         rowSrc: val('f_rowSrc'),   // 행 묶음 이름을 서식이 정하나(F) 문서가 정하나(D)

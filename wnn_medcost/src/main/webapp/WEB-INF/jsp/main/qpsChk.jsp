@@ -357,8 +357,10 @@
    * 기간 칸 목록 → [{no, label, cls}]. ***표를 그리는 곳은 전부 이걸 쓴다*** —
    * 머리글·셀·인쇄가 따로 세면 칸 수가 어긋난다(반달 접기가 그래서 `data-day` 를 쓴다).
    */
-  function prdCells(){
-    var k = kind(), out = [], i;
+  function prdCells(kk){
+    var k = kk || kind(), out = [], i;
+    // ★'1' = 한 칸. 주기 복합의 「매월」 구간이 이것이다 — 그 달 전체가 칸 하나다(2026-08-14)
+    if (k === '1') return [{ no:1, label:'', cls:'' }];
     if (k === 'W') {           // 요일 7칸 — 토·일은 색을 준다(날짜 격자와 같은 규칙)
       for (i = 0; i < 7; i++) out.push({ no:i+1, label:WDAY[i], cls:(i===5?'sat':(i===6?'sun':'')) });
       return out;
@@ -381,9 +383,11 @@
     return String(FORM.prdsub).split(',').map(function(s){ return s.trim(); })
              .filter(function(s){ return s; }).slice(0, 9);
   }
-  /** 쪼갠 칸까지 펼친 목록. `prd` 는 원래 기간 번호(인쇄 나누기가 이걸 본다). */
-  function prdFlat(){
-    var base = prdCells(), sub = prdSubs(), out = [];
+  /** 쪼갠 칸까지 펼친 목록. `prd` 는 원래 기간 번호(인쇄 나누기가 이걸 본다).
+   *  ★`kk`(묶음의 기간축)를 주면 <b>기간 세분을 적용하지 않는다</b> — 주기 복합과 PRD_SUB 를
+   *    같이 쓰는 근거 서식이 없다. 섞으면 열 번호(기간×10+쪽)가 묶음마다 달라져 값이 어긋난다. */
+  function prdFlat(kk){
+    var base = prdCells(kk), sub = kk ? [] : prdSubs(), out = [];
     if (!sub.length) return base.map(function(c){ return { no:c.no, prd:c.no, label:c.label, cls:c.cls, sub:'' }; });
     base.forEach(function(c){
       sub.forEach(function(s, j){
@@ -394,9 +398,35 @@
   }
 
   /** 기간 축의 머리글 이름 — 표 왼쪽 위 모서리에 적는다. */
-  function prdHeadNm(){
-    var k = kind();
-    return k === 'W' ? '요일' : k === 'N' ? '주차' : k === 'M' ? '월' : k === 'Q' ? '분기' : '일';
+  function prdHeadNm(kk){
+    var k = kk || kind();
+    return k === '1' ? '' : k === 'W' ? '요일' : k === 'N' ? '주차' : k === 'M' ? '월' : k === 'Q' ? '분기' : '일';
+  }
+
+  /* ═══ 주기 복합 — 묶음마다 기간 축이 다른 격자 (2026-08-14) ═══
+     근거 10종(진단검사 기기 점검표) : 매일 7행×1~31일 / 매주 5행×1~5주 / 매월 4행×한 칸이
+     ***한 장짜리 종이에 세로로 3벌*** 붙어 있다. 판독 : QPS_서식판독_진단검사_2026-08-14.md
+
+     ★새 축을 만들지 않았다 — **묶음 이름은 이미 항목의 GRP_NM 에 있고**(v2 행 그룹),
+       없던 것은 「그 묶음이 어떤 기간으로 뻗는가」 하나뿐이라 그것만 서식이 정한다.
+         GRP_PRD = '매일>D,매주>N,매월>1'      묶음명 > 기간축
+       문법은 COL_NMS 의 `묶음>열`·ROW_BLKS 의 `이름>행수` 와 같은 가족이다.
+     ★기간축 글자는 PRD_KIND 와 같다(D W N M Q) + **'1'=한 칸**. 두 곳에서 다른 뜻이면 반드시 헷갈린다.
+     ⚠비면 아무것도 안 바뀐다 — 기존 서식 177종은 종전대로 격자 한 벌이다. */
+  function grpPrdList(){
+    if (!FORM || !FORM.grpprd) return [];
+    return String(FORM.grpprd).split(',').map(function(s){
+      var t = s.split('>');
+      var nm = String(t[0] || '').trim();
+      var k  = String(t[1] || '').trim().toUpperCase();
+      if ('DWNMQ1'.indexOf(k) < 0) k = 'D';       // 못 알아볼 축은 일 격자로 — 화면이 비지 않게
+      return nm ? { g: nm, k: k } : null;
+    }).filter(function(x){ return x; });
+  }
+  /** 주기 복합으로 그릴 것인가 — 기간이 열이고 항목이 행인 두 축만(서버 grpPrd 범위와 같다). */
+  function grpPrdOn(){
+    var a = axis();
+    return (a === 'ITEM_DAY' || a === 'ITEM_MONTH') && !docRow() && grpPrdList().length > 0;
   }
 
   /**
@@ -682,6 +712,12 @@
       }
       h += '</tbody></table>';
 
+    } else if (grpPrdOn()) {
+      // ═══ 주기 복합 — 묶음마다 기간 축이 다른 격자를 **한 벌씩** (2026-08-14) ═══
+      //   종이가 한 장인데 격자가 세로로 3벌이고 기간이 서로 다르다(매일 31 / 매주 5 / 매월 1).
+      //   ***한 표로는 못 그린다*** — 머리글의 열 수가 구간마다 달라서다. 그래서 표를 나눠 붙인다.
+      h += grpPrdHtml(g);
+
     } else {
       // ITEM_DAY / ITEM_MONTH — 항목 행 × 일(또는 월) 열
       // ★행 그룹 — 이어지는 항목의 GRP_NM 이 같으면 왼쪽에 묶음 칸을 세운다(2단 행 머리글).
@@ -797,6 +833,67 @@
        ★전월복사는 이 표를 **안 가져온다** — 그 달에 일어난 일이다(서버 carryVals 가 거른다). */
     h += subTableHtml(g);
     box.innerHTML = h;
+  }
+
+  /* ═══ 주기 복합 그리기 (2026-08-14) ═══
+     ★값 자리는 손대지 않는다 — 항목(행)이 이미 묶음별로 다르므로 **행번호가 곧 묶음을 가른다.**
+       열번호의 뜻만 그 행이 속한 묶음의 축이 정한다(매일 3열=3일 · 매주 3열=3주차).
+       ⇒ collect()·전월복사·빈행 정리는 종전 그대로 돈다(전부 행·열 번호만 본다). */
+  function grpPrdHtml(g){
+    var secs = grpPrdList(), used = {}, h = '';
+    secs.forEach(function(s){ used[s.g] = 1; });
+    // 서식에 적힌 **순서대로** 그린다 — 종이의 위아래 순서가 그것이다
+    secs.forEach(function(s, i){
+      var rows = ITEMS.filter(function(r){ return String(r.grpnm || '').trim() === s.g; });
+      if (rows.length) h += grpPrdSec(g, s.g, s.k, rows, i === 0);
+    });
+    // ★GRP_PRD 에 없는 묶음은 **버리지 않는다** — 서식 축으로 뒤에 붙인다.
+    //   (서식을 고치다 묶음 이름이 어긋나면 항목이 조용히 사라진다 — 그것이 제일 나쁘다)
+    var rest = ITEMS.filter(function(r){ return !used[String(r.grpnm || '').trim()]; });
+    if (rest.length) h += grpPrdSec(g, '', kind(), rest, !h);
+    // 점검자 확인란 — 종이에서 격자 3벌 **아래 한 줄**이다. 어느 묶음에도 안 속한다.
+    //   칸 수는 첫 구간(매일=31칸)에 맞춘다 — 원본이 그렇다.
+    if (FORM.signeryn === 'Y') {
+      var PCs = prdCells(secs.length ? secs[0].k : kind());
+      h += '<table class="gr" style="margin-top:6px;"><tbody><tr class="sign">' +
+           '<th class="hd" style="min-width:150px;">점검자 확인란</th>';
+      PCs.forEach(function(pc){ h += cell(SIGN_NO, pc.no, g(SIGN_NO, pc.no), '', pc.no); });
+      h += '</tr></tbody></table>';
+    }
+    return h;
+  }
+  /** 구간 하나 = 표 하나. `k` 가 그 구간의 기간축이다. */
+  function grpPrdSec(g, gnm, k, rows, first) {
+    var PF = prdFlat(k), one = (k === '1'), h = '';
+    h += '<table class="gr hasrg" style="margin-top:' + (first ? 0 : 6) + 'px;"><thead><tr>' +
+         (gnm ? '<th class="rgrp" style="min-width:44px;">구분</th>' : '') +
+         '<th class="hd">점검 항목</th>' + sideTh(false, 1);
+    PF.forEach(function(pf){
+      h += '<th class="' + pf.cls + '" data-day="' + pf.prd + '" style="min-width:' + (one ? 110 : 32) + 'px;">' +
+           esc(pf.label) + '</th>';
+    });
+    h += sideTh(true) + '</tr></thead><tbody>';
+    /* ★'N'(주차) 구간은 **주마다 날짜를 적는 줄**이 늘 있다 — 실측 10종이 전부 그랬다.
+       ⇒ 조각을 넷으로 늘리지 않으려고 「축에 딸린 성질」로 못박았다. 반례가 나오면 그때 칸을 연다.
+       ⚠한 서식에 N 구간이 둘이면 890 행이 겹친다. 근거가 없어 지금은 막지 않았다 — 생기면 갈라야 한다. */
+    if (k === 'N') {
+      h += '<tr class="prdh">' + (gnm ? '<th class="rgrp"></th>' : '') +
+           '<th class="hd">' + esc(String(FORM.prdheadnm || '').trim()) + '</th>' + sideTd(null, g);
+      PF.forEach(function(pf){
+        h += '<td data-day="' + pf.prd + '"><input data-r="' + PRDH_NO + '" data-c="' + pf.no +
+             '" value="' + esc(g(PRDH_NO, pf.no)) + '"></td>';
+      });
+      h += sideTd(null, g, true) + '</tr>';
+    }
+    rows.forEach(function(r, i){
+      h += '<tr>';
+      if (gnm && i === 0) h += '<th class="rgrp" rowspan="' + rows.length + '">' + esc(gnm) + '</th>';
+      h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
+      h += sideTd(r, g);
+      (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), '', pf.prd); }); })(r.sort);
+      h += sideTd(r, g, true) + '</tr>';
+    });
+    return h + '</tbody></table>';
   }
 
   var SUB_ROW_BASE = 9000;   // 예약 — 격자 아래 자유행 표(2026-08-13). 890·900·1000/2000대와 한 표에 산다
