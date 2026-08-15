@@ -109,6 +109,20 @@
   #qpsChk .ck-form .lb{ font-size:12.5px; font-weight:700; color:#43555f; padding-top:8px; }
   #qpsChk .ck-form .full{ grid-column:2 / -1; }
   #qpsChk .ck-form input{ width:100%; }
+
+  /* 사진칸(2026-08-15) — 서식 PHOTO_NMS 만큼 칸이 열린다(최대 12). safeRpt 사진과 같은 조작감 */
+  #qpsChk .ph-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px; }
+  #qpsChk .ph-cell{ position:relative; border:1.5px dashed #cfd8e0; border-radius:8px; background:#fafcfd;
+      min-height:130px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
+  #qpsChk .ph-cell:hover{ border-color:#8fc3b2; background:#f7fbf9; }
+  #qpsChk .ph-cell.has{ border-style:solid; background:#fff; }
+  #qpsChk .ph-cell img{ max-width:100%; max-height:180px; display:block; }
+  #qpsChk .ph-cell .empty{ color:#9aa7ae; font-size:12.5px; text-align:center; line-height:1.7; }
+  #qpsChk .ph-cell .no{ position:absolute; left:6px; top:5px; font-size:11px; font-weight:800; color:#8a99a3;
+      background:rgba(255,255,255,.85); border-radius:8px; padding:1px 7px; max-width:85%; overflow:hidden;
+      text-overflow:ellipsis; white-space:nowrap; }
+  #qpsChk .ph-cell .rm{ position:absolute; right:5px; top:5px; border:1px solid #e0b4b4; background:#fff;
+      color:#b23b3b; border-radius:6px; font-size:11.5px; padding:2px 8px; cursor:pointer; }
 </style>
 
 <div class="ck-head">
@@ -171,6 +185,14 @@
   <div id="ckFixWrap" style="display:none; margin-top:8px;">
     <div style="font-size:12.5px; font-weight:700; color:#43555f; margin-bottom:4px;">수리날짜 및 고장 발생 내용</div>
     <textarea id="f_fixTxt" rows="2"></textarea>
+  </div>
+  <%-- ★사진칸(2026-08-15) — 서식 PHOTO_NMS 가 칸 이름·수를 정한다(납가운 증빙사진·봉인스티커 월별).
+       칸 클릭=업로드, 같은 칸 재업로드=교체. safeRpt 사진과 같은 장치. --%>
+  <div id="ckPhotoWrap" style="display:none; margin-top:10px;">
+    <div style="font-size:12.5px; font-weight:700; color:#43555f; margin-bottom:4px;">사진첨부
+      <span style="font-weight:500; color:#8a99a3;">— 칸을 누르면 사진을 올립니다 · 인쇄물에 함께 실립니다</span></div>
+    <div class="ph-grid" id="ckPhotoGrid"></div>
+    <input type="file" id="ckPhotoInp" accept="image/*" style="display:none;">
   </div>
   <div id="ckFoot" style="display:none; margin-top:8px; font-size:12px; color:#6b7c86;"></div>
 </div>
@@ -1037,7 +1059,8 @@
       });
       ds.value = curSeq ? String(curSeq) : '';
       applyFormUi();
-      if (!curSeq) renderGrid([], []);
+      if (!curSeq) { renderGrid([], []); setPhotos([]); }   // 서식이 바뀌면 사진칸 구성도 갈린다
+      else renderPhotos();
     }).catch(err);
   };
 
@@ -1119,6 +1142,109 @@
     _toast('빈 행을 정리했습니다. 값 있는 행 ' + kept + '.', 'ok');
   };
 
+  /* ───── 사진칸 (2026-08-15) ─────────────────────────────────────────────
+     서식 PHOTO_NMS(쉼표 이름 목록)가 칸 이름·수를 정한다 — 납가운 증빙사진·봉인스티커 월별.
+     ★표시는 fetch→blob→objectURL — /sftp/download.do 가 attachment 강제(safeRpt 사진과 같은 해법). */
+  var PHOTOS = {}, _phSlot = 0;
+  function photoNms(){
+    var s = (FORM && FORM.photonms) ? String(FORM.photonms) : '';
+    if (!s.trim()) return [];
+    return s.split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x; }).slice(0, 12);
+  }
+  function renderPhotos(){
+    var nms = photoNms(), wrap = gel('ckPhotoWrap');
+    if (!nms.length) { wrap.style.display = 'none'; gel('ckPhotoGrid').innerHTML = ''; return; }
+    var h = '';
+    nms.forEach(function(nm, i){
+      var s = i + 1, ph = PHOTOS[s];
+      h += '<div class="ph-cell' + (ph ? ' has' : '') + '" onclick="ckPhotoPick(' + s + ');" title="' +
+           (ph ? '누르면 이 칸의 사진을 바꿉니다' : '누르면 사진을 올립니다') + '">' +
+           '<span class="no">' + esc(nm) + '</span>' +
+           (ph
+             ? (ph.url ? '<img src="' + ph.url + '" alt="">' : '<span class="empty">불러오는 중…</span>') +
+               '<button type="button" class="rm" onclick="ckPhotoDel(event,' + s + ');">✕</button>'
+             : '<span class="empty">＋ 사진 올리기</span>') +
+           '</div>';
+    });
+    gel('ckPhotoGrid').innerHTML = h;
+    wrap.style.display = '';
+  }
+  function setPhotos(files){
+    Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
+    PHOTOS = {};
+    (files || []).forEach(function(f){
+      var s = Number(f.fileseq);
+      if (s >= 1 && s <= 12) PHOTOS[s] = { filepath:f.filepath, orgnm:f.orgnm, url:'' };
+    });
+    renderPhotos();
+    if (!photoNms().length) return;
+    Object.keys(PHOTOS).forEach(function(s){ loadPhotoUrl(Number(s)); });
+  }
+  function loadPhotoUrl(slot){
+    var ph = PHOTOS[slot];
+    if (!ph || !ph.filepath) return;
+    fetch('/sftp/download.do?filePath=' + encodeURIComponent(ph.filepath))
+      .then(function(r){ if (!r.ok) throw new Error(); return r.blob(); })
+      .then(function(b){ if (PHOTOS[slot] !== ph) return; ph.url = URL.createObjectURL(b); renderPhotos(); })
+      .catch(function(){ /* 못 불러와도 칸은 남긴다 — 다시 열면 재시도 */ });
+  }
+  window.ckPhotoPick = function(slot){
+    if (!curSeq) { _alertBox('점검표를 먼저 저장한 뒤 사진을 붙일 수 있습니다.', {icon:'⚠️'}); return; }
+    _phSlot = slot;
+    gel('ckPhotoInp').click();
+  };
+  gel('ckPhotoInp').onchange = function(){
+    var f = this.files && this.files[0];
+    this.value = '';
+    if (!f || !_phSlot || !curSeq) return;
+    var fd = new FormData();
+    fd.append('chkSeq', curSeq); fd.append('fileSeq', _phSlot); fd.append('file', f);
+    $.ajax({ url:'<c:url value="/qps/chkPhotoUpload.do"/>', type:'POST', data:fd,
+             processData:false, contentType:false, dataType:'json' })
+      .then(function(res){
+        if (res && res.result === 'FAIL') { _alertBox(res.message || '업로드에 실패했습니다.', {icon:'❌'}); return; }
+        PHOTOS[Number(res.fileseq)] = { filepath:res.filepath, orgnm:res.orgnm, url:'' };
+        renderPhotos();
+        loadPhotoUrl(Number(res.fileseq));
+        _toast('사진을 올렸습니다.', 'ok');
+      })
+      .fail(function(){ _alertBox('업로드 중 오류가 발생했습니다.', {icon:'❌'}); });
+  };
+  window.ckPhotoDel = function(ev, slot){
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+    _confirmBox({ msg:'이 칸의 사진을 지울까요?', icon:'⚠️', okText:'지우기', okColor:'#b23b3b',
+      onOk: function(){
+        post('<c:url value="/qps/chkPhotoDelete.do"/>', { chkSeq:curSeq, fileSeq:slot }).then(function(){
+          if (PHOTOS[slot]) { try { URL.revokeObjectURL(PHOTOS[slot].url); } catch(e){} delete PHOTOS[slot]; }
+          renderPhotos();
+          _toast('지웠습니다.', 'ok');
+        }).catch(err);
+      } });
+  };
+  /** 인쇄용 — 있는 칸만 2칸씩 한 줄(원본 비율 유지). blob URL 은 같은 출처 인쇄창에서 접근된다 */
+  function ckPhotoPrintHtml(){
+    var nms = photoNms();
+    if (!nms.length) return '';
+    var cells = [];
+    nms.forEach(function(nm, i){
+      var ph = PHOTOS[i + 1];
+      if (ph && ph.url) cells.push({ nm:nm, url:ph.url });
+    });
+    if (!cells.length) return '';
+    var h = '<table style="margin-top:6px;"><tbody>';
+    for (var i = 0; i < cells.length; i += 2) {
+      h += '<tr>';
+      [cells[i], cells[i + 1]].forEach(function(c){
+        h += c ? '<td style="width:50%;text-align:center;vertical-align:middle;padding:4px;">' +
+                 '<div style="font-size:9.5px;font-weight:700;margin-bottom:2px;">' + esc(c.nm) + '</div>' +
+                 '<img src="' + c.url + '" style="max-width:100%;max-height:80mm;" alt=""></td>'
+               : '<td style="width:50%;"></td>';
+      });
+      h += '</tr>';
+    }
+    return h + '</tbody></table>';
+  }
+
   window.ckPickDoc = function(){
     var seq = val('ckDoc');
     if (!seq) { ckNew(); return; }
@@ -1134,6 +1260,7 @@
       set('f_wardNm', d.wardnm); set('f_noteTxt', d.notetxt); set('f_fixTxt', d.fixtxt);
       renderHead(d);
       renderGrid(res.vals || [], res.rows || [], res.cols || []);
+      setPhotos(res.files);
       gel('ckStat').textContent = '— 저장분 #' + d.chkseq;
       gel('ckDelBtn').style.display = '';
     }).catch(err);
@@ -1146,6 +1273,7 @@
     set('f_noteTxt', ''); set('f_fixTxt', '');
     renderHead({});
     renderGrid([], []);
+    setPhotos([]);
     gel('ckStat').textContent = '— 새 점검표';
     gel('ckDelBtn').style.display = 'none';
   };
@@ -1452,6 +1580,7 @@
       tail += '<div class="sig">' + String(FORM.signline).split(',').map(function(s){
                 return '<span>' + esc(s.trim()) + ' _____________ (인)</span>'; }).join('') + '</div>';
     }
+    tail += ckPhotoPrintHtml();   // 사진칸(2026-08-15) — 있는 칸만, 2칸씩 한 줄
 
     var body = apprHtml() + '<div class="h1">' + esc(FORM.formnm) + '</div><div style="clear:both;"></div>' +
                meta + legend + guide + grid + tail;
@@ -1464,7 +1593,15 @@
       '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    /* 사진(blob)이 다 그려진 뒤 인쇄창을 띄운다 — 고정 300ms 로는 사진이 빈 채 찍힐 수 있다(safeRpt 전례) */
+    var tries = 0;
+    (function waitImg(){
+      var ok = true, imgs = [];
+      try { imgs = w.document.images || []; } catch (e) {}
+      for (var i = 0; i < imgs.length; i++) if (!imgs[i].complete) ok = false;
+      if (ok || tries++ > 40) { try { w.print(); } catch (e) {} }
+      else setTimeout(waitImg, 150);
+    })();
   };
 
   /**

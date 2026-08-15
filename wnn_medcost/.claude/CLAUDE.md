@@ -130,6 +130,11 @@
   RPTBHEP/RPTCHK **집계표 원형 복원**(#41 의 「합침」 해소). safeRpt **68종**.
   ⛔h19 업무일지만 계속 보류(체크 ~50문항 전문이 판독에 없다 — 캡처 재판독 필요).
   ⚠자바+매퍼 변경 → WAR 재빌드+재기동 필요. 화면 왕복 검증은 재기동 뒤.
+- ✅**[이어서] 점검표 사진칸 완성** — `TBL_QPS_CHK_FORM.PHOTO_NMS`(칸 이름 목록=수·라벨, 최대 12) +
+  `TBL_QPS_CHK_FILE`(문서×칸, 재업로드=교체). safeRpt 사진과 판박이(blob 표시·인쇄 대기 포함).
+  [CHKPHOTO 시드](docs/sql/QPS_SEED_CHKPHOTO_2026-08-15.sql) : **`RAD022` 납가운 관리대장 등록**(XR07 보류 해소 —
+  LIST+평가기준 정형문+사진 5칸) · **`PHA024` 봉인스티커 월별 12칸**(RN27 p2 흡수).
+  ⇒ ⓐ급 백로그 전부 소진 — 남는 서식 보류는 h19(재판독)·XR23(개인 키)·w15·MR13 뿐.
 - ★★**SUNWOO 캡처는 이 PC 에서도 된다**(2026-08-14 실측으로 정정 — 「그 노트북에서만」이 아니다).
   computer-use MCP 없이 **PowerShell `CopyFromScreen` + `user32 mouse_event`** 로 몬다.
   ***★진위는 `MainWindowTitle`(=열린 문서 이름)로 본다*** — 이미지를 안 읽고도 무엇이 열렸는지 안다.

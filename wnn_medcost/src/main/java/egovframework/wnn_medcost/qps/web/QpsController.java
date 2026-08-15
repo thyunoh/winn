@@ -1823,6 +1823,69 @@ public class QpsController {
 		return res;
 	}
 
+	/* ─── 점검표 사진칸 (2026-08-15) — safeRpt 사진과 같은 장치 ────────────────
+	   칸 이름·수는 서식(TBL_QPS_CHK_FORM.PHOTO_NMS)이 정한다(최대 12).
+	   파일은 QPS/{병원}/CHK_PHOTO/{문서번호}/ — 같은 파일서버, 폴더만 가른다. */
+	@RequestMapping(value = "/qps/chkPhotoUpload.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkPhotoUpload(@RequestParam("file") MultipartFile file,
+	                                          @RequestParam Map<String, Object> p,
+	                                          HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("chkSeq"));
+			int slot = (int) Math.max(0, longOf(p.get("fileSeq")) == null ? 0 : longOf(p.get("fileSeq")));
+			if (seq == null || seq <= 0) return fail(res, "점검표를 먼저 저장한 뒤 사진을 붙일 수 있습니다.");
+			if (slot < 1 || slot > 12) return fail(res, "사진 칸 번호가 올바르지 않습니다.");
+			if (file == null || file.isEmpty()) return fail(res, "사진 파일을 선택해 주세요.");
+			String ct = String.valueOf(file.getContentType());
+			if (!ct.startsWith("image/")) return fail(res, "그림 파일(JPG·PNG 등)만 올릴 수 있습니다.");
+			if (svc.selectChkDocOne(hospCd, seq).get("doc") == null) return fail(res, "점검표를 찾을 수 없습니다.");
+
+			String origNm = file.getOriginalFilename();
+			String remoteNm = UUID.randomUUID() + "_" + origNm;
+			String folder = "QPS/" + hospCd + "/CHK_PHOTO/" + seq;
+			java.io.File tmp = java.nio.file.Files.createTempFile("qpsckp_", ".bin").toFile();
+			String remotePath;
+			try {
+				file.transferTo(tmp);
+				remotePath = sftpService.putFile(tmp.getAbsolutePath(), folder, remoteNm);
+			} finally {
+				if (tmp.exists()) tmp.delete();
+			}
+			if (remotePath == null) return fail(res, "파일서버 전송에 실패했습니다: " + origNm);
+
+			Map<String, Object> m = new HashMap<>();
+			m.put("chkSeq", seq); m.put("fileSeq", slot);
+			m.put("filePath", remotePath); m.put("orgNm", origNm); m.put("regUser", userId(request));
+			svc.saveChkPhoto(m);
+			res.put("fileseq", slot);
+			res.put("filepath", remotePath);
+			res.put("orgnm", origNm);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/chkPhotoDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkPhotoDelete(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("chkSeq"));
+			int slot = (int) Math.max(0, longOf(p.get("fileSeq")) == null ? 0 : longOf(p.get("fileSeq")));
+			if (seq == null || seq <= 0 || slot < 1 || slot > 12) return fail(res, "지울 사진 칸이 올바르지 않습니다.");
+			if (svc.selectChkDocOne(hospCd, seq).get("doc") == null) return fail(res, "점검표를 찾을 수 없습니다.");
+			svc.deleteChkPhoto(seq, slot);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/* ═══ QI 중간·최종보고서 (한 서식 + 종류 구분) ═══ */
 	@RequestMapping(value = "main/qpsQiRpt.do")
 	public String qpsQiRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsQiRpt"); }
