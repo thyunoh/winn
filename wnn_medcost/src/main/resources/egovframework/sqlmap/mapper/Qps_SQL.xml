@@ -1538,6 +1538,25 @@
 		 ORDER BY SUB_NO
 	</select>
 
+	<!-- ─── 점검표 사진칸 (2026-08-15) — safeRpt 사진과 같은 장치 ───────────
+	     칸 순번(FILE_SEQ)이 서식 PHOTO_NMS 의 순서다. 같은 칸 재업로드 = 교체(UPSERT). -->
+	<select id="selectChkFile" resultType="java.util.HashMap">
+		SELECT FILE_SEQ AS fileseq, FILE_PATH AS filepath, ORG_NM AS orgnm
+		  FROM TBL_QPS_CHK_FILE
+		 WHERE CHK_SEQ = #{chkSeq}
+		 ORDER BY FILE_SEQ
+	</select>
+
+	<insert id="upsertChkFile" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_FILE (CHK_SEQ, FILE_SEQ, FILE_PATH, ORG_NM, REG_USER)
+		VALUES (#{chkSeq}, #{fileSeq}, #{filePath}, #{orgNm}, #{regUser})
+		ON DUPLICATE KEY UPDATE FILE_PATH=#{filePath}, ORG_NM=#{orgNm}, REG_USER=#{regUser}, REG_DTTM=NOW()
+	</insert>
+
+	<delete id="deleteChkFile">
+		DELETE FROM TBL_QPS_CHK_FILE WHERE CHK_SEQ = #{chkSeq} AND FILE_SEQ = #{fileSeq}
+	</delete>
+
 	<delete id="deleteSafeRptRow">
 		DELETE FROM TBL_QPS_SAFERPT_ROW WHERE SRP_SEQ = #{srpSeq}
 	</delete>
@@ -2388,7 +2407,7 @@
 		       NOTE_NM AS notenm,
 		       SUB_NM AS subnm, SUB_COLS AS subcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
-		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, SORT_NO AS sortno,
+		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, PHOTO_NMS AS photonms, SORT_NO AS sortno,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
 		  FROM TBL_QPS_CHK_FORM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD IN (#{hospCd}, '*')

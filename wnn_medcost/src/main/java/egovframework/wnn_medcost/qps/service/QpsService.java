@@ -153,6 +153,9 @@ public interface QpsService {
 	/* 사진첨부 — 칸(1~4) 고정 자리. 파일 실체는 sftp 파일서버, 여기는 경로 메타만. */
 	int saveSafeRptPhoto(Map<String, Object> param) throws Exception;
 	int deleteSafeRptPhoto(long srpSeq, int fileSeq) throws Exception;
+	/* 점검표 사진칸(2026-08-15) — 서식 PHOTO_NMS 가 칸 이름·수를 정한다 */
+	int saveChkPhoto(Map<String, Object> param) throws Exception;
+	int deleteChkPhoto(long chkSeq, int fileSeq) throws Exception;
 
 	/* QI 중간·최종보고서 */
 	List<Map<String, Object>> selectQiRptList(String hospCd, String inYear, String rptGb) throws Exception;

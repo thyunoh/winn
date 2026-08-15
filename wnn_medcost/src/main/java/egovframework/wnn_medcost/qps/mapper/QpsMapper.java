@@ -251,6 +251,10 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectSafeRptFile(@Param("srpSeq") long srpSeq);
 	int upsertSafeRptFile(Map<String, Object> param);
 	int deleteSafeRptFile(@Param("srpSeq") long srpSeq, @Param("fileSeq") int fileSeq);
+	// 점검표 사진칸 (2026-08-15) — 서식 PHOTO_NMS 가 칸 이름·수를 정한다
+	List<Map<String, Object>> selectChkFile(@Param("chkSeq") long chkSeq);
+	int upsertChkFile(Map<String, Object> param);
+	int deleteChkFile(@Param("chkSeq") long chkSeq, @Param("fileSeq") int fileSeq);
 
 	/* QI 중간·최종보고서 (한 표 + RPT_GB) */
 	List<Map<String, Object>> selectQiRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,

@@ -1905,8 +1905,16 @@ public class QpsServiceImpl implements QpsService {
 		out.put("vals", doc == null ? new ArrayList<>() : mapper.selectChkVals(chkSeq));
 		out.put("rows", doc == null ? new ArrayList<>() : mapper.selectChkRows(chkSeq));
 		out.put("cols", doc == null ? new ArrayList<>() : mapper.selectChkCols(chkSeq));
+		out.put("files", doc == null ? new ArrayList<>() : mapper.selectChkFile(chkSeq));   // 사진칸(2026-08-15)
 		return out;
 	}
+
+	/** 점검표 사진 — 같은 칸에 다시 올리면 교체. 파일 실체는 파일서버에 남는다(safeRpt 사진과 같은 정책). */
+	@Override
+	public int saveChkPhoto(Map<String, Object> param) throws Exception { return mapper.upsertChkFile(param); }
+
+	@Override
+	public int deleteChkPhoto(long chkSeq, int fileSeq) throws Exception { return mapper.deleteChkFile(chkSeq, fileSeq); }
 
 	@Override
 	public long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
