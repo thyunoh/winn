@@ -5,7 +5,7 @@
 --
 --   ★SORT 대역 10~19 = 「의약품 · 혈액」 계열 신설(qpsSafeRpt.jsp BANDS 에 같이 추가) :
 --     11 BLOODRTN(26→11 이동) · 12 DRUGRTN(간호판, 별도 시드) · 13 DRUGRTNP · 14 DRUGBRK ·
---     15 DRUGADR · 16 DRUGADRE
+--     15 DRUGADR · 16 DRUGADRE · 17 DRUGREQ(간호 [274], 간호 모듈 n274 캡처 — 확인#2 해소)
 --
 --   대조 판정(항목 문자열 기준) :
 --   · DRUGRTNP = 약국 「병동의약품 반납신청서」(p01) — 간호판 DRUGRTN 과 **다른 판**(단건+사유 6택+
@@ -179,6 +179,28 @@ INSERT INTO TBL_QPS_SAFERPT_USE (RPT_GB,GRP_CD,SORT,USE_YN) VALUES
  ('DRUGADRE','AESEV',1,'Y'), ('DRUGADRE','AEACT',2,'Y'), ('DRUGADRE','AERE',3,'Y'),
  ('DRUGADRE','EVSEV',4,'Y'), ('DRUGADRE','EVCAUS',5,'Y'), ('DRUGADRE','EVSER',6,'Y'),
  ('DRUGADRE','EVACT',7,'Y');
+
+-- ── 6. DRUGREQ — 병동의약품 신청서 (간호 [274], n274 캡처로 확인#2 해소) ─────
+--   신청일자·병동 / 신청사유(비치의약품 보충·기타) / 표 No.·의약품명·수량·기타 / 약사 확인.
+INSERT INTO TBL_CODE_DTL
+ (CODE_GB, CODE_CD, SUB_CODE, JOB_SEQ, SUB_CODE_NM, START_DT, END_DT, USE_YN, SORT, ACTION_YN, REG_USER) VALUES
+ ('Q','QPS_SAFERPT_GB','DRUGREQ',1,'병동의약품 신청서','20000101','99991231','Y',17,'Y','system')
+ON DUPLICATE KEY UPDATE SUB_CODE_NM=VALUES(SUB_CODE_NM), SORT=VALUES(SORT), USE_YN='Y', ACTION_YN='Y';
+
+INSERT INTO TBL_QPS_SAFERPT_FORM (RPT_GB, SUB_NM, SUB_COLS, SIGN_LINE, FOOT_TXT, LBL_JSON, USE_YN, REG_USER) VALUES
+ ('DRUGREQ', NULL, '의약품명,수 량,기 타', '약사 확인', NULL,
+  '{"occurDt":"신청 일자","occurTm":"-","rptDt":"-","place":"-","targetNm":"-","targetNo":"-","deptNm":"병 동","positionNm":"-","admitDt":"-","diagNm":"-","wWhen":"-","wWho":"-","wWhere":"-","wWhat":"-","wHow":"-","wWhy":"-","summary":"-","vitalTxt":"-","injuryTxt":"-","treatTxt":"-","causeTxt":"-","planTxt":"-","note":"-"}',
+  'Y','system')
+ON DUPLICATE KEY UPDATE SUB_NM=VALUES(SUB_NM), SUB_COLS=VALUES(SUB_COLS),
+  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), LBL_JSON=VALUES(LBL_JSON), USE_YN='Y';
+
+DELETE FROM TBL_QPS_SAFERPT_USE WHERE RPT_GB='DRUGREQ';
+DELETE FROM TBL_QPS_SAFERPT_DEF WHERE RPT_GB='DRUGREQ';
+INSERT INTO TBL_QPS_SAFERPT_DEF (RPT_GB,GRP_CD,GRP_NM,ITEM_NM,MULTI_YN,ETC_YN,SORT,USE_YN) VALUES
+ ('DRUGREQ','REQRSN','신청 사유','비치의약품 보충','N','N',1,'Y'),
+ ('DRUGREQ','REQRSN','신청 사유','기타','N','Y',2,'Y');
+INSERT INTO TBL_QPS_SAFERPT_USE (RPT_GB,GRP_CD,SORT,USE_YN) VALUES
+ ('DRUGREQ','REQRSN',1,'Y');
 
 -- ── 확인 ────────────────────────────────────────────────────────────────────
 SELECT SUB_CODE, SUB_CODE_NM, SORT FROM TBL_CODE_DTL
