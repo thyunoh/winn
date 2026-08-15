@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260815-SRSUBS";
+	private static final String BUILD = "20260815-DEPTMENU";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1058,6 +1058,10 @@ public class QpsController {
 		f = (f == null) ? "" : f.trim().toUpperCase();
 		// 아는 모양만 통과 — 엉뚱한 값이 셀렉트에 들어가면 목록에 없는 값이 골라진 것처럼 보인다
 		model.addAttribute("chkFormId", f.matches("[A-Z0-9_]{2,30}") ? f : "");
+		// 부서별 메뉴(사이드바)에서 넘어온 부서 — 화면이 그 부서로 걸러서 연다
+		String d = request.getParameter("dept");
+		d = (d == null) ? "" : d.trim().toUpperCase();
+		model.addAttribute("chkDeptCd", d.matches("[A-Z]{2,10}") ? d : "");
 		return qpsScreen(request, model, ".main/qpsmgr/qpsChk");
 	}
 
@@ -1670,7 +1674,13 @@ public class QpsController {
 	/* ═══ 사고 유형별 보고서 (한 서식 + 유형) ═══
 	   ★체크박스 묶음은 항목표(TBL_QPS_SAFERPT_DEF)에서 온다 — 유형이 늘어도 코드를 안 고친다. */
 	@RequestMapping(value = "main/qpsSafeRpt.do")
-	public String qpsSafeRpt(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSafeRpt"); }
+	public String qpsSafeRpt(HttpServletRequest request, ModelMap model) {
+		// 사이드바 계열 링크에서 넘어온 유형 — 화면이 그 유형으로 연다(모르는 값이면 기본 유형)
+		String g = request.getParameter("gb");
+		g = (g == null) ? "" : g.trim().toUpperCase();
+		model.addAttribute("srGbInit", g.matches("[A-Z0-9_]{2,20}") ? g : "");
+		return qpsScreen(request, model, ".main/qpsmgr/qpsSafeRpt");
+	}
 
 	@RequestMapping(value = "/qps/safeRptBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody

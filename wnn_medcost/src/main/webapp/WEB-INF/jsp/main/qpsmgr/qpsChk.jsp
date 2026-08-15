@@ -142,7 +142,9 @@
   <div class="ck-bar">
     <%-- ★부서 먼저 — 서식이 130종이 되면 부서로 걸러야 고를 수 있다 --%>
     <span style="font-size:12.5px; font-weight:700; color:#43555f;">부서</span>
-    <select id="ckDept" style="width:auto;" onchange="ckPickDept();"><option value="">전체</option></select>
+    <%-- data-init = 사이드바 「부서별 점검표」에서 넘어온 부서코드(서버가 내려준다) --%>
+    <select id="ckDept" style="width:auto;" onchange="ckPickDept();"
+            data-init="<c:out value='${chkDeptCd}'/>"><option value="">전체</option></select>
     <span style="font-size:12.5px; font-weight:700; color:#43555f;">서식</span>
     <%-- data-init = [서식 관리]에서 「작성 화면에서 보기」로 넘어온 서식코드(서버가 내려준다) --%>
     <select id="ckForm" style="min-width:300px;" onchange="ckPickForm();"
@@ -1668,15 +1670,29 @@
   $(function(){
     // ★[서식 관리]에서 넘어왔으면 그 서식으로 연다. 사용 목록에서 꺼져 있으면 못 고르므로 안내한다.
     var want = (gel('ckForm').getAttribute('data-init') || '').trim();
+    // 사이드바 「부서별 점검표」에서 넘어온 부서 — 서식 지정(want)이 있으면 서식이 우선이다
+    var wantDept = (gel('ckDept').getAttribute('data-init') || '').trim();
     ckBase().then(function(){
       var sel = gel('ckForm');
       if (want && FORMS.some(function(f){ return f.formid === want; })) sel.value = want;
-      else if (want) {
-        _alertBox('그 서식은 <b>이 병원 사용 목록에 꺼져</b> 있어 작성 화면에 나오지 않습니다.<br>' +
-                  '[서식 관리]의 체크를 켜고 <b>[사용 저장]</b> 을 눌러 주세요.', {icon:'⚠️'});
+      else {
+        if (want) {
+          _alertBox('그 서식은 <b>이 병원 사용 목록에 꺼져</b> 있어 작성 화면에 나오지 않습니다.<br>' +
+                    '[서식 관리]의 체크를 켜고 <b>[사용 저장]</b> 을 눌러 주세요.', {icon:'⚠️'});
+        }
+        var dsel = gel('ckDept');
+        for (var i = 0; i < dsel.options.length; i++) {
+          if (dsel.options[i].value === wantDept) { dsel.value = wantDept; break; }
+        }
       }
       if (FORMS.length && !sel.value) sel.value = FORMS[0].formid;
       return ckBase();
+    }).then(function(){
+      // 부서로 걸렀으면 서식 목록이 갈렸다 — ⚠셀렉트는 목록이 다시 그려질 때 첫 서식을 저절로
+      // 보여주므로 값 비교로는 어긋남이 안 잡힌다. 받아 둔 레이아웃(FORM)과 대조해야 한다.
+      var sel = gel('ckForm');
+      if (FORMS.length && !FORMS.some(function(f){ return f.formid === sel.value; })) sel.value = FORMS[0].formid;
+      if (FORMS.length && (!FORM || FORM.formid !== sel.value)) return ckBase();
     }).then(function(){ renderHead({}); renderGrid([], []); });
   });
 })();

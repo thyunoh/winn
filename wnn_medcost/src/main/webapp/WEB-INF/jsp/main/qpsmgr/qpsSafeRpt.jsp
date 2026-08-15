@@ -104,8 +104,10 @@
     <span class="sr-sub">사고 유형별</span></div>
   <span class="sr-hosp" id="srHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="sr-spacer"></div>
-  <%-- ★유형 — 이 셀렉트가 바뀌면 체크 묶음이 통째로 갈린다(항목표에서 다시 받아 그린다) --%>
-  <select id="srGb" style="width:auto;" onchange="srLoad();"></select>
+  <%-- ★유형 — 이 셀렉트가 바뀌면 체크 묶음이 통째로 갈린다(항목표에서 다시 받아 그린다)
+       data-init = 사이드바 계열 링크에서 넘어온 유형코드(서버가 내려준다) --%>
+  <select id="srGb" style="width:auto;" onchange="srLoad();"
+          data-init="<c:out value='${srGbInit}'/>"></select>
   <select id="srYear" style="width:auto;" onchange="srLoad();"></select>
   <button type="button" class="sr-btn" onclick="srSave();">저장</button>
   <button type="button" class="sr-btn ghost" onclick="srPrint();">🖨 인쇄(A4)</button>
@@ -797,9 +799,38 @@
     );
     function step2(){
       var sel = gel('srGb');
-      sel.innerHTML = GBS.length
-        ? GBS.map(function(c){ return '<option value="' + esc(c.subcode) + '">' + esc(c.subcodenm) + '</option>'; }).join('')
-        : '<option value="PTSAFE">환자안전사고 보고서</option>';
+      if (GBS.length) {
+        // ★계열 묶음(optgroup) — SORT 대역이 곧 계열이다(시드 등록 규약 : 1~19 사고 ·
+        //   20대 보건 · 31~ 인사/총무 · 51~ 의무기록 · 71~ 영양 · 73~ 사회복지 · 91~ 검진결과).
+        //   새 유형은 대역 안 SORT 로 등록하면 화면 수정 없이 제 묶음에 들어온다.
+        var BANDS = [
+          [ 1, 19, '사고 · 안전 보고서'],
+          [20, 30, '교육 · 보건관리'],
+          [31, 50, '인사 · 원무 · 총무'],
+          [51, 70, '의무기록 · 정보보호'],
+          [71, 72, '영양'],
+          [73, 90, '사회복지 · 프로그램'],
+          [91, 99, '검진 · 접종 결과보고서']];
+        var html = '', rest = GBS.slice();
+        BANDS.forEach(function(b){
+          var grp = rest.filter(function(c){ var s = Number(c.sort); return s >= b[0] && s <= b[1]; });
+          if (!grp.length) return;
+          rest = rest.filter(function(c){ return grp.indexOf(c) < 0; });
+          html += '<optgroup label="' + esc(b[2]) + '">' +
+                  grp.map(function(c){ return '<option value="' + esc(c.subcode) + '">' + esc(c.subcodenm) + '</option>'; }).join('') +
+                  '</optgroup>';
+        });
+        // sort 를 안 내려주는 옛 서버(재기동 전)면 전부 여기로 온다 — 종전처럼 평평하게
+        if (rest.length) {
+          html += rest.map(function(c){ return '<option value="' + esc(c.subcode) + '">' + esc(c.subcodenm) + '</option>'; }).join('');
+        }
+        sel.innerHTML = html;
+      } else {
+        sel.innerHTML = '<option value="PTSAFE">환자안전사고 보고서</option>';
+      }
+      // 사이드바 계열 링크로 들어왔으면 그 유형으로 연다
+      var init = (sel.getAttribute('data-init') || '').trim();
+      if (init && GBS.some(function(c){ return c.subcode === init; })) sel.value = init;
       srNew();
       srLoad();
       loadIncid();

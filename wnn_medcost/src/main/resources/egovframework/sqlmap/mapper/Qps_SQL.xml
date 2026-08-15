@@ -231,7 +231,8 @@
 		<![CDATA[
 		SELECT CODE_CD  AS codecd,
 		       SUB_CODE AS subcode,
-		       RTRIM(SUB_CODE_NM) AS subcodenm
+		       RTRIM(SUB_CODE_NM) AS subcodenm,
+		       IFNULL(SORT,99) AS sort
 		  FROM TBL_CODE_DTL
 		 WHERE CODE_GB   = 'Q'
 		   AND CODE_CD  LIKE 'QPS\_%'

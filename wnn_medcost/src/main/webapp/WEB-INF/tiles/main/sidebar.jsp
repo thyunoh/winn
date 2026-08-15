@@ -246,6 +246,36 @@
                                     </div>
                                 </li>
 
+                                <%-- ── 부서별 점검표 (2026-08-15 — 담당자 위주 직관 메뉴) ──────
+                                     ★담당자가 제 부서를 눌러 바로 제 점검표로 들어간다.
+                                     화면은 전부 qpsChk 하나 — dept 파라미터가 부서 셀렉트를 미리 골라 준다.
+                                     ⚠부서코드는 QPS_CHK_DEPT 공통코드와 같아야 한다(모르는 값이면 전체로 열림).
+                                     주소가 서로 달라(쿼리 상이) 강조 중복 함정 없음. --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-dept" aria-controls="qps-g-dept"
+                                       style="font-weight:600;">▸ 부서별 점검표</a>
+                                    <div id="qps-g-dept" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NURSE">간호 · 병동</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=PHARM">약국</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NUTRI">영양</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=FACIL">시설</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=LAB">진단검사</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=INFECT">감염관리</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=HEALTH">보건관리자</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=ADMIN">원무 · 총무</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RENAL">인공신장</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=MEDREC">의무기록</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RADIO">방사선</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=REHAB">물리재활</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=CLINIC">진료</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=SOCIAL">사회복지</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=COMMON">공통</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+
                                 <%-- ── 부서 위원회 (2026-08-12) ──────────────────────────────
                                      ★***회의록은 화면 하나다.*** 약사·영양관리·소방안전관리 회의록이
                                      우리 회의록 화면과 **판박이**라 구분(FORM_GB)만 다르다 —
@@ -278,11 +308,18 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
                                        aria-expanded="false" data-target="#qps-g-rpt" aria-controls="qps-g-rpt"
-                                       style="font-weight:600;">▸ 보고서</a>
+                                       style="font-weight:600;">▸ 보고서 · 서식</a>
                                     <div id="qps-g-rpt" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <%-- 사고 유형별 보고서 — 한 화면 + 유형(체크 묶음은 항목표에서 온다) --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 유형별 보고서</a></li>
+                                            <%-- 사고 유형별 보고서 — 한 화면 + 유형(체크 묶음은 항목표에서 온다)
+                                                 ★계열 링크(2026-08-15) — gb 파라미터가 유형 셀렉트를 미리 골라 준다.
+                                                 유형 70종을 담당자가 계열로 찾아 들어가게(셀렉트 안에서도 같은 계열로 묶임). --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 · 안전 보고서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=EDURPT">교육 · 보건관리 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RULEDRF">인사 · 원무 · 총무 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=MRPROXY">의무기록 · 정보보호 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=NUTREQ">영양 · 사회복지 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RPTBHEP">검진 · 접종 결과보고서</a></li>
                                             <%-- ★원본은 이 폴더에도 「환자안전관리 라운딩 점검표」를 두지만 링크를 또 걸지 않는다.
                                                  QPS 그룹의 그것과 <같은 문서>이고, 같은 주소를 두 번 걸면
                                                  사이드바 강조가 뒤 링크에 붙는 함정이 있다(2026-08-09 실제로 겪음). --%>
