@@ -63,7 +63,8 @@ INSERT INTO TBL_QPS_CHK_FORM
  ('ADM011','*','환경관리 일일 점검 대장 - 원무부서, 로비 등','ENV','ADMIN','ITEM_DAY','M','D',10,
   NULL,'상태 : 양호(O), 정비요(△), 불량(X)',NULL,NULL,'Y','N','N',NULL,270,'Y','system'),
  -- EQUIP_DAY 1종 (w49) — 기기 이름은 문서가 적는다(항목은 머리 나열 6개)
- ('ADM012','*','일상점검표 - 의료기기','EQUIP','ADMIN','EQUIP_DAY','M','D',10,
+ -- ★EQUIP_CNT 20 : w49_p2 재캡처(2026-08-15)로 2쪽 = 기기 11~20 연속 확정(종전 10은 1쪽만 본 값)
+ ('ADM012','*','일상점검표 - 의료기기','EQUIP','ADMIN','EQUIP_DAY','M','D',20,
   NULL,NULL,NULL,NULL,'Y','N','Y',NULL,280,'Y','system');
 
 INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,CARRY_YN,USE_YN) VALUES
