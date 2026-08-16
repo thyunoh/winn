@@ -940,6 +940,21 @@
       if (z) srApplyZoom(z);
     } catch (ignore) {}
     srTabSync();
+    /* ★내용이 **나중에** 채워지면 다시 잰다 (2026-08-15).
+       카드 속은 AJAX 로 채우는데 높이는 부팅 직후에 쟀다 — 긴 문서인데도
+       「한 화면에 들어간다」로 잘못 보고 탭이 안 나오던 구멍이다.
+       ⚠**탭 띠 자신이 바뀐 것은 무시한다** — 안 그러면 재기→그리기→재기 로 서로 부른다. */
+    if (window.MutationObserver) {
+      var _mw = document.getElementById('qpsSafeRpt'), _mt;
+      if (_mw) new MutationObserver(function(ms){
+        var box = document.getElementById('srTabs');
+        for (var i = 0; i < ms.length; i++) {
+          if (!box || !box.contains(ms[i].target)) {
+            clearTimeout(_mt); _mt = setTimeout(srTabSync, 250); return;
+          }
+        }
+      }).observe(_mw, { childList: true, subtree: true });
+    }
     var _srT; window.addEventListener('resize', function(){ clearTimeout(_srT); _srT = setTimeout(srTabSync, 200); });
     post('<c:url value="/qps/codeList.do"/>', {}).then(
       function(res){ GBS = (res && res.codes && res.codes.QPS_SAFERPT_GB) || []; step2(); },
