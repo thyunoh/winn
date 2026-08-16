@@ -2041,13 +2041,22 @@ public class QpsServiceImpl implements QpsService {
 			Object fo = one.get("form");
 			if (!(fo instanceof Map)) return none;
 			String axis = str(((Map<String, Object>) fo).get("axisgb"));
-			// ═══ EQUIP_DAY — 앞 열(1000대) 값을 가져온다 (2026-08-13) ═══
+			// ═══ 앞 열(1000대) 값을 가져온다 — 「행 이름의 연장」인 칸 (2026-08-13, 2026-08-15 확장) ═══
 			//   행 이름(기기·품목)은 원래부터 틀로 왔지만 **그 행의 속성 칸**(수량·유효기간)은 안 왔다 —
 			//   근거 4종(물품 Count·위해도구 일일·응급약품 및 기구관리·일회용 소독 물품)이 전부
 			//   PRE_COLS 가 자산값이라 매달 다시 쳐야 했다. ⇒ 앞 열은 **행 이름의 연장**으로 본다.
 			//   ⚠뒤 열(2000대)은 안 가져온다 — 비고·조치 등 그 달의 결과다.
 			//   ⚠자유행 표(9000대)도 안 가져온다 — 문제 발생 기록은 그 달의 일이다.
-			if ("EQUIP_DAY".equals(axis)) {
+			//
+			//   ★★[2026-08-15] **EQUIP_DAY 만이 아니었다** — 축만 다를 뿐 같은 성격의 칸이
+			//     `ITEM_DAY`·`ITEM_MONTH` 에도 있다(앞 열의 행 번호·열 번호 규칙이 세 축 모두 같다) :
+			//       · ITEM_DAY  — 구급차 의료장비 관리대장(수량) · **응급키트 물품 점검대장(유효기간)**
+			//       · ITEM_MONTH — 월별비치의약품 4종(비치량) · 의료기기 예방점검 연간계획서(점검업체·시행)
+			//     ***원본 SUNWOO 에도 「전월 가져오기」 단추가 달려 있다***(응급키트 캡처에서 확인).
+			//     안 가져오면 병원이 유효기간 23줄·비치량을 **매달 다시 친다.**
+			//   ⚠`ITEM_COL` 은 넣지 않았다 — 앞 열을 쓰는 서식이 아직 없고(근거 0),
+			//     그 축은 문서가 「건별」이라 전월 개념 자체가 옅다.
+			if ("EQUIP_DAY".equals(axis) || "ITEM_DAY".equals(axis) || "ITEM_MONTH".equals(axis)) {
 				List<Map<String, Object>> keepPre = new ArrayList<>();
 				for (Map<String, Object> v : mapper.selectChkVals(seq)) {
 					int rn = intOf(v.get("rowno"), 0), cn = intOf(v.get("colno"), 0);
