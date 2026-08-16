@@ -1697,6 +1697,8 @@
       '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
+    ckPrintFitDays(w);   // 날짜 칸이 너무 좁아지지 않게 (아래 함수 머리말 참고)
+
     /* 사진(blob)이 다 그려진 뒤 인쇄창을 띄운다 — 고정 300ms 로는 사진이 빈 채 찍힐 수 있다(safeRpt 전례) */
     var tries = 0;
     (function waitImg(){
@@ -1707,6 +1709,48 @@
       else setTimeout(waitImg, 150);
     })();
   };
+
+  /**
+   * ★날짜 칸에 최소 폭을 준다 (2026-08-16) — ***원본 종이를 보고 정한 규칙이다.***
+   *
+   *   폭 넘침을 고치고 나니(PRINT_CSS 의 `min-width:0`) 이번엔 **날짜 칸이 3.6~4.9mm 로 좁은
+   *   서식이 23종** 남았다. 항목 이름이 길면 브라우저가 **첫 칸에 폭을 몰아주기** 때문이다.
+   *
+   *   ⇒ SUNWOO 원본을 꺼내 대조했다(XR02 낙상·w26 환경관리·RN31 응급키트) —
+   *     ***셋 다 31일을 한 줄에 두고 끊지 않으며, 대신 항목 칸을 표의 1/4 안쪽으로 좁게 둔다.***
+   *     즉 **날짜에 폭을 주고 글자 칸을 접는 것**이 원본의 방식이다. 그대로 따른다.
+   *
+   *   ⚠**`SPLIT_N`(15일씩 끊기)은 답이 아니다** — 원본이 끊지 않는다. 끊기는 *원본 종이가 이미
+   *     나뉘어 있을 때* 쓰는 장치다(FAC001·NUR007 등 15종). 폭 맞추기 수단으로 쓰면 종이가 달라진다.
+   *   ⚠**일률로 「첫 칸 26%」를 주는 방법은 못 쓴다** — 실험해 보니 PHA022 는 3.6→5.1mm 로 좋아지지만
+   *     RNL027 은 4.4→3.2mm 로 **되레 나빠졌다**(앞 열이 있는 서식은 남는 폭이 그리로 간다).
+   *   ★그래서 **재보고 정한다** — 최소폭을 줘 보고 ***종이를 넘기면 되돌린다.***
+   *     넘침 0종을 지키는 것이 좁은 칸을 넓히는 것보다 우선이다(넘치면 잘려 나간다).
+   */
+  function ckPrintFitDays(w) {
+    try {
+      var d = w.document;
+      /* 종이 안쪽 폭 — A4 가로 297mm − 여백 9mm×2. mm 로 재야 배율에 안 흔들린다. */
+      var probe = d.createElement('div');
+      probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:279mm;';
+      d.body.appendChild(probe);
+      var PAGE = probe.offsetWidth;
+      probe.parentNode.removeChild(probe);
+      if (!PAGE) return;
+      var MIN = Math.round(5 * PAGE / 279);          // 한 칸 5mm — ○ 하나 적을 만한 폭
+
+      [].slice.call(d.querySelectorAll('table.gr')).forEach(function (t) {
+        if (!t.rows.length) return;
+        var days = [].slice.call(t.rows[0].cells).filter(function (c) { return c.hasAttribute('data-day'); });
+        if (days.length < 8) return;                  // 날짜 격자가 아니면 손대지 않는다
+        var one = days[0].getBoundingClientRect().width / (days[0].colSpan || 1);
+        if (one >= MIN) return;                       // 이미 넉넉하다
+        days.forEach(function (c) { c.style.width = (MIN * (c.colSpan || 1)) + 'px'; });
+        if (t.scrollWidth > PAGE + 2)                 // ★넓히다 종이를 넘겼다 — 되돌린다
+          days.forEach(function (c) { c.style.width = ''; });
+      });
+    } catch (e) { /* 인쇄를 막지 않는다 */ }
+  }
 
   /**
    * ★★데이터 추출 — 점검표를 전산화한 뜻이 여기 있다.
