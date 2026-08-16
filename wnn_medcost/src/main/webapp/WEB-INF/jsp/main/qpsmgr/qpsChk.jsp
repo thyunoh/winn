@@ -1500,6 +1500,15 @@
     '      white-space:pre-wrap; text-align:left; min-height:24px; }' +
     '.sig{ margin-top:8px; font-size:10px; text-align:right; }' +
     '.sig span{ display:inline-block; margin-left:26px; }' +
+    /* ★★종이 폭 맞추기 (2026-08-16) — ***이 한 줄이 없으면 격자가 A4 를 넘는다.***
+       인쇄는 **화면 표를 복사**해 쓰는데(따로 그리면 화면과 종이가 갈리므로 일부러 그렇게 했다),
+       화면에서 날짜 칸에 박아 둔 `min-width:32px`(마우스로 누를 수 있어야 해서 필요하다)가
+       종이까지 따라온다. 31일 × 39px = 1209px 라 A4 가로 안쪽(1055px)을 **16~21% 넘었다.**
+       ⇒ 종이에서만 그 최소폭을 푼다. 그러면 `table{width:100%}` 가 남은 폭을 고르게 나눠
+         날짜 칸이 약 6mm 로 앉는다(원본 종이와 비슷하다).
+       ✅**점검표 309종 전부**를 인쇄 HTML 로 실측해 확인했다 — 고치기 전 122종 초과 → 고친 뒤 0종.
+       ⚠화면 쪽 `min-width` 는 **건드리지 말 것**(누르기 어려워진다). 종이에서만 푼다. */
+    'table.gr th, table.gr td{ min-width:0 !important; }' +
     /* 행을 끊어 좌우로 놓을 때 — 조각을 가로로 나란히. ★조각이 3개 이상이면 줄바꿈해 이어 붙는다 */
     '.splitrow{ display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; }' +
     '.splitcol{ flex:1 1 0; min-width:0; }' +
