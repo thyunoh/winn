@@ -1200,7 +1200,7 @@
   };
 
   /** 자동 서식코드 — 부서 접두어 + 3자리. 사람이 130종의 코드를 지을 수 없다. */
-  //   ★[등록 대장](docs/proposals/QPS_서식등록_대장_2026-08-12.md)의 접두어와 **같아야 한다** —
+  //   ★[등록 대장](docs/proposals/판독/QPS_서식등록_대장_2026-08-12.md)의 접두어와 **같아야 한다** —
   //     대장은 COM 으로 세어 두고 화면은 CHK 를 붙이면 대조가 안 된다.
   var DEPT_PRE = { NURSE:'NUR', PHARM:'PHA', NUTRI:'NUT', FACIL:'FAC', LAB:'LAB', INFECT:'INF', COMMON:'COM' };
   window.cfAutoId = function(){

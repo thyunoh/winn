@@ -39,7 +39,7 @@ DB 에서 내용을 고쳤으면 시드 파일을 **DB 기준으로 다시 뽑�
 나중에 시드를 재적재할 때 고친 내용이 되돌아간다.
 
 ```bash
-java -cp <mysql-connector.jar> Export.java     # → ../../sql/TBL_QNA_seed.sql 갱신
+java -cp <mysql-connector.jar> Export.java     # → ../../sql/qna/TBL_QNA_seed.sql 갱신
 ```
 
 ## 주의 (재작업 시 반드시 확인)

@@ -3,7 +3,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.*;
 
 /** 운영DB의 TBL_QNA_CAT / TBL_QNA_KB 를 시드 SQL 로 다시 뽑는다.
- *  (DB 에서 지식을 고친 뒤 실행하면 docs/sql/TBL_QNA_seed.sql 이 현재 DB 와 같아진다) */
+ *  (DB 에서 지식을 고친 뒤 실행하면 docs/sql/qna/TBL_QNA_seed.sql 이 현재 DB 와 같아진다) */
 public class Export {
   static String q(String v) {
     if (v == null) return "NULL";
@@ -12,7 +12,7 @@ public class Export {
 
   public static void main(String[] a) throws Exception {
     String url = "jdbc:mysql://114.108.153.178:3306/WNN?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul";
-    String dst = "C:/Users/user/git/winn/wnn_medcost/docs/sql/TBL_QNA_seed.sql";
+    String dst = "C:/Users/user/git/winn/wnn_medcost/docs/sql/qna/TBL_QNA_seed.sql";
     int cat = 0, kb = 0;
 
     try (Connection c = DriverManager.getConnection(url, "winner", "winnerdb_20@%");

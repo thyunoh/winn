@@ -1,7 +1,7 @@
 # 월보고서 표준문구(TBL_EVAL_REPORT_TPL) 사용법
 
 > 대상: 위너넷 관리자 · 작성일 2026-07-15
-> 관련: 시드 `docs/sql/TBL_EVAL_REPORT_TPL_seed.sql` · 문구 패턴 근거 `docs/reports/월간보고서_총평_작성가이드.md`
+> 관련: 시드 `docs/sql/evalrpt/TBL_EVAL_REPORT_TPL_seed.sql` · 문구 패턴 근거 `docs/reports/월간보고서_총평_작성가이드.md`
 
 ---
 
