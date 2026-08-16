@@ -307,9 +307,29 @@
                  { k:'file', nm:'사진 · 첨부' }, { k:'all', nm:'전체' }];
   var SR_TAB_KEY = 'qpsSrTab', srTab = 'base';
   function srCards(){ return [].slice.call(document.querySelectorAll('#qpsSafeRpt .sr-right .sr-card')); }
+  /** ★내용이 **한 화면에 들어가면 탭을 내지 않는다**(2026-08-15 지적).
+      전부 펼친 높이를 재고 원래대로 돌려놓는다 — 그림이 그려지기 전이라 깜빡이지 않는다. */
+  function srFits(cards){
+    var live = cards.filter(function(c){ return !srHiddenByType(c); });
+    if (live.length < 2) return true;
+    var prev = live.map(function(c){ return c.style.display; });
+    live.forEach(function(c){ c.style.display = ''; });
+    var h = 0;
+    live.forEach(function(c){ h += c.offsetHeight + 12; });
+    live.forEach(function(c, i){ c.style.display = prev[i]; });
+    return h <= (window.innerHeight - 170);
+  }
   function srTabSync(){
     var cards = srCards(), box = gel('srTabs');
     if (!box) return;
+    if (srFits(cards)) {                    // 한 화면에 들어간다 — 탭 없이 그대로
+      box.style.display = 'none';
+      cards.forEach(function(c){
+        if (c.getAttribute('data-off') === 'Y') { c.removeAttribute('data-off'); c.style.display = ''; }
+      });
+      return;
+    }
+    box.style.display = '';
     // 묶음별로 「유형이 안 숨긴 카드」가 몇 장인지
     var live = {};
     cards.forEach(function(c){
@@ -355,9 +375,11 @@
   window.srZoom = function(d){
     var w = document.querySelector('#qpsSafeRpt .sr-wrap');
     var cur = parseFloat(w && w.style.zoom) || 1;
-    if (d === 0) { srApplyZoom(1); try { localStorage.removeItem(SR_Z_KEY); } catch (ignore) {} return; }
+    if (d === 0) { srApplyZoom(1); try { localStorage.removeItem(SR_Z_KEY); } catch (ignore) {}
+                   setTimeout(srTabSync, 0); return; }
     var z = srApplyZoom(cur + d * 0.1);
     try { localStorage.setItem(SR_Z_KEY, String(z)); } catch (ignore) {}
+    setTimeout(srTabSync, 0);              // 글자가 커지면 넘치는지 다시 잰다
   };
 
   /** ★체크 묶음을 항목표에서 그린다. 유형별 하드코딩이 없다. */
@@ -918,6 +940,7 @@
       if (z) srApplyZoom(z);
     } catch (ignore) {}
     srTabSync();
+    var _srT; window.addEventListener('resize', function(){ clearTimeout(_srT); _srT = setTimeout(srTabSync, 200); });
     post('<c:url value="/qps/codeList.do"/>', {}).then(
       function(res){ GBS = (res && res.codes && res.codes.QPS_SAFERPT_GB) || []; step2(); },
       function(){ GBS = []; step2(); }

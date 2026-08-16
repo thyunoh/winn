@@ -43,6 +43,21 @@
   #qpsPlan table.ed input[type=checkbox]{ width:15px; height:15px; margin:4px auto; display:block; }
   #qpsPlan .rowdel{ color:#b23b3b; cursor:pointer; font-weight:700; text-align:center; width:26px; }
   #qpsPlan .tot{ background:#f7fbf9; font-weight:800; text-align:center; }
+  /* ── 탭 · 글자 크기 (2026-08-15) — 카드 7장이 세로로 쌓여 스크롤이 길다는 지적.
+       ★***탭 이름은 카드 제목에서 그대로 가져온다*** — 화면을 고쳐 항목이 늘어도 탭이 저절로 는다. */
+  #qpsPlan .qp-tabs{ display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; }
+  #qpsPlan .qp-tab{ border:1px solid #cfd9e0; background:#f4f7f9; color:#43555f; border-radius:8px 8px 0 0;
+                    padding:7px 15px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  #qpsPlan .qp-tab:hover{ background:#e9eff3; }
+  #qpsPlan .qp-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
+  #qpsPlan .qp-tab.dim{ opacity:.5; }
+  #qpsPlan .qp-mode{ margin-left:auto; border:1px solid #1f5a4b; background:#fff; color:#1f5a4b;
+                     border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsPlan .qp-mode.on{ background:#1f5a4b; color:#fff; }
+  #qpsPlan .qp-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
+  #qpsPlan .qp-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                            padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsPlan .qp-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="qp-head">
@@ -59,8 +74,17 @@
   <select id="plYear" style="width:auto;" onchange="plLoad();"></select>
   <button type="button" class="qp-btn" onclick="plSave();">저장</button>
   <button type="button" class="qp-btn ghost" onclick="plPrint();">🖨 인쇄(A4)</button>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="qp-zoom">
+    <button type="button" onclick="plZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="plZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="plZoom(0);"  title="처음 크기로">↺</button>
+  </span>
   <span class="qp-sub" id="plStat"></span>
 </div>
+
+<%-- ★탭 (2026-08-15) — 카드 제목에서 이름을 뽑아 그린다. 「전체」는 종전처럼 쭉 훑는 자리. --%>
+<div class="qp-tabs" id="plTabs"></div>
 
 <div class="qp-card"><h4>1. 개요 <span class="hint">— 항목명도 병원에 맞게 고칠 수 있습니다 (추진체계 흐름도는 글로 적습니다)</span></h4>
   <table class="ed"><thead><tr><th style="width:150px;">항목</th><th>내용</th><th style="width:26px;"></th></tr></thead>
@@ -399,9 +423,90 @@
     setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
   };
 
+  /* ═══ 탭 · 글자 크기 (2026-08-15 — 사용자 요청) ═══════════════════════════
+     ★***탭 이름을 카드 제목에서 뽑는다*** — 화면을 고쳐 항목이 늘어도 탭이 저절로 는다
+       (safeRpt 는 카드가 유형마다 숨어 `data-tab` 을 달았지만, 여기는 카드가 늘 같아 그럴 필요가 없다).
+     ★「전체」를 남긴다 — 쭉 훑어 읽던 방식을 뺏지 않는다.
+     ⚠인쇄는 별도 창을 만들므로 탭과 무관하다(숨긴 항목도 종이에는 다 나온다). */
+  var PL_KEY = 'qpsPlTab', plTab = 0;      // 0 = 첫 항목 · -1 = 전체
+  function plCards(){ return [].slice.call(document.querySelectorAll('#qpsPlan .qp-card')); }
+  function plTabNm(c, i){
+    var h = c.querySelector('h4');
+    if (!h) return '항목 ' + (i + 1);
+    // 제목에서 안내글(.hint)은 뺀다 — 탭에는 이름만
+    var t = h.cloneNode(true), hint = t.querySelector('.hint');
+    if (hint) hint.remove();
+    return (t.textContent || '').trim() || ('항목 ' + (i + 1));
+  }
+  window.plPickTab = function(i){
+    plTab = i;
+    try { localStorage.setItem(PL_KEY, String(i)); } catch (ignore) {}
+    plTabSync();
+  };
+  /** ★내용이 **한 화면에 들어가면 탭을 내지 않는다**(2026-08-15 지적 : 화면 반도 안 차는데 탭이 떴다). */
+  function plFits(cs){
+    if (cs.length < 2) return true;
+    var prev = cs.map(function(c){ return c.style.display; });
+    cs.forEach(function(c){ c.style.display = ''; });
+    var h = 0;
+    cs.forEach(function(c){ h += c.offsetHeight + 12; });
+    cs.forEach(function(c, i){ c.style.display = prev[i]; });
+    return h <= (window.innerHeight - 170);
+  }
+  function plTabSync(){
+    var cards = plCards(), box = document.getElementById('plTabs');
+    if (!box || !cards.length) return;
+    if (plFits(cards)) {                       // 한 화면에 들어간다 — 탭 없이 그대로
+      box.style.display = 'none';
+      cards.forEach(function(c){ c.style.display = ''; });
+      return;
+    }
+    box.style.display = '';
+    /* ★탭을 **잘게 나누지 않는다** — 카드가 많으면 이웃끼리 묶어 **최대 4개**로.
+       7장이면 2·2·2·1. 이름은 첫 카드 제목, 묶였으면 「외」. */
+    var MAX = 4, per = Math.ceil(cards.length / MAX), groups = [];
+    for (var s0 = 0; s0 < cards.length; s0 += per) groups.push(cards.slice(s0, s0 + per));
+    if (plTab >= groups.length) plTab = 0;
+    var all = (plTab === -1);
+    box.innerHTML = groups.map(function(g, i){
+      return '<button type="button" class="qp-tab' + (!all && plTab === i ? ' on' : '') +
+             (all ? ' dim' : '') + '" onclick="plPickTab(' + i + ');">' +
+             plTabNm(g[0], 0) + (g.length > 1 ? ' 외' : '') + '</button>';
+    }).join('') +
+      '<button type="button" class="qp-mode' + (all ? ' on' : '') + '" onclick="plPickTab(' +
+      (all ? '0' : '-1') + ');">' + (all ? '▤ 나눠 보기' : '☰ 전체 보기') + '</button>';
+    groups.forEach(function(g, i){
+      g.forEach(function(c){ c.style.display = (all || plTab === i) ? '' : 'none'; });
+    });
+  }
+
+  var PL_Z_KEY = 'qpsPlZoom';
+  function plApplyZoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    var w = document.getElementById('qpsPlan');
+    if (w) w.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.plZoom = function(d){
+    var w = document.getElementById('qpsPlan');
+    var cur = parseFloat(w && w.style.zoom) || 1;
+    if (d === 0) { plApplyZoom(1); try { localStorage.removeItem(PL_Z_KEY); } catch (ignore) {} return; }
+    var z = plApplyZoom(cur + d * 0.1);
+    try { localStorage.setItem(PL_Z_KEY, String(z)); } catch (ignore) {}
+    setTimeout(plTabSync, 0);            // 글자가 커지면 넘치는지 다시 잰다
+  };
+
   $(function(){
     var g = document.getElementById('plGb');
     if (g) { var init = g.getAttribute('data-init'); if (init) g.value = init; }
+    try {                                  // 지난번에 쓰던 탭·글자 크기를 되살린다
+      var t = parseInt(localStorage.getItem(PL_KEY), 10);
+      if (!isNaN(t)) plTab = t;
+      var z = parseFloat(localStorage.getItem(PL_Z_KEY));
+      if (z) plApplyZoom(z);
+    } catch (ignore) {}
+    plTabSync();
+    var _plT; window.addEventListener('resize', function(){ clearTimeout(_plT); _plT = setTimeout(plTabSync, 200); });
     plLoad();
   });
 })();

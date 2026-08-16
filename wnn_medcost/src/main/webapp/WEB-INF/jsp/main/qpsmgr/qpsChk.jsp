@@ -1213,7 +1213,10 @@
   window.ckTabSync = function(){
     var box = gel('ckTabs'), main = gel('ckMainWrap'), ph = gel('ckPhotoWrap');
     if (!box || !main || !ph) return;
-    if (!ckHasPhoto()) {                       // 가를 것이 없다 — 종전 모습 그대로
+    /* ★사진칸이 있어도 **한 화면에 들어가면** 탭을 내지 않는다(2026-08-15 지적) */
+    var card = document.querySelector('#qpsChk .ck-card');
+    var fits = card && (card.offsetHeight <= window.innerHeight - 150);
+    if (!ckHasPhoto() || (fits && ckTab !== 'photo')) {   // 가를 것이 없다 — 종전 모습 그대로
       box.style.display = 'none';
       main.style.display = '';
       if (ph.getAttribute('data-off') === 'Y') { ph.removeAttribute('data-off'); ph.style.display = ''; }

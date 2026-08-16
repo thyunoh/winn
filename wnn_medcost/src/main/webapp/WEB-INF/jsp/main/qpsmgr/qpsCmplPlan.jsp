@@ -56,6 +56,22 @@
       opacity:1 !important; visibility:visible !important; position:static !important; cursor:pointer; margin:0 4px 0 0 !important; }
   #qpsCmplPlan table.ed input[type=checkbox]{ margin:4px auto !important; display:block !important; }
   #qpsCmplPlan .rowdel{ color:#b23b3b; cursor:pointer; font-weight:700; text-align:center; width:26px; }
+  /* ── 탭 · 글자 크기 (2026-08-15) — 카드가 세로로 쌓여 스크롤이 길다는 지적.
+       ★한 화면에 들어가면 **탭을 내지 않는다**(고정으로 달지 않는다).
+       ★탭 이름은 카드 제목에서 뽑고, 많으면 이웃끼리 묶어 **최대 4개**. */
+  #qpsCmplPlan .zz-tabs{ display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; align-items:center; }
+  #qpsCmplPlan .zz-tab{ border:1px solid #cfd9e0; background:#f4f7f9; color:#43555f; border-radius:8px 8px 0 0;
+                   padding:7px 15px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  #qpsCmplPlan .zz-tab:hover{ background:#e9eff3; }
+  #qpsCmplPlan .zz-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
+  #qpsCmplPlan .zz-tab.dim{ opacity:.5; }
+  #qpsCmplPlan .zz-mode{ margin-left:auto; border:1px solid #1f5a4b; background:#fff; color:#1f5a4b;
+                    border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsCmplPlan .zz-mode.on{ background:#1f5a4b; color:#fff; }
+  #qpsCmplPlan .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
+  #qpsCmplPlan .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                           padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsCmplPlan .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="qp-head">
@@ -67,7 +83,15 @@
   <button type="button" class="qp-btn" onclick="cpSave();">저장</button>
   <button type="button" class="qp-btn ghost" onclick="cpPrint();">🖨 인쇄(A4)</button>
   <span class="qp-sub" id="cpStat"></span>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
 </div>
+<%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
+<div class="zz-tabs" id="zzTabs" style="display:none;"></div>
 
 <div class="qp-card"><h4>주제 · 문제개요 <span class="hint">— 항목명도 병원에 맞게 고칠 수 있습니다</span></h4>
   <table class="ed"><thead><tr><th style="width:180px;">항목</th><th>내용</th><th style="width:26px;"></th></tr></thead>
@@ -308,6 +332,79 @@
 
   $(function(){ cpLoad(); });
 })();
+
+  /* ═══ 탭 · 글자 크기 (2026-08-15 · 사용자 요청) ═══════════════════════════
+     ★***고정으로 달지 않는다*** — 전부 펼친 높이를 재서 **한 화면을 넘칠 때만** 탭을 낸다.
+       창 크기·글자 크기가 바뀌면 다시 잰다.
+     ★탭이 **잘게 나뉘지 않게** 이웃 카드를 묶어 최대 4개. 이름은 첫 카드 제목(+「외」).
+     ★「전체 보기」는 탭이 아니라 **보기 방식**이라 오른쪽 끝에 따로 둔다.
+     ⚠인쇄는 별도 창이라 탭과 무관하다(숨긴 항목도 종이에는 다 나온다). */
+  (function(){
+    var KEY = 'qpsTab_qpsCmplPlan', ZKEY = 'qpsZoom_qpsCmplPlan', cur = 0;
+    function cards(){ return [].slice.call(document.querySelectorAll('#qpsCmplPlan .qp-card')); }
+    function nm(c, i){
+      var h = c.querySelector('h4');
+      if (!h) return '항목 ' + (i + 1);
+      var t = h.cloneNode(true), hint = t.querySelector('.hint');
+      if (hint) hint.remove();
+      return (t.textContent || '').trim().slice(0, 20) || ('항목 ' + (i + 1));
+    }
+    function fits(cs){
+      if (cs.length < 2) return true;
+      var prev = cs.map(function(c){ return c.style.display; });
+      cs.forEach(function(c){ c.style.display = ''; });
+      var h = 0;
+      cs.forEach(function(c){ h += c.offsetHeight + 12; });
+      cs.forEach(function(c, i){ c.style.display = prev[i]; });
+      return h <= (window.innerHeight - 170);
+    }
+    function sync(){
+      var cs = cards(), box = document.getElementById('zzTabs');
+      if (!box || !cs.length) return;
+      if (fits(cs)) {                       // 한 화면에 들어간다 — 탭이 필요 없다
+        box.style.display = 'none';
+        cs.forEach(function(c){ c.style.display = ''; });
+        return;
+      }
+      box.style.display = '';
+      var MAX = 4, per = Math.ceil(cs.length / MAX), groups = [];
+      for (var s0 = 0; s0 < cs.length; s0 += per) groups.push(cs.slice(s0, s0 + per));
+      if (cur >= groups.length) cur = 0;
+      var all = (cur === -1);
+      box.innerHTML = groups.map(function(g, i){
+        return '<button type="button" class="zz-tab' + (!all && cur === i ? ' on' : '') +
+               (all ? ' dim' : '') + '" onclick="zzTab(' + i + ');">' +
+               nm(g[0], 0) + (g.length > 1 ? ' 외' : '') + '</button>';
+      }).join('') +
+        '<button type="button" class="zz-mode' + (all ? ' on' : '') + '" onclick="zzTab(' +
+        (all ? '0' : '-1') + ');">' + (all ? '▤ 나눠 보기' : '☰ 전체 보기') + '</button>';
+      groups.forEach(function(g, i){
+        g.forEach(function(c){ c.style.display = (all || cur === i) ? '' : 'none'; });
+      });
+    }
+    window.zzTab = function(i){ cur = i; try { localStorage.setItem(KEY, String(i)); } catch (e) {} sync(); };
+    function zoom(z){
+      z = Math.min(1.6, Math.max(0.8, z));
+      var w = document.getElementById('qpsCmplPlan');
+      if (w) w.style.zoom = z.toFixed(2);
+      return z;
+    }
+    window.zzZoom = function(d){
+      var w = document.getElementById('qpsCmplPlan'), c0 = parseFloat(w && w.style.zoom) || 1;
+      if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} setTimeout(sync, 0); return; }
+      var z = zoom(c0 + d * 0.1);
+      try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+      setTimeout(sync, 0);
+    };
+    try {
+      var t = parseInt(localStorage.getItem(KEY), 10); if (!isNaN(t)) cur = t;
+      var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z);
+    } catch (e) {}
+    function boot(){ setTimeout(sync, 0); }
+    if (window.jQuery) jQuery(boot); else document.addEventListener('DOMContentLoaded', boot);
+    var _t; window.addEventListener('resize', function(){ clearTimeout(_t); _t = setTimeout(sync, 200); });
+    window.zzResync = sync;
+  })();
 </script>
 </div><%-- /#qpsCmplPlan --%>
 </div><%-- /.dashboard-wrapper --%>

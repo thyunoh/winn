@@ -261,10 +261,10 @@
   window.udPick = function(on){
     [].slice.call(document.querySelectorAll('#udDeptBox input')).forEach(function(x){ x.checked = !!on; });
   };
-  /** 새 직원이 왔을 때 — 전임자(같은 부서 사람)의 부서를 그대로 가져온다. */
   /* ── 알림 — 프로젝트 표준인 SweetAlert(Swal). 라이브러리가 없으면 기본 창으로 내려간다.
        ★창을 **작게** 쓴다(사용자 지적) — 기본값은 아이콘·여백이 커서 부서 이름이 몇 줄로 접힌다.
-         폭 `ud-swal` 로 넓히고(부서가 15개까지 온다) 아이콘은 없애거나 작게. --%> */
+         폭 `ud-swal` 로 넓히고(부서가 15개까지 온다) 아이콘은 없애거나 작게.
+       ⚠***JS 주석 안에 `--` + `%>` 를 쓰지 말 것*** — JSP 가 거기서 주석을 닫아 버린다(실제로 겪음). */
   function say(text, icon){
     if (!window.Swal) { alert(text); return; }
     Swal.fire({ icon:icon || 'info', title:text, width:380, padding:'0.9em',
