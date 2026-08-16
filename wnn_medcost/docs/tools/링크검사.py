@@ -30,6 +30,10 @@ def scan(root):
                 link = m.group(1)
                 if SKIP.match(link):
                     continue
+                # ⚠`[조사의 목표](서술)` 처럼 **링크가 아닌 괄호**가 본문에 섞여 있다.
+                #   경로 모양(확장자나 `/`)이 아니면 링크로 보지 않는다.
+                if '/' not in link and '.' not in link:
+                    continue
                 p = os.path.normpath(os.path.join(dp, link.split('#')[0]))
                 if not os.path.exists(p):
                     bad.append((t, link))
