@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260815-ROWSAFE";
+	private static final String BUILD = "20260815-USERDEPT";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1385,15 +1385,38 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			String inYear = str(p.get("inYear"), "");
 			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			/* ★담당 부서(2026-08-15) — 이 사람이 맡은 부서만 보여준다.
+			   ***등록이 없으면 전 부서*** — 이 규칙 하나로 끝난다.
+			   ⚠**계정 종류로 가르지 않는다**(사용자 지시) — 관리자도 지정하면 그대로 걸린다.
+			     여러 병원을 지원하는 담당자는 그 병원에 등록이 없으므로 자연히 전 부서가 된다. */
+			List<String> myDept = svc.selectQpsUserDept(hospCd, userId(request));
+			String want = str(p.get("deptCd"), "");
+			// 담당 부서가 정해진 사람이 **남의 부서를 지정**하면 무시한다(주소를 직접 쳐도 새지 않게)
+			if (!myDept.isEmpty() && !want.isEmpty() && !myDept.contains(want)) want = "";
+
 			// ★작성 화면은 그 병원이 켠 서식만 본다 — 130종을 다 보여주면 못 쓴다
-			res.put("forms", svc.selectChkFormList(hospCd, "", str(p.get("deptCd"), ""), "Y"));
+			List<Map<String, Object>> forms = svc.selectChkFormList(hospCd, "", want, "Y");
+			if (!myDept.isEmpty() && want.isEmpty()) {
+				// 부서를 안 골랐을 때 = 「내 부서 전부」. 공통(COMMON)은 누구에게나 보인다.
+				List<Map<String, Object>> keep = new ArrayList<>();
+				for (Map<String, Object> f : forms) {
+					String d = str(f.get("deptcd"), "");
+					if (d.isEmpty() || "COMMON".equals(d) || myDept.contains(d)) keep.add(f);
+				}
+				forms = keep;
+			}
+			res.put("forms", forms);
 			// 부서 셀렉트 이름표 — 코드값('NURSE')이 그대로 보이면 안 된다
 			java.util.List<Map<String, Object>> dept = new java.util.ArrayList<>();
 			java.util.List<Map<String, Object>> allc = svc.selectQpsCodes();
 			if (allc != null) for (Map<String, Object> r : allc) {
-				if ("QPS_CHK_DEPT".equals(String.valueOf(r.get("codecd")))) dept.add(r);
+				if (!"QPS_CHK_DEPT".equals(String.valueOf(r.get("codecd")))) continue;
+				// 담당이 정해졌으면 셀렉트에도 제 부서만 (+공통은 항상)
+				String cd = str(r.get("subcode"), "");
+				if (myDept.isEmpty() || myDept.contains(cd) || "COMMON".equals(cd)) dept.add(r);
 			}
 			res.put("dept", dept);
+			res.put("mydept", myDept);        // 화면이 「담당 부서로 좁혀 보고 있습니다」를 알린다
 			String formId = str(p.get("formId"), "");
 			if (!formId.isEmpty()) res.putAll(svc.selectChkBase(hospCd, formId, inYear));
 			res.put("line", svc.selectApprLine(hospCd));
@@ -1877,6 +1900,71 @@ public class QpsController {
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
+	}
+
+	/* ═══ 사용자 ↔ 담당 부서 (2026-08-15) ═══════════════════════════════════════
+	   담당자가 **제 부서 점검표만** 보게 한다(부서 15개를 다 보여주면 제 것을 못 찾는다).
+	   ★***등록이 없으면 「전 부서」*** — 막는 장치가 아니라 좁혀 주는 장치다.
+	   ★위너넷 담당자는 여러 병원을 지원하므로 언제나 전 부서. */
+	@RequestMapping(value = "main/qpsUserDept.do")
+	public String qpsUserDept(HttpServletRequest request, ModelMap model) {
+		return qpsScreen(request, model, ".main/qpsmgr/qpsUserDept");
+	}
+
+	@RequestMapping(value = "/qps/userDeptBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> userDeptBase(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("users", svc.selectQpsUserList(hospCd));
+			// 부서 이름표 — 코드값이 그대로 보이면 안 된다
+			List<Map<String, Object>> dept = new ArrayList<>();
+			List<Map<String, Object>> allc = svc.selectQpsCodes();
+			if (allc != null) for (Map<String, Object> r : allc) {
+				if ("QPS_CHK_DEPT".equals(String.valueOf(r.get("codecd")))) dept.add(r);
+			}
+			res.put("dept", dept);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/userDeptSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> userDeptSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			// 여러 사람 · 여러 부서를 쉼표로 받는다(새 직원 복사 · 부서별 일괄 세팅이 같은 창구를 쓴다)
+			List<String> users = csv(p.get("userIds"), "[A-Za-z0-9_.-]{1,50}");
+			List<String> depts = csv(p.get("deptCds"), "[A-Z]{2,20}");
+			if (users.isEmpty()) return fail(res, "적용할 사용자를 고르세요.");
+			boolean add = "Y".equals(str(p.get("addMode"), "N"));   // 기존에 더하기
+			int n = svc.saveQpsUserDept(hospCd, users, depts, userId(request), add);
+			res.put("saved", n);
+			res.put("message", add
+					? (n + "명에게 부서 " + depts.size() + "개를 **더했습니다**(기존 담당은 그대로).")
+					: depts.isEmpty()
+						? (n + "명을 **전 부서**로 되돌렸습니다.")
+						: (n + "명에게 부서 " + depts.size() + "개를 지정했습니다."));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 쉼표로 온 목록을 <b>모양이 맞는 것만</b> 걸러 준다 — 엉뚱한 값이 표에 들어가지 않게. */
+	private List<String> csv(Object o, String pattern) {
+		List<String> out = new ArrayList<>();
+		if (o == null) return out;
+		for (String s : String.valueOf(o).split(",")) {
+			String v = s.trim();
+			if (!v.isEmpty() && v.matches(pattern) && !out.contains(v)) out.add(v);
+		}
+		return out;
 	}
 
 	@RequestMapping(value = "/qps/chkPhotoDelete.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")

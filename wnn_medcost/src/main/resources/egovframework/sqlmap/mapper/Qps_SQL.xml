@@ -2761,4 +2761,41 @@
 		</foreach>
 	</insert>
 
+	<!-- ═══ 사용자 ↔ 담당 부서 (2026-08-15) ═══════════════════════════════════
+	     ★***등록이 없으면 「전 부서」다*** — 표가 비면 지금과 똑같이 동작한다.
+	       막는 장치가 아니라 **좁혀 주는 장치**다(도입하는 날 업무가 멈추면 안 된다). -->
+
+	<!-- 그 병원 사용자 + 각자의 담당 부서(쉼표로 이어 준다) — 관리 화면 목록 -->
+	<select id="selectQpsUserList" resultType="java.util.HashMap">
+		SELECT u.USER_ID AS userid, MAX(u.USER_NM) AS usernm,
+		       MAX(IFNULL(u.WINNER_YN,'N')) AS winneryn,
+		       (SELECT GROUP_CONCAT(d.DEPT_CD ORDER BY d.DEPT_CD)
+		          FROM TBL_QPS_USER_DEPT d
+		         WHERE d.HOSP_CD = u.HOSP_CD AND d.USER_ID = u.USER_ID AND d.USE_YN = 'Y') AS deptcds
+		  FROM TBL_USER_MST u
+		 WHERE u.HOSP_CD = #{hospCd}
+		   AND IFNULL(u.END_DT,'99991231') >= DATE_FORMAT(NOW(),'%Y%m%d')
+		 GROUP BY u.USER_ID
+		 ORDER BY MAX(u.USER_NM), u.USER_ID
+	</select>
+
+	<!-- 한 사람의 담당 부서 — 화면·서버 필터가 함께 쓴다 -->
+	<select id="selectQpsUserDept" resultType="java.lang.String">
+		SELECT DEPT_CD FROM TBL_QPS_USER_DEPT
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId} AND USE_YN = 'Y'
+		 ORDER BY DEPT_CD
+	</select>
+
+	<delete id="deleteQpsUserDept">
+		DELETE FROM TBL_QPS_USER_DEPT WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
+	</delete>
+
+	<insert id="insertQpsUserDept" parameterType="map">
+		INSERT INTO TBL_QPS_USER_DEPT (HOSP_CD, USER_ID, DEPT_CD, USE_YN, REG_USER) VALUES
+		<foreach item="d" collection="depts" separator=",">
+		 (#{hospCd}, #{userId}, #{d}, 'Y', #{regUser})
+		</foreach>
+		ON DUPLICATE KEY UPDATE USE_YN='Y', REG_USER=VALUES(REG_USER)
+	</insert>
+
 </mapper>

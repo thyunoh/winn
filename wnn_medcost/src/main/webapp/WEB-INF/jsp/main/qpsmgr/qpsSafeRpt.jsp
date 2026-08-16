@@ -42,6 +42,21 @@
   #qpsSafeRpt .sr-left{ width:260px; flex:none; }
   #qpsSafeRpt .sr-right{ flex:1; min-width:0; max-width:1000px; }
   #qpsSafeRpt .sr-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  /* ── 탭 (2026-08-15) — 카드 7장이 세로로 쌓여 스크롤이 길다는 지적. 묶어서 한 번에 한 묶음만 보인다.
+       ★「전체」 탭을 남겨 둔다 — 종전처럼 쭉 훑고 싶은 사람도 있다(기본은 「기본」). */
+  #qpsSafeRpt .sr-tabs{ display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; }
+  #qpsSafeRpt .sr-tab{ border:1px solid #cfd9e0; background:#f4f7f9; color:#43555f; border-radius:8px 8px 0 0;
+                       padding:7px 16px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  #qpsSafeRpt .sr-tab:hover{ background:#e9eff3; }
+  #qpsSafeRpt .sr-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
+  #qpsSafeRpt .sr-tab .n{ font-weight:400; opacity:.75; margin-left:5px; font-size:12px; }
+  /* ── 글자 크기 (2026-08-15) — SUNWOO 의 [폰트 확대/축소] 와 같은 자리.
+       ★CSS 가 px 로 짜여 있어 뿌리 font-size 를 키워도 안 따라온다 ⇒ `zoom` 으로 통째로 키운다.
+         격자·칸 너비까지 같이 커져 원본 프로그램과 같은 느낌이 된다. 인쇄는 새 창이라 영향 없다. */
+  #qpsSafeRpt .sr-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
+  #qpsSafeRpt .sr-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                               padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsSafeRpt .sr-zoom button:hover{ background:#eef3f6; }
   #qpsSafeRpt .sr-card h4{ margin:0 0 10px; font-size:14px; font-weight:800; color:#1f5a4b; }
   #qpsSafeRpt .sr-card h4 .hint{ font-weight:500; font-size:12px; color:#8a99a3; }
   #qpsSafeRpt .sr-list{ max-height:520px; overflow:auto; }
@@ -112,6 +127,12 @@
   <button type="button" class="sr-btn" onclick="srSave();">저장</button>
   <button type="button" class="sr-btn ghost" onclick="srPrint();">🖨 인쇄(A4)</button>
   <button type="button" class="sr-btn warn" id="srDelBtn" onclick="srDel();" style="display:none;">삭제</button>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다(localStorage) --%>
+  <span class="sr-zoom">
+    <button type="button" onclick="srZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="srZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="srZoom(0);"  title="처음 크기로">↺</button>
+  </span>
   <span class="sr-sub" id="srStat"></span>
   <span style="flex:0 0 60px;"></span>
 </div>
@@ -126,7 +147,11 @@
   </div>
 
   <div class="sr-right">
-    <div class="sr-card">
+    <%-- ★탭 (2026-08-15) — data-tab 이 카드의 묶음이다. 유형마다 숨는 카드가 있으므로
+         **보이는 카드가 하나도 없는 탭은 띠에서 빠진다**(srTabSync 가 매번 다시 센다). --%>
+    <div class="sr-tabs" id="srTabs"></div>
+
+    <div class="sr-card" data-tab="base">
       <h4>대상 · 발생 <span class="hint">— [사고에서 가져오기]로 이미 등록한 사고를 골라 채울 수 있습니다</span></h4>
       <input type="hidden" id="f_srpSeq" value="">
       <input type="hidden" id="f_incidSeq" value="">
@@ -153,7 +178,7 @@
     </div>
 
     <%-- ★체크 묶음 — 항목표(def)에서 그린다. 이 화면에 유형별 분기가 없다. --%>
-    <div class="sr-card" id="cardChk">
+    <div class="sr-card" data-tab="base" id="cardChk">
       <h4>구분 <span class="hint" id="srChkHint">— 유형에 따라 항목이 바뀝니다</span></h4>
       <div id="srChkBox"></div>
     </div>
@@ -161,12 +186,12 @@
     <%-- ★반복행 표 — 서식이 열 이름을 정하고 행은 문서가 늘린다.
          단벌 = FORM.SUB_COLS(종전) · 여러 벌 = TBL_QPS_SAFERPT_SUB(2026-08-15, 인사기록카드 9벌 등).
          정의가 없는 유형이 대부분이라 이 카드는 기본으로 숨어 있다. --%>
-    <div class="sr-card" id="cardRow" style="display:none;">
+    <div class="sr-card" data-tab="body" id="cardRow" style="display:none;">
       <h4><span id="srRowNm">품목</span> <span class="hint">— 줄이 모자라면 각 표의 [＋ 행 추가]</span></h4>
       <div id="srRowBox"></div>
     </div>
 
-    <div class="sr-card" id="cardSix">
+    <div class="sr-card" data-tab="body" id="cardSix">
       <h4>사건개요 (육하원칙) <span class="hint">— 안 쓰는 서식은 비워 두면 인쇄물에도 안 나옵니다</span></h4>
       <div class="sr-form">
         <div class="lb" data-lbl="wWhen">언제</div>   <div><input type="text" id="f_wWhen" maxlength="300"></div>
@@ -178,7 +203,7 @@
       </div>
     </div>
 
-    <div class="sr-card">
+    <div class="sr-card" data-tab="body">
       <h4>서술</h4>
       <div class="sr-form">
         <div class="lb" data-lbl="summary">사건경위</div>   <div class="full"><textarea id="f_summary" rows="3"></textarea></div>
@@ -193,14 +218,14 @@
 
     <%-- ★사진첨부 — 서식(TBL_QPS_SAFERPT_FORM.PHOTO_YN='Y')이 켠 유형에서만 보인다.
          칸(1~4)이 인쇄물 2×2 의 고정 자리다. 상담일지 계열·직원 교육 결과 보고서가 쓴다(설계 §①). --%>
-    <div class="sr-card" id="cardPhoto" style="display:none;">
+    <div class="sr-card" data-tab="file" id="cardPhoto" style="display:none;">
       <h4>사진첨부 <span class="hint">— 칸을 누르면 사진을 올립니다 · 인쇄물에 2×2로 실립니다</span></h4>
       <div class="ph-note">⚠ 환자·직원의 얼굴 등 개인정보가 식별되는 사진은 동의 없이 올리지 마세요.</div>
       <div class="ph-grid" id="srPhotoGrid"></div>
       <input type="file" id="srPhotoInp" accept="image/*" style="display:none;">
     </div>
 
-    <div class="sr-card">
+    <div class="sr-card" data-tab="file">
       <h4>사진 · 첨부파일</h4>
       <div id="srFileBox"></div>
     </div>
@@ -269,7 +294,71 @@
     var six = ['wWhen','wWho','wWhere','wWhat','wHow','wWhy'];
     gel('cardSix').style.display = six.every(function(k){ return m[k] === '-'; }) ? 'none' : '';
     gel('srTitle').textContent = gbNm();
+    srTabSync();          // 카드가 숨거나 나타나면 탭 띠도 다시 센다
   }
+
+  /* ═══ 탭 · 글자 크기 (2026-08-15 — 사용자 요청) ═══════════════════════════
+     ★탭 = 카드의 `data-tab` 묶음. **유형마다 숨는 카드가 있으므로** 띠는 그때그때 다시 그린다
+       (보이는 카드가 없는 묶음은 띠에서 뺀다 — 눌러도 빈 화면이 되는 탭을 만들지 않는다).
+     ★「전체」를 남겨 둔다 — 쭉 훑어 읽던 사람의 방식을 뺏지 않는다.
+     ⚠카드를 숨기는 주체가 둘이다(유형별 `display:none` · 탭) — 섞이면 「분명 있는데 안 보인다」가 된다.
+       ⇒ ***탭은 `data-off` 로만 숨긴다.*** 유형이 숨긴 카드는 탭이 켜도 그대로 숨어 있다. */
+  var SR_TABS = [{ k:'base', nm:'기본' }, { k:'body', nm:'본문' },
+                 { k:'file', nm:'사진 · 첨부' }, { k:'all', nm:'전체' }];
+  var SR_TAB_KEY = 'qpsSrTab', srTab = 'base';
+  function srCards(){ return [].slice.call(document.querySelectorAll('#qpsSafeRpt .sr-right .sr-card')); }
+  function srTabSync(){
+    var cards = srCards(), box = gel('srTabs');
+    if (!box) return;
+    // 묶음별로 「유형이 안 숨긴 카드」가 몇 장인지
+    var live = {};
+    cards.forEach(function(c){
+      var k = c.getAttribute('data-tab') || 'base';
+      live[k] = (live[k] || 0) + (srHiddenByType(c) ? 0 : 1);
+    });
+    var shown = SR_TABS.filter(function(t){ return t.k === 'all' || live[t.k] > 0; });
+    if (!shown.some(function(t){ return t.k === srTab; })) srTab = shown.length ? shown[0].k : 'all';
+    box.innerHTML = shown.map(function(t){
+      return '<button type="button" class="sr-tab' + (t.k === srTab ? ' on' : '') +
+             '" onclick="srPickTab(\'' + t.k + '\');">' + t.nm +
+             (t.k === 'all' ? '' : '<span class="n">' + (live[t.k] || 0) + '</span>') + '</button>';
+    }).join('');
+    srApplyTab();
+  }
+  /** 유형이 숨긴 카드인가 — 탭이 켜도 이건 안 보여야 한다 */
+  function srHiddenByType(c){ return c.getAttribute('data-off') !== 'Y' && c.style.display === 'none'; }
+  function srApplyTab(){
+    srCards().forEach(function(c){
+      var k = c.getAttribute('data-tab') || 'base';
+      var off = !(srTab === 'all' || srTab === k);
+      if (off) {
+        if (!srHiddenByType(c)) { c.setAttribute('data-off', 'Y'); c.style.display = 'none'; }
+      } else if (c.getAttribute('data-off') === 'Y') {
+        c.removeAttribute('data-off'); c.style.display = '';
+      }
+    });
+  }
+  window.srPickTab = function(k){
+    srTab = k;
+    try { localStorage.setItem(SR_TAB_KEY, k); } catch (ignore) {}
+    srTabSync();
+  };
+
+  /* 글자 크기 — CSS 가 px 라 `zoom` 으로 통째로 키운다(격자 칸도 같이 커진다). */
+  var SR_Z_MIN = 0.8, SR_Z_MAX = 1.6, SR_Z_KEY = 'qpsSrZoom';
+  function srApplyZoom(z){
+    z = Math.min(SR_Z_MAX, Math.max(SR_Z_MIN, z));
+    var w = document.querySelector('#qpsSafeRpt .sr-wrap');
+    if (w) w.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.srZoom = function(d){
+    var w = document.querySelector('#qpsSafeRpt .sr-wrap');
+    var cur = parseFloat(w && w.style.zoom) || 1;
+    if (d === 0) { srApplyZoom(1); try { localStorage.removeItem(SR_Z_KEY); } catch (ignore) {} return; }
+    var z = srApplyZoom(cur + d * 0.1);
+    try { localStorage.setItem(SR_Z_KEY, String(z)); } catch (ignore) {}
+  };
 
   /** ★체크 묶음을 항목표에서 그린다. 유형별 하드코딩이 없다. */
   function renderChk(sel){
@@ -383,7 +472,7 @@
   /** @param vals 서버가 준 [{rowno,colno,val}] — 없으면 빈 표를 그린다. */
   function renderRows(vals){
     var defs = subDefs();
-    if (!defs.length) { gel('cardRow').style.display = 'none'; gel('srRowBox').innerHTML = ''; return; }
+    if (!defs.length) { gel('cardRow').style.display = 'none'; gel('srRowBox').innerHTML = ''; srTabSync(); return; }
     gel('srRowNm').textContent = (defs.length === 1 && defs[0].nm) ? defs[0].nm : '세부 내역';
     var byset = splitRowVals(vals);
     defs = withLegacySet(defs, byset);
@@ -403,6 +492,7 @@
     });
     gel('srRowBox').innerHTML = h;
     gel('cardRow').style.display = '';
+    srTabSync();
   }
   function rowHtml(nCol, v){
     var h = '<tr>';
@@ -452,8 +542,9 @@
   function photoOn(){ return FORM && FORM.photoyn === 'Y'; }
   function renderPhotos(){
     var card = gel('cardPhoto');
-    if (!photoOn()) { card.style.display = 'none'; gel('srPhotoGrid').innerHTML = ''; return; }
+    if (!photoOn()) { card.style.display = 'none'; gel('srPhotoGrid').innerHTML = ''; srTabSync(); return; }
     card.style.display = '';
+    srTabSync();
     var h = '';
     for (var i = 1; i <= 4; i++) {
       var ph = PHOTOS[i];
@@ -818,6 +909,15 @@
 
   // 유형 목록은 공통코드에서 — 유형이 늘어도 화면을 안 고친다
   $(function(){
+    /* 지난번에 쓰던 탭·글자 크기를 되살린다(이 PC 이 브라우저에만 저장) —
+       ★탭 띠는 카드가 그려진 뒤 srTabSync 가 다시 세므로 값만 미리 넣어 둔다. */
+    try {
+      var t = localStorage.getItem(SR_TAB_KEY);
+      if (t && SR_TABS.some(function(x){ return x.k === t; })) srTab = t;
+      var z = parseFloat(localStorage.getItem(SR_Z_KEY));
+      if (z) srApplyZoom(z);
+    } catch (ignore) {}
+    srTabSync();
     post('<c:url value="/qps/codeList.do"/>', {}).then(
       function(res){ GBS = (res && res.codes && res.codes.QPS_SAFERPT_GB) || []; step2(); },
       function(){ GBS = []; step2(); }

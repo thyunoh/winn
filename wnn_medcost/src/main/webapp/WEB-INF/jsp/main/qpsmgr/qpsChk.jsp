@@ -48,6 +48,18 @@
   #qpsChk .ck-btn.mini{ padding:2px 9px; font-size:11.5px; border-color:#cfd8e0; color:#556570; background:#fff; }
 
   #qpsChk .ck-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  /* ── 탭 · 글자 크기 (2026-08-15 사용자 요청) — safeRpt 와 같은 모양·같은 규칙 ──
+       ★탭은 **사진칸이 있는 서식에서만** 나온다(없으면 가를 것이 없다).
+       ★글자 크기는 `zoom` — CSS 가 px 라 뿌리 font-size 로는 격자가 안 따라 커진다. */
+  #qpsChk .ck-tabs{ display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; }
+  #qpsChk .ck-tab{ border:1px solid #cfd9e0; background:#f4f7f9; color:#43555f; border-radius:8px 8px 0 0;
+                   padding:7px 16px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  #qpsChk .ck-tab:hover{ background:#e9eff3; }
+  #qpsChk .ck-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
+  #qpsChk .ck-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
+  #qpsChk .ck-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                           padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsChk .ck-zoom button:hover{ background:#eef3f6; }
   #qpsChk .ck-card h4{ margin:0 0 10px; font-size:14px; font-weight:800; color:#1f5a4b; }
   #qpsChk .ck-card h4 .hint{ font-weight:500; font-size:12px; color:#8a99a3; }
   #qpsChk .ck-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
@@ -132,6 +144,12 @@
   <div class="ck-spacer"></div>
   <button type="button" class="ck-btn" onclick="ckSave();">저장</button>
   <button type="button" class="ck-btn ghost" onclick="ckPrint();">🖨 인쇄(A4 가로)</button>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="ck-zoom">
+    <button type="button" onclick="ckZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="ckZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="ckZoom(0);"  title="처음 크기로">↺</button>
+  </span>
   <button type="button" class="ck-btn ghost" onclick="ckExtract();">📊 데이터 추출</button>
   <button type="button" class="ck-btn warn" id="ckDelBtn" onclick="ckDel();" style="display:none;">삭제</button>
   <span class="ck-sub" id="ckStat"></span>
@@ -170,6 +188,9 @@
     <%-- ★월 생성 — 일 단위 서식만. 없으면 한 달에 [새로 작성]을 31번 눌러야 한다. --%>
     <button type="button" class="ck-btn ghost" id="ckMonthBtn" onclick="ckMonthGen();" style="display:none;">📅 이 달 전체 만들기</button>
   </div>
+  <%-- ★탭 (2026-08-15) — 사진칸이 있는 서식에서만 나온다(ckTabSync). 없으면 가를 것이 없다. --%>
+  <div class="ck-tabs" id="ckTabs" style="display:none;"></div>
+  <div id="ckMainWrap">
   <div id="ckHeadWrap" class="ck-form" style="margin-bottom:10px;"></div>
   <div class="ck-guide" id="ckGuide" style="display:none;"></div>
   <div class="ck-legend" id="ckLegend" style="display:none;"></div>
@@ -188,6 +209,7 @@
     <div style="font-size:12.5px; font-weight:700; color:#43555f; margin-bottom:4px;">수리날짜 및 고장 발생 내용</div>
     <textarea id="f_fixTxt" rows="2"></textarea>
   </div>
+  </div><%-- /#ckMainWrap — 여기까지가 「점검표」 탭 --%>
   <%-- ★사진칸(2026-08-15) — 서식 PHOTO_NMS 가 칸 이름·수를 정한다(납가운 증빙사진·봉인스티커 월별).
        칸 클릭=업로드, 같은 칸 재업로드=교체. safeRpt 사진과 같은 장치. --%>
   <div id="ckPhotoWrap" style="display:none; margin-top:10px;">
@@ -1178,7 +1200,67 @@
     });
     gel('ckPhotoGrid').innerHTML = h;
     wrap.style.display = '';
+    ckTabSync();
   }
+
+  /* ═══ 탭 · 글자 크기 (2026-08-15 — 사용자 요청) ═══════════════════════════
+     ★가를 것이 있을 때만 탭을 낸다 — **사진칸이 있는 서식**만이다(격자는 본체라 못 가른다).
+       사진칸이 없으면 띠 자체를 숨기고 종전과 똑같이 쭉 보여준다.
+     ⚠사진 영역을 숨기는 주체가 둘(서식에 사진칸이 없음 · 탭) — safeRpt 와 같은 규칙으로
+       ***탭은 `data-off` 로만 숨긴다.*** */
+  var CK_TAB_KEY = 'qpsCkTab', ckTab = 'main';
+  function ckHasPhoto(){ return photoNms().length > 0; }
+  window.ckTabSync = function(){
+    var box = gel('ckTabs'), main = gel('ckMainWrap'), ph = gel('ckPhotoWrap');
+    if (!box || !main || !ph) return;
+    if (!ckHasPhoto()) {                       // 가를 것이 없다 — 종전 모습 그대로
+      box.style.display = 'none';
+      main.style.display = '';
+      if (ph.getAttribute('data-off') === 'Y') { ph.removeAttribute('data-off'); ph.style.display = ''; }
+      return;
+    }
+    box.style.display = '';
+    var tabs = [{ k:'main', nm:'점검표' },
+                { k:'photo', nm:'사진 (' + photoNms().length + ')' },
+                { k:'all', nm:'전체' }];
+    box.innerHTML = tabs.map(function(t){
+      return '<button type="button" class="ck-tab' + (t.k === ckTab ? ' on' : '') +
+             '" onclick="ckPickTab(\'' + t.k + '\');">' + esc(t.nm) + '</button>';
+    }).join('');
+    main.style.display = (ckTab === 'photo') ? 'none' : '';
+    if (ckTab === 'main') { ph.setAttribute('data-off', 'Y'); ph.style.display = 'none'; }
+    else if (ph.getAttribute('data-off') === 'Y') { ph.removeAttribute('data-off'); ph.style.display = ''; }
+  };
+  window.ckPickTab = function(k){
+    ckTab = k;
+    try { localStorage.setItem(CK_TAB_KEY, k); } catch (ignore) {}
+    ckTabSync();
+  };
+
+  /* 글자 크기 — CSS 가 px 라 `zoom` 으로 통째로(격자 칸도 같이 커진다). 인쇄는 새 창이라 무관. */
+  var CK_Z_MIN = 0.8, CK_Z_MAX = 1.6, CK_Z_KEY = 'qpsCkZoom';
+  function ckApplyZoom(z){
+    z = Math.min(CK_Z_MAX, Math.max(CK_Z_MIN, z));
+    var c = document.querySelector('#qpsChk .ck-card');
+    if (c) c.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.ckZoom = function(d){
+    var c = document.querySelector('#qpsChk .ck-card');
+    var cur = parseFloat(c && c.style.zoom) || 1;
+    if (d === 0) { ckApplyZoom(1); try { localStorage.removeItem(CK_Z_KEY); } catch (ignore) {} return; }
+    var z = ckApplyZoom(cur + d * 0.1);
+    try { localStorage.setItem(CK_Z_KEY, String(z)); } catch (ignore) {}
+  };
+  (function(){                                  // 지난번에 쓰던 값 되살리기
+    try {
+      var t = localStorage.getItem(CK_TAB_KEY);
+      if (t === 'main' || t === 'photo' || t === 'all') ckTab = t;
+      var z = parseFloat(localStorage.getItem(CK_Z_KEY));
+      if (z) ckApplyZoom(z);
+    } catch (ignore) {}
+  })();
+
   function setPhotos(files){
     Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
     PHOTOS = {};

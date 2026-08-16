@@ -157,6 +157,14 @@ public interface QpsService {
 	int saveChkPhoto(Map<String, Object> param) throws Exception;
 	int deleteChkPhoto(long chkSeq, int fileSeq) throws Exception;
 
+	/* 사용자 ↔ 담당 부서(2026-08-15) — 등록이 없으면 「전 부서」 */
+	List<Map<String, Object>> selectQpsUserList(String hospCd) throws Exception;
+	List<String> selectQpsUserDept(String hospCd, String userId) throws Exception;
+	/** 여러 사람에게 같은 부서 묶음을 한 번에 — 새 직원 복사·부서별 일괄 세팅이 이걸 쓴다.
+	 *  @param add true 면 <b>기존에 더한다</b>(사람마다 이미 가진 부서는 그대로) · false 면 덮어쓴다 */
+	int saveQpsUserDept(String hospCd, List<String> userIds, List<String> depts, String regUser, boolean add)
+			throws Exception;
+
 	/* QI 중간·최종보고서 */
 	List<Map<String, Object>> selectQiRptList(String hospCd, String inYear, String rptGb) throws Exception;
 	Map<String, Object> selectQiRptWithItems(String hospCd, long qirSeq) throws Exception;

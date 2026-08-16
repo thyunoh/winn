@@ -256,6 +256,12 @@ public interface QpsMapper {
 	int upsertChkFile(Map<String, Object> param);
 	int deleteChkFile(@Param("chkSeq") long chkSeq, @Param("fileSeq") int fileSeq);
 
+	// 사용자 ↔ 담당 부서 (2026-08-15) — 등록이 없으면 「전 부서」다(막는 장치가 아니다)
+	List<Map<String, Object>> selectQpsUserList(@Param("hospCd") String hospCd);
+	List<String> selectQpsUserDept(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int deleteQpsUserDept(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int insertQpsUserDept(Map<String, Object> param);
+
 	/* QI 중간·최종보고서 (한 표 + RPT_GB) */
 	List<Map<String, Object>> selectQiRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
 	                                          @Param("rptGb") String rptGb);

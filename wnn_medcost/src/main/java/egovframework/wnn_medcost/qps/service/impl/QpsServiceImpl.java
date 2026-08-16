@@ -1916,6 +1916,54 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public int deleteChkPhoto(long chkSeq, int fileSeq) throws Exception { return mapper.deleteChkFile(chkSeq, fileSeq); }
 
+	/* ═══ 사용자 ↔ 담당 부서 (2026-08-15) ═══════════════════════════════════
+	   ★***등록이 없으면 「전 부서」다*** — 이 표가 비어 있으면 지금과 똑같이 돈다.
+	     「등록 안 했으니 아무것도 못 본다」로 만들면 도입하는 날 업무가 멈춘다. */
+	@Override
+	public List<Map<String, Object>> selectQpsUserList(String hospCd) throws Exception {
+		return mapper.selectQpsUserList(hospCd);
+	}
+
+	@Override
+	public List<String> selectQpsUserDept(String hospCd, String userId) throws Exception {
+		if (hospCd == null || hospCd.isEmpty() || userId == null || userId.isEmpty()) return new ArrayList<>();
+		return mapper.selectQpsUserDept(hospCd, userId);
+	}
+
+	/**
+	 * 여러 사람에게 <b>같은 부서 묶음</b>을 한 번에 준다 —
+	 * 「새 직원에게 전임자 것 복사」·「부서별 일괄 세팅」이 모두 이 하나를 쓴다.
+	 * ★부서를 <b>하나도 안 고르고</b> 저장하면 그 사람의 등록이 지워진다 = <b>전 부서로 되돌림</b>이다
+	 *   (지우는 것이 곧 「제한 없음」이라 별도 해제 기능이 필요 없다).
+	 */
+	@Override
+	public int saveQpsUserDept(String hospCd, List<String> userIds, List<String> depts, String regUser,
+	                           boolean add) throws Exception {
+		if (userIds == null || userIds.isEmpty()) return 0;
+		int n = 0;
+		for (String uid : userIds) {
+			if (uid == null || uid.trim().isEmpty()) continue;
+			String u = uid.trim();
+			List<String> put = new ArrayList<>();
+			if (depts != null) put.addAll(depts);
+			if (add) {
+				/* ★「기존에 더하기」 — 사람마다 이미 가진 부서를 지키고 새 것만 얹는다.
+				   여러 명을 골라 「간호를 추가」 하는 식이라 사람마다 결과가 다르다. */
+				for (String had : mapper.selectQpsUserDept(hospCd, u)) if (!put.contains(had)) put.add(had);
+				if (put.isEmpty()) { n++; continue; }        // 더할 것도 가진 것도 없으면 그대로 둔다
+			}
+			mapper.deleteQpsUserDept(hospCd, u);
+			if (!put.isEmpty()) {
+				Map<String, Object> m = new HashMap<>();
+				m.put("hospCd", hospCd); m.put("userId", u);
+				m.put("depts", put);     m.put("regUser", regUser);
+				mapper.insertQpsUserDept(m);
+			}
+			n++;
+		}
+		return n;
+	}
+
 	@Override
 	public long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
 	                       List<Map<String, Object>> rows, List<Map<String, Object>> cols) throws Exception {

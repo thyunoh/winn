@@ -381,6 +381,9 @@
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do">점검표 작성</a></li>
                                             <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- ★사용자별 담당 부서(2026-08-15) — 담당자가 제 부서 서식만 보게 한다.
+                                                 ***등록이 없으면 전 부서*** 라 안 써도 지금과 똑같이 돈다. --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서</a></li>
                                         </ul>
                                     </div>
                                 </li>
