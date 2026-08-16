@@ -250,7 +250,12 @@
                                      ★담당자가 제 부서를 눌러 바로 제 점검표로 들어간다.
                                      화면은 전부 qpsChk 하나 — dept 파라미터가 부서 셀렉트를 미리 골라 준다.
                                      ⚠부서코드는 QPS_CHK_DEPT 공통코드와 같아야 한다(모르는 값이면 전체로 열림).
-                                     주소가 서로 달라(쿼리 상이) 강조 중복 함정 없음. --%>
+                                     주소가 서로 달라(쿼리 상이) 강조 중복 함정 없음.
+                                     ★★***점검표가 <있는> 부서만 건다*** (2026-08-15 점검에서 잡음) —
+                                       부서 코드 15개 중 **감염관리·진료는 점검표가 0종**이다
+                                       (감염관리는 전용 화면 묶음으로 구현됐고, 진료 3종은 safeRpt·중복 제외로 갔다).
+                                       링크를 걸면 눌렀을 때 「쓸 수 있는 서식이 없습니다」만 나온다.
+                                       ⇒ ***그 부서에 서식을 등록하면 여기에 줄을 더한다*** (링크 한 줄이 전부다). --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
                                        aria-expanded="false" data-target="#qps-g-dept" aria-controls="qps-g-dept"
@@ -262,14 +267,14 @@
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NUTRI">영양</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=FACIL">시설</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=LAB">진단검사</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=INFECT">감염관리</a></li>
+                                            <%-- 감염관리 : 점검표 0종 — [QPS] 그룹의 감염관리 묶음이 전용 화면이다 --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=HEALTH">보건관리자</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=ADMIN">원무 · 총무</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RENAL">인공신장</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=MEDREC">의무기록</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RADIO">방사선</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=REHAB">물리재활</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=CLINIC">진료</a></li>
+                                            <%-- 진료 : 점검표 0종 — DR01 은 당직일지(중복 제외), DR02·03 은 [보고서·서식]의 영양상담 --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=SOCIAL">사회복지</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=COMMON">공통</a></li>
                                         </ul>
