@@ -17,7 +17,7 @@
 | `TBL_QPS_SAFERPT_USE` | 그 유형이 쓰는 묶음 + 순서 | 행 N개 |
 | `TBL_QPS_SAFERPT_CHK` | 답 = `GRP_CD`+`ITEM_NM` **문자열** (항목표를 고쳐도 옛 자료 보존) | — |
 
-화면도 하드코딩이 없다 — [qpsSafeRpt.jsp:208](../../../src/main/webapp/WEB-INF/jsp/main/qpsSafeRpt.jsp)
+화면도 하드코딩이 없다 — [qpsSafeRpt.jsp:208](../../../src/main/webapp/WEB-INF/jsp/main/qpsmgr/qpsSafeRpt.jsp)
 이 USE 를 순회해 묶음을 그리고, `:470` 이 유형 셀렉트를 공통코드로 채운다.
 
 **고정 26칸** : 발생일·시각 / 보고일 / 장소 / 대상(성명·번호·부서·직위) · 입원일 · 진단명 /
@@ -36,7 +36,7 @@
 | ③ | **정형 문구** ("위와 같이 …을 보고합니다") | ❌ 인쇄 전용 | 의약품 반납 신청서[290] |
 
 ②③이 인쇄 전용인 근거 — **점검표 엔진이 이미 그렇게 하고 있다.**
-[qpsChk.jsp:1353-1357](../../../src/main/webapp/WEB-INF/jsp/main/qpsChk.jsp) 이
+[qpsChk.jsp:1353-1357](../../../src/main/webapp/WEB-INF/jsp/main/qpsmgr/qpsChk.jsp) 이
 `FOOT_TXT` 를 작은 글씨 한 줄로, `SIGN_LINE` 을 쉼표로 갈라 `보고자 _____________ (인)` 로 찍는다.
 ***값을 받지 않는다*** — 종이에 손으로 서명하는 칸이다.
 
