@@ -350,6 +350,25 @@
     var c = subCols();
     return c.length ? [{ no: 0, nm: (FORM && FORM.subnm) ? FORM.subnm : '', cols: c }] : [];
   }
+  /* ★★[2026-08-15] 옛 단벌 문서 구제 — ***안 그리면 조용히 지워진다.***
+     유형에 벌(SUBS)이 **뒤늦게** 생기면, 그 전에 저장된 문서의 행은 벌 번호가 없어(ROW_NO 1~999)
+     `byset[0]` 에 담긴다. 그런데 defs 는 1~9 뿐이라 **화면에 안 나오고**, 그 상태로 저장하면
+     collectRows 가 그 값을 안 담아 ***삭제 후 재삽입에서 사라진다***(실데이터 유실).
+     ⇒ 벌 0 에 값이 있으면 **맨 앞에 한 벌 더** 붙인다. 화면에 그려지면 collectRows 가
+       `data-sub="0"` 으로 다시 담으므로 저장해도 남고, 인쇄에도 나온다.
+       열 이름은 옛 단벌 정의(FORM.SUB_COLS)를 쓰고, 없으면 첫 벌의 열을 빌린다
+       (칸 수만 맞으면 값은 제자리에 들어간다).
+     ⚠**화면과 인쇄가 같은 판단을 해야 한다** — 그래서 함수 하나로 둔다.
+       (인쇄는 `splitRowVals(collectRows())` 로 화면 값을 다시 가르므로, 여기를 안 거치면
+        화면엔 보이는데 종이에서만 빠진다.)
+     ※지금은 QPS 가 병원에 안 열려 있어 실데이터가 없다 — **정식 오픈 뒤를 위한 안전장치**다. */
+  function withLegacySet(defs, byset){
+    if (!defs.length || defs[0].no === 0) return defs;               // 단벌 유형은 그대로
+    if (!byset[0] || !Object.keys(byset[0]).length) return defs;     // 옛 값이 없으면 그대로
+    var oldCols = subCols();
+    return [{ no: 0, nm: '이전 자료 (벌 구분 전에 적은 내용)',
+              cols: oldCols.length ? oldCols : defs[0].cols }].concat(defs);
+  }
   /** 값을 벌별로 가른다 — 1000대의 몫이 벌, 나머지가 행(0~999 는 단벌) */
   function splitRowVals(vals){
     var byset = {};
@@ -367,6 +386,7 @@
     if (!defs.length) { gel('cardRow').style.display = 'none'; gel('srRowBox').innerHTML = ''; return; }
     gel('srRowNm').textContent = (defs.length === 1 && defs[0].nm) ? defs[0].nm : '세부 내역';
     var byset = splitRowVals(vals);
+    defs = withLegacySet(defs, byset);
     var h = '';
     defs.forEach(function(d){
       var grid = byset[d.no] || {}, maxRow = 0;
@@ -393,6 +413,10 @@
     var box = (btn && btn.closest) ? btn.closest('.rowset') : null;   // 자기 벌의 표에만 행을 더한다
     var tb = box ? box.querySelector('tbody') : document.querySelector('#srRowBox tbody');
     if (!tb) return;
+    /* ⚠**한 벌은 999행까지다** — 행 번호가 `벌×1000+행` 이라 1000행째가 되면
+       ***다음 벌의 자리로 넘어간다***(1벌 1000행 = 2벌 0행). 종이 서식에 999행이 필요한 일은
+       없지만, 막아 두지 않으면 눌린 만큼 조용히 옆 벌을 덮어쓴다. */
+    if (tb.rows.length >= 999) { _alertBox('한 표에 999행까지 넣을 수 있습니다.', {icon:'⚠️'}); return; }
     var nCol = tb.parentNode.querySelectorAll('thead th').length - 1;  // 마지막 칸은 ✕ 열
     tb.insertAdjacentHTML('beforeend', rowHtml(nCol, {}));
   };
@@ -663,6 +687,7 @@
     var defs = subDefs();
     if (!defs.length) return '';
     var byset = splitRowVals(collectRows());
+    defs = withLegacySet(defs, byset);   // 화면과 같은 판단 — 옛 단벌 값도 종이에 나온다
     var h = '';
     defs.forEach(function(d){
       var grid = byset[d.no] || {}, maxRow = 0;

@@ -1109,7 +1109,15 @@
   window.ckRowAdd = function(n, b){
     if (!FORM || FORM.axisgb !== 'LIST') return;
     var c = collect(), k = Number(b) || 1;
-    LIST_ROWS[k] = (LIST_ROWS[k] || 0) + (Number(n) || 1);
+    /* ⚠**블록이 있는 대장은 999행까지다** — 행 번호가 `블록×1000+행`(blkRowNo)이라
+       1000행째가 되면 ***다음 블록의 자리로 넘어간다***(1블록 1000행 = 2블록 0행).
+       블록이 없는 대장은 행 번호가 그냥 1,2,3… 이라 이 한계가 없다. */
+    var want = (LIST_ROWS[k] || 0) + (Number(n) || 1);
+    if (blkDefs().length && want > 999) {
+      _alertBox('한 표에 999행까지 넣을 수 있습니다.', {icon:'⚠️'});
+      return;
+    }
+    LIST_ROWS[k] = want;
     renderGrid(c.vals, c.rows, c.cols);
   };
 
