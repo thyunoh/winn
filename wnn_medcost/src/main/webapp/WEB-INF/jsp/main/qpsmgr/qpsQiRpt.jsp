@@ -83,7 +83,8 @@
   #qpsQiRpt .zz-mode{ margin-left:auto; border:1px solid #1f5a4b; background:#fff; color:#1f5a4b;
                     border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsQiRpt .zz-mode.on{ background:#1f5a4b; color:#fff; }
-  #qpsQiRpt .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
+  /* ★오른쪽 끝을 조금 띄운다(2026-08-18) — 화면 가장자리에 붙어 마지막 단추가 잘려 보였다 */
+  #qpsQiRpt .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
   #qpsQiRpt .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
                            padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsQiRpt .zz-zoom button:hover{ background:#eef3f6; }
@@ -104,7 +105,9 @@
   <button type="button" class="qr-btn ghost" onclick="qrPrint();">🖨 인쇄(A4)</button>
   <button type="button" class="qr-btn warn" id="qrDelBtn" onclick="qrDel();" style="display:none;">삭제</button>
   <span class="qr-sub" id="qrStat"></span>
-  <span style="flex:0 0 60px;"></span>
+  <%-- ★[2026-08-18] 글자크기 묶음을 조금 왼쪽으로(60 → 12px) — QI 계획서와 같은 손질이다.
+       오른쪽 끝에 붙어 마지막 ↺ 단추가 잘려 보였다. --%>
+  <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
     <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>

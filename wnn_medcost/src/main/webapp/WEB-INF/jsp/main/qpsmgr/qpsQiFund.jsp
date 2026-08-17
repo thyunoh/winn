@@ -45,6 +45,13 @@
   #qpsQiFund table.ed tr.newact td{ border-top:2px solid #cfd8e0; }
   #qpsQiFund .rowdel{ color:#b23b3b; cursor:pointer; font-weight:700; text-align:center; width:26px; }
   #qpsQiFund .tot{ background:#f7fbf9; font-weight:800; text-align:right; }
+  /* ── 글자 크기 (2026-08-18 요청 「QI 에 글자 축소·확대가 없는 게 있다」)
+       QI 계획서(qpsQiPlan)와 **같은 모양·같은 조작**이다 — 화면마다 다르면 손이 헷갈린다.
+       ★탭 기능은 안 붙인다 — 이 화면은 카드가 둘뿐이라 한 화면에 들어간다. */
+  #qpsQiFund .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
+  #qpsQiFund .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                           padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsQiFund .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="qf-head">
@@ -55,6 +62,13 @@
   <button type="button" class="qf-btn" onclick="qfSave();">저장</button>
   <button type="button" class="qf-btn ghost" onclick="qfPrint();">🖨 인쇄(A4)</button>
   <span class="qf-sub" id="qfStat"></span>
+  <span style="flex:0 0 12px;"></span>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
 </div>
 
 <div class="qf-card">
@@ -235,6 +249,27 @@
   };
 
   $(function(){ qfLoad(); });
+})();
+
+/* ═══ 글자 크기 (2026-08-18 요청) ═══════════════════════════════════════
+   QI 계획서(qpsQiPlan)의 zzZoom 과 **같은 규칙** — 0.8~1.6배, 0.1 단위, ↺ 는 처음 크기.
+   ★고른 크기는 **이 PC 이 브라우저에만** 남는다(localStorage). 서버에 저장하지 않는다.
+   ★키를 화면마다 따로 둔다 — 표가 넓은 화면과 좁은 화면의 알맞은 배율이 다르다. */
+(function(){
+  var W = 'qpsQiFund', ZKEY = 'qpsZoom_' + W;
+  function zoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    var w = document.getElementById(W);
+    if (w) w.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.zzZoom = function(d){
+    var w = document.getElementById(W), c0 = parseFloat(w && w.style.zoom) || 1;
+    if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
+    var z = zoom(c0 + d * 0.1);
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+  };
+  try { var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z); } catch (e) {}
 })();
 </script>
 </div><%-- /#qpsQiFund --%>

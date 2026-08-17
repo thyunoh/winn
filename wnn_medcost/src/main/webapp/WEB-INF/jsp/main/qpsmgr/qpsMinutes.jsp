@@ -50,6 +50,14 @@
   #qpsMin .qm-form{ display:grid; grid-template-columns:110px 1fr 110px 1fr; gap:9px 10px; align-items:start; }
   #qpsMin .qm-form .lb{ font-size:12.5px; font-weight:700; color:#43555f; padding-top:8px; }
   #qpsMin .qm-form .full{ grid-column:2 / -1; }
+  /* ── 글자 크기 (2026-08-18 요청 「QI 에 글자 축소·확대가 없는 게 있다」)
+       QI 계획서(qpsQiPlan)와 **같은 모양·같은 조작**이다 — 화면마다 다르면 손이 헷갈린다.
+       ⚠이 화면은 **위원회 회의록 공용**이다 — QI 활동뿐 아니라 감염·약사·운영위원회 등
+         모든 구분에서 같이 보인다(틀이 하나라 나눌 수 없다). */
+  #qpsMin .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
+  #qpsMin .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                        padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsMin .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="qm-head">
@@ -97,6 +105,13 @@
   <button type="button" class="qm-btn" onclick="qmSave();">저장</button>
   <button type="button" class="qm-btn ghost" onclick="qmPrint();">🖨 인쇄(A4)</button>
   <button type="button" class="qm-btn warn" id="qmDelBtn" onclick="qmDel();" style="display:none;">삭제</button>
+  <span style="flex:0 0 12px;"></span>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
 </div>
 
 <div class="qm-wrap">
@@ -475,6 +490,27 @@
     if (g) { var init = g.getAttribute('data-init'); if (init) g.value = init; }
     qmList();
   });
+})();
+
+/* ═══ 글자 크기 (2026-08-18 요청) ═══════════════════════════════════════
+   QI 계획서(qpsQiPlan)의 zzZoom 과 **같은 규칙** — 0.8~1.6배, 0.1 단위, ↺ 는 처음 크기.
+   ★고른 크기는 **이 PC 이 브라우저에만** 남는다(localStorage). 키는 화면마다 따로 둔다.
+   ⚠회의록은 위원회 구분(Q·I·J·R·F…)이 여럿이지만 **틀이 하나**라 배율도 하나로 공유된다. */
+(function(){
+  var W = 'qpsMin', ZKEY = 'qpsZoom_' + W;
+  function zoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    var w = document.getElementById(W);
+    if (w) w.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.zzZoom = function(d){
+    var w = document.getElementById(W), c0 = parseFloat(w && w.style.zoom) || 1;
+    if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
+    var z = zoom(c0 + d * 0.1);
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+  };
+  try { var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z); } catch (e) {}
 })();
 </script>
 </div><%-- /#qpsMin --%>

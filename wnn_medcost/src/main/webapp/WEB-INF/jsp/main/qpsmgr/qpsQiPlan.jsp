@@ -81,7 +81,8 @@
   #qpsQiPlan .zz-mode{ margin-left:auto; border:1px solid #1f5a4b; background:#fff; color:#1f5a4b;
                     border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsQiPlan .zz-mode.on{ background:#1f5a4b; color:#fff; }
-  #qpsQiPlan .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
+  /* ★오른쪽 끝을 조금 띄운다(2026-08-18) — 화면 가장자리에 붙어 마지막 단추가 잘려 보였다 */
+  #qpsQiPlan .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
   #qpsQiPlan .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
                            padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsQiPlan .zz-zoom button:hover{ background:#eef3f6; }
@@ -96,7 +97,9 @@
   <button type="button" class="qi-btn ghost" onclick="qpPrint();">🖨 인쇄(A4)</button>
   <button type="button" class="qi-btn warn" id="qpDelBtn" onclick="qpDel();" style="display:none;">삭제</button>
   <span class="qi-sub" id="qpStat"></span>
-  <span style="flex:0 0 60px;"></span>
+  <%-- ★[2026-08-18 요청 「글자크기 단추가 너무 우측 끝에 있다 — 조금 좌측으로」]
+       이 빈 칸이 묶음을 오른쪽 끝까지 밀고 있었다(60 → 12px). 끝 단추 ↺ 가 화면 밖으로 잘리던 것도 같은 원인. --%>
+  <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
     <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
