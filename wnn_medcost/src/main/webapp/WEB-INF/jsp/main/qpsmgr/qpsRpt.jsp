@@ -51,6 +51,12 @@
   #qpsRpt .st.none   { background:#f7f8f9; color:#a8b4bb; }
   #qpsRpt .qr-write{ font-size:11.5px; color:#2f5f96; }
   #qpsRpt .qr-empty{ color:#8a99a3; font-size:13px; padding:22px; text-align:center; }
+  /* ── 글자 크기 (2026-08-18 요청 「QPS 메뉴에도 없는 것 추가」)
+       QI 계획서(qpsQiPlan)와 **같은 모양·같은 조작**이다 — 화면마다 다르면 손이 헷갈린다. */
+  #qpsRpt .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
+  #qpsRpt .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                        padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsRpt .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="qr-head">
@@ -60,6 +66,13 @@
   <div class="qr-spacer"></div>
   <select id="qrYear" onchange="qrLoad();"></select>
   <select id="qrPrd" onchange="qrLoad();"></select>
+  <span style="flex:0 0 12px;"></span>
+  <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
 </div>
 
 <div class="qr-tiles" id="qrTiles"></div>
@@ -146,6 +159,26 @@
                     '&prd=' + encodeURIComponent(document.getElementById('qrPrd').value);
   };
   $(function(){ qrLoad(); });
+})();
+
+/* ═══ 글자 크기 (2026-08-18 요청) ═══════════════════════════════════════
+   QI 계획서(qpsQiPlan)의 zzZoom 과 **같은 규칙** — 0.8~1.6배, 0.1 단위, ↺ 는 처음 크기.
+   ★고른 크기는 **이 PC 이 브라우저에만** 남는다(localStorage). 키는 화면마다 따로 둔다. */
+(function(){
+  var W = 'qpsRpt', ZKEY = 'qpsZoom_' + W;
+  function zoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    var w = document.getElementById(W);
+    if (w) w.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.zzZoom = function(d){
+    var w = document.getElementById(W), c0 = parseFloat(w && w.style.zoom) || 1;
+    if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
+    var z = zoom(c0 + d * 0.1);
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+  };
+  try { var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z); } catch (e) {}
 })();
 </script>
 </div><%-- /#qpsRpt --%>
