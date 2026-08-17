@@ -25,6 +25,13 @@
     <button type="button" class="btn-sv" id="btnAnsSaveTop" style="display:none">이 응답 저장</button>
     <button type="button" class="btn-pr" id="btnSvPrint">🖨 조사결과 보고서</button>
     <button type="button" class="btn-pr" id="btnSvPrint2">🖨 지표분석 보고서</button>
+  <span style="flex:0 0 12px;"></span>
+  <%-- 글자 크기 - 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
   </div>
 
   <!-- 탭 -->
@@ -153,6 +160,11 @@
 #qpsSurvey .statt{width:100%;border-collapse:collapse;margin-bottom:8px;}
 #qpsSurvey .statt th,#qpsSurvey .statt td{border:1px solid #dfe4ea;padding:5px 7px;font-size:12px;text-align:center;}
 #qpsSurvey .statt th{background:#f6f8fa;} #qpsSurvey .statt td.nm{text-align:left;}
+  /* -- 글자 크기 (2026-08-18 요청) : QI 계획서(qpsQiPlan)와 같은 모양.같은 조작 */
+  #qpsSurvey .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
+  #qpsSurvey .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                        padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsSurvey .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <script>
@@ -837,5 +849,28 @@
     fillCode(gel('a_age'),    'QPS_SRV_AGE');
   });
   loadBase();
+})();
+
+/* === 글자 크기 (2026-08-18 요청) ==========================================
+   QI 계획서(qpsQiPlan)의 zzZoom 과 **같은 규칙** - 0.8~1.6배, 0.1 단위, ↺ 는 처음 크기.
+   ★고른 크기는 **이 PC 이 브라우저에만** 남는다(localStorage). 키는 화면마다 따로 둔다. */
+(function(){
+  var W = 'qpsSurvey', ZKEY = 'qpsZoom_' + W;
+  /* ⚠**같은 화면이 두 벌 붙어 있을 수 있다**(주소 숨김 구조 - content 를 갈아끼운다).
+     getElementById 는 「첫 번째 = 보이지 않는 사본」을 잡아 ***눌러도 아무 일이 없다.***
+     ⇒ querySelectorAll 로 **붙어 있는 사본 전부**에 건다. */
+  function els(){ return [].slice.call(document.querySelectorAll('#' + W)); }
+  function zoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    els().forEach(function(w){ w.style.zoom = z.toFixed(2); });
+    return z;
+  }
+  window.zzZoom = function(d){
+    var e0 = els()[0], c0 = parseFloat(e0 && e0.style.zoom) || 1;
+    if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
+    var z = zoom(c0 + d * 0.1);
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+  };
+  try { var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z); } catch (e) {}
 })();
 </script>

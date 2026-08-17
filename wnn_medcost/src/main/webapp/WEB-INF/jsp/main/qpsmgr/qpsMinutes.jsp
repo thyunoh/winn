@@ -498,14 +498,17 @@
    ⚠회의록은 위원회 구분(Q·I·J·R·F…)이 여럿이지만 **틀이 하나**라 배율도 하나로 공유된다. */
 (function(){
   var W = 'qpsMin', ZKEY = 'qpsZoom_' + W;
+  /* ⚠**같은 화면이 두 벌 붙어 있을 수 있다**(주소 숨김 구조 - content 를 갈아끼운다).
+     getElementById 는 「첫 번째 = 보이지 않는 사본」을 잡아 ***눌러도 아무 일이 없다.***
+     ⇒ querySelectorAll 로 **붙어 있는 사본 전부**에 건다. */
+  function els(){ return [].slice.call(document.querySelectorAll('#' + W)); }
   function zoom(z){
     z = Math.min(1.6, Math.max(0.8, z));
-    var w = document.getElementById(W);
-    if (w) w.style.zoom = z.toFixed(2);
+    els().forEach(function(w){ w.style.zoom = z.toFixed(2); });
     return z;
   }
   window.zzZoom = function(d){
-    var w = document.getElementById(W), c0 = parseFloat(w && w.style.zoom) || 1;
+    var e0 = els()[0], c0 = parseFloat(e0 && e0.style.zoom) || 1;
     if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
     var z = zoom(c0 + d * 0.1);
     try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}

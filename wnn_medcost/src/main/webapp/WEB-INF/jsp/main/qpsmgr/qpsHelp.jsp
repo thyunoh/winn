@@ -44,10 +44,23 @@
   #qpsHelp .st.on{ background:#e4f3ea; color:#1f7a52; }
   #qpsHelp .st.auto{ background:#e7eff8; color:#2f5f96; }
   #qpsHelp .st.off{ background:#f3f5f6; color:#94a3ab; }
+  /* -- 글자 크기 (2026-08-18 요청) : QI 계획서(qpsQiPlan)와 같은 모양.같은 조작 */
+  #qpsHelp .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
+  #qpsHelp .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                        padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsHelp .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="qh-wrap">
-  <div class="qh-head"><div class="qh-title"><span class="qh-dot"></span>QPS(질향상·환자안전) 사용 안내</div></div>
+  <div class="qh-head"><div class="qh-title"><span class="qh-dot"></span>QPS(질향상·환자안전) 사용 안내</div>
+  <span style="flex:0 0 12px;"></span>
+  <%-- 글자 크기 - 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
+  </div>
   <p class="qh-lede">
     QPS 는 의료기관 인증평가의 질향상·환자안전 지표를 관리하는 메뉴입니다.
     <b>원천 자료(사고보고·관찰기록·월별 값)만 입력하면 지표는 자동으로 계산됩니다</b> — 율을 손으로 계산해 적는 일이 없습니다.
@@ -187,5 +200,30 @@
     <p style="margin-top:10px;">그 밖의 문의는 화면 왼쪽 아래 <b>고객센터(02-6953-2452)</b> 또는 [1:1 문의하기]로 연락 주세요.</p>
   </section>
 </div>
+<script>
+
+/* === 글자 크기 (2026-08-18 요청) ==========================================
+   QI 계획서(qpsQiPlan)의 zzZoom 과 **같은 규칙** - 0.8~1.6배, 0.1 단위, ↺ 는 처음 크기.
+   ★고른 크기는 **이 PC 이 브라우저에만** 남는다(localStorage). 키는 화면마다 따로 둔다. */
+(function(){
+  var W = 'qpsHelp', ZKEY = 'qpsZoom_' + W;
+  /* ⚠**같은 화면이 두 벌 붙어 있을 수 있다**(주소 숨김 구조 - content 를 갈아끼운다).
+     getElementById 는 「첫 번째 = 보이지 않는 사본」을 잡아 ***눌러도 아무 일이 없다.***
+     ⇒ querySelectorAll 로 **붙어 있는 사본 전부**에 건다. */
+  function els(){ return [].slice.call(document.querySelectorAll('#' + W)); }
+  function zoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    els().forEach(function(w){ w.style.zoom = z.toFixed(2); });
+    return z;
+  }
+  window.zzZoom = function(d){
+    var e0 = els()[0], c0 = parseFloat(e0 && e0.style.zoom) || 1;
+    if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
+    var z = zoom(c0 + d * 0.1);
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+  };
+  try { var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z); } catch (e) {}
+})();
+</script>
 </div><%-- /#qpsHelp --%>
 </div><%-- /.dashboard-wrapper --%>

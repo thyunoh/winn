@@ -68,6 +68,11 @@
   #qpsCmpl .cm-form input{ width:100%; }
   #qpsCmpl .ro{ background:#f5f7f9; border:1px solid #e3e9ed; border-radius:5px; padding:6px 8px;
       font-size:12.5px; color:#43555f; min-height:31px; }
+  /* -- 글자 크기 (2026-08-18 요청) : QI 계획서(qpsQiPlan)와 같은 모양.같은 조작 */
+  #qpsCmpl .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; margin-right:14px; }
+  #qpsCmpl .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
+                        padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
+  #qpsCmpl .zz-zoom button:hover{ background:#eef3f6; }
 </style>
 
 <div class="cm-head">
@@ -78,7 +83,14 @@
   <button type="button" class="cm-btn" onclick="cmSaveAll();">대장 저장</button>
   <button type="button" class="cm-btn ghost" onclick="cmPrintBook();">🖨 대장 인쇄</button>
   <span class="cm-sub" id="cmStat"></span>
-  <span style="flex:0 0 60px;"></span>
+  <span style="flex:0 0 12px;"></span>
+  <span style="flex:0 0 12px;"></span>
+  <%-- 글자 크기 - 이 PC 이 브라우저에만 저장된다 --%>
+  <span class="zz-zoom">
+    <button type="button" onclick="zzZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
+  </span>
 </div>
 
 <div class="cm-tabs">
@@ -462,6 +474,29 @@
       function(){ CODES = {}; cmLoad(); }        // 코드가 없어도 대장은 열린다(폴백)
     );
   });
+})();
+
+/* === 글자 크기 (2026-08-18 요청) ==========================================
+   QI 계획서(qpsQiPlan)의 zzZoom 과 **같은 규칙** - 0.8~1.6배, 0.1 단위, ↺ 는 처음 크기.
+   ★고른 크기는 **이 PC 이 브라우저에만** 남는다(localStorage). 키는 화면마다 따로 둔다. */
+(function(){
+  var W = 'qpsCmpl', ZKEY = 'qpsZoom_' + W;
+  /* ⚠**같은 화면이 두 벌 붙어 있을 수 있다**(주소 숨김 구조 - content 를 갈아끼운다).
+     getElementById 는 「첫 번째 = 보이지 않는 사본」을 잡아 ***눌러도 아무 일이 없다.***
+     ⇒ querySelectorAll 로 **붙어 있는 사본 전부**에 건다. */
+  function els(){ return [].slice.call(document.querySelectorAll('#' + W)); }
+  function zoom(z){
+    z = Math.min(1.6, Math.max(0.8, z));
+    els().forEach(function(w){ w.style.zoom = z.toFixed(2); });
+    return z;
+  }
+  window.zzZoom = function(d){
+    var e0 = els()[0], c0 = parseFloat(e0 && e0.style.zoom) || 1;
+    if (d === 0) { zoom(1); try { localStorage.removeItem(ZKEY); } catch (e) {} return; }
+    var z = zoom(c0 + d * 0.1);
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+  };
+  try { var z = parseFloat(localStorage.getItem(ZKEY)); if (z) zoom(z); } catch (e) {}
 })();
 </script>
 </div><%-- /#qpsCmpl --%>
