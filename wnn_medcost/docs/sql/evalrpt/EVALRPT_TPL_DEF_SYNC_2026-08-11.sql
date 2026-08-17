@@ -20,7 +20,7 @@ UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='1단계 �
 UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='해당 월 평가와 전월 평가를 모두 받은 욕창 고위험군 환자 중 전월에 비해 2단계 이상의 욕창이 새로 발생한 환자의 비율을 평가하는 지표.' WHERE SECT_KEY='def_10';
 UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='2단계 이상 욕창 보유 환자 중 당일 개선된 환자 비율(개선 = 욕창 단계 수가 줄거나 최고단계가 낮아진 경우).' WHERE SECT_KEY='def_11';
 UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='전월과 당월 의료최고도·선택입원군 및 10개 항목이 완전 자립이거나 감독 필요인 경우는 제외한 대상자 중, 전월 대비 10개 항목의 기능 정도가 2점 이상 개선된 환자의 비율.' WHERE SECT_KEY='def_12';
-UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='당뇨병 상병 환자 중 HbA1c 검사결과가 적정범위(4% 이상 ~ 8.5% 미만)에 해당하는 환자의 비율을 평가하는 지표임.' WHERE SECT_KEY='def_13';
+UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='당뇨 환자 중 HbA1c 검사결과가 적정범위(4% 이상 ~ 8.5% 미만)에 해당하는 환자의 비율을 평가하는 지표임.' WHERE SECT_KEY='def_13';
 UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='평가 대상기간 동안 입원 중인 환자 중 입원기간이 181일 이상인 환자의 비율을 평가하는 지표로, 값이 낮을수록 우수함. 단, 평가기간(7~12월) 중 1개월이라도 의료최고도·의료고도·의료중도에 해당하는 환자는 평가대상에서 제외함.' WHERE SECT_KEY='def_14';
 UPDATE TBL_EVAL_REPORT_TPL SET UPD_USER='sync-20260811', TPL_CONTENT='지역사회 복귀율은 심평원 및 행정안전부 자료 등을 연계하여 산출되는 지표로, 기관 자체 자료만으로는 정확한 결과값을 산출하기 어려워 WinCheck에서는 임의로 표준화 3점, 가중치 3점으로 적용함.' WHERE SECT_KEY='def_15';
 

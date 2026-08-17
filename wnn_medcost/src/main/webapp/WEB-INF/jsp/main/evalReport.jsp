@@ -182,8 +182,13 @@
 
   /* 지면 */
   #evalReport .er-doc{ padding:22px 14px 40px; display:flex; flex-direction:column; align-items:center; gap:20px; }
-  #evalReport .er-page{ width:880px; max-width:100%; background:var(--er-paper); box-shadow:0 6px 26px rgba(28,45,72,.14);
-    border-radius:6px; padding:46px 50px; }
+  /* ★[2026-08-17] 원본(편집 화면)의 글줄 폭을 A4 복제본과 **똑같이** 맞춘다 — 검수 신고
+       「편집 때 엔터로 맞춘 간격이 변환하면 뒤죽박죽」의 반쪽 원인.
+       종전 880px−좌우50px=본문 780px 인데 A4 장은 210mm−좌우15mm=180mm(약 680px)라
+       **줄바꿈 위치가 달라** 편집 화면에서 맞춘 줄이 변환본에서 다른 자리에서 꺾였다.
+       폭이 같아야 화면 = 종이(WYSIWYG). ⚠좌우는 반드시 15mm 유지 — 복제본(.er-autopage)과 짝. */
+  #evalReport .er-page{ width:210mm; max-width:100%; background:var(--er-paper); box-shadow:0 6px 26px rgba(28,45,72,.14);
+    border-radius:6px; padding:46px 15mm; }
   @media (max-width:720px){ #evalReport .er-page{ padding:28px 18px; } }
 
   /* ===== A4 자동 페이지 분할(WYSIWYG) — 화면 = PDF. 원본 섹션(.er-srcpage)은 숨기고 A4 실측 페이지를 생성 ===== */
@@ -241,11 +246,26 @@
   #evalReport.er-preview .er-noprint{ display:none !important; }
   /* ※ display:flex 를 무조건 주면 안 된다 — 위 .er-noprint{display:none} 과 우선순위가 같은데
         이 규칙이 뒤에 있어 숨김을 항상 이겨서, 편집을 꺼도 툴바가 그대로 보였다(2026-07-22). */
-  #evalReport .er-mrbar{ display:none; align-items:center; gap:8px; flex-wrap:wrap;
-                         background:#f4f7fb; border:1px dashed #b9c9de; border-radius:8px; padding:8px 12px; margin-bottom:10px; }
-  #evalReport.er-editmode .er-mrbar{ display:flex; }
+  /* ★[2026-08-17 검수 「문구 정리해서 줄이고 버튼 조금 위로 겹쳐서」]
+       안내문을 2줄로 줄이고 **단추를 안내문에 붙였다** — 종전에는 세로 여백(gap 8 · padding 8)이
+       줄마다 붙어 안내문과 단추가 멀리 떨어져 띠가 두툼했다.
+       ⇒ 줄 사이 여백(`row-gap`)만 2px 로 줄이고(좌우 gap 8 은 유지) 아래 padding 을 6px 로 —
+         가로 간격은 그대로라 단추끼리 붙지 않는다. */
+  #evalReport .er-mrbar{ display:none; align-items:center; gap:8px; row-gap:2px; flex-wrap:wrap;
+                         background:#f4f7fb; border:1px dashed #b9c9de; border-radius:8px;
+                         padding:7px 12px 6px; margin-bottom:8px; }
+  /* ★[2026-08-17 검수 「1번 간격 띄우고 2번 위로」] 툴바와 붙여넣기 영역 사이를 **넉넉히 띄운다.**
+       왜 : 그림이 툴바에 붙어 있으면 「그림 위」에 조절바가 들어갈 자리가 없어 **그림 아래(화면 맨 아래)로
+       밀려났다.** 여기를 띄우면 조절바가 **그림 위 제자리로 올라온다**(자리 계산은 _mrPlaceImgBar).
+     ★**편집 모드에서만** 준다 — 보기·인쇄에서는 툴바가 display:none 이라 이 여백도 함께 사라진다
+       (종이에 빈 줄이 생기지 않는다). 조절바 높이(37) + 위아래 간격이 들어갈 만큼이면 된다.
+     ⚠**46px 이 하한선에 가깝다**(「간격 살짝 좁혀주고」로 58→46) — 여기에 붙여넣기 영역의
+       padding 8 + 테두리 1 이 더해져 실제 여유는 약 55px 이고, 조절바가 「그림 위」로 가려면
+       **37(바)+8(아래 간격)+6(위 간격) = 51px** 이 필요하다. ***더 좁히면 바가 그림 아래로 밀려난다.*** */
+  #evalReport.er-editmode .er-mrbar{ display:flex; margin-bottom:46px; }
   #evalReport.er-preview .er-mrbar{ display:none !important; }
-  #evalReport .er-mrhint{ font-size:12px; color:#5b6b80; margin-right:auto; }
+  /* 안내문 — 줄간격을 좁혀(1.45) 두 줄이 한 덩이로 보이게. 아래 여백 0 이라 단추가 바로 뒤에 붙는다 */
+  #evalReport .er-mrhint{ font-size:12px; color:#5b6b80; margin:0 auto 0 0; line-height:1.45; flex:1 1 100%; }
   #evalReport .er-zoom{ display:inline-flex; align-items:center; gap:2px; }
   #evalReport .er-zoom .er-btn{ padding:3px 8px; min-width:30px; }
   #evalReport .er-zoom .er-zoomlbl{ min-width:58px; font-variant-numeric:tabular-nums; }
@@ -280,10 +300,32 @@
        특이도가 더 높아 아래 무력화가 지려면 editmode 셀렉터로도 한 번 더 꺼야 한다(2026-08-03 PDF 점선 유출) */
   @media print { #evalReport .er-mrbody img.er-pgbreak,
                  #evalReport.er-editmode .er-mrbody img.er-pgbreak{ border-top:none !important; padding-top:0 !important; } }
-  #evalReport .er-imgbar{ position:fixed; z-index:1400; transform:translateX(-50%);
-                          display:flex; gap:3px; align-items:center; background:#fff;
-                          border:1px solid var(--er-line); border-radius:8px; padding:4px 6px;
-                          box-shadow:0 6px 20px rgba(31,42,55,.22); }
+  /* ★[2026-08-17 검수] 조절바를 **한 자리에 고정**한다 — 종전에는 고른 그림 위에 따라다녀
+       ***그림·툴바를 가리고 누를 때마다 자리가 바뀌어*** 불편했다(「툴바는 고정으로」).
+       화면 아래 가운데에 고정 = 위쪽 편집 영역을 가리지 않고 어느 그림을 골라도 같은 자리다.
+     ⚠`left`·`top` 을 JS 가 매기던 것을 멈췄다(_mrPlaceImgBar) — 여기 CSS 가 자리를 정한다. */
+  /* ⚠★z-index 는 **12100** — 화면 아래에는 사이트 고정 요소가 이미 있다
+       (`#todayAsqBar` z-index **9999** 전체폭 띠 · `#wqaFab` **12000** 오른쪽 아래 단추).
+       1400 이던 종전 값으로는 **그 아래에 깔려 조절바가 안 보였다**(「해당내용 툴바 없어짐」 신고).
+     ⚠`bottom` 도 그 띠 높이만큼 띄운다 — 자리는 `_mrPlaceImgBar` 가 **실측해서** 정한다
+       (띠가 없거나 높이가 달라지는 화면에서도 맞도록. 여기 18px 은 띠가 없을 때의 기본값). */
+  /* ★자리 = **고른 그림 바로 위**(2026-08-17 최종. 「선택영역 바로 위에 있어야 하는데 맨 위에 위치」).
+       화면 아래 가운데 → 화면 맨 위로 옮겨 봤지만 둘 다 ***그림에서 멀어 눈이 왕복***했고,
+       맨 위는 사이트의 「자주 쓰는 메뉴」 띠(`#wnnFavBar`)와도 겹쳤다.
+       ⇒ `_mrPlaceImgBar` 가 **그림 위에 붙여** 놓는다(자리 계산은 그 함수 주석 참고).
+       여기서는 **겹쳐 그릴 조건만** 준다 — z-index 는 **12100**(사이트 고정 요소가 9999·12000 이라
+       종전 1400 으로는 **깔려서 안 보였다** — 「툴바 없어짐」 신고의 원인). */
+  /* ★[2026-08-17 검수 「2번 다른 내용하고 구분이 안 되서 살짝 색깔 구분」]
+       조절바가 **흰 배경 + 옅은 테두리**여서 아래 표·문서 위에 떠 있어도 ***구분이 안 됐다***
+       (붙인 서류가 대개 흰 종이라 바가 그 일부처럼 보였다).
+     ⇒ ①바탕을 **옅은 남색 톤**(--er-navytint) ②테두리를 **진한 남색**(--er-navy2) ③그림자를 조금 진하게.
+       단추는 흰 바탕(er-btn 기본)이라 띠 안에서 단추가 도리어 또렷해진다. */
+  #evalReport .er-imgbar{ position:fixed; z-index:12100; transform:translateX(-50%); bottom:auto;
+                          display:flex; gap:3px; align-items:center;
+                          background:var(--er-navytint);
+                          /* ⚠테두리를 **2px** 로 — 1.5px 는 브라우저가 1px 로 반올림해(배율 1) 구분이 약했다(실측). */
+                          border:2px solid var(--er-navy2); border-radius:9px; padding:5px 7px;
+                          box-shadow:0 8px 22px rgba(31,42,55,.32); }
   #evalReport .er-imgbar .er-btn{ padding:3px 8px; min-width:30px; }
   #evalReport .er-imgbar .er-zoomlbl{ min-width:52px; text-align:center; font-variant-numeric:tabular-nums; }
   /* 크기조절 손잡이 3개 — 모서리(비율유지) · 오른쪽(가로) · 아래(세로).
@@ -310,10 +352,26 @@
   body.er-capturing .er-hnd, body.er-capturing #er-imgBar, body.er-capturing #er-cropModal { display:none !important; }
   body.er-capturing #evalReport .er-mrbody img.er-imgsel{ outline:none !important; }
   body.er-capturing #evalReport.er-editmode .er-mrbody{ border:none !important; padding:0 !important; }
+  /* ★끌어 옮길 때 '놓일 자리'를 보여 주는 선 (2026-08-17) — body 직계라 페이지 위에 겹쳐 그린다 */
+  .er-mrdrop{ position:fixed; z-index:1590; height:0; border-top:3px solid var(--er-navy2);
+              box-shadow:0 0 0 1px #fff; pointer-events:none; display:none; }
+  body.er-mrdragging{ cursor:grabbing; }
+  body.er-mrdragging #evalReport .er-mrbody img{ opacity:.55; }      /* 끌고 있는 중임을 보이게 */
+  #evalReport.er-editmode .er-mrbody img{ cursor:grab; }             /* 잡아서 옮길 수 있음을 알림 */
+  /* 좌우 위치 — `data-ox`(0~100 눈금)에 기억하고 **여백은 JS 가 계산해 인라인으로** 준다
+     (남는 공간 = 100−그림폭 에 비례해야 하므로 CSS 만으로는 못 낸다 — _mrApplyOx 참고).
+     여기서는 블록으로만 만든다. 옛 `data-align`(3단 정렬) 문서도 같이 받는다(호환). */
+  #evalReport .er-mrbody img[data-ox], #evalReport .er-mrbody img[data-align]{ display:block; }
+  #evalReport .er-mrbody img[data-align="left"]  { margin-left:0;    margin-right:auto; }
+  #evalReport .er-mrbody img[data-align="center"]{ margin-left:auto; margin-right:auto; }
+  #evalReport .er-mrbody img[data-align="right"] { margin-left:auto; margin-right:0; }
   #evalReport .er-mrbody td, #evalReport .er-mrbody th{ word-break:break-word; }
   /* ↔ 폭맞춤 — 아래한글 표는 고정폭이라 붙이면 오른쪽이 비는데, 켜면 본문 폭까지 늘린다 */
+  /* 폭맞춤 — ★폭은 **표에 인라인으로** 적는다(erMrFit) → 저장·인쇄까지 남는다.
+     여기 `!important` 는 붙인 표가 `width` 속성(HTML attribute)을 갖고 있어도 이기게 하는 보조다.
+     ⚠`.er-mrfit img{width:100%}` 는 **뺐다**(2026-08-17) — 표를 맞추려 눌렀는데 폭 없이 붙인
+       그림이 통째로 커졌다. 그림 크기는 조절바가 맡는다. */
   #evalReport .er-mrbody.er-mrfit table{ width:100% !important; }
-  #evalReport .er-mrbody.er-mrfit img{ width:100%; }
   #evalReport .er-btn.er-on{ background:var(--er-navy); color:#fff; border-color:var(--er-navy); }
   /* 잘라오기 창 */
   /* 잘라오기 창 — 배경을 덮지 않는 '떠 있는 창'. 제목줄을 잡고 끌어 옮긴다.
@@ -854,19 +912,20 @@
         </div>
         <div class="er-after"><span class="er-lbl">개선 후 예상 종합점수</span><span class="er-from er-num" id="er-afterFrom">-</span>→<span class="er-val er-num er-editable" data-key="after_score">-</span><span class="er-lbl" id="er-afterGrade"></span></div>
 
-        <div class="er-callout">
-          <div class="er-coh">결론</div>
-          <div class="er-editable" data-key="concl">가중치가 큰 결과지표(예: 욕창·ADL 개선)의 실적 기록 정상화만으로 큰 폭의 점수 확보가 가능함. 실제 진료·재활은 이뤄지나 개선 판정이 평가표에 기록되지 않아 낮게 산정되는 경우가 많으므로, 추가 인력·비용 없이 기록·평가 절차 개선으로 목표 달성 가능성이 높음.</div>
-          <div class="er-fn er-editable" data-key="concl_note">※ 단기 실행 우선순위: (1) 결과지표 재평가 기록 절차 정비 → (2) 과정지표 기록 → (3) 퇴원계획(지역연계) 강화.</div>
-        </div>
+        <%-- ★[2026-08-17 검수 삭제] '결론' 박스(data-key concl · concl_note) 제거 — 검수 박혜련.
+             내용이 **병원과 무관한 고정 문구**여서 기관마다 손볼 것이 너무 많다는 지적이었다.
+             같은 이야기는 아래 **총평**(renderSummary 가 실제 수치로 자동 생성)이 이미 하고 있다.
+             ⚠되살릴 때 : 여기에 두 er-editable 을 다시 넣기만 하면 된다(JS 는 concl 을 따로 참조하지 않는다.
+               editables() 가 data-key 로 훑으므로 저장·불러오기는 자동으로 붙는다).
+             ⚠이미 저장된 보고서의 TBL_EVAL_REPORT_TEXT 의 concl 행은 **지우지 않는다** —
+               화면에 그 data-key 가 없으면 그냥 쓰이지 않고, 되살릴 때 옛 편집본이 그대로 돌아온다. --%>
 
-        <div class="er-subh">참고 : 현재 vs 목표 점수 비교</div>
-        <div class="er-tw">
-          <table class="er-tbl">
-            <thead><tr><th class="er-l">구분</th><th>현재</th><th>개선 후(목표)</th></tr></thead>
-            <tbody id="er-cmpBody"><!-- JS --></tbody>
-          </table>
-        </div>
+        <%-- ★[2026-08-17 검수 삭제] '참고 : 현재 vs 목표 점수 비교' 표(er-cmpBody) 제거 — 검수 박혜련.
+             구조영역을 30점 만점까지 오를 수 있는 것처럼 배정해 보여 **현실과 어긋나** 병원 문의·문제
+             소지가 있다는 지적(인력 지표 등은 실제로 만점에 못 닿는 기관이 많다).
+             ⚠되살릴 때 : 이 표와 **renderSec5() 끝의 er-cmpBody 채움 코드**를 함께 되돌려야 한다 —
+               el() 은 null 을 돌려주므로 한쪽만 살리면 renderSec5 가 거기서 죽어
+               captureAuto 까지 안 돌고 저장 필터가 통째로 깨진다. --%>
 
         <!-- 총평 — 문서 맨 끝(마무리) 배치. 상세 내용(Ⅰ~Ⅴ)을 먼저 보고 마지막에 종합 논평을 읽는 참조 패턴.
              구어체·핵심 수치만, 조회 시 자동 초안(renderSummary) 생성 후 문단별 편집 가능 -->
@@ -898,24 +957,56 @@
              아래한글·워드에서 표째로 복사해 그대로 Ctrl+V. 서식(표·굵기·색)이 함께 붙는다.
              전체가 하나의 편집영역(data-key=mr_body)이라 붙인 내용이 통째로 저장·복원된다. -->
         <div class="er-noprint er-mrbar">
-          <span class="er-mrhint">아래한글·워드에서 <b>표째 복사</b> 후 아래 영역에 <b>Ctrl+V</b> · 그림은 <b>클릭</b>해서 크기 조절 · 여러 장은 <b>Ctrl+클릭</b>으로 함께 선택</span>
-          <span class="er-zoom">
-            <button type="button" class="er-btn" onclick="erMrZoomStep(event,-1)" title="붙인 내용 축소 5% — Shift+클릭 = 1% 미세조절 (그림을 아무것도 고르지 않았을 때는 Ctrl+마우스휠도 됩니다)">➖</button>
-            <button type="button" class="er-btn er-zoomlbl" id="er-mrZoomLbl" onclick="erMrZoomInput()" title="클릭 → 배율(%)을 숫자로 직접 입력 (100 = 원래 크기)">100%</button>
-            <button type="button" class="er-btn" onclick="erMrZoomStep(event,1)" title="붙인 내용 확대 5% — Shift+클릭 = 1% 미세조절">➕</button>
+          <%-- ★[2026-08-17 검수] 안내문을 **두 갈래로 갈라 적는다** — 「한글·워드에서 가능하다」고만 읽고
+               [탐색기 열기] 로 .hwp 를 찾다가 「PDF 만 되네」로 오해한 신고가 있었다.
+               ***한글·워드는 「복사→붙여넣기」 길이고, 탐색기는 「PDF·이미지 잘라오기」 길이다.***
+               브라우저는 .hwp 를 그릴 수 없어(잘라오기는 캔버스에 그려 오려낸다) 파일로는 못 받는다 —
+               그래서 accept 에 .hwp 를 넣지 않는다(넣으면 골라도 안 열려 더 헷갈린다). --%>
+          <%-- ★문구를 두 번 고쳤다(2026-08-17) — 처음엔 「.hwp 는 탐색기로 열 수 없다」만 적었더니
+                 ***「한글은 안 되는 것」으로 읽혔다***(「그럼 HWP 도 되는 것 아닌가요」 재문의).
+               ⇒ ***한글·워드 <b>둘 다 붙여넣기는 된다</b>는 것을 먼저*** 말하고,
+                 못 되는 것은 「파일로 여는 것」뿐임을 뒤에 붙인다. 실측 : 한글(함초롬바탕·10pt·색) ·
+                 워드(맑은 고딕·10pt·색) 표 모두 서식째 붙고 저장·복원·인쇄까지 살아 있다. --%>
+          <%-- ★문구는 **두 줄**로 줄였다(2026-08-17 검수 「문구 정리해서 줄이고」) —
+               세 줄+긴 설명이라 읽히지 않았다. 남긴 것은 ***모르면 틀리는 것***뿐이다 :
+               ①어느 길로 넣는가(복사·붙여넣기 / 파일 열기) ②`.hwp` 를 파일로 못 여는 이유와 우회.
+               ⚠자세한 설명은 **단추 tooltip** 에 있다 — 띠에 다 적지 않는다. --%>
+          <span class="er-mrhint">
+            <b>한글·워드</b> : 표째 복사 → 아래 클릭 후 <b>Ctrl+V</b>
+            &nbsp;│&nbsp; <b>PDF·이미지</b> : <b>[📂]</b> 로 열어 잘라 넣기
+            &nbsp;│&nbsp; 그림 <b>클릭</b>·<b>Ctrl+클릭</b>
+            <br><span style="color:#8a97a8;">※ <b>.hwp·.docx 파일은 [📂]로 못 엽니다</b> — 복사·붙여넣기 또는 <b>PDF로 저장</b> 후 사용</span>
           </span>
-          <button type="button" class="er-btn" onclick="erMrFit()" id="er-mrFitBtn" title="붙인 표를 본문 폭에 맞춰 늘립니다(오른쪽 빈 공간 제거)">↔ 폭맞춤</button>
+          <%-- ★[2026-08-17 검수 삭제] '영역 전체 배율(➖ 100% ➕)' 제거 — 아래 그림 조절바의
+               '그림 크기(➖ 72% ➕)' 와 ***생김새가 똑같아 중복으로 읽혔다***(「1번은 중복됨」).
+               둘은 실제로 다른 기능이었다(이쪽=붙인 내용 전체 CSS zoom / 저쪽=그림 하나하나의 폭)
+               지만, 화면에 같은 모양이 둘 있으면 무엇을 누르는지 알 수 없다.
+             ★지울 수 있는 근거 : 이 배율은 **저장되지 않는다**(값을 `#er-mrBody` 의 style.zoom 에만
+               두고 collectTexts 는 innerHTML 만 저장한다) → 열 때마다 100% 로 시작하는 **임시 보기**였다.
+               남는 상태가 없으니 지워도 문서가 달라지지 않는다.
+             ⚠**Ctrl+휠 배율도 같이 없앴다** — 단추가 없어진 뒤에도 휠로는 걸려서,
+               우연히 축소되면 **되돌릴 수단도 표시도 없는** 상태가 된다(그게 더 나쁘다).
+             ⚠표 크기는 `↔ 폭맞춤` 이 맡는다(붙인 한글·워드 표를 본문 폭에 맞춤).
+             ⚠되살릴 때 : `erMrZoomStep`·`erMrZoomInput`·`erMrZoomReset`·`_erMrApplyZoom` 함수는
+               **그대로 남겨 두었다** — 이 단추 묶음만 다시 넣으면 된다. --%>
+          <%-- 이름에 **대상(표)** 을 박아 둔다(2026-08-17 「폭맞춤 기능은 무엇인가요」) —
+               '폭맞춤' 만으로는 무엇의 폭인지 알 수 없었다. 그림은 조절바가 맡는다. --%>
+          <button type="button" class="er-btn" onclick="erMrFit()" id="er-mrFitBtn" title="한글·워드에서 붙인 표는 고정폭이라 오른쪽이 빕니다. 누르면 표를 본문 폭까지 늘립니다(다시 누르면 원래 폭). 그림 크기는 그림을 클릭해 조절바로 조절하세요.">↔ 표 폭맞춤</button>
           <!-- '전체 비우기'는 뺐다(2026-07-22 요청) — 한 번에 다 날아가 사고가 나기 쉽고,
                그림별 삭제(그림 클릭 → 🗑)와 실행취소로 충분하다. erMrClear 함수는 남겨둠. -->
           <button type="button" class="er-btn" id="er-mrUndoBtn" onclick="erMrUndo()" title="방금 한 작업을 되돌립니다 (Ctrl+Z)" disabled>↩ 실행취소</button>
-          <!-- 탐색기는 '누를 때만' 열린다 — 파일은 안 열고 넣어둔 그림만 손보는 경우가 많다 -->
-          <button type="button" class="er-btn er-good" onclick="erMrPickFile()" title="PDF·이미지 파일을 열어 필요한 부분만 잘라 넣습니다">📂 탐색기 열기</button>
+          <!-- 탐색기는 '누를 때만' 열린다 — 파일은 안 열고 넣어둔 그림만 손보는 경우가 많다.
+               ★버튼 이름에 **받는 종류를 박아 둔다**(2026-08-17 검수) — '탐색기 열기' 로만 적혀 있어
+                 한글 파일도 열리는 줄 알고 눌렀다가 목록에 안 보여 오류로 오해했다. -->
+          <button type="button" class="er-btn er-good" onclick="erMrPickFile()" title="PDF·이미지 파일을 열어 필요한 부분만 잘라 넣습니다. 한글(.hwp)·워드(.docx) 파일은 열 수 없습니다 — 그 문서는 내용을 복사해 아래 영역에 Ctrl+V 하거나, PDF로 저장한 뒤 여기서 여세요.">📂 PDF·이미지 열기</button>
         </div>
         <!-- 안내문은 er-mrBody 밖에 둔다 — 안에 넣으면 저장 내용(mr_body)에 섞인다 -->
-        <div id="er-mrPh" class="er-mrph er-noprint" style="display:none">
-          위 <b>📂 탐색기 열기</b> 로 PDF·이미지를 열어 필요한 부분을 잘라 넣거나,<br>
-          아래한글·워드에서 <b>표째 복사</b> 후 이 아래를 클릭하고 <b>Ctrl+V</b> 하세요.
-        </div>
+        <%-- ★[2026-08-17 검수 삭제] 빈 영역 안내문(#er-mrPh) 제거 — **바로 위 툴바 힌트와 같은 말**이어서
+             같은 안내가 두 번 보였다(「중복 표시, 아래 표시는 삭제」). 안내는 툴바 힌트 한 곳으로 모은다.
+             ⚠되살릴 때 : `erMrToggleSec()` 이 `el('er-mrPh')` 를 `if(ph)` 로 방어하고 있어
+               요소를 다시 넣기만 하면 「비었고 편집 중」일 때 저절로 다시 뜬다(JS 무수정).
+               CSS `.er-mrph` 도 남겨 두었다.
+             ⇒ 이제 안내문은 **툴바 힌트 · 버튼 tooltip 두 곳**이다 — 고칠 때 함께 볼 것. --%>
         <div id="er-mrBody" class="er-editable er-mrbody" data-key="mr_body"></div>
       </div>
 
@@ -931,6 +1022,19 @@
     <button class="er-btn er-zoomlbl" id="er-imgSzLbl" onclick="erImgSizeInput()" title="클릭 → 크기(%)를 숫자로 직접 입력 · 여러 장 선택 중이면 전부 같은 크기로 맞춰집니다">100%</button>
     <button class="er-btn" onclick="erImgSize(event.shiftKey?1:5)" title="그림 확대 5% — Shift+클릭 = 1% 미세조절">➕</button>
     <button class="er-btn" onclick="erImgRatio()" title="처음 넣었을 때의 크기·비율로 되돌립니다">↺ 원래대로</button>
+    <!-- ★[2026-08-17 검수] 위치 옮기기 — 크기·삭제는 되는데 **옮기는 수단이 없었다**(「이미지 전체를 이동은
+         안 되나요」). 붙인 그림·표는 문서 흐름에 놓이므로 **순서를 바꿔** 옮긴다.
+         ⚠자유롭게 끌어 놓는 방식(절대 위치)은 쓰지 않는다 — A4 장 계산(erPaginate)이 흐름 높이를
+           재므로 떠 있는 그림은 장 경계·인쇄가 어긋난다. 여러 장 선택(Ctrl+클릭)이면 함께 움직인다. -->
+    <%-- ★[2026-08-17 검수 삭제] '⬆ 위로 / ⬇ 아래로' 단추 제거(「위아래 기능 자체 삭제」) —
+         ***그림을 잡아서 끌면 같은 일을 하고***(놓을 자리에 파란 선이 뜬다) 단추까지 두니 띠만 길었다.
+       ⚠`erImgMove()` 함수는 **남겨 두었다** — 단추만 되넣으면 부활한다(끌기와 같은 규칙을 쓴다).
+         끌기 쪽(`_mrBindImgDrag`)이 실제 이동 경로이므로 함수를 지우면 안 된다는 뜻은 아니지만,
+         되살릴 여지를 두려고 그대로 둔다. --%>
+    <!-- 좌우 = 문서 안 배치(왼쪽·가운데·오른쪽). 자유 좌표가 아니라 정렬이다 — 흐름 문서라 그게 맞는 '좌우'다 -->
+    <button class="er-btn" onclick="erImgAlign(-1, event.shiftKey)" title="왼쪽으로 조금 이동 (한 번 = 5눈금) — Shift+클릭 = 1눈금 미세조절">◀</button>
+    <button class="er-btn er-zoomlbl" id="er-imgOxLbl" onclick="erImgOxInput()" title="클릭 → 좌우 위치를 숫자로 직접 입력 (0=왼쪽 끝 · 50=가운데 · 100=오른쪽 끝)">가운데</button>
+    <button class="er-btn" onclick="erImgAlign(1, event.shiftKey)"  title="오른쪽으로 조금 이동 (한 번 = 5눈금) — Shift+클릭 = 1눈금 미세조절">▶</button>
     <!-- 화살표 = 현재 상태(2026-08-03 요청): ⤓(아래) = 미지정 / ⤒(위) = 지정됨. _mrBrkBtnSync 가 갱신 -->
     <button class="er-btn" id="er-imgBrkBtn" onclick="erImgBreak()" title="이 그림부터 새 장(페이지)에서 시작합니다. 지정된 그림에서 다시 누르면 해제됩니다">⤓ 새 장에서</button>
     <button class="er-btn" onclick="erImgDel()" title="이 그림 삭제" style="color:#c0392b">🗑</button>
@@ -1263,7 +1367,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     '10':'해당 월 평가와 전월 평가를 모두 받은 욕창 고위험군 환자 중 전월에 비해 2단계 이상의 욕창이 새로 발생한 환자의 비율을 평가하는 지표.',
     '11':'2단계 이상 욕창 보유 환자 중 당일 개선된 환자 비율(개선 = 욕창 단계 수가 줄거나 최고단계가 낮아진 경우).',
     '12':'전월과 당월 의료최고도·선택입원군 및 10개 항목이 완전 자립이거나 감독 필요인 경우는 제외한 대상자 중, 전월 대비 10개 항목의 기능 정도가 2점 이상 개선된 환자의 비율.',
-    '13':'당뇨병 상병 환자 중 HbA1c 검사결과가 적정범위(4% 이상 ~ 8.5% 미만)에 해당하는 환자의 비율을 평가하는 지표임.',
+    '13':'당뇨 환자 중 HbA1c 검사결과가 적정범위(4% 이상 ~ 8.5% 미만)에 해당하는 환자의 비율을 평가하는 지표임.',
     '14':'평가 대상기간 동안 입원 중인 환자 중 입원기간이 181일 이상인 환자의 비율을 평가하는 지표로, 값이 낮을수록 우수함. 단, 평가기간(7~12월) 중 1개월이라도 의료최고도·의료고도·의료중도에 해당하는 환자는 평가대상에서 제외함.',
     '15':'지역사회 복귀율은 심평원 및 행정안전부 자료 등을 연계하여 산출되는 지표로, 기관 자체 자료만으로는 정확한 결과값을 산출하기 어려워 WinCheck에서는 임의로 표준화 3점, 가중치 3점으로 적용함.'
   };
@@ -1661,6 +1765,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         }
         Array.prototype.forEach.call(top.children, function(ch){
           var id=ch.id||'';
+          /* ★[2026-08-17] **인쇄에 안 찍히는 편집 도구(.er-noprint)는 장 계산에서 뺀다** —
+               `.er-mrbar`(붙여넣기 안내·배율 단추)·`#er-mrPh`(빈 영역 안내)가 그것이다.
+               평소엔 display:none 이라 높이 0 이지만 ***편집을 켜면 보이게 되어***(er-editmode 규칙)
+               A4 복제본에서 **133px 를 차지**했다. 종이에는 없는 높이라 편집 중 「N장 시작」 표지가
+               실제 인쇄 경계보다 위에 찍히고, 사용자는 그 틀린 경계에 맞춰 간격을 조정하게 된다
+               (검수 신고 「간격이 안 맞는다」의 잔여 원인 — 안내문을 늘리면서 오차가 커져 잡았다).
+             ⚠er-noprint 를 새로 붙이는 요소가 생기면 자동으로 여기 걸린다(의도한 동작이다). */
+          if(ch.classList && ch.classList.contains('er-noprint')) return;
           if(ch.classList.contains('er-eyebrow')){    // 큰 섹션(Ⅰ~Ⅴ) 헤더 = 항상 새 페이지 시작
             units.push({ nodes:[ch], keep:true, newPage:true });
           } else if(id==='er-sec3Body'){   // Ⅲ: 그룹라벨 / (지표제목+분석박스) 쌍 단위로 분해
@@ -1830,6 +1942,13 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       if(src) src.innerHTML = t.innerHTML;
     }
     markDirty();   // 원본·복제본 어느 쪽을 고쳐도 → '수정중 · 미저장' 표시
+    /* ★[2026-08-17] 타이핑 중에도 장 경계 표지('N장 시작')를 따라오게 — 검수 신고의 나머지 반쪽.
+         엔터로 줄을 내려도 재분할(erPaginate)이 안 돌아 표지가 **낡은 자리**에 남았고,
+         사용자는 그 낡은 경계에 맞춰 간격을 조정 → 변환(편집끄기·PDF) 때 재분할이 돌며 어긋났다.
+         키 입력마다 돌리면 무겁다(문서 전체 복제) → 0.6초 디바운스. 원본 DOM 은 건드리지 않아
+         커서가 튀지 않는다(재분할은 화면 밖 복제본만 다시 만든다). */
+    if(editing){ clearTimeout(window._erRepagTm);
+      window._erRepagTm = setTimeout(function(){ try{ erPaginate(); }catch(e){} }, 600); }
   });
 
   // 첨부 PDF 미리보기 — download.do 가 강제 다운로드(attachment)라 iframe 직접 불가 →
@@ -2097,19 +2216,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       _mrZoom=n; _erMrApplyZoom(); markDirty();
     });
   };
-  // Ctrl + 휠 = 붙인 내용 확대/축소 (그 영역 위에서만)
-  document.addEventListener('wheel', function(ev){
-    if(!ev.ctrlKey) return;
-    /* ★그림을 골라 둔 상태에서는 Ctrl+휠을 확대/축소로 쓰지 않는다 (2026-08-03).
-         Ctrl 은 그림 여러 장 고르기(Ctrl+클릭)에도 쓰인다. 그래서 Ctrl 을 누른 채 휠을 굴려
-         다음 그림으로 내려가면 확대/축소가 걸려 "글자가 커졌다 작아졌다" 했다.
-         고른 그림이 있으면 = 지금 고르는 중이라는 뜻이므로 휠은 그냥 스크롤로 흘려보낸다.
-         (확대/축소는 조절바 ➖ ➕ 로 그대로 가능하고, 빈 곳을 눌러 선택을 풀면 Ctrl+휠도 되살아난다) */
-    if(_mrSelImg || _mrSelSet.length) return;
-    var b=el('er-mrBody'); if(!b || !ev.target || !ev.target.closest) return;
-    if(!ev.target.closest('#er-mrBody') && !ev.target.closest('.er-mrbar')) return;
-    ev.preventDefault(); erMrZoom(ev.deltaY<0 ? 1 : -1);
-  }, { passive:false });
+  /* ★[2026-08-17 검수] Ctrl+휠 '붙인 내용 배율' 제거 — 위 단추 묶음을 없앴으므로 휠만 남기면
+       **표시도 되돌릴 단추도 없는 배율**이 우연히 걸린다. 배율 함수 자체는 남겨 두었다(되살리기 대비).
+     ※그림 하나하나의 크기는 조절바(➖ % ➕ · 손잡이)로 조절한다. */
 
   // 붙여넣기 직후 — 섹션 표시·페이지 재분할. 서식은 그대로 두고(원본 표 모양 유지) 폭만 넘치지 않게 한다
   function _erMrBindPaste(){
@@ -2120,12 +2229,40 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
     b.addEventListener('input', function(){ erMrToggleSec(); });
   }
-  // ↔ 폭맞춤 — 아래한글 표는 고정폭이라 붙이면 오른쪽이 빈다. 켜면 본문 폭까지 늘린다
+  /* ↔ 표 폭맞춤 — 아래한글·워드 표는 **고정폭(pt)** 이라 붙이면 오른쪽이 빈다. 켜면 본문 폭까지 늘린다.
+       (실측 : 한글 260pt 표 347px → 본문 폭 662px)
+     ★[2026-08-17 검수 「폭맞춤 기능은 무엇인가요 의미없으면 제외」] 의미는 있으나 **두 가지를 고쳤다** :
+       ①⚠***저장이 안 되고 있었다*** — 상태를 `#er-mrBody` 의 **클래스**(`er-mrfit`)로만 두었는데
+         `collectTexts` 는 innerHTML 만 저장한다 ⇒ 켜서 넓힌 뒤 저장하고 **다시 열면 표가 다시 좁아졌다**
+         (배율 단추와 같은 뿌리의 결함). ⇒ **표마다 인라인 `width:100%` 를 적는다** → innerHTML 에
+         담겨 재조회·인쇄·거래처 열람까지 남는다. 되돌릴 원래 폭은 `data-w0t` 에 보관(껐을 때 복원).
+       ②⚠**그림까지 늘리던 규칙을 뺐다**(`.er-mrfit img{width:100%}`) — 표를 맞추려고 눌렀는데
+         **그림이 통째로 커지는** 것은 뜻과 다르다. 그림 크기는 조절바(➖ % ➕ · 손잡이)가 맡는다.
+         ※인라인 폭이 있는 그림(잘라 넣은 것)은 원래도 영향이 없었고, **폭 없이 붙인 그림만** 커졌다.
+     ★켜짐/꺼짐 판정은 **표에 남은 `data-w0t` 표시**로 한다 — 클래스는 새로 열면 사라지므로
+       클래스로 판정하면 「다시 열었을 때 단추가 꺼져 보이는데 표는 넓은」 어긋남이 생긴다. */
   window.erMrFit = function(){
     var b=el('er-mrBody'); if(!b) return;
-    var on=b.classList.toggle('er-mrfit');
+    if(!_mrCanEdit(false)) return;
+    var tbs=Array.prototype.slice.call(b.querySelectorAll('table'));
+    if(!tbs.length){ toast('붙인 표가 없습니다. 표를 붙여넣은 뒤 눌러 주세요.'); return; }
+    var isOn = tbs.some(function(t){ return t.hasAttribute('data-w0t'); });   // 이미 맞춰 둔 상태인가
+    var on = !isOn;
+    _mrSnap();                                   // ↩ 실행취소 대상
+    tbs.forEach(function(t){
+      if(on){
+        if(!t.hasAttribute('data-w0t')) t.setAttribute('data-w0t', t.style.width || '');
+        t.style.width='100%';
+      } else {
+        var w0=t.getAttribute('data-w0t');
+        if(w0) t.style.width=w0; else t.style.removeProperty('width');
+        t.removeAttribute('data-w0t');
+      }
+    });
+    b.classList.toggle('er-mrfit', on);           // 표 테두리 등 보조 규칙용(폭은 인라인이 정한다)
     var btn=el('er-mrFitBtn'); if(btn) btn.classList.toggle('er-on', on);
     markDirty(); try{ erPaginate(); }catch(e){}
+    toast(on ? ('표 '+tbs.length+'개를 본문 폭에 맞췄습니다.') : ('표 '+tbs.length+'개를 원래 폭으로 되돌렸습니다.'));
   };
 
   /* ── 📂 파일에서 잘라오기 (2026-07-22) ────────────────────────────────────
@@ -2406,6 +2543,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var w=100;
     sel.forEach(function(im){                    // 선택된 전체에 같은 증감폭 적용(각자 현재 크기 기준)
       w=Math.min(100, Math.max(20, _mrImgW(im)+d)); im.style.width=w+'%';
+      if(im.hasAttribute('data-ox')||im.hasAttribute('data-align')) _mrApplyOx(im);  // ★폭이 바뀌면 좌우 여백도 다시(안 하면 오른쪽 그림이 종이 밖으로 나간다)
     });
     var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(_mrSelImg||sel[0])+'%';
     markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
@@ -2418,7 +2556,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     _erAskNum(sel.length>1 ? ('그림 '+sel.length+'장 크기(%) — 전부 같은 크기로') : '그림 크기(%)',
               _mrImgW(_mrSelImg||sel[0]), 15, 100, function(n){
       _mrSnapOnce('size');
-      sel.forEach(function(im){ im.style.width=n+'%'; if(im.style.height && im.style.height!=='auto') im.style.height='auto'; });
+      sel.forEach(function(im){ im.style.width=n+'%'; if(im.hasAttribute('data-ox')||im.hasAttribute('data-align')) _mrApplyOx(im); if(im.style.height && im.style.height!=='auto') im.style.height='auto'; });
       var lb=el('er-imgSzLbl'); if(lb) lb.textContent=n+'%';
       markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
     });
@@ -2580,6 +2718,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       var w0=parseFloat(im.getAttribute('data-w0'));
       if(!w0 && im.naturalWidth) w0=_mrInitWidth(im.naturalWidth); // 예전에 넣어 기록이 없는 그림
       if(w0 && Math.abs(_mrImgW(im)-w0) >= 1){ im.style.width=Math.round(w0)+'%'; changed=true; }
+      if(im.hasAttribute('data-ox')||im.hasAttribute('data-align')) _mrApplyOx(im);   // ★폭이 바뀌면 좌우 여백 재계산
     });
     var rep=_mrSelImg||sel[0];
     var lb=el('er-imgSzLbl'); if(lb) lb.textContent=_mrImgW(rep)+'%';
@@ -2588,6 +2727,114 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     toast(sel.length>1 ? ('그림 '+sel.length+'장을 처음 크기·비율로 되돌렸습니다.')
                        : ('처음 크기('+_mrImgW(rep)+'%)·비율로 되돌렸습니다.'));
   };
+  /* ⬆⬇ 위치 옮기기 (2026-08-17 검수 「이미지 전체를 이동은 안 되나요」) —
+       붙인 그림·표는 의무기록 영역의 **문서 흐름**에 놓인다. 그래서 '이동' 은
+       ***같은 층(er-mrBody 직계 블록) 안에서 순서를 바꾸는 것***으로 구현한다.
+     ⚠자유 배치(절대 위치)는 일부러 안 만든다 — erPaginate 가 **흐름 높이**로 A4 장을 나누므로
+       떠 있는 그림은 장 경계·인쇄가 어긋나고, 글과 겹칠 수 있다.
+     ★여러 장 선택(Ctrl+클릭) → **한 덩이로** 움직인다(서로의 순서는 유지).
+       띄어 고른 경우(1·3번만)도 덩이로 모여 움직인다 — 그게 「전체 선택 후 이동」의 기대 동작이다.
+     ★그림이 p·div 로 싸여 있을 수 있어 **er-mrBody 직계 조상**을 찾아 그 블록을 옮긴다
+       (⚠주석에 꺾쇠 태그를 그대로 쓰지 말 것 — JSP구조검사.py 의 div 짝 세기가 헛경보를 낸다. 실제로 겪음)
+       (한 블록에 두 장이 들어 있으면 함께 간다 — 같은 줄이니 맞는 동작). */
+  window.erImgMove = function(dir){
+    var sel=_mrSel(); if(!sel.length) return;
+    if(!_mrCanEdit(false)) return;
+    var body=el('er-mrBody'); if(!body) return;
+    var kids=Array.prototype.slice.call(body.children);
+    function topBlock(im){ var n=im; while(n && n.parentNode && n.parentNode!==body) n=n.parentNode; return (n && n.parentNode===body) ? n : null; }
+    var blocks=[];
+    sel.forEach(function(im){ var b=topBlock(im); if(b && blocks.indexOf(b)<0) blocks.push(b); });
+    if(!blocks.length) return;
+    blocks.sort(function(a,b){ return kids.indexOf(a)-kids.indexOf(b); });
+    _mrSnap();                                    // ↩ 실행취소 대상
+    var moved=false;
+    /* ★기준점은 「넘어갈 상대」 = 고른 덩이 **밖**의 가장 가까운 블록이다.
+         ⚠처음엔 위=덩이 맨앞의 앞 블록 / 아래=덩이 맨뒤의 뒤 블록으로 찾았는데,
+           ***띄어 고른 경우***(A·B 고르고 T 건너 C 도 고름)에는 덩이 맨뒤가 이미 마지막이라
+           「이미 맨 아래입니다」가 떠 **아무 일도 안 났다**(실측으로 잡음).
+         ⇒ 아래로 = 덩이 맨앞 **뒤쪽**에서 처음 만나는 안 고른 블록(=T) **뒤로** 덩이를 모아 옮긴다.
+            위로  = 덩이 맨뒤 **앞쪽**에서 처음 만나는 안 고른 블록 **앞으로** 모아 옮긴다.
+            → 떨어져 고른 것도 한 덩이로 모이며 상대를 넘어간다(양쪽 다 진행된다). */
+    if(dir<0){                                    // ⬆ 위로
+      var prev=blocks[blocks.length-1].previousElementSibling;
+      while(prev && blocks.indexOf(prev)>=0) prev=prev.previousElementSibling;
+      if(prev){ blocks.forEach(function(b){ body.insertBefore(b, prev); }); moved=true; }
+    } else {                                      // ⬇ 아래로
+      var next=blocks[0].nextElementSibling;
+      while(next && blocks.indexOf(next)>=0) next=next.nextElementSibling;
+      if(next){ var ref=next.nextSibling; blocks.forEach(function(b){ body.insertBefore(b, ref); }); moved=true; }
+    }
+    if(!moved){                                   // 끝에 닿음 — 방금 쌓은 무의미 스냅샷을 회수한다(erImgRatio 와 같은 방식)
+      _mrUndo.pop(); _mrUndoSync();
+      toast(dir<0 ? '이미 맨 위입니다.' : '이미 맨 아래입니다.');
+      return;
+    }
+    markDirty(); _mrPlaceImgBar(); try{ _mrSyncPgMarks(); }catch(e){} try{ erPaginate(); }catch(e){}
+    toast((blocks.length>1 ? (blocks.length+'개를 ') : '')+(dir<0?'위로':'아래로')+' 옮겼습니다. ↩ 실행취소로 되돌릴 수 있습니다.');
+  };
+
+  /* ◀▶ 좌우 이동 (2026-08-17 검수 「좌우 위아래」 → 「이동을 조금 세부화, 지금은 기본이동이 큼」) —
+     ★처음엔 **왼쪽·가운데·오른쪽 3단 정렬**로 만들었는데 ***한 번에 너무 크게 튀었다***
+       ⇒ **0~100 눈금의 세부 이동**으로 바꿨다. 한 번 = **5**, **Shift+클릭 = 1**(➖➕ 와 같은 규칙).
+       0=왼쪽 끝 · 50=가운데 · 100=오른쪽 끝. 3단 정렬은 이 눈금의 특별한 값일 뿐이다.
+     ★흐름 문서라 '좌우' 는 **여백으로** 민다(자유 좌표로 띄우면 A4 장 계산·인쇄가 어긋난다).
+     ★상태는 `data-ox` 에 적는다 — mr_body innerHTML 에 함께 저장되므로 **재조회·인쇄에도 남는다.**
+     ⚠**여백은 남는 공간(100−그림폭)에 비례**해야 한다 — 그냥 `margin-left:ox%` 로 주면
+       큰 그림이 오른쪽으로 밀려 **잘려 나간다.** 그래서 `ox/100 × (100 − 폭%)` 로 환산한다.
+     ⚠**크기를 바꾸면 여백도 다시 계산**해야 한다(폭이 바뀌면 남는 공간이 달라진다) —
+       erImgSize·erImgRatio·손잡이 끌기 뒤에 `_mrApplyOx` 를 부른다. 안 부르면 오른쪽에 둔 그림이
+       크게 만든 순간 종이 밖으로 나간다.
+     ⚠기본값 50(가운데) — 예전에 넣어 값이 없는 그림도 보이던 그대로 가운데다.
+       옛 `data-align`(3단) 이 남아 있으면 눈금으로 옮겨 읽는다(호환). */
+  function _mrOx(im){
+    var v=parseFloat(im.getAttribute('data-ox'));
+    if(isFinite(v)) return Math.max(0, Math.min(100, v));
+    var a=im.getAttribute('data-align');          // 옛 3단 값 호환
+    if(a==='left') return 0;
+    if(a==='right') return 100;
+    return 50;
+  }
+  function _mrApplyOx(im){
+    var ox=_mrOx(im), w=parseFloat(im.style.width)||100;
+    var room=Math.max(0, 100-w);                  // 남는 가로 공간(%)
+    im.setAttribute('data-ox', Math.round(ox));
+    im.removeAttribute('data-align');             // 눈금으로 통일 — 두 규칙이 섞이지 않게
+    im.style.display='block';
+    im.style.marginLeft=(room*ox/100).toFixed(2)+'%';
+    im.style.marginRight='0';
+  }
+  window._mrApplyOxAll = function(sel){ (sel||[]).forEach(_mrApplyOx); };
+  /* 눈금 라벨 클릭 = 좌우 위치 직접 입력 (크기 % 라벨과 같은 방식) */
+  window.erImgOxInput = function(){
+    var sel=_mrSel(); if(!sel.length) return;
+    if(!_mrCanEdit(false)) return;
+    _erAskNum('좌우 위치 (0=왼쪽 끝 · 50=가운데 · 100=오른쪽 끝)', _mrOx(_mrSelImg||sel[0]), 0, 100, function(n){
+      _mrSnap();
+      sel.forEach(function(im){ im.setAttribute('data-ox', n); _mrApplyOx(im); });
+      markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
+    });
+  };
+  /* 조절바의 좌우 눈금 라벨 갱신 — 0·50·100 은 이름으로, 그 밖은 숫자로 */
+  function _mrOxLblSync(im){
+    var b=el('er-imgOxLbl'); if(!b || !im) return;
+    var v=_mrOx(im);
+    b.textContent = (v===0?'왼쪽 끝':v===100?'오른쪽 끝':v===50?'가운데':String(v));
+  }
+  window.erImgAlign = function(dir, fine){
+    var sel=_mrSel(); if(!sel.length) return;
+    if(!_mrCanEdit(false)) return;
+    var step=(fine?1:5)*(dir<0?-1:1);
+    var rep=_mrSelImg||sel[0], cur=_mrOx(rep);
+    var to=Math.max(0, Math.min(100, cur+step));
+    if(to===cur){ toast(dir<0 ? '이미 왼쪽 끝입니다.' : '이미 오른쪽 끝입니다.'); return; }
+    _mrSnapOnce('ox');                            // 연속 클릭은 한 단계로 묶는다(➖➕ 와 같은 방식)
+    sel.forEach(function(im){ im.setAttribute('data-ox', to); _mrApplyOx(im); });
+    markDirty(); _mrPlaceImgBar(); try{ erPaginate(); }catch(e){}
+    var nm = (to===0?'왼쪽 끝':to===100?'오른쪽 끝':to===50?'가운데':(to+'/100'));
+    toast((sel.length>1 ? (sel.length+'장 · ') : '')+'좌우 '+nm);
+  };
+
   /* 그림 선택 해제 — 조절바·손잡이를 모두 감춘다.
      잘라오기 창이나 별도 창을 띄우면 그 위에 손잡이가 겹쳐 떠 있어 방해된다(2026-07-22). */
   // Ctrl+P(브라우저 메뉴 인쇄)는 erPrint 를 안 거친다 — 인쇄 직전 이벤트에서 '새 장' 알약을 확실히 걷는다
@@ -2629,14 +2876,53 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
          손잡이(_mrPlaceHandle)는 이미 같은 조건으로 숨고 있었는데 조절바만 빠져 있었다. */
     if(r.width<2 || r.bottom<0 || r.top>window.innerHeight){ bar.style.display='none'; _mrPlaceHandle(); return; }
     bar.style.display='flex';
-    /* 가로도 화면 안으로 당긴다 — transform:translateX(-50%) 라 좌우 끝에서는 절반이 잘려 나간다 */
-    var halfW=(bar.offsetWidth||160)/2;
-    var cx=Math.min(window.innerWidth-halfW-6, Math.max(halfW+6, r.left+r.width/2));
-    bar.style.left=Math.round(cx)+'px';
-    bar.style.top =Math.round(Math.max(8, r.top-40))+'px';
+    /* ★★자리 = **고른 그림 바로 위**(2026-08-17 최종 — 「선택영역 바로 위에 있어야 한다」).
+         ⚠화면 아래 가운데·화면 맨 위로 각각 옮겨 봤지만 둘 다 **그림에서 멀어** 눈이 왕복했고,
+           맨 위는 「자주 쓰는 메뉴」 띠와도 겹쳤다. 그림에 붙이는 것이 맞다.
+         ⚠단추가 늘어나 바가 **넓다**(600px 넘음) — 좁은 그림에 맞춰 가운데를 잡으면 화면 밖으로
+           나가므로 **좌우를 화면 안으로 당긴다**(transform:translateX(-50%) 라 절반이 잘린다).
+         ⚠**위에 자리가 없으면**(그림이 상단 메뉴에 가까움) **그림 아래**로 내려 붙인다 —
+           안 그러면 바가 메뉴 밑에 깔려 안 보인다(예전 「툴바 없어짐」과 같은 증상이 된다). */
+    var _bw=bar.offsetWidth||300, _bh=bar.offsetHeight||37, _gap=8, _navB=0;
+    var _nav=document.getElementById('top-navbar');
+    if(_nav){ var nr=_nav.getBoundingClientRect(); if(nr.height>0 && nr.top<8) _navB=nr.bottom; }
+    /* ★★**천장은 상단 메뉴만이 아니다 — 붙여넣기 툴바(.er-mrbar)도 천장이다**(2026-08-17 「겹쳐보여서 간격 유지」).
+         그림이 툴바 바로 밑에 있으면 「그림 위」가 곧 툴바 자리라 ***조절바가 단추들을 덮었다.***
+         화면에 보이는 동안만 천장으로 센다(스크롤로 위로 지나가면 rect 가 음수 → 제약 없음). */
+    var _ceil=_navB;
+    var _mb=document.querySelector('#evalReport .er-srcpage .er-mrbar');
+    if(_mb){ var mr2=_mb.getBoundingClientRect(); if(mr2.height>0 && mr2.bottom>_ceil) _ceil=mr2.bottom; }
+    /* ★자리 정하기 — **우선순위가 중요하다**(2026-08-17) :
+         ①기본은 ***그림 바로 위 8px***(「선택영역 바로 위에 있어야 한다」).
+         ②그 자리가 천장(메뉴·툴바 아래끝)과 겹치면 → **천장과 그림 사이 가운데**로 옮겨
+           ***양쪽에 간격이 남게*** 한다(「겹쳐보여서 간격 유지」·「중간에 간격유지하게」).
+         ③사이가 좁아 그것도 안 되면 → **그림 아래**로 내린다(억지로 끼우면 겹친다).
+       ⚠②를 기본으로 두면 여유가 많을 때 바가 그림에서 **95px 나 떨어져** ①의 요구를 깬다(실측으로 잡음). */
+    var _top=r.top-_bh-_gap;                                     // ① 그림 바로 위
+    if(_top < _ceil+6){
+      var _room=r.top-_ceil;
+      if(_room >= _bh+12) _top = _ceil + Math.max(6, Math.round((_room-_bh)/2));  // ② 사이 가운데
+      else                _top = r.bottom + _gap;                                 // ③ 그림 아래
+    }
+    if(_top+_bh > window.innerHeight-4)                            // 아래도 넘치면 화면 안으로
+      _top = Math.max(_ceil+6, window.innerHeight-_bh-4);          // ★천장(메뉴+툴바)은 여기서도 지킨다
+    /* ★가로는 **그림이 아니라 붙여넣기 영역(er-mrBody)의 가운데**에 맞춘다
+         (2026-08-17 검수 「이동시 툴바도 같이 움직임」).
+       왜 : 그림 가운데에 맞추면 ◀▶ 로 좌우로 밀 때마다·크기를 바꿀 때마다 ***조절바가 따라 흔들려***
+         방금 누른 단추가 커서 밑에서 달아났다. 영역 가운데는 **고정**이라 단추 자리가 안 변한다.
+       ※세로는 그대로 그림을 따라간다 — 조절바는 「고른 그림 바로 위」에 있어야 무엇을 고치는지 보인다. */
+    var _host=el('er-mrBody');
+    var _hr=_host ? _host.getBoundingClientRect() : r;
+    var _anchor=(_hr.width>40 ? _hr.left+_hr.width/2 : r.left+r.width/2);
+    var _half=_bw/2;
+    var _cx=Math.min(window.innerWidth-_half-6, Math.max(_half+6, _anchor));
+    bar.style.left=Math.round(_cx)+'px';
+    bar.style.top =Math.round(_top)+'px';
+    bar.style.bottom='auto';
     // 2장 이상 골랐으면 개수를 함께 보여준다 — 버튼이 전체에 적용된다는 신호
     var _n=_mrSelSet.length;
     var lb=el('er-imgSzLbl'); if(lb) lb.textContent=(_n>1 ? (_n+'장 · ') : '')+_mrImgW(_mrSelImg)+'%';
+    try{ _mrOxLblSync(_mrSelImg); }catch(e){}                   // 좌우 눈금 라벨도 함께 갱신
     _mrBrkBtnSync(_mrSelImg.classList.contains('er-pgbreak'));  // '새 장에서' 눌림 상태·화살표(⤓/⤒) 반영
     _mrPlaceHandle();
   }
@@ -2702,6 +2988,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         var w=(mode==='wl') ? Math.max(40, w0 - dx*2) : Math.max(40, w0 + dx);
         var pct=Math.min(100, Math.max(15, Math.round(w/box0*100)));
         _mrSelImg.style.width=pct+'%';
+        if(_mrSelImg.hasAttribute('data-ox')||_mrSelImg.hasAttribute('data-align')) _mrApplyOx(_mrSelImg);   // ★끌어서 크기를 바꿀 때도 좌우 여백 재계산
         var lb=el('er-imgSzLbl'); if(lb) lb.textContent=pct+'%';
         if(mode==='wh') _mrSelImg.style.height='auto';       // 모서리 = 비율 유지
       }
@@ -2749,9 +3036,105 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       }
       _mrPlaceImgBar();
     });
+    _mrBindImgDrag(b);        // ★그림을 끌어서 자리 옮기기
     // 스크롤·리사이즈하면 조절바·'새 장' 표지 위치도 따라간다
     window.addEventListener('scroll', function(){ if(_mrSelImg) _mrPlaceImgBar(); _mrSyncPgMarks(); }, true);
     window.addEventListener('resize', function(){ if(_mrSelImg) _mrPlaceImgBar(); _mrSyncPgMarks(); });
+  }
+
+  /* ── 그림을 끌어서 자리 옮기기 (2026-08-17 검수 「Ctrl+클릭 전체 선택 후 마우스 이동하면 안 됨」) ──
+     ⬆⬇ 단추만으로는 여러 칸 옮길 때 여러 번 눌러야 한다. 잡아서 끌어 놓는 것이 자연스럽다.
+     ★놓는 자리는 **블록 사이**다(자유 배치가 아니다) — erPaginate 가 흐름 높이로 A4 장을 나누므로
+       떠 있는 그림은 장 경계·인쇄가 어긋난다. 끌 때 **놓일 자리에 파란 선**을 그려 미리 보여 준다.
+     ★여러 장 선택(Ctrl+클릭) 상태에서 그중 하나를 끌면 **선택한 전체가 함께** 간다(그게 요청의 요지다).
+     ⚠브라우저 기본 그림 끌기(contentEditable 의 native drag)는 **끈다** —
+       한 장만 옮겨지고 우리 규칙(여러 장·블록 단위)과 충돌하며, 엉뚱한 곳에 떨어진다.
+     ⚠클릭과 끌기를 가른다 — 5px 넘게 움직여야 '끌기'로 본다(안 그러면 선택이 안 된다).
+     ⚠**손잡이(.er-hnd)에서 시작한 끌기는 크기 조절**이므로 여기서 손대지 않는다. */
+  var _mrDrag = null;
+  function _mrDropLine(){
+    var d=el('er-mrDropLine');
+    if(!d){ d=document.createElement('div'); d.id='er-mrDropLine'; d.className='er-mrdrop'; document.body.appendChild(d); }
+    return d;
+  }
+  function _mrBlocksOf(sel){                       // 선택 그림들의 er-mrBody 직계 블록(문서 순서)
+    var body=el('er-mrBody'); if(!body) return [];
+    var kids=Array.prototype.slice.call(body.children), out=[];
+    sel.forEach(function(im){
+      var n=im; while(n && n.parentNode && n.parentNode!==body) n=n.parentNode;
+      if(n && n.parentNode===body && out.indexOf(n)<0) out.push(n);
+    });
+    out.sort(function(a,b){ return kids.indexOf(a)-kids.indexOf(b); });
+    return out;
+  }
+  /* 마우스 y 로 '놓을 자리' 판정 — 끌고 있는 블록들을 뺀 나머지 중, 각 블록의 세로 중간과 견준다.
+     반환 = 그 앞에 끼울 기준 블록(null = 맨 끝에 붙임). */
+  function _mrDropRef(y, moving){
+    var body=el('er-mrBody'); if(!body) return null;
+    var kids=Array.prototype.slice.call(body.children).filter(function(k){ return moving.indexOf(k)<0; });
+    for(var i=0;i<kids.length;i++){
+      var r=kids[i].getBoundingClientRect();
+      if(y < r.top + r.height/2) return kids[i];
+    }
+    return null;
+  }
+  function _mrDrawDropLine(ref, moving){
+    var body=el('er-mrBody'), d=_mrDropLine();
+    var br=body.getBoundingClientRect(), top;
+    if(ref){ top = ref.getBoundingClientRect().top - 2; }
+    else {
+      var kids=Array.prototype.slice.call(body.children).filter(function(k){ return moving.indexOf(k)<0; });
+      top = kids.length ? (kids[kids.length-1].getBoundingClientRect().bottom + 1) : br.top + 2;
+    }
+    d.style.display='block';
+    d.style.left = br.left+'px'; d.style.width = br.width+'px'; d.style.top = top+'px';
+  }
+  function _mrBindImgDrag(b){
+    if(b._dragBound) return; b._dragBound=1;
+    // 기본 그림 끌기 차단 — 우리 규칙으로만 옮긴다
+    b.addEventListener('dragstart', function(ev){ if(ev.target && ev.target.tagName==='IMG') ev.preventDefault(); });
+    b.addEventListener('mousedown', function(ev){
+      if(ev.button!==0) return;
+      var im=(ev.target && ev.target.tagName==='IMG') ? ev.target : null;
+      if(!im || !_mrCanEdit(true)) return;
+      if(ev.target.closest && ev.target.closest('.er-hnd')) return;   // 손잡이 = 크기 조절
+      if(ev.ctrlKey || ev.metaKey || ev.shiftKey) return;              // 더하기 선택 클릭은 그대로 둔다
+      _mrDrag = { im:im, x0:ev.clientX, y0:ev.clientY, on:false, ref:null, moving:null };
+    });
+    document.addEventListener('mousemove', function(ev){
+      if(!_mrDrag) return;
+      if(!_mrDrag.on){
+        if(Math.abs(ev.clientX-_mrDrag.x0)<5 && Math.abs(ev.clientY-_mrDrag.y0)<5) return;   // 아직 클릭
+        /* 끌기 시작 — 끌 대상은 「이미 골라 둔 전체」다. 안 골라둔 그림을 끌면 그것 하나만.
+           ※선택은 click 에서 처리되므로 mousedown 시점에는 아직 이 그림이 안 골라져 있을 수 있다. */
+        var sel=_mrSel();
+        if(sel.indexOf(_mrDrag.im)<0) sel=[_mrDrag.im];
+        _mrDrag.moving=_mrBlocksOf(sel);
+        if(!_mrDrag.moving.length){ _mrDrag=null; return; }
+        _mrDrag.on=true;
+        _mrSnap();                                        // ↩ 실행취소 대상
+        document.body.style.userSelect='none';            // 끄는 동안 글자 선택 방지
+        document.body.classList.add('er-mrdragging');
+      }
+      _mrDrag.ref=_mrDropRef(ev.clientY, _mrDrag.moving);
+      _mrDrawDropLine(_mrDrag.ref, _mrDrag.moving);
+      ev.preventDefault();
+    }, { passive:false });
+    document.addEventListener('mouseup', function(){
+      if(!_mrDrag) return;
+      var dg=_mrDrag; _mrDrag=null;
+      document.body.style.userSelect=''; document.body.classList.remove('er-mrdragging');
+      var d=el('er-mrDropLine'); if(d) d.style.display='none';
+      if(!dg.on) return;                                  // 그냥 클릭이었다 → 선택 로직에 맡긴다
+      var body=el('er-mrBody');
+      // 제자리에 놓았으면 아무 것도 하지 않는다(무의미 스냅샷 회수)
+      var first=dg.moving[0], already = (dg.ref===first) ||
+        (!dg.ref && body.lastElementChild===dg.moving[dg.moving.length-1]);
+      if(already){ _mrUndo.pop(); _mrUndoSync(); return; }
+      dg.moving.forEach(function(blk){ body.insertBefore(blk, dg.ref); });
+      markDirty(); _mrPlaceImgBar(); try{ _mrSyncPgMarks(); }catch(e){} try{ erPaginate(); }catch(e){}
+      toast((dg.moving.length>1 ? (dg.moving.length+'개를 ') : '')+'옮겼습니다. ↩ 실행취소로 되돌릴 수 있습니다.');
+    });
   }
   window.erCropInsert = function(){
     if(!_crop.has) return;
@@ -2876,8 +3259,14 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     _erMrBindPaste(); _mrBindImgSelect(); _mrDeselect();
     _mrUndo=[]; _mrUndoSync();          // 다른 보고서를 열면 되돌리기 이력은 초기화
     _erMrApplyZoom();      // 저장분이 있으면 그대로 두고 배율만 적용
+    /* ★단추 상태는 **표에 남은 data-w0t** 로 판정한다 — 클래스는 새로 열면 사라지므로
+         클래스로 보면 「단추는 꺼졌는데 표는 넓은」 어긋남이 난다(2026-08-17). */
     var btn=el('er-mrFitBtn'), b=el('er-mrBody');
-    if(btn && b) btn.classList.toggle('er-on', b.classList.contains('er-mrfit'));
+    if(btn && b){
+      var fitted = !!b.querySelector('table[data-w0t]');
+      b.classList.toggle('er-mrfit', fitted);
+      btn.classList.toggle('er-on', fitted);
+    }
     erMrToggleSec();
   }
 
@@ -3321,11 +3710,21 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
 
   // Ⅴ 권장 개선 시나리오(원본 PDF 형식) — 부족분 상위 4개 자동:
-  //   최우선(상위 2)=+2구간, 나머지=+1구간(최대 5구간) 목표 → 상승분·개선 후 예상 종합점수·현재vs목표 비교표 자동 계산
+  //   최우선(상위 2)=+2구간, 나머지=+1구간(최대 5구간) 목표 → 상승분·개선 후 예상 종합점수 자동 계산
+  /* ★★[2026-08-17 검수] ***구조영역(cate_fg='10')은 현재 구간에서 딱 1단계만*** 올린다.
+       왜 : 구조영역은 **인력 충원**이라야 오르는 지표라 병원이 단기간에 여러 구간을 뛰어넘을 수 없다.
+       그런데 종전 규칙(최우선 2개=+2구간, 나머지=+1구간, 상한 5)은 구조영역도 **5점 구간(=30점 만점)**
+       까지 끌어올려 ***현실에서 도달 못 하는 목표***를 제시했다(검수 : 「구조영역 30점 만점으로 진행하지는
+       못하는데 기본 세팅값이 30점 만점이라 수정이 필요합니다」).
+     ⇒ 구조영역은 `s+1`(상한 5), 진료영역은 종전대로. 이 값이 시나리오 표·상승분·**개선 후 예상 종합점수**
+       에 모두 쓰이므로 여기 한 곳만 고치면 아래 숫자가 함께 맞는다. */
   function renderSec5(){
     var top = topGaps(4), rows='', upStruct=0, upCare=0;
     top.forEach(function(x,i){
-      var r=x.r, s=sOf(r)||1, tz=Math.min(5, s+(i<2?2:1));
+      var r=x.r, s=sOf(r)||1;
+      var struct = (r.cate_fg==='10');
+      var tz = struct ? Math.min(5, s+1)                 // 구조영역 = 1단계만
+                      : Math.min(5, s+(i<2?2:1));        // 진료영역 = 종전 규칙
       var tgt=Math.min(x.w, x.w/5*tz), up=Math.max(0, tgt-x.got);
       if(r.cate_fg==='10') upStruct+=up; else upCare+=up;
       rows += '<tr><td>'+(i+1)+(i<2?' <span style="font-size:10px;">핵심</span>':'')+'</td>'
@@ -3337,11 +3736,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     var afterEl = document.querySelector('#evalReport [data-key="after_score"]');
     if(afterEl) afterEl.textContent = f1(after);
     el('er-afterGrade').textContent = '( +'+f1(totalUp)+' · '+gradeOf(after)+' )';
-    el('er-cmpBody').innerHTML =
-      '<tr><td class="er-l">구조영역 (30)</td><td class="er-num">'+f1(scores.struct)+'</td><td class="er-num'+(upStruct>0.0001?' er-b-good':'')+'">'+f1(scores.struct+upStruct)+'</td></tr>'
-     +'<tr><td class="er-l">진료영역 (70)</td><td class="er-num">'+f1(scores.care)+'</td><td class="er-num'+(upCare>0.0001?' er-b-good':'')+'">'+f1(scores.care+upCare)+'</td></tr>'
-     +'<tr class="er-tot"><td class="er-l">종합 (100)</td><td class="er-num">'+f1(scores.total)+'</td><td class="er-b-good er-num">'+f1(after)+'</td></tr>'
-     +'<tr class="er-sub"><td class="er-l">등급</td><td class="er-b-bad">'+gradeOf(scores.total)+'</td><td class="'+(parseInt(gradeOf(after),10)<parseInt(gradeOf(scores.total),10)?'er-b-good':'')+'">'+gradeOf(after)+'</td></tr>';
+    /* er-cmpBody(현재 vs 목표 비교표) 채움 코드는 표와 함께 삭제(2026-08-17 검수) — 위 HTML 주석 참고 */
   }
 
   // 저장된 편집 문구 키 — 자동 문구(핵심진단·비고 등)는 override 가 없을 때만 채움
@@ -3898,44 +4293,15 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     // [C11] 연말(12월) 확정 국면 — 잔여 개선 여지 무관하게 점수 확정(세밀분석 §8, 3병원 수렴)
     if(curYm && parseInt(curYm.substring(4,6),10)===12)
       p.sum_p3 += ' 다만 평가가 12월 진료분까지로 종료되는 시점이므로, 남은 개선 여지와 무관하게 현재 점수 수준에서 확정되는 국면임.';
-    p.sum_p4 = '항정신성의약품 처방률, DUR 점검률, 지역사회복귀율은 예상값 기준으로 산출되어 최종 평가 결과에 따라 점수가 다소 달라질 수 있음.';
-    // [P4 항정 리스크 2026-07-24] 가이드 §3-P4 line63/95 명시 문형 — 지표07(항정신성) 화면값(s_score·stdweig)만으로
-    //   "40% 초과 시 표준화 1점 구간 하락 → 가중치 약 −(W/5×(S−1))점 감소" 조립(청구% 불필요, draft 안전).
-    //   정답지 검증: 07=표준화3구간·가중치3점 → −1.2점(계요 47.88% 6월 → 1점구간 가중치 1.2점 감소와 일치).
-    var api07 = indicators.filter(function(r){ return r.cate_cd==='07'; })[0];
-    if(api07){
-      var aS=n(api07.s_score)||0, aW=n(api07.stdweig);
-      /* [N1 2026-08-05] 전월 <실측> 처방률이 있으면 가정문 대신 실측 문형 — 2026-07 정답지 27건 수렴 1위.
-           표준화 구간: 10% 미만=5점 / 10~40%=3점 / 40% 이상=1점 (정답지 전건 동일 명기).
-           방향별 문형(정답지 그대로):
-             1점 구간 → "동일 수준 산정 시 −Δ점 감소 예상 … 장기·중복 처방 검토"(중화·태종대·청암·무지개·시흥더봄·이푸른)
-             5점 구간 → "해당 수준 유지 시 +Δ점 추가 상승 가능"(강동스마일)
-             3점 구간 → 현 가정과 같아 수치만 병기.  Δ = W/5 × |실측구간 − 현재구간|. */
-      if(_psyPrev && aW>0 && aS>=1){
-        var pBand = (_psyPrev.rate < 10) ? 5 : (_psyPrev.rate < 40 ? 3 : 1);
-        /* 기간 표기 — 7월 보고서는 "6월", 8월은 "7월", 9월~ 는 "7~N월"(같은 해라 연도 표기는 앞에 한 번) */
-        var pmF = parseInt(_psyPrev.from.substring(4,6),10), pmT = parseInt(_psyPrev.to.substring(4,6),10);
-        var pmLbl = (pmF===pmT) ? pmF+'월' : pmF+'~'+pmT+'월';
-        var pHead = ' 항정신성의약품 처방률은 당월 청구자료 확정 전으로 표준화 '+aS+'점 구간으로 예상하여 산정하였으나, '
-                  + _psyPrev.from.substring(0,4)+'년 '+pmLbl+' 처방률은 '+f1(_psyPrev.rate)+'%로 표준화 '+pBand+'점 구간에 해당함.';
-        var pDelta = f1(aW/5*Math.abs(pBand-aS));
-        if(pBand < aS){
-          var aBoot2=topGaps(1)[0];
-          p.sum_p4 += pHead+' 동일한 수준으로 산정될 경우 가중치점수 약 −'+pDelta+'점 감소 가능성이 있으므로, 불필요한 장기·중복 처방 여부와 처방의 적정성을 지속적으로 검토하여 처방률을 관리할 필요가 있음.'
-                    + (aBoot2 ? ' 아울러 점수 감소 가능성을 고려하여 \''+aBoot2.nm+'\' 등 실제 개선 가능한 지표의 점수를 추가 확보하는 것이 중요함.' : '');
-        } else if(pBand > aS){
-          p.sum_p4 += pHead+' 해당 수준을 유지할 경우 가중치점수 약 +'+pDelta+'점 추가 상승이 가능함.';
-        } else {
-          p.sum_p4 += pHead;
-        }
-      } else if(aS>1 && aW>0){
-        var aDrop=f1(aW/5*(aS-1));                 // 1점 구간 하락 시 감소 가중치
-        var aBoot=topGaps(1)[0];                    // 보완 우선(부족점수 최대) 지표
-        p.sum_p4 += ' 특히 항정신성의약품 처방률은 전국 기관 기준으로 최종 산정되는 지표로, 처방률이 40%를 초과하여 표준화 1점 구간으로 산정될 경우 가중치 약 −'+aDrop+'점 하락이 예상되므로, 불필요한 장기·중복 처방을 정기적으로 점검하고'
-                  + (aBoot ? ' \''+aBoot.nm+'\' 등 부족점수가 큰 지표를 우선 관리하여 점수 감소 보완이 필요함.' : ' 처방 적정성의 지속적인 관리가 필요함.');
-      }
-    }
-    p.sum_p4 += ' 해당 대상자에 대한 지속적인 관리가 요구됨.';
+    /* ★[2026-08-17 검수 교체] P4 = **고정 한 문장** — 검수 박혜련.
+         종전에는 기본 문장 뒤에 전월 <실측> 처방률 문형(N1)·항정 리스크 문형(P4)이 동적으로 붙어
+         「2026년 7월 처방률은 0.0%로 표준화 5점 구간…」 같은 수치가 총평에 그대로 나왔다.
+         **총평에 처방률 수치(0.0% 등)가 나오면 안 된다**는 지적 → 수치·구간·상승/하락 예측을 전부 빼고
+         아래 확정 문구 하나로 고정한다(꼬리의 「해당 대상자에 대한 지속적인 관리가 요구됨」도 함께 제거).
+       ⚠되살릴 때 참고 — 걷어낸 동적 문형의 원형은 git 이력(이 줄 이전 버전)의
+         N1(전월 실측: 5점 유지 상승형 · 1점 하락 경고형 · 3점 수치 병기형)과
+         P4(실측 없음: 40% 초과 하락 경고형)다. _psyPrev(전월 실측) 계산부는 남겨 둔다. */
+    p.sum_p4 = '항정신성의약품 처방률, DUR 점검률 및 지역사회복귀율은 예상값을 기준으로 산출한 결과이므로 청구자료 및 최종 평가 결과에 따라 종합점수는 일부 변동될 수 있음.';
     /* [★2] P5 신뢰도 — ★12월에만 '익년 2~3월 점검 대비형', 그 외(7~11월)는 상시형.
          종전 기준은 10~12월이었으나 2025 정답지 318건에서 대비형은 12월 전용이다
          (12월 보고서 9/9·8/8·5/5·5/5 전건, 10~11월은 상시형 유지 — 4개 그룹 독립 확인).
@@ -4055,10 +4421,20 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
            · DUR(08) = 분석 문구를 확정 문구로 교체(100% 가정 산정 + 점검 안내 + 확인 경로). 정의·개선방향 없음. */
         var noDefPlan = (fg==='10') || (cd==='08');
         if (cd==='08'){
-          /* DUR(08) 고정문 — 2026-08-10 서식 요청: 첫 줄만 굵게, '다만,'부터 빨간 글씨. */
+          /* DUR(08) 고정문 — 2026-08-10 서식 요청: 첫 줄만 굵게, '다만,'부터 빨간 글씨.
+             ★★[2026-08-17 검수] 「DUR 지표만 글씨체가 다르다 — 빨간 글씨와 그 밑 글씨」
+               ***원인은 `font-weight:400` 이었다.*** 브라우저로 실측해 확정했다 :
+                 · `.er-ana` 문단(=모든 지표 본문)은 원래 **700** 이다(약간 굵은 본문).
+                 · DUR 만 2·3줄에 400 을 **명시**해 본문보다 얇게 그려졌다.
+                 · 맑은 고딕은 400 과 700 이 **다른 글꼴 파일**이라 글씨체가 달라 보인다.
+             ⇒ **400 지정을 뺀다.** 그러면 두 줄이 본문(700)을 그대로 따라 다른 지표와 같아진다.
+               색(빨강·회색)은 뜻이 있으므로 그대로 둔다.
+             ⚠`.er-hl-bad` 는 800 이라 그것도 상쇄해야 한다 → 700 을 명시한다(문단과 같은 값).
+             ⚠첫 줄은 `<b>`(=700) 로 되돌린다 — 다른 지표 첫 줄도 전부 `<b>` 700 이다.
+               (오전에 800 으로 바꿨다가 실측에서 **더 달라진 것**을 확인해 되돌렸다.) */
           auto = '<b>DUR 점검률을 100%로 가정하여 가중치 '+fnum(w)+'점을 산정함.</b><br>'
-               + '<span class="er-hl-bad" style="font-weight:400;">다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.</span><br>'
-               + '<span style="font-weight:400; color:var(--er-soft);">• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소</span>';   /* 확인 경로 — 빨강 아님, 진하지 않게(2026-08-10) */
+               + '<span class="er-hl-bad" style="font-weight:700;">다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.</span><br>'
+               + '<span style="color:var(--er-soft);">• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소</span>';   /* 확인 경로 — 빨강 아님, 굵기는 본문 따름(2026-08-17) */
         }
         /* [2026-08-03] Ⅳ 권고사항 통합 — 별도 장이던 권고의 고유 내용(목표 완결문·5구간 병기·%p부족·
              감소 사다리/여유 한도)을 분석내용 박스 안 '목표 :' 줄로 옮기고 Ⅳ장은 삭제했다(사용자 요청).
@@ -4359,7 +4735,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         // ③ 병원별 저장 문구 override 적용 (+ savedKeys 갱신 — 자동 문구가 저장본을 덮지 않게)
         var map={};
         texts.forEach(function(t){ map[t.sectkey]=t.content; savedKeys[t.sectkey]=1; });
-        editables().forEach(function(e){ var k=e.getAttribute('data-key'); if(map[k]!=null) e.innerHTML=map[k]; });
+        /* ★저장본은 **글자 그대로** 쓰고 **굵기만** 정규화한다(normalizeWeight · 2026-08-17 선택 C).
+           승인본을 다시 만들지 않으므로 확정된 숫자·문장은 그대로다. */
+        editables().forEach(function(e){ var k=e.getAttribute('data-key'); if(map[k]!=null) e.innerHTML=normalizeWeight(map[k]); });
         // ★ 목표등급·목표점수는 '차등제 마스터'가 우선 — 저장된 옛 목표 문구(override)를 현재 등록값으로 정정.
         //   (등급을 수정하면 보고서에 그 수정값이 반영되어야 함. 이력 열람은 뒤에서 스냅샷 메타가 다시 덮어씀)
         applyGoalDefault(res && res.goal);
@@ -4409,12 +4787,76 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     });
   }
 
+  /**
+   * ★★저장 전에 <b>글꼴·글자크기 서식만</b> 걷어낸다 (2026-08-17 검수 후속).
+   *
+   * <p>경위 : 「DUR 지표만 글씨체가 다릅니다」 지적을 파 보니, 편집 툴바(글꼴·크기)로 고친 문장에
+   *   `font-family`·`font-size` 가 <b>인라인으로 박혀</b> 저장되고 있었다. 그 병원 보고서만
+   *   글씨가 달라진다. 실제로 7건이 그렇게 남아 있었다(ana_01·02·03·06·13·cover_notes·plan_06).
+   *
+   * <p>★거르는 것은 <b>글꼴·크기 둘뿐</b>이다 — 굵게·색·밑줄은 <b>뜻이 있는 서식</b>이라 지키다.
+   *   (DUR 의 빨간 '다만' 줄, 총평의 강조 등이 그것이다.)
+   * <p>★`&lt;font&gt;` 태그도 같이 없앤다 — 옛 브라우저 편집기가 만드는데 크기·글꼴을 함께 물고 온다.
+   * <p>⚠원본 화면은 건드리지 않는다 — <b>복사본</b>에서 지우고 그 HTML 만 보낸다.
+   *   화면에서 지우면 저장 직후 사용자가 보던 서식이 사라져 「저장하니 글씨가 바뀐다」가 된다.
+   */
+  function stripFontStyle(html){
+    var box = document.createElement('div');
+    box.innerHTML = html;                                    // ★복사본에서만 손댄다
+    box.querySelectorAll('[style]').forEach(function(el){
+      var s = el.style;
+      if (s.fontFamily) s.removeProperty('font-family');
+      if (s.fontSize)   s.removeProperty('font-size');
+      if (!el.getAttribute('style')) el.removeAttribute('style');   // 빈 style="" 은 지운다
+    });
+    /* <font size|face> → 속성만 떼고 태그는 남긴다(색은 color 로 살아 있을 수 있다) */
+    box.querySelectorAll('font[size], font[face]').forEach(function(el){
+      el.removeAttribute('size'); el.removeAttribute('face');
+    });
+    return box.innerHTML;
+  }
+
+  /**
+   * ★저장본을 그릴 때 <b>본문보다 얇은 굵기 지정만</b> 걷어낸다 (2026-08-17 · 선택 C).
+   *
+   * 왜 : `.er-ana` 문단은 원래 700(약간 굵은 본문)이다. 그런데 저장본에 `font-weight:400`
+   *   이 박혀 있으면 그 줄만 얇게 그려지고, 맑은 고딕은 400·700 이 **다른 글꼴 파일**이라
+   *   ***글씨체가 달라 보인다***(DUR 검수 지적이 바로 이것).
+   *
+   * ★★**대전제는 지킨다** — 승인본의 **글자·숫자는 하나도 건드리지 않는다.**
+   *   손대는 것은 굵기 선언 하나뿐이고, 그것도 **700 미만**일 때만 없앤다.
+   *   ⇒ 담당자가 툴바로 넣은 **굵게(700·800)** 는 뜻이 있는 서식이라 **그대로 남는다.**
+   * ⚠승인본을 **다시 만들지 않는다** — 그러면 문장 속 숫자가 현재 값으로 바뀌어 확정본이 흔들린다.
+   *   저장된 HTML 을 그대로 쓰고 **그릴 때만** 굵기를 정규화한다.
+   * ⚠원본 문자열은 바꾸지 않는다(복사본에서 손본다) — DB 값을 함부로 덮지 않기 위함.
+   */
+  function normalizeWeight(html){
+    var box = document.createElement('div');
+    box.innerHTML = html;
+    box.querySelectorAll('[style]').forEach(function(el){
+      var w = el.style.fontWeight;
+      if(!w) return;
+      var num = (w==='normal') ? 400 : (w==='bold') ? 700 : parseInt(w,10);
+      if(isFinite(num) && num < 700){                 // 본문(700)보다 얇은 것만
+        el.style.removeProperty('font-weight');
+        if(!el.getAttribute('style')) el.removeAttribute('style');
+      }
+    });
+    return box.innerHTML;
+  }
+
   function collectTexts(){
     // 자동 기본값(AUTO)과 다른 것만 저장 = 사용자가 실제로 편집한 문구만.
     // (자동 문구를 저장하지 않으므로 수치·양식이 바뀌어도 항상 최신 자동 문구가 렌더됨)
     var arr=[];
     editables().forEach(function(e){
-      var k=e.getAttribute('data-key'), html=e.innerHTML;
+      /* ★Ⅴ 의무기록(mr_body)은 **글꼴 필터를 태우지 않는다**(2026-08-17 검수 중 발견).
+           stripFontStyle 은 「편집기가 멋대로 심는 글꼴·크기」를 걷어내려고 오늘 넣은 것인데,
+           의무기록은 ***사용자가 한글·워드에서 붙여넣은 문서 자체***여서 글꼴·크기가 곧 내용이다.
+           태우면 붙인 표가 저장 뒤 다른 모습이 된다(실측: font-family·font-size 2곳→0곳.
+           색·표 폭·테두리는 원래 안 지운다). captureAuto 가 mr_body 를 빼는 것과 같은 이유다. */
+      var k=e.getAttribute('data-key');
+      var html=(k==='mr_body') ? e.innerHTML : stripFontStyle(e.innerHTML);
       if(AUTO[k] !== undefined && html === AUTO[k]) return;   // 자동 기본 그대로 → 저장 제외
       arr.push({ sectKey:k, content:html });
     });
@@ -4431,7 +4873,17 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
       texts:collectTexts() };
     jQuery.ajax({ url: ctx+'/main/saveEvalReport.do', type:'POST', contentType:'application/json', dataType:'json',
       data: JSON.stringify(payload),
-      success:function(res){ if(res && res.result==='OK'){ _draftClear(); if(onOk) onOk(); } else { erSwal('error','저장 실패: '+((res&&res.message)||''), {title:'오류'}); if(onErr) onErr(); } },
+      success:function(res){ if(res && res.result==='OK'){
+          /* ★★저장 성공 = DB 에 override 행이 생겼다 — 메모리 savedKeys 도 **그 자리에서** 같이 갱신(2026-08-17 실사고).
+               savedKeys 는 loadSavedTexts(조회 시점)에만 채워지고 있었다. 그래서
+               「편집 → 저장 → 승인 → 승인취소」 하면 승인취소의 renderGoalSummary() 재렌더가
+               총평(sum_p1~p5)·pri_note 등을 <저장본 없음>으로 보고 **자동 문구로 덮었다**
+               (화면에서 편집한 총평이 통째로 사라져 보임). 더 나쁘게는, 그 상태로 다시 저장하면
+               덮인 자동 문구가 AUTO 와 같아 저장에서 제외되고 서버는 DELETE 후 재INSERT 라
+               **DB 행까지 지워져 영구 소실**이었다.
+             ⚠병합(추가)만 한다 — 초기화하면 applyTpls 가 걸어 둔 전사 TPL 마킹까지 날아간다. */
+          try{ (payload.texts||[]).forEach(function(t){ savedKeys[t.sectKey]=1; }); }catch(e){}
+          _draftClear(); if(onOk) onOk(); } else { erSwal('error','저장 실패: '+((res&&res.message)||''), {title:'오류'}); if(onErr) onErr(); } },
       error:function(){ erSwal('error','저장 중 오류가 발생했습니다.', {title:'오류'}); if(onErr) onErr(); }
     });
   }
