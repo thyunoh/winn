@@ -2024,8 +2024,8 @@ public class QpsServiceImpl implements QpsService {
 	}
 
 	@Override
-	public void deleteChkDoc(Map<String, Object> param) throws Exception {
-		mapper.deleteChkDoc(param);
+	public int deleteChkDoc(Map<String, Object> param) throws Exception {
+		return mapper.deleteChkDoc(param);   // 건수를 돌려준다 — 0 이면 컨트롤러가 「삭제할 문서 없음」으로 답한다
 	}
 
 	/**

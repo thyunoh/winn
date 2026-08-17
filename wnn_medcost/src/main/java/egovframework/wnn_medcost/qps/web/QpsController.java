@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260815-USERDEPT";
+	private static final String BUILD = "20260817-DELGUARD";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1531,7 +1531,8 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("chkSeq", longOf(p.get("chkSeq"))); m.put("regUser", userId(request));
-			svc.deleteChkDoc(m);
+			// ★삭제 건수 확인 (2026-08-17) — safeRptDelete 와 같은 이유·같은 셈법(그쪽 주석 참고)
+			if (svc.deleteChkDoc(m) == 0) return fail(res, "삭제할 문서를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1783,7 +1784,12 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("srpSeq", longOf(p.get("srpSeq"))); m.put("regUser", userId(request));
-			svc.deleteSafeRpt(m);
+			// ★삭제 건수를 확인한다 (2026-08-17) — WHERE 에 병원코드가 있어 남의 문서는 원래도 안 지워지지만,
+			//   응답이 무조건 OK 라 "지워진 줄 아는" 오해 소지가 있었다(08-15 격리 점검의 「작은 흠」).
+			//   ⚠0 건 = ***없는 문서이거나 남의 병원 것***이다. 「이미 지운 문서」는 0 이 아니다 —
+			//     USE_YN='N' 로 바꾸는 소프트 삭제라 두 번째 호출도 **행이 걸려** 1 이 온다
+			//     (MySQL 은 값이 안 바뀌어도 matched 를 돌려준다). 두 번 눌러도 OK 인 편이 안전하므로 그대로 둔다.
+			if (svc.deleteSafeRpt(m) == 0) return fail(res, "삭제할 문서를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

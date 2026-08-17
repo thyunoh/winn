@@ -264,7 +264,7 @@ public interface QpsService {
 	 */
 	long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
 	                List<Map<String, Object>> rows, List<Map<String, Object>> cols) throws Exception;
-	void deleteChkDoc(Map<String, Object> param) throws Exception;
+	int deleteChkDoc(Map<String, Object> param) throws Exception;   // 삭제 건수(0=없음/남의 문서)
 	/**
 	 * 전월 복사용 <b>틀</b>만 돌려준다 — ★***점검 결과는 담지 않는다.***
 	 * 저장도 하지 않는다(화면에 깔아 주기만 한다).
