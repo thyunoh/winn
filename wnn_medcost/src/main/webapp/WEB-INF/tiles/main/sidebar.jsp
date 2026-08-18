@@ -603,7 +603,7 @@
 								     ★파일 이름이 바뀌면 아래 한 줄만 고친다.
 								     · 종전 링크(외부 원격지원 포털) = https://377.co.kr --%>
 								<li class="nav-item">
-								    <a class="nav-item nav-link" href="#" onclick="wnnRemoteHelp(); return false;">원격지원상담 </a>
+								    <a class="nav-item nav-link" href="/sftp/download.do?filePath=REMOTE%2Fwin-10.exe">원격지원상담 </a>
 								</li>
                             </ul>
                         </div>
@@ -2667,55 +2667,6 @@ $(document).ready(function() {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
   else bind();
-})();
-</script>
-
-<%-- ═══ 원격지원 프로그램 내려받기 (2026-08-18) ═══════════════════════════════
-     「원격지원상담」을 누르면 서버에 올려 둔 원격지원 프로그램을 내려받는다.
-     ⚠***브라우저는 exe 를 대신 실행하지 못한다*** — 내려받기까지가 끝이고 실행은 사람이 누른다.
-       그래서 ***어디를 보고 무엇을 눌러야 하는지***를 함께 띄운다(전산 담당이 없는 병원이 쓴다).
-     ★파일이 바뀌면 REMOTE_FILE 한 줄만 고친다.
-     ★내려받기는 `location.href` 로 건다 — 응답이 `Content-Disposition: attachment` 라
-       ***페이지가 넘어가지 않고*** 받기만 한다(새 창을 띄우면 빈 창이 남는다).                --%>
-<script>
-(function(){
-  var REMOTE_FILE = 'REMOTE/win-10.exe';                       // /home/winner/upload/ 아래 경로
-  var URL_DOWN = '/sftp/download.do?filePath=' + encodeURIComponent(REMOTE_FILE);
-  /* ★알림은 **프로젝트 표준 컴팩트**(assessment 의 regen-confirm-popup 과 같은 값) —
-       width 380 · 아이콘 48px. ***크게 두지 말 것***(반복 지적).
-     ★글도 ***필요한 것만*** 남긴다 — 담당자가 지금 해야 할 일 한 줄 + 막혔을 때 한 줄. */
-  function miniStyle(){
-    if (document.getElementById('wnnRemoteSwalStyle')) return;
-    var st = document.createElement('style');
-    st.id = 'wnnRemoteSwalStyle';
-    st.innerHTML =
-      '.wnn-remote-popup { padding:14px 16px !important; }' +
-      /* ★글자는 한 단계 크게(2026-08-18 사용자) — 창 높이는 그대로 두고 글씨만 키운다 */
-      '.wnn-remote-popup .swal2-title { font-size:1.2em !important; padding:6px 0 2px !important; }' +
-      '.wnn-remote-popup .swal2-html-container { font-size:1.05em !important; margin:6px 0 0 !important; }' +
-      '.wnn-remote-popup .swal2-icon { width:48px; height:48px; margin:8px auto 4px; }' +
-      '.wnn-remote-popup .swal2-icon .swal2-icon-content { font-size:1.6em; }' +
-      '.wnn-remote-popup .swal2-actions { margin-top:12px; }' +
-      '.wnn-remote-popup .swal2-styled { font-size:0.9em !important; padding:7px 16px !important; }' +
-      '.wnn-remote-popup .wr-s { font-size:0.92em; color:#7b8992; margin-top:7px; line-height:1.6; }' +
-      '.wnn-remote-popup .swal2-styled { font-size:0.95em !important; }';
-    document.head.appendChild(st);
-  }
-  window.wnnRemoteHelp = function(){
-    try { location.href = URL_DOWN; } catch (e) {}
-    // ★[2026-08-18 사용자] 보조 설명은 뺐다 — ***필요한 한 줄만*** 남긴다
-    var msg = '내려받은 <b>win-10.exe</b> 를 눌러 <b>실행</b>하세요.';
-    try {
-      if (typeof Swal !== 'undefined') {
-        miniStyle();
-        Swal.fire({ icon:'info', title:'원격지원 프로그램', html:msg, width:380,
-                    confirmButtonText:'확인', customClass:{ popup:'wnn-remote-popup' } });
-        return;
-      }
-    } catch (e) {}
-    try { if (typeof _alertBox === 'function') { _alertBox(msg, {icon:'🖥'}); return; } } catch (e) {}
-    alert('원격지원 프로그램을 내려받습니다. 받은 win-10.exe 를 실행해 주세요.');
-  };
 })();
 </script>
 

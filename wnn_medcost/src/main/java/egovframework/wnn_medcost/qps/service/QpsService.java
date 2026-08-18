@@ -174,6 +174,17 @@ public interface QpsService {
 	/** 부서별 양식 관리(2026-08-18) — 서식의 <b>부서·분류만</b> 옮긴다.
 	 *  ★한 양식은 한 부서다(사용자 확정) — 두 부서에서 쓰려면 <b>복제해 별도 서식</b>으로 만든다. */
 	int saveChkFormDept(String hospCd, List<Map<String, Object>> rows, String regUser) throws Exception;
+
+	/**
+	 * 지표분석보고서의 <b>분포 표</b>(2026-08-18) — 지표에 따라 축이 다르다.
+	 * <ul>
+	 *   <li>사고보고 계열(자살·자해 등) : <b>연령대 · 발생장소 · 시간대</b></li>
+	 *   <li>격리·강박 : <b>19세 이상/미만 · 시행 시간 구간</b>(격리 13칸 · 강박 5칸)</li>
+	 * </ul>
+	 * ★<b>구간 나누기는 자바가 한다</b> — 시각이 문자열이라 SQL 로 재면 형변환 함정이 붙는다.
+	 * @param prd 기간 — {@code YYYY} · {@code YYYY-Q1..Q4} · {@code YYYY-H1..H2}
+	 */
+	List<Map<String, Object>> selectIndiDist(String hospCd, String indiCd, String prd) throws Exception;
 	/** @param rows 화면에 있던 부서마다 1행 : {deptCd, cates(쉼표로 이은 분류)} —
 	 *  ★분류를 하나도 안 고른 부서는 <b>전 분류로 되돌린다</b>(행을 지우는 것이 곧 「제한 없음」) */
 	int saveDeptCate(List<Map<String, Object>> rows, String regUser) throws Exception;

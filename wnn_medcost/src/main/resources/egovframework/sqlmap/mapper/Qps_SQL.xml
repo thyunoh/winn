@@ -257,6 +257,9 @@
 		       IFNULL(GOAL_DIR,'L') AS goaldir,
 		       RPT_CYCLE AS rptcycle, RPT_SCOPE AS rptscope, SHARE_TXT AS sharetxt, NOTE AS note,
 		       NUMER_SRC AS numersrc, DENOM_GB AS denomgb,
+		       <!-- ★분포 표(2026-08-18)가 이 둘을 본다 — 어느 사고를 셀지(INCID_GB)와 등급 문턱(MIN_LEVEL).
+		            ***분자와 같은 조건으로 세야*** 분포 합계가 분자와 맞는다. -->
+		       INCID_GB AS incidgb, MIN_LEVEL AS minlevel,
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own,
 		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
 		  FROM TBL_QPS_INDI_MST
@@ -2500,6 +2503,37 @@
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
 	</insert>
+
+	<!-- ═══════════════════════════════════════════════════════════════════════
+	     지표분석보고서 — 분포 표 원자료 (2026-08-18)
+	       ★***구간 나누기(연령대·시간대·시행시간)는 SQL 이 아니라 자바가 한다.***
+	         시각이 `HH:MM`·`HHMM` 문자열이라 SQL 로 재려면 형변환 함정이 줄줄이 붙는다.
+	         여기서는 **원자료만** 꺼내고, 자바가 한 번 훑어 세 축을 동시에 센다.
+	       ★기간은 `OCCUR_DT`(YYYYMMDD) 로 자른다 — 분기·반기·연이 모두 같은 방식이다.
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<select id="selectIncidDistRows" resultType="java.util.HashMap">
+		SELECT PT_AGE AS ptage, PLACE_CD AS placecd, OCCUR_TM AS occurtm, LEVEL_CD AS levelcd
+		  FROM TBL_QPS_INCIDENT
+		 WHERE HOSP_CD = #{hospCd} AND INCID_GB = #{incidGb} AND USE_YN = 'Y'
+		   AND OCCUR_DT BETWEEN #{fromDt} AND #{toDt}
+		   <!-- ★분자와 같은 등급 필터 — 분포 합계가 분자와 어긋나면 보고서가 스스로 모순된다.
+		        ⚠***`selectBreakdown` 과 글자 하나까지 같아야 한다***(`LV` 를 떼는 방식) —
+		          한쪽만 'Level' 로 적으면 같은 자료에서 다른 수가 나온다. -->
+		   AND ( IFNULL(#{minLevel},'') = ''
+		         OR CAST(REPLACE(IFNULL(LEVEL_CD,'LV0'),'LV','') AS UNSIGNED) &gt;= CAST(#{minLevel} AS UNSIGNED) )
+	</select>
+
+	<!-- 격리·강박 시행일지 원자료 — 19세 구분과 <시행 시간>을 자바가 센다 -->
+	<select id="selectSecLogDistRows" resultType="java.util.HashMap">
+		SELECT i.SEC_GB AS secgb, i.ADULT_GB AS adultgb, i.GUIDE_YN AS guideyn,
+		       i.ST_DT AS stdt, i.ST_TM AS sttm, i.ED_DT AS eddt, i.ED_TM AS edtm
+		  FROM TBL_QPS_SECLOG h
+		  JOIN TBL_QPS_SECLOG_ITEM i ON i.LOG_SEQ = h.LOG_SEQ
+		 WHERE h.HOSP_CD = #{hospCd} AND h.USE_YN = 'Y'
+		   AND h.LOG_YM BETWEEN #{fromYm} AND #{toYm}
+		   <if test="secGb != null and secGb != ''"> AND i.SEC_GB = #{secGb} </if>
+		 ORDER BY h.LOG_YM, i.SORT
+	</select>
 
 	<!-- ═══════════════════════════════════════════════════════════════════════
 	     부서별 양식 관리 (2026-08-18) — ★***부서·분류 두 칸만*** 고친다.
