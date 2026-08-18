@@ -1964,6 +1964,51 @@ public class QpsServiceImpl implements QpsService {
 		return n;
 	}
 
+	/* ═══ 부서별 「쓰는 분류」 (2026-08-18) ═══
+	   ★***정해 둔 것이 없는 부서는 「전 분류」다*** — 사용자별 담당 부서와 같은 규칙이다.
+	     빈 표는 지금과 똑같이 돈다. **막는 장치가 아니라 좁혀 주는 장치**다.
+	   ★쓰는 곳은 서식 등록 화면 하나뿐 — 보는 화면은 이 규칙을 안 본다(서식이 사라지면 안 되므로). */
+	@Override
+	public List<Map<String, Object>> selectDeptCate() throws Exception {
+		return mapper.selectDeptCate();
+	}
+
+	@Override
+	public List<Map<String, Object>> selectDeptCateCnt() throws Exception {
+		return mapper.selectDeptCateCnt();
+	}
+
+	/**
+	 * 화면 한 판을 통째로 받아 <b>부서마다 지우고 다시 넣는다</b>.
+	 * ★<b>화면에 있던 부서만</b> 건드린다 — 안 보낸 부서의 규칙은 그대로 남는다.
+	 * ★분류를 하나도 안 고른 부서는 행이 <b>0개</b>가 되고, 그것이 곧 <b>전 분류</b>다
+	 *   (지우는 것이 「제한 없음」이라 해제 기능이 따로 필요 없다).
+	 */
+	@Override
+	public int saveDeptCate(List<Map<String, Object>> rows, String regUser) throws Exception {
+		if (rows == null || rows.isEmpty()) return 0;
+		int n = 0;
+		for (Map<String, Object> r : rows) {
+			String dept = r.get("deptCd") == null ? "" : String.valueOf(r.get("deptCd")).trim();
+			if (dept.isEmpty()) continue;
+			List<String> put = new ArrayList<>();
+			String cs = r.get("cates") == null ? "" : String.valueOf(r.get("cates"));
+			for (String c : cs.split(",")) {
+				String v = c.trim();
+				// ★공통코드 모양만 통과 — 화면이 보낸 값을 그대로 믿지 않는다
+				if (!v.isEmpty() && v.matches("[A-Z0-9_]{2,20}") && !put.contains(v)) put.add(v);
+			}
+			mapper.deleteDeptCate(dept);
+			if (!put.isEmpty()) {
+				Map<String, Object> m = new HashMap<>();
+				m.put("deptCd", dept); m.put("cates", put); m.put("regUser", regUser);
+				mapper.insertDeptCate(m);
+			}
+			n++;
+		}
+		return n;
+	}
+
 	@Override
 	public long saveChkDoc(Map<String, Object> doc, List<Map<String, Object>> vals,
 	                       List<Map<String, Object>> rows, List<Map<String, Object>> cols) throws Exception {

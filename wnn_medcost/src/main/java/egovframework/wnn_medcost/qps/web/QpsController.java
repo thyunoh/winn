@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260818-SECLOG";
+	private static final String BUILD = "20260818-DEPTCATE";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -834,6 +834,14 @@ public class QpsController {
 		return res;
 	}
 
+	/* ═══ 우리 병원 사용 서식 (2026-08-18) ═══
+	   ★병원과 위너넷이 **같은 화면**을 쓴다 — 병원이 못 하면 우리가 대신 켜 줘야 하는데,
+	     화면을 따로 두면 두 벌을 만들고 두 벌을 고치게 된다.
+	   ★목록·저장은 이미 있는 것을 그대로 쓴다(chkFormList.do · chkUseSave.do) — 여기는 진입만 한다.
+	   ⚠서식을 만들고 고치는 것은 여전히 위너넷 전용(qpsChkForm)이다. 여기서는 **켜고 끄기만** 한다. */
+	@RequestMapping(value = "main/qpsChkUse.do")
+	public String qpsChkUse(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsChkUse"); }
+
 	/* ═══ 격리·강박 시행일지 (2026-08-18) ═══
 	   ★지표 ISOLATION/SECLUSION 의 원천이다 — 저장하면 관찰형 집계(TBL_QPS_MONITOR)까지 함께 반영된다. */
 	@RequestMapping(value = "main/qpsSecLog.do")
@@ -1141,7 +1149,13 @@ public class QpsController {
 		return qpsScreen(request, model, ".main/qpsmgr/qpsChk");
 	}
 
-	/** 서식 목록 */
+	/** 서식 목록
+	 *  ★[2026-08-18] 위너넷 전용 게이트를 <b>뺐다</b> — 「우리 병원 사용 서식」(qpsChkUse) 이
+	 *    ***병원 담당자도 쓰는 화면***인데 목록을 못 받아 화면이 통째로 비었다(빈 화면이 아니라
+	 *    「서식 관리는 위너넷 담당자만」 경고가 떠서 <b>권한 문제로만 보인다</b>).
+	 *  ★여는 것은 <b>읽기 하나뿐</b>이다 — 서식을 만들고 고치는
+	 *    chkFormSave · chkFormCopy · chkFormDel · chkCodeAdd · chkCodeNext 는 게이트 그대로다.
+	 *  ★남의 병원은 못 본다 — hospCd() 가 s_wnn_yn='Y' 일 때만 파라미터를 받는다. */
 	@RequestMapping(value = "/qps/chkFormList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public Map<String, Object> chkFormList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
@@ -1150,7 +1164,6 @@ public class QpsController {
 		try {
 			String hospCd = hospCd(request, p);
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
-			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
 			res.put("list", svc.selectChkFormList(hospCd, str(p.get("cateCd"), ""), str(p.get("deptCd"), ""), "N"));
 			// 분류 셀렉트 — 공통코드 전체에서 이 세트만 걸러 준다(코드 조회는 한 곳뿐이라 그대로 쓴다)
 			java.util.List<Map<String, Object>> cate = new java.util.ArrayList<>();
@@ -1449,6 +1462,59 @@ public class QpsController {
 			String hospCd = hospCd(request, p);
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			svc.saveChkUse(hospCd, jsonRows(p.get("uses")), userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══════════════════════════════════════════════════════════════════════
+	   부서별 「쓰는 분류」 (2026-08-18) — 사용자 결정
+	     「부서별로 어느 분류 서식을 쓸지 정하고 관리해야 할 듯 (기본은 설정하고)」
+	   ★적용 지점은 **서식 등록 화면 하나뿐**이다 — 보는 화면(사용 서식·점검표 작성)은
+	     이 규칙을 안 본다. 규칙과 자료가 어긋나는 날 ***서식이 목록에서 사라지는 것***을 막는다.
+	   ★정해 둔 것이 없는 부서는 **전 분류**다(사용자별 담당 부서와 같은 규칙).
+	   ═══════════════════════════════════════════════════════════════════ */
+	@RequestMapping(value = "main/qpsDeptCate.do")
+	public String qpsDeptCate(HttpServletRequest request, ModelMap model) {
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsmgr/qpsChk");   // 병원 계정은 작성 화면으로
+		return qpsScreen(request, model, ".main/qpsmgr/qpsDeptCate");
+	}
+
+	/** 부서별 분류 규칙 + 지금 등록된 서식의 실제 종수
+	 *  ⚠읽기는 막지 않는다 — 서식 등록 화면이 셀렉트를 좁히는 데 쓰고, 그 화면은 이미 위너넷 전용이다. */
+	@RequestMapping(value = "/qps/deptCateList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> deptCateList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("rules", svc.selectDeptCate());        // 사람이 정해 둔 것
+			res.put("cnts",  svc.selectDeptCateCnt());     // 지금 서식이 실제로 있는 칸
+			java.util.List<Map<String, Object>> cate = new java.util.ArrayList<>();
+			java.util.List<Map<String, Object>> dept = new java.util.ArrayList<>();
+			java.util.List<Map<String, Object>> all = svc.selectQpsCodes();
+			if (all != null) for (Map<String, Object> r : all) {
+				String cd = String.valueOf(r.get("codecd"));
+				if ("QPS_CHK_CATE".equals(cd)) cate.add(r);
+				if ("QPS_CHK_DEPT".equals(cd)) dept.add(r);
+			}
+			res.put("cate", cate);
+			res.put("dept", dept);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 부서별 분류 규칙 저장 — ★규칙을 정하는 일이라 위너넷 전용이다(서식 관리와 같은 갈래). */
+	@RequestMapping(value = "/qps/deptCateSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> deptCateSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			res.put("cnt", svc.saveDeptCate(jsonRows(p.get("rows")), userId(request)));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

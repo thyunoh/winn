@@ -385,8 +385,17 @@
                                     <div id="qps-g-chk" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do">점검표 작성</a></li>
+                                            <%-- 우리 병원 사용 서식(2026-08-18) — ★위너넷 게이트를 걸지 않는다.
+                                                 병원이 스스로 켜는 화면이다(못 하면 위너넷이 병원코드로 대신 켜 준다).
+                                                 서식을 만들고 고치는 것은 아래 [서식 관리](위너넷 전용) 그대로다. --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChkUse.do">우리 병원 사용 서식</a></li>
                                             <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- 부서별 쓰는 분류(2026-08-18) — 서식을 만들 때 고를 분류를 부서마다 정해 둔다.
+                                                 ★정한 것이 없는 부서는 전 분류(막는 장치가 아니라 좁혀 주는 장치).
+                                                 서식 관리와 같은 갈래라 **위너넷 전용**이다(서버도 막는다). --%>
+                                            <li class="nav-item" id="qpsDeptCateMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsDeptCate.do">부서별 쓰는 분류 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <%-- ★사용자별 담당 부서(2026-08-15) — 담당자가 제 부서 서식만 보게 한다.
                                                  ***등록이 없으면 전 부서*** 라 안 써도 지금과 똑같이 돈다. --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서</a></li>
@@ -1537,6 +1546,9 @@ function hosp_conact() {
         // 점검표 [서식 관리] — 위너넷 전용(사용자 확정 2026-08-11 : 병원은 서식을 못 만든다)
         var chkForm = document.getElementById("qpsChkFormMenu");
         if (chkForm) chkForm.style.display = "";
+        // 점검표 [부서별 쓰는 분류] — 서식 관리와 같은 갈래(2026-08-18)
+        var deptCate = document.getElementById("qpsDeptCateMenu");
+        if (deptCate) deptCate.style.display = "";
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
         

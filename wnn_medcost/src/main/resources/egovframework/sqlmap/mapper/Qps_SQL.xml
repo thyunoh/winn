@@ -2799,6 +2799,42 @@
 	</insert>
 
 	<!-- ═══════════════════════════════════════════════════════════════════════
+	     부서별 「쓰는 분류」 (2026-08-18) — 사람이 정해 두는 규칙.
+	       ★***정해 둔 것이 없는 부서는 「전 분류」다*** — TBL_QPS_USER_DEPT 와 같은 규칙.
+	       ★병원 구분이 없다 — 서식 자체가 공통('*')이라 규칙도 공통이다.
+	       ★쓰는 곳은 **서식 등록 화면 하나뿐**이다. 보는 화면(사용 서식·작성)은 이 표를 안 본다
+	         — 규칙과 자료가 어긋나는 날 ***서식이 목록에서 사라지는 것***을 막기 위해서다.
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<select id="selectDeptCate" resultType="java.util.HashMap">
+		SELECT DEPT_CD AS deptcd, CATE_CD AS catecd
+		  FROM TBL_QPS_DEPT_CATE
+		 WHERE USE_YN = 'Y'
+		 ORDER BY DEPT_CD, CATE_CD
+	</select>
+
+	<!-- 지금 등록된 서식이 부서×분류로 몇 종인가 — 관리 화면이 「정한 규칙」 옆에 실제 수를 같이 보여준다.
+	     ⚠규칙에서 뺀 칸에 서식이 남아 있으면 그 칸이 어긋난 것이다(화면이 표시한다). -->
+	<select id="selectDeptCateCnt" resultType="java.util.HashMap">
+		SELECT f.DEPT_CD AS deptcd, f.CATE_CD AS catecd, COUNT(*) AS cnt
+		  FROM TBL_QPS_CHK_FORM f
+		 WHERE f.USE_YN = 'Y'
+		   AND IFNULL(f.DEPT_CD,'') <![CDATA[<>]]> '' AND IFNULL(f.CATE_CD,'') <![CDATA[<>]]> ''
+		 GROUP BY f.DEPT_CD, f.CATE_CD
+	</select>
+
+	<delete id="deleteDeptCate">
+		DELETE FROM TBL_QPS_DEPT_CATE WHERE DEPT_CD = #{deptCd}
+	</delete>
+
+	<insert id="insertDeptCate" parameterType="map">
+		INSERT INTO TBL_QPS_DEPT_CATE (DEPT_CD, CATE_CD, USE_YN, REG_USER) VALUES
+		<foreach item="c" collection="cates" separator=",">
+		 (#{deptCd}, #{c}, 'Y', #{regUser})
+		</foreach>
+		ON DUPLICATE KEY UPDATE USE_YN='Y', REG_USER=VALUES(REG_USER)
+	</insert>
+
+	<!-- ═══════════════════════════════════════════════════════════════════════
 	     격리·강박 시행일지 (2026-08-18) — 병원+년월 1부. 머리 + 행.
 	       ★하단 집계(격리/강박/합계)는 저장하지 않는다 — 행에서 센다.
 	       ★지표 ISOLATION/SECLUSION 의 분자·분모가 이 표에서 나온다

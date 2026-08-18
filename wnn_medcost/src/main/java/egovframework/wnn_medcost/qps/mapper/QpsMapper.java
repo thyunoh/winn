@@ -262,6 +262,12 @@ public interface QpsMapper {
 	int deleteQpsUserDept(@Param("hospCd") String hospCd, @Param("userId") String userId);
 	int insertQpsUserDept(Map<String, Object> param);
 
+	// 부서별 「쓰는 분류」 (2026-08-18) — 정해 둔 것이 없는 부서는 「전 분류」다
+	List<Map<String, Object>> selectDeptCate();
+	List<Map<String, Object>> selectDeptCateCnt();
+	int deleteDeptCate(@Param("deptCd") String deptCd);
+	int insertDeptCate(Map<String, Object> param);
+
 	/* QI 중간·최종보고서 (한 표 + RPT_GB) */
 	List<Map<String, Object>> selectQiRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
 	                                          @Param("rptGb") String rptGb);

@@ -1227,6 +1227,7 @@
       if (!isNew) return;
       if (d) set('f_deptCd', d);
       if (c) set('f_cateCd', c);
+      cfCateNarrow();                    // 부서가 바뀌었으면 분류 후보도 따라간다(2026-08-18)
     });
   };
 
@@ -1274,6 +1275,8 @@
             });
             gel(pair[0]).value = keepF;
             gel(pair[1]).value = cd || keepS;   // ★방금 넣은 값이 골라지게 — 다시 찾게 하지 않는다
+            // ★방금 만든 분류는 아직 어느 부서 규칙에도 없다 ⇒ 「(규칙 밖)」으로 남되 **고른 값은 지켜진다**
+            cfCateNarrow();
             _toast(what + ' 「' + nm + '」 를 추가했습니다.', 'ok');
           }).catch(err);
       } });
@@ -1415,6 +1418,7 @@
       curId = d.formid || ''; curOwn = d.own || 'N';
       set('f_formId', d.formid); set('f_formNm', d.formnm);
       set('f_cateCd', d.catecd || ''); set('f_deptCd', d.deptcd || '');
+      cfCateNarrow();   // ★옛 서식의 분류가 규칙 밖이어도 값은 그대로 남는다(「(규칙 밖)」으로 보인다)
       set('f_axisGb', d.axisgb || 'ITEM_DAY'); set('f_equipCnt', d.equipcnt || 10);
       // ★옛 `HALF_YN='Y'` 는 「15칸 · 열」과 같다 — 읽는 쪽에서만 물러난다
       var sd = (d.splitdir === 'C' || d.splitdir === 'R') ? d.splitdir : (d.halfyn === 'Y' ? 'C' : '');
@@ -1470,6 +1474,7 @@
     setChk('f_spanAllYn', 'N'); setChk('f_prdHeadYn', 'N');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
+    cfCateNarrow();                      // 새 서식은 규칙 안에서만 고른다(2026-08-18)
     set('f_axisGb', 'ITEM_DAY'); set('f_equipCnt', 10); set('f_sortNo', 0); set('f_prdKind', 'D'); set('f_prdSub', '');
     set('f_grpPrd', '');
     setChk('f_signerYn', 'Y'); setChk('f_noteYn', 'Y'); setChk('f_fixYn', 'N');
@@ -1545,7 +1550,44 @@
       } });
   };
 
-  $(function(){ cfList().then(function(){ if (LIST.length) cfOpen(LIST[0].formid); else cfNew(); }); });
+  /* ═══ 부서별 쓰는 분류 (2026-08-18 · 사용자 결정) ═══════════════════════════
+     ★서식을 만들 때 **그 부서가 쓰는 분류만** 고르게 한다 — 부서 14 × 분류 6 = 84칸 중
+       실제로 쓰이는 칸은 42뿐이다. 나머지는 ***고르면 0종이 되는 헛 조합***이다.
+     ★***정해 둔 것이 없는 부서는 전 분류다*** — 규칙을 안 만들면 지금과 똑같이 돈다
+       (막는 장치가 아니라 좁혀 주는 장치. 규칙은 [부서별 쓰는 분류] 화면에서 정한다).
+     ★★***이미 그 분류로 등록된 서식의 값은 지우지 않는다*** — 「(규칙 밖)」으로 남겨 둔다.
+       안 그러면 뒤에 규칙을 바꾼 날, 옛 서식을 열었다 저장하는 순간 ***분류가 조용히 바뀐다.***
+     ⚠규칙은 **여기(등록)에서만** 쓴다 — 보는 화면(사용 서식·작성)은 안 본다. */
+  var RULECAT = null;                  // null = 아직 못 받았다(=좁히지 않는다)
+  window.cfRuleLoad = function(){
+    return post('<c:url value="/qps/deptCateList.do"/>', {}).then(function(res){
+      RULECAT = {};
+      (res.rules || []).forEach(function(r){ (RULECAT[r.deptcd] = RULECAT[r.deptcd] || {})[r.catecd] = true; });
+      cfCateNarrow();
+    }).catch(function(){ RULECAT = null; });   // 못 받으면 전 분류 그대로 — 등록을 막지 않는다
+  };
+  window.cfCateNarrow = function(){
+    var sel = gel('f_cateCd');
+    if (!sel || !CATE.length || !RULECAT) return;
+    var rule = RULECAT[val('f_deptCd')], cur = val('f_cateCd'), keep = false;
+    sel.innerHTML = '<option value="">— 선택 —</option>';
+    CATE.forEach(function(c){
+      var ok = !rule || !!rule[c.subcode];       // 규칙이 없는 부서 = 전 분류
+      if (!ok && c.subcode !== cur) return;      // 규칙 밖은 안 내놓는다(지금 값만 예외)
+      sel.add(new Option((c.subcodenm || c.subcode) + (ok ? '' : ' (규칙 밖)'), c.subcode));
+      if (c.subcode === cur) keep = true;
+    });
+    sel.value = keep ? cur : '';
+  };
+
+  $(function(){
+    var dsel = gel('f_deptCd');
+    if (dsel) dsel.addEventListener('change', cfCateNarrow);
+    cfList().then(function(){
+      cfRuleLoad();                                                    // 규칙은 목록 뒤에(CATE 가 있어야 좁힌다)
+      if (LIST.length) cfOpen(LIST[0].formid); else cfNew();
+    });
+  });
 })();
 
   /* ═══ 탭 · 글자 크기 (2026-08-15 · 사용자 요청) ═══════════════════════════

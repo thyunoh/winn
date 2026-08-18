@@ -165,6 +165,14 @@ public interface QpsService {
 	int saveQpsUserDept(String hospCd, List<String> userIds, List<String> depts, String regUser, boolean add)
 			throws Exception;
 
+	/* 부서별 「쓰는 분류」(2026-08-18) — 정해 둔 것이 없는 부서는 「전 분류」 */
+	List<Map<String, Object>> selectDeptCate() throws Exception;
+	/** 지금 등록된 서식의 부서×분류 실제 종수 — 관리 화면이 규칙 옆에 함께 보여준다 */
+	List<Map<String, Object>> selectDeptCateCnt() throws Exception;
+	/** @param rows 화면에 있던 부서마다 1행 : {deptCd, cates(쉼표로 이은 분류)} —
+	 *  ★분류를 하나도 안 고른 부서는 <b>전 분류로 되돌린다</b>(행을 지우는 것이 곧 「제한 없음」) */
+	int saveDeptCate(List<Map<String, Object>> rows, String regUser) throws Exception;
+
 	/* QI 중간·최종보고서 */
 	List<Map<String, Object>> selectQiRptList(String hospCd, String inYear, String rptGb) throws Exception;
 	Map<String, Object> selectQiRptWithItems(String hospCd, long qirSeq) throws Exception;
