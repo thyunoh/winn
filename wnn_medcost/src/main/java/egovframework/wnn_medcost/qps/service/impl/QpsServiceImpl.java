@@ -2106,37 +2106,11 @@ public class QpsServiceImpl implements QpsService {
 			return out;
 		}
 
-		/* ── 사고보고 계열 — 연령·장소·시간대 ─────────────────────────────── */
-		Map<String, Object> def = mapper.selectIndiDef(hospCd, cd);
-		String incidGb = (def == null) ? "" : str(def.get("incidgb"));
-		if (incidGb.isEmpty()) return out;              // 사고보고 계열이 아니면 분포가 없다
-
-		Map<String, Object> p = new HashMap<>();
-		p.put("hospCd", hospCd); p.put("incidGb", incidGb);
-		p.put("fromDt", rg[0]); p.put("toDt", rg[1]);
-		p.put("minLevel", (def.get("minlevel") == null) ? "" : String.valueOf(def.get("minlevel")));
-
-		Map<String, Object> age = distBox("AGE", "연령별",
-				new String[]{ "30","40","50","60","70","80","90","ETC" },
-				new String[]{ "30대","40대","50대","60대","70대","80대","90대 이상","기타·미상" });
-		// ★발생장소는 **칸을 미리 깔지 않는다** — 병원이 적은 값이 그대로 들어온다(분류집계와 같은 방식)
-		Map<String, Object> place = distBox("PLACE", "발생장소별", new String[]{}, new String[]{});
-		Map<String, Object> time = distBox("TIME", "시간대별",
-				new String[]{ "DAY", "EVE", "NGT", "미상" },
-				new String[]{ "DAY (07~15시)", "EVENING (15~23시)", "NIGHT (23~07시)", "미상" });
-
-		for (Map<String, Object> r : mapper.selectIncidDistRows(p)) {
-			Object a = r.get("ptage");
-			int n = (a instanceof Number) ? ((Number) a).intValue() : -1;
-			distAdd(age, (n < 30) ? "ETC" : (n >= 90 ? "90" : String.valueOf((n / 10) * 10)));
-
-			String pl = str(r.get("placecd")).trim();
-			distAdd(place, pl.isEmpty() ? "미상" : pl);
-
-			int t = hhmm(str(r.get("occurtm")));
-			distAdd(time, (t < 0) ? "미상" : (t >= 420 && t < 900) ? "DAY" : (t >= 900 && t < 1380) ? "EVE" : "NGT");
-		}
-		out.add(age); out.add(place); out.add(time);
+		/* ── 사고보고 계열은 ***여기서 세지 않는다*** ─────────────────────────
+		   ⚠★**연령대·발생장소·시간대는 이미 `selectBreakdown` 이 만들고 화면(분류별 집계)이 그린다.**
+		     같은 수를 두 곳에서 세면 언젠가 갈린다 — 실제로 등급 필터를 `LV`/`Level` 로 다르게 썼다가
+		     한쪽만 고친 적이 있다. ***세는 자리는 하나로 둔다.***
+		   ⇒ 이 메서드는 **격리·강박 전용**이다(그 둘만 `selectBreakdown` 에 없는 축을 쓴다). */
 		return out;
 	}
 

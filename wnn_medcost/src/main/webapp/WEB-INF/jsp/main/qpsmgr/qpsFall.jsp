@@ -1378,6 +1378,36 @@
       html += '</tbody></table>';
     });
     wrap.innerHTML = html;
+    distLoad();                     // ★격리·강박만 — 19세 구분·시행 시간 구간을 덧붙인다
+  }
+
+  /* ═══ 격리·강박 분포 (2026-08-18) ═══════════════════════════════════════
+     원본 지표분석보고서 1·2쪽의 「2) 19세 이상/미만」·「2) 시행 시간대별」이다.
+     ★***격리는 13칸 · 강박은 5칸*** — 구간 수가 달라 한 표로 합치면 안 된다(판독 §1-3).
+     ⚠★***여기서 세는 것은 이 둘뿐이다*** — 연령대·발생장소·시간대는 위 「분류별 집계」가
+       이미 세고 있다(`selectBreakdown`). 같은 수를 두 곳에서 세면 언젠가 갈린다.
+     ★자료가 없어도 **칸은 0 으로 그린다** — 원본이 고정 칸 표라, 없는 구간을 빼면 표가 짧아져 어긋난다.
+       (서버가 칸을 깔아 보내므로 화면은 받은 대로 그리기만 한다.)                     */
+  var lastDist = null;                 // ★인쇄물도 같은 값을 쓴다 — 화면과 종이가 갈리지 않게
+  function distLoad(){
+    lastDist = null;
+    if (INDI_CD !== 'ISOLATION' && INDI_CD !== 'SECLUSION') return;
+    post('<c:url value="/qps/indiDist.do"/>', { indiCd: INDI_CD, prd: year() })
+      .then(function(res){
+        var ds = (res && res.dists) || [], wrap = document.getElementById('qfBreak'), h = '';
+        lastDist = ds;
+        ds.forEach(function(d){
+          h += '<table class="qf-grid" style="width:auto; min-width:180px;">' +
+               '<thead><tr><th colspan="2">' + esc(d.nm) + '</th></tr></thead><tbody>';
+          (d.rows || []).forEach(function(r){
+            h += '<tr><td>' + esc(r.nm) + '</td><td class="num">' + num(r.cnt) + '</td></tr>';
+          });
+          h += '<tr><td><b>합계</b></td><td class="num"><b>' + num(d.tot) + '</b></td></tr>';
+          h += '</tbody></table>';
+        });
+        if (h) wrap.insertAdjacentHTML('beforeend', h);
+      })
+      .catch(function(){ /* 분포는 곁들이는 표다 — 못 받아도 화면을 막지 않는다 */ });
   }
 
   // 보고서(서술)
@@ -1741,6 +1771,25 @@
       var six = ['TYPE','PLACE','TIME','DAMAGE','AGE','DEPT'].map(function(k){ return axTbl(k, AXIS_NM[k]); }).join('');
       if (six) brkHtml = six + '<div style="clear:both;"></div>';
       if (harmHtml) harmHtml = harmHtml + '<div style="clear:both;"></div>';
+    })();
+
+    /* ★격리·강박 분포도 **종이에 같이 실린다**(2026-08-18) — 원본 1·2쪽의 표다.
+       ⚠화면에만 있고 인쇄물에 빠지면 ***같은 보고서가 두 얼굴***이 된다(이 화면에서 전에 겪은 함정). */
+    (function(){
+      if (!lastDist || !lastDist.length) return;
+      var h = lastDist.map(function(dd){
+        var tot = Number(dd.tot || 0);
+        return '<table class="qp-nobreak" style="width:48%; float:left; margin:0 1% 6px 0;">' +
+               '<thead><tr><th colspan="3">' + esc(dd.nm) + '</th></tr>' +
+               '<tr><th>구분</th><th style="width:34px;">건수</th><th style="width:40px;">비율</th></tr></thead><tbody>' +
+               (dd.rows || []).map(function(r){
+                 var c = Number(r.cnt || 0);
+                 return '<tr><td class="l">' + esc(r.nm) + '</td><td>' + num(c) + '</td>' +
+                        '<td>' + (tot ? (Math.round(c / tot * 1000) / 10) + '%' : '-') + '</td></tr>';
+               }).join('') +
+               '<tr><td class="l"><b>계</b></td><td><b>' + num(tot) + '</b></td><td></td></tr></tbody></table>';
+      }).join('');
+      if (h) brkHtml = (brkHtml || '') + h + '<div style="clear:both;"></div>';
     })();
 
     // 차트 — 캔버스를 이미지로 떠서 넣는다(숨긴 영역에서는 다시 그릴 수 없다)

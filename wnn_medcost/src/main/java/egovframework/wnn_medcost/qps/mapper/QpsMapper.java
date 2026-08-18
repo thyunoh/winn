@@ -269,8 +269,7 @@ public interface QpsMapper {
 	/** 부서별 양식 관리 — 부서·분류 두 칸만 고친다(공통 '*' 행도 대상. 위너넷 전용) */
 	int updateChkFormDept(Map<String, Object> param);
 
-	// 지표분석보고서 분포 표 — ★원자료만 꺼낸다(구간 나누기는 자바)
-	List<Map<String, Object>> selectIncidDistRows(Map<String, Object> param);
+	// 지표분석보고서 분포 표 — ★원자료만 꺼낸다(구간 나누기는 자바)
 	List<Map<String, Object>> selectSecLogDistRows(Map<String, Object> param);
 	int deleteDeptCate(@Param("deptCd") String deptCd);
 	int insertDeptCate(Map<String, Object> param);
