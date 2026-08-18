@@ -1441,9 +1441,13 @@ public class QpsController {
 	public Map<String, Object> chkUseSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
 		Map<String, Object> res = new HashMap<>();
 		try {
+			/* ★[2026-08-18] 위너넷 전용 게이트를 **뺐다** — 「우리 병원 사용 서식」(qpsChkUse) 화면을
+			     병원도 쓰기 때문이다. 서식을 만들고 고치는 것은 여전히 위너넷 전용이고,
+			     여기서 하는 일은 ***이미 있는 서식을 켜고 끄는 것뿐***이라 병원이 해도 된다.
+			   ★남의 병원은 못 건드린다 — hospCd() 가 `s_wnn_yn='Y'` 일 때만 파라미터를 받고,
+			     아니면 로그인 쿠키의 병원을 강제한다. ***화면에서 칸을 숨기는 것이 막이 아니라 이것이 막이다.*** */
 			String hospCd = hospCd(request, p);
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
-			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
 			svc.saveChkUse(hospCd, jsonRows(p.get("uses")), userId(request));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
