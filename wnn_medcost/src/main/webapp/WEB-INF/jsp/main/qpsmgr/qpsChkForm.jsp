@@ -87,13 +87,20 @@
   /* ── 탭 · 글자 크기 (2026-08-15) — 카드가 세로로 쌓여 스크롤이 길다는 지적.
        ★한 화면에 들어가면 **탭을 내지 않는다**(고정으로 달지 않는다).
        ★탭 이름은 카드 제목에서 뽑고, 많으면 이웃끼리 묶어 **최대 4개**. */
-  #qpsChkForm .zz-tabs{ display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; align-items:center; }
+  /* ★[2026-08-18 요청] 탭 띠를 **오른쪽으로** 옮겼다 — 왼쪽은 서식 목록이 차지하는 자리라
+       탭이 목록 위에 얹혀 있으면 「목록의 제목」처럼 읽힌다. 오른쪽 = 탭이 여는 내용이 있는 쪽이다.
+     ⚠아래 .zz-mode 의 margin-left:auto 를 함께 없애야 한다 —
+       auto 여백이 남는 자리를 다 먹어 ***justify-content 가 듣지 않는다.*** */
+  #qpsChkForm .zz-tabs{ display:flex; gap:6px; margin:0 0 10px; flex-wrap:wrap; align-items:center;
+      justify-content:flex-end; }
   #qpsChkForm .zz-tab{ border:1px solid #cfd9e0; background:#f4f7f9; color:#43555f; border-radius:8px 8px 0 0;
                    padding:7px 15px; font-size:13.5px; font-weight:700; cursor:pointer; }
   #qpsChkForm .zz-tab:hover{ background:#e9eff3; }
   #qpsChkForm .zz-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
   #qpsChkForm .zz-tab.dim{ opacity:.5; }
-  #qpsChkForm .zz-mode{ margin-left:auto; border:1px solid #1f5a4b; background:#fff; color:#1f5a4b;
+  /* margin-left:auto 를 뺐다 — 위 .zz-tabs 의 오른쪽 정렬이 듣게 하려는 것이다.
+     [서식 정의][점검항목][미리보기] 다음에 [전체 보기] 가 나란히 오른쪽 끝에 선다. */
+  #qpsChkForm .zz-mode{ margin-left:8px; border:1px solid #1f5a4b; background:#fff; color:#1f5a4b;
                     border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsChkForm .zz-mode.on{ background:#1f5a4b; color:#fff; }
   #qpsChkForm .zz-zoom{ display:inline-flex; gap:4px; align-items:center; margin-left:2px; }
@@ -1548,7 +1555,15 @@
      ★「전체 보기」는 탭이 아니라 **보기 방식**이라 오른쪽 끝에 따로 둔다.
      ⚠인쇄는 별도 창이라 탭과 무관하다(숨긴 항목도 종이에는 다 나온다). */
   (function(){
-    var KEY = 'qpsTab_qpsChkForm', ZKEY = 'qpsZoom_qpsChkForm', cur = 0;
+    /* ★[2026-08-18 요청] 「좌측 클릭하면 우측이 보여야 한다 · 체크 세 가지만 나누기」
+         이 화면은 **왼쪽 목록에서 고르면 오른쪽이 바뀌는 구조**다. 그런데 탭이 카드를 넷으로
+         갈라 놓아 ***목록 탭에 있으면 오른쪽이 아예 안 보였다*** — 「눌러도 아무 일이 없다」의 정체다.
+       ⇒ ①**서식 목록은 탭에서 뺀다.** 고르는 자리라 늘 보여야 한다(아래 head).
+         ②나누는 것은 **서식 정의 · 점검항목 · 미리보기 셋뿐**이다.
+         ③기본값은 **전체 보기(-1)**. 나눠 보기를 고르면 그 선택이 저장돼 그대로 남는다.
+       ⚠키 이름을 `…Form2` 로 **한 번 갈았다** — 브라우저에 남아 있던 옛 선택(목록 탭=0)이
+         새 기본값을 덮어써서 고쳐도 그대로 보이기 때문이다. 갈아 준 만큼 한 번은 초기화된다. */
+    var KEY = 'qpsTab_qpsChkForm2', ZKEY = 'qpsZoom_qpsChkForm', cur = -1;
     function cards(){ return [].slice.call(document.querySelectorAll('#qpsChkForm .cf-card')); }
     function nm(c, i){
       var h = c.querySelector('h4');
@@ -1567,9 +1582,14 @@
       return h <= (window.innerHeight - 170);
     }
     function sync(){
-      var cs = cards(), box = document.getElementById('zzTabs');
-      if (!box || !cs.length) return;
-      if (fits(cs)) {                       // 한 화면에 들어간다 — 탭이 필요 없다
+      var all0 = cards(), box = document.getElementById('zzTabs');
+      if (!box || !all0.length) return;
+      /* ★첫 카드(서식 목록)는 **탭에서 뺀다** — 여기서 고르면 나머지가 바뀌는 구조라
+           숨기면 고를 자리가 없어진다. 나누는 것은 뒤의 셋(정의·항목·미리보기)뿐이다. */
+      var head = all0[0], cs = all0.slice(1);
+      head.style.display = '';
+      if (!cs.length) { box.style.display = 'none'; return; }
+      if (fits(all0)) {                     // 한 화면에 들어간다 — 탭이 필요 없다
         box.style.display = 'none';
         cs.forEach(function(c){ c.style.display = ''; });
         return;
