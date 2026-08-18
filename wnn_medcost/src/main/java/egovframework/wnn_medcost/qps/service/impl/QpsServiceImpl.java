@@ -1986,6 +1986,160 @@ public class QpsServiceImpl implements QpsService {
 		return mapper.selectDeptCateCnt();
 	}
 
+	/* ═══════════════════════════════════════════════════════════════════════
+	   지표분석보고서 — 분포 표 (2026-08-18)
+	     원본 1·2쪽의 「2) 3) 4) 분포」다. 축이 지표마다 다르다 :
+	       · 사고보고 계열(자살·자해 등) : <b>연령대 · 발생장소 · 시간대</b>
+	       · 격리 / 강박               : <b>19세 이상·미만 · 시행 시간 구간</b>(격리 13칸 · 강박 5칸)
+	     ★★***구간 나누기는 여기(자바)서 한다*** — 시각이 `HHMM`·`HH:MM` 문자열이라
+	       SQL 로 재면 형변환 함정이 줄줄이 붙는다. SQL 은 원자료만 꺼낸다.
+	     ★***빈 칸도 0 으로 내놓는다*** — 원본이 고정 칸 표라, 없는 구간을 빼면 표가 짧아져 어긋난다.
+	   ═══════════════════════════════════════════════════════════════════ */
+
+	/** 기간 문자열 → [fromDt, toDt, fromYm, toYm]. `YYYY` · `YYYY-Q1..4` · `YYYY-H1..2` */
+	private String[] prdRange(String prd) {
+		String p = (prd == null) ? "" : prd.trim();
+		String y = (p.length() >= 4) ? p.substring(0, 4) : "";
+		if (!y.matches("[0-9]{4}")) throw new IllegalArgumentException("기간이 올바르지 않습니다: " + prd);
+		int sm = 1, em = 12;
+		int q = p.indexOf("-Q"), h = p.indexOf("-H");
+		if (q > 0) { int n = Integer.parseInt(p.substring(q + 2, q + 3)); sm = (n - 1) * 3 + 1; em = sm + 2; }
+		else if (h > 0) { int n = Integer.parseInt(p.substring(h + 2, h + 3)); sm = (n - 1) * 6 + 1; em = sm + 5; }
+		String fYm = y + String.format("%02d", sm), tYm = y + String.format("%02d", em);
+		// 끝 달의 마지막 날 — 31 로 두어도 문자열 비교라 안전하다(2월 30·31일 자료는 없다)
+		return new String[]{ fYm + "01", tYm + "31", fYm, tYm };
+	}
+
+	/** 칸을 미리 깔아 둔 분포 하나 */
+	private Map<String, Object> distBox(String key, String nm, String[] codes, String[] names) {
+		List<Map<String, Object>> rows = new ArrayList<>();
+		for (int i = 0; i < codes.length; i++) {
+			Map<String, Object> r = new HashMap<>();
+			r.put("cd", codes[i]); r.put("nm", names[i]); r.put("cnt", 0);
+			rows.add(r);
+		}
+		Map<String, Object> box = new HashMap<>();
+		box.put("key", key); box.put("nm", nm); box.put("rows", rows); box.put("tot", 0);
+		return box;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void distAdd(Map<String, Object> box, String cd) {
+		List<Map<String, Object>> rows = (List<Map<String, Object>>) box.get("rows");
+		for (Map<String, Object> r : rows) {
+			if (String.valueOf(r.get("cd")).equals(cd)) {
+				r.put("cnt", ((Integer) r.get("cnt")) + 1);
+				box.put("tot", ((Integer) box.get("tot")) + 1);
+				return;
+			}
+		}
+		// ★칸에 없는 값이 오면 **버리지 않고 줄을 늘린다** — 조용히 빠지면 합계가 안 맞는다
+		Map<String, Object> neo = new HashMap<>();
+		neo.put("cd", cd); neo.put("nm", cd); neo.put("cnt", 1);
+		rows.add(neo);
+		box.put("tot", ((Integer) box.get("tot")) + 1);
+	}
+
+	/** `HHMM` / `HH:MM` → 분. 못 읽으면 -1 */
+	private int hhmm(String s) {
+		String t = (s == null) ? "" : s.replace(":", "").trim();
+		if (!t.matches("[0-9]{3,4}")) return -1;
+		if (t.length() == 3) t = "0" + t;
+		int h = Integer.parseInt(t.substring(0, 2)), m = Integer.parseInt(t.substring(2));
+		if (h > 23 || m > 59) return -1;
+		return h * 60 + m;
+	}
+
+	/** `YYYYMMDD` + `HH:MM` → 분 단위 절대값. 못 읽으면 -1 */
+	private long stamp(String dt, String tm) {
+		String d = (dt == null) ? "" : dt.trim();
+		if (!d.matches("[0-9]{8}")) return -1;
+		int t = hhmm(tm);
+		if (t < 0) t = 0;
+		try {
+			java.time.LocalDate ld = java.time.LocalDate.of(Integer.parseInt(d.substring(0, 4)),
+					Integer.parseInt(d.substring(4, 6)), Integer.parseInt(d.substring(6, 8)));
+			return ld.toEpochDay() * 1440L + t;
+		} catch (Exception e) { return -1; }
+	}
+
+	@Override
+	public List<Map<String, Object>> selectIndiDist(String hospCd, String indiCd, String prd) throws Exception {
+		List<Map<String, Object>> out = new ArrayList<>();
+		if (hospCd == null || hospCd.isEmpty() || indiCd == null || indiCd.isEmpty()) return out;
+		String[] rg = prdRange(prd);
+		String cd = indiCd.trim().toUpperCase();
+
+		/* ── 격리 · 강박 — 시행일지에서 센다 ───────────────────────────────── */
+		if ("ISOLATION".equals(cd) || "SECLUSION".equals(cd)) {
+			boolean isol = "ISOLATION".equals(cd);
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd); p.put("fromYm", rg[2]); p.put("toYm", rg[3]);
+			p.put("secGb", isol ? "ISOL" : "RSTR");
+
+			Map<String, Object> adult = distBox("ADULT", "연령 구분",
+					new String[]{ "ADULT", "MINOR" }, new String[]{ "19세 이상", "19세 미만" });
+			// ★구간 수가 격리(13)와 강박(5)로 다르다 — ***한 표로 합치면 안 된다***(판독 §1-3)
+			String[] dCd, dNm;
+			if (isol) {
+				dCd = new String[]{ "1","2","3","4","5","6","7","8","9","10","11","12","OVER" };
+				dNm = new String[]{ "1시간 이내","1~2시간","2~3시간","3~4시간","4~5시간","5~6시간","6~7시간",
+						"7~8시간","8~9시간","9~10시간","10~11시간","11~12시간","12시간 이상" };
+			} else {
+				dCd = new String[]{ "1","2","3","4","OVER" };
+				dNm = new String[]{ "1시간 이내","1~2시간","2~3시간","3~4시간","4시간 이상" };
+			}
+			Map<String, Object> dur = distBox("DUR", "시행 시간대별", dCd, dNm);
+
+			for (Map<String, Object> r : mapper.selectSecLogDistRows(p)) {
+				String ag = str(r.get("adultgb"));
+				distAdd(adult, ag.isEmpty() ? "미상" : ag);
+				long st = stamp(str(r.get("stdt")), str(r.get("sttm")));
+				long ed = stamp(str(r.get("eddt")), str(r.get("edtm")));
+				if (st < 0 || ed < 0 || ed < st) { distAdd(dur, "미상"); continue; }
+				long hours = (ed - st + 59) / 60;          // 올림 — 「1시간 이내」가 0분을 포함한다
+				if (hours <= 0) hours = 1;
+				int max = isol ? 12 : 4;
+				distAdd(dur, (hours > max) ? "OVER" : String.valueOf(hours));
+			}
+			out.add(adult); out.add(dur);
+			return out;
+		}
+
+		/* ── 사고보고 계열 — 연령·장소·시간대 ─────────────────────────────── */
+		Map<String, Object> def = mapper.selectIndiDef(hospCd, cd);
+		String incidGb = (def == null) ? "" : str(def.get("incidgb"));
+		if (incidGb.isEmpty()) return out;              // 사고보고 계열이 아니면 분포가 없다
+
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("incidGb", incidGb);
+		p.put("fromDt", rg[0]); p.put("toDt", rg[1]);
+		p.put("minLevel", (def.get("minlevel") == null) ? "" : String.valueOf(def.get("minlevel")));
+
+		Map<String, Object> age = distBox("AGE", "연령별",
+				new String[]{ "30","40","50","60","70","80","90","ETC" },
+				new String[]{ "30대","40대","50대","60대","70대","80대","90대 이상","기타·미상" });
+		// ★발생장소는 **칸을 미리 깔지 않는다** — 병원이 적은 값이 그대로 들어온다(분류집계와 같은 방식)
+		Map<String, Object> place = distBox("PLACE", "발생장소별", new String[]{}, new String[]{});
+		Map<String, Object> time = distBox("TIME", "시간대별",
+				new String[]{ "DAY", "EVE", "NGT", "미상" },
+				new String[]{ "DAY (07~15시)", "EVENING (15~23시)", "NIGHT (23~07시)", "미상" });
+
+		for (Map<String, Object> r : mapper.selectIncidDistRows(p)) {
+			Object a = r.get("ptage");
+			int n = (a instanceof Number) ? ((Number) a).intValue() : -1;
+			distAdd(age, (n < 30) ? "ETC" : (n >= 90 ? "90" : String.valueOf((n / 10) * 10)));
+
+			String pl = str(r.get("placecd")).trim();
+			distAdd(place, pl.isEmpty() ? "미상" : pl);
+
+			int t = hhmm(str(r.get("occurtm")));
+			distAdd(time, (t < 0) ? "미상" : (t >= 420 && t < 900) ? "DAY" : (t >= 900 && t < 1380) ? "EVE" : "NGT");
+		}
+		out.add(age); out.add(place); out.add(time);
+		return out;
+	}
+
 	@Override
 	public List<Map<String, Object>> selectDeptMenuCnt(String hospCd) throws Exception {
 		if (hospCd == null || hospCd.isEmpty()) return new ArrayList<>();

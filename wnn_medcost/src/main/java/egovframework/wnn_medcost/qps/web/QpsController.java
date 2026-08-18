@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260818-WNNONLY2";
+	private static final String BUILD = "20260818-INDIDIST";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1599,6 +1599,27 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
 			res.put("cnt", svc.saveChkFormDept(hospCd, jsonRows(p.get("rows")), userId(request)));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 지표분석보고서 — <b>분포 표</b> (2026-08-18).
+	 * ★원본 1·2쪽의 「2) 3) 4) 분포」다. 축은 지표가 정한다(사고보고=연령·장소·시간 / 격리·강박=19세·시행시간).
+	 * @param prd 기간 — {@code YYYY} · {@code YYYY-Q1..Q4} · {@code YYYY-H1..H2}
+	 */
+	@RequestMapping(value = "/qps/indiDist.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> indiDist(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String indiCd = str(p.get("indiCd"), "").trim().toUpperCase();
+			if (!indiCd.matches("[A-Z0-9_]{2,20}")) return fail(res, "지표가 필요합니다.");
+			res.put("dists", svc.selectIndiDist(hospCd, indiCd, str(p.get("prd"), "")));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
