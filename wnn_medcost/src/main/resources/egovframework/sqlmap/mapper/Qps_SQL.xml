@@ -2328,6 +2328,32 @@
 
 	<!-- 서식 목록 — ★지표정의서와 같은 방식으로 **서식당 한 줄**만 준다.
 	     병원 전용 정의가 있으면 그것, 없으면 공통('*'). `HOSP_CD IN (병원,'*')` 로 두면 두 줄이 나온다. -->
+	<!-- ═══════════════════════════════════════════════════════════════════════
+	     「쓰는 서식」 판정 — ★★두 층이다 (2026-08-18 사용자 결정)
+	       ① 위너넷이 정한 **기본 세트** = `HOSP_CD='*'` 행 (새 표를 만들지 않는다)
+	       ② 병원이 고친 것        = `HOSP_CD=병원코드` 행
+	     ★규칙 : ***병원 지정이 있으면 그것, 없으면 기본 세트, 기본도 없으면 전부.***
+	       「기본으로 쓰면 상관없다」 — 병원이 아무것도 안 하면 기본 그대로 돈다.
+	     ⚠***세 곳(목록 useyn · 작성 화면 필터 · 사이드바 부서 수)이 같은 규칙을 써야 한다.***
+	       한 곳만 고치면 「메뉴엔 있는데 열면 없는」 어긋남이 생긴다 ⇒ 조각으로 빼 두었다.
+	     ⚠빈 목록으로 저장하면 병원 행이 지워져 **기본으로 되돌아간다**(그것이 [기본으로 되돌리기]다).
+	       ⇒ 병원이 「한 종도 안 쓰기」를 고를 수는 없다. 실제로 그런 병원은 이 화면을 안 쓴다.
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<sql id="chkUseOn">
+		( CASE WHEN EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE h0 WHERE h0.HOSP_CD = #{hospCd})
+		       THEN EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE h1
+		                     WHERE h1.HOSP_CD = #{hospCd} AND h1.FORM_ID = f.FORM_ID AND h1.USE_YN='Y')
+		       WHEN EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE g0 WHERE g0.HOSP_CD = '*')
+		       THEN EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE g1
+		                     WHERE g1.HOSP_CD = '*' AND g1.FORM_ID = f.FORM_ID AND g1.USE_YN='Y')
+		       ELSE TRUE END )
+	</sql>
+	<sql id="chkUseDef">
+		( CASE WHEN NOT EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE g2 WHERE g2.HOSP_CD = '*') THEN TRUE
+		       ELSE EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE g3
+		                     WHERE g3.HOSP_CD = '*' AND g3.FORM_ID = f.FORM_ID AND g3.USE_YN='Y') END )
+	</sql>
+
 	<select id="selectChkFormList" resultType="java.util.HashMap">
 		SELECT f.FORM_ID AS formid, f.HOSP_CD AS hospcd, f.FORM_NM AS formnm, f.CATE_CD AS catecd,
 		       f.DEPT_CD AS deptcd,
@@ -2337,11 +2363,10 @@
 		          WHERE i.FORM_ID = f.FORM_ID AND i.HOSP_CD = f.HOSP_CD AND i.USE_YN='Y' ) AS itemcnt,
 		       ( SELECT COUNT(*) FROM TBL_QPS_CHK_DOC d
 		          WHERE d.FORM_ID = f.FORM_ID AND d.HOSP_CD = #{hospCd} AND d.USE_YN='Y' ) AS doccnt,
-		       <!-- 이 병원이 쓰기로 켠 서식인가. 지정이 하나도 없는 병원은 전부 'Y'(기본 열림) -->
-		       CASE WHEN NOT EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u0 WHERE u0.HOSP_CD = #{hospCd}) THEN 'Y'
-		            WHEN EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u1
-		                          WHERE u1.HOSP_CD = #{hospCd} AND u1.FORM_ID = f.FORM_ID AND u1.USE_YN='Y') THEN 'Y'
-		            ELSE 'N' END AS useyn
+		       <!-- 이 병원이 쓰는 서식인가 — ★두 층이다(2026-08-18). <include> 로 세 곳이 같은 규칙을 쓴다 -->
+		       CASE WHEN <include refid="chkUseOn"/> THEN 'Y' ELSE 'N' END AS useyn,
+		       <!-- ★기본 세트에 든 서식인가 — 화면이 「기본」 뱃지를 달고, 병원이 무엇을 고쳤는지 보여준다 -->
+		       CASE WHEN <include refid="chkUseDef"/> THEN 'Y' ELSE 'N' END AS defyn
 		  FROM TBL_QPS_CHK_FORM f
 		 WHERE f.USE_YN = 'Y'
 		   <if test="cateCd != null and cateCd != ''"> AND f.CATE_CD = #{cateCd} </if>
@@ -2358,9 +2383,7 @@
 		        문자열 "N" 을 숫자로 바꾸려다 NumberFormatException 으로 죽는다(2026-08-11 실제 발생).
 		        한 글자 비교는 반드시 **큰따옴표** 로 — 속성은 작은따옴표로 감싼다. -->
 		   <if test='onlyUse == "Y"'>
-		     AND ( NOT EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u2 WHERE u2.HOSP_CD = #{hospCd})
-		           OR EXISTS (SELECT 1 FROM TBL_QPS_CHK_USE u3
-		                       WHERE u3.HOSP_CD = #{hospCd} AND u3.FORM_ID = f.FORM_ID AND u3.USE_YN='Y') )
+		     AND <include refid="chkUseOn"/>
 		   </if>
 		   AND f.HOSP_CD = ( SELECT CASE WHEN EXISTS (
 		                         SELECT 1 FROM TBL_QPS_CHK_FORM x
@@ -2387,6 +2410,11 @@
 
 	<!-- 병원별 사용 서식 저장 — 통째 교체. ★한 번이라도 저장하면 그 뒤로는 켠 것만 보인다. -->
 	<delete id="deleteChkUse">DELETE FROM TBL_QPS_CHK_USE WHERE HOSP_CD = #{hospCd}</delete>
+
+	<!-- 이 병원이 <직접 정한> 적이 있는가 — 화면이 「기본 그대로」인지 「고친 상태」인지 알려 준다 -->
+	<select id="countChkUseHosp" resultType="int">
+		SELECT COUNT(*) FROM TBL_QPS_CHK_USE WHERE HOSP_CD = #{hospCd}
+	</select>
 	<insert id="insertChkUse" parameterType="map">
 		INSERT INTO TBL_QPS_CHK_USE (HOSP_CD, FORM_ID, USE_YN, REG_USER) VALUES
 		<foreach item="u" collection="uses" separator=",">
@@ -2472,6 +2500,20 @@
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
 	</insert>
+
+	<!-- ═══════════════════════════════════════════════════════════════════════
+	     부서별 양식 관리 (2026-08-18) — ★***부서·분류 두 칸만*** 고친다.
+	       왜 : 서식 관리 화면은 한 서식의 모든 칸을 다루느라 **한눈에 안 들어온다**(사용자 지적).
+	            「어느 양식이 어느 부서 것인가」만 보고 고치는 자리를 따로 둔다.
+	       ★`saveChkForm` 과 달리 **공통('*') 행도 고친다** — 배정을 정하는 것이 이 화면의 일이다.
+	       ⚠그래서 **위너넷 전용**이다(컨트롤러가 막는다).
+	       ★작성한 문서는 `병원+서식+기간` 키라 **부서를 옮겨도 문서가 흔들리지 않는다.**
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<update id="updateChkFormDept" parameterType="map">
+		UPDATE TBL_QPS_CHK_FORM
+		   SET DEPT_CD = #{deptCd}, CATE_CD = #{cateCd}, UPD_USER = #{regUser}
+		 WHERE FORM_ID = #{formId} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</update>
 
 	<update id="deleteChkForm" parameterType="map">
 		UPDATE TBL_QPS_CHK_FORM SET USE_YN='N', UPD_USER=#{regUser}
@@ -2820,6 +2862,27 @@
 		 WHERE f.USE_YN = 'Y'
 		   AND IFNULL(f.DEPT_CD,'') <![CDATA[<>]]> '' AND IFNULL(f.CATE_CD,'') <![CDATA[<>]]> ''
 		 GROUP BY f.DEPT_CD, f.CATE_CD
+	</select>
+
+	<!-- ═══ 사이드바 「부서별 점검표」 줄 (2026-08-18) ═══════════════════════════
+	     ★***손으로 적던 15줄을 자료에서 뽑는다.*** 2026-08-15 에 서식 0종인 감염관리·진료 두 줄을
+	       손으로 지웠고, 08-18 에 감염관리에 서식이 생겨 **다시 넣어야 하는** 상태였다.
+	     ★세는 규칙은 **작성 화면과 같아야 한다** — 그래야 눌렀을 때 그만큼 나온다 :
+	       ⓐ이 병원이 쓰기로 켠 것만(지정이 없는 병원은 전부) ⓑ병원 전용 서식이 있으면 그것, 없으면 공통('*')
+	     ⚠공통(COMMON)은 여기서 제 몫으로 세어 준다 — 작성 화면에서는 어느 부서를 골라도 함께 나오지만,
+	       메뉴 줄로는 「공통」 하나가 따로 있어야 담당자가 찾아간다.
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<select id="selectDeptMenuCnt" resultType="java.util.HashMap">
+		SELECT f.DEPT_CD AS deptcd, COUNT(*) AS cnt
+		  FROM TBL_QPS_CHK_FORM f
+		 WHERE f.USE_YN = 'Y'
+		   AND IFNULL(f.DEPT_CD,'') <![CDATA[<>]]> ''
+		   AND <include refid="chkUseOn"/>
+		   AND f.HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                         SELECT 1 FROM TBL_QPS_CHK_FORM x
+		                          WHERE x.FORM_ID = f.FORM_ID AND x.HOSP_CD = #{hospCd} AND x.USE_YN = 'Y')
+		                       THEN #{hospCd} ELSE '*' END )
+		 GROUP BY f.DEPT_CD
 	</select>
 
 	<delete id="deleteDeptCate">

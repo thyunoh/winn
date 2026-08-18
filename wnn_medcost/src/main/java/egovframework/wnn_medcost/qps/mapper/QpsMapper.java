@@ -265,6 +265,9 @@ public interface QpsMapper {
 	// 부서별 「쓰는 분류」 (2026-08-18) — 정해 둔 것이 없는 부서는 「전 분류」다
 	List<Map<String, Object>> selectDeptCate();
 	List<Map<String, Object>> selectDeptCateCnt();
+	List<Map<String, Object>> selectDeptMenuCnt(@Param("hospCd") String hospCd);
+	/** 부서별 양식 관리 — 부서·분류 두 칸만 고친다(공통 '*' 행도 대상. 위너넷 전용) */
+	int updateChkFormDept(Map<String, Object> param);
 	int deleteDeptCate(@Param("deptCd") String deptCd);
 	int insertDeptCate(Map<String, Object> param);
 
@@ -382,6 +385,8 @@ public interface QpsMapper {
 	int insertChkCode(Map<String, Object> param);
 	/** 서식코드 중복 검사 — 새 서식 저장 전 필수(안 하면 남의 서식을 덮는다). */
 	int countChkForm(@Param("formId") String formId);
+	/** 이 병원이 사용 서식을 직접 정한 적이 있는가(0 이면 기본 세트를 그대로 쓰는 중) */
+	int countChkUseHosp(@Param("hospCd") String hospCd);
 	int selectChkCodeMax(@Param("prefix") String prefix);
 	Map<String, Object> selectChkForm(@Param("hospCd") String hospCd, @Param("formId") String formId);
 	List<Map<String, Object>> selectChkItems(@Param("hospCd") String hospCd, @Param("formId") String formId);

@@ -1745,7 +1745,9 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public void saveChkUse(String hospCd, List<Map<String, Object>> uses, String regUser) throws Exception {
 		mapper.deleteChkUse(hospCd);
-		if (uses == null || uses.isEmpty()) return;   // 전부 끄면 지정 없음 = 기본 열림으로 돌아간다
+		/* ★빈 목록 = 그 병원 지정을 지운다 ⇒ ***기본 세트(HOSP_CD='*')로 되돌아간다***(2026-08-18).
+		   그것이 화면의 [기본으로 되돌리기]다. 기본 세트도 없으면 종전처럼 전부 열린다. */
+		if (uses == null || uses.isEmpty()) return;
 		Map<String, Object> p = new HashMap<>();
 		p.put("hospCd", hospCd); p.put("uses", uses); p.put("regUser", regUser);
 		mapper.insertChkUse(p);
@@ -1754,6 +1756,12 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public boolean existsChkForm(String formId) throws Exception {
 		return mapper.countChkForm(formId) > 0;
+	}
+
+	@Override
+	public boolean existsChkUseHosp(String hospCd) throws Exception {
+		if (hospCd == null || hospCd.isEmpty()) return false;
+		return mapper.countChkUseHosp(hospCd) > 0;
 	}
 
 	/**
@@ -1976,6 +1984,38 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public List<Map<String, Object>> selectDeptCateCnt() throws Exception {
 		return mapper.selectDeptCateCnt();
+	}
+
+	@Override
+	public List<Map<String, Object>> selectDeptMenuCnt(String hospCd) throws Exception {
+		if (hospCd == null || hospCd.isEmpty()) return new ArrayList<>();
+		return mapper.selectDeptMenuCnt(hospCd);
+	}
+
+	/**
+	 * 부서별 양식 관리 — <b>부서·분류 두 칸만</b> 고친다.
+	 * ★한 양식은 한 부서다(2026-08-18 사용자 확정). 두 부서에서 쓰려면 <b>복제해 별도 서식</b>을 만든다.
+	 * ★작성한 문서는 <b>병원+서식+기간</b> 키라 부서를 옮겨도 문서가 흔들리지 않는다.
+	 */
+	@Override
+	public int saveChkFormDept(String hospCd, List<Map<String, Object>> rows, String regUser) throws Exception {
+		if (rows == null || rows.isEmpty()) return 0;
+		int n = 0;
+		for (Map<String, Object> r : rows) {
+			String formId = str(r.get("formId")).trim().toUpperCase();
+			String deptCd = str(r.get("deptCd")).trim().toUpperCase();
+			String cateCd = str(r.get("cateCd")).trim().toUpperCase();
+			// ★아는 모양만 통과 — 화면이 보낸 값을 그대로 믿지 않는다
+			if (!formId.matches("[A-Z0-9_]{2,30}")) continue;
+			if (!deptCd.matches("[A-Z0-9_]{2,20}")) continue;
+			if (!cateCd.isEmpty() && !cateCd.matches("[A-Z0-9_]{2,20}")) continue;
+			Map<String, Object> m = new HashMap<>();
+			m.put("formId", formId); m.put("hospCd", hospCd);
+			m.put("deptCd", deptCd); m.put("cateCd", cateCd.isEmpty() ? null : cateCd);
+			m.put("regUser", regUser);
+			n += mapper.updateChkFormDept(m);
+		}
+		return n;
 	}
 
 	/**

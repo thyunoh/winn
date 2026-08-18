@@ -193,6 +193,10 @@
           <select id="f_cateCd" style="width:auto; min-width:200px;"><option value="">— 선택 —</option></select>
           <button type="button" class="cf-btn mini" onclick="cfCodeAdd('QPS_CHK_CATE','분류');"
                   title="분류 추가">＋</button>
+          <%-- ★[2026-08-18] 분류 후보는 **부서마다 정해 둔 규칙**을 따른다 — 그 규칙을 여기서 바로 연다.
+               (규칙이 없는 부서는 전 분류. 정하는 자리를 못 찾아 헤매지 않게 링크를 옆에 둔다.) --%>
+          <a href="/main/qpsDeptCate.do" class="cf-sub" style="text-decoration:underline;"
+             title="부서마다 고를 수 있는 분류를 정합니다">부서별 분류 정하기</a>
           <span class="cf-sub">부서 = 누가 쓰나 · 분류 = 무엇을 점검하나</span></div>
 
         <div class="lb">서식명 *</div>
@@ -1571,13 +1575,20 @@
     if (!sel || !CATE.length || !RULECAT) return;
     var rule = RULECAT[val('f_deptCd')], cur = val('f_cateCd'), keep = false;
     sel.innerHTML = '<option value="">— 선택 —</option>';
+    var only = '';
     CATE.forEach(function(c){
       var ok = !rule || !!rule[c.subcode];       // 규칙이 없는 부서 = 전 분류
       if (!ok && c.subcode !== cur) return;      // 규칙 밖은 안 내놓는다(지금 값만 예외)
       sel.add(new Option((c.subcodenm || c.subcode) + (ok ? '' : ' (규칙 밖)'), c.subcode));
       if (c.subcode === cur) keep = true;
+      if (ok) only = only ? '*' : c.subcode;     // 규칙 안이 딱 하나면 그 코드가 남는다
     });
     sel.value = keep ? cur : '';
+    /* ★기본 분류 (2026-08-18) — ***새 서식이고, 그 부서가 쓰는 분류가 하나뿐이면*** 그것으로 채운다.
+       예) 영양은 「환경·시설」 하나다 — 매번 같은 값을 고르게 하지 않는다.
+       ⚠***이미 저장된 서식은 건드리지 않는다***(curId 가 있으면 그냥 둔다) — 사람이 안 고른 값이
+         조용히 들어갔다가 저장되면, 분류가 바뀐 줄도 모른다. */
+    if (!keep && !curId && only && only !== '*') sel.value = only;
   };
 
   $(function(){

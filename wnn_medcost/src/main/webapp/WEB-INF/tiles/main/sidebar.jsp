@@ -262,13 +262,25 @@
                                        (감염관리는 전용 화면 묶음으로 구현됐고, 진료 3종은 safeRpt·중복 제외로 갔다).
                                        ⚠빈 화면이 나오는 게 아니라 **공통 서식(MSDS 2종)만** 뜬다(실측) —
                                          담당자가 「우리 부서 점검표는 이것뿐인가」로 잘못 읽는다. 그래서 뺐다.
-                                       ⇒ ***그 부서에 서식을 등록하면 여기에 줄을 더한다*** (링크 한 줄이 전부다). --%>
-                                <li class="nav-item">
+                                     ★★[2026-08-18] ***손으로 줄을 더하고 빼는 일을 없앴다*** —
+                                       `qps/deptMenu.do` 가 **서식이 있는 부서만** 돌려주고 아래 스크립트가 다시 그린다.
+                                       (실제로 08-15 에 손으로 지운 감염관리가 08-18 에 서식이 생겨 다시 넣어야 했다.)
+                                       ***아래 하드코딩 줄은 폴백이니 지우지 말 것.*** --%>
+                                <%-- ★★[2026-08-18 사용자 지시] ***중복 메뉴라 감춘다.***
+                                     이 14줄은 전부 `qpsChk.do?dept=코드` — **[점검표 작성]과 같은 화면**이고,
+                                     그 화면에도 부서 셀렉트가 있다. 게다가 [우리 병원 사용 서식]이 **부서 축**으로 바뀌어
+                                     「부서별로 고른다」는 그쪽에서 한다. ⇒ 메뉴만 길어지고 하는 일이 겹친다.
+                                     ★***지우지 않고 감췄다*** — 줄과 자동 채우기(deptMenu)는 그대로다.
+                                       되살리려면 아래 li 의 `style="display:none;"` 한 군데만 지우면 된다. --%>
+                                <li class="nav-item" id="qps-g-dept-li" style="display:none;">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
                                        aria-expanded="false" data-target="#qps-g-dept" aria-controls="qps-g-dept"
                                        style="font-weight:600;">▸ 부서별 점검표</a>
                                     <div id="qps-g-dept" class="collapse submenu" style="background-color:#fff;">
-                                        <ul class="nav flex-column">
+                                        <%-- ★[2026-08-18] 이 줄들은 **자료에서 다시 그려진다**(qpsDeptMenu 아래 스크립트).
+                                             아래 하드코딩은 ***폴백***이다 — 조회를 못 하면 이 줄이 그대로 보인다.
+                                             ⚠지우지 말 것. 메뉴가 통째로 비면 업무가 멈춘다. --%>
+                                        <ul class="nav flex-column" id="qps-dept-list">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NURSE">간호 · 병동</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=PHARM">약국</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NUTRI">영양</a></li>
@@ -385,20 +397,37 @@
                                     <div id="qps-g-chk" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do">점검표 작성</a></li>
-                                            <%-- 우리 병원 사용 서식(2026-08-18) — ★위너넷 게이트를 걸지 않는다.
-                                                 병원이 스스로 켜는 화면이다(못 하면 위너넷이 병원코드로 대신 켜 준다).
-                                                 서식을 만들고 고치는 것은 아래 [서식 관리](위너넷 전용) 그대로다. --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChkUse.do">우리 병원 사용 서식</a></li>
+                                            <%-- 우리 병원 사용 서식 — ★[2026-08-18 저녁 사용자 확정] ***우리가 정한다.***
+                                                 병원에게는 안 보인다(스스로 고르지 않는다) ⇒ **위너넷 전용**으로 돌렸다.
+                                                 위너넷이 [기본 설정] 또는 병원코드로 **대신** 켠다.
+                                                 ★되살리려면(병원도 고르게 하려면) : 아래 li 의 id·display 를 지우고
+                                                   아래 위너넷 블록의 qpsChkUseMenu 두 줄, 그리고
+                                                   QpsController.qpsChkUse 의 isWnn 게이트를 함께 뺀다. --%>
+                                            <li class="nav-item" id="qpsChkUseMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsChkUse.do">우리 병원 사용 서식 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- 부서별 양식(2026-08-18) — ★서식 관리는 한 서식의 모든 칸을 다뤄
+                                                 「어느 양식이 어느 부서 것인가」가 한눈에 안 들어온다(사용자).
+                                                 그것만 보는 자리. 공통 서식을 고치므로 위너넷 전용이다. --%>
+                                            <li class="nav-item" id="qpsDeptFormMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsDeptForm.do">부서별 양식 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <%-- 부서별 쓰는 분류(2026-08-18) — 서식을 만들 때 고를 분류를 부서마다 정해 둔다.
                                                  ★정한 것이 없는 부서는 전 분류(막는 장치가 아니라 좁혀 주는 장치).
                                                  서식 관리와 같은 갈래라 **위너넷 전용**이다(서버도 막는다). --%>
-                                            <li class="nav-item" id="qpsDeptCateMenu" style="display:none;">
+                                            <%-- ★[2026-08-18] ***메뉴 줄을 뺐다 — 중복이다.***
+                                                 이 화면은 **서식을 만들 때** 쓰는 규칙이라 들어가는 길이
+                                                 [서식 관리] 분류 칸 옆의 **[부서별 분류 정하기]** 링크로 이미 있다.
+                                                 (화면·주소 `main/qpsDeptCate.do` 는 그대로 살아 있다.) --%>
+                                            <li class="nav-item" id="qpsDeptCateMenu" style="display:none;" hidden>
                                                 <a class="nav-item nav-link" href="/main/qpsDeptCate.do">부서별 쓰는 분류 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <%-- ★사용자별 담당 부서(2026-08-15) — 담당자가 제 부서 서식만 보게 한다.
                                                  ***등록이 없으면 전 부서*** 라 안 써도 지금과 똑같이 돈다. --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서</a></li>
+                                            <%-- ★[2026-08-18 저녁] 설정 화면이라 **위너넷 전용**으로 돌렸다
+                                                 (「병원은 설정 못 한다 — 전산 요원이 없어서」).
+                                                 병원 담당자에게는 [점검표 작성] 하나만 남는다. --%>
+                                            <li class="nav-item" id="qpsUserDeptMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                         </ul>
                                     </div>
                                 </li>
@@ -566,8 +595,15 @@
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
                                 </li>
                                 -->
+								<%-- ★[2026-08-18] 원격지원상담 = **원격지원 프로그램 내려받기**로 바꿨다.
+								     · 파일 = 서버 업로드 폴더의 `REMOTE/win-10.exe`
+								       (`/sftp/download.do` 가 `/home/winner/upload/` 아래만 내보낸다 — 경로 탈출은 그 안에서 막는다).
+								     ⚠***브라우저는 exe 를 대신 실행해 주지 못한다*** — 우리가 할 수 있는 것은 <내려받기>까지고,
+								       실행은 사람이 누른다. 그래서 누르는 순간 **어디를 보고 무엇을 눌러야 하는지** 안내를 띄운다.
+								     ★파일 이름이 바뀌면 아래 한 줄만 고친다.
+								     · 종전 링크(외부 원격지원 포털) = https://377.co.kr --%>
 								<li class="nav-item">
-								    <a class="nav-item nav-link"  href="https://377.co.kr" target="_blank">원격지원상담 </a>
+								    <a class="nav-item nav-link" href="#" onclick="wnnRemoteHelp(); return false;">원격지원상담 </a>
 								</li>
                             </ul>
                         </div>
@@ -1546,9 +1582,20 @@ function hosp_conact() {
         // 점검표 [서식 관리] — 위너넷 전용(사용자 확정 2026-08-11 : 병원은 서식을 못 만든다)
         var chkForm = document.getElementById("qpsChkFormMenu");
         if (chkForm) chkForm.style.display = "";
-        // 점검표 [부서별 쓰는 분류] — 서식 관리와 같은 갈래(2026-08-18)
-        var deptCate = document.getElementById("qpsDeptCateMenu");
-        if (deptCate) deptCate.style.display = "";
+        // 점검표 [부서별 양식] — 서식 관리와 같은 갈래(2026-08-18)
+        var deptForm = document.getElementById("qpsDeptFormMenu");
+        if (deptForm) deptForm.style.display = "";
+        // 점검표 [우리 병원 사용 서식] — ★[2026-08-18] 병원은 스스로 안 고른다.
+        //   ***병원 요구를 듣고 위너넷이 대신 정한다*** ⇒ 위너넷에게만 보인다.
+        var chkUse = document.getElementById("qpsChkUseMenu");
+        if (chkUse) chkUse.style.display = "";
+        // 점검표 [사용자별 담당 부서] — 설정 화면이라 위너넷 전용(2026-08-18)
+        var userDept = document.getElementById("qpsUserDeptMenu");
+        if (userDept) userDept.style.display = "";
+        // 점검표 [부서별 쓰는 분류] — ★2026-08-18 메뉴에서 뺐다(서식 관리 안 링크로 들어간다).
+        //   되살리려면 아래 두 줄의 주석을 풀고 li 의 hidden·display:none 을 지운다.
+        // var deptCate = document.getElementById("qpsDeptCateMenu");
+        // if (deptCate) deptCate.style.display = "";
         var adminVisitAsq = document.getElementById("adminVisitAsqMenu");
         if (adminVisitAsq) adminVisitAsq.style.display = "";
         
@@ -2558,6 +2605,117 @@ $(document).ready(function() {
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
     else apply();
+})();
+</script>
+
+<%-- ═══ 부서별 점검표 줄을 자료에서 그린다 (2026-08-18) ═══════════════════════
+     왜 : 15줄이 손으로 적혀 있어 **서식이 늘고 줄 때마다 사람이 고쳐야** 했다.
+          2026-08-15 서식 0종인 감염관리·진료를 손으로 지웠고, 08-18 감염관리에 서식이 생겨
+          ***다시 넣어야 하는 상태***가 됐다. 그 손질을 없앤다.
+
+     ★***사이드바는 모든 화면에 뜨는 타일***이다 — 화면마다 조회가 붙으면 안 된다.
+       ⇒ ⓐQPS 메뉴 게이트가 켜진 사람만 ⓑ**[부서별 점검표] 를 처음 펼칠 때 한 번**만 부른다.
+     ★sessionStorage 에 담아 **다음 화면에서는 곧바로 그린다**(깜빡임 없음). 그 뒤 조용히 다시 받아
+       달라졌으면 고쳐 그린다 — 서식을 등록한 직후에도 오래된 줄이 남지 않는다.
+     ⚠★***못 받으면 아무것도 하지 않는다*** — JSP 에 적힌 폴백 줄이 그대로 보인다.
+       메뉴가 통째로 비면 업무가 멈춘다. 「조회 실패 = 빈 메뉴」로 만들지 말 것.        --%>
+<script>
+(function(){
+  var KEY = 'qpsDeptMenu', done = false;
+
+  function paint(menu){
+    var ul = document.getElementById('qps-dept-list');
+    if (!ul || !menu || !menu.length) return;              // ★빈 목록이면 폴백을 남긴다
+    var h = '';
+    for (var i = 0; i < menu.length; i++) {
+      var m = menu[i];
+      var cd = String(m.cd || '').replace(/[^A-Z0-9_]/g, '');   // 주소에 들어가는 값 — 아는 모양만
+      var nm = String(m.nm || cd).replace(/[&<>"]/g, function(c){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; });
+      if (!cd) continue;
+      h += '<li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=' + cd + '">'
+         + nm + '</a></li>';
+    }
+    if (h) ul.innerHTML = h;
+  }
+
+  function load(){
+    if (done) return; done = true;
+    // ⓐ담아 둔 것이 있으면 먼저 그린다(다음 화면부터는 곧바로 보인다)
+    try {
+      var c = sessionStorage.getItem(KEY);
+      if (c) paint(JSON.parse(c));
+    } catch (e) {}
+    // ⓑ그러고 나서 조용히 다시 받는다 — ★dataType:'json' 필수
+    try {
+      $.ajax({ url:'/qps/deptMenu.do', type:'POST', dataType:'json' })
+       .done(function(res){
+         if (!res || res.result !== 'OK' || !res.menu || !res.menu.length) return;   // 실패 = 폴백 유지
+         paint(res.menu);
+         try { sessionStorage.setItem(KEY, JSON.stringify(res.menu)); } catch (e) {}
+       });
+    } catch (e) {}
+  }
+
+  function bind(){
+    var a = document.querySelector('a[data-target="#qps-g-dept"]');
+    if (a) a.addEventListener('click', function(){ if (!window.qpsMenuOn || window.qpsMenuOn()) load(); });
+    // 이미 펼쳐진 채로 들어온 경우(탭 복원)에도 한 번 받는다
+    var box = document.getElementById('qps-g-dept');
+    if (box && box.className.indexOf('show') >= 0 && (!window.qpsMenuOn || window.qpsMenuOn())) load();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+</script>
+
+<%-- ═══ 원격지원 프로그램 내려받기 (2026-08-18) ═══════════════════════════════
+     「원격지원상담」을 누르면 서버에 올려 둔 원격지원 프로그램을 내려받는다.
+     ⚠***브라우저는 exe 를 대신 실행하지 못한다*** — 내려받기까지가 끝이고 실행은 사람이 누른다.
+       그래서 ***어디를 보고 무엇을 눌러야 하는지***를 함께 띄운다(전산 담당이 없는 병원이 쓴다).
+     ★파일이 바뀌면 REMOTE_FILE 한 줄만 고친다.
+     ★내려받기는 `location.href` 로 건다 — 응답이 `Content-Disposition: attachment` 라
+       ***페이지가 넘어가지 않고*** 받기만 한다(새 창을 띄우면 빈 창이 남는다).                --%>
+<script>
+(function(){
+  var REMOTE_FILE = 'REMOTE/win-10.exe';                       // /home/winner/upload/ 아래 경로
+  var URL_DOWN = '/sftp/download.do?filePath=' + encodeURIComponent(REMOTE_FILE);
+  /* ★알림은 **프로젝트 표준 컴팩트**(assessment 의 regen-confirm-popup 과 같은 값) —
+       width 380 · 아이콘 48px. ***크게 두지 말 것***(반복 지적).
+     ★글도 ***필요한 것만*** 남긴다 — 담당자가 지금 해야 할 일 한 줄 + 막혔을 때 한 줄. */
+  function miniStyle(){
+    if (document.getElementById('wnnRemoteSwalStyle')) return;
+    var st = document.createElement('style');
+    st.id = 'wnnRemoteSwalStyle';
+    st.innerHTML =
+      '.wnn-remote-popup { padding:14px 16px !important; }' +
+      /* ★글자는 한 단계 크게(2026-08-18 사용자) — 창 높이는 그대로 두고 글씨만 키운다 */
+      '.wnn-remote-popup .swal2-title { font-size:1.2em !important; padding:6px 0 2px !important; }' +
+      '.wnn-remote-popup .swal2-html-container { font-size:1.05em !important; margin:6px 0 0 !important; }' +
+      '.wnn-remote-popup .swal2-icon { width:48px; height:48px; margin:8px auto 4px; }' +
+      '.wnn-remote-popup .swal2-icon .swal2-icon-content { font-size:1.6em; }' +
+      '.wnn-remote-popup .swal2-actions { margin-top:12px; }' +
+      '.wnn-remote-popup .swal2-styled { font-size:0.9em !important; padding:7px 16px !important; }' +
+      '.wnn-remote-popup .wr-s { font-size:0.92em; color:#7b8992; margin-top:7px; line-height:1.6; }' +
+      '.wnn-remote-popup .swal2-styled { font-size:0.95em !important; }';
+    document.head.appendChild(st);
+  }
+  window.wnnRemoteHelp = function(){
+    try { location.href = URL_DOWN; } catch (e) {}
+    // ★[2026-08-18 사용자] 보조 설명은 뺐다 — ***필요한 한 줄만*** 남긴다
+    var msg = '내려받은 <b>win-10.exe</b> 를 눌러 <b>실행</b>하세요.';
+    try {
+      if (typeof Swal !== 'undefined') {
+        miniStyle();
+        Swal.fire({ icon:'info', title:'원격지원 프로그램', html:msg, width:380,
+                    confirmButtonText:'확인', customClass:{ popup:'wnn-remote-popup' } });
+        return;
+      }
+    } catch (e) {}
+    try { if (typeof _alertBox === 'function') { _alertBox(msg, {icon:'🖥'}); return; } } catch (e) {}
+    alert('원격지원 프로그램을 내려받습니다. 받은 win-10.exe 를 실행해 주세요.');
+  };
 })();
 </script>
 

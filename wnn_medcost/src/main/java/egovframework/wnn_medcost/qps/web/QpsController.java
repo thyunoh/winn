@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260818-DEPTCATE";
+	private static final String BUILD = "20260818-WNNONLY2";
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -840,7 +840,19 @@ public class QpsController {
 	   ★목록·저장은 이미 있는 것을 그대로 쓴다(chkFormList.do · chkUseSave.do) — 여기는 진입만 한다.
 	   ⚠서식을 만들고 고치는 것은 여전히 위너넷 전용(qpsChkForm)이다. 여기서는 **켜고 끄기만** 한다. */
 	@RequestMapping(value = "main/qpsChkUse.do")
-	public String qpsChkUse(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsChkUse"); }
+	public String qpsChkUse(HttpServletRequest request, ModelMap model) {
+		/* ★★[2026-08-18 저녁 사용자 확정] ***병원은 스스로 고르지 않는다 — 요구를 듣고 우리가 정한다.***
+		   ⇒ 위너넷 전용으로 돌렸다(화면·기능은 그대로. 되살리려면 이 두 줄과 사이드바 게이트만 빼면 된다).
+		   ⚠읽기 API(chkFormList)는 열어 둔 채로 둔다 — 막아도 얻는 것이 없고, 되살릴 때 다시 열어야 한다. */
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsmgr/qpsChk");   // 병원 계정은 작성 화면으로
+		/* ★부서를 미리 골라 연다(2026-08-18) — 사이드바 [부서별 점검표]·[점검표 작성]에서 넘어온다.
+		   ⚠주소 숨김이 location.search 를 지우므로 화면이 쿼리를 직접 못 읽는다 — 서버가 모델로 내린다
+		     (qpsChk 의 dept·form 과 같은 방식). */
+		String d = request.getParameter("dept");
+		d = (d == null) ? "" : d.trim().toUpperCase();
+		model.addAttribute("chkDeptCd", d.matches("[A-Z]{2,10}") ? d : "");
+		return qpsScreen(request, model, ".main/qpsmgr/qpsChkUse");
+	}
 
 	/* ═══ 격리·강박 시행일지 (2026-08-18) ═══
 	   ★지표 ISOLATION/SECLUSION 의 원천이다 — 저장하면 관찰형 집계(TBL_QPS_MONITOR)까지 함께 반영된다. */
@@ -1177,6 +1189,10 @@ public class QpsController {
 			res.put("cate", cate);
 			res.put("dept", dept);
 			res.put("hosp", svc.selectHospInfo(hospCd));
+			/* ★이 병원이 직접 정했는가(2026-08-18) — false 면 **기본 세트를 그대로 쓰는 중**이다.
+			   화면이 「기본 그대로」/「고친 상태」를 알리고 [기본으로 되돌리기]를 낼지 정한다. */
+			res.put("ownSet", svc.existsChkUseHosp(hospCd) ? "Y" : "N");
+			res.put("hospCd", hospCd);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1515,6 +1531,74 @@ public class QpsController {
 			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
 			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
 			res.put("cnt", svc.saveDeptCate(jsonRows(p.get("rows")), userId(request)));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 사이드바 「부서별 점검표」 줄 (2026-08-18).
+	 * ★<b>손으로 적던 15줄을 자료에서 뽑는다</b> — 2026-08-15 에 서식 0종인 감염관리·진료를 손으로 지웠고,
+	 *   08-18 에 감염관리에 서식이 생겨 <b>다시 넣어야 하는</b> 상태였다. 그 손질을 없앤다.
+	 * ★세 갈래를 모두 반영한다 : <b>이 병원이 쓰는 서식</b>(사용 목록) · <b>이 사람의 담당 부서</b>(등록이 없으면 전 부서) ·
+	 *   부서 이름·차례는 공통코드.
+	 * ⚠<b>공통(COMMON)은 담당 부서와 무관하게 남긴다</b> — 작성 화면이 어느 부서에서도 함께 보여주는 서식이라
+	 *   메뉴에서만 사라지면 「있는데 못 찾는」 것이 된다.
+	 */
+	@RequestMapping(value = "/qps/deptMenu.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> deptMenu(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Integer> cnt = new HashMap<>();
+			for (Map<String, Object> r : svc.selectDeptMenuCnt(hospCd)) {
+				Object c = r.get("cnt");                       // COUNT(*) 는 Long 으로 온다
+				cnt.put(str(r.get("deptcd"), ""), (c instanceof Number) ? ((Number) c).intValue() : 0);
+			}
+			List<String> myDept = svc.selectQpsUserDept(hospCd, userId(request));   // 없으면 전 부서
+			java.util.List<Map<String, Object>> menu = new java.util.ArrayList<>();
+			java.util.List<Map<String, Object>> all = svc.selectQpsCodes();
+			if (all != null) for (Map<String, Object> r : all) {
+				if (!"QPS_CHK_DEPT".equals(String.valueOf(r.get("codecd")))) continue;
+				String cd = str(r.get("subcode"), "");
+				Integer n = cnt.get(cd);
+				if (n == null || n <= 0) continue;                                   // ★서식이 없는 부서는 줄을 안 만든다
+				if (!myDept.isEmpty() && !myDept.contains(cd) && !"COMMON".equals(cd)) continue;
+				Map<String, Object> m = new HashMap<>();
+				m.put("cd", cd); m.put("nm", str(r.get("subcodenm"), cd)); m.put("cnt", n);
+				menu.add(m);
+			}
+			res.put("menu", menu);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══════════════════════════════════════════════════════════════════════
+	   부서별 양식 관리 (2026-08-18) — 사용자 : 「부서별 양식 저장관리하는 내용만 —
+	     서식 관리(위너넷)는 **한눈에 안 들어와서**」
+	   ★서식 관리 화면은 한 서식의 모든 칸을 다룬다. 여기는 ***어느 양식이 어느 부서 것인가***만 본다.
+	   ★★***한 양식은 한 부서다***(사용자 확정) — 두 부서에서 쓰려면 **복제해 별도 서식**을 만든다
+	     (이 화면의 [복제]는 이미 있는 `chkFormCopy` 를 그대로 쓴다).
+	   ⚠공통('*') 행을 고치므로 **위너넷 전용**이다. ═══════════════════════════ */
+	@RequestMapping(value = "main/qpsDeptForm.do")
+	public String qpsDeptForm(HttpServletRequest request, ModelMap model) {
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsmgr/qpsChk");   // 병원 계정은 작성 화면으로
+		return qpsScreen(request, model, ".main/qpsmgr/qpsDeptForm");
+	}
+
+	@RequestMapping(value = "/qps/chkFormDeptSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkFormDeptSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "서식 관리는 위너넷 담당자만 사용할 수 있습니다.");
+			res.put("cnt", svc.saveChkFormDept(hospCd, jsonRows(p.get("rows")), userId(request)));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -2060,6 +2144,12 @@ public class QpsController {
 	   ★위너넷 담당자는 여러 병원을 지원하므로 언제나 전 부서. */
 	@RequestMapping(value = "main/qpsUserDept.do")
 	public String qpsUserDept(HttpServletRequest request, ModelMap model) {
+		/* ★★[2026-08-18 저녁 사용자 확정] ***「병원은 설정 못 한다 — 전산 요원이 없어서」***
+		   ⇒ **설정하는 화면은 병원에 내지 않는다.** 이 화면도 설정이라 위너넷 전용으로 돌렸다
+		     (병원 요구를 들으면 위너넷이 병원코드로 대신 지정한다 — 사용 서식과 같은 흐름).
+		   ★되살리려면 이 두 줄과 사이드바 qpsUserDeptMenu 게이트만 빼면 된다.
+		   ⚠저장 API(userDeptSave)는 그대로다 — hospCd() 가 남의 병원을 막아 준다. */
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsmgr/qpsChk");   // 병원 계정은 작성 화면으로
 		return qpsScreen(request, model, ".main/qpsmgr/qpsUserDept");
 	}
 

@@ -169,6 +169,11 @@ public interface QpsService {
 	List<Map<String, Object>> selectDeptCate() throws Exception;
 	/** 지금 등록된 서식의 부서×분류 실제 종수 — 관리 화면이 규칙 옆에 함께 보여준다 */
 	List<Map<String, Object>> selectDeptCateCnt() throws Exception;
+	/** 사이드바 「부서별 점검표」 줄 — 이 병원이 실제로 쓰는 서식이 있는 부서만(2026-08-18) */
+	List<Map<String, Object>> selectDeptMenuCnt(String hospCd) throws Exception;
+	/** 부서별 양식 관리(2026-08-18) — 서식의 <b>부서·분류만</b> 옮긴다.
+	 *  ★한 양식은 한 부서다(사용자 확정) — 두 부서에서 쓰려면 <b>복제해 별도 서식</b>으로 만든다. */
+	int saveChkFormDept(String hospCd, List<Map<String, Object>> rows, String regUser) throws Exception;
 	/** @param rows 화면에 있던 부서마다 1행 : {deptCd, cates(쉼표로 이은 분류)} —
 	 *  ★분류를 하나도 안 고른 부서는 <b>전 분류로 되돌린다</b>(행을 지우는 것이 곧 「제한 없음」) */
 	int saveDeptCate(List<Map<String, Object>> rows, String regUser) throws Exception;
@@ -248,6 +253,8 @@ public interface QpsService {
 	List<Map<String, Object>> selectChkFormList(String hospCd, String cateCd, String deptCd, String onlyUse) throws Exception;
 	/** 병원별 사용 서식 저장 — 통째 교체 */
 	void saveChkUse(String hospCd, List<Map<String, Object>> uses, String regUser) throws Exception;
+	/** 이 병원이 사용 서식을 직접 정했는가 — false 면 <b>기본 세트를 그대로 쓰는 중</b>(2026-08-18) */
+	boolean existsChkUseHosp(String hospCd) throws Exception;
 	/** 서식 화면에서 부서·분류 코드 추가 → 갱신된 코드목록을 돌려준다. */
 	List<Map<String, Object>> addChkCode(String codeCd, String subCode, String subCodeNm, String regUser) throws Exception;
 	/** 서식코드가 이미 있는가 — 새 서식 저장 전 검사. */
