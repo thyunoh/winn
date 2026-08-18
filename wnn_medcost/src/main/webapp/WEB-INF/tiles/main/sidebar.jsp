@@ -214,6 +214,9 @@
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRpt.do">지표분석목록</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsDef.do">지표정의서</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRound.do">환자안전관리 라운딩 점검표</a></li>
+                                            <%-- 격리·강박 시행일지(2026-08-18) — ★지표 ISOLATION/SECLUSION 의 <원천 대장>이다.
+                                                 저장하면 그 달 준수율 집계가 함께 갱신된다. 이 자료 없이는 지표가 빈 표다. --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSecLog.do">격리 · 강박 시행일지</a></li>
                                             <%-- RCA — 근본원인 분석 보고서. 회의록은 서식 1호에 구분 R 로 흡수 --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRca.do">RCA 근본원인 분석</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=R">RCA 회의록</a></li>
@@ -238,6 +241,9 @@
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=INFEXP">직원감염노출사고분석보고서</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=HANDWASH">손위생수행률</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=UTI">요로감염</a></li>
+                                            <%-- 유치도뇨관 월별 기록지(2026-08-18) — ★바로 위 요로감염 지표의 <분모>다.
+                                                 보유 환자 수의 월 합계가 유치도뇨관 일수(device-day)로 넘어간다. --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCathDay.do">유치도뇨관 월별 기록지</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRisk.do">감염관리 우선순위 사정 도구</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfStaff.do">감염관리 전담자(담당)</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfPat.do">감염병환자</a></li>

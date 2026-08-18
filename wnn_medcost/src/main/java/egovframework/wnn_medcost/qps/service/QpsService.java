@@ -275,4 +275,18 @@ public interface QpsService {
 	Map<String, Object> makeChkMonth(Map<String, Object> param) throws Exception;
 	/** 데이터 추출 — 평면 목록 + 이행 요약. ★점검표를 전산화한 뜻이 여기 있다. */
 	Map<String, Object> selectChkExtract(Map<String, Object> param) throws Exception;
+
+	/* ═══ 격리·강박 시행일지 (2026-08-18) ═══ */
+	Map<String, Object> selectSecLogWithItems(String hospCd, String logYm) throws Exception;
+	/**
+	 * 저장 — 행을 다시 깔고, <b>지표 집계까지 함께 반영</b>한다.
+	 * ★분모=그 달 그 구분의 전체 건수 · 분자=GUIDE_YN='Y' 건수 → TBL_QPS_MONITOR.
+	 *   ISOLATION(격리)·SECLUSION(강박) 두 지표를 각각 얹는다.
+	 */
+	long saveSecLog(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+
+	/* ═══ 유치도뇨관 월별 기록지 (2026-08-18) ═══ */
+	Map<String, Object> selectCathDayWithItems(String hospCd, String cathYm) throws Exception;
+	/** 저장 — 일자 행을 다시 깔고, CATH_CNT 월 합계를 CENSUS(CATHDAYS)에 반영한다. */
+	long saveCathDay(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
 }

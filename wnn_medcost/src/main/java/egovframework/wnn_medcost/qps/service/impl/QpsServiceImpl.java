@@ -2279,4 +2279,99 @@ public class QpsServiceImpl implements QpsService {
 		boolean itemIsCol = "DAY_ITEM".equals(axisGb) || "LIST".equals(axisGb);
 		return new ChkNorm(false, "EQUIP_DAY".equals(axisGb), itemIsCol, gb);
 	}
+
+	// ============ 격리·강박 시행일지 (2026-08-18) ============
+
+	@Override
+	public Map<String, Object> selectSecLogWithItems(String hospCd, String logYm) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectSecLog(hospCd, logYm);
+		out.put("doc", doc);
+		out.put("items", (doc == null || doc.get("logseq") == null)
+				? new ArrayList<>()
+				: mapper.selectSecLogItems(Long.parseLong(String.valueOf(doc.get("logseq")))));
+		return out;
+	}
+
+	@Override
+	public long saveSecLog(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		mapper.upsertSecLog(p);
+		long seq = Long.parseLong(String.valueOf(p.get("logSeq")));
+		mapper.deleteSecLogItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("logSeq", seq);
+			ip.put("items", items);
+			mapper.insertSecLogItems(ip);
+		}
+		/* ★지표 반영 — 이 대장이 ISOLATION/SECLUSION 의 원천이다.
+		   구분별로 세어 관찰형 집계(TBL_QPS_MONITOR)에 얹는다. 새 분자원천을 만들지 않는다. */
+		String hospCd = str(p.get("hospCd")), logYm = str(p.get("logYm")), regUser = str(p.get("regUser"));
+		secToMonitor(hospCd, logYm, regUser, items, "ISOL", "ISOLATION");
+		secToMonitor(hospCd, logYm, regUser, items, "RSTR", "SECLUSION");
+		return seq;
+	}
+
+	/**
+	 * 그 달 그 구분의 <b>전체 건수(분모)</b>와 <b>지침준수 건수(분자)</b>를 세어 다시 넣는다.
+	 * ★부분 수정이 아니라 <b>지우고 다시 세는 것</b>이다 — 행이 지워졌을 때도 수가 맞는다.
+	 * ★그 달 그 구분이 하나도 없으면 행을 두지 않는다(0/0 이 지표에 잡히면 안 된다).
+	 */
+	private void secToMonitor(String hospCd, String logYm, String regUser,
+			List<Map<String, Object>> items, String secGb, String indiCd) {
+		int obs = 0, pass = 0;
+		if (items != null) {
+			for (Map<String, Object> it : items) {
+				if (!secGb.equals(str(it.get("secgb")))) continue;
+				obs++;
+				if ("Y".equals(str(it.get("guideyn")))) pass++;
+			}
+		}
+		Map<String, Object> m = new HashMap<>();
+		m.put("hospCd", hospCd); m.put("indiCd", indiCd); m.put("logYm", logYm);
+		mapper.deleteSecLogMonitor(m);
+		if (obs == 0) return;
+		m.put("obsCnt", obs); m.put("passCnt", pass); m.put("regUser", regUser);
+		mapper.insertSecLogMonitor(m);
+	}
+
+	// ============ 유치도뇨관 월별 기록지 (2026-08-18) ============
+
+	@Override
+	public Map<String, Object> selectCathDayWithItems(String hospCd, String cathYm) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		Map<String, Object> doc = mapper.selectCathDay(hospCd, cathYm);
+		out.put("doc", doc);
+		out.put("items", (doc == null || doc.get("cathseq") == null)
+				? new ArrayList<>()
+				: mapper.selectCathDayItems(Long.parseLong(String.valueOf(doc.get("cathseq")))));
+		return out;
+	}
+
+	@Override
+	public long saveCathDay(Map<String, Object> p, List<Map<String, Object>> items) throws Exception {
+		mapper.upsertCathDay(p);
+		long seq = Long.parseLong(String.valueOf(p.get("cathSeq")));
+		mapper.deleteCathDayItems(seq);
+		if (items != null && !items.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("cathSeq", seq);
+			ip.put("items", items);
+			mapper.insertCathDayItems(ip);
+		}
+		/* ★분모 반영 — 유치도뇨관 보유 환자 수의 월 합계 = 유치도뇨관 일수(device-day).
+		   TBL_QPS_CENSUS(CENSUS_GB='CATHDAYS')의 그 달 칸만 갱신한다. */
+		int sum = 0;
+		if (items != null) for (Map<String, Object> it : items) sum += intOf(it.get("cathcnt"), 0);
+		String ym = str(p.get("cathYm"));
+		Map<String, Object> c = new HashMap<>();
+		c.put("hospCd", str(p.get("hospCd")));
+		c.put("inYear", ym.substring(0, 4));
+		// ⚠컬럼명 치환(${})이라 ***서버가 M01~M12 로만 만든다*** — 화면 값을 그대로 넣지 않는다
+		c.put("monCol", "M" + ym.substring(4, 6));
+		c.put("monVal", sum);
+		c.put("regUser", str(p.get("regUser")));
+		mapper.upsertCathCensus(c);
+		return seq;
+	}
 }

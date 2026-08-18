@@ -411,4 +411,25 @@ public interface QpsMapper {
 	/** 데이터 추출 — 평면 한 줄씩(엑셀/집계용). 축을 되돌려 일자·항목으로 준다. */
 	List<Map<String, Object>> selectChkExtract(Map<String, Object> param);
 	List<Map<String, Object>> selectChkSummary(Map<String, Object> param);
+
+	/* ═══ 격리·강박 시행일지 (2026-08-18) ═══
+	   ★지표 ISOLATION/SECLUSION 의 원천이다 — 분모=전체 건수, 분자=GUIDE_YN='Y'. */
+	Map<String, Object> selectSecLog(@Param("hospCd") String hospCd, @Param("logYm") String logYm);
+	int upsertSecLog(Map<String, Object> param);
+	List<Map<String, Object>> selectSecLogItems(@Param("logSeq") long logSeq);
+	int deleteSecLogItems(@Param("logSeq") long logSeq);
+	int insertSecLogItems(Map<String, Object> param);
+	/** 관찰형 집계 반영 — 그 달 그 지표 행을 지우고 다시 넣는다(다시 세는 것이다). */
+	int deleteSecLogMonitor(Map<String, Object> param);
+	int insertSecLogMonitor(Map<String, Object> param);
+
+	/* ═══ 유치도뇨관 월별 기록지 (2026-08-18) ═══
+	   ★CATH_CNT 월 합계가 지표 UTI 의 분모(유치도뇨관 일수)다. */
+	Map<String, Object> selectCathDay(@Param("hospCd") String hospCd, @Param("cathYm") String cathYm);
+	int upsertCathDay(Map<String, Object> param);
+	List<Map<String, Object>> selectCathDayItems(@Param("cathSeq") long cathSeq);
+	int deleteCathDayItems(@Param("cathSeq") long cathSeq);
+	int insertCathDayItems(Map<String, Object> param);
+	/** 분모 반영 — TBL_QPS_CENSUS(CATHDAYS)의 해당 월 칸만 갱신. monCol 은 서버가 M01~M12 로만 만든다. */
+	int upsertCathCensus(Map<String, Object> param);
 }

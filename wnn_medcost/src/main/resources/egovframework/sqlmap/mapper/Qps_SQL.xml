@@ -2798,4 +2798,99 @@
 		ON DUPLICATE KEY UPDATE USE_YN='Y', REG_USER=VALUES(REG_USER)
 	</insert>
 
+	<!-- ═══════════════════════════════════════════════════════════════════════
+	     격리·강박 시행일지 (2026-08-18) — 병원+년월 1부. 머리 + 행.
+	       ★하단 집계(격리/강박/합계)는 저장하지 않는다 — 행에서 센다.
+	       ★지표 ISOLATION/SECLUSION 의 분자·분모가 이 표에서 나온다
+	         (분모=전체 건수 · 분자=GUIDE_YN='Y').
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<select id="selectSecLog" resultType="java.util.HashMap">
+		SELECT LOG_SEQ AS logseq, LOG_YM AS logym
+		  FROM TBL_QPS_SECLOG WHERE HOSP_CD = #{hospCd} AND LOG_YM = #{logYm} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertSecLog" parameterType="map" useGeneratedKeys="true" keyProperty="logSeq">
+		INSERT INTO TBL_QPS_SECLOG (HOSP_CD, LOG_YM, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{logYm}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE USE_YN='Y', UPD_USER=#{regUser}, LOG_SEQ = LAST_INSERT_ID(LOG_SEQ)
+	</insert>
+
+	<select id="selectSecLogItems" resultType="java.util.HashMap">
+		SELECT SORT AS sort,
+		       DATE_FORMAT(STR_TO_DATE(EXEC_DT,'%Y%m%d'),'%Y-%m-%d') AS execdt,
+		       SEC_GB AS secgb, ORDER_NM AS ordernm, WRITER_NM AS writernm,
+		       PAT_NO AS patno, PAT_NM AS patnm, ADULT_GB AS adultgb, INSUR_GB AS insurgb,
+		       REL_ORDER AS relorder, JOIN_NM AS joinnm,
+		       DATE_FORMAT(STR_TO_DATE(ST_DT,'%Y%m%d'),'%Y-%m-%d') AS stdt, ST_TM AS sttm,
+		       DATE_FORMAT(STR_TO_DATE(ED_DT,'%Y%m%d'),'%Y-%m-%d') AS eddt, ED_TM AS edtm,
+		       GUIDE_YN AS guideyn
+		  FROM TBL_QPS_SECLOG_ITEM WHERE LOG_SEQ = #{logSeq} ORDER BY SORT
+	</select>
+
+	<delete id="deleteSecLogItems">DELETE FROM TBL_QPS_SECLOG_ITEM WHERE LOG_SEQ = #{logSeq}</delete>
+
+	<insert id="insertSecLogItems" parameterType="map">
+		INSERT INTO TBL_QPS_SECLOG_ITEM
+		 (LOG_SEQ, SORT, EXEC_DT, SEC_GB, ORDER_NM, WRITER_NM, PAT_NO, PAT_NM, ADULT_GB, INSUR_GB,
+		  REL_ORDER, JOIN_NM, ST_DT, ST_TM, ED_DT, ED_TM, GUIDE_YN) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{logSeq}, #{it.sort}, REPLACE(#{it.execdt},'-',''), #{it.secgb}, #{it.ordernm}, #{it.writernm},
+			 #{it.patno}, #{it.patnm}, #{it.adultgb}, #{it.insurgb}, #{it.relorder}, #{it.joinnm},
+			 REPLACE(#{it.stdt},'-',''), #{it.sttm}, REPLACE(#{it.eddt},'-',''), #{it.edtm}, #{it.guideyn})
+		</foreach>
+	</insert>
+
+	<!-- 지표 반영 — 관찰형(TBL_QPS_MONITOR)에 월 집계행을 얹는다.
+	     ★새 분자원천을 만들지 않는다. NUMER_SRC='MONITOR' 인 ISOLATION/SECLUSION 이 그대로 돈다.
+	     ⚠먼저 그 달 그 지표 행을 지우고 다시 넣는다(부분 수정이 아니라 다시 세는 것이다). -->
+	<delete id="deleteSecLogMonitor">
+		DELETE FROM TBL_QPS_MONITOR
+		 WHERE HOSP_CD = #{hospCd} AND INDI_CD = #{indiCd} AND OBS_DT = CONCAT(#{logYm}, '01')
+	</delete>
+
+	<insert id="insertSecLogMonitor" parameterType="map">
+		INSERT INTO TBL_QPS_MONITOR (HOSP_CD, INDI_CD, OBS_DT, OBS_CNT, PASS_CNT, OBSERVER, NOTE, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{indiCd}, CONCAT(#{logYm},'01'), #{obsCnt}, #{passCnt}, NULL,
+		        '격리·강박 시행일지 자동집계', 'Y', #{regUser})
+	</insert>
+
+	<!-- ═══════════════════════════════════════════════════════════════════════
+	     유치도뇨관 월별 기록지 (2026-08-18) — 병원+년월 1부. 날짜 1~31 격자.
+	       ★Total 행은 저장하지 않는다 — 합계는 센다.
+	       ★CATH_CNT 월 합계가 지표 UTI 의 분모(유치도뇨관 일수)다.
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<select id="selectCathDay" resultType="java.util.HashMap">
+		SELECT CATH_SEQ AS cathseq, CATH_YM AS cathym
+		  FROM TBL_QPS_CATHDAY WHERE HOSP_CD = #{hospCd} AND CATH_YM = #{cathYm} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="upsertCathDay" parameterType="map" useGeneratedKeys="true" keyProperty="cathSeq">
+		INSERT INTO TBL_QPS_CATHDAY (HOSP_CD, CATH_YM, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{cathYm}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE USE_YN='Y', UPD_USER=#{regUser}, CATH_SEQ = LAST_INSERT_ID(CATH_SEQ)
+	</insert>
+
+	<select id="selectCathDayItems" resultType="java.util.HashMap">
+		SELECT DAY_NO AS dayno, IN_CNT AS incnt, STAY_CNT AS staycnt, CATH_CNT AS cathcnt
+		  FROM TBL_QPS_CATHDAY_ITEM WHERE CATH_SEQ = #{cathSeq} ORDER BY DAY_NO
+	</select>
+
+	<delete id="deleteCathDayItems">DELETE FROM TBL_QPS_CATHDAY_ITEM WHERE CATH_SEQ = #{cathSeq}</delete>
+
+	<insert id="insertCathDayItems" parameterType="map">
+		INSERT INTO TBL_QPS_CATHDAY_ITEM (CATH_SEQ, DAY_NO, IN_CNT, STAY_CNT, CATH_CNT) VALUES
+		<foreach item="it" collection="items" separator=",">
+			(#{cathSeq}, #{it.dayno}, #{it.incnt}, #{it.staycnt}, #{it.cathcnt})
+		</foreach>
+	</insert>
+
+	<!-- 분모 반영 — TBL_QPS_CENSUS(CENSUS_GB='CATHDAYS')의 해당 월 칸만 갱신한다.
+	     ⚠월 칸이 M01~M12 라 컬럼명을 만들어야 한다 — ${} 는 문자열 치환이라
+	       ***반드시 서버에서 M01~M12 로만 만들어 넘긴다***(사용자 입력 금지). -->
+	<update id="upsertCathCensus" parameterType="map">
+		INSERT INTO TBL_QPS_CENSUS (HOSP_CD, CENSUS_GB, IN_YEAR, ${monCol}, REG_USER)
+		VALUES (#{hospCd}, 'CATHDAYS', #{inYear}, #{monVal}, #{regUser})
+		ON DUPLICATE KEY UPDATE ${monCol} = VALUES(${monCol})
+	</update>
+
 </mapper>

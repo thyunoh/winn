@@ -834,6 +834,82 @@ public class QpsController {
 		return res;
 	}
 
+	/* ═══ 격리·강박 시행일지 (2026-08-18) ═══
+	   ★지표 ISOLATION/SECLUSION 의 원천이다 — 저장하면 관찰형 집계(TBL_QPS_MONITOR)까지 함께 반영된다. */
+	@RequestMapping(value = "main/qpsSecLog.do")
+	public String qpsSecLog(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSecLog"); }
+
+	@RequestMapping(value = "/qps/secLogGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> secLogGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("logYm"), "").replace("-", "");
+			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
+			res.putAll(svc.selectSecLogWithItems(hospCd, ym));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/secLogSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> secLogSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("logYm"), "").replace("-", "");
+			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("logYm", ym);
+			m.put("regUser", userId(request));
+			res.put("logSeq", svc.saveSecLog(m, jsonRows(p.get("items"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 유치도뇨관 월별 기록지 (2026-08-18) ═══
+	   ★지표 UTI 의 분모(유치도뇨관 일수)가 여기서 나온다 — 저장하면 CENSUS(CATHDAYS)에 반영된다. */
+	@RequestMapping(value = "main/qpsCathDay.do")
+	public String qpsCathDay(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsCathDay"); }
+
+	@RequestMapping(value = "/qps/cathDayGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cathDayGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("cathYm"), "").replace("-", "");
+			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
+			res.putAll(svc.selectCathDayWithItems(hospCd, ym));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/cathDaySave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> cathDaySave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("cathYm"), "").replace("-", "");
+			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("cathYm", ym);
+			m.put("regUser", userId(request));
+			res.put("cathSeq", svc.saveCathDay(m, jsonRows(p.get("items"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/* ═══ QI 활동 계획서 ═══
 	   원본 10장(낙상·손위생·신체보호대·욕창·불만고충·영양실·근접오류·투약오류·학대및폭력·재택복귀율)
 	   대조 결과 서식은 하나이고 <주제별로 한 장>이다. */
