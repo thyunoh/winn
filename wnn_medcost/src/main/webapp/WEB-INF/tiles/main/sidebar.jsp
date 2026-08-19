@@ -714,29 +714,53 @@
                             <span id="adminJoinReqCnt" style="background:#d9534f; color:#fff; border-radius:10px;
                                   padding:1px 8px; font-size:11.5px; font-weight:800; margin-left:6px;"></span></a>
                     </li>
-                    <%-- ★처리할 신청이 있을 때만 메뉴를 낸다(2026-08-19 요청).
-                         숫자는 곧 "할 일"이라 옆에 배지로 같이 보여준다.
-                         이 script 는 li 바로 뒤라 페이지 뒤쪽에서 무엇이 터지든 영향을 받지 않는다. --%>
+                    <%-- ★아직 개발 단계라 **기본 숨김**이다(2026-08-19).
+                         입력칸 밖에서 `r` `e` `q` 를 이어서 치면 나타난다 —
+                         로그인 화면(wnn_consult)의 [신규병원 가입신청] 과 같은 열쇠말이다.
+                         운영은 두 앱이 같은 호스트라 sessionStorage 가 공유된다 →
+                         로그인 화면에서 한 번 켜면 여기서도 켜져 있다.
+                         (로컬은 포트가 달라 origin 이 달라서 각각 쳐야 한다)
+                         옆 배지의 숫자는 처리할 신청 건수다.
+                         ★정식 오픈 시 : li 의 display:none 과 이 스크립트의 게이트만 지우면 된다. --%>
                     <script>
                     (function(){
+                      var KEY = 'reqDev', WORD = 'req', buf = '', t = null;
+                      function on(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
+                      function apply(){
+                        var li = document.getElementById('adminJoinReqMenu');
+                        if (li) li.style.display = on() ? '' : 'none';
+                      }
+                      /* 건수 배지 — 메뉴가 켜져 있든 아니든 미리 받아 둔다(켜는 순간 바로 보이게) */
                       try {
                         var x = new XMLHttpRequest();
-                        x.open("POST", "/join/joinReqCnt.do", true);
-                        x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                        x.open('POST', '/join/joinReqCnt.do', true);
+                        x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                         x.onload = function(){
                           try {
                             var d = JSON.parse(x.responseText);
                             var n = parseInt(d && d.cnt, 10) || 0;
-                            if (n > 0) {
-                              var li = document.getElementById("adminJoinReqMenu");
-                              var bd = document.getElementById("adminJoinReqCnt");
-                              if (bd) bd.textContent = n;
-                              if (li) li.style.display = "";
-                            }
+                            var bd = document.getElementById('adminJoinReqCnt');
+                            if (bd) bd.textContent = n > 0 ? n : '';
                           } catch (ignore) {}
                         };
-                        x.send("");
+                        x.send('');
                       } catch (ignore) {}
+                      document.addEventListener('keydown', function(e){
+                        if (e.ctrlKey || e.altKey || e.metaKey) return;
+                        var t0 = e.target, tag = (t0 && t0.tagName || '').toUpperCase();
+                        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                        if (t0 && t0.isContentEditable) return;
+                        var k = (e.key || '').toLowerCase();
+                        if (k.length !== 1) return;
+                        buf = (buf + k).slice(-WORD.length);
+                        clearTimeout(t); t = setTimeout(function(){ buf = ''; }, 1500);
+                        if (buf === WORD) {
+                          buf = '';
+                          try { sessionStorage.setItem(KEY, on() ? 'N' : 'Y'); } catch (ignore) {}
+                          apply();
+                        }
+                      });
+                      apply();
                     })();
                     </script>
                 </ul>
