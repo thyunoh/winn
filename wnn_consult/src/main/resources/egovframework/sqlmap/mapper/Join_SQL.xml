@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  신규병원 가입신청 (TBL_JOIN_REQ / _MGR / _AGREE / _HIS)
+  2026-08-19
+
+  기존 회원가입(User_SQL.xml 의 insertMember)은 TBL_HOSP_MST 에 등록된 병원의 사용자 등록이고,
+  여기는 병원 자체가 아직 없는 신규 가입신청이다. 그래서 HOSP_CD 에 FK 를 걸지 않는다.
+-->
+<mapper namespace="egovframework.wnn_consult.join.mapper.JoinMapper">
+
+	<!--
+	  화면에 뿌릴 동의서 목록 (본문 포함).
+
+	  ★무엇을 받을지는 **USE_YN 한 곳**으로만 정한다. 코드에 조건을 더 두지 않는다.
+	    2026-08-19 현재 신규병원 가입에서 받는 것은 원격접속·DB접근(서식2), 개인정보 수집·이용(서식3) 둘뿐이다.
+	    의뢰서(CONSULT_REQ)는 동의서가 아니라 신청서라서, 이용약관·처리위탁과 함께 USE_YN='N' 로 내렸다.
+	    (docs/sql/join/AGREE_USE_FIX_20260819.sql)
+	    ※이 목록은 화면이 그리는 근거이자 **서버의 필수동의 검증 기준**이다.
+	      그래서 한 곳만 바꾸면 화면과 검증이 같이 움직인다 —
+	      코드에 따로 조건을 박으면 "화면에 없는 항목을 서버가 요구" 해서 신청이 막힌다.
+	-->
+	<select id="selAgreeList" parameterType="AgreeMdDTO" resultType="AgreeMdDTO"><![CDATA[
+		SELECT A.AGREE_CD,
+		       A.VER_NO,
+		       A.AGREE_NM,
+		       A.FORM_NO,
+		       A.ESS_YN,
+		       A.SIGN_GB,
+		       A.LEGACY_COL,
+		       A.AGREE_TEXT,
+		       A.SORT,
+		       A.USE_YN
+		  FROM TBL_AGREE_MST A
+		 WHERE A.USE_YN    = 'Y'
+		   AND A.ACTION_YN = 'Y'
+		   AND A.VER_NO = (SELECT MAX(B.VER_NO) FROM TBL_AGREE_MST B
+		                    WHERE B.AGREE_CD = A.AGREE_CD AND B.USE_YN = 'Y' AND B.ACTION_YN = 'Y')
+		   AND (A.START_DT IS NULL OR A.START_DT <= DATE_FORMAT(NOW(),'%Y%m%d'))
+		   AND (A.END_DT   IS NULL OR A.END_DT   >= DATE_FORMAT(NOW(),'%Y%m%d'))
+		 ORDER BY IFNULL(A.SORT, 999), A.AGREE_CD
+	]]></select>
+
+	<!--
+	  요양기관기호 확인.
+	  · HOSP_CNT > 0  : 이미 등록된 병원 → 신규 가입신청이 아니라 기존 회원가입으로 보내야 한다
+	  · REQ_CNT  > 0  : 접수(10)/검토중(20) 신청이 이미 있다 → 중복 신청 차단
+	-->
+	<select id="selHospChk" parameterType="JoinReqDTO" resultType="JoinReqDTO"><![CDATA[
+		SELECT
+		    (SELECT COUNT(*) FROM TBL_HOSP_MST H
+		      WHERE H.HOSP_CD = #{hospCd} AND H.ACTION_YN = 'Y')                       AS HOSP_CNT,
+		    (SELECT COUNT(*) FROM TBL_JOIN_REQ R
+		      WHERE R.HOSP_CD = #{hospCd} AND R.REQ_STAT IN ('10','20')
+		        AND R.ACTION_YN = 'Y')                                                 AS REQ_CNT,
+		    (SELECT MAX(H2.HOSP_NM) FROM TBL_HOSP_MST H2
+		      WHERE H2.HOSP_CD = #{hospCd} AND H2.ACTION_YN = 'Y')                     AS HOSP_NM_DB
+	]]></select>
+
+	<!--
+	  이메일 확인. 로그인 ID 가 될 값이라 세 곳을 다 본다.
+	  TBL_USER_MST 는 병원이 달라도 같은 이메일이 있을 수 있으므로 병원 무관하게 센다.
+	-->
+	<select id="selEmailChk" parameterType="JoinReqDTO" resultType="JoinReqDTO"><![CDATA[
+		SELECT
+		    (  (SELECT COUNT(*) FROM TBL_USER_MST   U WHERE U.USER_ID = #{email} AND U.ACTION_YN = 'Y')
+		     + (SELECT COUNT(*) FROM TBL_MEMBER_MST M WHERE M.EMAIL   = #{email})            )  AS USER_CNT,
+		    (SELECT COUNT(*) FROM TBL_JOIN_REQ R
+		      WHERE R.EMAIL = #{email} AND R.REQ_STAT IN ('10','20') AND R.ACTION_YN = 'Y')     AS REQ_CNT
+	]]></select>
+
+	<!-- 신청 등록. REQ_NO 는 AUTO_INCREMENT → useGeneratedKeys 로 DTO 에 되돌려 받는다 -->
+	<insert id="insertJoinReq" parameterType="JoinReqDTO"
+	        useGeneratedKeys="true" keyProperty="reqNo" keyColumn="REQ_NO"><![CDATA[
+		INSERT INTO TBL_JOIN_REQ (
+		    REQ_STAT, REQ_DTTM,
+		    HOSP_CD, HOSP_NM, HOSP_CEO, BUSI_NUM,
+		    ZIP_CD, HOSP_ADDR, HOSP_EXTRADR, HOSP_TEL, HOSP_FAX, WARDCNT,
+		    OCS_COMPANY, OCS_USER_ID, OCS_USER_PW, HIRA_CERT_PW,
+		    PC_USE_GB, PC_USE_TIME, PC_USE_STDT,
+		    ASQ_DAY, ASQ_BIGO, EVAL_GOAL, CONACT_GB,
+		    EMAIL, PASS_WD, MBR_NM, JOB_NM, MBR_TEL, BIGO,
+		    SEAL_IMG, SEAL_MIME, SEAL_NM, SEAL_HASH,
+		    ACTION_YN, REG_DTTM, REG_USER, REG_IP, UPD_DTTM, UPD_USER, UPD_IP
+		) VALUES (
+		    '10', NOW(),
+		    TRIM(#{hospCd}), #{hospNm}, #{hospCeo}, #{busiNum},
+		    #{zipCd}, #{hospAddr}, #{hospExtradr}, #{hospTel}, #{hospFax},
+		    NULLIF(TRIM(IFNULL(#{wardcnt},'')),''),
+		    /* 전산프로그램 정보(MASTER) · 심평원 인증서암호 —
+		       기존 계약정보(TBL_HOSPCONT_MST)와 같은 항목·같은 방식으로 담는다.
+		       승인 시 이 값들을 계약정보로 옮긴다. */
+		    #{ocsCompany}, #{ocsUserId}, #{ocsUserPw}, #{hiraCertPw},
+		    #{pcUseGb}, #{pcUseTime}, REPLACE(IFNULL(#{pcUseStdt},''),'-',''),
+		    #{asqDay}, #{asqBigo}, #{evalGoal}, #{conactGb},
+		    TRIM(#{email}), #{passWd}, #{mbrNm}, #{jobNm}, #{mbrTel}, #{bigo},
+		    /* 대표자 직인 — 화면이 base64 본문만 보내므로 FROM_BASE64 로 되돌려 담는다.
+		       빈 문자열이면 NULL 로(빈 blob 을 만들지 않는다). */
+		    FROM_BASE64(NULLIF(IFNULL(#{sealImg},''),'')), #{sealMime}, #{sealNm}, #{sealHash},
+		    'Y', NOW(), TRIM(#{email}), #{regIp}, NOW(), TRIM(#{email}), #{regIp}
+		)
+	]]></insert>
+
+	<!-- 담당자. 같은 구분을 여러 명 적을 수 있어 MGR_SEQ 는 기존 최대 +1 -->
+	<insert id="insertJoinMgr" parameterType="JoinMgrDTO"><![CDATA[
+		INSERT INTO TBL_JOIN_MGR (
+		    REQ_NO, MGR_GB, MGR_SEQ, DEPT_NM, JOB_NM, MGR_NM, MGR_TEL, EMAIL,
+		    USER_YN, ACTION_YN, REG_DTTM, REG_USER, REG_IP
+		) VALUES (
+		    #{reqNo}, #{mgrGb},
+		    (SELECT IFNULL(MAX(X.MGR_SEQ),0)+1 FROM TBL_JOIN_MGR X
+		      WHERE X.REQ_NO = #{reqNo} AND X.MGR_GB = #{mgrGb}),
+		    #{deptNm}, #{jobNm}, #{mgrNm}, #{mgrTel}, #{email},
+		    IFNULL(#{userYn},'N'), 'Y', NOW(), #{regUser}, #{regIp}
+		)
+	]]></insert>
+
+	<!-- 동의내역. 동의 시점의 본문 버전·IP·일시가 남아야 나중에 대조가 된다 -->
+	<insert id="insertJoinAgree" parameterType="JoinAgreeDTO"><![CDATA[
+		INSERT INTO TBL_JOIN_AGREE (
+		    REQ_NO, AGREE_CD, VER_NO, AGREE_YN, READ_YN,
+		    AGREE_DTTM, AGREE_IP, AGREE_NM, REG_DTTM, REG_USER, UPD_DTTM, UPD_USER
+		) VALUES (
+		    #{reqNo}, #{agreeCd}, #{verNo}, #{agreeYn}, #{readYn},
+		    NOW(), #{agreeIp}, #{agreeNm}, NOW(), #{regUser}, NOW(), #{regUser}
+		)
+		ON DUPLICATE KEY UPDATE
+		    VER_NO     = VALUES(VER_NO),
+		    AGREE_YN   = VALUES(AGREE_YN),
+		    READ_YN    = VALUES(READ_YN),
+		    AGREE_DTTM = NOW(),
+		    AGREE_IP   = VALUES(AGREE_IP),
+		    UPD_DTTM   = NOW(),
+		    UPD_USER   = VALUES(UPD_USER)
+	]]></insert>
+
+	<!-- 처리이력 -->
+	<insert id="insertJoinHis" parameterType="JoinReqDTO"><![CDATA[
+		INSERT INTO TBL_JOIN_HIS (REQ_NO, HIS_SEQ, BEF_STAT, AFT_STAT, HIS_MEMO, REG_DTTM, REG_USER, REG_IP)
+		SELECT #{reqNo}, IFNULL(MAX(H.HIS_SEQ),0)+1, NULL, '10', '가입신청 접수', NOW(), TRIM(#{email}), #{regIp}
+		  FROM TBL_JOIN_HIS H
+		 WHERE H.REQ_NO = #{reqNo}
+	]]></insert>
+
+
+
+</mapper>

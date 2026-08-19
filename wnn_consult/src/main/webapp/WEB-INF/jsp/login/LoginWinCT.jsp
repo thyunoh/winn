@@ -533,6 +533,46 @@
 														<span id="capsLockWarn" style="display:none; position:absolute; left:90px; top:1px; font-size:12.5px; font-weight:bold; color:#ffd54d; white-space:nowrap;">
 															<i class="fas fa-exclamation-triangle"></i> Caps Lock 켜짐
 														</span>
+														<%-- 신규병원 가입신청 — [회원가입]과 **같은 줄 왼쪽 빈 자리**에 둔다.
+														     [회원가입]은 등록된 병원의 사용자 등록이라 신규 기관은 그 길로 못 들어온다.
+														     ★Caps Lock 안내(left:90px, 켜질 때만 보임)와 겹치지 않게 230px 부터 시작한다. --%>
+														<%-- ★아직 개발 단계라 **기본 숨김**이다(2026-08-19).
+														     입력칸 밖에서 `r` `e` `q` 를 이어서 치면 나타난다.
+														     wnn_medcost 사이드바의 QPS 개발자 플래그(q·p·s)와 같은 방식 —
+														     조합키(Ctrl·Alt)는 브라우저·OS·한글 IME 가 가로채서 안 먹는 데가 있다.
+														     sessionStorage 라 브라우저를 닫으면 자동으로 꺼진다.
+														     ★정식 오픈 시 : 이 span 의 display:none 과 아래 reqDev 스크립트만 지우면 된다. --%>
+														<span id="joinApplyLink"
+															style="position:absolute; left:230px; top:0; font-size:13px; font-weight:bold; white-space:nowrap; display:none;">
+															<a href="javascript:void(0);" onclick="fnJoinApply();"
+																style="color:#ffe08a; text-decoration:none;">신규병원 가입신청 <i class="fas fa-angle-right"></i></a>
+														</span>
+														<script>
+														(function(){
+														    var KEY = 'reqDev', WORD = 'req', buf = '', t = null;
+														    function on(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
+														    function apply(){
+														        var el = document.getElementById('joinApplyLink');
+														        if (el) el.style.display = on() ? '' : 'none';
+														    }
+														    document.addEventListener('keydown', function(e){
+														        if (e.ctrlKey || e.altKey || e.metaKey) return;      // 다른 단축키와 섞이지 않게
+														        var t0 = e.target, tag = (t0 && t0.tagName || '').toUpperCase();
+														        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;   // 입력칸 안에서는 무시
+														        if (t0 && t0.isContentEditable) return;
+														        var k = (e.key || '').toLowerCase();
+														        if (k.length !== 1) return;
+														        buf = (buf + k).slice(-WORD.length);
+														        clearTimeout(t); t = setTimeout(function(){ buf = ''; }, 1500);
+														        if (buf === WORD) {
+														            buf = '';
+														            try { sessionStorage.setItem(KEY, on() ? 'N' : 'Y'); } catch(ignore){}
+														            apply();
+														        }
+														    });
+														    apply();
+														})();
+														</script>
 												</div>
 											<%-- ★이 스크립트는 반드시 #capsLockWarn 뒤에 와야 한다 —
 											     위에 두면 파싱 시점에 그 span 이 아직 없어 getElementById 가 null 이고,
@@ -558,6 +598,9 @@
 												<button type="button" id="blogin" onclick="login()"
 													style="height: 120px; width: 120px; background-color: white; color: black; font-weight: bold; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 36px; margin-bottom: 5px;">
 													로그인</button>
+												<%-- 기존 그대로 — 회원가입 | ID/PW찾기.
+												     [신규병원 가입신청]은 이 줄에 끼우면 폭이 모자라 잘린다.
+												     그래서 같은 높이의 **왼쪽 빈 자리**(아이디저장 줄)로 옮겼다. --%>
 												<div
 													style="font-size: 13px; font-weight: bold; color: white;">
 													<a href="javascript:void(0);" onclick="fnmbrReg();"
@@ -629,7 +672,7 @@
 													</div>
 
 													<!-- 우측 로그아웃 버튼 -->
-													<div style="margin-left: 68px; flex-shrink: 0;">
+													<div style="margin-left: 20px; flex-shrink: 0;">
 														<button class="btn btn-warning" onclick="logout()"
 															style="min-width: 120px; height: 60px; font-size: 16px;">
 															로그아웃</button>
@@ -824,6 +867,10 @@
 	</div>
     <!--    메인화면 끝  -->
     
+	<%-- 신규병원 가입신청 모달 — 기존 회원가입(#mainModal)과 같은 방식으로 이 화면에 붙는다.
+	     안에서 window.fnJoinApply() 를 정의하므로 이 include 가 있어야 링크가 동작한다. --%>
+	<jsp:include page="/WEB-INF/jsp/login/join_apply.jsp" />
+
 	<!--회원가입 모달창   -->
 	<div id="mainModal" class="modal fade" tabindex="-1" data-backdrop="static"
 		data-keyboard="false" aria-hidden="true" role="dialog">
@@ -1438,8 +1485,10 @@
    </script>
 
 	<!-- 회원가입 스크립트 시작 -->
-	<script>	
-		    /*회원가입*/ 
+	<script>
+		    /* fnJoinApply() 는 join_apply.jsp(신규병원 가입신청 모달) 안에서 정의한다.
+		       여기서 또 정의하면 나중에 읽히는 쪽이 이겨 모달이 안 뜬다 — 두지 말 것. */
+		    /*회원가입*/
 		    function fnmbrReg(){
 		    	 const ids = ['cont_name', 'cont_startDt', 'cont_endDt', 'cont_name1', 'cont_startDt1', 'cont_endDt1'];
 		    	 ids.forEach(id => {

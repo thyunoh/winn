@@ -7,6 +7,10 @@
 		<setting name="jdbcTypeForNull" value="NULL" />
 	</settings>
     <typeAliases>
+   	    <!-- 신규병원 가입신청(위너넷 관리자 조회·승인) -->
+   	    <typeAlias  alias="JoinReqDTO"   type="egovframework.wnn_medcost.join.model.JoinReqDTO"/>
+   	    <typeAlias  alias="JoinMgrDTO"   type="egovframework.wnn_medcost.join.model.JoinMgrDTO"/>
+   	    <typeAlias  alias="JoinAgreeDTO" type="egovframework.wnn_medcost.join.model.JoinAgreeDTO"/>
         <typeAlias  alias="WardDTO"     type="egovframework.wnn_medcost.user.model.WardDTO"/>
         
         <typeAlias  alias="DietDTO"     type="egovframework.wnn_medcost.user.model.DietDTO"/>

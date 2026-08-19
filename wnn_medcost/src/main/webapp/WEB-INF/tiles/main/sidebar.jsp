@@ -698,6 +698,47 @@
                             </ul>
                         </div>
                     </li>
+
+                    <%-- 신규병원 가입신청 — 메뉴 맨 아래(분야별통계 다음).
+                         ★★class 에 menu-section 을 **넣지 않는다.**
+                           top.jsp 의 상단 탭(전체·경영분석·적정성평가…)은 눌릴 때마다
+                           `$('.menu-section').hide()` 로 그 클래스를 단 항목을 통째로 숨기고,
+                           계약구분에 따라 `#menu-a … #menu-h` 만 골라 다시 켠다.
+                           그 목록에 없는 새 메뉴는 **한 번 숨겨지면 영영 안 켜진다** —
+                           앞서 menu-section 을 달았다가 메뉴가 안 나온 원인이 이것이다(2026-08-19).
+                           같은 이유로 menu-qps 도 menu-section 이 아니다(위쪽 주석 참고).
+                         ※권한은 컨트롤러가 세션 MAIN_GU='1' 로 막는다. --%>
+                    <li class="nav-item" id="adminJoinReqMenu" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="/join/joinReq.do">
+                            <i class="fas fa-hospital-user"></i>신규병원 가입신청
+                            <span id="adminJoinReqCnt" style="background:#d9534f; color:#fff; border-radius:10px;
+                                  padding:1px 8px; font-size:11.5px; font-weight:800; margin-left:6px;"></span></a>
+                    </li>
+                    <%-- ★처리할 신청이 있을 때만 메뉴를 낸다(2026-08-19 요청).
+                         숫자는 곧 "할 일"이라 옆에 배지로 같이 보여준다.
+                         이 script 는 li 바로 뒤라 페이지 뒤쪽에서 무엇이 터지든 영향을 받지 않는다. --%>
+                    <script>
+                    (function(){
+                      try {
+                        var x = new XMLHttpRequest();
+                        x.open("POST", "/join/joinReqCnt.do", true);
+                        x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                        x.onload = function(){
+                          try {
+                            var d = JSON.parse(x.responseText);
+                            var n = parseInt(d && d.cnt, 10) || 0;
+                            if (n > 0) {
+                              var li = document.getElementById("adminJoinReqMenu");
+                              var bd = document.getElementById("adminJoinReqCnt");
+                              if (bd) bd.textContent = n;
+                              if (li) li.style.display = "";
+                            }
+                          } catch (ignore) {}
+                        };
+                        x.send("");
+                      } catch (ignore) {}
+                    })();
+                    </script>
                 </ul>
             </div>
         </nav>
@@ -1604,6 +1645,7 @@ function hosp_conact() {
         // 샘파일 업로드 현황 — 위너넷 담당자 전용(2026-08-05)
         var adminUpStat = document.getElementById("adminUploadStatMenu");
         if (adminUpStat) adminUpStat.style.display = "";
+
         
         // 적정성평가 월간보고서(menu-evalreport)는 2단계부터 전원 노출 — li 기본 표시(display 숨김 제거)라 별도 처리 불필요.
         var evalRptMenu = document.getElementById("menu-evalreport");

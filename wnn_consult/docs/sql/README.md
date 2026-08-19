@@ -20,6 +20,12 @@
 신청서(의뢰서 [서식1]) + 동의 3종을 받아 두고, 위너넷이 승인할 때
 **`TBL_HOSP_MST` 를 새로 만들고 `TBL_USER_MST` 를 연계**한다. 계약(`TBL_HOSPCONT_MST`)은 승인 뒤 기존 화면에서 건다.
 
+**⛔ [TBL_JOIN_SIGN_20260819.sql](join/TBL_JOIN_SIGN_20260819.sql) 는 보류** — 도장·사인은 1차 범위 밖. 전부 새 표라 나중에 붙여도 기존 스키마를 안 건드린다(단 `TBL_AGREE_MST` ALTER 는 그때 같이).
+
+본문 시드 : [AGREE_TEXT_SEED_20260819.sql](join/AGREE_TEXT_SEED_20260819.sql)(서식1·2·3, 적용완료) · [AGREE_TEXT_FROM_CODE_20260819.sql](join/AGREE_TEXT_FROM_CODE_20260819.sql)(이용약관·처리위탁을 공통코드에서 복사, **미적용**)
+
+업무흐름은 [신규병원_가입_업무흐름.md](../신규병원_가입_업무흐름.md).
+
 만드는 표 : `TBL_AGREE_MST`(동의서·버전) · `TBL_JOIN_REQ`(신청) · `TBL_JOIN_MGR`(담당자) ·
 `TBL_JOIN_AGREE`(동의내역) · `TBL_JOIN_HIS`(처리이력).
 기존 표는 **ALTER 하지 않는다** — 연계키는 `TBL_JOIN_REQ.CFM_*` 가 들고 있다.

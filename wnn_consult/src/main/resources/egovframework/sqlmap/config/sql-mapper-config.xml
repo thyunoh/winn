@@ -13,6 +13,12 @@
         <typeAlias  alias="HospMdDTO"  type="egovframework.wnn_consult.user.model.HospMdDTO"/>
         <typeAlias  alias="MberDTO"    type="egovframework.wnn_consult.user.model.MberDTO"/>
         
+        <!-- 신규병원 가입신청 -->
+        <typeAlias  alias="JoinReqDTO"   type="egovframework.wnn_consult.join.model.JoinReqDTO"/>
+        <typeAlias  alias="JoinMgrDTO"   type="egovframework.wnn_consult.join.model.JoinMgrDTO"/>
+        <typeAlias  alias="JoinAgreeDTO" type="egovframework.wnn_consult.join.model.JoinAgreeDTO"/>
+        <typeAlias  alias="AgreeMdDTO"   type="egovframework.wnn_consult.join.model.AgreeMdDTO"/>
+
         <typeAlias  alias="NotiDTO"    type="egovframework.wnn_consult.mangr.model.NotiDTO"/>
         <typeAlias  alias="AsqDTO"     type="egovframework.wnn_consult.mangr.model.AsqDTO"/>
         <typeAlias  alias="FaqDTO"     type="egovframework.wnn_consult.mangr.model.FaqDTO"/>
