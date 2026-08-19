@@ -85,11 +85,6 @@ public class JoinReqDTO {
     private String  updUser;
     private String  updIp;
 
-    /* 승인 후 병원이 올리는 동의서 원본 — 이게 있어야 프로그램이 열린다 */
-    private String  docYn;          // 제출여부 Y/N
-    private String  docDttm;        // 제출일시
-    private String  docFileNm;      // 제출 파일명
-
     private String  passYn;         // 비밀번호 설정여부(Y/N) — 원문은 못 꺼낸다
     private String  reqStatNm;      // 처리상태명(공통코드) — 관리자 목록용
 
@@ -223,11 +218,4 @@ public class JoinReqDTO {
     public void setMgrList(List<JoinMgrDTO> mgrList) { this.mgrList = mgrList; }
     public List<JoinAgreeDTO> getAgreeList() { return agreeList; }
     public void setAgreeList(List<JoinAgreeDTO> agreeList) { this.agreeList = agreeList; }
-
-    public String getDocYn()            { return docYn; }
-    public void   setDocYn(String v)    { this.docYn = v; }
-    public String getDocDttm()          { return docDttm; }
-    public void   setDocDttm(String v)  { this.docDttm = v; }
-    public String getDocFileNm()        { return docFileNm; }
-    public void   setDocFileNm(String v){ this.docFileNm = v; }
 }

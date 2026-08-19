@@ -234,46 +234,4 @@ public class SftpService {
         }
     }
     
-
-    /**
-     * SFTP 파일만 지운다(DB 기록은 건드리지 않는다).
-     *
-     * 가입승인 롤백에서 쓴다. 롤백은 TBL_FILE_MST 기록을 트랜잭션 안에서 이미 지우므로,
-     * 여기서 또 지우면 안 된다. 없는 파일은 성공으로 본다 — 이미 목적을 이룬 상태다.
-     */
-    public boolean deleteOnly(String filePath) {
-        Session session = null;
-        ChannelSftp channelSftp = null;
-        try {
-            JSch jsch = new JSch();
-            session = jsch.getSession(SFTP_USER, SFTP_HOST, SFTP_PORT);
-            session.setPassword(SFTP_PASSWORD);
-
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-
-            session.connect();
-            channelSftp = (ChannelSftp) session.openChannel("sftp");
-            channelSftp.connect();
-
-            try {
-                channelSftp.rm(filePath);
-                System.out.println("🗑️ SFTP 삭제: " + filePath);
-            } catch (SftpException se) {
-                if (se.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
-                    System.out.println("↷ 이미 없는 파일: " + filePath);
-                } else {
-                    throw se;
-                }
-            }
-            return true;
-
-        } catch (Exception e) {
-            System.err.println("❌ SFTP 삭제 실패: " + filePath + " / " + e.getMessage());
-            return false;
-        } finally {
-            disconnectSftp(session, channelSftp);
-        }
-    }
 }

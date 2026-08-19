@@ -571,8 +571,7 @@
 							</select>
 						</div>						
 					</div>
-					<%-- [2026-08-19] 병원정보는 보는 화면이다. 파일 업로드·삭제는 계약관리에서만 한다. --%>
-					<form id="uploadForm" style="display:none;" action="${pageContext.request.contextPath}"
+					<form id="uploadForm" action="${pageContext.request.contextPath}"
 						method="post" enctype="multipart/form-data">
 						<input type="hidden" name="action" value="upload">
 						<div class="form-group row mb-1">
@@ -739,8 +738,8 @@
 							class="col-2 col-lg-2 col-form-label text-left">사용구분</label>
 						<div class="col-4 col-lg-4">
 							<select id="useYn_one" name="useYn_one" class="custom-select">
-								<option value="Y" selected>사용</option>
-								<option value="N">미사용</option>
+								<option value="Y">Y</option>
+								<option value="N" selected>N</option>
 							</select>
 						</div>
 					</div>
@@ -2537,7 +2536,6 @@
 				hctmpedit_Data = hctmpedit_Data || {}; 
 				hctmpedit_Data.hospCd_one   = hospidcd; // 기본값 저장
 				hctmpedit_Data.hospUuid_one = hospUuidcd;
-				hctmpedit_Data.joinDt_one   = selectedRowData.joinDt || "";   /* 계약 기본값용 가입일(2026-08-19) */
 			    if (hospidcd) {
 			        // AJAX 요청하여 hospUuid에 해당하는 데이터 가져오기
 			        $.ajax({
@@ -2611,23 +2609,6 @@
 		        }
 		    	$("#hospCd_one").val(hctmpedit_Data.hospCd_one ? hctmpedit_Data.hospCd_one : '');
 		        $("#hospUuid_one").val(hctmpedit_Data.hospUuid_one ? hctmpedit_Data.hospUuid_one : '');
-		            /* 계약 입력 기본값(2026-08-19 요청) — 매번 같은 값을 손으로 넣던 것을 미리 채운다.
-		               계약구분 적정성평가 / 시작일 = 가입일 / 종료일 20991231,
-		               승인일·중지일은 시작일·종료일과 같게 둔다(로그인 판정이 이 두 값을 본다). */
-		            if (document.getElementById('conactGb_one')) {
-		                /* 가입일 : 선택한 행 → 상단 병원정보 순서로 찾는다.
-		                   yyyymmdd 로 오면 화면 형식(yyyy-mm-dd)으로 바꾼다. */
-		                var _join = (hctmpedit_Data.joinDt_one || $('#joinDt').val() || '').trim();
-		                if (/^[0-9]{8}$/.test(_join))
-		                    _join = _join.substring(0,4) + '-' + _join.substring(4,6) + '-' + _join.substring(6,8);
-		                var _end  = '2099-12-31';
-		                $('#conactGb_one').val('2');       // 2 = 적정성평가
-		                $('#startDt_one').val(_join);
-		                $('#endDt_one').val(_end);
-		                $('#acceptDt_one').val(_join);     // 승인일자 = 시작일자
-		                $('#closeDt_one').val(_end);       // 중지일자 = 종료일자
-		                $('#useYn_one').val('Y');          // 사용구분 기본 '사용'
-		            }
 		    }   
 		    if (flag !== 'I') {
 				// 수정.삭제 모드 (대상확인)
@@ -4019,9 +4000,16 @@
 		                tableBody += "<td>" + regDttm + "</td>";
 
 		                if (fileUrl !== "#") {
-		                    /* 삭제 버튼 없음 — 병원정보는 보는 화면(2026-08-19).
-		                       여기서도 지울 수 있으면 승인문서가 실수로 사라진다. */
-		                    tableBody += "<td></td>";
+		                    // ✅ 삭제 버튼
+		                    tableBody += "<td style='text-align: center; vertical-align: middle;'>";
+		                    tableBody += "<a href='#' class='btn btn-link delete-file' " +
+		                                 "data-filepath ='" + doc.filePath     + "' " +
+		                                 "data-filetitle='" + doc.fileTitle    + "' " +
+		                                 "data-filegb   ='" + doc.fileGb       + "' " +
+		                                 "data-fileseq  ='" + doc.fileSeq      + "'>"; // fileSeq가 notiSeq인 경우
+		                    tableBody += "<i class='fa-solid fa-trash' style='font-size: 1.2em; color: black;'></i>";
+		                    tableBody += "</a>";
+		                    tableBody += "</td>";
 
 		                    // ✅ 다운로드 버튼
 		                    tableBody += "<td style='text-align: center; vertical-align: middle;'>";

@@ -31,12 +31,7 @@
   #joinReq .jr-btn{ border:1px solid #1f5a4b; background:#1f5a4b; color:#fff; border-radius:6px;
       padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
   #joinReq .jr-btn.ghost{ background:#fff; color:#1f5a4b; }
-  /* 반려는 되돌릴 수 없다. 승인 바로 옆에 비슷한 모양으로 두면 눌러야 할 것을 잘못 누른다
-     (2026-08-19 "승인 눌렀는데 반려창" 신고). 색을 확실히 나누고 사이를 벌린다. */
-  #joinReq .jr-btn.warn{ background:#fff; color:#b23b3b; border:1px solid #b23b3b; }
-  #joinReq #jrCfmBtn{ margin-right:26px; }
-  /* 버튼 크기를 서로 맞춘다(2026-08-19) — 닫기만 작으면 눌러야 할 것이 헷갈린다 */
-  #joinReq .jr-card h4 .jr-btn{ min-width:84px; text-align:center; }
+  #joinReq .jr-btn.warn{ background:#fff; color:#b23b3b; border-color:#e0b4b4; }
   #joinReq .jr-btn.mini{ padding:3px 10px; font-size:11.5px; border-color:#cfd8e0; color:#556570; background:#fff; }
   #joinReq .jr-btn:hover{ opacity:.9; }
 
@@ -48,7 +43,6 @@
   #joinReq .jr-card h4{ margin:0 0 10px; font-size:14px; font-weight:800; color:#1f5a4b;
                         display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   #joinReq .jr-card h4 .hint{ font-weight:500; font-size:12px; color:#8a99a3; }
-  #joinReq .jr-card h4 .hint{ margin-right:14px; }
 
   /* 목록 */
   #joinReq table.jr-grid{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -62,11 +56,10 @@
   #joinReq .jr-empty{ color:#8a99a3; font-size:12.5px; padding:22px 6px; text-align:center; }
 
   /* 상태 배지 */
-  #joinReq .st{ display:inline-block; border-radius:12px; padding:2px 10px; font-size:11.5px; font-weight:800; white-space:nowrap; }
+  #joinReq .st{ display:inline-block; border-radius:12px; padding:2px 10px; font-size:11.5px; font-weight:800; }
   #joinReq .st.s10{ background:#e7f0fb; color:#2f5c96; }
   #joinReq .st.s20{ background:#fff3d9; color:#8a6d00; }
   #joinReq .st.s30{ background:#e7f3ee; color:#1f5a4b; }
-  #joinReq .st.s40{ background:#eef7f2; color:#1f5a4b; border:1px solid #cfe6da; }
   #joinReq .st.s90{ background:#fdeaea; color:#a33; }
 
   /* 상세 : 의뢰서와 같은 라벨칸+값칸 표 */
@@ -78,22 +71,6 @@
   #joinReq .jr-none{ color:#8a99a3; }
   #joinReq .jr-detail{ display:none; }
   #joinReq .jr-detail.on{ display:block; }
-
-  /* ── 상단 고정 · 하단만 스크롤 (2026-08-19 요청) ─────────────────────
-     목록에서 다른 건을 고를 때마다 페이지 전체가 오르내리면 목록을 다시 찾아야 한다.
-     검색·목록은 제자리에 두고 상세만 자체 스크롤시킨다.
-     높이는 vh 에서 상단(검색+목록+여백)을 뺀 값 — 목록이 길어지면 아래에서 다시 잰다. */
-  #joinReq{ display:flex; flex-direction:column; height:calc(100vh - 92px);
-            overflow:hidden; padding-bottom:14px; }
-  #joinReq #jrZoomBox{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
-  #joinReq .jr-top{ flex:0 0 auto; }
-  #joinReq .jr-detail.on{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden;
-            padding-right:4px; scrollbar-width:thin; }
-  #joinReq .jr-detail.on::-webkit-scrollbar{ width:9px; }
-  #joinReq .jr-detail.on::-webkit-scrollbar-thumb{ background:#c8d3db; border-radius:5px; }
-  /* 목록이 많아도 상단이 화면을 다 먹지 않게 */
-  #joinReq .jr-scroll{ max-height:38vh; overflow-y:auto; }
-  #joinReq .jr-grid thead th{ position:sticky; top:0; z-index:2; }
 </style>
 
 <div class="jr-head">
@@ -110,7 +87,6 @@
 
 <div id="jrZoomBox">
 
-  <div class="jr-top">
   <div class="jr-card">
     <div class="jr-bar">
       <select id="jrStat" onchange="jrList();">
@@ -118,7 +94,6 @@
         <option value="10" selected>접수</option>
         <option value="20">검토중</option>
         <option value="30">승인</option>
-        <option value="40">동의서제출</option>
         <option value="90">반려</option>
       </select>
       <input type="text" id="jrKey" placeholder="요양기관기호 · 병원명 · 이메일" style="width:260px;"
@@ -130,7 +105,7 @@
     <div class="jr-scroll">
       <table class="jr-grid">
         <colgroup>
-          <col style="width:70px;"><col style="width:108px;"><col style="width:110px;"><col>
+          <col style="width:70px;"><col style="width:90px;"><col style="width:110px;"><col>
           <col style="width:110px;"><col style="width:130px;"><col style="width:180px;">
           <col style="width:70px;"><col style="width:130px;">
         </colgroup>
@@ -144,7 +119,6 @@
       </table>
     </div>
   </div>
-  </div>
 
   <div class="jr-detail" id="jrDetail">
     <div class="jr-card">
@@ -153,10 +127,7 @@
         <%-- 승인/반려는 접수(10)·검토중(20) 일 때만 보인다. 이미 처리된 건은 버튼이 없다. --%>
         <button type="button" class="jr-btn"      id="jrCfmBtn" onclick="jrConfirm();" style="display:none;">승인</button>
         <button type="button" class="jr-btn warn" id="jrRjtBtn" onclick="jrReject();"  style="display:none;">반려</button>
-        <button type="button" class="jr-btn warn" id="jrRbkBtn" onclick="jrRollback();" style="display:none;">승인취소</button>
-        <button type="button" class="jr-btn ghost" id="jrRjtCancelBtn" onclick="jrRjtCancel();" style="display:none;">반려취소</button>
-        <button type="button" class="jr-btn warn" id="jrCancelBtn" onclick="jrReqCancel();" style="display:none;">가입취소</button>
-        <button type="button" class="jr-btn ghost" onclick="jrClose();">닫기</button>
+        <button type="button" class="jr-btn ghost mini" onclick="jrClose();">닫기</button>
       </h4>
       <div id="jrDone" style="display:none; margin-bottom:9px; font-size:12.5px;"></div>
       <div id="jrInfo"></div>
@@ -184,17 +155,15 @@
   var CUR = null;   // 지금 펼친 신청번호
 
   /* wnn_consult 에는 ui-message.js 가 없다 — 이 화면에서 쓰는 알림·확인을 여기서 만든다.
-     SweetAlert 규격 : 알림 width 480 · 제목 19px · 버튼 15px · 아이콘 48px.
-     짧은 제목형은 15px 로 충분하지만, 이 화면 메시지는 한 문장이라 작게 보인다는
-     지적을 받아 키웠다(2026-08-19). 폭·아이콘은 그대로 두고 글자만 키운다. */
+     SweetAlert 는 컴팩트 규격(width 380 · 제목 15px · 아이콘 48px)으로 맞춘다. */
   function _alertBox(msg){
-    if (window.Swal) Swal.fire({ title:String(msg), width:480, customClass:{ popup:'jr-swal' },
+    if (window.Swal) Swal.fire({ title:String(msg), width:380, customClass:{ popup:'jr-swal' },
                                  confirmButtonText:'확인', confirmButtonColor:'#1f5a4b' });
     else alert(msg);
   }
   function _confirmBox(msg, onYes){
     if (window.Swal) {
-      Swal.fire({ icon:'question', title:String(msg), width:480,
+      Swal.fire({ icon:'question', title:String(msg), width:380,
                   customClass:{ popup:'jr-swal', icon:'jr-swal-icon' },
                   showCancelButton:true, confirmButtonText:'확인', cancelButtonText:'취소',
                   confirmButtonColor:'#1f5a4b' }).then(function(r){ if (r.isConfirmed) onYes(); });
@@ -202,9 +171,9 @@
   }
   (function(){
     var st = document.createElement('style');
-    st.textContent = '.jr-swal .swal2-title{ font-size:19px !important; font-weight:700 !important;'
-                   + ' line-height:1.6 !important; white-space:pre-line; padding:4px 14px 6px !important; }'
-                   + '.jr-swal .swal2-styled{ font-size:15px !important; padding:8px 26px !important; }'
+    st.textContent = '.jr-swal .swal2-title{ font-size:15px !important; font-weight:700 !important;'
+                   + ' line-height:1.55 !important; white-space:pre-line; padding:0 10px 4px !important; }'
+                   + '.jr-swal .swal2-styled{ font-size:13px !important; padding:6px 20px !important; }'
                    + '.jr-swal-icon{ width:48px !important; height:48px !important; font-size:24px !important;'
                    + ' border-width:3px !important; margin:12px auto 6px !important; }';
     document.head.appendChild(st);
@@ -354,12 +323,6 @@
         var open = (i.reqStat === '10' || i.reqStat === '20');
         gel('jrCfmBtn').style.display = open ? '' : 'none';
         gel('jrRjtBtn').style.display = open ? '' : 'none';
-        // 승인취소는 승인된 건(30·40)에서만 — 되돌릴 게 있어야 한다
-        gel('jrRbkBtn').style.display = (i.reqStat === '30' || i.reqStat === '40') ? '' : 'none';
-        // 반려취소는 반려건(90)에서만 — 접수로 되돌린다
-        gel('jrRjtCancelBtn').style.display = (i.reqStat === '90') ? '' : 'none';
-        // 신청 전체취소는 접수(10)에서만 — 아무것도 안 만들어진 단계다
-        gel('jrCancelBtn').style.display = (i.reqStat === '10') ? '' : 'none';
 
         var done = gel('jrDone');
         if (i.reqStat === '30') {
@@ -377,7 +340,7 @@
         }
 
         gel('jrDetail').classList.add('on');
-        gel('jrDetail').scrollTop = 0;   // 상세는 자체 스크롤 — 페이지를 움직이지 않는다
+        gel('jrDetail').scrollIntoView({ behavior:'smooth', block:'start' });
       },
       error:function(){ _alertBox('상세를 불러오지 못했습니다.'); }
     });
@@ -386,15 +349,14 @@
   /* ── 승인 · 반려 ──────────────────────────────────────────────── */
   window.jrConfirm = function(){
     if (!CUR) return;
-    console.log('[joinReq] 승인창 reqNo=' + CUR);
     if (!window.Swal) { _alertBox('확인창을 열 수 없습니다.'); return; }
     Swal.fire({
       icon: 'question',
       title: '신청번호 ' + CUR + ' 승인',
-      html: '<div style="font-size:14px; line-height:1.75; text-align:left;">'
+      html: '<div style="font-size:13px; line-height:1.7; text-align:left;">'
           + '병원이 새로 만들어지고, 신청 계정이 <b>병원관리자</b>로 등록됩니다.<br>'
-          + '<b>[계약관리]</b> 에서 계약을 넣어야 이용이 시작됩니다.<br>'
-          + '동의서 <b>PDF 는 병원이 직접 만들어 올립니다.</b></div>',
+          + '신청서·동의서 <b>PDF 가 계약 폴더에 올라갑니다.</b><br>'
+          + '계약은 승인 뒤 <b>[계약관리]</b> 에서 넣어야 이용이 시작됩니다.</div>',
       width: 420,
       customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
       showCancelButton: true,
@@ -407,7 +369,16 @@
         type:'post', url:'/join/joinReqCfm.do', dataType:'json', data:{ reqNo: CUR },
         success:function(d){
           if (d.error_code !== '0') { _alertBox(d.error_msg || '승인하지 못했습니다.'); return; }
-          // 완료 알림 없음(2026-08-19 요청) — 상태가 승인으로 바뀌는 게 화면에 보인다
+          Swal.fire({
+            icon: 'success',
+            title: '승인했습니다',
+            html: '<div style="font-size:13px; line-height:1.7;">'
+                + (d.pdf_msg ? esc(d.pdf_msg) + '<br>' : '')
+                + '<b>[계약관리]</b> 에서 계약을 등록해 주세요.</div>',
+            width: 400,
+            customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
+            confirmButtonText: '확인', confirmButtonColor: '#1f5a4b'
+          });
           var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
         },
         error:function(){ _alertBox('승인하지 못했습니다.'); }
@@ -419,13 +390,11 @@
      승인/반려 어느 쪽인지도 안 보인다(2026-08-19 지적). SweetAlert 입력창으로 받는다. */
   window.jrReject = function(){
     if (!CUR) return;
-    console.log('[joinReq] 반려창 reqNo=' + CUR);
     if (!window.Swal) { _alertBox('입력창을 열 수 없습니다.'); return; }
     Swal.fire({
       icon: 'warning',
       title: '신청번호 ' + CUR + ' 반려',
       input: 'text',
-      html: '<div style="font-size:12.5px; color:#b23b3b; line-height:1.6; text-align:left;">이 신청을 <b>반려</b>합니다. 승인하시려면 [취소] 를 누른 뒤 <b>승인</b> 버튼을 눌러 주세요.</div>',
       inputPlaceholder: '반려 사유 (신청 이력에 남습니다)',
       width: 420,
       customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
@@ -443,124 +412,12 @@
     });
   };
 
-  /* ── 가입취소(신청 전체취소) ────────────────────────────────────────────────
-     접수 단계라 병원·계정이 아직 없다. 신청서를 목록에서 내리고 이력만 남긴다.
-     행을 지우지 않으므로 나중에 무엇이 취소됐는지 추적할 수 있다. */
-  window.jrReqCancel = function(){
-    if (!CUR) return;
-    console.log('[joinReq] 가입취소창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('입력창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'warning',
-      title: '신청번호 ' + CUR + ' 가입취소',
-      html: '<div style="font-size:14px; line-height:1.75; text-align:left;">'
-          + '이 신청을 <b>목록에서 내립니다.</b> 병원·계정은 아직 만들어지지 않았습니다.<br>'
-          + '같은 요양기관기호로 <b>다시 신청</b>할 수 있습니다.</div>',
-      input: 'text',
-      inputPlaceholder: '취소 사유 (신청 이력에 남습니다)',
-      width: 460,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '가입취소',
-      cancelButtonText: '닫기',
-      confirmButtonColor: '#b23b3b',
-      inputValidator: function(v){
-        if (!v || String(v).trim() === '') return '취소 사유를 입력하세요.';
-        return null;
-      }
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqCancel.do', dataType:'json',
-        data:{ reqNo: CUR, rjtRsn: String(r.value).trim() },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '취소하지 못했습니다.'); return; }
-          jrClose(); jrList();
-        },
-        error:function(){ _alertBox('취소하지 못했습니다.'); }
-      });
-    });
-  };
-
-  /* ── 반려취소 ──────────────────────────────────────────────────────
-     반려는 병원·사용자를 만들지 않으므로 지울 것이 없다. 상태만 접수로 되돌린다. */
-  window.jrRjtCancel = function(){
-    if (!CUR) return;
-    console.log('[joinReq] 반려취소창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('확인창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'question',
-      title: '신청번호 ' + CUR + ' 반려취소',
-      html: '<div style="font-size:14px; line-height:1.75; text-align:left;">'
-          + '반려를 <b>접수</b> 상태로 되돌립니다. 반려 사유는 지워집니다.<br>'
-          + '되돌린 뒤 다시 승인하거나 다시 반려할 수 있습니다.</div>',
-      width: 430,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '반려취소',
-      cancelButtonText: '닫기',
-      confirmButtonColor: '#1f5a4b'
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqRjtCancel.do', dataType:'json', data:{ reqNo: CUR },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '반려를 취소하지 못했습니다.'); return; }
-          // 완료 알림 없음 — 목록·상세가 바로 접수 상태로 바뀐다
-          var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
-        },
-        error:function(){ _alertBox('반려를 취소하지 못했습니다.'); }
-      });
-    });
-  };
-
-  /* ── 승인취소(롤백) ────────────────────────────────────────────────
-     병원·사용자를 지우는 되돌릴 수 없는 처리다. 무엇이 지워지는지 먼저 보여주고,
-     사유를 받는다. 계약이 있거나 사용자가 늘었으면 서버가 거부한다. */
-  window.jrRollback = function(){
-    if (!CUR) return;
-    console.log('[joinReq] 승인취소창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('입력창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'warning',
-      title: '신청번호 ' + CUR + ' 승인취소',
-      html: '<div style="font-size:12.5px; line-height:1.7; text-align:left;">'
-          + '승인으로 만들어진 <b>병원 · 사용자 · 회원 · 동의확정</b> 이 모두 지워지고,<br>'
-          + '신청은 <b>접수</b> 상태로 돌아갑니다. 되돌릴 수 없습니다.<br>'
-          + '<span style="color:#7b8b97;">계약이 등록돼 있거나 사용자가 늘었으면 취소되지 않습니다.</span></div>',
-      input: 'text',
-      inputPlaceholder: '취소 사유 (신청 이력에 남습니다)',
-      width: 440,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '승인취소',
-      cancelButtonText: '닫기',
-      confirmButtonColor: '#b23b3b',
-      inputValidator: function(v){
-        if (!v || String(v).trim() === '') return '취소 사유를 입력하세요.';
-        return null;
-      }
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqRollback.do', dataType:'json',
-        data:{ reqNo: CUR, rjtRsn: String(r.value).trim() },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '승인취소하지 못했습니다.'); return; }
-          // 완료 알림은 뺀다(2026-08-19 요청) — 목록·상세가 바로 접수 상태로 바뀌어 눈에 보인다
-          var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
-        },
-        error:function(){ _alertBox('승인취소하지 못했습니다.'); }
-      });
-    });
-  };
-
   function jrRejectExec(rsn){
     $.ajax({
       type:'post', url:'/join/joinReqRjt.do', dataType:'json', data:{ reqNo: CUR, rjtRsn: rsn },
       success:function(d){
         if (d.error_code !== '0') { _alertBox(d.error_msg || '반려하지 못했습니다.'); return; }
-        // 완료 알림 없음 — 상태가 반려로 바뀌는 게 화면에 보인다
+        _alertBox('반려했습니다.');
         var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
       },
       error:function(){ _alertBox('반려하지 못했습니다.'); }

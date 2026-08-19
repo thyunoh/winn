@@ -168,9 +168,7 @@
 
 	<!-- 담당자 -->
 	<select id="selJoinMgrList" parameterType="JoinReqDTO" resultType="JoinMgrDTO"><![CDATA[
-		SELECT M.MGR_GB, M.MGR_SEQ, M.DEPT_NM, M.JOB_NM, M.MGR_NM, M.MGR_TEL, M.EMAIL,
-		       (SELECT D.SUB_CODE_NM FROM TBL_CODE_DTL D
-		         WHERE D.CODE_GB='Z' AND D.CODE_CD='MGR_GB' AND D.SUB_CODE=M.MGR_GB) AS MGR_GB_NM
+		SELECT M.MGR_GB, M.MGR_SEQ, M.DEPT_NM, M.JOB_NM, M.MGR_NM, M.MGR_TEL, M.EMAIL
 		  FROM TBL_JOIN_MGR M
 		 WHERE M.REQ_NO = #{reqNo} AND M.ACTION_YN = 'Y'
 		 ORDER BY M.MGR_GB, M.MGR_SEQ
@@ -179,8 +177,7 @@
 	<!-- 동의내역 (동의서명·서식번호를 붙여 준다) -->
 	<select id="selJoinAgreeList" parameterType="JoinReqDTO" resultType="JoinAgreeDTO"><![CDATA[
 		SELECT A.AGREE_CD, A.VER_NO, A.AGREE_YN, A.READ_YN, A.AGREE_IP, A.AGREE_NM,
-		       DATE_FORMAT(A.AGREE_DTTM,'%Y-%m-%d %H:%i') AS AGREE_DTTM,
-		       M.AGREE_NM AS AGREE_NM_TXT, M.FORM_NO, M.ESS_YN, M.AGREE_TEXT AS CONTENTS
+		       M.AGREE_NM AS AGREE_NM_TXT, M.FORM_NO, M.ESS_YN
 		  FROM TBL_JOIN_AGREE A
 		  LEFT JOIN TBL_AGREE_MST M
 		         ON M.AGREE_CD = A.AGREE_CD AND M.VER_NO = A.VER_NO
@@ -205,13 +202,12 @@
 		INSERT INTO TBL_HOSP_MST
 		     ( HOSP_CD, JOB_SEQ, HOSP_NM, HOSP_ADDR, HOSP_EXTRADR, HOSP_CEO, BUSI_NUM,
 		       ZIP_CD, HOSP_TEL, HOSP_FAX, START_DT, END_DT, JOIN_DT, ACCEPT_DT,
-		       USE_YN, ACTION_YN, WARDCNT, HOSP_UUID, WINNER_YN, HOS_GRD, REG_DTTM, REG_USER, REG_IP )
+		       USE_YN, ACTION_YN, WARDCNT, HOSP_UUID, WINNER_YN, REG_DTTM, REG_USER, REG_IP )
 		SELECT R.HOSP_CD, 1, R.HOSP_NM, R.HOSP_ADDR, R.HOSP_EXTRADR, R.HOSP_CEO, R.BUSI_NUM,
 		       R.ZIP_CD, R.HOSP_TEL, R.HOSP_FAX,
 		       DATE_FORMAT(NOW(),'%Y%m%d'), '20991231',
 		       DATE_FORMAT(NOW(),'%Y%m%d'), DATE_FORMAT(NOW(),'%Y%m%d'),
-		       /* 종별등급은 기본 '병원'(3). 담당자가 병원정보에서 바꾼다(2026-08-19). */
-		       'Y', 'Y', R.WARDCNT, UUID(), 'N', '3', NOW(), #{cfmUser}, #{regIp}
+		       'Y', 'Y', R.WARDCNT, UUID(), 'N', NOW(), #{cfmUser}, #{regIp}
 		  FROM TBL_JOIN_REQ R
 		 WHERE R.REQ_NO = #{reqNo}
 	]]></insert>
@@ -313,279 +309,5 @@
 		SELECT COUNT(*) FROM TBL_JOIN_REQ
 		 WHERE ACTION_YN = 'Y' AND REQ_STAT IN ('10','20')
 	]]></select>
-
-	<!-- ============================================================================
-	     병원 쪽 — 승인 후 동의서 원본 제출
-	     승인만으로는 프로그램을 쓸 수 없다. 서명·날인한 동의서를 올려야 화면이 열린다.
-	     모든 조회는 HOSP_CD 를 쿠키에서 강제로 넣는다(자기 병원 것만 보이게).
-	     ========================================================================== -->
-
-	<!-- 내 병원의 승인건 1 건 (가장 최근) -->
-	<select id="selMyJoinReq" parameterType="egovframework.wnn_medcost.join.model.JoinReqDTO"
-	        resultType="egovframework.wnn_medcost.join.model.JoinReqDTO"><![CDATA[
-		SELECT R.REQ_NO      AS reqNo
-		     , R.REQ_STAT    AS reqStat
-		     , R.DOC_YN      AS docYn
-		     , DATE_FORMAT(R.DOC_DTTM,  '%Y-%m-%d %H:%i') AS docDttm
-		     , R.DOC_FILE_NM AS docFileNm
-		     , R.HOSP_CD     AS hospCd
-		     , R.HOSP_NM     AS hospNm
-		     , R.HOSP_CEO    AS hospCeo
-		     , R.BUSI_NUM    AS busiNum
-		     , R.ZIP_CD      AS zipCd
-		     , R.HOSP_ADDR   AS hospAddr
-		     , R.HOSP_EXTRADR AS hospExtradr
-		     , R.HOSP_TEL    AS hospTel
-		     , R.HOSP_FAX    AS hospFax
-		     , R.WARDCNT     AS wardcnt
-		     , TO_BASE64(R.SEAL_IMG) AS sealImg
-		     , R.SEAL_MIME   AS sealMime
-		     , R.SEAL_NM     AS sealNm
-		     , R.OCS_COMPANY AS ocsCompany
-		     , R.OCS_USER_ID AS ocsUserId
-		     , CAST(R.HIRA_CERT_PW AS CHAR) AS hiraCertPw
-		     , R.PC_USE_GB   AS pcUseGb
-		     , R.PC_USE_TIME AS pcUseTime
-		     , R.PC_USE_STDT AS pcUseStdt
-		     , R.ASQ_DAY     AS asqDay
-		     , R.ASQ_BIGO    AS asqBigo
-		     , R.EVAL_GOAL   AS evalGoal
-		     , R.CONACT_GB   AS conactGb
-		     , R.EMAIL       AS email
-		     , R.MBR_NM      AS mbrNm
-		     , R.JOB_NM      AS jobNm
-		     , R.MBR_TEL     AS mbrTel
-		     , R.BIGO        AS bigo
-		     , DATE_FORMAT(R.REQ_DTTM,  '%Y-%m-%d %H:%i') AS reqDttm
-		     , DATE_FORMAT(R.CFM_DTTM,  '%Y-%m-%d %H:%i') AS cfmDttm
-		  FROM TBL_JOIN_REQ R
-		 WHERE R.ACTION_YN = 'Y'
-		   AND R.HOSP_CD   = #{hospCd}
-		   AND R.REQ_STAT IN ('30','40')
-		 ORDER BY R.REQ_NO DESC
-		 LIMIT 1
-	]]></select>
-
-	<!-- 동의서 제출 확정 : 상태 30 → 40 -->
-	<update id="updateDocSubmit" parameterType="egovframework.wnn_medcost.join.model.JoinReqDTO"><![CDATA[
-		UPDATE TBL_JOIN_REQ
-		   SET DOC_YN      = 'Y'
-		     , DOC_DTTM    = NOW()
-		     , DOC_FILE_NM = #{docFileNm}
-		     , REQ_STAT    = '40'
-		     , UPD_DTTM    = NOW()
-		     , UPD_USER    = #{cfmUser}
-		 WHERE REQ_NO   = #{reqNo}
-		   AND HOSP_CD  = #{hospCd}
-		   AND REQ_STAT = '30'
-	]]></update>
-
-	<!-- 화면 진입 게이트 : 1 이면 "동의서 제출 안 한 승인병원" -->
-	<select id="selDocGate" parameterType="string" resultType="int"><![CDATA[
-		SELECT COUNT(*)
-		  FROM TBL_JOIN_REQ
-		 WHERE ACTION_YN = 'Y'
-		   AND HOSP_CD   = #{value}
-		   AND REQ_STAT  = '30'
-		   AND DOC_YN    = 'N'
-	]]></select>
-
-
-	<!-- ============================================================================
-	     승인 롤백(승인취소)                                                2026-08-19
-
-	     승인이 만든 것을 정확히 되돌린다. 지우는 대상은 **승인이 보관해 둔 연계키**
-	     (CFM_HOSP_CD / CFM_HOSP_SEQ / HOSP_UUID / CFM_USER_ID)로만 찍는다.
-	     요양기관기호만 보고 지우면 다른 경로로 만든 병원까지 날아간다.
-
-	     소프트삭제(ACTION_YN='N')가 아니라 **진짜 삭제**다. TBL_HOSP_MST 의 PK 가
-	     (HOSP_CD, JOB_SEQ) 이고 승인은 JOB_SEQ=1 로 넣으므로, 남겨두면 다시 승인할 때
-	     PK 충돌로 막힌다. 롤백의 목적이 "다시 승인할 수 있게"이므로 지운다.
-	     ========================================================================== -->
-
-	<!-- 계약이 있으면 롤백 금지 : 이미 쓰고 있다는 뜻이다 -->
-	<select id="selContCnt" parameterType="string" resultType="int"><![CDATA[
-		SELECT COUNT(*) FROM TBL_HOSPCONT_MST WHERE HOSP_CD = #{value}
-	]]></select>
-
-	<!-- 승인으로 만든 계정 말고 다른 사용자가 생겼으면 롤백 금지 -->
-	<select id="selOtherUserCnt" parameterType="JoinReqDTO" resultType="int"><![CDATA[
-		SELECT COUNT(*)
-		  FROM TBL_USER_MST
-		 WHERE HOSP_CD  = #{cfmHospCd}
-		   AND USER_ID <> #{cfmUserId}
-	]]></select>
-
-	<!-- 승인이 만든 병원행이 맞는지 UUID 로 확인 : 1 이어야 한다 -->
-	<select id="selHospUuidChk" parameterType="JoinReqDTO" resultType="int"><![CDATA[
-		SELECT COUNT(*)
-		  FROM TBL_HOSP_MST
-		 WHERE HOSP_CD   = #{cfmHospCd}
-		   AND JOB_SEQ   = #{cfmHospSeq}
-		   AND HOSP_UUID = #{hospUuid}
-	]]></select>
-
-	<!-- 계약도 함께 취소한다(2026-08-19 지시). 병원 자체가 사라지므로 남겨두면 고아행이 된다. -->
-	<delete id="delContFromReq" parameterType="JoinReqDTO"><![CDATA[
-		DELETE FROM TBL_HOSPCONT_MST WHERE HOSP_CD = #{cfmHospCd}
-	]]></delete>
-
-	<!-- 승인 뒤 계약폴더에 올라간 파일 목록 (SFTP 실제 파일까지 지우려면 경로가 필요하다) -->
-	<select id="selJoinFileList" parameterType="JoinReqDTO" resultType="java.util.Map"><![CDATA[
-		SELECT SEQ AS seq, FILE_PATH AS filePath, FILE_TITLE AS fileTitle, FILE_SEQ AS fileSeq, FILE_GB AS fileGb
-		  FROM TBL_FILE_MST
-		 WHERE HOSP_CD = #{cfmHospCd} AND FILE_GB = 'C' AND FILE_SEQ = '1'
-	]]></select>
-
-	<delete id="delJoinFiles" parameterType="JoinReqDTO"><![CDATA[
-		DELETE FROM TBL_FILE_MST
-		 WHERE HOSP_CD = #{cfmHospCd} AND FILE_GB = 'C' AND FILE_SEQ = '1'
-	]]></delete>
-
-	<delete id="delHospSignFromReq" parameterType="JoinReqDTO"><![CDATA[
-		DELETE FROM TBL_HOSPSIGN_MST WHERE HOSP_CD = #{cfmHospCd}
-	]]></delete>
-
-	<delete id="delMemberFromReq" parameterType="JoinReqDTO"><![CDATA[
-		DELETE FROM TBL_MEMBER_MST WHERE HOSP_CD = #{cfmHospCd} AND EMAIL = #{cfmUserId}
-	]]></delete>
-
-	<delete id="delUserFromReq" parameterType="JoinReqDTO"><![CDATA[
-		DELETE FROM TBL_USER_MST
-		 WHERE HOSP_CD = #{cfmHospCd} AND USER_ID = #{cfmUserId} AND JOB_SEQ = #{cfmUserSeq}
-	]]></delete>
-
-	<delete id="delHospFromReq" parameterType="JoinReqDTO"><![CDATA[
-		DELETE FROM TBL_HOSP_MST
-		 WHERE HOSP_CD = #{cfmHospCd} AND JOB_SEQ = #{cfmHospSeq} AND HOSP_UUID = #{hospUuid}
-	]]></delete>
-
-	<!-- 신청은 접수(10) 로 되돌린다. 동의서 제출도 함께 풀린다. -->
-	<update id="updateReqRollback" parameterType="JoinReqDTO"><![CDATA[
-		UPDATE TBL_JOIN_REQ
-		   SET REQ_STAT     = '10',
-		       /* 제출 표시도 함께 되돌린다 — 올렸던 파일은 롤백이 지우므로
-		          'Y' 로 남겨두면 다시 승인해도 제출화면이 뜨지 않는다(2026-08-19). */
-		       DOC_YN       = 'N',
-		       DOC_DTTM     = NULL,
-		       DOC_FILE_NM  = NULL,
-		       CFM_HOSP_CD  = NULL,
-		       CFM_HOSP_SEQ = NULL,
-		       CFM_USER_ID  = NULL,
-		       CFM_USER_SEQ = NULL,
-		       CFM_START_DT = NULL,
-		       CFM_DTTM     = NULL,
-		       CFM_USER     = NULL,
-		       UPD_DTTM     = NOW(),
-		       UPD_USER     = #{cfmUser},
-		       UPD_IP       = #{regIp}
-		 WHERE REQ_NO = #{reqNo}
-		   AND REQ_STAT IN ('30','40')
-	]]></update>
-
-	<!-- 롤백용 연계키만 뽑는다(상세조회는 도장이미지까지 실어서 무겁다) -->
-	<select id="selReqKeys" parameterType="JoinReqDTO" resultType="JoinReqDTO"><![CDATA[
-		SELECT REQ_NO       AS reqNo
-		     , REQ_STAT     AS reqStat
-		     , HOSP_CD      AS hospCd
-		     , HOSP_NM      AS hospNm
-		     , CFM_HOSP_CD  AS cfmHospCd
-		     , CFM_HOSP_SEQ AS cfmHospSeq
-		     , CFM_USER_ID  AS cfmUserId
-		     , CFM_USER_SEQ AS cfmUserSeq
-		     , HOSP_UUID    AS hospUuid
-		  FROM TBL_JOIN_REQ
-		 WHERE REQ_NO = #{reqNo}
-	]]></select>
-
-
-	<!-- 반려취소 : 90 → 10. 반려는 아무것도 만들지 않으므로 상태·사유만 되돌리면 된다. -->
-	<update id="updateReqUnreject" parameterType="JoinReqDTO"><![CDATA[
-		UPDATE TBL_JOIN_REQ
-		   SET REQ_STAT = '10',
-		       RJT_RSN  = NULL,
-		       CFM_DTTM = NULL,
-		       CFM_USER = NULL,
-		       UPD_DTTM = NOW(),
-		       UPD_USER = #{cfmUser},
-		       UPD_IP   = #{regIp}
-		 WHERE REQ_NO   = #{reqNo}
-		   AND REQ_STAT = '90'
-	]]></update>
-
-
-	<!-- ============================================================================
-	     병원이 로그인해서 신청내역을 고친다                              2026-08-19
-
-	     고칠 수 있는 것은 **문서에 찍히는 병원정보 7가지**뿐이다.
-	     요양기관기호(키)·이메일(로그인 ID)·비밀번호는 건드리지 않는다 —
-	     바뀌면 승인으로 만들어진 병원·계정과 어긋난다.
-
-	     조건에 HOSP_CD 를 함께 넣어 **자기 병원 것만** 고쳐지게 한다.
-	     ========================================================================== -->
-	<update id="updateMyJoinReq" parameterType="egovframework.wnn_medcost.join.model.JoinReqDTO"><![CDATA[
-		UPDATE TBL_JOIN_REQ
-		   SET HOSP_NM      = #{hospNm}
-		     , HOSP_CEO     = #{hospCeo}
-		     , HOSP_TEL     = #{hospTel}
-		     , HOSP_FAX     = #{hospFax}
-		     , BUSI_NUM     = #{busiNum}
-		     , ZIP_CD       = #{zipCd}
-		     , HOSP_ADDR    = #{hospAddr}
-		     , HOSP_EXTRADR = #{hospExtradr}
-		     , WARDCNT      = NULLIF(TRIM(IFNULL(#{wardcnt},'')),'')
-		     , UPD_DTTM     = NOW()
-		     , UPD_USER     = #{cfmUser}
-		     , UPD_IP       = #{regIp}
-		 WHERE REQ_NO   = #{reqNo}
-		   AND HOSP_CD  = #{hospCd}
-		   AND REQ_STAT IN ('30','40')
-	]]></update>
-
-	<!-- 병원마스터에도 같이 반영한다. 승인 뒤에는 화면·문서가 이쪽을 보므로
-	     신청서만 고치면 두 곳이 어긋난다. -->
-	<update id="updateHospFromMy" parameterType="egovframework.wnn_medcost.join.model.JoinReqDTO"><![CDATA[
-		UPDATE TBL_HOSP_MST
-		   SET HOSP_NM      = #{hospNm}
-		     , HOSP_CEO     = #{hospCeo}
-		     , HOSP_TEL     = #{hospTel}
-		     , HOSP_FAX     = #{hospFax}
-		     , BUSI_NUM     = #{busiNum}
-		     , ZIP_CD       = #{zipCd}
-		     , HOSP_ADDR    = #{hospAddr}
-		     , HOSP_EXTRADR = #{hospExtradr}
-		     , WARDCNT      = NULLIF(TRIM(IFNULL(#{wardcnt},'')),'')
-		     , UPD_DTTM     = NOW()
-		     , UPD_USER     = #{cfmUser}
-		     , UPD_IP       = #{regIp}
-		 WHERE HOSP_CD   = #{hospCd}
-		   AND ACTION_YN = 'Y'
-	]]></update>
-
-
-	<!-- ============================================================================
-	     신청 전체취소 — 접수·검토중 건을 없던 일로 한다               2026-08-19
-
-	     행을 지우지 않고 ACTION_YN='N' 으로 내린다. 목록·조회가 모두 'Y' 만 보므로
-	     화면에서는 사라지고, 누가 언제 무엇을 취소했는지는 이력에 남는다.
-	     같은 요양기관기호로 다시 신청할 수 있다(중복확인이 'Y' 만 본다).
-
-	     승인된 건은 대상이 아니다 — 병원·계정이 이미 만들어져 있어 [승인취소] 를
-	     먼저 해야 한다.
-	     ========================================================================== -->
-	<update id="updateReqCancel" parameterType="JoinReqDTO"><![CDATA[
-		UPDATE TBL_JOIN_REQ
-		   SET ACTION_YN = 'N',
-		       UPD_DTTM  = NOW(),
-		       UPD_USER  = #{cfmUser},
-		       UPD_IP    = #{regIp}
-		 WHERE REQ_NO   = #{reqNo}
-		   AND REQ_STAT = '10'
-		   AND ACTION_YN = 'Y'
-	]]></update>
-
-	<update id="updateMgrCancel" parameterType="JoinReqDTO"><![CDATA[
-		UPDATE TBL_JOIN_MGR SET ACTION_YN = 'N' WHERE REQ_NO = #{reqNo}
-	]]></update>
 
 </mapper>

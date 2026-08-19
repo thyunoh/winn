@@ -44,4 +44,12 @@ public class JoinAgreeDTO {
     public void setEssYn(String essYn) { this.essYn = essYn; }
     public String getFormNo() { return formNo; }
     public void setFormNo(String formNo) { this.formNo = formNo; }
+
+    private String agreeDttm;   // 동의일시 — 문서에 찍힌다
+    public String getAgreeDttm() { return agreeDttm; }
+    public void setAgreeDttm(String v) { this.agreeDttm = v; }
+
+    private String contents;    // 동의서 본문 — 문서 2·3장에 그대로 들어간다
+    public String getContents() { return contents; }
+    public void setContents(String v) { this.contents = v; }
 }

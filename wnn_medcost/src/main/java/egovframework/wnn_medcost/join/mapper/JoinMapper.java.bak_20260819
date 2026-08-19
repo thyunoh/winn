@@ -35,28 +35,4 @@ public interface JoinMapper {
 
     /** 접수 대기(10·20) 건수 — 사이드바 메뉴 노출 판단용 */
     int selJoinReqCnt() throws Exception;
-
-    /* 병원 쪽 — 승인 후 동의서 원본 제출 */
-    JoinReqDTO selMyJoinReq(JoinReqDTO dto) throws Exception;
-    int  updateDocSubmit(JoinReqDTO dto) throws Exception;
-    int  selDocGate(String hospCd) throws Exception;
-
-    /* 승인 롤백 */
-    JoinReqDTO selReqKeys(JoinReqDTO dto) throws Exception;
-    int  selContCnt(String hospCd) throws Exception;
-    int  selOtherUserCnt(JoinReqDTO dto) throws Exception;
-    int  selHospUuidChk(JoinReqDTO dto) throws Exception;
-    int  delHospSignFromReq(JoinReqDTO dto) throws Exception;
-    int  delMemberFromReq(JoinReqDTO dto) throws Exception;
-    int  delUserFromReq(JoinReqDTO dto) throws Exception;
-    int  delHospFromReq(JoinReqDTO dto) throws Exception;
-    int  updateReqRollback(JoinReqDTO dto) throws Exception;
-    int  delContFromReq(JoinReqDTO dto) throws Exception;
-    java.util.List<java.util.Map<String,Object>> selJoinFileList(JoinReqDTO dto) throws Exception;
-    int  delJoinFiles(JoinReqDTO dto) throws Exception;
-    int  updateReqUnreject(JoinReqDTO dto) throws Exception;
-    int updateMyJoinReq(JoinReqDTO dto) throws Exception;
-    int updateHospFromMy(JoinReqDTO dto) throws Exception;
-    int updateReqCancel(JoinReqDTO dto) throws Exception;
-    int updateMgrCancel(JoinReqDTO dto) throws Exception;
 }

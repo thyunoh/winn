@@ -40,4 +40,8 @@ public class JoinMgrDTO {
     public void setRegUser(String regUser) { this.regUser = regUser; }
     public String getRegIp() { return regIp; }
     public void setRegIp(String regIp) { this.regIp = regIp; }
+
+    private String mgrGbNm;   // 담당구분명 — 문서에 그대로 찍힌다
+    public String getMgrGbNm() { return mgrGbNm; }
+    public void setMgrGbNm(String v) { this.mgrGbNm = v; }
 }

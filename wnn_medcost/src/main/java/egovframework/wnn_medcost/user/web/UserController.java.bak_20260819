@@ -64,7 +64,6 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import egovframework.wnn_medcost.join.service.JoinService;
 
 @Controller
 @RequestMapping("/user")  // 클래스 레벨에서 기본 경로 설정
@@ -75,10 +74,6 @@ public class UserController extends BaseController {
 	
 	@Resource(name = "UserService") // 서비스 선언
 	private UserService svc;
-
-	/* 신규병원 동의서 게이트 확인용 — 조회 한 번뿐이고, 실패하면 그냥 통과시킨다 */
-	@Resource(name = "JoinService")
-	private JoinService joinSvc;
 
 	//메인화면 호출
 	@RequestMapping(value = "/" , method = RequestMethod.GET) 
@@ -132,23 +127,6 @@ public class UserController extends BaseController {
 	}
 	
 	
-	/**
-	 * 신규병원 동의서 게이트.
-	 *
-	 * 승인(30)만 받고 동의서 원본을 아직 안 올린 병원은 대시보드 대신 제출화면으로 보낸다.
-	 * 판정에 실패하면 무조건 통과시킨다 — 기존 병원이 이 조회 하나 때문에
-	 * 프로그램에 못 들어가는 일이 있어서는 안 된다.
-	 */
-	private boolean needJoinDocs(String s_hospid, String s_mainfg) {
-		try {
-			if ("1".equals(s_mainfg)) return false;      // 위너넷 직원은 해당 없음
-			return joinSvc.selDocGate(s_hospid) > 0;
-		} catch (Exception ex) {
-			log.warn(" 동의서 게이트 확인 실패 — 통과시킨다 hospCd=" + s_hospid, ex);
-			return false;
-		}
-	}
-
 	@RequestMapping(value="/dashboard.do")
     public String main1(HttpServletRequest request, ModelMap model) throws Exception {
 		
@@ -160,12 +138,6 @@ public class UserController extends BaseController {
 			//   반환한다(로그인 안 한 직접 URL 접근 차단 겸용).
 			String s_hospid = cookie_value.get("s_hospid");
 			if (s_hospid != null && !s_hospid.trim().isEmpty()) {
-				// 승인은 받았지만 동의서 원본을 아직 안 올린 신규병원 → 제출화면으로.
-				//   제출해야 대시보드·메뉴가 열린다(계약은 따로 있어야 메뉴가 찬다).
-				if (needJoinDocs(s_hospid.trim(), cookie_value.get("s_mainfg"))) {
-					model.addAttribute("hospCd", s_hospid.trim());
-					return ".main/mangr/joinDocs";
-				}
 				return ".main/dashboard";
 			} else {
 				return ".login/LoginWinCT";
