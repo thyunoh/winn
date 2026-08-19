@@ -3836,6 +3836,7 @@
 		    });
 		});
 		
+		
 		function openHospitalSearch(callback) {
 		    openCommonSearch("hospital", function (data) {
 		        console.log("받은 병원 데이터:", data);
