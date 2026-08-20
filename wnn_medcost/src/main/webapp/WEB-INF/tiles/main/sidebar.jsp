@@ -2754,16 +2754,16 @@ $(document).ready(function() {
       if (href.indexOf('/join/joinDocs.do') >= 0) return;   // 제출 화면만 열어둔다
       a.style.opacity = '.45';
       a.style.pointerEvents = 'none';
-      a.setAttribute('title', '신청서를 제출하셔야 이용하실 수 있습니다.');
+      a.setAttribute('title', '동의서를 제출하셔야 이용하실 수 있습니다.');
     });
 
     var msg = document.createElement('li');
     msg.style.cssText = 'padding:10px 14px; margin:6px 10px; border-radius:6px;'
                       + 'background:#fff8e8; border:1px solid #f0d9a8; color:#8a6420;'
                       + 'font-size:12px; line-height:1.6; list-style:none;';
-    msg.innerHTML = '신청서를 제출하셔야<br>프로그램을 이용하실 수 있습니다.'
+    msg.innerHTML = '동의서를 제출하셔야<br>프로그램을 이용하실 수 있습니다.'
                   + '<div style="margin-top:6px;"><a href="/join/joinDocs.do"'
-                  + ' style="color:#1f5a4b; font-weight:700;">신청서 제출하러 가기 →</a></div>';
+                  + ' style="color:#1f5a4b; font-weight:700;">동의서 제출하러 가기 →</a></div>';
     box.insertBefore(msg, box.firstChild);
   }
 

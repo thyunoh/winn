@@ -53,14 +53,30 @@
 </style>
 
 <div class="jd-head">
-  <h3>신청서 제출</h3>
+  <%-- ★[2026-08-20 요청] 화면·단계 이름을 「신청서 제출」 → **「동의서 제출」** 로.
+       상태값 40 의 이름도 이미 '동의서제출'(joinReq.jsp 상태 콤보)이라 그쪽과도 맞는다.
+       PDF 쪽 이름도 함께 바꿨다(2026-08-20 «신청서 PDF도 동의서로») —
+       단추 「동의서 PDF 만들기」·「동의서 미리보기」·파일명 `동의서_<기호>_<신청번호>.pdf`.
+       ⚠**문서 1장째의 제목(위너넷 적정성 컨설팅 의뢰서 / 신규병원 가입신청서)은 그대로 둔다** —
+         그건 서식 자체의 이름이다(2·3장이 동의서). 바꾸려면 서식 문구를 고치는 것이라 별도 확인이 필요하다. --%>
+  <h3>동의서 제출</h3>
   <span style="font-size:12.5px; color:#7b8b97;" id="jdSub"></span>
+  <%-- ★[2026-08-20 요청] 글자 축소·확대 — 가입신청 화면(joinReq.jsp)·신청서(join_apply.jsp)와 같은 조작.
+       오른쪽 끝에 붙인다(.jd-head 가 flex 라 margin-left:auto 로 민다). --%>
+  <span id="jdZoomBtns" style="margin-left:auto; white-space:nowrap;">
+    <button type="button" class="jd-btn ghost mini" onclick="jdZoom(-1);" title="글자 작게">가－</button>
+    <button type="button" class="jd-btn ghost mini" onclick="jdZoom(1);"  title="글자 크게">가＋</button>
+    <button type="button" class="jd-btn ghost mini" onclick="jdZoom(0);"  title="처음 크기로">↺</button>
+  </span>
 </div>
+
+<%-- 글자 크기가 걸리는 범위 — 머리줄(제목·단추)은 빼고 **본문만** 키운다 --%>
+<div id="jdZoomBox">
 
 <div class="jd-step">
   <div class="done">① 가입신청</div>
   <div class="done">② 위너넷 승인</div>
-  <div class="on" id="jdStep3">③ 신청서 제출</div>
+  <div class="on" id="jdStep3">③ 동의서 제출</div>
   <div id="jdStep4">④ 사용시작</div>
 </div>
 
@@ -85,9 +101,9 @@
 </div>
 
 <div class="jd-card" id="jdUpBox">
-  <h4>신청서 제출</h4>
+  <h4>동의서 제출</h4>
   <div style="padding:4px 0 2px;">
-    <button type="button" class="jd-btn" id="jdMakeBtn" onclick="jdMakePdf();">신청서 PDF 만들기</button>
+    <button type="button" class="jd-btn" id="jdMakeBtn" onclick="jdMakePdf();">동의서 PDF 만들기</button>
     <%-- [제거 2026-08-19] 만들면 미리보기 창이 바로 뜨므로 따로 둘 필요가 없다.
          jdPrint() 는 남겨둔다 — 필요하면 버튼만 되살리면 된다. --%>
   </div>
@@ -112,7 +128,7 @@
        display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.3);">
     <div style="display:flex; align-items:center; gap:10px; padding:11px 16px;
          border-bottom:1px solid #e2e8ed;">
-      <b style="font-size:14.5px; color:#1f5a4b;">신청서 미리보기</b>
+      <b style="font-size:14.5px; color:#1f5a4b;">동의서 미리보기</b>
       <span id="jdPvNm" style="font-size:12px; color:#7b8b97;"></span>
       <span style="flex:1;"></span>
       <button type="button" class="jd-btn" onclick="jdPvSubmit();">제출</button>
@@ -134,7 +150,7 @@
   var INFO   = null;      /* 인쇄용 — 마지막으로 불러온 신청내용 */
   var AGREE  = [];
   var MGRS   = [];
-  var PDF_BLOB = null, PDF_NAME = '';   /* 방금 만든 신청서 PDF */
+  var PDF_BLOB = null, PDF_NAME = '';   /* 방금 만든 동의서 PDF */
 
   function gel(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s)
@@ -187,7 +203,7 @@
           gel('jdUpBox').innerHTML =
               '<h4>제출 완료</h4>'
             + '<div style="padding:14px 4px; line-height:1.9;">'
-            + '신청서가 접수되었습니다. <b>이제 프로그램을 사용하실 수 있습니다.</b><br>'
+            + '동의서가 접수되었습니다. <b>이제 프로그램을 사용하실 수 있습니다.</b><br>'
             + '<span style="font-size:12px; color:#7b8b97;">'
             + '제출일시 ' + esc(i.docDttm || '') + ' · 파일 ' + esc(i.docFileNm || '') + '</span></div>';
         }
@@ -217,7 +233,7 @@
       if (i.jobNm)  a.push(esc(i.jobNm));
       if (i.mbrTel) a.push(esc(i.mbrTel));
       if (i.email)  a.push(esc(i.email));
-      out.push('<div style="padding:2px 0;"><b>접수담당자</b> ' + esc(i.mbrNm || '')
+      out.push('<div style="padding:1px 0; line-height:1.45;"><b>접수담당자</b> ' + esc(i.mbrNm || '')
              + (a.length ? ' <span style="color:#7b8b97;">· ' + a.join(' · ') + '</span>' : '')
              + '</div>');
     }
@@ -228,7 +244,7 @@
       if (m.jobNm)  t.push(esc(m.jobNm));
       if (m.mgrTel) t.push(esc(m.mgrTel));
       if (m.email || m.mgrEmail) t.push(esc(m.email || m.mgrEmail));
-      out.push('<div style="padding:2px 0;"><b>' + esc(m.mgrGbNm || m.mgrGb || '') + '</b> '
+      out.push('<div style="padding:1px 0; line-height:1.45;"><b>' + esc(m.mgrGbNm || m.mgrGb || '') + '</b> '
              + esc(m.mgrNm || '') + (t.length ? ' <span style="color:#7b8b97;">· '
              + t.join(' · ') + '</span>' : '') + '</div>');
     }
@@ -258,12 +274,16 @@
       + '<th>FAX</th><td>' + v('hospFax', i.hospFax) + '</td></tr>'
       + '<tr><th>우편번호</th><td>' + v('zipCd', i.zipCd) + '</td>'
       + '<th>병상수</th><td>' + v('wardcnt', i.wardcnt) + '</td></tr>'
-      + '<tr><th>주소</th><td colspan="3">' + v('hospAddr', i.hospAddr) + '</td></tr>'
-      + '<tr><th>상세주소</th><td colspan="3">' + v('hospExtradr', i.hospExtradr) + '</td></tr>'
+      /* ★[2026-08-20 요청] 주소와 상세주소를 **한 줄로** — 같은 주소인데 위아래로 떨어져 있었다.
+         칸 구성은 다른 줄과 같은 4칸(제목·값·제목·값)이라 표가 어긋나지 않는다. */
+      + '<tr><th>주소</th><td>' + v('hospAddr', i.hospAddr) + '</td>'
+      + '<th>상세주소</th><td>' + v('hospExtradr', i.hospExtradr) + '</td></tr>'
       + '<tr><th>신청일시</th><td>' + nv(i.reqDttm) + '</td>'
       + '<th>승인일시</th><td>' + nv(i.cfmDttm) + '</td></tr>'
       + '<tr><th>심평원 인증서암호</th><td colspan="3">' + nv(i.hiraCertPw) + '</td></tr>'
-      + '<tr><th>대표자 도장</th><td>' + jdSealTag(120) + '</td>'
+      /* ★[2026-08-20 요청] 이 줄의 위아래를 줄인다 — 줄 높이는 **도장 그림이 정한다**(담당자 글줄보다 크다).
+         120 → 96px. 담당자 줄 간격도 함께 좁혔다(padding 2→1px·line-height 1.45). 인쇄용 도장은 그대로다. */
+      + '<tr><th>대표자 도장</th><td>' + jdSealTag(96) + '</td>'
       + '<th>담당자</th><td>' + jdMgrText() + '</td></tr>'
       + '<tr><th>동의서</th><td colspan="3">'
       + (submitted
@@ -305,7 +325,7 @@
         if (window.Swal){
           Swal.fire({ icon:'success', title:'수정했습니다', width:420,
             html:'<div style="font-size:13px; line-height:1.7;">'
-               + '바뀐 내용으로 <b>신청서 PDF 를 다시 만들어</b> 올려 주세요.</div>',
+               + '바뀐 내용으로 <b>동의서 PDF 를 다시 만들어</b> 올려 주세요.</div>',
             customClass:{ popup:'jd-swal' }, confirmButtonText:'확인', confirmButtonColor:'#1f5a4b' });
         }
       },
@@ -414,7 +434,7 @@
     };
 
     if (window.Swal){
-      Swal.fire({ icon:'question', title:'신청서 제출',
+      Swal.fire({ icon:'question', title:'동의서 제출',
         html:'<div style="font-size:13px; line-height:1.7;">제출하면 바로 프로그램을 사용하실 수 있습니다.</div>',
         width:400, customClass:{ popup:'jd-swal' },
         showCancelButton:true, confirmButtonText:'제출', cancelButtonText:'취소',
@@ -584,7 +604,7 @@
 
     for (var n = 0; n < AGREE.length; n++) pages += agreePage(AGREE[n], n + 2);
     var html =
-        '<html><head><meta charset="utf-8"><title>가입신청서</title><style>'
+        '<html><head><meta charset="utf-8"><title>동의서</title><style>'
       + '@page{ size:A4; margin:0; }'
       + 'body{ font-family:"맑은 고딕","Malgun Gothic",sans-serif; font-size:12px; color:#000;'
       + '      margin:0; background:#fff; }'
@@ -636,7 +656,7 @@
     setTimeout(function(){ fr.contentWindow.focus(); fr.contentWindow.print(); }, 400);
   };
 
-  /* ── 신청서 PDF 만들기 ──────────────────────────────────────────
+  /* ── 동의서 PDF 만들기 ──────────────────────────────────────────
      월간보고서와 같은 방식이다 — 화면 밖에 문서를 그려 html2canvas 로 장마다
      캡처하고 jsPDF 로 A4 에 얹는다. 서버에 만들 필요도, 인쇄해서 스캔할 필요도 없다.
      도장은 신규가입 때 등록한 이미지가 문서에 이미 들어가 있다. */
@@ -685,7 +705,7 @@
       if (n >= sheets.length){
         try {
           PDF_BLOB = pdf.output('blob');
-          PDF_NAME = '가입신청서_' + (INFO.hospCd || '') + '_' + (INFO.reqNo || '') + '.pdf';
+          PDF_NAME = '동의서_' + (INFO.hospCd || '') + '_' + (INFO.reqNo || '') + '.pdf';
           PICKED = [];                       // 직접 고른 파일보다 방금 만든 것이 우선이다
           render();
           jdPvOpen();
@@ -693,7 +713,7 @@
           box('PDF 를 만들지 못했습니다.', 'error');
         }
         box0.innerHTML = '';
-        btn.disabled = false; btn.innerHTML = '신청서 PDF 만들기';
+        btn.disabled = false; btn.innerHTML = '동의서 PDF 만들기';
         return;
       }
 
@@ -708,7 +728,7 @@
         })
         .catch(function(){
           box0.innerHTML = '';
-          btn.disabled = false; btn.innerHTML = '신청서 PDF 만들기';
+          btn.disabled = false; btn.innerHTML = '동의서 PDF 만들기';
           box('PDF 를 만들지 못했습니다.', 'error');
         });
     };
@@ -716,6 +736,37 @@
   };
 
   jdInfo();
+})();
+</script>
+
+</div><%-- /jdZoomBox --%>
+
+<script>
+/* ★[2026-08-20 요청] 글자 축소·확대 — 가입신청(joinReq.jsp jrZoom)과 **같은 규칙**으로 맞춘다.
+     한 번에 0.1 · 0.8~1.6 · 기본 1.1 · [↺]는 기본값으로 · 이 PC 이 브라우저에만 기억.
+   ★CSS 가 px 라 뿌리 font-size 로는 표 칸이 안 따라 커진다 ⇒ `zoom` 으로 통째로 키운다(같은 이유·같은 방법). */
+(function(){
+  var KEY = 'wnnJoinDocsZoom', Z_MIN = 0.8, Z_MAX = 1.6, Z_DEF = 1.1;
+  function box(){ return document.getElementById('jdZoomBox'); }
+  function apply(z){
+    z = Math.min(Z_MAX, Math.max(Z_MIN, z));
+    var b = box(); if (b) b.style.zoom = z.toFixed(2);
+    return z;
+  }
+  window.jdZoom = function(d){
+    var b = box();
+    var cur = parseFloat(b && b.style.zoom) || Z_DEF;
+    if (d === 0) { apply(Z_DEF); try { localStorage.removeItem(KEY); } catch (ignore) {} return; }
+    var z = apply(cur + d * 0.1);
+    try { localStorage.setItem(KEY, String(z)); } catch (ignore) {}
+  };
+  function init(){
+    var z = NaN;
+    try { z = parseFloat(localStorage.getItem(KEY)); } catch (ignore) {}
+    apply(z || Z_DEF);          // 저장해 둔 개인 설정이 없으면 기본(한 단계 큰) 크기로 시작
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 

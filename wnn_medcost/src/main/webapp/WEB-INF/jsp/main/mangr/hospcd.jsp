@@ -4487,3 +4487,134 @@
 <!-- 기타 정보 End -->
 <!-- ============================================================== -->
 
+<!-- ============================================================== -->
+<!-- 가입신청에서 넘어온 병원 자동 선택 Start (2026-08-20) -->
+<!-- ============================================================== -->
+<script type="text/javascript">
+/* ★[2026-08-20 요청] 신규병원 가입신청(joinReq.jsp)에서 승인된 병원의 [계약정보 입력] 을 누르면
+     `/user/hospcd.do?hospCd=8자리` 로 들어온다. 그 병원을 **찾아서 눌러 준 상태**로 화면을 연다
+     — 계약정보·사용자정보·이메일정보 패널이 그 병원 것으로 채워져 바로 계약을 넣을 수 있다.
+   ★서버(UserController.hospcd)는 손대지 않았다. 파라미터는 화면에서만 읽는다 —
+     조회칸(#findData)에 값을 넣어 두면 window.onload 의 find_Check() 가 그 조건으로 목록을 만든다.
+   ★행 선택은 **click 을 실제로 일으켜서** 한다 — 계약/사용자/이메일 패널이 전부 그 클릭에 매달려
+     있기 때문이다(hcontLoad·hucontLoad·he_setHosp). 값만 채우면 아래 패널이 안 따라온다.
+   ⚠파라미터가 없으면 이 블록은 아무것도 하지 않는다(메뉴로 연 평소 경로 그대로). */
+(function(){
+	/* ★★[2026-08-20 진짜 원인] **이 앱은 주소를 숨긴다.**
+	     tiles 템플릿 `main.jsp` 가 <head> 에서
+	         history.replaceState({...}, '', '/user/dashboard.do')
+	     로 주소를 바꿔치기한다 — 그때 ***쿼리스트링(?hospCd=..)이 통째로 지워진다.***
+	     그 코드는 <head> 라 이 블록보다 **먼저** 돌아서, 여기서 location.search 를 읽으면 언제나 비어 있다.
+	     ⇒ 「계약입력을 눌러도 아무 일도 안 일어난다」의 원인이 이것이었다(2026-08-20).
+	   ★해법 = main.jsp 가 **지우기 전에 담아 둔 원래 경로**(sessionStorage '_realPath') 를 함께 본다.
+	     사이드바의 qpsdev 스위치가 이미 같은 방법을 쓴다(sidebar.jsp — 같은 함정을 겪은 자리).
+	   ⚠주소로 파라미터를 넘기는 기능을 이 앱에 새로 만들 때는 **반드시 이 두 곳을 같이 봐야 한다.** */
+	var hc = '', reqNo = '', src = '';
+	try {
+		src = (window.location.search || '') + '|' + (sessionStorage.getItem('_realPath') || '');
+	} catch(e) { src = window.location.search || ''; }
+	try {
+		var m = /[?&]hospCd=([^&#|]*)/.exec(src);
+		if (m) hc = decodeURIComponent(m[1]).trim();
+		var r = /[?&]reqNo=([0-9]+)/.exec(src);
+		if (r) reqNo = r[1];
+	} catch(e) { hc = ''; }
+	if (!hc) return;
+
+	/* ★[2026-08-20 요청 「다시 화면으로 오는 기능 없음」] 가입신청으로 되돌아가는 단추를 띄운다.
+	     계약관리는 메뉴로도 여는 공용 화면이라 **가입신청에서 넘어왔을 때만** 보이게 한다.
+	     reqNo 를 되돌려 주므로 돌아가면 보던 신청이 그대로 다시 펼쳐진다. */
+	$(function(){
+		var $b = $('<button type="button" class="btn btn-outline-secondary btn-sm">◀ 가입신청으로</button>')
+			/* ⚠z-index 는 **모달(부트스트랩 1050·이 화면의 주소검색 10700)보다 낮게** 둔다 —
+			   높이면 계약 등록 모달 위로 단추가 떠서 모달을 가린다(자동으로 모달이 열리는 화면이다). */
+			.css({ position:'fixed', top:'96px', right:'18px', zIndex:1000, fontWeight:700, background:'#fff' })
+			.attr('title', '신규병원 가입신청 화면으로 돌아갑니다')
+			.on('click', function(){
+				location.href = '/join/joinReq.do' + (reqNo ? ('?reqNo=' + encodeURIComponent(reqNo)) : '');
+			});
+		$('body').append($b);
+	});
+
+	/* ① 조회 조건에 넣는다 — 화면의 조회칸과 내부 조건(findValues) 둘 다 맞춰야 서버 조회에 실린다 */
+	try {
+		var el = document.getElementById('findData');
+		if (el) { el.value = hc; if (typeof findField === 'function') findField(el); }
+	} catch(e) {}
+
+	/* ② 계약 등록 모달은 **그 기관에 바로 묶어서** 연다 (2026-08-20 재요청 「지금은 찾아서 함」).
+	      종전 : 목록이 그려지기를 기다렸다가 → 그 줄을 찾아 → 클릭해서 → 그 클릭이 채운 값으로 모달을 열었다.
+	             그리드에 그 줄이 없으면(조건·페이지·조회 실패) 아무 일도 안 일어난다.
+	      지금 : **요양기관기호로 그 기관 한 건만 서버에서 바로 받아**(selHospCdList 의 `hospCd` = 정확일치)
+	             계약 입력에 필요한 값(hospCd_one·hospUuid_one·joinDt_one)을 직접 채우고 모달을 연다.
+	             그리드와 무관하게 언제나 그 기관으로 연결된다.
+	      ⚠계약 저장에는 **HOSP_UUID** 가 필요해서 기관 한 건 조회는 반드시 있어야 한다(기호만으로는 못 넣는다). */
+	var opened = false;   // 계약 등록 모달을 이미 한 번 열었는가 — 닫았는데 또 뜨면 손을 못 쓴다
+	function bindAndOpen(){
+		if (opened) return;
+		opened = true;
+		$.ajax({
+			type:'POST', url:'/user/hospCdList.do', dataType:'json', data:{ hospCd: hc },
+			success:function(d){
+				var row = (d && d.data && d.data.length) ? d.data[0] : null;
+				if (!row) {
+					if (typeof messageBox === 'function')
+						messageBox("1","<h5>요양기관기호 " + hc + " 를 계약관리에서 찾지 못했습니다.</h5>"
+						             + "<p>가입신청이 승인되었는지 확인해 주세요.</p><br>","","","");
+					return;
+				}
+				/* 행을 클릭했을 때와 **같은 값**을 채운다(hcontLoad 의 클릭 처리와 동일한 세 가지) */
+				hctmpedit_Data = hctmpedit_Data || {};
+				hctmpedit_Data.hospCd_one   = row.hospCd;
+				hctmpedit_Data.hospUuid_one = row.hospUuid;
+				hctmpedit_Data.joinDt_one   = row.joinDt || '';
+				try {
+					if (typeof hc_modal_Open === 'function') hc_modal_Open('I');
+				} catch(e) { /* 모달이 안 열려도 아래에서 줄이 선택되므로 손으로 [입력] 을 누르면 된다 */ }
+			},
+			error:function(){
+				if (typeof messageBox === 'function')
+					messageBox("1","<h5>요양기관 정보를 불러오지 못했습니다.</h5><p></p><br>","","","");
+			}
+		});
+	}
+	/* ⚠**언제 여느냐가 중요하다.** 계약구분 드롭다운(#conactGb_one)은 `window.onload` 의 `comm_Check()` 가
+	     `/base/commList.do` 로 받아 채운다. 그 전에 모달을 열면 **계약구분이 빈 채로** 뜨고
+	     기본값(적정성평가=2) 설정도 먹지 않는다. 그래서 ①window load 이후 ②옵션이 실제로 들어온 뒤 연다
+	     (최대 4초까지 0.2초 간격으로 기다리고, 그래도 안 오면 그냥 연다 — 안 여는 것보다는 낫다). */
+	$(window).on('load', function(){
+		var wait = 0;
+		(function ready(){
+			var opts = $('#conactGb_one option').length;
+			if (opts > 1 || wait >= 20) { bindAndOpen(); return; }   // 1개 = 처음의 빈 'option' 뿐
+			wait++; setTimeout(ready, 200);
+		})();
+	});
+
+	/* ③ 그리드에서도 그 줄을 골라 둔다 — 모달을 닫으면 계약·사용자·이메일 패널이 그 기관 것으로 보인다.
+	      (모달 열기는 ②가 이미 책임지므로, 여기서 못 찾아도 계약 입력은 진행된다.) */
+	var tried = 0;
+	function pick(){
+		if (tried++ > 5) { $(document).off('draw.dt', onDraw); return; }
+		if (!$.fn.DataTable.isDataTable('#tableName')) return;
+		var t = $('#tableName').DataTable(), hit = null;
+		t.rows().every(function(){
+			var d = this.data();
+			if (d && String(d.hospCd).trim() === hc) { hit = this.node(); }
+		});
+		if (!hit) return;
+		$(document).off('draw.dt', onDraw);          // 찾았으니 더 보지 않는다
+		$(hit).trigger('click');                      // 아래 패널들이 이 클릭에 따라온다
+		try { hit.scrollIntoView({ block:'center' }); } catch(e) {}
+	}
+	function onDraw(e){
+		if (!e || !e.target || e.target.id !== 'tableName') return;   // 아래 패널 그리드의 draw 는 무시
+		setTimeout(pick, 0);
+	}
+	$(document).on('draw.dt', onDraw);
+})();
+</script>
+<!-- ============================================================== -->
+<!-- 가입신청에서 넘어온 병원 자동 선택 End -->
+<!-- ============================================================== -->
+

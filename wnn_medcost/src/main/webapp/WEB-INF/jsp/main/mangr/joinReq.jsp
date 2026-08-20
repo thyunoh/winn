@@ -113,9 +113,12 @@
   <div class="jr-top">
   <div class="jr-card">
     <div class="jr-bar">
+      <%-- ★[2026-08-20 요청] 기본은 **전체 상태** — 사용자가 고르지 않는 한 걸러 두지 않는다.
+           종전 기본이 「접수」라 ***승인하는 순간 그 줄이 목록에서 사라져*** "없어졌다/안 된다" 로 읽혔다.
+           (계약관리에 다녀오거나 화면을 다시 열 때도 접수만 보였다.) --%>
       <select id="jrStat" onchange="jrList();">
-        <option value="">전체 상태</option>
-        <option value="10" selected>접수</option>
+        <option value="" selected>전체 상태</option>
+        <option value="10">접수</option>
         <option value="20">검토중</option>
         <option value="30">승인</option>
         <option value="40">동의서제출</option>
@@ -132,14 +135,16 @@
         <colgroup>
           <col style="width:70px;"><col style="width:108px;"><col style="width:110px;"><col>
           <col style="width:110px;"><col style="width:130px;"><col style="width:180px;">
-          <col style="width:70px;"><col style="width:130px;">
+          <col style="width:70px;"><col style="width:130px;"><col style="width:96px;">
         </colgroup>
         <thead>
+          <%-- ★[2026-08-20] 「계약」 칸 신설 — 승인된 줄에서 **목록에서 바로** 계약관리로 간다.
+               종전에는 단추가 상세 패널 안에만 있어, 목록만 보고 "그런 기능이 없다"고 읽혔다. --%>
           <tr><th>신청번호</th><th>상태</th><th>요양기관기호</th><th>병원명</th><th>대표자</th>
-              <th>전화번호</th><th>신청자 이메일</th><th>도장</th><th>신청일시</th></tr>
+              <th>전화번호</th><th>신청자 이메일</th><th>도장</th><th>신청일시</th><th>계약</th></tr>
         </thead>
         <tbody id="jrBody">
-          <tr><td colspan="9" class="jr-empty">조회를 눌러 주세요.</td></tr>
+          <tr><td colspan="10" class="jr-empty">조회를 눌러 주세요.</td></tr>
         </tbody>
       </table>
     </div>
@@ -153,6 +158,10 @@
         <%-- 승인/반려는 접수(10)·검토중(20) 일 때만 보인다. 이미 처리된 건은 버튼이 없다. --%>
         <button type="button" class="jr-btn"      id="jrCfmBtn" onclick="jrConfirm();" style="display:none;">승인</button>
         <button type="button" class="jr-btn warn" id="jrRjtBtn" onclick="jrReject();"  style="display:none;">반려</button>
+        <%-- ★[2026-08-20 요청] 승인된 건은 여기서 바로 [계약관리]로 간다 —
+             종전에는 "계약은 [계약관리] 화면에서 등록합니다" 라고 글로만 안내해 사용자가 메뉴를 다시 찾아
+             그 병원을 검색해야 했다. 이 단추는 그 병원을 **미리 골라 둔 채로** 계약관리를 연다. --%>
+        <button type="button" class="jr-btn" id="jrContBtn" onclick="jrGoCont();" style="display:none;">계약정보 입력</button>
         <button type="button" class="jr-btn warn" id="jrRbkBtn" onclick="jrRollback();" style="display:none;">승인취소</button>
         <button type="button" class="jr-btn ghost" id="jrRjtCancelBtn" onclick="jrRjtCancel();" style="display:none;">반려취소</button>
         <button type="button" class="jr-btn warn" id="jrCancelBtn" onclick="jrReqCancel();" style="display:none;">가입취소</button>
@@ -180,8 +189,12 @@
 (function(){
   "use strict";
 
-  var JR_Z_KEY = 'wnnJoinReqZoom', Z_MIN = 0.8, Z_MAX = 1.6;
+  /* ★[2026-08-20 요청] 기본 글자 크기를 **한 단계(0.1) 크게** 시작한다 — 1.0 → 1.1.
+     [↺ 처음 크기로] 도 1.0 이 아니라 이 값으로 돌아간다(사용자가 아는 '처음'은 이제 1.1 이다).
+     ⚠더 키우거나 되돌릴 곳은 JR_Z_DEF 한 줄이다. 저장해 둔 개인 설정(localStorage)이 있으면 그게 먼저다. */
+  var JR_Z_KEY = 'wnnJoinReqZoom', Z_MIN = 0.8, Z_MAX = 1.6, JR_Z_DEF = 1.1;
   var CUR = null;   // 지금 펼친 신청번호
+  var CUR_HOSP = ''; // 그 신청의 요양기관기호 — [계약정보 입력] 이 계약관리로 넘길 값(2026-08-20)
 
   /* wnn_consult 에는 ui-message.js 가 없다 — 이 화면에서 쓰는 알림·확인을 여기서 만든다.
      SweetAlert 규격 : 알림 width 480 · 제목 19px · 버튼 15px · 아이콘 48px.
@@ -226,8 +239,8 @@
   }
   window.jrZoom = function(d){
     var b = gel('jrZoomBox');
-    var cur = parseFloat(b && b.style.zoom) || 1;
-    if (d === 0) { jrApplyZoom(1); try { localStorage.removeItem(JR_Z_KEY); } catch (ignore) {} return; }
+    var cur = parseFloat(b && b.style.zoom) || JR_Z_DEF;
+    if (d === 0) { jrApplyZoom(JR_Z_DEF); try { localStorage.removeItem(JR_Z_KEY); } catch (ignore) {} return; }
     var z = jrApplyZoom(cur + d * 0.1);
     try { localStorage.setItem(JR_Z_KEY, String(z)); } catch (ignore) {}
   };
@@ -242,7 +255,7 @@
         var L = d.resultList || [];
         gel('jrCnt').textContent = L.length + '건';
         if (!L.length) {
-          gel('jrBody').innerHTML = '<tr><td colspan="9" class="jr-empty">신청 내역이 없습니다.</td></tr>';
+          gel('jrBody').innerHTML = '<tr><td colspan="10" class="jr-empty">신청 내역이 없습니다.</td></tr>';
           jrClose(); return;
         }
         gel('jrBody').innerHTML = L.map(function(r){
@@ -255,7 +268,14 @@
                + '<td>' + nv(r.hospTel) + '</td>'
                + '<td class="l">' + nv(r.email) + '</td>'
                + '<td>' + (r.sealNm === 'Y' ? '있음' : '<span class="jr-none">없음</span>') + '</td>'
-               + '<td>' + nv(r.reqDttm) + '</td></tr>';
+               + '<td>' + nv(r.reqDttm) + '</td>'
+               /* 계약 — 승인된 줄에만 단추. 줄 클릭(상세 열기)과 겹치지 않게 stopPropagation. */
+               + '<td>' + ((r.reqStat === '30' || r.reqStat === '40') && r.hospCd
+                   ? '<button type="button" class="jr-btn" style="padding:2px 9px;font-size:12px;"'
+                     + ' onclick="event.stopPropagation(); jrGoContRow(\'' + esc(r.hospCd) + '\',' + esc(r.reqNo) + ');"'
+                     + ' title="이 병원이 선택된 채로 계약관리를 엽니다">계약입력</button>'
+                   : '<span class="jr-none">-</span>') + '</td>'
+               + '</tr>';
         }).join('');
       },
       error:function(){ _alertBox('목록을 불러오지 못했습니다.'); }
@@ -356,6 +376,19 @@
         gel('jrRjtBtn').style.display = open ? '' : 'none';
         // 승인취소는 승인된 건(30·40)에서만 — 되돌릴 게 있어야 한다
         gel('jrRbkBtn').style.display = (i.reqStat === '30' || i.reqStat === '40') ? '' : 'none';
+        /* [2026-08-20] 계약정보 입력 — **단추는 늘 보이고, 승인 전에는 눌리지 않게** 한다.
+           ⚠감춰 두면 "그런 기능이 없다" 로 읽힌다(2026-08-20 지적). 왜 못 쓰는지를 단추가 말해야 한다.
+           승인 전에는 병원이 아직 만들어지지 않아 계약관리에서 찾을 수 없다(승인 때 병원·사용자·회원이 생긴다). */
+        CUR_HOSP = i.hospCd || '';
+        var contOk = (i.reqStat === '30' || i.reqStat === '40') && !!CUR_HOSP;
+        var cbtn = gel('jrContBtn');
+        cbtn.style.display = '';
+        cbtn.disabled      = !contOk;
+        cbtn.style.opacity = contOk ? '' : '.45';
+        cbtn.style.cursor  = contOk ? '' : 'not-allowed';
+        cbtn.title = contOk
+          ? '이 병원이 선택된 채로 계약관리를 엽니다'
+          : '승인 후에 쓸 수 있습니다 — 승인해야 병원이 만들어집니다.';
         // 반려취소는 반려건(90)에서만 — 접수로 되돌린다
         gel('jrRjtCancelBtn').style.display = (i.reqStat === '90') ? '' : 'none';
         // 신청 전체취소는 접수(10)에서만 — 아무것도 안 만들어진 단계다
@@ -366,7 +399,7 @@
           done.style.display = '';
           done.style.color = '#1f5a4b';
           done.innerHTML = '<b>승인 완료</b> — ' + esc(i.cfmDttm || '') + ' · 처리자 ' + esc(i.cfmUser || '')
-                         + ' &nbsp;|&nbsp; 계약은 [계약관리] 화면에서 등록합니다.';
+                         + ' &nbsp;|&nbsp; 계약은 위 <b>[계약정보 입력]</b> 을 누르면 이 병원이 선택된 채로 열립니다.';
         } else if (i.reqStat === '90') {
           done.style.display = '';
           done.style.color = '#a33';
@@ -381,6 +414,29 @@
       },
       error:function(){ _alertBox('상세를 불러오지 못했습니다.'); }
     });
+  };
+
+  /* ── 계약정보 입력 (2026-08-20) ────────────────────────────────────
+     승인된 병원을 **계약관리(/user/hospcd.do) 에 미리 골라 둔 채로** 연다.
+     · 넘기는 값은 요양기관기호(hospCd) 하나 — 계약관리가 그 값으로 조회하고 그 줄을 눌러 준다
+       (hospcd.jsp 아래쪽 「가입신청에서 넘어온 병원 자동 선택」 블록).
+     · 같은 창에서 이동한다 — 메뉴로 여는 것과 같은 화면이라 뒤로가기로 돌아온다. */
+  /* 목록의 [계약입력] — 상세를 열지 않고 그 줄 값으로 바로 간다 */
+  window.jrGoContRow = function(hospCd, reqNo){
+    if (!hospCd) { _alertBox('요양기관기호가 없어 계약관리를 열 수 없습니다.'); return; }
+    location.href = '/user/hospcd.do?hospCd=' + encodeURIComponent(hospCd)
+                  + '&reqNo=' + encodeURIComponent(reqNo || '');
+  };
+
+  window.jrGoCont = function(){
+    if (!CUR_HOSP) { _alertBox('요양기관기호가 없어 계약관리를 열 수 없습니다.'); return; }
+    if (gel('jrContBtn') && gel('jrContBtn').disabled) {
+      _alertBox('아직 <b>승인 전</b>입니다.<br>승인해야 병원이 만들어지고 계약을 넣을 수 있습니다.'); return;
+    }
+    /* reqNo 도 함께 넘긴다 — 계약관리의 [◀ 가입신청으로] 가 이 값을 되돌려 주면
+       돌아왔을 때 보던 신청이 다시 펼쳐진다(위 $(function) 의 reqNo 처리). */
+    location.href = '/user/hospcd.do?hospCd=' + encodeURIComponent(CUR_HOSP)
+                  + '&reqNo=' + encodeURIComponent(CUR);
   };
 
   /* ── 승인 · 반려 ──────────────────────────────────────────────── */
@@ -577,9 +633,21 @@
   $(function(){
     try {
       var z = parseFloat(localStorage.getItem(JR_Z_KEY));
-      if (z) jrApplyZoom(z);
-    } catch (ignore) {}
+      jrApplyZoom(z || JR_Z_DEF);          // 저장해 둔 개인 설정이 없으면 기본(한 단계 큰) 크기로 시작
+    } catch (ignore) { jrApplyZoom(JR_Z_DEF); }
     jrList();
+
+    /* [2026-08-20] 계약관리에서 [◀ 가입신청으로] 로 돌아오면 `?reqNo=` 를 달고 온다 —
+       보던 신청을 **다시 펼쳐 준다.** 목록 조회가 끝나야 줄을 고를 수 있어 잠깐 기다린다
+       (승인·반려 뒤 다시 펼치는 곳들과 같은 방식 : jrList() → 0.5초 → jrInfo()).
+       ★★주소만 보면 안 된다 — tiles 템플릿 main.jsp 가 <head> 에서 주소를 '/user/dashboard.do' 로
+         바꿔치기하며 **쿼리스트링을 지운다.** 지우기 전에 담아 둔 sessionStorage('_realPath') 를 함께 본다
+         (hospcd.jsp 의 같은 주석·sidebar.jsp 의 qpsdev 스위치와 같은 함정). */
+    try {
+      var src = (window.location.search || '') + '|' + (sessionStorage.getItem('_realPath') || '');
+      var m = /[?&]reqNo=([0-9]+)/.exec(src);
+      if (m) setTimeout(function(){ jrInfo(m[1]); }, 500);
+    } catch (ignore) {}
   });
 })();
 </script>
