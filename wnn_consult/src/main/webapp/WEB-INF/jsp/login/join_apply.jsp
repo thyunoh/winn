@@ -544,7 +544,10 @@
 
   var CTX         = '<c:out value="${pageContext.request.contextPath}"/>';
   var JA_Z_KEY    = 'wnnJoinZoom';
-  var JA_Z_MIN = 0.8, JA_Z_MAX = 1.6;
+  /* ★[2026-08-20 요청] 기본 글자 크기를 **한 단계(0.1) 크게** 시작한다 — 1.0 → 1.1.
+     병원이 직접 쓰는 화면이라 처음부터 크게 보이는 편이 낫다(관리자쪽 joinReq.jsp 도 같이 올렸다).
+     [↺ 처음 크기로] 도 이 값으로 돌아간다. ⚠조절은 JA_Z_DEF 한 줄. 저장된 개인 설정이 있으면 그게 먼저다. */
+  var JA_Z_MIN = 0.8, JA_Z_MAX = 1.6, JA_Z_DEF = 1.1;
 
   var hospOk  = false;      // 요양기관기호 확인 통과
   var emailOk = false;      // 이메일 중복확인 통과
@@ -626,8 +629,8 @@
   }
   window.jaZoom = function(d){
     var b = gel('jaZoomBox');
-    var cur = parseFloat(b && b.style.zoom) || 1;
-    if (d === 0) { jaApplyZoom(1); try { localStorage.removeItem(JA_Z_KEY); } catch (ignore) {} return; }
+    var cur = parseFloat(b && b.style.zoom) || JA_Z_DEF;
+    if (d === 0) { jaApplyZoom(JA_Z_DEF); try { localStorage.removeItem(JA_Z_KEY); } catch (ignore) {} return; }
     var z = jaApplyZoom(cur + d * 0.1);
     try { localStorage.setItem(JA_Z_KEY, String(z)); } catch (ignore) {}
   };
@@ -1015,8 +1018,8 @@
     jaTab = 'f1';
     try {
       var z = parseFloat(localStorage.getItem(JA_Z_KEY));
-      if (z) jaApplyZoom(z);
-    } catch (ignore) {}
+      jaApplyZoom(z || JA_Z_DEF);          // 저장해 둔 개인 설정이 없으면 기본(한 단계 큰) 크기로 시작
+    } catch (ignore) { jaApplyZoom(JA_Z_DEF); }
     jaTabSync();
 
     $('#joinModal').modal('show');
