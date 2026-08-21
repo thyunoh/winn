@@ -208,7 +208,7 @@
   #jrcMask{ position:fixed; inset:0; background:rgba(20,32,38,.45); z-index:12500;
             display:flex; align-items:center; justify-content:center; }
   #jrcMask *{ box-sizing:border-box; font-family:inherit; }
-  #jrcMask .jrc-win{ background:#f4f6f8; width:min(1180px, 96vw); max-height:92vh;
+  #jrcMask .jrc-win{ background:#f4f6f8; width:min(820px, 96vw); max-height:92vh;
             border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,.35); display:flex; flex-direction:column; }
   #jrcMask .jrc-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
             padding:11px 14px; background:#1f5a4b; color:#fff; border-radius:10px 10px 0 0; }
@@ -224,8 +224,18 @@
 
   #jrcMask .jrc-none{ color:#8a99a3; }
 
-  #jrcMask .jrc-cols{ display:flex; gap:11px; align-items:flex-start; flex-wrap:wrap; }
-  #jrcMask .jrc-sec{ flex:1 1 480px; background:#fff; border:1px solid #dde5ea; border-radius:9px; overflow:hidden; }
+  /* ★[2026-08-21] 두 계약을 좌우 나열 → 탭으로 분리(사용자 지시 「두 개 탭을 분리」).
+     ⚠숨은 탭의 입력칸도 DOM 에 그대로 있다 — 저장(jrcSave)은 종전대로 두 구분을 함께 본다. */
+  #jrcMask .jrc-cols{ display:block; }
+  #jrcMask .jrc-tabs{ display:flex; gap:6px; margin-bottom:10px; }
+  #jrcMask .jrc-tab{ border:1px solid #cfd9e0; background:#eef2f5; color:#5a6b76; border-radius:8px;
+            padding:9px 22px; font-size:14px; font-weight:700; cursor:pointer;
+            display:flex; align-items:center; gap:8px; }
+  #jrcMask .jrc-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
+  /* 탭 점 = 그 구분의 「계약 등록/수정」 체크 상태 — 안 보이는 탭이 켜져 있는지 한눈에 */
+  #jrcMask .jrc-tdot{ width:9px; height:9px; border-radius:50%; background:#c3ced6; flex:0 0 auto; }
+  #jrcMask .jrc-sec{ display:none; background:#fff; border:1px solid #dde5ea; border-radius:9px; overflow:hidden; }
+  #jrcMask .jrc-sec.on{ display:block; }
   #jrcMask .jrc-sech{ display:flex; align-items:center; gap:8px; flex-wrap:wrap;
             padding:8px 11px; background:#f2f6f8; border-bottom:1px solid #e2e9ee; }
   #jrcMask .jrc-sech label{ margin:0; font-size:13px; color:#2b3c45; cursor:pointer; display:flex; align-items:center; gap:6px; }
@@ -252,6 +262,16 @@
   #jrcMask .jrc-mini.warn{ border-color:#d3a3a3; color:#a33; }
   #jrcMask .jrc-hist{ font-size:11.5px; color:#7b8a93; margin-top:6px; line-height:1.7; }
   #jrcMask .jrc-hint{ font-size:11.5px; color:#7b8a93; margin-top:7px; line-height:1.7; }
+  /* ui-message 알림·확인(.cfm-backdrop, z-10000)이 이 창 오버레이(12500) 뒤에 깔리지 않게 +
+     폭 480px(2026-08-21 「좌우 넓히고 위아래 축소」 — 340px 기본에서는 날짜가 줄바꿈된다).
+     ⚠ui-message 자체(공용 파일)는 건드리지 않는다 — 이 화면에서만 덮는다. */
+  body #confirmBackdrop{ z-index:13000 !important; }
+  body #confirmBackdrop .cfm-box{ width:480px; max-width:94vw; padding:20px 24px 16px; }
+  body #confirmBackdrop .cfm-icon{ margin-bottom:8px; }
+  body #confirmBackdrop .cfm-msg{ margin-bottom:16px; }
+  /* _jrAsk 진행 계열 단추(승인·반려취소) — ui-message 기본은 빨강/파랑뿐이라 teal 을 이 화면에서 더한다 */
+  .cfm-btn-ok.jr-ok-teal{ background:#1f5a4b; }
+  .cfm-btn-ok.jr-ok-teal:hover{ background:#17453a; }
 </style>
   <div class="jrc-win">
     <div class="jrc-head">
@@ -282,22 +302,95 @@
   var CUR = null;   // 지금 펼친 신청번호
   var CUR_HOSP = ''; // 그 신청의 요양기관기호 — [계약정보 입력] 이 계약관리로 넘길 값(2026-08-20)
 
-  /* wnn_consult 에는 ui-message.js 가 없다 — 이 화면에서 쓰는 알림·확인을 여기서 만든다.
-     SweetAlert 규격 : 알림 width 480 · 제목 19px · 버튼 15px · 아이콘 48px.
-     짧은 제목형은 15px 로 충분하지만, 이 화면 메시지는 한 문장이라 작게 보인다는
-     지적을 받아 키웠다(2026-08-19). 폭·아이콘은 그대로 두고 글자만 키운다. */
+  /* ★★[2026-08-21 최종] 알림·확인 = ui-message.js — 코네트 물류(konet_vsweb)와 같은
+     흰 카드+아이콘+색 버튼 (사용자 확정 「계약정보 관련 메세지 sejong_vsweb 있는 내용으로」).
+     이 파일 맨 위에서 /asset/js/ui-message.js 를 이미 싣고 있었는데 ***여기 지역 함수가
+     같은 이름으로 전역을 가리고 있었다*** — 이제 지역 함수는 전역으로 위임만 한다.
+     · 그 전 판(messageBox·small-swal)은 「기존 스타일로」 지시로 만든 것 — 이 확정으로 대체됐다.
+     · ui-message 가 없는 곳(wnn_consult 로 복사될 때)은 Swal(jr-swal) → alert 순 폴백.
+     ⚠ui-message 의 확인창(.cfm-backdrop)은 z-10000 이라 계약정보 입력창(12500) 뒤에 깔린다 —
+       jrcMask 의 style 블록이 13000 으로 올리고, 폭도 480px 로 넓힌다(날짜 줄바꿈 방지). */
   function _alertBox(msg){
-    if (window.Swal) Swal.fire({ title:String(msg), width:480, customClass:{ popup:'jr-swal' },
+    var h = String(msg == null ? '' : msg).replace(/\n/g, '<br>');
+    if (typeof window._alertBox === 'function') { window._alertBox(h); return; }
+    if (window.Swal) Swal.fire({ title:h, width:480, customClass:{ popup:'jr-swal' },
                                  confirmButtonText:'확인', confirmButtonColor:'#1f5a4b' });
     else alert(msg);
   }
   function _confirmBox(msg, onYes){
+    var h = String(msg == null ? '' : msg).replace(/\n/g, '<br>');
+    if (typeof window._confirmBox === 'function') { window._confirmBox({ msg:h, onOk:onYes }); return; }
     if (window.Swal) {
-      Swal.fire({ icon:'question', title:String(msg), width:480,
-                  customClass:{ popup:'jr-swal', icon:'jr-swal-icon' },
-                  showCancelButton:true, confirmButtonText:'확인', cancelButtonText:'취소',
-                  confirmButtonColor:'#1f5a4b' }).then(function(r){ if (r.isConfirmed) onYes(); });
-    } else { if (confirm(msg)) onYes(); }
+      Swal.fire({ icon:'question', title:'확인', html:h,
+                  showCancelButton:true, confirmButtonText:'예', cancelButtonText:'아니오' })
+        .then(function(r){ if (r.isConfirmed) onYes(); });
+    } else { if (confirm(String(msg))) onYes(); }
+  }
+
+  /* ── 승인·반려류 큰 창도 같은 모양으로 (2026-08-21 「전부 다 이 스타일로」) ──────
+     ui-message 에는 입력칸이 없어 이 화면 전용 _jrAsk 를 둔다 — ui-message 가 주입하는
+     CSS 클래스(.cfm-backdrop/.cfm-box…)를 그대로 빌려 쓰므로 모양이 완전히 같다(공용 파일 무수정).
+     opts = { icon, title, msg(HTML), input, placeholder, requiredMsg,
+              okText, okColor('red' 위험 | 'teal' 진행 | 'blue'), cancelText, onOk(입력값) }
+     ui-message 가 안 실린 환경(wnn_consult 복사 시)은 종전 Swal 입력창으로 폴백. */
+  function _jrAsk(o){
+    o = o || {};
+    if (!window._uiMessageLoaded) {
+      if (!window.Swal) { _alertBox('확인창을 열 수 없습니다.'); return; }
+      Swal.fire({
+        icon:(o.okColor === 'red' ? 'warning' : 'question'),
+        title:o.title || '', html:o.msg || '',
+        input:(o.input ? 'text' : undefined), inputPlaceholder:o.placeholder || '',
+        width:460, customClass:{ popup:'jr-swal', icon:'jr-swal-icon' },
+        showCancelButton:true, confirmButtonText:o.okText || '확인',
+        cancelButtonText:o.cancelText || '취소',
+        confirmButtonColor:(o.okColor === 'red' ? '#b23b3b' : '#1f5a4b'),
+        inputValidator:function(v){
+          if (o.input && (!v || String(v).trim() === '')) return o.requiredMsg || '내용을 입력하세요.';
+          return null;
+        }
+      }).then(function(r){ if (r.isConfirmed && typeof o.onOk === 'function') o.onOk(o.input ? String(r.value).trim() : ''); });
+      return;
+    }
+    var old = gel('jrAskBd'); if (old && old.parentNode) old.parentNode.removeChild(old);
+    var bd = document.createElement('div');
+    bd.id = 'jrAskBd'; bd.className = 'cfm-backdrop';
+    bd.style.display = 'flex'; bd.style.zIndex = '13000';
+    bd.innerHTML = ''
+      + '<div class="cfm-box" style="width:480px; max-width:94vw; padding:20px 24px 16px;">'
+      +   '<div class="cfm-icon" style="margin-bottom:8px;">' + (o.icon || '❓') + '</div>'
+      +   '<div style="font-size:17px; font-weight:800; color:#20303a; margin-bottom:10px;">' + (o.title || '') + '</div>'
+      +   '<div class="cfm-msg" style="text-align:left; font-size:14.5px; line-height:1.8; margin-bottom:14px;">' + (o.msg || '') + '</div>'
+      +   (o.input
+          ? '<input type="text" id="jrAskIn" placeholder="' + (o.placeholder || '') + '"'
+            + ' style="width:100%; height:38px; border:1px solid #cfd8e0; border-radius:8px; padding:0 10px; font-size:14px; margin-bottom:4px;">'
+            + '<div id="jrAskErr" style="display:none; color:#b23b3b; font-size:12.5px; text-align:left; margin:2px 0 6px;"></div>'
+          : '')
+      +   '<div class="cfm-actions" style="margin-top:10px;">'
+      +     '<button type="button" class="cfm-btn cfm-btn-cancel" id="jrAskNo">' + (o.cancelText || '취소') + '</button>'
+      +     '<button type="button" class="cfm-btn cfm-btn-ok'
+      +       (o.okColor === 'blue' ? ' cfm-ok-blue' : '') + (o.okColor === 'teal' ? ' jr-ok-teal' : '')
+      +       '" id="jrAskOk">' + (o.okText || '확인') + '</button>'
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(bd);
+    function close(){ if (bd.parentNode) bd.parentNode.removeChild(bd); }
+    gel('jrAskNo').onclick = close;
+    bd.onclick = function(e){ if (e.target === bd) close(); };
+    gel('jrAskOk').onclick = function(){
+      var v = '';
+      if (o.input) {
+        v = String(gel('jrAskIn').value || '').trim();
+        if (!v) {
+          var er = gel('jrAskErr');
+          er.textContent = o.requiredMsg || '내용을 입력하세요.';
+          er.style.display = ''; gel('jrAskIn').focus(); return;
+        }
+      }
+      close();
+      if (typeof o.onOk === 'function') o.onOk(v);
+    };
+    if (o.input) setTimeout(function(){ var e = gel('jrAskIn'); if (e) e.focus(); }, 60);
   }
   (function(){
     var st = document.createElement('style');
@@ -525,32 +618,21 @@
   /* ── 승인 · 반려 ──────────────────────────────────────────────── */
   window.jrConfirm = function(){
     if (!CUR) return;
-    console.log('[joinReq] 승인창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('확인창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'question',
-      title: '신청번호 ' + CUR + ' 승인',
-      html: '<div style="font-size:14px; line-height:1.75; text-align:left;">'
-          + '병원이 새로 만들어지고, 신청 계정이 <b>병원관리자</b>로 등록됩니다.<br>'
-          + '<b>[계약관리]</b> 에서 계약을 넣어야 이용이 시작됩니다.<br>'
-          + '동의서 <b>PDF 는 병원이 직접 만들어 올립니다.</b></div>',
-      width: 420,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '승인',
-      cancelButtonText: '취소',
-      confirmButtonColor: '#1f5a4b'
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqCfm.do', dataType:'json', data:{ reqNo: CUR },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '승인하지 못했습니다.'); return; }
-          // 완료 알림 없음(2026-08-19 요청) — 상태가 승인으로 바뀌는 게 화면에 보인다
-          var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
-        },
-        error:function(){ _alertBox('승인하지 못했습니다.'); }
-      });
+    _jrAsk({
+      icon:'❓', title:'신청번호 ' + CUR + ' 승인',
+      msg:'승인신청을 완료하고 <b>계약정보</b>를 입력하세요.',
+      okText:'승인', okColor:'teal', cancelText:'취소',
+      onOk:function(){
+        $.ajax({
+          type:'post', url:'/join/joinReqCfm.do', dataType:'json', data:{ reqNo: CUR },
+          success:function(d){
+            if (d.error_code !== '0') { _alertBox(d.error_msg || '승인하지 못했습니다.'); return; }
+            // 완료 알림 없음(2026-08-19 요청) — 상태가 승인으로 바뀌는 게 화면에 보인다
+            var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
+          },
+          error:function(){ _alertBox('승인하지 못했습니다.'); }
+        });
+      }
     });
   };
 
@@ -558,27 +640,12 @@
      승인/반려 어느 쪽인지도 안 보인다(2026-08-19 지적). SweetAlert 입력창으로 받는다. */
   window.jrReject = function(){
     if (!CUR) return;
-    console.log('[joinReq] 반려창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('입력창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'warning',
-      title: '신청번호 ' + CUR + ' 반려',
-      input: 'text',
-      html: '<div style="font-size:12.5px; color:#b23b3b; line-height:1.6; text-align:left;">이 신청을 <b>반려</b>합니다. 승인하시려면 [취소] 를 누른 뒤 <b>승인</b> 버튼을 눌러 주세요.</div>',
-      inputPlaceholder: '반려 사유 (신청 이력에 남습니다)',
-      width: 420,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '반려',
-      cancelButtonText: '취소',
-      confirmButtonColor: '#b23b3b',
-      inputValidator: function(v){
-        if (!v || String(v).trim() === '') return '반려 사유를 입력하세요.';
-        return null;
-      }
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      jrRejectExec(String(r.value).trim());
+    _jrAsk({
+      icon:'⚠️', title:'신청번호 ' + CUR + ' 반려',
+      msg:'이 신청을 <b>반려</b>합니다. 승인 신청을 원하면 <b>다시 신청</b>하면 됩니다.',
+      input:true, placeholder:'반려 사유 (신청 이력에 남습니다)', requiredMsg:'반려 사유를 입력하세요.',
+      okText:'반려', okColor:'red', cancelText:'취소',
+      onOk:function(v){ jrRejectExec(v); }
     });
   };
 
@@ -587,37 +654,22 @@
      행을 지우지 않으므로 나중에 무엇이 취소됐는지 추적할 수 있다. */
   window.jrReqCancel = function(){
     if (!CUR) return;
-    console.log('[joinReq] 가입취소창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('입력창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'warning',
-      title: '신청번호 ' + CUR + ' 가입취소',
-      html: '<div style="font-size:14px; line-height:1.75; text-align:left;">'
-          + '이 신청을 <b>목록에서 내립니다.</b> 병원·계정은 아직 만들어지지 않았습니다.<br>'
-          + '같은 요양기관기호로 <b>다시 신청</b>할 수 있습니다.</div>',
-      input: 'text',
-      inputPlaceholder: '취소 사유 (신청 이력에 남습니다)',
-      width: 460,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '가입취소',
-      cancelButtonText: '닫기',
-      confirmButtonColor: '#b23b3b',
-      inputValidator: function(v){
-        if (!v || String(v).trim() === '') return '취소 사유를 입력하세요.';
-        return null;
+    _jrAsk({
+      icon:'⚠️', title:'신청번호 ' + CUR + ' 가입취소',
+      msg:'이 신청을 <b>취소</b>합니다. 다시 할 경우 <b>요양기관에서 다시 입력</b>해야 합니다.',
+      input:true, placeholder:'취소 사유 (신청 이력에 남습니다)', requiredMsg:'취소 사유를 입력하세요.',
+      okText:'가입취소', okColor:'red', cancelText:'닫기',
+      onOk:function(v){
+        $.ajax({
+          type:'post', url:'/join/joinReqCancel.do', dataType:'json',
+          data:{ reqNo: CUR, rjtRsn: v },
+          success:function(d){
+            if (d.error_code !== '0') { _alertBox(d.error_msg || '취소하지 못했습니다.'); return; }
+            jrClose(); jrList();
+          },
+          error:function(){ _alertBox('취소하지 못했습니다.'); }
+        });
       }
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqCancel.do', dataType:'json',
-        data:{ reqNo: CUR, rjtRsn: String(r.value).trim() },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '취소하지 못했습니다.'); return; }
-          jrClose(); jrList();
-        },
-        error:function(){ _alertBox('취소하지 못했습니다.'); }
-      });
     });
   };
 
@@ -625,31 +677,22 @@
      반려는 병원·사용자를 만들지 않으므로 지울 것이 없다. 상태만 접수로 되돌린다. */
   window.jrRjtCancel = function(){
     if (!CUR) return;
-    console.log('[joinReq] 반려취소창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('확인창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'question',
-      title: '신청번호 ' + CUR + ' 반려취소',
-      html: '<div style="font-size:14px; line-height:1.75; text-align:left;">'
-          + '반려를 <b>접수</b> 상태로 되돌립니다. 반려 사유는 지워집니다.<br>'
-          + '되돌린 뒤 다시 승인하거나 다시 반려할 수 있습니다.</div>',
-      width: 430,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '반려취소',
-      cancelButtonText: '닫기',
-      confirmButtonColor: '#1f5a4b'
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqRjtCancel.do', dataType:'json', data:{ reqNo: CUR },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '반려를 취소하지 못했습니다.'); return; }
-          // 완료 알림 없음 — 목록·상세가 바로 접수 상태로 바뀐다
-          var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
-        },
-        error:function(){ _alertBox('반려를 취소하지 못했습니다.'); }
-      });
+    _jrAsk({
+      icon:'❓', title:'신청번호 ' + CUR + ' 반려취소',
+      msg:'반려를 <b>접수</b> 상태로 되돌립니다. 반려 사유는 지워집니다.<br>'
+        + '되돌린 뒤 다시 승인하거나 다시 반려할 수 있습니다.',
+      okText:'반려취소', okColor:'teal', cancelText:'닫기',
+      onOk:function(){
+        $.ajax({
+          type:'post', url:'/join/joinReqRjtCancel.do', dataType:'json', data:{ reqNo: CUR },
+          success:function(d){
+            if (d.error_code !== '0') { _alertBox(d.error_msg || '반려를 취소하지 못했습니다.'); return; }
+            // 완료 알림 없음 — 목록·상세가 바로 접수 상태로 바뀐다
+            var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
+          },
+          error:function(){ _alertBox('반려를 취소하지 못했습니다.'); }
+        });
+      }
     });
   };
 
@@ -658,39 +701,26 @@
      사유를 받는다. 계약이 있거나 사용자가 늘었으면 서버가 거부한다. */
   window.jrRollback = function(){
     if (!CUR) return;
-    console.log('[joinReq] 승인취소창 reqNo=' + CUR);
-    if (!window.Swal) { _alertBox('입력창을 열 수 없습니다.'); return; }
-    Swal.fire({
-      icon: 'warning',
-      title: '신청번호 ' + CUR + ' 승인취소',
-      html: '<div style="font-size:12.5px; line-height:1.7; text-align:left;">'
-          + '승인으로 만들어진 <b>병원 · 사용자 · 회원 · 동의확정</b> 이 모두 지워지고,<br>'
-          + '신청은 <b>접수</b> 상태로 돌아갑니다. 되돌릴 수 없습니다.<br>'
-          + '<span style="color:#7b8b97;">계약이 등록돼 있거나 사용자가 늘었으면 취소되지 않습니다.</span></div>',
-      input: 'text',
-      inputPlaceholder: '취소 사유 (신청 이력에 남습니다)',
-      width: 440,
-      customClass: { popup:'jr-swal', icon:'jr-swal-icon' },
-      showCancelButton: true,
-      confirmButtonText: '승인취소',
-      cancelButtonText: '닫기',
-      confirmButtonColor: '#b23b3b',
-      inputValidator: function(v){
-        if (!v || String(v).trim() === '') return '취소 사유를 입력하세요.';
-        return null;
+    _jrAsk({
+      icon:'⚠️', title:'신청번호 ' + CUR + ' 승인취소',
+      /* 문구 간결화(2026-08-21 지시) — 세부는 서버가 지키고 막히면 그때 서버 안내가 뜬다.
+         ★계약도 함께 지워진다(JoinServiceImpl.rollback 의 delContFromReq) — 「계약이 있으면
+         취소 불가」 안내줄은 사실과 달라 뺐다(2026-08-21 「계약내용도 취소되어야 하고 이 메세지는 제외」). */
+      msg:'승인으로 만든 <b>병원·계정·계약이 지워지고</b>, 신청은 <b>접수</b>로 돌아갑니다.',
+      input:true, placeholder:'취소 사유 (신청 이력에 남습니다)', requiredMsg:'취소 사유를 입력하세요.',
+      okText:'승인취소', okColor:'red', cancelText:'닫기',
+      onOk:function(v){
+        $.ajax({
+          type:'post', url:'/join/joinReqRollback.do', dataType:'json',
+          data:{ reqNo: CUR, rjtRsn: v },
+          success:function(d){
+            if (d.error_code !== '0') { _alertBox(d.error_msg || '승인취소하지 못했습니다.'); return; }
+            // 완료 알림은 뺀다(2026-08-19 요청) — 목록·상세가 바로 접수 상태로 바뀌어 눈에 보인다
+            var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
+          },
+          error:function(){ _alertBox('승인취소하지 못했습니다.'); }
+        });
       }
-    }).then(function(r){
-      if (!r.isConfirmed) return;
-      $.ajax({
-        type:'post', url:'/join/joinReqRollback.do', dataType:'json',
-        data:{ reqNo: CUR, rjtRsn: String(r.value).trim() },
-        success:function(d){
-          if (d.error_code !== '0') { _alertBox(d.error_msg || '승인취소하지 못했습니다.'); return; }
-          // 완료 알림은 뺀다(2026-08-19 요청) — 목록·상세가 바로 접수 상태로 바뀌어 눈에 보인다
-          var no = CUR; jrList(); setTimeout(function(){ jrInfo(no); }, 500);
-        },
-        error:function(){ _alertBox('승인취소하지 못했습니다.'); }
-      });
     });
   };
 
@@ -768,7 +798,7 @@
   window.jrcOpen = function(hospCd, reqNo){
     if (!hospCd) { _alertBox('요양기관기호가 없어 계약정보를 열 수 없습니다.'); return; }
     JRC = { hospCd:String(hospCd).trim(), reqNo:(reqNo || ''), hospNm:'', hospUuid:'', joinDt:'',
-            req:{}, conts:{}, cnts:{}, gbs:[] };
+            req:{}, conts:{}, cnts:{}, gbs:[], tab:'' };
     gel('jrcHosp').innerHTML = '';
     gel('jrcCols').innerHTML = '';
     gel('jrcMask').style.display = 'flex';
@@ -822,8 +852,22 @@
       + (JRC.reqNo ? '<span class="jrc-cd">신청번호 ' + esc(JRC.reqNo) + '</span>' : '');
 
 
-    gel('jrcCols').innerHTML = JRC.gbs.map(jrcSecHtml).join('');
+    /* 탭 띠 — 카드 두 장을 한 장씩 보여 준다(2026-08-21 「두 개 탭을 분리」) */
+    var tabs = '<div class="jrc-tabs">' + JRC.gbs.map(function(g){
+      return '<button type="button" class="jrc-tab" id="jrcTabBtn_' + g.gb + '"'
+           + ' onclick="jrcTab(\'' + g.gb + '\');">'
+           + '<span class="jrc-tdot" id="jrcTabDot_' + g.gb + '"></span>' + esc(g.nm) + '</button>';
+    }).join('') + '</div>';
+    gel('jrcCols').innerHTML = tabs + JRC.gbs.map(jrcSecHtml).join('');
     JRC.gbs.forEach(function(g){ jrcFill(g); });
+    /* 처음 보여 줄 탭 : 보던 탭 > 기존 계약이 있는 구분 > 체크된 구분 > 첫 구분 */
+    var cur = JRC.tab;
+    if (!cur || !gel('jrcSec_' + cur)) {
+      var byEx = JRC.gbs.filter(function(g){ return !!JRC.conts[g.gb]; })[0];
+      var byOn = JRC.gbs.filter(function(g){ var e = gel('jrcOn_' + g.gb); return e && e.checked; })[0];
+      cur = (byEx || byOn || JRC.gbs[0]).gb;
+    }
+    jrcTab(cur);
   }
 
   function jrcSecHtml(g){
@@ -901,12 +945,25 @@
     jrcToggle(b);
   }
 
+  window.jrcTab = function(b){
+    if (JRC) JRC.tab = b;
+    var gbs = JRC ? JRC.gbs : [];
+    gbs.forEach(function(g){
+      var on  = (g.gb === b);
+      var sec = gel('jrcSec_' + g.gb);    if (sec) sec.classList.toggle('on', on);
+      var btn = gel('jrcTabBtn_' + g.gb); if (btn) btn.classList.toggle('on', on);
+    });
+  };
+
   window.jrcToggle = function(b){
     var on  = gel('jrcOn_' + b).checked;
     var sec = gel('jrcSec_' + b);
     sec.classList.toggle('off', !on);
     var f = sec.querySelectorAll('.jrc-secb input, .jrc-secb select');
     for (var i = 0; i < f.length; i++) f[i].disabled = !on;
+    /* 탭 점 — 체크된 구분은 초록(안 보이는 탭의 상태도 띠에서 보이게) */
+    var d = gel('jrcTabDot_' + b);
+    if (d) d.style.background = on ? '#2ecc71' : '#c3ced6';
   };
 
   window.jrcManual = function(el){ if (el) el.setAttribute('data-man', '1'); };
@@ -995,7 +1052,8 @@
   function jrcRun(list, i){
     if (i >= list.length) {
       jrcBusy(false);
-      _alertBox('계약정보를 저장했습니다.');
+      /* 성공 알림은 띄우지 않는다(2026-08-21 「마지막 결과확인 없애기」) —
+         창이 다시 그려져 「기존 계약」 배지·등록 건수로 결과가 보인다. 실패 때만 알린다. */
       jrcReload();
       return;
     }
@@ -1036,7 +1094,7 @@
       jrcPost('/user/hospContDelete.do',
         [{ keyhospCd:JRC.hospCd, keystartDt:jrcD2S(ex.startDt),
            keyendDt:jrcD2S(ex.endDt), keyconactGb:b, updUser:who.user, updIp:who.ip }],
-        function(){ jrcBusy(false); _alertBox('계약을 삭제했습니다.'); jrcReload(); },
+        function(){ jrcBusy(false); jrcReload(); },   /* 성공 알림 없음 — 위와 같은 지시 */
         function(){ jrcBusy(false); _alertBox('계약을 삭제하지 못했습니다.'); });
     });
   };
