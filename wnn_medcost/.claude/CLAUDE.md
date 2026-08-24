@@ -398,7 +398,7 @@
 - **정식 오픈 시**: 양쪽의 `display:none` 과 `joinReqDev` 스크립트만 지우면 된다.
 - ※사이드바의 **QPS 개발자 플래그(`qpsDev` / `qps` 타이핑)** 는 **별개**다 — 같이 바꾸지 말 것.
 
-### [대기 · DB 적용 필요] 장기입원 환자분율(14) — **181일 이상 0명인데 현황값 100%** (2026-08-24)
+### [완료] 장기입원 환자분율(14) — **181일 이상 0명인데 현황값 100%** (2026-08-24, 운영 적용 완료)
 - **요청**(월분석보고서 검수): 「181일 이상 장기입원 환자가 **0명일 경우 수치가 100%** 로 확인되는데
   **0%로 수정**하는 것이 적절할 것 같습니다(5점 구간 % 기준이 20% 미만이기에). 예) 평택삼성요양병원」
 - **원인** — 「산출값 0.00 이면 만점 처리」 규칙에 **14 가 08 과 함께 묶여** 있었다:
@@ -412,17 +412,28 @@
   · `EVALUATION_INDICATORS_VALUE`(FUNCTION) — 누적(`select_Hosp_Indi` L5026)·`SP_DASH_INDICATORS` 에서 **재계산**
   (`SP_EVALUATION_INDICATORS_CREATE2` 는 분모=전체·분자=181일이상 을 **넘겨주기만** 한다 — 손댈 것 없음)
 - **조치 파일**(전부 `('08','14')` → `('08')` **한 줄**, 나머지는 운영 원본 그대로):
-  · [FN_EVALUATION_INDICATORS_VALUE_2026-08-24.sql](docs/sql/proc/FN_EVALUATION_INDICATORS_VALUE_2026-08-24.sql)
+  · [FN_EVALUATION_INDICATORS_VALUE_2026-08-24.sql](docs/sql/proc/FN_EVALUATION_INDICATORS_VALUE_2026-08-24.sql) — **적용 완료 08-24 08:53**
     · 백업 [BACKUP_…_20260824.sql](docs/sql/proc/BACKUP_FN_EVALUATION_INDICATORS_VALUE_20260824.sql)
-  · [SP_EVALUATION_INDICATORS_REGISTER_2026-08-24.sql](docs/sql/proc/SP_EVALUATION_INDICATORS_REGISTER_2026-08-24.sql)
+  · [SP_EVALUATION_INDICATORS_REGISTER_2026-08-24.sql](docs/sql/proc/SP_EVALUATION_INDICATORS_REGISTER_2026-08-24.sql) — **적용 완료 08-24 08:28**
     · 백업 [BACKUP_…_20260824.sql](docs/sql/proc/BACKUP_SP_EVALUATION_INDICATORS_REGISTER_20260824.sql)
-  · 과거 자료 보정 [FIX_LONGADM14_CALVAL100_2026-08-24.sql](docs/sql/evalrpt/FIX_LONGADM14_CALVAL100_2026-08-24.sql)
+  · 과거 자료 보정 [FIX_LONGADM14_CALVAL100_2026-08-24.sql](docs/sql/evalrpt/FIX_LONGADM14_CALVAL100_2026-08-24.sql) — **실행 완료**
     — **26건 · 10개 병원 · 202407~202612**(평택삼성 202509~202512·202606~202608 7건 포함)의 `CAL_VAL` 100.00 → 0.00.
-    원본은 `TBL_PAT_INDI_BAK_LONGADM14_20260824` 에 백업. **점수 컬럼은 건드리지 않는다**
+    ⚠**백업 테이블은 만들지 않았다**(UPDATE 만 실행) — 되돌리려면
+      `UPDATE TBL_PAT_INDI SET CAL_VAL=100.00 WHERE CATE_CD='14' AND UPD_USER='fix20260824';`
+      (보정 전 값이 26건 모두 100.00 으로 같아 표식만으로 복구된다. 단 UPD_USER 원값은 못 살린다.)
+    **점수 컬럼은 건드리지 않는다**
     (26건 전부 이미 `S_SCORE=5 · WEIGVAL=STDWEIG · MAX_VAL=5` 임을 실측 확인).
   ★**프로시저·함수를 먼저** 적용할 것 — 안 그러면 자료 재생성 때 100 으로 되돌아간다(2026-08-17 약사건 재현).
 - **회귀 없음 근거**: `TBL_WEVALUE_MST` 의 14/5점 구간이 **0.00~19.99**(2024·2025·2026 판 모두 동일)이라
   0.00 도 일반 경로(구간 조회)에서 그대로 **STD_SCORE 5 · WEIGVAL `TRUNC(5/5*5)`=5.00** 을 받는다.
+- **검증(운영 실측 2026-08-24)** :
+  · 함수 직접 호출 — `EVALUATION_INDICATORS_VALUE('1','14','202612',14,0)` = **0.00**(전 100.00),
+    `('2',…)` = **5.00**(가중치 만점 유지), `('1','08',…)` = **100.00**(08 은 종전 그대로 — 안 건드림).
+  · 대상 26건 : `CAL_VAL=100` **잔여 0건** · `0.00` 26건 · `UPD_USER='fix20260824'` 26건 ·
+    점수 4컬럼(`S_SCORE`·`STDWEIG`·`WEIGVAL`·`MAX_VAL`) **26건 전부 5/5.00/5.00/5** 회귀 없음.
+  · `fix20260824` 로 바뀐 행은 **전부 CATE_CD='14'** — 다른 지표 오염 없음.
+  · 정상 산출 행(14 중 분자>0) **770건 불변**(가중치 합 2,455.80, 손댄 행 0).
+  · 누적 경로도 확인 — 평택삼성 2026 평가기간(7~8월) 분모 8·분자 0 → **현황값 0.00% · 가중치 5.00**.
 - **JSP 수정 없음**: [evalReport.jsp](src/main/webapp/WEB-INF/jsp/main/evalReport.jsp) 는 `cal_val` 을 그대로 찍고,
   누적은 함수로 재계산하므로 DB 만 고치면 보고서·적정성평가 화면이 함께 0% 로 바뀐다.
 - **배포**: DB 프로시저/함수 + 데이터 보정만 — 앱 변경·재기동 불필요.
