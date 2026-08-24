@@ -568,7 +568,8 @@
 		            				     이 표시가 붙은 줄은 지워도 자료 손실이 없다 — 안심하고 정리 가능.
 		            				     ★위너넷(winner==='Y')에게만 표시(2026-08-03 요청) — 병원 사용자에게는
 		            				       내부 상태라 불안만 주므로 숨긴다. 진단이 필요하면 위너넷이 접속해 확인. */
-		            				if (winner === 'Y' && row && row.data_cnt != null && Number(row.data_cnt) === 0)
+		            				if (winner === 'Y' && row && row.data_cnt != null && Number(row.data_cnt) === 0
+		            					&& (row.mg_flag !== '9' || row.dup_cnt_yn === 'Y'))   /* 2026-08-24 : 평가표는 <같은 건수 중복>일 때만 배지 — 흡수(포함) 케이스는 숨김 */
 		            					t += ' <span style="display:inline-block;padding:1px 7px;border-radius:9px;'
 		            					   + 'background:#fdecea;color:#c0392b;border:1px solid #f5b7b1;'
 		            					   + 'font-size:11px;font-weight:700;" title="업로드 이력만 남고 실제 저장된 자료가 없습니다. 지워도 자료 손실이 없는 줄입니다.">자료없음</span>';
@@ -1070,9 +1071,24 @@ $(document).ready(function() {
 	            	     ★응답은 배열이 아니라 {data:[…]} 묶음이다(컨트롤러 response.put("data",…)) —
 	            	       처음에 response 에 바로 filter 를 걸어 헛돌았다(일반병원에서 그대로 보이던 원인).
 	            	     data_cnt 가 안 내려오는 경우(서버 구버전)는 숨기지 않는다(오탐 방지). */
+	            	/* ★2026-08-24 — dup_cnt_yn 은 서버 컬럼이 아니라 <여기서> 계산한다.
+	            	     resultMap 에 컬럼을 더했더니 그 resultMap 을 쓰는 다른 조회가 "컬럼 없음"으로 깨졌다.
+	            	     같은 달 배치가 이 응답에 전부 오므로: 평가표(9) 중 같은 건수가 2개 이상이면 Y(같은 파일 중복). */
+	            	if (response && Array.isArray(response.data)) {
+	            		var cntMap = {};
+	            		for (var ci = 0; ci < response.data.length; ci++) {
+	            			var rr = response.data[ci];
+	            			if (rr && rr.mg_flag === '9') cntMap[rr.case_cnt] = (cntMap[rr.case_cnt] || 0) + 1;
+	            		}
+	            		for (var cj = 0; cj < response.data.length; cj++) {
+	            			var r2 = response.data[cj];
+	            			if (r2 && r2.mg_flag === '9') r2.dup_cnt_yn = (cntMap[r2.case_cnt] > 1) ? 'Y' : 'N';
+	            		}
+	            	}
 	            	if (winner !== 'Y' && response && Array.isArray(response.data)) {
 	            		response.data = response.data.filter(function(r){
-	            			return !(r && r.data_cnt != null && Number(r.data_cnt) === 0);
+	            			return !(r && r.data_cnt != null && Number(r.data_cnt) === 0
+	            			         && (r.mg_flag !== '9' || r.dup_cnt_yn === 'Y'));   /* 2026-08-24 : 배지와 같은 규칙 */
 	            		});
 	            	}
 	            	callback(response);
