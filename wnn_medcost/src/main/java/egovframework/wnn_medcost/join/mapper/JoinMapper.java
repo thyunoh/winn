@@ -57,6 +57,16 @@ public interface JoinMapper {
     int  updateReqUnreject(JoinReqDTO dto) throws Exception;
     int updateMyJoinReq(JoinReqDTO dto) throws Exception;
     int updateHospFromMy(JoinReqDTO dto) throws Exception;
+    int updateContOcsFromMy(JoinReqDTO dto) throws Exception;   /* 2026-08-24 : 계약의 빈 OCS 정보 채움 */
+    java.util.List<String> selContGbList(String hospCd) throws Exception;   /* 2026-08-24 : 승인 계약의 구분 목록 */
     int updateReqCancel(JoinReqDTO dto) throws Exception;
     int updateMgrCancel(JoinReqDTO dto) throws Exception;
+
+    /* ★2026-08-24 — 승인 후 화면에서 담당자·동의를 채운다(신청 단계에서 옮겨 온 항목).
+       담당자는 <통째로 갈아끼운다> — 지운 뒤 다시 넣는다.
+       행마다 대조하면 MGR_SEQ(구분별 일련번호)가 꼬여 같은 담당자가 두 번 들어간다. */
+    java.util.List<java.util.Map<String,Object>> selAgreeMstList() throws Exception;
+    int deleteJoinMgrAll(JoinReqDTO dto) throws Exception;
+    int insertJoinMgr(egovframework.wnn_medcost.join.model.JoinMgrDTO dto) throws Exception;
+    int insertJoinAgree(egovframework.wnn_medcost.join.model.JoinAgreeDTO dto) throws Exception;
 }

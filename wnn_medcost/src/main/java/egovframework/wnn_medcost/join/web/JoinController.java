@@ -19,6 +19,7 @@ import java.io.File;
 import egovframework.util.ClientInfo;
 import egovframework.wnn_medcost.ftpload.service.SftpService;
 import egovframework.wnn_medcost.join.service.JoinPdfMaker;
+import egovframework.wnn_medcost.join.model.JoinAgreeDTO;
 import egovframework.wnn_medcost.join.model.JoinReqDTO;
 import egovframework.wnn_medcost.join.service.JoinService;
 
@@ -282,6 +283,11 @@ public class JoinController {
                 a.setReqNo(info.getReqNo());
                 model.addAttribute("agreeList", svc.selJoinAgreeList(a));
                 model.addAttribute("mgrList",   svc.selJoinMgrList(a));
+                /* ★2026-08-24 — 동의서 <마스터>도 함께 준다. 신청 단계에서 동의를 안 받게 되어
+                   TBL_JOIN_AGREE 가 비어 있는 상태로 넘어오므로, 화면이 무엇에 동의받아야 하는지 알아야 한다. */
+                model.addAttribute("agreeMst", svc.selAgreeMstList());
+                /* ★2026-08-24 — 승인이 만든 계약의 구분(1·2) — 희망 서비스 자동체크용 */
+                model.addAttribute("contGbs", svc.selContGbList(hospCd));
             }
             model.addAttribute("error_code", "0");
         } catch (Exception e) {
@@ -320,6 +326,66 @@ public class JoinController {
             if (info == null) {
                 model.addAttribute("error_code", "40400");
                 model.addAttribute("error_msg", "승인된 가입신청을 찾을 수 없습니다.");
+                return "jsonView";
+            }
+
+            /* ★2026-08-24 프로세스 변경 — 「모두 입력 + 동의서 제출」이라야 메뉴가 열린다.
+               신청 단계가 요양기관기호·요양기관명·신청자정보만 받으므로, 나머지는 <여기서> 다 채웠는지 본다.
+               ⚠화면에서도 같은 검사를 하지만 서버가 최종 판정이다 — 화면 검사는 우회할 수 있다.
+                 여기를 통과해야 REQ_STAT 이 40 이 되고, 사이드바 게이트(DOC_YN='N')가 풀린다. */
+            String lack = lackOf(info);
+            if (lack != null) {
+                model.addAttribute("error_code", "40000");
+                model.addAttribute("error_msg", "아직 비어 있는 항목이 있습니다 — " + lack);
+                return "jsonView";
+            }
+
+            /* 희망 서비스 — 둘 중 하나는 있어야 한다(2026-08-24).
+               신청서 값이 비어도 <승인이 만든 계약>이 있으면 채워진 것으로 본다(화면 자동체크와 같은 기준). */
+            if (bl(info.getConactGb())) {
+                java.util.List<String> gbs = svc.selContGbList(hospCd);
+                if (gbs == null || gbs.isEmpty()) {
+                    model.addAttribute("error_code", "40000");
+                    model.addAttribute("error_msg", "희망 서비스(진료비 분석·적정성평가)를 선택해 주세요.");
+                    return "jsonView";
+                }
+            }
+
+            /* 담당자 — 총 관리자(1)·심사과(3)는 성명·전화·이메일까지 있어야 한다
+               (화면 jdLackSync 와 같은 기준. 서버가 최종 판정이다). */
+            JoinReqDTO mq = new JoinReqDTO();
+            mq.setReqNo(info.getReqNo());
+            java.util.List<egovframework.wnn_medcost.join.model.JoinMgrDTO> mgrs = svc.selJoinMgrList(mq);
+            for (String gb : new String[]{"1", "3"}) {
+                boolean ok = false;
+                if (mgrs != null) {
+                    for (egovframework.wnn_medcost.join.model.JoinMgrDTO m : mgrs) {
+                        if (m == null || !gb.equals(m.getMgrGb())) continue;
+                        if (!bl(m.getMgrNm()) && !bl(m.getMgrTel()) && !bl(m.getEmail())) { ok = true; break; }
+                    }
+                }
+                if (!ok) {
+                    model.addAttribute("error_code", "40000");
+                    model.addAttribute("error_msg", "담당자 — " + ("1".equals(gb) ? "총 관리자" : "심사과")
+                                                  + "의 성명·전화번호·이메일을 입력하세요.");
+                    return "jsonView";
+                }
+            }
+
+            /* 필수 동의(TBL_AGREE_MST.ESS_YN='Y')를 다 체크했는지 */
+            JoinReqDTO aq = new JoinReqDTO();
+            aq.setReqNo(info.getReqNo());
+            java.util.List<JoinAgreeDTO> agrs = svc.selJoinAgreeList(aq);
+            boolean agreedAll = agrs != null && !agrs.isEmpty();
+            if (agrs != null) {
+                for (JoinAgreeDTO a : agrs) {
+                    if (a == null) continue;
+                    if ("Y".equals(a.getEssYn()) && !"Y".equals(a.getAgreeYn())) { agreedAll = false; break; }
+                }
+            }
+            if (!agreedAll) {
+                model.addAttribute("error_code", "40000");
+                model.addAttribute("error_msg", "필수 동의 항목에 모두 동의해야 제출할 수 있습니다.");
                 return "jsonView";
             }
 
@@ -440,14 +506,17 @@ public class JoinController {
                 model.addAttribute("error_msg", "로그인이 필요합니다.");
                 return "jsonView";
             }
+            /* ★2026-08-24 — 저장은 <느슨하게> 본다. 이 화면에서 채울 항목이 많아졌으므로
+               중간 저장을 막으면 한 번에 다 채워야 한다. 빠짐없이 채웠는지는 <제출> 때 본다. */
             if (dto.getHospNm() == null || dto.getHospNm().trim().isEmpty()) {
                 model.addAttribute("error_code", "40000");
                 model.addAttribute("error_msg", "병원명을 입력하세요.");
                 return "jsonView";
             }
-            if (dto.getHospCeo() == null || dto.getHospCeo().trim().isEmpty()) {
+            /* ★2026-08-24 — ASQ_DAY 는 varchar(2). 길면 DB 가 Data too long 으로 거부한다(실제 발생). */
+            if (dto.getAsqDay() != null && dto.getAsqDay().trim().length() > 2) {
                 model.addAttribute("error_code", "40000");
-                model.addAttribute("error_msg", "대표자를 입력하세요.");
+                model.addAttribute("error_msg", "환자평가표 작성완료일은 1~31 사이 숫자(매월 N일)로 입력하세요.");
                 return "jsonView";
             }
 
@@ -460,6 +529,20 @@ public class JoinController {
                 return "jsonView";
             }
 
+            /* ★2026-08-24 — 대표자 도장이 이 화면으로 옮겨 왔다.
+               화면은 base64 <본문만> 보낸다(data URL 접두어는 떼고). 해시는 서버가 계산한다 —
+               화면이 준 해시를 믿으면 나중에 대조하는 의미가 없다. 빈 값이면 손대지 않는다
+               (SQL 이 CASE 로 기존 도장을 지켜 준다). */
+            if (dto.getSealImg() != null && !dto.getSealImg().trim().isEmpty()) {
+                byte[] raw = java.util.Base64.getDecoder().decode(dto.getSealImg().trim());
+                if (raw.length > 3 * 1024 * 1024) {
+                    model.addAttribute("error_code", "40000");
+                    model.addAttribute("error_msg", "직인 이미지가 너무 큽니다.");
+                    return "jsonView";
+                }
+                dto.setSealHash(sha256Hex(raw));
+            }
+
             dto.setReqNo(info.getReqNo());
             dto.setHospCd(hospCd);                     // 쿠키값으로 잠근다
             dto.setCfmUser(ck(request, "s_userid"));
@@ -470,6 +553,11 @@ public class JoinController {
         } catch (IllegalStateException e) {
             model.addAttribute("error_code", "40900");
             model.addAttribute("error_msg", e.getMessage());
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            /* ★2026-08-24 — 「수정 중 오류」로만 보이던 것. 길이 초과(Data too long) 등은 무엇이 문제인지 알려 준다. */
+            log.error(" joinDocsSave 자료형·길이 오류", e);
+            model.addAttribute("error_code", "40000");
+            model.addAttribute("error_msg", "저장하지 못했습니다 — 입력값이 허용 길이·형식을 넘는 항목이 있습니다. 각 칸을 확인해 주세요.");
         } catch (Exception e) {
             log.error(" joinDocsSave 오류", e);
             model.addAttribute("error_code", "50000");
@@ -528,5 +616,36 @@ public class JoinController {
             model.addAttribute("error_msg", "취소 중 오류가 발생했습니다.");
         }
         return "jsonView";
+    }
+
+    /* ★2026-08-24 — 제출 가능한지 본다. 비었으면 <첫 항목 이름>을 돌려주고, 다 찼으면 null.
+       화면의 안내문과 같은 순서·같은 이름을 쓴다(사람이 두 곳을 대조하게 만들지 않는다). */
+    private String lackOf(JoinReqDTO i) {
+        if (i == null) return "신청 정보";
+        if (bl(i.getHospNm()))     return "병원명";
+        if (bl(i.getHospCeo()))    return "대표자";
+        if (bl(i.getHospTel()))    return "전화번호";
+        if (bl(i.getHospAddr()))   return "주소";
+        if (bl(i.getOcsCompany())) return "전산프로그램명";
+        if (bl(i.getOcsUserId()))  return "전산프로그램 ID";
+        if (bl(i.getOcsUserPw()))  return "전산프로그램 PW";
+        if (bl(i.getHiraCertPw())) return "심평원 인증서암호";
+        if (bl(i.getAsqDay()))     return "환자평가표 작성완료일";
+        if (bl(i.getEvalGoal()))   return "적정성평가 목표점수·등급";
+        if (bl(i.getSealImg()))    return "대표자 도장·사인";
+        return null;
+    }
+
+    private static boolean bl(String s) { return s == null || s.trim().isEmpty(); }
+
+    /* 직인 대조용 해시 — 화면이 준 값을 믿지 않고 서버가 원본에서 다시 계산한다 */
+    private String sha256Hex(byte[] data) throws Exception {
+        byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(data);
+        StringBuilder sb = new StringBuilder(d.length * 2);
+        for (int i = 0; i < d.length; i++) {
+            sb.append(Character.forDigit((d[i] >> 4) & 0xF, 16));
+            sb.append(Character.forDigit(d[i] & 0xF, 16));
+        }
+        return sb.toString();
     }
 }

@@ -102,15 +102,12 @@ public class JoinController {
             String email = dto.getEmail() == null ? "" : dto.getEmail().trim().toLowerCase();
             dto.setEmail(email);
 
-            /* 필수 항목(2026-08-19 지정) — 화면과 같은 기준으로 여기서도 본다.
-               병원명 · 요양기관기호 · 전화번호 · 심평원 인증서암호 · 전산프로그램 정보(MASTER) ·
-               환자평가표 작성완료일 · 적정성평가 목표점수·등급 · 로그인 계정.
-               대표자·주소도 필수. 담당자(총 관리자·심사과)는 아래에서 따로 본다. */
-            if (isBlank(dto.getHospCd()) || isBlank(dto.getHospNm()) || isBlank(dto.getHospTel())
-                    || isBlank(dto.getHospCeo()) || isBlank(dto.getHospAddr())
-                    || isBlank(email) || isBlank(dto.getMbrNm()) || isBlank(dto.getMbrTel())
-                    || isBlank(dto.getOcsCompany()) || isBlank(dto.getOcsUserId()) || isBlank(dto.getOcsUserPw())
-                    || isBlank(dto.getHiraCertPw()) || isBlank(dto.getAsqDay()) || isBlank(dto.getEvalGoal())) {
+            /* ★2026-08-24 프로세스 변경 — 신청 단계 필수는 <요양기관기호 · 요양기관명 · 신청자정보> 뿐이다.
+               전화번호·주소·대표자·전산프로그램·인증서암호·환자평가표일·목표점수·담당자표는
+               ***승인 후*** 병원이 로그인해서 채운다(wnn_medcost joinDocs.do). 여기서 막으면 신청 자체가 안 된다.
+               ⚠TBL_JOIN_REQ 는 REQ_NO·REQ_STAT·DOC_YN·HOSP_CD·EMAIL 만 NOT NULL 이라 빈 값으로 들어간다(확인함). */
+            if (isBlank(dto.getHospCd()) || isBlank(dto.getHospNm())
+                    || isBlank(email) || isBlank(dto.getMbrNm()) || isBlank(dto.getMbrTel())) {
                 model.addAttribute("error_code", "30000");
                 model.addAttribute("error_msg", "필수 항목이 비어 있습니다.");
                 return "jsonView";
@@ -119,17 +116,6 @@ public class JoinController {
             if (dto.getHospCd().trim().length() > 8) {
                 model.addAttribute("error_code", "30000");
                 model.addAttribute("error_msg", "요양기관기호는 8자를 넘을 수 없습니다.");
-                return "jsonView";
-            }
-            // 담당자 — 총 관리자(1)·심사과(3)는 성명·전화·이메일까지 필수
-            if (!hasMgr(dto, "1")) {
-                model.addAttribute("error_code", "30000");
-                model.addAttribute("error_msg", "담당자 — 총 관리자의 성명·전화번호·이메일을 확인하세요.");
-                return "jsonView";
-            }
-            if (!hasMgr(dto, "3")) {
-                model.addAttribute("error_code", "30000");
-                model.addAttribute("error_msg", "담당자 — 심사과의 성명·전화번호·이메일을 입력하세요.");
                 return "jsonView";
             }
             if (isBlank(dto.getPassWd()) || isBlank(dto.getAfPassWd())) {
@@ -173,18 +159,8 @@ public class JoinController {
                 return "jsonView";
             }
 
-            // 필수 동의가 다 체크됐는지 — 마스터의 ESS_YN='Y' 기준으로 다시 본다
-            List<AgreeMdDTO> agrMst = svc.selAgreeList(new AgreeMdDTO());
-            if (agrMst != null) {
-                for (AgreeMdDTO m : agrMst) {
-                    if (!"Y".equals(m.getEssYn())) continue;
-                    if (!isAgreed(dto, m.getAgreeCd())) {
-                        model.addAttribute("error_code", "30005");
-                        model.addAttribute("error_msg", "필수 동의 항목에 모두 동의해야 신청할 수 있습니다.");
-                        return "jsonView";
-                    }
-                }
-            }
+            /* ★2026-08-24 — 필수 동의 검사 제거. 동의서 2종은 ***승인 후*** 화면에서 받는다.
+               (신청 화면에 동의 항목 자체가 없으므로 여기서 막으면 아무도 신청을 못 한다) */
 
             // 비밀번호 암호화 — 기존 회원가입과 같은 방식(이메일을 salt 로)
             String encrypted = EgovFileScrty.encryptPassword(dto.getPassWd(), email);
@@ -193,13 +169,8 @@ public class JoinController {
 
             dto.setRegIp(GetClientIP.getClientIP(request));
 
-            /* 대표자 도장·사인은 필수 — 없으면 동의서의 (인) 자리가 빈 채로 접수된다 */
-            if (isBlank(dto.getSealImg())) {
-                model.addAttribute("error_code", "30006");
-                model.addAttribute("error_msg", "대표자 도장·사인을 올려 주세요.");
-                return "jsonView";
-            }
-
+            /* ★2026-08-24 — 대표자 도장·사인 <필수> 검사 제거. 도장은 동의서에 찍히는 것이라
+               ***승인 후*** 동의서 화면에서 받는다. 아래 크기·해시 처리는 값이 있을 때만 도는 코드라 그대로 둔다. */
             /* 대표자 직인 — 화면이 base64 본문만 보낸다.
                해시는 서버가 계산한다(화면이 준 값을 믿으면 대조의 의미가 없다). */
             if (!isBlank(dto.getSealImg())) {

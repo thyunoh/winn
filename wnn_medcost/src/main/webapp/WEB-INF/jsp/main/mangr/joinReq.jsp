@@ -117,7 +117,10 @@
            종전 기본이 「접수」라 ***승인하는 순간 그 줄이 목록에서 사라져*** "없어졌다/안 된다" 로 읽혔다.
            (계약관리에 다녀오거나 화면을 다시 열 때도 접수만 보였다.) --%>
       <select id="jrStat" onchange="jrList();">
-        <option value="" selected>전체 상태</option>
+        <%-- ★2026-08-24 「전체 승인만 보기」 — 기본을 <승인 전체(승인+동의서제출)>로.
+             승인(30)만 기본이면 병원이 제출(40)하는 순간 줄이 사라지는 옛 함정이 재발한다. --%>
+        <option value="">전체 상태</option>
+        <option value="3040" selected>승인 전체</option>
         <option value="10">접수</option>
         <option value="20">검토중</option>
         <option value="30">승인</option>
@@ -223,19 +226,10 @@
   #jrcMask .jrc-body{ padding:12px 14px 16px; overflow-y:auto; }
 
   #jrcMask .jrc-none{ color:#8a99a3; }
-
-  /* ★[2026-08-21] 두 계약을 좌우 나열 → 탭으로 분리(사용자 지시 「두 개 탭을 분리」).
-     ⚠숨은 탭의 입력칸도 DOM 에 그대로 있다 — 저장(jrcSave)은 종전대로 두 구분을 함께 본다. */
-  #jrcMask .jrc-cols{ display:block; }
-  #jrcMask .jrc-tabs{ display:flex; gap:6px; margin-bottom:10px; }
-  #jrcMask .jrc-tab{ border:1px solid #cfd9e0; background:#eef2f5; color:#5a6b76; border-radius:8px;
-            padding:9px 22px; font-size:14px; font-weight:700; cursor:pointer;
-            display:flex; align-items:center; gap:8px; }
-  #jrcMask .jrc-tab.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
-  /* 탭 점 = 그 구분의 「계약 등록/수정」 체크 상태 — 안 보이는 탭이 켜져 있는지 한눈에 */
-  #jrcMask .jrc-tdot{ width:9px; height:9px; border-radius:50%; background:#c3ced6; flex:0 0 auto; }
-  #jrcMask .jrc-sec{ display:none; background:#fff; border:1px solid #dde5ea; border-radius:9px; overflow:hidden; }
-  #jrcMask .jrc-sec.on{ display:block; }
+  /* ★[내력] 좌우 나열(08-21 전) → 탭 분리(08-21) → **한 화면 나열**(08-24 「탭 말고 한 화면에」).
+     두 구분(적정성평가·진료비 분석) 카드를 세로로 나란히 둔다. 켜고 끄는 것은 카드 머리줄의 체크. */
+  #jrcMask .jrc-cols{ display:flex; flex-direction:column; gap:10px; }
+  #jrcMask .jrc-sec{ display:block; background:#fff; border:1px solid #dde5ea; border-radius:9px; overflow:hidden; }
   #jrcMask .jrc-sech{ display:flex; align-items:center; gap:8px; flex-wrap:wrap;
             padding:8px 11px; background:#f2f6f8; border-bottom:1px solid #e2e9ee; }
   #jrcMask .jrc-sech label{ margin:0; font-size:13px; color:#2b3c45; cursor:pointer; display:flex; align-items:center; gap:6px; }
@@ -440,7 +434,7 @@
         gel('jrBody').innerHTML = L.map(function(r){
           return '<tr data-no="' + esc(r.reqNo) + '" onclick="jrInfo(' + esc(r.reqNo) + ');">'
                + '<td>' + esc(r.reqNo) + '</td>'
-               + '<td><span class="st s' + esc(r.reqStat) + '">' + esc(r.reqStatNm || r.reqStat) + '</span></td>'
+               + '<td>' + (r.actionYn === 'N' ? '<span class="jr-none">취소</span>' : '<span class="st s' + esc(r.reqStat) + '">' + esc(r.reqStatNm || r.reqStat) + '</span>') + '</td>'
                + '<td>' + nv(r.hospCd) + '</td>'
                + '<td class="l">' + nv(r.hospNm) + '</td>'
                + '<td>' + nv(r.hospCeo) + '</td>'
@@ -452,7 +446,7 @@
                + '<td>' + ((r.reqStat === '30' || r.reqStat === '40') && r.hospCd
                    ? '<button type="button" class="jr-btn" style="padding:2px 9px;font-size:12px;"'
                      + ' onclick="event.stopPropagation(); jrGoContRow(\'' + esc(r.hospCd) + '\',' + esc(r.reqNo) + ');"'
-                     + ' title="계약정보 입력창을 엽니다 — 화면은 그대로 있습니다">계약입력</button>'
+                     + ' title="계약정보 입력창을 엽니다 — 화면은 그대로 있습니다">' + (r.contYn === 'Y' ? '계약수정' : '계약입력') + '</button>'
                    : '<span class="jr-none">-</span>') + '</td>'
                + '</tr>';
         }).join('');
@@ -486,38 +480,43 @@
             + '<div style="font-size:11px;color:#8a99a3;margin-top:3px;">' + esc(i.sealNm || '') + '</div>'
           : '<span class="jr-none">없음</span>';
 
+        /* ★2026-08-24 「세줄로」 — 라벨+값 3쌍(6칸) + 오른쪽 도장칸. 주소·전산프로그램·비고만 넓게.
+           ★비밀번호 점(●)이 "25CF25CF…" 로 보이던 것도 정정 — \u 이스케이프가 어딘가에서 벗겨진 잔재라
+             문자 그대로의 ● 로 박는다. */
         gel('jrInfo').innerHTML =
           '<table class="jr-sheet">'
-          + '<colgroup><col style="width:130px;"><col><col style="width:130px;"><col><col style="width:110px;"><col style="width:120px;"></colgroup>'
+          + '<colgroup><col style="width:110px;"><col><col style="width:110px;"><col style="width:300px;">'
+          + '<col style="width:110px;"><col style="width:220px;"><col style="width:88px;"><col style="width:220px;"></colgroup>'   /* 2026-08-24 : 폭 미세조정 — 최종: 첫 값칸(자동)이 줄고, 요양기관기호쪽 300·전화번호쪽 220, 도장 88+220 고정 */
           + '<tr><th>병원명</th><td>' + nv(i.hospNm) + '</td>'
           +     '<th>요양기관기호</th><td>' + nv(i.hospCd) + '</td>'
+          +     '<th>전화번호</th><td>' + nv(i.hospTel) + '</td>'
           +     '<th rowspan="4">대표자 도장</th><td rowspan="4" style="text-align:center;">' + seal + '</td></tr>'
           + '<tr><th>대표자</th><td>' + nv(i.hospCeo) + '</td>'
-          +     '<th>사업자등록번호</th><td>' + nv(i.busiNum) + '</td></tr>'
-          + '<tr><th>전화번호</th><td>' + nv(i.hospTel) + '</td>'
+          +     '<th>사업자등록번호</th><td>' + nv(i.busiNum) + '</td>'
           +     '<th>FAX</th><td>' + nv(i.hospFax) + '</td></tr>'
-          + '<tr><th>주소</th><td colspan="3">' + nv((i.zipCd ? '(' + i.zipCd + ') ' : '') + addr) + '</td></tr>'
           + '<tr><th>병상수</th><td>' + nv(i.wardcnt) + '</td>'
-          +     '<th>희망 서비스</th><td colspan="3">' + nv(CON[i.conactGb] || i.conactGb) + '</td></tr>'
-          + '<tr><th>전산프로그램</th><td colspan="5">'
+          +     '<th>희망 서비스</th><td>' + nv(CON[i.conactGb] || i.conactGb) + '</td>'
+          +     '<th>심평원<br>인증서암호</th><td>' + nv(i.hiraCertPw) + '</td></tr>'
+          + '<tr><th>PC 사용여부</th><td>' + nv(PCU[i.pcUseGb] || i.pcUseGb)
+          +     (i.pcUseTime ? ' (가능시간 ' + esc(i.pcUseTime) + ')' : '')
+          +     (i.pcUseStdt ? ' (시작일 ' + esc(i.pcUseStdt) + ')' : '') + '</td>'
+          +     '<th>환자평가표<br>작성완료일</th><td>' + (i.asqDay ? '매월 ' + esc(i.asqDay) + '일' : '<span class="jr-none">-</span>')
+          +     (i.asqBigo ? ' (' + esc(i.asqBigo) + ')' : '') + '</td>'
+          +     '<th>적정성평가 목표</th><td>' + nv(i.evalGoal) + '</td></tr>'
+          + '<tr><th>주소</th><td colspan="7">' + nv((i.zipCd ? '(' + i.zipCd + ') ' : '') + addr) + '</td></tr>'
+          + '<tr><th>전산프로그램</th><td colspan="7">'
           +     '프로그램명 ' + nv(i.ocsCompany) + ' &nbsp;·&nbsp; ID ' + nv(i.ocsUserId)
           +     ' &nbsp;·&nbsp; PW ' + nv(i.ocsUserPw) + '</td></tr>'
-          + '<tr><th>심평원 인증서암호</th><td>' + nv(i.hiraCertPw) + '</td>'
-          +     '<th>PC 사용여부</th><td colspan="3">' + nv(PCU[i.pcUseGb] || i.pcUseGb)
-          +     (i.pcUseTime ? ' (가능시간 ' + esc(i.pcUseTime) + ')' : '')
-          +     (i.pcUseStdt ? ' (시작일 ' + esc(i.pcUseStdt) + ')' : '') + '</td></tr>'
-          + '<tr><th>환자평가표<br>작성완료일</th><td>' + (i.asqDay ? '매월 ' + esc(i.asqDay) + '일' : '<span class="jr-none">-</span>')
-          +     (i.asqBigo ? ' (' + esc(i.asqBigo) + ')' : '') + '</td>'
-          +     '<th>적정성평가 목표</th><td colspan="3">' + nv(i.evalGoal) + '</td></tr>'
+          /* ★2026-08-24 「이 부분은 네 줄(4쌍)로 조이게」 — 신청자·연락처·IP·이메일을 한 줄에 */
           + '<tr><th>신청자</th><td>' + nv(i.mbrNm) + (i.jobNm ? ' / ' + esc(i.jobNm) : '') + '</td>'
           +     '<th>연락처</th><td>' + nv(i.mbrTel) + '</td>'
-          +     '<th>신청 IP</th><td>' + nv(i.regIp) + '</td></tr>'
-          + '<tr><th>이메일 (로그인 ID)</th><td>' + nv(i.email) + '</td>'
-          +     '<th>비밀번호</th><td colspan="3">'
+          +     '<th>신청 IP</th><td>' + nv(i.regIp) + '</td>'
+          +     '<th>이메일 (ID)</th><td>' + nv(i.email) + '</td></tr>'
+          + '<tr><th>비밀번호</th><td colspan="7">'
           +     (i.passYn === 'Y'
-              ? '25CF25CF25CF25CF25CF25CF25CF25CF <span style="font-size:11.5px;color:#8a99a3;">설정됨 — 단방향 암호화라 원문은 볼 수 없습니다</span>'
+              ? '●●●●●●●● <span style="font-size:11.5px;color:#8a99a3;">설정됨 — 단방향 암호화라 원문은 볼 수 없습니다</span>'
               : '<span class="jr-none">미설정</span>') + '</td></tr>'
-          + '<tr><th>비 고</th><td colspan="5">' + nv(i.bigo) + '</td></tr>'
+          + '<tr><th>비 고</th><td colspan="7">' + nv(i.bigo) + '</td></tr>'
           + '</table>';
 
         var M = d.mgrList || [];
@@ -536,9 +535,9 @@
         var A = d.agreeList || [];
         gel('jrAgree').innerHTML = !A.length
           ? '<div class="jr-empty">동의 내역이 없습니다.</div>'
-          : '<table class="jr-grid"><thead><tr><th>서식</th><th class="l">동의서</th><th style="width:70px;">필수</th>'
+          : '<table class="jr-grid"><thead><tr><th style="width:70px;">서식</th><th class="l">동의서</th><th style="width:70px;">필수</th>'   /* 2026-08-24 : 동의서 축소·동의자 확대 */
             + '<th style="width:70px;">동의</th><th style="width:70px;">열람</th>'
-            + '<th style="width:80px;">버전</th><th style="width:150px;">동의 IP</th><th style="width:110px;">동의자</th></tr></thead><tbody>'
+            + '<th style="width:80px;">버전</th><th style="width:140px;">동의 IP</th><th style="width:300px;">동의자</th></tr></thead><tbody>'
             + A.map(function(a){
                 return '<tr style="cursor:default;"><td>' + nv(a.formNo) + '</td>'
                      + '<td class="l">' + nv(a.agreeNmTxt || a.agreeCd) + '</td>'
@@ -550,16 +549,19 @@
             + '</tbody></table>';
 
         // 처리 가능한 상태(접수·검토중)에서만 승인/반려 버튼을 낸다
-        var open = (i.reqStat === '10' || i.reqStat === '20');
+        /* ★2026-08-24 — 취소(ACTION_YN='N')건은 보기 전용: 어떤 처리 단추도 내지 않는다 */
+        var alive = (i.actionYn !== 'N');
+        if (!alive) gel('jrDetailSub').textContent += ' · 취소된 신청(보기 전용)';
+        var open = alive && (i.reqStat === '10' || i.reqStat === '20');
         gel('jrCfmBtn').style.display = open ? '' : 'none';
         gel('jrRjtBtn').style.display = open ? '' : 'none';
         // 승인취소는 승인된 건(30·40)에서만 — 되돌릴 게 있어야 한다
-        gel('jrRbkBtn').style.display = (i.reqStat === '30' || i.reqStat === '40') ? '' : 'none';
+        gel('jrRbkBtn').style.display = (alive && (i.reqStat === '30' || i.reqStat === '40')) ? '' : 'none';
         /* [2026-08-20] 계약정보 입력 — **단추는 늘 보이고, 승인 전에는 눌리지 않게** 한다.
            ⚠감춰 두면 "그런 기능이 없다" 로 읽힌다(2026-08-20 지적). 왜 못 쓰는지를 단추가 말해야 한다.
            승인 전에는 병원이 아직 만들어지지 않아 계약관리에서 찾을 수 없다(승인 때 병원·사용자·회원이 생긴다). */
         CUR_HOSP = i.hospCd || '';
-        var contOk = (i.reqStat === '30' || i.reqStat === '40') && !!CUR_HOSP;
+        var contOk = alive && (i.reqStat === '30' || i.reqStat === '40') && !!CUR_HOSP;
         var cbtn = gel('jrContBtn');
         cbtn.style.display = '';
         cbtn.disabled      = !contOk;
@@ -568,10 +570,12 @@
         cbtn.title = contOk
           ? '계약정보 입력창을 엽니다 — 적정성평가·진료비 분석 계약을 여기서 바로 넣습니다'
           : '승인 후에 쓸 수 있습니다 — 승인해야 병원이 만들어집니다.';
+        /* 계약이 이미 있으면 [계약 수정] 으로 — 등록·수정을 한 단추가 겸한다(2026-08-24) */
+        cbtn.textContent = (i.contYn === 'Y') ? '계약 수정' : '계약정보 입력';
         // 반려취소는 반려건(90)에서만 — 접수로 되돌린다
-        gel('jrRjtCancelBtn').style.display = (i.reqStat === '90') ? '' : 'none';
+        gel('jrRjtCancelBtn').style.display = (alive && i.reqStat === '90') ? '' : 'none';
         // 신청 전체취소는 접수(10)에서만 — 아무것도 안 만들어진 단계다
-        gel('jrCancelBtn').style.display = (i.reqStat === '10') ? '' : 'none';
+        gel('jrCancelBtn').style.display = (alive && i.reqStat === '10') ? '' : 'none';
 
         var done = gel('jrDone');
         if (i.reqStat === '30') {
@@ -851,23 +855,11 @@
       + '<span class="jrc-cd">' + esc(JRC.hospCd) + '</span>'
       + (JRC.reqNo ? '<span class="jrc-cd">신청번호 ' + esc(JRC.reqNo) + '</span>' : '');
 
-
-    /* 탭 띠 — 카드 두 장을 한 장씩 보여 준다(2026-08-21 「두 개 탭을 분리」) */
-    var tabs = '<div class="jrc-tabs">' + JRC.gbs.map(function(g){
-      return '<button type="button" class="jrc-tab" id="jrcTabBtn_' + g.gb + '"'
-           + ' onclick="jrcTab(\'' + g.gb + '\');">'
-           + '<span class="jrc-tdot" id="jrcTabDot_' + g.gb + '"></span>' + esc(g.nm) + '</button>';
-    }).join('') + '</div>';
-    gel('jrcCols').innerHTML = tabs + JRC.gbs.map(jrcSecHtml).join('');
+    /* ★2026-08-24 요청 「적정성평가·진료비분석 탭 말고 한 화면에」 — 탭 띠 폐기.
+         두 구분의 카드를 세로로 나란히 그린다(.jrc-cols = flex column).
+         카드마다 머리줄의 체크로 켜고 끄는 것은 종전 그대로다. */
+    gel('jrcCols').innerHTML = JRC.gbs.map(jrcSecHtml).join('');
     JRC.gbs.forEach(function(g){ jrcFill(g); });
-    /* 처음 보여 줄 탭 : 보던 탭 > 기존 계약이 있는 구분 > 체크된 구분 > 첫 구분 */
-    var cur = JRC.tab;
-    if (!cur || !gel('jrcSec_' + cur)) {
-      var byEx = JRC.gbs.filter(function(g){ return !!JRC.conts[g.gb]; })[0];
-      var byOn = JRC.gbs.filter(function(g){ var e = gel('jrcOn_' + g.gb); return e && e.checked; })[0];
-      cur = (byEx || byOn || JRC.gbs[0]).gb;
-    }
-    jrcTab(cur);
   }
 
   function jrcSecHtml(g){
@@ -938,22 +930,13 @@
          + esc(jrcS2D(ex.startDt)) + ' ~ ' + esc(jrcS2D(ex.endDt)) + ')을 수정합니다.')
       : '아직 이 구분의 계약이 없습니다.';
 
-    /* 처음 체크 상태 : 기존 계약이 있으면 켠다. 없으면 **신청서의 희망 서비스**를 따른다
-       (희망이 A 면 둘 다). 신청서 없이 열었으면 꺼 둔 채로 고르게 한다. */
+    /* 처음 체크 상태 : 기존 계약이 있으면 켠다. 없으면 신청서의 희망 서비스를 따른다(A 면 둘 다).
+       ★2026-08-24 「승인 동시체크 가능하게」 — 프로세스 변경으로 승인 시점엔 희망 서비스가
+         <비어> 오는 게 보통이라, 비어 있으면 **둘 다 켠 채로** 시작한다(안 넣을 쪽만 끄면 된다). */
     var want = String(q.conactGb || '');
-    gel('jrcOn_' + b).checked = ex ? true : (want === 'A' || want === b);
+    gel('jrcOn_' + b).checked = ex ? true : (want === '' ? true : (want === 'A' || want === b));
     jrcToggle(b);
   }
-
-  window.jrcTab = function(b){
-    if (JRC) JRC.tab = b;
-    var gbs = JRC ? JRC.gbs : [];
-    gbs.forEach(function(g){
-      var on  = (g.gb === b);
-      var sec = gel('jrcSec_' + g.gb);    if (sec) sec.classList.toggle('on', on);
-      var btn = gel('jrcTabBtn_' + g.gb); if (btn) btn.classList.toggle('on', on);
-    });
-  };
 
   window.jrcToggle = function(b){
     var on  = gel('jrcOn_' + b).checked;
@@ -961,9 +944,6 @@
     sec.classList.toggle('off', !on);
     var f = sec.querySelectorAll('.jrc-secb input, .jrc-secb select');
     for (var i = 0; i < f.length; i++) f[i].disabled = !on;
-    /* 탭 점 — 체크된 구분은 초록(안 보이는 탭의 상태도 띠에서 보이게) */
-    var d = gel('jrcTabDot_' + b);
-    if (d) d.style.background = on ? '#2ecc71' : '#c3ced6';
   };
 
   window.jrcManual = function(el){ if (el) el.setAttribute('data-man', '1'); };
@@ -1052,9 +1032,13 @@
   function jrcRun(list, i){
     if (i >= list.length) {
       jrcBusy(false);
-      /* 성공 알림은 띄우지 않는다(2026-08-21 「마지막 결과확인 없애기」) —
-         창이 다시 그려져 「기존 계약」 배지·등록 건수로 결과가 보인다. 실패 때만 알린다. */
-      jrcReload();
+      /* ★2026-08-24 「저장하면 오류 없으면 자동 닫기」 — 여기 도달 = 전부 성공
+         (실패는 fail() 이 알림을 띄우고 멈추므로 이 줄에 못 온다).
+         닫은 뒤 목록을 다시 불러 [계약입력]→[계약수정] 라벨·상세 단추도 함께 맞춘다. */
+      jrcClose();
+      if (typeof jrList === 'function') jrList();
+      var cb = gel('jrContBtn');
+      if (cb && cb.style.display !== 'none') cb.textContent = '계약 수정';
       return;
     }
     var it   = list[i];

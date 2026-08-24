@@ -181,12 +181,11 @@
   <b>이미 등록된 병원</b>이라면 이 창이 아니라 <b>[회원가입]</b>을 이용하세요.
 </div>
 
-<%-- 탭 3개 고정. 한 번에 하나만 보인다 —
-     전체를 이어서 보여주는 스크롤 보기는 어디가 어디인지 헷갈려 뺐다(2026-08-19). --%>
+<%-- ★2026-08-24 프로세스 변경 — 신청 단계는 <요양기관기호 · 요양기관명 · 신청자정보> 만 받는다.
+     나머지(전화번호·주소·대표자·전산프로그램·인증서암호·담당자표·목표점수 …)와 동의서 2종·대표자 도장은
+     ***승인 후 병원이 로그인해서*** 「동의서 제출」 화면(wnn_medcost joinDocs.do)에서 채운다.
+     ⇒ 탭 3개(의뢰서·원격접속동의·개인정보동의) 폐기. 이 창은 한 장짜리다. --%>
 <div class="ja-tabs" id="jaTabs">
-  <button type="button" class="ja-tab on" data-pane="f1" onclick="jaPickTab('f1');">컨설팅 의뢰서</button>
-  <button type="button" class="ja-tab"    data-pane="f2" onclick="jaPickTab('f2');">원격접속·DB접근 동의</button>
-  <button type="button" class="ja-tab"    data-pane="f3" onclick="jaPickTab('f3');">개인정보 수집·이용 동의</button>
   <span class="ja-tools">
     <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
     <button type="button" onclick="jaZoom(-1);" title="글자 작게">가－</button>
@@ -213,7 +212,7 @@
 
       <table class="ja-sheet">
         <colgroup>
-          <col style="width:120px;"><col><col style="width:120px;"><col><col style="width:110px;"><col>
+          <col style="width:120px;"><col><col style="width:130px;"><col>
         </colgroup>
         <tbody>
           <tr>
@@ -229,144 +228,6 @@
               </div>
               <div class="ja-msg" id="ja_hospCdMsg"></div>
             </td>
-            <th>전화번호 <span class="rq">*</span></th>
-            <td><input type="text" id="ja_hospTel" name="hospTel" class="must" maxlength="20"></td>
-          </tr>
-          <%-- 주소는 한 줄을 통째로 쓴다. 우편번호·주소·상세주소를 한 칸에 몰아넣으니
-               정작 주소칸이 너무 좁았다(2026-08-19 지적). FAX 는 아래 줄로 내렸다. --%>
-          <tr>
-            <th>주소 <span class="rq">*</span></th>
-            <td colspan="5">
-              <div class="ja-inline">
-                <input type="text" id="ja_zipCd" name="zipCd" maxlength="20" placeholder="우편번호"
-                       style="flex:0 0 92px;" readonly>
-                <button type="button" class="ja-btn ghost" onclick="jaAddrSearch();">주소검색</button>
-                <input type="text" id="ja_hospAddr" name="hospAddr" class="must" maxlength="200"
-                       placeholder="주소검색을 눌러 주세요" style="flex:2.2;" onkeyup="jaSignSync();" readonly>
-                <input type="text" id="ja_hospExtradr" name="hospExtradr" maxlength="200"
-                       placeholder="상세주소(건물·층·호)" style="flex:1.4;" onkeyup="jaSignSync();">
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <th>대표자 <span class="rq">*</span></th>
-            <td><input type="text" id="ja_hospCeo" name="hospCeo" class="must" maxlength="20" onkeyup="jaSignSync();"></td>
-            <th>사업자등록번호</th>
-            <td><input type="text" id="ja_busiNum" name="busiNum" maxlength="20" placeholder="000-00-00000"></td>
-            <th>FAX</th>
-            <td><input type="text" id="ja_hospFax" name="hospFax" maxlength="20"></td>
-          </tr>
-
-          <%-- 전산프로그램 정보(MASTER) — 의뢰서 항목 그대로 받는다.
-               위너넷 직원이 그 병원의 심사청구까지 대행하므로 업무상 필요한 접속정보다.
-               ★저장 위치·방식은 기존 계약정보(TBL_HOSPCONT_MST)와 같다. 승인 시 그리로 옮긴다. --%>
-          <tr>
-            <th>전산프로그램 정보<br>(MASTER) <span class="rq">*</span></th>
-            <td colspan="5">
-              <div class="ja-inline">
-                <span class="lbl">프로그램명</span>
-                <input type="text" id="ja_ocsCompany" name="ocsCompany" class="must" maxlength="100" style="flex:1.4;">
-                <span class="lbl">ID</span>
-                <input type="text" id="ja_ocsUserId" name="ocsUserId" class="must" maxlength="20" style="flex:1;">
-                <span class="lbl">PW</span>
-                <input type="text" id="ja_ocsUserPw" name="ocsUserPw" class="must" maxlength="50" style="flex:1;">
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <th>심평원 인증서암호 <span class="rq">*</span></th>
-            <td><input type="text" id="ja_hiraCertPw" name="hiraCertPw" class="must" maxlength="50"></td>
-            <th>병상수</th>
-            <td><input type="text" id="ja_wardcnt" name="wardcnt" maxlength="6" placeholder="숫자만"
-                       oninput="this.value=this.value.replace(/[^0-9]/g,'');"></td>
-            <%-- 희망 서비스는 **둘 다 고를 수 있다**(2026-08-19).
-                 값은 기존 로그인 판정 규칙을 그대로 따른다 —
-                 User_SQL.xml userLoginCheck 가 계약 2건이면 'A', 하나면 '1'/'2' 로 본다. --%>
-            <th>희망 서비스</th>
-            <td>
-              <input type="hidden" id="ja_conactGb" name="conactGb" value="">
-              <label class="ja-chk"><input type="checkbox" id="ja_conact1" onchange="jaConactSync();"> 진료비 분석</label>
-              <label class="ja-chk"><input type="checkbox" id="ja_conact2" onchange="jaConactSync();"> 적정성평가</label>
-            </td>
-          </tr>
-
-          <tr>
-            <th>PC 사용여부</th>
-            <td colspan="5">
-              <label class="ja-chk"><input type="radio" name="pcUseGb" value="1" onchange="jaPcUseSync();"> 단독사용 가능</label>
-              <label class="ja-chk"><input type="radio" name="pcUseGb" value="2" onchange="jaPcUseSync();"> 단독불가</label>
-              <span class="ja-chk">가능시간 :
-                <input type="text" id="ja_pcUseTime" name="pcUseTime" maxlength="50" style="width:150px;" disabled></span>
-              <label class="ja-chk"><input type="radio" name="pcUseGb" value="3" onchange="jaPcUseSync();"> PC사용 시작일</label>
-              <span class="ja-chk">
-                <input type="text" id="ja_pcUseStdt" name="pcUseStdt" maxlength="10" placeholder="YYYY-MM-DD"
-                       style="width:130px;" disabled></span>
-            </td>
-          </tr>
-          <tr>
-            <th>환자평가표<br>작성완료일 <span class="rq">*</span></th>
-            <td colspan="2">
-              <div class="ja-inline">
-                <span class="lbl">매월</span>
-                <input type="text" id="ja_asqDay" name="asqDay" class="must" maxlength="2" style="max-width:52px;"
-                       oninput="this.value=this.value.replace(/[^0-9]/g,'');">
-                <span class="lbl">일</span>
-                <input type="text" id="ja_asqBigo" name="asqBigo" maxlength="100" placeholder="( 비고 )">
-              </div>
-            </td>
-            <th>적정성평가<br>목표점수 및 등급 <span class="rq">*</span></th>
-            <td colspan="2"><input type="text" id="ja_evalGoal" name="evalGoal" class="must" maxlength="100" placeholder="예: 1등급 / 90점"></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="ja-card">
-      <h4>담당자 <span class="hint">총 관리자는 아래 신청자 정보로 자동 · 심사과는 필수</span></h4>
-      <table class="ja-sheet">
-        <colgroup>
-          <col style="width:100px;"><col style="width:18%;"><col style="width:18%;">
-          <col style="width:16%;"><col style="width:19%;"><col>
-        </colgroup>
-        <thead>
-          <tr><th></th><th>부서</th><th>직책</th><th>성명</th><th>전화번호</th><th>이메일 주소</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="mid">총 관리자 <span class="rq">*</span></td>
-            <td><input type="hidden" name="mgrList[0].mgrGb" value="1">
-                <input type="text" name="mgrList[0].deptNm" id="ja_mgr0Dept" maxlength="50"></td>
-            <td><input type="text" name="mgrList[0].jobNm"  id="ja_mgr0Job"  maxlength="50"></td>
-            <td><input type="text" name="mgrList[0].mgrNm"  id="ja_mgr0Nm"   class="must" maxlength="50"></td>
-            <td><input type="text" name="mgrList[0].mgrTel" id="ja_mgr0Tel"  class="must" maxlength="50"></td>
-            <td><input type="text" name="mgrList[0].email"  id="ja_mgr0Mail" class="must" maxlength="100"></td>
-          </tr>
-          <tr>
-            <td class="mid">간호과</td>
-            <td><input type="hidden" name="mgrList[1].mgrGb" value="2">
-                <input type="text" name="mgrList[1].deptNm" maxlength="50"></td>
-            <td><input type="text" name="mgrList[1].jobNm"  maxlength="50"></td>
-            <td><input type="text" name="mgrList[1].mgrNm"  maxlength="50"></td>
-            <td><input type="text" name="mgrList[1].mgrTel" maxlength="50"></td>
-            <td><input type="text" name="mgrList[1].email"  maxlength="100"></td>
-          </tr>
-          <tr>
-            <td class="mid">심사과 <span class="rq">*</span></td>
-            <td><input type="hidden" name="mgrList[2].mgrGb" value="3">
-                <input type="text" name="mgrList[2].deptNm" maxlength="50"></td>
-            <td><input type="text" name="mgrList[2].jobNm"  maxlength="50"></td>
-            <td><input type="text" name="mgrList[2].mgrNm"  id="ja_mgr2Nm"  class="must" maxlength="50"></td>
-            <td><input type="text" name="mgrList[2].mgrTel" id="ja_mgr2Tel" class="must" maxlength="50"></td>
-            <td><input type="text" name="mgrList[2].email"  id="ja_mgr2Mail" class="must" maxlength="100"></td>
-          </tr>
-          <tr>
-            <td class="mid">전산담당</td>
-            <td><input type="hidden" name="mgrList[3].mgrGb" value="4">
-                <input type="text" name="mgrList[3].deptNm" maxlength="50"></td>
-            <td><input type="text" name="mgrList[3].jobNm"  maxlength="50"></td>
-            <td><input type="text" name="mgrList[3].mgrNm"  maxlength="50"></td>
-            <td><input type="text" name="mgrList[3].mgrTel" maxlength="50"></td>
-            <td><input type="text" name="mgrList[3].email"  maxlength="100"></td>
           </tr>
         </tbody>
       </table>
@@ -431,95 +292,6 @@
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <%-- [서식1] 자체에 대한 동의. 본문을 안 띄우면 READ_YN 이 N 으로 남아
-         "무엇에 동의했는지" 증빙이 서지 않는다 — 서식2·3 과 똑같이 전문을 펼쳐 둔다. --%>
-    <div class="ja-card" id="jaF1AgrCard" style="display:none;">
-      <h4>의뢰서 동의</h4>
-      <div id="jaDocF1" class="ja-doc"></div>
-      <div id="jaAgrF1"></div>
-    </div>
-  </div>
-
-  <!-- ② [서식2] 원격접속 및 DB접근 동의 --------------------------------------- -->
-  <div class="ja-pane" data-pane="f2">
-    <div class="ja-card">
-      <h4>원격접속 및 DB접근에 관한 동의서</h4>
-      <div id="jaDocF2" class="ja-doc empty">동의서를 불러오는 중입니다…</div>
-      <div id="jaAgrF2"></div>
-      <div class="ja-sign">
-        <div class="sg-txt">위와 같이 원격접속 및 DB 접근에 동의합니다.</div>
-        <div class="sg-date"><span class="ja-sgY">-</span>년 &nbsp;&nbsp;<span class="ja-sgM">-</span>월 &nbsp;&nbsp;<span class="ja-sgD">-</span>일</div>
-        <%-- 의뢰서 서식 그대로 : 왼쪽 두 줄(요양기관명·주소) + 오른쪽 한 칸(대표자·(인)) --%>
-        <table class="sg-box">
-          <colgroup><col style="width:110px;"><col><col style="width:90px;"><col style="width:26%;"></colgroup>
-          <tr>
-            <th>요양기관명</th>
-            <td><b class="ja-sgHosp">-</b></td>
-            <th rowspan="2">대표자</th>
-            <td rowspan="2">
-              <b class="ja-sgCeo">-</b>
-              <%-- 직인 자리 — 「(인)」 위에 불러온 이미지를 얹는다 --%>
-              <span class="sg-sealbox">
-                <img class="ja-sealimg" alt="직인" style="display:none;">
-                <span class="sg-seal">(인)</span>
-              </span>
-              <span class="sg-sealbtn ja-noprint">
-                <button type="button" class="ja-btn ghost" onclick="jaSealPick();">직인 불러오기</button>
-                <button type="button" class="ja-btn ghost ja-sealdel" onclick="jaSealClear();"
-                        style="display:none;">지우기</button>
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th>
-            <td><b class="ja-sgAddr">-</b></td>
-          </tr>
-        </table>
-        <div class="sg-to">위너넷 &nbsp;귀하</div>
-        <div class="sg-note">※ 대표자 날인은 이번 단계에서 받지 않습니다. 종이 날인이 필요하면 승인 절차에서 안내드립니다.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ③ [서식3] 개인정보 수집·이용 동의 --------------------------------------- -->
-  <div class="ja-pane" data-pane="f3">
-    <div class="ja-card">
-      <h4>개인정보 수집 및 이용에 관한 동의서</h4>
-      <div id="jaDocF3" class="ja-doc empty">동의서를 불러오는 중입니다…</div>
-      <div id="jaAgrF3"></div>
-      <div class="ja-sign">
-        <div class="sg-txt">위와 같이 개인정보 수집·이용에 동의합니다.</div>
-        <div class="sg-date"><span class="ja-sgY">-</span>년 &nbsp;&nbsp;<span class="ja-sgM">-</span>월 &nbsp;&nbsp;<span class="ja-sgD">-</span>일</div>
-        <%-- 의뢰서 서식 그대로 : 왼쪽 두 줄(요양기관명·주소) + 오른쪽 한 칸(대표자·(인)) --%>
-        <table class="sg-box">
-          <colgroup><col style="width:110px;"><col><col style="width:90px;"><col style="width:26%;"></colgroup>
-          <tr>
-            <th>요양기관명</th>
-            <td><b class="ja-sgHosp">-</b></td>
-            <th rowspan="2">대표자</th>
-            <td rowspan="2">
-              <b class="ja-sgCeo">-</b>
-              <%-- 직인 자리 — 「(인)」 위에 불러온 이미지를 얹는다 --%>
-              <span class="sg-sealbox">
-                <img class="ja-sealimg" alt="직인" style="display:none;">
-                <span class="sg-seal">(인)</span>
-              </span>
-              <span class="sg-sealbtn ja-noprint">
-                <button type="button" class="ja-btn ghost" onclick="jaSealPick();">직인 불러오기</button>
-                <button type="button" class="ja-btn ghost ja-sealdel" onclick="jaSealClear();"
-                        style="display:none;">지우기</button>
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th>
-            <td><b class="ja-sgAddr">-</b></td>
-          </tr>
-        </table>
-        <div class="sg-to">위너넷 &nbsp;귀하</div>
-      </div>
     </div>
   </div>
 
@@ -929,31 +701,16 @@
   /* 필수 항목 — **항목 하나씩** 적는다.
      예전에는 탭 단위로 "미입력 : 컨설팅 의뢰서" 만 나와서 무엇이 빠졌는지 알 수 없었다(2026-08-19 지적).
      이제 바닥에 빠진 항목 이름이 그대로 나온다. */
+  /* ★2026-08-24 — 신청 단계 필수는 <요양기관기호(확인) · 병원명 · 신청자정보> 뿐이다.
+     대표자·주소·전산프로그램·인증서암호·담당자표·목표점수·동의서·도장은 승인 후 화면으로 옮겼다. */
   var LACK = [
     { pane:'f1', nm:'요양기관기호 확인', chk:function(){ return !hospOk; } },
     { pane:'f1', nm:'병원명',           chk:function(){ return val('ja_hospNm')===''; } },
-    { pane:'f1', nm:'대표자',           chk:function(){ return val('ja_hospCeo')===''; } },
-    { pane:'f1', nm:'주소',             chk:function(){ return val('ja_hospAddr')===''; } },
-    { pane:'f1', nm:'전화번호',         chk:function(){ return val('ja_hospTel')===''; } },
-    { pane:'f1', nm:'프로그램명',       chk:function(){ return val('ja_ocsCompany')===''; } },
-    { pane:'f1', nm:'프로그램 ID',      chk:function(){ return val('ja_ocsUserId')===''; } },
-    { pane:'f1', nm:'프로그램 PW',      chk:function(){ return val('ja_ocsUserPw')===''; } },
-    { pane:'f1', nm:'심평원 인증서암호', chk:function(){ return val('ja_hiraCertPw')===''; } },
-    { pane:'f1', nm:'환자평가표 작성완료일', chk:function(){ return val('ja_asqDay')===''; } },
-    { pane:'f1', nm:'적정성평가 목표',   chk:function(){ return val('ja_evalGoal')===''; } },
-    { pane:'f1', nm:'담당자(심사과) 성명',   chk:function(){ return val('ja_mgr2Nm')===''; } },
-    { pane:'f1', nm:'담당자(심사과) 전화',   chk:function(){ return val('ja_mgr2Tel')===''; } },
-    { pane:'f1', nm:'담당자(심사과) 이메일', chk:function(){ return val('ja_mgr2Mail')===''; } },
     { pane:'f1', nm:'이메일 중복확인',  chk:function(){ return !emailOk; } },
     { pane:'f1', nm:'비밀번호',         chk:function(){ return val('ja_passWd')==='' || val('ja_afPassWd')===''
                                                             || val('ja_passWd') !== val('ja_afPassWd'); } },
     { pane:'f1', nm:'신청자 성명',      chk:function(){ return val('ja_mbrNm')===''; } },
-    { pane:'f1', nm:'연락처',           chk:function(){ return val('ja_mbrTel')===''; } },
-    { pane:'f1', nm:'의뢰서 동의',      chk:function(){ return agrLack('f1'); } },
-    { pane:'f2', nm:'원격접속·DB접근 동의',  chk:function(){ return agrLack('f2'); } },
-    { pane:'f3', nm:'개인정보 수집·이용 동의', chk:function(){ return agrLack('f3'); } },
-    /* 도장·사인은 서식2·3 양쪽에 함께 찍히므로 한 번만 본다(탭 표시는 서식2에 붙인다) */
-    { pane:'f2', nm:'대표자 도장·사인',  chk:function(){ return val('ja_sealImg')===''; } }
+    { pane:'f1', nm:'연락처',           chk:function(){ return val('ja_mbrTel')===''; } }
   ];
   window.jaLackSync = function(){
     var names = [], badPane = {};
@@ -997,7 +754,6 @@
     ['ja_hospCdMsg','ja_emailMsg','ja_pwdMsg'].forEach(function(id){
       var m = gel(id); if (m) { m.className='ja-msg'; m.textContent=''; }
     });
-    if (!loaded) jaLoadAgree(); else jaRenderAgree();
     // 가입일자 = 오늘 (표시용. 저장은 서버 NOW())
     var _t = new Date();
     var _dt = _t.getFullYear() + '-' + ('0'+(_t.getMonth()+1)).slice(-2) + '-' + ('0'+_t.getDate()).slice(-2);
@@ -1009,8 +765,9 @@
     _put('.ja-sgM', String(_t.getMonth() + 1));
     _put('.ja-sgD', String(_t.getDate()));
 
-    jaSealClear();
-    jaPcUseSync(); jaConactSync(); jaMgrSync(); jaSignSync();
+    /* ★2026-08-24 — 동의서·도장·전산프로그램·담당자표가 이 창에서 빠졌다.
+         그 칸들을 만지던 초기화(jaLoadAgree·jaSealClear·jaPcUseSync·jaConactSync·jaMgrSync·jaSignSync)는
+         없는 요소를 건드려 <스크립트가 통째로 멈춘다>. 실제로 jaPcUseSync 에서 터졌다. 전부 뺀다. */
 
     /* ★열 때는 **항상 [컨설팅 의뢰서]부터** 시작한다.
        마지막에 보던 탭을 되살리면 동의서가 먼저 열려 신청서를 건너뛰게 된다.
@@ -1029,29 +786,15 @@
   /* ── 제출 ──────────────────────────────────────────────────────── */
   function go(pane){ jaPickTab(pane); }
   window.jaSubmit = function(){
-    if (!hospOk)                   { go('f1'); jaMsg('warning','요양기관기호 [확인]을 눌러 주세요.'); return; }
-    if (val('ja_hospNm') === '')     { go('f1'); jaMsg('warning','병원명을 입력하세요.'); gel('ja_hospNm').focus(); return; }
-    if (val('ja_hospCeo') === '')    { go('f1'); jaMsg('warning','대표자를 입력하세요.'); gel('ja_hospCeo').focus(); return; }
-    if (val('ja_hospAddr') === '')   { go('f1'); jaMsg('warning','주소를 입력하세요.'); jaAddrSearch(); return; }
-    if (val('ja_hospTel') === '')    { go('f1'); jaMsg('warning','전화번호를 입력하세요.'); gel('ja_hospTel').focus(); return; }
-    if (val('ja_ocsCompany') === '') { go('f1'); jaMsg('warning','전산프로그램명을 입력하세요.'); gel('ja_ocsCompany').focus(); return; }
-    if (val('ja_ocsUserId') === '')  { go('f1'); jaMsg('warning','전산프로그램 ID 를 입력하세요.'); gel('ja_ocsUserId').focus(); return; }
-    if (val('ja_ocsUserPw') === '')  { go('f1'); jaMsg('warning','전산프로그램 PW 를 입력하세요.'); gel('ja_ocsUserPw').focus(); return; }
-    if (val('ja_hiraCertPw') === '') { go('f1'); jaMsg('warning','심평원 인증서암호를 입력하세요.'); gel('ja_hiraCertPw').focus(); return; }
-    if (val('ja_asqDay') === '')     { go('f1'); jaMsg('warning','환자평가표 작성완료일을 입력하세요.'); gel('ja_asqDay').focus(); return; }
-    if (val('ja_evalGoal') === '')   { go('f1'); jaMsg('warning','적정성평가 목표점수·등급을 입력하세요.'); gel('ja_evalGoal').focus(); return; }
-    if (val('ja_mgr2Nm') === '')     { go('f1'); jaMsg('warning','담당자 — 심사과 성명을 입력하세요.'); gel('ja_mgr2Nm').focus(); return; }
-    if (val('ja_mgr2Tel') === '')    { go('f1'); jaMsg('warning','담당자 — 심사과 전화번호를 입력하세요.'); gel('ja_mgr2Tel').focus(); return; }
-    if (val('ja_mgr2Mail') === '')   { go('f1'); jaMsg('warning','담당자 — 심사과 이메일 주소를 입력하세요.'); gel('ja_mgr2Mail').focus(); return; }
-    if (!emailOk)                  { go('f1'); jaMsg('warning','이메일 [중복확인]을 눌러 주세요.'); return; }
-    if (val('ja_passWd').length < 4) { go('f1'); jaMsg('warning','비밀번호는 4자 이상이어야 합니다.'); gel('ja_passWd').focus(); return; }
-    if (val('ja_passWd') !== val('ja_afPassWd')) { go('f1'); jaMsg('warning','비밀번호가 서로 다릅니다.'); gel('ja_afPassWd').focus(); return; }
-    if (val('ja_mbrNm') === '')    { go('f1'); jaMsg('warning','신청자 성명을 입력하세요.'); gel('ja_mbrNm').focus(); return; }
-    if (val('ja_mbrTel') === '')   { go('f1'); jaMsg('warning','연락처를 입력하세요.'); gel('ja_mbrTel').focus(); return; }
-    if (agrLack('f1'))             { go('f1'); jaMsg('warning','의뢰서 동의에 체크해 주세요.'); return; }
-    if (agrLack('f2'))             { go('f2'); jaMsg('warning','원격접속·DB접근 동의에 체크해 주세요.'); return; }
-    if (agrLack('f3'))             { go('f3'); jaMsg('warning','개인정보 수집·이용 동의에 체크해 주세요.'); return; }
-    if (val('ja_sealImg') === '')  { go('f2'); jaMsg('warning','대표자 도장·사인을 올려 주세요.','동의서의 (인) 자리에서 [직인 불러오기] 를 눌러 주세요.'); return; }
+    /* ★2026-08-24 — 신청 단계 검사는 여섯 가지뿐이다.
+         나머지 항목·동의서·도장은 승인 후 「동의서 제출」 화면에서 받고, 거기가 끝나야 메뉴가 열린다. */
+    if (!hospOk)                     { jaMsg('warning','요양기관기호 [확인]을 눌러 주세요.'); return; }
+    if (val('ja_hospNm') === '')     { jaMsg('warning','병원명을 입력하세요.'); gel('ja_hospNm').focus(); return; }
+    if (!emailOk)                    { jaMsg('warning','이메일 [중복확인]을 눌러 주세요.'); return; }
+    if (val('ja_passWd').length < 4) { jaMsg('warning','비밀번호는 4자 이상이어야 합니다.'); gel('ja_passWd').focus(); return; }
+    if (val('ja_passWd') !== val('ja_afPassWd')) { jaMsg('warning','비밀번호가 서로 다릅니다.'); gel('ja_afPassWd').focus(); return; }
+    if (val('ja_mbrNm') === '')      { jaMsg('warning','신청자 성명을 입력하세요.'); gel('ja_mbrNm').focus(); return; }
+    if (val('ja_mbrTel') === '')     { jaMsg('warning','연락처를 입력하세요.'); gel('ja_mbrTel').focus(); return; }
 
     jaMgrSync();
     var formData = $("form[name='joinForm']").serialize();

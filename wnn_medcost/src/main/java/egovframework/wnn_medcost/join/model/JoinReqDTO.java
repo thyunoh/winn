@@ -98,6 +98,7 @@ public class JoinReqDTO {
     private Integer reqCnt;         // 진행중(10,20) 신청이 이미 있는가
     private Integer userCnt;        // 이메일이 이미 사용자로 있는가
     private String  hospNmDb;       // 이미 등록된 병원이면 그 이름
+    private String  contYn;         // 계약 존재 여부(Y/N) — 목록·상세 [계약입력↔계약수정] 라벨용(2026-08-24)
 
     /* 하위 목록 */
     private List<JoinMgrDTO>   mgrList   = new ArrayList<JoinMgrDTO>();
@@ -219,6 +220,8 @@ public class JoinReqDTO {
     public void setUserCnt(Integer userCnt) { this.userCnt = userCnt; }
     public String getHospNmDb() { return hospNmDb; }
     public void setHospNmDb(String hospNmDb) { this.hospNmDb = hospNmDb; }
+    public String getContYn() { return contYn; }
+    public void setContYn(String contYn) { this.contYn = contYn; }
     public List<JoinMgrDTO> getMgrList() { return mgrList; }
     public void setMgrList(List<JoinMgrDTO> mgrList) { this.mgrList = mgrList; }
     public List<JoinAgreeDTO> getAgreeList() { return agreeList; }

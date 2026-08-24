@@ -37,6 +37,12 @@ public interface JoinService {
     /** 병원이 자기 신청내역(병원정보 7항목)을 고친다. */
     void updateMyJoinReq(JoinReqDTO dto) throws Exception;
 
+    /* ★2026-08-24 — 승인 후 화면에서 동의를 받는다. 그 화면이 쓸 동의서 마스터 목록. */
+    java.util.List<java.util.Map<String,Object>> selAgreeMstList() throws Exception;
+
+    /* ★2026-08-24 — 승인이 만든 계약의 구분 목록(희망 서비스 자동체크·제출 검사용). */
+    java.util.List<String> selContGbList(String hospCd) throws Exception;
+
     /** 신청 전체취소 — 접수·검토중·반려 건을 없던 일로 한다. */
     void cancelReq(JoinReqDTO dto) throws Exception;
 }

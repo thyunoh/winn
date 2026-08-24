@@ -210,7 +210,11 @@ public class JoinServiceImpl implements JoinService {
     }
 
     /**
-     * 병원이 자기 신청내역을 고친다 — 문서에 찍히는 병원정보 7가지뿐.
+     * 병원이 자기 신청내역을 고친다.
+     *
+     * ★2026-08-24 프로세스 변경으로 <범위가 넓어졌다> — 종전에는 문서에 찍히는 병원정보 7가지뿐이었으나,
+     * 이제 전산프로그램·인증서암호·환자평가표일·목표점수·희망서비스·담당자·동의·대표자 도장까지
+     * 여기서 받는다(신청 단계는 요양기관기호·요양기관명·신청자정보만 받는다).
      *
      * 신청서(TBL_JOIN_REQ)와 병원마스터(TBL_HOSP_MST)를 <b>같이</b> 고친다.
      * 승인 뒤에는 화면·계약이 병원마스터를 보므로, 신청서만 고치면 두 곳이 어긋난다.
@@ -223,9 +227,57 @@ public class JoinServiceImpl implements JoinService {
         if (n == 0) throw new IllegalStateException("수정할 수 없는 신청입니다. 승인 상태인지 확인해 주세요.");
 
         mapper.updateHospFromMy(dto);   // 병원이 아직 없으면 0건 — 문제되지 않는다
+        /* ★2026-08-24 「승인 시 등록 안 된 내용 저장도」 — 전산프로그램 정보를 계약의 <빈 칸에만> 채운다
+           (승인이 만든 계약은 이 값이 없다. 관리자가 이미 넣은 값은 SQL 의 CASE 가 지킨다). */
+        mapper.updateContOcsFromMy(dto);
 
-        LOGGER.info("신청내역 수정 reqNo={} hospCd={} by={}",
-                    dto.getReqNo(), dto.getHospCd(), dto.getCfmUser());
+        /* ★2026-08-24 프로세스 변경 — 담당자·동의도 이 화면에서 채운다.
+           담당자는 <비우고 다시 넣는다>. 화면이 보낸 목록이 곧 최종 상태다.
+           ⚠비어 있는 행(성명·전화·이메일이 모두 빈 줄)은 넣지 않는다 — 화면 표가 4줄 고정이라
+             안 쓰는 구분도 함께 올라온다. 그대로 넣으면 빈 담당자가 쌓인다. */
+        if (dto.getMgrList() != null && !dto.getMgrList().isEmpty()) {
+            mapper.deleteJoinMgrAll(dto);
+            for (JoinMgrDTO m : dto.getMgrList()) {
+                if (m == null) continue;
+                if (blank(m.getMgrNm()) && blank(m.getMgrTel()) && blank(m.getEmail())
+                        && blank(m.getDeptNm()) && blank(m.getJobNm())) continue;
+                m.setReqNo(dto.getReqNo());
+                m.setRegUser(dto.getCfmUser());
+                m.setRegIp(dto.getRegIp());
+                mapper.insertJoinMgr(m);
+            }
+        }
+
+        /* 동의내역 — 체크한 것만 올라온다. AGREE_DTTM·IP 는 SQL 이 NOW()·전달 IP 로 남긴다
+           (나중에 "무엇에 언제 동의했는지" 대조가 서야 한다). 같은 건은 ON DUPLICATE KEY 로 덮인다. */
+        if (dto.getAgreeList() != null && !dto.getAgreeList().isEmpty()) {
+            for (JoinAgreeDTO a : dto.getAgreeList()) {
+                if (a == null || blank(a.getAgreeCd())) continue;
+                a.setReqNo(dto.getReqNo());
+                a.setAgreeIp(dto.getRegIp());
+                a.setRegUser(dto.getCfmUser());
+                mapper.insertJoinAgree(a);
+            }
+        }
+
+        LOGGER.info("신청내역 수정 reqNo={} hospCd={} by={} mgr={} agree={}",
+                    dto.getReqNo(), dto.getHospCd(), dto.getCfmUser(),
+                    dto.getMgrList() == null ? 0 : dto.getMgrList().size(),
+                    dto.getAgreeList() == null ? 0 : dto.getAgreeList().size());
+    }
+
+    private static boolean blank(String s) { return s == null || s.trim().isEmpty(); }
+
+    /** ★2026-08-24 — 승인 후 화면이 쓸 동의서 마스터 목록(최신 판만). */
+    @Override
+    public java.util.List<java.util.Map<String,Object>> selAgreeMstList() throws Exception {
+        return mapper.selAgreeMstList();
+    }
+
+    /** ★2026-08-24 — 승인이 만든 계약의 구분 목록(희망 서비스 자동체크·제출 검사용). */
+    @Override
+    public java.util.List<String> selContGbList(String hospCd) throws Exception {
+        return mapper.selContGbList(hospCd);
     }
 
     /**
