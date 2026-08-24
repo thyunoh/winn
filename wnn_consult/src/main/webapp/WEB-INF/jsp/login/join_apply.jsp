@@ -31,7 +31,7 @@
 <div class="modal fade" id="joinModal" tabindex="-1" data-backdrop="static"
      data-keyboard="false" aria-hidden="true" role="dialog">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document"
-       style="max-width: 1100px;">
+       style="max-width: 1000px;">
     <div class="modal-content rounded-3 shadow-lg">
 
       <div class="modal-header" style="background:#003366; padding:11px 16px;">
