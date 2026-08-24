@@ -715,16 +715,17 @@
                                   padding:1px 8px; font-size:11.5px; font-weight:800; margin-left:6px;"></span></a>
                     </li>
                     <%-- ★아직 개발 단계라 **기본 숨김**이다(2026-08-19).
-                         입력칸 밖에서 `r` `e` `q` 를 이어서 치면 나타난다 —
-                         로그인 화면(wnn_consult)의 [신규병원 가입신청] 과 같은 열쇠말이다.
+                         **Ctrl+Alt+R** 로 켜고 끈다(2026-08-24 변경 : req → rg → Ctrl+R → Ctrl+Alt+R) —
+                         로그인 화면(wnn_consult)의 [신규병원 가입신청] 과 같은 키·같은 저장키(joinReqDev)다.
                          운영은 두 앱이 같은 호스트라 sessionStorage 가 공유된다 →
                          로그인 화면에서 한 번 켜면 여기서도 켜져 있다.
                          (로컬은 포트가 달라 origin 이 달라서 각각 쳐야 한다)
                          옆 배지의 숫자는 처리할 신청 건수다.
+                         ★Ctrl+R(새로고침)·Ctrl+Shift+R 은 그대로 둔다 — Alt 를 더해 브라우저 단축키와 안 겹치게 했다.
                          ★정식 오픈 시 : li 의 display:none 과 이 스크립트의 게이트만 지우면 된다. --%>
                     <script>
                     (function(){
-                      var KEY = 'reqDev', WORD = 'req', buf = '', t = null;
+                      var KEY = 'joinReqDev';
                       function on(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
                       function apply(){
                         var li = document.getElementById('adminJoinReqMenu');
@@ -746,19 +747,14 @@
                         x.send('');
                       } catch (ignore) {}
                       document.addEventListener('keydown', function(e){
-                        if (e.ctrlKey || e.altKey || e.metaKey) return;
-                        var t0 = e.target, tag = (t0 && t0.tagName || '').toUpperCase();
-                        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-                        if (t0 && t0.isContentEditable) return;
-                        var k = (e.key || '').toLowerCase();
-                        if (k.length !== 1) return;
-                        buf = (buf + k).slice(-WORD.length);
-                        clearTimeout(t); t = setTimeout(function(){ buf = ''; }, 1500);
-                        if (buf === WORD) {
-                          buf = '';
-                          try { sessionStorage.setItem(KEY, on() ? 'N' : 'Y'); } catch (ignore) {}
-                          apply();
-                        }
+                        /* ★2026-08-24 : 열쇠말 타이핑(req→rg) → Ctrl+Alt+R 로 교체.
+                             Ctrl+R(새로고침) 을 뺏지 않으려고 Alt 를 더했다. 파이어폭스 리더모드(Ctrl+Alt+R) 만 겹쳐 preventDefault 로 막는다.
+                             ★e.key 는 배열·IME 에 따라 'r' 이 아닐 수 있어 e.code('KeyR') 도 함께 본다. */
+                        if (!e.ctrlKey || !e.altKey || e.metaKey || e.shiftKey) return;   // Ctrl+Alt+R 만 (Shift 조합은 통과)
+                        if ((e.key || '').toLowerCase() !== 'r' && e.code !== 'KeyR') return;
+                        e.preventDefault();
+                        try { sessionStorage.setItem(KEY, on() ? 'N' : 'Y'); } catch (ignore) {}
+                        apply();
                       });
                       apply();
                     })();

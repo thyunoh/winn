@@ -381,6 +381,55 @@
 
 ## 장애/수정 이력
 
+### [완료] 신규병원 가입신청 — **개발 중 숨김 열쇠 = Ctrl+Alt+R** (2026-08-24)
+- 「신규병원 가입신청」은 아직 정식 오픈 전이라 **기본 숨김**이다(2026-08-19 도입). **Ctrl+Alt+R** 로 켜고 끈다.
+  ***메뉴·링크가 안 보인다고 지워진 것으로 오해하지 말 것.***
+  · 로그인 화면(wnn_consult) [LoginWinCT.jsp](../wnn_consult/src/main/webapp/WEB-INF/jsp/login/LoginWinCT.jsp) — 로그인 상자의 링크
+  · 사이드바(wnn_medcost) [sidebar.jsp](src/main/webapp/WEB-INF/tiles/main/sidebar.jsp) `#adminJoinReqMenu` — 관리자 메뉴
+- **저장키 = `sessionStorage['joinReqDev']`** — 두 화면이 **같은 키**를 본다. 운영은 두 앱이 같은 호스트라
+  로그인 화면에서 한 번 켜면 사이드바에도 켜져 있다(로컬은 9080·8080 이라 origin 이 달라 각각 켜야 한다).
+  브라우저를 닫으면 자동으로 꺼진다.
+- **열쇠가 바뀐 내력**: `req` 타이핑 → `rg` 타이핑 → `Ctrl+R` → **`Ctrl+Alt+R`**(확정).
+  ★`Ctrl+R`(새로고침)·`Ctrl+Shift+R`(강력 새로고침)은 **브라우저가 쓰는 키라 피했다** — 가로채면
+  그 화면에서 새로고침을 잃는다. 특히 sidebar.jsp 는 **전 화면**에 붙어 앱 전체가 영향을 받는다.
+  Ctrl+Alt+R 은 크롬·엣지에서 비어 있고, 파이어폭스 리더모드만 겹쳐 `preventDefault` 로 막는다.
+- **★한/영 상태와 무관하게 먹어야 한다** — 한글 IME 에서는 `e.key` 가 `'r'` 이 아니라 `'ㄱ'` 으로 올 수 있어
+  물리 키 코드 `e.code === 'KeyR'` 를 **함께** 본다. 조건에서 이걸 빼면 「한글일 때만 안 먹는다」가 된다.
+- **정식 오픈 시**: 양쪽의 `display:none` 과 `joinReqDev` 스크립트만 지우면 된다.
+- ※사이드바의 **QPS 개발자 플래그(`qpsDev` / `qps` 타이핑)** 는 **별개**다 — 같이 바꾸지 말 것.
+
+### [대기 · DB 적용 필요] 장기입원 환자분율(14) — **181일 이상 0명인데 현황값 100%** (2026-08-24)
+- **요청**(월분석보고서 검수): 「181일 이상 장기입원 환자가 **0명일 경우 수치가 100%** 로 확인되는데
+  **0%로 수정**하는 것이 적절할 것 같습니다(5점 구간 % 기준이 20% 미만이기에). 예) 평택삼성요양병원」
+- **원인** — 「산출값 0.00 이면 만점 처리」 규칙에 **14 가 08 과 함께 묶여** 있었다:
+  `IF l_calcvalue = 0.00 AND in_cate_gory IN ('08','14') THEN … SET l_calcvalue = 100.00;`
+  08(DUR 점검율)은 **높을수록 우수**라 만점=100% 가 말이 되지만, 14(장기입원)는 **낮을수록 우수**
+  (5점 = 0.00~19.99%)라 **0% 가 맞다**. 100% 는 오히려 **최저 구간(1점 = 80~100%)** 의 값이라 오해를 부른다.
+  ★**점수는 원래도 만점이었다** — 같은 블록이 `l_std_score = l_max_score`·`l_weightval = l_stdweight` 를
+  함께 넣어 5점·가중치 5.00 을 줬다. **틀린 것은 화면에 보이는 현황값(CAL_VAL) 하나뿐.**
+- ⚠⚠★★**같은 로직이 두 곳에 복제**돼 있다(2026-08-17 약사건과 같은 함정) — **둘 다 적용해야 한다**:
+  · `SP_EVALUATION_INDICATORS_REGISTER` — 자료생성 시 `TBL_PAT_INDI.CAL_VAL` 에 **저장**
+  · `EVALUATION_INDICATORS_VALUE`(FUNCTION) — 누적(`select_Hosp_Indi` L5026)·`SP_DASH_INDICATORS` 에서 **재계산**
+  (`SP_EVALUATION_INDICATORS_CREATE2` 는 분모=전체·분자=181일이상 을 **넘겨주기만** 한다 — 손댈 것 없음)
+- **조치 파일**(전부 `('08','14')` → `('08')` **한 줄**, 나머지는 운영 원본 그대로):
+  · [FN_EVALUATION_INDICATORS_VALUE_2026-08-24.sql](docs/sql/proc/FN_EVALUATION_INDICATORS_VALUE_2026-08-24.sql)
+    · 백업 [BACKUP_…_20260824.sql](docs/sql/proc/BACKUP_FN_EVALUATION_INDICATORS_VALUE_20260824.sql)
+  · [SP_EVALUATION_INDICATORS_REGISTER_2026-08-24.sql](docs/sql/proc/SP_EVALUATION_INDICATORS_REGISTER_2026-08-24.sql)
+    · 백업 [BACKUP_…_20260824.sql](docs/sql/proc/BACKUP_SP_EVALUATION_INDICATORS_REGISTER_20260824.sql)
+  · 과거 자료 보정 [FIX_LONGADM14_CALVAL100_2026-08-24.sql](docs/sql/evalrpt/FIX_LONGADM14_CALVAL100_2026-08-24.sql)
+    — **26건 · 10개 병원 · 202407~202612**(평택삼성 202509~202512·202606~202608 7건 포함)의 `CAL_VAL` 100.00 → 0.00.
+    원본은 `TBL_PAT_INDI_BAK_LONGADM14_20260824` 에 백업. **점수 컬럼은 건드리지 않는다**
+    (26건 전부 이미 `S_SCORE=5 · WEIGVAL=STDWEIG · MAX_VAL=5` 임을 실측 확인).
+  ★**프로시저·함수를 먼저** 적용할 것 — 안 그러면 자료 재생성 때 100 으로 되돌아간다(2026-08-17 약사건 재현).
+- **회귀 없음 근거**: `TBL_WEVALUE_MST` 의 14/5점 구간이 **0.00~19.99**(2024·2025·2026 판 모두 동일)이라
+  0.00 도 일반 경로(구간 조회)에서 그대로 **STD_SCORE 5 · WEIGVAL `TRUNC(5/5*5)`=5.00** 을 받는다.
+- **JSP 수정 없음**: [evalReport.jsp](src/main/webapp/WEB-INF/jsp/main/evalReport.jsp) 는 `cal_val` 을 그대로 찍고,
+  누적은 함수로 재계산하므로 DB 만 고치면 보고서·적정성평가 화면이 함께 0% 로 바뀐다.
+- **배포**: DB 프로시저/함수 + 데이터 보정만 — 앱 변경·재기동 불필요.
+- **함께 확인한 것(별건, 손대지 않음)**: 같은 블록에서 **08(DUR 점검율)** 은 분모>0·분자=0 이어도
+  100%·만점이 된다. 「점검 대상이 있는데 하나도 안 했다」와 「대상이 없다」가 구분되지 않는다.
+  이번 요청 범위 밖이라 **그대로 뒀다** — 담당자 확인 필요.
+
 ### [완료] 가입신청 → **별도 계약정보 입력창** (hospcd.jsp 연동 폐기) (2026-08-21)
 - **요청**: 「계약정보입력 시 hospcd.jsp 연동하지 말고 **별도 계약정보입력창**(입력 시 전산프로그램 정보도
   끌고 오게), 적정성평가·진료비분석 **두 가지 계약정보**」 — 08-20 의 「계약관리로 화면 이동」 방식을 대체한다.
