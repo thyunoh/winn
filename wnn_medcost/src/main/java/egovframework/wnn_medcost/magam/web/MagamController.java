@@ -37,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Controller
 public class MagamController {
 
+	
 	private static final Logger log = LoggerFactory.getLogger(MagamController.class);
 	private static Map<String, String> cookie_value = new HashMap<>();
 	

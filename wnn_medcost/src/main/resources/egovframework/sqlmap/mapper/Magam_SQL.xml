@@ -56,6 +56,7 @@
 		  <result property="ver_number" column="ver_number" />
 	</resultMap>
 	 
+	 
 	<resultMap id="ipwonMap" type="egovframework.wnn_medcost.magam.model.IpwonDTO">	   
           <result property="hosp_cd"    column="hosp_cd" />
           <result property="jobyymm"    column="jobyymm" />
