@@ -7,48 +7,46 @@
    을 아래 내용으로 통째로 교체한다.
 
    ---------------------------------------------------------------------------
-   해결하는 문제 (분자가 보기 그리드보다 1 작게 나오는 원인)
+   [변경이력]
    ---------------------------------------------------------------------------
-   보기 그리드(MagamMapper.select_CategoryList11)와 이 산정 SP가 '당월 대상(current_month)'을
-   서로 다르게 정의하고 있었다.
-       · 산정 SP  : current_month = EVAL_TYPE = '2' 만
-       · 보기 그리드: current_month = EVAL_TYPE = '2'  OR  (EVAL_TYPE='3' + 초일입원 + 작성일 7~10 + 전월 동일 작성일 없음)
-   전월 대상(previousmonth)·개선 판정 로직·COUNT(DISTINCT patId) 는 양쪽이 완전히 동일하다.
-   따라서 '월초 개시 + 7~10일 작성'인 초기평가(EVAL_TYPE='3') 개선 환자가
-   보기 그리드에는 '개선'으로 잡히지만 산정 분자에서는 빠져,
-   예) 개선 8명(그리드) vs 분자 7명(SP) 처럼 딱 1 차이가 났다.
+   1) 2026-08-17 : current_month 를 보기 그리드(select_CategoryList11)와 동일하게
+      EVAL_TYPE='2' + 월초 초기평가('3', 개시일 1일·작성일 7~10·전월 동일 작성일 없음)로 확장.
+      (분자가 그리드보다 1 작게 나오던 문제 — 반영 완료, 이 파일에도 유지되어 있음)
 
-   ---------------------------------------------------------------------------
-   바꾼 것 (딱 1군데)
-   ---------------------------------------------------------------------------
-   current_month 의 WHERE 절
-       AND IFNULL(a.EVAL_TYPE,'') = '2'
-   →  보기 그리드(select_CategoryList11)와 100% 동일한 EVAL_TYPE 분기로 교체
-       AND ( a.EVAL_TYPE = '2'
-             OR ( a.EVAL_TYPE = '3'
-                  AND DAY(STR_TO_DATE(a.MED_START,'%Y%m%d')) = 1
-                  AND DAY(STR_TO_DATE(a.DOC_DT,'%Y%m%d')) BETWEEN 7 AND 10
-                  AND NOT EXISTS ( ... 전월 동일 PAT_ID·동일 DOC_DT 없음 ... ) ) )
-   ※ current_month SELECT 에 DOC_DT 를 추가로 뽑지 않아도 된다(WHERE 에서 a.DOC_DT 직접 참조 가능).
+   2) 2026-08-24 (이번 교체) : ★ '제외' 혼합 케이스를 분모에서 뺀다.
+      - 증상 : 보기 그리드가 '제외'(improveYn='2')로 표시하는 환자가
+               SP 분모에는 그대로 남아 미개선과 똑같이 분율을 깎았다.
+               실측 예) 2026-08 강남수요양병원 — 전월 3단계 1부위 → 당월 2단계 2부위 환자:
+               그리드 '제외' 표시인데 분모 6에 포함되어 5/6=83.33%.
+               분모에서 빼면 5/5=100%.
+      - '제외' 판정(그리드 improveYn='2'와 100% 동일 조건) :
+            악화 조건(부위합 증가 OR 최고단계 상승) 과
+            개선 조건(부위합 감소 OR 최고단계 하강) 이 동시에 참인 혼합 케이스.
+            (예: 최고단계는 3→2로 낮아졌는데 부위 수는 1→2로 늘어난 경우)
+      - 바꾼 곳 : 분모 COUNT(DISTINCT pm.patId)
+                → COUNT(DISTINCT CASE WHEN NOT(혼합 케이스) THEN pm.patId END)
+      - 분자는 무변경. 분자 조건(개선 AND NOT 악화 / 부위합 감소+전 단계 비증가)은
+        혼합 케이스와 절대 겹치지 않으므로 분자 ⊆ 분모 가 항상 성립한다(분율 100% 초과 불가).
 
    ---------------------------------------------------------------------------
    그대로 둔 것
    ---------------------------------------------------------------------------
+   - current_month 의 EVAL_TYPE 분기(2026-08-17 반영분)
    - previousmonth (전월 MAX(ADMIT_DT) + 전월 2단계 이상 욕창 보유)
-   - 개선 판정 CASE (step2·3·4 합/최고단계 비교, 악화 아님)
-   - 분모 = COUNT(DISTINCT pm.patId), 분자 = COUNT(DISTINCT CASE WHEN 개선 THEN pm.patId END)
+   - 개선 판정 CASE (step2·3·4 합/최고단계 비교, 악화 아님) = 분자
    - current_month / previousmonth 의 FORCE INDEX (INDEX01)
 
    ---------------------------------------------------------------------------
    ⚠ 주의
    ---------------------------------------------------------------------------
-   1) 이 교체는 '공식 지표값'을 바꾼다(초기평가 개선 환자가 분자에 추가 → 분자 증가, 획득률·결과 상승).
-      "욕창개선환자분율이 초일입원 초기평가(EVAL_TYPE='3')를 대상에 포함하는가"라는
-      평가 정의(심평원 기준)에 부합하는지 확인한 뒤 반영할 것.
-      - 포함이 맞으면: 아래 교체본 적용(그리드와 일치).
-      - '2'만이 맞으면: 반대로 보기 그리드(select_CategoryList11)에서 '3' 개선을 집계·표시에서 빼야 한다.
-   2) 같은 초기평가 분기를 쓰는 다른 지표(예: 12.ADL select_CategoryList12 등)도
-      해당 산정 SP 가 EVAL_TYPE='2' 만 쓰는지 동일 점검 권장(같은 누락 가능성).
+   1) 이 교체는 '공식 지표값'을 바꾼다(혼합 케이스가 분모에서 빠짐 → 분모 감소, 결과 상승).
+      "혼합 케이스는 산정에서 제외"가 심평원 기준에 부합한다는 사용자 확정(2026-08-24)에 따른 것.
+   2) 보기 그리드(select_CategoryList11)는 손대지 않는다 — 그리드는 이미 '제외'로 표시만 하고
+      분모/분자를 계산하지 않는다(좌측 지표 그리드의 분모/분자는 이 SP 결과).
+      그리드 '제외' 표시 건수 = 이번에 분모에서 빠지는 건수 — 화면으로 그대로 검증 가능:
+      분모 = 전월단계 값이 있는 행 수 − '제외' 행 수, 분자 = '개선' 행 수.
+   3) 같은 혼합 케이스 개념이 없는 10번(신규발생)은 해당 없음.
+      12.ADL 등 다른 지표는 '제외' 판정 자체가 없는지 별도 확인.
    ============================================================================ */
 
 		WITH current_month AS (
@@ -61,7 +59,7 @@
 		      FORCE INDEX (INDEX01) /* 20260303 */
 		     WHERE a.HOSP_CD = hosp_cd
 			   AND a.MED_START LIKE CONCAT(job_month,'%')
-			   /* ★ 변경: 보기 그리드(select_CategoryList11)와 동일 — 정기평가('2') + 월초 초기평가('3') */
+			   /* 보기 그리드(select_CategoryList11)와 동일 — 정기평가('2') + 월초 초기평가('3') */
 			   AND (
 			         a.EVAL_TYPE = '2'
 			         OR (
@@ -98,7 +96,45 @@
 		           CAST(b.PR_ULCER3 AS UNSIGNED) +
 		           CAST(b.PR_ULCER4 AS UNSIGNED) > 0
 		)
-		SELECT COUNT(DISTINCT pm.patId)
+		SELECT /* ★ 분모 : '제외' 혼합 케이스(악화·개선 동시 충족)를 뺀다
+		         — 보기 그리드 select_CategoryList11 의 improveYn='2' 판정과 동일 조건 */
+		       COUNT(DISTINCT CASE WHEN NOT (
+					            /* 악화 조건 (부위합 증가 OR 최고단계 상승) */
+					            ((pm.prevStep2 + pm.prevStep3 + pm.prevStep4) < (cm.curtStep2 + cm.curtStep3 + cm.curtStep4)
+					             OR
+					             CASE
+					                 WHEN pm.prevStep4 > 0 THEN 4
+					                 WHEN pm.prevStep3 > 0 THEN 3
+					                 WHEN pm.prevStep2 > 0 THEN 2
+					                 ELSE 0
+					             END
+					             <
+					             CASE
+					                 WHEN cm.curtStep4 > 0 THEN 4
+					                 WHEN cm.curtStep3 > 0 THEN 3
+					                 WHEN cm.curtStep2 > 0 THEN 2
+					                 ELSE 0
+					             END
+					            )
+					            AND
+					            /* 개선 조건 (부위합 감소 OR 최고단계 하강) */
+					            ((pm.prevStep2 + pm.prevStep3 + pm.prevStep4) > (cm.curtStep2 + cm.curtStep3 + cm.curtStep4)
+					             OR
+					             CASE
+					                 WHEN pm.prevStep4 > 0 THEN 4
+					                 WHEN pm.prevStep3 > 0 THEN 3
+					                 WHEN pm.prevStep2 > 0 THEN 2
+					                 ELSE 0
+					             END
+					             >
+					             CASE
+					                 WHEN cm.curtStep4 > 0 THEN 4
+					                 WHEN cm.curtStep3 > 0 THEN 3
+					                 WHEN cm.curtStep2 > 0 THEN 2
+					                 ELSE 0
+					             END
+					            )
+					       ) THEN pm.patId END)
              , COUNT(DISTINCT CASE WHEN
 					            ((pm.prevStep2 + pm.prevStep3 + pm.prevStep4) > (cm.curtStep2 + cm.curtStep3 + cm.curtStep4)
 					             OR
