@@ -2544,11 +2544,19 @@
 		     */
 		     , CASE 
 		    
-				    /* 입원 후 문서일(docDt)이 3개월(월 기준) 이내이면 'X' */
-				    WHEN pd.examiDt IS NOT NULL AND pd.docDt < DATE_ADD(pd.admitDt, INTERVAL 3 MONTH) THEN 'X'
+				    /* ★2026-08-26 수정 — 「제외(X)」는 <입원 3개월 미만>일 때만이다.
+				         (1) 종전엔 examiDt IS NOT NULL 을 함께 걸어, 검사기록 유무가 제외 판정을 좌우했다.
+				             입원 3개월 경과 여부는 검사와 무관하므로 그 조건을 뗀다.
+				         (2) 「검사일 > 작성일」은 제외가 아니라 <작성일 기준 유효한 검사결과가 없는> 경우다
+				             → 'X'(제외) 가 아니라 '2'(초과) 로 보낸다. 화면 집계가 '1·2·3' 만 초과로 세므로
+				               '5'(누락) 로 두면 초과 대상에 잡히지 않는다(2026-08-26 재검토).
+				               '2' 는 원래 「검사일이 작성일보다 미래」에 배정된 코드라 뜻도 맞는다.
+				             종전 비교식 REPLACE(examiDt,'-','') > docDt 는 '20260709' > DATE 라 문자열↔날짜
+				             혼합비교가 되어 판정이 어긋났다 — 날짜끼리 비교로 바로잡는다. */
+				    WHEN pd.docDt < DATE_ADD(pd.admitDt, INTERVAL 3 MONTH) THEN 'X'
 				    
-				    /* 검사일이 문서일보다 미래이면 'X' */
-				    WHEN pd.examiDt IS NOT NULL AND REPLACE(pd.examiDt,'-','') > pd.docDt THEN 'X'
+				    /* 검사일이 작성일보다 미래 = 그 달 평가에 쓸 수 없는 검사 → '2'(초과) */
+				    WHEN pd.examiDt IS NOT NULL AND pd.examiDt > pd.docDt THEN '2'
 				    
 				    /* 검사일로부터 3개월 경과 후 문서가 작성되면 '1' */
 				    WHEN pd.examiDt IS NOT NULL AND pd.docDt > DATE_ADD(STR_TO_DATE(pd.examiDt, '%Y-%m-%d'), INTERVAL 3 MONTH) THEN '1'
