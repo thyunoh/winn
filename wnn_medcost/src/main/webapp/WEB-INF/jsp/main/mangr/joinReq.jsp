@@ -238,6 +238,11 @@
   #jrcMask .jrc-badge.new{ background:#e7f0fb; color:#2f5c96; }
   #jrcMask .jrc-badge.upd{ background:#fff3d9; color:#8a6d00; }
   #jrcMask .jrc-secb{ padding:9px 11px 11px; }
+  /* ★2026-08-24 「승인일자·중지일자 색깔 분리」 — 이 두 값이 <프로그램 사용기간>을 정한다.
+       계약 시작·종료일과 헷갈려 잘못 넣으면 로그인해도 화면이 안 열리므로 눈에 띄게 나눈다. */
+  /* 2026-08-24 : 승인일자·중지일자 <같은 색>으로 — 둘이 한 쌍(프로그램 사용기간)임을 보이게 */
+  #jrcMask th.jrc-acc, #jrcMask th.jrc-cls{ background:#fdecea !important; color:#a5352c !important; }
+  #jrcMask input.jrc-acc, #jrcMask input.jrc-cls{ background:#fff7f6; border-color:#eab5ae; }
   #jrcMask .jrc-sec.off .jrc-secb{ opacity:.45; }
 
   #jrcMask table.jrc-tb{ width:100%; border-collapse:collapse; font-size:12.5px; table-layout:fixed; }
@@ -853,13 +858,47 @@
     var q = JRC.req || {};
     gel('jrcHosp').innerHTML = esc(JRC.hospNm)
       + '<span class="jrc-cd">' + esc(JRC.hospCd) + '</span>'
-      + (JRC.reqNo ? '<span class="jrc-cd">신청번호 ' + esc(JRC.reqNo) + '</span>' : '');
+      ;   /* 2026-08-24 : 「신청번호 N」 표시 제거(요청) — 병원명·기호만 남긴다 */
 
     /* ★2026-08-24 요청 「적정성평가·진료비분석 탭 말고 한 화면에」 — 탭 띠 폐기.
          두 구분의 카드를 세로로 나란히 그린다(.jrc-cols = flex column).
          카드마다 머리줄의 체크로 켜고 끄는 것은 종전 그대로다. */
-    gel('jrcCols').innerHTML = JRC.gbs.map(jrcSecHtml).join('');
+    gel('jrcCols').innerHTML = JRC.gbs.map(jrcSecHtml).join('') + jrcCommonHtml();   /* 2026-08-24 : 공통 정보는 하단 */
+    jrcCommonFill();   /* 공용 정보 먼저 — 카드들이 그 값을 참조하진 않지만 순서를 맞춘다 */
     JRC.gbs.forEach(function(g){ jrcFill(g); });
+  }
+
+  /* ★2026-08-24 「공통 내용은 양쪽에 표시할 필요 없음」 — 두 계약이 공유하는 값만 모은 공용 구역.
+       전산프로그램 정보(회사·ID·PW) + 계약 담당(담당자·전화). 저장 때 두 계약에 같은 값이 들어간다. */
+  function jrcCommonHtml(){
+    return ''
+      + '<div class="jrc-sec" style="margin-top:10px;">'
+      +   '<div class="jrc-sech"><b>공통 정보</b>'
+      +     '<span style="font-size:12px; color:#8a99a3; margin-left:8px;">적정성평가·진료비경영분석에 함께 저장됩니다</span>'
+      +   '</div>'
+      +   '<div class="jrc-secb">'
+      +     '<table class="jrc-tb">'
+      +       '<colgroup><col style="width:88px;"><col><col style="width:88px;"><col></colgroup>'
+      +       '<tr><th class="grp" colspan="4">전산프로그램 정보</th></tr>'
+      +       '<tr><th>프로그램명</th><td><input type="text" id="jrcPgm"></td>'
+      +           '<th>아이디</th><td><input type="text" id="jrcPid"></td></tr>'
+      +       '<tr><th>패스워드</th><td colspan="3"><input type="text" id="jrcPpw"></td></tr>'
+      +       '<tr><th class="grp" colspan="4">계약 담당</th></tr>'
+      +       '<tr><th>담당자</th><td><input type="text" id="jrcMgr"></td>'
+      +           '<th>담당전화</th><td><input type="text" id="jrcTel"></td></tr>'
+      +     '</table>'
+      +   '</div>'
+      + '</div>';
+  }
+  /* 공용 구역 값 채우기 — 기존 계약(있으면 첫 구분) 값이 우선, 없으면 신청서 값 */
+  function jrcCommonFill(){
+    var q = JRC.req || {}, ex = null;
+    for (var n = 0; n < JRC.gbs.length; n++) { var c = JRC.conts[JRC.gbs[n].gb]; if (c) { ex = c; break; } }
+    gel('jrcPgm').value = (ex && ex.ocsCompany)  ? ex.ocsCompany  : (q.ocsCompany || '');
+    gel('jrcPid').value = (ex && ex.ocsUserId)   ? ex.ocsUserId   : (q.ocsUserId  || '');
+    gel('jrcPpw').value = (ex && ex.ocsUserPw)   ? ex.ocsUserPw   : (q.ocsUserPw  || '');
+    gel('jrcMgr').value = (ex && ex.conUserId)   ? ex.conUserId   : (q.mbrNm || '');
+    gel('jrcTel').value = (ex && ex.conUserTel)  ? ex.conUserTel  : (q.mbrTel || '');
   }
 
   function jrcSecHtml(g){
@@ -879,18 +918,13 @@
       +       '<colgroup><col style="width:88px;"><col><col style="width:88px;"><col></colgroup>'
       +       '<tr><th>계약시작일</th><td><input type="date" id="jrcSt_' + b + '" onchange="jrcSyncDt(\'' + b + '\');"></td>'
       +           '<th>계약종료일</th><td><input type="date" id="jrcEd_' + b + '" onchange="jrcSyncDt(\'' + b + '\');"></td></tr>'
-      +       '<tr><th>승인일자</th><td><input type="date" id="jrcAc_' + b + '" onchange="jrcManual(this);"></td>'
-      +           '<th>중지일자</th><td><input type="date" id="jrcCl_' + b + '" onchange="jrcManual(this);"></td></tr>'
+      +       '<tr><th class="jrc-acc">승인일자</th><td><input type="date" class="jrc-acc" id="jrcAc_' + b + '" onchange="jrcManual(this);"></td>'
+      +           '<th class="jrc-cls">중지일자</th><td><input type="date" class="jrc-cls" id="jrcCl_' + b + '" onchange="jrcManual(this);"></td></tr>'
       +       '<tr><th>사용구분</th><td><select id="jrcUse_' + b + '"><option value="Y">사용</option><option value="N">미사용</option></select></td>'
       +           '<th>운영사용</th><td><label><input type="checkbox" id="jrcNor_' + b + '"> 프로그램만 사용</label></td></tr>'
       +       '<tr><th>세부내용</th><td colspan="3"><input type="text" id="jrcCon_' + b + '" placeholder="계약 세부내용"></td></tr>'
-      +       '<tr><th class="grp" colspan="4">전산프로그램 정보</th></tr>'
-      +       '<tr><th>프로그램명</th><td><input type="text" id="jrcPgm_' + b + '"></td>'
-      +           '<th>아이디</th><td><input type="text" id="jrcPid_' + b + '"></td></tr>'
-      +       '<tr><th>패스워드</th><td colspan="3"><input type="text" id="jrcPpw_' + b + '"></td></tr>'
-      +       '<tr><th class="grp" colspan="4">계약 담당</th></tr>'
-      +       '<tr><th>담당자</th><td><input type="text" id="jrcMgr_' + b + '"></td>'
-      +           '<th>담당전화</th><td><input type="text" id="jrcTel_' + b + '"></td></tr>'
+      /* ★2026-08-24 — 전산프로그램 정보·계약 담당은 두 계약이 <같은 값>이라 카드에서 뺐다.
+         창 위 공용 구역(jrcCommon)에서 한 번만 입력하고, 저장 때 두 계약에 함께 넣는다. */
       +     '</table>'
       +     '<div class="jrc-hist" id="jrcHist_' + b + '"></div>'
       +   '</div>'
@@ -911,13 +945,7 @@
     gel('jrcNor_' + b).checked = !!(ex && ex.norYn === 'Y');
     gel('jrcCon_' + b).value = ex ? (ex.conContent || '') : '';
 
-    /* 전산프로그램 정보 — 기존 계약 값이 우선, 비어 있으면 신청서 값 */
-    gel('jrcPgm_' + b).value = (ex && ex.ocsCompany) ? ex.ocsCompany : (q.ocsCompany || '');
-    gel('jrcPid_' + b).value = (ex && ex.ocsUserId)  ? ex.ocsUserId  : (q.ocsUserId  || '');
-    gel('jrcPpw_' + b).value = (ex && ex.ocsUserPw)  ? ex.ocsUserPw  : (q.ocsUserPw  || '');
-
-    gel('jrcMgr_' + b).value = (ex && ex.conUserId)  ? ex.conUserId  : (q.mbrNm || '');
-    gel('jrcTel_' + b).value = (ex && ex.conUserTel) ? ex.conUserTel : (q.mbrTel || '');
+    /* 전산프로그램 정보·계약 담당은 공용 구역(jrcCommonFill)에서 한 번만 채운다 — 2026-08-24 */
 
     var mode = gel('jrcMode_' + b);
     mode.className   = 'jrc-badge ' + (ex ? 'upd' : 'new');
@@ -961,9 +989,9 @@
   window.jrcPullPgm = function(b){
     var q = JRC ? (JRC.req || {}) : {};
     if (!JRC || !JRC.reqNo) { _alertBox('신청서를 함께 열지 않아 가져올 값이 없습니다.'); return; }
-    gel('jrcPgm_' + b).value = q.ocsCompany || '';
-    gel('jrcPid_' + b).value = q.ocsUserId  || '';
-    gel('jrcPpw_' + b).value = q.ocsUserPw  || '';
+    gel('jrcPgm').value = q.ocsCompany || '';
+    gel('jrcPid').value = q.ocsUserId || '';
+    gel('jrcPpw').value = q.ocsUserPw || '';
   };
 
   /* ── 저장 ─────────────────────────────────────────────────────── */
@@ -1004,13 +1032,13 @@
                useYn:(jrcVal('jrcUse_' + b) || 'Y'),
                norYn:(gel('jrcNor_' + b).checked ? 'Y' : 'N'),
                conContent:jrcVal('jrcCon_' + b),
-               conUserId:jrcVal('jrcMgr_' + b),
-               conUserTel:jrcVal('jrcTel_' + b),
+               conUserId:jrcVal('jrcMgr'),
+               conUserTel:jrcVal('jrcTel'),
                /* 이메일 칸은 화면에서 뺐다(2026-08-21) — 기존 계약의 값을 그대로 물려 지워지지 않게 한다 */
                conEmail:((ex && ex.conEmail) ? ex.conEmail : ''),
-               ocsCompany:jrcVal('jrcPgm_' + b),
-               ocsUserId:jrcVal('jrcPid_' + b),
-               ocsUserPw:jrcVal('jrcPpw_' + b),
+               ocsCompany:jrcVal('jrcPgm'),   /* 공용 구역 값(2026-08-24) */
+               ocsUserId:jrcVal('jrcPid'),
+               ocsUserPw:jrcVal('jrcPpw'),
                regUser:who.user, updUser:who.user, regIp:who.ip, updIp:who.ip },
         old: ex ? { hospCd:JRC.hospCd, startDt:jrcD2S(ex.startDt),
                     endDt:jrcD2S(ex.endDt), conactGb:b } : null

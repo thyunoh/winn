@@ -30,8 +30,11 @@
 
 <div class="modal fade" id="joinModal" tabindex="-1" data-backdrop="static"
      data-keyboard="false" aria-hidden="true" role="dialog">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document"
-       style="max-width: 1000px;">
+  <%-- ★2026-08-26 「위치가 내려와 보인다」 — 신청 폼이 짧아지면서(요청으로 항목 축소)
+       modal-dialog-centered(세로 중앙 정렬)가 창을 아래로 밀어 보였다. 상단 기준으로 바꾸고
+       위 여백만 조금 준다. 높이는 내용에 맞춘다(본문 max-height 로 화면 초과분만 스크롤). --%>
+  <div class="modal-dialog" role="document"
+       style="max-width: 1000px; margin-top: 24px; margin-bottom: 24px;">
     <div class="modal-content rounded-3 shadow-lg">
 
       <div class="modal-header" style="background:#003366; padding:11px 16px;">
@@ -54,7 +57,10 @@
         </div>
       </div>
 
-      <div class="modal-body" id="joinModalBody" style="padding:0;">
+      <%-- ★2026-08-26 「아래 공간이 생김」 — scrollable 은 본문을 <화면 높이 기준>으로 늘려
+           내용이 짧아진 지금은 아래에 빈 칸이 남았다. 내용 높이대로 두고,
+           화면이 작을 때만 본문이 스크롤되게 max-height 로 상한만 건다. --%>
+      <div class="modal-body" id="joinModalBody" style="padding:0; max-height:calc(100vh - 150px); overflow-y:auto;">
       <div id="joinModal_in">
 <style>
   #joinModal_in{ background:#f4f6f8; color:#1f2a30; padding:11px 13px 13px; font-family:inherit; }
