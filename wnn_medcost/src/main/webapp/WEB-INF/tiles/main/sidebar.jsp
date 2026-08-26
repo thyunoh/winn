@@ -718,13 +718,18 @@
                            앞서 menu-section 을 달았다가 메뉴가 안 나온 원인이 이것이다(2026-08-19).
                            같은 이유로 menu-qps 도 menu-section 이 아니다(위쪽 주석 참고).
                          ※권한은 컨트롤러가 세션 MAIN_GU='1' 로 막는다. --%>
-                    <li class="nav-item" id="adminJoinReqMenu" style="display:none;">
+                    <%-- ★위너넷 관리자(로그인 때 심는 쿠키 s_mainfg='1')에게는 <무조건> 보인다 (2026-08-26 사용자 요청).
+                         종전에는 관리자에게도 숨겨 두고 Ctrl+Alt+R 로 켜야 했다 — 개발 중이라 그랬던 것인데,
+                         이제 관리자는 그냥 쓰는 메뉴라 숨길 이유가 없다.
+                         ※비관리자에게는 종전대로 숨김 + Ctrl+Alt+R 개발용 토글만 남는다(화면은 컨트롤러가 막는다). --%>
+                    <c:set var="wnnAdminMenu" value="${cookie.s_mainfg.value eq '1' ? 'Y' : 'N'}" />
+                    <li class="nav-item" id="adminJoinReqMenu"<c:if test="${wnnAdminMenu ne 'Y'}"> style="display:none;"</c:if>>
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/join/joinReq.do">
                             <i class="fas fa-hospital-user"></i>신규병원 가입신청
                             <span id="adminJoinReqCnt" style="background:#d9534f; color:#fff; border-radius:10px;
                                   padding:1px 8px; font-size:11.5px; font-weight:800; margin-left:6px;"></span></a>
                     </li>
-                    <%-- ★아직 개발 단계라 **기본 숨김**이다(2026-08-19).
+                    <%-- ★[2026-08-26] 위너넷 관리자에게는 **무조건 보인다**(위 c:set 참고). 아래 단축키는 이제 비관리자용 개발 토글이다.
                          **Ctrl+Alt+R** 로 켜고 끈다(2026-08-24 변경 : req → rg → Ctrl+R → Ctrl+Alt+R) —
                          로그인 화면(wnn_consult)의 [신규병원 가입신청] 과 같은 키·같은 저장키(joinReqDev)다.
                          운영은 두 앱이 같은 호스트라 sessionStorage 가 공유된다 →
@@ -736,10 +741,13 @@
                     <script>
                     (function(){
                       var KEY = 'joinReqDev';
+                      /* ★위너넷 관리자면 단축키와 무관하게 늘 보인다 (2026-08-26) —
+                           sessionStorage 에 예전에 'N' 이 남아 있어도 관리자에게는 안 숨겨진다. */
+                      var ADMIN = '${wnnAdminMenu}' === 'Y';
                       function on(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
                       function apply(){
                         var li = document.getElementById('adminJoinReqMenu');
-                        if (li) li.style.display = on() ? '' : 'none';
+                        if (li) li.style.display = (ADMIN || on()) ? '' : 'none';
                       }
                       /* 건수 배지 — 메뉴가 켜져 있든 아니든 미리 받아 둔다(켜는 순간 바로 보이게) */
                       try {

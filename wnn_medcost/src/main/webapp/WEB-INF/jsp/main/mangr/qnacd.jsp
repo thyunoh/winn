@@ -95,6 +95,9 @@
   #qnaCats .it.doc.on{ background:#eefaf6; border-left-color:#0f6b5c; }
   #qnaCats .it.hot .nm{ color:#c2410c; }
   #qnaCats .it.hot.on{ background:#fdf1ea; border-left-color:#c2410c; }
+  /* [✎ 관리자 등록] — 관리자가 이 화면에서 넣은 질문만 모아 본다 (2026-08-26) */
+  #qnaCats .it.adm .nm{ color:#5b6c80; }
+  #qnaCats .it.adm.on{ background:#f0f3f7; border-left-color:#5b6c80; }
   #qnaCats .sub{ display:block; padding:5px 14px 5px 26px; cursor:pointer; font-size:.92em; color:#5b6c80; }
   #qnaCats .sub:hover{ background:#f4f8fd; color:#1746a2; }
   #qnaCats .sub.on{ background:#f0f4fa; color:#1746a2; font-weight:700; }
@@ -119,6 +122,33 @@
   #qnaList .qi .hc{ flex:0 0 auto; font-size:.8em; color:#b7c4d4; }
   #qnaList .qi:nth-child(-n+3) .no.rank{ color:#e2564a; }
   #qnaList .empty{ padding:16px 14px; color:#a3b2c5; }
+  /* 관리자가 이 화면에서 등록한 질문 표시 (2026-08-26 「관리자등록내용 표시도 되는지」) —
+     ★색 체계를 건드리지 않는다: 파랑=위너넷 확정 · 초록=심평원 원문 · 주황=AI 참고답변.
+       「누가 넣었나」는 신뢰 등급이 아니라 관리용 꼬리표라 <회색>으로 따로 둔다. */
+  #qnaList .qi .adm{ flex:0 0 auto; font-size:.72em; font-weight:700; color:#7d8fa5;
+                     background:#f0f3f7; border:1px solid #dde4ec; border-radius:5px; padding:1px 5px; line-height:1.6; }
+  /* 줄별 작업 단추 — 편집 도구를 켰을 때만 나온다 (2026-08-26 「수정아이콘 직관적으로」)
+     ★종전에는 ✏·🗑·☆ 이모지뿐이었다. 두 가지가 문제였다(실화면 확인) :
+       ① ✏ 는 글자꼴(text presentation)로 그려져 <가로줄 －> 처럼 보인다 — 연필로 안 읽힌다.
+       ② 🗑 은 <질문을 지운다>로 읽히는데, 실제로는 자주 목록에서 내리는 것뿐이다.
+          진짜 삭제는 수정 창 안의 [질문 삭제] 다 — 뜻이 정반대로 전달될 수 있었다.
+     ⇒ 무엇을 하는 단추인지 <글자로> 적는다. 아이콘 하나로 줄이려다 뜻이 어긋나는 것보다 낫다. */
+  #qnaList .qi .act{ flex:0 0 auto; display:flex; gap:5px; align-items:flex-start; }
+  #qnaList .qi .act .ic{ display:inline-block; font-size:13px; line-height:1.6; cursor:pointer;
+                         opacity:.8; transition:opacity .12s, transform .12s; }
+  #qnaList .qi .act .ic:hover{ opacity:1; transform:scale(1.18); }
+  /* [수정]만 <글꼴이 아니라 그림(SVG)> — 사용자가 모양을 지정했다 (2026-08-26).
+     ★이모지·기호 글자는 그 PC 글꼴에 그림이 있어야 나온다. 없으면 네모(두부)이거나
+       글자꼴로 그려져 가로줄처럼 보인다(✏ 로 실제 겪은 것). SVG 는 글꼴을 안 타서 늘 같은 모양이다.
+     색은 currentColor 라 아래 두 줄만 바꾸면 되고, 크기는 em 이라 [가－/가＋] 를 따라 같이 커진다. */
+  #qnaList .qi .act .ic.draw{ color:#5b6c80; opacity:1; }
+  #qnaList .qi .act .ic.draw:hover{ color:#1f6feb; }
+  #qnaList .qi .act .ic svg{ display:block; margin-top:2px; }
+  /* 방금 등록·수정·올린 줄을 잠깐 노랗게 (2026-08-26 요청 「등록후 어느위치하였는지 확인필요」) —
+     저장하면 목록이 다시 그려질 뿐이라 새 질문이 어디로 갔는지 알 수 없었다. */
+  #qnaList .qi.justsaved{ animation:qnaSaved 2.6s ease-out 1; }
+  @keyframes qnaSaved{ 0%,60%{ background:#fff3cd; box-shadow:inset 3px 0 0 #e2a400; }
+                       100%{ background:transparent; box-shadow:none; } }
 
   /* ── 우: 답변 ── */
   #qnaDocCard{ flex:1 1 auto; min-width:0; }
@@ -129,6 +159,8 @@
   #qnaDoc .cat{ display:inline-block; font-size:.8em; font-weight:700; color:#1746a2; background:#eaf1fd;
                 border:1px solid #d3e0f7; border-radius:9px; padding:1px 8px; margin-bottom:8px; }
   #qnaDoc .cat.doc{ color:#0f6b5c; background:#f2fbf8; border-color:#bfe0d8; }
+  /* 「누가 넣었나」 꼬리표 — 신뢰 등급 색(파랑·초록·주황)과 섞이지 않게 회색 (2026-08-26) */
+  #qnaDoc .cat.adm{ color:#5b6c80; background:#f0f3f7; border-color:#d8e0ea; margin-left:5px; }
   #qnaDoc h3{ font-size:1.22em; font-weight:800; color:#1746a2; margin:2px 0 16px; line-height:1.45; }
   #qnaDoc ul{ margin:2px 0 0; padding:0; list-style:none; }
   #qnaDoc li{ position:relative; padding-left:13px; margin:5px 0; }
@@ -219,7 +251,8 @@
       <div class="qcard" id="qnaDocCard">
         <div class="qhd">
           <span class="t">답변</span>
-          <span class="c">눌러 보신 질문의 내용이 여기에 표시됩니다</span>
+          <%-- id = 저장 직후 <어디에 들어갔는지·검색으로 잡히는지>를 여기에 적는다 (2026-08-26) --%>
+          <span class="c" id="qnaDocSub">눌러 보신 질문의 내용이 여기에 표시됩니다</span>
           <%-- 글자 크기 — 화면 전체(#qnaWrap)의 기준 크기를 바꾼다. 고른 값은 다음에도 유지된다. --%>
           <span class="fz">
             <button type="button" onclick="qnaFont(-1)" title="글자 작게">가－</button>
@@ -293,20 +326,27 @@
               search:'/mangr/qnaSearch.do', ask:'/mangr/qnaAsk.do' };
   var CATS = [], TOP = [], LIST = [], CUR = { cat:'__HOT__', sub:'', kb:0, fold:false }, MODE = 'cat';
   /* 자주하는 질문 편집(2026-08-26) — 위너넷 관리자에게만 보인다. 서버(qnaTopSave.do)도 다시 막는다.
-     ★[수정] 체크를 켰을 때만 등록 버튼·✏🗑 아이콘이 나온다(사용자 「수정여부 체크하면 활성화」) —
+     ★[수정] 체크를 켰을 때만 등록 버튼·줄 아이콘이 나온다(사용자 「수정여부 체크하면 활성화」) —
        평소에는 일반 병원과 같은 깔끔한 목록으로 보고, 고칠 때만 켠다. */
+  /* ★★이 화면의 편집 도구는 <Ctrl+Alt+Q 를 눌렀을 때만> 보인다 (2026-08-26 사용자 확정).
+       · 관리자라도 처음 들어오면 [수정] 체크가 안 보인다 — 평소에는 병원과 같은 깔끔한 화면으로 본다.
+       · Ctrl+Alt+Q 를 누르면 [수정] 체크와 [관리자 등록] 분류가 나타난다.
+     ⚠★일반 병원 사용자에게는 <어떤 키를 눌러도> 안 나온다 — 아래 핸들러 첫 줄이 ADMIN 이 아니면 즉시 돌아간다.
+       가르는 것은 서버가 내려주는 qnaAdmin 뿐이고, 저장·삭제 엔드포인트도 서버에서 따로 막는다.
+     ※사이드바 [신규병원 가입신청]의 Ctrl+Alt+R 과는 <다른 기능>이다 — 그쪽은 관리자에게 상시 노출로 바꿨다. */
   var ADMIN = '${qnaAdmin}' === 'Y', _qtopId = null, _qtopEditOn = false, _qtopKeyOn = false;
-  /* ★관리자라도 평소엔 편집 도구가 아예 안 보인다 — Ctrl+Alt+Q 를 눌러야 [수정] 체크가 나타난다
-       (사용자 2026-08-26). 다시 누르면 숨고 편집 모드도 함께 꺼진다. */
+  /* Ctrl+Alt+Q = 숨김 해제. <한 방향(켜기)>뿐이다.
+     ★토글이 아니다 — 다시 눌러도 안 꺼진다. 종전에는 토글이라 실수로 한 번 더 누르면 도구가 사라져
+       <기능이 통째로 없어진 것처럼> 보였다(실제로 그렇게 읽혔다). 되숨기려면 새로고침한다. */
   document.addEventListener('keydown', function(e){
-    if (!ADMIN) return;
+    if (!ADMIN || _qtopKeyOn) return;                 /* 이미 켜져 있으면 아무 일도 하지 않는다 */
     if (e.ctrlKey && e.altKey && (e.key === 'q' || e.key === 'Q')){
       e.preventDefault();
-      _qtopKeyOn = !_qtopKeyOn;
-      if (!_qtopKeyOn) _qtopEditOn = false;
+      _qtopKeyOn = true;
+      renderCats();                                   /* [관리자 등록] 분류가 함께 나타난다 */
       if (MODE === 'hot') el('qnaListTt').innerHTML = hotTitle();
       renderList(true);
-      if (window._toast) _toast(_qtopKeyOn ? '자주하는 질문 편집 도구를 켰습니다' : '편집 도구를 숨겼습니다', 'info');
+      if (window._toast) _toast('관리자 편집 도구를 켰습니다 — [수정] 체크를 켜면 줄마다 고칠 수 있습니다', 'info');
     }
   });
   function hotTitle(){
@@ -326,8 +366,11 @@
   }
   window.qnaTopEditMode = function(on){
     _qtopEditOn = !!on;
-    el('qnaListTt').innerHTML = hotTitle();
-    if (MODE === 'hot') renderList(true);   // 아이콘 표시만 갱신 — 보던 자리를 지킨다
+    /* ★제목을 다시 쓰는 것은 자주하는 질문 목록일 때만 — hotTitle() 은 '자주하는 질문' 이라는
+         글자를 품고 있어서, 분류·검색 목록에서 부르면 그 목록 이름을 덮어쓴다.
+       ★목록은 <어느 모드에서나> 다시 그린다 — 줄 아이콘이 모든 목록에 붙기 때문이다. */
+    if (MODE === 'hot') el('qnaListTt').innerHTML = hotTitle();
+    renderList(true);                       // 아이콘 표시만 갱신 — 보던 자리를 지킨다
   };
 
   function post(url, params, ok, fail){
@@ -342,6 +385,29 @@
       .catch(function(e){ if (fail) fail(e); });
   }
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  /* 이 화면에서 관리자가 등록한 질문인가 (2026-08-26 「관리자등록내용 표시도 되는지」)
+       판별 두 가지를 OR 로 본다 — 서버는 안 고쳤고 목록·검색·상세가 모두 이 두 칸을 이미 내려준다.
+         · SRC_TYPE='WNN'   ← insertQnaTop 이 박는 값 (IN=위너넷 확정지식 / PDF=심평원 원문)
+         · KB_CODE 'WNNFAQ-' ← 같은 곳에서 만드는 코드 접두
+       둘 중 하나만 봐도 되지만, 나중에 한쪽 규칙이 바뀌어도 표시가 조용히 사라지지 않게 둘 다 본다. */
+  function isAdminKb(x){
+    return !!x && (x.srcType === 'WNN' || /^WNNFAQ-/.test(String(x.kbCode == null ? '' : x.kbCode)));
+  }
+  var _admCnt = -1;   /* [✎ 관리자 등록] 옆 건수 — 한 번 모아 본 뒤에만 안다(-1 = 아직 모름) */
+  /* [수정] 아이콘 그림 — 사용자가 지정한 모양(겹친 두 사각형), 2026-08-26.
+     선만 있는 그림이라 stroke 를 currentColor 로 두면 CSS 색을 그대로 따라간다. */
+  var ICO_EDIT = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor"'
+               + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+               + '<rect x="9" y="9" width="11" height="11" rx="2"></rect>'
+               + '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  /* [빼기] 아이콘 — 휴지통도 같은 선 굵기의 그림으로 (2026-08-26 사용자 「선 그림으로 맞추기」).
+     이모지 🗑 는 PC 글꼴에 기대지만 이건 어디서나 같은 모양·같은 크기로 나온다. */
+  var ICO_DEL  = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor"'
+               + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+               + '<path d="M3 6h18"></path>'
+               + '<path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>'
+               + '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>'
+               + '<path d="M10 11v6"></path><path d="M14 11v6"></path></svg>';
   function el(id){ return document.getElementById(id); }
   function findCat(id){ for(var i=0;i<CATS.length;i++) if(CATS[i].catId===id) return CATS[i]; return null; }
 
@@ -349,7 +415,16 @@
   function renderCats(){
     var h = '<div class="g">많이 찾는 것</div>'
           + '<div class="it hot' + (CUR.cat==='__HOT__' ? ' on' : '') + '" onclick="qnaCat(\'__HOT__\')">'
-          +   '<span class="nm">🔥 자주하는 질문</span><span class="n">' + TOP.length + '</span></div>', i, j;
+          +   '<span class="nm">🔥 자주하는 질문</span><span class="n">' + TOP.length + '</span></div>'
+          /* 관리자가 넣은 질문만 모아 보기 — 편집 도구(Ctrl+Alt+Q)를 켰을 때만 나온다.
+             ★자료가 지금까지는 스크립트로 적재됐고 앞으로는 이 화면에서 손으로 쌓인다(2026-08-26).
+               그러면 「내가 넣은 것이 어디까지인가」를 볼 자리가 반드시 필요해진다. */
+          + (ADMIN && _qtopKeyOn
+              ? '<div class="it adm' + (CUR.cat==='__ADM__' ? ' on' : '') + '" onclick="qnaCat(\'__ADM__\')"'
+                + ' title="이 화면에서 등록·수정한 질문만 최근 순으로 모아 봅니다">'
+                + '<span class="arw"></span><span class="nm">📝 관리자 등록</span>'
+                + '<span class="n">' + (_admCnt < 0 ? '' : _admCnt) + '</span></div>'
+              : ''), i, j;
     /* IN(사내 확정답변) 분류는 별도 그룹 제목 없이 "많이 찾는 것" 아래로 통합(2026-08-05 사용자 요청) */
     var grp = [['IN',''], ['PDF','심사평가원 원문']];
     for (j=0;j<grp.length;j++){
@@ -393,20 +468,33 @@
       h += '<div class="qi' + (String(CUR.kb)===String(x.kbId) ? ' on' : '') + '" onclick="qnaOpen(' + x.kbId + ')">'
          +   '<span class="no' + (MODE==='hot' ? ' rank' : '') + '">' + (i+1) + '</span>'
          +   '<span class="tx">' + esc(x.shortTitle || x.title) + '</span>'
+         /* 관리자가 넣은 줄에 꼬리표 — 편집 도구를 켰을 때만. 병원 사용자 화면은 그대로다.
+            ★[관리자 등록] 모아 보기에서는 안 붙인다 — 거긴 전부 관리자 등록분이라 뻔하다. */
+         + (ADMIN && _qtopKeyOn && MODE !== 'adm' && isAdminKb(x)
+             ? '<span class="adm" title="이 화면에서 관리자가 등록한 질문입니다">관리자</span>' : '')
          /* 「n회」 조회수 표기는 내리기로 확정(2026-08-05 사용자 요청) */
-         /* 자주하는 질문은 관리자에게 수정·빼기 버튼(2026-08-26) — 줄 클릭(답변 열기)과 섞이지 않게 전파를 끊는다 */
-         + (MODE==='hot' && ADMIN && _qtopEditOn
-             ? '<span onclick="event.stopPropagation();qnaTopEdit(' + x.kbId + ')" title="수정"'
-               + ' style="margin-left:6px; cursor:pointer; font-size:13px;">✏</span>'
-             + '<span onclick="event.stopPropagation();qnaTopDelGo(' + x.kbId + ')" title="자주하는 질문에서 빼기"'
-               + ' style="margin-left:4px; cursor:pointer; font-size:13px;">🗑</span>'
-             : '')
-         /* 분류·검색 목록에서는 ✏ 수정 + ☆ 자주 올리기(사용자 2026-08-26 「작성 내용 삭제나 수정 어떻게」) */
-         + (MODE!=='hot' && ADMIN && _qtopEditOn
-             ? '<span onclick="event.stopPropagation();qnaTopEdit(' + x.kbId + ')" title="수정"'
-               + ' style="margin-left:6px; cursor:pointer; font-size:13px;">✏</span>'
-             + '<span onclick="event.stopPropagation();qnaTopAddGo(' + x.kbId + ')" title="자주하는 질문에 올리기"'
-               + ' style="margin-left:4px; cursor:pointer; font-size:13px; color:#e2a400;">☆</span>'
+         /* 줄별 작업 아이콘 — 줄 클릭(답변 열기)과 섞이지 않게 전파를 끊는다.
+            ★★어느 목록에서나 [수정]·[빼기] <같은 그림·같은 동작> 이다 (2026-08-26 사용자
+              「동일한 기능으로, 별표 기능 없애고」). 종전에 분류·검색 목록에만 있던
+              ⭐[자주 등록](목록에 올리는 반대 동작)은 없앴다 — 같은 자리에서 어떤 목록이냐에 따라
+              올리기와 내리기가 뒤바뀌면 손이 기억한 자리를 못 믿게 된다.
+            ★[빼기]는 <모든 줄에> 나온다 (2026-08-26 사용자 「그런 구분 없이 두 개 아이콘 나오게」) —
+              한때 <자주하는 질문에 올라 있는 줄에만> 보이게 했더니, 줄마다 아이콘 수가 달라
+              「왜 어떤 것은 수정만 있나」로 읽혔다. 줄이 가지런한 쪽을 택한다.
+              자주 목록에 없는 줄에서 눌러도 <아무것도 망가지지 않는다> — 이미 내려가 있는 것을
+              한 번 더 내리는 셈이라 그대로다(TOP_YN='N' → 'N').
+            ⚠[빼기]의 뜻은 <삭제가 아니라 자주 목록에서 내리기>다. 진짜 삭제는 수정 창 안 [질문 삭제] 뿐이다.
+            ★★심사평가원 원문(SRC_TYPE='PDF')에는 아무 아이콘도 안 붙인다 (2026-08-26 사용자 요청) —
+              그건 우리가 쓴 글이 아니라 <받아 적은 원문>이라 고칠 대상이 아니다. [수정] 체크를 켜도 마찬가지.
+              위너넷 확정지식(IN)과 관리자 등록분(WNN)만 손댈 수 있다. */
+         + (ADMIN && _qtopEditOn && x.srcType !== 'PDF'
+             ? '<span class="act">'
+               + '<span class="ic draw" onclick="event.stopPropagation();qnaTopEdit(' + x.kbId + ')"'
+                 + ' title="이 질문의 제목·답변 내용을 고칩니다">' + ICO_EDIT + '</span>'
+               + '<span class="ic draw" onclick="event.stopPropagation();qnaTopDelGo(' + x.kbId + ')"'
+                 + ' title="자주하는 질문 목록에서 뺍니다 — 질문·답변은 분류와 검색에 그대로 남습니다">'
+                 + ICO_DEL + '</span>'
+               + '</span>'
              : '')
          + '</div>';
     }
@@ -442,9 +530,14 @@
 
   /* ── 우: 답변 ── */
   function renderDoc(kb){
-    var doc = (kb.srcType !== 'IN');
+    /* ★초록(원문)은 심평원 PDF 에만 준다 (2026-08-26 수정) —
+         종전 `srcType !== 'IN'` 은 관리자가 이 화면에서 등록한 글(SRC_TYPE='WNN')까지
+         <심평원 원문>으로 칠했다. 위너넷이 쓴 답을 원문으로 보이게 하면 안 된다. */
+    var doc = (kb.srcType !== 'IN' && kb.srcType !== 'WNN');
     var cat = (kb.catNm || '') + (kb.subNm ? ' › ' + kb.subNm : '');
     var h = '<span class="cat' + (doc ? ' doc' : '') + '">' + esc(cat || (doc ? '심평원 원문' : '위너넷')) + '</span>'
+          /* 누가 넣었는지는 관리자에게만 — 병원 사용자에게는 뜻 없는 정보다 */
+          + (ADMIN && isAdminKb(kb) ? '<span class="cat adm">📝 관리자 등록</span>' : '')
           + '<h3>' + esc(kb.title) + '</h3>';
     var body = String(kb.body == null ? '' : kb.body);
 
@@ -512,18 +605,52 @@
       var c0 = findCat(id);
       if (c0 && c0.subs && c0.subs.length){ CUR.fold = !CUR.fold; renderCats(); return; }
     }
-    CUR.cat = id; CUR.sub = ''; CUR.fold = false; MODE = (id === '__HOT__') ? 'hot' : 'cat';
+    CUR.cat = id; CUR.sub = ''; CUR.fold = false;
+    MODE = (id === '__HOT__') ? 'hot' : (id === '__ADM__' ? 'adm' : 'cat');
     renderCats();
     if (id === '__HOT__'){
       el('qnaListTt').innerHTML = hotTitle();
       LIST = TOP; renderList(); return;
     }
+    if (id === '__ADM__'){ qnaAdmList(); return; }
     var c = findCat(id);
     el('qnaListTt').innerHTML = c ? esc(c.catNm) : '질문 목록';
     el('qnaList').innerHTML = '<div class="empty">불러오는 중…</div>';
     post(API.list, { catId:id }, function(j){ LIST = j.list || []; renderList(); },
                                  function(){ el('qnaList').innerHTML = '<div class="empty">목록을 불러오지 못했습니다.</div>'; });
   };
+  /* ── [✎ 관리자 등록] 모아 보기 (2026-08-26) ──────────────────────────
+       관리자가 이 화면에서 넣은 질문만 <최근 등록 순>으로 모은다.
+       ★서버는 안 고쳤다 — 대분류(12개)별 목록을 <한꺼번에 띄워> 받아 화면에서 거른다.
+         목록 조회는 본문을 빼고 제목만 오므로(selectQnaKbList) 가볍다.
+       ⚠등록분이 많아져 이 방식이 무거워지면 <서버 조회 한 방>으로 바꿀 것 —
+         Mangr_SQL.xml 의 selectQnaKbList 에 `AND K.SRC_TYPE='WNN'` 갈래를 더하면 된다(WAR 재빌드).
+       ★중분류(SUB_ID)로는 안 걸린다 — 등록 SQL 이 SUB_ID 를 안 채우기 때문에
+         대분류 CAT_ID 로만 훑어야 빠지는 것이 없다. */
+  function qnaAdmList(){
+    el('qnaListTt').innerHTML = '📝 관리자 등록';
+    el('qnaList').innerHTML = '<div class="empty">관리자가 등록한 질문을 모으는 중…</div>';
+    var got = [], left = CATS.length, i;
+    if (!left){ LIST = []; _admCnt = 0; renderList(); return; }
+    function done(){
+      /* KB_ID 는 IDENTITY 라 큰 쪽이 나중에 넣은 것 — 방금 등록한 것이 맨 위로 온다 */
+      got.sort(function(a,b){ return Number(b.kbId) - Number(a.kbId); });
+      LIST = got; _admCnt = got.length;
+      renderCats();                       /* 분류 항목 옆 건수 갱신 */
+      renderList();
+      if (!got.length)
+        el('qnaList').innerHTML = '<div class="empty">이 화면에서 등록한 질문이 아직 없습니다.</div>';
+    }
+    for (i=0;i<CATS.length;i++){
+      (function(c){
+        post(API.list, { catId:c.catId }, function(j){
+          var l = j.list || [], n;
+          for (n=0;n<l.length;n++) if (isAdminKb(l[n])){ l[n].catId = c.catId; l[n].catNm = c.catNm; got.push(l[n]); }
+          if (--left === 0) done();
+        }, function(){ if (--left === 0) done(); });
+      })(CATS[i]);
+    }
+  }
   window.qnaSub = function(subId){
     CUR.sub = subId; MODE = 'cat';
     renderCats();
@@ -533,6 +660,8 @@
   };
   window.qnaOpen = function(kbId){
     CUR.kb = kbId;
+    /* 다른 질문을 열면 「방금 등록…」 안내는 지운다 — 저장 확인 문구가 계속 남아 있으면 안 된다 */
+    el('qnaDocSub').innerHTML = '눌러 보신 질문의 내용이 여기에 표시됩니다';
     renderList(true);   // 선택 표시만 갱신 — 보고 있던 자리를 지킨다
     el('qnaDoc').innerHTML = '<div class="guide">불러오는 중…</div>';
     post(API.get, { kbId:kbId, askType:(MODE==='search' ? 'TYPE' : 'PICK') }, function(j){
@@ -799,8 +928,10 @@
     if (v) applyFont(parseFloat(v) || QNA_FS);
   })();
 
-  /* ── 최초 적재 — 자주 목록 편집 후에도 다시 부른다(2026-08-26) ── */
-  function qnaReloadInit(){
+  /* ── 최초 적재 — 자주 목록 편집 후에도 다시 부른다(2026-08-26) ──
+       after = 다시 그린 <뒤에> 할 일. 저장 확인(qnaVerify)이 이 자리로 들어온다 —
+       TOP·CATS 가 새로 채워진 뒤라야 방금 넣은 질문을 찾을 수 있다. */
+  function qnaReloadInit(after){
     post(API.init, { topCnt:20 }, function(j){
       var raw = j.cats || [], i, tot = 0;
       TOP = j.top || [];
@@ -818,12 +949,82 @@
       el('qnaListTt').innerHTML = hotTitle();
       LIST = TOP; MODE = 'hot'; CUR.cat = '__HOT__'; CUR.sub = '';
       renderList();
+      if (typeof after === 'function') after();
     }, function(){
       el('qnaCats').innerHTML = '<div class="empty" style="padding:16px 14px;color:#a3b2c5">'
         + '지식 자료를 불러오지 못했습니다.</div>';
     });
   }
   qnaReloadInit();
+
+  /* ── 등록·수정 직후 확인 (2026-08-26 요청 「등록후 어느위치하였는지」·「확인차원에서 검색」) ──────
+       종전에는 저장하면 목록만 다시 그려서, 방금 넣은 질문이 <어디로 갔는지>도
+       <검색으로 잡히는지>도 알 수 없었다. 이제 저장하면 곧바로
+         ① 검색창에 그 제목을 넣고 <사용자가 치는 것과 똑같은 검색 API> 를 태운다
+         ② 결과 몇 번째로 잡혔는지 짚어 주고 그 줄을 노랗게 번쩍인 뒤 답변을 펼친다
+         ③ 검색에 안 잡히면 <경고>하고, 대신 등록한 분류 목록에서 자리를 찾아 보여 준다
+       ★②가 아니라 ③이 뜨면 그 질문은 병원 사용자가 검색으로 못 찾는다는 뜻이다
+         (KEYWORDS 가 비어 제목에 없는 말로는 안 걸린다) — 제목을 실제 물어볼 말로 고치거나
+         KEYWORDS 를 채워야 한다. */
+  function rowFind(list, kbId, title){
+    for (var i=0;i<list.length;i++){
+      if (kbId){ if (String(list[i].kbId) === String(kbId)) return i; }
+      else if (title && (list[i].title === title || list[i].shortTitle === title)) return i;
+    }
+    return -1;
+  }
+  /* 그 줄로 스크롤 → 노랗게 번쩍 → 답변 펼침 → 머리줄·토스트에 자리 표시.
+     ★qnaOpen 이 목록을 다시 그리므로 <먼저 열고 그 다음에> 줄을 집어야 한다 — 순서를 바꾸면
+       방금 붙인 강조가 재렌더에 지워진다. */
+  function flashRow(idx, kbId, msg, bad){
+    qnaOpen(kbId);
+    var box = el('qnaList'), row = box.children[idx];
+    if (row){
+      /* 그 줄이 목록 한가운데 오게. 음수는 0 으로 — 브라우저가 알아서 자르기는 하지만 뜻을 분명히 둔다 */
+      box.scrollTop = Math.max(0, box.scrollTop + row.getBoundingClientRect().top
+                                - box.getBoundingClientRect().top
+                                - box.clientHeight / 2 + row.offsetHeight / 2);
+      row.className += ' justsaved';
+    }
+    el('qnaDocSub').innerHTML = (bad ? '⚠ ' : '') + esc(msg);
+    /* 토스트 갈래 이름은 ui-message.js 의 CSS 그대로 — ok/warn/err/info (success·error 는 없는 이름이라 색이 안 붙는다) */
+    if (window._toast) _toast(msg, bad ? 'warn' : 'ok');
+  }
+  /* 검색에서 못 찾았을 때 — 등록한 분류 목록에서라도 자리를 알려 준다 */
+  function verifyByCat(kbId, title, catId, head){
+    if (!catId){ el('qnaDocSub').innerHTML = '⚠ ' + esc(head); if (window._toast) _toast(head, 'warn'); return; }
+    var c = findCat(catId);
+    CUR.cat = catId; CUR.sub = ''; CUR.fold = false; MODE = 'cat';
+    renderCats();
+    el('qnaListTt').innerHTML = c ? esc(c.catNm) : '질문 목록';
+    el('qnaList').innerHTML = '<div class="empty">불러오는 중…</div>';
+    post(API.list, { catId:catId }, function(j){
+      LIST = j.list || []; renderList();
+      var k = rowFind(LIST, kbId, title);
+      if (k < 0){ el('qnaDocSub').innerHTML = '⚠ ' + esc(head); if (window._toast) _toast(head, 'warn'); return; }
+      flashRow(k, LIST[k].kbId, head + ' · [' + (c ? c.catNm : '분류') + '] ' + (k + 1) + '번째에 있습니다', true);
+    }, function(){ el('qnaDocSub').innerHTML = '⚠ ' + esc(head); if (window._toast) _toast(head, 'warn'); });
+  }
+  function qnaVerify(kbId, title, catId, what){
+    if (!title){ verifyByCat(kbId, title, catId, what); return; }
+    el('qnaQ').value = title;              /* 검색창에도 남긴다 — 관리자가 그대로 다시 눌러 볼 수 있게 */
+    MODE = 'search';
+    el('qnaListTt').innerHTML = '검색 · ' + esc(title);
+    el('qnaList').innerHTML = '<div class="empty">등록한 내용을 검색으로 확인하는 중…</div>';
+    post(API.search, { q:title, listCnt:30 }, function(j){
+      LIST = j.list || [];
+      var idx = rowFind(LIST, kbId, title);
+      if (idx < 0){                        /* 검색으로는 못 찾는다 — 이게 알려야 할 신호다 */
+        verifyByCat(kbId, title, catId, what + ' · 그런데 이 제목으로 검색하면 안 나옵니다');
+        return;
+      }
+      renderList();
+      var c = findCat(catId);
+      flashRow(idx, LIST[idx].kbId,
+               what + ' · 검색 ' + (idx + 1) + '번째로 확인됨'
+             + (c ? ' (분류: ' + c.catNm + ')' : ''));
+    }, function(){ verifyByCat(kbId, title, catId, what); });
+  }
 
   /* ── 자주하는 질문 편집(위너넷 관리자, 2026-08-26) ──
        kbId=0 → 신규 등록 · kbId>0 → 수정(본문은 qnaGet 으로 채운다). 빼기는 지정만 푼다(지식은 남는다). */
@@ -882,23 +1083,25 @@
     if (!el('qtopCat').value){ qmsg('분류를 선택하세요.'); el('qtopCat').focus(); return; }
     if (!t){ qmsg('질문 제목을 입력하세요.'); el('qtopTitle').focus(); return; }
     if (!b){ qmsg('답변 내용을 입력하세요.'); el('qtopBody').focus(); return; }
+    /* 저장 뒤 확인에 쓸 값은 <창을 닫기 전에> 붙잡아 둔다 — 닫으면 입력칸이 비고 _qtopId 도 다음 편집에 덮인다.
+       신규는 kbId 를 모르므로(서버가 안 돌려준다) 제목으로 찾는다 — 방금 저장한 그 제목이다. */
+    var vId = _qtopId || '', vCat = el('qtopCat').value, vWhat = _qtopId ? '수정했습니다' : '등록했습니다';
     post('/mangr/qnaTopSave.do',
-         { kbId:(_qtopId || ''), title:t, body:b, catId:el('qtopCat').value, topNo:(el('qtopNo').value || '0') },
+         { kbId:(_qtopId || ''), title:t, body:b, catId:vCat, topNo:(el('qtopNo').value || '0') },
          function(j){
            if (j.error_code !== '0'){ qmsg(j.error_message || '저장하지 못했습니다.'); return; }
-           qnaTopClose(); qnaReloadInit();
+           qnaTopClose();
+           qnaReloadInit(function(){ qnaVerify(vId, t, vCat, vWhat); });
          },
          function(){ qmsg('저장하지 못했습니다.'); });
   };
-  window.qnaTopAddGo = function(kbId){
-    qask('이 질문을 <b>자주하는 질문</b>에 올릴까요?<br>맨 뒤 순서로 들어갑니다.', '올리기', function(){
-      post('/mangr/qnaTopAdd.do', { kbId:kbId, topNo:(TOP.length + 1) }, function(j){
-        if (j.error_code !== '0'){ qmsg(j.error_message || '올리지 못했습니다.'); return; }
-        qnaReloadInit();   // 자주하는 질문 화면으로 돌아가 방금 올린 것을 바로 확인한다
-      }, function(){ qmsg('올리지 못했습니다.'); });
-    });
-  };
-  /* 완전 삭제 — 분류·검색·자주 목록 모두에서 내린다(자주에서 빼기(🗑)와 다르다) */
+  /* ★[⭐ 자주 등록]은 없앴다 (2026-08-26 사용자 「별표 기능 없애고」) — 목록마다 같은 자리에서
+       올리기·내리기가 뒤바뀌지 않게 하려는 것. 새 질문은 등록하면 <자동으로> 자주하는 질문에
+       올라간다(insertQnaTop 이 TOP_YN='Y' 로 넣는다).
+     ⚠그래서 지금은 <한 번 뺀 질문을 화면에서 다시 올릴 길이 없다>. 서버 쪽 /mangr/qnaTopAdd.do
+       와 서비스는 그대로 살려 뒀으니, 되올리기가 필요해지면 수정 창에 「자주하는 질문에 표시」
+       체크 하나만 붙이면 된다(화면만 고치면 됨). */
+  /* 완전 삭제 — 분류·검색·자주 목록 모두에서 내린다([빼기]와 다르다) */
   window.qnaKbDelGo = function(){
     if (!_qtopId) return;
     qask('이 질문을 <b>완전히 삭제</b>할까요?<br>분류·검색·자주하는 질문 어디에서도 안 나오게 됩니다.', '삭제', function(){
@@ -909,6 +1112,13 @@
     });
   };
   window.qnaTopDelGo = function(kbId){
+    /* [빼기] 아이콘은 모든 줄에 붙지만, 자주 목록에 없는 질문은 뺄 것이 없다.
+       ★확인창을 띄웠다가 아무 일도 안 일어나면 <눌렀는데 먹통>으로 읽힌다 — 그 전에 사실대로 알린다.
+         (아이콘을 줄마다 다르게 보이지 않게 하면서도, 무슨 일이 있었는지는 감추지 않는다) */
+    if (rowFind(TOP, kbId, '') < 0){
+      if (window._toast) _toast('이 질문은 자주하는 질문에 없습니다 — 뺄 것이 없습니다', 'info');
+      return;
+    }
     qask('<b>자주하는 질문</b>에서 뺄까요?<br>질문·답변 자체는 분류·검색에 그대로 남습니다.', '빼기', function(){
       post('/mangr/qnaTopDel.do', { kbId:kbId }, function(j){
         if (j.error_code !== '0'){ qmsg(j.error_message || '빼지 못했습니다.'); return; }
