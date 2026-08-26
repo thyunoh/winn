@@ -2553,8 +2553,13 @@
 				               '2' 는 원래 「검사일이 작성일보다 미래」에 배정된 코드라 뜻도 맞는다.
 				             종전 비교식 REPLACE(examiDt,'-','') > docDt 는 '20260709' > DATE 라 문자열↔날짜
 				             혼합비교가 되어 판정이 어긋났다 — 날짜끼리 비교로 바로잡는다. */
-				    WHEN pd.docDt < DATE_ADD(pd.admitDt, INTERVAL 3 MONTH) THEN 'X'
-				    
+				    /* ★2026-08-26 오후 재수정 — 「제외(X)」는 <당뇨 체크(DIABETES='1')된 사람>에게만.
+				         오전 수정에서 examiDt IS NOT NULL 을 떼자(제외는 검사와 무관하므로) 그 조건이 사실상
+				         해 오던 당뇨 대상자 거르기까지 함께 사라져, 당뇨 아닌 신규입원자(검사기록 없음)가
+				         전부 「제외」로 표시됐다(서온요양병원 202607 — 10명 실측, 전원 DIABETES=0).
+				         당뇨 조건을 명시하면 당뇨 신규입원자 20명(실측)은 그대로 X 로 남는다. */
+				    WHEN pd.diabeYn = '1' AND pd.docDt < DATE_ADD(pd.admitDt, INTERVAL 3 MONTH) THEN 'X'
+
 				    /* 검사일이 작성일보다 미래 = 그 달 평가에 쓸 수 없는 검사 → '2'(초과) */
 				    WHEN pd.examiDt IS NOT NULL AND pd.examiDt > pd.docDt THEN '2'
 				    

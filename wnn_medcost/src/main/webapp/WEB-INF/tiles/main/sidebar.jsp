@@ -699,6 +699,16 @@
                         </div>
                     </li>
 
+                    <%-- 적정성평가 교육 동영상 (2026-08-26) — 분야별통계 다음. 새 창에서 스트리밍 재생(EduVideoController).
+                         ★menu-section 금지(아래 가입신청 주석의 함정과 같음 — 상단 탭이 숨긴 뒤 영영 안 켜진다).
+                         이름이 길어 두 줄 — 둘째 줄은 아이콘 폭만큼 들여쓴다(「글자가 잘릴 것 같은데」). --%>
+                    <li class="nav-item">
+                        <a class="nav-item nav-link" style="font-size: 15px; line-height: 1.4; white-space: normal;" href="#"
+                           onclick="window.open('/eduvideo/stream.do', 'wnnEduVideo'); return false;">
+                            <i class="fas fa-video"></i>2026년 2주기 8차<br>
+                            <span style="padding-left: 27px;">요양병원 적정성평가 이해</span></a>
+                    </li>
+
                     <%-- 신규병원 가입신청 — 메뉴 맨 아래(분야별통계 다음).
                          ★★class 에 menu-section 을 **넣지 않는다.**
                            top.jsp 의 상단 탭(전체·경영분석·적정성평가…)은 눌릴 때마다
