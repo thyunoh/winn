@@ -295,7 +295,7 @@
   }
 
   /* ── 내 병원 승인건 ─────────────────────────────────────────────── */
-  function jdInfo(){
+  function jdInfo(cb){
     $.ajax({
       type:'post', url:'/join/joinDocsInfo.do', dataType:'json',
       success:function(d){
@@ -330,6 +330,7 @@
             + '<span style="font-size:12px; color:#7b8b97;">'
             + '제출일시 ' + esc(i.docDttm || '') + ' · 파일 ' + esc(i.docFileNm || '') + '</span></div>';
         }
+        if (cb) cb();   /* 재조회가 끝난 최신 INFO 로 이어서 할 일(저장→PDF 자동 생성 등) */
       },
       error:function(){ box('조회하지 못했습니다.'); }
     });
@@ -902,18 +903,23 @@
         if (d.error_code !== '0'){ box(d.error_msg || '수정하지 못했습니다.'); return; }
         EDIT = false;
         SEALNEW = null;   /* 저장됐으니 서버값을 다시 받아 쓴다 */
-        jdInfo();
-        /* ★2026-08-24 — 표준 ui-message(승인 화면과 동일). 없으면 아래 Swal 폴백 */
-        if (window._uiMessageLoaded){
-          _alertBox('수정했습니다.<br>바뀐 내용으로 <b>동의서 PDF 를 다시 만들어</b> 올려 주세요.', { icon:'✅' });
-          return;
-        }
-        if (window.Swal){
-          Swal.fire({ icon:'success', title:'수정했습니다', width:380,
-            html:'<div style="font-size:13px; line-height:1.7;">'
-               + '바뀐 내용으로 <b>동의서 PDF 를 다시 만들어</b> 올려 주세요.</div>',
-            customClass:{ popup:'jd-swal' }, confirmButtonText:'확인', confirmButtonColor:'#1f5a4b' });
-        }
+        /* ★2026-08-26 「저장·PDF 올리기 동시 실행」 — 저장이 되면 동의서 PDF 도 바로 만든다.
+             재조회(jdInfo)가 끝나야 최신 내용으로 만들어지므로 콜백으로 잇는다.
+             만들기가 끝나면 미리보기가 뜨고 거기서 [제출] 로 올라간다(자동 제출은 안 한다 — 확인 기회).
+             이미 제출 완료 상태(만들기 버튼 없음)면 예전 안내로 돌아간다. */
+        jdInfo(function(){
+          if (gel('jdMakeBtn')){ jdMakePdf(true); return; }   /* 저장→PDF→제출까지 자동(2026-08-26) */
+          if (window._uiMessageLoaded){
+            _alertBox('수정했습니다.<br>바뀐 내용으로 <b>동의서 PDF 를 다시 만들어</b> 올려 주세요.', { icon:'✅' });
+            return;
+          }
+          if (window.Swal){
+            Swal.fire({ icon:'success', title:'수정했습니다', width:380,
+              html:'<div style="font-size:13px; line-height:1.7;">'
+                 + '바뀐 내용으로 <b>동의서 PDF 를 다시 만들어</b> 올려 주세요.</div>',
+              customClass:{ popup:'jd-swal' }, confirmButtonText:'확인', confirmButtonColor:'#1f5a4b' });
+          }
+        });
       },
       error:function(){ gel('jdSaveBtn').disabled = false; box('수정하지 못했습니다.'); }
     });
@@ -965,7 +971,7 @@
 
   /* ── 제출 : 파일이 올라간 뒤에만 상태를 바꾼다.
         순서를 바꾸면 "제출됨인데 파일이 없는" 상태가 남는다. ─────────── */
-  window.jdSubmit = function(){
+  window.jdSubmit = function(auto){
     if (!REQNO) return;
     /* ★2026-08-24 — 올릴 파일이 없으면 조용히 끝나던 것 → 무엇을 해야 하는지 알려 준다 */
     if (!PICKED.length && !PDF_BLOB){ box('동의서 PDF 를 먼저 만들어 주세요.', 'warning'); return; }
@@ -1038,6 +1044,9 @@
         }
       });
     };
+
+    /* ★2026-08-26 「제출까지 자동으로」 — 저장→PDF 자동 흐름(jdSubmit(true))이면 확인창 없이 바로 올린다 */
+    if (auto === true){ go(); return; }
 
     /* ★2026-08-24 — 확인창도 표준 ui-message(승인 화면과 동일). 없으면 Swal→confirm 폴백 */
     if (window._uiMessageLoaded && typeof window._confirmBox === 'function'){
@@ -1294,7 +1303,7 @@
 
   window.jdPvSubmit = function(){ jdPvClose(); jdSubmit(); };
 
-  window.jdMakePdf = function(){
+  window.jdMakePdf = function(autoSubmit){
     /* ★2026-08-24 「도장·PDF 안 올리면 오류 메시지」 — 미완성 상태로 만들면
          (인) 자리가 빈 PDF 가 조용히 만들어졌다. 남은 항목을 알려 주고 막는다. */
     if (EDIT){ box('수정 중입니다. 먼저 [저장] 을 눌러 주세요.', 'warning'); return; }
@@ -1335,7 +1344,8 @@
           PDF_NAME = '동의서_' + (INFO.hospCd || '') + '_' + (INFO.reqNo || '') + '.pdf';
           PICKED = [];                       // 직접 고른 파일보다 방금 만든 것이 우선이다
           render();
-          jdPvOpen();
+          /* ★2026-08-26 「제출까지 자동으로」 — 저장에서 온 자동 흐름이면 미리보기 대신 바로 제출 */
+          if (autoSubmit === true){ jdSubmit(true); } else { jdPvOpen(); }
         } catch (e) {
           box('PDF 를 만들지 못했습니다.', 'error');
         }

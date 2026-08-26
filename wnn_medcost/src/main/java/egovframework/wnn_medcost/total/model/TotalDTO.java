@@ -322,4 +322,9 @@ public class TotalDTO {
 		this.myoungFg = myoungFg;
 	}
 
+	// 위너넷 여부 — WnnMaskInterceptor 가 조회 직전에 채운다(매퍼 #{sWnnYn} 마스킹 분기용). 화면·컨트롤러는 모른다.
+	private String sWnnYn;
+	public String getsWnnYn() { return sWnnYn; }
+	public void setsWnnYn(String sWnnYn) { this.sWnnYn = sWnnYn; }
+
 }

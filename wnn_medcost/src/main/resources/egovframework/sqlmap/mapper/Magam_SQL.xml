@@ -1389,7 +1389,7 @@
 
 		SELECT sub.patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(sub.patNm, '')) >= 1 
-				    THEN CONCAT(LEFT(COALESCE(sub.patNm, ''), CHAR_LENGTH(COALESCE(sub.patNm, '')) - 1), '*')
+				    THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(sub.patNm, '') ELSE CONCAT(LEFT(COALESCE(sub.patNm, ''), CHAR_LENGTH(COALESCE(sub.patNm, '')) - 1), '*') END
 				    ELSE ''
 				END AS patNm
 			 , sub.admitDt
@@ -1465,7 +1465,7 @@
 	<select id="select_PrevMonthMissing05" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
 		SELECT LEFT(prev.PAT_ID, 6) AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) >= 1
-		            THEN CONCAT(LEFT(COALESCE(prev.PAT_NM, ''), CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) - 1), '*')
+		            THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(prev.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(prev.PAT_NM, ''), CHAR_LENGTH(COALESCE(prev.PAT_NM, '')) - 1), '*') END
 		            ELSE '' END AS patNm
 		     , prev.ADMIT_DT    AS admitDt
 		     , prev.MED_START   AS medStart
@@ -1498,7 +1498,7 @@
 		SELECT DISTINCT
 		       LEFT(pm.PAT_ID,6)                                  AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) >= 1
-					THEN CONCAT(LEFT(COALESCE(pm.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(pm.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(pm.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) - 1), '*') END
 					ELSE '' END                                   AS patNm
 		     , pm.ADMIT_DT                                        AS admitDt
 		     , pm.MED_START                                       AS medStart
@@ -1626,7 +1626,7 @@
 		SELECT DISTINCT
 		       LEFT(pm.PAT_ID,6)                                  AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) >= 1
-					THEN CONCAT(LEFT(COALESCE(pm.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(pm.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(pm.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm.PAT_NM, '')) - 1), '*') END
 					ELSE '' END                                   AS patNm
 		     , pm.ADMIT_DT                                        AS admitDt
 		     , pm.MED_START                                       AS medStart
@@ -1875,7 +1875,7 @@
 		SELECT distinct 
 		       LEFT(cm.patId,6) AS patId 
 			 , CASE WHEN CHAR_LENGTH(COALESCE(cm.patNm, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(cm.patNm, '') ELSE CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*') END
 					ELSE '' END AS patNm                   
 			 , cm.admitDt                     
 			 , cm.medStart                      
@@ -1977,7 +1977,7 @@
 		  SELECT distinct 
 		       LEFT(tpm.PAT_ID,6)
 			 , CASE WHEN CHAR_LENGTH(COALESCE(tpm.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(tpm.PAT_NM, ''), CHAR_LENGTH(COALESCE(tpm.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(tpm.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(tpm.PAT_NM, ''), CHAR_LENGTH(COALESCE(tpm.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm                   
 			 , tpm.ADMIT_DT                    
 			 , tpm.MED_START                      
@@ -2071,7 +2071,7 @@
 		SELECT distinct 
 		       LEFT(cm.patId,6) AS patId 
 			 , CASE WHEN CHAR_LENGTH(COALESCE(cm.patNm, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(cm.patNm, '') ELSE CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*') END
 					ELSE '' END AS patNm                        
 			 , cm.admitDt                     
 			 , cm.medStart                      
@@ -2163,7 +2163,7 @@
 		SELECT distinct 
 		       LEFT(cm.patId,6) AS patId 
 			 , CASE WHEN CHAR_LENGTH(COALESCE(cm.patNm, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(cm.patNm, '') ELSE CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*') END
 					ELSE '' END AS patNm                         
 			 , cm.admitDt                     
 			 , cm.medStart                      
@@ -2301,7 +2301,7 @@
 		  SELECT distinct 
 		       LEFT(tpm.PAT_ID,6)
 			 , CASE WHEN CHAR_LENGTH(COALESCE(tpm.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(tpm.PAT_NM, ''), CHAR_LENGTH(COALESCE(tpm.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(tpm.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(tpm.PAT_NM, ''), CHAR_LENGTH(COALESCE(tpm.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm                   
 			 , tpm.ADMIT_DT                    
 			 , tpm.MED_START                      
@@ -2381,7 +2381,7 @@
 		SELECT distinct 
 		       LEFT(cm.patId,6) AS patId 
 			 , CASE WHEN CHAR_LENGTH(COALESCE(cm.patNm, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(cm.patNm, '') ELSE CONCAT(LEFT(COALESCE(cm.patNm, ''), CHAR_LENGTH(COALESCE(cm.patNm, '')) - 1), '*') END
 					ELSE '' END AS patNm                            
 			 , cm.admitDt                     
 			 , cm.medStart                      
@@ -2509,7 +2509,7 @@
 		SELECT distinct
 		       LEFT(pd.patId,6) AS patId
 			 , CASE WHEN CHAR_LENGTH(COALESCE(pd.patNm, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(pd.patNm, ''), CHAR_LENGTH(COALESCE(pd.patNm, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(pd.patNm, '') ELSE CONCAT(LEFT(COALESCE(pd.patNm, ''), CHAR_LENGTH(COALESCE(pd.patNm, '')) - 1), '*') END
 					ELSE '' END AS patNm                        
 			 , pd.admitDt                     
 			 , pd.medStart                      
@@ -2628,7 +2628,7 @@
 		SELECT DISTINCT 
 		       LEFT(pm2.PAT_ID,6) AS patId 
 		     , CASE WHEN CHAR_LENGTH(COALESCE(pm2.PAT_NM, '')) >= 1 
-		            THEN CONCAT(LEFT(COALESCE(pm2.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm2.PAT_NM, '')) - 1), '*')
+		            THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(pm2.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(pm2.PAT_NM, ''), CHAR_LENGTH(COALESCE(pm2.PAT_NM, '')) - 1), '*') END
 		            ELSE '' END AS patNm
 		     , pm2.ADMIT_DT     AS admitDt  
 		     , pm2.MED_START    AS medStart                     
@@ -2729,7 +2729,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 					        
 			   , A.ADMIT_DT                                        AS admitDt
@@ -2759,7 +2759,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -2786,7 +2786,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -2822,7 +2822,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		      , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -2846,7 +2846,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -2882,7 +2882,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-		              THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 		              ELSE '' END                                  AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 		       , B.MED_START                                       AS medStart		       
@@ -2914,7 +2914,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -2946,7 +2946,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -2968,7 +2968,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 		       , A.MED_START                                       AS medStart  
@@ -3032,7 +3032,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3056,7 +3056,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3079,7 +3079,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3103,7 +3103,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3145,7 +3145,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3205,7 +3205,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3225,7 +3225,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3249,7 +3249,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3283,7 +3283,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3317,7 +3317,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3352,7 +3352,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3386,7 +3386,7 @@
 		  SELECT DISTINCT 
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3422,7 +3422,7 @@
 		  SELECT DISTINCT 
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3459,7 +3459,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3500,7 +3500,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3523,7 +3523,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3554,7 +3554,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3584,7 +3584,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3608,7 +3608,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3630,7 +3630,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3652,7 +3652,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -3681,7 +3681,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 		              ELSE '' END                                 AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 		       , A.MED_START                                       AS medStart
@@ -3713,7 +3713,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 					        
 			   , A.ADMIT_DT                                        AS admitDt
@@ -3743,7 +3743,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3770,7 +3770,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3806,7 +3806,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		      , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3830,7 +3830,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3866,7 +3866,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-		              THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 		              ELSE '' END                                  AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 		       , B.MED_START                                       AS medStart		       
@@ -3898,7 +3898,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3930,7 +3930,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -3955,7 +3955,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 		       , A.MED_START                                       AS medStart  
@@ -4019,7 +4019,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4043,7 +4043,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4066,7 +4066,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4090,7 +4090,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4132,7 +4132,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4194,7 +4194,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4228,7 +4228,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4262,7 +4262,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4299,7 +4299,7 @@
 		  SELECT DISTINCT
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4333,7 +4333,7 @@
 		  SELECT DISTINCT 
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4369,7 +4369,7 @@
 		  SELECT DISTINCT 
 		         LEFT(A.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(A.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(A.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(A.PAT_NM, ''), CHAR_LENGTH(COALESCE(A.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		       , A.ADMIT_DT                                        AS admitDt
 			   , A.MED_START                                       AS medStart  
@@ -4409,7 +4409,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4440,7 +4440,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4470,7 +4470,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4496,7 +4496,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4518,7 +4518,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4540,7 +4540,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4563,7 +4563,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4584,7 +4584,7 @@
 		  SELECT DISTINCT 
 		         LEFT(C.PAT_ID,6)                                  AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  
@@ -4621,7 +4621,7 @@
 		         LEFT(S.JUMINNO,6)                                  AS patId
 		       , COALESCE(S.CHARTNO,'')                             AS chartNo
 		       , CASE WHEN CHAR_LENGTH(COALESCE(S.PATNAME, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(S.PATNAME, ''), CHAR_LENGTH(COALESCE(S.PATNAME, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(S.PATNAME, '') ELSE CONCAT(LEFT(COALESCE(S.PATNAME, ''), CHAR_LENGTH(COALESCE(S.PATNAME, '')) - 1), '*') END
 		              ELSE '' END                                   AS patNm
 		       , S.IPWONDT                                          AS admitDt
 		       , S.MED_START                                        AS medStart
@@ -4692,7 +4692,7 @@
 		         LEFT(P.PAT_ID,6)                                   AS patId
 		       , COALESCE(S.CHARTNO,'')                             AS chartNo
 		       , CASE WHEN CHAR_LENGTH(COALESCE(P.PAT_NM, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(P.PAT_NM, ''), CHAR_LENGTH(COALESCE(P.PAT_NM, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(P.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(P.PAT_NM, ''), CHAR_LENGTH(COALESCE(P.PAT_NM, '')) - 1), '*') END
 		              ELSE '' END                                   AS patNm
 		       , P.ADMIT_DT                                         AS admitDt
 		       , P.MED_START                                        AS medStart
@@ -4754,7 +4754,7 @@
 		         LEFT(P.PAT_ID,6)                                   AS patId
 		       , COALESCE(II.CHARTNO,'')                            AS chartNo
 		       , CASE WHEN CHAR_LENGTH(COALESCE(P.PAT_NM, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(P.PAT_NM, ''), CHAR_LENGTH(COALESCE(P.PAT_NM, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(P.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(P.PAT_NM, ''), CHAR_LENGTH(COALESCE(P.PAT_NM, '')) - 1), '*') END
 		              ELSE '' END                                   AS patNm
 		       , P.ADMIT_DT                                         AS admitDt
 		       , P.MED_START                                        AS medStart
@@ -4811,7 +4811,7 @@
 		         LEFT(PX.PAT_ID,6)                                  AS patId
 		       , COALESCE(II.CHARTNO,'')                            AS chartNo
 		       , CASE WHEN CHAR_LENGTH(COALESCE(PX.PAT_NM, '')) >= 1
-		              THEN CONCAT(LEFT(COALESCE(PX.PAT_NM, ''), CHAR_LENGTH(COALESCE(PX.PAT_NM, '')) - 1), '*')
+		              THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(PX.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(PX.PAT_NM, ''), CHAR_LENGTH(COALESCE(PX.PAT_NM, '')) - 1), '*') END
 		              ELSE '' END                                   AS patNm
 		       , PX.ADMIT_DT                                        AS admitDt
 		       , PX.catDt                                           AS medStart
@@ -4946,7 +4946,7 @@
 		       CASE WHEN COALESCE(JOBYYMM,'') = #{jobYymm} THEN 'curr' ELSE 'prev' END AS monthType
 		     , COALESCE(JOBYYMM,'')                    AS jobYymm
 		     , CASE WHEN CHAR_LENGTH(COALESCE(PATNAME, '')) >= 1
-		            THEN CONCAT(LEFT(COALESCE(PATNAME, ''), CHAR_LENGTH(COALESCE(PATNAME, '')) - 1), '*')
+		            THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(PATNAME, '') ELSE CONCAT(LEFT(COALESCE(PATNAME, ''), CHAR_LENGTH(COALESCE(PATNAME, '')) - 1), '*') END
 		            ELSE '' END                        AS patName
 		     , LEFT(COALESCE(JUMINNO,''),6)            AS juminno
 		     , COALESCE(IPWONDT,'')                    AS ipwonDt
@@ -4972,7 +4972,7 @@
 		  SELECT DISTINCT
 		         C.PAT_ID                                          AS patId
 		       , CASE WHEN CHAR_LENGTH(COALESCE(C.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(C.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(C.PAT_NM, ''), CHAR_LENGTH(COALESCE(C.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm
 			   , C.ADMIT_DT                                        AS admitDt
 			   , C.MED_START                                       AS medStart  

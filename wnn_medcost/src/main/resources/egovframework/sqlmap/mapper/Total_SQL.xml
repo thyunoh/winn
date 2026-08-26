@@ -23,7 +23,7 @@
 		          , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 			         
 		          , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-				 		 THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+				 		 THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 						 ELSE '' END AS patNm  		
 							
 			      , CASE WHEN mm.MFORM_NO IN ('H020','H120','H022','D020','P020')        = '1' THEN '보험' 
@@ -82,7 +82,7 @@
 		          , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 			         
 		          , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-				 		 THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+				 		 THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 						 ELSE '' END AS patNm  		
 							
 			      , CASE WHEN mm.MFORM_NO IN ('H020','H120','H022','D020','P020')        = '1' THEN '보험' 
@@ -142,7 +142,7 @@
 		          , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 			         
 		          , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-				 		 THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+				 		 THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 						 ELSE '' END AS patNm  		
 							
 			      , CASE WHEN mm.MFORM_NO IN ('H020','H120','H022','D020','P020')        = '1' THEN '보험' 
@@ -201,7 +201,7 @@
 	<select id="total_DataList_02" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO">	
 		SELECT DISTINCT LEFT(COALESCE(a.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(a.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(a.PAT_NM, ''), CHAR_LENGTH(COALESCE(a.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(a.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(a.PAT_NM, ''), CHAR_LENGTH(COALESCE(a.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm       
                     
 		     , a.ADMIT_DT   							AS admitDt
@@ -260,7 +260,7 @@
 	<select id="total_DataList_03" parameterType="map" resultType="egovframework.wnn_medcost.total.model.TotalDTO"><![CDATA[
 		SELECT DISTINCT LEFT(COALESCE(a.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(a.PAT_NM, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(a.PAT_NM, ''), CHAR_LENGTH(COALESCE(a.PAT_NM, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(a.PAT_NM, '') ELSE CONCAT(LEFT(COALESCE(a.PAT_NM, ''), CHAR_LENGTH(COALESCE(a.PAT_NM, '')) - 1), '*') END
 					ELSE '' END AS patNm  
 		     , a.ADMIT_DT   							AS admitDt
 		     , a.MED_START  							AS medStart		     
@@ -317,7 +317,7 @@
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 	         
 	         , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm  		
 					
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
@@ -378,7 +378,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm  
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
 		            WHEN #{codeFg}    = '2' THEN '보호'
@@ -505,7 +505,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
 		            WHEN #{codeFg}    = '2' THEN '보호'
@@ -592,7 +592,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
 		            WHEN #{codeFg}    = '2' THEN '보호'
@@ -688,7 +688,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
 		            WHEN #{codeFg}    = '2' THEN '보호'
@@ -847,7 +847,7 @@
         SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
 		            WHEN #{codeFg}    = '2' THEN '보호'
@@ -1036,7 +1036,7 @@
         SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN #{codeFg}    = '1' THEN '보험' 
 		            WHEN #{codeFg}    = '2' THEN '보호'
@@ -1103,7 +1103,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN gd.CFORM_NO = 'H010' THEN '보험' 
 		            WHEN gd.CFORM_NO = 'H011' THEN '보호'
@@ -1193,7 +1193,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1 
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN ad.CFORM_NO = 'H010' THEN '보험' 
 		            WHEN ad.CFORM_NO = 'H011' THEN '보호'
@@ -1384,7 +1384,7 @@
 		            , LEFT(COALESCE(mm.PAT_ID,''),6)
 		)
 		SELECT CASE WHEN CHAR_LENGTH(COALESCE(q1.PATNAME, '')) >= 1
-					THEN CONCAT(LEFT(COALESCE(q1.PATNAME, ''), CHAR_LENGTH(COALESCE(q1.PATNAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(q1.PATNAME, '') ELSE CONCAT(LEFT(COALESCE(q1.PATNAME, ''), CHAR_LENGTH(COALESCE(q1.PATNAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , q1.JUMINNO               AS patId
 		     , CASE WHEN q2.CFORM_NO = 'H010' THEN '보험'
@@ -1506,7 +1506,7 @@
 	    SELECT DISTINCT mm.CLAIM_NO                      AS claimNo
 	         , LEFT(COALESCE(mm.PAT_ID, '0000000'), 7)   AS patId
 		     , CASE WHEN CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) >= 1
-					THEN CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*')
+					THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(mm.PAT_NAME, '') ELSE CONCAT(LEFT(COALESCE(mm.PAT_NAME, ''), CHAR_LENGTH(COALESCE(mm.PAT_NAME, '')) - 1), '*') END
 					ELSE '' END AS patNm
 		     , CASE WHEN cj.CFORM_NO = 'H010' THEN '보험'
 		            WHEN cj.CFORM_NO = 'H011' THEN '보호'

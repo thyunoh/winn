@@ -55,5 +55,11 @@
     	
     	
 	</typeAliases>
-	
+
+	<!-- 환자명 마스킹 해제 스위치: 모든 map 파라미터 조회에 sWnnYn(위너넷 여부)을 자동 주입한다.
+	     매퍼의 마스킹 식 93곳이 #{sWnnYn} 로 분기 — 위너넷만 실명, 일반병원은 끝자리 '*' 유지 (2026-08-26) -->
+	<plugins>
+		<plugin interceptor="egovframework.util.WnnMaskInterceptor" />
+	</plugins>
+
 </configuration>

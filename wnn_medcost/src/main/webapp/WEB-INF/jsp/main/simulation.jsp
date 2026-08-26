@@ -763,7 +763,7 @@ function fn_IndiSelect() {
 			    
 			    { label: '총 분모·분자', colspan: 2 },
 			    { label: '5점구간', rowspan: 2 },
-			    { label: '평균', colspan: 2 }
+			    { label: '누적결과', colspan: 2 }
 			    
 			],
 			[
