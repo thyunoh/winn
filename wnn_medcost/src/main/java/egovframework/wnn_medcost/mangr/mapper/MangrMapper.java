@@ -73,4 +73,10 @@ public interface MangrMapper {
 	List<Map<String,Object>> selectQnaGround(Map<String,Object> p)           throws Exception;
 	int                      updateQnaHit(Map<String,Object> p)              throws Exception;
 	int                      insertQnaLog(Map<String,Object> p)              throws Exception;
+	/* 자주하는 질문 편집(위너넷 관리자, 2026-08-26) — 조회수 자동 순위 대신 관리자 지정(TOP_YN·TOP_NO) */
+	int                      insertQnaTop(Map<String,Object> p)              throws Exception;
+	int                      updateQnaTop(Map<String,Object> p)              throws Exception;
+	int                      deleteQnaTop(Map<String,Object> p)              throws Exception;
+	int                      addQnaTop(Map<String,Object> p)                 throws Exception;
+	int                      deleteQnaKb(Map<String,Object> p)               throws Exception;
 }

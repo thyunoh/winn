@@ -708,10 +708,20 @@ public class MangrController {
 	       (쿠키 가드는 뷰 반환 메서드에만 필요 — 2026-06-10 대시보드 500 장애 참조).
 	   ==================================================================== */
 
+	/** 위너넷 관리자인가 — 로그인 때 심어 둔 s_mainfg(관리자구분)가 1 일 때만 (JoinController 와 같은 판별) */
+	private boolean qnaIsWnnAdmin(HttpServletRequest request) {
+		try {
+			String v = ClientInfo.getCookie(request).get("s_mainfg");
+			return v != null && "1".equals(v.trim());
+		} catch (Exception ex) { return false; }
+	}
+
 	/** 적정성평가 Q&A 자료 — 관리자(위너넷) 메뉴 화면. 플로팅 챗과 같은 지식·같은 조회 API 를 쓴다. */
 	@RequestMapping(value="/qnacd.do")
 	public String qnacd(HttpServletRequest request, ModelMap model) {
 		cookie_value = ClientInfo.getCookie(request);
+		// 자주하는 질문 편집 버튼은 위너넷 관리자에게만 보인다(2026-08-26) — 저장 API 도 서버에서 한 번 더 막는다
+		model.addAttribute("qnaAdmin", qnaIsWnnAdmin(request) ? "Y" : "N");
 		try {
 			if (cookie_value.get("s_hospid").trim() != null &&
 				cookie_value.get("s_hospid").trim() != "" ) {
@@ -722,6 +732,99 @@ public class MangrController {
 		} catch(Exception ex) {
 			return ".login/LoginWinCT";
 		}
+	}
+
+	/** 자주하는 질문 등록·수정 (위너넷 관리자 전용, 2026-08-26) — kbId 가 있으면 수정, 없으면 신규 */
+	@RequestMapping(value="/qnaTopSave.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaTopSave(@RequestParam(value="kbId",  required=false) String kbId,
+	                                      @RequestParam(value="title") String title,
+	                                      @RequestParam(value="body")  String body,
+	                                      @RequestParam(value="catId") String catId,
+	                                      @RequestParam(value="topNo", required=false, defaultValue="0") int topNo,
+	                                      HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<>();
+		if (!qnaIsWnnAdmin(request)) {   // 메뉴만 감추면 주소를 직접 부를 수 있다 — 여기서도 막는다
+			response.put("error_code", "403");
+			response.put("error_message", "위너넷 관리자만 등록할 수 있습니다.");
+			return response;
+		}
+		try {
+			svc.qnaTopSave(kbId, title, body, catId, topNo);
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/** 기존 질문을 자주하는 질문에 올리기 (위너넷 관리자 전용) — 뺐던 것 되살리기 포함 */
+	@RequestMapping(value="/qnaTopAdd.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaTopAdd(@RequestParam(value="kbId") String kbId,
+	                                     @RequestParam(value="topNo", required=false, defaultValue="0") int topNo,
+	                                     HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<>();
+		if (!qnaIsWnnAdmin(request)) {
+			response.put("error_code", "403");
+			response.put("error_message", "위너넷 관리자만 등록할 수 있습니다.");
+			return response;
+		}
+		try {
+			svc.qnaTopAdd(kbId, topNo);
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/** 질문 완전 삭제 (위너넷 관리자 전용) — 분류·검색·자주 목록 모두에서 내린다 */
+	@RequestMapping(value="/qnaKbDel.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaKbDel(@RequestParam(value="kbId") String kbId,
+	                                    HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<>();
+		if (!qnaIsWnnAdmin(request)) {
+			response.put("error_code", "403");
+			response.put("error_message", "위너넷 관리자만 삭제할 수 있습니다.");
+			return response;
+		}
+		try {
+			svc.qnaKbDel(kbId);
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
+	}
+
+	/** 자주하는 질문에서 빼기 (위너넷 관리자 전용) — 지식은 남기고 지정만 푼다 */
+	@RequestMapping(value="/qnaTopDel.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> qnaTopDel(@RequestParam(value="kbId") String kbId,
+	                                     HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<>();
+		if (!qnaIsWnnAdmin(request)) {
+			response.put("error_code", "403");
+			response.put("error_message", "위너넷 관리자만 삭제할 수 있습니다.");
+			return response;
+		}
+		try {
+			svc.qnaTopDel(kbId);
+			response.put("error_code", "0");
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			response.put("error_code", "10000");
+			response.put("error_message", ex.getMessage());
+		}
+		return response;
 	}
 
 	/** 화면 열 때 1회 — 카테고리(대·중분류, 건수) + 자주하는 질문 순위 */

@@ -626,8 +626,8 @@
     ]]>
     </select>
 
-    <!-- 자주하는 질문 순위 — 조회수 누적(HIT_CNT) 기준. 아직 아무도 안 물어본 초기에는
-         가중치(사내 확정지식 우선)로 채워 빈 목록이 되지 않게 한다. -->
+    <!-- 자주하는 질문 — 위너넷 관리자가 지정한 것만(TOP_YN='Y'), 지정한 순서(TOP_NO)대로 (2026-08-26 요청).
+         종전의 조회수(HIT_CNT) 자동 순위는 안 쓰기로 확정 — 관리자가 등록·편집한 목록이 정본이다. -->
     <select id="selectQnaTopList" parameterType="java.util.HashMap" resultType="java.util.HashMap"><![CDATA[
         SELECT  K.KB_ID    AS kbId
                ,K.KB_CODE  AS kbCode
@@ -635,14 +635,56 @@
                ,K.CAT_ID   AS catId
                ,K.SRC_TYPE AS srcType
                ,K.HIT_CNT  AS hitCnt
+               ,K.TOP_NO   AS topNo
                ,C.CAT_NM   AS catNm
           FROM  TBL_QNA_KB K
           LEFT JOIN TBL_QNA_CAT C ON C.CAT_ID = K.CAT_ID
-         WHERE  K.USE_YN = 'Y'
-         ORDER BY K.HIT_CNT DESC, K.WEIGHT DESC, K.SORT_NO
+         WHERE  K.USE_YN = 'Y' AND K.TOP_YN = 'Y'
+         ORDER BY K.TOP_NO, K.KB_ID
          LIMIT #{topCnt}
     ]]>
     </select>
+
+    <!-- 자주하는 질문 등록(위너넷 관리자) — 새 지식으로 넣고 바로 자주 목록에 지정한다.
+         KB_CODE 는 서비스가 만든다(WNNFAQ-밀리초, UNIQUE 충돌 방지). -->
+    <insert id="insertQnaTop" parameterType="java.util.HashMap"><![CDATA[
+        INSERT INTO TBL_QNA_KB
+               (KB_CODE, CAT_ID, SRC_TYPE, KIND, TITLE, BODY, WEIGHT, USE_YN, TOP_YN, TOP_NO)
+        VALUES (#{kbCode}, #{catId}, 'WNN', 'HTML', #{title}, #{body}, 5, 'Y', 'Y', #{topNo})
+    ]]>
+    </insert>
+
+    <!-- 질문 수정(위너넷 관리자) — 제목·답변·분류만. ★자주 지정(TOP_YN·TOP_NO)은 안 건드린다 —
+         분류 화면에서 고쳤다고 자주 목록에 올라가거나 순서가 바뀌면 안 된다(2026-08-26). -->
+    <update id="updateQnaTop" parameterType="java.util.HashMap"><![CDATA[
+        UPDATE TBL_QNA_KB
+           SET TITLE  = #{title}
+              ,BODY   = #{body}
+              ,CAT_ID = #{catId}
+              ,KIND   = 'HTML'   /* 편집기가 서식(HTML)으로 저장한다 — 표시도 HTML 로 (2026-08-26) */
+         WHERE KB_ID  = #{kbId}
+    ]]>
+    </update>
+
+    <!-- 질문 완전 삭제(위너넷 관리자) — 분류·검색·자주 목록 어디에서도 안 나온다.
+         행은 남긴다(USE_YN='N') — 실수로 지웠을 때 DB 에서 되살릴 수 있게. -->
+    <update id="deleteQnaKb" parameterType="java.util.HashMap"><![CDATA[
+        UPDATE TBL_QNA_KB SET USE_YN = 'N', TOP_YN = 'N' WHERE KB_ID = #{kbId}
+    ]]>
+    </update>
+
+    <!-- 자주하는 질문에서 빼기(위너넷 관리자) — 지식은 남기고 지정만 푼다(검색·분류에서는 그대로 나온다). -->
+    <update id="deleteQnaTop" parameterType="java.util.HashMap"><![CDATA[
+        UPDATE TBL_QNA_KB SET TOP_YN = 'N' WHERE KB_ID = #{kbId}
+    ]]>
+    </update>
+
+    <!-- 기존 질문을 자주하는 질문에 올리기(위너넷 관리자) — 뺐던 것을 되살리거나, 분류·검색의 질문을 지정한다.
+         내용은 안 건드리고 지정(TOP_YN·TOP_NO)만 켠다. -->
+    <update id="addQnaTop" parameterType="java.util.HashMap"><![CDATA[
+        UPDATE TBL_QNA_KB SET TOP_YN = 'Y', TOP_NO = #{topNo} WHERE KB_ID = #{kbId}
+    ]]>
+    </update>
 
     <!-- 선택한 카테고리의 질문 목록 (본문은 빼고 제목만 — 목록이 가벼워야 한다) -->
     <select id="selectQnaKbList" parameterType="java.util.HashMap" resultType="java.util.HashMap">

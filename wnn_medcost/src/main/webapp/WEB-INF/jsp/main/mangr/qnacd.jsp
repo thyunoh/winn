@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%-- 알림·확인 = 가입신청 승인 화면과 같은 ui-message (사용자 2026-08-26 「가입신청에서 쓰는 메시지로」) --%>
+<script src="/asset/js/ui-message.js"></script>
 <%--
   적정성평가 Q&A — 자료 찾아보기 (2026-08-04)
     · 지식 TBL_QNA_KB · 카테고리 TBL_QNA_CAT · 질문로그 TBL_QNA_LOG
@@ -64,7 +66,7 @@
   #qnaWrap .qcard{ background:#fff; border:1px solid #e3ebf5; border-radius:12px; display:flex; flex-direction:column;
                    min-height:0; overflow:hidden; box-shadow:0 1px 3px rgba(23,70,162,.05); }
   #qnaWrap .qhd{ flex:0 0 auto; display:flex; align-items:baseline; gap:8px; padding:11px 14px 9px;
-                 border-bottom:1px solid #eef3f9; }
+                 border-bottom:1px solid #eef3f9; position:relative; }   /* 수정 체크를 오른쪽 끝에 절대배치(2026-08-26) */
   #qnaWrap .qhd .t{ font-size:1.02em; font-weight:800; color:#1746a2; }
   #qnaWrap .qhd .c{ flex:1; min-width:0; font-size:.85em; font-weight:600; color:#a3b2c5;
                     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -232,6 +234,55 @@
   </div>
 </div>
 
+<%-- 자주하는 질문 등록·수정 모달 (위너넷 관리자만, 2026-08-26) — 저장은 TBL_QNA_KB(TOP_YN·TOP_NO) --%>
+<div id="qtopModal" style="display:none; position:fixed; inset:0; background:rgba(20,30,45,.4); z-index:9990;">
+  <%-- 폭 넓게(사용자 2026-08-26 「좌우 넓게」) — 답변 원문이 길어 680px 로는 줄이 잘게 꺾였다 --%>
+  <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:960px; max-width:96vw;
+              background:#fff; border-radius:12px; padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.25);">
+    <h3 id="qtopTt" style="margin:0 0 14px; font-size:19px; color:#1d3557;">자주하는 질문 등록</h3>
+    <%-- 글자 크기 15px대로 통일 — 기본 상속이 작아 「글자가 너무 작음」(사용자 2026-08-26) --%>
+    <div style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
+      <label style="font-size:15px; color:#556;">분류</label>
+      <select id="qtopCat" style="flex:1; padding:8px 10px; border:1px solid #cdd6e0; border-radius:6px; font-size:15px;"></select>
+      <%-- 순서는 자동(사용자 2026-08-26) — 신규는 맨 뒤, 수정은 원래 자리 유지. 칸은 숨기고 값만 쓴다 --%>
+      <input id="qtopNo" type="number" min="0" style="display:none;">
+    </div>
+    <input id="qtopTitle" placeholder="질문 제목" style="width:100%; padding:10px 12px; margin-bottom:10px; font-size:15.5px;
+           border:1px solid #cdd6e0; border-radius:6px; box-sizing:border-box;">
+    <%-- 답변 = 서식 편집기(사용자 2026-08-26 「이런식을 할 수 있게」) — 굵게·색 등을 눈에 보이는 대로 쓰고 HTML 로 저장한다.
+         기존 답변의 <b> 가 날글자로 보이던 것도 여기서 실제 굵게로 열린다. --%>
+    <div style="border:1px solid #cdd6e0; border-radius:6px; overflow:hidden;">
+      <div style="display:flex; gap:4px; padding:6px 8px; background:#f6f8fb; border-bottom:1px solid #e3e9f0; flex-wrap:wrap;">
+        <button type="button" onclick="qtopCmd('bold')"      title="굵게"     style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; font-weight:800;">B</button>
+        <button type="button" onclick="qtopCmd('italic')"    title="기울임"   style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; font-style:italic; font-weight:700;">I</button>
+        <button type="button" onclick="qtopCmd('underline')" title="밑줄"     style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; text-decoration:underline; font-weight:700;">U</button>
+        <span style="width:1px; background:#dbe3ec; margin:2px 4px;"></span>
+        <button type="button" onclick="qtopCmd('foreColor','#d43a2f')"   title="빨강 글자" style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; color:#d43a2f; font-weight:800;">가</button>
+        <button type="button" onclick="qtopCmd('foreColor','#1d4ed8')"   title="파랑 글자" style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; color:#1d4ed8; font-weight:800;">가</button>
+        <button type="button" onclick="qtopCmd('foreColor','#111111')"   title="검정 글자" style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; color:#111; font-weight:800;">가</button>
+        <button type="button" onclick="qtopCmd('hiliteColor','#fff176')" title="형광펜"   style="width:34px; height:30px; border:1px solid #d4dce5; background:#fff176; border-radius:5px; cursor:pointer; font-weight:800;">가</button>
+        <span style="width:1px; background:#dbe3ec; margin:2px 4px;"></span>
+        <button type="button" onclick="qtopCmd('fontSize','5')" title="글자 크게"   style="height:30px; padding:0 10px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer; font-weight:700;">가＋</button>
+        <button type="button" onclick="qtopCmd('fontSize','3')" title="보통 크기"   style="height:30px; padding:0 10px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer;">가</button>
+        <button type="button" onclick="qtopCmd('removeFormat')" title="서식 지우기" style="height:30px; padding:0 10px; border:1px solid #d4dce5; background:#fff; border-radius:5px; cursor:pointer;">지우개</button>
+      </div>
+      <%-- 세로도 넓게(사용자 2026-08-26) — 화면 높이의 55% (작은 화면에서도 280px 확보) --%>
+      <div id="qtopBody" contenteditable="true" style="width:100%; height:55vh; min-height:280px; overflow-y:auto; padding:12px;
+           box-sizing:border-box; font-size:15px; line-height:1.7; outline:none; background:#fff;"></div>
+    </div>
+    <div style="display:flex; margin-top:14px; align-items:center;">
+      <%-- 완전 삭제 — 수정으로 열었을 때만 보인다. 분류·검색·자주 목록 어디에서도 내려간다 (2026-08-26) --%>
+      <button type="button" id="qtopDelBtn" onclick="qnaKbDelGo()" style="display:none; background:#fff; color:#b23b3b;
+              border:1px solid #d7a5a5; border-radius:6px; padding:8px 18px; cursor:pointer; font-size:14px;">질문 삭제</button>
+      <span style="flex:1;"></span>
+      <button type="button" onclick="qnaTopSaveGo()" style="background:#2563eb; color:#fff; border:0; border-radius:6px;
+              padding:8px 22px; cursor:pointer; font-size:14px;">저장</button>
+      <button type="button" onclick="qnaTopClose()" style="background:#fff; color:#556; border:1px solid #cdd6e0;
+              border-radius:6px; padding:8px 18px; cursor:pointer; font-size:14px; margin-left:6px;">닫기</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =====================================================================
    적정성평가 Q&A 자료 (관리자 화면)
@@ -241,6 +292,43 @@
   var API = { init:'/mangr/qnaInit.do', list:'/mangr/qnaList.do', get:'/mangr/qnaGet.do',
               search:'/mangr/qnaSearch.do', ask:'/mangr/qnaAsk.do' };
   var CATS = [], TOP = [], LIST = [], CUR = { cat:'__HOT__', sub:'', kb:0, fold:false }, MODE = 'cat';
+  /* 자주하는 질문 편집(2026-08-26) — 위너넷 관리자에게만 보인다. 서버(qnaTopSave.do)도 다시 막는다.
+     ★[수정] 체크를 켰을 때만 등록 버튼·✏🗑 아이콘이 나온다(사용자 「수정여부 체크하면 활성화」) —
+       평소에는 일반 병원과 같은 깔끔한 목록으로 보고, 고칠 때만 켠다. */
+  var ADMIN = '${qnaAdmin}' === 'Y', _qtopId = null, _qtopEditOn = false, _qtopKeyOn = false;
+  /* ★관리자라도 평소엔 편집 도구가 아예 안 보인다 — Ctrl+Alt+Q 를 눌러야 [수정] 체크가 나타난다
+       (사용자 2026-08-26). 다시 누르면 숨고 편집 모드도 함께 꺼진다. */
+  document.addEventListener('keydown', function(e){
+    if (!ADMIN) return;
+    if (e.ctrlKey && e.altKey && (e.key === 'q' || e.key === 'Q')){
+      e.preventDefault();
+      _qtopKeyOn = !_qtopKeyOn;
+      if (!_qtopKeyOn) _qtopEditOn = false;
+      if (MODE === 'hot') el('qnaListTt').innerHTML = hotTitle();
+      renderList(true);
+      if (window._toast) _toast(_qtopKeyOn ? '자주하는 질문 편집 도구를 켰습니다' : '편집 도구를 숨겼습니다', 'info');
+    }
+  });
+  function hotTitle(){
+    if (!ADMIN || !_qtopKeyOn) return '자주하는 질문';
+    /* 체크·등록 버튼은 제목과 <같은 줄 오른쪽 끝>에(사용자 2026-08-26) — 제목 옆에 두면 줄이 꺾여 내려갔다.
+       머리줄(.qhd)을 기준으로 절대배치한다(아래 CSS 의 position:relative). */
+    return '자주하는 질문'
+      + '<span style="position:absolute; right:14px; top:5px; display:flex; gap:8px; align-items:center;">'
+      + (_qtopEditOn
+          ? '<button type="button" onclick="qnaTopEdit(0)" style="background:#2563eb; color:#fff; position:relative; top:-3px;'
+            + ' border:0; border-radius:6px; padding:3px 12px; font-size:12.5px; cursor:pointer;">＋ 질문 등록</button>'
+          : '')
+      + '<label style="font-size:12.5px; color:#556; cursor:pointer; font-weight:600; white-space:nowrap;">'
+      +   '<input type="checkbox"' + (_qtopEditOn ? ' checked' : '') + ' onchange="qnaTopEditMode(this.checked)"'
+      +   ' style="vertical-align:-2px; margin-right:3px; cursor:pointer;">수정</label>'
+      + '</span>';
+  }
+  window.qnaTopEditMode = function(on){
+    _qtopEditOn = !!on;
+    el('qnaListTt').innerHTML = hotTitle();
+    if (MODE === 'hot') renderList(true);   // 아이콘 표시만 갱신 — 보던 자리를 지킨다
+  };
 
   function post(url, params, ok, fail){
     var body = [];
@@ -305,7 +393,21 @@
       h += '<div class="qi' + (String(CUR.kb)===String(x.kbId) ? ' on' : '') + '" onclick="qnaOpen(' + x.kbId + ')">'
          +   '<span class="no' + (MODE==='hot' ? ' rank' : '') + '">' + (i+1) + '</span>'
          +   '<span class="tx">' + esc(x.shortTitle || x.title) + '</span>'
-         /* 「n회」 조회수 표기는 내리기로 확정(2026-08-05 사용자 요청) — 순위 계산(HIT_CNT)은 그대로 쓰고 숫자만 안 보인다 */
+         /* 「n회」 조회수 표기는 내리기로 확정(2026-08-05 사용자 요청) */
+         /* 자주하는 질문은 관리자에게 수정·빼기 버튼(2026-08-26) — 줄 클릭(답변 열기)과 섞이지 않게 전파를 끊는다 */
+         + (MODE==='hot' && ADMIN && _qtopEditOn
+             ? '<span onclick="event.stopPropagation();qnaTopEdit(' + x.kbId + ')" title="수정"'
+               + ' style="margin-left:6px; cursor:pointer; font-size:13px;">✏</span>'
+             + '<span onclick="event.stopPropagation();qnaTopDelGo(' + x.kbId + ')" title="자주하는 질문에서 빼기"'
+               + ' style="margin-left:4px; cursor:pointer; font-size:13px;">🗑</span>'
+             : '')
+         /* 분류·검색 목록에서는 ✏ 수정 + ☆ 자주 올리기(사용자 2026-08-26 「작성 내용 삭제나 수정 어떻게」) */
+         + (MODE!=='hot' && ADMIN && _qtopEditOn
+             ? '<span onclick="event.stopPropagation();qnaTopEdit(' + x.kbId + ')" title="수정"'
+               + ' style="margin-left:6px; cursor:pointer; font-size:13px;">✏</span>'
+             + '<span onclick="event.stopPropagation();qnaTopAddGo(' + x.kbId + ')" title="자주하는 질문에 올리기"'
+               + ' style="margin-left:4px; cursor:pointer; font-size:13px; color:#e2a400;">☆</span>'
+             : '')
          + '</div>';
     }
     box.innerHTML = h;
@@ -346,7 +448,10 @@
           + '<h3>' + esc(kb.title) + '</h3>';
     var body = String(kb.body == null ? '' : kb.body);
 
-    if (kb.kind === 'CARD'){
+    if (kb.kind === 'HTML'){
+      /* 관리자 편집기(자주하는 질문)가 서식 그대로 저장한 답변 — 그대로 보여 준다 (2026-08-26) */
+      h += '<div style="line-height:1.8;">' + body + '</div>';
+    } else if (kb.kind === 'CARD'){
       var ls = body.split('\n');
       h += '<ul>';
       for (var i=0;i<ls.length;i++) if (ls[i].replace(/\s/g,'')) h += '<li>' + ls[i] + '</li>';
@@ -410,7 +515,7 @@
     CUR.cat = id; CUR.sub = ''; CUR.fold = false; MODE = (id === '__HOT__') ? 'hot' : 'cat';
     renderCats();
     if (id === '__HOT__'){
-      el('qnaListTt').innerHTML = '자주하는 질문';
+      el('qnaListTt').innerHTML = hotTitle();
       LIST = TOP; renderList(); return;
     }
     var c = findCat(id);
@@ -694,27 +799,122 @@
     if (v) applyFont(parseFloat(v) || QNA_FS);
   })();
 
-  /* ── 최초 적재 ── */
-  post(API.init, { topCnt:20 }, function(j){
-    var raw = j.cats || [], i, tot = 0;
-    TOP = j.top || [];
-    CATS = [];
-    for (i=0;i<raw.length;i++) if (!raw[i].pCatId){ raw[i].subs = []; CATS.push(raw[i]); }
-    for (i=0;i<raw.length;i++){
-      if (!raw[i].pCatId) continue;
-      var p = findCat(raw[i].pCatId);
-      if (p) p.subs.push(raw[i]);
+  /* ── 최초 적재 — 자주 목록 편집 후에도 다시 부른다(2026-08-26) ── */
+  function qnaReloadInit(){
+    post(API.init, { topCnt:20 }, function(j){
+      var raw = j.cats || [], i, tot = 0;
+      TOP = j.top || [];
+      CATS = [];
+      for (i=0;i<raw.length;i++) if (!raw[i].pCatId){ raw[i].subs = []; CATS.push(raw[i]); }
+      for (i=0;i<raw.length;i++){
+        if (!raw[i].pCatId) continue;
+        var p = findCat(raw[i].pCatId);
+        if (p) p.subs.push(raw[i]);
+      }
+      for (i=0;i<CATS.length;i++) tot += (CATS[i].qCnt || 0);
+      el('qnaTotCnt').innerHTML = tot + '건';
+      renderCats();
+      renderGuide();
+      el('qnaListTt').innerHTML = hotTitle();
+      LIST = TOP; MODE = 'hot'; CUR.cat = '__HOT__'; CUR.sub = '';
+      renderList();
+    }, function(){
+      el('qnaCats').innerHTML = '<div class="empty" style="padding:16px 14px;color:#a3b2c5">'
+        + '지식 자료를 불러오지 못했습니다.</div>';
+    });
+  }
+  qnaReloadInit();
+
+  /* ── 자주하는 질문 편집(위너넷 관리자, 2026-08-26) ──
+       kbId=0 → 신규 등록 · kbId>0 → 수정(본문은 qnaGet 으로 채운다). 빼기는 지정만 푼다(지식은 남는다). */
+  window.qnaTopEdit = function(kbId){
+    if (!ADMIN) return;
+    /* 분류는 직접 고르게 한다(사용자 2026-08-26 「선택으로 하고 선택하게」) — 첫 항목이 몰래 들어가는 것 방지 */
+    var i, h = '<option value="">-- 분류를 선택하세요 --</option>';
+    for (i=0;i<CATS.length;i++) h += '<option value="' + esc(CATS[i].catId) + '">' + esc(CATS[i].catNm) + '</option>';
+    el('qtopCat').innerHTML = h;
+    el('qtopDelBtn').style.display = kbId ? '' : 'none';   // 완전 삭제는 수정으로 열었을 때만
+    if (kbId){
+      _qtopId = kbId;
+      el('qtopTt').innerHTML = '질문 수정';
+      var x = null;
+      for (i=0;i<TOP.length;i++) if (String(TOP[i].kbId) === String(kbId)) x = TOP[i];
+      el('qtopTitle').value = x ? (x.title || '') : '';
+      el('qtopNo').value    = x ? (x.topNo || 0) : 0;
+      if (x && x.catId) el('qtopCat').value = x.catId;
+      el('qtopBody').innerHTML = '불러오는 중…';
+      post(API.get, { kbId:kbId, askType:'EDIT' }, function(j){
+        var kb = (j && j.kb) ? j.kb : null;
+        /* 편집기는 HTML 로 보고 저장한다 — 기존 plain 답변(QA·CARD 등)은 개행을 <br> 로 바꿔 연다.
+           안에 섞여 있던 <b>…</b> 는 여기서 실제 굵게로 보인다(사용자 「기존 것도 이렇게 됨」 해결). */
+        var b = kb ? String(kb.body || '') : '';
+        el('qtopBody').innerHTML = (kb && kb.kind === 'HTML') ? b : b.replace(/\r?\n/g, '<br>');
+        if (kb && kb.title) el('qtopTitle').value = kb.title;
+      }, function(){ el('qtopBody').innerHTML = ''; });
+    } else {
+      _qtopId = null;
+      el('qtopTt').innerHTML = '자주하는 질문 등록';
+      el('qtopTitle').value = ''; el('qtopBody').innerHTML = '';
+      el('qtopNo').value = TOP.length + 1;
     }
-    for (i=0;i<CATS.length;i++) tot += (CATS[i].qCnt || 0);
-    el('qnaTotCnt').innerHTML = tot + '건';
-    renderCats();
-    renderGuide();
-    el('qnaListTt').innerHTML = '자주하는 질문';
-    LIST = TOP; MODE = 'hot';
-    renderList();
-  }, function(){
-    el('qnaCats').innerHTML = '<div class="empty" style="padding:16px 14px;color:#a3b2c5">'
-      + '지식 자료를 불러오지 못했습니다.</div>';
-  });
+    el('qtopModal').style.display = '';
+  };
+  window.qnaTopClose = function(){ el('qtopModal').style.display = 'none'; };
+  /* 알림·확인 — 가입신청 승인 화면과 같은 ui-message. 없으면 브라우저 기본으로 폴백 */
+  function qask(msg, okText, onOk){
+    if (window._uiMessageLoaded && typeof window._confirmBox === 'function'){
+      _confirmBox({ msg:msg, icon:'❓', okText:okText, okColor:'blue', onOk:onOk });
+    } else if (confirm(msg.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''))) onOk();
+  }
+  function qmsg(msg){
+    if (window._uiMessageLoaded && typeof window._alertBox === 'function') _alertBox(msg, { icon:'⚠️' });
+    else alert(msg.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''));
+  }
+  /* 편집기 툴바 — 고른 글자에 서식을 입힌다(관리자 전용 화면이라 execCommand 로 충분) */
+  window.qtopCmd = function(cmd, val){
+    el('qtopBody').focus();
+    try { document.execCommand('styleWithCSS', false, true); } catch(ignore){}
+    document.execCommand(cmd, false, val || null);
+  };
+  window.qnaTopSaveGo = function(){
+    var t = el('qtopTitle').value.trim(), b = el('qtopBody').innerHTML.trim();
+    if (!el('qtopBody').innerText.trim()) b = '';   // 서식만 남고 글이 없으면 빈 것으로 본다
+    if (!el('qtopCat').value){ qmsg('분류를 선택하세요.'); el('qtopCat').focus(); return; }
+    if (!t){ qmsg('질문 제목을 입력하세요.'); el('qtopTitle').focus(); return; }
+    if (!b){ qmsg('답변 내용을 입력하세요.'); el('qtopBody').focus(); return; }
+    post('/mangr/qnaTopSave.do',
+         { kbId:(_qtopId || ''), title:t, body:b, catId:el('qtopCat').value, topNo:(el('qtopNo').value || '0') },
+         function(j){
+           if (j.error_code !== '0'){ qmsg(j.error_message || '저장하지 못했습니다.'); return; }
+           qnaTopClose(); qnaReloadInit();
+         },
+         function(){ qmsg('저장하지 못했습니다.'); });
+  };
+  window.qnaTopAddGo = function(kbId){
+    qask('이 질문을 <b>자주하는 질문</b>에 올릴까요?<br>맨 뒤 순서로 들어갑니다.', '올리기', function(){
+      post('/mangr/qnaTopAdd.do', { kbId:kbId, topNo:(TOP.length + 1) }, function(j){
+        if (j.error_code !== '0'){ qmsg(j.error_message || '올리지 못했습니다.'); return; }
+        qnaReloadInit();   // 자주하는 질문 화면으로 돌아가 방금 올린 것을 바로 확인한다
+      }, function(){ qmsg('올리지 못했습니다.'); });
+    });
+  };
+  /* 완전 삭제 — 분류·검색·자주 목록 모두에서 내린다(자주에서 빼기(🗑)와 다르다) */
+  window.qnaKbDelGo = function(){
+    if (!_qtopId) return;
+    qask('이 질문을 <b>완전히 삭제</b>할까요?<br>분류·검색·자주하는 질문 어디에서도 안 나오게 됩니다.', '삭제', function(){
+      post('/mangr/qnaKbDel.do', { kbId:_qtopId }, function(j){
+        if (j.error_code !== '0'){ qmsg(j.error_message || '삭제하지 못했습니다.'); return; }
+        qnaTopClose(); qnaReloadInit();
+      }, function(){ qmsg('삭제하지 못했습니다.'); });
+    });
+  };
+  window.qnaTopDelGo = function(kbId){
+    qask('<b>자주하는 질문</b>에서 뺄까요?<br>질문·답변 자체는 분류·검색에 그대로 남습니다.', '빼기', function(){
+      post('/mangr/qnaTopDel.do', { kbId:kbId }, function(j){
+        if (j.error_code !== '0'){ qmsg(j.error_message || '빼지 못했습니다.'); return; }
+        qnaReloadInit();
+      }, function(){ qmsg('빼지 못했습니다.'); });
+    });
+  };
 })();
 </script>

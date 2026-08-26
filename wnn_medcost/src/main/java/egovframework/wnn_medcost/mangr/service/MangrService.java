@@ -70,4 +70,9 @@ public interface MangrService {
 	Map<String,Object>       qnaSearch(String q, int listCnt, String hospCd, String userId) throws Exception;
 	/* 등록된 자료에서 못 찾았을 때 — LLM(Gemini) 참고답변 (2026-08-06) */
 	Map<String,Object>       qnaAsk(String q, String hospCd, String userId)                 throws Exception;
+	/* 자주하는 질문 편집(위너넷 관리자, 2026-08-26) — kbId 가 있으면 수정, 없으면 신규 등록 */
+	void                     qnaTopSave(String kbId, String title, String body, String catId, int topNo) throws Exception;
+	void                     qnaTopDel(String kbId)                                         throws Exception;
+	void                     qnaTopAdd(String kbId, int topNo)                              throws Exception;
+	void                     qnaKbDel(String kbId)                                         throws Exception;
 }

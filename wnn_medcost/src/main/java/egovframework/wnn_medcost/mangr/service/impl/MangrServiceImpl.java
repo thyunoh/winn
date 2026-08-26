@@ -659,6 +659,49 @@ public class MangrServiceImpl implements MangrService {
 		}
 	}
 
+	/* ── 자주하는 질문 편집(위너넷 관리자, 2026-08-26) ─────────────────────
+	     조회수 자동 순위는 안 쓰기로 확정 — 관리자가 등록·수정·해제한 지정(TOP_YN·TOP_NO)이 정본이다. */
+	@Override
+	public void qnaTopSave(String kbId, String title, String body, String catId, int topNo) throws Exception {
+		Map<String,Object> p = new HashMap<>();
+		p.put("title", title);
+		p.put("body",  body);
+		p.put("catId", catId);
+		p.put("topNo", topNo);
+		if (kbId != null && !kbId.trim().isEmpty()) {
+			p.put("kbId", kbId.trim());
+			mapper.updateQnaTop(p);
+		} else {
+			// KB_CODE 는 UNIQUE — 밀리초로 만들어 충돌을 피한다(관리자 등록분은 'WNNFAQ-' 접두로 구분)
+			p.put("kbCode", "WNNFAQ-" + System.currentTimeMillis());
+			mapper.insertQnaTop(p);
+		}
+	}
+
+	@Override
+	public void qnaTopDel(String kbId) throws Exception {
+		Map<String,Object> p = new HashMap<>();
+		p.put("kbId", kbId);
+		mapper.deleteQnaTop(p);
+	}
+
+	/** 기존 질문을 자주하는 질문에 올린다 — 뺐던 것 되살리기 포함(내용은 안 건드린다) */
+	@Override
+	public void qnaTopAdd(String kbId, int topNo) throws Exception {
+		Map<String,Object> p = new HashMap<>();
+		p.put("kbId",  kbId);
+		p.put("topNo", topNo);
+		mapper.addQnaTop(p);
+	}
+
+	/** 질문 완전 삭제 — 분류·검색·자주 목록 모두에서 내린다(행은 USE_YN='N' 로 남겨 되살릴 수 있게) */
+	@Override
+	public void qnaKbDel(String kbId) throws Exception {
+		Map<String,Object> p = new HashMap<>();
+		p.put("kbId", kbId);
+		mapper.deleteQnaKb(p);
+	}
+
 	private void writeLog(String hospCd, String userId, String qText, Object kbId,
 	                      String matchYn, String askType) throws Exception {
 		Map<String,Object> l = new HashMap<>();
