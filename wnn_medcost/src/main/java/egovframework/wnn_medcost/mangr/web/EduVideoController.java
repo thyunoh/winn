@@ -27,7 +27,8 @@ public class EduVideoController {
         File f = new File(VIDEO_PATH);
         if (!f.isFile()) {
             // 앱의 404 페이지가 빈 html 이라 sendError 면 흰 화면만 보인다(2026-08-26 실제 혼동) — 안내 문구를 직접 내보낸다.
-            // 개발 PC 는 톰캣 실행 드라이브 기준(D:) home/winner/video/01_01.mp4 에 파일을 두면 로컬에서도 재생 확인 가능.
+            // 개발 PC(Windows)는 드라이브 글자가 없는 경로라 JVM 실행 드라이브 루트로 해석된다 — 로컬 톰캣(tmp1)은 C: 라
+            //   C:\home\winner\video\01_01.mp4 에 파일을 두면 로컬에서도 재생 확인 가능(2026-08-26 「로컬에서 안 되는 이유」).
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.setContentType("text/html; charset=UTF-8");
             response.getWriter().write("<html><body style='font-family:Malgun Gothic, sans-serif; padding:40px; color:#333;'>"
