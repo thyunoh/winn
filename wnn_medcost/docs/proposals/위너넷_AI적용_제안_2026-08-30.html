@@ -1,0 +1,566 @@
+<meta charset="utf-8">
+<title>WinCheck+ AI 적용 계획</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap">
+
+<style>
+  /* ── 위너넷 문서 공통 토큰 (문서전산화 제안 2026-07-12 과 동일 계열) ── */
+  :root{
+    --bg:#eef2f5; --surface:#ffffff; --surface-2:#f4f8fb; --surface-3:#e6edf3;
+    --ink:#16222e; --ink-2:#516070; --ink-3:#7c8a98;
+    --line:#dbe3ea; --line-2:#c7d3dd;
+    --blue:#1f6fb0; --blue-strong:#0d5386; --blue-soft:#e9f2fa;
+    --amber:#b45309; --amber-soft:#fbf1e2;
+    --green:#1f7a52; --green-soft:#e6f3ec;
+    --shadow:0 1px 2px rgba(20,40,60,.06), 0 8px 24px rgba(20,40,60,.06);
+    --maxw:920px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d151d; --surface:#152029; --surface-2:#111b24; --surface-3:#1b2833;
+      --ink:#e7eef4; --ink-2:#a4b3c0; --ink-3:#7a8996;
+      --line:#243543; --line-2:#31465a;
+      --blue:#57a6df; --blue-strong:#8ac2ec; --blue-soft:#122839;
+      --amber:#e0a458; --amber-soft:#2a2013;
+      --green:#5cbd8c; --green-soft:#122a1e;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d151d; --surface:#152029; --surface-2:#111b24; --surface-3:#1b2833;
+    --ink:#e7eef4; --ink-2:#a4b3c0; --ink-3:#7a8996;
+    --line:#243543; --line-2:#31465a;
+    --blue:#57a6df; --blue-strong:#8ac2ec; --blue-soft:#122839;
+    --amber:#e0a458; --amber-soft:#2a2013;
+    --green:#5cbd8c; --green-soft:#122a1e;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Pretendard Variable","Pretendard","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
+    font-weight:400; line-height:1.72; letter-spacing:-.011em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:56px 24px 110px; display:flex; flex-direction:column; gap:44px}
+
+  /* ── 문서 머리 ── */
+  .doc-head{display:flex; flex-direction:column; gap:14px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11.5px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--blue); margin:0;
+  }
+  h1{
+    font-size:clamp(28px,4.2vw,40px); line-height:1.16; margin:0;
+    font-weight:700; letter-spacing:-.028em; text-wrap:balance;
+  }
+  .lede{margin:0; font-size:17.5px; color:var(--ink-2); max-width:62ch; font-weight:300}
+  .meta-line{
+    display:flex; flex-wrap:wrap; gap:8px 18px; padding-top:6px;
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; color:var(--ink-3);
+  }
+  .meta-line span{white-space:nowrap}
+
+  /* ── 섹션 ── */
+  section{display:flex; flex-direction:column; gap:16px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; border-bottom:1px solid var(--line-2); padding-bottom:10px}
+  .sec-no{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:13px; font-weight:600;
+    color:var(--blue); flex:0 0 auto;
+  }
+  h2{margin:0; font-size:21px; font-weight:600; letter-spacing:-.022em}
+  h3{margin:0; font-size:16.5px; font-weight:600; letter-spacing:-.018em}
+  p{margin:0; max-width:66ch}
+  section > p, .card > p, .panel > p{color:var(--ink-2)}
+  strong{font-weight:600; color:var(--ink)}
+  em{font-style:normal; color:var(--blue-strong); font-weight:600}
+  code{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.88em;
+    background:var(--surface-3); padding:1px 5px; border-radius:4px; color:var(--ink);
+  }
+  ul{margin:0; padding-left:19px; display:flex; flex-direction:column; gap:6px; color:var(--ink-2); max-width:66ch}
+  li strong{color:var(--ink)}
+
+  /* ── 강조 패널 (자산) ── */
+  .panel{
+    background:var(--blue-soft); border:1px solid color-mix(in srgb, var(--blue) 26%, transparent);
+    border-radius:12px; padding:22px 24px; display:flex; flex-direction:column; gap:14px;
+  }
+  .panel h3{color:var(--blue-strong)}
+  .asset-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px}
+  .asset{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:14px 15px; display:flex; flex-direction:column; gap:5px}
+  .asset .n{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:20px; font-weight:600;
+    color:var(--blue-strong); font-variant-numeric:tabular-nums; line-height:1.2;
+  }
+  .asset .t{font-size:13.5px; font-weight:600}
+  .asset .d{font-size:12.5px; color:var(--ink-3); line-height:1.55}
+
+  /* ── 표 ── */
+  .tw{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+  table{border-collapse:collapse; width:100%; font-size:13.8px; min-width:520px}
+  th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{
+    background:var(--surface-2); font-weight:600; font-size:12.5px; color:var(--ink-2);
+    letter-spacing:.01em; white-space:nowrap; border-bottom:1px solid var(--line-2);
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.mono,th.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+  td.c{text-align:center}
+
+  /* ── 기능 카드 ── */
+  .cards{display:flex; flex-direction:column; gap:16px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--blue);
+    border-radius:10px; padding:20px 22px; display:flex; flex-direction:column; gap:12px; box-shadow:var(--shadow);
+  }
+  .card.later{border-left-color:var(--line-2)}
+  .card-head{display:flex; align-items:baseline; gap:11px; flex-wrap:wrap}
+  .fid{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; font-weight:600;
+    color:var(--surface); background:var(--blue); padding:2px 8px; border-radius:5px; letter-spacing:.04em;
+  }
+  .card.later .fid{background:var(--ink-3)}
+  .kv{display:grid; grid-template-columns:auto 1fr; gap:5px 16px; font-size:13.2px; align-items:baseline}
+  .kv dt{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; color:var(--ink-3);
+    letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; padding-top:2px;
+  }
+  .kv dd{margin:0; color:var(--ink-2)}
+
+  .tags{display:flex; flex-wrap:wrap; gap:6px}
+  .tag{
+    font-size:11.5px; font-weight:500; padding:2px 9px; border-radius:20px;
+    border:1px solid var(--line-2); color:var(--ink-2); background:var(--surface-2); white-space:nowrap;
+  }
+  .tag.go{background:var(--green-soft); border-color:color-mix(in srgb, var(--green) 34%, transparent); color:var(--green)}
+  .tag.warn{background:var(--amber-soft); border-color:color-mix(in srgb, var(--amber) 34%, transparent); color:var(--amber)}
+
+  /* ── 주의 박스 ── */
+  .note{
+    background:var(--amber-soft); border:1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+    border-radius:10px; padding:16px 18px; display:flex; flex-direction:column; gap:8px;
+  }
+  .note .lb{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--amber);
+  }
+  .note p, .note li{color:var(--ink-2)}
+
+  /* ── 로드맵 ── */
+  .phases{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px}
+  .phase{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:17px 18px; display:flex; flex-direction:column; gap:10px}
+  .phase .when{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; font-weight:600;
+    letter-spacing:.08em; color:var(--blue); text-transform:uppercase;
+  }
+  .phase h3{font-size:15.5px}
+  .phase ul{font-size:13.3px; padding-left:17px; gap:5px}
+
+  hr{border:none; border-top:1px solid var(--line); margin:0}
+  footer{color:var(--ink-3); font-size:12.5px; display:flex; flex-direction:column; gap:6px}
+  footer .fl{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  a{color:var(--blue-strong)}
+  a:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--blue); outline-offset:2px; border-radius:3px}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+</style>
+
+<div class="wrap">
+
+  <header class="doc-head">
+    <p class="eyebrow">위너넷 · 제안 문서</p>
+    <h1>WinCheck+ AI 적용 계획</h1>
+    <p class="lede">
+      새 제품을 만드는 계획이 아니다. WinCheck+ 가 이미 갖고 있는 <strong>오류 규칙 30종</strong>과
+      <strong>담당자 수기 정답지 318건</strong>을 학습·평가 자산으로 쓰면, 지금 규칙으로 못 넘는 벽을
+      AI 로 넘을 수 있다. 그 벽이 어디이고 어떤 순서로 넘을지를 정리한다.
+    </p>
+    <div class="meta-line">
+      <span>2026-08-30</span>
+      <span>대상 · WinCheck+ (wnn_medcost)</span>
+      <span>상태 · 검토용 초안</span>
+    </div>
+  </header>
+
+  <!-- ───────────── 1 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">01</span><h2>요약</h2></div>
+    <p>
+      심사·평가 환경이 <em>사후 삭감</em>에서 <em>사전·실시간 검증</em>으로 옮겨가고 있다.
+      WinCheck+ 는 이미 그 자리에 있는 제품이다 — 평가표·오더·청구 SAM 을 교차대조해
+      제출 전에 오류를 잡는 일을 하고 있다. AI 는 이 구조를 <strong>대체하지 않고 세 곳에서 확장</strong>한다.
+    </p>
+    <ul>
+      <li><strong>서술(글)</strong> — 담당자가 손으로 쓰던 총평·권고·오류 설명을 정답지 수준으로 생성. 규칙 템플릿이 85% 에서 멈춘 지점.</li>
+      <li><strong>예측</strong> — 규칙에 안 걸리는 이상 패턴 탐지, 제출 전 등급 시뮬레이션, 등급을 가르는 한계환자 지목.</li>
+      <li><strong>비정형</strong> — 오더에는 안 남고 간호기록에만 있는 사실을 평가표와 대조. 현재 규칙이 도달하지 못하는 영역.</li>
+    </ul>
+    <p>
+      1단계(3개월)는 <strong>새 데이터 없이, 있는 화면 위에서</strong> 끝난다.
+      외부 LLM 없이 시작할 수 있는 항목만 모아 두었다.
+    </p>
+  </section>
+
+  <!-- ───────────── 2 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">02</span><h2>왜 지금인가</h2></div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>움직임</th><th>내용</th><th>WinCheck+ 에 주는 뜻</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>심평원 AI 심사 전환</strong></td>
+            <td>1차 전산심사·전문심사·모니터링·현지조사·분석심사 전 단계에 AI 적용 선언. 심사 AI 모델을 요양기관에도 제공하는 방향.</td>
+            <td>병원이 <strong>청구 전에 스스로 거르는 것</strong>이 표준이 된다. 우리가 하던 일이 선택에서 필수로 바뀐다.</td>
+          </tr>
+          <tr>
+            <td><strong>실시간 의료이용 관리</strong></td>
+            <td>사후적 삭감 중심 → 실시간 환자단위 심사로 개편 추진.</td>
+            <td>월 마감 후 점검하는 주기로는 못 따라간다. <strong>상시 점검</strong> 구조가 필요하다.</td>
+          </tr>
+          <tr>
+            <td><strong>AI 기본법 시행</strong></td>
+            <td>2026년 1월 시행. 의료·심사 판단은 고영향 영역으로 볼 여지가 크다.</td>
+            <td>점수만 내놓는 AI 는 못 쓴다. <strong>근거 제시 + 사람의 최종 확인</strong>이 설계 요건.</td>
+          </tr>
+          <tr>
+            <td><strong>실손24 · EMR 연계 확대</strong></td>
+            <td>의료기관 연계율을 2026년 하반기 80~90% 목표로 확대. 주요 EMR 업체 참여 중.</td>
+            <td>병원–외부 전자연계 배관이 깔린다. 엑셀 수기 업로드를 <strong>자동 수집</strong>으로 바꿀 명분과 통로가 생긴다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────── 3 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">03</span><h2>우리가 이미 가진 것</h2></div>
+    <p>
+      AI 를 붙이려는 대부분의 병원·업체가 못 넘는 벽은 모델이 아니라 <strong>정답이 없다는 것</strong>이다.
+      WinCheck+ 에는 전문가가 판정한 정답이 여러 형태로 쌓여 있다. 이것이 이 계획의 근거 전부다.
+    </p>
+    <div class="panel">
+      <h3>AI 관점에서 본 보유 자산</h3>
+      <div class="asset-grid">
+        <div class="asset">
+          <span class="n">30종</span>
+          <span class="t">오류 판정 규칙 (A1~M3)</span>
+          <span class="d">전문가가 정의한 오류 유형. 규칙에 걸린 실제 케이스가 곧 <strong>라벨링된 학습데이터</strong>다.</span>
+        </div>
+        <div class="asset">
+          <span class="n">318건</span>
+          <span class="t">담당자 수기 정답지</span>
+          <span class="d">53개 기관 × 2025년 7~12월 월간보고서 총평. 서술 생성 모델의 <strong>평가셋</strong>으로 그대로 쓸 수 있다.</span>
+        </div>
+        <div class="asset">
+          <span class="n">15종</span>
+          <span class="t">지표 산식 · 시뮬레이션</span>
+          <span class="d">지표별 분모·분자 산정 로직과 구간·가중치 체계가 코드로 확정돼 있다. 예측의 목표변수가 명확하다.</span>
+        </div>
+        <div class="asset">
+          <span class="n">40여</span>
+          <span class="t">QPS 운영 화면</span>
+          <span class="d">낙상·감염·RCA·FMEA·점검표·라운딩. 적정성평가 밖의 <strong>안전사건 시계열</strong>을 이미 모으고 있다.</span>
+        </div>
+        <div class="asset">
+          <span class="n">다기관</span>
+          <span class="t">병원 간 비교 기반</span>
+          <span class="d">한 병원 안에서는 못 보이는 이상치가 기관 간 분포에서는 보인다. 벤치마크 축이 이미 있다.</span>
+        </div>
+        <div class="asset">
+          <span class="n">교차</span>
+          <span class="t">3원 대조 구조</span>
+          <span class="d">평가표 × 특정수가 오더 × 청구 SAM. 한 원천만 보는 시스템이 못 잡는 오류를 잡는 뼈대가 서 있다.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── 4 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">04</span><h2>적용 지도</h2></div>
+    <p>모듈별로 어디에 무엇이 붙는지, 그리고 그것이 <strong>AI 가 필요한 일인지</strong>를 먼저 갈랐다.</p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>모듈</th><th>붙는 기능</th><th class="mono">ID</th><th>성격</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>월간보고서</td><td>총평·권고 서술 생성</td><td class="mono">F1</td><td>LLM (정답지 기반)</td></tr>
+          <tr><td>적정성평가 점검</td><td>오류 설명·조치 안내 생성</td><td class="mono">F2</td><td>LLM (규칙 결과 해설)</td></tr>
+          <tr><td>시뮬레이션</td><td>등급 예측 · 한계환자 추출</td><td class="mono">F3</td><td><strong>AI 아님</strong> — 최적화·산식</td></tr>
+          <tr><td>적정성평가 점검</td><td>지표 이상탐지 (병동·작성자·추세)</td><td class="mono">F4</td><td>통계·이상탐지</td></tr>
+          <tr><td>QPS</td><td>안전사건 위험 예측 · RCA 초안</td><td class="mono">F5</td><td>예측 + LLM</td></tr>
+          <tr><td>점검 확장</td><td>간호기록 ↔ 평가표 텍스트 대조</td><td class="mono">F6</td><td>LLM (온프레미스 필수)</td></tr>
+          <tr><td>기준정보</td><td>고시 개정 → 규칙 영향분석 초안</td><td class="mono">F7</td><td>LLM (사내 도구)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <span class="lb">먼저 짚을 것</span>
+      <p>
+        <strong>F3 은 AI 가 아니다.</strong> 그런데 현장 체감은 이 목록에서 가장 크다.
+        "AI 적용"이라는 이름 아래 가장 먼저 해야 할 일이 AI 가 아닌 경우가 흔하고, 이 계획도 그렇다.
+        AI 를 쓸 자리와 안 쓸 자리를 섞으면 검증 방법도 섞인다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ───────────── 5 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">05</span><h2>기능 상세</h2></div>
+
+    <div class="cards">
+
+      <!-- F1 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="fid">F1</span>
+          <h3>총평·권고 서술 생성</h3>
+          <div class="tags"><span class="tag go">1단계</span><span class="tag">정답지 보유</span></div>
+        </div>
+        <p>
+          현재 <code>evalReport.jsp</code> 의 <code>renderSummary()</code>·<code>TPL_DEF</code>·<code>TPL_DIR</code> 이
+          규칙 템플릿으로 총평 초안을 만들고 있고, 담당자 만족도는 <strong>약 85%</strong> 에서 정체돼 있다.
+          남은 15% 는 문구 부족이 아니라 <strong>어투·맥락·문단 간 논리</strong>다 — 템플릿으로 메우기 어려운 종류다.
+        </p>
+        <dl class="kv">
+          <dt>하는 일</dt><dd>지표 수치·구간·전월 대비 변화를 입력으로, 정답지 어투를 따른 총평 4~6문단과 지표별 권고를 생성</dd>
+          <dt>정답지</dt><dd>2025년 53개 기관 318건 + 2026년 완료본 약 28건. 학습이 아니라 <strong>프롬프트 예시 + 평가셋</strong>으로 먼저 쓴다</dd>
+          <dt>검증</dt><dd>정답지 대비 블라인드 비교 — 담당자가 사람 글과 생성 글을 구분 못 하는 비율. 기존 만족도 지표를 그대로 승계</dd>
+          <dt>안전장치</dt><dd>생성물은 <strong>초안</strong>. 기존 문구 우선순위(병원별 편집분 &gt; TPL 테이블 &gt; 자동초안)를 유지하고 그 맨 아래 칸만 교체</dd>
+          <dt>주의</dt><dd>수치·도표·양식은 <strong>건드리지 않는다</strong>(고객 확정 사항). 생성 범위는 서술부로 고정</dd>
+        </dl>
+      </article>
+
+      <!-- F2 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="fid">F2</span>
+          <h3>오류 설명·조치 안내 생성</h3>
+          <div class="tags"><span class="tag go">1단계</span><span class="tag">난이도 낮음</span></div>
+        </div>
+        <p>
+          지금 오류 목록에 뜨는 문장은 <em>규칙 정의문</em>이다 —
+          "당월 환자평가표가 2개 이상 작성되었을 때 환자분류군이 다를 경우". 규칙을 아는 사람만 읽힌다.
+          같은 판정 결과에 <strong>그 환자의 실제 값</strong>을 넣어 읽을 수 있는 문장으로 바꾼다.
+        </p>
+        <dl class="kv">
+          <dt>바뀌는 모습</dt><dd>"8/3 입원평가 분류군 3, 8/12 계속입원평가 분류군 5 — 둘 중 하나가 오기입일 가능성이 높습니다. 8/12 평가표 ADL 항목을 확인하세요."</dd>
+          <dt>입력</dt><dd>규칙이 이미 뽑아낸 행. <strong>판정은 그대로 SQL 이 한다</strong> — LLM 은 설명만 쓴다</dd>
+          <dt>왜 안전한가</dt><dd>AI 가 오류 여부를 정하지 않으므로, 문장이 어색해도 판정이 틀리지 않는다. 첫 도입에 적합</dd>
+          <dt>효과</dt><dd>병원 재작업 시간 단축. 규칙 30종을 외우지 않아도 손댈 곳을 안다</dd>
+        </dl>
+      </article>
+
+      <!-- F3 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="fid">F3</span>
+          <h3>등급 시뮬레이션 · 한계환자 추출</h3>
+          <div class="tags"><span class="tag go">1단계</span><span class="tag">AI 아님</span></div>
+        </div>
+        <p>
+          <code>simulation.jsp</code> 에 구간별 필요 인원 표시가 이미 요구사항으로 올라와 있다
+          (5점 ~32명 / 4점 ~49명 / 현재 67명 형태). 이 축을 <strong>지표 전체·상시</strong>로 넓힌다.
+        </p>
+        <dl class="kv">
+          <dt>하는 일</dt><dd>① 지금 이대로 제출하면 지표별 몇 %, 종합 몇 등급 ② 어느 환자 몇 명을 보완하면 구간이 바뀌는지 지목</dd>
+          <dt>핵심</dt><dd><strong>분자 +1 과 분모 −1 의 효과가 다르다.</strong> 욕창개선(11번)의 '제외' 케이스처럼 분모에서 빠지는 건이 분율을 더 크게 움직인다 — 어느 쪽을 손대는 게 효율적인지까지 계산</dd>
+          <dt>재료</dt><dd><code>calcEvalIndiValue</code> · <code>selectHospGoalGrade</code> · <code>select_CategoryList05~14</code>. <strong>새 데이터 없음</strong></dd>
+          <dt>왜 먼저인가</dt><dd>지금은 마감 후에야 결과를 안다. 이 기능은 마감 전에 손쓸 시간을 만든다 — 고객이 돈을 내는 이유에 가장 가깝다</dd>
+        </dl>
+      </article>
+
+      <!-- F4 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="fid">F4</span>
+          <h3>지표 이상탐지</h3>
+          <div class="tags"><span class="tag">2단계</span><span class="tag">통계</span></div>
+        </div>
+        <p>
+          규칙은 <strong>걸리거나 안 걸리거나</strong> 둘 뿐이다. 실무의 문제는
+          "규칙엔 안 걸리는데 뭔가 이상한" 케이스다. 분포와 추세로 잡는다.
+        </p>
+        <dl class="kv">
+          <dt>보는 축</dt><dd>병동별·작성자별·월별 체크율 분포. 예 — 특정 병동만 배뇨훈련프로그램 체크율 100%, 특정 작성자만 욕창 '새로 발생' 체크 0%</dd>
+          <dt>같이 할 것</dt><dd><strong>화면 판정 ↔ SP 판정 전수 대사.</strong> 09번 지표에서 화면은 '해당'인데 프로시저는 미충족으로 보는 조합이 이미 확인돼 있다 — 규칙이 아니라 전수 비교로 잡을 문제</dd>
+          <dt>산출</dt><dd>오류가 아니라 <strong>확인 요망</strong> 목록. 등급으로 나누고 근거 수치를 함께 제시</dd>
+        </dl>
+      </article>
+
+      <!-- F5 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="fid">F5</span>
+          <h3>QPS 위험 예측 · RCA 초안</h3>
+          <div class="tags"><span class="tag">2단계</span><span class="tag">데이터 축적 필요</span></div>
+        </div>
+        <p>
+          QPS 모듈에 낙상·감염·점검표·라운딩 기록이 쌓이고 있다. 적정성평가와 달리
+          <strong>사건이 일어나기 전</strong>을 다룰 수 있는 유일한 영역이다.
+        </p>
+        <dl class="kv">
+          <dt>예측</dt><dd>낙상 위험 환자 · 감염 발생 위험 병동. 입원정보·평가표 ADL·투약·점검 이력을 특징으로</dd>
+          <dt>서술</dt><dd>RCA·FMEA 작성 시 유사 과거 사례 제시 + 원인분석 초안. 위원회 회의록 요약</dd>
+          <dt>전제</dt><dd>사건 수가 적으면 모델이 안 선다. <strong>기관 수 × 기간</strong>이 쌓인 뒤에 착수 — 그래서 2단계</dd>
+        </dl>
+      </article>
+
+      <!-- F6 -->
+      <article class="card later">
+        <div class="card-head">
+          <span class="fid">F6</span>
+          <h3>간호기록 ↔ 평가표 텍스트 대조</h3>
+          <div class="tags"><span class="tag">3단계</span><span class="tag warn">온프레미스 필수</span></div>
+        </div>
+        <p>
+          현재 D 계열 크로스체크는 <strong>구조화된 오더만</strong> 본다. 그런데 실제 근거는 간호기록·경과기록에 있다.
+          <strong>오더에 안 남는 행위가 기록에는 남는다</strong> — 여기가 규칙 30종으로 못 가는 영역이다.
+        </p>
+        <dl class="kv">
+          <dt>잡히는 것</dt><dd>기록에 "foley 유지 중"인데 평가표 삽입일자 공란 · 드레싱 서술은 있는데 피부궤양 처치 미체크 · 배뇨일지 서술은 있는데 훈련프로그램 미체크</dd>
+          <dt>제약</dt><dd>의무기록 원문이 외부로 나가면 안 된다. <strong>원내 sLLM</strong> 또는 병원 경계 내 배포 전제. 이 조건이 안 서면 착수하지 않는다</dd>
+          <dt>산출</dt><dd>판정이 아니라 <strong>근거 문장 인용 + 확인 요청</strong>. 기록 문장을 그대로 보여 주고 사람이 판단</dd>
+        </dl>
+      </article>
+
+      <!-- F7 -->
+      <article class="card later">
+        <div class="card-head">
+          <span class="fid">F7</span>
+          <h3>고시 개정 영향분석 (사내 도구)</h3>
+          <div class="tags"><span class="tag">상시</span><span class="tag">고객 노출 없음</span></div>
+        </div>
+        <p>
+          매년 평가계획·고시가 바뀌고 그때마다 프로시저와 SQL 을 손으로 고친다.
+          개정 문서를 넣어 <strong>변경점 · 영향받는 지표와 규칙 목록 · 수정 초안</strong>을 받는다.
+        </p>
+        <dl class="kv">
+          <dt>범위</dt><dd>초안 생성까지. <strong>자동 반영 금지</strong> — 사람이 읽고 고친 것만 반영</dd>
+          <dt>이득</dt><dd>"이번 개정이 어느 지표를 건드리나"를 놓치지 않는 것. 놓치면 그 해 전체 산출이 어긋난다</dd>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ───────────── 6 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">06</span><h2>단계</h2></div>
+    <div class="phases">
+      <div class="phase">
+        <span class="when">1단계 · 0~3개월</span>
+        <h3>있는 화면 위에서</h3>
+        <ul>
+          <li><strong>F3</strong> 시뮬레이션·한계환자</li>
+          <li><strong>F2</strong> 오류 설명 생성</li>
+          <li><strong>F1</strong> 총평 생성 (평가셋 구축 → 시범)</li>
+        </ul>
+        <p style="font-size:13px">새 데이터·새 인프라 없음. 실패해도 기존 동작이 그대로 남는 항목만.</p>
+      </div>
+      <div class="phase">
+        <span class="when">2단계 · 3~6개월</span>
+        <h3>데이터를 넓힌다</h3>
+        <ul>
+          <li><strong>F4</strong> 이상탐지 · 전수 대사</li>
+          <li>오더·SAM <strong>자동 수집</strong>(엑셀 업로드 대체)</li>
+          <li><strong>F5</strong> QPS 예측 착수</li>
+        </ul>
+        <p style="font-size:13px">상시 점검이 성립하려면 사람이 파일을 올리지 않아도 자료가 들어와야 한다.</p>
+      </div>
+      <div class="phase">
+        <span class="when">3단계 · 6~12개월</span>
+        <h3>비정형으로</h3>
+        <ul>
+          <li><strong>F6</strong> 의무기록 텍스트 대조</li>
+          <li>원내 sLLM 배포 모델 확정</li>
+          <li>기관 간 벤치마크 리포트</li>
+        </ul>
+        <p style="font-size:13px">병원 보안 요건이 먼저 정리돼야 시작할 수 있다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── 7 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">07</span><h2>기술 구성과 데이터 경계</h2></div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>기능</th><th>다루는 자료</th><th>처리 위치</th><th>이유</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">F1</td><td>지표 <strong>집계 수치</strong>(환자정보 없음)</td><td>외부 API 가능</td><td>개인정보가 프롬프트에 들어가지 않는다</td></tr>
+          <tr><td class="mono">F2</td><td>환자 <strong>식별자 제거</strong> 후 항목값</td><td>외부 API 가능 (비식별 전제)</td><td>날짜·분류군 등만 전달, 이름·번호 제외</td></tr>
+          <tr><td class="mono">F3 · F4</td><td>원내 DB</td><td>사내 서버</td><td>LLM 미사용 — 산식·통계</td></tr>
+          <tr><td class="mono">F5</td><td>안전사건 · 입원정보</td><td>사내 서버 / 원내</td><td>민감정보. 예측 모델은 경계 안에서 학습</td></tr>
+          <tr><td class="mono">F6</td><td><strong>의무기록 원문</strong></td><td>원내 sLLM 만</td><td>원문 반출 불가. 조건 미충족 시 착수 보류</td></tr>
+          <tr><td class="mono">F7</td><td>공개 고시 문서 · 소스</td><td>사내 개발 도구</td><td>환자정보 없음</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      경계를 기능별로 갈라 두면 <strong>F1·F2 는 지금 당장</strong> 시작할 수 있다.
+      전부를 원내 모델로 묶으려다 아무것도 시작 못 하는 것이 흔한 실패 방식이다.
+    </p>
+  </section>
+
+  <!-- ───────────── 8 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">08</span><h2>지켜야 할 선</h2></div>
+    <div class="note">
+      <span class="lb">설계 원칙 · 협상 대상 아님</span>
+      <ul>
+        <li><strong>자동 수정 금지.</strong> 평가표는 의무기록이다. AI 는 <em>제안</em>까지, 확정은 사람이 한다. 어떤 기능도 평가표 값을 스스로 바꾸지 않는다.</li>
+        <li><strong>판정은 규칙이, 설명은 AI 가.</strong> 오류 여부를 LLM 이 정하는 구조로 가지 않는다. 판정 근거를 추적할 수 없게 되는 순간 이 제품의 존재 이유가 사라진다.</li>
+        <li><strong>근거 없는 출력 금지.</strong> 점수·순위를 내놓을 때는 항상 그 근거가 된 행을 함께 보여 준다. AI 기본법 고영향 영역 요건이자, 현장에서 신뢰를 얻는 유일한 방법이다.</li>
+        <li><strong>검증은 과거 연도 백테스트로.</strong> 작년 데이터로 돌려 그 해 실제 등급·삭감 결과를 얼마나 맞췄는지 본다. 규칙 30종과 정답지 318건이 있으므로 가능하다.</li>
+        <li><strong>기존 동작을 되돌릴 수 있게.</strong> 모든 생성 기능은 끌 수 있어야 하고, 껐을 때 지금과 똑같이 동작해야 한다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── 9 ───────────── -->
+  <section>
+    <div class="sec-head"><span class="sec-no">09</span><h2>정해야 할 것</h2></div>
+    <p>착수 전에 답이 필요한 항목이다. 기술 문제가 아니라 <strong>결정</strong>이다.</p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th style="width:1%" class="mono">#</th><th>물음</th><th>막히는 것</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono c">1</td><td>1단계 착수 순서 — <strong>F3 먼저</strong>인가 <strong>F1 먼저</strong>인가</td><td>F3 은 체감이 크고, F1 은 담당자 공수를 직접 줄인다</td></tr>
+          <tr><td class="mono c">2</td><td>F1·F2 를 <strong>외부 API</strong> 로 시작해도 되는가 (비식별 전제)</td><td>불가하면 1단계 전체가 원내 모델 확보 뒤로 밀린다</td></tr>
+          <tr><td class="mono c">3</td><td>정답지 318건을 <strong>학습·평가에 쓰는 것</strong>에 대한 기관 동의 범위</td><td>병원별 보고서라 내부 활용 범위 확인 필요</td></tr>
+          <tr><td class="mono c">4</td><td>오더·SAM <strong>자동 수집</strong>을 병원 EMR 과 어디까지 연계할 수 있는가</td><td>2단계 상시 점검의 전제조건</td></tr>
+          <tr><td class="mono c">5</td><td>AI 생성 결과를 <strong>고객 화면에 노출</strong>할 때의 표기 방침</td><td>"AI 초안" 표시 여부·문구. 법 시행에 맞춰 먼저 정해 둘 것</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+
+  <footer>
+    <p class="fl">위너넷 · WinCheck+ AI 적용 계획 · 2026-08-30 초안</p>
+    <p>
+      근거 자료 — <code>Magam_SQL.xml</code>(오류 규칙 A1~M3) ·
+      <code>docs/reports/월보고서_서술강화_작업상태.md</code>(정답지 318건, 만족도 85%) ·
+      <code>docs/reports/월간보고서_총평_작성가이드.md</code> ·
+      <code>docs/적정성평가_요구사항.md</code>(시뮬레이션 구간 요구) ·
+      <code>evalReport.jsp</code> · <code>simulation.jsp</code> · <code>assessment.jsp</code>
+    </p>
+    <p>정책 환경은 2026년 8월 기준 공개 자료(심평원 심사체계 전환 발표, 금융위 실손24 확대 계획, AI 기본법 시행)를 요약한 것이다.</p>
+  </footer>
+
+</div>
