@@ -587,9 +587,12 @@
 								<li class="nav-item">
 								    <a class="nav-item nav-link" href="/mangr/noticd3.do">소 식 지</a>
 								</li>                                                                
+                                <%-- 자주하는 질문(기존 FAQ 화면) 메뉴 내림 — Q&A 화면의 자주하는 질문으로 대체 (2026-08-31) --%>
+                                <%--
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/mangr/faqcd.do">자주하는 질문</a>
                                 </li>
+                                --%>
                                 <!--  
                                 <li class="nav-item">
                                     <a class="nav-item nav-link"  href="/mangr/asqcd.do">1:1 문의하기</a>
@@ -794,11 +797,14 @@
 	                        <span><i class="fas fa-headphones" style="opacity: 0.6; margin-right: 10px;"></i> <b>1:1 문의하기</b></span>
 	                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
 	                    </a>
+	                    <%-- 자주하는 질문(기존 FAQ 모달) 버튼 내림 — Q&A 화면의 자주하는 질문으로 대체 (2026-08-31) --%>
+	                    <%--
 	                    <a href="#" onclick="loadFaqData();" class="btn btn-outline-primary btn-block d-flex align-items-center justify-content-between"
 	                       style="border-radius: 8px; padding: 6px 16px; font-size: 12px; border-width: 2px; margin-right:35px;">
 	                        <span><i class="fas fa-clipboard-list" style="opacity: 0.6; margin-right: 10px;"></i> <b>자주하는 질문</b></span>
 	                        <i class="fas fa-chevron-right" style="opacity: 0.6;"></i>
 	                    </a>
+	                    --%>
 	                </div>
 	            </div>
 	        </div>
@@ -809,17 +815,17 @@
 <!-- FAQ 모달 -->
 
 <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" style="margin-top: 100px;"> <!-- 여기 추가 -->
- 
-    <div class="modal-content" style="max-height: 900px;"> <!-- 높이 제한 -->
+  <div class="modal-dialog modal-lg" style="margin-top: 45px;">
+    <div class="modal-content" style="max-height: 84vh;"> <!-- 화면보다 커지지 않게 — 고정 px 라 작은 화면에서 하단이 잘렸다(2026-08-31) -->
       <div class="modal-header">
         <h5 class="modal-title" id="faqModalLabel">자주 묻는 질문 (FAQ)</h5>
         <button type="button" class="btn btn-outline-dark" data-dismiss="modal" onclick="faqMainClose()">
           닫기 <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="modal-body" style="max-height: 700px; overflow-y: auto;">
-        <div class="input-group mb-3">
+      <div class="modal-body" style="max-height: calc(84vh - 76px); overflow-y: auto; padding-top: 0;">
+        <%-- 검색줄 고정(sticky) — 목록을 내려도 검색이 위에 남는다. padding-top 은 검색줄이 갖는다(겹침 방지) --%>
+        <div class="input-group mb-3" style="position: sticky; top: 0; z-index: 5; background: #fff; padding: 14px 0 8px;">
           <input type="text" id="faqSearchInput" class="form-control" placeholder="검색어를 입력하세요" onkeypress="if(event.keyCode===13) searchFaq();">
           <div class="input-group-append">
             <button class="btn btn-primary" type="button" onclick="searchFaq();">
@@ -1091,104 +1097,52 @@ function loadFaqData(keyword) {
         data: { qstnConts: searchKeyword, ansrConts: searchKeyword },
         dataType: "json",
         success: function (response) {
+            /* ★2026-08-31 「Q&A 자주하는 질문 화면 식으로」 — 번호 + 제목 한 줄 목록으로 그리고,
+                 누르면 바로 아래에 답변이 펼쳐진다. 답변은 서식(HTML) 그대로 div 에 꽂는다 —
+                 summernote(에디터)로 보여 주던 것은 무겁고 답변마다 편집기가 떠서 뺐다.
+                 자료도 자주 20건이 아니라 실무 Q&A 전체(TBL_QNA_KB, 자주 지정건이 맨 위)다. */
             if (response.error_code === "0" && Array.isArray(response.data) && response.data.length > 0) {
                 $.each(response.data, function (index, faq) {
                     let question = String(faq.qstnConts || "질문이 없습니다.").trim();
-                    let answer = String(faq.ansrConts || "답변이 없습니다.").trim();
+                    let answer = String(faq.ansrConts || "답변이 없습니다.").trim()
+                                   .replace(/\r?\n/g, "<br>");   // 옛 답변(개행 저장분)도 줄이 살게
 
-                    // faq-item 전체 묶음 div
-                    let faqItem = $("<div>", { class: "faq-item" });
+                    let faqItem = $("<div>", { class: "faq-item", style: "padding:8px 12px;" });
 
-                    // 질문 div
                     let faqQuestion = $("<div>", {
-                        class: "faq-question"
-                    }).text(question);
+                        class: "faq-question",
+                        style: "display:flex; align-items:baseline; gap:10px; cursor:pointer; font-size:14px;"
+                    });
+                    faqQuestion.append($("<span>").css({ "flex": "0 0 auto", "min-width": "1.8em", "text-align": "center",
+                                                         "font-weight": "800", "color": (index < 3 ? "#e2564a" : "#b7c4d4") })
+                                                  .text(index + 1));
+                    faqQuestion.append($("<span>").css({ "flex": "1", "font-weight": "600", "color": "#1746a2" }).text(question));
+                    faqQuestion.append($("<span>", { class: "arrow" }).css({ "flex": "0 0 auto", "color": "#2563eb" }).text("▼"));
 
-                    // ▼ 아이콘
-                    let arrowSpan = $("<span>", { class: "arrow" }).text("▼");
-                    faqQuestion.append(arrowSpan);
-
-                    // 답변 div
                     let faqAnswer = $("<div>", {
                         class: "faq-answer",
-                        style: "display: none;"
-                    });
+                        style: "display:none;"
+                    }).html(answer);
 
-                    // textarea ID를 유니크하게 생성
-                    let textareaId = "faqTextarea_" + index;
-
-                    // textarea 생성
-                    let textarea = $("<textarea>", {
-                        id: textareaId,
-                        class: "faq-textarea"
-                    }).val(answer);
-
-                    faqAnswer.append(textarea);
                     faqItem.append(faqQuestion).append(faqAnswer);
                     $("#faqList").append(faqItem);
 
-                    // click 이벤트 바인딩 (각 item별)
                     faqQuestion.on("click", function () {
                         let $thisItem = $(this).closest(".faq-item");
-
                         if ($thisItem.hasClass("active")) {
-                            // 열려있으면 닫기
                             $thisItem.removeClass("active").find(".faq-answer").slideUp();
                             $thisItem.find(".arrow").text("▼");
-
-                            // Summernote 제거
-                            if ($("#" + textareaId).hasClass("summernote")) {
-                                $("#" + textareaId).summernote('destroy');
-                            }
                         } else {
-                            // 다른 항목 닫기 및 summernote 제거
-                            $(".faq-item").each(function () {
-                                $(this).removeClass("active").find(".faq-answer").slideUp();
-                                $(this).find(".arrow").text("▼");
-
-                                let $ta = $(this).find("textarea");
-                                if ($ta.hasClass("summernote")) {
-                                    $ta.summernote('destroy');
-                                }
-                            });
-
-                            // 현재 항목 열기
+                            $(".faq-item").removeClass("active").find(".faq-answer").slideUp();
+                            $(".faq-item .arrow").text("▼");
                             $thisItem.addClass("active").find(".faq-answer").slideDown();
                             $thisItem.find(".arrow").text("▲");
-                            
-                            let convertedAnswer = answer.replace(/\n/g, "<br>"); // 줄바꿈 → <br>
-
-	                         // Summernote 적용
-	                         $("#" + textareaId).summernote({
-	                             height: 300,
-	                             lang: 'ko-KR',
-	                             toolbar: [
-	                                 ['style', ['style']],
-	                                 ['font', ['bold', 'italic', 'underline', 'clear']],
-	                                 ['fontname', ['fontname']],
-	                                 ['fontsize', ['fontsize']],
-	                                 ['color', ['color']],
-	                             ],
-	                             fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '굴림체', '돋움체'],
-	                             fontNamesIgnoreCheck: ['맑은 고딕', '굴림체', '돋움체'],
-	                             callbacks: {
-	                                 onInit: function () {
-	                                     $('.note-editable').css('font-size', '14px');
-	                                     $("#" + textareaId).next(".note-editor").find(".note-toolbar").hide();
-	
-	                                     // 줄바꿈 처리된 내용 넣기
-	                                     $("#" + textareaId).summernote('code', convertedAnswer);
-	                                 }
-	                             }
-	                         });
                         }
                     });
                 });
             } else {
                 $("#faqList").html(`<p class="text-muted text-center">검색된 결과가 없습니다.</p>`);
             }
-
-            console.log("📢 FAQ 데이터 로드 완료");
         },
         error: function () {
             $("#faqList").html(`<p class="text-danger text-center">FAQ 데이터를 불러오는 중 오류가 발생했습니다.</p>`);

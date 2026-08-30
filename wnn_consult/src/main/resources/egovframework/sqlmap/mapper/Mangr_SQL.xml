@@ -372,31 +372,30 @@
         WHERE  ASQ_SEQ  = #{asqSeq} 
      ]]>   
     </select> 
-   <!-- 자주하는 질문 --> 
-    <select id="selectfaqList" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[ 
-        SELECT 
-            A.FAQ_SEQ ,
-            A.FILE_GB, 
-            A.QSTN_CONTS, 
-            IFNULL(A.ANSR_CONTS,'') AS ANSR_CONTS, 
-            A.REG_DTTM, 
-            A.REG_USER, 
-            A.REG_IP, 
-            A.UPD_DTTM, 
-            A.UPD_USER, 
-            A.UPD_IP ,
-            A.SORT_SEQ
-           FROM TBL_FAQ_MST A 
-        WHERE 1=1  
-          AND A.ACTION_YN = 'Y'  
+   <!-- 자주하는 질문 — 2026-08-31 부터 TBL_FAQ_MST 대신 **WinCheck 실무 Q&A**(TBL_QNA_KB)를 보여준다.
+        자주 20건만이 아니라 사내 실무 답변 <전체>(SRC_TYPE='IN' — 심사평가원 PDF 원문 제외),
+        자주 지정건(TOP_YN='Y')이 지정 순서대로 맨 위. 화면(FaqDTO·모달)은 그대로 쓰려고 열 이름만 맞춘다.
+        기존 TBL_FAQ_MST 는 더 안 쓴다(질문 등록·수정은 WinCheck Q&A 화면에서). -->
+    <select id="selectfaqList" parameterType="FaqDTO" resultType="FaqDTO"> <![CDATA[
+        SELECT
+            K.KB_ID   AS FAQ_SEQ,
+            '5'       AS FILE_GB,
+            K.TITLE   AS QSTN_CONTS,
+            IFNULL(K.BODY,'') AS ANSR_CONTS,
+            K.REG_DTTM,
+            K.UPD_DTTM,
+            K.TOP_NO  AS SORT_SEQ
+           FROM TBL_QNA_KB K
+        WHERE K.USE_YN = 'Y'
+          AND K.SRC_TYPE = 'IN'
 		 ]]>
 		  <if test='qstnConts != null and qstnConts !="" '><![CDATA[
-	         AND (A.QSTN_CONTS LIKE CONCAT('%',#{qstnConts},'%')
-	          OR  A.ANSR_CONTS LIKE CONCAT('%',#{ansrConts},'%') )
+	         AND (K.TITLE LIKE CONCAT('%',#{qstnConts},'%')
+	          OR  K.BODY  LIKE CONCAT('%',#{ansrConts},'%') )
 	      ]]>
 	      </if>
 	      <![CDATA[
-		     Order by A.SORT_SEQ  DESC
+		     ORDER BY (K.TOP_YN = 'Y') DESC, CASE WHEN K.TOP_YN = 'Y' THEN K.TOP_NO ELSE 999999 END, K.CAT_ID, K.KB_ID
 	      ]]>
     </select>
     <!--  

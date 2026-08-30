@@ -2,43 +2,35 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.wnn_medcost.mangr.mapper.MangrMapper">
 	<!-- 면하번호등록 -->  
+    <!-- 자주 묻는 질문 모달 — 2026-08-31 부터 TBL_FAQ_MST 대신 **WinCheck 실무 Q&A**(TBL_QNA_KB)를 보여준다.
+         자주하는 질문 20건만이 아니라 사내 실무 답변 <전체>(SRC_TYPE='IN' — 심사평가원 PDF 원문은 제외).
+         자주 지정건(TOP_YN='Y')이 지정 순서대로 맨 위, 나머지는 분류·번호 순.
+         화면(FaqDTO·모달)은 그대로 쓰려고 열 이름만 기존 FAQ 모양으로 맞춘다. -->
     <select id="getfaqCdList" parameterType="FaqDTO" resultType="FaqDTO"><![CDATA[
-		SELECT 
-		     A.FAQ_SEQ
-		    ,A.HOSP_CD    
-		    ,A.FILE_GB
-		    ,A.QSTN_CONTS
-		    ,A.QSTN_CONTS  AS QSTN_CONTS1
-		    ,A.ANSR_CONTS 
-		    ,A.ANSR_CONTS  AS ANSR_CONTS1
-		    ,B.USER_NM
-		    ,IFNULL(A.START_DT,'') START_DT
-		    ,IFNULL(A.END_DT,'') END_DT
-		    ,A.USE_YN
-		    ,A.SORT_SEQ
-		    ,A.REG_DTTM
-		    ,A.REG_USER
-		    ,A.REG_IP
-		    ,A.UPD_DTTM
-		    ,A.UPD_USER
-		    ,A.UPD_IP
-		FROM TBL_FAQ_MST A
-		LEFT JOIN TBL_USER_MST B
-		    ON  B.HOSP_CD = A.HOSP_CD
-		    AND B.USER_ID = A.UPD_USER
-		    AND B.ACTION_YN = A.ACTION_YN 
-		WHERE A.ACTION_YN = 'Y'
+		SELECT
+		     K.KB_ID   AS FAQ_SEQ
+		    ,'5'       AS FILE_GB
+		    ,K.TITLE   AS QSTN_CONTS
+		    ,K.TITLE   AS QSTN_CONTS1
+		    ,IFNULL(K.BODY,'') AS ANSR_CONTS
+		    ,IFNULL(K.BODY,'') AS ANSR_CONTS1
+		    ,K.USE_YN
+		    ,K.TOP_NO  AS SORT_SEQ
+		    ,K.REG_DTTM
+		    ,K.UPD_DTTM
+		FROM TBL_QNA_KB K
+		WHERE K.USE_YN = 'Y'
+		  AND K.SRC_TYPE = 'IN'
 		 ]]>
 		  <if test='qstnConts != null and qstnConts !="" '><![CDATA[
-	         AND (A.QSTN_CONTS LIKE CONCAT('%',#{qstnConts},'%')
-	          OR  A.ANSR_CONTS LIKE CONCAT('%',#{ansrConts},'%') )
+	         AND (K.TITLE LIKE CONCAT('%',#{qstnConts},'%')
+	          OR  K.BODY  LIKE CONCAT('%',#{ansrConts},'%') )
 	      ]]>
 	      </if>
-	      <![CDATA[		
-        ORDER BY A.UPD_DTTM  DESC
-        
-    ]]>   
-    </select>     
+	      <![CDATA[
+        ORDER BY (K.TOP_YN = 'Y') DESC, CASE WHEN K.TOP_YN = 'Y' THEN K.TOP_NO ELSE 999999 END, K.CAT_ID, K.KB_ID
+    ]]>
+    </select>
     <insert id="insertfaqCd" parameterType="FaqDTO" ><![CDATA[
         INSERT INTO TBL_FAQ_MST (
 		     FILE_GB

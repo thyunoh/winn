@@ -334,10 +334,9 @@
      ⚠★일반 병원 사용자에게는 <어떤 키를 눌러도> 안 나온다 — 아래 핸들러 첫 줄이 ADMIN 이 아니면 즉시 돌아간다.
        가르는 것은 서버가 내려주는 qnaAdmin 뿐이고, 저장·삭제 엔드포인트도 서버에서 따로 막는다.
      ※사이드바 [신규병원 가입신청]의 Ctrl+Alt+R 과는 <다른 기능>이다 — 그쪽은 관리자에게 상시 노출로 바꿨다. */
-  var ADMIN = '${qnaAdmin}' === 'Y', _qtopId = null, _qtopEditOn = false, _qtopKeyOn = false;
-  /* Ctrl+Alt+Q = 숨김 해제. <한 방향(켜기)>뿐이다.
-     ★토글이 아니다 — 다시 눌러도 안 꺼진다. 종전에는 토글이라 실수로 한 번 더 누르면 도구가 사라져
-       <기능이 통째로 없어진 것처럼> 보였다(실제로 그렇게 읽혔다). 되숨기려면 새로고침한다. */
+  /* ★2026-08-31 「Ctrl+Alt+Q 없이 관리자 보이게」 — _qtopKeyOn 을 처음부터 켠다.
+       위너넷 관리자면 [수정] 체크·[관리자 등록] 분류가 바로 보인다(키 리스너는 무해해서 남겨 둔다). */
+  var ADMIN = '${qnaAdmin}' === 'Y', _qtopId = null, _qtopEditOn = false, _qtopKeyOn = true;
   document.addEventListener('keydown', function(e){
     if (!ADMIN || _qtopKeyOn) return;                 /* 이미 켜져 있으면 아무 일도 하지 않는다 */
     if (e.ctrlKey && e.altKey && (e.key === 'q' || e.key === 'Q')){
