@@ -1,7 +1,5 @@
 package egovframework.wnn_medcost.magam.web;
 
-
-
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
@@ -31,7 +29,6 @@ import egovframework.wnn_medcost.ftpload.service.SftpService;
 import egovframework.util.ClientInfo;
 import javax.servlet.annotation.MultipartConfig;
 import org.springframework.web.multipart.MultipartFile;
-
 
 @MultipartConfig
 @Controller
