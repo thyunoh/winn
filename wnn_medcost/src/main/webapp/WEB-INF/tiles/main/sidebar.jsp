@@ -721,38 +721,23 @@
                            앞서 menu-section 을 달았다가 메뉴가 안 나온 원인이 이것이다(2026-08-19).
                            같은 이유로 menu-qps 도 menu-section 이 아니다(위쪽 주석 참고).
                          ※권한은 컨트롤러가 세션 MAIN_GU='1' 로 막는다. --%>
-                    <%-- ★위너넷 관리자(로그인 때 심는 쿠키 s_mainfg='1')에게는 <무조건> 보인다 (2026-08-26 사용자 요청).
-                         종전에는 관리자에게도 숨겨 두고 Ctrl+Alt+R 로 켜야 했다 — 개발 중이라 그랬던 것인데,
-                         이제 관리자는 그냥 쓰는 메뉴라 숨길 이유가 없다.
-                         ※비관리자에게는 종전대로 숨김 + Ctrl+Alt+R 개발용 토글만 남는다(화면은 컨트롤러가 막는다). --%>
-                    <c:set var="wnnAdminMenu" value="${cookie.s_mainfg.value eq '1' ? 'Y' : 'N'}" />
-                    <li class="nav-item" id="adminJoinReqMenu"<c:if test="${wnnAdminMenu ne 'Y'}"> style="display:none;"</c:if>>
+                    <%-- ★[2026-08-31] 위너넷 관리자(로그인 때 심는 쿠키 s_mainfg='1') <전용> 메뉴.
+                         일반 병원에서는 **메뉴가 아예 만들어지지 않는다** — 숨기기(display:none)가 아니라
+                         c:if 로 통째로 빼서, 개발자도구로 봐도 없다(사용자 2026-08-31 「일반병원에서 안 보이게」).
+                         ★종전 Ctrl+Alt+R 개발 토글(sessionStorage 'joinReqDev')은 없앴다 —
+                           운영은 로그인 화면(wnn_consult)과 같은 호스트라 sessionStorage 가 공유돼,
+                           그 화면에서 한 번 켠 브라우저면 병원 계정으로 들어와도 메뉴가 보였다(이번 요청의 원인).
+                         ※화면 자체는 컨트롤러가 MAIN_GU='1' 로 다시 막는다(메뉴만 감추면 주소를 직접 칠 수 있다). --%>
+                    <c:if test="${cookie.s_mainfg.value eq '1'}">
+                    <li class="nav-item" id="adminJoinReqMenu">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/join/joinReq.do">
                             <i class="fas fa-hospital-user"></i>신규병원 가입신청
                             <span id="adminJoinReqCnt" style="background:#d9534f; color:#fff; border-radius:10px;
                                   padding:1px 8px; font-size:11.5px; font-weight:800; margin-left:6px;"></span></a>
                     </li>
-                    <%-- ★[2026-08-26] 위너넷 관리자에게는 **무조건 보인다**(위 c:set 참고). 아래 단축키는 이제 비관리자용 개발 토글이다.
-                         **Ctrl+Alt+R** 로 켜고 끈다(2026-08-24 변경 : req → rg → Ctrl+R → Ctrl+Alt+R) —
-                         로그인 화면(wnn_consult)의 [신규병원 가입신청] 과 같은 키·같은 저장키(joinReqDev)다.
-                         운영은 두 앱이 같은 호스트라 sessionStorage 가 공유된다 →
-                         로그인 화면에서 한 번 켜면 여기서도 켜져 있다.
-                         (로컬은 포트가 달라 origin 이 달라서 각각 쳐야 한다)
-                         옆 배지의 숫자는 처리할 신청 건수다.
-                         ★Ctrl+R(새로고침)·Ctrl+Shift+R 은 그대로 둔다 — Alt 를 더해 브라우저 단축키와 안 겹치게 했다.
-                         ★정식 오픈 시 : li 의 display:none 과 이 스크립트의 게이트만 지우면 된다. --%>
+                    <%-- 배지 건수도 관리자일 때만 부른다(비관리자에게 신청 건수가 새지 않게) --%>
                     <script>
                     (function(){
-                      var KEY = 'joinReqDev';
-                      /* ★위너넷 관리자면 단축키와 무관하게 늘 보인다 (2026-08-26) —
-                           sessionStorage 에 예전에 'N' 이 남아 있어도 관리자에게는 안 숨겨진다. */
-                      var ADMIN = '${wnnAdminMenu}' === 'Y';
-                      function on(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
-                      function apply(){
-                        var li = document.getElementById('adminJoinReqMenu');
-                        if (li) li.style.display = (ADMIN || on()) ? '' : 'none';
-                      }
-                      /* 건수 배지 — 메뉴가 켜져 있든 아니든 미리 받아 둔다(켜는 순간 바로 보이게) */
                       try {
                         var x = new XMLHttpRequest();
                         x.open('POST', '/join/joinReqCnt.do', true);
@@ -767,19 +752,9 @@
                         };
                         x.send('');
                       } catch (ignore) {}
-                      document.addEventListener('keydown', function(e){
-                        /* ★2026-08-24 : 열쇠말 타이핑(req→rg) → Ctrl+Alt+R 로 교체.
-                             Ctrl+R(새로고침) 을 뺏지 않으려고 Alt 를 더했다. 파이어폭스 리더모드(Ctrl+Alt+R) 만 겹쳐 preventDefault 로 막는다.
-                             ★e.key 는 배열·IME 에 따라 'r' 이 아닐 수 있어 e.code('KeyR') 도 함께 본다. */
-                        if (!e.ctrlKey || !e.altKey || e.metaKey || e.shiftKey) return;   // Ctrl+Alt+R 만 (Shift 조합은 통과)
-                        if ((e.key || '').toLowerCase() !== 'r' && e.code !== 'KeyR') return;
-                        e.preventDefault();
-                        try { sessionStorage.setItem(KEY, on() ? 'N' : 'Y'); } catch (ignore) {}
-                        apply();
-                      });
-                      apply();
                     })();
                     </script>
+                    </c:if>
                 </ul>
             </div>
         </nav>
