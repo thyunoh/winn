@@ -2522,6 +2522,37 @@
 		DELETE FROM TBL_QPS_HOLIDAY WHERE HOL_DT = #{holDt}
 	</delete>
 
+	<!-- ═══ 공통코드(QPS) 관리 (2026-09-02) — 스크립트로 넣은 TBL_CODE_DTL 'Q' 묶음(QPS_%)을 화면에서 관리 ═══
+	     ★코드값(SUB_CODE)은 작성분의 키라 못 바꾼다 — 이름·차례·사용 여부만. 지움 = USE_YN 'N'(작성분이 남는다).
+	     ★JOB_SEQ 1 고정 upsert — 시드와 같은 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식은 안 쓴다). -->
+	<select id="selectQpsCodeGroups" resultType="java.util.HashMap">
+		SELECT d.CODE_CD AS codecd,
+		       IFNULL((SELECT MAX(m.CODE_NM) FROM TBL_CODE_MST m WHERE m.CODE_CD = d.CODE_CD AND m.ACTION_YN = 'Y'), '') AS codenm,
+		       SUM(d.USE_YN = 'Y') AS cnt, COUNT(*) AS total
+		  FROM TBL_CODE_DTL d
+		 WHERE d.CODE_GB = 'Q' AND d.CODE_CD LIKE 'QPS\_%' AND d.ACTION_YN = 'Y'
+		 GROUP BY d.CODE_CD
+		 ORDER BY d.CODE_CD
+	</select>
+	<select id="selectQpsCodesAll" resultType="java.util.HashMap">
+		SELECT CODE_CD AS codecd, SUB_CODE AS subcode, RTRIM(SUB_CODE_NM) AS subcodenm,
+		       IFNULL(SORT, 99) AS sort, USE_YN AS useyn
+		  FROM TBL_CODE_DTL
+		 WHERE CODE_GB = 'Q' AND CODE_CD LIKE 'QPS\_%' AND ACTION_YN = 'Y'
+		 ORDER BY CODE_CD, IFNULL(SORT, 99), SUB_CODE
+	</select>
+	<insert id="saveQpsCode" parameterType="map">
+		INSERT INTO TBL_CODE_DTL (CODE_GB, CODE_CD, SUB_CODE, JOB_SEQ, SUB_CODE_NM, START_DT, END_DT, USE_YN, SORT, ACTION_YN, REG_USER)
+		VALUES ('Q', #{codeCd}, #{subCode}, 1, #{subCodeNm}, '20000101', '99991231', #{useYn}, #{sort}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE SUB_CODE_NM = VALUES(SUB_CODE_NM), SORT = VALUES(SORT), USE_YN = VALUES(USE_YN),
+		                        ACTION_YN = 'Y', UPD_USER = #{regUser}, UPD_DTTM = NOW()
+	</insert>
+	<insert id="saveQpsCodeGroup" parameterType="map">
+		INSERT INTO TBL_CODE_MST (CODE_CD, JOB_SEQ, CODE_NM, START_DT, END_DT, USE_YN, ACTION_YN, REG_USER)
+		VALUES (#{codeCd}, 1, #{codeNm}, '20000101', '99991231', 'Y', 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE CODE_NM = VALUES(CODE_NM), USE_YN = 'Y', ACTION_YN = 'Y', UPD_USER = #{regUser}, UPD_DTTM = NOW()
+	</insert>
+
 
 	<!-- 격리·강박 시행일지 원자료 — 19세 구분과 <시행 시간>을 자바가 센다 -->
 	<select id="selectSecLogDistRows" resultType="java.util.HashMap">

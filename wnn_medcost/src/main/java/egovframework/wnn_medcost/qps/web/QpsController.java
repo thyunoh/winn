@@ -486,6 +486,13 @@ public class QpsController {
 		return qpsScreen(request, model, ".main/qpsmgr/qpsHoliday");
 	}
 
+	/** 기준코드 › 공통코드(QPS) 관리(2026-09-02) — 스크립트로 넣은 TBL_CODE_DTL 'Q' 묶음(QPS_%)을 화면에서 관리.
+	 *  보는 것은 모두, 고치는 것은 위너넷만(codeSave/codeGrpSave 가 막는다). 메뉴 : QPS ▸ 관리(설정) ▸ 기준코드 ▸ 공통코드. */
+	@RequestMapping(value = "main/qpsCode.do")
+	public String qpsCode(HttpServletRequest request, ModelMap model) {
+		return qpsScreen(request, model, ".main/qpsmgr/qpsCode");
+	}
+
 	/**
 	 * 자료실 — 조직도·내규처럼 "문서라기보다 보관물"인 자료를 분류별로 모아 둔다.
 	 * 서식(회의록·계획서·라운딩)과 달리 본문 입력이 없다. 분류(QPS_LIB 코드)가 곧 첨부의 문서키다.
@@ -1268,6 +1275,70 @@ public class QpsController {
 			String dt = str(p.get("holDt"), "").replaceAll("[^0-9]", "");
 			if (!dt.matches("\\d{8}")) return fail(res, "날짜는 YYYYMMDD 8자리입니다.");
 			svc.deleteHoliday(dt);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 공통코드(QPS) 관리 (2026-09-02) ═══
+	   스크립트(시드)로 넣은 TBL_CODE_DTL 'Q' 묶음 31개(부서·분류·보고서 유형·불만고충·만족도·사고 세부유형·자료실 …)를
+	   화면에서 **이름·차례·사용 여부**만 고친다. 코드값은 작성분의 키라 못 바꾼다. 지움 = USE_YN 'N'.
+	   ⚠QPS 화면들은 selectQpsCodes(USE_YN='Y')를 그때그때 읽으므로 저장 즉시 반영된다. 사이드바 부서 줄은 sessionStorage 캐시라 다음 화면부터.
+	   ⚠주소는 `qcode*` — `/qps/codeList.do` 는 이미 다른 메서드(화면용 코드 조회)가 쓴다. 같은 주소면 Spring 이 기동 때 죽는다. */
+	@RequestMapping(value = "/qps/qcodeList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> qpsCodeList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("groups", svc.selectQpsCodeGroups());
+			res.put("rows", svc.selectQpsCodesAll());
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/qcodeSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> qpsCodeSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "공통코드 관리는 위너넷 담당자만 할 수 있습니다.");
+			String codeCd = str(p.get("codeCd"), "").trim().toUpperCase();
+			String subCode = unesc(p.get("subCode")).trim();
+			String nm = unesc(p.get("subCodeNm")).trim();
+			if (!codeCd.matches("QPS_[A-Z0-9_]{1,40}")) return fail(res, "묶음 코드는 QPS_ 로 시작하는 영문 대문자·숫자·_ 입니다.");
+			if (subCode.isEmpty() || subCode.length() > 50) return fail(res, "코드값은 1~50자입니다.");
+			if (nm.isEmpty()) return fail(res, "이름을 적어 주세요.");
+			if (nm.length() > 100) nm = nm.substring(0, 100);
+			Integer so = intOf(p.get("sort"));
+			Map<String, Object> m = new HashMap<>();
+			m.put("codeCd", codeCd); m.put("subCode", subCode); m.put("subCodeNm", nm);
+			m.put("sort", so == null ? Integer.valueOf(99) : so);
+			m.put("useYn", "N".equals(str(p.get("useYn"), "Y")) ? "N" : "Y");
+			m.put("regUser", userId(request));
+			svc.saveQpsCode(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/qcodeGrpSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> qpsCodeGrpSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "공통코드 관리는 위너넷 담당자만 할 수 있습니다.");
+			String codeCd = str(p.get("codeCd"), "").trim().toUpperCase();
+			String nm = unesc(p.get("codeNm")).trim();
+			if (!codeCd.matches("QPS_[A-Z0-9_]{1,40}")) return fail(res, "묶음 코드는 QPS_ 로 시작하는 영문 대문자·숫자·_ 입니다.");
+			if (nm.isEmpty()) return fail(res, "묶음 이름을 적어 주세요.");
+			if (nm.length() > 100) nm = nm.substring(0, 100);
+			Map<String, Object> m = new HashMap<>();
+			m.put("codeCd", codeCd); m.put("codeNm", nm); m.put("regUser", userId(request));
+			svc.saveQpsCodeGroup(m);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

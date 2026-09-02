@@ -1907,6 +1907,16 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public void deleteHoliday(String holDt) throws Exception { mapper.deleteHoliday(holDt); }
 
+	// ═══ 공통코드(QPS) 관리 (2026-09-02) — 스크립트로 넣은 'Q' 묶음을 화면에서 이름·차례·사용 여부만 고친다 ═══
+	@Override
+	public List<Map<String, Object>> selectQpsCodeGroups() throws Exception { return mapper.selectQpsCodeGroups(); }
+	@Override
+	public List<Map<String, Object>> selectQpsCodesAll() throws Exception { return mapper.selectQpsCodesAll(); }
+	@Override
+	public void saveQpsCode(Map<String, Object> param) throws Exception { mapper.saveQpsCode(param); }
+	@Override
+	public void saveQpsCodeGroup(Map<String, Object> param) throws Exception { mapper.saveQpsCodeGroup(param); }
+
 	@Override
 	public Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception {
 		Map<String, Object> out = new LinkedHashMap<>(selectChkFormOne(hospCd, formId));

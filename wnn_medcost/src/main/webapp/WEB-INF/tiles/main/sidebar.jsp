@@ -189,183 +189,81 @@
                                     <span id="qpsMenuQCnt" style="font-size:11px; color:#8a99a3; margin-left:4px;"></span>
                                 </li>
 
-                                <%-- ── QI (원본 6종) — 통째로 미구현. 링크를 걸면 404 라 안내만 둔다 ── --%>
+                                <%-- ═══ QPS 메뉴 배열 (2026-09-02 사용자 지시 「업무별로 직관적으로 — 관리(설정) · 담당자별 업무(부서별 업무 순서)」) ═══
+                                     ★차례 = 한 해 일의 흐름 : 계획·위원회 → 지표·분석 → 환자안전 활동 → QI → 환자 의견(만족도·불만) → 보고서·서식
+                                       → 점검표 작성 → **담당자별 업무**(부서마다 점검표·서식·위원회·기록을 하는 차례대로) → **관리(설정)** → 자료·안내.
+                                     ★같은 화면이 두 자리에 걸릴 때(부서 묶음의 서식·시행일지)는 주소에 `d=부서` 를 붙여 **강조 중복을 막는다**
+                                       (강조 스크립트가 쿼리까지 같은 링크만 잡는다. 서버는 모르는 파라미터를 무시한다).
+                                     ★부서 위원회는 그 부서 묶음으로 갔다(약사→약국 · 영양관리→영양 · 소방→시설 · 인사→원무·총무). 다학제·운영위·중독은 계획·위원회에.
+                                     ★감염 그룹은 「담당자별 업무 ▸ 감염관리」 로 갔다 — 항목 이름은 그대로라 메뉴 검색으로 찾힌다.
+                                     ★id 는 그대로 : qpsChkUseMenu·qpsChkFormMenu·qpsDeptFormMenu·qpsDeptCateMenu·qpsUserDeptMenu(위너넷 게이트 스크립트) ·
+                                       qps-g-dept·qps-dept-list(부서 자동 가림 스크립트 — 이제 줄을 다시 그리지 않고 서식 없는 부서의 점검표 줄만 감춘다). --%>
+
+                                <%-- ── 1. 계획 · 위원회 ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-qi" aria-controls="qps-g-qi"
-                                       style="font-weight:600;">▸ QI</a>
-                                    <div id="qps-g-qi" class="collapse submenu" style="background-color:#fff;">
+                                       aria-expanded="false" data-target="#qps-g-plan" aria-controls="qps-g-plan"
+                                       style="font-weight:600;">▸ 계획 · 위원회</a>
+                                    <div id="qps-g-plan" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiPlan.do">QI 계획서</a></li>
-                                            <%-- QI 회의록 — 서식 1호(회의록)에 구분 J 로 흡수했다. 주제·차수는 회의명에 적는다 --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=J">QI 회의록</a></li>
-                                            <%-- 중간·최종보고서는 한 화면이다(최종이 중간의 상위집합) --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiRpt.do">QI 중간·최종보고서</a></li>
-                                            <%-- 주제선정 기준표 + 우선순위 집계표 = 한 화면 두 탭.
-                                                 원본의 (전년도)/(당해년도)는 연도 셀렉트로 덮인다 --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiTopic.do">QI 주제선정 · 우선순위</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiFund.do">활동 자원지원 내역</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPlan.do">연간 활동계획서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do">QPS 위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=M">다학제 평가팀</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=K">다학제(개최)</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=W">운영위원회</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=C">중독연구소 운영위</a></li>
                                         </ul>
                                     </div>
                                 </li>
 
-                                <%-- ── QPS (원본 8종) ── --%>
+                                <%-- ── 2. 지표 · 분석 ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-qps" aria-controls="qps-g-qps"
-                                       style="font-weight:600;">▸ QPS</a>
-                                    <div id="qps-g-qps" class="collapse submenu" style="background-color:#fff;">
+                                       aria-expanded="false" data-target="#qps-g-indi" aria-controls="qps-g-indi"
+                                       style="font-weight:600;">▸ 지표 · 분석</a>
+                                    <div id="qps-g-indi" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPlan.do">연간 활동계획서</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do">QPS 위원회</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsIndex.do">지표 현황</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRpt.do">지표분석목록</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsDef.do">지표정의서</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+
+                                <%-- ── 3. 환자안전 활동 ── --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-safe" aria-controls="qps-g-safe"
+                                       style="font-weight:600;">▸ 환자안전 활동</a>
+                                    <div id="qps-g-safe" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRound.do">환자안전관리 라운딩 점검표</a></li>
-                                            <%-- 격리·강박 시행일지(2026-08-18) — ★지표 ISOLATION/SECLUSION 의 <원천 대장>이다.
-                                                 저장하면 그 달 준수율 집계가 함께 갱신된다. 이 자료 없이는 지표가 빈 표다. --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSecLog.do">격리 · 강박 시행일지</a></li>
-                                            <%-- RCA — 근본원인 분석 보고서. 회의록은 서식 1호에 구분 R 로 흡수 --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRca.do">RCA 근본원인 분석</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=R">RCA 회의록</a></li>
-                                            <%-- FMEA — 계획서·보고서가 한 화면(문서구분). 회의록은 서식 1호에 구분 F 로 흡수 --%>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFmea.do">FMEA 계획서·보고서</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=F">FMEA 회의록</a></li>
                                         </ul>
                                     </div>
                                 </li>
 
-                                <%-- ── 감염 (원본 10종 — 전부 커버됨) ──
-                                     계획서·위원회·라운딩은 QPS 와 같은 화면이고 구분(FORM_GB)만 I 다. --%>
+                                <%-- ── 4. QI ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-inf" aria-controls="qps-g-inf"
-                                       style="font-weight:600;">▸ 감염</a>
-                                    <div id="qps-g-inf" class="collapse submenu" style="background-color:#fff;">
+                                       aria-expanded="false" data-target="#qps-g-qi" aria-controls="qps-g-qi"
+                                       style="font-weight:600;">▸ QI</a>
+                                    <div id="qps-g-qi" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPlan.do?gb=I">감염관리계획서</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=I">감염관리위원회</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRound.do?gb=I">감염라운딩</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=INFEXP">직원감염노출사고분석보고서</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=HANDWASH">손위생수행률</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=UTI">요로감염</a></li>
-                                            <%-- 유치도뇨관 월별 기록지(2026-08-18) — ★바로 위 요로감염 지표의 <분모>다.
-                                                 보유 환자 수의 월 합계가 유치도뇨관 일수(device-day)로 넘어간다. --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCathDay.do">유치도뇨관 월별 기록지</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRisk.do">감염관리 우선순위 사정 도구</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfStaff.do">감염관리 전담자(담당)</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfPat.do">감염병환자</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRpt.do">감염종합보고</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiTopic.do">QI 주제선정 · 우선순위</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiPlan.do">QI 계획서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=J">QI 회의록</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiRpt.do">QI 중간·최종보고서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsQiFund.do">활동 자원지원 내역</a></li>
                                         </ul>
                                     </div>
                                 </li>
 
-                                <%-- ── 부서별 점검표 (2026-08-15 — 담당자 위주 직관 메뉴) ──────
-                                     ★담당자가 제 부서를 눌러 바로 제 점검표로 들어간다.
-                                     화면은 전부 qpsChk 하나 — dept 파라미터가 부서 셀렉트를 미리 골라 준다.
-                                     ⚠부서코드는 QPS_CHK_DEPT 공통코드와 같아야 한다(모르는 값이면 전체로 열림).
-                                     주소가 서로 달라(쿼리 상이) 강조 중복 함정 없음.
-                                     ★★***점검표가 <있는> 부서만 건다*** (2026-08-15 점검에서 잡음) —
-                                       부서 코드 15개 중 **감염관리·진료는 그 부서 점검표가 0종**이다
-                                       (감염관리는 전용 화면 묶음으로 구현됐고, 진료 3종은 safeRpt·중복 제외로 갔다).
-                                       ⚠빈 화면이 나오는 게 아니라 **공통 서식(MSDS 2종)만** 뜬다(실측) —
-                                         담당자가 「우리 부서 점검표는 이것뿐인가」로 잘못 읽는다. 그래서 뺐다.
-                                     ★★[2026-08-18] ***손으로 줄을 더하고 빼는 일을 없앴다*** —
-                                       `qps/deptMenu.do` 가 **서식이 있는 부서만** 돌려주고 아래 스크립트가 다시 그린다.
-                                       (실제로 08-15 에 손으로 지운 감염관리가 08-18 에 서식이 생겨 다시 넣어야 했다.)
-                                       ***아래 하드코딩 줄은 폴백이니 지우지 말 것.*** --%>
-                                <%-- ★★[2026-08-18 사용자 지시] ***중복 메뉴라 감춘다.***
-                                     이 14줄은 전부 `qpsChk.do?dept=코드` — **[점검표 작성]과 같은 화면**이고,
-                                     그 화면에도 부서 셀렉트가 있다. 게다가 [우리 병원 사용 서식]이 **부서 축**으로 바뀌어
-                                     「부서별로 고른다」는 그쪽에서 한다. ⇒ 메뉴만 길어지고 하는 일이 겹친다.
-                                     ★***지우지 않고 감췄다*** — 줄과 자동 채우기(deptMenu)는 그대로다.
-                                       되살리려면 아래 li 의 `style="display:none;"` 한 군데만 지우면 된다. --%>
-                                <li class="nav-item" id="qps-g-dept-li" style="display:none;">
-                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-dept" aria-controls="qps-g-dept"
-                                       style="font-weight:600;">▸ 부서별 점검표</a>
-                                    <div id="qps-g-dept" class="collapse submenu" style="background-color:#fff;">
-                                        <%-- ★[2026-08-18] 이 줄들은 **자료에서 다시 그려진다**(qpsDeptMenu 아래 스크립트).
-                                             아래 하드코딩은 ***폴백***이다 — 조회를 못 하면 이 줄이 그대로 보인다.
-                                             ⚠지우지 말 것. 메뉴가 통째로 비면 업무가 멈춘다. --%>
-                                        <ul class="nav flex-column" id="qps-dept-list">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NURSE">간호 · 병동</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=PHARM">약국</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NUTRI">영양</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=FACIL">시설</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=LAB">진단검사</a></li>
-                                            <%-- 감염관리 : 점검표 0종 — [QPS] 그룹의 감염관리 묶음이 전용 화면이다 --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=HEALTH">보건관리자</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=ADMIN">원무 · 총무</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RENAL">인공신장</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=MEDREC">의무기록</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RADIO">방사선</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=REHAB">물리재활</a></li>
-                                            <%-- 진료 : 점검표 0종 — DR01 은 당직일지(중복 제외), DR02·03 은 [보고서·서식]의 영양상담 --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=SOCIAL">사회복지</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=COMMON">공통</a></li>
-                                        </ul>
-                                    </div>
-                                </li>
-
-                                <%-- ── 부서 위원회 (2026-08-12) ──────────────────────────────
-                                     ★***회의록은 화면 하나다.*** 약사·영양관리·소방안전관리 회의록이
-                                     우리 회의록 화면과 **판박이**라 구분(FORM_GB)만 다르다 —
-                                     ***새 화면이 아니라 링크 세 줄이 전부다***
-                                     (약국 판정 §3-2 · 영양 판정 §1-4 · 시설 판정 §5).
-                                     ⚠조직도·내규는 여기가 아니다 — **그림·자유 문서**라 자료실로 간다. --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-cmt" aria-controls="qps-g-cmt"
-                                       style="font-weight:600;">▸ 부서 위원회</a>
-                                    <div id="qps-g-cmt" class="collapse submenu" style="background-color:#fff;">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=P">약사위원회</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=N">영양관리위원회</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=S">소방안전관리위원회</a></li>
-                                            <%-- ★다학제 평가팀(2026-08-13) — 간호/병동 캡처 246·248(정기/임시=M)·292(개최에 따른=K).
-                                                 K 는 원본에만 있는 「격리 및 강박 시행시간」 칸이 있다(SEC_TIME). --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=M">다학제 평가팀</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=K">다학제(개최)</a></li>
-                                            <%-- ★원무총무 3형제(2026-08-14) — w01~06 운영위 여섯 판이 한 판(월은 회의 일시가 담는다).
-                                                 ⚠인사위원회 gb=H — 'P' 는 약사위원회가 먼저 쓴다(코드 충돌 정정 이력). --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=W">운영위원회</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=C">중독연구소 운영위</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=H">인사위원회</a></li>
-                                        </ul>
-                                    </div>
-                                </li>
-
-                                <%-- ── 보고서 (원본 11종) — 미구현. 다음 작업 후보 1순위 ── --%>
-                                <li class="nav-item">
-                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-rpt" aria-controls="qps-g-rpt"
-                                       style="font-weight:600;">▸ 보고서 · 서식</a>
-                                    <div id="qps-g-rpt" class="collapse submenu" style="background-color:#fff;">
-                                        <ul class="nav flex-column">
-                                            <%-- 사고 유형별 보고서 — 한 화면 + 유형(체크 묶음은 항목표에서 온다)
-                                                 ★계열 링크(2026-08-15) — gb 파라미터가 유형 셀렉트를 미리 골라 준다.
-                                                 유형 70종을 담당자가 계열로 찾아 들어가게(셀렉트 안에서도 같은 계열로 묶임). --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 · 안전 보고서</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=EDURPT">교육 · 보건관리 서식</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RULEDRF">인사 · 원무 · 총무 서식</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=MRPROXY">의무기록 · 정보보호 서식</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=NUTREQ">영양 · 사회복지 서식</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RPTBHEP">검진 · 접종 결과보고서</a></li>
-                                            <%-- ★원본은 이 폴더에도 「환자안전관리 라운딩 점검표」를 두지만 링크를 또 걸지 않는다.
-                                                 QPS 그룹의 그것과 <같은 문서>이고, 같은 주소를 두 번 걸면
-                                                 사이드바 강조가 뒤 링크에 붙는 함정이 있다(2026-08-09 실제로 겪음). --%>
-                                            <li class="nav-item">
-                                                <span class="nav-item nav-link" style="color:#a8b4bb; font-size:12px; cursor:default;">
-                                                    ※ 환자안전관리 라운딩 점검표는 [QPS] 그룹에 있습니다
-                                                </span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </li>
-
-                                <%-- ── 환자만족도 조사 (원본 6종 → 우리 화면 3개) ──
-                                     안내문은 조사 계획서 화면의 카드, 조사결과·지표분석 보고서는 설문 화면의 인쇄다. --%>
+                                <%-- ── 5. 환자 의견 — 만족도 조사 · 불만고충 ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
                                        aria-expanded="false" data-target="#qps-g-srv" aria-controls="qps-g-srv"
@@ -378,9 +276,6 @@
                                         </ul>
                                     </div>
                                 </li>
-
-                                <%-- ── 불만고충 (원본 3종 → 우리 화면 3개) ──
-                                     처리대장과 개선활동처리결과는 목록↔상세라 한 화면 두 탭이다. --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
                                        aria-expanded="false" data-target="#qps-g-cmpl" aria-controls="qps-g-cmpl"
@@ -394,70 +289,179 @@
                                     </div>
                                 </li>
 
-                                <%-- ── 점검표 (2차 — 간호/병동·약국·영양·시설 공용 엔진) ──
-                                     ★서식은 코드가 아니라 데이터다. 새 점검표는 [서식 관리]에서 등록한다.
-                                     ★[서식 관리]는 위너넷 전용 — 아래 스크립트가 s_wnn_yn='Y' 일 때만 보인다.
-                                       (컨트롤러에서도 막는다. 주소를 직접 쳐도 병원 계정은 작성 화면으로 간다.) --%>
+                                <%-- ── 6. 보고서 · 서식 (계열별 — 유형 셀렉트를 그 계열로 미리 고른다) ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-chk" aria-controls="qps-g-chk"
-                                       style="font-weight:600;">▸ 점검표</a>
-                                    <div id="qps-g-chk" class="collapse submenu" style="background-color:#fff;">
+                                       aria-expanded="false" data-target="#qps-g-rpt" aria-controls="qps-g-rpt"
+                                       style="font-weight:600;">▸ 보고서 · 서식</a>
+                                    <div id="qps-g-rpt" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do">점검표 작성</a></li>
-                                            <%-- 우리 병원 사용 서식 — ★[2026-08-18 저녁 사용자 확정] ***우리가 정한다.***
-                                                 병원에게는 안 보인다(스스로 고르지 않는다) ⇒ **위너넷 전용**으로 돌렸다.
-                                                 위너넷이 [기본 설정] 또는 병원코드로 **대신** 켠다.
-                                                 ★되살리려면(병원도 고르게 하려면) : 아래 li 의 id·display 를 지우고
-                                                   아래 위너넷 블록의 qpsChkUseMenu 두 줄, 그리고
-                                                   QpsController.qpsChkUse 의 isWnn 게이트를 함께 뺀다. --%>
-                                            <li class="nav-item" id="qpsChkUseMenu" style="display:none;">
-                                                <a class="nav-item nav-link" href="/main/qpsChkUse.do">우리 병원 사용 서식 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
-                                            <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
-                                                <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
-                                            <%-- 부서별 양식(2026-08-18) — ★서식 관리는 한 서식의 모든 칸을 다뤄
-                                                 「어느 양식이 어느 부서 것인가」가 한눈에 안 들어온다(사용자).
-                                                 그것만 보는 자리. 공통 서식을 고치므로 위너넷 전용이다. --%>
-                                            <li class="nav-item" id="qpsDeptFormMenu" style="display:none;">
-                                                <a class="nav-item nav-link" href="/main/qpsDeptForm.do">부서별 양식 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
-                                            <%-- 부서별 쓰는 분류(2026-08-18) — 서식을 만들 때 고를 분류를 부서마다 정해 둔다.
-                                                 ★정한 것이 없는 부서는 전 분류(막는 장치가 아니라 좁혀 주는 장치).
-                                                 서식 관리와 같은 갈래라 **위너넷 전용**이다(서버도 막는다). --%>
-                                            <%-- ★[2026-08-18] ***메뉴 줄을 뺐다 — 중복이다.***
-                                                 이 화면은 **서식을 만들 때** 쓰는 규칙이라 들어가는 길이
-                                                 [서식 관리] 분류 칸 옆의 **[부서별 분류 정하기]** 링크로 이미 있다.
-                                                 (화면·주소 `main/qpsDeptCate.do` 는 그대로 살아 있다.) --%>
-                                            <li class="nav-item" id="qpsDeptCateMenu" style="display:none;" hidden>
-                                                <a class="nav-item nav-link" href="/main/qpsDeptCate.do">부서별 쓰는 분류 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
-                                            <%-- ★사용자별 담당 부서(2026-08-15) — 담당자가 제 부서 서식만 보게 한다.
-                                                 ***등록이 없으면 전 부서*** 라 안 써도 지금과 똑같이 돈다. --%>
-                                            <%-- ★[2026-08-18 저녁] 설정 화면이라 **위너넷 전용**으로 돌렸다
-                                                 (「병원은 설정 못 한다 — 전산 요원이 없어서」).
-                                                 병원 담당자에게는 [점검표 작성] 하나만 남는다. --%>
-                                            <li class="nav-item" id="qpsUserDeptMenu" style="display:none;">
-                                                <a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 · 안전 보고서</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=EDURPT">교육 · 보건관리 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RULEDRF">인사 · 원무 · 총무 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=MRPROXY">의무기록 · 정보보호 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=NUTREQ">영양 · 사회복지 서식</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RPTBHEP">검진 · 접종 결과보고서</a></li>
                                         </ul>
                                     </div>
                                 </li>
 
-                                <%-- ── 공통 — 원본에 없는 우리 화면 ── --%>
+                                <%-- ── 7. 점검표 작성 — 가장 많이 여는 줄이라 그룹 밖에 바로 둔다 ── --%>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do" style="font-weight:600;">▸ 점검표 작성</a></li>
+
+                                <%-- ── 8. 담당자별 업무 — 부서마다 「점검표 → 서식 → 위원회 → 기록」 차례. ★부서 묶음 id = qps-d-부서코드(QPS_CHK_DEPT) ──
+                                     ★`qps-dept-list` 의 li[data-dept] 는 아래 스크립트(qpsDeptMenu)가 **서식 없는 부서의 점검표 줄만** 감춘다.
+                                       다른 줄(서식·위원회)이 남는 부서는 묶음이 그대로 있고, 점검표 줄만 없던 진료 같은 부서는 묶음째 감춰진다. --%>
+                                <li class="nav-item" id="qps-g-dept-li">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-dept" aria-controls="qps-g-dept"
+                                       style="font-weight:600;">▸ 담당자별 업무</a>
+                                    <div id="qps-g-dept" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column" id="qps-dept-list">
+                                            <li class="nav-item" data-dept="NURSE">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-NURSE" aria-controls="qps-d-NURSE">간호 · 병동</a>
+                                                <div id="qps-d-NURSE" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NURSE">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?d=NURSE">사고 · 안전 보고서</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSecLog.do?d=NURSE">격리 · 강박 시행일지</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCathDay.do?d=NURSE">유치도뇨관 월별 기록지</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="PHARM">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-PHARM" aria-controls="qps-d-PHARM">약국</a>
+                                                <div id="qps-d-PHARM" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=PHARM">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=DRUGRTN&amp;d=PHARM">의약품 · 혈액 서식</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=P">약사위원회</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="NUTRI">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-NUTRI" aria-controls="qps-d-NUTRI">영양</a>
+                                                <div id="qps-d-NUTRI" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=NUTRI">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=NUTREQ&amp;d=NUTRI">영양 서식(상담 의뢰·기록)</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=N">영양관리위원회</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="FACIL">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-FACIL" aria-controls="qps-d-FACIL">시설</a>
+                                                <div id="qps-d-FACIL" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=FACIL">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=S">소방안전관리위원회</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="LAB">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-LAB" aria-controls="qps-d-LAB">진단검사</a>
+                                                <div id="qps-d-LAB" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=LAB">점검표 작성</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="INFECT">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-INFECT" aria-controls="qps-d-INFECT">감염관리</a>
+                                                <div id="qps-d-INFECT" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=INFECT">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPlan.do?gb=I">감염관리계획서</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=I">감염관리위원회</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRound.do?gb=I">감염라운딩</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRisk.do">감염관리 우선순위 사정 도구</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfStaff.do">감염관리 전담자(담당)</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfPat.do">감염병환자</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCathDay.do">유치도뇨관 월별 기록지</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=INFEXP">직원감염노출사고분석보고서</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=HANDWASH">손위생수행률</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsFall.do?indi=UTI">요로감염</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsInfRpt.do">감염종합보고</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="HEALTH">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-HEALTH" aria-controls="qps-d-HEALTH">보건관리자</a>
+                                                <div id="qps-d-HEALTH" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=HEALTH">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=EDURPT&amp;d=HEALTH">교육 · 보건관리 서식</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RPTBHEP&amp;d=HEALTH">검진 · 접종 결과보고서</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="ADMIN">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-ADMIN" aria-controls="qps-d-ADMIN">원무 · 총무</a>
+                                                <div id="qps-d-ADMIN" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=ADMIN">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RULEDRF&amp;d=ADMIN">인사 · 원무 · 총무 서식</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsMinutes.do?gb=H">인사위원회</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="RENAL">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-RENAL" aria-controls="qps-d-RENAL">인공신장</a>
+                                                <div id="qps-d-RENAL" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RENAL">점검표 작성</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="MEDREC">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-MEDREC" aria-controls="qps-d-MEDREC">의무기록</a>
+                                                <div id="qps-d-MEDREC" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=MEDREC">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=MRPROXY&amp;d=MEDREC">의무기록 · 정보보호 서식</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="RADIO">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-RADIO" aria-controls="qps-d-RADIO">방사선</a>
+                                                <div id="qps-d-RADIO" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=RADIO">점검표 작성</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="REHAB">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-REHAB" aria-controls="qps-d-REHAB">물리재활</a>
+                                                <div id="qps-d-REHAB" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=REHAB">점검표 작성</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="CLINIC">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-CLINIC" aria-controls="qps-d-CLINIC">진료</a>
+                                                <div id="qps-d-CLINIC" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=CLINIC">점검표 작성</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="SOCIAL">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-SOCIAL" aria-controls="qps-d-SOCIAL">사회복지</a>
+                                                <div id="qps-d-SOCIAL" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=SOCIAL">점검표 작성</a></li>
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=NUTREQ&amp;d=SOCIAL">사회복지 서식(사회사업·후원·봉사)</a></li>
+                                                </ul></div>
+                                            </li>
+                                            <li class="nav-item" data-dept="COMMON">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false" data-target="#qps-d-COMMON" aria-controls="qps-d-COMMON">공통</a>
+                                                <div id="qps-d-COMMON" class="collapse submenu" style="background-color:#fff;"><ul class="nav flex-column">
+                                                    <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=COMMON">점검표 작성(공통 서식)</a></li>
+                                                </ul></div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+
+                                <%-- ── 9. 관리 (설정) — 위너넷 담당자 몫. id 는 위너넷 게이트 스크립트가 쓰는 것 그대로 ── --%>
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
-                                       aria-expanded="false" data-target="#qps-g-etc" aria-controls="qps-g-etc"
-                                       style="font-weight:600;">▸ 공통</a>
-                                    <div id="qps-g-etc" class="collapse submenu" style="background-color:#fff;">
+                                       aria-expanded="false" data-target="#qps-g-adm" aria-controls="qps-g-adm"
+                                       style="font-weight:600;">▸ 관리 (설정)</a>
+                                    <div id="qps-g-adm" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a></li>
-                                            <%-- 기준코드(2026-09-02 사용자 지시 「QPS 공통에 기준코드로 공휴일 관리 서브로」) —
-                                                 점검표 엔진이 쓰는 **전 병원 공용 기준값**. 첫 항목 = 공휴일(SUNWOO t_holiday 대응 :
-                                                 전체 O · 일괄 서명의 휴일 제외, 날짜 머리글 색). 보는 것은 모두, 등록·삭제는 위너넷만(서버가 막는다).
-                                                 작성 화면 툴바의 「공휴일 관리 →」는 이 화면으로 오는 바로가기다(중복 화면 아님). --%>
+                                            <li class="nav-item" id="qpsChkUseMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsChkUse.do">우리 병원 사용 서식 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <li class="nav-item" id="qpsDeptFormMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsDeptForm.do">부서별 양식 · 복제 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- 부서별 쓰는 분류 — 서식 관리 안의 [부서별 분류 정하기] 링크로 가므로 메뉴는 감춘다(08-18 중복 제거) --%>
+                                            <li class="nav-item" id="qpsDeptCateMenu" style="display:none;" hidden>
+                                                <a class="nav-item nav-link" href="/main/qpsDeptCate.do">부서별 쓰는 분류 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <li class="nav-item" id="qpsUserDeptMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- 기준코드 — 전 병원 공용 기준값. 보는 것은 모두, 등록·삭제는 위너넷만(서버가 막는다) --%>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false"
                                                    data-target="#qps-g-code" aria-controls="qps-g-code">기준코드</a>
                                                 <div id="qps-g-code" class="collapse submenu" style="background-color:#fff;">
                                                     <ul class="nav flex-column">
+                                                        <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCode.do">공통코드</a></li>
                                                         <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHoliday.do">공휴일 관리</a></li>
                                                     </ul>
                                                 </div>
@@ -466,6 +470,18 @@
                                     </div>
                                 </li>
 
+                                <%-- ── 10. 자료 · 안내 ── --%>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#qps-g-etc" aria-controls="qps-g-etc"
+                                       style="font-weight:600;">▸ 자료 · 안내</a>
+                                    <div id="qps-g-etc" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
                             </ul>
                         </div>
                     </li>
@@ -2653,20 +2669,23 @@ $(document).ready(function() {
 (function(){
   var KEY = 'qpsDeptMenu', done = false;
 
+  /* ★[2026-09-02] 줄을 다시 그리지 않는다 — 「담당자별 업무」 묶음(점검표·서식·위원회·기록)이 JSP 에 있다.
+       자료(이 병원이 쓰는 서식 + 담당 부서)에 없는 부서는 **점검표 줄만** 감추고, 그래서 줄이 하나도 안 남는 부서는 묶음째 감춘다.
+       이름은 JSP 것을 쓴다. 빈 목록이면 아무것도 안 한다(전 부서 보임). */
   function paint(menu){
     var ul = document.getElementById('qps-dept-list');
-    if (!ul || !menu || !menu.length) return;              // ★빈 목록이면 폴백을 남긴다
-    var h = '';
-    for (var i = 0; i < menu.length; i++) {
-      var m = menu[i];
-      var cd = String(m.cd || '').replace(/[^A-Z0-9_]/g, '');   // 주소에 들어가는 값 — 아는 모양만
-      var nm = String(m.nm || cd).replace(/[&<>"]/g, function(c){
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; });
-      if (!cd) continue;
-      h += '<li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do?dept=' + cd + '">'
-         + nm + '</a></li>';
-    }
-    if (h) ul.innerHTML = h;
+    if (!ul || !menu || !menu.length) return;
+    var on = {};
+    for (var i = 0; i < menu.length; i++) on[String(menu[i].cd || '').replace(/[^A-Z0-9_]/g, '')] = true;
+    [].forEach.call(ul.querySelectorAll('li[data-dept]'), function(li){
+      var cd = li.getAttribute('data-dept'), keep = !!on[cd] || cd === 'COMMON';
+      var chk = li.querySelector('a[href^="/main/qpsChk.do?dept="]'), chkLi = chk && chk.closest('li');
+      if (chkLi) chkLi.style.display = keep ? '' : 'none';
+      var left = [].filter.call(li.querySelectorAll('a.nav-link[href]'), function(a){
+        return a.getAttribute('href') !== '#' && a.closest('li').style.display !== 'none';
+      });
+      li.style.display = left.length ? '' : 'none';
+    });
   }
 
   function load(){

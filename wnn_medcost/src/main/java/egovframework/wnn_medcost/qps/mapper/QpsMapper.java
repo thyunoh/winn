@@ -401,6 +401,11 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectHolidays(@Param("year") String year);
 	int saveHoliday(Map<String, Object> param);
 	int deleteHoliday(@Param("holDt") String holDt);
+	/** 공통코드(QPS) 관리(2026-09-02) — 'Q' 묶음 QPS_% : 묶음 목록(이름·건수) / 세부 전체(안 쓰는 것 포함) / 세부 upsert / 묶음 이름 upsert */
+	List<Map<String, Object>> selectQpsCodeGroups();
+	List<Map<String, Object>> selectQpsCodesAll();
+	int saveQpsCode(Map<String, Object> param);
+	int saveQpsCodeGroup(Map<String, Object> param);
 
 	List<Map<String, Object>> selectChkDocList(@Param("hospCd") String hospCd, @Param("formId") String formId,
 	                                           @Param("inYear") String inYear);
