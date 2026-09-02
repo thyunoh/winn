@@ -95,7 +95,7 @@ INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,CARRY
  -- RN02 낙상예방
  ('RNL006','*',1,'낙상예방 지침 게시물',NULL,'CHECK','N','Y'),
  ('RNL006','*',2,'낙상주의 표시판',NULL,'CHECK','N','Y'),
- ('RNL006','*',3,'침대 부속물(SIDE RAIL, 바퀴잠금장치)',NULL,'CHECK','N','Y'),
+ ('RNL006','*',3,'침대 부속물 점검 (SIDE RAIL 작동여부, 바퀴잠금장치 작동여부)',NULL,'CHECK','N','Y'),   -- 2026-09-02 원본(KIDNEY_Chart_002) 대조 : 두 줄 라벨 그대로
  ('RNL006','*',4,'침대 주변 정리',NULL,'CHECK','N','Y'),
  ('RNL006','*',5,'바닥 점검(복도포함)',NULL,'CHECK','N','Y'),
  ('RNL006','*',6,'조명확인',NULL,'CHECK','N','Y'),
@@ -203,7 +203,7 @@ INSERT INTO TBL_QPS_CHK_FORM
  (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, POST_COLS, DESC_NM,
   GUIDE_TXT, SIGNER_YN, NOTE_YN, FIX_YN, FOOT_TXT, SORT_NO, USE_YN, REG_USER) VALUES
  ('RNL019','*','낙상 시설, 환경 관리일지(인공신장)','SAFE','RENAL','ITEM_MONTH','Y','비고',NULL,
-  NULL,'N','N','N',NULL,1690,'Y','system'),
+  NULL,'Y','N','N',NULL,1690,'Y','system'),   -- SIGNER_YN Y : 원본은 담당자서명(간호)·(원무) 두 줄(2026-09-02 원본 대조)
  ('RNL020','*','응급카트(키트) 의약품 관리대장(AKU)','DRUG','RENAL','ITEM_MONTH','Y','유효기간,용량,수량',NULL,
   NULL,'N','N','N','병동 월 1회 · 약제과 분기 1회 점검 / 사용 후 반드시 채워 넣을 것 / 유효기간·수량·봉인 상태를 확인할 것',1700,'Y','system'),
  ('RNL021','*','응급키트 물품 점검대장(인공신장)','DRUG','RENAL','ITEM_MONTH','Y','수량',NULL,
@@ -212,22 +212,26 @@ INSERT INTO TBL_QPS_CHK_FORM
   'AAMI 허용기준 — 배양 <100CFU/ml · 내독소 <0.25EU/ml','N','N','N',
   '배양 월 1회 · 내독소 3개월 1회 · 미세물질 년 1회',1720,'Y','system');
 INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,DESC_TXT,INPUT_GB,CARRY_YN,USE_YN) VALUES
- -- RN03 낙상 시설·환경 관리일지 (15항목)
- ('RNL019','*', 1,'복도·계단 손잡이 상태'      ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 2,'바닥 미끄럼 방지 상태'      ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 3,'조명 밝기 확인'             ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 4,'침대 바퀴 잠금장치'         ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 5,'침대 SIDE RAIL 상태'        ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 6,'화장실 손잡이·비상벨'       ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 7,'샤워실 미끄럼 방지 매트'    ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 8,'휠체어·이동기구 상태'       ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*', 9,'문턱·단차 표시'             ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*',10,'낙상주의 표시판 부착'       ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*',11,'복도 장애물 정리'           ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*',12,'환자 이동 통로 확보'        ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*',13,'투석 의자·베드 고정 상태'   ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*',14,'응급 호출벨 작동'           ,NULL,NULL,'CHECK','N','Y'),
- ('RNL019','*',15,'낙상 예방 게시물 비치'      ,NULL,NULL,'CHECK','N','Y'),
+ -- RN03 낙상 시설·환경 관리일지 (14항목)
+ -- ★2026-09-02 델파이 원본(KIDNEY_Chart_003 「낙상환경,시설관리일지(인공신장)」) 대조로 **항목을 통째로 바꿨다.**
+ --   08-14 의 15항목(「복도·계단 손잡이 상태」「투석 의자·베드 고정 상태」…)은 원본 어디에도 없는 문장이었다 —
+ --   캡처 없이 이름만 보고 지어 넣은 것. 아래 14줄이 원본 라벨 그대로(원본 겹공백 보존 · 두 줄 라벨은 한 줄로).
+ --   묶음 「시설 점검」은 원본의 왼쪽 세로 띠. 원본은 담당자서명(간호)·(원무) 두 줄이라 SIGNER_YN 을 Y 로(사인 행 하나로 갈음).
+ --   운영 반영 = QPS_SEED_FIX_DFM_2026-09-02.sql
+ ('RNL019','*', 1,'침대바퀴,잠금장치,siderail  작동 확인'            ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 2,'휠체어 바퀴,잠금장치 확인'                        ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 3,'이동침대 바퀴,잠금 확인'                          ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 4,'위험요소 제거'                                    ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 5,'호출벨 부착,작동여부 확인'                        ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 6,'환자경로 바닥턱 확인'                             ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 7,'침상 주변 정리 여부확인 (부속기구,전기코드나 환자의 부착물등)','시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 8,'미끄럼 방지 테이프 부착 여부 확인'                ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*', 9,'낙상주의 표지판 부착 여부 확인'                   ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*',10,'휠체어 방향 전환 안내 표지판 부착 여부 확인'      ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*',11,'통로 불필요한 환경 위험요소 물건 제거'            ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*',12,'바닥 물기, 미끄러운용액 있는지 확인'              ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*',13,'조명밝기확인 (낮:밝게/야간:어둡지않게)'           ,'시설 점검',NULL,'CHECK','N','Y'),
+ ('RNL019','*',14,'복도 및 계단 안전바 점검'                         ,'시설 점검',NULL,'CHECK','N','Y'),
  -- RN06 응급카트 의약품 (프리셋 14 — 용량·수량은 문서 값)
  ('RNL020','*', 1,'Epinephrine'      ,'경구/주사',NULL,'CHECK','N','Y'),
  ('RNL020','*', 2,'Atrohine'         ,'경구/주사',NULL,'CHECK','N','Y'),

@@ -134,7 +134,7 @@ INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,INPUT_GB,CARRY_YN,USE
  ('NUR027','*',1,'냉온수 정상작동여부','CHECK','N','Y'),
  ('NUR027','*',2,'이상 소음 여부','CHECK','N','Y'),
  ('NUR027','*',3,'정수기 위생 여부','CHECK','N','Y'),
- ('NUR027','*',4,'바닥 물팀 청소','CHECK','N','Y'),
+ ('NUR027','*',4,'바닥 물튐 청소','CHECK','N','Y'),   -- 2026-09-02 원본(Meal_Chart_042) 대조 : 「물팀」→「물튐」
  ('NUR027','*',5,'종이컵 재고 점검','CHECK','N','Y'),
  ('NUR027','*',6,'물받이 위생 점검','CHECK','N','Y'),
  ('NUR028','*',1,'정상 작동 여부','CHECK','N','Y'),

@@ -61,7 +61,7 @@ INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,CARRY
  ('ADM016','*', 9,'Needle Bearing 및 윤활상태'                  ,'DOOR'     ,'CHECK','N','Y'),
  ('ADM016','*',10,'문 잠금장치 안전작동 여부'                    ,'DOOR'     ,'CHECK','N','Y'),
  ('ADM016','*',11,'Gasket 상태'                                 ,'DOOR'     ,'CHECK','N','Y'),
- ('ADM016','*',12,'정상동작 여부'                               ,'압력게이지','CHECK','N','Y'),
+ ('ADM016','*',12,'정상작동 여부'                               ,'압력게이지','CHECK','N','Y'),   -- 2026-09-02 원본(Employee_Chart_037) 대조 : 「정상동작」→「정상작동」
  ('ADM016','*',13,'정상작동 여부'                               ,'온도센서' ,'CHECK','N','Y'),
  ('ADM016','*',14,'멸균 사이클 정상가동 여부'                    ,'성 능'    ,'CHECK','N','Y'),
  ('ADM016','*',15,'건조성능 (멸균전 중량의+3%이내)'              ,'성 능'    ,'CHECK','N','Y'),
@@ -75,7 +75,7 @@ INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,CARRY
  ('ADM016','*',23,'완료후알람및경보기능작동'                      ,'성 능'    ,'CHECK','N','Y'),
  ('ADM016','*',24,'증류수, 경수의 사용 여부'                      ,'기 타'    ,'CHECK','N','Y'),
  ('ADM016','*',25,'Tray (Basket) 사용 여부'                      ,'기 타'    ,'CHECK','N','Y'),
- ('ADM016','*',26,'제품의 수령 상태'                             ,'기 타'    ,'CHECK','N','Y'),
+ ('ADM016','*',26,'제품의 수평 상태'                             ,'기 타'    ,'CHECK','N','Y'),   -- 2026-09-02 원본 대조 : 「수령」→「수평」
  ('ADM016','*',27,'제품주위 환경 (적정온도, 습도 유지 여부)'      ,'기 타'    ,'CHECK','N','Y'),
  ('ADM016','*',28,'배관의 누수 여부'                             ,'기 타'    ,'CHECK','N','Y'),
  ('ADM016','*',29,'Chamber의 청결 상태'                          ,'기 타'    ,'CHECK','N','Y'),

@@ -54,7 +54,7 @@ INSERT INTO TBL_QPS_CHK_FORM
 
 INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,INPUT_GB,CARRY_YN,USE_YN) VALUES
  -- REH001 · PT01 (항목 6개 = 타 부서 「일상점검표-의료기기」와 같은 세트)
- ('REH001','*',1,'전원 결함 여부'      ,NULL,'CHECK','N','Y'),
+ ('REH001','*',1,'전원 결합 여부'      ,NULL,'CHECK','N','Y'),   -- 2026-09-02 원본(REHAB_Chart_001_A) 「1. 전원 결합 여부」 — 원본 오타 보존 규칙
  ('REH001','*',2,'청결 상태'           ,NULL,'CHECK','N','Y'),
  ('REH001','*',3,'가동 이상 여부'      ,NULL,'CHECK','N','Y'),
  ('REH001','*',4,'보관 상태'           ,NULL,'CHECK','N','Y'),

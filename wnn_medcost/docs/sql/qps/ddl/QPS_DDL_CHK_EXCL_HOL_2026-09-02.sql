@@ -6,7 +6,9 @@
 --           O 가 둘 찍히는 것을 막는다. ⇒ 서식 옵션 EXCL_YN. 고정 열(ITEM_COL)에서만 뜻이 있다.
 --        ② 공휴일 — SUNWOO t_holiday. 일괄 서명·전체 O 에서 휴일 칸을 건너뛰고 머리글에 색을 준다.
 --           SUNWOO 소스에는 표 정의(T_HOLIDAY.sql)만 있고 자료는 없어 **2025~2027 공휴일을 직접 넣었다.**
---           ⚠아래 날짜는 정부 관보 기준으로 다시 확인할 것(대체공휴일·임시공휴일은 해마다 바뀐다).
+--           ✅2026-09-02 웹 대조 완료 — 2025 time.is · 2026/2027 publicholidays.co.kr 와 전부 일치.
+--             일부러 안 넣은 것 : 제헌절(7/17 — 국경일이지만 2008년부터 공휴일 아님) · 2027 현충일 대체휴일(현충일은 대체공휴일 대상 아님).
+--             ⚠임시공휴일은 해마다 국무회의로 생긴다 — 생기면 [QPS ▸ 공통 ▸ 기준코드 ▸ 공휴일 관리]에서 넣는다.
 --   더하기만 하는 DDL ⇒ 운영 선적용 안전(옛 WAR 는 EXCL_YN 을 읽지도 쓰지도 않는다).
 --   코드 : Qps_SQL.xml(selectChkForm·saveChkForm·selectHolidays·saveHoliday·deleteHoliday) ·
 --          QpsController(chkFormSave exclYn · holidayList/Save/Del.do) · qpsChkForm.jsp(f_exclYn) ·

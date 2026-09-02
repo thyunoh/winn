@@ -359,7 +359,7 @@ VALUES
   130, 'Y', 'system');
 
 INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, INPUT_GB, UNIT_NM, USE_YN) VALUES
- ('PHA023','*', 1,'이중잠금'          ,'마약류'   ,'CHECK',NULL,'Y'),
+ ('PHA023','*', 1,'이중금고'          ,'마약류'   ,'CHECK',NULL,'Y'),   -- 2026-09-02 원본(Pharm_Chart_020_A) 대조 : 「이중잠금」→「이중금고」
  ('PHA023','*', 2,'출납대장 보유'      ,'마약류'   ,'CHECK',NULL,'Y'),
  ('PHA023','*', 3,'마약장 관리자 표시'  ,'마약류'   ,'CHECK',NULL,'Y'),
  ('PHA023','*', 4,'잔량 반납 적절성'    ,'마약류'   ,'CHECK',NULL,'Y'),

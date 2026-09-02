@@ -2,6 +2,7 @@
    정규화: 공백·괄호·구두점 제거, 전각→반각, 「<…> - 」 접두 제거, 흔한 동의어 통일 */
 const fs = require('fs');
 const DIR = __dirname;
+const S = process.env.DFM_SET ? '_' + process.env.DFM_SET : '';   // 세트 — 비면 점검표, 'rpt' 면 safeRpt(forms_rpt.tsv …)
 const norm = s => String(s || '')
   .replace(/<[^>]*>\s*-?\s*/g, '')            // <QI 계획서> - 낙상 → 낙상
   .replace(/\([^)]*\)/g, m => m)               // 괄호 안은 남긴다(구분에 쓰임)
@@ -29,7 +30,7 @@ dfm.forEach((p, unit) => {
     if (c) { const name = decodeDelphiStr(c.replace(/^\s*Caption\s*=\s*/, '')).trim(); if (name) units.push({ unit, code: '', name, n: norm(name), src: 'dfm' }); }
   } catch (e) {}
 });
-const forms = fs.readFileSync(DIR + '/forms.tsv', 'utf8').split(/\r?\n/).filter(Boolean).map(l => { const [id, nm, cate, dept, axis, prd, cnt, file] = l.split('\t'); return { id, nm, cate, dept, axis, prd, cnt: Number(cnt), file, n: norm(nm) }; });
+const forms = fs.readFileSync(DIR + '/forms' + S + '.tsv', 'utf8').split(/\r?\n/).filter(Boolean).map(l => { const [id, nm, cate, dept, axis, prd, cnt, file] = l.split('\t'); return { id, nm, cate, dept, axis, prd, cnt: Number(cnt), file, n: norm(nm) }; });
 
 const rows = [];
 forms.forEach(f => {
@@ -49,6 +50,6 @@ forms.forEach(f => {
   rows.push({ f, best, cands: cands.slice(0, 10) });
 });
 const out = rows.map(r => [r.f.id, r.f.nm, r.f.axis, r.f.cnt, r.best ? r.best.sc.toFixed(2) : '', r.best ? r.best.u.unit : '', r.best ? r.best.u.name : '', r.best && dfm.get(r.best.u.unit) ? dfm.get(r.best.u.unit) : '', r.cands.slice(1).map(c => c.u.unit + '(' + c.sc.toFixed(2) + ')').join(' ')].join('\t'));
-fs.writeFileSync(DIR + '/matches.tsv', 'FORM_ID\tFORM_NM\tAXIS\tITEMS\tSCORE\tUNIT\tUNIT_NM\tDFM\tOTHERS\n' + out.join('\n'));
+fs.writeFileSync(DIR + '/matches' + S + '.tsv', 'FORM_ID\tFORM_NM\tAXIS\tITEMS\tSCORE\tUNIT\tUNIT_NM\tDFM\tOTHERS\n' + out.join('\n'));
 const exact = rows.filter(r => r.best && r.best.sc >= 0.999).length, good = rows.filter(r => r.best && r.best.sc >= 0.8 && r.best.sc < 0.999).length, weak = rows.filter(r => r.best && r.best.sc < 0.8).length, none = rows.filter(r => !r.best).length;
 console.log(`서식 ${rows.length} · 정확 ${exact} · 유사(0.8~) ${good} · 약함(0.5~0.8) ${weak} · 없음 ${none} · dfm 있음 ${rows.filter(r => r.best && dfm.get(r.best.u.unit)).length}`);
