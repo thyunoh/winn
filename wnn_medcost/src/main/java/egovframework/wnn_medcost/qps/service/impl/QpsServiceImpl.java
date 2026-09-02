@@ -1135,6 +1135,15 @@ public class QpsServiceImpl implements QpsService {
 		Map<String, Object> out = new LinkedHashMap<>();
 		out.put("def",  mapper.selectSafeRptDef(rptGb));
 		out.put("list", mapper.selectSafeRptList(hospCd, inYear, rptGb));
+		// 부서 고르기(2026-09-02 밤, B9 후속) — QPS 부서 코드 이름(공통 제외) + 그 병원 작성분의 부서값. 직접 치기도 된다(datalist)
+		java.util.LinkedHashSet<String> depts = new java.util.LinkedHashSet<>();
+		try {
+			for (Map<String, Object> r : mapper.selectQpsCodes())
+				if ("QPS_CHK_DEPT".equals(str(r.get("codecd"))) && !"COMMON".equals(str(r.get("subcode"))) && !str(r.get("subcodenm")).isEmpty())
+					depts.add(str(r.get("subcodenm")));
+			for (String d : mapper.selectSafeRptDepts(hospCd)) if (d != null && !d.trim().isEmpty()) depts.add(d.trim());
+		} catch (Exception ignore) { }
+		out.put("depts", new ArrayList<>(depts));
 		// 유형별 설정(반복행 표·서명란·정형문구). 설정이 없는 유형이 대부분이라 null 이 정상이다.
 		out.put("form", mapper.selectSafeRptForm(rptGb));
 		// 반복행 표 여러 벌(2026-08-15) — 있으면 화면이 FORM 단벌 대신 이걸 그린다(빈 배열 = 종전 동작)

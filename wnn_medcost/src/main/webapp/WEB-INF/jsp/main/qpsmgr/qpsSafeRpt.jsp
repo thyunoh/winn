@@ -170,7 +170,8 @@
         <div class="lb" data-lbl="place">발생장소</div>  <div><input type="text" id="f_place" maxlength="200"></div>
         <div class="lb" id="lbTargetNm" data-lbl="targetNm">성명</div>  <div><input type="text" id="f_targetNm" maxlength="60"></div>
         <div class="lb" id="lbTargetNo" data-lbl="targetNo">등록번호</div> <div><input type="text" id="f_targetNo" maxlength="40"></div>
-        <div class="lb" data-lbl="deptNm">부서</div>      <div><input type="text" id="f_deptNm" maxlength="60"></div>
+        <%-- 부서 고르기(2026-09-02 밤) — QPS 부서 이름 + 이 병원 작성분의 부서값을 datalist 로. 직접 치기도 된다(점검표 병동과 같은 방식) --%>
+        <div class="lb" data-lbl="deptNm">부서</div>      <div><input type="text" id="f_deptNm" maxlength="60" list="srDeptList" autocomplete="off"><datalist id="srDeptList"></datalist></div>
         <div class="lb" data-lbl="positionNm">직위</div>      <div><input type="text" id="f_positionNm" maxlength="60"></div>
         <div class="lb" id="lbAdmit" data-lbl="admitDt">입원일</div> <div><input type="date" id="f_admitDt"></div>
         <div class="lb" id="lbDiag" data-lbl="diagNm">진단명</div>  <div><input type="text" id="f_diagNm" maxlength="200"></div>
@@ -642,6 +643,8 @@
       DEF = res.def || [];
       FORM = res.form || {};   // 유형이 바뀌면 반복행 표의 열 구성도 통째로 갈린다
       SUBS = res.subs || [];   // 반복행 표 여러 벌(있으면 FORM 단벌을 이긴다)
+      // 부서 고르기 목록(QPS 부서 이름 + 이 병원 작성분) — 유형이 바뀌어도 같다
+      gel('srDeptList').innerHTML = (res.depts || []).map(function(d){ return '<option value="' + esc(d) + '">'; }).join('');
       applyLabels();
       renderChk({});
       renderRows([]);

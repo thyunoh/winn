@@ -231,6 +231,8 @@ public interface QpsMapper {
 
 	/* 사고 유형별 보고서 — 체크 묶음은 항목표(DEF)에서 온다 */
 	List<Map<String, Object>> selectSafeRptDef(@Param("rptGb") String rptGb);
+	/** 보고서 부서 고르기(2026-09-02 밤) — 그 병원 작성분의 DEPT_NM 목록 */
+	List<String> selectSafeRptDepts(@Param("hospCd") String hospCd);
 	List<Map<String, Object>> selectSafeRptList(@Param("hospCd") String hospCd, @Param("inYear") String inYear,
 	                                            @Param("rptGb") String rptGb);
 	Map<String, Object> selectSafeRpt(@Param("hospCd") String hospCd, @Param("srpSeq") long srpSeq);

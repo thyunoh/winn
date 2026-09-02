@@ -103,7 +103,14 @@
   ①병동 칸은 `<input list>` + datalist — **고르되 직접 치기도 된다**(마스터가 없어 SUNWOO 처럼 작성분에서 모은다). ②`#ckWardF` 필터(전체/병동별/병동 없음) — 이 서식·이 해 문서에 병동이 하나도 없으면 숨김,
   목록 채우기는 `ckDocFill()` 하나로(ckBase 와 필터 변경이 같이 씀), 열어 둔 문서가 필터에 빠져도 화면은 그대로. ③`ckWardForm()` = 간호 부서 서식이거나 다른 문서가 병동을 적었으면 병동 서식 —
   빈 병동이면 `_confirmBox` 로 **한 번** 묻고(막지 않음, SUNWOO 「병동선택 없이 진행?」) 「병동 없이 저장」 답은 저장 뒤 그 문서번호로 옮겨 다시 안 묻는다. [새로 작성]이 표시를 푼다.
-  검증 = jsdom 16검사(scratch `sim_qpsChk_ward.js`) + SEL 22검사 회귀 + 함수검사·문법·구조·javac. ⛔**Tomcat 재기동 필요**(매퍼·서비스).
+  검증 = jsdom 16검사(scratch `sim_qpsChk_ward.js`) + SEL 22검사 회귀 + 함수검사·문법·구조·javac. ✅사용자 커밋·재기동.
+- ✅**보고서 「부서」 고르기**(같은 날 밤, B9 후속) — qpsSafeRpt.jsp `f_deptNm` 에 datalist(`#srDeptList`). 목록 = **QPS 부서 코드 이름(QPS_CHK_DEPT, 공통 제외) + 그 병원 작성분의 DEPT_NM**
+  (`selectSafeRptDepts`, 서비스 `selectSafeRptBase` 가 합쳐 `depts` 로). 직접 치기도 된다. 유형별 라벨(LBL_JSON)이 부서 칸을 숨기면 그대로 숨는다. ⛔Tomcat 재기동 필요(매퍼·서비스).
+  ⚠**겪은 사고 : 매퍼 XML 에 `<>` 를 그대로 썼다**(`IFNULL(WARD_NM,'') <> ''` 두 곳) → XML 파싱 오류로 기동 실패(사용자 「QPS_SQL.XML 오류」). `!=` 로 고쳤다.
+  ★규칙 : **매퍼 SQL 의 `<`·`<>`·`<=` 는 CDATA 나 `&lt;` 로만** — 이 파일의 기존 관행은 `<![CDATA[<>]]>`·`!=`. 내가 쓰던 id 중복 검사는 정형성을 안 본다 ⇒ 앞으로 매퍼를 고치면
+  **PowerShell `[xml]` 로드**(System.Xml.XmlDocument.Load)로 정형성까지 본다(09-02 밤 276 statements OK).
+- 📄**가짜병원 99999998 정리 SQL 준비**(같은 날 밤) — [QPS_CLEAN_TESTHOSP_2026-09-02.sql](docs/sql/qps/QPS_CLEAN_TESTHOSP_2026-09-02.sql). 잔재 = CHK_FORM 5 · CHK_ITEM 90 · **CHK_USE 311** · MINUTES 1 · SECLOG 1
+  (08-15 「전부 삭제」는 문서·값만이었다). 병원 마스터 4표 어디에도 없는 코드 — DELETE 는 **주석으로** 두었다. 실행은 사용자 결정.
 - ✅**공통코드(QPS) 관리 화면**(같은 날 밤, 사용자 지시 「스크립트로 생성한 공통코드를 관리하게」) — 메뉴 QPS ▸ 관리(설정) ▸ 기준코드 ▸ **공통코드**
   (`main/qpsCode.do` · qpsCode.jsp). 대상 = TBL_CODE_DTL 'Q' 묶음 `QPS_%` 31개. 왼쪽 묶음(이름·쓰는 수/전체) · 오른쪽 세부코드(이름·차례·사용).
   ★**코드값은 못 바꾼다**(작성분의 키) · 지움 = USE_YN 'N'(옛 문서 보존) · upsert 는 시드와 같은 JOB_SEQ 1 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식과 다름 — 섞지 말 것).

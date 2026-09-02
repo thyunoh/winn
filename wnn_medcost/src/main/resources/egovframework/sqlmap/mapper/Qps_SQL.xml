@@ -1442,6 +1442,13 @@
 		 ORDER BY u.SORT, d.GRP_CD, d.SORT, d.ITEM_NM
 	</select>
 
+	<!-- 보고서 「부서」 고르기(2026-09-02 밤, B9 후속) — 점검표 병동과 같은 방식 : 그 병원 작성분의 DEPT_NM 을 모아 datalist 로. 서비스가 QPS 부서 코드 이름과 합친다 -->
+	<select id="selectSafeRptDepts" resultType="java.lang.String">
+		SELECT DISTINCT TRIM(DEPT_NM) FROM TBL_QPS_SAFERPT
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN='Y' AND IFNULL(DEPT_NM,'') != ''
+		 ORDER BY 1
+	</select>
+
 	<select id="selectSafeRptList" resultType="java.util.HashMap">
 		SELECT SRP_SEQ AS srpseq, RPT_GB AS rptgb, TARGET_NM AS targetnm, DEPT_NM AS deptnm,
 		       DATE_FORMAT(STR_TO_DATE(OCCUR_DT,'%Y%m%d'),'%Y-%m-%d') AS occurdt,
@@ -2633,7 +2640,7 @@
 	     서식을 가리지 않는다(병동은 병원의 것). 화면은 datalist 로 고르되 직접 치기도 된다. -->
 	<select id="selectChkWards" resultType="java.lang.String">
 		SELECT DISTINCT TRIM(WARD_NM) FROM TBL_QPS_CHK_DOC
-		 WHERE HOSP_CD = #{hospCd} AND USE_YN='Y' AND IFNULL(WARD_NM,'') <> ''
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN='Y' AND IFNULL(WARD_NM,'') != ''
 		 ORDER BY 1
 	</select>
 	<select id="selectChkDocList" resultType="java.util.HashMap">
