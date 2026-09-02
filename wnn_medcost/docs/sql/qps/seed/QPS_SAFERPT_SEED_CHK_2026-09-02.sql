@@ -8,7 +8,12 @@
 --          「기타」에 글자칸이 붙은 것은 ETC_YN='Y'. 항목 글자는 원본 캡션 그대로.
 --   코드 변경 없음 — 작성 화면 「구분」 카드가 항목표를 읽어 그린다. 재실행 안전(ON DUPLICATE KEY UPDATE).
 --   ⚠이미 글자 칸(LBL_JSON 라벨)에 적어 둔 작성분은 그대로 남는다 — 새 문서부터 체크로 고른다.
+--   ★[09-02 밤 정정] ② 는 STAFFVIO 가 아니라 **HARASS** — 같은 서식이 이미 HARASS(SORT 9)로 있었다(08-18 신규분이 못 보고 또 만듦 ·
+--      PSY 시드는 운영에 아직 안 돌았고 HARASS 작성분 0). 1차 실행 때 STAFFVIO 로 들어간 묶음은 아래 DELETE 가 지운다. **다시 돌려 주세요.**
 -- ═══════════════════════════════════════════════════════════════════════════
+
+DELETE FROM TBL_QPS_SAFERPT_USE WHERE RPT_GB='STAFFVIO';
+DELETE FROM TBL_QPS_SAFERPT_DEF WHERE RPT_GB='STAFFVIO';
 
 INSERT INTO TBL_QPS_SAFERPT_DEF (RPT_GB,GRP_CD,GRP_NM,ITEM_NM,MULTI_YN,ETC_YN,SORT,USE_YN) VALUES
  -- ① PSYVISIT 방문객 안전사고보고서 (RPT_Insane_014) — 방문사유 · 사고종류(+성폭력 종류) · 사고결과
@@ -22,10 +27,10 @@ INSERT INTO TBL_QPS_SAFERPT_DEF (RPT_GB,GRP_CD,GRP_NM,ITEM_NM,MULTI_YN,ETC_YN,SO
  ('PSYVISIT','ACCRESULT','사고결과','지속적인 치료가 필요','N','N',1,'Y'),('PSYVISIT','ACCRESULT','사고결과','치료 후 후유증 없이 치료됨','N','N',2,'Y'),
  ('PSYVISIT','ACCRESULT','사고결과','특별한 이상 없음','N','N',3,'Y'),('PSYVISIT','ACCRESULT','사고결과','추후 관찰 필요','N','N',4,'Y'),
  ('PSYVISIT','ACCRESULT','사고결과','기타','N','Y',99,'Y'),
- -- ② STAFFVIO 직원간 폭행/성희롱 사건 보고서 (RPT_Chart_047) — 피해자 요구사항
- ('STAFFVIO','DEMAND','피해자 요구사항','공개사과','N','N',1,'Y'),('STAFFVIO','DEMAND','피해자 요구사항','징계조치','N','N',2,'Y'),
- ('STAFFVIO','DEMAND','피해자 요구사항','법적조치','N','N',3,'Y'),('STAFFVIO','DEMAND','피해자 요구사항','해고','N','N',4,'Y'),
- ('STAFFVIO','DEMAND','피해자 요구사항','기타요구','N','Y',99,'Y'),
+ -- ② HARASS 직원간 폭행/성희롱 사건 보고서 (RPT_Chart_047) — 피해자 요구사항 (기존 「사건유형」 HRTYPE 은 우리가 더한 묶음 — 그대로 둠)
+ ('HARASS','DEMAND','피해자 요구사항','공개사과','N','N',1,'Y'),('HARASS','DEMAND','피해자 요구사항','징계조치','N','N',2,'Y'),
+ ('HARASS','DEMAND','피해자 요구사항','법적조치','N','N',3,'Y'),('HARASS','DEMAND','피해자 요구사항','해고','N','N',4,'Y'),
+ ('HARASS','DEMAND','피해자 요구사항','기타요구','N','Y',99,'Y'),
  -- ③ INFDIS 감염성 질환 발생 보고서 (RPT_Chart_005_A) — 구분
  ('INFDIS','INFKIND','구분','폐렴','N','N',1,'Y'),('INFDIS','INFKIND','구분','결핵','N','N',2,'Y'),
  ('INFDIS','INFKIND','구분','접촉성 피부질환','N','N',3,'Y'),('INFDIS','INFKIND','구분','기타 감염병 질환','N','Y',99,'Y'),
@@ -55,7 +60,7 @@ ON DUPLICATE KEY UPDATE GRP_NM=VALUES(GRP_NM), MULTI_YN=VALUES(MULTI_YN), ETC_YN
 
 INSERT INTO TBL_QPS_SAFERPT_USE (RPT_GB,GRP_CD,SORT,USE_YN) VALUES
  ('PSYVISIT','VISITRSN',1,'Y'),('PSYVISIT','ACCTYPE',2,'Y'),('PSYVISIT','SEXVIOL',3,'Y'),('PSYVISIT','ACCRESULT',4,'Y'),
- ('STAFFVIO','DEMAND',1,'Y'),
+ ('HARASS','DEMAND',1,'Y'),
  ('INFDIS','INFKIND',1,'Y'),
  ('MRLOST','RESULT',1,'Y'),
  ('SWDIARY','AMPM',1,'Y'),
@@ -65,8 +70,8 @@ INSERT INTO TBL_QPS_SAFERPT_USE (RPT_GB,GRP_CD,SORT,USE_YN) VALUES
  ('CONSENT','AGREE1',1,'Y'),('CONSENT','AGREE2',2,'Y'),('CONSENT','AGREE3',3,'Y'),('CONSENT','AGREE4',4,'Y'),('CONSENT','AGREE5',5,'Y')
 ON DUPLICATE KEY UPDATE SORT=VALUES(SORT), USE_YN='Y';
 
--- 확인 : 유형별 묶음 수 (PSYVISIT 4 · SWINTAKE 2 · SWSPONS 2 · CONSENT 5 · 나머지 1)
+-- 확인 : 유형별 묶음 수 (PSYVISIT 4 · SWINTAKE 2 · SWSPONS 2 · CONSENT 5 · HARASS 2(기존 HRTYPE + DEMAND) · 나머지 1) — STAFFVIO 는 안 나와야 한다
 SELECT u.RPT_GB, COUNT(DISTINCT u.GRP_CD) AS 묶음, COUNT(d.ITEM_NM) AS 항목
   FROM TBL_QPS_SAFERPT_USE u JOIN TBL_QPS_SAFERPT_DEF d ON d.RPT_GB=u.RPT_GB AND d.GRP_CD=u.GRP_CD
- WHERE u.RPT_GB IN ('PSYVISIT','STAFFVIO','INFDIS','MRLOST','SWDIARY','SWINTAKE','SWCLOSE','SWSPONS','CONSENT')
+ WHERE u.RPT_GB IN ('PSYVISIT','HARASS','STAFFVIO','INFDIS','MRLOST','SWDIARY','SWINTAKE','SWCLOSE','SWSPONS','CONSENT')
  GROUP BY u.RPT_GB ORDER BY u.RPT_GB;

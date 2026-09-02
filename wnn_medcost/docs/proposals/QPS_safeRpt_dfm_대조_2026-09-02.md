@@ -105,3 +105,22 @@ safeRpt 는 점검표와 달리 **고정 23칸(LBL_JSON 으로 이름만 바꿈)
 - **입력 종류**(CHECK/NUM/TEXT)는 아직 안 맞춰 봤다 — dfm 의 TcxCheckBox 수 vs 시드 CHECK 수로 다음에 본다(표의 「dfm 체크/글자칸」이 그 재료).
 - **DB 에서 채우는 항목**: `f_get_BeforeDevice`(33종 — 의료기기 목록 서식에서 장비 이름을 가져옴) · `f_checkList/t_list`(78종) 로 채우는 이름은 dfm 에 없다. 이런 서식은 「시드에만」이 곧 **우리가 병원 자료를 서식에 박은 것**일 수 있다(약품 이름을 서식에 안 넣은 원칙과 같은 문제).
 - 이름이 같은 변형 폼(`_A/_B/_1`)이 여럿일 때 첫 것에 붙었다 — §1 의 오매칭 후보.
+
+## 7. 체크 묶음(TBL_QPS_SAFERPT_DEF) 대조 — 2026-09-02 밤
+
+§6 의 첫 줄(입력 종류)을 체크 묶음 쪽에서 해 봤다. 원본 dfm 의 `TcxCheckBox` 를 Hint·라벨로 묶어(`cmp_saferpt_def.js`) 우리 DEF 와 유형별로 맞췄다.
+
+| 결과 | 유형 | 조치 |
+|---|---|---|
+| 원본엔 체크가 있는데 우리 DEF 가 없음 | PSYVISIT·HARASS(처음엔 STAFFVIO — 아래 부산물)·INFDIS·MRLOST·SWDIARY·SWINTAKE·SWCLOSE·SWSPONS·CONSENT (9) | 손으로 시드 [SEED_CHK](../sql/qps/seed/QPS_SAFERPT_SEED_CHK_2026-09-02.sql) — 전부 라디오(원본 .pas Hint 배타) |
+| DEF 가 있는데 원본 묶음이 더 있음 | PTSAFE·BEDSORE·INFEXP·STAFF·HAZMAT·SWINTAKE·NUTREC·SWVULN·MRFIX·SYSAUTH·SELFDIS·ABUSE·PRIVACY·INFDIS·DRUGADRE (15) | `gen_saferpt_def.js` 자동 생성 [SEED_CHK2](../sql/qps/seed/QPS_SAFERPT_SEED_CHK2_2026-09-02.sql) — 새 묶음 35 · 기존 묶음 보탬 5(손상종류+7 · 낙상 유발약물+4 · 예방간호+8 · 사고유형+8 · 조치사항+3) |
+| 우리 DEF 가 원본과 같거나 더 많음 | 나머지 | 없음 |
+
+- 기존 묶음·항목은 손대지 않았다 — 작성분(TBL_QPS_SAFERPT_CHK)이 묶음코드+항목 글자로 저장돼 있다. 보탠 항목은 뒤에 붙는다.
+- **동의어가 남는다** : PTSAFE 손상종류 「없음」↔보탠 「외상없음」, STAFF 사고유형 「폭행·폭언」↔보탠 「폭언」「욕설」 등. 원본이 그렇게 나뉘어 있어 그대로 두었다 — 병원이 쓰면서 하나를 USE_YN N 으로 내리면 된다(DEF 관리 화면은 아직 없음 — SQL).
+- 자동 생성이 못 가른 것(스크립트 손질표로 잡음) : 점수 칸 라벨(BEDSORE 「단계」·PTSAFE 「의식상태」)과 약물별 반복 열(DRUGADRE E·F)은 체크 묶음이 아니라 뺐고, 원본 Hint 가 엉뚱한 묶음(SELFDIS 「보고부서」= 실제로는 대리인 서명사유)은 이름을 바꿨다.
+- ⚠1차 자동 출력(손질 전 — 「기타」 하나로 다른 묶음이 합쳐진 것)을 운영에 먼저 돌렸다. CHK2 파일 머리가 15유형의 `ORG%` 묶음을 지우고 다시 넣으므로 **같은 파일을 한 번 더** 돌리면 정리된다(작성분이 ORG 묶음을 쓴 체크 0건 — 운영 확인).
+- 부산물 : **HARASS 와 STAFFVIO 가 같은 서식**(직원간 폭행/성희롱 사건 보고서, 원본 RPT_Chart_047)이다 — 08-18 신규분에서 이미 있던 HARASS(SORT 9)를 못 보고 STAFFVIO 를 또 만든 것.
+  운영 확인(09-02 밤) : 08-18 PSY 시드는 **아직 운영에 안 돌았다**(유형 76개·최대 SORT 95, PSYIMPR·PSYVISIT 코드 없음) · HARASS 작성분 0 · STAFFVIO 로는 SEED_CHK 의 묶음 5행만 들어가 있음(고아).
+  ⇒ 우리 쪽에서 정리했다 : PSY 시드는 STAFFVIO 코드를 안 만들고 그 설정(LBL_JSON·정형문구)을 **HARASS 에** 넣도록, SEED_CHK 는 「피해자 요구사항」을 HARASS 에 넣고 머리에서 STAFFVIO 고아 행을 지우도록 고쳤다.
+  HARASS 의 기존 「사건유형」(폭행·폭언·성희롱·성추행·기타)은 원본엔 없는 우리 묶음 — 그대로 둔다(작성분 없어도 의미 있는 분류).

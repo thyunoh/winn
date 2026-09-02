@@ -65,9 +65,19 @@
   ★옛 링크 69개 전부 유지(자동 대조), 같은 화면이 두 자리에 걸릴 땐 `?d=부서` 를 붙여 강조 중복을 막음. 부서 위원회는 부서 묶음으로, 감염 그룹은 「담당자별 업무 ▸ 감염관리」로.
   ★`qpsDeptMenu` 스크립트는 이제 줄을 다시 그리지 않고 **서식 없는 부서의 점검표 줄만** 감춘다. 위너넷 게이트 id(qpsChkUseMenu…)는 그대로.
 - ✅**safeRpt 체크 묶음 보강 9유형**(같은 날 밤) — 원본 dfm 의 TcxCheckBox 전수 대조 → 「원본엔 체크가 있는데 우리 DEF 가 없는」 유형
-  PSYVISIT·STAFFVIO·INFDIS·MRLOST·SWDIARY·SWINTAKE·SWCLOSE·SWSPONS·CONSENT 를 [QPS_SAFERPT_SEED_CHK_2026-09-02.sql](docs/sql/qps/seed/QPS_SAFERPT_SEED_CHK_2026-09-02.sql)
-  로 시드(⛔운영 실행 필요). ★08-18 「선택지 미구현·코드 변경 필요」 메모는 **틀렸었다** — `TBL_QPS_SAFERPT_DEF/USE` 가 이미 20여 유형에 쓰인다. 코드 변경 없음.
+  PSYVISIT·HARASS(처음엔 STAFFVIO)·INFDIS·MRLOST·SWDIARY·SWINTAKE·SWCLOSE·SWSPONS·CONSENT 를 [QPS_SAFERPT_SEED_CHK_2026-09-02.sql](docs/sql/qps/seed/QPS_SAFERPT_SEED_CHK_2026-09-02.sql)
+  로 시드(사용자 09-02 실행 → STAFFVIO→HARASS 정정본 ⛔재실행 필요). ★08-18 「선택지 미구현·코드 변경 필요」 메모는 **틀렸었다** — `TBL_QPS_SAFERPT_DEF/USE` 가 이미 20여 유형에 쓰인다. 코드 변경 없음.
   원본 .pas 전부 Hint 묶음 배타 ⇒ 라디오(MULTI_YN N), 「기타」는 ETC_YN Y.
+- ✅**safeRpt 체크 묶음 2차 — DEF 가 있는 15유형의 빠진 묶음**(같은 날 밤) — `cmp_saferpt_def.js`(우리 DEF ↔ 원본 체크 묶음 대조, 20유형 차이)
+  → `gen_saferpt_def.js` 가 [QPS_SAFERPT_SEED_CHK2_2026-09-02.sql](docs/sql/qps/seed/QPS_SAFERPT_SEED_CHK2_2026-09-02.sql)을 **자동 생성**(178행 · 새 묶음 35 · 기존 묶음 보탬 5).
+  규칙 = 항목 반 이상 겹침 「이미 있음」 · 겹침 있으면 빠진 항목만 보탬 · 아니면 새 묶음 `ORGn`. SKIP(점수 칸 라벨·약물 반복 열)·RENAME(SELFDIS「보고부서」→「대리인 서명사유」 등) 손질표는 스크립트 안.
+  ⚠**사용자가 손질 전 1차 출력을 먼저 실행했다** — 그래서 파일 머리에 `ORG%` 묶음 DELETE(15유형만)를 넣어 **같은 파일을 다시 돌리면 정리**된다(작성분이 ORG 묶음을 쓴 적 없음 — 09-02 밤 운영 확인). ⛔운영 재실행 필요.
+  겪은 것 : ①「기타」 하나로 전혀 다른 묶음이 합쳐짐 → 범용 항목(기타·없음·모름)은 겹침에서 빼고 ov≥2 또는 이름 유사 ②괄호 꼬리 라벨(「대리인(환자와의 관계」) → 앞부분 포함 일치
+  ③생성기가 제 출력 CHK2 를 다시 읽음 → 제외 ④「신 규」「기타( )」 같은 원본 캡션 → 붙이고 「기타」는 맨 뒤(1차 시드와 같은 차례). 기존 묶음·항목은 절대 안 건드린다(작성분 글자 키).
+  남은 표현 차이 = DAMAGE 「없음」↔보탠 「외상없음」 같은 동의어 · MRDISP 「부본/부분」 — 병원이 화면에서 정리(공통코드 화면이 아니라 DEF 는 아직 SQL). 
+  ★**STAFFVIO 는 HARASS 와 같은 서식이었다**(원본 RPT_Chart_047 · HARASS 는 SORT 9 로 이미 있음) — 08-18 신규분의 착오. 운영 확인 : **08-18 PSY 시드는 아직 운영에 안 돌았다**(유형 76개·PSYIMPR/PSYVISIT 코드 없음),
+  HARASS 작성분 0. ⇒ PSY 시드(STAFFVIO 코드 안 만들고 설정을 HARASS 에) · SEED_CHK(「피해자 요구사항」→HARASS, 머리에서 STAFFVIO 고아 행 DELETE) 둘을 고쳤다. 병원 물음 아님(병원확인 #47 취소선).
+  ⚠SEED_CHK 의 PSYVISIT 묶음은 PSY 시드가 돌기 전엔 고아(무해). 운영 순서 = PSY → CHK(재) → CHK2(재).
 - ✅**공통코드(QPS) 관리 화면**(같은 날 밤, 사용자 지시 「스크립트로 생성한 공통코드를 관리하게」) — 메뉴 QPS ▸ 관리(설정) ▸ 기준코드 ▸ **공통코드**
   (`main/qpsCode.do` · qpsCode.jsp). 대상 = TBL_CODE_DTL 'Q' 묶음 `QPS_%` 31개. 왼쪽 묶음(이름·쓰는 수/전체) · 오른쪽 세부코드(이름·차례·사용).
   ★**코드값은 못 바꾼다**(작성분의 키) · 지움 = USE_YN 'N'(옛 문서 보존) · upsert 는 시드와 같은 JOB_SEQ 1 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식과 다름 — 섞지 말 것).
