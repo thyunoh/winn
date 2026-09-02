@@ -2450,7 +2450,7 @@
 	<select id="selectChkItems" resultType="java.util.HashMap">
 		SELECT SORT AS sort, ITEM_NM AS itemnm, GRP_NM AS grpnm, BLK_NM AS blknm,
 		       DESC_TXT AS desctxt, SPAN_TXT AS spantxt,
-		       INPUT_GB AS inputgb, UNIT_NM AS unitnm, CARRY_YN AS carryyn
+		       INPUT_GB AS inputgb, UNIT_NM AS unitnm, CARRY_YN AS carryyn, CELL_TXTS AS celltxts
 		  FROM TBL_QPS_CHK_ITEM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD = #{hospCd}
 		 ORDER BY SORT
@@ -2559,9 +2559,10 @@
 	</delete>
 
 	<insert id="insertChkItems" parameterType="map">
-		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, BLK_NM, DESC_TXT, SPAN_TXT, INPUT_GB, UNIT_NM, CARRY_YN, USE_YN) VALUES
+		<!-- CELL_TXTS(2026-09-02) = 셀 고정문 — 열마다 미리 찍힌 글(인사고과 평가표의 「특출남 매우 조직적임」…). ITEM_COL 전용, 비면 종전과 같다 -->
+		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, BLK_NM, DESC_TXT, SPAN_TXT, CELL_TXTS, INPUT_GB, UNIT_NM, CARRY_YN, USE_YN) VALUES
 		<foreach item="it" collection="items" separator=",">
-		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.blknm}, #{it.desctxt}, #{it.spantxt}, #{it.inputgb}, #{it.unitnm}, #{it.carryyn}, 'Y')
+		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.blknm}, #{it.desctxt}, #{it.spantxt}, #{it.celltxts}, #{it.inputgb}, #{it.unitnm}, #{it.carryyn}, 'Y')
 		</foreach>
 	</insert>
 

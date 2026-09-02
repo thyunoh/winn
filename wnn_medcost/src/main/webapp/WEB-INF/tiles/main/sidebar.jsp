@@ -180,6 +180,14 @@
                                ***부서별 공유 폴더***다(2026-08-11 확인). 부서 업무는 2차 범위라 그때 붙인다. --%>
                         <div id="qps-sub" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
+                                <%-- ★QPS 메뉴 검색(2026-09-02 사용자 요청) — 글자를 치면 아래 트리에서 그 글자가 든 항목만 남기고
+                                     그룹을 펼친다. 지우면 원래대로. Enter = 첫 항목으로 이동. 감춰 둔 줄(위너넷 전용·중복 메뉴)은 검색해도 안 나온다.
+                                     동작은 이 파일 맨 아래 「QPS 메뉴 검색」 스크립트. --%>
+                                <li class="nav-item" id="qpsMenuQWrap" style="padding:6px 12px 4px;">
+                                    <input type="text" id="qpsMenuQ" placeholder="🔍 메뉴 검색" autocomplete="off" title="글자를 치면 그 글자가 든 메뉴만 남습니다. Enter = 첫 항목으로, Esc = 지움"
+                                           style="width:100%; font-size:12.5px; padding:5px 8px; border:1px solid #cfd8e0; border-radius:6px; box-sizing:border-box;">
+                                    <span id="qpsMenuQCnt" style="font-size:11px; color:#8a99a3; margin-left:4px;"></span>
+                                </li>
 
                                 <%-- ── QI (원본 6종) — 통째로 미구현. 링크를 걸면 404 라 안내만 둔다 ── --%>
                                 <li class="nav-item">
@@ -2689,6 +2697,68 @@ $(document).ready(function() {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
   else bind();
+})();
+
+/* ═══ QPS 메뉴 검색 (2026-09-02 사용자 요청 「QPS 메뉴에서 메뉴 검색 기능」) ═══
+   글자를 치면 #qps-sub 트리에서 그 글자가 든 **잎(주소가 있는 줄)** 만 남기고, 잎이 남은 그룹은 펼친다.
+   ★원래 감춰 둔 줄(위너넷 전용 display:none · 중복 메뉴 hidden)은 검색해도 안 꺼낸다 — 첫 검색 때 상태를 적어 둔다.
+   ★지우면 펼침 상태까지 원래대로. Enter = 보이는 첫 잎으로 이동.
+   ★문서 위임(document) 으로 건다 — 사이드바가 두 벌 붙는 화면이 있어 id 로 한 번만 잡으면 안 먹는다. */
+(function(){
+  var saved = null;
+  function norm(s){ return String(s || '').toLowerCase().replace(/\s+/g, ''); }
+  function leavesOf(root){
+    return [].slice.call(root.querySelectorAll('a.nav-link[href]')).filter(function(a){ return a.getAttribute('href') !== '#' && a.closest('li'); });
+  }
+  function run(root, q){
+    var groups = [].slice.call(root.querySelectorAll('div.collapse')), leaves = leavesOf(root);
+    q = norm(q);
+    if (!saved) {   // 첫 검색 — 원래 상태(감춰 둔 줄 · 펼침)를 적어 둔다
+      saved = { hidden: [], open: {} };
+      [].forEach.call(root.querySelectorAll('li'), function(li){ if (li.hidden || li.style.display === 'none') saved.hidden.push(li); });
+      groups.forEach(function(g){ saved.open[g.id] = g.classList.contains('show'); });
+    }
+    var wasHidden = function(li){ return saved.hidden.indexOf(li) >= 0; };
+    // 감춰 둔 그룹 **안**의 잎도 없는 것으로 본다(건수·Enter 이동에서 빠진다)
+    var hiddenUp = function(li){ var p = li.parentElement && li.parentElement.closest('li'); while (p) { if (wasHidden(p)) return true; p = p.parentElement && p.parentElement.closest('li'); } return false; };
+    if (!q) {       // 지움 — 원래대로
+      [].forEach.call(root.querySelectorAll('li'), function(li){ if (!wasHidden(li) && li.id !== 'qpsMenuQWrap') li.style.display = ''; });
+      groups.forEach(function(g){ g.classList.toggle('show', !!saved.open[g.id]);
+        var t = root.querySelector('a[data-target="#' + g.id + '"]'); if (t) t.setAttribute('aria-expanded', saved.open[g.id] ? 'true' : 'false'); });
+      saved = null; setCnt(root, ''); return;
+    }
+    var hit = 0;
+    leaves.forEach(function(a){
+      var li = a.closest('li'); if (wasHidden(li) || hiddenUp(li)) return;
+      var ok = norm(a.textContent).indexOf(q) >= 0; li.style.display = ok ? '' : 'none'; if (ok) hit++;
+    });
+    groups.forEach(function(g){
+      var li = g.closest('li'); if (!li || wasHidden(li) || hiddenUp(li)) return;
+      var any = leaves.some(function(a){ var l = a.closest('li'); return g.contains(a) && !wasHidden(l) && !hiddenUp(l) && l.style.display !== 'none'; });
+      li.style.display = any ? '' : 'none'; g.classList.toggle('show', any);
+      var t = root.querySelector('a[data-target="#' + g.id + '"]'); if (t) t.setAttribute('aria-expanded', any ? 'true' : 'false');
+    });
+    setCnt(root, hit ? hit + '개' : '없음');
+  }
+  function setCnt(root, s){ var c = root.querySelector('#qpsMenuQCnt'); if (c) c.textContent = s; }
+  document.addEventListener('input', function(ev){
+    var t = ev.target; if (!t || t.id !== 'qpsMenuQ') return;
+    var root = t.closest('#qps-sub'); if (root) run(root, t.value);
+  });
+  document.addEventListener('keydown', function(ev){
+    var t = ev.target; if (!t || t.id !== 'qpsMenuQ') return;
+    if (ev.key === 'Escape') { t.value = ''; var r0 = t.closest('#qps-sub'); if (r0) run(r0, ''); return; }
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    var root = t.closest('#qps-sub'); if (!root) return;
+    var first = leavesOf(root).filter(function(a){
+      var li = a.closest('li'); if (li.style.display === 'none' || li.hidden) return false;
+      for (var p = li.parentElement && li.parentElement.closest('li'); p; p = p.parentElement && p.parentElement.closest('li'))
+        if (p.hidden || p.style.display === 'none') return false;    // 감춰 둔 그룹 안의 잎은 건너뛴다
+      return true;
+    })[0];
+    if (first && norm(t.value)) location.href = first.getAttribute('href');
+  });
 })();
 </script>
 

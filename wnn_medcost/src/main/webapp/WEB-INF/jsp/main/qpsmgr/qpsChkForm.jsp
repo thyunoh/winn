@@ -394,6 +394,9 @@
         <%-- ★고정 띠 문구(2026-08-12) — 값이 있으면 그 행의 격자가 입력칸이 아니라 이 글 한 칸이 된다
              (「매월 1회 실시」·「자동화재탐지 설비와 연동」) --%>
         <th style="width:140px;" id="thSpanTxt" hidden>고정 띠 문구</th>
+        <%-- ★셀 고정문(2026-09-02) — 열마다 미리 찍힌 글. 인사고과 평가표의 「특출남 매우 조직적임,평균 이상임…」처럼
+             **열 수만큼 쉼표로**(COL_NMS 와 같은 규칙). 빈 자리는 보통 입력칸. 고정 열(ITEM_COL) 축에서만 보인다. --%>
+        <th style="width:220px;" id="thCellTxts" hidden>셀 고정문<br><span style="font-weight:400;color:#8a99a3;">열마다 쉼표</span></th>
         <th style="width:90px;">입력</th>
         <th style="width:56px;">단위</th>
         <%-- ★전월복사에서 가져올 열(2026-08-12) — 대장(LIST)만. 자산 목록은 가져오고 점검 결과는 비운다.
@@ -789,6 +792,10 @@
     gel('thSpanTxt').hidden = !itemRowAx;
     document.querySelectorAll('#tbITEM [data-cell="spantxt"]').forEach(function(td){ td.hidden = !itemRowAx; });
     gel('f_spanAllWrap').style.display = itemRowAx ? '' : 'none';
+    // ★셀 고정문(2026-09-02) — 고정 열(ITEM_COL)에서만. 열마다 미리 찍힌 글 + 그 아래 입력칸
+    var isCol = (a === 'ITEM_COL');
+    gel('thCellTxts').hidden = !isCol;
+    document.querySelectorAll('#tbITEM [data-cell="celltxts"]').forEach(function(td){ td.hidden = !isCol; });
     // ★기간 열 머리글 입력 행 — 기간이 **열**이고 항목이 **행**인 두 축만(서버 prdHeadOk 와 같은 판단)
     var phAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH');
     gel('f_prdHeadWrap').style.display = phAx ? '' : 'none';
@@ -829,6 +836,7 @@
       '<td data-cell="blknm" hidden><input data-f="blknm" value="' + esc(r.blknm) + '" placeholder="예) 자연환기"></td>' +
       '<td data-cell="desctxt" hidden><input data-f="desctxt" value="' + esc(r.desctxt) + '" placeholder="예) 물걸레 소독"></td>' +
       '<td data-cell="spantxt" hidden><input data-f="spantxt" value="' + esc(r.spantxt) + '" placeholder="예) 매월 1회 실시"></td>' +
+      '<td data-cell="celltxts" hidden><input data-f="celltxts" value="' + esc(r.celltxts) + '" placeholder="열마다 쉼표. 예) 특출남,평균 이상,보통,미흡,부적당"></td>' +
       '<td><select data-f="inputgb">' +
         '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' ? '' : ' selected') + '>O / X</option>' +
         '<option value="TEXT"' + (r.inputgb === 'TEXT' ? ' selected' : '') + '>글자</option>' +
@@ -1407,10 +1415,10 @@
         q(val('f_noteNm')) + ',\n  ' +
         q(chk('f_signerYn')) + ',' + q(chk('f_noteYn')) + ',' + q(chk('f_fixYn')) + ',' +
         q(val('f_signLine')) + ',' + q(val('f_footTxt')) + ',' + (Number(val('f_sortNo')) || 0) + ",'Y','system');\n" +
-      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,BLK_NM,DESC_TXT,SPAN_TXT,INPUT_GB,UNIT_NM,CARRY_YN,USE_YN) VALUES\n' +
+      'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,BLK_NM,DESC_TXT,SPAN_TXT,CELL_TXTS,INPUT_GB,UNIT_NM,CARRY_YN,USE_YN) VALUES\n' +
       items.map(function(r, i){
         return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' + q(r.blknm) + ',' +
-               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ',' +
+               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q(axis() === 'ITEM_COL' ? r.celltxts : '') + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ',' +
                q(axis() === 'LIST' && r.carryyn === 'Y' ? 'Y' : 'N') + ",'Y')";
       }).join(',\n') + ';\n';
     gel('cfSqlTxt').value = sql;

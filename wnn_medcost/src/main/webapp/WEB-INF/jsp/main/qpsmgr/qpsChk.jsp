@@ -117,6 +117,10 @@
   #qpsChk table.gr tr.sign td, #qpsChk table.gr tr.sign th{ background:#fbfcfd; }
   #qpsChk .sun{ color:#c0392b; } #qpsChk .sat{ color:#2c6fb5; }
   #qpsChk .hol{ color:#c0392b; text-decoration:underline dotted; }   /* 공휴일(2026-09-02) — 이름은 title 로 */
+  /* 셀 고정문(2026-09-02) — 칸 위 글 + 아래 입력칸. 평가표라 글이 길어 칸이 넓고 줄바꿈된다 */
+  #qpsChk table.gr td.hasct{ vertical-align:top; min-width:120px; max-width:170px; padding:3px 3px 2px; cursor:pointer; }
+  #qpsChk table.gr td.hasct .ck-ct{ font-size:11px; line-height:1.3; color:#43555f; white-space:normal; text-align:left; margin-bottom:2px; }
+  #qpsChk table.gr td.hasct input{ text-align:center; }
   #qpsChk .ck-excl{ color:#8a4b12; background:#fff4e5; border:1px solid #f1d9b5; border-radius:4px; padding:2px 8px; font-size:12px; }
   <%-- ★편의 기능 띠 + 손짓 표시 (2026-09-02, SUNWOO 원본 소스 대조로 이식 — 아래 JS 「편의 기능」 절 참고).
        머리글·행 머리에 손 모양을 줘 「누를 수 있다」를 알린다. 이름 칸 빈 행(rowoff)은 흐리게. --%>
@@ -644,7 +648,16 @@
           if (!spanAll()) h += sideTd(r, g, true);
           h += '</tr>';
         } else {
-          cd.forEach(function(c, k){ h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt'); });
+          // ★셀 고정문(2026-09-02, 보류서식 최종판정 §3 설계) — 열마다 미리 찍힌 글 + 그 아래 입력칸.
+          //   인사고과 평가표(w15)의 10행 × 5열 = 50칸이 저마다 다른 글자. 쉼표로 열 수만큼, 빈 자리는 보통 칸.
+          //   글자를 더블클릭해도 그 칸이 토글된다(아래 dblclick ①-2). 인쇄는 격자를 복사하므로 그대로 찍힌다.
+          var ct = String(r.celltxts || '').split(',').map(function(s){ return s.trim(); });
+          cd.forEach(function(c, k){
+            var t = ct[k] || '';
+            if (t) h += '<td class="hasct"><div class="ck-ct">' + esc(t) + '</div><input' + ((r.inputgb === 'CHECK') ? '' : ' class="ltxt"') +
+                        ' data-r="' + r.sort + '" data-c="' + (k + 1) + '" value="' + esc(g(r.sort, k + 1)) + '"></td>';
+            else h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt');
+          });
           h += sideTd(r, g, true) + '</tr>';
         }
         if (hasIg || band) { cp++; if (cp >= ig[ci].n) { ci++; cp = 0; } }
@@ -1123,6 +1136,28 @@
     }).catch(err);
   };
 
+  /* ★서식 목록만 조용히 다시 받기(2026-09-02 「F5 눌러야 하네요」) — 다른 화면(우리 병원 사용 서식)에서 서식을 켜고
+     돌아오면 열어 둔 작성 화면의 목록은 옛것이다. 탭이 다시 보이거나 창이 포커스를 얻을 때 **목록만** 갱신한다.
+     ⚠ckBase 를 그대로 부르면 새 문서일 때 격자를 비운다(입력 중인 값이 날아감) — 그래서 따로 둔다. 같으면 손대지 않는다. */
+  var ckFormsAt = 0;
+  function ckFormsRefresh(){
+    if (document.hidden || Date.now() - ckFormsAt < 3000) return;   // 3초 안에 여러 번 오는 focus/visibility 를 한 번으로
+    ckFormsAt = Date.now();
+    post('<c:url value="/qps/chkBase.do"/>', { inYear: gel('ckYear').value, formId: '', deptCd: val('ckDept') }).then(function(res){
+      var list = res.forms || [], sel = gel('ckForm'), keep = sel.value;
+      var cur = [].map.call(sel.options, function(o){ return o.value; }).join('|');
+      var nw  = list.map(function(f){ return f.formid; }).join('|');
+      if (cur === nw || (!list.length && !FORMS.length)) return;
+      FORMS = list; sel.innerHTML = '';
+      if (!FORMS.length) sel.add(new Option('— 쓸 수 있는 서식이 없습니다 —', ''));
+      FORMS.forEach(function(f){ sel.add(new Option(f.formnm, f.formid)); });
+      if (keep && FORMS.some(function(f){ return f.formid === keep; })) sel.value = keep;
+      _toast('서식 목록을 새로 받았습니다.', 'ok');
+    }, function(){});
+  }
+  document.addEventListener('visibilitychange', ckFormsRefresh);
+  window.addEventListener('focus', ckFormsRefresh);
+
   /** 부서를 바꾸면 서식 목록이 갈린다 — 고르던 서식이 그 부서에 없으면 첫 서식으로 옮긴다. */
   window.ckPickDept = function(){
     ckBase().then(function(){
@@ -1520,6 +1555,9 @@
         }
         return;                              // 이름 칸·글자 칸은 원래대로(글자 선택)
       }
+      // ①-2 셀 고정문 칸 — 글자를 더블클릭해도 그 칸이 토글된다(평가표는 글을 읽고 고르는 것이라 글 위를 누른다)
+      var ctd = t.closest('td.hasct');
+      if (ctd) { var ip = ctd.querySelector('input[data-r]'); if (ckOxOk(ip)) { ev.preventDefault(); ip.value = ckFlip(ip.value); ckExclApply(ip); } return; }
       var th = t.closest('th, td'); if (!th) return;
       var tr = th.closest('tr'), tb = th.closest('table'); if (!tr || !tb) return;
       // ② 사인 행 머리 — 그 줄 일괄 서명(빈 칸만 · 토·일 제외 옵션). SUNWOO signLine 61종

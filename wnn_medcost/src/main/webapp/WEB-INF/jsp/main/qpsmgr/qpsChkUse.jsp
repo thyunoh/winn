@@ -393,7 +393,9 @@
       if (!on && inDef) off++;
       if (on !== !!SAVED[r.formid]) dirty++;          // ★서버에 있는 것과 다른가 = 아직 저장 전
     });
-    var tail = dirty ? ' <b>아직 저장 전입니다</b>(고친 것 ' + dirty + '종).' : '';
+    // ★저장 단추를 띠 안에도 둔다(2026-09-02 「옮기고 상단 저장 버튼을 실행해야 하네요」) — 더하기/빼기 한 자리 바로 옆에서 저장한다
+    var tail = dirty ? ' <b>아직 저장 전입니다</b>(고친 것 ' + dirty + '종). ' +
+                       '<button type="button" class="cu-btn mini" style="margin-left:6px;border-color:#1f5a4b;color:#1f5a4b;font-weight:700;" onclick="cuSave();">지금 저장</button>' : '';
     if (!add && !off) {
       box.className = dirty ? 'cu-state chg' : 'cu-state def';
       box.innerHTML = (OWNSET ? '지금 목록이 <b>기본 설정과 같습니다.</b>'
