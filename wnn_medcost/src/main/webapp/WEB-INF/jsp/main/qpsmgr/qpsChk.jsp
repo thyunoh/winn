@@ -116,6 +116,16 @@
   #qpsChk table.gr td input.ltxt{ text-align:left; padding-left:6px; }
   #qpsChk table.gr tr.sign td, #qpsChk table.gr tr.sign th{ background:#fbfcfd; }
   #qpsChk .sun{ color:#c0392b; } #qpsChk .sat{ color:#2c6fb5; }
+  <%-- ★편의 기능 띠 + 손짓 표시 (2026-09-02, SUNWOO 원본 소스 대조로 이식 — 아래 JS 「편의 기능」 절 참고).
+       머리글·행 머리에 손 모양을 줘 「누를 수 있다」를 알린다. 이름 칸 빈 행(rowoff)은 흐리게. --%>
+  #qpsChk .ck-tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; font-size:12px; color:#556570; }
+  #qpsChk .ck-tools .ck-chk{ display:inline-flex; align-items:center; gap:4px; cursor:pointer; user-select:none; font-weight:600; }
+  #qpsChk .ck-tools .ck-chk input{ margin:0; }
+  #qpsChk .ck-tools .ck-hint{ color:#8a99a3; margin-left:2px; }
+  #qpsChk .ck-tools .ck-hint b{ color:#43555f; }
+  #qpsChk table.gr thead th[data-day], #qpsChk table.gr thead th[data-col],
+  #qpsChk table.gr tbody th.hd, #qpsChk table.gr tbody td.hd, #qpsChk table.gr tr.sign th.hd{ cursor:pointer; }
+  #qpsChk table.gr tr.rowoff td input[data-r]{ background:#f3f5f7; color:#9aa7ae; }
 
   #qpsChk .ck-form{ display:grid; grid-template-columns:110px 1fr 110px 1fr; gap:9px 10px; align-items:start; }
   #qpsChk .ck-form .lb{ font-size:12.5px; font-weight:700; color:#43555f; padding-top:8px; }
@@ -198,6 +208,16 @@
        ★표 **밖**에 둔다. 표 안에 두면 인쇄가 격자를 그대로 복사하므로 종이에 버튼이 찍힌다. --%>
   <%-- ★블록이 있으면 이 자리에 **블록마다** 손잡이가 깔린다(ckListBar 를 다시 그린다). --%>
   <div id="ckListBar" class="ck-bar" style="display:none; margin-bottom:6px;"></div>
+  <%-- ★편의 기능 띠 (2026-09-02) — SUNWOO 원본 소스(ParentChartMulti.pas)의 사용자 기능을 격자에 얹은 것.
+       단추 둘(전체 O · 전체 지움) + 토·일 제외 + 손짓 안내 한 줄. 서식을 고르면 나온다(applyFormUi).
+       ★표 **밖**에 둔다 — 표 안에 두면 인쇄가 격자를 그대로 복사하므로 종이에 단추가 찍힌다(ckListBar 와 같은 이유). --%>
+  <div id="ckTools" class="ck-tools" style="display:none;">
+    <button type="button" class="ck-btn mini" onclick="ckAllOx('O');" title="빈 칸 전부에 O — 이미 적힌 칸은 그대로 둡니다">☑ 전체 O</button>
+    <button type="button" class="ck-btn mini" onclick="ckAllOx('');" title="격자 값을 전부 비웁니다(묻고 합니다)">☐ 전체 지움</button>
+    <label class="ck-chk" title="전체 O · 일괄 서명에서 토요일·일요일 칸은 건너뜁니다"><input type="checkbox" id="ckExclWk" onchange="ckExclWkSave();"> 토·일 제외</label>
+    <span class="ck-hint">더블클릭 = 칸 <b>빈→O→X</b> · 날짜/열 머리 = <b>세로줄</b> · 항목 = <b>가로줄</b> · 사인 머리 = <b>일괄 서명</b> ·
+      <b>Enter</b> = 오른쪽 복사 · <b>Ctrl+Enter</b> = 아래 복사 · <b>이름 빈 줄</b>은 흐리게 표시(입력은 됨)</span>
+  </div>
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
 
   <div id="ckNoteWrap" style="display:none; margin-top:10px;">
@@ -578,9 +598,10 @@
       var colTh = function(){
         return cd.map(function(c, k){
           // 문서가 정하는 열이면 머리글 자체가 **입력칸**이다(기기명 칸과 같은 자리)
-          if (docCol) return '<th style="min-width:96px;"><input data-cn="' + (k + 1) + '" value="' +
+          // data-col = 그 열의 data-c — 머리글 더블클릭으로 세로줄을 토글할 때 쓴다(2026-09-02)
+          if (docCol) return '<th data-col="' + (k + 1) + '" style="min-width:96px;"><input data-cn="' + (k + 1) + '" value="' +
                              esc(CN[k + 1] || '') + '" placeholder="' + (k + 1) + '번"></th>';
-          return '<th style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>';
+          return '<th data-col="' + (k + 1) + '" style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>';
         }).join('');
       };
       h += '<table class="gr' + (hasIg ? ' hasrg' : '') + '"><thead>';
@@ -659,7 +680,7 @@
       // ★블록 안 function 선언은 브라우저마다 끌어올림이 갈린다 — 변수에 담는다
       var itemTh = function(){
         return ITEMS.map(function(r){
-          return '<th style="min-width:110px;white-space:normal;">' + esc(r.itemnm) +
+          return '<th data-col="' + r.sort + '" style="min-width:110px;white-space:normal;">' + esc(r.itemnm) +
                  (r.unitnm ? ('<br>(' + esc(r.unitnm) + ')') : '') + '</th>';
         }).join('');
       };
@@ -703,7 +724,7 @@
       });
       var hasGrp = grps.some(function(x){ return x.g; });
       var itemTh = function(){
-        return ITEMS.map(function(r){ return '<th style="min-width:88px;white-space:normal;">' + esc(r.itemnm) +
+        return ITEMS.map(function(r){ return '<th data-col="' + r.sort + '" style="min-width:88px;white-space:normal;">' + esc(r.itemnm) +
                (r.unitnm ? ('<br>(' + esc(r.unitnm) + ')') : '') + '</th>'; }).join('');
       };
       // 기간 세분이 있으면 왼쪽에 쪽 칸이 하나 더 선다 — 머리글도 그만큼 덮어야 칸수가 맞는다
@@ -879,6 +900,7 @@
        ★전월복사는 이 표를 **안 가져온다** — 그 달에 일어난 일이다(서버 carryVals 가 거른다). */
     h += subTableHtml(g);
     box.innerHTML = h;
+    ckRowOffSync();   // 이름 칸이 빈 행은 잠근다(2026-09-02 편의 기능) — 표를 새로 그릴 때마다
   }
 
   /* ═══ 주기 복합 그리기 (2026-08-14) ═══
@@ -1016,6 +1038,7 @@
     if (FORM && FORM.axisgb === 'LIST') lb.innerHTML = listBarHtml();
     // 월 생성은 **일 단위 서식**만 — 다른 주기에 31개를 깔면 목록이 통째로 망가진다(서버도 막는다)
     gel('ckMonthBtn').style.display = (FORM && FORM.prdgb === 'D') ? '' : 'none';
+    gel('ckTools').style.display = FORM ? '' : 'none';   // 편의 기능 띠 — 서식이 있을 때만(2026-09-02)
     gel('ckNoteWrap').style.display = (FORM && FORM.noteyn === 'Y') ? '' : 'none';
     gel('ckNoteTitle').textContent = noteNm();   // 서식이 정한 칸 이름(조치사항 등)
     gel('ckFixWrap').style.display  = (FORM && FORM.fixyn === 'Y') ? '' : 'none';
@@ -1394,6 +1417,140 @@
     });
     return { vals: vals, rows: rows, cols: cols };
   }
+
+  /* ═══ 편의 기능 — SUNWOO 원본 소스 대조로 이식 (2026-09-02) ═══
+     ★근거 = D:\sunwoo\sunwoo\SmartChart\COM\ParentChartMulti.pas 의 부모 편의기능(InitFunctionValues 12종)과
+       CHT/*.pas 1,373개 사용 빈도 : O/X 더블클릭 토글·Enter 복사·일괄 서명 각 61종 · 전체 마킹(chk_all) 300종 ·
+       이름 빈 행 잠금(blankDisableLine) 47종 · 토/일·휴일 제외 8~19종. 「검증된 소스라 사용자 위주 기능이 많다」
+       (사용자, 2026-09-02) — 그 중 서식 정의를 안 건드리고 격자에 바로 얹을 수 있는 것만 골랐다.
+     ★규칙은 SUNWOO 그대로. 단 **둘은 이 화면 원칙을 따른다** :
+       ①이미 적힌 값은 덮지 않는다 — 전체 O·일괄 서명은 **빈 칸만** 채운다(SUNWOO 는 덮어쓴다). 전월복사와 같은 원칙.
+       ②온습도 「랜덤 채움」(tempHumi, 55종)은 ***일부러 안 옮겼다*** — 측정값을 지어내는 기능이라 점검 기록의 뜻을 해친다.
+     ★토글 순서 = 빈→O→X→빈 (ALLQFunc f_switch_flag 의 2단). 3단(△)·4단(○△X●)은 근거 서식이 오면 FORM 칸으로 연다.
+     ★대상 = 격자 **값칸**(`input[data-r]` 중 .ltxt 아닌 것)뿐. 사인 행 900·기간 머리 890·자유행 표 9000+·이름 칸(data-rn/cn)·
+       글자 칸(.ltxt)은 토글·복사 대상이 아니다 — 글자 칸에 Enter 복사를 허용하면 대장의 이름이 사유 칸으로 번진다
+       (SUNWOO 는 칸 **너비**로 걸렀다 — 여기서는 .ltxt 로 가른다).
+     ★휴일 = 이 화면이 이미 칠하는 **토·일(dowCls)** 만. SUNWOO 는 t_holiday(공휴일 관리)까지 보는데 WinCheck+ 엔
+       그 표가 없다(관리자모듈 대조 08-17 ④ 결정 사안) — 표가 생기면 ckCellOff 한 곳만 넓히면 된다.
+     ★표가 다시 그려져도 살아남게 리스너는 #ckGridWrap 에 **한 번만** 건다(위임). */
+  var FLIP = { '': 'O', 'O': 'X', 'X': '' };
+  function ckFlip(v){ v = String(v || '').trim(); return (v in FLIP) ? FLIP[v] : ''; }   // 그 밖의 글자면 비운다
+  /** 토글·복사·전체 마킹의 대상 칸인가 */
+  function ckOxOk(inp){
+    if (!inp || inp.tagName !== 'INPUT' || !inp.hasAttribute('data-r')) return false;
+    if (inp.classList.contains('ltxt') || inp.readOnly) return false;
+    var r = Number(inp.getAttribute('data-r'));
+    return !(r === SIGN_NO || r === PRDH_NO || r >= SUB_ROW_BASE);
+  }
+  function ckOxCells(scope){ return [].filter.call((scope || gel('ckGridWrap')).querySelectorAll('input[data-r]'), ckOxOk); }
+  /** 그 칸이 토·일 칸인가 — 「토·일 제외」가 켜져 있을 때만 참. 기간이 열이면 머리글 색, 행이면 행 머리 색을 본다. */
+  function ckCellOff(inp){
+    var ex = gel('ckExclWk'); if (!ex || !ex.checked) return false;
+    var td = inp.closest('td'), tr = inp.closest('tr'), tb = inp.closest('table');
+    var d = td ? td.getAttribute('data-day') : null;
+    if (d != null) {
+      var th = tb ? tb.querySelector('thead th[data-day="' + d + '"]') : null;
+      if (th) return /(^|\s)(sat|sun)(\s|$)/.test(th.className);
+      var k = kind();                       // 머리글 없는 표(주기 복합의 사인 줄) — 날짜 규칙으로 직접 센다
+      if (k === 'D') return !!dowCls(Number(d)).trim();
+      if (k === 'W') return Number(d) >= 6;
+      return false;
+    }
+    var hd = tr ? tr.querySelector('td.hd, th.hd') : null;   // 기간이 **행**인 축(DAY_ITEM) — 행 머리의 색
+    return !!(hd && /(^|\s)(sat|sun)(\s|$)/.test(hd.className));
+  }
+  /** 로그인 사용자 이름 — top.jsp 가 심는 s_usernm 쿠키(다른 QPS 화면과 같은 출처) */
+  function ckUserNm(){
+    var m = document.cookie.match(/(?:^|;\s*)s_usernm=([^;]*)/);
+    try { return m ? decodeURIComponent(m[1]).trim() : ''; } catch (e) { return m ? m[1] : ''; }
+  }
+  /** 전체 O / 전체 지움 (SUNWOO chk_all). ★O 는 빈 칸만 · 지움은 묻고 한다. */
+  window.ckAllOx = function(v){
+    var cells = ckOxCells();
+    if (!cells.length) { _alertBox('격자가 없습니다.', {icon:'ℹ️'}); return; }
+    if (v) {
+      var n = 0;
+      cells.forEach(function(el){ if (!String(el.value).trim() && !ckCellOff(el)) { el.value = v; n++; } });
+      _toast('빈 칸 ' + n + '개에 ' + v + ' 를 채웠습니다. 이미 적힌 칸은 그대로입니다.', 'ok');
+      return;
+    }
+    _confirmBox({ msg: '격자 값을 <b>전부</b> 비웁니다. 되돌릴 수 없습니다.<br>(이름 칸·글자 칸·사인은 그대로)',
+      icon:'⚠️', okText:'비우기', okColor:'#b23b3b',
+      onOk: function(){ var n = 0; cells.forEach(function(el){ if (String(el.value).trim()) { el.value = ''; n++; } });
+                        _toast(n + '개 칸을 비웠습니다.', 'ok'); } });
+  };
+  window.ckExclWkSave = function(){ try { localStorage.setItem('qpsChkExclWk', gel('ckExclWk').checked ? 'Y' : 'N'); } catch (e) {} };
+  /** 이름 칸(data-rn)이 빈 행은 흐리게만 표시한다 — SUNWOO blankDisableLine(47종)은 비활성+값 삭제. ★잠그지도 지우지도 않는다. */
+  function ckRowOffSync(){
+    gel('ckGridWrap').querySelectorAll('input[data-rn]').forEach(function(nm){
+      var cellEl = nm.closest('th,td'); if (!cellEl) return;
+      var tr = cellEl.closest('tr'), n = Number(cellEl.getAttribute('rowspan') || 1), off = !String(nm.value).trim();
+      // ★잠그지 않는다 — 흐리게만(2026-09-02 사용자 요청 「잠금 대신 흐리게만」). SUNWOO 는 줄을 비활성하지만
+      //   새 서식을 열자마자 전부 회색 잠금이면 낯설다. 입력·토글은 그대로 되고, 이름을 적으면 표시가 풀린다.
+      for (var i = 0; i < n && tr; i++, tr = tr.nextElementSibling) tr.classList.toggle('rowoff', off);
+    });
+  }
+  (function(){
+    var wrap = gel('ckGridWrap');
+    wrap.addEventListener('input', function(ev){ if (ev.target && ev.target.hasAttribute('data-rn')) ckRowOffSync(); });
+    wrap.addEventListener('dblclick', function(ev){
+      var t = ev.target; if (!t || !t.closest) return;
+      // ① 값칸 — 한 칸 토글 / 사인 칸 — 비어 있으면 내 이름
+      if (t.tagName === 'INPUT') {
+        if (ckOxOk(t)) { ev.preventDefault(); t.value = ckFlip(t.value); return; }
+        if (t.hasAttribute('data-r') && Number(t.getAttribute('data-r')) === SIGN_NO && !String(t.value).trim()) {
+          var nm = ckUserNm(); if (nm) { ev.preventDefault(); t.value = nm; }
+        }
+        return;                              // 이름 칸·글자 칸은 원래대로(글자 선택)
+      }
+      var th = t.closest('th, td'); if (!th) return;
+      var tr = th.closest('tr'), tb = th.closest('table'); if (!tr || !tb) return;
+      // ② 사인 행 머리 — 그 줄 일괄 서명(빈 칸만 · 토·일 제외 옵션). SUNWOO signLine 61종
+      if (tr.classList.contains('sign') && th.classList.contains('hd')) {
+        var nm2 = ckUserNm();
+        if (!nm2) { _alertBox('로그인 사용자 이름을 찾지 못했습니다.', {icon:'⚠️'}); return; }
+        var k = 0;
+        tr.querySelectorAll('input[data-r]').forEach(function(el){
+          if (Number(el.getAttribute('data-r')) !== SIGN_NO || String(el.value).trim() || ckCellOff(el)) return;
+          el.value = nm2; k++;
+        });
+        _toast('사인 ' + k + '칸에 「' + nm2 + '」을 넣었습니다. 이미 적힌 칸은 그대로입니다.', 'ok'); return;
+      }
+      // ③ 머리글(날짜 · 열) — 세로줄 토글. SUNWOO switchFlagLineV
+      if (th.tagName === 'TH' && th.closest('thead')) {
+        var d = th.getAttribute('data-day'), c = th.getAttribute('data-col'), cells = [];
+        if (d != null) cells = [].filter.call(tb.querySelectorAll('td[data-day="' + d + '"] input[data-r]'), ckOxOk);
+        else if (c != null) cells = ckOxCells(tb).filter(function(el){ return el.getAttribute('data-c') === c; });
+        else return;
+        ev.preventDefault(); cells.forEach(function(el){ el.value = ckFlip(el.value); }); return;
+      }
+      // ④ 행 머리(항목 · 날짜) — 가로줄 토글. SUNWOO switchFlagLineH. 이름 입력칸이 든 머리(기기명)는 제외(고쳐 쓰는 자리다)
+      if (th.classList.contains('hd') && !th.querySelector('input') && !tr.classList.contains('prdh')) {
+        ev.preventDefault(); ckOxCells(tr).forEach(function(el){ el.value = ckFlip(el.value); });
+      }
+    });
+    // Enter = 오른쪽 복사 · Ctrl+Enter = 아래 복사 (SUNWOO copyLine — 값칸끼리만)
+    wrap.addEventListener('keydown', function(ev){
+      var t = ev.target; if (ev.key !== 'Enter' || !ckOxOk(t)) return;
+      ev.preventDefault();
+      var v = t.value, tr = t.closest('tr'), tb = t.closest('table'), c = t.getAttribute('data-c');
+      if (ev.ctrlKey) {                       // 아래로 — 같은 표, 같은 열, 이 행 다음부터
+        var seen = false;
+        [].forEach.call(tb.querySelectorAll('tbody tr'), function(row){
+          if (row === tr) { seen = true; return; }
+          if (!seen) return;
+          [].forEach.call(row.querySelectorAll('input[data-r][data-c="' + c + '"]'), function(el){ if (ckOxOk(el)) el.value = v; });
+        });
+      } else {                                // 오른쪽으로 — 같은 행, 이 칸 다음부터
+        var after = false;
+        [].forEach.call(tr.querySelectorAll('input[data-r]'), function(el){
+          if (el === t) { after = true; return; }
+          if (after && ckOxOk(el)) el.value = v;
+        });
+      }
+    });
+    try { if (localStorage.getItem('qpsChkExclWk') === 'Y') gel('ckExclWk').checked = true; } catch (e) {}
+  })();
 
   window.ckSave = function(){
     if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
