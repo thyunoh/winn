@@ -117,9 +117,6 @@
   #qpsChk table.gr tr.sign td, #qpsChk table.gr tr.sign th{ background:#fbfcfd; }
   #qpsChk .sun{ color:#c0392b; } #qpsChk .sat{ color:#2c6fb5; }
   #qpsChk .hol{ color:#c0392b; text-decoration:underline dotted; }   /* 공휴일(2026-09-02) — 이름은 title 로 */
-  #qpsChk .ck-hol{ margin:6px 0 10px; padding:8px 12px; border:1px solid #dfe4ea; border-radius:6px; background:#fff; font-size:12.5px; }
-  #qpsChk .ck-hol table{ border-collapse:collapse; margin-top:4px; }
-  #qpsChk .ck-hol td{ padding:2px 10px 2px 0; }
   #qpsChk .ck-excl{ color:#8a4b12; background:#fff4e5; border:1px solid #f1d9b5; border-radius:4px; padding:2px 8px; font-size:12px; }
   <%-- ★편의 기능 띠 + 손짓 표시 (2026-09-02, SUNWOO 원본 소스 대조로 이식 — 아래 JS 「편의 기능」 절 참고).
        머리글·행 머리에 손 모양을 줘 「누를 수 있다」를 알린다. 이름 칸 빈 행(rowoff)은 흐리게. --%>
@@ -222,12 +219,11 @@
     <button type="button" class="ck-btn mini" onclick="ckAllOx('');" title="격자 값을 전부 비웁니다(묻고 합니다)">☐ 전체 지움</button>
     <label class="ck-chk" title="전체 O · 일괄 서명에서 토요일·일요일·공휴일 칸은 건너뜁니다"><input type="checkbox" id="ckExclWk" onchange="ckExclWkSave();"> 토·일·공휴일 제외</label>
     <button type="button" class="ck-btn mini" id="ckWeekBtn" style="display:none;" onclick="ckWeekFill(true);" title="주차 머리글에 그 달의 날짜 범위(월~일)를 넣습니다">주차 날짜 채움</button>
-    <span id="ckHolBtnWrap" style="display:none;"><button type="button" class="ck-btn mini" onclick="ckHolPanel();" title="전 병원 공용 공휴일 — 위너넷 담당자만">공휴일 관리</button></span>
+    <span id="ckHolBtnWrap" style="display:none;"><a href="/main/qpsHoliday.do" class="ck-sub" style="text-decoration:underline;" title="QPS ▸ 공통 ▸ 기준코드 ▸ 공휴일 관리 — 바로가기">공휴일 관리 →</a></span>
     <span class="ck-excl" id="ckExclNote" style="display:none;" title="서식 옵션 — 평가표라 O 를 찍으면 그 줄의 다른 O 가 지워집니다">한 줄에 O 하나</span>
     <span class="ck-hint">더블클릭 = 칸 <b>빈→O→X</b> · 날짜/열 머리 = <b>세로줄</b> · 항목 = <b>가로줄</b> · 사인 머리 = <b>일괄 서명</b> ·
       <b>Enter</b> = 오른쪽 복사 · <b>Ctrl+Enter</b> = 아래 복사 · <b>이름 빈 줄</b>은 흐리게 표시(입력은 됨) · 날짜 머리 <span class="hol">빨간 점선</span> = 공휴일</span>
   </div>
-  <div id="ckHolPanel" class="ck-hol" style="display:none;"></div>
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
 
   <div id="ckNoteWrap" style="display:none; margin-top:10px;">
@@ -1619,42 +1615,8 @@
       if (on) el.title = ckHolNm(d); else if (el.title) el.removeAttribute('title');
     });
   }
-  /* [공휴일 관리] — 위너넷 계정에만 보인다(서버도 막는다). 그 해 목록 + 날짜·이름 추가 + 삭제 */
-  window.ckHolPanel = function(){
-    var p = gel('ckHolPanel');
-    if (p.style.display !== 'none') { p.style.display = 'none'; return; }
-    p.style.display = ''; ckHolRender();
-  };
-  function ckHolRender(){
-    var y = String(gel('ckYear').value || '');
-    ckHolLoad().then(function(m){
-      var keys = Object.keys(m).sort(), h = '<b>' + esc(y) + '년 공휴일</b> <span class="ck-sub">전 병원 공용 · 토·일은 따로 적지 않습니다 · 대체공휴일도 여기에</span><table>';
-      keys.forEach(function(k){
-        h += '<tr><td>' + esc(y) + '-' + k.slice(0, 2) + '-' + k.slice(2) + '</td><td>' + esc(m[k]) + '</td>' +
-             '<td><button type="button" class="ck-btn mini" onclick="ckHolDel(\'' + esc(y + k) + '\');">삭제</button></td></tr>';
-      });
-      if (!keys.length) h += '<tr><td colspan="3" class="ck-sub">등록된 공휴일이 없습니다.</td></tr>';
-      h += '</table><div style="margin-top:6px;"><input type="date" id="ckHolDt" style="width:auto;"> ' +
-           '<input type="text" id="ckHolNm" placeholder="이름 (예: 추석)" maxlength="50" style="width:150px;"> ' +
-           '<button type="button" class="ck-btn mini" onclick="ckHolAdd();">추가</button></div>';
-      gel('ckHolPanel').innerHTML = h;
-    });
-  }
-  window.ckHolAdd = function(){
-    var dt = val('ckHolDt').replace(/-/g, ''), nm = val('ckHolNm');
-    if (!/^\d{8}$/.test(dt) || !nm) { _alertBox('날짜와 이름을 적어 주세요.', {icon:'⚠️'}); return; }
-    post('<c:url value="/qps/holidaySave.do"/>', { holDt: dt, holNm: nm }).then(function(){
-      delete HOLS[dt.slice(0, 4)]; _toast('공휴일을 등록했습니다.', 'ok'); ckHolRender(); ckHolLoad().then(ckHolTint);
-    }).catch(err);
-  };
-  window.ckHolDel = function(dt){
-    _confirmBox({ msg: dt.slice(0, 4) + '-' + dt.slice(4, 6) + '-' + dt.slice(6) + ' 공휴일을 지웁니다.', icon:'⚠️', okText:'삭제', okColor:'#b23b3b',
-      onOk: function(){
-        post('<c:url value="/qps/holidayDel.do"/>', { holDt: dt }).then(function(){
-          delete HOLS[dt.slice(0, 4)]; ckHolRender(); ckHolLoad().then(ckHolTint);
-        }).catch(err);
-      } });
-  };
+  /* 등록·삭제 화면은 QPS ▸ 공통 ▸ 기준코드 ▸ 공휴일 관리(qpsHoliday.jsp) — 툴바의 「공휴일 관리 →」가 그리로 간다(위너넷만 보임).
+     ★[2026-09-02] 처음엔 이 툴바에 패널을 붙였다가 사용자 지시로 메뉴 화면으로 옮겼다(중복 화면을 두지 않는다). */
 
   /* ── 주차 날짜 자동 채움 — SUNWOO weekCheck/weekList(35종) 대응 ──
      주차(N) 격자의 기간 머리글(890행)이 비어 있으면 그 달의 날짜 범위를 넣는다. 주 = 월~일,

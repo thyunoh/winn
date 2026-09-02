@@ -479,6 +479,13 @@ public class QpsController {
 		}
 	}
 
+	/** 기준코드 › 공휴일 관리(2026-09-02) — 전 병원 공용. 보는 것은 모두, 등록·삭제는 holidaySave/Del 이 위너넷만 받는다.
+	 *  메뉴 : QPS ▸ 공통 ▸ 기준코드 ▸ 공휴일 관리. 작성 화면 툴바의 「공휴일 관리 →」도 여기로 온다. */
+	@RequestMapping(value = "main/qpsHoliday.do")
+	public String qpsHoliday(HttpServletRequest request, ModelMap model) {
+		return qpsScreen(request, model, ".main/qpsmgr/qpsHoliday");
+	}
+
 	/**
 	 * 자료실 — 조직도·내규처럼 "문서라기보다 보관물"인 자료를 분류별로 모아 둔다.
 	 * 서식(회의록·계획서·라운딩)과 달리 본문 입력이 없다. 분류(QPS_LIB 코드)가 곧 첨부의 문서키다.

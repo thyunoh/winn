@@ -441,6 +441,19 @@
                                         <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsLib.do">자료실</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHelp.do">사용 안내</a></li>
+                                            <%-- 기준코드(2026-09-02 사용자 지시 「QPS 공통에 기준코드로 공휴일 관리 서브로」) —
+                                                 점검표 엔진이 쓰는 **전 병원 공용 기준값**. 첫 항목 = 공휴일(SUNWOO t_holiday 대응 :
+                                                 전체 O · 일괄 서명의 휴일 제외, 날짜 머리글 색). 보는 것은 모두, 등록·삭제는 위너넷만(서버가 막는다).
+                                                 작성 화면 툴바의 「공휴일 관리 →」는 이 화면으로 오는 바로가기다(중복 화면 아님). --%>
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false"
+                                                   data-target="#qps-g-code" aria-controls="qps-g-code">기준코드</a>
+                                                <div id="qps-g-code" class="collapse submenu" style="background-color:#fff;">
+                                                    <ul class="nav flex-column">
+                                                        <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHoliday.do">공휴일 관리</a></li>
+                                                    </ul>
+                                                </div>
+                                            </li>
                                         </ul>
                                     </div>
                                 </li>
