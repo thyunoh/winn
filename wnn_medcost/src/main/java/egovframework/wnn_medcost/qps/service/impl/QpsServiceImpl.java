@@ -1841,6 +1841,7 @@ public class QpsServiceImpl implements QpsService {
 		m.put("spanAllYn", "Y".equals(str(src.get("spanallyn"))) ? "Y" : "N");  // 고정 띠가 뒤 칸까지 덮나
 		m.put("prdHeadYn", "Y".equals(str(src.get("prdheadyn"))) ? "Y" : "N"); // 기간 열 머리글 입력 행
 		m.put("prdHeadNm", str(src.get("prdheadnm")));                          //   그 줄의 이름
+		m.put("exclYn",   "Y".equals(str(src.get("exclyn"))) ? "Y" : "N");     // 한 줄에 O 하나(평가표, 2026-09-02)
 		m.put("noteNm",   str(src.get("notenm")));    // 특이사항 칸의 이름(조치사항 등)
 		m.put("guideTxt", str(src.get("guidetxt")));  m.put("headNms", str(src.get("headnms")));
 		m.put("colNms",  str(src.get("colnms")));     // ITEM_COL 의 고정 열 — 복제할 때 빠지면 표가 안 그려진다
@@ -1897,6 +1898,14 @@ public class QpsServiceImpl implements QpsService {
 	public void deleteChkForm(Map<String, Object> param) throws Exception {
 		mapper.deleteChkForm(param);
 	}
+
+	// ═══ 공휴일 (2026-09-02) — SUNWOO t_holiday 대응. 작성 화면의 「토·일·공휴일 제외」와 머리글 색이 쓴다 ═══
+	@Override
+	public List<Map<String, Object>> selectHolidays(String year) throws Exception { return mapper.selectHolidays(year); }
+	@Override
+	public void saveHoliday(Map<String, Object> param) throws Exception { mapper.saveHoliday(param); }
+	@Override
+	public void deleteHoliday(String holDt) throws Exception { mapper.deleteHoliday(holDt); }
 
 	@Override
 	public Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception {

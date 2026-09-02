@@ -269,7 +269,7 @@ public interface QpsMapper {
 	/** 부서별 양식 관리 — 부서·분류 두 칸만 고친다(공통 '*' 행도 대상. 위너넷 전용) */
 	int updateChkFormDept(Map<String, Object> param);
 
-	// 지표분석보고서 분포 표 — ★원자료만 꺼낸다(구간 나누기는 자바)
+	// 지표분석보고서 분포 표 — ★원자료만 꺼낸다(구간 나누기는 자바)
 	List<Map<String, Object>> selectSecLogDistRows(Map<String, Object> param);
 	int deleteDeptCate(@Param("deptCd") String deptCd);
 	int insertDeptCate(Map<String, Object> param);
@@ -397,6 +397,10 @@ public interface QpsMapper {
 	int deleteChkForm(Map<String, Object> param);
 	int deleteChkItems(@Param("hospCd") String hospCd, @Param("formId") String formId);
 	int insertChkItems(Map<String, Object> param);
+	/** 공휴일(2026-09-02, SUNWOO t_holiday 대응) — 병원 구분 없이 공용. year='2026' 처럼 4자리 */
+	List<Map<String, Object>> selectHolidays(@Param("year") String year);
+	int saveHoliday(Map<String, Object> param);
+	int deleteHoliday(@Param("holDt") String holDt);
 
 	List<Map<String, Object>> selectChkDocList(@Param("hospCd") String hospCd, @Param("formId") String formId,
 	                                           @Param("inYear") String inYear);

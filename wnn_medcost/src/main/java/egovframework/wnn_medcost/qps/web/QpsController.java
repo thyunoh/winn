@@ -1214,6 +1214,58 @@ public class QpsController {
 		return res;
 	}
 
+	/* ═══ 공휴일 (2026-09-02) — SUNWOO t_holiday 대응 ═══
+	   작성 화면이 「토·일·공휴일 제외」(전체 O · 일괄 서명)와 날짜 머리글 색에 쓴다. 병원 구분 없이 **공용** 한 벌.
+	   등록·삭제는 위너넷 담당자만(작성 화면의 [공휴일 관리] — 위너넷 계정에만 보인다). */
+	@RequestMapping(value = "/qps/holidayList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> holidayList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String year = str(p.get("year"), "").trim();
+			if (!year.matches("\\d{4}")) return fail(res, "연도가 잘못되었습니다.");
+			res.put("list", svc.selectHolidays(year));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/holidaySave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> holidaySave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "공휴일 등록은 위너넷 담당자만 할 수 있습니다.");
+			String dt = str(p.get("holDt"), "").replaceAll("[^0-9]", "");
+			if (!dt.matches("\\d{8}")) return fail(res, "날짜는 YYYYMMDD 8자리입니다.");
+			String nm = unesc(p.get("holNm")).trim();
+			if (nm.isEmpty()) return fail(res, "공휴일 이름을 적어 주세요.");
+			if (nm.length() > 50) nm = nm.substring(0, 50);
+			Map<String, Object> m = new HashMap<>();
+			m.put("holDt", dt); m.put("holNm", nm); m.put("regUser", userId(request));
+			svc.saveHoliday(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/holidayDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> holidayDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "공휴일 삭제는 위너넷 담당자만 할 수 있습니다.");
+			String dt = str(p.get("holDt"), "").replaceAll("[^0-9]", "");
+			if (!dt.matches("\\d{8}")) return fail(res, "날짜는 YYYYMMDD 8자리입니다.");
+			svc.deleteHoliday(dt);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/** 서식 저장 — ★병원 전용 행으로만 쓴다. 공통('*')은 어떤 경우에도 안 건드린다. */
 	@RequestMapping(value = "/qps/chkFormSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -1345,6 +1397,10 @@ public class QpsController {
 			//   연간 시설물·소방 계획은 예산 칸을 남기고, 소방시설 월 점검표는 상태 칸까지 덮는다.
 			//   고정 띠 자체가 항목이 행인 축의 것이라 범위도 sideOk 와 같다.
 			m.put("spanAllYn", (sideOk && "Y".equals(str(p.get("spanAllYn"), ""))) ? "Y" : "N");
+			// ★행 배타 체크(2026-09-02) — SUNWOO 175종의 「같은 Hint 묶음 안에서 하나만」(평가표의 상/중/하 · 적합/부적합).
+			//   O 를 찍으면 그 줄의 다른 O 가 지워진다. 열이 평가 등급인 **고정 열(ITEM_COL)** 에서만 뜻이 있다 —
+			//   날짜 열에 걸면 「하루만 점검」이 되어 버린다.
+			m.put("exclYn", ("ITEM_COL".equals(axisGb) && "Y".equals(str(p.get("exclYn"), ""))) ? "Y" : "N");
 			// ★기간 열 머리글 입력 행(2026-08-12) — CCTV·가스보일러의 주차 밑 「-」 칸, 소화기 연대장의 월별 점검자.
 			//   기간이 **열**이고 항목이 **행**인 두 축만. EQUIP_DAY 는 제외 —
 			//   근거 실물이 없고, 그 축은 전 칸을 O/X 로 맞춰(allCheck) 「8/1-8/7」이 O 로 바뀐다.

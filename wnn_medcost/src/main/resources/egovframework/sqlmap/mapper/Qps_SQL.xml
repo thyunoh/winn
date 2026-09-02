@@ -2435,7 +2435,7 @@
 		       HEAD_NMS AS headnms, COL_NMS AS colnms, COL_SRC AS colsrc,
 		       ROW_BLK_GB AS rowblkgb, ROW_BLKS AS rowblks, ROW_SRC AS rowsrc,
 		       DESC_NM AS descnm, PRE_COLS AS precols, POST_COLS AS postcols,
-		       SPAN_ALL_YN AS spanallyn, PRD_HEAD_YN AS prdheadyn, PRD_HEAD_NM AS prdheadnm,
+		       SPAN_ALL_YN AS spanallyn, EXCL_YN AS exclyn, PRD_HEAD_YN AS prdheadyn, PRD_HEAD_NM AS prdheadnm,
 		       NOTE_NM AS notenm,
 		       SUB_NM AS subnm, SUB_COLS AS subcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
@@ -2478,13 +2478,13 @@
 		INSERT INTO TBL_QPS_CHK_FORM
 		 (FORM_ID, HOSP_CD, FORM_NM, CATE_CD, DEPT_CD, AXIS_GB, PRD_GB, PRD_KIND, PRD_SUB, GRP_PRD, EQUIP_CNT,
 		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS, ROW_SRC,
-		  DESC_NM, PRE_COLS, POST_COLS, SPAN_ALL_YN, PRD_HEAD_YN, PRD_HEAD_NM, NOTE_NM,
+		  DESC_NM, PRE_COLS, POST_COLS, SPAN_ALL_YN, EXCL_YN, PRD_HEAD_YN, PRD_HEAD_NM, NOTE_NM,
 		  SUB_NM, SUB_COLS,
 		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
 		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{prdSub}, #{grpPrd}, #{equipCnt},
 		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks}, #{rowSrc},
-		  #{descNm}, #{preCols}, #{postCols}, #{spanAllYn}, #{prdHeadYn}, #{prdHeadNm}, #{noteNm},
+		  #{descNm}, #{preCols}, #{postCols}, #{spanAllYn}, #{exclYn}, #{prdHeadYn}, #{prdHeadNm}, #{noteNm},
 		  #{subNm}, #{subCols},
 		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
@@ -2496,13 +2496,31 @@
 		  HEAD_NMS=VALUES(HEAD_NMS), COL_NMS=VALUES(COL_NMS), COL_SRC=VALUES(COL_SRC),
 		  ROW_BLK_GB=VALUES(ROW_BLK_GB), ROW_BLKS=VALUES(ROW_BLKS), ROW_SRC=VALUES(ROW_SRC),
 		  DESC_NM=VALUES(DESC_NM), PRE_COLS=VALUES(PRE_COLS), POST_COLS=VALUES(POST_COLS),
-		  SPAN_ALL_YN=VALUES(SPAN_ALL_YN), PRD_HEAD_YN=VALUES(PRD_HEAD_YN),
+		  SPAN_ALL_YN=VALUES(SPAN_ALL_YN), EXCL_YN=VALUES(EXCL_YN), PRD_HEAD_YN=VALUES(PRD_HEAD_YN),
 		  PRD_HEAD_NM=VALUES(PRD_HEAD_NM), NOTE_NM=VALUES(NOTE_NM),
 		  SUB_NM=VALUES(SUB_NM), SUB_COLS=VALUES(SUB_COLS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
 		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
 	</insert>
+
+	<!-- ═══ 공휴일 (2026-09-02) — SUNWOO t_holiday 대응. 병원 구분 없이 **공용** 한 벌.
+	     작성 화면이 「토·일·공휴일 제외」(전체 O · 일괄 서명)와 날짜 머리글 색에 쓴다.
+	     DDL : docs/sql/qps/ddl/QPS_DDL_CHK_EXCL_HOL_2026-09-02.sql -->
+	<select id="selectHolidays" resultType="java.util.HashMap">
+		SELECT HOL_DT AS holdt, HOL_NM AS holnm
+		  FROM TBL_QPS_HOLIDAY
+		 WHERE HOL_DT LIKE CONCAT(#{year}, '%') AND USE_YN = 'Y'
+		 ORDER BY HOL_DT
+	</select>
+	<insert id="saveHoliday" parameterType="map">
+		INSERT INTO TBL_QPS_HOLIDAY (HOL_DT, HOL_NM, USE_YN, REG_USER)
+		VALUES (#{holDt}, #{holNm}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE HOL_NM = VALUES(HOL_NM), USE_YN = 'Y', UPD_USER = #{regUser}
+	</insert>
+	<delete id="deleteHoliday">
+		DELETE FROM TBL_QPS_HOLIDAY WHERE HOL_DT = #{holDt}
+	</delete>
 
 
 	<!-- 격리·강박 시행일지 원자료 — 19세 구분과 <시행 시간>을 자바가 센다 -->

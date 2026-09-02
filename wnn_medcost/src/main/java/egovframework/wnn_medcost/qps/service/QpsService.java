@@ -279,6 +279,10 @@ public interface QpsService {
 	/** 서식 저장 — 병원 전용 행으로만 쓴다(공통 '*' 는 안 건드린다) */
 	void saveChkForm(Map<String, Object> form, List<Map<String, Object>> items) throws Exception;
 	void deleteChkForm(Map<String, Object> param) throws Exception;
+	/** 공휴일(2026-09-02) — 그 해의 공휴일 목록 / 등록(같은 날짜면 이름 갱신) / 삭제. 병원 구분 없이 공용 */
+	List<Map<String, Object>> selectHolidays(String year) throws Exception;
+	void saveHoliday(Map<String, Object> param) throws Exception;
+	void deleteHoliday(String holDt) throws Exception;
 	/** 작성 화면 기초 — 서식 + 항목 + 그 해 작성목록 */
 	Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception;
 	/** 작성 문서 1건 — 머리 + 셀값 + 기기행 */

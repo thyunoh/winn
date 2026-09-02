@@ -288,6 +288,12 @@
           <input type="text" id="f_colNms" maxlength="600" placeholder="쉼표로. 예) Y,N,비고"
                  oninput="cfAxisChange();"><%-- cfAxisChange 가 cfColHint + renderPrev 를 함께 돈다 --%>
           <div class="cf-sub" id="cfColHint" style="margin-top:3px;"></div>
+          <%-- ★행 배타 체크(2026-09-02) — SUNWOO 175종이 쓰는 「같은 Hint 묶음 안에서 하나만」.
+               평가표(상/중/하 · 적합/부적합 · 예/아니오)에서 한 항목에 O 가 둘 찍히는 것을 막는다.
+               고정 열 축에서만 뜻이 있다(서버가 축을 본다). 작성 화면 : O 를 찍으면 그 줄의 다른 O 가 지워지고,
+               전체 O · Enter 오른쪽 복사 · 가로줄 토글은 꺼진다. --%>
+          <label style="display:inline-block; margin-top:6px; font-size:12.5px; color:#43555f;">
+            <input type="checkbox" id="f_exclYn" style="vertical-align:-2px;"> 한 줄에 O 는 하나만 (평가표 — O 를 찍으면 그 줄의 다른 O 가 지워짐)</label>
         </div>
 
         <%-- ★행 블록 — 한 문서에 표가 여럿, ***열은 같다***(2026-08-12).
@@ -1371,7 +1377,7 @@
       "DELETE FROM TBL_QPS_CHK_FORM WHERE FORM_ID=" + q(id) + " AND HOSP_CD='*';\n" +
       'INSERT INTO TBL_QPS_CHK_FORM\n' +
       ' (FORM_ID,HOSP_CD,FORM_NM,CATE_CD,DEPT_CD,AXIS_GB,PRD_GB,PRD_KIND,PRD_SUB,GRP_PRD,EQUIP_CNT,HALF_YN,SPLIT_N,SPLIT_DIR,GUIDE_TXT,HEAD_NMS,COL_NMS,COL_SRC,ROW_BLK_GB,ROW_BLKS,ROW_SRC,DESC_NM,PRE_COLS,POST_COLS,\n' +
-      '  SPAN_ALL_YN,PRD_HEAD_YN,PRD_HEAD_NM,NOTE_NM,\n' +
+      '  SPAN_ALL_YN,EXCL_YN,PRD_HEAD_YN,PRD_HEAD_NM,NOTE_NM,\n' +
       '  SIGNER_YN,NOTE_YN,FIX_YN,SIGN_LINE,FOOT_TXT,SORT_NO,USE_YN,REG_USER) VALUES\n' +
       ' (' + q(id) + ",'*'," + q(val('f_formNm')) + ',' + q(val('f_cateCd')) + ',' + q(val('f_deptCd')) + ',' +
         q(axis()) + ',' +
@@ -1395,6 +1401,7 @@
         q(sideAxOn() ? val('f_preCols') : '') + ',' +
         q(sideAxOn() ? val('f_postCols') : '') + ',\n  ' +
         q(sideAxOn() ? chk('f_spanAllYn') : 'N') + ',' +
+        q(axis() === 'ITEM_COL' ? chk('f_exclYn') : 'N') + ',' +     // 한 줄에 O 하나(2026-09-02)
         q((axis() === 'ITEM_DAY' || axis() === 'ITEM_MONTH') ? chk('f_prdHeadYn') : 'N') + ',' +
         q((axis() === 'ITEM_DAY' || axis() === 'ITEM_MONTH') ? val('f_prdHeadNm') : '') + ',' +
         q(val('f_noteNm')) + ',\n  ' +
@@ -1442,6 +1449,7 @@
       set('f_descNm', d.descnm); set('f_preCols', d.precols); set('f_postCols', d.postcols);
       set('f_subNm', d.subnm); set('f_subCols', d.subcols);
       setChk('f_spanAllYn', d.spanallyn); setChk('f_prdHeadYn', d.prdheadyn);
+      setChk('f_exclYn', d.exclyn);        // 한 줄에 O 하나(2026-09-02) — 옛 서버는 키가 없어 N 이 된다
       set('f_prdHeadNm', d.prdheadnm); set('f_noteNm', d.notenm);
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
       setChk('f_signerYn', d.signeryn); setChk('f_noteYn', d.noteyn); setChk('f_fixYn', d.fixyn);
@@ -1475,7 +1483,7 @@
      'f_descNm','f_preCols','f_postCols','f_subNm','f_subCols','f_prdHeadNm','f_noteNm','f_signLine','f_footTxt']
       .forEach(function(id){ set(id, ''); });
     set('f_rowBlkGb', 'S'); set('f_colSrc', 'F'); set('f_rowSrc', 'F');
-    setChk('f_spanAllYn', 'N'); setChk('f_prdHeadYn', 'N');
+    setChk('f_spanAllYn', 'N'); setChk('f_prdHeadYn', 'N'); setChk('f_exclYn', 'N');
     // 상단 필터를 걸어 뒀으면 그 부서·분류로 시작한다(반대 순서는 cfFilterChange 가 맡는다)
     set('f_deptCd', val('cfDept')); set('f_cateCd', val('cfCate'));
     cfCateNarrow();                      // 새 서식은 규칙 안에서만 고른다(2026-08-18)
@@ -1520,6 +1528,7 @@
         descNm: val('f_descNm'), preCols: val('f_preCols'), postCols: val('f_postCols'),
         subNm: val('f_subNm'), subCols: val('f_subCols'),   // 격자 아래 자유행 표(2026-08-13)
         spanAllYn: chk('f_spanAllYn'),   // 고정 띠가 뒤 칸까지 덮나
+        exclYn: chk('f_exclYn'),         // 한 줄에 O 하나(평가표) — 서버가 ITEM_COL 에서만 받는다(2026-09-02)
         prdHeadYn: chk('f_prdHeadYn'), prdHeadNm: val('f_prdHeadNm'),  // 기간 열 머리글 입력 행
         noteNm: val('f_noteNm'),         // 특이사항 칸의 이름(비면 특이사항)
         guideTxt: val('f_guideTxt'), headNms: val('f_headNms'),

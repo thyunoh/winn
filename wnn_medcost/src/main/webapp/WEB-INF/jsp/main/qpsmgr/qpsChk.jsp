@@ -116,6 +116,11 @@
   #qpsChk table.gr td input.ltxt{ text-align:left; padding-left:6px; }
   #qpsChk table.gr tr.sign td, #qpsChk table.gr tr.sign th{ background:#fbfcfd; }
   #qpsChk .sun{ color:#c0392b; } #qpsChk .sat{ color:#2c6fb5; }
+  #qpsChk .hol{ color:#c0392b; text-decoration:underline dotted; }   /* 공휴일(2026-09-02) — 이름은 title 로 */
+  #qpsChk .ck-hol{ margin:6px 0 10px; padding:8px 12px; border:1px solid #dfe4ea; border-radius:6px; background:#fff; font-size:12.5px; }
+  #qpsChk .ck-hol table{ border-collapse:collapse; margin-top:4px; }
+  #qpsChk .ck-hol td{ padding:2px 10px 2px 0; }
+  #qpsChk .ck-excl{ color:#8a4b12; background:#fff4e5; border:1px solid #f1d9b5; border-radius:4px; padding:2px 8px; font-size:12px; }
   <%-- ★편의 기능 띠 + 손짓 표시 (2026-09-02, SUNWOO 원본 소스 대조로 이식 — 아래 JS 「편의 기능」 절 참고).
        머리글·행 머리에 손 모양을 줘 「누를 수 있다」를 알린다. 이름 칸 빈 행(rowoff)은 흐리게. --%>
   #qpsChk .ck-tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; font-size:12px; color:#556570; }
@@ -126,6 +131,7 @@
   #qpsChk table.gr thead th[data-day], #qpsChk table.gr thead th[data-col],
   #qpsChk table.gr tbody th.hd, #qpsChk table.gr tbody td.hd, #qpsChk table.gr tr.sign th.hd{ cursor:pointer; }
   #qpsChk table.gr tr.rowoff td input[data-r]{ background:#f3f5f7; color:#9aa7ae; }
+
 
   #qpsChk .ck-form{ display:grid; grid-template-columns:110px 1fr 110px 1fr; gap:9px 10px; align-items:start; }
   #qpsChk .ck-form .lb{ font-size:12.5px; font-weight:700; color:#43555f; padding-top:8px; }
@@ -214,10 +220,14 @@
   <div id="ckTools" class="ck-tools" style="display:none;">
     <button type="button" class="ck-btn mini" onclick="ckAllOx('O');" title="빈 칸 전부에 O — 이미 적힌 칸은 그대로 둡니다">☑ 전체 O</button>
     <button type="button" class="ck-btn mini" onclick="ckAllOx('');" title="격자 값을 전부 비웁니다(묻고 합니다)">☐ 전체 지움</button>
-    <label class="ck-chk" title="전체 O · 일괄 서명에서 토요일·일요일 칸은 건너뜁니다"><input type="checkbox" id="ckExclWk" onchange="ckExclWkSave();"> 토·일 제외</label>
+    <label class="ck-chk" title="전체 O · 일괄 서명에서 토요일·일요일·공휴일 칸은 건너뜁니다"><input type="checkbox" id="ckExclWk" onchange="ckExclWkSave();"> 토·일·공휴일 제외</label>
+    <button type="button" class="ck-btn mini" id="ckWeekBtn" style="display:none;" onclick="ckWeekFill(true);" title="주차 머리글에 그 달의 날짜 범위(월~일)를 넣습니다">주차 날짜 채움</button>
+    <span id="ckHolBtnWrap" style="display:none;"><button type="button" class="ck-btn mini" onclick="ckHolPanel();" title="전 병원 공용 공휴일 — 위너넷 담당자만">공휴일 관리</button></span>
+    <span class="ck-excl" id="ckExclNote" style="display:none;" title="서식 옵션 — 평가표라 O 를 찍으면 그 줄의 다른 O 가 지워집니다">한 줄에 O 하나</span>
     <span class="ck-hint">더블클릭 = 칸 <b>빈→O→X</b> · 날짜/열 머리 = <b>세로줄</b> · 항목 = <b>가로줄</b> · 사인 머리 = <b>일괄 서명</b> ·
-      <b>Enter</b> = 오른쪽 복사 · <b>Ctrl+Enter</b> = 아래 복사 · <b>이름 빈 줄</b>은 흐리게 표시(입력은 됨)</span>
+      <b>Enter</b> = 오른쪽 복사 · <b>Ctrl+Enter</b> = 아래 복사 · <b>이름 빈 줄</b>은 흐리게 표시(입력은 됨) · 날짜 머리 <span class="hol">빨간 점선</span> = 공휴일</span>
   </div>
+  <div id="ckHolPanel" class="ck-hol" style="display:none;"></div>
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
 
   <div id="ckNoteWrap" style="display:none; margin-top:10px;">
@@ -744,14 +754,14 @@
       if (dSub) {
         DPF.forEach(function(pf, ix){
           h += '<tr>';
-          if (ix % dSub === 0) h += '<td class="hd ' + pf.cls + '" style="text-align:center;" rowspan="' + dSub + '">' + esc(pf.label) + '</td>';
+          if (ix % dSub === 0) h += '<td class="hd ' + pf.cls + '" data-day="' + pf.prd + '" style="text-align:center;" rowspan="' + dSub + '">' + esc(pf.label) + '</td>';
           h += '<td class="hd" style="text-align:center;min-width:44px;">' + esc(pf.sub) + '</td>';
           ITEMS.forEach(function(r){ h += cell(pf.no, r.sort, g(pf.no, r.sort)); });
           h += '</tr>';
         });
       } else {
       PC.forEach(function(pc){
-        h += '<tr><td class="hd ' + pc.cls + '" style="text-align:center;">' + esc(pc.label) + '</td>';
+        h += '<tr><td class="hd ' + pc.cls + '" data-day="' + pc.no + '" style="text-align:center;">' + esc(pc.label) + '</td>';
         ITEMS.forEach(function(r){ h += cell(pc.no, r.sort, g(pc.no, r.sort)); });
         h += '</tr>';
       });
@@ -900,7 +910,9 @@
        ★전월복사는 이 표를 **안 가져온다** — 그 달에 일어난 일이다(서버 carryVals 가 거른다). */
     h += subTableHtml(g);
     box.innerHTML = h;
-    ckRowOffSync();   // 이름 칸이 빈 행은 잠근다(2026-09-02 편의 기능) — 표를 새로 그릴 때마다
+    ckRowOffSync();   // 이름 칸이 빈 행은 흐리게(2026-09-02 편의 기능) — 표를 새로 그릴 때마다
+    ckHolTint(); ckHolLoad().then(ckHolTint);   // 공휴일 색 — 캐시가 있으면 바로, 없으면 받아서(2026-09-02)
+    ckWeekFill(false);                          // 주차 머리글이 비어 있으면 그 달의 날짜 범위를 넣는다
   }
 
   /* ═══ 주기 복합 그리기 (2026-08-14) ═══
@@ -1039,6 +1051,10 @@
     // 월 생성은 **일 단위 서식**만 — 다른 주기에 31개를 깔면 목록이 통째로 망가진다(서버도 막는다)
     gel('ckMonthBtn').style.display = (FORM && FORM.prdgb === 'D') ? '' : 'none';
     gel('ckTools').style.display = FORM ? '' : 'none';   // 편의 기능 띠 — 서식이 있을 때만(2026-09-02)
+    // 주차 격자(N)에만 [주차 날짜 채움] · 위너넷 계정에만 [공휴일 관리] · 평가표(EXCL_YN)엔 표식
+    gel('ckWeekBtn').style.display = (FORM && prdHeadOn() && (kind() === 'N' || /N/.test(String(FORM.grpprd || '')))) ? '' : 'none';
+    gel('ckHolBtnWrap').style.display = (gel('qpsChk').getAttribute('data-wnn') === 'Y') ? '' : 'none';
+    gel('ckExclNote').style.display = ckExclOn() ? '' : 'none';
     gel('ckNoteWrap').style.display = (FORM && FORM.noteyn === 'Y') ? '' : 'none';
     gel('ckNoteTitle').textContent = noteNm();   // 서식이 정한 칸 이름(조치사항 등)
     gel('ckFixWrap').style.display  = (FORM && FORM.fixyn === 'Y') ? '' : 'none';
@@ -1443,21 +1459,21 @@
     return !(r === SIGN_NO || r === PRDH_NO || r >= SUB_ROW_BASE);
   }
   function ckOxCells(scope){ return [].filter.call((scope || gel('ckGridWrap')).querySelectorAll('input[data-r]'), ckOxOk); }
-  /** 그 칸이 토·일 칸인가 — 「토·일 제외」가 켜져 있을 때만 참. 기간이 열이면 머리글 색, 행이면 행 머리 색을 본다. */
+  /** 그 칸이 토·일·공휴일 칸인가 — 「토·일·공휴일 제외」가 켜져 있을 때만 참. 기간이 열이면 머리글 색, 행이면 행 머리 색을 본다. */
   function ckCellOff(inp){
     var ex = gel('ckExclWk'); if (!ex || !ex.checked) return false;
     var td = inp.closest('td'), tr = inp.closest('tr'), tb = inp.closest('table');
     var d = td ? td.getAttribute('data-day') : null;
     if (d != null) {
       var th = tb ? tb.querySelector('thead th[data-day="' + d + '"]') : null;
-      if (th) return /(^|\s)(sat|sun)(\s|$)/.test(th.className);
+      if (th) return /(^|\s)(sat|sun|hol)(\s|$)/.test(th.className);
       var k = kind();                       // 머리글 없는 표(주기 복합의 사인 줄) — 날짜 규칙으로 직접 센다
-      if (k === 'D') return !!dowCls(Number(d)).trim();
+      if (k === 'D') return !!dowCls(Number(d)).trim() || ckIsHol(Number(d));
       if (k === 'W') return Number(d) >= 6;
       return false;
     }
     var hd = tr ? tr.querySelector('td.hd, th.hd') : null;   // 기간이 **행**인 축(DAY_ITEM) — 행 머리의 색
-    return !!(hd && /(^|\s)(sat|sun)(\s|$)/.test(hd.className));
+    return !!(hd && /(^|\s)(sat|sun|hol)(\s|$)/.test(hd.className));
   }
   /** 로그인 사용자 이름 — top.jsp 가 심는 s_usernm 쿠키(다른 QPS 화면과 같은 출처) */
   function ckUserNm(){
@@ -1469,6 +1485,7 @@
     var cells = ckOxCells();
     if (!cells.length) { _alertBox('격자가 없습니다.', {icon:'ℹ️'}); return; }
     if (v) {
+      if (ckExclOn()) { _alertBox('이 서식은 <b>한 줄에 O 하나</b>(평가표)라 전체 O 는 쓰지 않습니다.<br>칸을 더블클릭하거나 열 머리를 더블클릭해 한 열로 채우세요.', {icon:'ℹ️'}); return; }
       var n = 0;
       cells.forEach(function(el){ if (!String(el.value).trim() && !ckCellOff(el)) { el.value = v; n++; } });
       _toast('빈 칸 ' + n + '개에 ' + v + ' 를 채웠습니다. 이미 적힌 칸은 그대로입니다.', 'ok');
@@ -1492,12 +1509,16 @@
   }
   (function(){
     var wrap = gel('ckGridWrap');
-    wrap.addEventListener('input', function(ev){ if (ev.target && ev.target.hasAttribute('data-rn')) ckRowOffSync(); });
+    wrap.addEventListener('input', function(ev){
+      var t = ev.target; if (!t || !t.hasAttribute) return;
+      if (t.hasAttribute('data-rn')) ckRowOffSync();
+      if (t.hasAttribute('data-r')) ckExclApply(t);   // 손으로 O 를 쳐도 한 줄 하나 규칙은 같다
+    });
     wrap.addEventListener('dblclick', function(ev){
       var t = ev.target; if (!t || !t.closest) return;
       // ① 값칸 — 한 칸 토글 / 사인 칸 — 비어 있으면 내 이름
       if (t.tagName === 'INPUT') {
-        if (ckOxOk(t)) { ev.preventDefault(); t.value = ckFlip(t.value); return; }
+        if (ckOxOk(t)) { ev.preventDefault(); t.value = ckFlip(t.value); ckExclApply(t); return; }
         if (t.hasAttribute('data-r') && Number(t.getAttribute('data-r')) === SIGN_NO && !String(t.value).trim()) {
           var nm = ckUserNm(); if (nm) { ev.preventDefault(); t.value = nm; }
         }
@@ -1522,10 +1543,11 @@
         if (d != null) cells = [].filter.call(tb.querySelectorAll('td[data-day="' + d + '"] input[data-r]'), ckOxOk);
         else if (c != null) cells = ckOxCells(tb).filter(function(el){ return el.getAttribute('data-c') === c; });
         else return;
-        ev.preventDefault(); cells.forEach(function(el){ el.value = ckFlip(el.value); }); return;
+        ev.preventDefault(); cells.forEach(function(el){ el.value = ckFlip(el.value); ckExclApply(el); }); return;   // 평가표면 「이 열로 채우기」가 된다
       }
       // ④ 행 머리(항목 · 날짜) — 가로줄 토글. SUNWOO switchFlagLineH. 이름 입력칸이 든 머리(기기명)는 제외(고쳐 쓰는 자리다)
       if (th.classList.contains('hd') && !th.querySelector('input') && !tr.classList.contains('prdh')) {
+        if (ckExclOn()) { _toast('이 서식은 한 줄에 O 하나입니다 — 가로줄 토글은 쓰지 않습니다.', 'warn'); return; }
         ev.preventDefault(); ckOxCells(tr).forEach(function(el){ el.value = ckFlip(el.value); });
       }
     });
@@ -1539,8 +1561,10 @@
         [].forEach.call(tb.querySelectorAll('tbody tr'), function(row){
           if (row === tr) { seen = true; return; }
           if (!seen) return;
-          [].forEach.call(row.querySelectorAll('input[data-r][data-c="' + c + '"]'), function(el){ if (ckOxOk(el)) el.value = v; });
+          [].forEach.call(row.querySelectorAll('input[data-r][data-c="' + c + '"]'), function(el){ if (ckOxOk(el)) { el.value = v; ckExclApply(el); } });
         });
+      } else if (ckExclOn()) {                // 평가표는 오른쪽 복사가 뜻이 없다(한 줄에 O 하나) — 아무것도 안 한다
+        return;
       } else {                                // 오른쪽으로 — 같은 행, 이 칸 다음부터
         var after = false;
         [].forEach.call(tr.querySelectorAll('input[data-r]'), function(el){
@@ -1551,6 +1575,117 @@
     });
     try { if (localStorage.getItem('qpsChkExclWk') === 'Y') gel('ckExclWk').checked = true; } catch (e) {}
   })();
+
+  /* ═══ 델파이 분석 2차 이식 (2026-09-02 오후) — 배타 체크 · 공휴일 · 주차 날짜 ═══
+     「그대로가 아니라 개선해서」(사용자) : SUNWOO 는 폼마다 코드로 박았지만 여기서는 **서식 옵션·공용 표**로 푼다. */
+
+  /* ── 행 배타 체크 — SUNWOO 175종 폼의 「같은 Hint 묶음 체크박스는 하나만」. 서식 옵션 EXCL_YN(ITEM_COL) ──
+     O 를 찍으면 같은 줄(같은 항목)의 다른 격자 O 를 지운다. 옆 칸(1000+/2000+)·글자 칸은 대상이 아니다.
+     X 는 안 건드린다 — 「부적합 X 하나 + 적합 O 하나」가 같이 있는 서식이 있을 수 있어 O 끼리만 배타로 둔다. */
+  function ckExclOn(){ return !!(FORM && FORM.exclyn === 'Y' && axis() === 'ITEM_COL'); }
+  function ckExclApply(inp){
+    if (!ckExclOn() || !ckOxOk(inp) || !/^o$/i.test(String(inp.value).trim())) return;
+    var tr = inp.closest('tr'); if (!tr) return;
+    [].forEach.call(tr.querySelectorAll('input[data-r]'), function(el){
+      if (el === inp || !ckOxOk(el) || Number(el.getAttribute('data-c')) >= PRE_BASE) return;
+      if (/^o$/i.test(String(el.value).trim())) el.value = '';
+    });
+  }
+
+  /* ── 공휴일 — SUNWOO t_holiday 대응. 전 병원 공용 표(TBL_QPS_HOLIDAY), 연 단위로 받아 캐시 ──
+     쓰는 곳 : 날짜 머리글 색(.hol, 이름은 title) · 「토·일·공휴일 제외」(전체 O · 일괄 서명).
+     ★옛 서버(엔드포인트 없음)면 「공휴일 없음」으로 조용히 넘어간다 — 화면이 서버보다 먼저 배포돼도 안 깨진다. */
+  var HOLS = {};                                        // 연 → { 'MMDD': 이름 }
+  function ckHolLoad(){
+    var y = String(gel('ckYear').value || '');
+    if (!/^\d{4}$/.test(y)) return $.Deferred().resolve({}).promise();
+    if (HOLS[y]) return $.Deferred().resolve(HOLS[y]).promise();
+    return post('<c:url value="/qps/holidayList.do"/>', { year: y }).then(function(res){
+      var m = {};
+      (res.list || []).forEach(function(h){ var d = String(h.holdt || ''); if (d.length === 8) m[d.slice(4)] = h.holnm || ''; });
+      HOLS[y] = m; return m;
+    }, function(){ HOLS[y] = {}; return HOLS[y]; });
+  }
+  function ckHolKey(d){ return ('0' + Number(gel('ckMm').value || 1)).slice(-2) + ('0' + Number(d)).slice(-2); }
+  function ckIsHol(d){ var h = HOLS[String(gel('ckYear').value || '')]; return !!(h && h[ckHolKey(d)]); }
+  function ckHolNm(d){ var h = HOLS[String(gel('ckYear').value || '')]; return (h && h[ckHolKey(d)]) || ''; }
+  /** 날짜 머리(열 머리 th · DAY_ITEM 행 머리 td)에 공휴일 색 — 글자가 날짜 숫자인 머리만(주차 「1주」·요일 「월」은 제외) */
+  function ckHolTint(){
+    if (!FORM) return;
+    [].forEach.call(gel('ckGridWrap').querySelectorAll('thead th[data-day], td.hd[data-day]'), function(el){
+      if (!/^\d{1,2}$/.test(el.textContent.trim())) return;
+      var d = Number(el.getAttribute('data-day')), on = ckIsHol(d);
+      el.classList.toggle('hol', on);
+      if (on) el.title = ckHolNm(d); else if (el.title) el.removeAttribute('title');
+    });
+  }
+  /* [공휴일 관리] — 위너넷 계정에만 보인다(서버도 막는다). 그 해 목록 + 날짜·이름 추가 + 삭제 */
+  window.ckHolPanel = function(){
+    var p = gel('ckHolPanel');
+    if (p.style.display !== 'none') { p.style.display = 'none'; return; }
+    p.style.display = ''; ckHolRender();
+  };
+  function ckHolRender(){
+    var y = String(gel('ckYear').value || '');
+    ckHolLoad().then(function(m){
+      var keys = Object.keys(m).sort(), h = '<b>' + esc(y) + '년 공휴일</b> <span class="ck-sub">전 병원 공용 · 토·일은 따로 적지 않습니다 · 대체공휴일도 여기에</span><table>';
+      keys.forEach(function(k){
+        h += '<tr><td>' + esc(y) + '-' + k.slice(0, 2) + '-' + k.slice(2) + '</td><td>' + esc(m[k]) + '</td>' +
+             '<td><button type="button" class="ck-btn mini" onclick="ckHolDel(\'' + esc(y + k) + '\');">삭제</button></td></tr>';
+      });
+      if (!keys.length) h += '<tr><td colspan="3" class="ck-sub">등록된 공휴일이 없습니다.</td></tr>';
+      h += '</table><div style="margin-top:6px;"><input type="date" id="ckHolDt" style="width:auto;"> ' +
+           '<input type="text" id="ckHolNm" placeholder="이름 (예: 추석)" maxlength="50" style="width:150px;"> ' +
+           '<button type="button" class="ck-btn mini" onclick="ckHolAdd();">추가</button></div>';
+      gel('ckHolPanel').innerHTML = h;
+    });
+  }
+  window.ckHolAdd = function(){
+    var dt = val('ckHolDt').replace(/-/g, ''), nm = val('ckHolNm');
+    if (!/^\d{8}$/.test(dt) || !nm) { _alertBox('날짜와 이름을 적어 주세요.', {icon:'⚠️'}); return; }
+    post('<c:url value="/qps/holidaySave.do"/>', { holDt: dt, holNm: nm }).then(function(){
+      delete HOLS[dt.slice(0, 4)]; _toast('공휴일을 등록했습니다.', 'ok'); ckHolRender(); ckHolLoad().then(ckHolTint);
+    }).catch(err);
+  };
+  window.ckHolDel = function(dt){
+    _confirmBox({ msg: dt.slice(0, 4) + '-' + dt.slice(4, 6) + '-' + dt.slice(6) + ' 공휴일을 지웁니다.', icon:'⚠️', okText:'삭제', okColor:'#b23b3b',
+      onOk: function(){
+        post('<c:url value="/qps/holidayDel.do"/>', { holDt: dt }).then(function(){
+          delete HOLS[dt.slice(0, 4)]; ckHolRender(); ckHolLoad().then(ckHolTint);
+        }).catch(err);
+      } });
+  };
+
+  /* ── 주차 날짜 자동 채움 — SUNWOO weekCheck/weekList(35종) 대응 ──
+     주차(N) 격자의 기간 머리글(890행)이 비어 있으면 그 달의 날짜 범위를 넣는다. 주 = 월~일,
+     1주는 1일부터 첫 일요일까지, 5주는 달 끝까지(6주째가 있어도 5주에 붙인다 — 칸이 다섯이다).
+     ★적힌 값은 안 덮는다. [주차 날짜 채움] 단추는 force 로 전부 다시 쓴다. */
+  function ckWeekRanges(){
+    var y = Number(gel('ckYear').value), m = Number(gel('ckMm').value || 1), last = new Date(y, m, 0).getDate();
+    var out = [], start = 1;
+    for (var w = 1; w <= 5 && start <= last; w++) {
+      var end = start;
+      while (end < last && new Date(y, m - 1, end).getDay() !== 0) end++;
+      if (w === 5) end = last;
+      out.push({ no: w, txt: m + '/' + start + '~' + m + '/' + end });
+      start = end + 1;
+    }
+    return out;
+  }
+  window.ckWeekFill = function(force){
+    if (!FORM || !prdHeadOn()) return;
+    var wr = ckWeekRanges(), n = 0;
+    [].forEach.call(gel('ckGridWrap').querySelectorAll('table'), function(tb){
+      var ths = tb.querySelectorAll('thead th[data-day]');
+      if (!ths.length || ![].every.call(ths, function(th){ return /주$/.test(th.textContent.trim()); })) return;   // 주차 격자만
+      wr.forEach(function(w){
+        var inp = tb.querySelector('input[data-r="' + PRDH_NO + '"][data-c="' + w.no + '"]');
+        if (!inp) return;
+        if (force || !String(inp.value).trim()) { inp.value = w.txt; n++; }
+      });
+    });
+    if (force) _toast('주차 날짜 ' + n + '칸을 채웠습니다.', 'ok');
+  };
 
   window.ckSave = function(){
     if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
