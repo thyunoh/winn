@@ -199,8 +199,13 @@
       <span id="ckNoLb" style="font-size:12.5px; font-weight:700; color:#43555f;"></span>
       <select id="ckPrdNo" style="width:auto;"></select></span>
     <span style="font-size:12.5px; font-weight:700; color:#43555f; margin-left:6px;">병동</span>
-    <input type="text" id="f_wardNm" maxlength="100" placeholder="예) 3병동" style="width:120px;">
+    <%-- ★병동 고르기(2026-09-02 밤, B9 · 델파이 대조) — SUNWOO 는 서식 위 병동 콤보(cmb_dept)로 고르고 그 값으로 문서를 가른다.
+         우리는 자유 글자라 「3병동/3 병동」이 갈릴 수 있었다 ⇒ 그 병원 작성분의 병동값을 datalist 로 주고 **직접 치기도 된다**(마스터 없음). --%>
+    <input type="text" id="f_wardNm" maxlength="100" placeholder="예) 3병동" style="width:120px;" list="ckWardList" autocomplete="off">
+    <datalist id="ckWardList"></datalist>
     <span class="ck-spacer"></span>
+    <%-- ★문서 목록 병동 필터 — SUNWOO 메인의 병동 콤보(전체/병동별)에 해당. 그 서식·그 해 문서에 적힌 병동만 항목으로 --%>
+    <select id="ckWardF" style="width:auto; display:none;" onchange="ckDocFill();" title="저장된 점검표를 병동으로 거릅니다"></select>
     <select id="ckDoc" style="min-width:220px;" onchange="ckPickDoc();">
       <option value="">— 저장된 점검표 —</option>
     </select>
@@ -260,6 +265,8 @@
 <script>
 (function(){
   var HOSP_NM = '', APPR_LINE = [], FORMS = [], FORM = null, ITEMS = [], DOCS = [], curSeq = 0;
+  var WARDS = [];            // 그 병원 작성분의 병동값(2026-09-02 밤, B9) — 병동 고르기 datalist
+  var ckWardAskedFor = null; // 빈 병동 확인을 이미 한 문서(curSeq 또는 'new') — 한 문서에 한 번만 묻는다
 
   function gel(id){ return document.getElementById(id); }
   function post(url, data){
@@ -1154,15 +1161,18 @@
       FORM = res.form || null;
       ITEMS = res.items || [];
       DOCS = res.list || [];
-      var ds = gel('ckDoc');
-      ds.innerHTML = '<option value="">— 저장된 점검표 (' + DOCS.length + ') —</option>';
-      DOCS.forEach(function(d){
-        // ★주기마다 표기가 다르다 — 「8월 3주차」·「하반기」·「2분기」
-        var nm = docPrdLabel(d) + (d.wardnm ? (' · ' + d.wardnm) : '') +
-                 (d.head1 ? (' · ' + d.head1) : '');
-        ds.add(new Option(nm, d.chkseq));
-      });
-      ds.value = curSeq ? String(curSeq) : '';
+      // 병동 고르기 목록(병원 전체 작성분) — 서식이 바뀌어도 같다
+      WARDS = (res.wards || []).map(function(w){ return String(w || '').trim(); }).filter(function(w){ return w; });
+      gel('ckWardList').innerHTML = WARDS.map(function(w){ return '<option value="' + esc(w) + '">'; }).join('');
+      // 병동 필터 항목 = 이 서식·이 해 문서에 적힌 병동. 병동이 하나도 없으면 필터를 숨긴다(자리만 차지)
+      var wf = gel('ckWardF'), keepW = wf.value, seen = {}, wl = [];
+      DOCS.forEach(function(d){ var w = String(d.wardnm || '').trim(); if (w && !seen[w]) { seen[w] = 1; wl.push(w); } });
+      wl.sort();
+      wf.innerHTML = '<option value="">병동 전체</option>' + wl.map(function(w){ return '<option value="' + esc(w) + '">' + esc(w) + '</option>'; }).join('') +
+                     (DOCS.some(function(d){ return !String(d.wardnm || '').trim(); }) && wl.length ? '<option value="(없음)">병동 없음</option>' : '');
+      wf.style.display = wl.length ? '' : 'none';
+      if (keepW && [].some.call(wf.options, function(o){ return o.value === keepW; })) wf.value = keepW;
+      ckDocFill();
       applyFormUi();
       if (!curSeq) { renderGrid([], []); setPhotos([]); }   // 서식이 바뀌면 사진칸 구성도 갈린다
       else renderPhotos();
@@ -1172,6 +1182,24 @@
   /* ★서식 목록만 조용히 다시 받기(2026-09-02 「F5 눌러야 하네요」) — 다른 화면(우리 병원 사용 서식)에서 서식을 켜고
      돌아오면 열어 둔 작성 화면의 목록은 옛것이다. 탭이 다시 보이거나 창이 포커스를 얻을 때 **목록만** 갱신한다.
      ⚠ckBase 를 그대로 부르면 새 문서일 때 격자를 비운다(입력 중인 값이 날아감) — 그래서 따로 둔다. 같으면 손대지 않는다. */
+  /** 저장된 점검표 셀렉트를 (병동 필터를 거쳐) 다시 채운다 — ckBase 와 필터 변경이 같이 쓴다(2026-09-02 밤, B9) */
+  window.ckDocFill = function(){
+    var ds = gel('ckDoc'), f = gel('ckWardF').value;
+    var list = DOCS.filter(function(d){
+      var w = String(d.wardnm || '').trim();
+      return !f || (f === '(없음)' ? !w : w === f);
+    });
+    ds.innerHTML = '<option value="">— 저장된 점검표 (' + list.length + (f ? '/' + DOCS.length : '') + ') —</option>';
+    list.forEach(function(d){
+      // ★주기마다 표기가 다르다 — 「8월 3주차」·「하반기」·「2분기」
+      var nm = docPrdLabel(d) + (d.wardnm ? (' · ' + d.wardnm) : '') +
+               (d.head1 ? (' · ' + d.head1) : '');
+      ds.add(new Option(nm, d.chkseq));
+    });
+    // 열어 둔 문서가 필터에 걸려 목록에서 빠져도 **화면은 그대로**(값이 날아가지 않는다) — 셀렉트만 빈 줄이 된다
+    ds.value = (curSeq && list.some(function(d){ return String(d.chkseq) === String(curSeq); })) ? String(curSeq) : '';
+  };
+
   var ckFormsAt = 0;
   function ckFormsRefresh(){
     if (document.hidden || Date.now() - ckFormsAt < 3000) return;   // 3초 안에 여러 번 오는 focus/visibility 를 한 번으로
@@ -1207,6 +1235,7 @@
     gel('ckStat').textContent = '';
     gel('ckDelBtn').style.display = 'none';
     set('f_wardNm', ''); set('f_noteTxt', ''); set('f_fixTxt', '');
+    ckWardAskedFor = null;   // 새 문서마다 빈 병동 확인을 다시 한다(B9)
     ckBase().then(function(){ renderHead({}); renderGrid([], []); });
   };
 
@@ -1726,8 +1755,20 @@
     if (force) _toast('주차 날짜 ' + n + '칸을 채웠습니다.', 'ok');
   };
 
+  /** 병동 서식인가 — 간호·병동 부서 서식이거나, 이 서식의 다른 문서가 병동을 적고 있으면. (SUNWOO 는 chart_id 가 'W' 로 시작하면) */
+  function ckWardForm(){
+    return !!FORM && (FORM.deptcd === 'NURSE' || DOCS.some(function(d){ return String(d.wardnm || '').trim(); }));
+  }
   window.ckSave = function(){
     if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
+    // ★빈 병동 확인(2026-09-02 밤, B9) — 병동 서식인데 병동이 비면 **한 번** 묻는다. 막지 않는다(SUNWOO 「병동선택 없이 진행하시겠습니까?」와 같다)
+    var askKey = curSeq || 'new';
+    if (!val('f_wardNm') && ckWardForm() && ckWardAskedFor !== askKey) {
+      _confirmBox({ msg: '병동이 비어 있습니다.<br>병동 없이 저장할까요?', icon: '🏥', okText: '병동 없이 저장',
+                    onOk: function(){ ckWardAskedFor = askKey; ckSave(); },
+                    onCancel: function(){ gel('f_wardNm').focus(); } });
+      return;
+    }
     var c = collect();
     // ★주기(prdGb)는 안 보낸다 — **서버가 서식에서 읽는다.** 화면 값을 믿으면 서식과 어긋난 문서가 생긴다.
     var m = { chkSeq: curSeq || '', formId: FORM.formid, inYear: gel('ckYear').value,
@@ -1742,6 +1783,7 @@
     post('<c:url value="/qps/chkSave.do"/>', m).then(function(res){
       _toast('저장되었습니다.', 'ok');
       curSeq = Number(res.chkSeq);
+      if (ckWardAskedFor === askKey) ckWardAskedFor = curSeq;   // 「병동 없이」로 답한 새 문서는 저장 뒤에도 다시 안 묻는다
       ckBase().then(function(){ gel('ckDoc').value = String(curSeq); ckPickDoc(); });
     }).catch(err);
   };

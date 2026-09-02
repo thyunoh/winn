@@ -1933,6 +1933,7 @@ public class QpsServiceImpl implements QpsService {
 	public Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception {
 		Map<String, Object> out = new LinkedHashMap<>(selectChkFormOne(hospCd, formId));
 		out.put("list", mapper.selectChkDocList(hospCd, formId, inYear));
+		out.put("wards", mapper.selectChkWards(hospCd));   // 병동 고르기(2026-09-02 밤, B9) — 병원 작성분에서 모은 병동값
 		return out;
 	}
 

@@ -414,6 +414,8 @@ public interface QpsMapper {
 	int updateSafeRptDefGroup(Map<String, Object> param);
 	int saveSafeRptUse(Map<String, Object> param);
 
+	/** 그 병원 작성분의 병동값 목록(2026-09-02 밤, B9) — 병동 고르기용 */
+	List<String> selectChkWards(@Param("hospCd") String hospCd);
 	List<Map<String, Object>> selectChkDocList(@Param("hospCd") String hospCd, @Param("formId") String formId,
 	                                           @Param("inYear") String inYear);
 	Map<String, Object> selectChkDoc(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq);

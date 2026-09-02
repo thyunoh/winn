@@ -2629,6 +2629,13 @@
 	</insert>
 
 	<!-- ── 작성 문서 ────────────────────────────────────────────────────── -->
+	<!-- ★병동 목록(2026-09-02 밤, 남은할일 B9) — 마스터가 없다(TBL_WARD_MST 는 병상 수). SUNWOO 와 같이 **그 병원 작성분의 병동값**을 모아 준다.
+	     서식을 가리지 않는다(병동은 병원의 것). 화면은 datalist 로 고르되 직접 치기도 된다. -->
+	<select id="selectChkWards" resultType="java.lang.String">
+		SELECT DISTINCT TRIM(WARD_NM) FROM TBL_QPS_CHK_DOC
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN='Y' AND IFNULL(WARD_NM,'') <> ''
+		 ORDER BY 1
+	</select>
 	<select id="selectChkDocList" resultType="java.util.HashMap">
 		SELECT CHK_SEQ AS chkseq, IN_YEAR AS inyear, IN_MM AS inmm,
 		       PRD_GB AS prdgb, PRD_NO AS prdno,
