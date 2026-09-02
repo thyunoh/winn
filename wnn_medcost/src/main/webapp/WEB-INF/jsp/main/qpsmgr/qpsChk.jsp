@@ -27,9 +27,12 @@
 <script src="/asset/js/ui-message.js"></script>
 
 <div class="dashboard-wrapper">
-<div id="qpsChk" data-wnn="<c:out value='${wnnYn}'/>">
+<div id="qpsChk" class="ck-init" data-wnn="<c:out value='${wnnYn}'/>">
 <style>
-  #qpsChk{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 60px; max-width:100%; overflow-x:hidden; }
+  #qpsChk{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 60px; max-width:100%; overflow-x:hidden; transition:opacity .15s; }
+  <%-- ★첫 그리기 전엔 감춘다(2026-09-02 「사이드에서 선택하면 우측이 깜박거림」) — 종전엔 빈 셀렉트·「서식을 고르세요」·격자가
+       ckBase 세 번에 걸쳐 차례로 바뀌어 보였다. 자료가 다 오면 한 번에 보이고(ck-init 제거), 못 와도 1.5초 뒤엔 드러낸다. --%>
+  #qpsChk.ck-init{ opacity:0; }
   #qpsChk *{ box-sizing:border-box; }
   #qpsChk .ck-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
   #qpsChk .ck-title{ font-size:18px; font-weight:800; color:#20303a; display:flex; align-items:center; gap:8px; }
@@ -1141,7 +1144,8 @@
     return mm || '연간';
   }
 
-  window.ckBase = function(){
+  /** @param quiet 참이면 목록(서식·부서·문서·병동)만 채우고 **격자·사진·머리는 안 그린다** — 첫 진입의 「목록 받기」 단계용(깜박임 방지, 2026-09-02) */
+  window.ckBase = function(quiet){
     return post('<c:url value="/qps/chkBase.do"/>', {
       inYear: gel('ckYear').value, formId: val('ckForm'), deptCd: val('ckDept')
     }).then(function(res){
@@ -1173,6 +1177,7 @@
       wf.style.display = wl.length ? '' : 'none';
       if (keepW && [].some.call(wf.options, function(o){ return o.value === keepW; })) wf.value = keepW;
       ckDocFill();
+      if (quiet) return;                 // 목록만 — 그리기는 다음 호출이(첫 진입은 ckBase 를 두 번 부른다)
       applyFormUi();
       if (!curSeq) { renderGrid([], []); setPhotos([]); }   // 서식이 바뀌면 사진칸 구성도 갈린다
       else renderPhotos();
@@ -1221,7 +1226,7 @@
 
   /** 부서를 바꾸면 서식 목록이 갈린다 — 고르던 서식이 그 부서에 없으면 첫 서식으로 옮긴다. */
   window.ckPickDept = function(){
-    ckBase().then(function(){
+    ckBase(true).then(function(){   // 목록만 받고 그리기는 ckPickForm 의 ckBase 한 번으로(겹쳐 그리기 방지)
       if (FORMS.length && !FORMS.some(function(f){ return f.formid === val('ckForm'); })) {
         gel('ckForm').value = FORMS[0].formid;
       }
@@ -1236,7 +1241,7 @@
     gel('ckDelBtn').style.display = 'none';
     set('f_wardNm', ''); set('f_noteTxt', ''); set('f_fixTxt', '');
     ckWardAskedFor = null;   // 새 문서마다 빈 병동 확인을 다시 한다(B9)
-    ckBase().then(function(){ renderHead({}); renderGrid([], []); });
+    ckBase().then(function(){ renderHead({}); });   // 격자는 ckBase 가 그린다(curSeq 0) — 겹쳐 그리면 깜박인다(2026-09-02)
   };
 
   /**
@@ -2193,7 +2198,13 @@
     var want = (gel('ckForm').getAttribute('data-init') || '').trim();
     // 사이드바 「부서별 점검표」에서 넘어온 부서 — 서식 지정(want)이 있으면 서식이 우선이다
     var wantDept = (gel('ckDept').getAttribute('data-init') || '').trim();
-    ckBase().then(function(){
+    /* ★첫 진입 깜박임(2026-09-02 사용자 「사이드에서 선택하면 우측이 깜박거림」) —
+         종전엔 ckBase 를 세 번(목록 받기 → 서식 정해 다시 → 부서 걸러 다시) 부르며 매번 셀렉트·「서식을 고르세요」·격자를 다시 그렸고,
+         첫 focus 가 서식 목록 갱신(ckFormsRefresh)까지 한 번 더 불렀다. 이제 ①첫 호출은 **목록만**(quiet) ②그리기는 한 번 ③다 그린 뒤 드러낸다(ck-init 제거)
+         ④갱신 타이머를 지금으로 맞춰 첫 focus 에 안 돈다. 자료가 못 와도 1.5초 뒤엔 드러낸다(빈 화면으로 멈추지 않게). */
+    var reveal = function(){ gel('qpsChk').classList.remove('ck-init'); };
+    setTimeout(reveal, 1500);
+    ckBase(true).then(function(){
       var sel = gel('ckForm');
       if (want && FORMS.some(function(f){ return f.formid === want; })) sel.value = want;
       else {
@@ -2214,7 +2225,11 @@
       var sel = gel('ckForm');
       if (FORMS.length && !FORMS.some(function(f){ return f.formid === sel.value; })) sel.value = FORMS[0].formid;
       if (FORMS.length && (!FORM || FORM.formid !== sel.value)) return ckBase();
-    }).then(function(){ renderHead({}); renderGrid([], []); });
+    }).then(function(){
+      renderHead({});                 // 격자는 마지막 ckBase 가 이미 그렸다(curSeq 0) — 다시 안 그린다
+      ckFormsAt = Date.now();         // 첫 focus 의 목록 갱신은 건너뛴다(방금 받았다)
+      reveal();
+    }).catch(function(e){ reveal(); err(e); });
   });
 })();
 </script>

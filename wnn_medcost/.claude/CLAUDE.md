@@ -126,7 +126,19 @@
   나머지 7곳(회의록·감염보고·감염위험·QI계획·FMEA·RCA·서식)도 `svc.deleteX(m) == 0 → FAIL`. 서비스 `deleteChkForm` 만 void→int. 매퍼는 그대로(소프트 삭제 UPDATE, WHERE 에 HOSP_CD — 서식은 `<> '*'` 도).
   ★MySQL 은 값이 안 바뀌어도 matched 를 돌려주므로 두 번 눌러도 OK(안전한 쪽). 화면은 FAIL 을 err 로 보여 주는 공통 post() 라 JSP 변경 없음. javac 통과. ✅사용자 커밋·재기동.
 - 🔍**오늘치 굳히기 점검**(같은 날 밤 마지막) — 새 화면 3(qpsRptDef·qpsCode·qpsHoliday)의 innerHTML 결합에 esc 빠진 값 0(qpsCode 의 cnt/total 은 숫자) ·
-  새 조회 2(병동·부서 DISTINCT)는 `IX_CHK_DOC`·`IX_QPS_SAFERPT` 가 HOSP_CD 선두라 그 병원 행만 훑는다 · 감사 결함 0 · 시뮬 131 통과. **이 날 코드로 할 일은 여기서 끝.**
+  새 조회 2(병동·부서 DISTINCT)는 `IX_CHK_DOC`·`IX_QPS_SAFERPT` 가 HOSP_CD 선두라 그 병원 행만 훑는다 · 감사 결함 0 · 시뮬 131 통과.
+- ✅**점검표 첫 진입 깜박임**(같은 날 밤, 사용자 「사이드에서 선택하면 우측이 깜박거림」) — 원인 = qpsChk 초기화가 `ckBase` 를 **세 번**(목록 → 서식 정해 다시 → 부서 걸러 다시) 부르며
+  매번 셀렉트·「서식을 고르세요」·격자를 다시 그렸고, `ckPickForm` 도 ckBase 가 그린 격자 위에 `renderGrid([],[])` 를 겹쳐 그렸고, 첫 focus 가 `ckFormsRefresh` 까지 불렀다.
+  고침 = ①`ckBase(quiet)` — 참이면 목록만 채우고 안 그린다(첫 호출·부서 바꿀 때) ②그리기는 마지막 한 번, 겹치는 renderGrid 제거 ③`#qpsChk.ck-init{opacity:0}` 로 다 그린 뒤 드러냄(1.5초 폴백)
+  ④`ckFormsAt = Date.now()` 로 첫 focus 갱신 건너뜀. JSP 만(배포 복사 끝, 재기동 불필요). 시뮬 131 회귀 통과.
+- ✅**메뉴 이동 「전체 새로고침 깜박거림」**(같은 날 밤, 사용자 캡처 — 회의록 화면) — 구조 원인 = 타일 레이아웃이라 메뉴마다 **문서 전체를 다시 받는다**. 그 자체는 못 없애지만(pjax 는 화면마다 인라인 스크립트·리스너가 누적돼 위험)
+  첫 그리기를 늦추던 것을 걷어냈다(tiles/main/header.jsp·main.jsp) : ①jQuery 3.7.1 **비압축(300KB)** → min ②내보내기 전용 pdfmake·vfs_fonts·xlsx(2MB 대) **defer** — 최상위에서 부르는 JSP 없음을 8개 사용 파일 전부 확인
+  ③Google Fonts 링크 두 개 → 하나, `media="print" onload="this.media='all'"` 로 그리기 비차단 ④`schcommons.js` 두 번 로드 제거(안의 `$(document).ready`·`DOMNodeInserted` 리스너가 두 벌 걸리고 있었다)
+  ⑤`<html style="background:#f4f6f8">` — CSS 오기 전 흰 바탕 순간을 화면색으로. ⚠head 의 나머지 동기 스크립트 30여 개(datatables·차트·bootstrap 등)는 파싱 중 쓰는 JSP 가 있을 수 있어 **안 건드렸다**.
+  ★git 블롭은 LF(autocrlf), 작업본은 CRLF — CR/LF 바이트 수 비교는 작업본끼리만 뜻이 있다.
+  ⇒ 사용자 「아직 깜박거림 있음」 → **문서 간 뷰 전환** 추가(header.jsp `@view-transition { navigation: auto }`, Chrome/Edge 126+) — 브라우저가 떠 있던 화면을 붙들고 새 화면이 그려지면
+  0.12초 겹쳐 바꾼다. 흰 순간이 사라지는 것이 목표. 미지원 브라우저는 종전과 같다. 사이드바의 summernote 2개도 defer(쓰는 3화면 전부 함수 안에서 호출 — 확인).
+  ★그래도 거슬리면 남은 길은 「오른쪽만 갈아끼우기」(pjax)뿐 — 화면마다 인라인 스크립트(전역 function·최상위 let/const·document 리스너)를 검토해야 하는 큰 일. 결정 사안.
 - ✅**공통코드(QPS) 관리 화면**(같은 날 밤, 사용자 지시 「스크립트로 생성한 공통코드를 관리하게」) — 메뉴 QPS ▸ 관리(설정) ▸ 기준코드 ▸ **공통코드**
   (`main/qpsCode.do` · qpsCode.jsp). 대상 = TBL_CODE_DTL 'Q' 묶음 `QPS_%` 31개. 왼쪽 묶음(이름·쓰는 수/전체) · 오른쪽 세부코드(이름·차례·사용).
   ★**코드값은 못 바꾼다**(작성분의 키) · 지움 = USE_YN 'N'(옛 문서 보존) · upsert 는 시드와 같은 JOB_SEQ 1 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식과 다름 — 섞지 말 것).

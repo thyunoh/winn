@@ -16,8 +16,9 @@
 -->
 
 <link   href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/lang/summernote-ko-KR.min.js"></script>
+<%-- 편집기 스크립트는 defer(2026-09-02 깜박임) — 본문 파싱을 막던 것. 쓰는 화면(asqcd·faqcd·noticd)은 전부 함수 안에서 부른다(최상위 호출 0 확인) --%>
+<script defer src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/lang/summernote-ko-KR.min.js"></script>
 <!-- 리치에디터 -->
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 

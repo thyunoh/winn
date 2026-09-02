@@ -4,7 +4,9 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<%-- ★html 바탕색(2026-09-02 「메뉴 선택 시 전체 새로고침 깜박거림」) — 화면을 바꾸면 CSS 가 오기 전 한순간 **흰 바탕**이 보인다.
+     화면 바탕(#f4f6f8)과 같은 색을 미리 깔아 두면 그 순간이 눈에 덜 띈다. 구조 변경 없음. --%>
+<html xmlns="http://www.w3.org/1999/xhtml" style="background:#f4f6f8;">
 
 <head>
 <script>

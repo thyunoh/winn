@@ -16,6 +16,13 @@
 	<%-- maximum-scale=1 을 뺐다(2026-08-02) — 태블릿에서 손가락 확대(핀치줌)가 막혀 있었다.
 	     표가 넓은 화면이 많아 확대는 사실상 유일한 탈출구다. 데스크탑에는 아무 영향 없다. --%>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<%-- ★메뉴 이동 깜박임(2026-09-02, 사용자 「아직 깜박거림 있음」) — 문서 간 뷰 전환(View Transitions, Chrome/Edge 126+).
+	     같은 출처로 이동할 때 브라우저가 **떠 있던 화면을 붙들고** 새 화면이 그려지면 짧게 겹쳐 바꾼다 — 흰 화면 순간이 사라진다.
+	     지원 안 하는 브라우저는 무시한다(종전과 같음). 구조 변경 없음 — 화면은 여전히 통째로 다시 받는다. --%>
+	<style>
+	  @view-transition { navigation: auto; }
+	  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .12s; }
+	</style>
 
 	<title>위너넷 분석.평가 </title>    
 
@@ -71,7 +78,8 @@
 	
 	
 	<!-- 구글 웹폰트 링크  
-	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+	<%-- 글꼴 CSS 는 그리기를 막지 않게(2026-09-02) — 먼저 print 로 받고 다 오면 all 로. 아래 88행께의 가벼운 판(중복)은 뺐다 --%>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 	
 	<style>
 	    html, body {
@@ -85,7 +93,6 @@
 	-->
 	
 	<!-- Noto Sans KR 웹폰트 불러오기 
-	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
 	
 	<style>
 	    html, body {
@@ -103,11 +110,14 @@
 	<!--**********************************
 	    Scripts
 	***********************************-->
-	<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+	<%-- ★메뉴 이동 깜박임 줄이기(2026-09-02) — head 의 동기 스크립트가 화면마다 다시 실행돼 첫 그리기가 늦었다.
+	     ①jQuery 는 같은 판의 min ②내보내기 전용 라이브러리(pdfmake·vfs_fonts·xlsx, 합쳐 2MB 대)는 defer — 단추를 눌러야 쓰고
+	       파싱 중(최상위)에 부르는 JSP 가 없음을 8개 사용 파일 전부 확인했다(defer 는 순서 유지 · DOMContentLoaded 전 실행). --%>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+	<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 	<script src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.1.8/b-3.2.0/b-colvis-3.2.0/b-html5-3.2.0/b-print-3.2.0/datatables.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>    
+	<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>    
 
 
 	<!-- chart bundle js -->
@@ -154,8 +164,9 @@
 	<script type="text/javascript" src="/js/winmc/jqBootstrapValidation.min.js"></script>
 	 
 	<script type="text/javascript" src="/js/winmc/schcommons.js"></script> <!--공통검색 -->
-    <script type="text/javascript" src="/js/winmc/authControl.js"></script> <!--권한관리 -->   
-    <script type="text/javascript" src="/js/winmc/schcommons.js"></script> <!--병원검색 -->
+    <script type="text/javascript" src="/js/winmc/authControl.js"></script> <!--권한관리 -->
+    <%-- schcommons.js 두 번째 로드는 뺐다(2026-09-02) — 같은 파일이 위(공통검색)에 이미 있고, 두 번 실행되면
+         안의 $(document).ready 와 DOMNodeInserted 리스너가 **두 벌** 걸린다. 병원검색도 같은 파일이다. --%>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
