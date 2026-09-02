@@ -1,0 +1,7 @@
+{
+  "name": "qps-sim",
+  "private": true,
+  "description": "QPS 화면 인라인 JS 가짜 DOM 시뮬 (jsdom) — node run_all.js",
+  "scripts": { "test": "node run_all.js" },
+  "devDependencies": { "jsdom": "^24.1.3" }
+}
