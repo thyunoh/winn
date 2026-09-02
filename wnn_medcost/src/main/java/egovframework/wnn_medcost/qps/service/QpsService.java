@@ -278,7 +278,7 @@ public interface QpsService {
 	Map<String, Object> selectChkFormOne(String hospCd, String formId) throws Exception;
 	/** 서식 저장 — 병원 전용 행으로만 쓴다(공통 '*' 는 안 건드린다) */
 	void saveChkForm(Map<String, Object> form, List<Map<String, Object>> items) throws Exception;
-	void deleteChkForm(Map<String, Object> param) throws Exception;
+	int deleteChkForm(Map<String, Object> param) throws Exception;   // 건수 — 0 이면 공용('*')이거나 다른 병원(2026-09-02)
 	/** 공휴일(2026-09-02) — 그 해의 공휴일 목록 / 등록(같은 날짜면 이름 갱신) / 삭제. 병원 구분 없이 공용 */
 	List<Map<String, Object>> selectHolidays(String year) throws Exception;
 	void saveHoliday(Map<String, Object> param) throws Exception;

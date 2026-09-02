@@ -458,7 +458,8 @@ public class QpsController {
 			m.put("hospCd", hospCd);
 			m.put("minSeq", longOf(p.get("minSeq")));
 			m.put("regUser", userId(request));
-			svc.deleteMinutes(m);
+			// ★삭제 건수 확인(2026-09-02) — 0 이면 없는 문서이거나 다른 병원 것. 08-15 권한 검증의 「응답만 OK」 흠을 문서 삭제 7곳에 같이 막았다
+			if (svc.deleteMinutes(m) == 0) return fail(res, "삭제할 회의록을 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -713,7 +714,7 @@ public class QpsController {
 			m.put("hospCd", hospCd);
 			m.put("rptSeq", longOf(p.get("rptSeq")));
 			m.put("regUser", userId(request));
-			svc.deleteInfRpt(m);
+			if (svc.deleteInfRpt(m) == 0) return fail(res, "삭제할 보고서를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -807,7 +808,7 @@ public class QpsController {
 			m.put("hospCd", hospCd);
 			m.put("riskSeq", longOf(p.get("riskSeq")));
 			m.put("regUser", userId(request));
-			svc.deleteInfRisk(m);
+			if (svc.deleteInfRisk(m) == 0) return fail(res, "삭제할 문서를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1040,7 +1041,7 @@ public class QpsController {
 			m.put("hospCd", hospCd);
 			m.put("qipSeq", longOf(p.get("qipSeq")));
 			m.put("regUser", userId(request));
-			svc.deleteQiPlan(m);
+			if (svc.deleteQiPlan(m) == 0) return fail(res, "삭제할 계획서를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1131,7 +1132,7 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("fmeSeq", longOf(p.get("fmeSeq"))); m.put("regUser", userId(request));
-			svc.deleteFmea(m);
+			if (svc.deleteFmea(m) == 0) return fail(res, "삭제할 FMEA 를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -1628,7 +1629,7 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("formId", str(p.get("formId"), "")); m.put("regUser", userId(request));
-			svc.deleteChkForm(m);
+			if (svc.deleteChkForm(m) == 0) return fail(res, "삭제할 서식을 찾을 수 없습니다. (공용 서식이거나 다른 병원의 서식입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -2177,7 +2178,7 @@ public class QpsController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			Map<String, Object> m = new HashMap<>();
 			m.put("hospCd", hospCd); m.put("rcaSeq", longOf(p.get("rcaSeq"))); m.put("regUser", userId(request));
-			svc.deleteRca(m);
+			if (svc.deleteRca(m) == 0) return fail(res, "삭제할 RCA 를 찾을 수 없습니다. (없는 문서이거나 다른 병원의 문서입니다)");
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

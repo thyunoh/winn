@@ -1904,8 +1904,8 @@ public class QpsServiceImpl implements QpsService {
 	}
 
 	@Override
-	public void deleteChkForm(Map<String, Object> param) throws Exception {
-		mapper.deleteChkForm(param);
+	public int deleteChkForm(Map<String, Object> param) throws Exception {
+		return mapper.deleteChkForm(param);   // 건수 — 매퍼 WHERE 가 공용('*')을 빼므로 0 이면 공용이거나 다른 병원
 	}
 
 	// ═══ 공휴일 (2026-09-02) — SUNWOO t_holiday 대응. 작성 화면의 「토·일·공휴일 제외」와 머리글 색이 쓴다 ═══
