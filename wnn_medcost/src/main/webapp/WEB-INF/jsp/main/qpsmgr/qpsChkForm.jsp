@@ -415,7 +415,7 @@
       <div id="cfPasteBox" style="display:none; margin-top:8px; border:1px solid #dfe4ea; border-radius:6px; padding:10px;">
         <div style="font-size:12.5px; color:#43555f; margin-bottom:6px;">
           <b>한 줄에 항목 하나</b>씩 붙여넣으세요. 엑셀에서 세로로 복사하면 그대로 들어갑니다.<br>
-          <span style="color:#8a99a3;">탭이나 <b>|</b> 로 나누면 <b>항목 ▸ 열묶음 ▸ 입력(CHECK/TEXT/NUM) ▸ 단위 ▸ 전월복사(Y)</b> 로 읽습니다.</span>
+          <span style="color:#8a99a3;">탭이나 <b>|</b> 로 나누면 <b>항목 ▸ 열묶음 ▸ 입력(CHECK/TEXT/NUM/SEL) ▸ 단위 ▸ 전월복사(Y) ▸ 선택지(SEL 일 때, 쉼표)</b> 로 읽습니다.</span>
         </div>
         <textarea id="cfPasteTxt" rows="8" placeholder="전원 상태&#10;외관 및 내부청결 상태 점검&#10;온도|치료실 환경|NUM|℃"></textarea>
         <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
@@ -793,9 +793,21 @@
     document.querySelectorAll('#tbITEM [data-cell="spantxt"]').forEach(function(td){ td.hidden = !itemRowAx; });
     gel('f_spanAllWrap').style.display = itemRowAx ? '' : 'none';
     // ★셀 고정문(2026-09-02) — 고정 열(ITEM_COL)에서만. 열마다 미리 찍힌 글 + 그 아래 입력칸
+    // ★같은 칸이 입력 종류 「선택」(SEL)에선 **선택지**다(어느 축이든) — 유/무 · 이용/제공/열람/파기 처럼 고르는 칸.
+    //   SEL 항목이 하나라도 있으면 칸을 보이고, 항목마다 안내 글을 달리한다.
     var isCol = (a === 'ITEM_COL');
-    gel('thCellTxts').hidden = !isCol;
-    document.querySelectorAll('#tbITEM [data-cell="celltxts"]').forEach(function(td){ td.hidden = !isCol; });
+    var selRows = [].filter.call(document.querySelectorAll('#tbITEM tr'), function(tr){
+      var s = tr.querySelector('[data-f="inputgb"]'); return s && s.value === 'SEL'; });
+    var showCt = isCol || selRows.length > 0;
+    gel('thCellTxts').hidden = !showCt;
+    gel('thCellTxts').innerHTML = (isCol ? '셀 고정문' : '선택지') + (isCol && selRows.length ? ' · 선택지' : '') +
+      '<br><span style="font-weight:400;color:#8a99a3;">' + (isCol ? '열마다 쉼표' : '쉼표로. 예) 유,무') + '</span>';
+    document.querySelectorAll('#tbITEM tr').forEach(function(tr){
+      var td = tr.querySelector('[data-cell="celltxts"]'), ip = td && td.querySelector('input'); if (!td || !ip) return;
+      td.hidden = !showCt;
+      var isSel = (tr.querySelector('[data-f="inputgb"]') || {}).value === 'SEL';
+      ip.placeholder = isSel ? '선택지를 쉼표로. 예) 유,무' : (isCol ? '열마다 쉼표. 예) 특출남,평균 이상,보통,미흡,부적당' : '(입력 종류가 「선택」일 때만 씀)');
+    });
     // ★기간 열 머리글 입력 행 — 기간이 **열**이고 항목이 **행**인 두 축만(서버 prdHeadOk 와 같은 판단)
     var phAx = (a === 'ITEM_DAY' || a === 'ITEM_MONTH');
     gel('f_prdHeadWrap').style.display = phAx ? '' : 'none';
@@ -837,10 +849,12 @@
       '<td data-cell="desctxt" hidden><input data-f="desctxt" value="' + esc(r.desctxt) + '" placeholder="예) 물걸레 소독"></td>' +
       '<td data-cell="spantxt" hidden><input data-f="spantxt" value="' + esc(r.spantxt) + '" placeholder="예) 매월 1회 실시"></td>' +
       '<td data-cell="celltxts" hidden><input data-f="celltxts" value="' + esc(r.celltxts) + '" placeholder="열마다 쉼표. 예) 특출남,평균 이상,보통,미흡,부적당"></td>' +
-      '<td><select data-f="inputgb">' +
-        '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' ? '' : ' selected') + '>O / X</option>' +
+      // ★입력 종류를 바꾸면 「선택지」 칸이 보이거나 숨어야 한다(SEL) — cfAxisChange 가 칸 보임을 다시 센다
+      '<td><select data-f="inputgb" onchange="cfAxisChange();">' +
+        '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' || r.inputgb === 'SEL' ? '' : ' selected') + '>O / X</option>' +
         '<option value="TEXT"' + (r.inputgb === 'TEXT' ? ' selected' : '') + '>글자</option>' +
         '<option value="NUM"' + (r.inputgb === 'NUM' ? ' selected' : '') + '>숫자</option>' +
+        '<option value="SEL"' + (r.inputgb === 'SEL' ? ' selected' : '') + '>선택</option>' +
       '</select></td>' +
       '<td><input data-f="unitnm" value="' + esc(r.unitnm) + '" placeholder="℃"></td>' +
       '<td data-cell="carryyn" hidden style="text-align:center;">' +
@@ -1364,9 +1378,11 @@
       // 탭 또는 | 로 나눈다 — 엑셀에서 여러 칸을 복사하면 탭이 들어온다
       var p = ln.split(/\t|\|/).map(function(s){ return s.trim(); });
       var ig = (p[2] || '').toUpperCase();
+      // 여섯째 칸 = 선택지(입력이 SEL 일 때, 「유,무」처럼 쉼표) — 다른 종류면 무시
       itemRow({ itemnm: p[0], grpnm: p[1] || '',
-                inputgb: (ig === 'TEXT' || ig === 'NUM') ? ig : 'CHECK',
-                unitnm: p[3] || '', carryyn: (p[4] || '').toUpperCase() === 'Y' ? 'Y' : 'N' });
+                inputgb: (ig === 'TEXT' || ig === 'NUM' || ig === 'SEL') ? ig : 'CHECK',
+                unitnm: p[3] || '', carryyn: (p[4] || '').toUpperCase() === 'Y' ? 'Y' : 'N',
+                celltxts: (ig === 'SEL') ? (p[5] || '') : '' });
     });
     renumber(); cfAxisChange(); cfHeadCount();
     gel('cfPasteBox').style.display = 'none';
@@ -1418,7 +1434,7 @@
       'INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID,HOSP_CD,SORT,ITEM_NM,GRP_NM,BLK_NM,DESC_TXT,SPAN_TXT,CELL_TXTS,INPUT_GB,UNIT_NM,CARRY_YN,USE_YN) VALUES\n' +
       items.map(function(r, i){
         return ' (' + q(id) + ",'*'," + (i + 1) + ',' + q(r.itemnm) + ',' + q(r.grpnm) + ',' + q(r.blknm) + ',' +
-               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q(axis() === 'ITEM_COL' ? r.celltxts : '') + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ',' +
+               q(r.desctxt) + ',' + q(r.spantxt) + ',' + q((axis() === 'ITEM_COL' || r.inputgb === 'SEL') ? r.celltxts : '') + ',' + q(r.inputgb || 'CHECK') + ',' + q(r.unitnm) + ',' +
                q(axis() === 'LIST' && r.carryyn === 'Y' ? 'Y' : 'N') + ",'Y')";
       }).join(',\n') + ';\n';
     gel('cfSqlTxt').value = sql;

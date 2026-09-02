@@ -114,6 +114,12 @@
   #qpsChk table.gr td.hd input{ text-align:left; }
   <%-- 대장(LIST)의 글자 칸 — 이름·사유가 들어가므로 가운데 정렬이면 읽기 나쁘다 --%>
   #qpsChk table.gr td input.ltxt{ text-align:left; padding-left:6px; }
+  <%-- ★선택 칸(INPUT_GB=SEL, 2026-09-02 델파이 dfm 대조) — 원본이 「유/무」「이용/제공/열람/파기」 같은 **라디오 묶음**인 칸.
+       글자로 치는 대신 고른다. 선택지는 항목의 CELL_TXTS(쉼표). 빈 칸은 흐리게(empty). --%>
+  #qpsChk table.gr td select[data-r]{ width:100%; min-width:58px; border:none; background:transparent; text-align:center;
+      text-align-last:center; padding:3px 0; font-size:12px; color:#1f3d4d; cursor:pointer; }
+  #qpsChk table.gr td select[data-r]:focus{ background:#eaf5f0; outline:1px solid #8fc3b2; }
+  #qpsChk table.gr td select[data-r].empty{ color:#b3bec5; }
   #qpsChk table.gr tr.sign td, #qpsChk table.gr tr.sign th{ background:#fbfcfd; }
   #qpsChk .sun{ color:#c0392b; } #qpsChk .sat{ color:#2c6fb5; }
   #qpsChk .hol{ color:#c0392b; text-decoration:underline dotted; }   /* 공휴일(2026-09-02) — 이름은 title 로 */
@@ -131,7 +137,7 @@
   #qpsChk .ck-tools .ck-hint b{ color:#43555f; }
   #qpsChk table.gr thead th[data-day], #qpsChk table.gr thead th[data-col],
   #qpsChk table.gr tbody th.hd, #qpsChk table.gr tbody td.hd, #qpsChk table.gr tr.sign th.hd{ cursor:pointer; }
-  #qpsChk table.gr tr.rowoff td input[data-r]{ background:#f3f5f7; color:#9aa7ae; }
+  #qpsChk table.gr tr.rowoff td input[data-r], #qpsChk table.gr tr.rowoff td select[data-r]{ background:#f3f5f7; color:#9aa7ae; }
 
 
   #qpsChk .ck-form{ display:grid; grid-template-columns:110px 1fr 110px 1fr; gap:9px 10px; align-items:start; }
@@ -509,11 +515,36 @@
    * 셀 하나. day 를 주면 `data-day` 를 단다 — ★인쇄에서 **반달 접기**가 이걸 보고 열을 가른다.
    * 표를 다시 그리지 않고 화면 격자를 복사해 쓰기 때문에, 어느 칸이 며칠인지 표에 적혀 있어야 한다.
    */
-  function cell(r, c, v, cls, day){
-    return '<td' + (day ? (' data-day="' + day + '"') : '') + '><input' +
+  function cell(r, c, v, cls, day, opts){
+    var td = '<td' + (day ? (' data-day="' + day + '"') : '') + '>';
+    if (opts && opts.length) return td + selHtml(r, c, v, opts) + '</td>';   // 선택 칸(아래 selOpts)
+    return td + '<input' +
            (cls ? (' class="' + cls + '"') : '') +
            ' data-r="' + r + '" data-c="' + c + '" value="' + esc(v) + '"></td>';
   }
+  /* ═══ 선택 칸 (INPUT_GB='SEL', 2026-09-02) ═══
+     델파이 원본 dfm 을 대조하니 「유/무」「유/무/응급」「이용/제공/열람/파기」처럼 **정해진 몇 개 중 하나를 고르는 칸**이
+     TcxCheckBox 라디오 묶음으로 있는데(마약류 저장시설 점검부 · 개인영상정보 관리대장 · 검체 TAT 대장) 우리는 글자 칸이었다.
+     ⇒ 입력 종류 SEL 을 더했다. 선택지는 항목의 CELL_TXTS(쉼표) — ITEM_COL 의 「셀 고정문」과 같은 칸을 **다른 뜻**으로 쓴다
+       (SEL 이면 고정문이 아니라 선택지). 값은 고른 글자 그대로 저장되므로 옛 글자 값(TEXT 시절)도 그대로 보이고,
+       서식에서 선택지를 바꿔도 이미 적힌 값은 목록 끝에 한 줄로 살아남는다(사라지지 않는 것이 우선).
+     ★collect·인쇄·전월복사는 행·열 번호만 보므로 그대로 돈다(collect 와 인쇄만 select 를 함께 읽게 했다).
+     ★O/X 토글·Enter 복사·전체 O 의 대상이 아니다(ckOxOk 가 INPUT 만 본다). */
+  function selOpts(r){
+    if (!r || r.inputgb !== 'SEL') return null;
+    var o = String(r.celltxts || '').split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    return o.length ? o : null;
+  }
+  function selHtml(r, c, v, opts){
+    v = String(v == null ? '' : v).trim();
+    var o = opts.slice(); if (v && o.indexOf(v) < 0) o.push(v);
+    return '<select data-r="' + r + '" data-c="' + c + '"' + (v ? '' : ' class="empty"') + '><option value=""></option>' +
+           o.map(function(t){ return '<option value="' + esc(t) + '"' + (t === v ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') +
+           '</select>';
+  }
+  /** 날짜 격자(ITEM_DAY·DAY_ITEM…)의 글자·숫자 항목 — 더블클릭 O/X 토글·전체 O 의 대상에서 뺀다(ckOxOk).
+   *  ⚠종전엔 이 격자에서 입력 종류를 안 봐서 **이름·온도 칸을 더블클릭하면 값이 지워졌다**(ckFlip 은 O/X 아닌 글자를 비운다). */
+  function noxCls(r){ return (r && (r.inputgb === 'TEXT' || r.inputgb === 'NUM')) ? 'nox' : ''; }
 
   /**
    * 격자 옆 칸의 **머리글**. `back=true` 면 뒤쪽(POST) 것만.
@@ -651,12 +682,14 @@
           // ★셀 고정문(2026-09-02, 보류서식 최종판정 §3 설계) — 열마다 미리 찍힌 글 + 그 아래 입력칸.
           //   인사고과 평가표(w15)의 10행 × 5열 = 50칸이 저마다 다른 글자. 쉼표로 열 수만큼, 빈 자리는 보통 칸.
           //   글자를 더블클릭해도 그 칸이 토글된다(아래 dblclick ①-2). 인쇄는 격자를 복사하므로 그대로 찍힌다.
-          var ct = String(r.celltxts || '').split(',').map(function(s){ return s.trim(); });
+          //   ★선택 칸(SEL)이면 CELL_TXTS 는 고정문이 아니라 **선택지**다 — 고정문은 없는 것으로 본다(selOpts).
+          var so = selOpts(r);
+          var ct = so ? [] : String(r.celltxts || '').split(',').map(function(s){ return s.trim(); });
           cd.forEach(function(c, k){
             var t = ct[k] || '';
             if (t) h += '<td class="hasct"><div class="ck-ct">' + esc(t) + '</div><input' + ((r.inputgb === 'CHECK') ? '' : ' class="ltxt"') +
                         ' data-r="' + r.sort + '" data-c="' + (k + 1) + '" value="' + esc(g(r.sort, k + 1)) + '"></td>';
-            else h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt');
+            else h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt', null, so);
           });
           h += sideTd(r, g, true) + '</tr>';
         }
@@ -725,7 +758,7 @@
           if (!ITEMS.length) h += '<td></td>';
           // ★표시칸(CHECK)만 가운데 정렬. 이름·사유가 가운데 오면 읽기 나쁘다
           ITEMS.forEach(function(r){
-            h += cell(rno, r.sort, g(rno, r.sort), (r.inputgb === 'CHECK') ? '' : 'ltxt');
+            h += cell(rno, r.sort, g(rno, r.sort), (r.inputgb === 'CHECK') ? '' : 'ltxt', null, selOpts(r));
           });
           h += '</tr>';
         }
@@ -765,13 +798,13 @@
           h += '<tr>';
           if (ix % dSub === 0) h += '<td class="hd ' + pf.cls + '" data-day="' + pf.prd + '" style="text-align:center;" rowspan="' + dSub + '">' + esc(pf.label) + '</td>';
           h += '<td class="hd" style="text-align:center;min-width:44px;">' + esc(pf.sub) + '</td>';
-          ITEMS.forEach(function(r){ h += cell(pf.no, r.sort, g(pf.no, r.sort)); });
+          ITEMS.forEach(function(r){ h += cell(pf.no, r.sort, g(pf.no, r.sort), noxCls(r), null, selOpts(r)); });
           h += '</tr>';
         });
       } else {
       PC.forEach(function(pc){
         h += '<tr><td class="hd ' + pc.cls + '" data-day="' + pc.no + '" style="text-align:center;">' + esc(pc.label) + '</td>';
-        ITEMS.forEach(function(r){ h += cell(pc.no, r.sort, g(pc.no, r.sort)); });
+        ITEMS.forEach(function(r){ h += cell(pc.no, r.sort, g(pc.no, r.sort), noxCls(r), null, selOpts(r)); });
         h += '</tr>';
       });
       }
@@ -869,7 +902,7 @@
             var drw = blkRowNo(db, r.sort);
             h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
             h += sideTd(r, g, false, drw);
-            PF.forEach(function(pf){ h += cell(drw, pf.no, g(drw, pf.no), '', pf.prd); });
+            PF.forEach(function(pf){ h += cell(drw, pf.no, g(drw, pf.no), noxCls(r), pf.prd, selOpts(r)); });
             h += sideTd(r, g, true, drw) + '</tr>';
           });
         }
@@ -895,7 +928,7 @@
           h += '<td class="spanfix" colspan="' + (PF.length + (spanAll() ? postCols().length : 0)) + '">' + esc(sp) + '</td>';
           if (!spanAll()) h += sideTd(r, g, true);
         } else {
-          (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), '', pf.prd); }); })(r.sort);
+          (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), noxCls(r), pf.prd, selOpts(r)); }); })(r.sort);
           h += sideTd(r, g, true);
         }
         h += '</tr>';
@@ -979,7 +1012,7 @@
       if (gnm && i === 0) h += '<th class="rgrp" rowspan="' + rows.length + '">' + esc(gnm) + '</th>';
       h += '<th class="hd">' + esc(r.itemnm) + (r.unitnm ? (' (' + esc(r.unitnm) + ')') : '') + '</th>';
       h += sideTd(r, g);
-      (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), '', pf.prd); }); })(r.sort);
+      (function(rw){ PF.forEach(function(pf){ h += cell(rw, pf.no, g(rw, pf.no), noxCls(r), pf.prd, selOpts(r)); }); })(r.sort);
       h += sideTd(r, g, true) + '</tr>';
     });
     return h + '</tbody></table>';
@@ -1445,7 +1478,8 @@
 
   function collect(){
     var vals = [], rows = [];
-    document.querySelectorAll('#ckGridWrap input[data-r]').forEach(function(el){
+    // 선택 칸(select[data-r], 2026-09-02)도 같은 값 자리다 — 고른 글자가 그대로 값
+    document.querySelectorAll('#ckGridWrap input[data-r], #ckGridWrap select[data-r]').forEach(function(el){
       var v = String(el.value).trim();
       if (!v) return;                       // ★빈 칸은 안 담는다
       vals.push({ rowno: Number(el.getAttribute('data-r')), colno: Number(el.getAttribute('data-c')), val: v });
@@ -1485,7 +1519,7 @@
   /** 토글·복사·전체 마킹의 대상 칸인가 */
   function ckOxOk(inp){
     if (!inp || inp.tagName !== 'INPUT' || !inp.hasAttribute('data-r')) return false;
-    if (inp.classList.contains('ltxt') || inp.readOnly) return false;
+    if (inp.classList.contains('ltxt') || inp.classList.contains('nox') || inp.readOnly) return false;   // nox = 날짜 격자의 글자·숫자 항목
     var r = Number(inp.getAttribute('data-r'));
     return !(r === SIGN_NO || r === PRDH_NO || r >= SUB_ROW_BASE);
   }
@@ -1545,8 +1579,13 @@
       if (t.hasAttribute('data-rn')) ckRowOffSync();
       if (t.hasAttribute('data-r')) ckExclApply(t);   // 손으로 O 를 쳐도 한 줄 하나 규칙은 같다
     });
+    // 선택 칸(2026-09-02) — 빈 칸은 흐리게(empty). input 이벤트는 select 에 안 오므로 change 로
+    wrap.addEventListener('change', function(ev){
+      var t = ev.target; if (t && t.tagName === 'SELECT' && t.hasAttribute('data-r')) t.classList.toggle('empty', !t.value);
+    });
     wrap.addEventListener('dblclick', function(ev){
       var t = ev.target; if (!t || !t.closest) return;
+      if (t.tagName === 'SELECT' || t.tagName === 'OPTION') return;   // 선택 칸은 목록을 여는 손짓이다 — 줄 토글로 새지 않게
       // ① 값칸 — 한 칸 토글 / 사인 칸 — 비어 있으면 내 이름
       if (t.tagName === 'INPUT') {
         if (ckOxOk(t)) { ev.preventDefault(); t.value = ckFlip(t.value); ckExclApply(t); return; }
@@ -1900,14 +1939,16 @@
     var src = document.querySelector('#ckGridWrap table.gr');
     if (!src) { _alertBox('표가 없습니다.', {icon:'⚠️'}); return; }
     var t = src.cloneNode(true);
-    // 입력칸은 값만 남긴다(종이에 네모를 찍지 않는다)
-    t.querySelectorAll('input').forEach(function(el){
+    // 입력칸은 값만 남긴다(종이에 네모를 찍지 않는다). 선택 칸(select)도 고른 글자만.
+    // ★값은 **화면 원본**에서 읽는다(같은 차례) — 복제본의 select 는 고른 상태를 못 믿는다(브라우저·가짜 DOM 마다 다르다)
+    var srcEls = src.querySelectorAll('input, select');
+    t.querySelectorAll('input, select').forEach(function(el, i){
       var td = el.parentNode, isHd = td.classList.contains('hd');
       // 대장의 글자 칸은 종이에서도 왼쪽 정렬 — 이름·사유가 가운데 오면 읽기 나쁘다
       var isTxt = el.classList.contains('ltxt');
       // ★열 이름 칸(문서가 정하는 열)은 **머리글**이다 — 왼쪽 정렬로 눕히면 안 된다
       var isCn = el.hasAttribute('data-cn');
-      td.textContent = String(el.value || '');
+      td.textContent = String((srcEls[i] || el).value || '');
       if (!isCn && (isHd || isTxt)) td.className = 'l';
     });
     t.querySelectorAll('th.hd').forEach(function(el){ el.className = 'l'; });

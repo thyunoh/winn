@@ -2590,7 +2590,8 @@
 	</delete>
 
 	<insert id="insertChkItems" parameterType="map">
-		<!-- CELL_TXTS(2026-09-02) = 셀 고정문 — 열마다 미리 찍힌 글(인사고과 평가표의 「특출남 매우 조직적임」…). ITEM_COL 전용, 비면 종전과 같다 -->
+		<!-- CELL_TXTS(2026-09-02) = 셀 고정문 — 열마다 미리 찍힌 글(인사고과 평가표의 「특출남 매우 조직적임」…). ITEM_COL 전용, 비면 종전과 같다.
+		     ★같은 칸이 INPUT_GB='SEL'(선택, 같은 날 밤)이면 **선택지**(「유,무」)다 — 어느 축이든. 화면(qpsChk.jsp selOpts)이 가른다. -->
 		INSERT INTO TBL_QPS_CHK_ITEM (FORM_ID, HOSP_CD, SORT, ITEM_NM, GRP_NM, BLK_NM, DESC_TXT, SPAN_TXT, CELL_TXTS, INPUT_GB, UNIT_NM, CARRY_YN, USE_YN) VALUES
 		<foreach item="it" collection="items" separator=",">
 		 (#{formId}, #{hospCd}, #{it.sort}, #{it.itemnm}, #{it.grpnm}, #{it.blknm}, #{it.desctxt}, #{it.spantxt}, #{it.celltxts}, #{it.inputgb}, #{it.unitnm}, #{it.carryyn}, 'Y')
