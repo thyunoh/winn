@@ -463,6 +463,8 @@
                                                     <ul class="nav flex-column">
                                                         <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsCode.do">공통코드</a></li>
                                                         <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsHoliday.do">공휴일 관리</a></li>
+                                                        <%-- 보고서(safeRpt) 유형별 체크 묶음 — 시드로만 60여 묶음, 화면에서 항목 내림·추가(2026-09-02 밤) --%>
+                                                        <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsRptDef.do">보고서 체크 묶음</a></li>
                                                     </ul>
                                                 </div>
                                             </li>

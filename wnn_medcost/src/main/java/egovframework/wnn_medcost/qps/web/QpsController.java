@@ -488,6 +488,11 @@ public class QpsController {
 
 	/** 기준코드 › 공통코드(QPS) 관리(2026-09-02) — 스크립트로 넣은 TBL_CODE_DTL 'Q' 묶음(QPS_%)을 화면에서 관리.
 	 *  보는 것은 모두, 고치는 것은 위너넷만(codeSave/codeGrpSave 가 막는다). 메뉴 : QPS ▸ 관리(설정) ▸ 기준코드 ▸ 공통코드. */
+	@RequestMapping(value = "main/qpsRptDef.do")
+	public String qpsRptDef(HttpServletRequest request, ModelMap model) {
+		return qpsScreen(request, model, ".main/qpsmgr/qpsRptDef");
+	}
+
 	@RequestMapping(value = "main/qpsCode.do")
 	public String qpsCode(HttpServletRequest request, ModelMap model) {
 		return qpsScreen(request, model, ".main/qpsmgr/qpsCode");
@@ -1339,6 +1344,104 @@ public class QpsController {
 			Map<String, Object> m = new HashMap<>();
 			m.put("codeCd", codeCd); m.put("codeNm", nm); m.put("regUser", userId(request));
 			svc.saveQpsCodeGroup(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 보고서 체크 묶음 관리 (2026-09-02 밤) ═══
+	   safeRpt 유형별 체크 묶음(TBL_QPS_SAFERPT_DEF/USE)이 시드로만 60여 묶음 쌓였다 — 병원이 「이 선택지 빼 달라」 할 때 SQL 없이 위너넷이 고친다.
+	   ★항목 이름·묶음 코드는 PK 이자 작성분(TBL_QPS_SAFERPT_CHK)의 저장 글자 — 못 바꾼다. 내림 = USE_YN N, 새 이름은 새 항목.
+	   ★공유 묶음('*')을 고치면 그것을 쓰는 모든 유형이 같이 바뀐다 — 화면이 경고를 단다.
+	   보는 것은 모두 · 고치는 것은 위너넷만. 주소 rdef* (중복 grep 확인 09-02). */
+	private static final String RDEF_GB = "\\*|[A-Z0-9_]{1,20}";
+	private static final String RDEF_CD = "[A-Z0-9_]{1,30}";
+
+	@RequestMapping(value = "/qps/rdefList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> rptDefList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			List<Map<String, Object>> types = new ArrayList<>();
+			for (Map<String, Object> c : svc.selectQpsCodesAll())
+				if ("QPS_SAFERPT_GB".equals(str(c.get("codecd"), ""))) types.add(c);
+			res.put("types", types);
+			res.put("def", svc.selectSafeRptDefAll());
+			res.put("use", svc.selectSafeRptUseAll());
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 항목 한 줄 — 새 항목이면 묶음 이름·라디오 여부도 함께(그 묶음의 첫 항목일 때 필요) */
+	@RequestMapping(value = "/qps/rdefSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> rptDefSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "체크 묶음 관리는 위너넷 담당자만 할 수 있습니다.");
+			String gb = str(p.get("rptGb"), "").trim().toUpperCase(), cd = str(p.get("grpCd"), "").trim().toUpperCase();
+			String item = unesc(p.get("itemNm")).trim(), grpNm = unesc(p.get("grpNm")).trim();
+			if (!gb.matches(RDEF_GB)) return fail(res, "유형 코드가 올바르지 않습니다.");
+			if (!cd.matches(RDEF_CD)) return fail(res, "묶음 코드는 영문 대문자·숫자·_ 1~30자입니다.");
+			if (item.isEmpty() || item.length() > 200) return fail(res, "항목 글자는 1~200자입니다.");
+			if (grpNm.isEmpty()) grpNm = cd;
+			if (grpNm.length() > 100) grpNm = grpNm.substring(0, 100);
+			Integer so = intOf(p.get("sort"));
+			Map<String, Object> m = new HashMap<>();
+			m.put("rptGb", gb); m.put("grpCd", cd); m.put("grpNm", grpNm); m.put("itemNm", item);
+			m.put("multiYn", "N".equals(str(p.get("multiYn"), "Y")) ? "N" : "Y");
+			m.put("etcYn", "Y".equals(str(p.get("etcYn"), "N")) ? "Y" : "N");
+			m.put("sort", so == null ? Integer.valueOf(99) : so);
+			m.put("useYn", "N".equals(str(p.get("useYn"), "Y")) ? "N" : "Y");
+			svc.saveSafeRptDefItem(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 묶음 이름·라디오 여부 — 그 묶음의 항목 행 전부에 쓴다 */
+	@RequestMapping(value = "/qps/rdefGrpSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> rptDefGrpSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "체크 묶음 관리는 위너넷 담당자만 할 수 있습니다.");
+			String gb = str(p.get("rptGb"), "").trim().toUpperCase(), cd = str(p.get("grpCd"), "").trim().toUpperCase();
+			String grpNm = unesc(p.get("grpNm")).trim();
+			if (!gb.matches(RDEF_GB)) return fail(res, "유형 코드가 올바르지 않습니다.");
+			if (!cd.matches(RDEF_CD)) return fail(res, "묶음 코드가 올바르지 않습니다.");
+			if (grpNm.isEmpty()) return fail(res, "묶음 이름을 적어 주세요.");
+			if (grpNm.length() > 100) grpNm = grpNm.substring(0, 100);
+			Map<String, Object> m = new HashMap<>();
+			m.put("rptGb", gb); m.put("grpCd", cd); m.put("grpNm", grpNm);
+			m.put("multiYn", "N".equals(str(p.get("multiYn"), "Y")) ? "N" : "Y");
+			svc.updateSafeRptDefGroup(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 유형 ↔ 묶음 연결(USE) — 차례·쓰기 여부. 공유 묶음을 유형에 붙이는 길이기도 하다 */
+	@RequestMapping(value = "/qps/rdefUseSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> rptDefUseSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			if (hospCd(request, p).isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "체크 묶음 관리는 위너넷 담당자만 할 수 있습니다.");
+			String gb = str(p.get("rptGb"), "").trim().toUpperCase(), cd = str(p.get("grpCd"), "").trim().toUpperCase();
+			if (!gb.matches("[A-Z0-9_]{1,20}")) return fail(res, "유형 코드가 올바르지 않습니다(공유 '*' 에는 연결을 두지 않습니다).");
+			if (!cd.matches(RDEF_CD)) return fail(res, "묶음 코드가 올바르지 않습니다.");
+			Integer so = intOf(p.get("sort"));
+			Map<String, Object> m = new HashMap<>();
+			m.put("rptGb", gb); m.put("grpCd", cd);
+			m.put("sort", so == null ? Integer.valueOf(99) : so);
+			m.put("useYn", "N".equals(str(p.get("useYn"), "Y")) ? "N" : "Y");
+			svc.saveSafeRptUse(m);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;

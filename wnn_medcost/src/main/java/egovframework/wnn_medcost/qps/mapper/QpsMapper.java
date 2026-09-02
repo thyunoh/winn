@@ -407,6 +407,13 @@ public interface QpsMapper {
 	int saveQpsCode(Map<String, Object> param);
 	int saveQpsCodeGroup(Map<String, Object> param);
 
+	// 보고서 체크 묶음 관리 (2026-09-02 밤) — TBL_QPS_SAFERPT_DEF/USE
+	List<Map<String, Object>> selectSafeRptDefAll();
+	List<Map<String, Object>> selectSafeRptUseAll();
+	int saveSafeRptDefItem(Map<String, Object> param);
+	int updateSafeRptDefGroup(Map<String, Object> param);
+	int saveSafeRptUse(Map<String, Object> param);
+
 	List<Map<String, Object>> selectChkDocList(@Param("hospCd") String hospCd, @Param("formId") String formId,
 	                                           @Param("inYear") String inYear);
 	Map<String, Object> selectChkDoc(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq);

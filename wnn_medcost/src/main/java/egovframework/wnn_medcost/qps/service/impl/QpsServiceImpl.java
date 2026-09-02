@@ -1917,6 +1917,18 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public void saveQpsCodeGroup(Map<String, Object> param) throws Exception { mapper.saveQpsCodeGroup(param); }
 
+	// ═══ 보고서 체크 묶음 관리 (2026-09-02 밤) — 매퍼 위임뿐. 검증은 컨트롤러가 한다 ═══
+	@Override
+	public List<Map<String, Object>> selectSafeRptDefAll() throws Exception { return mapper.selectSafeRptDefAll(); }
+	@Override
+	public List<Map<String, Object>> selectSafeRptUseAll() throws Exception { return mapper.selectSafeRptUseAll(); }
+	@Override
+	public void saveSafeRptDefItem(Map<String, Object> param) throws Exception { mapper.saveSafeRptDefItem(param); }
+	@Override
+	public void updateSafeRptDefGroup(Map<String, Object> param) throws Exception { mapper.updateSafeRptDefGroup(param); }
+	@Override
+	public void saveSafeRptUse(Map<String, Object> param) throws Exception { mapper.saveSafeRptUse(param); }
+
 	@Override
 	public Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception {
 		Map<String, Object> out = new LinkedHashMap<>(selectChkFormOne(hospCd, formId));

@@ -288,6 +288,13 @@ public interface QpsService {
 	List<Map<String, Object>> selectQpsCodesAll() throws Exception;
 	void saveQpsCode(Map<String, Object> param) throws Exception;
 	void saveQpsCodeGroup(Map<String, Object> param) throws Exception;
+
+	// 보고서 체크 묶음 관리 (2026-09-02 밤)
+	List<Map<String, Object>> selectSafeRptDefAll() throws Exception;
+	List<Map<String, Object>> selectSafeRptUseAll() throws Exception;
+	void saveSafeRptDefItem(Map<String, Object> param) throws Exception;
+	void updateSafeRptDefGroup(Map<String, Object> param) throws Exception;
+	void saveSafeRptUse(Map<String, Object> param) throws Exception;
 	/** 작성 화면 기초 — 서식 + 항목 + 그 해 작성목록 */
 	Map<String, Object> selectChkBase(String hospCd, String formId, String inYear) throws Exception;
 	/** 작성 문서 1건 — 머리 + 셀값 + 기기행 */

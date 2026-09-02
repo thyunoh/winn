@@ -2553,6 +2553,36 @@
 		ON DUPLICATE KEY UPDATE CODE_NM = VALUES(CODE_NM), USE_YN = 'Y', ACTION_YN = 'Y', UPD_USER = #{regUser}, UPD_DTTM = NOW()
 	</insert>
 
+	<!-- ═══ 보고서 체크 묶음 관리 (2026-09-02 밤) — TBL_QPS_SAFERPT_DEF/USE 를 화면에서 ═══
+	     시드로만 60여 묶음이 쌓였다(08-11 실물 · 09-02 델파이 대조 2차). 병원이 「이 선택지 빼 달라」 할 때 SQL 없이 위너넷이 고친다.
+	     ★항목 이름(ITEM_NM)은 PK 이자 작성분(TBL_QPS_SAFERPT_CHK)의 저장 글자 — **못 바꾼다.** 내림 = USE_YN 'N', 새 이름은 새 항목.
+	     ★묶음 이름·라디오 여부(GRP_NM·MULTI_YN)는 행마다 들고 있는 구조라 그 묶음 행 **전부**에 같이 쓴다(updateSafeRptDefGroup). -->
+	<select id="selectSafeRptDefAll" resultType="java.util.HashMap">
+		SELECT RPT_GB AS rptgb, GRP_CD AS grpcd, GRP_NM AS grpnm, ITEM_NM AS itemnm,
+		       MULTI_YN AS multiyn, ETC_YN AS etcyn, SORT AS sort, USE_YN AS useyn
+		  FROM TBL_QPS_SAFERPT_DEF
+		 ORDER BY RPT_GB, GRP_CD, SORT, ITEM_NM
+	</select>
+	<select id="selectSafeRptUseAll" resultType="java.util.HashMap">
+		SELECT RPT_GB AS rptgb, GRP_CD AS grpcd, SORT AS sort, USE_YN AS useyn
+		  FROM TBL_QPS_SAFERPT_USE
+		 ORDER BY RPT_GB, SORT, GRP_CD
+	</select>
+	<insert id="saveSafeRptDefItem" parameterType="map">
+		<!-- 새 항목이면 묶음 이름·라디오 여부를 함께 넣고, 있던 항목이면 항목 것(기타·차례·사용)만 고친다 -->
+		INSERT INTO TBL_QPS_SAFERPT_DEF (RPT_GB, GRP_CD, GRP_NM, ITEM_NM, MULTI_YN, ETC_YN, SORT, USE_YN)
+		VALUES (#{rptGb}, #{grpCd}, #{grpNm}, #{itemNm}, #{multiYn}, #{etcYn}, #{sort}, #{useYn})
+		ON DUPLICATE KEY UPDATE ETC_YN = VALUES(ETC_YN), SORT = VALUES(SORT), USE_YN = VALUES(USE_YN)
+	</insert>
+	<update id="updateSafeRptDefGroup" parameterType="map">
+		UPDATE TBL_QPS_SAFERPT_DEF SET GRP_NM = #{grpNm}, MULTI_YN = #{multiYn}
+		 WHERE RPT_GB = #{rptGb} AND GRP_CD = #{grpCd}
+	</update>
+	<insert id="saveSafeRptUse" parameterType="map">
+		INSERT INTO TBL_QPS_SAFERPT_USE (RPT_GB, GRP_CD, SORT, USE_YN) VALUES (#{rptGb}, #{grpCd}, #{sort}, #{useYn})
+		ON DUPLICATE KEY UPDATE SORT = VALUES(SORT), USE_YN = VALUES(USE_YN)
+	</insert>
+
 
 	<!-- 격리·강박 시행일지 원자료 — 19세 구분과 <시행 시간>을 자바가 센다 -->
 	<select id="selectSecLogDistRows" resultType="java.util.HashMap">
