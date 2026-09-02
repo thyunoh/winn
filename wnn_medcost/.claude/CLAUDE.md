@@ -64,6 +64,10 @@
   계획·위원회 → 지표·분석 → 환자안전 활동 → QI → 환자만족도·불만고충 → 보고서·서식 → 점검표 작성 → **담당자별 업무**(부서 15 × 점검표→서식→위원회→기록) → **관리(설정)** → 자료·안내.
   ★옛 링크 69개 전부 유지(자동 대조), 같은 화면이 두 자리에 걸릴 땐 `?d=부서` 를 붙여 강조 중복을 막음. 부서 위원회는 부서 묶음으로, 감염 그룹은 「담당자별 업무 ▸ 감염관리」로.
   ★`qpsDeptMenu` 스크립트는 이제 줄을 다시 그리지 않고 **서식 없는 부서의 점검표 줄만** 감춘다. 위너넷 게이트 id(qpsChkUseMenu…)는 그대로.
+- ✅**safeRpt 체크 묶음 보강 9유형**(같은 날 밤) — 원본 dfm 의 TcxCheckBox 전수 대조 → 「원본엔 체크가 있는데 우리 DEF 가 없는」 유형
+  PSYVISIT·STAFFVIO·INFDIS·MRLOST·SWDIARY·SWINTAKE·SWCLOSE·SWSPONS·CONSENT 를 [QPS_SAFERPT_SEED_CHK_2026-09-02.sql](docs/sql/qps/seed/QPS_SAFERPT_SEED_CHK_2026-09-02.sql)
+  로 시드(⛔운영 실행 필요). ★08-18 「선택지 미구현·코드 변경 필요」 메모는 **틀렸었다** — `TBL_QPS_SAFERPT_DEF/USE` 가 이미 20여 유형에 쓰인다. 코드 변경 없음.
+  원본 .pas 전부 Hint 묶음 배타 ⇒ 라디오(MULTI_YN N), 「기타」는 ETC_YN Y.
 - ✅**공통코드(QPS) 관리 화면**(같은 날 밤, 사용자 지시 「스크립트로 생성한 공통코드를 관리하게」) — 메뉴 QPS ▸ 관리(설정) ▸ 기준코드 ▸ **공통코드**
   (`main/qpsCode.do` · qpsCode.jsp). 대상 = TBL_CODE_DTL 'Q' 묶음 `QPS_%` 31개. 왼쪽 묶음(이름·쓰는 수/전체) · 오른쪽 세부코드(이름·차례·사용).
   ★**코드값은 못 바꾼다**(작성분의 키) · 지움 = USE_YN 'N'(옛 문서 보존) · upsert 는 시드와 같은 JOB_SEQ 1 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식과 다름 — 섞지 말 것).
