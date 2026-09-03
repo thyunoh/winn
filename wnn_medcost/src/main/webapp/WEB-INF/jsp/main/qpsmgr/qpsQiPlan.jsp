@@ -17,6 +17,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="qpsQiPlan" data-wnn="<c:out value='${wnnYn}'/>">
@@ -115,7 +116,7 @@
   <div class="qi-left">
     <div class="qi-card">
       <h4>계획서 목록 <span class="hint" id="qpCnt"></span></h4>
-      <div class="qi-list" id="qpListBox"><div class="qi-empty">불러오는 중…</div></div>
+      <div class="qi-list" id="qpListBox" data-find="계획 찾기"><div class="qi-empty">불러오는 중…</div></div>
       <button type="button" class="qi-btn ghost" style="width:100%; margin-top:6px;" onclick="qpNew();">＋ 새 계획서</button>
     </div>
   </div>

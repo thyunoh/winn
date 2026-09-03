@@ -10,6 +10,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%-- 공통 첨부 위젯 — window.qpsFileBox 정의 --%>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
@@ -90,7 +91,7 @@
   <div class="ql-wrap" data-split="가로" data-split-key="lib.body">
     <div class="ql-side">
       <h4>분류</h4>
-      <div id="qlCats"><div class="ql-empty" style="padding:12px 4px;">불러오는 중…</div></div>
+      <div id="qlCats" data-find="분류 찾기"><div class="ql-empty" style="padding:12px 4px;">불러오는 중…</div></div>
     </div>
     <div class="ql-main">
       <div class="ql-mtit" id="qlTit">분류를 선택하세요</div>

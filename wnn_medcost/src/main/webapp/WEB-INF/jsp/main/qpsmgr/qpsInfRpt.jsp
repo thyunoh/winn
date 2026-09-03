@@ -11,6 +11,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -109,7 +110,7 @@
   <div class="ir-left">
     <div class="ir-card">
       <h4>문서 목록 <span class="hint" id="irCnt"></span></h4>
-      <div class="ir-list" id="irListBox"><div class="ir-empty">불러오는 중…</div></div>
+      <div class="ir-list" id="irListBox" data-find="보고서 찾기"><div class="ir-empty">불러오는 중…</div></div>
       <button type="button" class="ir-btn ghost" style="width:100%; margin-top:6px;" onclick="irNew();">＋ 새 문서</button>
     </div>
   </div>

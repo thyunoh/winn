@@ -8,6 +8,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%-- 공통 첨부 위젯 — window.qpsFileBox 정의(회의록·계획서·라운딩 공용) --%>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
@@ -119,7 +120,7 @@
   <div class="qm-left">
     <div class="qm-card">
       <h4>회의록 목록 <span class="hint" id="qmCnt"></span></h4>
-      <div class="qm-list" id="qmList"><div class="qm-empty">불러오는 중…</div></div>
+      <div class="qm-list" id="qmList" data-find="회의록 찾기"><div class="qm-empty">불러오는 중…</div></div>
       <button type="button" class="qm-btn ghost" style="width:100%; margin-top:6px;" onclick="qmNew();">＋ 새 회의록</button>
     </div>
   </div>

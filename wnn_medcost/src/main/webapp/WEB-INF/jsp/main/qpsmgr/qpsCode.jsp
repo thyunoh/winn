@@ -11,6 +11,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="qpsCode" data-wnn="<c:out value='${wnnYn}'/>">
@@ -79,7 +80,7 @@
 <div class="qc-body" data-split="가로" data-split-key="code.body">
   <div class="qc-left">
     <div class="hd">묶음 <span id="qcGrpCnt" class="qc-sub"></span></div>
-    <div id="qcGroups"><div class="qc-empty">불러오는 중…</div></div>
+    <div id="qcGroups" data-find="묶음 찾기"><div class="qc-empty">불러오는 중…</div></div>
   </div>
   <div class="qc-right">
     <div class="qc-rhead">

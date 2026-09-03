@@ -17,6 +17,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -123,7 +124,7 @@
   <div class="qr-left">
     <div class="qr-card">
       <h4>보고서 목록 <span class="hint" id="qrCnt"></span></h4>
-      <div class="qr-list" id="qrListBox"><div class="qr-empty">불러오는 중…</div></div>
+      <div class="qr-list" id="qrListBox" data-find="보고서 찾기"><div class="qr-empty">불러오는 중…</div></div>
       <button type="button" class="qr-btn ghost" style="width:100%; margin-top:6px;" onclick="qrNew();">＋ 새 보고서</button>
     </div>
   </div>

@@ -17,6 +17,7 @@
   ⚠「여러 사람 선택」은 만들었다가 **뺐다**(사용자 지적 : 의미 없음) — 고를 것이 하나여야 헷갈리지 않는다.
 --%>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <div class="dashboard-wrapper">
 <div id="qpsUserDept">
 <style>
@@ -122,7 +123,7 @@
       <thead><tr>
         <th style="width:110px;">이름</th><th style="width:100px;">ID</th><th>담당 부서</th>
       </tr></thead>
-      <tbody id="udUserBody"><tr><td colspan="4" style="text-align:center; color:#8a99a3;">불러오는 중…</td></tr></tbody>
+      <tbody id="udUserBody" data-find="사용자 찾기"><tr><td colspan="4" style="text-align:center; color:#8a99a3;">불러오는 중…</td></tr></tbody>
     </table>
   </div>
 

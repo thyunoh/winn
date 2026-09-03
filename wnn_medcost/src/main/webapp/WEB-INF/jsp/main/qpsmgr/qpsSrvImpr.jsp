@@ -16,6 +16,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -106,7 +107,7 @@
   <div class="si-left">
     <div class="si-card">
       <h4>보고서 목록 <span class="hint" id="siCnt"></span></h4>
-      <div class="si-list" id="siListBox"><div class="si-empty">불러오는 중…</div></div>
+      <div class="si-list" id="siListBox" data-find="찾기"><div class="si-empty">불러오는 중…</div></div>
       <button type="button" class="si-btn ghost" style="width:100%; margin-top:6px;" onclick="siNew();">＋ 새 보고서</button>
     </div>
   </div>

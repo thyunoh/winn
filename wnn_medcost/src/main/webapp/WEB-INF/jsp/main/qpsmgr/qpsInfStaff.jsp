@@ -9,6 +9,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -84,7 +85,7 @@
   <div class="st-left">
     <div class="st-card">
       <h4>전담자 목록</h4>
-      <div id="stList"><div class="st-empty">불러오는 중…</div></div>
+      <div id="stList" data-find="찾기"><div class="st-empty">불러오는 중…</div></div>
     </div>
   </div>
 
