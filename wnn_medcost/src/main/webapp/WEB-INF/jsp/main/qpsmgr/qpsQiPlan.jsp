@@ -16,6 +16,7 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="qpsQiPlan" data-wnn="<c:out value='${wnnYn}'/>">
@@ -110,7 +111,7 @@
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
 
-<div class="qi-wrap">
+<div class="qi-wrap" data-split="가로" data-split-key="qiplan.body">
   <div class="qi-left">
     <div class="qi-card">
       <h4>계획서 목록 <span class="hint" id="qpCnt"></span></h4>

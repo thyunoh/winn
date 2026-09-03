@@ -448,7 +448,7 @@
                                             <li class="nav-item" id="qpsChkUseMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsChkUse.do">우리 병원 사용 서식 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <li class="nav-item" id="qpsChkFormMenu" style="display:none;">
-                                                <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                                <a class="nav-item nav-link" href="/main/qpsChkForm.do">서식 생성 관리 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <li class="nav-item" id="qpsDeptFormMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsDeptForm.do">부서별 양식 · 복제 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <%-- 부서별 쓰는 분류 — 서식 관리 안의 [부서별 분류 정하기] 링크로 가므로 메뉴는 감춘다(08-18 중복 제거) --%>

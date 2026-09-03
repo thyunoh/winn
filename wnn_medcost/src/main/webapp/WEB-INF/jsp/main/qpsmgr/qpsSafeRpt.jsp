@@ -16,6 +16,7 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -137,7 +138,7 @@
   <span style="flex:0 0 60px;"></span>
 </div>
 
-<div class="sr-wrap">
+<div class="sr-wrap" data-split="가로" data-split-key="saferpt.body">
   <div class="sr-left">
     <div class="sr-card">
       <h4>보고서 목록 <span class="hint" id="srCnt"></span></h4>

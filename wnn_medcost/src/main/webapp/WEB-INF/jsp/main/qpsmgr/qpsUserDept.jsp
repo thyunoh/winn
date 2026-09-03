@@ -16,6 +16,7 @@
       · **편의 기능**(접어 둠) — **복사 하나뿐**. 보고 있는 사람의 담당을 받을 사람 한 명에게.
   ⚠「여러 사람 선택」은 만들었다가 **뺐다**(사용자 지적 : 의미 없음) — 고를 것이 하나여야 헷갈리지 않는다.
 --%>
+<script src="/asset/js/ui-split.js"></script>
 <div class="dashboard-wrapper">
 <div id="qpsUserDept">
 <style>
@@ -114,7 +115,7 @@
   <b>등록하지 않은 사람은 전 부서</b>를 봅니다 · 부서를 <b>모두 해제하고 저장</b>하면 다시 전 부서가 됩니다.
 </div>
 
-<div class="ud-wrap">
+<div class="ud-wrap" data-split="가로" data-split-key="userdept.body">
   <div class="ud-left ud-card">
     <h4>사용자 <span class="hint">— 이름을 누르면 오른쪽에서 고칩니다</span></h4>
     <table>

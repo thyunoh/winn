@@ -16,6 +16,7 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -118,7 +119,7 @@
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
 
-<div class="qr-wrap">
+<div class="qr-wrap" data-split="가로" data-split-key="qirpt.body">
   <div class="qr-left">
     <div class="qr-card">
       <h4>보고서 목록 <span class="hint" id="qrCnt"></span></h4>
