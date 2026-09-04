@@ -253,6 +253,7 @@
     background: #fff; /* 이미지 로딩 전 배경 */
 }
 
+
 </style>
 <body>
 <!-- Navbar Start -->
