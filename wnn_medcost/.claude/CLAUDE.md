@@ -530,6 +530,14 @@
 
 ## 장애/수정 이력
 
+### [완료 · 배포 대기] Q&A 답변에 GPT 복사본을 올렸더니 태그가 글자로 보임 (2026-09-04)
+- **증상**: 위너넷이 ChatGPT 화면을 복사해 「자주하는 질문」(qnacd 등록창 → TBL_QNA_KB 2600)에 올림 → 병원 사이드바 FAQ 창에 `<div><span style=…>` 가 글자로 보인다고 전화.
+- **원인 2가지**: ①`web.xml` **HTMLTagFilter** 가 `*.do` 파라미터의 `< > & " '` 를 `&lt;` 로 바꿔 넘긴다 → `@RequestParam` 인 `qnaTopSave.do` 만 걸려 **본문이 글자로 저장**(FAQ·문의 등록은 `@RequestBody` JSON 이라 안 걸림). 그래서 같은 글이 편집창엔 정상, 병원 화면엔 태그로 보였다.
+  ②ChatGPT 화면 복사본엔 `section`·`data-turn-id`·클래스 포장 태그가 통째로 따라온다(2587·ASQ 183/185 에도 잔존, 이건 표시엔 무해).
+- **조치**: · 서버 `qnaTopSave` 되돌림(`qnaUnescapeHtml`, 자바 → **WAR 재빌드**) · [html-paste-clean.js](src/main/webapp/asset/js/html-paste-clean.js) 신설 = `wnnPasteClean`(summernote onPaste — qnacd 의 qnaCleanNode 와 같은 규칙, 글·줄바꿈·굵게·색·형광펜·표만) + `wnnUnescapeHtml`
+  · faqcd·asqcd 편집기 onPaste + 불러올 때 되돌림 · **sidebar.jsp FAQ 창은 그릴 때 되돌림**(JSP 교체만으로 병원 화면이 먼저 정상이 됨) · 저장된 2600 은 [KB2600_CLEAN_2026-09-04.sql](docs/sql/qna/KB2600_CLEAN_2026-09-04.sql) ⛔사용자 실행(3,856→1,910자, 검증 jsdom).
+- ★규칙 : **HTML 을 저장하는 `@RequestParam` 엔드포인트는 HTMLTagFilter 를 되돌려야 한다**(JSON 본문은 무관). 화면은 「태그가 없고 &lt; 만 있으면 되돌림」으로 옛 글도 살린다. jsdom 은 이 세션 scratch 에 설치돼 있다(`npm i jsdom` 3분 넘음 — 타임아웃 뒤에도 설치는 끝나 있었다).
+
 ### [대기 · DB 적용 필요] 마감업로드 — 평가표 배치 삭제가 **다른 배치 환자까지 소실** (2026-08-24)
 - **증상**: 같은 달 환자평가표(.L01)를 나눠 올린 뒤(예: 67건+70건) 한 배치를 **삭제하면 다른 배치
   건수도 사라짐**. 삭제 후 재업로드 흐름에서 재현(더행복요양병원 202607). 병원처럼 삭제 없이

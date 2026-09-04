@@ -734,6 +734,12 @@ public class MangrController {
 		}
 	}
 
+	/** HTMLTagFilter(HTMLTagFilterRequestWrapper)가 바꾼 다섯 글자만 원래대로 — &amp; 는 맨 끝에 풀어야 이중 해제가 안 된다 */
+	private static String qnaUnescapeHtml(String s) {
+		if (s == null) return null;
+		return s.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&");
+	}
+
 	/** 자주하는 질문 등록·수정 (위너넷 관리자 전용, 2026-08-26) — kbId 가 있으면 수정, 없으면 신규 */
 	@RequestMapping(value="/qnaTopSave.do", method = RequestMethod.POST)
 	@ResponseBody
@@ -750,6 +756,11 @@ public class MangrController {
 			return response;
 		}
 		try {
+			/* web.xml 의 HTMLTagFilter 가 *.do 파라미터의 < > & " ' 를 &lt; 등으로 바꿔 넘긴다.
+			   답변은 편집기가 HTML 그대로 저장하는 칸이라 그대로 두면 태그가 글자로 저장돼
+			   화면에 <div><span …> 이 보인다(2026-09-04 사용자 신고 — GPT 답변 붙여넣기). 여기서만 되돌린다. */
+			body  = qnaUnescapeHtml(body);
+			title = qnaUnescapeHtml(title);
 			svc.qnaTopSave(kbId, title, body, catId, topNo);
 			response.put("error_code", "0");
 		} catch(Exception ex) {

@@ -1121,6 +1121,10 @@ function loadFaqData(keyword) {
                     let question = String(faq.qstnConts || "질문이 없습니다.").trim();
                     let answer = String(faq.ansrConts || "답변이 없습니다.").trim()
                                    .replace(/\r?\n/g, "<br>");   // 옛 답변(개행 저장분)도 줄이 살게
+                    // web.xml HTMLTagFilter 가 < > 를 &lt; &gt; 로 바꿔 저장된 답변(자주하는 질문 등록 경로, 2026-09-04 병원 신고 「태그가 글자로 보인다」)
+                    //  — 태그가 하나도 없고 &lt; 만 있으면 되돌려서 그린다. 서버(qnaTopSave) 도 되돌리게 고쳤지만 이미 저장된 글과 배포 전 기간을 위해 화면에서도 막는다
+                    if (answer.indexOf('<') < 0 && answer.indexOf('&lt;') >= 0)
+                        answer = answer.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 
                     let faqItem = $("<div>", { class: "faq-item", style: "padding:8px 12px;" });
 

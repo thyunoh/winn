@@ -150,6 +150,7 @@
 		<!-- ============================================================== -->
 		<!-- 기본 초기화 Start -->
 		<!-- ============================================================== -->
+		<script src="/asset/js/html-paste-clean.js"></script>   <%-- 붙여넣기 정리·HTMLTagFilter 되돌림 (2026-09-04) --%>
 		<script type="text/javascript">
 		
 		// 안해도 상관없음, 단 getElementById를 변경하면 꼭해야됨
@@ -1461,7 +1462,7 @@
 			  try { $('#ansrConts1').summernote('destroy'); } catch(e) {}
 
 			  // answerText가 null/undefined일 경우 빈 문자열로 초기화
-			  let safeAnswer = (answerText || '');
+			  let safeAnswer = window.wnnUnescapeHtml ? window.wnnUnescapeHtml(answerText || '') : (answerText || '');   // HTMLTagFilter 가 글자로 바꿔 저장된 본문은 태그로 되돌려 편집기에 넣는다
 			  let convertedAnswer = safeAnswer.replace(/\n/g, "<br>");
 
 			  $('#ansrConts1').summernote({
@@ -1484,7 +1485,9 @@
 			        $('#ansrConts1').next().find('.note-editable').css('font-size', '14px');
 			        // 줄바꿈 유지된 내용 적용
 			        $('#ansrConts1').summernote('code', convertedAnswer);
-			      }
+			      },
+			      // GPT·웹에서 복사한 글의 포장 태그(section·data-*·class)를 벗기고 글·색·굵기만 넣는다 (2026-09-04 「이렇게 나온다」 신고)
+			      onPaste: function (e) { if (window.wnnPasteClean) window.wnnPasteClean(e, $('#ansrConts1')); }
 			    }
 			  });
 			}

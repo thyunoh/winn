@@ -542,7 +542,7 @@
 
     if (kb.kind === 'HTML'){
       /* 관리자 편집기(자주하는 질문)가 서식 그대로 저장한 답변 — 그대로 보여 준다 (2026-08-26) */
-      h += '<div style="line-height:1.8;">' + body + '</div>';
+      h += '<div style="line-height:1.8;">' + qnaFixEsc(body) + '</div>';
     } else if (kb.kind === 'CARD'){
       var ls = body.split('\n');
       h += '<ul>';
@@ -1048,6 +1048,7 @@
         /* 편집기는 HTML 로 보고 저장한다 — 기존 plain 답변(QA·CARD 등)은 개행을 <br> 로 바꿔 연다.
            안에 섞여 있던 <b>…</b> 는 여기서 실제 굵게로 보인다(사용자 「기존 것도 이렇게 됨」 해결). */
         var b = kb ? String(kb.body || '') : '';
+        if (kb && kb.kind === 'HTML') b = qnaFixEsc(b);   /* 2026-09-04 전에 저장돼 태그가 글자로 남은 답변 */
         el('qtopBody').innerHTML = (kb && kb.kind === 'HTML') ? b : b.replace(/\r?\n/g, '<br>');
         if (kb && kb.title) el('qtopTitle').value = kb.title;
       }, function(){ el('qtopBody').innerHTML = ''; });
@@ -1070,6 +1071,58 @@
     if (window._uiMessageLoaded && typeof window._alertBox === 'function') _alertBox(msg, { icon:'⚠️' });
     else alert(msg.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''));
   }
+  /* ── 2026-09-04 사용자 신고: GPT 답변을 붙여넣어 저장하면 화면에 <div><span style=…> 가 글자로 보인다 ──
+       원인은 두 가지. ① web.xml 의 HTMLTagFilter 가 *.do 파라미터의 < > 를 &lt; &gt; 로 바꿔 저장했다(서버에서 되돌림,
+       MangrController.qnaTopSave). ② GPT 화면에서 복사한 HTML 에 data-start·class·<section> 같은 쓰레기가 딸려 온다.
+       아래는 ①로 이미 망가져 저장된 답변을 화면에서 되살리는 것과, ② 붙여넣을 때 정리하는 것. */
+  /* 태그가 통째로 &lt;…&gt; 로 저장된 답변만 되돌린다 — 진짜 < 가 하나라도 있으면 정상 HTML 이니 손대지 않는다 */
+  function qnaFixEsc(b){
+    b = String(b == null ? '' : b);
+    if (b.indexOf('<') >= 0 || b.indexOf('&lt;') < 0) return b;
+    return b.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+  }
+  /* 붙여넣은 HTML 정리 — 글·줄바꿈·굵게·색·형광펜만 남긴다 */
+  var PASTE_KEEP = { B:1, STRONG:1, I:1, EM:1, U:1, BR:1, P:1, DIV:1, SPAN:1, UL:1, OL:1, LI:1, TABLE:1, TR:1, TD:1, TH:1, THEAD:1, TBODY:1, A:1, FONT:1, H1:1, H2:1, H3:1, H4:1 };
+  function qnaCleanNode(n){
+    var kids = Array.prototype.slice.call(n.childNodes), i, c;
+    for (i=0;i<kids.length;i++){
+      c = kids[i];
+      if (c.nodeType === 8 || (c.nodeType === 1 && /^(SCRIPT|STYLE|META|LINK|BUTTON|SVG|IMG)$/.test(c.nodeName))){ n.removeChild(c); continue; }
+      if (c.nodeType !== 1) continue;
+      qnaCleanNode(c);
+      if (!PASTE_KEEP[c.nodeName]){                    /* section·article·main 등은 벗기고 안의 것만 남긴다 */
+        while (c.firstChild) n.insertBefore(c.firstChild, c);
+        n.removeChild(c); continue;
+      }
+      var at = Array.prototype.slice.call(c.attributes), j, nm, keep;
+      for (j=0;j<at.length;j++){
+        nm = at[j].name.toLowerCase();
+        keep = (nm === 'style') || (nm === 'href' && c.nodeName === 'A') || (nm === 'color' && c.nodeName === 'FONT')
+            || ((nm === 'colspan' || nm === 'rowspan') && (c.nodeName === 'TD' || c.nodeName === 'TH'));
+        if (!keep) c.removeAttribute(at[j].name);
+      }
+      if (c.getAttribute && c.getAttribute('style')){   /* 스타일도 색·형광펜·굵기·크기만 */
+        var st = c.style, ok = ['color','background-color','font-weight','font-size','text-decoration','font-style'], cs = '', k;
+        for (k=0;k<ok.length;k++) if (st.getPropertyValue(ok[k])) cs += ok[k] + ':' + st.getPropertyValue(ok[k]) + ';';
+        if (cs) c.setAttribute('style', cs); else c.removeAttribute('style');
+      }
+      if (c.nodeName === 'DIV' && !c.childNodes.length && c.parentNode) c.parentNode.removeChild(c);   /* 빈 껍데기 */
+    }
+  }
+  el('qtopBody').addEventListener('paste', function(e){
+    var cd = e.clipboardData || window.clipboardData; if (!cd) return;
+    var html = cd.getData('text/html'), txt = cd.getData('text/plain');
+    e.preventDefault();
+    if (html){
+      var box = document.createElement('div'); box.innerHTML = html;
+      qnaCleanNode(box);
+      html = box.innerHTML;
+    } else {
+      html = esc(txt || '').replace(/\r?\n/g, '<br>');
+    }
+    document.execCommand('insertHTML', false, html);
+  });
+
   /* 편집기 툴바 — 고른 글자에 서식을 입힌다(관리자 전용 화면이라 execCommand 로 충분) */
   window.qtopCmd = function(cmd, val){
     el('qtopBody').focus();
