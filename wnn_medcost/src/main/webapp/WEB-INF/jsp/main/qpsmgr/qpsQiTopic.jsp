@@ -18,6 +18,8 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="qpsQiTopic" data-wnn="<c:out value='${wnnYn}'/>">
@@ -103,11 +105,11 @@
 
 <%-- ───────── 탭1 : 기준표 (평가위원 1명 = 1장) ───────── --%>
 <div id="pane1">
-  <div class="qt-wrap">
+  <div class="qt-wrap" data-split="가로" data-split-key="qitopic.body">
     <div class="qt-left">
       <div class="qt-card">
         <h4>평가위원 <span class="hint" id="qtCnt"></span></h4>
-        <div id="qtListBox"><div class="qt-empty">불러오는 중…</div></div>
+        <div id="qtListBox" data-find="주제 찾기"><div class="qt-empty">불러오는 중…</div></div>
         <button type="button" class="qt-btn ghost" style="width:100%; margin-top:6px;" onclick="qtNew();">＋ 새 평가위원</button>
       </div>
     </div>

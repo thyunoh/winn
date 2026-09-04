@@ -11,6 +11,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="qpsRptDef" data-wnn="<c:out value='${wnnYn}'/>">
@@ -26,10 +27,21 @@
   #qpsRptDef input, #qpsRptDef select{ border:1px solid #cfd8e0; border-radius:5px; padding:4px 7px; font-size:12.5px; background:#fff; font-family:inherit; }
   #qpsRptDef .rd-note{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:9px 14px; font-size:12.5px; color:#43555f; margin-bottom:12px; line-height:1.6; }
   #qpsRptDef .rd-note b{ color:#20303a; }
-  #qpsRptDef .rd-body{ display:flex; gap:12px; align-items:flex-start; }
-  #qpsRptDef .rd-left{ width:330px; flex:0 0 330px; background:#fff; border:1px solid #e3e9ed; border-radius:10px; overflow:hidden; position:sticky; top:8px; }
-  #qpsRptDef .rd-left .hd{ padding:8px 12px; font-size:12.5px; font-weight:700; color:#43555f; background:#f2f6f8; border-bottom:1px solid #dde5ea; }
-  #qpsRptDef #rdTypes{ max-height:calc(100vh - 300px); min-height:240px; overflow-y:auto; }
+  #qpsRptDef .rd-body{ display:flex; gap:0; align-items:stretch; }
+  <%-- ★왼쪽 칸은 **화면 높이에 맞춰 스스로 나눠 갖는다.**
+       vh 숫자를 못 박으면 창 크기·확대 배율마다 미리보기가 화면 밖으로 밀린다(실제로 5px 밀렸다). --%>
+  #qpsRptDef .rd-left{ width:412px; flex:0 0 auto; min-width:240px; background:transparent; border:0; border-radius:0; overflow:visible;
+      position:sticky; top:8px; max-height:calc(100vh - 20px); display:flex; flex-direction:column; gap:10px; }
+  #qpsRptDef .rd-left > .rd-tybox{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; overflow:hidden;
+      display:flex; flex-direction:column; min-height:150px; flex:1 1 0; }
+  #qpsRptDef .rd-left .hd{ padding:7px 10px; font-size:12.5px; font-weight:700; color:#43555f; background:#f2f6f8;
+      border-bottom:1px solid #dde5ea; display:flex; align-items:center; gap:6px; }
+  #qpsRptDef .rd-left .hd .sp{ flex:1; }
+  <%-- 찾기 칸은 머리 안에서 남는 만큼만 — 「유형 79개」를 밀어내지 않는다 --%>
+  #qpsRptDef #rdFind{ flex:0 1 150px; min-width:90px; padding:3px 7px; font-size:12px; font-weight:400; }
+  <%-- ★유형 목록과 「지금 양식 모양」이 **한 화면에 같이** 들어와야 한다.
+       목록에 높이를 다 주면 미리보기가 화면 밖으로 밀려 — 고치면서 볼 수 없다(그러라고 만든 것인데). --%>
+  #qpsRptDef #rdTypes{ flex:1 1 auto; min-height:110px; overflow-y:auto; }
   #qpsRptDef .rd-ty{ padding:7px 12px; border-bottom:1px solid #eef2f5; cursor:pointer; font-size:12.5px; display:flex; gap:8px; align-items:center; }
   #qpsRptDef .rd-ty:hover{ background:#f7fbf9; }
   #qpsRptDef .rd-ty.on{ background:#e7f3ee; }
@@ -39,7 +51,26 @@
   #qpsRptDef .rd-ty .cd{ font-size:11px; color:#8a99a3; font-family:Consolas,monospace; }
   #qpsRptDef .rd-ty .n{ font-size:11.5px; color:#6b7c86; white-space:nowrap; }
   #qpsRptDef .rd-ty .n.zero{ color:#c0c9cf; }
-  #qpsRptDef .rd-right{ flex:1; min-width:0; }
+  <%-- ★「지금 양식 모양」 — 고치는 표만 보면 **무엇을 더해야 할지 알 수 없다.**
+       보고서 화면이 실제로 그리는 모습(라디오/체크 + 기타 칸)을 옆에 두어야 빠진 것이 보인다. --%>
+  #qpsRptDef .rd-prevbox{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; overflow:hidden;
+      display:flex; flex-direction:column; min-height:210px; flex:1.25 1 0; }
+  #qpsRptDef .rd-prevbox .hd{ display:flex; align-items:center; gap:6px; }
+  #qpsRptDef .rd-prevbox .hd .sp{ flex:1; }
+  #qpsRptDef #rdPrev{ flex:1 1 auto; overflow-y:auto; padding:10px 12px; background:#fbfdfe; }
+  #qpsRptDef .pv-g{ margin-bottom:11px; }
+  #qpsRptDef .pv-g:last-child{ margin-bottom:0; }
+  #qpsRptDef .pv-nm{ font-size:12px; font-weight:800; color:#20303a; margin-bottom:3px; display:flex; gap:5px; align-items:baseline; }
+  #qpsRptDef .pv-nm .k{ font-size:10.5px; font-weight:700; color:#8a99a3; }
+  #qpsRptDef .pv-nm .sh{ font-size:10px; font-weight:800; color:#7a5a00; background:#ffefc2; border-radius:8px; padding:0 5px; }
+  #qpsRptDef .pv-items{ display:flex; flex-wrap:wrap; gap:3px 10px; font-size:12px; color:#33454f; line-height:1.7; }
+  #qpsRptDef .pv-it{ display:inline-flex; align-items:baseline; gap:3px; max-width:100%; }
+  <%-- 긴 항목(「안전보건관리책임자 선임」 …)이 칸보다 넓으면 **줄을 바꿔야** 한다 —
+       통째로 nowrap 이면 왼쪽 칸에 가로 스크롤이 생긴다(실제로 생겼다). 표시(○)는 붙여 둔다. --%>
+  #qpsRptDef .pv-it > .lb{ white-space:normal; word-break:keep-all; }
+  #qpsRptDef .pv-etc{ border-bottom:1px solid #b9c6ce; display:inline-block; min-width:52px; margin-left:3px; }
+  #qpsRptDef .pv-none{ color:#b23b3b; font-size:11.5px; }
+  #qpsRptDef .rd-right{ flex:1 1 0; min-width:280px; padding-left:3px; }
   #qpsRptDef .rd-rhead{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 12px; }
   #qpsRptDef .rd-rhead .t{ font-size:14px; font-weight:800; color:#20303a; }
   #qpsRptDef .rd-cd{ font-family:Consolas,monospace; font-size:12px; color:#43555f; }
@@ -80,7 +111,6 @@
   <div class="rd-title"><span class="rd-dot"></span>보고서 체크 묶음 <span class="rd-sub">— 기준코드 · 보고서·서식 「구분」 선택지 · 전 병원 공용</span></div>
   <span class="rd-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="rd-spacer"></span>
-  <input type="text" id="rdFind" placeholder="유형·묶음·항목 찾기" style="width:200px;" oninput="rdPaintTypes();">
 </div>
 
 <div class="rd-note">
@@ -90,10 +120,24 @@
   <span id="rdHospNote" style="display:none;">고치는 것은 위너넷 담당자가 합니다 — 바꿀 것이 있으면 알려 주세요.</span>
 </div>
 
-<div class="rd-body">
-  <div class="rd-left">
-    <div class="hd">유형 <span id="rdTyCnt" class="rd-sub"></span></div>
-    <div id="rdTypes"><div class="rd-empty">불러오는 중…</div></div>
+<div class="rd-body" data-split="가로" data-split-key="rptdef.body">
+  <%-- ★위아래(유형 목록 ↔ 지금 양식 모양)도 끌어서 나눈다. 손잡이는 ui-split.js 가 끼워 넣는다. --%>
+  <div class="rd-left" data-split="세로" data-split-key="rptdef.left">
+    <div class="rd-tybox">
+      <%-- ★찾기는 **거르는 대상 바로 위**에 둔다 — 이 칸이 거르는 것은 왼쪽 유형 목록이다.
+           화면 오른쪽 위에 있으면 무엇을 거르는지 안 보인다. --%>
+      <div class="hd">유형 <span id="rdTyCnt" class="rd-sub"></span>
+        <span class="sp"></span>
+        <input type="text" id="rdFind" placeholder="유형·묶음·항목 찾기" oninput="rdPaintTypes();">
+      </div>
+      <div id="rdTypes"><div class="rd-empty">불러오는 중…</div></div>
+    </div>
+    <%-- ★고치는 표 옆에 **실제 보이는 모양**을 둔다 — 이게 없으면 무엇을 더할지 알 수 없다 --%>
+    <div class="rd-prevbox">
+      <div class="hd">지금 양식 모양 <span class="sp"></span>
+        <span class="rd-sub" id="rdPrevSub" style="font-weight:400;"></span></div>
+      <div id="rdPrev"><div class="rd-empty" style="padding:14px;">유형을 고르세요.</div></div>
+    </div>
   </div>
   <div class="rd-right">
     <div class="rd-rhead">
@@ -183,6 +227,75 @@
     gel('rdTyCnt').textContent = n + '개';
   };
 
+  /**
+   * ★「지금 양식 모양」 — 보고서 화면이 실제로 그리는 모습을 그대로 흉내 낸다.
+   *
+   * ***고치는 표만 보면 무엇을 더해야 할지 알 수 없다.*** 「낙상·투약·기타」가 표에 줄지어
+   * 있는 것과, 종이에서 `○낙상 ○투약 ○기타 ____` 로 한 줄에 놓이는 것은 보이는 것이 다르다.
+   * 빠진 선택지도 이 모양으로 봐야 눈에 띈다.
+   *
+   * ★보고서 화면과 **같은 규칙**이어야 한다 —
+   *   · 차례 = USE.sort (공유 묶음도 그 유형이 정한 차례를 따른다)
+   *   · 「사용」이 꺼진 묶음·항목은 **안 그린다**(화면에도 안 나오기 때문)
+   *   · 하나만(라디오)은 ○, 여럿(체크)은 ☐
+   *   · 「기타 글자칸」이 켜진 항목 뒤에는 적는 줄이 따라온다
+   * ***갈리면 미리보기가 거짓말을 한다.***
+   */
+  function rdPaintPrev(cards, shared, gb){
+    var box = gel('rdPrev'), sub = gel('rdPrevSub');
+    if (shared) {
+      // 공유 묶음은 「어느 유형의 양식」이 아니다 — 묶음 하나하나의 모양만 보여 준다
+      sub.textContent = '공유 묶음 — 붙인 유형에서 이렇게 보입니다';
+    } else {
+      sub.textContent = tyNm(gb);
+    }
+    var h = '', n = 0;
+    cards.forEach(function(c){
+      // 안 쓰는 묶음은 보고서 화면에 안 나온다 — 미리보기에도 안 그린다
+      if (!shared && (!c.use || c.use.useyn !== 'Y')) return;
+      var items = (c.g.items || []).filter(function(i){ return i.useyn === 'Y'; })
+                    .sort(function(a, b){ return (a.sort - b.sort) || (a.itemnm < b.itemnm ? -1 : 1); });
+      n++;
+      var mark = (c.g.multi === 'Y') ? '☐' : '○';
+      h += '<div class="pv-g"><div class="pv-nm">' + esc(c.g.nm || c.g.cd) +
+           '<span class="k">' + esc(c.g.cd) + '</span>' +
+           (c.g.own === SHARED ? '<span class="sh">공유</span>' : '') + '</div>';
+      if (!items.length) {
+        h += '<div class="pv-none">— 쓸 수 있는 항목이 없습니다(전부 「사용」 꺼짐)</div>';
+      } else {
+        h += '<div class="pv-items">' + items.map(function(i){
+          return '<span class="pv-it">' + mark + '<span class="lb">' + esc(i.itemnm) + '</span>' +
+                 (i.etcyn === 'Y' ? '<span class="pv-etc"></span>' : '') + '</span>';
+        }).join('') + '</div>';
+      }
+      h += '</div>';
+    });
+    box.innerHTML = h || '<div class="rd-empty" style="padding:14px;">' +
+      (shared ? '공유 묶음이 없습니다.' : '이 유형은 체크 선택지가 없습니다 — 보고서 화면에 「구분」 칸이 안 나옵니다.') + '</div>';
+    if (n) sub.textContent += ' · ' + n + '묶음';
+  }
+
+  /**
+   * ★왼쪽 칸 높이를 **실제로 재서** 맞춘다.
+   * `calc(100vh - 20px)` 로는 안 된다 — 이 화면 위에 앱 머리말·안내가 얼마나 올지 CSS 가 모른다.
+   * 그대로 두면 「지금 양식 모양」이 **화면 아래로 잘려** 고치면서 볼 수 없다(그러라고 만든 것인데).
+   */
+  function rdFitLeft(){
+    var L = document.querySelector('.rd-left');
+    if (!L) return;
+    var top = L.getBoundingClientRect().top;
+    var h = Math.max(360, window.innerHeight - top - 14);
+    // ⚠**max-height 만 주면 안 된다.** 그러면 칸의 높이가 「내용만큼」이라
+    //   안쪽 두 상자가 각자 최소 높이에 붙어 버린다 — 미리보기가 늘 눌린 채로 있었다.
+    //   ***늘어나게 하려면 height 를 실제로 줘야 한다.***
+    L.style.height = h + 'px';
+    L.style.maxHeight = h + 'px';
+  }
+  window.addEventListener('resize', rdFitLeft);
+  // ★손잡이로 크기를 바꾸면 왼쪽 칸 높이를 다시 잰다 —
+  //   좌우 폭이 바뀌면 항목이 줄바꿈되며 필요한 높이도 달라진다.
+  window.uiSplitChanged = function(){ rdFitLeft(); };
+
   window.rdPick = function(gb){
     CUR = gb; rdPaintTypes();
     var shared = (gb === SHARED);
@@ -205,6 +318,8 @@
         if (!USE.some(function(u){ return u.rptgb === gb && u.grpcd === cd; })) cards.push({ g: own[cd], use: { rptgb: gb, grpcd: cd, sort: 99, useyn: 'N' }, noUse: true });
       });
     }
+    rdPaintPrev(cards, shared, gb);
+    rdFitLeft();
     var h = '';
     cards.forEach(function(c){ h += cardHtml(c.g, c.use, shared, c.noUse); });
     gel('rdCards').innerHTML = h || '<div class="rd-empty">' + (shared ? '공유 묶음이 없습니다.' : '이 유형은 체크 묶음을 쓰지 않습니다 — 아래에서 만들거나 공유 묶음을 붙이세요.') + '</div>';

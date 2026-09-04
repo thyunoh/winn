@@ -16,6 +16,8 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -137,11 +139,11 @@
   <span style="flex:0 0 60px;"></span>
 </div>
 
-<div class="sr-wrap">
+<div class="sr-wrap" data-split="가로" data-split-key="saferpt.body">
   <div class="sr-left">
     <div class="sr-card">
       <h4>보고서 목록 <span class="hint" id="srCnt"></span></h4>
-      <div class="sr-list" id="srListBox"><div class="sr-empty">불러오는 중…</div></div>
+      <div class="sr-list" id="srListBox" data-find="보고서 찾기"><div class="sr-empty">불러오는 중…</div></div>
       <button type="button" class="sr-btn ghost" style="width:100%; margin-top:6px;" onclick="srNew();">＋ 새 보고서</button>
     </div>
   </div>

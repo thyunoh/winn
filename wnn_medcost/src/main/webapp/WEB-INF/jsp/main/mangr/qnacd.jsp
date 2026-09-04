@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%-- 알림·확인 = 가입신청 승인 화면과 같은 ui-message (사용자 2026-08-26 「가입신청에서 쓰는 메시지로」) --%>
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
 <%--
   적정성평가 Q&A — 자료 찾아보기 (2026-08-04)
     · 지식 TBL_QNA_KB · 카테고리 TBL_QNA_CAT · 질문로그 TBL_QNA_LOG
@@ -226,7 +227,7 @@
 <div class="dashboard-wrapper">
   <%-- padding-right:0 = 3단이 화면 오른쪽 끝까지 차게 (2026-08-05). 이 화면에만 준다 --%>
   <div class="container-fluid dashboard-content" style="padding-bottom:8px; padding-right:0;">
-    <div id="qnaWrap">
+    <div id="qnaWrap" data-split="가로" data-split-key="qnacd.body">
 
       <div class="qcard" id="qnaCatCard">
         <div class="qhd"><span class="t">질문 분류</span><span class="c" id="qnaTotCnt"></span></div>

@@ -8,6 +8,8 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -79,11 +81,11 @@
   </span>
 </div>
 
-<div class="st-wrap">
+<div class="st-wrap" data-split="가로" data-split-key="infstaff.body">
   <div class="st-left">
     <div class="st-card">
       <h4>전담자 목록</h4>
-      <div id="stList"><div class="st-empty">불러오는 중…</div></div>
+      <div id="stList" data-find="찾기"><div class="st-empty">불러오는 중…</div></div>
     </div>
   </div>
 

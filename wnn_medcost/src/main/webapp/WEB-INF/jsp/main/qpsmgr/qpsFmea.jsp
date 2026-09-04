@@ -18,6 +18,8 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
+<script src="/asset/js/ui-find.js"></script>
 <%@ include file="/WEB-INF/jsp/main/inc/qpsFileBox.jsp" %>
 
 <div class="dashboard-wrapper">
@@ -121,11 +123,11 @@
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
 
-<div class="fm-wrap">
+<div class="fm-wrap" data-split="가로" data-split-key="fmea.body">
   <div class="fm-left">
     <div class="fm-card">
       <h4>문서 목록 <span class="hint" id="fmCnt"></span></h4>
-      <div class="fm-list" id="fmListBox"><div class="fm-empty">불러오는 중…</div></div>
+      <div class="fm-list" id="fmListBox" data-find="문서 찾기"><div class="fm-empty">불러오는 중…</div></div>
       <button type="button" class="fm-btn ghost" style="width:100%; margin-top:6px;" onclick="fmNew();">＋ 새 문서</button>
     </div>
     <div class="fm-card" id="cardScale">

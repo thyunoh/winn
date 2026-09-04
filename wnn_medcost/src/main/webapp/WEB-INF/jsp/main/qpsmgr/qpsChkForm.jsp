@@ -24,6 +24,7 @@
      ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/ui-split.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="qpsChkForm" data-wnn="<c:out value='${wnnYn}'/>">
@@ -136,10 +137,16 @@
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
 
-<div class="cf-wrap">
+<div class="cf-wrap" data-split="가로" data-split-key="chkform.body">
   <div class="cf-left">
     <div class="cf-card">
-      <h4>서식 목록 <span class="hint" id="cfCnt"></span></h4>
+      <%-- ★315종이다 — **찾기 없이는 못 고른다.** 거르는 대상(목록) 바로 위에 둔다. --%>
+      <h4 style="display:flex; align-items:center; gap:6px;">
+        <span style="white-space:nowrap;">서식 목록 <span class="hint" id="cfCnt"></span></span>
+        <span style="flex:1;"></span>
+        <input type="text" id="cfFind" placeholder="서식명·코드·부서 찾기" oninput="cfPaintList();"
+               style="flex:0 1 170px; min-width:100px; font-size:12px; font-weight:400; padding:3px 7px;">
+      </h4>
       <%-- ★체크 = 이 병원이 쓰는 서식. 켠 것만 [점검표 작성]에 나온다.
            130종을 모든 병원에 다 보여주면 못 쓴다(정신 폴더 on/off 도 이걸로 푼다). --%>
       <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
@@ -1224,24 +1231,46 @@
         });
       }
       LIST = res.list || [];
-      gel('cfCnt').textContent = LIST.length ? ('· ' + LIST.length + '종') : '';
-      var onCnt = LIST.filter(function(r){ return r.useyn === 'Y'; }).length;
-      gel('cfUseHint').innerHTML = '체크 = 이 병원이 쓰는 서식 <b>' + onCnt + '/' + LIST.length + '</b>';
-      var box = gel('cfListBox');
-      box.innerHTML = LIST.length
-        ? LIST.map(function(r){
-            return '<div class="cf-item' + (r.formid === curId ? ' on' : '') + '" onclick="cfOpen(\'' + esc(r.formid) + '\');">' +
-                   '<div class="t"><input type="checkbox" class="cfuse" data-id="' + esc(r.formid) + '"' +
-                     (r.useyn === 'Y' ? ' checked' : '') + ' onclick="event.stopPropagation();"' +
-                     ' style="vertical-align:-2px; margin-right:6px;">' + esc(r.formnm) + '</div>' +
-                   '<div class="d" style="padding-left:20px;"><span class="tag axis">' + esc(AXIS_NM[r.axisgb] || r.axisgb) + '</span>' +
-                   '<span class="tag ' + (r.own === 'Y' ? 'own">병원 서식' : 'std">기본 서식') + '</span>' +
-                   (r.deptcd ? ('<span>' + esc(codeNm(DEPT, r.deptcd)) + '</span>') : '') +
-                   '<span>항목 ' + Number(r.itemcnt || 0) + '</span>' +
-                   '<span>작성 ' + Number(r.doccnt || 0) + '건</span></div></div>';
-          }).join('')
-        : '<div class="cf-empty">서식이 없습니다.<br>[＋ 새 서식]으로 만드세요.</div>';
+      cfPaintList();
     }).catch(err);
+  };
+
+  /**
+   * 목록을 그린다. **찾기 글자로 거른 뒤** 그린다.
+   *
+   * ★서식이 315종이라 눈으로 훑을 수 없다 — 이름·코드·부서·표 모양 어느 쪽으로도 찾히게 한다.
+   * ⚠**거르는 것은 보이는 것만이다.** 「전체 켬/끔」은 지금 보이는 서식에만 걸린다 —
+   *   부서·분류 필터가 이미 그렇게 움직이고 있어 **같은 규칙**으로 뒀다.
+   *   ***저장(cfUseSave)은 안 보이던 서식의 사용 여부를 지킨다*** — 거기서 전체를 다시 받아 합친다.
+   */
+  window.cfPaintList = function(){
+    var q = String((gel('cfFind') || {}).value || '').trim().toLowerCase();
+    var view = !q ? LIST : LIST.filter(function(r){
+      return String(r.formnm || '').toLowerCase().indexOf(q) >= 0
+          || String(r.formid || '').toLowerCase().indexOf(q) >= 0
+          || String(codeNm(DEPT, r.deptcd) || '').toLowerCase().indexOf(q) >= 0
+          || String(AXIS_NM[r.axisgb] || r.axisgb || '').toLowerCase().indexOf(q) >= 0;
+    });
+    gel('cfCnt').textContent = !LIST.length ? ''
+      : (q ? ('· ' + view.length + '/' + LIST.length + '종') : ('· ' + LIST.length + '종'));
+    var onCnt = LIST.filter(function(r){ return r.useyn === 'Y'; }).length;
+    gel('cfUseHint').innerHTML = '체크 = 이 병원이 쓰는 서식 <b>' + onCnt + '/' + LIST.length + '</b>' +
+      (q ? ' <span style="color:#b26a00;">· 찾는 중 ' + view.length + '개만 보임</span>' : '');
+    var box = gel('cfListBox');
+    box.innerHTML = view.length
+      ? view.map(function(r){
+          return '<div class="cf-item' + (r.formid === curId ? ' on' : '') + '" onclick="cfOpen(\'' + esc(r.formid) + '\');">' +
+                 '<div class="t"><input type="checkbox" class="cfuse" data-id="' + esc(r.formid) + '"' +
+                   (r.useyn === 'Y' ? ' checked' : '') + ' onclick="event.stopPropagation();"' +
+                   ' style="vertical-align:-2px; margin-right:6px;">' + esc(r.formnm) + '</div>' +
+                 '<div class="d" style="padding-left:20px;"><span class="tag axis">' + esc(AXIS_NM[r.axisgb] || r.axisgb) + '</span>' +
+                 '<span class="tag ' + (r.own === 'Y' ? 'own">병원 서식' : 'std">기본 서식') + '</span>' +
+                 (r.deptcd ? ('<span>' + esc(codeNm(DEPT, r.deptcd)) + '</span>') : '') +
+                 '<span>항목 ' + Number(r.itemcnt || 0) + '</span>' +
+                 '<span>작성 ' + Number(r.doccnt || 0) + '건</span></div></div>';
+        }).join('')
+      : (LIST.length ? '<div class="cf-empty">찾는 서식이 없습니다.</div>'
+                     : '<div class="cf-empty">서식이 없습니다.<br>[＋ 새 서식]으로 만드세요.</div>');
   };
 
   /**
