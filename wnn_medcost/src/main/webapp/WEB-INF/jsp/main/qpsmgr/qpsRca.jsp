@@ -316,8 +316,8 @@
 
   // ---------- 인쇄(A4 1장) — 원본처럼 단계|항목|내용 3열 ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:12mm; }' +
-    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '@page{ size:A4 portrait; margin:0; }' +
+    'body{ margin:12mm; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:17px; font-weight:800; text-align:center; margin:0 0 10px; letter-spacing:1px; }' +
     'table{ width:100%; border-collapse:collapse; font-size:10px; }' +
     'th,td{ border:1px solid #666; padding:4px 5px; text-align:center; vertical-align:middle; line-height:1.55; }' +
