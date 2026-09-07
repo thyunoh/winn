@@ -17,14 +17,15 @@
   #qpsPrintAll{ padding:14px 16px 24px; }
   #qpsPrintAll h3{ margin:0 0 4px; font-size:18px; font-weight:800; color:#1f5a4b; }
   #qpsPrintAll .sub{ font-size:12.5px; color:#6b7a83; margin-bottom:14px; }
-  #qpsPrintAll .card{ border:1px solid #dfe6ea; border-radius:10px; padding:14px 16px; background:#fff; max-width:760px; }
+  #qpsPrintAll .card{ border:1px solid #dfe6ea; border-radius:10px; padding:14px 16px; background:#fff; max-width:1080px; }
   #qpsPrintAll .row{ display:flex; align-items:center; gap:10px; padding:7px 4px; border-bottom:1px dashed #eef2f4; }
   #qpsPrintAll .row:last-child{ border-bottom:0; }
-  #qpsPrintAll .row label{ margin:0; font-size:14px; cursor:pointer; }
+  #qpsPrintAll .row label{ margin:0; font-size:14px; cursor:pointer; flex:0 0 360px; }
   #qpsPrintAll .row .desc{ font-size:12px; color:#8a99a3; margin-left:auto; }
   /* 작성 주기 배지(사용자 2026-09-07) */
-  #qpsPrintAll .row .cyc{ margin-left:auto; font-size:11.5px; font-weight:700; color:#3b6ea5; background:#eef4fb; border:1px solid #d7e5f5; border-radius:8px; padding:2px 6px; height:26px; cursor:pointer; }
+  #qpsPrintAll .row .cyc{ font-size:11.5px; font-weight:700; color:#3b6ea5; background:#eef4fb; border:1px solid #d7e5f5; border-radius:8px; padding:2px 6px; height:26px; cursor:pointer; }
   #qpsPrintAll .row .desc{ margin-left:10px; min-width:76px; text-align:right; }
+  #qpsPrintAll .row .desc:last-child{ margin-right:auto; }
   #qpsPrintAll .bar{ margin-top:14px; display:flex; gap:8px; align-items:center; }
   #qpsPrintAll .btn{ height:36px; padding:0 16px; border-radius:8px; border:1px solid #cfd8e0; background:#fff; font-size:13.5px; font-weight:700; cursor:pointer; }
   #qpsPrintAll .btn.go{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
@@ -32,7 +33,7 @@
   #qpsPrintAll .btn.find{ background:#2f6fb0; border-color:#2f6fb0; color:#fff; }
   #qpsPrintAll .btn.find:hover{ background:#265d95; border-color:#265d95; }
   #qpsPrintAll .btn:disabled{ opacity:.5; cursor:default; }
-  #qpsPrintAll .stat{ font-size:12.5px; color:#4a5560; margin-left:6px; }
+  #qpsPrintAll .stat{ font-size:12.5px; color:#4a5560; margin-left:6px; flex:1 1 auto; min-width:180px; }
   #qpsPrintAll .hint{ margin-top:12px; font-size:12px; color:#8a99a3; line-height:1.7; }
   #qpsBulkFrames{ position:fixed; left:-10000px; top:0; width:1200px; height:900px; }
 </style>
@@ -44,14 +45,14 @@
   <div class="card">
     <div class="bar" style="margin:0 0 10px; padding-bottom:10px; border-bottom:1px solid #e6edf1;">
       <label style="margin:0; font-size:13.5px; font-weight:700;">연도</label>
-      <select id="paYear" style="height:34px; border:1px solid #cfd8e0; border-radius:8px; padding:0 8px; font-size:13.5px;" onchange="paYearChanged()"></select>
+      <select id="paYear" style="height:34px; border:1px solid #cfd8e0; border-radius:8px; padding:0 8px; font-size:13.5px;" onchange="paYearChanged(true)"></select>
       <%-- 기간 (2026-09-07) — 한 해에 여러 건 쌓이는 서식(회의록 등)은 기간으로 걸러 건마다 뽑는다.
            소급 등록이라 작성일이 여기저기 흩어진다는 사용자 말에 따라 넣었다. 비워 두면 그 해 전체. --%>
       <label style="margin:0 0 0 8px; font-size:13px; color:#6b7a83;">기간</label>
       <input type="date" id="paFrom" style="height:34px; border:1px solid #cfd8e0; border-radius:8px; padding:0 6px; font-size:13px;" onchange="paYearChanged()">
       <span style="color:#9aa7b0;">~</span>
       <input type="date" id="paTo" style="height:34px; border:1px solid #cfd8e0; border-radius:8px; padding:0 6px; font-size:13px;" onchange="paYearChanged()">
-      <button type="button" class="btn find" id="paChk" onclick="paCheck()">🔎 이 해에 작성된 것 찾기</button>
+      <button type="button" class="btn find" id="paChk" onclick="paCheck()">🔎 이 기간에 작성된 것 찾기</button>
       <span class="stat" id="paChkStat"></span>
     </div>
 
@@ -181,6 +182,18 @@
     for (var i = y + 1; i >= y - 4; i--) sel.add(new Option(i + '년', i));
     sel.value = y;
   })();
+
+  /* 기간 기본값(사용자 2026-09-07 「일자 기본 셋팅해줘」) — 고른 해의 1월 1일부터.
+     올해면 끝은 오늘까지(앞날에 쓴 서식은 없다), 지난 해면 12월 31일까지.
+     ★기간이 비면 화면이 여는 것 하나만 나온다. 소급 등록한 건까지 담기려면 채워져 있어야 한다. */
+  function setYearRange() {
+    var y = +gel('paYear').value, now = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    gel('paFrom').value = y + '-01-01';
+    gel('paTo').value = (y === now.getFullYear())
+      ? (y + '-' + p(now.getMonth() + 1) + '-' + p(now.getDate()))
+      : (y + '-12-31');
+  }
+  setYearRange();   // 화면을 열면 곧바로 그 해가 들어가 있게
   function year() { return gel('paYear').value; }
   function range() {
     var f = gel('paFrom').value || '', t = gel('paTo').value || '';
@@ -250,7 +263,8 @@
       setTimeout(function () { fin([]); }, 12000);
     });
   }
-  window.paYearChanged = function () {
+  window.paYearChanged = function (fromYear) {
+    if (fromYear) setYearRange();   // 연도를 바꾼 경우만 기간을 다시 잡는다(직접 고친 날짜는 그대로 둔다)
     FORMS.forEach(function (f) { var el = gel('paSt_' + f.key); if (el) el.textContent = ''; });
     gel('paChkStat').textContent = '';
   };

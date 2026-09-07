@@ -2544,8 +2544,8 @@
 	<insert id="saveFormCyc" parameterType="map">
 		INSERT INTO TBL_QPS_FORM_CYC (HOSP_CD, FORM_KEY, FORM_NM, CYC_GB, USE_YN, SORT_NO, REG_USER)
 		VALUES (#{hospCd}, #{formKey}, #{formNm}, #{cycGb}, IFNULL(#{useYn},'Y'), #{sortNo}, #{regUser})
-		ON DUPLICATE KEY UPDATE FORM_NM = VALUES(FORM_NM), CYC_GB = VALUES(CYC_GB),
-		                        USE_YN = VALUES(USE_YN), SORT_NO = VALUES(SORT_NO), UPD_USER = #{regUser}
+		ON DUPLICATE KEY UPDATE FORM_NM = IFNULL(VALUES(FORM_NM), FORM_NM), CYC_GB = VALUES(CYC_GB),
+		                        USE_YN = IFNULL(VALUES(USE_YN), USE_YN), SORT_NO = IFNULL(VALUES(SORT_NO), SORT_NO), UPD_USER = #{regUser}
 	</insert>
 
 	<!-- ═══ 공통코드(QPS) 관리 (2026-09-02) — 스크립트로 넣은 TBL_CODE_DTL 'Q' 묶음(QPS_%)을 화면에서 관리 ═══
