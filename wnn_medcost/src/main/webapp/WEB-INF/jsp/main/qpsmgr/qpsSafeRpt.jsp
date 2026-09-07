@@ -915,23 +915,8 @@
         : '');
 
     var title = (gbNm() + '_' + val('f_occurDt') + '_' + val('f_targetNm') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    /* 사진(blob)이 다 그려진 뒤 인쇄창을 띄운다 — 300ms 고정 대기로는 사진이 빈 채 찍힐 수 있다.
-       6초(40×150ms)를 넘기면 그냥 연다(사진 하나 못 불러왔다고 인쇄를 막지 않는다). */
-    var tries = 0;
-    (function waitImg(){
-      var ok = true, imgs = [];
-      try { imgs = w.document.images || []; } catch (e) {}
-      for (var i = 0; i < imgs.length; i++) if (!imgs[i].complete) ok = false;
-      if (ok || tries++ > 40) qpsPrintGo(w);   /* 사진이 다 붙은 뒤, 글꼴까지 기다려 인쇄(2026-09-07) */
-      else setTimeout(waitImg, 150);
-    })();
+    /* 인쇄는 공통 창구로 — 사진·글꼴 기다림은 qpsPrintGo 가 한다(2026-09-07) */
+    qpsPrintOut(title, PRINT_CSS, body);
   };
 
   // 유형 목록은 공통코드에서 — 유형이 늘어도 화면을 안 고친다

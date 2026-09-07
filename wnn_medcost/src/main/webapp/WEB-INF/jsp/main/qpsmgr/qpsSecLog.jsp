@@ -246,8 +246,6 @@
   };
 
   window.slPrint = function(){
-    var w = window.open('', '_blank');
-    if (!w) { _alertBox('팝업이 막혀 있습니다.', {icon:'⚠'}); return; }
     var head = '<tr><th>번호</th><th>시행일자</th><th>구분</th><th>지시자</th><th>작성자</th><th>등록번호</th>' +
                '<th>환자성명</th><th>성인구분</th><th>보험구분</th><th>주치의/해제지시자</th><th>참여자</th>' +
                '<th>시작</th><th>종료</th><th>지침준수</th></tr>';
@@ -272,19 +270,15 @@
               '.appr{float:right;border-collapse:collapse;margin-bottom:8px;}' +
               '.appr th,.appr td{width:60px;height:34px;}' +
               '@page{ size:A4 landscape; margin:10mm; }';   /* 여백을 정해 둔다 — 없으면 브라우저·프린터 기본값을 따라 자리가 달라진다(2026-09-07) */
-    w.document.write('<html><head><meta charset="UTF-8"><title>격리·강박 시행일지</title>' +
-      '<style>' + css + '</style></head><body>' +
+    /* 인쇄는 공통 창구로 — 낱장·일괄이 같은 조립을 쓴다(2026-09-07) */
+    qpsPrintOut('격리·강박 시행일지', css,
       '<table class="appr"><tr><th>담당</th><th>팀장</th><th>부서장</th><th>이사장</th></tr>' +
       '<tr><td></td><td></td><td></td><td></td></tr></table>' +
       '<h1>격리 / 강박 시행일지</h1>' +
       '<div style="clear:both;margin-bottom:6px;">' + esc(gel('slYm').value) + '</div>' +
       '<table>' + head + body + '</table>' +
       '<div style="margin-top:8px;">격리 ' + gel('slCntI').textContent + ' 건 · 강박 ' +
-        gel('slCntR').textContent + ' 건 · 합계 ' + gel('slCntT').textContent + ' 건</div>' +
-      '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+        gel('slCntR').textContent + ' 건 · 합계 ' + gel('slCntT').textContent + ' 건</div>');
   };
 
   $(function(){ slLoad(); });

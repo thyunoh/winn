@@ -2890,6 +2890,47 @@ window.qpsPickYear = function (sel, defYear) {
      · 평소      → 지금처럼 새 창에 찍어 인쇄한다(팝업이 막히면 안내).
      · 일괄 출력 → 창을 띄우지 않고 **부모(일괄 출력 화면)에 넘긴다**. 부모가 여러 서식을 한 문서로 이어 붙인다.
    ★일괄인지 아닌지는 부모가 iframe 의 window 에 QPS_BULK 를 켜서 알려 준다. 화면 쪽 코드는 그대로다. */
+/* ═══ 종이 여백 만들기 — 「아래에 about:blank 가 찍힌다」(사용자 2026-09-07) ═══
+   브라우저는 @page 여백 **자리에** 날짜·주소(about:blank)·쪽수를 제가 찍는다. CSS 로는 못 끈다.
+   자리가 없으면(여백 0) 안 찍는다 — 한 장짜리 서식에서 이미 확인된 방법이다.
+   그래서 @page 여백을 0 으로 내리고, 종이 여백은 우리가 만든다.
+     · 좌우 : 칸(td)의 padding — 어느 장이든 그대로 붙는다.
+     · 위아래 : 표의 thead·tfoot — 인쇄 때 **장마다 되풀이**되므로 두 장 넘어가도 여백이 산다.
+       (본문에 padding 을 주면 첫 장에만 붙는다. 그래서 표를 쓴다.)
+   ★이미 여백 0 인 서식(한 장짜리)은 손대지 않는다 — 지금 잘 나오고 있다.
+   ★서식 CSS 가 table·td 를 통째로 꾸미는 경우가 많아, 우리 표만은 그 꾸밈을 되돌린다. */
+window.qpsPaperWrap = function (css, body) {
+  css = String(css == null ? '' : css);
+  var m = css.match(/@page[^{]*\{([^}]*)\}/i);
+  if (!m) return { css: css, body: body };                 // @page 가 없으면 건드리지 않는다
+
+  var size = (m[1].match(/size\s*:\s*([^;]+)/i) || [, 'A4 portrait'])[1].trim();
+  var mg = (m[1].match(/margin\s*:\s*([^;]+)/i) || [, ''])[1].trim();
+  if (!mg) return { css: css, body: body };
+  var t = mg.split(/\s+/), mv = t[0], mh = (t.length > 1 ? t[1] : t[0]);
+  var zero = function (v) { return /^0(\D*)$/.test(v); };
+  if (zero(mv) && zero(mh)) return { css: css, body: body }; // 이미 0 — 그대로 둔다
+
+  var out = css.replace(/@page[^{]*\{[^}]*\}/i, '') +
+    '@page{ size:' + size + '; margin:0; }' +
+    'html,body{ margin:0 !important; padding:0 !important; }' +
+    '.qps-sheet{ width:100% !important; border:0 !important; border-collapse:collapse !important;' +
+    '            background:none !important; box-shadow:none !important; }' +
+    '.qps-sheet > thead > tr, .qps-sheet > tbody > tr, .qps-sheet > tfoot > tr{ background:none !important; }' +
+    '.qps-sheet > thead > tr > td, .qps-sheet > tfoot > tr > td,' +
+    '.qps-sheet > tbody > tr > td{ border:0 !important; background:none !important; vertical-align:top; }' +
+    '.qps-sheet > thead > tr > td, .qps-sheet > tfoot > tr > td{ padding:0 !important; }' +
+    '.qps-sheet > tbody > tr > td{ padding:0 ' + mh + ' !important; }' +
+    '.qps-vsp{ height:' + mv + '; line-height:0; font-size:0; }';
+
+  var out2 = '<table class="qps-sheet">' +
+               '<thead><tr><td><div class="qps-vsp"></div></td></tr></thead>' +
+               '<tbody><tr><td>' + body + '</td></tr></tbody>' +
+               '<tfoot><tr><td><div class="qps-vsp"></div></td></tr></tfoot>' +
+             '</table>';
+  return { css: out, body: out2 };
+};
+
 window.qpsPrintOut = function (title, css, body) {
   title = String(title || 'QPS');
   if (window.QPS_BULK && window.parent && window.parent !== window) {
@@ -2898,6 +2939,9 @@ window.qpsPrintOut = function (title, css, body) {
       return true;
     } catch (e) { }
   }
+  /* 낱장 인쇄 — 종이 여백을 우리가 만들어 브라우저의 날짜·about:blank·쪽수를 없앤다(2026-09-07) */
+  try { var pw = qpsPaperWrap(css, body); css = pw.css; body = pw.body; } catch (e) { }
+
   var w = window.open('', '_blank', 'width=900,height=1000');
   if (!w) {
     if (window._alertBox) _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', { icon: '⚠️' });
@@ -2911,21 +2955,32 @@ window.qpsPrintOut = function (title, css, body) {
   w.document.close();
   w.focus();
   qpsPrintGo(w);
-  return true;
+  return w;          /* 창을 돌려준다 — 인쇄창을 더 손봐야 하는 화면이 있다(점검표 날짜 칸 등, 2026-09-07) */
 };
 
+/* 인쇄 시점 — 그림·글꼴이 다 붙은 뒤에 print() 한다.
+   ★사진(blob)이 아직 안 붙었는데 부르면 빈 칸으로 찍힌다. 화면마다 따로 기다리던 것을 여기로 모았다(2026-09-07). */
 window.qpsPrintGo = function (w, maxMs) {
   if (!w) return;
-  var done = false;
+  var done = false, t0 = Date.now(), max = maxMs || 3000;
+  var imgsOk = function () {
+    try {
+      var im = w.document.images || [];
+      for (var i = 0; i < im.length; i++) if (!im[i].complete) return false;
+    } catch (e) { }
+    return true;
+  };
   var go = function () {
-    if (done) return; done = true;
+    if (done) return;
+    if (!imgsOk() && Date.now() - t0 < max + 3000) { setTimeout(go, 150); return; }  // 사진은 조금 더 기다려 준다
+    done = true;
     try { w.focus(); w.print(); } catch (e) { }
   };
   var boot = function () {
     try {
       if (w.document && w.document.fonts && w.document.fonts.ready) {
         w.document.fonts.ready.then(function () { setTimeout(go, 80); });
-        setTimeout(go, maxMs || 3000);          // 글꼴이 끝내 안 오면 이때는 인쇄한다
+        setTimeout(go, max);          // 글꼴이 끝내 안 오면 이때는 인쇄한다
         return;
       }
     } catch (e) { }

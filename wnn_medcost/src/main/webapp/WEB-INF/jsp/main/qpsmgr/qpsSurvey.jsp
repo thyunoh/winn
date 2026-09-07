@@ -609,14 +609,8 @@
     return '<span class="barbox"><span class="bar" style="width:'+w+'%"></span></span>';
   }
   function doPrintWin(title, body){
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { say('팝업이 차단되어 인쇄창을 열지 못했습니다. 주소창 오른쪽의 팝업 차단을 허용해 주세요.', '⚠️'); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' +
-      esc(title.replace(/[\\\/:*?"<>|]/g, '-')) + '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    /* 인쇄는 공통 창구로 — 낱장·일괄이 같은 조립을 쓴다(2026-09-07) */
+    qpsPrintOut(title, PRINT_CSS, body);
   }
   function apprHtml(line){
     if (!line || !line.length) return '';
@@ -782,6 +776,10 @@
       });
     });
   };
+
+  /* 일괄 출력에서 부를 수 있게 밖으로 내놓는다 — HAND 는 이 안에만 있다(2026-09-07) */
+  window.svPrintRpt  = function(){ HAND.btnSvPrint(); };
+  window.svPrintIndi = function(){ HAND.btnSvPrint2(); };
 
   /* ── 이벤트 위임 ────────────────────────────────────────────────
      ★버튼마다 onclick 을 걸면, 화면 사본이 여럿일 때 「등록된 버튼」과

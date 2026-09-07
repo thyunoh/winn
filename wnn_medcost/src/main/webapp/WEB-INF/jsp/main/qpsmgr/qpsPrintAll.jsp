@@ -18,7 +18,24 @@
   #qpsPrintAll h3{ margin:0 0 4px; font-size:18px; font-weight:800; color:#1f5a4b; }
   #qpsPrintAll .sub{ font-size:12.5px; color:#6b7a83; margin-bottom:14px; }
   #qpsPrintAll .card{ border:1px solid #dfe6ea; border-radius:10px; padding:14px 16px; background:#fff; max-width:1080px; }
-  #qpsPrintAll .row{ display:flex; align-items:center; gap:10px; padding:7px 4px; border-bottom:1px dashed #eef2f4; }
+    /* 묶음 머리 (2026-09-07 서식 36종) */
+  #qpsPrintAll .grp{ display:flex; align-items:center; gap:8px; margin:12px 0 2px; padding:4px 4px 3px;
+                      border-bottom:1px solid #dfe6ea; font-size:12.5px; font-weight:800; color:#1f5a4b; }
+  #qpsPrintAll .grp:first-child{ margin-top:2px; }
+  #qpsPrintAll .grp{ cursor:pointer; user-select:none; }
+  #qpsPrintAll .grp:hover{ background:#f7fafb; }
+  /* 접기 표시는 눈에 띄게 — 누르는 곳이라는 것이 보여야 한다(사용자 2026-09-07 「화살표 크게」) */
+  #qpsPrintAll .grp .ar{ width:16px; color:#2f6fb0; font-size:15px; line-height:1; text-align:center; }
+  /* 묶음 속은 한 칸 들여쓴다 — 머리와 줄이 같은 자리에 서면 어디에 딸린 줄인지 안 보인다(「해당내용 안쪽으로」) */
+  #qpsPrintAll .gbox{ margin:0 0 2px 16px; padding-left:10px; border-left:2px solid #e6edf1; }
+  #qpsPrintAll .gbox .row{ padding-left:6px; }
+  #qpsPrintAll .grp .gn{ font-size:12.5px; }
+  #qpsPrintAll .gc{ margin-left:8px; font-size:11px; font-weight:600; color:#8a99a3; }
+  #qpsPrintAll .gc.has{ color:#2f6fb0; }
+  #qpsPrintAll .gsel{ margin-left:auto; height:22px; padding:0 8px; border:1px solid #cfd8e0; border-radius:6px;
+                       background:#f7fafb; font-size:11.5px; font-weight:700; color:#4a5560; cursor:pointer; }
+  #qpsPrintAll .gsel:hover{ background:#eef4fb; border-color:#b9cfe6; color:#2f6fb0; }
+#qpsPrintAll .row{ display:flex; align-items:center; gap:10px; padding:7px 4px; border-bottom:1px dashed #eef2f4; }
   #qpsPrintAll .row:last-child{ border-bottom:0; }
   #qpsPrintAll .row label{ margin:0; font-size:14px; cursor:pointer; flex:0 0 360px; }
   #qpsPrintAll .row .desc{ font-size:12px; color:#8a99a3; margin-left:auto; }
@@ -80,28 +97,59 @@
 <script>
 (function () {
   var CTX = '';
-  /* 담을 서식 — url = 그 화면 주소 · fn = 그 화면의 인쇄 함수 이름 · wait = 자료가 들어올 때까지 기다릴 시간(ms)
-     ★한 장짜리(머리글·바닥글 없이 나오게 손봐 둔 것)부터 담았다. 여러 장 서식은 확인한 뒤 늘린다. */
+  /* 담을 서식 — grp = 묶음 이름(사이드바 차례) · url = 그 화면 주소 · fn = 그 화면의 인쇄 함수 이름
+     · listFn = 한 해에 여러 건 쌓이는 서식이 스스로 알려 주는 목록 · cyc = 주기 기본값(표에 값이 있으면 표가 이긴다)
+     ★회의록은 화면 하나에 위원회만 다르다(?gb=) — 실사에서는 위원회별로 한 묶음씩 필요하다. */
   var FORMS = [
     /* ── 계획 · 위원회 ── */
-    { key:'minutes', nm:'QPS 위원회 회의록',        url:'/main/qpsMinutes.do',  fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'plan',     nm:'연간 활동계획서',            url:'/main/qpsPlan.do',            fn:'plPrint', cyc:'Y' },
+    { grp:'계획 · 위원회', key:'minutes',  nm:'QPS 위원회 회의록',          url:'/main/qpsMinutes.do',         fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_M',    nm:'다학제 평가팀 회의록',       url:'/main/qpsMinutes.do?gb=M',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_K',    nm:'다학제 평가팀(개최) 회의록', url:'/main/qpsMinutes.do?gb=K',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_W',    nm:'운영위원회 회의록',          url:'/main/qpsMinutes.do?gb=W',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_C',    nm:'중독연구소 운영위 회의록',   url:'/main/qpsMinutes.do?gb=C',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_H',    nm:'인사위원회 회의록',          url:'/main/qpsMinutes.do?gb=H',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_P',    nm:'약사위원회 회의록',          url:'/main/qpsMinutes.do?gb=P',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_N',    nm:'영양관리위원회 회의록',      url:'/main/qpsMinutes.do?gb=N',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_S',    nm:'소방안전관리위원회 회의록',  url:'/main/qpsMinutes.do?gb=S',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'계획 · 위원회', key:'min_I',    nm:'감염관리위원회 회의록',      url:'/main/qpsMinutes.do?gb=I',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+
     /* ── 지표 · 분석 ── */
-    { key:'def',     nm:'지표 정의서',              url:'/main/qpsDef.do',      fn:'qdPrint', cyc:'Y' },
+    { grp:'지표 · 분석', key:'def',        nm:'지표 정의서',                url:'/main/qpsDef.do',             fn:'qdPrint', cyc:'Y' },
+    { grp:'지표 · 분석', key:'fall',       nm:'낙상 지표 분석',             url:'/main/qpsFall.do',            fn:'qfPrint', cyc:'Q' },
+
     /* ── 환자안전 활동 ── */
-    { key:'round',   nm:'환자안전관리 라운딩 점검표', url:'/main/qpsRound.do',  fn:'rdPrint', cyc:'M' },
-    { key:'rca',     nm:'RCA 근본원인 분석',        url:'/main/qpsRca.do',      fn:'rcPrint', cyc:'S' },
-    { key:'fmea',    nm:'FMEA 계획서 · 보고서',     url:'/main/qpsFmea.do',     fn:'fmPrint', cyc:'Y' },
+    { grp:'환자안전 활동', key:'round',    nm:'환자안전관리 라운딩 점검표', url:'/main/qpsRound.do',           fn:'rdPrint', cyc:'M' },
+    { grp:'환자안전 활동', key:'seclog',   nm:'격리 · 강박 시행일지',       url:'/main/qpsSecLog.do',          fn:'slPrint', cyc:'M' },
+    { grp:'환자안전 활동', key:'cathday',  nm:'유치도뇨관 월별 기록지',     url:'/main/qpsCathDay.do',         fn:'cdPrint', cyc:'M' },
+    { grp:'환자안전 활동', key:'rca',      nm:'RCA 근본원인 분석',          url:'/main/qpsRca.do',             fn:'rcPrint', cyc:'S' },
+    { grp:'환자안전 활동', key:'min_R',    nm:'RCA 회의록',                 url:'/main/qpsMinutes.do?gb=R',    fn:'qmPrint', listFn:'qmBulkList', cyc:'S' },
+    { grp:'환자안전 활동', key:'fmea',     nm:'FMEA 계획서 · 보고서',       url:'/main/qpsFmea.do',            fn:'fmPrint', cyc:'Y' },
+    { grp:'환자안전 활동', key:'min_F',    nm:'FMEA 회의록',                url:'/main/qpsMinutes.do?gb=F',    fn:'qmPrint', listFn:'qmBulkList', cyc:'Y' },
+    { grp:'환자안전 활동', key:'saferpt',  nm:'사고 · 안전 보고서',         url:'/main/qpsSafeRpt.do',         fn:'srPrint', cyc:'S' },
+
     /* ── QI ── */
-    { key:'qiplan',  nm:'QI 활동계획서',            url:'/main/qpsQiPlan.do',   fn:'qpPrint', cyc:'Y' },
-    { key:'qirpt',   nm:'QI 중간 · 최종보고서',     url:'/main/qpsQiRpt.do',    fn:'qrPrint', cyc:'H' },
-    { key:'qifund',  nm:'활동 자원지원 내역',       url:'/main/qpsQiFund.do',   fn:'qfPrint', cyc:'Y' },
+    { grp:'QI', key:'qitopic',  nm:'QI 주제선정 · 우선순위',   url:'/main/qpsQiTopic.do',  fn:'qtPrint', cyc:'Y' },
+    { grp:'QI', key:'qiplan',   nm:'QI 활동계획서',            url:'/main/qpsQiPlan.do',   fn:'qpPrint', cyc:'Y' },
+    { grp:'QI', key:'min_J',    nm:'QI 회의록',                url:'/main/qpsMinutes.do?gb=J', fn:'qmPrint', listFn:'qmBulkList', cyc:'Q' },
+    { grp:'QI', key:'qirpt',    nm:'QI 중간 · 최종보고서',     url:'/main/qpsQiRpt.do',    fn:'qrPrint', cyc:'H' },
+    { grp:'QI', key:'qifund',   nm:'활동 자원지원 내역',       url:'/main/qpsQiFund.do',   fn:'qfPrint', cyc:'Y' },
+
     /* ── 환자만족도 조사 ── */
-    { key:'srvplan', nm:'환자만족도 조사계획서',    url:'/main/qpsSrvPlan.do',  fn:'spPrint', cyc:'Y' },
-    { key:'srvnote', nm:'환자만족도 조사안내문',    url:'/main/qpsSrvPlan.do',  fn:'spPrintNotice', cyc:'Y' },
-    { key:'srvimpr', nm:'개선활동결과보고서',       url:'/main/qpsSrvImpr.do',  fn:'siPrint', cyc:'S' },
+    { grp:'환자만족도 조사', key:'srvplan', nm:'환자만족도 조사계획서',   url:'/main/qpsSrvPlan.do', fn:'spPrint',       cyc:'Y' },
+    { grp:'환자만족도 조사', key:'srvnote', nm:'환자만족도 조사안내문',   url:'/main/qpsSrvPlan.do', fn:'spPrintNotice', cyc:'Y' },
+    { grp:'환자만족도 조사', key:'srvrpt',  nm:'만족도 조사결과 보고서',  url:'/main/qpsSurvey.do',  fn:'svPrintRpt',    cyc:'Y' },
+    { grp:'환자만족도 조사', key:'srvindi', nm:'만족도 지표분석 보고서',  url:'/main/qpsSurvey.do',  fn:'svPrintIndi',   cyc:'Y' },
+    { grp:'환자만족도 조사', key:'srvimpr', nm:'개선활동결과보고서',      url:'/main/qpsSrvImpr.do', fn:'siPrint',       cyc:'S' },
+
     /* ── 불만고충 ── */
-    { key:'cmplplan',nm:'불만고충 처리계획서',      url:'/main/qpsCmplPlan.do', fn:'cpPrint', cyc:'Y' },
-    { key:'cmplrpt', nm:'불만고충 지표분석보고서',  url:'/main/qpsCmplRpt.do',  fn:'crPrint', cyc:'Q' }
+    { grp:'불만고충', key:'cmplplan', nm:'불만고충 처리계획서',      url:'/main/qpsCmplPlan.do', fn:'cpPrint',      cyc:'Y' },
+    { grp:'불만고충', key:'cmplbook', nm:'불만고충 처리대장',        url:'/main/qpsCmpl.do',     fn:'cmPrintBook',  cyc:'M' },
+    { grp:'불만고충', key:'cmplact',  nm:'개선활동 처리결과',        url:'/main/qpsCmpl.do',     fn:'cmActPrint',   cyc:'S' },
+    { grp:'불만고충', key:'cmplrpt',  nm:'불만고충 지표분석보고서',  url:'/main/qpsCmplRpt.do',  fn:'crPrint',      cyc:'Q' },
+
+    /* ── 점검표 ── */
+    { grp:'점검표', key:'chk', nm:'점검표 작성', url:'/main/qpsChk.do', fn:'ckPrint', cyc:'M' }
   ];
   FORMS.forEach(function (f) { if (!f.wait) f.wait = 2600; });   // 자료가 들어올 때까지 기다릴 시간
 
@@ -132,18 +180,83 @@
     return 0;
   }
 
+  /* 목록 — 서식이 100종을 넘는다(코드표에서 오는 사고·안전 계열 78종 포함).
+     다 펼쳐 두면 못 쓴다(2026-09-07 「펼쳐진 상태」) → **묶음은 접어 두고**, 머리를 누르면 펴진다.
+       · 머리에 그 묶음의 종수와 고른 수를 적는다 — 접힌 채로도 무엇이 골라졌는지 보인다.
+       · [모두] 는 펴지 않고 그 묶음만 고른다(같은 단추로 켜고 끈다).
+       · 「찾기」로 작성된 것이 나오면 그 묶음만 저절로 펴 준다(아래 paOpenGrp). */
+  var GRP_OPEN = {};        // 묶음 이름 → 펴져 있나
+
   function draw() {
-    var h = '';
+    var h = '', grp = null, gi = -1, byGrp = [];
     FORMS.forEach(function (f) {
+      if (f.grp !== grp) { grp = f.grp; gi++; byGrp.push({ nm: grp, n: 0 }); }
+      byGrp[gi].n++;
+    });
+
+    grp = null; gi = -1;
+    FORMS.forEach(function (f) {
+      if (f.grp !== grp) {
+        if (gi >= 0) h += '</div>';
+        grp = f.grp; gi++;
+        var open = !!GRP_OPEN[grp];
+        h += '<div class="grp' + (open ? ' on' : '') + '" data-grp="' + grp + '" onclick="paToggleGrp(this)">' +
+               '<span class="ar">' + (open ? '▾' : '▸') + '</span>' +
+               '<span class="gn">' + grp + '</span>' +
+               '<span class="gc" id="paGc_' + gi + '" data-grp="' + grp + '">' + byGrp[gi].n + '종</span>' +
+               '<button type="button" class="gsel" onclick="paPickGrp(event, this)" data-grp="' + grp + '">모두</button>' +
+             '</div>' +
+             '<div class="gbox" data-grp="' + grp + '"' + (open ? '' : ' hidden') + '>';
+      }
       /* 주기는 그 자리에서 고친다 — 고치면 바로 표(TBL_QPS_FORM_CYC)에 저장한다(2026-09-07 「설정 표로 빼줘」) */
       var op = '';
       for (var k in CYC) op += '<option value="' + k + '"' + (f.cyc === k ? ' selected' : '') + '>' + CYC[k] + '</option>';
-      h += '<div class="row"><label><input type="checkbox" class="paChk" value="' + f.key + '"> ' + f.nm + '</label>' +
+      h += '<div class="row"><label><input type="checkbox" class="paChk" data-grp="' + f.grp + '" value="' + f.key + '" onclick="paCount()"> ' + f.nm + '</label>' +
            '<select class="cyc" data-key="' + f.key + '" onchange="paCycSave(this)" title="작성 주기 — 고치면 바로 저장됩니다">' + op + '</select>' +
            '<span class="desc" id="paSt_' + f.key + '">' + (f.note || '') + '</span></div>';   /* 주소(.do)는 안 보인다 — 화면에 쓸 말이 아니다(2026-09-07) */
     });
+    if (gi >= 0) h += '</div>';
     gel('paList').innerHTML = h;
+    paCount();
   }
+
+  /* 묶음마다 「n종 · m 고름」 — 접힌 채로도 고른 것이 보이게 */
+  window.paCount = function () {
+    var gs = document.querySelectorAll('#paList .gc');
+    for (var i = 0; i < gs.length; i++) {
+      var g = gs[i].getAttribute('data-grp');
+      var cs = document.querySelectorAll('#paList .paChk[data-grp="' + g + '"]');
+      var on = 0;
+      for (var j = 0; j < cs.length; j++) if (cs[j].checked) on++;
+      gs[i].textContent = cs.length + '종' + (on ? ' · ' + on + ' 고름' : '');
+      gs[i].className = 'gc' + (on ? ' has' : '');
+    }
+  };
+
+  window.paToggleGrp = function (hd) {
+    var g = hd.getAttribute('data-grp');
+    GRP_OPEN[g] = !GRP_OPEN[g];
+    paOpenGrp(g, GRP_OPEN[g]);
+  };
+
+  function paOpenGrp(g, open) {
+    GRP_OPEN[g] = !!open;
+    var hd = document.querySelector('#paList .grp[data-grp="' + g + '"]');
+    var bx = document.querySelector('#paList .gbox[data-grp="' + g + '"]');
+    if (bx) bx.hidden = !open;
+    if (hd) { hd.className = 'grp' + (open ? ' on' : ''); var a = hd.querySelector('.ar'); if (a) a.textContent = open ? '▾' : '▸'; }
+  }
+
+  /* 묶음 하나만 고르기 — 이미 다 골라져 있으면 푼다. 머리를 누른 것으로 번지지 않게 이벤트를 멈춘다. */
+  window.paPickGrp = function (ev, btn) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    var g = btn.getAttribute('data-grp');
+    var cs = document.querySelectorAll('#paList .paChk[data-grp="' + g + '"]');
+    var allOn = true;
+    for (var i = 0; i < cs.length; i++) if (!cs[i].checked) { allOn = false; break; }
+    for (var j = 0; j < cs.length; j++) cs[j].checked = !allOn;
+    paCount();
+  };
 
   /* 표에 저장된 주기를 먼저 읽어 온다. 표가 비었거나 못 읽으면 화면 기본값 그대로 — 설정 전에도 멀쩡히 돈다. */
   function loadCyc() {
@@ -157,8 +270,46 @@
       });
     }).catch(function () { });
   }
-  loadCyc().then(draw);
-  draw();   // 표를 읽기 전에도 목록은 보이게
+  /* 사고·안전 보고서 78종 — 화면 하나에 유형(?gb=)만 다르다. 코드표(QPS_SAFERPT_GB)에서 읽어 온다.
+     ★코드로 박지 않는 까닭 : 서식이 늘면 코드표에 한 줄 넣는 것으로 끝나야 한다(그 화면의 규약과 같다).
+     ★계열 묶음은 SORT 대역이 정한다 — 그 화면(qpsSafeRpt.jsp)의 BANDS 와 같은 값이다. 한쪽만 고치면 어긋난다. */
+  var SR_BANDS = [
+    [ 1,  9, '사고 · 안전 보고서'],
+    [10, 19, '의약품 · 혈액'],
+    [20, 30, '교육 · 보건관리'],
+    [31, 50, '인사 · 원무 · 총무'],
+    [51, 70, '의무기록 · 정보보호'],
+    [71, 72, '영양'],
+    [73, 90, '사회복지 · 프로그램'],
+    [91, 99, '검진 · 접종 결과보고서']];
+  function srBand(s) {
+    s = Number(s); if (isNaN(s)) s = 99;
+    for (var i = 0; i < SR_BANDS.length; i++) if (s >= SR_BANDS[i][0] && s <= SR_BANDS[i][1]) return SR_BANDS[i][2];
+    return '그 밖의 서식';
+  }
+  function loadSafe() {
+    return fetch(CTX + '/qps/codeList.do', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: ''
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      var cs = (j && j.codes && j.codes.QPS_SAFERPT_GB) || [];
+      if (!cs.length) return;
+      /* 붙박이로 넣어 둔 대표 한 줄은 뺀다 — 아래에서 유형마다 한 줄로 다시 깐다 */
+      for (var i = FORMS.length - 1; i >= 0; i--) if (FORMS[i].key === 'saferpt') FORMS.splice(i, 1);
+      var add = cs.map(function (c) {
+        return { grp: srBand(c.sort), key: 'sr_' + c.subcode, nm: c.subcodenm,
+                 url: '/main/qpsSafeRpt.do?gb=' + encodeURIComponent(c.subcode), fn: 'srPrint', cyc: 'S' };
+      });
+      /* 묶음이 흩어지지 않게 대역 차례로 붙인다 */
+      var order = SR_BANDS.map(function (b) { return b[2]; }).concat(['그 밖의 서식']);
+      add.sort(function (a, b) { return order.indexOf(a.grp) - order.indexOf(b.grp); });
+      FORMS = FORMS.concat(add);
+    }).catch(function () { });
+  }
+
+  /* 목록은 두 번 그린다 — 표·코드표를 못 읽어도 붙박이 서식은 먼저 보이게 */
+  draw();
+  loadSafe().then(loadCyc).then(draw);   // 서식을 다 채운 뒤 표의 주기를 입힌다(차례가 중요하다)
 
   window.paCycSave = function (sel) {
     var key = sel.getAttribute('data-key'), f = fdef(key);
@@ -306,6 +457,9 @@
         }
         var cb = document.querySelector('#paList .paChk[value="' + pk + '"]');
         if (cb) cb.checked = !!found[pk];          // 나온 것만 미리 골라 둔다
+        /* 작성된 것이 있는 묶음은 저절로 펴 준다 — 접힌 채로 두면 무엇이 나왔는지 못 본다(2026-09-07) */
+        if (found[pk]) { var ff = fdef(pk); if (ff) paOpenGrp(ff.grp, true); }
+        paCount();
         gel('paChkStat').textContent = '(' + n + '/' + jobs.length + ') 보는 중 …';
       }, function () {
         running = false; gel('paChk').disabled = false; gel('paGo').disabled = false;
@@ -321,6 +475,7 @@
   window.paToggleAll = function (el) {
     var cs = document.querySelectorAll('#paList .paChk');
     for (var i = 0; i < cs.length; i++) cs[i].checked = el.checked;
+    paCount();
   };
   window.paClear = function () {
     var cs = document.querySelectorAll('#paList .paChk');
@@ -405,7 +560,14 @@
   };
 
   /* 모은 것을 한 문서로 — 서식마다 CSS 가 다르므로 각각을 제 CSS 로 감싸고 사이를 새 장으로 넘긴다.
-     ★인쇄 CSS 의 @page 는 문서에 하나만 먹는다. 첫 서식의 것을 쓰고, 나머지는 본문 규칙만 살린다. */
+
+     ★여백과 「바닥의 about:blank」(사용자 2026-09-07 「아래부분 아직 있네요」)
+       브라우저는 @page 여백 자리에 날짜·주소·쪽수를 제가 찍는다. 자리가 없으면 안 찍는다 —
+       그래서 @page 여백을 0 으로 두고(낱장 서식에서 이미 확인된 방법), 종이 여백은 우리가 만든다.
+       한 장짜리가 아니라 여러 장으로 넘어가는 서식도 있으므로 padding 으로는 안 된다(첫 장에만 붙는다).
+       표의 thead·tfoot 은 인쇄 때 **장마다 되풀이**되므로, 위아래 12mm 를 그것으로 띄운다.
+       좌우 10mm 는 칸(td) 의 padding 이라 어차피 장마다 그대로 붙는다.
+       ★서식과 서식 사이는 표 단위로 끊는다 — 칸 안에서의 page-break 는 브라우저마다 잘 안 듣는다. */
   function merge(picked) {
     var got = picked.filter(function (f) { return parts[f.key] && parts[f.key].body; });
     running = false; gel('paGo').disabled = false;
@@ -414,10 +576,23 @@
     var css = '', bodyAll = '', seen = {};
     got.forEach(function (f, idx) {
       var p = parts[f.key];
-      if (!seen[p.css]) { seen[p.css] = 1; css += p.css; }        // 같은 CSS 는 한 번만
-      bodyAll += '<div class="qps-part"' + (idx ? ' style="page-break-before:always;"' : '') + '>' + p.body + '</div>';
+      /* 서식이 들고 온 @page 는 버린다 — 문서에 하나만 먹는데다 여백은 아래에서 다시 잡는다 */
+      var pc = String(p.css || '').replace(/@page[^{]*\{[^}]*\}/g, '');
+      if (!seen[pc]) { seen[pc] = 1; css += pc; }                 // 같은 CSS 는 한 번만
+      bodyAll += '<table class="qps-sheet"' + (idx ? ' style="page-break-before:always;"' : '') + '>' +
+                   '<thead><tr><td><div class="qps-vsp"></div></td></tr></thead>' +
+                   '<tbody><tr><td><div class="qps-part">' + p.body + '</div></td></tr></tbody>' +
+                   '<tfoot><tr><td><div class="qps-vsp"></div></td></tr></tfoot>' +
+                 '</table>';
     });
-    css += '.qps-part{ break-inside:auto; }';
+    /* 아래 규칙은 서식 CSS 뒤에 붙여 우리가 이기게 한다 */
+    css += '.qps-part{ break-inside:auto; }' +
+           '@page{ size:A4 portrait; margin:0; }' +
+           'html,body{ margin:0 !important; padding:0 !important; }' +
+           '.qps-sheet{ width:100%; border-collapse:collapse; }' +
+           '.qps-sheet > thead > tr > td, .qps-sheet > tfoot > tr > td{ padding:0; border:0; }' +
+           '.qps-sheet > tbody > tr > td{ padding:0 10mm; border:0; }' +
+           '.qps-vsp{ height:12mm; }';
 
     var w = window.open('', '_blank', 'width=980,height=1000');
     if (!w) { gel('paStat').textContent = '팝업이 막혀 인쇄창을 열지 못했습니다 — 주소창 오른쪽에서 허용해 주세요.'; return; }

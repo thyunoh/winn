@@ -380,14 +380,8 @@
       css = '@page{ size:A4 portrait; margin:12mm; }' + css;
     }
 
-    var w = window.open('', '_blank', 'width=1000,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' +
-      esc(title.replace(/[\\\/:*?"<>|]/g, '-')) + '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    /* 인쇄는 공통 창구로 — 낱장·일괄이 같은 조립을 쓴다(2026-09-07) */
+    qpsPrintOut(title.replace(/[\\\/:*?"<>|]/g, '-'), css, body);
   };
 
   $(function(){ qtNew(); });

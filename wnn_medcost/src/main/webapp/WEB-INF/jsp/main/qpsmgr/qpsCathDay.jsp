@@ -190,8 +190,6 @@
   };
 
   window.cdPrint = function(){
-    var w = window.open('', '_blank');
-    if (!w) { _alertBox('팝업이 막혀 있습니다.', {icon:'⚠'}); return; }
     var body = '';
     var last = daysInMonth();
     for (var d = 1; d <= last; d++) {
@@ -207,18 +205,15 @@
               'th,td{border:1px solid #333;padding:3px 5px;text-align:center;}' +
               'th{background:#eee;}' +
               '@page{ size:A4 portrait; margin:12mm; }';   /* 여백을 정해 둔다 — 없으면 브라우저·프린터 기본값을 따라 자리가 달라진다(2026-09-07) */
-    w.document.write('<html><head><meta charset="UTF-8"><title>유치도뇨관 월별 기록지</title>' +
-      '<style>' + css + '</style></head><body>' +
+    /* 인쇄는 공통 창구로 — 낱장·일괄이 같은 조립을 쓴다(2026-09-07) */
+    qpsPrintOut('유치도뇨관 월별 기록지', css,
       '<h1>유치도뇨관 월별 기록지</h1>' +
       '<div style="text-align:center;margin-bottom:8px;">' + esc(gel('cdYm').value) + '</div>' +
       '<table><tr><th>날짜</th><th>입원환자수</th><th>재원환자수</th><th>재원환자중 유치도뇨관 보유 환자 수</th></tr>' +
       body +
       '<tr><th>Total</th><th>' + gel('cdTotIn').textContent + '</th><th>' + gel('cdTotStay').textContent +
         '</th><th>' + gel('cdTotCath').textContent + '</th></tr>' +
-      '</table></body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+      '</table>');
   };
 
   $(function(){ cdLoad(); });

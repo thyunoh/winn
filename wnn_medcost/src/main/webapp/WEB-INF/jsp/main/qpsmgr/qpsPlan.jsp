@@ -412,15 +412,8 @@
       '<td class="c"><b>' + tot.toLocaleString() + '</b></td></tr></tbody></table>';
 
     var title = ('활동계획서_' + yy + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' +
-      cover + intro + topic + biz + ev + sched + bud + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    /* 인쇄는 공통 창구로 — 낱장·일괄이 같은 조립을 쓴다(2026-09-07) */
+    qpsPrintOut(title, PRINT_CSS, cover + intro + topic + biz + ev + sched + bud);
   };
 
   /* ═══ 탭 · 글자 크기 (2026-08-15 — 사용자 요청) ═══════════════════════════

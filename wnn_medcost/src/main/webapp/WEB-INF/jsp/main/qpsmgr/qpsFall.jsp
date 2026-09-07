@@ -1888,16 +1888,9 @@
   // 별도 창에서 인쇄 — 제목(머리글)은 우리가 정하고, 주소 바닥글은 about:blank 라 사라진다.
   // 'PDF로 저장' 을 고르면 이 제목이 **파일명 기본값**이 된다.
   function doPrint(bodyHtml, title){
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
     var safe = String(title).replace(/[\\\/:*?"<>|]/g, '-');   // 파일명에 못 쓰는 글자
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
-      '<title>' + esc(safe) + '</title><style>' + PRINT_CSS + '</style></head><body>' + bodyHtml + '</body></html>');
-    w.document.close();
-    w.focus();
-    // 차트 이미지가 붙은 뒤에 인쇄 — 바로 부르면 그림이 빈 채로 나갈 수 있다(로드·글꼴을 기다린다, 2026-09-07)
-    qpsPrintGo(w);
+    /* 인쇄는 공통 창구로 — 낱장·일괄이 같은 조립을 쓴다(2026-09-07) */
+    qpsPrintOut(safe, PRINT_CSS, bodyHtml);
   }
 
   // ---------- 공통코드 ----------

@@ -2070,24 +2070,10 @@
                meta + legend + guide + grid + tail;
 
     var title = (FORM.formnm + '_' + yy + prdTxt + '_' + (val('f_wardNm') || '') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=1200,height=900');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    ckPrintFitDays(w);   // 날짜 칸이 너무 좁아지지 않게 (아래 함수 머리말 참고)
-
-    /* 사진(blob)이 다 그려진 뒤 인쇄창을 띄운다 — 고정 300ms 로는 사진이 빈 채 찍힐 수 있다(safeRpt 전례) */
-    var tries = 0;
-    (function waitImg(){
-      var ok = true, imgs = [];
-      try { imgs = w.document.images || []; } catch (e) {}
-      for (var i = 0; i < imgs.length; i++) if (!imgs[i].complete) ok = false;
-      if (ok || tries++ > 40) qpsPrintGo(w);   /* 사진이 다 붙은 뒤, 글꼴까지 기다려 인쇄(2026-09-07) */
-      else setTimeout(waitImg, 150);
-    })();
+    /* 인쇄는 공통 창구로 — 사진·글꼴 기다림은 qpsPrintGo 가 한다(2026-09-07) */
+    var w = qpsPrintOut(title, PRINT_CSS, body);
+    /* 날짜 칸이 너무 좁아지지 않게 (아래 함수 머리말 참고) — 일괄 출력일 때는 창이 없다 */
+    try { if (w && w.document) ckPrintFitDays(w); } catch (e) { }
   };
 
   /**
