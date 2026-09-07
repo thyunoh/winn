@@ -442,6 +442,8 @@ public interface QpsMapper {
 	Map<String, Object> selectChkDocPrev(Map<String, Object> param);
 	/** 그 달에 이미 있는 문서 번호들 — 월 생성이 같은 날을 또 만들지 않도록. */
 	List<Integer> selectChkDocNos(Map<String, Object> param);
+	/** 작성 현황(2026-09-07) — 그 해 저장 문서 전부 + 서식 이름·부서·주기. deptCd 를 주면 그 부서 + 공통만. */
+	List<Map<String, Object>> selectChkDocStatus(Map<String, Object> param);
 
 	/** 문서가 정하는 <b>열</b> 이름 — 바로 위 CHK_ROW 의 대칭(2026-08-12, v3 순서 8). */
 	List<Map<String, Object>> selectChkCols(@Param("chkSeq") long chkSeq);

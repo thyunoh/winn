@@ -2156,6 +2156,71 @@ public class QpsController {
 		return res;
 	}
 
+	/**
+	 * 일괄 작성 (2026-09-07 사용자 확정) — 열어 둔 <b>저장 문서 하나</b>를 원본으로, 그 서식의 주기마다
+	 * 원본 다음 기간부터 「~까지」 지정한 기간까지 문서를 만든다(점검표 작성 화면 [📑 이 문서로 일괄 작성]).
+	 * ⚠저장을 한다 — 화면이 먼저 묻는다. 값(점검 결과)은 copyVals='Y' 일 때만 복사(기본 꺼짐).
+	 */
+	@RequestMapping(value = "/qps/chkBulkCopy.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkBulkCopy(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("chkSeq"));
+			if (seq == null || seq <= 0) return fail(res, "원본 문서를 먼저 열어 주세요.");
+			String toYear = str(p.get("toYear"), "");
+			if (toYear.length() != 4) return fail(res, "「~까지」 연도가 필요합니다.");
+			String toMm = str(p.get("toMm"), "").trim();
+			if (!toMm.isEmpty() && (toMm.length() != 2 || Integer.parseInt(toMm) < 1 || Integer.parseInt(toMm) > 12)) return fail(res, "월이 올바르지 않습니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);  m.put("chkSeq", seq);
+			m.put("toYear", toYear);  m.put("toMm", toMm);
+			m.put("toNo", intOf(p.get("toNo")) == null ? Integer.valueOf(0) : intOf(p.get("toNo")));
+			m.put("copyVals", "Y".equals(str(p.get("copyVals"), "N")) ? "Y" : "N");
+			m.put("regUser", userId(request));
+			res.putAll(svc.copyChkBulk(m));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 작성 현황 (2026-09-07 사용자 「이 부서 작성 현황 표 — 부서에 들어가면 그 부서만, 전체로도」) —
+	 * 그 해 저장된 점검표 문서 전부(서식·부서·주기·기간·병동·저장일시·작성자). 화면이 서식별로 묶어 「몇 건 · 최근 언제」를 그린다.
+	 * ★담당 부서 규칙은 chkBase 와 같다 — 담당이 정해진 사람은 제 부서(+공통)만, 남의 부서를 지정하면 무시.
+	 */
+	@RequestMapping(value = "/qps/chkDocStatus.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkDocStatus(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		res.put("build", BUILD);
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String inYear = str(p.get("inYear"), "");
+			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
+			List<String> myDept = svc.selectQpsUserDept(hospCd, userId(request));
+			String want = str(p.get("deptCd"), "").trim().toUpperCase();
+			if (!myDept.isEmpty() && !want.isEmpty() && !myDept.contains(want)) want = "";
+			List<Map<String, Object>> rows = svc.selectChkDocStatus(hospCd, inYear, want);
+			if (!myDept.isEmpty() && want.isEmpty()) {          // 부서를 안 골랐을 때 = 내 부서 전부(+공통)
+				List<Map<String, Object>> keep = new ArrayList<>();
+				for (Map<String, Object> r : rows) {
+					String d = str(r.get("deptcd"), "");
+					if (d.isEmpty() || "COMMON".equals(d) || myDept.contains(d)) keep.add(r);
+				}
+				rows = keep;
+			}
+			res.put("list", rows);
+			res.put("deptCd", want);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/* ═══ 일괄 출력 (2026-09-07) ═══
 	   고른 서식을 한 번에 이어 붙여 인쇄한다. 화면은 자료를 만들지도 고치지도 않고 **모아 인쇄만** 한다
 	   (요양병원은 서식을 하나씩 열어 뽑는 방식이 현장에서 안 돌아간다 — 사용자). */

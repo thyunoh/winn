@@ -173,12 +173,18 @@
   <div class="ck-spacer"></div>
   <button type="button" class="ck-btn" onclick="ckSave();">저장</button>
   <button type="button" class="ck-btn ghost" onclick="ckPrint();">🖨 인쇄(A4 가로)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-07 「각각 등록화면에서 일괄출력이 필요함 — 별도 화면은 확인도 안 되고 효율이 떨어짐」)
+       이 서식(또는 이 부서 서식 전부)의 저장된 점검표를 기간으로 골라 한 번에 이어 인쇄. 아래 #ckBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="ck-btn ghost" onclick="ckBulkPrintToggle();" title="이 서식(또는 이 부서 서식 전부)의 저장된 점검표를 기간으로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="ck-zoom">
     <button type="button" onclick="ckZoom(-1);" title="글자 작게">가－</button>
     <button type="button" onclick="ckZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="ckZoom(0);"  title="처음 크기로">↺</button>
   </span>
+  <%-- ★작성 현황 (2026-09-07 사용자 「무슨 서식을 작성했는지 알아야 확인할 수 있다」) — 그 해 서식별 저장 건수·최근 작성.
+       부서(담당자별 업무)로 들어왔으면 그 부서만, 단독 메뉴면 전체(내 부서 전부). 아래 #ckStatBox 에 펼친다. --%>
+  <button type="button" class="ck-btn ghost" id="ckStatBtn" onclick="ckStatToggle();" title="이 해에 어느 서식을 몇 건 작성했는지 — 부서를 골랐으면 그 부서만, 아니면 전체">📋 작성 현황</button>
   <button type="button" class="ck-btn ghost" onclick="ckExtract();">📊 데이터 추출</button>
   <button type="button" class="ck-btn warn" id="ckDelBtn" onclick="ckDel();" style="display:none;">삭제</button>
   <span class="ck-sub" id="ckStat"></span>
@@ -221,6 +227,49 @@
     <button type="button" class="ck-btn ghost" onclick="ckPrevSeed();" title="지난 문서의 기기명·열 이름·상단 칸과 서식이 지정한 자산 열만 가져옵니다(점검 결과는 가져오지 않습니다)">⧉ 전월 복사</button>
     <%-- ★월 생성 — 일 단위 서식만. 없으면 한 달에 [새로 작성]을 31번 눌러야 한다. --%>
     <button type="button" class="ck-btn ghost" id="ckMonthBtn" onclick="ckMonthGen();" style="display:none;">📅 이 달 전체 만들기</button>
+    <%-- ★일괄 작성 (2026-09-07 사용자 확정) — 열어 둔 **저장 문서**를 원본으로, 이 서식의 주기마다 「~까지」 문서를 만든다.
+         저장된 문서를 열었을 때만 보인다(ckPickDoc 이 켜고 ckNew 가 끈다). 저장이라 확인창을 먼저 띄운다. --%>
+    <button type="button" class="ck-btn ghost" id="ckBulkBtn" onclick="ckBulkOpen();" style="display:none;" title="열어 둔 이 문서를 원본으로, 서식 주기(월·주차·일·분기·반기·연)마다 다음 기간부터 지정한 기간까지 문서를 한 번에 만듭니다">📑 이 문서로 일괄 작성</button>
+  </div>
+  <%-- 일괄 작성 조건 띠 — [📑 이 문서로 일괄 작성]을 누르면 열린다. 값 복사는 선택(기본 꺼짐). --%>
+  <div id="ckBulkBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #9fc9c0; border-radius:8px; background:#f2f9f7; font-size:12.5px; color:#1f2a37;">
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <b style="color:#125a4e;">📑 일괄 작성</b>
+      <span>원본 <b id="ckBulkSrc">—</b></span>
+      <span style="margin-left:6px;">→ 다음 기간부터</span>
+      <select id="ckBulkY" style="width:auto;"></select>
+      <span id="ckBulkMWrap"><select id="ckBulkM" style="width:auto;" onchange="ckBulkNoFill();"></select></span>
+      <span id="ckBulkNWrap" style="display:none;"><select id="ckBulkN" style="width:auto;"></select></span>
+      <span><b>까지</b></span>
+      <label class="ck-chk" style="margin-left:10px;" title="켜면 원본의 O/X·수치·서명까지 그대로 복사됩니다. 끄면 기기명·열 이름·상단 칸·병동만(점검 결과는 비움)"><input type="checkbox" id="ckBulkVals"> 점검 결과 값도 복사</label>
+      <button type="button" class="ck-btn" style="margin-left:auto;" onclick="ckBulkGo();">만들기</button>
+      <button type="button" class="ck-btn ghost" onclick="ckBulkClose();">닫기</button>
+    </div>
+    <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">서식 주기마다 한 장씩 만듭니다. 이미 있는 기간은 그대로 두고, 특이사항·수리내용은 옮기지 않습니다. 한 번에 400장까지.</div>
+  </div>
+  <%-- 작성 현황 표 (2026-09-07) — [📋 작성 현황] 로 열고 닫는다. 서식별 한 줄(건수·최근), 줄을 누르면 그 서식의 문서 목록이 펼쳐지고 [열기]로 바로 연다. --%>
+  <div id="ckStatBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #cfd8e0; border-radius:8px; background:#fff; font-size:12.5px; color:#1f2a37;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+      <b id="ckStatTitle" style="color:#125a4e;">📋 작성 현황</b>
+      <span id="ckStatSum" style="color:#5a6b7a;"></span>
+      <label class="ck-chk" style="margin-left:6px;" title="저장된 문서가 없는 서식도 함께 보입니다(무엇이 빠졌는지)"><input type="checkbox" id="ckStatAll" checked onchange="ckStatRender();"> 작성 없는 서식도</label>
+      <button type="button" class="ck-btn ghost" style="margin-left:auto;" onclick="ckStatLoad();">새로 읽기</button>
+      <button type="button" class="ck-btn ghost" onclick="ckStatToggle();">닫기</button>
+    </div>
+    <div id="ckStatBody" style="max-height:340px; overflow:auto;"></div>
+  </div>
+  <%-- 일괄 출력 조건 띠 (2026-09-07) — [🖨 일괄 출력]로 열고 닫는다. 저장된 문서만 모아 인쇄(자료를 만들지 않음). --%>
+  <div id="ckBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+      <label class="ck-chk"><input type="radio" name="ckBpScope" value="F" checked> 이 서식만 <span id="ckBpFormNm" style="color:#5a6b7a;"></span></label>
+      <label class="ck-chk"><input type="radio" name="ckBpScope" value="D"> 이 부서 서식 전부 <span id="ckBpDeptNm" style="color:#5a6b7a;"></span></label>
+      <span style="margin-left:8px;">기간 <b id="ckBpYear"></b>년</span>
+      <select id="ckBpFrom" style="width:auto;"></select><span>~</span><select id="ckBpTo" style="width:auto;"></select>
+      <button type="button" class="ck-btn" id="ckBpGo" style="margin-left:auto;" onclick="ckBulkPrintGo();">출력</button>
+      <button type="button" class="ck-btn ghost" onclick="ckBulkPrintToggle();">닫기</button>
+    </div>
+    <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 점검표만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 연·반기·분기 서식은 그 해 것을 담고, 「이 서식만」은 위 병동 필터를 따릅니다. 한 번에 120장까지. <span id="ckBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
   </div>
   <%-- ★탭 (2026-08-15) — 사진칸이 있는 서식에서만 나온다(ckTabSync). 없으면 가를 것이 없다. --%>
   <div class="ck-tabs" id="ckTabs" style="display:none;"></div>
@@ -1117,6 +1166,9 @@
     if (FORM && FORM.axisgb === 'LIST') lb.innerHTML = listBarHtml();
     // 월 생성은 **일 단위 서식**만 — 다른 주기에 31개를 깔면 목록이 통째로 망가진다(서버도 막는다)
     gel('ckMonthBtn').style.display = (FORM && FORM.prdgb === 'D') ? '' : 'none';
+    // 일괄 작성은 **저장된 문서를 열어 둔 때**만(2026-09-07) — 서식이 바뀌면 조건 띠도 접는다
+    gel('ckBulkBtn').style.display = (FORM && curSeq) ? '' : 'none';
+    if (!FORM || !curSeq) gel('ckBulkBox').style.display = 'none';
     gel('ckTools').style.display = FORM ? '' : 'none';   // 편의 기능 띠 — 서식이 있을 때만(2026-09-02)
     // 주차 격자(N)에만 [주차 날짜 채움] · 위너넷 계정에만 [공휴일 관리] · 평가표(EXCL_YN)엔 표식
     gel('ckWeekBtn').style.display = (FORM && prdHeadOn() && (kind() === 'N' || /N/.test(String(FORM.grpprd || '')))) ? '' : 'none';
@@ -1524,12 +1576,15 @@
       setPhotos(res.files);
       gel('ckStat').textContent = '— 저장분 #' + d.chkseq;
       gel('ckDelBtn').style.display = '';
+      gel('ckBulkBtn').style.display = '';                 // 저장 문서가 열렸다 — 이걸 원본으로 일괄 작성할 수 있다
+      if (gel('ckBulkBox').style.display !== 'none') ckBulkFill();   // 띠가 열려 있으면 원본 표시를 이 문서로
     }).catch(err);
   };
 
   window.ckNew = function(){
     curSeq = 0;
     LIST_ROWS = {};
+    gel('ckBulkBtn').style.display = 'none'; gel('ckBulkBox').style.display = 'none';   // 새 문서는 원본이 될 수 없다
     gel('ckDoc').value = '';
     set('f_noteTxt', ''); set('f_fixTxt', '');
     renderHead({});
@@ -1878,6 +1933,254 @@
           ckBase();
         }).catch(err);
       } });
+  };
+
+  /* ═══ 📑 이 문서로 일괄 작성 (2026-09-07 사용자 확정 — 「특정 서식만 · 한 번 작성한 것을 원본으로 · 이전 작성 내역을 가져다 ·
+         서식 작성 주기마다 · 지정한 기간까지」) ═══
+     ★원본 = 지금 열어 둔 저장 문서(curSeq). 서식 주기(FORM.prdgb)에 맞춰 「~까지」 칸이 바뀐다 :
+       연=연도만 · 반기/분기=연+번호 · 월=연+월 · 주차=연+월+주차 · 일=연+월+일.  시작은 원본 다음 기간(사용자 확정 「~까지만」).
+     ★가져오는 것 = 틀(기기행·열 이름·상단 칸·병동). **점검 결과 값은 체크했을 때만**(기본 꺼짐 — 지난 O 가 「점검했다」로 읽히면 안 된다).
+     ★저장을 한다 — 확인창을 먼저 띄운다. 이미 있는 기간은 서버가 건너뛴다. */
+  var BULK_NO_LB = { H:'반기', Q:'분기', W:'주차', D:'일' };
+  window.ckBulkOpen = function(){
+    if (!FORM || !curSeq) { _alertBox('저장된 점검표를 먼저 열어 주세요 — 그 문서가 원본이 됩니다.', {icon:'📑'}); return; }
+    var box = gel('ckBulkBox');
+    if (box.style.display !== 'none') { ckBulkClose(); return; }
+    ckBulkFill();
+    box.style.display = '';
+  };
+  window.ckBulkClose = function(){ gel('ckBulkBox').style.display = 'none'; };
+  /** 원본 표시 + 「~까지」 칸 채우기. 기본값 = 그 해의 마지막 기간(월 서식이면 12월, 일 서식이면 이 달 말일…) */
+  window.ckBulkFill = function(){
+    var g = prd(), y = Number(gel('ckYear').value), mm = Number(gel('ckMm').value || 1);
+    var srcD = { prdgb: g, prdno: (prdNos().length ? gel('ckPrdNo').value : ''), inmm: (usesMm() ? gel('ckMm').value : '') };
+    gel('ckBulkSrc').textContent = y + '년 ' + docPrdLabel(srcD) + (val('f_wardNm') ? (' · ' + val('f_wardNm')) : '');
+    // 연도 — 원본 해부터 두 해 뒤까지
+    var ys = gel('ckBulkY'); ys.innerHTML = '';
+    for (var i = y; i <= y + 2; i++) ys.add(new Option(i + '년', i));
+    ys.value = y;
+    // 월 — 월을 쓰는 주기(월·주차·일)만
+    gel('ckBulkMWrap').style.display = usesMm() ? '' : 'none';
+    if (usesMm()) {
+      var ms = gel('ckBulkM'); ms.innerHTML = '';
+      for (var m = 1; m <= 12; m++) ms.add(new Option(m + '월', (m < 10 ? '0' : '') + m));
+      ms.value = (g === 'M') ? '12' : (mm < 10 ? '0' : '') + mm;   // 월 서식은 연말까지, 주차·일은 이 달 안이 기본
+    }
+    ckBulkNoFill();
+    gel('ckBulkVals').checked = false;                                 // ★기본 꺼짐(사용자 확정)
+  };
+  /** 번호 칸 — 반기 1~2 · 분기 1~4 · 주차 1~5 · 일 1~그 달 날수. 기본값은 그 단위의 마지막 */
+  window.ckBulkNoFill = function(){
+    var g = prd(), wrap = gel('ckBulkNWrap'), ns = gel('ckBulkN');
+    if (!BULK_NO_LB[g]) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    var y = Number(gel('ckBulkY').value), m = Number(gel('ckBulkM').value || 1);
+    var max = (g === 'H') ? 2 : (g === 'Q') ? 4 : (g === 'W') ? 5 : new Date(y, m, 0).getDate();
+    ns.innerHTML = '';
+    for (var i = 1; i <= max; i++) ns.add(new Option(i + BULK_NO_LB[g], i));
+    ns.value = String(max);
+  };
+  window.ckBulkGo = function(){
+    if (!FORM || !curSeq) return;
+    var g = prd(), toY = gel('ckBulkY').value, toM = usesMm() ? gel('ckBulkM').value : '', toN = BULK_NO_LB[g] ? gel('ckBulkN').value : '';
+    var toD = { prdgb: g, prdno: toN, inmm: toM };
+    var withVals = gel('ckBulkVals').checked;
+    _confirmBox({
+      msg: '<b>' + esc(gel('ckBulkSrc').textContent) + '</b> 문서를 원본으로<br>' +
+           '다음 기간부터 <b>' + esc(toY) + '년 ' + esc(docPrdLabel(toD)) + '</b>까지 ' + esc(FORM.formnm) + '를 주기마다 한 장씩 만들까요?<br>' +
+           '<span style="font-size:12px;color:' + (withVals ? '#b23b3b' : '#6b7c86') + ';">' +
+           (withVals ? '⚠ 점검 결과 값(O/X·수치·서명)까지 그대로 복사됩니다 — 실제 점검 전에 「점검함」으로 읽힐 수 있습니다.'
+                     : '기기명·열 이름·상단 칸·병동만 가져오고 점검 결과는 비어 있습니다.') +
+           ' 이미 있는 기간은 그대로 둡니다.</span>',
+      icon:'📑', okText:'만들기', okColor: withVals ? '#b23b3b' : undefined,
+      onOk: function(){
+        post('<c:url value="/qps/chkBulkCopy.do"/>', { chkSeq: curSeq, toYear: toY, toMm: toM, toNo: toN, copyVals: withVals ? 'Y' : 'N' })
+          .then(function(res){
+            _toast(res.made + '장을 만들었습니다' +
+                   (res.first ? (' (' + res.first + ' ~ ' + res.last + ')') : '') +
+                   (res.skipped ? ' · 이미 있던 ' + res.skipped + '장은 그대로' : '') +
+                   (res.copyVals === 'Y' ? ' · 값 포함' : ' · 값 없음') + '.', 'ok');
+            ckBulkClose();
+            ckBase();                                              // 목록에 새 문서들이 보이게
+          }).catch(err);
+      } });
+  };
+
+  /* ═══ 📋 작성 현황 (2026-09-07 사용자 「이 부서 작성 현황 표 — 부서별로 들어가면 그 부서만, 전체로도」) ═══
+     서버(/qps/chkDocStatus.do)가 그 해 저장 문서를 평면으로 주면 여기서 **서식별로 묶어** 그린다 :
+       [부서 머리] → 서식 한 줄(주기 · 저장 N건 · 최근 「9월 3주차 · 3병동 · 09-07 14:20 · 홍길동」) → 줄을 누르면 문서 목록(기간·병동·저장일시·작성자·[열기]).
+     ★범위 = 지금 화면의 부서 콤보(ckDept). 담당자별 업무로 들어오면 그 부서(+공통)만, 단독 메뉴면 내가 볼 수 있는 전 부서.
+     ★「작성 없는 서식도」 = 서식 목록(FORMS)에 있는데 문서가 0건인 서식을 회색으로 — 무엇이 빠졌는지 보라고. */
+  var STAT = { rows: [], open: {} };
+  window.ckStatToggle = function(){
+    var box = gel('ckStatBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    box.style.display = '';
+    ckStatLoad();
+  };
+  window.ckStatLoad = function(){
+    var dept = val('ckDept');
+    gel('ckStatBody').innerHTML = '<div style="padding:10px;color:#8a97a4;">읽는 중 …</div>';
+    post('<c:url value="/qps/chkDocStatus.do"/>', { inYear: gel('ckYear').value, deptCd: dept }).then(function(res){
+      STAT.rows = res.list || [];
+      ckStatRender();
+    }).catch(function(e){ gel('ckStatBody').innerHTML = '<div style="padding:10px;color:#b23b3b;">읽지 못했습니다 — 톰캣 재기동 전이면 이 기능이 아직 없습니다.</div>'; });
+  };
+  function deptNmOf(cd){
+    var o = gel('ckDept') && [].filter.call(gel('ckDept').options, function(x){ return x.value === cd; })[0];
+    return o ? o.textContent : (cd === 'COMMON' ? '공통' : (cd || '(부서 없음)'));
+  }
+  window.ckStatRender = function(){
+    var dept = val('ckDept'), yy = gel('ckYear').value, showAll = gel('ckStatAll').checked;
+    gel('ckStatTitle').textContent = '📋 ' + (dept ? (deptNmOf(dept) + ' 작성 현황') : '전체 작성 현황') + ' — ' + yy + '년';
+    // 서식별로 묶는다. 서식 목록(FORMS)을 뼈대로 두고 문서를 붙인다 — 0건 서식도 자리가 있어야 「빠진 것」이 보인다
+    var byForm = {}, order = [];
+    (FORMS || []).forEach(function(f){ byForm[f.formid] = { f: f, docs: [] }; order.push(f.formid); });
+    STAT.rows.forEach(function(r){
+      var k = r.formid;
+      if (!byForm[k]) { byForm[k] = { f: { formid: k, formnm: r.formnm, deptcd: r.deptcd, prdgb: r.prdgb }, docs: [] }; order.push(k); }
+      byForm[k].docs.push(r);
+    });
+    var PRD = { D:'매일', W:'매주', M:'매월', Q:'분기', H:'반기', Y:'연' };
+    var forms = 0, docs = 0, h = '', lastDept = null;
+    order.forEach(function(k){
+      var g = byForm[k], n = g.docs.length;
+      if (!n && !showAll) return;
+      if (n) { forms++; docs += n; }
+      var dc = String(g.f.deptcd || '');
+      if (!dept && dc !== lastDept) {            // 전체 보기 — 부서 머리줄
+        lastDept = dc;
+        h += '<div style="margin:8px 0 3px; padding:3px 6px; background:#eaf2f0; border-radius:6px; font-weight:800; color:#125a4e;">' + esc(deptNmOf(dc)) + '</div>';
+      }
+      var last = n ? g.docs.reduce(function(a, b){ return (String(a.upddttm || '') >= String(b.upddttm || '')) ? a : b; }) : null;
+      var open = !!STAT.open[k];
+      h += '<div style="display:flex; align-items:center; gap:8px; padding:5px 6px; border-bottom:1px solid #eef2f4; cursor:' + (n ? 'pointer' : 'default') + ';' + (n ? '' : ' color:#9aa7b0;') + '"' +
+           (n ? ' onclick="ckStatOpen(\'' + esc(k) + '\')"' : '') + '>' +
+           '<span style="width:14px; color:#2f6fb0;">' + (n ? (open ? '▾' : '▸') : '') + '</span>' +
+           '<b style="flex:0 0 300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + esc(g.f.formnm) + '">' + esc(g.f.formnm) + '</b>' +
+           '<span style="flex:0 0 44px; color:#5a6b7a;">' + (PRD[g.f.prdgb] || '') + '</span>' +
+           '<span style="flex:0 0 70px; font-weight:700; color:' + (n ? '#125a4e' : '#9aa7b0') + ';">' + (n ? (n + '건') : '— 없음') + '</span>' +
+           (last ? ('<span style="color:#5a6b7a;">최근 ' + esc(docPrdLabel(last)) + (last.wardnm ? (' · ' + esc(last.wardnm)) : '') + ' · ' + esc(String(last.upddttm || '').slice(5)) + (last.upduser ? (' · ' + esc(last.upduser)) : '') + '</span>') : '') +
+           '</div>';
+      if (n && open) {
+        h += '<div style="margin:0 0 4px 22px; padding:4px 8px; background:#fafcfb; border-left:2px solid #cfe2dc;">';
+        g.docs.forEach(function(d){
+          h += '<div style="display:flex; align-items:center; gap:10px; padding:2px 0; font-size:12px;">' +
+               '<span style="flex:0 0 120px;">' + esc(docPrdLabel(d)) + '</span>' +
+               '<span style="flex:0 0 100px; color:#5a6b7a;">' + esc(d.wardnm || '') + '</span>' +
+               '<span style="flex:0 0 120px; color:#5a6b7a;">' + esc(d.upddttm || '') + '</span>' +
+               '<span style="flex:0 0 90px; color:#5a6b7a;">' + esc(d.upduser || '') + '</span>' +
+               '<a href="#" style="color:#2f6fb0; text-decoration:underline;" onclick="ckStatGo(\'' + esc(k) + '\',' + Number(d.chkseq) + '); return false;">열기</a>' +
+               '</div>';
+        });
+        h += '</div>';
+      }
+    });
+    gel('ckStatSum').textContent = '서식 ' + forms + '종 · 문서 ' + docs + '건' + (dept ? '' : ' (전체)');
+    gel('ckStatBody').innerHTML = h || '<div style="padding:10px;color:#8a97a4;">이 해에 저장된 점검표가 없습니다.</div>';
+  };
+  window.ckStatOpen = function(k){ STAT.open[k] = !STAT.open[k]; ckStatRender(); };
+  /** 현황에서 [열기] — 그 서식으로 바꾸고 그 문서를 연다 */
+  window.ckStatGo = function(formId, seq){
+    gel('ckForm').value = formId;
+    ckBase().then(function(){ gel('ckDoc').value = String(seq); ckPickDoc(); });
+  };
+  /* 목록을 다시 읽을 때(연도·부서 바뀜 · 저장 · 삭제 · 일괄 작성) 현황도 따라 새로 읽는다 — 열려 있을 때만 */
+  (function(){
+    var base0 = window.ckBase;
+    window.ckBase = function(q){
+      var r = base0(q);
+      // 일괄 출력이 서식을 넘기며 ckBase 를 여러 번 부르는 동안은 현황을 다시 읽지 않는다(끝나고 원래 서식으로 돌아올 때 한 번)
+      return Promise.resolve(r).then(function(x){ if (gel('ckStatBox').style.display !== 'none' && !(window.BP && window.BP.busy)) ckStatLoad(); return x; });
+    };
+  })();
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-07 「각각 등록화면에서 일괄출력이 필요함 — 별도 화면은 확인도 안 되고 효율이 떨어짐」) ═══
+     범위 = 이 서식 / 이 부서 서식 전부 · 기간 = 화면 연도 + 월 범위(월 없는 연·반기·분기 서식은 해가 같으면 담음) ·
+     「이 서식만」은 저장된 점검표 목록의 병동 필터(ckWardF)를 그대로 따른다.
+     동작 = 문서마다 열어(ckPickDoc) 낱장 인쇄 함수(ckPrint)를 부른다. 그동안 qpsPrintOut 은 창을 띄우지 않고 QPS_BULK_CB 로 모아 주고,
+            끝에 qpsPrintMerge(sidebar.jsp)가 한 문서로 이어 붙인다(장마다 제 종이 방향). 낱장과 같은 조립이라 결과가 갈리지 않는다.
+     ★자료를 만들지 않는다 — 저장된 문서만. 끝나면 원래 보던 서식·문서로 되돌린다. 상한 120장.
+     ★일괄 출력 화면(qpsPrintAll)의 ckBulkPrint 는 그대로 두었다 — 그쪽은 부모 창에 넘기는 길이고, 이쪽은 같은 화면 안에서 끝낸다. */
+  window.BP = { busy:false };
+  function bpMonths(){
+    var mf = gel('ckBpFrom'), mt = gel('ckBpTo');
+    if (mf.options.length) return;
+    for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
+  }
+  window.ckBulkPrintToggle = function(){
+    var box = gel('ckBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
+    bpMonths();
+    gel('ckBpFrom').value = '01'; gel('ckBpTo').value = '12';
+    gel('ckBpFormNm').textContent = '(' + FORM.formnm + ')';
+    gel('ckBpDeptNm').textContent = val('ckDept') ? ('(' + deptNmOf(val('ckDept')) + ' ' + (FORMS || []).length + '종)') : ('(전체 ' + (FORMS || []).length + '종)');
+    gel('ckBpYear').textContent = gel('ckYear').value;
+    gel('ckBpStat').textContent = '';
+    box.style.display = '';
+  };
+  function bpInRange(d, yy, f, t){
+    if (String(d.inyear || '') !== String(yy)) return false;
+    var m = String(d.inmm || '').replace(/\D/g, '');
+    if (!m) return true;                                  // 연·반기·분기 — 해가 같으면 담는다
+    if (m.length < 2) m = '0' + m;
+    return m >= f && m <= t;
+  }
+  window.ckBulkPrintGo = function(){
+    if (BP.busy || !FORM) return;
+    var scope = (document.querySelector('input[name=ckBpScope]:checked') || {}).value || 'F';
+    var yy = gel('ckYear').value, f = gel('ckBpFrom').value, t = gel('ckBpTo').value;
+    if (f > t) { var x = f; f = t; t = x; gel('ckBpFrom').value = f; gel('ckBpTo').value = t; }
+    var forms = (scope === 'D') ? (FORMS || []).slice() : [FORM];
+    var wardF = (scope === 'F') ? gel('ckWardF').value : '';
+    var keepForm = gel('ckForm').value, keepSeq = curSeq, keepNm = FORM.formnm;
+    var title = ((scope === 'D') ? (val('ckDept') ? deptNmOf(val('ckDept')) + ' 점검표' : '점검표 전체') : keepNm) +
+                '_' + yy + '년' + (f === '01' && t === '12' ? '' : ('_' + Number(f) + '~' + Number(t) + '월')) + '_' + HOSP_NM;
+    var parts = [], MAX = 120, done = 0, stat = gel('ckBpStat'), fi = 0;
+    BP.busy = true; gel('ckBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('ckForm').value = keepForm;                    // 원래 보던 서식·문서로
+      Promise.resolve(ckBase()).then(function(){
+        if (keepSeq) { gel('ckDoc').value = String(keepSeq); return ckPickDoc(); }
+        ckNew();
+      }).then(function(){
+        BP.busy = false; gel('ckBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 점검표가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; gel('ckBpGo').disabled = false; });
+    };
+    var nextForm = function(){
+      if (fi >= forms.length || done >= MAX) { finish(); return; }
+      var fm = forms[fi++];
+      gel('ckForm').value = fm.formid;
+      stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' 읽는 중 …';
+      Promise.resolve(ckBase()).then(function(){
+        var docs = (DOCS || []).filter(function(d){
+          if (!bpInRange(d, yy, f, t)) return false;
+          if (wardF) { var w = String(d.wardnm || '').trim(); return (wardF === '(없음)') ? !w : (w === wardF); }
+          return true;
+        });
+        var j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { nextForm(); return; }
+          gel('ckDoc').value = String(docs[j++].chkseq);
+          Promise.resolve(ckPickDoc()).then(function(){
+            setTimeout(function(){                         // 격자·사진이 붙은 뒤에 찍는다(일괄 출력 화면과 같은 틈)
+              try { ckPrint(); done++; } catch (e) { }
+              stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + done + '장';
+              oneDoc();
+            }, 150);
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ nextForm(); });
+    };
+    nextForm();
   };
 
   window.ckDel = function(){

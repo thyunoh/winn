@@ -2933,6 +2933,12 @@ window.qpsPaperWrap = function (css, body) {
 
 window.qpsPrintOut = function (title, css, body) {
   title = String(title || 'QPS');
+  /* ★화면 안 일괄 출력 (2026-09-07 「각각 등록화면에서 일괄출력이 필요함 — 별도 화면은 확인도 안 되고 효율이 떨어짐」) —
+       그 화면이 QPS_BULK_CB(함수)를 걸어 두면 창을 띄우지 않고 그 함수에 넘긴다. 화면이 문서마다 제 인쇄 함수를 부르며 모아,
+       끝에 qpsPrintMerge 로 한 문서를 만든다. 부모(일괄 출력 화면)보다 먼저 본다 — 같은 화면 안이 우선. */
+  if (typeof window.QPS_BULK_CB === 'function') {
+    try { window.QPS_BULK_CB({ title: title, css: css, body: body }); return true; } catch (e) { }
+  }
   if (window.QPS_BULK && window.parent && window.parent !== window) {
     try {
       window.parent.postMessage({ type: 'qpsPrintPart', key: window.QPS_BULK, title: title, css: css, body: body }, '*');
@@ -2956,6 +2962,56 @@ window.qpsPrintOut = function (title, css, body) {
   w.focus();
   qpsPrintGo(w);
   return w;          /* 창을 돌려준다 — 인쇄창을 더 손봐야 하는 화면이 있다(점검표 날짜 칸 등, 2026-09-07) */
+};
+
+/* ═══ 모은 인쇄물을 한 문서로 (2026-09-07, 화면 안 일괄 출력 공용) ═══
+   parts = [{title, css, body}, …] — 장마다 표(.qps-sheet)로 감싸고 사이를 새 장으로 넘긴다.
+   ★장마다 **제 종이 방향**을 지킨다 — 점검표는 날짜 격자(가로)와 고정 열(세로)이 섞인다. 서식이 준 @page 의 size 를
+     이름 붙은 페이지(@page qpsPgN + page:qpsPgN)로 옮긴다(Chrome 85+). 여백은 0 으로 두고 thead/tfoot·td padding 으로 만든다
+     (브라우저가 여백 자리에 날짜·about:blank 를 찍는 것을 막는 방법 — qpsPaperWrap 과 같은 요령).
+   ★같은 CSS 는 한 번만 싣는다(같은 서식 30장이면 30벌이 된다). 돌려주는 값 = 장수(팝업 차단이면 -1). */
+window.qpsPrintMerge = function (parts, title) {
+  parts = parts || [];
+  if (!parts.length) return 0;
+  var css = '', body = '', seen = {}, n = 0;
+  parts.forEach(function (p) {
+    var pc = String(p.css || '');
+    var pm = pc.match(/@page[^{]*\{([^}]*)\}/i);
+    var size = ((pm && /size\s*:\s*([^;]+)/i.exec(pm[1])) || [, 'A4 portrait'])[1].trim();
+    pc = pc.replace(/@page[^{]*\{[^}]*\}/gi, '');
+    if (!seen[pc]) { seen[pc] = 1; css += pc; }
+    var pg = 'qpsPg' + n;
+    css += '@page ' + pg + '{ size:' + size + '; margin:0; }';
+    body += '<div class="qps-pg" style="page:' + pg + ';' + (n ? ' page-break-before:always;' : '') + '">' +
+              '<table class="qps-sheet">' +
+                '<thead><tr><td><div class="qps-vsp"></div></td></tr></thead>' +
+                '<tbody><tr><td><div class="qps-part">' + p.body + '</div></td></tr></tbody>' +
+                '<tfoot><tr><td><div class="qps-vsp"></div></td></tr></tfoot>' +
+              '</table></div>';
+    n++;
+  });
+  css += '.qps-part{ break-inside:auto; }' +
+         'html,body{ margin:0 !important; padding:0 !important; }' +
+         '.qps-sheet{ width:100% !important; border:0 !important; border-collapse:collapse !important; background:none !important; box-shadow:none !important; }' +
+         '.qps-sheet > thead > tr, .qps-sheet > tbody > tr, .qps-sheet > tfoot > tr{ background:none !important; }' +
+         '.qps-sheet > thead > tr > td, .qps-sheet > tfoot > tr > td, .qps-sheet > tbody > tr > td{ border:0 !important; background:none !important; vertical-align:top; }' +
+         '.qps-sheet > thead > tr > td, .qps-sheet > tfoot > tr > td{ padding:0 !important; }' +
+         '.qps-sheet > tbody > tr > td{ padding:0 10mm !important; }' +
+         '.qps-vsp{ height:12mm; line-height:0; font-size:0; }';
+  var w = window.open('', '_blank', 'width=980,height=1000');
+  if (!w) {
+    if (window._alertBox) _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', { icon: '⚠️' });
+    else alert('팝업이 차단되어 인쇄창을 열지 못했습니다.');
+    return -1;
+  }
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  w.document.open();
+  w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title || 'QPS 일괄 출력') +
+                   '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
+  w.document.close();
+  w.focus();
+  qpsPrintGo(w, 5000);
+  return n;
 };
 
 /* 인쇄 시점 — 그림·글꼴이 다 붙은 뒤에 print() 한다.

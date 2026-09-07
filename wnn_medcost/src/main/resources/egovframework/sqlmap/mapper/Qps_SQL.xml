@@ -2563,6 +2563,30 @@
 		 GROUP BY F.DEPT_CD
 	</select>
 
+	<!-- ═══ 작성 현황 (2026-09-07 사용자 「이 부서 작성 현황 표」) ═══
+	     그 해 저장 문서 전부를 서식 이름·부서·주기와 함께 평면으로. 화면(qpsChk.jsp ckStatRender)이 서식별로 묶어 건수·최근을 그린다.
+	     ★서식은 selectChkFormList 와 같은 규칙으로 한 줄만 잡는다 — 병원 복제본이 있으면 그것, 없으면 공통('*').
+	       그냥 FORM_ID 로 조인하면 공통·병원 두 줄이 붙어 문서가 두 번 세어진다.
+	     ★부서를 주면 그 부서 + 공통(COMMON) — 작성 화면 서식 목록과 같은 범위. -->
+	<select id="selectChkDocStatus" resultType="java.util.HashMap">
+		SELECT d.CHK_SEQ AS chkseq, d.FORM_ID AS formid, f.FORM_NM AS formnm, f.DEPT_CD AS deptcd, f.PRD_GB AS prdgb,
+		       d.IN_YEAR AS inyear, d.IN_MM AS inmm, d.PRD_NO AS prdno, d.WARD_NM AS wardnm,
+		       DATE_FORMAT(IFNULL(d.UPD_DTTM, d.REG_DTTM), '%Y-%m-%d %H:%i') AS upddttm,
+		       IFNULL(d.UPD_USER, d.REG_USER) AS upduser
+		  FROM TBL_QPS_CHK_DOC d
+		  JOIN TBL_QPS_CHK_FORM f
+		    ON f.FORM_ID = d.FORM_ID AND f.USE_YN = 'Y'
+		   AND f.HOSP_CD = ( SELECT CASE WHEN EXISTS (
+		                         SELECT 1 FROM TBL_QPS_CHK_FORM x
+		                          WHERE x.FORM_ID = d.FORM_ID AND x.HOSP_CD = #{hospCd} AND x.USE_YN = 'Y')
+		                       THEN #{hospCd} ELSE '*' END )
+		 WHERE d.HOSP_CD = #{hospCd} AND d.USE_YN = 'Y' AND d.IN_YEAR = #{inYear}
+		<if test="deptCd != null and deptCd != ''">
+		   AND (f.DEPT_CD = #{deptCd} OR f.DEPT_CD = 'COMMON')
+		</if>
+		 ORDER BY f.DEPT_CD, f.SORT_NO, f.FORM_NM, IFNULL(d.IN_MM,'00'), IFNULL(d.PRD_NO,0), d.CHK_SEQ
+	</select>
+
 	<!-- ═══ 공통코드(QPS) 관리 (2026-09-02) — 스크립트로 넣은 TBL_CODE_DTL 'Q' 묶음(QPS_%)을 화면에서 관리 ═══
 	     ★코드값(SUB_CODE)은 작성분의 키라 못 바꾼다 — 이름·차례·사용 여부만. 지움 = USE_YN 'N'(작성분이 남는다).
 	     ★JOB_SEQ 1 고정 upsert — 시드와 같은 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식은 안 쓴다). -->

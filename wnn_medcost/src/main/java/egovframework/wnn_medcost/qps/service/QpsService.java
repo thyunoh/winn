@@ -318,6 +318,10 @@ public interface QpsService {
 			throws Exception;
 	/** 월 생성 — 일 단위 서식의 한 달치 <b>빈</b> 문서를 만든다. 이미 있는 날은 건너뛴다. */
 	Map<String, Object> makeChkMonth(Map<String, Object> param) throws Exception;
+	/** 일괄 작성(2026-09-07) — 저장된 문서 하나를 원본으로, 그 서식의 주기마다 지정한 기간까지 문서를 복사해 만든다. 이미 있는 기간은 건너뛴다. */
+	Map<String, Object> copyChkBulk(Map<String, Object> param) throws Exception;
+	/** 작성 현황(2026-09-07) — 그 해 저장된 점검표 문서를 서식 정보와 함께(부서로 걸러) 돌려준다. 화면이 서식별로 묶어 보인다. */
+	List<Map<String, Object>> selectChkDocStatus(String hospCd, String inYear, String deptCd) throws Exception;
 	/** 데이터 추출 — 평면 목록 + 이행 요약. ★점검표를 전산화한 뜻이 여기 있다. */
 	Map<String, Object> selectChkExtract(Map<String, Object> param) throws Exception;
 

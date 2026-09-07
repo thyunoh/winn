@@ -2443,6 +2443,158 @@ public class QpsServiceImpl implements QpsService {
 		return out;
 	}
 
+	/**
+	 * 일괄 작성 (2026-09-07 사용자 확정 — 「특정 서식만, 한 번 작성한 것을 가지고, 이전 작성 내역을 가져다가,
+	 * 서식 작성 주기마다 지정해서 일괄 작성」) —
+	 * <b>저장된 문서 하나</b>를 원본으로, 그 서식의 <b>주기 단위마다</b>(월·주차·일·분기·반기·연) 원본 <b>다음 기간부터
+	 * 지정한 기간까지</b> 문서를 하나씩 만든다. {@link #makeChkMonth}(빈 문서·일 단위·한 달)와 다른 점 :
+	 * 원본이 「직전 문서」가 아니라 <b>사람이 열어 둔 문서</b>이고, 주기가 전부이며, 여러 달을 넘어갈 수 있다.
+	 *
+	 * ★가져오는 것 = 틀(기기 행·열 이름·상단 자유칸·병동). <b>점검 결과 값은 copyVals='Y' 일 때만</b>(사용자 확정 : 선택·기본 꺼짐) —
+	 *   지난 O 가 그대로 붙으면 「점검했다」로 읽히는 것을 전월복사가 막아 온 원칙 그대로. 특이사항·수리내용은 그 달의 일이라 안 옮긴다.
+	 * ★이미 있는 기간은 건너뛴다(덮어쓰지 않음, 같은 병동 기준). 한 번에 400장까지 — 일 단위로 여러 달을 지정하면 수백 장이 되므로 상한을 둔다.
+	 * ★주기는 <b>서식이 정한다</b>(chkSave·월 생성과 같은 규칙). 주차 수는 월요일 시작으로 세되 화면 셀렉트(1~5)를 넘지 않는다.
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public Map<String, Object> copyChkBulk(Map<String, Object> param) throws Exception {
+		String hospCd = str(param.get("hospCd")), regUser = str(param.get("regUser"));
+		long srcSeq = longOfObj(param.get("chkSeq"));
+		boolean copyVals = "Y".equals(str(param.get("copyVals")));
+		Map<String, Object> src = mapper.selectChkDoc(hospCd, srcSeq);
+		if (src == null) throw new Exception("원본 문서를 찾을 수 없습니다.");
+		String formId = str(src.get("formid"));
+
+		// 주기는 서식이 정한다 — 문서에 적힌 값은 폴백
+		String prdGb = str(src.get("prdgb")).toUpperCase();
+		Object fo = selectChkFormOne(hospCd, formId).get("form");
+		if (fo instanceof Map) { String g = str(((Map<String, Object>) fo).get("prdgb")).toUpperCase(); if (g.length() == 1 && "YHQMWD".indexOf(g) >= 0) prdGb = g; }
+		if (prdGb.length() != 1 || "YHQMWD".indexOf(prdGb) < 0) prdGb = "M";
+		boolean useMm = "M".equals(prdGb) || "W".equals(prdGb) || "D".equals(prdGb);
+
+		int sy = Integer.parseInt(str(src.get("inyear")));
+		int sm = useMm ? Integer.parseInt(str(src.get("inmm")).isEmpty() ? "1" : str(src.get("inmm"))) : 0;
+		int sn = (int) longOfObj(src.get("prdno"));
+		int ty = Integer.parseInt(str(param.get("toYear")));
+		int tm = useMm ? Integer.parseInt(str(param.get("toMm")).isEmpty() ? "12" : str(param.get("toMm"))) : 0;
+		int tn = (int) longOfObj(param.get("toNo"));
+
+		// 기간 하나를 (연, 월, 번호) 로 들고 다음 기간으로 넘긴다 — 주기마다 규칙이 다르다
+		int[] cur = new int[]{ sy, sm, sn };
+		int[] end = new int[]{ ty, tm, tn };
+		if ("Y".equals(prdGb)) { cur[1] = 0; cur[2] = 0; end[1] = 0; end[2] = 0; }
+		if ("M".equals(prdGb)) { cur[2] = 0; end[2] = 0; }
+		if ("H".equals(prdGb)) { end[2] = Math.max(1, Math.min(2, end[2] == 0 ? 2 : end[2])); }
+		if ("Q".equals(prdGb)) { end[2] = Math.max(1, Math.min(4, end[2] == 0 ? 4 : end[2])); }
+		if ("W".equals(prdGb)) { int w = weeksOf(end[0], end[1]); end[2] = Math.max(1, Math.min(w, end[2] == 0 ? w : end[2])); }
+		if ("D".equals(prdGb)) { int dd = java.time.YearMonth.of(end[0], end[1]).lengthOfMonth(); end[2] = Math.max(1, Math.min(dd, end[2] == 0 ? dd : end[2])); }
+		if (keyOf(end) <= keyOf(cur)) throw new Exception("원본 다음 기간부터 만들 수 있습니다 — 「~까지」를 원본 뒤로 골라 주세요.");
+
+		// 원본에서 가져올 것 — 틀은 늘, 값은 켰을 때만
+		List<Map<String, Object>> rows = mapper.selectChkRows(srcSeq);
+		List<Map<String, Object>> cols = mapper.selectChkCols(srcSeq);
+		List<Map<String, Object>> vals = copyVals ? mapper.selectChkVals(srcSeq) : null;
+		String wardNm = str(src.get("wardnm"));
+
+		Map<String, Set<Integer>> haveCache = new HashMap<>();
+		int made = 0, skipped = 0, total = 0;
+		int[] first = null, last = null;
+		while (true) {
+			cur = nextPrd(prdGb, cur);
+			if (keyOf(cur) > keyOf(end)) break;
+			if (++total > 400) throw new Exception("한 번에 400장까지만 만듭니다 — 「~까지」를 줄여 나눠 만들어 주세요.");
+			String inMm = useMm ? String.format("%02d", cur[1]) : "";
+			String hk = cur[0] + "|" + inMm;
+			Set<Integer> have = haveCache.get(hk);
+			if (have == null) {
+				Map<String, Object> q = new HashMap<>();
+				q.put("hospCd", hospCd); q.put("formId", formId);
+				q.put("inYear", String.valueOf(cur[0])); q.put("inMm", inMm); q.put("wardNm", wardNm);
+				have = new HashSet<>();
+				List<Integer> got = mapper.selectChkDocNos(q);
+				if (got != null) have.addAll(got);
+				haveCache.put(hk, have);
+			}
+			if (have.contains(Integer.valueOf(cur[2]))) { skipped++; continue; }
+
+			Map<String, Object> doc = new HashMap<>();
+			doc.put("hospCd", hospCd);   doc.put("formId", formId);
+			doc.put("inYear", String.valueOf(cur[0]));
+			doc.put("inMm", useMm ? inMm : null);
+			doc.put("prdGb", prdGb);     doc.put("prdNo", cur[2] == 0 ? null : Integer.valueOf(cur[2]));
+			doc.put("wardNm", wardNm.isEmpty() ? null : wardNm);
+			for (int h = 1; h <= 8; h++) doc.put("head" + h, src.get("head" + h));
+			doc.put("noteTxt", null);    doc.put("fixTxt", null);   // ★그 달에 일어난 일은 안 옮긴다
+			doc.put("chkSeq", "");
+			doc.put("regUser", regUser);
+			// 값 목록은 문서마다 새로 복사한다 — saveChkDoc 이 정규화하며 항목을 바꾸므로 같은 객체를 돌려쓰지 않는다
+			List<Map<String, Object>> v2 = null;
+			if (vals != null) { v2 = new ArrayList<>(); for (Map<String, Object> v : vals) v2.add(new HashMap<>(v)); }
+			saveChkDoc(doc, v2, rows, cols);
+			made++;
+			if (first == null) first = cur.clone();
+			last = cur.clone();
+		}
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("made", Integer.valueOf(made));
+		out.put("skipped", Integer.valueOf(skipped));
+		out.put("total", Integer.valueOf(total));
+		out.put("prdGb", prdGb);
+		out.put("copyVals", copyVals ? "Y" : "N");
+		out.put("first", first == null ? "" : prdLabel(prdGb, first));
+		out.put("last", last == null ? "" : prdLabel(prdGb, last));
+		return out;
+	}
+
+	/**
+	 * 작성 현황 (2026-09-07 사용자 「이 부서 작성 현황 표」) — 그 해 저장 문서 전부를 서식 정보(이름·부서·주기)와 함께.
+	 * 부서를 주면 그 부서 + 공통(COMMON)만 — 작성 화면의 서식 목록(selectChkFormList)과 같은 범위.
+	 * ★서식별 묶기·건수 세기는 화면이 한다(문서 수백 장이라도 표 하나) — 서버는 평면 목록만.
+	 */
+	@Override
+	public List<Map<String, Object>> selectChkDocStatus(String hospCd, String inYear, String deptCd) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("inYear", inYear); p.put("deptCd", deptCd == null ? "" : deptCd);
+		return mapper.selectChkDocStatus(p);
+	}
+
+	/** 기간 (연, 월, 번호) 를 한 줄 숫자로 — 앞뒤 비교용. 월 없는 주기는 월 0 */
+	private static long keyOf(int[] p) { return p[0] * 100000L + p[1] * 1000L + p[2]; }
+
+	/** 그 달의 주차 수 — 월요일 시작, 1주차 = 1일부터 첫 일요일까지. 화면 셀렉트가 1~5 라 5 를 넘기지 않는다 */
+	private static int weeksOf(int y, int m) {
+		int days = java.time.YearMonth.of(y, m).lengthOfMonth();
+		int dow = java.time.LocalDate.of(y, m, 1).getDayOfWeek().getValue();   // 월=1 … 일=7
+		return Math.min(5, (int) Math.ceil((dow - 1 + days) / 7.0));
+	}
+
+	/** 다음 기간 — 주기마다 넘김 규칙이 다르다(연·반기·분기·월·주차·일) */
+	private static int[] nextPrd(String g, int[] p) {
+		int y = p[0], m = p[1], n = p[2];
+		if ("Y".equals(g)) return new int[]{ y + 1, 0, 0 };
+		if ("H".equals(g)) return (n < 2) ? new int[]{ y, 0, n + 1 } : new int[]{ y + 1, 0, 1 };
+		if ("Q".equals(g)) return (n < 4) ? new int[]{ y, 0, n + 1 } : new int[]{ y + 1, 0, 1 };
+		if ("M".equals(g)) return (m < 12) ? new int[]{ y, m + 1, 0 } : new int[]{ y + 1, 1, 0 };
+		if ("W".equals(g)) {
+			if (n < weeksOf(y, m)) return new int[]{ y, m, n + 1 };
+			return (m < 12) ? new int[]{ y, m + 1, 1 } : new int[]{ y + 1, 1, 1 };
+		}
+		// D
+		if (n < java.time.YearMonth.of(y, m).lengthOfMonth()) return new int[]{ y, m, n + 1 };
+		return (m < 12) ? new int[]{ y, m + 1, 1 } : new int[]{ y + 1, 1, 1 };
+	}
+
+	/** 기간 이름 — 화면 docPrdLabel 과 같은 표기(「2026년 10월 3주차」) */
+	private static String prdLabel(String g, int[] p) {
+		String y = p[0] + "년";
+		if ("Y".equals(g)) return y;
+		if ("H".equals(g)) return y + " " + (p[2] == 2 ? "하반기" : "상반기");
+		if ("Q".equals(g)) return y + " " + p[2] + "분기";
+		if ("M".equals(g)) return y + " " + p[1] + "월";
+		if ("W".equals(g)) return y + " " + p[1] + "월 " + p[2] + "주차";
+		return y + " " + p[1] + "월 " + p[2] + "일";
+	}
+
 	@Override
 	public Map<String, Object> selectChkExtract(Map<String, Object> param) throws Exception {
 		Map<String, Object> out = new LinkedHashMap<>();
