@@ -73,6 +73,9 @@
   #qpsChk .ck-empty{ color:#8a99a3; font-size:12.5px; padding:20px 6px; text-align:center; }
 
   #qpsChk .gridwrap{ overflow:auto; max-height:62vh; border:1px solid #dfe4ea; border-radius:6px; }
+  /* 남는 폭은 글 쓰는 칸이 (2026-09-07) — 화면과 종이 둘 다 */
+  #qpsChk table.gr.wfit{ width:100%; }
+  #qpsChk table.gr.wfit th.wcol{ width:100%; }
   #qpsChk table.gr{ border-collapse:separate; border-spacing:0; font-size:12px; background:#fff; }
   #qpsChk table.gr th, #qpsChk table.gr td{ border-right:1px solid #e2e8ec; border-bottom:1px solid #e2e8ec;
       padding:0; text-align:center; white-space:nowrap; }
@@ -239,8 +242,9 @@
     <button type="button" class="ck-btn mini" id="ckWeekBtn" style="display:none;" onclick="ckWeekFill(true);" title="주차 머리글에 그 달의 날짜 범위(월~일)를 넣습니다">주차 날짜 채움</button>
     <span id="ckHolBtnWrap" style="display:none;"><a href="/main/qpsHoliday.do" class="ck-sub" style="text-decoration:underline;" title="QPS ▸ 공통 ▸ 기준코드 ▸ 공휴일 관리 — 바로가기">공휴일 관리 →</a></span>
     <span class="ck-excl" id="ckExclNote" style="display:none;" title="서식 옵션 — 평가표라 O 를 찍으면 그 줄의 다른 O 가 지워집니다">한 줄에 O 하나</span>
-    <span class="ck-hint">더블클릭 = 칸 <b>빈→O→X</b> · 날짜/열 머리 = <b>세로줄</b> · 항목 = <b>가로줄</b> · 사인 머리 = <b>일괄 서명</b> ·
-      <b>Enter</b> = 오른쪽 복사 · <b>Ctrl+Enter</b> = 아래 복사 · <b>이름 빈 줄</b>은 흐리게 표시(입력은 됨) · 날짜 머리 <span class="hol">빨간 점선</span> = 공휴일</span>
+    <%-- ★조작법은 **서식 유형에 따라 다르다** — 날짜도 사인도 없는 서식(항목 × 고정 열)에
+         「공휴일」·「일괄 서명」을 적어 두면 못 쓰는 조작을 읽히는 셈이다. applyFormUi 가 채운다(2026-09-07). --%>
+    <span class="ck-hint" id="ckHint"></span>
   </div>
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
 
@@ -646,16 +650,27 @@
       var band = !hasBk && (FORM.rowblkgb === 'B') && ig.some(function(x){ return x.g; });
       var hasIg = !band && ig.some(function(x){ return x.g; });
 
+      /* ★남는 폭은 **글 쓰는 칸**이 가져간다 (2026-09-07 사용자 지적 「오른쪽이 텅 빈다」).
+         고정 열 서식은 열이 서넛뿐이라 표가 화면·종이의 왼쪽 3분의 1만 쓴다.
+         그렇다고 「확인(O)」 칸을 넓히면 ○ 하나에 한 뼘을 주는 꼴이라 더 이상하다.
+         실제로 글이 들어가는 마지막 칸(비고·특이사항·조치사항 …)만 남는 폭을 먹게 한다.
+         ★열이 많으면(9칸 이상) 손대지 않는다 — 이미 폭이 모자란 쪽이다. */
+      var wideK = -1;
+      if (!docCol && cd.length <= 8) {
+        var lastNm = String((cd[cd.length - 1] || {}).n || '');
+        if (/비고|특이|조치|내용|사유|의견|기타|결과/.test(lastNm)) wideK = cd.length - 1;
+      }
       var colTh = function(){
         return cd.map(function(c, k){
           // 문서가 정하는 열이면 머리글 자체가 **입력칸**이다(기기명 칸과 같은 자리)
           // data-col = 그 열의 data-c — 머리글 더블클릭으로 세로줄을 토글할 때 쓴다(2026-09-02)
           if (docCol) return '<th data-col="' + (k + 1) + '" style="min-width:96px;"><input data-cn="' + (k + 1) + '" value="' +
                              esc(CN[k + 1] || '') + '" placeholder="' + (k + 1) + '번"></th>';
-          return '<th data-col="' + (k + 1) + '" style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>';
+          return '<th data-col="' + (k + 1) + '"' + (k === wideK ? ' class="wcol"' : '') +
+                 ' style="min-width:78px;white-space:normal;">' + esc(c.n) + '</th>';
         }).join('');
       };
-      h += '<table class="gr' + (hasIg ? ' hasrg' : '') + '"><thead>';
+      h += '<table class="gr' + (hasIg ? ' hasrg' : '') + (wideK >= 0 ? ' wfit' : '') + '"><thead>';
       if (hasCg) {
         // ★2단 머리글에서는 옆 칸도 두 줄을 덮어야 한다 — 안 그러면 아랫줄이 한 칸씩 밀린다
         h += '<tr>' + (hasIg ? '<th class="rgrp" rowspan="2">묶음</th>' : '') +
@@ -1105,7 +1120,21 @@
     gel('ckTools').style.display = FORM ? '' : 'none';   // 편의 기능 띠 — 서식이 있을 때만(2026-09-02)
     // 주차 격자(N)에만 [주차 날짜 채움] · 위너넷 계정에만 [공휴일 관리] · 평가표(EXCL_YN)엔 표식
     gel('ckWeekBtn').style.display = (FORM && prdHeadOn() && (kind() === 'N' || /N/.test(String(FORM.grpprd || '')))) ? '' : 'none';
-    gel('ckHolBtnWrap').style.display = (gel('qpsChk').getAttribute('data-wnn') === 'Y') ? '' : 'none';
+    /* ═══ 조작법·날짜 전용 단추 — 서식 유형에 맞는 것만 (2026-09-07) ═══
+       날짜(또는 월) 열이 있는 축 : ITEM_DAY · ITEM_MONTH · EQUIP_DAY · DAY_ITEM
+       없는 축 : ITEM_COL(항목 × 고정 열) · LIST(대장) — 여기엔 공휴일도, 토·일도, 날짜 머리도 없다. */
+    var _a = axis();
+    var dated = (_a === 'ITEM_DAY' || _a === 'ITEM_MONTH' || _a === 'EQUIP_DAY' || _a === 'DAY_ITEM');
+    var tip = ['더블클릭 = 칸 <b>빈→O→X</b>'];
+    if (_a !== 'LIST') tip.push((dated ? '날짜/열' : '열') + ' 머리 = <b>세로줄</b>', '항목 = <b>가로줄</b>');
+    if (FORM && FORM.signeryn === 'Y') tip.push('사인 머리 = <b>일괄 서명</b>');
+    tip.push('<b>Enter</b> = 오른쪽 복사', '<b>Ctrl+Enter</b> = 아래 복사');
+    tip.push('<b>이름 빈 줄</b>은 흐리게 표시(입력은 됨)');
+    if (dated) tip.push('날짜 머리 <span class="hol">빨간 점선</span> = 공휴일');
+    gel('ckHint').innerHTML = tip.join(' · ');
+    /* 토·일·공휴일 제외 · 공휴일 관리 — 날짜가 없는 서식에는 쓸 데가 없다 */
+    gel('ckExclWk').parentNode.style.display = dated ? '' : 'none';
+    gel('ckHolBtnWrap').style.display = (dated && gel('qpsChk').getAttribute('data-wnn') === 'Y') ? '' : 'none';
     gel('ckExclNote').style.display = ckExclOn() ? '' : 'none';
     gel('ckNoteWrap').style.display = (FORM && FORM.noteyn === 'Y') ? '' : 'none';
     gel('ckNoteTitle').textContent = noteNm();   // 서식이 정한 칸 이름(조치사항 등)
@@ -1480,7 +1509,7 @@
   window.ckPickDoc = function(){
     var seq = val('ckDoc');
     if (!seq) { ckNew(); return; }
-    post('<c:url value="/qps/chkGet.do"/>', { chkSeq: seq }).then(function(res){
+    return post('<c:url value="/qps/chkGet.do"/>', { chkSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.chkseq || 0);
       LIST_ROWS = {};   // ★행 수는 이 문서가 정한다 — 앞 문서의 행 수를 물려받으면 빈 행이 딸려 온다
@@ -1862,13 +1891,17 @@
   };
 
   // ---------- 인쇄 ----------
-  // ★A4 **가로**다. 31칸 격자는 세로로는 안 들어간다.
+  /* ★종이 방향은 **열 수가 정한다**(2026-09-07 사용자 지적).
+     31칸 날짜 격자는 세로로 안 들어가 A4 가로가 필요하지만, 「항목 × 고정 열」처럼
+     열이 서넛뿐인 서식을 가로로 뽑으면 표가 종이 왼쪽 3분의 1만 쓰고 나머지가 빈다.
+     그래서 @page 는 여기서 빼고 ckPrint 가 세어 붙인다(paperCss). */
   var PRINT_CSS =
-    '@page{ size:A4 landscape; margin:10mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:16px; font-weight:800; text-align:center; margin:0 0 6px; }' +
     '.meta{ font-size:11px; margin:0 0 6px; display:flex; gap:14px; flex-wrap:wrap; }' +
     'table{ width:100%; border-collapse:collapse; font-size:9px; }' +
+    'table.wfit th.wcol{ width:100%; }' +   /* 남는 폭은 글 쓰는 칸이 (2026-09-07) */
+
     'th,td{ border:1px solid #666; padding:2px 3px; text-align:center; height:17px; }' +
     'th{ background:#eee; font-weight:700; }' +
     'td.l,th.l{ text-align:left; white-space:normal; }' +
@@ -1980,6 +2013,82 @@
     return c;
   }
 
+
+  /* ═══ 일괄 출력 — 이 부서의 점검표를 **저장된 것만** 한 장씩 넘긴다 (2026-09-07) ═══
+     왜 : 점검표는 부서 공통 서식이 315종이다. 일괄 출력 목록에 315줄을 깔 수는 없어
+          **부서마다 한 줄**로 담고, 어느 서식이 몇 장인지는 이 화면이 안다 — 여기서 펼친다.
+
+     ★자료를 만들지 않는다 : 저장분이 없는 서식은 넘기지 않는다(빈 양식은 낱장 화면에서 뽑는다).
+     ★기간 : 점검표에는 작성일자가 없다(해 + 월 + 주기번호). 그래서 **연·월**로 견준다.
+              월이 없는 것(연간)은 해가 걸리면 담는다.
+     ★한 화면이 여러 장을 넘기는 첫 경우다 — 받는 쪽은 key 마다 배열로 쌓고,
+       더 안 오면(1.2초 조용) 끝난 것으로 본다. 그래서 장 사이에 틈을 너무 두면 안 된다.
+     ★서식 수가 많은 부서(간호 66종)가 있어 최대 장수를 둔다 — 넘치면 자르고 알린다. */
+  window.ckBulkPrint = function(){
+    var q  = String(window.location.search || '');
+    var fr = ((/[?&]from=([\d-]+)/.exec(q) || [,''])[1] || '').replace(/-/g, '').slice(0, 6);
+    var to = ((/[?&]to=([\d-]+)/.exec(q)   || [,''])[1] || '').replace(/-/g, '').slice(0, 6);
+    var forms = (FORMS || []).slice();            // ckBase 가 이 부서로 걸러 채워 둔 서식 목록
+    var MAX = 60, done = 0, i = 0;
+
+    var inRange = function(d){
+      if (!fr && !to) return true;
+      var y = String(d.inyear || '');
+      if (!y) return true;
+      var m = String(d.inmm || '').replace(/\D/g, '');
+      if (!m) {                                    // 연간 — 해가 걸치면 담는다
+        return (!fr || y >= fr.slice(0,4)) && (!to || y <= to.slice(0,4));
+      }
+      var ym = y + (m.length < 2 ? '0' + m : m);
+      return (!fr || ym >= fr) && (!to || ym <= to);
+    };
+
+    var fin = function(){                          // 다 넘겼다고 알린다 — 빈 서식이 잇달아도 기다리지 않게
+      try {
+        if (window.QPS_BULK && window.parent && window.parent !== window)
+          window.parent.postMessage({ type: 'qpsPrintDone', key: window.QPS_BULK, n: done }, '*');
+      } catch (e) { }
+    };
+
+    var nextForm = function(){
+      if (i >= forms.length || done >= MAX) { fin(); return; }
+      var f = forms[i++];
+      gel('ckForm').value = f.formid;
+      ckBase().then(function(){
+        var docs = (DOCS || []).filter(inRange);
+        var j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { nextForm(); return; }
+          gel('ckDoc').value = String(docs[j++].chkseq);
+          var p = ckPickDoc();
+          Promise.resolve(p).then(function(){
+            setTimeout(function(){                 // 격자·사진이 붙은 뒤에 넘긴다
+              try { ckPrint(); done++; } catch (e) { }
+              oneDoc();
+            }, 150);
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ nextForm(); });
+    };
+    nextForm();
+  };
+
+  /* 종이 방향 — 표의 열 수로 정한다. 8칸을 넘으면 가로, 아니면 세로.
+     ★8 로 잡은 까닭 : 날짜 격자는 최소 주(7)·월(12)·일(28~31)이라 모두 넘고,
+       「항목 × 고정 열」 23종은 대개 3~6칸이라 안 넘는다. 대장(LIST)도 칸 수를 따라간다.
+     ★넘침이 잘림보다 나쁘다 — 애매하면 가로다. */
+  function paperCss(tbl) {
+    var n = 0;
+    try {
+      var r = tbl && tbl.rows && tbl.rows[0];
+      if (r) for (var i = 0; i < r.cells.length; i++) n += (r.cells[i].colSpan || 1);
+    } catch (e) { }
+    var land = (n === 0 || n > 8);
+    return '@page{ size:A4 ' + (land ? 'landscape' : 'portrait') + '; margin:10mm; }' +
+           'body{ --qps-paper:' + (land ? '279' : '190') + '; }';   // 안쪽 폭(mm) — ckPrintFitDays 가 읽는다
+  }
+
   window.ckPrint = function(){
     if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
     // ★인쇄는 화면 격자를 그대로 옮긴다 — 따로 만들면 화면과 종이가 갈린다
@@ -2071,7 +2180,8 @@
 
     var title = (FORM.formnm + '_' + yy + prdTxt + '_' + (val('f_wardNm') || '') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
     /* 인쇄는 공통 창구로 — 사진·글꼴 기다림은 qpsPrintGo 가 한다(2026-09-07) */
-    var w = qpsPrintOut(title, PRINT_CSS, body);
+    /* 열 수를 세어 종이 방향을 정한다 — 고정 열 서식을 가로로 뽑으면 종이가 3분의 2 빈다(2026-09-07) */
+    var w = qpsPrintOut(title, paperCss(t) + PRINT_CSS, body);
     /* 날짜 칸이 너무 좁아지지 않게 (아래 함수 머리말 참고) — 일괄 출력일 때는 창이 없다 */
     try { if (w && w.document) ckPrintFitDays(w); } catch (e) { }
   };
@@ -2096,14 +2206,17 @@
   function ckPrintFitDays(w) {
     try {
       var d = w.document;
-      /* 종이 안쪽 폭 — A4 가로 297mm − 여백 9mm×2. mm 로 재야 배율에 안 흔들린다. */
+      /* 종이 안쪽 폭 — 가로면 297−18=279mm, 세로면 210−20=190mm. 방향은 paperCss 가 body 에 적어 둔다.
+         mm 로 재야 배율에 안 흔들린다. */
+      var mm = 279;
+      try { mm = Number(d.defaultView.getComputedStyle(d.body).getPropertyValue('--qps-paper')) || 279; } catch (e) { }
       var probe = d.createElement('div');
-      probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:279mm;';
+      probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + mm + 'mm;';
       d.body.appendChild(probe);
       var PAGE = probe.offsetWidth;
       probe.parentNode.removeChild(probe);
       if (!PAGE) return;
-      var MIN = Math.round(5 * PAGE / 279);          // 한 칸 5mm — ○ 하나 적을 만한 폭
+      var MIN = Math.round(5 * PAGE / mm);          // 한 칸 5mm — ○ 하나 적을 만한 폭
 
       [].slice.call(d.querySelectorAll('table.gr')).forEach(function (t) {
         if (!t.rows.length) return;

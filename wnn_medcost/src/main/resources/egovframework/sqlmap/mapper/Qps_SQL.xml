@@ -2548,6 +2548,21 @@
 		                        USE_YN = IFNULL(VALUES(USE_YN), USE_YN), SORT_NO = IFNULL(VALUES(SORT_NO), SORT_NO), UPD_USER = #{regUser}
 	</insert>
 
+	<!-- ═══ 부서별 점검표 작성 건수 (2026-09-07 사용자 「작성된 것 찾기 너무 오래 걸림」) ═══
+	     왜 : 일괄 출력의 「작성됨」은 서식마다 화면을 한 번씩 열어 보는 방식이다. 점검표는 부서 하나에
+	          서식이 66종인 곳도 있어(간호) 그 방식으로는 수백 번을 돈다. **건수만은 여기서 한 번에 센다.**
+	     ★서식(TBL_QPS_CHK_FORM)은 병원 공통(HOSP_CD='*')이고 작성분(_DOC)만 병원별이라 FORM_ID 로만 잇는다.
+	     ★인쇄 판정을 대신하지 않는다 — 「몇 건 있나」만 알려 준다. -->
+	<select id="selectChkCntByDept" resultType="java.util.HashMap">
+		SELECT F.DEPT_CD AS deptcd, COUNT(*) AS cnt
+		  FROM TBL_QPS_CHK_DOC D
+		  JOIN TBL_QPS_CHK_FORM F ON F.FORM_ID = D.FORM_ID
+		 WHERE D.HOSP_CD = #{hospCd}
+		   AND D.IN_YEAR = #{inYear}
+		   AND D.USE_YN  = 'Y'
+		 GROUP BY F.DEPT_CD
+	</select>
+
 	<!-- ═══ 공통코드(QPS) 관리 (2026-09-02) — 스크립트로 넣은 TBL_CODE_DTL 'Q' 묶음(QPS_%)을 화면에서 관리 ═══
 	     ★코드값(SUB_CODE)은 작성분의 키라 못 바꾼다 — 이름·차례·사용 여부만. 지움 = USE_YN 'N'(작성분이 남는다).
 	     ★JOB_SEQ 1 고정 upsert — 시드와 같은 방식(기존 공통코드 화면의 JOB_SEQ 증가 방식은 안 쓴다). -->

@@ -1287,6 +1287,26 @@ public class QpsController {
 		return res;
 	}
 
+	/* 부서별 점검표 작성 건수 — 일괄 출력의 「작성됨」 (2026-09-07 사용자 「너무 오래 걸림」)
+	   왜 : 다른 서식은 화면을 한 번 열어 보면 되지만, 점검표는 부서 하나에 서식이 66종인 곳도 있다(간호).
+	        그 방식으로는 수백 번을 돈다 ⇒ **건수만은 쿼리 하나로** 센다.
+	   ★읽기만 한다. 인쇄 판정을 대신하지 않는다 — 「몇 건 있나」만 알려 준다. */
+	@RequestMapping(value = "/qps/chkCntByDept.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkCntByDept(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hosp = hospCd(request, p);
+			if (hosp.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String yy = String.valueOf(p.get("inYear") == null ? "" : p.get("inYear")).trim();
+			if (!yy.matches("[0-9]{4}")) yy = String.valueOf(java.time.LocalDate.now().getYear());
+			res.put("list", svc.selectChkCntByDept(hosp, yy));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+
 	@RequestMapping(value = "/qps/formCycSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public Map<String, Object> formCycSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {

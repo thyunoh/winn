@@ -405,6 +405,8 @@ public interface QpsMapper {
 
 	/* 서식별 작성 주기 (2026-09-07) — 일괄 출력의 「기간 안에 몇 건이어야 하는가」 */
 	List<Map<String, Object>> selectFormCyc(@Param("hospCd") String hospCd);
+	/** 부서별 점검표 작성 건수 — 일괄 출력의 「작성됨」을 한 번에 센다(2026-09-07) */
+	List<Map<String, Object>> selectChkCntByDept(@Param("hospCd") String hospCd, @Param("inYear") String inYear);
 	int saveFormCyc(Map<String, Object> param);
 	int deleteHoliday(@Param("holDt") String holDt);
 	/** 공통코드(QPS) 관리(2026-09-02) — 'Q' 묶음 QPS_% : 묶음 목록(이름·건수) / 세부 전체(안 쓰는 것 포함) / 세부 upsert / 묶음 이름 upsert */

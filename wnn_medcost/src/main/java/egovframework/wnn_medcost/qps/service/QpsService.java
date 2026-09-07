@@ -283,6 +283,7 @@ public interface QpsService {
 	List<Map<String, Object>> selectHolidays(String year) throws Exception;
 	void saveHoliday(Map<String, Object> param) throws Exception;
 	List<Map<String, Object>> selectFormCyc(String hospCd) throws Exception;   // 서식별 작성 주기(2026-09-07)
+	List<Map<String, Object>> selectChkCntByDept(String hospCd, String inYear) throws Exception;   // 부서별 점검표 작성 건수(2026-09-07)
 	void saveFormCyc(Map<String, Object> param) throws Exception;
 	void deleteHoliday(String holDt) throws Exception;
 	/** 공통코드(QPS) 관리(2026-09-02) */

@@ -1916,6 +1916,8 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public List<Map<String, Object>> selectFormCyc(String hospCd) throws Exception { return mapper.selectFormCyc(hospCd); }
 	@Override
+	public List<Map<String, Object>> selectChkCntByDept(String hospCd, String inYear) throws Exception { return mapper.selectChkCntByDept(hospCd, inYear); }
+	@Override
 	public void saveFormCyc(Map<String, Object> param) throws Exception { mapper.saveFormCyc(param); }
 	@Override
 	public void deleteHoliday(String holDt) throws Exception { mapper.deleteHoliday(holDt); }

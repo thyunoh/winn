@@ -35,6 +35,12 @@
   #qpsPrintAll .gsel{ margin-left:auto; height:22px; padding:0 8px; border:1px solid #cfd8e0; border-radius:6px;
                        background:#f7fafb; font-size:11.5px; font-weight:700; color:#4a5560; cursor:pointer; }
   #qpsPrintAll .gsel:hover{ background:#eef4fb; border-color:#b9cfe6; color:#2f6fb0; }
+  #qpsPrintAll .gfind{ margin-left:auto; height:22px; padding:0 8px; border:1px solid #b9cfe6; border-radius:6px;
+                        background:#eef4fb; font-size:11.5px; font-weight:700; color:#2f6fb0; cursor:pointer; }
+  #qpsPrintAll .gfind:hover{ background:#dce9f7; }
+  #qpsPrintAll .gfind:disabled, #qpsPrintAll .gsel:disabled{ opacity:.55; cursor:default; }
+  #qpsPrintAll .gsel.on{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
+  #qpsPrintAll .gsel{ margin-left:6px; }
 #qpsPrintAll .row{ display:flex; align-items:center; gap:10px; padding:7px 4px; border-bottom:1px dashed #eef2f4; }
   #qpsPrintAll .row:last-child{ border-bottom:0; }
   #qpsPrintAll .row label{ margin:0; font-size:14px; cursor:pointer; flex:0 0 360px; }
@@ -69,12 +75,14 @@
       <input type="date" id="paFrom" style="height:34px; border:1px solid #cfd8e0; border-radius:8px; padding:0 6px; font-size:13px;" onchange="paYearChanged()">
       <span style="color:#9aa7b0;">~</span>
       <input type="date" id="paTo" style="height:34px; border:1px solid #cfd8e0; border-radius:8px; padding:0 6px; font-size:13px;" onchange="paYearChanged()">
-      <button type="button" class="btn find" id="paChk" onclick="paCheck()">🔎 이 기간에 작성된 것 찾기</button>
+      <button type="button" class="btn find" id="paChk" onclick="paCheck()" title="펼쳐 놓은 묶음만 봅니다 — 다 접혀 있으면 점검표를 뺀 전부. 묶음마다 [🔎 찾기] 로 하나씩 볼 수도 있습니다">🔎 펼친 묶음에서 찾기</button>
       <span class="stat" id="paChkStat"></span>
     </div>
 
     <div class="row" style="border-bottom:1px solid #e6edf1;">
       <label><input type="checkbox" id="paAll" onclick="paToggleAll(this)"> <b>전체 고르기</b></label>
+      <button type="button" class="gsel" onclick="paAllGrp(true)" style="margin-left:auto;">⌄ 전체 펼치기</button>
+      <button type="button" class="gsel" onclick="paAllGrp(false)">⌃ 전체 접기</button>
       <span class="desc">한 장짜리 서식부터 담았습니다</span>
     </div>
     <div id="paList"></div>
@@ -204,7 +212,8 @@
                '<span class="ar">' + (open ? '▾' : '▸') + '</span>' +
                '<span class="gn">' + grp + '</span>' +
                '<span class="gc" id="paGc_' + gi + '" data-grp="' + grp + '">' + byGrp[gi].n + '종</span>' +
-               '<button type="button" class="gsel" onclick="paPickGrp(event, this)" data-grp="' + grp + '">모두</button>' +
+               '<button type="button" class="gfind" onclick="paFindGrp(event, this)" data-grp="' + grp + '" title="이 묶음만 작성된 것을 찾습니다">🔎 찾기</button>' +
+               '<button type="button" class="gsel" onclick="paPickGrp(event, this)" data-grp="' + grp + '" title="이 묶음을 한 번에 고르거나 풉니다">☑ 선택</button>' +
              '</div>' +
              '<div class="gbox" data-grp="' + grp + '"' + (open ? '' : ' hidden') + '>';
       }
@@ -218,6 +227,11 @@
     if (gi >= 0) h += '</div>';
     gel('paList').innerHTML = h;
     paCount();
+    /* 「전체 고르기」 체크는 목록을 다시 그리면 풀린다 — 셈과 맞춰 둔다 */
+    var all = document.querySelectorAll('#paList .paChk'), onAll = 0;
+    for (var q = 0; q < all.length; q++) if (all[q].checked) onAll++;
+    gel('paAll').checked = all.length && onAll === all.length;
+    if (running) paBusy(true);          // 찾는 중에 목록을 다시 그렸으면 잠금을 되살린다
   }
 
   /* 묶음마다 「n종 · m 고름」 — 접힌 채로도 고른 것이 보이게 */
@@ -230,6 +244,9 @@
       for (var j = 0; j < cs.length; j++) if (cs[j].checked) on++;
       gs[i].textContent = cs.length + '종' + (on ? ' · ' + on + ' 고름' : '');
       gs[i].className = 'gc' + (on ? ' has' : '');
+      /* [모두] 는 켜고 끄는 단추다 — 다 골라져 있으면 이름이 [해제] 로 바뀐다(사용자 2026-09-07) */
+      var bt = document.querySelector('#paList .gsel[data-grp="' + g + '"]');
+      if (bt) { var full = cs.length && on === cs.length; bt.textContent = full ? '☐ 해제' : '☑ 선택'; bt.className = 'gsel' + (full ? ' on' : ''); }
     }
   };
 
@@ -304,6 +321,19 @@
       var order = SR_BANDS.map(function (b) { return b[2]; }).concat(['그 밖의 서식']);
       add.sort(function (a, b) { return order.indexOf(a.grp) - order.indexOf(b.grp); });
       FORMS = FORMS.concat(add);
+
+      /* 점검표 — 부서 공통 서식이 315종이다. 줄로 다 깔면 목록이 무너지므로 **부서마다 한 줄**로 담고,
+         인쇄할 때 그 부서의 서식·저장분을 화면이 스스로 펼쳐 넘긴다(multi = 여러 장 온다).
+         ★부서 목록도 코드표(QPS_CHK_DEPT)에서 읽는다 — 부서가 늘어도 화면을 안 고친다. */
+      var ds = (j && j.codes && j.codes.QPS_CHK_DEPT) || [];
+      if (ds.length) {
+        for (var k = FORMS.length - 1; k >= 0; k--) if (FORMS[k].key === 'chk') FORMS.splice(k, 1);
+        FORMS = FORMS.concat(ds.map(function (d) {
+          return { grp: '점검표', key: 'chk_' + d.subcode, nm: d.subcodenm + ' 점검표',
+                   url: '/main/qpsChk.do?dept=' + encodeURIComponent(d.subcode),
+                   fn: 'ckBulkPrint', multi: true, cyc: 'M' };
+        }));
+      }
     }).catch(function () { });
   }
 
@@ -407,9 +437,9 @@
           waited += 200; if (waited > 6000) return fin([]);
           setTimeout(tick, 200);
         };
-        setTimeout(tick, 300);
+        setTimeout(tick, 150);
       };
-      ifr.src = CTX + f.url + (f.url.indexOf('?') < 0 ? '?' : '&') + 'yy=' + year();
+      ifr.src = frameSrc(f);
       box.appendChild(ifr);
       setTimeout(function () { fin([]); }, 12000);
     });
@@ -439,16 +469,76 @@
     next();
   }
 
-  window.paCheck = function () {
-    if (running) return;
-    running = true; parts = {}; gel('paChk').disabled = true; gel('paGo').disabled = true;
-    FORMS.forEach(function (f) { var el = gel('paSt_' + f.key); if (el) { el.textContent = '…'; el.style.color = ''; } });
+  /* 작성된 것 찾기 — 서식마다 화면을 한 번씩 열어 보므로 **서식 수만큼 시간이 든다.**
+     서식이 127종이 되고 나니 전부 보는 데 너무 오래 걸린다(사용자 2026-09-07 「너무 오래 걸림」).
+     ⇒ ①묶음마다 [찾기] 를 달아 **한 묶음씩** 볼 수 있게 하고,
+       ②위쪽 단추는 **펴 놓은 묶음만** 본다(다 접혀 있으면 전부).
+       ③한꺼번에 여는 창을 3 → 5 로 늘린다(더 늘리면 화면이 버벅인다).
+     ★점검표는 화면 하나가 그 부서의 서식을 모두 도는 구조라 훨씬 무겁다 — 묶음 [찾기] 로만 본다. */
+  /* 점검표 「작성됨」은 서버가 한 번에 센다 (2026-09-07 「너무 오래 걸림」).
+     다른 서식은 화면을 열어 봐야 알지만, 점검표는 부서마다 서식이 수십 종이라 그 방식이 안 맞는다.
+     ★건수만 센다 — 인쇄는 종전대로 화면이 조립한다(판정과 인쇄가 갈리지 않게, 건수는 「빠진 것 찾기」 용도). */
+  function chkCount() {
+    paBusy(true, '점검표', '세는 중 …');
+    return fetch(CTX + '/qps/chkCntByDept.do', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'inYear=' + encodeURIComponent(year())
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      var by = {};
+      ((j && j.list) || []).forEach(function (r) { by['chk_' + String(r.deptcd || '').toUpperCase()] = Number(r.cnt || 0); });
+      var n = 0;
+      FORMS.forEach(function (f) {
+        if (f.grp !== '점검표') return;
+        var c = by[f.key] || 0, el = gel('paSt_' + f.key);
+        if (el) {
+          el.textContent = c ? ('✔ ' + c + '건') : '— 없음';
+          el.style.color = c ? '#1f5a4b' : '#b0bcc4';
+        }
+        var cb = document.querySelector('#paList .paChk[value="' + f.key + '"]');
+        if (cb) cb.checked = !!c;
+        if (c) n += c;
+      });
+      paCount();
+      paBusy(false);
+      gel('paChkStat').textContent = '점검표 — ' + year() + '년 작성분 ' + n + '건';
+    }).catch(function () { paBusy(false); gel('paChkStat').textContent = '점검표 건수를 못 받았습니다 — 톰캣 재기동이 필요할 수 있습니다.'; });
+  }
+
+  /* 찾는 동안 단추를 잠그고, **누른 묶음 머리에** 진행을 적는다 (2026-09-07 「찾기 바로 작동 안 함」).
+     종전에는 저 위 한 줄에만 적혀 누른 티가 안 났고, 이미 돌고 있으면 아무 말 없이 무시했다. */
+  function paBusy(on, grp, txt) {
+    var bs = document.querySelectorAll('#paList .gfind, #paList .gsel, #paAll');
+    for (var i = 0; i < bs.length; i++) bs[i].disabled = !!on;
+    gel('paChk').disabled = !!on;
+    gel('paGo').disabled = !!on;
+    var gs = document.querySelectorAll('#paList .gfind');
+    for (var j = 0; j < gs.length; j++) {
+      var g = gs[j].getAttribute('data-grp');
+      if (on && grp && g === grp) gs[j].textContent = txt || '보는 중 …';
+      else if (!on) gs[j].textContent = '🔎 찾기';
+    }
+  }
+
+  window.paCheck = function (onlyGrp) {
+    if (running) { gel('paChkStat').textContent = '이미 찾는 중입니다 — 끝나면 다시 눌러 주세요.'; return; }
+    var list = FORMS.filter(function (f) {
+      if (onlyGrp) return f.grp === onlyGrp;
+      if (f.grp === '점검표') return false;                 // 무거운 묶음은 제 [찾기] 로만
+      var open = Object.keys(GRP_OPEN).some(function (g) { return GRP_OPEN[g]; });
+      return open ? !!GRP_OPEN[f.grp] : true;
+    });
+    if (!list.length) { gel('paChkStat').textContent = '볼 서식이 없습니다.'; return; }
+
+    running = true; parts = {}; TM = [];
+    paBusy(true, onlyGrp, '보는 중 0/' + list.length);
+    list.forEach(function (f) { var el = gel('paSt_' + f.key); if (el) { el.textContent = '…'; el.style.color = ''; } });
     var t0 = Date.now();
-    expand(FORMS).then(function (jobs) {
+    expand(list).then(function (jobs) {
       var found = {};                              // 서식(부모) 별로 몇 건 나왔나 — 기간이면 한 서식이 여러 건이 된다
-      pool(jobs, 3, function (f, n) {
-        var pk = f.parentKey || f.key, ok = parts[f.key] && parts[f.key].body;
-        if (ok) found[pk] = (found[pk] || 0) + 1;
+      pool(jobs, 8, function (f, n) {
+        var pk = f.parentKey || f.key, ok = (parts[f.key] || []).length;   /* 한 화면이 여러 장을 넘길 수 있다(점검표) */
+        if (ok) found[pk] = (found[pk] || 0) + ok;
         var el = gel('paSt_' + pk);
         if (el) {
           var need = due(fdef(pk) && fdef(pk).cyc, range());
@@ -460,16 +550,37 @@
         /* 작성된 것이 있는 묶음은 저절로 펴 준다 — 접힌 채로 두면 무엇이 나왔는지 못 본다(2026-09-07) */
         if (found[pk]) { var ff = fdef(pk); if (ff) paOpenGrp(ff.grp, true); }
         paCount();
-        gel('paChkStat').textContent = '(' + n + '/' + jobs.length + ') 보는 중 …';
+        paBusy(true, onlyGrp, '보는 중 ' + n + '/' + jobs.length);
+        gel('paChkStat').textContent = (onlyGrp ? (onlyGrp + ' ') : '') + '(' + n + '/' + jobs.length + ') 보는 중 …';
       }, function () {
-        running = false; gel('paChk').disabled = false; gel('paGo').disabled = false;
+        running = false; paBusy(false);
         var forms = 0, docs = 0;
-        FORMS.forEach(function (f) { if (found[f.key]) { forms++; docs += found[f.key]; } });
+        list.forEach(function (f) { if (found[f.key]) { forms++; docs += found[f.key]; } });
         var rg = range();
-        gel('paChkStat').textContent = (rg ? (gel('paFrom').value + ' ~ ' + (gel('paTo').value || '오늘')) : (year() + '년')) +
-          ' — 서식 ' + forms + '종 · ' + docs + '건 (' + ((Date.now() - t0) / 1000).toFixed(1) + '초)';
+        /* 어디에 시간이 갔는지 함께 적는다 — 「오래 걸린다」를 짐작으로 고치지 않으려고(2026-09-07) */
+        var avg = function (k) { return TM.length ? (TM.reduce(function (s, x) { return s + (x[k] || 0); }, 0) / TM.length / 1000).toFixed(1) : '0'; };
+        gel('paChkStat').textContent = (onlyGrp ? (onlyGrp + ' — ') : '') +
+          (rg ? (gel('paFrom').value + ' ~ ' + (gel('paTo').value || '오늘')) : (year() + '년')) +
+          ' — 서식 ' + forms + '종 · ' + docs + '건 (' + ((Date.now() - t0) / 1000).toFixed(1) + '초)' +
+          ' · 한 서식 평균 : 화면 열기 ' + avg('load') + '초 → 조회 ' + avg('call') + '초 → 마침 ' + avg('all') + '초';
       });
     });
+  };
+
+  /* 묶음 머리의 [찾기] — 그 묶음만 본다. 머리 클릭(접기)으로 번지지 않게 멈춘다. */
+  window.paFindGrp = function (ev, btn) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    var g = btn.getAttribute('data-grp');
+    paOpenGrp(g, true);
+    if (g === '점검표') { chkCount(); return; }   // 점검표는 서버가 한 번에 센다
+    paCheck(g);
+  };
+
+  /* 전체 펼치기 · 접기 (사용자 2026-09-07) — 묶음이 12개라 하나씩 누르기 번거롭다.
+     ★위쪽 [이 기간에 작성된 것 찾기] 는 **펴 놓은 묶음만** 본다. 그래서 이 두 단추가 곧 「어디까지 볼지」이기도 하다. */
+  window.paAllGrp = function (open) {
+    var hs = document.querySelectorAll('#paList .grp');
+    for (var i = 0; i < hs.length; i++) paOpenGrp(hs[i].getAttribute('data-grp'), open);
   };
 
   window.paToggleAll = function (el) {
@@ -486,19 +597,35 @@
 
   /* 서식 하나 — 숨은 iframe 에 화면을 띄우고, 자료가 들어올 때를 기다렸다가 그 화면의 인쇄 함수를 부른다.
      결과는 sidebar.jsp 의 qpsPrintOut 이 postMessage 로 이 화면에 넘겨 준다. */
+  /* 화면을 여는 주소 — 고른 해와 **기간**을 넘긴다.
+     기간은 여러 장을 스스로 골라 넘기는 화면(점검표)이 쓴다. 모르는 화면은 그냥 무시한다(2026-09-07). */
+  function frameSrc(f) {
+    var s = CTX + f.url + (f.url.indexOf('?') < 0 ? '?' : '&') + 'yy=' + year();
+    var fr = gel('paFrom').value, to = gel('paTo').value;
+    if (fr) s += '&from=' + fr;
+    if (to) s += '&to=' + to;
+    return s;
+  }
+
+  /* 구간별 시간을 모은다 — 「찾기가 왜 오래 걸리나」를 짐작이 아니라 재서 말하려고(2026-09-07).
+     열기 = 화면(JSP+CSS+JS)이 뜰 때까지 · 조회 = 그 화면이 제 자료를 받아올 때까지 · 넘김 = 인쇄물이 넘어올 때까지 */
+  var TM = [];
   function grab(f) {
     return new Promise(function (resolve) {
+      var tA = Date.now(), tLoad = 0, tCall = 0;
       var box = gel('qpsBulkFrames');
       var ifr = document.createElement('iframe');
       ifr.style.cssText = 'width:1200px;height:900px;border:0;';
       var done = false;
       var finish = function () {
         if (done) return; done = true;
+        TM.push({ load: tLoad, call: tCall, all: Date.now() - tA });
         setTimeout(function () { try { box.removeChild(ifr); } catch (e) { } }, 200);
         resolve();
       };
       parts['__wait_' + f.key] = finish;                 // postMessage 가 오면 이걸 부른다
       ifr.onload = function () {
+        tLoad = Date.now() - tA;
         var w = ifr.contentWindow;
         try { w.QPS_BULK = f.key; } catch (e) { finish(); return; }
         /* 자료가 들어오기를 **조용해질 때까지만** 기다린다(2026-09-07 「확인 오래 걸림」).
@@ -509,10 +636,12 @@
         var call = function () {
           if (done) return;
           try {
+            tCall = Date.now() - tA;
             if (typeof w[f.fn] === 'function') w[f.fn]();
             else { finish(); return; }
           } catch (e) { finish(); return; }
-          setTimeout(finish, 1200);                      // 넘어오지 않으면 그냥 넘어간다
+          /* 여러 장 서식은 화면이 「다 넘겼다」고 알려 줄 때까지 기다린다 — 여기서 끊으면 첫 장만 온다 */
+          if (!f.multi) setTimeout(finish, 800);         // 넘어오지 않으면 그냥 넘어간다(자료 없는 서식이 대부분이라 이 시간이 곧 총시간이다)
         };
         var tick = function () {
           if (done) return;
@@ -525,18 +654,33 @@
         };
         setTimeout(tick, 300);
       };
-      ifr.src = CTX + f.url + (f.url.indexOf('?') < 0 ? '?' : '&') + 'yy=' + year();   /* 고른 해로 연다(2026-09-07) */
+      ifr.src = frameSrc(f);
       box.appendChild(ifr);
-      setTimeout(finish, (f.wait || 2600) + 9000);       // 화면이 끝내 안 뜨면
+      setTimeout(finish, f.multi ? 180000 : (f.wait || 2600) + 9000);   // 화면이 끝내 안 뜨면(여러 장 서식은 넉넉히)
     });
   }
 
+  /* 받는 곳 — 한 화면이 인쇄물을 **여러 장** 넘길 수 있다(점검표는 부서의 서식 수만큼, 2026-09-07).
+     그래서 key 마다 배열로 쌓는다. 한 장짜리는 오던 대로 첫 장에서 끝낸다 —
+     여러 장 서식(multi)만 「더 안 오면」 끝낸다(1.2초 조용하면 다 온 것). */
+  var partTmr = {};
   window.addEventListener('message', function (e) {
     var d = e.data;
-    if (!d || d.type !== 'qpsPrintPart') return;
-    parts[d.key] = { title: d.title, css: d.css, body: d.body };
+    if (!d) return;
+    if (d.type === 'qpsPrintDone') {          // 화면이 「다 넘겼다」고 알려 온다(여러 장 서식)
+      var cb0 = parts['__wait_' + d.key];
+      clearTimeout(partTmr[d.key]);
+      if (typeof cb0 === 'function') cb0();
+      return;
+    }
+    if (d.type !== 'qpsPrintPart') return;
+    (parts[d.key] = parts[d.key] || []).push({ title: d.title, css: d.css, body: d.body });
     var cb = parts['__wait_' + d.key];
-    if (typeof cb === 'function') cb();
+    if (typeof cb !== 'function') return;
+    var f = fdef(d.key) || {};
+    if (!f.multi) { cb(); return; }
+    clearTimeout(partTmr[d.key]);
+    partTmr[d.key] = setTimeout(cb, 5000);   // 알림을 놓쳤을 때의 안전망
   });
 
   window.paRun = function () {
@@ -569,21 +713,23 @@
        좌우 10mm 는 칸(td) 의 padding 이라 어차피 장마다 그대로 붙는다.
        ★서식과 서식 사이는 표 단위로 끊는다 — 칸 안에서의 page-break 는 브라우저마다 잘 안 듣는다. */
   function merge(picked) {
-    var got = picked.filter(function (f) { return parts[f.key] && parts[f.key].body; });
+    var got = picked.filter(function (f) { return (parts[f.key] || []).length; });
     running = false; gel('paGo').disabled = false;
     if (!got.length) { gel('paStat').textContent = '가져온 서식이 없습니다 — 화면에서 낱장으로 먼저 확인해 주세요.'; return; }
 
-    var css = '', bodyAll = '', seen = {};
-    got.forEach(function (f, idx) {
-      var p = parts[f.key];
-      /* 서식이 들고 온 @page 는 버린다 — 문서에 하나만 먹는데다 여백은 아래에서 다시 잡는다 */
-      var pc = String(p.css || '').replace(/@page[^{]*\{[^}]*\}/g, '');
-      if (!seen[pc]) { seen[pc] = 1; css += pc; }                 // 같은 CSS 는 한 번만
-      bodyAll += '<table class="qps-sheet"' + (idx ? ' style="page-break-before:always;"' : '') + '>' +
-                   '<thead><tr><td><div class="qps-vsp"></div></td></tr></thead>' +
-                   '<tbody><tr><td><div class="qps-part">' + p.body + '</div></td></tr></tbody>' +
-                   '<tfoot><tr><td><div class="qps-vsp"></div></td></tr></tfoot>' +
-                 '</table>';
+    var css = '', bodyAll = '', seen = {}, sheets = 0;
+    got.forEach(function (f) {
+      /* 한 서식이 여러 장일 수 있다(점검표는 부서의 서식마다 한 장) — 장마다 표 하나 */
+      (parts[f.key] || []).forEach(function (p) {
+        /* 서식이 들고 온 @page 는 버린다 — 문서에 하나만 먹는데다 여백은 아래에서 다시 잡는다 */
+        var pc = String(p.css || '').replace(/@page[^{]*\{[^}]*\}/g, '');
+        if (!seen[pc]) { seen[pc] = 1; css += pc; }               // 같은 CSS 는 한 번만
+        bodyAll += '<table class="qps-sheet"' + (sheets++ ? ' style="page-break-before:always;"' : '') + '>' +
+                     '<thead><tr><td><div class="qps-vsp"></div></td></tr></thead>' +
+                     '<tbody><tr><td><div class="qps-part">' + p.body + '</div></td></tr></tbody>' +
+                     '<tfoot><tr><td><div class="qps-vsp"></div></td></tr></tfoot>' +
+                   '</table>';
+      });
     });
     /* 아래 규칙은 서식 CSS 뒤에 붙여 우리가 이기게 한다 */
     css += '.qps-part{ break-inside:auto; }' +
@@ -602,7 +748,7 @@
     w.document.close();
     w.focus();
     if (typeof qpsPrintGo === 'function') qpsPrintGo(w, 5000);
-    gel('paStat').textContent = got.length + '종을 이어 붙였습니다.' +
+    gel('paStat').textContent = got.length + '종 · ' + sheets + '장을 이어 붙였습니다.' +
       (got.length < picked.length ? ' (' + (picked.length - got.length) + '종은 못 가져왔습니다)' : '');
   };
 })();
