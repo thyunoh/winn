@@ -171,7 +171,7 @@
   (function(){
     var y = new Date().getFullYear(), sel = gel('siYear');
     for (var i = y + 1; i >= y - 4; i--) sel.add(new Option(i + '년', i));
-    sel.value = y;
+    qpsPickYear(sel, y);   /* 주소의 ?yy= 가 있으면 그 해로(일괄 출력, 2026-09-07) */
   })();
 
   /* 유형 목록 — 코드가 없거나 조회가 실패해도 화면은 그대로 쓴다(직접입력이라 목록은 거들 뿐).
@@ -328,14 +328,7 @@
       '<div style="font-size:10px;color:#444;margin-top:4px;">※ 개선사진은 첨부파일로 관리합니다.</div>';
 
     var title = ('만족도개선활동_' + yy + '_' + val('f_deptNm') + '_' + headType).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    qpsPrintOut(title, PRINT_CSS, body);   /* 낱장 인쇄·일괄 출력 공통(2026-09-07) */
   };
 
   $(function(){ loadTypes(); siNew(); });

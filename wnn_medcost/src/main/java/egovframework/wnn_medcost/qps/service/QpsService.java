@@ -282,6 +282,8 @@ public interface QpsService {
 	/** 공휴일(2026-09-02) — 그 해의 공휴일 목록 / 등록(같은 날짜면 이름 갱신) / 삭제. 병원 구분 없이 공용 */
 	List<Map<String, Object>> selectHolidays(String year) throws Exception;
 	void saveHoliday(Map<String, Object> param) throws Exception;
+	List<Map<String, Object>> selectFormCyc(String hospCd) throws Exception;   // 서식별 작성 주기(2026-09-07)
+	void saveFormCyc(Map<String, Object> param) throws Exception;
 	void deleteHoliday(String holDt) throws Exception;
 	/** 공통코드(QPS) 관리(2026-09-02) */
 	List<Map<String, Object>> selectQpsCodeGroups() throws Exception;

@@ -402,6 +402,10 @@ public interface QpsMapper {
 	/** 공휴일(2026-09-02, SUNWOO t_holiday 대응) — 병원 구분 없이 공용. year='2026' 처럼 4자리 */
 	List<Map<String, Object>> selectHolidays(@Param("year") String year);
 	int saveHoliday(Map<String, Object> param);
+
+	/* 서식별 작성 주기 (2026-09-07) — 일괄 출력의 「기간 안에 몇 건이어야 하는가」 */
+	List<Map<String, Object>> selectFormCyc(@Param("hospCd") String hospCd);
+	int saveFormCyc(Map<String, Object> param);
 	int deleteHoliday(@Param("holDt") String holDt);
 	/** 공통코드(QPS) 관리(2026-09-02) — 'Q' 묶음 QPS_% : 묶음 목록(이름·건수) / 세부 전체(안 쓰는 것 포함) / 세부 upsert / 묶음 이름 upsert */
 	List<Map<String, Object>> selectQpsCodeGroups();

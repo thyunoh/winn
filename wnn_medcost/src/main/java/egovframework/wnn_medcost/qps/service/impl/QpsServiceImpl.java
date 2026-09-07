@@ -1914,6 +1914,10 @@ public class QpsServiceImpl implements QpsService {
 	@Override
 	public void saveHoliday(Map<String, Object> param) throws Exception { mapper.saveHoliday(param); }
 	@Override
+	public List<Map<String, Object>> selectFormCyc(String hospCd) throws Exception { return mapper.selectFormCyc(hospCd); }
+	@Override
+	public void saveFormCyc(Map<String, Object> param) throws Exception { mapper.saveFormCyc(param); }
+	@Override
 	public void deleteHoliday(String holDt) throws Exception { mapper.deleteHoliday(holDt); }
 
 	// ═══ 공통코드(QPS) 관리 (2026-09-02) — 스크립트로 넣은 'Q' 묶음을 화면에서 이름·차례·사용 여부만 고친다 ═══

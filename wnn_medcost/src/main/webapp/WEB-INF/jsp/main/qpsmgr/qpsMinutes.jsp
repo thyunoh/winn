@@ -213,7 +213,7 @@
   (function(){
     var y = new Date().getFullYear(), sel = document.getElementById('qmYear');
     for (var i = y + 1; i >= y - 4; i--) sel.add(new Option(i + '년', i));
-    sel.value = y;
+    qpsPickYear(sel, y);   /* 주소의 ?yy= 가 있으면 그 해로(일괄 출력, 2026-09-07) */
   })();
 
   window.qmList = function(){
@@ -245,7 +245,24 @@
                    '<div class="d">' + esc(r.meetdt) + (r.place ? (' · ' + esc(r.place)) : '') + '</div></div>';
           }).join('')
         : '<div class="qm-empty">이 해의 회의록이 없습니다.<br>[＋ 새 회의록]으로 시작하세요.</div>';
+      /* 주소로 건을 지정해 열 수 있다 — 일괄 출력이 기간에 드는 회의록을 하나씩 뽑을 때 쓴다(2026-09-07).
+         ?seq=12 = 그 회의록 · ?seq=first = 목록의 첫 건. 없으면 지금까지처럼 아무것도 안 연다. */
+      try {
+        var m = /[?&]seq=(\d+|first)/.exec(window.location.search || '');
+        if (m && list.length) {
+          var want = (m[1] === 'first') ? Number(list[0].minseq) : Number(m[1]);
+          var hit = list.filter(function (r) { return Number(r.minseq) === want; });
+          if (hit.length || m[1] === 'first') qmOpen(hit.length ? want : Number(list[0].minseq));
+        }
+      } catch (e) { }
     }).catch(err);
+  };
+  /* 일괄 출력이 「이 해에 몇 건인지」를 물어볼 때 쓴다 — 목록만 돌려준다(자료를 건드리지 않는다). */
+  window.qmBulkList = function () {
+    return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value })
+      .then(function (res) {
+        return (res.list || []).map(function (r) { return { seq: r.minseq, dt: r.meetdt, nm: r.title }; });
+      });
   };
 
   /* ★하단 조치표는 **소방안전관리위원회(S)에만** 있다(2026-08-12).
@@ -477,14 +494,7 @@
           return t.getFullYear() + '. ' + (t.getMonth() + 1) + '. ' + t.getDate() + '.'; })() + '</div>';
 
     var title = ('회의록_' + val('m_title') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    qpsPrintOut(title, PRINT_CSS, body);   /* 낱장 인쇄·일괄 출력 공통(2026-09-07) */
   };
 
   $(function(){

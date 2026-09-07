@@ -320,14 +320,7 @@
           return t.getFullYear() + '. ' + (t.getMonth() + 1) + '. ' + t.getDate() + '.'; })() + '</div>';
 
     var title = ('지표정의서_' + val('d_indiNm') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    qpsPrintOut(title, PRINT_CSS, body);   /* 낱장 인쇄·일괄 출력 공통(2026-09-07) */
   };
 
   $(function(){

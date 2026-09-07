@@ -245,7 +245,7 @@
   (function(){
     var y = new Date().getFullYear(), sel = gel('qrYear');
     for (var i = y + 1; i >= y - 4; i--) sel.add(new Option(i + '년', i));
-    sel.value = y;
+    qpsPickYear(sel, y);   /* 주소의 ?yy= 가 있으면 그 해로(일괄 출력, 2026-09-07) */
   })();
 
   /** 종류에 따라 화면을 바꾼다 — 최종에만 활동효과·결론이 있다. */
@@ -607,14 +607,7 @@
       '<div style="font-size:9.5px;color:#444;margin-top:4px;">※ 사진은 첨부파일로 관리합니다.</div>';
 
     var title = ('QI' + (f ? '최종' : '중간') + '보고서_' + yy + '_' + val('f_topicNm') + '_' + HOSP_NM).replace(/[\\\/:*?"<>|]/g, '-');
-    var w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) { _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', {icon:'⚠️'}); return; }
-    w.document.open();
-    w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
-    w.document.close();
-    w.focus();
-    qpsPrintGo(w);
+    qpsPrintOut(title, PRINT_CSS, body);   /* 낱장 인쇄·일괄 출력 공통(2026-09-07) */
   };
 
   // 목표를 고치면 달성여부 판정이 바로 바뀌게

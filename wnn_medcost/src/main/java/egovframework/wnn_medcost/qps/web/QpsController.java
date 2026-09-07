@@ -1271,6 +1271,45 @@ public class QpsController {
 		return res;
 	}
 
+	/* ═══ 서식별 작성 주기 (2026-09-07 사용자 「주기 설정 표로 빼줘」) ═══
+	   일괄 출력이 「이 기간에 몇 건이어야 하는가」를 판정하는 데 쓴다. 주기는 병원마다 달라 표로 뺐다.
+	   표가 비어 있으면 빈 목록을 돌려준다 — 화면이 제 기본값으로 돈다(설정 전에도 멀쩡히 쓰인다). */
+	@RequestMapping(value = "/qps/formCycList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> formCycList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hosp = hospCd(request, p);
+			if (hosp.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.selectFormCyc(hosp));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/qps/formCycSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> formCycSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hosp = hospCd(request, p);
+			if (hosp.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String key = str(p.get("formKey"), "").trim();
+			String cyc = str(p.get("cycGb"), "").trim().toUpperCase();
+			if (key.isEmpty() || key.length() > 30) return fail(res, "서식 열쇠가 잘못되었습니다.");
+			if (!cyc.matches("[DWMQHYS]")) return fail(res, "주기는 D·W·M·Q·H·Y·S 중 하나입니다.");
+			String nm = unesc(p.get("formNm")).trim();
+			if (nm.length() > 60) nm = nm.substring(0, 60);
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hosp); m.put("formKey", key); m.put("formNm", nm); m.put("cycGb", cyc);
+			m.put("useYn", str(p.get("useYn"), "Y")); m.put("sortNo", p.get("sortNo"));
+			m.put("regUser", userId(request));
+			svc.saveFormCyc(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	@RequestMapping(value = "/qps/holidayDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public Map<String, Object> holidayDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
@@ -2096,6 +2135,12 @@ public class QpsController {
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
 	}
+
+	/* ═══ 일괄 출력 (2026-09-07) ═══
+	   고른 서식을 한 번에 이어 붙여 인쇄한다. 화면은 자료를 만들지도 고치지도 않고 **모아 인쇄만** 한다
+	   (요양병원은 서식을 하나씩 열어 뽑는 방식이 현장에서 안 돌아간다 — 사용자). */
+	@RequestMapping(value = "main/qpsPrintAll.do")
+	public String qpsPrintAll(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsPrintAll"); }
 
 	/* ═══ RCA 근본원인 분석 보고서 ═══
 	   ★RCA 회의록은 여기 없다 — 서식 1호(회의록)에 FORM_GB='R' 로 흡수했다. */

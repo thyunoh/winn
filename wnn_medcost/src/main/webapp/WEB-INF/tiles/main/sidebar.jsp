@@ -323,6 +323,8 @@
                                        style="font-weight:600;">▸ 보고서 · 서식</a>
                                     <div id="qps-g-rpt" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
+                                            <%-- 일괄 출력 (2026-09-07) — 고른 서식을 한 번에 이어 붙여 인쇄. 실사 준비 묶음을 한 번에 뽑으라는 뜻 --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPrintAll.do">🖨 일괄 출력</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 · 안전 보고서</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=EDURPT">교육 · 보건관리 서식</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RULEDRF">인사 · 원무 · 총무 서식</a></li>
@@ -2863,6 +2865,55 @@ $(document).ready(function() {
    글꼴이 아직 안 붙었으면 자리가 덜 잡힌 채로 인쇄돼 줄·칸이 밀렸다. 이제 이렇게 기다린다 :
      ① 창이 다 뜨기를(load) ② 글꼴이 준비되기를(document.fonts.ready) ③ 그래도 안 오면 정해진 시간 뒤에.
    ★한 번만 인쇄한다(done) · 창이 닫혔거나 막히면 조용히 지나간다. */
+/* ═══ QPS 연도 — 주소로 넘어온 연도를 화면에 꽂는다 (2026-09-07 일괄 출력) ═══
+   일괄 출력이 서식 화면을 열 때 ?yy=2026 을 붙인다. 화면은 연도 칸을 채운 뒤 이 함수로 값을 정하면 된다.
+     sel.value = y;  →  qpsPickYear(sel, y);
+   ★넘어온 게 없으면 지금까지처럼 기본값(올해)을 쓴다 — 낱장으로 여는 화면은 달라지지 않는다.
+   ★목록에 없는 연도가 넘어오면 그 연도를 만들어 넣는다(지난 자료를 뽑을 때). */
+window.qpsPickYear = function (sel, defYear) {
+  var y = String(defYear == null ? '' : defYear);
+  try {
+    var m = /[?&]yy=(\d{4})/.exec(window.location.search || '');
+    if (m) y = m[1];
+  } catch (e) { }
+  if (sel && sel.options) {
+    var has = false;
+    for (var i = 0; i < sel.options.length; i++) if (String(sel.options[i].value) === y) { has = true; break; }
+    if (!has && y) { try { sel.add(new Option(y + '년', y), 0); } catch (e) { } }
+  }
+  if (sel) sel.value = y;
+  return y;
+};
+
+/* ═══ QPS 인쇄 내보내기 — 낱장 인쇄와 일괄 출력이 같은 조립을 쓴다 (2026-09-07) ═══
+   화면은 인쇄할 것을 만들어 이 함수에 넘기기만 한다 : qpsPrintOut(제목, 인쇄CSS, 본문HTML)
+     · 평소      → 지금처럼 새 창에 찍어 인쇄한다(팝업이 막히면 안내).
+     · 일괄 출력 → 창을 띄우지 않고 **부모(일괄 출력 화면)에 넘긴다**. 부모가 여러 서식을 한 문서로 이어 붙인다.
+   ★일괄인지 아닌지는 부모가 iframe 의 window 에 QPS_BULK 를 켜서 알려 준다. 화면 쪽 코드는 그대로다. */
+window.qpsPrintOut = function (title, css, body) {
+  title = String(title || 'QPS');
+  if (window.QPS_BULK && window.parent && window.parent !== window) {
+    try {
+      window.parent.postMessage({ type: 'qpsPrintPart', key: window.QPS_BULK, title: title, css: css, body: body }, '*');
+      return true;
+    } catch (e) { }
+  }
+  var w = window.open('', '_blank', 'width=900,height=1000');
+  if (!w) {
+    if (window._alertBox) _alertBox('팝업이 차단되어 인쇄창을 열지 못했습니다.<br>주소창 오른쪽의 팝업 차단을 허용해 주세요.', { icon: '⚠️' });
+    else alert('팝업이 차단되어 인쇄창을 열지 못했습니다.');
+    return false;
+  }
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  w.document.open();
+  w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(title) +
+                   '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
+  w.document.close();
+  w.focus();
+  qpsPrintGo(w);
+  return true;
+};
+
 window.qpsPrintGo = function (w, maxMs) {
   if (!w) return;
   var done = false;
