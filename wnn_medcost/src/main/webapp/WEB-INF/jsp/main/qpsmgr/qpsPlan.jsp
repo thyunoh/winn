@@ -420,7 +420,7 @@
       cover + intro + topic + biz + ev + sched + bud + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   /* ═══ 탭 · 글자 크기 (2026-08-15 — 사용자 요청) ═══════════════════════════

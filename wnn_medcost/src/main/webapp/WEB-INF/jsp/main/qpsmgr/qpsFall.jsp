@@ -1896,10 +1896,8 @@
       '<title>' + esc(safe) + '</title><style>' + PRINT_CSS + '</style></head><body>' + bodyHtml + '</body></html>');
     w.document.close();
     w.focus();
-    // 차트 이미지가 붙은 뒤에 인쇄 — 바로 부르면 그림이 빈 채로 나갈 수 있다
-    setTimeout(function(){
-      try { w.print(); } catch (e) { }
-    }, 400);
+    // 차트 이미지가 붙은 뒤에 인쇄 — 바로 부르면 그림이 빈 채로 나갈 수 있다(로드·글꼴을 기다린다, 2026-09-07)
+    qpsPrintGo(w);
   }
 
   // ---------- 공통코드 ----------

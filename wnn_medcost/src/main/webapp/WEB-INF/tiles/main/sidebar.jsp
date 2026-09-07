@@ -80,6 +80,32 @@
     outline: none !important;
     box-shadow: none !important;
 }
+
+/* ═══ QPS 메뉴 — 주메뉴 · 서브메뉴 구분 (사용자 2026-09-07 「주메뉴·서브메뉴인데 구분되게」) ═══
+   종전에는 굵기(600)와 ▸ 표시만 달라 한 덩어리로 보였다. 이제 세 단계가 눈에 갈린다 :
+     ① 주메뉴(계획·위원회 …)  = 옅은 띠 + 왼쪽 파란 막대, 펼치면 조금 더 진하게
+     ② 부서 묶음(담당자별 업무 안) = 들여쓰고 왼쪽에 옅은 선
+     ③ 실제 화면 링크          = 한 칸 더 들여쓰고 작게
+   ★인라인 style="font-weight:600" 이 붙어 있어 글자 굵기·색만 !important 로 덮는다. */
+#qps-sub > ul > li > a[data-toggle="collapse"] {
+    display: block; margin: 4px 6px 2px; padding: 7px 10px;
+    background: #eaf1f8; border-left: 3px solid #3f7fc1; border-radius: 5px;
+    color: #22405e !important; font-weight: 700 !important; font-size: 13.5px;
+}
+#qps-sub > ul > li > a[data-toggle="collapse"]:hover { background: #dce9f6; }
+#qps-sub > ul > li > a[data-toggle="collapse"][aria-expanded="true"] {
+    background: #d6e6f5; border-left-color: #1f5f9e;
+}
+#qps-dept-list > li > a[data-toggle="collapse"] {
+    margin-left: 10px; padding: 4px 10px 4px 14px;
+    border-left: 2px solid #c8d8e8; color: #33506b !important; font-weight: 600 !important; font-size: 12.8px;
+}
+#qps-sub .submenu ul > li > a.nav-link:not([data-toggle="collapse"]) {
+    padding: 4px 10px 4px 24px; font-size: 12.5px; color: #4a5560;
+}
+#qps-sub .submenu ul > li > a.nav-link:not([data-toggle="collapse"]):hover {
+    color: #0a6ebd; background: #f4f8fc;
+}
 </style>
 <div class="nav-left-sidebar">
     <div class="menu-list">
@@ -2831,6 +2857,34 @@ $(document).ready(function() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', chk);
   else chk();
 })();
+
+/* ═══ QPS 인쇄 — 다 그린 뒤에 인쇄한다 (사용자 2026-09-07 「인쇄할 경우 위치가 안 맞는 경우」) ═══
+   종전에는 인쇄 창을 띄우고 **300ms 뒤 무조건** print() 를 불렀다(19개 화면). 표가 크거나 PC 가 느리거나
+   글꼴이 아직 안 붙었으면 자리가 덜 잡힌 채로 인쇄돼 줄·칸이 밀렸다. 이제 이렇게 기다린다 :
+     ① 창이 다 뜨기를(load) ② 글꼴이 준비되기를(document.fonts.ready) ③ 그래도 안 오면 정해진 시간 뒤에.
+   ★한 번만 인쇄한다(done) · 창이 닫혔거나 막히면 조용히 지나간다. */
+window.qpsPrintGo = function (w, maxMs) {
+  if (!w) return;
+  var done = false;
+  var go = function () {
+    if (done) return; done = true;
+    try { w.focus(); w.print(); } catch (e) { }
+  };
+  var boot = function () {
+    try {
+      if (w.document && w.document.fonts && w.document.fonts.ready) {
+        w.document.fonts.ready.then(function () { setTimeout(go, 80); });
+        setTimeout(go, maxMs || 3000);          // 글꼴이 끝내 안 오면 이때는 인쇄한다
+        return;
+      }
+    } catch (e) { }
+    setTimeout(go, 300);
+  };
+  try {
+    if (w.document && w.document.readyState === 'complete') boot();
+    else { w.onload = boot; setTimeout(boot, 1500); }   // onload 를 놓쳐도 멈추지 않게
+  } catch (e) { setTimeout(go, 300); }
+};
 </script>
 <!-- ============================================================== -->
 <!-- sidebar end -->

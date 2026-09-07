@@ -271,7 +271,7 @@
               'th{background:#eee;}' +
               '.appr{float:right;border-collapse:collapse;margin-bottom:8px;}' +
               '.appr th,.appr td{width:60px;height:34px;}' +
-              '@page{size:A4 landscape;}';
+              '@page{ size:A4 landscape; margin:10mm; }';   /* 여백을 정해 둔다 — 없으면 브라우저·프린터 기본값을 따라 자리가 달라진다(2026-09-07) */
     w.document.write('<html><head><meta charset="UTF-8"><title>격리·강박 시행일지</title>' +
       '<style>' + css + '</style></head><body>' +
       '<table class="appr"><tr><th>담당</th><th>팀장</th><th>부서장</th><th>이사장</th></tr>' +
@@ -284,7 +284,7 @@
       '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   $(function(){ slLoad(); });

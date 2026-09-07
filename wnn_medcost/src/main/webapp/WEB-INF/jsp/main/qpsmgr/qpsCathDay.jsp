@@ -206,7 +206,7 @@
               'table{width:100%;border-collapse:collapse;}' +
               'th,td{border:1px solid #333;padding:3px 5px;text-align:center;}' +
               'th{background:#eee;}' +
-              '@page{size:A4 portrait;}';
+              '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }';   /* 여백을 정해 둔다 — 없으면 브라우저·프린터 기본값을 따라 자리가 달라진다(2026-09-07) */
     w.document.write('<html><head><meta charset="UTF-8"><title>유치도뇨관 월별 기록지</title>' +
       '<style>' + css + '</style></head><body>' +
       '<h1>유치도뇨관 월별 기록지</h1>' +
@@ -218,7 +218,7 @@
       '</table></body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   $(function(){ cdLoad(); });

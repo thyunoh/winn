@@ -614,7 +614,7 @@
       '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   // 목표를 고치면 달성여부 판정이 바로 바뀌게

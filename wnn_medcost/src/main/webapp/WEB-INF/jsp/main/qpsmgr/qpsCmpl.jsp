@@ -402,7 +402,7 @@
       esc(title.replace(/[\\\/:*?"<>|]/g, '-')) + '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   }
 
   /** 대장 인쇄 — 가로(A4 landscape). 컬럼이 12개라 세로로는 못 담는다. */

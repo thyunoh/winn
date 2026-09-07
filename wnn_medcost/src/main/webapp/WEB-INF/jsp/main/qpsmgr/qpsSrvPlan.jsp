@@ -334,7 +334,7 @@
       '</title><style>' + PRINT_CSS + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   /* 조사안내 인쇄 — 원본은 장식 테두리 + 제목 + 자유입력 박스 1개짜리 게시용 안내문이다.
@@ -361,7 +361,7 @@
       '</title><style>' + NOTICE_CSS + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   $(function(){ spLoad(); });

@@ -387,7 +387,7 @@
       esc(title.replace(/[\\\/:*?"<>|]/g, '-')) + '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
     w.document.close();
     w.focus();
-    setTimeout(function(){ try { w.print(); } catch (e) { } }, 300);
+    qpsPrintGo(w);
   };
 
   $(function(){ qtNew(); });
