@@ -1610,7 +1610,7 @@
   //   ②앱 CSS 가 인쇄물에 스며든다. 빈 문서(about:blank)에 우리 서식만 써 넣으면 둘 다 사라진다.
   //   (날짜·페이지번호까지 없애려면 인쇄 창의 [머리글 및 바닥글] 체크를 끄면 된다 — 브라우저 설정)
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
+    '@page{ size:A4 portrait; margin:12mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.qp-h1{ font-size:19px; font-weight:800; text-align:center; letter-spacing:-.3px; margin:0 0 3px; }' +
     '.qp-h2{ font-size:12.5px; text-align:center; color:#333; margin:0 0 12px; }' +

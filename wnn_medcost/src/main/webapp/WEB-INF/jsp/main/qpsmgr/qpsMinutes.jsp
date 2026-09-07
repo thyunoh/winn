@@ -393,8 +393,8 @@
 
   // ---------- 인쇄(A4 1장) — 별도 창 방식(주소 바닥글·앱 CSS 가 안 붙는다) ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:14mm 14mm 16mm; }' +
-    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '@page{ size:A4 portrait; margin:0; }' +
+    'body{ margin:12mm; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:19px; font-weight:800; text-align:center; margin:0 0 3px; }' +
     '.h2{ font-size:12.5px; text-align:center; color:#333; margin:0 0 12px; }' +
     'table{ width:100%; border-collapse:collapse; font-size:11.5px; }' +

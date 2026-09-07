@@ -600,7 +600,7 @@
 
   // ---------- 인쇄 — 빈 섹션은 빠진다(투약보고서처럼 축약판이 자연스럽게 나온다) ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:11mm; }' +
+    '@page{ size:A4 portrait; margin:12mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:17px; font-weight:800; text-align:center; margin:0 0 8px; letter-spacing:1px; }' +
     '.sec{ font-size:12.5px; font-weight:800; margin:10px 0 4px; padding-bottom:2px; border-bottom:1.5px solid #333; }' +

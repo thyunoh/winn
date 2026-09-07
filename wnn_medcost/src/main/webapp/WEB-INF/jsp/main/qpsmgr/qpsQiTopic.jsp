@@ -377,7 +377,7 @@
         '<th style="width:60px;">개선활동<br>용이성<br><br>10점</th><th style="width:60px;">국내·외<br>평가지표<br><br>10점</th>' +
         '<th style="width:50px;">총점<br>60점</th></tr></thead><tbody>' + body2 + '</tbody></table>';
       title = 'QPS주제선정기준표_' + yy + '_' + val('f_evaluator') + '_' + HOSP_NM;
-      css = '@page{ size:A4 portrait; margin:11mm; }' + css;
+      css = '@page{ size:A4 portrait; margin:12mm; }' + css;
     }
 
     var w = window.open('', '_blank', 'width=1000,height=1000');

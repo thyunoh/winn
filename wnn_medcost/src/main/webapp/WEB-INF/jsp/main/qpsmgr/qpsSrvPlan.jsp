@@ -280,8 +280,8 @@
 
   // ---------- 인쇄(A4) — 별도 창(QPS 공통 방식) ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
-    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '@page{ size:A4 portrait; margin:0; }' +
+    'body{ margin:12mm; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:18px; font-weight:800; text-align:center; margin:0 0 10px; letter-spacing:1px; }' +
     '.sec{ font-size:13px; font-weight:800; margin:12px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #333; }' +
     'table{ width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:6px; }' +
@@ -340,8 +340,8 @@
   /* 조사안내 인쇄 — 원본은 장식 테두리 + 제목 + 자유입력 박스 1개짜리 게시용 안내문이다.
      결재란도 표도 없다. 한 장으로 끝난다. */
   var NOTICE_CSS =
-    '@page{ size:A4 portrait; margin:14mm; }' +
-    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '@page{ size:A4 portrait; margin:0; }' +
+    'body{ margin:12mm; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.box{ border:6px double #1f5a4b; padding:18mm 14mm; min-height:230mm; }' +
     '.t{ font-size:30px; font-weight:800; text-align:center; letter-spacing:6px; margin-bottom:16mm; }' +
     '.b{ font-size:15px; line-height:2.1; white-space:pre-wrap; }' +

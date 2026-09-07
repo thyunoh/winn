@@ -267,7 +267,7 @@
   // ---------- 인쇄(A4 정의서 1장) ----------
   // 지표분석보고서와 같은 방식 — 별도 창에 서식만 써 넣는다(앱 CSS·주소 바닥글이 안 붙는다).
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:14mm 14mm 16mm; }' +
+    '@page{ size:A4 portrait; margin:12mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:19px; font-weight:800; text-align:center; margin:0 0 3px; }' +
     '.h2{ font-size:12.5px; text-align:center; color:#333; margin:0 0 12px; }' +

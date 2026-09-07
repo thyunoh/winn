@@ -584,7 +584,7 @@
      ★집계 수치는 인쇄 직전에 서버에서 새로 받는다 — 화면 DOM 을 긁지 않는다(어긋남 방지).
      ★결재란은 결재선(apprGet, 지표 SATISFY·연간)에서, 지표 프레임은 정의서(indiDefGet)에서 가져온다. */
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
+    '@page{ size:A4 portrait; margin:12mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.cover{ text-align:center; padding-top:45mm; page-break-after:always; }' +
     '.cover .t{ font-size:24px; font-weight:800; line-height:1.5; }' +

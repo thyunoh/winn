@@ -278,8 +278,8 @@
 
   // ---------- 인쇄(A4 1장) — 별도 창(QPS 공통 방식) ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
-    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '@page{ size:A4 portrait; margin:0; }' +
+    'body{ margin:12mm; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:18px; font-weight:800; text-align:center; margin:0 0 10px; letter-spacing:1px; }' +
     'table{ width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:6px; }' +
     'th,td{ border:1px solid #666; padding:5px 6px; text-align:center; vertical-align:middle; line-height:1.6; }' +

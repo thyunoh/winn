@@ -533,7 +533,7 @@
 
   // ---------- 인쇄 ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:11mm; }' +
+    '@page{ size:A4 portrait; margin:12mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:17px; font-weight:800; text-align:center; margin:0 0 8px; letter-spacing:1px; }' +
     'table{ width:100%; border-collapse:collapse; font-size:10px; margin-bottom:5px; }' +

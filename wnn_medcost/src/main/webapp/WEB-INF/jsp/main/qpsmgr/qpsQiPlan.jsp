@@ -394,8 +394,8 @@
 
   // ---------- 인쇄(A4 1장) — 원본 배치 ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:11mm; }' +
-    'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
+    '@page{ size:A4 portrait; margin:0; }' +
+    'body{ margin:12mm; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:17px; font-weight:800; text-align:center; margin:0 0 8px; letter-spacing:1px; }' +
     'table{ width:100%; border-collapse:collapse; font-size:10px; margin-bottom:5px; }' +
     'th,td{ border:1px solid #666; padding:3px 4px; text-align:center; vertical-align:middle; line-height:1.5; }' +
@@ -425,8 +425,8 @@
       var tds = '';
       for (var k = 0; k < 4; k++) {
         var m = team[i + k];
-        tds += '<th style="width:7%;">' + (m ? esc(m.grp) : '') + '</th>' +
-               '<td style="width:18%;">' + (m ? esc(m.c1) : '') + '</td>';
+        tds += '<th style="width:6%;">' + (m ? esc(m.grp) : '') + '</th>' +
+               '<td style="width:17%;">' + (m ? esc(m.c1) : '') + '</td>';
       }
       trs += '<tr>' + tds + '</tr>';
     }
@@ -448,7 +448,7 @@
         '<tr><th>주제명</th><td class="l" colspan="3">' + esc(val('f_topicNm')) + '</td></tr>' +
       '</tbody></table>' +
       (trs ? '<table><tbody><tr><th rowspan="' + (team.length ? Math.ceil(team.length / 4) : 1) +
-             '" style="width:60px;">팀구성</th></tr>' + trs + '</tbody></table>'
+             '" style="width:8%;">팀구성</th></tr>'   /* 표가 오른쪽으로 넘어 잘렸다 — 8% + 4x(6+17)% = 100% (2026-09-07) */ + trs + '</tbody></table>'
            : '') +
       '<table><tbody><tr><th style="width:90px;">주제선정 배경</th>' +
         '<td class="pre" style="height:60px;">' + esc(val('f_background')) + '</td></tr></tbody></table>' +

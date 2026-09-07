@@ -222,7 +222,7 @@
 
   // ---------- 인쇄(A4) — 별도 창 ----------
   var PRINT_CSS =
-    '@page{ size:A4 portrait; margin:12mm 12mm 14mm; }' +
+    '@page{ size:A4 portrait; margin:12mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:17px; font-weight:800; margin:0 0 2px; }' +
     '.h2{ font-size:12px; color:#333; margin:0 0 10px; display:flex; justify-content:space-between; }' +

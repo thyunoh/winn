@@ -1864,7 +1864,7 @@
   // ---------- 인쇄 ----------
   // ★A4 **가로**다. 31칸 격자는 세로로는 안 들어간다.
   var PRINT_CSS =
-    '@page{ size:A4 landscape; margin:9mm; }' +
+    '@page{ size:A4 landscape; margin:10mm; }' +
     'body{ margin:0; font-family:"맑은 고딕",Malgun Gothic,sans-serif; color:#000; }' +
     '.h1{ font-size:16px; font-weight:800; text-align:center; margin:0 0 6px; }' +
     '.meta{ font-size:11px; margin:0 0 6px; display:flex; gap:14px; flex-wrap:wrap; }' +
