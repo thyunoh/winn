@@ -929,7 +929,7 @@
       var ok = true, imgs = [];
       try { imgs = w.document.images || []; } catch (e) {}
       for (var i = 0; i < imgs.length; i++) if (!imgs[i].complete) ok = false;
-      if (ok || tries++ > 40) { try { w.print(); } catch (e) {} }
+      if (ok || tries++ > 40) qpsPrintGo(w);   /* 사진이 다 붙은 뒤, 글꼴까지 기다려 인쇄(2026-09-07) */
       else setTimeout(waitImg, 150);
     })();
   };
