@@ -1880,8 +1880,11 @@ public class QpsServiceImpl implements QpsService {
 
 	@Override
 	public void saveChkForm(Map<String, Object> form, List<Map<String, Object>> items) throws Exception {
-		mapper.saveChkForm(form);
 		String hospCd = str(form.get("hospCd")), formId = str(form.get("formId"));
+		/* ★★새 서식인가를 **저장하기 전에** 봐야 한다(2026-09-08) — 저장한 뒤에는 늘 「있음」이다.
+		     새 서식이면 아래에서 사용 서식 세트에 함께 켠다. 고치는 것은 건드리지 않는다. */
+		boolean isNew = mapper.countChkForm(formId) == 0;
+		mapper.saveChkForm(form);
 		mapper.deleteChkItems(hospCd, formId);
 		if (items != null && !items.isEmpty()) {
 			int sort = 0;
@@ -1901,6 +1904,31 @@ public class QpsServiceImpl implements QpsService {
 				mapper.insertChkItems(p);
 			}
 		}
+		if (isNew) turnOnNewForm(formId, str(form.get("regUser")));
+	}
+
+	/**
+	 * 새로 만든(복사한) 서식을 <b>사용 서식 세트에 함께 켠다</b> (2026-09-08).
+	 *
+	 * <p>⚠<b>왜 필요한가</b> — 작성 화면은 「세트가 하나라도 있으면 그 세트에 든 것만」 보여 준다(<code>chkUseOn</code>).
+	 * 그래서 세트에 없는 새 서식은 <b>부서별 양식·서식 관리에는 보이는데 작성 화면에만 없는</b> 상태가 된다.
+	 * 09-02 밤 ADM019 로 한 번, 09-08 복사 실왕복으로 또 겪었다 — 그때마다 사람이 SQL 로 메꿔 왔다.</p>
+	 *
+	 * <p>★<b>이미 있는 세트 전부</b>에 켠다(기본 세트 '*' 와 병원별 세트). 세트가 없는 병원은 원래 전부 보이므로 넣을 것이 없다.
+	 * 병원이 원치 않으면 [우리 병원 사용 서식]에서 끄면 된다 — <b>끄는 것이 켜는 것보다 쉽고, 안 보이는 쪽이 사고다.</b></p>
+	 *
+	 * <p>⚠<b>새 서식일 때만</b> 부른다. 고칠 때도 부르면, 병원이 <b>일부러 꺼 둔 서식</b>이
+	 * (세트에 행이 없는 상태라) 저장 한 번에 되살아난다 — 그래서 호출부가 저장 전에 <code>isNew</code> 를 본다.</p>
+	 *
+	 * <p>서식 저장을 막지는 않는다 — 세트 반영이 실패해도 서식은 이미 만들어졌고, 화면에서 켜면 된다.</p>
+	 */
+	private void turnOnNewForm(String formId, String regUser) {
+		try {
+			for (String set : mapper.selectChkUseSets()) {
+				if (set == null || set.isEmpty()) continue;
+				mapper.insertChkUseOne(set, formId, regUser);
+			}
+		} catch (Exception ignore) { /* 세트 반영 실패가 서식 저장을 되돌리게 두지 않는다 */ }
 	}
 
 	@Override

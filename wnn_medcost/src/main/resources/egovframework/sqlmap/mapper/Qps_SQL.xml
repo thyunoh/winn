@@ -2432,6 +2432,23 @@
 		</foreach>
 	</insert>
 
+	<!-- ═══ 새로 만든(복사한) 서식을 사용 서식 세트에 함께 켠다 (2026-09-08) ═══
+	     ⚠**복사만으로는 작성 화면에 안 나왔다** — 복사는 서식·항목만 쓰고 이 표를 안 건드렸다.
+	       그런데 위 `chkUseOn` 규칙은 「세트가 하나라도 있으면 그 세트에 든 것만 보여 준다」이므로,
+	       세트에 없는 새 서식은 **부서별 양식·서식 관리에는 보이는데 작성 화면에만 없는** 상태가 된다
+	       (09-02 밤 ADM019 로 한 번, 09-08 복사 실왕복으로 또 겪었다).
+	     ★그래서 **이미 있는 세트 전부**에 한 줄씩 켜 준다 — 세트가 없는 병원은 원래 전부 보이므로 넣을 것이 없다.
+	       병원이 원치 않으면 [우리 병원 사용 서식]에서 끄면 된다(끄는 것이 켜는 것보다 쉽고, 안 보이는 쪽이 사고다). -->
+	<select id="selectChkUseSets" resultType="string">
+		SELECT DISTINCT HOSP_CD FROM TBL_QPS_CHK_USE
+	</select>
+	<insert id="insertChkUseOne" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_USE (HOSP_CD, FORM_ID, USE_YN, REG_USER)
+		SELECT #{hospCd}, #{formId}, 'Y', #{regUser}
+		 WHERE NOT EXISTS ( SELECT 1 FROM TBL_QPS_CHK_USE u
+		                     WHERE u.HOSP_CD = #{hospCd} AND u.FORM_ID = #{formId} )
+	</insert>
+
 	<select id="selectChkForm" resultType="java.util.HashMap">
 		SELECT FORM_ID AS formid, HOSP_CD AS hospcd, FORM_NM AS formnm, CATE_CD AS catecd,
 		       DEPT_CD AS deptcd,

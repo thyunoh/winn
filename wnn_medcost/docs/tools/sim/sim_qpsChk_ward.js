@@ -6,7 +6,8 @@ const s = fs.readFileSync(SRC, 'utf8');
 function grab(re, name){ const m = s.match(re); if (!m) throw new Error('못 찾음: ' + name); return m[0]; }
 const docFill = grab(/\n  window\.ckDocFill = function\(\)\{[\s\S]*?\n  \};/, 'ckDocFill');
 const wardForm = grab(/\n  function ckWardForm\(\)\{[\s\S]*?\n  \}/, 'ckWardForm');
-const save = grab(/\n  window\.ckSave = function\(\)\{[\s\S]*?\n  \};/, 'ckSave');
+// ★2026-09-08 : 일괄 사인이 「저장만」 부를 수 있게 ckSave 가 opts 를 받는다(빈 인자면 종전 그대로)
+const save = grab(/\n  window\.ckSave = function\(opts\)\{[\s\S]*?\n  \};/, 'ckSave');
 // ckBase 안의 병동 채우기 부분만
 const fill = grab(/\n      WARDS = \(res\.wards[\s\S]*?ckDocFill\(\);/, 'ckBase 병동 채우기');
 

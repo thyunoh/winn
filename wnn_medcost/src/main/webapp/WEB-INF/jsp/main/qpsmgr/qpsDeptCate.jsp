@@ -104,16 +104,17 @@
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   /* ★Swal 은 프로젝트 표준. ***창은 작게*** — 크게 두면 부서 이름이 여러 줄로 접힌다.
      ⚠Swal 창은 body 바로 밑에 붙으므로 #qpsDeptCate 안에 CSS 를 두면 안 먹는다 → 인라인으로 준다. */
+  /* ★알림·확인은 **프로젝트 표준 ui-message.js**(2026-09-08 전 QPS 화면 일괄 정리). ⛔Swal 직접 호출 금지. */
   function toast(text, icon){
-    if (!window.Swal) { _alertBox(text, {icon:'✅'}); return; }
-    Swal.fire({ icon:icon || 'success', title:text, width:380, padding:'0.9em',
-                timer:1700, showConfirmButton:false });
+    var t = (icon === 'info') ? 'info' : (icon === 'warning' || icon === 'warn') ? 'warn' : 'ok';
+    if (window._toast) { _toast(text, t); return; }
+    _alertBox(text, { icon: (t === 'ok') ? '✅' : 'ℹ️' });
   }
   function ask(html){
-    if (!window.Swal) return Promise.resolve(confirm(String(html).replace(/<[^>]*>/g, '')));
-    return Swal.fire({ html:html, width:400, padding:'1em', showCancelButton:true,
-                       confirmButtonText:'예', cancelButtonText:'아니오' })
-               .then(function(r){ return !!r.value; });
+    return new Promise(function(resolve){
+      _confirmBox({ msg: html, icon: '❓', okText: '예',
+                    onOk: function(){ resolve(true); }, onCancel: function(){ resolve(false); } });
+    });
   }
 
   window.dqLoad = function(){

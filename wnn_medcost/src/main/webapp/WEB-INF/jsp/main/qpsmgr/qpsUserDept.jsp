@@ -16,6 +16,8 @@
       · **편의 기능**(접어 둠) — **복사 하나뿐**. 보고 있는 사람의 담당을 받을 사람 한 명에게.
   ⚠「여러 사람 선택」은 만들었다가 **뺐다**(사용자 지적 : 의미 없음) — 고를 것이 하나여야 헷갈리지 않는다.
 --%>
+<%-- ★알림·확인 표준 — 이 줄이 없으면 _alertBox·_confirmBox·_toast 가 없어 브라우저 기본 창으로 떨어진다(2026-09-08) --%>
+<script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/ui-split.js"></script>
 <script src="/asset/js/ui-find.js"></script>
 <div class="dashboard-wrapper">
@@ -279,18 +281,19 @@
        ★창을 **작게** 쓴다(사용자 지적) — 기본값은 아이콘·여백이 커서 부서 이름이 몇 줄로 접힌다.
          폭 `ud-swal` 로 넓히고(부서가 15개까지 온다) 아이콘은 없애거나 작게.
        ⚠***JS 주석 안에 `--` + `%>` 를 쓰지 말 것*** — JSP 가 거기서 주석을 닫아 버린다(실제로 겪음). */
+  /* ★알림·확인은 **프로젝트 표준 ui-message.js**(2026-09-08 전 QPS 화면 일괄 정리).
+     ⛔Swal 직접 호출 금지 — 상시 방침(CLAUDE.md 머리)인데 이 화면이 남아 있었다.
+     ★부르는 자리는 그대로다 — `say(글, 종류)` · `ask(html) → Promise<boolean>`. */
   function say(text, icon){
-    if (!window.Swal) { alert(text); return; }
-    Swal.fire({ icon:icon || 'info', title:text, width:380, padding:'0.9em',
-                timer:1600, showConfirmButton:false,
-                customClass:{ popup:'ud-swal', title:'ud-swal-t' } });
+    var t = (icon === 'success') ? 'ok' : (icon === 'warning' || icon === 'warn') ? 'warn' : 'info';
+    if (window._toast) { _toast(text, t); return; }
+    _alertBox(text, { icon: (t === 'ok') ? '✅' : 'ℹ️' });
   }
   function ask(html){
-    if (!window.Swal) return Promise.resolve(confirm(String(html).replace(/<[^>]*>/g, '')));
-    return Swal.fire({ html:html, width:460, padding:'1em',
-                       showCancelButton:true, confirmButtonText:'예', cancelButtonText:'아니오',
-                       customClass:{ popup:'ud-swal', htmlContainer:'ud-swal-h' } })
-               .then(function(r){ return !!r.value; });
+    return new Promise(function(resolve){
+      _confirmBox({ msg: html, icon: '❓', okText: '예',
+                    onOk: function(){ resolve(true); }, onCancel: function(){ resolve(false); } });
+    });
   }
 
   /** 받을 사람 — **한 명**(라디오). 「여러 명」은 만들었다가 뺐다(사용자 지적 : 의미 없음). */

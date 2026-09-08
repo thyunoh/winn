@@ -323,8 +323,17 @@
                                        style="font-weight:600;">▸ 보고서 · 서식</a>
                                     <div id="qps-g-rpt" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
-                                            <%-- 일괄 출력 (2026-09-07) — 고른 서식을 한 번에 이어 붙여 인쇄. 실사 준비 묶음을 한 번에 뽑으라는 뜻 --%>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPrintAll.do">🖨 일괄 출력</a></li>
+                                            <%-- 서식 묶음 인쇄 (2026-09-07 신설 · 2026-09-08 이름 바꿈)
+                                                 ★「일괄 출력」이던 이름을 바꾼 까닭 — 2026-09-08 에 등록 화면 21곳마다 [🖨 일괄 출력] 이 생겨
+                                                   **같은 이름이 두 군데**가 됐다. 하는 일이 다르다 :
+                                                     · 등록 화면 [일괄 출력] = 한 서식의 **여러 건**(기간·구분·회차로 걸러)
+                                                     · 이 메뉴          = **여러 서식**을 한 벌로(실사·인증 준비)
+                                                   이름이 같으면 라운딩 12달치를 이 화면에서 뽑으려다 1장만 나오는 식으로 헛돈다. --%>
+                                            <%-- ★메뉴는 **한 줄**이다(2026-09-08) — 「작성 현황」을 메뉴로 따로 냈더니
+                                                 이름도 화면도 닮아 **중복으로 읽혔다**(사용자 「2개 메뉴가 살짝 중복인 것 같은데」).
+                                                 ⇒ 업무는 갈라 둔 채 **화면 안 탭**(🖨 묶음 인쇄 / 📋 작성 현황)으로 옮겼다.
+                                                 ※`?mode=stat` 으로 바로 여는 길은 살아 있다(옛 링크·바로가기 호환). --%>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsPrintAll.do">🖨 서식 묶음 인쇄</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do">사고 · 안전 보고서</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=EDURPT">교육 · 보건관리 서식</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsSafeRpt.do?gb=RULEDRF">인사 · 원무 · 총무 서식</a></li>

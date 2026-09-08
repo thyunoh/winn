@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260908-JSONROWS";   // 저장 4곳 jsonRows 통일 — 배포 확인용(codeList.do 응답 build)
+	private static final String BUILD = "20260908-CHKUSE";     // 저장 4곳 jsonRows 통일 + 새 서식을 사용 서식 세트에 자동 켬 — 배포 확인용(codeList.do 응답 build)
 
 	@Resource(name = "QpsService")
 	private QpsService svc;

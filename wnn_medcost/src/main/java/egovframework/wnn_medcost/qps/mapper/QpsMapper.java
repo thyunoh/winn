@@ -386,6 +386,11 @@ public interface QpsMapper {
 	                                            @Param("onlyUse") String onlyUse);
 	int deleteChkUse(@Param("hospCd") String hospCd);
 	int insertChkUse(Map<String, Object> param);
+	/** 사용 서식 세트를 가진 병원코드들('*' 포함) — 새 서식을 어디에 켜야 하는지 알려 준다(2026-09-08). */
+	List<String> selectChkUseSets();
+	/** 새 서식을 그 세트에 한 줄 켠다 — 이미 있으면 아무 일도 하지 않는다. */
+	int insertChkUseOne(@Param("hospCd") String hospCd, @Param("formId") String formId,
+	                    @Param("regUser") String regUser);
 	/** 서식 화면에서 부서·분류 코드 추가 — 추가만(지우기는 공통코드 화면에서). */
 	int insertChkCode(Map<String, Object> param);
 	/** 서식코드 중복 검사 — 새 서식 저장 전 필수(안 하면 남의 서식을 덮는다). */

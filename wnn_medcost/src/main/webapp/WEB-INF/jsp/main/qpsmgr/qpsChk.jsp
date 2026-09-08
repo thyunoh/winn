@@ -176,6 +176,9 @@
   <%-- ★화면 안 일괄 출력 (2026-09-07 「각각 등록화면에서 일괄출력이 필요함 — 별도 화면은 확인도 안 되고 효율이 떨어짐」)
        이 서식(또는 이 부서 서식 전부)의 저장된 점검표를 기간으로 골라 한 번에 이어 인쇄. 아래 #ckBulkPrintBox 에 펼친다. --%>
   <button type="button" class="ck-btn ghost" onclick="ckBulkPrintToggle();" title="이 서식(또는 이 부서 서식 전부)의 저장된 점검표를 기간으로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
+  <%-- ★화면 안 일괄 사인 (2026-09-08 — 일괄 작성·일괄 출력에 이은 세 묶음의 마지막)
+       고른 점검표들의 **빈 사인 칸**을 내 이름으로 채워 저장한다. 아래 #ckBulkSignBox 에 펼친다. --%>
+  <button type="button" class="ck-btn ghost" onclick="ckBulkSignToggle();" title="이 서식(또는 이 부서 서식 전부)의 저장된 점검표에 빈 사인 칸만 내 이름으로 채워 저장합니다">✍ 일괄 사인</button>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="ck-zoom">
     <button type="button" onclick="ckZoom(-1);" title="글자 작게">가－</button>
@@ -270,6 +273,21 @@
       <button type="button" class="ck-btn ghost" onclick="ckBulkPrintToggle();">닫기</button>
     </div>
     <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 점검표만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 연·반기·분기 서식은 그 해 것을 담고, 「이 서식만」은 위 병동 필터를 따릅니다. 한 번에 120장까지. <span id="ckBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
+  </div>
+  <%-- ✍ 일괄 사인 조건 띠 (2026-09-08) — [✍ 일괄 사인]로 열고 닫는다.
+       ★일괄 출력과 다르다 : 이쪽은 **자료를 고쳐 저장한다**. 그래서 조건 띠 색을 달리하고(초록) 실행 전에 반드시 묻는다. --%>
+  <div id="ckBulkSignBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b7ddc9; border-radius:8px; background:#eef8f2; font-size:12.5px; color:#1f2a37;">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <b style="color:#1f7a52;">✍ 일괄 사인</b>
+      <label class="ck-chk"><input type="radio" name="ckBsScope" value="F" checked> 이 서식만 <span id="ckBsFormNm" style="color:#5a6b7a;"></span></label>
+      <label class="ck-chk"><input type="radio" name="ckBsScope" value="D"> 이 부서 서식 전부 <span id="ckBsDeptNm" style="color:#5a6b7a;"></span></label>
+      <span style="margin-left:8px;">기간 <b id="ckBsYear"></b>년</span>
+      <select id="ckBsFrom" style="width:auto;"></select><span>~</span><select id="ckBsTo" style="width:auto;"></select>
+      <span style="margin-left:8px;">서명 <b id="ckBsNm" style="color:#1f7a52;"></b></span>
+      <button type="button" class="ck-btn" id="ckBsGo" style="margin-left:auto;" onclick="ckBulkSignGo();">서명</button>
+      <button type="button" class="ck-btn ghost" onclick="ckBulkSignToggle();">닫기</button>
+    </div>
+    <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;"><b>빈 사인 칸만</b> 채워 저장합니다 — 이미 적힌 사인은 그대로 둡니다(사인 머리 더블클릭과 같은 규칙). 위 <b>「토·일·공휴일 제외」</b> 설정을 따르고, 사인 칸이 없는 서식·채울 칸이 없는 문서는 건드리지 않습니다. 한 번에 200건까지. <span id="ckBsStat" style="color:#1f7a52; font-weight:700;"></span></div>
   </div>
   <%-- ★탭 (2026-08-15) — 사진칸이 있는 서식에서만 나온다(ckTabSync). 없으면 가를 것이 없다. --%>
   <div class="ck-tabs" id="ckTabs" style="display:none;"></div>
@@ -1852,11 +1870,18 @@
   function ckWardForm(){
     return !!FORM && (FORM.deptcd === 'NURSE' || DOCS.some(function(d){ return String(d.wardnm || '').trim(); }));
   }
-  window.ckSave = function(){
-    if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
+  /* opts(선택, 2026-09-08 일괄 사인) — { quiet:true } 면 **저장만** 하고 프라미스를 돌려준다.
+     묻지 않고(이미 저장된 문서라 병동은 그대로다) · 토스트도 없고 · 목록 재조회도 안 한다(순회가 스스로 다음 문서로 옮긴다).
+     ★저장 payload 는 한 곳(여기)에서만 만든다 — 일괄용을 따로 두면 낱장 저장과 갈려 조용히 어긋난다. */
+  window.ckSave = function(opts){
+    var quiet = !!(opts && opts.quiet);
+    if (!FORM) {
+      if (quiet) return Promise.reject(new Error('서식이 없습니다.'));
+      _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return;
+    }
     // ★빈 병동 확인(2026-09-02 밤, B9) — 병동 서식인데 병동이 비면 **한 번** 묻는다. 막지 않는다(SUNWOO 「병동선택 없이 진행하시겠습니까?」와 같다)
     var askKey = curSeq || 'new';
-    if (!val('f_wardNm') && ckWardForm() && ckWardAskedFor !== askKey) {
+    if (!quiet && !val('f_wardNm') && ckWardForm() && ckWardAskedFor !== askKey) {
       _confirmBox({ msg: '병동이 비어 있습니다.<br>병동 없이 저장할까요?', icon: '🏥', okText: '병동 없이 저장',
                     onOk: function(){ ckWardAskedFor = askKey; ckSave(); },
                     onCancel: function(){ gel('f_wardNm').focus(); } });
@@ -1873,12 +1898,13 @@
               cols: JSON.stringify(c.cols) };
     // 상단 자유칸 — 없는 칸은 빈 값으로 보낸다(서버가 8개를 다 받는다)
     for (var hi = 1; hi <= HEAD_MAX; hi++) m['head' + hi] = val('f_head' + hi);
-    post('<c:url value="/qps/chkSave.do"/>', m).then(function(res){
-      _toast('저장되었습니다.', 'ok');
+    return post('<c:url value="/qps/chkSave.do"/>', m).then(function(res){
       curSeq = Number(res.chkSeq);
+      if (quiet) return res;                                    // 일괄 사인 — 알림도 재조회도 없이 다음 문서로
+      _toast('저장되었습니다.', 'ok');
       if (ckWardAskedFor === askKey) ckWardAskedFor = curSeq;   // 「병동 없이」로 답한 새 문서는 저장 뒤에도 다시 안 묻는다
-      ckBase().then(function(){ gel('ckDoc').value = String(curSeq); ckPickDoc(); });
-    }).catch(err);
+      return ckBase().then(function(){ gel('ckDoc').value = String(curSeq); ckPickDoc(); });
+    }).catch(function(e){ if (quiet) throw e; err(e); });
   };
 
   /* ═══ 전월 복사 · 월 생성 (2026-08-12, v3 순서 9) ═══
@@ -2095,7 +2121,11 @@
     window.ckBase = function(q){
       var r = base0(q);
       // 일괄 출력이 서식을 넘기며 ckBase 를 여러 번 부르는 동안은 현황을 다시 읽지 않는다(끝나고 원래 서식으로 돌아올 때 한 번)
-      return Promise.resolve(r).then(function(x){ if (gel('ckStatBox').style.display !== 'none' && !(window.BP && window.BP.busy)) ckStatLoad(); return x; });
+      return Promise.resolve(r).then(function(x){
+        var bulk = (window.BP && window.BP.busy) || (window.BS && window.BS.busy);   // 일괄 출력·일괄 사인 중엔 건너뛴다(2026-09-08)
+        if (gel('ckStatBox').style.display !== 'none' && !bulk) ckStatLoad();
+        return x;
+      });
     };
   })();
 
@@ -2186,9 +2216,14 @@
         var j = 0;
         var oneDoc = function(){
           if (j >= docs.length || done >= MAX) { nextForm(); return; }
-          gel('ckDoc').value = String(docs[j++].chkseq);
+          var pseq = Number(docs[j++].chkseq);
+          gel('ckDoc').value = String(pseq);
+          curSeq = 0;                                      // ★못 연 문서를 가려내려고 먼저 내린다(아래 대조 · 2026-09-08)
           Promise.resolve(ckPickDoc()).then(function(){
             setTimeout(function(){                         // 격자가 붙은 뒤에 찍는다(일괄 출력 화면과 같은 틈)
+              /* ★못 열었으면 건너뛴다 — ckPickDoc 은 실패를 catch 가 삼키므로 그냥 찍으면
+                 **앞 문서가 한 번 더** 종이에 실린다(다른 QPS 화면에서 먼저 겪은 함정). */
+              if (curSeq !== pseq) { oneDoc(); return; }
               bpPhotosWait().then(function(){              // 사진칸 서식은 blob 이 붙을 때까지(2026-09-08)
                 try { ckPrint(); done++; } catch (e) { }
                 stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + done + '장';
@@ -2201,6 +2236,124 @@
       }, function(){ nextForm(); });
     };
     nextForm();
+  };
+
+  /* ═══ ✍ 화면 안 일괄 사인 (2026-09-08 — 「일괄 작성 · 일괄 출력 · 일괄 사인」 세 묶음의 마지막) ═══
+     뜻(사용자 확정) : **점검표 여러 문서의 빈 사인 칸을 내 이름으로 한 번에** 채운다.
+       지금도 한 문서 안에서는 사인 머리를 더블클릭하면 그 줄이 채워진다(SUNWOO signLine) — 그것을 **여러 문서에** 하는 것이다.
+     범위·기간 조건은 일괄 출력과 **같은 규약**(이 서식 / 이 부서 서식 전부 · 연도 + 월 범위 · 「이 서식만」은 병동 필터를 따름).
+     ★★일괄 출력과 결정적으로 다른 점 — **자료를 고쳐 저장한다.** 그래서
+       ①조건 띠 색을 달리하고(초록) ②실행 전에 반드시 묻고 ③**빈 칸만** 채운다(이미 적힌 사인은 안 덮는다 — 전체 O·전월복사와 같은 원칙)
+       ④채울 칸이 없는 문서는 **저장조차 하지 않는다**(안 건드린 문서의 수정일시가 바뀌면 「누가 손댔나」가 흐려진다).
+     ★결재(승인)가 아니다 — 결재선이 도는 것은 지표분석보고서뿐이고, 이건 종이 서식의 **점검자 사인 칸**이다.
+     ★상한 200건. */
+  window.BS = { busy:false };
+  function bsMonths(){
+    var mf = gel('ckBsFrom'), mt = gel('ckBsTo');
+    if (mf.options.length) return;
+    for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
+  }
+  /** 이 문서의 빈 사인 칸을 이름으로 채운다 — 사인 머리 더블클릭과 **같은 규칙**을 쓴다(빈 칸만 · 토·일·공휴일 제외 설정 존중). */
+  function bsFill(nm){
+    var box = gel('ckGridWrap'); if (!box) return 0;
+    var n = 0;
+    box.querySelectorAll('input[data-r]').forEach(function(el){
+      if (Number(el.getAttribute('data-r')) !== SIGN_NO || String(el.value).trim() || ckCellOff(el)) return;
+      el.value = nm; n++;
+    });
+    return n;
+  }
+  window.ckBulkSignToggle = function(){
+    var box = gel('ckBulkSignBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
+    var nm = ckUserNm();
+    if (!nm) { _alertBox('로그인 사용자 이름을 찾지 못했습니다.<br>사인을 넣을 이름이 없어 일괄 사인을 쓸 수 없습니다.', {icon:'⚠️'}); return; }
+    bsMonths();
+    gel('ckBsFrom').value = '01'; gel('ckBsTo').value = '12';
+    gel('ckBsFormNm').textContent = '(' + FORM.formnm + ')';
+    gel('ckBsDeptNm').textContent = val('ckDept') ? ('(' + deptNmOf(val('ckDept')) + ' ' + (FORMS || []).length + '종)') : ('(전체 ' + (FORMS || []).length + '종)');
+    gel('ckBsYear').textContent = gel('ckYear').value;
+    gel('ckBsNm').textContent = nm;
+    gel('ckBsStat').textContent = '';
+    box.style.display = '';
+  };
+  window.ckBulkSignGo = function(){
+    if (BS.busy || BP.busy || !FORM) return;
+    var nm = ckUserNm();
+    if (!nm) { _alertBox('로그인 사용자 이름을 찾지 못했습니다.', {icon:'⚠️'}); return; }
+    var scope = (document.querySelector('input[name=ckBsScope]:checked') || {}).value || 'F';
+    var yy = gel('ckYear').value, f = gel('ckBsFrom').value, t = gel('ckBsTo').value;
+    if (f > t) { var x = f; f = t; t = x; gel('ckBsFrom').value = f; gel('ckBsTo').value = t; }
+    var forms = (scope === 'D') ? (FORMS || []).slice() : [FORM];
+    var wardF = (scope === 'F') ? gel('ckWardF').value : '';
+    var whatNm = (scope === 'D') ? (val('ckDept') ? (deptNmOf(val('ckDept')) + ' 서식 전부') : '전체 서식') : FORM.formnm;
+    var prd = yy + '년 ' + ((f === '01' && t === '12') ? '전체' : (Number(f) + '~' + Number(t) + '월'));
+
+    /* ★자료를 고쳐 저장하므로 반드시 묻는다(일괄 출력에는 없는 단계) */
+    _confirmBox({
+      msg: '<b>' + esc(whatNm) + '</b> · ' + esc(prd) + ' 의 저장된 점검표에<br>' +
+           '<b>' + esc(nm) + '</b> 이름으로 서명합니다.<br><br>' +
+           '<span style="color:#6b7c86;font-size:12px;">· <b>빈 사인 칸만</b> 채웁니다 — 이미 적힌 사인은 그대로 둡니다.<br>' +
+           '· 채운 문서는 <b>저장</b>됩니다(되돌리려면 그 문서를 열어 지워야 합니다).<br>' +
+           '· 사인 칸이 없는 서식은 건너뜁니다.</span>',
+      icon: '✍', okText: '서명', onOk: function(){ run(); }
+    });
+
+    function run(){
+      var keepForm = gel('ckForm').value, keepSeq = curSeq;
+      var MAX = 200, docsN = 0, cellN = 0, fi = 0, stat = gel('ckBsStat');
+      BS.busy = true; gel('ckBsGo').disabled = true;
+      var finish = function(){
+        gel('ckForm').value = keepForm;                    // 원래 보던 서식·문서로
+        Promise.resolve(ckBase()).then(function(){
+          if (keepSeq) { gel('ckDoc').value = String(keepSeq); return ckPickDoc(); }
+          ckNew();
+        }).then(function(){
+          BS.busy = false; gel('ckBsGo').disabled = false;
+          stat.textContent = docsN
+            ? (docsN + '건에 사인 ' + cellN + '칸을 넣어 저장했습니다' + (docsN >= MAX ? ' (상한 ' + MAX + '건)' : '') + '.')
+            : '채울 빈 사인 칸이 없었습니다(이미 서명됐거나 사인 칸이 없는 서식입니다).';
+          if (docsN) _toast(docsN + '건에 서명했습니다.', 'ok');
+        }, function(){ BS.busy = false; gel('ckBsGo').disabled = false; });
+      };
+      var nextForm = function(){
+        if (fi >= forms.length || docsN >= MAX) { finish(); return; }
+        var fm = forms[fi++];
+        gel('ckForm').value = fm.formid;
+        stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' 읽는 중 …';
+        Promise.resolve(ckBase()).then(function(){
+          var docs = (DOCS || []).filter(function(d){
+            if (!bpInRange(d, yy, f, t)) return false;
+            if (wardF) { var w = String(d.wardnm || '').trim(); return (wardF === '(없음)') ? !w : (w === wardF); }
+            return true;
+          });
+          var j = 0;
+          var oneDoc = function(){
+            if (j >= docs.length || docsN >= MAX) { nextForm(); return; }
+            var seq = Number(docs[j++].chkseq);
+            gel('ckDoc').value = String(seq);
+            /* ★먼저 0 으로 내린다 — ckPickDoc 은 실패를 catch 가 삼켜서 **앞 문서 번호가 그대로 남는다.**
+               그러면 「못 열었는데 앞 문서에 서명·저장」이 된다(화면 격자도 앞 문서 것 그대로다). */
+            curSeq = 0;
+            Promise.resolve(ckPickDoc()).then(function(){
+              setTimeout(function(){                        // 격자가 붙은 뒤에 채운다(일괄 출력과 같은 틈)
+                if (curSeq !== seq) { oneDoc(); return; }    // 못 연 문서는 건너뛴다 — 앞 문서에 서명하면 안 된다
+                var n = bsFill(nm);
+                if (!n) { oneDoc(); return; }                // 채울 칸이 없으면 저장하지 않는다(수정일시를 안 건드린다)
+                ckSave({ quiet:true }).then(function(){
+                  docsN++; cellN += n;
+                  stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + docsN + '건 · ' + cellN + '칸';
+                  oneDoc();
+                }, function(){ oneDoc(); });                 // 저장이 실패해도 순회는 이어 간다
+              }, 150);
+            }, function(){ oneDoc(); });
+          };
+          oneDoc();
+        }, function(){ nextForm(); });
+      };
+      nextForm();
+    }
   };
 
   window.ckDel = function(){

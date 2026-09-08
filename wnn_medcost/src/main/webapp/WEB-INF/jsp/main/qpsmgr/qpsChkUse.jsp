@@ -223,10 +223,18 @@
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   /* ★Swal 은 프로젝트 표준 — ***창은 작게***(부서·서식 이름이 여러 줄로 접힌다).
      ⚠Swal 창은 body 바로 밑에 붙으므로 #qpsChkUse 안에 CSS 를 두면 안 먹는다 → 인라인 옵션으로 준다. */
+  /* ★알림·확인은 **프로젝트 표준 ui-message.js**(2026-09-08 전 QPS 화면 일괄 정리).
+     ⛔Swal 직접 호출 금지 — 상시 방침(CLAUDE.md 머리)인데 이 화면들이 남아 있었다. */
   function toast(text, icon){
-    if (!window.Swal) return;
-    Swal.fire({ icon:icon || 'info', title:text, width:380, padding:'0.9em',
-                timer:2200, showConfirmButton:false });
+    var t = (icon === 'success') ? 'ok' : (icon === 'warning' || icon === 'warn') ? 'warn' : 'info';
+    if (window._toast) { _toast(text, t); return; }
+    _alertBox(text, { icon: (t === 'ok') ? '✅' : 'ℹ️' });
+  }
+  function ask(html){
+    return new Promise(function(resolve){
+      _confirmBox({ msg: html, icon: '❓', okText: '예',
+                    onOk: function(){ resolve(true); }, onCancel: function(){ resolve(false); } });
+    });
   }
   /** 위너넷이 다른 병원(또는 ★기본 세트 '*')을 고른 경우에만 병원코드를 보낸다.
       ⚠막는 것은 서버다 — hospCd() 가 s_wnn_yn='Y' 일 때만 이 값을 받는다. */
@@ -489,12 +497,7 @@
   /** ★기본으로 되돌리기 = 이 병원 지정을 지운다 — 그러면 기본 세트를 따라간다 */
   window.cuReset = function(){
     if (DEFMODE) return;
-    var ask = window.Swal
-      ? Swal.fire({ html:'우리 병원 지정을 지우고 <b>기본 설정</b>을 따릅니다.<br>계속할까요?',
-                    width:400, padding:'1em', showCancelButton:true,
-                    confirmButtonText:'예', cancelButtonText:'아니오' }).then(function(r){ return !!r.value; })
-      : Promise.resolve(confirm('우리 병원 지정을 지우고 기본 설정을 따릅니다. 계속할까요?'));
-    ask.then(function(ok){
+    ask('우리 병원 지정을 지우고 <b>기본 설정</b>을 따릅니다.<br>계속할까요?').then(function(ok){
       if (!ok) return;
       doSave([], '기본 설정으로 되돌렸습니다.');
     });

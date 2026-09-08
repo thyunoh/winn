@@ -58,12 +58,80 @@
   #qpsPrintAll .btn:disabled{ opacity:.5; cursor:default; }
   #qpsPrintAll .stat{ font-size:12.5px; color:#4a5560; margin-left:6px; flex:1 1 auto; min-width:180px; }
   #qpsPrintAll .hint{ margin-top:12px; font-size:12px; color:#8a99a3; line-height:1.7; }
+  /* 두 길 안내 띠 (2026-09-08) — 등록 화면 일괄 출력과 역할이 갈린다는 것을 첫 화면에서 알린다 */
+  #qpsPrintAll .way{ max-width:1080px; margin:0 0 12px; padding:9px 12px; border:1px solid #d7e5f5;
+                     border-left:4px solid #2f6fb0; border-radius:8px; background:#f4f9ff;
+                     font-size:12.5px; color:#3b4c57; line-height:1.65; }
+  #qpsPrintAll .way b{ color:#2f6fb0; }
+  /* 그 등록 화면으로 보내는 바로가기 — 여러 건은 거기서 조건 걸어 뽑는다 */
+  #qpsPrintAll .row .goscr{ height:24px; padding:0 9px; border:1px solid #cfd8e0; border-radius:6px;
+                            background:#fff; font-size:11.5px; font-weight:700; color:#4a5560;
+                            cursor:pointer; white-space:nowrap; }
+  #qpsPrintAll .row .goscr:hover{ background:#eef4fb; border-color:#b9cfe6; color:#2f6fb0; }
   #qpsBulkFrames{ position:fixed; left:-10000px; top:0; width:1200px; height:900px; }
+
+  /* ═══ 업무 모드 (2026-09-08 사용자 「주기랑 찾기는 작성 현황으로 옮겨줘」) ═══
+     이 화면에는 성격이 다른 두 업무가 섞여 있었다 :
+       · 📋 작성 현황 = 어느 서식을 얼마나 썼나 · 주기는 무엇인가 · 빠진 것은 없나   (찾기 · 주기)
+       · 🖨 묶음 인쇄 = 고른 서식을 한 벌로 뽑는다                                  (고르기 · 인쇄)
+     ⚠**화면을 둘로 쪼개지는 않았다** — 서식 표 127종과 iframe 기계(frameSrc·grab·message)를
+       두 벌로 두면 한쪽만 고쳐 반드시 어긋난다(이 저장소가 여러 번 겪은 함정).
+     ⇒ 기계는 한 벌로 두고 **메뉴와 보이는 것만** 업무별로 가른다(`?mode=stat` · 아래 CSS).
+     ★새 메뉴는 자바 없이 붙는다 — JSP 가 `param.mode` 를 그대로 읽는다(서버가 받은 요청이라 주소 숨김과 무관). */
+  #qpsPrintAll.m-stat  .paChk,                        /* 현황에는 고르기·인쇄가 없다 */
+  #qpsPrintAll.m-stat  #paAllLb,
+  #qpsPrintAll.m-stat  .gsel,
+  #qpsPrintAll.m-stat  #paBar,
+  #qpsPrintAll.m-stat  #wayPrint,
+  #qpsPrintAll.m-stat  #hintPrint,
+  #qpsPrintAll.m-stat  #h3Print,
+  #qpsPrintAll.m-stat  #subPrint,
+  #qpsPrintAll.m-print .cyc,                          /* 인쇄에는 주기·찾기가 없다 */
+  #qpsPrintAll.m-print #paChk,
+  #qpsPrintAll.m-print .gfind,
+  #qpsPrintAll.m-print .desc,
+  #qpsPrintAll.m-print #wayStat,
+  #qpsPrintAll.m-print #hintStat,
+  #qpsPrintAll.m-print #h3Stat,
+  #qpsPrintAll.m-print #subStat{ display:none !important; }
+
+  /* 업무 탭 — 메뉴를 둘로 내면 이름이 닮아 중복으로 읽힌다(2026-09-08 사용자 지적) ⇒ 메뉴는 하나, 여기서 가른다 */
+  #qpsPrintAll .modes{ display:flex; gap:6px; margin:0 0 12px; border-bottom:2px solid #dfe4ea; }
+  #qpsPrintAll .modes button{ border:1px solid #cfd9e0; border-bottom:0; background:#f4f7f9; color:#43555f;
+      border-radius:8px 8px 0 0; padding:7px 16px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  #qpsPrintAll .modes button:hover{ background:#e9eff3; }
+  #qpsPrintAll.m-print .modes button[data-m="print"],
+  #qpsPrintAll.m-stat  .modes button[data-m="stat"]{ background:#1f5a4b; border-color:#1f5a4b; color:#fff; }
 </style>
 
-<div id="qpsPrintAll">
-  <h3>🖨 일괄 출력</h3>
-  <div class="sub">고른 서식을 한 번에 이어 붙여 인쇄합니다. 화면에 있는 그대로 모을 뿐, 자료를 만들거나 고치지 않습니다.</div>
+<%-- 모드 — 주소의 ?mode=stat 이면 「작성 현황」, 아니면 「묶음 인쇄」. 서버가 받은 파라미터라 그대로 읽힌다. --%>
+<c:set var="paMode" value="${param.mode eq 'stat' ? 'stat' : 'print'}"/>
+
+<div id="qpsPrintAll" class="m-${paMode}">
+  <h3 id="h3Print">🖨 서식 묶음 인쇄</h3>
+  <h3 id="h3Stat">📋 서식 작성 현황</h3>
+  <%-- ★두 길을 첫 줄에서 갈라 준다(2026-09-08) — 등록 화면마다 [🖨 일괄 출력] 이 생기면서
+       「같은 이름의 기능이 두 군데」가 됐다. 무엇을 어디서 하는지 여기서 못 박지 않으면
+       라운딩 12달치를 이 화면에서 뽑으려다 1장만 나오는 식으로 헛돈다. --%>
+  <div class="sub" id="subPrint">서식 <b>종류를 가로질러</b> 한 벌로 묶어 인쇄합니다 — 실사·인증 준비용입니다.
+    화면에 있는 그대로 모을 뿐, 자료를 만들거나 고치지 않습니다.</div>
+  <div class="sub" id="subStat">어느 서식을 <b>얼마나 썼는지</b> · 작성 주기가 무엇인지 · 빠진 것은 없는지 봅니다.
+    보기만 할 뿐, 자료를 만들거나 고치지 않습니다.</div>
+
+  <%-- 업무 탭 — 성격이 다른 두 업무를 여기서 가른다(메뉴는 한 줄). 서식 표·기계는 한 벌이라 탭만 바뀐다. --%>
+  <div class="modes">
+    <button type="button" data-m="print" onclick="paMode('print');">🖨 묶음 인쇄</button>
+    <button type="button" data-m="stat"  onclick="paMode('stat');">📋 작성 현황</button>
+  </div>
+  <div class="way" id="wayPrint">
+    <b>한 서식의 여러 건</b>(라운딩 3~7월 · 회의록 정기만 · QI 보고서 중간·최종 …)은
+    <b>그 등록 화면의 [🖨 일괄 출력]</b> 이 훨씬 잘합니다 — 업무 조건(기간·구분·회차)으로 걸러 뽑습니다.
+    아래 서식 줄 오른쪽 <b>[화면에서 →]</b> 로 바로 갑니다.
+  </div>
+  <div class="way" id="wayStat">
+    <b>[🔎 찾기]</b> 는 서식마다 화면을 한 번씩 열어 보므로 <b>서식 수만큼 시간이 듭니다</b> — 묶음 머리의 [🔎 찾기] 로 한 묶음씩 보는 편이 빠릅니다.
+    <b>주기</b>는 그 자리에서 고치면 바로 저장됩니다. 뽑는 것은 <b>[🖨 서식 묶음 인쇄]</b> 메뉴에서 합니다.
+  </div>
 
   <div class="card">
     <div class="bar" style="margin:0 0 10px; padding-bottom:10px; border-bottom:1px solid #e6edf1;">
@@ -80,23 +148,31 @@
     </div>
 
     <div class="row" style="border-bottom:1px solid #e6edf1;">
-      <label><input type="checkbox" id="paAll" onclick="paToggleAll(this)"> <b>전체 고르기</b></label>
+      <label id="paAllLb"><input type="checkbox" id="paAll" onclick="paToggleAll(this)"> <b>전체 고르기</b></label>
       <button type="button" class="gsel" onclick="paAllGrp(true)" style="margin-left:auto;">⌄ 전체 펼치기</button>
       <button type="button" class="gsel" onclick="paAllGrp(false)">⌃ 전체 접기</button>
       <span class="desc">한 장짜리 서식부터 담았습니다</span>
     </div>
     <div id="paList"></div>
 
-    <div class="bar">
-      <button type="button" class="btn go" id="paGo" onclick="paRun()">고른 서식 인쇄</button>
+    <div class="bar" id="paBar">
+      <button type="button" class="btn go" id="paGo" onclick="paRun()">고른 서식 묶어 인쇄</button>
       <button type="button" class="btn" onclick="paClear()">고른 것 지우기</button>
       <span class="stat" id="paStat"></span>
     </div>
 
-    <div class="hint">
+    <div class="hint" id="hintPrint">
       · 서식마다 화면을 열어 그 화면의 인쇄 내용을 그대로 가져옵니다 — 낱장으로 뽑을 때와 같은 모양입니다.<br>
+      · <b>서식 하나에 한 장씩</b> 담깁니다(그 화면이 지금 보여 주는 것). 한 서식을 <b>여러 건</b> 뽑으려면
+        오른쪽 <b>[화면에서 →]</b> 로 그 화면에 가서 [🖨 일괄 출력] 을 쓰세요 — 회의록만 이 화면에서도 기간 안 여러 건을 담습니다.<br>
       · 자료가 없는 서식은 빈 양식으로 나옵니다. 빼려면 체크를 풀어 주세요.<br>
       · 서식과 서식 사이는 새 장으로 넘어갑니다.
+    </div>
+    <div class="hint" id="hintStat">
+      · <b>찾기</b> 는 그 서식의 화면을 열어 「인쇄할 내용이 나오는가」로 봅니다 — 나오면 <b>작성됨</b>입니다(인쇄와 같은 길이라 결과가 어긋나지 않습니다).<br>
+      · <b>주기</b> 는 그 서식을 얼마나 자주 써야 하는지입니다(매일·매주·매월·분기·반기·연 1회·그때그때). 고르면 바로 저장되어 다음에도 그대로 나옵니다.<br>
+      · 점검표는 서식이 수십 종이라 서버가 한 번에 세어 줍니다 — 묶음 머리의 [🔎 찾기] 로 보세요.<br>
+      · 자세한 문서 목록·작성자·최근 작성일은 <b>점검표 작성 화면의 [📋 작성 현황]</b> 에서 봅니다(점검표 전용).
     </div>
   </div>
 </div>
@@ -222,7 +298,11 @@
       for (var k in CYC) op += '<option value="' + k + '"' + (f.cyc === k ? ' selected' : '') + '>' + CYC[k] + '</option>';
       h += '<div class="row"><label><input type="checkbox" class="paChk" data-grp="' + f.grp + '" value="' + f.key + '" onclick="paCount()"> ' + f.nm + '</label>' +
            '<select class="cyc" data-key="' + f.key + '" onchange="paCycSave(this)" title="작성 주기 — 고치면 바로 저장됩니다">' + op + '</select>' +
-           '<span class="desc" id="paSt_' + f.key + '">' + (f.note || '') + '</span></div>';   /* 주소(.do)는 안 보인다 — 화면에 쓸 말이 아니다(2026-09-07) */
+           '<span class="desc" id="paSt_' + f.key + '">' + (f.note || '') + '</span>' +
+           /* ★그 등록 화면으로 — 여러 건은 거기서 업무 조건으로 걸러 뽑는다(2026-09-08) */
+           '<button type="button" class="goscr" data-key="' + f.key + '" onclick="paGoScreen(event, this)"' +
+           ' title="이 서식의 등록 화면을 새 창으로 엽니다 — 여러 건은 그 화면의 [🖨 일괄 출력] 으로 뽑으세요">화면에서 →</button>' +
+           '</div>';   /* 주소(.do)는 안 보인다 — 화면에 쓸 말이 아니다(2026-09-07) */
     });
     if (gi >= 0) h += '</div>';
     gel('paList').innerHTML = h;
@@ -263,6 +343,28 @@
     if (bx) bx.hidden = !open;
     if (hd) { hd.className = 'grp' + (open ? ' on' : ''); var a = hd.querySelector('.ar'); if (a) a.textContent = open ? '▾' : '▸'; }
   }
+
+  /* ★[화면에서 →] — 그 서식의 등록 화면을 연다(2026-09-08).
+     까닭 : 이 화면은 **서식 하나에 한 장**만 담는다(그 화면이 지금 보여 주는 것). 한 서식의 **여러 건**은
+     2026-09-08 에 등록 화면 21곳마다 붙인 [🖨 일괄 출력] 이 업무 조건(기간·구분·회차)으로 걸러 훨씬 잘 뽑는다.
+     여기서 길을 터 주지 않으면 「라운딩 12달치가 왜 1장만 나오나」로 헛돈다.
+     ★새 창으로 연다 — 고르던 체크를 잃지 않는다(Q&A 화면에서 확정한 규약과 같다).
+     ★고른 해를 ?yy= 로 넘긴다 — 각 화면의 qpsPickYear 가 읽는다(frameSrc 와 같은 규약). */
+  /* 업무 탭 — 보이는 것만 바꾼다(서식 표·iframe 기계는 한 벌이라 다시 읽을 것이 없다).
+     ★찾는 중에는 바꾸지 않는다 — 진행 표시가 다른 탭으로 사라져 「멈춘 것처럼」 보인다. */
+  window.paMode = function (m) {
+    if (running) { gel('paChkStat').textContent = '찾는 중입니다 — 끝난 뒤에 옮겨 주세요.'; return; }
+    var root = gel('qpsPrintAll');
+    root.className = (m === 'stat') ? 'm-stat' : 'm-print';
+  };
+
+  window.paGoScreen = function (ev, btn) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    var f = fdef(btn.getAttribute('data-key'));
+    if (!f) return;
+    var s = CTX + f.url + (f.url.indexOf('?') < 0 ? '?' : '&') + 'yy=' + year();
+    window.open(s, '_blank');
+  };
 
   /* 묶음 하나만 고르기 — 이미 다 골라져 있으면 푼다. 머리를 누른 것으로 번지지 않게 이벤트를 멈춘다. */
   window.paPickGrp = function (ev, btn) {
