@@ -85,6 +85,8 @@
   <select id="spYear" style="width:auto;" onchange="spLoad();"></select>
   <button type="button" class="qp-btn" onclick="spSave();">저장</button>
   <button type="button" class="qp-btn ghost" onclick="spPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 4호) : 저장된 해만 골라 한 번에 이어 인쇄. 아래 #spBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qp-btn ghost" onclick="spBulkPrintToggle();" title="저장된 만족도 조사 계획서를 연도 범위로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span class="qp-sub" id="spStat"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
@@ -92,6 +94,17 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 「연 1부」 문서라 조건은 연도 범위뿐. 저장된 해만 담는다. --%>
+<div id="spBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span>
+    <select id="spBpFrom" style="width:auto;"></select><span>~</span><select id="spBpTo" style="width:auto;"></select>
+    <button type="button" class="qp-btn" id="spBpGo" style="margin-left:auto;" onclick="spBulkPrintGo();">출력</button>
+    <button type="button" class="qp-btn ghost" onclick="spBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 해의 계획서만 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 한 번에 120장까지. <span id="spBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
@@ -220,13 +233,18 @@
     return items;
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.spLoad = function(){
+    var my = ++LOAD_REQ;
     /* 첨부 키 = 년도|S. 구분을 빼면 질향상 계획서 첨부와 섞인다. */
     if (fileBox) fileBox.setKey(gel('spYear').value + '|' + FORM_GB);
+    LAST_DOC = false;   // ★먼저 내린다 — 조회가 실패하면(err 가 삼켜 resolve 로 온다) 앞 해의 값이 남아 잘못 찍힌다
     return post('<c:url value="/qps/planGet.do"/>', { formGb: FORM_GB, inYear: gel('spYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('spHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       var plan = res.plan, items = res.items || [];
+      LAST_DOC = !!plan;
       gel('spSubmitDt').value = (plan && plan.submitdt) ? plan.submitdt : '';
       gel('spStat').textContent = plan ? ('최종수정 ' + (plan.upddttm || '')) : '작성 전 — 기본 틀을 채워 두었습니다';
       SECTS.forEach(function(sect){
@@ -276,6 +294,61 @@
         _toast(n ? (n + '개 칸을 채웠습니다. 확인 후 저장해 주세요.') : '채울 빈 칸이 없습니다.', n ? 'ok' : 'info');
       });
     }).catch(err);
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 4호 · 연 문서형) ═══
+     「연 1부」라 목록이 없다. 해를 하나씩 열어(spLoad) **저장된 해만**(LAST_DOC) 낱장 인쇄(spPrint)를 QPS_BULK_CB 로 모아
+     끝에 qpsPrintMerge(sidebar.jsp)로 한 문서. 빈 해는 기본 틀이 깔려 있어 그대로 찍으면 빈 서식이 섞인다.
+     ★조사안내문(spPrintNotice)은 게시용 별건이라 안 담는다. 끝나면 보던 해로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  var LAST_DOC = false;   // 지금 보이는 해에 저장된 계획서가 있는가 — 일괄 출력이 빈 해를 거른다
+  function bpFill(){
+    var yf = gel('spBpFrom'), yt = gel('spBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('spYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.spBulkPrintToggle = function(){
+    var box = gel('spBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('spBpFrom').value = gel('spYear').value; gel('spBpTo').value = gel('spYear').value;
+    gel('spBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.spBulkPrintGo = function(){
+    if (BP.busy) return;
+    var f = Number(gel('spBpFrom').value), t = Number(gel('spBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('spBpFrom').value = String(f); gel('spBpTo').value = String(t); }
+    var keepYear = gel('spYear').value;
+    var title = '만족도조사계획서_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('spBpStat'), yi = 0;
+    BP.busy = true; gel('spBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('spYear').value = keepYear;                     // 보던 해로
+      Promise.resolve(spLoad()).then(function(){
+        BP.busy = false; gel('spBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 계획서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; gel('spBpGo').disabled = false; });
+    };
+    var oneYear = function(){
+      if (yi >= years.length || done >= MAX) { finish(); return; }
+      var yy = years[yi++];
+      gel('spYear').value = yy;
+      stat.textContent = yy + '년 읽는 중 …';
+      Promise.resolve(spLoad()).then(function(){
+        if (LAST_DOC) { try { spPrint(); done++; } catch (e) { } }
+        stat.textContent = yy + '년 — ' + done + '부';
+        oneYear();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
   };
 
   // ---------- 인쇄(A4) — 별도 창(QPS 공통 방식) ----------

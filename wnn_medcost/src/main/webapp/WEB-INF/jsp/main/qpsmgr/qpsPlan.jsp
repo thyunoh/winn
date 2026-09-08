@@ -74,6 +74,8 @@
   <select id="plYear" style="width:auto;" onchange="plLoad();"></select>
   <button type="button" class="qp-btn" onclick="plSave();">저장</button>
   <button type="button" class="qp-btn ghost" onclick="plPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 4호) : 저장된 해만 골라 한 번에 이어 인쇄. 아래 #plBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qp-btn ghost" onclick="plBulkPrintToggle();" title="이 구분(또는 둘 다)의 저장된 계획서를 연도 범위로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="qp-zoom">
     <button type="button" onclick="plZoom(-1);" title="글자 작게">가－</button>
@@ -81,6 +83,20 @@
     <button type="button" onclick="plZoom(0);"  title="처음 크기로">↺</button>
   </span>
   <span class="qp-sub" id="plStat"></span>
+</div>
+
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 계획서는 「구분 × 연 1부」 문서라 조건도 그것 : 구분(이 구분/둘 다) · 연도 범위. 저장된 해만 담는다. --%>
+<div id="plBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="plBpScope" value="F" checked> 이 구분만 <span id="plBpGbNm" style="color:#5a6b7a;"></span></label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="plBpScope" value="A"> 질향상·감염 둘 다</label>
+    <span style="margin-left:8px;">연도</span>
+    <select id="plBpFrom" style="width:auto;"></select><span>~</span><select id="plBpTo" style="width:auto;"></select>
+    <button type="button" class="qp-btn" id="plBpGo" style="margin-left:auto;" onclick="plBulkPrintGo();">출력</button>
+    <button type="button" class="qp-btn ghost" onclick="plBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 해의 계획서만 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 한 번에 120장까지. <span id="plBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <%-- ★탭 (2026-08-15) — 카드 제목에서 이름을 뽑아 그린다. 「전체」는 종전처럼 쭉 훑는 자리. --%>
@@ -291,15 +307,20 @@
     return items;
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.plLoad = function(){
+    var my = ++LOAD_REQ;
     /* 첨부 키 = 년도|구분. ★구분을 빼면 감염 계획서 첨부가 질향상 것과 섞인다(2026-08-10). */
     if (fileBox) fileBox.setKey(document.getElementById('plYear').value + '|' + plGb());
     var t = document.getElementById('plTitle');
     if (t) t.textContent = (plGb()==='I') ? '감염관리 활동계획서' : '질향상및 환자안전 활동계획서';
+    LAST_DOC = false;   // ★먼저 내린다 — 조회가 실패하면(err 가 삼켜 resolve 로 온다) 앞 해의 값이 남아 잘못 찍힌다
     return post('/qps/planGet.do', { formGb: plGb(), inYear: document.getElementById('plYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('plHosp').textContent = '🏥 ' + HOSP_NM; }
       var plan = res.plan, items = res.items || [];
+      LAST_DOC = !!plan;
       document.getElementById('plSubmitDt').value = (plan && plan.submitdt) ? plan.submitdt : '';
       document.getElementById('plStat').textContent = plan ? ('최종수정 ' + (plan.upddttm || '')) : '작성 전 — 기본 틀을 채워 두었습니다';
       SECTS.forEach(function(sect){
@@ -323,6 +344,72 @@
       _toast('저장되었습니다.', 'ok');
       return plLoad();
     }).catch(err);
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 4호 · 연 문서형) ═══
+     ★조건은 이 업무의 말로 — 계획서는 「구분 × 연 1부」라 목록이 없다. 해를 하나씩 열어(plLoad) **저장된 해만**(LAST_DOC)
+       낱장 인쇄(plPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서. 빈 해는 기본 틀이 깔려 있어
+       그대로 찍으면 빈 서식이 섞인다. ★자료를 만들지 않는다. 끝나면 보던 구분·해로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  var LAST_DOC = false;   // 지금 보이는 해에 저장된 계획서가 있는가 — 일괄 출력이 빈 해를 거른다
+  function $id(id){ return document.getElementById(id); }
+  function bpFill(){
+    var yf = $id('plBpFrom'), yt = $id('plBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call($id('plYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  function plGbNm(v){ var o = document.querySelector('#plGb option[value="' + v + '"]'); return o ? o.text : v; }
+  window.plBulkPrintToggle = function(){
+    var box = $id('plBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    $id('plBpFrom').value = $id('plYear').value; $id('plBpTo').value = $id('plYear').value;
+    $id('plBpGbNm').textContent = '(' + plGbNm(plGb()) + ')';
+    $id('plBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.plBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=plBpScope]:checked') || {}).value || 'F';
+    var f = Number($id('plBpFrom').value), t = Number($id('plBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; $id('plBpFrom').value = String(f); $id('plBpTo').value = String(t); }
+    var gbs = (scope === 'A') ? Array.prototype.map.call($id('plGb').options, function(o){ return o.value; }) : [plGb()];
+    var keepYear = $id('plYear').value, keepGb = plGb();
+    var title = '활동계획서_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + (scope === 'A' ? '전체' : plGbNm(keepGb)) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = $id('plBpStat'), gi = 0;
+    BP.busy = true; $id('plBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      $id('plGb').value = keepGb; $id('plYear').value = keepYear;   // 보던 구분·해로
+      Promise.resolve(plLoad()).then(function(){
+        BP.busy = false; $id('plBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 계획서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; $id('plBpGo').disabled = false; });
+    };
+    var nextGb = function(){
+      if (gi >= gbs.length || done >= MAX) { finish(); return; }
+      $id('plGb').value = gbs[gi++];
+      var yi = 0;
+      var oneYear = function(){
+        if (yi >= years.length || done >= MAX) { nextGb(); return; }
+        var yy = years[yi++];
+        $id('plYear').value = yy;
+        stat.textContent = '(' + plGbNm(plGb()) + ') ' + yy + '년 읽는 중 …';
+        Promise.resolve(plLoad()).then(function(){
+          if (LAST_DOC) { try { plPrint(); done++; } catch (e) { } }
+          stat.textContent = '(' + plGbNm(plGb()) + ') ' + yy + '년 — ' + done + '부';
+          oneYear();
+        }, function(){ oneYear(); });
+      };
+      oneYear();
+    };
+    nextGb();
   };
 
   // ---------- 인쇄(A4 여러 장) — 별도 창 방식 ----------

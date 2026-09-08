@@ -67,6 +67,8 @@
   <input type="month" id="cdYm" style="width:auto;" onchange="cdLoad();">
   <button type="button" class="cd-btn" onclick="cdSave();">저장</button>
   <button type="button" class="cd-btn ghost" onclick="cdPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 3호) : 저장된 달만 골라 한 번에 이어 인쇄. 아래 #cdBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="cd-btn ghost" onclick="cdBulkPrintToggle();" title="저장된 월별 기록지를 월 범위로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span class="cd-sub" id="cdStat"></span>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
@@ -75,6 +77,19 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 월별 기록지는 「월 1부」 문서라 조건은 연도 · 월 범위뿐. 저장된 달만 담는다. --%>
+<div id="cdBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>기간</span>
+    <select id="cdBpYear" style="width:auto;"></select>
+    <select id="cdBpFrom" style="width:auto;"></select><span>~</span><select id="cdBpTo" style="width:auto;"></select>
+    <button type="button" class="cd-btn" id="cdBpGo" style="margin-left:auto;" onclick="cdBulkPrintGo();">출력</button>
+    <button type="button" class="cd-btn ghost" onclick="cdBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 달의 기록지만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 한 번에 120장까지. <span id="cdBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="cd-note">
@@ -111,6 +126,7 @@
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, function(c){
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function n(v){ var x = parseInt(v, 10); return isNaN(x) ? 0 : x; }
+  var LAST_DOC = false;   // 지금 보이는 달에 저장된 기록지가 있는가 — 일괄 출력이 빈 달을 거른다(2026-09-08)
 
   (function(){
     var d = new Date();
@@ -156,9 +172,15 @@
   }
   gel('cdBody').addEventListener('input', paint);
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.cdLoad = function(){
+    var my = ++LOAD_REQ;
     if (ym().length !== 6) return;
-    post('/qps/cathDayGet.do', { cathYm: ym() }).then(function(res){
+    LAST_DOC = false;   // ★먼저 내린다 — 조회가 실패하면(err 가 삼켜 resolve 로 온다) 앞 달의 값이 남아 잘못 찍힌다
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('/qps/cathDayGet.do', { cathYm: ym() }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
+      LAST_DOC = !!res.doc;
       var map = {};
       (res.items || []).forEach(function(r){ map[n(r.dayno)] = r; });
       build(map);
@@ -187,6 +209,62 @@
                 ' 일이 요로감염 지표의 분모로 넘어갔습니다.', {icon:'✅'});
       cdLoad();
     }).catch(err);
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 3호 · 월 문서형) ═══
+     월별 기록지는 「월 1부」라 목록이 없다. 달을 하나씩 열어(cdLoad) **저장된 달만**(LAST_DOC) 낱장 인쇄(cdPrint)를
+     QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서. 빈 달은 날짜 줄만 깔려 있어 그대로 찍으면 빈 표가 섞인다.
+     ★자료를 만들지 않는다. 끝나면 보던 달로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var ys = gel('cdBpYear');
+    if (!ys.options.length) { var y = new Date().getFullYear(); for (var i = y + 1; i >= y - 4; i--) ys.add(new Option(i + '년', i)); }
+    var mf = gel('cdBpFrom'), mt = gel('cdBpTo');
+    if (mf.options.length) return;
+    for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
+  }
+  window.cdBulkPrintToggle = function(){
+    var box = gel('cdBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('cdBpYear').value = ym().substring(0, 4); gel('cdBpFrom').value = '01'; gel('cdBpTo').value = '12';
+    gel('cdBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.cdBulkPrintGo = function(){
+    if (BP.busy) return;
+    var yy = gel('cdBpYear').value, f = gel('cdBpFrom').value, t = gel('cdBpTo').value;
+    if (f > t) { var x = f; f = t; t = x; gel('cdBpFrom').value = f; gel('cdBpTo').value = t; }
+    var keepYm = gel('cdYm').value;
+    var title = '유치도뇨관 월별기록지_' + yy + '년' + (f === '01' && t === '12' ? '' : ('_' + Number(f) + '~' + Number(t) + '월'));
+    var months = [];
+    for (var m = Number(f); m <= Number(t); m++) months.push((m < 10 ? '0' : '') + m);
+    var parts = [], MAX = 120, done = 0, stat = gel('cdBpStat'), mi = 0;
+    BP.busy = true; gel('cdBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('cdYm').value = keepYm;                        // 보던 달로
+      Promise.resolve(cdLoad()).then(function(){
+        BP.busy = false; gel('cdBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 기록지가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; gel('cdBpGo').disabled = false; });
+    };
+    var oneMonth = function(){
+      if (mi >= months.length || done >= MAX) { finish(); return; }
+      var mm = months[mi++];
+      gel('cdYm').value = yy + '-' + mm;
+      stat.textContent = yy + '년 ' + Number(mm) + '월 읽는 중 …';
+      Promise.resolve(cdLoad()).then(function(){
+        if (LAST_DOC) { try { cdPrint(); done++; } catch (e) { } }
+        stat.textContent = yy + '년 ' + Number(mm) + '월 — ' + done + '장';
+        oneMonth();
+      }, function(){ oneMonth(); });
+    };
+    oneMonth();
   };
 
   window.cdPrint = function(){

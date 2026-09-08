@@ -1483,7 +1483,11 @@
   })();
 
   function setPhotos(files){
-    Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
+    /* ★일괄 출력 중에는 blob URL 을 거두지 않는다(2026-09-08) — 모아 둔 인쇄 조각(QPS_BULK_CB)이
+       이 URL 을 그대로 들고 있어, 다음 문서를 열며 거두면 끝에 합친 종이에서 사진이 깨진다.
+       거두지 않은 URL 은 페이지를 떠날 때 브라우저가 정리한다(상한 120장이라 부담 없음). */
+    if (!(window.BP && BP.busy))
+      Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
     PHOTOS = {};
     (files || []).forEach(function(f){
       var s = Number(f.fileseq);
@@ -2108,6 +2112,20 @@
     if (mf.options.length) return;
     for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
   }
+  /** 사진 blob 이 붙을 때까지(최대 4초) — 안 기다리면 사진칸 서식(RAD022 등)이 종이에서 빈다(2026-09-08).
+      못 받은 칸은 두고 간다(낱장 인쇄와 같은 결과). */
+  function bpPhotosWait(){
+    var keys = Object.keys(PHOTOS);
+    if (!photoNms().length || !keys.length) return Promise.resolve();
+    return new Promise(function(done){
+      var n = 0;
+      (function tick(){
+        var ok = keys.every(function(k){ return !PHOTOS[k] || PHOTOS[k].url; });
+        if (ok || ++n > 33) { done(); return; }
+        setTimeout(tick, 120);
+      })();
+    });
+  }
   window.ckBulkPrintToggle = function(){
     var box = gel('ckBulkPrintBox');
     if (box.style.display !== 'none') { box.style.display = 'none'; return; }
@@ -2170,10 +2188,12 @@
           if (j >= docs.length || done >= MAX) { nextForm(); return; }
           gel('ckDoc').value = String(docs[j++].chkseq);
           Promise.resolve(ckPickDoc()).then(function(){
-            setTimeout(function(){                         // 격자·사진이 붙은 뒤에 찍는다(일괄 출력 화면과 같은 틈)
-              try { ckPrint(); done++; } catch (e) { }
-              stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + done + '장';
-              oneDoc();
+            setTimeout(function(){                         // 격자가 붙은 뒤에 찍는다(일괄 출력 화면과 같은 틈)
+              bpPhotosWait().then(function(){              // 사진칸 서식은 blob 이 붙을 때까지(2026-09-08)
+                try { ckPrint(); done++; } catch (e) { }
+                stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + done + '장';
+                oneDoc();
+              });
             }, 150);
           }, function(){ oneDoc(); });
         };

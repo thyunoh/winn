@@ -164,6 +164,8 @@
   <div class="qf-spacer"></div>
   <select id="qfYear"></select>
   <button type="button" class="qf-btn ghost" onclick="qfReload();">↻ 새로고침</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 10호) : 연도 범위 × 회차의 지표분석보고서를 이어 인쇄. 아래 #qfBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qf-btn ghost" onclick="qfBulkPrintToggle();" title="연도 범위·회차의 지표분석보고서를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 - 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
@@ -171,6 +173,27 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 이 화면은 「한 지표 · 연도 × 회차(분기·반기)마다 지표분석보고서 1부」라
+     조건은 연도 범위 + 회차 + 작성된 회차만 담을지. 수치는 해마다 다시 계산되므로 해를 옮길 때 자료를 통째로 다시 읽는다. --%>
+<div id="qfBulkPrintBox" style="display:none; margin:6px 0 10px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span>
+    <select id="qfBpFrom" style="width:auto;"></select><span>~</span><select id="qfBpTo" style="width:auto;"></select>
+    <span style="margin-left:8px;">회차</span>
+    <select id="qfBpPrd" style="width:auto;">
+      <option value="ONE">지금 고른 회차만</option>
+      <option value="Q" selected>분기 4회(1~4/4)</option>
+      <option value="A">분기·반기 6회 전부</option>
+    </select>
+    <span class="qf-sub" id="qfBpPrdNm"></span>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0 0 0 8px;"><input type="checkbox" id="qfBpDone" checked> 서술이 작성된 회차만</label>
+    <button type="button" class="qf-btn" id="qfBpGo" style="margin-left:auto;" onclick="qfBulkPrintGo();">출력</button>
+    <button type="button" class="qf-btn ghost" onclick="qfBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">회차마다 보고서 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 수치는 그때 다시 계산, 확정된 회차는 동결값). 체크를 끄면 아직 안 쓴 회차도 수치만 있는 보고서로 찍힙니다. 병원 확인은 <b>맨 처음 한 번만</b> 묻습니다. 한 번에 120부까지. <span id="qfBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="qf-tabs">
@@ -494,6 +517,9 @@
   // ★incidRaw 는 모듈 스코프여야 한다 — 행 클릭 핸들러는 한 번만 붙는데,
   //   목록을 다시 불러올 때마다 새 배열을 지역변수에 담으면 핸들러가 낡은 배열을 계속 본다(선택 시 옛 자료).
   var dtIncid = null, chart = null, curDef = null, incidRaw = [], lastCalc = null;
+  // ★일괄 출력이 대조하는 표식(2026-09-08) — lastCalc 가 어느 해 수치인지 · 화면의 서술이 어느 회차 것인지.
+  //   조회 실패를 catch 가 삼키므로 「앞 해·앞 회차 것이 그대로 찍히는」 사고를 이 두 값으로 막는다.
+  var CALC_YY = '', RPT_KEY = '', LAST_RPT = false;
   var dtMon = null, monRaw = [];   // 관찰형(손위생) 목록
 
   // ---------- 공통 ----------
@@ -1143,12 +1169,15 @@
 
   // ---------- 탭3 : 지표분석 ----------
   function indiLoad(){
+    CALC_YY = '';   // ★먼저 비운다(2026-09-08) — 조회가 실패하면 catch 가 삼켜 앞 해의 수치가 남는다.
+    var my = year();
     return post('/qps/indiCalc.do', {
-      indiCd: INDI_CD, incidGb: INCID_GB, inYear: year(),
-      fromDt: year() + '0101', toDt: year() + '1231'
+      indiCd: INDI_CD, incidGb: INCID_GB, inYear: my,
+      fromDt: my + '0101', toDt: my + '1231'
     }).then(function(res){
       curDef = res.indi || {};
       lastCalc = res;                 // 인쇄물이 이 값을 그대로 쓴다(다시 계산하지 않는다)
+      CALC_YY = my;                   // 이 수치가 어느 해 것인지 — 일괄 출력이 대조해 엉뚱한 해를 안 찍는다
       // ★병원 배지를 매번 서버 응답으로 다시 쓴다 — 상단 [병원검색]으로 병원을 바꾸면
       //   숫자는 바로 새 병원 것이 되는데 배지·인쇄물만 옛 병원으로 남는 문제가 있었다(2026-08-09).
       if (res.hosp) {
@@ -1424,11 +1453,15 @@
   function prdOf(){ var k = document.getElementById('qfPrdKey').value; return { gb: k.charAt(0), key: year() + k }; }
   window.qfReportLoad = function(){
     var p = prdOf();
-    post('/qps/reportGet.do', { indiCd: INDI_CD, prdGb: p.gb, prdKey: p.key }).then(function(res){
+    RPT_KEY = ''; LAST_RPT = false;   // ★먼저 비운다(2026-09-08) — 실패를 catch 가 삼키면 앞 회차의 서술이 남는다
+    // ★프라미스를 돌려준다 — 일괄 출력이 「서술·결재까지 온 뒤」 찍는다(결재란이 인쇄물에 들어간다)
+    return post('/qps/reportGet.do', { indiCd: INDI_CD, prdGb: p.gb, prdKey: p.key }).then(function(res){
       var r = res.report || {};
       set('r_act1', r.act1txt); set('r_act2', r.act2txt); set('r_act3', r.act3txt); set('r_act4', r.act4txt);
       set('r_analysis', r.analysistxt); set('r_plan', r.plantxt);
       document.getElementById('qfRptStat').textContent = r.upddttm ? ('최종수정 ' + r.upddttm) : '작성 전';
+      RPT_KEY = p.key;
+      LAST_RPT = !!r.upddttm;          // 화면의 「작성 전」 판정과 같은 기준
       return apprLoad();   // 기간이 바뀌면 결재 상태도 그 기간 것으로 바뀐다
     }).catch(err);
   };
@@ -1652,8 +1685,111 @@
     var d = new Date();
     return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + '.';
   }
-  window.qfPrint = function(){
-    if (!lastCalc || !curDef || !curDef.indinm) { _alertBox('지표를 먼저 불러온 뒤 인쇄해 주세요.', {icon:'⚠️'}); return; }
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 10호 · 지표 하나 × 연도 × 회차) ═══
+     이 화면은 다른 QPS 화면과 문서 단위가 다르다 — 목록이 없고, **한 지표의 연도 × 회차(분기·반기)마다 지표분석보고서 1부**다.
+     조건 = 연도 범위 + 회차(지금 회차만 / 분기 4회 / 분기·반기 6회) + ☑서술이 작성된 회차만.
+     ★수치는 해마다 다시 계산되므로 해를 옮길 때 `qfReload`(지표계산·재원일수·사고목록·서술)를 통째로 다시 돌린다 — 느리지만 이 화면의 사실이다.
+     ★확정(최종승인)된 회차는 낱장 인쇄와 똑같이 **동결값**으로 찍힌다(qfPrint 안 frozenMap 이 판단).
+     ★병원 확인창은 **맨 처음 한 번만** — 낱장 인쇄의 확인 취지(위너넷이 여러 병원을 오간다)는 지키되 회차마다 묻지 않는다. 상한 120부. */
+  window.BP = { busy:false };
+  var BP_PRDS = { Q: ['Q1','Q2','Q3','Q4'], A: ['Q1','Q2','Q3','Q4','H1','H2'] };
+  function bpFill(){
+    var yf = document.getElementById('qfBpFrom'), yt = document.getElementById('qfBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(document.getElementById('qfYear').options, function(o){
+      yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value));
+    });
+  }
+  function bpPrdNm(k){ return (k.charAt(0) === 'Q') ? (k.charAt(1) + '/4 분기') : (k === 'H1' ? '상반기(중간)' : '하반기(최종)'); }
+  window.qfBulkPrintToggle = function(){
+    var box = document.getElementById('qfBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    document.getElementById('qfBpFrom').value = year(); document.getElementById('qfBpTo').value = year();
+    document.getElementById('qfBpPrdNm').textContent = '— 지금 고른 회차는 ' + bpPrdNm(document.getElementById('qfPrdKey').value);
+    document.getElementById('qfBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.qfBulkPrintGo = function(){
+    if (BP.busy) return;
+    var f = Number(document.getElementById('qfBpFrom').value), t = Number(document.getElementById('qfBpTo').value);
+    if (f > t) { var x = f; f = t; t = x;
+      document.getElementById('qfBpFrom').value = String(f); document.getElementById('qfBpTo').value = String(t); }
+    var scope = document.getElementById('qfBpPrd').value;
+    var doneOnly = document.getElementById('qfBpDone').checked;
+    var keepYear = year(), keepPrd = document.getElementById('qfPrdKey').value;
+    var prds = (scope === 'ONE') ? [keepPrd] : (BP_PRDS[scope] || BP_PRDS.Q);
+    var indiNm = (curDef && curDef.indinm) ? curDef.indinm : '지표';
+    var title = indiNm + ' 지표분석보고서_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + (HOSP_NM || '');
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+
+    /* ★병원 확인 — 낱장 인쇄와 같은 취지로 한 번만 묻는다(제출물이라 어느 병원인지 못 박는다) */
+    _confirmBox({
+      msg: '<b>' + esc(HOSP_NM || '(병원 미확인)') + '</b> 기준으로 <b>' + esc(indiNm) + '</b> 지표분석보고서를 이어서 인쇄합니다.<br>' +
+           esc(years[0]) + '~' + esc(years[years.length - 1]) + '년 · ' +
+           esc(scope === 'ONE' ? ('지금 회차(' + bpPrdNm(keepPrd) + ')') : (prds.length + '회차')) +
+           (doneOnly ? ' · 서술이 작성된 회차만' : ' · 안 쓴 회차도 포함') + '<br><br>' +
+           '<span style="color:#6b7c86;font-size:12px;">해마다 자료를 다시 계산하므로 범위가 넓으면 시간이 걸립니다.<br>' +
+           '다른 병원이면 상단 [병원검색]에서 바꾼 뒤 다시 하세요.</span>',
+      icon: '🖨', okText: '인쇄',
+      onOk: function(){ run(); }
+    });
+
+    function run(){
+      var parts = [], MAX = 120, done = 0, stat = document.getElementById('qfBpStat'), yi = 0;
+      BP.busy = true; document.getElementById('qfBpGo').disabled = true;
+      window.QPS_BULK_CB = function(p){ parts.push(p); };
+      var finish = function(){
+        window.QPS_BULK_CB = null;
+        document.getElementById('qfYear').value = keepYear;             // 보던 해·회차로
+        document.getElementById('qfPrdKey').value = keepPrd;
+        Promise.resolve(qfReload()).then(function(){
+          BP.busy = false; document.getElementById('qfBpGo').disabled = false;
+          if (!parts.length) { stat.textContent = doneOnly ? '조건에 맞는(서술이 작성된) 회차가 없습니다.' : '찍을 회차가 없습니다.'; return; }
+          var n = qpsPrintMerge(parts, title);
+          stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                             (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+        }, function(){ BP.busy = false; document.getElementById('qfBpGo').disabled = false; });
+      };
+      var oneYear = function(){
+        if (yi >= years.length || done >= MAX) { finish(); return; }
+        var yy = years[yi++];
+        document.getElementById('qfYear').value = yy;
+        stat.textContent = yy + '년 자료 읽는 중 …';
+        Promise.resolve(qfReload()).then(function(){
+          if (CALC_YY !== yy) { oneYear(); return; }   // 그 해 수치를 못 받았다 — 앞 해 수치가 이 해 이름으로 찍히면 안 된다
+          var ks = prds.slice(), j = 0;
+          var onePrd = function(){
+            if (j >= ks.length || done >= MAX) { oneYear(); return; }
+            var k = ks[j++];
+            document.getElementById('qfPrdKey').value = k;
+            Promise.resolve(qfReportLoad()).then(function(){
+              if (RPT_KEY !== (yy + k)) { onePrd(); return; }          // 서술·결재를 못 받았다 — 앞 회차 것이 찍히면 안 된다
+              if (doneOnly && !LAST_RPT) { onePrd(); return; }         // 아직 안 쓴 회차는 건너뛴다
+              new Promise(function(res){ qfPrint({ noAsk:true, done:res }); }).then(function(okv){
+                if (okv) done++;
+                stat.textContent = yy + '년 — ' + done + '부';
+                onePrd();
+              });
+            }, function(){ onePrd(); });
+          };
+          onePrd();
+        }, function(){ oneYear(); });
+      };
+      oneYear();
+    }
+  };
+
+  /* opts(선택, 2026-09-08 일괄 출력) — { noAsk:true, done:fn }
+     ★noAsk 면 병원 확인창을 건너뛴다. 일괄 출력은 **맨 처음 한 번만** 묻고 회차마다 다시 묻지 않는다
+       (회차 6개 × 여러 해면 확인창이 수십 번 뜬다). done 은 성공·실패 둘 다 부른다 — 안 부르면 순회가 멈춘다. */
+  window.qfPrint = function(opts){
+    var done = (opts && opts.done) || null;
+    if (!lastCalc || !curDef || !curDef.indinm) {
+      if (done) { done(false); return; }
+      _alertBox('지표를 먼저 불러온 뒤 인쇄해 주세요.', {icon:'⚠️'}); return;
+    }
     var d = curDef, lab = labelsOf(d), ms = lastCalc.months || [];
 
     // ★확정(동결)된 기간이면 동결값으로 찍는다 — 화면 표(applyFrozenToView)와 같은 헬퍼를 쓴다
@@ -1864,6 +2000,8 @@
 
     // ★제출물이라 어느 병원으로 나가는지 한 번 확인시킨다 —
     //   위너넷 계정은 여러 병원을 오가므로 "병원을 안 바꾸고 인쇄"가 실제로 일어난다(2026-08-09 지적).
+    var out = function(){ doPrint(body, (d.indinm || '지표') + ' 지표분석보고서_' + (hosp || '') + '_' + prdLabelPlain()); };
+    if (opts && opts.noAsk) { out(); if (done) done(true); return; }   // 일괄 출력 — 확인은 맨 처음 한 번만 물었다
     _confirmBox({
       msg: '<b>' + esc(hosp || '(병원 미확인)') + '</b> 기준으로 인쇄합니다.<br>' +
            esc(d.indinm) + ' · ' + esc(prdLabel()) + '<br><br>' +
@@ -1871,7 +2009,7 @@
            '인쇄창이 새 창으로 열립니다. 종이 위·아래의 <b>날짜·페이지번호</b>까지 없애려면<br>' +
            '인쇄 설정의 <b>[추가 설정] → [머리글 및 바닥글]</b> 체크를 끄세요.</span>',
       icon: '🖨', okText: '인쇄',
-      onOk: function(){ doPrint(body, (d.indinm || '지표') + ' 지표분석보고서_' + (hosp || '') + '_' + prdLabelPlain()); }
+      onOk: function(){ out(); if (done) done(true); }
     });
     };   // /goPrint
 
@@ -1926,7 +2064,8 @@
   // ★공통코드를 그보다 먼저 받는다 — incidSetupUi(유형 목록)·관찰 폼이 코드를 본다.
   //   실패해도 catch 로 삼키고 진행한다(코드는 폴백이 있는 부가물이라 화면을 막으면 안 된다).
   window.qfReload = function(){
-    indiLoad().then(censusLoad).then(incidLoad).then(qfReportLoad).catch(err);
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「그 해 자료가 다 온 뒤」 회차를 돈다
+    return indiLoad().then(censusLoad).then(incidLoad).then(qfReportLoad).catch(err);
   };
   $(function(){
     post('/qps/codeList.do', {}).then(function(res){ CODES = res.codes || {}; applyCodes(); })

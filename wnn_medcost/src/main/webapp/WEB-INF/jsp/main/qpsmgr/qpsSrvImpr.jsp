@@ -90,6 +90,8 @@
   <select id="siYear" style="width:auto;" onchange="siList();"></select>
   <button type="button" class="si-btn" onclick="siSave();">저장</button>
   <button type="button" class="si-btn ghost" onclick="siPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 8호) : 연도 범위의 저장된 보고서(부서×유형)를 이어 인쇄. 아래 #siBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="si-btn ghost" onclick="siBulkPrintToggle();" title="연도 범위의 저장된 개선활동 결과보고서를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="si-btn warn" id="siDelBtn" onclick="siDel();" style="display:none;">삭제</button>
   <span class="si-sub" id="siStat"></span>
   <span style="flex:0 0 60px;"></span>
@@ -99,6 +101,18 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 개선활동 결과보고서는 「부서×유형으로 여러 장 · 연도 목록」이라 조건은 연도 범위, 그 해 보고서 전부. --%>
+<div id="siBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span>
+    <select id="siBpFrom" style="width:auto;"></select><span>~</span><select id="siBpTo" style="width:auto;"></select>
+    <span style="color:#5a6b7a;">— 그 해의 보고서 전부(부서·유형마다 한 장씩)</span>
+    <button type="button" class="si-btn" id="siBpGo" style="margin-left:auto;" onclick="siBulkPrintGo();">출력</button>
+    <button type="button" class="si-btn ghost" onclick="siBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 보고서만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 첨부 사진은 안 실림). 한 번에 120장까지. <span id="siBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
@@ -150,7 +164,8 @@
 
 <script>
 (function(){
-  var curSeq = 0, HOSP_NM = '', APPR_LINE = [];
+  var curSeq = 0, HOSP_NM = '', APPR_LINE = [],
+      LIST = [];   // 지금 보이는 보고서 목록(연도) — 일괄 출력이 순회한다(2026-09-08)
 
   var fileBox = window.qpsFileBox({ mount:'siFileBox', refGb:'SRVIMPR',
       hint:'개선 전·후 사진', needSaveMsg:'보고서를 먼저 저장하면 사진을 붙일 수 있습니다.' });
@@ -207,11 +222,15 @@
     return out;
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.siList = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/srvImprList.do"/>', { inYear: gel('siYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('siHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
-      var list = res.list || [], box = gel('siListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('siListBox');
       gel('siCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       if (!list.length) { box.innerHTML = '<div class="si-empty">보고서가 없습니다.<br>[＋ 새 보고서]로 만드세요.</div>'; return; }
       box.innerHTML = list.map(function(r){
@@ -223,7 +242,8 @@
   };
 
   window.siOpen = function(seq){
-    post('<c:url value="/qps/srvImprGet.do"/>', { imprSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/srvImprGet.do"/>', { imprSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.imprseq || 0);
       set('f_imprSeq', d.imprseq); set('f_deptNm', d.deptnm); set('f_typeNm', d.typenm);
@@ -235,7 +255,7 @@
       gel('siStat').textContent = '— 저장된 보고서 #' + d.imprseq;
       gel('siDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.imprseq);
-      siList();
+      if (!(window.BP && BP.busy)) siList();   // 일괄 출력 중엔 생략 — 늦게 온 응답이 다음 해 목록을 덮는다
     }).catch(err);
   };
 
@@ -297,6 +317,70 @@
     APPR_LINE.forEach(function(){ h += '<td></td>'; });
     return h + '</tr></tbody></table>';
   }
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 8호 · 연도 목록형) ═══
+     개선활동 결과보고서는 「부서×유형 1장」이 연도 목록으로 있다. 해마다 목록(siList)을 받아 보고서를 하나씩 열어(siOpen)
+     낱장 인쇄(siPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서.
+     ★자료를 만들지 않는다. 첨부 사진은 낱장 인쇄와 같이 안 실린다. 끝나면 보던 해·보고서로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var yf = gel('siBpFrom'), yt = gel('siBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('siYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.siBulkPrintToggle = function(){
+    var box = gel('siBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('siBpFrom').value = gel('siYear').value; gel('siBpTo').value = gel('siYear').value;
+    gel('siBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.siBulkPrintGo = function(){
+    if (BP.busy) return;
+    var f = Number(gel('siBpFrom').value), t = Number(gel('siBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('siBpFrom').value = String(f); gel('siBpTo').value = String(t); }
+    var keepYear = gel('siYear').value, keepSeq = curSeq;
+    var title = '만족도개선활동_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('siBpStat'), yi = 0;
+    BP.busy = true; gel('siBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('siYear').value = keepYear;                     // 보던 해·보고서로
+      Promise.resolve(siList()).then(function(){
+        if (keepSeq) siOpen(keepSeq); else siNew();
+        BP.busy = false; gel('siBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 보고서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; gel('siBpGo').disabled = false; });
+    };
+    var oneYear = function(){
+      if (yi >= years.length || done >= MAX) { finish(); return; }
+      var yy = years[yi++];
+      gel('siYear').value = yy;
+      stat.textContent = yy + '년 목록 읽는 중 …';
+      Promise.resolve(siList()).then(function(){
+        var docs = (LIST || []).slice(), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { oneYear(); return; }
+          var seq = Number(docs[j++].imprseq);
+          Promise.resolve(siOpen(seq)).then(function(){
+            if (curSeq !== seq) { oneDoc(); return; }   // 못 열렸으면(err 가 삼킨 실패) 건너뛴다 — 앞 보고서가 찍히면 안 된다
+            try { siPrint(); done++; } catch (e) { }
+            stat.textContent = yy + '년 — ' + done + '장';
+            oneDoc();
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
+  };
 
   window.siPrint = function(){
     var yy = gel('siYear').value, headType = val('f_typeNm');

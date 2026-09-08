@@ -69,6 +69,8 @@
   <%-- 저장·인쇄는 <상단>에 둔다 — QPS 화면 공통(2026-08-10 확정) --%>
   <button type="button" class="qd-btn" onclick="qdSave();">저장</button>
   <button type="button" class="qd-btn ghost" onclick="qdPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 8호) : 이 영역/전체 지표의 정의서를 한 장씩 이어 인쇄. 아래 #qdBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qd-btn ghost" onclick="qdBulkPrintToggle();" title="영역·전체 지표의 정의서를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
@@ -76,6 +78,18 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 지표정의서는 「지표마다 1장 · 연도 없음」이라 조건은 지표 범위(이 영역/전체) + 우리 병원이 채운 것만 담을지. --%>
+<div id="qdBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="qdBpScope" value="F" checked> 이 영역의 지표(<span id="qdBpAreaNm"></span>)</label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="qdBpScope" value="A"> 전체 지표</label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0 0 0 8px;"><input type="checkbox" id="qdBpOwn"> 우리 병원이 채운 정의서만</label>
+    <button type="button" class="qd-btn" id="qdBpGo" style="margin-left:auto;" onclick="qdBulkPrintGo();">출력</button>
+    <button type="button" class="qd-btn ghost" onclick="qdBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">지표마다 정의서 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 체크를 끄면 아직 공통 기본값인 지표도 그 기본값으로 찍힙니다. 한 번에 120장까지. <span id="qdBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div id="qdBody" style="display:none;">
@@ -149,7 +163,8 @@
   var $root   = document.getElementById('qpsDef');
   var INDI_CD = $root.getAttribute('data-indicd') || '';
   var WNN_YN  = $root.getAttribute('data-wnn') || 'N';
-  var curDef = null, apprLine = [], HOSP_NM = '';
+  var curDef = null, apprLine = [], HOSP_NM = '',
+      LIST = [];   // 지표 목록(영역·차례 · defown) — 일괄 출력이 순회한다(2026-09-08)
 
   // ★hospCd 를 보내지 않는다 — 서버가 매 요청 쿠키(s_hospid)를 본다(다른 QPS 화면과 같은 원칙).
   //   ★dataType:'json' 필수 — 빠뜨리면 응답이 문자열로 와서 조용히 실패한다.
@@ -167,12 +182,15 @@
   function num(v){ return (v==null||v==='') ? '' : Number(v).toLocaleString(); }
   function cycNm(c){ return c === 'Q' ? '분기별' : c === 'H' ? '반기별' : c === 'Y' ? '연 1회' : (c || ''); }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.qdLoad = function(){
+    var my = ++LOAD_REQ;
     var cd = document.getElementById('qdIndi').value || INDI_CD;
     if (!cd) { document.getElementById('qdBody').style.display = 'none';
                document.getElementById('qdEmpty').style.display = ''; return; }
     INDI_CD = cd;
     return post('/qps/indiDefGet.do', { indiCd: cd, inYear: new Date().getFullYear() }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       var d = res.def || {};
       curDef = d;
       apprLine = res.line || [];
@@ -181,7 +199,8 @@
         var b = document.getElementById('qdHosp');
         if (b) b.textContent = '🏥 ' + HOSP_NM;
       }
-      fillIndiSelect(res.list || [], cd);
+      LIST = res.list || [];
+      fillIndiSelect(LIST, cd);
 
       set('d_area', d.areanm);        set('d_deptNm', d.deptnm);
       set('d_indiNm', d.indinm);      set('d_ownerNm', d.ownernm);
@@ -279,6 +298,62 @@
     '.appr td{ height:46px; width:62px; }' +
     '.foot{ margin-top:14px; font-size:11px; text-align:center; }' +
     'tr{ page-break-inside:avoid; }';
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 8호 · 지표 목록형) ═══
+     지표정의서는 「지표마다 1장」, 연도가 없다. 조건 = 지표 범위(이 영역 / 전체) + ☑우리 병원이 채운 것만(목록의 defown='Y').
+     지표를 하나씩 열어(qdLoad) 낱장 인쇄(qdPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서.
+     ★자료를 만들지 않는다. 끝나면 보던 지표로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function qid(id){ return document.getElementById(id); }
+  function bpAreaOf(cd){
+    for (var i = 0; i < LIST.length; i++) if (String(LIST[i].indicd) === String(cd)) return LIST[i].areanm || '기타';
+    return '';
+  }
+  window.qdBulkPrintToggle = function(){
+    var box = qid('qdBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    qid('qdBpAreaNm').textContent = bpAreaOf(INDI_CD) || '—';
+    qid('qdBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.qdBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=qdBpScope]:checked') || {}).value || 'F';
+    var ownOnly = qid('qdBpOwn').checked, area = bpAreaOf(INDI_CD);
+    var keepCd = INDI_CD;
+    var docs = (LIST || []).filter(function(r){
+      if (scope !== 'A' && (r.areanm || '기타') !== area) return false;
+      if (ownOnly && r.defown !== 'Y') return false;
+      return true;
+    });
+    var title = '지표정의서_' + (scope === 'A' ? '전체' : area) + (ownOnly ? '_우리병원' : '') + '_' + HOSP_NM;
+    var parts = [], MAX = 120, done = 0, stat = qid('qdBpStat'), j = 0;
+    BP.busy = true; qid('qdBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      qid('qdIndi').value = keepCd;                      // 보던 지표로
+      Promise.resolve(keepCd ? qdLoad() : null).then(function(){
+        BP.busy = false; qid('qdBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '조건에 맞는 정의서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; qid('qdBpGo').disabled = false; });
+    };
+    var oneDoc = function(){
+      if (j >= docs.length || done >= MAX) { finish(); return; }
+      var cd = String(docs[j++].indicd);
+      qid('qdIndi').value = cd; curDef = null;
+      stat.textContent = cd + ' 읽는 중 …';
+      Promise.resolve(qdLoad()).then(function(){
+        if (curDef && String(INDI_CD) === cd) { try { qdPrint(); done++; } catch (e) { } }   // 못 읽었으면(err 가 삼킨 실패) 건너뛴다
+        stat.textContent = done + '장';
+        oneDoc();
+      }, function(){ oneDoc(); });
+    };
+    oneDoc();
+  };
 
   window.qdPrint = function(){
     if (!curDef) { _alertBox('지표를 먼저 불러온 뒤 인쇄해 주세요.', {icon:'⚠️'}); return; }

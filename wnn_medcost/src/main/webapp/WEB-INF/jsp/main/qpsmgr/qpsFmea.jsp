@@ -110,6 +110,8 @@
   <select id="fmYear" style="width:auto;" onchange="fmLoad();"></select>
   <button type="button" class="fm-btn" onclick="fmSave();">저장</button>
   <button type="button" class="fm-btn ghost" onclick="fmPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 6호) : 구분(계획서/보고서)·연도 범위의 저장된 문서를 주제별로 이어 인쇄. 아래 #fmBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="fm-btn ghost" onclick="fmBulkPrintToggle();" title="연도 범위의 저장된 FMEA 문서를 주제별로 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="fm-btn warn" id="fmDelBtn" onclick="fmDel();" style="display:none;">삭제</button>
   <span class="fm-sub" id="fmStat"></span>
   <span style="flex:0 0 60px;"></span>
@@ -119,6 +121,19 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — FMEA 는 「구분(계획서/보고서) × 연도 × 주제별 1부」라 조건은 구분 범위 + 연도 범위. --%>
+<div id="fmBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="fmBpScope" value="F" checked> 이 구분만(<span id="fmBpGbNm"></span>)</label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="fmBpScope" value="A"> 계획서·보고서 모두</label>
+    <span style="margin-left:8px;">연도</span>
+    <select id="fmBpFrom" style="width:auto;"></select><span>~</span><select id="fmBpTo" style="width:auto;"></select>
+    <button type="button" class="fm-btn" id="fmBpGo" style="margin-left:auto;" onclick="fmBulkPrintGo();">출력</button>
+    <button type="button" class="fm-btn ghost" onclick="fmBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 문서만 주제별로 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 첨부 그림은 안 실림). 한 번에 120부까지. <span id="fmBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
@@ -263,7 +278,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', APPR_LINE = [], INDI = [], SCALE = {}, curSeq = 0;
+  var HOSP_NM = '', APPR_LINE = [], INDI = [], SCALE = {}, curSeq = 0,
+      LIST = [];   // 지금 보이는 문서 목록(구분·연도) — 일괄 출력이 순회한다(2026-09-08)
 
   var fileBox = window.qpsFileBox({ mount:'fmFileBox', refGb:'FMEA',
       hint:'프로세스 맵·fishbone·사진', needSaveMsg:'문서를 먼저 저장하면 첨부할 수 있습니다.' });
@@ -478,8 +494,11 @@
     }
   };
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.fmLoad = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/fmeaBase.do"/>', { inYear: gel('fmYear').value, docGb: gb() }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('fmHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       INDI = res.indi || [];
@@ -491,7 +510,8 @@
       INDI.forEach(function(d){ sel.add(new Option(d.indinm, d.indicd)); });
       sel.value = keep;
 
-      var list = res.list || [], box = gel('fmListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('fmListBox');
       gel('fmCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       box.innerHTML = list.length
         ? list.map(function(r){
@@ -508,7 +528,8 @@
              'f_fishboneTxt','f_imprTxt','f_verifyTxt','f_conclTxt','f_nextTxt','f_shareTxt'];
 
   window.fmOpen = function(seq){
-    post('<c:url value="/qps/fmeaGet.do"/>', { fmeSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/fmeaGet.do"/>', { fmeSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.fmeseq || 0);
       if (d.docgb && d.docgb !== gb()) {
@@ -549,7 +570,7 @@
       gel('fmStat').textContent = '— 저장된 문서 #' + d.fmeseq;
       gel('fmDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.fmeseq);
-      fmLoad();
+      if (!(window.BP && BP.busy)) fmLoad();   // 일괄 출력 중엔 생략 — 늦게 온 응답이 다음 구분·해 목록을 덮는다
     }).catch(err);
   };
 
@@ -625,6 +646,84 @@
     return v ? ('<div class="sec">' + title + '</div><div style="border:1px solid #666;padding:5px 7px;' +
                 'font-size:9.5px;white-space:pre-wrap;text-align:left;">' + esc(v) + '</div>') : '';
   }
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 6호 · 구분×연도 목록형) ═══
+     FMEA 는 「구분(계획서 P/보고서 R) × 연도」 마다 주제별 1부가 목록으로 있다. 구분·해마다 목록(fmLoad)을 받아
+     문서를 하나씩 열어(fmOpen) 낱장 인쇄(fmPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서.
+     ★자료를 만들지 않는다. 첨부(프로세스 맵·fishbone 그림)는 낱장 인쇄와 같이 안 실린다. 끝나면 보던 구분·해·문서로 되돌린다. 상한 120부. */
+  window.BP = { busy:false };
+  function fmGbNm(v){ return v === 'R' ? '보고서' : '계획서'; }
+  function bpFill(){
+    var yf = gel('fmBpFrom'), yt = gel('fmBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('fmYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.fmBulkPrintToggle = function(){
+    var box = gel('fmBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('fmBpGbNm').textContent = fmGbNm(gb());
+    gel('fmBpFrom').value = gel('fmYear').value; gel('fmBpTo').value = gel('fmYear').value;
+    gel('fmBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.fmBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=fmBpScope]:checked') || {}).value || 'F';
+    var f = Number(gel('fmBpFrom').value), t = Number(gel('fmBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('fmBpFrom').value = String(f); gel('fmBpTo').value = String(t); }
+    var keepGb = gb(), keepYear = gel('fmYear').value, keepSeq = curSeq;
+    var gbs = (scope === 'A') ? ['P', 'R'] : [keepGb];
+    var title = 'FMEA_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + (scope === 'A' ? '계획서·보고서' : fmGbNm(keepGb)) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('fmBpStat'), gi = 0, yi = 0;
+    BP.busy = true; gel('fmBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('fmGb').value = keepGb; gel('fmYear').value = keepYear;   // 보던 구분·해·문서로
+      Promise.resolve(fmLoad()).then(function(){
+        if (keepSeq) fmOpen(keepSeq); else fmNew();
+        BP.busy = false; gel('fmBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 문서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+      }, function(){ BP.busy = false; gel('fmBpGo').disabled = false; });
+    };
+    var setGb = function(g){
+      // fmGbChange 는 fmLoad 까지 부르므로 여기선 카드 표시만 맞춘다(목록은 아래서 한 번 받는다)
+      gel('fmGb').value = g;
+      var r = (g === 'R');
+      gel('fmTitle').textContent = r ? 'FMEA 보고서' : 'FMEA 계획서';
+      document.querySelectorAll('#qpsFmea .rptonly').forEach(function(el){ el.style.display = r ? '' : 'none'; });
+      gel('cardScale').style.display = r ? '' : 'none';
+    };
+    var oneYear = function(){
+      if (done >= MAX) { finish(); return; }
+      if (yi >= years.length) { gi++; yi = 0; }
+      if (gi >= gbs.length) { finish(); return; }
+      var g = gbs[gi], yy = years[yi++];
+      setGb(g); gel('fmYear').value = yy;
+      stat.textContent = fmGbNm(g) + ' ' + yy + '년 목록 읽는 중 …';
+      Promise.resolve(fmLoad()).then(function(){
+        var docs = (LIST || []).slice(), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { oneYear(); return; }
+          var seq = Number(docs[j++].fmeseq);
+          Promise.resolve(fmOpen(seq)).then(function(){
+            if (curSeq !== seq) { oneDoc(); return; }   // 못 열렸으면(err 가 삼킨 실패) 건너뛴다 — 앞 문서가 찍히면 안 된다
+            try { fmPrint(); done++; } catch (e) { }
+            stat.textContent = fmGbNm(g) + ' ' + yy + '년 — ' + done + '부';
+            oneDoc();
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
+  };
 
   window.fmPrint = function(){
     var yy = gel('fmYear').value, isR = (gb() === 'R');

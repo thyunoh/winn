@@ -25,6 +25,8 @@
     <button type="button" class="btn-sv" id="btnAnsSaveTop" style="display:none">이 응답 저장</button>
     <button type="button" class="btn-pr" id="btnSvPrint">🖨 조사결과 보고서</button>
     <button type="button" class="btn-pr" id="btnSvPrint2">🖨 지표분석 보고서</button>
+    <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 9호) : 연도 범위의 조사마다 두 보고서를 골라 이어 인쇄. 아래 #svBulkPrintBox 에 펼친다. --%>
+    <button type="button" class="btn-pr" id="btnSvBulk" title="연도 범위의 조사별 보고서를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 - 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
@@ -32,6 +34,20 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+  </div>
+
+  <%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 만족도 조사는 「연도마다 조사 N회 · 조사 1회에 보고서 2종」이라 조건은 연도 범위 + 무엇을 담을지. --%>
+  <div id="svBulkPrintBox" style="display:none; margin:0 0 10px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+      <span>연도</span>
+      <select id="svBpFrom" style="height:30px;padding:0 6px;"></select><span>~</span><select id="svBpTo" style="height:30px;padding:0 6px;"></select>
+      <label style="display:inline-flex; align-items:center; gap:4px; margin:0 0 0 8px;"><input type="checkbox" id="svBpRpt" checked> 조사결과 보고서</label>
+      <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" id="svBpIndi" checked> 지표분석 보고서</label>
+      <button type="button" class="btn-sv" id="btnSvBpGo" style="margin-left:auto;">출력</button>
+      <button type="button" class="btn-pr" id="btnSvBpClose">닫기</button>
+    </div>
+    <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">조사마다 고른 보고서를 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 집계는 그때 서버에서 새로 셉니다). 응답이 없는 조사도 빈 집계로 찍히니 필요하면 연도를 좁히세요. 한 번에 120부까지. <span id="svBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
   </div>
 
   <!-- 탭 -->
@@ -206,13 +222,16 @@
     try { _confirmBox(msg, {icon:'❓', onOk:cb}); } catch(e) { if (confirm(msg)) cb(); }
   }
 
-  function post(url, data, cb){
+  /* ★fail(선택) — 넘기면 실패를 알림 대신 그 함수로 알려 준다(2026-09-08 일괄 출력).
+     안 넘기면 종전 그대로 알림을 띄운다. 일괄 출력은 조사 수십 건을 도는데 실패마다 알림이 뜨면 멈춰 선다. */
+  function post(url, data, cb, fail){
     $.ajax({ url:url, type:'POST', data:data, dataType:'json',
       success:function(r){
         if (r && r.result==='OK') { try { cb(r); } catch(e){ say('화면 처리 중 오류: '+e.message,'❌'); } }
+        else if (fail) fail(r);
         else say((r && (r.message || r.msg)) || '처리 중 오류가 발생했습니다.', '❌');
       },
-      error:function(){ say('통신 오류가 발생했습니다.', '❌'); } });
+      error:function(){ if (fail) fail(); else say('통신 오류가 발생했습니다.', '❌'); } });
   }
 
   /* ── 연도 셀렉트 ── */
@@ -246,8 +265,11 @@
   }
 
   /* ── 초기 로드 ── */
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문항을 덮지 않게(2026-09-08, 다른 QPS 화면과 같은 규칙)
   function loadBase(){
+    var my = ++LOAD_REQ;
     post('<c:url value="/qps/surveyBase.do"/>', {inYear:gel('svYear').value}, function(r){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다
       DEF = r.def || [];
       AREA = {};
       DEF.forEach(function(d){ if(!AREA[d.areacd]) AREA[d.areacd] = {nm:d.areanm, qs:[]}; AREA[d.areacd].qs.push(d); });
@@ -318,8 +340,23 @@
     return false;
   }
 
+  /* 조사 1건을 화면 칸에 채운다 — 목록에서 고를 때와 일괄 출력이 **같은 코드**를 쓴다(2026-09-08).
+     ★인쇄물은 이 칸들(f_surveynm·f_purpose…)을 읽으므로, 찍기 전에 반드시 여기를 거쳐야 한다. */
+  function applySurveyDoc(r){
+    var d = r.doc||{};
+    gel('f_surveynm').value = d.surveynm||''; gel('f_purpose').value = d.purpose||'';
+    gel('f_goal').value = d.goal||'';         gel('f_useplan').value = d.useplan||'';
+    gel('f_target').value = d.target||'';     gel('f_method').value = d.method||'';
+    gel('f_staff').value = d.staff||'';       gel('f_statmethod').value = d.statmethod||'';
+    gel('f_frdt').value = fmtDt(d.frdt);      gel('f_todt').value = fmtDt(d.todt);
+    gel('f_imprtxt').value = d.imprtxt||'';   gel('f_strategytxt').value = d.strategytxt||'';
+    gel('f_concltxt').value = d.concltxt||''; gel('f_nextacttxt').value = d.nextacttxt||'';
+    drawAnsList(r.ans||[]);
+  }
+
   HAND.svList = function(){
-    curSurvey = Number(this.value||0);
+    /* ★this 는 셀렉트다(위임이 .call 로 넘긴다). 일괄 출력이 인자 없이 부를 때를 대비해 셀렉트에서도 읽는다. */
+    curSurvey = Number(((this && this.value != null) ? this.value : gel('svList').value) || 0);
     userCleared = !curSurvey;
     if (!curSurvey){
       /* 「— 조사 선택 —」로 되돌리면 세 탭을 모두 비운다.
@@ -331,15 +368,7 @@
       return;
     }
     post('<c:url value="/qps/surveyGet.do"/>', {surveyId:curSurvey}, function(r){
-      var d = r.doc||{};
-      gel('f_surveynm').value = d.surveynm||''; gel('f_purpose').value = d.purpose||'';
-      gel('f_goal').value = d.goal||'';         gel('f_useplan').value = d.useplan||'';
-      gel('f_target').value = d.target||'';     gel('f_method').value = d.method||'';
-      gel('f_staff').value = d.staff||'';       gel('f_statmethod').value = d.statmethod||'';
-      gel('f_frdt').value = fmtDt(d.frdt);      gel('f_todt').value = fmtDt(d.todt);
-      gel('f_imprtxt').value = d.imprtxt||'';   gel('f_strategytxt').value = d.strategytxt||'';
-      gel('f_concltxt').value = d.concltxt||''; gel('f_nextacttxt').value = d.nextacttxt||'';
-      drawAnsList(r.ans||[]);
+      applySurveyDoc(r);
       var onStat = gel('pane-stat') && gel('pane-stat').style.display !== 'none';
       if (onStat) loadStat();
     });
@@ -685,18 +714,20 @@
   function hospNm(){ return '${hospNm}'; }
 
   // 인쇄 공통 준비 — 집계 + 결재선을 받아 cb(stat, line)
-  function prepPrint(cb){
+  // ★fail(선택) — 일괄 출력이 「이 조사는 건너뛴다」를 알 수 있게(2026-09-08). 안 넘기면 종전대로 알림만.
+  function prepPrint(cb, fail){
     ensureSurvey();
-    if (!curSurvey) { say('조사를 먼저 선택해 주세요.', '⚠️'); return; }
+    if (!curSurvey) { if (fail) { fail(); return; } say('조사를 먼저 선택해 주세요.', '⚠️'); return; }
     post('<c:url value="/qps/surveyStat.do"/>', {surveyId:curSurvey}, function(r){
       post('<c:url value="/qps/apprGet.do"/>', {indiCd:'SATISFY', prdGb:'Y', prdKey:gel('svYear').value}, function(a){
         cb(r, (a && a.line) || []);
-      });
-    });
+      }, fail);
+    }, fail);
   }
 
-  /* ① 조사결과 보고서 (원본 12p) — 표지 / 목적·개요·산출기준 / 내용·활용 / 분포 / 문항 집계 / 개선사항 */
-  HAND.btnSvPrint = function(){
+  /* ① 조사결과 보고서 (원본 12p) — 표지 / 목적·개요·산출기준 / 내용·활용 / 분포 / 문항 집계 / 개선사항
+     ★done(선택) — 일괄 출력이 「이 장이 끝났다」를 기다린다(2026-09-08). 실패해도 부른다(안 부르면 순회가 멈춘다). */
+  HAND.btnSvPrint = function(done){
     prepPrint(function(r, line){
       var yy = gel('svYear').value;
       var body =
@@ -727,11 +758,12 @@
         areaBlocksHtml(r) +
         imprHtml();
       doPrintWin(yy + '_만족도조사결과보고서_' + hospNm(), body);
-    });
+      if (done) done(true);
+    }, done ? function(){ done(false); } : null);
   };
 
   /* ② 지표분석 보고서 (원본 10p) — 지표 프레임(정의서 재사용) + 현황·영역요약 + 집계 + 서술 3칸 + 개선사항 */
-  HAND.btnSvPrint2 = function(){
+  HAND.btnSvPrint2 = function(done){
     prepPrint(function(r, line){
       post('<c:url value="/qps/indiDefGet.do"/>', {indiCd:'SATISFY'}, function(dr){
         var d = (dr && dr.def) || {};
@@ -773,13 +805,114 @@
           '<div class="sec">증진활동 평가 및 추후 활동계획</div>' + txt('f_nextacttxt') +
           imprHtml();
         doPrintWin(yy + '_만족도지표분석보고서_' + hospNm(), body);
-      });
-    });
+        if (done) done(true);
+      }, done ? function(){ done(false); } : null);
+    }, done ? function(){ done(false); } : null);
   };
 
   /* 일괄 출력에서 부를 수 있게 밖으로 내놓는다 — HAND 는 이 안에만 있다(2026-09-07) */
   window.svPrintRpt  = function(){ HAND.btnSvPrint(); };
   window.svPrintIndi = function(){ HAND.btnSvPrint2(); };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 9호 · 연도×조사, 보고서 2종) ═══
+     만족도 조사는 「연도마다 조사 N회 · 조사 1회에 보고서 2종(조사결과·지표분석)」이다.
+     조건 = 연도 범위 + ☑조사결과 ☑지표분석. 해마다 조사 목록(surveyBase)을 받아 조사를 하나씩 열고(surveyGet → applySurveyDoc)
+     고른 보고서를 찍어 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서.
+     ★이 화면은 콜백 구조라(프라미스가 아니다) 아래 bp* 가 프라미스 다리를 놓는다.
+     ★인쇄물은 화면 칸을 읽으므로 반드시 조사를 화면에 올린 뒤 찍는다. 끝나면 보던 해·조사로 되돌린다. 상한 120부. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var yf = gel('svBpFrom'), yt = gel('svBpTo');
+    if (yf.options.length) return;
+    var opts = gel('svYear').options;
+    for (var i = 0; i < opts.length; i++) {
+      yf.add(new Option(opts[i].text, opts[i].value));
+      yt.add(new Option(opts[i].text, opts[i].value));
+    }
+  }
+  HAND.btnSvBulk = function(){
+    var box = gel('svBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('svBpFrom').value = gel('svYear').value; gel('svBpTo').value = gel('svYear').value;
+    gel('svBpStat').textContent = '';
+    box.style.display = '';
+  };
+  HAND.btnSvBpClose = function(){ gel('svBulkPrintBox').style.display = 'none'; };
+
+  function bpPost(url, data){
+    return new Promise(function(res, rej){ post(url, data, res, function(){ rej(new Error('조회 실패')); }); });
+  }
+  /** 그 해로 옮겨 문항(DEF·AREA)과 조사 목록을 받는다 — loadBase 의 자동 선택은 쓰지 않는다(순회를 흔든다) */
+  function bpYear(yy){
+    gel('svYear').value = yy;
+    ++LOAD_REQ;   // ★날아가는 중인 loadBase 응답을 무효로 — 안 그러면 그 응답이 이 목록을 덮는다
+    return bpPost('<c:url value="/qps/surveyBase.do"/>', { inYear: yy }).then(function(r){
+      DEF = r.def || [];
+      AREA = {};
+      DEF.forEach(function(d){ if (!AREA[d.areacd]) AREA[d.areacd] = { nm:d.areanm, qs:[] }; AREA[d.areacd].qs.push(d); });
+      drawQuestions();
+      var L = r.list || [], h = '<option value="">— 조사 선택 —</option>';
+      for (var i = 0; i < L.length; i++)
+        h += '<option value="' + L[i].surveyid + '">' + esc(L[i].inyear) + '-' + L[i].seq + ' '
+           + esc(L[i].surveynm || '(무제)') + ' (' + (L[i].anscnt || 0) + '건)</option>';
+      gel('svList').innerHTML = h;
+      return L;
+    });
+  }
+  function bpOpen(id){
+    gel('svList').value = String(id); curSurvey = Number(id);
+    return bpPost('<c:url value="/qps/surveyGet.do"/>', { surveyId: id }).then(function(r){ applySurveyDoc(r); return true; });
+  }
+  function bpPrint(fn){ return new Promise(function(res){ fn(function(okv){ res(!!okv); }); }); }
+
+  HAND.btnSvBpGo = function(){
+    if (BP.busy) return;
+    var wantRpt = gel('svBpRpt').checked, wantIndi = gel('svBpIndi').checked;
+    if (!wantRpt && !wantIndi) { say('조사결과·지표분석 중 하나는 골라야 합니다.', '⚠️'); return; }
+    var f = Number(gel('svBpFrom').value), t = Number(gel('svBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('svBpFrom').value = String(f); gel('svBpTo').value = String(t); }
+    var keepYear = gel('svYear').value, keepSurvey = curSurvey;
+    var title = '만족도조사_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + hospNm();
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('svBpStat'), yi = 0;
+    BP.busy = true; gel('btnSvBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      bpYear(keepYear).then(function(){                       // 보던 해·조사로
+        gel('svList').value = keepSurvey ? String(keepSurvey) : '';
+        HAND.svList.call(gel('svList'));
+      }, function(){}).then(function(){
+        BP.busy = false; gel('btnSvBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 조사가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+      });
+    };
+    var oneYear = function(){
+      if (yi >= years.length || done >= MAX) { finish(); return; }
+      var yy = years[yi++];
+      stat.textContent = yy + '년 조사 목록 읽는 중 …';
+      bpYear(yy).then(function(L){
+        var docs = (L || []).slice(), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { oneYear(); return; }
+          var id = Number(docs[j++].surveyid);
+          bpOpen(id).then(function(){
+            var seq = Promise.resolve();
+            if (wantRpt)  seq = seq.then(function(){ return bpPrint(HAND.btnSvPrint).then(function(okv){ if (okv) done++; }); });
+            if (wantIndi) seq = seq.then(function(){ return bpPrint(HAND.btnSvPrint2).then(function(okv){ if (okv) done++; }); });
+            return seq.then(function(){ stat.textContent = yy + '년 — ' + done + '부'; oneDoc(); });
+          }, function(){ oneDoc(); });   // 못 연 조사는 건너뛴다 — 앞 조사가 찍히면 안 된다
+        };
+        oneDoc();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
+  };
 
   /* ── 이벤트 위임 ────────────────────────────────────────────────
      ★버튼마다 onclick 을 걸면, 화면 사본이 여럿일 때 「등록된 버튼」과

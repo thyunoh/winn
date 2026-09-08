@@ -97,6 +97,8 @@
   <select id="qpYear" style="width:auto;" onchange="qpList();"></select>
   <button type="button" class="qi-btn" onclick="qpSave();">저장</button>
   <button type="button" class="qi-btn ghost" onclick="qpPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 5호) : 연도 범위의 저장된 계획서를 주제별로 한 부씩 이어 인쇄. 아래 #qpBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qi-btn ghost" onclick="qpBulkPrintToggle();" title="연도 범위의 저장된 QI 계획서를 주제별로 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="qi-btn warn" id="qpDelBtn" onclick="qpDel();" style="display:none;">삭제</button>
   <span class="qi-sub" id="qpStat"></span>
   <%-- ★[2026-08-18 요청 「글자크기 단추가 너무 우측 끝에 있다 — 조금 좌측으로」]
@@ -108,6 +110,18 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — QI 계획서는 「주제별 1부 · 연도 목록」이라 조건은 연도 범위, 그 해의 계획서를 전부 담는다. --%>
+<div id="qpBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span>
+    <select id="qpBpFrom" style="width:auto;"></select><span>~</span><select id="qpBpTo" style="width:auto;"></select>
+    <span style="color:#5a6b7a;">— 그 해의 계획서 전부(주제별 한 부씩)</span>
+    <button type="button" class="qi-btn" id="qpBpGo" style="margin-left:auto;" onclick="qpBulkPrintGo();">출력</button>
+    <button type="button" class="qi-btn ghost" onclick="qpBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 계획서만 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 한 번에 120부까지. <span id="qpBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
@@ -202,7 +216,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', APPR_LINE = [], INDI = [], curSeq = 0;
+  var HOSP_NM = '', APPR_LINE = [], INDI = [], curSeq = 0,
+      LIST = [];   // 지금 보이는 계획서 목록(연도) — 일괄 출력이 순회한다(2026-09-08)
 
   function gel(id){ return document.getElementById(id); }   // ★$ 로 짓지 말 것
   function post(url, data){
@@ -307,8 +322,11 @@
                       : '이미 적힌 칸은 그대로 두었습니다(자동으로 덮지 않습니다).';
   };
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.qpList = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/qiPlanList.do"/>', { inYear: gel('qpYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('qpHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       INDI = res.indi || [];
@@ -317,7 +335,8 @@
       INDI.forEach(function(d){ sel.add(new Option(d.indinm, d.indicd)); });
       sel.value = keep;
 
-      var list = res.list || [], box = gel('qpListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('qpListBox');
       gel('qpCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       if (!list.length) { box.innerHTML = '<div class="qi-empty">계획서가 없습니다.<br>[＋ 새 계획서]로 만드세요.</div>'; return; }
       box.innerHTML = list.map(function(r){
@@ -329,7 +348,8 @@
   };
 
   window.qpOpen = function(seq){
-    post('<c:url value="/qps/qiPlanGet.do"/>', { qipSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/qiPlanGet.do"/>', { qipSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.qipseq || 0);
       set('f_qipSeq', d.qipseq); set('f_indiCd', d.indicd || ''); set('f_topicNm', d.topicnm);
@@ -347,7 +367,7 @@
       gel('qpAutoMsg').style.display = 'none';
       gel('qpStat').textContent = '— 저장된 계획서 #' + d.qipseq;
       gel('qpDelBtn').style.display = '';
-      qpList();
+      if (!(window.BP && BP.busy)) qpList();   // 일괄 출력 중엔 생략 — 늦게 온 응답이 다음 해 목록을 덮는다
     }).catch(err);
   };
 
@@ -413,6 +433,70 @@
     APPR_LINE.forEach(function(){ h += '<td></td>'; });
     return h + '</tr></tbody></table>';
   }
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 5호 · 연도 목록형) ═══
+     QI 계획서는 「주제별 1부」가 연도 목록으로 있다. 해마다 목록(qpList)을 받아 계획서를 하나씩 열어(qpOpen)
+     낱장 인쇄(qpPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서.
+     ★자료를 만들지 않는다. 끝나면 보던 해·계획서로 되돌린다. 상한 120부. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var yf = gel('qpBpFrom'), yt = gel('qpBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('qpYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.qpBulkPrintToggle = function(){
+    var box = gel('qpBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('qpBpFrom').value = gel('qpYear').value; gel('qpBpTo').value = gel('qpYear').value;
+    gel('qpBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.qpBulkPrintGo = function(){
+    if (BP.busy) return;
+    var f = Number(gel('qpBpFrom').value), t = Number(gel('qpBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('qpBpFrom').value = String(f); gel('qpBpTo').value = String(t); }
+    var keepYear = gel('qpYear').value, keepSeq = curSeq;
+    var title = 'QI활동계획서_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('qpBpStat'), yi = 0;
+    BP.busy = true; gel('qpBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('qpYear').value = keepYear;                     // 보던 해·계획서로
+      Promise.resolve(qpList()).then(function(){
+        if (keepSeq) qpOpen(keepSeq); else qpNew();
+        BP.busy = false; gel('qpBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 계획서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+      }, function(){ BP.busy = false; gel('qpBpGo').disabled = false; });
+    };
+    var oneYear = function(){
+      if (yi >= years.length || done >= MAX) { finish(); return; }
+      var yy = years[yi++];
+      gel('qpYear').value = yy;
+      stat.textContent = yy + '년 목록 읽는 중 …';
+      Promise.resolve(qpList()).then(function(){
+        var docs = (LIST || []).slice(), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { oneYear(); return; }
+          var seq = Number(docs[j++].qipseq);
+          Promise.resolve(qpOpen(seq)).then(function(){
+            if (curSeq !== seq) { oneDoc(); return; }   // 못 열렸으면(err 가 삼킨 실패) 건너뛴다 — 앞 문서가 찍히면 안 된다
+            try { qpPrint(); done++; } catch (e) { }
+            stat.textContent = yy + '년 — ' + done + '부';
+            oneDoc();
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
+  };
 
   window.qpPrint = function(){
     var yy = gel('qpYear').value, items = collect();

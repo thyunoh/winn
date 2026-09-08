@@ -128,6 +128,9 @@
   <select id="srYear" style="width:auto;" onchange="srLoad();"></select>
   <button type="button" class="sr-btn" onclick="srSave();">저장</button>
   <button type="button" class="sr-btn ghost" onclick="srPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — qpsChk 에 붙인 것과 같은 방식의 확장 1호) :
+       이 유형(또는 계열·전체 유형)의 저장된 보고서를 기간으로 골라 한 번에 이어 인쇄. 아래 #srBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="sr-btn ghost" onclick="srBulkPrintToggle();" title="이 유형(또는 계열·전체 유형)의 저장된 보고서를 기간으로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="sr-btn warn" id="srDelBtn" onclick="srDel();" style="display:none;">삭제</button>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다(localStorage) --%>
   <span class="sr-zoom">
@@ -137,6 +140,22 @@
   </span>
   <span class="sr-sub" id="srStat"></span>
   <span style="flex:0 0 60px;"></span>
+</div>
+
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — qpsChk #ckBulkPrintBox 와 같은 꼴.
+     범위 = 이 유형 / 이 계열 유형 전부(SORT 대역) / 전체 유형 · 기간 = 화면 연도 + 발생일의 월 범위. --%>
+<div id="srBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="srBpScope" value="F" checked> 이 유형만 <span id="srBpGbNm" style="color:#5a6b7a;"></span></label>
+    <label id="srBpBandWrap" style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="srBpScope" value="B"> 이 계열 유형 전부 <span id="srBpBandNm" style="color:#5a6b7a;"></span></label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="srBpScope" value="A"> 전체 유형 <span id="srBpAllNm" style="color:#5a6b7a;"></span></label>
+    <span style="margin-left:8px;">기간 <b id="srBpYear"></b>년</span>
+    <select id="srBpFrom" style="width:auto;"></select><span>~</span><select id="srBpTo" style="width:auto;"></select>
+    <button type="button" class="sr-btn" id="srBpGo" style="margin-left:auto;" onclick="srBulkPrintGo();">출력</button>
+    <button type="button" class="sr-btn ghost" onclick="srBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 보고서만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 기간은 발생일 기준입니다. 한 번에 120장까지. <span id="srBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="sr-wrap" data-split="가로" data-split-key="saferpt.body">
@@ -239,7 +258,8 @@
 (function(){
   // FORM = 유형별 설정(반복행 표·서명란·정형문구). 설정이 없는 유형이 대부분이라 {} 가 정상이다.
   // SUBS = 반복행 표 여러 벌 정의(2026-08-15). 빈 배열이면 FORM 단벌 규칙 그대로.
-  var HOSP_NM = '', APPR_LINE = [], DEF = [], GBS = [], curSeq = 0, FORM = {}, SUBS = [];
+  var HOSP_NM = '', APPR_LINE = [], DEF = [], GBS = [], curSeq = 0, FORM = {}, SUBS = [],
+      LIST = [];   // 지금 보이는 보고서 목록(유형×연도) — 일괄 출력이 기간으로 거른다(2026-09-08)
 
   var fileBox = window.qpsFileBox({ mount:'srFileBox', refGb:'SAFERPT',
       hint:'사고 관련 사진·자료', needSaveMsg:'보고서를 먼저 저장하면 첨부할 수 있습니다.' });
@@ -258,6 +278,29 @@
   function set(id, v){ var e = gel(id); if (e) e.value = (v == null ? '' : v); }
   function gb(){ return gel('srGb').value || 'PTSAFE'; }
   function gbNm(){ for (var i=0;i<GBS.length;i++) if (GBS[i].subcode === gb()) return GBS[i].subcodenm; return '사고 보고서'; }
+
+  /* ★계열 묶음 — SORT 대역이 곧 계열이다(시드 등록 규약, 2026-08-15). 셀렉트 optgroup 과
+     일괄 출력의 「이 계열 유형 전부」가 같은 표를 본다 — 두 벌이면 반드시 어긋난다. */
+  var SR_BANDS = [
+    [ 1,  9, '사고 · 안전 보고서'],
+    [10, 19, '의약품 · 혈액'],
+    [20, 30, '교육 · 보건관리'],
+    [31, 50, '인사 · 원무 · 총무'],
+    [51, 70, '의무기록 · 정보보호'],
+    [71, 72, '영양'],
+    [73, 90, '사회복지 · 프로그램'],
+    [91, 99, '검진 · 접종 결과보고서']];
+  /** 유형코드 → 그 계열 [하한,상한,이름]. sort 를 안 내려주는 옛 서버면 null(계열 범위를 숨긴다). */
+  function srBandOf(code){
+    var s = null;
+    for (var i = 0; i < GBS.length; i++) if (GBS[i].subcode === code) { s = Number(GBS[i].sort); break; }
+    if (s == null || isNaN(s)) return null;
+    for (var j = 0; j < SR_BANDS.length; j++) if (s >= SR_BANDS[j][0] && s <= SR_BANDS[j][1]) return SR_BANDS[j];
+    return null;
+  }
+  function srBandGbs(band){
+    return GBS.filter(function(c){ var s = Number(c.sort); return s >= band[0] && s <= band[1]; });
+  }
 
   (function(){
     var y = new Date().getFullYear(), sel = gel('srYear');
@@ -586,7 +629,11 @@
   }
   /** 서버 목록([{fileseq,filepath,orgnm}]) → 상태 반영 + 표시용 blob 로드 */
   function setPhotos(files){
-    Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
+    /* ★일괄 출력 중에는 blob URL 을 거두지 않는다(2026-09-08) — 모아 둔 인쇄 조각이 이 URL 을
+       그대로 들고 있어, 다음 문서를 열며 거두면 끝에 합친 종이에서 사진이 깨진다.
+       거두지 않은 URL 은 페이지를 떠날 때 브라우저가 정리한다(한 번에 120장 상한이라 부담 없음). */
+    if (!(window.BP && BP.busy))
+      Object.keys(PHOTOS).forEach(function(k){ try { URL.revokeObjectURL(PHOTOS[k].url); } catch(e){} });
     PHOTOS = {};
     (files || []).forEach(function(f){
       var s = Number(f.fileseq);
@@ -638,8 +685,11 @@
       } });
   };
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.srLoad = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/safeRptBase.do"/>', { inYear: gel('srYear').value, rptGb: gb() }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('srHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       DEF = res.def || [];
@@ -651,7 +701,8 @@
       renderChk({});
       renderRows([]);
       setPhotos([]);           // 유형이 바뀌면 사진 카드도 서식(PHOTO_YN)에 맞춰 켜고 끈다
-      var list = res.list || [], box = gel('srListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('srListBox');
       gel('srCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       box.innerHTML = list.length
         ? list.map(function(r){
@@ -664,7 +715,8 @@
   };
 
   window.srOpen = function(seq){
-    post('<c:url value="/qps/safeRptGet.do"/>', { srpSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/safeRptGet.do"/>', { srpSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.srpseq || 0);
       if (d.rptgb && d.rptgb !== gb()) { gel('srGb').value = d.rptgb; applyLabels(); }
@@ -768,6 +820,106 @@
           _toast('삭제되었습니다.', 'ok'); srNew(); srLoad();
         }).catch(err);
       } });
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — qpsChk 확장 1호. 「각각 등록화면에서 일괄출력」 요청) ═══
+     ★조건은 이 업무에 맞췄다(사용자 지시 「업무에 맞게」) — 보고서는 작성 주기가 없는 **건 단위** 문서라
+       기간은 **발생일**의 월 범위로 거르고, 범위는 서식·부서 대신 **유형 / 계열(SORT 대역) / 전체 유형**이다.
+     동작 = 문서마다 열어(srOpen) 낱장 인쇄(srPrint)를 부른다. 그동안 qpsPrintOut 은 창을 띄우지 않고
+            QPS_BULK_CB 로 모아 주고, 끝에 qpsPrintMerge(sidebar.jsp)가 한 문서로 이어 붙인다.
+     ★자료를 만들지 않는다 — 저장된 보고서만. 끝나면 원래 보던 유형·보고서로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function bpMonths(){
+    var mf = gel('srBpFrom'), mt = gel('srBpTo');
+    if (mf.options.length) return;
+    for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
+  }
+  window.srBulkPrintToggle = function(){
+    var box = gel('srBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpMonths();
+    gel('srBpFrom').value = '01'; gel('srBpTo').value = '12';
+    gel('srBpGbNm').textContent = '(' + gbNm() + ')';
+    var band = srBandOf(gb()), bw = gel('srBpBandWrap');
+    if (band) { bw.style.display = ''; gel('srBpBandNm').textContent = '(' + band[2] + ' ' + srBandGbs(band).length + '종)'; }
+    else {     // sort 를 안 내려주는 옛 서버 — 계열을 셀 수 없으니 그 범위를 감춘다
+      bw.style.display = 'none';
+      if (bw.querySelector('input').checked) document.querySelector('input[name=srBpScope][value=F]').checked = true;
+    }
+    gel('srBpAllNm').textContent = '(' + GBS.length + '종)';
+    gel('srBpYear').textContent = gel('srYear').value;
+    gel('srBpStat').textContent = '';
+    box.style.display = '';
+  };
+  function bpInRange(r, f, t){
+    var m = String(r.occurdt || '').replace(/\D/g, '').substr(4, 2);
+    if (m.length < 2) return true;    // 발생일 없는 옛 자료 — 해가 같으니 담는다(저장 검증상 드묾)
+    return m >= f && m <= t;
+  }
+  /** 사진 blob 이 붙을 때까지(최대 4초) — 안 기다리면 종이에서 그 칸이 빈다. 못 받은 칸은 두고 간다. */
+  function bpPhotosWait(){
+    var keys = Object.keys(PHOTOS);
+    if (!photoOn() || !keys.length) return Promise.resolve();
+    return new Promise(function(done){
+      var n = 0;
+      (function tick(){
+        var ok = keys.every(function(k){ return !PHOTOS[k] || PHOTOS[k].url; });
+        if (ok || ++n > 33) { done(); return; }
+        setTimeout(tick, 120);
+      })();
+    });
+  }
+  window.srBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=srBpScope]:checked') || {}).value || 'F';
+    var yy = gel('srYear').value, f = gel('srBpFrom').value, t = gel('srBpTo').value;
+    if (f > t) { var x = f; f = t; t = x; gel('srBpFrom').value = f; gel('srBpTo').value = t; }
+    var band = (scope === 'B') ? srBandOf(gb()) : null;
+    var gbs = (scope === 'A') ? GBS.map(function(c){ return c.subcode; })
+            : (scope === 'B' && band) ? srBandGbs(band).map(function(c){ return c.subcode; })
+            : [gb()];
+    var keepGb = gb(), keepSeq = curSeq;
+    var title = ((scope === 'A') ? '보고서 전체' : (scope === 'B' && band) ? band[2] : gbNm()) +
+                '_' + yy + '년' + (f === '01' && t === '12' ? '' : ('_' + Number(f) + '~' + Number(t) + '월')) + '_' + HOSP_NM;
+    var parts = [], MAX = 120, done = 0, stat = gel('srBpStat'), gi = 0;
+    BP.busy = true; gel('srBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('srGb').value = keepGb;                       // 원래 보던 유형·보고서로
+      srLoad().then(function(){
+        if (keepSeq) srOpen(keepSeq); else srNew();
+        BP.busy = false; gel('srBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 보고서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; gel('srBpGo').disabled = false; });
+    };
+    var nextGb = function(){
+      if (gi >= gbs.length || done >= MAX) { finish(); return; }
+      gel('srGb').value = gbs[gi++];
+      stat.textContent = '(' + gi + '/' + gbs.length + ') ' + gbNm() + ' 읽는 중 …';
+      srLoad().then(function(){
+        var docs = (LIST || []).filter(function(r){ return bpInRange(r, f, t); }), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { nextGb(); return; }
+          var seq = Number(docs[j++].srpseq);
+          Promise.resolve(srOpen(seq)).then(function(){
+            // ★못 열렸으면(post 실패는 err 가 삼켜 resolve 로 온다) 이전 문서가 화면에 남아 있다 —
+            //   그대로 찍으면 **남의 내용이 그 자리에 들어간다.** curSeq 대조로 건너뛴다.
+            if (curSeq !== seq) { oneDoc(); return; }
+            bpPhotosWait().then(function(){
+              try { srPrint(); done++; } catch (e) { }
+              stat.textContent = '(' + gi + '/' + gbs.length + ') ' + gbNm() + ' — ' + done + '장';
+              oneDoc();
+            });
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ nextGb(); });
+    };
+    nextGb();
   };
 
   // ---------- 인쇄 ----------
@@ -956,17 +1108,9 @@
         // ★계열 묶음(optgroup) — SORT 대역이 곧 계열이다(시드 등록 규약 : 1~19 사고 ·
         //   20대 보건 · 31~ 인사/총무 · 51~ 의무기록 · 71~ 영양 · 73~ 사회복지 · 91~ 검진결과).
         //   새 유형은 대역 안 SORT 로 등록하면 화면 수정 없이 제 묶음에 들어온다.
-        var BANDS = [
-          [ 1,  9, '사고 · 안전 보고서'],
-          [10, 19, '의약품 · 혈액'],
-          [20, 30, '교육 · 보건관리'],
-          [31, 50, '인사 · 원무 · 총무'],
-          [51, 70, '의무기록 · 정보보호'],
-          [71, 72, '영양'],
-          [73, 90, '사회복지 · 프로그램'],
-          [91, 99, '검진 · 접종 결과보고서']];
+        // 대역 표는 SR_BANDS(위쪽) 하나만 본다 — 일괄 출력의 「이 계열」과 같은 표다(2026-09-08 통합)
         var html = '', rest = GBS.slice();
-        BANDS.forEach(function(b){
+        SR_BANDS.forEach(function(b){
           var grp = rest.filter(function(c){ var s = Number(c.sort); return s >= b[0] && s <= b[1]; });
           if (!grp.length) return;
           rest = rest.filter(function(c){ return grp.indexOf(c) < 0; });

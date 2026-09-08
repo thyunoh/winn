@@ -84,6 +84,8 @@
   <select id="rcYear" style="width:auto;" onchange="rcLoad();"></select>
   <button type="button" class="rc-btn" onclick="rcSave();">저장</button>
   <button type="button" class="rc-btn ghost" onclick="rcPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 6호) : 그 해의 RCA 보고서를 발생일 월 범위로 골라 이어 인쇄. 아래 #rcBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="rc-btn ghost" onclick="rcBulkPrintToggle();" title="발생일 범위의 저장된 RCA 보고서를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="rc-btn warn" id="rcDelBtn" onclick="rcDel();" style="display:none;">삭제</button>
   <span class="rc-sub" id="rcStat"></span>
   <span style="flex:0 0 60px;"></span>
@@ -93,6 +95,18 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — RCA 는 사고 「건 단위」(주기 없음) · 목록은 연도별이라 조건은 연도 + 발생일 월 범위. --%>
+<div id="rcBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span><select id="rcBpYear" style="width:auto;"></select>
+    <span style="margin-left:8px;">발생일</span>
+    <select id="rcBpFrom" style="width:auto;"></select><span>~</span><select id="rcBpTo" style="width:auto;"></select>
+    <button type="button" class="rc-btn" id="rcBpGo" style="margin-left:auto;" onclick="rcBulkPrintGo();">출력</button>
+    <button type="button" class="rc-btn ghost" onclick="rcBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">발생일이 범위 안인 저장된 보고서만 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 첨부는 안 실림). 한 번에 120부까지. <span id="rcBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
@@ -185,7 +199,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', APPR_LINE = [], INCID = [], curSeq = 0;
+  var HOSP_NM = '', APPR_LINE = [], INCID = [], curSeq = 0,
+      LIST = [];   // 지금 보이는 보고서 목록(연도) — 일괄 출력이 순회한다(2026-09-08)
 
   var fileBox = window.qpsFileBox({ mount:'rcFileBox', refGb:'RCA',
       hint:'근거자료', needSaveMsg:'보고서를 먼저 저장하면 첨부할 수 있습니다.' });
@@ -235,11 +250,15 @@
     gel('rcIncidMsg').textContent = '사고 #' + seq + ' 에서 가져왔습니다.';
   };
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.rcLoad = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/rcaList.do"/>', { inYear: gel('rcYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('rcHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
-      var list = res.list || [], box = gel('rcListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('rcListBox');
       gel('rcCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       box.innerHTML = list.length
         ? list.map(function(r){
@@ -257,7 +276,8 @@
                 'f_writeDt','f_writerNm'];
 
   window.rcOpen = function(seq){
-    post('<c:url value="/qps/rcaGet.do"/>', { rcaSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/rcaGet.do"/>', { rcaSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.rcaseq || 0);
       set('f_rcaSeq', d.rcaseq); set('f_incidSeq', d.incidseq || '');
@@ -273,7 +293,7 @@
       gel('rcStat').textContent = '— 저장된 보고서 #' + d.rcaseq;
       gel('rcDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.rcaseq);
-      rcLoad();
+      if (!(window.BP && BP.busy)) rcLoad();   // 일괄 출력 중엔 생략 — 늦게 온 응답이 목록을 덮는다
     }).catch(err);
   };
 
@@ -335,6 +355,70 @@
     APPR_LINE.forEach(function(){ h += '<td></td>'; });
     return h + '</tr></tbody></table>';
   }
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 6호 · 건 단위 목록형) ═══
+     RCA 는 사고 건마다 1부, 목록은 연도별(rcaList). 조건 = 연도 + **발생일** 월 범위(기본 1~12월 = 그 해 전부).
+     목록(rcLoad)의 occurdt 로 거른 뒤 보고서를 하나씩 열어(rcOpen) 낱장 인쇄(rcPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge 로 한 문서.
+     ★자료를 만들지 않는다. 끝나면 보던 해·보고서로 되돌린다. 상한 120부. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var ys = gel('rcBpYear');
+    if (ys.options.length) return;
+    Array.prototype.forEach.call(gel('rcYear').options, function(o){ ys.add(new Option(o.text, o.value)); });
+    var mf = gel('rcBpFrom'), mt = gel('rcBpTo');
+    for (var m = 1; m <= 12; m++) { mf.add(new Option(m + '월', m)); mt.add(new Option(m + '월', m)); }
+  }
+  window.rcBulkPrintToggle = function(){
+    var box = gel('rcBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('rcBpYear').value = gel('rcYear').value; gel('rcBpFrom').value = '1'; gel('rcBpTo').value = '12';
+    gel('rcBpStat').textContent = '';
+    box.style.display = '';
+  };
+  function bpInRange(r, f, t){
+    var m = Number(String(r.occurdt || '').replace(/-/g, '').substr(4, 2));   // 'YYYY-MM-DD' 또는 'YYYYMMDD'
+    if (!m) return false;
+    return m >= f && m <= t;
+  }
+  window.rcBulkPrintGo = function(){
+    if (BP.busy) return;
+    var yy = gel('rcBpYear').value, f = Number(gel('rcBpFrom').value), t = Number(gel('rcBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('rcBpFrom').value = String(f); gel('rcBpTo').value = String(t); }
+    var keepYear = gel('rcYear').value, keepSeq = curSeq;
+    var title = 'RCA근본원인분석_' + yy + '년' + ((f === 1 && t === 12) ? '' : ('_' + f + '~' + t + '월')) + '_' + HOSP_NM;
+    var parts = [], MAX = 120, done = 0, stat = gel('rcBpStat');
+    BP.busy = true; gel('rcBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('rcYear').value = keepYear;                     // 보던 해·보고서로
+      Promise.resolve(rcLoad()).then(function(){
+        if (keepSeq) rcOpen(keepSeq); else rcNew();
+        BP.busy = false; gel('rcBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 보고서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+      }, function(){ BP.busy = false; gel('rcBpGo').disabled = false; });
+    };
+    gel('rcYear').value = yy;
+    stat.textContent = yy + '년 목록 읽는 중 …';
+    Promise.resolve(rcLoad()).then(function(){
+      var docs = (LIST || []).filter(function(r){ return bpInRange(r, f, t); }), j = 0;
+      var oneDoc = function(){
+        if (j >= docs.length || done >= MAX) { finish(); return; }
+        var seq = Number(docs[j++].rcaseq);
+        Promise.resolve(rcOpen(seq)).then(function(){
+          if (curSeq !== seq) { oneDoc(); return; }   // 못 열렸으면(err 가 삼킨 실패) 건너뛴다 — 앞 보고서가 찍히면 안 된다
+          try { rcPrint(); done++; } catch (e) { }
+          stat.textContent = yy + '년 — ' + done + '부';
+          oneDoc();
+        }, function(){ oneDoc(); });
+      };
+      oneDoc();
+    }, function(){ finish(); });
+  };
 
   window.rcPrint = function(){
     function r1(step, rows, span){

@@ -87,6 +87,8 @@
   <select id="qtYear" style="width:auto;" onchange="qtLoad();"></select>
   <button type="button" class="qt-btn" onclick="qtSave();">기준표 저장</button>
   <button type="button" class="qt-btn ghost" onclick="qtPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 5호) : 연도 범위의 집계표 + 평가위원별 기준표를 한 번에 이어 인쇄. 아래 #qtBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qt-btn ghost" onclick="qtBulkPrintToggle();" title="연도 범위의 집계표와 평가위원별 기준표를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="qt-btn warn" id="qtDelBtn" onclick="qtDel();" style="display:none;">삭제</button>
   <span class="qt-sub" id="qtStat"></span>
   <span style="flex:0 0 12px;"></span>
@@ -96,6 +98,19 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 주제선정은 「집계표(연 1장) + 평가위원별 기준표」라 조건은 연도 범위 + 무엇을 담을지. --%>
+<div id="qtBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span>
+    <select id="qtBpFrom" style="width:auto;"></select><span>~</span><select id="qtBpTo" style="width:auto;"></select>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0 0 0 8px;"><input type="checkbox" id="qtBpRoll" checked> 우선순위 집계표</label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" id="qtBpEach" checked> 평가위원별 기준표</label>
+    <button type="button" class="qt-btn" id="qtBpGo" style="margin-left:auto;" onclick="qtBulkPrintGo();">출력</button>
+    <button type="button" class="qt-btn ghost" onclick="qtBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">해마다 집계표(기준표가 있을 때) 한 장 뒤에 평가위원별 기준표를 이어 붙입니다(자료를 만들지 않음). 한 번에 120장까지. <span id="qtBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="qt-tabs">
@@ -153,7 +168,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', APPR_LINE = [], curSeq = 0, ROLL = [], CROSS = [], EVALS = [];
+  var HOSP_NM = '', APPR_LINE = [], curSeq = 0, ROLL = [], CROSS = [], EVALS = [],
+      LIST = [];   // 지금 보이는 평가위원 목록(연도) — 일괄 출력이 순회한다(2026-09-08)
 
   function gel(id){ return document.getElementById(id); }   // ★$ 로 짓지 말 것
   function post(url, data){
@@ -234,12 +250,16 @@
     return out;
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.qtLoad = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/qiTopicList.do"/>', { inYear: gel('qtYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('qtHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       ROLL = res.rollup || []; CROSS = res.cross || []; EVALS = res.evaluators || [];
-      var list = res.list || [], box = gel('qtListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('qtListBox');
       gel('qtCnt').textContent = list.length ? ('· ' + list.length + '명') : '';
       box.innerHTML = list.length
         ? list.map(function(r){
@@ -279,7 +299,8 @@
   }
 
   window.qtOpen = function(seq){
-    post('<c:url value="/qps/qiTopicGet.do"/>', { qitSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/qiTopicGet.do"/>', { qitSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.qitseq || 0);
       set('f_qitSeq', d.qitseq); set('f_evalDt', d.evaldt); set('f_evaluator', d.evaluator);
@@ -289,7 +310,7 @@
       gel('qtStat').textContent = '— 저장된 기준표 #' + d.qitseq;
       gel('qtDelBtn').style.display = '';
       qtTab(1);
-      qtLoad();
+      if (!(window.BP && BP.busy)) qtLoad();   // 일괄 출력 중엔 생략 — 늦게 온 응답이 다음 해 목록·집계를 덮는다
     }).catch(err);
   };
   function blank10(){ var a = []; for (var i = 0; i < 10; i++) a.push({}); return a; }
@@ -349,6 +370,76 @@
     APPR_LINE.forEach(function(){ h += '<td></td>'; });
     return h + '</tr></tbody></table>';
   }
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 5호 · 집계표+목록형) ═══
+     주제선정은 해마다 「우선순위 집계표(자동 셈, 저장 안 함) 1장 + 평가위원별 기준표 N장」이다.
+     해를 하나씩 열어(qtLoad) ①기준표가 있으면 집계표를(qtTab(2)+qtPrint) ②평가위원마다 기준표를(qtOpen+qtPrint)
+     QPS_BULK_CB 로 모아 끝에 qpsPrintMerge 로 한 문서. 무엇을 담을지는 체크 둘로 고른다.
+     ★qtPrint 는 보이는 탭(pane2)으로 집계표/기준표를 가르므로 탭을 돌려 가며 찍고 끝에 원래 탭으로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var yf = gel('qtBpFrom'), yt = gel('qtBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('qtYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.qtBulkPrintToggle = function(){
+    var box = gel('qtBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('qtBpFrom').value = gel('qtYear').value; gel('qtBpTo').value = gel('qtYear').value;
+    gel('qtBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.qtBulkPrintGo = function(){
+    if (BP.busy) return;
+    var wantRoll = gel('qtBpRoll').checked, wantEach = gel('qtBpEach').checked;
+    if (!wantRoll && !wantEach) { _alertBox('집계표·기준표 중 하나는 골라야 합니다.', {icon:'⚠️'}); return; }
+    var f = Number(gel('qtBpFrom').value), t = Number(gel('qtBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('qtBpFrom').value = String(f); gel('qtBpTo').value = String(t); }
+    var keepYear = gel('qtYear').value, keepSeq = curSeq, keepTab = (gel('pane2').style.display !== 'none') ? 2 : 1;
+    var title = 'QPS주제선정_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('qtBpStat'), yi = 0;
+    BP.busy = true; gel('qtBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('qtYear').value = keepYear;                     // 보던 해·기준표·탭으로
+      Promise.resolve(qtLoad()).then(function(){
+        if (keepSeq) qtOpen(keepSeq); else qtNew();
+        qtTab(keepTab);
+        BP.busy = false; gel('qtBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 기준표가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; gel('qtBpGo').disabled = false; });
+    };
+    var oneYear = function(){
+      if (yi >= years.length || done >= MAX) { finish(); return; }
+      var yy = years[yi++];
+      gel('qtYear').value = yy;
+      stat.textContent = yy + '년 읽는 중 …';
+      Promise.resolve(qtLoad()).then(function(){
+        if (wantRoll && ROLL.length && done < MAX) { qtTab(2); try { qtPrint(); done++; } catch (e) { } }
+        var docs = wantEach ? (LIST || []).slice() : [], j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { oneYear(); return; }
+          var seq = Number(docs[j++].qitseq);
+          Promise.resolve(qtOpen(seq)).then(function(){
+            if (curSeq !== seq) { oneDoc(); return; }   // 못 열렸으면 건너뛴다 — 앞 기준표가 찍히면 안 된다
+            qtTab(1);
+            try { qtPrint(); done++; } catch (e) { }
+            stat.textContent = yy + '년 — ' + done + '장';
+            oneDoc();
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
+  };
 
   window.qtPrint = function(){
     var yy = gel('qtYear').value;

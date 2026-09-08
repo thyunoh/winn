@@ -106,6 +106,9 @@
        종전에는 폼 맨 아래라 회의록이 길면 끝까지 내려가야 했다. --%>
   <button type="button" class="qm-btn" onclick="qmSave();">저장</button>
   <button type="button" class="qm-btn ghost" onclick="qmPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 2호) : 이 위원회(또는 전체 위원회)의 저장된 회의록을
+       회의일·회의 구분으로 골라 한 번에 이어 인쇄. 아래 #qmBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qm-btn ghost" onclick="qmBulkPrintToggle();" title="이 위원회(또는 전체 위원회)의 저장된 회의록을 회의일로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="qm-btn warn" id="qmDelBtn" onclick="qmDel();" style="display:none;">삭제</button>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
@@ -114,6 +117,22 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 회의록의 업무 축으로 : 위원회 · 회의일(월 범위) · 회의 구분(정기/임시).
+     ★회의 구분은 목록에 안 내려오므로 문서를 연 뒤에 거른다(서버 무변경). --%>
+<div id="qmBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="qmBpScope" value="F" checked> 이 위원회만 <span id="qmBpGbNm" style="color:#5a6b7a;"></span></label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="qmBpScope" value="A"> 전체 위원회 <span id="qmBpAllNm" style="color:#5a6b7a;"></span></label>
+    <span style="margin-left:8px;">회의일 <b id="qmBpYear"></b>년</span>
+    <select id="qmBpFrom" style="width:auto;"></select><span>~</span><select id="qmBpTo" style="width:auto;"></select>
+    <select id="qmBpMeet" style="width:auto;"><option value="">정기·임시 전부</option><option value="R">정기 회의만</option><option value="T">임시 회의만</option></select>
+    <button type="button" class="qm-btn" id="qmBpGo" style="margin-left:auto;" onclick="qmBulkPrintGo();">출력</button>
+    <button type="button" class="qm-btn ghost" onclick="qmBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 회의록만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 기간은 회의일 기준입니다. 한 번에 120장까지. <span id="qmBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="qm-wrap" data-split="가로" data-split-key="minutes.body">
@@ -190,7 +209,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', apprLine = [], curSeq = 0;
+  var HOSP_NM = '', apprLine = [], curSeq = 0,
+      LIST = [];   // 지금 보이는 회의록 목록(위원회×연도) — 일괄 출력이 회의일로 거른다(2026-09-08)
   /** 위원회 구분 — Q=질향상·환자안전, I=감염관리 (2026-08-10) */
   function qmGb(){ var e=document.getElementById('qmGb'); return e ? e.value : 'Q'; }
   // 공통 첨부 위젯 — 회의록(MINUTES) 문서키 = 회의록 SEQ. 문서 저장 전엔 업로드 잠김.
@@ -216,7 +236,9 @@
     qpsPickYear(sel, y);   /* 주소의 ?yy= 가 있으면 그 해로(일괄 출력, 2026-09-07) */
   })();
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.qmList = function(){
+    var my = ++LOAD_REQ;
     var t = document.getElementById('qmTitle');
     if (t) t.textContent = (qmGb()==='I') ? '감염관리위원회 회의록'
                          : (qmGb()==='J') ? '질향상활동(QI) 회의록'
@@ -232,11 +254,13 @@
                          : (qmGb()==='H') ? '인사위원회 회의록' : '위원회 회의록';
     qmActToggle();   // 위원회를 바꾸면 하단 조치표가 붙거나 사라진다
     return post('/qps/minutesList.do', { formGb: qmGb(), inYear: document.getElementById('qmYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       apprLine = res.line || [];
       if (res.hosp) HOSP_NM = res.hosp.hospnm || '';
       var hb = document.querySelector('#qpsMin .qm-hosp');
       if (hb && HOSP_NM) hb.textContent = '🏥 ' + HOSP_NM;
-      var list = res.list || [];
+      LIST = res.list || [];
+      var list = LIST;
       document.getElementById('qmCnt').textContent = list.length ? ('— ' + list.length + '건') : '';
       document.getElementById('qmList').innerHTML = list.length
         ? list.map(function(r){
@@ -300,7 +324,8 @@
   }
 
   window.qmOpen = function(seq){
-    post('/qps/minutesGet.do', { minSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('/qps/minutesGet.do', { minSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.minseq || 0);
       // ★★문서의 위원회로 셀렉트를 맞춘다(2026-08-12) — 셀렉트는 **목록 필터도 겸한다.**
@@ -325,7 +350,9 @@
       document.getElementById('qmStat').textContent = '— 저장된 문서 #' + d.minseq;
       document.getElementById('qmDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.minseq);
-      qmList();
+      // 목록의 선택 표시를 맞추려 다시 받는다 — ★일괄 출력 중에는 생략(문서마다 목록을 또 받고,
+      //   늦게 온 응답이 다음 위원회 목록을 덮어쓴다). 끝나면 finish 가 목록을 다시 받는다.
+      if (!(window.BP && BP.busy)) qmList();
     }).catch(err);
   };
 
@@ -423,6 +450,87 @@
     '.appr td{ height:46px; width:62px; }' +
     '.foot{ margin-top:14px; font-size:11px; text-align:center; }' +
     'tr{ page-break-inside:avoid; }';
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 2호. 「각각 등록화면에서 일괄출력」 요청) ═══
+     ★조건은 이 업무의 말로(사용자 지시 「업무에 맞게」) — 회의록은 **회의일** 단위 문서라 기간 = 회의일의 월 범위,
+       범위 = 이 위원회 / 전체 위원회, 그리고 **회의 구분(정기/임시)**. 회의 구분은 목록 SQL 에 없어
+       **문서를 연 뒤 라디오(m_meetGb)로 거른다** — 매퍼를 안 건드려 재기동이 필요 없다(어차피 인쇄하려면 열어야 한다).
+     동작 = 위원회마다 qmList → 회의록마다 qmOpen → qmPrint 를 QPS_BULK_CB 로 모아 qpsPrintMerge(sidebar.jsp).
+     ★자료를 만들지 않는다 — 저장된 회의록만. 끝나면 원래 보던 위원회·회의록으로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function $id(id){ return document.getElementById(id); }
+  function bpMonths(){
+    var mf = $id('qmBpFrom'), mt = $id('qmBpTo');
+    if (mf.options.length) return;
+    for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
+  }
+  function qmGbNm(v){ var o = document.querySelector('#qmGb option[value="' + v + '"]'); return o ? o.text : v; }
+  function qmGbAll(){ return Array.prototype.map.call($id('qmGb').options, function(o){ return o.value; }); }
+  window.qmBulkPrintToggle = function(){
+    var box = $id('qmBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpMonths();
+    $id('qmBpFrom').value = '01'; $id('qmBpTo').value = '12'; $id('qmBpMeet').value = '';
+    $id('qmBpGbNm').textContent = '(' + qmGbNm(qmGb()) + ')';
+    $id('qmBpAllNm').textContent = '(' + qmGbAll().length + '종)';
+    $id('qmBpYear').textContent = $id('qmYear').value;
+    $id('qmBpStat').textContent = '';
+    box.style.display = '';
+  };
+  function bpInRange(r, f, t){
+    var m = String(r.meetdt || '').replace(/\D/g, '').substr(4, 2);
+    if (m.length < 2) return true;    // 회의일 없는 옛 자료 — 해가 같으니 담는다(저장 검증상 드묾)
+    return m >= f && m <= t;
+  }
+  window.qmBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=qmBpScope]:checked') || {}).value || 'F';
+    var yy = $id('qmYear').value, f = $id('qmBpFrom').value, t = $id('qmBpTo').value, mg = $id('qmBpMeet').value;
+    if (f > t) { var x = f; f = t; t = x; $id('qmBpFrom').value = f; $id('qmBpTo').value = t; }
+    var gbs = (scope === 'A') ? qmGbAll() : [qmGb()];
+    var keepGb = qmGb(), keepSeq = curSeq;
+    var title = ((scope === 'A') ? '위원회 회의록 전체' : (($id('qmTitle') || {}).textContent || '위원회 회의록')) +
+                '_' + yy + '년' + (f === '01' && t === '12' ? '' : ('_' + Number(f) + '~' + Number(t) + '월')) +
+                (mg === 'R' ? '_정기' : mg === 'T' ? '_임시' : '') + '_' + HOSP_NM;
+    var parts = [], MAX = 120, done = 0, stat = $id('qmBpStat'), gi = 0;
+    BP.busy = true; $id('qmBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      $id('qmGb').value = keepGb;                        // 원래 보던 위원회·회의록으로
+      Promise.resolve(qmList()).then(function(){
+        if (keepSeq) qmOpen(keepSeq); else qmNew();
+        BP.busy = false; $id('qmBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 회의록이 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; $id('qmBpGo').disabled = false; });
+    };
+    var nextGb = function(){
+      if (gi >= gbs.length || done >= MAX) { finish(); return; }
+      $id('qmGb').value = gbs[gi++];
+      stat.textContent = '(' + gi + '/' + gbs.length + ') ' + qmGbNm(qmGb()) + ' 읽는 중 …';
+      Promise.resolve(qmList()).then(function(){
+        var docs = (LIST || []).filter(function(r){ return bpInRange(r, f, t); }), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { nextGb(); return; }
+          var seq = Number(docs[j++].minseq);
+          Promise.resolve(qmOpen(seq)).then(function(){
+            // ★못 열렸으면(post 실패는 err 가 삼켜 resolve 로 온다) 이전 회의록이 화면에 남아 있다 —
+            //   그대로 찍으면 남의 내용이 그 자리에 들어간다. curSeq 대조로 건너뛴다.
+            if (curSeq !== seq) { oneDoc(); return; }
+            if (mg && getGb() !== mg) { oneDoc(); return; }   // 정기/임시 거르기 — 문서를 열어야 안다
+            try { qmPrint(); done++; } catch (e) { }
+            stat.textContent = '(' + gi + '/' + gbs.length + ') ' + qmGbNm(qmGb()) + ' — ' + done + '장';
+            oneDoc();
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ nextGb(); });
+    };
+    nextGb();
+  };
 
   window.qmPrint = function(){
     if (!val('m_title')) { _alertBox('회의록을 먼저 불러오거나 작성해 주세요.', {icon:'⚠️'}); return; }

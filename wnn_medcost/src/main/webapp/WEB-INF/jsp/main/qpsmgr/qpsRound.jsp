@@ -63,6 +63,8 @@
   <button type="button" class="qr-btn ghost" onclick="rdCopyPrev();">⧉ 전월 복사</button>
   <button type="button" class="qr-btn" onclick="rdSave();">저장</button>
   <button type="button" class="qr-btn ghost" onclick="rdPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 3호) : 저장된 달만 골라 한 번에 이어 인쇄. 아래 #rdBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qr-btn ghost" onclick="rdBulkPrintToggle();" title="이 구분(또는 둘 다)의 저장된 라운딩 점검표를 월 범위로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span class="qr-sub" id="rdStat"></span>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
@@ -71,6 +73,22 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 라운딩은 「구분 × 월 1부」 문서라 조건도 그것 : 구분(이 구분/둘 다) · 연도 · 월 범위.
+     저장된 달만 담는다(빈 달은 기본 틀이 그려져 있어 그대로 찍으면 빈 서식이 나온다). --%>
+<div id="rdBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="rdBpScope" value="F" checked> 이 구분만 <span id="rdBpGbNm" style="color:#5a6b7a;"></span></label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="rdBpScope" value="A"> 질향상·감염 둘 다</label>
+    <span style="margin-left:8px;">기간</span>
+    <select id="rdBpYear" style="width:auto;"></select>
+    <select id="rdBpFrom" style="width:auto;"></select><span>~</span><select id="rdBpTo" style="width:auto;"></select>
+    <button type="button" class="qr-btn" id="rdBpGo" style="margin-left:auto;" onclick="rdBulkPrintGo();">출력</button>
+    <button type="button" class="qr-btn ghost" onclick="rdBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 달의 점검표만 한 장씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 한 번에 120장까지. <span id="rdBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="qr-card">
@@ -90,7 +108,8 @@
 
 <script>
 (function(){
-  var HOSP_NM = '', rowIdx = 0;
+  var HOSP_NM = '', rowIdx = 0,
+      LAST_DOC = false;   // 지금 보이는 달에 저장된 점검표가 있는가 — 일괄 출력이 빈 달을 거른다(2026-09-08)
   // 공통 첨부 — 라운딩(ROUND) 문서키 = 년월(자연키).
   var fileBox = window.qpsFileBox({ mount:'rdFileBox', refGb:'ROUND',
       hint:'라운딩 사진·파일', needSaveMsg:'년월을 선택하면 첨부할 수 있습니다.' });
@@ -181,14 +200,19 @@
     });
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.rdLoad = function(){
+    var my = ++LOAD_REQ;
     if (fileBox) fileBox.setKey(ym() + '|' + rdGb());   /* 년월|구분 = 첨부 키(감염 것과 안 섞이게) */
     var t = document.getElementById('rdTitle');
     if (t) t.textContent = (rdGb()==='I') ? '감염관리 라운딩 점검표' : '환자안전 관리 라운딩 점검표';
+    LAST_DOC = false;   // ★먼저 내린다 — 조회가 실패하면(err 가 삼켜 resolve 로 온다) 앞 달의 값이 남아 잘못 찍힌다
     return post('/qps/roundGet.do', { formGb: rdGb(), roundYm: ym() }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || '';
         document.getElementById('rdHosp').textContent = '🏥 ' + HOSP_NM; }
       var rnd = res.round;
+      LAST_DOC = !!rnd;
       document.getElementById('rdChecker').value = (rnd && rnd.checker) ? rnd.checker : '';
       document.getElementById('rdStat').textContent = rnd ? ('최종수정 ' + (rnd.upddttm || '')) : '작성 전';
       fill(res.items || [], false);
@@ -218,6 +242,75 @@
       _toast('저장되었습니다.', 'ok');
       return rdLoad();
     }).catch(err);
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 3호 · 월 문서형) ═══
+     ★조건은 이 업무의 말로 — 라운딩은 「구분 × 월 1부」라 목록이 없다. 달을 하나씩 열어(rdLoad) **저장된 달만**(LAST_DOC)
+       낱장 인쇄(rdPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp)로 한 문서. 빈 달은 기본 틀이 깔려
+       있어 그대로 찍으면 빈 서식이 섞인다 — 그래서 LAST_DOC 으로 거른다.
+     ★자료를 만들지 않는다. 끝나면 보던 구분·달로 되돌린다. 상한 120장. */
+  window.BP = { busy:false };
+  function $id(id){ return document.getElementById(id); }
+  function bpFill(){
+    var ys = $id('rdBpYear');
+    if (!ys.options.length) { var y = new Date().getFullYear(); for (var i = y + 1; i >= y - 4; i--) ys.add(new Option(i + '년', i)); }
+    var mf = $id('rdBpFrom'), mt = $id('rdBpTo');
+    if (mf.options.length) return;
+    for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
+  }
+  function rdGbNm(v){ var o = document.querySelector('#rdGb option[value="' + v + '"]'); return o ? o.text : v; }
+  window.rdBulkPrintToggle = function(){
+    var box = $id('rdBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    $id('rdBpYear').value = ym().substring(0, 4); $id('rdBpFrom').value = '01'; $id('rdBpTo').value = '12';
+    $id('rdBpGbNm').textContent = '(' + rdGbNm(rdGb()) + ')';
+    $id('rdBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.rdBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=rdBpScope]:checked') || {}).value || 'F';
+    var yy = $id('rdBpYear').value, f = $id('rdBpFrom').value, t = $id('rdBpTo').value;
+    if (f > t) { var x = f; f = t; t = x; $id('rdBpFrom').value = f; $id('rdBpTo').value = t; }
+    var gbs = (scope === 'A') ? Array.prototype.map.call($id('rdGb').options, function(o){ return o.value; }) : [rdGb()];
+    var keepYm = $id('rdYm').value, keepGb = rdGb();
+    var title = '라운딩점검표_' + yy + '년' + (f === '01' && t === '12' ? '' : ('_' + Number(f) + '~' + Number(t) + '월')) +
+                '_' + (scope === 'A' ? '전체' : rdGbNm(keepGb)) + '_' + HOSP_NM;
+    var months = [];
+    for (var m = Number(f); m <= Number(t); m++) months.push((m < 10 ? '0' : '') + m);
+    var parts = [], MAX = 120, done = 0, stat = $id('rdBpStat'), gi = 0;
+    BP.busy = true; $id('rdBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      $id('rdGb').value = keepGb; $id('rdYm').value = keepYm;   // 보던 구분·달로
+      Promise.resolve(rdLoad()).then(function(){
+        BP.busy = false; $id('rdBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 점검표가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ BP.busy = false; $id('rdBpGo').disabled = false; });
+    };
+    var nextGb = function(){
+      if (gi >= gbs.length || done >= MAX) { finish(); return; }
+      $id('rdGb').value = gbs[gi++];
+      var mi = 0;
+      var oneMonth = function(){
+        if (mi >= months.length || done >= MAX) { nextGb(); return; }
+        var mm = months[mi++];
+        $id('rdYm').value = yy + '-' + mm;
+        stat.textContent = '(' + rdGbNm(rdGb()) + ') ' + yy + '년 ' + Number(mm) + '월 읽는 중 …';
+        Promise.resolve(rdLoad()).then(function(){
+          if (LAST_DOC) { try { rdPrint(); done++; } catch (e) { } }
+          stat.textContent = '(' + rdGbNm(rdGb()) + ') ' + yy + '년 ' + Number(mm) + '월 — ' + done + '장';
+          oneMonth();
+        }, function(){ oneMonth(); });
+      };
+      oneMonth();
+    };
+    nextGb();
   };
 
   // ---------- 인쇄(A4) — 별도 창 ----------

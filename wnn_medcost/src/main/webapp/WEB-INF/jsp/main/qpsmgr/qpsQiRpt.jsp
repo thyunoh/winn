@@ -105,6 +105,8 @@
   <select id="qrYear" style="width:auto;" onchange="qrList();"></select>
   <button type="button" class="qr-btn" onclick="qrSave();">저장</button>
   <button type="button" class="qr-btn ghost" onclick="qrPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 5호) : 종류(중간/최종)·연도 범위의 저장된 보고서를 주제별로 이어 인쇄. 아래 #qrBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qr-btn ghost" onclick="qrBulkPrintToggle();" title="연도 범위의 저장된 QI 활동보고서를 주제별로 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <button type="button" class="qr-btn warn" id="qrDelBtn" onclick="qrDel();" style="display:none;">삭제</button>
   <span class="qr-sub" id="qrStat"></span>
   <%-- ★[2026-08-18] 글자크기 묶음을 조금 왼쪽으로(60 → 12px) — QI 계획서와 같은 손질이다.
@@ -116,6 +118,19 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — QI 보고서는 「종류(중간/최종) × 연도 × 주제별 1부」라 조건은 종류 범위 + 연도 범위. --%>
+<div id="qrBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="qrBpScope" value="F" checked> 이 종류만(<span id="qrBpGbNm"></span>)</label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="radio" name="qrBpScope" value="A"> 중간·최종 모두</label>
+    <span style="margin-left:8px;">연도</span>
+    <select id="qrBpFrom" style="width:auto;"></select><span>~</span><select id="qrBpTo" style="width:auto;"></select>
+    <button type="button" class="qr-btn" id="qrBpGo" style="margin-left:auto;" onclick="qrBulkPrintGo();">출력</button>
+    <button type="button" class="qr-btn ghost" onclick="qrBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 보고서만 주제별로 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 결과분석 수치는 지표에서 그때 셉니다). 한 번에 120부까지. <span id="qrBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 <%-- ★탭 — 내용이 한 화면을 넘칠 때만 나온다(zzSync 가 재 본다) --%>
 <div class="zz-tabs" id="zzTabs" style="display:none;"></div>
@@ -223,7 +238,8 @@
 <script>
 (function(){
   // QBD = 분기별 분류집계(활동효과 v2). 사고형이면 위해등급·사고분류, 관찰형이면 직종·시점이 들어온다.
-  var HOSP_NM = '', APPR_LINE = [], INDI = [], curSeq = 0, CALC = null, QBD = [];
+  var HOSP_NM = '', APPR_LINE = [], INDI = [], curSeq = 0, CALC = null, QBD = [],
+      LIST = [];   // 지금 보이는 보고서 목록(종류·연도) — 일괄 출력이 순회한다(2026-09-08)
 
   var fileBox = window.qpsFileBox({ mount:'qrFileBox', refGb:'QIRPT',
       hint:'개선활동 사진', needSaveMsg:'보고서를 먼저 저장하면 사진을 붙일 수 있습니다.' });
@@ -302,12 +318,13 @@
      ★수치는 저장하지 않는다 — 볼 때마다 다시 센다(지표 화면과 어긋날 수 없게). */
   window.qrPickIndi = function(){
     var cd = val('f_indiCd');
-    if (!cd) { CALC = null; QBD = []; renderStat(); return; }
+    if (!cd) { CALC = null; QBD = []; renderStat(); return Promise.resolve(); }
     var d = null;
     for (var i = 0; i < INDI.length; i++) if (String(INDI[i].indicd) === cd) { d = INDI[i]; break; }
     if (d && !val('f_topicNm')) set('f_topicNm', d.indinm);
     var yy = gel('qrYear').value;
-    post('<c:url value="/qps/indiCalc.do"/>', { indiCd: cd, inYear: yy }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 결과분석·활동효과 수치가 다 온 뒤에 인쇄하도록 기다린다
+    return post('<c:url value="/qps/indiCalc.do"/>', { indiCd: cd, inYear: yy }).then(function(res){
       CALC = res || null;
       renderStat();                       // 먼저 그린다 — 분류집계는 늦게 와도 표가 비어 보이지 않게
       // 활동효과 v2 — 분기별 분류집계. ★실패해도 본 표는 그대로 둔다(있으면 좋은 것이지 없으면 안 되는 게 아니다)
@@ -434,8 +451,11 @@
     return ok ? '<b style="color:#1f5a4b;">충족</b>' : '<b style="color:#b23b3b;">미충족</b>';
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.qrList = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/qiRptList.do"/>', { inYear: gel('qrYear').value, rptGb: gb() }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('qrHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       INDI = res.indi || [];
@@ -444,7 +464,8 @@
       INDI.forEach(function(d){ sel.add(new Option(d.indinm, d.indicd)); });
       sel.value = keep;
 
-      var list = res.list || [], box = gel('qrListBox');
+      LIST = res.list || [];
+      var list = LIST, box = gel('qrListBox');
       gel('qrCnt').textContent = list.length ? ('· ' + list.length + '건') : '';
       if (!list.length) { box.innerHTML = '<div class="qr-empty">보고서가 없습니다.<br>[＋ 새 보고서]로 만드세요.</div>'; return; }
       box.innerHTML = list.map(function(r){
@@ -456,7 +477,8 @@
   };
 
   window.qrOpen = function(seq){
-    post('<c:url value="/qps/qiRptGet.do"/>', { qirSeq: seq }).then(function(res){
+    // ★프라미스를 돌려준다(2026-09-08) — 일괄 출력이 「열림 → 수치 → 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/qiRptGet.do"/>', { qirSeq: seq }).then(function(res){
       var d = res.doc || {};
       curSeq = Number(d.qirseq || 0);
       if (d.rptgb) { gel('qrGb').value = d.rptgb; }
@@ -483,6 +505,7 @@
       gel('qrStat').textContent = '— 저장된 보고서 #' + d.qirseq;
       gel('qrDelBtn').style.display = '';
       if (fileBox) fileBox.setKey(d.qirseq);
+      if (window.BP && BP.busy) return qrPickIndi();   // 일괄 출력 중 — 수치가 온 뒤 인쇄하게 기다리고, 목록 재조회는 생략
       qrPickIndi();
       qrList();
     }).catch(err);
@@ -552,6 +575,76 @@
     APPR_LINE.forEach(function(){ h += '<td></td>'; });
     return h + '</tr></tbody></table>';
   }
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 5호 · 종류×연도 목록형) ═══
+     QI 보고서는 「종류(중간 M/최종 F) × 연도」 마다 주제별 1부가 목록으로 있다. 종류·해마다 목록(qrList)을 받아
+     보고서를 하나씩 열어(qrOpen → qrPickIndi 수치까지 기다림) 낱장 인쇄(qrPrint)를 QPS_BULK_CB 로 모아 끝에 qpsPrintMerge 로 한 문서.
+     ★자료를 만들지 않는다. 끝나면 보던 종류·해·보고서로 되돌린다. 상한 120부. */
+  window.BP = { busy:false };
+  function qrGbNm(v){ return v === 'F' ? '최종보고서' : '중간보고서'; }
+  function bpFill(){
+    var yf = gel('qrBpFrom'), yt = gel('qrBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('qrYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.qrBulkPrintToggle = function(){
+    var box = gel('qrBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('qrBpGbNm').textContent = qrGbNm(gb());
+    gel('qrBpFrom').value = gel('qrYear').value; gel('qrBpTo').value = gel('qrYear').value;
+    gel('qrBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.qrBulkPrintGo = function(){
+    if (BP.busy) return;
+    var scope = (document.querySelector('input[name=qrBpScope]:checked') || {}).value || 'F';
+    var f = Number(gel('qrBpFrom').value), t = Number(gel('qrBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('qrBpFrom').value = String(f); gel('qrBpTo').value = String(t); }
+    var keepGb = gb(), keepYear = gel('qrYear').value, keepSeq = curSeq;
+    var gbs = (scope === 'A') ? ['M', 'F'] : [keepGb];
+    var title = 'QI활동보고서_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + (scope === 'A' ? '중간·최종' : qrGbNm(keepGb)) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('qrBpStat'), gi = 0, yi = 0;
+    BP.busy = true; gel('qrBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('qrGb').value = keepGb; gel('qrYear').value = keepYear;   // 보던 종류·해·보고서로
+      Promise.resolve(qrList()).then(function(){
+        if (keepSeq) qrOpen(keepSeq); else qrNew();
+        BP.busy = false; gel('qrBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 보고서가 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+      }, function(){ BP.busy = false; gel('qrBpGo').disabled = false; });
+    };
+    var oneYear = function(){
+      if (done >= MAX) { finish(); return; }
+      if (yi >= years.length) { gi++; yi = 0; }
+      if (gi >= gbs.length) { finish(); return; }
+      var g = gbs[gi], yy = years[yi++];
+      gel('qrGb').value = g; gel('qrYear').value = yy;
+      stat.textContent = qrGbNm(g) + ' ' + yy + '년 목록 읽는 중 …';
+      Promise.resolve(qrList()).then(function(){
+        var docs = (LIST || []).slice(), j = 0;
+        var oneDoc = function(){
+          if (j >= docs.length || done >= MAX) { oneYear(); return; }
+          var seq = Number(docs[j++].qirseq);
+          Promise.resolve(qrOpen(seq)).then(function(){
+            if (curSeq !== seq) { oneDoc(); return; }   // 못 열렸으면(err 가 삼킨 실패) 건너뛴다 — 앞 보고서가 찍히면 안 된다
+            try { qrPrint(); done++; } catch (e) { }
+            stat.textContent = qrGbNm(g) + ' ' + yy + '년 — ' + done + '부';
+            oneDoc();
+          }, function(){ oneDoc(); });
+        };
+        oneDoc();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
+  };
 
   window.qrPrint = function(){
     var yy = gel('qrYear').value, f = (gb() === 'F'), items = collect();

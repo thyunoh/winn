@@ -82,6 +82,8 @@
   <select id="cmYear" style="width:auto;" onchange="cmLoad();"></select>
   <button type="button" class="cm-btn" onclick="cmSaveAll();">대장 저장</button>
   <button type="button" class="cm-btn ghost" onclick="cmPrintBook();">🖨 대장 인쇄</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 7호) : 그 해 대장 1장 + 접수일 범위의 처리결과 보고서(있는 건만)를 이어 인쇄. 아래 #cmBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="cm-btn ghost" onclick="cmBulkPrintToggle();" title="대장과 건별 처리결과 보고서를 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span class="cm-sub" id="cmStat"></span>
   <span style="flex:0 0 12px;"></span>
   <span style="flex:0 0 12px;"></span>
@@ -91,6 +93,20 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 처리대장은 「연 1장(가로) + 건마다 처리결과 보고서(세로)」라 조건은 연도 + 접수일 월 범위 + 무엇을 담을지. --%>
+<div id="cmBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span><select id="cmBpYear" style="width:auto;"></select>
+    <span style="margin-left:8px;">접수일</span>
+    <select id="cmBpFrom" style="width:auto;"></select><span>~</span><select id="cmBpTo" style="width:auto;"></select>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0 0 0 8px;"><input type="checkbox" id="cmBpBook" checked> 처리대장(그 해 전체)</label>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" id="cmBpAct" checked> 처리결과 보고서(범위 안 · 작성된 건만)</label>
+    <button type="button" class="cm-btn" id="cmBpGo" style="margin-left:auto;" onclick="cmBulkPrintGo();">출력</button>
+    <button type="button" class="cm-btn ghost" onclick="cmBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">대장 한 장 뒤에 접수일이 범위 안이고 처리결과가 작성된 건의 보고서를 한 장씩 이어 붙입니다(자료를 만들지 않음). 다른 해를 고르면 대장을 다시 불러오니 <b>저장 안 한 수정은 먼저 저장</b>하세요. 한 번에 120장까지. <span id="cmBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="cm-tabs">
@@ -298,8 +314,11 @@
     return out;
   }
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.cmLoad = function(){
+    var my = ++LOAD_REQ;
     return post('<c:url value="/qps/cmplList.do"/>', { inYear: gel('cmYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('cmHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       ROWS = res.list || [];
@@ -339,14 +358,16 @@
     txt('a_content', r.content);
     set('a_cmplSeq', seq);
 
-    post('<c:url value="/qps/cmplActGet.do"/>', { cmplSeq: seq }).then(function(res){
+    // ★프라미스(성공 true/실패 false)를 돌려준다(2026-09-08) — 일괄 출력이 「고름 → 처리결과 인쇄」 를 차례로 잇는 데 쓴다
+    return post('<c:url value="/qps/cmplActGet.do"/>', { cmplSeq: seq }).then(function(res){
       var a = res.act || {};
       set('a_rptDt', a.rptdt); set('a_deptNm', a.deptnm); set('a_imprDt', a.imprdt);
       set('a_place', a.place); set('a_problem', a.problem); set('a_analysis', a.analysis);
       set('a_planTxt', a.plantxt); set('a_actTxt', a.acttxt); set('a_cause', a.cause);
       set('a_answer', a.answer); set('a_prevent', a.prevent);
-      cmTab(2);
-    }).catch(err);
+      if (!(window.BP && BP.busy)) cmTab(2);   // 일괄 출력 중엔 탭을 안 바꾼다(끝에 원래 탭으로)
+      return true;
+    }).catch(function(e){ err(e); return false; });
   };
   function clearAct(){
     ['a_cmplSeq','a_rptDt','a_deptNm','a_imprDt','a_place','a_problem','a_analysis',
@@ -459,6 +480,81 @@
       '</tbody></table>';
     openPrint('불만고충처리결과_' + gel('cmYear').value + '_' + HOSP_NM,
       '@page{ size:A4 portrait; margin:12mm; }' + PRINT_CSS + 'table{font-size:10.5px;}', body);
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 7호 · 대장 + 건별 보고서) ═══
+     처리대장은 「연 1장(가로 · 그 해 전체 건) + 건마다 처리결과 보고서(세로)」다. 조건 = 연도 + 접수일 월 범위 + 무엇을 담을지(체크 둘).
+     ①대장은 cmPrintBook(화면 표 그대로) ②처리결과는 ROWS 중 hasact 있고 접수일이 범위 안인 건마다 cmPick → cmActPrint.
+     QPS_BULK_CB 로 모아 끝에 qpsPrintMerge(sidebar.jsp) — 장마다 제 종이 방향(가로/세로)이 붙는다.
+     ★다른 해를 고르면 cmLoad 로 대장을 다시 그린다(저장 안 한 수정은 사라짐 — 안내문에 적음). 끝나면 보던 해·건·탭으로. 상한 120장. */
+  window.BP = { busy:false };
+  function bpFill(){
+    var ys = gel('cmBpYear');
+    if (ys.options.length) return;
+    Array.prototype.forEach.call(gel('cmYear').options, function(o){ ys.add(new Option(o.text, o.value)); });
+    var mf = gel('cmBpFrom'), mt = gel('cmBpTo');
+    for (var m = 1; m <= 12; m++) { mf.add(new Option(m + '월', m)); mt.add(new Option(m + '월', m)); }
+  }
+  window.cmBulkPrintToggle = function(){
+    var box = gel('cmBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('cmBpYear').value = gel('cmYear').value; gel('cmBpFrom').value = '1'; gel('cmBpTo').value = '12';
+    gel('cmBpStat').textContent = '';
+    box.style.display = '';
+  };
+  /** 접수일(없으면 접수월)의 달이 범위 안인가 */
+  function bpInRange(r, f, t){
+    var m = Number(String(r.recvdt || '').replace(/-/g, '').substr(4, 2)) || Number(r.recvmm || 0);
+    if (!m) return false;
+    return m >= f && m <= t;
+  }
+  function rowOf(seq){ return gel('cmBody').querySelector('tr[data-seq="' + seq + '"]'); }
+  window.cmBulkPrintGo = function(){
+    if (BP.busy) return;
+    var wantBook = gel('cmBpBook').checked, wantAct = gel('cmBpAct').checked;
+    if (!wantBook && !wantAct) { _alertBox('대장·처리결과 보고서 중 하나는 골라야 합니다.', {icon:'⚠️'}); return; }
+    var yy = gel('cmBpYear').value, f = Number(gel('cmBpFrom').value), t = Number(gel('cmBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('cmBpFrom').value = String(f); gel('cmBpTo').value = String(t); }
+    var keepYear = gel('cmYear').value, keepSeq = curSeq, keepTab = (gel('pane2').style.display !== 'none') ? 2 : 1;
+    var changed = (yy !== keepYear);
+    var title = '불만고충처리_' + yy + '년' + ((f === 1 && t === 12) ? '' : ('_' + f + '~' + t + '월')) + '_' + HOSP_NM;
+    var parts = [], MAX = 120, done = 0, stat = gel('cmBpStat');
+    BP.busy = true; gel('cmBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      var back = Promise.resolve();
+      if (changed) { gel('cmYear').value = keepYear; back = Promise.resolve(cmLoad()); }   // 보던 해의 대장으로
+      back.then(function(){
+        var tr = keepSeq ? rowOf(keepSeq) : null;
+        return tr ? cmPick(tr) : null;                    // 보던 건의 처리결과로(BP.busy 라 탭은 안 바뀐다)
+      }).then(function(){
+        cmTab(keepTab);
+        BP.busy = false; gel('cmBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 찍을 것이 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '장을 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '장)' : '') + '.');
+      }, function(){ cmTab(keepTab); BP.busy = false; gel('cmBpGo').disabled = false; });
+    };
+    var start = Promise.resolve();
+    if (changed) { gel('cmYear').value = yy; stat.textContent = yy + '년 대장 읽는 중 …'; start = Promise.resolve(cmLoad()); }
+    start.then(function(){
+      if (wantBook) { try { cmPrintBook(); done++; } catch (e) { } }
+      var docs = wantAct ? (ROWS || []).filter(function(r){ return Number(r.hasact) > 0 && bpInRange(r, f, t); }) : [], j = 0;
+      var oneDoc = function(){
+        if (j >= docs.length || done >= MAX) { finish(); return; }
+        var seq = Number(docs[j++].cmplseq), tr = rowOf(seq);
+        if (!tr) { oneDoc(); return; }
+        Promise.resolve(cmPick(tr)).then(function(okv){
+          if (okv && curSeq === seq) { try { cmActPrint(); done++; } catch (e) { } }   // 못 읽은 건은 건너뛴다 — 앞 건의 처리결과가 찍히면 안 된다
+          stat.textContent = yy + '년 — ' + done + '장';
+          oneDoc();
+        }, function(){ oneDoc(); });
+      };
+      oneDoc();
+    }, function(){ finish(); });
   };
 
   // 코드 먼저, 그 다음 목록 — 셀렉트를 그릴 때 코드가 있어야 한다

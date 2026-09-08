@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260902-DELPHI";   // 델파이 원본 대조의 날 — 배포 확인용(codeList.do 응답 build)
+	private static final String BUILD = "20260908-JSONROWS";   // 저장 4곳 jsonRows 통일 — 배포 확인용(codeList.do 응답 build)
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -253,13 +253,9 @@ public class QpsController {
 			String inYear = str(p.get("inYear"), "");
 			if (inYear.length() != 4) return fail(res, "년도가 필요합니다.");
 
-			java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
-			String json = str(p.get("items"), "");
-			if (!json.isEmpty()) {
-				com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-				items = om.readValue(json,
-					new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});
-			}
+			// ★jsonRows 로 받는다(2026-09-08) — XSS 필터가 따옴표를 &quot; 로 바꿔 보내므로 원문 파싱은 깨진다
+			//   (라운딩 저장이 실제로 「Unexpected character ('&')」 로 죽어 있었다 — 같은 꼴 4곳을 함께 고침)
+			java.util.List<Map<String, Object>> items = jsonRows(p.get("items"));
 			long seq = svc.savePlan(hospCd, str(p.get("formGb"), "Q"), inYear, str(p.get("submitDt"), ""), items, userId(request));
 			res.put("planSeq", seq);
 			res.put("result", "OK");
@@ -314,13 +310,8 @@ public class QpsController {
 			String ym = str(p.get("roundYm"), "").replace("-", "");
 			if (ym.length() != 6) return fail(res, "년월이 필요합니다.");
 
-			java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
-			String json = str(p.get("items"), "");
-			if (!json.isEmpty()) {
-				com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-				items = om.readValue(json,
-					new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});
-			}
+			// ★jsonRows 로 받는다(2026-09-08) — XSS 필터의 &quot; 를 되돌린다. 종전 원문 파싱은 저장이 통째로 실패했다
+			java.util.List<Map<String, Object>> items = jsonRows(p.get("items"));
 			res.put("rndSeq", svc.saveRound(hospCd, str(p.get("formGb"), "Q"), ym, str(p.get("checker"), ""), items, userId(request)));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
@@ -690,13 +681,8 @@ public class QpsController {
 			                 "eduTarget","eduTopic","eduBody","note"};
 			for (String c : cols) m.put(c, str(p.get(c), ""));
 
-			java.util.List<Map<String, Object>> mem = new java.util.ArrayList<>();
-			String json = str(p.get("members"), "");
-			if (!json.isEmpty()) {
-				com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-				mem = om.readValue(json,
-					new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});
-			}
+			// ★jsonRows 로 받는다(2026-09-08) — XSS 필터의 &quot; 를 되돌린다(원문 파싱은 구성원이 있으면 저장 실패)
+			java.util.List<Map<String, Object>> mem = jsonRows(p.get("members"));
 			res.put("rptSeq", svc.saveInfRpt(m, mem));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
@@ -784,13 +770,8 @@ public class QpsController {
 			m.put("evaluator", str(p.get("evaluator"), ""));
 			m.put("regUser", userId(request));
 
-			java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
-			String json = str(p.get("items"), "");
-			if (!json.isEmpty()) {
-				com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-				items = om.readValue(json,
-					new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Map<String, Object>>>(){});
-			}
+			// ★jsonRows 로 받는다(2026-09-08) — XSS 필터의 &quot; 를 되돌린다(원문 파싱은 항목이 있으면 저장 실패)
+			java.util.List<Map<String, Object>> items = jsonRows(p.get("items"));
 			res.put("riskSeq", svc.saveInfRisk(m, items));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }

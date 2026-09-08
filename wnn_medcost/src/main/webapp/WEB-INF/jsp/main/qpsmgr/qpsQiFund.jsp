@@ -61,6 +61,8 @@
   <select id="qfYear" style="width:auto;" onchange="qfLoad();"></select>
   <button type="button" class="qf-btn" onclick="qfSave();">저장</button>
   <button type="button" class="qf-btn ghost" onclick="qfPrint();">🖨 인쇄(A4)</button>
+  <%-- ★화면 안 일괄 출력 (2026-09-08 — 확장 5호) : 저장된 해만 골라 한 번에 이어 인쇄. 아래 #qfBulkPrintBox 에 펼친다. --%>
+  <button type="button" class="qf-btn ghost" onclick="qfBulkPrintToggle();" title="저장된 자원지원 내역을 연도 범위로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <span class="qf-sub" id="qfStat"></span>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
@@ -69,6 +71,17 @@
     <button type="button" onclick="zzZoom(1);"  title="글자 크게">가＋</button>
     <button type="button" onclick="zzZoom(0);"  title="처음 크기로">↺</button>
   </span>
+</div>
+<%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — 「연 1부」 문서라 조건은 연도 범위뿐. 저장된 해만 담는다. --%>
+<div id="qfBulkPrintBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #b9cfe6; border-radius:8px; background:#eef4fb; font-size:12.5px; color:#1f2a37;">
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <b style="color:#2f6fb0;">🖨 일괄 출력</b>
+    <span>연도</span>
+    <select id="qfBpFrom" style="width:auto;"></select><span>~</span><select id="qfBpTo" style="width:auto;"></select>
+    <button type="button" class="qf-btn" id="qfBpGo" style="margin-left:auto;" onclick="qfBulkPrintGo();">출력</button>
+    <button type="button" class="qf-btn ghost" onclick="qfBulkPrintToggle();">닫기</button>
+  </div>
+  <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">저장된 해의 내역만 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음). 한 번에 120부까지. <span id="qfBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
 <div class="qf-card">
@@ -170,12 +183,17 @@
     if (e.target.closest('#tbITEM tr')) qfRecalc();
   });
 
+  var LOAD_REQ = 0;   // 조회 순번 — 늦게 온 옛 응답이 새 목록·문서를 덮지 않게(2026-09-08, 일괄 출력에서 실제로 겪음)
   window.qfLoad = function(){
+    var my = ++LOAD_REQ;
     if (fileBox) fileBox.setKey(gel('qfYear').value);
+    LAST_DOC = false;   // ★먼저 내린다 — 조회가 실패하면(err 가 삼켜 resolve 로 온다) 앞 해의 값이 남아 잘못 찍힌다
     return post('<c:url value="/qps/qiFundGet.do"/>', { inYear: gel('qfYear').value }).then(function(res){
+      if (my !== LOAD_REQ) return;   // 더 새 조회가 나갔다 — 옛 응답은 버린다(2026-09-08)
       if (res.hosp) { HOSP_NM = res.hosp.hospnm || ''; gel('qfHosp').textContent = '🏥 ' + HOSP_NM; }
       APPR_LINE = res.line || [];
       var d = res.doc, items = res.items || [];
+      LAST_DOC = !!d;
       gel('tbITEM').innerHTML = '';
       (items.length ? items : [{actno:1},{actno:1},{actno:2},{actno:2}]).forEach(row);
       gel('qfStat').textContent = d ? ('최종수정 ' + (d.upddttm || '')) : '작성 전';
@@ -192,6 +210,61 @@
       _toast('저장되었습니다.', 'ok');
       return qfLoad();
     }).catch(err);
+  };
+
+  /* ═══ 🖨 화면 안 일괄 출력 (2026-09-08 — 확장 5호 · 연 문서형) ═══
+     「연 1부」라 목록이 없다. 해를 하나씩 열어(qfLoad) **저장된 해만**(LAST_DOC) 낱장 인쇄(qfPrint)를 QPS_BULK_CB 로 모아
+     끝에 qpsPrintMerge(sidebar.jsp)로 한 문서. 빈 해는 기본 줄 넷이 깔려 있어 그대로 찍으면 빈 표가 섞인다.
+     끝나면 보던 해로 되돌린다. 상한 120부. */
+  window.BP = { busy:false };
+  var LAST_DOC = false;   // 지금 보이는 해에 저장된 내역이 있는가 — 일괄 출력이 빈 해를 거른다
+  function bpFill(){
+    var yf = gel('qfBpFrom'), yt = gel('qfBpTo');
+    if (yf.options.length) return;
+    Array.prototype.forEach.call(gel('qfYear').options, function(o){ yf.add(new Option(o.text, o.value)); yt.add(new Option(o.text, o.value)); });
+  }
+  window.qfBulkPrintToggle = function(){
+    var box = gel('qfBulkPrintBox');
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    bpFill();
+    gel('qfBpFrom').value = gel('qfYear').value; gel('qfBpTo').value = gel('qfYear').value;
+    gel('qfBpStat').textContent = '';
+    box.style.display = '';
+  };
+  window.qfBulkPrintGo = function(){
+    if (BP.busy) return;
+    var f = Number(gel('qfBpFrom').value), t = Number(gel('qfBpTo').value);
+    if (f > t) { var x = f; f = t; t = x; gel('qfBpFrom').value = String(f); gel('qfBpTo').value = String(t); }
+    var keepYear = gel('qfYear').value;
+    var title = 'QI자원지원내역_' + (f === t ? (f + '년') : (f + '~' + t + '년')) + '_' + HOSP_NM;
+    var years = [];
+    for (var y = f; y <= t; y++) years.push(String(y));
+    var parts = [], MAX = 120, done = 0, stat = gel('qfBpStat'), yi = 0;
+    BP.busy = true; gel('qfBpGo').disabled = true;
+    window.QPS_BULK_CB = function(p){ parts.push(p); };
+    var finish = function(){
+      window.QPS_BULK_CB = null;
+      gel('qfYear').value = keepYear;                     // 보던 해로
+      Promise.resolve(qfLoad()).then(function(){
+        BP.busy = false; gel('qfBpGo').disabled = false;
+        if (!parts.length) { stat.textContent = '기간 안에 저장된 내역이 없습니다.'; return; }
+        var n = qpsPrintMerge(parts, title);
+        stat.textContent = (n < 0) ? '팝업이 막혀 인쇄창을 열지 못했습니다.' :
+                           (parts.length + '부를 이어 붙였습니다' + (done >= MAX ? ' (상한 ' + MAX + '부)' : '') + '.');
+      }, function(){ BP.busy = false; gel('qfBpGo').disabled = false; });
+    };
+    var oneYear = function(){
+      if (yi >= years.length || done >= MAX) { finish(); return; }
+      var yy = years[yi++];
+      gel('qfYear').value = yy;
+      stat.textContent = yy + '년 읽는 중 …';
+      Promise.resolve(qfLoad()).then(function(){
+        if (LAST_DOC) { try { qfPrint(); done++; } catch (e) { } }
+        stat.textContent = yy + '년 — ' + done + '부';
+        oneYear();
+      }, function(){ oneYear(); });
+    };
+    oneYear();
   };
 
   // ---------- 인쇄 — 같은 활동번호를 rowspan 으로 묶는다(원본의 세로 병합) ----------
