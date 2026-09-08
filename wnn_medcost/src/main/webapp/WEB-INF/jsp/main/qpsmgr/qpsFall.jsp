@@ -480,7 +480,10 @@
       <button type="button" class="qf-btn"       id="qfBtnApprove" onclick="qfApprAct('APPROVE');">승인</button>
       <button type="button" class="qf-btn warn"  id="qfBtnReject"  onclick="qfApprAct('REJECT');">반려</button>
       <button type="button" class="qf-btn warn"  id="qfBtnReopen"  onclick="qfApprAct('REOPEN');">확정 취소</button>
-      <button type="button" class="qf-btn ghost" id="qfBtnLine"    onclick="qfApprLineEdit();">결재선 설정</button>
+      <%-- ⛔[결재선 설정] 단추는 뺐다(2026-09-08 사용자 「낙상화면 결재선설정은 빼줘」) —
+           결재 단계는 **QPS ▸ 관리(설정) ▸ 결재 권한** 화면에서 정한다(그 표의 열이 곧 결재선이다).
+           같은 표(TBL_QPS_APPR_LINE)를 두 화면에서 고치게 두면 반드시 어긋난다.
+           ★함수 `qfApprLineEdit` 와 아래 show('#qfBtnLine') 은 남겨 두었다 — 단추만 되넣으면 부활한다. --%>
       <button type="button" class="qf-btn ghost" id="qfBtnPrint"   onclick="qfPrint();">🖨 인쇄(A4)</button>
     </div>
 
@@ -1555,7 +1558,7 @@
     show('#qfBtnApprove', st === 'SUBMIT');
     show('#qfBtnReject',  st === 'SUBMIT');
     show('#qfBtnReopen',  st === 'CONFIRM');        // 최종승인 뒤 되돌리는 유일한 길 — 사유 필수, 이력에 남는다
-    show('#qfBtnLine',    WNN_YN === 'Y');          // 결재선 설정은 관리자(위너넷)만
+    show('#qfBtnLine',    WNN_YN === 'Y');          // (단추는 뺐다 — 결재 단계는 [결재 권한] 화면에서. show 는 없는 요소면 그냥 지나간다)
 
     // 결재 중·최종승인이면 서술 저장을 막는다(서버에도 같은 가드가 있다)
     var lock = (st === 'SUBMIT' || st === 'CONFIRM');

@@ -346,6 +346,8 @@
 
                                 <%-- ── 7. 점검표 작성 — 가장 많이 여는 줄이라 그룹 밖에 바로 둔다 ── --%>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsChk.do" style="font-weight:600;">▸ 점검표 작성</a></li>
+                                <%-- 근무표 — 점검표 사인의 짝이라 바로 아래 둔다(2026-09-08). 병원이 쓰는 화면이라 감추지 않는다. --%>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/qpsDuty.do">▸ 근무표</a></li>
 
                                 <%-- ── 8. 담당자별 업무 — 부서마다 「점검표 → 서식 → 위원회 → 기록」 차례. ★부서 묶음 id = qps-d-부서코드(QPS_CHK_DEPT) ──
                                      ★`qps-dept-list` 의 li[data-dept] 는 아래 스크립트(qpsDeptMenu)가 **서식 없는 부서의 점검표 줄만** 감춘다.
@@ -493,6 +495,9 @@
                                                 <a class="nav-item nav-link" href="/main/qpsDeptCate.do">부서별 쓰는 분류 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <li class="nav-item" id="qpsUserDeptMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- 결재 권한 — 부서마다 단계별 결재자(2026-09-08). 설정이라 위너넷만 --%>
+                                            <li class="nav-item" id="qpsApprAuthMenu" style="display:none;">
+                                                <a class="nav-item nav-link" href="/main/qpsApprAuth.do">결재 권한 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <%-- 기준코드 — 전 병원 공용 기준값. 보는 것은 모두, 등록·삭제는 위너넷만(서버가 막는다) --%>
                                             <li class="nav-item">
                                                 <a class="nav-item nav-link" href="#" data-toggle="collapse" aria-expanded="false"
@@ -1681,6 +1686,9 @@ function hosp_conact() {
         // 점검표 [사용자별 담당 부서] — 설정 화면이라 위너넷 전용(2026-08-18)
         var userDept = document.getElementById("qpsUserDeptMenu");
         if (userDept) userDept.style.display = "";
+        // 점검표 [결재 권한] — 설정 화면이라 위너넷 전용(2026-09-08)
+        var apprAuth = document.getElementById("qpsApprAuthMenu");
+        if (apprAuth) apprAuth.style.display = "";
         // 점검표 [부서별 쓰는 분류] — ★2026-08-18 메뉴에서 뺐다(서식 관리 안 링크로 들어간다).
         //   되살리려면 아래 두 줄의 주석을 풀고 li 의 hidden·display:none 을 지운다.
         // var deptCate = document.getElementById("qpsDeptCateMenu");

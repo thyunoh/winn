@@ -378,6 +378,16 @@
 
         <div class="lb">하단 서명란</div>
         <div><input type="text" id="f_signLine" maxlength="200" placeholder="쉼표. 예) 부서장,원무과장"></div>
+
+        <%-- ★결재란 (2026-09-08 사용자 「사인 하다 보니 서식마다 결재란 관리가 필요함 —
+             담당자 하는 것이 있고, 결재란이 있는 것이 있고」) — 화면 결재 상자와 인쇄 결재표가 이 칸을 본다.
+             ⚠끄면 **그 서식의 종이에서 결재 상자가 사라진다** — 담당자 사인만 쓰는 서식에 쓴다. --%>
+        <div class="lb">결재란</div>
+        <div class="full" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding-top:4px;">
+          <label style="font-size:12.5px;"><input type="checkbox" id="f_apprYn" style="vertical-align:-2px;" checked> 결재란 씀</label>
+          <input type="text" id="f_apprSteps" maxlength="200" style="width:280px;" placeholder="단계(쉼표) — 비우면 병원 결재선을 따름">
+          <span class="cf-sub">끄면 담당자 사인만 씁니다 · 단계를 적으면 그 서식만 다른 결재선이 됩니다</span>
+        </div>
         <div class="lb">정렬</div>
         <div><input type="number" id="f_sortNo" value="0" style="width:90px;"></div>
 
@@ -1507,6 +1517,8 @@
       set('f_guideTxt', d.guidetxt); set('f_headNms', d.headnms);
       setChk('f_signerYn', d.signeryn); setChk('f_noteYn', d.noteyn); setChk('f_fixYn', d.fixyn);
       set('f_signLine', d.signline); set('f_footTxt', d.foottxt); set('f_sortNo', d.sortno || 0);
+      /* ★옛 서식(칸이 없던 때)은 appryn 이 비어 온다 — **켜짐**으로 본다(현행 유지) */
+      setChk('f_apprYn', (d.appryn === 'N') ? 'N' : 'Y'); set('f_apprSteps', d.apprsteps);
       gel('f_formId').readOnly = true;   // 코드는 못 바꾼다 — 바꾸면 작성분과 끊긴다
 
       gel('tbITEM').innerHTML = '';
@@ -1587,6 +1599,7 @@
         guideTxt: val('f_guideTxt'), headNms: val('f_headNms'),
         signerYn: chk('f_signerYn'), noteYn: chk('f_noteYn'), fixYn: chk('f_fixYn'),
         signLine: val('f_signLine'), footTxt: val('f_footTxt'), sortNo: val('f_sortNo'),
+        apprYn: chk('f_apprYn'), apprSteps: val('f_apprSteps'),   /* 결재란 — 서식이 정한다(2026-09-08) */
         // ★새 서식이면 서버가 중복을 막는다 — 안 막으면 남의 서식을 덮어쓴다
         newYn: curId ? 'N' : 'Y',
         items: JSON.stringify(items)

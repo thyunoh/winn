@@ -158,6 +158,31 @@ public interface QpsMapper {
 	int insertAppr(Map<String, Object> param);
 	int updateReportAppr(Map<String, Object> param);
 
+	/* ═══ 서명·도장 + 점검표 결재란 (2026-09-08) ═══
+	   ★도장은 사람마다 한 장, 결재 기록은 문서×단계 한 줄. 기록엔 그림을 복사하지 않는다. */
+	Map<String, Object> selectQpsSign(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int saveQpsSign(Map<String, Object> param);
+	/** 격자 사인 칸의 작은 도장 — 문서에 적힌 **이름들**로 도장을 찾는다(param: hospCd, names). */
+	List<Map<String, Object>> selectQpsSignsByNames(Map<String, Object> param);
+	int deleteQpsSign(@Param("hospCd") String hospCd, @Param("userId") String userId);
+
+	List<Map<String, Object>> selectChkApprList(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq);
+	/** 그 단계를 **남이** 이미 찍었는가 — 0 이어야 찍을 수 있다(내가 찍은 것은 다시 찍기=갱신). */
+	int countChkApprOther(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq,
+	                      @Param("stepNo") int stepNo, @Param("userId") String userId);
+	int saveChkAppr(Map<String, Object> param);
+	/** ★내가 찍은 것만 취소된다(매퍼 WHERE 에 USER_ID). */
+	int deleteChkAppr(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq,
+	                  @Param("stepNo") int stepNo, @Param("userId") String userId);
+
+	/* 결재 권한 — 부서 × 단계 × 사람(서식 예외 가능). ⚠지정이 없으면 누구나(막는 장치가 아니라 좁혀 주는 장치). */
+	List<Map<String, Object>> selectApprAuth(@Param("hospCd") String hospCd,
+	                                         @Param("deptCd") String deptCd,
+	                                         @Param("formId") String formId);
+	List<Map<String, Object>> selectApprAuthList(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd);
+	int deleteApprAuth(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd, @Param("formId") String formId);
+	int insertApprAuth(Map<String, Object> param);
+
 	// 공통 첨부 (TBL_QPS_FILE — REF_GB+REF_KEY)
 	List<Map<String, Object>> selectQpsFileList(@Param("hospCd") String hospCd,
 	                                            @Param("refGb")  String refGb,
@@ -479,4 +504,24 @@ public interface QpsMapper {
 	int insertCathDayItems(Map<String, Object> param);
 	/** 분모 반영 — TBL_QPS_CENSUS(CATHDAYS)의 해당 월 칸만 갱신. monCol 은 서버가 M01~M12 로만 만든다. */
 	int upsertCathCensus(Map<String, Object> param);
+
+	/* ═══ 근무표(듀티) — 2026-09-08 ═══
+	   부서·병동 × 연월 한 장(머리) + 사람 줄(= 그 달 명단) + 사람×날짜 값. */
+	Map<String, Object> selectDuty(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd,
+	                               @Param("wardNm") String wardNm, @Param("dutyYm") String dutyYm);
+	List<Map<String, Object>> selectDutyRows(@Param("dutySeq") long dutySeq);
+	List<Map<String, Object>> selectDutyVals(@Param("dutySeq") long dutySeq);
+	List<String> selectDutyWards(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd);
+	List<Map<String, Object>> selectDutyList(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd);
+	int insertDuty(Map<String, Object> param);            // useGeneratedKeys → param 의 dutySeq 에 새 번호
+	int updateDuty(Map<String, Object> param);
+	int updateDutyLock(Map<String, Object> param);
+	int deleteDutyRows(@Param("dutySeq") long dutySeq);
+	int deleteDutyVals(@Param("dutySeq") long dutySeq);
+	int insertDutyRows(Map<String, Object> param);
+	int insertDutyVals(Map<String, Object> param);
+	/** 날짜마다 근무자(사인 매치) — 쉬는 기호 제외, shiftCd 를 주면 기호 첫 글자로 거른다. */
+	List<Map<String, Object>> selectDutyDayNames(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd,
+	                                             @Param("wardNm") String wardNm, @Param("dutyYm") String dutyYm,
+	                                             @Param("shiftCd") String shiftCd);
 }

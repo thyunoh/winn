@@ -137,6 +137,37 @@
   <%-- ★편의 기능 띠 + 손짓 표시 (2026-09-02, SUNWOO 원본 소스 대조로 이식 — 아래 JS 「편의 기능」 절 참고).
        머리글·행 머리에 손 모양을 줘 「누를 수 있다」를 알린다. 이름 칸 빈 행(rowoff)은 흐리게. --%>
   #qpsChk .ck-tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; font-size:12px; color:#556570; }
+  /* ═══ 결재란 (2026-09-08) — 종이 결재 상자를 화면에 그대로. 칸을 누르면 내 도장이 찍힌다 ═══ */
+  #qpsChk .ck-appr{ display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:8px; }
+  #qpsChk .ck-appr .lbl{ font-size:12px; color:#6b5a2e; align-self:center; }
+  #qpsChk .ck-apst{ border:1px solid #d9c9a0; border-radius:6px; background:#fffdf7; width:96px; text-align:center;
+      cursor:pointer; overflow:hidden; }
+  #qpsChk .ck-apst:hover{ background:#fff7e6; }
+  #qpsChk .ck-apst .hd{ font-size:11px; font-weight:700; color:#6b5a2e; background:#f7efdc;
+      border-bottom:1px solid #e8dcc0; padding:2px 0; }
+  #qpsChk .ck-apst .bd{ height:52px; display:flex; align-items:center; justify-content:center; position:relative; }
+  #qpsChk .ck-apst .bd img{ max-height:46px; max-width:88px; }
+  #qpsChk .ck-apst .bd .nm{ font-size:12px; color:#20303a; font-weight:700; }
+  #qpsChk .ck-apst .bd .empty{ font-size:11px; color:#b6bfc6; }
+  #qpsChk .ck-apst .ft{ font-size:10px; color:#8a99a3; border-top:1px solid #f0e7d4; padding:1px 0; }
+  #qpsChk .ck-apst.mine{ border-color:#1f7a52; }
+  #qpsChk .ck-apst.mine .hd{ background:#e7f4ee; color:#1f5a4b; border-bottom-color:#cfe3da; }
+  #qpsChk .ck-apst.gone .hd{ background:#f3eaea; color:#8a5a5a; }
+  /* 권한 밖 — 누를 수 없는 칸임을 눈으로 (2026-09-08) */
+  #qpsChk .ck-apst.noauth{ opacity:.55; background:#f7f8f9; }
+  #qpsChk .ck-apst.noauth .hd{ background:#eef1f3; color:#8a99a3; }
+  /* 내 도장 등록 창 — ui-message 위에 뜨지 않게 z 는 그 아래(10000 미만) */
+  #qpsChk .ck-signwrap{ position:fixed; inset:0; background:rgba(20,30,40,.45); z-index:9600;
+      display:flex; align-items:center; justify-content:center; }
+  #qpsChk .ck-sign{ background:#fff; border-radius:14px; padding:16px 18px; width:420px; max-width:94vw;
+      box-shadow:0 12px 40px rgba(0,0,0,.28); }
+  #qpsChk .ck-sign h4{ margin:0 0 6px; font-size:15px; color:#20303a; }
+  #qpsChk .ck-sign .desc{ font-size:11.5px; color:#8a99a3; line-height:1.6; margin-bottom:8px; }
+  #qpsChk .ck-sign canvas{ border:1px dashed #cfd8e0; border-radius:8px; background:#fff; touch-action:none;
+      width:100%; height:120px; display:block; }
+  #qpsChk .ck-sign .now{ border:1px solid #e3e9ed; border-radius:8px; padding:6px; text-align:center; margin-bottom:8px; }
+  #qpsChk .ck-sign .now img{ max-height:60px; max-width:100%; }
+  #qpsChk .ck-sign .btns{ display:flex; gap:6px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap; }
   #qpsChk .ck-tools .ck-chk{ display:inline-flex; align-items:center; gap:4px; cursor:pointer; user-select:none; font-weight:600; }
   #qpsChk .ck-tools .ck-chk input{ margin:0; }
   #qpsChk .ck-tools .ck-hint{ color:#8a99a3; margin-left:2px; }
@@ -172,13 +203,22 @@
   <span class="ck-hosp" id="ckHosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="ck-spacer"></div>
   <button type="button" class="ck-btn" onclick="ckSave();">저장</button>
-  <button type="button" class="ck-btn ghost" onclick="ckPrint();">🖨 인쇄(A4 가로)</button>
+  <%-- ★인쇄 전에 **사인 칸 도장**을 먼저 받아 온다(ckPrintGo) — 도장 그림은 서버에서 오므로 기다렸다 찍어야 한다 --%>
+  <button type="button" class="ck-btn ghost" onclick="ckPrintGo();">🖨 인쇄(A4 가로)</button>
   <%-- ★화면 안 일괄 출력 (2026-09-07 「각각 등록화면에서 일괄출력이 필요함 — 별도 화면은 확인도 안 되고 효율이 떨어짐」)
        이 서식(또는 이 부서 서식 전부)의 저장된 점검표를 기간으로 골라 한 번에 이어 인쇄. 아래 #ckBulkPrintBox 에 펼친다. --%>
   <button type="button" class="ck-btn ghost" onclick="ckBulkPrintToggle();" title="이 서식(또는 이 부서 서식 전부)의 저장된 점검표를 기간으로 골라 한 번에 인쇄합니다">🖨 일괄 출력</button>
   <%-- ★화면 안 일괄 사인 (2026-09-08 — 일괄 작성·일괄 출력에 이은 세 묶음의 마지막)
        고른 점검표들의 **빈 사인 칸**을 내 이름으로 채워 저장한다. 아래 #ckBulkSignBox 에 펼친다. --%>
   <button type="button" class="ck-btn ghost" onclick="ckBulkSignToggle();" title="이 서식(또는 이 부서 서식 전부)의 저장된 점검표에 빈 사인 칸만 내 이름으로 채워 저장합니다">✍ 일괄 사인</button>
+  <%-- ★내 도장 (2026-09-08 「마우스로 사인 가능한가요 / 아님 스캔 도장」 → 「결재란부터」)
+       사람마다 한 장. 마우스로 그리거나 스캔 그림을 올린다. 결재란에 찍히는 그림이 이것이다. --%>
+  <button type="button" class="ck-btn ghost" onclick="ckSignOpen();" title="결재란에 찍을 내 도장·서명을 등록합니다(마우스로 그리거나 스캔 그림 올리기)">🖋 내 도장</button>
+  <%-- ★격자 사인 칸의 작은 도장 (2026-09-08) — 종이에서 사인 칸을 **이름 글자 대신 도장 그림**으로 찍는다.
+       도장을 등록하지 않은 사람은 그대로 이름이 찍힌다. 이 PC 이 브라우저에만 저장된다. --%>
+  <label class="ck-chk" title="종이의 점검자 사인 칸을 이름 대신 도장 그림으로 찍습니다(도장이 없는 사람은 이름 그대로)">
+    <input type="checkbox" id="ckStamp" onchange="ckStampSync();"> 사인 칸 도장
+  </label>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="ck-zoom">
     <button type="button" onclick="ckZoom(-1);" title="글자 작게">가－</button>
@@ -283,11 +323,22 @@
       <label class="ck-chk"><input type="radio" name="ckBsScope" value="D"> 이 부서 서식 전부 <span id="ckBsDeptNm" style="color:#5a6b7a;"></span></label>
       <span style="margin-left:8px;">기간 <b id="ckBsYear"></b>년</span>
       <select id="ckBsFrom" style="width:auto;"></select><span>~</span><select id="ckBsTo" style="width:auto;"></select>
-      <span style="margin-left:8px;">서명 <b id="ckBsNm" style="color:#1f7a52;"></b></span>
       <button type="button" class="ck-btn" id="ckBsGo" style="margin-left:auto;" onclick="ckBulkSignGo();">서명</button>
       <button type="button" class="ck-btn ghost" onclick="ckBulkSignToggle();">닫기</button>
     </div>
-    <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;"><b>빈 사인 칸만</b> 채워 저장합니다 — 이미 적힌 사인은 그대로 둡니다(사인 머리 더블클릭과 같은 규칙). 위 <b>「토·일·공휴일 제외」</b> 설정을 따르고, 사인 칸이 없는 서식·채울 칸이 없는 문서는 건드리지 않습니다. 한 번에 200건까지. <span id="ckBsStat" style="color:#1f7a52; font-weight:700;"></span></div>
+    <%-- ★누구 이름으로 넣는가 (2026-09-08 사용자 「근무표에 따른 사인도 매치가 되어야 하고」) —
+         종이 점검표의 사인 칸은 **그날 근무한 사람**이다. 근무표(qpsDuty)를 적어 두면 날짜 칸마다 그 사람 이름이 들어간다. --%>
+    <div style="margin-top:6px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span>이름</span>
+      <label class="ck-chk"><input type="radio" name="ckBsWho" value="ME" checked onchange="ckBsWhoSync();"> 내 이름 <b id="ckBsNm" style="color:#1f7a52;"></b></label>
+      <label class="ck-chk"><input type="radio" name="ckBsWho" value="DUTY" onchange="ckBsWhoSync();"> 그날 근무자 <span style="color:#5a6b7a;">(근무표에서)</span></label>
+      <span id="ckBsDutyOpt" style="display:none;">
+        근무 <select id="ckBsShift" style="width:auto;"><option value="">전체(쉬는 날 빼고)</option></select>
+        <span style="color:#5a6b7a;">· 병동은 문서에 적힌 병동을 씁니다</span>
+        <a href="/main/qpsDuty.do" style="color:#1f7a52; font-weight:600;">근무표 →</a>
+      </span>
+    </div>
+    <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;"><b>빈 사인 칸만</b> 채워 저장합니다 — 이미 적힌 사인은 그대로 둡니다(사인 머리 더블클릭과 같은 규칙). 위 <b>「토·일·공휴일 제외」</b> 설정을 따르고, 사인 칸이 없는 서식·채울 칸이 없는 문서는 건드리지 않습니다. 한 번에 200건까지. <span id="ckBsDutyHint" style="color:#1f7a52;"></span> <span id="ckBsStat" style="color:#1f7a52; font-weight:700;"></span></div>
   </div>
   <%-- ★탭 (2026-08-15) — 사진칸이 있는 서식에서만 나온다(ckTabSync). 없으면 가를 것이 없다. --%>
   <div class="ck-tabs" id="ckTabs" style="display:none;"></div>
@@ -313,7 +364,16 @@
          「공휴일」·「일괄 서명」을 적어 두면 못 쓰는 조작을 읽히는 셈이다. applyFormUi 가 채운다(2026-09-07). --%>
     <span class="ck-hint" id="ckHint"></span>
   </div>
+  <%-- ★결재란 (2026-09-08 사용자 「결재란부터 진행해줘」) — **저장된 문서에만** 보인다.
+       단계는 결재선(TBL_QPS_APPR_LINE, 병원 행 없으면 공통)이 정하고, 칸을 누르면 **내 도장**이 찍힌다.
+       ★여러 사인이 여기서 풀린다 — 점검자·관리자·원장이 각자 제 도장으로 찍고 문서마다 누구인지 남는다.
+       ⚠표 **밖**에 둔다(격자를 복사하는 인쇄에 단추가 딸려 가지 않게) — ckListBar·ckTools 와 같은 이유. --%>
+  <div id="ckApprBox" class="ck-appr" style="display:none;"></div>
   <div class="gridwrap" id="ckGridWrap"><div class="ck-empty">서식을 고르세요.</div></div>
+  <%-- ★서식 아래 결재란 (2026-09-08) — 종이 아래쪽 「점검자 ______ (인)」 줄이다.
+       자리는 **서식이 정한다**(SIGN_LINE, 쉼표) · 위 결재 상자(병원 결재선)와는 다른 것 ·
+       기록은 같은 표에 예약 대역 901~910 으로 담는다. 여기도 칸을 누르면 내 도장이 찍힌다. --%>
+  <div id="ckSlineBox" class="ck-appr" style="display:none; margin-top:8px;"></div>
 
   <div id="ckNoteWrap" style="display:none; margin-top:10px;">
     <%-- ★칸 이름은 서식이 정한다(NOTE_NM) — 조치사항·기타 이상내용. 비면 「특이사항」. --%>
@@ -1600,7 +1660,309 @@
       gel('ckDelBtn').style.display = '';
       gel('ckBulkBtn').style.display = '';                 // 저장 문서가 열렸다 — 이걸 원본으로 일괄 작성할 수 있다
       if (gel('ckBulkBox').style.display !== 'none') ckBulkFill();   // 띠가 열려 있으면 원본 표시를 이 문서로
+      ckApprLoad();   // 결재란 — 저장된 문서에만 나온다(2026-09-08)
     }).catch(err);
+  };
+
+  /* ═══════════ 결재란 + 내 도장 (2026-09-08) ═══════════════════════════════
+     사용자 「마우스로 사인 가능한가요 / 아님 스캔 도장」 → 「결재란부터 진행해줘」.
+     ★사인이 들어가는 자리 셋 중 **결재란**만 다룬다 — 격자의 점검자 사인 행은 칸이 6mm 라 도장이 점이 된다.
+     ★단계는 결재선이 정하고, 기록은 문서×단계 한 줄. **도장 그림은 기록에 복사하지 않는다**(사람 것을 그때 읽는다).
+     ★★찍기·취소는 **서버가 로그인 계정으로 강제**한다 — 화면은 편의일 뿐이고 막는 것은 서버다. */
+  var APPR_BOX = [], APPR_ME = '', SLINE_BOX = [];
+
+  /** 이 서식이 결재란을 쓰는가 — 옛 서식(칸이 없던 때)은 비어 오므로 **켜짐**으로 본다(현행 유지). */
+  function apprOn(){ return !!FORM && FORM.appryn !== 'N'; }
+  /** 단계 목록 — 서식이 따로 정했으면 그것, 아니면 병원 결재선. */
+  function apprSteps(){
+    var t = (FORM && FORM.apprsteps) ? String(FORM.apprsteps).trim() : '';
+    if (!t) return APPR_LINE;
+    return t.split(',').map(function(x, i){ return { stepno: i + 1, stepnm: x.trim() }; })
+            .filter(function(x){ return x.stepnm; });
+  }
+
+  /** 확인창을 프라미스로 — 이 화면엔 공통 ask 가 없다(다른 QPS 화면과 같은 모양을 쓰려고 감싼다).
+      ★알림·확인은 표준 ui-message(_confirmBox) 하나만 쓴다 — 상시 방침. */
+  function ckAsk(html, opts){
+    opts = opts || {};
+    return new Promise(function(res){
+      _confirmBox({ msg: html, icon: opts.icon || '❓', okText: opts.okText || '예', okColor: opts.okColor,
+                    onOk: function(){ res(true); }, onCancel: function(){ res(false); } });
+    });
+  }
+
+  /** 결재 상자 다시 읽기 — 저장된 문서일 때만. 새 문서는 결재할 대상이 없다. */
+  function ckApprLoad(){
+    var box = gel('ckApprBox');
+    if (!box) return;
+    if (!curSeq || !apprOn()) { APPR_BOX = []; box.style.display = 'none'; box.innerHTML = ''; return; }
+    return post('<c:url value="/qps/chkApprList.do"/>', { chkSeq: curSeq, formId: (FORM ? FORM.formid : '') }).then(function(res){
+      apprTake(res);
+    }).catch(function(){ /* 결재란을 못 읽어도 점검표 작성은 막지 않는다 */ });
+  }
+  /** 응답 하나로 **두 상자**를 함께 세운다 — 위(결재선)와 아래(서식 결재란)는 같은 표에서 온다. */
+  function apprTake(res){
+    APPR_BOX  = apprFit(res.box || []);
+    SLINE_BOX = res.sline || [];
+    APPR_ME   = res.me || APPR_ME || '';
+    ckApprPaint();
+    ckSlinePaint();
+  }
+
+  /**
+   * 서버가 준 상자(=병원 결재선 + 기록)를 <b>이 서식의 단계</b>에 맞춘다(2026-09-08).
+   * ★서식이 단계를 따로 정하지 않았으면 그대로 쓴다 — 서버 것이 곧 병원 결재선이다.
+   * ★정의 밖 단계에 찍힌 기록은 <b>뒤에 붙인다</b> — 버리면 이미 찍은 도장이 화면에서 사라진다(서버와 같은 원칙).
+   */
+  function apprFit(box){
+    if (!FORM || !FORM.apprsteps) return box;
+    var by = {}, used = {};
+    box.forEach(function(b){ if (b.userid) by[String(b.stepno)] = b; });
+    var out = apprSteps().map(function(s){
+      var d = by[String(s.stepno)];
+      if (!d) return { stepno: s.stepno, stepnm: s.stepnm };
+      used[String(s.stepno)] = 1;
+      return { stepno: s.stepno, stepnm: s.stepnm, userid: d.userid, usernm: d.usernm,
+               apprdt: d.apprdt, apprdttm: d.apprdttm, signimg: d.signimg, signmime: d.signmime };
+    });
+    box.forEach(function(b){ if (b.userid && !used[String(b.stepno)]) { b.gone = 'Y'; out.push(b); } });
+    return out;
+  }
+
+  function ckApprPaint(){
+    var box = gel('ckApprBox');
+    if (!box) return;
+    /* ★서식이 결재란을 안 쓰면 그리지 않는다(2026-09-08) — 담당자 사인만 쓰는 서식이 있다 */
+    if (!curSeq || !APPR_BOX.length || !apprOn()) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    var h = '<span class="lbl">결재</span>';
+    APPR_BOX.forEach(function(s){
+      var mine = s.userid && s.userid === APPR_ME;
+      var body = s.signimg
+          ? '<img src="data:' + esc(s.signmime || 'image/png') + ';base64,' + esc(s.signimg) + '" alt="">'
+          : (s.usernm ? '<span class="nm">' + esc(s.usernm) + '</span>'
+                      /* ★빈 칸에는 **누구 자리인지** 적는다(권한 지정이 있을 때) — 눌러 보고 알게 하지 않는다 */
+                      : '<span class="empty">' + (s.who ? esc(s.who) : '비어 있음') + '</span>');
+      /* ★권한 밖 칸은 **흐리게**(2026-09-08) — 눌러도 서버가 막지만, 누를 것과 아닌 것이 눈에 보여야 한다 */
+      var noAuth = (s.can === 'N');
+      h += '<div class="ck-apst' + (mine ? ' mine' : '') + (s.gone === 'Y' ? ' gone' : '') + (noAuth ? ' noauth' : '') +
+           '" data-step="' + esc(s.stepno) + '"' +
+           ' title="' + (s.usernm ? (esc(s.usernm) + ' · ' + esc(s.apprdttm || ''))
+                        : (noAuth ? ('결재 권한이 없는 단계입니다' + (s.who ? (' — ' + esc(s.who) + ' 님 자리') : ''))
+                                  : '누르면 내 도장으로 결재합니다')) + '">' +
+           '<div class="hd">' + esc(s.stepnm || ('단계 ' + s.stepno)) + '</div>' +
+           '<div class="bd">' + body + '</div>' +
+           /* ⚠빈 칸은 `&nbsp;` **그대로** 넣어야 한다 — esc 를 태우면 글자 「&nbsp;」가 보인다(2026-09-08 실측) */
+           '<div class="ft">' + (s.apprdt ? esc(s.apprdt) : '&nbsp;') + '</div></div>';
+    });
+    h += '<span class="lbl" style="color:#8a99a3;">칸을 누르면 내 도장으로 결재합니다 · 내가 찍은 것만 취소됩니다</span>';
+    box.innerHTML = h;
+    box.style.display = '';
+  }
+
+  /* ═══ 서식 아래 결재란(SIGN_LINE) — 2026-09-08 ═══
+     종이 아래쪽 「점검자 ______ (인)」 줄을 **화면에서 찍는다.** 위 결재 상자와 규칙은 같고(빈 칸 클릭 = 내 도장,
+     내가 찍은 것만 취소, 남이 찍은 칸은 못 건드림) **자리를 서식이 정한다**는 것만 다르다.
+     ★권한(결재 권한 화면)으로 좁히지 않는다 — 점검한 사람이 그 자리에 찍는 칸이다. */
+  function ckSlinePaint(){
+    var box = gel('ckSlineBox');
+    if (!box) return;
+    if (!curSeq || !SLINE_BOX.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    var h = '<span class="lbl">서식 결재란</span>';
+    SLINE_BOX.forEach(function(s){
+      var mine = s.userid && s.userid === APPR_ME;
+      var body = s.signimg
+          ? '<img src="data:' + esc(s.signmime || 'image/png') + ';base64,' + esc(s.signimg) + '" alt="">'
+          : (s.usernm ? '<span class="nm">' + esc(s.usernm) + '</span>'
+                      : '<span class="empty">비어 있음</span>');
+      h += '<div class="ck-apst' + (mine ? ' mine' : '') + (s.gone === 'Y' ? ' gone' : '') +
+           '" data-step="' + esc(s.stepno) + '"' +
+           ' title="' + (s.usernm ? (esc(s.usernm) + ' · ' + esc(s.apprdttm || '')) : '누르면 내 도장으로 서명합니다') + '">' +
+           '<div class="hd">' + esc(s.stepnm || '') + '</div>' +
+           /* ★날짜 줄이 없다(2026-09-08 사용자 「일자는 들어가면 안 됩니다」) — 종이의 「(인)」 자리는 도장만.
+              언제 찍었는지는 칸의 title(마우스 올리면)과 기록(APPR_DTTM)에 남는다. */
+           '<div class="bd">' + body + '</div></div>';
+    });
+    h += '<span class="lbl" style="color:#8a99a3;">종이 아래쪽 「(인)」 자리입니다 · 비워 두면 종이에 빈 줄로 나갑니다(손도장)</span>';
+    box.innerHTML = h;
+    box.style.display = '';
+  }
+
+  document.getElementById('ckSlineBox').addEventListener('click', function(ev){
+    var c = ev.target.closest ? ev.target.closest('.ck-apst') : null;
+    if (!c) return;
+    var no = Number(c.getAttribute('data-step') || 0);
+    var s  = SLINE_BOX.filter(function(x){ return Number(x.stepno) === no; })[0];
+    if (!s) return;
+    var send = function(url, msg, opts){
+      return ckAsk(msg, opts).then(function(ok){
+        if (!ok) return;
+        post(url, { chkSeq: curSeq, stepNo: no, stepNm: s.stepnm || '', formId: (FORM ? FORM.formid : '') })
+          .then(function(res){ apprTake(res); _toast(opts.done, 'ok'); }).catch(err);
+      });
+    };
+    if (s.userid && s.userid === APPR_ME)
+      return send('<c:url value="/qps/chkApprDel.do"/>', '<b>' + esc(s.stepnm || '') + '</b> 서명을 취소합니다.',
+                  { icon:'⚠️', okText:'서명 취소', done:'서명을 취소했습니다.' });
+    if (s.userid) {
+      _alertBox('<b>' + esc(s.usernm || '') + '</b> 님이 서명한 칸입니다.<br>' +
+                '<span style="font-size:12px;color:#8a99a3;">' + esc(s.apprdttm || '') + ' · 그 사람이 취소해야 바뀝니다.</span>', {icon:'ℹ️'});
+      return;
+    }
+    return send('<c:url value="/qps/chkApprSave.do"/>',
+                '<b>' + esc(s.stepnm || '') + '</b> 자리에 <b>내 도장</b>을 찍습니다.' +
+                '<div style="text-align:left;font-size:11.5px;color:#8a99a3;margin-top:8px;">' +
+                '도장을 등록하지 않았으면 <b>이름만</b> 찍힙니다 — 툴바 <b>[🖋 내 도장]</b> 에서 등록하세요.<br>' +
+                '비워 두면 종이에는 지금까지처럼 <b>빈 줄</b>로 나갑니다(손도장).</div>',
+                { icon:'🖋', okText:'서명', done:'서명했습니다.' });
+  });
+
+  /* 결재 칸 클릭 — 위임(다시 그려도 살아남는다) */
+  document.getElementById('ckApprBox').addEventListener('click', function(ev){
+    var c = ev.target.closest ? ev.target.closest('.ck-apst') : null;
+    if (!c) return;
+    var no = Number(c.getAttribute('data-step') || 0);
+    var s  = APPR_BOX.filter(function(x){ return Number(x.stepno) === no; })[0];
+    if (!s) return;
+    if (s.userid && s.userid === APPR_ME) {          // 내가 찍은 칸 — 취소
+      ckAsk('<b>' + esc(s.stepnm || '') + '</b> 결재를 취소합니다.', { icon:'⚠️', okText:'결재 취소' }).then(function(ok){
+        if (!ok) return;
+        post('<c:url value="/qps/chkApprDel.do"/>', { chkSeq: curSeq, stepNo: no, formId: (FORM ? FORM.formid : '') }).then(function(res){
+          apprTake(res);
+          _toast('결재를 취소했습니다.', 'ok');
+        }).catch(err);
+      });
+      return;
+    }
+    if (s.can === 'N') {                              // 권한 밖 — 서버도 막지만 먼저 알려 준다
+      _alertBox('이 단계는 <b>결재 권한이 없습니다.</b>' +
+                (s.who ? ('<br><span style="font-size:12px;color:#8a99a3;">' + esc(s.who) + ' 님이 결재할 자리입니다.</span>') : ''), {icon:'🔒'});
+      return;
+    }
+    if (s.userid) {                                   // 남이 찍은 칸 — 서버도 막지만 먼저 알려 준다
+      _alertBox('<b>' + esc(s.usernm || '') + '</b> 님이 결재한 칸입니다.<br>' +
+                '<span style="font-size:12px;color:#8a99a3;">' + esc(s.apprdttm || '') + ' · 그 사람이 취소해야 바뀝니다.</span>', {icon:'ℹ️'});
+      return;
+    }
+    ckAsk('<b>' + esc(s.stepnm || '') + '</b> 에 <b>내 도장</b>을 찍습니다.' +
+        '<div style="text-align:left;font-size:11.5px;color:#8a99a3;margin-top:8px;">' +
+        '도장을 등록하지 않았으면 <b>이름만</b> 찍힙니다 — 툴바 <b>[🖋 내 도장]</b> 에서 등록하세요.<br>' +
+        '내가 찍은 결재는 같은 칸을 다시 눌러 취소할 수 있습니다.</div>',
+        { icon:'🖋', okText:'결재' }).then(function(ok){
+      if (!ok) return;
+      post('<c:url value="/qps/chkApprSave.do"/>', { chkSeq: curSeq, stepNo: no, stepNm: s.stepnm || '', formId: (FORM ? FORM.formid : '') })
+        .then(function(res){
+          apprTake(res);
+          _toast('결재했습니다.', 'ok');
+        }).catch(err);
+    });
+  });
+
+  /* ── 내 도장 등록 창 ───────────────────────────────────────────────────
+     ★한 사람 한 장 — 마우스로 그리든 스캔을 올리든 **같은 칸**에 담는다.
+     ★캔버스는 **화면 크기와 그리는 크기를 따로** 잡는다(devicePixelRatio) — 안 그러면 저장한 그림이 흐리다. */
+  var SIGN_CV = null, SIGN_CTX = null, SIGN_DRAWN = false;
+
+  window.ckSignOpen = function(){
+    post('<c:url value="/qps/signGet.do"/>', {}).then(function(res){
+      var s = res.sign || null;
+      var now = s && s.signimg
+        ? '<div class="now"><img src="data:' + esc(s.signmime || 'image/png') + ';base64,' + esc(s.signimg) + '" alt="">' +
+          '<div style="font-size:11px;color:#8a99a3;margin-top:4px;">지금 등록된 도장 · ' + esc(s.upddttm || '') + '</div></div>'
+        : '<div class="now" style="color:#b6bfc6;font-size:12px;">등록된 도장이 없습니다 — 결재하면 이름만 찍힙니다.</div>';
+      var wrap = document.createElement('div');
+      wrap.className = 'ck-signwrap'; wrap.id = 'ckSignWrap';
+      wrap.innerHTML =
+        '<div class="ck-sign">' +
+          '<h4>🖋 내 도장 · 서명</h4>' +
+          '<div class="desc">결재란에 찍히는 그림입니다. <b>한 사람에 한 장</b>이고 <b>본인만</b> 등록·삭제할 수 있습니다.<br>' +
+            '아래 칸에 <b>마우스로 그리거나</b>, <b>스캔한 도장 그림</b>을 올리세요. 배경이 투명한 PNG 가 가장 깨끗합니다.</div>' +
+          now +
+          '<canvas id="ckSignCv"></canvas>' +
+          '<div style="font-size:11px;color:#8a99a3;margin-top:4px;">위 칸에 그리면 됩니다 · 다시 그리려면 [지우기]</div>' +
+          '<div style="margin-top:8px;font-size:12px;">스캔 그림 : <input type="file" id="ckSignFile" accept="image/*"></div>' +
+          '<div class="btns">' +
+            '<button type="button" class="ck-btn ghost" onclick="ckSignClear();">지우기</button>' +
+            (s && s.signimg ? '<button type="button" class="ck-btn ghost" onclick="ckSignDel();">등록 내리기</button>' : '') +
+            '<button type="button" class="ck-btn ghost" onclick="ckSignClose();">닫기</button>' +
+            '<button type="button" class="ck-btn" onclick="ckSignSave();">저장</button>' +
+          '</div>' +
+        '</div>';
+      document.getElementById('qpsChk').appendChild(wrap);
+      ckSignBind();
+    }).catch(err);
+  };
+
+  function ckSignBind(){
+    SIGN_CV = gel('ckSignCv'); SIGN_DRAWN = false;
+    var r = SIGN_CV.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    SIGN_CV.width = Math.round(r.width * dpr); SIGN_CV.height = Math.round(r.height * dpr);
+    SIGN_CTX = SIGN_CV.getContext('2d');
+    SIGN_CTX.scale(dpr, dpr);
+    SIGN_CTX.lineWidth = 2.2; SIGN_CTX.lineCap = 'round'; SIGN_CTX.lineJoin = 'round'; SIGN_CTX.strokeStyle = '#1a2b38';
+    var down = false;
+    function pt(e){
+      var b = SIGN_CV.getBoundingClientRect();
+      var t = (e.touches && e.touches[0]) ? e.touches[0] : e;
+      return { x: t.clientX - b.left, y: t.clientY - b.top };
+    }
+    function start(e){ down = true; var p = pt(e); SIGN_CTX.beginPath(); SIGN_CTX.moveTo(p.x, p.y); e.preventDefault(); }
+    function move(e){ if (!down) return; var p = pt(e); SIGN_CTX.lineTo(p.x, p.y); SIGN_CTX.stroke(); SIGN_DRAWN = true; e.preventDefault(); }
+    function end(){ down = false; }
+    SIGN_CV.addEventListener('mousedown', start); SIGN_CV.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', end);
+    SIGN_CV.addEventListener('touchstart', start); SIGN_CV.addEventListener('touchmove', move); SIGN_CV.addEventListener('touchend', end);
+
+    gel('ckSignFile').addEventListener('change', function(){
+      var f = this.files && this.files[0]; if (!f) return;
+      if (!/^image\//.test(f.type)) { _alertBox('그림 파일만 올릴 수 있습니다.', {icon:'⚠️'}); this.value = ''; return; }
+      var fr = new FileReader();
+      fr.onload = function(){
+        var im = new Image();
+        im.onload = function(){
+          /* ★캔버스 폭에 맞춰 줄여 그린다 — 스캔 원본을 그대로 저장하면 몇 MB 가 되고 결재 칸은 52px 다 */
+          var b = SIGN_CV.getBoundingClientRect();
+          SIGN_CTX.clearRect(0, 0, b.width, b.height);
+          var sc = Math.min(b.width / im.width, b.height / im.height, 1);
+          var w = im.width * sc, hh = im.height * sc;
+          SIGN_CTX.drawImage(im, (b.width - w) / 2, (b.height - hh) / 2, w, hh);
+          SIGN_DRAWN = true;
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(f);
+    });
+  }
+
+  window.ckSignClear = function(){
+    if (!SIGN_CTX) return;
+    var b = SIGN_CV.getBoundingClientRect();
+    SIGN_CTX.clearRect(0, 0, b.width, b.height);
+    SIGN_DRAWN = false;
+    var f = gel('ckSignFile'); if (f) f.value = '';
+  };
+  window.ckSignClose = function(){
+    var w = gel('ckSignWrap'); if (w && w.parentNode) w.parentNode.removeChild(w);
+    SIGN_CV = null; SIGN_CTX = null;
+  };
+  window.ckSignSave = function(){
+    if (!SIGN_DRAWN) { _alertBox('그리거나 그림을 올린 뒤 저장하세요.', {icon:'ℹ️'}); return; }
+    var url = SIGN_CV.toDataURL('image/png');
+    post('<c:url value="/qps/signSave.do"/>', { signImg: url, signGb: 'S', signMime: 'image/png' })
+      .then(function(){
+        ckSignClose(); _toast('도장을 등록했습니다.', 'ok');
+        ckApprLoad();   // 이미 찍어 둔 내 결재에도 새 도장이 보이게
+      }).catch(err);
+  };
+  window.ckSignDel = function(){
+    ckAsk('등록된 <b>내 도장</b>을 내립니다.' +
+        '<div style="text-align:left;font-size:11.5px;color:#8a99a3;margin-top:8px;">' +
+        '이미 결재한 문서의 <b>이름·날짜는 그대로</b> 남고 도장 그림만 안 나옵니다.</div>',
+        { icon:'⚠️', okText:'내리기' }).then(function(ok){
+      if (!ok) return;
+      post('<c:url value="/qps/signDel.do"/>', {}).then(function(){
+        ckSignClose(); _toast('도장을 내렸습니다.', 'ok'); ckApprLoad();
+      }).catch(err);
+    });
   };
 
   window.ckNew = function(){
@@ -1614,6 +1976,7 @@
     setPhotos([]);
     gel('ckStat').textContent = '— 새 점검표';
     gel('ckDelBtn').style.display = 'none';
+    APPR_BOX = []; SLINE_BOX = []; ckApprPaint(); ckSlinePaint();   // 새 문서는 결재할 대상이 아니다(2026-09-08)
   };
 
   function collect(){
@@ -1680,10 +2043,30 @@
     var hd = tr ? tr.querySelector('td.hd, th.hd') : null;   // 기간이 **행**인 축(DAY_ITEM) — 행 머리의 색
     return !!(hd && /(^|\s)(sat|sun|hol)(\s|$)/.test(hd.className));
   }
-  /** 로그인 사용자 이름 — top.jsp 가 심는 s_usernm 쿠키(다른 QPS 화면과 같은 출처) */
+  /**
+   * 로그인 사용자 이름 — top.jsp 가 심는 s_usernm 쿠키(다른 QPS 화면과 같은 출처).
+   *
+   * ⚠★**top.jsp 는 쿠키를 `escape()` 로 심는다**(setCookie·setSessionCookie) — 한글이 `%XX` 가 아니라
+   *   **`%uB9C8%uC2A4%uD130`(마스터)** 꼴로 들어간다. 그래서 `decodeURIComponent` 는 **URIError 로 죽고**
+   *   옛 코드의 catch 가 **인코딩된 글자를 그대로** 돌려줬다 — 일괄 사인 띠의 「서명」에 그 글자가 보였고,
+   *   그대로 눌렀으면 **점검표 사인 칸에 `%uB9C8…` 이 저장될 뻔했다**(2026-09-08 사용자 캡처로 발견).
+   * ⇒ `%u` 꼴이면 `unescape`(escape 의 짝), 아니면 `decodeURIComponent`, 둘 다 실패하면 원문.
+   *   ★`unescape` 는 낡았지만 **`escape` 로 심은 값을 되돌리는 유일한 짝**이다(UTF-8 %XX 에 쓰면 깨지므로 %u 일 때만).
+   */
   function ckUserNm(){
     var m = document.cookie.match(/(?:^|;\s*)s_usernm=([^;]*)/);
-    try { return m ? decodeURIComponent(m[1]).trim() : ''; } catch (e) { return m ? m[1] : ''; }
+    if (!m) return '';
+    var v = m[1], nm = '';
+    try {
+      nm = /%u[0-9a-fA-F]{4}/.test(v) ? unescape(v) : decodeURIComponent(v);   // escape() 로 심은 한글
+    } catch (e) {
+      try { nm = unescape(v); } catch (e2) { nm = v; }
+    }
+    nm = String(nm).trim();
+    /* ★못 푼 값은 **이름이 없는 것으로 본다** — 그래야 부르는 쪽의 「이름을 찾지 못했습니다」 안내가 뜬다.
+       그대로 돌려주면 사인 칸에 `%uB9C8…` 이 저장되고, 저장된 뒤에는 문서를 하나씩 고쳐야 한다. */
+    if (/%u[0-9a-fA-F]{4}|%[0-9a-fA-F]{2}/.test(nm)) return '';
+    return nm;
   }
   /** 전체 O / 전체 지움 (SUNWOO chk_all). ★O 는 빈 칸만 · 지움은 묻고 한다. */
   window.ckAllOx = function(v){
@@ -1787,6 +2170,10 @@
       }
     });
     try { if (localStorage.getItem('qpsChkExclWk') === 'Y') gel('ckExclWk').checked = true; } catch (e) {}
+    /* ★사인 칸 도장 — **기본 켬**. 도장을 등록한 사람만 그림이 되고 나머지는 이름 그대로라, 켜 둬도 종이가 갑자기 달라지지 않는다. */
+    /* ⚠요소가 없을 수도 있다(시뮬·부분 렌더) — catch 안에서 또 만지면 거기서 죽는다 */
+    var st = gel('ckStamp');
+    if (st) { var v = '1'; try { v = localStorage.getItem('wnnChkStamp'); } catch (e) { } st.checked = (v !== '0'); }
   })();
 
   /* ═══ 델파이 분석 2차 이식 (2026-09-02 오후) — 배타 체크 · 공휴일 · 주차 날짜 ═══
@@ -2224,7 +2611,8 @@
               /* ★못 열었으면 건너뛴다 — ckPickDoc 은 실패를 catch 가 삼키므로 그냥 찍으면
                  **앞 문서가 한 번 더** 종이에 실린다(다른 QPS 화면에서 먼저 겪은 함정). */
               if (curSeq !== pseq) { oneDoc(); return; }
-              bpPhotosWait().then(function(){              // 사진칸 서식은 blob 이 붙을 때까지(2026-09-08)
+              /* 사진칸 서식은 blob 이 붙을 때까지 · 사인 칸 도장은 그림이 올 때까지 기다렸다 찍는다(2026-09-08) */
+              bpPhotosWait().then(ckSignsLoad).then(function(){
                 try { ckPrint(); done++; } catch (e) { }
                 stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + done + '장';
                 oneDoc();
@@ -2263,12 +2651,71 @@
     });
     return n;
   }
+  /* ═══ 그날 근무자로 채우기 (2026-09-08 — 근무표 qpsDuty 와 짝) ═══
+     종이 점검표의 사인 칸은 **그날 근무한 사람**이다. 근무표를 적어 두면 날짜 칸마다 그 사람 이름이 들어간다.
+     ★날짜 격자에서만 뜻이 있다 — 「항목 × 고정 열」(ITEM_COL)처럼 열이 날짜가 아닌 서식은 건너뛴다
+       (그 서식의 사인 칸에는 data-day 가 없다 — 그것으로 가른다).
+     ★한 달 한 번만 물어본다(DUTY_CACHE) — 문서마다 부르면 200건에 200번 왕복이다. */
+  var DUTY_CACHE = {}, DUTY_SHIFTS = null;
+  window.ckBsWhoSync = function(){
+    var who = (document.querySelector('input[name=ckBsWho]:checked') || {}).value || 'ME';
+    gel('ckBsDutyOpt').style.display = (who === 'DUTY') ? '' : 'none';
+    gel('ckBsDutyHint').textContent = (who === 'DUTY')
+      ? '「그날 근무자」는 날짜 격자 서식에만 들어갑니다(근무표가 없는 달·날짜는 빈 칸으로 둡니다).' : '';
+    if (who === 'DUTY' && !DUTY_SHIFTS) {
+      DUTY_SHIFTS = [];
+      post('<c:url value="/qps/codeList.do"/>', {}).then(function(res){
+        var list = ((res.codes || {})['QPS_DUTY_SHIFT']) || [];
+        DUTY_SHIFTS = list;
+        gel('ckBsShift').innerHTML = '<option value="">전체(쉬는 날 빼고)</option>' + list.map(function(s){
+          return '<option value="' + esc(s.subcode) + '">' + esc(s.subcode) + ' ' + esc(s.subcodenm) + '</option>'; }).join('');
+      }).catch(function(){ /* 옛 서버면 전체만 쓴다 */ });
+    }
+  };
+  /** 그 부서·병동·달의 「날짜 → 근무자 이름」. 없으면 빈 객체(그 달은 근무자로 못 채운다). */
+  function bsDutyNames(deptCd, wardNm, ym, shift){
+    var key = deptCd + '|' + wardNm + '|' + ym + '|' + shift;
+    if (DUTY_CACHE[key]) return Promise.resolve(DUTY_CACHE[key]);
+    return post('<c:url value="/qps/dutyDayNames.do"/>', { deptCd: deptCd, wardNm: wardNm, dutyYm: ym, shiftCd: shift })
+      .then(function(res){ DUTY_CACHE[key] = res.names || {}; return DUTY_CACHE[key]; },
+            function(){ DUTY_CACHE[key] = {}; return DUTY_CACHE[key]; });
+  }
+  /** 이 문서의 빈 사인 칸을 **날짜마다 그날 근무자**로 채운다. 근무자가 없는 날은 그대로 둔다. */
+  function bsFillDuty(names){
+    var box = gel('ckGridWrap'); if (!box || !names) return 0;
+    var n = 0;
+    box.querySelectorAll('input[data-r]').forEach(function(el){
+      if (Number(el.getAttribute('data-r')) !== SIGN_NO || String(el.value).trim() || ckCellOff(el)) return;
+      var td = el.closest('td'), d = td ? td.getAttribute('data-day') : null;
+      if (d == null) {                                   // 기간이 **행**인 축(DAY_ITEM) — 행 머리에 날짜가 있다
+        var tr = el.closest('tr');
+        var hd = tr ? tr.querySelector('td.hd[data-day], th.hd[data-day]') : null;
+        if (hd) d = hd.getAttribute('data-day');
+      }
+      if (d == null) return;                             // 날짜 칸이 아니다(ITEM_COL 등) — 건드리지 않는다
+      var nm = names[String(Number(d))];
+      if (!nm) return;                                   // 그날 근무자가 없으면 빈 칸으로 둔다
+      el.value = nm; n++;
+    });
+    return n;
+  }
+  /** 문서의 연월(yyyy-MM) — 월 문서가 아니면 빈 값(근무표는 달 단위라 매치할 수 없다). */
+  function bsDocYm(doc){
+    var y = String(doc.inyear || ''), m = String(doc.inmm || '').replace(/\D/g, '');
+    if (y.length !== 4 || !m) return '';
+    return y + '-' + ('0' + Number(m)).slice(-2);
+  }
   window.ckBulkSignToggle = function(){
     var box = gel('ckBulkSignBox');
     if (box.style.display !== 'none') { box.style.display = 'none'; return; }
     if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
     var nm = ckUserNm();
-    if (!nm) { _alertBox('로그인 사용자 이름을 찾지 못했습니다.<br>사인을 넣을 이름이 없어 일괄 사인을 쓸 수 없습니다.', {icon:'⚠️'}); return; }
+    /* ★이름을 못 찾아도 **띠는 연다** — 「그날 근무자」는 근무표에서 이름을 가져오므로 쓸 수 있다(2026-09-08). */
+    if (!nm) {
+      _alertBox('로그인 사용자 이름을 찾지 못했습니다.<br>「내 이름」으로는 서명할 수 없어 <b>그날 근무자</b>로 맞춰 둡니다.', {icon:'⚠️'});
+      var rd = document.querySelector('input[name=ckBsWho][value=DUTY]');
+      if (rd) rd.checked = true;
+    }
     bsMonths();
     gel('ckBsFrom').value = '01'; gel('ckBsTo').value = '12';
     gel('ckBsFormNm').textContent = '(' + FORM.formnm + ')';
@@ -2276,12 +2723,15 @@
     gel('ckBsYear').textContent = gel('ckYear').value;
     gel('ckBsNm').textContent = nm;
     gel('ckBsStat').textContent = '';
+    ckBsWhoSync();
     box.style.display = '';
   };
   window.ckBulkSignGo = function(){
     if (BS.busy || BP.busy || !FORM) return;
+    var who = (document.querySelector('input[name=ckBsWho]:checked') || {}).value || 'ME';
+    var shift = (who === 'DUTY') ? (gel('ckBsShift') ? gel('ckBsShift').value : '') : '';
     var nm = ckUserNm();
-    if (!nm) { _alertBox('로그인 사용자 이름을 찾지 못했습니다.', {icon:'⚠️'}); return; }
+    if (who === 'ME' && !nm) { _alertBox('로그인 사용자 이름을 찾지 못했습니다.', {icon:'⚠️'}); return; }
     var scope = (document.querySelector('input[name=ckBsScope]:checked') || {}).value || 'F';
     var yy = gel('ckYear').value, f = gel('ckBsFrom').value, t = gel('ckBsTo').value;
     if (f > t) { var x = f; f = t; t = x; gel('ckBsFrom').value = f; gel('ckBsTo').value = t; }
@@ -2293,10 +2743,14 @@
     /* ★자료를 고쳐 저장하므로 반드시 묻는다(일괄 출력에는 없는 단계) */
     _confirmBox({
       msg: '<b>' + esc(whatNm) + '</b> · ' + esc(prd) + ' 의 저장된 점검표에<br>' +
-           '<b>' + esc(nm) + '</b> 이름으로 서명합니다.<br><br>' +
+           (who === 'DUTY'
+             ? ('<b>그날 근무표의 근무자</b> 이름으로 서명합니다' + (shift ? (' (근무 <b>' + esc(shift) + '</b> 만)') : '') + '.<br><br>')
+             : ('<b>' + esc(nm) + '</b> 이름으로 서명합니다.<br><br>')) +
            '<span style="color:#6b7c86;font-size:12px;">· <b>빈 사인 칸만</b> 채웁니다 — 이미 적힌 사인은 그대로 둡니다.<br>' +
            '· 채운 문서는 <b>저장</b>됩니다(되돌리려면 그 문서를 열어 지워야 합니다).<br>' +
-           '· 사인 칸이 없는 서식은 건너뜁니다.</span>',
+           (who === 'DUTY'
+             ? '· <b>날짜 격자 서식</b>에만 들어갑니다 — 근무표가 없는 달·근무자가 없는 날은 빈 칸으로 둡니다.</span>'
+             : '· 사인 칸이 없는 서식은 건너뜁니다.</span>'),
       icon: '✍', okText: '서명', onOk: function(){ run(); }
     });
 
@@ -2331,7 +2785,7 @@
           var j = 0;
           var oneDoc = function(){
             if (j >= docs.length || docsN >= MAX) { nextForm(); return; }
-            var seq = Number(docs[j++].chkseq);
+            var doc = docs[j++], seq = Number(doc.chkseq);
             gel('ckDoc').value = String(seq);
             /* ★먼저 0 으로 내린다 — ckPickDoc 은 실패를 catch 가 삼켜서 **앞 문서 번호가 그대로 남는다.**
                그러면 「못 열었는데 앞 문서에 서명·저장」이 된다(화면 격자도 앞 문서 것 그대로다). */
@@ -2339,13 +2793,23 @@
             Promise.resolve(ckPickDoc()).then(function(){
               setTimeout(function(){                        // 격자가 붙은 뒤에 채운다(일괄 출력과 같은 틈)
                 if (curSeq !== seq) { oneDoc(); return; }    // 못 연 문서는 건너뛴다 — 앞 문서에 서명하면 안 된다
-                var n = bsFill(nm);
-                if (!n) { oneDoc(); return; }                // 채울 칸이 없으면 저장하지 않는다(수정일시를 안 건드린다)
-                ckSave({ quiet:true }).then(function(){
-                  docsN++; cellN += n;
-                  stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + docsN + '건 · ' + cellN + '칸';
-                  oneDoc();
-                }, function(){ oneDoc(); });                 // 저장이 실패해도 순회는 이어 간다
+                /* 채운 뒤 저장 — 채울 칸이 없으면 저장조차 하지 않는다(수정일시를 안 건드린다) */
+                var after = function(n){
+                  if (!n) { oneDoc(); return; }
+                  ckSave({ quiet:true }).then(function(){
+                    docsN++; cellN += n;
+                    stat.textContent = '(' + fi + '/' + forms.length + ') ' + fm.formnm + ' — ' + docsN + '건 · ' + cellN + '칸';
+                    oneDoc();
+                  }, function(){ oneDoc(); });               // 저장이 실패해도 순회는 이어 간다
+                };
+                if (who !== 'DUTY') { after(bsFill(nm)); return; }
+                /* ★그날 근무자 — 부서는 **그 서식의 부서**(공통 서식이면 화면에서 고른 부서), 병동은 **그 문서의 병동**,
+                   달은 그 문서의 연월. 근무표가 없으면 이름이 하나도 안 와 그 문서는 건드리지 않는다. */
+                var dym = bsDocYm(doc);
+                var dcd = (fm.deptcd && fm.deptcd !== 'COMMON') ? fm.deptcd : val('ckDept');
+                if (!dym || !dcd) { oneDoc(); return; }
+                bsDutyNames(dcd, String(doc.wardnm || '').trim(), dym, shift)
+                  .then(function(names){ after(bsFillDuty(names)); }, function(){ oneDoc(); });
               }, 150);
             }, function(){ oneDoc(); });
           };
@@ -2387,6 +2851,10 @@
     '      white-space:pre-wrap; text-align:left; min-height:24px; }' +
     '.sig{ margin-top:8px; font-size:10px; text-align:right; }' +
     '.sig span{ display:inline-block; margin-left:26px; }' +
+    /* 서식 아래 결재란의 도장(2026-09-08) — 글줄 높이에 맞춘다. 빈 자리는 여전히 밑줄 그대로 나간다. */
+    '.sig .sigst{ display:inline-block; vertical-align:middle; margin:0 2px; }' +
+    '.sig img.sigimg{ height:9mm; width:auto; display:block;' +
+    '  -webkit-print-color-adjust:exact; print-color-adjust:exact; }' +   /* 날짜는 안 찍는다 — (인) 자리는 도장만 */
     /* ★★종이 폭 맞추기 (2026-08-16) — ***이 한 줄이 없으면 격자가 A4 를 넘는다.***
        인쇄는 **화면 표를 복사**해 쓰는데(따로 그리면 화면과 종이가 갈리므로 일부러 그렇게 했다),
        화면에서 날짜 칸에 박아 둔 `min-width:32px`(마우스로 누를 수 있어야 해서 필요하다)가
@@ -2396,15 +2864,33 @@
        ✅**점검표 309종 전부**를 인쇄 HTML 로 실측해 확인했다 — 고치기 전 122종 초과 → 고친 뒤 0종.
        ⚠화면 쪽 `min-width` 는 **건드리지 말 것**(누르기 어려워진다). 종이에서만 푼다. */
     'table.gr th, table.gr td{ min-width:0 !important; }' +
+    /* ★사인 칸의 작은 도장(2026-09-08) — 날짜 칸이 6mm 라 **칸 높이에 맞춰** 줄인다.
+       print-color-adjust 를 켜 두지 않으면 브라우저가 인쇄에서 그림을 흐리게 만든다. */
+    'img.stmp{ height:4.6mm; width:auto; max-width:100%; object-fit:contain; vertical-align:middle;' +
+    '  -webkit-print-color-adjust:exact; print-color-adjust:exact; }' +
     /* 행을 끊어 좌우로 놓을 때 — 조각을 가로로 나란히. ★조각이 3개 이상이면 줄바꿈해 이어 붙는다 */
     '.splitrow{ display:flex; gap:6px; align-items:flex-start; flex-wrap:wrap; }' +
     '.splitcol{ flex:1 1 0; min-width:0; }' +
     '.splitcol table{ width:100%; }';
 
+  /**
+   * 인쇄 결재 상자 — 찍힌 것이 있으면 **도장 그림**(없으면 이름)과 날짜를 넣는다(2026-09-08).
+   * ★칸이 52×34px 라 도장은 그 안에 맞춘다. 안 찍힌 칸은 종전처럼 **빈 칸**으로 나가 손도장을 받을 수 있다.
+   * ★결재 기록(APPR_BOX)이 있으면 그것이 단계 목록도 겸한다 — 결재선을 뒤에 줄여도 찍힌 도장이 종이에서 사라지지 않는다.
+   */
   function apprHtml(){
-    if (!APPR_LINE.length) return '';
-    return '<table class="appr"><thead><tr>' + APPR_LINE.map(function(r){ return '<th>' + esc(r.stepnm) + '</th>'; }).join('') +
-           '</tr></thead><tbody><tr>' + APPR_LINE.map(function(){ return '<td></td>'; }).join('') + '</tr></tbody></table>';
+    if (!apprOn()) return '';                       // 서식이 결재란을 안 쓴다(2026-09-08)
+    var line = (curSeq && APPR_BOX.length) ? APPR_BOX : apprSteps();
+    if (!line.length) return '';
+    return '<table class="appr"><thead><tr>' + line.map(function(r){ return '<th>' + esc(r.stepnm) + '</th>'; }).join('') +
+           '</tr></thead><tbody><tr>' + line.map(function(r){
+             if (!r || !r.userid) return '<td></td>';
+             var in1 = r.signimg
+               ? '<img src="data:' + esc(r.signmime || 'image/png') + ';base64,' + esc(r.signimg) + '" style="max-height:26px;max-width:48px;">'
+               : '<span style="font-size:9px;">' + esc(r.usernm || '') + '</span>';
+             return '<td style="vertical-align:middle;">' + in1 +
+                    '<div style="font-size:7px;color:#666;">' + esc(r.apprdt || '') + '</div></td>';
+           }).join('') + '</tr></tbody></table>';
   }
 
   /* ═══ 인쇄 배치 — 「N칸씩 + 방향」 (2026-08-12, v3 순서 6) ═══
@@ -2565,6 +3051,48 @@
            'body{ --qps-paper:' + (land ? '279' : '190') + '; }';   // 안쪽 폭(mm) — ckPrintFitDays 가 읽는다
   }
 
+  /* ═══ 격자 사인 칸의 작은 도장 (2026-09-08) ═══
+     ★사인 칸에 남는 것은 **이름 글자**뿐이라 그 이름으로 도장을 찾는다(종이도 「이름 = 그 사람」으로 읽는다).
+       SUNWOO 원본(HLP_DutySign)도 근무자를 뽑아 `t_signature_user.sign_img` 를 서식에 넣었다 — 같은 자리다.
+     ★**종이에만** 찍는다 — 화면 칸은 `input` 이라 그림을 넣으면 고쳐 쓸 수가 없다(사인은 글자로 고친다).
+     ⚠도장이 없는 사람은 **이름 그대로** — 「도장 없으면 빈 칸」이 되면 누가 점검했는지 종이에서 사라진다. */
+  var SIGN_IMGS = {}, SIGN_ASKED = {};
+  function ckStampOn(){ var e = gel('ckStamp'); return !!(e && e.checked); }
+  window.ckStampSync = function(){
+    try { localStorage.setItem('wnnChkStamp', ckStampOn() ? '1' : '0'); } catch (e) { }
+    if (ckStampOn()) ckSignsLoad();
+  };
+  /** 이 문서의 사인 칸에 적힌 이름들(중복 없이) */
+  function ckSignNames(){
+    var box = gel('ckGridWrap'), out = [], seen = {};
+    if (!box) return out;
+    box.querySelectorAll('input[data-r]').forEach(function(el){
+      if (Number(el.getAttribute('data-r')) !== SIGN_NO) return;
+      var v = String(el.value || '').trim();
+      if (!v || seen[v]) return;
+      seen[v] = 1; out.push(v);
+    });
+    return out;
+  }
+  /** 그 이름들의 도장을 받아 둔다 — 한 번 물어본 이름은 다시 묻지 않는다(없다는 답도 기억한다). */
+  function ckSignsLoad(){
+    if (!ckStampOn()) return Promise.resolve();
+    var want = ckSignNames().filter(function(n){ return !SIGN_ASKED[n]; });
+    if (!want.length) return Promise.resolve();
+    want.forEach(function(n){ SIGN_ASKED[n] = 1; });
+    return post('<c:url value="/qps/signNames.do"/>', { names: JSON.stringify(want.map(function(n){ return { nm: n }; })) })
+      .then(function(res){
+        (res.list || []).forEach(function(s){
+          if (!s.signimg) return;
+          SIGN_IMGS[String(s.usernm || '').trim()] = 'data:' + (s.signmime || 'image/png') + ';base64,' + s.signimg;
+        });
+      }, function(){ /* 옛 서버(엔드포인트 없음)면 도장 없이 이름 그대로 찍는다 */ });
+  }
+  /** 인쇄 단추 — 도장을 받아 온 뒤에 찍는다(그림이 서버에서 오므로 기다려야 한다). */
+  window.ckPrintGo = function(){
+    return Promise.resolve(ckSignsLoad()).then(function(){ ckPrint(); }, function(){ ckPrint(); });
+  };
+
   window.ckPrint = function(){
     if (!FORM) { _alertBox('서식을 먼저 고르세요.', {icon:'⚠️'}); return; }
     // ★인쇄는 화면 격자를 그대로 옮긴다 — 따로 만들면 화면과 종이가 갈린다
@@ -2580,7 +3108,13 @@
       var isTxt = el.classList.contains('ltxt');
       // ★열 이름 칸(문서가 정하는 열)은 **머리글**이다 — 왼쪽 정렬로 눕히면 안 된다
       var isCn = el.hasAttribute('data-cn');
-      td.textContent = String((srcEls[i] || el).value || '');
+      var v = String((srcEls[i] || el).value || '');
+      /* ★사인 칸은 도장 그림으로 — 등록한 사람만. 없으면 이름 글자 그대로(누가 점검했는지 사라지면 안 된다) */
+      if (ckStampOn() && Number(el.getAttribute('data-r')) === SIGN_NO && v && SIGN_IMGS[v]) {
+        td.innerHTML = '<img class="stmp" src="' + SIGN_IMGS[v] + '" alt="' + esc(v) + '" title="' + esc(v) + '">';
+        return;
+      }
+      td.textContent = v;
       if (!isCn && (isHd || isTxt)) td.className = 'l';
     });
     t.querySelectorAll('th.hd').forEach(function(el){ el.className = 'l'; });
@@ -2645,9 +3179,23 @@
     if (FORM.noteyn === 'Y') tail += '<div class="box"><b>' + esc(noteNm()) + '</b><br>' + esc(val('f_noteTxt')) + '</div>';
     if (FORM.fixyn === 'Y')  tail += '<div class="box"><b>수리날짜 및 고장 발생 내용</b><br>' + esc(val('f_fixTxt')) + '</div>';
     if (FORM.foottxt)        tail += '<div style="font-size:9px;margin-top:4px;text-align:left;">' + esc(FORM.foottxt) + '</div>';
+    /* ★서식 아래 결재란 (2026-09-08) — 화면에서 서명한 자리는 **도장 그림 + 날짜**, 비운 자리는 지금까지처럼 **빈 줄**(손도장).
+       ⚠자리 이름은 서식(SIGN_LINE)이 정본이고, 기록은 예약 대역 901~910 이다. 순서가 곧 그 자리다. */
     if (FORM.signline) {
-      tail += '<div class="sig">' + String(FORM.signline).split(',').map(function(s){
-                return '<span>' + esc(s.trim()) + ' _____________ (인)</span>'; }).join('') + '</div>';
+      tail += '<div class="sig">' + String(FORM.signline).split(',').map(function(s, i){
+        var nm = s.trim();
+        if (!nm) return '';
+        var d = (SLINE_BOX || []).filter(function(x){ return Number(x.stepno) === (900 + 1 + i); })[0];
+        if (d && (d.signimg || d.usernm)) {
+          var who = d.signimg
+            ? '<img class="sigimg" src="data:' + esc(d.signmime || 'image/png') + ';base64,' + esc(d.signimg) + '" alt="' + esc(d.usernm || '') + '">'
+            : ('<b>' + esc(d.usernm) + '</b>');
+          /* ★★날짜는 **안 찍는다**(2026-09-08 사용자 「일자는 들어가면 안 됩니다」) — 종이 서식의 「(인)」 자리는
+             도장만 있는 칸이다. 위 결재 상자(결재선)와 다른 점. 언제 찍었는지는 기록(APPR_DTTM)에 남는다. */
+          return '<span>' + esc(nm) + ' <span class="sigst">' + who + '</span></span>';
+        }
+        return '<span>' + esc(nm) + ' _____________ (인)</span>';
+      }).join('') + '</div>';
     }
     tail += ckPhotoPrintHtml();   // 사진칸(2026-08-15) — 있는 칸만, 2칸씩 한 줄
 

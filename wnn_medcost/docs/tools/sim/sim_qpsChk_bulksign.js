@@ -21,11 +21,17 @@ function build(){
     '<label><input type="radio" name="ckBsScope" value="F" checked></label><label><input type="radio" name="ckBsScope" value="D"></label>' +
     '<span id="ckBsFormNm"></span><span id="ckBsDeptNm"></span><span id="ckBsYear"></span>' +
     '<select id="ckBsFrom"></select><select id="ckBsTo"></select><span id="ckBsNm"></span>' +
+    // 2026-09-08 — 「내 이름 / 그날 근무자」 고르기(근무표 매치)
+    '<label><input type="radio" name="ckBsWho" value="ME" checked></label>' +
+    '<label><input type="radio" name="ckBsWho" value="DUTY"></label>' +
+    '<span id="ckBsDutyOpt" style="display:none;"><select id="ckBsShift"><option value="">전체</option></select></span>' +
+    '<span id="ckBsDutyHint"></span>' +
     '<button id="ckBsGo"></button><span id="ckBsStat"></span></div>' +
     '<div id="ckGridWrap"></div>');
   const { window } = dom, { document } = window;
   const state = { bases: [], picks: [], saves: [], asks: [], alerts: [], toasts: [],
-                  failPick: [], failSave: [], docsOf: {}, cells: {}, excl: false };
+                  failPick: [], failSave: [], docsOf: {}, cells: {}, excl: false,
+                  posts: [], dutyNames: {} };   // dutyNames : "부서|병동|연월|근무" → {일:이름}
   const ctx = { window, document, Option: window.Option, Promise, state };
   const code =
     'var FORM = null, FORMS = [], DOCS = [], curSeq = 0, SIGN_NO = 900;' +
@@ -44,12 +50,19 @@ function build(){
     '\nfunction ckBase(){ var fid = gel("ckForm").value; state.bases.push(fid);' +
     '\n  return Promise.resolve().then(function(){ FORM = { formid: fid, formnm: "서식" + fid }; DOCS = (state.docsOf[fid] || []).slice(); }); }' +
     // ckPickDoc — 그 문서의 격자를 그린다(사인 칸 = data-r=900)
+    // ★칸은 td 로 감싼다 — 날짜 격자는 td[data-day] 가 곧 일자다(그날 근무자 채우기가 이걸 본다)
     '\nfunction ckPickDoc(){ var seq = Number(gel("ckDoc").value); state.picks.push(seq);' +
     '\n  return Promise.resolve().then(function(){ if (state.failPick.indexOf(seq) >= 0) return; curSeq = seq;' +
     '\n    var cs = state.cells[seq] || [];' +
-    '\n    gel("ckGridWrap").innerHTML = cs.map(function(c, i){' +
-    '\n      return "<input data-r=\\"" + (c.sign === false ? 1 : 900) + "\\" data-i=\\"" + i + "\\"" +' +
-    '\n             (c.off ? " data-off=\\"1\\"" : "") + " value=\\"" + (c.v || "") + "\\">"; }).join(""); }); }' +
+    '\n    gel("ckGridWrap").innerHTML = "<table><tr>" + cs.map(function(c, i){' +
+    '\n      return "<td" + (c.day ? (" data-day=\\"" + c.day + "\\"") : "") + "><input data-r=\\"" + (c.sign === false ? 1 : 900) + "\\" data-i=\\"" + i + "\\"" +' +
+    '\n             (c.off ? " data-off=\\"1\\"" : "") + " value=\\"" + (c.v || "") + "\\"></td>"; }).join("") + "</tr></table>"; }); }' +
+    // 화면 공용 post — 근무표 조회·공통코드 조회를 여기서 가로챈다
+    '\nfunction post(url, data){ state.posts.push({ url: url, data: data });' +
+    '\n  if (/dutyDayNames/.test(url)) { var k = data.deptCd + "|" + data.wardNm + "|" + data.dutyYm + "|" + (data.shiftCd || "");' +
+    '\n    return Promise.resolve({ names: state.dutyNames[k] || {} }); }' +
+    '\n  if (/codeList/.test(url)) return Promise.resolve({ codes: { QPS_DUTY_SHIFT: [{ subcode:"D", subcodenm:"주간" }] } });' +
+    '\n  return Promise.resolve({}); }' +
     '\nfunction ckNew(){ curSeq = 0; }' +
     // ckSave(quiet) — 저장된 사인 값을 state 에 남긴다
     '\nfunction ckSave(opts){ var seq = curSeq;' +
@@ -60,6 +73,14 @@ function build(){
     grab(S, /\n  window\.BS = \{ busy:false \};/, 'BS') + '\nvar BS = window.BS; var BP = { busy:false }; window.BP = BP;' +
     grab(S, /\n  function bsMonths\(\)\{[\s\S]*?\n  \}/, 'bsMonths') +
     grab(S, /\n  function bsFill\(nm\)\{[\s\S]*?\n  \}/, 'bsFill') +
+    // 2026-09-08 — 그날 근무자로 채우기(근무표 매치)
+    grab(S, /\n  var DUTY_CACHE = \{\}, DUTY_SHIFTS = null;/, 'DUTY_CACHE') +
+    grab(S, /\n  window\.ckBsWhoSync = function\(\)\{[\s\S]*?\n  \};/, 'whoSync') +
+    // 브라우저에서는 window.x 가 곧 전역이라 그냥 부를 수 있다 — 시뮬은 별칭을 만들어 준다
+    '\nvar ckBsWhoSync = window.ckBsWhoSync;' +
+    grab(S, /\n  function bsDutyNames\(deptCd, wardNm, ym, shift\)\{[\s\S]*?\n  \}/, 'bsDutyNames') +
+    grab(S, /\n  function bsFillDuty\(names\)\{[\s\S]*?\n  \}/, 'bsFillDuty') +
+    grab(S, /\n  function bsDocYm\(doc\)\{[\s\S]*?\n  \}/, 'bsDocYm') +
     grab(S, /\n  window\.ckBulkSignToggle = function\(\)\{[\s\S]*?\n  \};/, 'toggle') +
     grab(S, /\n  window\.ckBulkSignGo = function\(\)\{[\s\S]*?\n  \};/, 'go') +
     '\nreturn { toggle: window.ckBulkSignToggle, go: window.ckBulkSignGo, BS: window.BS,' +
@@ -145,10 +166,57 @@ function opt(sel, vals){ vals.forEach(v => sel.add(new sel.ownerDocument.default
   ok('채울 칸이 하나도 없으면 저장조차 하지 않는다(수정일시를 안 건드린다)', state.saves.length === 0 &&
      /없었습니다/.test($('ckBsStat').textContent));
 
+  /* ═══ 그날 근무자로 채우기 (2026-09-08 — 근무표 매치) ═══ */
+  state.saves.length = 0; state.posts.length = 0; state.excl = false;
+  state.docsOf = {
+    F1: [{ chkseq: 11, inyear: '2026', inmm: '03', wardnm: '3층' },   // 3월 — 근무표 있음
+         { chkseq: 12, inyear: '2026', inmm: '05', wardnm: '3층' },   // 5월 — 근무표 없음
+         { chkseq: 13, inyear: '2026', inmm: '',   wardnm: '3층' }]   // 연 문서 — 달이 없어 매치 불가
+  };
+  state.cells = {
+    11: [{ v: '', day: 1 }, { v: '', day: 2 }, { v: '', day: 3 }, { v: '이미', day: 4 }, { v: '' }],
+    12: [{ v: '', day: 1 }],
+    13: [{ v: '', day: 1 }]
+  };
+  state.dutyNames = { 'NUR|3층|2026-03|': { '1': '김주간', '2': '박야간' } };
+  $('ckDept').innerHTML = '<option value="NUR" selected>간호</option>';
+  state.formList = [{ formid: 'F1', formnm: '서식F1', deptcd: 'NUR' }];
+  await M.setUp('F1', 11);
+  $('ckBsFrom').value = '01'; $('ckBsTo').value = '12'; $('ckWardF').value = '';
+  $('ckBulkSignBox').querySelectorAll('input[name=ckBsScope]')[0].checked = true;
+  $('ckBulkSignBox').querySelectorAll('input[name=ckBsWho]')[1].checked = true;   // 그날 근무자
+  M.go(); await until(() => !M.BS.busy);
+  ok('그날 근무자 — 날짜마다 그 사람 이름이 들어간다',
+     JSON.stringify((state.saves.find(s => s.seq === 11) || {}).signs) === JSON.stringify(['김주간', '박야간', '', '이미', '']));
+  ok('근무자가 없는 날·이미 적힌 칸·날짜 아닌 칸은 그대로 둔다', state.saves.length === 1);
+  ok('근무표가 없는 달은 건드리지 않는다(5월)', !state.saves.find(s => s.seq === 12));
+  ok('달이 없는 문서(연·반기)는 근무표를 묻지도 않는다',
+     !state.posts.some(p => /dutyDayNames/.test(p.url) && p.data.dutyYm === '2026-'));
+  ok('부서·병동·연월로 묻는다', state.posts.some(p => /dutyDayNames/.test(p.url) &&
+     p.data.deptCd === 'NUR' && p.data.wardNm === '3층' && p.data.dutyYm === '2026-03'));
+
+  var q1 = state.posts.filter(p => /dutyDayNames/.test(p.url)).length;
+  state.saves.length = 0;
+  M.go(); await until(() => !M.BS.busy);
+  ok('같은 부서·병동·달은 한 번만 묻는다(캐시)', state.posts.filter(p => /dutyDayNames/.test(p.url)).length === q1);
+  /* ⚠시뮬은 문서를 열 때마다 격자를 **빈 칸으로 다시 그린다**(실서버는 저장분이 돌아온다) —
+     그래서 두 번째 순회도 채워진다. 여기서 볼 것은 **캐시로 같은 이름이 다시 쓰이는가**다. */
+  ok('캐시에서 같은 이름이 다시 쓰인다',
+     JSON.stringify((state.saves.find(s => s.seq === 11) || {}).signs) === JSON.stringify(['김주간', '박야간', '', '이미', '']));
+
+  state.saves.length = 0;
+  state.cells = { 11: [{ v: '' }, { v: '' }] };            // 날짜 칸이 없는 서식(ITEM_COL)
+  M.go(); await until(() => !M.BS.busy);
+  ok('날짜 격자가 아닌 서식은 그날 근무자로 채우지 않는다', state.saves.length === 0);
+
+  $('ckBulkSignBox').querySelectorAll('input[name=ckBsWho]')[0].checked = true;
   state.userNm = '';
   $('ckBulkSignBox').style.display = 'none'; state.alerts.length = 0;
   M.toggle();
-  ok('로그인 이름이 없으면 열지 않고 알린다', $('ckBulkSignBox').style.display === 'none' && state.alerts.length === 1);
+  ok('로그인 이름이 없어도 띠는 열고(근무자로 쓸 수 있다) 알린 뒤 「그날 근무자」로 맞춘다',
+     $('ckBulkSignBox').style.display === '' && state.alerts.length === 1 &&
+     $('ckBulkSignBox').querySelectorAll('input[name=ckBsWho]')[1].checked === true);
+  ok('「그날 근무자」를 고르면 근무 고르기 칸이 보인다', $('ckBsDutyOpt').style.display === '');
 
   ok('소스 — ckSave 가 quiet 를 받아 저장만 하고 프라미스를 돌려준다', /window\.ckSave = function\(opts\)\{/.test(S) &&
      /if \(quiet\) return res;/.test(S) && /return post\('\/qps\/chkSave\.do'/.test(S));

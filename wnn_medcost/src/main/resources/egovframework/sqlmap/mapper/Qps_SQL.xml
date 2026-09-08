@@ -964,6 +964,123 @@
 		ON DUPLICATE KEY UPDATE STATUS=VALUES(STATUS), CUR_STEP=VALUES(CUR_STEP), UPD_USER=#{updUser}
 	</insert>
 
+	<!-- ═══════════ 서명·도장 + 점검표 결재란 (2026-09-08) ═══════════
+	     ★도장은 **사람마다 한 장**(TBL_QPS_SIGN), 결재 기록은 **문서×단계 한 줄**(TBL_QPS_CHK_APPR).
+	       기록에 그림을 복사하지 않고 찍은 사람만 남긴다 — 도장을 새로 등록하면 옛 문서도 새 도장으로 인쇄된다.
+	     ★단계 이름은 `selectApprLine`(병원 행 없으면 공통 '*')을 그대로 쓴다 — 정의가 두 벌이 되면 어긋난다. -->
+
+	<!-- 내 도장 한 장. ★그림은 TO_BASE64 로 — joinDocs 대표자 도장과 같은 방식 -->
+	<select id="selectQpsSign" resultType="java.util.HashMap">
+		SELECT USER_ID AS userid, USER_NM AS usernm, SIGN_GB AS signgb,
+		       TO_BASE64(SIGN_IMG) AS signimg, SIGN_MIME AS signmime,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_QPS_SIGN
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId} AND USE_YN = 'Y'
+	</select>
+
+	<!-- ★격자 사인 칸의 **작은 도장**(2026-09-08) — 사인 칸에 남는 것은 **이름 글자**뿐이라
+	     그 이름으로 도장을 찾는다(종이도 「이름 = 그 사람」으로 읽는다).
+	     ⚠같은 이름이 둘이면 앞 사람 것이 쓰인다 — 이름이 겹치는 병원은 도장을 안 쓰거나 이름을 구분해 적어야 한다.
+	     ⚠그림이 큰 칸이라 **문서에 실제로 적힌 이름만** 물어본다(전 직원을 실으면 수백 KB 가 오간다). -->
+	<select id="selectQpsSignsByNames" resultType="java.util.HashMap">
+		SELECT USER_ID AS userid, RTRIM(USER_NM) AS usernm, SIGN_GB AS signgb,
+		       IFNULL(SIGN_MIME,'image/png') AS signmime, TO_BASE64(SIGN_IMG) AS signimg
+		  FROM TBL_QPS_SIGN
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y' AND SIGN_IMG IS NOT NULL
+		   AND RTRIM(USER_NM) IN
+		   <foreach item="nm" collection="names" open="(" separator="," close=")">#{nm}</foreach>
+		 ORDER BY USER_ID
+	</select>
+
+	<insert id="saveQpsSign" parameterType="map">
+		INSERT INTO TBL_QPS_SIGN (HOSP_CD, USER_ID, USER_NM, SIGN_GB, SIGN_IMG, SIGN_MIME, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{userId}, #{userNm}, #{signGb}, FROM_BASE64(#{signImg}), #{signMime}, 'Y', #{userId})
+		ON DUPLICATE KEY UPDATE
+		  USER_NM=VALUES(USER_NM), SIGN_GB=VALUES(SIGN_GB), SIGN_IMG=VALUES(SIGN_IMG),
+		  SIGN_MIME=VALUES(SIGN_MIME), USE_YN='Y', UPD_USER=#{userId}
+	</insert>
+
+	<!-- 내림 = 지우기(옛 문서의 결재 기록은 그대로 두고 그림만 안 나오게) -->
+	<update id="deleteQpsSign">
+		UPDATE TBL_QPS_SIGN SET USE_YN='N', UPD_USER=#{userId}
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
+	</update>
+
+	<!-- 문서의 결재 기록 + **찍은 사람의 도장 그림**을 함께.
+	     ★LEFT JOIN 이라 도장을 안 올린 사람도 이름·날짜는 나온다(종이엔 이름만 찍힌다). -->
+	<select id="selectChkApprList" resultType="java.util.HashMap">
+		SELECT A.STEP_NO AS stepno, A.STEP_NM AS stepnm,
+		       A.USER_ID AS userid, A.USER_NM AS usernm,
+		       DATE_FORMAT(A.APPR_DTTM,'%Y-%m-%d') AS apprdt,
+		       DATE_FORMAT(A.APPR_DTTM,'%Y-%m-%d %H:%i') AS apprdttm,
+		       TO_BASE64(S.SIGN_IMG) AS signimg, S.SIGN_MIME AS signmime
+		  FROM TBL_QPS_CHK_APPR A
+		  LEFT JOIN TBL_QPS_SIGN S
+		         ON S.HOSP_CD = A.HOSP_CD AND S.USER_ID = A.USER_ID AND S.USE_YN = 'Y'
+		 WHERE A.HOSP_CD = #{hospCd} AND A.CHK_SEQ = #{chkSeq} AND A.USE_YN = 'Y'
+		 ORDER BY A.STEP_NO
+	</select>
+
+	<!-- 그 단계에 이미 **다른 사람이** 찍었는가 — 0 이면 찍어도 된다(내가 찍은 것은 다시 찍기 = 갱신) -->
+	<select id="countChkApprOther" resultType="int">
+		SELECT COUNT(*) FROM TBL_QPS_CHK_APPR
+		 WHERE HOSP_CD = #{hospCd} AND CHK_SEQ = #{chkSeq} AND STEP_NO = #{stepNo}
+		   AND USE_YN = 'Y' AND IFNULL(USER_ID,'') != #{userId}
+	</select>
+
+	<insert id="saveChkAppr" parameterType="map">
+		INSERT INTO TBL_QPS_CHK_APPR
+		 (HOSP_CD, CHK_SEQ, STEP_NO, STEP_NM, USER_ID, USER_NM, APPR_DTTM, USE_YN, REG_USER)
+		VALUES
+		 (#{hospCd}, #{chkSeq}, #{stepNo}, #{stepNm}, #{userId}, #{userNm}, NOW(), 'Y', #{userId})
+		ON DUPLICATE KEY UPDATE
+		  STEP_NM=VALUES(STEP_NM), USER_ID=VALUES(USER_ID), USER_NM=VALUES(USER_NM),
+		  APPR_DTTM=NOW(), USE_YN='Y', UPD_USER=#{userId}
+	</insert>
+
+	<!-- ═══ 결재 권한 (2026-09-08) — 부서 × 단계 × 사람, 서식 예외 가능 ═══
+	     ★**서식 줄이 부서 줄을 이긴다** — 같은 단계에 둘 다 있으면 서식 지정만 쓴다.
+	       (조회는 둘 다 가져오고 서비스가 「서식 줄이 있으면 그 단계는 서식 줄만」으로 고른다.)
+	     ⚠**지정이 하나도 없으면 누구나** — 도입하는 날 결재가 멈추면 안 된다(qpsUserDept 와 같은 원칙). -->
+	<select id="selectApprAuth" resultType="java.util.HashMap">
+		SELECT DEPT_CD AS deptcd, FORM_ID AS formid, STEP_NO AS stepno,
+		       USER_ID AS userid, USER_NM AS usernm
+		  FROM TBL_QPS_APPR_AUTH
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		   AND DEPT_CD = #{deptCd}
+		   AND FORM_ID IN (#{formId}, '*')
+		 ORDER BY STEP_NO, CASE WHEN FORM_ID = '*' THEN 1 ELSE 0 END, USER_ID
+	</select>
+
+	<!-- 관리 화면 — 한 부서(또는 한 서식)의 지정을 통째로 보여 준다 -->
+	<select id="selectApprAuthList" resultType="java.util.HashMap">
+		SELECT DEPT_CD AS deptcd, FORM_ID AS formid, STEP_NO AS stepno,
+		       USER_ID AS userid, USER_NM AS usernm
+		  FROM TBL_QPS_APPR_AUTH
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		   AND ( #{deptCd} = '' OR DEPT_CD = #{deptCd} )
+		 ORDER BY DEPT_CD, FORM_ID, STEP_NO, USER_ID
+	</select>
+
+	<!-- 통째 교체 — 줄이면 뺀 사람이 남지 않아야 한다(결재선 저장과 같은 방식) -->
+	<delete id="deleteApprAuth">
+		DELETE FROM TBL_QPS_APPR_AUTH
+		 WHERE HOSP_CD = #{hospCd} AND DEPT_CD = #{deptCd} AND FORM_ID = #{formId}
+	</delete>
+
+	<insert id="insertApprAuth" parameterType="map">
+		INSERT INTO TBL_QPS_APPR_AUTH (HOSP_CD, DEPT_CD, FORM_ID, STEP_NO, USER_ID, USER_NM, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{deptCd}, #{formId}, #{stepNo}, #{userId}, #{userNm}, 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE USER_NM=VALUES(USER_NM), USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+	<!-- ★★취소는 **내가 찍은 것만** — WHERE 의 USER_ID 를 절대 빼지 말 것(남의 결재를 지우게 된다) -->
+	<update id="deleteChkAppr">
+		UPDATE TBL_QPS_CHK_APPR SET USE_YN='N', UPD_USER=#{userId}
+		 WHERE HOSP_CD = #{hospCd} AND CHK_SEQ = #{chkSeq} AND STEP_NO = #{stepNo}
+		   AND USER_ID = #{userId} AND USE_YN='Y'
+	</update>
+
 	<!-- ===================== 공통 첨부 (TBL_QPS_FILE) =====================
 	     REF_GB(문서종류)+REF_KEY(문서키)로 회의록·계획서·라운딩·자료실 첨부를 한 표에 담는다.
 	     파일 실체는 SFTP, 여기엔 메타만. 다운로드는 /sftp/download.do?filePath= 재사용. -->
@@ -2464,6 +2581,7 @@
 		       SUB_NM AS subnm, SUB_COLS AS subcols,
 		       SIGNER_YN AS signeryn, NOTE_YN AS noteyn, FIX_YN AS fixyn,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, PHOTO_NMS AS photonms, SORT_NO AS sortno,
+		       APPR_YN AS appryn, APPR_STEPS AS apprsteps,   /* 결재란 — 서식이 정한다(2026-09-08) */
 		       CASE WHEN HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
 		  FROM TBL_QPS_CHK_FORM
 		 WHERE FORM_ID = #{formId} AND USE_YN='Y' AND HOSP_CD IN (#{hospCd}, '*')
@@ -2504,13 +2622,13 @@
 		  HALF_YN, SPLIT_N, SPLIT_DIR, GUIDE_TXT, HEAD_NMS, COL_NMS, COL_SRC, ROW_BLK_GB, ROW_BLKS, ROW_SRC,
 		  DESC_NM, PRE_COLS, POST_COLS, SPAN_ALL_YN, EXCL_YN, PRD_HEAD_YN, PRD_HEAD_NM, NOTE_NM,
 		  SUB_NM, SUB_COLS,
-		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
+		  SIGNER_YN, NOTE_YN, FIX_YN, SIGN_LINE, APPR_YN, APPR_STEPS, FOOT_TXT, SORT_NO, USE_YN, REG_USER)
 		VALUES
 		 (#{formId}, #{hospCd}, #{formNm}, #{cateCd}, #{deptCd}, #{axisGb}, #{prdGb}, #{prdKind}, #{prdSub}, #{grpPrd}, #{equipCnt},
 		  #{halfYn}, #{splitN}, #{splitDir}, #{guideTxt}, #{headNms}, #{colNms}, #{colSrc}, #{rowBlkGb}, #{rowBlks}, #{rowSrc},
 		  #{descNm}, #{preCols}, #{postCols}, #{spanAllYn}, #{exclYn}, #{prdHeadYn}, #{prdHeadNm}, #{noteNm},
 		  #{subNm}, #{subCols},
-		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
+		  #{signerYn}, #{noteYn}, #{fixYn}, #{signLine}, #{apprYn}, #{apprSteps}, #{footTxt}, #{sortNo}, 'Y', #{regUser})
 		ON DUPLICATE KEY UPDATE
 		  FORM_NM=VALUES(FORM_NM), CATE_CD=VALUES(CATE_CD), DEPT_CD=VALUES(DEPT_CD),
 		  AXIS_GB=VALUES(AXIS_GB), PRD_GB=VALUES(PRD_GB), PRD_KIND=VALUES(PRD_KIND), PRD_SUB=VALUES(PRD_SUB),
@@ -2524,7 +2642,8 @@
 		  PRD_HEAD_NM=VALUES(PRD_HEAD_NM), NOTE_NM=VALUES(NOTE_NM),
 		  SUB_NM=VALUES(SUB_NM), SUB_COLS=VALUES(SUB_COLS),
 		  SIGNER_YN=VALUES(SIGNER_YN), NOTE_YN=VALUES(NOTE_YN), FIX_YN=VALUES(FIX_YN),
-		  SIGN_LINE=VALUES(SIGN_LINE), FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
+		  SIGN_LINE=VALUES(SIGN_LINE), APPR_YN=VALUES(APPR_YN), APPR_STEPS=VALUES(APPR_STEPS),
+		  FOOT_TXT=VALUES(FOOT_TXT), SORT_NO=VALUES(SORT_NO),
 		  USE_YN='Y', UPD_USER=#{regUser}
 	</insert>
 
@@ -3177,5 +3296,105 @@
 		VALUES (#{hospCd}, 'CATHDAYS', #{inYear}, #{monVal}, #{regUser})
 		ON DUPLICATE KEY UPDATE ${monCol} = VALUES(${monCol})
 	</update>
+
+	<!-- ═══════════ 근무표(듀티) — 2026-09-08 ═══════════════════════════════
+	     SUNWOO 원본 = t_duty(사람×하루) + t_duty_group(월별 근무조 명단) 두 표인데,
+	     우리는 **근무표의 사람 줄이 곧 그 달의 명단**이라 표가 셋(머리·사람·값)이면 족하다.
+	     ★사인 매치(HLP_DutySign.pas)의 우리 판 = selectDutyDayNames — 원본은 `ORDER BY user_id DESC`
+	       로 우연에 맡겼지만 우리는 **담당자가 적은 차례(SORT_NO)** 로 고른다.
+	     ⚠매퍼 SQL 의 `<`·`<>` 는 CDATA 나 `&lt;` 로만(2026-09-02 기동 실패 겪음) — 여기서는 안 쓴다. -->
+
+	<select id="selectDuty" resultType="java.util.HashMap">
+		SELECT DUTY_SEQ AS dutyseq, DEPT_CD AS deptcd, WARD_NM AS wardnm, DUTY_YM AS dutyym,
+		       NOTE_TXT AS notetxt, LOCK_YN AS lockyn, LOCK_USER AS lockuser,
+		       DATE_FORMAT(LOCK_DTTM,'%Y-%m-%d %H:%i') AS lockdttm,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm, UPD_USER AS upduser
+		  FROM TBL_QPS_DUTY
+		 WHERE HOSP_CD = #{hospCd} AND DEPT_CD = #{deptCd}
+		   AND WARD_NM = #{wardNm} AND DUTY_YM = #{dutyYm} AND USE_YN = 'Y'
+		 LIMIT 1
+	</select>
+
+	<select id="selectDutyRows" resultType="java.util.HashMap">
+		SELECT ROW_NO AS rowno, USER_ID AS userid, USER_NM AS usernm, JOB_NM AS jobnm, SORT_NO AS sortno
+		  FROM TBL_QPS_DUTY_ROW WHERE DUTY_SEQ = #{dutySeq} ORDER BY SORT_NO, ROW_NO
+	</select>
+
+	<select id="selectDutyVals" resultType="java.util.HashMap">
+		SELECT ROW_NO AS rowno, DAY_NO AS dayno, SHIFT_CD AS shiftcd
+		  FROM TBL_QPS_DUTY_VAL WHERE DUTY_SEQ = #{dutySeq} ORDER BY ROW_NO, DAY_NO
+	</select>
+
+	<!-- 병동·근무조 이름 목록 — 마스터가 없으므로 **적어 둔 근무표에서 모은다**(점검표 병동과 같은 방식). -->
+	<select id="selectDutyWards" resultType="java.lang.String">
+		SELECT DISTINCT WARD_NM FROM TBL_QPS_DUTY
+		 WHERE HOSP_CD = #{hospCd} AND DEPT_CD = #{deptCd} AND USE_YN = 'Y' AND WARD_NM != ''
+		 ORDER BY WARD_NM
+	</select>
+
+	<!-- 그 부서에 저장된 근무표 목록(최근 것부터) — 화면의 「있는 달」 표시용 -->
+	<select id="selectDutyList" resultType="java.util.HashMap">
+		SELECT DUTY_YM AS dutyym, WARD_NM AS wardnm, LOCK_YN AS lockyn,
+		       (SELECT COUNT(*) FROM TBL_QPS_DUTY_ROW r WHERE r.DUTY_SEQ = d.DUTY_SEQ) AS rowcnt
+		  FROM TBL_QPS_DUTY d
+		 WHERE d.HOSP_CD = #{hospCd} AND d.DEPT_CD = #{deptCd} AND d.USE_YN = 'Y'
+		 ORDER BY d.DUTY_YM DESC, d.WARD_NM
+		 LIMIT 24
+	</select>
+
+	<insert id="insertDuty" parameterType="map" useGeneratedKeys="true" keyProperty="dutySeq">
+		INSERT INTO TBL_QPS_DUTY (HOSP_CD, DEPT_CD, WARD_NM, DUTY_YM, NOTE_TXT, USE_YN, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{deptCd}, #{wardNm}, #{dutyYm}, #{noteTxt}, 'Y', #{userId}, #{userId})
+	</insert>
+
+	<update id="updateDuty">
+		UPDATE TBL_QPS_DUTY SET NOTE_TXT = #{noteTxt}, USE_YN = 'Y', UPD_USER = #{userId}
+		 WHERE DUTY_SEQ = #{dutySeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<!-- 마감 잠금 — 켜면 값이 안 바뀐다(원본 t_duty_group.status='C' 와 같은 뜻). 푸는 것도 같은 화면에서. -->
+	<update id="updateDutyLock">
+		UPDATE TBL_QPS_DUTY
+		   SET LOCK_YN = #{lockYn},
+		       LOCK_USER = CASE WHEN #{lockYn} = 'Y' THEN #{userId} ELSE NULL END,
+		       LOCK_DTTM = CASE WHEN #{lockYn} = 'Y' THEN NOW() ELSE NULL END,
+		       UPD_USER  = #{userId}
+		 WHERE DUTY_SEQ = #{dutySeq} AND HOSP_CD = #{hospCd}
+	</update>
+
+	<delete id="deleteDutyRows">DELETE FROM TBL_QPS_DUTY_ROW WHERE DUTY_SEQ = #{dutySeq}</delete>
+	<delete id="deleteDutyVals">DELETE FROM TBL_QPS_DUTY_VAL WHERE DUTY_SEQ = #{dutySeq}</delete>
+
+	<insert id="insertDutyRows" parameterType="map">
+		INSERT INTO TBL_QPS_DUTY_ROW (DUTY_SEQ, ROW_NO, USER_ID, USER_NM, JOB_NM, SORT_NO) VALUES
+		<foreach item="it" collection="rows" separator=",">
+			(#{dutySeq}, #{it.rowno}, #{it.userid}, #{it.usernm}, #{it.jobnm}, #{it.sortno})
+		</foreach>
+	</insert>
+
+	<insert id="insertDutyVals" parameterType="map">
+		INSERT INTO TBL_QPS_DUTY_VAL (DUTY_SEQ, ROW_NO, DAY_NO, SHIFT_CD) VALUES
+		<foreach item="it" collection="vals" separator=",">
+			(#{dutySeq}, #{it.rowno}, #{it.dayno}, #{it.shiftcd})
+		</foreach>
+	</insert>
+
+	<!-- ★★사인 매치 — 그 달의 **날짜마다 근무자**. (SUNWOO HLP_DutySign.pas 의 우리 판)
+	     · 쉬는 기호(O 휴무·V 휴가·R 대체휴무)는 근무자가 아니다.
+	     · shiftCd 를 주면 **기호 첫 글자**로 거른다(원본의 SUBSTRING(work_cd,1,1) LIKE) — 'D' 면 주간 근무자만.
+	     · wardNm 을 비우면 그 부서의 근무표 전부에서 모은다(서비스가 날짜마다 첫 사람을 고른다). -->
+	<select id="selectDutyDayNames" resultType="java.util.HashMap">
+		SELECT v.DAY_NO AS dayno, v.SHIFT_CD AS shiftcd,
+		       r.USER_ID AS userid, r.USER_NM AS usernm, r.SORT_NO AS sortno, r.ROW_NO AS rowno,
+		       d.WARD_NM AS wardnm
+		  FROM TBL_QPS_DUTY d
+		  JOIN TBL_QPS_DUTY_VAL v ON v.DUTY_SEQ = d.DUTY_SEQ
+		  JOIN TBL_QPS_DUTY_ROW r ON r.DUTY_SEQ = v.DUTY_SEQ AND r.ROW_NO = v.ROW_NO
+		 WHERE d.HOSP_CD = #{hospCd} AND d.DEPT_CD = #{deptCd} AND d.DUTY_YM = #{dutyYm} AND d.USE_YN = 'Y'
+		   AND ( #{wardNm} = '' OR d.WARD_NM = #{wardNm} )
+		   AND v.SHIFT_CD NOT IN ('O','V','R')
+		   AND ( #{shiftCd} = '' OR LEFT(v.SHIFT_CD, 1) = #{shiftCd} )
+		 ORDER BY v.DAY_NO, r.SORT_NO, r.ROW_NO
+	</select>
 
 </mapper>

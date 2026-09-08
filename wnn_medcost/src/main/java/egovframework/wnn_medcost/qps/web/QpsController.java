@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260908-CHKUSE";     // 저장 4곳 jsonRows 통일 + 새 서식을 사용 서식 세트에 자동 켬 — 배포 확인용(codeList.do 응답 build)
+	private static final String BUILD = "20260908-DUTY";       // 근무표(듀티) + 일괄 사인 「그날 근무자로」 — 배포 확인용(codeList.do 응답 build)
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -1648,6 +1648,11 @@ public class QpsController {
 			m.put("noteYn",   "Y".equals(str(p.get("noteYn"), ""))   ? "Y" : "N");
 			m.put("fixYn",    "Y".equals(str(p.get("fixYn"), ""))    ? "Y" : "N");
 			m.put("signLine", unesc(p.get("signLine")));
+			/* ★결재란은 **서식이 정한다**(2026-09-08 「담당자 하는 것이 있고, 결재란이 있는 것이 있고」).
+			   ⚠기본은 **'Y'(현행 유지)** — 지금 종이에 결재 상자가 나가고 있어 기본을 뒤집으면 전 서식의 종이가 바뀐다.
+			   ★단계는 비우면 병원 결재선을 따른다(서식마다 적어 두면 결재선을 고쳐도 그 서식은 안 따라간다). */
+			m.put("apprYn",    "N".equals(str(p.get("apprYn"), "Y")) ? "N" : "Y");
+			m.put("apprSteps", unesc(p.get("apprSteps")));
 			m.put("footTxt",  unesc(p.get("footTxt")));
 			Integer so = intOf(p.get("sortNo"));
 			m.put("sortNo",   so == null ? Integer.valueOf(0) : so);
@@ -2512,6 +2517,25 @@ public class QpsController {
 	   담당자가 **제 부서 점검표만** 보게 한다(부서 15개를 다 보여주면 제 것을 못 찾는다).
 	   ★***등록이 없으면 「전 부서」*** — 막는 장치가 아니라 좁혀 주는 장치다.
 	   ★위너넷 담당자는 여러 병원을 지원하므로 언제나 전 부서. */
+	/**
+	 * 결재 권한 (2026-09-08 사용자 「결재는 권한 관리로 — 서식별 해당 권한 있는 내용 보여주고 결재하게」).
+	 * ★부서 × 단계 × 사람. 서식은 제 부서 지정을 따르고, 예외가 필요한 서식만 따로 덮어쓴다.
+	 * ⚠<b>설정 화면이라 위너넷 전용</b> — 병원이 제 결재 권한을 스스로 늘리면 결재란의 뜻이 없어진다
+	 *   (「병원은 설정 못 한다」 확정과 같은 줄기, qpsUserDept 와 같은 처리).
+	 */
+	@RequestMapping(value = "main/qpsApprAuth.do")
+	public String qpsApprAuth(HttpServletRequest request, ModelMap model) {
+		if (!isWnn(request)) return qpsScreen(request, model, ".main/qpsmgr/qpsChk");   // 병원 계정은 작성 화면으로
+		return qpsScreen(request, model, ".main/qpsmgr/qpsApprAuth");
+	}
+
+	/**
+	 * 근무표 (2026-09-08 사용자 「근무표에 따른 사인도 매치가 되어야 하고」 · 「근무표는 SUNWOO 에도 있었음」).
+	 * ★<b>병원이 쓰는 화면</b>이다(설정이 아니다) — 담당자가 그 달 근무를 적고, 점검표 일괄 사인이 그것을 읽는다.
+	 */
+	@RequestMapping(value = "main/qpsDuty.do")
+	public String qpsDuty(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsDuty"); }
+
 	@RequestMapping(value = "main/qpsUserDept.do")
 	public String qpsUserDept(HttpServletRequest request, ModelMap model) {
 		/* ★★[2026-08-18 저녁 사용자 확정] ***「병원은 설정 못 한다 — 전산 요원이 없어서」***
@@ -3991,6 +4015,299 @@ public class QpsController {
 		return res;
 	}
 
+	/* ═══════════ 서명·도장 + 점검표 결재란 (2026-09-08) ═══════════
+	   사용자 「마우스로 사인 가능한가요 / 아님 스캔 도장」 → 「결재란부터 진행해줘」.
+	   ★★<b>본인 것만</b> — 도장 등록·삭제도, 결재 찍기·취소도 <b>로그인 계정</b>으로 강제한다.
+	     화면이 보낸 userId 는 <b>받지 않는다</b>. 그 한 줄을 열면 남의 이름으로 도장을 찍는 도구가 된다. */
+
+	/** 내 도장 조회 — 없으면 sign 이 null. */
+	@RequestMapping(value = "/qps/signGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = userId(request);
+			if (uid.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("sign", svc.selectQpsSign(hospCd, uid));
+			res.put("userNm", userNm(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 격자 사인 칸의 <b>작은 도장</b>(2026-09-08) — 사인 칸에는 이름 글자만 남으므로 <b>이름으로</b> 찾는다.
+	 * names = [{"nm":"김간호"}, …] JSON. 그 문서에 실제로 적힌 이름만 물어본다(그림이 커서 전 직원을 실으면 안 된다).
+	 * ⚠JSON 문자열은 반드시 <b>jsonRows</b> 로 — @RequestParam 은 HTMLTagFilter 가 `&quot;` 로 바꿔 놓는다.
+	 */
+	@RequestMapping(value = "/qps/signNames.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signNames(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			List<String> names = new ArrayList<>();
+			for (Map<String, Object> r : jsonRows(p.get("names"))) {
+				String nm = str(r.get("nm"), "");
+				if (!nm.isEmpty()) names.add(nm);
+			}
+			res.put("list", svc.selectQpsSignsByNames(hospCd, names));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 내 도장 등록·교체. signImg = base64(데이터 URL 의 콤마 뒤). */
+	@RequestMapping(value = "/qps/signSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = userId(request);
+			if (uid.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String img = str(p.get("signImg"), "");
+			// 데이터 URL 로 와도 받아 준다(화면이 canvas.toDataURL 을 그대로 보낼 수 있게)
+			int c = img.indexOf(',');
+			if (img.startsWith("data:") && c > 0) img = img.substring(c + 1);
+			img = img.replaceAll("\\s", "");
+			if (img.isEmpty()) return fail(res, "도장 그림이 비어 있습니다.");
+			// 대충 4/3 배 — 1MB 넘는 그림은 결재란에 쓸 일이 없다(인쇄 칸이 52px 다)
+			if (img.length() > 1400000) return fail(res, "그림이 너무 큽니다. 1MB 이하로 줄여 주세요.");
+			svc.saveQpsSign(hospCd, uid, userNm(request),
+			                str(p.get("signGb"), "S"), img, str(p.get("signMime"), "image/png"));
+			res.put("sign", svc.selectQpsSign(hospCd, uid));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 내 도장 내림 — 옛 문서의 결재 기록(이름·날짜)은 남는다. */
+	@RequestMapping(value = "/qps/signDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = userId(request);
+			if (uid.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			svc.deleteQpsSign(hospCd, uid);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 점검표 문서의 결재 상자 — 단계 목록 + 찍힌 기록(+도장 그림). */
+	@RequestMapping(value = "/qps/chkApprList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkApprList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectChkApprBox(hospCd, seqOf(p.get("chkSeq")), str(p.get("formId"), ""), userId(request)));
+			res.put("me", userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 그 단계에 <b>내 이름으로</b> 결재. 남이 찍은 단계는 서비스가 막는다. */
+	@RequestMapping(value = "/qps/chkApprSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkApprSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = userId(request);
+			if (uid.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			long chkSeq = seqOf(p.get("chkSeq")); int stepNo = (int) seqOf(p.get("stepNo"));
+			if (chkSeq <= 0) return fail(res, "저장된 문서에만 결재할 수 있습니다.");
+			if (stepNo <= 0) return fail(res, "결재 단계를 고르세요.");
+			svc.saveChkAppr(hospCd, chkSeq, stepNo, str(p.get("stepNm"), ""), str(p.get("formId"), ""), uid, userNm(request));
+			res.putAll(svc.selectChkApprBox(hospCd, chkSeq, str(p.get("formId"), ""), uid));
+			res.put("me", uid);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 결재 취소 — <b>내가 찍은 것만</b>(매퍼 WHERE 에 USER_ID). */
+	@RequestMapping(value = "/qps/chkApprDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> chkApprDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = userId(request);
+			if (uid.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			long chkSeq = seqOf(p.get("chkSeq")); int stepNo = (int) seqOf(p.get("stepNo"));
+			if (svc.deleteChkAppr(hospCd, chkSeq, stepNo, uid) == 0)
+				return fail(res, "내가 결재한 것만 취소할 수 있습니다.");
+			res.putAll(svc.selectChkApprBox(hospCd, chkSeq, str(p.get("formId"), ""), uid));
+			res.put("me", uid);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 결재 권한 목록 — 부서를 비우면 그 병원 전체. */
+	@RequestMapping(value = "/qps/apprAuthList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> apprAuthList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.selectApprAuthList(hospCd, str(p.get("deptCd"), "")));
+			res.put("line", svc.selectApprLine(hospCd));
+			res.put("users", svc.selectHospUsers(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 결재 권한 저장 — 한 부서(또는 한 서식)의 지정을 <b>통째로 교체</b>.
+	 * rows = [{stepNo, userId, userNm}, …] JSON.
+	 * ⚠<b>고치는 것은 위너넷만</b> — 병원이 제 권한을 스스로 늘리면 결재란의 뜻이 없어진다.
+	 */
+	@RequestMapping(value = "/qps/apprAuthSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> apprAuthSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!isWnn(request)) return fail(res, "결재 권한은 위너넷 담당자만 고칠 수 있습니다.");
+			svc.saveApprAuth(hospCd, str(p.get("deptCd"), ""), str(p.get("formId"), ""),
+			                 jsonRows(p.get("rows")), userId(request));
+			res.put("list", svc.selectApprAuthList(hospCd, str(p.get("deptCd"), "")));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══════════ 근무표(듀티) — 2026-09-08 ═══════════════════════════════════
+	   부서·병동 × 연월 한 장. 사람 줄이 곧 그 달의 근무조 명단이고, 값은 사람 × 날짜 한 칸이다.
+	   ★일괄 사인의 「그날 근무자로 채우기」가 dutyDayNames 를 읽는다. */
+
+	/** 근무표 한 장 + 병동 목록 + 근무 기호 + 병원 사용자(사람 고르기). */
+	@RequestMapping(value = "/qps/dutyGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> dutyGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			/* ★부서 목록은 **담당 부서 규칙**을 그대로 따른다(chkBase 와 같다) —
+			   등록이 없으면 전 부서, 있으면 제 부서만. 남의 부서를 주소로 지정해도 무시한다. */
+			List<String> myDept = svc.selectQpsUserDept(hospCd, userId(request));
+			List<Map<String, Object>> dept = new ArrayList<>(), shifts = new ArrayList<>();
+			List<Map<String, Object>> allc = svc.selectQpsCodes();
+			if (allc != null) for (Map<String, Object> r : allc) {
+				String cc = String.valueOf(r.get("codecd"));
+				if ("QPS_DUTY_SHIFT".equals(cc)) { shifts.add(r); continue; }
+				if (!"QPS_CHK_DEPT".equals(cc)) continue;
+				String cd = str(r.get("subcode"), "");
+				if (cd.isEmpty() || "COMMON".equals(cd)) continue;   // 공통은 근무표의 부서가 아니다
+				if (myDept.isEmpty() || myDept.contains(cd)) dept.add(r);
+			}
+			res.put("dept", dept);
+			res.put("shifts", shifts);
+			res.put("users", svc.selectHospUsers(hospCd));
+
+			String deptCd = str(p.get("deptCd"), "");
+			if (!myDept.isEmpty() && !deptCd.isEmpty() && !myDept.contains(deptCd)) deptCd = "";
+			if (!deptCd.isEmpty()) {
+				String ym = dutyYm(p.get("dutyYm"));
+				if (ym.isEmpty()) return fail(res, "연월이 올바르지 않습니다.");
+				res.putAll(svc.selectDutySheet(hospCd, deptCd, str(p.get("wardNm"), ""), ym));
+				res.put("dutyYm", ym);
+			}
+			res.put("deptCd", deptCd);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 근무표 저장 — 사람 줄·날짜 값을 <b>통째로 다시 깐다</b>.
+	 * rows = [{rowNo,userId,userNm,jobNm,sortNo}] · vals = [{rowNo,dayNo,shiftCd}] (JSON).
+	 * ⚠JSON 문자열은 반드시 <b>jsonRows</b> 로 — @RequestParam 은 HTMLTagFilter 가 `&quot;` 로 바꿔 놓는다.
+	 */
+	@RequestMapping(value = "/qps/dutySave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> dutySave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = dutyYm(p.get("dutyYm"));
+			if (ym.isEmpty()) return fail(res, "연월이 올바르지 않습니다.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("deptCd", str(p.get("deptCd"), ""));
+			m.put("wardNm", str(p.get("wardNm"), ""));
+			m.put("dutyYm", ym);
+			m.put("noteTxt", str(p.get("noteTxt"), ""));
+			m.put("userId", userId(request));
+			long seq = svc.saveDuty(m, jsonRows(p.get("rows")), jsonRows(p.get("vals")));
+			res.put("dutySeq", seq);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 마감 잠그기·풀기 — 잠그면 저장이 막힌다(그 달 사인에 이미 쓰인 자료라). */
+	@RequestMapping(value = "/qps/dutyLock.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> dutyLock(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = dutyYm(p.get("dutyYm"));
+			if (ym.isEmpty()) return fail(res, "연월이 올바르지 않습니다.");
+			svc.lockDuty(hospCd, str(p.get("deptCd"), ""), str(p.get("wardNm"), ""), ym,
+			             "Y".equals(str(p.get("lockYn"), "")) ? "Y" : "N", userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 날짜 → 그날 근무자 — 점검표 일괄 사인이 읽는다. shiftCd 를 주면 그 근무(기호 첫 글자)만. */
+	@RequestMapping(value = "/qps/dutyDayNames.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> dutyDayNames(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = dutyYm(p.get("dutyYm"));
+			if (ym.isEmpty()) return fail(res, "연월이 올바르지 않습니다.");
+			res.putAll(svc.selectDutyDayNames(hospCd, str(p.get("deptCd"), ""), str(p.get("wardNm"), ""),
+			                                  ym, str(p.get("shiftCd"), "")));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 연월을 `yyyy-MM` 한 꼴로만 받는다(yyyyMM 도 받아 준다). 형식이 아니면 빈 값. */
+	private static String dutyYm(Object o) {
+		String s = (o == null) ? "" : String.valueOf(o).trim();
+		if (s.matches("\\d{4}-(0[1-9]|1[0-2])")) return s;
+		if (s.matches("\\d{4}(0[1-9]|1[0-2])")) return s.substring(0, 4) + "-" + s.substring(4);
+		return "";
+	}
+
 	// ===================== 공통 =====================
 
 	/** 결재란에 찍을 이름 — 사용자명 쿠키가 없으면 아이디로 대체한다. */
@@ -4176,6 +4493,12 @@ public class QpsController {
 		String s = String.valueOf(o).trim().replace(",", "").replace("%", "").replace("‰", "");
 		if (s.isEmpty()) return null;
 		try { return new java.math.BigDecimal(s); } catch (Exception e) { return null; }
+	}
+
+	/** 문서번호·단계번호 — 비어 있거나 숫자가 아니면 0(부르는 쪽이 「고르세요」로 막는다). */
+	private static long seqOf(Object o) {
+		Long v = longOf(o);
+		return (v == null) ? 0L : v.longValue();
 	}
 
 	private static Long longOf(Object o) {

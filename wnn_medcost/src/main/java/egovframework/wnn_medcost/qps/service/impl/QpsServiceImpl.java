@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -320,6 +321,272 @@ public class QpsServiceImpl implements QpsService {
 			}
 		}
 		return n;
+	}
+
+	/* ═══ 서명·도장 + 점검표 결재란 (2026-09-08) ═══════════════════════════════
+	   ★★<b>본인 것만</b> — 컨트롤러가 로그인 계정을 넘기고, 여기서도 그 값만 쓴다.
+	     화면이 보낸 userId 를 믿고 남의 이름으로 찍게 두면 그 순간 문서 위조 도구가 된다. */
+
+	@Override
+	public Map<String, Object> selectQpsSign(String hospCd, String userId) throws Exception {
+		if (hospCd == null || hospCd.isEmpty() || userId == null || userId.isEmpty()) return null;
+		return mapper.selectQpsSign(hospCd, userId);
+	}
+
+	/** 이름 목록으로 도장 찾기 — 빈 이름·중복은 걸러 내고, 한 번에 너무 많이 묻지 않는다(그림이 크다). */
+	@Override
+	public List<Map<String, Object>> selectQpsSignsByNames(String hospCd, List<String> names) throws Exception {
+		List<Map<String, Object>> empty = new ArrayList<>();
+		if (hospCd == null || hospCd.isEmpty() || names == null || names.isEmpty()) return empty;
+		Set<String> uniq = new LinkedHashSet<>();
+		for (String n : names) {
+			String s = str(n);
+			if (s.isEmpty() || s.length() > 100) continue;
+			uniq.add(s);
+			if (uniq.size() >= 50) break;          // 한 문서의 사인 이름이 50을 넘을 일은 없다
+		}
+		if (uniq.isEmpty()) return empty;
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("names", new ArrayList<>(uniq));
+		return mapper.selectQpsSignsByNames(p);
+	}
+
+	@Override
+	public int saveQpsSign(String hospCd, String userId, String userNm,
+	                       String signGb, String signImg, String signMime) throws Exception {
+		if (signImg == null || signImg.trim().isEmpty()) throw new Exception("도장 그림이 비어 있습니다.");
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("userId", userId);
+		p.put("userNm", userNm);
+		p.put("signGb", "D".equals(signGb) ? "D" : "S");
+		p.put("signImg", signImg.trim());
+		p.put("signMime", (signMime == null || signMime.isEmpty()) ? "image/png" : signMime);
+		return mapper.saveQpsSign(p);
+	}
+
+	@Override
+	public int deleteQpsSign(String hospCd, String userId) throws Exception {
+		return mapper.deleteQpsSign(hospCd, userId);
+	}
+
+	/**
+	 * 점검표 결재 상자 — <b>단계 목록</b>(TBL_QPS_APPR_LINE, 병원 행 없으면 공통 '*')에
+	 * <b>찍힌 기록</b>(TBL_QPS_CHK_APPR + 도장 그림)을 얹어 한 번에 돌려준다.
+	 *
+	 * <p>★단계는 <b>정의 쪽이 정본</b>이다 — 기록에만 있고 정의에 없는 단계(뒤에 결재선을 줄인 경우)도
+	 * 버리지 않고 뒤에 붙인다. 안 그러면 <b>이미 찍은 도장이 화면에서 사라진다</b>.</p>
+	 */
+	@Override
+	public Map<String, Object> selectChkApprBox(String hospCd, long chkSeq, String formId, String userId) throws Exception {
+		Map<String, Object> out = new LinkedHashMap<>();
+		List<Map<String, Object>> line = mapper.selectApprLine(hospCd);
+		List<Map<String, Object>> done = (chkSeq > 0) ? mapper.selectChkApprList(hospCd, chkSeq)
+		                                              : new ArrayList<Map<String, Object>>();
+		Map<String, Map<String, Object>> byStep = new HashMap<>();
+		for (Map<String, Object> d : done) byStep.put(str(d.get("stepno")), d);
+
+		List<Map<String, Object>> box = new ArrayList<>();
+		Set<String> used = new HashSet<>();
+		if (line != null) {
+			for (Map<String, Object> s : line) {
+				String no = str(s.get("stepno"));
+				if (SLINE_BASE <= intOf(no, 0)) continue;      // 결재선이 900 대를 쓸 일은 없다(자리 예약)
+				Map<String, Object> row = new LinkedHashMap<>();
+				row.put("stepno", s.get("stepno"));
+				row.put("stepnm", s.get("stepnm"));
+				Map<String, Object> d = byStep.get(no);
+				if (d != null) {
+					used.add(no);
+					row.put("userid", d.get("userid"));   row.put("usernm",   d.get("usernm"));
+					row.put("apprdt", d.get("apprdt"));   row.put("apprdttm", d.get("apprdttm"));
+					row.put("signimg", d.get("signimg")); row.put("signmime", d.get("signmime"));
+				}
+				box.add(row);
+			}
+		}
+		// 정의에서 사라진 단계에 찍힌 것 — 버리면 종이에서 도장이 없어진다
+		for (Map<String, Object> d : done) {
+			String no = str(d.get("stepno"));
+			if (used.contains(no) || intOf(no, 0) >= SLINE_BASE) continue;   // 900 대는 아래 서식 결재란 몫
+			Map<String, Object> row = new LinkedHashMap<>(d);
+			row.put("gone", "Y");
+			box.add(row);
+		}
+		/* ★결재 권한(2026-09-08) — 칸마다 **내가 찍을 수 있는지**(can)와 **누가 찍을 수 있는지**(who)를 붙인다.
+		   화면은 이걸로 못 찍는 칸을 흐리게 두고, 서버는 saveChkAppr 에서 다시 막는다(화면은 편의, 막는 것은 서버). */
+		Map<String, Set<String>> auth = apprAuthMap(hospCd, formId);
+		Map<String, String>      who  = apprAuthNames(hospCd, formId);
+		for (Map<String, Object> row : box) {
+			String no = str(row.get("stepno"));
+			Set<String> ids = auth.get(no);
+			row.put("can",  (ids == null || ids.isEmpty() || (userId != null && ids.contains(userId))) ? "Y" : "N");
+			if (who.get(no) != null) row.put("who", who.get(no));
+		}
+		out.put("box", box);
+
+		/* ═══ 서식 아래 결재란(SIGN_LINE) — 2026-09-08 ═══
+		   종이 아래쪽의 「점검자 ______ (인)」 줄이다. 지금까지는 **빈 줄로 인쇄해 손도장**을 받았다.
+		   ★자리는 서식이 정한다(`TBL_QPS_CHK_FORM.SIGN_LINE`, 쉼표) — 상단 결재 상자(결재선)와는 **다른 것**이다.
+		   ★기록은 **같은 표**(TBL_QPS_CHK_APPR)에 예약 대역 **901~910** 으로 담는다 — 새 표를 만들면
+		     「누가 찍었나·본인만 취소」 규칙을 두 벌로 지켜야 한다(이 저장소가 여러 번 겪은 함정).
+		   ⚠서식이 SIGN_LINE 을 고쳐 자리가 줄어도 **찍힌 것은 버리지 않는다**(gone='Y' 로 뒤에 붙인다). */
+		List<Map<String, Object>> sline = new ArrayList<>();
+		Set<String> sUsed = new HashSet<>();
+		String signLine = "";
+		try {
+			Map<String, Object> form = (formId == null || formId.trim().isEmpty())
+			                         ? null : mapper.selectChkForm(hospCd, formId.trim());
+			if (form != null) signLine = str(form.get("signline"));
+		} catch (Exception ignore) { }
+		if (!signLine.isEmpty()) {
+			String[] nms = signLine.split(",");
+			for (int i = 0; i < nms.length && i < 10; i++) {
+				String nm = str(nms[i]);
+				if (nm.isEmpty()) continue;
+				String no = String.valueOf(SLINE_BASE + 1 + i);      // 901, 902, …
+				Map<String, Object> row = new LinkedHashMap<>();
+				row.put("stepno", Integer.valueOf(no));
+				row.put("stepnm", nm);
+				Map<String, Object> d = byStep.get(no);
+				if (d != null) {
+					sUsed.add(no);
+					row.put("userid", d.get("userid"));   row.put("usernm",   d.get("usernm"));
+					row.put("apprdt", d.get("apprdt"));   row.put("apprdttm", d.get("apprdttm"));
+					row.put("signimg", d.get("signimg")); row.put("signmime", d.get("signmime"));
+				}
+				row.put("can", "Y");            // ★이 자리는 권한으로 좁히지 않는다 — 점검한 사람이 찍는 칸이다
+				sline.add(row);
+			}
+		}
+		for (Map<String, Object> d : done) {    // 자리가 줄어도 찍힌 것은 남긴다
+			String no = str(d.get("stepno"));
+			if (intOf(no, 0) < SLINE_BASE || sUsed.contains(no)) continue;
+			Map<String, Object> row = new LinkedHashMap<>(d);
+			row.put("gone", "Y");
+			row.put("can", "Y");
+			sline.add(row);
+		}
+		out.put("sline", sline);
+		return out;
+	}
+
+	/** 서식 아래 결재란(SIGN_LINE)이 쓰는 예약 대역 — 901~910. 결재선 단계(1~10)와 한 표에 산다. */
+	private static final int SLINE_BASE = 900;
+
+	/**
+	 * 결재 권한 — 단계번호 → 그 단계를 찍을 수 있는 사람들(2026-09-08).
+	 *
+	 * <p>★<b>서식 줄이 부서 줄을 이긴다</b> — 같은 단계에 둘 다 있으면 서식 지정만 쓴다.
+	 * 매퍼가 서식 줄을 먼저 주므로 그 단계에 서식 줄이 하나라도 있으면 부서 줄은 넣지 않는다.</p>
+	 * <p>⚠<b>지정이 하나도 없는 단계는 비워 둔다</b> — 부르는 쪽이 「비었으면 누구나」로 읽는다.
+	 * 막는 장치가 아니라 좁혀 주는 장치다(qpsUserDept 와 같은 원칙).</p>
+	 */
+	private Map<String, Set<String>> apprAuthMap(String hospCd, String formId) {
+		Map<String, Set<String>> out = new HashMap<>();
+		String dept = apprDeptOf(hospCd, formId);
+		if (dept.isEmpty()) return out;
+		List<Map<String, Object>> rows = mapper.selectApprAuth(hospCd, dept, formId);
+		Set<String> formStep = new HashSet<>();
+		for (Map<String, Object> r : rows) {   // 서식 줄이 먼저 온다(매퍼 ORDER BY)
+			String no = str(r.get("stepno")), fid = str(r.get("formid"));
+			boolean isForm = !"*".equals(fid);
+			if (!isForm && formStep.contains(no)) continue;   // 그 단계는 서식 지정이 이겼다
+			if (isForm) formStep.add(no);
+			Set<String> ids = out.get(no);
+			if (ids == null) { ids = new LinkedHashSet<>(); out.put(no, ids); }
+			ids.add(str(r.get("userid")));
+		}
+		return out;
+	}
+
+	/** 결재 권한 — 단계번호 → 찍을 수 있는 사람 이름(화면 안내용, 「박실장 님이 결재할 단계입니다」). */
+	private Map<String, String> apprAuthNames(String hospCd, String formId) {
+		Map<String, String> out = new HashMap<>();
+		String dept = apprDeptOf(hospCd, formId);
+		if (dept.isEmpty()) return out;
+		List<Map<String, Object>> rows = mapper.selectApprAuth(hospCd, dept, formId);
+		Map<String, Boolean> formStep = new HashMap<>();
+		for (Map<String, Object> r : rows) {
+			String no = str(r.get("stepno")), fid = str(r.get("formid"));
+			boolean isForm = !"*".equals(fid);
+			if (!isForm && Boolean.TRUE.equals(formStep.get(no))) continue;
+			if (isForm) formStep.put(no, Boolean.TRUE);
+			String nm = str(r.get("usernm")).isEmpty() ? str(r.get("userid")) : str(r.get("usernm"));
+			out.put(no, out.get(no) == null ? nm : (out.get(no) + ", " + nm));
+		}
+		return out;
+	}
+
+	/** 그 서식의 부서 — 권한은 부서 단위라 서식에서 부서를 찾아야 한다. */
+	private String apprDeptOf(String hospCd, String formId) {
+		if (formId == null || formId.trim().isEmpty()) return "";
+		try {
+			Map<String, Object> f = mapper.selectChkForm(hospCd, formId.trim());
+			return (f == null) ? "" : str(f.get("deptcd"));
+		} catch (Exception e) { return ""; }
+	}
+
+	@Override
+	public int saveChkAppr(String hospCd, long chkSeq, int stepNo, String stepNm,
+	                       String formId, String userId, String userNm) throws Exception {
+		if (chkSeq <= 0) throw new Exception("저장된 문서에만 결재할 수 있습니다.");
+		if (userId == null || userId.isEmpty()) throw new Exception("로그인이 필요합니다.");
+		// ★그 단계를 남이 이미 찍었으면 막는다 — 종이 결재란과 같이 한 칸에 한 사람이다
+		if (mapper.countChkApprOther(hospCd, chkSeq, stepNo, userId) > 0)
+			throw new Exception("이미 다른 사람이 결재한 단계입니다. 그 사람이 취소해야 바뀝니다.");
+		/* ★★권한 검사는 **여기가 본진**이다 — 화면이 흐리게 해 두는 것은 편의일 뿐,
+		     주소로 직접 부르면 그만이므로 서버가 막아야 한다. */
+		Map<String, Set<String>> auth = apprAuthMap(hospCd, formId);
+		Set<String> ids = auth.get(String.valueOf(stepNo));
+		if (ids != null && !ids.isEmpty() && !ids.contains(userId)) {
+			String who = apprAuthNames(hospCd, formId).get(String.valueOf(stepNo));
+			throw new Exception("이 단계를 결재할 권한이 없습니다." + (who == null ? "" : (" (" + who + ")")));
+		}
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("chkSeq", chkSeq);
+		p.put("stepNo", stepNo); p.put("stepNm", stepNm);
+		p.put("userId", userId); p.put("userNm", userNm);
+		return mapper.saveChkAppr(p);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectApprAuthList(String hospCd, String deptCd) throws Exception {
+		return mapper.selectApprAuthList(hospCd, deptCd == null ? "" : deptCd.trim());
+	}
+
+	/** 한 부서(또는 한 서식)의 지정을 <b>통째로 교체</b> — 줄이면 뺀 사람이 남지 않아야 한다. */
+	@Override
+	public int saveApprAuth(String hospCd, String deptCd, String formId,
+	                        List<Map<String, Object>> rows, String regUser) throws Exception {
+		if (deptCd == null || deptCd.trim().isEmpty()) throw new Exception("부서를 고르세요.");
+		String fid = (formId == null || formId.trim().isEmpty()) ? "*" : formId.trim();
+		mapper.deleteApprAuth(hospCd, deptCd.trim(), fid);
+		int n = 0;
+		if (rows != null) {
+			for (Map<String, Object> r : rows) {
+				String uid = str(r.get("userId"));
+				if (uid.isEmpty()) continue;
+				Integer no = intOrNull(r.get("stepNo"));
+				if (no == null || no <= 0) continue;
+				Map<String, Object> p = new HashMap<>();
+				p.put("hospCd", hospCd); p.put("deptCd", deptCd.trim()); p.put("formId", fid);
+				p.put("stepNo", no); p.put("userId", uid); p.put("userNm", str(r.get("userNm")));
+				p.put("regUser", regUser);
+				mapper.insertApprAuth(p);
+				n++;
+			}
+		}
+		return n;
+	}
+
+	/* ★`intOrNull` 은 이 파일 아래쪽에 이미 있다(빈 칸은 0 이 아니라 null) — 사본을 만들지 않는다 */
+
+	@Override
+	public int deleteChkAppr(String hospCd, long chkSeq, int stepNo, String userId) throws Exception {
+		// 매퍼 WHERE 에 USER_ID 가 있어 **내가 찍은 것만** 내려간다 — 0 이면 「내 결재가 아니다」
+		return mapper.deleteChkAppr(hospCd, chkSeq, stepNo, userId);
 	}
 
 	@Override
@@ -2813,5 +3080,154 @@ public class QpsServiceImpl implements QpsService {
 		c.put("regUser", str(p.get("regUser")));
 		mapper.upsertCathCensus(c);
 		return seq;
+	}
+
+	/* ═══════════ 근무표(듀티) — 2026-09-08 ═══════════════════════════════════
+	   SUNWOO 는 하루씩 지웠다 넣지만(t_duty), 우리는 **한 달 격자를 통째로** 저장한다.
+	   ★사람 줄이 곧 그 달의 근무조 명단이다 — 명단 표를 따로 두면 두 곳이 어긋난다. */
+
+	/** 값 꾸러미의 키를 소문자·대소문자 섞임 어느 쪽으로 와도 읽는다(화면이 보내는 JSON 이라 느슨하게). */
+	private static Object any(Map<String, Object> m, String... keys) {
+		if (m == null) return null;
+		for (String k : keys) { Object v = m.get(k); if (v != null) return v; }
+		return null;
+	}
+
+	@Override
+	public Map<String, Object> selectDutySheet(String hospCd, String deptCd, String wardNm, String dutyYm) throws Exception {
+		Map<String, Object> out = new HashMap<>();
+		String w = (wardNm == null) ? "" : wardNm.trim();
+		Map<String, Object> head = mapper.selectDuty(hospCd, deptCd, w, dutyYm);
+		out.put("duty", head);
+		if (head != null) {
+			long seq = Long.parseLong(String.valueOf(head.get("dutyseq")));
+			out.put("rows", mapper.selectDutyRows(seq));
+			out.put("vals", mapper.selectDutyVals(seq));
+		} else {
+			out.put("rows", new ArrayList<Map<String, Object>>());
+			out.put("vals", new ArrayList<Map<String, Object>>());
+		}
+		out.put("wards", mapper.selectDutyWards(hospCd, deptCd));
+		out.put("sheets", mapper.selectDutyList(hospCd, deptCd));
+		return out;
+	}
+
+	@Override
+	public long saveDuty(Map<String, Object> p, List<Map<String, Object>> rows,
+	                     List<Map<String, Object>> vals) throws Exception {
+		String hospCd = str(p.get("hospCd")), deptCd = str(p.get("deptCd"));
+		String wardNm = str(p.get("wardNm")), dutyYm = str(p.get("dutyYm"));
+		if (deptCd.isEmpty()) throw new Exception("부서를 고르세요.");
+		if (dutyYm.length() != 7) throw new Exception("연월이 올바르지 않습니다.");
+
+		Map<String, Object> head = mapper.selectDuty(hospCd, deptCd, wardNm, dutyYm);
+		long seq;
+		if (head == null) {
+			mapper.insertDuty(p);                       // useGeneratedKeys → p.dutySeq
+			seq = Long.parseLong(String.valueOf(p.get("dutySeq")));
+		} else {
+			// ★마감된 근무표는 고치지 않는다 — 이미 그 달 사인에 쓰인 자료다
+			if ("Y".equals(str(head.get("lockyn")))) throw new Exception("마감된 근무표입니다. 마감을 풀고 고치세요.");
+			seq = Long.parseLong(String.valueOf(head.get("dutyseq")));
+			p.put("dutySeq", seq);
+			mapper.updateDuty(p);
+		}
+
+		mapper.deleteDutyVals(seq);
+		mapper.deleteDutyRows(seq);
+
+		Set<Integer> live = new LinkedHashSet<>();      // 실제로 들어간 줄 번호 — 값은 이 줄만 남긴다
+		List<Map<String, Object>> rw = new ArrayList<>();
+		if (rows != null) {
+			int no = 0;
+			for (Map<String, Object> r : rows) {
+				String nm = str(any(r, "usernm", "userNm"));
+				if (nm.isEmpty()) continue;             // 이름 없는 줄은 줄이 아니다
+				no++;
+				Map<String, Object> o = new HashMap<>();
+				Integer rn = intOrNull(any(r, "rowno", "rowNo"));
+				int rowNo = (rn == null || rn <= 0) ? no : rn;
+				o.put("rowno", rowNo);
+				o.put("userid", str(any(r, "userid", "userId")));
+				o.put("usernm", nm);
+				o.put("jobnm", str(any(r, "jobnm", "jobNm")));
+				Integer so = intOrNull(any(r, "sortno", "sortNo"));
+				o.put("sortno", (so == null) ? no : so);
+				if (live.contains(rowNo)) continue;     // 같은 줄 번호가 두 번 오면 앞의 것만
+				live.add(rowNo);
+				rw.add(o);
+			}
+		}
+		if (!rw.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("dutySeq", seq); ip.put("rows", rw);
+			mapper.insertDutyRows(ip);
+		}
+
+		List<Map<String, Object>> vl = new ArrayList<>();
+		Set<String> seen = new LinkedHashSet<>();
+		if (vals != null) {
+			for (Map<String, Object> v : vals) {
+				String cd = str(any(v, "shiftcd", "shiftCd"));
+				if (cd.isEmpty()) continue;             // 빈 칸은 줄을 만들지 않는다
+				Integer rn = intOrNull(any(v, "rowno", "rowNo"));
+				Integer dn = intOrNull(any(v, "dayno", "dayNo"));
+				if (rn == null || dn == null) continue;
+				if (dn < 1 || dn > 31) continue;
+				if (!live.contains(rn)) continue;       // 사라진 줄의 값은 버린다
+				String key = rn + "_" + dn;
+				if (seen.contains(key)) continue;
+				seen.add(key);
+				Map<String, Object> o = new HashMap<>();
+				o.put("rowno", rn); o.put("dayno", dn);
+				o.put("shiftcd", cd.length() > 10 ? cd.substring(0, 10) : cd);
+				vl.add(o);
+			}
+		}
+		if (!vl.isEmpty()) {
+			Map<String, Object> ip = new HashMap<>();
+			ip.put("dutySeq", seq); ip.put("vals", vl);
+			mapper.insertDutyVals(ip);
+		}
+		return seq;
+	}
+
+	@Override
+	public int lockDuty(String hospCd, String deptCd, String wardNm, String dutyYm,
+	                    String lockYn, String userId) throws Exception {
+		Map<String, Object> head = mapper.selectDuty(hospCd, deptCd, (wardNm == null ? "" : wardNm.trim()), dutyYm);
+		if (head == null) throw new Exception("저장된 근무표가 없습니다.");
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("dutySeq", Long.parseLong(String.valueOf(head.get("dutyseq"))));
+		p.put("lockYn", "Y".equals(lockYn) ? "Y" : "N");
+		p.put("userId", userId);
+		return mapper.updateDutyLock(p);
+	}
+
+	@Override
+	public Map<String, Object> selectDutyDayNames(String hospCd, String deptCd, String wardNm,
+	                                              String dutyYm, String shiftCd) throws Exception {
+		List<Map<String, Object>> list = mapper.selectDutyDayNames(
+				hospCd, deptCd, (wardNm == null ? "" : wardNm.trim()), dutyYm,
+				(shiftCd == null ? "" : shiftCd.trim().toUpperCase()));
+		/* ★날짜마다 **첫 사람**만 — 매퍼가 이미 SORT_NO, ROW_NO 로 정렬해 준다.
+		   (원본 SUNWOO 는 user_id 역순으로 우연히 골랐다. 여기서는 담당자가 적은 차례를 따른다.) */
+		Map<String, Object> names = new LinkedHashMap<>();
+		Map<String, Object> ids = new LinkedHashMap<>();
+		Map<String, Object> shifts = new LinkedHashMap<>();
+		for (Map<String, Object> r : list) {
+			String d = String.valueOf(r.get("dayno"));
+			if (names.containsKey(d)) continue;
+			names.put(d, str(r.get("usernm")));
+			ids.put(d, str(r.get("userid")));
+			shifts.put(d, str(r.get("shiftcd")));
+		}
+		Map<String, Object> out = new HashMap<>();
+		out.put("names", names);
+		out.put("ids", ids);
+		out.put("shifts", shifts);
+		out.put("cnt", names.size());
+		return out;
 	}
 }

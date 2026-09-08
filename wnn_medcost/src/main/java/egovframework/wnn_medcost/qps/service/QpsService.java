@@ -73,6 +73,40 @@ public interface QpsService {
 	/** 결재선 저장 — 단계 목록을 통째로 교체한다(줄이면 뒤 단계가 사라진다). */
 	int saveApprLine(String hospCd, List<String> stepNames, String userId) throws Exception;
 
+	/* ═══ 서명·도장 + 점검표 결재란 (2026-09-08) ═══
+	   ★★<b>본인 것만</b> — 도장 등록·삭제도, 결재 찍기·취소도 로그인 계정으로 강제한다.
+	     도장 그림이 도용되면 문서 위조가 되므로 이 규칙을 풀지 말 것. */
+
+	/** 내 도장 한 장(없으면 null). 그림은 base64. */
+	Map<String, Object> selectQpsSign(String hospCd, String userId) throws Exception;
+	/** 내 도장 등록·교체(한 사람 한 장). signGb = S(마우스 서명)·D(스캔 도장). */
+	int saveQpsSign(String hospCd, String userId, String userNm,
+	                String signGb, String signImg, String signMime) throws Exception;
+	/** 내 도장 내림 — 옛 문서의 결재 기록은 남고 그림만 안 나온다. */
+	int deleteQpsSign(String hospCd, String userId) throws Exception;
+	/**
+	 * 격자 사인 칸의 <b>작은 도장</b> — 사인 칸에는 이름 글자만 남으므로 <b>이름으로</b> 도장을 찾는다.
+	 * 문서에 실제로 적힌 이름만 물어본다(전 직원을 실으면 수백 KB 가 오간다).
+	 */
+	List<Map<String, Object>> selectQpsSignsByNames(String hospCd, List<String> names) throws Exception;
+
+	/**
+	 * 점검표 문서의 결재 상자 = 단계 목록 + 찍힌 기록(+도장 그림) + <b>내가 찍을 수 있는 단계인가</b>.
+	 * formId 를 주면 그 서식의 부서로 결재 권한을 따진다(비면 권한 판정 없이 전부 허용).
+	 */
+	Map<String, Object> selectChkApprBox(String hospCd, long chkSeq, String formId, String userId) throws Exception;
+	/** 그 단계에 내 이름으로 결재(도장 찍기). 남이 이미 찍었거나 <b>권한이 없으면</b> 막는다. */
+	int saveChkAppr(String hospCd, long chkSeq, int stepNo, String stepNm,
+	                String formId, String userId, String userNm) throws Exception;
+
+	/* 결재 권한 관리 (부서 × 단계 × 사람) */
+	List<Map<String, Object>> selectApprAuthList(String hospCd, String deptCd) throws Exception;
+	/** 한 부서(또는 한 서식)의 지정을 통째로 교체. rows = {stepNo, userId, userNm}. */
+	int saveApprAuth(String hospCd, String deptCd, String formId,
+	                 List<Map<String, Object>> rows, String regUser) throws Exception;
+	/** 내가 찍은 결재만 취소. */
+	int deleteChkAppr(String hospCd, long chkSeq, int stepNo, String userId) throws Exception;
+
 	/** 결재 상태 + 결재선 + 이력을 한 번에 (화면이 한 번의 호출로 그린다). */
 	Map<String, Object> selectApprState(String hospCd, String indiCd, String prdGb, String prdKey) throws Exception;
 
@@ -338,4 +372,23 @@ public interface QpsService {
 	Map<String, Object> selectCathDayWithItems(String hospCd, String cathYm) throws Exception;
 	/** 저장 — 일자 행을 다시 깔고, CATH_CNT 월 합계를 CENSUS(CATHDAYS)에 반영한다. */
 	long saveCathDay(Map<String, Object> param, List<Map<String, Object>> items) throws Exception;
+
+	/* ═══ 근무표(듀티) — 2026-09-08 ═══ */
+	/** 한 장(부서·병동 × 연월) — 머리 + 사람 줄 + 날짜 값 + 병동 목록 + 저장된 달 목록. */
+	Map<String, Object> selectDutySheet(String hospCd, String deptCd, String wardNm, String dutyYm) throws Exception;
+	/**
+	 * 저장 — 사람 줄과 날짜 값을 <b>통째로 다시 깐다</b>(줄이면 뺀 사람이 남지 않아야 한다).
+	 * ★마감(LOCK_YN='Y')된 근무표는 고치지 않는다.
+	 */
+	long saveDuty(Map<String, Object> param, List<Map<String, Object>> rows,
+	              List<Map<String, Object>> vals) throws Exception;
+	/** 마감 잠그기·풀기. */
+	int lockDuty(String hospCd, String deptCd, String wardNm, String dutyYm,
+	             String lockYn, String userId) throws Exception;
+	/**
+	 * 날짜 → 그날 근무자 이름(일괄 사인의 「그날 근무자로 채우기」).
+	 * 같은 날 여럿이면 <b>근무표에 적은 차례</b>(SORT_NO)로 첫 사람. 쉬는 기호는 근무자가 아니다.
+	 */
+	Map<String, Object> selectDutyDayNames(String hospCd, String deptCd, String wardNm,
+	                                       String dutyYm, String shiftCd) throws Exception;
 }
