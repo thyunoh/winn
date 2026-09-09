@@ -88,7 +88,26 @@ public interface QpsService {
 	 * 격자 사인 칸의 <b>작은 도장</b> — 사인 칸에는 이름 글자만 남으므로 <b>이름으로</b> 도장을 찾는다.
 	 * 문서에 실제로 적힌 이름만 물어본다(전 직원을 실으면 수백 KB 가 오간다).
 	 */
-	List<Map<String, Object>> selectQpsSignsByNames(String hospCd, List<String> names) throws Exception;
+	List<Map<String, Object>> selectQpsSignsByNames(String hospCd, List<String> names, String deptCd) throws Exception;
+
+	/* ═══ 담당자별 사인·도장 (2026-09-09) ═══
+	   한 줄 = 한 사람 = 사인 한 장. 계정 없는 사람은 서버가 만든 P+12자리 USER_ID(ACCT_YN='N'). */
+	/** 인사 목록(그림 포함). deptCd 를 비우면 전부, withRetire 'Y' 면 퇴직자(퇴사일이 오늘 이전)도. */
+	List<Map<String, Object>> selectQpsSigners(String hospCd, String deptCd, String withRetire) throws Exception;
+	/** 근무표 사람 콤보 — 이름만(가볍게), 퇴직자 제외. */
+	List<Map<String, Object>> selectQpsSignerNames(String hospCd) throws Exception;
+	/** 사람 줄 만들기·고치기 — userId 가 비면 새 사람(P+12자리), 계정을 이으면 그 계정이 USER_ID. 돌려주는 값 = USER_ID.
+	 *  hr = 인사 칸(empNo·posNm·joinDt·retireDt·remark, 2026-09-09 인사 등록) — 날짜는 YYYYMMDD 로 고른다. */
+	String saveQpsSigner(String hospCd, String userId, String acctUserId, String userNm,
+	                     String jobNm, String deptCd, Integer sortNo, Map<String, Object> hr, String regUser) throws Exception;
+	/** 그림만 내린다(사람 줄은 남긴다). */
+	int clearQpsSignImg(String hospCd, String userId, String regUser) throws Exception;
+	/** 사람 줄 삭제(소프트). */
+	int deleteQpsSigner(String hospCd, String userId, String regUser) throws Exception;
+	/** 면허등록(차등제 인력 신고)에서 가져올 후보 — 이름·직종·입퇴사일, 이미 등록된 이름은 already='Y'. */
+	List<Map<String, Object>> selectHospEmpCandidates(String hospCd) throws Exception;
+	/** 점검표 사인 칸에서 고를 이름 목록(그림 없이, 퇴직자 제외). */
+	List<Map<String, Object>> selectQpsSignerPicks(String hospCd, String deptCd) throws Exception;
 
 	/**
 	 * 점검표 문서의 결재 상자 = 단계 목록 + 찍힌 기록(+도장 그림) + <b>내가 찍을 수 있는 단계인가</b>.

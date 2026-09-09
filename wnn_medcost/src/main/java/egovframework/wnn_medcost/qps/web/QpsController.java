@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260908-DUTY";       // 근무표(듀티) + 일괄 사인 「그날 근무자로」 — 배포 확인용(codeList.do 응답 build)
+	private static final String BUILD = "20260909-SIGNER";     // 인사 등록 · 담당자별 사인·도장(+면허 가져오기·사인 칸 이름 고르기) — 배포 확인용(codeList.do 응답 build)
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -2536,6 +2536,13 @@ public class QpsController {
 	@RequestMapping(value = "main/qpsDuty.do")
 	public String qpsDuty(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsDuty"); }
 
+	/**
+	 * 담당자 사인·도장 (2026-09-09 사용자 「담당자별 사인(작성해서) 및 도장 관리 필요함」).
+	 * ★병원 자료라 **병원도 연다** — 고치기는 자료실과 같은 권한(canEditLib)으로 서버가 가른다.
+	 */
+	@RequestMapping(value = "main/qpsSigner.do")
+	public String qpsSigner(HttpServletRequest request, ModelMap model) { return qpsScreen(request, model, ".main/qpsmgr/qpsSigner"); }
+
 	@RequestMapping(value = "main/qpsUserDept.do")
 	public String qpsUserDept(HttpServletRequest request, ModelMap model) {
 		/* ★★[2026-08-18 저녁 사용자 확정] ***「병원은 설정 못 한다 — 전산 요원이 없어서」***
@@ -4054,7 +4061,149 @@ public class QpsController {
 				String nm = str(r.get("nm"), "");
 				if (!nm.isEmpty()) names.add(nm);
 			}
-			res.put("list", svc.selectQpsSignsByNames(hospCd, names));
+			/* deptCd = 그 문서의 부서(서식 부서, 공통이면 화면 부서) — **동명이인**이면 그 부서 사람이 먼저 온다(2026-09-09) */
+			res.put("list", svc.selectQpsSignsByNames(hospCd, names, str(p.get("deptCd"), "")));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 담당자별 사인·도장 (2026-09-09) ═══
+	   TBL_QPS_SIGN 을 담당자 표로 넓혔다. 계정 없는 직원(근무표의 간호사·조무사)도 사인 그림을 가질 수 있다.
+	   ★고치기 권한 = 자료실과 같은 규칙(canEditLib : 위너넷 · QPS 담당자 · 담당자 없으면 병원관리자). 보기는 병원 전원.
+	   ★결재란은 그대로 **로그인 계정 본인만** 찍는다 — 이 화면은 사인 칸(이름 매치)과 근무표 콤보를 위한 것이다. */
+
+	/** 담당자 목록 + 부서 코드 + 계정 목록(계정 잇기용) + 내가 고칠 수 있는가. */
+	@RequestMapping(value = "/qps/signerList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signerList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.selectQpsSigners(hospCd, str(p.get("deptCd"), ""), str(p.get("withRetire"), "N")));
+			List<Map<String, Object>> dept = new ArrayList<>();
+			List<Map<String, Object>> allc = svc.selectQpsCodes();
+			if (allc != null) for (Map<String, Object> r : allc) {
+				if (!"QPS_CHK_DEPT".equals(String.valueOf(r.get("codecd")))) continue;
+				String cd = str(r.get("subcode"), "");
+				if (cd.isEmpty() || "COMMON".equals(cd)) continue;
+				dept.add(r);
+			}
+			res.put("dept", dept);
+			res.put("users", svc.selectHospUsers(hospCd));
+			res.put("canEdit", canEditLib(request, hospCd) ? "Y" : "N");
+			res.put("me", userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 사람 줄 만들기·고치기 — userId 비면 새 사람. acctUserId 를 주면 그 계정과 한 줄(결재란 도장과 같은 줄). */
+	@RequestMapping(value = "/qps/signerSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signerSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!canEditLib(request, hospCd)) return fail(res, "담당자 명단은 QPS 담당자·병원관리자만 고칠 수 있습니다.");
+			Integer sort = null;
+			try { sort = Integer.valueOf(str(p.get("sortNo"), "0").trim()); } catch (Exception ignore) { }
+			/* 인사 칸(2026-09-09 인사 등록) — 사번·직책/직급·입사일·퇴사일·비고 */
+			Map<String, Object> hr = new HashMap<>();
+			for (String k : new String[]{ "empNo", "posNm", "joinDt", "retireDt", "remark" }) hr.put(k, str(p.get(k), ""));
+			String uid = svc.saveQpsSigner(hospCd, str(p.get("userId"), ""), str(p.get("acctUserId"), ""),
+			                               str(p.get("userNm"), ""), str(p.get("jobNm"), ""), str(p.get("deptCd"), ""),
+			                               sort, hr, userId(request));
+			res.put("userId", uid);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 담당자의 사인·도장 그림 저장 — 마우스로 그린 것(S)·스캔(D). 그림은 내 도장과 **같은 줄·같은 저장 경로**(saveQpsSign).
+	 * ★남의 그림을 올리는 자리라 권한(canEditLib)으로 막는다. 본인 것은 종전대로 본인이 올릴 수 있다.
+	 */
+	@RequestMapping(value = "/qps/signerImgSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signerImgSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = str(p.get("userId"), "");
+			if (uid.isEmpty()) return fail(res, "누구의 사인인지 고르세요.");
+			boolean mine = uid.equals(userId(request));
+			if (!mine && !canEditLib(request, hospCd)) return fail(res, "다른 사람의 사인은 QPS 담당자·병원관리자만 등록할 수 있습니다.");
+			Map<String, Object> who = svc.selectQpsSigners(hospCd, "", "Y").stream()
+			                             .filter(r -> uid.equals(str(r.get("userid"), ""))).findFirst().orElse(null);
+			if (who == null) return fail(res, "명단에 없는 사람입니다. 먼저 사람을 등록하세요.");
+			String img = str(p.get("signImg"), "");
+			int c = img.indexOf(',');
+			if (img.startsWith("data:") && c > 0) img = img.substring(c + 1);
+			img = img.replaceAll("\\s", "");
+			if (img.isEmpty()) return fail(res, "그림이 비어 있습니다.");
+			if (img.length() > 1400000) return fail(res, "그림이 너무 큽니다. 1MB 이하로 줄여 주세요.");
+			svc.saveQpsSign(hospCd, uid, str(who.get("usernm"), ""),
+			                str(p.get("signGb"), "S"), img, str(p.get("signMime"), "image/png"));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 그림만 내린다(사람은 남는다) / 사람 줄 삭제 — 둘 다 권한 필요(본인 그림 내리기는 본인도 가능). */
+	@RequestMapping(value = "/qps/signerDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signerDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = str(p.get("userId"), "");
+			if (uid.isEmpty()) return fail(res, "대상이 없습니다.");
+			boolean imgOnly = "img".equals(str(p.get("what"), ""));
+			boolean mine = uid.equals(userId(request));
+			if (!(imgOnly && mine) && !canEditLib(request, hospCd)) return fail(res, "QPS 담당자·병원관리자만 할 수 있습니다.");
+			int n = imgOnly ? svc.clearQpsSignImg(hospCd, uid, userId(request))
+			                : svc.deleteQpsSigner(hospCd, uid, userId(request));
+			if (n == 0) return fail(res, "대상이 없습니다.");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 「면허등록에서 가져오기」 후보 목록(2026-09-09) — 차등제 인력 신고표에서 이름·직종·입퇴사일을 베껴 온다.
+	 * ★등록 자체는 화면이 줄마다 signerSave.do 를 부른다(붙여넣기와 같은 길 — 저장 규칙을 두 벌로 만들지 않는다).
+	 */
+	@RequestMapping(value = "/qps/signerEmpList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signerEmpList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			if (!canEditLib(request, hospCd)) return fail(res, "QPS 담당자·병원관리자만 할 수 있습니다.");
+			res.put("list", svc.selectHospEmpCandidates(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/**
+	 * 점검표 사인 칸에서 고를 이름 목록(2026-09-09) — 그림 없이 이름·직종만(퇴직자 제외).
+	 * ★보기 전용이라 권한으로 안 좁힌다(사인 칸은 점검한 사람이 적는 칸이다).
+	 */
+	@RequestMapping(value = "/qps/signerPicks.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> signerPicks(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.selectQpsSignerPicks(hospCd, str(p.get("deptCd"), "")));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
@@ -4223,6 +4372,8 @@ public class QpsController {
 			res.put("dept", dept);
 			res.put("shifts", shifts);
 			res.put("users", svc.selectHospUsers(hospCd));
+			/* ★담당자 명단(2026-09-09) — 계정 없는 직원도 여기서 고른다. 사인 그림이 있는 사람은 그날 근무자 사인에 그림이 붙는다. */
+			res.put("signers", svc.selectQpsSignerNames(hospCd));
 
 			String deptCd = str(p.get("deptCd"), "");
 			if (!myDept.isEmpty() && !deptCd.isEmpty() && !myDept.contains(deptCd)) deptCd = "";

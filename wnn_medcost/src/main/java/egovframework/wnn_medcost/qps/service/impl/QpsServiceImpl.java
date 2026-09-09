@@ -335,7 +335,7 @@ public class QpsServiceImpl implements QpsService {
 
 	/** 이름 목록으로 도장 찾기 — 빈 이름·중복은 걸러 내고, 한 번에 너무 많이 묻지 않는다(그림이 크다). */
 	@Override
-	public List<Map<String, Object>> selectQpsSignsByNames(String hospCd, List<String> names) throws Exception {
+	public List<Map<String, Object>> selectQpsSignsByNames(String hospCd, List<String> names, String deptCd) throws Exception {
 		List<Map<String, Object>> empty = new ArrayList<>();
 		if (hospCd == null || hospCd.isEmpty() || names == null || names.isEmpty()) return empty;
 		Set<String> uniq = new LinkedHashSet<>();
@@ -349,7 +349,108 @@ public class QpsServiceImpl implements QpsService {
 		Map<String, Object> p = new HashMap<>();
 		p.put("hospCd", hospCd);
 		p.put("names", new ArrayList<>(uniq));
+		/* ★동명이인이면 **그 문서 부서의 사람·재직자**가 먼저 온다 — 화면이 이름마다 첫 줄을 쓴다(2026-09-09) */
+		p.put("deptCd", str(deptCd));
 		return mapper.selectQpsSignsByNames(p);
+	}
+
+	/* ═══ 담당자별 사인·도장 (2026-09-09) ═══
+	   TBL_QPS_SIGN 을 담당자 표로 넓혔다 — 계정이 있으면 그 계정이 USER_ID, 없으면 서버가 P+12자리를 만든다.
+	   ★그림은 saveQpsSign(같은 줄 upsert)이 얹는다 — 그림 저장 경로를 둘로 만들지 않는다. */
+	@Override
+	public List<Map<String, Object>> selectQpsSigners(String hospCd, String deptCd, String withRetire) throws Exception {
+		return mapper.selectQpsSigners(hospCd, deptCd == null ? "" : deptCd.trim(), "Y".equals(withRetire) ? "Y" : "N");
+	}
+
+	/** 인사 날짜 칸 — 2026-09-09·2026.9.9·20260909 어느 꼴이든 YYYYMMDD 로, 비면 null, 못 읽으면 예외 */
+	private static String hrDate(Object v, String label) throws Exception {
+		String s = str(v).replaceAll("[^0-9]", "");
+		if (s.isEmpty()) return null;
+		if (s.length() != 8) throw new Exception(label + "은(는) 연월일 8자리(예: 2026-09-09)로 적으세요.");
+		int y = Integer.parseInt(s.substring(0, 4)), m = Integer.parseInt(s.substring(4, 6)), d = Integer.parseInt(s.substring(6, 8));
+		if (y < 1900 || m < 1 || m > 12 || d < 1 || d > 31) throw new Exception(label + "이(가) 올바른 날짜가 아닙니다.");
+		return s;
+	}
+
+	@Override
+	public List<Map<String, Object>> selectQpsSignerNames(String hospCd) throws Exception {
+		return mapper.selectQpsSignerNames(hospCd);
+	}
+
+	@Override
+	public String saveQpsSigner(String hospCd, String userId, String acctUserId, String userNm,
+	                            String jobNm, String deptCd, Integer sortNo, Map<String, Object> hr, String regUser) throws Exception {
+		String nm = str(userNm);
+		if (nm.isEmpty()) throw new Exception("이름을 적으세요.");
+		if (nm.length() > 100) throw new Exception("이름이 너무 깁니다.");
+		String uid = str(userId), acct = str(acctUserId);
+		if (hr == null) hr = new HashMap<>();
+		String empNo = str(hr.get("empNo")), posNm = str(hr.get("posNm")), remark = str(hr.get("remark"));
+		if (empNo.length() > 20) throw new Exception("사번이 너무 깁니다(20자).");
+		if (posNm.length() > 50) throw new Exception("직책/직급이 너무 깁니다(50자).");
+		if (remark.length() > 200) throw new Exception("비고가 너무 깁니다(200자).");
+		String joinDt = hrDate(hr.get("joinDt"), "입사일"), retireDt = hrDate(hr.get("retireDt"), "퇴사일");
+		if (joinDt != null && retireDt != null && retireDt.compareTo(joinDt) < 0) throw new Exception("퇴사일이 입사일보다 앞섭니다.");
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("userNm", nm);
+		p.put("jobNm", str(jobNm).isEmpty() ? null : str(jobNm));
+		p.put("deptCd", str(deptCd).isEmpty() ? null : str(deptCd));
+		p.put("sortNo", sortNo == null ? 0 : sortNo);
+		p.put("empNo", empNo.isEmpty() ? null : empNo);
+		p.put("posNm", posNm.isEmpty() ? null : posNm);
+		p.put("joinDt", joinDt);
+		p.put("retireDt", retireDt);
+		p.put("remark", remark.isEmpty() ? null : remark);
+		p.put("regUser", regUser);
+		if (!uid.isEmpty()) {                                   // 있는 사람 고치기
+			Map<String, Object> cur = mapper.selectQpsSignerOne(hospCd, uid);
+			if (cur == null) throw new Exception("없는 사람입니다.");
+			p.put("userId", uid);
+			mapper.updateQpsSigner(p);
+			return uid;
+		}
+		/* 새 사람 — 계정을 이었으면 그 계정이 곧 USER_ID(결재란 도장과 한 줄이 된다), 아니면 P+12자리 */
+		if (!acct.isEmpty()) {
+			if (!acct.matches("[A-Za-z0-9_.@-]{1,50}")) throw new Exception("계정이 올바르지 않습니다.");
+			p.put("userId", acct);
+			p.put("acctYn", "Y");
+		} else {
+			p.put("userId", "P" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase());
+			p.put("acctYn", "N");
+		}
+		mapper.insertQpsSigner(p);
+		return str(p.get("userId"));
+	}
+
+	@Override
+	public int clearQpsSignImg(String hospCd, String userId, String regUser) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("userId", userId); p.put("regUser", regUser);
+		return mapper.clearQpsSignImg(p);
+	}
+
+	@Override
+	public int deleteQpsSigner(String hospCd, String userId, String regUser) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("userId", userId); p.put("regUser", regUser);
+		return mapper.deleteQpsSigner(p);
+	}
+
+	/**
+	 * 「면허등록에서 가져오기」 후보 — 차등제 인력 신고표(TBL_HOSPEMP_MST)의 이름·직종·입퇴사일.
+	 * ★두 표를 합치지 않는다 — 저쪽은 면허 신고(키 = 면허번호+입사일), 이쪽은 사람 명부다. **베껴 오기만** 한다.
+	 */
+	@Override
+	public List<Map<String, Object>> selectHospEmpCandidates(String hospCd) throws Exception {
+		if (hospCd == null || hospCd.isEmpty()) return new ArrayList<>();
+		return mapper.selectHospEmpCandidates(hospCd);
+	}
+
+	@Override
+	public List<Map<String, Object>> selectQpsSignerPicks(String hospCd, String deptCd) throws Exception {
+		if (hospCd == null || hospCd.isEmpty()) return new ArrayList<>();
+		return mapper.selectQpsSignerPicks(hospCd, str(deptCd));
 	}
 
 	@Override

@@ -495,6 +495,10 @@
                                                 <a class="nav-item nav-link" href="/main/qpsDeptCate.do">부서별 쓰는 분류 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
                                             <li class="nav-item" id="qpsUserDeptMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsUserDept.do">사용자별 담당 부서 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>
+                                            <%-- 담당자 사인·도장 — 직원마다 사인(마우스로 그림)·도장을 등록(2026-09-09).
+                                                 병원 자료라 **병원도 보인다**(고치기는 자료실과 같은 권한 — 서버가 가른다). --%>
+                                            <li class="nav-item">
+                                                <a class="nav-item nav-link" href="/main/qpsSigner.do">인사 등록 · 사인·도장</a></li>
                                             <%-- 결재 권한 — 부서마다 단계별 결재자(2026-09-08). 설정이라 위너넷만 --%>
                                             <li class="nav-item" id="qpsApprAuthMenu" style="display:none;">
                                                 <a class="nav-item nav-link" href="/main/qpsApprAuth.do">결재 권한 <span style="font-size:11px;color:#8a99a3;">(위너넷)</span></a></li>

@@ -982,14 +982,50 @@
 	     그 이름으로 도장을 찾는다(종이도 「이름 = 그 사람」으로 읽는다).
 	     ⚠같은 이름이 둘이면 앞 사람 것이 쓰인다 — 이름이 겹치는 병원은 도장을 안 쓰거나 이름을 구분해 적어야 한다.
 	     ⚠그림이 큰 칸이라 **문서에 실제로 적힌 이름만** 물어본다(전 직원을 실으면 수백 KB 가 오간다). -->
+	<!-- ★차례가 곧 「동명이인 중 누구를 쓸까」다(2026-09-09 보강) — 화면은 이름마다 **첫 줄**을 쓴다.
+	         ①그 문서 부서의 사람 ②재직자(퇴사일이 없거나 아직 안 지난 사람) ③그다음 USER_ID.
+	         부서를 안 주면(deptCd 빈 값) 종전과 같이 재직자 우선으로만 고른다. -->
 	<select id="selectQpsSignsByNames" resultType="java.util.HashMap">
-		SELECT USER_ID AS userid, RTRIM(USER_NM) AS usernm, SIGN_GB AS signgb,
+		SELECT USER_ID AS userid, RTRIM(USER_NM) AS usernm, SIGN_GB AS signgb, DEPT_CD AS deptcd,
 		       IFNULL(SIGN_MIME,'image/png') AS signmime, TO_BASE64(SIGN_IMG) AS signimg
 		  FROM TBL_QPS_SIGN
 		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y' AND SIGN_IMG IS NOT NULL
 		   AND RTRIM(USER_NM) IN
 		   <foreach item="nm" collection="names" open="(" separator="," close=")">#{nm}</foreach>
-		 ORDER BY USER_ID
+		 ORDER BY CASE WHEN #{deptCd} != '' AND IFNULL(DEPT_CD,'') = #{deptCd} THEN 0 ELSE 1 END,
+		          CASE WHEN RETIRE_DT IS NULL OR RETIRE_DT = '' OR RETIRE_DT > DATE_FORMAT(NOW(),'%Y%m%d') THEN 0 ELSE 1 END,
+		          USER_ID
+	</select>
+
+	<!-- 인사 등록 「면허등록에서 가져오기」(2026-09-09) — 차등제 면허 인력 신고표(TBL_HOSPEMP_MST)에서 이름·직종·입퇴사일 후보를 뽑는다.
+	     ★이름으로 묶는다(한 사람이 면허를 둘 이상 신고할 수 있다) · already='Y' 면 이미 인사 등록에 있는 이름이다.
+	     ⚠DEPT_CODE 는 병원 진료과 코드라 QPS 부서(QPS_CHK_DEPT)와 체계가 다르다 — 부서는 가져오며 화면에서 고른다. -->
+	<select id="selectHospEmpCandidates" resultType="java.util.HashMap">
+		SELECT RTRIM(E.USER_NM) AS usernm,
+		       MIN(E.LIC_TYPE) AS lictype,
+		       MIN(IFNULL(C.SUB_CODE_NM, '')) AS jobnm,
+		       MIN(E.IP_DT) AS joindt,
+		       MAX(IFNULL(E.TE_DT, '')) AS retiredt,
+		       CASE WHEN MAX(S.USER_ID) IS NULL THEN 'N' ELSE 'Y' END AS already
+		  FROM TBL_HOSPEMP_MST E
+		  LEFT JOIN TBL_CODE_DTL C
+		         ON C.CODE_GB = 'Z' AND C.CODE_CD = 'LIC_TYPE' AND C.SUB_CODE = E.LIC_TYPE AND C.ACTION_YN = 'Y'
+		  LEFT JOIN TBL_QPS_SIGN S
+		         ON S.HOSP_CD = E.HOSP_CD AND RTRIM(S.USER_NM) = RTRIM(E.USER_NM) AND S.USE_YN = 'Y'
+		 WHERE E.HOSP_CD = #{hospCd} AND E.ACTION_YN = 'Y' AND IFNULL(E.USER_NM,'') != ''
+		 GROUP BY RTRIM(E.USER_NM)
+		 ORDER BY MIN(E.LIC_TYPE), RTRIM(E.USER_NM)
+	</select>
+
+	<!-- 점검표 사인 칸 이름 고르기(2026-09-09) — 그림 없이 이름만. 퇴직자 제외, 부서를 주면 그 부서 + 부서 없는 사람. -->
+	<select id="selectQpsSignerPicks" resultType="java.util.HashMap">
+		SELECT RTRIM(USER_NM) AS usernm, JOB_NM AS jobnm, DEPT_CD AS deptcd,
+		       CASE WHEN SIGN_IMG IS NULL THEN 'N' ELSE 'Y' END AS hasimg
+		  FROM TBL_QPS_SIGN
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		   AND ( RETIRE_DT IS NULL OR RETIRE_DT = '' OR RETIRE_DT > DATE_FORMAT(NOW(),'%Y%m%d') )
+		   AND ( #{deptCd} = '' OR IFNULL(DEPT_CD,'') = #{deptCd} OR IFNULL(DEPT_CD,'') = '' )
+		 ORDER BY CASE WHEN IFNULL(DEPT_CD,'') = #{deptCd} THEN 0 ELSE 1 END, SORT_NO, USER_NM
 	</select>
 
 	<insert id="saveQpsSign" parameterType="map">
@@ -1003,6 +1039,73 @@
 	<!-- 내림 = 지우기(옛 문서의 결재 기록은 그대로 두고 그림만 안 나오게) -->
 	<update id="deleteQpsSign">
 		UPDATE TBL_QPS_SIGN SET USE_YN='N', UPD_USER=#{userId}
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
+	</update>
+
+	<!-- ═══ 담당자별 사인·도장 (2026-09-09) — TBL_QPS_SIGN 을 「담당자 표」로 넓혔다 ═══
+	     한 줄 = 한 사람 = 사인 한 장. ACCT_YN Y = 로그인 계정(결재 가능) · N = 이름만 있는 담당자(사인 칸 전용).
+	     ★격자 사인 칸의 도장은 이름으로 찾으므로(selectQpsSignsByNames) 계정 없는 사람도 저절로 붙는다. -->
+
+	<!-- 관리 화면 목록 — 그림까지(미리보기). 부서를 비우면 전부. -->
+	<select id="selectQpsSigners" resultType="java.util.HashMap">
+		SELECT s.USER_ID AS userid, RTRIM(s.USER_NM) AS usernm, s.EMP_NO AS empno, s.JOB_NM AS jobnm, s.POS_NM AS posnm,
+		       s.DEPT_CD AS deptcd, s.ACCT_YN AS acctyn, s.SORT_NO AS sortno,
+		       s.JOIN_DT AS joindt, s.RETIRE_DT AS retiredt, s.REMARK AS remark,
+		       CASE WHEN s.RETIRE_DT IS NOT NULL AND s.RETIRE_DT != '' AND s.RETIRE_DT &lt;= DATE_FORMAT(NOW(),'%Y%m%d') THEN 'Y' ELSE 'N' END AS retired,
+		       s.SIGN_GB AS signgb,
+		       CASE WHEN s.SIGN_IMG IS NULL THEN 'N' ELSE 'Y' END AS hasimg,
+		       TO_BASE64(s.SIGN_IMG) AS signimg, IFNULL(s.SIGN_MIME,'image/png') AS signmime,
+		       DATE_FORMAT(s.UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm, s.UPD_USER AS upduser
+		  FROM TBL_QPS_SIGN s
+		 WHERE s.HOSP_CD = #{hospCd} AND s.USE_YN = 'Y'
+		   AND ( #{deptCd} = '' OR IFNULL(s.DEPT_CD,'') = #{deptCd} )
+		   AND ( #{withRetire} = 'Y' OR s.RETIRE_DT IS NULL OR s.RETIRE_DT = '' OR s.RETIRE_DT > DATE_FORMAT(NOW(),'%Y%m%d') )
+		 ORDER BY IFNULL(s.DEPT_CD,''), s.SORT_NO, s.USER_NM
+	</select>
+
+	<!-- 근무표 사람 콤보 — 그림 없이 이름만(가볍게). ★퇴직자(RETIRE_DT 가 오늘 이전)는 뺀다. -->
+	<select id="selectQpsSignerNames" resultType="java.util.HashMap">
+		SELECT USER_ID AS userid, RTRIM(USER_NM) AS usernm, JOB_NM AS jobnm, POS_NM AS posnm, DEPT_CD AS deptcd, ACCT_YN AS acctyn,
+		       CASE WHEN SIGN_IMG IS NULL THEN 'N' ELSE 'Y' END AS hasimg
+		  FROM TBL_QPS_SIGN
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		   AND ( RETIRE_DT IS NULL OR RETIRE_DT = '' OR RETIRE_DT > DATE_FORMAT(NOW(),'%Y%m%d') )
+		 ORDER BY IFNULL(DEPT_CD,''), SORT_NO, USER_NM
+	</select>
+
+	<select id="selectQpsSignerOne" resultType="java.util.HashMap">
+		SELECT USER_ID AS userid, RTRIM(USER_NM) AS usernm, ACCT_YN AS acctyn, USE_YN AS useyn
+		  FROM TBL_QPS_SIGN WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
+	</select>
+
+	<!-- 사람 줄 — 그림 없이 만든다(그림은 saveQpsSign 이 같은 줄에 얹는다). 지웠던 사람을 같은 계정으로 다시 넣으면 살아난다. -->
+	<insert id="insertQpsSigner" parameterType="map">
+		INSERT INTO TBL_QPS_SIGN (HOSP_CD, USER_ID, USER_NM, EMP_NO, JOB_NM, POS_NM, DEPT_CD, ACCT_YN, SORT_NO,
+		                          JOIN_DT, RETIRE_DT, REMARK, SIGN_GB, USE_YN, REG_USER)
+		VALUES (#{hospCd}, #{userId}, #{userNm}, #{empNo}, #{jobNm}, #{posNm}, #{deptCd}, #{acctYn}, #{sortNo},
+		        #{joinDt}, #{retireDt}, #{remark}, 'S', 'Y', #{regUser})
+		ON DUPLICATE KEY UPDATE
+		  USER_NM=VALUES(USER_NM), EMP_NO=VALUES(EMP_NO), JOB_NM=VALUES(JOB_NM), POS_NM=VALUES(POS_NM), DEPT_CD=VALUES(DEPT_CD),
+		  SORT_NO=VALUES(SORT_NO), JOIN_DT=VALUES(JOIN_DT), RETIRE_DT=VALUES(RETIRE_DT), REMARK=VALUES(REMARK),
+		  USE_YN='Y', UPD_USER=#{regUser}
+	</insert>
+
+	<update id="updateQpsSigner">
+		UPDATE TBL_QPS_SIGN
+		   SET USER_NM = #{userNm}, EMP_NO = #{empNo}, JOB_NM = #{jobNm}, POS_NM = #{posNm}, DEPT_CD = #{deptCd}, SORT_NO = #{sortNo},
+		       JOIN_DT = #{joinDt}, RETIRE_DT = #{retireDt}, REMARK = #{remark}, UPD_USER = #{regUser}
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
+	</update>
+
+	<!-- 그림만 내린다(사람 줄은 남긴다) — 「내 도장 내리기」(deleteQpsSign, 줄째 USE_YN=N)와 다르다 -->
+	<update id="clearQpsSignImg">
+		UPDATE TBL_QPS_SIGN SET SIGN_IMG = NULL, SIGN_MIME = NULL, UPD_USER = #{regUser}
+		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
+	</update>
+
+	<!-- 사람 줄 삭제(소프트) — 계정 연결 줄도 같은 길(다시 등록하면 살아난다) -->
+	<update id="deleteQpsSigner">
+		UPDATE TBL_QPS_SIGN SET USE_YN = 'N', UPD_USER = #{regUser}
 		 WHERE HOSP_CD = #{hospCd} AND USER_ID = #{userId}
 	</update>
 

@@ -46,6 +46,8 @@ const SHIFTS = [ {subcode:'D',subcodenm:'주간'}, {subcode:'E',subcodenm:'오�
                  {subcode:'O',subcodenm:'휴무'}, {subcode:'V',subcodenm:'휴가'}, {subcode:'R',subcodenm:'대체휴무'} ];
 const DEPTS = [ {subcode:'NURSE',subcodenm:'간호·병동'}, {subcode:'LAB',subcodenm:'진단검사'} ];
 const USERS = [ {userid:'u1',usernm:'김간호'}, {userid:'u2',usernm:'박간호'}, {userid:'u3',usernm:'이간호'} ];
+/* 담당자 명단(TBL_QPS_SIGN, 2026-09-09) — 계정 없는 사람(P…)도 있고, u1 은 계정이자 명단 */
+const SIGNERS = [ {userid:'P1A2B3C4D5E6',usernm:'최조무',jobnm:'조무사',hasimg:'Y'}, {userid:'u1',usernm:'김간호',jobnm:'간호사',hasimg:'N'} ];
 
 (async function(){
   const { window, document, state, $ } = build();
@@ -58,7 +60,7 @@ const USERS = [ {userid:'u1',usernm:'김간호'}, {userid:'u2',usernm:'박간호
       rows:[{ rowno:1, userid:'u1', usernm:'김간호', jobnm:'간호사', sortno:1 },
             { rowno:2, userid:'u2', usernm:'박간호', jobnm:'조무사', sortno:2 }],
       vals:[{ rowno:1, dayno:1, shiftcd:'D' }, { rowno:1, dayno:2, shiftcd:'N' }, { rowno:2, dayno:1, shiftcd:'O' }] };
-    return { result:'OK', dept:DEPTS, shifts:SHIFTS, users:USERS, wards:['3층'], duty:null, rows:[], vals:[] };
+    return { result:'OK', dept:DEPTS, shifts:SHIFTS, users:USERS, signers:SIGNERS, wards:['3층'], duty:null, rows:[], vals:[] };
   };
   state.res['/qps/dutySave.do'] = () => ({ result:'OK', dutySeq: 9 });
   state.res['/qps/dutyLock.do'] = () => ({ result:'OK' });
@@ -74,6 +76,21 @@ const USERS = [ {userid:'u1',usernm:'김간호'}, {userid:'u2',usernm:'박간호
      /class="hol"[^>]*title="삼일절"/.test($('dtHead').innerHTML) && /class="sun"/.test($('dtHead').innerHTML));
   ok('기호 팔레트 = 지움 + 공통코드 6종', $('dtPal').querySelectorAll('button').length === 7);
   ok('아직 저장 전이면 그렇게 알린다', /저장 전/.test($('dtInfo').textContent));
+
+  // ── 사람 콤보 = 담당자 명단 먼저, 명단에 없는 계정 직원 뒤 (2026-09-09)
+  const og = $('dtUser').querySelectorAll('optgroup');
+  ok('콤보가 「인사 등록 직원」·「계정 직원(명단에 없음)」 두 묶음으로 선다', og.length === 2 &&
+     /인사 등록 직원/.test(og[0].label) && /명단에 없음/.test(og[1].label));
+  ok('명단 묶음 = 최조무(✎ 사인 있음)·김간호 · 직종이 붙는다', og[0].querySelectorAll('option').length === 2 &&
+     /최조무 · 조무사 ✎/.test(og[0].textContent) && /김간호 · 간호사/.test(og[0].textContent) && !/김간호[^<]*✎/.test(og[0].innerHTML));
+  ok('명단에 있는 계정(u1)은 계정 묶음에서 빠진다', og[1].querySelectorAll('option').length === 2 &&
+     !og[1].querySelector('option[value="u1"]'));
+  $('dtUser').value = 'P1A2B3C4D5E6'; window.dtAddBlank();
+  const r0 = $('dtBody').querySelector('tr[data-rn]');
+  ok('계정 없는 담당자를 고르면 이름·직종이 명단에서 채워진다', r0 && r0.querySelector('input[data-f=usernm]').value === '최조무' &&
+     r0.querySelector('input[data-f=jobnm]').value === '조무사');
+  window.dtDelRow(r0.querySelector('button[title="이 줄 지우기"]'));
+  ok('그 줄을 지우면 빈 표로 돌아간다', !$('dtBody').querySelector('tr[data-rn]'));
 
   // ── 사람 추가
   $('dtUser').value = 'u1'; window.dtAddBlank();

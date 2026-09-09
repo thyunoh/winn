@@ -15,7 +15,7 @@ const ok = (n, c) => { if (c) { pass++; console.log('  ✅', n); } else { fail++
 function build(){
   const dom = new JSDOM('<label><input type="checkbox" id="ckStamp" checked></label><div id="ckGridWrap"></div>');
   const { window } = dom, { document } = window;
-  const state = { posts: [], res: { list: [] } };
+  const state = { posts: [], res: { list: [] }, FORM: { deptcd: 'NURSE' }, screenDept: '' };
   const ctx = {
     window, document, state, Promise, Number, String, JSON, Object,
     localStorage: { _m: {}, getItem(k){ return this._m[k] == null ? null : this._m[k]; }, setItem(k, v){ this._m[k] = String(v); } }
@@ -23,16 +23,22 @@ function build(){
   const code =
     'var SIGN_NO = 900;' +
     '\nfunction gel(id){ return document.getElementById(id); }' +
+    /* 화면의 FORM(고른 서식)·val(ckDept) 자리 — 부서는 「서식 부서, 공통이면 화면 부서」다 */
+    '\nvar FORM = state.FORM;' +   /* 서식은 setForm 으로 바꾼다 — 값을 베껴 두면 뒤에 state 를 고쳐도 안 바뀐다 */
+    '\nfunction val(id){ return state.screenDept; }' +
     '\nfunction post(url, data){ state.posts.push({ url: url, data: data });' +
     '\n  if (state.failPost) return Promise.reject(new Error("없는 엔드포인트"));' +
     '\n  return Promise.resolve(state.res); }' +
     grab(S, /\n  var SIGN_IMGS = \{\}, SIGN_ASKED = \{\};/, 'vars') +
+    grab(S, /\n  function ckFormDept\(\)\{[\s\S]*?\n  \}/, 'ckFormDept') +
+    grab(S, /\n  var SIGN_DEPT = null;/, 'SIGN_DEPT') +
     grab(S, /\n  function ckStampOn\(\)\{[\s\S]*?\n  \}/, 'ckStampOn') +
     grab(S, /\n  window\.ckStampSync = function\(\)\{[\s\S]*?\n  \};/, 'ckStampSync') +
     grab(S, /\n  function ckSignNames\(\)\{[\s\S]*?\n  \}/, 'ckSignNames') +
     grab(S, /\n  function ckSignsLoad\(\)\{[\s\S]*?\n  \}/, 'ckSignsLoad') +
     '\nreturn { names: ckSignNames, load: ckSignsLoad, imgs: function(){ return SIGN_IMGS; },' +
-    '\n  asked: function(){ return SIGN_ASKED; }, sync: window.ckStampSync, ls: localStorage };';
+    '\n  asked: function(){ return SIGN_ASKED; }, sync: window.ckStampSync, ls: localStorage, dept: ckFormDept,' +
+    '\n  setForm: function(f){ FORM = f; } };';
   const M = new Function(...Object.keys(ctx), code)(...Object.values(ctx));
   return { M, state, document, window };
 }
@@ -83,6 +89,29 @@ function grid(document, cells){
   ok('켜고 끔은 이 브라우저에 기억된다', M.ls.getItem('wnnChkStamp') === '1');
   document.getElementById('ckStamp').checked = false; M.sync();
   ok('끄면 0 으로 남는다', M.ls.getItem('wnnChkStamp') === '0');
+
+  /* ── 동명이인 · 부서 (2026-09-09) ─────────────────────────────────────
+     서버가 「그 부서 사람 · 재직자」를 먼저 준다 — 화면은 **먼저 온 것을 지킨다**(뒤엣것으로 안 덮는다). */
+  {
+    const B = build();
+    B.state.FORM = { deptcd: 'NURSE' };
+    grid(B.document, [ { v: '홍길동', day: 1 } ]);
+    B.state.res = { list: [ { usernm: '홍길동', deptcd: 'NURSE', signimg: 'NUR', signmime: 'image/png' },
+                            { usernm: '홍길동', deptcd: 'LAB',   signimg: 'LAB', signmime: 'image/png' } ] };
+    await B.M.load();
+    ok('도장 조회에 **부서**가 함께 간다(서식 부서)', B.state.posts[0].data.deptCd === 'NURSE');
+    ok('★동명이인이면 **먼저 온 사람**(부서·재직 우선)의 도장을 쓰고 뒤엣것으로 덮지 않는다',
+       B.M.imgs()['홍길동'] === 'data:image/png;base64,NUR');
+
+    B.M.setForm({ deptcd: 'COMMON' }); B.state.screenDept = 'LAB';
+    ok('공통 서식이면 **화면 부서**를 쓴다', B.M.dept() === 'LAB');
+    grid(B.document, [ { v: '홍길동', day: 1 } ]);
+    B.state.res = { list: [ { usernm: '홍길동', deptcd: 'LAB', signimg: 'LAB', signmime: 'image/png' } ] };
+    await B.M.load();
+    ok('★부서가 바뀌면 받아 둔 도장을 버리고 다시 묻는다 — 같은 이름이라도 다른 사람일 수 있다',
+       B.state.posts.length === 2 && B.state.posts[1].data.deptCd === 'LAB' &&
+       B.M.imgs()['홍길동'] === 'data:image/png;base64,LAB');
+  }
 
   /* ── 소스 검사 : 인쇄 쪽은 격자를 통째로 복제하는 큰 함수라 여기서는 규칙만 확인한다 ── */
   ok('소스 — 인쇄에서 **도장이 있을 때만** 그림으로 바꾼다(없으면 이름 글자)',

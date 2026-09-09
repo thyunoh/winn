@@ -111,8 +111,9 @@
 
 <div class="dt-tools">
   <b>사람</b>
-  <select id="dtUser" style="min-width:150px;"><option value="">— 직원 고르기 —</option></select>
+  <select id="dtUser" style="min-width:170px;"><option value="">— 사람 고르기 —</option></select>
   <button type="button" class="dt-btn ghost mini" onclick="dtAddBlank();">+ 빈 줄</button>
+  <a href="/main/qpsSigner.do" class="dt-sub" style="color:#1f5a4b; font-weight:600;" title="계정 없는 직원도 인사 등록에 올리면 고를 수 있고, 사인을 그려 두면 사인 칸에 그림이 붙습니다. 퇴사일이 지난 사람은 빠집니다">인사 등록 →</a>
   <span class="dt-sub">|</span>
   <button type="button" class="dt-btn ghost mini" onclick="dtPrev('rows');">전월 사람 가져오기</button>
   <button type="button" class="dt-btn ghost mini" onclick="dtPrev('all');">전월 통째 복사</button>
@@ -137,7 +138,7 @@
 
 <script>
 (function(){
-  var DEPTS = [], SHIFTS = [], USERS = [], WARDS = [], HOLS = {}, LOCK = 'N', HAS = false;
+  var DEPTS = [], SHIFTS = [], USERS = [], SIGNERS = [], WARDS = [], HOLS = {}, LOCK = 'N', HAS = false;
   /* ★붓은 **처음엔 안 들려 있다**(null) — '' 로 두면 지우개를 든 채로 시작해 칸을 누르면 값이 지워진다. */
   var BRUSH = null, PAINT = false, LOAD_REQ = 0;
 
@@ -221,9 +222,19 @@
           return '<option value="' + esc(x.subcode) + '">' + esc(x.subcodenm) + '</option>'; }).join('');
         if (!DEPTS.length) gel('dtDept').innerHTML = '<option value="">(부서 없음)</option>';
       }
+      /* ★사람 콤보 = **인사 등록 직원**(관리(설정) ▸ 인사 등록 · 사인·도장, 퇴직자 제외)이 먼저, 명단에 없는 계정 직원이 그 뒤(2026-09-09).
+         계정 없는 간호사·조무사도 명단에 올리면 여기서 고를 수 있고, 사인 그림이 있으면 그날 근무자 사인에 그림이 붙는다. */
+      SIGNERS = res.signers || SIGNERS;
       if (!gel('dtUser').options.length || gel('dtUser').options.length === 1) {
-        gel('dtUser').innerHTML = '<option value="">— 직원 고르기 —</option>' + USERS.map(function(u){
+        var inS = {};
+        var g1 = SIGNERS.map(function(s){ inS[s.userid] = 1;
+          return '<option value="' + esc(s.userid) + '">' + esc(s.usernm || s.userid) + (s.jobnm ? (' · ' + esc(s.jobnm)) : '') +
+                 (s.hasimg === 'Y' ? ' ✎' : '') + '</option>'; }).join('');
+        var g2 = USERS.filter(function(u){ return !inS[u.userid]; }).map(function(u){
           return '<option value="' + esc(u.userid) + '">' + esc(u.usernm || u.userid) + '</option>'; }).join('');
+        gel('dtUser').innerHTML = '<option value="">— 사람 고르기 —</option>' +
+          (g1 ? ('<optgroup label="인사 등록 직원 (✎ = 사인 있음)">' + g1 + '</optgroup>') : '') +
+          (g2 ? ('<optgroup label="계정 직원 (명단에 없음)">' + g2 + '</optgroup>') : '');
       }
       if (!gel('dtPal').children.length) palPaint();
       gel('dtWardList').innerHTML = WARDS.map(function(w){ return '<option value="' + esc(w) + '"></option>'; }).join('');
@@ -322,10 +333,12 @@
     if (lockGuard()) return;
     var uid = val('dtUser');
     if (uid) {
-      var nm = '';
-      for (var i = 0; i < USERS.length; i++) if (USERS[i].userid === uid) nm = USERS[i].usernm || uid;
+      var nm = '', job = '';
+      /* 담당자 명단이 먼저(직종까지 따라온다) — 없으면 계정 직원 */
+      for (var s = 0; s < SIGNERS.length; s++) if (SIGNERS[s].userid === uid) { nm = SIGNERS[s].usernm || uid; job = SIGNERS[s].jobnm || ''; }
+      if (!nm) for (var i = 0; i < USERS.length; i++) if (USERS[i].userid === uid) nm = USERS[i].usernm || uid;
       if (dupUser(uid)) { _alertBox('<b>' + esc(nm) + '</b> 님은 이미 표에 있습니다.', {icon:'ℹ️'}); return; }
-      addRow(uid, nm, '');
+      addRow(uid, nm, job);
       gel('dtUser').value = '';
       return;
     }

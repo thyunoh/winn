@@ -1107,6 +1107,7 @@
     ckRowOffSync();   // 이름 칸이 빈 행은 흐리게(2026-09-02 편의 기능) — 표를 새로 그릴 때마다
     ckHolTint(); ckHolLoad().then(ckHolTint);   // 공휴일 색 — 캐시가 있으면 바로, 없으면 받아서(2026-09-02)
     ckWeekFill(false);                          // 주차 머리글이 비어 있으면 그 달의 날짜 범위를 넣는다
+    ckSignPickSync();                           // 사인 칸에 인사 등록 이름 고르기를 붙인다(2026-09-09)
   }
 
   /* ═══ 주기 복합 그리기 (2026-08-14) ═══
@@ -3057,6 +3058,38 @@
      ★**종이에만** 찍는다 — 화면 칸은 `input` 이라 그림을 넣으면 고쳐 쓸 수가 없다(사인은 글자로 고친다).
      ⚠도장이 없는 사람은 **이름 그대로** — 「도장 없으면 빈 칸」이 되면 누가 점검했는지 종이에서 사라진다. */
   var SIGN_IMGS = {}, SIGN_ASKED = {};
+  /** 이 문서의 부서 — 서식 부서(공통이면 화면 부서). 도장 찾기·이름 고르기가 같은 기준을 쓴다. */
+  function ckFormDept(){ return (FORM && FORM.deptcd && FORM.deptcd !== 'COMMON') ? FORM.deptcd : (val('ckDept') || ''); }
+
+  /* ═══ 사인 칸 이름 고르기 (2026-09-09) ═══
+     사인 칸은 자유 글자다 — 손으로 치면 「홍길동」·「홍 길동」처럼 갈려 **도장이 안 붙는다**(도장은 이름으로 찾는다).
+     ⇒ 인사 등록 명단을 `<datalist>` 로 붙여 **고를 수도, 그대로 칠 수도** 있게 한다(입력을 막지 않는다 — 명단에 없는 사람도 적을 수 있어야 한다).
+     ★부서(서식 부서·공통이면 화면 부서)로 좁힌다 · 퇴직자는 빠진다 · 옛 서버(엔드포인트 없음)면 조용히 종전대로 자유 입력. */
+  var PICK_NAMES = null, PICK_DEPT = null;
+  function ckSignPickLoad(){
+    var d = ckFormDept();
+    if (PICK_NAMES && PICK_DEPT === d) return Promise.resolve(PICK_NAMES);
+    PICK_DEPT = d;
+    return post('<c:url value="/qps/signerPicks.do"/>', { deptCd: d }).then(
+      function(res){ PICK_NAMES = res.list || []; return PICK_NAMES; },
+      function(){ PICK_NAMES = []; return PICK_NAMES; });
+  }
+  window.ckSignPickSync = function(){
+    var box = gel('ckGridWrap'); if (!box) return Promise.resolve();
+    var cells = [].filter.call(box.querySelectorAll('input[data-r]'),
+                               function(e){ return Number(e.getAttribute('data-r')) === SIGN_NO; });
+    if (!cells.length) return Promise.resolve();          // 사인 칸이 없는 서식은 아무것도 안 한다
+    return ckSignPickLoad().then(function(list){
+      if (!list || !list.length) return;                  // 인사 등록이 비면 종전과 같이 자유 입력
+      var host = gel('qpsChk') || document.body;
+      var dl = gel('ckSignNmList');
+      if (!dl) { dl = document.createElement('datalist'); dl.id = 'ckSignNmList'; host.appendChild(dl); }
+      dl.innerHTML = list.map(function(s){
+        return '<option value="' + esc(s.usernm) + '">' +
+               esc(String(s.jobnm || '') + (s.hasimg === 'Y' ? ' ✎' : '')) + '</option>'; }).join('');
+      cells.forEach(function(el){ el.setAttribute('list', 'ckSignNmList'); });
+    });
+  };
   function ckStampOn(){ var e = gel('ckStamp'); return !!(e && e.checked); }
   window.ckStampSync = function(){
     try { localStorage.setItem('wnnChkStamp', ckStampOn() ? '1' : '0'); } catch (e) { }
@@ -3075,16 +3108,25 @@
     return out;
   }
   /** 그 이름들의 도장을 받아 둔다 — 한 번 물어본 이름은 다시 묻지 않는다(없다는 답도 기억한다). */
+  var SIGN_DEPT = null;
   function ckSignsLoad(){
     if (!ckStampOn()) return Promise.resolve();
+    /* 부서가 바뀌면 받아 둔 도장을 버린다 — 같은 이름이라도 부서가 다르면 **다른 사람**일 수 있다(2026-09-09) */
+    var d = ckFormDept();
+    if (SIGN_DEPT !== d) { SIGN_DEPT = d; SIGN_IMGS = {}; SIGN_ASKED = {}; }
     var want = ckSignNames().filter(function(n){ return !SIGN_ASKED[n]; });
     if (!want.length) return Promise.resolve();
     want.forEach(function(n){ SIGN_ASKED[n] = 1; });
-    return post('<c:url value="/qps/signNames.do"/>', { names: JSON.stringify(want.map(function(n){ return { nm: n }; })) })
+    /* ★부서를 함께 보낸다(2026-09-09) — **동명이인**이면 서버가 그 부서 사람·재직자를 먼저 준다.
+       그래서 여기서는 **먼저 온 것을 지키고 뒤엣것으로 덮지 않는다**(덮으면 차례를 매긴 뜻이 없어진다). */
+    return post('<c:url value="/qps/signNames.do"/>', { names: JSON.stringify(want.map(function(n){ return { nm: n }; })),
+                                                        deptCd: ckFormDept() })
       .then(function(res){
         (res.list || []).forEach(function(s){
           if (!s.signimg) return;
-          SIGN_IMGS[String(s.usernm || '').trim()] = 'data:' + (s.signmime || 'image/png') + ';base64,' + s.signimg;
+          var nm = String(s.usernm || '').trim();
+          if (SIGN_IMGS[nm]) return;                    // 같은 이름이 여럿이면 **앞 사람**(부서·재직 우선)
+          SIGN_IMGS[nm] = 'data:' + (s.signmime || 'image/png') + ';base64,' + s.signimg;
         });
       }, function(){ /* 옛 서버(엔드포인트 없음)면 도장 없이 이름 그대로 찍는다 */ });
   }

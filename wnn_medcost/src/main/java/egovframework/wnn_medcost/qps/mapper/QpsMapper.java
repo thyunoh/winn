@@ -164,6 +164,20 @@ public interface QpsMapper {
 	int saveQpsSign(Map<String, Object> param);
 	/** 격자 사인 칸의 작은 도장 — 문서에 적힌 **이름들**로 도장을 찾는다(param: hospCd, names). */
 	List<Map<String, Object>> selectQpsSignsByNames(Map<String, Object> param);
+
+	/* ═══ 담당자별 사인·도장 (2026-09-09) — TBL_QPS_SIGN 을 담당자 표로 넓혔다 ═══ */
+	List<Map<String, Object>> selectQpsSigners(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd,
+	                                           @Param("withRetire") String withRetire);
+	List<Map<String, Object>> selectQpsSignerNames(@Param("hospCd") String hospCd);
+	Map<String, Object> selectQpsSignerOne(@Param("hospCd") String hospCd, @Param("userId") String userId);
+	int insertQpsSigner(Map<String, Object> param);
+	int updateQpsSigner(Map<String, Object> param);
+	int clearQpsSignImg(Map<String, Object> param);
+	int deleteQpsSigner(Map<String, Object> param);
+	/** 면허등록(TBL_HOSPEMP_MST)에서 가져올 후보 — 이름으로 묶고, already='Y' 면 이미 인사 등록에 있다. */
+	List<Map<String, Object>> selectHospEmpCandidates(@Param("hospCd") String hospCd);
+	/** 점검표 사인 칸 이름 고르기 — 그림 없이 이름만(퇴직자 제외). */
+	List<Map<String, Object>> selectQpsSignerPicks(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd);
 	int deleteQpsSign(@Param("hospCd") String hospCd, @Param("userId") String userId);
 
 	List<Map<String, Object>> selectChkApprList(@Param("hospCd") String hospCd, @Param("chkSeq") long chkSeq);
