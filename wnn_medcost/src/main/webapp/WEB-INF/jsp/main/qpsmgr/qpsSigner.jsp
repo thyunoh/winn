@@ -146,7 +146,9 @@
   </div>
 </div>
 
-<div class="sg-emp" id="sgEmp">
+<%-- ⚠id 는 `sgEmpBox` 다 — 위 폼의 **사번 칸이 이미 `sgEmp`** 라 같은 이름을 쓰면
+     getElementById 가 그 입력칸을 집어 띠가 안 열린다(2026-09-09 실제로 겪었다). --%>
+<div class="sg-emp" id="sgEmpBox">
   <b>👩‍⚕️ 면허등록에서 가져오기</b> — 차등제 <b>인력 신고(면허등록)</b>에 적어 둔 직원입니다. 고른 사람을 <b>이름·직종·입사일</b>째 인사 등록에 넣습니다.
   이미 등록된 이름은 <span style="color:#8a99a3;">회색</span>으로 빠집니다. 부서는 저 표에 없어 여기서 함께 정합니다(뒤에 줄마다 고쳐도 됩니다).
   <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0;">
@@ -424,7 +426,7 @@
      여기서는 **이름·직종·입퇴사일만 베껴** 온다. 뒤에 저쪽이 바뀌어도 이쪽은 따라가지 않는다(따라가면 사인이 딸려 흔들린다). */
   window.sgEmpOpen = function(){
     sgFormClose(); sgBulkClose();
-    gel('sgEmp').style.display = 'block';
+    gel('sgEmpBox').style.display = 'block';
     gel('sgEmpDept').innerHTML = gel('sgFDept').innerHTML;
     gel('sgEmpDept').value = val('sgDept') || '';
     gel('sgEmpPrev').innerHTML = '<div class="sg-empty" style="padding:8px;">불러오는 중…</div>';
@@ -436,7 +438,7 @@
       gel('sgEmpPrev').innerHTML = '<div class="sg-empty" style="padding:8px;">' + esc(e.message || '가져오지 못했습니다.') + '</div>';
     });
   };
-  window.sgEmpClose = function(){ gel('sgEmp').style.display = 'none'; };
+  window.sgEmpClose = function(){ gel('sgEmpBox').style.display = 'none'; };
   /** 면허등록의 퇴사일 — ★`20991231` 같은 **무기한 관용값**은 비운다(그대로 가져오면 인사 카드에 2099년이 남는다) */
   function empRetireDt(e){
     var r = String(e.retiredt || '').replace(/[^0-9]/g, '');

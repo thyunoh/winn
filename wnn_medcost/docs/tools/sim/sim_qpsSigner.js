@@ -211,7 +211,7 @@ function LIST(){
 
   // ── 면허등록에서 가져오기
   window.sgEmpOpen(); await tick(40);
-  ok('면허 띠가 열리고 폼·붙여넣기 띠는 닫힌다', $('sgEmp').style.display === 'block' && $('sgForm').style.display === 'none' &&
+  ok('면허 띠가 열리고 폼·붙여넣기 띠는 닫힌다', $('sgEmpBox').style.display === 'block' && $('sgForm').style.display === 'none' &&
      $('sgBulk').style.display === 'none');
   ok('퇴사일 지난 사람은 기본으로 빠진다(4명 중 3명)', $('sgEmpPrev').querySelectorAll('tbody tr').length === 3 &&
      !/구면허/.test($('sgEmpPrev').textContent));
@@ -239,7 +239,7 @@ function LIST(){
      ep[0].remark === '면허등록에서' && ep[1].userNm === '오면허' && ep[1].jobNm === '간호조무사');
   ok('★무기한 관용값(20991231)은 퇴사일로 안 가져온다 — 미리보기도 빈 칸', ep[1].retireDt === '' &&
      !/2099/.test($('sgEmpPrev') ? $('sgEmpPrev').textContent : ''));
-  ok('끝나면 띠를 닫고 그 부서로 표를 맞춘다', $('sgEmp').style.display === 'none' && $('sgDept').value === 'NURSE' &&
+  ok('끝나면 띠를 닫고 그 부서로 표를 맞춘다', $('sgEmpBox').style.display === 'none' && $('sgDept').value === 'NURSE' &&
      state.toasts.some(t => /2명 가져왔습니다/.test(t)));
   $('sgDept').value = ''; await window.sgLoad(); await tick();
 
@@ -304,6 +304,17 @@ function LIST(){
   state.res['/qps/signerList.do'] = () => ({ result:'OK', canEdit:'Y', me:'admin', dept: DEPTS, users: USERS, list: [] });
   await window.sgLoad(); await tick();
   ok('명단이 비면 시작 안내(사람 추가·붙여넣기)', /아직 등록된 직원이 없습니다/.test($('sgBody').textContent) && /붙여넣기/.test($('sgBody').textContent));
+
+  /* ★소스 — id 가 겹치면 getElementById 가 **앞엣것**을 집어 「단추를 눌러도 아무 일 없음」이 된다.
+     실제로 겪었다(2026-09-09) : 사번 칸 `sgEmp` 와 면허 띠 `sgEmp` 가 겹쳐 띠가 폼 안 입력칸으로 잡혔다.
+     시뮬도 `$('sgEmp').style.display` 로 보다가 그 입력칸을 보고 통과시켰다 — 그래서 **소스에서** 센다. */
+  {
+    const ids = {}, dup = [];
+    for (const m of S.matchAll(/\sid="([A-Za-z_][\w:.-]*)"/g)) {
+      if (ids[m[1]]) { if (dup.indexOf(m[1]) < 0) dup.push(m[1]); } else ids[m[1]] = 1;
+    }
+    ok('소스 — 화면 안에 같은 id 가 없다' + (dup.length ? (' ★겹침: ' + dup.join(',')) : ''), dup.length === 0);
+  }
 
   console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
   process.exitCode = fail ? 1 : 0;
