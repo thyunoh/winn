@@ -683,9 +683,27 @@
            o.map(function(t){ return '<option value="' + esc(t) + '"' + (t === v ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') +
            '</select>';
   }
+  /* ═══ 직원 이름 칸 (INPUT_GB='NAME', 2026-09-09) ═══
+     격자 안에도 **우리 직원 이름을 적는 열**이 있다(직원 교육 현황표 성명 · 검진 명부 이름 · 서명대장 성함 …).
+     손으로 치면 「홍길동」·「홍 길동」처럼 갈려 나중에 사람으로 세기 어렵다 ⇒ 사인 칸과 **같은 명단**을 붙여 고를 수 있게 한다.
+     ★새 표·새 칸을 만들지 않았다 — 입력 종류(INPUT_GB)에 값 하나를 더했을 뿐이다(SEL 을 더한 전례와 같은 결).
+       서버는 INPUT_GB 를 그대로 흘려보내고 **CHECK 일 때만** O/X 로 맞추므로(ChkNorm) 자바·매퍼는 손댈 것이 없다.
+     ★★**이름 열이라고 다 켜면 안 된다** — 같은 「이름」이라도 검진 명부는 직원, 검사결과 대장은 **환자**다.
+       열 이름(성명·이름)만 보고 자동으로 붙이면 환자 칸·가족 칸에 직원 명단이 뜬다(인사기록카드에 「가족사항 성명」이 있다).
+       그래서 **서식이 열마다 켠다** — 시드로 직원 명부 15열만 켜 두고, 나머지는 병원이 서식 관리에서 켠다.
+     ★글자 칸(TEXT)과 똑같이 동작한다 — 켜고 끄는 것으로 값이 바뀌지 않는다(정렬·O/X 제외 규칙이 같다). */
+  function isNameGb(r){ return !!(r && r.inputgb === 'NAME'); }
+  /** LIST·ITEM_COL 격자의 글자 칸 클래스. 표시(CHECK)만 가운데 정렬이라 클래스가 없다. */
+  function ltxtCls(r){
+    if (r && r.inputgb === 'CHECK') return '';
+    return isNameGb(r) ? 'ltxt nmpick' : 'ltxt';
+  }
   /** 날짜 격자(ITEM_DAY·DAY_ITEM…)의 글자·숫자 항목 — 더블클릭 O/X 토글·전체 O 의 대상에서 뺀다(ckOxOk).
    *  ⚠종전엔 이 격자에서 입력 종류를 안 봐서 **이름·온도 칸을 더블클릭하면 값이 지워졌다**(ckFlip 은 O/X 아닌 글자를 비운다). */
-  function noxCls(r){ return (r && (r.inputgb === 'TEXT' || r.inputgb === 'NUM')) ? 'nox' : ''; }
+  function noxCls(r){
+    if (isNameGb(r)) return 'nox nmpick';                 // 이름 칸도 O/X 대상이 아니다
+    return (r && (r.inputgb === 'TEXT' || r.inputgb === 'NUM')) ? 'nox' : '';
+  }
 
   /**
    * 격자 옆 칸의 **머리글**. `back=true` 면 뒤쪽(POST) 것만.
@@ -839,9 +857,9 @@
           var ct = so ? [] : String(r.celltxts || '').split(',').map(function(s){ return s.trim(); });
           cd.forEach(function(c, k){
             var t = ct[k] || '';
-            if (t) h += '<td class="hasct"><div class="ck-ct">' + esc(t) + '</div><input' + ((r.inputgb === 'CHECK') ? '' : ' class="ltxt"') +
+            if (t) h += '<td class="hasct"><div class="ck-ct">' + esc(t) + '</div><input' + (ltxtCls(r) ? (' class="' + ltxtCls(r) + '"') : '') +
                         ' data-r="' + r.sort + '" data-c="' + (k + 1) + '" value="' + esc(g(r.sort, k + 1)) + '"></td>';
-            else h += cell(r.sort, k + 1, g(r.sort, k + 1), (r.inputgb === 'CHECK') ? '' : 'ltxt', null, so);
+            else h += cell(r.sort, k + 1, g(r.sort, k + 1), ltxtCls(r), null, so);
           });
           h += sideTd(r, g, true) + '</tr>';
         }
@@ -910,7 +928,7 @@
           if (!ITEMS.length) h += '<td></td>';
           // ★표시칸(CHECK)만 가운데 정렬. 이름·사유가 가운데 오면 읽기 나쁘다
           ITEMS.forEach(function(r){
-            h += cell(rno, r.sort, g(rno, r.sort), (r.inputgb === 'CHECK') ? '' : 'ltxt', null, selOpts(r));
+            h += cell(rno, r.sort, g(rno, r.sort), ltxtCls(r), null, selOpts(r));
           });
           h += '</tr>';
         }
@@ -3061,8 +3079,9 @@
   /** 이 문서의 부서 — 서식 부서(공통이면 화면 부서). 도장 찾기·이름 고르기가 같은 기준을 쓴다. */
   function ckFormDept(){ return (FORM && FORM.deptcd && FORM.deptcd !== 'COMMON') ? FORM.deptcd : (val('ckDept') || ''); }
 
-  /* ═══ 사인 칸 이름 고르기 (2026-09-09) ═══
+  /* ═══ 사인 칸·직원 이름 칸에서 이름 고르기 (2026-09-09) ═══
      사인 칸은 자유 글자다 — 손으로 치면 「홍길동」·「홍 길동」처럼 갈려 **도장이 안 붙는다**(도장은 이름으로 찾는다).
+     ★같은 명단을 격자 안 **직원 이름 열**(INPUT_GB='NAME')에도 붙인다 — 위 isNameGb 절 참조.
      ⇒ 인사 등록 명단을 `<datalist>` 로 붙여 **고를 수도, 그대로 칠 수도** 있게 한다(입력을 막지 않는다 — 명단에 없는 사람도 적을 수 있어야 한다).
      ★부서(서식 부서·공통이면 화면 부서)로 좁힌다 · 퇴직자는 빠진다 · 옛 서버(엔드포인트 없음)면 조용히 종전대로 자유 입력. */
   var PICK_NAMES = null, PICK_DEPT = null;
@@ -3076,9 +3095,11 @@
   }
   window.ckSignPickSync = function(){
     var box = gel('ckGridWrap'); if (!box) return Promise.resolve();
-    var cells = [].filter.call(box.querySelectorAll('input[data-r]'),
-                               function(e){ return Number(e.getAttribute('data-r')) === SIGN_NO; });
-    if (!cells.length) return Promise.resolve();          // 사인 칸이 없는 서식은 아무것도 안 한다
+    /* 붙이는 자리 둘 — ①점검자 사인 행(SIGN_NO) ②서식이 「직원 이름」으로 켜 둔 열(INPUT_GB='NAME' → .nmpick, 2026-09-09) */
+    var cells = [].filter.call(box.querySelectorAll('input[data-r]'), function(e){
+      return Number(e.getAttribute('data-r')) === SIGN_NO || e.classList.contains('nmpick');
+    });
+    if (!cells.length) return Promise.resolve();          // 사인 칸도 이름 열도 없는 서식은 아무것도 안 한다
     return ckSignPickLoad().then(function(list){
       if (!list || !list.length) return;                  // 인사 등록이 비면 종전과 같이 자유 입력
       var host = gel('qpsChk') || document.body;

@@ -706,7 +706,8 @@
                   : (a === 'DAY_ITEM')  ? '— 항목이 표의 **열**이 됩니다. 「열 묶음」을 적으면 2단 머리글이 생깁니다'
                   : (a === 'ITEM_MONTH')? '— 항목이 행, 1~12월이 열입니다(연 1장)'
                   : (a === 'LIST')      ? '— 항목이 표의 **열**, 행은 작성자가 늘립니다(날짜 칸이 없는 대장). ' +
-                                          '이름·사유는 입력종류를 글(TEXT)로 두세요 — 표시(CHECK)로 두면 한 글자가 O/X 로 바뀝니다'
+                                          '이름·사유는 입력종류를 글(TEXT)로 두세요 — 표시(CHECK)로 두면 한 글자가 O/X 로 바뀝니다. ' +
+                                          '우리 직원 이름을 적는 열이면 「직원 이름」으로 두면 작성 화면에서 인사 등록 명단을 골라 넣습니다(환자 이름 열엔 쓰지 마세요)'
                   : (a === 'ITEM_COL')  ? '— 항목이 **행**, 열은 아래 「고정 열」에 적은 대로입니다(날짜가 없는 점검표). ' +
                                           '「묶음」을 적으면 2단 행 머리글이 생깁니다'
                                         : '— 항목이 표의 **행**이 됩니다';
@@ -868,10 +869,13 @@
       '<td data-cell="celltxts" hidden><input data-f="celltxts" value="' + esc(r.celltxts) + '" placeholder="열마다 쉼표. 예) 특출남,평균 이상,보통,미흡,부적당"></td>' +
       // ★입력 종류를 바꾸면 「선택지」 칸이 보이거나 숨어야 한다(SEL) — cfAxisChange 가 칸 보임을 다시 센다
       '<td><select data-f="inputgb" onchange="cfAxisChange();">' +
-        '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' || r.inputgb === 'SEL' ? '' : ' selected') + '>O / X</option>' +
+        '<option value="CHECK"' + (r.inputgb === 'TEXT' || r.inputgb === 'NUM' || r.inputgb === 'SEL' || r.inputgb === 'NAME' ? '' : ' selected') + '>O / X</option>' +
         '<option value="TEXT"' + (r.inputgb === 'TEXT' ? ' selected' : '') + '>글자</option>' +
         '<option value="NUM"' + (r.inputgb === 'NUM' ? ' selected' : '') + '>숫자</option>' +
         '<option value="SEL"' + (r.inputgb === 'SEL' ? ' selected' : '') + '>선택</option>' +
+        // ★직원 이름(NAME, 2026-09-09) = 글자 칸과 똑같이 동작하되, 작성 화면에서 **인사 등록 명단**을 골라 넣을 수 있다.
+        //   ⚠환자 이름 열에는 켜지 말 것 — 직원 명단이 뜬다(같은 「이름」이라도 검진 명부는 직원, 검사 대장은 환자다).
+        '<option value="NAME"' + (r.inputgb === 'NAME' ? ' selected' : '') + '>직원 이름</option>' +
       '</select></td>' +
       '<td><input data-f="unitnm" value="' + esc(r.unitnm) + '" placeholder="℃"></td>' +
       '<td data-cell="carryyn" hidden style="text-align:center;">' +
@@ -1419,7 +1423,7 @@
       var ig = (p[2] || '').toUpperCase();
       // 여섯째 칸 = 선택지(입력이 SEL 일 때, 「유,무」처럼 쉼표) — 다른 종류면 무시
       itemRow({ itemnm: p[0], grpnm: p[1] || '',
-                inputgb: (ig === 'TEXT' || ig === 'NUM' || ig === 'SEL') ? ig : 'CHECK',
+                inputgb: (ig === 'TEXT' || ig === 'NUM' || ig === 'SEL' || ig === 'NAME') ? ig : 'CHECK',
                 unitnm: p[3] || '', carryyn: (p[4] || '').toUpperCase() === 'Y' ? 'Y' : 'N',
                 celltxts: (ig === 'SEL') ? (p[5] || '') : '' });
     });

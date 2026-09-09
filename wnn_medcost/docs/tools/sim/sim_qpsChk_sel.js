@@ -7,10 +7,16 @@ function fn(name) {
   const re = new RegExp('\\n  function ' + name + '\\([^)]*\\)\\{[\\s\\S]*?\\n  \\}');
   const m = s.match(re); if (!m) throw new Error('함수 못 찾음: ' + name); return m[0];
 }
+/** ⚠**한 줄 정의**는 위 패턴으로 잡으면 뒤 함수까지 통째로 삼킨다(이 저장소의 오랜 함정) — 한 줄만 잘라 온다 */
+function fn1(name) {
+  const re = new RegExp('\\n  function ' + name + '\\([^)]*\\)\\{.*');
+  const m = s.match(re); if (!m) throw new Error('함수 못 찾음(한 줄): ' + name); return m[0];
+}
 const dom = new JSDOM('<div id="ckGridWrap"></div>');
 const { window } = dom; const { document } = window;
 const ctx = { document, window, SIGN_NO: 900, PRDH_NO: 890, SUB_ROW_BASE: 9000, gel: id => document.getElementById(id) };
-const code = [fn('esc'), fn('cell'), fn('selOpts'), fn('selHtml'), fn('noxCls'), fn('collect'), fn('ckOxOk')].join('\n');
+// ★noxCls 는 2026-09-09 부터 isNameGb(직원 이름 칸)를 부른다 — 함께 꺼내지 않으면 ReferenceError 로 죽는다
+const code = [fn('esc'), fn('cell'), fn('selOpts'), fn('selHtml'), fn1('isNameGb'), fn('noxCls'), fn('collect'), fn('ckOxOk')].join('\n');
 const f = new Function(...Object.keys(ctx), code + '\nreturn { esc, cell, selOpts, selHtml, noxCls, collect, ckOxOk };');
 const M = f(...Object.values(ctx));
 
@@ -35,6 +41,7 @@ ok('선택지 글자 이스케이프', /<option value="a&amp;b">a&amp;b<\/option
 
 // 3. noxCls
 ok('noxCls TEXT/NUM → nox, CHECK/SEL → 빈', M.noxCls({ inputgb: 'TEXT' }) === 'nox' && M.noxCls({ inputgb: 'NUM' }) === 'nox' && M.noxCls({ inputgb: 'CHECK' }) === '' && M.noxCls({ inputgb: 'SEL' }) === '');
+ok('noxCls NAME → nox + nmpick(직원 이름 칸, 2026-09-09)', M.noxCls({ inputgb: 'NAME' }) === 'nox nmpick');
 
 // 4. collect — select 값이 담기고 빈 select 는 안 담긴다
 document.getElementById('ckGridWrap').innerHTML = '<table><tr>' +

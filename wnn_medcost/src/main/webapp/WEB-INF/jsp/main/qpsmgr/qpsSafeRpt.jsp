@@ -496,16 +496,29 @@
     if (!s.trim()) return [];
     return s.split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x; });
   }
-  /** 벌 정의 [{no,nm,cols[]}] — no=0 은 단벌(옛 규칙, 값 1~999) */
+  /* ═══ 직원 이름 열 (NAME_COLS, 2026-09-09) ═══
+     반복행 표에도 **우리 직원 이름을 적는 열**이 있다(혈액 반납 간호사·의사 · 완결도 담당의사 · 상담 근로자).
+     손으로 치면 이름이 갈리므로 점검표 사인 칸과 **같은 명단**(signerPicks.do)을 붙여 고를 수 있게 한다.
+     ★열 이름이 `SUB_COLS` 쉼표 한 줄이라 열마다 표시를 달 자리가 없다 ⇒ **이름 열 번호 목록**을 담는 칸(NAME_COLS)을 따로 둔다.
+     ★★**이름 열이라고 다 켜지 않는다** — 인사기록카드(HRCARD)의 「성명」은 **가족**이다. 서식이 켠 열에만 붙는다.
+     ★입력을 막지 않는다 — 그냥 input 이라 명단에 없는 사람도 적을 수 있다. */
+  function nameColSet(s){
+    var o = {};
+    String((s && s.namecols) || '').split(',').forEach(function(x){
+      var n = Number(String(x).trim()); if (n >= 1) o[n] = 1;
+    });
+    return o;
+  }
+  /** 벌 정의 [{no,nm,cols[],names{}}] — no=0 은 단벌(옛 규칙, 값 1~999) · names = 직원 이름 열 번호 */
   function subDefs(){
     if (SUBS && SUBS.length) {
       return SUBS.map(function(s){
         var cols = String(s.subcols || '').split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x; });
-        return { no: Number(s.subno) || 0, nm: s.subnm || '', cols: cols };
+        return { no: Number(s.subno) || 0, nm: s.subnm || '', cols: cols, names: nameColSet(s) };
       }).filter(function(s){ return s.no >= 1 && s.no <= 9 && s.cols.length; });
     }
     var c = subCols();
-    return c.length ? [{ no: 0, nm: (FORM && FORM.subnm) ? FORM.subnm : '', cols: c }] : [];
+    return c.length ? [{ no: 0, nm: (FORM && FORM.subnm) ? FORM.subnm : '', cols: c, names: nameColSet(FORM) }] : [];
   }
   /* ★★[2026-08-15] 옛 단벌 문서 구제 — ***안 그리면 조용히 지워진다.***
      유형에 벌(SUBS)이 **뒤늦게** 생기면, 그 전에 저장된 문서의 행은 벌 번호가 없어(ROW_NO 1~999)
@@ -524,7 +537,8 @@
     if (!byset[0] || !Object.keys(byset[0]).length) return defs;     // 옛 값이 없으면 그대로
     var oldCols = subCols();
     return [{ no: 0, nm: '이전 자료 (벌 구분 전에 적은 내용)',
-              cols: oldCols.length ? oldCols : defs[0].cols }].concat(defs);
+              cols: oldCols.length ? oldCols : defs[0].cols,
+              names: oldCols.length ? nameColSet(FORM) : (defs[0].names || {}) }].concat(defs);
   }
   /** 값을 벌별로 가른다 — 1000대의 몫이 벌, 나머지가 행(0~999 는 단벌) */
   function splitRowVals(vals){
@@ -549,23 +563,55 @@
       var grid = byset[d.no] || {}, maxRow = 0;
       Object.keys(grid).forEach(function(r){ r = Number(r); if (r > maxRow) maxRow = r; });
       var n = Math.max(maxRow, MIN_ROWS);
-      h += '<div class="rowset" data-sub="' + d.no + '">' +
+      h += '<div class="rowset" data-sub="' + d.no + '" data-names="' + esc(Object.keys(d.names || {}).join(',')) + '">' +
            (defs.length > 1 ? '<div class="rs-h">' + esc(d.nm || ('표 ' + d.no)) + '</div>' : '') +
            '<table class="rowtbl"><thead><tr>' +
            d.cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') +
            '<th class="del"></th></tr></thead><tbody>';
-      for (var r = 1; r <= n; r++) h += rowHtml(d.cols.length, grid[r] || {});
+      for (var r = 1; r <= n; r++) h += rowHtml(d.cols.length, grid[r] || {}, d.names);
       h += '</tbody></table>' +
            '<button type="button" class="sr-btn ghost rs-add" onclick="srRowAdd(this);">＋ 행 추가</button></div>';
     });
     gel('srRowBox').innerHTML = h;
     gel('cardRow').style.display = '';
     srTabSync();
+    srNamePickSync();                       // 직원 이름 열에 인사 등록 명단을 붙인다(2026-09-09)
   }
-  function rowHtml(nCol, v){
+  /* 인사 등록 명단을 datalist 로 — 점검표 사인 칸(ckSignPickSync)과 **같은 엔드포인트**를 쓴다.
+     ★보고서는 부서가 자유 글자(DEPT_NM)라 부서로 좁히지 않는다 — 재직자 전부를 준다(퇴직자는 서버가 뺀다).
+     ★한 번만 묻고 기억한다 · 명단이 비거나 **옛 서버(엔드포인트 없음)면 조용히** 종전대로 자유 입력. */
+  var SR_NAMES = null;
+  function srNamePickSync(){
+    if (!document.querySelector('#srRowBox input.nmpick')) return Promise.resolve();   // 이름 열이 없는 유형
+    var put = function(list){
+      if (!list || !list.length) return;
+      var host = gel('qpsSafeRpt') || document.body;
+      var dl = gel('srNmList');
+      if (!dl) { dl = document.createElement('datalist'); dl.id = 'srNmList'; host.appendChild(dl); }
+      dl.innerHTML = list.map(function(s){
+        return '<option value="' + esc(s.usernm) + '">' + esc(String(s.jobnm || '')) + '</option>'; }).join('');
+    };
+    if (SR_NAMES) { put(SR_NAMES); return Promise.resolve(); }
+    return post('<c:url value="/qps/signerPicks.do"/>', { deptCd: '' }).then(
+      function(res){ SR_NAMES = res.list || []; put(SR_NAMES); },
+      function(){ SR_NAMES = []; });
+  }
+  /** @param names 직원 이름 열 번호 묶음({4:1,5:1}) — 그 칸에만 인사 등록 명단을 붙인다 */
+  function rowHtml(nCol, v, names){
     var h = '<tr>';
-    for (var c = 1; c <= nCol; c++) h += '<td><input type="text" maxlength="500" value="' + esc(v[c] || '') + '"></td>';
+    for (var c = 1; c <= nCol; c++)
+      h += '<td><input type="text" maxlength="500"' +
+           ((names && names[c]) ? ' class="nmpick" list="srNmList"' : '') +
+           ' value="' + esc(v[c] || '') + '"></td>';
     return h + '<td class="del"><button type="button" onclick="srRowDel(this);" title="이 행 지우기">✕</button></td></tr>';
+  }
+  /** 표(.rowset)에 적어 둔 이름 열 번호 — [＋ 행 추가]로 **뒤에 생긴 행에도** 명단이 붙어야 한다 */
+  function namesOfBox(box){
+    var o = {};
+    String((box && box.getAttribute('data-names')) || '').split(',').forEach(function(x){
+      var n = Number(String(x).trim()); if (n >= 1) o[n] = 1;
+    });
+    return o;
   }
   window.srRowAdd = function(btn){
     var box = (btn && btn.closest) ? btn.closest('.rowset') : null;   // 자기 벌의 표에만 행을 더한다
@@ -576,7 +622,7 @@
        없지만, 막아 두지 않으면 눌린 만큼 조용히 옆 벌을 덮어쓴다. */
     if (tb.rows.length >= 999) { _alertBox('한 표에 999행까지 넣을 수 있습니다.', {icon:'⚠️'}); return; }
     var nCol = tb.parentNode.querySelectorAll('thead th').length - 1;  // 마지막 칸은 ✕ 열
-    tb.insertAdjacentHTML('beforeend', rowHtml(nCol, {}));
+    tb.insertAdjacentHTML('beforeend', rowHtml(nCol, {}, namesOfBox(box)));
   };
   window.srRowDel = function(btn){
     var tr = btn.closest('tr'), tb = tr.parentNode;

@@ -1,6 +1,8 @@
-// 점검표 사인 칸 「이름 고르기」(2026-09-09) — 인사 등록 명단을 <datalist> 로 붙여 고를 수도, 그대로 칠 수도 있게 한다.
-// ★확인할 것 : 사인 칸에만 붙는다 · 부서로 좁혀 묻는다 · 명단이 비면 아무것도 안 한다(자유 입력 그대로) ·
-//   옛 서버(엔드포인트 없음)면 조용히 넘어간다 · 부서가 그대로면 다시 묻지 않는다 · **입력을 막지 않는다**(datalist 는 고르기일 뿐).
+// 점검표 사인 칸·직원 이름 칸 「이름 고르기」(2026-09-09) — 인사 등록 명단을 <datalist> 로 붙여 고를 수도, 그대로 칠 수도 있게 한다.
+// ★확인할 것 : 사인 칸(SIGN_NO)과 **서식이 켜 둔 직원 이름 열**(INPUT_GB='NAME')에만 붙는다 · 부서로 좁혀 묻는다 ·
+//   명단이 비면 아무것도 안 한다(자유 입력 그대로) · 옛 서버(엔드포인트 없음)면 조용히 넘어간다 ·
+//   부서가 그대로면 다시 묻지 않는다 · **입력을 막지 않는다**(datalist 는 고르기일 뿐).
+// ★★환자 이름 열에는 붙으면 안 된다 — 그래서 열 이름이 아니라 **서식이 켠 표시**(NAME)로만 가른다.
 const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
@@ -28,18 +30,24 @@ function build(){
     '\n  if (state.failPost) return Promise.reject(new Error("없는 엔드포인트"));' +
     '\n  return Promise.resolve(state.res); }' +
     grab(S, /\n  function ckFormDept\(\)\{[\s\S]*?\n  \}/, 'ckFormDept') +
+    // ⚠isNameGb 는 **한 줄 정의**다 — 여러 줄 패턴으로 잡으면 뒤 함수까지 통째로 삼킨다(이 저장소의 오랜 함정)
+    grab(S, /\n  function isNameGb\(r\)\{.*\n/, 'isNameGb') +
+    grab(S, /\n  function ltxtCls\(r\)\{[\s\S]*?\n  \}/, 'ltxtCls') +
+    grab(S, /\n  function noxCls\(r\)\{[\s\S]*?\n  \}/, 'noxCls') +
     grab(S, /\n  var PICK_NAMES = null, PICK_DEPT = null;/, 'PICK vars') +
     grab(S, /\n  function ckSignPickLoad\(\)\{[\s\S]*?\n  \}/, 'ckSignPickLoad') +
     grab(S, /\n  window\.ckSignPickSync = function\(\)\{[\s\S]*?\n  \};/, 'ckSignPickSync') +
-    '\nreturn { sync: window.ckSignPickSync, setForm: function(f){ FORM = f; } };';
+    '\nreturn { sync: window.ckSignPickSync, setForm: function(f){ FORM = f; },' +
+    '\n         ltxtCls: ltxtCls, noxCls: noxCls, isNameGb: isNameGb };';
   const M = new Function(...Object.keys(ctx), code)(...Object.values(ctx));
   return { M, state, document, window };
 }
 
-/** 사인 칸(행 900)과 값칸을 섞어 격자를 만든다 */
+/** 사인 칸(행 900)·값칸·직원 이름 칸(cls 로 nmpick)을 섞어 격자를 만든다 */
 function grid(document, cells){
   document.getElementById('ckGridWrap').innerHTML = '<table><tr>' + cells.map(function(c){
-    return '<td><input data-r="' + (c.r == null ? 900 : c.r) + '" value="' + (c.v || '') + '"></td>';
+    return '<td><input' + (c.cls ? (' class="' + c.cls + '"') : '') +
+           ' data-r="' + (c.r == null ? 900 : c.r) + '" value="' + (c.v || '') + '"></td>';
   }).join('') + '</tr></table>';
 }
 const dl = (document) => document.getElementById('ckSignNmList');
@@ -108,6 +116,38 @@ const signCells = (document) => [].filter.call(document.querySelectorAll('#ckGri
     try { await B.M.sync(); } catch (e) { died = true; }
     ok('★옛 서버(엔드포인트 없음)면 조용히 넘어간다 — 화면이 죽지 않는다', !died && !dl(B.document));
   }
+
+  // ── 직원 이름 열(INPUT_GB='NAME', 2026-09-09) ──
+  {
+    const B = build();
+    // 서식이 켠 이름 열 · 그냥 글자 열(환자 이름 자리) · 사인 칸 없음
+    grid(B.document, [ { r: 1, v: '', cls: 'ltxt nmpick' }, { r: 2, v: '', cls: 'ltxt' } ]);
+    B.state.res = { list: [ { usernm: '김간호', jobnm: '간호사', hasimg: 'Y' } ] };
+    await B.M.sync();
+    const nm = B.document.querySelector('#ckGridWrap input[data-r="1"]');
+    const other = B.document.querySelector('#ckGridWrap input[data-r="2"]');
+    ok('사인 칸이 없어도 **직원 이름 열**만 있으면 명단을 붙인다', B.state.posts.length === 1 && !!dl(B.document) &&
+       nm.getAttribute('list') === 'ckSignNmList');
+    ok('★★같은 글자 칸이라도 켜지 않은 열(환자 이름 자리)엔 안 붙는다', other.getAttribute('list') === null);
+  }
+  {
+    const B = build();
+    grid(B.document, [ { v: '' }, { r: 3, v: '', cls: 'ltxt nmpick' } ]);
+    B.state.res = { list: [ { usernm: '김간호', jobnm: '간호사', hasimg: 'N' } ] };
+    await B.M.sync();
+    ok('사인 칸과 이름 열이 함께 있으면 **둘 다** 붙는다',
+       B.document.querySelector('#ckGridWrap input[data-r="900"]').getAttribute('list') === 'ckSignNmList' &&
+       B.document.querySelector('#ckGridWrap input[data-r="3"]').getAttribute('list') === 'ckSignNmList');
+  }
+  // ── 입력 종류 → 칸 클래스 (격자를 그릴 때 nmpick 이 붙는 자리)
+  ok('LIST·ITEM_COL : NAME 이면 글자 칸 + nmpick', M.ltxtCls({ inputgb: 'NAME' }) === 'ltxt nmpick');
+  ok('LIST·ITEM_COL : 글자(TEXT)·선택(SEL)은 종전대로 ltxt 만', M.ltxtCls({ inputgb: 'TEXT' }) === 'ltxt' &&
+     M.ltxtCls({ inputgb: 'SEL' }) === 'ltxt');
+  ok('LIST·ITEM_COL : 표시(CHECK)는 클래스 없음(가운데 정렬)', M.ltxtCls({ inputgb: 'CHECK' }) === '');
+  ok('날짜 격자 : NAME 은 O/X 대상에서 빼고(nox) 명단도 붙인다', M.noxCls({ inputgb: 'NAME' }) === 'nox nmpick');
+  ok('날짜 격자 : 글자·숫자는 종전대로 nox 만', M.noxCls({ inputgb: 'TEXT' }) === 'nox' && M.noxCls({ inputgb: 'NUM' }) === 'nox');
+  ok('날짜 격자 : 표시(CHECK)는 그대로 O/X 대상', M.noxCls({ inputgb: 'CHECK' }) === '');
+  ok('입력 종류가 없던 옛 항목도 죽지 않는다', M.ltxtCls(null) === 'ltxt' && M.noxCls(null) === '' && M.isNameGb(null) === false);
 
   /* ── 소스 검사 ── */
   ok('소스 — 표를 새로 그릴 때마다 붙인다(renderGrid 끝)', /ckSignPickSync\(\);\s+\/\/ 사인 칸에 인사 등록 이름 고르기/.test(S));

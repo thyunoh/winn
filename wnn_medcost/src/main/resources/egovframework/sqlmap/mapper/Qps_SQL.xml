@@ -1747,7 +1747,7 @@
 
 	<!-- 설정이 없는 유형이 대부분이다 — 없으면 null 이 와서 화면이 표를 안 그린다(지금과 동일 동작). -->
 	<select id="selectSafeRptForm" resultType="java.util.HashMap">
-		SELECT RPT_GB AS rptgb, SUB_NM AS subnm, SUB_COLS AS subcols,
+		SELECT RPT_GB AS rptgb, SUB_NM AS subnm, SUB_COLS AS subcols, NAME_COLS AS namecols,
 		       SIGN_LINE AS signline, FOOT_TXT AS foottxt, PHOTO_YN AS photoyn, LBL_JSON AS lbljson
 		  FROM TBL_QPS_SAFERPT_FORM
 		 WHERE RPT_GB = #{rptGb} AND USE_YN = 'Y'
@@ -1763,7 +1763,7 @@
 	<!-- 반복행 표 「여러 벌」(2026-08-15) — 벌이 있으면 FORM 의 단벌 정의를 이긴다.
 	     값은 같은 ROW 표에 ROW_NO=벌×1000+행 으로 담긴다(단벌은 종전대로 1~999). -->
 	<select id="selectSafeRptSub" resultType="java.util.HashMap">
-		SELECT SUB_NO AS subno, SUB_NM AS subnm, SUB_COLS AS subcols
+		SELECT SUB_NO AS subno, SUB_NM AS subnm, SUB_COLS AS subcols, NAME_COLS AS namecols
 		  FROM TBL_QPS_SAFERPT_SUB
 		 WHERE RPT_GB = #{rptGb} AND USE_YN = 'Y'
 		 ORDER BY SUB_NO
