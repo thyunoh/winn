@@ -1097,11 +1097,13 @@
 	       ★다음 공지로 바꿀 때는 아래 3줄만 고치면 된다(START·END·IMG).
 	         END 는 그날까지 포함이다 — '2026-08-17' 이면 8/17 24:00 까지 뜬다.
 	       2026-08-10 : 휴무 안내(holiday_winner.png, 4/29~5/5, 종료)를 NLD 공지로 교체.
-	         안내 기간은 8/11~8/17 이나, 확인을 위해 <시작일만> 8/10 로 앞당겨 둠.
-	         → 확인 끝나면 START 를 '2026-08-11' 로 되돌릴 것. */
-	    var HOLIDAY_START = '2026-08-11';
-	    var HOLIDAY_END   = '2026-08-17';
-	    var HOLIDAY_IMG   = '/wnn_consult/images/winct/NLD.jpg';
+	       2026-09-14 : NLD 공지(NLD.jpg, 8/11~8/17, 종료)를 추석 연휴 휴무 안내로 교체.
+	         게시 기간 2026.09.17 00:00 ~ 2026.09.27 23:59 (휴무 자체는 9/24~9/27).
+	         확인을 위해 <시작일만> 9/14 로 앞당겨 둠.
+	         → 확인 끝나면 START 를 '2026-09-17' 로 되돌릴 것. */
+	    var HOLIDAY_START = '2026-09-17';
+	    var HOLIDAY_END   = '2026-09-27';
+	    var HOLIDAY_IMG   = '/wnn_consult/images/winct/Chuseok.png';
 	    var STORAGE_KEY   = 'holiday_hide_' + HOLIDAY_START.replace(/-/g,'');
 
 	    function todayStr() {
