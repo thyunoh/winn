@@ -563,6 +563,14 @@
 							render: function(data, type, row) {
 		            			if (type === 'display') {
 		            				var t = data != null ? getFormat(data,'n1') + ' 건 ' : '';
+		            				/* [2026-09-15] 평가표(9)는 나중 업로드가 겹치는 환자를 가져가므로(08-24 확정 사양) 올린 건수와 지금 남은 행이 다를 수 있다.
+		            				     다르면 실질 건수(data_cnt = 그 CHUNGSEQ 의 TBL_PATVAL_MST 행 수)를 앞에, 올린 건수는 괄호로 — 예) 0 건(199) (사용자 확정).
+		            				     getFormat 은 문자열만 받으므로(input.replace) COUNT(*) 숫자는 String 으로 감싼다. */
+		            				if (row && row.mg_flag === '9' && data != null && row.data_cnt != null && Number(row.data_cnt) !== Number(data)) {
+		            					t = getFormat(String(row.data_cnt),'n1') + ' 건'
+		            					  + '<span style="color:#888;" title="올린 건수 ' + getFormat(String(data),'n1') + '건 중 이 업로드에 남은 평가표 '
+		            					  + getFormat(String(row.data_cnt),'n1') + '건 (겹친 환자는 나중 업로드로 넘어감)">(' + getFormat(String(data),'n1') + ')</span> ';
+		            				}
 		            				/* [2026-08-03] 유령 이력 표시 — 이력은 남았는데 실제 자료가 0건인 줄
 		            				     (여수시립 202607: 중복 업로드 삭제로 자료만 소실, 이력은 '109건'으로 남아 혼동).
 		            				     이 표시가 붙은 줄은 지워도 자료 손실이 없다 — 안심하고 정리 가능.

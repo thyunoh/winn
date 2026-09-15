@@ -1579,7 +1579,11 @@
 		             )
 		         /* 제외 대상  */
 		         AND LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) NOT IN ('A')   <!-- 의료최고도 -->
-		         <!-- 치매+BPSD+향정신약(분모 제외)은 바깥 manageYn CASE ①분기에서 '제외' 처리 → 여기(분자 sb)에서는 필터하지 않음 -->
+		         AND NOT ( LEFT(COALESCE(pat.PAT_CLASS, 'E'), 1) IN ('B', 'C')   <!-- [2026-09-15] 치매+BPSD+향정신약은 분자에서도 뺀다(SP 와 같게). 바깥 CASE 는 sb 매칭('Y')을 먼저 보므로 여기서 빼야 목록에 '제외'로 보인다 -->
+		                   AND pat.DEMENTIA = '1'
+		                   AND ( pat.DELUSION IN ('2','3') OR pat.HALLUCIN IN ('2','3') OR pat.AGITATION IN ('2','3')
+		                      OR pat.DISINHIB IN ('2','3') OR pat.CARE_RESIST IN ('2','3') OR pat.WANDER IN ('2','3') )
+		                   AND pat.PSYCH_DRUG = '1' )
 		         AND COALESCE(pat.URINE_MGMT,'') <![CDATA[ <> ]]> '1'             <!-- 배뇨관련 루 관리 제외 (NULL 안전) -->
 		         AND SUBSTRING(dm.DIAG_CODE, 1, 4) NOT IN ('Z935','Z936','T830')  <!-- 요로전환술 진단 제외 -->
                  AND IFNULL(pat.EVAL_TYPE,'') in('1','2')
@@ -1608,7 +1612,7 @@
 		 WHERE pm.HOSP_CD = #{hospCd}
 		   AND pm.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND pm.URINE_CTL IN ('0','1','2','3')         /* 0/1 도 표시 (manageYn 에서 '제외' 표기) */
-	       AND IFNULL(pm.EVAL_TYPE,'') in('1','2') 
+	       AND IFNULL(pm.EVAL_TYPE,'') in('1','2','3')   <!-- [2026-09-15] 평가구분 3(이전 평가표 적용)도 화면에 보인다. 분자 판정(sb)은 1·2 그대로 --> 
 		   /* PAT_CLASS='A' 도 함께 표시되어 manageYn 에서 '제외' 로 표기 */
 		 ORDER BY
 		   /* SELECT DISTINCT + ORDER BY 충돌 회피 — SELECT 절의 alias(manageYn) 만 참조 */
