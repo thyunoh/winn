@@ -1113,6 +1113,12 @@ public class MagamServiceImpl implements MagamService {
 		return mapper.select_PatvalChangedList(params);
 	}
 
+	/** [2026-09-15] 업로드 목록 [대상자] — 그 작업-KEY(CHUNGSEQ)로 지금 남은 평가표 명단 */
+	@Override
+	public List<Map<String, Object>> select_PatvalByChungseq(Map<String, Object> params) {
+		return mapper.select_PatvalByChungseq(params);
+	}
+
 	@Override
 	public List<MagamDTO> selectAllHospCdList() {
 		return mapper.selectAllHospCdList();

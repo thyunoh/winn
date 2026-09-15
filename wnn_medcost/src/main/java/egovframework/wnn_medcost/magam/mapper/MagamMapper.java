@@ -172,6 +172,7 @@ public interface MagamMapper {
 	Map<String, Object> select_PatvalMstPrev(Map<String, Object> params);
 
 	List<Map<String, Object>> select_PatvalChangedList(Map<String, Object> params);
+	List<Map<String, Object>> select_PatvalByChungseq(Map<String, Object> params);   // [2026-09-15] 업로드 목록 [대상자]
 
 	// 파일 검증 관련
 	List<Map<String, Object>> getFilesFirstLine(MagamDTO dto);

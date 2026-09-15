@@ -5581,6 +5581,23 @@
 
 	<!-- 적정성평가 관련 항목 전월 대비 변경 환자 목록
 	     비교: D.ADL / E·F.유치도뇨관 / F.HbA1c / I.1~I.4 욕창 / I.5 피부문제 처치 -->
+	<!-- [2026-09-15] 업로드 목록 [대상자] : 그 작업-KEY(CHUNGSEQ)로 지금 남은 평가표 명단 (건수 칸 실질 건수와 같은 기준, INDEX03 = HOSP_CD+CHUNGSEQ) -->
+	<select id="select_PatvalByChungseq" parameterType="map" resultType="java.util.Map">
+		SELECT LEFT(PAT_ID,6)                                     AS patId
+		     , CASE WHEN CHAR_LENGTH(COALESCE(PAT_NM, '')) >= 1
+		            THEN CASE WHEN #{sWnnYn} = 'Y' THEN COALESCE(PAT_NM, '')
+		                      ELSE CONCAT(LEFT(COALESCE(PAT_NM, ''), CHAR_LENGTH(COALESCE(PAT_NM, '')) - 1), '*') END
+		            ELSE '' END                                   AS patNm
+		     , ADMIT_DT                                           AS admitDt
+		     , MED_START                                          AS medStart
+		     , EVAL_TYPE                                          AS evalType
+		     , DOC_DT                                             AS docDt
+		  FROM TBL_PATVAL_MST
+		 WHERE HOSP_CD  = #{hospCd}
+		   AND CHUNGSEQ = #{chungseq}
+		 ORDER BY MED_START DESC, PAT_ID, ADMIT_DT
+	</select>
+
 	<select id="select_PatvalChangedList" parameterType="map" resultType="java.util.Map">
 		SELECT cur.PAT_ID AS patId, cur.ADMIT_DT AS admitDt, cur.MED_START AS medStart
 		  FROM TBL_PATVAL_MST cur

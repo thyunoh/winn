@@ -128,6 +128,7 @@ public interface MagamService {
 	Map<String, Object> select_PatvalMstPrev(Map<String, Object> params) throws Exception;
 
 	List<Map<String, Object>> select_PatvalChangedList(Map<String, Object> params) throws Exception;
+	List<Map<String, Object>> select_PatvalByChungseq(Map<String, Object> params) throws Exception;   // [2026-09-15] 업로드 목록 [대상자]
 
 	// 파일 검증 관련
 	String uploadMagamFilesOnly(List<FilesDTO> filesData) throws Exception;

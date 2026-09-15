@@ -1947,6 +1947,45 @@ public class MagamController {
 		}
 	}
 
+	// [2026-09-15] 업로드 목록 [대상자] — 평가표 업로드(작업-KEY = CHUNGSEQ)가 지금 가진 대상자 명단
+	//   ★병원은 화면이 보낸 값이 아니라 로그인 쿠키(s_hospid)로 정한다 — 다른 병원 명단을 볼 수 없다.
+	//   ★위너넷 판별은 쿠키+세션(evalCompare 와 같은 방식) — 위너넷이 아니면 이름 끝 글자를 가린다(적정성평가 목록과 같은 규칙).
+	@RequestMapping(value="/main/select_PatvalByChungseq.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_PatvalByChungseq(@RequestParam Map<String, Object> params, HttpServletRequest request) throws Exception {
+		Map<String, Object> response = new HashMap<>();
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String hospCd = "";
+			try { hospCd = String.valueOf(ck.get("s_hospid")).trim(); } catch (Exception ignore) {}
+			String chungseq = params.get("chungseq") == null ? "" : String.valueOf(params.get("chungseq")).trim();
+			if (hospCd.isEmpty() || "null".equals(hospCd) || chungseq.isEmpty()) {
+				response.put("data", new java.util.ArrayList<Map<String, Object>>());
+				response.put("error_mess", "병원 또는 작업-KEY 가 없습니다.");
+				return response;
+			}
+			String wnnYn = "N";
+			try {
+				String c = String.valueOf(ck.get("s_wnn_yn")).trim();
+				javax.servlet.http.HttpSession ses = request.getSession(false);
+				Object wnn = (ses != null) ? ses.getAttribute("s_wnn_yn") : null;
+				String sv = (wnn != null) ? String.valueOf(wnn).trim() : "";
+				wnnYn = ("Y".equalsIgnoreCase(c) || "Y".equalsIgnoreCase(sv)) ? "Y" : "N";
+			} catch (Exception ignore) {}
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd);
+			p.put("chungseq", chungseq);
+			p.put("sWnnYn", wnnYn);
+			response.put("data", svc.select_PatvalByChungseq(p));
+			return response;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			response.put("data", new java.util.ArrayList<Map<String, Object>>());
+			response.put("error_mess", ex.getMessage());
+			return response;
+		}
+	}
+
 	// 환자평가표(TBL_PATVAL_MST) 단건 조회 — 모달 표시용
 	@RequestMapping(value="/main/select_PatvalMst.do", method = RequestMethod.POST)
 	@ResponseBody

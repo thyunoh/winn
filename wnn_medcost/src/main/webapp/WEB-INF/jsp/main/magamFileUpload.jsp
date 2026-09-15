@@ -686,6 +686,7 @@ $(document).ready(function() {
         g_Year = $('#year_Select').val();
         findField('mg_year', g_Year)
         findField('mg_flag', g_Flag)
+        jobMon = gMonth;   // [2026-09-15] 탭을 바꿔도 보던 달 유지(사용자 「7월 보다가 탭 누르면 8월로 이동」) — 업로드 뒤 재조회들과 같은 방식
         loadMonthsData();
     });
     
@@ -4960,4 +4961,138 @@ $('#verifyModal').on('hidden.bs.modal', function() {
 
 <!-- ============================================================== -->
 <!-- 월별,  8.청구서 9.평가표 정보 End -->
-<!-- ============================================================== -->     
+<!-- ============================================================== -->
+
+<!-- ============================================================== -->
+<!-- [2026-09-15] 평가표 업로드 [대상자] 창 — 사용자 「적정성평가 보는 것처럼 · 대상자보기 버튼 · 환자평가표만 · 검색 · 앞에 번호」 -->
+<!--   명단 = 그 작업-KEY(CHUNGSEQ)로 지금 TBL_PATVAL_MST 에 남은 평가표 (건수 칸의 실질 건수와 같은 기준) -->
+<!-- ============================================================== -->
+<style>/* [2026-09-15] 대상자 창 표 — 줄 위아래 간격을 조금 줄인다(사용자 「위아래 간격 조금만 축소」). 이 창에만. */
+#mgPvListModal .table th, #mgPvListModal .table td { padding: 4px 6px !important; line-height: 1.3 !important; height: auto !important; vertical-align: middle; } #mgPvListModal .table tr { height: auto !important; }
+</style>
+<div class="modal fade" id="mgPvListModal" tabindex="-1" role="dialog" data-backdrop="static" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document" style="max-width:920px;">
+        <div class="modal-content" style="border:none; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.18);">
+            <div class="modal-header" title="제목 줄을 잡고 끌면 창이 움직입니다" style="cursor:move; user-select:none; background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color:#fff; border-radius:12px 12px 0 0; padding:14px 20px;">
+                <h5 class="modal-title" style="font-weight:600; color:#fff !important;"><i class="fa fa-users mr-2"></i>평가표 대상자 <span id="mgPvListTitle" style="font-weight:400; font-size:14px;"></span></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" data-mgpv-close="1" style="opacity:.9;text-shadow:none;"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" style="padding:12px 18px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <span style="white-space:nowrap; font-size:14px; font-weight:600; color:#333;">자 료 검 색 :</span>
+                    <input type="text" id="mgPvListQ" class="form-control form-control-sm" style="width:260px;" placeholder="이름.생년월일.날짜 검색">
+                    <span id="mgPvListCnt" style="margin-left:auto; white-space:nowrap; font-size:14px; font-weight:600; color:#1e3c72;"></span>
+                </div>
+                <div style="max-height:60vh; overflow-y:auto; border:1px solid #dee2e6;">
+                    <table class="table table-sm table-hover mb-0" style="font-size:13px;">
+                        <thead style="position:sticky; top:0; background:#eef3f8; z-index:1;">
+                            <tr>
+                                <th class="text-center" style="width:56px;">No</th>
+                                <th class="text-center">생년월일</th>
+                                <th class="text-center">대상자</th>
+                                <th class="text-center">입원일자</th>
+                                <th class="text-center">요양개시일</th>
+                                <th class="text-center">구분</th>
+                                <th class="text-center">평가표작성일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mgPvListBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #e9ecef; padding:8px 18px;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal" data-mgpv-close="1" style="min-width:90px;">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/asset/js/ui-message.js"></script>   <!-- [2026-09-15] 새 알림은 ui-message (CLAUDE.md 상시 방침) -->
+<script type="text/javascript">
+/* [2026-09-15] 평가표 업로드 [대상자] 창.
+     ★병원은 서버가 로그인 쿠키로 정한다(다른 병원 명단 불가) · 위너넷이 아니면 이름 끝 글자를 가린다(서버에서).
+     ★이름은 mgpv 접두 — patvalModal.js 가 _pv… / _PV_… / pv-… 를 이미 쓴다(겹치면 조용히 덮인다). */
+var _MGPV_LIST = [];
+var _MGPV_EVAL = { '1': '입원', '2': '계속', '3': '적용' };
+function _mgpvDate(v) { v = (v == null ? '' : String(v)).replace(/[^0-9]/g, ''); return v.length === 8 ? v.substr(0, 4) + '-' + v.substr(4, 2) + '-' + v.substr(6, 2) : v; }
+function _mgpvEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function _mgpvMsg(html) { $('#mgPvListBody').html('<tr><td colspan="7" class="text-center" style="padding:18px;">' + html + '</td></tr>'); }
+function fn_MgPvListDraw() {
+    var q = String($('#mgPvListQ').val() || '').replace(/[\s\-]/g, '').toLowerCase();
+    var h = [], n = 0;
+    for (var i = 0; i < _MGPV_LIST.length; i++) {
+        var r = _MGPV_LIST[i];
+        var cells = [r.patId, r.patNm, _mgpvDate(r.admitDt), _mgpvDate(r.medStart), _MGPV_EVAL[r.evalType] || (r.evalType || ''), _mgpvDate(r.docDt)];
+        if (q) {
+            var hay = cells.join('|').replace(/[\s\-]/g, '').toLowerCase();
+            if (hay.indexOf(q) < 0) continue;
+        }
+        n++;
+        var tds = '';
+        for (var k = 0; k < cells.length; k++) tds += '<td class="text-center">' + _mgpvEsc(cells[k]) + '</td>';
+        h.push('<tr><td class="text-center" style="color:#666;">' + n + '</td>' + tds + '</tr>');
+    }
+    if (!n) { _mgpvMsg('<span class="text-muted">' + (_MGPV_LIST.length ? '검색 결과가 없습니다.' : '이 업로드에 남은 평가표가 없습니다.') + '</span>'); }
+    else    { $('#mgPvListBody').html(h.join('')); }
+    $('#mgPvListCnt').text(q ? (n + ' / ' + _MGPV_LIST.length + '명') : (_MGPV_LIST.length + '명'));
+}
+function fn_MgPvListOpen(row) {
+    _MGPV_LIST = [];
+    $('#mgPvListQ').val('');
+    $('#mgPvListCnt').text('');
+    $('#mgPvListTitle').text('— 작업-KEY ' + (row.claim_no || '') + ' · 올린 ' + (row.case_cnt != null ? row.case_cnt : '-') + '건');
+    _mgpvMsg('<span class="text-muted">불러오는 중…</span>');
+    $('#mgPvListModal .modal-dialog').css({ left: 0, top: 0 });   // 끌어 둔 위치를 제자리로
+    $('#mgPvListModal').modal('show');
+    $.ajax({
+        url: '/main/select_PatvalByChungseq.do', type: 'POST', dataType: 'json',
+        data: { chungseq: row.claim_no },
+        success: function(res) {
+            if (res && res.error_mess) { _mgpvMsg('<span class="text-danger">' + _mgpvEsc(res.error_mess) + '</span>'); return; }
+            _MGPV_LIST = (res && Array.isArray(res.data)) ? res.data : [];
+            fn_MgPvListDraw();
+        },
+        error: function() { _mgpvMsg('<span class="text-danger">서버에 연결하지 못했습니다.</span>'); }
+    });
+}
+/* [2026-09-15 수정] 줄마다 버튼 → 표 위 [대상자보기] 하나(사용자 「상단에 하나만 · 클릭하고 버튼 실행」).
+     표에서 클릭해 고른(selected) 줄이 환자평가표면 창을 연다. [복사]·[엑셀]·[출력] 줄의 오른쪽 끝에 붙인다.
+     ★표는 다시 만들어질 수 있어(init.dt) 그때마다 새 wrapper 에 붙인다 · 고른 줄은 전역(edit_Data)이 아니라 표의 .selected 로 찾는다. */
+function _mgpvAlert(msg) {
+    if (typeof window._alertBox === 'function') { window._alertBox(msg, { icon: 'ℹ️' }); return; }
+    if (window.Swal) { Swal.fire({ html: msg, icon: 'info', customClass: { popup: 'small-swal' } }); return; }
+    alert(String(msg).replace(/<[^>]+>/g, ''));
+}
+function fn_MgPvTopClick() {
+    var $tr = $('#tableName tbody tr.selected').first();
+    if (!$tr.length) { _mgpvAlert('목록에서 <b>환자평가표</b> 줄을 먼저 클릭해 고른 뒤 눌러 주세요.'); return; }
+    var row = $('#tableName').DataTable().row($tr).data();
+    if (!row || row.mg_flag !== '9') { _mgpvAlert('대상자는 <b>환자평가표</b> 줄에서만 볼 수 있습니다.'); return; }
+    fn_MgPvListOpen(row);
+}
+function fn_MgPvAttachTopBtn() {
+    var $w = $('#tableName_wrapper');
+    if (!$w.length || $w.find('#mgPvTopBtn').length) return;
+    var $btn = $('<button type="button" id="mgPvTopBtn" class="btn btn-outline-primary btn-sm" style="float:right; margin-bottom:4px;">대상자보기 <i class="fa fa-users ml-1"></i></button>');
+    var $dtb = $w.find('.dt-buttons').first();
+    if ($dtb.length) { $btn.insertBefore($dtb); } else { $w.prepend($btn); }
+}
+$(document).on('init.dt', function (e, settings) { if (settings && settings.nTable && settings.nTable.id === 'tableName') { fn_MgPvAttachTopBtn(); } });
+$(function () { if ($.fn.DataTable && $.fn.DataTable.isDataTable('#tableName')) { fn_MgPvAttachTopBtn(); } });
+$(document).on('click', '#mgPvTopBtn', fn_MgPvTopClick);
+$(document).on('click', '#mgPvListModal [data-mgpv-close]', function () { $('#mgPvListModal').modal('hide'); });
+/* 창 끌어 옮기기 — 제목 줄(.modal-header)을 잡고 끈다(단추 위에서 누른 것은 제외). 바깥을 눌러도 닫히지 않는다(data-backdrop="static"). */
+var _mgpvDrag = null;
+$(document).on('mousedown', '#mgPvListModal .modal-header', function (e) {
+    if (e.which !== 1 || $(e.target).closest('button, a, input').length) return;
+    var $d = $('#mgPvListModal .modal-dialog');
+    $d.css('position', 'relative');
+    _mgpvDrag = { $d: $d, sx: e.clientX, sy: e.clientY, l: parseFloat($d.css('left')) || 0, t: parseFloat($d.css('top')) || 0 };
+    e.preventDefault();
+});
+$(document).on('mousemove', function (e) {
+    if (!_mgpvDrag) return;
+    _mgpvDrag.$d.css({ left: _mgpvDrag.l + (e.clientX - _mgpvDrag.sx), top: _mgpvDrag.t + (e.clientY - _mgpvDrag.sy) });
+});
+$(document).on('mouseup', function () { _mgpvDrag = null; });
+$(document).on('input', '#mgPvListQ', fn_MgPvListDraw);
+</script>
