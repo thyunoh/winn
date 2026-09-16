@@ -1,6 +1,11 @@
 wnn_medcost/target
 target
-.settings
+# Eclipse 프로젝트 설정 — PC 마다 다르므로 올리지 않되 **.jsdtscope 는 올린다**.
+#   ★docs/tools 의 Node 스크립트(=>·async·const)를 Eclipse JS 검사기가 못 읽어 가짜 빨간 X 를 붙인다.
+#     .jsdtscope 가 그 폴더를 검사에서 뺀다 — 한 PC 에서만 고치면 다른 PC 는 pull 해도 X 가 남았다(2026-09-15).
+#   ★폴더째 무시하면(`.settings`) 안의 파일을 되살릴 수 없다 — `.settings/*` 로 내용물만 무시해야 예외(!)가 먹는다.
+.settings/*
+!.settings/.jsdtscope
 .classpath
 bin
 
