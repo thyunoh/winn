@@ -1474,6 +1474,50 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
     return lead + conn + (full? zoneTxt : '<span class="er-hl-bad">'+zoneTxt+'</span>') + cumAna(r);
   }
 
+  /* ── [2026-09-16 검수 · 박혜련] 항정신성의약품 처방률(07) — 당월 청구 SAM 미업로드 문장 ─────────────
+       종전 : 「9월 대상 140명 중 해당 0명으로 30%, 표준화 3점 구간(10~40% 미만)에 해당하여 가중치 3점 중 1.8점 산정.」
+              → 청구가 없어 처방을 알 수 없는데 「해당 0명 · 30%」라 사실처럼 읽혔다.
+       등록 SP(SP_EVALUATION_INDICATORS_REGISTER) : 07 분자 0 + 당월 청구서(H010·H011) 없음 → 현황값 30.00 · 표준화 3점을 넣는다.
+       ⇒ 그 기본값(분자 0 · 현황값 30 · 3점)이면 「분석일 기준 청구 SAM 미업로드로 3점 산정」 으로 쓰고,
+          평가기간 앞달(7월~전월, 7월 보고서는 전월) 실측 처방률(_psyPrev)로 예상 구간·가중치·증감을 붙인다.
+          예상 구간 = 지표 정의(TPL_DEF 07)의 기관 처방률 참고 기준 : 10% 이하 5점 · 40% 이상 1점 · 그 사이 3점.
+          가중치 = SP 와 같게 TRUNCATE(구간 ÷ 5 × 가중치, 2). */
+  function isPsyNoSam(r){
+    return !!r && r.cate_cd==='07' && n(r.ntorval)===0 && Math.abs(n(r.cal_val)-30)<0.001 && n(r.s_score)===3;
+  }
+  function psyZoneOfRate(rate){ rate=n(rate); return rate<=10 ? 5 : (rate>=40 ? 1 : 3); }
+  function psyZoneRangeTxt(z){ return z===5 ? '10% 이하' : (z===1 ? '40% 이상' : '10~40% 미만'); }
+  function psyPeriodTxt(p){
+    var y1=p.from.substring(0,4), m1=+p.from.substring(4,6), y2=p.to.substring(0,4), m2=+p.to.substring(4,6);
+    if (p.from===p.to) return y1+'년 '+m1+'월';
+    return (y1===y2) ? y1+'년 '+m1+'~'+m2+'월' : y1+'년 '+m1+'월~'+y2+'년 '+m2+'월';
+  }
+  /* 분석일 = 표지 작성일(편집·저장되는 칸 — 승인본은 그 날짜로 굳는다). 비었으면 오늘. → '9/16' */
+  function psyAnaDate(){
+    var s = (el('er-coverDate') && el('er-coverDate').textContent) || '';
+    var m = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if (m) return (+m[2])+'/'+(+m[3]);
+    var t = new Date(); return (t.getMonth()+1)+'/'+t.getDate();
+  }
+  function psyNoSamAna(r){
+    var w=n(r.stdweig), got=n(r.weigval), s=n(r.s_score)||3;
+    var html = '<b>'+psyAnaDate()+'일 분석일 기준 청구 SAM 파일 미 업로드 상태로 표준화 '+s+'점, 가중치 '+f1(got)+'점으로 산정함.</b>';
+    var p = _psyPrev;
+    if (!p || !(n(p.d)>0)) return html;                       // 앞달 실측이 없으면 경고 줄은 생략
+    var zs = psyZoneOfRate(p.rate);
+    var wz = Math.floor((zs/5*w)*100 + 1e-6)/100;            // SP 와 같은 TRUNCATE(…,2)
+    var lead = psyPeriodTxt(p)+' 항정신성의약품 처방률은 '+f1(p.rate)+'%로 확인되어 예상 표준화 '+zs+'점 구간('+psyZoneRangeTxt(zs)+')에 해당함.';
+    if (zs < s) {
+      html += '<br><span class="er-hl-bad" style="font-weight:700;">* 다만, '+lead
+            + ' 향후 항정신성의약품 처방률이 표준화 '+zs+'점으로 반영될 경우 가중치 '+f1(wz)+'점으로 산정되어, 현재 적용점수 '+f1(got)+'점 대비 '+f1(got-wz)+'점 감소할 우려가 있음.</span>';
+    } else if (zs > s) {
+      html += '<br>* 참고로, '+lead
+            + ' 향후 항정신성의약품 처방률이 표준화 '+zs+'점으로 반영될 경우 가중치 '+f1(wz)+'점으로 산정되어, 현재 적용점수 '+f1(got)+'점 대비 '+f1(wz-got)+'점 상승할 수 있음.';
+    } else {
+      html += '<br>* 참고로, '+lead+' 현재 적용 구간과 같음.';
+    }
+    return html;
+  }
   /* 평가기간 누적 실적 한 줄 (2026-08-10 요청) — 당월 문장 뒤에 <별도 산출값>으로 붙는다.
        "7~9월 누적 평가대상자 120명 중 유치도뇨관 14일 초과 대상자 5명으로 4.17%,
         표준화 2구간에 해당하여 가중치 3점 중 1.2점 산정."
@@ -4435,6 +4479,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
           auto = '<b>DUR 점검률을 100%로 가정하여 가중치 '+fnum(w)+'점을 산정함.</b><br>'
                + '<span class="er-hl-bad" style="font-weight:700;">다만, 매월 심사평가원의 DUR 점검완료 현황을 확인하여 DUR 점검 누락 대상자를 지속적으로 관리하여야 하며, 점검 결과에 따라 최종 평가 결과 발표 시 점수 차이가 발생할 수 있음.</span><br>'
                + '<span style="color:var(--er-soft);">• 확인 경로: 요양기관업무포털 → 모니터링 → DUR정보 → 기관별 DUR 점검완료현황 → 처방전 조회 및 취소</span>';   /* 확인 경로 — 빨강 아님, 굵기는 본문 따름(2026-08-17) */
+        }
+        /* [2026-09-16 검수] 항정(07) — 당월 청구 SAM 미업로드(등록 SP 기본값 3점)면 분석문을 바꾼다(psyNoSamAna 설명 참조). */
+        if (cd==='07' && isPsyNoSam(r)) {
+          auto = psyNoSamAna(r);
         }
         /* [2026-08-03] Ⅳ 권고사항 통합 — 별도 장이던 권고의 고유 내용(목표 완결문·5구간 병기·%p부족·
              감소 사다리/여유 한도)을 분석내용 박스 안 '목표 :' 줄로 옮기고 Ⅳ장은 삭제했다(사용자 요청).
