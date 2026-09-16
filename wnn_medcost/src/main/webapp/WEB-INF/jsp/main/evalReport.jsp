@@ -1301,6 +1301,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
        당월 처방률은 청구(SAM) 업로드 전이라 알 수 없어 3점 가정인데, <전월 실측>으로 방향을 미리 알려주는 것.
        원천 = select_CategoryList.do cateCd='07'(전월) — 환자별 psyOrderYn('●') 비율. 실패·0명이면 null(문장 생략). */
   var _psyPrev = null;    // { from:'202607', to:'202611', n:●수, d:인월합, rate:% } — 7월 보고서만 전월 단월
+  var _psyPrevSp = null;  // [2026-09-17] 항정(07) 평가기간(7월~전월) 처방률 — 등록 SP 합산(DTOR·NTOR = 점수와 같은 환자 수 기준). 목록(●) 줄 수보다 이쪽이 맞다(수원삼성 9월 64.5% vs 65.2%)
   var prevTotal = null;   // 전월 종합점수 — 총평 P1 전월대비용 (7월=새 평가기간 시작·자료 없음이면 null)
   function prevYmOf(ym){ var y=+ym.substring(0,4), m=+ym.substring(4,6)-1; if(m<1){ m=12; y--; } return String(y)+('0'+m).slice(-2); }
 
@@ -1502,7 +1503,7 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   function psyNoSamAna(r){
     var w=n(r.stdweig), got=n(r.weigval), s=n(r.s_score)||3;
     var html = '<b>'+psyAnaDate()+'일 분석일 기준 청구 SAM 파일 미 업로드 상태로 표준화 '+s+'점, 가중치 '+f1(got)+'점으로 산정함.</b>';
-    var p = _psyPrev;
+    var p = _psyPrevSp || _psyPrev;                       // 등록 SP 합산(점수와 같은 환자 수 기준) 우선, 없으면(7월 보고서) 목록 ● 기준
     if (!p || !(n(p.d)>0)) return html;                       // 앞달 실측이 없으면 경고 줄은 생략
     var zs = psyZoneOfRate(p.rate);
     var wz = Math.floor((zs/5*w)*100 + 1e-6)/100;            // SP 와 같은 TRUNCATE(…,2)
@@ -3629,6 +3630,10 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
         pt += v; if(v>0) pHas = true;
       });
       if(pHas) prevTotal = Math.round(pt*10)/10;
+      /* [2026-09-17] 항정(07) 청구 미업로드 문장용 — 7월~전월 합산 처방률(등록 SP 기준). pcMap 은 aPrevCum(7월~전월) 이라 7월 보고서엔 없다(→ 목록 기준 _psyPrev 로 대신). */
+      _psyPrevSp = (pcMap['07'] && pcMap['07'].dtor>0)
+        ? { from:_cumFrom, to:_prevYm, n:pcMap['07'].ntor, d:pcMap['07'].dtor, rate:Math.round(pcMap['07'].ntor/pcMap['07'].dtor*10000)/100 }
+        : null;
       _bladderGapN = 0;   // '분자제외' 표기된 배뇨 미체크 건만 집계(패드/기저귀 오류는 제외)
       var bd = (r4 && r4[0] && r4[0].data) || [];
       bd.forEach(function(e){ if(String(e.errName||'').indexOf('분자제외')>=0) _bladderGapN++; });
