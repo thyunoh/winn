@@ -5790,7 +5790,12 @@
 		 WHERE HOSP_CD   = #{hospCd}
 		   AND ACTION_YN = 'Y'
 		   AND GOAL_SCORE IS NOT NULL
-		 ORDER BY (START_YY = #{startYy}) DESC, START_YY DESC, QTER_FLAG DESC, UPD_DTTM DESC
+				 <!-- [2026-09-21] 그 달에 <실제로 쓰이는> 신고 분기를 먼저 고른다(프로시저와 같은 규칙).
+		      · 다음 분기 신고가 있으면 그것(7·8·9월 → 4분기) · 없으면 그 달이 속한 분기
+		      · 둘 다 없으면 종전대로 그 해 최신 분기(목표점수는 연간 값이라 표시가 끊기지 않게) -->
+		 ORDER BY (START_YY = #{nextYy}  AND QTER_FLAG = #{nextQt})   DESC,
+		          (START_YY = #{startYy} AND QTER_FLAG = #{qterFlag}) DESC,
+		          (START_YY = #{startYy}) DESC, START_YY DESC, QTER_FLAG DESC, UPD_DTTM DESC
 		 LIMIT 1
 	</select>
 

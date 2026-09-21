@@ -369,6 +369,12 @@ public class UserServiceImpl implements UserService {
 		return mapper.getHospContList(dto);
 	}	
 	
+		/** [2026-09-21] 그 달 자료생성(TBL_PAT_INDI) 이 되어 있는지 — 구조영역 자동 재계산 대상 판별 */
+	@Override
+	public int countPatIndiMonth(HospGrdDTO dto) throws Exception {
+		return mapper.countPatIndiMonth(dto);
+	}
+
 	@Override
 	public void callIndicatorsStructureZone(HospGrdDTO dto) throws Exception {
 		// TODO Auto-generated method stub

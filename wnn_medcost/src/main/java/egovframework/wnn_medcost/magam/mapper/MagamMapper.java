@@ -93,7 +93,9 @@ public interface MagamMapper {
 	// 차등제 등록(TBL_GRADE_MST) 목표점수/병원등급 — 월보고서 목표값 기본소스
 	Map<String, Object> selectHospGoalGrade(@Param("hospCd") String hospCd,
 	                                        @Param("startYy") String startYy,
-	                                        @Param("qterFlag") String qterFlag);
+	                                        @Param("qterFlag") String qterFlag,
+	                                        @Param("nextYy") String nextYy,      // [2026-09-21] 다음 분기(적용 우선)
+	                                        @Param("nextQt") String nextQt);
 	// 운영사용 여부(TBL_HOSPCONT_MST.NOR_YN, 적정성평가 계약 기준) — 월보고서 Ⅳ 이하 공개 판단
 	String selectHospNorYn(@Param("hospCd") String hospCd);
 	// 월보고서 메일발송 / 열람(읽음) 기록

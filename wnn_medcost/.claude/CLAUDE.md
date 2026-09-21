@@ -1836,6 +1836,22 @@
 - **부수 변경**: magamFileUpload.jsp 예상시간 공식 80/25줄/초 → 3초+600/120줄/초. (JSP만이라 WAR 재빌드 불필요하나 다음 배포에 포함할 것)
 - **후속 (2026-07-09 오후, 대형 파일 90000 실패)**: 4.9MB/2.6만줄 GHP 업로드가 진행바 100% 후 한참 돌다 `90000` 실패. **원인은 자바 쪽 TBL_FILES_DATA 적재** — MyBatis foreach가 2.6만행을 한 문장(6MB+, 파라미터 34만개)으로 생성하다 예외(+ DBCP removeAbandonedTimeout 300초 강제회수 가능성). **조치**: ① [MagamServiceImpl] `insertFilesDataBatch` 신설 = 순수 JDBC 배치(1000행 단위 executeBatch, URL의 rewriteBatchedStatements=true로 multi-row 변환, 단일 커넥션 마지막 commit이라 전체성공/전체취소 유지). `uploadMagamFilesMain`/`uploadMagamFilesOnly` 둘 다 이걸 쓰도록 교체(기존 mapper.uploadMagamFilesMain XML은 잔존·미사용) ② [context-datasource.xml] removeAbandonedTimeout 300→900 (양 프로파일). **주의**: 기존 `jdbcTemplate` 필드는 @Autowired가 없어 null(uploadMagamFilesBatch는 죽은 코드 — 호출하면 NPE) → DataSource 직접 주입 방식 사용. **자바+XML 변경 → WAR 재빌드 필수.**
 
+### [대기 · DB 적용 필요] 구조영역(01~04) — 다음 분기 차등제를 신고해도 지난달이 안 바뀌던 것 (2026-09-21 · 울산효원요양병원)
+- **요청**: 「2026년 4분기 차등제 신고값을 입력하면 7·8·9월 구조영역이 4분기 기준으로 재산출되어야 하는데 3분기 값 그대로다. 작년까지는 바뀌었다.」
+  규칙 = **N분기 신고값은 직전 분기 석 달에 적용** : 4분기 신고 전 7~9월=3분기 → 신고 후 **4분기로 재산출** · 1분기 신고 전 10~12월=4분기 → 신고 후 이듬해 1분기.
+- **원인 둘** : ①두 프로시저가 **달→분기 고정**(7·8·9월은 언제나 같은 해 QTER_FLAG='3')이라 다음 분기 신고를 아예 안 본다
+  ②작년까지 바뀌던 것은 차등제 저장 때 **직전 분기에 값을 복사하고 재계산**하던 코드 덕이었는데 2026-07-03 「한 번 저장 = 한 분기」 요청으로 빠졌다(그래서 2026년부터 증상).
+- **고침(복사 방식으로 되돌리지 않는다 — 규칙 자체를 프로시저에)** :
+  · ⛔**DB 적용 필요** [CREATE2](docs/sql/proc/SP_EVALUATION_INDICATORS_CREATE2_2026-09-21.sql) · [STRUCTURE_ZONE](docs/sql/proc/SP_INDICATORS_STRUCTURE_ZONE_2026-09-21.sql)
+    (원복 = `BACKUP_*_20260921.sql`) — 그 달에 쓸 분기를 **다음 분기 우선·없으면 같은 분기**로 고르고, **약사 분모 기간도 고른 분기**를 따른다(4분기 = 6/15~9/14),
+    차등제 중복 행은 최신 1건만(SELECT…INTO 1172 방지), 달마다 값 변수 0 초기화(재계산 프로시저에서 앞달 값이 남던 것). ★**2026년 1월 이후 달만** 새 규칙(사용자 「2026년도부터 변경」).
+  · **자바** : `UserController.saveHospGrd` → 저장 뒤 `recalcStructureMonths` 로 **그 신고값이 쓰이는 달만 구조영역 재계산**(직전 분기 3달 + 자기 분기 3달, 2026년 이후·지난 달·자료생성된 달만).
+    판별 조회 `countPatIndiMonth` 신설(User_SQL·매퍼·서비스·구현). 월보고서 `selectHospGoalGrade` 는 **적용 분기(다음 분기) 우선**으로 고른다(라벨 「*2026년 4분기 신고 기준 산출」이 실제 계산과 어긋나지 않게).
+- **검증** : 프로시저 2개를 **임시 이름(ZZ_SYNTAX_TEST_*)으로 만들어 문법 확인 후 삭제**(운영 원본 무변경) · javac(자바 6개) · 매퍼 XML 정형성·id 중복 0.
+- ⚠**점수가 움직인다** — 울산효원(38282682) 실측 : 7~9월이 3분기(환자 166.33·간호사 16.26·간호인력 39.79) → 4분기(173.32·18.15·41.87)로 바뀌면
+  의사 1인당 33.27(3구간·5.10점) → **34.66(2구간·3.40점)**. 10월은 이미 4분기라 그대로. 적용 뒤 해당 병원·월을 자료생성하거나 차등제를 다시 저장해야 반영된다.
+- ⚠`SP_EVALUATION_INDICATORS_CREATE`·`CREATE3` 은 호출되지 않는 옛 판이라 손대지 않았다(2026-08-17 확인과 같음).
+
 ### [완료] 차등제(01~04) 저장 안됨 + 직전분기 자동복제 + 저장분기 그리드 신설 (2026-07-03)
 - **증상 1 (업데이트 안 됨)**: 분기 선택 후 저장해도 값이 이전 그대로. **원인**: `saveHospGrd`가 `INSERT ... ON DUPLICATE KEY UPDATE`인데 TBL_GRADE_MST에 (HOSP_CD,START_YY,QTER_FLAG) UNIQUE 키가 없으면 매 저장이 새 행 추가 → `selectHospGrd`가 `LIMIT 1`(정렬 없음)로 **옛 행**을 읽음. **조치**: [UserServiceImpl.saveHospGrd] = **UPDATE 먼저(`updateHospGrdData` 신설) → 0건이면 INSERT**, `selectHospGrd`에 `ORDER BY UPD_DTTM DESC` 추가. 기존 중복행은 다음 저장 때 전부 같은 값으로 수렴(삭제 불필요).
 - **증상 2 (하나 저장했는데 두 분기 생김)**: 컨트롤러 `saveHospGrd.do`가 저장 전에 **직전 분기에도 동일 값 자동복제 저장**(+직전분기 구조영역 재계산). 사용자 요청으로 **제거** — 한 번 저장 = 선택 분기 1건만. `callIndicatorsStructureZone`은 현재 미호출(코드 잔존, 지표 재계산은 화면 fn_CreateData가 수행).

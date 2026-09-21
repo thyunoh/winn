@@ -2219,6 +2219,13 @@ public class UserController extends BaseController {
 
 	            svc.saveHospGrd(dto);
 	            svc.yearSaveHospGrd(dto);
+
+	            /* [2026-09-21] 차등제 저장 → 그 신고값이 쓰이는 달의 <구조영역(01~04)만> 자동 재계산.
+	               요청 : 울산효원요양병원 「4분기를 신고하면 7·8·9월이 4분기 값으로 다시 계산되어야 한다」.
+	               ★2026-07-03 에 뺀 「직전 분기 복사 저장」은 되살리지 않는다 — 저장은 여전히 고른 분기 1건뿐이고,
+	                 달→분기 규칙(다음 분기 우선)은 프로시저가 갖는다. 여기서는 그 달들을 다시 계산만 한다.
+	               ★실패해도 저장은 되돌리지 않는다(재계산은 화면 [자료생성]으로도 가능). */
+	            try { recalcStructureMonths(dto); } catch (Exception ex) { ex.printStackTrace(); }
 	        }
 
 	        return ResponseEntity.ok("OK");
@@ -2226,6 +2233,44 @@ public class UserController extends BaseController {
 	        e.printStackTrace();
 	        return ResponseEntity.status(500).body("Error: " + e.getMessage());
 	    }
+	}
+	/**
+	 * [2026-09-21] 차등제 한 분기(startYy·qterFlag)의 값이 쓰이는 달 목록을 구조영역만 다시 계산한다.
+	 *   · 직전 분기 석 달 — 이 신고값이 <우선> 적용되는 달 (예: 2026-4분기 → 2026년 7·8·9월)
+	 *   · 자기 분기 석 달 — 다음 분기가 신고되기 전까지 쓰이는 달 (예: 2026-4분기 → 10·11·12월)
+	 *   건너뛰는 달 : 2026년 1월 이전(옛 규칙 유지) · 아직 오지 않은 달 · 그 달 자료생성이 안 된 병원
+	 */
+	private void recalcStructureMonths(HospGrdDTO dto) throws Exception {
+		if (dto == null || dto.getHospCd() == null) return;
+		String yy = (dto.getStartYy()  == null) ? "" : dto.getStartYy().trim();
+		String qt = (dto.getQterFlag() == null) ? "" : dto.getQterFlag().trim();
+		if (yy.length() != 4 || qt.isEmpty()) return;
+
+		int y = Integer.parseInt(yy);
+		int q = Integer.parseInt(qt);
+		java.util.List<String> months = new java.util.ArrayList<String>();
+		int py = (q == 1) ? y - 1 : y;
+		int pq = (q == 1) ? 4 : q - 1;
+		for (int i = 0; i < 3; i++) months.add(String.format("%04d%02d", py, (pq - 1) * 3 + 1 + i));   // 직전 분기 석 달
+		for (int i = 0; i < 3; i++) months.add(String.format("%04d%02d", y,  (q  - 1) * 3 + 1 + i));   // 자기 분기 석 달
+
+		String now = new java.text.SimpleDateFormat("yyyyMM").format(new java.util.Date());
+		for (String ym : months) {
+			if (ym.compareTo("202601") < 0) continue;   // 새 규칙은 2026년 1월 이후 달만
+			if (ym.compareTo(now)      > 0) continue;   // 아직 오지 않은 달은 만들지 않는다
+
+			HospGrdDTO p = new HospGrdDTO();
+			p.setHospCd(dto.getHospCd());
+			p.setJobYm(ym);
+			p.setStrYm(ym);
+			p.setEndYm(ym);
+			p.setRegUser(dto.getUpdUser() != null ? dto.getUpdUser() : dto.getRegUser());
+
+			if (svc.countPatIndiMonth(p) == 0) continue;   // 그 달 자료생성 전이면 건드리지 않는다
+
+			svc.callIndicatorsStructureZone(p);
+			System.out.println("구조영역 재계산: " + dto.getHospCd() + " " + ym);
+		}
 	}
 	@RequestMapping(value="/selectHospGrd.do", method = RequestMethod.POST)
 	@ResponseBody

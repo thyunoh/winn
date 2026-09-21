@@ -580,7 +580,13 @@ public class MagamServiceImpl implements MagamService {
 			String startYy = evalYm.substring(0, 4);
 			int mon = Integer.parseInt(evalYm.substring(4, 6));
 			String qterFlag = String.valueOf((mon + 2) / 3);
-			Map<String, Object> goal = mapper.selectHospGoalGrade(hospCd, startYy, qterFlag);
+			/* [2026-09-21] 그 달에 실제로 쓰이는 신고 분기 = 다음 분기(있으면) — 프로시저와 같은 규칙.
+			   2026년 1월 이전 달은 종전대로(같은 값을 넘겨 우선순위를 중립으로 둔다). */
+			int qn = Integer.parseInt(qterFlag);
+			String nextYy = (qn == 4) ? String.valueOf(Integer.parseInt(startYy) + 1) : startYy;
+			String nextQt = (qn == 4) ? "1" : String.valueOf(qn + 1);
+			if (evalYm.compareTo("202601") < 0) { nextYy = startYy; nextQt = qterFlag; }
+			Map<String, Object> goal = mapper.selectHospGoalGrade(hospCd, startYy, qterFlag, nextYy, nextQt);
 			res.put("goal", goal);   // {goalscore, hospgrade} 또는 null(미등록)
 		}
 		// 운영사용 여부(적정성평가 계약의 NOR_YN) — 'Y' 가 아니면 병원 사용자에게 Ⅳ 이하(권고·로드맵·총평)를 숨긴다.

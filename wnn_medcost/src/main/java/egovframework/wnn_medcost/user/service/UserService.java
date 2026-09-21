@@ -94,4 +94,5 @@ public interface UserService {
 	java.util.List<HospGrdDTO> selectHospGrdList(HospGrdDTO dto) throws Exception;
 
 	void callIndicatorsStructureZone(HospGrdDTO dto)      throws Exception;
+	int              countPatIndiMonth(HospGrdDTO dto)    throws Exception;   // [2026-09-21] 그 달 자료생성 여부
 }

@@ -1742,6 +1742,13 @@
      ]]>   
     </update>    
    
+    <!-- [2026-09-21] 그 달 자료생성이 되어 있는지 — 차등제 저장 뒤 구조영역 자동 재계산 대상 판별 -->
+    <select id="countPatIndiMonth" parameterType="HospGrdDTO" resultType="int">
+        SELECT COUNT(*)
+          FROM TBL_PAT_INDI
+         WHERE HOSP_CD = #{hospCd}
+           AND JOBYYMM = #{jobYm}
+    </select>
     <select id="callIndicatorsStructureZone" statementType="CALLABLE">
     	{ CALL SP_INDICATORS_STRUCTURE_ZONE(
 	        #{hospCd,    mode=IN, jdbcType=VARCHAR},
