@@ -1,0 +1,399 @@
+<meta charset="utf-8">
+<title>업무 에이전트 착수 결정표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap">
+
+<style>
+  /* 위너넷 문서 공통 토큰 — AI 미팅체크리스트 2026-08-30 과 동일 */
+  :root{
+    --bg:#eef2f5; --surface:#ffffff; --surface-2:#f4f8fb; --surface-3:#e6edf3;
+    --ink:#16222e; --ink-2:#516070; --ink-3:#7c8a98;
+    --line:#dbe3ea; --line-2:#c7d3dd;
+    --blue:#1f6fb0; --blue-strong:#0d5386; --blue-soft:#e9f2fa;
+    --amber:#b45309; --amber-soft:#fbf1e2; --amber-line:#e3c391;
+    --green:#1f7a52; --green-soft:#e6f3ec;
+    --shadow:0 1px 2px rgba(20,40,60,.06), 0 8px 24px rgba(20,40,60,.06);
+    --maxw:840px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d151d; --surface:#152029; --surface-2:#111b24; --surface-3:#1b2833;
+      --ink:#e7eef4; --ink-2:#a4b3c0; --ink-3:#7a8996;
+      --line:#243543; --line-2:#31465a;
+      --blue:#57a6df; --blue-strong:#8ac2ec; --blue-soft:#122839;
+      --amber:#e0a458; --amber-soft:#2a2013; --amber-line:#5a4325;
+      --green:#5cbd8c; --green-soft:#122a1e;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d151d; --surface:#152029; --surface-2:#111b24; --surface-3:#1b2833;
+    --ink:#e7eef4; --ink-2:#a4b3c0; --ink-3:#7a8996;
+    --line:#243543; --line-2:#31465a;
+    --blue:#57a6df; --blue-strong:#8ac2ec; --blue-soft:#122839;
+    --amber:#e0a458; --amber-soft:#2a2013; --amber-line:#5a4325;
+    --green:#5cbd8c; --green-soft:#122a1e;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Pretendard Variable","Pretendard","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
+    line-height:1.68; letter-spacing:-.011em; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:48px 22px 96px; display:flex; flex-direction:column; gap:26px}
+
+  /* ── 머리 ── */
+  .doc-head{display:flex; flex-direction:column; gap:11px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; font-weight:600;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--blue); margin:0;
+  }
+  h1{font-size:clamp(26px,4vw,34px); line-height:1.18; margin:0; font-weight:700; letter-spacing:-.028em; text-wrap:balance}
+  .lede{margin:0; font-size:16px; color:var(--ink-2); max-width:60ch; font-weight:300}
+
+  /* ── 미팅 기입란 ── */
+  .slate{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px 18px;
+  }
+  .slot{display:flex; flex-direction:column; gap:3px}
+  .slot label{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+  }
+  .slot input{
+    font:inherit; font-size:14px; color:var(--ink); background:transparent;
+    border:none; border-bottom:1px solid var(--line-2); padding:3px 1px; width:100%;
+  }
+  .slot input:focus{outline:none; border-bottom-color:var(--blue); border-bottom-width:2px; padding-bottom:2px}
+
+  /* ── 1분 브리핑 ── */
+  .brief{
+    background:var(--blue-soft); border:1px solid color-mix(in srgb,var(--blue) 26%,transparent);
+    border-radius:10px; padding:16px 18px; display:flex; flex-direction:column; gap:7px;
+  }
+  .brief .lb{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--blue-strong);
+  }
+  .brief p{margin:0; font-size:14.2px; color:var(--ink-2); max-width:64ch}
+  .brief strong{color:var(--ink); font-weight:600}
+
+  /* ── 구분 띠 ── */
+  .band{display:flex; align-items:center; gap:11px; margin-top:8px}
+  .band h2{
+    margin:0; font-size:13px; font-weight:600; letter-spacing:.04em; white-space:nowrap;
+    font-family:"IBM Plex Mono",ui-monospace,monospace; text-transform:uppercase;
+  }
+  .band .rule{flex:1; height:1px; background:var(--line-2)}
+  .band.key h2{color:var(--amber)}
+  .band.key .rule{background:var(--amber-line)}
+  .band.rest h2{color:var(--ink-3)}
+
+  /* ── 문항 ── */
+  .items{display:flex; flex-direction:column; gap:14px}
+  .item{
+    background:var(--surface); border:1px solid var(--line); border-radius:11px;
+    padding:18px 20px; display:flex; flex-direction:column; gap:13px; box-shadow:var(--shadow);
+    break-inside:avoid;
+  }
+  .item.key{border-color:var(--amber-line); border-left:3px solid var(--amber)}
+  .q{display:flex; gap:12px; align-items:baseline}
+  .qn{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; font-weight:600;
+    color:var(--surface); background:var(--ink-3); border-radius:5px; padding:2px 8px; flex:0 0 auto;
+  }
+  .item.key .qn{background:var(--amber)}
+  .qt{margin:0; font-size:16.5px; font-weight:600; letter-spacing:-.018em; line-height:1.45}
+  .qt em{font-style:normal; color:var(--blue-strong)}
+
+  .why{
+    margin:0; font-size:13.6px; color:var(--ink-2); padding-left:14px;
+    border-left:2px solid var(--line-2); max-width:62ch;
+  }
+  .why b{color:var(--ink); font-weight:600}
+
+  /* 선택지 */
+  .opts{display:flex; flex-direction:column; gap:7px}
+  .opt{
+    display:flex; gap:10px; align-items:flex-start; padding:9px 12px;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:8px; cursor:pointer;
+  }
+  .opt:hover{border-color:var(--line-2)}
+  .opt input{margin:4px 0 0; accent-color:var(--blue); width:15px; height:15px; flex:0 0 auto; cursor:pointer}
+  .opt input:focus-visible{outline:2px solid var(--blue); outline-offset:2px}
+  .opt .ot{display:flex; flex-direction:column; gap:2px; font-size:13.8px}
+  .opt .oa{font-weight:600}
+  .opt .ob{color:var(--ink-3); font-size:12.8px; line-height:1.55}
+  .opt:has(input:checked){background:var(--blue-soft); border-color:color-mix(in srgb,var(--blue) 38%,transparent)}
+
+  /* 갈림 */
+  .fork{
+    font-size:13px; color:var(--ink-2); background:var(--surface-2);
+    border:1px dashed var(--line-2); border-radius:8px; padding:10px 13px; display:flex; flex-direction:column; gap:4px;
+  }
+  .fork .fl{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+  }
+  .fork b{color:var(--ink); font-weight:600}
+
+  /* 메모 */
+  .memo{display:flex; flex-direction:column; gap:4px}
+  .memo label{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+  }
+  .memo textarea{
+    font:inherit; font-size:14px; line-height:1.6; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+    padding:9px 11px; min-height:52px; resize:vertical; width:100%;
+  }
+  .memo textarea:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-soft)}
+  .memo textarea::placeholder{color:var(--ink-3)}
+
+  /* ── 꼬리 ── */
+  .after{
+    background:var(--green-soft); border:1px solid color-mix(in srgb,var(--green) 30%,transparent);
+    border-radius:10px; padding:15px 17px; display:flex; flex-direction:column; gap:6px;
+  }
+  .after .lb{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--green);
+  }
+  .after p{margin:0; font-size:14px; color:var(--ink-2); max-width:64ch}
+  .after strong{color:var(--ink); font-weight:600}
+
+  footer{color:var(--ink-3); font-size:12.3px; display:flex; flex-direction:column; gap:4px; padding-top:6px; border-top:1px solid var(--line)}
+  footer .fl{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  code{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.88em; background:var(--surface-3); padding:1px 5px; border-radius:4px}
+  .saved{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; color:var(--ink-3);
+    text-align:right; min-height:16px;
+  }
+
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+
+  /* ── 인쇄 (A4) ── */
+  @media print{
+    @page{size:A4; margin:14mm 12mm}
+    body{background:#fff; color:#000; font-size:11pt}
+    .wrap{max-width:none; padding:0; gap:14px}
+    .item,.slate,.brief,.after{box-shadow:none; break-inside:avoid}
+    .memo textarea{min-height:44px; background:#fff; border:1px solid #bbb}
+    .slot input{border-bottom:1px solid #999}
+    .opt{background:#fff}
+    .saved{display:none}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="doc-head">
+    <p class="eyebrow">위너넷 · 미팅 체크리스트</p>
+    <h1>업무 에이전트 착수 결정표</h1>
+    <p class="lede">
+      「WinCheck+ 업무 에이전트」 제안서 10절을 미팅에서 바로 쓰도록 뽑은 표.
+      여덟 문항 중 <strong>①②③만 착수 그림을 가른다</strong> — 시간이 모자라면 그 셋만 받아 온다.
+    </p>
+  </header>
+
+  <div class="slate">
+    <div class="slot"><label for="m-date">일자</label><input id="m-date" type="text" placeholder="2026-  -  "></div>
+    <div class="slot"><label for="m-who">참석</label><input id="m-who" type="text" placeholder="이름 · 소속"></div>
+    <div class="slot"><label for="m-rec">기록</label><input id="m-rec" type="text" placeholder="작성자"></div>
+  </div>
+
+  <div class="brief">
+    <span class="lb">먼저 한 문단으로</span>
+    <p>
+      Ai 365 같은 「Copilot 에이전트」가 하는 일은 셋 — <strong>자료 찾아 답하기 · 말로 조회하기 · 규칙대로 알리기</strong>.
+      WinCheck+ 에는 지식 DB 336건 · 병원 격리 권한 · 지표 · 계약 · 발송 로그가 이미 있어,
+      <strong>제품을 사지 않아도 대부분 안에서 된다.</strong> 1단계(알림 · 규정 Q&amp;A)는 새 표 없이 끝난다.
+      없는 것은 외부 통신 허용과 개인정보 차단층, 그리고 사무실 자료로 가는 길이다.
+    </p>
+  </div>
+
+  <div class="band key"><h2>착수 그림을 가르는 세 문항</h2><span class="rule"></span></div>
+
+  <div class="items">
+
+    <!-- 1 -->
+    <article class="item key">
+      <div class="q">
+        <span class="qn">01</span>
+        <h3 class="qt">이 컨셉을 <em>외부 제품으로 도입</em>할까요, <em>WinCheck+ 안에 직접</em> 만들까요?</h3>
+      </div>
+      <p class="why">
+        Ai 365 는 <b>Microsoft 365(Teams·SharePoint) 위에서 도는 제품</b>이다. 위너넷은 MS 365 를 쓰지 않고, 우리 자료는 WinCheck+ DB 에 있다.
+        도입하면 그 제품에 우리 DB 를 잇는 개발이 따로 필요하다.
+      </p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q1"><span class="ot">
+          <span class="oa">WinCheck+ 안에 직접 (제안서 방향)</span>
+          <span class="ob">있는 화면·권한·DB 위에 창을 얹는다. 병원이 쓰는 화면과 같은 곳이라 따로 로그인할 일이 없다. 호출 비용만 든다.</span></span></label>
+        <label class="opt"><input type="radio" name="q1"><span class="ot">
+          <span class="oa">외부 제품 도입</span>
+          <span class="ob">사내 업무(연차·기안) 쪽은 빨리 붙을 수 있다. 대신 라이선스 비용과 MS 365 전환, 우리 DB 연동 개발이 같이 온다. 병원 화면에는 못 쓴다.</span></span></label>
+        <label class="opt"><input type="radio" name="q1"><span class="ot">
+          <span class="oa">나눠서 — 병원 업무는 직접, 사내 업무는 외부</span>
+          <span class="ob">병원을 위한 AG1~AG4·AG7~AG10 은 WinCheck+ 에, 위너넷 사내 연차·기안(AG11)만 그룹웨어·외부 제품으로.</span></span></label>
+      </div>
+      <div class="memo"><label for="n1">받아온 답 · 이유</label><textarea id="n1" placeholder="누가 어떤 이유로 그렇게 말했는지까지"></textarea></div>
+    </article>
+
+    <!-- 2 -->
+    <article class="item key">
+      <div class="q">
+        <span class="qn">02</span>
+        <h3 class="qt">운영 서버에서 <em>외부 LLM API</em> 를 부를 수 있게 방화벽을 열어도 됩니까?</h3>
+      </div>
+      <p class="why">
+        <b>1단계 일정이 이 문항에 달려 있다.</b> 지금 운영 서버는 밖으로 나가는 HTTPS 가 막혀 있다.
+        보내는 것은 규정 원문과 집계 수치뿐이고, 환자 이름·번호는 조회 함수가 애초에 돌려주지 않는다.
+      </p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q2"><span class="ot">
+          <span class="oa">연다 — LLM 주소 하나만</span>
+          <span class="ob">1단계 Q&amp;A 답변(AG1)과 2단계 조회 창이 계획대로 간다. 보내는 것·안 보내는 것 목록을 문서로 고정한다.</span></span></label>
+        <label class="opt"><input type="radio" name="q2"><span class="ot">
+          <span class="oa">안 연다</span>
+          <span class="ob">알림(AG2)만 먼저 간다 — LLM 이 필요 없다. 나머지는 원내 모델을 확보한 뒤로 밀린다.</span></span></label>
+        <label class="opt"><input type="radio" name="q2"><span class="ot">
+          <span class="oa">보안 검토 후 결정</span>
+          <span class="ob">검토 동안 AG2 알림을 먼저 만든다. 검토에 쓸 「보내는 자료 목록」 초안을 이쪽에서 먼저 드린다.</span></span></label>
+      </div>
+      <div class="memo"><label for="n2">받아온 답 · 조건</label><textarea id="n2" placeholder="허용 범위, 검토 담당자, 기한"></textarea></div>
+    </article>
+
+    <!-- 3 -->
+    <article class="item key">
+      <div class="q">
+        <span class="qn">03</span>
+        <h3 class="qt">사무실 <em>로컬 DB</em> 의 자료(계약 금액·입금·거래처)를 에이전트가 써야 합니까?</h3>
+      </div>
+      <p class="why">
+        운영 DB 에는 <b>계약 금액·매출 칸이 없다.</b> 「한빛 계약 금액 얼마야」에 답하려면 사무실 자료가 필요하다.
+        길은 사무실 PC 의 수집 프로그램이 필요한 표만 밤마다 올리는 방식(샘파일 감시 프로그램과 같은 구조) — 방화벽을 안 연다.
+      </p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q3"><span class="ot">
+          <span class="oa">쓴다 — 수집 프로그램으로</span>
+          <span class="ob">무슨 프로그램(DB 종류)인지와 읽어도 되는 표를 받아 와야 한다. 주민번호·계좌번호는 읽지 않는다.</span></span></label>
+        <label class="opt"><input type="radio" name="q3"><span class="ot">
+          <span class="oa">안 쓴다 — 계약 표에 금액 칸만 더한다</span>
+          <span class="ob">위너넷이 계약관리 화면에 금액을 직접 적는다. 회계와 이중 입력이 된다.</span></span></label>
+        <label class="opt"><input type="radio" name="q3"><span class="ot">
+          <span class="oa">금액은 안 다룬다</span>
+          <span class="ob">영업 창은 계약 구분·기간·열람률·가입신청까지만 답한다. 가장 빠르다.</span></span></label>
+      </div>
+      <div class="memo"><label for="n3">받아온 답 · 프로그램명 · 읽을 표</label><textarea id="n3" placeholder="예: ○○회계 / MS-SQL / 계약·입금 표"></textarea></div>
+    </article>
+
+  </div>
+
+  <div class="band rest"><h2>시간이 남으면</h2><span class="rule"></span></div>
+
+  <div class="items">
+
+    <!-- 4 -->
+    <article class="item">
+      <div class="q"><span class="qn">04</span><h3 class="qt">규정 Q&amp;A 답변을 <em>병원에 바로</em> 열까요, 위너넷이 먼저 써 볼까요?</h3></div>
+      <p class="why">병원에 열면 「AI 요약」 표기와 오답 신고 창구가 먼저 있어야 한다.</p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q4"><span class="ot"><span class="oa">위너넷 먼저 한두 달 → 병원</span><span class="ob">답 못 한 질문을 먼저 채워 두고 연다. 안전하다.</span></span></label>
+        <label class="opt"><input type="radio" name="q4"><span class="ot"><span class="oa">병원에 바로</span><span class="ob">표기 문구를 이 자리에서 정해야 한다.</span></span></label>
+      </div>
+      <div class="memo"><label for="n4">메모 · 표기 문구</label><textarea id="n4" placeholder="예: 「AI 가 자료를 요약한 답입니다 · 근거를 확인하세요」"></textarea></div>
+    </article>
+
+    <!-- 5 -->
+    <article class="item">
+      <div class="q"><span class="qn">05</span><h3 class="qt">알림은 어느 <em>통로</em>로 보냅니까?</h3></div>
+      <p class="why">화면 상단 띠·메일은 지금 있다. 카카오 알림톡·문자는 발신 프로필·비용 계약이 필요하다.</p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q5"><span class="ot"><span class="oa">화면 띠 · 메일로 시작</span><span class="ob">1단계에 충분하다. 반응률을 보고 넓힌다.</span></span></label>
+        <label class="opt"><input type="radio" name="q5"><span class="ot"><span class="oa">알림톡 · 문자까지</span><span class="ob">병원 담당자가 화면에 잘 안 들어오면 이쪽이 낫다. 계약 담당을 정한다.</span></span></label>
+      </div>
+      <div class="memo"><label for="n5">메모</label><textarea id="n5"></textarea></div>
+    </article>
+
+    <!-- 6 -->
+    <article class="item">
+      <div class="q"><span class="qn">06</span><h3 class="qt"><em>로그인 이력 · 내보내기 이력</em> 표를 만들까요?</h3></div>
+      <p class="why">지금 로그인은 서버 로그에만, 명단 엑셀·PDF 내보내기는 기록이 없다. 「안 들어오는 병원」「명단 대량 내려받기」가 여기에 달려 있다.</p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q6"><span class="ot"><span class="oa">만든다</span><span class="ob">표 둘이라 작다. 보안 점검 자료로도 쓴다.</span></span></label>
+        <label class="opt"><input type="radio" name="q6"><span class="ot"><span class="oa">보류 — 보고서 열람 로그로 갈음</span><span class="ob">이탈 신호는 월보고서 열람 여부로만 본다.</span></span></label>
+      </div>
+      <div class="memo"><label for="n6">메모</label><textarea id="n6"></textarea></div>
+    </article>
+
+    <!-- 7 -->
+    <article class="item">
+      <div class="q"><span class="qn">07</span><h3 class="qt">위너넷 <em>사내 연차 · 기안 · 경비</em>는 지금 어디서 관리합니까?</h3></div>
+      <p class="why">WinCheck+ 에는 사내 인사·결재 표가 없다. 답에 따라 AG11(사내 업무)의 길이 갈린다. 사내 규정 조회는 문서만 있으면 먼저 간다.</p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q7"><span class="ot"><span class="oa">그룹웨어 · 로컬 DB</span><span class="ob">03번과 같은 수집 프로그램으로 읽는다.</span></span></label>
+        <label class="opt"><input type="radio" name="q7"><span class="ot"><span class="oa">엑셀 · 종이</span><span class="ob">WinCheck+ 에 사내 표를 새로 둔다. 문서전산화 견적서 승인이 첫 사내 결재가 된다.</span></span></label>
+        <label class="opt"><input type="radio" name="q7"><span class="ot"><span class="oa">사내 업무는 이번 범위에서 뺀다</span><span class="ob">01번에서 「나눠서」를 골랐다면 자연히 이쪽이다.</span></span></label>
+      </div>
+      <div class="memo"><label for="n7">메모 · 프로그램명 · 사내 규정 문서 위치</label><textarea id="n7"></textarea></div>
+    </article>
+
+    <!-- 8 -->
+    <article class="item">
+      <div class="q"><span class="qn">08</span><h3 class="qt">1단계 결과를 <em>언제, 누구에게</em> 보여 드릴까요?</h3></div>
+      <p class="why">1단계(알림 + 규정 Q&amp;A)는 개발 1인 기준 0~2개월. 중간에 한 번 보면 방향이 안 틀어진다.</p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q8"><span class="ot"><span class="oa">한 달 뒤 알림 먼저 시연</span><span class="ob">LLM 없이 되는 AG2 로 체감부터.</span></span></label>
+        <label class="opt"><input type="radio" name="q8"><span class="ot"><span class="oa">두 달 뒤 1단계 전체</span><span class="ob">알림 + Q&amp;A 답변을 한 번에.</span></span></label>
+      </div>
+      <div class="memo"><label for="n8">일정 · 시연 대상</label><textarea id="n8"></textarea></div>
+    </article>
+
+  </div>
+
+  <div class="after">
+    <span class="lb">미팅 끝나고</span>
+    <p>
+      <strong>①②③의 답만 알려주시면</strong> 그 조합에 맞춰 1단계 설계로 넘어갑니다.
+      ②가 「안 연다」여도 알림(AG2)은 바로 시작할 수 있습니다. 나머지 다섯은 나오는 대로 반영합니다.
+    </p>
+  </div>
+
+  <div class="saved" id="saved" aria-live="polite"></div>
+
+  <footer>
+    <span class="fl">위너넷 · 업무 에이전트 착수 결정표 · 2026-09-22</span>
+    <span>본문 근거 — 위너넷_업무에이전트_제안_2026-09-22.html 06·10절 · 화면 시안 위너넷_업무에이전트_시안_2026-09-22.html. 에이전트 번호(AG1~AG11)는 그 문서와 같다.</span>
+    <span>적은 내용은 이 브라우저에만 남는다(다른 PC·다른 사람에게는 안 보인다). 인쇄하면 A4 로 나온다.</span>
+  </footer>
+
+</div>
+
+<script>
+  // 미팅 중 적은 것이 새로고침으로 날아가지 않게 — 이 브라우저에만 저장
+  (function(){
+    var KEY = 'wincheck-agent-meeting-2026-09-22';
+    var saved = document.getElementById('saved');
+    var fields = [];
+    document.querySelectorAll('input[type="text"], textarea').forEach(function(el){ fields.push({ el: el, k: el.id, t: 'v' }); });
+    document.querySelectorAll('input[type="radio"]').forEach(function(el, i){ el.id = el.id || ('r_' + el.name + '_' + i); fields.push({ el: el, k: el.id, t: 'c' }); });
+    function read(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
+    var t;
+    function stamp(msg){ saved.textContent = msg; clearTimeout(t); t = setTimeout(function(){ saved.textContent = ''; }, 2200); }
+    function save(){
+      var d = {}; fields.forEach(function(f){ d[f.k] = (f.t === 'v') ? f.el.value : f.el.checked; });
+      try { localStorage.setItem(KEY, JSON.stringify(d)); stamp('저장됨'); } catch (e) { stamp('저장 안 됨 — 적은 내용을 따로 옮겨 두세요'); }
+    }
+    var d = read();
+    fields.forEach(function(f){ if (!(f.k in d)) return; if (f.t === 'v') f.el.value = d[f.k]; else f.el.checked = !!d[f.k]; });
+    if (Object.keys(d).length) stamp('적은 내용 복원됨');
+    fields.forEach(function(f){ f.el.addEventListener(f.t === 'v' ? 'input' : 'change', save); });
+  })();
+</script>
