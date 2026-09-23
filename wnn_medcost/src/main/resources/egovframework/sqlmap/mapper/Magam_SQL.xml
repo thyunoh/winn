@@ -2592,7 +2592,11 @@
 				    ELSE '' END AS approYn
 		            
 	         ]]>  
-			 , FN_TEWON_CHECK(#{hospCd},#{jobYymm},pd.admitDt,pd.patNm) AS tewonYn
+			 /* 다음월 = 당월 퇴원(TBL_IPWON_INFO) 이면 'Y' → 화면 '퇴원'.
+			    · 화면이 nextTarget 을 읽으므로 그 이름으로 준다(종전 tewonYn 은 DTO 에 칸이 없어 버려졌다).
+			    · 함수는 입원일을 'YYYYMMDD' 글자로 비교한다 — pd.admitDt 는 STR_TO_DATE 로 만든 날짜형이라
+			      그대로 넘기면 '2026-06-05' 가 되어 한 건도 안 걸린다(2026-09-23 실측 0건 → 405건). */
+			 , FN_TEWON_CHECK(#{hospCd},#{jobYymm},DATE_FORMAT(pd.admitDt,'%Y%m%d'),pd.patNm) AS nextTarget
 			 <![CDATA[
 			 /* ───── 분모/분자 표시 (당뇨 + 입원 3개월 경과 = 분모, 그중 HbA1c 적정시행 = 분자) ───── */
 			 , CASE WHEN pd.diabeYn = '1'
