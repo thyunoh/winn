@@ -55,6 +55,8 @@ public class PatvalDTO {
 	private String skinDress;      // 피부궤양 드레싱
 	
 	private String nextTarget;     // 다음월 대상
+	private String tewonDt;        // 당월 퇴원일 (TBL_IPWON_INFO, 'YYYY-MM-DD')
+	private String reIpwonDt;      // 그 퇴원 뒤 재입원일 (TBL_IPWON_INFO, 'YYYY-MM-DD')
 	
 	private String improveYn;      // 개선여부
 	
@@ -284,6 +286,18 @@ public class PatvalDTO {
 	}
 	public void setNextTarget(String nextTarget) {
 		this.nextTarget = nextTarget;
+	}
+	public String getTewonDt() {
+		return tewonDt;
+	}
+	public void setTewonDt(String tewonDt) {
+		this.tewonDt = tewonDt;
+	}
+	public String getReIpwonDt() {
+		return reIpwonDt;
+	}
+	public void setReIpwonDt(String reIpwonDt) {
+		this.reIpwonDt = reIpwonDt;
 	}
 	public String getCurtStep1() {
 		return curtStep1;

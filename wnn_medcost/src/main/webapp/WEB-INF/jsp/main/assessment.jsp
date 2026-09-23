@@ -3055,6 +3055,25 @@ function Indicater_DataList() {
    	fn_FindDataTable();
    	
 }
+// 13.당뇨 HbA1c — 우측 그리드 행을 누르면 도구줄(복사·엑셀·출력·자료검색) 오른쪽 끝에
+//   그 환자의 재원/퇴원(퇴원일)을 보여준다. 다른 지표이거나 row 가 없으면 지운다.
+function fn_ShowTewonInfo(row) {
+	var $old = $('#tewonInfo');
+	// 재원(퇴원 아님)이면 아무것도 표시하지 않는다
+	if (!row || jobFlag !== '13' || row.nextTarget !== 'Y') { $old.remove(); return; }
+	var $bar = $('#viewTable_wrapper .datatable-controls').first();
+	if (!$bar.length) return;
+	var $s = $old.length ? $old : $('<span id="tewonInfo"></span>').css({
+		'margin-left': 'auto', 'padding-right': '12px', 'font-size': '14px', 'white-space': 'nowrap'
+	});
+	if ($s.parent()[0] !== $bar[0]) $bar.append($s);
+	// 이름은 그리드 값 그대로 — 일반 병원은 SQL 이 끝자리를 * 로 가려서 준다(sWnnYn)
+	var nm = '<span style="color:#222;">' + $('<div>').text(row.patNm || '').html() + '</span> · ';
+	$s.css('color', '');
+	$s.html(nm + '<span style="color:red;">퇴원일 <b>' + (row.tewonDt || '(날짜 없음)') + '</b></span>'
+		+ (row.reIpwonDt ? ' <span style="color:#1a56c4;">· 재입원 <b>' + row.reIpwonDt + '</b></span>' : ''));
+}
+
 function fn_ViewData(data) {
 
 	jobFlag    = data.cate_cd;
@@ -3075,6 +3094,7 @@ function fn_ViewData(data) {
 	if (typeof fn_UpdatePatvalBtnState === 'function') {
 	    fn_UpdatePatvalBtnState(null);
 	}
+	fn_ShowTewonInfo(null);
 
 	datWaiting = false;   		// Data 가져오는 동안 대기상태 Waiting 표시 여부
 	page_Navig = true;   		// 페이지 네비게이션 표시여부 
@@ -4655,6 +4675,7 @@ function fn_FindDataTable() {
 		    if (typeof fn_UpdatePatvalBtnState === 'function' && _ctId === 'viewTable') {
 		        fn_UpdatePatvalBtnState(edit_Data);
 		    }
+		    if (_ctId === 'viewTable') { fn_ShowTewonInfo(edit_Data); }
 		});
 	    /* 싱글 선택 start */
 	    if (row_Select) {
