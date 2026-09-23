@@ -3055,12 +3055,12 @@ function Indicater_DataList() {
    	fn_FindDataTable();
    	
 }
-// 13.당뇨 HbA1c — 우측 그리드 행을 누르면 도구줄(복사·엑셀·출력·자료검색) 오른쪽 끝에
-//   그 환자의 재원/퇴원(퇴원일)을 보여준다. 다른 지표이거나 row 가 없으면 지운다.
+// 13.당뇨 HbA1c · 14.장기입원 — 우측 그리드 행을 누르면 도구줄(복사·엑셀·출력·자료검색) 오른쪽 끝에
+//   퇴원 환자의 퇴원일(·재입원일)을 보여준다. 다른 지표이거나 row 가 없으면 지운다.
 function fn_ShowTewonInfo(row) {
 	var $old = $('#tewonInfo');
 	// 재원(퇴원 아님)이면 아무것도 표시하지 않는다
-	if (!row || jobFlag !== '13' || row.nextTarget !== 'Y') { $old.remove(); return; }
+	if (!row || (jobFlag !== '13' && jobFlag !== '14') || row.nextTarget !== 'Y') { $old.remove(); return; }
 	var $bar = $('#viewTable_wrapper .datatable-controls').first();
 	if (!$bar.length) return;
 	var $s = $old.length ? $old : $('<span id="tewonInfo"></span>').css({
@@ -4135,7 +4135,7 @@ function fn_ViewData(data) {
     	
     } else if (data.cate_cd === "14") {
     	page_Hight = 563;
-    	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','평가군','장기입원','제외대상'  ];
+    	c_Head_Set = [  '생년월일','대상자','입원일자','요양개시일','평가표작성일','평가군','장기입원','다음월'  ];
        	columnsSet = [  
    			    		{ data: 'patId',     visible: true,  className: 'dt-body-center', width: '100px'  },
    					    { data: 'patNm',     visible: true,  className: 'dt-body-center', width: '100px'  },					    
@@ -4184,14 +4184,20 @@ function fn_ViewData(data) {
    			            		return data;
    			  			    },
    						},
-					    { data: 'approYn',     visible: true,  className: 'dt-body-center', width: '100px', 
-   							render: function(data, type, row) {
-   			        			if (type === 'display') {
-   			        				if (data === 'Y') return '●';
-   			            		}
-   			            		return data;
-   			  			    },
-   						}
+					    // 종전 「제외대상」(approYn = 환자군 A·B·C) 칸 — 대상 환자를 D·E군으로만 뽑아 늘 비어 있었다.
+					    // 재원 여부 확인용 「다음월」로 바꿈 : 당월 퇴원(TBL_IPWON_INFO)이면 '퇴원'.
+					    { data: 'nextTarget', visible: true, className: 'dt-body-center', width: '100px',
+							render: function(data, type, row) {
+						        if (type === 'display') {
+						        	if (data === 'Y') return '퇴원';
+						            if (data === 'N') return '';
+						        }
+						        return data;
+						    },
+						    createdCell: function(td, cellData) {
+						    	if (cellData === 'Y') td.style.color = 'red';
+						    }
+					    }
        				 ];
        	
        	// 초기 data Sort,  없으면 []
@@ -5127,21 +5133,22 @@ function dataLoad(data, callback, settings) {
 	            	} else if (jobFlag === '14') {
 	            		
 	            		let long_Cnt = 0;
-	            		let next_Cnt = 0;
-		                
+	            		// 퇴원은 같은 입원이 달마다 여러 줄로 나오므로 환자·입원일 단위로 한 번만 센다
+	            		const tewonKeys = {};
+
 		                for (let i = 0; i < response.data.length; i++) {
-		                    
+
 		                	const item = response.data[i];
-		                	
+
 		                    if (item.longAdm === 'Y') {
 		                    	long_Cnt += 1;
 		                    }
 		                    if (item.nextTarget === 'Y') {
-		                    	next_Cnt += 1;
+		                    	tewonKeys[item.patId + '|' + item.patNm + '|' + item.admitDt] = 1;
 		                    }
 		                }
-		                
-		                cntNote = '[중복포함,181일 총:' + long_Cnt + '건 ]·제외대상:' + next_Cnt + '건';
+
+		                cntNote = '[중복포함,181일 총:' + long_Cnt + '건 ]·당월 퇴원:' + Object.keys(tewonKeys).length + '명';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(65) + '<span style="color: blue;">' + cntNote + '</span>';
 	            	

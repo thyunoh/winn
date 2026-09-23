@@ -20,7 +20,7 @@
 							</div>
 							<div>
 								<span>전화｜02-2653-7971</span>
-								<span>팩스｜02-2653-7901</span>
+								<span>팩스｜0503-8379-5156</span>&nbsp&nbsp;
 								<span>이메일｜winner797@naver.com</span>
 							</div>
 							<div> <br>

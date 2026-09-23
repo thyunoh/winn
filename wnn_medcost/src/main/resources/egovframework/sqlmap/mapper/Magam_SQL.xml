@@ -2510,6 +2510,31 @@
 		    SELECT * FROM patient_data_fb fb
 		     WHERE NOT EXISTS (SELECT 1 FROM patient_data_main m WHERE m.patId = fb.patId)
 		)
+		/* 당월 퇴원 · 그 뒤 재입원 — 입퇴원현황을 한 번만 모아 둔다(select_CategoryList14 의 tw/tr 와 같은 규칙).
+		   행마다 서브쿼리로 찾으면 10초 넘게 걸린다. 조건은 FN_TEWON_CHECK 와 같다. */
+		, tw AS (
+		    SELECT REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')        AS ipDt
+		         , REGEXP_REPLACE(t.PATNAME,'[0-9]','')             AS nm
+		         , MIN(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''))   AS twDt
+		         , MIN(LEFT(t.JUMINNO,6))                           AS jm
+		      FROM TBL_IPWON_INFO t
+		     WHERE t.HOSP_CD = #{hospCd}
+		       AND t.JOBYYMM = #{jobYymm}
+		       AND COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'') LIKE CONCAT(#{jobYymm},'%')
+		     GROUP BY REPLACE(REPLACE(t.IPWONDT,'-',''),'/',''), REGEXP_REPLACE(t.PATNAME,'[0-9]','')
+		)
+		, tr AS (
+		    SELECT tw.ipDt, tw.nm, tw.twDt
+		         , MIN(REPLACE(REPLACE(r.IPWONDT,'-',''),'/',''))   AS reDt
+		      FROM tw
+		      LEFT JOIN TBL_IPWON_INFO r
+		        ON r.HOSP_CD = #{hospCd}
+		       AND r.JOBYYMM >= #{jobYymm}
+		       AND LEFT(r.JUMINNO,6) = tw.jm
+		       AND REGEXP_REPLACE(r.PATNAME,'[0-9]','') = tw.nm
+		       AND REPLACE(REPLACE(r.IPWONDT,'-',''),'/','') > tw.twDt
+		     GROUP BY tw.ipDt, tw.nm, tw.twDt
+		)
 		SELECT distinct
 		       LEFT(pd.patId,6) AS patId
 			 , CASE WHEN CHAR_LENGTH(COALESCE(pd.patNm, '')) >= 1 
@@ -2596,32 +2621,10 @@
 			    · 화면이 nextTarget 을 읽으므로 그 이름으로 준다(종전 tewonYn 은 DTO 에 칸이 없어 버려졌다).
 			    · 함수는 입원일을 'YYYYMMDD' 글자로 비교한다 — pd.admitDt 는 STR_TO_DATE 로 만든 날짜형이라
 			      그대로 넘기면 '2026-06-05' 가 되어 한 건도 안 걸린다(2026-09-23 실측 0건 → 405건). */
-			 , FN_TEWON_CHECK(#{hospCd},#{jobYymm},DATE_FORMAT(pd.admitDt,'%Y%m%d'),pd.patNm) AS nextTarget
-			 /* 당월 퇴원일 — 행 클릭 시 도구줄 오른쪽에 표시. 조건은 FN_TEWON_CHECK 와 똑같이 맞춘다
-			    (함수가 'Y' 인 줄에만 값이 온다). */
-			 , (SELECT DATE_FORMAT(STR_TO_DATE(REPLACE(REPLACE(ti.TEWONDT,'-',''),'/',''),'%Y%m%d'),'%Y-%m-%d')
-			      FROM TBL_IPWON_INFO ti
-			     WHERE ti.HOSP_CD = #{hospCd}
-			       AND ti.JOBYYMM = #{jobYymm}
-			       AND REPLACE(REPLACE(ti.IPWONDT,'-',''),'/','') = DATE_FORMAT(pd.admitDt,'%Y%m%d')
-			       AND REGEXP_REPLACE(ti.PATNAME,'[0-9]','') = pd.patNm
-			       AND COALESCE(REPLACE(REPLACE(ti.TEWONDT,'-',''),'/',''),'') LIKE CONCAT(#{jobYymm},'%')
-			     LIMIT 1) AS tewonDt
-			 /* 재입원일 — 위 퇴원 건의 퇴원일 뒤에 같은 환자(이름·생년월일 6자리)가 다시 입원한 가장 이른 날.
-			    입퇴원현황은 달마다 올라오므로 이번 달 이후 자료 전체에서 찾는다(같은 입원이 여러 달에 겹쳐 MIN). */
-			 , (SELECT DATE_FORMAT(STR_TO_DATE(MIN(REPLACE(REPLACE(r.IPWONDT,'-',''),'/','')),'%Y%m%d'),'%Y-%m-%d')
-			      FROM TBL_IPWON_INFO ti
-			      JOIN TBL_IPWON_INFO r
-			        ON r.HOSP_CD = ti.HOSP_CD
-			       AND r.JOBYYMM >= #{jobYymm}
-			       AND LEFT(r.JUMINNO,6) = LEFT(ti.JUMINNO,6)
-			       AND REGEXP_REPLACE(r.PATNAME,'[0-9]','') = REGEXP_REPLACE(ti.PATNAME,'[0-9]','')
-			       AND REPLACE(REPLACE(r.IPWONDT,'-',''),'/','') > REPLACE(REPLACE(ti.TEWONDT,'-',''),'/','')
-			     WHERE ti.HOSP_CD = #{hospCd}
-			       AND ti.JOBYYMM = #{jobYymm}
-			       AND REPLACE(REPLACE(ti.IPWONDT,'-',''),'/','') = DATE_FORMAT(pd.admitDt,'%Y%m%d')
-			       AND REGEXP_REPLACE(ti.PATNAME,'[0-9]','') = pd.patNm
-			       AND COALESCE(REPLACE(REPLACE(ti.TEWONDT,'-',''),'/',''),'') LIKE CONCAT(#{jobYymm},'%')) AS reIpwonDt
+			 , CASE WHEN tr.ipDt IS NULL THEN 'N' ELSE 'Y' END           AS nextTarget
+			 /* 행 클릭 시 도구줄 오른쪽에 표시 — 당월 퇴원일 · 그 뒤 재입원일(위 tr) */
+			 , DATE_FORMAT(STR_TO_DATE(tr.twDt,'%Y%m%d'),'%Y-%m-%d')     AS tewonDt
+			 , DATE_FORMAT(STR_TO_DATE(tr.reDt,'%Y%m%d'),'%Y-%m-%d')     AS reIpwonDt
 			 <![CDATA[
 			 /* ───── 분모/분자 표시 (당뇨 + 입원 3개월 경과 = 분모, 그중 HbA1c 적정시행 = 분자) ───── */
 			 , CASE WHEN pd.diabeYn = '1'
@@ -2637,6 +2640,7 @@
 			 ]]>
 
 	  	  FROM patient_data pd
+	  	  LEFT JOIN tr ON tr.ipDt = DATE_FORMAT(pd.admitDt,'%Y%m%d') AND tr.nm = pd.patNm
 	</select>
 	
 	
@@ -2657,6 +2661,31 @@
 		       /* A31(중도입원) 이력 있는 환자 전체 제외 */
 		       AND SUM(CASE WHEN IFNULL(pm1.PAT_CLASS, PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)) = 'A31'
 		                    THEN 1 ELSE 0 END) = 0
+		)
+		/* 당월 퇴원 · 그 뒤 재입원 — 입퇴원현황을 한 번만 모아 둔다(행마다 서브쿼리로 찾으면 20초 넘게 걸렸다).
+		   조건은 FN_TEWON_CHECK 와 같다 : 병원 · 작업월 · 입원일 · 이름(숫자 뗌) · 퇴원일이 작업월 안. */
+		, tw AS (
+		    SELECT REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')        AS ipDt
+		         , REGEXP_REPLACE(t.PATNAME,'[0-9]','')             AS nm
+		         , MIN(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''))   AS twDt
+		         , MIN(LEFT(t.JUMINNO,6))                           AS jm
+		      FROM TBL_IPWON_INFO t
+		     WHERE t.HOSP_CD = #{hospCd}
+		       AND t.JOBYYMM = #{jobYymm}
+		       AND COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'') LIKE CONCAT(#{jobYymm},'%')
+		     GROUP BY REPLACE(REPLACE(t.IPWONDT,'-',''),'/',''), REGEXP_REPLACE(t.PATNAME,'[0-9]','')
+		)
+		, tr AS (
+		    SELECT tw.ipDt, tw.nm, tw.twDt
+		         , MIN(REPLACE(REPLACE(r.IPWONDT,'-',''),'/',''))   AS reDt
+		      FROM tw
+		      LEFT JOIN TBL_IPWON_INFO r
+		        ON r.HOSP_CD = #{hospCd}
+		       AND r.JOBYYMM >= #{jobYymm}
+		       AND LEFT(r.JUMINNO,6) = tw.jm
+		       AND REGEXP_REPLACE(r.PATNAME,'[0-9]','') = tw.nm
+		       AND REPLACE(REPLACE(r.IPWONDT,'-',''),'/','') > tw.twDt
+		     GROUP BY tw.ipDt, tw.nm, tw.twDt
 		)
 		SELECT DISTINCT 
 		       LEFT(pm2.PAT_ID,6) AS patId 
@@ -2718,8 +2747,13 @@
 		     , CASE WHEN LEFT(IFNULL(pm2.PAT_CLASS,PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)),1) IN ('A','B','C') 
 		            THEN 'Y' ELSE '' 
 		             END AS approYn
+		     /* 다음월 = 당월 퇴원(TBL_IPWON_INFO) 이면 'Y' → 화면 '퇴원' (13.당뇨와 같은 규칙, 위 tr 참고) */
+		     , CASE WHEN tr.ipDt IS NULL THEN 'N' ELSE 'Y' END                    AS nextTarget
+		     , DATE_FORMAT(STR_TO_DATE(tr.twDt,'%Y%m%d'),'%Y-%m-%d')              AS tewonDt
+		     , DATE_FORMAT(STR_TO_DATE(tr.reDt,'%Y%m%d'),'%Y-%m-%d')              AS reIpwonDt
 		  FROM TBL_PATVAL_MST pm2
-		  LEFT JOIN TBL_IPWON_INFO ii 
+		  LEFT JOIN tr ON tr.ipDt = pm2.ADMIT_DT AND tr.nm = pm2.PAT_NM
+		  LEFT JOIN TBL_IPWON_INFO ii
 		         ON ii.HOSP_CD = pm2.HOSP_CD
 		        <![CDATA[
 		        AND ii.JOBYYMM BETWEEN CASE WHEN CAST(SUBSTRING(#{jobYymm},5,2) AS UNSIGNED) <= 6
