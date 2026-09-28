@@ -1,3 +1,8 @@
+# ⛔ 2026-09-28 오후 원복 — 코드는 저장소에 없다(기록용)
+TypeSafe 세 기능(Q&A 재순위·보고서 유형 추천·불만고충 분류)은 운영 서버의 아웃바운드 HTTPS 차단·유료 키 문제로 **당일 오후 원복**했다.
+이 폴더의 검사 자바 6벌은 `TypeSafeUtil`·서비스 메서드가 있어야 컴파일된다 — 되살릴 때 커밋 `fd1a0834` 의 파일을 꺼내고(`git checkout fd1a0834 -- <파일>`)
+미커밋이던 점검 주소는 `uncommitted_tsHealth_2026-09-28.patch` 를 `git apply`. 사용자 「TypeSafe 는 좀더 확인 후 요청하겠음」.
+
 # TypeSafe(Jev) 검사 도구 — Q&A 검색 재순위 · 보고서 유형 추천 · 불만고충 분류 (2026-09-28)
 
 `egovframework/util/TypeSafeUtil.java` 와 `MangrServiceImpl.rerankByTypeSafe` 를 검사하는 자바 여섯 벌.

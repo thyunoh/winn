@@ -35,7 +35,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import egovframework.util.TypeSafeUtil;
 import egovframework.wnn_medcost.base.model.CodeMdDTO;
 import egovframework.wnn_medcost.mangr.mapper.MangrMapper;
 import egovframework.wnn_medcost.mangr.model.AsqDTO;
@@ -328,16 +327,7 @@ public class MangrServiceImpl implements MangrService {
 		p.put("listCnt", listCnt <= 0 ? 8 : listCnt);
 		p.put("words", words);
 		List<Map<String,Object>> list = mapper.selectQnaSearch(p);
-
-		/* ★TypeSafe 재순위 (2026-09-28) — SQL 점수는 낱말이 겹치는 정도라 「본문에 그 말이 많은 엉뚱한 항목」이
-		     1등이 되는 함정을 여러 번 겪었다. 상위 후보 몇 건을 System One(Jev)에 한 번에 보내
-		     후보마다 「이 항목이 질문에 답하는가」 확률(noul)을 받아 그 순서로 다시 세운다.
-		     · 키가 없거나 호출이 실패하면 null → 종전 순서·종전 weak 판정 그대로(조용한 폴백).
-		     · 후보 밖(topN 뒤) 항목은 원래 순서로 뒤에 붙는다 — 사용자가 직접 고를 길은 그대로 둔다.
-		     · 화면에는 후보마다 ai(확률)를 붙여 「AI 적합도」 배지로 보여 준다. */
-		Double aiTop = rerankByTypeSafe(key, list);
 		res.put("list", list);
-		res.put("rerank", aiTop != null);
 
 		/* 제대로 찾았는가? — 화면은 이 값으로 AI 참고답변 여부를 정한다 (2026-08-06)
 		     ★"0건이면 AI" 로는 안 된다. ngram 이 '오래'·'점수' 같은 조각에도 걸려
@@ -349,23 +339,6 @@ public class MangrServiceImpl implements MangrService {
 		boolean weak;
 		if (list == null || list.isEmpty()) {
 			weak = true;
-		} else if (aiTop != null) {
-			/* 재순위가 돌았으면 낱말 적중 비율 대신 <최고 확률>로 판정한다 (2026-09-28).
-			     ★두 단계 규칙 — 실측(운영 KB 336건 · 2026-09-28)으로 정했다 :
-			       · 찾은 질문의 1등은 0.72~0.97, 자료 없는 질문은 후보 전부 0.01~0.09 로 납작하다.
-			       · 그런데 본문이 얇은 항목은 정답이라도 0.2~0.3 에 머문다(합성 자료 실측). 그때는 2등과 <두드러지게> 벌어져 있다
-			         (0.21 vs 0.07 · 0.30 vs 0.03). 한 문턱(0.5)만 쓰면 이런 정답을 「자료 없음」으로 버린다.
-			     ⇒ top ≥ 0.5 면 찾음 · top < 0.12 면 못 찾음 · 그 사이는 top ≥ 2.5×2등 일 때만 찾음.
-			     환경변수 TYPESAFE_QNA_THRESHOLD(0.5) · TYPESAFE_QNA_FLOOR(0.12) · TYPESAFE_QNA_RATIO(2.5) 로 조정. */
-			double hi    = TypeSafeUtil.dblCfg("TYPESAFE_QNA_THRESHOLD", "typesafe.qna.threshold", 0.5);
-			double floor = TypeSafeUtil.dblCfg("TYPESAFE_QNA_FLOOR",     "typesafe.qna.floor",     0.12);
-			double ratio = TypeSafeUtil.dblCfg("TYPESAFE_QNA_RATIO",     "typesafe.qna.ratio",     2.5);
-			double second = 0;
-			if (list.size() > 1 && list.get(1).get("ai") instanceof Number) second = ((Number) list.get(1).get("ai")).doubleValue();
-			if (aiTop >= hi)         weak = false;
-			else if (aiTop < floor)  weak = true;
-			else                     weak = (aiTop < ratio * second);
-			res.put("aiTop", aiTop);
 		} else if (words.isEmpty()) {
 			weak = false;
 		} else {
@@ -376,67 +349,13 @@ public class MangrServiceImpl implements MangrService {
 		res.put("weak", weak);
 
 		try {
-			/* MATCH_YN — 종전엔 「1건이라도 나오면 Y」였는데 ngram 은 거의 늘 무엇이든 물어 와 N 이 사실상 안 남았다.
-			   이제 weak(못 찾음)면 N (2026-09-28) — 「지식에 없어서 못 답한 질문」 목록이 뜻대로 쌓인다.
-			   KB_ID 는 못 찾았어도 1등을 남긴다(무엇이 잘못 걸렸는지 나중에 본다). */
 			boolean hit = (list != null && !list.isEmpty());
-			writeLog(hospCd, userId, key, hit ? list.get(0).get("kbId") : null, (hit && !weak) ? "Y" : "N", "TYPE");
+			writeLog(hospCd, userId, key, hit ? list.get(0).get("kbId") : null, hit ? "Y" : "N", "TYPE");
 		} catch (Exception e) {
 			LOGGER.warn("[QNA] 질문로그 적재 실패 (검색은 정상) : {}", e.getMessage());
 		}
 		return res;
 	}
-
-	/** 검색 결과 상위 후보를 TypeSafe 로 다시 세운다. 목록을 <제자리에서> 고치고 최고 확률을 돌려준다.
-	 *  키 없음·실패·후보 없음이면 null 이고 목록은 손대지 않는다(excerpt 만 뗀다 — 화면엔 안 보낸다).
-	 *  ★질문은 maskPrivacy 를 거쳐 나간다 — 질문칸에 환자 이름·주민번호가 섞여 들어오는 경우가 있다. */
-	private Double rerankByTypeSafe(String q, List<Map<String,Object>> list) {
-		if (list == null || list.isEmpty()) return null;
-		try {
-			if (!TypeSafeUtil.isReady()) return null;
-			int topN = TypeSafeUtil.intCfg("TYPESAFE_QNA_TOPN", "typesafe.qna.topn", 10);
-			if (topN < 2) topN = 2;
-			int n = Math.min(topN, list.size());
-
-			List<TypeSafeUtil.Candidate> cands = new ArrayList<>();
-			for (int i = 0; i < n; i++) {
-				Map<String,Object> r = list.get(i);
-				cands.add(new TypeSafeUtil.Candidate(
-					String.valueOf(r.get("kbId")),
-					str(r.get("title")),
-					str(r.get("catNm")),
-					str(r.get("excerpt"))));
-			}
-			Map<String, Double> ai = TypeSafeUtil.rerank(maskPrivacy(q), cands,
-				TypeSafeUtil.intCfg("TYPESAFE_QNA_TIMEOUT_MS", "typesafe.qna.timeoutMs", 8000));
-			if (ai == null || ai.isEmpty()) return null;
-
-			/* 앞 n 건만 확률 내림차순으로 다시 세운다(답이 안 온 후보는 맨 뒤·원래 순서). 뒤는 그대로. */
-			List<Map<String,Object>> head = new ArrayList<>(list.subList(0, n));
-			for (Map<String,Object> r : head) {
-				Double v = ai.get(String.valueOf(r.get("kbId")));
-				if (v != null) r.put("ai", Math.round(v * 1000d) / 1000d);
-			}
-			final Map<String, Double> fin = ai;
-			Collections.sort(head, new java.util.Comparator<Map<String,Object>>() {   /* 안정 정렬 — 같은 값이면 SQL 순서 */
-				public int compare(Map<String,Object> a, Map<String,Object> b) {
-					Double x = fin.get(String.valueOf(a.get("kbId"))), y = fin.get(String.valueOf(b.get("kbId")));
-					double dx = (x == null) ? -1 : x, dy = (y == null) ? -1 : y;
-					return Double.compare(dy, dx);
-				}
-			});
-			for (int i = 0; i < n; i++) list.set(i, head.get(i));
-
-			Object top = head.get(0).get("ai");
-			return (top instanceof Number) ? ((Number) top).doubleValue() : null;
-		} catch (Exception e) {
-			LOGGER.warn("[QNA-TS] 재순위 실패 (종전 순서로) : {}", e.getMessage());
-			return null;
-		} finally {
-			for (Map<String,Object> r : list) r.remove("excerpt");   /* 화면 목록에는 본문 조각을 안 보낸다 */
-		}
-	}
-	private static String str(Object o) { return (o == null) ? "" : String.valueOf(o); }
 
 	/** 검색어를 낱말로 쪼갠다 — 제목 적중 가산에 쓴다.
 	 *  한 글자 낱말과 흔한 꼬리말("무엇","어떻게" 등)은 아무 데나 걸려 순위를 흐리므로 뺀다.
@@ -493,8 +412,12 @@ public class MangrServiceImpl implements MangrService {
 	/** 무료 등급은 보낸 내용이 모델 개선에 쓰일 수 있다 → 환자 식별정보는 보내기 전에 지운다.
 	 *  질문칸에 "홍길동 환자 주민번호 123456-1234567" 처럼 섞여 들어오는 경우가 있다. */
 	private String maskPrivacy(String s) {
-		/* 규칙은 TypeSafeUtil.maskPrivacy 한 곳에 — Gemini·TypeSafe 어디로 나가든 같은 가림(2026-09-28 통합) */
-		return TypeSafeUtil.maskPrivacy(s);
+		if (s == null) return "";
+		String out = s;
+		out = out.replaceAll("\\d{6}\\s*[-–]\\s*\\d{7}", "[주민번호]");        /* 주민등록번호 */
+		out = out.replaceAll("\\d{2,3}\\s*[-–]\\s*\\d{3,4}\\s*[-–]\\s*\\d{4}", "[전화번호]");
+		out = out.replaceAll("[가-힣]{2,4}\\s*(환자|님|씨)(?=\\s|$|[,.])", "[환자]");
+		return out;
 	}
 
 	@Override

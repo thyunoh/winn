@@ -914,7 +914,18 @@
 
 ## 장애/수정 이력
 
-### [완료 · 로컬 — 실API·화면 검증 끝] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
+### ⛔[2026-09-28 오후 원복] TypeSafe 세 기능(Q&A 재순위 · 보고서 유형 추천 · 불만고충 분류) + 점검 주소 — 코드에서 뺐다
+- **왜** : 운영 서버에 올렸는데 동작하지 않았고(아웃바운드 HTTPS 차단이 유력), 방화벽 개방·유료 키 유지가 전제라 사용자가 **「일단 원복」** 을 택했다(2026-09-28 오후).
+  기능 자체는 로컬에서 실API·운영 자료·화면까지 전부 검증된 상태였다(위 세 절의 결과는 그대로 유효).
+- **무엇을 되돌렸나** : 소스 8 + 새 파일 3 을 **오늘 아침 커밋 `43a5037a` 상태**로. 되돌린 것 = `MangrServiceImpl`(재순위·MATCH_YN 규칙·maskPrivacy 위임) · `Mangr_SQL.xml`(excerpt 열) · `qnacd.jsp`(배지) · `QpsService/Impl`(suggestRptGb·suggestCmpl) · `QpsController`(rptGbSuggest·cmplSuggest·tsHealth·BUILD 20260909-SIGNER 로 복귀) · `qpsSafeRpt.jsp`(✨ 유형 추천 띠) · `qpsCmpl.jsp`(분류 자동 채움) · 삭제 = `TypeSafeUtil.java` · 시뮬 2(`sim_qpsSafeRpt_suggest`·`sim_qpsCmpl_suggest`).
+  ⚠**같이 사라진 개선** : Q&A 질문 로그 MATCH_YN 이 「1건이라도 나오면 Y」로 되돌아갔다(못 답한 질문 목록이 다시 안 쌓인다). 필요하면 이 한 줄만 따로 살릴 수 있다(`writeLog(... (hit && !weak) ? "Y" : "N" ...)`).
+- **남긴 것(기록)** : 이 CLAUDE.md 절들 · 배포 가이드 §7·§9 · [docs/tools/typesafe](docs/tools/typesafe/README.md)(검사 자바 6벌 — 코드가 없으니 지금은 컴파일 안 됨, 되살릴 때 쓴다) ·
+  미커밋이던 점검 주소(tsHealth)는 [uncommitted_tsHealth_2026-09-28.patch](docs/tools/typesafe/uncommitted_tsHealth_2026-09-28.patch) 로.
+- **되살리는 법** : 커밋 4개(`0df80763` 1호 · `25849b2c` 도구 · `e6e7154f` TLS·판정 규칙 · `fd1a0834` 2·3호)의 파일을 `git checkout fd1a0834 -- <파일들>` 로 꺼내고 위 패치를 `git apply`. 그 뒤 WAR 재빌드+재기동, setenv.sh 에 `TYPESAFE_API_KEY`, 방화벽 `api.typesafe.ai` 443 아웃바운드.
+- **운영** : 지금 운영에 올라간 WAR 에는 세 기능이 들어 있으나 키가 없어 **종전 동작으로 폴백 중**이라 급하지 않다. 원복 소스로 WAR 를 다시 만들어 올리면 완전히 이전과 같아진다.
+- ★교훈 : **외부 유료 API 를 붙일 때는 「운영 서버가 밖으로 나가는가」와 「누가 요금을 내는가」를 코드보다 먼저 정한다.** 이번엔 로컬 검증까지 다 끝낸 뒤에 그 둘이 걸렸다.
+
+### [원복됨 — 기록용] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
 - **배경**: `/typesafe:typesafe-ai` 스킬로 시작 → 후보 3개(Q&A 재순위 · safeRpt 유형 추천 · 불만고충 분류) 중 사용자가 **1번** 선택. 이 저장소의 **첫 TypeSafe 적용**.
   Q&A 검색 점수는 「낱말이 몇 번 겹치나」(ngram + 제목·키워드 LIKE 가산)라 엉뚱한 1등 사고를 여러 번 겪었고, MATCH_YN 은 「1건이라도 나오면 Y」라 **못 답한 질문 목록이 사실상 안 쌓였다**.
 - **구조**(자바 2 · 매퍼 1 · JSP 1 → ⛔**WAR 재빌드+재기동**):
@@ -946,7 +957,7 @@
 - ⚠javac 클래스패스는 git-bash 에서도 **Windows 경로+`;`** 로(`/d/…` 면 인터페이스를 못 찾아 `@Override` 오류 100개). 검사 자바가 예외로 죽으면 HttpServer 스레드가 살아 **안 끝난다** — main 을 try/catch+exit 로.
   ⚠**bash `node -e "…"` 안에 백틱이 든 한글 문서를 넣으면 셸이 명령 치환으로 먹어 글이 빈다** — 문서 블록은 파일로 써서 node 가 읽게 한다(이번에 한 번 겪어 다시 넣었다).
 
-### [완료 · 로컬 — 실API·화면 검증 끝] 보고서(qpsSafeRpt) ✨ 유형 추천 — TypeSafe 적용 2호 (2026-09-28)
+### [원복됨 — 기록용] 보고서(qpsSafeRpt) ✨ 유형 추천 — TypeSafe 적용 2호 (2026-09-28)
 - **배경**: 사용자 「2번 보고서 유형 추천도 진행해줘」. 보고서 유형이 **78종·8계열**이라 「이 일은 어느 서식에 적나」를 셀렉트에서 못 찾는 담당자용. 자유 글 한두 줄 → 확률 상위 3건, 누르면 그 유형으로.
 - **구조**(자바 4 · JSP 1 · 매퍼 0 → ⛔**WAR 재빌드+재기동**, `BUILD="20260928-TSSUGGEST"`):
   · [TypeSafeUtil](src/main/java/egovframework/util/TypeSafeUtil.java) 에 **`choice(state, instructions, options, timeout)`** 신설 → `ChoiceResult{choice, confidence, probabilities(내림차순)}`. option 255 상한 검사. **`maskPrivacy` 도 여기로 옮겼다**(Mangr 의 것은 위임만 — Gemini·TypeSafe 어디로 나가든 같은 가림).
@@ -967,7 +978,7 @@
   ⚠(내 변경과 무관·기존) 창 폭 800px 에서는 유형 셀렉트(`srGb`, 머리줄 오른쪽)가 **위너넷 「자주 쓰는 메뉴」 띠(#wnnFavBar) 밑에 깔린다** — elementFromPoint 로 확인. 넓은 크롬에선 안 겹치고 띠는 끌어 옮길 수 있다. 「화면 오른쪽 위에 단추를 두지 말 것」 함정의 또 한 사례.
 - **다음 후보** : 사고(qpsIncident) 화면의 사고 유형·「분류」 콤보 추천, 불만고충 접수 유형·부서 라우팅 — 전부 `TypeSafeUtil.choice` 한 줄로 붙는다(선택지는 공통코드에서).
 
-### [완료 · 로컬 — 실API·화면 검증 끝] 불만고충 처리대장(qpsCmpl) ✨ 분류 추천 — TypeSafe 적용 3호 (2026-09-28)
+### [원복됨 — 기록용] 불만고충 처리대장(qpsCmpl) ✨ 분류 추천 — TypeSafe 적용 3호 (2026-09-28)
 - **배경**: 사용자 「3번 불만고충 분류도 진행해줘」. 대장 한 줄의 「불만고충내용」을 적으면 **비어 있는 불만고충유형(QPS_CMPL_TYPE 7)·민원인구분(QPS_CMPL_PERSON 4)** 을 AI 가 채운다.
   ⚠**처리 부서 칸은 이 대장에 없다**(설계 그대로 — 열 = 접수일·접수유형·민원인·구분·처리기간·유형·내용·처리결과·회신) → 「부서 라우팅」은 만들지 않았다. 접수유형(방문·전화·소리함)·회신방법은 글로 알 수 없어 대상에서 뺐다.
 - **구조**(자바 4 · JSP 1 · 매퍼 0 → ⛔**WAR 재빌드+재기동**):
@@ -986,6 +997,17 @@
   유형을 손으로 「친절」로 바꾸면 표시(.aifill·title) 사라짐 · 「고맙다는 인사 전화」 행은 둘 다 빈 채 · 「간병인이 환자 자세를 안 바꿔 줘」 → 간병사관련·입원환자. 시험 행은 저장하지 않았다(DB 잔여 0).
   ⚠★**첫 확인에서 연보라가 안 보였다** — `#qpsCmpl table.ed select{ background:transparent }`(표 안 셀렉트를 납작하게 만드는 기존 규칙)가 `#qpsCmpl select.aifill` 보다 **명시도가 높아** 배경을 지웠다(computed `rgba(0,0,0,0)` 로 잡음). `#qpsCmpl table.ed select.aifill` 로 더 센 규칙을 **뒤에** 두어 해결(inset box-shadow 테두리도). **표 안 입력칸에 상태색을 줄 때는 그 표의 「납작하게」 규칙을 먼저 본다.**
 - **셋의 뼈대는 같다** : `TypeSafeUtil.systemOne/rerank/choice/choices` + 서비스 한 메서드(코드는 `selectQpsCodes` 에서, NONE 추가, maskPrivacy) + 컨트롤러 ok=false 폴백 + 화면은 「비어 있는 것만·표시 남기고·실패는 조용히」. 다음 적용은 이 셋 중 가장 가까운 것을 베낀다.
+
+### [원복됨 — 패치로 보존] TypeSafe 운영 점검 주소 `/qps/tsHealth.do` + 배포 가이드 §9 (2026-09-28 오후)
+- **배경**: 사용자가 운영에 WAR 를 올렸는데 「안 된다」 — 세 기능이 실패를 **조용히 폴백**하도록 만든 탓에 원인(키 못 읽음 / 방화벽 / 키 값 / TLS)이 화면에선 안 보인다. 셸 명령 넷을 드렸지만 브라우저 한 번으로 갈리게 했다.
+  사용자 결정 = **1번 「그대로 두고 방화벽 열어 쓴다」**(2번 Gemini 대체·3번 되돌리기 아님). 기존 코드는 안 건드렸다.
+- **구조**(자바 2 → ⛔WAR 재빌드) : `TypeSafeUtil.health()` = key·url·model·tls + **아주 작은 noul 1회 실제 호출**(ms·noul·error). `LAST_ERROR` 에 마지막 실패 이유를 남기고 예외 종류별 **힌트를 붙인다**(UnknownHost=DNS · timed out/Connect/NoRoute=방화벽 · handshake/record_overflow=TLS · 401/403=키 틀림·Inactive).
+  `QpsController.tsHealth`(**위너넷 쿠키만**, GET 도 됨) · `codeList.do` 응답에 `typesafe:true/false`(키 읽음 여부, 호출 없음).
+- **검증** : 실키 정상 `call.ok:true noul=0.96 5.5초(첫 호출)` · 키 없음 `key:false + 안내` · 없는 호스트 `UnknownHostException — DNS` · 막힌 주소(10.255.255.1) → ★**`SSLProtocolException: Read timed out`** 으로 싸여 와 처음엔 「TLS 결함」 힌트가 붙었다 → 글자(`timed out`)로 먼저 갈라 「방화벽·경로」 로 고침.
+  ⚠막힌 주소 점검은 8초×재시도 1 = **16초** 걸린다(설계대로 — 점검 화면이니 기다린다).
+- **가이드** [배포_가이드.md §9](docs/배포_가이드.md) = 키 넣기(setenv.sh·`>>` 금지·실인스턴스 재기동) → `tsHealth.do` 표(보이는 것 → 뜻 → 조치) → curl → 로그 → 끄는 법·요금.
+  ★운영 「안 된다」의 최유력 원인 = **아웃바운드 HTTPS 차단**(이 서버의 알려진 상태). 방화벽 요청 문구 : 「톰캣 서버(114.108.153.178)에서 `api.typesafe.ai` TCP 443 아웃바운드 허용」.
+- ⚠운영 반영은 **다시 WAR 재빌드+재기동**(점검 주소가 새 매핑이라 기동 때 생긴다). 이번 점검 주소를 안 올려도 §9 의 셸 명령으로 같은 것을 볼 수 있다.
 
 ### [완료 · 배포 대기] Q&A 답변에 GPT 복사본을 올렸더니 태그가 글자로 보임 (2026-09-04)
 - **증상**: 위너넷이 ChatGPT 화면을 복사해 「자주하는 질문」(qnacd 등록창 → TBL_QNA_KB 2600)에 올림 → 병원 사이드바 FAQ 창에 `<div><span style=…>` 가 글자로 보인다고 전화.

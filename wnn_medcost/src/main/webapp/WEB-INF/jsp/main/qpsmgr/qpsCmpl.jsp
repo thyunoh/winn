@@ -43,8 +43,6 @@
   #qpsCmpl .cm-btn.ghost{ background:#fff; color:#1f5a4b; }
   #qpsCmpl .cm-btn.warn{ background:#fff; color:#b23b3b; border-color:#e0b4b4; }
   #qpsCmpl .cm-btn.mini{ padding:2px 9px; font-size:11.5px; border-color:#cfd8e0; color:#556570; background:#fff; }
-  /* AI 가 채운 유형·민원인구분 (2026-09-28) — 사람이 바꾸면 표시가 사라진다 */
-  #qpsCmpl select.aifill{ background:#f1ebfb; border-color:#b9a8dd; }
 
   #qpsCmpl .cm-tabs{ display:flex; gap:6px; margin-bottom:10px; }
   #qpsCmpl .cm-tab{ padding:7px 16px; border:1px solid #dde5ea; border-radius:8px 8px 0 0;
@@ -59,8 +57,6 @@
   #qpsCmpl table.ed td{ border:1px solid #e6ecef; padding:2px; vertical-align:middle; }
   #qpsCmpl table.ed input, #qpsCmpl table.ed select{ width:100%; border:none; background:transparent; padding:4px 3px; font-size:12px; }
   #qpsCmpl table.ed input:focus, #qpsCmpl table.ed select:focus{ background:#f7fbf9; outline:1px solid #8fc3b2; }
-  /* ★위 표 규칙(background:transparent)이 .aifill 을 이겨 표시가 안 보였다(2026-09-28 화면 실측) — 표 안에서도 연보라가 남게 뒤에 더 센 규칙으로 */
-  #qpsCmpl table.ed select.aifill{ background:#f1ebfb; box-shadow:inset 0 0 0 1px #b9a8dd; border-radius:4px; }
   #qpsCmpl table.ed tr.sel td{ background:#f0f7f4; }
   #qpsCmpl table.ed tr.noreply td{ background:#fff8f2; }
   #qpsCmpl .rowdel{ color:#b23b3b; cursor:pointer; font-weight:700; text-align:center; width:26px; }
@@ -143,9 +139,7 @@
     </tr></thead><tbody id="cmBody"></tbody></table>
     </div>
     <button type="button" class="cm-btn mini" style="margin-top:6px;" onclick="cmAdd();">＋ 행 추가</button>
-    <span class="cm-sub" style="margin-left:8px;">접수일을 넣으면 접수월이 자동으로 채워집니다.
-      <%-- ✨ 분류 추천 (2026-09-28, TypeSafe 적용 3호) — 내용을 적고 칸을 떠나면 비어 있는 유형·민원인구분을 AI 가 채우고 연보라로 표시한다. --%>
-      <span id="cmSgHint">불만고충내용을 적으면 <b style="color:#5b3fa6;">비어 있는</b> 유형·민원인구분을 AI 가 추천해 채웁니다(연보라 칸 — 맞지 않으면 바꾸세요).</span></span>
+    <span class="cm-sub" style="margin-left:8px;">접수일을 넣으면 접수월이 자동으로 채워집니다.</span>
   </div>
 </div>
 
@@ -302,53 +296,8 @@
   });
   gel('qpsCmpl').addEventListener('change', function(e){
     var tr = e.target.closest('#cmBody tr');
-    if (!tr) return;
-    paintRow(tr);
-    var f = e.target.getAttribute('data-f');
-    /* 사람이 유형·민원인구분을 직접 바꾸면 AI 표시를 뗀다 — 그 뒤로는 내용을 고쳐도 다시 덮지 않는다 */
-    if ((f === 'typecd' || f === 'personcd') && e.target.classList.contains('aifill')) sgUnmark(e.target);
-    if (f === 'content') cmSuggestRow(tr);
+    if (tr) paintRow(tr);
   });
-
-  /* ── ✨ 분류 추천 (2026-09-28, TypeSafe 적용 3호) ─────────────────────────────
-       내용(content) 칸을 떠나면 /qps/cmplSuggest.do 로 한 줄을 보내 유형·민원인구분 확률을 받는다.
-       ★원칙 : **비어 있는 칸(또는 AI 가 채운 칸)에만** 넣고, 넣은 칸은 연보라(.aifill)+title 로 「AI 가 채웠다」를 남긴다.
-         사람이 고른 값은 절대 덮지 않는다(2026-09-08 「자동 정리는 지우는 쪽이 아니라 보여 주는 쪽으로」와 같은 원칙).
-       · 문턱 CM_SG_MIN(0.6) 아래거나 NONE 이 1등이면 그 칸은 비워 둔다 — 억지로 채우지 않는다.
-       · 실패·키 없음은 조용히(알림 없음) — 대장 작성이 추천에 막히면 안 된다. 행마다 한 번에 한 요청(data-sg-busy). */
-  var CM_SG_MIN = 0.6, CM_SG_MINLEN = 4;
-  function sgUnmark(el){ el.classList.remove('aifill'); el.removeAttribute('title'); }
-  function sgFill(tr, f, pick){
-    var sel = tr.querySelector('[data-f=' + f + ']');
-    if (!sel) return false;
-    var canWrite = !String(sel.value).trim() || sel.classList.contains('aifill');
-    if (!canWrite) return false;
-    if (!pick || !pick.code || pick.choice === 'NONE' || Number(pick.p) < CM_SG_MIN) {
-      if (sel.classList.contains('aifill')) { sel.value = ''; sgUnmark(sel); }   /* 예전 AI 값은 새 글에 안 맞으면 거둔다 */
-      return false;
-    }
-    if (!Array.prototype.some.call(sel.options, function(o){ return o.value === String(pick.code); })) return false;
-    sel.value = String(pick.code);
-    sel.classList.add('aifill');
-    sel.title = 'AI 추천 ' + Math.round(Number(pick.p) * 100) + '% — 맞지 않으면 바꾸세요';
-    return true;
-  }
-  window.cmSuggestRow = function(tr){
-    var c = tr.querySelector('[data-f=content]');
-    var text = c ? String(c.value).trim() : '';
-    if (text.length < CM_SG_MINLEN) return;
-    var t = tr.querySelector('[data-f=typecd]'), p = tr.querySelector('[data-f=personcd]');
-    var need = (t && (!t.value || t.classList.contains('aifill'))) || (p && (!p.value || p.classList.contains('aifill')));
-    if (!need) return;                                   /* 둘 다 사람이 골라 둔 행은 부르지 않는다 */
-    if (tr.getAttribute('data-sg-busy')) return;
-    tr.setAttribute('data-sg-busy', '1');
-    post('<c:url value="/qps/cmplSuggest.do"/>', { text: text }).then(function(res){
-      if (!res || !res.ok) return;
-      if (String(c.value).trim() !== text) return;       /* 기다리는 동안 글이 또 바뀌었으면 옛 답은 버린다 */
-      var a = sgFill(tr, 'typecd', res.type), b = sgFill(tr, 'personcd', res.person);
-      if (a || b) paintRow(tr);
-    }, function(){ /* 조용히 */ }).always(function(){ tr.removeAttribute('data-sg-busy'); });
-  };
 
   function readRow(tr){
     var r = { cmplseq: tr.getAttribute('data-seq') || '' };

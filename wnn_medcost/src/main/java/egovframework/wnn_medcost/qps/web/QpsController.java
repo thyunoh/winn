@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260928-TSSUGGEST";  // 보고서 유형 추천(TypeSafe) · 이전 = 20260909-SIGNER 인사 등록 · 담당자별 사인·도장(+면허 가져오기·사인 칸 이름 고르기) — 배포 확인용(codeList.do 응답 build)
+	private static final String BUILD = "20260909-SIGNER";     // 인사 등록 · 담당자별 사인·도장(+면허 가져오기·사인 칸 이름 고르기) — 배포 확인용(codeList.do 응답 build)
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -2311,26 +2311,6 @@ public class QpsController {
 		return qpsScreen(request, model, ".main/qpsmgr/qpsSafeRpt");
 	}
 
-	/** 보고서 유형 추천 (2026-09-28, TypeSafe) — 자유 글 → QPS_SAFERPT_GB 상위 3건.
-	 *  실패는 result FAIL 이 아니라 ok=false 로 내려보낸다 — 화면이 오류창 대신 「목록에서 고르세요」로 조용히 물러난다. */
-	@RequestMapping(value = "/qps/rptGbSuggest.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-	@ResponseBody
-	public Map<String, Object> rptGbSuggest(@RequestParam Map<String, Object> p, HttpServletRequest request) {
-		Map<String, Object> res = new HashMap<>();
-		res.put("build", BUILD);
-		try {
-			String hospCd = hospCd(request, p);
-			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
-			res.putAll(svc.suggestRptGb(str(p.get("text"), "")));
-			res.put("result", "OK");
-		} catch (Exception ex) {
-			res.put("ok", false);
-			res.put("reason", "추천 처리 중 오류");
-			res.put("result", "OK");
-		}
-		return res;
-	}
-
 	@RequestMapping(value = "/qps/safeRptBase.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public Map<String, Object> safeRptBase(@RequestParam Map<String, Object> p, HttpServletRequest request) {
@@ -2889,25 +2869,6 @@ public class QpsController {
 	}
 
 	/** 대장 저장 — ★행별 upsert. 통째 교체하면 각 건에 매달린 처리결과가 미아가 된다. */
-	/** 불만고충 분류 추천 (2026-09-28, TypeSafe) — 내용 한 줄 → 유형·민원인 구분. 실패는 ok=false(화면은 조용히 비워 둔다). */
-	@RequestMapping(value = "/qps/cmplSuggest.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-	@ResponseBody
-	public Map<String, Object> cmplSuggest(@RequestParam Map<String, Object> p, HttpServletRequest request) {
-		Map<String, Object> res = new HashMap<>();
-		res.put("build", BUILD);
-		try {
-			String hospCd = hospCd(request, p);
-			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
-			res.putAll(svc.suggestCmpl(str(p.get("text"), "")));
-			res.put("result", "OK");
-		} catch (Exception ex) {
-			res.put("ok", false);
-			res.put("reason", "추천 처리 중 오류");
-			res.put("result", "OK");
-		}
-		return res;
-	}
-
 	@RequestMapping(value = "/qps/cmplSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody
 	public Map<String, Object> cmplSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {

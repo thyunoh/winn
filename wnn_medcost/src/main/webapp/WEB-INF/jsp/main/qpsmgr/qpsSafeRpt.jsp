@@ -126,9 +126,6 @@
   <select id="srGb" style="width:auto;" onchange="srLoad();"
           data-init="<c:out value='${srGbInit}'/>"></select>
   <select id="srYear" style="width:auto;" onchange="srLoad();"></select>
-  <%-- ✨ 유형 추천 (2026-09-28, TypeSafe) — 유형 79종·8계열이라 「이 일은 어느 서식에 적나」를 셀렉트에서 못 찾는 담당자용.
-       한두 줄 적으면 AI 가 확률 상위 3건을 내고, 누르면 그 유형으로 바뀐다. 키가 없거나 실패하면 「목록에서 고르세요」로 물러난다. --%>
-  <button type="button" class="sr-btn ghost" onclick="srSuggestToggle();" title="무슨 일이 있었는지 한두 줄 적으면 알맞은 보고서 유형을 추천합니다">✨ 유형 추천</button>
   <button type="button" class="sr-btn" onclick="srSave();">저장</button>
   <button type="button" class="sr-btn ghost" onclick="srPrint();">🖨 인쇄(A4)</button>
   <%-- ★화면 안 일괄 출력 (2026-09-08 — qpsChk 에 붙인 것과 같은 방식의 확장 1호) :
@@ -143,20 +140,6 @@
   </span>
   <span class="sr-sub" id="srStat"></span>
   <span style="flex:0 0 60px;"></span>
-</div>
-
-<%-- ✨ 유형 추천 띠 (2026-09-28) — 일괄 출력 띠(파랑)와 색을 달리한다(연보라). 사건경위(f_summary)가 적혀 있으면 그 글을 미리 넣는다. --%>
-<div id="srSuggestBox" style="display:none; margin:6px 0 4px; padding:8px 12px; border:1px solid #cfc3ea; border-radius:8px; background:#f5f1fc; font-size:12.5px; color:#1f2a37;">
-  <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
-    <b style="color:#5b3fa6; padding-top:6px;">✨ 유형 추천</b>
-    <textarea id="srSgText" rows="2" style="flex:1 1 380px; min-width:260px; font-size:12.5px;" maxlength="1000"
-      placeholder="무슨 일이 있었는지 한두 줄 — 예) 밤에 환자가 침대에서 내려오다 넘어져 이마가 찢어짐 / 신입 간호사 손위생 교육을 했다"></textarea>
-    <button type="button" class="sr-btn" id="srSgGo" onclick="srSuggestGo();">추천받기</button>
-    <button type="button" class="sr-btn ghost" onclick="srSuggestToggle();">닫기</button>
-  </div>
-  <div id="srSgOut" style="margin-top:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-height:1.6em;">
-    <span style="color:#5a6b7a; font-size:11.5px;">추천은 참고용입니다 — 누르면 그 유형으로 바뀌고, 맞지 않으면 위 목록에서 직접 고르세요. 이름·주민번호는 지운 뒤 보내지만 되도록 적지 마세요.</span>
-  </div>
 </div>
 
 <%-- 🖨 화면 안 일괄 출력 조건 띠 (2026-09-08) — qpsChk #ckBulkPrintBox 와 같은 꼴.
@@ -897,62 +880,6 @@
     if (mf.options.length) return;
     for (var m = 1; m <= 12; m++) { var v = (m < 10 ? '0' : '') + m; mf.add(new Option(m + '월', v)); mt.add(new Option(m + '월', v)); }
   }
-  /* ── ✨ 유형 추천 (2026-09-28, TypeSafe 적용 2호) ─────────────────────────────
-       서버 /qps/rptGbSuggest.do 가 유형 전부를 Choice 선택지로 놓고 확률 상위 3건을 준다.
-       · 열 때 사건경위(f_summary)가 있으면 미리 넣는다 — 이미 적은 글을 다시 치게 하지 않는다.
-       · 결과는 「유형명 (계열) 78%」 칩 — 누르면 srGb 를 그 값으로 바꾸고 srLoad() (셀렉트를 손으로 바꾼 것과 같은 길).
-       · NONE 이 1등이거나 1등 확률이 SG_MIN 아래면 추천을 내지 않고 「뚜렷한 유형이 없습니다」 — 억지 추천이 더 나쁘다.
-       · 서버가 ok=false 면(키 없음·실패) 그 이유를 회색 글로 — 오류창을 띄우지 않는다(추천은 편의 기능이다). */
-  var SG_MIN = 0.25, SG_BUSY = false;
-  window.srSuggestToggle = function(){
-    var box = gel('srSuggestBox');
-    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
-    box.style.display = '';
-    var ta = gel('srSgText');
-    if (!ta.value.trim() && val('f_summary')) ta.value = val('f_summary');
-    ta.focus();
-  };
-  function sgChip(o){
-    var band = srBandOf(o.code);
-    return '<button type="button" class="sr-btn ghost" style="border-color:#b9a8dd; color:#3f2a80;" data-sg="' + esc(o.code) + '"'
-         + ' onclick="srSuggestPick(this.getAttribute(\'data-sg\'));" title="이 유형으로 바꿉니다">'
-         + esc(o.nm) + (band ? ' <span style="color:#7a6a9e; font-weight:400;">(' + esc(band[2]) + ')</span>' : '')
-         + ' <b>' + Math.round(o.p * 100) + '%</b></button>';
-  }
-  window.srSuggestGo = function(){
-    var t = gel('srSgText').value.trim(), out = gel('srSgOut');
-    if (!t) { _alertBox('무슨 일이 있었는지 한두 줄 적어 주세요.', {icon:'✍️'}); gel('srSgText').focus(); return; }
-    if (SG_BUSY) return;
-    SG_BUSY = true; gel('srSgGo').disabled = true;
-    out.innerHTML = '<span style="color:#5b3fa6;">추천 중…</span>';
-    post('<c:url value="/qps/rptGbSuggest.do"/>', { text: t }).then(function(res){
-      if (!res || !res.ok) {
-        out.innerHTML = '<span style="color:#8a6d3b;">추천을 받지 못했습니다' + (res && res.reason ? ' — ' + esc(res.reason) : '') + '. 위 목록에서 직접 고르세요.</span>';
-        return;
-      }
-      var top = res.top || [];
-      if (!top.length || res.choice === 'NONE' || Number(top[0].p) < SG_MIN) {
-        out.innerHTML = '<span style="color:#8a6d3b;">뚜렷하게 맞는 유형이 없습니다' + (top.length ? ' (가장 가까운 것 ' + esc(top[0].nm) + ' ' + Math.round(top[0].p*100) + '%)' : '')
-                      + '. 위 목록에서 직접 고르세요.</span>';
-        return;
-      }
-      var h = '<span style="color:#5a6b7a;">추천 :</span>';
-      for (var i = 0; i < top.length; i++) h += sgChip(top[i]);
-      if (top.length === 1 || Number(top[0].p) - Number(top[1] ? top[1].p : 0) >= 0.4) h += '<span style="color:#5a6b7a; font-size:11.5px;">1순위가 뚜렷합니다.</span>';
-      out.innerHTML = h;
-    }, function(){
-      out.innerHTML = '<span style="color:#8a6d3b;">추천 서버에 닿지 못했습니다. 위 목록에서 직접 고르세요.</span>';
-    }).always(function(){ SG_BUSY = false; gel('srSgGo').disabled = false; });
-  };
-  window.srSuggestPick = function(code){
-    var sel = gel('srGb');
-    if (!GBS.some(function(c){ return c.subcode === code; })) { _alertBox('이 유형은 지금 목록에 없습니다.', {icon:'❓'}); return; }
-    if (sel.value === code) { _toast('이미 그 유형입니다.', 'ok'); return; }
-    sel.value = code;
-    srLoad();                                  /* 셀렉트 onchange 와 같은 길 — 체크 묶음·라벨이 그 유형으로 갈린다 */
-    _toast('유형을 「' + gbNm() + '」으로 바꿨습니다.', 'ok');
-  };
-
   window.srBulkPrintToggle = function(){
     var box = gel('srBulkPrintBox');
     if (box.style.display !== 'none') { box.style.display = 'none'; return; }

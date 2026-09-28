@@ -1,0 +1,161 @@
+diff --git a/wnn_medcost/.claude/CLAUDE.md b/wnn_medcost/.claude/CLAUDE.md
+index 37fbb6fe..96c2eebd 100644
+--- a/wnn_medcost/.claude/CLAUDE.md
++++ b/wnn_medcost/.claude/CLAUDE.md
+@@ -987,6 +987,17 @@
+   ⚠★**첫 확인에서 연보라가 안 보였다** — `#qpsCmpl table.ed select{ background:transparent }`(표 안 셀렉트를 납작하게 만드는 기존 규칙)가 `#qpsCmpl select.aifill` 보다 **명시도가 높아** 배경을 지웠다(computed `rgba(0,0,0,0)` 로 잡음). `#qpsCmpl table.ed select.aifill` 로 더 센 규칙을 **뒤에** 두어 해결(inset box-shadow 테두리도). **표 안 입력칸에 상태색을 줄 때는 그 표의 「납작하게」 규칙을 먼저 본다.**
+ - **셋의 뼈대는 같다** : `TypeSafeUtil.systemOne/rerank/choice/choices` + 서비스 한 메서드(코드는 `selectQpsCodes` 에서, NONE 추가, maskPrivacy) + 컨트롤러 ok=false 폴백 + 화면은 「비어 있는 것만·표시 남기고·실패는 조용히」. 다음 적용은 이 셋 중 가장 가까운 것을 베낀다.
+ 
++### [완료 · 로컬] TypeSafe 운영 점검 주소 `/qps/tsHealth.do` + 배포 가이드 §9 (2026-09-28 오후)
++- **배경**: 사용자가 운영에 WAR 를 올렸는데 「안 된다」 — 세 기능이 실패를 **조용히 폴백**하도록 만든 탓에 원인(키 못 읽음 / 방화벽 / 키 값 / TLS)이 화면에선 안 보인다. 셸 명령 넷을 드렸지만 브라우저 한 번으로 갈리게 했다.
++  사용자 결정 = **1번 「그대로 두고 방화벽 열어 쓴다」**(2번 Gemini 대체·3번 되돌리기 아님). 기존 코드는 안 건드렸다.
++- **구조**(자바 2 → ⛔WAR 재빌드) : `TypeSafeUtil.health()` = key·url·model·tls + **아주 작은 noul 1회 실제 호출**(ms·noul·error). `LAST_ERROR` 에 마지막 실패 이유를 남기고 예외 종류별 **힌트를 붙인다**(UnknownHost=DNS · timed out/Connect/NoRoute=방화벽 · handshake/record_overflow=TLS · 401/403=키 틀림·Inactive).
++  `QpsController.tsHealth`(**위너넷 쿠키만**, GET 도 됨) · `codeList.do` 응답에 `typesafe:true/false`(키 읽음 여부, 호출 없음).
++- **검증** : 실키 정상 `call.ok:true noul=0.96 5.5초(첫 호출)` · 키 없음 `key:false + 안내` · 없는 호스트 `UnknownHostException — DNS` · 막힌 주소(10.255.255.1) → ★**`SSLProtocolException: Read timed out`** 으로 싸여 와 처음엔 「TLS 결함」 힌트가 붙었다 → 글자(`timed out`)로 먼저 갈라 「방화벽·경로」 로 고침.
++  ⚠막힌 주소 점검은 8초×재시도 1 = **16초** 걸린다(설계대로 — 점검 화면이니 기다린다).
++- **가이드** [배포_가이드.md §9](docs/배포_가이드.md) = 키 넣기(setenv.sh·`>>` 금지·실인스턴스 재기동) → `tsHealth.do` 표(보이는 것 → 뜻 → 조치) → curl → 로그 → 끄는 법·요금.
++  ★운영 「안 된다」의 최유력 원인 = **아웃바운드 HTTPS 차단**(이 서버의 알려진 상태). 방화벽 요청 문구 : 「톰캣 서버(114.108.153.178)에서 `api.typesafe.ai` TCP 443 아웃바운드 허용」.
++- ⚠운영 반영은 **다시 WAR 재빌드+재기동**(점검 주소가 새 매핑이라 기동 때 생긴다). 이번 점검 주소를 안 올려도 §9 의 셸 명령으로 같은 것을 볼 수 있다.
++
+ ### [완료 · 배포 대기] Q&A 답변에 GPT 복사본을 올렸더니 태그가 글자로 보임 (2026-09-04)
+ - **증상**: 위너넷이 ChatGPT 화면을 복사해 「자주하는 질문」(qnacd 등록창 → TBL_QNA_KB 2600)에 올림 → 병원 사이드바 FAQ 창에 `<div><span style=…>` 가 글자로 보인다고 전화.
+ - **원인 2가지**: ①`web.xml` **HTMLTagFilter** 가 `*.do` 파라미터의 `< > & " '` 를 `&lt;` 로 바꿔 넘긴다 → `@RequestParam` 인 `qnaTopSave.do` 만 걸려 **본문이 글자로 저장**(FAQ·문의 등록은 `@RequestBody` JSON 이라 안 걸림). 그래서 같은 글이 편집창엔 정상, 병원 화면엔 태그로 보였다.
+diff --git "a/wnn_medcost/docs/\353\260\260\355\217\254_\352\260\200\354\235\264\353\223\234.md" "b/wnn_medcost/docs/\353\260\260\355\217\254_\352\260\200\354\235\264\353\223\234.md"
+index 56b92d83..d06a4075 100644
+--- "a/wnn_medcost/docs/\353\260\260\355\217\254_\352\260\200\354\235\264\353\223\234.md"
++++ "b/wnn_medcost/docs/\353\260\260\355\217\254_\352\260\200\354\235\264\353\223\234.md"
+@@ -163,3 +163,25 @@ mv wnn_medcost-1.0.0.bak_20260809_1013 wnn_medcost-1.0.0   # 3.3 에서 만든 
+ | 자바 6개 + `Qps_SQL.xml` + JSP 4개 | **WAR 재빌드 + 재기동** |
+ | DB (`docs/sql/QPS_*_2026-08-09.sql` 8개) | **이미 운영 DB 적용 완료** — 할 일 없음 |
+ | 확인 | QPS 탭 → 지표 현황(18종) → 인쇄 → 결재 → 지표정의서 |
++
++## 9. TypeSafe(AI 판정) 운영 점검 — 2026-09-28
++
++Q&A 검색 재순위 · 보고서 유형 추천 · 불만고충 분류 셋이 `api.typesafe.ai` 를 부른다. **키가 없거나 막히면 셋 다 조용히 종전 동작**이라
++「안 된다」가 오류 없이 보인다. 아래 순서로 가른다.
++
++1. **키** — `/usr/share/tomcat9/bin/setenv.sh` 에 `export TYPESAFE_API_KEY=apikey_…` 한 줄(`>>` 금지, `cat -A` 로 줄 끝 확인) → **`bin/shutdown.sh` + `startup.sh`** 재기동
++   (`systemctl restart tomcat9` 는 유령 인스턴스 — 그쪽을 재기동하면 키가 실서비스에 안 실린다).
++2. **점검 주소** — 위너넷 계정으로 로그인한 브라우저 주소창에 `…/qps/tsHealth.do` 를 친다(JSON 한 화면).
++   | 보이는 것 | 뜻 | 조치 |
++   |---|---|---|
++   | `"key":false` | 톰캣이 키를 못 읽음 | setenv.sh 줄·재기동한 인스턴스 확인(위 1) |
++   | `"key":true` + `call.ok:true` + `ms` | **정상** — 그 ms 가 응답 속도(첫 호출 2~6초, 이후 0.2~0.3초) | 끝 |
++   | `call.error` 에 `ConnectException`·`SocketTimeout` | 서버에서 밖으로 443 이 안 나감 | **방화벽에서 `api.typesafe.ai` 443 아웃바운드 개방** |
++   | `call.error` 에 `UnknownHostException` | DNS 가 못 풂 | 서버 DNS·아웃바운드 |
++   | `call.error` 에 `HTTP 401/403` | 키 값이 틀림·콘솔에서 Inactive | 콘솔(console.typesafe.ai/keys)에서 새 키 |
++   | `call.error` 에 `SSLException` | 옛 JDK TLS 결함 | `TYPESAFE_TLS=TLSv1.2`(기본값) 인지, JDK 판 |
++   `/qps/codeList.do` 응답에도 `"typesafe":true/false`(키 읽음 여부, 호출 없음)와 `build` 가 있다.
++3. **셸에서 같은 것** — `curl -sS -m 10 -o /dev/null -w "%{http_code}\n" https://api.typesafe.ai/v1/systemone` : 숫자면 길이 열림, 타임아웃이면 방화벽.
++4. **로그** — `grep TYPESAFE /usr/share/tomcat9/logs/catalina.out | tail` (원인이 한 줄로 남는다).
++
++끄고 싶으면 setenv.sh 의 키 줄을 지우고 재기동 — 셋 다 종전 동작으로 돌아간다. 요금은 호출당 입력 1~2.5천 토큰(콘솔 결제 메뉴에서 단가 확인).
+diff --git a/wnn_medcost/src/main/java/egovframework/util/TypeSafeUtil.java b/wnn_medcost/src/main/java/egovframework/util/TypeSafeUtil.java
+index d7d86fe3..0c314463 100644
+--- a/wnn_medcost/src/main/java/egovframework/util/TypeSafeUtil.java
++++ b/wnn_medcost/src/main/java/egovframework/util/TypeSafeUtil.java
+@@ -102,6 +102,44 @@ public class TypeSafeUtil {
+ 		return r;
+ 	}
+ 	private static volatile boolean LAST_IO_FAIL = false;
++	private static volatile String  LAST_ERROR   = "";     /* 마지막 실패 이유(점검 화면용) — 성공하면 빈 값 */
++	public static String lastError() { return LAST_ERROR; }
++
++	/**
++	 * 운영 점검 — 키가 있는가 · 밖으로 나가는가 · 몇 ms 걸리는가를 한 번에(2026-09-28, 서버 「안 된다」를 셸 없이 가르기 위해).
++	 * 아주 작은 noul 질문 하나를 실제로 보낸다(토큰 수십 개).
++	 * @return key(boolean) · url · model · tls · call{ok, ms, error, noul}
++	 */
++	public static Map<String, Object> health() {
++		Map<String, Object> h = new LinkedHashMap<>();
++		h.put("key",   isReady());
++		h.put("url",   apiUrl());
++		h.put("model", model());
++		h.put("tls",   env("TYPESAFE_TLS", "typesafe.tls", "TLSv1.2"));
++		Map<String, Object> call = new LinkedHashMap<>();
++		if (!isReady()) {
++			call.put("ok", false);
++			call.put("error", "키 없음 — 톰캣 환경변수 TYPESAFE_API_KEY(또는 -Dtypesafe.api.key)가 비어 있다. setenv.sh 를 고쳤으면 실서비스 인스턴스를 재기동했는지 본다.");
++		} else {
++			long t0 = System.currentTimeMillis();
++			JsonObject q = new JsonObject();
++			q.addProperty("type", "noul");
++			q.addProperty("instructions", "Is this message urgent?");
++			JsonObject qs = new JsonObject();
++			qs.add("u", q);
++			JsonObject a = systemOne(new com.google.gson.JsonPrimitive("Server is down, please help now."), qs, 8000);
++			call.put("ms", System.currentTimeMillis() - t0);
++			if (a != null && a.has("u") && a.getAsJsonObject("u").has("noul")) {
++				call.put("ok", true);
++				call.put("noul", a.getAsJsonObject("u").get("noul").getAsDouble());
++			} else {
++				call.put("ok", false);
++				call.put("error", LAST_ERROR.isEmpty() ? "응답 해석 실패" : LAST_ERROR);
++			}
++		}
++		h.put("call", call);
++		return h;
++	}
+ 
+ 	private static JsonObject systemOneOnce(String key, JsonElement state, JsonObject questions, int readTimeoutMs) {
+ 		LAST_IO_FAIL = false;
+@@ -139,20 +177,29 @@ public class TypeSafeUtil {
+ 				finally { in.close(); }
+ 			}
+ 			if (code < 200 || code >= 300) {
++				LAST_ERROR = "HTTP " + code + (code == 401 || code == 403 ? " — 키가 틀렸거나 콘솔에서 Inactive 상태" : "") + " : " + abbreviate(sb.toString(), 200);
+ 				LOGGER.warn("[TYPESAFE] HTTP {} : {}", code, abbreviate(sb.toString(), 400));
+ 				return null;
+ 			}
+ 			JsonObject root = gson.fromJson(sb.toString(), JsonObject.class);
+ 			if (root == null || !root.has("answers") || !root.get("answers").isJsonObject()) {
++				LAST_ERROR = "answers 없음 : " + abbreviate(sb.toString(), 200);
+ 				LOGGER.warn("[TYPESAFE] answers 없음 : {}", abbreviate(sb.toString(), 400));
+ 				return null;
+ 			}
++			LAST_ERROR = "";
+ 			if (root.has("usage") && LOGGER.isDebugEnabled())
+ 				LOGGER.debug("[TYPESAFE] usage {}", root.get("usage"));
+ 			return root.getAsJsonObject("answers");
+ 		} catch (Exception e) {
+ 			/* 방화벽·DNS·타임아웃·TLS 전부 여기로 — 폴백이 있으니 warn 한 줄로 끝낸다 */
+ 			LAST_IO_FAIL = true;
++			/* ★시간 초과는 SSLProtocolException 으로 싸여 오기도 한다(막힌 주소로 실측) — 글자로 먼저 가른다 */
++			String msg = String.valueOf(e);
++			String hint = (e instanceof java.net.UnknownHostException) ? " — DNS 가 api.typesafe.ai 를 못 푼다(아웃바운드 차단·DNS)"
++			            : (msg.contains("timed out") || e instanceof java.net.ConnectException || e instanceof java.net.NoRouteToHostException) ? " — 서버에서 밖으로 443 이 안 나간다(방화벽·경로)"
++			            : (msg.contains("handshake") || msg.contains("record_overflow") || msg.contains("protocol")) ? " — TLS 결함(TYPESAFE_TLS=TLSv1.2 인지·JDK 판)" : "";
++			LAST_ERROR = e.toString() + hint;
+ 			LOGGER.warn("[TYPESAFE] 호출 실패 (종전 동작으로 폴백) : {}", e.toString());
+ 			return null;
+ 		} finally {
+diff --git a/wnn_medcost/src/main/java/egovframework/wnn_medcost/qps/web/QpsController.java b/wnn_medcost/src/main/java/egovframework/wnn_medcost/qps/web/QpsController.java
+index 145abac9..e909f85c 100644
+--- a/wnn_medcost/src/main/java/egovframework/wnn_medcost/qps/web/QpsController.java
++++ b/wnn_medcost/src/main/java/egovframework/wnn_medcost/qps/web/QpsController.java
+@@ -3545,6 +3545,25 @@ public class QpsController {
+ 				byCd.computeIfAbsent(cd, k -> new java.util.ArrayList<>()).add(r);
+ 			}
+ 			res.put("codes", byCd);
++			res.put("typesafe", egovframework.util.TypeSafeUtil.isReady());   /* 운영 점검용 — 키를 읽었는지(호출은 안 한다), 2026-09-28 */
++			res.put("result", "OK");
++		} catch (Exception ex) { fail(res, ex.getMessage()); }
++		return res;
++	}
++
++	/** TypeSafe 운영 점검 (2026-09-28) — 위너넷만. 키·주소·TLS 와 실제 작은 호출 1회(ms·오류 원인). 서버 셸 없이 「키인가 방화벽인가」를 가른다.
++	 *  주소 : /qps/tsHealth.do (GET 도 됨 — 브라우저 주소창에 쳐서 본다) */
++	@RequestMapping(value = "/qps/tsHealth.do", produces = "application/json;charset=UTF-8")
++	@ResponseBody
++	public Map<String, Object> tsHealth(@RequestParam Map<String, Object> p, HttpServletRequest request) {
++		Map<String, Object> res = new HashMap<>();
++		res.put("build", BUILD);
++		try {
++			Map<String, String> ck = ClientInfo.getCookie(request);
++			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
++			if (!"Y".equals(wnn)) return fail(res, "위너넷 계정으로 로그인해야 볼 수 있습니다.");
++			res.putAll(egovframework.util.TypeSafeUtil.health());
++			res.put("javaVersion", System.getProperty("java.runtime.version"));
+ 			res.put("result", "OK");
+ 		} catch (Exception ex) { fail(res, ex.getMessage()); }
+ 		return res;
