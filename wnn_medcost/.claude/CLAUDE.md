@@ -914,6 +914,25 @@
 
 ## 장애/수정 이력
 
+### [완료 · 로컬 — 실API 미검증] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
+- **배경**: `/typesafe:typesafe-ai` 스킬로 시작 → 후보 3개(Q&A 재순위 · safeRpt 유형 추천 · 불만고충 분류) 중 사용자가 **1번** 선택. 이 저장소의 **첫 TypeSafe 적용**.
+  Q&A 검색 점수는 「낱말이 몇 번 겹치나」(ngram + 제목·키워드 LIKE 가산)라 엉뚱한 1등 사고를 여러 번 겪었고, MATCH_YN 은 「1건이라도 나오면 Y」라 **못 답한 질문 목록이 사실상 안 쌓였다**.
+- **구조**(자바 2 · 매퍼 1 · JSP 1 → ⛔**WAR 재빌드+재기동**):
+  · [TypeSafeUtil.java](src/main/java/egovframework/util/TypeSafeUtil.java) 신설 = 공용 호출(`systemOne(state,questions,timeout)` → answers) + `rerank(question, candidates)` → id→noul.
+    후보 전부를 **한 요청의 state** 에 담고 후보 수만큼 noul 질문(「`candidates[i]` 가 `question` 에 답하는가」, criteria true/false 에 「낱말만 겹치면 false」·「현장 용어=공식 용어」)을 낸다 — 왕복 1회.
+    (TypeSafe 재순위 쿡북은 짝마다 요청을 따로 보내지만, 같은 state 위 독립 질문은 한 요청에 묶는 것이 문서 권장·검색 응답 시간에 맞다.)
+  · `MangrServiceImpl.qnaSearch` → `rerankByTypeSafe` : SQL 상위 **10건**(TYPESAFE_QNA_TOPN)을 보내 noul 내림차순으로 다시 세움(답 없는 후보 뒤·11번째 이후 원래 순서), 항목에 `ai`(확률) 부착, 응답 `rerank`·`aiTop`.
+    **weak = 최고 noul < 0.5**(TYPESAFE_QNA_THRESHOLD) — 재순위가 돌았으면 낱말 적중 비율 대신 이것. weak 면 종전처럼 화면이 Gemini 참고답변(qnaAsk)으로.
+    ★**MATCH_YN 규칙 변경** : `(hit && !weak) ? Y : N` — 재순위 유무와 무관하게 weak 면 N. KB_ID 는 1등을 그대로 남긴다(무엇이 잘못 걸렸는지 보려고).
+  · 매퍼 `selectQnaSearch` 에 `LEFT(REGEXP_REPLACE(BODY,태그,' '),500) AS excerpt` 추가(resultType HashMap — 공유 resultMap 아님) — 서비스가 후보 판정에 쓰고 **화면엔 보내기 전에 뗀다**.
+  · qnacd.jsp `renderList` : 검색 모드 + `x.ai` 숫자면 **「87%」 배지**(0.7↑ 파랑 · 0.5~0.7 회색 · 아래 흐림) + 제목 줄 「· AI 재순위」.
+- **원칙** : 키 없음·HTTP 오류·타임아웃·파싱 실패 전부 **null → 종전 순서·종전 판정**(검색은 멈추지 않는다). 질문은 `maskPrivacy` 를 거쳐 나간다. 키는 `TYPESAFE_API_KEY`(-Dtypesafe.api.key) 만 — Gemini 키와 같은 규칙.
+- **검증** : 모의 서버 [TsMock](docs/tools/typesafe/TsMock.java) **11항목 통과**(요청 모양·순서·답 없는 후보·excerpt 제거·마스킹·500/answers 없음/연결 불가 폴백) · javac(WAR lib) · 매퍼 XML 정형성 39문·id 중복 0 · JSP 인라인 문법 · tmp1 복사 완료(8080 은 내려가 있었다).
+  ⛔**실제 API 는 아직 안 돌렸다 — 이 PC 에 키가 없다.** [TsLive](docs/tools/typesafe/TsLive.java) 에 키를 주면 한국어 5질문 판정·응답시간이 찍힌다. 문턱 0.5 · topN 10 은 그 결과를 보고 다시 정한다.
+- ⚠**운영 서버는 아웃바운드 HTTPS 차단** — `api.typesafe.ai` 가 막히면 운영에서는 늘 폴백(=종전 동작)이다. 방화벽 개방이 운영 반영의 전제. 배포 가이드 §7 에 적음.
+- ⚠javac 클래스패스는 git-bash 에서도 **Windows 경로+`;`** 로(`/d/…` 면 인터페이스를 못 찾아 `@Override` 오류 100개). 검사 자바가 예외로 죽으면 HttpServer 스레드가 살아 **안 끝난다** — main 을 try/catch+exit 로.
+  ⚠**bash `node -e "…"` 안에 백틱이 든 한글 문서를 넣으면 셸이 명령 치환으로 먹어 글이 빈다** — 문서 블록은 파일로 써서 node 가 읽게 한다(이번에 한 번 겪어 다시 넣었다).
+
 ### [완료 · 배포 대기] Q&A 답변에 GPT 복사본을 올렸더니 태그가 글자로 보임 (2026-09-04)
 - **증상**: 위너넷이 ChatGPT 화면을 복사해 「자주하는 질문」(qnacd 등록창 → TBL_QNA_KB 2600)에 올림 → 병원 사이드바 FAQ 창에 `<div><span style=…>` 가 글자로 보인다고 전화.
 - **원인 2가지**: ①`web.xml` **HTMLTagFilter** 가 `*.do` 파라미터의 `< > & " '` 를 `&lt;` 로 바꿔 넘긴다 → `@RequestParam` 인 `qnaTopSave.do` 만 걸려 **본문이 글자로 저장**(FAQ·문의 등록은 `@RequestBody` JSON 이라 안 걸림). 그래서 같은 글이 편집창엔 정상, 병원 화면엔 태그로 보였다.
