@@ -126,6 +126,11 @@
   /* 관리자가 이 화면에서 등록한 질문 표시 (2026-08-26 「관리자등록내용 표시도 되는지」) —
      ★색 체계를 건드리지 않는다: 파랑=위너넷 확정 · 초록=심평원 원문 · 주황=AI 참고답변.
        「누가 넣었나」는 신뢰 등급이 아니라 관리용 꼬리표라 <회색>으로 따로 둔다. */
+  /* TypeSafe 재순위 「AI 적합도」 배지 (2026-09-28) — 확률 0.7 이상 파랑 · 0.5~0.7 회색 · 그 아래 흐리게 */
+  #qnaList .qi .ai{ flex:0 0 auto; align-self:center; font-size:.72em; font-weight:700; padding:1px 7px; border-radius:9px;
+                    background:#eaf2ff; color:#1f6feb; white-space:nowrap; }
+  #qnaList .qi .ai.mid{ background:#f0f3f7; color:#6b7c92; }
+  #qnaList .qi .ai.low{ background:transparent; color:#b7c4d4; }
   #qnaList .qi .adm{ flex:0 0 auto; font-size:.72em; font-weight:700; color:#7d8fa5;
                      background:#f0f3f7; border:1px solid #dde4ec; border-radius:5px; padding:1px 5px; line-height:1.6; }
   /* 줄별 작업 단추 — 편집 도구를 켰을 때만 나온다 (2026-08-26 「수정아이콘 직관적으로」)
@@ -468,6 +473,12 @@
       h += '<div class="qi' + (String(CUR.kb)===String(x.kbId) ? ' on' : '') + '" onclick="qnaOpen(' + x.kbId + ')">'
          +   '<span class="no' + (MODE==='hot' ? ' rank' : '') + '">' + (i+1) + '</span>'
          +   '<span class="tx">' + esc(x.shortTitle || x.title) + '</span>'
+         /* TypeSafe 재순위 배지 (2026-09-28) — 검색 결과에서 서버가 ai(0~1)를 붙여 준 줄에만.
+            「왜 이 순서인가」를 보여 주는 용도다. 키가 없거나 호출이 실패한 검색에는 ai 가 없어 종전 모양 그대로. */
+         + (MODE === 'search' && typeof x.ai === 'number'
+             ? '<span class="ai' + (x.ai >= 0.7 ? '' : (x.ai >= 0.5 ? ' mid' : ' low')) + '"'
+               + ' title="AI 판정 : 이 항목이 질문에 답할 가능성 ' + Math.round(x.ai*100) + '%">'
+               + Math.round(x.ai*100) + '%</span>' : '')
          /* 관리자가 넣은 줄에 꼬리표 — 편집 도구를 켰을 때만. 병원 사용자 화면은 그대로다.
             ★[관리자 등록] 모아 보기에서는 안 붙인다 — 거긴 전부 관리자 등록분이라 뻔하다. */
          + (ADMIN && _qtopKeyOn && MODE !== 'adm' && isAdminKb(x)
@@ -742,6 +753,9 @@
     el('qnaList').innerHTML = '<div class="empty">찾는 중…</div>';
     post(API.search, { q:q, listCnt:30 }, function(j){
       LIST = j.list || [];
+      /* 재순위가 돌았으면 제목 줄에 표시 — 순서가 낱말 점수가 아니라 AI 판정이라는 뜻 (2026-09-28) */
+      if (j.rerank) el('qnaListTt').innerHTML += ' <span style="font-weight:400;color:#1f6feb;font-size:.85em" '
+        + 'title="TypeSafe 가 상위 후보를 「질문에 답하는가」로 다시 세운 순서입니다">· AI 재순위</span>';
       /* 영어로 친 것을 두벌식 한글로 바꿔 한 번 더 (재시도 1회 한정 — _retry 로 무한 반복 차단).
            · 먼저 <친 그대로> 찾는다 — DUR·ADL 처럼 자료에 진짜 영문으로 적힌 말이 있기 때문.
            · 그래도 없으면 자판을 바꿔 본다 (qosy → 배뇨).

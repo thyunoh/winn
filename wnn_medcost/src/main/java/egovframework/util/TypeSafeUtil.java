@@ -1,0 +1,214 @@
+package egovframework.util;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+/**
+ * TypeSafe System One(Jev) 호출 — 글을 만들지 않고 <타입이 정해진 판정>(예/아니오 확률 등)만 받는다.
+ *
+ * 첫 사용처 = 적정성평가 Q&A 검색 재순위(2026-09-28) : SQL 이 뽑은 후보 몇 건을 한 번에 보내
+ * 「이 항목이 질문에 답하는가」를 후보마다 확률(noul)로 받아 순위를 다시 매기고,
+ * 최고 확률이 문턱 아래면 <자료에 없는 질문>으로 본다.
+ *
+ * ★설계 원칙
+ *   · 키가 없거나 호출이 실패하면 null 을 돌려주고, 부르는 쪽은 종전 동작으로 조용히 폴백한다.
+ *     (검색은 늘 나가야 한다 — 외부 서비스 장애가 화면 오류로 번지면 안 된다.)
+ *   · 키는 환경변수 TYPESAFE_API_KEY 우선, 없으면 -Dtypesafe.api.key (Gemini 키와 같은 규칙).
+ *     소스·설정파일에 평문으로 넣지 않는다. 운영은 톰캣 setenv.sh 에 export.
+ *   · 환자 식별정보는 부르는 쪽이 먼저 지운다(MangrServiceImpl.maskPrivacy). 여기서는 받은 그대로 보낸다.
+ *   · 운영 서버는 아웃바운드 HTTPS 가 막혀 있을 수 있다 — 연결 실패는 warn 한 줄로 끝내고 폴백.
+ *
+ * API : POST https://api.typesafe.ai/v1/systemone · Authorization: Bearer <키>
+ *       본문 { state, model:"jev-latest", questions:{ id:{type,instructions,criteria} } }
+ *       응답 { answers:{ id:{type:"noul", noul:0~1} | {type:"choice", choice, probabilities, confidence} } }
+ */
+public class TypeSafeUtil {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(TypeSafeUtil.class);
+
+	private TypeSafeUtil() { }
+
+	/* ── 설정 ─────────────────────────────────────────────────────────── */
+
+	private static String env(String envKey, String propKey, String def) {
+		String v = System.getenv(envKey);
+		if (v == null || v.trim().isEmpty()) v = System.getProperty(propKey);
+		if (v == null || v.trim().isEmpty()) return def;
+		return v.trim();
+	}
+
+	/** API 키 — 없으면 null (그러면 모든 호출이 null 을 돌려준다) */
+	public static String apiKey() {
+		String k = env("TYPESAFE_API_KEY", "typesafe.api.key", null);
+		return (k == null || k.startsWith("YOUR_")) ? null : k;
+	}
+	public static boolean isReady() { return apiKey() != null; }
+
+	public static String apiUrl() { return env("TYPESAFE_API_URL", "typesafe.api.url", "https://api.typesafe.ai/v1/systemone"); }
+	public static String model()  { return env("TYPESAFE_MODEL",   "typesafe.model",   "jev-latest"); }
+
+	/** 정수 설정(환경변수·-D) — 못 읽으면 기본값 */
+	public static int intCfg(String envKey, String propKey, int def) {
+		try { return Integer.parseInt(env(envKey, propKey, String.valueOf(def))); }
+		catch (Exception e) { return def; }
+	}
+	/** 소수 설정(환경변수·-D) — 못 읽으면 기본값 */
+	public static double dblCfg(String envKey, String propKey, double def) {
+		try { return Double.parseDouble(env(envKey, propKey, String.valueOf(def))); }
+		catch (Exception e) { return def; }
+	}
+
+	/* ── 낮은 수준 호출 ─────────────────────────────────────────────── */
+
+	/**
+	 * System One 한 번 호출. state 와 questions 를 그대로 싸서 보내고 answers 객체를 돌려준다.
+	 * 키 없음·HTTP 오류·파싱 실패·타임아웃은 전부 null (warn 로그).
+	 *
+	 * @param state      판정할 자료(JsonObject/JsonArray/JsonPrimitive)
+	 * @param questions  질문 id → {type, instructions, criteria}
+	 * @param readTimeoutMs 읽기 제한(ms). 검색처럼 사용자가 기다리는 자리는 짧게.
+	 */
+	public static JsonObject systemOne(JsonElement state, JsonObject questions, int readTimeoutMs) {
+		String key = apiKey();
+		if (key == null) return null;
+		if (questions == null || questions.size() == 0) return null;
+
+		HttpURLConnection conn = null;
+		try {
+			Gson gson = new Gson();
+			JsonObject body = new JsonObject();
+			body.add("state", state);
+			body.addProperty("model", model());
+			body.add("questions", questions);
+
+			URL url = new URL(apiUrl());
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+			conn.setRequestProperty("Authorization", "Bearer " + key);   /* 키는 헤더로 — URL 에 실으면 접속로그에 남는다 */
+			conn.setDoOutput(true);
+			conn.setConnectTimeout(5000);
+			conn.setReadTimeout(readTimeoutMs <= 0 ? 15000 : readTimeoutMs);
+
+			OutputStream os = conn.getOutputStream();
+			try { os.write(gson.toJson(body).getBytes("UTF-8")); os.flush(); }
+			finally { os.close(); }
+
+			int code = conn.getResponseCode();
+			InputStream is = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
+			StringBuilder sb = new StringBuilder();
+			if (is != null) {
+				BufferedReader in = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+				try { String line; while ((line = in.readLine()) != null) sb.append(line); }
+				finally { in.close(); }
+			}
+			if (code < 200 || code >= 300) {
+				LOGGER.warn("[TYPESAFE] HTTP {} : {}", code, abbreviate(sb.toString(), 400));
+				return null;
+			}
+			JsonObject root = gson.fromJson(sb.toString(), JsonObject.class);
+			if (root == null || !root.has("answers") || !root.get("answers").isJsonObject()) {
+				LOGGER.warn("[TYPESAFE] answers 없음 : {}", abbreviate(sb.toString(), 400));
+				return null;
+			}
+			if (root.has("usage") && LOGGER.isDebugEnabled())
+				LOGGER.debug("[TYPESAFE] usage {}", root.get("usage"));
+			return root.getAsJsonObject("answers");
+		} catch (Exception e) {
+			/* 방화벽·DNS·타임아웃 전부 여기로 — 폴백이 있으니 warn 한 줄로 끝낸다 */
+			LOGGER.warn("[TYPESAFE] 호출 실패 (종전 동작으로 폴백) : {}", e.toString());
+			return null;
+		} finally {
+			if (conn != null) try { conn.disconnect(); } catch (Exception ignore) { }
+		}
+	}
+
+	/* ── 재순위 ───────────────────────────────────────────────────────── */
+
+	/** 재순위 후보 한 건 — id 는 부르는 쪽이 답을 되찾는 열쇠(KB_ID 등) */
+	public static class Candidate {
+		public final String id, title, category, excerpt;
+		public Candidate(String id, String title, String category, String excerpt) {
+			this.id = id; this.title = title; this.category = category; this.excerpt = excerpt;
+		}
+	}
+
+	/**
+	 * 질문 하나 × 후보 여러 건 → 후보마다 「이 항목이 질문에 답하는가」 확률(0~1).
+	 *
+	 * 후보 전부를 <한 요청의 state> 에 담고 후보 수만큼 noul 질문을 낸다(질문은 병렬·독립 평가).
+	 * TypeSafe 재순위 쿡북은 (질문,후보) 짝마다 요청을 따로 보내지만, 같은 state 위의 독립 질문은
+	 * 한 요청에 묶는 것이 문서의 권장이고 왕복이 한 번이라 검색 응답 시간에 맞다.
+	 *
+	 * @return id → noul (요청 실패·키 없음이면 null). 답이 안 온 후보는 맵에 없다.
+	 */
+	public static Map<String, Double> rerank(String question, List<Candidate> cands, int readTimeoutMs) {
+		if (question == null || question.trim().isEmpty() || cands == null || cands.isEmpty()) return null;
+		if (!isReady()) return null;
+
+		JsonObject state = new JsonObject();
+		state.addProperty("question", question.trim());
+		state.addProperty("domain", "한국 요양병원 적정성평가·수가 청구 실무 Q&A. 자료 = 심사평가원 교육자료·고시 질의응답·위너넷(WinCheck+) 확정 지식.");
+		JsonArray arr = new JsonArray();
+		JsonObject questions = new JsonObject();
+		for (int i = 0; i < cands.size(); i++) {
+			Candidate c = cands.get(i);
+			JsonObject o = new JsonObject();
+			o.addProperty("title",    nz(c.title));
+			o.addProperty("category", nz(c.category));
+			o.addProperty("excerpt",  nz(c.excerpt));
+			arr.add(o);
+
+			JsonObject q = new JsonObject();
+			q.addProperty("type", "noul");
+			q.addProperty("instructions",
+				"사용자 질문 `question` 에 대해 지식 항목 `candidates[" + i + "]`(제목·분류·본문 앞부분)가 "
+			  + "실제로 답을 주는 자료인가? 질문과 같은 낱말이 들어 있다는 것만으로는 부족하고, "
+			  + "질문이 알고 싶어 하는 규칙·기준·절차·수치를 그 항목이 다루어야 한다. "
+			  + "현장 용어(소변줄·콧줄·기저귀 등)와 공식 용어(유치도뇨관·경관영양·배뇨관리)는 같은 뜻으로 본다.");
+			JsonObject crit = new JsonObject();
+			crit.addProperty("true",  "항목이 질문의 주제를 직접 다루며, 사용자가 이 항목을 열면 질문에 대한 답(기준·절차·수치·해석)을 얻는다.");
+			crit.addProperty("false", "항목이 다른 주제이거나, 낱말만 겹치고 질문이 묻는 내용은 다루지 않거나, 너무 일반적이어서 이 질문의 답이 되지 못한다.");
+			q.add("criteria", crit);
+			questions.add("c" + i, q);
+		}
+		state.add("candidates", arr);
+
+		JsonObject answers = systemOne(state, questions, readTimeoutMs);
+		if (answers == null) return null;
+
+		Map<String, Double> out = new LinkedHashMap<>();
+		for (int i = 0; i < cands.size(); i++) {
+			JsonElement a = answers.get("c" + i);
+			if (a == null || !a.isJsonObject()) continue;
+			JsonElement n = a.getAsJsonObject().get("noul");
+			if (n == null || !n.isJsonPrimitive()) continue;
+			try { out.put(cands.get(i).id, n.getAsDouble()); } catch (Exception ignore) { }
+		}
+		return out.isEmpty() ? null : out;
+	}
+
+	/* ── 잡동사니 ─────────────────────────────────────────────────────── */
+
+	private static String nz(String s) { return (s == null) ? "" : s; }
+
+	private static String abbreviate(String s, int max) {
+		if (s == null) return "";
+		return (s.length() <= max) ? s : s.substring(0, max) + "…";
+	}
+}

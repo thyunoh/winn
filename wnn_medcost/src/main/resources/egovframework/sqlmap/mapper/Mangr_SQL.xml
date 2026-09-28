@@ -765,6 +765,8 @@
                ,K.KIND     AS kind
                ,K.DOC_PAGE AS docPage
                ,C.CAT_NM   AS catNm
+               /* TypeSafe 재순위용 본문 앞부분 (2026-09-28) — 서비스가 후보 판정에 쓰고 화면엔 안 보낸다 */
+               ,LEFT(REGEXP_REPLACE(K.BODY, '<[^>]*>', ' '), 500) AS excerpt
                ,(   MATCH(K.TITLE,K.KEYWORDS,K.BODY) AGAINST (#{q} IN NATURAL LANGUAGE MODE)
                   + CASE WHEN K.TITLE     LIKE CONCAT('%',#{q},'%') THEN 14 ELSE 0 END
                   + CASE WHEN K.KEYWORDS  LIKE CONCAT('%',#{q},'%') THEN  6 ELSE 0 END
