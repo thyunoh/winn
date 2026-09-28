@@ -260,6 +260,103 @@ public class TypeSafeUtil {
 		return out.isEmpty() ? null : out;
 	}
 
+	/* ── 선택(Choice) ─────────────────────────────────────────────────── */
+
+	/** Choice 한 질문의 답 — 고른 option · 분포 · 확신(분포가 뾰족한 정도, 0~1) */
+	public static class ChoiceResult {
+		public final String choice;
+		public final double confidence;
+		public final Map<String, Double> probabilities;   /* option → 확률, 내림차순 */
+		ChoiceResult(String c, double conf, Map<String, Double> p) { choice = c; confidence = conf; probabilities = p; }
+	}
+
+	/**
+	 * 정해진 선택지 중 하나 고르기 — 첫 사용처 = 사고·보고서 유형 추천(2026-09-28).
+	 *
+	 * @param state        판정할 자료(질문·자유 글 등을 담은 JSON)
+	 * @param instructions 무엇을 고르는지(한 문장, state 의 칸은 `백틱` 경로로 가리킨다)
+	 * @param options      option 이름(코드) → 설명. **255개 상한**(API). 목록이 완전하지 않을 수 있으면 「해당 없음」 option 을 넣을 것.
+	 * @return 실패·키 없음이면 null. probabilities 는 확률 내림차순으로 정렬돼 온다.
+	 */
+	public static ChoiceResult choice(JsonElement state, String instructions, Map<String, String> options, int readTimeoutMs) {
+		Map<String, ChoiceSpec> qs = new LinkedHashMap<>();
+		qs.put("pick", new ChoiceSpec(instructions, options));
+		Map<String, ChoiceResult> r = choices(state, qs, readTimeoutMs);
+		return (r == null) ? null : r.get("pick");
+	}
+
+	/** Choice 질문 하나의 정의 — 여러 개를 한 요청에 묶을 때 쓴다 */
+	public static class ChoiceSpec {
+		public final String instructions; public final Map<String, String> options;
+		public ChoiceSpec(String i, Map<String, String> o) { instructions = i; options = o; }
+	}
+
+	/**
+	 * 같은 state 위의 Choice 질문 여러 개를 **한 요청**에 — 질문은 병렬·독립 평가라 왕복이 한 번이다(문서 권장).
+	 * 첫 사용처 = 불만고충 대장의 유형 + 민원인 구분 동시 추천(2026-09-28).
+	 * @return 질문 id → 결과. 요청 실패·키 없음이면 null. 해석 못 한 질문은 맵에 없다.
+	 */
+	public static Map<String, ChoiceResult> choices(JsonElement state, Map<String, ChoiceSpec> specs, int readTimeoutMs) {
+		if (specs == null || specs.isEmpty()) return null;
+		if (!isReady()) return null;
+		JsonObject questions = new JsonObject();
+		for (Map.Entry<String, ChoiceSpec> s : specs.entrySet()) {
+			ChoiceSpec sp = s.getValue();
+			if (sp == null || sp.options == null || sp.options.isEmpty() || sp.options.size() > 255) return null;
+			JsonObject q = new JsonObject();
+			q.addProperty("type", "choice");
+			q.addProperty("instructions", sp.instructions);
+			JsonObject crit = new JsonObject();
+			for (Map.Entry<String, String> e : sp.options.entrySet()) crit.addProperty(e.getKey(), nz(e.getValue()));
+			q.add("criteria", crit);
+			questions.add(s.getKey(), q);
+		}
+		JsonObject answers = systemOne(state, questions, readTimeoutMs);
+		if (answers == null) return null;
+		Map<String, ChoiceResult> out = new LinkedHashMap<>();
+		for (String id : specs.keySet()) {
+			JsonElement a = answers.get(id);
+			if (a == null || !a.isJsonObject()) continue;
+			ChoiceResult r = parseChoice(a.getAsJsonObject());
+			if (r != null) out.put(id, r);
+		}
+		return out.isEmpty() ? null : out;
+	}
+
+	private static ChoiceResult parseChoice(JsonObject ao) {
+		try {
+			String choice = ao.has("choice") ? ao.get("choice").getAsString() : null;
+			double conf = ao.has("confidence") ? ao.get("confidence").getAsDouble() : 0;
+			List<Map.Entry<String, Double>> l = new java.util.ArrayList<>();
+			if (ao.has("probabilities") && ao.get("probabilities").isJsonObject())
+				for (Map.Entry<String, JsonElement> e : ao.getAsJsonObject("probabilities").entrySet())
+					l.add(new java.util.AbstractMap.SimpleEntry<>(e.getKey(), e.getValue().getAsDouble()));
+			java.util.Collections.sort(l, new java.util.Comparator<Map.Entry<String, Double>>() {
+				public int compare(Map.Entry<String, Double> x, Map.Entry<String, Double> y) { return Double.compare(y.getValue(), x.getValue()); }
+			});
+			Map<String, Double> probs = new LinkedHashMap<>();
+			for (Map.Entry<String, Double> e : l) probs.put(e.getKey(), e.getValue());
+			if (choice == null && !probs.isEmpty()) choice = probs.keySet().iterator().next();
+			return new ChoiceResult(choice, conf, probs);
+		} catch (Exception e) {
+			LOGGER.warn("[TYPESAFE] choice 응답 해석 실패 : {}", e.toString());
+			return null;
+		}
+	}
+
+	/* ── 개인정보 가림 ─────────────────────────────────────────────────── */
+
+	/** 밖으로 나가는 글에서 환자 식별정보를 지운다 — 주민번호·전화번호·「홍길동 환자/님/씨」.
+	 *  (2026-08-06 Q&A Gemini 호출용으로 만든 것을 2026-09-28 여기로 옮겨 TypeSafe 호출 전부가 같은 규칙을 쓴다.) */
+	public static String maskPrivacy(String s) {
+		if (s == null) return "";
+		String out = s;
+		out = out.replaceAll("\\d{6}\\s*[-–]\\s*\\d{7}", "[주민번호]");
+		out = out.replaceAll("\\d{2,3}\\s*[-–]\\s*\\d{3,4}\\s*[-–]\\s*\\d{4}", "[전화번호]");
+		out = out.replaceAll("[가-힣]{2,4}\\s*(환자|님|씨)(?=\\s|$|[,.])", "[환자]");
+		return out;
+	}
+
 	/* ── 잡동사니 ─────────────────────────────────────────────────────── */
 
 	private static String nz(String s) { return (s == null) ? "" : s; }

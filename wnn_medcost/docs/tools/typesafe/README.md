@@ -1,26 +1,30 @@
-# TypeSafe(Jev) 검사 도구 — Q&A 검색 재순위 (2026-09-28)
+# TypeSafe(Jev) 검사 도구 — Q&A 검색 재순위 · 보고서 유형 추천 · 불만고충 분류 (2026-09-28)
 
-`egovframework/util/TypeSafeUtil.java` 와 `MangrServiceImpl.rerankByTypeSafe` 를 검사하는 자바 네 벌.
+`egovframework/util/TypeSafeUtil.java` 와 `MangrServiceImpl.rerankByTypeSafe` 를 검사하는 자바 여섯 벌.
 JDK 11 단일 파일 컴파일로 돈다(메이븐 불필요). 클래스패스는 이클립스 배포본(tmp1)의 `WEB-INF/lib` + `WEB-INF/classes`.
 
 ```powershell
 $LIB='D:\egv\.metadata\.plugins\org.eclipse.wst.server.core\tmp1\wtpwebapps\wnn_medcost\WEB-INF\lib'
 $CLS='D:\egv\.metadata\.plugins\org.eclipse.wst.server.core\tmp1\wtpwebapps\wnn_medcost\WEB-INF\classes'
 mkdir out
-javac -encoding UTF-8 -nowarn -d out -cp "$LIB\*;$CLS" TsMock.java TsLive.java TsLiveDb.java TsSsl.java
+javac -encoding UTF-8 -nowarn -d out -cp "$LIB\*;$CLS" TsMock.java TsLive.java TsLiveDb.java TsLiveSuggest.java TsLiveCmpl.java TsSsl.java
 ```
 
 | 도구 | 키 | 무엇을 보나 | 2026-09-28 결과 |
 |---|---|---|---|
-| **TsMock** | 없어야 함 | 가짜 서버로 코드 흐름 11항목 — 요청 모양·순서 바뀜·답 없는 후보 뒤·excerpt 제거·질문 마스킹·500/answers 없음/연결 불가 폴백 | PASS 11 / FAIL 0 |
+| **TsMock** | 없어야 함 | 가짜 서버로 코드 흐름 14항목 — 재순위(요청 모양·순서 바뀜·답 없는 후보 뒤·excerpt 제거·질문 마스킹·500/answers 없음/연결 불가 폴백) + **choice**(요청 모양·마스킹·확률 정렬·빈 선택지) | PASS 14 / FAIL 0 |
 | **TsLive** | 필요 | 합성 후보 6건 × 질문 5개 — 순위가 맞나, 자료 없는 질문은 납작한가, 응답 시간 | 5/5 정답 1등 · 첫 2.3초·이후 0.23초 · 없는 질문 전부 0.01 |
 | **TsLiveDb** | 필요 + DB | 운영 `TBL_QNA_KB` 를 **SELECT 만** 해 `selectQnaSearch` 와 같은 SQL 로 후보 30건을 뽑고 진짜 재순위 함수(리플렉션)를 태움. 질문 로그의 실제 질문도 8개 섞음. A/B 판정 규칙 나란히 계산 | 15/15 호출 성공 · 찾은 질문 1등 0.68~0.98 · 없는 질문 0.02~0.09 |
+| **TsLiveSuggest** | 필요 + DB | **보고서 유형 추천**(적용 2호) — 운영 `QPS_SAFERPT_GB` 78종을 SELECT 해 매퍼를 Proxy 로 흉내 내고 진짜 `QpsServiceImpl.suggestRptGb` 를 태움. 자유 글 10문장 → 상위 3·NONE·confidence | 낙상 1.00 · 교육 0.92 · 감염 0.93 · 개인정보 0.94 · 잡담 NONE 0.99 |
+| **TsLiveCmpl** | 필요 + DB | **불만고충 분류 추천**(적용 3호) — `QPS_CMPL_TYPE`·`QPS_CMPL_PERSON` 을 SELECT 해 진짜 `suggestCmpl`(Choice 2문 한 요청)을 태움. 불만 글 10줄 → 유형·민원인 구분·NONE | 유형 10/10 기대대로 · 인사 전화 NONE 0.92 · 민원인은 드러날 때만 |
 | **TsSsl** | 필요 | TLS 결함 재현 — A 기본 · B `Connection: close` · C `https.protocols` · D `jdk.tls.client.protocols` · E TLS1.2+close 로 8연속 호출 | A 8/8(재사용) · **B 1/8** · C·D·E 8/8 |
 
 ```powershell
 java -cp "out;$LIB\*;$CLS" TsMock                       # 환경변수 TYPESAFE_API_KEY 를 비우고
 $env:TYPESAFE_API_KEY='...'; java -cp "out;$LIB\*;$CLS" TsLive
 java "-Dfile.encoding=UTF-8" -cp "out;$LIB\*;$CLS" TsLiveDb <db사용자> <db비밀번호>
+java "-Dfile.encoding=UTF-8" -cp "out;$LIB\*;$CLS" TsLiveSuggest <db사용자> <db비밀번호>
+java "-Dfile.encoding=UTF-8" -cp "out;$LIB\*;$CLS" TsLiveCmpl <db사용자> <db비밀번호>
 java -cp "out;$LIB\*;$CLS" TsSsl E
 ```
 

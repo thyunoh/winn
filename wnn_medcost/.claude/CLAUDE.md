@@ -914,7 +914,7 @@
 
 ## 장애/수정 이력
 
-### [완료 · 로컬 — 실API 검증 끝] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
+### [완료 · 로컬 — 실API·화면 검증 끝] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
 - **배경**: `/typesafe:typesafe-ai` 스킬로 시작 → 후보 3개(Q&A 재순위 · safeRpt 유형 추천 · 불만고충 분류) 중 사용자가 **1번** 선택. 이 저장소의 **첫 TypeSafe 적용**.
   Q&A 검색 점수는 「낱말이 몇 번 겹치나」(ngram + 제목·키워드 LIKE 가산)라 엉뚱한 1등 사고를 여러 번 겪었고, MATCH_YN 은 「1건이라도 나오면 Y」라 **못 답한 질문 목록이 사실상 안 쌓였다**.
 - **구조**(자바 2 · 매퍼 1 · JSP 1 → ⛔**WAR 재빌드+재기동**):
@@ -936,10 +936,56 @@
   「침대에만 누워 있는 환자 욕창 관리」 SQL 1등 「와상상태 여부」 → AI 1등 「욕창 처치 항목은 무엇을 체크해야 하나요」 **0.87**(기대한 개선) · 제목 그대로 물은 것은 0.94~0.98 · 「직원 식당 메뉴」 0.02 · 「소변줄 오래 꽂으면 점수」는 SQL 후보 30건에 정답이 없어 0.08(→ 종전대로 Gemini + 용어 변환 길).
   ★**재순위는 후보 밖을 못 고른다** — 현장 용어가 KB 낱말과 안 겹치면 SQL 이 정답을 안 물어 온다. 다음 개선 후보 = qnaAsk 의 용어 변환(rewriteTerms)을 검색 앞단에도 쓰기.
   [TsSsl](docs/tools/typesafe/TsSsl.java) = TLS 결함 재현(A 기본 · B close · C/D TLS1.2 · E TLS1.2+close). tmp1 복사 완료(8080 은 내려가 있어 화면은 미확인).
+- ✅**[같은 날 10:31] 화면 실왕복 완료**(이클립스 재기동 뒤 · 내장 브라우저 · 쿠키 `s_hospid=w1234567; s_userid=admin; s_wnn_yn=Y`) :
+  「침대에만 누워 있는 환자 욕창 관리」 → 응답 0.9초 · `rerank:true` · 1등 「욕창 처치 항목」 **88%** 배지(파랑) · 2등 이하 46%·35%… 회색 · 제목 줄 「· AI 재순위」 · 1등이 바로 펼쳐짐(weak=false).
+  「직원 식당 메뉴」 → 전부 2% · weak=true → 「등록된 자료에 없는 질문입니다. AI 가 정리하는 중…」(종전 Gemini 길). **질문 로그** : 침대 질문 kb=698 **Y**(폴백 때는 kb=2123 N 이었다) · 식당 질문 kb=2424 **N** + AI 줄 N.
+  ⚠★**이클립스 톰캣은 이클립스가 뜰 때의 환경변수를 물려받는다** — 키를 넣은 뒤 톰캣만 재시작하면 `rerank:false` 로 조용히 폴백한다(실제로 겪음). **이클립스를 완전히 다시 띄울 것.**
+  시험으로 남은 로그 = `TBL_QNA_LOG` LOG_ID 3082~3091(USER_ID admin, 2026-09-28 10:24~10:31) — 지우려면 `DELETE FROM TBL_QNA_LOG WHERE LOG_ID BETWEEN 3082 AND 3091 AND USER_ID='admin';`(사용자 실행).
 - ⚠**운영 서버는 아웃바운드 HTTPS 차단** — `api.typesafe.ai` 가 막히면 운영에서는 늘 폴백(=종전 동작)이다. 방화벽 개방이 운영 반영의 전제. 배포 가이드 §7 에 적음.
 - ⚠콘솔(console.typesafe.ai/keys)의 키는 **만들 때 한 번만 전체가 보인다**(목록은 `apikey_2252...46d9` 가림) · 첫 키는 Inactive 로 403 이 났다 — 403 authentication_error 면 코드보다 키 상태부터.
 - ⚠javac 클래스패스는 git-bash 에서도 **Windows 경로+`;`** 로(`/d/…` 면 인터페이스를 못 찾아 `@Override` 오류 100개). 검사 자바가 예외로 죽으면 HttpServer 스레드가 살아 **안 끝난다** — main 을 try/catch+exit 로.
   ⚠**bash `node -e "…"` 안에 백틱이 든 한글 문서를 넣으면 셸이 명령 치환으로 먹어 글이 빈다** — 문서 블록은 파일로 써서 node 가 읽게 한다(이번에 한 번 겪어 다시 넣었다).
+
+### [완료 · 로컬 — 실API·화면 검증 끝] 보고서(qpsSafeRpt) ✨ 유형 추천 — TypeSafe 적용 2호 (2026-09-28)
+- **배경**: 사용자 「2번 보고서 유형 추천도 진행해줘」. 보고서 유형이 **78종·8계열**이라 「이 일은 어느 서식에 적나」를 셀렉트에서 못 찾는 담당자용. 자유 글 한두 줄 → 확률 상위 3건, 누르면 그 유형으로.
+- **구조**(자바 4 · JSP 1 · 매퍼 0 → ⛔**WAR 재빌드+재기동**, `BUILD="20260928-TSSUGGEST"`):
+  · [TypeSafeUtil](src/main/java/egovframework/util/TypeSafeUtil.java) 에 **`choice(state, instructions, options, timeout)`** 신설 → `ChoiceResult{choice, confidence, probabilities(내림차순)}`. option 255 상한 검사. **`maskPrivacy` 도 여기로 옮겼다**(Mangr 의 것은 위임만 — Gemini·TypeSafe 어디로 나가든 같은 가림).
+  · `QpsServiceImpl.suggestRptGb(text)` : `selectQpsCodes` 의 **QPS_SAFERPT_GB 전부**를 Choice 선택지(코드 → 이름)로 + **`NONE`(「해당하는 유형 없음」)** — 목록에 없는 일을 억지로 한 유형에 밀지 않게. 글은 1000자 상한·maskPrivacy. 응답 `ok/top[{code,nm,sort,p}]/none/confidence/choice`, 키 없음·실패는 **ok=false + reason**.
+    ★**계열 이름(SR_BANDS)은 서버로 보내지 않는다** — 그 표는 화면에만 있고 두 벌이면 어긋난다. 유형 이름만으로 충분함을 실측했다(아래).
+  · `QpsController` **`/qps/rptGbSuggest.do`** — 예외도 ok=false 로(화면은 오류창 대신 「목록에서 고르세요」).
+  · [qpsSafeRpt.jsp](src/main/webapp/WEB-INF/jsp/main/qpsmgr/qpsSafeRpt.jsp) : 툴바 **[✨ 유형 추천]** → 연보라 띠 `#srSuggestBox`(일괄 출력 파랑과 구분) — 열 때 **사건경위(f_summary)가 있으면 미리 넣는다** · [추천받기] → 칩 「유형명 (계열) 83%」 3개(계열은 화면의 `srBandOf`) · 칩 클릭 = `srGb` 바꾸고 `srLoad()`(셀렉트 onchange 와 같은 길) + 토스트.
+    **NONE 1등 또는 1등 < 0.25(`SG_MIN`)면 칩을 안 낸다**(「뚜렷하게 맞는 유형이 없습니다 (가장 가까운 것 …)」) — 억지 추천이 더 나쁘다. ok=false·통신 실패는 회색 글로만(알림창 없음). 연타 방지 `SG_BUSY`. 같은 유형 다시 누르면 srLoad 안 부름.
+- **검증** : jsdom [sim_qpsSafeRpt_suggest.js](docs/tools/sim/sim_qpsSafeRpt_suggest.js) **15검사** → 전 시뮬 **499** 통과 · 모의 서버 TsMock **14**(choice 요청 모양·마스킹·확률 정렬·빈 선택지) · javac · JSP 문법·div 94/94·id 중복 0 ·
+  **실API+운영 유형 78종** [TsLiveSuggest](docs/tools/typesafe/TsLiveSuggest.java)(매퍼를 Proxy 로 흉내 내 진짜 `suggestRptGb` 를 태움, DB 는 SELECT 만) **10문장** :
+  낙상 → 환자안전사고 **1.00** · 손위생 교육 → 직원 교육 결과 **0.92** · 투약 오류 → 환자안전사고 0.88 · 수혈 발열 → 환자안전사고 0.56/의약품 부작용 0.28 · 보호자 폭언 → 직원간 폭행/성희롱 0.40/환자 학대 0.21 ·
+  MRSA 격리 → 감염성 질환 발생 0.93 · 개인정보 서류 폐기 → 개인정보 유출신고 0.94 · 직원 검진 → 건강검진 결과보고서 0.86 · **「오늘 점심 뭐 먹을까」 → NONE 0.99** · 「홍길동 환자 010-… 미끄러짐」 → 환자안전사고 1.00(마스킹 뒤에도). 첫 호출 6.3초(TLS 준비) · 이후 0.2~0.28초.
+  ⛔**화면 확인은 톰캣 재기동 뒤** — 클래스·JSP 는 tmp1 에 복사했지만 **스프링 URL 매핑은 기동 때 만들어져** `rptGbSuggest.do` 가 404 다(재기동 없이 새 엔드포인트는 안 열린다 — 이번에 확인).
+- ⚠**겪은 것** : ①기존 `@Override` 줄 바로 뒤에 새 메서드를 끼워 넣어 어노테이션이 겹쳤다(`Override is not a repeatable annotation`) — **메서드는 앞 메서드의 javadoc 위에** 넣는다 ②TsMock 에 검사를 끼울 때 앞 검사가 남긴 `mode` 를 안 되돌려 헛 FAIL ③jsdom 시뮬은 `post()` 가 jQuery 식(`.then().always()`)이라 **thenable 흉내(`jq`)** 를 넣어야 한다.
+- ✅**[같은 날 10:55] 톰캣 재시작 뒤 화면 실왕복 완료**(`build=20260928-TSSUGGEST`, 내장 브라우저·가짜 쿠키) : `rptGbSuggest.do` 0.9초 · [✨ 유형 추천] 열면 사건경위가 미리 들어감 →
+  「신입 간호사 손위생 교육」 → 칩 「직원 교육 결과 보고서 (교육 · 보건관리) **90%**」·5%·4% + 「1순위가 뚜렷합니다」 → 칩 클릭 → `srGb`=EDURPT · 제목 「직원 교육 결과 보고서」 · 구분 카드가 그 유형으로 갈림 ·
+  「오늘 점심 뭐 먹을까」 → 칩 0 「뚜렷하게 맞는 유형이 없습니다 (가장 가까운 것 영양상담 기록지 1%)」 · 낙상 문장 → 환자안전사고 100%.
+  ⚠(내 변경과 무관·기존) 창 폭 800px 에서는 유형 셀렉트(`srGb`, 머리줄 오른쪽)가 **위너넷 「자주 쓰는 메뉴」 띠(#wnnFavBar) 밑에 깔린다** — elementFromPoint 로 확인. 넓은 크롬에선 안 겹치고 띠는 끌어 옮길 수 있다. 「화면 오른쪽 위에 단추를 두지 말 것」 함정의 또 한 사례.
+- **다음 후보** : 사고(qpsIncident) 화면의 사고 유형·「분류」 콤보 추천, 불만고충 접수 유형·부서 라우팅 — 전부 `TypeSafeUtil.choice` 한 줄로 붙는다(선택지는 공통코드에서).
+
+### [완료 · 로컬 — 실API·화면 검증 끝] 불만고충 처리대장(qpsCmpl) ✨ 분류 추천 — TypeSafe 적용 3호 (2026-09-28)
+- **배경**: 사용자 「3번 불만고충 분류도 진행해줘」. 대장 한 줄의 「불만고충내용」을 적으면 **비어 있는 불만고충유형(QPS_CMPL_TYPE 7)·민원인구분(QPS_CMPL_PERSON 4)** 을 AI 가 채운다.
+  ⚠**처리 부서 칸은 이 대장에 없다**(설계 그대로 — 열 = 접수일·접수유형·민원인·구분·처리기간·유형·내용·처리결과·회신) → 「부서 라우팅」은 만들지 않았다. 접수유형(방문·전화·소리함)·회신방법은 글로 알 수 없어 대상에서 뺐다.
+- **구조**(자바 4 · JSP 1 · 매퍼 0 → ⛔**WAR 재빌드+재기동**):
+  · [TypeSafeUtil](src/main/java/egovframework/util/TypeSafeUtil.java) **`choices(state, Map<id, ChoiceSpec>)`** 신설 — 같은 state 위 Choice 여러 개를 **한 요청**에(질문은 병렬·독립). `choice` 는 이걸 감싼 한 질문 판이 됐다(`parseChoice` 공용).
+  · `QpsServiceImpl.suggestCmpl(text)` : 질문 2개 = 유형(7종 + NONE「불만 글이 아니다」) · 민원인(4종 + NONE「누가 제기했는지 안 드러남」). 유형 설명은 instructions 에 한 줄씩(시설=건물·병실·청결 / 친절=말투·응대 / 식사 / 관리=행정·수납·면회·분실 / 진료=처치·투약·검사 / 간병사관련 / 기타).
+    응답 `ok / type{code,nm,p,second,none,choice} / person{…}` — **문턱은 화면이 정한다**(서버는 확률만). 글 1000자 상한·maskPrivacy.
+  · `QpsController` **`/qps/cmplSuggest.do`**(실패도 ok=false).
+  · [qpsCmpl.jsp](src/main/webapp/WEB-INF/jsp/main/qpsmgr/qpsCmpl.jsp) : 단추 없이 **내용 칸을 떠나면(change) 자동** — `cmSuggestRow(tr)`.
+    ★★**원칙 = 「빈 칸(또는 AI 가 채운 칸)에만 넣고, 넣은 칸은 연보라(`select.aifill`)+title「AI 추천 91% — 맞지 않으면 바꾸세요」로 표시」.** 사람이 고른 값은 절대 덮지 않는다(09-08 부서 양식의 「자동 정리는 지우는 쪽이 아니라 보여 주는 쪽으로」와 같은 원칙).
+    사람이 그 셀렉트를 바꾸면 표시를 떼고 그 뒤로는 안 건드린다 · 문턱 **0.6**(`CM_SG_MIN`) 아래거나 NONE 1등이면 비워 둔다(예전 AI 값이 새 글에 안 맞으면 거둔다) · 4자 미만·둘 다 사람이 고른 행은 요청 자체를 안 한다 · 행마다 한 번에 한 요청(`data-sg-busy`) · 기다리는 동안 글이 바뀌면 옛 답을 버린다 · 실패는 조용히(대장 작성이 추천에 막히면 안 된다). 표 아래 안내 한 줄(`#cmSgHint`).
+- **검증** : jsdom [sim_qpsCmpl_suggest.js](docs/tools/sim/sim_qpsCmpl_suggest.js) **16검사** → 전 시뮬 **515** 통과 · TsMock 14 · javac · JSP 문법·div 60/60·span 17/17·id 중복 0 ·
+  **실API+운영 코드** [TsLiveCmpl](docs/tools/typesafe/TsLiveCmpl.java)(매퍼 Proxy) **10문장** — 유형 전부 기대대로 : 병실 춥고 화장실 더러움→시설 1.00 · 밥 식음→식사 0.97 · 간호사 말투→친절 0.83 · 면회 안내→관리 1.00 · 간병인 자세→간병사관련 0.90 · 주사 부위 설명 없음→진료 0.99 · 주차장→시설 0.90 · 옷 분실→관리 1.00 · **「고맙다는 인사 전화」→NONE 0.92** · 이름·전화 든 글도 마스킹 뒤 시설 1.00.
+  민원인 구분은 **글에 드러날 때만**(보호자 항의 1.00 · 아들 0.68 · 환자 말씀 0.31→NONE 0.65 로 비움 · 간병인 건 입원환자 0.93) — 지시대로 「드러나지 않으면 NONE」이 지켜진다. 첫 호출 2.7초·이후 0.2~0.29초.
+- ⚠**시뮬 함정 재확인** : 꺼낸 코드 안에서 `window.cmSuggestRow` 를 change 리스너가 맨이름으로 부르면 `ReferenceError` — README 대로 **별칭 한 줄**(`var cmSuggestRow = window.cmSuggestRow`)을 뒤에 둔다(8건이 한꺼번에 깨져 보였다).
+- ✅**[같은 날 11:20] 톰캣 재시작 뒤 화면 실왕복 완료**(내장 브라우저·가짜 쿠키) : 행 추가 → 내용 「보호자가 병실이 너무 춥고 화장실 청소가 안 되어 있다고 항의」 → 칸을 떠나면 유형 「시설 및 환경」(title 「AI 추천 100%」)·민원인 「보호자」 가 채워짐 ·
+  유형을 손으로 「친절」로 바꾸면 표시(.aifill·title) 사라짐 · 「고맙다는 인사 전화」 행은 둘 다 빈 채 · 「간병인이 환자 자세를 안 바꿔 줘」 → 간병사관련·입원환자. 시험 행은 저장하지 않았다(DB 잔여 0).
+  ⚠★**첫 확인에서 연보라가 안 보였다** — `#qpsCmpl table.ed select{ background:transparent }`(표 안 셀렉트를 납작하게 만드는 기존 규칙)가 `#qpsCmpl select.aifill` 보다 **명시도가 높아** 배경을 지웠다(computed `rgba(0,0,0,0)` 로 잡음). `#qpsCmpl table.ed select.aifill` 로 더 센 규칙을 **뒤에** 두어 해결(inset box-shadow 테두리도). **표 안 입력칸에 상태색을 줄 때는 그 표의 「납작하게」 규칙을 먼저 본다.**
+- **셋의 뼈대는 같다** : `TypeSafeUtil.systemOne/rerank/choice/choices` + 서비스 한 메서드(코드는 `selectQpsCodes` 에서, NONE 추가, maskPrivacy) + 컨트롤러 ok=false 폴백 + 화면은 「비어 있는 것만·표시 남기고·실패는 조용히」. 다음 적용은 이 셋 중 가장 가까운 것을 베낀다.
 
 ### [완료 · 배포 대기] Q&A 답변에 GPT 복사본을 올렸더니 태그가 글자로 보임 (2026-09-04)
 - **증상**: 위너넷이 ChatGPT 화면을 복사해 「자주하는 질문」(qnacd 등록창 → TBL_QNA_KB 2600)에 올림 → 병원 사이드바 FAQ 창에 `<div><span style=…>` 가 글자로 보인다고 전화.

@@ -24,6 +24,15 @@ public class TsMock {
 			if (mode == 2) { send(ex, 200, "{\"model\":\"jev\"}"); return; }
 			JsonObject req = new Gson().fromJson(lastBody, JsonObject.class);
 			JsonObject qs = req.getAsJsonObject("questions");
+			if (qs.has("pick")) {
+				JsonObject crit = qs.getAsJsonObject("pick").getAsJsonObject("criteria");
+				JsonObject probs = new JsonObject(); String best = null; int n = crit.size();
+				for (String k : crit.keySet()) { double v = crit.get(k).getAsString().contains("환자안전") ? 0.7 : ("NONE".equals(k) ? 0.05 : 0.25/(n-2)); probs.addProperty(k, v); if (v == 0.7) best = k; }
+				JsonObject an = new JsonObject(); an.addProperty("type","choice"); an.addProperty("choice", best); an.addProperty("confidence", 0.66); an.add("probabilities", probs);
+				JsonObject answers = new JsonObject(); answers.add("pick", an);
+				JsonObject res = new JsonObject(); res.addProperty("model","jev-mock"); res.add("answers", answers);
+				send(ex, 200, new Gson().toJson(res)); return;
+			}
 			// 가짜 판정 : 후보 제목에 '유치도뇨관' 이 있으면 0.9, '배뇨' 0.6, 아니면 0.1 ; c3(400) 은 답을 안 준다
 			JsonArray cands = req.getAsJsonObject("state").getAsJsonArray("candidates");
 			JsonObject answers = new JsonObject();
@@ -96,6 +105,23 @@ public class TsMock {
 		mode = 2;
 		if (TypeSafeUtil.rerank("q", cands(), 3000) == null) pass++; else { fail++; System.out.println("FAIL ⑤"); }
 
+		mode = 0;   // ⑤ 가 남긴 「answers 없음」 모드를 되돌린다
+		// ⑦ choice — 선택지 4개+NONE, 확률 내림차순·choice·confidence, 마스킹된 state
+		{
+			java.util.LinkedHashMap<String,String> opts = new java.util.LinkedHashMap<>();
+			opts.put("PTSAFE","환자안전사고 보고서"); opts.put("EDURPT","직원 교육 결과 보고서"); opts.put("FIRE","화재 안전 점검"); opts.put("NONE","해당 없음");
+			JsonObject st = new JsonObject(); st.addProperty("text", TypeSafeUtil.maskPrivacy("홍길동 환자 010-1234-5678 침대에서 떨어짐"));
+			TypeSafeUtil.ChoiceResult cr = TypeSafeUtil.choice(st, "가장 알맞은 서식을 고른다", opts, 3000);
+			JsonObject sent = new Gson().fromJson(lastBody, JsonObject.class);
+			String sentText = sent.getAsJsonObject("state").get("text").getAsString();
+			boolean okShape = "choice".equals(sent.getAsJsonObject("questions").getAsJsonObject("pick").get("type").getAsString())
+				&& sent.getAsJsonObject("questions").getAsJsonObject("pick").getAsJsonObject("criteria").size() == 4;
+			if (okShape && !sentText.contains("홍길동") && sentText.contains("[환자]") && sentText.contains("[전화번호]")) pass++; else { fail++; System.out.println("FAIL ⑦ 요청/마스킹 : " + sentText); }
+			java.util.Iterator<String> it = (cr == null) ? null : cr.probabilities.keySet().iterator();
+			if (cr != null && "PTSAFE".equals(cr.choice) && cr.confidence == 0.66 && cr.probabilities.size() == 4 && "PTSAFE".equals(it.next()) && cr.probabilities.get("NONE") == 0.05) pass++;
+			else { fail++; System.out.println("FAIL ⑦ 결과 : " + (cr == null ? null : cr.choice + " " + cr.probabilities)); }
+			if (TypeSafeUtil.choice(st, "x", new java.util.LinkedHashMap<String,String>(), 3000) == null) pass++; else { fail++; System.out.println("FAIL ⑦ 빈 선택지"); }
+		}
 		// ⑥ 연결 불가(방화벽 흉내) → null, 예외 없음
 		System.setProperty("typesafe.api.url", "http://127.0.0.1:1/v1/systemone");
 		mode = 0;

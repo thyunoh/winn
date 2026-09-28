@@ -493,12 +493,8 @@ public class MangrServiceImpl implements MangrService {
 	/** 무료 등급은 보낸 내용이 모델 개선에 쓰일 수 있다 → 환자 식별정보는 보내기 전에 지운다.
 	 *  질문칸에 "홍길동 환자 주민번호 123456-1234567" 처럼 섞여 들어오는 경우가 있다. */
 	private String maskPrivacy(String s) {
-		if (s == null) return "";
-		String out = s;
-		out = out.replaceAll("\\d{6}\\s*[-–]\\s*\\d{7}", "[주민번호]");        /* 주민등록번호 */
-		out = out.replaceAll("\\d{2,3}\\s*[-–]\\s*\\d{3,4}\\s*[-–]\\s*\\d{4}", "[전화번호]");
-		out = out.replaceAll("[가-힣]{2,4}\\s*(환자|님|씨)(?=\\s|$|[,.])", "[환자]");
-		return out;
+		/* 규칙은 TypeSafeUtil.maskPrivacy 한 곳에 — Gemini·TypeSafe 어디로 나가든 같은 가림(2026-09-28 통합) */
+		return TypeSafeUtil.maskPrivacy(s);
 	}
 
 	@Override

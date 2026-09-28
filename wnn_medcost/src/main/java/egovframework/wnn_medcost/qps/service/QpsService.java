@@ -198,6 +198,10 @@ public interface QpsService {
 
 	/* 사고 유형별 보고서 */
 	Map<String, Object> selectSafeRptBase(String hospCd, String inYear, String rptGb) throws Exception;
+	/** 자유 글(무슨 일이 있었나) → 보고서 유형(QPS_SAFERPT_GB) 추천 상위 몇 건 — TypeSafe Choice(2026-09-28). 키 없음·실패면 ok=false. */
+	Map<String, Object> suggestRptGb(String text) throws Exception;
+	/** 불만고충 내용 → 유형(QPS_CMPL_TYPE)·민원인 구분(QPS_CMPL_PERSON) 동시 추천 — TypeSafe Choice 2문 한 요청(2026-09-28). 키 없음·실패면 ok=false. */
+	Map<String, Object> suggestCmpl(String text) throws Exception;
 	Map<String, Object> selectSafeRptOne(String hospCd, long srpSeq) throws Exception;
 	/** @param rows 반복행 표(SUB_COLS) 값. 쓰지 않는 유형이 대부분이라 null 이어도 된다. */
 	long saveSafeRpt(Map<String, Object> param, List<Map<String, Object>> chks,

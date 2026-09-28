@@ -1497,6 +1497,122 @@ public class QpsServiceImpl implements QpsService {
 
 	// ============ 사고 유형별 보고서 ============
 
+	/* ★보고서 유형 추천 (2026-09-28, TypeSafe 적용 2호) — 유형이 79종·8계열이라 처음 쓰는 담당자는 셀렉트에서 못 찾는다.
+	     「무슨 일이 있었나」 한두 줄을 받아 유형 전부를 Choice 선택지로 놓고(코드 → 이름) 확률 상위 3건을 돌려준다.
+	     · 선택지에 NONE(「해당하는 유형 없음」)을 넣는다 — 목록에 없는 일(잡담·다른 업무)을 억지로 한 유형에 밀지 않게.
+	     · 계열 이름은 보내지 않는다 — 계열 표(SR_BANDS)는 화면에만 있고 두 벌로 두면 어긋난다. 유형 이름만으로 충분하다(실측).
+	     · 글은 maskPrivacy 를 거친다(사고 내용에 환자 이름이 들어온다). 키 없음·실패면 ok=false — 화면은 「목록에서 고르세요」. */
+	@Override
+	public Map<String, Object> suggestRptGb(String text) throws Exception {
+		Map<String, Object> res = new HashMap<>();
+		String t = (text == null) ? "" : text.trim();
+		if (t.isEmpty()) { res.put("ok", false); res.put("reason", "빈 글"); return res; }
+		if (t.length() > 1000) t = t.substring(0, 1000);
+		if (!egovframework.util.TypeSafeUtil.isReady()) { res.put("ok", false); res.put("reason", "추천 기능이 설정되지 않았습니다(TYPESAFE_API_KEY)."); return res; }
+
+		LinkedHashMap<String, String> opts = new LinkedHashMap<>();
+		Map<String, Map<String, Object>> byCode = new HashMap<>();
+		for (Map<String, Object> r : mapper.selectQpsCodes()) {
+			if (!"QPS_SAFERPT_GB".equals(String.valueOf(r.get("codecd")))) continue;
+			String cd = String.valueOf(r.get("subcode")), nm = String.valueOf(r.get("subcodenm"));
+			opts.put(cd, nm);
+			byCode.put(cd, r);
+		}
+		if (opts.isEmpty()) { res.put("ok", false); res.put("reason", "유형 목록이 없습니다."); return res; }
+		opts.put("NONE", "해당하는 보고서 유형이 없다 — 위 목록의 어느 업무에도 맞지 않거나, 보고서로 적을 일이 아니다.");
+
+		com.google.gson.JsonObject state = new com.google.gson.JsonObject();
+		state.addProperty("text", egovframework.util.TypeSafeUtil.maskPrivacy(t));
+		state.addProperty("context", "한국 요양병원 QPS(질향상·환자안전) 업무. 담당자가 방금 있었던 일이나 작성하려는 문서를 한두 줄로 적었다. "
+			+ "선택지는 이 병원이 쓰는 보고서 서식의 이름이다(사고·안전, 의약품·혈액, 교육·보건관리, 인사·원무·총무, 의무기록·정보보호, 영양, 사회복지, 검진·접종).");
+		egovframework.util.TypeSafeUtil.ChoiceResult cr = egovframework.util.TypeSafeUtil.choice(state,
+			"`text` 에 적힌 일을 기록하기에 가장 알맞은 보고서 서식을 고른다. 서식 이름이 그 일의 종류(무엇이 누구에게 일어났나, 어느 부서 업무인가)와 맞아야 한다. "
+		  + "낱말이 겹치는 것보다 실제로 그 서식에 적을 내용인지가 우선이다. 어느 서식에도 맞지 않으면 NONE.",
+			opts, egovframework.util.TypeSafeUtil.intCfg("TYPESAFE_QNA_TIMEOUT_MS", "typesafe.qna.timeoutMs", 8000));
+		if (cr == null) { res.put("ok", false); res.put("reason", "추천 서버에 닿지 못했습니다."); return res; }
+
+		List<Map<String, Object>> top = new ArrayList<>();
+		double none = 0;
+		for (Map.Entry<String, Double> e : cr.probabilities.entrySet()) {
+			if ("NONE".equals(e.getKey())) { none = e.getValue(); continue; }
+			if (top.size() >= 3) continue;
+			Map<String, Object> r = byCode.get(e.getKey());
+			if (r == null) continue;
+			Map<String, Object> o = new HashMap<>();
+			o.put("code", e.getKey());
+			o.put("nm",   r.get("subcodenm"));
+			o.put("sort", r.get("sort"));
+			o.put("p",    Math.round(e.getValue() * 1000d) / 1000d);
+			top.add(o);
+		}
+		res.put("ok", true);
+		res.put("top", top);
+		res.put("none", Math.round(none * 1000d) / 1000d);
+		res.put("confidence", Math.round(cr.confidence * 1000d) / 1000d);
+		res.put("choice", cr.choice);
+		return res;
+	}
+
+	/* ★불만고충 분류 추천 (2026-09-28, TypeSafe 적용 3호) — 대장에 「불만고충내용」을 적으면 비어 있는 유형·민원인 구분을 추천한다.
+	     · 두 질문(유형 7 / 민원인 구분 4)을 **한 요청**에 — 같은 글 위의 독립 판정이라 왕복 한 번.
+	     · 둘 다 NONE 을 넣는다 : 유형 NONE=「불만·고충 글이 아니다」, 민원인 NONE=「글에 누가 제기했는지 안 나온다」(대개 이쪽이 맞다 — 억지로 채우지 않게).
+	     · 처리 부서 칸은 이 대장에 없다(설계 그대로) — 부서 라우팅은 안 만든다.
+	     · 응답 = ok / type{code,nm,p,second} / person{code,nm,p,second}. 문턱은 화면이 정한다(빈 칸에만 채우고 표시를 남긴다). */
+	@Override
+	public Map<String, Object> suggestCmpl(String text) throws Exception {
+		Map<String, Object> res = new HashMap<>();
+		String t = (text == null) ? "" : text.trim();
+		if (t.length() < 2) { res.put("ok", false); res.put("reason", "글이 너무 짧습니다."); return res; }
+		if (t.length() > 1000) t = t.substring(0, 1000);
+		if (!egovframework.util.TypeSafeUtil.isReady()) { res.put("ok", false); res.put("reason", "추천 기능이 설정되지 않았습니다(TYPESAFE_API_KEY)."); return res; }
+
+		LinkedHashMap<String, String> typeOpts = new LinkedHashMap<>(), personOpts = new LinkedHashMap<>();
+		Map<String, String> nm = new HashMap<>();
+		for (Map<String, Object> r : mapper.selectQpsCodes()) {
+			String grp = String.valueOf(r.get("codecd")), cd = String.valueOf(r.get("subcode")), n = String.valueOf(r.get("subcodenm"));
+			if ("QPS_CMPL_TYPE".equals(grp))   { typeOpts.put(cd, n);   nm.put("T" + cd, n); }
+			if ("QPS_CMPL_PERSON".equals(grp)) { personOpts.put(cd, n); nm.put("P" + cd, n); }
+		}
+		if (typeOpts.isEmpty()) { res.put("ok", false); res.put("reason", "유형 코드가 없습니다."); return res; }
+		typeOpts.put("NONE",   "불만·고충 내용이 아니거나 무슨 불만인지 알 수 없다.");
+		personOpts.put("NONE", "글에 누가 제기했는지(환자·보호자·내원객) 드러나지 않는다.");
+
+		com.google.gson.JsonObject state = new com.google.gson.JsonObject();
+		state.addProperty("text", egovframework.util.TypeSafeUtil.maskPrivacy(t));
+		state.addProperty("context", "한국 요양병원의 불만·고충 처리대장. 담당자가 접수한 민원 내용을 한 줄로 적었다.");
+		Map<String, egovframework.util.TypeSafeUtil.ChoiceSpec> qs = new LinkedHashMap<>();
+		qs.put("type", new egovframework.util.TypeSafeUtil.ChoiceSpec(
+			"`text` 의 불만·고충이 병원의 어느 영역에 대한 것인지 고른다. 시설 및 환경=건물·병실·화장실·냉난방·소음·청결 / 친절=직원의 말투·태도·응대 / 식사=식단·맛·배식 / "
+		  + "관리=행정·수납·면회·안내·물품 분실 등 병원 운영 / 진료=의사·간호 처치·투약·검사 등 의료 행위 / 간병사관련=간병인·요양보호사의 돌봄 / 기타=위 어디에도 뚜렷이 속하지 않는 불만.", typeOpts));
+		qs.put("person", new egovframework.util.TypeSafeUtil.ChoiceSpec(
+			"`text` 를 제기한 사람이 누구인지 고른다. 글에 「보호자·가족·아들·딸」이 제기했다고 드러나면 보호자, 환자 본인이면 입원환자, 방문객·외부인이면 내원객. "
+		  + "드러나지 않으면 추측하지 말고 NONE.", personOpts));
+		Map<String, egovframework.util.TypeSafeUtil.ChoiceResult> ans = egovframework.util.TypeSafeUtil.choices(state, qs,
+			egovframework.util.TypeSafeUtil.intCfg("TYPESAFE_QNA_TIMEOUT_MS", "typesafe.qna.timeoutMs", 8000));
+		if (ans == null) { res.put("ok", false); res.put("reason", "추천 서버에 닿지 못했습니다."); return res; }
+
+		res.put("ok", true);
+		res.put("type",   pickOf(ans.get("type"),   "T", nm));
+		res.put("person", pickOf(ans.get("person"), "P", nm));
+		return res;
+	}
+	/** ChoiceResult → {code,nm,p,second,none} (NONE 을 뺀 1등과 2등 확률, NONE 확률은 따로) */
+	private static Map<String, Object> pickOf(egovframework.util.TypeSafeUtil.ChoiceResult cr, String pfx, Map<String, String> nm) {
+		Map<String, Object> o = new HashMap<>();
+		if (cr == null) return o;
+		double none = 0, first = -1, second = 0; String code = null;
+		for (Map.Entry<String, Double> e : cr.probabilities.entrySet()) {
+			if ("NONE".equals(e.getKey())) { none = e.getValue(); continue; }
+			if (first < 0) { first = e.getValue(); code = e.getKey(); }
+			else if (second == 0) second = e.getValue();
+		}
+		if (code != null) { o.put("code", code); o.put("nm", nm.get(pfx + code)); o.put("p", Math.round(first * 1000d) / 1000d); }
+		o.put("second", Math.round(second * 1000d) / 1000d);
+		o.put("none",   Math.round(none * 1000d) / 1000d);
+		o.put("choice", cr.choice);
+		return o;
+	}
+
 	/** 화면 초기 로드 — ★항목표(DEF)를 함께 준다. 화면은 이걸 순회해 체크박스를 그린다(유형별 하드코딩 없음). */
 	@Override
 	public Map<String, Object> selectSafeRptBase(String hospCd, String inYear, String rptGb) throws Exception {
