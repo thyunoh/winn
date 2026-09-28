@@ -914,22 +914,30 @@
 
 ## 장애/수정 이력
 
-### [완료 · 로컬 — 실API 미검증] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
+### [완료 · 로컬 — 실API 검증 끝] 적정성평가 Q&A 검색에 TypeSafe(Jev) 재순위 + 미답변 판정 (2026-09-28)
 - **배경**: `/typesafe:typesafe-ai` 스킬로 시작 → 후보 3개(Q&A 재순위 · safeRpt 유형 추천 · 불만고충 분류) 중 사용자가 **1번** 선택. 이 저장소의 **첫 TypeSafe 적용**.
   Q&A 검색 점수는 「낱말이 몇 번 겹치나」(ngram + 제목·키워드 LIKE 가산)라 엉뚱한 1등 사고를 여러 번 겪었고, MATCH_YN 은 「1건이라도 나오면 Y」라 **못 답한 질문 목록이 사실상 안 쌓였다**.
 - **구조**(자바 2 · 매퍼 1 · JSP 1 → ⛔**WAR 재빌드+재기동**):
   · [TypeSafeUtil.java](src/main/java/egovframework/util/TypeSafeUtil.java) 신설 = 공용 호출(`systemOne(state,questions,timeout)` → answers) + `rerank(question, candidates)` → id→noul.
-    후보 전부를 **한 요청의 state** 에 담고 후보 수만큼 noul 질문(「`candidates[i]` 가 `question` 에 답하는가」, criteria true/false 에 「낱말만 겹치면 false」·「현장 용어=공식 용어」)을 낸다 — 왕복 1회.
+    후보 전부를 **한 요청의 state** 에 담고 후보 수만큼 noul 질문(「`candidates[i]` 가 `question` 에 답하는가」, criteria true/false 에 「낱말만 겹치면 false」·「현장 용어=공식 용어」)을 낸다 — 왕복 1회, 입력 약 2,500 토큰.
     (TypeSafe 재순위 쿡북은 짝마다 요청을 따로 보내지만, 같은 state 위 독립 질문은 한 요청에 묶는 것이 문서 권장·검색 응답 시간에 맞다.)
   · `MangrServiceImpl.qnaSearch` → `rerankByTypeSafe` : SQL 상위 **10건**(TYPESAFE_QNA_TOPN)을 보내 noul 내림차순으로 다시 세움(답 없는 후보 뒤·11번째 이후 원래 순서), 항목에 `ai`(확률) 부착, 응답 `rerank`·`aiTop`.
-    **weak = 최고 noul < 0.5**(TYPESAFE_QNA_THRESHOLD) — 재순위가 돌았으면 낱말 적중 비율 대신 이것. weak 면 종전처럼 화면이 Gemini 참고답변(qnaAsk)으로.
-    ★**MATCH_YN 규칙 변경** : `(hit && !weak) ? Y : N` — 재순위 유무와 무관하게 weak 면 N. KB_ID 는 1등을 그대로 남긴다(무엇이 잘못 걸렸는지 보려고).
+    ★**weak 판정 = 두 단계**(실측으로 정함) : top ≥ 0.5 찾음 · top < 0.12 못 찾음 · 사이는 **top ≥ 2.5×2등** 일 때만 찾음(TYPESAFE_QNA_THRESHOLD·FLOOR·RATIO).
+      근거 = 운영 KB 후보로는 찾은 질문 1등 0.68~0.98 · 없는 질문 0.01~0.09 로 갈리지만, **본문이 얇은 항목은 정답이라도 0.2~0.3**(합성 후보 실측 : 0.21 vs 2등 0.07). 한 문턱만 쓰면 그런 정답을 버린다.
+    weak 면 종전처럼 화면이 Gemini 참고답변(qnaAsk)으로. ★**MATCH_YN 규칙 변경** : `(hit && !weak) ? Y : N` — 재순위 유무와 무관하게 weak 면 N. KB_ID 는 1등을 그대로 남긴다.
   · 매퍼 `selectQnaSearch` 에 `LEFT(REGEXP_REPLACE(BODY,태그,' '),500) AS excerpt` 추가(resultType HashMap — 공유 resultMap 아님) — 서비스가 후보 판정에 쓰고 **화면엔 보내기 전에 뗀다**.
   · qnacd.jsp `renderList` : 검색 모드 + `x.ai` 숫자면 **「87%」 배지**(0.7↑ 파랑 · 0.5~0.7 회색 · 아래 흐림) + 제목 줄 「· AI 재순위」.
-- **원칙** : 키 없음·HTTP 오류·타임아웃·파싱 실패 전부 **null → 종전 순서·종전 판정**(검색은 멈추지 않는다). 질문은 `maskPrivacy` 를 거쳐 나간다. 키는 `TYPESAFE_API_KEY`(-Dtypesafe.api.key) 만 — Gemini 키와 같은 규칙.
-- **검증** : 모의 서버 [TsMock](docs/tools/typesafe/TsMock.java) **11항목 통과**(요청 모양·순서·답 없는 후보·excerpt 제거·마스킹·500/answers 없음/연결 불가 폴백) · javac(WAR lib) · 매퍼 XML 정형성 39문·id 중복 0 · JSP 인라인 문법 · tmp1 복사 완료(8080 은 내려가 있었다).
-  ⛔**실제 API 는 아직 안 돌렸다 — 이 PC 에 키가 없다.** [TsLive](docs/tools/typesafe/TsLive.java) 에 키를 주면 한국어 5질문 판정·응답시간이 찍힌다. 문턱 0.5 · topN 10 은 그 결과를 보고 다시 정한다.
+- **원칙** : 키 없음·HTTP 오류·타임아웃·파싱 실패 전부 **null → 종전 순서·종전 판정**(검색은 멈추지 않는다). 접속 단계 예외는 **1회 재시도**(4xx/5xx 는 안 함). 질문은 `maskPrivacy` 를 거쳐 나간다. 키는 `TYPESAFE_API_KEY`(-Dtypesafe.api.key) 만 — Gemini 키와 같은 규칙.
+- ★★**TLS 함정(실측·해결)** : 이 PC 의 JDK 는 **11+28(2018 첫 판)** — api.typesafe.ai 에 TLS 1.3 으로 **두 번째 새 접속**을 맺을 때 `handshake_failure`/`record_overflow`(기본 1/8 성공, 실DB 검사에서 절반 실패). **TLSv1.2 고정이면 8/8.**
+  ⇒ `TypeSafeUtil.tlsFactory()` 가 **이 접속만** `setEnabledProtocols(TLSv1.2)` 소켓 팩토리로 맺는다(TYPESAFE_TLS 로 바꿈, 빈 값=JDK 기본). ⚠`-Djdk.tls.client.protocols` 전역은 쓰지 않았다 — Gemini·메일 접속까지 바뀐다. 운영 JDK 판이 달라도 무해.
+- **검증** : 모의 서버 [TsMock](docs/tools/typesafe/TsMock.java) **11항목**(⚠환경변수에 진짜 키가 있으면 「키 없음」 시나리오가 깨진다 — 비우고 돌릴 것) · javac(WAR lib) · 매퍼 XML 정형성 39문·id 중복 0 · JSP 인라인 문법 ·
+  **실API** [TsLive](docs/tools/typesafe/TsLive.java)(합성 후보 6 × 질문 5 = 순위 5/5 정답, 첫 호출 2.3초·이후 0.23초) ·
+  **실DB** [TsLiveDb](docs/tools/typesafe/TsLiveDb.java)(운영 TBL_QNA_KB SELECT 만 · 로그의 실제 질문 포함 15문항, TLS 고침 뒤 **15/15 성공**) —
+  「침대에만 누워 있는 환자 욕창 관리」 SQL 1등 「와상상태 여부」 → AI 1등 「욕창 처치 항목은 무엇을 체크해야 하나요」 **0.87**(기대한 개선) · 제목 그대로 물은 것은 0.94~0.98 · 「직원 식당 메뉴」 0.02 · 「소변줄 오래 꽂으면 점수」는 SQL 후보 30건에 정답이 없어 0.08(→ 종전대로 Gemini + 용어 변환 길).
+  ★**재순위는 후보 밖을 못 고른다** — 현장 용어가 KB 낱말과 안 겹치면 SQL 이 정답을 안 물어 온다. 다음 개선 후보 = qnaAsk 의 용어 변환(rewriteTerms)을 검색 앞단에도 쓰기.
+  [TsSsl](docs/tools/typesafe/TsSsl.java) = TLS 결함 재현(A 기본 · B close · C/D TLS1.2 · E TLS1.2+close). tmp1 복사 완료(8080 은 내려가 있어 화면은 미확인).
 - ⚠**운영 서버는 아웃바운드 HTTPS 차단** — `api.typesafe.ai` 가 막히면 운영에서는 늘 폴백(=종전 동작)이다. 방화벽 개방이 운영 반영의 전제. 배포 가이드 §7 에 적음.
+- ⚠콘솔(console.typesafe.ai/keys)의 키는 **만들 때 한 번만 전체가 보인다**(목록은 `apikey_2252...46d9` 가림) · 첫 키는 Inactive 로 403 이 났다 — 403 authentication_error 면 코드보다 키 상태부터.
 - ⚠javac 클래스패스는 git-bash 에서도 **Windows 경로+`;`** 로(`/d/…` 면 인터페이스를 못 찾아 `@Override` 오류 100개). 검사 자바가 예외로 죽으면 HttpServer 스레드가 살아 **안 끝난다** — main 을 try/catch+exit 로.
   ⚠**bash `node -e "…"` 안에 백틱이 든 한글 문서를 넣으면 셸이 명령 치환으로 먹어 글이 빈다** — 문서 블록은 파일로 써서 node 가 읽게 한다(이번에 한 번 겪어 다시 넣었다).
 

@@ -351,9 +351,20 @@ public class MangrServiceImpl implements MangrService {
 			weak = true;
 		} else if (aiTop != null) {
 			/* 재순위가 돌았으면 낱말 적중 비율 대신 <최고 확률>로 판정한다 (2026-09-28).
-			     문턱 기본 0.5 — 「답이 될 가능성이 반도 안 된다」면 자료에 없는 질문으로 보고 AI 참고답변으로.
-			     환경변수 TYPESAFE_QNA_THRESHOLD(-Dtypesafe.qna.threshold)로 조정. */
-			weak = (aiTop < TypeSafeUtil.dblCfg("TYPESAFE_QNA_THRESHOLD", "typesafe.qna.threshold", 0.5));
+			     ★두 단계 규칙 — 실측(운영 KB 336건 · 2026-09-28)으로 정했다 :
+			       · 찾은 질문의 1등은 0.72~0.97, 자료 없는 질문은 후보 전부 0.01~0.09 로 납작하다.
+			       · 그런데 본문이 얇은 항목은 정답이라도 0.2~0.3 에 머문다(합성 자료 실측). 그때는 2등과 <두드러지게> 벌어져 있다
+			         (0.21 vs 0.07 · 0.30 vs 0.03). 한 문턱(0.5)만 쓰면 이런 정답을 「자료 없음」으로 버린다.
+			     ⇒ top ≥ 0.5 면 찾음 · top < 0.12 면 못 찾음 · 그 사이는 top ≥ 2.5×2등 일 때만 찾음.
+			     환경변수 TYPESAFE_QNA_THRESHOLD(0.5) · TYPESAFE_QNA_FLOOR(0.12) · TYPESAFE_QNA_RATIO(2.5) 로 조정. */
+			double hi    = TypeSafeUtil.dblCfg("TYPESAFE_QNA_THRESHOLD", "typesafe.qna.threshold", 0.5);
+			double floor = TypeSafeUtil.dblCfg("TYPESAFE_QNA_FLOOR",     "typesafe.qna.floor",     0.12);
+			double ratio = TypeSafeUtil.dblCfg("TYPESAFE_QNA_RATIO",     "typesafe.qna.ratio",     2.5);
+			double second = 0;
+			if (list.size() > 1 && list.get(1).get("ai") instanceof Number) second = ((Number) list.get(1).get("ai")).doubleValue();
+			if (aiTop >= hi)         weak = false;
+			else if (aiTop < floor)  weak = true;
+			else                     weak = (aiTop < ratio * second);
 			res.put("aiTop", aiTop);
 		} else if (words.isEmpty()) {
 			weak = false;

@@ -1,14 +1,22 @@
 package egovframework.util;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +95,16 @@ public class TypeSafeUtil {
 		String key = apiKey();
 		if (key == null) return null;
 		if (questions == null || questions.size() == 0) return null;
+		/* 한 번 실패하면 한 번만 더 — TLS 재접속 결함(아래 tlsFactory 주석)처럼 <접속 단계>에서 튀는 것은 두 번째에 대개 붙는다.
+		   HTTP 4xx/5xx 응답은 재시도하지 않는다(같은 답이 온다). */
+		JsonObject r = systemOneOnce(key, state, questions, readTimeoutMs);
+		if (r == null && LAST_IO_FAIL) r = systemOneOnce(key, state, questions, readTimeoutMs);
+		return r;
+	}
+	private static volatile boolean LAST_IO_FAIL = false;
 
+	private static JsonObject systemOneOnce(String key, JsonElement state, JsonObject questions, int readTimeoutMs) {
+		LAST_IO_FAIL = false;
 		HttpURLConnection conn = null;
 		try {
 			Gson gson = new Gson();
@@ -98,6 +115,10 @@ public class TypeSafeUtil {
 
 			URL url = new URL(apiUrl());
 			conn = (HttpURLConnection) url.openConnection();
+			if (conn instanceof HttpsURLConnection) {
+				SSLSocketFactory f = tlsFactory();
+				if (f != null) ((HttpsURLConnection) conn).setSSLSocketFactory(f);
+			}
 			conn.setRequestMethod("POST");
 			conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 			conn.setRequestProperty("Authorization", "Bearer " + key);   /* 키는 헤더로 — URL 에 실으면 접속로그에 남는다 */
@@ -130,12 +151,48 @@ public class TypeSafeUtil {
 				LOGGER.debug("[TYPESAFE] usage {}", root.get("usage"));
 			return root.getAsJsonObject("answers");
 		} catch (Exception e) {
-			/* 방화벽·DNS·타임아웃 전부 여기로 — 폴백이 있으니 warn 한 줄로 끝낸다 */
+			/* 방화벽·DNS·타임아웃·TLS 전부 여기로 — 폴백이 있으니 warn 한 줄로 끝낸다 */
+			LAST_IO_FAIL = true;
 			LOGGER.warn("[TYPESAFE] 호출 실패 (종전 동작으로 폴백) : {}", e.toString());
 			return null;
 		} finally {
 			if (conn != null) try { conn.disconnect(); } catch (Exception ignore) { }
 		}
+	}
+
+	/* ── TLS ─────────────────────────────────────────────────────────────
+	   ★이 PC 의 JDK 11 첫 판(11+28, 2018)은 TLS 1.3 으로 api.typesafe.ai 에 <두 번째 새 접속>을 맺을 때
+	     handshake_failure / record_overflow 를 낸다(2026-09-28 실측 : 기본 1/8 성공 · TLSv1.2 고정 8/8 성공).
+	     JDK 11.0.3 이후엔 고쳐진 결함이지만 운영 서버 JDK 판을 못 믿으므로 <이 접속만> TLSv1.2 로 맺는다 —
+	     -Djdk.tls.client.protocols 로 전역을 바꾸면 Gemini·메일 등 다른 접속까지 영향을 받는다.
+	   TYPESAFE_TLS(-Dtypesafe.tls) 로 바꿀 수 있고, 빈 값이면 JDK 기본대로. */
+	private static volatile SSLSocketFactory TLS_FACTORY;
+	private static volatile boolean TLS_FACTORY_TRIED;
+
+	private static SSLSocketFactory tlsFactory() {
+		if (TLS_FACTORY_TRIED) return TLS_FACTORY;
+		TLS_FACTORY_TRIED = true;
+		String proto = env("TYPESAFE_TLS", "typesafe.tls", "TLSv1.2");
+		if (proto.isEmpty() || "default".equalsIgnoreCase(proto)) return null;
+		try {
+			final String[] protos = proto.split("\\s*,\\s*");
+			final SSLSocketFactory base = SSLContext.getDefault().getSocketFactory();
+			TLS_FACTORY = new SSLSocketFactory() {
+				private Socket fix(Socket s) { if (s instanceof SSLSocket) ((SSLSocket) s).setEnabledProtocols(protos); return s; }
+				public String[] getDefaultCipherSuites()   { return base.getDefaultCipherSuites(); }
+				public String[] getSupportedCipherSuites() { return base.getSupportedCipherSuites(); }
+				public Socket createSocket(Socket s, String h, int p, boolean auto) throws IOException { return fix(base.createSocket(s, h, p, auto)); }
+				public Socket createSocket(String h, int p) throws IOException { return fix(base.createSocket(h, p)); }
+				public Socket createSocket(String h, int p, InetAddress lh, int lp) throws IOException { return fix(base.createSocket(h, p, lh, lp)); }
+				public Socket createSocket(InetAddress h, int p) throws IOException { return fix(base.createSocket(h, p)); }
+				public Socket createSocket(InetAddress h, int p, InetAddress lh, int lp) throws IOException { return fix(base.createSocket(h, p, lh, lp)); }
+				public Socket createSocket() throws IOException { return fix(base.createSocket()); }
+			};
+		} catch (Exception e) {
+			LOGGER.warn("[TYPESAFE] TLS 소켓 팩토리 준비 실패 (JDK 기본으로) : {}", e.toString());
+			TLS_FACTORY = null;
+		}
+		return TLS_FACTORY;
 	}
 
 	/* ── 재순위 ───────────────────────────────────────────────────────── */
