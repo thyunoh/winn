@@ -2706,7 +2706,7 @@
 		                   DATEDIFF(COALESCE(ii.TEWONDT, DATE_FORMAT(pm2.DOC_DT,'%Y%m%d')), DATE_FORMAT(pm2.ADMIT_DT,'%Y%m%d')) + 1 >= 181
 		                   ]]>
 		                   OR
-		                   /* 이전 입원 내역 있을 때 년도 기준 누적 180일 이상 */
+		                   /* 이전 입원(퇴원 후 90일 이내 재입원) 합산 181일 이상 */
 		                   EXISTS (
 		                       SELECT 1
 		                         FROM TBL_IPWON_INFO prev_ii
@@ -2716,15 +2716,15 @@
 		                          AND COALESCE(prev_ii.TEWONDT,'') != ''
 		                          <![CDATA[
 		                          AND REPLACE(prev_ii.TEWONDT,'-','') < REPLACE(pm2.ADMIT_DT,'-','')
-		                          AND DATEDIFF(
-		                                  STR_TO_DATE(REPLACE(COALESCE(ii.TEWONDT,
-		                                      DATE_FORMAT(pm2.DOC_DT,'%Y%m%d')),'-',''),'%Y%m%d'),
-		                                  CASE
-		                                      WHEN LEFT(REPLACE(prev_ii.IPWONDT,'-',''),4) < LEFT(pm2.ADMIT_DT,4)
-		                                      THEN STR_TO_DATE(CONCAT(LEFT(pm2.ADMIT_DT,4),'0101'),'%Y%m%d')
-		                                      ELSE STR_TO_DATE(REPLACE(prev_ii.IPWONDT,'-',''),'%Y%m%d')
-		                                  END
-		                              ) + 1 >= 181
+		                          /* [2026-09-29] 퇴원 후 90일 이내 재입원만 이전 입원을 합산한다 — 심평원 「입원료 산정기준(체감제)에 따름」.
+		                               종전 「올해 1월 1일부터 기간 차이」는 작년 입원 이력만 있어도 7월 이후 재입원을 장기입원으로 잡았다
+		                               (부산은빛 정은주 : 2025-06-14 퇴원 → 2026-07-27 재입원, 실입원 7일인데 214일로 계산) */
+		                          AND REPLACE(prev_ii.TEWONDT,'-','') >= DATE_FORMAT(DATE_SUB(STR_TO_DATE(pm2.ADMIT_DT,'%Y%m%d'), INTERVAL 90 DAY),'%Y%m%d')
+		                          /* 이전 입원일수 + 현재 입원일수 (입원하지 않은 날은 세지 않는다) */
+		                          AND DATEDIFF(STR_TO_DATE(REPLACE(prev_ii.TEWONDT,'-',''),'%Y%m%d'),
+		                                       STR_TO_DATE(REPLACE(prev_ii.IPWONDT,'-',''),'%Y%m%d')) + 1
+		                            + DATEDIFF(STR_TO_DATE(REPLACE(COALESCE(ii.TEWONDT, DATE_FORMAT(pm2.DOC_DT,'%Y%m%d')),'-',''),'%Y%m%d'),
+		                                       STR_TO_DATE(pm2.ADMIT_DT,'%Y%m%d')) + 1 >= 181
 		                          ]]>
 		                   )
 		                   OR
