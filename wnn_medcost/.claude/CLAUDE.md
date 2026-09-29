@@ -2094,5 +2094,5 @@
 - ⚠프로시저 `SP_EVALUATION_INDICATORS_CREATE2` 14번 같은 자리는 **사용자가 직접 수정**(수정부분만 안내함). 둘이 어긋나면 목록 점(●)과 분자 수가 달라진다.
 - ★★**[2026-09-30] 같은 규칙이 세 번째 자리에도 있었다 — `SP_LONGADM_COUNT`**(시뮬레이션·월보고서의 **누적 14번**, `MagamServiceImpl.select_Hosp_Indi` → `callLongAdmCount` 가 TBL_PAT_INDI 합계를 이 값으로 덮는다).
   증상 = 부산은빛 9월 적정성평가 9명 중 2명(4점) vs 월보고서·시뮬레이션 9명 중 4명(3점) — 늘어난 2건 = 정은주 07-27·08-25 입원(옛 규칙). DB 재현으로 옛 9/4 · 새 9/2 확인.
-  [SP_LONGADM_COUNT_2026-09-30.sql](docs/sql/proc/SP_LONGADM_COUNT_2026-09-30.sql) ⛔**사용자 실행 필요**(원복 = BACKUP_…_20260930.sql). 앱 변경·재기동 없음.
+  [SP_LONGADM_COUNT_2026-09-30.sql](docs/sql/proc/SP_LONGADM_COUNT_2026-09-30.sql) ✅**사용자 실행(09-30 08:16) · 확인 = 7~9월 9/2 · 22.22% · 가중치 4.00**(원복 = BACKUP_…_20260930.sql). 앱 변경·재기동 없음.
   ⇒ **장기입원(14) 판정을 고칠 때는 세 곳을 같이** : 목록 `select_CategoryList14` · 월 자료 `SP_EVALUATION_INDICATORS_CREATE2` · 누적 `SP_LONGADM_COUNT`.
