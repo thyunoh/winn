@@ -2092,3 +2092,7 @@
 - 기준: 심평원 세부시행계획 지표12 「(181일 이상 입원) 일당 정액수가 및 입원료 산정기준에 따름」 = 체감제 — **퇴원 후 90일 이내 재입원만 누적**(2021~ 타 요양병원 포함, 타병원은 청구 체감코드 조건이 담당).
 - 수정: `Magam_SQL.xml` select_CategoryList14 의 prev_ii EXISTS → 이전퇴원일 ≥ 현재입원일−90일 AND (이전입원일수 + 현재입원일수) ≥ 181. **한 번(직전 입원)만 이어 붙인다.**
 - ⚠프로시저 `SP_EVALUATION_INDICATORS_CREATE2` 14번 같은 자리는 **사용자가 직접 수정**(수정부분만 안내함). 둘이 어긋나면 목록 점(●)과 분자 수가 달라진다.
+- ★★**[2026-09-30] 같은 규칙이 세 번째 자리에도 있었다 — `SP_LONGADM_COUNT`**(시뮬레이션·월보고서의 **누적 14번**, `MagamServiceImpl.select_Hosp_Indi` → `callLongAdmCount` 가 TBL_PAT_INDI 합계를 이 값으로 덮는다).
+  증상 = 부산은빛 9월 적정성평가 9명 중 2명(4점) vs 월보고서·시뮬레이션 9명 중 4명(3점) — 늘어난 2건 = 정은주 07-27·08-25 입원(옛 규칙). DB 재현으로 옛 9/4 · 새 9/2 확인.
+  [SP_LONGADM_COUNT_2026-09-30.sql](docs/sql/proc/SP_LONGADM_COUNT_2026-09-30.sql) ⛔**사용자 실행 필요**(원복 = BACKUP_…_20260930.sql). 앱 변경·재기동 없음.
+  ⇒ **장기입원(14) 판정을 고칠 때는 세 곳을 같이** : 목록 `select_CategoryList14` · 월 자료 `SP_EVALUATION_INDICATORS_CREATE2` · 누적 `SP_LONGADM_COUNT`.
