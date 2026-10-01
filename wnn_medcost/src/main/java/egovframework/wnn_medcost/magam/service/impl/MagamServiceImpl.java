@@ -539,7 +539,12 @@ public class MagamServiceImpl implements MagamService {
 
 	@Override
 	public String create_Eval_Indi(IndiDTO dto) {
-		return mapper.create_Eval_Indi(dto);
+		/* [2026-10-01] 프로시저 결과는 매퍼 반환값이 아니라 OUT 파라미터(dto.errcode / dto.errmess)로 온다.
+		     종전에는 매퍼 반환값(늘 null)을 그대로 돌려줘, 프로시저가 오류로 롤백해도 호출한 쪽이 「성공」으로 봤다
+		     (2026-10-01 선한이웃 — 자료생성을 눌렀는데 값이 안 바뀌고 오류도 안 보임). */
+		String ret = mapper.create_Eval_Indi(dto);
+		String errcode = dto.getErrcode();
+		return (errcode != null && !errcode.trim().isEmpty()) ? errcode.trim() : ret;
 	}
 	
 	@Override

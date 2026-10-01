@@ -1434,6 +1434,20 @@
 				 WHERE c.HOSP_CD = #{hospCd}
 				   AND c.MED_START LIKE CONCAT(#{jobYymm},'%')
 				   AND IFNULL(c.PAT_CLASS,'') NOT LIKE 'A%'
+				   /* [2026-10-01] 전월 평가표와 이어지지 않는 신규 입원(퇴원 뒤 재입원 · 당일/익일 재입원 아님)은 대상에서 뺀다 — SP 05 와 같은 조건.
+				      전월 평가표가 아예 없고 입원일이 당월 이전인 환자(전월 자료 미업로드 등)는 종전대로 둔다. */
+				   AND ( EXISTS (SELECT 1
+				                   FROM TBL_PATVAL_MST pv
+				                  WHERE pv.HOSP_CD = c.HOSP_CD
+				                    AND pv.PAT_ID  = c.PAT_ID
+				                    AND pv.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm}, '01'), INTERVAL 1 MONTH), '%Y%m'),'%')
+				                    AND FN_ADMIT_CONT(c.HOSP_CD, c.PAT_ID, c.PAT_NM, pv.ADMIT_DT, pv.MED_START, c.ADMIT_DT) = 'Y')
+				         OR ( c.ADMIT_DT NOT LIKE CONCAT(#{jobYymm},'%')
+				              AND NOT EXISTS (SELECT 1
+				                                FROM TBL_PATVAL_MST pv2
+				                               WHERE pv2.HOSP_CD = c.HOSP_CD
+				                                 AND pv2.PAT_ID  = c.PAT_ID
+				                                 AND pv2.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm}, '01'), INTERVAL 1 MONTH), '%Y%m'),'%')) ) )
 				   
 				   AND ( 
 				         c.EVAL_TYPE = '2'
@@ -1857,6 +1871,8 @@
 		),
 		previousmonth AS (
 			SELECT b.PAT_ID                      AS patId
+			     , b.ADMIT_DT                    AS admitDt
+			     , b.MED_START                   AS medStart
 			     , CAST(b.PR_ULCER1 AS UNSIGNED) AS prevStep1
 		         , CAST(b.PR_ULCER2 AS UNSIGNED) AS prevStep2
 		         , CAST(b.PR_ULCER3 AS UNSIGNED) AS prevStep3
@@ -1977,6 +1993,8 @@
 			         
 		  FROM current_month cm
 		  JOIN previousmonth pm ON cm.patId = pm.patId
+		                       /* [2026-10-01] 전월 평가표와 이어지는 입원만 — FN_ADMIT_CONT(입원일 같음 · 전월 평가 때 이미 입원 중 · 당일/익일 재입원) */
+		                       AND FN_ADMIT_CONT(#{hospCd}, cm.patId, cm.patNm, pm.admitDt, pm.medStart, cm.admitDt) = 'Y'
 		  UNION ALL
 		  SELECT distinct 
 		       LEFT(tpm.PAT_ID,6)
@@ -2008,7 +2026,8 @@
 		    
  		   AND tpm.PAT_ID NOT IN (SELECT cm2.patId
  		                            FROM current_month cm2
- 		                            JOIN previousmonth pm2 ON cm2.patId = pm2.patId)   
+ 		                            JOIN previousmonth pm2 ON cm2.patId = pm2.patId
+ 		                                                  AND FN_ADMIT_CONT(#{hospCd}, cm2.patId, cm2.patNm, pm2.admitDt, pm2.medStart, cm2.admitDt) = 'Y')   
 		                             
 		   AND CAST(tpm.PR_ULCER2 AS UNSIGNED) +
 		       CAST(tpm.PR_ULCER3 AS UNSIGNED) +
@@ -2054,6 +2073,7 @@
 		previousmonth AS (
 			SELECT b.PAT_ID                      AS patId	
 			     , b.ADMIT_DT                    AS admitDt		
+			     , b.MED_START                   AS medStart
 			     , CAST(b.PR_ULCER1 AS UNSIGNED) AS prevStep1
 		         , CAST(b.PR_ULCER2 AS UNSIGNED) AS prevStep2
 		         , CAST(b.PR_ULCER3 AS UNSIGNED) AS prevStep3
@@ -2102,7 +2122,9 @@
 			             COALESCE(cm.curtStep2,0) + COALESCE(cm.curtStep3,0) + COALESCE(cm.curtStep4,0) > 0 
 			        THEN '1' ELSE '2' END AS improveYn
 		  FROM current_month cm
-		  JOIN previousmonth pm ON cm.patId = pm.patId AND cm.admitDt = pm.admitDt
+		  JOIN previousmonth pm ON cm.patId = pm.patId
+		                       /* [2026-10-01] 전월 평가표와 이어지는 입원만 — FN_ADMIT_CONT(입원일 같음 · 전월 평가 때 이미 입원 중 · 당일/익일 재입원) */
+		                       AND FN_ADMIT_CONT(#{hospCd}, cm.patId, cm.patNm, pm.admitDt, pm.medStart, cm.admitDt) = 'Y'
 		 WHERE pm.dangerYn = 'Y'
 		   AND cm.dangerYn = 'Y'
 		  
@@ -2143,6 +2165,8 @@
 		),
 		previousmonth AS (
 			SELECT b.PAT_ID                      AS patId			
+			     , b.ADMIT_DT                    AS admitDt
+			     , b.MED_START                   AS medStart
 			     , CAST(b.PR_ULCER1 AS UNSIGNED) AS prevStep1
 		         , CAST(b.PR_ULCER2 AS UNSIGNED) AS prevStep2
 		         , CAST(b.PR_ULCER3 AS UNSIGNED) AS prevStep3
@@ -2301,6 +2325,8 @@
   		            
 		  FROM current_month cm
 		  JOIN previousmonth pm ON cm.patId = pm.patId
+		                       /* [2026-10-01] 전월 평가표와 이어지는 입원만 — FN_ADMIT_CONT(입원일 같음 · 전월 평가 때 이미 입원 중 · 당일/익일 재입원) */
+		                       AND FN_ADMIT_CONT(#{hospCd}, cm.patId, cm.patNm, pm.admitDt, pm.medStart, cm.admitDt) = 'Y'
 		  UNION ALL
 		  SELECT distinct 
 		       LEFT(tpm.PAT_ID,6)
@@ -2328,7 +2354,8 @@
 		    
  		   AND tpm.PAT_ID NOT IN (SELECT cm2.patId
  		                            FROM current_month cm2
-		                            JOIN previousmonth pm2 ON cm2.patId = pm2.patId)   
+		                            JOIN previousmonth pm2 ON cm2.patId = pm2.patId
+		                                                  AND FN_ADMIT_CONT(#{hospCd}, cm2.patId, cm2.patNm, pm2.admitDt, pm2.medStart, cm2.admitDt) = 'Y')   
 		                             
 		   AND CAST(tpm.PR_ULCER2 AS UNSIGNED) +
 		       CAST(tpm.PR_ULCER3 AS UNSIGNED) +
@@ -2373,6 +2400,8 @@
 		),
 		previous_month AS (
 		SELECT d.PAT_ID AS patId
+		     , d.ADMIT_DT  AS admitDt
+		     , d.MED_START AS medStart
 		  	 , ADL_SCORE_CHECK(d.DRESSING,d.WASHING,d.BRUSHING,d.BATHING,d.EATING,d.MOVE_POS,d.SIT_UP,d.TRANSFER,d.EXIT_ROOM,d.TOILET_USE, '1') AS pAdlScore
 		  	 , ADL_SCORE_CHECK(d.DRESSING,d.WASHING,d.BRUSHING,d.BATHING,d.EATING,d.MOVE_POS,d.SIT_UP,d.TRANSFER,d.EXIT_ROOM,d.TOILET_USE, '2') AS pAdl10Val
 		  	 , CASE WHEN IFNULL(d.PAT_CLASS,'') = '' THEN LEFT(PATIENT_CLASSIFICATION(d.HOSP_CD, d.PAT_ID, d.CHUNGSEQ, d.CLFORM_VER, d.ADMIT_DT, d.MED_START),1)
@@ -2403,7 +2432,10 @@
 		            THEN '1'
 		            ELSE '3' END AS improveYn
 		     */
-		     , CASE WHEN cm.cPatClass IN ('A','E') AND pm.pPatClass IN ('A','E') OR pm.pAdl10Val = 1
+		     		     /* [2026-10-01] 전월 평가표가 없거나 이어지지 않는(신규 입원) 줄은 분모 밖 → '제외'. 종전에는 '미개선' 으로 보였다(점수와는 무관) */
+		     , CASE WHEN pm.patId IS NULL
+		            THEN '3'
+		            WHEN cm.cPatClass IN ('A','E') AND pm.pPatClass IN ('A','E') OR pm.pAdl10Val = 1
 		            THEN '3'
 		            WHEN cm.cPatClass IN ('A','E') AND pm.pPatClass IS NULL
 		            THEN '3'  
@@ -2417,6 +2449,8 @@
 		     
 		  FROM current_month cm
 		  LEFT JOIN previous_month pm ON cm.patId = pm.patId
+		                            /* [2026-10-01] 전월 평가표와 이어지는 입원만 — FN_ADMIT_CONT(입원일 같음 · 전월 평가 때 이미 입원 중 · 당일/익일 재입원) */
+		                            AND FN_ADMIT_CONT(#{hospCd}, cm.patId, cm.patNm, pm.admitDt, pm.medStart, cm.admitDt) = 'Y'
 	</select>
 	
 	
