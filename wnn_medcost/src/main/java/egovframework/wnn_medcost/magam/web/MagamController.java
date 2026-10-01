@@ -1148,12 +1148,21 @@ public class MagamController {
 			err_cd = svc.create_Eval_Indi(dto);			
 			System.out.println("create_Eval_Indi 호출종료");
 			
-			if ("90000".equals(err_cd)) {
- 				model.addAttribute("error_mess", "작업 1. 자료생성중 오류 발생됨. 담당자에게 문의하세요 !!");
- 			} 
-        	        	
+			/* [2026-10-01] 프로시저가 오류로 롤백했으면(errcode 가 '0' 이 아님) 화면이 알 수 있게 응답에 싣는다.
+			     error_detail(프로시저가 돌려준 원문)은 화면이 위너넷에게만 보여 준다. */
+			if (err_cd != null && !"0".equals(err_cd)) {
+				model.addAttribute("error_code", err_cd);
+ 				model.addAttribute("error_mess", "자료생성 중 오류가 발생해 저장되지 않았습니다. 담당자에게 문의하세요.");
+ 				model.addAttribute("error_detail", dto.getErrmess() == null ? "" : dto.getErrmess());
+ 				log.error("create_Eval_Indi 실패 - hosp=" + dto.getHosp_cd() + ", ym=" + dto.getJobyymm()
+ 				        + ", errcode=" + err_cd + ", errmess=" + dto.getErrmess());
+ 			}
+
         } catch (Exception ex) {
-            model.addAttribute("error_code", ex.getMessage()); 
+            model.addAttribute("error_code", "99999");
+            model.addAttribute("error_mess", "자료생성 중 서버 오류가 발생했습니다. 담당자에게 문의하세요.");
+            model.addAttribute("error_detail", String.valueOf(ex.getMessage()));
+            log.error("create_Eval_Indi 예외 - hosp=" + dto.getHosp_cd() + ", ym=" + dto.getJobyymm(), ex);
         }
         
         return "jsonView";
@@ -1184,8 +1193,15 @@ public class MagamController {
 			// 1개 병원만 처리
 			if ("one".equals(mode)) {
 				String err_cd = svc.create_Eval_Indi(dto);
-				response.put("result", "OK");
+				/* [2026-10-01] 프로시저가 오류로 롤백한 병원은 FAIL — 화면의 진행창이 「n건 오류」로 센다(종전엔 늘 OK) */
+				boolean ok = (err_cd == null || "0".equals(err_cd));
+				response.put("result", ok ? "OK" : "FAIL");
 				response.put("err_cd", err_cd);
+				if (!ok) {
+					response.put("message", dto.getErrmess());
+					log.error("createEvalIndiAllHosp[one] 실패 - hosp=" + dto.getHosp_cd() + ", ym=" + dto.getJobyymm()
+					        + ", errcode=" + err_cd + ", errmess=" + dto.getErrmess());
+				}
 				return response;
 			}
 
@@ -1268,8 +1284,10 @@ public class MagamController {
 		Map<String, Object> response = new HashMap<>();
 		try {
 			String err_cd = svc.create_Eval_Indi(dto);
-			response.put("result", "OK");
+			boolean ok = (err_cd == null || "0".equals(err_cd));   // [2026-10-01] 프로시저 오류(롤백)는 FAIL
+			response.put("result", ok ? "OK" : "FAIL");
 			response.put("err_cd", err_cd);
+			if (!ok) response.put("message", dto.getErrmess());
 		} catch (Exception e) {
 			response.put("result", "FAIL");
 			response.put("message", e.getMessage());

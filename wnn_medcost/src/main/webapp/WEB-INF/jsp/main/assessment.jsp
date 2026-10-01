@@ -931,6 +931,7 @@ th.noArrow {
 </div>
 
 
+<script src="/asset/js/ui-message.js"></script>   <!-- [2026-10-01] 자료생성 실패 알림 — 새 알림은 ui-message (CLAUDE.md 상시 방침) -->
 <script type="text/javascript">
 
 var jobFlag = '00';
@@ -2391,6 +2392,35 @@ function fn_CreateData(flag, force) {
                 success: function(response) {
                     finished = true;
                     if (revealTimer) clearInterval(revealTimer);
+                    /* [2026-10-01] 프로시저가 오류로 롤백하면 서버가 error_code(≠'0')·error_mess 를 싣는다.
+                         종전에는 이것을 안 보고 무조건 「완료되었습니다」 — 값이 안 바뀌는데 이유를 알 수 없었다.
+                         실패해도 이전에 생성된 자료는 그대로 있으므로 화면에는 그 자료를 다시 보여 준다. */
+                    var _ec = (response && response.error_code != null) ? String(response.error_code) : '';
+                    var _em = (response && response.error_mess) ? String(response.error_mess) : '';
+                    if ((_ec && _ec !== '0') || _em) {
+                        if (waitingCreate) waitingCreate.style.display = 'none';
+                        if (box) box.innerHTML = '';
+                        var _wnn = false;
+                        try { _wnn = (getCookie('s_wnn_yn') || '').trim() === 'Y'; } catch (e) {}
+                        var _esc = function(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+                        var _msg = '<b>자료생성에 실패했습니다.</b><br>'
+                                 + _esc(_em || '자료생성 중 오류가 발생했습니다.')
+                                 + '<br><span style="color:#666;font-size:13px;">화면의 값은 이전에 생성된 자료입니다.</span>';
+                        /* 원문(프로시저 오류)은 위너넷에게만 — 병원에는 SQL 오류 글자를 보이지 않는다 */
+                        if (_wnn && response.error_detail) {
+                            _msg += '<div style="margin-top:8px;padding:6px 8px;background:#f6f6f6;border-radius:6px;'
+                                  + 'font-size:12px;color:#444;text-align:left;word-break:break-all;">'
+                                  + '[' + _esc(_ec) + '] ' + _esc(response.error_detail) + '</div>';
+                        }
+                        if (typeof window._alertBox === 'function') {
+                            window._alertBox(_msg, { icon: '⚠️', okText: '확인', okColor: 'red' });
+                        } else {
+                            Swal.fire({ icon: 'error', title: '오류', html: _msg });
+                        }
+                        loadFivePointCriteria(jobyymm);
+                        Indicater_DataList();
+                        return;
+                    }
                     if (response) {
                         shown = names.length; render();   // 전체 ✔ 확정
                         if (box) box.innerHTML = '<div style="font-weight:600;color:#28a745;">'
