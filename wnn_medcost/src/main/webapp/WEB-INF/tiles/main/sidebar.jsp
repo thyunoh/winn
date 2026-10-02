@@ -813,8 +813,11 @@
                          ★종전 Ctrl+Alt+R 개발 토글(sessionStorage 'joinReqDev')은 없앴다 —
                            운영은 로그인 화면(wnn_consult)과 같은 호스트라 sessionStorage 가 공유돼,
                            그 화면에서 한 번 켠 브라우저면 병원 계정으로 들어와도 메뉴가 보였다(이번 요청의 원인).
-                         ※화면 자체는 컨트롤러가 MAIN_GU='1' 로 다시 막는다(메뉴만 감추면 주소를 직접 칠 수 있다). --%>
-                    <c:if test="${cookie.s_mainfg.value eq '1'}">
+                         ※화면 자체는 컨트롤러가 MAIN_GU='1' 로 다시 막는다(메뉴만 감추면 주소를 직접 칠 수 있다).
+                         ★[2026-10-02] 판별을 <위너넷 여부>(TBL_HOSP_MST.WINNER_YN='Y' → 로그인 때 심는 쿠키 s_wnn_yn='Y')로 바꿨다.
+                           종전 s_mainfg='1' 은 <병원 내> 관리자구분이라 일반병원 관리자 계정도 1 이어서 메뉴가 보였다
+                           (사용자 「병원 계정으로 들어가면 아직도 노출」 · 「WINNER_YN='Y' 으로만」). 컨트롤러(JoinController.isWnnAdmin)도 같은 기준. --%>
+                    <c:if test="${cookie.s_wnn_yn.value eq 'Y'}">
                     <li class="nav-item" id="adminJoinReqMenu">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="/join/joinReq.do">
                             <i class="fas fa-hospital-user"></i>신규병원 가입신청

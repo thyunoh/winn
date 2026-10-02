@@ -60,9 +60,11 @@ public class JoinController {
         return ck(request, "s_hospid").length() > 0;
     }
 
-    /** 위너넷 관리자인가 — 로그인 시 심어 둔 s_mainfg(관리자구분)가 1 일 때만 */
+    /** 위너넷인가 — 위너넷 여부(TBL_HOSP_MST.WINNER_YN=Y → 로그인 때 심는 쿠키 s_wnn_yn=Y) 로만 판별한다.
+     *  ★[2026-10-02] 종전 s_mainfg=1 은 <병원 내> 관리자구분이라 일반병원 관리자도 1 이었다
+     *    (병원 계정으로 신규병원 가입신청 메뉴·화면이 열리던 원인 · 사용자 「WINNER_YN=Y 으로만」). */
     private boolean isWnnAdmin(HttpServletRequest request) {
-        return "1".equals(ck(request, "s_mainfg"));
+        return "Y".equals(ck(request, "s_wnn_yn"));
     }
 
 
@@ -74,8 +76,8 @@ public class JoinController {
             return ".login/LoginWinCT";
         }
         if (!isWnnAdmin(request)) {
-            log.warn(" joinReq : 권한 없음 — s_hospid={} s_userid={} s_mainfg={} (필요값 1)",
-                     ck(request, "s_hospid"), ck(request, "s_userid"), ck(request, "s_mainfg"));
+            log.warn(" joinReq : 권한 없음 — s_hospid={} s_userid={} s_wnn_yn={} s_mainfg={} (필요값 s_wnn_yn=Y)",
+                     ck(request, "s_hospid"), ck(request, "s_userid"), ck(request, "s_wnn_yn"), ck(request, "s_mainfg"));
             return ".main/main";
         }
         return ".main/mangr/joinReq";
@@ -577,7 +579,7 @@ public class JoinController {
     public String joinGate(HttpServletRequest request, ModelMap model) throws Exception {
         String gate = "N";
         try {
-            if (!"1".equals(ck(request, "s_mainfg"))) {
+            if (!isWnnAdmin(request)) {   // 위너넷(s_wnn_yn=Y)만 잠금 제외 — s_mainfg 는 보지 않는다(2026-10-02)
                 gate = svc.selDocGate(ck(request, "s_hospid")) > 0 ? "Y" : "N";
             }
         } catch (Exception e) {

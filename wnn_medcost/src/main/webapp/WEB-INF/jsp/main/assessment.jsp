@@ -4219,6 +4219,7 @@ function fn_ViewData(data) {
 					    { data: 'nextTarget', visible: true, className: 'dt-body-center', width: '100px',
 							render: function(data, type, row) {
 						        if (type === 'display') {
+						        	// [2026-10-02] 7~12월은 누적 대상이라 이전 달 퇴원도 '퇴원'으로 표시한다(퇴원일은 행을 누르면 상단에 나온다 — 칸에는 날짜를 넣지 않는다)
 						        	if (data === 'Y') return '퇴원';
 						            if (data === 'N') return '';
 						        }
@@ -5165,6 +5166,7 @@ function dataLoad(data, callback, settings) {
 	            		let long_Cnt = 0;
 	            		// 퇴원은 같은 입원이 달마다 여러 줄로 나오므로 환자·입원일 단위로 한 번만 센다
 	            		const tewonKeys = {};
+	            		const tewonCur  = {};   // 당월 퇴원
 
 		                for (let i = 0; i < response.data.length; i++) {
 
@@ -5175,10 +5177,14 @@ function dataLoad(data, callback, settings) {
 		                    }
 		                    if (item.nextTarget === 'Y') {
 		                    	tewonKeys[item.patId + '|' + item.patNm + '|' + item.admitDt] = 1;
+		                    	// 그중 이번 달에 퇴원한 건(7~12월은 이전 달 퇴원도 함께 표시한다 — 2026-10-02)
+		                    	if (String(item.tewonDt || '').replace(/-/g, '').substring(0, 6) === String(jobYyMm)) {
+		                    		tewonCur[item.patId + '|' + item.patNm + '|' + item.admitDt] = 1;
+		                    	}
 		                    }
 		                }
 
-		                cntNote = '[중복포함,181일 총:' + long_Cnt + '건 ]·당월 퇴원:' + Object.keys(tewonKeys).length + '명';
+		                cntNote = '[중복포함,181일 총:' + long_Cnt + '건 ]·퇴원:' + Object.keys(tewonKeys).length + '명(당월 ' + Object.keys(tewonCur).length + '명)';
 		                
 		                document.getElementById("lab_title").innerHTML = lTitle + nbsp(65) + '<span style="color: blue;">' + cntNote + '</span>';
 	            	

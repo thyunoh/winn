@@ -2705,8 +2705,13 @@
 		         , MIN(LEFT(t.JUMINNO,6))                           AS jm
 		      FROM TBL_IPWON_INFO t
 		     WHERE t.HOSP_CD = #{hospCd}
-		       AND t.JOBYYMM = #{jobYymm}
-		       AND COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'') LIKE CONCAT(#{jobYymm},'%')
+		       /* [2026-10-02] 퇴원을 「누적 기간 전체」에서 찾는다 — 7~12월은 7월부터 누적 대상이라, 종전처럼 작업월 퇴원만 찾으면
+		            7·8월에 퇴원한 환자가 9월 화면에서 재원처럼 보였다(부산은빛 신말순 07-01·박숙자 07-09 퇴원). 1~6월은 종전대로 그 달만. */
+		       AND t.JOBYYMM BETWEEN CASE WHEN CAST(SUBSTRING(#{jobYymm},5,2) AS UNSIGNED) >= 7 THEN CONCAT(SUBSTRING(#{jobYymm},1,4),'07') ELSE #{jobYymm} END
+		                         AND #{jobYymm}
+		       AND COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'')
+		           BETWEEN CONCAT(CASE WHEN CAST(SUBSTRING(#{jobYymm},5,2) AS UNSIGNED) >= 7 THEN CONCAT(SUBSTRING(#{jobYymm},1,4),'07') ELSE #{jobYymm} END, '01')
+		               AND CONCAT(#{jobYymm}, '31')
 		     GROUP BY REPLACE(REPLACE(t.IPWONDT,'-',''),'/',''), REGEXP_REPLACE(t.PATNAME,'[0-9]','')
 		)
 		, tr AS (
@@ -2715,7 +2720,7 @@
 		      FROM tw
 		      LEFT JOIN TBL_IPWON_INFO r
 		        ON r.HOSP_CD = #{hospCd}
-		       AND r.JOBYYMM >= #{jobYymm}
+		       AND r.JOBYYMM >= LEFT(tw.twDt,6)          /* 퇴원한 달 이후의 재입원 */
 		       AND LEFT(r.JUMINNO,6) = tw.jm
 		       AND REGEXP_REPLACE(r.PATNAME,'[0-9]','') = tw.nm
 		       AND REPLACE(REPLACE(r.IPWONDT,'-',''),'/','') > tw.twDt

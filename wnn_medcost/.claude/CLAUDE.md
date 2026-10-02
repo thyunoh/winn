@@ -2157,3 +2157,15 @@
   · SP 처리기 = 임시 사본에서 함수 이름을 없는 것으로 바꿔 **강제 오류** → `errcode=90000 errmess=SQLSTATE=42000, MESSAGE=FUNCTION WNN.ZZ_NO_SUCH_FN does not exist` / 정상 = `0 Success`(둘 다 ROLLBACK · 자료 무변경 · 임시 루틴 잔여 0).
   ⛔브라우저 눈 검증은 재기동 뒤. 자바 2 + JSP 1 → **WAR 재빌드+재기동**(tmp1 에 클래스·JSP 복사해 둠).
 >>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
+
+### [완료] 위너넷 전용 판별 = WINNER_YN='Y' 만 (2026-10-02, 「병원 계정으로 들어가면 신규병원 가입신청이 아직도 노출」)
+- 원인: 메뉴·서버검사가 `s_mainfg='1'` 이었다. **MAIN_GU 는 병원 내 관리자구분이라 일반병원 관리자 계정도 1**(일반병원 146계정/약 62병원) → 병원 관리자 계정이면 메뉴가 보이고 화면도 열렸다.
+- 사용자 확정 규칙: **WINNER_YN='Y' 면 보이고 아니면 안 보인다. s_mainfg 는 상관없음.** → 쿠키 `s_wnn_yn='Y'`(로그인 때 WINNER_YN 으로 심음, top.jsp 병원검색과 같은 값) 하나로만 판별.
+- 수정: `sidebar.jsp` 가입신청 메뉴 c:if / `JoinController.isWnnAdmin`(+joinGate 잠금 제외) / `MangrController.qnaIsWnnAdmin` / `UserController.needJoinDocs`.
+- ★앞으로 위너넷 전용 기능에 `s_mainfg` 를 쓰지 말 것.
+
+### [완료] 장기입원(14) 목록 「퇴원」 표시 — 누적 기간 전체에서 찾는다 (2026-10-02, 부산은빛 9월)
+- 요청: 9월 화면에서 장기입원 2명(신말순 07-01 퇴원·박숙자 07-09 퇴원)에 「퇴원」이 안 나온다. 원인은 `select_CategoryList14` 의 tw 가 **작업월(JOBYYMM=작업월, 퇴원일 LIKE 작업월)만** 봤기 때문 — 7~12월은 7월부터 누적 대상인데 퇴원은 당월만 찾았다.
+- 수정: tw = JOBYYMM·퇴원일을 **누적 기간(7~12월은 그해 7월~작업월, 1~6월은 그 달)** 으로. tr 재입원은 `r.JOBYYMM >= LEFT(tw.twDt,6)`. 화면(assessment.jsp)은 이전 달 퇴원이면 `퇴원 MM-DD`, 머리글은 `퇴원:N명(당월 M명)`.
+- ★분모·분자는 그대로다(누적 지표라 퇴원해도 대상에 남는다) — 표시만 바뀐다.
+- ⚠함정: 매퍼 XML 주석에 `<…>` 를 쓰면 CDATA 밖에서는 XML 이 깨진다(이번에 `<누적 기간 전체>` 로 한 번 깨뜨림) → 「」 를 쓴다.

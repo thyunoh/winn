@@ -139,9 +139,9 @@ public class UserController extends BaseController {
 	 * 판정에 실패하면 무조건 통과시킨다 — 기존 병원이 이 조회 하나 때문에
 	 * 프로그램에 못 들어가는 일이 있어서는 안 된다.
 	 */
-	private boolean needJoinDocs(String s_hospid, String s_mainfg) {
+	private boolean needJoinDocs(String s_hospid, String s_wnn_yn) {
 		try {
-			if ("1".equals(s_mainfg)) return false;      // 위너넷 직원은 해당 없음
+			if (s_wnn_yn != null && "Y".equals(s_wnn_yn.trim())) return false;   // 위너넷(WINNER_YN=Y)은 해당 없음 — s_mainfg 는 병원 내 관리자구분이라 쓰지 않는다(2026-10-02)
 			return joinSvc.selDocGate(s_hospid) > 0;
 		} catch (Exception ex) {
 			log.warn(" 동의서 게이트 확인 실패 — 통과시킨다 hospCd=" + s_hospid, ex);
@@ -162,7 +162,7 @@ public class UserController extends BaseController {
 			if (s_hospid != null && !s_hospid.trim().isEmpty()) {
 				// 승인은 받았지만 동의서 원본을 아직 안 올린 신규병원 → 제출화면으로.
 				//   제출해야 대시보드·메뉴가 열린다(계약은 따로 있어야 메뉴가 찬다).
-				if (needJoinDocs(s_hospid.trim(), cookie_value.get("s_mainfg"))) {
+				if (needJoinDocs(s_hospid.trim(), cookie_value.get("s_wnn_yn"))) {
 					model.addAttribute("hospCd", s_hospid.trim());
 					return ".main/mangr/joinDocs";
 				}

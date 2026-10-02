@@ -927,7 +927,7 @@ $(document).ready(function() {
 		    	var data = dataTable.row($(this).parents('tr')).data();
 		    	
 		    	//교육담당자  mainfg = 3으로 등록되어 있어 삭제 권한 없음, 병원담당자 mainfg = 1 또는 2인 경우 삭제권한 있음. (병원직원, mainfg = 3 담당자로 등록된 경우 삭제 권한 없음)
-		    	if (((data.lock_yn === 'N' && ['1', '2'].includes(mainfg)) || (winner === 'Y' && ['1', '2'].includes(mainfg)))) {
+		    	if (((data.lock_yn === 'N' && ['1', '2'].includes(mainfg)) || winner === 'Y')) {   // [2026-10-02] 위너넷은 WINNER_YN=Y 로만 판별(s_mainfg 는 보지 않는다)
 			    	// success:  성공 또는 완료를 나타내는 녹색 체크 마크 아이콘
 					// error:    오류나 실패를 나타내는 빨간색 X 아이콘
 					// warning:  주의나 경고를 나타내는 노란색 느낌표 아이콘
@@ -3099,7 +3099,7 @@ function updateMonthsContainer(rawData) {
 
         let buttonHTML = '';
         
-        if (item.lock_yn === "N" || (winner === 'Y' && ['1', '2'].includes(mainfg))) {
+        if (item.lock_yn === "N" || winner === 'Y') {
         	buttonHTML += '<button data-action="fileLoad" data-mgmonth="' + item.mgmonth + '" id="' + item.mgmonth + '" class="btn ' + buttonClass + ' btn-block btn-sm small hover-change mb-1" data-original="' + button_Text + '" data-hover="' + hovers_Text + '">' + button_Text + '</button>';
         }
 
@@ -3133,7 +3133,7 @@ function updateMonthsContainer(rawData) {
             }
         }
 
-        if ((winner === 'Y' && ['1', '2'].includes(mainfg)) && item.magamyn === "Y") {
+        if (winner === 'Y' && item.magamyn === "Y") {
         	if (item.lock_yn === "Y") {
                 buttonHTML += '<button data-action="magamLock" data-mgmonth="' + item.mgmonth + '" id="lock_' + item.mgmonth + '" class="btn btn-danger         text-black btn-block btn-sm small mb-1">🔒잠김</button>';
             } else {

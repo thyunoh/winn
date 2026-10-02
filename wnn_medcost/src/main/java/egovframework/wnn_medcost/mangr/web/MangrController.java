@@ -708,11 +708,11 @@ public class MangrController {
 	       (쿠키 가드는 뷰 반환 메서드에만 필요 — 2026-06-10 대시보드 500 장애 참조).
 	   ==================================================================== */
 
-	/** 위너넷 관리자인가 — 로그인 때 심어 둔 s_mainfg(관리자구분)가 1 일 때만 (JoinController 와 같은 판별) */
+	/** 위너넷인가 — 위너넷 여부 쿠키 s_wnn_yn=Y 로만 판별 (JoinController.isWnnAdmin 과 같은 기준 · 2026-10-02 「WINNER_YN=Y 면 보이고 아니면 안 보임, s_mainfg 는 상관없음」) */
 	private boolean qnaIsWnnAdmin(HttpServletRequest request) {
 		try {
-			String v = ClientInfo.getCookie(request).get("s_mainfg");
-			return v != null && "1".equals(v.trim());
+			String v = ClientInfo.getCookie(request).get("s_wnn_yn");
+			return v != null && "Y".equals(v.trim());
 		} catch (Exception ex) { return false; }
 	}
 
