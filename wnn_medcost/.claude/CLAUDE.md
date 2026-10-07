@@ -2092,9 +2092,7 @@
 - 기준: 심평원 세부시행계획 지표12 「(181일 이상 입원) 일당 정액수가 및 입원료 산정기준에 따름」 = 체감제 — **퇴원 후 90일 이내 재입원만 누적**(2021~ 타 요양병원 포함, 타병원은 청구 체감코드 조건이 담당).
 - 수정: `Magam_SQL.xml` select_CategoryList14 의 prev_ii EXISTS → 이전퇴원일 ≥ 현재입원일−90일 AND (이전입원일수 + 현재입원일수) ≥ 181. **한 번(직전 입원)만 이어 붙인다.**
 - ⚠프로시저 `SP_EVALUATION_INDICATORS_CREATE2` 14번 같은 자리는 **사용자가 직접 수정**(수정부분만 안내함). 둘이 어긋나면 목록 점(●)과 분자 수가 달라진다.
-<<<<<<< HEAD
 - ★분모 집계 단위(사용자 확정 2026-09-29): **같은 사람이라도 입원일자가 다르면 별도 1건**(프로시저 dedup `GROUP BY patId(생년월일6), admitDt`). 「환자 단위로 묶자」로 고치지 말 것 — 90일 이내 재입원(정은주 08-24→08-25)도 2건이 맞다.
-=======
 - ★★**[2026-09-30] 같은 규칙이 세 번째 자리에도 있었다 — `SP_LONGADM_COUNT`**(시뮬레이션·월보고서의 **누적 14번**, `MagamServiceImpl.select_Hosp_Indi` → `callLongAdmCount` 가 TBL_PAT_INDI 합계를 이 값으로 덮는다).
   증상 = 부산은빛 9월 적정성평가 9명 중 2명(4점) vs 월보고서·시뮬레이션 9명 중 4명(3점) — 늘어난 2건 = 정은주 07-27·08-25 입원(옛 규칙). DB 재현으로 옛 9/4 · 새 9/2 확인.
   [SP_LONGADM_COUNT_2026-09-30.sql](docs/sql/proc/SP_LONGADM_COUNT_2026-09-30.sql) ✅**사용자 실행(09-30 08:16) · 확인 = 7~9월 9/2 · 22.22% · 가중치 4.00**(원복 = BACKUP_…_20260930.sql). 앱 변경·재기동 없음.
@@ -2156,7 +2154,6 @@
 - **검증** : javac(WAR lib, exit 0) · JSP 인라인 문법 6블록 0오류 · 시뮬 [sim_assessment_createfail.js](docs/tools/sim/sim_assessment_createfail.js) 8검사(위너넷 원문·병원 비노출·Swal 폴백·성공 종전대로)
   · SP 처리기 = 임시 사본에서 함수 이름을 없는 것으로 바꿔 **강제 오류** → `errcode=90000 errmess=SQLSTATE=42000, MESSAGE=FUNCTION WNN.ZZ_NO_SUCH_FN does not exist` / 정상 = `0 Success`(둘 다 ROLLBACK · 자료 무변경 · 임시 루틴 잔여 0).
   ⛔브라우저 눈 검증은 재기동 뒤. 자바 2 + JSP 1 → **WAR 재빌드+재기동**(tmp1 에 클래스·JSP 복사해 둠).
->>>>>>> branch 'main' of https://github.com/thyunoh/winn.git
 
 ### [완료] 위너넷 전용 판별 = WINNER_YN='Y' 만 (2026-10-02, 「병원 계정으로 들어가면 신규병원 가입신청이 아직도 노출」)
 - 원인: 메뉴·서버검사가 `s_mainfg='1'` 이었다. **MAIN_GU 는 병원 내 관리자구분이라 일반병원 관리자 계정도 1**(일반병원 146계정/약 62병원) → 병원 관리자 계정이면 메뉴가 보이고 화면도 열렸다.

@@ -1,0 +1,710 @@
+<title>신규 요양병원 업무 패키지</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 한 줄 세로 흐름(최대 980px). 화면 시안은 흰 카드 안에 '모니터'처럼 그린다. 병원 담당자가 한 번 훑어도 읽히게 글자는 크게, 색은 적게. */
+:root{
+  --bg:#f5f7f4; --card:#ffffff; --fg:#1c2726; --muted:#66716e; --line:#d9dfdb;
+  --primary:#0f6e64; --primary-soft:#e3f1ee; --accent:#d9772b; --accent-soft:#fbeadb;
+  --ok:#2f8f5b; --warn:#c9792a; --bad:#c0463f;
+  --font-display:"Gothic A1","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#131a19; --card:#1c2524; --fg:#e7ece9; --muted:#9ba7a3; --line:#2d3a37;
+  --primary:#4fb3a6; --primary-soft:#1b3330; --accent:#f0a05a; --accent-soft:#3a2a1c;
+  --ok:#5fc08a; --warn:#e2a35e; --bad:#e2756e; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#131a19; --card:#1c2524; --fg:#e7ece9; --muted:#9ba7a3; --line:#2d3a37;
+  --primary:#4fb3a6; --primary-soft:#1b3330; --accent:#f0a05a; --accent-soft:#3a2a1c;
+  --ok:#5fc08a; --warn:#e2a35e; --bad:#e2756e; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.65;margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 64px;padding-inline:16px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;line-height:1.25;margin:0}
+h1{font-size:clamp(28px,5vw,40px);font-weight:900}
+h2{font-size:clamp(22px,3.4vw,28px);font-weight:900;margin-bottom:6px}
+h3{font-size:18px;font-weight:700}
+p{margin:0}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);font-weight:700}
+.lead{font-size:18px;color:var(--fg);max-width:40em}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+section{margin-top:56px}
+.sec-head{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:end}
+@media (max-width:720px){.hero{grid-template-columns:1fr}}
+.hero-note{background:var(--primary-soft);border-left:4px solid var(--primary);padding:14px 16px;border-radius:0 8px 8px 0;font-size:15px}
+.hero-note b{color:var(--primary)}
+
+.trio{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media (max-width:900px){.trio{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.trio{grid-template-columns:1fr}}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tile .n{font-family:var(--font-display);font-weight:900;font-size:13px;color:var(--accent);letter-spacing:.06em}
+.tile h3{font-size:18px}
+.tile ul{margin:4px 0 0;padding-left:18px;font-size:14.5px}
+.tile .src{margin-top:auto;font-size:13px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center}
+@media (max-width:720px){.flow{grid-template-columns:1fr}.flow .arrow{transform:rotate(90deg);justify-self:center}}
+.flow .box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.flow .box h3{font-size:16px;margin-bottom:6px}
+.flow .box ul{margin:0;padding-left:18px;font-size:14px}
+.flow .arrow{font-size:28px;color:var(--primary);font-weight:900;text-align:center}
+.flow .core{border:2px solid var(--primary)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--primary-soft);color:var(--primary);margin-left:6px;vertical-align:middle}
+.tag.new{background:var(--accent-soft);color:var(--accent)}
+.tag.real{background:var(--accent-soft);color:var(--accent);margin-left:0}
+
+.prog{display:grid;grid-template-columns:1fr;gap:18px}
+.prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.prog-grid{grid-template-columns:1fr}}
+.list-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0}
+.list-card h3{font-size:16px;margin-bottom:8px}
+.list-card ul{margin:0;padding-left:18px;font-size:15px}
+.list-card li+li{margin-top:4px}
+.ask{background:var(--accent-soft);border-radius:10px;padding:16px 18px}
+.ask h3{color:var(--accent);font-size:16px;margin-bottom:8px}
+.ask ol{margin:0;padding-left:20px;font-size:15px}
+.ask li+li{margin-top:4px}
+.prog-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.prog-h .n{font-family:var(--font-display);font-weight:900;color:var(--accent);font-size:15px}
+
+/* 화면 시안(모니터) */
+.screen{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.screen .bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+.screen .bar .dots{display:flex;gap:5px}
+.screen .bar .dots i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.screen .bar .ttl{font-weight:700;color:var(--fg)}
+.screen .bar .ex{margin-left:auto;background:var(--accent-soft);color:var(--accent);font-weight:700;padding:1px 8px;border-radius:999px;font-size:12px}
+.screen .bar .ex.ok{background:var(--primary-soft);color:var(--primary)}
+.screen .body{padding:14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--font-display);font-weight:900;font-size:24px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .d{font-size:12px;font-weight:700}
+.up{color:var(--ok)} .down{color:var(--bad)}
+.charts{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:720px){.charts{grid-template-columns:1fr}}
+.chart{border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.chart h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:700}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{font-family:var(--font-body);fill:var(--muted);font-size:11px}
+.chart .axis{stroke:var(--line)}
+.chart .bar-me{fill:var(--primary)}
+.chart .bar-avg{fill:var(--line)}
+.chart .lbl{fill:var(--fg);font-weight:700}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.stack{display:flex;height:22px;border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.stack span{display:block;height:100%;font-size:11px;color:#fff;text-align:center;line-height:22px;font-weight:700;min-width:0;overflow:hidden}
+.sA{background:#7a8a86}.sB{background:#5e7d78}.sC{background:#3f8f84}.sD{background:#0f6e64}.sE{background:#0b4f48}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+@media (max-width:720px){.input-row{grid-template-columns:1fr}}
+.input-row .f{border:1px dashed var(--line);border-radius:8px;padding:8px 12px;font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.input-row .f b{font-variant-numeric:tabular-nums}
+.input-row .f .need{color:var(--bad);font-weight:700}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.tbl th{color:var(--muted);font-weight:700;font-size:12px}
+.tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+
+/* 고정경비 */
+.cost{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:720px){.cost{grid-template-columns:1fr}}
+.bep{border:2px solid var(--primary);border-radius:8px;padding:12px;background:var(--primary-soft)}
+.bep h4{margin:0 0 8px;font-size:13px;color:var(--primary);font-weight:700}
+.bep .big{font-family:var(--font-display);font-weight:900;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.bep .row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;border-top:1px dashed var(--line)}
+.bep .row:first-of-type{border-top:0}
+.gauge{height:14px;border-radius:999px;background:var(--line);overflow:hidden;margin:8px 0 4px;position:relative}
+.gauge i{display:block;height:100%;background:var(--primary)}
+.gauge b{position:absolute;top:-4px;width:2px;height:22px;background:var(--accent)}
+
+/* 고객관리 파이프라인 */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media (max-width:720px){.pipe{grid-template-columns:repeat(2,1fr)}}
+.col{border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0;background:var(--bg)}
+.col .h{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px}
+.col .h span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:0 7px;font-variant-numeric:tabular-nums}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:12.5px;margin-top:6px;line-height:1.4}
+.pcard b{display:block;font-size:13px}
+.pcard .r{color:var(--muted)}
+.pcard .auto{color:var(--primary);font-weight:700}
+.pcard .due{color:var(--bad);font-weight:700}
+
+/* 자동화 알림 */
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.alert .ic{width:10px;height:38px;border-radius:4px}
+.alert .ic.w{background:var(--warn)} .alert .ic.b{background:var(--bad)} .alert .ic.o{background:var(--ok)} .alert .ic.p{background:var(--primary)}
+.alert b{display:block}
+.alert .act{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap}
+.sim{margin-top:12px;border:1px solid var(--line);border-radius:8px;padding:12px}
+.sim h4{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.sim-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;font-size:14px}
+.sim-row .box{border:1px solid var(--line);border-radius:8px;padding:8px 12px;text-align:center;min-width:0}
+.sim-row .box b{display:block;font-family:var(--font-display);font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.sim-row .arr{font-weight:900;color:var(--accent)}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:720px){.steps{grid-template-columns:1fr}}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.step .k{font-family:var(--font-display);font-weight:900;color:var(--primary);font-size:14px}
+.step h3{margin:4px 0 6px}
+.step p{font-size:14px}
+.step .why{font-size:13px;color:var(--muted);margin-top:8px}
+
+.form{background:var(--card);border:2px solid var(--primary);border-radius:12px;padding:20px}
+.form .q{margin-top:16px}
+.form .q>label,.form .q>.ql{display:block;font-weight:700;margin-bottom:6px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.opts input{margin:0}
+.opts label:has(input:checked){background:var(--primary-soft);border-color:var(--primary);color:var(--primary);font-weight:700}
+.form textarea,.form input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit;background:var(--bg);color:var(--fg)}
+.form textarea{min-height:90px;resize:vertical}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:720px){.form .two{grid-template-columns:1fr}}
+.btn{font:inherit;font-weight:700;border:0;border-radius:8px;padding:12px 18px;cursor:pointer;background:var(--primary);color:#fff}
+.btn:focus-visible,.opts input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.toast{font-size:14px;color:var(--ok);font-weight:700}
+.out{margin-top:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;white-space:pre-wrap;font-size:14px;display:none}
+.out.show{display:block}
+footer{margin-top:56px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion:no-preference){.tile,.step{transition:transform .15s}.tile:hover,.step:hover{transform:translateY(-2px)}}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div>
+    <div class="eyebrow">WinCheck+ 확장 제안 · 2026-10-08</div>
+    <h1 style="margin-top:6px">신규 요양병원 업무 패키지</h1>
+    <p class="lead" style="margin-top:12px">적정성평가 프로그램에 더해, 개원 첫해에 바로 쓰이는 네 가지를 제공합니다. <b>경영통계 · 고정경비 관리 · 업무 자동화 · 신규환자 고객관리.</b> 모두 병원이 지금 올리는 자료로 돌아가며, EMR(닥터스)과 연결하지 않습니다.</p>
+  </div>
+  <div class="hero-note">
+    <b>이 문서의 쓰임</b><br>
+    병원에 먼저 보여 드리고 의견을 듣기 위한 시안입니다. ① 경영통계와 ② 고정경비의 수익·환자 수는 <b>부산은빛요양병원 2026년 5~9월 실제 자료</b>로 계산했고, 고정비 금액과 ③·④ 화면의 숫자는 예시입니다. 맨 아래 <b>의견 적기</b>에서 필요한 것, 빼도 되는 것을 알려 주시면 그 순서대로 만듭니다.
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <h2>개원 첫해, 병원이 부딪히는 일</h2>
+    <p class="muted">신규 요양병원은 병상을 채우고, 고정비를 버티고, 심평원 신고를 놓치지 않고, 첫 적정성평가에 들어가는 1년을 보냅니다. 네 프로그램은 이 순서에 맞춰져 있습니다.</p>
+  </div>
+  <div class="trio">
+    <div class="tile">
+      <div class="n">① 경영통계</div>
+      <h3>지금 병원이 어떤 상태인지 한 화면에</h3>
+      <ul>
+        <li>월 진료비, 평균 재원 환자, 입·퇴원 수</li>
+        <li>환자군(A~E) 구성, 환자 1인 1일 진료비</li>
+        <li>위너넷 고객 병원 평균과 비교</li>
+      </ul>
+      <div class="src">자료: 청구 샘파일 · 입퇴원현황 (이미 올리는 것) · 병상 수 1회 입력</div>
+    </div>
+    <div class="tile">
+      <div class="n">② 고정경비 관리</div>
+      <h3>매달 나가는 돈과 손익분기를 한눈에</h3>
+      <ul>
+        <li>인건비·임대료·위탁비·공과금 항목별 월 고정비</li>
+        <li>실제 수익과 맞춰 <b>손익분기 환자 수</b> 계산</li>
+        <li>월별 추이, 전월보다 늘어난 항목 표시</li>
+      </ul>
+      <div class="src">자료: 고정비는 처음 1회 등록 후 바뀐 것만 입력 · 수익·환자 수는 샘파일</div>
+    </div>
+    <div class="tile">
+      <div class="n">③ 업무 자동화</div>
+      <h3>잊으면 손해 보는 일을 대신 챙김</h3>
+      <ul>
+        <li>차등제 신고·평가 일정 기한 알림</li>
+        <li>샘파일·입퇴원 자료 미업로드 자동 독촉</li>
+        <li>평가표 제출 전 자가점검, 인력 변동 시뮬레이션</li>
+      </ul>
+      <div class="src">자료: 지금 WinCheck+에 있는 것 전부 재사용</div>
+    </div>
+    <div class="tile">
+      <div class="n">④ 신규환자 고객관리</div>
+      <h3>상담에서 입원까지, 놓치는 환자 없이</h3>
+      <ul>
+        <li>전화·방문 상담 접수와 단계 관리</li>
+        <li>입퇴원현황이 올라오면 입원 전환 자동 체크</li>
+        <li>퇴원 환자 안부 연락 목록, 재입원 후보</li>
+      </ul>
+      <div class="src">자료: 상담 내용은 병원이 입력 · 입원 여부는 입퇴원현황으로 자동</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>자료는 어디서 오나</h2>
+    <p class="muted">새로 올릴 파일은 없습니다. 월 몇 줄 입력만 추가됩니다.</p>
+  </div>
+  <div class="flow">
+    <div class="box">
+      <h3>병원이 지금 올리는 것</h3>
+      <ul>
+        <li>청구 샘파일 (매월)</li>
+        <li>입퇴원현황 (매월)</li>
+        <li>환자평가표 (매월)</li>
+        <li>차등제 신고값 (분기)</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box core">
+      <h3>WinCheck+ <span class="tag">기존</span></h3>
+      <ul>
+        <li>적정성평가 산출·월보고서</li>
+        <li>QPS 문서·교육·Q&amp;A</li>
+        <li><b>+ 새 입력</b> <span class="tag new">추가</span><br>병상 수(1회) · 고정비 항목(바뀔 때만) · 비급여 월합계·상담 접수(선택)</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box">
+      <h3>병원이 보는 화면</h3>
+      <ul>
+        <li>① 경영통계 대시보드</li>
+        <li>② 고정경비·손익분기</li>
+        <li>③ 알림·점검·시뮬레이션</li>
+        <li>④ 상담~입원 관리판</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ① 경영통계 (부산은빛 실제) -->
+<section class="prog">
+  <div class="sec-head">
+    <div class="prog-h"><span class="n">①</span><h2>경영통계</h2></div>
+    <p class="muted">원장·행정실장이 월초에 5분 보는 화면입니다. 아래는 <b>부산은빛요양병원 2026년 9월 실제 자료</b>(청구 샘파일·입퇴원현황·환자평가표)로 만든 시안입니다.</p>
+  </div>
+
+  <div class="screen">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">경영통계 · 부산은빛요양병원 · 2026년 9월</span><span class="ex ok">실제 자료</span></div>
+    <div class="body">
+      <div class="kpis">
+        <div class="kpi"><div class="l">월 총진료비 (급여+본인부담)</div><div class="v">4.68억</div><div class="d down">▼ 0.4% 전월 4.70억</div></div>
+        <div class="kpi"><div class="l">평균 재원 환자 (일)</div><div class="v">172명</div><div class="d muted">입원일수 5,162일 ÷ 30</div></div>
+        <div class="kpi"><div class="l">입원 / 퇴원</div><div class="v">18 / 18</div><div class="d muted">8월 25 / 26</div></div>
+        <div class="kpi"><div class="l">환자 1인 1일 진료비</div><div class="v">9.07만</div><div class="d down">고객 평균 11.3만 (8월)</div></div>
+      </div>
+      <div class="charts">
+        <div class="chart">
+          <h4>월 총진료비 추이 (억원) · 위너넷 고객 병원 평균과 비교</h4>
+          <svg viewBox="0 0 420 170" role="img" aria-label="5월부터 9월까지 월 총진료비 막대그래프, 고객 평균과 비교">
+            <line class="axis" x1="34" y1="140" x2="410" y2="140" stroke-width="1"/>
+            <line class="axis" x1="34" y1="20" x2="34" y2="140" stroke-width="1"/>
+            <text x="6" y="144">0</text><text x="6" y="84">3.5</text><text x="6" y="24">7</text>
+            <!-- 1억 = 17.14px (7억 = 120px). 막대: 우리병원(진한색) / 고객 평균(연한색) -->
+            <g>
+              <rect class="bar-me" x="56" y="59.4" width="24" height="80.6"/><rect class="bar-avg" x="82" y="44" width="24" height="96"/><text x="69" y="156" text-anchor="middle">5월</text><text class="lbl" x="68" y="54" text-anchor="middle">4.70</text><text x="94" y="40" text-anchor="middle">5.60</text>
+              <rect class="bar-me" x="128" y="62.7" width="24" height="77.3"/><rect class="bar-avg" x="154" y="33" width="24" height="107"/><text x="141" y="156" text-anchor="middle">6월</text><text class="lbl" x="140" y="58" text-anchor="middle">4.51</text><text x="166" y="29" text-anchor="middle">6.24</text>
+              <rect class="bar-me" x="200" y="60" width="24" height="80"/><rect class="bar-avg" x="226" y="26.7" width="24" height="113.3"/><text x="213" y="156" text-anchor="middle">7월</text><text class="lbl" x="212" y="55" text-anchor="middle">4.67</text><text x="238" y="22" text-anchor="middle">6.61</text>
+              <rect class="bar-me" x="272" y="59.4" width="24" height="80.6"/><rect class="bar-avg" x="298" y="24.6" width="24" height="115.4"/><text x="285" y="156" text-anchor="middle">8월</text><text class="lbl" x="284" y="54" text-anchor="middle">4.70</text><text x="310" y="20" text-anchor="middle">6.73</text>
+              <rect class="bar-me" x="344" y="59.8" width="24" height="80.2"/><rect class="bar-avg" x="370" y="44.9" width="24" height="95.1" opacity=".5"/><text x="357" y="156" text-anchor="middle">9월</text><text class="lbl" x="356" y="55" text-anchor="middle">4.68</text><text x="382" y="40" text-anchor="middle">집계중</text>
+            </g>
+          </svg>
+          <div class="legend"><span><i style="background:var(--primary)"></i>부산은빛</span><span><i style="background:var(--line)"></i>위너넷 고객 평균 (6~8월 62~64곳, 병원명 없이)</span></div>
+          <p class="small muted" style="margin-top:6px">9월 평균은 아직 10곳만 올려 흐리게 표시. 진료비는 환자 수·환자군에 따라 다르므로 "환자 1인 1일 진료비"로도 비교합니다.</p>
+        </div>
+        <div class="chart">
+          <h4>환자군 구성 (9월 평가표, 179명)</h4>
+          <div class="stack"><span class="sA" style="width:1%"></span><span class="sB" style="width:27%">B 49</span><span class="sC" style="width:55%">C 98</span><span class="sD" style="width:17%">D 30</span><span class="sE" style="width:1%"></span></div>
+          <p class="small muted">의료고도·중도(B·C)가 82%. 장기입원 지표 대상(D·E)은 31명입니다.</p>
+          <table class="tbl">
+            <tr><th>월</th><th>환자</th><th>B</th><th>C</th><th>D</th><th>적정성 점수</th></tr>
+            <tr><td>7월</td><td class="n">186</td><td class="n">51</td><td class="n">118</td><td class="n">14</td><td class="n">82.2</td></tr>
+            <tr><td>8월</td><td class="n">187</td><td class="n">48</td><td class="n">131</td><td class="n">7</td><td class="n">86.0</td></tr>
+            <tr><td>9월</td><td class="n">179</td><td class="n">49</td><td class="n">98</td><td class="n">30</td><td class="n">86.0</td></tr>
+          </table>
+          <p class="small muted" style="margin-top:6px">9월에 C→D로 23명이 옮겨간 것이 보입니다. 환자군은 일당정액 수익과 바로 연결됩니다.</p>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="f"><span>허가 병상 수 (1회 입력) → 병상 가동률</span><b class="need">미등록 · 입력 필요</b></div>
+        <div class="f"><span>비급여 월 합계 (선택, 월 1줄)</span><b class="need">미입력 · 샘파일에 없음</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-grid">
+    <div class="list-card">
+      <h3>입력 없이 바로 나오는 것 (위 화면이 그 증거)</h3>
+      <ul>
+        <li>월 총진료비·급여·본인부담, 보험 구분(건강보험 3.44억 / 의료급여 1.24억)</li>
+        <li>평균 재원 환자, 입원일수, 환자 1인 1일 진료비</li>
+        <li>입·퇴원 수, 퇴원자 평균 재원일수(9월 351일)</li>
+        <li>환자군 구성 변화, 위너넷 고객 평균과 비교</li>
+      </ul>
+    </div>
+    <div class="list-card">
+      <h3>병원이 입력해야 하는 것</h3>
+      <ul>
+        <li>허가 병상 수 — 한 번만 (가동률 계산)</li>
+        <li>비급여 월 합계 — 월 1줄 (선택)</li>
+        <li>월 인건비 — 월 1줄 (선택, ② 고정경비와 공유)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ask">
+    <h3>병원에 여쭙고 싶은 것</h3>
+    <ol>
+      <li>이 중 매달 꼭 보고 싶은 숫자는 무엇입니까? 빼도 되는 것은?</li>
+      <li>다른 병원 평균과 비교되는 것이 도움이 됩니까, 부담스럽습니까?</li>
+      <li>비급여·인건비를 월 1줄 입력하는 것은 가능합니까?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ② 고정경비 관리 -->
+<section class="prog">
+  <div class="sec-head">
+    <div class="prog-h"><span class="n">②</span><h2>고정경비 관리</h2></div>
+    <p class="muted">신규 병원은 환자가 차기 전까지 매달 고정비가 수익보다 큽니다. "몇 명이 입원해야 적자를 벗어나는지"를 숫자로 보여 주는 화면입니다. <b>수익·환자 수는 부산은빛 9월 실제 자료</b>, 고정비 금액은 180명 규모 병원을 가정한 <b>입력 예시</b>입니다.</p>
+  </div>
+
+  <div class="screen">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">고정경비 · 부산은빛요양병원 · 2026년 9월</span><span class="ex">수익 실제 · 고정비 예시</span></div>
+    <div class="body">
+      <div class="kpis">
+        <div class="kpi"><div class="l">월 고정비 합계 (입력)</div><div class="v">2.90억</div><div class="d down">▲ 0.04억 전월 대비</div></div>
+        <div class="kpi"><div class="l">월 총진료비 (실제)</div><div class="v">4.68억</div><div class="d muted">비급여 미입력</div></div>
+        <div class="kpi"><div class="l">환자 1인 1일 기여수익</div><div class="v">6.57만</div><div class="d muted">진료비 9.07만 − 변동비 2.5만(예시)</div></div>
+        <div class="kpi"><div class="l">손익분기 재원 환자</div><div class="v">147명</div><div class="d up">현재 평균 172명 · 여유 25명</div></div>
+      </div>
+      <div class="cost">
+        <div class="chart">
+          <h4>고정비 항목별 (9월, 입력 예시) · 전월 대비</h4>
+          <table class="tbl">
+            <tr><th>항목</th><th>월 금액</th><th>비율</th><th>전월 대비</th></tr>
+            <tr><td>인건비 (의사·간호·간병·행정)</td><td class="n">2.10억</td><td class="n">72%</td><td class="n">+0.03억</td></tr>
+            <tr><td>임대료·관리비</td><td class="n">0.22억</td><td class="n">8%</td><td class="n">—</td></tr>
+            <tr><td>급식·세탁·청소 위탁</td><td class="n">0.25억</td><td class="n">9%</td><td class="n">+0.01억</td></tr>
+            <tr><td>공과금 (전기·가스·수도)</td><td class="n">0.10억</td><td class="n">3%</td><td class="n">—</td></tr>
+            <tr><td>보험·장비 리스·소모품</td><td class="n">0.23억</td><td class="n">8%</td><td class="n">—</td></tr>
+            <tr><td><b>합계</b></td><td class="n"><b>2.90억</b></td><td class="n">100%</td><td class="n">+0.04억</td></tr>
+          </table>
+          <p class="small muted" style="margin-top:6px">처음에 항목별 금액을 한 번 등록하면, 다음 달부터는 바뀐 것만 고칩니다. 인건비는 차등제 신고 인력 수(의사 5.3·간호사 14.68·간호인력 40.83)와 연결해 입력 부담을 줄일 수 있습니다.</p>
+        </div>
+        <div class="bep">
+          <h4>손익분기 (BEP)</h4>
+          <div class="big">147명</div>
+          <div class="small">이 인원 이상 재원하면 고정비를 넘깁니다</div>
+          <div class="gauge"><i style="width:86%"></i><b style="left:73.5%"></b></div>
+          <div class="small muted">막대 = 현재 평균 재원 172명 · 주황선 = 손익분기 147명 · 눈금 끝 = 200명(병상 수 입력 전 가정)</div>
+          <div class="row"><span>월 고정비 (입력)</span><b>2.90억</b></div>
+          <div class="row"><span>÷ 환자 1인 월 기여수익 (6.57만×30일)</span><b>197만</b></div>
+          <div class="row"><span>= 손익분기 환자 수</span><b>147명</b></div>
+          <div class="row"><span>현재 여유 (172 − 147)</span><b class="up">+25명 (약 0.49억/월)</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-grid">
+    <div class="list-card">
+      <h3>자동으로 되는 것</h3>
+      <ul>
+        <li>수익(총진료비·환자군별 일당정액)은 샘파일에서 계산</li>
+        <li>평균 재원 환자 수는 청구 입원일수·입퇴원현황에서 계산</li>
+        <li>손익분기 환자 수, 여유 인원, 월별 고정비 추이</li>
+        <li>고정비가 전월보다 늘면 그 항목을 표시</li>
+      </ul>
+    </div>
+    <div class="list-card">
+      <h3>병원이 입력해야 하는 것</h3>
+      <ul>
+        <li>고정비 항목별 월 금액 — 처음 1회, 이후 바뀐 것만</li>
+        <li>환자 1인 1일 변동비(식재료·소모품 등) — 1회, 모르면 기본값</li>
+        <li>비급여 월 합계 — 월 1줄 (수익에 더함, 선택)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ask">
+    <h3>병원에 여쭙고 싶은 것</h3>
+    <ol>
+      <li>고정비를 항목별로 입력하는 것이 가능합니까? 항목은 몇 개가 적당합니까? (위 5개 / 더 세분)</li>
+      <li>인건비를 직종별(의사·간호·간병·행정)로 나눠 보고 싶습니까, 합계만 보면 됩니까?</li>
+      <li>손익분기 외에 더 보고 싶은 숫자가 있습니까? (예: 병상당 수익, 환자군별 수익성, 월 순이익 추정)</li>
+      <li>이 숫자를 누가 봅니까? (원장·행정실장·법인) 그분이 직접 입력합니까?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ③ 업무 자동화 -->
+<section class="prog">
+  <div class="sec-head">
+    <div class="prog-h"><span class="n">③</span><h2>업무 자동화</h2></div>
+    <p class="muted">로그인하면 처음 보이는 알림판입니다. 위너넷이 전화로 챙기던 일을 화면이 대신합니다. 항목은 예시입니다.</p>
+  </div>
+
+  <div class="screen">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">오늘 챙길 일 · 10월 8일</span><span class="ex">예시 화면</span></div>
+    <div class="body">
+      <div class="alerts">
+        <div class="alert"><div class="ic b"></div><div><b>4분기 차등제 신고 D-6</b><span class="small muted">신고 기간 10월 1일~14일 · 신고 후 7·8·9월 구조영역이 다시 계산됩니다</span></div><div class="act">신고값 입력 →</div></div>
+        <div class="alert"><div class="ic w"></div><div><b>9월 청구 샘파일이 아직 없습니다</b><span class="small muted">미업로드 시 항정신성의약품 처방률이 산출되지 않습니다</span></div><div class="act">올리기 →</div></div>
+        <div class="alert"><div class="ic w"></div><div><b>9월 환자평가표 자가점검: 확인할 항목 3건</b><span class="small muted">계속입원인데 평가구분 1 · 유치도뇨관 삽입일 누락 · 욕창 단계와 처치 불일치</span></div><div class="act">목록 보기 →</div></div>
+        <div class="alert"><div class="ic w"></div><div><b>9월 고정비 입력이 아직 없습니다</b><span class="small muted">입력하지 않으면 8월 값으로 손익분기를 계산합니다 · ② 고정경비와 연결</span></div><div class="act">입력 →</div></div>
+        <div class="alert"><div class="ic p"></div><div><b>퇴원 7일 지난 환자 2명 — 안부 연락 대상</b><span class="small muted">④ 고객관리와 연결</span></div><div class="act">명단 →</div></div>
+        <div class="alert"><div class="ic o"></div><div><b>9월 입퇴원현황 올림 (10월 3일)</b><span class="small muted">장기입원 퇴원 표시에 반영됨</span></div><div class="act">확인</div></div>
+      </div>
+      <div class="sim">
+        <h4>인력 변동 시뮬레이션 — "간호사를 1명 더 뽑으면?" (부산은빛 4분기 신고값 기준)</h4>
+        <div class="sim-row">
+          <div class="box">지금<br><b>간호사 14.68명</b><span class="small muted">1인당 11.38명 · 5.1점</span></div>
+          <div class="arr">+1명 →</div>
+          <div class="box">예상<br><b>15.68명</b><span class="small muted">1인당 10.66명 · 구간 변동 즉시 계산</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-grid">
+    <div class="list-card">
+      <h3>자동으로 되는 것</h3>
+      <ul>
+        <li>신고·평가 기한 알림 (화면 + 문자/메일)</li>
+        <li>매월 정한 날까지 자료가 없으면 독촉 알림</li>
+        <li>제출 전 자가점검 — 월보고서의 오류점검을 병원이 먼저 봄</li>
+        <li>인력 입력 → 차등제 등급·구조영역 점수 즉시 계산</li>
+      </ul>
+    </div>
+    <div class="list-card">
+      <h3>병원이 하는 것</h3>
+      <ul>
+        <li>알림을 보고 처리 — 입력은 지금과 같음</li>
+        <li>문자·메일 받을 담당자 등록 (1회)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ask">
+    <h3>병원에 여쭙고 싶은 것</h3>
+    <ol>
+      <li>알림은 화면만으로 충분합니까, 문자나 메일도 필요합니까? 누가 받아야 합니까?</li>
+      <li>보호자 안내문·확인서(입원 안내, 비급여 동의, 퇴원 안내)를 자동으로 채워 출력하는 기능이 필요합니까?</li>
+      <li>지금 손으로 반복하는 일 중 가장 귀찮은 것은 무엇입니까?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ④ 고객관리 -->
+<section class="prog">
+  <div class="sec-head">
+    <div class="prog-h"><span class="n">④</span><h2>신규환자 고객관리</h2></div>
+    <p class="muted">원무·상담 담당자가 쓰는 관리판입니다. 상담 내용만 적으면 입원 여부는 자료가 올라올 때 자동으로 맞춰집니다. 이름·건수는 예시입니다.</p>
+  </div>
+
+  <div class="screen">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">상담 ~ 입원 관리판 · 10월</span><span class="ex">예시 화면</span></div>
+    <div class="body">
+      <div class="pipe">
+        <div class="col"><div class="h">상담 <span>7</span></div>
+          <div class="pcard"><b>김○○ 보호자 (아들)</b><span class="r">10/7 전화 · 뇌졸중 재활 · 지인 소개</span><span class="due">방문 약속 잡기</span></div>
+          <div class="pcard"><b>이○○ 본인</b><span class="r">10/6 방문 · 당뇨·보행 불편 · 인터넷</span></div>
+        </div>
+        <div class="col"><div class="h">방문 <span>3</span></div>
+          <div class="pcard"><b>박○○ 보호자 (딸)</b><span class="r">10/8 병실 둘러봄 · 치매 · 병원 소개</span></div>
+        </div>
+        <div class="col"><div class="h">입원 결정 <span>2</span></div>
+          <div class="pcard"><b>최○○</b><span class="r">10/10 입원 예정 · 503호</span></div>
+        </div>
+        <div class="col"><div class="h">입원 <span>5</span></div>
+          <div class="pcard"><b>정○○</b><span class="r">10/2 입원</span><span class="auto">✔ 입퇴원현황으로 자동 확인</span></div>
+        </div>
+        <div class="col"><div class="h">퇴원 후 <span>4</span></div>
+          <div class="pcard"><b>한○○</b><span class="r">9/28 퇴원 · 자택</span><span class="due">안부 연락 D-day</span></div>
+        </div>
+      </div>
+      <table class="tbl">
+        <tr><th>유입 경로 (10월)</th><th>상담</th><th>입원</th><th>전환율</th></tr>
+        <tr><td>지인·환자 소개</td><td class="n">6</td><td class="n">3</td><td class="n">50%</td></tr>
+        <tr><td>타 병원 전원</td><td class="n">4</td><td class="n">3</td><td class="n">75%</td></tr>
+        <tr><td>인터넷 검색</td><td class="n">5</td><td class="n">1</td><td class="n">20%</td></tr>
+        <tr><td>기타</td><td class="n">2</td><td class="n">0</td><td class="n">0%</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="prog-grid">
+    <div class="list-card">
+      <h3>자동으로 되는 것</h3>
+      <ul>
+        <li>입퇴원현황이 올라오면 이름·생년월일로 입원·퇴원 전환 체크</li>
+        <li>퇴원 후 정한 날짜에 안부 연락 목록, 재입원 후보 표시</li>
+        <li>유입 경로별 상담 수·전환율, 월별 신규 입원 추이</li>
+      </ul>
+    </div>
+    <div class="list-card">
+      <h3>병원이 하는 것</h3>
+      <ul>
+        <li>상담 받으면 이름·연락처·상태·경로를 적음 (1분)</li>
+        <li>단계가 바뀌면 카드를 옮김</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ask">
+    <h3>병원에 여쭙고 싶은 것</h3>
+    <ol>
+      <li>지금 상담 기록은 어디에 적습니까? (수첩, 엑셀, 없음)</li>
+      <li>상담을 받는 사람이 누구입니까? 그분이 컴퓨터로 입력할 수 있습니까?</li>
+      <li>퇴원 환자 안부 연락을 실제로 하고 있습니까? 하고 싶습니까?</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>만드는 순서 (안)</h2>
+    <p class="muted">의견을 듣고 순서를 바꿉니다. 지금 생각은 이렇습니다.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="k">1단계</div><h3>경영통계 + 고정경비</h3><p>경영통계는 입력 없이 바로 나오고, 고정경비는 그 위에 입력 표 하나를 얹는 것이라 함께 만듭니다. 계약 때 바로 보여 드릴 수 있습니다.</p><div class="why">기존 자료만으로 됨 · 비교 기능은 위너넷만 가능</div></div>
+    <div class="step"><div class="k">2단계</div><h3>업무 자동화</h3><p>기한 알림과 미업로드 독촉부터. 위너넷 운영 부담도 같이 줄어듭니다.</p><div class="why">자가점검·시뮬레이션은 있는 로직 재사용</div></div>
+    <div class="step"><div class="k">3단계</div><h3>신규환자 고객관리</h3><p>입력 화면이 있어 병원 교육이 필요합니다. 상담 담당자 의견을 듣고 설계합니다.</p><div class="why">병원마다 상담 방식이 달라 먼저 들어야 함</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>의견 적기</h2>
+    <p class="muted">고르고 적은 뒤 <b>의견 복사</b>를 누르면 글이 만들어집니다. 카카오톡이나 메일로 위너넷 담당자에게 붙여 넣어 주세요. 이 페이지는 입력 내용을 보관하지 않습니다.</p>
+  </div>
+  <form class="form" id="fb">
+    <div class="q"><div class="ql">① 경영통계 — 필요합니까?</div>
+      <div class="opts">
+        <label><input type="radio" name="q1" value="꼭 필요" id="q1a"><span>꼭 필요</span></label>
+        <label><input type="radio" name="q1" value="있으면 좋음" id="q1b"><span>있으면 좋음</span></label>
+        <label><input type="radio" name="q1" value="필요 없음" id="q1c"><span>필요 없음</span></label>
+      </div></div>
+    <div class="q"><div class="ql">② 고정경비 관리 — 필요합니까?</div>
+      <div class="opts">
+        <label><input type="radio" name="q2" value="꼭 필요" id="q2a"><span>꼭 필요</span></label>
+        <label><input type="radio" name="q2" value="있으면 좋음" id="q2b"><span>있으면 좋음</span></label>
+        <label><input type="radio" name="q2" value="필요 없음" id="q2c"><span>필요 없음</span></label>
+      </div></div>
+    <div class="q"><div class="ql">③ 업무 자동화 — 필요합니까?</div>
+      <div class="opts">
+        <label><input type="radio" name="q3" value="꼭 필요" id="q3a"><span>꼭 필요</span></label>
+        <label><input type="radio" name="q3" value="있으면 좋음" id="q3b"><span>있으면 좋음</span></label>
+        <label><input type="radio" name="q3" value="필요 없음" id="q3c"><span>필요 없음</span></label>
+      </div></div>
+    <div class="q"><div class="ql">④ 신규환자 고객관리 — 필요합니까?</div>
+      <div class="opts">
+        <label><input type="radio" name="q4" value="꼭 필요" id="q4a"><span>꼭 필요</span></label>
+        <label><input type="radio" name="q4" value="있으면 좋음" id="q4b"><span>있으면 좋음</span></label>
+        <label><input type="radio" name="q4" value="필요 없음" id="q4c"><span>필요 없음</span></label>
+      </div></div>
+    <div class="q"><div class="ql">가장 먼저 받고 싶은 것 하나</div>
+      <div class="opts">
+        <label><input type="radio" name="q5" value="경영통계" id="q5a"><span>경영통계</span></label>
+        <label><input type="radio" name="q5" value="고정경비 관리" id="q5b"><span>고정경비 관리</span></label>
+        <label><input type="radio" name="q5" value="업무 자동화" id="q5c"><span>업무 자동화</span></label>
+        <label><input type="radio" name="q5" value="고객관리" id="q5d"><span>고객관리</span></label>
+      </div></div>
+    <div class="q"><div class="ql">고정비 입력 — 가능한 방식 (여러 개 가능)</div>
+      <div class="opts">
+        <label><input type="checkbox" name="q6" value="항목별 월 입력 가능" id="q6a"><span>항목별 월 입력 가능</span></label>
+        <label><input type="checkbox" name="q6" value="합계 1줄만 가능" id="q6b"><span>합계 1줄만 가능</span></label>
+        <label><input type="checkbox" name="q6" value="인건비 직종별로 보고 싶음" id="q6c"><span>인건비 직종별로 보고 싶음</span></label>
+        <label><input type="checkbox" name="q6" value="입력 어려움" id="q6d"><span>입력 어려움</span></label>
+      </div></div>
+    <div class="q"><div class="ql">알림을 받고 싶은 방법 (여러 개 가능)</div>
+      <div class="opts">
+        <label><input type="checkbox" name="q7" value="화면" id="q7a"><span>프로그램 화면</span></label>
+        <label><input type="checkbox" name="q7" value="문자" id="q7b"><span>문자</span></label>
+        <label><input type="checkbox" name="q7" value="메일" id="q7c"><span>메일</span></label>
+        <label><input type="checkbox" name="q7" value="카카오톡" id="q7d"><span>카카오톡</span></label>
+      </div></div>
+    <div class="q"><label for="q8">지금 가장 귀찮거나 자주 놓치는 업무</label><textarea id="q8" placeholder="예) 매달 샘파일 올리는 날짜를 잊는다 / 차등제 신고 때 간호인력 수 계산이 헷갈린다"></textarea></div>
+    <div class="q"><label for="q9">그 밖의 의견, 더 있었으면 하는 기능</label><textarea id="q9"></textarea></div>
+    <div class="q two">
+      <div><label for="q10">병원명</label><input type="text" id="q10" placeholder="예) ○○요양병원"></div>
+      <div><label for="q11">담당자 · 직책 (선택)</label><input type="text" id="q11" placeholder="예) 홍길동 행정실장"></div>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn" id="copyBtn">의견 복사</button>
+      <button type="button" class="btn ghost" id="clearBtn">지우기</button>
+      <span class="toast" id="toast" aria-live="polite"></span>
+    </div>
+    <div class="out" id="out"></div>
+  </form>
+</section>
+
+<footer>
+  (주)위너넷 WinCheck+ · 신규 요양병원 업무 패키지 시안 · 2026-10-08<br>
+  ①·② 화면의 진료비·환자 수·환자군·입퇴원·점수는 부산은빛요양병원이 WinCheck+에 올린 2026년 5~9월 자료(청구 샘파일·입퇴원현황·환자평가표·차등제 신고)로 계산했습니다. 고객 평균은 같은 달 청구 자료를 올린 위너넷 고객 병원 전체의 평균입니다. 고정비 금액·변동비·③④ 화면의 이름과 건수는 예시입니다.
+</footer>
+</div>
+
+<script>
+(function(){
+  var KEY='wnn_newpkg_fb_draft';
+  var texts=['q8','q9','q10','q11'];
+  var radios=['q1','q2','q3','q4','q5'];
+  var checks=['q6','q7'];
+  function val(name){var el=document.querySelector('input[name="'+name+'"]:checked');return el?el.value:'(선택 안 함)';}
+  function chk(name){var a=[];document.querySelectorAll('input[name="'+name+'"]:checked').forEach(function(e){a.push(e.value);});return a.length?a.join(', '):'(선택 안 함)';}
+  function text(){
+    var g=function(id){return (document.getElementById(id).value||'').trim()||'(없음)';};
+    return ['[신규 요양병원 업무 패키지 의견]',
+      '병원: '+g('q10')+' / 담당: '+g('q11'),
+      '① 경영통계: '+val('q1'),
+      '② 고정경비 관리: '+val('q2'),
+      '③ 업무 자동화: '+val('q3'),
+      '④ 고객관리: '+val('q4'),
+      '가장 먼저: '+val('q5'),
+      '고정비 입력 방식: '+chk('q6'),
+      '알림 방법: '+chk('q7'),
+      '귀찮은 업무: '+g('q8'),
+      '기타 의견: '+g('q9'),
+      '작성일: '+new Date().toISOString().slice(0,10)].join('\n');
+  }
+  function save(){
+    try{
+      var d={};
+      texts.forEach(function(i){d[i]=document.getElementById(i).value;});
+      radios.forEach(function(r){var e=document.querySelector('input[name="'+r+'"]:checked');d[r]=e?e.id:'';});
+      checks.forEach(function(c){d[c]=[];document.querySelectorAll('input[name="'+c+'"]:checked').forEach(function(e){d[c].push(e.id);});});
+      localStorage.setItem(KEY,JSON.stringify(d));
+    }catch(e){}
+  }
+  function load(){
+    try{
+      var d=JSON.parse(localStorage.getItem(KEY)||'null');if(!d)return;
+      texts.forEach(function(i){if(d[i])document.getElementById(i).value=d[i];});
+      radios.forEach(function(r){if(d[r]){var e=document.getElementById(d[r]);if(e)e.checked=true;}});
+      checks.forEach(function(c){(d[c]||[]).forEach(function(id){var e=document.getElementById(id);if(e)e.checked=true;});});
+    }catch(e){}
+  }
+  var form=document.getElementById('fb'),out=document.getElementById('out'),toast=document.getElementById('toast');
+  form.addEventListener('input',save);
+  form.addEventListener('change',save);
+  form.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var t=text();
+    out.textContent=t;out.classList.add('show');
+    function fallback(){
+      try{var r=document.createRange();r.selectNodeContents(out);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}
+      toast.textContent='아래 글을 길게 눌러 복사해 주세요.';
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){toast.textContent='복사했습니다. 위너넷 담당자에게 붙여 넣어 주세요.';},fallback);
+    }else{fallback();}
+  });
+  document.getElementById('clearBtn').addEventListener('click',function(){
+    form.reset();out.textContent='';out.classList.remove('show');toast.textContent='';
+    try{localStorage.removeItem(KEY);}catch(e){}
+  });
+  load();
+})();
+</script>
