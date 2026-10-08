@@ -52,6 +52,9 @@ public class MisController {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
 			} catch (Exception ignore) { model.addAttribute("hospNm", ""); }
+			// 카톡 공유(업무 알림) — konet 발주서와 같은 kakao.properties. 키가 비면 화면이 링크 복사로 물러선다.
+			model.addAttribute("kakaoJsKey", kakaoProp("kakao.js.key"));
+			model.addAttribute("shareBase", shareBase(request));
 			return view;
 		} catch (Exception ex) { return ".login/LoginWinCT"; }
 	}
@@ -319,13 +322,61 @@ public class MisController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			String testTo = str(p.get("testTo"), "");
 			if (!testTo.isEmpty() && !testTo.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) return fail(res, "시험 발송 주소 형식이 맞지 않습니다.");
-			List<Map<String, Object>> rows = svc.sendNoti(hospCd, wnnYn(request), userId(request), longOf(p.get("notiSeq")), testTo);
+			java.util.Set<Long> seqs = seqsOf(p.get("seqs"));                       // 체크한 받는 사람(JSON 배열) — 없으면 전부
+			if (testTo.isEmpty() && seqs != null && seqs.isEmpty()) return fail(res, "보낼 사람을 체크해 주세요.");
+			List<Map<String, Object>> rows = svc.sendNoti(hospCd, wnnYn(request), userId(request), seqs, testTo);
 			int ok = 0, failN = 0, skip = 0;
 			for (Map<String, Object> r : rows) { String s = String.valueOf(r.get("result")); if ("OK".equals(s)) ok++; else if ("FAIL".equals(s)) failN++; else skip++; }
 			res.put("rows", rows); res.put("ok", ok); res.put("fail", failN); res.put("skip", skip);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
+	}
+
+	/** 카톡 공유·링크 복사도 이력에 남긴다(채널 KAKAO/LINK) — 보낸 것은 서버가 아니라 사람의 카톡이지만 「언제 누가 공유했나」는 같은 표에서 본다. */
+	@RequestMapping(value = "/mis/notiShareLog.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> notiShareLog(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ch = "LINK".equals(str(p.get("channel"), "")) ? "LINK" : "KAKAO";
+			svc.logNotiShare(hospCd, ch, cut(unesc(p.get("subject")), 200), cut(unesc(p.get("body")), 2000), "FAIL".equals(str(p.get("result"), "OK")) ? "FAIL" : "OK", cut(unesc(p.get("errMsg")), 500), userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** kakao.properties(UTF-8) — 톰캣 -D 옵션이 있으면 그것이 우선(konet 과 같은 규칙) */
+	private static String kakaoProp(String key) {
+		try { String v = System.getProperty(key); if (v != null && !v.trim().isEmpty()) return v.trim(); } catch (Exception ignore) { }
+		try (java.io.InputStream in = MisController.class.getClassLoader().getResourceAsStream("kakao.properties")) {
+			if (in == null) return "";
+			java.util.Properties p = new java.util.Properties();
+			p.load(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+			String v = p.getProperty(key);
+			return v == null ? "" : v.trim();
+		} catch (Exception e) { return ""; }
+	}
+	private static String shareBase(HttpServletRequest request) {
+		String b = kakaoProp("share.base.url");
+		if (!b.isEmpty()) return b.replaceAll("/+$", "");
+		int port = request.getServerPort();
+		boolean std = ("http".equals(request.getScheme()) && port == 80) || ("https".equals(request.getScheme()) && port == 443);
+		return request.getScheme() + "://" + request.getServerName() + (std ? "" : ":" + port) + request.getContextPath();
+	}
+
+	/** 화면에서 체크한 받는 사람 번호들(JSON 배열) → Set. 파라미터가 없으면 null(= 전부), 빈 배열이면 빈 Set. ★@RequestParam JSON 은 unesc 뒤 파싱(CLAUDE.md 규칙). */
+	private static java.util.Set<Long> seqsOf(Object o) {
+		String json = unesc(str(o, ""));
+		if (json.isEmpty()) return null;
+		java.util.Set<Long> s = new java.util.LinkedHashSet<>();
+		try {
+			com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+			for (Object x : om.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<List<Object>>(){})) { Long v = longOf(x); if (v != null) s.add(v); }
+		} catch (Exception e) { return null; }
+		return s;
 	}
 
 	private String wnnYn(HttpServletRequest request) {

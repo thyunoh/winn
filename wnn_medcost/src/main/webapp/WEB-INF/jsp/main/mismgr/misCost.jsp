@@ -9,6 +9,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/mis-split.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="misCost" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>">
@@ -87,7 +88,7 @@
 
 <div class="mc-kpis" id="mcKpis"></div>
 
-<div class="mc-grid">
+<div class="mc-grid" data-split="cost.main" data-split-bp="900" data-vsplit="cost.top">
   <div class="mc-card">
     <h4>항목별 월 금액 <span id="mcYmLbl" class="small"></span><span class="sp"></span>
       <button type="button" class="mc-btn" onclick="mcCopyPrev();" id="mcCopyBtn" title="가장 가까운 이전 달 값을 전부 가져옵니다">이전 달 값 가져오기</button>

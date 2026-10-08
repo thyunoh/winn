@@ -446,8 +446,9 @@ public class MisServiceImpl implements MisService {
 		return r;
 	}
 
+	/** seqs = 화면에서 체크한 받는 사람(NOTI_SEQ). null 이면 사용 중인 사람 전부. (사용자 2026-10-08 「메일·카톡 보낼 때 해당자 체크하고 보내기」) */
 	@Override
-	public List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, Long notiSeq, String testTo) throws Exception {
+	public List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, java.util.Set<Long> seqs, String testTo) throws Exception {
 		List<Map<String, Object>> alerts = selectAlerts(hospCd, wnnYn);
 		List<Map<String, Object>> out = new ArrayList<>();
 		if (testTo != null && !testTo.trim().isEmpty()) {           // 시험 발송 — 적은 주소로 메일 1통
@@ -457,7 +458,7 @@ public class MisServiceImpl implements MisService {
 		}
 		for (Map<String, Object> u : mapper.selectNotiUsers(hospCd)) {
 			if (!"Y".equals(String.valueOf(u.get("useyn")))) continue;
-			if (notiSeq != null && !String.valueOf(u.get("notiseq")).equals(String.valueOf(notiSeq))) continue;
+			if (seqs != null && !seqs.contains(Long.parseLong(String.valueOf(u.get("notiseq"))))) continue;
 			out.addAll(sendTo(hospCd, alerts, u, sentBy, false));
 		}
 		return out;
@@ -528,6 +529,14 @@ public class MisServiceImpl implements MisService {
 		}
 		r.put("date", today); r.put("hosps", hosps); r.put("sent", sent); r.put("failed", failed); r.put("skipped", skipped);
 		return r;
+	}
+
+	@Override
+	public void logNotiShare(String hospCd, String channel, String subject, String body, String result, String errMsg, String userId) throws Exception {
+		Map<String, Object> l = new HashMap<>();
+		l.put("hospCd", hospCd); l.put("channel", channel); l.put("toAddr", "KAKAO".equals(channel) ? "카카오톡(받는 사람은 카톡에서 고름)" : "클립보드"); l.put("toName", userId);
+		l.put("subject", subject); l.put("body", body); l.put("result", result); l.put("errMsg", errMsg); l.put("sentBy", userId); l.put("levelCnt", "");
+		mapper.insertNotiLog(l);
 	}
 
 	private static String esc(String s) { return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;"); }

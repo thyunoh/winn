@@ -2220,3 +2220,16 @@
   · 엔드포인트 `/mis/notiBoard|notiUserSave|notiUserDel|notiPreview|notiSend.do`(notiSend 는 notiSeq 한 명 / testTo 시험 주소도 받는다). 서버 검증 = 이름 필수 · 메일 형식 · 번호 9자리↑ · 채널 하나는 켜야.
   · 문자 설정 키(mail.properties.sample) : `sms.enabled/provider=aligo/key/userId/sender/testmode`. ⚠**운영은 아웃바운드 HTTPS 차단** — 문자를 쓰려면 apis.aligo.in 443 을 먼저 열어야 한다(메일 465 는 열려 있다).
   검증 = javac 6개 · 매퍼 XML 49문 id 중복 0 · 스프링 XML 스키마 PARSE OK · 인라인 JS Nashorn OK · div 36/36. ⛔**화면·발송 실측은 재기동 뒤**(새 매퍼 문장·새 빈이라 기동 때 올라간다).
+- ✅**[2026-10-08 오후] 업무 알림 💬 카톡 공유 + MIS 공통 가운데 막대 크기 조절** :
+  · 카톡 공유 = konet 발주서(poKakao)와 같은 **카카오 JS SDK 2.7.4 텍스트 카드**(사람이 누르고 받는 사람을 카톡에서 고름 — 서버 발송 아님). 글 = 「[WinCheck+] 병원 오늘 챙길 일 N건」 + 급함·할 일 제목(최대 6) + [업무 알림 열기](share.base.url + /main/misAlert.do). [🔗 글 복사]는 같은 글을 클립보드로. 둘 다 이력(KAKAO/LINK)에 남긴다(`/mis/notiShareLog.do`).
+    설정 = [kakao.properties](src/main/resources/kakao.properties)(`kakao.js.key`·`share.base.url`, -D 옵션 우선) — **2026-10-08 실측 성공**(크롬, 카드 도착). ★Kakao Developers 의 **JS SDK 도메인은 키마다 따로**다 : 지금 키(ea17c…)에 `https://www.winner797.co.kr`·`https://winner797.co.kr`·`http://localhost:8080`. 도메인이 빠지면 카톡 창에 「요청 실패 — 인증 실패」. 리다이렉트 URI 는 로그인용이라 비워 둔다.
+    ⚠카드 하단 앱 이름은 **키가 속한 앱**(지금은 konet_물류시스템)이다 — 키를 더 만들어도 안 바뀐다. WinCheck+ 로 보이려면 「앱 만들기」로 새 앱 + 그 앱의 JS 키·도메인. 색 이모지(🔴🟠)는 카톡 PC 에서 회색 점으로만 보여 `[급함]`/`-` 글자로 바꿨다.
+    팝업 차단이면 SDK 가 null 창에 손대다 TypeError — 화면은 「팝업 차단」으로 안내·기록. 내장 브라우저는 내 클릭의 팝업을 막으므로 **카톡 창 실측은 사용자 크롬으로**.
+  · 가운데 막대 = [asset/js/mis-split.js](src/main/webapp/asset/js/mis-split.js) — 두 칸 grid 에 `data-split="키"` 만 붙이면 끝(7곳 : stat.main · cost.main · alert.main/noti/preview · lead.main/follow). 막대는 absolute 라 grid 칸을 안 차지한다 · 비율은 localStorage `misSplit.<키>` · 두 번 누르면 원래대로 · `data-split-bp`(기본 1000) 아래 폭이면 숨기고 인라인 비율도 거둔다(미디어쿼리 한 칸과 충돌 방지). 새 MIS 화면에 두 칸이 생기면 속성 하나만.
+- ✅**[2026-10-08 오후] 업무 알림 — 받는 사람 체크해서 보내기 + 위아래 막대(MIS 공통)** :
+  · 받는 사람 표에 체크 열(기본 = 사용 중인 사람 전부, 머리 체크 = 전체) — **[지금 보내기]는 체크한 사람에게만**(`seqs` JSON → `sendNoti(..., Set<Long> seqs, ...)`, 비면 「체크해 주세요」). 줄마다 있던 [보내기] 단추는 뺐다(체크가 대신).
+    ⚠처음엔 **알림 줄에 체크**(어느 알림을 담을지)로 만들었다가 사용자 「1번째가 아니고 메일·카톡 보낼 때 해당자 체크」로 되돌렸다 — 담는 내용은 종전대로 급함·할 일 전부(사람마다 단계 설정). 카톡 공유는 카톡 창에서 사람을 고르므로 체크와 무관.
+  · 세로 막대 = mis-split.js 의 `data-vsplit="키"` — 요소 아래 가로 막대, 끌면 높이(px)+안쪽 스크롤, 두 번 누르면 자동 높이, 내용보다 크게 끌면 자동으로 돌아간다(빈 칸 방지), localStorage `misSplit.v.<키>`, 내용이 늦게 채워지면 MutationObserver 로 다시 맞춘다.
+    적용 7곳 : stat.top · cost.top · alert.top · alert.noti · lead.top · lead.follow (가로 막대 data-split 과 같은 요소에 같이 둘 수 있다).
+- ✅**[2026-10-08 오후] 고객관리 — 관리판 칸을 눌러 그 단계로 바로 접수**(사용자 「클릭하면 해당 폼 안 뜸」) : 칸(`.col[data-stage]`) 빈 곳 클릭 = `mlNewAt(stage)` — 새 상담 폼이 그 단계로 열리고(제목에 단계 배지, 입원·퇴원 후면 「입원일을 적어 두세요」) 저장하면 그 칸에 들어간다. 칸 아래 「＋ 이 단계로 접수 / ＋ 눌러서 「방문」 단계로 바로 접수」 안내, 카드 클릭은 종전대로 상세. 이미 입원한 환자를 뒤늦게 적을 때 상담→방문→… 네 번 안 눌러도 된다.
+  시연 자료 : **위너넷(w1234567)에 상담 6건**(상담 김영희 · 방문 이순자 · 입원 결정 박종수 · 입원 허영옥(410519, 5/30 입퇴원현황 자동 매칭) · 퇴원 후 정명숙(470807, 5/28~7/8 자동) · 종결 최영수) — 보호자·연락처는 지어 넣은 값. 지우려면 카드 [삭제](USE_YN=N).

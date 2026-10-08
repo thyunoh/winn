@@ -44,8 +44,10 @@ public interface MisService {
 	void deleteNotiUser(String hospCd, long notiSeq) throws Exception;
 	/** 지금 보낼 내용 미리보기 — 제목·HTML·문자 글·건수(보내지 않는다) */
 	Map<String, Object> previewNoti(String hospCd, String wnnYn) throws Exception;
-	/** 지금 보내기 — 등록된 사람 전부(또는 notiSeq 한 명), testTo 가 있으면 그 주소로 메일 1통만. 결과는 사람·채널마다 한 줄 + 이력 저장 */
-	List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, Long notiSeq, String testTo) throws Exception;
+	/** 지금 보내기 — seqs(화면에서 체크한 받는 사람) 에게, null 이면 사용 중인 사람 전부. testTo 가 있으면 그 주소로 메일 1통만. 결과는 사람·채널마다 한 줄 + 이력 저장 */
+	List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, java.util.Set<Long> seqs, String testTo) throws Exception;
 	/** 자동 발송(스케줄러) — 하루 1회 선점 후 자동 수신자가 있는 병원 전부 */
 	Map<String, Object> runAutoNoti() throws Exception;
+	/** 카톡 공유·링크 복사 이력(채널 KAKAO/LINK) */
+	void logNotiShare(String hospCd, String channel, String subject, String body, String result, String errMsg, String userId) throws Exception;
 }

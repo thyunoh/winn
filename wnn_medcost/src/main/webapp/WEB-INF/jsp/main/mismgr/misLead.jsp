@@ -9,6 +9,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/mis-split.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="misLead" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>">
@@ -38,6 +39,9 @@
   @media (max-width:1100px){ #misLead .pipe{ grid-template-columns:repeat(2,1fr); } }
   #misLead .col{ border:1px solid #e3e9ed; border-radius:8px; padding:8px; min-width:0; background:#f7f9fa; min-height:160px; }
   #misLead .col .h{ display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:6px; color:#20303a; }
+  #misLead .col{ cursor:pointer; }                                       /* 빈 곳 클릭 = 그 단계로 접수 */
+  #misLead .col .addhint{ color:#8a99a3; font-size:12px; text-align:center; padding:10px 4px 4px; border:1px dashed transparent; border-radius:6px; }
+  #misLead .col:hover .addhint{ color:#1f5a4b; border-color:#cfe3da; background:#fff; }
   #misLead .col .h span{ background:#fff; border:1px solid #dde5ea; border-radius:999px; padding:0 7px; font-variant-numeric:tabular-nums; }
   #misLead .pcard{ background:#fff; border:1px solid #e3e9ed; border-radius:6px; padding:7px 9px; font-size:12.5px; margin-top:6px; line-height:1.45; cursor:pointer; }
   #misLead .pcard:hover{ border-color:#1f5a4b; }
@@ -97,7 +101,7 @@
   <div class="small" style="margin-top:8px;" id="mlClosed"></div>
 </div>
 
-<div class="ml-grid">
+<div class="ml-grid" data-split="lead.main" data-vsplit="lead.top">
   <div class="ml-card" id="mlDetail" style="display:none;">
     <h4 id="mlDetailTtl">상담 상세</h4>
     <div class="frm">
@@ -133,7 +137,7 @@
   </div>
 </div>
 
-<div class="ml-grid ml-grid2">
+<div class="ml-grid ml-grid2" data-split="lead.follow" data-vsplit="lead.follow">
   <div class="ml-card">
     <h4>유입 경로별 상담 → 입원 <span class="sp"></span><label class="small"><input type="radio" name="mlStatRng" value="m" checked onchange="mlStats();"> 이번 달</label> <label class="small"><input type="radio" name="mlStatRng" value="q" onchange="mlStats();"> 최근 3달</label></h4>
     <div class="ml-wrap"><table id="mlStat"></table></div>
@@ -184,7 +188,7 @@
     var leads = D.leads || [], h = '', total = 0;
     STAGES.forEach(function(st){
       var list = leads.filter(function(l){ return l.stage === st[0]; }); total += list.length;
-      h += '<div class="col"><div class="h">' + st[1] + ' <span>' + list.length + '</span></div>';
+      h += '<div class="col" data-stage="' + st[0] + '" title="빈 곳을 누르면 「' + st[1] + '」 단계로 바로 접수합니다"><div class="h">' + st[1] + ' <span>' + list.length + '</span></div>';
       list.forEach(function(l){
         var due = '';
         if (l.stage === '50' && l.dischdt) { var dd = daysBetween(l.dischdt, TODAY); due = '<span class="due' + (dd >= 7 ? '' : ' ok') + '">퇴원 ' + dd + '일째' + (dd >= 7 ? ' · 안부 연락' : '') + '</span>'; }
@@ -195,6 +199,8 @@
            + (l.admitdt ? '<span class="' + (l.matchyn === 'Y' ? 'auto' : 'r') + '">' + (l.matchyn === 'Y' ? '✔ ' : '') + dMD(l.admitdt) + ' 입원' + (l.dischdt ? ' → ' + dMD(l.dischdt) + ' 퇴원' : '') + (l.matchyn === 'Y' ? ' (입퇴원현황 확인)' : '') + '</span>' : (l.plandt ? '<span class="r">' + dMD(l.plandt) + ' 예정</span>' : ''))
            + due + '</div>';
       });
+      // 빈 칸을 눌러도 아무 일이 없던 것(사용자 2026-10-08 「클릭하면 해당 폼 안 뜸」) → 칸마다 「＋ 접수」 안내, 빈 곳 클릭 = 그 단계로 새 상담
+      h += '<div class="addhint">' + (list.length ? '＋ 이 단계로 접수' : '＋ 눌러서 「' + st[1] + '」 단계로 바로 접수') + '</div>';
       h += '</div>';
     });
     gel('mlPipe').innerHTML = h;
@@ -202,6 +208,7 @@
     gel('mlClosed').innerHTML = closed.length ? '종결 ' + closed.length + '건(최근 60일): ' + closed.map(function(l){ return '<a href="#" data-seq="' + esc(l.leadseq) + '" class="mlClosedLink">' + esc(l.patnm) + (l.closersn ? '(' + esc(l.closersn) + ')' : '') + '</a>'; }).join(' · ') : '';
     gel('mlCnt').textContent = '진행 중 ' + total + '건';
     $('#mlPipe .pcard').on('click', function(){ var s = this.getAttribute('data-seq'); var l = leads.filter(function(x){ return String(x.leadseq) === s; })[0]; if (l) openDetail(l); });
+    $('#mlPipe .col').on('click', function(e){ if (e.target.closest('.pcard')) return; mlNewAt(this.getAttribute('data-stage')); });
     $('#mlClosed .mlClosedLink').on('click', function(ev){ ev.preventDefault(); var s = this.getAttribute('data-seq'); var l = leads.filter(function(x){ return String(x.leadseq) === s; })[0]; if (l) openDetail(l); });
   }
 
@@ -224,7 +231,16 @@
     $('#mlPipe .pcard').removeClass('sel'); $('#mlPipe .pcard[data-seq="' + l.leadseq + '"]').addClass('sel');
     try { gel('mlDetail').scrollIntoView({ behavior:'smooth', block:'nearest' }); } catch(e){}
   }
-  window.mlNew = function(){ openDetail({ leadseq:'', stage:'10', channel:'INTRO', contactdt:TODAY }); gel('lfNm').focus(); };
+  window.mlNew = function(){ mlNewAt('10'); };
+  /* 관리판의 칸을 눌러 그 단계로 바로 접수 — 이미 입원한 환자를 뒤늦게 적을 때(입원·퇴원 후) 상담부터 네 번 누를 필요가 없다 */
+  window.mlNewAt = function(stage){
+    stage = String(stage || '10'); if (!STAGES.some(function(s){ return s[0] === stage; })) stage = '10';
+    openDetail({ leadseq:'', stage: stage, channel:'INTRO', contactdt:TODAY });
+    gel('mlDetailTtl').innerHTML = '새 상담 접수 · <span class="badge' + (stage === '40' || stage === '50' ? ' ok' : '') + '">' + esc(stageNm(stage)) + '</span> 단계로 저장됩니다'
+      + (stage === '40' || stage === '50' ? ' <span class="small">— 입원일을 적어 두세요(입퇴원현황이 올라오면 자동으로 맞춰집니다)</span>' : '');
+    gel('lfNm').focus();
+    gel('mlDetail').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  };
   window.mlCloseDetail = function(){ CUR = null; gel('mlDetail').style.display = 'none'; gel('mlLogCard').style.display = 'none'; $('#mlPipe .pcard').removeClass('sel'); };
 
   window.mlSave = function(){

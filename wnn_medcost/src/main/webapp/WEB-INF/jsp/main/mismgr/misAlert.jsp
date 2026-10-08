@@ -9,9 +9,12 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/mis-split.js"></script>
+<%-- 카카오 JavaScript SDK (카톡 공유) — konet 발주서와 같은 판. 못 받으면 화면이 링크 복사로 물러선다 --%>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 
 <div class="dashboard-wrapper">
-<div id="misAlert" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>">
+<div id="misAlert" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>" data-nm="<c:out value='${hospNm}'/>" data-kakao="<c:out value='${kakaoJsKey}'/>" data-share="<c:out value='${shareBase}'/>">
 <style>
   #misAlert{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 50px; max-width:100%; overflow-x:hidden; }
   #misAlert *{ box-sizing:border-box; }
@@ -25,6 +28,8 @@
   #misAlert #maSim th, #misAlert #maSim td{ padding:5px 6px; }   /* 8칸이라 좁게 — 마지막 칸이 잘리던 것(2026-10-08 사용자 캡처) */
   #misAlert .ma-btn{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px; padding:5px 11px; font-size:12.5px; font-weight:700; cursor:pointer; }
   #misAlert .ma-btn:hover{ background:#eef3f6; }
+  #misAlert .ma-btn.kakao{ background:#fee500; color:#191919; border-color:#f2d900; }   /* 카카오 노랑 — konet 발주서와 같은 단추 */
+  #misAlert .ma-btn.kakao:hover{ background:#f7df00; }
   #misAlert .ma-note{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 14px; font-size:12.5px; color:#43555f; margin-bottom:12px; line-height:1.6; }
   #misAlert .ma-grid{ display:grid; grid-template-columns:1fr 1.15fr; gap:12px; }   /* 시뮬레이션 표가 8칸이라 오른쪽을 더 넓게 */
   @media (max-width:1000px){ #misAlert .ma-grid{ grid-template-columns:1fr; } }
@@ -34,9 +39,10 @@
   #misAlert .ma-card h4 .sp{ flex:1; }
   #misAlert .cnt{ font-size:11px; font-weight:700; border-radius:10px; padding:1px 8px; }
   #misAlert .cnt.bad{ background:#fde5e3; color:#b23b3b; } #misAlert .cnt.warn{ background:#fbeadb; color:#b45f1c; } #misAlert .cnt.ok{ background:#e7f3ee; color:#1f5a4b; } #misAlert .cnt.info{ background:#eef2f5; color:#43555f; }
-  #misAlert .alerts{ display:flex; flex-direction:column; gap:8px; }
-  #misAlert .alert{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border:1px solid #e3e9ed; border-radius:8px; padding:9px 12px; font-size:13.5px; background:#fff; }
-  #misAlert .alert .ic{ width:9px; height:36px; border-radius:4px; }
+  #misAlert .alerts{ display:flex; flex-direction:column; gap:5px; }   /* 줄 사이 8→5 (사용자 2026-10-08 「위아래 간격 조금만 좁혀」) */
+  #misAlert .alert{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border:1px solid #e3e9ed; border-radius:8px; padding:6px 12px; font-size:13.5px; background:#fff; }   /* 안쪽 위아래 9→6 */
+  #misAlert .alert .ic{ width:9px; height:32px; border-radius:4px; }
+  #misAlert #maNotiUsers input[type=checkbox]{ width:15px; height:15px; margin:0; cursor:pointer; }   /* 받는 사람 체크 — 체크한 사람에게만 보낸다 */
   #misAlert .alert .ic.warn{ background:#d9772b; } #misAlert .alert .ic.bad{ background:#c0463f; } #misAlert .alert .ic.ok{ background:#2f8f5b; } #misAlert .alert .ic.info{ background:#6b7c86; }
   #misAlert .alert b{ display:block; color:#20303a; }
   #misAlert .alert .d{ font-size:12px; color:#6b7c86; }
@@ -68,7 +74,7 @@
   빨강은 기한이 지났거나 점수에 바로 영향이 있는 것, 주황은 곧 해야 할 것, 초록은 끝난 것입니다. 문자·메일로 받는 기능은 담당자 등록 뒤 붙입니다.
 </div>
 
-<div class="ma-grid">
+<div class="ma-grid" data-split="alert.main" data-vsplit="alert.top">
   <div class="ma-card">
     <h4>오늘 챙길 일 <span class="sp"></span><span id="maCnt"></span></h4>
     <div class="alerts" id="maList"><div class="ma-empty">점검하는 중…</div></div>
@@ -85,9 +91,11 @@
 <div class="ma-card" style="margin-top:12px;" id="maNoti">
   <h4>문자·메일로 받기 <span class="small">— 로그인하지 않은 날도 「급함·할 일」이 담당자에게 간다</span><span class="sp"></span>
     <span id="maNotiStat" class="small"></span>
+    <button type="button" class="ma-btn kakao" onclick="maKakao();" title="오늘 챙길 일(급함·할 일)을 카톡 글로 — 받는 사람은 카톡에서 고릅니다">💬 카톡 공유</button>
+    <button type="button" class="ma-btn" onclick="maCopyText();" title="같은 글을 클립보드로 — 카톡·메신저에 붙여 넣기">🔗 글 복사</button>
     <button type="button" class="ma-btn" onclick="maNotiPreview();">미리보기</button>
     <button type="button" class="ma-btn" onclick="maNotiSend();" style="background:#1f5a4b;color:#fff;border-color:#1f5a4b;">지금 보내기</button></h4>
-  <div class="ma-grid" style="grid-template-columns:1.25fr 1fr;">
+  <div class="ma-grid" data-split="alert.noti" data-vsplit="alert.noti" style="grid-template-columns:1.25fr 1fr;">
     <div>
       <div class="small" style="margin-bottom:6px;"><b>알림 받는 사람</b> — 메일·문자 중 하나는 켜야 합니다. 「자동」은 평일 아침 08:30 에 서버가 보내는 주기, 「단계」는 급함만 받을지 할 일까지 받을지.</div>
       <div class="ma-wrap"><table id="maNotiUsers"><tbody><tr><td class="ma-empty">불러오는 중…</td></tr></tbody></table></div>
@@ -112,8 +120,8 @@
     </div>
   </div>
   <div id="maNotiPv" style="display:none;margin-top:10px;border-top:1px dashed #cfd9e0;padding-top:10px;">
-    <div class="small" style="margin-bottom:6px;"><b>미리보기</b> — 지금 보내면 이렇게 갑니다(급함·할 일만 담깁니다). <span id="maPvSubj"></span></div>
-    <div class="ma-grid" style="grid-template-columns:1.4fr 1fr;">
+    <div class="small" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><b>미리보기</b> — 지금 보내면 이렇게 갑니다(급함·할 일만 담깁니다). <span id="maPvSubj"></span><span style="flex:1"></span><button type="button" class="ma-btn" onclick="maNotiPvClose();">닫기</button></div>
+    <div class="ma-grid" data-split="alert.preview" style="grid-template-columns:1.4fr 1fr;">
       <iframe id="maPvFrame" style="width:100%;height:320px;border:1px solid #e3e9ed;border-radius:8px;background:#fff;"></iframe>
       <div><div class="small" style="margin-bottom:4px;">문자(SMS/LMS) 글 <span id="maPvSmsLen"></span></div><pre id="maPvSms" style="white-space:pre-wrap;font-family:inherit;font-size:13px;background:#f7f9fa;border:1px solid #e3e9ed;border-radius:8px;padding:10px;margin:0;min-height:120px;"></pre></div>
     </div>
@@ -156,6 +164,7 @@
       var list = res.alerts || [], h = '', bad = 0, warn = 0, ok = 0, info = 0;
       var order = { bad:0, warn:1, info:2, ok:3 };
       list.sort(function(a, b){ return (order[a.level]||9) - (order[b.level]||9); });
+      ALERTS = list;   // 카톡 공유·글 복사가 쓴다
       list.forEach(function(a){
         if (a.level === 'bad') bad++; else if (a.level === 'warn') warn++; else if (a.level === 'ok') ok++; else info++;
         h += '<div class="alert ' + esc(a.level) + '"><div class="ic ' + esc(a.level) + '"></div><div><b>' + esc(a.title) + '</b>' + (a.desc ? '<span class="d">' + esc(a.desc) + '</span>' : '') + '</div>'
@@ -218,25 +227,68 @@
   /* ── 문자·메일 알림 (2026-10-08) ── */
   var NB = null;
   var AUTO_NM = { D:'매일(평일)', W:'매주 월요일', N:'수동만' };
-  function fmtDt(s){ s = String(s||''); return s.length >= 16 ? s.slice(5,16).replace('T',' ') : s; }
+  function fmtDt(s){   // 연도까지 — 「2026-10-08 12:48」(사용자 2026-10-08 「년도 표시」)
+    if (s && typeof s === 'object' && s.year) {   // DATETIME 이 LocalDateTime 객체로 올 때(옛 매퍼) — {year, monthValue, dayOfMonth, hour, minute}
+      var p2 = function(n){ return String(n).padStart(2,'0'); };
+      return s.year + '-' + p2(s.monthValue) + '-' + p2(s.dayOfMonth) + ' ' + p2(s.hour) + ':' + p2(s.minute);
+    }
+    s = String(s||''); return s.length >= 16 ? s.slice(0,16).replace('T',' ') : s;
+  }
+
+  /* ── 카톡 공유 · 글 복사 (2026-10-08, konet 발주서 poKakao 와 같은 방식) ──
+     카카오 JS SDK 「공유하기」 텍스트 카드 — 이 브라우저에서 카톡 창이 열리고 받는 사람을 사람이 고른다(서버가 보내는 것이 아니다).
+     SDK 키가 없거나 도메인 미등록·차단이면 글 복사로 물러선다. 공유한 것은 이력(KAKAO/LINK)에 남긴다. */
+  var ALERTS = [], KAKAO_KEY = root.getAttribute('data-kakao') || '', SHARE_BASE = (root.getAttribute('data-share') || '').replace(/\/+$/, ''), HOSP_NM = root.getAttribute('data-nm') || '';
+  function shareText(){
+    var picked = ALERTS.filter(function(a){ return a.level === 'bad' || a.level === 'warn'; });
+    var d = new Date(), md = (d.getMonth()+1) + '/' + d.getDate();
+    var t = '[WinCheck+] ' + HOSP_NM + ' 오늘 챙길 일 ' + picked.length + '건 (' + md + ')';
+    picked.slice(0, 6).forEach(function(a){ t += '\n' + (a.level === 'bad' ? '[급함] ' : '- ') + a.title; });   // 색 이모지는 카톡 PC 에서 회색 점으로만 보여(2026-10-08 실측) 글자로 가른다
+    if (picked.length > 6) t += '\n외 ' + (picked.length - 6) + '건';
+    return { text: t, count: picked.length, url: SHARE_BASE + '/main/misAlert.do' };
+  }
+  function shareLog(ch, s, result, err){ try { $.post('<c:url value="/mis/notiShareLog.do"/>', withHosp({ channel: ch, subject: s.text.split('\n')[0], body: s.text, result: result || 'OK', errMsg: err || '' })).always(function(){ maNotiLoad(); }); } catch(e){} }
+  window.maCopyText = function(){
+    var s = shareText(), full = s.text + '\n' + s.url;
+    var done = function(){ _toast('오늘 챙길 일 ' + s.count + '건을 복사했습니다. 카톡 대화창에 붙여 넣으세요.', 'ok'); shareLog('LINK', s); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(done, function(){ prompt('아래 글을 복사하세요', full); });
+    else prompt('아래 글을 복사하세요', full);
+  };
+  window.maKakao = function(){
+    var s = shareText();
+    if (!window.Kakao || !KAKAO_KEY) { _alertBox('카카오 공유 설정이 없어 <b>글 복사</b>로 보냅니다.<br><span class="small">kakao.properties 의 kakao.js.key 를 채우고 Kakao Developers 에 이 사이트 도메인을 등록하면 카톡 창이 바로 열립니다.</span>', {icon:'💬', onOk:function(){ maCopyText(); }}); return; }
+    try { if (!Kakao.isInitialized()) Kakao.init(KAKAO_KEY); } catch(e) { _alertBox('카카오 초기화 실패: ' + esc(e.message) + '<br><span class="small">글 복사로 보내세요.</span>', {icon:'⚠️'}); shareLog('KAKAO', s, 'FAIL', e.message); return; }
+    try {
+      Kakao.Share.sendDefault({ objectType:'text', text: s.text, link:{ mobileWebUrl: s.url, webUrl: s.url }, buttons:[ { title:'업무 알림 열기', link:{ mobileWebUrl: s.url, webUrl: s.url } } ] });
+      shareLog('KAKAO', s);
+    } catch(e) {
+      // 팝업이 막히면 SDK 가 열지 못한 창(null)에 손대다 TypeError 를 낸다 — 사용자에게는 「팝업 차단」으로 말해 준다
+      var blocked = /null|appendChild|window/i.test(String(e && e.message));
+      var msg = blocked ? '브라우저가 카톡 창(팝업)을 막았습니다. 주소창 오른쪽의 팝업 차단 아이콘에서 이 사이트를 허용한 뒤 다시 눌러 주세요.' : '카카오 공유 실패: ' + esc(e.message) + '<br><span class="small">이 사이트 도메인이 Kakao Developers 앱에 등록되어 있는지 보세요.</span>';
+      shareLog('KAKAO', s, 'FAIL', blocked ? '팝업 차단' : e.message);
+      _alertBox(msg + '<br><span class="small">급하면 [🔗 글 복사]로 붙여 넣어 보낼 수 있습니다.</span>', {icon:'⚠️'});
+    }
+  };
   window.maNotiLoad = function(){
     post('<c:url value="/mis/notiBoard.do"/>', withHosp({})).then(function(res){
       NB = res;
       gel('maNotiStat').innerHTML = '메일 ' + (res.mailReady ? '<span class="pill on">준비됨</span>' : '<span class="pill off" title="' + esc(res.mailReason) + '">설정 없음</span>')
         + ' 문자 ' + (res.smsReady ? '<span class="pill on">준비됨</span>' : '<span class="pill skip" title="' + esc(res.smsReason) + '">설정 없음</span>')
         + ' 자동 ' + (res.autoEnabled ? '<span class="pill on">평일 08:30</span>' : '<span class="pill" title="서버 설정 noti.auto.enabled 가 꺼져 있습니다 — 운영 서버에서만 켭니다">꺼짐</span>');
-      var us = res.users || [], h = '<thead><tr><th>이름</th><th>역할</th><th>메일</th><th>휴대폰</th><th>채널</th><th>자동</th><th>단계</th><th></th></tr></thead><tbody>';
-      if (!us.length) h += '<tr><td colspan="8" class="ma-empty">아직 등록된 사람이 없습니다. 아래에서 추가하거나 계정에서 가져오세요.</td></tr>';
+      // 체크 열 — [지금 보내기]는 체크한 사람에게만(사용자 2026-10-08 「메일·카톡 보낼 때 해당자 체크하고 보내기」). 기본 = 사용 중인 사람 전부 체크.
+      var us = res.users || [], h = '<thead><tr><th style="width:30px"><input type="checkbox" id="maUserAll" checked title="전체 선택/해제" onclick="maUserAll(this.checked)"></th><th>이름</th><th>역할</th><th>메일</th><th>휴대폰</th><th>채널</th><th>자동</th><th>단계</th><th></th></tr></thead><tbody>';
+      if (!us.length) h += '<tr><td colspan="9" class="ma-empty">아직 등록된 사람이 없습니다. 아래에서 추가하거나 계정에서 가져오세요.</td></tr>';
       us.forEach(function(u){
         var off = u.useyn !== 'Y';
-        h += '<tr' + (off ? ' style="opacity:.5"' : '') + '><td><b>' + esc(u.name) + '</b>' + (off ? ' <span class="pill">사용 안 함</span>' : '') + '</td><td>' + esc(u.rolenm||'') + '</td><td>' + esc(u.email||'') + '</td><td>' + esc(u.tel||'') + '</td>'
+        h += '<tr' + (off ? ' style="opacity:.5"' : '') + '><td><input type="checkbox" class="maUserPick" data-seq="' + u.notiseq + '"' + (off ? ' disabled' : ' checked') + ' onchange="maUserSync()"></td>'
+           + '<td><b>' + esc(u.name) + '</b>' + (off ? ' <span class="pill">사용 안 함</span>' : '') + '</td><td>' + esc(u.rolenm||'') + '</td><td>' + esc(u.email||'') + '</td><td>' + esc(u.tel||'') + '</td>'
            + '<td>' + (u.mailyn === 'Y' ? '<span class="pill on">메일</span> ' : '') + (u.smsyn === 'Y' ? '<span class="pill on">문자</span>' : '') + '</td>'
            + '<td>' + esc(AUTO_NM[u.autogb] || u.autogb) + '</td><td>' + (u.minlevel === 'bad' ? '급함만' : '급함+할 일') + '</td>'
            + '<td style="white-space:nowrap"><button type="button" class="ma-btn" style="padding:2px 7px" onclick="maNotiEdit(' + u.notiseq + ')">수정</button> '
-           + '<button type="button" class="ma-btn" style="padding:2px 7px" onclick="maNotiSendOne(' + u.notiseq + ')" title="이 사람에게만 지금 보내기">보내기</button> '
            + '<button type="button" class="ma-btn" style="padding:2px 7px;color:#b23b3b" onclick="maNotiDel(' + u.notiseq + ')">삭제</button></td></tr>';
       });
       gel('maNotiUsers').innerHTML = h + '</tbody>';
+      maUserSync();
       var cs = res.candidates || [], c = '';
       cs.forEach(function(x, i){ if (!x.email && !x.tel) return; c += '<span class="cand" onclick="maNotiPick(' + i + ')" title="누르면 아래 칸에 채워집니다">' + esc(x.name) + ' <span style="color:#6b7c86">' + esc(x.email || x.tel) + '</span></span>'; });
       gel('maNotiCand').innerHTML = c ? '<b>계정에서 가져오기</b> (누르면 칸에 채워집니다 — 계정 표는 바뀌지 않습니다) ' + c : '';
@@ -244,7 +296,8 @@
       if (!ls.length) l += '<tr><td colspan="5" class="ma-empty">아직 보낸 적이 없습니다.</td></tr>';
       ls.forEach(function(g){
         var cls = g.result === 'OK' ? 'on' : g.result === 'FAIL' ? 'off' : 'skip', nm = g.result === 'OK' ? '보냄' : g.result === 'FAIL' ? '실패' : '건너뜀';
-        l += '<tr><td>' + esc(fmtDt(g.sentdttm)) + '</td><td>' + (g.channel === 'MAIL' ? '메일' : '문자') + '</td><td title="' + esc(g.toaddr||'') + '">' + esc(g.toname||'') + '<div class="small">' + esc(g.toaddr||'') + '</div></td>'
+        var chNm = g.channel === 'MAIL' ? '메일' : g.channel === 'SMS' ? '문자' : g.channel === 'KAKAO' ? '카톡 공유' : g.channel === 'LINK' ? '글 복사' : g.channel;
+        l += '<tr><td style="white-space:nowrap">' + esc(fmtDt(g.sentdttm)) + '</td><td>' + esc(chNm) + '</td><td title="' + esc(g.toaddr||'') + '">' + esc(g.toname||'') + '<div class="small">' + esc(g.toaddr||'') + '</div></td>'
            + '<td><span class="pill ' + cls + '">' + nm + '</span></td><td class="small" style="white-space:normal;max-width:240px">' + esc(g.errmsg||'') + (g.sentby === 'auto' ? ' <span class="pill">자동</span>' : '') + '</td></tr>';
       });
       gel('maNotiLogs').innerHTML = l + '</tbody>';
@@ -287,21 +340,28 @@
       gel('maNotiPv').scrollIntoView({ behavior:'smooth', block:'nearest' });
     }).catch(function(e){ _alertBox(esc((e && e.message) || '미리보기를 만들지 못했습니다.'), {icon:'❌'}); });
   };
+  window.maNotiPvClose = function(){ gel('maNotiPv').style.display = 'none'; gel('maPvFrame').srcdoc = ''; gel('maNotiPv').previousElementSibling && gel('maNoti').scrollIntoView({ behavior:'smooth', block:'start' }); };
   function sendResult(res){
     var lines = (res.rows||[]).map(function(r){ var nm = r.result === 'OK' ? '✅ 보냄' : r.result === 'FAIL' ? '❌ 실패' : '⏭ 건너뜀'; return nm + ' · ' + (r.channel === 'MAIL' ? '메일' : '문자') + ' · ' + esc(r.name) + ' ' + esc(r.to) + (r.message ? '<div class="small" style="margin-left:18px">' + esc(r.message) + '</div>' : ''); });
     _alertBox('<div style="text-align:left;font-size:13px;line-height:1.6">' + (lines.length ? lines.join('<br>') : '보낼 사람이 없습니다.') + '</div>', { icon: res.fail ? '⚠️' : (res.ok ? '📨' : 'ℹ️') });
     maNotiLoad();
   }
-  window.maNotiSend = function(){
-    var n = (NB && NB.users ? NB.users.filter(function(u){ return u.useyn === 'Y'; }).length : 0);
-    if (!n) { _alertBox('받는 사람을 먼저 등록해 주세요.', {icon:'⚠️'}); return; }
-    _confirmBox({ msg: '등록된 ' + n + '명에게 지금 「급함·할 일」을 보냅니다.<br>(설정이 없는 채널은 건너뛰고 이력에 남깁니다)', icon:'📨', okText:'보내기',
-      onOk: function(){ post('<c:url value="/mis/notiSend.do"/>', withHosp({})).then(sendResult).catch(function(e){ _alertBox(esc(e.message), {icon:'❌'}); }); } });
+  /* 받는 사람 체크 — [지금 보내기]는 체크한 사람에게만 */
+  function pickedSeqs(){ return $('#maNotiUsers .maUserPick:checked').map(function(){ return Number(this.getAttribute('data-seq')); }).get(); }
+  function pickedNames(){ var s = {}; pickedSeqs().forEach(function(k){ s[k] = 1; }); return (NB && NB.users ? NB.users : []).filter(function(u){ return s[u.notiseq]; }).map(function(u){ return u.name; }); }
+  window.maUserAll = function(on){ $('#maNotiUsers .maUserPick:not(:disabled)').prop('checked', !!on); maUserSync(); };
+  window.maUserSync = function(){
+    var all = $('#maNotiUsers .maUserPick:not(:disabled)'), n = all.filter(':checked').length, hd = gel('maUserAll');
+    if (hd) { hd.checked = all.length > 0 && n === all.length; hd.indeterminate = n > 0 && n < all.length; }
+    var btn = document.querySelector('#maNoti > h4 .ma-btn[onclick="maNotiSend();"]'); if (btn) btn.textContent = n ? '지금 보내기 (' + n + '명)' : '지금 보내기';
   };
-  window.maNotiSendOne = function(seq){
-    var u = (NB.users||[]).filter(function(x){ return String(x.notiseq) === String(seq); })[0]; if (!u) return;
-    _confirmBox({ msg: esc(u.name) + ' 님에게만 지금 보냅니다.', icon:'📨', okText:'보내기',
-      onOk: function(){ post('<c:url value="/mis/notiSend.do"/>', withHosp({ notiSeq: seq })).then(sendResult).catch(function(e){ _alertBox(esc(e.message), {icon:'❌'}); }); } });
+  window.maNotiSend = function(){
+    var total = (NB && NB.users ? NB.users.filter(function(u){ return u.useyn === 'Y'; }).length : 0);
+    if (!total) { _alertBox('받는 사람을 먼저 등록해 주세요.', {icon:'⚠️'}); return; }
+    var seqs = pickedSeqs(); if (!seqs.length) { _alertBox('보낼 사람을 표에서 체크해 주세요.', {icon:'⚠️'}); return; }
+    var nm = pickedNames(), who = nm.slice(0, 5).join(', ') + (nm.length > 5 ? ' 외 ' + (nm.length - 5) + '명' : '');
+    _confirmBox({ msg: '체크한 <b>' + seqs.length + '명</b>(' + esc(who) + ')에게 지금 「급함·할 일」을 보냅니다.<br>(설정이 없는 채널은 건너뛰고 이력에 남깁니다)', icon:'📨', okText:'보내기',
+      onOk: function(){ post('<c:url value="/mis/notiSend.do"/>', withHosp({ seqs: JSON.stringify(seqs) })).then(sendResult).catch(function(e){ _alertBox(esc(e.message), {icon:'❌'}); }); } });
   };
 
   $(function(){ maLoad(); maNotiLoad(); });

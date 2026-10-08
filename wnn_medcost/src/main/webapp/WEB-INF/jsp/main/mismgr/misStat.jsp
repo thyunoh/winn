@@ -9,6 +9,7 @@
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
+<script src="/asset/js/mis-split.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="misStat" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>" data-nm="<c:out value='${hospNm}'/>">
@@ -76,7 +77,7 @@
 
 <div class="ms-kpis" id="msKpis"></div>
 
-<div class="ms-grid">
+<div class="ms-grid" data-split="stat.main" data-split-bp="900" data-vsplit="stat.top">
   <div class="ms-card">
     <h4 id="msChartTtl">월 총진료비 추이 (억원)</h4>
     <div id="msChartBox" style="flex:1 1 auto;min-height:260px;max-height:340px;position:relative;"><canvas id="msChartCv"></canvas></div>

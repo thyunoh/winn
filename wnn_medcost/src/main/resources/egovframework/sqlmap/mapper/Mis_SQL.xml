@@ -385,7 +385,7 @@
 	</insert>
 	<select id="selectNotiLogs" resultType="java.util.HashMap">
 		SELECT LOG_SEQ AS logseq, CHANNEL AS channel, TO_ADDR AS toaddr, TO_NAME AS toname, SUBJECT AS subject, RESULT AS result, ERR_MSG AS errmsg
-		     , SENT_BY AS sentby, LEVEL_CNT AS levelcnt, SENT_DTTM AS sentdttm
+		     , SENT_BY AS sentby, LEVEL_CNT AS levelcnt, DATE_FORMAT(SENT_DTTM, '%Y-%m-%d %H:%i') AS sentdttm   <!-- 글자로 — DATETIME 은 LocalDateTime 객체로 직렬화돼 화면에 [object Object] 가 찍힌다 -->
 		  FROM TBL_MIS_NOTI_LOG
 		 WHERE HOSP_CD = #{hospCd}
 		 ORDER BY LOG_SEQ DESC
