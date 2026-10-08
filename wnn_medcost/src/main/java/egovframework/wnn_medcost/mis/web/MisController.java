@@ -29,7 +29,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261008-MIS3";   // + ④ 고객관리(상담 접수·자동 매칭·안부 연락)
+	private static final String BUILD = "20261008-MIS4";   // + 알림↔고객관리 연동 · 경영통계 엑셀/인쇄 · 고정경비 추정 손익
 
 	@Resource(name = "MisService")
 	private MisService svc;

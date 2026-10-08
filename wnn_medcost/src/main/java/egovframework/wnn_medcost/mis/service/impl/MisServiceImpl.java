@@ -185,8 +185,43 @@ public class MisServiceImpl implements MisService {
 				out.add(alert("info", "허가 병상 수가 등록되지 않았습니다", "한 번만 넣으면 경영통계에 병상 가동률이 나옵니다.", "/main/misCost.do", "설정 →"));
 		} catch (Exception e) { out.add(alert("info", "고정비 입력 여부를 확인하지 못했습니다", e.getMessage(), "", "")); }
 
+		// ⑥ 고객관리(④) 연동 — 연락 예정일이 지난·오늘인 상담, 퇴원 뒤 안부 연락이 밀린 환자, 이번 달 상담·입원 (2026-10-08 강화)
+		//    새 조회 없이 고객관리 화면이 쓰는 조회(selectLeads·selectFollowList·selectLeadStats)를 그대로 세어 두 화면이 어긋나지 않게 한다.
+		try {
+			int over = 0, todayCnt = 0, active = 0;
+			for (Map<String, Object> l : mapper.selectLeads(hospCd)) {
+				String st = String.valueOf(l.get("stage")), nd = l.get("nextdt") == null ? "" : String.valueOf(l.get("nextdt"));
+				if (!("10".equals(st) || "20".equals(st) || "30".equals(st))) continue;   // 상담·방문·입원 결정 = 아직 사람이 챙겨야 하는 단계
+				active++;
+				if (!nd.matches("\\d{8}")) continue;
+				if (nd.compareTo(today) < 0) over++; else if (nd.equals(today)) todayCnt++;
+			}
+			if (over > 0) out.add(alert("bad", "연락 예정일이 지난 상담 " + over + "건", "다음 연락일을 넘긴 상담입니다. 늦을수록 다른 병원으로 갑니다.", "/main/misLead.do", "고객관리 →"));
+			if (todayCnt > 0) out.add(alert("warn", "오늘 연락할 상담 " + todayCnt + "건", "고객관리에 적어 둔 다음 연락일이 오늘입니다.", "/main/misLead.do", "고객관리 →"));
+			if (active > 0 && over == 0 && todayCnt == 0) out.add(alert("ok", "진행 중인 상담 " + active + "건 — 오늘 연락할 것 없음", "", "/main/misLead.do", "확인"));
+
+			// 퇴원 안부 — 최근 30일 퇴원 가운데 7일이 지났는데 연락 기록이 없는 건
+			List<Map<String, Object>> fl = selectFollowList(hospCd, 30);
+			java.util.Calendar c7 = java.util.Calendar.getInstance(); c7.add(java.util.Calendar.DAY_OF_MONTH, -7);
+			String limit = new java.text.SimpleDateFormat("yyyyMMdd").format(c7.getTime());
+			int pend = 0;
+			for (Map<String, Object> f : fl) {
+				String tw = f.get("twdt") == null ? "" : String.valueOf(f.get("twdt"));
+				if (!"Y".equals(String.valueOf(f.get("doneyn"))) && tw.matches("\\d{8}") && tw.compareTo(limit) <= 0) pend++;
+			}
+			if (pend > 0) out.add(alert("warn", "퇴원 7일이 지났는데 안부 연락이 없는 환자 " + pend + "명", "최근 30일 퇴원 기준. 재입원 안내·만족도 확인 기회입니다.", "/main/misLead.do", "안부 연락 →"));
+			else if (!fl.isEmpty()) out.add(alert("ok", "최근 30일 퇴원 환자 " + fl.size() + "명 — 안부 연락 밀린 것 없음", "", "/main/misLead.do", "확인"));
+
+			// 이번 달 상담 → 입원 전환
+			long leadsM = 0, admitsM = 0;
+			for (Map<String, Object> s : mapper.selectLeadStats(hospCd, nowYm + "01", today)) { leadsM += num(s.get("leads")); admitsM += num(s.get("admits")); }
+			if (leadsM > 0) out.add(alert("info", "이번 달 신규 상담 " + leadsM + "건 · 그중 입원 " + admitsM + "건", "유입경로별 전환율은 고객관리 아래 표에 있습니다.", "/main/misLead.do", "보기 →"));
+		} catch (Exception e) { out.add(alert("info", "고객관리 현황을 확인하지 못했습니다", e.getMessage(), "/main/misLead.do", "고객관리 →")); }
+
 		return out;
 	}
+
+	private static long num(Object o) { try { return o == null ? 0 : Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0; } }
 
 	private static Map<String, Object> alert(String level, String title, String desc, String href, String act) {
 		Map<String, Object> m = new HashMap<>();

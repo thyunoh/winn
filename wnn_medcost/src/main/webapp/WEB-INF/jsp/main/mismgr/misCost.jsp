@@ -31,8 +31,9 @@
   #misCost .mc-btn.pri:hover{ background:#2a7665; }
   #misCost .mc-btn.del{ color:#b23b3b; }
   #misCost .mc-note{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 14px; font-size:12.5px; color:#43555f; margin-bottom:12px; line-height:1.6; }
-  #misCost .mc-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
-  @media (max-width:900px){ #misCost .mc-kpis{ grid-template-columns:repeat(2,1fr); } }
+  #misCost .mc-kpis{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:12px; }   /* 5칸 — 추정 월 손익 카드 추가(2026-10-08) */
+  @media (max-width:1100px){ #misCost .mc-kpis{ grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:760px){ #misCost .mc-kpis{ grid-template-columns:repeat(2,1fr); } }
   #misCost .mc-kpi{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:12px 14px; min-width:0; }
   #misCost .mc-kpi .l{ font-size:12px; color:#6b7c86; }
   #misCost .mc-kpi .v{ font-size:26px; font-weight:900; color:#20303a; line-height:1.2; font-variant-numeric:tabular-nums; }
@@ -114,9 +115,9 @@
 </div>
 
 <div class="mc-card">
-  <h4>최근 12달 추이 — 고정비 · 추가수익 · 총진료비 · 손익분기</h4>
+  <h4>최근 12달 추이 — 고정비 · 추가수익 · 총진료비 · 손익분기 · 추정 손익</h4>
   <div class="mc-wrap"><table id="mcTrend"></table></div>
-  <div class="small" style="margin-top:6px;">손익분기 환자 = 고정비 ÷ (1인 1일 기여수익 × 그 달 일수). 여유 = 평균 재원 − 손익분기. 고정비 입력이 없는 달은 비어 있습니다(이전 달 값을 자동으로 쓰지 않습니다 — 저장해야 셉니다).</div>
+  <div class="small" style="margin-top:6px;">손익분기 환자 = 고정비 ÷ (1인 1일 기여수익 × 그 달 일수). 여유 = 평균 재원 − 손익분기. 추정 손익 = (총진료비 + 추가수익) − 고정비 − 변동비 × 입원일수 — 청구에 없는 비급여 수익은 추가수익에 적어야 들어옵니다. 고정비 입력이 없는 달은 비어 있습니다(이전 달 값을 자동으로 쓰지 않습니다 — 저장해야 셉니다).</div>
 </div>
 
 <script>
@@ -231,11 +232,14 @@
     var perDay = days ? tot / days : 0, contrib = perDay - varC, census = days ? days / dIn : 0;
     var revenue = tot + s.r;
     var bep = (contrib > 0 && s.c) ? Math.ceil(s.c / (contrib * dIn)) : null;
+    // 추정 월 손익 = (총진료비 + 추가수익) − 고정비 − 변동비 × 입원일수 (2026-10-08 강화) — 청구와 고정비가 둘 다 있어야 뜻이 있다
+    var varTot = varC * days, profit = (cl && s.c) ? revenue - s.c - varTot : null;
     var k = '';
     k += '<div class="mc-kpi"><div class="l">월 고정비 합계 (입력)</div><div class="v">' + (s.c ? eok(s.c) : '—') + '</div><div class="d ' + (s.cp && s.c > s.cp ? 'down' : 'up') + '">' + (s.cp ? (s.c >= s.cp ? '▲ ' : '▼ ') + eok(Math.abs(s.c - s.cp)) + ' 전월 대비' : '전월 입력 없음') + '</div></div>';
     k += '<div class="mc-kpi"><div class="l">월 수익 (총진료비' + (s.r ? ' + 추가수익' : '') + ')</div><div class="v">' + (revenue ? eok(revenue) : '—') + '</div><div class="d">' + (cl ? '청구 ' + eok(tot) + (s.r ? ' + ' + eok(s.r) : '') : '청구 샘파일 없음') + '</div></div>';
     k += '<div class="mc-kpi"><div class="l">환자 1인 1일 기여수익</div><div class="v">' + (perDay ? man(contrib) : '—') + '</div><div class="d">진료비 ' + (perDay ? man(perDay) : '—') + ' − 변동비 ' + man(varC) + '</div></div>';
     k += '<div class="mc-kpi"><div class="l">손익분기 재원 환자</div><div class="v">' + (bep ? bep + '명' : '—') + '</div><div class="d ' + (bep && census >= bep ? 'up' : 'down') + '">' + (bep && census ? '현재 평균 ' + Math.round(census) + '명 · ' + (census >= bep ? '여유 ' : '부족 ') + Math.abs(Math.round(census - bep)) + '명' : (s.c ? '청구 자료가 있어야 계산됩니다' : '고정비를 입력하세요')) + '</div></div>';
+    k += '<div class="mc-kpi"><div class="l">추정 월 손익 (수익 − 고정비 − 변동비)</div><div class="v ' + (profit == null ? '' : (profit >= 0 ? 'up' : 'down')) + '">' + (profit == null ? '—' : (profit >= 0 ? '+' : '−') + eok(Math.abs(profit))) + '</div><div class="d">' + (profit == null ? '청구와 고정비가 있어야 계산됩니다' : '변동비 ' + man(varC) + ' × ' + num(days) + '일 = ' + eok(varTot)) + '</div></div>';
     gel('mcKpis').innerHTML = k;
 
     var scale = bed || Math.max(Math.ceil(Math.max(census, bep||0) * 1.2 / 10) * 10, 10);
@@ -250,6 +254,7 @@
       var gap = census - bep;
       b += '<div class="brow"><span>' + (gap >= 0 ? '현재 여유' : '현재 부족') + ' (' + Math.round(census) + ' − ' + bep + ')</span><b class="' + (gap >= 0 ? 'up' : 'down') + '">' + (gap >= 0 ? '+' : '−') + Math.abs(Math.round(gap)) + '명 (약 ' + eok(Math.abs(gap) * contrib * dIn) + '/월)</b></div>';
       if (s.r) b += '<div class="brow"><span>추가수익 반영 시 손익분기</span><b>' + Math.ceil(Math.max(0, s.c - s.r) / (contrib * dIn)) + '명</b></div>';
+      if (profit != null) b += '<div class="brow"><span>추정 월 손익 (' + eok(revenue) + ' − ' + eok(s.c) + ' − ' + eok(varTot) + ')</span><b class="' + (profit >= 0 ? 'up' : 'down') + '">' + (profit >= 0 ? '+' : '−') + eok(Math.abs(profit)) + '</b></div>';
     } else {
       b += '<div class="big">—</div><div class="small">' + (!s.c ? '왼쪽 표에 고정비를 넣으면 계산됩니다.' : (!cl ? '이 달 청구 샘파일이 없어 수익을 모릅니다.' : '기여수익이 0 이하입니다 — 변동비 설정을 확인하세요.')) + '</div>';
     }
@@ -259,16 +264,18 @@
   function renderTrend(){
     var claim = {}, trend = {}; (D.trendClaim||[]).forEach(function(r){ claim[r.ym] = r; }); (D.trend||[]).forEach(function(r){ trend[r.ym] = r; });
     var varC = toNum(gel('mcVar').value); if (varC == null) varC = VAR_DEF;
-    var h = '<thead><tr><th>월</th><th class="n">고정비</th><th class="n">추가수익</th><th class="n">총진료비</th><th class="n">평균 재원</th><th class="n">1인 1일 기여</th><th class="n">손익분기</th><th class="n">여유</th></tr></thead><tbody>', any = false;
+    var h = '<thead><tr><th>월</th><th class="n">고정비</th><th class="n">추가수익</th><th class="n">총진료비</th><th class="n">평균 재원</th><th class="n">1인 1일 기여</th><th class="n">손익분기</th><th class="n">여유</th><th class="n">추정 손익</th></tr></thead><tbody>', any = false;
     var ym = addYm(D.ym, -11);
     for (var i = 0; i < 12; i++, ym = addYm(ym, 1)) {
       var c = claim[ym], t = trend[ym]; if (!c && !t) continue; any = true;
       var dIn = daysIn(ym), tot = c ? Number(c.totamt) : 0, days = c ? Number(c.admdays) : 0, cost = t ? Number(t.costamt) : 0, extra = t ? Number(t.extraamt) : 0;
       var perDay = days ? tot/days : 0, contrib = perDay - varC, census = days ? days/dIn : 0;
       var bep = (contrib > 0 && cost) ? Math.ceil(cost/(contrib*dIn)) : null;
-      h += '<tr><td>' + esc(ymLbl(ym)) + '</td><td class="n">' + (cost ? eok(cost) : '—') + '</td><td class="n">' + (extra ? eok(extra) : '—') + '</td><td class="n">' + (tot ? eok(tot) : '—') + '</td><td class="n">' + (census ? Math.round(census) + '명' : '—') + '</td><td class="n">' + (perDay ? man(contrib) : '—') + '</td><td class="n">' + (bep ? bep + '명' : '—') + '</td><td class="n ' + (bep ? (census >= bep ? 'up' : 'down') : '') + '">' + (bep ? (census >= bep ? '+' : '−') + Math.abs(Math.round(census - bep)) + '명' : '—') + '</td></tr>';
+      var profit = (tot && cost) ? tot + extra - cost - varC * days : null;   // KPI 의 「추정 월 손익」과 같은 식
+      h += '<tr><td>' + esc(ymLbl(ym)) + '</td><td class="n">' + (cost ? eok(cost) : '—') + '</td><td class="n">' + (extra ? eok(extra) : '—') + '</td><td class="n">' + (tot ? eok(tot) : '—') + '</td><td class="n">' + (census ? Math.round(census) + '명' : '—') + '</td><td class="n">' + (perDay ? man(contrib) : '—') + '</td><td class="n">' + (bep ? bep + '명' : '—') + '</td><td class="n ' + (bep ? (census >= bep ? 'up' : 'down') : '') + '">' + (bep ? (census >= bep ? '+' : '−') + Math.abs(Math.round(census - bep)) + '명' : '—') + '</td>'
+         + '<td class="n ' + (profit == null ? '' : (profit >= 0 ? 'up' : 'down')) + '">' + (profit == null ? '—' : (profit >= 0 ? '+' : '−') + eok(Math.abs(profit))) + '</td></tr>';
     }
-    if (!any) h += '<tr><td colspan="8" class="mc-empty">아직 입력도 청구 자료도 없습니다.</td></tr>';
+    if (!any) h += '<tr><td colspan="9" class="mc-empty">아직 입력도 청구 자료도 없습니다.</td></tr>';
     gel('mcTrend').innerHTML = h + '</tbody>';
   }
 
