@@ -532,6 +532,9 @@ public class MisServiceImpl implements MisService {
 	}
 
 	@Override
+	public boolean hasMisContract(String hospCd) throws Exception { return hospCd != null && !hospCd.isEmpty() && mapper.countMisContract(hospCd) > 0; }
+
+	@Override
 	public void logNotiShare(String hospCd, String channel, String subject, String body, String result, String errMsg, String userId) throws Exception {
 		Map<String, Object> l = new HashMap<>();
 		l.put("hospCd", hospCd); l.put("channel", channel); l.put("toAddr", "KAKAO".equals(channel) ? "카카오톡(받는 사람은 카톡에서 고름)" : "클립보드"); l.put("toName", userId);

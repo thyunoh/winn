@@ -395,6 +395,15 @@
 	<select id="selectNotiHosps" resultType="string">
 		SELECT DISTINCT HOSP_CD FROM TBL_MIS_NOTI_USER WHERE USE_YN = 'Y' AND AUTO_GB IN ('D','W')
 	</select>
+	<!-- MIS 계약 여부(2026-10-08) — 계약 구분 'M'(경영관리) 의 유효 계약이 있으면 1 이상. 사이드바 메뉴 노출·화면 진입 판정.
+	     유효 = ACTION_YN='Y' + 종료일(END_DT, yyyymmdd) 이 오늘 이후. ⚠USE_YN 은 「운영사용(전체 공개)」 표식이라 유효 계약도 'N' 인 것이 보통 — 조건에 넣지 않는다(실측 2026-10-08). -->
+	<select id="countMisContract" resultType="int">
+		SELECT COUNT(*)
+		  FROM TBL_HOSPCONT_MST
+		 WHERE HOSP_CD = #{hospCd} AND CONACT_GB = 'M' AND ACTION_YN = 'Y'
+		   AND (COALESCE(END_DT,'') = '' OR REPLACE(END_DT,'-','') >= DATE_FORMAT(NOW(),'%Y%m%d'))
+	</select>
+
 	<!-- 자동 발송 선점 — 같은 날 먼저 넣은 쪽만 1 을 돌려받는다 -->
 	<insert id="insertNotiRun">
 		INSERT IGNORE INTO TBL_MIS_NOTI_RUN (RUN_DT, RUN_HOST) VALUES (#{runDt}, #{runHost})

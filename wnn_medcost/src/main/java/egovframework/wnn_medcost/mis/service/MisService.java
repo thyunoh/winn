@@ -48,6 +48,8 @@ public interface MisService {
 	List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, java.util.Set<Long> seqs, String testTo) throws Exception;
 	/** 자동 발송(스케줄러) — 하루 1회 선점 후 자동 수신자가 있는 병원 전부 */
 	Map<String, Object> runAutoNoti() throws Exception;
+	/** 이 병원에 MIS 계약(계약 구분 'M')이 유효한가 — 병원 계정의 메뉴 노출·화면 진입은 이것으로 가른다(위너넷은 무관) */
+	boolean hasMisContract(String hospCd) throws Exception;
 	/** 카톡 공유·링크 복사 이력(채널 KAKAO/LINK) */
 	void logNotiShare(String hospCd, String channel, String subject, String body, String result, String errMsg, String userId) throws Exception;
 }

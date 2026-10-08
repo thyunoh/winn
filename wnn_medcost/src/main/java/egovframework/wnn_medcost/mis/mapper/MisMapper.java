@@ -74,4 +74,6 @@ public interface MisMapper {
 	List<Map<String, Object>> selectNotiLogs(@Param("hospCd") String hospCd);
 	List<String> selectNotiHosps();
 	int insertNotiRun(@Param("runDt") String runDt, @Param("runHost") String runHost);
+	/** MIS 계약(CONACT_GB='M') 유효 건수 — 메뉴 노출·화면 진입 판정 */
+	int countMisContract(@Param("hospCd") String hospCd);
 }

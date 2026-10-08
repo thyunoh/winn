@@ -2241,3 +2241,9 @@
   **[병원 이름 가리기]** 단추(머리 안내문 안, `toggleMask`) — 글자 노드의 부산은빛요양병원→A요양병원·부산은빛→A병원, 되돌리기 가능, `?mask=1` 로 열면 처음부터 가림(다른 병원에 보여 줄 때).
 - 📘**[2026-10-08 오후] MIS 인수인계·배포·정리** — [MIS_인수인계_2026-10-08.md](docs/proposals/MIS_인수인계_2026-10-08.md)(구조·표·화면별 요점·배포 순서·설정 키·시연 자료·함정·결정 사안) · [배포_가이드 §10](docs/배포_가이드.md) · [MIS_CLEAN_DEMO_2026-10-08.sql](docs/sql/mis/MIS_CLEAN_DEMO_2026-10-08.sql)(시연 자료 삭제 — 주석 풀어 실행, 회의 뒤).
   ★**「MIS 이어서」면 인수인계 문서부터.** 열린 결정 = 병원에 메뉴를 여는 방식(계약 구분 코드 추가 안) · 알리고 계정·방화벽 · 알림톡.
+- ✅**[2026-10-08 오후] 병원에 MIS 메뉴 열기 = 계약 구분 'M'**(사용자 결정 「계약 구분에 MIS 추가(권장)」, `BUILD 20261008-MIS6`, ⛔자바·매퍼 → 재기동 / 운영 WAR) :
+  · 시드 [MIS_SEED_CONACT_M_2026-10-08.sql](docs/sql/mis/seed/MIS_SEED_CONACT_M_2026-10-08.sql) — 공통코드 `Z/CONACT_GB` 에 `M 경영관리(MIS)` 한 줄(표 구조 변경 없음). ⛔사용자 실행. 계약관리·가입신청 계약 입력창 목록은 이 코드를 읽어 자동으로 「M」이 생긴다.
+  · 판정 = `countMisContract`(TBL_HOSPCONT_MST, CONACT_GB='M', ACTION_YN='Y', END_DT ≥ 오늘). ⚠**USE_YN 은 조건에 넣지 않는다** — 그 칸은 「운영사용(전체 공개)」 표식이라 유효 계약도 'N'(부산은빛·위너넷 실측).
+  · `MisController.screen` — 병원 계정(s_wnn_yn≠Y)은 계약 없으면 `redirect:/user/dashboard.do`(DB 로 판정, 쿠키 위조 무관) · `/mis/menuChk.do` 가 보는 병원의 misYn.
+  · sidebar.jsp — 토글 스크립트에 `contractAsk()`(menuChk 한 번, sessionStorage `misChk.<병원>`) → 계약 있으면 누구에게나 메뉴, 위너넷 m·i·s 토글은 그대로. **로그인 쿠키 s_conact_gb(A/1/2)는 안 건드렸다**(A=둘 다 계산이 흔들린다).
+  · 병원에 열려면 계약관리에서 구분 「경영관리(MIS)」 계약 등록(시드 파일 끝에 SQL 예). 아직 등록된 병원 0.

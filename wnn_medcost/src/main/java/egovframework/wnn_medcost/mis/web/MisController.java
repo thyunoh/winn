@@ -29,7 +29,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261008-MIS5";   // + 업무 알림 문자·메일 발송(받는 사람·미리보기·지금 보내기·자동 발송)
+	private static final String BUILD = "20261008-MIS6";   // + 계약 구분 'M' 으로 병원에 메뉴·화면 열기(menuChk · screen 가드)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -46,8 +46,11 @@ public class MisController {
 		try {
 			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
 			if (hospId.isEmpty()) return ".login/LoginWinCT";
+			String wnnYn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			// 병원 계정은 MIS 계약(계약 구분 'M')이 있어야 연다(2026-10-08 「계약 구분에 MIS 추가」). 위너넷은 어느 병원이든 본다. 쿠키가 아니라 DB 로 본다(위조 불가).
+			if (!"Y".equals(wnnYn) && !svc.hasMisContract(hospId)) return "redirect:/user/dashboard.do";
 			model.addAttribute("hospCd", hospId);
-			model.addAttribute("wnnYn", ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim());
+			model.addAttribute("wnnYn", wnnYn);
 			try {
 				Map<String, Object> h = svc.selectHospInfo(hospId);
 				model.addAttribute("hospNm", h == null || h.get("hospnm") == null ? "" : String.valueOf(h.get("hospnm")));
@@ -57,6 +60,21 @@ public class MisController {
 			model.addAttribute("shareBase", shareBase(request));
 			return view;
 		} catch (Exception ex) { return ".login/LoginWinCT"; }
+	}
+
+	/** 사이드바가 묻는다 — 지금 보는 병원에 MIS 메뉴를 보일지. 병원 계정 = MIS 계약 여부, 위너넷 = 계약이 있으면 Y(없어도 m·i·s 토글은 따로 된다). */
+	@RequestMapping(value = "/mis/menuChk.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> menuChk(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			res.put("hospCd", hospId);
+			res.put("misYn", !hospId.isEmpty() && svc.hasMisContract(hospId) ? "Y" : "N");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
 	}
 
 	/* ═══ 경영통계 ═══ */

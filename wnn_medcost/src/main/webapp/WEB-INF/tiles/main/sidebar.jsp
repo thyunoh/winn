@@ -3112,9 +3112,25 @@ window.qpsPrintGo = function (w, maxMs) {
         try { if (typeof getCookie === 'function') return (getCookie("s_wnn_yn") || '').trim() === 'Y'; } catch(e){}
         try { var m = ('; ' + document.cookie).match(/;\s*s_wnn_yn=([^;]*)/); return m ? decodeURIComponent(m[1]).trim() === 'Y' : false; } catch(e){ return false; }
     }
-    window.misMenuOn = function(){ return flagOn() && isWnn(); };
+    /* 계약 기준 노출(2026-10-08 「계약 구분에 MIS 추가」) — 보고 있는 병원에 계약 구분 'M'(경영관리) 계약이 있으면 누구에게나 메뉴를 보인다.
+       서버(/mis/menuChk.do)에 한 번 묻고 결과를 sessionStorage('misChk.<병원>')에 둔다(탭을 닫으면 다시 묻는다). 위너넷의 m·i·s 토글은 그대로 살아 있다. */
+    var CONTRACT = null;
+    function hospId(){ try { if (typeof getCookie === 'function') return (getCookie('s_hospid') || '').trim(); } catch(e){} try { var m = ('; ' + document.cookie).match(/;\s*s_hospid=([^;]*)/); return m ? decodeURIComponent(m[1]).trim() : ''; } catch(e){ return ''; } }
+    function contractOn(){ if (CONTRACT === null) { try { CONTRACT = sessionStorage.getItem('misChk.' + hospId()) === 'Y'; } catch(e){ CONTRACT = false; } } return CONTRACT; }
+    function contractAsk(){
+        var h = hospId(); if (!h) return;
+        try { if (sessionStorage.getItem('misChk.' + h) !== null) return; } catch(e){}
+        try {
+            $.ajax({ url: '/mis/menuChk.do', type: 'POST', dataType: 'json' }).then(function(res){
+                var y = res && res.misYn === 'Y';
+                try { sessionStorage.setItem('misChk.' + h, y ? 'Y' : 'N'); } catch(e){}
+                CONTRACT = y; apply(false);
+            });
+        } catch(e){}
+    }
+    window.misMenuOn = function(){ return (flagOn() && isWnn()) || contractOn(); };
     function apply(open){
-        var on = (flagOn() && isWnn());
+        var on = (flagOn() && isWnn()) || contractOn();
         var li = document.getElementById('menu-mis');
         if (li) li.style.display = on ? '' : 'none';
         if (open && on) { try { $('#mis-sub').addClass('show'); $('#menu-mis > a').attr('aria-expanded', 'true'); } catch(e){} }
@@ -3148,6 +3164,7 @@ window.qpsPrintGo = function (w, maxMs) {
         if (mm && isWnn()) flagSet(mm[1].toLowerCase() === 'on' ? 'Y' : 'N');
     } catch(e){}
     apply(false);
+    contractAsk();
     // 지금 MIS 화면이면 메뉴를 펼쳐 둔다(어느 메뉴에서 왔는지 보이게)
     try { if (/\/main\/mis(Stat|Cost|Alert|Lead).do/.test(location.pathname + '|' + (sessionStorage.getItem('_realPath') || ''))) apply(true); } catch(e){}
 })();
