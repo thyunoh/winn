@@ -88,7 +88,7 @@
   <div class="ml-title"><span class="ml-dot"></span>신규환자 고객관리 <span class="ml-sub">— 상담에서 입원까지, 입원 여부는 입퇴원현황으로 자동 확인</span></div>
   <span class="ml-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="ml-spacer"></span>
-  <button type="button" class="ml-btn" onclick="mlExcel();" title="상담 목록(종결 포함)과 퇴원 안부 연락 표를 엑셀 파일로">엑셀</button>
+  <button type="button" class="ml-btn" onclick="mlExcel();" title="상담 목록(종결 포함)과 퇴원 안부 연락 표를 엑셀 파일로">엑셀출력</button>
   <button type="button" class="ml-btn" onclick="mlLoad();" title="상담 목록을 다시 읽고 입퇴원현황과 다시 대조합니다 — 다른 창에서 입퇴원현황을 올린 뒤 누르세요">입퇴원현황 다시 대조</button>
 </div>
 

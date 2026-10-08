@@ -65,7 +65,7 @@
     <select id="msFrom" onchange="msLoad();"></select> ~ <select id="msTo" onchange="msLoad();"></select>
   </label>
   <label style="font-size:13px;color:#43555f;"><input type="checkbox" id="msCmp" checked onchange="msRender();"> 고객 평균 비교</label>
-  <button type="button" class="ms-btn" onclick="msExcel();" title="월별 상세·환자군 표를 엑셀 파일로">엑셀</button>
+  <button type="button" class="ms-btn" onclick="msExcel();" title="월별 상세·환자군 표를 엑셀 파일로">엑셀출력</button>
   <button type="button" class="ms-btn" onclick="msPrint();" title="원장 보고용 한 장(가로) — 그래프·환자군·월별 상세">인쇄</button>
   <button type="button" class="ms-btn" onclick="location.href='<c:url value="/main/misCost.do"/>';">고정경비 →</button>
 </div>
@@ -258,7 +258,7 @@
     gel('msClsTbl').innerHTML = t + '</tbody>';
 
     // 월별 상세
-    var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">전년 동월</th><th class="n">전년 대비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일</th><th class="n">환자 1인 월</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 환자 1인 월</th><th class="n">고객 1인 1일</th>' : '') + '</tr></thead><tbody>';
+    var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">전년 동월</th><th class="n">전년 대비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일 진료비</th><th class="n">환자 1인 월</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 환자 1인 월</th><th class="n">고객 1인 1일 진료비</th>' : '') + '</tr></thead><tbody>';
     var any = false;
     L.forEach(function(r){
       if (!r.totamt && r.incnt == null && !(r.cls.A+r.cls.B+r.cls.C+r.cls.D+r.cls.E)) return; any = true;
@@ -289,7 +289,7 @@
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(gel('msTbl'), {raw:false}), '월별 상세');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(gel('msClsTbl'), {raw:false}), '환자군·점수');
-      XLSX.writeFile(wb, fileSafe('경영통계_' + HOSP_NM + '_' + D.fromYm + '-' + D.toYm) + '.xlsx');
+      XLSX.writeFile(wb, fileSafe('경영통계_' + HOSP_NM + '_' + (VIEW.from || D.fromYm) + '-' + (VIEW.to || D.toYm)) + '.xlsx');
     } catch(e){ err(e); }
   };
   /* 인쇄 — 원장 보고용 한 장(A4 가로) : 머리 + KPI + 그래프(캔버스를 그림으로) + 환자군 + 월별 상세. 화면 표를 그대로 복사하므로 숫자가 화면과 같다. */
@@ -299,7 +299,7 @@
     var w = window.open('', '_blank');
     if (!w) { _alertBox('팝업이 막혀 있습니다. 이 사이트의 팝업을 허용한 뒤 다시 눌러 주세요.', {icon:'⚠️'}); return; }
     var d = new Date(), today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    var css = '@page{size:A4 landscape;margin:10mm} body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#1f2a30;margin:0;font-size:11px}'
+    var css = '@page{size:A4 landscape;margin:0} body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#1f2a30;margin:0;padding:10mm 12mm;font-size:11px}'   /* 여백 0 = 브라우저가 여백에 찍는 날짜·제목·about:blank·쪽수가 사라진다(사용자 2026-10-08 「출력 시 제거」) — 종이 여백은 body padding 으로 */
       + 'h1{font-size:18px;margin:0 0 8px;display:flex;align-items:baseline;gap:10px} h1 small{font-size:12px;color:#6b7c86;font-weight:400} h1 .dt{margin-left:auto;font-size:11px;color:#6b7c86;font-weight:400}'
       + 'h2{font-size:13px;margin:12px 0 6px;color:#1f5a4b;border-left:4px solid #1f5a4b;padding-left:8px}'
       + '.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px} .ms-kpi{border:1px solid #cfd8e0;border-radius:8px;padding:8px 10px} .ms-kpi .l{font-size:10px;color:#6b7c86} .ms-kpi .v{font-size:20px;font-weight:900;line-height:1.2} .ms-kpi .d{font-size:10px;font-weight:700;color:#6b7c86}'
@@ -307,7 +307,7 @@
       + 'table{width:100%;border-collapse:collapse;font-size:10px} th{background:#f2f6f8;color:#43555f;padding:4px 6px;border-bottom:1px solid #b9c5cd;text-align:left;white-space:nowrap} td{padding:3px 6px;border-bottom:1px solid #e3e9ed} td.n,th.n{text-align:right;font-variant-numeric:tabular-nums} .small{font-size:9.5px;color:#6b7c86} p.small{margin:4px 0 0}'
       + 'tr{page-break-inside:avoid} h2{page-break-after:avoid}';
     var h = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>경영통계 ' + esc(HOSP_NM) + '</title><style>' + css + '</style></head><body>'
-      + '<h1>경영통계 <small>' + esc(HOSP_NM) + ' · ' + esc(ymLbl(D.fromYm)) + ' ~ ' + esc(ymLbl(D.toYm)) + '</small><span class="dt">' + today + ' 출력 · WinCheck⁺</span></h1>'
+      + '<h1>경영통계 <small>' + esc(HOSP_NM) + ' · ' + esc(ymLbl(VIEW.from || D.fromYm)) + ' ~ ' + esc(ymLbl(VIEW.to || D.toYm)) + '</small><span class="dt">' + today + ' 출력 · WinCheck⁺</span></h1>'
       + '<div class="kpis">' + gel('msKpis').innerHTML + '</div>'
       + '<h2>' + esc(gel('msChartTtl').textContent) + '</h2>' + (img ? '<img src="' + img + '" alt="">' : '') + '<p class="small">' + esc(gel('msChartNote').textContent) + '</p>'
       + '<h2>' + esc(gel('msClsTtl').textContent) + '</h2>' + gel('msClsTbl').outerHTML + '<p class="small">' + esc(gel('msClsNote').textContent) + '</p>'
