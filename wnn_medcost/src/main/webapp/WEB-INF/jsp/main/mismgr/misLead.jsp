@@ -66,6 +66,8 @@
   #misLead .logs .d{ color:#6b7c86; margin-right:6px; font-variant-numeric:tabular-nums; }
   #misLead .badge{ font-size:11px; font-weight:700; border-radius:10px; padding:1px 7px; background:#eef2f5; color:#43555f; }
   #misLead .badge.ok{ background:#e7f3ee; color:#1f5a4b; }
+  #misLead #mlDetailTtl{ font-size:16px; color:#20303a; }                       /* 상세 제목 조금 크게(사용자 2026-10-08 「조금 크게」) */
+  #misLead #mlDetailTtl .badge{ font-size:12.5px; padding:2px 10px; }
   #misLead .badge.warn{ background:#fbeadb; color:#b45f1c; }
   #misLead table{ width:100%; border-collapse:collapse; font-size:13px; }
   #misLead th{ background:#f2f6f8; font-weight:700; color:#43555f; padding:7px 9px; border-bottom:1px solid #dde5ea; text-align:left; white-space:nowrap; }
@@ -86,12 +88,11 @@
   <div class="ml-title"><span class="ml-dot"></span>신규환자 고객관리 <span class="ml-sub">— 상담에서 입원까지, 입원 여부는 입퇴원현황으로 자동 확인</span></div>
   <span class="ml-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="ml-spacer"></span>
-  <button type="button" class="ml-btn pri" onclick="mlNew();">＋ 상담 접수</button>
-  <button type="button" class="ml-btn" onclick="mlLoad();">다시 불러오기</button>
+  <button type="button" class="ml-btn" onclick="mlLoad();" title="상담 목록을 다시 읽고 입퇴원현황과 다시 대조합니다 — 다른 창에서 입퇴원현황을 올린 뒤 누르세요">입퇴원현황 다시 대조</button>
 </div>
 
 <div class="ml-note">
-  전화·방문 상담을 받으면 <b>[＋ 상담 접수]</b>로 이름·생년월일·보호자·경로를 적습니다(1분). 단계는 카드를 눌러 옮기고, <b>입원·퇴원은 입퇴원현황이 올라오면 자동으로</b> 표시됩니다(생년월일 6자리와 이름으로 맞춥니다 — 생년월일을 적어야 자동 확인이 됩니다).
+  전화·방문 상담을 받으면 관리판의 <b>「상담」 칸을 눌러</b> 이름·생년월일·보호자·경로를 적습니다(1분). 이미 입원한 환자를 뒤늦게 적을 때는 「입원」 칸을 누르면 그 단계로 바로 저장됩니다. 단계는 카드를 눌러 옮기고, <b>입원·퇴원은 입퇴원현황이 올라오면 자동으로</b> 표시됩니다(생년월일 6자리와 이름으로 맞춥니다 — 생년월일을 적어야 자동 확인이 됩니다).
   주민번호 전체는 받지 않습니다.
 </div>
 
@@ -314,7 +315,7 @@
     var done = tr.querySelector('.fwDone').checked, res = tr.querySelector('.fwRes').value, memo = tr.querySelector('.fwMemo').value;
     if (res && !done) { tr.querySelector('.fwDone').checked = true; done = true; }
     post('<c:url value="/mis/followSave.do"/>', withHosp({ birth6: q.birth6, ipwonDt: q.ipwonDt, tewonDt: q.tewonDt, doneYn: done ? 'Y' : 'N', resultCd: res, memo: memo }))
-      .then(function(){ tr.className = done ? 'done' : ''; if (res === 'READMIT') _toast('재입원 희망 — [＋ 상담 접수]로 이어서 적어 두세요.', 'ok'); }).catch(err);
+      .then(function(){ tr.className = done ? 'done' : ''; if (res === 'READMIT') _toast('재입원 희망 — 관리판 「상담」 칸을 눌러 이어서 적어 두세요.', 'ok'); }).catch(err);
   }
 
   $(function(){ mlLoad(); });
