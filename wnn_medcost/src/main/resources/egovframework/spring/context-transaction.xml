@@ -22,10 +22,13 @@
 		     트랜잭션이 없으면 항목 INSERT 가 실패할 때 새 문서는 머리만 고아로 남고, 고치던 문서는 항목이 지워진 채 남는다.
 		     ★이 앱에는 tx:annotation-driven 이 없어 @Transactional 은 동작하지 않는다 — 그래서 여기 pointcut 으로 건다. (2026-09-15) -->
 		<aop:pointcut id="qpsQiSaveTx" expression="execution(* egovframework.wnn_medcost.qps.service.impl.QpsServiceImpl.saveQi*(..))"/>
+		<!-- MIS 고정경비 월 저장(지우고 다시 넣기) — 2026-10-08 -->
+		<aop:pointcut id="misCostSaveTx" expression="execution(* egovframework.wnn_medcost.mis.service.impl.MisServiceImpl.saveCostMonth(..))"/>
 
 		<!-- ★순서 규칙(스키마) : aop:config 안은 pointcut 전부 → advisor 전부. 섞으면 기동 때 XML 검증에서 컨텍스트가 죽는다. -->
 		<aop:advisor advice-ref="txAdvice" pointcut-ref="requiredTx" />
 		<aop:advisor advice-ref="txAdvice" pointcut-ref="qpsQiSaveTx" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="misCostSaveTx" />
 	</aop:config>
 
 </beans>

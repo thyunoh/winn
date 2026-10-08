@@ -788,6 +788,23 @@
                         </div>
                     </li>
 
+                    <%-- ===== MIS(경영관리) — 신규 요양병원 업무 패키지 1단계 : 경영통계 · 고정경비 (2026-10-08) =====
+                         ★QPS 와 같은 노출 방침(사용자 「mis 하면 qps 처럼 작동하게」) : 기본 숨김, 위너넷(s_wnn_yn='Y')이 입력칸 밖에서
+                           m·i·s 를 이어 치면 토글된다(이 파일 맨 아래 「MIS 메뉴 표시 토글」 스크립트, sessionStorage 'misDev').
+                         ★menu-section 이 아니다 — top.jsp 탭/계약 필터의 영향을 받지 않게. 서버(MisController)는 로그인만 본다.
+                         ★정식 오픈 시 : style 의 display:none 과 토글 스크립트를 걷어내고 계약구분으로 태운다. --%>
+                    <li class="nav-item" id="menu-mis" style="display:none;">
+                        <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
+                           aria-expanded="false" data-target="#mis-sub" aria-controls="mis-sub">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>경영관리(MIS)</a>
+                        <div id="mis-sub" class="collapse submenu" style="background-color: white;">
+                            <ul class="nav flex-column">
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misStat.do">경영통계</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">고정경비 관리</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
                     <%-- 적정성평가 교육 동영상 (2026-08-26) — 분야별통계 다음. 새 창에서 스트리밍 재생(EduVideoController).
                          ★menu-section 금지(아래 가입신청 주석의 함정과 같음 — 상단 탭이 숨긴 뒤 영영 안 켜진다).
                          이름이 길어 두 줄 — 둘째 줄은 아이콘 폭만큼 들여쓴다(「글자가 잘릴 것 같은데」). --%>
@@ -3078,3 +3095,58 @@ window.qpsPrintGo = function (w, maxMs) {
         
         
         
+
+<script>
+/* ══ MIS 메뉴 표시 토글 — 키워드 'mis' 타이핑 (2026-10-08) ═══════════════════
+     QPS 의 'qps' 토글과 같은 방식(사용자 「mis 하면 qps 처럼 작동하게」 · 「버튼 활성화」).
+     · 입력칸 밖에서 m·i·s 를 이어 치면 #menu-mis 가 켜지고 서브메뉴가 펼쳐진다. 다시 치면 숨긴다.
+     · 저장 = sessionStorage('misDev') — 이 탭에서만, 브라우저를 닫으면 꺼진다. 위너넷(s_wnn_yn='Y')이 아니면 아무 일도 없다.
+     · 정식 오픈 시 : 이 스크립트와 li 의 display:none 만 지우면 된다.                                   */
+(function(){
+    var KEY = 'misDev', WORD = 'mis', buf = '', bufTimer = null;
+    function flagOn(){ try { return sessionStorage.getItem(KEY) === 'Y'; } catch(e){ return false; } }
+    function flagSet(v){ try { sessionStorage.setItem(KEY, v); } catch(e){} }
+    function isWnn(){
+        try { if (typeof getCookie === 'function') return (getCookie("s_wnn_yn") || '').trim() === 'Y'; } catch(e){}
+        try { var m = ('; ' + document.cookie).match(/;\s*s_wnn_yn=([^;]*)/); return m ? decodeURIComponent(m[1]).trim() === 'Y' : false; } catch(e){ return false; }
+    }
+    window.misMenuOn = function(){ return flagOn() && isWnn(); };
+    function apply(open){
+        var on = (flagOn() && isWnn());
+        var li = document.getElementById('menu-mis');
+        if (li) li.style.display = on ? '' : 'none';
+        if (open && on) { try { $('#mis-sub').addClass('show'); $('#menu-mis > a').attr('aria-expanded', 'true'); } catch(e){} }
+    }
+    function toggle(){
+        if (!isWnn()) return;
+        var on = flagOn();
+        flagSet(on ? 'N' : 'Y');
+        apply(true);
+        try {
+            if (typeof _toast === 'function') _toast('경영관리(MIS) 메뉴 ' + (on ? '숨김 — 다시 보려면 mis 를 치세요.' : '표시 — 좌측 [경영관리(MIS)] ▸ 경영통계 · 고정경비'), 'ok');
+            else if (typeof Swal !== 'undefined') Swal.fire({ toast:true, position:'top-end', width:380, timer:4000, showConfirmButton:false, icon:'info', title:'MIS 메뉴 ' + (on ? '숨김' : '표시') });
+        } catch(e){}
+    }
+    function inField(t){ if (!t) return false; var tag = (t.tagName || '').toUpperCase(); return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable === true; }
+    document.addEventListener('keydown', function(ev){
+        if (ev.ctrlKey || ev.altKey || ev.metaKey) { buf = ''; return; }
+        if (inField(ev.target)) { buf = ''; return; }
+        var ch = (ev.code && ev.code.indexOf('Key') === 0) ? ev.code.charAt(3).toLowerCase() : (ev.key || '').toLowerCase();
+        if (ch.length !== 1 || ch < 'a' || ch > 'z') { buf = ''; return; }
+        buf += ch;
+        if (WORD.indexOf(buf) !== 0) buf = (ch === WORD.charAt(0)) ? ch : '';
+        if (bufTimer) clearTimeout(bufTimer);
+        bufTimer = setTimeout(function(){ buf = ''; }, 1500);
+        if (buf === WORD) { buf = ''; toggle(); }
+    });
+    /* 주소 스위치 — ?misdev=on|off (main.jsp 가 쿼리를 지우므로 _realPath 도 본다, qpsdev 와 같은 요령) */
+    try {
+        var q = (location.search || '') + '|' + (sessionStorage.getItem('_realPath') || '');
+        var mm = /[?&]misdev=(on|off)/i.exec(q);
+        if (mm && isWnn()) flagSet(mm[1].toLowerCase() === 'on' ? 'Y' : 'N');
+    } catch(e){}
+    apply(false);
+    // 지금 MIS 화면이면 메뉴를 펼쳐 둔다(어느 메뉴에서 왔는지 보이게)
+    try { if (/\/main\/mis(Stat|Cost)\.do/.test(location.pathname + '|' + (sessionStorage.getItem('_realPath') || ''))) apply(true); } catch(e){}
+})();
+</script>

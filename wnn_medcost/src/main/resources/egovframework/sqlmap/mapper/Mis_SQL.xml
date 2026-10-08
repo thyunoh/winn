@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ============================================================================
+     MIS(경영관리) 1단계 — 경영통계 · 고정경비 (2026-10-08)
+       · 근거 : docs/proposals/신규요양병원_업무패키지_제안_2026-10-08.html · DDL docs/sql/mis/ddl/MIS_DDL_2026-10-08.sql
+       · ★경영통계 수치는 저장하지 않고 집계 SQL 로 산출한다(QPS·TBL_EVAL_REPORT 와 같은 사상).
+         원천 = 청구 샘파일(TBL_CHUNG_MST·TBL_MYOUNG_MST) · 환자평가표(TBL_PATVAL_MST) · 입퇴원현황(TBL_IPWON_INFO) · 자료생성 결과(TBL_PAT_INDI)
+       · 명세서 조인은 적정성 SP(향정 07)와 같은 규칙 : cm.HOSP_CD+CLAIM_NO · COALESCE(mm.DELYN,'')='' — 숫자가 적정성평가와 같은 근거에서 나오게.
+       · 결과는 HashMap + 소문자 별칭(이 프로젝트 관용구) · 부등호는 CDATA · 주석에 꺾쇠 금지
+     ============================================================================ -->
+<mapper namespace="egovframework.wnn_medcost.mis.mapper.MisMapper">
+
+	<!-- 병원 기본 — 화면 배지용(서버 기준 병원명) -->
+	<select id="selectHospInfo" resultType="java.util.HashMap">
+		SELECT h.HOSP_CD AS hospcd, h.HOSP_NM AS hospnm, h.JOIN_DT AS joindt
+		  FROM TBL_HOSP_MST h
+		 WHERE h.HOSP_CD = #{hospCd}
+		 LIMIT 1
+	</select>
+
+	<!-- ===================== 경영통계 — 월별 집계 ===================== -->
+	<!-- 청구 : 총진료비·급여(공단)·본인부담·입원일수·환자 수·명세서 수. 연월 = 청구서 진료년월(cm.DATE_YM) -->
+	<select id="selectMonthClaim" resultType="java.util.HashMap">
+		SELECT cm.DATE_YM                       AS ym
+		     , COUNT(*)                         AS bills
+		     , COUNT(DISTINCT mm.PAT_ID)        AS pats
+		     , COALESCE(SUM(mm.ADM_DAYS),0)     AS admdays
+		     , COALESCE(SUM(mm.TOT_AMT),0)      AS totamt
+		     , COALESCE(SUM(mm.CLAIM_AMT),0)    AS claimamt
+		     , COALESCE(SUM(mm.SELF_AMT),0)     AS selfamt
+		  FROM TBL_MYOUNG_MST mm
+		  JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		 WHERE mm.HOSP_CD = #{hospCd}
+		   AND COALESCE(mm.DELYN,'') = ''
+		   AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
+		 GROUP BY cm.DATE_YM
+		 ORDER BY cm.DATE_YM
+	</select>
+
+	<!-- 보험 구분별(INSUR_TYPE 4=건강보험 2=의료급여 …) 총진료비 -->
+	<select id="selectMonthInsur" resultType="java.util.HashMap">
+		SELECT cm.DATE_YM AS ym, cm.INSUR_TYPE AS insurtype
+		     , COALESCE(SUM(mm.TOT_AMT),0) AS totamt, COUNT(DISTINCT mm.PAT_ID) AS pats
+		  FROM TBL_MYOUNG_MST mm
+		  JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		 WHERE mm.HOSP_CD = #{hospCd}
+		   AND COALESCE(mm.DELYN,'') = ''
+		   AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
+		 GROUP BY cm.DATE_YM, cm.INSUR_TYPE
+		 ORDER BY cm.DATE_YM, cm.INSUR_TYPE
+	</select>
+
+	<!-- 환자군(A~E) 구성 — 환자평가표, 요양개시월 기준, 환자 단위 -->
+	<select id="selectMonthClass" resultType="java.util.HashMap">
+		SELECT LEFT(p.MED_START,6)                 AS ym
+		     , LEFT(COALESCE(p.PAT_CLASS,'E'),1)   AS cls
+		     , COUNT(DISTINCT p.PAT_ID)            AS pats
+		  FROM TBL_PATVAL_MST p
+		 WHERE p.HOSP_CD = #{hospCd}
+		   AND p.MED_START BETWEEN CONCAT(#{fromYm},'01') AND CONCAT(#{toYm},'31')
+		 GROUP BY LEFT(p.MED_START,6), LEFT(COALESCE(p.PAT_CLASS,'E'),1)
+		 ORDER BY ym, cls
+	</select>
+
+	<!-- 입·퇴원 — 입퇴원현황. 같은 입원이 달마다 여러 줄(퇴원 전엔 퇴원일이 빈 줄, 퇴원 뒤엔 찬 줄)이라
+	     먼저 (생년월일·입원일) 단위로 묶어 퇴원일은 MAX 로 고른 뒤, 그 달에 입원·퇴원한 건을 센다. -->
+	<select id="selectMonthInOut" resultType="java.util.HashMap">
+		SELECT x.ym
+		     , SUM(x.inflag)  AS incnt
+		     , SUM(x.outflag) AS outcnt
+		     , ROUND(AVG(CASE WHEN x.outflag = 1 THEN x.staydays END), 1) AS avgstay
+		  FROM (
+		        SELECT a.jm, a.ipdt, a.twdt, m.ym
+		             , CASE WHEN a.ipdt LIKE CONCAT(m.ym,'%') THEN 1 ELSE 0 END AS inflag
+		             , CASE WHEN a.twdt LIKE CONCAT(m.ym,'%') THEN 1 ELSE 0 END AS outflag
+		             , CASE WHEN a.twdt <![CDATA[<>]]> '' AND LENGTH(a.ipdt) = 8 AND LENGTH(a.twdt) = 8
+		                    THEN DATEDIFF(STR_TO_DATE(a.twdt,'%Y%m%d'), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1 END AS staydays
+		          FROM (SELECT LEFT(t.JUMINNO,6)                                              AS jm
+		                     , REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')                      AS ipdt
+		                     , MAX(COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),''))    AS twdt
+		                  FROM TBL_IPWON_INFO t
+		                 WHERE t.HOSP_CD = #{hospCd}
+		                   AND t.JOBYYMM BETWEEN #{fromYm} AND #{toYm}
+		                 GROUP BY LEFT(t.JUMINNO,6), REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')) a
+		          JOIN (SELECT DISTINCT JOBYYMM AS ym FROM TBL_IPWON_INFO
+		                 WHERE HOSP_CD = #{hospCd} AND JOBYYMM BETWEEN #{fromYm} AND #{toYm}) m
+		            ON (a.ipdt LIKE CONCAT(m.ym,'%') OR a.twdt LIKE CONCAT(m.ym,'%'))
+		       ) x
+		 WHERE x.inflag = 1 OR x.outflag = 1
+		 GROUP BY x.ym
+		 ORDER BY x.ym
+	</select>
+
+	<!-- 적정성평가 종합점수(자료생성 결과 합) -->
+	<select id="selectMonthScore" resultType="java.util.HashMap">
+		SELECT JOBYYMM AS ym, SUM(WEIGVAL) AS score
+		  FROM TBL_PAT_INDI
+		 WHERE HOSP_CD = #{hospCd} AND JOBYYMM BETWEEN #{fromYm} AND #{toYm}
+		 GROUP BY JOBYYMM
+		 ORDER BY JOBYYMM
+	</select>
+
+	<!-- 위너넷 고객 병원 평균 — 같은 달 청구를 올린 병원 전체(병원명 없이 평균만). 비교 기능은 위너넷만 가능한 것. -->
+	<select id="selectMonthAvg" resultType="java.util.HashMap">
+		SELECT h.ym
+		     , COUNT(*)                                   AS hosps
+		     , ROUND(AVG(h.tot),0)                        AS avgtot
+		     , ROUND(AVG(h.tot / NULLIF(h.days,0)),0)     AS avgperday
+		     , ROUND(AVG(h.pats),0)                       AS avgpats
+		  FROM (SELECT cm.HOSP_CD, cm.DATE_YM AS ym, SUM(mm.TOT_AMT) AS tot, SUM(mm.ADM_DAYS) AS days, COUNT(DISTINCT mm.PAT_ID) AS pats
+		          FROM TBL_MYOUNG_MST mm
+		          JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		         WHERE COALESCE(mm.DELYN,'') = ''
+		           AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
+		         GROUP BY cm.HOSP_CD, cm.DATE_YM
+		        HAVING tot <![CDATA[>]]> 0) h
+		 GROUP BY h.ym
+		 ORDER BY h.ym
+	</select>
+
+	<!-- 차등제 신고값(최신) — 인력 수 표시·인건비 입력 참고 -->
+	<select id="selectGradeLatest" resultType="java.util.HashMap">
+		SELECT START_YY AS startyy, QTER_FLAG AS qterflag, PAT_COUNT AS patcount, DOC_COUNT AS doccount
+		     , NUR_COUNT AS nurcount, NUR_S_CNT AS nurscnt, PHAM_DAYS AS phamdays, GOAL_SCORE AS goalscore, HOSPGRADE AS hospgrade
+		  FROM TBL_GRADE_MST
+		 WHERE HOSP_CD = #{hospCd} AND ACTION_YN = 'Y'
+		 ORDER BY START_YY DESC, QTER_FLAG DESC, UPD_DTTM DESC
+		 LIMIT 1
+	</select>
+
+	<!-- 자료가 있는 마지막 청구 연월 — 화면 기본 달 -->
+	<select id="selectLastClaimYm" resultType="java.lang.String">
+		SELECT MAX(cm.DATE_YM)
+		  FROM TBL_CHUNG_MST cm
+		 WHERE cm.HOSP_CD = #{hospCd} AND COALESCE(cm.DEL_YN,'') <![CDATA[<>]]> 'Y'
+	</select>
+
+	<!-- ===================== 고정경비 ===================== -->
+	<select id="selectCfg" resultType="java.util.HashMap">
+		SELECT HOSP_CD AS hospcd, BED_CNT AS bedcnt, VAR_COST_DAY AS varcostday, NOTE AS note, UPD_DTTM AS upddttm, UPD_USER AS upduser
+		  FROM TBL_MIS_CFG WHERE HOSP_CD = #{hospCd}
+	</select>
+
+	<insert id="saveCfg">
+		INSERT INTO TBL_MIS_CFG (HOSP_CD, BED_CNT, VAR_COST_DAY, NOTE, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{bedCnt}, #{varCostDay}, #{note}, #{userId}, #{userId})
+		ON DUPLICATE KEY UPDATE BED_CNT = VALUES(BED_CNT), VAR_COST_DAY = VALUES(VAR_COST_DAY), NOTE = VALUES(NOTE), UPD_USER = VALUES(UPD_USER)
+	</insert>
+
+	<!-- 항목 : 공통('*') + 이 병원 — 같은 코드가 둘이면 병원 것이 이긴다 -->
+	<select id="selectCats" resultType="java.util.HashMap">
+		SELECT c.HOSP_CD AS hospcd, c.CAT_CD AS catcd, c.CAT_NM AS catnm, c.CAT_GB AS catgb, c.SORT_NO AS sortno, c.USE_YN AS useyn
+		     , CASE WHEN c.HOSP_CD = '*' THEN 'N' ELSE 'Y' END AS own
+		  FROM TBL_MIS_COST_CAT c
+		 WHERE c.HOSP_CD = #{hospCd}
+		    OR (c.HOSP_CD = '*' AND NOT EXISTS (SELECT 1 FROM TBL_MIS_COST_CAT o WHERE o.HOSP_CD = #{hospCd} AND o.CAT_CD = c.CAT_CD))
+		 ORDER BY c.CAT_GB, c.SORT_NO, c.CAT_CD
+	</select>
+
+	<!-- 항목 저장(병원 전용 행) — 공통 항목을 고치면 병원 전용 사본이 생겨 공통을 덮는다(이름·사용 여부) -->
+	<insert id="saveCat">
+		INSERT INTO TBL_MIS_COST_CAT (HOSP_CD, CAT_CD, CAT_NM, CAT_GB, SORT_NO, USE_YN, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{catCd}, #{catNm}, #{catGb}, #{sortNo}, #{useYn}, #{userId}, #{userId})
+		ON DUPLICATE KEY UPDATE CAT_NM = VALUES(CAT_NM), CAT_GB = VALUES(CAT_GB), SORT_NO = VALUES(SORT_NO), USE_YN = VALUES(USE_YN), UPD_USER = VALUES(UPD_USER)
+	</insert>
+
+	<!-- 병원 전용 항목 삭제 — 공통('*')은 지우지 못한다(WHERE 가 막는다). 금액 기록이 있으면 서비스가 먼저 거른다. -->
+	<delete id="deleteCat">
+		DELETE FROM TBL_MIS_COST_CAT WHERE HOSP_CD = #{hospCd} AND CAT_CD = #{catCd} AND HOSP_CD <![CDATA[<>]]> '*'
+	</delete>
+
+	<select id="countCostByCat" resultType="int">
+		SELECT COUNT(*) FROM TBL_MIS_COST WHERE HOSP_CD = #{hospCd} AND CAT_CD = #{catCd}
+	</select>
+
+	<!-- 월 금액 — 한 달 -->
+	<select id="selectCost" resultType="java.util.HashMap">
+		SELECT CAT_CD AS catcd, AMT AS amt, MEMO AS memo, UPD_DTTM AS upddttm, UPD_USER AS upduser
+		  FROM TBL_MIS_COST WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</select>
+
+	<!-- 입력이 있는 가장 가까운 이전 달(「바뀐 것만 입력」 — 빈 달은 이 달 값을 보여 준다) -->
+	<select id="selectPrevCostYm" resultType="java.lang.String">
+		SELECT MAX(YYYYMM) FROM TBL_MIS_COST WHERE HOSP_CD = #{hospCd} AND YYYYMM <![CDATA[<]]> #{ym}
+	</select>
+
+	<!-- 월별 합계(기간) — 추이 표. 고정비(C)·추가수익(R)을 항목 구분으로 가른다 -->
+	<select id="selectCostTrend" resultType="java.util.HashMap">
+		SELECT m.YYYYMM AS ym
+		     , COALESCE(SUM(CASE WHEN c.CAT_GB = 'R' THEN m.AMT ELSE 0 END),0) AS extraamt
+		     , COALESCE(SUM(CASE WHEN COALESCE(c.CAT_GB,'C') = 'C' THEN m.AMT ELSE 0 END),0) AS costamt
+		  FROM TBL_MIS_COST m
+		  LEFT JOIN TBL_MIS_COST_CAT c
+		         ON c.CAT_CD = m.CAT_CD
+		        AND c.HOSP_CD = (SELECT CASE WHEN EXISTS (SELECT 1 FROM TBL_MIS_COST_CAT o WHERE o.HOSP_CD = m.HOSP_CD AND o.CAT_CD = m.CAT_CD) THEN m.HOSP_CD ELSE '*' END)
+		 WHERE m.HOSP_CD = #{hospCd} AND m.YYYYMM BETWEEN #{fromYm} AND #{toYm}
+		 GROUP BY m.YYYYMM
+		 ORDER BY m.YYYYMM
+	</select>
+
+	<delete id="deleteCostMonth">
+		DELETE FROM TBL_MIS_COST WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</delete>
+
+	<insert id="insertCost">
+		INSERT INTO TBL_MIS_COST (HOSP_CD, YYYYMM, CAT_CD, AMT, MEMO, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{ym}, #{catCd}, #{amt}, #{memo}, #{userId}, #{userId})
+	</insert>
+
+</mapper>
