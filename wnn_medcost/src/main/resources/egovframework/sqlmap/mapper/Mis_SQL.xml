@@ -208,4 +208,145 @@
 		VALUES (#{hospCd}, #{ym}, #{catCd}, #{amt}, #{memo}, #{userId}, #{userId})
 	</insert>
 
+	<!-- ===================== 업무 알림(③ 업무 자동화) — 「그 달 자료가 올라왔나」를 세는 조회들 ===================== -->
+	<select id="countClaimYm" resultType="int">
+		SELECT COUNT(*) FROM TBL_CHUNG_MST WHERE HOSP_CD = #{hospCd} AND DATE_YM = #{ym} AND COALESCE(DEL_YN,'') <![CDATA[<>]]> 'Y'
+	</select>
+	<select id="selectIpwonYm" resultType="java.util.HashMap">
+		SELECT COUNT(*) AS cnt, MAX(REG_DTTM) AS lastreg FROM TBL_IPWON_INFO WHERE HOSP_CD = #{hospCd} AND JOBYYMM = #{ym}
+	</select>
+	<select id="selectPatvalYm" resultType="java.util.HashMap">
+		SELECT COUNT(DISTINCT PAT_ID) AS cnt, MAX(REG_DTTM) AS lastreg FROM TBL_PATVAL_MST WHERE HOSP_CD = #{hospCd} AND MED_START LIKE CONCAT(#{ym},'%')
+	</select>
+	<select id="selectPatIndiYm" resultType="java.util.HashMap">
+		SELECT COUNT(*) AS cnt, MAX(UPD_DTTM) AS lastreg, SUM(WEIGVAL) AS score FROM TBL_PAT_INDI WHERE HOSP_CD = #{hospCd} AND JOBYYMM = #{ym}
+	</select>
+	<select id="countGradeQ" resultType="int">
+		SELECT COUNT(*) FROM TBL_GRADE_MST WHERE HOSP_CD = #{hospCd} AND START_YY = #{yy} AND QTER_FLAG = #{qt} AND ACTION_YN = 'Y'
+	</select>
+	<select id="countCostYm" resultType="int">
+		SELECT COUNT(*) FROM TBL_MIS_COST WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</select>
+	<!-- 구조영역(01~03) 표준화 구간 — 인력 시뮬레이션용. 오늘 유효한 판(ACTION_YN='Y') -->
+	<select id="selectStructZones" resultType="java.util.HashMap">
+		SELECT CATE_CODE AS catecode, ORDER_SEQ AS orderseq, WEVALUE_NM AS wevaluenm
+		     , START_INDI AS startindi, END_INDI AS endindi, STD_SCORE AS stdscore, WE_VALUE AS wevalue
+		  FROM TBL_WEVALUE_MST
+		 WHERE CATE_CODE IN ('01','02','03')
+		   AND ACTION_YN = 'Y'
+		   AND #{today} BETWEEN START_DT AND END_DT
+		 ORDER BY CATE_CODE, START_INDI
+	</select>
+
+
+	<!-- ===================== ④ 신규환자 고객관리 (2026-10-08, DDL MIS_DDL_LEAD_2026-10-08.sql) ===================== -->
+	<select id="selectLeads" resultType="java.util.HashMap">
+		SELECT LEAD_SEQ AS leadseq, PAT_NM AS patnm, BIRTH6 AS birth6, GENDER AS gender, GUARD_NM AS guardnm, GUARD_REL AS guardrel, TEL AS tel
+		     , CONTACT_DT AS contactdt, CHANNEL AS channel, COND_MEMO AS condmemo, STAGE AS stage, PLAN_DT AS plandt, NEXT_DT AS nextdt, NEXT_MEMO AS nextmemo
+		     , ADMIT_DT AS admitdt, DISCH_DT AS dischdt, MATCH_YN AS matchyn, CLOSE_RSN AS closersn, UPD_DTTM AS upddttm, UPD_USER AS upduser
+		  FROM TBL_MIS_LEAD
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		   AND (STAGE <![CDATA[<>]]> '90' OR UPD_DTTM >= DATE_SUB(NOW(), INTERVAL 60 DAY))
+		 ORDER BY STAGE, COALESCE(NEXT_DT, '99999999'), CONTACT_DT DESC, LEAD_SEQ DESC
+	</select>
+
+	<select id="selectLead" resultType="java.util.HashMap">
+		SELECT LEAD_SEQ AS leadseq, PAT_NM AS patnm, BIRTH6 AS birth6, STAGE AS stage, ADMIT_DT AS admitdt, DISCH_DT AS dischdt, MATCH_YN AS matchyn
+		  FROM TBL_MIS_LEAD WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq} AND USE_YN = 'Y'
+	</select>
+
+	<insert id="insertLead" useGeneratedKeys="true" keyProperty="leadSeq">
+		INSERT INTO TBL_MIS_LEAD (HOSP_CD, PAT_NM, BIRTH6, GENDER, GUARD_NM, GUARD_REL, TEL, CONTACT_DT, CHANNEL, COND_MEMO, STAGE, PLAN_DT, NEXT_DT, NEXT_MEMO, ADMIT_DT, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{patNm}, #{birth6}, #{gender}, #{guardNm}, #{guardRel}, #{tel}, #{contactDt}, #{channel}, #{condMemo}, #{stage}, #{planDt}, #{nextDt}, #{nextMemo}, #{admitDt}, #{userId}, #{userId})
+	</insert>
+
+	<update id="updateLead">
+		UPDATE TBL_MIS_LEAD
+		   SET PAT_NM = #{patNm}, BIRTH6 = #{birth6}, GENDER = #{gender}, GUARD_NM = #{guardNm}, GUARD_REL = #{guardRel}, TEL = #{tel}
+		     , CONTACT_DT = #{contactDt}, CHANNEL = #{channel}, COND_MEMO = #{condMemo}, STAGE = #{stage}, PLAN_DT = #{planDt}
+		     , NEXT_DT = #{nextDt}, NEXT_MEMO = #{nextMemo}, ADMIT_DT = #{admitDt}, DISCH_DT = #{dischDt}, CLOSE_RSN = #{closeRsn}, UPD_USER = #{userId}
+		 WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq}
+	</update>
+
+	<update id="updateLeadStage">
+		UPDATE TBL_MIS_LEAD SET STAGE = #{stage}, CLOSE_RSN = #{closeRsn}, UPD_USER = #{userId}
+		 WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq}
+	</update>
+
+	<!-- 자동 매칭 결과 반영 — 사람이 적은 단계보다 앞으로만 -->
+	<update id="updateLeadMatch">
+		UPDATE TBL_MIS_LEAD
+		   SET STAGE = CASE WHEN STAGE <![CDATA[<]]> #{stage} THEN #{stage} ELSE STAGE END
+		     , ADMIT_DT = CASE WHEN COALESCE(ADMIT_DT,'') = '' THEN #{admitDt} ELSE ADMIT_DT END   /* 빈 글자('')로 저장된 입원일도 채운다 — COALESCE 는 '' 를 값으로 본다(실측) */
+		     , DISCH_DT = CASE WHEN #{dischDt} <![CDATA[<>]]> '' THEN #{dischDt} ELSE DISCH_DT END
+		     , MATCH_YN = 'Y'
+		 WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq}
+	</update>
+
+	<update id="deleteLead">
+		UPDATE TBL_MIS_LEAD SET USE_YN = 'N', UPD_USER = #{userId} WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq}
+	</update>
+
+	<!-- 입퇴원현황과 매칭 — 상담 뒤 입원한 건(생년월일 6 + 이름). 입원일 오름차순이라 서비스가 첫 입원을 고른다 -->
+	<select id="selectLeadMatches" resultType="java.util.HashMap">
+		SELECT l.LEAD_SEQ AS leadseq
+		     , REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')                          AS ipdt
+		     , MAX(COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),''))        AS twdt
+		  FROM TBL_MIS_LEAD l
+		  JOIN TBL_IPWON_INFO t
+		    ON t.HOSP_CD = l.HOSP_CD
+		   AND LEFT(t.JUMINNO,6) = l.BIRTH6
+		   AND REGEXP_REPLACE(t.PATNAME,'[0-9]','') = l.PAT_NM
+		   AND REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') >= l.CONTACT_DT
+		 WHERE l.HOSP_CD = #{hospCd} AND l.USE_YN = 'Y'
+		   AND l.STAGE IN ('10','20','30','40','50')   /* 50(퇴원 후)도 다시 본다 — 입원일이 비어 있던 줄을 채우기 위해(멱등) */
+		   AND COALESCE(l.BIRTH6,'') <![CDATA[<>]]> ''
+		 GROUP BY l.LEAD_SEQ, REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')
+		 ORDER BY l.LEAD_SEQ, ipdt
+	</select>
+
+	<insert id="insertLeadLog">
+		INSERT INTO TBL_MIS_LEAD_LOG (LEAD_SEQ, HOSP_CD, LOG_DT, STAGE, MEMO, REG_USER)
+		VALUES (#{leadSeq}, #{hospCd}, #{logDt}, #{stage}, #{memo}, #{userId})
+	</insert>
+
+	<select id="selectLeadLogs" resultType="java.util.HashMap">
+		SELECT LOG_SEQ AS logseq, LOG_DT AS logdt, STAGE AS stage, MEMO AS memo, REG_USER AS reguser, REG_DTTM AS regdttm
+		  FROM TBL_MIS_LEAD_LOG WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq} ORDER BY LOG_SEQ DESC
+	</select>
+
+	<!-- 유입 경로별 집계(기간) — 상담 수·입원 전환 수 -->
+	<select id="selectLeadStats" resultType="java.util.HashMap">
+		SELECT CHANNEL AS channel, COUNT(*) AS leads
+		     , SUM(CASE WHEN STAGE IN ('40','50') THEN 1 ELSE 0 END) AS admits
+		  FROM TBL_MIS_LEAD
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y' AND CONTACT_DT BETWEEN #{fromDt} AND #{toDt}
+		 GROUP BY CHANNEL
+	</select>
+
+	<!-- 퇴원 환자 안부 연락 목록 — 최근 N일 퇴원(입퇴원현황, 입원 건 단위) + 연락 기록 -->
+	<select id="selectFollowList" resultType="java.util.HashMap">
+		SELECT a.jm AS birth6, a.nm AS patnm, a.ipdt, a.twdt
+		     , DATEDIFF(STR_TO_DATE(a.twdt,'%Y%m%d'), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1 AS staydays
+		     , f.DONE_YN AS doneyn, f.DONE_DT AS donedt, f.RESULT_CD AS resultcd, f.MEMO AS memo
+		     , (SELECT MIN(REPLACE(REPLACE(r.IPWONDT,'-',''),'/','')) FROM TBL_IPWON_INFO r
+		         WHERE r.HOSP_CD = #{hospCd} AND LEFT(r.JUMINNO,6) = a.jm AND REGEXP_REPLACE(r.PATNAME,'[0-9]','') = a.nm
+		           AND REPLACE(REPLACE(r.IPWONDT,'-',''),'/','') <![CDATA[>]]> a.twdt) AS readmitdt
+		  FROM (SELECT LEFT(t.JUMINNO,6) AS jm, REGEXP_REPLACE(t.PATNAME,'[0-9]','') AS nm
+		             , REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') AS ipdt
+		             , MAX(COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'')) AS twdt
+		          FROM TBL_IPWON_INFO t
+		         WHERE t.HOSP_CD = #{hospCd} AND t.JOBYYMM >= #{fromYm}
+		         GROUP BY LEFT(t.JUMINNO,6), REGEXP_REPLACE(t.PATNAME,'[0-9]',''), REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')
+		        HAVING twdt BETWEEN #{fromDt} AND #{toDt}) a
+		  LEFT JOIN TBL_MIS_FOLLOW f ON f.HOSP_CD = #{hospCd} AND f.BIRTH6 = a.jm AND f.IPWON_DT = a.ipdt AND f.TEWON_DT = a.twdt
+		 ORDER BY a.twdt DESC, a.nm
+	</select>
+
+	<insert id="saveFollow">
+		INSERT INTO TBL_MIS_FOLLOW (HOSP_CD, BIRTH6, IPWON_DT, TEWON_DT, DONE_YN, DONE_DT, RESULT_CD, MEMO, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{birth6}, #{ipwonDt}, #{tewonDt}, #{doneYn}, #{doneDt}, #{resultCd}, #{memo}, #{userId}, #{userId})
+		ON DUPLICATE KEY UPDATE DONE_YN = VALUES(DONE_YN), DONE_DT = VALUES(DONE_DT), RESULT_CD = VALUES(RESULT_CD), MEMO = VALUES(MEMO), UPD_USER = VALUES(UPD_USER)
+	</insert>
+
 </mapper>

@@ -801,6 +801,8 @@
                             <ul class="nav flex-column">
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misStat.do">경영통계</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">고정경비 관리</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misAlert.do">업무 알림</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misLead.do">신규환자 고객관리</a></li>
                             </ul>
                         </div>
                     </li>
@@ -3147,6 +3149,6 @@ window.qpsPrintGo = function (w, maxMs) {
     } catch(e){}
     apply(false);
     // 지금 MIS 화면이면 메뉴를 펼쳐 둔다(어느 메뉴에서 왔는지 보이게)
-    try { if (/\/main\/mis(Stat|Cost)\.do/.test(location.pathname + '|' + (sessionStorage.getItem('_realPath') || ''))) apply(true); } catch(e){}
+    try { if (/\/main\/mis(Stat|Cost|Alert|Lead).do/.test(location.pathname + '|' + (sessionStorage.getItem('_realPath') || ''))) apply(true); } catch(e){}
 })();
 </script>

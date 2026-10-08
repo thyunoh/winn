@@ -29,7 +29,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261008-MIS1";
+	private static final String BUILD = "20261008-MIS3";   // + ④ 고객관리(상담 접수·자동 매칭·안부 연락)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -200,6 +200,184 @@ public class MisController {
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
 	}
+
+
+	/* ═══ 업무 알림(③ 업무 자동화) ═══ */
+	@RequestMapping(value = "main/misAlert.do")
+	public String misAlert(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misAlert"); }
+
+	@RequestMapping(value = "/mis/alertGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> alertGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String wnn = ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim();
+			res.put("alerts", svc.selectAlerts(hospCd, wnn));
+			res.put("hospCd", hospCd);
+			res.put("build", BUILD);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 인력 시뮬레이션 재료 — 계산은 화면이 한다(숫자를 바꾸며 바로 보게). */
+	@RequestMapping(value = "/mis/simGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> simGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectSim(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+
+	/* ═══ ④ 신규환자 고객관리 ═══ */
+	@RequestMapping(value = "main/misLead.do")
+	public String misLead(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misLead"); }
+
+	/** 관리판 — 상담 목록(단계별) + 유입 경로 집계. 열 때마다 입퇴원현황과 대조해 입원·퇴원을 자동 반영한다. */
+	@RequestMapping(value = "/mis/leadList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leadList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectLeadBoard(hospCd));
+			res.put("hospCd", hospCd);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 상담 저장(새로/고치기). 주민번호 전체는 받지 않는다 — 생년월일 6자리만. */
+	@RequestMapping(value = "/mis/leadSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leadSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String patNm = unesc(p.get("patNm")).trim().replaceAll("\\s+", "");
+			if (patNm.isEmpty()) return fail(res, "환자 이름을 적어 주세요.");
+			if (patNm.length() > 50) patNm = patNm.substring(0, 50);
+			String birth6 = str(p.get("birth6"), "").replaceAll("[^0-9]", "");
+			if (!birth6.isEmpty() && !birth6.matches("\\d{6}")) return fail(res, "생년월일은 6자리(YYMMDD)입니다.");
+			String contactDt = str(p.get("contactDt"), "").replaceAll("[^0-9]", "");
+			if (!contactDt.matches("\\d{8}")) contactDt = nowDt();
+			String stage = str(p.get("stage"), "10");
+			if (!stage.matches("10|20|30|40|50|90")) stage = "10";
+			String channel = str(p.get("channel"), "ETC").toUpperCase();
+			if (!channel.matches("INTRO|TRANS|WEB|ADS|ETC")) channel = "ETC";
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("leadSeq", str(p.get("leadSeq"), ""));
+			m.put("patNm", patNm); m.put("birth6", birth6);
+			String g = str(p.get("gender"), "").toUpperCase(); m.put("gender", g.matches("M|F") ? g : null);
+			m.put("guardNm", cut(unesc(p.get("guardNm")), 50)); m.put("guardRel", cut(unesc(p.get("guardRel")), 20)); m.put("tel", cut(unesc(p.get("tel")), 30));
+			m.put("contactDt", contactDt); m.put("channel", channel); m.put("condMemo", cut(unesc(p.get("condMemo")), 300)); m.put("stage", stage);
+			m.put("planDt", dt8(p.get("planDt"))); m.put("nextDt", dt8(p.get("nextDt"))); m.put("nextMemo", cut(unesc(p.get("nextMemo")), 200));
+			m.put("admitDt", dt8(p.get("admitDt"))); m.put("dischDt", dt8(p.get("dischDt"))); m.put("closeRsn", cut(unesc(p.get("closeRsn")), 100));
+			m.put("userId", userId(request));
+			res.put("leadSeq", svc.saveLead(m));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 단계 옮기기(상담→방문→입원결정→입원→퇴원후, 종결). 이력에 남는다. */
+	@RequestMapping(value = "/mis/leadStage.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leadStage(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("leadSeq")); if (seq == null) return fail(res, "상담 번호가 없습니다.");
+			String stage = str(p.get("stage"), ""); if (!stage.matches("10|20|30|40|50|90")) return fail(res, "단계 값이 잘못되었습니다.");
+			svc.moveLead(hospCd, seq, stage, cut(unesc(p.get("closeRsn")), 100), cut(unesc(p.get("memo")), 500), userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/leadLog.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leadLog(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("leadSeq")); if (seq == null) return fail(res, "상담 번호가 없습니다.");
+			String memo = cut(unesc(p.get("memo")), 500);
+			if (!memo.isEmpty()) svc.addLeadLog(hospCd, seq, memo, userId(request));
+			res.put("logs", svc.selectLeadLogs(hospCd, seq));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/leadDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leadDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("leadSeq")); if (seq == null) return fail(res, "상담 번호가 없습니다.");
+			svc.deleteLead(hospCd, seq, userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 퇴원 환자 안부 연락 목록 — 최근 days 일(기본 60) */
+	@RequestMapping(value = "/mis/followList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> followList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Integer days = intOf(p.get("days")); if (days == null || days < 7 || days > 365) days = 60;
+			res.put("list", svc.selectFollowList(hospCd, days));
+			res.put("days", days);
+			res.put("today", nowDt());
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/followSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> followSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String b = str(p.get("birth6"), "").replaceAll("[^0-9]", ""), ip = dt8(p.get("ipwonDt")), tw = dt8(p.get("tewonDt"));
+			if (!b.matches("\\d{6}") || ip.isEmpty() || tw.isEmpty()) return fail(res, "퇴원 건 키(생년월일·입원일·퇴원일)가 없습니다.");
+			String done = "Y".equals(str(p.get("doneYn"), "N")) ? "Y" : "N";
+			String rc = str(p.get("resultCd"), "").toUpperCase(); if (!rc.matches("HOME|READMIT|OTHER|NOANS|ETC")) rc = "";
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("birth6", b); m.put("ipwonDt", ip); m.put("tewonDt", tw);
+			m.put("doneYn", done); m.put("doneDt", "Y".equals(done) ? nowDt() : null); m.put("resultCd", rc.isEmpty() ? null : rc);
+			m.put("memo", cut(unesc(p.get("memo")), 300)); m.put("userId", userId(request));
+			svc.saveFollow(m);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	private static String nowDt() { return new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()); }
+	private static String dt8(Object o) { String s = str(o, "").replaceAll("[^0-9]", ""); return s.matches("\\d{8}") ? s : ""; }
+	private static String cut(String s, int n) { if (s == null) return ""; s = s.trim(); return s.length() > n ? s.substring(0, n) : s; }
 
 	/* ═══ 공통 ═══ */
 	/** 병원 — 로그인 쿠키. 위너넷(s_wnn_yn=Y)만 hospCd 파라미터로 다른 병원을 본다(QPS 와 같은 규칙). */

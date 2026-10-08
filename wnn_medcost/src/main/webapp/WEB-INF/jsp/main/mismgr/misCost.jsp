@@ -39,6 +39,8 @@
   #misCost .mc-kpi .d{ font-size:12px; font-weight:700; color:#6b7c86; }
   #misCost .up{ color:#2f8f5b; } #misCost .down{ color:#c0463f; }
   #misCost .mc-grid{ display:grid; grid-template-columns:1.3fr 1fr; gap:12px; margin-bottom:12px; }
+  #misCost .mc-grid > *{ min-width:0; }   /* 그리드 칸이 안의 긴 글자 때문에 화면 밖으로 밀려 잘리던 것(2026-10-08 사용자 캡처) */
+  #misCost .mc-grid > div > .mc-card, #misCost .bep{ overflow-wrap:anywhere; }
   @media (max-width:900px){ #misCost .mc-grid{ grid-template-columns:1fr; } }
   #misCost .mc-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:12px 14px; min-width:0; }
   #misCost .mc-card h4{ margin:0 0 8px; font-size:13px; color:#43555f; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -52,8 +54,10 @@
   #misCost .bep{ border:2px solid #1f5a4b; border-radius:10px; padding:12px 14px; background:#e7f3ee; }
   #misCost .bep h4{ color:#1f5a4b; }
   #misCost .bep .big{ font-size:32px; font-weight:900; line-height:1.1; color:#20303a; font-variant-numeric:tabular-nums; }
-  #misCost .bep .row{ display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:4px 0; border-top:1px dashed #cfe3da; }
-  #misCost .bep .row:first-of-type{ border-top:0; }
+  /* ★class 이름을 row 로 두면 부트스트랩 .row(좌우 −15px 여백)가 먹어 글자가 상자 끝에 붙는다(2026-10-08 사용자 캡처) */
+  #misCost .bep .brow{ margin:0;  display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:4px 0; border-top:1px dashed #cfe3da; flex-wrap:wrap; }
+  #misCost .bep .brow b{ white-space:nowrap; }
+  #misCost .bep .brow:first-of-type{ border-top:0; }
   #misCost .gauge{ height:14px; border-radius:999px; background:#d9e3e0; overflow:hidden; margin:8px 0 4px; position:relative; }
   #misCost .gauge i{ display:block; height:100%; background:#1f5a4b; }
   #misCost .gauge b{ position:absolute; top:-4px; width:2px; height:22px; background:#d9772b; }
@@ -93,7 +97,7 @@
       <select id="mcNewGb"><option value="C">고정비</option><option value="R">추가수익</option></select>
       <input type="text" id="mcNewNm" placeholder="항목 이름 (예: 차량 리스)" maxlength="60" style="width:200px;">
       <button type="button" class="mc-btn" onclick="mcCatAdd();">추가</button>
-      <span class="small">공통 항목은 지울 수 없고 「사용」을 끌 수 있습니다. 이름을 바꾸면 이 병원에만 적용됩니다.</span>
+      <span class="small">공통 항목은 지울 수 없고 「끄기」로 숨겼다가 「사용」으로 되살립니다(끄면 이 달 합계에서 빠지고, 저장된 금액은 남습니다). 병원이 추가한 항목은 금액 기록이 없을 때만 [삭제]되며 되살릴 수 없습니다.</span>
     </div>
   </div>
   <div>
@@ -181,12 +185,12 @@
       var val = cur ? Number(cur.amt) : (pv ? Number(pv.amt) : null);
       var inherit = !cur && pv;
       h += '<tr data-cat="' + esc(c.catcd) + '" data-gb="' + esc(c.catgb) + '"' + (off ? ' style="opacity:.5"' : '') + '>'
-         + '<td>' + esc(c.catnm) + (c.own === 'Y' ? ' <span class="badge ok">병원</span>' : '') + (off ? ' <span class="badge">사용 안 함</span>' : '') + '</td>'
+         + '<td>' + esc(c.catnm) + (c.own === 'Y' && !isCopy(c) ? ' <span class="badge ok" title="이 병원이 추가한 항목">병원 추가</span>' : '') + (off ? ' <span class="badge">사용 안 함</span>' : '') + '</td>'
          + '<td class="n"><input type="text" class="amt' + (inherit ? ' inherit' : '') + '" value="' + (val == null ? '' : num(val)) + '"' + (off ? ' disabled' : '') + '></td>'
          + '<td class="n small">' + (pv ? num(pv.amt) : '—') + '</td>'
          + '<td><input type="text" class="memo" maxlength="200" value="' + esc(cur ? cur.memo : '') + '"' + (off ? ' disabled' : '') + '></td>'
          + '<td style="white-space:nowrap">' + '<button type="button" class="mc-btn" style="padding:2px 7px" onclick="mcCatToggle(\'' + esc(c.catcd) + '\',\'' + (off ? 'Y' : 'N') + '\')">' + (off ? '사용' : '끄기') + '</button>'
-         + (c.own === 'Y' ? ' <button type="button" class="mc-btn del" style="padding:2px 7px" onclick="mcCatDel(\'' + esc(c.catcd) + '\')">삭제</button>' : '') + '</td></tr>';
+         + (c.own === 'Y' && !isCopy(c) ? ' <button type="button" class="mc-btn del" style="padding:2px 7px" onclick="mcCatDel(\'' + esc(c.catcd) + '\')">삭제</button>' : '') + '</td></tr>';
     });
     h += '<tr class="sum"><td>고정비 합계</td><td class="n" id="mcSumC">—</td><td class="n small" id="mcSumCp">—</td><td colspan="2" class="small" id="mcSumD"></td></tr>';
     h += '<tr class="sum"><td>추가수익 합계</td><td class="n" id="mcSumR">—</td><td class="n small" id="mcSumRp">—</td><td colspan="2"></td></tr></tbody>';
@@ -240,12 +244,12 @@
       b += '<div class="big">' + bep + '명</div><div class="small">이 인원 이상 재원하면 고정비를 넘깁니다</div>';
       b += '<div class="gauge"><i style="width:' + Math.min(100, census/scale*100).toFixed(1) + '%"></i><b style="left:' + Math.min(100, bep/scale*100).toFixed(1) + '%"></b></div>';
       b += '<div class="small">막대 = 평균 재원 ' + Math.round(census) + '명 · 주황선 = 손익분기 ' + bep + '명 · 눈금 끝 = ' + scale + (bed ? '병상 (가동률 ' + (census/bed*100).toFixed(1) + '%)' : '명 (병상 수 입력 전)') + '</div>';
-      b += '<div class="row"><span>월 고정비</span><b>' + eok(s.c) + '</b></div>';
-      b += '<div class="row"><span>÷ 환자 1인 월 기여수익 (' + man(contrib) + ' × ' + dIn + '일)</span><b>' + man(contrib*dIn) + '</b></div>';
-      b += '<div class="row"><span>= 손익분기 환자 수</span><b>' + bep + '명</b></div>';
+      b += '<div class="brow"><span>월 고정비</span><b>' + eok(s.c) + '</b></div>';
+      b += '<div class="brow"><span>÷ 환자 1인 월 기여수익 (' + man(contrib) + ' × ' + dIn + '일)</span><b>' + man(contrib*dIn) + '</b></div>';
+      b += '<div class="brow"><span>= 손익분기 환자 수</span><b>' + bep + '명</b></div>';
       var gap = census - bep;
-      b += '<div class="row"><span>' + (gap >= 0 ? '현재 여유' : '현재 부족') + ' (' + Math.round(census) + ' − ' + bep + ')</span><b class="' + (gap >= 0 ? 'up' : 'down') + '">' + (gap >= 0 ? '+' : '−') + Math.abs(Math.round(gap)) + '명 (약 ' + eok(Math.abs(gap) * contrib * dIn) + '/월)</b></div>';
-      if (s.r) b += '<div class="row"><span>추가수익 반영 시 손익분기</span><b>' + Math.ceil(Math.max(0, s.c - s.r) / (contrib * dIn)) + '명</b></div>';
+      b += '<div class="brow"><span>' + (gap >= 0 ? '현재 여유' : '현재 부족') + ' (' + Math.round(census) + ' − ' + bep + ')</span><b class="' + (gap >= 0 ? 'up' : 'down') + '">' + (gap >= 0 ? '+' : '−') + Math.abs(Math.round(gap)) + '명 (약 ' + eok(Math.abs(gap) * contrib * dIn) + '/월)</b></div>';
+      if (s.r) b += '<div class="brow"><span>추가수익 반영 시 손익분기</span><b>' + Math.ceil(Math.max(0, s.c - s.r) / (contrib * dIn)) + '명</b></div>';
     } else {
       b += '<div class="big">—</div><div class="small">' + (!s.c ? '왼쪽 표에 고정비를 넣으면 계산됩니다.' : (!cl ? '이 달 청구 샘파일이 없어 수익을 모릅니다.' : '기여수익이 0 이하입니다 — 변동비 설정을 확인하세요.')) + '</div>';
     }
@@ -278,8 +282,14 @@
 
   window.mcSave = function(){
     if (!D) return;
-    var rows = [];
-    $('#mcTbl tbody tr[data-cat]').each(function(){ var inp = this.querySelector('input.amt'); if (inp.disabled) return; var v = toNum(inp.value); if (v == null) return; rows.push({ catCd: this.getAttribute('data-cat'), amt: v, memo: this.querySelector('input.memo').value }); });
+    var rows = [], saved = {}; (D.cost||[]).forEach(function(r){ saved[r.catcd] = r; });
+    $('#mcTbl tbody tr[data-cat]').each(function(){
+      var cat = this.getAttribute('data-cat'), inp = this.querySelector('input.amt');
+      // 꺼진 항목은 「숨긴 것」이지 금액을 버린 것이 아니다 — 이 달에 이미 저장된 금액이 있으면 그대로 다시 넣는다(저장은 그 달을 지우고 다시 넣으므로).
+      if (inp.disabled) { if (saved[cat]) rows.push({ catCd: cat, amt: Number(saved[cat].amt), memo: saved[cat].memo || '' }); return; }
+      var v = toNum(inp.value); if (v == null) return;
+      rows.push({ catCd: cat, amt: v, memo: this.querySelector('input.memo').value });
+    });
     if (!rows.length) { _alertBox('저장할 금액이 없습니다. 항목에 금액을 적어 주세요.', {icon:'⚠️'}); return; }
     _confirmBox({ msg: esc(ymLbl(D.ym)) + ' 금액 ' + rows.length + '건을 저장합니다.<br>이 달의 기존 입력은 이 내용으로 바뀝니다.', icon:'💾', okText:'저장',
       onOk: function(){
@@ -302,9 +312,15 @@
     var c = catsAll().filter(function(x){ return x.catcd === cd; })[0]; if (!c) return;
     post('<c:url value="/mis/catSave.do"/>', withHosp({ catCd: cd, catNm: c.catnm, catGb: c.catgb, sortNo: c.sortno, useYn: useYn })).then(function(){ mcLoad(); }).catch(err);
   };
+  /* 공통 항목의 병원 사본인가 — 병원이 [항목 추가]로 만든 코드는 'H'+8자리(mcCatAdd), 공통 씨앗은 LABOR·RENT 같은 낱말 코드.
+     공통 항목을 끄거나 켜면 병원 사본이 생기는데, 화면에서 이름을 못 바꾸므로 사본은 「끄기/사용」만 보여 주고 삭제 단추를 두지 않는다
+     (처음엔 [원래대로]를 두었다가 사용자 「의미 없지 않나」로 뺌 — 2026-10-08). 삭제는 병원이 추가한 항목에만. */
+  function isCopy(c){ return c.own === 'Y' && !/^H[0-9A-Z]{8}$/.test(String(c.catcd || '')); }
   window.mcCatDel = function(cd){
-    var c = catsAll().filter(function(x){ return x.catcd === cd; })[0]; if (!c) return;
-    _confirmBox({ msg: '「' + esc(c.catnm) + '」 항목을 지웁니다. 금액 기록이 있으면 지워지지 않고 「끄기」를 쓰라고 안내합니다.', icon:'⚠️', okText:'삭제', okColor:'#b23b3b',
+    var c = catsAll().filter(function(x){ return x.catcd === cd; })[0]; if (!c || isCopy(c)) return;
+    _confirmBox({
+      msg: '병원이 추가한 「' + esc(c.catnm) + '」 항목을 지웁니다. <b>되살릴 수 없습니다.</b><br>금액 기록이 있으면 지워지지 않으니 그때는 「끄기」를 쓰세요.',
+      icon: '🗑️', okText: '삭제', okColor: '#b23b3b',
       onOk: function(){ post('<c:url value="/mis/catDel.do"/>', withHosp({ catCd: cd })).then(function(){ _toast('지웠습니다.', 'ok'); mcLoad(); }).catch(err); } });
   };
 

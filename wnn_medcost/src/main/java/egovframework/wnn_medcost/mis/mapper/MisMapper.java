@@ -39,4 +39,28 @@ public interface MisMapper {
 	List<Map<String, Object>> selectCostTrend(@Param("hospCd") String hospCd, @Param("fromYm") String fromYm, @Param("toYm") String toYm);
 	int deleteCostMonth(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	int insertCost(Map<String, Object> p);
+
+	/* ── 업무 알림 ── */
+	int countClaimYm(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	Map<String, Object> selectIpwonYm(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	Map<String, Object> selectPatvalYm(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	Map<String, Object> selectPatIndiYm(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int countGradeQ(@Param("hospCd") String hospCd, @Param("yy") String yy, @Param("qt") String qt);
+	int countCostYm(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectStructZones(@Param("today") String today);
+
+	/* ── ④ 신규환자 고객관리 ── */
+	List<Map<String, Object>> selectLeads(@Param("hospCd") String hospCd);
+	Map<String, Object> selectLead(@Param("hospCd") String hospCd, @Param("leadSeq") long leadSeq);
+	int insertLead(Map<String, Object> p);
+	int updateLead(Map<String, Object> p);
+	int updateLeadStage(Map<String, Object> p);
+	int updateLeadMatch(Map<String, Object> p);
+	int deleteLead(Map<String, Object> p);
+	List<Map<String, Object>> selectLeadMatches(@Param("hospCd") String hospCd);
+	int insertLeadLog(Map<String, Object> p);
+	List<Map<String, Object>> selectLeadLogs(@Param("hospCd") String hospCd, @Param("leadSeq") long leadSeq);
+	List<Map<String, Object>> selectLeadStats(@Param("hospCd") String hospCd, @Param("fromDt") String fromDt, @Param("toDt") String toDt);
+	List<Map<String, Object>> selectFollowList(@Param("hospCd") String hospCd, @Param("fromYm") String fromYm, @Param("fromDt") String fromDt, @Param("toDt") String toDt);
+	int saveFollow(Map<String, Object> p);
 }

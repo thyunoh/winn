@@ -2181,3 +2181,19 @@
 - **검증** : javac 4개(WAR lib) · 매퍼 XML 정형성 20문·id 중복 0 · **매퍼 SELECT 전부를 운영 DB 에 부산은빛 값으로 실행**(오류 0, 수치는 제안서와 일치 — 9월 총진료비 4.68억·입원일수 5,162·환자군 B49/C98/D30·점수 86.0) · 화면 JS 2개 Nashorn 문법 OK.
   ⛔**눈 검증은 WAR 재빌드+재기동 뒤** — 이 PC 엔 Eclipse 배포 폴더(tmp1)가 없다. 재기동 뒤 `mis` 쳐서 메뉴 → 경영통계(부산은빛) → 고정경비에 금액 넣고 저장 → 손익분기 확인.
 - **다음(2·3단계)** : ③업무 자동화(기한 알림·미업로드 독촉·자가점검·인력 시뮬) · ④고객관리(상담 접수 입력 + 입퇴원현황 자동 매칭). 병원 의견을 받은 뒤 순서 결정.
+- ✅**[2026-10-08 재기동 뒤 화면 실왕복]** 내장 브라우저(쿠키 `s_hospid=21281238; s_userid=admin; s_wnn_yn=Y`) : `mis` 타이핑 → 메뉴 켜짐·펼침 · 경영통계 KPI 4.68억/172명/14·14/9.1만 · 고정경비 설정(병상 200·변동비 25,000) + 9월 예시 금액 6건 저장 → **손익분기 148명·여유 24명·가동률 86.0%**.
+  ★**부산은빛 9월에 시연용 예시 고정비가 저장돼 있다**(인건비 2.10억·임대 0.22·위탁 0.25·공과금 0.10·보험리스 0.23·비급여 수익 0.38, MEMO 「시연 예시」). 지우려면 `DELETE FROM TBL_MIS_COST WHERE HOSP_CD='21281238' AND YYYYMM='202609'; DELETE FROM TBL_MIS_CFG WHERE HOSP_CD='21281238';`
+  · 사용자 지적(인천스마일 화면) 「그래프를 진료비 분석 그래프처럼 · 환자군(B·C·D·E) 분류 설명」 → 손 SVG(넓은 화면에서 글자가 거대해짐) 대신 **Chart.js**(header.jsp 가 싣는다, total_Report 와 같은 색 — 본원 주황·비교 파랑, 범례 아래, 20곳 미만 달은 반투명+툴팁 「집계중」) · 환자군 A~E 설명 표(details, 기본 펼침) · 1인 1일 고객 평균은 **20곳 이상 올린 가장 가까운 달** 것을 쓴다(9월 10곳으로 비교하면 어긋난다).
+  · 로컬 배포 폴더는 이 PC 에서 `C:\Users\HYUN\eclipse-workspace\.metadata\.plugins\org.eclipse.wst.server.core\tmp1\wtpwebapps\wnn_medcost`(실행 중 톰캣의 `-Dwtp.deploy` 로 찾음 — D:\egv 아님). JSP 만 고치면 거기 복사로 바로 반영.
+  · 콘솔의 morris/Chartist/loading.js 오류는 이 화면과 무관한 기존 전역 플러그인 초기화 오류다.
+- ✅**[2026-10-08 이어서] ③ 업무 자동화 1차 = 「업무 알림」 화면**(`main/misAlert.do` · misAlert.jsp · `/mis/alertGet.do`·`/mis/simGet.do`, 메뉴 경영관리(MIS) ▸ 업무 알림). ⛔**자바 변경 → 재기동 필요**(`BUILD 20261008-MIS2`).
+  · 알림 = 서버(`MisServiceImpl.selectAlerts`)가 **지난달** 청구 샘파일·입퇴원현황·환자평가표·자료생성, **이번 분기** 차등제 신고값, 지난달 **평가표 자가점검**(적정성-평가 점검과 같은 `MagamService.select_assesCheck00` 을 돌려 건수만), 고정비·병상 수를 점검. level bad/warn/ok/info + 바로가기. 판정 실패는 그 항목만 info(한 조회 때문에 판이 안 뜨면 안 된다).
+  · 인력 시뮬레이션 = 최신 차등제 신고값 + `TBL_WEVALUE_MST`(01~03, ACTION_YN=Y, 오늘 유효) — 1인당 환자 = 평균환자 ÷ 인력(둘째 자리 반올림) → 구간 START_INDI~END_INDI → 가중치 = WE_VALUE×표준화÷5 절삭. 「5점 되려면」 = 평균환자 ÷ 5점 구간 상한. 계산은 화면(JS), 저장 없음.
+  · 문자·메일 발송은 **2차**(담당자 등록 표 필요) — 아직 없음.
+- ✅**[2026-10-08 이어서] ④ 신규환자 고객관리**(`main/misLead.do` · misLead.jsp · `/mis/leadList·leadSave·leadStage·leadLog·leadDel·followList·followSave.do`, 메뉴 경영관리(MIS) ▸ 신규환자 고객관리). ⛔**DDL [MIS_DDL_LEAD_2026-10-08.sql](docs/sql/mis/ddl/MIS_DDL_LEAD_2026-10-08.sql) 실행 + WAR 재빌드·재기동**(`BUILD 20261008-MIS3`).
+  · 표 3 = `TBL_MIS_LEAD`(상담 1건 = 1줄, 단계 10 상담·20 방문·30 입원결정·40 입원·50 퇴원후·90 종결, 유입경로 INTRO/TRANS/WEB/ADS/ETC) · `TBL_MIS_LEAD_LOG`(이력) · `TBL_MIS_FOLLOW`(퇴원 안부 연락, 키 = 생년월일6+입원일+퇴원일).
+  · ★**자동 매칭** = 관리판을 열 때마다 `selectLeadMatches`(생년월일6 + 이름(숫자 뗌), 상담일 이후 입원) → 첫 입원 건으로 STAGE 40/50·ADMIT_DT·DISCH_DT·MATCH_YN — **단계는 앞으로만**(사람이 적은 「입원」을 되돌리지 않는다). 생년월일이 없는 상담은 매칭 안 됨(화면 안내).
+  · 안부 연락 = 입퇴원현황의 최근 N일 퇴원 건(입원 건 단위, 재입원이면 배지) + 결과(HOME/READMIT/OTHER/NOANS/ETC)·메모. 7일 지나면 「연락」 배지.
+  · 주민번호 전체는 안 받는다(이름·생년월일6·보호자·연락처만). 상세 입력은 `_confirmBox` 에 입력칸이 없어 화면 안 패널.
+  ⚠⚠**함정(2026-10-08, 두 번 겪음 — misAlert.jsp·misLead.jsp 가 통째로 깨짐)** : `perl -pe 's|패턴|치환|'` 에서 **패턴 안에 `\|\|`(JS 의 `||`)가 있으면** 구분자 처리 뒤 `||` 가 **빈 교대식**이 되어 모든 줄이 매치 → 파일 전 줄이 치환문으로 바뀐다(grep -c 가 줄 수와 같게 나오면 이것). 한 번은 커밋(a93ce180)까지 갔다가 f59ee8c9 로 복구.
+  ⇒ **JS 가 든 줄을 고칠 땐 Edit 도구(정확 문자열)나 `#` 구분자**를 쓰고, 치환 뒤 **`grep -c` 결과가 1~2 인지** 반드시 본다.

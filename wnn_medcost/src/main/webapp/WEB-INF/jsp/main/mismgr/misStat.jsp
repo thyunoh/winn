@@ -34,6 +34,7 @@
   #misStat .ms-kpi .d{ font-size:12px; font-weight:700; color:#6b7c86; }
   #misStat .up{ color:#2f8f5b; } #misStat .down{ color:#c0463f; } #misStat .need{ color:#c0463f; }
   #misStat .ms-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:12px; margin-bottom:12px; }
+  #misStat .ms-grid > .ms-card:first-child{ display:flex; flex-direction:column; }   /* 그래프 카드가 오른쪽(환자군) 카드 높이만큼 늘어나 그래프가 빈칸을 채운다(2026-10-08 사용자 「아래로 내리고」) */
   @media (max-width:900px){ #misStat .ms-grid{ grid-template-columns:1fr; } }
   #misStat .ms-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:12px 14px; min-width:0; }
   #misStat .ms-card h4{ margin:0 0 8px; font-size:13px; color:#43555f; font-weight:700; }
@@ -75,14 +76,25 @@
 <div class="ms-grid">
   <div class="ms-card">
     <h4 id="msChartTtl">월 총진료비 추이 (억원)</h4>
-    <div id="msChart"></div>
-    <div class="legend"><span><i style="background:#1f5a4b"></i>우리 병원</span><span id="msLegAvg"><i style="background:#cfd8e0"></i>위너넷 고객 평균 (병원명 없이)</span></div>
+    <div id="msChartBox" style="flex:1 1 auto;min-height:300px;position:relative;"><canvas id="msChartCv"></canvas></div>
     <div class="small" id="msChartNote" style="margin-top:6px;"></div>
   </div>
   <div class="ms-card">
     <h4 id="msClsTtl">환자군 구성</h4>
     <div class="stack" id="msStack"></div>
     <div class="small" id="msClsNote"></div>
+    <details class="small" style="margin-top:8px;" open>
+      <summary style="cursor:pointer;color:#1f5a4b;font-weight:700;">환자군(A~E) 분류 설명</summary>
+      <table style="margin-top:6px;">
+        <tr><th style="width:130px;white-space:nowrap;">환자군</th><th>설명</th></tr>
+        <tr><td style="white-space:nowrap;"><b>A 의료최고도</b></td><td>혼수·인공호흡기·중심정맥영양 등 의료 필요도가 가장 높은 환자. 일당정액 수가가 가장 높음.</td></tr>
+        <tr><td style="white-space:nowrap;"><b>B 의료고도</b></td><td>뇌성마비·척수손상·파킨슨 등 신체기능이 크게 떨어져 집중 간호가 필요한 환자.</td></tr>
+        <tr><td style="white-space:nowrap;"><b>C 의료중도</b></td><td>중증 질환·욕창·경관영양 등 지속적인 의료 처치가 필요한 환자.</td></tr>
+        <tr><td style="white-space:nowrap;"><b>D 의료경도</b></td><td>치매·경증 질환 등 의료 필요도가 낮은 환자. 장기입원(181일) 지표의 대상.</td></tr>
+        <tr><td style="white-space:nowrap;"><b>E 선택입원군</b></td><td>의료보다 요양 목적이 큰 환자. 수가가 가장 낮고 장기입원 지표의 대상이며, 본인부담이 높음.</td></tr>
+      </table>
+      <div style="margin-top:4px;">분류는 매달 환자평가표(심평원 환자분류 기준)로 정해지며, 일당정액 수가는 A→E 순으로 낮아집니다. B·C 비율이 높을수록 1인 1일 진료비가 높고, D·E 가 늘면 장기입원 지표가 나빠질 수 있습니다.</div>
+    </details>
     <div class="ms-wrap"><table id="msClsTbl"></table></div>
   </div>
 </div>
@@ -164,9 +176,9 @@
     var cur = withClaim.length ? withClaim[withClaim.length-1] : L[L.length-1];
     var prev = null; for (var i = L.indexOf(cur) - 1; i >= 0; i--) { if (L[i].totamt > 0) { prev = L[i]; break; } }
     var dIn = daysIn(cur.ym), census = cur.admdays ? cur.admdays / dIn : 0, perDay = cur.admdays ? cur.totamt / cur.admdays : 0;
-    var a = B.avg[cur.ym], aPrev = prev ? B.avg[prev.ym] : null;
-    var avgPerDay = a && Number(a.avgperday) ? Number(a.avgperday) : (aPrev && Number(aPrev.avgperday) ? Number(aPrev.avgperday) : 0);
-    var avgPerDayYm = a && Number(a.avgperday) ? cur.ym : (aPrev ? prev.ym : '');
+    // 고객 평균(1인 1일)은 20곳 이상 올린 가장 가까운 달 것을 쓴다 — 집계 중인 달(10곳)로 비교하면 어긋난다
+    var avgRef = null; for (var j = L.indexOf(cur); j >= 0; j--) { var av0 = B.avg[L[j].ym]; if (av0 && Number(av0.hosps||0) >= 20 && Number(av0.avgperday)) { avgRef = av0; break; } }
+    var avgPerDay = avgRef ? Number(avgRef.avgperday) : 0, avgPerDayYm = avgRef ? avgRef.ym : '';
 
     // KPI
     var k = '';
@@ -176,23 +188,41 @@
     k += '<div class="ms-kpi"><div class="l">환자 1인 1일 진료비</div><div class="v">' + (perDay ? man(perDay) : '—') + '</div><div class="d ' + (avgPerDay && perDay >= avgPerDay ? 'up' : 'down') + '">' + (cmp && avgPerDay ? '고객 평균 ' + man(avgPerDay) + ' (' + esc(ymShort(avgPerDayYm)) + ')' : '총진료비 ÷ 입원일수') + '</div></div>';
     gel('msKpis').innerHTML = k;
 
-    // 막대 — 총진료비(우리) vs 고객 평균
-    var maxV = 0; L.forEach(function(r){ maxV = Math.max(maxV, r.totamt, cmp && B.avg[r.ym] ? Number(B.avg[r.ym].avgtot||0) : 0); });
-    var top = Math.max(1, Math.ceil(maxV / 100000000)), H = 120, base = 140, W = 420, n = L.length, slot = (W - 40) / n;
-    var svg = '<svg viewBox="0 0 ' + W + ' 170" role="img" aria-label="월 총진료비 막대그래프">';
-    svg += '<line x1="34" y1="' + base + '" x2="' + (W-10) + '" y2="' + base + '" stroke="#dde5ea"/><line x1="34" y1="20" x2="34" y2="' + base + '" stroke="#dde5ea"/>';
-    svg += '<text x="6" y="' + (base+4) + '">0</text><text x="6" y="' + (base - H/2 + 4) + '">' + (top/2) + '</text><text x="6" y="24">' + top + '</text>';
-    L.forEach(function(r, i){
-      var x = 40 + i * slot, bw = cmp ? Math.min(24, slot*0.36) : Math.min(34, slot*0.6);
-      var h = r.totamt / (top*100000000) * H, y = base - h;
-      if (r.totamt > 0) svg += '<rect x="' + (x + (cmp ? 0 : (slot - bw)/2 - 0)) + '" y="' + y.toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" fill="#1f5a4b"/><text class="lbl" x="' + (x + bw/2 + (cmp ? 0 : (slot-bw)/2)) + '" y="' + (y-4).toFixed(1) + '" text-anchor="middle">' + (r.totamt/100000000).toFixed(2) + '</text>';
-      if (cmp && B.avg[r.ym]) { var av = Number(B.avg[r.ym].avgtot||0), ah = av/(top*100000000)*H, ay = base - ah, few = Number(B.avg[r.ym].hosps||0) < 20;
-        svg += '<rect x="' + (x + bw + 2) + '" y="' + ay.toFixed(1) + '" width="' + bw + '" height="' + ah.toFixed(1) + '" fill="#cfd8e0"' + (few ? ' opacity=".5"' : '') + '/><text x="' + (x + bw + 2 + bw/2) + '" y="' + (ay-4).toFixed(1) + '" text-anchor="middle">' + (few ? '집계중' : (av/100000000).toFixed(2)) + '</text>'; }
-      svg += '<text x="' + (x + slot/2 - 4) + '" y="156" text-anchor="middle">' + esc(ymShort(r.ym)) + '</text>';
-    });
-    svg += '</svg>';
-    gel('msChart').innerHTML = svg;
-    gel('msLegAvg').style.display = cmp ? '' : 'none';
+    // 막대 — 총진료비(본원) vs 고객 평균 : Chart.js(header.jsp 가 싣는다) — 진료비-분석 현황(total_Report)과 같은 모양·색(본원 주황, 비교 파랑)
+    var labels = L.map(function(r){ return ymLbl(r.ym); });
+    var mine = L.map(function(r){ return r.totamt ? +(r.totamt/100000000).toFixed(2) : null; });
+    var avgs = L.map(function(r){ var av = B.avg[r.ym]; return cmp && av && Number(av.avgtot) ? +(Number(av.avgtot)/100000000).toFixed(2) : null; });
+    var fewFlag = L.map(function(r){ var av = B.avg[r.ym]; return av ? Number(av.hosps||0) < 20 : false; });
+    var hospsOf = L.map(function(r){ var av = B.avg[r.ym]; return av ? Number(av.hosps||0) : 0; });
+    if (window._msChart) { try { window._msChart.destroy(); } catch(e){} window._msChart = null; }
+    if (typeof Chart !== 'undefined') {
+      var ds = [{ label:'본원', data:mine, backgroundColor:'rgba(237,125,49,0.9)', borderWidth:0, borderRadius:4, maxBarThickness:46 }];
+      if (cmp) ds.unshift({ label:'위너넷 고객 평균', data:avgs, backgroundColor: fewFlag.map(function(f){ return f ? 'rgba(11,142,202,0.35)' : 'rgba(11,142,202,0.85)'; }), borderWidth:0, borderRadius:4, maxBarThickness:46 });
+      // 막대 위에 값을 적는다(종전 SVG 그래프처럼 — 사용자 「이전 그래프 위에 표현」). 비교 막대는 20곳 미만이면 「집계중」.
+      var valueOnBar = { id:'msValueOnBar', afterDatasetsDraw:function(chart){
+        var c = chart.ctx; c.save(); c.font = 'bold 11px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+        chart.data.datasets.forEach(function(d, di){ var meta = chart.getDatasetMeta(di); if (meta.hidden) return;
+          meta.data.forEach(function(bar, i){ var v = d.data[i]; if (v == null) return;
+            var isMine = d.label === '본원', txt = (!isMine && fewFlag[i]) ? '집계중' : v.toFixed(2);
+            c.fillStyle = isMine ? '#20303a' : '#6b7c86'; c.fillText(txt, bar.x, bar.y - 3); }); });
+        c.restore(); } };
+      window._msChart = new Chart(gel('msChartCv').getContext('2d'), {
+        type:'bar',
+        data:{ labels:labels, datasets:ds },
+        plugins:[valueOnBar],
+        options:{
+          maintainAspectRatio:false, responsive:true, animation:{ duration:600 },
+          plugins:{
+            legend:{ display:true, position:'bottom', labels:{ boxWidth:12, padding:10, font:{ size:11 } } },
+            tooltip:{ callbacks:{ label:function(c){ var v = c.parsed.y; if (v == null) return c.dataset.label + ': 자료 없음'; var s = c.dataset.label + ': ' + v.toFixed(2) + '억'; if (c.dataset.label !== '본원') s += ' (' + hospsOf[c.dataIndex] + '곳' + (fewFlag[c.dataIndex] ? ' · 집계중' : '') + ')'; return s; } } }
+          },
+          scales:{
+            y:{ beginAtZero:true, grace:'10%', grid:{ color:'rgba(0,0,0,0.05)' }, ticks:{ callback:function(v){ return v + '억'; }, font:{ size:11 } } },
+            x:{ grid:{ display:false }, ticks:{ font:{ size:11 } } }
+          }
+        }
+      });
+    }
     var hospsTxt = ''; if (cmp) { var hs = L.map(function(r){ return B.avg[r.ym] ? Number(B.avg[r.ym].hosps||0) : 0; }).filter(Boolean); if (hs.length) hospsTxt = '고객 평균은 같은 달 청구를 올린 ' + Math.min.apply(null, hs) + '~' + Math.max.apply(null, hs) + '곳의 평균(20곳 미만인 달은 흐리게 「집계중」). '; }
     gel('msChartNote').textContent = hospsTxt + '진료비는 환자 수·환자군에 따라 다르므로 「환자 1인 1일 진료비」로도 비교합니다.';
 
