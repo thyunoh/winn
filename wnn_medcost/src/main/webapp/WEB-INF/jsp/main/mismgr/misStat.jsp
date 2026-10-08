@@ -35,6 +35,7 @@
   #misStat .up{ color:#2f8f5b; } #misStat .down{ color:#c0463f; } #misStat .need{ color:#c0463f; }
   #misStat .ms-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:12px; margin-bottom:12px; }
   #misStat .ms-grid > .ms-card:first-child{ display:flex; flex-direction:column; }   /* 그래프 카드가 오른쪽(환자군) 카드 높이만큼 늘어나 그래프가 빈칸을 채운다(2026-10-08 사용자 「아래로 내리고」) */
+  #misStat .ms-grid{ align-items:start; }   /* 두 카드가 서로 높이를 끌어올리지 않게 — 가운데를 줄여 아래 월별 상세에 자리를 준다(2026-10-08 사용자) */
   @media (max-width:900px){ #misStat .ms-grid{ grid-template-columns:1fr; } }
   #misStat .ms-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:12px 14px; min-width:0; }
   #misStat .ms-card h4{ margin:0 0 8px; font-size:13px; color:#43555f; font-weight:700; }
@@ -76,14 +77,14 @@
 <div class="ms-grid">
   <div class="ms-card">
     <h4 id="msChartTtl">월 총진료비 추이 (억원)</h4>
-    <div id="msChartBox" style="flex:1 1 auto;min-height:300px;position:relative;"><canvas id="msChartCv"></canvas></div>
+    <div id="msChartBox" style="flex:1 1 auto;min-height:260px;max-height:340px;position:relative;"><canvas id="msChartCv"></canvas></div>
     <div class="small" id="msChartNote" style="margin-top:6px;"></div>
   </div>
   <div class="ms-card">
     <h4 id="msClsTtl">환자군 구성</h4>
     <div class="stack" id="msStack"></div>
     <div class="small" id="msClsNote"></div>
-    <details class="small" style="margin-top:8px;" open>
+    <details class="small" style="margin-top:8px;">
       <summary style="cursor:pointer;color:#1f5a4b;font-weight:700;">환자군(A~E) 분류 설명</summary>
       <table style="margin-top:6px;">
         <tr><th style="width:130px;white-space:nowrap;">환자군</th><th>설명</th></tr>
@@ -102,7 +103,7 @@
 <div class="ms-card">
   <h4>월별 상세</h4>
   <div class="ms-wrap"><table id="msTbl"><tbody><tr><td class="ms-empty">불러오는 중…</td></tr></tbody></table></div>
-  <div class="small" style="margin-top:6px;">총진료비 = 급여(공단) + 본인부담. 환자 1인 1일 진료비 = 총진료비 ÷ 입원일수. 평균 재원 = 입원일수 ÷ 그 달 일수. 퇴원자 평균 재원일수 = 그 달 퇴원한 환자의 입원일~퇴원일.</div>
+  <div class="small" style="margin-top:6px;">총진료비 = 급여(공단) + 본인부담. 1인 1일 = 총진료비 ÷ 입원일수. 환자 1인 월 = 총진료비 ÷ 그 달 환자 수. 평균 재원 = 입원일수 ÷ 그 달 일수. 퇴원자 평균 재원일수 = 그 달 퇴원한 환자의 입원일~퇴원일. 고객 열은 같은 달 청구를 올린 위너넷 고객 병원 평균(괄호 = 병원 수)으로, 병원 규모와 무관하게 환자 한 명 기준으로 비교합니다.</div>
 </div>
 
 <script>
@@ -238,18 +239,18 @@
     gel('msClsTbl').innerHTML = t + '</tbody>';
 
     // 월별 상세
-    var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 평균 진료비</th><th class="n">고객 평균 1인 1일</th>' : '') + '</tr></thead><tbody>';
+    var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일</th><th class="n">환자 1인 월</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 환자 1인 월</th><th class="n">고객 1인 1일</th>' : '') + '</tr></thead><tbody>';
     var any = false;
     L.forEach(function(r){
       if (!r.totamt && r.incnt == null && !(r.cls.A+r.cls.B+r.cls.C+r.cls.D+r.cls.E)) return; any = true;
       var di = daysIn(r.ym), av = B.avg[r.ym];
       h += '<tr><td>' + esc(ymLbl(r.ym)) + '</td><td class="n">' + (r.totamt ? eok(r.totamt) : '—') + '</td><td class="n">' + (r.claimamt ? eok(r.claimamt) : '—') + '</td><td class="n">' + (r.selfamt ? eok(r.selfamt) : '—') + '</td>'
          + '<td class="n">' + (r.insur['4'] ? eok(r.insur['4']) : '—') + '</td><td class="n">' + (r.insur['2'] ? eok(r.insur['2']) : '—') + '</td>'
-         + '<td class="n">' + (r.pats || '—') + '</td><td class="n">' + (r.admdays ? num(r.admdays) : '—') + '</td><td class="n">' + (r.admdays ? Math.round(r.admdays/di) + '명' : '—') + '</td><td class="n">' + (r.admdays ? man(r.totamt/r.admdays) : '—') + '</td>'
+         + '<td class="n">' + (r.pats || '—') + '</td><td class="n">' + (r.admdays ? num(r.admdays) : '—') + '</td><td class="n">' + (r.admdays ? Math.round(r.admdays/di) + '명' : '—') + '</td><td class="n">' + (r.admdays ? man(r.totamt/r.admdays) : '—') + '</td><td class="n">' + (r.pats ? man(r.totamt/r.pats) : '—') + '</td>'
          + '<td class="n">' + (r.incnt == null ? '—' : r.incnt) + '</td><td class="n">' + (r.outcnt == null ? '—' : r.outcnt) + '</td><td class="n">' + (r.avgstay == null ? '—' : r.avgstay + '일') + '</td>'
-         + (cmp ? '<td class="n">' + (av && Number(av.avgtot) ? eok(av.avgtot) + ' <span class="small">(' + av.hosps + '곳)</span>' : '—') + '</td><td class="n">' + (av && Number(av.avgperday) ? man(av.avgperday) : '—') + '</td>' : '') + '</tr>';
+         + (cmp ? '<td class="n">' + (av && Number(av.avgtot) && Number(av.avgpats) ? man(Number(av.avgtot)/Number(av.avgpats)) + ' <span class="small">(' + av.hosps + '곳)</span>' : '—') + '</td><td class="n">' + (av && Number(av.avgperday) ? man(av.avgperday) : '—') + '</td>' : '') + '</tr>';
     });
-    if (!any) h += '<tr><td colspan="15" class="ms-empty">이 기간에 올린 자료가 없습니다.</td></tr>';
+    if (!any) h += '<tr><td colspan="16" class="ms-empty">이 기간에 올린 자료가 없습니다.</td></tr>';
     gel('msTbl').innerHTML = h + '</tbody>';
 
     // 병상 안내(가동률은 고정경비 화면의 설정에서)
