@@ -12,7 +12,7 @@
 <script src="/asset/js/mis-split.js"></script>
 
 <div class="dashboard-wrapper">
-<div id="misLead" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>">
+<div id="misLead" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>" data-nm="<c:out value='${hospNm}'/>">
 <style>
   #misLead{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 50px; max-width:100%; overflow-x:hidden; }
   #misLead *{ box-sizing:border-box; }
@@ -88,6 +88,7 @@
   <div class="ml-title"><span class="ml-dot"></span>신규환자 고객관리 <span class="ml-sub">— 상담에서 입원까지, 입원 여부는 입퇴원현황으로 자동 확인</span></div>
   <span class="ml-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="ml-spacer"></span>
+  <button type="button" class="ml-btn" onclick="mlExcel();" title="상담 목록(종결 포함)과 퇴원 안부 연락 표를 엑셀 파일로">엑셀</button>
   <button type="button" class="ml-btn" onclick="mlLoad();" title="상담 목록을 다시 읽고 입퇴원현황과 다시 대조합니다 — 다른 창에서 입퇴원현황을 올린 뒤 누르세요">입퇴원현황 다시 대조</button>
 </div>
 
@@ -317,6 +318,20 @@
     post('<c:url value="/mis/followSave.do"/>', withHosp({ birth6: q.birth6, ipwonDt: q.ipwonDt, tewonDt: q.tewonDt, doneYn: done ? 'Y' : 'N', resultCd: res, memo: memo }))
       .then(function(){ tr.className = done ? 'done' : ''; if (res === 'READMIT') _toast('재입원 희망 — 관리판 「상담」 칸을 눌러 이어서 적어 두세요.', 'ok'); }).catch(err);
   }
+
+  /* 엑셀(2026-10-08) — 시트 1 상담 목록(화면에 있는 것 = 진행 중 + 최근 60일 종결), 시트 2 퇴원 안부 연락(표 그대로). xlsx 는 header.jsp 가 defer 로 싣는다 */
+  window.mlExcel = function(){
+    if (typeof XLSX === 'undefined') { _alertBox('엑셀 모듈을 아직 불러오지 못했습니다. 잠시 뒤 다시 눌러 주세요.', {icon:'⏳'}); return; }
+    try {
+      var leads = (D && D.leads) || [], aoa = [['단계','환자','생년월일','성별','보호자','관계','연락처','상담일','유입 경로','상태·요구','다음 할 일','내용','방문·입원 예정','입원일','퇴원일','입퇴원현황 확인','종결 사유']];
+      leads.forEach(function(l){ aoa.push([stageNm(l.stage), l.patnm||'', l.birth6||'', l.gender==='M'?'남':l.gender==='F'?'여':'', l.guardnm||'', l.guardrel||'', l.tel||'', dLbl(l.contactdt), CH[l.channel]||l.channel||'', l.condmemo||'', dLbl(l.nextdt), l.nextmemo||'', dLbl(l.plandt), dLbl(l.admitdt), dLbl(l.dischdt), l.matchyn==='Y'?'Y':'', l.closersn||'']); });
+      var ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{wch:8},{wch:10},{wch:9},{wch:5},{wch:10},{wch:7},{wch:14},{wch:11},{wch:12},{wch:36},{wch:11},{wch:24},{wch:12},{wch:11},{wch:11},{wch:8},{wch:20}];
+      var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '상담 목록');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(gel('mlFollow'), {raw:false}), '퇴원 안부 연락');
+      var nm = (root.getAttribute('data-nm') || '').replace(/[\\\/:*?"<>|]/g, '_'), d = new Date();
+      XLSX.writeFile(wb, '고객관리_' + nm + '_' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '.xlsx');
+    } catch(e){ err(e); }
+  };
 
   $(function(){ mlLoad(); });
 })();

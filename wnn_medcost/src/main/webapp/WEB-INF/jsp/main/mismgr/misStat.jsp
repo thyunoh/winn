@@ -106,7 +106,7 @@
 <div class="ms-card">
   <h4>월별 상세</h4>
   <div class="ms-wrap"><table id="msTbl"><tbody><tr><td class="ms-empty">불러오는 중…</td></tr></tbody></table></div>
-  <div class="small" style="margin-top:6px;">총진료비 = 급여(공단) + 본인부담. 1인 1일 = 총진료비 ÷ 입원일수. 환자 1인 월 = 총진료비 ÷ 그 달 환자 수. 평균 재원 = 입원일수 ÷ 그 달 일수. 퇴원자 평균 재원일수 = 그 달 퇴원한 환자의 입원일~퇴원일. 고객 열은 같은 달 청구를 올린 위너넷 고객 병원 평균(괄호 = 병원 수)으로, 병원 규모와 무관하게 환자 한 명 기준으로 비교합니다.</div>
+  <div class="small" style="margin-top:6px;">총진료비 = 급여(공단) + 본인부담. 전년 동월 = 같은 달 1년 전 총진료비(그 달 청구가 올라와 있을 때만, 그래프에는 회색 점선). 1인 1일 = 총진료비 ÷ 입원일수. 환자 1인 월 = 총진료비 ÷ 그 달 환자 수. 평균 재원 = 입원일수 ÷ 그 달 일수. 퇴원자 평균 재원일수 = 그 달 퇴원한 환자의 입원일~퇴원일. 고객 열은 같은 달 청구를 올린 위너넷 고객 병원 평균(괄호 = 병원 수)으로, 병원 규모와 무관하게 환자 한 명 기준으로 비교합니다.</div>
 </div>
 
 <script>
@@ -147,18 +147,26 @@
     sf.value = addYm(cur, -6); st.value = addYm(cur, -1);
   })();
 
+  /* 전년 동월 비교(2026-10-08) — 고른 기간보다 12달 앞서서 받아 두고(서버 상한 24달), 보이는 기간은 고른 그대로. 앞 12달은 전년 동월 칸에만 쓴다. */
+  var VIEW = { from:'', to:'' };
   window.msLoad = function(){
-    var p = { fromYm: gel('msFrom').value, toYm: gel('msTo').value };
+    var f = gel('msFrom').value, t = gel('msTo').value;
+    if (f > t) { var x = f; f = t; t = x; }
+    var reqFrom = addYm(f, -12); if (reqFrom < addYm(t, -23)) reqFrom = addYm(t, -23);
+    VIEW.from = f; VIEW.to = t;
+    var p = { fromYm: reqFrom, toYm: t };
     if (WNN) p.hospCd = hospCd();
     post('<c:url value="/mis/statGet.do"/>', p).then(function(res){
       D = res;
-      if (gel('msFrom').value !== res.fromYm) gel('msFrom').value = res.fromYm;
-      if (gel('msTo').value !== res.toYm) gel('msTo').value = res.toYm;
+      if (res.toYm !== t) { VIEW.to = res.toYm; VIEW.from = addYm(res.toYm, -5); }   // 서버가 기간을 바꿨으면(자료 없는 달 등) 그에 맞춘다
+      if (VIEW.from < res.fromYm) VIEW.from = res.fromYm;
+      if (gel('msFrom').value !== VIEW.from) gel('msFrom').value = VIEW.from;
+      if (gel('msTo').value !== VIEW.to) gel('msTo').value = VIEW.to;
       msRender();
     }).catch(function(e){ gel('msTbl').innerHTML = '<tbody><tr><td class="ms-empty">' + esc((e && e.message) || '불러오지 못했습니다.') + '</td></tr></tbody>'; });
   };
 
-  /* 월 단위로 합친다 */
+  /* 월 단위로 합친다 — list 는 보이는 기간, all 은 받은 전체(전년 동월 찾기용) */
   function build(res){
     var byYm = {};
     function row(ym){ if (!byYm[ym]) byYm[ym] = { ym:ym, totamt:0, claimamt:0, selfamt:0, admdays:0, pats:0, bills:0, cls:{A:0,B:0,C:0,D:0,E:0}, incnt:null, outcnt:null, avgstay:null, score:null, insur:{} }; return byYm[ym]; }
@@ -168,9 +176,12 @@
     (res.inout||[]).forEach(function(m){ var r = row(m.ym); r.incnt = Number(m.incnt||0); r.outcnt = Number(m.outcnt||0); r.avgstay = m.avgstay == null ? null : Number(m.avgstay); });
     (res.scores||[]).forEach(function(m){ var r = row(m.ym); r.score = Number(m.score||0); });
     var avg = {}; (res.avg||[]).forEach(function(m){ avg[m.ym] = m; });
-    var list = []; var ym = res.fromYm; while (ym <= res.toYm) { list.push(byYm[ym] || row(ym)); ym = addYm(ym, 1); }
-    return { list:list, avg:avg };
+    var vf = VIEW.from || res.fromYm, vt = VIEW.to || res.toYm;
+    var list = []; var ym = vf; while (ym <= vt) { list.push(byYm[ym] || row(ym)); ym = addYm(ym, 1); }
+    return { list:list, avg:avg, all:byYm };
   }
+  /* 전년 동월 행(받아 둔 범위 안에 있고 청구가 있을 때만) */
+  function lastYear(B, ym){ var r = B.all[addYm(ym, -12)]; return (r && r.totamt > 0) ? r : null; }
 
   window.msRender = function(){
     if (!D) return;
@@ -186,7 +197,9 @@
 
     // KPI
     var k = '';
-    k += '<div class="ms-kpi"><div class="l">월 총진료비 (급여+본인부담) · ' + esc(ymLbl(cur.ym)) + '</div><div class="v">' + (cur.totamt ? eok(cur.totamt) : '—') + '</div><div class="d ' + (prev && cur.totamt >= prev.totamt ? 'up' : 'down') + '">' + (prev ? esc(pct(cur.totamt, prev.totamt)) + ' 전월 ' + eok(prev.totamt) : '전월 자료 없음') + '</div></div>';
+    var ly = lastYear(B, cur.ym);
+    k += '<div class="ms-kpi"><div class="l">월 총진료비 (급여+본인부담) · ' + esc(ymLbl(cur.ym)) + '</div><div class="v">' + (cur.totamt ? eok(cur.totamt) : '—') + '</div><div class="d ' + (prev && cur.totamt >= prev.totamt ? 'up' : 'down') + '">' + (prev ? esc(pct(cur.totamt, prev.totamt)) + ' 전월 ' + eok(prev.totamt) : '전월 자료 없음')
+       + (ly ? ' <span class="' + (cur.totamt >= ly.totamt ? 'up' : 'down') + '" style="margin-left:6px">' + esc(pct(cur.totamt, ly.totamt)) + ' 전년 동월 ' + eok(ly.totamt) + '</span>' : '') + '</div></div>';
     k += '<div class="ms-kpi"><div class="l">평균 재원 환자 (일)</div><div class="v">' + (census ? Math.round(census) + '명' : '—') + '</div><div class="d">입원일수 ' + num(cur.admdays) + '일 ÷ ' + dIn + '</div></div>';
     k += '<div class="ms-kpi"><div class="l">입원 / 퇴원</div><div class="v">' + (cur.incnt == null ? '—' : cur.incnt + ' / ' + cur.outcnt) + '</div><div class="d">' + (prev && prev.incnt != null ? '전월 ' + prev.incnt + ' / ' + prev.outcnt : '입퇴원현황 기준') + '</div></div>';
     k += '<div class="ms-kpi"><div class="l">환자 1인 1일 진료비</div><div class="v">' + (perDay ? man(perDay) : '—') + '</div><div class="d ' + (avgPerDay && perDay >= avgPerDay ? 'up' : 'down') + '">' + (cmp && avgPerDay ? '고객 평균 ' + man(avgPerDay) + ' (' + esc(ymShort(avgPerDayYm)) + ')' : '총진료비 ÷ 입원일수') + '</div></div>';
@@ -202,10 +215,13 @@
     if (typeof Chart !== 'undefined') {
       var ds = [{ label:'본원', data:mine, backgroundColor:'rgba(237,125,49,0.9)', borderWidth:0, borderRadius:4, maxBarThickness:46 }];
       if (cmp) ds.unshift({ label:'위너넷 고객 평균', data:avgs, backgroundColor: fewFlag.map(function(f){ return f ? 'rgba(11,142,202,0.35)' : 'rgba(11,142,202,0.85)'; }), borderWidth:0, borderRadius:4, maxBarThickness:46 });
+      // 전년 동월 — 회색 점선(자료가 있는 달만). 막대 위 값 표시는 막대만 한다(선은 툴팁으로).
+      var lys = L.map(function(r){ var y = lastYear(B, r.ym); return y ? +(y.totamt/100000000).toFixed(2) : null; });
+      if (lys.some(function(v){ return v != null; })) ds.push({ type:'line', label:'전년 동월(본원)', data:lys, borderColor:'rgba(107,124,134,0.9)', backgroundColor:'rgba(107,124,134,0.9)', borderDash:[5,4], borderWidth:2, pointRadius:3, tension:0, spanGaps:true });
       // 막대 위에 값을 적는다(종전 SVG 그래프처럼 — 사용자 「이전 그래프 위에 표현」). 비교 막대는 20곳 미만이면 「집계중」.
       var valueOnBar = { id:'msValueOnBar', afterDatasetsDraw:function(chart){
         var c = chart.ctx; c.save(); c.font = 'bold 11px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'bottom';
-        chart.data.datasets.forEach(function(d, di){ var meta = chart.getDatasetMeta(di); if (meta.hidden) return;
+        chart.data.datasets.forEach(function(d, di){ var meta = chart.getDatasetMeta(di); if (meta.hidden || d.type === 'line') return;
           meta.data.forEach(function(bar, i){ var v = d.data[i]; if (v == null) return;
             var isMine = d.label === '본원', txt = (!isMine && fewFlag[i]) ? '집계중' : v.toFixed(2);
             c.fillStyle = isMine ? '#20303a' : '#6b7c86'; c.fillText(txt, bar.x, bar.y - 3); }); });
@@ -242,18 +258,20 @@
     gel('msClsTbl').innerHTML = t + '</tbody>';
 
     // 월별 상세
-    var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일</th><th class="n">환자 1인 월</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 환자 1인 월</th><th class="n">고객 1인 1일</th>' : '') + '</tr></thead><tbody>';
+    var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">전년 동월</th><th class="n">전년 대비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일</th><th class="n">환자 1인 월</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 환자 1인 월</th><th class="n">고객 1인 1일</th>' : '') + '</tr></thead><tbody>';
     var any = false;
     L.forEach(function(r){
       if (!r.totamt && r.incnt == null && !(r.cls.A+r.cls.B+r.cls.C+r.cls.D+r.cls.E)) return; any = true;
-      var di = daysIn(r.ym), av = B.avg[r.ym];
-      h += '<tr><td>' + esc(ymLbl(r.ym)) + '</td><td class="n">' + (r.totamt ? eok(r.totamt) : '—') + '</td><td class="n">' + (r.claimamt ? eok(r.claimamt) : '—') + '</td><td class="n">' + (r.selfamt ? eok(r.selfamt) : '—') + '</td>'
+      var di = daysIn(r.ym), av = B.avg[r.ym], ly = lastYear(B, r.ym);
+      h += '<tr><td>' + esc(ymLbl(r.ym)) + '</td><td class="n">' + (r.totamt ? eok(r.totamt) : '—') + '</td>'
+         + '<td class="n">' + (ly ? eok(ly.totamt) : '—') + '</td><td class="n ' + (ly && r.totamt ? (r.totamt >= ly.totamt ? 'up' : 'down') : '') + '">' + (ly && r.totamt ? esc(pct(r.totamt, ly.totamt)) : '—') + '</td>'
+         + '<td class="n">' + (r.claimamt ? eok(r.claimamt) : '—') + '</td><td class="n">' + (r.selfamt ? eok(r.selfamt) : '—') + '</td>'
          + '<td class="n">' + (r.insur['4'] ? eok(r.insur['4']) : '—') + '</td><td class="n">' + (r.insur['2'] ? eok(r.insur['2']) : '—') + '</td>'
          + '<td class="n">' + (r.pats || '—') + '</td><td class="n">' + (r.admdays ? num(r.admdays) : '—') + '</td><td class="n">' + (r.admdays ? Math.round(r.admdays/di) + '명' : '—') + '</td><td class="n">' + (r.admdays ? man(r.totamt/r.admdays) : '—') + '</td><td class="n">' + (r.pats ? man(r.totamt/r.pats) : '—') + '</td>'
          + '<td class="n">' + (r.incnt == null ? '—' : r.incnt) + '</td><td class="n">' + (r.outcnt == null ? '—' : r.outcnt) + '</td><td class="n">' + (r.avgstay == null ? '—' : r.avgstay + '일') + '</td>'
          + (cmp ? '<td class="n">' + (av && Number(av.avgtot) && Number(av.avgpats) ? man(Number(av.avgtot)/Number(av.avgpats)) + ' <span class="small">(' + av.hosps + '곳)</span>' : '—') + '</td><td class="n">' + (av && Number(av.avgperday) ? man(av.avgperday) : '—') + '</td>' : '') + '</tr>';
     });
-    if (!any) h += '<tr><td colspan="16" class="ms-empty">이 기간에 올린 자료가 없습니다.</td></tr>';
+    if (!any) h += '<tr><td colspan="18" class="ms-empty">이 기간에 올린 자료가 없습니다.</td></tr>';
     gel('msTbl').innerHTML = h + '</tbody>';
 
     // 병상 안내(가동률은 고정경비 화면의 설정에서)
