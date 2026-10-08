@@ -59,3 +59,19 @@ mail.smtp.timeout=15000
 # 메일에 들어가는 외부 접속 주소 (보고서 보기 링크 + 열람 추적 이미지)
 #   비워두면 링크·추적 없이 첨부 PDF만 발송한다. 로컬 테스트는 비워 두는 것을 권장.
 mail.siteBase=https://winner797.co.kr
+
+# ── MIS 업무 알림 자동 발송 (2026-10-08) ─────────────────────────────
+#   평일 08:30 에 등록된 담당자에게 「급함·할 일」을 메일·문자로 보낸다(MisNotiScheduler).
+#   ★운영 서버에서만 true — 개발 PC 톰캣도 운영 DB 를 보므로 거기서 켜면 병원에 메일이 두 번 간다.
+noti.auto.enabled=false
+
+# ── 문자(SMS/LMS) — 알리고(https://smartsms.aligo.in) ───────────────
+#   업체 계정이 없으면 전부 비워 둔다 → 문자는 「설정 없음」으로 건너뛰고 메일만 나간다.
+#   ★운영 서버는 아웃바운드 HTTPS 가 막혀 있다 — apis.aligo.in 443 을 먼저 열어야 한다.
+sms.enabled=false
+sms.provider=aligo
+sms.key=
+sms.userId=
+sms.sender=0269532452
+# Y 면 업체 테스트 모드(실제 발송 없이 응답만, 요금 없음)
+sms.testmode=N

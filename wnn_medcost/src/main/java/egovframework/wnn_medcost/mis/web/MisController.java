@@ -29,7 +29,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261008-MIS4";   // + 알림↔고객관리 연동 · 경영통계 엑셀/인쇄 · 고정경비 추정 손익
+	private static final String BUILD = "20261008-MIS5";   // + 업무 알림 문자·메일 발송(받는 사람·미리보기·지금 보내기·자동 발송)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -237,6 +237,100 @@ public class MisController {
 		return res;
 	}
 
+
+	/* ═══ ③-2 문자·메일 알림 (2026-10-08) ═══ */
+	@RequestMapping(value = "/mis/notiBoard.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> notiBoard(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectNotiBoard(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/notiUserSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> notiUserSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String name = cut(unesc(p.get("name")), 50), email = cut(str(p.get("email"), ""), 100), tel = cut(str(p.get("tel"), ""), 30);
+			if (name.isEmpty()) return fail(res, "이름을 적어 주세요.");
+			String mailYn = "Y".equals(str(p.get("mailYn"), "N")) ? "Y" : "N", smsYn = "Y".equals(str(p.get("smsYn"), "N")) ? "Y" : "N";
+			if ("Y".equals(mailYn) && !email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) return fail(res, "메일 주소 형식이 맞지 않습니다: " + email);
+			if ("Y".equals(smsYn) && tel.replaceAll("[^0-9]", "").length() < 9) return fail(res, "휴대폰 번호를 확인해 주세요: " + tel);
+			if (!"Y".equals(mailYn) && !"Y".equals(smsYn)) return fail(res, "메일·문자 중 하나는 켜야 합니다.");
+			String autoGb = str(p.get("autoGb"), "W"); if (!autoGb.matches("[DWN]")) autoGb = "W";
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd); m.put("notiSeq", longOf(p.get("notiSeq")));
+			m.put("name", name); m.put("roleNm", cut(unesc(p.get("roleNm")), 50)); m.put("email", email); m.put("tel", tel);
+			m.put("mailYn", mailYn); m.put("smsYn", smsYn); m.put("autoGb", autoGb);
+			m.put("minLevel", "bad".equals(str(p.get("minLevel"), "warn")) ? "bad" : "warn");
+			m.put("useYn", "N".equals(str(p.get("useYn"), "Y")) ? "N" : "Y");
+			m.put("userId", userId(request));
+			res.put("notiSeq", svc.saveNotiUser(m));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/notiUserDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> notiUserDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("notiSeq"));
+			if (seq == null) return fail(res, "대상이 없습니다.");
+			svc.deleteNotiUser(hospCd, seq);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 보낼 내용 미리보기(보내지 않음) */
+	@RequestMapping(value = "/mis/notiPreview.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> notiPreview(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.previewNoti(hospCd, wnnYn(request)));
+			res.remove("items");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 지금 보내기 — notiSeq 가 있으면 그 사람만, testTo 가 있으면 그 주소로 메일 1통(시험) */
+	@RequestMapping(value = "/mis/notiSend.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> notiSend(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String testTo = str(p.get("testTo"), "");
+			if (!testTo.isEmpty() && !testTo.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) return fail(res, "시험 발송 주소 형식이 맞지 않습니다.");
+			List<Map<String, Object>> rows = svc.sendNoti(hospCd, wnnYn(request), userId(request), longOf(p.get("notiSeq")), testTo);
+			int ok = 0, failN = 0, skip = 0;
+			for (Map<String, Object> r : rows) { String s = String.valueOf(r.get("result")); if ("OK".equals(s)) ok++; else if ("FAIL".equals(s)) failN++; else skip++; }
+			res.put("rows", rows); res.put("ok", ok); res.put("fail", failN); res.put("skip", skip);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	private String wnnYn(HttpServletRequest request) {
+		try { Map<String, String> ck = ClientInfo.getCookie(request); return ck.get("s_wnn_yn") == null ? "N" : ck.get("s_wnn_yn").trim(); } catch (Exception e) { return "N"; }
+	}
 
 	/* ═══ ④ 신규환자 고객관리 ═══ */
 	@RequestMapping(value = "main/misLead.do")

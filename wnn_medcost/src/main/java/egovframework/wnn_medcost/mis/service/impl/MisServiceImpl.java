@@ -346,4 +346,192 @@ public class MisServiceImpl implements MisService {
 
 	@Override
 	public void saveFollow(Map<String, Object> p) throws Exception { mapper.saveFollow(p); }
+
+	/* ═══ ③-2 문자·메일 알림 (2026-10-08) ═══
+	   · 받는 사람은 병원이 등록(TBL_MIS_NOTI_USER). 계정 표의 메일·전화는 후보로만.
+	   · 보내는 내용 = selectAlerts 의 bad·warn 만(ok·info 는 메일에 안 담는다 — 「할 일」만 가야 읽는다). 사람마다 받을 단계(bad 만 / bad+warn).
+	   · 메일은 MailUtil(네이버 SMTP), 문자는 SmsUtil(알리고). 설정이 없으면 그 채널은 SKIP 으로 이력에 남기고 다른 채널은 보낸다.
+	   · 자동 발송은 하루 1회 — TBL_MIS_NOTI_RUN 선점. */
+	@Override
+	public Map<String, Object> selectNotiBoard(String hospCd) throws Exception {
+		Map<String, Object> r = new HashMap<>();
+		r.put("users", mapper.selectNotiUsers(hospCd));
+		r.put("candidates", mapper.selectNotiCandidates(hospCd));
+		r.put("logs", mapper.selectNotiLogs(hospCd));
+		r.put("mailReady", egovframework.util.MailUtil.isReady());
+		r.put("mailReason", egovframework.util.MailUtil.isReady() ? "" : egovframework.util.MailUtil.notReadyReason());
+		r.put("smsReady", egovframework.util.SmsUtil.isReady());
+		r.put("smsReason", egovframework.util.SmsUtil.isReady() ? "" : egovframework.util.SmsUtil.notReadyReason());
+		java.util.Properties pr = egovframework.util.MailUtil.config();
+		r.put("autoEnabled", "true".equalsIgnoreCase(String.valueOf(pr.getProperty("noti.auto.enabled", "false")).trim()));
+		return r;
+	}
+
+	@Override
+	public long saveNotiUser(Map<String, Object> p) throws Exception {
+		Object seq = p.get("notiSeq");
+		if (seq == null || String.valueOf(seq).trim().isEmpty() || "0".equals(String.valueOf(seq).trim())) {
+			mapper.insertNotiUser(p);
+			return Long.parseLong(String.valueOf(p.get("notiSeq")));
+		}
+		mapper.updateNotiUser(p);
+		return Long.parseLong(String.valueOf(seq));
+	}
+
+	@Override
+	public void deleteNotiUser(String hospCd, long notiSeq) throws Exception { mapper.deleteNotiUser(hospCd, notiSeq); }
+
+	/** 알림을 bad·warn 만 골라 제목·HTML·문자 글로 만든다. minLevel = "bad" 면 bad 만. */
+	private Map<String, Object> compose(String hospCd, List<Map<String, Object>> alerts, String minLevel) {
+		List<Map<String, Object>> picked = new ArrayList<>();
+		int bad = 0, warn = 0;
+		for (Map<String, Object> a : alerts) {
+			String lv = String.valueOf(a.get("level"));
+			if ("bad".equals(lv)) { bad++; picked.add(a); }
+			else if ("warn".equals(lv) && !"bad".equals(minLevel)) { warn++; picked.add(a); }
+		}
+		String hospNm = "";
+		try { Map<String, Object> h = mapper.selectHospInfo(hospCd); if (h != null && h.get("hospnm") != null) hospNm = String.valueOf(h.get("hospnm")); } catch (Exception ignore) { }
+		java.util.Calendar cal = java.util.Calendar.getInstance();
+		String md = (cal.get(java.util.Calendar.MONTH) + 1) + "/" + cal.get(java.util.Calendar.DAY_OF_MONTH);
+		String ymd = new java.text.SimpleDateFormat("yyyy년 M월 d일").format(cal.getTime());
+		int n = picked.size();
+		String subject = "[WinCheck+] " + hospNm + " 오늘 챙길 일 " + n + "건 (" + md + ")";
+		String siteBase = egovframework.util.MailUtil.config().getProperty("mail.siteBase", "").trim();
+		if (siteBase.endsWith("/")) siteBase = siteBase.substring(0, siteBase.length() - 1);
+
+		StringBuilder h = new StringBuilder();
+		h.append("<div style=\"font-family:'Malgun Gothic','맑은 고딕',sans-serif;color:#1f2a30;max-width:640px;margin:0 auto;\">");
+		h.append("<div style=\"border-bottom:3px solid #1f5a4b;padding:10px 0 8px;\"><div style=\"font-size:18px;font-weight:800;\">WinCheck<sup>+</sup> 업무 알림</div>");
+		h.append("<div style=\"font-size:13px;color:#6b7c86;\">").append(esc(hospNm)).append(" · ").append(ymd).append(" 기준</div></div>");
+		if (n == 0) {
+			h.append("<p style=\"font-size:14px;margin:16px 0;\">오늘은 급하게 챙길 일이 없습니다.</p>");
+		} else {
+			h.append("<p style=\"font-size:14px;margin:14px 0 8px;\"><b style=\"color:#b23b3b;\">급함 ").append(bad).append("건</b> · <b style=\"color:#b45f1c;\">할 일 ").append(warn).append("건</b></p>");
+			h.append("<table style=\"width:100%;border-collapse:collapse;font-size:13px;\">");
+			for (Map<String, Object> a : picked) {
+				boolean isBad = "bad".equals(String.valueOf(a.get("level")));
+				String href = String.valueOf(a.get("href") == null ? "" : a.get("href"));
+				String link = (!siteBase.isEmpty() && href.startsWith("/")) ? siteBase + href : "";
+				h.append("<tr><td style=\"width:8px;background:").append(isBad ? "#c0463f" : "#d9772b").append(";border-radius:3px;\"></td>");
+				h.append("<td style=\"padding:8px 10px;border-bottom:1px solid #e3e9ed;\"><div style=\"font-weight:700;\">").append(esc(String.valueOf(a.get("title")))).append("</div>");
+				String desc = String.valueOf(a.get("desc") == null ? "" : a.get("desc"));
+				if (!desc.isEmpty()) h.append("<div style=\"color:#6b7c86;font-size:12px;margin-top:2px;\">").append(esc(desc)).append("</div>");
+				if (!link.isEmpty()) h.append("<div style=\"margin-top:4px;\"><a href=\"").append(esc(link)).append("\" style=\"color:#1f5a4b;font-weight:700;font-size:12px;\">").append(esc(String.valueOf(a.get("act") == null || String.valueOf(a.get("act")).isEmpty() ? "열기 →" : a.get("act")))).append("</a></div>");
+				h.append("</td></tr>");
+			}
+			h.append("</table>");
+		}
+		h.append("<p style=\"font-size:11.5px;color:#8a99a3;margin-top:16px;border-top:1px solid #e3e9ed;padding-top:8px;\">이 메일은 WinCheck+ 경영관리(MIS) › 업무 알림에서 등록한 담당자에게 자동으로 보내집니다. 받지 않으려면 업무 알림 화면의 「알림 받는 사람」에서 끄세요.");
+		if (!siteBase.isEmpty()) h.append(" <a href=\"").append(esc(siteBase)).append("/main/misAlert.do\" style=\"color:#1f5a4b;\">업무 알림 열기</a>");
+		h.append("</p></div>");
+
+		StringBuilder sms = new StringBuilder();
+		sms.append("[WinCheck+] ").append(shortNm(hospNm)).append(" 챙길 일 ").append(n).append("건");
+		int k = 0;
+		for (Map<String, Object> a : picked) { if (k++ >= 4) { sms.append("\n외 ").append(n - 4).append("건"); break; } sms.append("\n- ").append(cut(String.valueOf(a.get("title")), 40)); }
+		if (n > 0) sms.append("\n자세히: WinCheck+ 업무 알림");
+
+		Map<String, Object> r = new HashMap<>();
+		r.put("subject", subject); r.put("html", h.toString()); r.put("sms", sms.toString());
+		r.put("bad", bad); r.put("warn", warn); r.put("count", n); r.put("hospNm", hospNm);
+		r.put("items", picked);
+		return r;
+	}
+
+	@Override
+	public Map<String, Object> previewNoti(String hospCd, String wnnYn) throws Exception {
+		Map<String, Object> r = compose(hospCd, selectAlerts(hospCd, wnnYn), "warn");
+		r.put("smsBytes", egovframework.util.SmsUtil.bytesKr(String.valueOf(r.get("sms"))));
+		return r;
+	}
+
+	@Override
+	public List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, Long notiSeq, String testTo) throws Exception {
+		List<Map<String, Object>> alerts = selectAlerts(hospCd, wnnYn);
+		List<Map<String, Object>> out = new ArrayList<>();
+		if (testTo != null && !testTo.trim().isEmpty()) {           // 시험 발송 — 적은 주소로 메일 1통
+			Map<String, Object> c = compose(hospCd, alerts, "warn");
+			out.add(deliver(hospCd, "MAIL", testTo.trim(), "(시험)", c, sentBy));
+			return out;
+		}
+		for (Map<String, Object> u : mapper.selectNotiUsers(hospCd)) {
+			if (!"Y".equals(String.valueOf(u.get("useyn")))) continue;
+			if (notiSeq != null && !String.valueOf(u.get("notiseq")).equals(String.valueOf(notiSeq))) continue;
+			out.addAll(sendTo(hospCd, alerts, u, sentBy, false));
+		}
+		return out;
+	}
+
+	/** 한 사람에게 — 채널마다 한 줄. auto=true 면 챙길 일이 0건일 때 보내지 않는다(빈 메일이 매일 오면 끈다). */
+	private List<Map<String, Object>> sendTo(String hospCd, List<Map<String, Object>> alerts, Map<String, Object> u, String sentBy, boolean auto) {
+		List<Map<String, Object>> out = new ArrayList<>();
+		String minLevel = "bad".equals(String.valueOf(u.get("minlevel"))) ? "bad" : "warn";
+		Map<String, Object> c = compose(hospCd, alerts, minLevel);
+		String name = String.valueOf(u.get("name"));
+		if (auto && Integer.parseInt(String.valueOf(c.get("count"))) == 0) return out;
+		if ("Y".equals(String.valueOf(u.get("mailyn")))) out.add(deliver(hospCd, "MAIL", String.valueOf(u.get("email") == null ? "" : u.get("email")), name, c, sentBy));
+		if ("Y".equals(String.valueOf(u.get("smsyn")))) out.add(deliver(hospCd, "SMS", String.valueOf(u.get("tel") == null ? "" : u.get("tel")), name, c, sentBy));
+		return out;
+	}
+
+	/** 실제 발송 + 이력 한 줄. 설정이 없거나 주소가 비면 SKIP, 보냈는데 실패면 FAIL — 예외는 밖으로 안 낸다. */
+	private Map<String, Object> deliver(String hospCd, String channel, String to, String name, Map<String, Object> c, String sentBy) {
+		Map<String, Object> r = new HashMap<>();
+		r.put("channel", channel); r.put("to", to); r.put("name", name);
+		String result, err = "";
+		String subject = String.valueOf(c.get("subject"));
+		String body = "MAIL".equals(channel) ? String.valueOf(c.get("html")) : String.valueOf(c.get("sms"));
+		try {
+			if (to == null || to.trim().isEmpty()) { result = "SKIP"; err = ("MAIL".equals(channel) ? "메일 주소" : "휴대폰 번호") + "가 비어 있습니다"; }
+			else if ("MAIL".equals(channel)) {
+				if (!egovframework.util.MailUtil.isReady()) { result = "SKIP"; err = egovframework.util.MailUtil.notReadyReason(); }
+				else { egovframework.util.MailUtil.send(to, subject, body, null, null); result = "OK"; }
+			} else {
+				if (!egovframework.util.SmsUtil.isReady()) { result = "SKIP"; err = egovframework.util.SmsUtil.notReadyReason(); }
+				else { String id = egovframework.util.SmsUtil.send(to, body, "WinCheck+ 업무 알림"); result = "OK"; err = id == null || id.isEmpty() ? "" : "msg_id " + id; }
+			}
+		} catch (Exception e) { result = "FAIL"; err = e.getMessage() == null ? e.toString() : e.getMessage(); }
+		r.put("result", result); r.put("message", err);
+		try {
+			Map<String, Object> l = new HashMap<>();
+			l.put("hospCd", hospCd); l.put("channel", channel); l.put("toAddr", cut(to, 100)); l.put("toName", cut(name, 50));
+			l.put("subject", cut(subject, 200)); l.put("body", body); l.put("result", result); l.put("errMsg", cut(err, 500)); l.put("sentBy", cut(sentBy, 50));
+			l.put("levelCnt", "bad " + c.get("bad") + " · warn " + c.get("warn"));
+			mapper.insertNotiLog(l);
+		} catch (Exception ignore) { }
+		return r;
+	}
+
+	@Override
+	public Map<String, Object> runAutoNoti() throws Exception {
+		Map<String, Object> r = new HashMap<>();
+		String today = new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
+		String host = "";
+		try { host = java.net.InetAddress.getLocalHost().getHostName(); } catch (Exception ignore) { }
+		if (mapper.insertNotiRun(today, host) == 0) { r.put("skipped", "이미 다른 인스턴스가 오늘 보냈습니다"); return r; }
+		boolean monday = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.MONDAY;
+		int hosps = 0, sent = 0, failed = 0, skipped = 0;
+		for (String hospCd : mapper.selectNotiHosps()) {
+			hosps++;
+			List<Map<String, Object>> alerts;
+			try { alerts = selectAlerts(hospCd, "N"); } catch (Exception e) { continue; }
+			for (Map<String, Object> u : mapper.selectNotiUsers(hospCd)) {
+				if (!"Y".equals(String.valueOf(u.get("useyn")))) continue;
+				String gb = String.valueOf(u.get("autogb"));
+				if (!("D".equals(gb) || ("W".equals(gb) && monday))) continue;
+				for (Map<String, Object> x : sendTo(hospCd, alerts, u, "auto", true)) {
+					String rs = String.valueOf(x.get("result"));
+					if ("OK".equals(rs)) sent++; else if ("FAIL".equals(rs)) failed++; else skipped++;
+				}
+			}
+		}
+		r.put("date", today); r.put("hosps", hosps); r.put("sent", sent); r.put("failed", failed); r.put("skipped", skipped);
+		return r;
+	}
+
+	private static String esc(String s) { return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;"); }
+	private static String cut(String s, int n) { return s == null ? "" : (s.length() > n ? s.substring(0, n) : s); }
+	/** 문자용 짧은 병원 이름 — 「요양병원」을 떼고 8자까지 */
+	private static String shortNm(String nm) { String s = nm == null ? "" : nm.replace("요양병원", "").replace("병원", "").trim(); return cut(s.isEmpty() ? nm : s, 8); }
 }

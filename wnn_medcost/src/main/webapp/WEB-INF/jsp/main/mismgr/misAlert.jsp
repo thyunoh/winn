@@ -81,6 +81,56 @@
   </div>
 </div>
 
+<%-- ③-2 문자·메일 알림 (2026-10-08) — 받는 사람 · 미리보기 · 지금 보내기 · 발송 이력. 자동 발송은 서버(MisNotiScheduler, 평일 08:30). --%>
+<div class="ma-card" style="margin-top:12px;" id="maNoti">
+  <h4>문자·메일로 받기 <span class="small">— 로그인하지 않은 날도 「급함·할 일」이 담당자에게 간다</span><span class="sp"></span>
+    <span id="maNotiStat" class="small"></span>
+    <button type="button" class="ma-btn" onclick="maNotiPreview();">미리보기</button>
+    <button type="button" class="ma-btn" onclick="maNotiSend();" style="background:#1f5a4b;color:#fff;border-color:#1f5a4b;">지금 보내기</button></h4>
+  <div class="ma-grid" style="grid-template-columns:1.25fr 1fr;">
+    <div>
+      <div class="small" style="margin-bottom:6px;"><b>알림 받는 사람</b> — 메일·문자 중 하나는 켜야 합니다. 「자동」은 평일 아침 08:30 에 서버가 보내는 주기, 「단계」는 급함만 받을지 할 일까지 받을지.</div>
+      <div class="ma-wrap"><table id="maNotiUsers"><tbody><tr><td class="ma-empty">불러오는 중…</td></tr></tbody></table></div>
+      <div class="ma-nform" id="maNotiForm">
+        <input type="hidden" id="nfSeq" value="">
+        <label>이름 <input type="text" id="nfName" maxlength="50" style="width:90px;text-align:left;"></label>
+        <label>역할 <input type="text" id="nfRole" maxlength="50" placeholder="행정실장" style="width:90px;text-align:left;"></label>
+        <label>메일 <input type="text" id="nfEmail" maxlength="100" style="width:190px;text-align:left;"></label>
+        <label>휴대폰 <input type="text" id="nfTel" maxlength="30" placeholder="010-0000-0000" style="width:120px;text-align:left;"></label>
+        <label><input type="checkbox" id="nfMail" checked> 메일</label>
+        <label><input type="checkbox" id="nfSms"> 문자</label>
+        <label>자동 <select id="nfAuto"><option value="W">매주 월요일</option><option value="D">매일(평일)</option><option value="N">수동만</option></select></label>
+        <label>단계 <select id="nfLevel"><option value="warn">급함 + 할 일</option><option value="bad">급함만</option></select></label>
+        <button type="button" class="ma-btn" onclick="maNotiSave();" style="background:#1f5a4b;color:#fff;border-color:#1f5a4b;" id="nfSaveBtn">추가</button>
+        <button type="button" class="ma-btn" onclick="maNotiNew();">새로</button>
+      </div>
+      <div class="small" id="maNotiCand" style="margin-top:6px;"></div>
+    </div>
+    <div>
+      <div class="small" style="margin-bottom:6px;"><b>최근 발송 이력</b> — 실패·건너뜀도 남깁니다(왜 안 왔는지의 답).</div>
+      <div class="ma-wrap" style="max-height:300px;overflow:auto;"><table id="maNotiLogs"><tbody><tr><td class="ma-empty">—</td></tr></tbody></table></div>
+    </div>
+  </div>
+  <div id="maNotiPv" style="display:none;margin-top:10px;border-top:1px dashed #cfd9e0;padding-top:10px;">
+    <div class="small" style="margin-bottom:6px;"><b>미리보기</b> — 지금 보내면 이렇게 갑니다(급함·할 일만 담깁니다). <span id="maPvSubj"></span></div>
+    <div class="ma-grid" style="grid-template-columns:1.4fr 1fr;">
+      <iframe id="maPvFrame" style="width:100%;height:320px;border:1px solid #e3e9ed;border-radius:8px;background:#fff;"></iframe>
+      <div><div class="small" style="margin-bottom:4px;">문자(SMS/LMS) 글 <span id="maPvSmsLen"></span></div><pre id="maPvSms" style="white-space:pre-wrap;font-family:inherit;font-size:13px;background:#f7f9fa;border:1px solid #e3e9ed;border-radius:8px;padding:10px;margin:0;min-height:120px;"></pre></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #misAlert .ma-nform{ display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin-top:8px; font-size:12.5px; color:#43555f; background:#f7f9fa; border:1px solid #e3e9ed; border-radius:8px; padding:8px 10px; }
+  #misAlert .ma-nform label{ display:flex; align-items:center; gap:4px; margin:0; }
+  #misAlert .ma-nform select{ border:1px solid #cfd8e0; border-radius:6px; padding:3px 4px; font-size:12.5px; background:#fff; }
+  #misAlert .pill{ display:inline-block; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:700; background:#eef2f5; color:#43555f; }
+  #misAlert .pill.on{ background:#e7f3ee; color:#1f5a4b; } #misAlert .pill.off{ background:#fde5e3; color:#b23b3b; } #misAlert .pill.skip{ background:#fbeadb; color:#b45f1c; }
+  #misAlert .cand{ display:inline-block; margin:2px 4px 2px 0; border:1px solid #cfd9e0; border-radius:12px; padding:2px 9px; cursor:pointer; background:#fff; font-size:12px; }
+  #misAlert .cand:hover{ background:#eef3f6; }
+  #misAlert #maNotiUsers td{ white-space:normal; }
+</style>
+
 <script>
 (function(){
   function gel(id){ return document.getElementById(id); }
@@ -165,7 +215,96 @@
     tr.querySelector('.simZ').innerHTML = zoneTag(z) + (diff ? ' <span class="' + (diff > 0 ? 'up' : 'down') + '">' + (diff > 0 ? '+' : '') + n2(diff) + '</span>' : '');
   }
 
-  $(function(){ maLoad(); });
+  /* ── 문자·메일 알림 (2026-10-08) ── */
+  var NB = null;
+  var AUTO_NM = { D:'매일(평일)', W:'매주 월요일', N:'수동만' };
+  function fmtDt(s){ s = String(s||''); return s.length >= 16 ? s.slice(5,16).replace('T',' ') : s; }
+  window.maNotiLoad = function(){
+    post('<c:url value="/mis/notiBoard.do"/>', withHosp({})).then(function(res){
+      NB = res;
+      gel('maNotiStat').innerHTML = '메일 ' + (res.mailReady ? '<span class="pill on">준비됨</span>' : '<span class="pill off" title="' + esc(res.mailReason) + '">설정 없음</span>')
+        + ' 문자 ' + (res.smsReady ? '<span class="pill on">준비됨</span>' : '<span class="pill skip" title="' + esc(res.smsReason) + '">설정 없음</span>')
+        + ' 자동 ' + (res.autoEnabled ? '<span class="pill on">평일 08:30</span>' : '<span class="pill" title="서버 설정 noti.auto.enabled 가 꺼져 있습니다 — 운영 서버에서만 켭니다">꺼짐</span>');
+      var us = res.users || [], h = '<thead><tr><th>이름</th><th>역할</th><th>메일</th><th>휴대폰</th><th>채널</th><th>자동</th><th>단계</th><th></th></tr></thead><tbody>';
+      if (!us.length) h += '<tr><td colspan="8" class="ma-empty">아직 등록된 사람이 없습니다. 아래에서 추가하거나 계정에서 가져오세요.</td></tr>';
+      us.forEach(function(u){
+        var off = u.useyn !== 'Y';
+        h += '<tr' + (off ? ' style="opacity:.5"' : '') + '><td><b>' + esc(u.name) + '</b>' + (off ? ' <span class="pill">사용 안 함</span>' : '') + '</td><td>' + esc(u.rolenm||'') + '</td><td>' + esc(u.email||'') + '</td><td>' + esc(u.tel||'') + '</td>'
+           + '<td>' + (u.mailyn === 'Y' ? '<span class="pill on">메일</span> ' : '') + (u.smsyn === 'Y' ? '<span class="pill on">문자</span>' : '') + '</td>'
+           + '<td>' + esc(AUTO_NM[u.autogb] || u.autogb) + '</td><td>' + (u.minlevel === 'bad' ? '급함만' : '급함+할 일') + '</td>'
+           + '<td style="white-space:nowrap"><button type="button" class="ma-btn" style="padding:2px 7px" onclick="maNotiEdit(' + u.notiseq + ')">수정</button> '
+           + '<button type="button" class="ma-btn" style="padding:2px 7px" onclick="maNotiSendOne(' + u.notiseq + ')" title="이 사람에게만 지금 보내기">보내기</button> '
+           + '<button type="button" class="ma-btn" style="padding:2px 7px;color:#b23b3b" onclick="maNotiDel(' + u.notiseq + ')">삭제</button></td></tr>';
+      });
+      gel('maNotiUsers').innerHTML = h + '</tbody>';
+      var cs = res.candidates || [], c = '';
+      cs.forEach(function(x, i){ if (!x.email && !x.tel) return; c += '<span class="cand" onclick="maNotiPick(' + i + ')" title="누르면 아래 칸에 채워집니다">' + esc(x.name) + ' <span style="color:#6b7c86">' + esc(x.email || x.tel) + '</span></span>'; });
+      gel('maNotiCand').innerHTML = c ? '<b>계정에서 가져오기</b> (누르면 칸에 채워집니다 — 계정 표는 바뀌지 않습니다) ' + c : '';
+      var ls = res.logs || [], l = '<thead><tr><th>시각</th><th>채널</th><th>받는 사람</th><th>결과</th><th>비고</th></tr></thead><tbody>';
+      if (!ls.length) l += '<tr><td colspan="5" class="ma-empty">아직 보낸 적이 없습니다.</td></tr>';
+      ls.forEach(function(g){
+        var cls = g.result === 'OK' ? 'on' : g.result === 'FAIL' ? 'off' : 'skip', nm = g.result === 'OK' ? '보냄' : g.result === 'FAIL' ? '실패' : '건너뜀';
+        l += '<tr><td>' + esc(fmtDt(g.sentdttm)) + '</td><td>' + (g.channel === 'MAIL' ? '메일' : '문자') + '</td><td title="' + esc(g.toaddr||'') + '">' + esc(g.toname||'') + '<div class="small">' + esc(g.toaddr||'') + '</div></td>'
+           + '<td><span class="pill ' + cls + '">' + nm + '</span></td><td class="small" style="white-space:normal;max-width:240px">' + esc(g.errmsg||'') + (g.sentby === 'auto' ? ' <span class="pill">자동</span>' : '') + '</td></tr>';
+      });
+      gel('maNotiLogs').innerHTML = l + '</tbody>';
+    }).catch(function(e){ gel('maNotiUsers').innerHTML = '<tbody><tr><td class="ma-empty">' + esc((e && e.message) || '불러오지 못했습니다.') + '</td></tr></tbody>'; });
+  };
+  window.maNotiNew = function(){
+    gel('nfSeq').value = ''; gel('nfName').value = ''; gel('nfRole').value = ''; gel('nfEmail').value = ''; gel('nfTel').value = '';
+    gel('nfMail').checked = true; gel('nfSms').checked = false; gel('nfAuto').value = 'W'; gel('nfLevel').value = 'warn'; gel('nfSaveBtn').textContent = '추가';
+  };
+  window.maNotiEdit = function(seq){
+    var u = (NB.users||[]).filter(function(x){ return String(x.notiseq) === String(seq); })[0]; if (!u) return;
+    gel('nfSeq').value = u.notiseq; gel('nfName').value = u.name || ''; gel('nfRole').value = u.rolenm || ''; gel('nfEmail').value = u.email || ''; gel('nfTel').value = u.tel || '';
+    gel('nfMail').checked = u.mailyn === 'Y'; gel('nfSms').checked = u.smsyn === 'Y'; gel('nfAuto').value = u.autogb || 'W'; gel('nfLevel').value = u.minlevel || 'warn'; gel('nfSaveBtn').textContent = '수정 저장';
+    gel('nfName').focus();
+  };
+  window.maNotiPick = function(i){
+    var x = (NB.candidates||[])[i]; if (!x) return;
+    maNotiNew(); gel('nfName').value = x.name || ''; gel('nfEmail').value = x.email || ''; gel('nfTel').value = x.tel || '';
+    gel('nfMail').checked = !!x.email; gel('nfSms').checked = false; gel('nfName').focus();
+  };
+  window.maNotiSave = function(){
+    var p = { notiSeq: gel('nfSeq').value, name: gel('nfName').value.trim(), roleNm: gel('nfRole').value.trim(), email: gel('nfEmail').value.trim(), tel: gel('nfTel').value.trim(),
+              mailYn: gel('nfMail').checked ? 'Y' : 'N', smsYn: gel('nfSms').checked ? 'Y' : 'N', autoGb: gel('nfAuto').value, minLevel: gel('nfLevel').value, useYn: 'Y' };
+    if (!p.name) { _alertBox('이름을 적어 주세요.', {icon:'⚠️'}); gel('nfName').focus(); return; }
+    if (p.mailYn !== 'Y' && p.smsYn !== 'Y') { _alertBox('메일·문자 중 하나는 켜야 합니다.', {icon:'⚠️'}); return; }
+    post('<c:url value="/mis/notiUserSave.do"/>', withHosp(p)).then(function(){ _toast(p.name + ' 님을 ' + (p.notiSeq ? '고쳤습니다.' : '추가했습니다.'), 'ok'); maNotiNew(); maNotiLoad(); })
+      .catch(function(e){ _alertBox(esc((e && e.message) || '저장하지 못했습니다.'), {icon:'❌'}); });
+  };
+  window.maNotiDel = function(seq){
+    var u = (NB.users||[]).filter(function(x){ return String(x.notiseq) === String(seq); })[0]; if (!u) return;
+    _confirmBox({ msg: esc(u.name) + ' 님을 받는 사람에서 지웁니다.', icon:'🗑️', okText:'삭제', okColor:'#b23b3b',
+      onOk: function(){ post('<c:url value="/mis/notiUserDel.do"/>', withHosp({ notiSeq: seq })).then(function(){ _toast('지웠습니다.', 'ok'); maNotiLoad(); }).catch(function(e){ _alertBox(esc(e.message), {icon:'❌'}); }); } });
+  };
+  window.maNotiPreview = function(){
+    post('<c:url value="/mis/notiPreview.do"/>', withHosp({})).then(function(res){
+      gel('maNotiPv').style.display = '';
+      gel('maPvSubj').innerHTML = '제목: <b>' + esc(res.subject) + '</b> · 급함 ' + res.bad + ' · 할 일 ' + res.warn;
+      gel('maPvFrame').srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:12px;background:#fff;">' + res.html + '</body></html>';
+      gel('maPvSms').textContent = res.sms; gel('maPvSmsLen').textContent = '(' + res.smsBytes + '바이트 — ' + (res.smsBytes > 90 ? 'LMS' : 'SMS') + ')';
+      gel('maNotiPv').scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }).catch(function(e){ _alertBox(esc((e && e.message) || '미리보기를 만들지 못했습니다.'), {icon:'❌'}); });
+  };
+  function sendResult(res){
+    var lines = (res.rows||[]).map(function(r){ var nm = r.result === 'OK' ? '✅ 보냄' : r.result === 'FAIL' ? '❌ 실패' : '⏭ 건너뜀'; return nm + ' · ' + (r.channel === 'MAIL' ? '메일' : '문자') + ' · ' + esc(r.name) + ' ' + esc(r.to) + (r.message ? '<div class="small" style="margin-left:18px">' + esc(r.message) + '</div>' : ''); });
+    _alertBox('<div style="text-align:left;font-size:13px;line-height:1.6">' + (lines.length ? lines.join('<br>') : '보낼 사람이 없습니다.') + '</div>', { icon: res.fail ? '⚠️' : (res.ok ? '📨' : 'ℹ️') });
+    maNotiLoad();
+  }
+  window.maNotiSend = function(){
+    var n = (NB && NB.users ? NB.users.filter(function(u){ return u.useyn === 'Y'; }).length : 0);
+    if (!n) { _alertBox('받는 사람을 먼저 등록해 주세요.', {icon:'⚠️'}); return; }
+    _confirmBox({ msg: '등록된 ' + n + '명에게 지금 「급함·할 일」을 보냅니다.<br>(설정이 없는 채널은 건너뛰고 이력에 남깁니다)', icon:'📨', okText:'보내기',
+      onOk: function(){ post('<c:url value="/mis/notiSend.do"/>', withHosp({})).then(sendResult).catch(function(e){ _alertBox(esc(e.message), {icon:'❌'}); }); } });
+  };
+  window.maNotiSendOne = function(seq){
+    var u = (NB.users||[]).filter(function(x){ return String(x.notiseq) === String(seq); })[0]; if (!u) return;
+    _confirmBox({ msg: esc(u.name) + ' 님에게만 지금 보냅니다.', icon:'📨', okText:'보내기',
+      onOk: function(){ post('<c:url value="/mis/notiSend.do"/>', withHosp({ notiSeq: seq })).then(sendResult).catch(function(e){ _alertBox(esc(e.message), {icon:'❌'}); }); } });
+  };
+
+  $(function(){ maLoad(); maNotiLoad(); });
 })();
 </script>
 </div><%-- /#misAlert --%>

@@ -36,4 +36,16 @@ public interface MisService {
 	void deleteLead(String hospCd, long leadSeq, String userId) throws Exception;
 	List<Map<String, Object>> selectFollowList(String hospCd, int days) throws Exception;
 	void saveFollow(Map<String, Object> p) throws Exception;
+
+	/* ── ③-2 문자·메일 알림 (2026-10-08) ── */
+	/** 받는 사람 목록 + 계정 후보 + 최근 이력 + 메일·문자 설정 상태 */
+	Map<String, Object> selectNotiBoard(String hospCd) throws Exception;
+	long saveNotiUser(Map<String, Object> p) throws Exception;
+	void deleteNotiUser(String hospCd, long notiSeq) throws Exception;
+	/** 지금 보낼 내용 미리보기 — 제목·HTML·문자 글·건수(보내지 않는다) */
+	Map<String, Object> previewNoti(String hospCd, String wnnYn) throws Exception;
+	/** 지금 보내기 — 등록된 사람 전부(또는 notiSeq 한 명), testTo 가 있으면 그 주소로 메일 1통만. 결과는 사람·채널마다 한 줄 + 이력 저장 */
+	List<Map<String, Object>> sendNoti(String hospCd, String wnnYn, String sentBy, Long notiSeq, String testTo) throws Exception;
+	/** 자동 발송(스케줄러) — 하루 1회 선점 후 자동 수신자가 있는 병원 전부 */
+	Map<String, Object> runAutoNoti() throws Exception;
 }

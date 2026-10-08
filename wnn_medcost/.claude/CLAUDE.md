@@ -2212,3 +2212,11 @@
   · **고정경비 추정 월 손익** = (총진료비 + 추가수익) − 고정비 − 변동비 × 입원일수 — KPI 5번째 카드(그리드 4→5칸) · BEP 패널 마지막 줄 · 12달 추이 「추정 손익」 열. 부산은빛 9월 = 5.06 − 2.90 − 1.29 = **+0.87억**.
   검증 = javac(WAR lib) · 인라인 JS 3개 Nashorn OK · div 짝 · 내장 브라우저 실왕복(부산은빛 : 추정 손익 +0.87억 · 인쇄 HTML 37KB(그림 포함) · 시트 A1:P6 · alertGet build MIS4 · 「안부 연락 없는 환자 11명」 알림). 파일은 사용자 지시로 **Unstaged 그대로**.
   **다음 후보** : 문자·메일 알림(담당자 연락처 표 필요) · 고객관리 엑셀 · 경영통계 전년 동월 비교 · 제안서 병원 이름 가림.
+- ✅**[2026-10-08 오후] ③-2 업무 알림 문자·메일 발송**(`BUILD 20261008-MIS5`, ⛔자바·매퍼·스프링 XML → 재기동 / 운영 WAR) — DDL [MIS_DDL_NOTI_2026-10-08.sql](docs/sql/mis/ddl/MIS_DDL_NOTI_2026-10-08.sql) ✅사용자 실행(12:36).
+  · 표 3 = `TBL_MIS_NOTI_USER`(받는 사람 : 채널 메일/문자 · 자동 D 매일/W 매주 월/N 수동 · 단계 bad/warn) · `TBL_MIS_NOTI_LOG`(보낸 것 전부 — OK/FAIL/SKIP + 이유) · `TBL_MIS_NOTI_RUN`(자동 발송 **하루 1회 선점**, RUN_DT PK + INSERT IGNORE — 운영 톰캣에 앱이 두 벌이라).
+  · 내용 = `selectAlerts` 의 **bad·warn 만**(ok·info 는 안 보낸다). 메일 = `MailUtil`(기존 네이버 SMTP, 링크는 mail.siteBase) · 문자 = 신설 [SmsUtil](src/main/java/egovframework/util/SmsUtil.java)(알리고 HTTP, EUC-KR 90바이트 넘으면 LMS). 설정 없는 채널은 **SKIP 으로 이력에 남기고** 다른 채널은 보낸다.
+  · 자동 = [MisNotiScheduler](src/main/java/egovframework/wnn_medcost/mis/service/impl/MisNotiScheduler.java) `@Scheduled(평일 08:30)` — `context-common.xml` 에 `task:annotation-driven`(루트 컨텍스트, XmlBeanDefinitionReader PARSE OK). ★**mail.properties `noti.auto.enabled=true` 일 때만 보낸다(기본 꺼짐)** — 개발 PC 톰캣이 운영 DB 를 보므로 운영에서만 켠다. 자동은 챙길 일 0건이면 안 보낸다(빈 메일이 매일 오면 끈다).
+  · 화면 = misAlert.jsp 아래 카드 「문자·메일로 받기」 : 상태(메일/문자/자동 준비 여부) · 받는 사람 표(수정·보내기·삭제) · 입력 폼 · **계정에서 가져오기**(TBL_USER_MST 메일·전화 후보, 표는 안 고침) · [미리보기](iframe srcdoc + 문자 글·바이트) · [지금 보내기](확인 뒤, 결과를 사람·채널마다) · 최근 이력 30건.
+  · 엔드포인트 `/mis/notiBoard|notiUserSave|notiUserDel|notiPreview|notiSend.do`(notiSend 는 notiSeq 한 명 / testTo 시험 주소도 받는다). 서버 검증 = 이름 필수 · 메일 형식 · 번호 9자리↑ · 채널 하나는 켜야.
+  · 문자 설정 키(mail.properties.sample) : `sms.enabled/provider=aligo/key/userId/sender/testmode`. ⚠**운영은 아웃바운드 HTTPS 차단** — 문자를 쓰려면 apis.aligo.in 443 을 먼저 열어야 한다(메일 465 는 열려 있다).
+  검증 = javac 6개 · 매퍼 XML 49문 id 중복 0 · 스프링 XML 스키마 PARSE OK · 인라인 JS Nashorn OK · div 36/36. ⛔**화면·발송 실측은 재기동 뒤**(새 매퍼 문장·새 빈이라 기동 때 올라간다).

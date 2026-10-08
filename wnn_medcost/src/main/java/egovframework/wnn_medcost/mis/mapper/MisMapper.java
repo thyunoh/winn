@@ -63,4 +63,15 @@ public interface MisMapper {
 	List<Map<String, Object>> selectLeadStats(@Param("hospCd") String hospCd, @Param("fromDt") String fromDt, @Param("toDt") String toDt);
 	List<Map<String, Object>> selectFollowList(@Param("hospCd") String hospCd, @Param("fromYm") String fromYm, @Param("fromDt") String fromDt, @Param("toDt") String toDt);
 	int saveFollow(Map<String, Object> p);
+
+	/* ── ③-2 문자·메일 알림 (2026-10-08) ── */
+	List<Map<String, Object>> selectNotiUsers(@Param("hospCd") String hospCd);
+	int insertNotiUser(Map<String, Object> p);
+	int updateNotiUser(Map<String, Object> p);
+	int deleteNotiUser(@Param("hospCd") String hospCd, @Param("notiSeq") long notiSeq);
+	List<Map<String, Object>> selectNotiCandidates(@Param("hospCd") String hospCd);
+	int insertNotiLog(Map<String, Object> p);
+	List<Map<String, Object>> selectNotiLogs(@Param("hospCd") String hospCd);
+	List<String> selectNotiHosps();
+	int insertNotiRun(@Param("runDt") String runDt, @Param("runHost") String runHost);
 }

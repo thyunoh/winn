@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
-        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd">
 
     <context:component-scan base-package="egovframework">
        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
     </context:component-scan>
+
+    <!-- @Scheduled 켜기 (2026-10-08) — MIS 업무 알림 자동 발송(MisNotiScheduler, 평일 08:30). 스레드 1개면 충분하다.
+         ★실제로 보낼지는 mail.properties 의 noti.auto.enabled 가 정한다(기본 꺼짐 — 개발 PC 톰캣이 운영 DB 를 보므로). -->
+    <task:scheduler id="misTaskScheduler" pool-size="1" />
+    <task:annotation-driven scheduler="misTaskScheduler" />
 
 	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
 		<property name="basenames">

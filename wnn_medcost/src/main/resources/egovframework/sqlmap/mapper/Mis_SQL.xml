@@ -349,4 +349,55 @@
 		ON DUPLICATE KEY UPDATE DONE_YN = VALUES(DONE_YN), DONE_DT = VALUES(DONE_DT), RESULT_CD = VALUES(RESULT_CD), MEMO = VALUES(MEMO), UPD_USER = VALUES(UPD_USER)
 	</insert>
 
+	<!-- ═══ ③-2 업무 알림 문자·메일 발송 (2026-10-08) — TBL_MIS_NOTI_USER(받는 사람) · TBL_MIS_NOTI_LOG(이력) · TBL_MIS_NOTI_RUN(자동 발송 선점) ═══ -->
+	<select id="selectNotiUsers" resultType="java.util.HashMap">
+		SELECT NOTI_SEQ AS notiseq, NAME AS name, ROLE_NM AS rolenm, EMAIL AS email, TEL AS tel, MAIL_YN AS mailyn, SMS_YN AS smsyn
+		     , AUTO_GB AS autogb, MIN_LEVEL AS minlevel, USE_YN AS useyn, UPD_DTTM AS upddttm
+		  FROM TBL_MIS_NOTI_USER
+		 WHERE HOSP_CD = #{hospCd}
+		 ORDER BY USE_YN DESC, NOTI_SEQ
+	</select>
+	<insert id="insertNotiUser" useGeneratedKeys="true" keyProperty="notiSeq">
+		INSERT INTO TBL_MIS_NOTI_USER (HOSP_CD, NAME, ROLE_NM, EMAIL, TEL, MAIL_YN, SMS_YN, AUTO_GB, MIN_LEVEL, USE_YN, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{name}, #{roleNm}, #{email}, #{tel}, #{mailYn}, #{smsYn}, #{autoGb}, #{minLevel}, #{useYn}, #{userId}, #{userId})
+	</insert>
+	<update id="updateNotiUser">
+		UPDATE TBL_MIS_NOTI_USER
+		   SET NAME = #{name}, ROLE_NM = #{roleNm}, EMAIL = #{email}, TEL = #{tel}, MAIL_YN = #{mailYn}, SMS_YN = #{smsYn}
+		     , AUTO_GB = #{autoGb}, MIN_LEVEL = #{minLevel}, USE_YN = #{useYn}, UPD_USER = #{userId}
+		 WHERE HOSP_CD = #{hospCd} AND NOTI_SEQ = #{notiSeq}
+	</update>
+	<delete id="deleteNotiUser">
+		DELETE FROM TBL_MIS_NOTI_USER WHERE HOSP_CD = #{hospCd} AND NOTI_SEQ = #{notiSeq}
+	</delete>
+	<!-- 「계정에서 가져오기」 후보 — 이 병원 계정 표의 메일·전화(표는 고치지 않는다) -->
+	<select id="selectNotiCandidates" resultType="java.util.HashMap">
+		SELECT USER_NM AS name, COALESCE(EMAIL,'') AS email, COALESCE(USER_TEL,'') AS tel, MAIN_GU AS maingu
+		  FROM TBL_USER_MST
+		 WHERE HOSP_CD = #{hospCd} AND COALESCE(ACTION_YN,'Y') = 'Y' AND COALESCE(USE_YN,'Y') <![CDATA[<>]]> 'N'
+		   AND (COALESCE(EMAIL,'') <![CDATA[<>]]> '' OR COALESCE(USER_TEL,'') <![CDATA[<>]]> '')
+		 GROUP BY USER_NM, COALESCE(EMAIL,''), COALESCE(USER_TEL,''), MAIN_GU
+		 ORDER BY MAIN_GU, USER_NM
+	</select>
+	<insert id="insertNotiLog">
+		INSERT INTO TBL_MIS_NOTI_LOG (HOSP_CD, CHANNEL, TO_ADDR, TO_NAME, SUBJECT, BODY, RESULT, ERR_MSG, SENT_BY, LEVEL_CNT)
+		VALUES (#{hospCd}, #{channel}, #{toAddr}, #{toName}, #{subject}, #{body}, #{result}, #{errMsg}, #{sentBy}, #{levelCnt})
+	</insert>
+	<select id="selectNotiLogs" resultType="java.util.HashMap">
+		SELECT LOG_SEQ AS logseq, CHANNEL AS channel, TO_ADDR AS toaddr, TO_NAME AS toname, SUBJECT AS subject, RESULT AS result, ERR_MSG AS errmsg
+		     , SENT_BY AS sentby, LEVEL_CNT AS levelcnt, SENT_DTTM AS sentdttm
+		  FROM TBL_MIS_NOTI_LOG
+		 WHERE HOSP_CD = #{hospCd}
+		 ORDER BY LOG_SEQ DESC
+		 LIMIT 30
+	</select>
+	<!-- 자동 발송 대상 병원 — 자동(매일·매주) 받는 사람이 한 명이라도 있는 병원 -->
+	<select id="selectNotiHosps" resultType="string">
+		SELECT DISTINCT HOSP_CD FROM TBL_MIS_NOTI_USER WHERE USE_YN = 'Y' AND AUTO_GB IN ('D','W')
+	</select>
+	<!-- 자동 발송 선점 — 같은 날 먼저 넣은 쪽만 1 을 돌려받는다 -->
+	<insert id="insertNotiRun">
+		INSERT IGNORE INTO TBL_MIS_NOTI_RUN (RUN_DT, RUN_HOST) VALUES (#{runDt}, #{runHost})
+	</insert>
+
 </mapper>
