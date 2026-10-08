@@ -796,7 +796,7 @@
                     <li class="nav-item" id="menu-mis" style="display:none;">
                         <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
                            aria-expanded="false" data-target="#mis-sub" aria-controls="mis-sub">
-                        <i class="fas fa-chart-line" aria-hidden="true"></i>경영관리(MIS)</a>
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>경영고객관리</a>
                         <div id="mis-sub" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misStat.do">경영통계</a></li>
@@ -3141,7 +3141,7 @@ window.qpsPrintGo = function (w, maxMs) {
         flagSet(on ? 'N' : 'Y');
         apply(true);
         try {
-            if (typeof _toast === 'function') _toast('경영관리(MIS) 메뉴 ' + (on ? '숨김 — 다시 보려면 mis 를 치세요.' : '표시 — 좌측 [경영관리(MIS)] ▸ 경영통계 · 고정경비'), 'ok');
+            if (typeof _toast === 'function') _toast('경영고객관리 메뉴 ' + (on ? '숨김 — 다시 보려면 mis 를 치세요.' : '표시 — 좌측 [경영고객관리] ▸ 경영통계 · 고정경비'), 'ok');
             else if (typeof Swal !== 'undefined') Swal.fire({ toast:true, position:'top-end', width:380, timer:4000, showConfirmButton:false, icon:'info', title:'MIS 메뉴 ' + (on ? '숨김' : '표시') });
         } catch(e){}
     }

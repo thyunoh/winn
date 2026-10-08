@@ -422,7 +422,7 @@ public class MisServiceImpl implements MisService {
 			}
 			h.append("</table>");
 		}
-		h.append("<p style=\"font-size:11.5px;color:#8a99a3;margin-top:16px;border-top:1px solid #e3e9ed;padding-top:8px;\">이 메일은 WinCheck+ 경영관리(MIS) › 업무 알림에서 등록한 담당자에게 자동으로 보내집니다. 받지 않으려면 업무 알림 화면의 「알림 받는 사람」에서 끄세요.");
+		h.append("<p style=\"font-size:11.5px;color:#8a99a3;margin-top:16px;border-top:1px solid #e3e9ed;padding-top:8px;\">이 메일은 WinCheck+ 경영고객관리 › 업무 알림에서 등록한 담당자에게 자동으로 보내집니다. 받지 않으려면 업무 알림 화면의 「알림 받는 사람」에서 끄세요.");
 		if (!siteBase.isEmpty()) h.append(" <a href=\"").append(esc(siteBase)).append("/main/misAlert.do\" style=\"color:#1f5a4b;\">업무 알림 열기</a>");
 		h.append("</p></div>");
 

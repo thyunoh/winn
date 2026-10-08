@@ -2247,3 +2247,4 @@
   · `MisController.screen` — 병원 계정(s_wnn_yn≠Y)은 계약 없으면 `redirect:/user/dashboard.do`(DB 로 판정, 쿠키 위조 무관) · `/mis/menuChk.do` 가 보는 병원의 misYn.
   · sidebar.jsp — 토글 스크립트에 `contractAsk()`(menuChk 한 번, sessionStorage `misChk.<병원>`) → 계약 있으면 누구에게나 메뉴, 위너넷 m·i·s 토글은 그대로. **로그인 쿠키 s_conact_gb(A/1/2)는 안 건드렸다**(A=둘 다 계산이 흔들린다).
   · 병원에 열려면 계약관리에서 구분 「경영관리(MIS)」 계약 등록(시드 파일 끝에 SQL 예). 아직 등록된 병원 0.
+- ✅**[2026-10-08] 메뉴 이름 「경영관리(MIS)」 → 「경영고객관리」**(사용자 지시) — sidebar.jsp 메뉴 글자·토글 토스트, 알림 메일 바닥글(MisServiceImpl), 제안서·인수인계·배포 가이드. 코드·주석의 MIS/mismgr/`m·i·s` 토글 이름은 그대로.
