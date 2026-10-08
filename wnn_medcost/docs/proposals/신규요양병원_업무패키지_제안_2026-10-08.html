@@ -191,7 +191,8 @@ footer{margin-top:56px;font-size:13px;color:var(--muted);border-top:1px solid va
   </div>
   <div class="hero-note">
     <b>이 문서의 쓰임</b><br>
-    병원에 먼저 보여 드리고 의견을 듣기 위한 시안입니다. ① 경영통계와 ② 고정경비의 수익·환자 수는 <b>부산은빛요양병원 2026년 5~9월 실제 자료</b>로 계산했고, 고정비 금액과 ③·④ 화면의 숫자는 예시입니다. 맨 아래 <b>의견 적기</b>에서 필요한 것, 빼도 되는 것을 알려 주시면 그 순서대로 만듭니다.
+    병원에 먼저 보여 드리고 의견을 듣기 위한 문서입니다. 네 프로그램은 이미 WinCheck+ 에 만들어져 있어 화면으로 바로 보여 드릴 수 있습니다(아래 「구현 현황」). ① 경영통계와 ② 고정경비의 수익·환자 수는 <b>부산은빛요양병원 2026년 5~9월 실제 자료</b>로 계산했고, 고정비 금액과 ③·④ 화면의 숫자는 예시입니다. 맨 아래 <b>의견 적기</b>에서 필요한 것, 빼도 되는 것을 알려 주시면 그대로 다듬습니다.
+    <div style="margin-top:8px"><button type="button" id="maskBtn" onclick="toggleMask()" style="font:inherit;font-size:12.5px;font-weight:700;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--primary);cursor:pointer" title="다른 병원에 보여 줄 때 — 부산은빛 이름을 「A요양병원」으로 바꿉니다. 주소에 ?mask=1 을 붙여 열어도 됩니다">병원 이름 가리기</button></div>
   </div>
 </header>
 
@@ -564,14 +565,16 @@ footer{margin-top:56px;font-size:13px;color:var(--muted);border-top:1px solid va
 
 <section>
   <div class="sec-head">
-    <h2>만드는 순서 (안)</h2>
-    <p class="muted">의견을 듣고 순서를 바꿉니다. 지금 생각은 이렇습니다.</p>
+    <h2>구현 현황 <span class="tag">2026-10-08 기준</span></h2>
+    <p class="muted">네 프로그램 모두 WinCheck+ 안에 <b>경영관리(MIS)</b> 메뉴로 만들어져 있습니다. 병원 의견을 받아 다듬는 단계입니다.</p>
   </div>
   <div class="steps">
-    <div class="step"><div class="k">1단계</div><h3>경영통계 + 고정경비</h3><p>경영통계는 입력 없이 바로 나오고, 고정경비는 그 위에 입력 표 하나를 얹는 것이라 함께 만듭니다. 계약 때 바로 보여 드릴 수 있습니다.</p><div class="why">기존 자료만으로 됨 · 비교 기능은 위너넷만 가능</div></div>
-    <div class="step"><div class="k">2단계</div><h3>업무 자동화</h3><p>기한 알림과 미업로드 독촉부터. 위너넷 운영 부담도 같이 줄어듭니다.</p><div class="why">자가점검·시뮬레이션은 있는 로직 재사용</div></div>
-    <div class="step"><div class="k">3단계</div><h3>신규환자 고객관리</h3><p>입력 화면이 있어 병원 교육이 필요합니다. 상담 담당자 의견을 듣고 설계합니다.</p><div class="why">병원마다 상담 방식이 달라 먼저 들어야 함</div></div>
+    <div class="step"><div class="k">① 경영통계 — 완료</div><h3>입력 없이 바로</h3><p>월 총진료비·환자군·입퇴원·적정성 점수를 청구·평가표·입퇴원현황에서 자동 집계. 고객 평균 비교, <b>전년 동월 비교</b>, 엑셀출력·인쇄(원장 보고용 한 장).</p><div class="why">저장하지 않고 열 때마다 계산 · 비교는 위너넷 고객 평균</div></div>
+    <div class="step"><div class="k">② 고정경비 관리 — 완료</div><h3>한 번 적고 바뀐 것만</h3><p>항목별 월 금액(이전 달 값 자동 승계), 손익분기 환자 수, <b>추정 월 손익</b>(수익 − 고정비 − 변동비), 12달 추이. 병상 수·변동비는 병원 설정.</p><div class="why">항목은 병원이 추가·끄기 가능</div></div>
+    <div class="step"><div class="k">③ 업무 자동화 — 완료</div><h3>업무 알림 + 문자·메일</h3><p>지난달 자료 업로드·자료생성·차등제 신고·평가표 자가점검·고정비·고객관리 연락을 서버가 점검해 급함/할 일/완료로. 받는 사람을 등록하면 <b>메일 자동 발송(평일 08:30)</b>, 카톡 공유, 인력 변동 시뮬레이션.</p><div class="why">문자는 발송 업체(알리고) 계정이 생기면 켜짐</div></div>
+    <div class="step"><div class="k">④ 신규환자 고객관리 — 완료</div><h3>상담 → 입원 관리판</h3><p>상담·방문·입원 결정·입원·퇴원 후 다섯 칸. 입원·퇴원은 <b>입퇴원현황과 자동 대조</b>(생년월일+이름). 유입 경로별 전환율, 퇴원 환자 안부 연락 표, 엑셀출력.</p><div class="why">칸을 누르면 그 단계로 바로 접수</div></div>
   </div>
+  <p class="muted" style="margin-top:12px"><b>남은 일</b> — 문자 발송 업체 계정(알리고) 등록과 운영 서버 방화벽 개방 · 카카오 알림톡(비즈니스 채널 심사) · 병원 의견에 따른 항목·문구 조정 · 운영 배포.</p>
 </section>
 
 <section>
@@ -647,6 +650,21 @@ footer{margin-top:56px;font-size:13px;color:var(--muted);border-top:1px solid va
 </div>
 
 <script>
+/* 병원 이름 가리기(2026-10-08) — 다른 병원에 보여 줄 때 부산은빛 → A요양병원. 글자 노드만 바꾸고 원문을 기억해 되돌린다. ?mask=1 로 열면 처음부터 가린다. */
+var MASKED=false, MASK_SAVED=[];
+function toggleMask(on){
+  var want=(typeof on==='boolean')?on:!MASKED;
+  if(want===MASKED) return;
+  if(want){
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false), n;
+    while((n=w.nextNode())){ if(n.parentNode&&n.parentNode.id==='maskBtn') continue; if(/부산은빛/.test(n.nodeValue)){ MASK_SAVED.push([n,n.nodeValue]); n.nodeValue=n.nodeValue.replace(/부산은빛요양병원/g,'A요양병원').replace(/부산은빛/g,'A병원'); } }
+    document.title=document.title.replace(/부산은빛요양병원/g,'A요양병원').replace(/부산은빛/g,'A병원');
+  } else { MASK_SAVED.forEach(function(p){ p[0].nodeValue=p[1]; }); MASK_SAVED=[]; }
+  MASKED=want;
+  var b=document.getElementById('maskBtn'); if(b) b.textContent=MASKED?'병원 이름 보이기 (지금 A요양병원으로 가려짐)':'병원 이름 가리기';
+  try{ var u=new URL(location.href); if(MASKED) u.searchParams.set('mask','1'); else u.searchParams.delete('mask'); history.replaceState(null,'',u.toString()); }catch(e){}
+}
+(function(){ try{ if(new URL(location.href).searchParams.get('mask')==='1') document.addEventListener('DOMContentLoaded',function(){ toggleMask(true); }); }catch(e){} })();
 (function(){
   var KEY='wnn_newpkg_fb_draft';
   var texts=['q8','q9','q10','q11'];
