@@ -76,4 +76,27 @@ public interface MisMapper {
 	int insertNotiRun(@Param("runDt") String runDt, @Param("runHost") String runHost);
 	/** MIS 계약(CONACT_GB='M') 유효 건수 — 메뉴 노출·화면 진입 판정 */
 	int countMisContract(@Param("hospCd") String hospCd);
+
+	/* ── EMR 엑셀 연계 (2026-10-11) ── insert 는 Map(hospCd·ym·userId·rows) */
+	List<Map<String, Object>> selectEmrMaps(@Param("hospCd") String hospCd);
+	int saveEmrMap(Map<String, Object> p);
+	int insertEmrUpload(Map<String, Object> p);
+	List<Map<String, Object>> selectEmrUploads(@Param("hospCd") String hospCd);
+	int deleteEmrPay(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int insertEmrPay(Map<String, Object> p);
+	List<Map<String, Object>> selectEmrPayRows(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectEmrPaySum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int deleteEmrAct(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int insertEmrAct(Map<String, Object> p);
+	List<Map<String, Object>> selectEmrActRows(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectEmrActSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int deleteEmrContact(@Param("hospCd") String hospCd);
+	int insertEmrContact(Map<String, Object> p);
+	List<Map<String, Object>> selectEmrContactRows(@Param("hospCd") String hospCd);
+	Map<String, Object> selectEmrContactSum(@Param("hospCd") String hospCd);
+	int deleteEmrStaff(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int insertEmrStaff(Map<String, Object> p);
+	List<Map<String, Object>> selectEmrStaffRows(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectEmrStaffSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	Map<String, Object> selectEmrIpwonSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
 }

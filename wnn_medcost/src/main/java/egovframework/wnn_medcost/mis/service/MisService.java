@@ -50,6 +50,17 @@ public interface MisService {
 	Map<String, Object> runAutoNoti() throws Exception;
 	/** 이 병원에 MIS 계약(계약 구분 'M')이 유효한가 — 병원 계정의 메뉴 노출·화면 진입은 이것으로 가른다(위너넷은 무관) */
 	boolean hasMisContract(String hospCd) throws Exception;
+	/* ── EMR 엑셀 연계 (2026-10-11) ── */
+	/** 화면 한 장 — 맞춤(maps) · 올린 이력(uploads) · 그 달 요약(pay·contact·staff·ipwon) */
+	Map<String, Object> selectEmrPage(String hospCd, String ym) throws Exception;
+	/** 올린 자료 보기 — PAY/STAFF 는 그 달, CONTACT 는 최신본 */
+	List<Map<String, Object>> selectEmrRows(String hospCd, String dataGb, String ym) throws Exception;
+	void saveEmrMap(String hospCd, String dataGb, String mapJson, Integer hdrRow, String userId) throws Exception;
+	/** 저장 — PAY/STAFF 는 그 달 지우고 다시 넣기, CONTACT 는 병원 통째 대체. 반환 = 지운 옛 줄 수. 트랜잭션은 context-transaction.xml misEmrSaveTx */
+	int saveEmr(String hospCd, String dataGb, String ym, List<Map<String, Object>> rows, String fileNm, int skipCnt, String userId) throws Exception;
+	/** IPWON 은 기존 업로드가 저장한다 — 여기서는 이력 한 줄만 */
+	void logEmrUpload(String hospCd, String dataGb, String ym, String fileNm, int rowCnt, int skipCnt, String userId) throws Exception;
+
 	/** 카톡 공유·링크 복사 이력(채널 KAKAO/LINK) */
 	void logNotiShare(String hospCd, String channel, String subject, String body, String result, String errMsg, String userId) throws Exception;
 }

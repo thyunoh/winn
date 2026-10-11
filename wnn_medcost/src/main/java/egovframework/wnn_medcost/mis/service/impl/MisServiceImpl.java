@@ -542,6 +542,69 @@ public class MisServiceImpl implements MisService {
 		mapper.insertNotiLog(l);
 	}
 
+	/* ═══ EMR 엑셀 연계 (2026-10-11) ═══ */
+	@Override
+	public Map<String, Object> selectEmrPage(String hospCd, String ym) throws Exception {
+		Map<String, Object> r = new HashMap<>();
+		r.put("maps", mapper.selectEmrMaps(hospCd));
+		r.put("uploads", mapper.selectEmrUploads(hospCd));
+		r.put("pay", mapper.selectEmrPaySum(hospCd, ym));
+		r.put("act", mapper.selectEmrActSum(hospCd, ym));
+		r.put("contact", mapper.selectEmrContactSum(hospCd));
+		r.put("staff", mapper.selectEmrStaffSum(hospCd, ym));
+		r.put("ipwon", mapper.selectEmrIpwonSum(hospCd, ym));
+		return r;
+	}
+
+	@Override
+	public List<Map<String, Object>> selectEmrRows(String hospCd, String dataGb, String ym) throws Exception {
+		if ("PAY".equals(dataGb)) return mapper.selectEmrPayRows(hospCd, ym);
+		if ("ACT".equals(dataGb)) return mapper.selectEmrActRows(hospCd, ym);
+		if ("CONTACT".equals(dataGb)) return mapper.selectEmrContactRows(hospCd);
+		if ("STAFF".equals(dataGb)) return mapper.selectEmrStaffRows(hospCd, ym);
+		return new ArrayList<>();
+	}
+
+	@Override
+	public void saveEmrMap(String hospCd, String dataGb, String mapJson, Integer hdrRow, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("dataGb", dataGb); p.put("mapJson", mapJson); p.put("hdrRow", hdrRow); p.put("userId", userId);
+		mapper.saveEmrMap(p);
+	}
+
+	@Override
+	public int saveEmr(String hospCd, String dataGb, String ym, List<Map<String, Object>> rows, String fileNm, int skipCnt, String userId) throws Exception {
+		int del;
+		if ("PAY".equals(dataGb)) del = mapper.deleteEmrPay(hospCd, ym);
+		else if ("ACT".equals(dataGb)) del = mapper.deleteEmrAct(hospCd, ym);
+		else if ("STAFF".equals(dataGb)) del = mapper.deleteEmrStaff(hospCd, ym);
+		else if ("CONTACT".equals(dataGb)) del = mapper.deleteEmrContact(hospCd);
+		else throw new IllegalArgumentException("자료 구분이 잘못되었습니다 : " + dataGb);
+		// 한 문장이 너무 커지지 않게 500줄씩(같은 트랜잭션 안)
+		for (int i = 0; i < rows.size(); i += 500) {
+			Map<String, Object> p = new HashMap<>();
+			p.put("hospCd", hospCd); p.put("ym", ym); p.put("userId", userId);
+			p.put("rows", rows.subList(i, Math.min(rows.size(), i + 500)));
+			if ("PAY".equals(dataGb)) mapper.insertEmrPay(p);
+			else if ("ACT".equals(dataGb)) mapper.insertEmrAct(p);
+			else if ("STAFF".equals(dataGb)) mapper.insertEmrStaff(p);
+			else mapper.insertEmrContact(p);
+		}
+		Map<String, Object> l = new HashMap<>();
+		l.put("hospCd", hospCd); l.put("dataGb", dataGb); l.put("ym", "CONTACT".equals(dataGb) ? null : ym);
+		l.put("fileNm", cut(fileNm, 200)); l.put("rowCnt", rows.size()); l.put("skipCnt", skipCnt); l.put("delCnt", del); l.put("userId", userId);
+		mapper.insertEmrUpload(l);
+		return del;
+	}
+
+	@Override
+	public void logEmrUpload(String hospCd, String dataGb, String ym, String fileNm, int rowCnt, int skipCnt, String userId) throws Exception {
+		Map<String, Object> l = new HashMap<>();
+		l.put("hospCd", hospCd); l.put("dataGb", dataGb); l.put("ym", ym);
+		l.put("fileNm", cut(fileNm, 200)); l.put("rowCnt", rowCnt); l.put("skipCnt", skipCnt); l.put("delCnt", 0); l.put("userId", userId);
+		mapper.insertEmrUpload(l);
+	}
+
 	private static String esc(String s) { return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;"); }
 	private static String cut(String s, int n) { return s == null ? "" : (s.length() > n ? s.substring(0, n) : s); }
 	/** 문자용 짧은 병원 이름 — 「요양병원」을 떼고 8자까지 */

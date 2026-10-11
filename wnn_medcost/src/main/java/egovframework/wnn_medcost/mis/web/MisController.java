@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,7 +30,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261008-MIS6";   // + 계약 구분 'M' 으로 병원에 메뉴·화면 열기(menuChk · screen 가드)
+	private static final String BUILD = "20261011-MIS7";   // + EMR 엑셀 연계(수납·행위별·연락처·입퇴원·인력, 머리글 맞춤) · 퇴원 안부에 보호자 연락처
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -537,6 +538,220 @@ public class MisController {
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
 	}
+
+	/* ═══ EMR 엑셀 연계 (2026-10-11) — 닥터스 EMR 과 연계가 안 돼 엑셀로 받아 올린다 ═══
+	 * 자료 구분 PAY 수납·진료비 / ACT 행위별 통계(행위 분류별 횟수·금액) / CONTACT 환자·보호자 연락처 / IPWON 입퇴원현황 / STAFF 직원·근무.
+	 * 머리글 ↔ 필드 맞춤은 화면이 하고(견본 양식 없음) 병원·자료별로 TBL_MIS_EMR_MAP 에 기억한다.
+	 * IPWON 의 저장은 기존 /main/saveExcelDatas.do(TBL_IPWON_INFO)를 그대로 쓴다 — 여기서는 맞춤·이력만(emrIpwonLog). */
+	private static final java.util.Set<String> EMR_GB = new java.util.HashSet<>(java.util.Arrays.asList("PAY", "ACT", "CONTACT", "IPWON", "STAFF"));
+
+	@RequestMapping(value = "main/misEmr.do")
+	public String misEmr(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misEmr"); }
+
+	@RequestMapping(value = "/mis/emrGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> emrGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("ym"), "").replaceAll("[^0-9]", "");
+			if (!ym.matches("\\d{6}")) ym = addMonths(nowYm(), -1);
+			res.putAll(svc.selectEmrPage(hospCd, ym));
+			res.put("ym", ym);
+			res.put("hospCd", hospCd);
+			res.put("build", BUILD);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 올린 자료 보기 */
+	@RequestMapping(value = "/mis/emrRows.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> emrRows(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String gb = str(p.get("dataGb"), "").toUpperCase();
+			if (!EMR_GB.contains(gb) || "IPWON".equals(gb)) return fail(res, "자료 구분이 잘못되었습니다.");
+			String ym = str(p.get("ym"), "").replaceAll("[^0-9]", "");
+			if (!"CONTACT".equals(gb) && !ym.matches("\\d{6}")) return fail(res, "연월이 잘못되었습니다.");
+			res.put("list", svc.selectEmrRows(hospCd, gb, ym));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 머리글 맞춤만 저장(올리지 않고 맞춤을 기억해 두고 싶을 때) */
+	@RequestMapping(value = "/mis/emrMapSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> emrMapSave(@RequestBody Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String gb = str(p.get("dataGb"), "").toUpperCase();
+			if (!EMR_GB.contains(gb)) return fail(res, "자료 구분이 잘못되었습니다.");
+			String mapJson = mapJsonOf(p.get("map"));
+			if (mapJson == null) return fail(res, "맞춤 내용이 잘못되었습니다.");
+			svc.saveEmrMap(hospCd, gb, mapJson, hdrRowOf(p.get("hdrRow")), userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 저장 — PAY/STAFF 는 그 달 대체, CONTACT 는 병원 통째 대체. 맞춤도 같이 기억한다. 본문 JSON(@RequestBody) — 줄이 많아 폼 크기 한도를 피하고, XSS 필터도 안 탄다. */
+	@RequestMapping(value = "/mis/emrSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> emrSave(@RequestBody Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String gb = str(p.get("dataGb"), "").toUpperCase();
+			if (!EMR_GB.contains(gb) || "IPWON".equals(gb)) return fail(res, "자료 구분이 잘못되었습니다.");
+			String ym = str(p.get("ym"), "").replaceAll("[^0-9]", "");
+			if (!"CONTACT".equals(gb) && !ym.matches("\\d{6}")) return fail(res, "연월이 잘못되었습니다.");
+			Object ro = p.get("rows");
+			if (!(ro instanceof List)) return fail(res, "올릴 줄이 없습니다.");
+			List<?> in = (List<?>) ro;
+			if (in.isEmpty()) return fail(res, "올릴 줄이 없습니다.");
+			if (in.size() > 20000) return fail(res, "한 번에 20,000줄까지 올릴 수 있습니다(지금 " + in.size() + "줄).");
+			List<Map<String, Object>> rows = new ArrayList<>();
+			int seq = 0;
+			for (Object o : in) {
+				if (!(o instanceof Map)) continue;
+				@SuppressWarnings("unchecked") Map<String, Object> r = (Map<String, Object>) o;
+				Map<String, Object> m = "PAY".equals(gb) ? emrPayRow(r) : "ACT".equals(gb) ? emrActRow(r) : "STAFF".equals(gb) ? emrStaffRow(r) : emrContactRow(r);
+				if (m == null) continue;
+				m.put("seq", ++seq);
+				rows.add(m);
+			}
+			if (rows.isEmpty()) return fail(res, "저장할 줄이 없습니다 — 맞춘 칸에 값이 있는지 보세요.");
+			Integer sk = intOf(p.get("skipCnt"));
+			int skip = (sk == null ? 0 : sk) + (in.size() - rows.size());
+			int del = svc.saveEmr(hospCd, gb, ym, rows, cut(str(p.get("fileNm"), ""), 200), skip, userId(request));
+			String mapJson = mapJsonOf(p.get("map"));
+			if (mapJson != null) svc.saveEmrMap(hospCd, gb, mapJson, hdrRowOf(p.get("hdrRow")), userId(request));
+			res.put("saved", rows.size());
+			res.put("deleted", del);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 입퇴원현황은 기존 업로드가 저장한 뒤 화면이 부른다 — 맞춤 기억 + 이력 한 줄 */
+	@RequestMapping(value = "/mis/emrIpwonLog.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> emrIpwonLog(@RequestBody Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("ym"), "").replaceAll("[^0-9]", "");
+			if (!ym.matches("\\d{6}")) return fail(res, "연월이 잘못되었습니다.");
+			Integer rc = intOf(p.get("rowCnt")), sc = intOf(p.get("skipCnt"));
+			svc.logEmrUpload(hospCd, "IPWON", ym, cut(str(p.get("fileNm"), ""), 200), rc == null ? 0 : rc, sc == null ? 0 : sc, userId(request));
+			String mapJson = mapJsonOf(p.get("map"));
+			if (mapJson != null) svc.saveEmrMap(hospCd, "IPWON", mapJson, hdrRowOf(p.get("hdrRow")), userId(request));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* 줄 정리 — 화면이 맞춰 보낸 값을 칸 길이·형식에 맞춘다. 이름·차트번호가 다 비면 null(뺀다). */
+	private static Map<String, Object> emrPayRow(Map<String, Object> r) {
+		Map<String, Object> m = new HashMap<>();
+		m.put("payDt", dt8(r.get("payDt")));
+		m.put("chartno", cut(str(r.get("chartno"), ""), 30));
+		m.put("patNm", cut(str(r.get("patNm"), ""), 50));
+		m.put("birth6", birth6(r.get("birth6")));
+		m.put("inoutGb", cut(str(r.get("inoutGb"), ""), 20));
+		m.put("insurNm", cut(str(r.get("insurNm"), ""), 30));
+		m.put("deptNm", cut(str(r.get("deptNm"), ""), 30));
+		for (String k : new String[]{"totAmt", "insAmt", "selfAmt", "nonpayAmt", "paidAmt", "unpaidAmt"}) m.put(k, amtOf(r.get(k)));
+		m.put("payMethod", cut(str(r.get("payMethod"), ""), 30));
+		m.put("memo", cut(str(r.get("memo"), ""), 200));
+		boolean who = !((String) m.get("chartno")).isEmpty() || !((String) m.get("patNm")).isEmpty();
+		boolean amt = m.get("totAmt") != null || m.get("paidAmt") != null || m.get("selfAmt") != null || m.get("nonpayAmt") != null;
+		return (who || amt) ? m : null;
+	}
+	/** 행위별 통계 — 한 줄 = 행위 분류 하나(수가코드·명칭은 받지 않는다 — 2026-10-11 사용자). 분류가 비면 뺀다(합계 줄은 화면이 먼저 거른다) */
+	private static Map<String, Object> emrActRow(Map<String, Object> r) {
+		Map<String, Object> m = new HashMap<>();
+		m.put("actGb", cut(str(r.get("actGb"), ""), 50));
+		m.put("payGb", cut(str(r.get("payGb"), ""), 20));
+		m.put("inoutGb", cut(str(r.get("inoutGb"), ""), 20));
+		m.put("deptNm", cut(str(r.get("deptNm"), ""), 30));
+		m.put("unitPrice", amtOf(r.get("unitPrice")));
+		m.put("actCnt", decOf(r.get("actCnt"), 999999999));
+		m.put("patCnt", intOf(str(r.get("patCnt"), "").replaceAll("[^0-9-]", "")));
+		m.put("totAmt", amtOf(r.get("totAmt")));
+		m.put("insAmt", amtOf(r.get("insAmt")));
+		m.put("selfAmt", amtOf(r.get("selfAmt")));
+		m.put("memo", cut(str(r.get("memo"), ""), 200));
+		return ((String) m.get("actGb")).isEmpty() ? null : m;
+	}
+	private static Map<String, Object> emrContactRow(Map<String, Object> r) {
+		Map<String, Object> m = new HashMap<>();
+		m.put("chartno", cut(str(r.get("chartno"), ""), 30));
+		m.put("patNm", cut(str(r.get("patNm"), ""), 50));
+		m.put("birth6", birth6(r.get("birth6")));
+		m.put("gender", cut(str(r.get("gender"), ""), 5));
+		m.put("tel", cut(str(r.get("tel"), ""), 30));
+		m.put("guardNm", cut(str(r.get("guardNm"), ""), 50));
+		m.put("guardRel", cut(str(r.get("guardRel"), ""), 20));
+		m.put("guardTel", cut(str(r.get("guardTel"), ""), 30));
+		m.put("addr", cut(str(r.get("addr"), ""), 200));
+		m.put("memo", cut(str(r.get("memo"), ""), 200));
+		return (((String) m.get("chartno")).isEmpty() && ((String) m.get("patNm")).isEmpty()) ? null : m;
+	}
+	private static Map<String, Object> emrStaffRow(Map<String, Object> r) {
+		Map<String, Object> m = new HashMap<>();
+		m.put("empNo", cut(str(r.get("empNo"), ""), 30));
+		m.put("empNm", cut(str(r.get("empNm"), ""), 50));
+		m.put("jobNm", cut(str(r.get("jobNm"), ""), 30));
+		m.put("deptNm", cut(str(r.get("deptNm"), ""), 30));
+		m.put("workGb", cut(str(r.get("workGb"), ""), 20));
+		m.put("joinDt", dt8(r.get("joinDt")));
+		m.put("retireDt", dt8(r.get("retireDt")));
+		m.put("workDays", decOf(r.get("workDays"), 99999));
+		m.put("workHours", decOf(r.get("workHours"), 999999));
+		m.put("nightCnt", decOf(r.get("nightCnt"), 9999));
+		m.put("payAmt", amtOf(r.get("payAmt")));
+		m.put("memo", cut(str(r.get("memo"), ""), 200));
+		return (((String) m.get("empNo")).isEmpty() && ((String) m.get("empNm")).isEmpty()) ? null : m;
+	}
+	/** 금액 — 콤마·원·공백을 떼고 정수(소수는 반올림). 음수(환불)는 그대로. 숫자가 아니면 null */
+	private static Long amtOf(Object o) {
+		String s = str(o, "").replaceAll("[,\\s원₩]", "");
+		if (s.isEmpty() || !s.matches("-?\\d+(\\.\\d+)?")) return null;
+		try { long v = Math.round(Double.parseDouble(s)); return Math.abs(v) > 999999999999L ? null : v; } catch (Exception e) { return null; }
+	}
+	private static java.math.BigDecimal decOf(Object o, double max) {
+		String s = str(o, "").replaceAll("[,\\s]", "");
+		if (s.isEmpty() || !s.matches("-?\\d+(\\.\\d+)?")) return null;
+		try { java.math.BigDecimal d = new java.math.BigDecimal(s).setScale(1, java.math.RoundingMode.HALF_UP); return Math.abs(d.doubleValue()) > max ? null : d; } catch (Exception e) { return null; }
+	}
+	/** 생년월일 6자리 — 주민번호·생년월일(1950-03-01, 500301-1…) 어느 꼴이든 앞 6자리. 8자리 생년월일(19500301)은 뒤 6자리 */
+	private static String birth6(Object o) {
+		String raw = str(o, "");
+		String d = raw.replaceAll("[^0-9]", "");
+		java.util.regex.Matcher mm = java.util.regex.Pattern.compile("^\\s*((?:19|20)\\d{2})[-./](\\d{1,2})[-./](\\d{1,2})").matcher(raw);
+		if (mm.find()) return mm.group(1).substring(2) + (mm.group(2).length() == 1 ? "0" : "") + mm.group(2) + (mm.group(3).length() == 1 ? "0" : "") + mm.group(3);
+		if (d.length() == 8 && d.matches("(19|20)\\d{6}")) return d.substring(2);
+		return d.length() >= 6 ? d.substring(0, 6) : "";
+	}
+	private static String mapJsonOf(Object o) {
+		if (o == null) return null;
+		try {
+			String json = o instanceof String ? (String) o : new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(o);
+			return json.length() > 20000 ? null : json;
+		} catch (Exception e) { return null; }
+	}
+	private static Integer hdrRowOf(Object o) { Integer v = intOf(o); return (v == null || v < 1 || v > 50) ? null : v; }
 
 	private static String nowDt() { return new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()); }
 	private static String dt8(Object o) { String s = str(o, "").replaceAll("[^0-9]", ""); return s.matches("\\d{8}") ? s : ""; }

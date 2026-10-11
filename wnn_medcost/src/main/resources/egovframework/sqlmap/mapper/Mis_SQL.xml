@@ -329,6 +329,7 @@
 		SELECT a.jm AS birth6, a.nm AS patnm, a.ipdt, a.twdt
 		     , DATEDIFF(STR_TO_DATE(a.twdt,'%Y%m%d'), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1 AS staydays
 		     , f.DONE_YN AS doneyn, f.DONE_DT AS donedt, f.RESULT_CD AS resultcd, f.MEMO AS memo
+		     , c.gnm AS guardnm, c.grel AS guardrel, c.gtel AS guardtel, c.tel AS tel
 		     , (SELECT MIN(REPLACE(REPLACE(r.IPWONDT,'-',''),'/','')) FROM TBL_IPWON_INFO r
 		         WHERE r.HOSP_CD = #{hospCd} AND LEFT(r.JUMINNO,6) = a.jm AND REGEXP_REPLACE(r.PATNAME,'[0-9]','') = a.nm
 		           AND REPLACE(REPLACE(r.IPWONDT,'-',''),'/','') <![CDATA[>]]> a.twdt) AS readmitdt
@@ -340,6 +341,12 @@
 		         GROUP BY LEFT(t.JUMINNO,6), REGEXP_REPLACE(t.PATNAME,'[0-9]',''), REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')
 		        HAVING twdt BETWEEN #{fromDt} AND #{toDt}) a
 		  LEFT JOIN TBL_MIS_FOLLOW f ON f.HOSP_CD = #{hospCd} AND f.BIRTH6 = a.jm AND f.IPWON_DT = a.ipdt AND f.TEWON_DT = a.twdt
+		  <!-- EMR 엑셀 연계(2026-10-11) : 올려 둔 환자·보호자 연락처를 생년월일6+이름(숫자 뗌)으로 붙인다. 같은 사람이 여러 줄이면 아무 값 하나 -->
+		  LEFT JOIN (SELECT ct.BIRTH6 AS jm, REGEXP_REPLACE(ct.PAT_NM,'[0-9]','') AS nm
+		                  , MAX(NULLIF(ct.GUARD_NM,'')) AS gnm, MAX(NULLIF(ct.GUARD_REL,'')) AS grel, MAX(NULLIF(ct.GUARD_TEL,'')) AS gtel, MAX(NULLIF(ct.TEL,'')) AS tel
+		               FROM TBL_MIS_EMR_CONTACT ct
+		              WHERE ct.HOSP_CD = #{hospCd} AND COALESCE(ct.BIRTH6,'') <![CDATA[<>]]> ''
+		              GROUP BY ct.BIRTH6, REGEXP_REPLACE(ct.PAT_NM,'[0-9]','')) c ON c.jm = a.jm AND c.nm = a.nm
 		 ORDER BY a.twdt DESC, a.nm
 	</select>
 
@@ -408,5 +415,172 @@
 	<insert id="insertNotiRun">
 		INSERT IGNORE INTO TBL_MIS_NOTI_RUN (RUN_DT, RUN_HOST) VALUES (#{runDt}, #{runHost})
 	</insert>
+
+	<!-- ═══ EMR 엑셀 연계 (2026-10-11) — 닥터스 EMR 엑셀을 머리글 맞춤으로 올린다. DDL docs/sql/mis/ddl/MIS_DDL_EMR_2026-10-11.sql
+	     · 자료 구분 PAY 수납 / CONTACT 연락처 / IPWON 입퇴원(저장은 기존 TBL_IPWON_INFO 업로드 그대로) / STAFF 인력
+	     · PAY·STAFF = 연월 단위 지우고 다시 넣기, CONTACT = 병원 단위 통째 대체 — 서비스 saveEmr 하나가 묶는다(context-transaction.xml misEmrSaveTx) ═══ -->
+	<select id="selectEmrMaps" resultType="java.util.HashMap">
+		SELECT DATA_GB AS datagb, MAP_JSON AS mapjson, HDR_ROW AS hdrrow, DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm, UPD_USER AS upduser
+		  FROM TBL_MIS_EMR_MAP
+		 WHERE HOSP_CD = #{hospCd}
+	</select>
+	<insert id="saveEmrMap">
+		INSERT INTO TBL_MIS_EMR_MAP (HOSP_CD, DATA_GB, MAP_JSON, HDR_ROW, UPD_USER)
+		VALUES (#{hospCd}, #{dataGb}, #{mapJson}, #{hdrRow}, #{userId})
+		ON DUPLICATE KEY UPDATE MAP_JSON = VALUES(MAP_JSON), HDR_ROW = VALUES(HDR_ROW), UPD_USER = VALUES(UPD_USER)
+	</insert>
+
+	<insert id="insertEmrUpload">
+		INSERT INTO TBL_MIS_EMR_UPLOAD (HOSP_CD, DATA_GB, YYYYMM, FILE_NM, ROW_CNT, SKIP_CNT, DEL_CNT, REG_USER)
+		VALUES (#{hospCd}, #{dataGb}, #{ym}, #{fileNm}, #{rowCnt}, #{skipCnt}, #{delCnt}, #{userId})
+	</insert>
+	<select id="selectEmrUploads" resultType="java.util.HashMap">
+		SELECT UP_SEQ AS upseq, DATA_GB AS datagb, YYYYMM AS ym, FILE_NM AS filenm, ROW_CNT AS rowcnt, SKIP_CNT AS skipcnt, DEL_CNT AS delcnt
+		     , DATE_FORMAT(REG_DTTM,'%Y-%m-%d %H:%i') AS regdttm, REG_USER AS reguser
+		  FROM TBL_MIS_EMR_UPLOAD
+		 WHERE HOSP_CD = #{hospCd}
+		 ORDER BY UP_SEQ DESC
+		 LIMIT 60
+	</select>
+
+	<!-- 수납 -->
+	<delete id="deleteEmrPay">
+		DELETE FROM TBL_MIS_EMR_PAY WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</delete>
+	<insert id="insertEmrPay">
+		INSERT INTO TBL_MIS_EMR_PAY (HOSP_CD, YYYYMM, SEQ_NUM, PAY_DT, CHARTNO, PAT_NM, BIRTH6, INOUT_GB, INSUR_NM, DEPT_NM
+		     , TOT_AMT, INS_AMT, SELF_AMT, NONPAY_AMT, PAID_AMT, UNPAID_AMT, PAY_METHOD, MEMO, REG_USER)
+		VALUES
+		<foreach collection="rows" item="r" separator=",">
+		(#{hospCd}, #{ym}, #{r.seq}, #{r.payDt}, #{r.chartno}, #{r.patNm}, #{r.birth6}, #{r.inoutGb}, #{r.insurNm}, #{r.deptNm}
+		, #{r.totAmt}, #{r.insAmt}, #{r.selfAmt}, #{r.nonpayAmt}, #{r.paidAmt}, #{r.unpaidAmt}, #{r.payMethod}, #{r.memo}, #{userId})
+		</foreach>
+	</insert>
+	<select id="selectEmrPayRows" resultType="java.util.HashMap">
+		SELECT SEQ_NUM AS seq, PAY_DT AS paydt, CHARTNO AS chartno, PAT_NM AS patnm, BIRTH6 AS birth6, INOUT_GB AS inoutgb, INSUR_NM AS insurnm, DEPT_NM AS deptnm
+		     , TOT_AMT AS totamt, INS_AMT AS insamt, SELF_AMT AS selfamt, NONPAY_AMT AS nonpayamt, PAID_AMT AS paidamt, UNPAID_AMT AS unpaidamt
+		     , PAY_METHOD AS paymethod, MEMO AS memo
+		  FROM TBL_MIS_EMR_PAY
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 ORDER BY SEQ_NUM
+		 LIMIT 3000
+	</select>
+	<!-- 수납 요약 — 입원·외래(엑셀 글자)별. 글자가 비면 「구분 없음」 -->
+	<select id="selectEmrPaySum" resultType="java.util.HashMap">
+		SELECT COALESCE(NULLIF(TRIM(INOUT_GB),''),'구분 없음') AS inoutgb
+		     , COUNT(*) AS cnt, COUNT(DISTINCT COALESCE(NULLIF(CHARTNO,''), CONCAT(COALESCE(BIRTH6,''),'|',COALESCE(PAT_NM,'')))) AS pats
+		     , COALESCE(SUM(TOT_AMT),0) AS totamt, COALESCE(SUM(INS_AMT),0) AS insamt, COALESCE(SUM(SELF_AMT),0) AS selfamt
+		     , COALESCE(SUM(NONPAY_AMT),0) AS nonpayamt, COALESCE(SUM(PAID_AMT),0) AS paidamt, COALESCE(SUM(UNPAID_AMT),0) AS unpaidamt
+		  FROM TBL_MIS_EMR_PAY
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 GROUP BY COALESCE(NULLIF(TRIM(INOUT_GB),''),'구분 없음')
+		 ORDER BY 1
+	</select>
+
+	<!-- 행위별 통계 — 한 줄 = 행위 분류 하나(그 달 횟수·금액). 수가코드·명칭은 받지 않는다(2026-10-11 사용자) -->
+	<delete id="deleteEmrAct">
+		DELETE FROM TBL_MIS_EMR_ACT WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</delete>
+	<insert id="insertEmrAct">
+		INSERT INTO TBL_MIS_EMR_ACT (HOSP_CD, YYYYMM, SEQ_NUM, ACT_GB, PAY_GB, INOUT_GB, DEPT_NM
+		     , UNIT_PRICE, ACT_CNT, PAT_CNT, TOT_AMT, INS_AMT, SELF_AMT, MEMO, REG_USER)
+		VALUES
+		<foreach collection="rows" item="r" separator=",">
+		(#{hospCd}, #{ym}, #{r.seq}, #{r.actGb}, #{r.payGb}, #{r.inoutGb}, #{r.deptNm}
+		, #{r.unitPrice}, #{r.actCnt}, #{r.patCnt}, #{r.totAmt}, #{r.insAmt}, #{r.selfAmt}, #{r.memo}, #{userId})
+		</foreach>
+	</insert>
+	<select id="selectEmrActRows" resultType="java.util.HashMap">
+		SELECT SEQ_NUM AS seq, ACT_GB AS actgb, PAY_GB AS paygb, INOUT_GB AS inoutgb, DEPT_NM AS deptnm
+		     , UNIT_PRICE AS unitprice, ACT_CNT AS actcnt, PAT_CNT AS patcnt, TOT_AMT AS totamt, INS_AMT AS insamt, SELF_AMT AS selfamt, MEMO AS memo
+		  FROM TBL_MIS_EMR_ACT
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 ORDER BY SEQ_NUM
+		 LIMIT 3000
+	</select>
+	<!-- 행위별 요약 — 행위 분류별(같은 분류가 입원·외래·급여구분으로 여러 줄이면 합친다). items = 그 분류의 줄 수 -->
+	<select id="selectEmrActSum" resultType="java.util.HashMap">
+		SELECT TRIM(ACT_GB) AS actgb
+		     , COUNT(*) AS items, COALESCE(SUM(ACT_CNT),0) AS actcnt, COALESCE(SUM(PAT_CNT),0) AS patcnt, COALESCE(SUM(TOT_AMT),0) AS totamt
+		     , COALESCE(SUM(INS_AMT),0) AS insamt, COALESCE(SUM(SELF_AMT),0) AS selfamt
+		  FROM TBL_MIS_EMR_ACT
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 GROUP BY TRIM(ACT_GB)
+		 ORDER BY totamt DESC
+	</select>
+
+	<!-- 연락처 -->
+	<delete id="deleteEmrContact">
+		DELETE FROM TBL_MIS_EMR_CONTACT WHERE HOSP_CD = #{hospCd}
+	</delete>
+	<insert id="insertEmrContact">
+		INSERT INTO TBL_MIS_EMR_CONTACT (HOSP_CD, SEQ_NUM, CHARTNO, PAT_NM, BIRTH6, GENDER, TEL, GUARD_NM, GUARD_REL, GUARD_TEL, ADDR, MEMO, REG_USER)
+		VALUES
+		<foreach collection="rows" item="r" separator=",">
+		(#{hospCd}, #{r.seq}, #{r.chartno}, #{r.patNm}, #{r.birth6}, #{r.gender}, #{r.tel}, #{r.guardNm}, #{r.guardRel}, #{r.guardTel}, #{r.addr}, #{r.memo}, #{userId})
+		</foreach>
+	</insert>
+	<select id="selectEmrContactRows" resultType="java.util.HashMap">
+		SELECT SEQ_NUM AS seq, CHARTNO AS chartno, PAT_NM AS patnm, BIRTH6 AS birth6, GENDER AS gender, TEL AS tel
+		     , GUARD_NM AS guardnm, GUARD_REL AS guardrel, GUARD_TEL AS guardtel, ADDR AS addr, MEMO AS memo
+		  FROM TBL_MIS_EMR_CONTACT
+		 WHERE HOSP_CD = #{hospCd}
+		 ORDER BY SEQ_NUM
+		 LIMIT 3000
+	</select>
+	<select id="selectEmrContactSum" resultType="java.util.HashMap">
+		SELECT COUNT(*) AS cnt
+		     , SUM(CASE WHEN COALESCE(TEL,'') <![CDATA[<>]]> '' THEN 1 ELSE 0 END) AS telcnt
+		     , SUM(CASE WHEN COALESCE(GUARD_TEL,'') <![CDATA[<>]]> '' THEN 1 ELSE 0 END) AS guardcnt
+		     , SUM(CASE WHEN COALESCE(BIRTH6,'') <![CDATA[<>]]> '' THEN 1 ELSE 0 END) AS birthcnt
+		     , DATE_FORMAT(MAX(REG_DTTM),'%Y-%m-%d %H:%i') AS regdttm
+		  FROM TBL_MIS_EMR_CONTACT
+		 WHERE HOSP_CD = #{hospCd}
+	</select>
+
+	<!-- 인력 -->
+	<delete id="deleteEmrStaff">
+		DELETE FROM TBL_MIS_EMR_STAFF WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</delete>
+	<insert id="insertEmrStaff">
+		INSERT INTO TBL_MIS_EMR_STAFF (HOSP_CD, YYYYMM, SEQ_NUM, EMP_NO, EMP_NM, JOB_NM, DEPT_NM, WORK_GB, JOIN_DT, RETIRE_DT
+		     , WORK_DAYS, WORK_HOURS, NIGHT_CNT, PAY_AMT, MEMO, REG_USER)
+		VALUES
+		<foreach collection="rows" item="r" separator=",">
+		(#{hospCd}, #{ym}, #{r.seq}, #{r.empNo}, #{r.empNm}, #{r.jobNm}, #{r.deptNm}, #{r.workGb}, #{r.joinDt}, #{r.retireDt}
+		, #{r.workDays}, #{r.workHours}, #{r.nightCnt}, #{r.payAmt}, #{r.memo}, #{userId})
+		</foreach>
+	</insert>
+	<select id="selectEmrStaffRows" resultType="java.util.HashMap">
+		SELECT SEQ_NUM AS seq, EMP_NO AS empno, EMP_NM AS empnm, JOB_NM AS jobnm, DEPT_NM AS deptnm, WORK_GB AS workgb
+		     , JOIN_DT AS joindt, RETIRE_DT AS retiredt, WORK_DAYS AS workdays, WORK_HOURS AS workhours, NIGHT_CNT AS nightcnt
+		     , PAY_AMT AS payamt, MEMO AS memo
+		  FROM TBL_MIS_EMR_STAFF
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 ORDER BY SEQ_NUM
+		 LIMIT 3000
+	</select>
+	<!-- 인력 요약 — 직종별. 그 달 안에 퇴사한 사람(퇴사일이 그 달 1일 앞)은 세지 않는다 -->
+	<select id="selectEmrStaffSum" resultType="java.util.HashMap">
+		SELECT COALESCE(NULLIF(TRIM(JOB_NM),''),'직종 없음') AS jobnm
+		     , COUNT(*) AS cnt
+		     , SUM(CASE WHEN COALESCE(RETIRE_DT,'') <![CDATA[<>]]> '' AND RETIRE_DT <![CDATA[<]]> CONCAT(#{ym},'01') THEN 1 ELSE 0 END) AS retired
+		     , COALESCE(SUM(WORK_DAYS),0) AS workdays, COALESCE(SUM(WORK_HOURS),0) AS workhours, COALESCE(SUM(NIGHT_CNT),0) AS nightcnt
+		     , COALESCE(SUM(PAY_AMT),0) AS payamt
+		  FROM TBL_MIS_EMR_STAFF
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 GROUP BY COALESCE(NULLIF(TRIM(JOB_NM),''),'직종 없음')
+		 ORDER BY cnt DESC, 1
+	</select>
+
+	<!-- 입퇴원(기존 표) 그 달 요약 — 줄 수 · 그 달 입원 · 그 달 퇴원 -->
+	<select id="selectEmrIpwonSum" resultType="java.util.HashMap">
+		SELECT COUNT(*) AS cnt
+		     , SUM(CASE WHEN REPLACE(REPLACE(COALESCE(IPWONDT,''),'-',''),'/','') LIKE CONCAT(#{ym},'%') THEN 1 ELSE 0 END) AS incnt
+		     , SUM(CASE WHEN REPLACE(REPLACE(COALESCE(TEWONDT,''),'-',''),'/','') LIKE CONCAT(#{ym},'%') THEN 1 ELSE 0 END) AS outcnt
+		     , SUM(CASE WHEN COALESCE(JUMINNO,'') = '' THEN 1 ELSE 0 END) AS nojumin
+		  FROM TBL_IPWON_INFO
+		 WHERE HOSP_CD = #{hospCd} AND JOBYYMM = #{ym}
+	</select>
 
 </mapper>
