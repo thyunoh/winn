@@ -694,21 +694,18 @@ public class MisController {
 		m.put("memo", cut(str(r.get("memo"), ""), 200));
 		return ((String) m.get("actGb")).isEmpty() ? null : m;
 	}
-	/** 삭감 내역 — 한 줄 = 삭감 항목 하나. 삭감액이 없으면 뺀다(삭감이 아닌 줄) */
+	/** 삭감 내역 — 한 줄 = 종별 × 지급처 [× 청구번호] 의 삭감·불능·조정(환자 단위 아님 — SWCHMISU 와 같은 결). 삭감액이 없으면 뺀다 */
 	private static Map<String, Object> emrCutRow(Map<String, Object> r) {
 		Map<String, Object> m = new HashMap<>();
 		m.put("claimNo", cut(str(r.get("claimNo"), ""), 30));
-		m.put("billNo", cut(str(r.get("billNo"), ""), 30));
 		m.put("resultDt", dt8(r.get("resultDt")));
-		m.put("chartno", cut(str(r.get("chartno"), ""), 30));
-		m.put("patNm", cut(str(r.get("patNm"), ""), 50));
-		m.put("birth6", birth6(r.get("birth6")));
+		m.put("jongNm", cut(str(r.get("jongNm"), ""), 50));
+		m.put("assCd", cut(str(r.get("assCd"), ""), 30));
+		m.put("assNm", cut(str(r.get("assNm"), ""), 100));
+		m.put("cutGb", cut(str(r.get("cutGb"), ""), 20));
 		m.put("inoutGb", cut(str(r.get("inoutGb"), ""), 20));
-		m.put("itemCd", cut(str(r.get("itemCd"), ""), 30));
-		m.put("itemNm", cut(str(r.get("itemNm"), ""), 100));
 		m.put("cutRsnCd", cut(str(r.get("cutRsnCd"), ""), 20));
 		m.put("cutRsn", cut(str(r.get("cutRsn"), ""), 200));
-		m.put("cutQty", decOf(r.get("cutQty"), 999999999));
 		m.put("claimAmt", amtOf(r.get("claimAmt")));
 		m.put("cutAmt", amtOf(r.get("cutAmt")));
 		m.put("objGb", cut(str(r.get("objGb"), ""), 30));

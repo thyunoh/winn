@@ -189,18 +189,17 @@
           {k:'insAmt',l:'공단부담',t:'amt',kw:['공단부담금','공단부담','청구액','보험자부담']},
           {k:'selfAmt',l:'본인부담',t:'amt',kw:['본인부담금','본인부담액','본인부담']},
           {k:'memo',l:'비고',t:'text',kw:['비고','메모']} ] },
-    CUT: { nm:'삭감 내역', icon:'✂', perMonth:true, desc:'심사 조정(삭감) 항목별 — 대상 연월 = 진료(청구) 연월. 그 달 청구 샘파일 명세서와 매칭해 삭감률·미매칭을 봅니다',
-      req:[['cutAmt']],
-      f:[ {k:'claimNo',l:'청구번호',t:'text',kw:['청구번호','접수번호']},
-          {k:'billNo',l:'명세서 번호',t:'text',kw:['명세서일련번호','명세서번호','일련번호']},
-          {k:'resultDt',l:'심사결과 통보일',t:'date',kw:['심사결과통보일','결과통보일','통보일자','통보일','심사일자','결정일자']},
-          {k:'chartno',l:'차트번호',t:'text',kw:KW_CHART}, {k:'patNm',l:'환자명',t:'text',kw:KW_NAME},
-          {k:'birth6',l:'생년월일(주민번호 앞)',t:'birth',kw:KW_BIRTH}, {k:'inoutGb',l:'입원/외래',t:'text',kw:KW_IO},
-          {k:'itemCd',l:'항목 코드',t:'text',kw:['항목코드','수가코드','청구코드','코드']},
-          {k:'itemNm',l:'항목명',t:'text',kw:['항목명','수가명','코드명','명칭','품명']},
+    CUT: { nm:'삭감 내역', icon:'✂', perMonth:true, desc:'종별 › 지급처별 삭감·불능·조정(환자별 아님) — 대상 연월 = 진료(청구) 연월. 그 달 청구 샘파일과 종별·지급처로 맞춰 감액률을 봅니다',
+      req:[['cutAmt'],['jongNm','assCd','assNm','claimNo']],
+      f:[ {k:'claimNo',l:'청구번호(접수번호)',t:'text',kw:['청구번호','접수번호']},
+          {k:'jongNm',l:'종별',t:'text',kw:['보험자종별','보험종별','청구종별','보험구분','보험유형','종별','서식']},
+          {k:'assCd',l:'지급처 코드',t:'text',kw:['지급처코드','보장기관기호','보장기관코드','지급기관코드','보험자코드','기관기호','기관코드']},
+          {k:'assNm',l:'지급처명',t:'text',kw:['지급처명','보장기관명','지급기관명','보험자명','보험사','지급처','기관명']},
+          {k:'cutGb',l:'구분(삭감·불능·조정)',t:'text',kw:['삭감구분','조정구분','감액구분','처리구분','결정구분','구분']},
+          {k:'inoutGb',l:'입원/외래',t:'text',kw:KW_IO},
+          {k:'resultDt',l:'심결 통보일',t:'date',kw:['심결통보일','심사결과통보일','결과통보일','통보일자','통보일','심사일자','결정일자']},
           {k:'cutRsnCd',l:'조정 사유 코드',t:'text',kw:['조정사유코드','삭감사유코드','사유코드','조정코드']},
           {k:'cutRsn',l:'조정(삭감) 사유',t:'text',kw:['조정사유','삭감사유','조정내역','사유']},
-          {k:'cutQty',l:'삭감 수량',t:'num',kw:['조정수량','삭감수량','수량']},
           {k:'claimAmt',l:'청구액',t:'amt',kw:['청구금액','청구액']},
           {k:'cutAmt',l:'삭감액',t:'amt',kw:['조정금액','삭감금액','조정액','삭감액','감액']},
           {k:'objGb',l:'이의신청',t:'text',kw:['이의신청여부','이의신청결과','이의신청','이의']},
@@ -269,18 +268,43 @@
     var k = sumOf(PAGE && PAGE.cut, 'claimamt'); if (k > 0) return { amt:k, src:'cut' };
     return null;
   }
-  /* 삭감 ↔ 샘파일 명세서 매칭 — 서버가 볼 때마다 센다(BILL 청구번호+명세서 → PAT 생년월일+이름 → NAME 이름만 → '' 미매칭) */
-  var MATCH_LBL = { BILL:'청구번호+명세서', PAT:'생년월일+이름', NAME:'이름만', '':'미매칭' };
-  function matchLbl(g){ g = g || ''; return '<span class="badge ' + (g === 'BILL' ? 'ok' : (g === '' ? 'bad' : 'mem')) + '">' + MATCH_LBL[g] + '</span>'; }
-  function matchHtml(){
-    var sam = PAGE.sam || {}, ms = PAGE.cutMatch || [], by = {};
-    ms.forEach(function(r){ by[r.matchgb || ''] = r; });
-    if (!Number(sam.cnt || 0)) return '<div class="bar"><span class="badge warn">' + ymLbl(PAGE.ym) + ' 청구 샘파일이 없습니다</span><span class="small">샘파일을 올리면 삭감 줄을 명세서와 맞춰 봅니다(청구번호+명세서 → 생년월일+이름 → 이름).</span></div>';
-    var rows = ['BILL','PAT','NAME',''].filter(function(g){ return by[g]; }).map(function(g){ return '<tr><td>' + matchLbl(g) + '</td><td class="n">' + num(by[g].cnt) + '</td><td class="n">' + num(by[g].cutamt) + '</td></tr>'; });
-    var un = by[''] ? Number(by[''].cnt) : 0;
-    return '<div class="small" style="margin:10px 0 4px;font-weight:700;color:#43555f;">청구 샘파일 매칭 — ' + ymLbl(PAGE.ym) + ' 샘파일 명세서 ' + num(sam.cnt) + '장 · 청구액 ' + num(sam.claimamt) + '</div>'
-      + tbl([{l:'매칭'},{l:'삭감 줄',n:1},{l:'삭감액',n:1}], rows)
-      + (un ? '<div class="small" style="margin-top:4px;color:#b23b3b;">미매칭 ' + num(un) + '줄 — 진료 연월이 다르거나(대상 연월 확인) 청구번호·명세서번호·생년월일 칸이 맞춰지지 않았을 수 있습니다. [올린 줄 보기]에서 줄마다 확인하세요.</div>' : '');
+  /* 삭감 ↔ 샘파일 — 종별 › 지급처 단위(SWCHMISU 와 같은 결). 서버가 볼 때마다 센다 : CLAIM 청구번호 → ASS 종별+지급처 → JONG 종별 → '' 미매칭 */
+  var MATCH_LBL = { CLAIM:'청구번호', ASS:'종별+지급처', JONG:'종별', '':'미매칭' };
+  var JONG_LBL = { HB:'건강보험', BH:'의료급여', BO:'보훈', JB:'자동차보험', SJ:'산재', '?':'매칭 안 됨' };
+  function jongLbl(j){ j = j || ''; return JONG_LBL[j] || (j ? '종별 ' + j.replace(/^T/, '') : '—'); }
+  function matchLbl(g){ g = g || ''; return '<span class="badge ' + (g === 'CLAIM' ? 'ok' : (g === '' ? 'bad' : 'mem')) + '">' + (MATCH_LBL[g] || g) + '</span>'; }
+  function assLbl(r){ if (r.jong === '?') return '<span class="small">종별·지급처를 못 찾은 삭감</span>';
+    if (!r.ass) return r.jong === 'HB' ? '공단' : '<span class="small">(지급처 없음)</span>';
+    return esc(r.ass) + (r.assnm ? ' <span class="small">' + esc(r.assnm) + '</span>' : ''); }
+  function rateTd(cut, base){ return '<td class="n">' + (base > 0 ? (cut / base * 100).toFixed(2) + '%' : '—') + '</td>'; }
+  /* 종별 › 지급처 표 — 종별마다 소계 줄, 그 아래 지급처 줄(지급처가 하나뿐이고 빈 값이면 소계만) */
+  function groupHtml(){
+    var sam = PAGE.sam || {}, gs = PAGE.cutGroup || [];
+    if (!Number(sam.cnt || 0) && !gs.length) return '';
+    var byJ = {}, order = [];
+    gs.forEach(function(r){ if (!byJ[r.jong]) { byJ[r.jong] = []; order.push(r.jong); } byJ[r.jong].push(r); });
+    var rows = [], T = { samcnt:0, samclaim:0, cutd:0, cutn:0, cuta:0 };
+    order.forEach(function(j){
+      var list = byJ[j], s = { samcnt:0, samclaim:0, cutd:0, cutn:0, cuta:0 };
+      list.forEach(function(r){ for (var k in s) s[k] += Number(r[k] || 0); });
+      for (var k in T) T[k] += s[k];
+      var cutAll = s.cutd + s.cutn + s.cuta, unm = j === '?';
+      rows.push('<tr class="sum"' + (unm ? ' style="color:#b23b3b"' : '') + '><td>' + esc(jongLbl(j)) + (list.length > 1 ? ' <span class="small">지급처 ' + list.length + '</span>' : '') + '</td>'
+        + '<td class="n">' + (unm ? '—' : num(s.samcnt)) + '</td><td class="n">' + (unm ? '—' : num(s.samclaim)) + '</td>'
+        + '<td class="n">' + num(s.cutd) + '</td><td class="n">' + num(s.cutn) + '</td><td class="n">' + num(s.cuta) + '</td><td class="n">' + num(cutAll) + '</td>' + (unm ? '<td class="n">—</td>' : rateTd(cutAll, s.samclaim)) + '</tr>');
+      if (unm || (list.length === 1 && !list[0].ass)) return;
+      list.forEach(function(r){
+        var c = Number(r.cutd||0) + Number(r.cutn||0) + Number(r.cuta||0);
+        rows.push('<tr><td style="padding-left:22px">' + assLbl(r) + '</td><td class="n">' + num(r.samcnt) + '</td><td class="n">' + num(r.samclaim) + '</td>'
+          + '<td class="n">' + num(r.cutd) + '</td><td class="n">' + num(r.cutn) + '</td><td class="n">' + num(r.cuta) + '</td><td class="n">' + num(c) + '</td>' + rateTd(c, Number(r.samclaim||0)) + '</tr>');
+      });
+    });
+    var all = T.cutd + T.cutn + T.cuta;
+    rows.push('<tr class="sum"><td>합계</td><td class="n">' + num(T.samcnt) + '</td><td class="n">' + num(T.samclaim) + '</td><td class="n">' + num(T.cutd) + '</td><td class="n">' + num(T.cutn) + '</td><td class="n">' + num(T.cuta) + '</td><td class="n">' + num(all) + '</td>' + rateTd(all, T.samclaim) + '</tr>');
+    return '<div class="small" style="margin:10px 0 4px;font-weight:700;color:#43555f;">종별 › 지급처 — 청구 샘파일(' + ymLbl(PAGE.ym) + ') 과 대조</div>'
+      + (Number(sam.cnt || 0) ? '' : '<div class="bar"><span class="badge warn">' + ymLbl(PAGE.ym) + ' 청구 샘파일이 없습니다</span><span class="small">샘파일을 올리면 종별·지급처별 청구액과 맞춰 봅니다.</span></div>')
+      + tbl([{l:'종별 › 지급처'},{l:'명세서',n:1},{l:'청구액',n:1},{l:'삭감',n:1},{l:'불능',n:1},{l:'조정',n:1},{l:'감액 계',n:1},{l:'감액률',n:1}], rows)
+      + '<div class="small" style="margin-top:4px;">지급처 = 명세서 보장기관기호(의료급여는 시군구, 건강보험은 공단 한 곳). 구분 글자가 「불능」이면 불능, 「조정·환수·공제」면 조정, 그 밖(빈 칸 포함)은 삭감으로 셉니다.</div>';
   }
   function cutRate(){ var b = cutRateBase(); return b ? sumOf(PAGE.cut, 'cutamt') / b.amt * 100 : null; }
   function cardTxt(gb){
@@ -290,7 +314,8 @@
     if (gb === 'ACT') { var a = PAGE.act || []; if (!a.length) return '<span class="badge warn">이 달 없음</span>';
       return '분류 ' + a.length + '가지 · 금액 ' + eok(sumOf(a,'totamt')) + '<br>횟수 ' + num(sumOf(a,'actcnt')); }
     if (gb === 'CUT') { var k = PAGE.cut || []; if (!k.length) return '<span class="badge warn">이 달 없음</span>';
-      var cr = cutRate(); return num(sumOf(k,'cnt')) + '건 · 삭감 ' + eok(sumOf(k,'cutamt')) + (cr == null ? '' : '<br>삭감률 ' + cr.toFixed(2) + '%'); }
+      var cr = cutRate(), um = (PAGE.cutGroup || []).filter(function(r){ return r.jong === '?'; })[0];
+      return num(sumOf(k,'cnt')) + '줄 · 감액 ' + eok(sumOf(k,'cutamt')) + (cr == null ? '' : '<br>감액률 ' + cr.toFixed(2) + '%') + (um ? ' <span class="badge bad">미매칭 ' + num(um.cutcnt) + '</span>' : ''); }
     if (gb === 'IPWON') { var w = PAGE.ipwon || {}; if (!Number(w.cnt||0)) return '<span class="badge warn">이 달 없음</span>';
       return num(w.cnt) + '줄 · 입원 ' + num(w.incnt) + ' · 퇴원 ' + num(w.outcnt) + (Number(w.nojumin||0) ? '<br><span class="badge bad">주민번호 없음 ' + num(w.nojumin) + '</span>' : ''); }
     if (gb === 'CONTACT') { var c = PAGE.contact || {}; if (!Number(c.cnt||0)) return '<span class="badge warn">올린 적 없음</span>';
@@ -339,18 +364,19 @@
         r1.push('<tr class="sum"><td>합계</td><td class="n">' + num(sumOf(a,'actcnt')) + '</td><td class="n">' + num(tot) + '</td><td class="n">' + num(sumOf(a,'insamt')) + '</td><td class="n">' + num(sumOf(a,'selfamt')) + '</td><td class="n">100%</td></tr>');
         h = tbl([{l:'행위 분류'},{l:'횟수',n:1},{l:'금액',n:1},{l:'공단',n:1},{l:'본인부담',n:1},{l:'비중',n:1}], r1); }
     } else if (TAB === 'CUT') {
-      var k = PAGE.cut || [], tp = PAGE.cutTop || [];
-      if (!k.length) h = '<div class="empty">' + ymLbl(PAGE.ym) + ' 삭감 내역을 아직 올리지 않았습니다.</div>';
+      var k = PAGE.cut || [];
+      if (!k.length) h = '<div class="empty">' + ymLbl(PAGE.ym) + ' 삭감 내역을 아직 올리지 않았습니다.</div>' + groupHtml();
       else { var ct = sumOf(k,'cutamt'), base = cutRateBase();
         var rk = k.map(function(r){ var pct = ct ? (Number(r.cutamt||0) / ct * 100) : 0;
-          return '<tr><td>' + esc(r.cutrsn) + (r.cutrsncd && r.cutrsncd !== r.cutrsn ? ' <span class="small">' + esc(r.cutrsncd) + '</span>' : '') + '</td><td class="n">' + num(r.cnt) + '</td><td class="n">' + num(r.pats) + '</td><td class="n">' + num(r.cutamt) + '</td><td class="n">' + pct.toFixed(1) + '%</td></tr>'; });
-        rk.push('<tr class="sum"><td>합계</td><td class="n">' + num(sumOf(k,'cnt')) + '</td><td class="n">—</td><td class="n">' + num(ct) + '</td><td class="n">100%</td></tr>');
-        h = '<div class="bar"><b>삭감률 ' + (base ? (ct / base.amt * 100).toFixed(2) + '%' : '—') + '</b><span class="small">'
-          + (base ? '= 삭감액 ' + num(ct) + ' ÷ ' + (base.src === 'sam' ? '그 달 청구 샘파일 청구액 ' : '삭감 줄에 적힌 청구액 ') + num(base.amt) + (base.src === 'cut' ? ' — 그 달 청구 샘파일을 올리면 전체 청구액으로 다시 셉니다' : '') : '그 달 청구 샘파일(또는 삭감 줄의 청구액)이 없어 삭감률을 못 셉니다') + '</span></div>'
-          + matchHtml()
-          + tbl([{l:'조정(삭감) 사유'},{l:'건',n:1},{l:'환자',n:1},{l:'삭감액',n:1},{l:'비중',n:1}], rk)
-          + (tp.length ? '<div class="small" style="margin:10px 0 4px;font-weight:700;color:#43555f;">삭감 많은 항목 ' + tp.length + '</div>'
-            + tbl([{l:'#',n:1},{l:'항목'},{l:'코드'},{l:'건',n:1},{l:'삭감액',n:1}], tp.map(function(r, i){ return '<tr><td class="n">' + (i+1) + '</td><td>' + esc(r.itemnm) + '</td><td>' + esc(r.itemcd || '') + '</td><td class="n">' + num(r.cnt) + '</td><td class="n">' + num(r.cutamt) + '</td></tr>'; })) : ''); }
+          return '<tr><td>' + esc(r.cutrsn) + (r.cutrsncd && r.cutrsncd !== r.cutrsn ? ' <span class="small">' + esc(r.cutrsncd) + '</span>' : '') + '</td><td class="n">' + num(r.cnt) + '</td><td class="n">' + num(r.cutamt) + '</td><td class="n">' + pct.toFixed(1) + '%</td></tr>'; });
+        rk.push('<tr class="sum"><td>합계</td><td class="n">' + num(sumOf(k,'cnt')) + '</td><td class="n">' + num(ct) + '</td><td class="n">100%</td></tr>');
+        var unm = (PAGE.cutGroup || []).filter(function(r){ return r.jong === '?'; })[0];
+        h = '<div class="bar"><b>감액률 ' + (base ? (ct / base.amt * 100).toFixed(2) + '%' : '—') + '</b><span class="small">'
+          + (base ? '= 감액(삭감·불능·조정) ' + num(ct) + ' ÷ ' + (base.src === 'sam' ? '그 달 청구 샘파일 청구액 ' : '삭감 줄에 적힌 청구액 ') + num(base.amt) + (base.src === 'cut' ? ' — 그 달 청구 샘파일을 올리면 전체 청구액으로 다시 셉니다' : '') : '그 달 청구 샘파일(또는 삭감 줄의 청구액)이 없어 감액률을 못 셉니다') + '</span></div>'
+          + (unm ? '<div class="small" style="color:#b23b3b;margin-bottom:6px;">매칭 안 된 삭감 ' + num(unm.cutcnt) + '줄 — 진료 연월이 다르거나 종별·지급처 코드·청구번호 칸이 맞춰지지 않았을 수 있습니다. [올린 줄 보기]에서 줄마다 확인하세요.</div>' : '')
+          + groupHtml()
+          + '<div class="small" style="margin:10px 0 4px;font-weight:700;color:#43555f;">조정(삭감) 사유별</div>'
+          + tbl([{l:'조정(삭감) 사유'},{l:'줄',n:1},{l:'감액',n:1},{l:'비중',n:1}], rk); }
     } else if (TAB === 'IPWON') {
       var w = PAGE.ipwon || {};
       h = !Number(w.cnt||0) ? '<div class="empty">' + ymLbl(PAGE.ym) + ' 입퇴원현황이 없습니다.</div>'
@@ -649,7 +675,7 @@
   var ROWCOLS = {
     PAY: [['paydt','수납일','d'],['chartno','차트번호'],['patnm','환자명'],['birth6','생년월일'],['inoutgb','입원/외래'],['insurnm','보험'],['deptnm','진료과'],['totamt','총진료비','n'],['insamt','공단','n'],['selfamt','본인부담','n'],['nonpayamt','비급여','n'],['paidamt','수납','n'],['unpaidamt','미수','n'],['paymethod','수납방법'],['memo','비고']],
     ACT: [['actgb','행위 분류'],['paygb','급여구분'],['inoutgb','입원/외래'],['deptnm','진료과'],['unitprice','단가','n'],['actcnt','횟수','n'],['patcnt','환자 수','n'],['totamt','금액','n'],['insamt','공단','n'],['selfamt','본인부담','n'],['memo','비고']],
-    CUT: [['claimno','청구번호'],['billno','명세서'],['resultdt','통보일','d'],['chartno','차트번호'],['patnm','환자명'],['birth6','생년월일'],['inoutgb','입원/외래'],['itemcd','항목 코드'],['itemnm','항목명'],['cutrsncd','사유 코드'],['cutrsn','사유'],['cutqty','수량','n'],['claimamt','청구액','n'],['cutamt','삭감액','n'],['objgb','이의신청'],['matchgb','샘파일 매칭','m'],['sambills','명세서(청구번호-일련)'],['samclaimamt','명세서 청구액','n'],['memo','비고']],
+    CUT: [['claimno','청구번호'],['jongnm','종별(엑셀)'],['cjong','종별(판정)','j'],['asscd','지급처 코드'],['assnm','지급처명'],['cutgb','구분'],['inoutgb','입원/외래'],['resultdt','통보일','d'],['cutrsncd','사유 코드'],['cutrsn','사유'],['claimamt','청구액','n'],['cutamt','삭감액','n'],['objgb','이의신청'],['matchgb','샘파일 매칭','m'],['samclaimamt','샘파일 청구액','n'],['memo','비고']],
     CONTACT: [['chartno','차트번호'],['patnm','환자명'],['birth6','생년월일'],['gender','성별'],['tel','환자 연락처'],['guardnm','보호자'],['guardrel','관계'],['guardtel','보호자 연락처'],['addr','주소'],['memo','비고']],
     STAFF: [['empno','사번'],['empnm','성명'],['jobnm','직종'],['deptnm','부서'],['workgb','근무 형태'],['joindt','입사일','d'],['retiredt','퇴사일','d'],['workdays','근무일','n'],['workhours','근무시간','n'],['nightcnt','야간','n'],['payamt','급여','n'],['memo','비고']]
   };
@@ -663,6 +689,7 @@
         : '<thead><tr><th class="n">No</th>' + cols.map(function(c){ return '<th' + (c[2] === 'n' ? ' class="n"' : '') + '>' + esc(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>'
           + list.map(function(r, i){ return '<tr><td class="n small">' + (i+1) + '</td>' + cols.map(function(c){ var v = r[c[0]];
               if (c[2] === 'm') return '<td>' + matchLbl(v) + '</td>';
+              if (c[2] === 'j') return '<td>' + esc(jongLbl(v)) + '</td>';
               return c[2] === 'n' ? '<td class="n">' + (v == null ? '' : num(v)) + '</td>' : '<td>' + esc(c[2] === 'd' ? d8Lbl(v) : (v == null ? '' : v)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
       gel('meRowsCard').style.display = '';
       gel('meRowsCard').scrollIntoView({ behavior:'smooth', block:'start' });

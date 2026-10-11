@@ -551,8 +551,7 @@ public class MisServiceImpl implements MisService {
 		r.put("pay", mapper.selectEmrPaySum(hospCd, ym));
 		r.put("act", mapper.selectEmrActSum(hospCd, ym));
 		r.put("cut", mapper.selectEmrCutSum(hospCd, ym));
-		r.put("cutTop", mapper.selectEmrCutTop(hospCd, ym));
-		r.put("cutMatch", mapper.selectEmrCutMatchSum(hospCd, ym));
+		r.put("cutGroup", mapper.selectEmrCutGroup(hospCd, ym));
 		r.put("sam", mapper.selectEmrSamSum(hospCd, ym));
 		r.put("contact", mapper.selectEmrContactSum(hospCd));
 		r.put("staff", mapper.selectEmrStaffSum(hospCd, ym));
