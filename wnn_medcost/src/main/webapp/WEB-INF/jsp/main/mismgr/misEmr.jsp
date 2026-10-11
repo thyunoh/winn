@@ -1,11 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<%-- misEmr.jsp — 경영고객관리 › EMR 엑셀 연계 (2026-10-11)
-     · 닥터스(Doctors) EMR 과 직접 연계가 안 돼 병원이 EMR 에서 엑셀로 내려받아 올린다. 자료 다섯 가지 :
-       수납대장(PAY) · 행위별 통계(ACT) · 입퇴원현황(IPWON) · 환자·보호자 연락처(CONTACT) · 직원·근무(STAFF).
+<%-- misEmr.jsp — 경영고객관리 › 병원자료엑셀연계 (2026-10-11)
+     · 닥터스(Doctors) EMR 과 직접 연계가 안 돼 병원이 EMR 에서 엑셀로 내려받아 올린다. 자료 여섯 가지(삭감은 같은 날 추가 — 청구는 기존 샘파일이 있어 받지 않고, 삭감을 그 샘파일 명세서와 매칭한다) :
+       수납대장(PAY) · 행위별 통계(ACT) · 삭감 내역(CUT) · 입퇴원현황(IPWON) · 환자·보호자 연락처(CONTACT) · 직원·근무(STAFF).
      · 견본 양식이 없다 ⇒ 엑셀 머리글 ↔ 필드를 화면이 자동 추천하고 사람이 고친다. 맞춘 것은 병원·자료별로 기억(TBL_MIS_EMR_MAP)해 다음 달엔 그대로.
-     · 저장 : PAY·ACT·STAFF = 고른 연월 통째 대체 · CONTACT = 병원 단위 최신본 대체 · IPWON = 기존 입원현황 업로드(/main/saveExcelDatas.do)와 같은 길(그 달 대체).
+     · 저장 : PAY·ACT·CUT·STAFF = 고른 연월 통째 대체 · CONTACT = 병원 단위 최신본 대체 · IPWON = 기존 입원현황 업로드(/main/saveExcelDatas.do)와 같은 길(그 달 대체).
      · 엑셀 읽기 = SheetJS(header.jsp 가 defer 로 싣는다). 알림은 ui-message.
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호)와 JS 템플릿 문자열의 달러+중괄호 금지(JSP EL 이 먹는다) --%>
 
@@ -29,8 +29,9 @@
   #misEmr .me-btn.pri:hover{ background:#2a7665; }
   #misEmr .me-btn:disabled{ opacity:.45; cursor:default; }
   #misEmr .me-note{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 14px; font-size:12.5px; color:#43555f; margin-bottom:12px; line-height:1.6; }
-  #misEmr .me-cards{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:12px; }
-  @media (max-width:1200px){ #misEmr .me-cards{ grid-template-columns:repeat(3,1fr); } }
+  #misEmr .me-cards{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:12px; }   /* 6종(삭감 추가 2026-10-11) */
+  @media (max-width:1400px){ #misEmr .me-cards{ grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:1100px){ #misEmr .me-cards{ grid-template-columns:repeat(3,1fr); } }
   @media (max-width:760px){ #misEmr .me-cards{ grid-template-columns:repeat(2,1fr); } }
   #misEmr .me-cardx{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 12px; cursor:pointer; min-width:0; }
   #misEmr .me-cardx:hover{ border-color:#9cc6b7; }
@@ -66,7 +67,7 @@
 </style>
 
 <div class="me-head">
-  <div class="me-title"><span class="me-dot"></span>EMR 엑셀 연계 <span class="me-sub">— 닥터스 EMR 에서 내려받은 엑셀을 올립니다</span></div>
+  <div class="me-title"><span class="me-dot"></span>병원자료엑셀연계 <span class="me-sub">— 닥터스 EMR 에서 내려받은 엑셀을 올립니다</span></div>
   <span class="me-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="me-spacer"></span>
   <label style="font-size:13px;color:#43555f;">대상 연월 <select id="meYm" onchange="meLoad();"></select></label>
@@ -188,6 +189,22 @@
           {k:'insAmt',l:'공단부담',t:'amt',kw:['공단부담금','공단부담','청구액','보험자부담']},
           {k:'selfAmt',l:'본인부담',t:'amt',kw:['본인부담금','본인부담액','본인부담']},
           {k:'memo',l:'비고',t:'text',kw:['비고','메모']} ] },
+    CUT: { nm:'삭감 내역', icon:'✂', perMonth:true, desc:'심사 조정(삭감) 항목별 — 대상 연월 = 진료(청구) 연월. 그 달 청구 샘파일 명세서와 매칭해 삭감률·미매칭을 봅니다',
+      req:[['cutAmt']],
+      f:[ {k:'claimNo',l:'청구번호',t:'text',kw:['청구번호','접수번호']},
+          {k:'billNo',l:'명세서 번호',t:'text',kw:['명세서일련번호','명세서번호','일련번호']},
+          {k:'resultDt',l:'심사결과 통보일',t:'date',kw:['심사결과통보일','결과통보일','통보일자','통보일','심사일자','결정일자']},
+          {k:'chartno',l:'차트번호',t:'text',kw:KW_CHART}, {k:'patNm',l:'환자명',t:'text',kw:KW_NAME},
+          {k:'birth6',l:'생년월일(주민번호 앞)',t:'birth',kw:KW_BIRTH}, {k:'inoutGb',l:'입원/외래',t:'text',kw:KW_IO},
+          {k:'itemCd',l:'항목 코드',t:'text',kw:['항목코드','수가코드','청구코드','코드']},
+          {k:'itemNm',l:'항목명',t:'text',kw:['항목명','수가명','코드명','명칭','품명']},
+          {k:'cutRsnCd',l:'조정 사유 코드',t:'text',kw:['조정사유코드','삭감사유코드','사유코드','조정코드']},
+          {k:'cutRsn',l:'조정(삭감) 사유',t:'text',kw:['조정사유','삭감사유','조정내역','사유']},
+          {k:'cutQty',l:'삭감 수량',t:'num',kw:['조정수량','삭감수량','수량']},
+          {k:'claimAmt',l:'청구액',t:'amt',kw:['청구금액','청구액']},
+          {k:'cutAmt',l:'삭감액',t:'amt',kw:['조정금액','삭감금액','조정액','삭감액','감액']},
+          {k:'objGb',l:'이의신청',t:'text',kw:['이의신청여부','이의신청결과','이의신청','이의']},
+          {k:'memo',l:'비고',t:'text',kw:['비고','메모']} ] },
     IPWON: { nm:'입퇴원현황', icon:'🛏', perMonth:true, desc:'입원현황 업로드와 같은 자리(입퇴원현황)에 저장 — 적정성평가·자동 매칭이 이 자료를 봅니다',
       req:[['patname'],['ipwondt'],['juminno']],
       f:[ {k:'chartno',l:'차트번호',t:'text',kw:KW_CHART}, {k:'patname',l:'수진자명',t:'text',kw:KW_NAME},
@@ -225,7 +242,7 @@
           {k:'payAmt',l:'급여(인건비)',t:'amt',kw:['총지급액','지급총액','급여총액','지급액','인건비','급여']},
           {k:'memo',l:'비고',t:'text',kw:['비고','메모']} ] }
   };
-  var ORDER = ['PAY','ACT','IPWON','CONTACT','STAFF'];
+  var ORDER = ['PAY','ACT','CUT','IPWON','CONTACT','STAFF'];
   var TAB = 'PAY';
   try { var t0 = localStorage.getItem('misEmrTab'); if (TYPES[t0]) TAB = t0; } catch(e){}
   var PAGE = null;            // emrGet 응답
@@ -246,12 +263,34 @@
     }).catch(function(e){ gel('meSum').innerHTML = '<div class="empty">' + esc((e && e.message) || '불러오지 못했습니다.') + '</div>'; });
   };
   function sumOf(list, k){ var s = 0; (list||[]).forEach(function(r){ s += Number(r[k]||0); }); return s; }
+  /* 삭감률 = 삭감액 ÷ 청구액. 분모 = 그 달 청구 샘파일 명세서 청구액(sam). 샘파일이 없으면 삭감 줄에 적힌 청구액(그 항목들 것뿐이라 높게 나온다). 둘 다 없으면 null */
+  function cutRateBase(){
+    var c = Number((PAGE && PAGE.sam || {}).claimamt || 0); if (c > 0) return { amt:c, src:'sam' };
+    var k = sumOf(PAGE && PAGE.cut, 'claimamt'); if (k > 0) return { amt:k, src:'cut' };
+    return null;
+  }
+  /* 삭감 ↔ 샘파일 명세서 매칭 — 서버가 볼 때마다 센다(BILL 청구번호+명세서 → PAT 생년월일+이름 → NAME 이름만 → '' 미매칭) */
+  var MATCH_LBL = { BILL:'청구번호+명세서', PAT:'생년월일+이름', NAME:'이름만', '':'미매칭' };
+  function matchLbl(g){ g = g || ''; return '<span class="badge ' + (g === 'BILL' ? 'ok' : (g === '' ? 'bad' : 'mem')) + '">' + MATCH_LBL[g] + '</span>'; }
+  function matchHtml(){
+    var sam = PAGE.sam || {}, ms = PAGE.cutMatch || [], by = {};
+    ms.forEach(function(r){ by[r.matchgb || ''] = r; });
+    if (!Number(sam.cnt || 0)) return '<div class="bar"><span class="badge warn">' + ymLbl(PAGE.ym) + ' 청구 샘파일이 없습니다</span><span class="small">샘파일을 올리면 삭감 줄을 명세서와 맞춰 봅니다(청구번호+명세서 → 생년월일+이름 → 이름).</span></div>';
+    var rows = ['BILL','PAT','NAME',''].filter(function(g){ return by[g]; }).map(function(g){ return '<tr><td>' + matchLbl(g) + '</td><td class="n">' + num(by[g].cnt) + '</td><td class="n">' + num(by[g].cutamt) + '</td></tr>'; });
+    var un = by[''] ? Number(by[''].cnt) : 0;
+    return '<div class="small" style="margin:10px 0 4px;font-weight:700;color:#43555f;">청구 샘파일 매칭 — ' + ymLbl(PAGE.ym) + ' 샘파일 명세서 ' + num(sam.cnt) + '장 · 청구액 ' + num(sam.claimamt) + '</div>'
+      + tbl([{l:'매칭'},{l:'삭감 줄',n:1},{l:'삭감액',n:1}], rows)
+      + (un ? '<div class="small" style="margin-top:4px;color:#b23b3b;">미매칭 ' + num(un) + '줄 — 진료 연월이 다르거나(대상 연월 확인) 청구번호·명세서번호·생년월일 칸이 맞춰지지 않았을 수 있습니다. [올린 줄 보기]에서 줄마다 확인하세요.</div>' : '');
+  }
+  function cutRate(){ var b = cutRateBase(); return b ? sumOf(PAGE.cut, 'cutamt') / b.amt * 100 : null; }
   function cardTxt(gb){
     if (!PAGE) return '…';
     if (gb === 'PAY') { var p = PAGE.pay || []; if (!p.length) return '<span class="badge warn">이 달 없음</span>';
       return num(sumOf(p,'cnt')) + '줄 · 총진료비 ' + eok(sumOf(p,'totamt')) + '<br>수납 ' + eok(sumOf(p,'paidamt')) + ' · 미수 ' + eok(sumOf(p,'unpaidamt')); }
     if (gb === 'ACT') { var a = PAGE.act || []; if (!a.length) return '<span class="badge warn">이 달 없음</span>';
       return '분류 ' + a.length + '가지 · 금액 ' + eok(sumOf(a,'totamt')) + '<br>횟수 ' + num(sumOf(a,'actcnt')); }
+    if (gb === 'CUT') { var k = PAGE.cut || []; if (!k.length) return '<span class="badge warn">이 달 없음</span>';
+      var cr = cutRate(); return num(sumOf(k,'cnt')) + '건 · 삭감 ' + eok(sumOf(k,'cutamt')) + (cr == null ? '' : '<br>삭감률 ' + cr.toFixed(2) + '%'); }
     if (gb === 'IPWON') { var w = PAGE.ipwon || {}; if (!Number(w.cnt||0)) return '<span class="badge warn">이 달 없음</span>';
       return num(w.cnt) + '줄 · 입원 ' + num(w.incnt) + ' · 퇴원 ' + num(w.outcnt) + (Number(w.nojumin||0) ? '<br><span class="badge bad">주민번호 없음 ' + num(w.nojumin) + '</span>' : ''); }
     if (gb === 'CONTACT') { var c = PAGE.contact || {}; if (!Number(c.cnt||0)) return '<span class="badge warn">올린 적 없음</span>';
@@ -299,6 +338,19 @@
           return '<tr><td>' + esc(r.actgb) + (Number(r.items) > 1 ? ' <span class="small" title="입원·외래·급여구분 등으로 나뉜 줄을 합쳤습니다">(' + num(r.items) + '줄)</span>' : '') + '</td><td class="n">' + num(r.actcnt) + '</td><td class="n">' + num(r.totamt) + '</td><td class="n">' + num(r.insamt) + '</td><td class="n">' + num(r.selfamt) + '</td><td class="n">' + pct.toFixed(1) + '%</td></tr>'; });
         r1.push('<tr class="sum"><td>합계</td><td class="n">' + num(sumOf(a,'actcnt')) + '</td><td class="n">' + num(tot) + '</td><td class="n">' + num(sumOf(a,'insamt')) + '</td><td class="n">' + num(sumOf(a,'selfamt')) + '</td><td class="n">100%</td></tr>');
         h = tbl([{l:'행위 분류'},{l:'횟수',n:1},{l:'금액',n:1},{l:'공단',n:1},{l:'본인부담',n:1},{l:'비중',n:1}], r1); }
+    } else if (TAB === 'CUT') {
+      var k = PAGE.cut || [], tp = PAGE.cutTop || [];
+      if (!k.length) h = '<div class="empty">' + ymLbl(PAGE.ym) + ' 삭감 내역을 아직 올리지 않았습니다.</div>';
+      else { var ct = sumOf(k,'cutamt'), base = cutRateBase();
+        var rk = k.map(function(r){ var pct = ct ? (Number(r.cutamt||0) / ct * 100) : 0;
+          return '<tr><td>' + esc(r.cutrsn) + (r.cutrsncd && r.cutrsncd !== r.cutrsn ? ' <span class="small">' + esc(r.cutrsncd) + '</span>' : '') + '</td><td class="n">' + num(r.cnt) + '</td><td class="n">' + num(r.pats) + '</td><td class="n">' + num(r.cutamt) + '</td><td class="n">' + pct.toFixed(1) + '%</td></tr>'; });
+        rk.push('<tr class="sum"><td>합계</td><td class="n">' + num(sumOf(k,'cnt')) + '</td><td class="n">—</td><td class="n">' + num(ct) + '</td><td class="n">100%</td></tr>');
+        h = '<div class="bar"><b>삭감률 ' + (base ? (ct / base.amt * 100).toFixed(2) + '%' : '—') + '</b><span class="small">'
+          + (base ? '= 삭감액 ' + num(ct) + ' ÷ ' + (base.src === 'sam' ? '그 달 청구 샘파일 청구액 ' : '삭감 줄에 적힌 청구액 ') + num(base.amt) + (base.src === 'cut' ? ' — 그 달 청구 샘파일을 올리면 전체 청구액으로 다시 셉니다' : '') : '그 달 청구 샘파일(또는 삭감 줄의 청구액)이 없어 삭감률을 못 셉니다') + '</span></div>'
+          + matchHtml()
+          + tbl([{l:'조정(삭감) 사유'},{l:'건',n:1},{l:'환자',n:1},{l:'삭감액',n:1},{l:'비중',n:1}], rk)
+          + (tp.length ? '<div class="small" style="margin:10px 0 4px;font-weight:700;color:#43555f;">삭감 많은 항목 ' + tp.length + '</div>'
+            + tbl([{l:'#',n:1},{l:'항목'},{l:'코드'},{l:'건',n:1},{l:'삭감액',n:1}], tp.map(function(r, i){ return '<tr><td class="n">' + (i+1) + '</td><td>' + esc(r.itemnm) + '</td><td>' + esc(r.itemcd || '') + '</td><td class="n">' + num(r.cnt) + '</td><td class="n">' + num(r.cutamt) + '</td></tr>'; })) : ''); }
     } else if (TAB === 'IPWON') {
       var w = PAGE.ipwon || {};
       h = !Number(w.cnt||0) ? '<div class="empty">' + ymLbl(PAGE.ym) + ' 입퇴원현황이 없습니다.</div>'
@@ -539,6 +591,7 @@
     if (!PAGE) return 0;
     if (TAB === 'PAY') return sumOf(PAGE.pay, 'cnt');
     if (TAB === 'ACT') return sumOf(PAGE.act, 'items');   // items = 그 달 저장된 줄 수(분류별 합)
+    if (TAB === 'CUT') return sumOf(PAGE.cut, 'cnt');
     if (TAB === 'STAFF') return sumOf(PAGE.staff, 'cnt');
     if (TAB === 'CONTACT') return Number((PAGE.contact || {}).cnt || 0);
     if (TAB === 'IPWON') return Number((PAGE.ipwon || {}).cnt || 0);
@@ -565,7 +618,7 @@
   function busy(on){ var bt = gel('meSaveBtn'); bt.disabled = on; if (on) bt.textContent = '저장 중…'; }
   function saveMis(b, ym){
     busy(true);
-    postJson('<c:url value="/mis/emrSave.do"/>', withHosp({ dataGb:TAB, ym:ym, fileNm:X.name, skipCnt:b.skip, rows:b.rows.map(strip), map:mapPayload(), hdrRow:X.hdr + 1 }))
+    postJson('<c:url value="/mis/emrSave.do"/>', withHosp({ dataGb:TAB, ym:ym, fileNm:X.name, skipCnt:b.skip + b.keyMiss, rows:b.rows.map(strip), map:mapPayload(), hdrRow:X.hdr + 1 }))
       .then(function(res){
         _alertBox(TYPES[TAB].nm + ' ' + num(res.saved) + '줄을 저장했습니다.' + (res.deleted ? ' (옛 자료 ' + num(res.deleted) + '줄은 바뀜)' : ''), {icon:'✅'});
         meCancel(); meLoad();
@@ -596,6 +649,7 @@
   var ROWCOLS = {
     PAY: [['paydt','수납일','d'],['chartno','차트번호'],['patnm','환자명'],['birth6','생년월일'],['inoutgb','입원/외래'],['insurnm','보험'],['deptnm','진료과'],['totamt','총진료비','n'],['insamt','공단','n'],['selfamt','본인부담','n'],['nonpayamt','비급여','n'],['paidamt','수납','n'],['unpaidamt','미수','n'],['paymethod','수납방법'],['memo','비고']],
     ACT: [['actgb','행위 분류'],['paygb','급여구분'],['inoutgb','입원/외래'],['deptnm','진료과'],['unitprice','단가','n'],['actcnt','횟수','n'],['patcnt','환자 수','n'],['totamt','금액','n'],['insamt','공단','n'],['selfamt','본인부담','n'],['memo','비고']],
+    CUT: [['claimno','청구번호'],['billno','명세서'],['resultdt','통보일','d'],['chartno','차트번호'],['patnm','환자명'],['birth6','생년월일'],['inoutgb','입원/외래'],['itemcd','항목 코드'],['itemnm','항목명'],['cutrsncd','사유 코드'],['cutrsn','사유'],['cutqty','수량','n'],['claimamt','청구액','n'],['cutamt','삭감액','n'],['objgb','이의신청'],['matchgb','샘파일 매칭','m'],['sambills','명세서(청구번호-일련)'],['samclaimamt','명세서 청구액','n'],['memo','비고']],
     CONTACT: [['chartno','차트번호'],['patnm','환자명'],['birth6','생년월일'],['gender','성별'],['tel','환자 연락처'],['guardnm','보호자'],['guardrel','관계'],['guardtel','보호자 연락처'],['addr','주소'],['memo','비고']],
     STAFF: [['empno','사번'],['empnm','성명'],['jobnm','직종'],['deptnm','부서'],['workgb','근무 형태'],['joindt','입사일','d'],['retiredt','퇴사일','d'],['workdays','근무일','n'],['workhours','근무시간','n'],['nightcnt','야간','n'],['payamt','급여','n'],['memo','비고']]
   };
@@ -608,6 +662,7 @@
       gel('meRowsTbl').innerHTML = !list.length ? '<tbody><tr><td class="empty">올린 줄이 없습니다.</td></tr></tbody>'
         : '<thead><tr><th class="n">No</th>' + cols.map(function(c){ return '<th' + (c[2] === 'n' ? ' class="n"' : '') + '>' + esc(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>'
           + list.map(function(r, i){ return '<tr><td class="n small">' + (i+1) + '</td>' + cols.map(function(c){ var v = r[c[0]];
+              if (c[2] === 'm') return '<td>' + matchLbl(v) + '</td>';
               return c[2] === 'n' ? '<td class="n">' + (v == null ? '' : num(v)) + '</td>' : '<td>' + esc(c[2] === 'd' ? d8Lbl(v) : (v == null ? '' : v)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
       gel('meRowsCard').style.display = '';
       gel('meRowsCard').scrollIntoView({ behavior:'smooth', block:'start' });

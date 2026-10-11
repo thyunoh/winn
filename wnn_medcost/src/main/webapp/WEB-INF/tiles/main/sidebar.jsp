@@ -803,7 +803,7 @@
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">고정경비 관리</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misAlert.do">업무 알림</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misLead.do">신규환자 고객관리</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misEmr.do">EMR 엑셀 연계</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misEmr.do">병원자료엑셀연계</a></li>
                             </ul>
                         </div>
                     </li>

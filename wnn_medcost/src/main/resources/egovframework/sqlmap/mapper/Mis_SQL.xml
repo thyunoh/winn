@@ -509,6 +509,105 @@
 		 ORDER BY totamt DESC
 	</select>
 
+	<!-- 삭감(심사 조정) 내역 — 한 줄 = 삭감 항목 하나 (DDL MIS_DDL_EMR_CUT_2026-10-11.sql).
+	     청구는 기존 청구 샘파일이 갖고 있어 엑셀로 받지 않는다(사용자) — 삭감 줄을 그 달 샘파일 명세서와 **볼 때마다** 매칭한다. -->
+	<delete id="deleteEmrCut">
+		DELETE FROM TBL_MIS_EMR_CUT WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+	</delete>
+	<insert id="insertEmrCut">
+		INSERT INTO TBL_MIS_EMR_CUT (HOSP_CD, YYYYMM, SEQ_NUM, CLAIM_NO, BILL_NO, RESULT_DT, CHARTNO, PAT_NM, BIRTH6, INOUT_GB, ITEM_CD, ITEM_NM
+		     , CUT_RSN_CD, CUT_RSN, CUT_QTY, CLAIM_AMT, CUT_AMT, OBJ_GB, MEMO, REG_USER)
+		VALUES
+		<foreach collection="rows" item="r" separator=",">
+		(#{hospCd}, #{ym}, #{r.seq}, #{r.claimNo}, #{r.billNo}, #{r.resultDt}, #{r.chartno}, #{r.patNm}, #{r.birth6}, #{r.inoutGb}, #{r.itemCd}, #{r.itemNm}
+		, #{r.cutRsnCd}, #{r.cutRsn}, #{r.cutQty}, #{r.claimAmt}, #{r.cutAmt}, #{r.objGb}, #{r.memo}, #{userId})
+		</foreach>
+	</insert>
+
+	<!-- 그 달 샘파일 명세서(CTE sm) — 명세서 조인 규칙은 경영통계(selectMonthClaim)와 같다(cm.HOSP_CD+CLAIM_NO · DELYN 빈 값 · 진료년월).
+	     billn = 명세서 일련번호 숫자(앞자리 0 무시) · jm = 주민번호 앞 6자리 · nm = 이름(숫자 뗌) -->
+	<sql id="emrSamMonth">
+		sm AS (SELECT TRIM(mm.CLAIM_NO) AS claimno, TRIM(COALESCE(mm.CLAIM_RCP_NO,'')) AS rcpno, mm.BILL_SEQ AS billseq
+		            , CAST(NULLIF(REGEXP_REPLACE(COALESCE(mm.BILL_SEQ,''),'[^0-9]',''),'') AS UNSIGNED) AS billn
+		            , LEFT(mm.PAT_ID,6) AS jm, REGEXP_REPLACE(COALESCE(mm.PAT_NAME,''),'[0-9]','') AS nm
+		            , mm.TOT_AMT AS totamt, mm.CLAIM_AMT AS claimamt, mm.PAT_ID AS patid
+		         FROM TBL_MYOUNG_MST mm
+		         JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		        WHERE mm.HOSP_CD = #{hospCd} AND COALESCE(mm.DELYN,'') = '' AND cm.DATE_YM = #{ym})
+	</sql>
+	<!-- 삭감 줄 + 매칭 구분(matchgb) : BILL 청구번호(샘파일 청구번호 또는 접수번호)+명세서번호 → PAT 생년월일+이름 → NAME 이름만(그 달 샘파일에 그 이름이 한 사람일 때) → 빈 값 미매칭 -->
+	<sql id="emrCutMatched">
+		<![CDATA[
+		SELECT c.*, REGEXP_REPLACE(COALESCE(c.PAT_NM,''),'[0-9]','') AS cnm
+		     , CAST(NULLIF(REGEXP_REPLACE(COALESCE(c.BILL_NO,''),'[^0-9]',''),'') AS UNSIGNED) AS cbilln
+		     , CASE WHEN COALESCE(TRIM(c.CLAIM_NO),'') <> '' AND COALESCE(c.BILL_NO,'') <> ''
+		                 AND EXISTS (SELECT 1 FROM sm WHERE (sm.claimno = TRIM(c.CLAIM_NO) OR sm.rcpno = TRIM(c.CLAIM_NO))
+		                                AND sm.billn = CAST(NULLIF(REGEXP_REPLACE(c.BILL_NO,'[^0-9]',''),'') AS UNSIGNED)) THEN 'BILL'
+		            WHEN COALESCE(c.BIRTH6,'') <> ''
+		                 AND EXISTS (SELECT 1 FROM sm WHERE sm.jm = c.BIRTH6 AND sm.nm = REGEXP_REPLACE(COALESCE(c.PAT_NM,''),'[0-9]','')) THEN 'PAT'
+		            WHEN COALESCE(c.PAT_NM,'') <> ''
+		                 AND (SELECT COUNT(DISTINCT sm.jm) FROM sm WHERE sm.nm = REGEXP_REPLACE(c.PAT_NM,'[0-9]','')) = 1 THEN 'NAME'
+		            ELSE '' END AS matchgb
+		  FROM TBL_MIS_EMR_CUT c
+		 WHERE c.HOSP_CD = #{hospCd} AND c.YYYYMM = #{ym}
+		]]>
+	</sql>
+	<select id="selectEmrCutRows" resultType="java.util.HashMap">
+		WITH <include refid="emrSamMonth"/>
+		SELECT x.SEQ_NUM AS seq, x.CLAIM_NO AS claimno, x.BILL_NO AS billno, x.RESULT_DT AS resultdt, x.CHARTNO AS chartno, x.PAT_NM AS patnm, x.BIRTH6 AS birth6, x.INOUT_GB AS inoutgb
+		     , x.ITEM_CD AS itemcd, x.ITEM_NM AS itemnm, x.CUT_RSN_CD AS cutrsncd, x.CUT_RSN AS cutrsn, x.CUT_QTY AS cutqty, x.CLAIM_AMT AS claimamt, x.CUT_AMT AS cutamt, x.OBJ_GB AS objgb, x.MEMO AS memo
+		     , x.matchgb AS matchgb
+		     <!-- 매칭된 샘파일 명세서(청구번호-명세서) · 그 명세서들 청구액 — BILL 은 그 한 장, PAT·NAME 은 그 환자의 그 달 명세서 전부 -->
+		     , CASE x.matchgb
+		         WHEN 'BILL' THEN (SELECT GROUP_CONCAT(DISTINCT CONCAT(sm.claimno,'-',sm.billseq) SEPARATOR ', ') FROM sm WHERE (sm.claimno = TRIM(x.CLAIM_NO) OR sm.rcpno = TRIM(x.CLAIM_NO)) AND sm.billn = x.cbilln)
+		         WHEN 'PAT'  THEN (SELECT GROUP_CONCAT(DISTINCT CONCAT(sm.claimno,'-',sm.billseq) SEPARATOR ', ') FROM sm WHERE sm.jm = x.BIRTH6 AND sm.nm = x.cnm)
+		         WHEN 'NAME' THEN (SELECT GROUP_CONCAT(DISTINCT CONCAT(sm.claimno,'-',sm.billseq) SEPARATOR ', ') FROM sm WHERE sm.nm = x.cnm)
+		       END AS sambills
+		     , CASE x.matchgb
+		         WHEN 'BILL' THEN (SELECT SUM(sm.claimamt) FROM sm WHERE (sm.claimno = TRIM(x.CLAIM_NO) OR sm.rcpno = TRIM(x.CLAIM_NO)) AND sm.billn = x.cbilln)
+		         WHEN 'PAT'  THEN (SELECT SUM(sm.claimamt) FROM sm WHERE sm.jm = x.BIRTH6 AND sm.nm = x.cnm)
+		         WHEN 'NAME' THEN (SELECT SUM(sm.claimamt) FROM sm WHERE sm.nm = x.cnm)
+		       END AS samclaimamt
+		  FROM (<include refid="emrCutMatched"/>) x
+		 ORDER BY x.SEQ_NUM
+		 LIMIT 3000
+	</select>
+	<!-- 매칭 요약 — 구분별 줄 수·삭감액 -->
+	<select id="selectEmrCutMatchSum" resultType="java.util.HashMap">
+		WITH <include refid="emrSamMonth"/>
+		SELECT x.matchgb AS matchgb, COUNT(*) AS cnt, COALESCE(SUM(x.CUT_AMT),0) AS cutamt
+		  FROM (<include refid="emrCutMatched"/>) x
+		 GROUP BY x.matchgb
+	</select>
+	<!-- 그 달 샘파일 청구 합계 — 삭감률의 분모(청구액). 명세서 0장이면 cnt 0 -->
+	<select id="selectEmrSamSum" resultType="java.util.HashMap">
+		WITH <include refid="emrSamMonth"/>
+		SELECT COUNT(*) AS cnt, COUNT(DISTINCT sm.patid) AS pats, COALESCE(SUM(sm.totamt),0) AS totamt, COALESCE(SUM(sm.claimamt),0) AS claimamt
+		  FROM sm
+	</select>
+	<!-- 삭감 요약 — 사유별(사유 글자 → 사유 코드 → 「사유 없음」). 금액 큰 순 -->
+	<select id="selectEmrCutSum" resultType="java.util.HashMap">
+		SELECT COALESCE(NULLIF(TRIM(CUT_RSN),''), NULLIF(TRIM(CUT_RSN_CD),''), '사유 없음') AS cutrsn
+		     , MAX(NULLIF(TRIM(CUT_RSN_CD),'')) AS cutrsncd
+		     , COUNT(*) AS cnt, COUNT(DISTINCT COALESCE(NULLIF(CHARTNO,''), CONCAT(COALESCE(BIRTH6,''),'|',COALESCE(PAT_NM,'')))) AS pats
+		     , COALESCE(SUM(CLAIM_AMT),0) AS claimamt, COALESCE(SUM(CUT_AMT),0) AS cutamt
+		  FROM TBL_MIS_EMR_CUT
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		 GROUP BY COALESCE(NULLIF(TRIM(CUT_RSN),''), NULLIF(TRIM(CUT_RSN_CD),''), '사유 없음')
+		 ORDER BY cutamt DESC
+	</select>
+	<!-- 삭감 많은 항목 10 — 항목명(없으면 코드)으로 묶는다. 항목 칸을 안 맞췄으면 빈 목록 -->
+	<select id="selectEmrCutTop" resultType="java.util.HashMap">
+		SELECT COALESCE(NULLIF(TRIM(ITEM_NM),''), NULLIF(TRIM(ITEM_CD),'')) AS itemnm, MAX(NULLIF(TRIM(ITEM_CD),'')) AS itemcd
+		     , COUNT(*) AS cnt, COALESCE(SUM(CUT_AMT),0) AS cutamt
+		  FROM TBL_MIS_EMR_CUT
+		 WHERE HOSP_CD = #{hospCd} AND YYYYMM = #{ym}
+		   AND COALESCE(NULLIF(TRIM(ITEM_NM),''), NULLIF(TRIM(ITEM_CD),'')) IS NOT NULL
+		 GROUP BY COALESCE(NULLIF(TRIM(ITEM_NM),''), NULLIF(TRIM(ITEM_CD),''))
+		 ORDER BY cutamt DESC
+		 LIMIT 10
+	</select>
+
 	<!-- 연락처 -->
 	<delete id="deleteEmrContact">
 		DELETE FROM TBL_MIS_EMR_CONTACT WHERE HOSP_CD = #{hospCd}

@@ -90,6 +90,15 @@ public interface MisMapper {
 	int insertEmrAct(Map<String, Object> p);
 	List<Map<String, Object>> selectEmrActRows(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	List<Map<String, Object>> selectEmrActSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int deleteEmrCut(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	int insertEmrCut(Map<String, Object> p);
+	List<Map<String, Object>> selectEmrCutRows(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectEmrCutSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectEmrCutTop(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	/** 삭감 줄 ↔ 그 달 샘파일 명세서 매칭 요약(구분별 줄·삭감액) */
+	List<Map<String, Object>> selectEmrCutMatchSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	/** 그 달 샘파일 청구 합계 — 삭감률 분모 */
+	Map<String, Object> selectEmrSamSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	int deleteEmrContact(@Param("hospCd") String hospCd);
 	int insertEmrContact(Map<String, Object> p);
 	List<Map<String, Object>> selectEmrContactRows(@Param("hospCd") String hospCd);

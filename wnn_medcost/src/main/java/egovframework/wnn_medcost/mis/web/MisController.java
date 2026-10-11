@@ -30,7 +30,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261011-MIS7";   // + EMR 엑셀 연계(수납·행위별·연락처·입퇴원·인력, 머리글 맞춤) · 퇴원 안부에 보호자 연락처
+	private static final String BUILD = "20261011-MIS8";   // + 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -540,10 +540,10 @@ public class MisController {
 	}
 
 	/* ═══ EMR 엑셀 연계 (2026-10-11) — 닥터스 EMR 과 연계가 안 돼 엑셀로 받아 올린다 ═══
-	 * 자료 구분 PAY 수납·진료비 / ACT 행위별 통계(행위 분류별 횟수·금액) / CONTACT 환자·보호자 연락처 / IPWON 입퇴원현황 / STAFF 직원·근무.
+	 * 자료 구분 PAY 수납·진료비 / ACT 행위별 통계(행위 분류별 횟수·금액) / CUT 삭감 내역(그 달 청구 샘파일 명세서와 매칭 — 청구는 샘파일이 있어 엑셀로 안 받는다) / CONTACT 환자·보호자 연락처 / IPWON 입퇴원현황 / STAFF 직원·근무.
 	 * 머리글 ↔ 필드 맞춤은 화면이 하고(견본 양식 없음) 병원·자료별로 TBL_MIS_EMR_MAP 에 기억한다.
 	 * IPWON 의 저장은 기존 /main/saveExcelDatas.do(TBL_IPWON_INFO)를 그대로 쓴다 — 여기서는 맞춤·이력만(emrIpwonLog). */
-	private static final java.util.Set<String> EMR_GB = new java.util.HashSet<>(java.util.Arrays.asList("PAY", "ACT", "CONTACT", "IPWON", "STAFF"));
+	private static final java.util.Set<String> EMR_GB = new java.util.HashSet<>(java.util.Arrays.asList("PAY", "ACT", "CUT", "CONTACT", "IPWON", "STAFF"));
 
 	@RequestMapping(value = "main/misEmr.do")
 	public String misEmr(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misEmr"); }
@@ -624,7 +624,7 @@ public class MisController {
 			for (Object o : in) {
 				if (!(o instanceof Map)) continue;
 				@SuppressWarnings("unchecked") Map<String, Object> r = (Map<String, Object>) o;
-				Map<String, Object> m = "PAY".equals(gb) ? emrPayRow(r) : "ACT".equals(gb) ? emrActRow(r) : "STAFF".equals(gb) ? emrStaffRow(r) : emrContactRow(r);
+				Map<String, Object> m = "PAY".equals(gb) ? emrPayRow(r) : "ACT".equals(gb) ? emrActRow(r) : "CUT".equals(gb) ? emrCutRow(r) : "STAFF".equals(gb) ? emrStaffRow(r) : emrContactRow(r);
 				if (m == null) continue;
 				m.put("seq", ++seq);
 				rows.add(m);
@@ -693,6 +693,27 @@ public class MisController {
 		m.put("selfAmt", amtOf(r.get("selfAmt")));
 		m.put("memo", cut(str(r.get("memo"), ""), 200));
 		return ((String) m.get("actGb")).isEmpty() ? null : m;
+	}
+	/** 삭감 내역 — 한 줄 = 삭감 항목 하나. 삭감액이 없으면 뺀다(삭감이 아닌 줄) */
+	private static Map<String, Object> emrCutRow(Map<String, Object> r) {
+		Map<String, Object> m = new HashMap<>();
+		m.put("claimNo", cut(str(r.get("claimNo"), ""), 30));
+		m.put("billNo", cut(str(r.get("billNo"), ""), 30));
+		m.put("resultDt", dt8(r.get("resultDt")));
+		m.put("chartno", cut(str(r.get("chartno"), ""), 30));
+		m.put("patNm", cut(str(r.get("patNm"), ""), 50));
+		m.put("birth6", birth6(r.get("birth6")));
+		m.put("inoutGb", cut(str(r.get("inoutGb"), ""), 20));
+		m.put("itemCd", cut(str(r.get("itemCd"), ""), 30));
+		m.put("itemNm", cut(str(r.get("itemNm"), ""), 100));
+		m.put("cutRsnCd", cut(str(r.get("cutRsnCd"), ""), 20));
+		m.put("cutRsn", cut(str(r.get("cutRsn"), ""), 200));
+		m.put("cutQty", decOf(r.get("cutQty"), 999999999));
+		m.put("claimAmt", amtOf(r.get("claimAmt")));
+		m.put("cutAmt", amtOf(r.get("cutAmt")));
+		m.put("objGb", cut(str(r.get("objGb"), ""), 30));
+		m.put("memo", cut(str(r.get("memo"), ""), 200));
+		return m.get("cutAmt") == null ? null : m;
 	}
 	private static Map<String, Object> emrContactRow(Map<String, Object> r) {
 		Map<String, Object> m = new HashMap<>();

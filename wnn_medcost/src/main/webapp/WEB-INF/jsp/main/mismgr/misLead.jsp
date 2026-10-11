@@ -300,7 +300,7 @@
         var dd = daysBetween(r.twdt, today), done = r.doneyn === 'Y';
         var key = 'birth6=' + esc(r.birth6) + '&ipwonDt=' + esc(r.ipdt) + '&tewonDt=' + esc(r.twdt);
         h += '<tr class="' + (done ? 'done' : '') + '" data-key="' + key + '"><td class="n small">' + (i + 1) + '</td><td>' + dLbl(r.twdt) + '</td><td><b>' + esc(r.patnm) + '</b> <span class="small">' + esc(r.birth6) + '</span>' + (r.readmitdt ? ' <span class="badge ok">' + dMD(r.readmitdt) + ' 재입원</span>' : '')
-           + (r.guardtel || r.tel ? '<br><span class="small" title="EMR 엑셀 연계로 올린 연락처">📞 ' + (r.guardtel ? esc((r.guardnm || '보호자') + (r.guardrel ? '(' + r.guardrel + ')' : '')) + ' ' + esc(r.guardtel) : '환자 ' + esc(r.tel)) + '</span>' : '') + '</td>'
+           + (r.guardtel || r.tel ? '<br><span class="small" title="병원자료엑셀연계로 올린 연락처">📞 ' + (r.guardtel ? esc((r.guardnm || '보호자') + (r.guardrel ? '(' + r.guardrel + ')' : '')) + ' ' + esc(r.guardtel) : '환자 ' + esc(r.tel)) + '</span>' : '') + '</td>'
            + '<td class="n">' + esc(r.staydays) + '일</td><td>' + (dd >= 7 && !done && !r.readmitdt ? '<span class="badge warn">' + dd + '일째 · 연락</span>' : dd + '일') + '</td>'
            + '<td><label><input type="checkbox" class="fwDone"' + (done ? ' checked' : '') + '> ' + (done && r.donedt ? dLbl(r.donedt) : '함') + '</label></td>'
            + '<td><select class="fwRes"><option value="">—</option>' + RESULTS.map(function(x){ return '<option value="' + x[0] + '"' + (r.resultcd === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></td>'

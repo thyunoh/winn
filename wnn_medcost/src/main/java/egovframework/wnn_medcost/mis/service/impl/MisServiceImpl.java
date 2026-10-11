@@ -550,6 +550,10 @@ public class MisServiceImpl implements MisService {
 		r.put("uploads", mapper.selectEmrUploads(hospCd));
 		r.put("pay", mapper.selectEmrPaySum(hospCd, ym));
 		r.put("act", mapper.selectEmrActSum(hospCd, ym));
+		r.put("cut", mapper.selectEmrCutSum(hospCd, ym));
+		r.put("cutTop", mapper.selectEmrCutTop(hospCd, ym));
+		r.put("cutMatch", mapper.selectEmrCutMatchSum(hospCd, ym));
+		r.put("sam", mapper.selectEmrSamSum(hospCd, ym));
 		r.put("contact", mapper.selectEmrContactSum(hospCd));
 		r.put("staff", mapper.selectEmrStaffSum(hospCd, ym));
 		r.put("ipwon", mapper.selectEmrIpwonSum(hospCd, ym));
@@ -560,6 +564,7 @@ public class MisServiceImpl implements MisService {
 	public List<Map<String, Object>> selectEmrRows(String hospCd, String dataGb, String ym) throws Exception {
 		if ("PAY".equals(dataGb)) return mapper.selectEmrPayRows(hospCd, ym);
 		if ("ACT".equals(dataGb)) return mapper.selectEmrActRows(hospCd, ym);
+		if ("CUT".equals(dataGb)) return mapper.selectEmrCutRows(hospCd, ym);
 		if ("CONTACT".equals(dataGb)) return mapper.selectEmrContactRows(hospCd);
 		if ("STAFF".equals(dataGb)) return mapper.selectEmrStaffRows(hospCd, ym);
 		return new ArrayList<>();
@@ -577,6 +582,7 @@ public class MisServiceImpl implements MisService {
 		int del;
 		if ("PAY".equals(dataGb)) del = mapper.deleteEmrPay(hospCd, ym);
 		else if ("ACT".equals(dataGb)) del = mapper.deleteEmrAct(hospCd, ym);
+		else if ("CUT".equals(dataGb)) del = mapper.deleteEmrCut(hospCd, ym);
 		else if ("STAFF".equals(dataGb)) del = mapper.deleteEmrStaff(hospCd, ym);
 		else if ("CONTACT".equals(dataGb)) del = mapper.deleteEmrContact(hospCd);
 		else throw new IllegalArgumentException("자료 구분이 잘못되었습니다 : " + dataGb);
@@ -587,6 +593,7 @@ public class MisServiceImpl implements MisService {
 			p.put("rows", rows.subList(i, Math.min(rows.size(), i + 500)));
 			if ("PAY".equals(dataGb)) mapper.insertEmrPay(p);
 			else if ("ACT".equals(dataGb)) mapper.insertEmrAct(p);
+			else if ("CUT".equals(dataGb)) mapper.insertEmrCut(p);
 			else if ("STAFF".equals(dataGb)) mapper.insertEmrStaff(p);
 			else mapper.insertEmrContact(p);
 		}
