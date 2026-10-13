@@ -163,6 +163,7 @@
     </div>
     <div class="mr-row" style="justify-content:flex-end;margin-top:4px;">
       <button type="button" class="mr-btn pri" id="mrDraftBtn">초안 만들기</button>
+      <button type="button" class="mr-btn" id="mrDraftClose" hidden>✕ 닫기</button>
     </div>
     <button type="button" class="mr-note-tog" id="mrNoteTog" aria-expanded="false">▸ 추가로 담을 내용 (선택)</button>
     <div id="mrNoteBox" hidden>
@@ -342,6 +343,7 @@
     card.remove();
     if (box && !box.querySelector('.mr-draft')) {
       box.innerHTML = '';
+      gel('mrDraftClose').hidden = true;
     }
   }
   function saveDraft(i){
@@ -399,7 +401,18 @@
         });
       })
       .catch(function(e){ box.innerHTML = '<div class="mr-warn">' + esc(e.message) + '</div>'; })
-      .always(function(){ clearInterval(timer); btn.disabled = false; });
+      .always(function(){ clearInterval(timer); btn.disabled = false; gel('mrDraftClose').hidden = !gel('mrDrafts').innerHTML; });
+  };
+
+  // 초안 닫기 — 저장하지 않은 글이 있으면 한 번 묻는다
+  function closeDrafts(){
+    gel('mrDrafts').innerHTML = '';
+    gel('mrDraftClose').hidden = true;
+  }
+  gel('mrDraftClose').onclick = function(){
+    if (gel('mrDrafts').querySelector('textarea.mr-doc')) {
+      _confirmBox({ msg: '저장하지 않은 초안이 있습니다. 닫으면 고친 글이 사라집니다. 닫을까요?', icon: '⚠️', okText: '닫기', okColor: '#b23b3b', onOk: closeDrafts });
+    } else { closeDrafts(); }
   };
 
   gel('mrDrafts').addEventListener('click', function(e){
