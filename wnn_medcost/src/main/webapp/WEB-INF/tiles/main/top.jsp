@@ -119,13 +119,6 @@
 						</a>
                          <div id="top-menu_c"> </div>
                          <div id="top-menu_d"> </div>
-                         <%-- QPS(질향상·환자안전) — 적정성평가와 별개 업무라 탭을 따로 둔다(2026-08-09).
-                              ★기본 숨김. 사이드바 #menu-qps 와 같은 게이트(위너넷 + 개발자 플래그)를 쓰며,
-                                sidebar.jsp 의 qpsDev 스크립트가 이 버튼도 함께 켠다.
-                              ★정식 오픈 시 : 계약구분(s_conact_gb)에 QPS 코드를 추가해 hosp_conact() 에서 그리면 된다. --%>
-                         <a href="/main/qpsIndex.do" id="top-menu_qps"
-                            class="btn btn-light btn-sm top-menu-btn border" style="display:none;"
-                            data-type="qps"><i class="fas fa-heartbeat"></i> QPS</a>
                          <!-- 2024년 표준화구간 안내 토글 (적정성평가 화면에서만 노출/연결: assessment.jsp) -->
                          <button type="button" id="btnStdRange" class="btn btn-light btn-sm top-btn-sub border" style="display:none; padding-left:10px; padding-right:10px; color:#000 !important;">2024년 표준화구간</button>
                         </div>
@@ -429,30 +422,6 @@
        $('#' + selectedTopMenu).addClass('active').trigger('click');
    });
 
-   // QPS 탭 — 누르면 좌측 메뉴가 QPS 전용이 된다(다른 업무 메뉴는 감춘다).
-   // ★menu-qps 는 menu-section 이 아니라 .menu-section 일괄 hide 로는 안 사라진다 → 따로 다룬다.
-   $(document).on('click', '#top-menu_qps', function () {
-       // ★게이트 재확인 — '마지막 선택 탭' 복원(localStorage)이 새 세션에서 이 클릭을 자동으로 일으킨다.
-       //   그때 게이트를 안 보면 qps 를 치지 않았는데도 QPS 메뉴가 펼쳐진다.
-       if (typeof qpsMenuOn === 'function' && !qpsMenuOn()) {
-           localStorage.removeItem('selectedTopMenu');
-           $('#top-menu_a').trigger('click');
-           return false;
-       }
-       $('.top-menu-btn').removeClass('active');
-       $(this).addClass('active');
-       $('.menu-section').hide();
-       // ★QPS 만 남기고 전부 걷어낸다(2026-08-09 지시 "QPS만 넣고 다 제외") — 항목을 나열하지 않고
-       //   사이드바 목록(#sbAllMenu)의 QPS 외 전부를 숨긴다. 그래야 메뉴가 새로 생겨도 QPS 탭에 안 샌다.
-       //   · '지금 보이는 것'만 qps-tab-hid 로 표시 후 숨긴다 — 권한 게이트로 숨겨져 있던 메뉴(관리자 1:1 등)를
-       //     다른 탭에서 무조건 show 로 복원하면 일반 계정에도 떠 버린다.
-       //   · .menu-section 은 표시하지 않고 그냥 숨긴다 — 저 그룹은 각 탭 핸들러가 계약구분으로
-       //     보임/숨김을 다시 정하므로, 우리가 복원하면 계약 필터와 싸운다.
-       $('#sbAllMenu > li').not('#menu-qps').not('.menu-section').not('.nav-divider')
-           .filter(':visible').addClass('qps-tab-hid').hide();
-       $('#menu-qps').show();
-       $('#qps-sub').addClass('show');       // 서브메뉴를 펼친 채로 — 탭을 눌렀으면 그 안을 보려는 것이다
-   });
    // 다른 탭을 누르면 QPS 메뉴는 숨기고, QPS 탭이 걷어냈던 항목을 원래대로 되살린다
    $(document).on('click', '#top-menu_a, #top-menu_b, #top-menu_c_btn, #top-menu_d_btn', function () {
        $('.qps-tab-hid').removeClass('qps-tab-hid').show();

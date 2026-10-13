@@ -192,7 +192,7 @@
                          ★정식 오픈 시 : style 의 display:none 과 아래 qpsDev 게이트를 걷어내고
                            계약구분(s_conact_gb)에 QPS 코드를 추가해 top.jsp 탭으로 태운다. -->
                     <li class="nav-item" id="menu-qps" style="display:none;">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
+                        <a class="nav-item nav-link" href="#" data-toggle="collapse"
                            aria-expanded="false" data-target="#qps-sub" aria-controls="qps-sub">
                         <i class="fa fa-heartbeat" aria-hidden="true"></i>QPS-환자안전</a>
                         <%-- ★2026-08-11 메뉴 2단화 — 기존 시스템의 업무 폴더 구조를 그대로 따른다.
@@ -794,7 +794,7 @@
                          ★menu-section 이 아니다 — top.jsp 탭/계약 필터의 영향을 받지 않게. 서버(MisController)는 로그인만 본다.
                          ★정식 오픈 시 : style 의 display:none 과 토글 스크립트를 걷어내고 계약구분으로 태운다. --%>
                     <li class="nav-item" id="menu-mis" style="display:none;">
-                        <a class="nav-item nav-link" style="font-size: 15px;" href="#" data-toggle="collapse"
+                        <a class="nav-item nav-link" href="#" data-toggle="collapse"
                            aria-expanded="false" data-target="#mis-sub" aria-controls="mis-sub">
                         <i class="fas fa-chart-line" aria-hidden="true"></i>경영고객관리</a>
                         <div id="mis-sub" class="collapse submenu" style="background-color: white;">
@@ -2672,9 +2672,6 @@ $(document).ready(function() {
         var on = (flagOn() && isWnn());
         var li = document.getElementById('menu-qps');
         if (li) li.style.display = on ? '' : 'none';
-        // 상단 QPS 탭도 같은 게이트를 쓴다(2026-08-09) — 사이드바만 켜면 탭이 없어 들어갈 길이 없다
-        var tab = document.getElementById('top-menu_qps');
-        if (tab) tab.style.display = on ? '' : 'none';
         // qps 를 치면 경영고객관리 메뉴도 함께 보인다(2026-10-13). QPS 를 끄면 MIS 자체 조건(m·i·s·계약)만 남긴다.
         var misLi = document.getElementById('menu-mis');
         if (misLi) misLi.style.display = (on || (window.misMenuOn && window.misMenuOn())) ? '' : 'none';
