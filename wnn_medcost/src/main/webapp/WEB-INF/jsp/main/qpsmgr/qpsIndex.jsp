@@ -58,6 +58,12 @@
   #qpsIndex .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
                           padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsIndex .zz-zoom button:hover{ background:#eef3f6; }
+  #qpsIndex .qi-help-btn{ border:1px solid #cfd9e0; background:#fff; color:#1f5a4b; border-radius:8px; padding:6px 12px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap; }
+  #qpsIndex .qi-help-btn:hover{ background:#eef3f6; }
+  #qpsIndex .qi-help{ background:#fbfdfc; border:1px solid #cfe3da; border-radius:10px; padding:12px 16px; margin:0 0 12px; font-size:13px; line-height:1.7; color:#1f2a30; }
+  #qpsIndex .qi-help b{ color:#1f5a4b; }
+  #qpsIndex .qi-help ol{ margin:6px 0 0; padding-left:20px; }
+  #qpsIndex .qi-help li{ margin-bottom:6px; }
 </style>
 
 <div class="qi-head">
@@ -66,6 +72,7 @@
   <span class="qi-hosp">🏥 <c:out value="${hospNm}" default="병원 미확인"/></span>
   <div class="qi-spacer"></div>
   <select id="qiYear" onchange="qiLoad();"></select>
+  <button type="button" class="qi-help-btn" id="qiHelpBtn">❔ 도움말</button>
   <span style="flex:0 0 12px;"></span>
   <%-- 글자 크기 — 이 PC 이 브라우저에만 저장된다 --%>
   <span class="zz-zoom">
@@ -81,7 +88,22 @@
   <span class="qi-state off" style="margin:0;">입력 전</span> 아직 자료가 없어 지표가 '-' 로 나옴
 </div>
 
+<div id="qiHelp" class="qi-help" hidden>
+  <b>이 화면의 세 메뉴</b>
+  <ol>
+    <li><b>지표 현황</b> : 지표 18개를 영역별 카드로 한눈에 봅니다. 카드의 「입력됨·자동집계·입력 전」은 자료 상태이고, 「정의서 미작성」은 정의서를 아직 채우지 않았다는 뜻입니다. 지표를 누르면 입력·분석 화면으로 갑니다.</li>
+    <li><b>지표분석목록</b> : 지표와 기간(분기·반기)별 지표분석보고서를 모아 봅니다. 결재 상태(작성 전·결재중·최종승인·반려)를 확인할 수 있고, 행을 누르면 그 보고서에서 서술을 쓰고 상신합니다.</li>
+    <li><b>지표정의서</b> : 지표마다 분자·분모, 산출 방법, 목표를 적어 두는 문서입니다. 채우지 않으면 공통 기본 정의가 쓰입니다.</li>
+  </ol>
+  <div style="margin-top:6px;color:#43555f;">순서 : 지표 현황에서 지표 입력 → 지표분석목록에서 보고서 작성·상신 → 필요하면 지표정의서 작성</div>
+</div>
 <div id="qiBody"><div class="qi-empty">불러오는 중…</div></div>
+<script>
+document.getElementById('qiHelpBtn').onclick = function(){
+  var p = document.getElementById('qiHelp');
+  p.hidden = !p.hidden;
+};
+</script>
 
 <script>
 (function(){

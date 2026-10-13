@@ -422,13 +422,6 @@
        $('#' + selectedTopMenu).addClass('active').trigger('click');
    });
 
-   // 다른 탭을 누르면 QPS 메뉴는 숨기고, QPS 탭이 걷어냈던 항목을 원래대로 되살린다
-   $(document).on('click', '#top-menu_a, #top-menu_b, #top-menu_c_btn, #top-menu_d_btn', function () {
-       $('.qps-tab-hid').removeClass('qps-tab-hid').show();
-       $('#menu-qps').hide();
-       $('#qps-sub').removeClass('show');
-   });
-
    // 메뉴 클릭 시 처리
    $(document).on('click', '.top-menu-btn', function () {
        $('.top-menu-btn').removeClass('active');

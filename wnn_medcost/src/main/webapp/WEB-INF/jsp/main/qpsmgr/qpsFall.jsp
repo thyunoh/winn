@@ -56,6 +56,12 @@
   #qpsFall .qf-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:14px 16px; margin-bottom:14px; }
   #qpsFall .qf-card h4{ margin:0 0 10px; font-size:14px; font-weight:800; color:#20303a; display:flex; align-items:center; gap:6px; }
   #qpsFall .qf-card h4 .qf-hint{ font-weight:500; font-size:12px; color:#8a99a3; }
+  #qpsFall .qf-route{ margin:0 0 8px; font-size:12px; line-height:1.65; color:#43555f; background:#f5f9f7; border:1px solid #dbe8e2; border-radius:7px; padding:5px 10px; }
+  #qpsFall .qf-route b{ color:#1f5a4b; }
+  #qpsFall .qf-route a{ color:#1f5a4b; font-weight:700; text-decoration:underline; cursor:pointer; }
+  #qpsFall .qf-route a:hover{ color:#0f3d32; }
+  #qpsFall .qf-hl{ outline:3px solid #f0b429; outline-offset:2px; transition:outline-color .3s; }
+  #qpsFall th.qf-axgo:hover{ background:#e7f3ee; }
 
   /* 표 */
   #qpsFall table.qf-grid{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -147,6 +153,12 @@
   #qpsFall .zz-zoom button{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px;
                         padding:4px 9px; font-size:13px; font-weight:700; cursor:pointer; }
   #qpsFall .zz-zoom button:hover{ background:#eef3f6; }
+  #qpsFall .qf-help{ background:#fbfdfc; border:1px solid #cfe3da; border-radius:10px; padding:12px 16px; margin:0 0 14px; font-size:13.5px; line-height:1.75; color:#1f2a30; }
+  #qpsFall .qf-help b{ color:#1f5a4b; }
+  #qpsFall .qf-help ol{ margin:6px 0 8px; padding-left:20px; }
+  #qpsFall .qf-help li{ margin-bottom:6px; }
+  #qpsFall .qf-help-line{ margin-top:6px; color:#43555f; }
+  #qpsFall .qf-help-warn{ margin-top:8px; background:#fff7e6; border:1px solid #f1d9a6; color:#7a5a12; border-radius:8px; padding:7px 10px; }
 </style>
 
 <div class="qf-head">
@@ -154,6 +166,7 @@
     <c:out value="${indiNm}" default="지표"/></div>
   <%-- 흐름 안내는 지표 유형마다 다르다(관찰형은 재원일수를 안 쓴다) → indiLoad 에서 다시 쓴다 --%>
   <div class="qf-sub" id="qfFlow">사고보고 → 재원일수 → 분기 지표 자동산출</div>
+  <button type="button" class="qf-btn ghost" id="qfHelpBtn">❔ 도움말</button>
   <%-- 대상 병원 — ★서버가 실제로 조회하는 병원을 그대로 찍는다(컨트롤러가 쿠키 s_hospid 로 조회).
        브라우저에서 쿠키를 읽어 표시하면 서버 기준과 어긋나도 알 수가 없다(2026-08-08 실제로 헤맸다).
        입원환자 건수까지 같이 보여주므로 '자료가 없어서 안 나오는 것'인지 한눈에 구분된다. --%>
@@ -196,6 +209,7 @@
   <div style="margin-top:5px; font-size:11.5px; color:#5a6b7a;">회차마다 보고서 한 부씩 이어 붙여 한 번에 인쇄합니다(자료를 만들지 않음 · 수치는 그때 다시 계산, 확정된 회차는 동결값). 체크를 끄면 아직 안 쓴 회차도 수치만 있는 보고서로 찍힙니다. 병원 확인은 <b>맨 처음 한 번만</b> 묻습니다. 한 번에 120부까지. <span id="qfBpStat" style="color:#2f6fb0; font-weight:700;"></span></div>
 </div>
 
+<div id="qfHelp" class="qf-help" hidden></div>
 <div class="qf-tabs">
   <%-- 탭·폼 문구는 지표마다 다르다(낙상/투약오류/자살자해…) → incidSetupUi 가 지표코드로 바꿔 쓴다.
        여기 적힌 '낙상'은 마스터를 못 읽었을 때의 최후 기본값일 뿐이다. --%>
@@ -378,6 +392,7 @@
          제목·라벨·저장구분을 지표에 맞춰 바꾸지 않으면 직원안전사고처럼 STAFF 분모를 쓰는 지표는
          재원일수 칸에 저장돼 **영원히 분모 0(지표 '-')** 이 된다(2026-08-09 발견). --%>
     <h4 id="qfCensusTitle">월별 총재원일수 <span class="qf-hint">— 지표의 분모(해당 월 일일 재원환자 수의 합)</span></h4>
+    <div class="qf-route" id="qfCensusRoute"></div>
     <div class="qf-scroll">
       <table class="qf-grid" style="min-width:760px;">
         <thead><tr id="qfCensusHead"></tr></thead>
@@ -390,7 +405,7 @@
            자료 마지막 월 이후는 부풀 수 있다 → 확인 후 저장이 전제. --%>
       <button type="button" class="qf-btn ghost" id="qfCensusCalcBtn" onclick="qfCensusCalc();">⚙ 입퇴원 자료로 자동계산</button>
       <span class="qf-sub" id="qfCensusHint">비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분).
-        자동계산 기준: 입원일 포함·퇴원일 제외, 재원중은 오늘까지 — 값 확인 후 [저장].</span>
+        자동계산 기준: 입원일 포함·퇴원일 제외, 재원중은 오늘까지 — 자동계산하면 바로 반영됩니다. 값을 직접 고친 경우에만 [저장].</span>
     </div>
   </div>
 </div>
@@ -408,6 +423,7 @@
 
   <div class="qf-card">
     <h4>월별 집계 <span class="qf-hint">— 분자·분모에서 서버가 산출한 값(수기입력 아님)</span></h4>
+    <div class="qf-route" id="qfMonRoute"></div>
     <div class="qf-scroll">
       <table class="qf-grid" style="min-width:900px;">
         <thead><tr id="qfMonHead"></tr></thead>
@@ -437,6 +453,7 @@
 
   <div class="qf-card">
     <h4>분류별 집계 <span class="qf-hint" id="qfBreakHint">— 사고보고에서 자동 집계(분자와 같은 기준)</span></h4>
+    <div class="qf-route" id="qfBreakRoute"></div>
     <div id="qfBreak" class="qf-scroll" style="display:flex; gap:14px; flex-wrap:wrap;"></div>
   </div>
 
@@ -748,6 +765,67 @@
     if (!ev.target.closest || !ev.target.closest('#qfPatBox, #f_ptNo')) patClose();
   });
 
+  // 📥 등록 위치 · 📤 가져오는 곳 — 표마다 「어디에 적으면 여기 찍히는지」를 붙이고, 누르면 그 화면으로 간다(2026-10-13).
+  // 화면 이름은 메뉴에서 보이는 이름과 같게 적는다 — 사용자가 그 이름으로 바로 찾아갈 수 있어야 한다.
+  // 표 제목·링크를 누르면 그 입력칸으로 내려가 포커스를 준다. 다른 탭에 있으면 먼저 사고 보고 탭을 연다(2026-10-13).
+  window.qfGoField = function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    qfTab('p1');
+    setTimeout(function(){
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.focus();
+      el.classList.add('qf-hl');
+      setTimeout(function(){ el.classList.remove('qf-hl'); }, 1600);
+    }, 250);
+  };
+  window.qfRouteSet = function(src, denomGb){
+    // 같은 화면 탭은 tab, 다른 화면은 href 로 간다. 링크 글자는 메뉴 이름과 맞춘다.
+    var T = {
+      inc:   { t: '사고 보고 탭', tab: 'p1' },
+      mon:   { t: '관찰 입력 탭', tab: 'p4' },
+      man:   { t: '월별 입력 탭', tab: 'p5' },
+      cen:   { t: '재원일수(분모) 탭', tab: 'p2' },
+      cmpl:  { t: '불만고충 ▸ 처리대장', href: '/main/qpsCmpl.do' },
+      surv:  { t: '환자만족도 ▸ 설문지·조사결과', href: '/main/qpsSurvey.do' },
+      upl:   { t: '청구·평가 업로드', href: '/main/magamFileUpload.do' }
+    };
+    // 원천별 연결: 등록 화면(📥)과 가져오는 화면(📤). 없으면 대시(—).
+    var R = {
+      INCIDENT: [null, null],
+      PATVAL:   [null, T.upl],
+      MONITOR:  [T.mon, T.mon],
+      MANUAL:   [T.man, T.man],
+      CMPL:     [T.cmpl, T.cmpl],
+      SRV:      [T.surv, T.surv]
+    };
+    var r = R[src] || [T.inc, T.inc];
+    // 링크 HTML — tab 이면 같은 화면 탭, href 면 그 화면으로 간다.
+    var esc0 = function(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+    var link = function(x){
+      if (!x) return '—';
+      if (x.field) return '<a href="javascript:void(0)" onclick="qfGoField(\'' + x.field + '\');">' + esc0(x.t) + '</a>';
+      if (x.tab) return '<a href="javascript:void(0)" onclick="qfTab(\'' + x.tab + '\');">' + esc0(x.t) + '</a>';
+      return '<a href="' + x.href + '">' + esc0(x.t) + '</a>';
+    };
+    // 📥 등록 · 📤 가져오기 — 글자 설명 없이 아이콘과 링크만
+    // 등록과 가져오기가 같은 화면이면 링크를 한 번만 보인다(월별 입력·관찰·불만고충 등)
+    var line = function(putX, fromX){
+      if (putX && fromX && putX === fromX) return '📥📤 ' + link(putX);
+      return '📥 ' + link(putX) + ' &nbsp; 📤 ' + link(fromX);
+    };
+    var set = function(id, html){ var el = document.getElementById(id); if (el) el.innerHTML = html; };
+    // 사고 보고 탭 링크는 화면에서 뺐다 — 사고형은 입력칸으로 바로 간다(발생일자·발생장소)
+    set('qfMonRoute', line(src === 'INCIDENT' ? { t: '발생일자 입력', field: 'f_occurDt' } : r[0], src === 'INCIDENT' ? null : r[1]));
+    // 분류별 집계의 📥은 발생장소 입력칸으로 내려간다(탭만 여는 것이 아니다)
+    set('qfBreakRoute', line(src === 'INCIDENT' ? { t: '발생장소 입력', field: 'f_placeCd' } : r[0], src === 'INCIDENT' ? null : r[1]));
+    // 재원일수(분모) — 분모 구분으로 갈린다
+    var isStaff = (denomGb === 'STAFF');
+    set('qfCensusRoute', isStaff
+      ? '📥 이 탭의 직원 수 칸 &nbsp; 📤 직원 수 입력'
+      : '📥 이 탭의 칸 &nbsp; 📤 ' + link(T.upl));
+  };
+
   // ---------- 환자 찾기 팝업 ([찾기] 버튼) ----------
   // 입력검색은 '아는 환자를 빨리', 이 팝업은 '이름을 몰라 훑어볼 때'. 둘 다 같은 엔드포인트를 쓴다.
   var mList = [], mSel = -1, mTimer = null;
@@ -889,7 +967,7 @@
     var hint = document.getElementById('qfCensusHint');
     if (hint) hint.textContent = isStaff
       ? "비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분). 직원수는 인사자료 기준으로 직접 입력합니다."
-      : "비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분). 자동계산 기준: 입원일 포함·퇴원일 제외, 재원중은 오늘까지 — 값 확인 후 [저장].";
+      : "비워두면 그 달은 '자료 없음'(지표 '-', 발생 0과 구분). 자동계산 기준: 입원일 포함·퇴원일 제외, 재원중은 오늘까지 — 자동계산하면 바로 반영됩니다. 값을 직접 고친 경우에만 [저장].";
     var tab = document.querySelector('#qpsFall .qf-tab[data-pane="p2"]');
     if (tab) tab.textContent = isStaff ? '👥 직원수(분모)' : '🛏 재원일수(분모)';
 
@@ -1157,9 +1235,73 @@
   window.qfCensusCalc = function(){
     post('/qps/censusCalc.do', { inYear: year() }).then(function(res){
       MONTHS.forEach(function(m){ set('c_m' + m, res['m' + m]); });
-      _toast('입원 ' + num(res.stays || 0) + '건으로 계산했습니다. 값 확인 후 [저장]을 누르세요.', 'info');
+      // 자동계산 값은 바로 저장해서 지표분석에 반영한다(저장 단추를 따로 누르지 않는다)
+      _toast('입원 ' + num(res.stays || 0) + '건으로 계산해 반영합니다.', 'info');
+      window.qfCensusSave();
     }).catch(err);
   };
+
+  // ❔ 도움말 — 지금 보고 있는 지표의 출처(numersrc)와 분모 구분(denomgb)에 맞춰 사용자 관점으로 설명한다
+  // 탭 이름은 화면에 보이는 그대로 읽는다 — 지표마다 탭 이름이 바뀌므로(예: 직원 감염노출, 직원수(분모)) 고정 문구를 쓰면 어긋난다.
+  function tabLbl(p){
+    var el = document.querySelector('#qpsFall .qf-tab[data-pane="' + p + '"]');
+    return el ? el.textContent.replace(/^[^가-힣A-Za-z]+/, '').trim() : '';
+  }
+  function qfHelpHtml(def){
+    if (!def || !def.numersrc) return '<b>지표를 불러오는 중입니다.</b> 잠시 뒤 다시 눌러 주세요.';
+    var src = def.numersrc || 'INCIDENT';
+    var denGb = def.denomgb === 'STAFF' ? '직원수' : (def.denomgb === 'INDAYS' ? '재원일수' : '');
+    var numerTxt = '', denomTxt = '', steps = [], warn = '';
+    if (src === 'INCIDENT') {
+      numerTxt = '사고 건수(위해등급 ' + (def.minlevel ? 'Level ' + def.minlevel + ' 이상' : 'Level 2 이상') + ')';
+      steps.push('<b>' + tabLbl('p1') + '</b> 탭에서 발생일·환자·위해등급 등을 적고 [저장]합니다. <b>사고 한 건 = 분자 한 건</b>입니다. 저장한 건은 아래 「사고 목록」에서 다시 고칠 수 있습니다.');
+      warn = '사고를 적지 않으면 분자가 0이 됩니다. 사고가 실제로 없었는지 먼저 확인하세요.';
+    } else if (src === 'PATVAL') {
+      numerTxt = '환자평가표의 욕창 신규 발생 건수';
+      steps.push('<b>입력할 것 없음</b> — 분자는 환자평가표에서 자동으로 가져옵니다. 평가표 자료를 올리면 숫자가 채워집니다.');
+      warn = '숫자가 0이면 평가표에 신규 발생 항목이 있는지 먼저 확인하세요.';
+    } else if (src === 'MONITOR') {
+      numerTxt = '수행 건수(관찰 기준을 지킨 건)';
+      steps.push('<b>관찰 입력</b> — 「관찰 입력」 탭에서 관찰한 건을 달마다 적습니다. <b>관찰하지 않은 달은 「-」</b>로 나옵니다.');
+      warn = '관찰을 적지 않은 달은 0이 아니라 「-」(자료 없음)입니다.';
+    } else if (src === 'MANUAL') {
+      numerTxt = '지표마다 다른 분자(아래 지표 정의 참고)';
+      steps.push('<b>월별 입력</b> — 「월별 입력」 탭에서 달마다 분자를 직접 적고 [저장]합니다.');
+    } else if (src === 'CMPL') {
+      numerTxt = '처리 건수(회신까지 끝난 건)';
+      steps.push('<b>입력할 것 없음</b> — 자료는 「불만고충 ▸ 처리대장」에 적습니다. 이 화면은 처리대장에서 자동으로 셉니다.');
+      warn = '처리대장에 회신 날짜를 적어야 처리 건수에 들어갑니다.';
+    } else if (src === 'SRV') {
+      numerTxt = '만족도 점수 합';
+      steps.push('<b>입력할 것 없음</b> — 자료는 「환자만족도 조사 ▸ 설문지·조사결과」에 적습니다. 이 화면은 설문에서 자동으로 셉니다.');
+    } else {
+      numerTxt = '분자';
+    }
+    if (src === 'MONITOR') denomTxt = '관찰 건수';
+    else if (src === 'CMPL') denomTxt = '접수 건수';
+    else if (src === 'SRV') denomTxt = '만점 합(응답 문항 수 × 5)';
+    else if (denGb) {
+      denomTxt = denGb;
+      steps.push(def.denomgb === 'STAFF' ? ('<b>직원수</b> — 「' + tabLbl('p2') + '」 탭에서 직원 수를 직접 적고 [저장]합니다.') : ('<b>재원일수</b> — 「' + tabLbl('p2') + '」 탭에서 [입퇴원 자료로 자동계산]을 누르면 바로 반영됩니다. 값을 직접 고치려면 칸에 적고 [저장]합니다.'));
+    } else denomTxt = '월별로 적은 분모';
+    steps.push('<b>지표분석</b> — 「' + tabLbl('p3') + '」 탭에서 숫자를 확인하고 분석 내용과 계획을 적은 뒤 [저장]합니다.');
+    steps.push('<b>상신</b> — 화면 아래 「결재」 칸의 [상신]을 누릅니다. 상신하면 내용을 고칠 수 없으니 먼저 확인하세요.');
+    var html = '<b>❔ ' + esc(def.indinm || '지표') + ' — 사용 안내</b>';
+    html += '<ol>' + steps.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ol>';
+    html += '<div class="qf-help-line"><b>분자</b> = ' + esc(numerTxt) + ' · <b>분모</b> = ' + esc(denomTxt) + ' · <b>발생률</b> = 분자 ÷ 분모 × 기준값(지표마다 다름, 자동 계산)</div>';
+    if (warn) html += '<div class="qf-help-warn">※ ' + esc(warn) + '</div>';
+    html += '<div class="qf-help-line">처음 하는 경우에는 1번부터 차례로 하세요. 숫자가 이상하면 화면 위의 「지표 정의」를 먼저 보세요.</div>';
+    return html;
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || !t.closest || !t.closest('#qfHelpBtn')) return;
+    var box = document.getElementById('qfHelp');
+    if (!box) return;
+    if (!box.hidden) { box.hidden = true; return; }
+    box.innerHTML = qfHelpHtml(curDef);
+    box.hidden = false;
+  });
 
   window.qfCensusSave = function(){
     var p = { censusGb: denomGb(), inYear: year() };   // ★지표가 쓰는 분모 구분으로 저장(INDAYS/STAFF)
@@ -1232,6 +1374,7 @@
       var bkHint = document.getElementById('qfBreakHint');
       if (bkHint) bkHint.textContent = isMonitor ? '— 관찰기록에서 자동 집계(직군·병동·순간별 수행률)'
                                                  : '— 사고보고에서 자동 집계(분자와 같은 기준)';
+      qfRouteSet(src, curDef.denomgb);
       // 첫 탭이 자기 유형과 안 맞으면 알맞은 탭으로 이동
       if (isMonitor && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p4"]')
                     && !document.querySelector('#qpsFall .qf-tab.on[data-pane="p3"]')) qfTab('p4');
@@ -1247,7 +1390,7 @@
       renderMonths(res.months || [], curDef);
       renderRollup(res.quarters || [], res.halves || [], res.year, curDef);
       renderChart(res.months || [], curDef);
-      renderBreak(res.breakdown || {});
+      renderBreak(res.breakdown || {}, res);
       // 관찰형은 분모가 관찰건수라 재원일수 경고를 띄우지 않는다(다른 안내로 대체)
       var warn = document.getElementById('qfNoCensus');
       if (warn) {
@@ -1384,7 +1527,7 @@
   var AXIS_NM = { PLACE:'발생장소', DAMAGE:'손상유형', TYPE:'사고유형', DEPT:'보고부서', AGE:'연령대', TIME:'시간대',
                   HARM:'사고분류(위해등급)' };
   var AXIS_MON = { JOB:'직군', WARD:'병동', MOMENT:'순간(moment)' };
-  function renderBreak(bd){
+  function renderBreak(bd, extra){
     var wrap = document.getElementById('qfBreak'), html = '';
     var isMon = (curDef && curDef.numersrc === 'MONITOR');
     var axes = isMon ? AXIS_MON : AXIS_NM;
@@ -1409,6 +1552,15 @@
       });
       html += '</tbody></table>';
     });
+    // 위해등급 기준에서 빠진 사고가 있는데 표가 비었으면 「자료 없음」 대신 이유와 입력칸 링크를 보인다(2026-10-13).
+    var ex = Number((extra && extra.breakExcluded) || 0);
+    var anyRow = Object.keys(axes).some(function(k){ return (bd[k] || []).length > 0; });
+    if (!isMon && !anyRow && ex > 0) {
+      html = '<div class="qf-route" style="margin:0 0 8px;">' +
+             '위해등급 Level ' + esc(extra.breakMinLevel) + ' 이상 사고가 없어 집계할 자료가 없습니다. ' +
+             '등록된 사고 ' + num(ex) + '건은 기준보다 낮은 등급이라 제외되었습니다. ' +
+             '<a href="javascript:void(0)" onclick="qfGoField(\'f_levelCd\');">해당 입력화면 이동</a></div>' + html;
+    }
     wrap.innerHTML = html;
     distLoad();                     // ★격리·강박만 — 19세 구분·시행 시간 구간을 덧붙인다
   }
@@ -1891,12 +2043,19 @@
     (function(){
       if (d.numersrc !== 'INCIDENT') return;
       var bd = (lastCalc && lastCalc.breakdown) || {};
+      // 축 제목을 누르면 그 축을 입력하는 칸으로 내려간다(2026-10-13)
+      var AX_GO = { PLACE: 'f_placeCd', DAMAGE: 'f_damageCd', TYPE: 'f_subtypeCd', DEPT: 'f_rptDept',
+                    AGE: 'f_ptAge', TIME: 'f_occurTm', HARM: 'f_levelCd' };
+      function axGo(key){
+        var id = AX_GO[key];
+        return id ? ' class="qf-axgo" style="cursor:pointer;" title="이 칸으로 가서 입력" onclick="qfGoField(\'' + id + '\');"' : '';
+      }
       function axTbl(key, nm){
         var list = bd[key] || [];
         if (!list.length) return '';
         var tot = list.reduce(function(s, r){ return s + Number(r.cnt || 0); }, 0);
         return '<table class="qp-nobreak" style="width:32%; float:left; margin:0 1% 6px 0;">' +
-               '<thead><tr><th colspan="3">' + esc(nm) + '</th></tr>' +
+               '<thead><tr><th colspan="3"' + axGo(key) + '>' + esc(nm) + '</th></tr>' +
                '<tr><th>구분</th><th style="width:34px;">건수</th><th style="width:40px;">비율</th></tr></thead><tbody>' +
                list.map(function(r){
                  var c = Number(r.cnt || 0);

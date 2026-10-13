@@ -3303,6 +3303,21 @@ public class QpsController {
 		model.addAttribute("formGb", gb);
 	}
 
+	/** 분류 축 하나의 건수 합 — 위해등급 기준 전후의 차이를 셀 때 쓴다(2026-10-13). */
+	private static int countOf(Map<String, Object> bd, String axis) {
+		int n = 0;
+		Object v = bd == null ? null : bd.get(axis);
+		if (v instanceof java.util.List) {
+			for (Object o : (java.util.List<?>) v) {
+				if (o instanceof Map) {
+					Object c = ((Map<?, ?>) o).get("cnt");
+					if (c instanceof Number) n += ((Number) c).intValue();
+				}
+			}
+		}
+		return n;
+	}
+
 	private String qpsScreen(HttpServletRequest request, ModelMap model, String view) {
 		Map<String, String> ck = ClientInfo.getCookie(request);
 		try {
@@ -3860,7 +3875,14 @@ public class QpsController {
 				// ★대장형·설문형을 여기 넣지 않으면 빈 결과를 얻으려고 7-way UNION 을 매번 돌린다.
 				res.put("breakdown", new HashMap<String, Object>());
 			} else {
-				res.put("breakdown", svc.selectBreakdown(hospCd, str(p.get("incidGb"), indiCd), fromDt, toDt, minLevel));
+				Map<String, Object> bd = svc.selectBreakdown(hospCd, str(p.get("incidGb"), indiCd), fromDt, toDt, minLevel);
+				res.put("breakdown", bd);
+				// 위해등급 기준에서 빠진 사고 건수 — 표가 비었을 때 「자료 없음」 대신 이유를 말하게 한다.
+				if (!minLevel.isEmpty()) {
+					Map<String, Object> all = svc.selectBreakdown(hospCd, str(p.get("incidGb"), indiCd), fromDt, toDt, "");
+					res.put("breakExcluded", countOf(all, "PLACE") - countOf(bd, "PLACE"));
+					res.put("breakMinLevel", minLevel);
+				}
 			}
 			res.put("result", "OK");
 		} catch (Exception ex) {
