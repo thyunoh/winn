@@ -694,4 +694,57 @@
 		 WHERE HOSP_CD = #{hospCd} AND JOBYYMM = #{ym}
 	</select>
 
+	<!-- ===================== 병원 내규 · 안내문 (2026-10-12) — TBL_MIS_RULE / 결재 대기 ===================== -->
+	<select id="selectRules" resultType="java.util.HashMap">
+		SELECT RULE_SEQ AS ruleSeq, TITLE AS title, BODY AS body,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_MIS_RULE
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		 ORDER BY UPD_DTTM DESC
+	</select>
+	<insert id="insertRule" useGeneratedKeys="true" keyProperty="ruleSeq">
+		INSERT INTO TBL_MIS_RULE (HOSP_CD, TITLE, BODY, USE_YN, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{title}, #{body}, 'Y', #{userId}, #{userId})
+	</insert>
+	<update id="updateRule">
+		UPDATE TBL_MIS_RULE SET TITLE = #{title}, BODY = #{body}, UPD_USER = #{userId}
+		 WHERE RULE_SEQ = #{ruleSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</update>
+	<update id="deleteRule">
+		UPDATE TBL_MIS_RULE SET USE_YN = 'N', UPD_USER = #{userId}
+		 WHERE RULE_SEQ = #{ruleSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</update>
+	<!-- 결재 대기 = QPS 보고서가 상신(SUBMIT)된 채 승인 차례를 기다리는 건 (Qps_SQL 의 STATUS 값과 같다) -->
+	<select id="countQpsPending" resultType="int">
+		SELECT COUNT(*) FROM TBL_QPS_REPORT WHERE HOSP_CD = #{hospCd} AND STATUS = 'SUBMIT'
+	</select>
+
+	<!-- ===================== 안내문 저장 (2026-10-13) — TBL_MIS_LEAFLET ===================== -->
+	<select id="selectLeaflets" resultType="java.util.HashMap">
+		SELECT LEAF_SEQ AS leafSeq, TITLE AS title, AUDIENCE AS audience, TOPIC AS topic,
+		       DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_MIS_LEAFLET
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		 ORDER BY UPD_DTTM DESC
+		 LIMIT 100
+	</select>
+	<select id="selectLeaflet" resultType="java.util.HashMap">
+		SELECT LEAF_SEQ AS leafSeq, TITLE AS title, AUDIENCE AS audience, TOPIC AS topic,
+		       BODY AS body, DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_MIS_LEAFLET
+		 WHERE LEAF_SEQ = #{leafSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</select>
+	<insert id="insertLeaflet" useGeneratedKeys="true" keyProperty="leafSeq">
+		INSERT INTO TBL_MIS_LEAFLET (HOSP_CD, TITLE, AUDIENCE, TOPIC, BODY, USE_YN, REG_USER, UPD_USER)
+		VALUES (#{hospCd}, #{title}, #{audience}, #{topic}, #{body}, 'Y', #{userId}, #{userId})
+	</insert>
+	<update id="updateLeaflet">
+		UPDATE TBL_MIS_LEAFLET SET TITLE = #{title}, BODY = #{body}, UPD_USER = #{userId}
+		 WHERE LEAF_SEQ = #{leafSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</update>
+	<update id="deleteLeaflet">
+		UPDATE TBL_MIS_LEAFLET SET USE_YN = 'N', UPD_USER = #{userId}
+		 WHERE LEAF_SEQ = #{leafSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+	</update>
+
 </mapper>

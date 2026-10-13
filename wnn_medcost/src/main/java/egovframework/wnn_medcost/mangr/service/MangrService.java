@@ -75,4 +75,7 @@ public interface MangrService {
 	void                     qnaTopDel(String kbId)                                         throws Exception;
 	void                     qnaTopAdd(String kbId, int topNo)                              throws Exception;
 	void                     qnaKbDel(String kbId)                                         throws Exception;
+
+	/** 다른 업무(병원 내규 조회·안내문 초안)가 Q&A 와 같은 Gemini 키·호출·개인정보 가림을 쓰도록 여는 창구. 키가 없거나 실패하면 null. */
+	String askGemini(String systemInstruction, String userText);
 }

@@ -105,6 +105,10 @@ public class MisServiceImpl implements MisService {
 	@Resource(name = "MagamService")
 	private egovframework.wnn_medcost.magam.service.MagamService magamSvc;
 
+	/* Gemini 호출은 적정성 Q&A 와 같은 키·같은 함수를 쓴다(MangrService.askGemini). */
+	@Resource(name = "MangrService")
+	private egovframework.wnn_medcost.mangr.service.MangrService mangrSvc;
+
 	@Override
 	public List<Map<String, Object>> selectAlerts(String hospCd, String wnnYn) throws Exception {
 		List<Map<String, Object>> out = new ArrayList<>();
@@ -218,7 +222,132 @@ public class MisServiceImpl implements MisService {
 			if (leadsM > 0) out.add(alert("info", "이번 달 신규 상담 " + leadsM + "건 · 그중 입원 " + admitsM + "건", "유입경로별 전환율은 고객관리 아래 표에 있습니다.", "/main/misLead.do", "보기 →"));
 		} catch (Exception e) { out.add(alert("info", "고객관리 현황을 확인하지 못했습니다", e.getMessage(), "/main/misLead.do", "고객관리 →")); }
 
+		// ⑦ 결재 대기 — QPS 보고서가 상신(SUBMIT)되어 승인 차례를 기다리는 건
+		try {
+			int pend = mapper.countQpsPending(hospCd);
+			if (pend > 0) out.add(alert("warn", "결재 대기 " + pend + "건 (상신됨)", "품질(QPS) 보고서가 상신되어 승인 차례를 기다리고 있습니다.", "/main/qpsFall.do", "결재 상황 보기 →"));
+		} catch (Exception e) { out.add(alert("info", "결재 대기 건수를 확인하지 못했습니다", e.getMessage(), "", "")); }
+
 		return out;
+	}
+
+	/* ═══ 병원 내규 · 안내문 (2026-10-12) ═══ */
+	private static final String RULE_SYS = "너는 이 병원의 내규·지침을 안내하는 도우미다. 아래 [내규] 본문에 적힌 내용만 근거로 답한다. "
+		+ "본문에 없는 금액·기한·규정 번호는 지어내지 않는다. 본문에서 찾지 못하면 \"등록된 내규에서 찾지 못했습니다\"라고만 답한다. "
+		+ "답은 짧게 존댓말로 쓰고, 마지막 줄에 근거 내규 제목을 \"근거: …\" 로 적는다.";
+	private static final String LEAF_SYS = "너는 요양병원이 신규 환자·보호자에게 나눠 줄 안내문 초안을 쓴다. 두 가지 안을 쓰고, 두 안 사이는 \"===\" 한 줄로 구분한다. "
+		+ "존댓말, 짧은 문장, 큰 글씨로 읽기 쉽게 줄을 나눈다. 금액·날짜·전화번호·주소·담당자 이름은 지어내지 말고 [ ] 빈칸으로 둔다. "
+		+ "환자 이름·주민번호 같은 개인정보는 쓰지 않는다. 의료 판단이나 처방은 쓰지 않는다.";
+
+	@Override
+	public List<Map<String, Object>> ruleList(String hospCd) throws Exception { return mapper.selectRules(hospCd); }
+
+	@Override
+	public long ruleSave(String hospCd, long ruleSeq, String title, String body, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("title", title); p.put("body", body); p.put("userId", userId);
+		if (ruleSeq > 0) {
+			p.put("ruleSeq", ruleSeq);
+			if (mapper.updateRule(p) == 0) throw new Exception("고칠 내규를 찾지 못했습니다. 목록을 새로 불러 주세요.");
+			return ruleSeq;
+		}
+		mapper.insertRule(p);
+		return num(p.get("ruleSeq"));
+	}
+
+	@Override
+	public int ruleDel(String hospCd, long ruleSeq, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("ruleSeq", ruleSeq); p.put("userId", userId);
+		return mapper.deleteRule(p);
+	}
+
+	/** 내규 질문 — 질문과 낱말이 많이 겹치는 내규부터 골라 그 본문만 근거로 답한다. 겹치는 내규가 없으면 AI 를 부르지 않는다(지어내기 방지). */
+	@Override
+	public Map<String, Object> ruleAsk(String hospCd, String question) throws Exception {
+		Map<String, Object> out = new java.util.LinkedHashMap<>();
+		String q = question == null ? "" : question.trim();
+		if (q.length() < 2) { out.put("ok", false); out.put("reason", "질문을 두 글자 이상 적어 주세요."); return out; }
+		String[] words = q.split("[\\s,.?!·/]+");
+		List<Map<String, Object>> hits = new ArrayList<>();
+		for (Map<String, Object> r : mapper.selectRules(hospCd)) {
+			String title = String.valueOf(r.get("title"));
+			String body = r.get("body") == null ? "" : String.valueOf(r.get("body"));
+			String t = title + " " + body;
+			int score = 0;
+			for (String w : words) if (w.length() >= 2 && t.contains(w)) score++;
+			if (score > 0) {
+				Map<String, Object> h = new HashMap<>();
+				h.put("title", title); h.put("body", body); h.put("score", score);
+				hits.add(h);
+			}
+		}
+		hits.sort((a, b) -> Integer.compare((Integer) b.get("score"), (Integer) a.get("score")));
+		out.put("ok", true);
+		if (hits.isEmpty()) {
+			out.put("found", false); out.put("refs", new ArrayList<String>());
+			out.put("answer", "등록된 내규에서 질문과 맞는 내용을 찾지 못했습니다. 내규를 등록해 두면 여기서 바로 찾아 드립니다.");
+			return out;
+		}
+		StringBuilder ctx = new StringBuilder();
+		List<String> refs = new ArrayList<>();
+		for (Map<String, Object> h : hits) {
+			if (refs.size() >= 3) break;
+			String body = (String) h.get("body");
+			if (body.length() > 3000) body = body.substring(0, 3000);
+			if (ctx.length() + body.length() > 8000) break;
+			refs.add((String) h.get("title"));
+			ctx.append("[내규] ").append((String) h.get("title")).append("\n").append(body).append("\n\n");
+		}
+		out.put("found", true); out.put("refs", refs);
+		String ans = mangrSvc.askGemini(RULE_SYS, "[질문] " + q + "\n\n" + ctx);
+		out.put("answer", ans == null ? "" : ans.trim());
+		return out;
+	}
+
+	/** 신규 환자·보호자 안내문 초안 — 두 안으로 나눈다. 금액·날짜·연락처는 AI 가 빈칸으로 둔다(LEAF_SYS). */
+	@Override
+	public Map<String, Object> leafletDraft(String audience, String topic, String note) throws Exception {
+		Map<String, Object> out = new java.util.LinkedHashMap<>();
+		String user = "대상: " + audience + "\n주제: " + topic + (note == null || note.isEmpty() ? "" : "\n추가로 담을 내용: " + note);
+		String ans = mangrSvc.askGemini(LEAF_SYS, user);
+		List<String> drafts = new ArrayList<>();
+		if (ans != null && !ans.trim().isEmpty()) {
+			for (String part : ans.trim().split("\\n\\s*={3,}\\s*\\n")) if (!part.trim().isEmpty()) drafts.add(part.trim());
+		}
+		out.put("ok", !drafts.isEmpty());
+		out.put("drafts", drafts);
+		if (drafts.isEmpty()) out.put("reason", "AI 초안을 받지 못했습니다. 연결 상태를 확인해 주세요.");
+		return out;
+	}
+
+	/* ═══ 안내문 저장 (2026-10-13) ═══ */
+	@Override
+	public List<Map<String, Object>> leafletList(String hospCd) throws Exception { return mapper.selectLeaflets(hospCd); }
+
+	@Override
+	public Map<String, Object> leafletGet(String hospCd, long leafSeq) throws Exception { return mapper.selectLeaflet(hospCd, leafSeq); }
+
+	/** 저장(새로)은 대상·주제까지 넣고, 고치기는 이름과 본문만 바꾼다(대상·주제는 처음 정한 대로 둔다). */
+	@Override
+	public long leafletSave(String hospCd, long leafSeq, String title, String audience, String topic, String body, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("title", title); p.put("body", body); p.put("userId", userId);
+		if (leafSeq > 0) {
+			p.put("leafSeq", leafSeq);
+			if (mapper.updateLeaflet(p) == 0) throw new Exception("고칠 안내문을 찾지 못했습니다. 목록을 새로 불러 주세요.");
+			return leafSeq;
+		}
+		p.put("audience", audience); p.put("topic", topic);
+		mapper.insertLeaflet(p);
+		return num(p.get("leafSeq"));
+	}
+
+	@Override
+	public int leafletDel(String hospCd, long leafSeq, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd); p.put("leafSeq", leafSeq); p.put("userId", userId);
+		return mapper.deleteLeaflet(p);
 	}
 
 	private static long num(Object o) { try { return o == null ? 0 : Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0; } }

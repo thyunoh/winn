@@ -30,7 +30,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261011-MIS8";   // + 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
+	private static final String BUILD = "20261013-MIS10";   // + 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -774,6 +774,155 @@ public class MisController {
 	private static String nowDt() { return new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()); }
 	private static String dt8(Object o) { String s = str(o, "").replaceAll("[^0-9]", ""); return s.matches("\\d{8}") ? s : ""; }
 	private static String cut(String s, int n) { if (s == null) return ""; s = s.trim(); return s.length() > n ? s.substring(0, n) : s; }
+
+	/* ═══ 병원 내규 · 안내문 (2026-10-12) ═══ */
+	@RequestMapping(value = "main/misRule.do")
+	public String misRule(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misRule"); }
+
+	@RequestMapping(value = "/mis/ruleList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> ruleList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.ruleList(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/ruleSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> ruleSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String title = cut(unesc(p.get("title")), 200);
+			if (title.isEmpty()) return fail(res, "내규 이름을 적어 주세요.");
+			String body = unesc(p.get("body"));
+			if (body.length() > 20000) return fail(res, "본문이 너무 깁니다(2만 자 이내). 나눠서 등록해 주세요.");
+			long seq = 0;
+			try { seq = Long.parseLong(str(p.get("ruleSeq"), "0")); } catch (NumberFormatException e) { seq = 0; }
+			String uid = str(ClientInfo.getCookie(request).get("s_userid"), "");
+			res.put("ruleSeq", svc.ruleSave(hospCd, seq, title, body, uid));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/ruleDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> ruleDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			long seq = 0;
+			try { seq = Long.parseLong(str(p.get("ruleSeq"), "0")); } catch (NumberFormatException e) { seq = 0; }
+			String uid = str(ClientInfo.getCookie(request).get("s_userid"), "");
+			if (svc.ruleDel(hospCd, seq, uid) == 0) return fail(res, "지울 내규를 찾지 못했습니다.");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/ruleAsk.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> ruleAsk(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.ruleAsk(hospCd, unesc(p.get("q"))));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/leafletDraft.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leafletDraft(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String audience = cut(unesc(p.get("audience")), 30);
+			String topic = cut(unesc(p.get("topic")), 60);
+			String note = cut(unesc(p.get("note")), 500);
+			if (audience.isEmpty() || topic.isEmpty()) return fail(res, "대상과 주제를 골라 주세요.");
+			res.putAll(svc.leafletDraft(audience, topic, note));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 안내문 저장 (2026-10-13) ═══ */
+	private static long seqOf(Object o) { try { return Long.parseLong(str(o, "0")); } catch (NumberFormatException e) { return 0; } }
+
+	@RequestMapping(value = "/mis/leafList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leafList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.put("list", svc.leafletList(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/leafGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leafGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Map<String, Object> leaf = svc.leafletGet(hospCd, seqOf(p.get("leafSeq")));
+			if (leaf == null) return fail(res, "안내문을 찾지 못했습니다.");
+			res.put("leaf", leaf);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/leafSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leafSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String title = cut(unesc(p.get("title")), 200);
+			if (title.isEmpty()) return fail(res, "저장 이름을 적어 주세요.");
+			String body = unesc(p.get("body"));
+			if (body.trim().isEmpty()) return fail(res, "저장할 글이 없습니다.");
+			if (body.length() > 20000) return fail(res, "글이 너무 깁니다(2만 자 이내).");
+			String audience = cut(unesc(p.get("audience")), 30);
+			String topic = cut(unesc(p.get("topic")), 60);
+			String uid = str(ClientInfo.getCookie(request).get("s_userid"), "");
+			res.put("leafSeq", svc.leafletSave(hospCd, seqOf(p.get("leafSeq")), title, audience, topic, body, uid));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	@RequestMapping(value = "/mis/leafDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leafDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String uid = str(ClientInfo.getCookie(request).get("s_userid"), "");
+			if (svc.leafletDel(hospCd, seqOf(p.get("leafSeq")), uid) == 0) return fail(res, "지울 안내문을 찾지 못했습니다.");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
 
 	/* ═══ 공통 ═══ */
 	/** 병원 — 로그인 쿠키. 위너넷(s_wnn_yn=Y)만 hospCd 파라미터로 다른 병원을 본다(QPS 와 같은 규칙). */

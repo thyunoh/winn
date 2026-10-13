@@ -107,4 +107,18 @@ public interface MisMapper {
 	List<Map<String, Object>> selectEmrStaffRows(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	List<Map<String, Object>> selectEmrStaffSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	Map<String, Object> selectEmrIpwonSum(@Param("hospCd") String hospCd, @Param("ym") String ym);
+
+	/* ── 병원 내규 · 안내문 (2026-10-12) ── */
+	List<Map<String, Object>> selectRules(@Param("hospCd") String hospCd);
+	int insertRule(Map<String, Object> p);
+	int updateRule(Map<String, Object> p);
+	int deleteRule(Map<String, Object> p);
+	int countQpsPending(@Param("hospCd") String hospCd);
+
+	/* ── 안내문 저장 (2026-10-13) ── */
+	List<Map<String, Object>> selectLeaflets(@Param("hospCd") String hospCd);
+	Map<String, Object> selectLeaflet(@Param("hospCd") String hospCd, @Param("leafSeq") long leafSeq);
+	int insertLeaflet(Map<String, Object> p);
+	int updateLeaflet(Map<String, Object> p);
+	int deleteLeaflet(Map<String, Object> p);
 }

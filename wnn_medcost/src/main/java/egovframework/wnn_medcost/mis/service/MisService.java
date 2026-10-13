@@ -63,4 +63,17 @@ public interface MisService {
 
 	/** 카톡 공유·링크 복사 이력(채널 KAKAO/LINK) */
 	void logNotiShare(String hospCd, String channel, String subject, String body, String result, String errMsg, String userId) throws Exception;
+
+	/* ── 병원 내규 · 안내문 (2026-10-12) ── */
+	List<Map<String, Object>> ruleList(String hospCd) throws Exception;
+	long ruleSave(String hospCd, long ruleSeq, String title, String body, String userId) throws Exception;
+	int ruleDel(String hospCd, long ruleSeq, String userId) throws Exception;
+	Map<String, Object> ruleAsk(String hospCd, String question) throws Exception;
+	Map<String, Object> leafletDraft(String audience, String topic, String note) throws Exception;
+
+	/* ── 안내문 저장 (2026-10-13) ── */
+	List<Map<String, Object>> leafletList(String hospCd) throws Exception;
+	Map<String, Object> leafletGet(String hospCd, long leafSeq) throws Exception;
+	long leafletSave(String hospCd, long leafSeq, String title, String audience, String topic, String body, String userId) throws Exception;
+	int leafletDel(String hospCd, long leafSeq, String userId) throws Exception;
 }

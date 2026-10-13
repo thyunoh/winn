@@ -543,6 +543,14 @@ public class MangrServiceImpl implements MangrService {
 		}
 	}
 
+	/** 다른 업무(병원 내규 조회·안내문 초안)가 Q&A 와 같은 Gemini 키·호출·개인정보 가림을 쓰도록 여는 창구. 키가 없거나 실패하면 null. */
+	@Override
+	public String askGemini(String systemInstruction, String userText) {
+		String k = geminiKey();
+		if (k == null) return null;
+		return callGemini(k, systemInstruction, maskPrivacy(userText));
+	}
+
 	/** API 키 — 환경변수 우선, 없으면 -D 시스템 프로퍼티. ★소스·설정파일에 평문으로 넣지 않는다.
 	 *  운영서버는 톰캣 setenv.sh 에 export GEMINI_API_KEY=... 로 넣는다. */
 	private String geminiKey() {
