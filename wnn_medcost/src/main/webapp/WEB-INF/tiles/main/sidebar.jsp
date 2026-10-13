@@ -2675,6 +2675,9 @@ $(document).ready(function() {
         // 상단 QPS 탭도 같은 게이트를 쓴다(2026-08-09) — 사이드바만 켜면 탭이 없어 들어갈 길이 없다
         var tab = document.getElementById('top-menu_qps');
         if (tab) tab.style.display = on ? '' : 'none';
+        // qps 를 치면 경영고객관리 메뉴도 함께 보인다(2026-10-13). QPS 를 끄면 MIS 자체 조건(m·i·s·계약)만 남긴다.
+        var misLi = document.getElementById('menu-mis');
+        if (misLi) misLi.style.display = (on || (window.misMenuOn && window.misMenuOn())) ? '' : 'none';
     }
     function toggle(){
         if (!isWnn()) return;                           // 위너넷 아니면 아무 일도 없다
@@ -3132,7 +3135,7 @@ window.qpsPrintGo = function (w, maxMs) {
     }
     window.misMenuOn = function(){ return (flagOn() && isWnn()) || contractOn(); };
     function apply(open){
-        var on = (flagOn() && isWnn()) || contractOn();
+        var on = (flagOn() && isWnn()) || contractOn() || !!(window.qpsMenuOn && window.qpsMenuOn());
         var li = document.getElementById('menu-mis');
         if (li) li.style.display = on ? '' : 'none';
         if (open && on) { try { $('#mis-sub').addClass('show'); $('#menu-mis > a').attr('aria-expanded', 'true'); } catch(e){} }
