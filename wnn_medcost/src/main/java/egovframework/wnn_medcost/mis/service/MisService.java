@@ -76,4 +76,7 @@ public interface MisService {
 	Map<String, Object> leafletGet(String hospCd, long leafSeq) throws Exception;
 	long leafletSave(String hospCd, long leafSeq, String title, String audience, String topic, String body, String userId) throws Exception;
 	int leafletDel(String hospCd, long leafSeq, String userId) throws Exception;
+
+	/* ── 통합검색 v1 (2026-10-13) ── */
+	Map<String, Object> searchAll(String hospCd, String question) throws Exception;
 }

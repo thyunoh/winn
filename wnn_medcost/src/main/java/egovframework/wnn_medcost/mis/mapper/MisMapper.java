@@ -121,4 +121,7 @@ public interface MisMapper {
 	int insertLeaflet(Map<String, Object> p);
 	int updateLeaflet(Map<String, Object> p);
 	int deleteLeaflet(Map<String, Object> p);
+
+	/* ── 통합검색 v1 (2026-10-13) ── */
+	List<Map<String, Object>> selectLeafletBodies(@Param("hospCd") String hospCd);
 }

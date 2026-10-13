@@ -350,6 +350,78 @@ public class MisServiceImpl implements MisService {
 		return mapper.deleteLeaflet(p);
 	}
 
+	/* ═══ 통합검색 v1 (2026-10-13) — 병원 내규 · 저장한 안내문 ═══ */
+	/** 낱말이 제목에 맞으면 3점, 본문에 맞으면 1점. AI 는 쓰지 않는다(찾기만 한다). */
+	@Override
+	public Map<String, Object> searchAll(String hospCd, String question) throws Exception {
+		Map<String, Object> out = new java.util.LinkedHashMap<>();
+		String q = question == null ? "" : question.trim();
+		if (q.length() < 2) { out.put("ok", false); out.put("reason", "두 글자 이상 적어 주세요."); return out; }
+		String[] words = q.split("[\\s,.?!·/]+");
+
+		List<Map<String, Object>> rules = new ArrayList<>();
+		for (Map<String, Object> r : mapper.selectRules(hospCd)) {
+			int sc = scoreOf(words, r.get("title"), r.get("body"));
+			if (sc <= 0) continue;
+			Map<String, Object> h = new HashMap<>();
+			h.put("seq", r.get("ruleSeq")); h.put("title", r.get("title"));
+			h.put("sub", r.get("upddttm") == null ? "" : "수정 " + r.get("upddttm"));
+			h.put("snip", snippetOf(words, r.get("body")));
+			h.put("score", sc);
+			rules.add(h);
+		}
+
+		List<Map<String, Object>> leaves = new ArrayList<>();
+		for (Map<String, Object> r : mapper.selectLeafletBodies(hospCd)) {
+			int sc = scoreOf(words, r.get("title"), r.get("body"));
+			if (sc <= 0) continue;
+			List<String> parts = new ArrayList<>();
+			for (String k : new String[]{"audience", "topic", "upddttm"}) {
+				Object v = r.get(k);
+				if (v != null && !String.valueOf(v).isEmpty()) parts.add(String.valueOf(v));
+			}
+			Map<String, Object> h = new HashMap<>();
+			h.put("seq", r.get("leafSeq")); h.put("title", r.get("title"));
+			h.put("sub", String.join(" · ", parts));
+			h.put("snip", snippetOf(words, r.get("body")));
+			h.put("score", sc);
+			leaves.add(h);
+		}
+
+		rules.sort((a, b) -> Integer.compare((Integer) b.get("score"), (Integer) a.get("score")));
+		leaves.sort((a, b) -> Integer.compare((Integer) b.get("score"), (Integer) a.get("score")));
+		out.put("ok", true);
+		out.put("rules", new ArrayList<>(rules.subList(0, Math.min(20, rules.size()))));
+		out.put("leaves", new ArrayList<>(leaves.subList(0, Math.min(20, leaves.size()))));
+		return out;
+	}
+
+	private static int scoreOf(String[] words, Object title, Object body) {
+		String t = title == null ? "" : String.valueOf(title);
+		String b = body == null ? "" : String.valueOf(body);
+		int sc = 0;
+		for (String w : words) {
+			if (w.length() < 2) continue;
+			if (t.contains(w)) sc += 3;
+			if (b.contains(w)) sc += 1;
+		}
+		return sc;
+	}
+
+	/** 처음 맞은 낱말 주변 90자 안팎을 보여 준다. 맞은 곳이 없으면 본문 앞부분. */
+	private static String snippetOf(String[] words, Object body) {
+		String b = body == null ? "" : String.valueOf(body).replaceAll("\\s+", " ").trim();
+		int at = -1;
+		for (String w : words) {
+			if (w.length() < 2) continue;
+			int i = b.indexOf(w);
+			if (i >= 0 && (at < 0 || i < at)) at = i;
+		}
+		if (at < 0) return b.length() > 90 ? b.substring(0, 90) + "…" : b;
+		int from = Math.max(0, at - 30), to = Math.min(b.length(), at + 60);
+		return (from > 0 ? "…" : "") + b.substring(from, to) + (to < b.length() ? "…" : "");
+	}
+
 	private static long num(Object o) { try { return o == null ? 0 : Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0; } }
 
 	private static Map<String, Object> alert(String level, String title, String desc, String href, String act) {

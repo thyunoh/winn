@@ -747,4 +747,14 @@
 		 WHERE LEAF_SEQ = #{leafSeq} AND HOSP_CD = #{hospCd} AND USE_YN = 'Y'
 	</update>
 
+	<!-- ===================== 통합검색 v1 (2026-10-13) — 저장한 안내문 본문까지 ===================== -->
+	<select id="selectLeafletBodies" resultType="java.util.HashMap">
+		SELECT LEAF_SEQ AS leafSeq, TITLE AS title, AUDIENCE AS audience, TOPIC AS topic,
+		       BODY AS body, DATE_FORMAT(UPD_DTTM,'%Y-%m-%d %H:%i') AS upddttm
+		  FROM TBL_MIS_LEAFLET
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		 ORDER BY UPD_DTTM DESC
+		 LIMIT 300
+	</select>
+
 </mapper>

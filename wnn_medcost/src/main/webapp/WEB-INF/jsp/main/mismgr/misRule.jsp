@@ -80,6 +80,14 @@
   <span class="mr-hosp"><c:out value="${hospNm}"/></span>
 </div>
 
+<div class="mr-card" id="mrSearch">
+  <h4>🔎 통합검색 <small>병원 내규와 저장한 안내문을 한 번에 찾습니다. 제목에 맞는 것이 위로 옵니다.</small></h4>
+  <div class="mr-row">
+    <input type="text" id="mrSq" maxlength="100" placeholder="예) 경조사, 면회, 식사">
+    <button type="button" class="mr-btn pri" id="mrSBtn">검색</button>
+  </div>
+  <div id="mrSRes" style="margin-top:8px;"></div>
+</div>
 <div class="mr-tabs">
   <button type="button" class="mr-tab on" data-tab="rule">📚 내규 조회</button>
   <button type="button" class="mr-tab" data-tab="leaf">✉ 안내문 초안</button>
@@ -225,6 +233,46 @@
   });
 
   gel('mrHelpBtn').onclick = function(){ gel('mrHelp').hidden = !gel('mrHelp').hidden; };
+
+  /* ── 통합검색 v1 — 병원 내규 · 저장한 안내문 ── */
+  var SEARCH_URL = '<c:url value="/mis/searchAll.do"/>';
+  function showTab(k){ var t = document.querySelector('#misRule .mr-tab[data-tab="' + k + '"]'); if (t) t.click(); }
+  function runSearch(){
+    var q = gel('mrSq').value.trim();
+    var box = gel('mrSRes');
+    if (q.length < 2) { _alertBox('두 글자 이상 적어 주세요.', {icon:'⚠️'}); return; }
+    box.innerHTML = '<div class="mr-wait">찾는 중…</div>';
+    post(SEARCH_URL, { q: q }).then(function(res){
+      if (!res.ok) { box.innerHTML = '<div class="mr-warn">' + esc(res.reason || '검색하지 못했습니다.') + '</div>'; return; }
+      var rows = [];
+      (res.rules || []).forEach(function(r){ rows.push({ kind: 'rule', r: r }); });
+      (res.leaves || []).forEach(function(r){ rows.push({ kind: 'leaf', r: r }); });
+      if (!rows.length) { box.innerHTML = '<div class="mr-empty">찾은 자료가 없습니다. 다른 낱말로 다시 찾아 보세요.</div>'; return; }
+      box.innerHTML = rows.map(function(x){
+        var tag = x.kind === 'rule' ? '내규' : '안내문';
+        return '<div class="mr-item" data-sk="' + x.kind + '" data-sseq="' + esc(x.r.seq) + '">'
+          + '<b>[' + tag + '] ' + esc(x.r.title) + '</b>'
+          + '<span>' + esc(x.r.sub || '') + '</span>'
+          + '<span>' + esc(x.r.snip || '') + '</span></div>';
+      }).join('');
+    }).catch(function(e){ box.innerHTML = '<div class="mr-warn">' + esc(e.message) + '</div>'; });
+  }
+  gel('mrSBtn').onclick = runSearch;
+  gel('mrSq').addEventListener('keydown', function(e){ if (e.key === 'Enter') runSearch(); });
+  // 결과를 누르면 그 자료 화면으로 간다
+  gel('mrSRes').addEventListener('click', function(e){
+    var it = e.target.closest ? e.target.closest('.mr-item') : null;
+    if (!it) return;
+    var seq = it.getAttribute('data-sseq');
+    if (it.getAttribute('data-sk') === 'rule') {
+      showTab('rule');
+      var hit = LIST.filter(function(x){ return String(x.ruleSeq) === String(seq); })[0];
+      if (hit) setEditor(hit); else loadList();
+    } else {
+      showTab('leaf');
+      openLeaf(seq);
+    }
+  });
 
   /* ── 내규 목록 · 편집 ── */
   function drawList(){

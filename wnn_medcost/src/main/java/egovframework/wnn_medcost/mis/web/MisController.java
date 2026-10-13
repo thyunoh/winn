@@ -30,7 +30,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261013-MIS10";   // + 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
+	private static final String BUILD = "20261013-MIS11";   // + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -919,6 +919,20 @@ public class MisController {
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
 			String uid = str(ClientInfo.getCookie(request).get("s_userid"), "");
 			if (svc.leafletDel(hospCd, seqOf(p.get("leafSeq")), uid) == 0) return fail(res, "지울 안내문을 찾지 못했습니다.");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 통합검색 v1 (2026-10-13) ═══ */
+	@RequestMapping(value = "/mis/searchAll.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> searchAll(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.searchAll(hospCd, unesc(p.get("q"))));
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
