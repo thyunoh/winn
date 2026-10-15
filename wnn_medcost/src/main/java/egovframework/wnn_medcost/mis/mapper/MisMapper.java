@@ -132,4 +132,13 @@ public interface MisMapper {
 	Map<String, Object> selectStaffChgNet(@Param("hospCd") String hospCd);
 	int insertStaffChg(Map<String, Object> p);
 	int deleteStaffChg(Map<String, Object> p);
+
+	/* ── 경영 보고서 (2026-10-15) — SWCHMISU 경영 보고서 형태, 청구월 한 달 + 전월 ── */
+	List<Map<String, Object>> selectReportItems(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectReportDiags(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectReportInOut(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectReportDrug(@Param("hospCd") String hospCd, @Param("ym") String ym);
+
+		/* ── 원무 수입실적 (2026-10-15) ── */
+		List<Map<String, Object>> selectRevRows(@Param("hospCd") String hospCd, @Param("fromDt") String fromDt, @Param("toDt") String toDt);
 }

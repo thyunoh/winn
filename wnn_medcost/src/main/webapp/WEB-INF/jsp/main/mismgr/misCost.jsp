@@ -1,8 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<%-- misCost.jsp — 경영관리(MIS) › 고정경비 관리 (2026-10-08)
-     · 제안서 ② 고정경비 화면 구현. 병원이 적는 것 = 병원 설정(병상 수·변동비) · 항목 · 월별 금액. 수익·입원일수는 서버 집계(청구 샘파일).
+<%-- misCost.jsp — 경영관리(MIS) › 손익분기 관리 (2026-10-08)
+     · 제안서 ② 고정비 화면 구현. 병원이 적는 것 = 병원 설정(병상 수·변동비) · 항목 · 월별 금액. 수익·입원일수는 서버 집계(청구 샘파일).
      · 「처음 1회 등록, 바뀐 것만」 : 이 달 입력이 없으면 가장 가까운 이전 달 값을 **회색으로 보여 주고** 저장 때 그대로 넣는다(저장 전엔 DB 에 없다).
      · 손익분기 = 월 고정비 ÷ (환자 1인 1일 기여수익 × 그 달 일수). 기여수익 = 1인 1일 진료비(실제) − 변동비(설정, 기본 25,000원).
      · 금액은 원 단위 정수로 저장, 화면은 천 단위 콤마 입력. 알림은 ui-message.
@@ -16,7 +16,7 @@
 <style>
   #misCost{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 50px; max-width:100%; overflow-x:hidden; }
   #misCost *{ box-sizing:border-box; }
-  #misCost .mc-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  #misCost .mc-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; padding-right:72px; }   /* 오른쪽 끝 상담 단추와 겹치지 않게 */
   #misCost .mc-title{ font-size:18px; font-weight:800; color:#20303a; display:flex; align-items:center; gap:8px; }
   #misCost .mc-dot{ width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,#1f5a4b,#2a7665); }
   #misCost .mc-sub{ font-size:12px; color:#6b7c86; font-weight:400; }
@@ -74,16 +74,16 @@
 </style>
 
 <div class="mc-head">
-  <div class="mc-title"><span class="mc-dot"></span>고정경비 관리 <span class="mc-sub">— 매달 나가는 돈과 손익분기</span></div>
+  <div class="mc-title"><span class="mc-dot"></span>손익분기 관리 <span class="mc-sub">— 고정비·추가수익을 적고 손익분기와 추정 손익을 봅니다</span></div>
   <span class="mc-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="mc-spacer"></span>
   <label style="font-size:13px;color:#43555f;">연월 <select id="mcYm" onchange="mcLoad();"></select></label>
-  <button type="button" class="mc-btn" onclick="location.href='<c:url value="/main/misStat.do"/>';">경영통계 →</button>
+  <button type="button" class="mc-btn" onclick="location.href='<c:url value="/main/misStat.do"/>';">월별통계분석 →</button>
 </div>
 
 <div class="mc-note">
   고정비는 <b>처음에 항목별로 한 번 적고, 다음 달부터는 바뀐 것만</b> 고치면 됩니다. 입력이 없는 달은 가장 가까운 이전 달 값을 <span style="color:#8a99a3;font-style:italic;">회색 기울임</span>으로 보여 주고, [저장]하면 이 달 값으로 굳습니다.
-  수익(총진료비)과 입원일수는 청구 샘파일에서 자동으로 옵니다. <span id="mcClaimNote"></span>
+  <b>고정비</b>는 월세·인건비처럼 매달 나가는 돈, <b>추가수익</b>은 청구 샘파일에 없는 수익(비급여 등)입니다. 수익(총진료비)과 입원일수는 청구 샘파일에서 자동으로 옵니다. <span id="mcClaimNote"></span>
 </div>
 
 <div class="mc-kpis" id="mcKpis"></div>

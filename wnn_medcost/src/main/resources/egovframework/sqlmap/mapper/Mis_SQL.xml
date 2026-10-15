@@ -21,35 +21,68 @@
 
 	<!-- ===================== 경영통계 — 월별 집계 ===================== -->
 	<!-- 청구 : 총진료비·급여(공단)·본인부담·입원일수·환자 수·명세서 수. 연월 = 청구서 진료년월(cm.DATE_YM) -->
-	<select id="selectMonthClaim" resultType="java.util.HashMap">
+	<!-- 위탁(JS008) 규칙 = 청구세부(Tong_SQL) 와 같다 : 전부 위탁인 명세서는 빼고, 섞인 명세서는 위탁 항목 금액만 뺀다.
+	     뺄 금액 = FN_CLAIM_TAMT 종류 1·4(총액 원금액) / 3·6(청구액). 위탁 행이 없는 명세서는 CASE 가 함수를 부르지 않는다. -->
+	<select id="selectMonthClaim" resultType="java.util.HashMap"><![CDATA[
 		SELECT cm.DATE_YM                       AS ym
 		     , COUNT(*)                         AS bills
 		     , COUNT(DISTINCT mm.PAT_ID)        AS pats
 		     , COALESCE(SUM(mm.ADM_DAYS),0)     AS admdays
-		     , COALESCE(SUM(mm.TOT_AMT),0)      AS totamt
-		     , COALESCE(SUM(mm.CLAIM_AMT),0)    AS claimamt
+		     , COALESCE(SUM(mm.TOT_AMT
+		         - CASE WHEN EXISTS (SELECT 1 FROM TBL_SPECODE_MST s WHERE s.HOSP_CD = mm.HOSP_CD AND s.CLAIM_NO = mm.CLAIM_NO AND s.BILL_SEQ = mm.BILL_SEQ AND s.SPEC_TYPE = 'JS008')
+		                THEN FN_CLAIM_TAMT(mm.HOSP_CD,mm.CLAIM_NO,mm.BILL_SEQ,1) + FN_CLAIM_TAMT(mm.HOSP_CD,mm.CLAIM_NO,mm.BILL_SEQ,4) ELSE 0 END), 0) AS totamt
+		     , COALESCE(SUM(mm.CLAIM_AMT
+		         - CASE WHEN EXISTS (SELECT 1 FROM TBL_SPECODE_MST s WHERE s.HOSP_CD = mm.HOSP_CD AND s.CLAIM_NO = mm.CLAIM_NO AND s.BILL_SEQ = mm.BILL_SEQ AND s.SPEC_TYPE = 'JS008')
+		                THEN FN_CLAIM_TAMT(mm.HOSP_CD,mm.CLAIM_NO,mm.BILL_SEQ,3) + FN_CLAIM_TAMT(mm.HOSP_CD,mm.CLAIM_NO,mm.BILL_SEQ,6) ELSE 0 END), 0) AS claimamt
 		     , COALESCE(SUM(mm.SELF_AMT),0)     AS selfamt
 		  FROM TBL_MYOUNG_MST mm
 		  JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
 		 WHERE mm.HOSP_CD = #{hospCd}
 		   AND COALESCE(mm.DELYN,'') = ''
 		   AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
+		   AND (SELECT COUNT(DISTINCT tsm.ROW_NO)
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = mm.HOSP_CD
+		           AND tsm.CLAIM_NO  = mm.CLAIM_NO
+		           AND tsm.BILL_SEQ  = mm.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = mm.HOSP_CD
+		           AND jsm.CLAIM_NO = mm.CLAIM_NO
+		           AND jsm.BILL_SEQ = mm.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L')
 		 GROUP BY cm.DATE_YM
 		 ORDER BY cm.DATE_YM
-	</select>
+	]]></select>
 
 	<!-- 보험 구분별(INSUR_TYPE 4=건강보험 2=의료급여 …) 총진료비 -->
-	<select id="selectMonthInsur" resultType="java.util.HashMap">
+	<select id="selectMonthInsur" resultType="java.util.HashMap"><![CDATA[
 		SELECT cm.DATE_YM AS ym, cm.INSUR_TYPE AS insurtype
-		     , COALESCE(SUM(mm.TOT_AMT),0) AS totamt, COUNT(DISTINCT mm.PAT_ID) AS pats
+		     , COALESCE(SUM(mm.TOT_AMT
+		         - CASE WHEN EXISTS (SELECT 1 FROM TBL_SPECODE_MST s WHERE s.HOSP_CD = mm.HOSP_CD AND s.CLAIM_NO = mm.CLAIM_NO AND s.BILL_SEQ = mm.BILL_SEQ AND s.SPEC_TYPE = 'JS008')
+		                THEN FN_CLAIM_TAMT(mm.HOSP_CD,mm.CLAIM_NO,mm.BILL_SEQ,1) + FN_CLAIM_TAMT(mm.HOSP_CD,mm.CLAIM_NO,mm.BILL_SEQ,4) ELSE 0 END), 0) AS totamt
+		     , COUNT(DISTINCT mm.PAT_ID) AS pats
 		  FROM TBL_MYOUNG_MST mm
 		  JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
 		 WHERE mm.HOSP_CD = #{hospCd}
 		   AND COALESCE(mm.DELYN,'') = ''
 		   AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
+		   AND (SELECT COUNT(DISTINCT tsm.ROW_NO)
+		          FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD   = mm.HOSP_CD
+		           AND tsm.CLAIM_NO  = mm.CLAIM_NO
+		           AND tsm.BILL_SEQ  = mm.BILL_SEQ
+		           AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*)
+		          FROM TBL_JINORD_MST jsm
+		         WHERE jsm.HOSP_CD  = mm.HOSP_CD
+		           AND jsm.CLAIM_NO = mm.CLAIM_NO
+		           AND jsm.BILL_SEQ = mm.BILL_SEQ
+		           AND jsm.ITEM_NO <> 'L')
 		 GROUP BY cm.DATE_YM, cm.INSUR_TYPE
 		 ORDER BY cm.DATE_YM, cm.INSUR_TYPE
-	</select>
+	]]></select>
 
 	<!-- 환자군(A~E) 구성 — 환자평가표, 요양개시월 기준, 환자 단위 -->
 	<select id="selectMonthClass" resultType="java.util.HashMap">
@@ -102,22 +135,63 @@
 	</select>
 
 	<!-- 위너넷 고객 병원 평균 — 같은 달 청구를 올린 병원 전체(병원명 없이 평균만). 비교 기능은 위너넷만 가능한 것. -->
-	<select id="selectMonthAvg" resultType="java.util.HashMap">
+	<!-- 고객 평균 — 본원 청구통계와 같은 위탁 규칙(2026-10-15). 전체 병원을 한 번에 세므로 명세서 단위 상관 서브쿼리 대신 집합으로 푼다
+	     (상관 서브쿼리 판은 120초를 넘었다). 위탁 금액 = 위탁 행(JS008) 의 AMOUNT 합 = FN_CLAIM_TAMT 종류 1+4 와 같다. -->
+	<select id="selectMonthAvg" resultType="java.util.HashMap"><![CDATA[
+		WITH bl AS (
+		  SELECT mm.HOSP_CD, mm.CLAIM_NO, mm.BILL_SEQ, mm.PAT_ID, mm.TOT_AMT, mm.ADM_DAYS, cm.DATE_YM AS ym
+		    FROM TBL_MYOUNG_MST mm
+		    JOIN TBL_CHUNG_MST cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		   WHERE COALESCE(mm.DELYN,'') = '' AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
+		),
+		sp AS (
+		  SELECT s.HOSP_CD, s.CLAIM_NO, s.BILL_SEQ, COUNT(DISTINCT s.ROW_NO) AS spn
+		    FROM TBL_SPECODE_MST s
+		    JOIN bl ON bl.HOSP_CD = s.HOSP_CD AND bl.CLAIM_NO = s.CLAIM_NO AND bl.BILL_SEQ = s.BILL_SEQ
+		   WHERE s.SPEC_TYPE = 'JS008'
+		   GROUP BY s.HOSP_CD, s.CLAIM_NO, s.BILL_SEQ
+		),
+		jsk AS (
+		  SELECT DISTINCT s.HOSP_CD, s.CLAIM_NO, s.BILL_SEQ, s.ROW_NO
+		    FROM TBL_SPECODE_MST s
+		    JOIN sp ON sp.HOSP_CD = s.HOSP_CD AND sp.CLAIM_NO = s.CLAIM_NO AND sp.BILL_SEQ = s.BILL_SEQ
+		   WHERE s.SPEC_TYPE = 'JS008'
+		),
+		jsa AS (
+		  SELECT j.HOSP_CD, j.CLAIM_NO, j.BILL_SEQ, SUM(j.AMOUNT) AS jsamt
+		    FROM TBL_JINORD_MST j
+		    JOIN jsk ON jsk.HOSP_CD = j.HOSP_CD AND jsk.CLAIM_NO = j.CLAIM_NO AND jsk.BILL_SEQ = j.BILL_SEQ AND jsk.ROW_NO = j.ROW_NO
+		   WHERE IFNULL(j.DELYN,'') = ''
+		   GROUP BY j.HOSP_CD, j.CLAIM_NO, j.BILL_SEQ
+		),
+		nl AS (
+		  SELECT j.HOSP_CD, j.CLAIM_NO, j.BILL_SEQ, COUNT(*) AS nonl
+		    FROM TBL_JINORD_MST j
+		    JOIN sp ON sp.HOSP_CD = j.HOSP_CD AND sp.CLAIM_NO = j.CLAIM_NO AND sp.BILL_SEQ = j.BILL_SEQ
+		   WHERE j.ITEM_NO <> 'L'
+		   GROUP BY j.HOSP_CD, j.CLAIM_NO, j.BILL_SEQ
+		),
+		kb AS (
+		  SELECT sp.HOSP_CD, sp.CLAIM_NO, sp.BILL_SEQ
+		    FROM sp LEFT JOIN nl ON nl.HOSP_CD = sp.HOSP_CD AND nl.CLAIM_NO = sp.CLAIM_NO AND nl.BILL_SEQ = sp.BILL_SEQ
+		   WHERE sp.spn = IFNULL(nl.nonl, 0)
+		)
 		SELECT h.ym
 		     , COUNT(*)                                   AS hosps
 		     , ROUND(AVG(h.tot),0)                        AS avgtot
 		     , ROUND(AVG(h.tot / NULLIF(h.days,0)),0)     AS avgperday
 		     , ROUND(AVG(h.pats),0)                       AS avgpats
-		  FROM (SELECT cm.HOSP_CD, cm.DATE_YM AS ym, SUM(mm.TOT_AMT) AS tot, SUM(mm.ADM_DAYS) AS days, COUNT(DISTINCT mm.PAT_ID) AS pats
-		          FROM TBL_MYOUNG_MST mm
-		          JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
-		         WHERE COALESCE(mm.DELYN,'') = ''
-		           AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm}
-		         GROUP BY cm.HOSP_CD, cm.DATE_YM
-		        HAVING tot <![CDATA[>]]> 0) h
+		  FROM (
+		    SELECT b.HOSP_CD, b.ym, SUM(b.TOT_AMT - IFNULL(jsa.jsamt,0)) AS tot, SUM(b.ADM_DAYS) AS days, COUNT(DISTINCT b.PAT_ID) AS pats
+		      FROM bl b
+		      LEFT JOIN jsa ON jsa.HOSP_CD = b.HOSP_CD AND jsa.CLAIM_NO = b.CLAIM_NO AND jsa.BILL_SEQ = b.BILL_SEQ
+		     WHERE NOT EXISTS (SELECT 1 FROM kb WHERE kb.HOSP_CD = b.HOSP_CD AND kb.CLAIM_NO = b.CLAIM_NO AND kb.BILL_SEQ = b.BILL_SEQ)
+		     GROUP BY b.HOSP_CD, b.ym
+		    HAVING tot > 0
+		  ) h
 		 GROUP BY h.ym
 		 ORDER BY h.ym
-	</select>
+	]]></select>
 
 	<!-- 차등제 신고값(최신) — 인력 수 표시·인건비 입력 참고 -->
 	<select id="selectGradeLatest" resultType="java.util.HashMap">
@@ -828,4 +902,144 @@
 		 WHERE HOSP_CD = #{hospCd} AND CHG_SEQ = #{chgSeq} AND USE_YN = 'Y'
 	</update>
 
+	<!-- ═══ 경영 보고서 (2026-10-15, SWCHMISU 경영 보고서 형태) — 청구월 한 달 기준. 금액은 명세서·처방 자료에서 직접 센다 ═══ -->
+
+	<!-- 항목별(처방 금액) — 항목 코드 · 이름 · 금액 · 건수. 이름은 공통 코드표(YD / ITEM_NO) -->
+	<select id="selectReportItems" resultType="java.util.HashMap">
+		<![CDATA[
+SELECT j.ITEM_NO AS itemno,
+       COALESCE(MAX(D.SUB_CODE_NM), CONCAT('항목 ', j.ITEM_NO)) AS itemnm,
+       ROUND(COALESCE(SUM(CASE WHEN bs.base_amt > 0 AND (
+                           (b.PAY_TYPE = '1' AND j.ITEM_NO = 'L' AND j.CODE_TYPE IN ('1','8'))
+                        OR (b.PAY_TYPE <> '1' AND NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST s
+                                                               WHERE s.HOSP_CD = j.HOSP_CD AND s.CLAIM_NO = j.CLAIM_NO
+                                                                 AND s.BILL_SEQ = j.BILL_SEQ AND s.ROW_NO = j.ROW_NO
+                                                                 AND s.SPEC_TYPE = 'JS008')))
+                         THEN COALESCE(b.CLAIM_AMT,0) * j.AMOUNT / bs.base_amt ELSE 0 END), 0), 0) AS amt,
+       COALESCE(SUM(j.AMOUNT),0) AS ordamt,
+       COUNT(*) AS cnt
+  FROM TBL_JINORD_MST j
+  JOIN TBL_MYOUNG_MST b ON b.HOSP_CD = j.HOSP_CD AND b.CLAIM_NO = j.CLAIM_NO AND b.BILL_SEQ = j.BILL_SEQ
+  JOIN TBL_CHUNG_MST c ON c.HOSP_CD = b.HOSP_CD AND c.CLAIM_NO = b.CLAIM_NO
+  JOIN (SELECT j2.HOSP_CD, j2.CLAIM_NO, j2.BILL_SEQ, SUM(j2.AMOUNT) AS base_amt
+          FROM TBL_JINORD_MST j2
+          JOIN TBL_MYOUNG_MST b2 ON b2.HOSP_CD = j2.HOSP_CD AND b2.CLAIM_NO = j2.CLAIM_NO AND b2.BILL_SEQ = j2.BILL_SEQ
+         WHERE j2.HOSP_CD = #{hospCd} AND COALESCE(b2.DELYN,'') = ''
+           AND ((b2.PAY_TYPE = '1' AND j2.ITEM_NO = 'L' AND j2.CODE_TYPE IN ('1','8'))
+                OR (b2.PAY_TYPE <> '1' AND NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST s
+                                                        WHERE s.HOSP_CD = j2.HOSP_CD AND s.CLAIM_NO = j2.CLAIM_NO
+                                                          AND s.BILL_SEQ = j2.BILL_SEQ AND s.ROW_NO = j2.ROW_NO
+                                                          AND s.SPEC_TYPE = 'JS008')))
+         GROUP BY j2.HOSP_CD, j2.CLAIM_NO, j2.BILL_SEQ) bs
+    ON bs.HOSP_CD = b.HOSP_CD AND bs.CLAIM_NO = b.CLAIM_NO AND bs.BILL_SEQ = b.BILL_SEQ
+  LEFT JOIN TBL_CODE_DTL D ON D.CODE_GB = 'YD' AND D.CODE_CD = 'ITEM_NO' AND D.SUB_CODE = TRIM(j.ITEM_NO)
+ WHERE j.HOSP_CD = #{hospCd} AND c.DATE_YM = #{ym} AND COALESCE(b.DELYN,'') = ''
+ GROUP BY j.ITEM_NO
+ ORDER BY amt DESC
+		]]>
+	</select>
+
+	<!-- 주상병별 — 명세서 한 장의 주상병(DIAG_TYPE 1)을 대분류(3자리)로 묶는다. 이름은 질병 대분류 코드표(Z / DISEASE_TYPE) -->
+	<select id="selectReportDiags" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT pd.grp AS code,
+		       COALESCE(MAX(Z.SUB_CODE_NM), '기타병명') AS nm,
+		       COUNT(*) AS bills,
+		       COALESCE(SUM(pd.totamt),0) AS amt,
+		       COUNT(DISTINCT pd.patid) AS pats
+		  FROM (
+		    SELECT b.HOSP_CD, b.CLAIM_NO, b.BILL_SEQ, b.PAT_ID AS patid,
+		           b.TOT_AMT - CASE WHEN EXISTS (SELECT 1 FROM TBL_SPECODE_MST s WHERE s.HOSP_CD = b.HOSP_CD AND s.CLAIM_NO = b.CLAIM_NO AND s.BILL_SEQ = b.BILL_SEQ AND s.SPEC_TYPE = 'JS008')
+		                    THEN FN_CLAIM_TAMT(b.HOSP_CD,b.CLAIM_NO,b.BILL_SEQ,1) + FN_CLAIM_TAMT(b.HOSP_CD,b.CLAIM_NO,b.BILL_SEQ,4) ELSE 0 END AS totamt,
+		           COALESCE((SELECT LEFT(d.DIAG_CODE,3) FROM TBL_DISEASE_MST d
+		                      WHERE d.HOSP_CD = b.HOSP_CD AND d.CLAIM_NO = b.CLAIM_NO AND d.BILL_SEQ = b.BILL_SEQ
+		                        AND d.DIAG_TYPE = '1' LIMIT 1), 'ZZ') AS grp
+		      FROM TBL_MYOUNG_MST b
+		      JOIN TBL_CHUNG_MST c ON c.HOSP_CD = b.HOSP_CD AND c.CLAIM_NO = b.CLAIM_NO
+		     WHERE b.HOSP_CD = #{hospCd} AND COALESCE(b.DELYN,'') = '' AND c.DATE_YM = #{ym}
+		       AND (SELECT COUNT(DISTINCT tsm.ROW_NO) FROM TBL_SPECODE_MST tsm
+		             WHERE tsm.HOSP_CD = b.HOSP_CD AND tsm.CLAIM_NO = b.CLAIM_NO AND tsm.BILL_SEQ = b.BILL_SEQ AND tsm.SPEC_TYPE = 'JS008')
+		           <>  (SELECT COUNT(*) FROM TBL_JINORD_MST jsm
+		                 WHERE jsm.HOSP_CD = b.HOSP_CD AND jsm.CLAIM_NO = b.CLAIM_NO AND jsm.BILL_SEQ = b.BILL_SEQ AND jsm.ITEM_NO <> 'L')
+		  ) pd
+		  LEFT JOIN TBL_CODE_DTL Z ON Z.CODE_GB = 'Z' AND Z.CODE_CD = 'DISEASE_TYPE'
+		                          AND Z.SUB_CODE = pd.grp AND Z.ACTION_YN = 'Y'
+		 GROUP BY pd.grp
+		 ORDER BY amt DESC
+		 LIMIT 40
+		]]>
+	</select>
+
+	<!-- 입원·외래 — 명세서 건수와 명세서 진료비. 외래 구분은 치료 구분 2·4·9·H·6 (분야별통계와 같은 기준) -->
+	<select id="selectReportInOut" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT CASE WHEN c.TREAT_TYPE IN ('2','4','9','H','6') THEN 'O' ELSE 'I' END AS gb,
+		       COUNT(*) AS bills,
+		       COALESCE(SUM(b.TOT_AMT
+		           - CASE WHEN EXISTS (SELECT 1 FROM TBL_SPECODE_MST s WHERE s.HOSP_CD = b.HOSP_CD AND s.CLAIM_NO = b.CLAIM_NO AND s.BILL_SEQ = b.BILL_SEQ AND s.SPEC_TYPE = 'JS008')
+		                  THEN FN_CLAIM_TAMT(b.HOSP_CD,b.CLAIM_NO,b.BILL_SEQ,1) + FN_CLAIM_TAMT(b.HOSP_CD,b.CLAIM_NO,b.BILL_SEQ,4) ELSE 0 END), 0) AS amt
+		  FROM TBL_MYOUNG_MST b
+		  JOIN TBL_CHUNG_MST c ON c.HOSP_CD = b.HOSP_CD AND c.CLAIM_NO = b.CLAIM_NO
+		 WHERE b.HOSP_CD = #{hospCd} AND COALESCE(b.DELYN,'') = '' AND c.DATE_YM = #{ym}
+		   AND (SELECT COUNT(DISTINCT tsm.ROW_NO) FROM TBL_SPECODE_MST tsm
+		         WHERE tsm.HOSP_CD = b.HOSP_CD AND tsm.CLAIM_NO = b.CLAIM_NO AND tsm.BILL_SEQ = b.BILL_SEQ AND tsm.SPEC_TYPE = 'JS008')
+		       <>  (SELECT COUNT(*) FROM TBL_JINORD_MST jsm
+		             WHERE jsm.HOSP_CD = b.HOSP_CD AND jsm.CLAIM_NO = b.CLAIM_NO AND jsm.BILL_SEQ = b.BILL_SEQ AND jsm.ITEM_NO <> 'L')
+		 GROUP BY gb
+		 ORDER BY gb
+		]]>
+	</select>
+
+	<!-- 약제(약가) — 정액·정율 구분. 약제비용 = 처방 약 금액에서 위탁청구(JS008) 제외. 비청구 = 정액에 포함된 약(항목 L). 위탁 금액은 따로 센다. -->
+	<select id="selectReportDrug" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT CASE WHEN B.PAY_TYPE = '1' THEN 'FIXED' ELSE 'RATE' END AS kind,
+		       COALESCE(SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST s
+		                                           WHERE s.HOSP_CD = jj.HOSP_CD AND s.CLAIM_NO = jj.CLAIM_NO
+		                                             AND s.BILL_SEQ = jj.BILL_SEQ AND s.ROW_NO = jj.ROW_NO
+		                                             AND s.SPEC_TYPE = 'JS008')
+		                         THEN jj.AMOUNT ELSE 0 END), 0) AS totalamt,
+		       COALESCE(SUM(CASE WHEN jj.ITEM_NO = 'L'
+		                          AND NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST s
+		                                           WHERE s.HOSP_CD = jj.HOSP_CD AND s.CLAIM_NO = jj.CLAIM_NO
+		                                             AND s.BILL_SEQ = jj.BILL_SEQ AND s.ROW_NO = jj.ROW_NO
+		                                             AND s.SPEC_TYPE = 'JS008')
+		                         THEN jj.AMOUNT ELSE 0 END), 0) AS nonclaimamt,
+		       COALESCE(SUM(CASE WHEN EXISTS (SELECT 1 FROM TBL_SPECODE_MST s
+		                                       WHERE s.HOSP_CD = jj.HOSP_CD AND s.CLAIM_NO = jj.CLAIM_NO
+		                                         AND s.BILL_SEQ = jj.BILL_SEQ AND s.ROW_NO = jj.ROW_NO
+		                                         AND s.SPEC_TYPE = 'JS008')
+		                         THEN jj.AMOUNT ELSE 0 END), 0) AS entrustamt
+		  FROM TBL_JINORD_MST jj
+		  JOIN TBL_MYOUNG_MST B ON B.HOSP_CD = jj.HOSP_CD AND B.CLAIM_NO = jj.CLAIM_NO AND B.BILL_SEQ = jj.BILL_SEQ
+		  JOIN TBL_CHUNG_MST A ON A.HOSP_CD = B.HOSP_CD AND A.CLAIM_NO = B.CLAIM_NO
+		 WHERE jj.HOSP_CD = #{hospCd} AND jj.CODE_TYPE = '3'
+		   AND A.DATE_YM = #{ym} AND COALESCE(B.DELYN,'') <> 'Y'
+		 GROUP BY kind
+		 ORDER BY kind
+		]]>
+	</select>
+
+	<!-- ═══ 원무 수입실적 (2026-10-15) — 수납대장(TBL_MIS_EMR_PAY, 병원자료엑셀연계 또는 데이터 연계) 을 수납일·입원외래·수납방법으로 묶는다 ═══ -->
+	<select id="selectRevRows" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT REPLACE(p.PAY_DT,'-','') AS paydt,
+		       CASE WHEN p.INOUT_GB LIKE '%입%' THEN 'IP' WHEN p.INOUT_GB LIKE '%외%' THEN 'OP' ELSE 'ETC' END AS io,
+		       COALESCE(NULLIF(TRIM(p.PAY_METHOD),''),'기타') AS pm,
+		       COUNT(*) AS cnt,
+		       COALESCE(SUM(p.TOT_AMT),0) AS totamt,
+		       COALESCE(SUM(p.INS_AMT),0) AS insamt,
+		       COALESCE(SUM(p.SELF_AMT),0) AS selfamt,
+		       COALESCE(SUM(p.NONPAY_AMT),0) AS nonpayamt,
+		       COALESCE(SUM(p.PAID_AMT),0) AS paidamt,
+		       COALESCE(SUM(p.UNPAID_AMT),0) AS unpaidamt
+		  FROM TBL_MIS_EMR_PAY p
+		 WHERE p.HOSP_CD = #{hospCd}
+		   AND REPLACE(p.PAY_DT,'-','') BETWEEN #{fromDt} AND #{toDt}
+		 GROUP BY REPLACE(p.PAY_DT,'-',''), io, pm
+		 ORDER BY paydt
+		]]>
+	</select>
+
 </mapper>
+

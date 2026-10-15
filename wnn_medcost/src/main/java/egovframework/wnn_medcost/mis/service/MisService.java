@@ -81,9 +81,15 @@ public interface MisService {
 	Map<String, Object> searchAll(String hospCd, String question) throws Exception;
 
 	/* ── 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ── */
-	Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn) throws Exception;
+	Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn, String fromIn, String toIn) throws Exception;
 	Map<String, Object> selectPatBoard(String hospCd) throws Exception;
 	Map<String, Object> selectNurseBoard(String hospCd) throws Exception;
 	long saveStaffChg(Map<String, Object> m) throws Exception;
 	int deleteStaffChg(String hospCd, long chgSeq, String userId) throws Exception;
+
+	/* ── 경영 보고서 (2026-10-15) ── */
+	Map<String, Object> selectReport(String hospCd, String ym) throws Exception;
+
+	/* ── 원무 수입실적 (2026-10-15) ── */
+	Map<String, Object> selectRevenue(String hospCd, String fromYm, String toYm) throws Exception;
 }

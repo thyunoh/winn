@@ -799,12 +799,32 @@
                         <i class="fas fa-chart-line" aria-hidden="true"></i>경영고객관리</a>
                         <div id="mis-sub" class="collapse submenu" style="background-color: white;">
                             <ul class="nav flex-column">
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misStat.do">경영통계</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">고정경비 관리</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#mis-g-stat" aria-controls="mis-g-stat"
+                                       style="font-weight:600;">▸ 경영통계</a>
+                                    <div id="mis-g-stat" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misReport.do">청구통계</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misDirector.do">청구세부통계</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misStat.do">월별청구통계</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misRevenue.do">수입일보</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">손익분기 관리</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-item nav-link" href="#" data-toggle="collapse"
+                                       aria-expanded="false" data-target="#mis-g-cust" aria-controls="mis-g-cust"
+                                       style="font-weight:600;">▸ 고객관리</a>
+                                    <div id="mis-g-cust" class="collapse submenu" style="background-color:#fff;">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misLead.do">신규환자</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misPatient.do">기존환자</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misAlert.do">업무 알림</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misLead.do">신규환자 고객관리</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misDirector.do">병원장 조회</a></li>
-                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misPatient.do">원무 환자고객</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misNurse.do">간호사 관리</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misEmr.do">병원자료엑셀연계</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misRule.do">병원 내규·안내문</a></li>

@@ -1,10 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<%-- misStat.jsp — 경영관리(MIS) › 경영통계 (2026-10-08)
+<%-- misStat.jsp — 경영관리(MIS) › 월별통계분석 (2026-10-08, 메뉴명 「경영 요약」→「월별통계분석」 2026-10-15)
      · 제안서 ① 경영통계 화면(docs/proposals/신규요양병원_업무패키지_제안_2026-10-08.html)을 그대로 구현.
      · 숫자는 전부 서버 집계(/mis/statGet.do) — 청구 샘파일·환자평가표·입퇴원현황·자료생성 결과. 저장하는 것 없음.
-     · 병상 수가 등록돼 있으면 가동률, 없으면 「입력 필요」 → 고정경비 화면으로 안내.
+     · 병상 수가 등록돼 있으면 가동률, 없으면 「입력 필요」 → 고정비 화면으로 안내.
      · 위너넷은 hospCd 파라미터(상단 병원검색 쿠키)로 다른 병원을 본다. 고객 평균은 병원명 없이 평균만.
      · ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
@@ -16,7 +16,7 @@
 <style>
   #misStat{ background:#f4f6f8; color:#1f2a30; min-height:100%; padding:14px 16px 50px; max-width:100%; overflow-x:hidden; }
   #misStat *{ box-sizing:border-box; }
-  #misStat .ms-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  #misStat .ms-head{ display:flex; align-items:center; gap:10px; margin-bottom:0; flex-wrap:wrap; background:#fff; border:1px solid #e3e9ed; border-radius:10px 10px 0 0; padding:10px 72px 10px 14px; }
   #misStat .ms-title{ font-size:18px; font-weight:800; color:#20303a; display:flex; align-items:center; gap:8px; }
   #misStat .ms-dot{ width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,#1f5a4b,#2a7665); }
   #misStat .ms-sub{ font-size:12px; color:#6b7c86; font-weight:400; }
@@ -26,7 +26,7 @@
   #misStat .ms-btn{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:6px; padding:5px 11px; font-size:12.5px; font-weight:700; cursor:pointer; }
   #misStat .ms-btn:hover{ background:#eef3f6; }
   #misStat .ms-btn.pri{ background:#1f5a4b; color:#fff; border-color:#1f5a4b; }
-  #misStat .ms-note{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 14px; font-size:12.5px; color:#43555f; margin-bottom:12px; line-height:1.6; }
+  #misStat .ms-note{ background:#fff; border:1px solid #e3e9ed; border-top:0; border-radius:0 0 10px 10px; padding:8px 14px 10px; font-size:12.5px; color:#43555f; margin-bottom:20px; line-height:1.6; }
   #misStat .ms-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
   @media (max-width:900px){ #misStat .ms-kpis{ grid-template-columns:repeat(2,1fr); } }
   #misStat .ms-kpi{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:12px 14px; min-width:0; }
@@ -58,7 +58,7 @@
 </style>
 
 <div class="ms-head">
-  <div class="ms-title"><span class="ms-dot"></span>경영통계 <span class="ms-sub">— 청구·평가표·입퇴원 자료로 자동 산출</span></div>
+  <div class="ms-title"><span class="ms-dot"></span>월별통계분석 <span class="ms-sub">— 청구·평가표·입퇴원 자료로 자동 산출</span></div>
   <span class="ms-hosp">🏥 <c:out value='${hospNm}'/></span>
   <span class="ms-spacer"></span>
   <label style="font-size:13px;color:#43555f;">기간
@@ -67,7 +67,7 @@
   <label style="font-size:13px;color:#43555f;"><input type="checkbox" id="msCmp" checked onchange="msRender();"> 고객 평균 비교</label>
   <button type="button" class="ms-btn" onclick="msExcel();" title="월별 상세·환자군 표를 엑셀 파일로">엑셀출력</button>
   <button type="button" class="ms-btn" onclick="msPrint();" title="원장 보고용 한 장(가로) — 그래프·환자군·월별 상세">인쇄</button>
-  <button type="button" class="ms-btn" onclick="location.href='<c:url value="/main/misCost.do"/>';">고정경비 →</button>
+  <button type="button" class="ms-btn" onclick="location.href='<c:url value="/main/misCost.do"/>';">손익분기 관리 →</button>
 </div>
 
 <div class="ms-note" id="msNote">
@@ -261,7 +261,7 @@
     var h = '<thead><tr><th>월</th><th class="n">총진료비</th><th class="n">전년 동월</th><th class="n">전년 대비</th><th class="n">급여(공단)</th><th class="n">본인부담</th><th class="n">건강보험</th><th class="n">의료급여</th><th class="n">환자</th><th class="n">입원일수</th><th class="n">평균 재원</th><th class="n">1인 1일 진료비</th><th class="n">환자 1인 월</th><th class="n">입원</th><th class="n">퇴원</th><th class="n">퇴원자 평균 재원일</th>' + (cmp ? '<th class="n">고객 환자 1인 월</th><th class="n">고객 1인 1일 진료비</th>' : '') + '</tr></thead><tbody>';
     var any = false;
     L.forEach(function(r){
-      if (!r.totamt && r.incnt == null && !(r.cls.A+r.cls.B+r.cls.C+r.cls.D+r.cls.E)) return; any = true;
+      any = true;   // 기간 안의 달은 전부 보인다(차트와 같은 줄 수) — 청구·입퇴원 자료가 없는 달은 「—」 (2026-10-15)
       var di = daysIn(r.ym), av = B.avg[r.ym], ly = lastYear(B, r.ym);
       h += '<tr><td>' + esc(ymLbl(r.ym)) + '</td><td class="n">' + (r.totamt ? eok(r.totamt) : '—') + '</td>'
          + '<td class="n">' + (ly ? eok(ly.totamt) : '—') + '</td><td class="n ' + (ly && r.totamt ? (r.totamt >= ly.totamt ? 'up' : 'down') : '') + '">' + (ly && r.totamt ? esc(pct(r.totamt, ly.totamt)) : '—') + '</td>'
@@ -274,8 +274,8 @@
     if (!any) h += '<tr><td colspan="18" class="ms-empty">이 기간에 올린 자료가 없습니다.</td></tr>';
     gel('msTbl').innerHTML = h + '</tbody>';
 
-    // 병상 안내(가동률은 고정경비 화면의 설정에서)
-    gel('msBedNote').innerHTML = ' 병상 가동률은 <b>고정경비 → 병원 설정</b>에 허가 병상 수를 넣으면 보입니다.';
+    // 병상 안내(가동률은 고정비 화면의 설정에서)
+    gel('msBedNote').innerHTML = ' 병상 가동률은 <b>손익분기 관리 → 병원 설정</b>에 허가 병상 수를 넣으면 보입니다.';
   };
 
   /* ── 엑셀 · 인쇄 (2026-10-08 강화) ── */
@@ -289,7 +289,7 @@
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(gel('msTbl'), {raw:false}), '월별 상세');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(gel('msClsTbl'), {raw:false}), '환자군·점수');
-      XLSX.writeFile(wb, fileSafe('경영통계_' + HOSP_NM + '_' + (VIEW.from || D.fromYm) + '-' + (VIEW.to || D.toYm)) + '.xlsx');
+      XLSX.writeFile(wb, fileSafe('월별통계분석_' + HOSP_NM + '_' + (VIEW.from || D.fromYm) + '-' + (VIEW.to || D.toYm)) + '.xlsx');
     } catch(e){ err(e); }
   };
   /* 인쇄 — 원장 보고용 한 장(A4 가로) : 머리 + KPI + 그래프(캔버스를 그림으로) + 환자군 + 월별 상세. 화면 표를 그대로 복사하므로 숫자가 화면과 같다. */
@@ -306,8 +306,8 @@
       + '.up{color:#2f8f5b} .down{color:#c0463f} img{display:block;width:100%;max-height:68mm;object-fit:contain;border:1px solid #e3e9ed;border-radius:6px}'
       + 'table{width:100%;border-collapse:collapse;font-size:10px} th{background:#f2f6f8;color:#43555f;padding:4px 6px;border-bottom:1px solid #b9c5cd;text-align:left;white-space:nowrap} td{padding:3px 6px;border-bottom:1px solid #e3e9ed} td.n,th.n{text-align:right;font-variant-numeric:tabular-nums} .small{font-size:9.5px;color:#6b7c86} p.small{margin:4px 0 0}'
       + 'tr{page-break-inside:avoid} h2{page-break-after:avoid}';
-    var h = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>경영통계 ' + esc(HOSP_NM) + '</title><style>' + css + '</style></head><body>'
-      + '<h1>경영통계 <small>' + esc(HOSP_NM) + ' · ' + esc(ymLbl(VIEW.from || D.fromYm)) + ' ~ ' + esc(ymLbl(VIEW.to || D.toYm)) + '</small><span class="dt">' + today + ' 출력 · WinCheck⁺</span></h1>'
+    var h = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>월별통계분석 ' + esc(HOSP_NM) + '</title><style>' + css + '</style></head><body>'
+      + '<h1>월별통계분석 <small>' + esc(HOSP_NM) + ' · ' + esc(ymLbl(VIEW.from || D.fromYm)) + ' ~ ' + esc(ymLbl(VIEW.to || D.toYm)) + '</small><span class="dt">' + today + ' 출력 · WinCheck⁺</span></h1>'
       + '<div class="kpis">' + gel('msKpis').innerHTML + '</div>'
       + '<h2>' + esc(gel('msChartTtl').textContent) + '</h2>' + (img ? '<img src="' + img + '" alt="">' : '') + '<p class="small">' + esc(gel('msChartNote').textContent) + '</p>'
       + '<h2>' + esc(gel('msClsTtl').textContent) + '</h2>' + gel('msClsTbl').outerHTML + '<p class="small">' + esc(gel('msClsNote').textContent) + '</p>'

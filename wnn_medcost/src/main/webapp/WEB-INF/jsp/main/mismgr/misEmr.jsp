@@ -354,7 +354,7 @@
       else { var rr = p.map(function(r){ return '<tr><td>' + esc(r.inoutgb) + '</td><td class="n">' + num(r.cnt) + '</td><td class="n">' + num(r.pats) + '</td><td class="n">' + num(r.totamt) + '</td><td class="n">' + num(r.selfamt) + '</td><td class="n">' + num(r.nonpayamt) + '</td><td class="n">' + num(r.paidamt) + '</td><td class="n">' + num(r.unpaidamt) + '</td></tr>'; });
         rr.push('<tr class="sum"><td>합계</td><td class="n">' + num(sumOf(p,'cnt')) + '</td><td class="n">—</td><td class="n">' + num(sumOf(p,'totamt')) + '</td><td class="n">' + num(sumOf(p,'selfamt')) + '</td><td class="n">' + num(sumOf(p,'nonpayamt')) + '</td><td class="n">' + num(sumOf(p,'paidamt')) + '</td><td class="n">' + num(sumOf(p,'unpaidamt')) + '</td></tr>');
         h = tbl([{l:'구분'},{l:'줄',n:1},{l:'환자',n:1},{l:'총진료비',n:1},{l:'본인부담',n:1},{l:'비급여',n:1},{l:'수납',n:1},{l:'미수',n:1}], rr)
-          + '<div class="small" style="margin-top:6px;">비급여·수납·미수는 청구 샘파일에 없는 숫자입니다. 고정경비 화면의 「추가수익」에 비급여 합계를 적으면 추정 손익에 들어갑니다.</div>'; }
+          + '<div class="small" style="margin-top:6px;">비급여·수납·미수는 청구 샘파일에 없는 숫자입니다. 고정비 화면의 「추가수익」에 비급여 합계를 적으면 추정 손익에 들어갑니다.</div>'; }
     } else if (TAB === 'ACT') {
       var a = PAGE.act || [];
       if (!a.length) h = '<div class="empty">' + ymLbl(PAGE.ym) + ' 행위별 통계를 아직 올리지 않았습니다.</div>';

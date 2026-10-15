@@ -136,9 +136,9 @@ public class MisServiceImpl implements MisService {
 		try {
 			if (mapper.countClaimYm(hospCd, lastYm) == 0)
 				out.add(alert(day >= 15 ? "bad" : "warn", lastLbl + " 청구 샘파일이 아직 없습니다",
-					"미업로드 시 항정신성의약품 처방률이 산출되지 않고, 경영통계의 진료비·입원일수가 비어 보입니다.", "/main/magamFileUpload.do", "올리기 →"));
+					"미업로드 시 항정신성의약품 처방률이 산출되지 않고, 월별통계분석의 진료비·입원일수가 비어 보입니다.", "/main/magamFileUpload.do", "올리기 →"));
 			else
-				out.add(alert("ok", lastLbl + " 청구 샘파일 올림", "경영통계·항정신성의약품 처방률에 반영됨.", "/main/magamFileUpload.do", "확인"));
+				out.add(alert("ok", lastLbl + " 청구 샘파일 올림", "월별통계분석·항정신성의약품 처방률에 반영됨.", "/main/magamFileUpload.do", "확인"));
 		} catch (Exception e) { out.add(alert("info", "청구 샘파일 여부를 확인하지 못했습니다", e.getMessage(), "", "")); }
 
 		// ③ 지난달 입퇴원현황
@@ -186,7 +186,7 @@ public class MisServiceImpl implements MisService {
 				out.add(alert("ok", lastLbl + " 고정비 입력됨", "손익분기에 반영됨.", "/main/misCost.do", "확인"));
 			Map<String, Object> cfg = mapper.selectCfg(hospCd);
 			if (cfg == null || cfg.get("bedcnt") == null)
-				out.add(alert("info", "허가 병상 수가 등록되지 않았습니다", "한 번만 넣으면 경영통계에 병상 가동률이 나옵니다.", "/main/misCost.do", "설정 →"));
+				out.add(alert("info", "허가 병상 수가 등록되지 않았습니다", "한 번만 넣으면 월별통계분석에 병상 가동률이 나옵니다.", "/main/misCost.do", "설정 →"));
 		} catch (Exception e) { out.add(alert("info", "고정비 입력 여부를 확인하지 못했습니다", e.getMessage(), "", "")); }
 
 		// ⑥ 고객관리(④) 연동 — 연락 예정일이 지난·오늘인 상담, 퇴원 뒤 안부 연락이 밀린 환자, 이번 달 상담·입원 (2026-10-08 강화)
@@ -821,17 +821,39 @@ public class MisServiceImpl implements MisService {
 	   새 표는 인력 변동 기록 하나뿐이다. 나머지는 기존 자료를 읽는다(입퇴원현황·상담·보호자·직원 명단·구조영역 구간). */
 
 	/** 병원장 한 장 — 청구(가장 최근 달)·입퇴원·상담·재원 환자·간호 인력 판정·챙길 일 개수. */
+	private static double numOf(Object o) { return o instanceof Number ? ((Number) o).doubleValue() : 0; }
+
 	@Override
-	public Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn) throws Exception {
+	public Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn, String fromIn, String toIn) throws Exception {
 		Map<String, Object> r = new HashMap<>();
-		String ym = mapper.selectLastClaimYm(hospCd);
+		// 기간 = 시작월~종료월(안 고르면 가장 최근 청구월 한 달). 청구 금액·일수는 기간 합계, 입원·외래는 종료월 기준.
+		String ym = (toIn != null && toIn.matches("\\d{6}")) ? toIn : mapper.selectLastClaimYm(hospCd);
 		if (ym != null && ym.matches("\\d{6}")) {
-			Map<String, Object> st = selectStat(hospCd, ym, ym);
+			String from = (fromIn != null && fromIn.matches("\\d{6}") && fromIn.compareTo(ym) <= 0) ? fromIn : ym;
+			Map<String, Object> st = selectStat(hospCd, from, ym);
 			r.put("ym", ym);
+			r.put("fromYm", from);
 			List<?> months = (List<?>) st.get("months");
-			r.put("claim", months == null || months.isEmpty() ? null : months.get(0));
+			Map<String, Object> agg = null;
+			if (months != null && !months.isEmpty()) {
+				agg = new HashMap<>();
+				double bills = 0, admdays = 0, tot = 0, claimamt = 0, selfamt = 0;
+				for (Object o : months) {
+					Map<?, ?> m = (Map<?, ?>) o;
+					bills += numOf(m.get("bills")); admdays += numOf(m.get("admdays"));
+					tot += numOf(m.get("totamt")); claimamt += numOf(m.get("claimamt")); selfamt += numOf(m.get("selfamt"));
+				}
+				agg.put("ym", ym);
+				agg.put("bills", (long) bills);
+				agg.put("admdays", (long) admdays);
+				agg.put("totamt", (long) tot);
+				agg.put("claimamt", (long) claimamt);
+				agg.put("selfamt", (long) selfamt);
+				agg.put("pats", ((Map<?, ?>) months.get(months.size() - 1)).get("pats"));
+			}
+			r.put("claim", agg);
 			List<?> io = (List<?>) st.get("inout");
-			r.put("inout", io == null || io.isEmpty() ? null : io.get(0));
+			r.put("inout", io == null || io.isEmpty() ? null : io.get(io.size() - 1));
 		}
 		String today = new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
 		// 상담 — 이번 달 접수·입원 전환(유입 경로 전체 합)
@@ -958,5 +980,41 @@ public class MisServiceImpl implements MisService {
 
 	private static double pDbl(Object o) {
 		try { return o == null ? 0 : Double.parseDouble(String.valueOf(o).trim()); } catch (Exception e) { return 0; }
+	}
+
+	/* ═══ 경영 보고서 (2026-10-15) — SWCHMISU 경영 보고서와 같은 구성. 청구월 한 달을 전월과 나란히 ═══
+	   숫자는 화면이 계산한다(서버는 원자료만 준다). 약제는 약가비율 기준(위탁 제외 · 비청구 = 정액 포함 약). */
+	@Override
+	public Map<String, Object> selectReport(String hospCd, String ym) throws Exception {
+		String prev = addMonths(ym, -1);
+		Map<String, Object> r = new HashMap<>();
+		r.put("ym", ym);
+		r.put("prevYm", prev);
+		r.put("claim", repFirst(mapper.selectMonthClaim(hospCd, ym, ym)));
+		r.put("prevClaim", repFirst(mapper.selectMonthClaim(hospCd, prev, prev)));
+		r.put("insur", mapper.selectMonthInsur(hospCd, ym, ym));
+		r.put("items", mapper.selectReportItems(hospCd, ym));
+		r.put("prevItems", mapper.selectReportItems(hospCd, prev));
+		r.put("diags", mapper.selectReportDiags(hospCd, ym));
+		r.put("prevDiags", mapper.selectReportDiags(hospCd, prev));
+		r.put("inout", mapper.selectReportInOut(hospCd, ym));
+		r.put("prevInout", mapper.selectReportInOut(hospCd, prev));
+		r.put("drug", mapper.selectReportDrug(hospCd, ym));
+		r.put("prevDrug", mapper.selectReportDrug(hospCd, prev));
+		return r;
+	}
+
+	/* ═══ 원무 수입실적 (2026-10-15) — 수납대장을 날짜·입원외래·수납방법별 행으로 준다. 묶기·합계는 화면이 한다. ═══ */
+	@Override
+	public Map<String, Object> selectRevenue(String hospCd, String fromYm, String toYm) throws Exception {
+		Map<String, Object> r = new HashMap<>();
+		r.put("fromYm", fromYm);
+		r.put("toYm", toYm);
+		r.put("rows", mapper.selectRevRows(hospCd, fromYm + "01", toYm + "31"));
+		return r;
+	}
+
+	private static Map<String, Object> repFirst(List<Map<String, Object>> rows) {
+		return rows == null || rows.isEmpty() ? null : rows.get(0);
 	}
 }

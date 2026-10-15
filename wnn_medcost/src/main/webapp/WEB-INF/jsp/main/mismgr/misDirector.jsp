@@ -4,8 +4,8 @@
 <%-- misDirector.jsp — 경영고객관리 › 병원장 조회 (2026-10-15, 수익·비용 중심으로 개편)
      · 신규 요양병원의 경영 쪽은 수익과 비용 지출을 가장 중요하게 본다. 그래서 이 화면은
          ① 이번 달 수익 · 비용 · 추정 손익(KPI) ② 12개월 수익·비용 추이 ③ 비용 지출 명세 ④ 수익 구성과 손익분기 ⑤ 운영 한눈(한 줄).
-     · 계산식은 고정경비 관리(misCost)와 같다: 수익 = 총진료비 + 추가수익, 비용 = 고정비 + 1인 1일 변동비 × 입원일수, 손익 = 수익 − 비용.
-     · 새로 적는 칸은 없다. 고정경비를 입력하면 손익이 계산된다(없으면 안내).
+     · 계산식은 손익분기 관리(misCost)와 같다: 수익 = 총진료비 + 추가수익, 비용 = 고정비 + 1인 1일 변동비 × 입원일수, 손익 = 수익 − 비용.
+     · 새로 적는 칸은 없다. 고정비를 입력하면 손익이 계산된다(없으면 안내).
      · 알림은 ui-message. ★주의: 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 
 <script src="/asset/js/ui-message.js"></script>
@@ -59,6 +59,10 @@
   #misDirector .md-empty{ font-size:12.5px; color:#8a99a3; line-height:1.6; padding:8px 0; }
   #misDirector .md-link{ font-size:12.5px; color:#1f5a4b; font-weight:800; text-decoration:none; }
   #misDirector .md-link:hover{ text-decoration:underline; }
+  #misDirector .md-cols3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:start; margin-bottom:12px; }
+  @media (max-width:1100px){ #misDirector .md-cols3{ grid-template-columns:1fr; } }
+  #misDirector .md-sub2{ font-size:12px; color:#1f5a4b; font-weight:800; margin:2px 0 6px; }
+  #misDirector .md-note2{ font-size:11.5px; color:#6b7c86; line-height:1.55; margin-top:6px; }
 </style>
 
 <div class="md-head">
@@ -82,7 +86,7 @@
 <div class="md-cols">
   <!-- 비용 지출 명세 -->
   <div class="md-card">
-    <h4>비용 지출 명세 <span class="sp"></span><a class="md-link" href="/main/misCost.do">고정경비 관리 →</a></h4>
+    <h4>비용 지출 명세 <span class="sp"></span><a class="md-link" href="/main/misCost.do">손익분기 관리 →</a></h4>
     <div class="md-scroll">
       <table>
         <thead><tr><th>항목</th><th class="n">이번 달</th><th class="n">전월</th><th class="n">증감</th><th class="n">비중</th></tr></thead>
@@ -107,6 +111,55 @@
 </div>
 
 <div class="md-card">
+  <h4>청구 분석 — 분야별통계와 같은 기준 <span class="sp"></span><span class="md-sub" id="mdAnaSub"></span></h4>
+  <div class="md-cols3">
+    <div>
+      <div class="md-sub2">유형별 청구</div>
+      <div class="md-scroll"><table>
+        <thead><tr><th>유형</th><th class="n">청구액</th><th class="n">건수</th><th class="n">건당</th><th class="n">비중</th></tr></thead>
+        <tbody id="mdAnaType"><tr><td colspan="5" class="md-empty">불러오는 중…</td></tr></tbody>
+      </table></div>
+    </div>
+    <div>
+      <div class="md-sub2">의사별 청구</div>
+      <div class="md-scroll"><table>
+        <thead><tr><th>의사(전문의)</th><th class="n">청구액</th><th class="n">건수</th><th class="n">건당</th><th class="n">비중</th></tr></thead>
+        <tbody id="mdAnaDoc"><tr><td colspan="5" class="md-empty">불러오는 중…</td></tr></tbody>
+      </table></div>
+    </div>
+    <div>
+      <div class="md-sub2">질환별 청구 (상위 10)</div>
+      <div class="md-scroll"><table>
+        <thead><tr><th>질환</th><th class="n">청구액</th><th class="n">건수</th><th class="n">비중</th></tr></thead>
+        <tbody id="mdAnaDis"><tr><td colspan="4" class="md-empty">불러오는 중…</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="md-cols">
+    <div>
+      <div class="md-sub2">일당청구액 (최근 6개월 · 입원 청구액 ÷ 입원일수)</div>
+      <div class="md-scroll"><table>
+        <thead><tr><th>월</th><th class="n">입원 청구액</th><th class="n">입원일수</th><th class="n">일당청구액</th><th class="n">건당</th></tr></thead>
+        <tbody id="mdAnaDay"><tr><td colspan="5" class="md-empty">불러오는 중…</td></tr></tbody>
+      </table></div>
+    </div>
+    <div>
+      <div class="md-sub2">약처방 — 진료대비 약제비율 분류 그대로</div>
+      <div class="md-scroll"><table>
+        <thead><tr><th>구분 (진료대비 약제비율)</th><th class="n">약제비용</th><th class="n">청구액</th><th class="n">청구 비율</th><th class="n">비청구액</th><th class="n">비청구 비율</th></tr></thead>
+        <tbody id="mdAnaDrug"><tr><td colspan="6" class="md-empty">불러오는 중…</td></tr></tbody>
+      </table></div>
+      <div class="md-note2">약제비용 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 금액. 청구액 = 약제비용 − 비청구액. 비청구액 = 정액에 포함되어 따로 청구하지 않는 약(항목 L 요양병원정액). 정율환자는 항목상 비청구 약이 확인되지 않아 전액 청구로 봤습니다(부분청구 기준은 확인 필요).</div>
+    </div>
+  </div>
+  <div class="md-sub2" style="margin-top:4px;">정액 비청구분 항목별 — 약 말고 다른 처방 (상위 12)</div>
+  <div class="md-scroll"><table>
+    <thead><tr><th>항목</th><th>분류</th><th class="n">진료비 총액</th><th class="n">건수</th><th class="n">비중</th></tr></thead>
+    <tbody id="mdAnaItem"><tr><td colspan="5" class="md-empty">불러오는 중…</td></tr></tbody>
+  </table></div>
+</div>
+
+<div class="md-card">
   <h4>운영 한눈 <span class="sp"></span><span class="md-sub">수익·비용에 영향을 주는 것만 한 줄로</span></h4>
   <div class="md-one" id="mdOps"><span>불러오는 중…</span></div>
 </div>
@@ -115,8 +168,8 @@
 (function(){
   var root = document.getElementById('misDirector');
   var WNN = root.getAttribute('data-wnn') === 'Y';
-  var VAR_DEF = 25000;             // 1인 1일 변동비 기본값 — 고정경비 관리(misCost)와 같다
-  var D = null, C = null;          // D = 병원장 한 장(directorGet), C = 고정경비 자료(costGet)
+  var VAR_DEF = 25000;             // 1인 1일 변동비 기본값 — 손익분기 관리(misCost)와 같다
+  var D = null, C = null;          // D = 병원장 한 장(directorGet), C = 고정비 자료(costGet)
   function g(id){ return document.getElementById(id); }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function num(v){ return Number(v||0).toLocaleString('ko-KR'); }
@@ -141,7 +194,7 @@
     });
   }
 
-  /* ── 계산: 고정경비 관리와 같은 식 ── */
+  /* ── 계산: 손익분기 관리와 같은 식 ── */
   function calc(ym, cl, io){
     var cfg = (C && C.cfg) || {};
     var varC = cfg.varcostday == null ? VAR_DEF : Number(cfg.varcostday);
@@ -192,7 +245,7 @@
   function drawChart(rows){
     var note = g('mdChartNote');
     var any = rows.some(function(r){ return r.rev != null || r.exp != null; });
-    if (!any) { note.textContent = '아직 청구 자료나 고정경비 입력이 없어 추이를 그릴 수 없습니다.'; }
+    if (!any) { note.textContent = '아직 청구 자료나 고정비 입력이 없어 추이를 그릴 수 없습니다.'; }
     else note.textContent = '막대 = 수익(진한 초록)·비용(주황) · 선 = 추정 손익(빨강 · 음수면 적자). 단위 만원.';
     if (typeof Chart === 'undefined') { note.textContent = '차트 라이브러리를 불러오지 못했습니다. 아래 표와 KPI 를 보세요.'; return; }
     if (window._mdChart) { try { window._mdChart.destroy(); } catch(e){} window._mdChart = null; }
@@ -229,11 +282,11 @@
       { l:'이번 달 비용', v: M.expense ? eok(M.expense) : '—', cls: M.expense ? '' : 'none',
         d: '고정비 ' + (M.fixedTot ? eok(M.fixedTot) : '—') + ' + 변동비 ' + (M.days ? man(M.varTot) : '—') },
       { l:'추정 손익', v: M.profit == null ? '—' : sgn(M.profit, eok), cls: M.profit == null ? 'none' : (M.profit >= 0 ? 'up' : 'down'), profit:true,
-        d: M.profit == null ? '고정경비를 입력하면 계산됩니다' : (M.profit >= 0 ? '흑자' : '적자') + ' · 수익 − 비용' },
+        d: M.profit == null ? '고정비를 입력하면 계산됩니다' : (M.profit >= 0 ? '흑자' : '적자') + ' · 수익 − 비용' },
       { l:'손익분기 재원 환자', v: M.bep ? M.bep + '명' : '—', cls: M.bep ? (M.census >= M.bep ? 'up' : 'down') : 'none',
         d: M.bep ? '평균 재원 ' + Math.round(M.census) + '명 · ' + (M.census >= M.bep ? '여유 ' : '부족 ') + Math.abs(Math.round(M.census - M.bep)) + '명' : '고정비·청구가 둘 다 있어야 계산됩니다' },
       { l:'가동률', v: M.bed ? pct(M.census, M.bed) : '—', cls: M.bed ? '' : 'none',
-        d: M.bed ? '평균 재원 ' + Math.round(M.census) + ' / 병상 ' + M.bed : '병상 수를 고정경비 관리에서 입력하세요' },
+        d: M.bed ? '평균 재원 ' + Math.round(M.census) + ' / 병상 ' + M.bed : '병상 수를 손익분기 관리에서 입력하세요' },
       { l:'고정비 전월 대비', v: M.prevFixed == null ? '—' : sgn(M.fixedTot - M.prevFixed, man), cls: M.prevFixed == null ? 'none' : (M.fixedTot > M.prevFixed ? 'down' : 'up'), d: expD }
     ];
     g('mdKpis').innerHTML = kp.map(function(k){
@@ -254,7 +307,7 @@
       rows.push('<tr class="sub"><td>환자 변동비 (1인 1일 ' + num(M.varC) + '원 × ' + num(M.days) + '일)</td><td class="n">' + num(M.varTot) + '</td>' +
         '<td class="n">—</td><td class="n">—</td><td class="n">' + pct(M.varTot, total) + '</td></tr>');
     }
-    if (!rows.length) rows.push('<tr><td colspan="5" class="md-empty">아직 입력된 고정비가 없습니다. <a class="md-link" href="/main/misCost.do">고정경비 관리</a>에서 항목별 금액을 적으세요.</td></tr>');
+    if (!rows.length) rows.push('<tr><td colspan="5" class="md-empty">아직 입력된 고정비가 없습니다. <a class="md-link" href="/main/misCost.do">손익분기 관리</a>에서 항목별 금액을 적으세요.</td></tr>');
     else rows.push('<tr class="tot"><td>비용 합계</td><td class="n">' + num(total) + '</td><td class="n">' + (prevTotal == null ? '—' : num(prevTotal)) + '</td><td class="n"></td><td class="n">100%</td></tr>');
     g('mdExp').innerHTML = rows.join('');
   }
@@ -307,7 +360,7 @@
     M.ym = ym;
     M.days = M.days || 0;
     var notes = [];
-    if (!M.fixedTot) notes.push('고정경비가 아직 없습니다. <a class="md-link" href="/main/misCost.do">고정경비 관리</a>에서 월 고정비를 입력하면 비용·손익이 계산됩니다.');
+    if (!M.fixedTot) notes.push('고정비가 아직 없습니다. <a class="md-link" href="/main/misCost.do">손익분기 관리</a>에서 월 고정비를 입력하면 비용·손익이 계산됩니다.');
     if (!M.bed) notes.push('병상 수가 없어 가동률은 빈칸입니다.');
     if (notes.length) { g('mdNote').hidden = false; g('mdNote').className = 'md-note warn'; g('mdNote').innerHTML = notes.join('<br>'); }
     else g('mdNote').hidden = true;
@@ -325,9 +378,99 @@
     post('/mis/directorGet.do', {}).then(function(d){
       D = d;
       return post('/mis/costGet.do', { ym: d.ym || '' }).then(function(c){ C = c; return d; }, function(){ C = null; return d; });
-    }).then(render).catch(function(e){
+    }).then(render).then(function(){ loadAnalysis(); }).catch(function(e){
       g('mdKpis').innerHTML = '<div class="md-kpi"><div class="l">불러오지 못했습니다</div><div class="v none" style="font-size:13px;color:#b23b3b;">' + esc(e && e.message) + '</div></div>';
       err(e);
+    });
+  }
+
+  /* ── 청구 분석 — 분야별통계의 기존 조회를 같은 조건으로 한 번에 (2026-10-15) ── */
+  function hosp(){ var h = ''; try { h = (getCookie('s_hospid') || '').trim(); } catch(e){} return h || root.getAttribute('data-hosp'); }
+  function tong(url, p){ p.hospCd = hosp(); return $.ajax({ url:url, type:'POST', data:p, dataType:'json' }); }
+  function arr(x){ return Array.isArray(x) ? x : []; }
+  function totRow(rows){ return rows.filter(function(r){ return r.medDept === '00' || r.medName === '전체'; })[0] || null; }
+  function body(id, html){ g(id).innerHTML = html || '<tr><td colspan="6" class="md-empty">해당 자료가 없습니다.</td></tr>'; }
+  function cells(arrv){ return '<tr>' + arrv.map(function(c, i){ return '<td' + (i > 0 ? ' class="n"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; }
+  function ratio(a, b){ return b ? (Math.round(Number(a||0) / Number(b) * 1000) / 10).toFixed(1) + '%' : '—'; }
+
+  function drawType(rows){
+    var list = rows.filter(function(r){ return !(r.medDept === '00' || r.medName === '전체' || r.cformName === '전체'); }).sort(function(a,b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
+    var sum = list.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
+    body('mdAnaType', list.map(function(r){
+      return cells([esc(r.cformName || r.medName), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, sum)]);
+    }).join(''));
+  }
+  function drawDoc(rows){
+    var list = rows.filter(function(r){ return r.licenseNo && r.licenseNo !== '99'; }).sort(function(a,b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
+    var sum = list.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
+    body('mdAnaDoc', list.map(function(r){
+      var nm = (r.licenseName && r.licenseName !== '전체') ? r.licenseName : ('면허 ' + r.licenseNo + ' (의사명 미등록)');
+      return cells([esc(nm), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, sum)]);
+    }).join(''));
+  }
+  function drawDis(rows){
+    var list = rows.filter(function(r){ return r.diagName || r.diagCode; }).sort(function(a,b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); }).slice(0, 10);
+    var sum = rows.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
+    body('mdAnaDis', list.map(function(r){
+      return cells([esc((r.diagCode ? r.diagCode + ' ' : '') + (r.diagName || '')), num(r.totalAmt), num(r.claimCount), ratio(r.totalAmt, sum)]);
+    }).join(''));
+  }
+  function drawDay(rows, trend){
+    var days = {}; (trend || []).forEach(function(t){ days[t.ym] = Number(t.admdays || 0); });
+    body('mdAnaDay', rows.slice().sort(function(a,b){ return String(a.dateYm).localeCompare(String(b.dateYm)); }).map(function(r){
+      var d = days[r.dateYm] || 0, amt = Number(r.ipAmt != null ? r.ipAmt : r.totalAmt || 0);
+      return cells([esc(ymLbl(r.dateYm)), num(amt), num(d), d ? num(Math.round(amt / d)) : '—', num(r.totalAvgAmt)]);
+    }).join(''));
+  }
+  function drawDrug(r082, r08, r081, r083){
+    var t082 = totRow(arr(r082)), t08 = totRow(arr(r08)), t081 = totRow(arr(r081)), t083 = totRow(arr(r083));
+    var yk = function(t){ return t ? Number(t.yakAmt || 0) : null; };
+    var rows = [];
+    // 약제비용 − 비청구액 = 청구액 (위탁청구는 기존 값에서 이미 뺐다)
+    var line = function(name, total, nonclaim){
+      if (total == null) { rows.push(cells([esc(name), '—', '—', '—', '—', '—'])); return; }
+      var nc = nonclaim || 0, claim = total - nc;
+      rows.push(cells([esc(name), num(total), num(claim), ratio(claim, total), num(nc), ratio(nc, total)]));
+    };
+    line('정액환자', yk(t081), yk(t08));
+    line('정율환자 (행위)', yk(t082), 0);
+    line('전체환자', yk(t083), yk(t08));
+    body('mdAnaDrug', rows.join(''));
+  }
+  function drawItem(rows){
+    var list = rows.filter(function(r){ return r.itemName && r.itemName !== '전체'; }).sort(function(a,b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); }).slice(0, 12);
+    var tot = rows.filter(function(r){ return r.itemName === '전체'; })[0];
+    var sum = tot ? Number(tot.totalAmt || 0) : list.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
+    body('mdAnaItem', list.map(function(r){
+      return cells([esc(r.codeName || ''), esc(r.itemName || ''), num(r.totalAmt), num(r.claimCount), ratio(r.totalAmt, sum)]);
+    }).join(''));
+  }
+
+  function loadAnalysis(){
+    var ym = D && D.ym;
+    if (!ym) {
+      ['mdAnaType','mdAnaDoc','mdAnaDis','mdAnaDay','mdAnaDrug','mdAnaItem'].forEach(function(id){ body(id, '<tr><td colspan="6" class="md-empty">청구 자료가 없어 분석을 할 수 없습니다.</td></tr>'); });
+      return;
+    }
+    g('mdAnaSub').textContent = ymLbl(ym) + ' 기준 · 의과 · 청구액 기준';
+    var base = { ipwe:'', medType:'1', jrType:'0', amtType:'2', startMonth: ym, endMonth: ym };
+    var reqs = [
+      tong('/tong/t_tong06List.do', $.extend({}, base)),
+      tong('/tong/t_tong05List.do', $.extend({}, base)),
+      tong('/tong/t_tong04List.do', $.extend({}, base)),
+      tong('/tong/t_tong00List.do', $.extend({}, base, { ipwe:'I', startMonth: addYm(ym, -5) })),
+      tong('/tong/t_tong082List.do', $.extend({}, base)),
+      tong('/tong/t_tong08List.do', $.extend({}, base)),
+      tong('/tong/t_tong081List.do', $.extend({}, base)),
+      tong('/tong/t_tong083List.do', $.extend({}, base)),
+      tong('/tong/t_tong09List.do', { ipwe:'', medType:'1', startMonth: ym, endMonth: ym })
+    ].map(function(q){ return q.then(function(r){ return r; }, function(){ return []; }); });
+    $.when.apply($, reqs).then(function(){
+      var a = arguments, trend = (C && C.trendClaim) || [];
+      drawType(arr(a[0])); drawDoc(arr(a[1])); drawDis(arr(a[2]));
+      drawDay(arr(a[3]), trend);
+      drawDrug(a[4], a[5], a[6], a[7]);
+      drawItem(arr(a[8]));
     });
   }
 

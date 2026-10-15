@@ -30,17 +30,17 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261015-MGR1";   // 병원장 조회·원무 환자고객·간호사 관리(MGR1) · + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
+	private static final String BUILD = "20261015-DIR3";   // 청구세부통계 시작월~종료월(DIR3) · 원무 수입실적(REV1, 일별·월별·경영 보고서 탭) · 병원장 조회·원무 환자고객·간호사 관리(MGR1) · + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
 
 	@Resource(name = "MisService")
 	private MisService svc;
 
 	/* ═══ 화면 ═══ */
 	@RequestMapping(value = "main/misStat.do")
-	public String misStat(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misStat"); }
+	public String misStat(HttpServletRequest request, ModelMap model) { model.addAttribute("initTab", "stat"); return screen(request, model, ".main/mismgr/misReport"); }   // 2026-10-15 경영 보고서의 「경영통계」 탭으로 통합
 
 	@RequestMapping(value = "main/misCost.do")
-	public String misCost(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misCost"); }
+	public String misCost(HttpServletRequest request, ModelMap model) { model.addAttribute("initTab", "cost"); return screen(request, model, ".main/mismgr/misReport"); }   // 2026-10-15 경영 보고서의 「고정경비 관리」 탭으로 통합
 
 	private String screen(HttpServletRequest request, ModelMap model, String view) {
 		Map<String, String> ck = ClientInfo.getCookie(request);
@@ -1016,7 +1016,7 @@ public class MisController {
 
 	/* ═══ 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ═══ */
 	@RequestMapping(value = "main/misDirector.do")
-	public String misDirector(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misDirector"); }
+	public String misDirector(HttpServletRequest request, ModelMap model) { model.addAttribute("initTab", "dir"); return screen(request, model, ".main/mismgr/misReport"); }   // 2026-10-15 경영 보고서의 「병원장 보고」 탭으로 통합
 
 	@RequestMapping(value = "main/misPatient.do")
 	public String misPatient(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misPatient"); }
@@ -1032,7 +1032,15 @@ public class MisController {
 		try {
 			String hospCd = hospCd(request, p);
 			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
-			res.putAll(svc.selectDirectorBoard(hospCd, wnnYn(request)));
+			// 기간: 종료월(toYm, 없으면 ym) · 시작월(fromYm). 시작이 비었거나 뒤면 종료월 한 달, 최대 24달.
+			String toYm = str(p.get("toYm"), "").replaceAll("[^0-9]", "");
+			if (toYm.isEmpty()) toYm = str(p.get("ym"), "").replaceAll("[^0-9]", "");
+			String fromYm = str(p.get("fromYm"), "").replaceAll("[^0-9]", "");
+			if (toYm.matches("\\d{6}")) {
+				if (!fromYm.matches("\\d{6}") || fromYm.compareTo(toYm) > 0) fromYm = toYm;
+				if (addMonths(fromYm, 23).compareTo(toYm) < 0) fromYm = addMonths(toYm, -23);
+			}
+			res.putAll(svc.selectDirectorBoard(hospCd, wnnYn(request), fromYm, toYm));
 			res.put("hospCd", hospCd);
 			res.put("build", BUILD);
 			res.put("result", "OK");
@@ -1111,6 +1119,57 @@ public class MisController {
 			try { seq = Long.parseLong(str(p.get("chgSeq"), "").trim()); }
 			catch (Exception e) { return fail(res, "지울 기록을 찾지 못했습니다."); }
 			if (svc.deleteStaffChg(hospCd, seq, userId(request)) == 0) return fail(res, "지울 기록이 없습니다.");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 원무 수입실적 (2026-10-15) — 경영고객관리 › 원무 수입실적 (일별·월별·경영 보고서 탭) ═══ */
+	@RequestMapping(value = "main/misRevenue.do")
+	public String misRevenue(HttpServletRequest request, ModelMap model) { model.addAttribute("initTab", "rev"); return screen(request, model, ".main/mismgr/misReport"); }   // 2026-10-15 경영 보고서의 「수입 일보」 탭으로 통합
+
+	/** 원무 수입실적 — 수납대장 행. 기간을 안 주면 최근 12개월. */
+	@RequestMapping(value = "/mis/revGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> revGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String toYm = str(p.get("toYm"), "").replaceAll("[^0-9]", "");
+			if (!toYm.matches("\\d{6}")) toYm = nowYm();
+			String fromYm = str(p.get("fromYm"), "").replaceAll("[^0-9]", "");
+			if (!fromYm.matches("\\d{6}") || fromYm.compareTo(toYm) > 0) fromYm = addMonths(toYm, -11);
+			if (addMonths(fromYm, 23).compareTo(toYm) < 0) fromYm = addMonths(toYm, -23);   // 최대 24개월
+			res.putAll(svc.selectRevenue(hospCd, fromYm, toYm));
+			res.put("hospCd", hospCd);
+			res.put("build", BUILD);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/* ═══ 경영 보고서 (2026-10-15) — 경영고객관리 › 경영 보고서 ═══ */
+	@RequestMapping(value = "main/misReport.do")
+	public String misReport(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misReport"); }
+
+	/** 경영 보고서 한 장 — 청구월(없으면 가장 최근 청구월)의 자료와 전월 자료. */
+	@RequestMapping(value = "/mis/reportGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> reportGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String ym = str(p.get("ym"), "").replaceAll("[^0-9]", "");
+			if (!ym.matches("\\d{6}")) {
+				String last = svc.selectLastClaimYm(hospCd);
+				ym = (last == null || !last.matches("\\d{6}")) ? "" : last;
+			}
+			if (ym.isEmpty()) return fail(res, "청구 자료가 없습니다. 청구 샘파일을 올리면 보고서가 만들어집니다.");
+			res.putAll(svc.selectReport(hospCd, ym));
+			res.put("hospCd", hospCd);
+			res.put("build", BUILD);
 			res.put("result", "OK");
 		} catch (Exception ex) { fail(res, ex.getMessage()); }
 		return res;
