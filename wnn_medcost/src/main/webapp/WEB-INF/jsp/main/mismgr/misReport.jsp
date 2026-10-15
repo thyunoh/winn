@@ -148,6 +148,21 @@
       '<table><thead><tr><th>구분</th><th class="n">' + esc(ymLbl(d.ym)) + '</th><th class="n">' + esc(ymLbl(d.prevYm)) + '</th><th class="n">증감</th><th>비고</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
+  /* ── 과별 진료비 (2026-10-15) — 청구세부 과별 분석과 같은 기준(총액 · 위탁 규칙). 진료과는 주상병 기준 ── */
+  function secDept(d){
+    var list = d.dept || [], tot = list.reduce(function(s, x){ return s + n0(x.amt); }, 0);
+    var cnt = list.reduce(function(s, x){ return s + n0(x.cnt); }, 0);
+    var max = 0; list.forEach(function(x){ max = Math.max(max, n0(x.amt)); });
+    var rows = list.slice(0, 10).map(function(x){
+      return row([esc(x.nm || '기타'), eok(x.amt), num(x.cnt) + '건', (n0(x.cnt) ? num(Math.round(n0(x.amt) / n0(x.cnt))) + '원' : '—'), pct(x.amt, tot), bar(n0(x.amt) / (max || 1), 90, '#1f5a4b')]);
+    }).join('');
+    var sum = row(['합계', eok(tot), num(cnt) + '건', (cnt ? num(Math.round(tot / cnt)) + '원' : '—'), '100.0%', ''], 'tot');
+    var rest = list.length > 10 ? '<div class="note">상위 10개 과 외 ' + (list.length - 10) + '개 과는 표에서 생략했고 합계에는 포함됩니다.</div>' : '';
+    return '<h2>과별 진료비 — 총액 기준 (' + list.length + '개 과)</h2>' +
+      '<table><thead><tr><th>진료과</th><th class="n">진료비</th><th class="n">건수</th><th class="n">건당</th><th class="n">비중</th><th>막대</th></tr></thead><tbody>' +
+      (rows ? rows + sum : '<tr><td colspan="6" class="n">해당 자료가 없습니다.</td></tr>') + '</tbody></table>' + rest;
+  }
+
   /* ── Ⅱ 총평 ── */
   function secII(d){
     var c = d.claim || {}, p = d.prevClaim || {};
@@ -280,7 +295,7 @@
 
   function render(d){
     var sumNote = '';
-    var pg1 = '<div class="pg">' + header(d) + '<div class="rg2"><div>' + secI(d) + '</div><div>' + secII(d) + '</div></div>' + secIII(d) + '<div class="rg2"><div>' + secIV(d) + '</div><div>' + secVII(d) + '</div></div>' +
+    var pg1 = '<div class="pg">' + header(d) + '<div class="rg2"><div>' + secI(d) + '</div><div>' + secDept(d) + '</div></div>' + secII(d) + secIII(d) +'<div class="rg2"><div>' + secIV(d) + '</div><div>' + secVII(d) + '</div></div>' +
       '<div class="foot">' + esc(root.getAttribute('data-nm') || '') + ' · ' + esc(ymLbl(d.ym)) + ' 청구분 청구통계 · 1 / 2 면 · 요약</div></div>';
     var pg2 = '<div class="pg">' + '<div class="meta">' + esc(root.getAttribute('data-nm') || '') + ' — ' + esc(ymLbl(d.ym)) + ' 청구분 · 전월 ' + esc(ymLbl(d.prevYm)) + ' 대비 · 상세 자료</div>' +
       '<div class="rg2"><div>' + secV(d) + '</div><div>' + secVI(d) + '</div></div>' +
@@ -294,8 +309,15 @@
     g('mrRoot').innerHTML = pg1 + pg2;
   }
 
+  /* 진행바 — 청구통계 자료를 집계하는 동안 보인다(2026-10-15) */
+  function repProgHtml(txt){
+    return '<style>@keyframes mrProg{0%{left:-40%}100%{left:100%}}</style>' +
+      '<div class="no-print" style="padding:18px 6px;"><div class="mr-note" style="margin-bottom:8px;">' + txt + '</div>' +
+      '<div style="position:relative;height:10px;background:#e4eaef;border-radius:5px;overflow:hidden;max-width:560px;">' +
+      '<div style="position:absolute;top:0;left:-40%;height:100%;width:40%;background:#0b8eca;border-radius:5px;animation:mrProg 1.1s ease-in-out infinite;"></div></div></div>';
+  }
   function load(ym){
-    g('mrRoot').innerHTML = '<div class="mr-note no-print">불러오는 중…</div>';
+    g('mrRoot').innerHTML = repProgHtml('청구 자료 집계 중… (명세서 · 항목 · 진단 · 보험 구분)');
     g('mrNote').hidden = true;
     post('/mis/reportGet.do', ym ? { ym: ym } : {}).then(function(d){
       g('mrYm').value = ymInput(ymOf(d.ym));

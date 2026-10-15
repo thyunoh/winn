@@ -53,7 +53,7 @@
     <button type="button" class="mdr-btn pri" id="mdrGo">조회</button>
     <button type="button" class="mdr-btn" id="mdrPrint">🖨 인쇄</button>
     <button type="button" class="mdr-btn" id="mdrReload">↻ 다시 불러오기</button>
-    <span class="mdr-note">기간은 시작월~종료월 · 처음에는 가장 최근 청구월 한 달 · 최대 24개월</span>
+    <span class="mdr-note">기간은 시작월~종료월 · 처음에는 종료월 포함 최근 6개월 · 최대 24개월</span>
   </div>
   <div class="mdr-note warn" id="mdrNote" hidden></div>
   <div id="mdrRoot"><div class="mdr-note" style="padding:20px 4px;">청구세부통계를 불러오는 중…</div></div>
@@ -98,6 +98,7 @@
       return res;
     });
   }
+  function mdrProg(pct, text){ var f = g('mdrProgFill'); if (!f) return; f.style.width = Math.max(0, Math.min(100, pct)) + '%'; g('mdrProgTxt').textContent = text; g('mdrProgPct').textContent = Math.round(pct) + '%'; }
   function tong(url, p){ p.hospCd = hosp(); return $.ajax({ url:url, type:'POST', data:p, dataType:'json' }); }
 
   /* 한 줄 — 첫 칸은 글자, 나머지는 숫자(오른쪽 맞춤). text 에 든 번호 칸만 글자로 둔다 */
@@ -146,14 +147,14 @@
              prevFixed: (hasPrev && nMonths === 1) ? prevFixed : null, prevExtra: (hasPrev && nMonths === 1) ? prevExtra : null, dIn:dIn, ym:ym, nMonths:nMonths };
   }
 
-  /* 12개월 추이 — 청구 자료가 있는 달만 수익을 채운다 */
-  function trendRows(ym){
+  /* 추이 — 조회 기간(from~to)의 달마다 수익·비용을 채운다. 청구 자료가 있는 달만 수익을 채운다 (2026-10-15: 12개월 고정 → 조회 기간) */
+  function trendRows(from, to){
     var claim = {}, cost = {};
     ((C && C.trendClaim) || []).forEach(function(r){ claim[r.ym] = r; });
     ((C && C.trend) || []).forEach(function(r){ cost[r.ym] = r; });
     var cfg = (C && C.cfg) || {}, varC = cfg.varcostday == null ? VAR_DEF : Number(cfg.varcostday);
-    var out = [], m = addYm(ym, -11);
-    for (var i = 0; i < 12; i++, m = addYm(m, 1)) {
+    var out = [], m = from;
+    for (var i = 0; i < 24 && m <= to; i++, m = addYm(m, 1)) {
       var c = claim[m], t = cost[m];
       var tot = c ? Number(c.totamt || 0) : 0, days = c ? Number(c.admdays || 0) : 0;
       var fx = t ? Number(t.costamt || 0) : 0, ex = t ? Number(t.extraamt || 0) : 0;
@@ -188,7 +189,7 @@
       var cls = r.rev == null ? 'sub' : '';
       return '<tr class="' + cls + '"><td>' + esc(ymLbl(r.ym)) + '</td><td class="n">' + (r.rev == null ? '—' : num(r.rev)) + '</td><td class="n">' + (r.exp == null ? '—' : num(r.exp)) + '</td><td class="n ' + (r.profit == null ? '' : (r.profit >= 0 ? 'up' : 'down')) + '">' + (r.profit == null ? '—' : sgn(r.profit, num)) + '</td></tr>';
     }).join('');
-    return '<h2>Ⅱ. 12개월 수익 · 비용 · 손익 추이</h2>' +
+    return '<h2>Ⅱ. 기간 수익 · 비용 · 손익 추이 (조회 기간 월별)</h2>' +
       '<table>' + head(['월', '수익(원)', '비용(원)', '추정 손익(원)']) + '<tbody>' + body + '</tbody></table>' +
       '<div class="sec-note">수익 = 청구 총진료비 + 추가수익 · 비용 = 고정비 + 환자 변동비(1인 1일 ' + num(VAR_DEF) + '원 기본). 청구나 고정비가 없는 달은 —.</div>';
   }
@@ -232,25 +233,25 @@
   /* ── Ⅴ 청구 분석 (의과 · 총액 기준 — 청구세부통계는 진료비 총액으로 본다) ── */
   function secAnalysis(part){
     if (!T) return '<h2>Ⅴ. 청구 분석</h2><div class="sec-note">청구 분석 자료를 불러오지 못했습니다.</div>';
-    var out = '<h2>Ⅴ. 청구 분석 — 유형 · 의사 · 질환 (전체 · 총액 기준)</h2>';
+    var out = '';   // Ⅴ 상위 제목 제거 — 5-1·5-2·5-3 을 독립 구획으로 (2026-10-15)
 
     /* 5-1 유형별 */
     var typ = T.type.filter(function(r){ return !(r.medDept === '00' || r.medName === '전체' || r.cformName === '전체'); })
                     .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
     var typSum = typ.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
-    var p51 = '<div class="sub2">5-1 유형별 청구</div><table>' + head(['유형', '총액(원)', '건수', '건당(원)', '비중']) + '<tbody>' +
-      (typ.length ? typ.map(function(r){ return tr([esc(r.cformName || r.medName), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, typSum)], '', []); }).join('') : emptyRow(5, '해당 자료가 없습니다.')) +
+    var p51 = '<h2>Ⅴ-1. 유형별 청구</h2><table>' + head(['번호', '유형', '총액(원)', '건수', '건당(원)', '비중'], [1]) + '<tbody>' +
+      (typ.length ? typ.map(function(r, i){ return tr([i + 1, esc(r.cformName || r.medName), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, typSum)], '', [1]); }).join('') : emptyRow(6, '해당 자료가 없습니다.')) +
       '</tbody></table>';
 
     /* 5-2 의사별 — 면허번호 기준, 의사명이 없으면 면허 번호로 표시 */
     var doc = T.doc.filter(function(r){ return r.licenseNo && r.licenseNo !== '99'; })
                    .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
     var docSum = doc.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
-    var p52 = '<div class="sub2">5-2 의사별 청구 (상위 10 · 면허번호 기준)</div><table>' + head(['의사', '총액(원)', '건수', '건당(원)', '비중']) + '<tbody>' +
-      (doc.length ? doc.slice(0, 10).map(function(r){
+    var p52 = '<h2>Ⅴ-2. 의사별 청구 (상위 10 · 면허번호 기준)</h2><table>' + head(['번호', '의사', '총액(원)', '건수', '건당(원)', '비중'], [1]) + '<tbody>' +
+      (doc.length ? doc.slice(0, 10).map(function(r, i){
         var nm = (r.licenseName && r.licenseName !== '전체') ? r.licenseName : ('면허 ' + r.licenseNo + ' (의사명 미등록)');
-        return tr([esc(nm), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, docSum)], '', []);
-      }).join('') : emptyRow(5, '해당 자료가 없습니다.')) +
+        return tr([i + 1, esc(nm), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, docSum)], '', [1]);
+      }).join('') : emptyRow(6, '해당 자료가 없습니다.')) +
       '</tbody></table>';
 
     out += '<div class="mdr-grid"><div>' + p51 + '</div><div>' + p52 + '</div></div>';
@@ -262,14 +263,14 @@
                    .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
     var disSum = T.dis.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
     var hasZZ = dis.some(function(r){ return r.diagCode === 'ZZ'; });
-    out += '<div class="sub2">5-3 질환별 청구 (상위 10 · 건당 · 환자당)</div><table>' +
-      head(['질환', '총액(원)', '건수', '환자', '건당(원)', '환자당(원)', '비중']) + '<tbody>' +
-      (dis.length ? dis.slice(0, 10).map(function(r){
+    out += '<h2>Ⅴ-3. 질환별 청구 (상위 10 · 건당 · 환자당)</h2><table>' +
+      head(['번호', '질환', '총액(원)', '건수', '환자', '건당(원)', '환자당(원)', '비중'], [1]) + '<tbody>' +
+      (dis.length ? dis.slice(0, 10).map(function(r, i){
         var cnt = Number(r.claimCount||0), pts = Number(r.uniqPatients||0), amt = Number(r.totalAmt||0);
-        return tr([esc((r.diagCode ? r.diagCode + ' ' : '') + (r.diagName || '')), num(amt), num(cnt), num(pts),
+        return tr([i + 1, esc((r.diagCode ? r.diagCode + ' ' : '') + (r.diagName || '')), num(amt), num(cnt), num(pts),
           num(r.amtPerClaim != null ? r.amtPerClaim : (cnt ? Math.floor(amt / cnt) : 0)),
-          num(r.amtPerPatient != null ? r.amtPerPatient : (pts ? Math.floor(amt / pts) : 0)), ratio(amt, disSum)], '', []);
-      }).join('') : emptyRow(7, '해당 자료가 없습니다.')) +
+          num(r.amtPerPatient != null ? r.amtPerPatient : (pts ? Math.floor(amt / pts) : 0)), ratio(amt, disSum)], '', [1]);
+      }).join('') : emptyRow(8, '해당 자료가 없습니다.')) +
       '</tbody></table>' +
       (hasZZ ? '<div class="sec-note">ZZ 기타병명 = 질병 분류표(공통코드 DISEASE_TYPE)에 없는 주상병 코드를 한데 모은 줄이다. 코드별로 보려면 「청구통계」 탭 Ⅵ(주상병별 수익 구성)을 본다.</div>' : '');
     return out;
@@ -308,17 +309,18 @@
                       .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); }).slice(0, 12);
     var itemTot = T.item.filter(function(r){ return r.itemName === '전체'; })[0];
     var itemSum = itemTot ? Number(itemTot.totalAmt || 0) : items.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
-    var itemRows = items.map(function(r){
-      return tr([esc(r.codeName || ''), esc(r.itemName || ''), num(r.totalAmt), num(r.claimCount), ratio(r.totalAmt, itemSum)], '', [1]);
+    var itemRows = items.map(function(r, i){
+      return tr([i + 1, esc(r.codeName || ''), esc(r.itemName || ''), num(r.totalAmt), num(r.claimCount), ratio(r.totalAmt, itemSum)], '', [1, 2]);
     }).join('');
-    return '<h2>Ⅶ. 약처방 — 진료대비 약제비율 · 정액 비청구</h2>' +
+    var topHtml = '<h2>Ⅶ-1. 약처방 — 진료대비 약제비율 · 정액 비청구</h2>' +
       '<table>' + head(['구분', '약제비용(원)', '청구액(원)', '청구 비율', '비청구액(원)', '비청구 비율']) + '<tbody>' + rows.join('') + '</tbody></table>' +
-      '<div class="sec-note">약제비용 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 금액. 청구액 = 약제비용 − 비청구액. 비청구액 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 정율환자는 항목상 비청구 약이 확인되지 않아 전액 청구로 봤다.</div>' +
-      '<div class="sub2">정액 비청구분 항목별 — 약 말고 다른 처방 (상위 12)</div>' +
-      '<table>' + head(['코드', '항목', '금액(원)', '건수', '비중'], [1]) + '<tbody>' +
-      (itemRows || emptyRow(5, '해당 자료가 없습니다.')) + '</tbody></table>';
+      '<div class="sec-note">약제비용 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 금액. 청구액 = 약제비용 − 비청구액. 비청구액 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 정율환자는 항목상 비청구 약이 확인되지 않아 전액 청구로 봤다.</div>';
+    var disHtml = '<h2>Ⅶ-2. 정액 비청구분 항목별 — 약 말고 다른 처방 (상위 12)</h2>' +
+      '<table style="width:100%;">' + head(['번호', '항목', '분류', '금액(원)', '건수', '비중'], [1, 2]) + '<tbody>' +
+      (itemRows || emptyRow(6, '해당 자료가 없습니다.')) + '</tbody></table>';
+    // 같은 줄에 좌(약처방 요약) · 우(정액 비청구분 항목별)
+    return '<div class="mdr-grid"><div>' + topHtml + '</div><div>' + disHtml + '</div></div>';
   }
-
   function render(){
     if (D && D.ym) g('mdrYm').value = D.ym.slice(0, 4) + '-' + D.ym.slice(4, 6);
     if (D && D.fromYm) g('mdrFrom').value = D.fromYm.slice(0, 4) + '-' + D.fromYm.slice(4, 6);
@@ -334,13 +336,14 @@
     var from = (D && D.fromYm) || ym;
     var R = rangeInfo(from, ym);
     var M = calc(ym, cl, R.n, R.days);
-    var tr12 = trendRows(ym);
-    var prevRev = tr12[10] ? tr12[10].rev : null;
+    var tr12 = trendRows(from, ym);
+    var prevYmRow = trendRows(addYm(ym, -1), addYm(ym, -1))[0];   // 전월 수익 — 조회 기간과 관계없이 종료월 전월
+    var prevRev = prevYmRow ? prevYmRow.rev : null;
     var today = (D && D.today) || '';
     var asof = today ? (today.slice(0,4) + '.' + today.slice(4,6) + '.' + today.slice(6,8)) : '';
     var nm = root.getAttribute('data-nm') || '';
     var header = '<h1>청구세부통계</h1>' +
-      '<div class="meta">' + esc(nm) + ' · 기간 ' + esc(periodLbl(from, ym)) + ' · 12개월 추이 포함</div>' +
+      '<div class="meta">' + esc(nm) + ' · 기간 ' + esc(periodLbl(from, ym)) + ' · 기간 추이 포함</div>' +
       '<div class="meta2">작성일 ' + esc(asof) + '</div>';
     var p1 = '<div class="pg">' + header + '<div class="mdr-grid"><div>' + secSummary(M, prevRev) + '</div><div>' + secTrend(tr12) + '</div></div>' +
       '<div class="mdr-grid"><div>' + secExpense(M) + '</div><div>' + secRevenue(M, cl) + '</div></div>' +
@@ -355,6 +358,7 @@
     var ym = D && D.ym;
     if (!ym) { T = null; return $.Deferred().resolve().promise(); }
     var from = (D && D.fromYm) || ym;
+    var done = 0; var step = function(){ done++; mdrProg(50 + done / 9 * 50, '청구 분석 불러오는 중… (3/3 · ' + done + '/9)'); }; mdrProg(50, '청구 분석 불러오는 중… (3/3 · 0/9)');
     var base = { ipwe:'', medType:'9', jrType:'0', amtType:'1', startMonth: from, endMonth: ym };   // medType 9 = 전체(의과 필터 없음), amtType 1 = 총액(진료비) 기준
     var reqs = [
       tong('/tong/t_tong06List.do', $.extend({}, base)),
@@ -366,7 +370,7 @@
       tong('/tong/t_tong081List.do', $.extend({}, base)),
       tong('/tong/t_tong083List.do', $.extend({}, base)),
       tong('/tong/t_tong09List.do', { ipwe:'', medType:'9', amtType:'1', startMonth: from, endMonth: ym })
-    ].map(function(q){ return q.then(function(r){ return r; }, function(){ return []; }); });
+    ].map(function(q){ return q.then(function(r){ step(); return r; }, function(){ step(); return []; }); });
     return $.when.apply($, reqs).then(function(){
       if (my !== LOAD_REQ) return;
       var a = arguments;
@@ -378,11 +382,14 @@
   function load(fromYm, toYm){
     var my = ++LOAD_REQ;
     g('mdrNote').hidden = true;
-    g('mdrRoot').innerHTML = '<div class="mdr-note" style="padding:20px 4px;">청구세부통계를 불러오는 중…</div>';
+    g('mdrRoot').innerHTML = '<div style="padding:20px 4px;"><div id="mdrProgTxt" class="mdr-note">자료 불러오는 중… (1/3)</div><div style="height:10px;background:#e4eaef;border-radius:5px;overflow:hidden;margin:8px 0;max-width:560px;"><div id="mdrProgFill" style="height:100%;width:0%;background:#1f5a4b;transition:width .25s;"></div></div><div id="mdrProgPct" class="mdr-note">0%</div></div>'; mdrProg(10, '자료 불러오는 중… (1/3)');
     return post('/mis/directorGet.do', { fromYm: fromYm || '', toYm: toYm || '' }).then(function(d){
       if (my !== LOAD_REQ) return null;
       D = d;
-      return post('/mis/costGet.do', { ym: d.ym || '' }).then(function(c){ C = c; }, function(){ C = null; });
+      // 추이는 조회 기간(시작월~종료월)으로 받는다. 전월 수익을 위해 시작월 한 달 전부터 받는다.
+      var f0 = (d.fromYm || d.ym || '');
+      var cf = f0 ? addYm(f0, -1) : '';
+      mdrProg(30, '고정비 불러오는 중… (2/3)'); return post('/mis/costGet.do', { ym: d.ym || '', fromYm: cf }).then(function(c){ C = c; }, function(){ C = null; });
     }).then(function(){
       if (my !== LOAD_REQ || !D) return;
       return loadAnalysis(my).then(function(){ if (my === LOAD_REQ) render(); });

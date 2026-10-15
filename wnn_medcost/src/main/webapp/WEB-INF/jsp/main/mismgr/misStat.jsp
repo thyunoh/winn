@@ -149,6 +149,13 @@
 
   /* 전년 동월 비교(2026-10-08) — 고른 기간보다 12달 앞서서 받아 두고(서버 상한 24달), 보이는 기간은 고른 그대로. 앞 12달은 전년 동월 칸에만 쓴다. */
   var VIEW = { from:'', to:'' };
+  /* 진행바 — 집계가 끝날 때까지 KPI 자리에 보인다(2026-10-15) */
+  function msProgHtml(txt){
+    return '<style>@keyframes msProg{0%{left:-40%}100%{left:100%}}</style>' +
+      '<div style="padding:14px 6px;"><div class="small" style="margin-bottom:8px;">' + txt + '</div>' +
+      '<div style="position:relative;height:10px;background:#e4eaef;border-radius:5px;overflow:hidden;max-width:560px;">' +
+      '<div style="position:absolute;top:0;left:-40%;height:100%;width:40%;background:#1f5a4b;border-radius:5px;animation:msProg 1.1s ease-in-out infinite;"></div></div></div>';
+  }
   window.msLoad = function(){
     var f = gel('msFrom').value, t = gel('msTo').value;
     if (f > t) { var x = f; f = t; t = x; }
@@ -156,6 +163,8 @@
     VIEW.from = f; VIEW.to = t;
     var p = { fromYm: reqFrom, toYm: t };
     if (WNN) p.hospCd = hospCd();
+    gel('msKpis').innerHTML = msProgHtml('월별 자료 집계 중… (청구 · 평가표 · 입퇴원 · 고객 평균)');
+    gel('msTbl').innerHTML = '<tbody><tr><td class="ms-empty">집계 중…</td></tr></tbody>';
     post('<c:url value="/mis/statGet.do"/>', p).then(function(res){
       D = res;
       if (res.toYm !== t) { VIEW.to = res.toYm; VIEW.from = addYm(res.toYm, -5); }   // 서버가 기간을 바꿨으면(자료 없는 달 등) 그에 맞춘다

@@ -802,7 +802,7 @@
                                 <li class="nav-item">
                                     <a class="nav-item nav-link" href="#" data-toggle="collapse"
                                        aria-expanded="false" data-target="#mis-g-stat" aria-controls="mis-g-stat"
-                                       style="font-weight:600;">▸ 경영통계</a>
+                                       style="font-weight:600;">▸ 경영통계관리</a>
                                     <div id="mis-g-stat" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misReport.do">청구통계</a></li>
@@ -820,7 +820,7 @@
                                     <div id="mis-g-cust" class="collapse submenu" style="background-color:#fff;">
                                         <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misLead.do">신규환자</a></li>
-                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misPatient.do">기존환자</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misPatient.do">입퇴원환자</a></li>
                                         </ul>
                                     </div>
                                 </li>

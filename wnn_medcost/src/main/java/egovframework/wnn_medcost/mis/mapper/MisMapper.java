@@ -127,6 +127,7 @@ public interface MisMapper {
 
 	/* ── 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ── */
 	List<Map<String, Object>> selectCurrentPats(@Param("hospCd") String hospCd);
+	List<Map<String, Object>> selectIpwonOnlyPats(@Param("hospCd") String hospCd);
 	List<Map<String, Object>> selectNurseRoster(@Param("hospCd") String hospCd);
 	List<Map<String, Object>> selectStaffChgs(@Param("hospCd") String hospCd, @Param("fromDt") String fromDt);
 	Map<String, Object> selectStaffChgNet(@Param("hospCd") String hospCd);
@@ -137,6 +138,7 @@ public interface MisMapper {
 	List<Map<String, Object>> selectReportItems(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	List<Map<String, Object>> selectReportDiags(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	List<Map<String, Object>> selectReportInOut(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	List<Map<String, Object>> selectReportDept(@Param("hospCd") String hospCd, @Param("ym") String ym);
 	List<Map<String, Object>> selectReportDrug(@Param("hospCd") String hospCd, @Param("ym") String ym);
 
 		/* ── 원무 수입실적 (2026-10-15) ── */

@@ -47,6 +47,12 @@ public class MisServiceImpl implements MisService {
 
 	@Override
 	public Map<String, Object> selectCostPage(String hospCd, String ym) throws Exception {
+		return selectCostPageRange(hospCd, addMonths(ym, -11), ym);
+	}
+
+	/** 고정비 화면 — 추이 기간을 fromYm~ym 으로 받는다(청구세부통계는 조회 기간을 넘긴다, 2026-10-15). */
+	@Override
+	public Map<String, Object> selectCostPageRange(String hospCd, String fromYm, String ym) throws Exception {
 		Map<String, Object> r = new HashMap<>();
 		r.put("cfg",   mapper.selectCfg(hospCd));
 		r.put("cats",  mapper.selectCats(hospCd));
@@ -56,8 +62,6 @@ public class MisServiceImpl implements MisService {
 		r.put("prevCost", prevYm == null ? new ArrayList<Map<String, Object>>() : mapper.selectCost(hospCd, prevYm));
 		// 이 달 수익·입원일수(손익분기 계산 재료) — 청구가 없는 달이면 빈 목록
 		r.put("claim", mapper.selectMonthClaim(hospCd, ym, ym));
-		// 최근 12달 추이(고정비·추가수익 vs 총진료비)
-		String fromYm = addMonths(ym, -11);
 		r.put("trend", mapper.selectCostTrend(hospCd, fromYm, ym));
 		r.put("trendClaim", mapper.selectMonthClaim(hospCd, fromYm, ym));
 		r.put("grade", mapper.selectGradeLatest(hospCd));
@@ -829,7 +833,10 @@ public class MisServiceImpl implements MisService {
 		// 기간 = 시작월~종료월(안 고르면 가장 최근 청구월 한 달). 청구 금액·일수는 기간 합계, 입원·외래는 종료월 기준.
 		String ym = (toIn != null && toIn.matches("\\d{6}")) ? toIn : mapper.selectLastClaimYm(hospCd);
 		if (ym != null && ym.matches("\\d{6}")) {
-			String from = (fromIn != null && fromIn.matches("\\d{6}") && fromIn.compareTo(ym) <= 0) ? fromIn : ym;
+			// 시작월을 안 주면 종료월 포함 최근 6개월(2026-10-15) — 화면이 처음 열 때 시작월을 보내지 않는다
+			String from = (fromIn != null && fromIn.matches("\\d{6}"))
+					? (fromIn.compareTo(ym) <= 0 ? fromIn : ym)
+					: addMonths(ym, -5);
 			Map<String, Object> st = selectStat(hospCd, from, ym);
 			r.put("ym", ym);
 			r.put("fromYm", from);
@@ -896,22 +903,45 @@ public class MisServiceImpl implements MisService {
 	@Override
 	public Map<String, Object> selectPatBoard(String hospCd) throws Exception {
 		List<Map<String, Object>> pats = mapper.selectCurrentPats(hospCd);
-		int noTel = 0, fresh = 0, inLead = 0;
+		// 기준 = 환자평가표(최근 평가월)의 입원 건. ipstatus: IN 재원 · OUT 퇴원(퇴원일 있음) · NONE 입퇴원현황 기록 없음
+		int noTel = 0, fresh = 0, inLead = 0, longStay = 0, inCnt = 0, outCnt = 0, noneCnt = 0;
 		for (Map<String, Object> p : pats) {
 			boolean tel = !pStr(p.get("tel")).isEmpty();
 			boolean lead = !pStr(p.get("leadseq")).isEmpty();
+			String st = pStr(p.get("ipstatus"));
+			int days = pInt(p.get("staydays"));
+			boolean in = "IN".equals(st);
+			// 장기입원 = 재원 181일 이상(적정성 장기입원 지표 대상) — 재원 중인 건만 센다
+			boolean isLong = in && days >= 181;
 			p.put("hasTel", tel);
 			p.put("hasLead", lead);
+			p.put("isLong", isLong);
 			if (!tel) noTel++;
 			if (lead) inLead++;
-			if (pInt(p.get("staydays")) <= 3) fresh++;
+			if (in && days <= 3) fresh++;
+			if (isLong) longStay++;
+			if (in) inCnt++; else if ("OUT".equals(st)) outCnt++; else noneCnt++;
+		}
+		// 입원리스트만 있는 재원 — 입퇴원현황에는 재원인데 환자평가표에는 없는 입원 건(같은 화면의 두 번째 탭)
+		List<Map<String, Object>> ipOnly = mapper.selectIpwonOnlyPats(hospCd);
+		for (Map<String, Object> p : ipOnly) {
+			int days = pInt(p.get("staydays"));
+			p.put("hasTel", !pStr(p.get("tel")).isEmpty());
+			p.put("hasLead", !pStr(p.get("leadseq")).isEmpty());
+			p.put("isLong", days >= 181);
 		}
 		Map<String, Object> r = new HashMap<>();
 		r.put("pats", pats);
+		r.put("ipOnly", ipOnly);
+		r.put("ipOnlyCnt", ipOnly.size());
 		r.put("total", pats.size());
 		r.put("noTel", noTel);
 		r.put("fresh", fresh);
 		r.put("inLead", inLead);
+		r.put("longStay", longStay);
+		r.put("inCnt", inCnt);
+		r.put("outCnt", outCnt);
+		r.put("noneCnt", noneCnt);
 		return r;
 	}
 
@@ -998,6 +1028,7 @@ public class MisServiceImpl implements MisService {
 		r.put("diags", mapper.selectReportDiags(hospCd, ym));
 		r.put("prevDiags", mapper.selectReportDiags(hospCd, prev));
 		r.put("inout", mapper.selectReportInOut(hospCd, ym));
+		r.put("dept", mapper.selectReportDept(hospCd, ym));   // 과별 진료비(2026-10-15)
 		r.put("prevInout", mapper.selectReportInOut(hospCd, prev));
 		r.put("drug", mapper.selectReportDrug(hospCd, ym));
 		r.put("prevDrug", mapper.selectReportDrug(hospCd, prev));

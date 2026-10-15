@@ -14,6 +14,8 @@ public interface MisService {
 
 	/** 고정경비 — 한 달 화면에 필요한 것 전부(cfg · cats · cost(이 달) · prevYm · prevCost · claim(이 달) · trend). */
 	Map<String, Object> selectCostPage(String hospCd, String ym) throws Exception;
+	/** 고정비 — 추이 기간(fromYm~ym)을 직접 받는다(청구세부통계의 조회 기간). */
+	Map<String, Object> selectCostPageRange(String hospCd, String fromYm, String ym) throws Exception;
 	void saveCfg(Map<String, Object> p) throws Exception;
 	void saveCat(Map<String, Object> p) throws Exception;
 	/** 병원 전용 항목 삭제 — 금액 기록이 있으면 거절(사용 끄기를 안내). 공통 항목은 매퍼 WHERE 가 막는다. */

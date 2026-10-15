@@ -118,7 +118,15 @@ public class MisController {
 				String last = svc.selectLastClaimYm(hospCd);
 				ym = (last == null || !last.matches("\\d{6}")) ? nowYm() : last;
 			}
-			res.putAll(svc.selectCostPage(hospCd, ym));
+			// 추이 기간: fromYm 이 있으면 fromYm~ym(최대 24달), 없으면 종료월 포함 12달(고정비 화면 기본)
+			String fromYm = str(p.get("fromYm"), "").replaceAll("[^0-9]", "");
+			if (fromYm.matches("\\d{6}")) {
+				if (fromYm.compareTo(ym) > 0) fromYm = ym;
+				if (addMonths(fromYm, 23).compareTo(ym) < 0) fromYm = addMonths(ym, -23);
+				res.putAll(svc.selectCostPageRange(hospCd, fromYm, ym));
+			} else {
+				res.putAll(svc.selectCostPage(hospCd, ym));
+			}
 			res.put("ym", ym);
 			res.put("hospCd", hospCd);
 			res.put("build", BUILD);
@@ -1037,7 +1045,9 @@ public class MisController {
 			if (toYm.isEmpty()) toYm = str(p.get("ym"), "").replaceAll("[^0-9]", "");
 			String fromYm = str(p.get("fromYm"), "").replaceAll("[^0-9]", "");
 			if (toYm.matches("\\d{6}")) {
-				if (!fromYm.matches("\\d{6}") || fromYm.compareTo(toYm) > 0) fromYm = toYm;
+				// 시작월을 안 주면 종료월 포함 최근 6개월(2026-10-15) — 주었는데 종료월보다 뒤면 종료월 한 달
+				if (!fromYm.matches("\\d{6}")) fromYm = addMonths(toYm, -5);
+				else if (fromYm.compareTo(toYm) > 0) fromYm = toYm;
 				if (addMonths(fromYm, 23).compareTo(toYm) < 0) fromYm = addMonths(toYm, -23);
 			}
 			res.putAll(svc.selectDirectorBoard(hospCd, wnnYn(request), fromYm, toYm));

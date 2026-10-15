@@ -833,23 +833,66 @@
 
 	<!-- ===================== 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15, DDL MIS_DDL_DIRECTOR_2026-10-15.sql) ===================== -->
 
-	<!-- 재원 환자 — 가장 최근 입퇴원 스냅샷(JOBYYMM)에서 퇴원일이 비어 있는 입원 건(등록번호·입원일 단위).
-	     보호자·상담은 생년월일 6 + 이름으로 붙인다. 같은 사람이 여러 번 붙지 않도록 MAX 로 한 줄만 남긴다. -->
-	<select id="selectCurrentPats" resultType="java.util.HashMap">
-		SELECT a.chartno AS chartno, a.patnm AS patnm, a.birth6 AS birth6, a.ipdt AS ipdt
-		     , DATEDIFF(CURDATE(), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1 AS staydays
+	<!-- 입원리스트만 있는 재원 — 최근 6개월 입원 · 입퇴원현황에 퇴원일 없는 입원 건 중 환자평가표에 같은 입원(생년월일 6 + 입원일)이 한 번도 없는 건(2026-10-15) -->
+	<select id="selectIpwonOnlyPats" resultType="java.util.HashMap">
+		SELECT ip.chartno AS chartno, ip.patnm AS patnm, ip.birth6 AS birth6, ip.ipdt AS ipdt
+		     , 'IN' AS ipstatus, NULL AS outdt
+		     , DATEDIFF(CURDATE(), STR_TO_DATE(ip.ipdt,'%Y%m%d')) + 1 AS staydays
 		     , ct.tel AS tel, ct.guardnm AS guardnm
 		     , ld.stage AS stage, ld.leadseq AS leadseq
-		  FROM (SELECT t.CHARTNO AS chartno
-		             , REGEXP_REPLACE(MAX(t.PATNAME),'[0-9]','') AS patnm
-		             , LEFT(MAX(t.JUMINNO),6) AS birth6
-		             , REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') AS ipdt
+		     , 0 AS pvcnt, NULL AS docdt, NULL AS patclass
+		  FROM (SELECT LEFT(t.JUMINNO,6) AS birth6, REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') AS ipdt
+		             , MAX(t.CHARTNO) AS chartno, REGEXP_REPLACE(MAX(t.PATNAME),'[0-9]','') AS patnm
 		             , MAX(COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'')) AS twdt
 		          FROM TBL_IPWON_INFO t
 		         WHERE t.HOSP_CD = #{hospCd}
-		           AND t.JOBYYMM = (SELECT MAX(JOBYYMM) FROM TBL_IPWON_INFO WHERE HOSP_CD = #{hospCd})
 		           AND REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') REGEXP '^[0-9]{8}$'
-		         GROUP BY t.CHARTNO, REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')) a
+		         GROUP BY LEFT(t.JUMINNO,6), REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')) ip
+		  LEFT JOIN (SELECT BIRTH6, PAT_NM, MAX(TEL) AS tel, MAX(GUARD_NM) AS guardnm
+		               FROM TBL_MIS_EMR_CONTACT WHERE HOSP_CD = #{hospCd}
+		              GROUP BY BIRTH6, PAT_NM) ct
+		    ON ct.BIRTH6 = ip.birth6 AND ct.PAT_NM = ip.patnm
+		  LEFT JOIN (SELECT BIRTH6, PAT_NM, MAX(LEAD_SEQ) AS leadseq, MAX(STAGE) AS stage
+		               FROM TBL_MIS_LEAD WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		              GROUP BY BIRTH6, PAT_NM) ld
+		    ON ld.BIRTH6 = ip.birth6 AND ld.PAT_NM = ip.patnm
+		 WHERE ip.twdt = ''
+		   AND ip.ipdt >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y%m%d')
+		   AND NOT EXISTS (SELECT 1 FROM TBL_PATVAL_MST v
+		                    WHERE v.HOSP_CD = #{hospCd} AND LEFT(v.PAT_ID,6) = ip.birth6 AND v.ADMIT_DT = ip.ipdt)
+		 ORDER BY ip.ipdt DESC
+		 LIMIT 1000
+	</select>
+<!-- 기존환자 — 기준은 환자평가표(최근 평가월)의 입원 건. 같은 입원(생년월일 6 + 입원일)이 입퇴원현황에 있으면 재원/퇴원과 퇴원일을 붙인다(2026-10-15).
+	     IN = 입퇴원현황에 퇴원일 없음 · OUT = 퇴원일 있음 · NONE = 입퇴원현황에 기록 없음. 같은 입원이 여러 달에 올라오면 퇴원일이 하나라도 찬 쪽을 퇴원으로 본다. -->
+	<select id="selectCurrentPats" resultType="java.util.HashMap">
+		SELECT a.chartno AS chartno, a.patnm AS patnm, a.birth6 AS birth6, a.ipdt AS ipdt
+		     , CASE WHEN ip.birth6 IS NULL THEN 'NONE' WHEN ip.twdt = '' THEN 'IN' ELSE 'OUT' END AS ipstatus
+		     , CASE WHEN ip.twdt = '' THEN NULL ELSE ip.twdt END AS outdt
+		     , CASE WHEN ip.birth6 IS NULL THEN NULL
+		            WHEN ip.twdt = '' THEN DATEDIFF(CURDATE(), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1
+		            ELSE DATEDIFF(STR_TO_DATE(ip.twdt,'%Y%m%d'), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1 END AS staydays
+		     , ct.tel AS tel, ct.guardnm AS guardnm
+		     , ld.stage AS stage, ld.leadseq AS leadseq
+		     , a.pvcnt AS pvcnt, a.docdt AS docdt, a.patclass AS patclass
+		  FROM (SELECT LEFT(v.PAT_ID,6) AS birth6, MAX(v.PAT_NM) AS patnm, v.ADMIT_DT AS ipdt
+		             , COUNT(*) AS pvcnt, MAX(v.DOC_DT) AS docdt
+		             , SUBSTRING_INDEX(GROUP_CONCAT(v.PAT_CLASS ORDER BY v.DOC_DT DESC SEPARATOR ','), ',', 1) AS patclass
+		             , MAX(ip0.chartno) AS chartno
+		          FROM TBL_PATVAL_MST v
+		          LEFT JOIN (SELECT LEFT(t.JUMINNO,6) AS birth6, REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') AS ipdt, MAX(t.CHARTNO) AS chartno
+		                       FROM TBL_IPWON_INFO t WHERE t.HOSP_CD = #{hospCd}
+		                      GROUP BY LEFT(t.JUMINNO,6), REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')) ip0
+		            ON ip0.birth6 = LEFT(v.PAT_ID,6) AND ip0.ipdt = v.ADMIT_DT
+		         WHERE v.HOSP_CD = #{hospCd}
+		           AND LEFT(v.MED_START,6) = (SELECT MAX(LEFT(MED_START,6)) FROM TBL_PATVAL_MST WHERE HOSP_CD = #{hospCd})
+		         GROUP BY LEFT(v.PAT_ID,6), v.ADMIT_DT) a
+		  LEFT JOIN (SELECT LEFT(t.JUMINNO,6) AS birth6, REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') AS ipdt
+		                  , MAX(COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'')) AS twdt
+		               FROM TBL_IPWON_INFO t
+		              WHERE t.HOSP_CD = #{hospCd}
+		              GROUP BY LEFT(t.JUMINNO,6), REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')) ip
+		    ON ip.birth6 = a.birth6 AND ip.ipdt = a.ipdt
 		  LEFT JOIN (SELECT BIRTH6, PAT_NM, MAX(TEL) AS tel, MAX(GUARD_NM) AS guardnm
 		               FROM TBL_MIS_EMR_CONTACT WHERE HOSP_CD = #{hospCd}
 		              GROUP BY BIRTH6, PAT_NM) ct
@@ -858,8 +901,7 @@
 		               FROM TBL_MIS_LEAD WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
 		              GROUP BY BIRTH6, PAT_NM) ld
 		    ON ld.BIRTH6 = a.birth6 AND ld.PAT_NM = a.patnm
-		 WHERE a.twdt = ''
-		 ORDER BY a.ipdt DESC
+		 ORDER BY FIELD(ipstatus,'IN','NONE','OUT'), a.ipdt DESC
 		 LIMIT 500
 	</select>
 
@@ -939,7 +981,36 @@ SELECT j.ITEM_NO AS itemno,
 		]]>
 	</select>
 
-	<!-- 주상병별 — 명세서 한 장의 주상병(DIAG_TYPE 1)을 대분류(3자리)로 묶는다. 이름은 질병 대분류 코드표(Z / DISEASE_TYPE) -->
+	<!-- 과별 진료비 — 청구세부(Tong tong02List)와 같은 기준 : 진료과 = 주상병(DIAG_TYPE 1)의 진료과, 없으면 진료 구분. 총액 기준 · 위탁 규칙 적용 · 명세서 단위 위탁 제외 (2026-10-15) -->
+	<select id="selectReportDept" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT base.med AS code
+		     , COALESCE(D.SUB_CODE_NM, '기타') AS nm
+		     , base.amt AS amt
+		     , base.cnt AS cnt
+		  FROM (
+		    SELECT IFNULL(C.MED_FIELD, B.MED_TYPE) AS med
+		         , SUM(COALESCE(NULLIF(B.MED_AMT2, 0), B.TOT_AMT, 0) + IFNULL(B.NON100_AMT,0)
+		               - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ,1) - FN_CLAIM_TAMT(B.HOSP_CD,B.CLAIM_NO,B.BILL_SEQ,4)) AS amt
+		         , COUNT(*) AS cnt
+		      FROM TBL_CHUNG_MST A
+		      JOIN TBL_MYOUNG_MST B ON A.CLAIM_NO = B.CLAIM_NO AND A.HOSP_CD = B.HOSP_CD
+		      LEFT JOIN TBL_DISEASE_MST C ON C.CLAIM_NO = B.CLAIM_NO AND C.HOSP_CD = B.HOSP_CD
+		                                 AND C.BILL_SEQ = B.BILL_SEQ AND C.DIAG_TYPE = '1'
+		     WHERE A.HOSP_CD = #{hospCd}
+		       AND A.DATE_YM = #{ym}
+		       AND IFNULL(B.DELYN,'') <> 'Y'
+		       AND (SELECT COUNT(DISTINCT tsm.ROW_NO) FROM TBL_SPECODE_MST tsm
+		             WHERE tsm.HOSP_CD = B.HOSP_CD AND tsm.CLAIM_NO = B.CLAIM_NO AND tsm.BILL_SEQ = B.BILL_SEQ AND tsm.SPEC_TYPE = 'JS008')
+		           <>  (SELECT COUNT(*) FROM TBL_JINORD_MST jsm
+		                 WHERE jsm.HOSP_CD = B.HOSP_CD AND jsm.CLAIM_NO = B.CLAIM_NO AND jsm.BILL_SEQ = B.BILL_SEQ AND jsm.ITEM_NO <> 'L')
+		     GROUP BY IFNULL(C.MED_FIELD, B.MED_TYPE)
+		  ) base
+		  LEFT JOIN TBL_CODE_DTL D ON D.CODE_GB = 'Z' AND D.CODE_CD = 'MED_DEPT' AND D.ACTION_YN = 'Y' AND D.SUB_CODE = base.med
+		 ORDER BY base.amt DESC
+		]]>
+	</select>
+<!-- 주상병별 — 명세서 한 장의 주상병(DIAG_TYPE 1)을 대분류(3자리)로 묶는다. 이름은 질병 대분류 코드표(Z / DISEASE_TYPE) -->
 	<select id="selectReportDiags" resultType="java.util.HashMap">
 		<![CDATA[
 		SELECT pd.grp AS code,
