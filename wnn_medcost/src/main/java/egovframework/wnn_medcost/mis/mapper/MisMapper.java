@@ -124,4 +124,12 @@ public interface MisMapper {
 
 	/* ── 통합검색 v1 (2026-10-13) ── */
 	List<Map<String, Object>> selectLeafletBodies(@Param("hospCd") String hospCd);
+
+	/* ── 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ── */
+	List<Map<String, Object>> selectCurrentPats(@Param("hospCd") String hospCd);
+	List<Map<String, Object>> selectNurseRoster(@Param("hospCd") String hospCd);
+	List<Map<String, Object>> selectStaffChgs(@Param("hospCd") String hospCd, @Param("fromDt") String fromDt);
+	Map<String, Object> selectStaffChgNet(@Param("hospCd") String hospCd);
+	int insertStaffChg(Map<String, Object> p);
+	int deleteStaffChg(Map<String, Object> p);
 }

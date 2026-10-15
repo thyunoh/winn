@@ -816,4 +816,147 @@ public class MisServiceImpl implements MisService {
 	private static String cut(String s, int n) { return s == null ? "" : (s.length() > n ? s.substring(0, n) : s); }
 	/** 문자용 짧은 병원 이름 — 「요양병원」을 떼고 8자까지 */
 	private static String shortNm(String nm) { String s = nm == null ? "" : nm.replace("요양병원", "").replace("병원", "").trim(); return cut(s.isEmpty() ? nm : s, 8); }
+
+	/* ═══ 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ═══
+	   새 표는 인력 변동 기록 하나뿐이다. 나머지는 기존 자료를 읽는다(입퇴원현황·상담·보호자·직원 명단·구조영역 구간). */
+
+	/** 병원장 한 장 — 청구(가장 최근 달)·입퇴원·상담·재원 환자·간호 인력 판정·챙길 일 개수. */
+	@Override
+	public Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn) throws Exception {
+		Map<String, Object> r = new HashMap<>();
+		String ym = mapper.selectLastClaimYm(hospCd);
+		if (ym != null && ym.matches("\\d{6}")) {
+			Map<String, Object> st = selectStat(hospCd, ym, ym);
+			r.put("ym", ym);
+			List<?> months = (List<?>) st.get("months");
+			r.put("claim", months == null || months.isEmpty() ? null : months.get(0));
+			List<?> io = (List<?>) st.get("inout");
+			r.put("inout", io == null || io.isEmpty() ? null : io.get(0));
+		}
+		String today = new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
+		// 상담 — 이번 달 접수·입원 전환(유입 경로 전체 합)
+		int leads = 0, admits = 0;
+		for (Map<String, Object> row : mapper.selectLeadStats(hospCd, today.substring(0, 6) + "01", today)) {
+			leads += pInt(row.get("leads"));
+			admits += pInt(row.get("admits"));
+		}
+		r.put("leads", leads);
+		r.put("admits", admits);
+		Map<String, Object> pat = selectPatBoard(hospCd);
+		r.put("pats", pat.get("total"));
+		r.put("noTel", pat.get("noTel"));
+		// 간호 인력은 변동 기록 표(DDL)가 없어도 병원장 화면이 뜨도록 따로 감싼다
+		Map<String, Object> nur = new HashMap<>();
+		try { nur = selectNurseBoard(hospCd); }
+		catch (Exception e) { r.put("nurseErr", pStr(e.getMessage())); }
+		r.put("headcount", nur.get("headcount"));
+		r.put("required", nur.get("required"));
+		r.put("short", nur.get("short"));
+		r.put("ratio", nur.get("ratio"));
+		r.put("fromRoster", nur.get("fromRoster"));
+		// 챙길 일 — 업무 알림의 빨강(bad)·주황(warn) 개수와 위에서부터 세 가지
+		int bad = 0, warn = 0;
+		List<Map<String, Object>> todo = new ArrayList<>();
+		for (Map<String, Object> a : selectAlerts(hospCd, wnnYn)) {
+			String lv = pStr(a.get("level"));
+			if ("bad".equals(lv)) bad++;
+			else if ("warn".equals(lv)) warn++;
+			if (("bad".equals(lv) || "warn".equals(lv)) && todo.size() < 3) todo.add(a);
+		}
+		r.put("bad", bad);
+		r.put("warn", warn);
+		r.put("todo", todo);
+		r.put("today", today);
+		return r;
+	}
+
+	/** 재원 환자 — 가장 최근 입퇴원 자료의 재원 건 + 보호자 연락처 유무 + 상담 연결 + 입원 3일 이내. */
+	@Override
+	public Map<String, Object> selectPatBoard(String hospCd) throws Exception {
+		List<Map<String, Object>> pats = mapper.selectCurrentPats(hospCd);
+		int noTel = 0, fresh = 0, inLead = 0;
+		for (Map<String, Object> p : pats) {
+			boolean tel = !pStr(p.get("tel")).isEmpty();
+			boolean lead = !pStr(p.get("leadseq")).isEmpty();
+			p.put("hasTel", tel);
+			p.put("hasLead", lead);
+			if (!tel) noTel++;
+			if (lead) inLead++;
+			if (pInt(p.get("staydays")) <= 3) fresh++;
+		}
+		Map<String, Object> r = new HashMap<>();
+		r.put("pats", pats);
+		r.put("total", pats.size());
+		r.put("noTel", noTel);
+		r.put("fresh", fresh);
+		r.put("inLead", inLead);
+		return r;
+	}
+
+	/** 간호사 관리 — 직원 명단(EMR 연계, 간호 직종) · 인력 변동 기록 · 1인당 환자수와 5점 구간 상한으로 필요 인원·부족 인원. */
+	@Override
+	public Map<String, Object> selectNurseBoard(String hospCd) throws Exception {
+		String today = new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
+		List<Map<String, Object>> roster = mapper.selectNurseRoster(hospCd);
+		List<Map<String, Object>> active = new ArrayList<>();
+		int nurses = 0, aides = 0;
+		for (Map<String, Object> s : roster) {
+			String ret = pStr(s.get("retiredt")).replaceAll("[^0-9]", "");
+			if (ret.length() == 8 && ret.compareTo(today) <= 0) continue;   // 퇴사일이 지난 사람은 재직으로 세지 않는다
+			active.add(s);
+			if ("간호사".equals(pStr(s.get("jobnm")))) nurses++; else aides++;
+		}
+		boolean fromRoster = !roster.isEmpty();
+		// 직원 명단이 없으면 변동 기록의 입사 − 퇴사로 간호사 수를 추정한다
+		int headcount = fromRoster ? nurses : pInt(mapper.selectStaffChgNet(hospCd).get("net"));
+		int pats = pInt(selectPatBoard(hospCd).get("total"));
+		// 1인당 환자수 기준 — 간호사 구간(TBL_WEVALUE_MST 02)의 5점 구간 상한(인력 시뮬레이션과 같은 규칙)
+		double top = 0;
+		for (Map<String, Object> z : mapper.selectStructZones(today)) {
+			if ("02".equals(pStr(z.get("catecode"))) && pInt(z.get("stdscore")) == 5) { top = pDbl(z.get("endindi")); break; }
+		}
+		int required = top > 0 ? (int) Math.ceil(pats / top) : 0;
+		int shortN = Math.max(0, required - headcount);
+		Double ratio = headcount > 0 ? Math.round(pats * 100.0 / headcount) / 100.0 : null;
+		Map<String, Object> r = new HashMap<>();
+		r.put("roster", active);
+		r.put("nurses", nurses);
+		r.put("aides", aides);
+		r.put("headcount", headcount);
+		r.put("fromRoster", fromRoster);
+		r.put("pats", pats);
+		r.put("ratio", ratio);
+		r.put("top", top);
+		r.put("required", required);
+		r.put("short", shortN);
+		r.put("chgs", mapper.selectStaffChgs(hospCd, today.substring(0, 4) + "0101"));
+		r.put("today", today);
+		return r;
+	}
+
+	@Override
+	public long saveStaffChg(Map<String, Object> m) throws Exception {
+		mapper.insertStaffChg(m);
+		Object k = m.get("chgSeq");
+		return k == null ? 0L : Long.parseLong(String.valueOf(k));
+	}
+
+	@Override
+	public int deleteStaffChg(String hospCd, long chgSeq, String userId) throws Exception {
+		Map<String, Object> p = new HashMap<>();
+		p.put("hospCd", hospCd);
+		p.put("chgSeq", chgSeq);
+		p.put("userId", userId);
+		return mapper.deleteStaffChg(p);
+	}
+
+	private static String pStr(Object o) { return o == null ? "" : String.valueOf(o).trim(); }
+
+	private static int pInt(Object o) {
+		try { return o == null ? 0 : (int) Double.parseDouble(String.valueOf(o).trim()); } catch (Exception e) { return 0; }
+	}
+
+	private static double pDbl(Object o) {
+		try { return o == null ? 0 : Double.parseDouble(String.valueOf(o).trim()); } catch (Exception e) { return 0; }
+	}
 }

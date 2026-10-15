@@ -757,4 +757,75 @@
 		 LIMIT 300
 	</select>
 
+	<!-- ===================== 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15, DDL MIS_DDL_DIRECTOR_2026-10-15.sql) ===================== -->
+
+	<!-- 재원 환자 — 가장 최근 입퇴원 스냅샷(JOBYYMM)에서 퇴원일이 비어 있는 입원 건(등록번호·입원일 단위).
+	     보호자·상담은 생년월일 6 + 이름으로 붙인다. 같은 사람이 여러 번 붙지 않도록 MAX 로 한 줄만 남긴다. -->
+	<select id="selectCurrentPats" resultType="java.util.HashMap">
+		SELECT a.chartno AS chartno, a.patnm AS patnm, a.birth6 AS birth6, a.ipdt AS ipdt
+		     , DATEDIFF(CURDATE(), STR_TO_DATE(a.ipdt,'%Y%m%d')) + 1 AS staydays
+		     , ct.tel AS tel, ct.guardnm AS guardnm
+		     , ld.stage AS stage, ld.leadseq AS leadseq
+		  FROM (SELECT t.CHARTNO AS chartno
+		             , REGEXP_REPLACE(MAX(t.PATNAME),'[0-9]','') AS patnm
+		             , LEFT(MAX(t.JUMINNO),6) AS birth6
+		             , REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') AS ipdt
+		             , MAX(COALESCE(REPLACE(REPLACE(t.TEWONDT,'-',''),'/',''),'')) AS twdt
+		          FROM TBL_IPWON_INFO t
+		         WHERE t.HOSP_CD = #{hospCd}
+		           AND t.JOBYYMM = (SELECT MAX(JOBYYMM) FROM TBL_IPWON_INFO WHERE HOSP_CD = #{hospCd})
+		           AND REPLACE(REPLACE(t.IPWONDT,'-',''),'/','') REGEXP '^[0-9]{8}$'
+		         GROUP BY t.CHARTNO, REPLACE(REPLACE(t.IPWONDT,'-',''),'/','')) a
+		  LEFT JOIN (SELECT BIRTH6, PAT_NM, MAX(TEL) AS tel, MAX(GUARD_NM) AS guardnm
+		               FROM TBL_MIS_EMR_CONTACT WHERE HOSP_CD = #{hospCd}
+		              GROUP BY BIRTH6, PAT_NM) ct
+		    ON ct.BIRTH6 = a.birth6 AND ct.PAT_NM = a.patnm
+		  LEFT JOIN (SELECT BIRTH6, PAT_NM, MAX(LEAD_SEQ) AS leadseq, MAX(STAGE) AS stage
+		               FROM TBL_MIS_LEAD WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y'
+		              GROUP BY BIRTH6, PAT_NM) ld
+		    ON ld.BIRTH6 = a.birth6 AND ld.PAT_NM = a.patnm
+		 WHERE a.twdt = ''
+		 ORDER BY a.ipdt DESC
+		 LIMIT 500
+	</select>
+
+	<!-- 간호사 관리 — 직원 명단: 가장 최근 직원 자료 달(EMR 연계)의 간호 직종(간호사·간호조무사). 퇴사일 지난 사람은 화면이 뺀다. -->
+	<select id="selectNurseRoster" resultType="java.util.HashMap">
+		SELECT s.EMP_NM AS empnm, s.JOB_NM AS jobnm, s.DEPT_NM AS deptnm, s.WORK_GB AS workgb
+		     , s.JOIN_DT AS joindt, s.RETIRE_DT AS retiredt
+		  FROM TBL_MIS_EMR_STAFF s
+		 WHERE s.HOSP_CD = #{hospCd}
+		   AND s.YYYYMM = (SELECT MAX(YYYYMM) FROM TBL_MIS_EMR_STAFF WHERE HOSP_CD = #{hospCd})
+		   AND s.JOB_NM LIKE '간호%'
+		 ORDER BY s.JOB_NM, s.DEPT_NM, s.EMP_NM
+		 LIMIT 300
+	</select>
+
+	<!-- 인력 변동 기록 — 기간 안(변동일 기준). 지운 것(USE_YN='N')은 빼고 보인다. -->
+	<select id="selectStaffChgs" resultType="java.util.HashMap">
+		SELECT CHG_SEQ AS chgseq, CHG_DT AS chgdt, STAFF_NM AS staffnm, JOB_NM AS jobnm, WARD_NM AS wardnm
+		     , CHG_GB AS chggb, MEMO AS memo
+		  FROM TBL_MIS_STAFF_CHG
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y' AND CHG_DT >= #{fromDt}
+		 ORDER BY CHG_DT DESC, CHG_SEQ DESC
+		 LIMIT 300
+	</select>
+
+	<!-- 간호사 순증감 — 직원 명단이 없을 때 대신 쓰는 추정(입사 − 퇴사, 간호사 직종만) -->
+	<select id="selectStaffChgNet" resultType="java.util.HashMap">
+		SELECT COALESCE(SUM(CASE WHEN CHG_GB = 'IN' THEN 1 WHEN CHG_GB = 'OUT' THEN -1 ELSE 0 END),0) AS net
+		  FROM TBL_MIS_STAFF_CHG
+		 WHERE HOSP_CD = #{hospCd} AND USE_YN = 'Y' AND JOB_NM = '간호사'
+	</select>
+
+	<insert id="insertStaffChg" useGeneratedKeys="true" keyProperty="chgSeq">
+		INSERT INTO TBL_MIS_STAFF_CHG (HOSP_CD, CHG_DT, STAFF_NM, JOB_NM, WARD_NM, CHG_GB, MEMO, REG_USER)
+		VALUES (#{hospCd}, #{chgDt}, #{staffNm}, #{jobNm}, #{wardNm}, #{chgGb}, #{memo}, #{userId})
+	</insert>
+
+	<update id="deleteStaffChg">
+		UPDATE TBL_MIS_STAFF_CHG SET USE_YN = 'N', UPD_DTTM = NOW(), UPD_USER = #{userId}
+		 WHERE HOSP_CD = #{hospCd} AND CHG_SEQ = #{chgSeq} AND USE_YN = 'Y'
+	</update>
+
 </mapper>

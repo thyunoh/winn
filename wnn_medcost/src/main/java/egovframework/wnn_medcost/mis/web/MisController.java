@@ -30,7 +30,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261013-MIS11";   // + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
+	private static final String BUILD = "20261015-MGR1";   // 병원장 조회·원무 환자고객·간호사 관리(MGR1) · + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -1012,5 +1012,107 @@ public class MisController {
 		y += Math.floorDiv(m, 12);
 		m = Math.floorMod(m, 12);
 		return String.format("%04d%02d", y, m + 1);
+	}
+
+	/* ═══ 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ═══ */
+	@RequestMapping(value = "main/misDirector.do")
+	public String misDirector(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misDirector"); }
+
+	@RequestMapping(value = "main/misPatient.do")
+	public String misPatient(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misPatient"); }
+
+	@RequestMapping(value = "main/misNurse.do")
+	public String misNurse(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misNurse"); }
+
+	/** 병원장 한 장 — 청구·상담·재원·간호 인력·챙길 일을 한 번에. */
+	@RequestMapping(value = "/mis/directorGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> directorGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectDirectorBoard(hospCd, wnnYn(request)));
+			res.put("hospCd", hospCd);
+			res.put("build", BUILD);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 원무 환자고객 — 재원 환자 목록과 요약. */
+	@RequestMapping(value = "/mis/patList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> patList(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectPatBoard(hospCd));
+			res.put("hospCd", hospCd);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 간호사 관리 — 직원 명단 · 변동 기록 · 인력 판정. */
+	@RequestMapping(value = "/mis/nurseGet.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> nurseGet(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.selectNurseBoard(hospCd));
+			res.put("hospCd", hospCd);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 인력 변동 기록 저장(입사·퇴사·이동). 변동일·성명·구분은 필수. */
+	@RequestMapping(value = "/mis/nurseSave.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> nurseSave(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String chgDt = dt8(p.get("chgDt"));
+			if (chgDt.isEmpty()) return fail(res, "변동일을 적어 주세요.");
+			String staffNm = cut(unesc(p.get("staffNm")), 50);
+			if (staffNm.isEmpty()) return fail(res, "성명을 적어 주세요.");
+			String chgGb = str(p.get("chgGb"), "").toUpperCase();
+			if (!chgGb.matches("IN|OUT|MOVE")) return fail(res, "구분(입사·퇴사·이동)을 고르세요.");
+			Map<String, Object> m = new HashMap<>();
+			m.put("hospCd", hospCd);
+			m.put("chgDt", chgDt);
+			m.put("staffNm", staffNm);
+			m.put("jobNm", cut(unesc(p.get("jobNm")), 30));
+			m.put("wardNm", cut(unesc(p.get("wardNm")), 30));
+			m.put("chgGb", chgGb);
+			m.put("memo", cut(unesc(p.get("memo")), 200));
+			m.put("userId", userId(request));
+			res.put("chgSeq", svc.saveStaffChg(m));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 인력 변동 기록 지우기 — 기록은 남기고 표식만 바꾼다(USE_YN='N'). */
+	@RequestMapping(value = "/mis/nurseDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> nurseDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			long seq;
+			try { seq = Long.parseLong(str(p.get("chgSeq"), "").trim()); }
+			catch (Exception e) { return fail(res, "지울 기록을 찾지 못했습니다."); }
+			if (svc.deleteStaffChg(hospCd, seq, userId(request)) == 0) return fail(res, "지울 기록이 없습니다.");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
 	}
 }

@@ -803,6 +803,9 @@
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">고정경비 관리</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misAlert.do">업무 알림</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misLead.do">신규환자 고객관리</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misDirector.do">병원장 조회</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misPatient.do">원무 환자고객</a></li>
+                                <li class="nav-item"><a class="nav-item nav-link" href="/main/misNurse.do">간호사 관리</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misEmr.do">병원자료엑셀연계</a></li>
                                 <li class="nav-item"><a class="nav-item nav-link" href="/main/misRule.do">병원 내규·안내문</a></li>
                             </ul>

@@ -79,4 +79,11 @@ public interface MisService {
 
 	/* ── 통합검색 v1 (2026-10-13) ── */
 	Map<String, Object> searchAll(String hospCd, String question) throws Exception;
+
+	/* ── 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ── */
+	Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn) throws Exception;
+	Map<String, Object> selectPatBoard(String hospCd) throws Exception;
+	Map<String, Object> selectNurseBoard(String hospCd) throws Exception;
+	long saveStaffChg(Map<String, Object> m) throws Exception;
+	int deleteStaffChg(String hospCd, long chgSeq, String userId) throws Exception;
 }
