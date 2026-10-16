@@ -108,7 +108,7 @@ async function runPage(html, jq, extraSetup){
   const root1 = doc1.getElementById('mdrRoot');
   const txt1 = root1.textContent;
   ok('병원장 보고: 페이지 세 장(.pg 3개 — 2026-10-16 Ⅷ 경영 진단 추가)', root1.querySelectorAll('.pg').length === 3, 'pg=' + root1.querySelectorAll('.pg').length);
-  ['청구세부통계', 'Ⅰ. 수익', 'Ⅱ. 12개월', 'Ⅲ. 비용 지출 명세', 'Ⅳ. 수익 구성', 'Ⅴ. 청구 분석', 'Ⅵ. 일당금액', 'Ⅶ. 약처방',
+  ['청구세부통계', 'Ⅰ. 수익', 'Ⅱ. 기간 수익', 'Ⅲ. 비용 지출 명세', 'Ⅳ. 수익 구성', 'Ⅴ-1. 유형별 청구', 'Ⅵ. 일당금액', 'Ⅶ-1. 약처방',
    'Ⅷ-1. 환자군별 수익성', 'Ⅷ-2. 고객 병원 대비 위치', 'Ⅷ-3. 비용 구조', 'Ⅷ-4. 돈이 새는 곳', 'Ⅷ-5. 자동 진단']
     .forEach(k => ok('섹션 있음: ' + k, txt1.indexOf(k) >= 0));
   ok('총진료비(청구) 142,823,510', txt1.indexOf('142,823,510') >= 0);
