@@ -30,7 +30,7 @@ import egovframework.wnn_medcost.mis.service.MisService;
 public class MisController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다(statGet 응답의 build). */
-	private static final String BUILD = "20261015-DIR3";   // 청구세부통계 시작월~종료월(DIR3) · 원무 수입실적(REV1, 일별·월별·경영 보고서 탭) · 병원장 조회·원무 환자고객·간호사 관리(MGR1) · + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
+	private static final String BUILD = "20261016-DIR4";   // 원장 진단(DIR4 = 청구세부통계 Ⅷ 경영 진단·AI 코멘트 · 고객관리 예상 비용·음성·AI 정리 · 청구↔평가표 알림) · 청구세부통계 시작월~종료월(DIR3) · 원무 수입실적(REV1, 일별·월별·경영 보고서 탭) · 병원장 조회·원무 환자고객·간호사 관리(MGR1) · + 통합검색 v1(MIS11, 내규·안내문) · 안내문 저장(MIS10) · 병원 내규 조회·안내문 초안·결재 대기 알림(MIS9) · 병원자료엑셀연계 삭감 자료 — 샘파일 명세서와 매칭(MIS7 = 수납·행위별·연락처·입퇴원·인력, 머리글 맞춤 · 퇴원 안부에 보호자 연락처)
 
 	@Resource(name = "MisService")
 	private MisService svc;
@@ -1020,6 +1020,73 @@ public class MisController {
 		y += Math.floorDiv(m, 12);
 		m = Math.floorMod(m, 12);
 		return String.format("%04d%02d", y, m + 1);
+	}
+
+	/* ═══ 효사랑가족요양병원 AI 사례 적용 · 원장 진단 (2026-10-16) ═══ */
+	/** 입원 상담 예상 비용 재료 — 환자군별 1인 1일 진료비(최근 청구 3달). */
+	@RequestMapping(value = "/mis/classCost.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> classCost(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.classCost(hospCd));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 상담 메모 AI 정리 — kind=log(이력 한 줄)/cond(상태·요구). 실패해도 FAIL 이 아니라 ok=false(화면은 적은 글을 그대로 둔다). */
+	@RequestMapping(value = "/mis/aiSummary.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> aiSummary(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String kind = "cond".equals(str(p.get("kind"), "")) ? "cond" : "log";
+			res.putAll(svc.aiSummary(kind, cut(unesc(p.get("text")), 2000)));
+			res.put("result", "OK");
+		} catch (Exception ex) { res.put("ok", false); res.put("reason", ex.getMessage()); res.put("result", "OK"); }
+		return res;
+	}
+
+	/** 원장 진단 재료 — 청구세부통계 「Ⅷ 경영 진단」(환자군별 수익성·고객 병원 대비·돈이 새는 곳). 기간은 directorGet 과 같은 규칙. */
+	@RequestMapping(value = "/mis/dirExtra.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> dirExtra(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			String toYm = str(p.get("toYm"), "").replaceAll("[^0-9]", "");
+			String fromYm = str(p.get("fromYm"), "").replaceAll("[^0-9]", "");
+			if (toYm.matches("\\d{6}")) {
+				if (!fromYm.matches("\\d{6}")) fromYm = addMonths(toYm, -5);
+				else if (fromYm.compareTo(toYm) > 0) fromYm = toYm;
+				if (addMonths(fromYm, 23).compareTo(toYm) < 0) fromYm = addMonths(toYm, -23);
+			}
+			res.putAll(svc.selectDirectorExtra(hospCd, fromYm, toYm));
+			res.put("hospCd", hospCd);
+			res.put("build", BUILD);
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
+	/** 원장 AI 경영 코멘트 — 화면이 만든 사실 목록을 받아 다섯 줄. 실패는 ok=false. */
+	@RequestMapping(value = "/mis/dirComment.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> dirComment(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			res.putAll(svc.dirComment(cut(unesc(p.get("hospNm")), 60), cut(unesc(p.get("period")), 60), cut(unesc(p.get("facts")), 3000)));
+			res.put("result", "OK");
+		} catch (Exception ex) { res.put("ok", false); res.put("reason", ex.getMessage()); res.put("result", "OK"); }
+		return res;
 	}
 
 	/* ═══ 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ═══ */

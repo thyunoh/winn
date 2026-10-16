@@ -82,6 +82,16 @@ public interface MisService {
 	/* ── 통합검색 v1 (2026-10-13) ── */
 	Map<String, Object> searchAll(String hospCd, String question) throws Exception;
 
+	/* ── 효사랑가족요양병원 AI 사례 적용 · 원장 진단 (2026-10-16) ── */
+	/** 입원 상담 예상 비용 — 본원 최근 청구에서 환자군별 1인 1일 진료비·본인부담(월 환산은 화면) */
+	Map<String, Object> classCost(String hospCd) throws Exception;
+	/** 상담 메모 AI 정리 — kind: log(상담 이력 한 줄) / cond(상태·요구 정리) */
+	Map<String, Object> aiSummary(String kind, String text) throws Exception;
+	/** 원장 진단 재료 — 환자군별 수익성·고객 병원 대비 위치·돈이 새는 곳(청구↔평가표 대조·삭감·미수·장기입원) */
+	Map<String, Object> selectDirectorExtra(String hospCd, String fromYm, String toYm) throws Exception;
+	/** 원장 AI 경영 코멘트 — 화면이 만든 사실 목록(facts)으로 요약·원인·위험·권고 */
+	Map<String, Object> dirComment(String hospNm, String period, String facts) throws Exception;
+
 	/* ── 병원장 조회 · 원무 환자고객 · 간호사 관리 (2026-10-15) ── */
 	Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn, String fromIn, String toIn) throws Exception;
 	Map<String, Object> selectPatBoard(String hospCd) throws Exception;

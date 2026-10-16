@@ -30,6 +30,17 @@
   #misLead .ml-btn.pri:hover{ background:#2a7665; }
   #misLead .ml-btn.del{ color:#b23b3b; }
   #misLead .ml-btn.sm{ padding:2px 8px; font-size:12px; }
+  #misLead .ml-tools{ display:flex; gap:6px; align-items:center; margin-top:4px; flex-wrap:wrap; }
+  #misLead .ml-btn.rec{ background:#b23b3b; color:#fff; border-color:#b23b3b; animation:mlRec 1s ease-in-out infinite; }
+  @keyframes mlRec{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
+  #misLead .ml-cost{ margin-top:10px; border:1px solid #dde5ea; border-radius:8px; padding:6px 10px; background:#f8fafb; }
+  #misLead .ml-cost summary{ cursor:pointer; font-weight:700; font-size:13px; color:#1f5a4b; }
+  #misLead .ml-cost-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0 6px; font-size:12.5px; }
+  #misLead .ml-cost-row label{ font-weight:700; color:#43555f; }
+  #misLead .ml-cost-row select, #misLead .ml-cost-row input{ width:auto; }
+  #misLead .ml-cost-tbl{ border-collapse:collapse; font-size:12.5px; }
+  #misLead .ml-cost-tbl th, #misLead .ml-cost-tbl td{ padding:3px 12px 3px 0; text-align:right; }
+  #misLead .ml-cost-tbl td:first-child, #misLead .ml-cost-tbl th:first-child{ text-align:left; color:#43555f; }
   #misLead .ml-note{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:10px 14px; font-size:12.5px; color:#43555f; margin-bottom:12px; line-height:1.6; }
   #misLead .ml-card{ background:#fff; border:1px solid #e3e9ed; border-radius:10px; padding:12px 14px; min-width:0; }
   #misLead .ml-card h4{ margin:0 0 10px; font-size:13px; color:#43555f; font-weight:700; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -115,13 +126,18 @@
       <label>관계</label><input type="text" id="lfRel" maxlength="20" placeholder="아들·딸·배우자">
       <label>연락처</label><input type="text" id="lfTel" maxlength="30">
       <label>유입 경로</label><select id="lfChannel"><option value="INTRO">지인·환자 소개</option><option value="TRANS">타 병원 전원</option><option value="WEB">인터넷 검색</option><option value="ADS">광고·현수막</option><option value="ETC">기타</option></select>
-      <label>상태·요구</label><div class="full"><textarea id="lfCond" maxlength="300" placeholder="예) 뇌졸중 재활, 보행 불편, 2인실 희망"></textarea></div>
+      <label>상태·요구</label><div class="full"><textarea id="lfCond" maxlength="300" placeholder="예) 뇌졸중 재활, 보행 불편, 2인실 희망"></textarea>
+        <div class="ml-tools"><button type="button" class="ml-btn sm" onclick="mlVoice('lfCond', this)">🎤 음성</button><button type="button" class="ml-btn sm" onclick="mlAi('cond', this)">✨ AI 정리</button><span class="small">말로 받아 적고, AI 가 상태·요구·확인할 것으로 정리합니다</span></div></div>
       <label>다음 할 일</label><input type="date" id="lfNextDt">
       <label>내용</label><input type="text" id="lfNextMemo" maxlength="200" placeholder="예) 방문 약속 잡기 · 보호자 재통화">
       <label>방문·입원 예정</label><input type="date" id="lfPlan">
       <label>입원일</label><input type="date" id="lfAdmit" title="입퇴원현황이 올라오면 자동으로 채워집니다">
     </div>
     <div class="stages" id="mlStages"></div>
+    <details class="ml-cost" id="mlCost" ontoggle="if(this.open){mlCostInit();}">
+      <summary>💰 예상 비용 안내 <span class="small">— 본원 최근 청구의 환자군별 1인 1일 진료비로, 보호자 물음에 바로 답할 때</span></summary>
+      <div id="mlCostBody"><div class="small">펼치면 불러옵니다.</div></div>
+    </details>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;">
       <button type="button" class="ml-btn pri" onclick="mlSave();">저장</button>
       <button type="button" class="ml-btn" onclick="mlCloseDetail();">닫기</button>
@@ -133,6 +149,8 @@
     <h4>상담 이력</h4>
     <div style="display:flex;gap:6px;">
       <input type="text" id="lfLogMemo" maxlength="500" placeholder="통화·방문 내용을 적고 Enter" style="flex:1;" onkeydown="if(event.key==='Enter'){mlLogAdd();}">
+      <button type="button" class="ml-btn" onclick="mlVoice('lfLogMemo', this)" title="말로 받아 적기(크롬·엣지)">🎤 음성</button>
+      <button type="button" class="ml-btn" onclick="mlAi('log', this)" title="적은 글을 기록체 한두 문장으로">✨ AI 정리</button>
       <button type="button" class="ml-btn" onclick="mlLogAdd();">기록</button>
     </div>
     <div class="logs" id="mlLogs"></div>
@@ -228,6 +246,7 @@
       st += '<button type="button" class="ml-btn sm" style="color:#b23b3b" onclick="mlStage(\'90\')">종결</button>';
     }
     gel('mlStages').innerHTML = st;
+    if (COST && gel('mlCost') && gel('mlCost').open) mlCostFill();
     gel('mlDelBtn').style.display = l.leadseq ? '' : 'none';
     if (l.leadseq) loadLogs(); else gel('mlLogs').innerHTML = '<div class="small">저장하면 이력을 적을 수 있습니다.</div>';
     $('#mlPipe .pcard').removeClass('sel'); $('#mlPipe .pcard[data-seq="' + l.leadseq + '"]').addClass('sel');
@@ -281,6 +300,87 @@
     if (!CUR || !CUR.leadseq) { _alertBox('먼저 상담을 저장해 주세요.', {icon:'⚠️'}); return; }
     var m = String(gel('lfLogMemo').value || '').trim(); if (!m) return;
     post('<c:url value="/mis/leadLog.do"/>', withHosp({ leadSeq: CUR.leadseq, memo: m })).then(function(res){ gel('lfLogMemo').value = ''; paintLogs(res.logs || []); }).catch(err);
+  };
+
+  /* ── 예상 비용 안내 · 음성 입력 · AI 정리 (2026-10-16, 효사랑가족요양병원 AI 사례 ③ 상담 즉답 · ⑨⑩ 통화 요약을 EMR 없이 옮김) ── */
+  var COST = null, COST_REQ = false;
+  var CLS_NM = { A:'A군 (의료최고도)', B:'B군 (의료고도)', C:'C군 (의료중도)', D:'D군 (의료경도)', E:'E군 (선택입원)' };
+  function won(v){ return Math.round(Number(v || 0)).toLocaleString('ko-KR') + '원'; }
+  function manWon(v){ return Math.round(Number(v || 0) / 10000).toLocaleString('ko-KR') + '만원'; }
+  function ymL(ym){ return ym ? Number(String(ym).slice(0, 4)) + '년 ' + Number(String(ym).slice(4, 6)) + '월' : ''; }
+  /* 본원 최근 청구 3달의 환자군별 1인 1일 진료비(서버) — 처음 펼칠 때 한 번만 받는다 */
+  window.mlCostInit = function(){
+    if (COST || COST_REQ) { mlCostFill(); return; }
+    COST_REQ = true;
+    post('<c:url value="/mis/classCost.do"/>', withHosp({})).then(function(res){ COST = res; mlCostFill(); }).catch(function(e){ COST = { ok:false, reason:(e && e.message) || '불러오지 못했습니다.' }; mlCostFill(); });
+  };
+  window.mlCostFill = function(){
+    var b = gel('mlCostBody'); if (!b || !COST) return;
+    var rows = COST.rows || [];
+    if (!COST.ok || !rows.length) { b.innerHTML = '<div class="small">' + esc(COST.reason || '자료가 없습니다.') + '</div>'; return; }
+    var sel = gel('mlCostCls'), cur = sel ? sel.value : '', days = gel('mlCostDays') ? gel('mlCostDays').value : 30;
+    var opts = rows.map(function(r){ return '<option value="' + esc(r.cls) + '">' + esc(CLS_NM[r.cls] || r.cls) + ' — 1일 ' + won(r.perday) + '</option>'; }).join('');
+    b.innerHTML = '<div class="ml-cost-row"><label>환자군</label><select id="mlCostCls" onchange="mlCostCalc();">' + opts + '</select>' +
+      '<label>입원일수</label><input type="number" id="mlCostDays" min="1" max="365" value="' + esc(days) + '" oninput="mlCostCalc();" style="width:70px;">' +
+      '<span class="small">기준 ' + esc(ymL(COST.fromYm)) + ' ~ ' + esc(ymL(COST.toYm)) + ' 청구</span></div>' +
+      '<div id="mlCostOut"></div>' +
+      '<textarea id="mlCostTxt" readonly style="min-height:78px;margin-top:6px;font-size:12.5px;"></textarea>' +
+      '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;"><button type="button" class="ml-btn" onclick="mlCostCopy();">🔗 안내문 복사</button><button type="button" class="ml-btn" onclick="mlCostToLog();">이력에 기록</button><span class="small">보호자에게 문자·카톡으로 바로 보낼 수 있는 글</span></div>';
+    var s2 = gel('mlCostCls');
+    if (cur && rows.some(function(r){ return r.cls === cur; })) s2.value = cur; else if (rows.some(function(r){ return r.cls === 'C'; })) s2.value = 'C';
+    mlCostCalc();
+  };
+  window.mlCostCalc = function(){
+    var rows = (COST && COST.rows) || [], cls = gel('mlCostCls').value, d = Math.max(1, Math.min(365, Number(gel('mlCostDays').value || 30)));
+    var r = rows.filter(function(x){ return x.cls === cls; })[0]; if (!r) return;
+    var tot = Number(r.perday) * d, self = Number(r.selfday) * d, pub = Number(r.claimday) * d;
+    gel('mlCostOut').innerHTML = '<table class="ml-cost-tbl"><tr><th></th><th>1일</th><th>' + d + '일</th></tr>' +
+      '<tr><td>총진료비</td><td>' + won(r.perday) + '</td><td><b>' + won(tot) + '</b></td></tr>' +
+      '<tr><td>본인부담(급여)</td><td>' + won(r.selfday) + '</td><td><b>' + won(self) + '</b></td></tr>' +
+      '<tr><td>공단부담</td><td>' + won(r.claimday) + '</td><td>' + won(pub) + '</td></tr></table>' +
+      '<div class="small">본원 ' + esc(CLS_NM[cls] || cls) + ' 환자 ' + esc(String(r.pats)) + '명 · 입원일수 ' + Number(r.admdays).toLocaleString('ko-KR') + '일 평균. 비급여(상급병실·간병비·식대 일부 등)는 청구에 없어 별도.</div>';
+    gel('mlCostTxt').value = '[' + (root.getAttribute('data-nm') || '') + '] 입원 비용 안내 (최근 청구 기준 · ' + (CLS_NM[cls] || cls) + ')\n' +
+      '· 1일 진료비 약 ' + manWon(r.perday) + ' (본인부담 약 ' + manWon(r.selfday) + ')\n' +
+      '· ' + d + '일 기준 총 약 ' + manWon(tot) + ', 본인부담 약 ' + manWon(self) + '\n' +
+      '· 환자군은 입원 후 환자평가표로 정해지며, 비급여(상급병실·간병비 등)는 별도입니다. 실제 금액은 상태에 따라 달라질 수 있습니다.';
+  };
+  window.mlCostCopy = function(){
+    var ta = gel('mlCostTxt'), t = ta ? ta.value : ''; if (!t) return;
+    function done(){ _toast('안내문을 복사했습니다. 문자·카톡에 붙여 넣으세요.', 'ok'); }
+    function fb(){ ta.select(); try { document.execCommand('copy'); done(); } catch(e){ _alertBox('복사하지 못했습니다.', {icon:'❌'}); } }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  };
+  window.mlCostToLog = function(){
+    if (!CUR || !CUR.leadseq) { _alertBox('먼저 상담을 저장해 주세요.', {icon:'⚠️'}); return; }
+    var cls = gel('mlCostCls').value, d = Number(gel('mlCostDays').value || 30), rows = (COST && COST.rows) || [], r = rows.filter(function(x){ return x.cls === cls; })[0]; if (!r) return;
+    var m = '비용 안내 — ' + (CLS_NM[cls] || cls) + ' 기준 1일 약 ' + manWon(r.perday) + '(본인부담 ' + manWon(r.selfday) + '), ' + d + '일 약 ' + manWon(Number(r.perday) * d);
+    post('<c:url value="/mis/leadLog.do"/>', withHosp({ leadSeq: CUR.leadseq, memo: m })).then(function(res){ paintLogs(res.logs || []); _toast('이력에 적었습니다.', 'ok'); }).catch(err);
+  };
+  /* 음성 입력 — 브라우저 Web Speech(크롬·엣지). 녹음 파일을 남기지 않고 글자로만 바꾼다(통화 녹음 요약 사례를 녹음 없이). 한 번 더 누르면 멈춘다. */
+  var REC = null, REC_BTN = null;
+  window.mlVoice = function(targetId, btn){
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { _alertBox('이 브라우저는 음성 입력을 지원하지 않습니다. 크롬·엣지에서 쓰세요.', {icon:'🎤'}); return; }
+    if (REC) { try { REC.stop(); } catch(e){} return; }
+    var el = gel(targetId), base = String(el.value || '').trim(), rec = new SR();
+    rec.lang = 'ko-KR'; rec.interimResults = true; rec.continuous = true;
+    rec.onresult = function(ev){ var fin = '', tmp = ''; for (var i = 0; i < ev.results.length; i++) { if (ev.results[i].isFinal) fin += ev.results[i][0].transcript; else tmp += ev.results[i][0].transcript; } el.value = (base ? base + ' ' : '') + fin + (tmp ? ' ' + tmp : ''); };
+    rec.onerror = function(ev){ if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') _alertBox('마이크 사용이 막혀 있습니다. 주소창의 마이크 권한을 허용해 주세요.', {icon:'🎤'}); };
+    rec.onend = function(){ REC = null; if (REC_BTN) { REC_BTN.classList.remove('rec'); REC_BTN.textContent = '🎤 음성'; REC_BTN = null; } el.value = String(el.value || '').replace(/\s+$/, ''); };
+    REC = rec; REC_BTN = btn; btn.classList.add('rec'); btn.textContent = '⏹ 멈춤';
+    try { rec.start(); } catch(e){ rec.onend(); }
+  };
+  /* AI 정리 — 말로 받아 적은 글·급히 적은 글을 이력은 기록체 한두 문장, 상태·요구는 세 줄로. 실패하면 원문 그대로, 성공해도 [↩ 원문]으로 되돌릴 수 있다. */
+  window.mlAi = function(kind, btn){
+    var id = kind === 'cond' ? 'lfCond' : 'lfLogMemo', el = gel(id), t = String(el.value || '').trim();
+    if (t.length < 5) { _alertBox('정리할 글을 먼저 적거나 🎤 음성으로 말해 주세요.', {icon:'✨'}); return; }
+    var old = btn.textContent; btn.disabled = true; btn.textContent = '정리 중…';
+    post('<c:url value="/mis/aiSummary.do"/>', withHosp({ kind: kind, text: t })).then(function(res){
+      if (res && res.ok && res.text) {
+        el.value = res.text; _toast('AI 가 정리했습니다. 되돌리려면 [↩ 원문].', 'ok');
+        btn.textContent = '↩ 원문'; btn.onclick = function(){ el.value = t; btn.textContent = old; btn.onclick = function(){ mlAi(kind, btn); }; };
+      } else { _alertBox((res && res.reason) || 'AI 정리를 받지 못했습니다. 적은 글은 그대로 있습니다.', {icon:'✨'}); btn.textContent = old; }
+    }).catch(function(e){ err(e); btn.textContent = old; }).always(function(){ btn.disabled = false; });
   };
 
   window.mlStats = function(){

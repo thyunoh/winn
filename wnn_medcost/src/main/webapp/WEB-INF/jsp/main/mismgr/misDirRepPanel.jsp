@@ -37,6 +37,10 @@
   #misDirRep .pg .sub2{ font-size:11.5px; font-weight:800; color:#1f5a4b; margin:9px 0 4px; }
   #misDirRep .pg .sec-note{ font-size:10.5px; color:#666; margin-top:3px; line-height:1.55; }
   #misDirRep .pg .note{ font-size:10.5px; color:#666; line-height:1.6; margin-top:8px; border-top:1px solid #d7dfe5; padding-top:6px; }
+  #misDirRep .pg ul.diag{ margin:2px 0 8px; padding-left:18px; line-height:1.7; font-size:12px; }
+  #misDirRep .pg ul.diag li.up{ color:#1f5a4b; }
+  #misDirRep .pg ul.diag li.down{ color:#b23b3b; font-weight:700; }
+  #misDirRep .pg .aibox{ background:#f3f7fb; border:1px solid #cfdce8; border-radius:6px; padding:8px 10px; font-size:12px; line-height:1.7; min-height:40px; }
   @media print{
     @page{ size:A4 portrait; margin:10mm; }
     #misDirRep{ background:#fff; padding:0; }
@@ -44,6 +48,7 @@
     #misDirRep .pg{ border:none; border-radius:0; margin:0; padding:0; max-width:none; page-break-after:always; }
     #misDirRep .pg:last-child{ page-break-after:auto; }
     #misDirRep .pg h2{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    #misDirRep .noprint{ display:none !important; }
   }
 </style>
 
@@ -65,6 +70,7 @@
   var WNN = root.getAttribute('data-wnn') === 'Y';
   var VAR_DEF = 25000;                       // 1인 1일 변동비 기본값 — 손익분기 관리(misCost)와 같다
   var D = null, C = null, T = null;          // D = directorGet 한 장, C = costGet(고정비), T = 청구 분석 묶음
+  var X = null, FACTS = [], AI_TXT = '';      // X = 원장 진단 재료(dirExtra) · FACTS = AI 코멘트에 보내는 사실 목록 · AI_TXT = 받은 코멘트(기간을 바꾸면 비운다)
   var STARTED = false, LOAD_REQ = 0;         // 늦게 온 옛 응답이 새 보고서를 덮지 않게 하는 순번
 
   function g(id){ return document.getElementById(id); }
@@ -350,8 +356,126 @@
       '<div class="note">Ⅰ~Ⅲ : 수익·비용은 손익분기 관리 입력 기준 · 병원장 조회 화면과 같은 식으로 계산했다.</div></div>';
     var p2 = '<div class="pg">' + secAnalysis('top') + '<div class="mdr-grid"><div>' + secAnalysis('dis') + '</div><div>' + secDay() + '</div></div>' + secDrug() +
       '<div class="note">Ⅴ~Ⅶ : 청구 분석은 전체 명세서 기준(총액 · 위탁 명세서 제외). 금액은 원 단위.</div></div>';
-    g('mdrRoot').innerHTML = p1 + p2;
+    var p3 = '<div class="pg">' + '<div class="mdr-grid"><div>' + secClass(M) + '</div><div>' + secPeer(M) + secStruct(M) + '</div></div>' + secLeak(M) + secDiag(M, prevRev) +
+      '<div class="note">Ⅷ : 효사랑가족요양병원 「AI 실무활용 사례발표대회」(의료&amp;복지뉴스 2026-10)를 참고해 EMR 없이 청구·환자평가표·고정비·상담 자료만으로 만들었다. 환자군 비용은 명세서를 같은 달 평가표의 환자군과 환자 단위로 이어 센 값.</div></div>';
+    g('mdrRoot').innerHTML = p1 + p2 + p3;
   }
+
+  /* ── Ⅷ 경영 진단 — 원장용 (2026-10-16, 효사랑가족요양병원 「AI 실무활용 사례」를 EMR 없이 청구·평가표·고정비·상담 자료로 옮김) ──
+     Ⅷ-1 환자군별 수익성 · Ⅷ-2 고객 병원 대비 위치 · Ⅷ-3 비용 구조 · Ⅷ-4 돈이 새는 곳 점검 · Ⅷ-5 자동 진단 + AI 경영 코멘트.
+     자료는 /mis/dirExtra.do 한 번(X). AI 코멘트는 단추를 눌렀을 때만(화면의 숫자를 사실 목록으로 보내고, 서버가 Gemini 에 묻는다). */
+  var CLS_NM = { A:'A군 (의료최고도)', B:'B군 (의료고도)', C:'C군 (의료중도)', D:'D군 (의료경도)', E:'E군 (선택입원)' };
+  function loadExtra(my){
+    return post('/mis/dirExtra.do', { fromYm: (D && D.fromYm) || '', toYm: (D && D.ym) || '' }).then(function(x){ if (my === LOAD_REQ) X = x; }, function(){ if (my === LOAD_REQ) X = null; });
+  }
+  function secClass(M){
+    var rows = arr(X && X.classCost), out = '<h2>Ⅷ-1. 환자군별 수익성 (' + esc(periodLbl((X && X.fromYm) || M.ym, M.ym)) + ' · 청구 명세서 + 같은 달 환자평가표)</h2>';
+    if (!rows.length) return out + '<div class="sec-note">환자군을 맞출 환자평가표가 없어 계산하지 못했습니다(평가표가 올라오면 자동으로 채워집니다).</div>';
+    var days = rows.reduce(function(s, r){ return s + Number(r.admdays || 0); }, 0), hi = null, lo = null;
+    rows.forEach(function(r){ var p = Number(r.perday || 0); if (!hi || p > Number(hi.perday)) hi = r; if (!lo || p < Number(lo.perday)) lo = r; });
+    out += '<table>' + head(['환자군', '환자', '입원일수', '비중', '1인 1일 진료비', '본인부담', '공단부담', '30일 환산']) + '<tbody>' +
+      rows.map(function(r){ return tr([esc(CLS_NM[r.cls] || r.cls), num(r.pats), num(r.admdays), pct(Number(r.admdays || 0), days), num(r.perday), num(r.selfday), num(r.claimday), num(Number(r.perday || 0) * 30)]); }).join('') +
+      '</tbody></table>';
+    if (hi && lo && hi !== lo) out += '<div class="sec-note">' + esc(CLS_NM[hi.cls] || hi.cls) + ' 1인 1일 ' + num(hi.perday) + '원 vs ' + esc(CLS_NM[lo.cls] || lo.cls) + ' ' + num(lo.perday) + '원 — 하루 ' + num(Number(hi.perday) - Number(lo.perday)) + '원, 한 달 약 ' + man((Number(hi.perday) - Number(lo.perday)) * 30) + '원 차이. 환자군 판정(환자평가표)이 곧 수익이다.</div>';
+    return out;
+  }
+  function secPeer(M){
+    var p = X && X.peer, out = '<h2>Ⅷ-2. 고객 병원 대비 위치 (' + esc(ymLbl(M.ym)) + ' · 같은 달 청구를 올린 병원)</h2>';
+    if (!p || !Number(p.hosps)) return out + '<div class="sec-note">같은 달 청구를 올린 다른 병원이 아직 없어 비교하지 못했습니다.</div>';
+    var n = Number(p.hosps), r1 = Number(p.rankperday), r2 = Number(p.rankdays), dIn = daysIn(M.ym);
+    function top(r){ return '상위 ' + Math.round(r / n * 100) + '%'; }
+    var dv = Number(p.myperday) - Number(p.avgperday);
+    out += '<table>' + head(['지표', '본원', '고객 평균', '순위', '비고'], [4]) + '<tbody>' +
+      tr(['1인 1일 진료비', num(p.myperday) + '원', num(p.avgperday) + '원', r1 + ' / ' + n + '위 (' + top(r1) + ')', esc('평균보다 ' + pct(Math.abs(dv), Number(p.avgperday)) + (dv >= 0 ? ' 높음' : ' 낮음'))], '', [4]) +
+      tr(['월 입원일수 (규모)', num(p.mydays) + '일', num(p.avgdays) + '일', r2 + ' / ' + n + '위 (' + top(r2) + ')', '평균 재원 ' + Math.round(Number(p.mydays) / dIn) + '명 vs ' + Math.round(Number(p.avgdays) / dIn) + '명'], '', [4]) +
+      '</tbody></table><div class="sec-note">순위는 명세서 금액 그대로(위탁 제외 전)라 Ⅰ의 1인 1일(위탁 제외)과 조금 다를 수 있다. 다른 병원 이름은 보이지 않는다(위너넷 고객 평균).</div>';
+    return out;
+  }
+  function secStruct(M){
+    var out = '<h2>Ⅷ-3. 비용 구조 (기간)</h2>';
+    if (!M.fixedTot || !M.revenue) return out + '<div class="sec-note">고정비와 청구가 둘 다 있어야 비율이 나옵니다.</div>';
+    var labor = M.fixed.filter(function(x){ return /인건비/.test(x.nm); }).reduce(function(s, x){ return s + x.amt; }, 0);
+    var rows = [
+      ['인건비율', labor ? pct(labor, M.revenue) : '—', labor ? '인건비 ' + eok(labor) + ' ÷ 수익 ' + eok(M.revenue) : '고정비 항목에 「인건비」가 없음'],
+      ['고정비율', pct(M.fixedTot, M.revenue), '고정비 ' + eok(M.fixedTot) + ' ÷ 수익'],
+      ['변동비율', pct(M.varTot, M.revenue), '1인 1일 ' + num(M.varC) + '원 × ' + num(M.days) + '일'],
+      ['손익률', M.profit == null ? '—' : pct(M.profit, M.revenue), M.profit == null ? '' : '추정 손익 ' + sgn(M.profit, eok)],
+      ['환자 1인 1일 기여', num(Math.round(M.contrib)) + '원', '1인 1일 진료비 − 변동비 · 이 돈으로 고정비를 메운다'],
+      ['재원 1명의 한 달 손익 기여', num(Math.round(M.contrib * 30)) + '원', '기여 × 30일 · 손익분기 ' + (M.bep ? M.bep + '명' : '—')]
+    ];
+    return out + '<table>' + head(['구분', '값', '설명'], [2]) + '<tbody>' + rows.map(function(r){ return tr([esc(r[0]), r[1], esc(r[2])], '', [2]); }).join('') + '</tbody></table>';
+  }
+  function secLeak(M){
+    var x = X || {}, rows = [], out = '<h2>Ⅷ-4. 돈이 새는 곳 점검 (' + esc(ymLbl(M.ym)) + ')</h2>';
+    function row(nm, val, st, note){ rows.push('<tr><td>' + nm + '</td><td class="n">' + val + '</td><td><b class="' + st + '">' + (st === 'down' ? '확인' : st === 'up' ? '양호' : '자료 없음') + '</b></td><td class="sub">' + note + '</td></tr>'); }
+    if (x.gapReady) {
+      row('평가표는 있는데 청구 명세서 없음', num(x.noClaim) + '명', Number(x.noClaim) ? 'down' : 'up', Number(x.noClaim) ? '청구 누락 의심 — ' + esc(arr(x.noClaimNm).join(', ')) + (Number(x.noClaim) > 10 ? ' 외' : '') : '누락 없음');
+      row('청구는 됐는데 환자평가표 없음', num(x.noPatval) + '명', Number(x.noPatval) ? 'down' : 'up', Number(x.noPatval) ? '평가표 누락 의심 — 적정성 분모·환자군 비용 계산에서 빠진다' : '누락 없음');
+    } else row('청구 ↔ 환자평가표 대조', '—', '', '청구와 평가표가 둘 다 올라온 달에 대조한다');
+    if (Number(x.cutCnt)) row('삭감·조정', num(x.cutAmt) + '원 (' + num(x.cutCnt) + '건)', 'down', '감액률 ' + pct(Number(x.cutAmt), Number(x.samClaim)) + ' (청구액 ' + eok(x.samClaim) + ' 대비) — 사유는 병원자료엑셀연계 › 삭감');
+    else row('삭감·조정', '—', '', '삭감 자료 없음 — 병원자료엑셀연계에 삭감 통보 엑셀을 올리면 계산');
+    if (Number(x.payCnt)) row('미수 (수납대장)', num(x.unpaid) + '원', Number(x.unpaid) ? 'down' : 'up', '미수율 ' + pct(Number(x.unpaid), Number(x.unpaid) + Number(x.paid)) + ' · 수납 ' + eok(x.paid));
+    else row('미수 (수납대장)', '—', '', '수납대장 없음 — 병원자료엑셀연계 › 수납대장');
+    row('장기입원 181일↑ 재원', num(x.longStay) + '명 / 재원 ' + num(x.inCnt) + '명', Number(x.longStay) ? 'down' : 'up', '적정성 장기입원 지표 대상 · 체감제로 수가가 깎인다');
+    row('보호자 연락처 없음', num(x.noTel) + '명', Number(x.noTel) ? 'down' : 'up', '퇴원 안부·재입원 안내를 못 한다 — 입퇴원환자 화면');
+    row('오늘 챙길 일', '급함 ' + num(D && D.bad) + ' · 확인 ' + num(D && D.warn), Number(D && D.bad) ? 'down' : 'up', '업무 알림 — 자료 미업로드·신고·상담 연락');
+    return out + '<table>' + head(['점검 항목', '값', '판정', '설명'], [3, 4]) + '<tbody>' + rows.join('') + '</tbody></table>';
+  }
+  function buildFacts(M, prevRev){
+    var f = [], x = X || {}, p = x.peer;
+    f.push('기간 ' + periodLbl((D && D.fromYm) || M.ym, M.ym) + ' · 수익 ' + (M.revenue ? num(M.revenue) + '원' : '청구 없음') + (M.tot ? ' (청구 총진료비 ' + num(M.tot) + '원, 입원일수 ' + num(M.days) + '일, 평균 재원 ' + Math.round(M.census) + '명' + (M.bed ? ', 병상 ' + M.bed + ' 가동률 ' + pct(M.census, M.bed) : '') + ')' : ''));
+    if (M.fixedTot) f.push('비용 ' + num(M.expense) + '원 (고정비 ' + num(M.fixedTot) + ' + 변동비 ' + num(M.varTot) + ') · 추정 손익 ' + sgn(M.profit, num) + '원 · 손익률 ' + pct(M.profit, M.revenue) + (M.bep ? ' · 손익분기 ' + M.bep + '명(여유 ' + Math.round(M.census - M.bep) + '명)' : ''));
+    else f.push('고정비 미입력 — 손익 계산 불가');
+    if (prevRev != null && M.nMonths === 1) f.push('전월 수익 ' + num(prevRev) + '원 → 이번 달 ' + sgn(M.revenue - prevRev, num) + '원 (' + pct(M.revenue - prevRev, prevRev) + ')');
+    var cls = arr(x.classCost); if (cls.length) f.push('환자군별 1인 1일 진료비: ' + cls.map(function(r){ return r.cls + '군 ' + num(r.perday) + '원(' + num(r.pats) + '명)'; }).join(', '));
+    if (p && Number(p.hosps)) f.push('고객 병원 ' + p.hosps + '곳 중 1인 1일 진료비 ' + p.rankperday + '위(본원 ' + num(p.myperday) + ' vs 평균 ' + num(p.avgperday) + '원), 입원일수 ' + p.rankdays + '위');
+    if (x.gapReady) f.push('청구↔평가표 대조: 평가표만 있는 환자 ' + num(x.noClaim) + '명, 명세서만 있는 환자 ' + num(x.noPatval) + '명');
+    if (Number(x.cutCnt)) f.push('삭감 ' + num(x.cutAmt) + '원 ' + num(x.cutCnt) + '건 (감액률 ' + pct(Number(x.cutAmt), Number(x.samClaim)) + ')');
+    if (Number(x.payCnt)) f.push('수납 ' + num(x.paid) + '원, 미수 ' + num(x.unpaid) + '원');
+    f.push('장기입원 181일↑ ' + num(x.longStay) + '명 / 재원 ' + num(x.inCnt) + '명 · 보호자 연락처 없음 ' + num(x.noTel) + '명');
+    if (D) f.push('간호사 ' + num(D.headcount) + '명' + (Number(D.short) ? ' (부족 ' + D.short + '명)' : '') + ' · 이번 달 상담 ' + num(D.leads) + '건 중 입원 ' + num(D.admits) + '건 · 챙길 일 급함 ' + num(D.bad) + ' 확인 ' + num(D.warn));
+    return f;
+  }
+  function autoDiag(M, prevRev){
+    var d = [], x = X || {}, p = x.peer;
+    if (M.profit == null) d.push(['', '고정비가 없어 손익을 모른다 — 손익분기 관리에 월 고정비(인건비·임대료 등)를 한 번만 적으면 매달 자동 계산된다.']);
+    else d.push([M.profit >= 0 ? 'up' : 'down', (M.profit >= 0 ? '흑자 ' : '적자 ') + sgn(M.profit, eok) + ' (손익률 ' + pct(M.profit, M.revenue) + ')' + (M.bep ? ' · 손익분기 ' + M.bep + '명 대비 ' + (M.census >= M.bep ? '여유 ' : '부족 ') + Math.abs(Math.round(M.census - M.bep)) + '명' : '')]);
+    if (prevRev != null && M.nMonths === 1 && M.revenue) { var dv = M.revenue - prevRev; d.push([dv >= 0 ? 'up' : 'down', '수익 전월 대비 ' + sgn(dv, eok) + ' (' + pct(dv, prevRev) + ')' + (Math.abs(dv) / prevRev > 0.1 ? ' — 10% 넘는 변동, 입원·퇴원 수와 환자군 변화를 보라' : '')]); }
+    var cls = arr(x.classCost);
+    if (cls.length >= 2) { var hi = cls.reduce(function(a, b){ return Number(a.perday) >= Number(b.perday) ? a : b; }), lo = cls.reduce(function(a, b){ return Number(a.perday) <= Number(b.perday) ? a : b; }); d.push(['', '환자군 ' + hi.cls + '군 ' + num(hi.perday) + '원 vs ' + lo.cls + '군 ' + num(lo.perday) + '원/일 — 환자 1명이 ' + lo.cls + '→' + hi.cls + '군이면 한 달 약 ' + man((Number(hi.perday) - Number(lo.perday)) * 30) + '원. 평가표 작성 정확도가 곧 수익.']); }
+    if (p && Number(p.hosps) > 1) { var diff = Number(p.myperday) - Number(p.avgperday); d.push([diff >= 0 ? 'up' : 'down', '1인 1일 진료비가 고객 평균보다 ' + pct(Math.abs(diff), Number(p.avgperday)) + (diff >= 0 ? ' 높다' : ' 낮다') + ' (' + p.rankperday + '/' + p.hosps + '위)' + (diff < 0 ? ' — 환자군 구성·행위 청구 누락을 점검' : '')]); }
+    if (x.gapReady && Number(x.noClaim)) d.push(['down', '평가표는 있는데 청구 명세서가 없는 환자 ' + x.noClaim + '명 — 청구 전에 누락인지 퇴원·전원인지 확인']);
+    if (Number(x.cutCnt) && Number(x.samClaim) && Number(x.cutAmt) / Number(x.samClaim) > 0.01) d.push(['down', '감액률 ' + pct(Number(x.cutAmt), Number(x.samClaim)) + ' — 1% 를 넘는다, 사유 상위부터 심사과와 점검']);
+    if (Number(x.longStay)) d.push(['', '181일 넘긴 재원 ' + x.longStay + '명 — 장기입원 지표와 체감제 수가에 걸린다']);
+    if (D && Number(D.short)) d.push(['down', '간호사 ' + D.short + '명 부족 — 1인당 환자 수 구간이 떨어지면 구조영역 점수와 차등 수가가 같이 내려간다']);
+    if (D && Number(D.leads) && !Number(D.admits)) d.push(['', '이번 달 상담 ' + D.leads + '건 중 입원 0 — 상담→방문 전환이 막힌 지점을 고객관리에서 확인']);
+    if (!d.length) d.push(['up', '숫자로 드러난 위험 신호가 없다.']);
+    return d;
+  }
+  function secDiag(M, prevRev){
+    FACTS = buildFacts(M, prevRev);
+    var d = autoDiag(M, prevRev);
+    return '<h2>Ⅷ-5. 자동 진단 · AI 경영 코멘트</h2>' +
+      '<div class="sub2">자동 진단 (규칙 — 화면의 숫자에서 바로)</div><ul class="diag">' + d.map(function(x){ return '<li' + (x[0] ? ' class="' + x[0] + '"' : '') + '>' + esc(x[1]) + '</li>'; }).join('') + '</ul>' +
+      '<div class="sub2">AI 경영 코멘트 (요약 · 원인 · 위험 · 기회 · 권고)</div>' +
+      '<div class="aibox" id="mdrAiBox">' + (AI_TXT ? esc(AI_TXT).replace(/\n/g, '<br>') : '<span class="sub">[✨ AI 코멘트 받기]를 누르면 위 사실 목록으로 다섯 줄을 씁니다. 숫자를 지어내지 않도록 지시했지만 판단은 원장이 합니다.</span>') + '</div>' +
+      '<div class="noprint" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="mdr-btn pri" onclick="mdrAi()">✨ AI 코멘트 받기</button><button type="button" class="mdr-btn" onclick="mdrCopyDiag()">🔗 진단 글 복사</button><span class="mdr-note">복사한 글은 카톡·메일에 그대로 붙일 수 있습니다</span></div>';
+  }
+  window.mdrAi = function(){
+    if (!FACTS.length) return;
+    var box = g('mdrAiBox'); if (!box) return;
+    box.innerHTML = '<span class="sub">AI 가 쓰는 중…</span>';
+    post('/mis/dirComment.do', { hospNm: root.getAttribute('data-nm') || '', period: periodLbl((D && D.fromYm) || (D && D.ym) || '', (D && D.ym) || ''), facts: FACTS.join('\n') }).then(function(r){
+      if (r && r.ok) { AI_TXT = r.text || ''; box.innerHTML = esc(AI_TXT).replace(/\n/g, '<br>'); }
+      else { AI_TXT = ''; box.innerHTML = '<span class="sub">' + esc((r && r.reason) || 'AI 코멘트를 받지 못했습니다.') + '</span>'; }
+    }, function(e){ AI_TXT = ''; box.innerHTML = '<span class="sub">' + esc((e && e.message) || '실패') + '</span>'; });
+  };
+  window.mdrCopyDiag = function(){
+    var nm = root.getAttribute('data-nm') || '', t = '[' + nm + '] 경영 진단 · ' + periodLbl((D && D.fromYm) || (D && D.ym) || '', (D && D.ym) || '') + '\n' + FACTS.map(function(f){ return '- ' + f; }).join('\n') + (AI_TXT ? '\n\n[AI 코멘트]\n' + AI_TXT : '');
+    function done(){ _toast('복사했습니다. 카톡·메일에 붙여 넣으세요.', 'ok'); }
+    function fallback(){ var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch(e){ _alertBox('복사하지 못했습니다.', {icon:'❌'}); } document.body.removeChild(ta); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+  };
 
   /* 청구세부통계 자료 — 한 장(directorGet) → 고정비(costGet) → 청구 분석 9개 조회를 같은 청구월로 */
   function loadAnalysis(my){
@@ -392,7 +516,8 @@
       mdrProg(30, '고정비 불러오는 중… (2/3)'); return post('/mis/costGet.do', { ym: d.ym || '', fromYm: cf }).then(function(c){ C = c; }, function(){ C = null; });
     }).then(function(){
       if (my !== LOAD_REQ || !D) return;
-      return loadAnalysis(my).then(function(){ if (my === LOAD_REQ) render(); });
+      AI_TXT = '';
+      return $.when(loadAnalysis(my), loadExtra(my)).then(function(){ if (my === LOAD_REQ) render(); });
     }, function(e){
       if (my !== LOAD_REQ) return;
       g('mdrRoot').innerHTML = '';
@@ -405,7 +530,7 @@
     var body = g('mdrRoot').innerHTML;
     if (!body || body.indexOf('class="pg"') < 0) { _alertBox('먼저 청구세부통계를 불러오세요.', {icon:'📄'}); return; }
     var css = root.getElementsByTagName('style')[0].textContent +
-      '@page{ size:A4 portrait; margin:0; } @media print{ #misDirRep .pg{ padding:10mm !important; max-width:none !important; width:210mm !important; } #misDirRep .mdr-grid{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; } }';
+      '@page{ size:A4 portrait; margin:0; } @media print{ #misDirRep .noprint{ display:none !important; } #misDirRep .pg{ padding:10mm !important; max-width:none !important; width:210mm !important; } #misDirRep .mdr-grid{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; } }';
     var w = window.open('', '_blank');
     if (!w) { _alertBox('팝업이 막혀 있습니다. 팝업을 허용한 뒤 다시 눌러 주세요.', {icon:'🚫'}); return; }
     var title = (root.getAttribute('data-nm') || '') + ' 청구세부통계';

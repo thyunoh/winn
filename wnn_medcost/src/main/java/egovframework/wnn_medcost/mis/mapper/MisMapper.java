@@ -77,6 +77,14 @@ public interface MisMapper {
 	/** MIS 계약(CONACT_GB='M') 유효 건수 — 메뉴 노출·화면 진입 판정 */
 	int countMisContract(@Param("hospCd") String hospCd);
 
+	/* ── 효사랑가족요양병원 AI 사례 적용 · 원장 진단 (2026-10-16) — EMR 없이 청구·평가표만으로 ── */
+	/** 환자군(A~E)별 1인 1일 진료비·본인부담·공단부담 — 입원 상담 예상 비용·환자군별 수익성 */
+	List<Map<String, Object>> selectClassCost(@Param("hospCd") String hospCd, @Param("fromYm") String fromYm, @Param("toYm") String toYm);
+	/** 그 달 평가표↔청구 명세서 환자 대조 — gb NOCLAIM(평가표만)/NOPATVAL(명세서만) */
+	List<Map<String, Object>> selectClaimPatvalGap(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	/** 고객 병원 대비 위치 — 그 달 1인 1일 진료비·입원일수 순위 */
+	Map<String, Object> selectPeerRank(@Param("hospCd") String hospCd, @Param("ym") String ym);
+
 	/* ── EMR 엑셀 연계 (2026-10-11) ── insert 는 Map(hospCd·ym·userId·rows) */
 	List<Map<String, Object>> selectEmrMaps(@Param("hospCd") String hospCd);
 	int saveEmrMap(Map<String, Object> p);

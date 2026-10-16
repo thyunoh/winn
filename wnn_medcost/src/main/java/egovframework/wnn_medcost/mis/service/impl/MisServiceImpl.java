@@ -226,12 +226,136 @@ public class MisServiceImpl implements MisService {
 			if (leadsM > 0) out.add(alert("info", "이번 달 신규 상담 " + leadsM + "건 · 그중 입원 " + admitsM + "건", "유입경로별 전환율은 고객관리 아래 표에 있습니다.", "/main/misLead.do", "보기 →"));
 		} catch (Exception e) { out.add(alert("info", "고객관리 현황을 확인하지 못했습니다", e.getMessage(), "/main/misLead.do", "고객관리 →")); }
 
+		// ⑧ 청구↔평가표 대조(효사랑가족요양병원 사례 ① 심사청구 효율화, 2026-10-16) — 지난달 둘 다 올라왔을 때만. 평가표만 있는 환자 = 청구 누락 의심, 명세서만 있는 환자 = 평가표 누락 의심.
+		try {
+			Map<String, Object> pv8 = mapper.selectPatvalYm(hospCd, lastYm);
+			if (mapper.countClaimYm(hospCd, lastYm) > 0 && pv8 != null && numOf(pv8.get("cnt")) > 0) {
+				int noClaim = 0, noPatval = 0;
+				for (Map<String, Object> g : mapper.selectClaimPatvalGap(hospCd, lastYm)) { if ("NOCLAIM".equals(String.valueOf(g.get("gb")))) noClaim++; else noPatval++; }
+				if (noClaim > 0) out.add(alert("warn", lastLbl + " 평가표는 있는데 청구 명세서가 없는 환자 " + noClaim + "명", "청구 누락이거나 퇴원·전원일 수 있습니다. 이름은 청구세부통계 「Ⅷ 경영 진단」에 있습니다.", "/main/misDirector.do", "원장 진단 →"));
+				if (noPatval > 0) out.add(alert("warn", lastLbl + " 청구는 됐는데 환자평가표가 없는 환자 " + noPatval + "명", "평가표가 빠지면 적정성 지표 분모와 환자군 비용 계산에서 빠집니다.", "/main/assessment.do", "평가표 확인 →"));
+				if (noClaim == 0 && noPatval == 0) out.add(alert("ok", lastLbl + " 청구 명세서와 환자평가표 환자가 서로 맞음", "", "/main/misDirector.do", "확인"));
+			}
+		} catch (Exception e) { out.add(alert("info", "청구↔평가표 대조를 하지 못했습니다", e.getMessage(), "", "")); }
+
 		// ⑦ 결재 대기 — QPS 보고서가 상신(SUBMIT)되어 승인 차례를 기다리는 건
 		try {
 			int pend = mapper.countQpsPending(hospCd);
 			if (pend > 0) out.add(alert("warn", "결재 대기 " + pend + "건 (상신됨)", "품질(QPS) 보고서가 상신되어 승인 차례를 기다리고 있습니다.", "/main/qpsFall.do", "결재 상황 보기 →"));
 		} catch (Exception e) { out.add(alert("info", "결재 대기 건수를 확인하지 못했습니다", e.getMessage(), "", "")); }
 
+		return out;
+	}
+
+	/* ═══ 효사랑가족요양병원 AI 사례 적용 · 원장 진단 (2026-10-16) ═══
+	   사례 ① AI 심사청구 효율화 → 청구↔평가표 대조 · ③ 상담 즉답 → 환자군별 예상 비용 · ⑨⑩ 통화 녹음 요약 → 상담 메모 AI 정리.
+	   EMR(닥터스)은 업체가 운영하므로 손대지 않고, 이미 올라오는 청구·평가표와 병원이 적는 상담·고정비만으로 한다. */
+	private static final String SUMM_LOG_SYS = "너는 요양병원 입원 상담 담당자의 메모 정리 도우미다. 통화·방문 내용을 받아 상담 이력에 적을 한두 문장으로 정리한다. "
+		+ "사실만 쓰고 추측·의료 판단·금액 약속은 넣지 않는다. 간결한 기록체(…함, …요청)로 쓴다. 전화번호·주민번호가 있으면 뺀다. 결과만 출력한다.";
+	private static final String SUMM_COND_SYS = "너는 요양병원 입원 상담 담당자의 메모 정리 도우미다. 환자 상태·요구 메모를 받아 「상태: … / 요구: … / 확인할 것: …」 세 줄로 정리한다. "
+		+ "전체 250자 안, 사실만 쓰고 의료 판단은 넣지 않는다. 전화번호·주민번호는 뺀다. 결과만 출력한다.";
+	private static final String DIR_SYS = "너는 요양병원 원장에게 보고하는 경영 분석 비서다. 아래 [사실]에 적힌 숫자만 근거로 쓴다. 적히지 않은 숫자·원인·업계 기준은 지어내지 않는다. "
+		+ "다음 다섯 줄로만 답한다. 각 줄은 「머리말: 내용」 꼴로 한두 문장, 전체 450자 안, 존댓말. "
+		+ "요약: 이 기간 수익·비용·손익이 어떤지 / 원인: 숫자로 드러난 변화(환자 수·일당·환자군·비용)의 후보 / 위험: 손익·청구·인력에서 챙길 신호 / 기회: 수익을 올리거나 비용을 줄일 여지 / 권고: 다음 달 원장이 결정할 것 1~2가지.";
+
+	/** 입원 상담 예상 비용 재료 — 가장 최근 청구월 포함 3달(없으면 6달)의 환자군별 1인 1일 진료비. 월 환산·안내문은 화면이 만든다. */
+	@Override
+	public Map<String, Object> classCost(String hospCd) throws Exception {
+		Map<String, Object> out = new java.util.LinkedHashMap<>();
+		String last = mapper.selectLastClaimYm(hospCd);
+		if (last == null || !last.matches("\\d{6}")) { out.put("ok", false); out.put("reason", "청구 자료가 없어 예상 비용을 낼 수 없습니다. 청구 샘파일이 올라오면 자동으로 계산됩니다."); return out; }
+		String from = addMonths(last, -2);
+		List<Map<String, Object>> rows = mapper.selectClassCost(hospCd, from, last);
+		if (rows.isEmpty()) { from = addMonths(last, -5); rows = mapper.selectClassCost(hospCd, from, last); }
+		out.put("ok", !rows.isEmpty());
+		out.put("fromYm", from);
+		out.put("toYm", last);
+		out.put("rows", rows);
+		if (rows.isEmpty()) out.put("reason", "최근 6달 청구에 환자군을 맞출 환자평가표가 없습니다.");
+		return out;
+	}
+
+	/** 상담 메모 AI 정리 — 음성 입력(Web Speech)이나 급히 적은 글을 기록체 한두 문장으로. 키가 없거나 실패하면 ok=false(적은 글은 화면이 그대로 둔다). */
+	@Override
+	public Map<String, Object> aiSummary(String kind, String text) throws Exception {
+		Map<String, Object> out = new java.util.LinkedHashMap<>();
+		String t = text == null ? "" : text.trim();
+		if (t.length() < 5) { out.put("ok", false); out.put("reason", "정리할 글이 너무 짧습니다."); return out; }
+		if (t.length() > 2000) t = t.substring(0, 2000);
+		boolean cond = "cond".equals(kind);
+		String ans = mangrSvc.askGemini(cond ? SUMM_COND_SYS : SUMM_LOG_SYS, t);
+		if (ans == null || ans.trim().isEmpty()) { out.put("ok", false); out.put("reason", "AI 정리를 받지 못했습니다(키 설정·연결 확인). 적은 글은 그대로 두었습니다."); return out; }
+		String s = ans.trim().replaceAll("^```[a-z]*\\s*|\\s*```$", "").trim();
+		int max = cond ? 300 : 500;
+		out.put("ok", true);
+		out.put("text", s.length() > max ? s.substring(0, max) : s);
+		return out;
+	}
+
+	/** 원장 진단 재료 — 환자군별 수익성(기간) · 고객 병원 대비 위치(종료월) · 돈이 새는 곳(청구↔평가표 대조·삭감·미수·장기입원·연락처).
+	 *  조회마다 따로 감싼다 — 한 자료가 없어도 나머지는 보인다. */
+	@Override
+	public Map<String, Object> selectDirectorExtra(String hospCd, String fromYm, String toYm) throws Exception {
+		Map<String, Object> r = new HashMap<>();
+		String ym = (toYm != null && toYm.matches("\\d{6}")) ? toYm : mapper.selectLastClaimYm(hospCd);
+		if (ym == null || !ym.matches("\\d{6}")) { r.put("ym", ""); return r; }
+		String from = (fromYm != null && fromYm.matches("\\d{6}") && fromYm.compareTo(ym) <= 0) ? fromYm : ym;
+		r.put("ym", ym);
+		r.put("fromYm", from);
+		try { r.put("classCost", mapper.selectClassCost(hospCd, from, ym)); } catch (Exception e) { r.put("classCostErr", e.getMessage()); }
+		try { r.put("peer", mapper.selectPeerRank(hospCd, ym)); } catch (Exception e) { r.put("peerErr", e.getMessage()); }
+		// 청구↔평가표 대조(종료월) — 둘 다 올라온 달에만 뜻이 있다(한쪽이 통째로 없으면 전원이 「없음」으로 나온다)
+		try {
+			Map<String, Object> pv = mapper.selectPatvalYm(hospCd, ym);
+			boolean both = mapper.countClaimYm(hospCd, ym) > 0 && pv != null && numOf(pv.get("cnt")) > 0;
+			r.put("gapReady", both);
+			int noClaim = 0, noPatval = 0;
+			List<String> noClaimNm = new ArrayList<>();
+			if (both) for (Map<String, Object> g : mapper.selectClaimPatvalGap(hospCd, ym)) {
+				if ("NOCLAIM".equals(String.valueOf(g.get("gb")))) { noClaim++; if (noClaimNm.size() < 10) noClaimNm.add(String.valueOf(g.get("patnm"))); }
+				else noPatval++;
+			}
+			r.put("noClaim", noClaim);
+			r.put("noPatval", noPatval);
+			r.put("noClaimNm", noClaimNm);
+		} catch (Exception e) { r.put("gapErr", e.getMessage()); }
+		// 삭감(병원자료엑셀연계 삭감 자료가 있을 때만)
+		try {
+			long cut = 0, cnt = 0;
+			for (Map<String, Object> c : mapper.selectEmrCutSum(hospCd, ym)) { cut += (long) numOf(c.get("cutamt")); cnt += (long) numOf(c.get("cnt")); }
+			r.put("cutAmt", cut);
+			r.put("cutCnt", cnt);
+			if (cnt > 0) { Map<String, Object> sam = mapper.selectEmrSamSum(hospCd, ym); r.put("samClaim", sam == null ? 0L : (long) numOf(sam.get("claimamt"))); }
+		} catch (Exception e) { r.put("cutErr", e.getMessage()); }
+		// 미수(수납대장, 종료월)
+		try {
+			long unpaid = 0, paid = 0, n = 0;
+			for (Map<String, Object> v : mapper.selectRevRows(hospCd, ym + "01", ym + "31")) { unpaid += (long) numOf(v.get("unpaidamt")); paid += (long) numOf(v.get("paidamt")); n += (long) numOf(v.get("cnt")); }
+			r.put("unpaid", unpaid);
+			r.put("paid", paid);
+			r.put("payCnt", n);
+		} catch (Exception e) { r.put("payErr", e.getMessage()); }
+		// 장기입원(181일↑ 재원)·보호자 연락처 — 입퇴원환자 화면과 같은 판정
+		try {
+			Map<String, Object> pb = selectPatBoard(hospCd);
+			r.put("longStay", pb.get("longStay"));
+			r.put("inCnt", pb.get("inCnt"));
+			r.put("noTel", pb.get("noTel"));
+		} catch (Exception e) { r.put("patErr", e.getMessage()); }
+		return r;
+	}
+
+	/** 원장 AI 경영 코멘트 — 화면이 보낸 사실 목록(화면에 보이는 숫자 그대로)으로 요약·원인·위험·기회·권고 다섯 줄. 키 없음·실패는 ok=false. */
+	@Override
+	public Map<String, Object> dirComment(String hospNm, String period, String facts) throws Exception {
+		Map<String, Object> out = new java.util.LinkedHashMap<>();
+		String f = facts == null ? "" : facts.trim();
+		if (f.isEmpty()) { out.put("ok", false); out.put("reason", "코멘트를 만들 사실이 없습니다."); return out; }
+		if (f.length() > 3000) f = f.substring(0, 3000);
+		String ans = mangrSvc.askGemini(DIR_SYS, "[병원] " + (hospNm == null ? "" : hospNm) + "\n[기간] " + (period == null ? "" : period) + "\n[사실]\n" + f);
+		if (ans == null || ans.trim().isEmpty()) { out.put("ok", false); out.put("reason", "AI 코멘트를 받지 못했습니다(키 설정·연결 확인). 자동 진단은 그대로 볼 수 있습니다."); return out; }
+		out.put("ok", true);
+		out.put("text", ans.trim().replaceAll("^```[a-z]*\\s*|\\s*```$", "").trim());
 		return out;
 	}
 

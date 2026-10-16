@@ -485,6 +485,66 @@
 		   AND (COALESCE(END_DT,'') = '' OR REPLACE(END_DT,'-','') >= DATE_FORMAT(NOW(),'%Y%m%d'))
 	</select>
 
+	<!-- ═══ 효사랑가족요양병원 AI 실무활용 사례 적용 (2026-10-16) — EMR 없이 청구·평가표·상담 자료만으로 ═══ -->
+	<!-- 입원 상담 예상 비용(사례 ③ 상담 즉답) — 본원 명세서(TBL_MYOUNG_MST)를 같은 달 평가표의 환자군(PAT_CLASS)과 환자 단위로 이어 환자군별 1인 1일 진료비·본인부담·공단부담.
+	     한 환자가 그 달 평가표를 여러 번 적었으면 가장 늦은 것. 입원일수 0 인 명세서는 뺀다. -->
+	<select id="selectClassCost" resultType="java.util.HashMap">
+		SELECT x.cls
+		     , COUNT(DISTINCT x.PAT_ID)                     AS pats
+		     , SUM(x.ADM_DAYS)                              AS admdays
+		     , ROUND(SUM(x.TOT_AMT)   / SUM(x.ADM_DAYS))     AS perday
+		     , ROUND(SUM(x.SELF_AMT)  / SUM(x.ADM_DAYS))     AS selfday
+		     , ROUND(SUM(x.CLAIM_AMT) / SUM(x.ADM_DAYS))     AS claimday
+		  FROM (SELECT mm.PAT_ID, mm.ADM_DAYS, mm.TOT_AMT, mm.SELF_AMT, mm.CLAIM_AMT
+		             , (SELECT LEFT(COALESCE(p.PAT_CLASS,'E'),1) FROM TBL_PATVAL_MST p
+		                 WHERE p.HOSP_CD = mm.HOSP_CD AND p.PAT_ID = mm.PAT_ID AND LEFT(p.MED_START,6) = cm.DATE_YM
+		                 ORDER BY p.MED_START DESC, p.DOC_DT DESC LIMIT 1) AS cls
+		          FROM TBL_MYOUNG_MST mm
+		          JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		         WHERE mm.HOSP_CD = #{hospCd} AND COALESCE(mm.DELYN,'') = ''
+		           AND cm.DATE_YM BETWEEN #{fromYm} AND #{toYm} AND mm.ADM_DAYS <![CDATA[>]]> 0) x
+		 WHERE x.cls IS NOT NULL
+		 GROUP BY x.cls
+		 ORDER BY x.cls
+	</select>
+
+	<!-- 청구 ↔ 평가표 대조(사례 ① 심사청구 효율화) — 그 달 평가표에는 있는데 명세서가 없는 환자(NOCLAIM, 청구 누락 의심) / 명세서에는 있는데 평가표가 없는 환자(NOPATVAL, 평가표 누락 의심). 확인 대상이지 오류 단정이 아니다. -->
+	<select id="selectClaimPatvalGap" resultType="java.util.HashMap">
+		SELECT 'NOCLAIM' AS gb, p.PAT_ID AS patid, MAX(p.PAT_NM) AS patnm
+		  FROM TBL_PATVAL_MST p
+		 WHERE p.HOSP_CD = #{hospCd} AND LEFT(p.MED_START,6) = #{ym}
+		   AND NOT EXISTS (SELECT 1 FROM TBL_MYOUNG_MST mm JOIN TBL_CHUNG_MST cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		                    WHERE mm.HOSP_CD = p.HOSP_CD AND mm.PAT_ID = p.PAT_ID AND cm.DATE_YM = #{ym} AND COALESCE(mm.DELYN,'') = '')
+		 GROUP BY p.PAT_ID
+		UNION ALL
+		SELECT 'NOPATVAL' AS gb, mm.PAT_ID AS patid, MAX(mm.PAT_NAME) AS patnm
+		  FROM TBL_MYOUNG_MST mm
+		  JOIN TBL_CHUNG_MST  cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		 WHERE mm.HOSP_CD = #{hospCd} AND cm.DATE_YM = #{ym} AND COALESCE(mm.DELYN,'') = '' AND mm.ADM_DAYS <![CDATA[>]]> 0
+		   AND NOT EXISTS (SELECT 1 FROM TBL_PATVAL_MST p WHERE p.HOSP_CD = mm.HOSP_CD AND p.PAT_ID = mm.PAT_ID AND LEFT(p.MED_START,6) = #{ym})
+		 GROUP BY mm.PAT_ID
+	</select>
+
+	<!-- 고객 병원 대비 위치(원장 진단, 2026-10-16) — 같은 달 청구를 올린 병원 가운데 본원의 1인 1일 진료비·평균 재원 환자 순위.
+	     순위는 명세서 금액 그대로(위탁 제외 전)로 세어 전 병원을 같은 잣대로 둔다. 본원 값도 같은 잣대라 KPI 의 1인 1일(위탁 제외)과 약간 다를 수 있다. -->
+	<select id="selectPeerRank" resultType="java.util.HashMap">
+		SELECT COUNT(*)                                                     AS hosps
+		     , SUM(CASE WHEN h.perday <![CDATA[>]]> my.perday THEN 1 ELSE 0 END) + 1 AS rankperday
+		     , SUM(CASE WHEN h.days   <![CDATA[>]]> my.days   THEN 1 ELSE 0 END) + 1 AS rankdays
+		     , ROUND(AVG(h.perday))                                         AS avgperday
+		     , ROUND(AVG(h.days))                                           AS avgdays
+		     , ROUND(my.perday)                                             AS myperday
+		     , my.days                                                      AS mydays
+		  FROM (SELECT cm.HOSP_CD, SUM(mm.TOT_AMT) / NULLIF(SUM(mm.ADM_DAYS),0) AS perday, SUM(mm.ADM_DAYS) AS days
+		          FROM TBL_MYOUNG_MST mm JOIN TBL_CHUNG_MST cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		         WHERE COALESCE(mm.DELYN,'') = '' AND cm.DATE_YM = #{ym}
+		         GROUP BY cm.HOSP_CD HAVING SUM(mm.ADM_DAYS) <![CDATA[>]]> 0) h
+		  JOIN (SELECT SUM(mm.TOT_AMT) / NULLIF(SUM(mm.ADM_DAYS),0) AS perday, SUM(mm.ADM_DAYS) AS days
+		          FROM TBL_MYOUNG_MST mm JOIN TBL_CHUNG_MST cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
+		         WHERE mm.HOSP_CD = #{hospCd} AND COALESCE(mm.DELYN,'') = '' AND cm.DATE_YM = #{ym}) my
+		 WHERE my.days <![CDATA[>]]> 0
+	</select>
+
 	<!-- 자동 발송 선점 — 같은 날 먼저 넣은 쪽만 1 을 돌려받는다 -->
 	<insert id="insertNotiRun">
 		INSERT IGNORE INTO TBL_MIS_NOTI_RUN (RUN_DT, RUN_HOST) VALUES (#{runDt}, #{runHost})
