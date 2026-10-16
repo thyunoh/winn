@@ -36,6 +36,7 @@ public interface MisService {
 	void addLeadLog(String hospCd, long leadSeq, String memo, String userId) throws Exception;
 	List<Map<String, Object>> selectLeadLogs(String hospCd, long leadSeq) throws Exception;
 	void deleteLead(String hospCd, long leadSeq, String userId) throws Exception;
+	void deleteLeadLog(String hospCd, long leadSeq, long logSeq) throws Exception;   // 2026-10-16 상담 이력 한 줄 삭제
 	List<Map<String, Object>> selectFollowList(String hospCd, int days) throws Exception;
 	void saveFollow(Map<String, Object> p) throws Exception;
 

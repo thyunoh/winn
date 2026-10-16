@@ -512,6 +512,23 @@ public class MisController {
 		return res;
 	}
 
+	/** 상담 이력 한 줄 삭제 — 상담 기록(환자)은 그대로 두고 이력 한 줄만 지운다 */
+	@RequestMapping(value = "/mis/leadLogDel.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> leadLogDel(@RequestParam Map<String, Object> p, HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			String hospCd = hospCd(request, p);
+			if (hospCd.isEmpty()) return fail(res, "로그인이 필요합니다.");
+			Long seq = longOf(p.get("leadSeq")); if (seq == null) return fail(res, "상담 번호가 없습니다.");
+			Long logSeq = longOf(p.get("logSeq")); if (logSeq == null) return fail(res, "이력 번호가 없습니다.");
+			svc.deleteLeadLog(hospCd, seq, logSeq);
+			res.put("logs", svc.selectLeadLogs(hospCd, seq));
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
+	}
+
 	/** 퇴원 환자 안부 연락 목록 — 최근 days 일(기본 60) */
 	@RequestMapping(value = "/mis/followList.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	@ResponseBody

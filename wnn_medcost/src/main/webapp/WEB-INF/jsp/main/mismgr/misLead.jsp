@@ -71,6 +71,7 @@
   #misLead .ml-more{ font-size:11px; color:#6b7c86; margin-top:2px; }
   #misLead .k-call{ background:#2f6fa3; } #misLead .k-visit{ background:#1f5a4b; } #misLead .k-admitplan{ background:#b45f1c; }
   #misLead .k-admit{ background:#0f5132; } #misLead .k-disch{ background:#6b7c86; } #misLead .k-anbu{ background:#b23b3b; }
+  #misLead .k-todo{ background:#6b5b95; }
   #misLead .ml-legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:12px; color:#43555f; }
   #misLead .ml-legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:4px; vertical-align:-1px; }
   #misLead .ml-agh{ font-size:15px; font-weight:800; color:#20303a; margin-bottom:6px; }
@@ -111,6 +112,10 @@
   #misLead .ml-fld{ display:flex; flex-direction:column; gap:3px; min-width:150px; }
   #misLead .ml-fld.wide{ flex:1; min-width:240px; }
   #misLead .ml-fld input{ width:100%; }
+  #misLead .ml-lbrow{ display:flex; align-items:center; gap:6px; }
+  #misLead .ml-line{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  #misLead .ml-line .ml-fld{ min-width:150px; }
+  #misLead .ml-line .ml-fld.wide{ flex:1; min-width:260px; }
   #misLead .ml-row1{ display:flex; gap:6px; margin-bottom:6px; }
   #misLead .ml-row1 input{ flex:1; }
   #misLead .ml-foot{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:14px; padding-top:10px; border-top:1px solid #e3e9ed; }
@@ -156,7 +161,7 @@
   <span class="ml-spacer"></span>
   <button type="button" class="ml-btn" onclick="mlHelp();" title="이 화면의 쓰는 법">❓ 도움말</button>
   <button type="button" class="ml-btn" onclick="mlExcel();" title="상담 목록(종결 포함)과 퇴원 안부 연락 표를 엑셀 파일로">엑셀출력</button>
-  <button type="button" class="ml-btn" onclick="mlLoad();" title="상담 목록을 다시 읽고 입퇴원현황과 다시 대조합니다 — 다른 창에서 입퇴원현황을 올린 뒤 누르세요">입퇴원현황 다시 대조</button>
+  <button type="button" class="ml-btn" onclick="mlReconcile();" title="상담 목록을 다시 읽고 입퇴원현황과 다시 대조합니다 — 다른 창에서 입퇴원현황을 올린 뒤 누르세요">입퇴원현황 다시 대조</button>
 </div>
 
 <div class="ml-tabs">
@@ -185,6 +190,7 @@
     <li><span class="ml-hk k-admit">입원</span>입원일. 입퇴원현황에 올라오면 자동으로 찍힙니다.</li>
     <li><span class="ml-hk k-disch">퇴원</span>퇴원일. 입퇴원현황에 올라오면 자동으로 찍힙니다.</li>
     <li><span class="ml-hk k-anbu">안부</span>퇴원 7일째. 안부 연락을 할 날입니다.</li>
+    <li><span class="ml-hk k-todo">할 일</span>입원 중 다음 할 일의 기한.</li>
     <li>지난 날짜의 연락·방문 칩은 흐리게 보이고, 목록에는 「지남」이 붙습니다.</li>
   </ul>
 
@@ -230,13 +236,20 @@
       <div id="mlCal"></div>
       <div class="ml-legend">
         <span><i class="k-call"></i>연락 예정</span><span><i class="k-visit"></i>방문</span><span><i class="k-admitplan"></i>입원 예정</span>
-        <span><i class="k-admit"></i>입원</span><span><i class="k-disch"></i>퇴원</span><span><i class="k-anbu"></i>안부 연락(퇴원 7일째)</span>
+        <span><i class="k-admit"></i>입원</span><span><i class="k-disch"></i>퇴원</span><span><i class="k-anbu"></i>안부 연락(퇴원 7일째)</span><span><i class="k-todo"></i>할 일(입원 중 다음 할 일)</span>
       </div>
     </div>
     <div class="ml-card">
       <input type="text" id="mlQ" class="ml-q" placeholder="환자 이름으로 찾기 (전체 단계)" oninput="mlSearch();">
       <div id="mlAgenda"></div>
-      <div style="margin-top:8px;"><button type="button" class="ml-btn pri" onclick="mlNewAt('10');">＋ 새 상담 접수</button></div>
+      <div style="margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="ml-btn pri" onclick="mlNewAt('10');">＋ 새 상담 접수</button>
+        <span class="small">또는 단계를 골라 바로 접수</span>
+        <select id="mlNewStage" title="이미 그 단계에 있는 환자를 바로 적을 때 고르세요">
+          <option value="20">방문</option><option value="30">입원 결정</option><option value="40" selected>입원</option><option value="50">퇴원 후</option>
+        </select>
+        <button type="button" class="ml-btn" onclick="mlNewAt(document.getElementById('mlNewStage').value);">＋ 바로 접수</button>
+      </div>
     </div>
   </div>
   <div class="ml-work ml-card" id="mlWork"></div>
@@ -276,7 +289,7 @@
   function withHosp(p){ if (WNN) p.hospCd = hospCd(); return p; }
 
   var URL_LIST = '<c:url value="/mis/leadList.do"/>', URL_SAVE = '<c:url value="/mis/leadSave.do"/>', URL_STAGE = '<c:url value="/mis/leadStage.do"/>',
-      URL_LOG = '<c:url value="/mis/leadLog.do"/>', URL_DEL = '<c:url value="/mis/leadDel.do"/>', URL_FOLLOW = '<c:url value="/mis/followList.do"/>',
+      URL_LOG = '<c:url value="/mis/leadLog.do"/>', URL_DEL = '<c:url value="/mis/leadDel.do"/>', URL_LOGDEL = '<c:url value="/mis/leadLogDel.do"/>', URL_FOLLOW = '<c:url value="/mis/followList.do"/>',
       URL_FSAVE = '<c:url value="/mis/followSave.do"/>', URL_COST = '<c:url value="/mis/classCost.do"/>', URL_AI = '<c:url value="/mis/aiSummary.do"/>';
 
   var STAGES = [['10','상담'],['20','방문'],['30','입원 결정'],['40','입원'],['50','퇴원 후']];
@@ -285,7 +298,7 @@
   var RESULTS = [['HOME','잘 지냄'],['READMIT','재입원 희망'],['OTHER','타 병원 입원'],['NOANS','연락 안 됨'],['ETC','기타']];
   var CLOSE_RSN = ['타 병원 입원','보류','연락 안 됨','기타'];
   var KIND = { call:{nm:'연락', c:'k-call'}, visit:{nm:'방문', c:'k-visit'}, admitplan:{nm:'입원 예정', c:'k-admitplan'},
-               admit:{nm:'입원', c:'k-admit'}, disch:{nm:'퇴원', c:'k-disch'}, anbu:{nm:'안부', c:'k-anbu'} };
+               admit:{nm:'입원', c:'k-admit'}, disch:{nm:'퇴원', c:'k-disch'}, anbu:{nm:'안부', c:'k-anbu'}, todo:{nm:'할 일', c:'k-todo'} };
   var DOW = ['일','월','화','수','목','금','토'];
   // 단계마다 작업 칸에 보이는 칸 (plan·admit·next 는 라벨, null 이면 숨김)
   var ST = { '10':{plan:'방문 예정일', admit:null, next:'다음 연락'}, '20':{plan:'방문일', admit:null, next:'다음 할 일'},
@@ -333,21 +346,36 @@
   function fv(id, dflt){ var e = gel(id); return e ? e.value : (dflt == null ? '' : String(dflt)); }
 
   /* ── 일정 만들기: 리드의 날짜 칸을 달력 일정으로 ── */
+  /* 환자 한 명의 달력 일정(단계 필터와 무관) */
+  function eventsOf(l){
+    var out = [];
+    if (l.stage === '90') return out;
+    function add(dt, kind){ var k = d8(dt); if (k) out.push({ date:k, kind:kind, l:l }); }
+    if (l.stage === '10') { add(l.nextdt, 'call'); add(l.plandt, 'visit'); }
+    if (l.stage === '20') { add(l.plandt, 'visit'); add(l.nextdt, 'call'); }
+    if (l.stage === '30') { add(l.plandt, 'admitplan'); add(l.nextdt, 'call'); }
+    if (l.stage === '40') { add(l.admitdt, 'admit'); add(l.nextdt, 'todo'); }   /* 입원 단계의 다음 할 일 날짜는 「할 일」로 표시한다 */
+    if (l.stage === '50') { add(l.dischdt, 'disch'); if (d8(l.dischdt)) add(addDays(d8(l.dischdt), 7), 'anbu'); }
+    return out;
+  }
   function buildEvents(){
     var out = [];
     leads().forEach(function(l){
-      if (l.stage === '90') return;
       if (FILTER !== 'all' && l.stage !== FILTER) return;
-      function add(dt, kind){ var k = d8(dt); if (k) out.push({ date:k, kind:kind, l:l }); }
-      if (l.stage === '10') { add(l.nextdt, 'call'); add(l.plandt, 'visit'); }
-      if (l.stage === '20') { add(l.plandt, 'visit'); add(l.nextdt, 'call'); }
-      if (l.stage === '30') { add(l.plandt, 'admitplan'); add(l.nextdt, 'call'); }
-      if (l.stage === '40') { add(l.admitdt, 'admit'); add(l.nextdt, 'call'); }
-      if (l.stage === '50') { add(l.dischdt, 'disch'); if (d8(l.dischdt)) add(addDays(d8(l.dischdt), 7), 'anbu'); }
+      out = out.concat(eventsOf(l));
     });
     return out;
   }
-  function isLate(e){ return e.date < TODAY && (e.kind === 'call' || e.kind === 'visit' || e.kind === 'admitplan' || e.kind === 'anbu'); }
+  /* 단계 필터에 든 환자 중 이 달 달력에 안 나오는 환자: 날짜가 없거나, 날짜가 다른 달에만 있는 경우 (대상자가 안 보이는 일을 막는다) */
+  function undatedLeads(){
+    var ym = String(VY) + pad(VM);
+    return leads().filter(function(l){
+      if (l.stage === '90') return false;
+      if (FILTER !== 'all' && l.stage !== FILTER) return false;
+      return !eventsOf(l).some(function(e){ return e.date.slice(0, 6) === ym; });
+    });
+  }
+  function isLate(e){ return e.date < TODAY && (e.kind === 'call' || e.kind === 'visit' || e.kind === 'admitplan' || e.kind === 'anbu' || e.kind === 'todo'); }
 
   /* ── 상단 단계 칩 ── */
   function renderChips(){
@@ -399,32 +427,48 @@
         (hits.length ? '<div class="ml-aglist">' + hits.map(function(l){ return agendaItem(l, null, ''); }).join('') + '</div>' : '<div class="ml-empty">찾는 환자가 없습니다. 상담 접수로 새로 적을 수 있습니다.</div>');
       return;
     }
+    if (FILTER === '90') {   /* 종결 칩: 달력에는 안 나오므로 종결 환자 목록을 보여 준다 */
+      var closed = leads().filter(function(l){ return l.stage === '90'; });
+      box.innerHTML = '<div class="ml-agh">종결된 상담 <span class="small">' + closed.length + '명</span></div>' +
+        '<div class="ml-agsub">종결 사유를 함께 보여 줍니다. 누르면 아래에서 내용을 보고 다시 열 수 있습니다.</div>' +
+        (closed.length ? '<div class="ml-aglist">' + closed.map(function(l){ return agendaItem(l, null, '<span class="tx" style="margin-left:auto;white-space:nowrap;">' + esc(l.closersn || '사유 없음') + '</span>'); }).join('') + '</div>'
+                       : '<div class="ml-empty">종결된 상담이 없습니다.</div>');
+      return;
+    }
     var day = SELDAY || TODAY, ev = buildEvents().filter(function(e){ return e.date === day; });
-    var order = { call:0, visit:1, admitplan:2, admit:3, disch:4, anbu:5 };
+    var order = { call:0, visit:1, admitplan:2, admit:3, disch:4, anbu:5, todo:6 };
     ev.sort(function(a, b){ return order[a.kind] - order[b.kind]; });
     var p = parts(day);
     var h = '<div class="ml-agh">' + p.m + '월 ' + p.d + '일 (' + dowOf(day) + ')' + (day === TODAY ? ' <span class="badge ok">오늘</span>' : '') + '</div>' +
             '<div class="ml-agsub">' + (ev.length ? ev.length + '건의 일정 · 누르면 아래에서 작업합니다' : '이 날 일정이 없습니다') + (FILTER !== 'all' ? ' · 단계 필터 적용 중' : '') + '</div>';
     h += '<div class="ml-aglist">' + ev.map(function(e){ return agendaItem(e.l, e.kind, isLate(e) ? '<span class="late">지남</span>' : ''); }).join('') + '</div>';
     h += '<div style="margin-top:8px;"><button type="button" class="ml-btn sm" onclick="mlNewAt(\'10\', {contactdt:\'' + day + '\'});">＋ 이 날짜로 상담 접수</button></div>';
+    var und = undatedLeads();
+    if (und.length) {
+      h += '<div class="ml-agh" style="margin-top:14px;font-size:14px;">이 달에 날짜가 없는 환자 <span class="small">' + und.length + '명</span></div>' +
+           '<div class="ml-agsub">입원일이나 예정일을 적으면 달력에 표시됩니다. 누르면 아래에서 바로 적을 수 있습니다.</div>' +
+           '<div class="ml-aglist">' + und.map(function(l){ return agendaItem(l, null, ''); }).join('') + '</div>';
+    }
     box.innerHTML = h;
   }
 
   /* ── 작업 칸 ── */
+  /* 칸마다 ✕ — 그 칸만 지운다 (환자 기록 전체를 지우지 않는다) */
+  function clearBtn(id, tip){ return '<button type="button" class="ml-btn sm" style="margin-left:4px;color:#b23b3b;" onclick="mlClearField(\'' + id + '\');" title="' + esc(tip) + '">✕ 지우기</button>'; }
+  function clearBtnIds(ids, tip){ return '<button type="button" class="ml-btn sm" style="color:#b23b3b;margin-left:auto;" onclick="mlClearFields([\'' + ids.join("','") + '\']);" title="' + esc(tip) + '">✕ 지우기</button>'; }
   function dateField(id, label, tip){ return '<div class="ml-fld"><label class="ml-lb">' + esc(label) + '</label><input type="date" id="' + id + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '></div>'; }
   function dateRaw(id){ return '<input type="date" id="' + id + '">'; }
   function nextInputs(){ return '<input type="date" id="lfNextDt"><input type="text" id="lfNextMemo" maxlength="200">'; }
-  function nextBlock(label){
-    return '<div class="ml-sec"><h5>' + esc(label) + '</h5><div class="ml-pair"><label class="ml-lb">날짜</label><input type="date" id="lfNextDt">' +
-           '<label class="ml-lb">내용</label><input type="text" id="lfNextMemo" maxlength="200" placeholder="예) 방문 약속 잡기 · 보호자 재통화"></div></div>';
-  }
+  /* 일정 한 줄: 방문일(입원 예정일·입원일) · 다음 할 일 날짜 · 내용 을 좌우로 나란히 */
   function stageForm(s){
-    var t = ST[s] || {}, vis = '', sink = '';
-    if (t.plan || t.admit) {
-      vis += '<div class="ml-sec"><h5>일정</h5><div class="ml-pair2">' +
-             (t.plan ? dateField('lfPlan', t.plan) : '') + (t.admit ? dateField('lfAdmit', t.admit, '입퇴원현황이 올라오면 자동으로 채워집니다') : '') + '</div></div>';
+    var t = ST[s] || {}, parts = [], sink = '';
+    if (t.plan) parts.push(dateField('lfPlan', t.plan));
+    if (t.admit) parts.push(dateField('lfAdmit', t.admit, '입퇴원현황이 올라오면 자동으로 채워집니다'));
+    if (t.next) {
+      parts.push(dateField('lfNextDt', t.next + ' 날짜'));
+      parts.push('<div class="ml-fld wide"><label class="ml-lb">' + esc(t.next) + ' 내용</label><input type="text" id="lfNextMemo" maxlength="200" placeholder="예) 방문 약속 잡기 · 보호자 재통화"></div>');
     }
-    if (t.next) vis += nextBlock(t.next);
+    var vis = parts.length ? '<div class="ml-sec"><h5>일정</h5><div class="ml-line">' + parts.join('') + '</div></div>' : '';
     if (!t.plan) sink += dateRaw('lfPlan');
     if (!t.admit) sink += dateRaw('lfAdmit');
     if (!t.next) sink += nextInputs();
@@ -496,7 +540,7 @@
         b += '<button type="button" class="ml-btn del" onclick="mlClose();">종결</button>';
       }
     }
-    if (!isNew) b += '<span class="ml-sp"></span><button type="button" class="ml-btn del sm" onclick="mlDel();">이 상담 지우기</button>';
+    if (!isNew) b += '<span class="ml-sp"></span><button type="button" class="ml-btn del sm" onclick="mlDel();">환자 기록 전부 지우기</button>';
     return '<div class="ml-foot">' + b + '</div>';
   }
   function bodyFor(s, l){
@@ -565,6 +609,8 @@
   window.mlMove = function(next, closeRsn){
     if (!CUR || !checkForm()) return;
     var cur = CUR.stage || '10';
+    /* 단계를 옮기면 이전 단계의 「다음 연락」 날짜와 내용은 지운다 (입원이 된 뒤에도 연락으로 남는 일을 막는다) */
+    if (next !== cur) { if (gel('lfNextDt')) gel('lfNextDt').value = ''; if (gel('lfNextMemo')) gel('lfNextMemo').value = ''; }
     post(URL_SAVE, leadPayload(cur)).then(function(res){
       var id = res.leadSeq || CUR.leadseq;
       if (next === cur && !closeRsn) return id;
@@ -583,10 +629,25 @@
     _confirmBox({ msg: '<b>' + esc(CUR.patnm) + '</b> 상담을 종결합니다. 사유: ' + esc(rsn) + '<br>종결하면 달력에서 사라지고 종결 목록에 남습니다.', icon:'⚠️', okText:'종결', okColor:'#b23b3b',
       onOk: function(){ mlMove('90', rsn); } });
   };
+  /* 칸 하나를 비우고 바로 저장한다. 아직 저장 전인 새 상담이면 칸만 비운다. */
+  window.mlClearFields = function(ids){
+    var any = false;
+    ids.forEach(function(id){ var el = gel(id); if (el) { el.value = ''; any = true; } });
+    if (!any || !CUR || !CUR.leadseq) return;
+    mlMove(CUR.stage || '10');   /* 한 번만 저장한다 */
+  };
+  window.mlClearField = function(id){ mlClearFields([id]); };
+  /* 이력 한 줄 삭제 — 상담 기록은 그대로 둔다 */
+  window.mlLogDel = function(logSeq){
+    if (!CUR || !CUR.leadseq) return;
+    _confirmBox({ msg: '이 이력 한 줄을 지웁니다. 상담 기록은 그대로 남습니다.', icon:'🗑️', okText:'지우기', okColor:'#b23b3b',
+      onOk: function(){ post(URL_LOGDEL, withHosp({ leadSeq: CUR.leadseq, logSeq: logSeq })).then(function(res){ paintLogs(res.logs || []); _toast('이력 한 줄을 지웠습니다.', 'ok'); }).catch(err); } });
+  };
+  /* 환자 기록 전체 삭제 — 이력까지 모두 지운다. 한 줄씩 지우려면 취소하고 칸의 ✕ 를 쓴다. */
   window.mlDel = function(){
     if (!CUR || !CUR.leadseq) return;
-    _confirmBox({ msg: '<b>' + esc(CUR.patnm) + '</b> 상담 기록을 지웁니다. 되돌릴 수 없습니다.', icon:'🗑️', okText:'삭제', okColor:'#b23b3b',
-      onOk: function(){ post(URL_DEL, withHosp({ leadSeq: CUR.leadseq })).then(function(){ _toast('지웠습니다.', 'ok'); CUR = null; mlLoad(); }).catch(err); } });
+    _confirmBox({ msg: '<b>' + esc(CUR.patnm) + '</b> 환자의 상담 기록과 이력을 <b>모두</b> 지웁니다.<br>한 줄이나 한 칸만 지우려면 취소하고 해당 칸의 ✕ 를 누르세요. 되돌릴 수 없습니다.', icon:'🗑️', okText:'전부 지우기', okColor:'#b23b3b',
+      onOk: function(){ post(URL_DEL, withHosp({ leadSeq: CUR.leadseq })).then(function(){ _toast('환자 기록을 지웠습니다.', 'ok'); CUR = null; mlLoad(); }).catch(err); } });
   };
   /* 재입원 상담 — 퇴원 환자의 기본 정보를 옮겨 새 상담(10 단계)을 연다. 기존 기록은 그대로 둔다. */
   window.mlReadmit = function(){
@@ -609,7 +670,8 @@
   }
   function paintLogs(logs){
     if (!gel('mlLogs')) return;
-    gel('mlLogs').innerHTML = logs.length ? logs.map(function(g){ return '<div><span class="d">' + dLbl(g.logdt) + '</span><span class="badge">' + esc(stageNm(g.stage)) + '</span> ' + esc(g.memo) + ' <span class="small">' + esc(g.reguser || '') + '</span></div>'; }).join('') : '<div class="small">아직 이력이 없습니다.</div>';
+    gel('mlLogs').innerHTML = logs.length ? logs.map(function(g){ return '<div><span class="d">' + dLbl(g.logdt) + '</span><span class="badge">' + esc(stageNm(g.stage)) + '</span> ' + esc(g.memo) + ' <span class="small">' + esc(g.reguser || '') + '</span>' +
+      ' <button type="button" class="ml-btn sm" style="color:#b23b3b;padding:0 6px;" onclick="mlLogDel(' + Number(g.logseq) + ');" title="이 이력 한 줄만 지웁니다">✕</button></div>'; }).join('') : '<div class="small">아직 이력이 없습니다.</div>';
   }
   window.mlLogAdd = function(){
     if (!CUR || !CUR.leadseq) { _alertBox('먼저 상담을 저장해 주세요.', {icon:'⚠️'}); return; }
@@ -657,7 +719,7 @@
   };
 
   /* ── 불러오기 ── */
-  window.mlLoad = function(){
+  window.mlLoad = function(done){
     post(URL_LIST, withHosp({})).then(function(res){
       D = res; TODAY = res.today || TODAY;
       if (!VY) { var p = parts(TODAY); VY = p.y; VM = p.m; }
@@ -665,8 +727,24 @@
       if (CUR && CUR.leadseq) CUR = findLead(CUR.leadseq);
       renderChips(); renderCal(); renderAgenda(); renderWork();
       mlStats();
+      if (done) done(res);
     }).catch(function(e){ gel('mlCal').innerHTML = '<div class="ml-empty">' + esc((e && e.message) || '불러오지 못했습니다.') + '</div>'; });
     mlFollow();
+  };
+  /* 입퇴원현황과 다시 대조 — 단계가 바뀐 환자 수를 알려 준다 (아무 반응이 없던 것을 막는다) */
+  window.mlReconcile = function(){
+    var before = {};
+    leads().forEach(function(l){ before[l.leadseq] = l.stage + '|' + (l.matchyn || '') + '|' + (l.admitdt || '') + '|' + (l.dischdt || ''); });
+    mlLoad(function(res){
+      var changed = 0;
+      (res.leads || []).forEach(function(l){
+        var was = before[l.leadseq];
+        if (was !== undefined && was !== (l.stage + '|' + (l.matchyn || '') + '|' + (l.admitdt || '') + '|' + (l.dischdt || ''))) changed++;
+      });
+      var cnt = {};
+      (res.leads || []).forEach(function(l){ cnt[l.stage] = (cnt[l.stage] || 0) + 1; });
+      _alertBox(changed ? '대조 완료 · 단계나 입퇴원 날짜가 바뀐 환자 ' + changed + '명 (입원 ' + (cnt['40'] || 0) + ' · 퇴원 후 ' + (cnt['50'] || 0) + ')' : '대조 완료 · 바뀐 환자는 없습니다 (입원 ' + (cnt['40'] || 0) + ' · 퇴원 후 ' + (cnt['50'] || 0) + ')', {icon:'🔄'});
+    });
   };
 
   /* ── 유입 경로 분석 ── */

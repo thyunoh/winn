@@ -57,6 +57,7 @@ public interface MisMapper {
 	int updateLeadStage(Map<String, Object> p);
 	int updateLeadMatch(Map<String, Object> p);
 	int deleteLead(Map<String, Object> p);
+	int deleteLeadLog(Map<String, Object> p);   // 2026-10-16 상담 이력 한 줄 삭제
 	List<Map<String, Object>> selectLeadMatches(@Param("hospCd") String hospCd);
 	int insertLeadLog(Map<String, Object> p);
 	List<Map<String, Object>> selectLeadLogs(@Param("hospCd") String hospCd, @Param("leadSeq") long leadSeq);

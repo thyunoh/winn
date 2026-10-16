@@ -647,6 +647,12 @@ public class MisServiceImpl implements MisService {
 		m.put("hospCd", hospCd); m.put("leadSeq", leadSeq); m.put("userId", userId);
 		mapper.deleteLead(m);
 	}
+	@Override
+	public void deleteLeadLog(String hospCd, long leadSeq, long logSeq) throws Exception {
+		Map<String, Object> m = new HashMap<>();
+		m.put("hospCd", hospCd); m.put("leadSeq", leadSeq); m.put("logSeq", logSeq);
+		mapper.deleteLeadLog(m);
+	}
 
 	private void log(Object hospCd, long leadSeq, String stage, String memo, String userId) {
 		try {

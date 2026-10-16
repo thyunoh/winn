@@ -360,6 +360,10 @@
 	<update id="deleteLead">
 		UPDATE TBL_MIS_LEAD SET USE_YN = 'N', UPD_USER = #{userId} WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq}
 	</update>
+	<!-- 상담 이력 한 줄 삭제 (2026-10-16) — 상담 기록 자체는 그대로 둔다 -->
+	<delete id="deleteLeadLog">
+		DELETE FROM TBL_MIS_LEAD_LOG WHERE HOSP_CD = #{hospCd} AND LEAD_SEQ = #{leadSeq} AND LOG_SEQ = #{logSeq}
+	</delete>
 
 	<!-- 입퇴원현황과 매칭 — 상담 뒤 입원한 건(생년월일 6 + 이름). 입원일 오름차순이라 서비스가 첫 입원을 고른다 -->
 	<select id="selectLeadMatches" resultType="java.util.HashMap">

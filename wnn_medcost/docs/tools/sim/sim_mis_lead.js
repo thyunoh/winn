@@ -35,8 +35,9 @@ const TODAY = '20261015';
 const LEADS = [
   { leadseq: 1, stage: '10', patnm: '김영희', birth6: '480101', gender: 'F', guardnm: '김철수', guardrel: '아들', tel: '010-1111-2222', channel: 'INTRO', contactdt: '20261012', nextdt: '20261016', nextmemo: '방문 약속', plandt: '20261020', condmemo: '뇌졸중 재활' },
   { leadseq: 2, stage: '20', patnm: '이순자', birth6: '390202', gender: 'F', channel: 'WEB', contactdt: '20261008', plandt: '20261015' },
-  { leadseq: 3, stage: '40', patnm: '박종수', birth6: '550303', gender: 'M', channel: 'ADS', contactdt: '20260920', admitdt: '20261005', matchyn: 'Y' },
+  { leadseq: 3, stage: '40', patnm: '박종수', birth6: '550303', gender: 'M', channel: 'ADS', contactdt: '20260920', admitdt: '20261005', matchyn: 'Y', nextdt: '20261014', nextmemo: '예전 연락' },
   { leadseq: 4, stage: '50', patnm: '정명숙', birth6: '470807', gender: 'F', channel: 'TRANS', contactdt: '20260510', admitdt: '20260901', dischdt: '20260910' },
+  { leadseq: 6, stage: '40', patnm: '윤미경', birth6: '620915', gender: 'F', channel: 'ADS', contactdt: '20261001' },
   { leadseq: 5, stage: '90', patnm: '최영수', birth6: '600404', gender: 'M', channel: 'WEB', contactdt: '20260801', closersn: '타 병원 입원' }
 ];
 
@@ -78,16 +79,23 @@ async function run(){
   const ag = doc.getElementById('mlAgenda').textContent;
   ok('오늘 일정: 이순자 방문 보임', ag.indexOf('이순자') >= 0 && ag.indexOf('방문') >= 0, ag);
   ok('오늘 일정: 다른 날 환자(김영희)는 안 보임', ag.indexOf('김영희') < 0);
+  ok('입원 단계: 예전 연락 날짜(10/14)가 연락 일정으로 안 찍힘', doc.querySelectorAll('#mlCal .ml-cd:not(.out)')[13].textContent.indexOf('연락 박종수') < 0, doc.querySelectorAll('#mlCal .ml-cd:not(.out)')[13].textContent);
+  ok('입원 단계: 다음 할 일 날짜(10/14)는 「할 일」로 찍힘', doc.querySelectorAll('#mlCal .ml-cd:not(.out)')[13].textContent.indexOf('할 일 박종수') >= 0);
+  ok('날짜 없는 환자: 윤미경(입원, 날짜 없음)이 목록에 보임', ag.indexOf('날짜가 없는 환자') >= 0 && ag.indexOf('윤미경') >= 0, ag);
+  ok('날짜 있는 환자(박종수 입원)는 날짜 없는 목록에 안 들어감', ag.split('날짜가 없는 환자')[1] !== undefined && ag.split('날짜가 없는 환자')[1].indexOf('박종수') < 0);
 
   // 3. 단계 칩 (종결 제외 4명)
   const chipTxt = doc.getElementById('mlChips').textContent;
-  ok('단계 칩: 전체 4명(종결 제외)', chipTxt.indexOf('전체4') >= 0, chipTxt);
+  ok('단계 칩: 전체 5명(종결 제외)', chipTxt.indexOf('전체5') >= 0, chipTxt);
 
   // 4. 단계 필터
   w.mlFilter('40');
   const d5 = doc.querySelectorAll('#mlCal .ml-cd:not(.out)')[4].textContent;
   ok('필터 입원: 10/5 칸에 입원 박종수', d5.indexOf('입원 박종수') >= 0, d5);
   ok('필터 입원: 16일 연락(김영희, 상담 단계)은 사라짐', doc.querySelectorAll('#mlCal .ml-cd:not(.out)')[15].textContent.indexOf('김영희') < 0);
+  w.mlFilter('all');
+  w.mlFilter('90');
+  ok('종결 칩: 종결 환자(최영수) 목록이 오른쪽에 보임', doc.getElementById('mlAgenda').textContent.indexOf('최영수') >= 0 && doc.getElementById('mlAgenda').textContent.indexOf('종결된 상담') >= 0);
   w.mlFilter('all');
 
   // 5. 환자 선택 → 작업 칸 (상담 단계: 접수 정보 펼침, 다음 연락·방문 칸, 비용 안내, 「방문으로 넘기기」)
@@ -105,6 +113,7 @@ async function run(){
   const saved = calls.filter(c => c.url === '/mis/leadSave.do');
   const staged = calls.filter(c => c.url === '/mis/leadStage.do');
   ok('넘기기: 먼저 leadSave(현재 단계 10)', saved.length === 1 && saved[0].data.stage === '10', JSON.stringify(saved));
+  ok('단계 넘기기: 이전 단계의 다음 연락 날짜는 저장 때 비워진다', saved[0] && saved[0].data.nextDt === '', JSON.stringify(saved));
   ok('넘기기: 이어서 leadStage 20', staged.length === 1 && staged[0].data.stage === '20' && String(staged[0].data.leadSeq) === '1', JSON.stringify(staged));
 
   // 7. 입원 단계 환자: 이전·다음 버튼, 퇴원 칸은 숨김 (입원일은 보이고 방문일은 숨김)
@@ -131,6 +140,8 @@ async function run(){
   w.mlNewAt('10', { contactdt: '20261020' });
   await wait(20);
   ok('날짜 접수: 상담일 2026-10-20', doc.getElementById('lfContact').value === '2026-10-20', doc.getElementById('lfContact').value);
+  w.mlNewAt('40');
+  ok('바로 접수(입원): 입원 단계 접수 칸과 입원일 칸이 보임', doc.getElementById('mlWork').textContent.indexOf('입원') >= 0 && !doc.getElementById('lfAdmit').closest('[hidden]') && doc.getElementById('mlWork').textContent.indexOf('저장하면 이 단계에 들어갑니다') >= 0);
 
   // 11. 달 이동
   w.mlMonth(-1);
@@ -148,6 +159,21 @@ async function run(){
   ok('탭: 유입 분석 보임', !doc.getElementById('mlPaneStat').hasAttribute('hidden') && doc.getElementById('mlPaneCal').hasAttribute('hidden'));
   w.mlTab('cal');
   ok('탭: 달력 복귀', !doc.getElementById('mlPaneCal').hasAttribute('hidden'));
+
+  // 15. 칸별 ✕ 지우기 → 그 칸만 비우고 저장, 환자 기록 전부 지우기 버튼 이름
+  w.mlPick('2');
+  await wait(20);
+  calls.length = 0;
+  w.mlClearField('lfPlan');
+  await wait(60);
+  const clr = calls.filter(c => c.url === '/mis/leadSave.do');
+  ok('칸 지우기: 방문일만 비우고 저장(planDt 빈 값)', clr.length >= 1 && clr[0].data.planDt === '' && clr[0].data.leadSeq == 2, JSON.stringify(clr));
+  ok('칸 지우기: 다른 칸(상태·보호자)은 그대로 저장', clr.length >= 1 && clr[0].data.patNm === '이순자' && clr[0].data.guardNm === '', JSON.stringify(clr));
+  w.mlPick('1');
+  const foot1 = doc.getElementById('mlWork').textContent;
+  ok('삭제 버튼: 「환자 기록 전부 지우기」(한 줄 삭제와 구분)', foot1.indexOf('환자 기록 전부 지우기') >= 0 && foot1.indexOf('이 상담 지우기') < 0);
+  // 칸 지우기 버튼이 화면에 있음
+  ok('지우기 버튼 없음 · 방문일과 다음 할 일이 한 줄(.ml-line)에 있음', doc.querySelectorAll('#mlWork button[onclick*="mlClearFields"]').length === 0 && !!doc.getElementById('lfPlan').closest('.ml-line') && doc.getElementById('lfPlan').closest('.ml-line') === doc.getElementById('lfNextDt').closest('.ml-line'));
 
   // 14. 도움말 열고 닫기
   ok('도움말: 처음엔 닫혀 있음', doc.getElementById('mlHelp').hasAttribute('hidden'));
