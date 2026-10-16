@@ -4,7 +4,7 @@
      · 병원장 조회(misDirector)와 같은 계산·같은 조회 API 를 쓴다(손익분기 관리 식, 분야별통계와 같은 청구 기준).
      · 출력 양식은 청구통계와 같은 A4 두 장. 세부 항목을 한 단계 더 넣었다:
        Ⅰ 수익·비용·손익 요약 · Ⅱ 12개월 추이 · Ⅲ 비용 지출 명세 · Ⅳ 수익 구성·손익분기 ·
-       Ⅴ 청구 분석(유형·의사·질환 상세: 건당·환자당) · Ⅵ 일당청구액 · Ⅶ 약처방·정액 비청구 항목
+       Ⅴ 청구 분석(유형·의사·질환 상세: 건당·환자당) · Ⅵ 일당청구액 (약제 청구 현황은 별도 화면 misDrug.jsp)
      · misReport.jsp 가 정적 include 한다 — pageEncoding 만 둔다(없으면 include 될 때 ISO-8859-1 로 읽혀 한글이 깨진다). 태그 라이브러리는 부모 파일의 것을 쓴다.
      · ★ 이 파일 안에서 Deferred EL 표기(샵+중괄호) 금지 --%>
 <div class="mr-panel" id="mrPanelDir" hidden>
@@ -37,9 +37,15 @@
   #misDirRep .pg .sub2{ font-size:11.5px; font-weight:800; color:#1f5a4b; margin:9px 0 4px; }
   #misDirRep .pg .sec-note{ font-size:10.5px; color:#666; margin-top:3px; line-height:1.55; }
   #misDirRep .pg .note{ font-size:10.5px; color:#666; line-height:1.6; margin-top:8px; border-top:1px solid #d7dfe5; padding-top:6px; }
+  #misDirRep .mdr-tabs{ display:flex; gap:6px; margin:4px 0 12px; flex-wrap:wrap; }
+  #misDirRep .mdr-tab{ border:1px solid #cfd9e0; background:#fff; color:#43555f; border-radius:8px; padding:7px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  #misDirRep .mdr-tab:hover{ background:#eef3f6; }
+  #misDirRep .mdr-tab.on{ background:#1f5a4b; color:#fff; border-color:#1f5a4b; }
+  #misDirRep [data-pane][hidden]{ display:none; }
   #misDirRep .pg ul.diag{ margin:2px 0 8px; padding-left:18px; line-height:1.7; font-size:12px; }
   #misDirRep .pg ul.diag li.up{ color:#1f5a4b; }
   #misDirRep .pg ul.diag li.down{ color:#b23b3b; font-weight:700; }
+  #misDirRep .pg tr.tot td{ font-weight:800; background:#f2f6f8; border-top:1px solid #9fb3bd; }
   #misDirRep .pg .aibox{ background:#f3f7fb; border:1px solid #cfdce8; border-radius:6px; padding:8px 10px; font-size:12px; line-height:1.7; min-height:40px; }
   @media print{
     @page{ size:A4 portrait; margin:10mm; }
@@ -61,6 +67,7 @@
     <span class="mdr-note">기간은 시작월~종료월 · 처음에는 종료월 포함 최근 6개월 · 최대 24개월</span>
   </div>
   <div class="mdr-note warn" id="mdrNote" hidden></div>
+  <div class="mdr-tabs" id="mdrTabs"><button type="button" class="mdr-tab on" data-tab="rep">청구 현황</button><button type="button" class="mdr-tab" data-tab="diag">경영 진단</button></div>
   <div id="mdrRoot"><div class="mdr-note" style="padding:20px 4px;">청구세부통계를 불러오는 중…</div></div>
 
 <script>
@@ -297,20 +304,26 @@
       (body || emptyRow(5, '해당 자료가 없습니다.')) + '</tbody></table>';
   }
 
-  /* ── Ⅶ 약처방 4분류 · 정액 비청구 항목 ── */
+  /* ── Ⅶ 약제 청구 현황 — 청구분 · 정액분 · 합계 · 정액 비청구 항목 ── */
   function secDrug(){
-    if (!T) return '<h2>Ⅶ. 약처방 · 정액 비청구</h2><div class="sec-note">자료를 불러오지 못했습니다.</div>';
+    if (!T) return '<h2>Ⅶ. 약제 청구 현황</h2><div class="sec-note">자료를 불러오지 못했습니다.</div>';
     var t082 = totRow(arr(T.drug[0])), t08 = totRow(arr(T.drug[1])), t081 = totRow(arr(T.drug[2])), t083 = totRow(arr(T.drug[3]));
     var yk = function(t){ return t ? Number(t.yakAmt || 0) : null; };
-    var rows = [];
-    var line = function(name, total, nonclaim){
-      if (total == null) { rows.push(tr([esc(name), '—', '—', '—', '—', '—'], '', [])); return; }
-      var nc = nonclaim || 0, claim = total - nc;
-      rows.push(tr([esc(name), num(total), num(claim), ratio(claim, total), num(nc), ratio(nc, total)], '', []));
+    // 청구분 = 실제로 청구되는 약제비 · 정액분 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 합계 = 청구분 + 정액분.
+    var rows = [], sumClaim = 0, sumFix = 0, sumTot = 0;
+    var line = function(name, claim, fixed){
+      if (claim == null && fixed == null) { rows.push(tr([esc(name), '—', '—', '—', '—', '—'], '', [])); return; }
+      var c = claim || 0, f = fixed || 0, t = c + f;
+      sumClaim += c; sumFix += f; sumTot += t;
+      rows.push(tr([esc(name), num(c), ratio(c, t), num(f), ratio(f, t), num(t)], '', []));
     };
-    line('정액환자', yk(t081), yk(t08));
+    var fixTot = yk(t081), fixNc = yk(t08);
+    line('정액환자', fixTot == null ? null : fixTot - (fixNc || 0), fixTot == null ? null : (fixNc || 0));
     line('정율환자 (행위)', yk(t082), 0);
-    line('전체환자', yk(t083), yk(t08));
+    rows.push(tr(['합계', num(sumClaim), ratio(sumClaim, sumTot), num(sumFix), ratio(sumFix, sumTot), num(sumTot)], 'tot', []));
+    var allTot = yk(t083), gap = allTot == null ? 0 : Math.round(allTot - sumTot);
+    var refNote = allTot == null ? '' : '<div class="sec-note">전체환자 약제비 ' + num(allTot) + '원' +
+      (Math.abs(gap) > 1 ? ' — 합계와 ' + num(Math.abs(gap)) + '원 차이가 있어 명세서 항목 누락 여부를 확인하세요.' : ' — 합계와 일치합니다.') + '</div>';
     var items = T.item.filter(function(r){ return r.itemName && r.itemName !== '전체'; })
                       .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); }).slice(0, 12);
     var itemTot = T.item.filter(function(r){ return r.itemName === '전체'; })[0];
@@ -318,13 +331,12 @@
     var itemRows = items.map(function(r, i){
       return tr([i + 1, esc(r.codeName || ''), esc(r.itemName || ''), num(r.totalAmt), num(r.claimCount), ratio(r.totalAmt, itemSum)], '', [1, 2]);
     }).join('');
-    var topHtml = '<h2>Ⅶ-1. 약처방 — 진료대비 약제비율 · 정액 비청구</h2>' +
-      '<table>' + head(['구분', '약제비용(원)', '청구액(원)', '청구 비율', '비청구액(원)', '비청구 비율']) + '<tbody>' + rows.join('') + '</tbody></table>' +
-      '<div class="sec-note">약제비용 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 금액. 청구액 = 약제비용 − 비청구액. 비청구액 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 정율환자는 항목상 비청구 약이 확인되지 않아 전액 청구로 봤다.</div>';
+    var topHtml = '<h2>Ⅶ-1. 약제 청구 현황 — 청구분 · 정액분 · 합계</h2>' +
+      '<table>' + head(['구분', '청구분(원)', '청구 비율', '정액분(원)', '정액 비율', '합계(원)']) + '<tbody>' + rows.join('') + '</tbody></table>' + refNote +
+      '<div class="sec-note">합계 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 약제비. 청구분 = 실제로 청구되는 약제비. 정액분 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 정율환자는 항목상 정액분이 확인되지 않아 전액 청구분으로 봤다.</div>';
     var disHtml = '<h2>Ⅶ-2. 정액 비청구분 항목별 — 약 말고 다른 처방 (상위 12)</h2>' +
       '<table style="width:100%;">' + head(['번호', '항목', '분류', '금액(원)', '건수', '비중'], [1, 2]) + '<tbody>' +
       (itemRows || emptyRow(6, '해당 자료가 없습니다.')) + '</tbody></table>';
-    // 같은 줄에 좌(약처방 요약) · 우(정액 비청구분 항목별)
     return '<div class="mdr-grid"><div>' + topHtml + '</div><div>' + disHtml + '</div></div>';
   }
   function render(){
@@ -357,8 +369,9 @@
     var p2 = '<div class="pg">' + secAnalysis('top') + '<div class="mdr-grid"><div>' + secAnalysis('dis') + '</div><div>' + secDay() + '</div></div>' + secDrug() +
       '<div class="note">Ⅴ~Ⅶ : 청구 분석은 전체 명세서 기준(총액 · 위탁 명세서 제외). 금액은 원 단위.</div></div>';
     var p3 = '<div class="pg">' + '<div class="mdr-grid"><div>' + secClass(M) + '</div><div>' + secPeer(M) + secStruct(M) + '</div></div>' + secLeak(M) + secDiag(M, prevRev) +
-      '<div class="note">Ⅷ : 효사랑가족요양병원 「AI 실무활용 사례발표대회」(의료&amp;복지뉴스 2026-10)를 참고해 EMR 없이 청구·환자평가표·고정비·상담 자료만으로 만들었다. 환자군 비용은 명세서를 같은 달 평가표의 환자군과 환자 단위로 이어 센 값.</div></div>';
-    g('mdrRoot').innerHTML = p1 + p2 + p3;
+      '</div>';
+    g('mdrRoot').innerHTML = '<div class="mdr-pane" data-pane="rep">' + p1 + p2 + '</div><div class="mdr-pane" data-pane="diag" hidden>' + p3 + '</div>';
+    mdrShowTab(MDR_TAB);
   }
 
   /* ── Ⅷ 경영 진단 — 원장용 (2026-10-16, 효사랑가족요양병원 「AI 실무활용 사례」를 EMR 없이 청구·평가표·고정비·상담 자료로 옮김) ──
@@ -526,8 +539,20 @@
     });
   }
 
+  /* 탭: 청구 현황(기본) · 경영 진단. 고른 탭은 다시 그려도 유지한다. */
+  var MDR_TAB = 'rep';
+  function mdrShowTab(t){
+    MDR_TAB = t;
+    var btns = document.querySelectorAll('#mdrTabs .mdr-tab');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-tab') === t);
+    var panes = document.querySelectorAll('#mdrRoot [data-pane]');
+    for (var j = 0; j < panes.length; j++) { if (panes[j].getAttribute('data-pane') === t) panes[j].removeAttribute('hidden'); else panes[j].setAttribute('hidden', ''); }
+  }
+  g('mdrTabs').addEventListener('click', function(e){ var b = e.target.closest ? e.target.closest('.mdr-tab') : null; if (b) mdrShowTab(b.getAttribute('data-tab')); });
+
   function printDir(){
-    var body = g('mdrRoot').innerHTML;
+    var clone = g('mdrRoot').cloneNode(true); var pn = clone.querySelectorAll('[data-pane]'); for (var k = 0; k < pn.length; k++) pn[k].removeAttribute('hidden');
+    var body = clone.innerHTML;
     if (!body || body.indexOf('class="pg"') < 0) { _alertBox('먼저 청구세부통계를 불러오세요.', {icon:'📄'}); return; }
     var css = root.getElementsByTagName('style')[0].textContent +
       '@page{ size:A4 portrait; margin:0; } @media print{ #misDirRep .noprint{ display:none !important; } #misDirRep .pg{ padding:10mm !important; max-width:none !important; width:210mm !important; } #misDirRep .mdr-grid{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; } }';

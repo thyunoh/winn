@@ -246,16 +246,16 @@
     var pF = parts(pf), pR = parts(pr);
     var pT = { total: pF.total + pR.total, claim: pF.claim + pR.claim };
     function line(name, P, pp){
-      return row([esc(name), eok(P.total), eok(P.claim), pct(P.claim, P.total), eok(P.nonclaim), pct(P.nonclaim, P.total),
+      return row([esc(name), num(P.total), num(P.claim), pct(P.claim, P.total), num(P.nonclaim), pct(P.nonclaim, P.total),
                   pp ? pct(pp.claim, pp.total) : '—']);
     }
     var rows = line('정액환자', F, pF) + line('정율환자 (행위)', R, pR) + line('전체환자', T, pT);
     return '<h2>Ⅴ. 약가비율 — 정액·정율·전체 (청구액 · 비청구액)</h2>' +
-      '<table><thead><tr><th>구분</th><th class="n">약제비용</th><th class="n">청구액</th><th class="n">청구 비율</th><th class="n">비청구액</th><th class="n">비청구 비율</th><th class="n">전월 청구 비율</th></tr></thead><tbody>' +
+      '<table><thead><tr><th>구분</th><th class="n">약제비용(원)</th><th class="n">청구액(원)</th><th class="n">청구 비율</th><th class="n">비청구액(원)</th><th class="n">비청구 비율</th><th class="n">전월 청구 비율</th></tr></thead><tbody>' +
       rows + '</tbody></table>' +
       '<div class="note">약제비용 = 처방 약 금액 − 위탁청구(JS008). <b>청구액 = 약제비용 − 비청구액</b>. 비청구액 = 정액에 포함되어 따로 청구하지 않는 약(항목 L 요양병원정액). ' +
       '정율환자는 항목상 비청구 약이 확인되지 않아 전액 청구로 봅니다(부분청구 기준은 확인 필요). ' +
-      '위탁청구는 청구액에서 제외했습니다 — 이 달 위탁 금액 ' + eok(T.entrust) + '.</div>';
+      '위탁청구는 청구액에서 제외했습니다 — 이 달 위탁 금액 ' + num(T.entrust) + '원.</div>';
   }
 
   /* ── Ⅵ 주상병별 ── */

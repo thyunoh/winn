@@ -97,7 +97,7 @@ async function runPage(html, jq, extraSetup){
       { diagCode:'F00', diagName:'알츠하이머병', totalAmt:18502330, claimCount:10, uniqPatients:6, amtPerClaim:1850233, amtPerPatient:3083721 } ],
     '/tong/t_tong00List.do': [ { dateYm:'202608', ipAmt:115349590, totalAvgAmt:1150000 } ],
     '/tong/t_tong082List.do': [ { medDept:'00', yakAmt:4000000 } ],
-    '/tong/t_tong08List.do': [ { medDept:'00', yakAmt:6000000 } ],
+    '/tong/t_tong08List.do': [ { medDept:'00', yakAmt:1000000 } ],
     '/tong/t_tong081List.do': [ { medDept:'00', yakAmt:5000000 } ],
     '/tong/t_tong083List.do': [ { medDept:'00', yakAmt:9000000 } ],
     '/tong/t_tong09List.do': [ { itemName:'전체', totalAmt:9000000 }, { codeName:'L', itemName:'요양병원 정액', totalAmt:3000000, claimCount:12 } ],
@@ -108,7 +108,7 @@ async function runPage(html, jq, extraSetup){
   const root1 = doc1.getElementById('mdrRoot');
   const txt1 = root1.textContent;
   ok('병원장 보고: 페이지 세 장(.pg 3개 — 2026-10-16 Ⅷ 경영 진단 추가)', root1.querySelectorAll('.pg').length === 3, 'pg=' + root1.querySelectorAll('.pg').length);
-  ['청구세부통계', 'Ⅰ. 수익', 'Ⅱ. 기간 수익', 'Ⅲ. 비용 지출 명세', 'Ⅳ. 수익 구성', 'Ⅴ-1. 유형별 청구', 'Ⅵ. 일당금액', 'Ⅶ-1. 약처방',
+  ['청구세부통계', 'Ⅰ. 수익', 'Ⅱ. 기간 수익', 'Ⅲ. 비용 지출 명세', 'Ⅳ. 수익 구성', 'Ⅴ-1. 유형별 청구', 'Ⅵ. 일당금액',
    'Ⅷ-1. 환자군별 수익성', 'Ⅷ-2. 고객 병원 대비 위치', 'Ⅷ-3. 비용 구조', 'Ⅷ-4. 돈이 새는 곳', 'Ⅷ-5. 자동 진단']
     .forEach(k => ok('섹션 있음: ' + k, txt1.indexOf(k) >= 0));
   ok('총진료비(청구) 142,823,510', txt1.indexOf('142,823,510') >= 0);
@@ -117,7 +117,8 @@ async function runPage(html, jq, extraSetup){
   ok('질환별 ZZ 기타병명 행 + 설명', txt1.indexOf('ZZ 기타병명') >= 0 && txt1.indexOf('질병 분류표') >= 0);
   ok('의사별: 면허 12345 김의사', txt1.indexOf('김의사') >= 0);
   ok('의사별: 면허 99(전체)는 빠짐', txt1.indexOf('면허 99') < 0);
-  ok('정액 비청구 항목 표시', txt1.indexOf('요양병원 정액') >= 0);
+  ok('Ⅶ 약제 청구 현황(청구분·정액분·합계)이 청구 현황 탭에 있음', txt1.indexOf('Ⅶ-1. 약제 청구 현황') >= 0 && txt1.indexOf('정액 비청구분 항목별') >= 0 && txt1.indexOf('합계와 일치합니다') >= 0);
+  ok('경영 진단은 별도 탭(.mdr-pane[data-pane=diag])으로 분리되어 있음', !!root1.querySelector('[data-pane="diag"]') && root1.querySelector('[data-pane="diag"]').textContent.indexOf('Ⅷ-1') >= 0 && root1.querySelector('[data-pane="rep"]').textContent.indexOf('Ⅷ-1') < 0);
   ok('NaN·undefined 없음', txt1.indexOf('NaN') < 0 && txt1.indexOf('undefined') < 0);
   ok('경영 보고서와 같은 호출: directorGet + costGet + 청구 분석 9개 + dirExtra', calls1.filter(u => u.indexOf('/tong/') === 0).length === 9 && calls1.indexOf('/mis/directorGet.do') >= 0 && calls1.indexOf('/mis/costGet.do') >= 0 && calls1.indexOf('/mis/dirExtra.do') >= 0, calls1.join(','));
 

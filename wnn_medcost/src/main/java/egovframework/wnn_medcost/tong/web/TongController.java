@@ -279,6 +279,14 @@ public class TongController {
 		}
     }
 	
+	@RequestMapping(value= "/t_drugItemList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<Map<String, Object>> t_drugItemList(@ModelAttribute("DTO") TongDTO dto) {
+	    List<Map<String, Object>> resultLst = new ArrayList<>();
+	    try { resultLst = svc.drugItemList(dto); } catch (Exception e) { e.printStackTrace(); }
+	    return resultLst;
+	}
+
 	@RequestMapping(value= "/t_tong08List.do", method = RequestMethod.POST)
 	@ResponseBody
 	public List<TongDTO> t_tong08List(@ModelAttribute("DTO") TongDTO dto) {

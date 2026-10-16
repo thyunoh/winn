@@ -807,6 +807,7 @@
                                         <ul class="nav flex-column">
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misReport.do">청구통계</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misDirector.do">청구세부통계</a></li>
+                                            <li class="nav-item"><a class="nav-item nav-link" href="/main/misDrug.do">약제 청구 현황</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misStat.do">월별청구통계</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misRevenue.do">수입일보</a></li>
                                             <li class="nav-item"><a class="nav-item nav-link" href="/main/misCost.do">손익분기 관리</a></li>

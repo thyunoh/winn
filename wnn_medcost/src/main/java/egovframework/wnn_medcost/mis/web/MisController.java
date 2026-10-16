@@ -232,6 +232,9 @@ public class MisController {
 	}
 
 
+	@RequestMapping(value = "main/misDrug.do")
+	public String misDrug(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misDrug"); }   // 2026-10-16 청구세부통계 Ⅶ 약처방을 별도 화면으로 분리 (청구분 · 정액분 · 합계)
+
 	/* ═══ 업무 알림(③ 업무 자동화) ═══ */
 	@RequestMapping(value = "main/misAlert.do")
 	public String misAlert(HttpServletRequest request, ModelMap model) { return screen(request, model, ".main/mismgr/misAlert"); }

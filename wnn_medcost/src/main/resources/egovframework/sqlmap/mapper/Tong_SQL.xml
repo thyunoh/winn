@@ -1537,4 +1537,50 @@
 		ORDER BY percentOfTotal DESC, ITEM_NO, CODE_NO
 	  ]]>
 	</select>	
+	<!-- 약제 청구 현황 — 품목코드(EDI_CODE)별 약제비 (2026-10-16)
+	     약제 = 처방 오더(TBL_JINORD_MST, CODE_TYPE 3) 중 위탁청구 JS008 행을 뺀 금액. 명세서 범위는 tong08~083 과 같다.
+	     정액 명세서 = PAY_TYPE 1 또는 산재정액. 그 안의 항목 L 약은 정액에 포함되어 따로 청구하지 않는 약(정액분).
+	     fixTotal = 정액 명세서 약제비 전체 · fixNonclaim = 그 중 항목 L(정액분) · prodTotal = 정액이 아닌 명세서 약제비.
+	     청구분 = (fixTotal - fixNonclaim) + prodTotal 로 화면이 계산한다. -->
+	<select id="drugItemList" resultType="java.util.HashMap"> <![CDATA[
+		SELECT jj.EDI_CODE                                                AS ediCode
+		     , COALESCE(MAX(sm.KOR_NM), '')  AS ediName
+		     , SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END) AS fixTotal
+		     , SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) AND jj.ITEM_NO = 'L' THEN jj.AMOUNT ELSE 0 END) AS fixNonclaim
+		     , SUM(CASE WHEN NOT (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END) AS prodTotal
+		     , COUNT(DISTINCT CONCAT(B.CLAIM_NO, '-', B.BILL_SEQ))        AS claimCount
+		  FROM TBL_CHUNG_MST A
+		  JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO
+		                         AND A.HOSP_CD  = B.HOSP_CD
+		  JOIN TBL_JINORD_MST jj ON  jj.HOSP_CD  = B.HOSP_CD
+		                         AND jj.CLAIM_NO = B.CLAIM_NO
+		                         AND jj.BILL_SEQ = B.BILL_SEQ
+		  LEFT JOIN (SELECT s.FEE_CODE, MAX(s.START_DT) AS START_DT FROM TBL_SUGA_MST s WHERE s.FEE_TYPE = '2' AND s.ACTION_YN = 'Y' GROUP BY s.FEE_CODE) sd ON sd.FEE_CODE = jj.EDI_CODE
+		  LEFT JOIN TBL_SUGA_MST sm ON sm.FEE_CODE = sd.FEE_CODE AND sm.FEE_TYPE = '2' AND sm.START_DT = sd.START_DT AND sm.ACTION_YN = 'Y'
+		 WHERE A.HOSP_CD = #{hospCd}
+		   AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+		   AND IFNULL(B.DELYN,'') <> 'Y'
+		   AND jj.CODE_TYPE IN ('3')
+		   AND NOT EXISTS (SELECT 1
+		                     FROM TBL_SPECODE_MST tsm
+		                    WHERE tsm.HOSP_CD   = jj.HOSP_CD
+		                      AND tsm.CLAIM_NO  = jj.CLAIM_NO
+		                      AND tsm.BILL_SEQ  = jj.BILL_SEQ
+		                      AND tsm.ROW_NO    = jj.ROW_NO
+		                      AND tsm.SPEC_TYPE = 'JS008')
+		   AND (SELECT COUNT(DISTINCT tsm2.ROW_NO)
+		          FROM TBL_SPECODE_MST tsm2
+		         WHERE tsm2.HOSP_CD   = B.HOSP_CD
+		           AND tsm2.CLAIM_NO  = B.CLAIM_NO
+		           AND tsm2.BILL_SEQ  = B.BILL_SEQ
+		           AND tsm2.SPEC_TYPE = 'JS008')
+		       <> (SELECT COUNT(*)
+		             FROM TBL_JINORD_MST jsm
+		            WHERE jsm.HOSP_CD  = B.HOSP_CD
+		              AND jsm.CLAIM_NO = B.CLAIM_NO
+		              AND jsm.BILL_SEQ = B.BILL_SEQ
+		              AND jsm.ITEM_NO <> 'L')
+		 GROUP BY jj.EDI_CODE
+	]]>
+	</select>
 </mapper>
