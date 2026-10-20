@@ -3195,3 +3195,198 @@ window.qpsPrintGo = function (w, maxMs) {
     try { if (/\/main\/mis(Stat|Cost|Alert|Lead).do/.test(location.pathname + '|' + (sessionStorage.getItem('_realPath') || ''))) apply(true); } catch(e){}
 })();
 </script>
+
+<!-- 버튼 메뉴 패널 (2026-10-20) — 경영고객관리 · QPS 를 같은 모양의 떠 있는 패널로 띄운다.
+     끌어서 옮기고, 그룹 제목이나 「전체 접기」로 버튼을 접고 펼친다.
+     'qps' 를 치면 보이기/숨기기. QPS 패널은 왼쪽 QPS 메뉴가 보일 때만 뜬다. -->
+<style>@media print{#misSubNav{display:none!important}}</style>
+<script>
+(function(){
+    var MIS_GROUPS = [
+        { nm: '경영통계관리', bg: '#41b883', fg: '#ffffff', items: [
+            ['청구통계','/main/misReport.do'], ['청구세부통계','/main/misDirector.do'], ['약제 청구 현황','/main/misDrug.do'],
+            ['월별청구통계','/main/misStat.do'], ['수입일보','/main/misRevenue.do'], ['손익분기 관리','/main/misCost.do']] },
+        { nm: '고객관리', bg: '#ffb400', fg: '#1a1a1a', items: [
+            ['신규환자','/main/misLead.do'], ['입퇴원환자','/main/misPatient.do']] },
+        { nm: '업무 · 안내', bg: '#e4e4e4', fg: '#333333', items: [
+            ['업무 알림','/main/misAlert.do'], ['간호사 관리','/main/misNurse.do'],
+            ['병원자료엑셀연계','/main/misEmr.do'], ['병원 내규·안내문','/main/misRule.do']] }
+    ];
+    var WORD = 'qps';
+
+    function curPath(){
+        try { return sessionStorage.getItem('_realPath') || location.pathname; } catch(e){ return location.pathname; }
+    }
+    function isMisPage(){ return /\/main\/mis[A-Za-z]+\.do/.test(curPath()); }
+    function clampPos(x, y, w, h){
+        x = Math.max(0, Math.min(window.innerWidth - w, x));
+        y = Math.max(0, Math.min(window.innerHeight - 40, y));
+        return { x: x, y: y };
+    }
+    function inField(t){
+        if (!t) return false;
+        var tag = (t.tagName || '').toUpperCase();
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable === true;
+    }
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+
+    /* 패널 한 장 — 머리(끌기·접기) + 본문 */
+    function makePanel(id, title, bodyHtml, posKey, rightPx, topPx){
+        var box = document.createElement('div');
+        box.id = id;
+        box.style.cssText = 'position:fixed;top:' + topPx + 'px;width:262px;background:#fff;border:1px solid #e1e7ec;border-radius:12px;' +
+            'box-shadow:0 6px 18px rgba(0,0,0,.08);padding:0 12px 12px;z-index:1000;';
+        box.innerHTML =
+            '<div class="mnp-grip" style="cursor:move;user-select:none;margin:0 -12px 8px;padding:9px 12px;border-bottom:1px solid #174a3d;' +
+            'border-radius:12px 12px 0 0;background:#f6f8fa;font-weight:800;font-size:13px;color:#20303a;display:flex;align-items:center;gap:6px;">' +
+            '<span style="flex:1;">' + esc(title) + '</span></div>' +
+            '<div class="mnp-body">' + bodyHtml + '</div>';
+        document.body.appendChild(box);
+        // 위치: 지난번 위치 → 없으면 오른쪽 기본 위치
+        var p = null;
+        try { p = JSON.parse(localStorage.getItem(posKey) || 'null'); } catch(e){}
+        var x = (p && typeof p.x === 'number') ? p.x : (window.innerWidth - rightPx - 262);
+        var y = (p && typeof p.y === 'number') ? p.y : topPx;
+        var c = clampPos(x, y, 262, box.offsetHeight || 300);
+        box.style.left = c.x + 'px'; box.style.top = c.y + 'px'; box.style.right = 'auto';
+        box.dataset.lastTop = c.y;
+        wireDrag(box, posKey);
+        return box;
+    }
+    function wireDrag(box, posKey){
+        var grip = box.querySelector('.mnp-grip'), drag = null;
+        grip.addEventListener('mousedown', function(e){
+            if (e.target && e.target.closest && e.target.closest('button')) return;
+            var r = box.getBoundingClientRect();
+            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e){
+            if (!drag) return;
+            var c = clampPos(e.clientX - drag.dx, e.clientY - drag.dy, box.offsetWidth, box.offsetHeight);
+            box.style.left = c.x + 'px'; box.style.top = c.y + 'px'; box.style.right = 'auto';
+            if (!box.dataset.foldPos) box.dataset.lastTop = c.y;
+        });
+        document.addEventListener('mouseup', function(){
+            if (!drag) return;
+            drag = null;
+            if (box.dataset.foldPos) return;
+            try { localStorage.setItem(posKey, JSON.stringify({ x: parseInt(box.style.left, 10) || 0, y: parseInt(box.style.top, 10) || 0 })); } catch(e){}
+        });
+    }
+    /* 그룹 버튼 묶음 — 그룹 제목을 누르면 그 그룹만 접히고, 「전체 접기/펼치기」는 모든 그룹을 바꾼다 */
+    function groupsHtml(groups, colorOf, folds){
+        var html = '';
+        groups.forEach(function(g, gi){
+            if (folds) html += '<div class="mn-gh" data-gi="' + gi + '" style="font-size:11px;color:#8a99a3;margin:10px 2px 5px;cursor:pointer;user-select:none;">▾ ' + esc(g.nm) + '</div>';
+            else html += '<div style="font-size:11px;color:#8a99a3;margin:10px 2px 5px;">' + esc(g.nm) + '</div>';
+            html += '<div class="mn-gb" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+            g.items.forEach(function(it){
+                var c = colorOf(g);
+                var on = (curPath() === it[1]);
+                html += '<a href="' + esc(it[1]) + '" style="display:flex;align-items:center;justify-content:center;min-height:38px;padding:4px 6px;' +
+                    'border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;line-height:1.25;text-align:center;' +
+                    'background:' + c.bg + ';color:' + c.fg + ';' + (on ? 'outline:2px solid #1f5a4b;outline-offset:1px;' : '') + '">' + esc(it[0]) + '</a>';
+            });
+            html += '</div>';
+        });
+        return html;
+    }
+    function wireGroups(box, groups){
+        var bs = box.querySelectorAll('.mn-gb'), hs = box.querySelectorAll('.mn-gh');
+        var all = box.querySelector('.mnp-all'), body = box.querySelector('.mnp-body');
+        function setGroup(i, open){
+            if (!bs[i] || !hs[i]) return;
+            bs[i].style.display = open ? 'grid' : 'none';
+            hs[i].textContent = (open ? '▾ ' : '▸ ') + groups[i].nm;
+        }
+        function syncAll(){
+            var folded = (body.style.display === 'none');
+            if (all) all.textContent = folded ? '전체 펼치기' : '전체 접기';
+            // 접으면 툴바를 진한 색으로, 펼치면 원래 연한 툴바로
+            var grip = box.querySelector('.mnp-grip');
+            if (grip) {
+                grip.style.background = folded ? '#9fd3ef' : '#f6f8fa';
+                grip.style.color = folded ? '#1d4f6b' : '#20303a';
+                grip.style.borderBottom = folded ? '1px solid #6fb8e0' : '1px solid #e1e7ec';
+            }
+            if (folded && !box.dataset.foldPos) {
+                box.dataset.foldPos = JSON.stringify({ l: box.style.left, t: box.style.top, r: box.style.right, b: box.style.bottom });
+                var gh = box.querySelector('.mnp-grip').offsetHeight || 40;
+                box.style.left = '8px'; box.style.right = 'auto'; box.style.bottom = 'auto';
+                box.style.top = Math.max(0, window.innerHeight - 120 - gh) + 'px';
+                box.style.height = 'auto'; box.style.maxHeight = 'none'; box.style.overflow = 'visible';
+            } else if (!folded && box.dataset.foldPos) {
+                var pp = JSON.parse(box.dataset.foldPos);
+                box.style.left = pp.l; box.style.top = pp.t; box.style.right = pp.r; box.style.bottom = pp.b;
+                box.style.height = ''; box.style.maxHeight = ''; box.style.overflow = '';
+                delete box.dataset.foldPos;
+            }
+        }
+        Array.prototype.forEach.call(hs, function(h, i){
+            h.addEventListener('click', function(){ setGroup(i, bs[i].style.display === 'none'); });
+        });
+        if (all) all.addEventListener('click', function(){
+            if (body.style.display !== 'none') { body.style.display = 'none'; }
+            else { body.style.display = ''; for (var i = 0; i < groups.length; i++) setGroup(i, true); }
+            syncAll();
+        });
+        syncAll();
+    }
+
+    /* 'qps' 키 — 이 패널의 보이기/숨기기 (입력칸에서는 반응하지 않는다) */
+    function bindWordKey(toggleFn){
+        var buf = '', bufTimer = null;
+        document.addEventListener('keydown', function(ev){
+            if (ev.ctrlKey || ev.altKey || ev.metaKey) { buf = ''; return; }
+            if (inField(ev.target)) { buf = ''; return; }
+            var ch = (ev.code && ev.code.indexOf('Key') === 0) ? ev.code.charAt(3).toLowerCase() : (ev.key || '').toLowerCase();
+            if (ch.length !== 1 || ch < 'a' || ch > 'z') { buf = ''; return; }
+            buf += ch;
+            if (WORD.indexOf(buf) !== 0) buf = (ch === WORD.charAt(0)) ? ch : '';
+            if (bufTimer) clearTimeout(bufTimer);
+            bufTimer = setTimeout(function(){ buf = ''; }, 1500);
+            if (buf === WORD) { buf = ''; toggleFn(); }
+        });
+    }
+
+    /* 경영고객관리 패널 */
+    function buildMis(){
+        if (!isMisPage() || document.getElementById('misSubNav')) return;
+        var body = groupsHtml(MIS_GROUPS, function(g){ return { bg: g.bg, fg: g.fg }; }, true);
+        var box = makePanel('misSubNav', '경영고객관리', body, 'misNavPos', 14, 180);
+        var allB = document.createElement('button');
+        allB.type = 'button'; allB.className = 'mnp-all'; allB.textContent = '전체 접기';
+        allB.style.cssText = 'font-size:11px;padding:3px 8px;border:1px solid #cfd9e0;border-radius:6px;background:#fff;color:#20303a;cursor:pointer;white-space:nowrap;';
+        box.querySelector('.mnp-grip').appendChild(allB);
+        // × — 패널을 닫는다(숨김). 다시 보이려면 qps 를 친다
+        var xB = document.createElement('button');
+        xB.type = 'button'; xB.className = 'mnp-x'; xB.textContent = '×'; xB.title = '닫기 (qps 로 다시 열기)';
+        xB.style.cssText = 'font-size:15px;line-height:1;padding:1px 7px;border:1px solid #cfd9e0;border-radius:6px;background:#fff;color:#20303a;cursor:pointer;font-weight:700;';
+        xB.addEventListener('click', function(){
+            box.style.display = 'none';
+            try { sessionStorage.setItem('misNavHide', '1'); } catch(e){}
+        });
+        box.querySelector('.mnp-grip').appendChild(xB);
+        // 왼쪽 「경영고객관리」 메뉴를 다시 누르면 닫혀 있던 패널이 다시 뜬다
+        var menuA = document.querySelector('#menu-mis > a');
+        if (menuA) menuA.addEventListener('click', function(){
+            box.style.display = '';
+            try { sessionStorage.setItem('misNavHide', '0'); } catch(e){}
+        });
+        wireGroups(box, MIS_GROUPS);
+        try { if (sessionStorage.getItem('misNavHide') === '1') box.style.display = 'none'; } catch(e){}
+        if (window.innerWidth < 1100) box.style.display = 'none';
+        bindWordKey(function(){
+            var hidden = box.style.display === 'none';
+            box.style.display = hidden ? '' : 'none';
+            try { sessionStorage.setItem('misNavHide', hidden ? '0' : '1'); } catch(e){}
+        });
+    }
+
+    function buildAll(){
+        buildMis();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildAll); else buildAll();
+})();
+</script>
