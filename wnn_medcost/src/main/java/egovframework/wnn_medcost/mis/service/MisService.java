@@ -97,6 +97,8 @@ public interface MisService {
 	Map<String, Object> selectDirectorBoard(String hospCd, String wnnYn, String fromIn, String toIn) throws Exception;
 	Map<String, Object> selectPatBoard(String hospCd) throws Exception;
 	Map<String, Object> selectNurseBoard(String hospCd) throws Exception;
+	/** 간호사 관리 — 기준 월(ym)의 구조영역(차등제 신고값)을 우선 쓴다. */
+	Map<String, Object> selectNurseBoard(String hospCd, String ym) throws Exception;
 	long saveStaffChg(Map<String, Object> m) throws Exception;
 	int deleteStaffChg(String hospCd, long chgSeq, String userId) throws Exception;
 

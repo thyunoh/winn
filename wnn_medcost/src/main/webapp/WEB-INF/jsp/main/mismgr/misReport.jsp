@@ -125,6 +125,44 @@
     return '<span class="' + (d >= 0 ? 'up' : 'down') + '">' + sgn(d) + man(Math.abs(d)) + ' (' + (n0(prev) ? (d >= 0 ? '+' : '') + (Math.round(d * 1000 / n0(prev)) / 10).toFixed(1) + '%' : '—') + ')</span>';
   }
 
+  /* ── 그래프 (2026-10-20) — 표 대신 막대. 색은 월 총진료비 차트와 같게: 당월·청구 파랑 · 전월·비청구 주황 ── */
+  var MG_BLUE = '#2d9fd3', MG_ORANGE = '#ef8a45';
+  var MG_CSS = '<style>.mg-grid{display:grid;grid-template-columns:190px minmax(80px,1fr) max-content;column-gap:8px;row-gap:6px;align-items:center;font-size:12px;margin:4px 0}.mg-row{display:contents}.mg-lbl{text-align:left;color:#20303a;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.mg-trk{height:12px;background:#eef2f5;border-radius:3px;overflow:hidden;display:flex}.mg-fill{height:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact}.mg-pair{display:flex;flex-direction:column;gap:3px}.mg-pair .mg-trk{height:9px}.mg-val{text-align:left;color:#20303a;white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.45}.mg-legend{font-size:11px;color:#43555f;margin:4px 0 6px}.mg-sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>';
+  function mgLegend(items){
+    return '<div class="mg-legend">' + items.map(function(x){ return '<span class="mg-sw" style="background:' + x[1] + '"></span>' + esc(x[0]); }).join('&nbsp; &nbsp; ') + '</div>';
+  }
+  /* 한 줄 막대: rows = {label, value, text(이미 쓴 글자), color?} */
+  function mgBars(rows){
+    var max = 0; rows.forEach(function(r){ max = Math.max(max, n0(r.value)); });
+    return MG_CSS + '<div class="mg-grid">' + rows.map(function(r){
+      var w = max ? (n0(r.value) / max * 100).toFixed(1) : '0';
+      return '<div class="mg-row"><div class="mg-lbl" title="' + esc(r.label) + '">' + esc(r.label) + '</div>' +
+        '<div class="mg-trk"><div class="mg-fill" style="width:' + w + '%;background:' + (r.color || MG_BLUE) + '"></div></div>' +
+        '<div class="mg-val">' + r.text + '</div></div>';
+    }).join('') + '</div>';
+  }
+  /* 두 값 비교 막대(당월·전월 등): rows = {label, a, b, ta, tb}, 범례 맨 위 */
+  function mgPairs(rows, na, nb){
+    var max = 0; rows.forEach(function(r){ max = Math.max(max, n0(r.a), n0(r.b)); });
+    var w = function(v){ return max ? (n0(v) / max * 100).toFixed(1) : '0'; };
+    return MG_CSS + mgLegend([[na, MG_BLUE], [nb, MG_ORANGE]]) + '<div class="mg-grid">' + rows.map(function(r){
+      return '<div class="mg-row"><div class="mg-lbl" title="' + esc(r.label) + '">' + esc(r.label) + '</div>' +
+        '<div class="mg-pair"><div class="mg-trk"><div class="mg-fill" style="width:' + w(r.a) + '%;background:' + MG_BLUE + '"></div></div>' +
+        '<div class="mg-trk"><div class="mg-fill" style="width:' + w(r.b) + '%;background:' + MG_ORANGE + '"></div></div></div>' +
+        '<div class="mg-val">' + r.ta + '<br>' + r.tb + '</div></div>';
+    }).join('') + '</div>';
+  }
+  /* 쌓은 막대(청구 + 비청구 = 전체): rows = {label, p:[a, b], text} */
+  function mgStack(rows, na, nb){
+    var max = 0; rows.forEach(function(r){ max = Math.max(max, n0(r.p[0]) + n0(r.p[1])); });
+    return MG_CSS + mgLegend([[na, MG_BLUE], [nb, MG_ORANGE]]) + '<div class="mg-grid">' + rows.map(function(r){
+      var a = max ? (n0(r.p[0]) / max * 100).toFixed(1) : '0', b = max ? (n0(r.p[1]) / max * 100).toFixed(1) : '0';
+      return '<div class="mg-row"><div class="mg-lbl">' + esc(r.label) + '</div>' +
+        '<div class="mg-trk"><div class="mg-fill" style="width:' + a + '%;background:' + MG_BLUE + '"></div><div class="mg-fill" style="width:' + b + '%;background:' + MG_ORANGE + '"></div></div>' +
+        '<div class="mg-val">' + r.text + '</div></div>';
+    }).join('') + '</div>';
+  }
+
   /* ── Ⅰ 수익 규모 ── */
   /* 건수 증감 — 금액(만원)과 따로 쓴다: 「+0만」처럼 건수가 금액 단위로 찍히던 것을 고친다. */
   function diffCnt(now, prev){
@@ -138,29 +176,28 @@
     var inO = (d.inout || []).filter(function(x){ return x.gb === 'O'; })[0] || {};
     var tot = n0(c.totamt), ptot = n0(p.totamt);
     var rows = [
-      row(['급여 발생총액 (명세서 총진료비)', eok(tot), eok(ptot), diffTxt(tot, ptot), '명세서 기준(100/100 포함) — 이 보고서의 분모'], 'tot'),
-      row(['공단·기관 청구액', eok(c.claimamt), eok(p.claimamt), diffTxt(c.claimamt, p.claimamt), '총진료비의 ' + pct(c.claimamt, tot)]),
-      row(['본인부담', eok(c.selfamt), eok(p.selfamt), diffTxt(c.selfamt, p.selfamt), '총진료비의 ' + pct(c.selfamt, tot)]),
-      row(['명세서 건수', num(c.bills) + '건', num(p.bills) + '건', diffCnt(c.bills, p.bills), '환자 ' + num(c.pats) + '명 · 입원일수 ' + num(c.admdays) + '일']),
-      row(['입원 진료비', eok(inI.amt), eok(pInI.amt), diffTxt(inI.amt, pInI.amt), '입원 ' + num(inI.bills) + '건 · 외래 ' + num(inO.bills) + '건'])
-    ].join('');
+      { label: '급여 발생총액 (명세서 총진료비)', a: tot, b: ptot },
+      { label: '공단·기관 청구액', a: n0(c.claimamt), b: n0(p.claimamt) },
+      { label: '본인부담', a: n0(c.selfamt), b: n0(p.selfamt) },
+      { label: '입원 진료비', a: n0(inI.amt), b: n0(pInI.amt) }
+    ].map(function(x){ x.ta = eok(x.a) + ' ' + diffTxt(x.a, x.b); x.tb = '전월 ' + eok(x.b); return x; });
     return '<h2>Ⅰ. 수익 규모 — 전월 대비 증감</h2>' +
-      '<table><thead><tr><th>구분</th><th class="n">' + esc(ymLbl(d.ym)) + '</th><th class="n">' + esc(ymLbl(d.prevYm)) + '</th><th class="n">증감</th><th>비고</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      mgPairs(rows, ymLbl(d.ym), ymLbl(d.prevYm)) +
+      '<div class="note">명세서 기준(100/100 포함) — 이 보고서의 분모 · 공단 청구 ' + pct(c.claimamt, tot) + ' · 본인부담 ' + pct(c.selfamt, tot) + ' · 명세서 ' + num(c.bills) + '건(' + diffCnt(c.bills, p.bills) + ') · 환자 ' + num(c.pats) + '명 · 입원일수 ' + num(c.admdays) + '일 · 입원 ' + num(inI.bills) + '건 · 외래 ' + num(inO.bills) + '건</div>';
   }
 
   /* ── 과별 진료비 (2026-10-15) — 청구세부 과별 분석과 같은 기준(총액 · 위탁 규칙). 진료과는 주상병 기준 ── */
   function secDept(d){
     var list = d.dept || [], tot = list.reduce(function(s, x){ return s + n0(x.amt); }, 0);
     var cnt = list.reduce(function(s, x){ return s + n0(x.cnt); }, 0);
-    var max = 0; list.forEach(function(x){ max = Math.max(max, n0(x.amt)); });
     var rows = list.slice(0, 10).map(function(x){
-      return row([esc(x.nm || '기타'), eok(x.amt), num(x.cnt) + '건', (n0(x.cnt) ? num(Math.round(n0(x.amt) / n0(x.cnt))) + '원' : '—'), pct(x.amt, tot), bar(n0(x.amt) / (max || 1), 90, '#1f5a4b')]);
-    }).join('');
-    var sum = row(['합계', eok(tot), num(cnt) + '건', (cnt ? num(Math.round(tot / cnt)) + '원' : '—'), '100.0%', ''], 'tot');
-    var rest = list.length > 10 ? '<div class="note">상위 10개 과 외 ' + (list.length - 10) + '개 과는 표에서 생략했고 합계에는 포함됩니다.</div>' : '';
+      return { label: x.nm || '기타', value: n0(x.amt),
+        text: eok(x.amt) + ' · ' + pct(x.amt, tot) + ' · ' + num(x.cnt) + '건' + (n0(x.cnt) ? ' · 건당 ' + num(Math.round(n0(x.amt) / n0(x.cnt))) + '원' : '') };
+    });
+    var rest = list.length > 10 ? '<div class="note">상위 10개 과 외 ' + (list.length - 10) + '개 과는 그래프에서 생략했고 합계에는 포함됩니다.</div>' : '';
     return '<h2>과별 진료비 — 총액 기준 (' + list.length + '개 과)</h2>' +
-      '<table><thead><tr><th>진료과</th><th class="n">진료비</th><th class="n">건수</th><th class="n">건당</th><th class="n">비중</th><th>막대</th></tr></thead><tbody>' +
-      (rows ? rows + sum : '<tr><td colspan="6" class="n">해당 자료가 없습니다.</td></tr>') + '</tbody></table>' + rest;
+      (list.length ? mgBars(rows) + '<div class="note">합계 ' + eok(tot) + ' · ' + num(cnt) + '건' + (cnt ? ' · 건당 ' + num(Math.round(tot / cnt)) + '원' : '') + '</div>' + rest
+                   : '<div class="note">해당 자료가 없습니다.</div>');
   }
 
   /* ── Ⅱ 총평 ── */
@@ -223,14 +260,15 @@
     var pI = pio.filter(function(x){ return x.gb === 'I'; })[0] || {}, pO = pio.filter(function(x){ return x.gb === 'O'; })[0] || {};
     var bs = n0(I.bills) + n0(O.bills), am = n0(I.amt) + n0(O.amt);
     var perI = n0(I.bills) ? n0(I.amt) / n0(I.bills) : 0, perO = n0(O.bills) ? n0(O.amt) / n0(O.bills) : 0;
+    var rows = [
+      { label: '입원', a: bs ? n0(I.bills) / bs * 100 : 0, b: am ? n0(I.amt) / am * 100 : 0,
+        ta: '건수 ' + num(I.bills) + '건 · ' + pct(I.bills, bs), tb: '진료비 ' + eok(I.amt) + ' · ' + pct(I.amt, am) + ' · 1건당 ' + num(Math.round(perI)) + '원' },
+      { label: '외래', a: bs ? n0(O.bills) / bs * 100 : 0, b: am ? n0(O.amt) / am * 100 : 0,
+        ta: '건수 ' + num(O.bills) + '건 · ' + pct(O.bills, bs), tb: '진료비 ' + eok(O.amt) + ' · ' + pct(O.amt, am) + ' · 1건당 ' + num(Math.round(perO)) + '원' }
+    ];
     return '<h2>Ⅳ. 입원·외래 구성</h2>' +
-      '<table><thead><tr><th>구분</th><th class="n">명세서 건수</th><th class="n">건수 비중</th><th class="n">진료비</th><th class="n">진료비 비중</th><th class="n">1건당</th><th class="n">전월 건수</th></tr></thead><tbody>' +
-      row(['입원', num(I.bills), pct(I.bills, bs), eok(I.amt), pct(I.amt, am), num(Math.round(perI)) + '원', num(pI.bills)]) +
-      row(['외래', num(O.bills), pct(O.bills, bs), eok(O.amt), pct(O.amt, am), num(Math.round(perO)) + '원', num(pO.bills)]) +
-      '</tbody></table>' +
-      '<div class="box sub" style="margin-top:6px;">' +
-      '입원 ' + bar(n0(I.bills) / (bs || 1), 160, '#1f5a4b') + ' 건수 · ' + bar(n0(I.amt) / (am || 1), 160, '#c97d10') + ' 진료비 &nbsp; 수익의 결정 요인은 <b>입원 병상 가동·재원일수</b>입니다. 외래는 건수가 많아도 금액 기여가 작습니다.' +
-      '</div>';
+      mgPairs(rows, '건수 비중', '진료비 비중') +
+      '<div class="note">전월 건수 · 입원 ' + num(pI.bills) + '건 · 외래 ' + num(pO.bills) + '건. 수익의 결정 요인은 <b>입원 병상 가동·재원일수</b>입니다. 외래는 건수가 많아도 금액 기여가 작습니다.</div>';
   }
 
   /* ── Ⅴ 약가비율 (정액·정율·전체 · 청구·비청구) ── */
@@ -246,13 +284,12 @@
     var pF = parts(pf), pR = parts(pr);
     var pT = { total: pF.total + pR.total, claim: pF.claim + pR.claim };
     function line(name, P, pp){
-      return row([esc(name), num(P.total), num(P.claim), pct(P.claim, P.total), num(P.nonclaim), pct(P.nonclaim, P.total),
-                  pp ? pct(pp.claim, pp.total) : '—']);
+      return { label: name, p: [P.claim, P.nonclaim],
+        text: '청구 ' + eok(P.claim) + ' (' + pct(P.claim, P.total) + ') · 비청구 ' + eok(P.nonclaim) + ' (' + pct(P.nonclaim, P.total) + ') · 전월 청구율 ' + (pp && pp.total ? pct(pp.claim, pp.total) : '—') };
     }
-    var rows = line('정액환자', F, pF) + line('정율환자 (행위)', R, pR) + line('전체환자', T, pT);
+    var rows = [line('정액환자', F, pF), line('정율환자 (행위)', R, pR), line('전체환자', T, pT)];
     return '<h2>Ⅴ. 약가비율 — 정액·정율·전체 (청구액 · 비청구액)</h2>' +
-      '<table><thead><tr><th>구분</th><th class="n">약제비용(원)</th><th class="n">청구액(원)</th><th class="n">청구 비율</th><th class="n">비청구액(원)</th><th class="n">비청구 비율</th><th class="n">전월 청구 비율</th></tr></thead><tbody>' +
-      rows + '</tbody></table>' +
+      mgStack(rows, '청구액', '비청구액') +
       '<div class="note">약제비용 = 처방 약 금액 − 위탁청구(JS008). <b>청구액 = 약제비용 − 비청구액</b>. 비청구액 = 정액에 포함되어 따로 청구하지 않는 약(항목 L 요양병원정액). ' +
       '정율환자는 항목상 비청구 약이 확인되지 않아 전액 청구로 봅니다(부분청구 기준은 확인 필요). ' +
       '위탁청구는 청구액에서 제외했습니다 — 이 달 위탁 금액 ' + num(T.entrust) + '원.</div>';
@@ -261,17 +298,16 @@
   /* ── Ⅵ 주상병별 ── */
   function secVI(d){
     var dg = (d.diags || []).slice(0, DIAG_TOP), pdg = d.prevDiags || [];
-    var tot = n0((d.claim || {}).totamt), maxA = dg.length ? n0(dg[0].amt) : 1;
+    var tot = n0((d.claim || {}).totamt);
     var rows = dg.map(function(x){
       var pv = pdg.filter(function(y){ return y.code === x.code; })[0];
       var dv = pv ? n0(x.amt) - n0(pv.amt) : null;
-      return row([esc(x.code), esc(x.nm), num(x.bills), num(x.amt), pct(x.amt, tot), num(Math.round(n0(x.bills) ? n0(x.amt) / n0(x.bills) : 0)),
-                  dv == null ? '—' : '<span class="' + (dv >= 0 ? 'up' : 'down') + '">' + sgn(dv) + man(Math.abs(dv)) + '</span>',
-                  bar(n0(x.amt) / (maxA || 1), 120, '#1f5a4b')]);
+      return { label: x.code + ' ' + x.nm, value: n0(x.amt),
+        text: eok(x.amt) + ' · ' + pct(x.amt, tot) + ' · ' + num(x.bills) + '건 · 명세서당 ' + num(Math.round(n0(x.bills) ? n0(x.amt) / n0(x.bills) : 0)) + '원' +
+              (dv == null ? '' : ' · <span class="' + (dv >= 0 ? 'up' : 'down') + '">' + sgn(dv) + man(Math.abs(dv)) + '</span> 전월 대비') };
     });
     return '<h2>Ⅵ. 주상병별 수익 구성 — 상위 10개 (주상병 기준)</h2>' +
-      '<table><thead><tr><th>코드</th><th>상병명(대분류)</th><th class="n">명세서</th><th class="n">진료비</th><th class="n">비중</th><th class="n">명세서당</th><th class="n">전월 대비</th><th>막대</th></tr></thead><tbody>' +
-      (rows.join('') || row(['—', '자료 없음', '', '', '', '', '', ''])) + '</tbody></table>';
+      (rows.length ? mgBars(rows) : '<div class="note">자료 없음</div>');
   }
 
   /* ── Ⅶ 보험 종별 ── */
@@ -280,11 +316,10 @@
     ins.forEach(function(x){ var k = String(x.insurtype || ''); m[k] = (m[k] || 0) + n0(x.totamt); sum += n0(x.totamt); });
     var keys = Object.keys(m).sort(function(a, b){ return m[b] - m[a]; });
     var rows = keys.map(function(k){
-      return row([esc(INSUR_NM[k] || '기타 (' + k + ')'), eok(m[k]), pct(m[k], sum), bar(m[k] / (sum || 1), 150, '#c97d10')]);
+      return { label: INSUR_NM[k] || '기타 (' + k + ')', value: m[k], text: eok(m[k]) + ' · ' + pct(m[k], sum) };
     });
     return '<h2>Ⅶ. 보험 종별 구성</h2>' +
-      '<table><thead><tr><th>종별</th><th class="n">진료비</th><th class="n">비중</th><th>막대</th></tr></thead><tbody>' +
-      (rows.join('') || row(['자료 없음', '', '', ''])) + '</tbody></table>';
+      (rows.length ? mgBars(rows) : '<div class="note">자료 없음</div>');
   }
 
   function header(d){

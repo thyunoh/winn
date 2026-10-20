@@ -142,21 +142,25 @@
 
   function drawJudge(d){
     var sh = Number(d.short||0), top = Number(d.top||0);
+    var grade = d.headSrc === 'grade';
+    var none = d.headSrc === 'none';
+    var cnt = function(v){ return v == null ? '–' : num(v) + '<small>명</small>'; };
     var boxes = [
-      ['간호사 재직', num(d.headcount) + '<small>명</small>', false],
-      ['재원 환자', num(d.pats) + '<small>명</small>', false],
-      ['1인당 환자 수', (d.ratio != null ? d.ratio : '–') + '<small>명</small>', false],
-      ['5점 구간 상한', (top > 0 ? top : '–') + '<small>명</small>', false],
-      ['필요 인원', num(d.required) + '<small>명</small>', false],
-      ['부족 인원', (sh > 0 ? num(sh) : '없음') + (sh > 0 ? '<small>명</small>' : ''), sh > 0]
+      ['간호사 재직' + (grade ? ' (신고)' : ''), grade ? (d.headcountRaw == null ? '–' : d.headcountRaw + '<small>명</small>') : cnt(d.headcount), false],
+      [grade ? '평균 재원 (신고)' : '재원 환자', grade ? (d.census == null ? '–' : d.census + '<small>명</small>') : cnt(d.pats), false],
+      ['1인당 환자 수', (d.ratio != null ? d.ratio + '<small>명</small>' : '–'), false],
+      ['5점 구간 상한', (top > 0 ? top + '<small>명</small>' : '–'), false],
+      ['필요 인원', cnt(d.required), false],
+      ['부족 인원', none || d.short == null ? '–' : (sh > 0 ? num(sh) + '<small>명</small>' : '없음'), sh > 0]
     ];
     g('mnJudge').innerHTML = boxes.map(function(b){
       return '<div class="mn-jbox"><span>' + b[0] + '</span><b class="' + (b[2] ? 'bad' : '') + '">' + b[1] + '</b></div>';
     }).join('');
     var notes = [];
-    if (!d.fromRoster) notes.push('직원 명단(병원자료엑셀연계 › 직원·근무)이 없어 변동 기록의 입사 − 퇴사로 간호사 수를 셌습니다.');
+    if (grade) notes.push('구조영역 기준 — ' + (d.headLabel || '차등제 신고') + '의 간호사 ' + d.headcountRaw + '명, 평균 재원 ' + d.census + '명으로 적정성 1인당 환자수와 같은 계산입니다.');
+    else notes.push('차등제 신고값이 없어 구조영역 간호사 수를 계산할 수 없습니다. 차등제 신고(병원 정보 › 차등제)를 입력하면 자동으로 계산됩니다.');
     if (!top) notes.push('간호사 구간 기준(5점 구간 상한)을 찾지 못해 필요 인원을 계산하지 못했습니다.');
-    if (sh > 0) notes.push('지금 재원 환자 기준으로 간호사가 ' + sh + '명 더 필요합니다(5점 기준). 변동 기록에 충원 계획을 함께 적어 두세요.');
+    if (sh > 0) notes.push((grade ? '평균 재원' : '지금 재원 환자') + ' 기준으로 간호사가 ' + sh + '명 더 필요합니다(5점 기준). 충원 계획을 함께 적어 두세요.');
     var nb = g('mnNote');
     nb.hidden = !notes.length;
     nb.className = 'mn-note' + (notes.length ? ' warn' : '');

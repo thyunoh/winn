@@ -537,8 +537,8 @@
 		     , SUM(CASE WHEN h.days   <![CDATA[>]]> my.days   THEN 1 ELSE 0 END) + 1 AS rankdays
 		     , ROUND(AVG(h.perday))                                         AS avgperday
 		     , ROUND(AVG(h.days))                                           AS avgdays
-		     , ROUND(my.perday)                                             AS myperday
-		     , my.days                                                      AS mydays
+		     , ROUND(MAX(my.perday))                                        AS myperday
+		     , MAX(my.days)                                                 AS mydays
 		  FROM (SELECT cm.HOSP_CD, SUM(mm.TOT_AMT) / NULLIF(SUM(mm.ADM_DAYS),0) AS perday, SUM(mm.ADM_DAYS) AS days
 		          FROM TBL_MYOUNG_MST mm JOIN TBL_CHUNG_MST cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
 		         WHERE COALESCE(mm.DELYN,'') = '' AND cm.DATE_YM = #{ym}
@@ -547,6 +547,29 @@
 		          FROM TBL_MYOUNG_MST mm JOIN TBL_CHUNG_MST cm ON cm.HOSP_CD = mm.HOSP_CD AND cm.CLAIM_NO = mm.CLAIM_NO
 		         WHERE mm.HOSP_CD = #{hospCd} AND COALESCE(mm.DELYN,'') = '' AND cm.DATE_YM = #{ym}) my
 		 WHERE my.days <![CDATA[>]]> 0
+	</select>
+
+	<!-- 차등제 신고 간호사 수 · 평균 재원 (2026-10-20) — 적정성 간호사 1인당 환자수의 분모·분자와 같은 값.
+	     그 달에 쓰이는 분기 우선: 다음 분기 신고 → 그 달이 속한 분기 → 그 해 최신 (월보고서 selectHospGoalGrade 와 같은 순서) -->
+	<select id="selectGradeStaff" resultType="java.util.HashMap">
+		SELECT NUR_COUNT AS nurcount, PAT_COUNT AS patcount, START_YY AS startyy, QTER_FLAG AS qterflag
+		  FROM TBL_GRADE_MST
+		 WHERE HOSP_CD = #{hospCd}
+		   AND ACTION_YN = 'Y'
+		   AND NUR_COUNT IS NOT NULL
+		   AND PAT_COUNT IS NOT NULL
+		 ORDER BY (START_YY = #{nextYy} AND QTER_FLAG = #{nextQt})   DESC,
+		          (START_YY = #{startYy} AND QTER_FLAG = #{qterFlag}) DESC,
+		          (START_YY = #{startYy}) DESC, START_YY DESC, QTER_FLAG DESC, UPD_DTTM DESC
+		 LIMIT 1
+	</select>
+
+	<!-- 적정성 장기입원 지표(TBL_PAT_INDI, 장기입원 14번) — 해당 월 자료생성 결과. DTORVAL=분모(대상), NTORVAL=분자(181일 이상) -->
+	<select id="selectPatIndi14" resultType="java.util.HashMap">
+		SELECT DTORVAL AS dtor, NTORVAL AS ntor
+		  FROM TBL_PAT_INDI
+		 WHERE HOSP_CD = #{hospCd} AND CATE_CD = '14' AND JOBYYMM = #{ym}
+		 LIMIT 1
 	</select>
 
 	<!-- 자동 발송 선점 — 같은 날 먼저 넣은 쪽만 1 을 돌려받는다 -->
@@ -1030,6 +1053,7 @@ SELECT j.ITEM_NO AS itemno,
   JOIN (SELECT j2.HOSP_CD, j2.CLAIM_NO, j2.BILL_SEQ, SUM(j2.AMOUNT) AS base_amt
           FROM TBL_JINORD_MST j2
           JOIN TBL_MYOUNG_MST b2 ON b2.HOSP_CD = j2.HOSP_CD AND b2.CLAIM_NO = j2.CLAIM_NO AND b2.BILL_SEQ = j2.BILL_SEQ
+          JOIN TBL_CHUNG_MST c2 ON c2.HOSP_CD = j2.HOSP_CD AND c2.CLAIM_NO = j2.CLAIM_NO AND c2.DATE_YM = #{ym}
          WHERE j2.HOSP_CD = #{hospCd} AND COALESCE(b2.DELYN,'') = ''
            AND ((b2.PAY_TYPE = '1' AND j2.ITEM_NO = 'L' AND j2.CODE_TYPE IN ('1','8'))
                 OR (b2.PAY_TYPE <> '1' AND NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST s

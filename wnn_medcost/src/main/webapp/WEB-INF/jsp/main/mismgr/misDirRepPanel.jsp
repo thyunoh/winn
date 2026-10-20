@@ -83,6 +83,44 @@
   function g(id){ return document.getElementById(id); }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function num(v){ return Number(v||0).toLocaleString('ko-KR'); }
+  /* 그래프 — 표 대신 막대로 그린다(인쇄에도 그대로 나간다, 2026-10-20) */
+  var BAR_CSS = '<style>.hbars{display:grid;grid-template-columns:200px minmax(60px,1fr) max-content;column-gap:8px;row-gap:5px;align-items:center;font-size:11.5px}.hbar-row{display:contents}.hbar-lbl{flex:0 0 200px;width:200px;text-align:left;color:#43555f;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.hbar-trk{flex:1;height:12px;background:#eef2f5;border-radius:3px;overflow:hidden}.hbar-fill{height:100%;background:#2d9fd3;border-radius:3px}.hbar-val{text-align:left;font-variant-numeric:tabular-nums;color:#20303a;white-space:nowrap}.vbars{display:flex;align-items:flex-end;gap:10px;height:230px;padding:8px 4px 0;border-bottom:1px solid #d5dee5}.vbar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}.vbar-fill{width:60%;max-width:46px;background:#2d9fd3;border-radius:3px 3px 0 0}.vbar-val{font-size:11px;color:#20303a;font-weight:700;margin-bottom:3px;white-space:nowrap}.vbar-lbl{font-size:11px;color:#43555f;margin-top:4px;white-space:nowrap}.vbar-sub{font-size:10px;color:#8a99a3}</style>';
+  function hBars(rows, msg){
+    if (!rows.length) return '<div class="sec-note">' + (msg || '해당 자료가 없습니다.') + '</div>';
+    var max = 0; rows.forEach(function(r){ max = Math.max(max, Number(r.value||0)); });
+    return BAR_CSS + '<div class="hbars">' + rows.map(function(r){
+      var pct = max ? Math.max(1, Math.round(Number(r.value||0) / max * 100)) : 0;
+      return '<div class="hbar-row"><div class="hbar-lbl" title="' + esc(r.label) + '">' + esc(r.label) + '</div>' +
+        '<div class="hbar-trk"><div class="hbar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="hbar-val" title="' + esc(r.text) + '">' + esc(r.text) + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function vBars(rows){
+    if (!rows.length) return '<div class="sec-note">해당 자료가 없습니다.</div>';
+    var max = 0; rows.forEach(function(r){ max = Math.max(max, Number(r.value||0)); });
+    return BAR_CSS + '<div class="vbars">' + rows.map(function(r){
+      var h = max ? Math.max(2, Math.round(Number(r.value||0) / max * 140)) : 2;
+      return '<div class="vbar-col"><div class="vbar-val">' + esc(r.text) + '</div>' +
+        '<div class="vbar-fill" style="height:' + h + 'px"></div>' +
+        '<div class="vbar-lbl">' + esc(r.label) + '</div><div class="vbar-sub">' + esc(r.sub || '') + '</div></div>';
+    }).join('') + '</div>';
+  }
+  /* 월별 수익·비용 묶음 막대 — 한 달에 수익(진하게)·비용(연하게) 두 개, 아래 줄은 추정 손익 */
+  var GB_CSS = '<style>.gbars{display:flex;align-items:flex-end;gap:8px;height:270px;padding:8px 4px 0;border-bottom:1px solid #d5dee5}.gb-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}.gb-pair{display:flex;align-items:flex-end;gap:4px;height:215px;width:100%;justify-content:center}.gb-one{width:44%;max-width:40px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}.gb-val{font-size:10px;color:#20303a;font-weight:700;margin-bottom:3px;white-space:nowrap}.gb-fill{width:100%;border-radius:3px 3px 0 0}.gb-lbl{font-size:11px;color:#43555f;margin-top:4px;white-space:nowrap}.gb-sub{font-size:10.5px;color:#8a99a3;white-space:nowrap}.gb-sub.up{color:#1f7a4d;font-weight:700}.gb-sub.down{color:#b3261e;font-weight:700}</style>';
+  function gBars(rows){
+    if (!rows.length) return '<div class="sec-note">해당 자료가 없습니다.</div>';
+    var max = 0; rows.forEach(function(r){ [r.a, r.b].forEach(function(s){ if (s.value != null) max = Math.max(max, Number(s.value)); }); });
+    var one = function(s, color){
+      if (s.value == null) return '<div class="gb-one"><div class="gb-val">—</div></div>';
+      var h = max ? Math.max(2, Math.round(Number(s.value) / max * 190)) : 2;
+      return '<div class="gb-one"><div class="gb-val">' + esc(s.text) + '</div><div class="gb-fill" style="height:' + h + 'px;background:' + color + '"></div></div>';
+    };
+    return GB_CSS + '<div class="gbars">' + rows.map(function(r){
+      return '<div class="gb-col"><div class="gb-pair">' + one(r.a, '#2d9fd3') + one(r.b, '#ef8a45') + '</div>' +
+        '<div class="gb-lbl">' + esc(r.label) + '</div><div class="gb-sub ' + (r.subCls || '') + '">' + esc(r.sub || '') + '</div></div>';
+    }).join('') + '</div>' +
+      '<div class="sec-note"><span style="color:#2d9fd3">■</span> 수익 &nbsp; <span style="color:#ef8a45">■</span> 비용 · 아래 숫자는 추정 손익</div>';
+  }
   function eok(v){ v = Number(v||0); return (v/100000000).toFixed(2) + '억'; }
   function man(v){ v = Number(v||0); return Math.round(v/10000).toLocaleString('ko-KR') + '만'; }
   function sgn(v, f){ return (v >= 0 ? '+' : '−') + f(Math.abs(v)); }
@@ -153,6 +191,8 @@
     var revenue = tot + extraTot, expense = fixedTot + varTot;
     var profit = (cl && fixedTot) ? revenue - expense : null;
     var dIn = totDays, census = days ? days / dIn : 0;
+    // 재원 기준 = 차등제 신고 평균 재원(적정성 구조영역과 같은 값). 신고가 없으면 청구 입원일수로 센다.
+    if (D && D.headSrc === 'grade' && D.census != null) census = Number(D.census);
     var perDay = days ? tot / days : 0, contrib = perDay - varC;
     var bep = (contrib > 0 && fixedTot) ? Math.ceil(fixedTot / (contrib * dIn)) : null;
     return { varC:varC, bed:bed, fixed:fixed, extra:extra, fixedTot:fixedTot, extraTot:extraTot, tot:tot, days:days,
@@ -179,64 +219,113 @@
   }
 
   /* ── Ⅰ 수익·비용·손익 요약 ── */
+  function donutSvg(parts, cTop, cBot){
+    var R = 52, C = 2 * Math.PI * R, off = 0;
+    var tot = parts.reduce(function(s, p){ return s + Math.max(0, p.v || 0); }, 0);
+    var ring = '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="#eef2f5" stroke-width="22"/>';
+    if (tot > 0) parts.forEach(function(p){
+      var len = C * Math.max(0, p.v || 0) / tot;
+      if (len <= 0) return;
+      ring += '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="' + p.color + '" stroke-width="22" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 70 70)"/>';
+      off += len;
+    });
+    return '<svg viewBox="0 0 140 140" width="140" height="140" role="img">' + ring +
+      '<text x="70" y="64" text-anchor="middle" font-size="11" fill="#6b7b85">' + esc(cTop) + '</text>' +
+      '<text x="70" y="82" text-anchor="middle" font-size="13" font-weight="800" fill="#20303a">' + esc(cBot) + '</text></svg>';
+  }
   function secSummary(M, prevRev){
-    var rows = [
-      ['기간 수익', M.revenue ? num(M.revenue) + '원' : '—', M.tot ? '청구 총진료비 ' + eok(M.tot) + (M.extraTot ? ' + 추가수익 ' + man(M.extraTot) : '') : '청구 자료 없음'],
-      ['기간 비용', M.expense ? num(M.expense) + '원' : '—', '고정비 ' + (M.fixedTot ? eok(M.fixedTot) : '—') + ' + 변동비 ' + (M.days ? man(M.varTot) : '—')],
-      ['추정 손익', M.profit == null ? '—' : sgn(M.profit, num) + '원', M.profit == null ? '고정비를 입력하면 계산됩니다' : (M.profit >= 0 ? '흑자' : '적자') + ' · 수익 − 비용'],
-      ['손익분기 재원 환자', M.bep ? M.bep + '명' : '—', M.bep ? '평균 재원 ' + Math.round(M.census) + '명 · ' + (M.census >= M.bep ? '여유 ' : '부족 ') + Math.abs(Math.round(M.census - M.bep)) + '명' : '고정비·청구가 둘 다 있어야 계산됩니다'],
-      ['평균 재원 · 가동률', M.days ? Math.round(M.census) + '명' : '—', M.bed ? '병상 ' + M.bed + ' · 가동률 ' + pct(M.census, M.bed) : '병상 수를 손익분기 관리에서 입력하세요'],
-      ['전월 수익', prevRev == null ? '—' : num(prevRev) + '원', (prevRev == null || !M.revenue) ? '전월 청구 자료 없음' : '기간과 차이 ' + sgn(M.revenue - prevRev, num) + '원']
-    ];
+    var rev = M.revenue || 0, exp = M.expense || 0;
+    var parts = [], cTop = '기간 수익', cBot = '—', legend = '';
+    if (rev > 0 && M.profit != null) {
+      var profit = M.profit;
+      parts = profit >= 0
+        ? [{ v: exp, color: '#ef8a45', label: '비용' }, { v: profit, color: '#2d9fd3', label: '추정 손익(흑자)' }]
+        : [{ v: rev, color: '#2d9fd3', label: '수익' }, { v: -profit, color: '#b3261e', label: '손실분(적자)' }];
+      cTop = '수익 ' + eok(rev); cBot = (profit >= 0 ? '흑자 ' : '적자 ') + sgn(profit, eok);
+      legend = parts.map(function(p){ return '<div class="sm-lg"><span class="sm-sw" style="background:' + p.color + '"></span>' + esc(p.label) + ' <b>' + eok(p.v) + '</b> <span class="sm-m">' + pct(p.v, rev) + '</span></div>'; }).join('');
+    } else if (rev > 0) {
+      parts = [{ v: rev, color: '#2d9fd3', label: '수익' }];
+      cBot = eok(rev);
+      legend = '<div class="sm-m">고정비를 입력하면 비용·손익 구간이 나뉩니다.</div>';
+    } else {
+      legend = '<div class="sm-m">청구 자료가 없어 도넛을 그리지 못했습니다.</div>';
+    }
+    var kpi = function(k, v, d, cls){
+      return '<div class="sm-kpi"><div class="sm-k">' + k + '</div><div class="sm-v ' + (cls || '') + '">' + v + '</div><div class="sm-d">' + esc(d) + '</div></div>';
+    };
+    var kpis =
+      kpi('기간 수익', M.revenue ? num(M.revenue) + '원' : '—', M.tot ? '청구 총진료비 ' + eok(M.tot) + (M.extraTot ? ' + 추가수익 ' + man(M.extraTot) : '') : '청구 자료 없음') +
+      kpi('기간 비용', M.expense ? num(M.expense) + '원' : '—', '고정비 ' + (M.fixedTot ? eok(M.fixedTot) : '—') + ' + 변동비 ' + (M.days ? man(M.varTot) : '—')) +
+      kpi('추정 손익', M.profit == null ? '—' : sgn(M.profit, num) + '원', M.profit == null ? '고정비를 입력하면 계산됩니다' : (M.profit >= 0 ? '흑자' : '적자') + ' · 수익 − 비용', M.profit == null ? '' : (M.profit >= 0 ? 'up' : 'down')) +
+      kpi('전월 수익', prevRev == null ? '—' : num(prevRev) + '원', (prevRev == null || !M.revenue) ? '전월 청구 자료 없음' : '기간과 차이 ' + sgn(M.revenue - prevRev, num) + '원');
+    var gauges = '';
+    if (M.bed && M.days) {
+      var occ = Math.min(100, M.census / M.bed * 100);
+      gauges += '<div class="sm-gauge"><div class="sm-gl"><span>가동률</span><b>' + pct(M.census, M.bed) + '</b><span class="sm-m">평균 재원 ' + Math.round(M.census) + '명 / 병상 ' + M.bed + '</span></div>' +
+        '<div class="sm-track"><div class="sm-fill" style="width:' + occ.toFixed(1) + '%"></div></div></div>';
+    }
+    if (M.bep && M.days) {
+      var gap = M.census - M.bep, gapN = Math.abs(Math.round(gap));
+      var max = Math.max(M.bep, M.census) * 1.2;
+      gauges += '<div class="sm-gauge"><div class="sm-gl"><span>손익분기</span><b class="' + (gap >= 0 ? 'up' : 'down') + '">' + (gap >= 0 ? '여유 +' : '부족 ') + gapN + '명</b><span class="sm-m">평균 재원 ' + Math.round(M.census) + '명 · 손익분기 ' + M.bep + '명</span></div>' +
+        '<div class="sm-track"><div class="sm-fill" style="width:' + Math.min(100, M.census / max * 100).toFixed(1) + '%;background:' + (gap >= 0 ? '#1f7a4d' : '#b3261e') + '"></div>' +
+        '<div class="sm-mark" style="left:' + (M.bep / max * 100).toFixed(1) + '%"></div></div></div>';
+    }
     return '<h2>Ⅰ. 수익 · 비용 · 손익 요약</h2>' +
-      '<table>' + head(['구분', '금액', '설명'], [2]) + '<tbody>' +
-      rows.map(function(r){ return tr([esc(r[0]), r[1], esc(r[2])], '', [2]); }).join('') +
-      '</tbody></table>' +
+      '<style>.sm-wrap{display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:center}.sm-donut{display:flex;flex-direction:column;align-items:center;gap:8px}.sm-legend{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:#43555f;align-self:stretch}.sm-lg{display:flex;align-items:center;gap:6px}.sm-sw{width:10px;height:10px;border-radius:2px;display:inline-block}.sm-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sm-kpi{border:1px solid #dbe3e9;border-radius:8px;padding:7px 9px;background:#fbfcfd;min-width:0}.sm-k{font-size:11.5px;color:#6b7b85}.sm-v{font-size:13.5px;font-weight:800;color:#20303a;margin:2px 0;white-space:nowrap}.sm-v.up,.sm-gl b.up{color:#1f7a4d}.sm-v.down,.sm-gl b.down{color:#b3261e}.sm-d,.sm-m{font-size:10.5px;color:#8a99a3}.sm-gauge{margin-top:10px}.sm-gl{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12px;color:#43555f;margin-bottom:4px}.sm-gl b{font-size:13px;color:#20303a}.sm-track{height:12px;background:#eef2f5;border-radius:4px;position:relative}.sm-fill{height:100%;background:#2d9fd3;border-radius:4px}.sm-mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:#ef8a45;margin-left:-1px}</style>' +
+      '<div class="sm-wrap"><div class="sm-donut">' + donutSvg(parts, cTop, cBot) + '<div class="sm-legend">' + legend + '</div></div>' +
+      '<div><div class="sm-kpis">' + kpis + '</div>' + gauges + '</div></div>' +
       (M.fixedTot ? '' : '<div class="sec-note">고정비가 아직 없어 비용·손익은 계산되지 않았습니다. 손익분기 관리에서 월 고정비를 입력하세요.</div>') +
       (M.bed ? '' : '<div class="sec-note">병상 수가 없어 가동률은 빈칸입니다.</div>');
   }
 
   /* ── Ⅱ 12개월 추이 ── */
   function secTrend(tr12){
-    var body = tr12.map(function(r){
-      var cls = r.rev == null ? 'sub' : '';
-      return '<tr class="' + cls + '"><td>' + esc(ymLbl(r.ym)) + '</td><td class="n">' + (r.rev == null ? '—' : num(r.rev)) + '</td><td class="n">' + (r.exp == null ? '—' : num(r.exp)) + '</td><td class="n ' + (r.profit == null ? '' : (r.profit >= 0 ? 'up' : 'down')) + '">' + (r.profit == null ? '—' : sgn(r.profit, num)) + '</td></tr>';
-    }).join('');
-    return '<h2>Ⅱ. 기간 수익 · 비용 · 손익 추이 (조회 기간 월별)</h2>' +
-      '<table>' + head(['월', '수익(원)', '비용(원)', '추정 손익(원)']) + '<tbody>' + body + '</tbody></table>' +
-      '<div class="sec-note">수익 = 청구 총진료비 + 추가수익 · 비용 = 고정비 + 환자 변동비(1인 1일 ' + num(VAR_DEF) + '원 기본). 청구나 고정비가 없는 달은 —.</div>';
+    var rows = tr12.map(function(r){
+      return { label: ymLbl(r.ym),
+        a: { value: r.rev, text: r.rev == null ? '' : eok(r.rev) },
+        b: { value: r.exp, text: r.exp == null ? '' : eok(r.exp) },
+        sub: r.profit == null ? '손익 —' : '손익 ' + sgn(r.profit, eok),
+        subCls: r.profit == null ? '' : (r.profit >= 0 ? 'up' : 'down') };
+    });
+    return '<h2>Ⅱ. 기간 수익 · 비용 · 손익 추이 (조회 기간 월별)</h2>' + gBars(rows) +
+      '<div class="sec-note">수익 = 청구 총진료비 + 추가수익 · 비용 = 고정비 + 환자 변동비(1인 1일 ' + num(VAR_DEF) + '원 기본). 청구나 고정비가 없는 달은 —. 정확한 금액은 Ⅰ 요약과 손익분기 관리에서 확인.</div>';
   }
 
   /* ── Ⅲ 비용 지출 명세 ── */
   function secExpense(M){
     var total = M.expense || 0, prevTotal = M.prevFixed;
     var rows = M.fixed.map(function(x){
-      return tr([esc(x.nm), num(x.amt), x.prev == null ? '—' : num(x.prev), x.prev == null ? '—' : sgn(x.amt - x.prev, num), pct(x.amt, total)], '', []);
+      return { label: x.nm, value: x.amt, text: num(x.amt) + '원 · ' + pct(x.amt, total) };
     });
-    if (M.days) rows.push(tr(['환자 변동비 (1인 1일 ' + num(M.varC) + '원 × ' + num(M.days) + '일)', num(M.varTot), '—', '—', pct(M.varTot, total)], 'sub', []));
-    if (!M.fixed.length && !M.days) rows.push(emptyRow(5, '고정비가 아직 입력되지 않았습니다. 손익분기 관리에서 항목별 금액을 적으면 여기 채워집니다.'));
-    else rows.push(tr(['비용 합계', num(total), prevTotal == null ? '—' : num(prevTotal), '', '100%'], 'tot', []));
+    if (M.days) rows.push({ label: '환자 변동비', value: M.varTot, text: num(M.varTot) + '원 · ' + pct(M.varTot, total) });
     return '<h2>Ⅲ. 비용 지출 명세</h2>' +
-      '<table>' + head(['항목', '기간', '전월', '증감', '비중']) + '<tbody>' + rows.join('') + '</tbody></table>';
+      hBars(rows, '고정비가 아직 입력되지 않았습니다. 손익분기 관리에서 항목별 금액을 적으면 여기 채워집니다.') +
+      (M.days ? '<div class="sec-note">환자 변동비 = 1인 1일 ' + num(M.varC) + '원 × ' + num(M.days) + '일</div>' : '') +
+      '<div class="sec-note">비용 합계 ' + num(total) + '원' + (prevTotal == null ? '' : ' · 전월 고정비 ' + num(prevTotal) + '원') + '</div>';
   }
 
   /* ── Ⅳ 수익 구성 · 손익분기 ── */
   function secRevenue(M, cl){
-    var rev = M.revenue || 0, rows = [];
-    if (cl) rows.push(tr(['총진료비 (청구)', num(M.tot), pct(M.tot, rev)], '', []));
-    M.extra.forEach(function(x){ rows.push(tr([esc(x.nm) + ' <span class="sub">(추가수익)</span>', num(x.amt), pct(x.amt, rev)], '', [])); });
-    if (!cl) rows.push(emptyRow(3, '청구 자료가 없어 수익을 계산하지 못했습니다. 청구 샘파일을 올리면 채워집니다.'));
-    else rows.push(tr(['수익 합계', num(rev), '100%'], 'tot', []));
+    var rev = M.revenue || 0, bars = [];
+    if (cl) bars.push({ label: '총진료비 (청구)', value: M.tot, text: num(M.tot) + '원 · ' + pct(M.tot, rev) });
+    M.extra.forEach(function(x){ bars.push({ label: x.nm + ' (추가수익)', value: x.amt, text: num(x.amt) + '원 · ' + pct(x.amt, rev) }); });
     var b = '<h2>Ⅳ. 수익 구성 · 손익분기(BEP)</h2>' +
-      '<table>' + head(['항목', '금액(원)', '비중']) + '<tbody>' + rows.join('') + '</tbody></table>';
+      hBars(bars, '청구 자료가 없어 수익을 계산하지 못했습니다. 청구 샘파일을 올리면 채워집니다.') +
+      (rev ? '<div class="sec-note">수익 합계 ' + num(rev) + '원</div>' : '');
     if (M.bep) {
       var gap = M.census - M.bep;
-      b += '<div class="sub2">손익분기(BEP)</div><table>' + head(['지표', '값', '의미'], [2]) + '<tbody>' +
-        tr(['손익분기 재원 인원', M.bep + '명', '이 인원 이상 재원하면 고정비를 넘는다'], '', [2]) +
-        tr(['평균 재원 (실제)', Math.round(M.census) + '명', '청구 재원일수 ÷ 그 달 일수'], '', [2]) +
-        '<tr><td>' + (gap >= 0 ? '현재 여유' : '현재 부족') + ' (' + Math.round(M.census) + ' − ' + M.bep + ')</td><td class="n ' + (gap >= 0 ? 'up' : 'down') + '">' + (gap >= 0 ? '+' : '') + Math.round(gap) + '명</td><td>' + (gap >= 0 ? '손익분기보다 많이 재원 중' : '손익분기에 못 미침') + '</td></tr>' +
-        tr(['환자 1인 1일 기여', num(Math.round(M.contrib)) + '원', '1인 1일 진료비 − 변동비'], '', [2]) +
-        '</tbody></table>';
+      var card = function(k, v, m, cls){
+        return '<div class="bep-it"><div class="bep-k">' + k + '</div><div class="bep-v ' + (cls || '') + '">' + v + '</div><div class="bep-m">' + m + '</div></div>';
+      };
+      b += '<div class="sub2">손익분기(BEP)</div>' +
+        '<style>.bep-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}.bep-it{display:grid;grid-template-columns:1fr auto;column-gap:8px;row-gap:2px;border:1px solid #dbe3e9;border-radius:6px;padding:7px 10px;background:#fbfcfd}.bep-k{grid-column:1;font-size:12px;font-weight:700;color:#20303a}.bep-v{grid-column:2;grid-row:1;font-size:13px;font-weight:800;color:#20303a;text-align:right;white-space:nowrap}.bep-m{grid-column:1 / 3;font-size:11px;color:#6b7b85}.bep-v.up{color:#1f7a4d}.bep-v.down{color:#b3261e}</style>' +
+        '<div class="bep-grid">' +
+          card('손익분기 재원 인원', M.bep + '명', '이 인원 이상 재원하면 고정비를 넘는다') +
+          card('평균 재원 (실제)', Math.round(M.census) + '명', '청구 재원일수 ÷ 그 달 일수') +
+          card((gap >= 0 ? '현재 여유' : '현재 부족') + ' (' + Math.round(M.census) + ' − ' + M.bep + ')', (gap >= 0 ? '+' : '') + Math.round(gap) + '명', gap >= 0 ? '손익분기보다 많이 재원 중' : '손익분기에 못 미침', gap >= 0 ? 'up' : 'down') +
+          card('환자 1인 1일 기여', num(Math.round(M.contrib)) + '원', '1인 1일 진료비 − 변동비') +
+        '</div>';
     } else {
       b += '<div class="sec-note">고정비와 청구 자료가 둘 다 있어야 손익분기를 계산합니다.</div>';
     }
@@ -252,20 +341,18 @@
     var typ = T.type.filter(function(r){ return !(r.medDept === '00' || r.medName === '전체' || r.cformName === '전체'); })
                     .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
     var typSum = typ.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
-    var p51 = '<h2>Ⅴ-1. 유형별 청구</h2><table>' + head(['번호', '유형', '총액(원)', '건수', '건당(원)', '비중'], [1]) + '<tbody>' +
-      (typ.length ? typ.map(function(r, i){ return tr([i + 1, esc(r.cformName || r.medName), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, typSum)], '', [1]); }).join('') : emptyRow(6, '해당 자료가 없습니다.')) +
-      '</tbody></table>';
+    var p51 = '<h2>Ⅴ-1. 유형별 청구</h2>' +
+      hBars(typ.map(function(r, i){ return { label: (i + 1) + '. ' + (r.cformName || r.medName || ''), value: Number(r.totalAmt || 0), text: num(r.totalAmt) + '원 · ' + ratio(r.totalAmt, typSum) + ' · ' + num(r.claimCount) + '건' }; }));
 
     /* 5-2 의사별 — 면허번호 기준, 의사명이 없으면 면허 번호로 표시 */
     var doc = T.doc.filter(function(r){ return r.licenseNo && r.licenseNo !== '99'; })
                    .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
     var docSum = doc.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
-    var p52 = '<h2>Ⅴ-2. 의사별 청구 (상위 10 · 면허번호 기준)</h2><table>' + head(['번호', '의사', '총액(원)', '건수', '건당(원)', '비중'], [1]) + '<tbody>' +
-      (doc.length ? doc.slice(0, 10).map(function(r, i){
+    var p52 = '<h2>Ⅴ-2. 의사별 청구 (상위 10 · 면허번호 기준)</h2>' +
+      hBars(doc.slice(0, 10).map(function(r, i){
         var nm = (r.licenseName && r.licenseName !== '전체') ? r.licenseName : ('면허 ' + r.licenseNo + ' (의사명 미등록)');
-        return tr([i + 1, esc(nm), num(r.totalAmt), num(r.claimCount), num(r.avgAmt), ratio(r.totalAmt, docSum)], '', [1]);
-      }).join('') : emptyRow(6, '해당 자료가 없습니다.')) +
-      '</tbody></table>';
+        return { label: (i + 1) + '. ' + nm, value: Number(r.totalAmt || 0), text: num(r.totalAmt) + '원 · ' + ratio(r.totalAmt, docSum) + ' · ' + num(r.claimCount) + '건' };
+      }));
 
     out += '<div class="mdr-grid"><div>' + p51 + '</div><div>' + p52 + '</div></div>';
     if (part === 'top') return out;   // 5-1·5-2 만 (위쪽 줄)
@@ -276,15 +363,8 @@
                    .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); });
     var disSum = T.dis.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
     var hasZZ = dis.some(function(r){ return r.diagCode === 'ZZ'; });
-    out += '<h2>Ⅴ-3. 질환별 청구 (상위 10 · 건당 · 환자당)</h2><table>' +
-      head(['번호', '질환', '총액(원)', '건수', '환자', '건당(원)', '환자당(원)', '비중'], [1]) + '<tbody>' +
-      (dis.length ? dis.slice(0, 10).map(function(r, i){
-        var cnt = Number(r.claimCount||0), pts = Number(r.uniqPatients||0), amt = Number(r.totalAmt||0);
-        return tr([i + 1, esc((r.diagCode ? r.diagCode + ' ' : '') + (r.diagName || '')), num(amt), num(cnt), num(pts),
-          num(r.amtPerClaim != null ? r.amtPerClaim : (cnt ? Math.floor(amt / cnt) : 0)),
-          num(r.amtPerPatient != null ? r.amtPerPatient : (pts ? Math.floor(amt / pts) : 0)), ratio(amt, disSum)], '', [1]);
-      }).join('') : emptyRow(8, '해당 자료가 없습니다.')) +
-      '</tbody></table>' +
+    out += '<h2>Ⅴ-3. 질환별 청구 (상위 10 · 건당 · 환자당)</h2>' +
+      hBars(dis.slice(0, 10).map(function(r, i){ var amt = Number(r.totalAmt||0), cnt = Number(r.claimCount||0), pts = Number(r.uniqPatients||0); return { label: (i + 1) + '. ' + (r.diagCode ? r.diagCode + ' ' : '') + (r.diagName || ''), value: amt, text: num(amt) + '원 · ' + ratio(amt, disSum) + ' · ' + num(cnt) + '건 · ' + num(pts) + '명' }; })) +
       (hasZZ ? '<div class="sec-note">ZZ 기타병명 = 질병 분류표(공통코드 DISEASE_TYPE)에 없는 주상병 코드를 한데 모은 줄이다. 코드별로 보려면 「청구통계」 탭 Ⅵ(주상병별 수익 구성)을 본다.</div>' : '');
     return out;
   }
@@ -300,8 +380,7 @@
       return tr([esc(ymLbl(r.dateYm)), num(amt), num(d), d ? num(Math.round(amt / d)) : '—', num(r.totalAvgAmt)], '', []);
     }).join('');
     return '<h2>Ⅵ. 일당금액 (최근 6개월 · 입원 총액 ÷ 입원일수)</h2>' +
-      '<table>' + head(['월', '입원 총액(원)', '입원일수', '일당금액(원)', '명세서당 평균(원)']) + '<tbody>' +
-      (body || emptyRow(5, '해당 자료가 없습니다.')) + '</tbody></table>';
+      vBars(rows.map(function(r){ var d = days[r.dateYm] || 0, amt = Number(r.ipAmt != null ? r.ipAmt : (r.totalAmt || 0)); var dly = d ? Math.round(amt / d) : 0; return { label: ymLbl(r.dateYm), value: dly, text: d ? man(dly) + '원' : '—', sub: '입원 ' + num(d) + '일' }; }));
   }
 
   /* ── Ⅶ 약제 청구 현황 — 청구분 · 정액분 · 합계 · 정액 비청구 항목 ── */
@@ -328,15 +407,11 @@
                       .sort(function(a, b){ return Number(b.totalAmt||0) - Number(a.totalAmt||0); }).slice(0, 12);
     var itemTot = T.item.filter(function(r){ return r.itemName === '전체'; })[0];
     var itemSum = itemTot ? Number(itemTot.totalAmt || 0) : items.reduce(function(s, r){ return s + Number(r.totalAmt||0); }, 0);
-    var itemRows = items.map(function(r, i){
-      return tr([i + 1, esc(r.codeName || ''), esc(r.itemName || ''), num(r.totalAmt), num(r.claimCount), ratio(r.totalAmt, itemSum)], '', [1, 2]);
-    }).join('');
     var topHtml = '<h2>Ⅶ-1. 약제 청구 현황 — 청구분 · 정액분 · 합계</h2>' +
       '<table>' + head(['구분', '청구분(원)', '청구 비율', '정액분(원)', '정액 비율', '합계(원)']) + '<tbody>' + rows.join('') + '</tbody></table>' + refNote +
       '<div class="sec-note">합계 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 약제비. 청구분 = 실제로 청구되는 약제비. 정액분 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 정율환자는 항목상 정액분이 확인되지 않아 전액 청구분으로 봤다.</div>';
     var disHtml = '<h2>Ⅶ-2. 정액 비청구분 항목별 — 약 말고 다른 처방 (상위 12)</h2>' +
-      '<table style="width:100%;">' + head(['번호', '항목', '분류', '금액(원)', '건수', '비중'], [1, 2]) + '<tbody>' +
-      (itemRows || emptyRow(6, '해당 자료가 없습니다.')) + '</tbody></table>';
+      hBars(items.slice(0, 12).map(function(r, i){ return { label: (i + 1) + '. ' + (r.codeName || ''), value: Number(r.totalAmt || 0), text: num(r.totalAmt) + '원 · ' + ratio(r.totalAmt, itemSum) }; }));
     return '<div class="mdr-grid"><div>' + topHtml + '</div><div>' + disHtml + '</div></div>';
   }
   function render(){
@@ -386,9 +461,11 @@
     if (!rows.length) return out + '<div class="sec-note">환자군을 맞출 환자평가표가 없어 계산하지 못했습니다(평가표가 올라오면 자동으로 채워집니다).</div>';
     var days = rows.reduce(function(s, r){ return s + Number(r.admdays || 0); }, 0), hi = null, lo = null;
     rows.forEach(function(r){ var p = Number(r.perday || 0); if (!hi || p > Number(hi.perday)) hi = r; if (!lo || p < Number(lo.perday)) lo = r; });
-    out += '<table>' + head(['환자군', '환자', '입원일수', '비중', '1인 1일 진료비', '본인부담', '공단부담', '30일 환산']) + '<tbody>' +
-      rows.map(function(r){ return tr([esc(CLS_NM[r.cls] || r.cls), num(r.pats), num(r.admdays), pct(Number(r.admdays || 0), days), num(r.perday), num(r.selfday), num(r.claimday), num(Number(r.perday || 0) * 30)]); }).join('') +
-      '</tbody></table>';
+    out += hBars(rows.map(function(r){
+      var pd = Number(r.perday || 0);
+      return { label: (CLS_NM[r.cls] || r.cls) + ' · ' + num(r.pats) + '명', value: pd,
+        text: num(r.perday) + '원 · 입원 ' + num(r.admdays) + '일 · 비중 ' + pct(Number(r.admdays || 0), days) + ' · 30일 ' + man(pd * 30) + '원' };
+    }), '환자군 자료가 없습니다.');
     if (hi && lo && hi !== lo) out += '<div class="sec-note">' + esc(CLS_NM[hi.cls] || hi.cls) + ' 1인 1일 ' + num(hi.perday) + '원 vs ' + esc(CLS_NM[lo.cls] || lo.cls) + ' ' + num(lo.perday) + '원 — 하루 ' + num(Number(hi.perday) - Number(lo.perday)) + '원, 한 달 약 ' + man((Number(hi.perday) - Number(lo.perday)) * 30) + '원 차이. 환자군 판정(환자평가표)이 곧 수익이다.</div>';
     return out;
   }
@@ -407,16 +484,25 @@
   function secStruct(M){
     var out = '<h2>Ⅷ-3. 비용 구조 (기간)</h2>';
     if (!M.fixedTot || !M.revenue) return out + '<div class="sec-note">고정비와 청구가 둘 다 있어야 비율이 나옵니다.</div>';
-    var labor = M.fixed.filter(function(x){ return /인건비/.test(x.nm); }).reduce(function(s, x){ return s + x.amt; }, 0);
-    var rows = [
-      ['인건비율', labor ? pct(labor, M.revenue) : '—', labor ? '인건비 ' + eok(labor) + ' ÷ 수익 ' + eok(M.revenue) : '고정비 항목에 「인건비」가 없음'],
-      ['고정비율', pct(M.fixedTot, M.revenue), '고정비 ' + eok(M.fixedTot) + ' ÷ 수익'],
-      ['변동비율', pct(M.varTot, M.revenue), '1인 1일 ' + num(M.varC) + '원 × ' + num(M.days) + '일'],
-      ['손익률', M.profit == null ? '—' : pct(M.profit, M.revenue), M.profit == null ? '' : '추정 손익 ' + sgn(M.profit, eok)],
-      ['환자 1인 1일 기여', num(Math.round(M.contrib)) + '원', '1인 1일 진료비 − 변동비 · 이 돈으로 고정비를 메운다'],
-      ['재원 1명의 한 달 손익 기여', num(Math.round(M.contrib * 30)) + '원', '기여 × 30일 · 손익분기 ' + (M.bep ? M.bep + '명' : '—')]
-    ];
-    return out + '<table>' + head(['구분', '값', '설명'], [2]) + '<tbody>' + rows.map(function(r){ return tr([esc(r[0]), r[1], esc(r[2])], '', [2]); }).join('') + '</tbody></table>';
+    var rev = M.revenue, labor = M.fixed.filter(function(x){ return /인건비/.test(x.nm); }).reduce(function(s, x){ return s + x.amt; }, 0);
+    var other = M.fixedTot - labor, vr = M.varTot || 0, pr = M.profit == null ? 0 : M.profit;
+    var segs = [{ nm: '인건비', v: labor, c: '#1f5a4b' }, { nm: '기타 고정비', v: other, c: '#7aa89d' }, { nm: '환자 변동비', v: vr, c: '#ef8a45' }];
+    if (pr >= 0) segs.push({ nm: '추정 이익', v: pr, c: '#2d9fd3' });
+    else segs.push({ nm: '적자 (비용이 수익을 초과)', v: -pr, c: '#b3261e', over: true });
+    // 막대 전체 길이 = 흑자면 수익, 적자면 비용 합계(수익보다 긴 부분은 표시하지 않는다)
+    var total = pr >= 0 ? rev : (M.fixedTot + vr);
+    var bar = segs.filter(function(s){ return !s.over && s.v > 0; }).map(function(s){
+      return '<div style="width:' + (s.v / total * 100).toFixed(2) + '%;height:100%;background:' + s.c + '" title="' + esc(s.nm) + ' ' + pct(s.v, rev) + '"></div>';
+    }).join('');
+    var legend = segs.filter(function(s){ return s.v > 0 || !s.over; }).map(function(s){
+      return '<span class="sb-lg"><i style="background:' + s.c + '"></i>' + esc(s.nm) + ' <b>' + pct(s.v, rev) + '</b></span>';
+    }).join('');
+    return out +
+      '<style>.sb-bar{display:flex;height:26px;border-radius:5px;overflow:hidden;background:#eef2f5;margin:6px 0 8px}.sb-lg{display:inline-flex;align-items:center;gap:5px;margin:0 14px 4px 0;font-size:12px;color:#43555f}.sb-lg i{display:inline-block;width:11px;height:11px;border-radius:2px}.sb-lg b{color:#20303a}</style>' +
+      '<div class="sm-m" style="font-size:11px;color:#8a99a3">수익 100% 기준 — 수익이 어디로 나가고 얼마가 남는지</div>' +
+      '<div class="sb-bar">' + bar + '</div>' +
+      '<div>' + legend + '</div>' +
+      '<div class="sec-note">환자 1인 1일 기여 ' + num(Math.round(M.contrib)) + '원 (1인 1일 진료비 − 변동비) · 재원 1명의 한 달 손익 기여 ' + num(Math.round(M.contrib * 30)) + '원 · 손익분기 ' + (M.bep ? M.bep + '명' : '—') + '</div>';
   }
   function secLeak(M){
     var x = X || {}, rows = [], out = '<h2>Ⅷ-4. 돈이 새는 곳 점검 (' + esc(ymLbl(M.ym)) + ')</h2>';
@@ -429,8 +515,7 @@
     else row('삭감·조정', '—', '', '삭감 자료 없음 — 병원자료엑셀연계에 삭감 통보 엑셀을 올리면 계산');
     if (Number(x.payCnt)) row('미수 (수납대장)', num(x.unpaid) + '원', Number(x.unpaid) ? 'down' : 'up', '미수율 ' + pct(Number(x.unpaid), Number(x.unpaid) + Number(x.paid)) + ' · 수납 ' + eok(x.paid));
     else row('미수 (수납대장)', '—', '', '수납대장 없음 — 병원자료엑셀연계 › 수납대장');
-    row('장기입원 181일↑ 재원', num(x.longStay) + '명 / 재원 ' + num(x.inCnt) + '명', Number(x.longStay) ? 'down' : 'up', '적정성 장기입원 지표 대상 · 체감제로 수가가 깎인다');
-    row('보호자 연락처 없음', num(x.noTel) + '명', Number(x.noTel) ? 'down' : 'up', '퇴원 안부·재입원 안내를 못 한다 — 입퇴원환자 화면');
+    row('장기입원 181일↑ (적정성 지표)', x.longStay == null ? '자료생성 전' : num(x.longStay) + '명 / 대상 ' + num(x.inCnt) + '명', Number(x.longStay) ? 'down' : 'up', '적정성 장기입원 지표와 같은 계산(해당 월 자료생성 결과) · 체감제로 수가가 깎인다');
     row('오늘 챙길 일', '급함 ' + num(D && D.bad) + ' · 확인 ' + num(D && D.warn), Number(D && D.bad) ? 'down' : 'up', '업무 알림 — 자료 미업로드·신고·상담 연락');
     return out + '<table>' + head(['점검 항목', '값', '판정', '설명'], [3, 4]) + '<tbody>' + rows.join('') + '</tbody></table>';
   }
@@ -445,8 +530,9 @@
     if (x.gapReady) f.push('청구↔평가표 대조: 평가표만 있는 환자 ' + num(x.noClaim) + '명, 명세서만 있는 환자 ' + num(x.noPatval) + '명');
     if (Number(x.cutCnt)) f.push('삭감 ' + num(x.cutAmt) + '원 ' + num(x.cutCnt) + '건 (감액률 ' + pct(Number(x.cutAmt), Number(x.samClaim)) + ')');
     if (Number(x.payCnt)) f.push('수납 ' + num(x.paid) + '원, 미수 ' + num(x.unpaid) + '원');
-    f.push('장기입원 181일↑ ' + num(x.longStay) + '명 / 재원 ' + num(x.inCnt) + '명 · 보호자 연락처 없음 ' + num(x.noTel) + '명');
-    if (D) f.push('간호사 ' + num(D.headcount) + '명' + (Number(D.short) ? ' (부족 ' + D.short + '명)' : '') + ' · 이번 달 상담 ' + num(D.leads) + '건 중 입원 ' + num(D.admits) + '건 · 챙길 일 급함 ' + num(D.bad) + ' 확인 ' + num(D.warn));
+    f.push('장기입원 181일↑(적정성 지표) ' + (x.longStay == null ? '자료생성 전' : num(x.longStay) + '명 / 대상 ' + num(x.inCnt) + '명'));
+    if (D && D.headSrc === 'none') f.push('간호사: 차등제 신고값 없음 — 구조영역 계산 불가 · 이번 달 상담 ' + num(D.leads) + '건 중 입원 ' + num(D.admits) + '건');
+    else if (D) f.push('간호사 ' + num(D.headcount) + '명(' + (D.headLabel || '') + ')' + (D.required ? ' · 5점 기준 필요 ' + num(D.required) + '명' : '') + (Number(D.short) ? ' (부족 ' + D.short + '명)' : '') + ' · 이번 달 상담 ' + num(D.leads) + '건 중 입원 ' + num(D.admits) + '건 · 챙길 일 급함 ' + num(D.bad) + ' 확인 ' + num(D.warn));
     return f;
   }
   function autoDiag(M, prevRev){
@@ -459,18 +545,59 @@
     if (p && Number(p.hosps) > 1) { var diff = Number(p.myperday) - Number(p.avgperday); d.push([diff >= 0 ? 'up' : 'down', '1인 1일 진료비가 고객 평균보다 ' + pct(Math.abs(diff), Number(p.avgperday)) + (diff >= 0 ? ' 높다' : ' 낮다') + ' (' + p.rankperday + '/' + p.hosps + '위)' + (diff < 0 ? ' — 환자군 구성·행위 청구 누락을 점검' : '')]); }
     if (x.gapReady && Number(x.noClaim)) d.push(['down', '평가표는 있는데 청구 명세서가 없는 환자 ' + x.noClaim + '명 — 청구 전에 누락인지 퇴원·전원인지 확인']);
     if (Number(x.cutCnt) && Number(x.samClaim) && Number(x.cutAmt) / Number(x.samClaim) > 0.01) d.push(['down', '감액률 ' + pct(Number(x.cutAmt), Number(x.samClaim)) + ' — 1% 를 넘는다, 사유 상위부터 심사과와 점검']);
-    if (Number(x.longStay)) d.push(['', '181일 넘긴 재원 ' + x.longStay + '명 — 장기입원 지표와 체감제 수가에 걸린다']);
-    if (D && Number(D.short)) d.push(['down', '간호사 ' + D.short + '명 부족 — 1인당 환자 수 구간이 떨어지면 구조영역 점수와 차등 수가가 같이 내려간다']);
+    if (Number(x.longStay)) d.push(['', '장기입원(181일 이상) ' + x.longStay + '명 — 적정성 장기입원 지표 기준(대상 ' + x.inCnt + '명)']);
+    if (D && D.headSrc === 'none') d.push(['down', '차등제 신고값이 없어 간호사 구조영역을 계산하지 못했다 — 차등제 신고를 입력하면 자동 계산']);
+    if (D && Number(D.short)) d.push(['down', '간호사 ' + D.short + '명 부족 — ' + (D.headLabel || '') + ' 간호사 ' + D.headcount + '명, 5점 기준(1인당 환자 ' + (D.top ? Number(D.top).toFixed(2) : '') + '명 이하) 필요 ' + D.required + '명. 구간이 떨어지면 구조영역 점수와 차등 수가가 같이 내려간다']);
     if (D && Number(D.leads) && !Number(D.admits)) d.push(['', '이번 달 상담 ' + D.leads + '건 중 입원 0 — 상담→방문 전환이 막힌 지점을 고객관리에서 확인']);
     if (!d.length) d.push(['up', '숫자로 드러난 위험 신호가 없다.']);
     return d;
+  }
+  /* 한눈에 보기 — 자동 진단·AI 코멘트가 쓰는 같은 숫자(M · X · D)를 막대로 (2026-10-20) */
+  function dgRow(label, v, max, color, text, mark){
+    var w = max ? Math.min(100, Math.max(0, v / max * 100)) : 0;
+    return '<div class="dg-row"><div>' + esc(label) + '</div><div class="dg-trk"><div class="dg-f" style="width:' + w.toFixed(1) + '%;background:' + color + '"></div>' +
+      (mark != null && max ? '<div class="dg-m" style="left:' + Math.min(100, mark / max * 100).toFixed(1) + '%"></div>' : '') +
+      '</div><div class="dg-v">' + text + '</div></div>';
+  }
+  function dgCard(t, html){ return '<div class="dg-card"><div class="dg-t">' + esc(t) + '</div>' + html + '</div>'; }
+  function dgHtml(M){
+    var x = X || {}, dd = D || {}, cards = [];
+    var rev = M.revenue || 0, exp = M.expense || 0;
+    var css = '<style>.dg-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 10px}.dg-card{border:1px solid #dbe3e9;border-radius:8px;padding:9px 11px;background:#fbfcfd;min-width:0}.dg-t{font-size:12px;font-weight:800;color:#20303a;margin-bottom:6px}.dg-row{display:grid;grid-template-columns:120px 1fr auto;column-gap:8px;align-items:center;margin:5px 0;font-size:11.5px;color:#43555f}.dg-trk{height:11px;background:#eef2f5;border-radius:3px;position:relative}.dg-f{height:100%;border-radius:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.dg-m{position:absolute;top:-3px;bottom:-3px;width:2px;background:#ef8a45}.dg-v{white-space:nowrap;color:#20303a;font-variant-numeric:tabular-nums}@media (max-width:900px){.dg-wrap{grid-template-columns:1fr}}</style>';
+    if (rev) {
+      var pl = '';
+      pl += dgRow('수익', rev, rev, '#2d9fd3', eok(rev));
+      pl += dgRow('비용', exp, rev, '#ef8a45', exp ? eok(exp) + ' (' + pct(exp, rev) + ')' : '—');
+      if (M.profit != null) pl += dgRow('추정 손익', Math.abs(M.profit), rev, M.profit >= 0 ? '#1f7a4d' : '#b3261e', sgn(M.profit, eok) + ' (' + pct(M.profit, rev) + ')');
+      cards.push(dgCard('손익 — 수익 · 비용', pl));
+    }
+    if (M.census) {
+      var rc = '';
+      rc += M.bep
+        ? dgRow('평균 재원', M.census, Math.max(M.census, M.bep) * 1.2, M.census >= M.bep ? '#1f7a4d' : '#b3261e', Math.round(M.census) + '명 / 손익분기 ' + M.bep + '명', M.bep)
+        : dgRow('평균 재원', M.census, M.bed || M.census, '#2d9fd3', Math.round(M.census) + '명');
+      if (M.bed) rc += dgRow('가동률', M.census, M.bed, '#2d9fd3', pct(M.census, M.bed) + ' (병상 ' + M.bed + ')');
+      cards.push(dgCard('재원 · 손익분기 · 가동률', rc));
+    }
+    if (dd.headcount != null) {
+      var need = dd.required != null ? Number(dd.required) : Number(dd.headcount) + Number(dd.short || 0);
+      cards.push(dgCard('간호사 인원 · ' + (dd.headLabel || ''), dgRow('현재', Number(dd.headcount), need || 1, '#2d9fd3', num(dd.headcount) + '명') +
+        dgRow('필요', need, need || 1, '#ef8a45', num(need) + '명' + (Number(dd.short) ? ' (부족 ' + num(dd.short) + '명)' : ''))));
+    }
+    if (x.inCnt != null) {
+      var mxL = Math.max(Number(x.inCnt), Number(x.longStay)) || 1;
+      cards.push(dgCard('장기입원 지표 (적정성 기준)', dgRow('지표 대상', Number(x.inCnt), mxL, '#2d9fd3', num(x.inCnt) + '명') +
+        dgRow('181일 이상', Number(x.longStay), mxL, '#ef8a45', num(x.longStay) + '명' + (Number(x.inCnt) ? ' (' + pct(Number(x.longStay), Number(x.inCnt)) + ')' : ''))));
+    }
+    if (!cards.length) return '';
+    return css + '<div class="sub2">한눈에 보기 (아래 진단과 같은 숫자)</div><div class="dg-wrap">' + cards.join('') + '</div>';
   }
   function secDiag(M, prevRev){
     FACTS = buildFacts(M, prevRev);
     var d = autoDiag(M, prevRev);
     return '<h2>Ⅷ-5. 자동 진단 · AI 경영 코멘트</h2>' +
       '<div class="sub2">자동 진단 (규칙 — 화면의 숫자에서 바로)</div><ul class="diag">' + d.map(function(x){ return '<li' + (x[0] ? ' class="' + x[0] + '"' : '') + '>' + esc(x[1]) + '</li>'; }).join('') + '</ul>' +
-      '<div class="sub2">AI 경영 코멘트 (요약 · 원인 · 위험 · 기회 · 권고)</div>' +
+      dgHtml(M) + '<div class="sub2">AI 경영 코멘트 (요약 · 원인 · 위험 · 기회 · 권고)</div>' +
       '<div class="aibox" id="mdrAiBox">' + (AI_TXT ? esc(AI_TXT).replace(/\n/g, '<br>') : '<span class="sub">[✨ AI 코멘트 받기]를 누르면 위 사실 목록으로 다섯 줄을 씁니다. 숫자를 지어내지 않도록 지시했지만 판단은 원장이 합니다.</span>') + '</div>' +
       '<div class="noprint" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="mdr-btn pri" onclick="mdrAi()">✨ AI 코멘트 받기</button><button type="button" class="mdr-btn" onclick="mdrCopyDiag()">🔗 진단 글 복사</button><span class="mdr-note">복사한 글은 카톡·메일에 그대로 붙일 수 있습니다</span></div>';
   }

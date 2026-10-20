@@ -140,6 +140,14 @@ public interface MisMapper {
 	List<Map<String, Object>> selectNurseRoster(@Param("hospCd") String hospCd);
 	List<Map<String, Object>> selectStaffChgs(@Param("hospCd") String hospCd, @Param("fromDt") String fromDt);
 	Map<String, Object> selectStaffChgNet(@Param("hospCd") String hospCd);
+	// 적정성 장기입원 지표(TBL_PAT_INDI 14) — 해당 월 자료생성 결과. dtor=분모(대상), ntor=분자(181일 이상)
+	Map<String, Object> selectPatIndi14(@Param("hospCd") String hospCd, @Param("ym") String ym);
+	// 차등제 신고 간호사 수·평균 재원 — 그 달에 쓰이는 분기 우선(다음 분기 → 그 분기 → 그 해 최신)
+	Map<String, Object> selectGradeStaff(@Param("hospCd") String hospCd,
+	                                     @Param("startYy") String startYy,
+	                                     @Param("qterFlag") String qterFlag,
+	                                     @Param("nextYy") String nextYy,
+	                                     @Param("nextQt") String nextQt);
 	int insertStaffChg(Map<String, Object> p);
 	int deleteStaffChg(Map<String, Object> p);
 

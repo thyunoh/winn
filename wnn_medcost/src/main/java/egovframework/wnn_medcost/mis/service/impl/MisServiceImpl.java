@@ -336,10 +336,14 @@ public class MisServiceImpl implements MisService {
 			r.put("payCnt", n);
 		} catch (Exception e) { r.put("payErr", e.getMessage()); }
 		// 장기입원(181일↑ 재원)·보호자 연락처 — 입퇴원환자 화면과 같은 판정
+		// 장기입원 — 적정성 장기입원 지표와 같은 값(해당 월 자료생성 결과). 분모 = 대상(inCnt), 분자 = 181일 이상(longStay). 보호자 연락처는 종전대로.
 		try {
 			Map<String, Object> pb = selectPatBoard(hospCd);
-			r.put("longStay", pb.get("longStay"));
-			r.put("inCnt", pb.get("inCnt"));
+			Map<String, Object> pi = mapper.selectPatIndi14(hospCd, ym);
+			r.put("inCnt", pi == null ? null : Math.round(pDbl(pi.get("dtor"))));
+			r.put("longStay", pi == null ? null : Math.round(pDbl(pi.get("ntor"))));
+			r.put("inSnap", ym);
+			r.put("longSrc", pi == null ? "none" : "indi");
 			r.put("noTel", pb.get("noTel"));
 		} catch (Exception e) { r.put("patErr", e.getMessage()); }
 		return r;
@@ -1006,12 +1010,18 @@ public class MisServiceImpl implements MisService {
 		r.put("noTel", pat.get("noTel"));
 		// 간호 인력은 변동 기록 표(DDL)가 없어도 병원장 화면이 뜨도록 따로 감싼다
 		Map<String, Object> nur = new HashMap<>();
-		try { nur = selectNurseBoard(hospCd); }
+		try { nur = selectNurseBoard(hospCd, ym); }
 		catch (Exception e) { r.put("nurseErr", pStr(e.getMessage())); }
+		// 간호사 현원·필요 인원 — 간호사 관리 화면과 같은 구조영역 기준(selectNurseBoard)
 		r.put("headcount", nur.get("headcount"));
+		r.put("headcountRaw", nur.get("headcountRaw"));
+		r.put("census", nur.get("census"));
 		r.put("required", nur.get("required"));
 		r.put("short", nur.get("short"));
 		r.put("ratio", nur.get("ratio"));
+		r.put("top", nur.get("top"));
+		r.put("headSrc", nur.get("headSrc"));
+		r.put("headLabel", nur.get("headLabel"));
 		r.put("fromRoster", nur.get("fromRoster"));
 		// 챙길 일 — 업무 알림의 빨강(bad)·주황(warn) 개수와 위에서부터 세 가지
 		int bad = 0, warn = 0;
@@ -1027,6 +1037,24 @@ public class MisServiceImpl implements MisService {
 		r.put("todo", todo);
 		r.put("today", today);
 		return r;
+	}
+
+	/** 차등제 신고 간호사 수·평균 재원 — 그 달에 쓰이는 분기를 고른다(다음 분기 신고 우선, 월보고서와 같은 규칙). 신고가 없으면 null. */
+	private Map<String, Object> gradeStaffOf(String hospCd, String ym) throws Exception {
+		if (ym == null || !ym.matches("\\d{6}")) return null;
+		int yy = Integer.parseInt(ym.substring(0, 4)), qn = (Integer.parseInt(ym.substring(4, 6)) + 2) / 3;
+		String startYy = String.valueOf(yy), qter = String.valueOf(qn);
+		String nextYy = qn == 4 ? String.valueOf(yy + 1) : startYy, nextQt = qn == 4 ? "1" : String.valueOf(qn + 1);
+		if (ym.compareTo("202601") < 0) { nextYy = startYy; nextQt = qter; }   // 2026년 1월 이전은 종전대로
+		return mapper.selectGradeStaff(hospCd, startYy, qter, nextYy, nextQt);
+	}
+
+	/** 간호사 1인당 환자수의 5점	/** 간호사 1인당 환자수의 5점 구간 상한(TBL_WEVALUE_MST 02) — 없으면 0. */
+	private double nurseTop(String today) throws Exception {
+		for (Map<String, Object> z : mapper.selectStructZones(today)) {
+			if ("02".equals(pStr(z.get("catecode"))) && pInt(z.get("stdscore")) == 5) return pDbl(z.get("endindi"));
+		}
+		return 0;
 	}
 
 	/** 재원 환자 — 가장 최근 입퇴원 자료의 재원 건 + 보호자 연락처 유무 + 상담 연결 + 입원 3일 이내. */
@@ -1046,7 +1074,7 @@ public class MisServiceImpl implements MisService {
 			p.put("hasTel", tel);
 			p.put("hasLead", lead);
 			p.put("isLong", isLong);
-			if (!tel) noTel++;
+			if (in && !tel) noTel++;   // 보호자 연락처 없음 = 재원 중인 환자만(퇴원·기록 없음은 세지 않는다)
 			if (lead) inLead++;
 			if (in && days <= 3) fresh++;
 			if (isLong) longStay++;
@@ -1078,6 +1106,12 @@ public class MisServiceImpl implements MisService {
 	/** 간호사 관리 — 직원 명단(EMR 연계, 간호 직종) · 인력 변동 기록 · 1인당 환자수와 5점 구간 상한으로 필요 인원·부족 인원. */
 	@Override
 	public Map<String, Object> selectNurseBoard(String hospCd) throws Exception {
+		return selectNurseBoard(hospCd, new java.text.SimpleDateFormat("yyyyMM").format(new java.util.Date()));
+	}
+
+	/** 간호사 관리 — 기준 월(ym)의 구조영역(차등제 신고 간호사 수·평균 재원, 5점 구간 상한)을 기준으로 필요·부족 인원을 센다. 신고가 없으면 명단·변동 기록. */
+	@Override
+	public Map<String, Object> selectNurseBoard(String hospCd, String ym) throws Exception {
 		String today = new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
 		List<Map<String, Object>> roster = mapper.selectNurseRoster(hospCd);
 		List<Map<String, Object>> active = new ArrayList<>();
@@ -1111,6 +1145,35 @@ public class MisServiceImpl implements MisService {
 		r.put("top", top);
 		r.put("required", required);
 		r.put("short", shortN);
+		// 구조영역 기준 — 차등제 신고값(간호사 수·평균 재원)과 5점 구간 상한으로 다시 센다(적정성 간호사 1인당 환자수와 같은 계산)
+		Map<String, Object> gs = gradeStaffOf(hospCd, ym);
+		if (gs != null) {
+			double raw = pDbl(gs.get("nurcount"));
+			double pt = pDbl(gs.get("patcount"));
+			int hc = (int) Math.round(raw);
+			double topG = nurseTop(today);
+			int req = topG > 0 ? (int) Math.ceil(pt / topG) : 0;
+			r.put("headcount", hc);
+			r.put("headcountRaw", Math.round(raw * 100) / 100.0);
+			r.put("census", Math.round(pt * 100) / 100.0);
+			r.put("top", topG);
+			r.put("required", req);
+			r.put("short", Math.max(0, req - hc));
+			r.put("ratio", raw > 0 ? Math.round(pt * 100.0 / raw) / 100.0 : null);
+			r.put("headSrc", "grade");
+			r.put("headLabel", pInt(gs.get("startyy")) + "년 " + pStr(gs.get("qterflag")) + "분기 차등제 신고");
+		} else {
+			// 명단 제출이 어려워 구조영역(차등제 신고) 수치만 쓴다 — 신고가 없으면 명단·변동 기록으로 대신 세지 않는다
+			r.put("headcount", null);
+			r.put("headcountRaw", null);
+			r.put("census", null);
+			r.put("required", null);
+			r.put("short", null);
+			r.put("ratio", null);
+			r.put("top", nurseTop(today));
+			r.put("headSrc", "none");
+			r.put("headLabel", "차등제 신고값 없음");
+		}
 		r.put("chgs", mapper.selectStaffChgs(hospCd, today.substring(0, 4) + "0101"));
 		r.put("today", today);
 		return r;
