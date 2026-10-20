@@ -3316,10 +3316,12 @@ window.qpsPrintGo = function (w, maxMs) {
                 box.style.left = '8px'; box.style.right = 'auto'; box.style.bottom = 'auto';
                 box.style.top = Math.max(0, window.innerHeight - 120 - gh) + 'px';
                 box.style.height = 'auto'; box.style.maxHeight = 'none'; box.style.overflow = 'visible';
+                box.style.paddingBottom = '0'; box.querySelector('.mnp-grip').style.marginBottom = '0';
             } else if (!folded && box.dataset.foldPos) {
                 var pp = JSON.parse(box.dataset.foldPos);
                 box.style.left = pp.l; box.style.top = pp.t; box.style.right = pp.r; box.style.bottom = pp.b;
                 box.style.height = ''; box.style.maxHeight = ''; box.style.overflow = '';
+                box.style.paddingBottom = ''; box.querySelector('.mnp-grip').style.marginBottom = '';
                 delete box.dataset.foldPos;
             }
         }
@@ -3334,25 +3336,9 @@ window.qpsPrintGo = function (w, maxMs) {
         syncAll();
     }
 
-    /* 'qps' 키 — 이 패널의 보이기/숨기기 (입력칸에서는 반응하지 않는다) */
-    function bindWordKey(toggleFn){
-        var buf = '', bufTimer = null;
-        document.addEventListener('keydown', function(ev){
-            if (ev.ctrlKey || ev.altKey || ev.metaKey) { buf = ''; return; }
-            if (inField(ev.target)) { buf = ''; return; }
-            var ch = (ev.code && ev.code.indexOf('Key') === 0) ? ev.code.charAt(3).toLowerCase() : (ev.key || '').toLowerCase();
-            if (ch.length !== 1 || ch < 'a' || ch > 'z') { buf = ''; return; }
-            buf += ch;
-            if (WORD.indexOf(buf) !== 0) buf = (ch === WORD.charAt(0)) ? ch : '';
-            if (bufTimer) clearTimeout(bufTimer);
-            bufTimer = setTimeout(function(){ buf = ''; }, 1500);
-            if (buf === WORD) { buf = ''; toggleFn(); }
-        });
-    }
-
     /* 경영고객관리 패널 */
     function buildMis(){
-        if (!isMisPage() || document.getElementById('misSubNav')) return;
+        if (!document.getElementById('menu-mis') || document.getElementById('misSubNav')) return;
         var body = groupsHtml(MIS_GROUPS, function(g){ return { bg: g.bg, fg: g.fg }; }, true);
         var box = makePanel('misSubNav', '경영고객관리', body, 'misNavPos', 14, 180);
         var allB = document.createElement('button');
@@ -3365,23 +3351,22 @@ window.qpsPrintGo = function (w, maxMs) {
         xB.style.cssText = 'font-size:15px;line-height:1;padding:1px 7px;border:1px solid #cfd9e0;border-radius:6px;background:#fff;color:#20303a;cursor:pointer;font-weight:700;';
         xB.addEventListener('click', function(){
             box.style.display = 'none';
-            try { sessionStorage.setItem('misNavHide', '1'); } catch(e){}
         });
         box.querySelector('.mnp-grip').appendChild(xB);
         // 왼쪽 「경영고객관리」 메뉴를 다시 누르면 닫혀 있던 패널이 다시 뜬다
         var menuA = document.querySelector('#menu-mis > a');
         if (menuA) menuA.addEventListener('click', function(){
             box.style.display = '';
-            try { sessionStorage.setItem('misNavHide', '0'); } catch(e){}
         });
         wireGroups(box, MIS_GROUPS);
-        try { if (sessionStorage.getItem('misNavHide') === '1') box.style.display = 'none'; } catch(e){}
+        var misLi = document.getElementById('menu-mis');
+        // 처음 열 때만 메뉴가 보이면 패널도 보인다
+        box.style.display = 'none';
+        if (isMisPage() && misLi && misLi.style.display !== 'none') box.style.display = '';
         if (window.innerWidth < 1100) box.style.display = 'none';
-        bindWordKey(function(){
-            var hidden = box.style.display === 'none';
-            box.style.display = hidden ? '' : 'none';
-            try { sessionStorage.setItem('misNavHide', hidden ? '0' : '1'); } catch(e){}
-        });
+        // 메뉴가 숨겨질 때만 패널을 숨긴다 (다시 보일 때는 손대지 않는다)
+        try { if (misLi) new MutationObserver(function(){ if (misLi.style.display === 'none') box.style.display = 'none'; })
+            .observe(misLi, { attributes: true, attributeFilter: ['style'] }); } catch(e){}
     }
 
     function buildAll(){

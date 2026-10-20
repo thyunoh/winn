@@ -10,6 +10,7 @@
 
 <script src="/asset/js/ui-message.js"></script>
 <script src="/asset/js/mis-split.js"></script>
+<script src="/asset/js/xlsx-style.bundle.js"></script>
 
 <div class="dashboard-wrapper">
 <div id="misLead" data-wnn="<c:out value='${wnnYn}'/>" data-hosp="<c:out value='${hospCd}'/>" data-nm="<c:out value='${hospNm}'/>">
@@ -866,17 +867,54 @@
     }).catch(function(e){ err(e); btn.textContent = old; }).always(function(){ btn.disabled = false; });
   };
 
-  /* ── 엑셀 ── */
+  /* ── 엑셀 — 매출장 양식: 가운데 큰 제목 · 조회 정보 줄 · 연한 파랑 머리글 · 모든 칸 얇은 테두리 (스타일 지원 xlsx-style) ── */
   window.mlExcel = function(){
-    if (typeof XLSX === 'undefined') { _alertBox('엑셀 모듈을 아직 불러오지 못했습니다. 잠시 뒤 다시 눌러 주세요.', {icon:'⏳'}); return; }
+    var XS = window.XLSXS;
+    if (!XS || !XS.utils || !XS.utils.encode_cell) { _alertBox('엑셀 모듈을 아직 불러오지 못했습니다. 잠시 뒤 다시 눌러 주세요.', {icon:'⏳'}); return; }
     try {
-      var aoa = [['단계','환자','생년월일','성별','보호자','관계','연락처','상담일','유입 경로','상태·요구','다음 할 일','내용','방문·입원 예정','입원일','퇴원일','입퇴원현황 확인','종결 사유']];
-      leads().forEach(function(l){ aoa.push([stageNm(l.stage), l.patnm||'', l.birth6||'', l.gender==='M'?'남':l.gender==='F'?'여':'', l.guardnm||'', l.guardrel||'', l.tel||'', dLbl(l.contactdt), CH[l.channel]||l.channel||'', l.condmemo||'', dLbl(l.nextdt), l.nextmemo||'', dLbl(l.plandt), dLbl(l.admitdt), dLbl(l.dischdt), l.matchyn==='Y'?'Y':'', l.closersn||'']); });
-      var ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{wch:8},{wch:10},{wch:9},{wch:5},{wch:10},{wch:7},{wch:14},{wch:11},{wch:12},{wch:36},{wch:11},{wch:24},{wch:12},{wch:11},{wch:11},{wch:8},{wch:20}];
-      var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '상담 목록');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(gel('mlFollow'), {raw:false}), '퇴원 안부 연락');
-      var nm = (root.getAttribute('data-nm') || '').replace(/[\\\/:*?"<>|]/g, '_'), d = new Date();
-      XLSX.writeFile(wb, '고객관리_' + nm + '_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '.xlsx');
+      var head = ['단계','환자','생년월일','성별','보호자','관계','연락처','상담일','유입 경로','상태·요구','다음 할 일','내용','방문·입원 예정','입원일','퇴원일','입퇴원현황 확인','종결 사유'];
+      var widths = [70,80,70,44,70,56,100,74,80,220,74,170,90,74,74,70,120];
+      var span = head.length, d = new Date(), ymd = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+      var line = { style: 'thin', color: { rgb: '000000' } };
+      var box = { top: line, bottom: line, left: line, right: line };
+      var sTitle = { font: { bold: true, sz: 16 }, alignment: { horizontal: 'center', vertical: 'center' } };
+      var sMeta = { font: { sz: 10 }, alignment: { horizontal: 'left', vertical: 'center' } };
+      var sSection = { font: { bold: true, sz: 12 }, alignment: { horizontal: 'left', vertical: 'center' } };
+      var sHead = { font: { bold: true, sz: 10 }, fill: { patternType: 'solid', fgColor: { rgb: 'DDEBF7' } }, border: box,
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
+      var sBody = { font: { sz: 10 }, border: box, alignment: { vertical: 'center' } };
+      function cell(v, s){ return { v: (v == null ? '' : String(v)), t: 's', s: s }; }
+      function blankRow(){ var r = []; for (var i = 0; i < span; i++) r.push(cell('', null)); return r; }
+      function titleRow(text, s){ var r = blankRow(); r[0] = cell(text, s); return r; }
+
+      var aoa = [], merges = [];
+      aoa.push(titleRow('[신규환자 고객관리 목록]', sTitle)); merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: span - 1 } });
+      aoa.push(titleRow('출력일 : ' + ymd + ' · 상담 전체(종결 포함) · ' + (root.getAttribute('data-nm') || ''), sMeta)); merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: span - 1 } });
+      aoa.push(blankRow());
+      aoa.push(head.map(function(h){ return cell(h, sHead); }));
+      leads().forEach(function(l){
+        var vals = [stageNm(l.stage), l.patnm||'', l.birth6||'', l.gender==='M'?'남':l.gender==='F'?'여':'', l.guardnm||'', l.guardrel||'', l.tel||'',
+                    dLbl(l.contactdt), CH[l.channel]||l.channel||'', l.condmemo||'', dLbl(l.nextdt), l.nextmemo||'', dLbl(l.plandt),
+                    dLbl(l.admitdt), dLbl(l.dischdt), l.matchyn==='Y'?'Y':'', l.closersn||''];
+        aoa.push(vals.map(function(v){ return cell(v, sBody); }));
+      });
+      aoa.push(blankRow());
+      aoa.push(titleRow('[퇴원 환자 안부 연락]', sSection)); merges.push({ s: { r: aoa.length - 1, c: 0 }, e: { r: aoa.length - 1, c: span - 1 } });
+      Array.prototype.forEach.call((gel('mlFollow') ? gel('mlFollow').querySelectorAll('tr') : []), function(tr){
+        var cells = Array.prototype.map.call(tr.children, function(c){ return c.textContent.replace(/\s+/g, ' ').trim(); });
+        if (!cells.length) return;
+        var isHead = !!tr.querySelector('th');
+        aoa.push(cells.map(function(v){ return cell(v, isHead ? sHead : sBody); }));
+      });
+
+      var ws = XS.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = widths.map(function(w){ return { wch: Math.round(w / 7) }; });
+      ws['!merges'] = merges;
+      ws['!rows'] = [{ hpt: 30 }, { hpt: 18 }, { hpt: 8 }, { hpt: 30 }];
+      var wb = XS.utils.book_new();
+      XS.utils.book_append_sheet(wb, ws, '신규환자');
+      var nm = (root.getAttribute('data-nm') || '').replace(/[\\\/:*?"<>|]/g, '_');
+      XS.writeFile(wb, '신규환자_' + nm + '_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '.xlsx');
     } catch(e){ err(e); }
   };
 
