@@ -37,7 +37,7 @@
   #misDrug .dg-hd{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   #misDrug .dg-hd .dg-spacer{ flex:1; }
   #misDrug .dg-wrap{ overflow-x:auto; }
-  #misDrug .dg-scroll{ max-height:690px; overflow:auto; border:1px solid #e3e9ed; border-radius:8px; }
+  #misDrug .dg-scroll{ max-height:760px; overflow:auto; border:1px solid #e3e9ed; border-radius:8px; }
   #misDrug .dg-scroll table{ border-collapse:separate; border-spacing:0; }
   #misDrug .dg-scroll thead th{ position:sticky; top:0; z-index:2; background:#f2f6f8; box-shadow:0 1px 0 #dde5ea; }
   #misDrug .dg-scroll tfoot td{ position:sticky; bottom:0; z-index:2; background:#eef3f6; font-weight:800; border-top:2px solid #9fb3bd; }
@@ -97,9 +97,9 @@
     var my = ++REQ;
     g('dgBody').innerHTML = '<div class="dg-prog">약제 자료 불러오는 중…</div>';
     var base = { ipwe:'', medType:'9', jrType:'0', amtType:'1', startMonth: from, endMonth: to };
-    tong('/tong/t_drugItemList.do', $.extend({}, base)).then(function(r){
+    $.when(tong('/tong/t_drugItemList.do', $.extend({}, base)), tong('/tong/t_drugLicList.do', $.extend({}, base)), tong('/tong/t_drugBreakList.do', $.extend({}, base))).then(function(r1, r2, r3){
       if (my !== REQ) return;
-      render(from, to, { drug: arr(r) });
+      render(from, to, { drug: arr(r1[0]), lic: arr(r2[0]), brk: arr(r3[0]) });
     }, function(){
       if (my !== REQ) return;
       g('dgBody').innerHTML = '<div class="dg-prog">약제 자료를 불러오지 못했습니다. 기간을 바꾸어 다시 조회하세요.</div>';
@@ -122,12 +122,101 @@
     }).join('');
     var foot = rows.length ? '<tfoot>' + tr(['합계', '', rows.length + '개 품목', num(sumClaim), num(sumFix), num(sumTot), ratio(sumTot, sumTot), ''], 'tot', [1, 2]) + '</tfoot>' : '';
 
-    var h = '<div class="dg-hd"><h2>품목코드별 약제 청구</h2></div>' +
+    /* 묶음 3가지(종별 · 외래입원 · 면허번호)는 같은 기준으로 나눈다 — 청구분 = 합계 − 항목 L, 정액분 = 항목 L */
+    function split(fixTot, fixNc, prod){ var total = fixTot + prod; return { claim: total - fixNc, fixed: fixNc, total: total }; }
+    var BR = arr(T.brk).map(function(x){
+      var s = split(Number(x.fixTotal || 0), Number(x.fixNonclaim || 0), Number(x.prodTotal || 0));
+      return { type: String(x.typeCd || '0'), ipw: String(x.ipwCd || 'I'), claim: s.claim, fixed: s.fixed, total: s.total, cnt: Number(x.claimCount || 0) };
+    });
+    function groupBy(list, field){
+      var m = {}, out = [];
+      list.forEach(function(x){
+        var k = x[field];
+        if (!m[k]) { m[k] = { key: k, claim: 0, fixed: 0, total: 0, cnt: 0 }; out.push(m[k]); }
+        m[k].claim += x.claim; m[k].fixed += x.fixed; m[k].total += x.total; m[k].cnt += x.cnt;
+      });
+      return out.filter(function(x){ return x.total !== 0; }).sort(function(a, b){ return b.total - a.total; });
+    }
+    /* 종별 = 청구서 보험종별(INSUR_TYPE) — 청구세부통계 Ⅶ 보험 종별 구성과 같은 이름 */
+    var INSUR_NM = { '4': '건강보험', '1': '의료급여', '2': '의료급여', '7': '보훈', '8': '자동차보험', '9': '산재보험' };
+    var IPW_NM = { 'I': '입원', 'O': '외래' };
+    var byType = groupBy(BR, 'type').map(function(x){ x.label = INSUR_NM[x.key] || (x.key ? '기타 (' + x.key + ')' : '기타'); return x; });
+    var byIpw = groupBy(BR, 'ipw').map(function(x){ x.label = IPW_NM[x.key] || x.key; return x; });
+    var byLic = arr(T.lic).map(function(x){
+      var s = split(Number(x.fixTotal || 0), Number(x.fixNonclaim || 0), Number(x.prodTotal || 0));
+      var no = x.licenseNo || '';
+      return { label: x.licenseName ? x.licenseName : ('면허 ' + (no === '' || no === '00' ? '미상' : no)), claim: s.claim, fixed: s.fixed, total: s.total, cnt: Number(x.claimCount || 0) };
+    }).filter(function(x){ return x.total !== 0; }).sort(function(a, b){ return b.total - a.total; });
+
+    /* 묶음 한 칸 — 청구분(파랑) · 정액분(주황) 막대, 길이는 그 묶음 안에서 가장 큰 합계 기준 */
+    function brkBox(title, list){
+      if (!list.length) return '';
+      var sum = list.reduce(function(s, x){ return s + x.total; }, 0), max = list[0].total;
+      var lines = list.map(function(x){
+        var a = max ? (x.claim / max * 100) : 0, b = max ? (x.fixed / max * 100) : 0;
+        return '<div class="dgl-row"><div class="dgb-lbl" title="' + esc(x.label) + '">' + esc(x.label) + ' (' + num(x.cnt) + '건)</div>' +
+          '<div class="dgl-trk"><div style="width:' + a.toFixed(2) + '%;background:#2d9fd3;"></div><div style="width:' + b.toFixed(2) + '%;background:#ef8a45;"></div></div>' +
+          '<div class="dgb-val">청구 ' + num(x.claim) + ' · 정액 ' + num(x.fixed) + ' · 합계 ' + num(x.total) + ' (' + ratio(x.total, sum) + ')</div></div>';
+      }).join('');
+      return '<div class="dgb-wrap"><div class="dgb-hd">' + esc(title) + '</div>' +
+        '<div class="dgb-sum"><span style="color:#2d9fd3;">■</span> 청구분 &nbsp; <span style="color:#ef8a45;">■</span> 정액분 · 막대 길이 = 합계</div>' + lines + '</div>';
+    }
+    var side = brkBox('보험 종별 약제 청구 (청구분 · 정액분 · 합계)', byType) +
+      brkBox('외래 · 입원 약제 청구 (청구분 · 정액분 · 합계)', byIpw) +
+      brkBox('면허번호별 약제 청구 (청구분 · 정액분 · 합계)', byLic);
+
+    var css = '<style>' +
+      '.dg-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:14px;align-items:start;}' +
+      '@media (max-width:1100px){.dg-grid2{grid-template-columns:minmax(0,1fr);}}' +
+      '.dg-side{display:flex;flex-direction:column;gap:12px;min-width:0;}' +
+      '.dgb-wrap{background:#fff;border:1px solid #e1e7ec;border-radius:10px;padding:12px 14px;}' +
+      '.dgb-hd{font-size:14px;font-weight:800;color:#20303a;margin-bottom:8px;}' +
+      '.dgb-sum{font-size:12px;color:#43555f;margin:0 0 8px;}' +
+      '.dgb-lbl{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#20303a;}' +
+      '.dgb-val{white-space:nowrap;color:#20303a;font-variant-numeric:tabular-nums;}' +
+      '.dgb-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 150px;gap:8px;align-items:center;margin:6px 0;font-size:12px;}' +
+      '.dgb-trk{height:12px;background:#eef2f5;border-radius:3px;overflow:hidden;}' +
+      '.dgb-fill{height:100%;background:#2d9fd3;border-radius:3px;}' +
+      '.dg-main{min-width:0;}' +
+      '.dgt-tabs{display:flex;gap:6px;}' +
+      '.dgt-tab{border:1px solid #cfd9e0;background:#fff;color:#43555f;border-radius:6px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;}' +
+      '.dgt-tab.on{background:#1f5a4b;color:#fff;border-color:#1f5a4b;}' +
+      '.dgl-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:3px 8px;align-items:center;margin:6px 0;font-size:12px;}' +
+      '.dgl-row .dgb-val{grid-column:2;white-space:normal;font-size:11px;color:#43555f;}' +
+      '.dgl-trk{display:flex;height:12px;background:#eef2f5;border-radius:3px;overflow:hidden;}' +
+      '</style>';
+    var top = rows.slice(0, 20), maxT = top.length ? top[0].total : 0;
+    var topSum = top.reduce(function(s, x){ return s + x.total; }, 0), othCnt = rows.length - top.length, othSum = sumTot - topSum;
+    var bars = top.map(function(x, i){
+      var w = maxT ? Math.max(1, Math.round(x.total / maxT * 100)) : 0;
+      return '<div class="dgb-row"><div class="dgb-lbl" title="' + esc(x.name) + '">' + (i + 1) + '. ' + esc(x.name) + '</div>' +
+        '<div class="dgb-trk"><div class="dgb-fill" style="width:' + w + '%"></div></div>' +
+        '<div class="dgb-val">' + num(x.total) + '원 · ' + ratio(x.total, sumTot) + '</div></div>';
+    }).join('');
+    var chart = '<div class="dgb-wrap"><div class="dgb-hd">합계 1~20위 (약제비 기준)</div>' +
+      '<div class="dgb-sum">상위 ' + top.length + '개 = 전체의 <b>' + ratio(topSum, sumTot) + '</b>' +
+      (othCnt > 0 ? ' · 기타 ' + othCnt + '개 = <b>' + ratio(othSum, sumTot) + '</b>' : '') + '</div>' +
+      (top.length ? bars : '<div class="dg-prog">자료가 없습니다.</div>') + '</div>';
+    var detail = '<div class="dg-scroll"><table>' + head(['번호', '품목코드', '품목명', '청구분(원)', '정액분(원)', '합계(원)', '비중', '명세서(건)'], [1, 2]) + '<tbody>' + body + '</tbody>' + foot + '</table></div>';
+    var tabs = '<div class="dgt-tabs"><button type="button" class="dgt-tab on" data-dgt="chart">합계 20위 그래프</button>' +
+      '<button type="button" class="dgt-tab" data-dgt="detail">세부 내역</button></div>';
+    var main = '<div data-dgt-pane="chart">' + chart + '</div>' +
+      '<div data-dgt-pane="detail" style="display:none;">' + detail + '</div>';
+
+    var h = css + '<div class="dg-hd" style="justify-content:space-between;"><h2>품목코드별 약제 청구</h2>' + tabs + '</div>' +
       (rows.length
-        ? '<div class="dg-scroll"><table>' + head(['번호', '품목코드', '품목명', '청구분(원)', '정액분(원)', '합계(원)', '비중', '명세서(건)'], [1, 2]) + '<tbody>' + body + '</tbody>' + foot + '</table></div>'
+        ? '<div class="dg-grid2"><div class="dg-side">' + side + '</div><div class="dg-main">' + main + '</div></div>'
         : '<div class="dg-prog">해당 기간에 약제 청구 자료가 없습니다.</div>') +
       '<div class="dg-note">합계 = 처방 오더 금액에서 위탁청구(JS008)를 뺀 약제비. 청구분 = 실제로 청구되는 약제비. 정액분 = 정액에 포함되어 따로 청구하지 않는 약(항목 L). 명세서는 그 약이 든 명세서 수다. 합계 순으로 정렬했다.</div>';
     g('dgBody').innerHTML = h;
+    /* 탭 — 본문 영역 한 번만 위임. 고른 탭만 보이고 나머지 패널은 숨긴다 */
+    g('dgBody').onclick = function(e){
+      var t = e.target && e.target.closest ? e.target.closest('[data-dgt]') : null;
+      if (!t) return;
+      var k = t.getAttribute('data-dgt');
+      Array.prototype.forEach.call(this.querySelectorAll('.dgt-tab'), function(b){ b.classList.toggle('on', b.getAttribute('data-dgt') === k); });
+      Array.prototype.forEach.call(this.querySelectorAll('[data-dgt-pane]'), function(p){ p.style.display = p.getAttribute('data-dgt-pane') === k ? '' : 'none'; });
+    };
     g('dgInfo').textContent = inp(from) + ' ~ ' + inp(to) + ' · 품목 ' + rows.length + '개 · 합계 ' + num(sumTot) + '원';
   }
 

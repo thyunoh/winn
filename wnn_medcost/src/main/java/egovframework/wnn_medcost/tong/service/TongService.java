@@ -20,7 +20,9 @@ public interface TongService {
 	List<TongDTO>     tong06List(TongDTO dto)      throws Exception;
 	List<TongDTO>     tong07List(TongDTO dto)      throws Exception;
 	List<TongDTO>     tong08List(TongDTO dto)      throws Exception;
-	List<Map<String, Object>> drugItemList(TongDTO dto) throws Exception;   // 2026-10-16 약제 청구 현황(품목코드별)
+	List<Map<String, Object>> drugItemList(TongDTO dto) throws Exception;
+	List<Map<String, Object>> drugLicList(TongDTO dto) throws Exception;
+	List<Map<String, Object>> drugBreakList(TongDTO dto) throws Exception;   // 2026-10-16 약제 청구 현황(품목코드별)
 	List<TongDTO>     tong082List(TongDTO dto)     throws Exception;
 	List<TongDTO>     tong083List(TongDTO dto)     throws Exception;
 	List<TongDTO>     tong09List(TongDTO dto)      throws Exception;

@@ -86,6 +86,16 @@ public class TongServiceImpl implements TongService {
 	}
 
 	@Override
+	public List<Map<String, Object>> drugLicList(TongDTO dto) throws Exception {
+		return mapper.drugLicList(dto);
+	}
+
+	@Override
+	public List<Map<String, Object>> drugBreakList(TongDTO dto) throws Exception {
+		return mapper.drugBreakList(dto);
+	}
+
+	@Override
 	public List<TongDTO> tong08List(TongDTO dto) throws Exception {
 		// TODO Auto-generated method stub
 		return mapper.tong08List(dto) ;

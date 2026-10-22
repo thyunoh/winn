@@ -287,6 +287,22 @@ public class TongController {
 	    return resultLst;
 	}
 
+	@RequestMapping(value= "/t_drugBreakList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<Map<String, Object>> t_drugBreakList(@ModelAttribute("DTO") TongDTO dto) {
+	    List<Map<String, Object>> resultLst = new ArrayList<>();
+	    try { resultLst = svc.drugBreakList(dto); } catch (Exception e) { e.printStackTrace(); }
+	    return resultLst;
+	}
+
+	@RequestMapping(value= "/t_drugLicList.do", method = RequestMethod.POST)
+	@ResponseBody
+	public List<Map<String, Object>> t_drugLicList(@ModelAttribute("DTO") TongDTO dto) {
+	    List<Map<String, Object>> resultLst = new ArrayList<>();
+	    try { resultLst = svc.drugLicList(dto); } catch (Exception e) { e.printStackTrace(); }
+	    return resultLst;
+	}
+
 	@RequestMapping(value= "/t_tong08List.do", method = RequestMethod.POST)
 	@ResponseBody
 	public List<TongDTO> t_tong08List(@ModelAttribute("DTO") TongDTO dto) {

@@ -1583,4 +1583,76 @@
 		 GROUP BY jj.EDI_CODE
 	]]>
 	</select>
+	<!-- 약제 청구 현황 — 면허번호(주상병 기준 의사)별 청구분 · 정액분 · 합계 -->
+	<select id="drugLicList" resultType="java.util.HashMap"><![CDATA[
+SELECT IFNULL(C.LICENSE_NO, '00') AS licenseNo
+     , COALESCE(MAX(LM.NAME), '') AS licenseName
+     , SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END) AS fixTotal
+     , SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) AND jj.ITEM_NO = 'L' THEN jj.AMOUNT ELSE 0 END) AS fixNonclaim
+     , SUM(CASE WHEN NOT (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END) AS prodTotal
+     , COUNT(DISTINCT CONCAT(B.CLAIM_NO, '-', B.BILL_SEQ)) AS claimCount
+  FROM TBL_CHUNG_MST A
+  JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO
+                         AND A.HOSP_CD  = B.HOSP_CD
+  JOIN TBL_JINORD_MST jj ON  jj.HOSP_CD  = B.HOSP_CD
+                         AND jj.CLAIM_NO = B.CLAIM_NO
+                         AND jj.BILL_SEQ = B.BILL_SEQ
+  LEFT JOIN TBL_DISEASE_MST C ON  C.CLAIM_NO = B.CLAIM_NO
+                              AND C.HOSP_CD  = B.HOSP_CD
+                              AND C.BILL_SEQ = B.BILL_SEQ
+                              AND C.DIAG_TYPE = '1'
+  LEFT JOIN TBL_LICENSE_MST LM ON  LM.HOSP_CD = A.HOSP_CD
+                               AND LM.LIC_NUM = IFNULL(C.LICENSE_NO, '00')
+                               AND LM.IP_DT = (SELECT MAX(X.IP_DT) FROM TBL_LICENSE_MST X
+                                                WHERE X.HOSP_CD = A.HOSP_CD AND X.LIC_NUM = IFNULL(C.LICENSE_NO, '00'))
+ WHERE A.HOSP_CD = #{hospCd}
+   AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+   AND IFNULL(B.DELYN,'') <> 'Y'
+   AND jj.CODE_TYPE IN ('3')
+   AND NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST tsm
+                    WHERE tsm.HOSP_CD = jj.HOSP_CD AND tsm.CLAIM_NO = jj.CLAIM_NO
+                      AND tsm.BILL_SEQ = jj.BILL_SEQ AND tsm.ROW_NO = jj.ROW_NO AND tsm.SPEC_TYPE = 'JS008')
+   AND (SELECT COUNT(DISTINCT tsm2.ROW_NO) FROM TBL_SPECODE_MST tsm2
+         WHERE tsm2.HOSP_CD = B.HOSP_CD AND tsm2.CLAIM_NO = B.CLAIM_NO
+           AND tsm2.BILL_SEQ = B.BILL_SEQ AND tsm2.SPEC_TYPE = 'JS008')
+       <> (SELECT COUNT(*) FROM TBL_JINORD_MST jsm
+            WHERE jsm.HOSP_CD = B.HOSP_CD AND jsm.CLAIM_NO = B.CLAIM_NO
+              AND jsm.BILL_SEQ = B.BILL_SEQ AND jsm.ITEM_NO <> 'L')
+ GROUP BY IFNULL(C.LICENSE_NO, '00')
+ ORDER BY (SUM(CASE WHEN NOT (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END)
+          + SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END)) DESC
+
+	]]>
+	</select>
+	<!-- 약제 청구 현황 — 종별(청구서 보험종별 INSUR_TYPE) × 외래입원 묶음 : 화면이 두 묶음으로 나눠 합산 -->
+	<select id="drugBreakList" resultType="java.util.HashMap"><![CDATA[
+SELECT IFNULL(A.INSUR_TYPE, '') AS typeCd
+     , CASE WHEN A.TREAT_TYPE IN ('2','4','9','H','6') THEN 'O' ELSE 'I' END AS ipwCd
+     , SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END) AS fixTotal
+     , SUM(CASE WHEN (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) AND jj.ITEM_NO = 'L' THEN jj.AMOUNT ELSE 0 END) AS fixNonclaim
+     , SUM(CASE WHEN NOT (B.PAY_TYPE = '1' OR (A.CFORM_NO = 'M110' AND B.MED_TYPE = '03')) THEN jj.AMOUNT ELSE 0 END) AS prodTotal
+     , COUNT(DISTINCT CONCAT(B.CLAIM_NO, '-', B.BILL_SEQ)) AS claimCount
+  FROM TBL_CHUNG_MST A
+  JOIN TBL_MYOUNG_MST B  ON  A.CLAIM_NO = B.CLAIM_NO
+                         AND A.HOSP_CD  = B.HOSP_CD
+  JOIN TBL_JINORD_MST jj ON  jj.HOSP_CD  = B.HOSP_CD
+                         AND jj.CLAIM_NO = B.CLAIM_NO
+                         AND jj.BILL_SEQ = B.BILL_SEQ
+ WHERE A.HOSP_CD = #{hospCd}
+   AND A.DATE_YM BETWEEN #{startMonth} AND #{endMonth}
+   AND IFNULL(B.DELYN,'') <> 'Y'
+   AND jj.CODE_TYPE IN ('3')
+   AND NOT EXISTS (SELECT 1 FROM TBL_SPECODE_MST tsm
+                    WHERE tsm.HOSP_CD = jj.HOSP_CD AND tsm.CLAIM_NO = jj.CLAIM_NO
+                      AND tsm.BILL_SEQ = jj.BILL_SEQ AND tsm.ROW_NO = jj.ROW_NO AND tsm.SPEC_TYPE = 'JS008')
+   AND (SELECT COUNT(DISTINCT tsm2.ROW_NO) FROM TBL_SPECODE_MST tsm2
+         WHERE tsm2.HOSP_CD = B.HOSP_CD AND tsm2.CLAIM_NO = B.CLAIM_NO
+           AND tsm2.BILL_SEQ = B.BILL_SEQ AND tsm2.SPEC_TYPE = 'JS008')
+       <> (SELECT COUNT(*) FROM TBL_JINORD_MST jsm
+            WHERE jsm.HOSP_CD = B.HOSP_CD AND jsm.CLAIM_NO = B.CLAIM_NO
+              AND jsm.BILL_SEQ = B.BILL_SEQ AND jsm.ITEM_NO <> 'L')
+ GROUP BY typeCd, ipwCd
+ ORDER BY typeCd, ipwCd
+	]]>
+	</select>
 </mapper>
