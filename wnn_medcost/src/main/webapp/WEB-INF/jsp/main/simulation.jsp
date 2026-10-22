@@ -18,6 +18,8 @@
 	.swal2-html-container { font-size: 1em !important; margin: .5em 1em !important; }
 	.swal2-icon           { width: 2.2em !important; height: 2.2em !important; margin: .6em auto .3em !important; }
 	.swal2-actions        { margin: .7em auto 0 !important; }
+	/* 조회 중인 구간 버튼 — 누르거나 자동 조회된 버튼을 채워서 표시 */
+	.sim-view-on          { background-color: #1f5a4b !important; color: #fff !important; border-color: #1f5a4b !important; }
 	</style>
 	<div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
@@ -39,7 +41,7 @@
 					    <div class="col-lg-10 d-flex flex-column">
 					        <!-- 상단 -->
 					        <div class="card mb-1">
-					            <div class="card-header d-flex align-items-center">
+					            <div class="card-header d-flex align-items-center" id="simuView">
 					                <h3 class="card-header-title mb-0 mr-1">년</h3>
 					                <select id="year_Select1" class="custom-select w-auto mr-3"></select>
 					
@@ -373,7 +375,38 @@ function fn_UncheckAllHosp() {
 	$('#selectAll_0').prop('checked', false);
 }
 
+// 병원 계정 로그인 시 좌측 병원 목록의 체크를 자동으로 켠다
+function fn_CheckOwnHosp() {
+	if (winner === 'Y' || !dataTable[0]) return;
+	dataTable[0].rows().every(function() {
+		$(this.node()).find('input[type="checkbox"]').prop('checked', true);
+	});
+	$('#selectAll_0').prop('checked', true);
+}
+
+// 이번 달이 1~6월이면 상반기, 7월 이후면 하반기를 자동 조회 (화면을 열 때 한 번, 체크된 병원이 있을 때)
+var halfAutoDone = false;
+function fn_AutoHalfYear() {
+	if (halfAutoDone || !dataTable[0]) return;
+	var anyChecked = false;
+	dataTable[0].rows().every(function() {
+		if ($(this.node()).find('input[type="checkbox"]').prop('checked')) anyChecked = true;
+	});
+	if (!anyChecked) return;
+	halfAutoDone = true;
+	fn_ViewData(new Date().getMonth() + 1 <= 6 ? 2 : 3);
+}
+
+// 조회 버튼 표시 — flag 와 같은 onclick 버튼만 채운다
+function fn_MarkViewBtn(flag) {
+	var tag = 'fn_ViewData(' + flag + ')';
+	Array.prototype.forEach.call(document.querySelectorAll('#simuView button'), function(b) {
+		b.classList.toggle('sim-view-on', (b.getAttribute('onclick') || '') === tag);
+	});
+}
+
 function fn_ViewData(flag) {
+	fn_MarkViewBtn(flag);
 	
 	if        (flag === 2){
 		$("#monthSelect1").val("01");
@@ -1494,6 +1527,8 @@ function dataLoad(data, callback, settings) {
 	            if (response && Object.keys(response).length > 0) {
 	            	            	
 	            	callback(response);
+	            	// 병원 계정: 목록은 자기 병원 한 줄뿐이므로 그려진 뒤 자동 체크 (병원명 클릭 생략)
+	            	setTimeout(function() { if (winner !== 'Y') fn_CheckOwnHosp(); fn_AutoHalfYear(); }, 0);
 	            	
 	            	
 	            	
