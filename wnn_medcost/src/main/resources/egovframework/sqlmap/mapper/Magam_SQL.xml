@@ -2473,6 +2473,7 @@
 		  LEFT JOIN TBL_MYOUNG_MST  tmm ON tmm.HOSP_CD = e.HOSP_CD   AND tmm.PAT_ID   = e.PAT_ID
 		       JOIN TBL_CHUNG_MST   tcm ON tcm.HOSP_CD = tmm.HOSP_CD AND tcm.CLAIM_NO = tmm.CLAIM_NO 
 		                                                             AND tcm.DATE_YM  = DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm}, '01'), INTERVAL 1 MONTH), '%Y%m')
+		                                                             AND tcm.CLAIM_NO = (SELECT c2.CLAIM_NO FROM TBL_MYOUNG_MST m2 JOIN TBL_CHUNG_MST c2 ON c2.HOSP_CD = m2.HOSP_CD AND c2.CLAIM_NO = m2.CLAIM_NO WHERE m2.HOSP_CD = tmm.HOSP_CD AND m2.PAT_ID = tmm.PAT_ID AND c2.DATE_YM = DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm}, '01'), INTERVAL 1 MONTH), '%Y%m') ORDER BY c2.REG_DTTM DESC, c2.CLAIM_NO DESC LIMIT 1)
 		  LEFT JOIN TBL_DISEASE_MST tdm ON tdm.HOSP_CD = tmm.HOSP_CD AND tdm.CLAIM_NO = tmm.CLAIM_NO 
 		                                                             AND tdm.BILL_SEQ = tmm.BILL_SEQ
 		                                                             AND LEFT(tdm.DIAG_CODE,3) IN ('E10','E11','E12','E13','E14')
