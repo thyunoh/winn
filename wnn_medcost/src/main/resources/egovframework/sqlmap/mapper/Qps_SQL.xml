@@ -3500,4 +3500,13 @@
 		 ORDER BY v.DAY_NO, r.SORT_NO, r.ROW_NO
 	</select>
 
+	<!-- QPS 계약 여부(2026-10-13) — 계약 구분 'Q'(QPS 질향상·환자안전)의 유효 계약이 있으면 1 이상. 사이드바 QPS 메뉴 노출 판정.
+	     MIS 의 countMisContract 와 같은 규칙: ACTION_YN='Y' + 종료일이 오늘 이후(또는 비어 있음). -->
+	<select id="countQpsContract" resultType="int">
+		SELECT COUNT(*)
+		  FROM TBL_HOSPCONT_MST
+		 WHERE HOSP_CD = #{hospCd} AND CONACT_GB = 'Q' AND ACTION_YN = 'Y'
+		   AND (COALESCE(END_DT,'') = '' OR REPLACE(END_DT,'-','') >= DATE_FORMAT(NOW(),'%Y%m%d'))
+	</select>
+
 </mapper>

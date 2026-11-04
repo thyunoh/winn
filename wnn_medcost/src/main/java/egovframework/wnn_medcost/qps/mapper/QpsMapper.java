@@ -538,4 +538,6 @@ public interface QpsMapper {
 	List<Map<String, Object>> selectDutyDayNames(@Param("hospCd") String hospCd, @Param("deptCd") String deptCd,
 	                                             @Param("wardNm") String wardNm, @Param("dutyYm") String dutyYm,
 	                                             @Param("shiftCd") String shiftCd);
+	/** QPS 계약 여부(2026-10-13) — 구분 'Q' 의 유효 계약 건수. */
+	int countQpsContract(@Param("hospCd") String hospCd);
 }

@@ -3331,4 +3331,9 @@ public class QpsServiceImpl implements QpsService {
 		out.put("cnt", names.size());
 		return out;
 	}
+	/* ═══ QPS 계약 여부 (2026-10-13) — 계약정보 구분 'Q' ═══ */
+	@Override
+	public boolean hasQpsContract(String hospCd) throws Exception {
+		return hospCd != null && !hospCd.isEmpty() && mapper.countQpsContract(hospCd) > 0;
+	}
 }

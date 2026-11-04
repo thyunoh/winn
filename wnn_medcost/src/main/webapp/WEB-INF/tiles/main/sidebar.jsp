@@ -2691,9 +2691,9 @@ $(document).ready(function() {
     }
     // ★게이트 판정을 밖에서도 쓸 수 있게 노출한다(top.jsp 의 QPS 탭 복원 로직이 본다).
     //   안 그러면 '마지막 선택 탭' 복원이 게이트를 무시하고 QPS 메뉴를 다시 펼친다 — 게이트가 새는 길.
-    window.qpsMenuOn = function(){ return flagOn() && isWnn(); };
+    window.qpsMenuOn = function(){ return (flagOn() && isWnn()) || qContractOn(); };
     function apply(){
-        var on = (flagOn() && isWnn());
+        var on = (flagOn() && isWnn()) || qContractOn();
         var li = document.getElementById('menu-qps');
         if (li) li.style.display = on ? '' : 'none';
         // qps 를 치면 경영고객관리 메뉴도 함께 보인다(2026-10-13). QPS 를 끄면 MIS 자체 조건(m·i·s·계약)만 남긴다.
@@ -2753,8 +2753,23 @@ $(document).ready(function() {
         if (m) flagSet(m[1] === 'y' ? 'Y' : 'N');
     })();
 
+    /* QPS 계약 기준 노출(2026-10-13) — 계약정보(TBL_HOSPCONT_MST)에 구분 'Q'(QPS 질향상·환자안전) 계약이 유효하면 메뉴를 보인다.
+       MIS 와 같은 방식이되 캐시는 두지 않는다 — 계약을 막 넣은 뒤 새로고침만으로 바로 보여야 하므로. 페이지마다 가벼운 조회 1회. */
+    var QCONTRACT = null;
+    function qHospId(){ try { if (typeof getCookie === 'function') return (getCookie('s_hospid') || '').trim(); } catch(e){} try { var m = ('; ' + document.cookie).match(/;\s*s_hospid=([^;]*)/); return m ? decodeURIComponent(m[1]).trim() : ''; } catch(e){ return ''; } }
+    function qContractOn(){ return QCONTRACT === true; }
+    function qContractAsk(){
+        if (!qHospId()) return;
+        try {
+            $.ajax({ url: '/qps/menuChk.do', type: 'POST', dataType: 'json' }).then(function(res){
+                QCONTRACT = !!(res && res.qpsYn === 'Y');
+                apply();
+            });
+        } catch(e){}
+    }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
     else apply();
+    qContractAsk();
 })();
 </script>
 

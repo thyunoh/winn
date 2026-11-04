@@ -410,4 +410,6 @@ public interface QpsService {
 	 */
 	Map<String, Object> selectDutyDayNames(String hospCd, String deptCd, String wardNm,
 	                                       String dutyYm, String shiftCd) throws Exception;
+	/** QPS 계약 여부(2026-10-13) — 계약정보(구분 'Q')에 유효한 계약이 있으면 true. 사이드바 QPS 메뉴 노출용. */
+	boolean hasQpsContract(String hospCd) throws Exception;
 }

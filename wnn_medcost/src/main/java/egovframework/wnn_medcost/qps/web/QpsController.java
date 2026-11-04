@@ -34,7 +34,7 @@ import egovframework.wnn_medcost.qps.service.QpsService;
 public class QpsController {
 
 	/** 배포 확인용 표식 — 코드를 고칠 때마다 올린다. 응답의 build 값으로 반영 여부를 확인한다. */
-	private static final String BUILD = "20260909-SIGNER";     // 인사 등록 · 담당자별 사인·도장(+면허 가져오기·사인 칸 이름 고르기) — 배포 확인용(codeList.do 응답 build)
+	private static final String BUILD = "20261013-QPSCONTRACT";     // 인사 등록 · 담당자별 사인·도장(+면허 가져오기·사인 칸 이름 고르기) — 배포 확인용(codeList.do 응답 build)
 
 	@Resource(name = "QpsService")
 	private QpsService svc;
@@ -171,6 +171,21 @@ public class QpsController {
 		} catch (Exception ex) {
 			return ".login/LoginWinCT";
 		}
+	}
+
+	/** 사이드바 QPS 메뉴 노출 판정(2026-10-13) — 로그인 병원의 계약정보에 구분 'Q' 계약이 유효하면 qpsYn=Y. 화면 편의용(진입 판정 아님). */
+	@RequestMapping(value = "/qps/menuChk.do", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+	@ResponseBody
+	public Map<String, Object> menuChk(HttpServletRequest request) {
+		Map<String, Object> res = new HashMap<>();
+		try {
+			Map<String, String> ck = ClientInfo.getCookie(request);
+			String hospId = ck.get("s_hospid") == null ? "" : ck.get("s_hospid").trim();
+			res.put("hospCd", hospId);
+			res.put("qpsYn", !hospId.isEmpty() && svc.hasQpsContract(hospId) ? "Y" : "N");
+			res.put("result", "OK");
+		} catch (Exception ex) { fail(res, ex.getMessage()); }
+		return res;
 	}
 
 	/** 현황판 목록(JSON) — 18종 × 선택 기간의 상태 + 결재선 단계 수. */
