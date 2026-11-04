@@ -65,6 +65,7 @@
 	                  AND ACTION_YN = 'Y'
 	                  AND NOW() BETWEEN STR_TO_DATE(ACCEPT_DT, '%Y%m%d')
 	                                AND STR_TO_DATE(CLOSE_DT, '%Y%m%d')
+	                AND CONACT_GB IN ('1','2')
 	                GROUP BY CONACT_GB
 	            ) D
 	        ) AS CONACT_GB

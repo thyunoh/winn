@@ -177,6 +177,7 @@
 	                END
 	            FROM TBL_HOSPCONT_MST 
 	            WHERE HOSP_CD = HM.HOSP_CD
+	              AND CONACT_GB IN ('1','2')
 	              AND ACTION_YN = 'Y' 
 	              -- 위너넷으로 할경우 종료일자 20991231일로 (20260211처리) 
                   AND NOW() BETWEEN STR_TO_DATE(ACCEPT_DT, '%Y%m%d')
