@@ -104,7 +104,9 @@ var _PV_CODES = {
 
 // 코드값 → "코드 : 설명" 형태로 렌더 (매핑 없으면 _pvTxt 로 fallback)
 function _pvCd(codeGroup, v) {
-    if (_pvIsEmpty(v)) return _pvEmptyMark();
+    // 배변·배뇨 조절은 '0'(조절할 수 있음)이 실제 답이므로 '-'로 가리지 않는다
+    var zeroAnswer = (codeGroup === 'bowelCtl' || codeGroup === 'urineCtl') && String(v) === '0';
+    if (!zeroAnswer && _pvIsEmpty(v)) return _pvEmptyMark();
     var map = _PV_CODES[codeGroup];
     var desc = map ? map[String(v)] : null;
     if (!desc) return _pvTxt(v);
