@@ -424,7 +424,7 @@ function fn_CreateData(flag) {
 						            if (prefix === 'E') return '제거일자';
 						            if (prefix === 'F') return '삽입기간';
 						            if (prefix === 'G') return '삽입·제거일자';
-						            if (data === 'H1')  return '소변조절가능·기저귀';
+						            if (data === 'H1')  return '대변·소변 조절가능·기저귀';
 						            if (data === 'H2')  return '기저귀사용';
 						            if (data === 'H3')  return '배뇨계획';
 	

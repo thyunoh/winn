@@ -3304,7 +3304,7 @@
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND C.LAST_FG      = '1'
 		 --  AND A.URINE_CTL    IN('0')
-		   AND A.URINE_CTL    IN('0') -- 0.조절가능 (H1 = 소변 조절 가능인데 패드·기저귀 체크) 
+		   AND A.URINE_CTL    IN('0') AND IFNULL(A.BOWEL_CTL,'') = '0' AND A.PAD_DIAPER = '1' AND COALESCE(A.ARTIF_UR,'') != '1' -- H1: 대변·소변 모두 조절가능 + 패드·기저귀 체크, 인공루 체크는 제외 
 		   AND A.INDWELL_CATH = '1'
 		UNION ALL
 		-- 배변 및 소변 조절상태-조절가능이나, 패드, 팬티형기저귀에 체크된 경우(점검)
@@ -4290,7 +4290,7 @@
 		WHERE A.HOSP_CD = #{hospCd}
 		   AND A.MED_START LIKE CONCAT(#{jobYymm},'%')
 		   AND C.LAST_FG      = '1'
-		   AND A.URINE_CTL  IN('0')            -- 0.조절가능 (H1 = 소변 조절 가능인데 패드·기저귀 체크) 
+		   AND A.URINE_CTL  IN('0') AND IFNULL(A.BOWEL_CTL,'') = '0' AND A.PAD_DIAPER = '1' AND COALESCE(A.ARTIF_UR,'') != '1'  -- H1: 대변·소변 모두 조절가능 + 패드·기저귀 체크, 인공루 체크는 제외 
 		   AND A.INDWELL_CATH = '1'	 	  
 		
 		ORDER BY errType
