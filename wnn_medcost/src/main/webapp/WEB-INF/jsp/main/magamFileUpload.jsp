@@ -3190,14 +3190,18 @@ function fn_GetJobsSam(fileName) {
     return fileName.toUpperCase();
 }
 
-// EUC-KR 보정 라인 길이 계산 (SP의 valsize 계산과 유사)
+// EUC-KR 기준 라인 길이 (= 명세 COL_SIZE 와 같은 값)
+// 2026-06-24 부터 줄바꿈을 /\r?\n/ 로 나누므로 라인에 CR 이 남지 않는다.
+// 예전 「바이트수 - 1」은 CR 1바이트를 빼려던 것이라, CR 이 없는 지금은 1 짧게 나온다
+// (2022094052.GHP : 명세 2096 → 실 2095 로 전 구간 길이오류 오판). 그래서 -1 을 뺐다.
 function fn_CalcValsize(lineval) {
+    var s = String(lineval || '').replace(/\r$/, '');
     var byteLen = 0;
-    for (var i = 0; i < lineval.length; i++) {
-        var code = lineval.charCodeAt(i);
+    for (var i = 0; i < s.length; i++) {
+        var code = s.charCodeAt(i);
         byteLen += (code > 127) ? 2 : 1;
     }
-    return byteLen - 1;
+    return byteLen;
 }
 
 // 검증 모달 표시
@@ -3404,7 +3408,8 @@ async function fn_ShowVerifyModal(verifyData) {
             var fl = firstLines[i];
             var fileName = fl.FILE_NM || fl.file_nm;
             var lineval  = fl.LINEVAL || fl.lineval || '';
-            var valsize  = parseInt(fl.VALSIZE || fl.valsize || 0);
+            // 서버 VALSIZE(바이트-1)가 아니라 화면이 가진 라인으로 직접 센다 — 위 fn_CalcValsize 주석 참고
+            var valsize  = fn_CalcValsize(lineval);
 
             // 내용 없는 파일은 무시
             if (!lineval || lineval.trim() === '' || valsize === 0) {
