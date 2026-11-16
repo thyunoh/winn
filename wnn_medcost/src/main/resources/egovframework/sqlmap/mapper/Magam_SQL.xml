@@ -2691,11 +2691,22 @@
 		                             AND CONCAT(#{jobYymm}, '31')
 		       ]]>     
 		     GROUP BY pm1.PAT_ID
-		    HAVING SUM(CASE WHEN LEFT(IFNULL(pm1.PAT_CLASS,PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)),1) NOT IN ('D','E') 
-		                    THEN 1 ELSE 0 END) = 0
+		    HAVING /* 의료중도는 입원 건 단위(bad_adm) — 환자 전체를 지우지 않는다 [2026-11-16] */
 		       /* A31(중도입원) 이력 있는 환자 전체 제외 */
-		       AND SUM(CASE WHEN IFNULL(pm1.PAT_CLASS, PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)) = 'A31'
+		       SUM(CASE WHEN IFNULL(pm1.PAT_CLASS, PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)) = 'A31'
 		                    THEN 1 ELSE 0 END) = 0
+		)
+		/* [2026-11-16] 의료중도 방문이 있는 입원 건(환자·입원일) — 그 입원만 명단에서 뺀다.
+		   종전엔 환자 전체를 뺐다 : 재입원의 의료중도가 앞 입원(장기입원 대상)까지 지웠다 */
+		, bad_adm AS (
+		    SELECT DISTINCT pm1.PAT_ID, pm1.ADMIT_DT
+		      FROM TBL_PATVAL_MST pm1
+		     WHERE pm1.HOSP_CD = #{hospCd}
+		       <![CDATA[
+		       AND pm1.MED_START BETWEEN CONCAT(CASE WHEN CAST(SUBSTRING(#{jobYymm},5,2) AS UNSIGNED) <= 6 THEN #{jobYymm} ELSE CONCAT(SUBSTRING(#{jobYymm},1,4),'07') END, '01')
+		                             AND CONCAT(#{jobYymm}, '31')
+		       ]]>
+		       AND LEFT(IFNULL(pm1.PAT_CLASS,PATIENT_CLASSIFICATION(pm1.HOSP_CD, pm1.PAT_ID, pm1.CHUNGSEQ, pm1.CLFORM_VER, pm1.ADMIT_DT, pm1.MED_START)),1) NOT IN ('D','E')
 		)
 		/* 당월 퇴원 · 그 뒤 재입원 — 입퇴원현황을 한 번만 모아 둔다(행마다 서브쿼리로 찾으면 20초 넘게 걸렸다).
 		   조건은 FN_TEWON_CHECK 와 같다 : 병원 · 작업월 · 입원일 · 이름(숫자 뗌) · 퇴원일이 작업월 안. */
@@ -2808,6 +2819,8 @@
 		        AND pm2.PAT_NM  = REGEXP_REPLACE(ii.PATNAME, '[0-9]', '')
 		  WHERE pm2.HOSP_CD = #{hospCd}
 		    AND pm2.PAT_ID IN (SELECT fp.PAT_ID FROM filtered_pat fp)
+		    /* [2026-11-16] 의료중도 입원 건 제외 — 같은 입원(환자·입원일)의 의료중도 방문만 본다 */
+		    AND NOT EXISTS (SELECT 1 FROM bad_adm ba WHERE ba.PAT_ID = pm2.PAT_ID AND ba.ADMIT_DT = pm2.ADMIT_DT)
 		    /* A31 입원건 자체도 명단에서 제외 */
 		    AND IFNULL(pm2.PAT_CLASS, PATIENT_CLASSIFICATION(pm2.HOSP_CD, pm2.PAT_ID, pm2.CHUNGSEQ, pm2.CLFORM_VER, pm2.ADMIT_DT, pm2.MED_START)) != 'A31'
 		    <![CDATA[
