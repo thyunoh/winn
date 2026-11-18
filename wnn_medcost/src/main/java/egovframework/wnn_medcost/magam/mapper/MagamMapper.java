@@ -141,7 +141,6 @@ public interface MagamMapper {
 	List<PatvalDTO>  select_CategoryList14(PatvalDTO dto);
 	
 	List<PatvalDTO>  select_CathCrossCheck(PatvalDTO dto);
-	List<PatvalDTO>  select_CathFormatCheck(PatvalDTO dto);
 
 	List<Map<String, Object>> select_CathPatvalByPat(Map<String, Object> params);
 	List<Map<String, Object>> select_CathSpcsugaByPat(Map<String, Object> params);

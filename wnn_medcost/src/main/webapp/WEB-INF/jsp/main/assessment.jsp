@@ -998,59 +998,6 @@ var _curIndiDtor = 0;  // 현재 보기중인 지표의 분모(대상자수) —
 var _prevMissingData = [];
 var _errCheckData = [];
 
-// 지표 목록의 「보기」 활성 판정 — 유치도뇨관(05)은 일자 오류가 있을 때만 켠다.
-//   평가표 : D1·D2 삽입일 중복 / E1 삽입일 공란·제거만 / F1 삽입일수 오기 / G1 첫 줄 공란·둘째 줄 기재 / G2 작성일 이후 날짜
-//   오더↔평가표 : D3 오더 삽입 있으나 평가표 없음 / D4 삽입일 불일치 / D5 수가현황 없음 / D6 평가표 삽입일에 오더 없음
-//   null = 조회 전(끔) · -1 = 조회 실패(막지 않음) · 0 이상 = 삽입·제거 오류 건수
-//   형식 : G3 삽입·제거일자가 8자리 날짜가 아니거나 없는 날짜 (예: 2026113, 0000000)
-var CATH_DATE_ERR_CODES = ['D1','D2','D3','D4','D5','D6','E1','F1','G1','G2','G3'];
-var _cathDateErrCnt = null;
-var _cathDateErrSeq = 0;
-
-function fn_CathDateErrOk() {
-    return _cathDateErrCnt === -1 || _cathDateErrCnt > 0;
-}
-
-function fn_LoadCathDateErrCount() {
-    var seq = ++_cathDateErrSeq;
-    var ym = document.getElementById("year_Select").value + document.getElementById("monthSelect").value;
-    var pa = null, pb = null, pc = null, failed = false;
-    _cathDateErrCnt = null;
-
-    function finish() {
-        if (seq !== _cathDateErrSeq) return;          // 월을 바꿔 옛 응답이 늦게 온 경우 버림
-        if (pa === null || pb === null || pc === null) return;   // 세 조회가 모두 올 때까지 대기
-        if (failed) {
-            _cathDateErrCnt = -1;                      // 조회 실패 → 막지 않고 켠다
-        } else {
-            var all = pa.concat(pb, pc);
-            _cathDateErrCnt = all.filter(function (r) { return CATH_DATE_ERR_CODES.indexOf(r.errType) >= 0; }).length;
-        }
-        if ($.fn.DataTable.isDataTable('#indicatorTable')) {
-            $('#indicatorTable').DataTable().rows().invalidate().draw(false);   // 「보기」 칸 다시 그리기
-        }
-    }
-
-    $.ajax({
-        url: "/main/select_assesCheck.do", type: "POST", dataType: "json",
-        data: { hospCd: hospid, jobYymm: ym, jobFlag: '00' },
-        success: function (res) { pa = (res && res.data) ? res.data : []; finish(); },
-        error: function () { pa = []; failed = true; finish(); }
-    });
-    $.ajax({
-        url: "/main/select_CathCrossCheck.do", type: "POST", dataType: "json",
-        data: { hospCd: hospid, jobYymm: ym },
-        success: function (res) { pb = (res && res.data) ? res.data : []; finish(); },
-        error: function () { pb = []; failed = true; finish(); }
-    });
-    $.ajax({
-        url: "/main/select_CathFormatCheck.do", type: "POST", dataType: "json",
-        data: { hospCd: hospid, jobYymm: ym },
-        success: function (res) { pc = (res && res.data) ? res.data : []; finish(); },
-        error: function () { pc = []; failed = true; finish(); }
-    });
-}
-
 // 상단 버튼 카운트/표시 갱신 (환자 단위로 unique 카운트)
 function fn_UpdateCath05Buttons() {
     var btnZone = document.getElementById('cath05BtnZone');
@@ -4468,10 +4415,7 @@ function fn_HeadColumnSet() {
         				} else if (["08","15","99"].includes(row.cate_cd)) {
         			        return '';
         			    } else {
-        			    	if (row.cate_cd === '05' && !fn_CathDateErrOk()) {
-        				    	return '<button class="btn btn-outline-info btn-xs showbtn" disabled title="유치도뇨관 일자 오류가 없어 보기를 쓸 수 없습니다">보기</button>';
-        				    }
-        				    return '<button class="btn btn-outline-info btn-xs showbtn">보기</button>';
+        			    	return '<button class="btn btn-outline-info btn-xs showbtn">보기</button>';
         			    }
             		}
             		return data;
@@ -4714,7 +4658,7 @@ function fn_FindDataTable() {
 	    // 행 더블클릭 = 보기 (2026-07-22 요청) — 좁은 '보기' 버튼을 정확히 누르지 않아도 되게.
 	    //   보기 버튼이 없는 행(DUR 점검율·지역사회 복귀율·합계 등)은 그대로 무시.
 	    $('#' + tableName.id + ' tbody').on('dblclick', 'tr', function() {
-	    	if(!$(this).find('.showbtn:not(:disabled)').length) return;
+	    	if(!$(this).find('.showbtn').length) return;
 	    	var data = dataTable.row(this).data();
 	    	if(!data) return;
 	    	fn_ViewData(data);
@@ -4901,7 +4845,6 @@ function dataLoad(data, callback, settings) {
 	            	
 	            	
 	            	fn_MaskPatNmRows(response);
-	            	fn_LoadCathDateErrCount();   // 「보기」 활성 판정용 일자 오류 건수
 	            	callback(response);
 	            	tableName.style.display = 'inline-block';
 	            	

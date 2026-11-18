@@ -967,11 +967,6 @@ public class MagamServiceImpl implements MagamService {
 	}
 
 	@Override
-	public List<PatvalDTO> select_CathFormatCheck(PatvalDTO dto) throws Exception {
-		return mapper.select_CathFormatCheck(dto);
-	}
-
-	@Override
 	public List<Map<String, Object>> select_CathPatvalByPat(Map<String, Object> params) throws Exception {
 		return mapper.select_CathPatvalByPat(params);
 	}

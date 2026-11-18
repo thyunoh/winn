@@ -6463,38 +6463,4 @@
 		 ORDER BY h.HOSP_NM
 	</select>
 
-	<!-- [2026-11-18] 유치도뇨관 삽입·제거일자 형식 오류(G3) — 8자리 yyyymmdd 가 아니거나 실제로 없는 날짜.
-	     빈 값('' · 00000000)은 오류가 아니다. 당월 작성 평가표(DOC_DT) 기준. -->
-	<select id="select_CathFormatCheck" parameterType="map" resultType="egovframework.wnn_medcost.magam.model.PatvalDTO">
-		SELECT DISTINCT
-		       LEFT(pm.PAT_ID,6)                                    AS patId
-		     , pm.MED_START                                         AS medStart
-		     , 'G3'                                                 AS errType
-		     , '유치도뇨관 삽입·제거일자 형식 오류(8자리 날짜가 아니거나 존재하지 않는 날짜)' AS errName
-		  FROM TBL_PATVAL_MST pm
-		 WHERE pm.HOSP_CD = #{hospCd}
-		   AND pm.DOC_DT LIKE CONCAT(#{jobYymm}, '%')
-		   AND (
-				    (COALESCE(pm.CAT_IN_1,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_1 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_1,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_2,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_2 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_2,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_3,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_3 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_3,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_4,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_4 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_4,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_5,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_5 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_5,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_6,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_6 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_6,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_7,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_7 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_7,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_8,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_8 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_8,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_9,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_9 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_9,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_IN_10,'') NOT IN ('','00000000') AND NOT (pm.CAT_IN_10 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_IN_10,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_1,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_1 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_1,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_2,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_2 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_2,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_3,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_3 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_3,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_4,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_4 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_4,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_5,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_5 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_5,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_6,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_6 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_6,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_7,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_7 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_7,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_8,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_8 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_8,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_9,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_9 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_9,'%Y%m%d') IS NOT NULL))
-				    OR (COALESCE(pm.CAT_OUT_10,'') NOT IN ('','00000000') AND NOT (pm.CAT_OUT_10 REGEXP '^[0-9]{8}$' AND STR_TO_DATE(pm.CAT_OUT_10,'%Y%m%d') IS NOT NULL))
-		       )
-	</select>
 </mapper>
