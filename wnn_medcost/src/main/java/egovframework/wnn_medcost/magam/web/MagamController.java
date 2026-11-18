@@ -1929,6 +1929,24 @@ public class MagamController {
 		}
 	}
 
+	// [2026-11-18] 유치도뇨관 삽입·제거일자 형식 오류(G3) — 목록 「보기」 활성 판정용
+	@RequestMapping(value="/main/select_CathFormatCheck.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> select_CathFormatCheck(@ModelAttribute("DTO") PatvalDTO dto, HttpSession session, HttpServletRequest request, Model model) throws Exception {
+		try {
+			List<PatvalDTO> resultdt = svc.select_CathFormatCheck(dto);
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", resultdt);
+			return response;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", new java.util.ArrayList<PatvalDTO>());
+			response.put("error_mess", ex.getMessage());
+			return response;
+		}
+	}
+
 	// 유치도뇨관 오류점검 — 환자별 상세 (평가표 CAT_IN/OUT + 수가 오더) 조회
 	@RequestMapping(value="/main/select_CathDetailByPat.do", method = RequestMethod.POST)
 	@ResponseBody

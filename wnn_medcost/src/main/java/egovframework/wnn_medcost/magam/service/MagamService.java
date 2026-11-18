@@ -93,6 +93,7 @@ public interface MagamService {
 	
 	
 	List<PatvalDTO>  select_CathCrossCheck(PatvalDTO dto) throws Exception;
+	List<PatvalDTO>  select_CathFormatCheck(PatvalDTO dto) throws Exception;
 
 	List<Map<String, Object>> select_CathPatvalByPat(Map<String, Object> params) throws Exception;
 	List<Map<String, Object>> select_CathSpcsugaByPat(Map<String, Object> params) throws Exception;
