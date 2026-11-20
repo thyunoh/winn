@@ -16,6 +16,10 @@
    - 주소가 실제로 200으로 열리는 것만 넣습니다. 404 주소가 들어가면 검색엔진 신뢰가 떨어집니다.
    - 페이지를 빼거나 내릴 때는 사이트맵에서도 지웁니다.
 3. **서버 배포**: 바뀐 JSP와 `sitemap.xml`을 `/usr/share/tomcat9/webapps/wnn_consult-1.0.0/`(같은 상대 경로)에 덮어씁니다. 재기동은 필요 없습니다. 자바 코드를 건드렸다면 WAR 재빌드가 필요합니다.
+   - **기존 페이지 수정**(제목·설명만 바꿈): JSP와 `sitemap.xml`만 덮어쓰면 끝입니다.
+   - **새 페이지 추가**(예: `wnnpage_consult6.do`): 공개 페이지 주소는 `MangrController.java`에 하나씩 등록돼 있습니다. 1~5번과 같은 꼴로 `@RequestMapping(value = "/login/wnnpage_consult6.do")` → `return ".login/wnnpage_consult6";` 메서드를 더하고, 새 JSP(`WEB-INF/jsp/login/wnnpage_consult6.jsp`)를 만듭니다. 자바가 바뀌므로 **WAR 재빌드 + 톰캣 재기동**이 필요합니다.
+   - 새 페이지는 재기동 뒤 주소가 200으로 열리는 것을 확인한 다음에 사이트맵에 넣습니다(2단계 규칙).
+   - 새 페이지는 본문(글·사진)도 마케팅에서 받아야 합니다. 주소·제목·설명만으로는 head만 채울 수 있습니다.
 4. **확인**: 새 주소를 열어 `<title>`이 바뀌었는지, `https://winner797.co.kr/wnn_consult/sitemap.xml`에 주소가 보이는지 확인합니다.
 5. **커밋**: 변경분은 직접 커밋합니다.
 
