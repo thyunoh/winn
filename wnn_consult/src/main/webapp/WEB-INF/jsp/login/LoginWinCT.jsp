@@ -23,6 +23,7 @@
 <!-- JavaScript Libraries -->
 <!-- wnnnet 설정시작 -->
 <title>위너넷 컨설팅</title>
+<meta name="robots" content="noindex, nofollow">
 <!-- Favicon -->
 <!-- jQuery (최신 버전 유지) -->
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>

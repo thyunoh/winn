@@ -22,7 +22,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
-  <title>위너넷 컨설팅</title>
+  <title>의료기관 인증 컨설팅 | 위너넷 컨설팅</title>
+  <meta name="description" content="위너넷 의료기관 인증 컨설팅을 소개하는 페이지입니다.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://winner797.co.kr/wnn_consult/login/wnnpage_consult3.do">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="위너넷">
+  <meta property="og:title" content="의료기관 인증 컨설팅 | 위너넷 컨설팅">
+  <meta property="og:description" content="위너넷 의료기관 인증 컨설팅을 소개하는 페이지입니다.">
+  <meta property="og:url" content="https://winner797.co.kr/wnn_consult/login/wnnpage_consult3.do">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"의료기관 인증 컨설팅","serviceType":"컨설팅","description":"위너넷 의료기관 인증 컨설팅을 소개하는 페이지입니다.","url":"https://winner797.co.kr/wnn_consult/login/wnnpage_consult3.do","provider":{"@type":"Organization","name":"위너넷","url":"https://winner797.co.kr/wnn_consult/"}}</script>
 
 <style>
 .tab-content {

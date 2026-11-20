@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://winner797.co.kr/wnn_consult/sitemap.xml
