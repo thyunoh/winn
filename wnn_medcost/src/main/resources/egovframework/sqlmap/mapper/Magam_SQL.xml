@@ -2788,7 +2788,9 @@
 		                        WHERE mm.HOSP_CD = pm2.HOSP_CD
 		                          AND mm.PAT_ID  = pm2.PAT_ID
 		                          AND COALESCE(mm.DELYN,'') = ''
-		                          AND cm.DATE_YM = #{jobYymm}
+		                          /* [2026-11-23] 해당월 → 반기 시작월~해당월 청구 중 한 번이라도 (자료생성 CREATE2 14번·SP_LONGADM_COUNT 와 같은 규칙) */
+		                          AND cm.DATE_YM BETWEEN CASE WHEN CAST(SUBSTRING(#{jobYymm},5,2) AS UNSIGNED) &lt;= 6 THEN #{jobYymm} ELSE CONCAT(SUBSTRING(#{jobYymm},1,4),'07') END
+		                                             AND #{jobYymm}
 		                          AND jm.ITEM_NO = '02'
 		                          AND SUBSTRING(jm.EDI_CODE,6,3) IN ('300','400','500')
 		                   )
