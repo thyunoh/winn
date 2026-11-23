@@ -1,0 +1,17 @@
+-- [2026-11-23] 적정성 05(유치도뇨관) 목록 속도 점검 — TBL_PATVAL_MST 인덱스 결론
+--
+-- 1) 기존 인덱스 (SHOW INDEX FROM TBL_PATVAL_MST, 운영 WNN DB 실측)
+--    PRIMARY : (HOSP_CD, CLFORM_VER, PAT_ID, ADMIT_DT, MED_START)
+--    INDEX01 : (HOSP_CD, MED_START, PAT_ID)
+--    INDEX02 : (HOSP_CD, PAT_ID, MED_START)
+--    INDEX03 : (HOSP_CD, CHUNGSEQ)
+--
+-- 2) 결론 : 인덱스 추가 불필요
+--    - 처음 검토한 IX_PATVAL_HOSP_PAT_MED (HOSP_CD, PAT_ID, MED_START) = INDEX02 와 완전히 같다 → 만들지 않는다.
+--    - 처음 검토한 IX_PATVAL_HOSP_MED (HOSP_CD, MED_START) = INDEX01 의 앞 두 칸과 같다(접두어) → 만들지 않는다.
+--    - 병원 · 환자 · 요양개시일로 찾는 인덱스는 이미 있다. 05 목록이 느린 원인은 인덱스 부재가 아니다.
+--
+-- 3) 다음 점검 (조회 전용, DB 변경 없음)
+--    05 목록 쿼리(Magam_SQL.xml select_CategoryList05)에 EXPLAIN ANALYZE 를 붙여
+--    어느 부분이 시간을 쓰는지 본다. 의심 지점 = 행마다 호출되는 PATIENT_CATHETER_CHECK(...) 와
+--    FN_ADMIT_CONT, 그리고 전월 EXISTS. 원인이 확인되면 로직 변경안을 따로 만든다(결과 동일성 검증 필요).
