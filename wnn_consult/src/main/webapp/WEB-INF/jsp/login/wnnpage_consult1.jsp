@@ -60,11 +60,11 @@
 </div>
 <!-- [/SEO 본문문구] -->
 <div class="tab-content" style="padding-bottom: 150px;">
-	    <div class="tab-pane fade" id="sub-tab1">
+	    <div class="tab-pane fade show active" id="sub-tab1">
 	        <div class="steb-container">
 	            <div class="chart-wrap">
 				    <section class="content-box text-center position-relative" style="display: inline-block;">				    
-				        <img src="/wnn_consult/images/winct/consult1_11.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">	
+				        <img src="/wnn_consult/images/winct/consult1_11.svg" class="img-fluid" alt="병의원 컨설팅 안내 이미지" style="width: 100%;">	
  			<!--          <button type="button" class="btn overlay-btn overlay-btn-e1" onclick="fnasq_main()"></button>		-->			         
 			           <button type="button" class="btn overlay-btn overlay-btn-e1" onclick="fnVisitAsqOpen()"></button> 			        
 				    </section>
@@ -76,7 +76,7 @@
 	        <div class="steb-container">
 	            <div class="chart-wrap">
 				    <section class="content-box text-center position-relative" style="display: inline-block;">				    
-				        <img src="/wnn_consult/images/winct/consult1_12.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
+				        <img src="/wnn_consult/images/winct/consult1_12.svg" class="img-fluid" alt="요양병원 컨설팅 안내 이미지" style="width: 100%;">				        
 				          <button type="button" class="btn overlay-btn overlay-btn-e2" onclick="fnVisitAsqOpen()"></button> 				        
 				    </section>
 	            </div>
@@ -87,7 +87,7 @@
 	        <div class="steb-container">
 	            <div class="chart-wrap">
 				    <section class="content-box text-center position-relative" style="display: inline-block;">				    
-				        <img src="/wnn_consult/images/winct/consult1_13.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
+				        <img src="/wnn_consult/images/winct/consult1_13.svg" class="img-fluid" alt="한방병원 컨설팅 안내 이미지" style="width: 100%;">				        
  				          <button type="button" class="btn overlay-btn overlay-btn-e3" onclick="fnVisitAsqOpen()"></button> 			        
 				    </section>
 	            </div>
@@ -97,6 +97,20 @@
 	    
 	    
 	</div>
+
+<section class="seo-text container py-4">
+    <h2>병원 유형별 진료비 청구·심사 컨설팅</h2>
+    <p>병의원, 요양병원, 한방병원은 기관 유형마다 청구 기준과 점검 항목이 다릅니다. 위너넷은 기관 상황을 먼저 확인한 뒤, 진료비 분석과 청구·심사 업무에 필요한 컨설팅을 안내합니다.</p>
+
+    <h3>주요 점검 영역</h3>
+    <ul>
+        <li><strong>진료비 분석:</strong> 청구 내역을 기간·항목별로 살펴 이상 패턴과 개선 지점 확인</li>
+        <li><strong>청구·심사 업무:</strong> 청구 명세와 심사 결과를 비교해 재청구 검토 대상 정리</li>
+        <li><strong>적정성평가·인증 준비:</strong> 평가와 인증에 필요한 자료 항목과 준비 순서 안내</li>
+    </ul>
+
+    <p class="small text-muted">위 탭(병의원·요양병원·한방병원)에서 기관 유형에 맞는 안내를 확인하세요. 본 페이지는 일반적인 안내이며, 개별 사안에 대한 법률·행정 판단이 아닙니다.</p>
+</section>
 
 <!-- JavaScript 추가 -->
 <script>

@@ -56,11 +56,11 @@
 </div>
 <!-- [/SEO 본문문구] -->
 <div class="tab-content" style="padding-bottom: 150px;">
-	<div class="tab-pane fade" id="sub-tab1">
+	<div class="tab-pane fade show active" id="sub-tab1">
         <div class="steb-container">
             <div class="chart-wrap">
 			    <section class="content-box text-center position-relative" style="display: inline-block;">				    
-			        <img src="/wnn_consult/images/winct/consult4_1.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
+			        <img src="/wnn_consult/images/winct/consult4_1.svg" class="img-fluid" alt="병원 적정성평가 컨설팅 안내 이미지" style="width: 100%;">				        
  				        <button type="button" class="btn overlay-btn overlay-btn-g1" onclick="fnVisitAsqOpen()"></button> 	
 			    </section>
 			</div>
@@ -71,7 +71,7 @@
         <div class="steb-container">
             <div class="chart-wrap">
 			    <section class="content-box text-center position-relative" style="display: inline-block;">				    
-			        <img src="/wnn_consult/images/winct/consult4_2.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
+			        <img src="/wnn_consult/images/winct/consult4_2.svg" class="img-fluid" alt="요양병원 적정성평가 컨설팅 안내 이미지" style="width: 100%;">				        
 			        <button type="button" class="btn overlay-btn overlay-btn-g2" onclick="fnVisitAsqOpen()"></button> 				        		        
 			    </section>
             </div>
@@ -80,6 +80,21 @@
 	    
     
 </div>
+
+<section class="seo-text container py-4">
+    <h2>요양병원 적정성평가, 월별로 나눠 관리하기</h2>
+    <p>적정성평가는 지표 하나가 실적과 점수에 직접 영향을 줍니다. 위너넷은 평가 자료를 월별로 분석해 지표별 현황과 개선 과제를 정리하고, 평가 대응을 지원합니다.</p>
+
+    <h3>주요 지원 내용</h3>
+    <ul>
+        <li><strong>월별 분석:</strong> 지표별 현황과 전월 대비 변화 확인</li>
+        <li><strong>환자평가표·의무기록 점검:</strong> 평가 자료의 누락과 오류 확인</li>
+        <li><strong>개선 방향 안내:</strong> 점수 향상에 필요한 지표와 실행 항목 정리</li>
+        <li><strong>윈체크 적정성평가 분석:</strong> 프로그램으로 확인할 수 있는 분석 결과 안내</li>
+    </ul>
+
+    <p class="small text-muted">본 페이지는 일반적인 안내이며, 개별 사안에 대한 법률·행정 판단이 아닙니다.</p>
+</section>
 
 <!-- JavaScript -->
 <script>

@@ -52,17 +52,32 @@
 </div>
 <!-- [/SEO 본문문구] -->
 <div class="tab-content" style="padding-bottom: 150px;">
-  <div class="tab-pane fade" id="sub-tab1">
+  <div class="tab-pane fade show active" id="sub-tab1">
        <div class="steb-container">
            <div class="chart-wrap">
                <section class="content-box text-center position-relative" style="display: inline-block;">				    
-			        <img src="/wnn_consult/images/winct/consult2_1.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
+			        <img src="/wnn_consult/images/winct/consult2_1.svg" class="img-fluid" alt="요양병원 재청구·대행청구 컨설팅 안내 이미지" style="width: 100%;">				        
 				    <button type="button" class="btn overlay-btn overlay-btn-f1" onclick="fnVisitAsqOpen()"></button> 	
 			    </section>
            </div>
        </div>
    </div>
 </div>
+
+<section class="seo-text container py-4">
+    <h2>요양병원 재청구·대행청구 지원</h2>
+    <p>청구 누락이나 심사 조정이 생기면 바로 대응해야 할 자료가 많아집니다. 위너넷은 청구 내역과 진료기록을 함께 검토해, 재청구와 이의신청에 필요한 내용을 정리합니다.</p>
+
+    <h3>지원 내용</h3>
+    <ul>
+        <li><strong>청구 내역 검토:</strong> 누락·오류 항목과 심사 조정 내역 확인</li>
+        <li><strong>재청구 준비:</strong> 진료기록과 대조해 재청구 가능 항목 정리</li>
+        <li><strong>이의신청 자료:</strong> 심사 결과에 대한 소명 근거 정리</li>
+        <li><strong>대행청구:</strong> 병원 업무 부담을 줄이기 위한 청구 업무 대행 안내</li>
+    </ul>
+
+    <p class="small text-muted">본 페이지는 일반적인 안내이며, 개별 사안에 대한 법률·행정 판단이 아닙니다.</p>
+</section>
 
 <!-- JavaScript -->
 <script>

@@ -53,17 +53,40 @@
 </div>
 <!-- [/SEO 본문문구] -->
 <div class="tab-content" style="padding-bottom: 150px;">
-    <div class="tab-pane fade" id="sub-tab1">
+    <div class="tab-pane fade show active" id="sub-tab1">
         <div class="steb-container">
             <div class="chart-wrap">				
                 <section class="content-box text-center position-relative" style="display: inline-block;">				    
-			        <img src="/wnn_consult/images/winct/consult5_1.svg" class="img-fluid" alt="WinnerNet Main Image" style="width: 100%;">				        
+			        <img src="/wnn_consult/images/winct/consult5_1.svg" class="img-fluid" alt="요양기관 현지조사 컨설팅 안내 이미지" style="width: 100%;">				        
  				        <button type="button" class="btn overlay-btn overlay-btn-h1" onclick="fnVisitAsqOpen()"></button> 	
 			    </section>
+
             </div>
         </div>
     </div>
 </div>
+
+<section class="seo-text container py-4">
+                <h2>요양기관 현지조사, 사전 준비가 결과를 좌우합니다</h2>
+                <p>요양기관 현지조사는 건강보험심사평가원, 국민건강보험공단, 보건복지부 등이 진료기록과 청구자료를 확인하는 절차입니다. 조사 통보를 받은 뒤 급하게 준비하기보다, 평소에 청구와 기록이 맞는지 점검해 두는 것이 중요합니다.</p>
+
+                <h3>위너넷 현지조사 컨설팅이 돕는 일</h3>
+                <ul>
+                    <li><strong>사전 점검:</strong> 진료기록부·경과기록·처방·검사 내역과 요양급여 청구명세서가 일치하는지 확인</li>
+                    <li><strong>인력 근무 실태 점검:</strong> 신고 인력의 근무 기록과 직종별 업무 분장 확인</li>
+                    <li><strong>조사 준비:</strong> 조사 대상 기간과 요청 자료 목록 정리, 원본 기록 보존 안내</li>
+                    <li><strong>조사 이후 대응:</strong> 사실확인서 검토, 처분 사전통지 의견 제출 자료 정리</li>
+                </ul>
+
+                <h3>이런 병원에 필요합니다</h3>
+                <ul>
+                    <li>현지조사 통보를 받았거나 곧 받을 것으로 예상되는 병원</li>
+                    <li>청구 내역과 기록이 맞는지 정기적으로 점검하고 싶은 병원</li>
+                    <li>처분 통지 후 소명 자료를 준비해야 하는 병원</li>
+                </ul>
+
+                <p class="small text-muted">본 페이지는 일반적인 안내이며, 개별 사안에 대한 법률·행정 판단이 아닙니다.</p>
+            </section>
 
 <!-- JavaScript -->
 <script>
