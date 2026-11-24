@@ -51,19 +51,6 @@
 청구 삭감이나 누락, 재청구 업무 부담으로 고민 중인 요양병원을 위해 청구자료와 진료기록을 검토하고 재청구·이의신청 및 대행청구 실무를 지원합니다.
 </div>
 <!-- [/SEO 본문문구] -->
-<div class="tab-content" style="padding-bottom: 150px;">
-  <div class="tab-pane fade show active" id="sub-tab1">
-       <div class="steb-container">
-           <div class="chart-wrap">
-               <section class="content-box text-center position-relative" style="display: inline-block;">				    
-			        <img src="/wnn_consult/images/winct/consult2_1.svg" class="img-fluid" alt="요양병원 재청구·대행청구 컨설팅 안내 이미지" style="width: 100%;">				        
-				    <button type="button" class="btn overlay-btn overlay-btn-f1" onclick="fnVisitAsqOpen()"></button> 	
-			    </section>
-           </div>
-       </div>
-   </div>
-</div>
-
 <section class="seo-text container py-4">
     <h2>요양병원 재청구·대행청구 지원</h2>
     <p>청구 누락이나 심사 조정이 생기면 바로 대응해야 할 자료가 많아집니다. 위너넷은 청구 내역과 진료기록을 함께 검토해, 재청구와 이의신청에 필요한 내용을 정리합니다.</p>
@@ -78,6 +65,20 @@
 
     <p class="small text-muted">본 페이지는 일반적인 안내이며, 개별 사안에 대한 법률·행정 판단이 아닙니다.</p>
 </section>
+
+<div class="tab-content" style="padding-bottom: 150px;">
+  <div class="tab-pane fade show active" id="sub-tab1">
+       <div class="steb-container">
+           <div class="chart-wrap">
+               <section class="content-box text-center position-relative" style="display: inline-block;">				    
+			        <img src="/wnn_consult/images/winct/consult2_1.svg" class="img-fluid" alt="요양병원 재청구·대행청구 컨설팅 안내 이미지" style="width: 100%;">				        
+				    <button type="button" class="btn overlay-btn overlay-btn-f1" onclick="fnVisitAsqOpen()"></button> 	
+			    </section>
+           </div>
+       </div>
+   </div>
+</div>
+
 
 <!-- JavaScript -->
 <script>

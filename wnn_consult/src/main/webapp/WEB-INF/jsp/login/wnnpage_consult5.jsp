@@ -52,20 +52,6 @@
 요양기관 현지조사를 앞두고 준비 절차나 자료 점검이 필요한 병원을 위해 진료기록과 청구자료를 살펴보고 조사 준비와 대응 실무를 지원합니다.
 </div>
 <!-- [/SEO 본문문구] -->
-<div class="tab-content" style="padding-bottom: 150px;">
-    <div class="tab-pane fade show active" id="sub-tab1">
-        <div class="steb-container">
-            <div class="chart-wrap">				
-                <section class="content-box text-center position-relative" style="display: inline-block;">				    
-			        <img src="/wnn_consult/images/winct/consult5_1.svg" class="img-fluid" alt="요양기관 현지조사 컨설팅 안내 이미지" style="width: 100%;">				        
- 				        <button type="button" class="btn overlay-btn overlay-btn-h1" onclick="fnVisitAsqOpen()"></button> 	
-			    </section>
-
-            </div>
-        </div>
-    </div>
-</div>
-
 <section class="seo-text container py-4">
                 <h2>요양기관 현지조사, 사전 준비가 결과를 좌우합니다</h2>
                 <p>요양기관 현지조사는 건강보험심사평가원, 국민건강보험공단, 보건복지부 등이 진료기록과 청구자료를 확인하는 절차입니다. 조사 통보를 받은 뒤 급하게 준비하기보다, 평소에 청구와 기록이 맞는지 점검해 두는 것이 중요합니다.</p>
@@ -87,6 +73,21 @@
 
                 <p class="small text-muted">본 페이지는 일반적인 안내이며, 개별 사안에 대한 법률·행정 판단이 아닙니다.</p>
             </section>
+
+<div class="tab-content" style="padding-bottom: 150px;">
+    <div class="tab-pane fade show active" id="sub-tab1">
+        <div class="steb-container">
+            <div class="chart-wrap">				
+                <section class="content-box text-center position-relative" style="display: inline-block;">				    
+			        <img src="/wnn_consult/images/winct/consult5_1.svg" class="img-fluid" alt="요양기관 현지조사 컨설팅 안내 이미지" style="width: 100%;">				        
+ 				        <button type="button" class="btn overlay-btn overlay-btn-h1" onclick="fnVisitAsqOpen()"></button> 	
+			    </section>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- JavaScript -->
 <script>
