@@ -22,16 +22,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
-  <title>병원·요양병원 컨설팅 | 위너넷 컨설팅</title>
-  <meta name="description" content="위너넷의 병원 및 요양병원 컨설팅을 소개하는 페이지입니다.">
+  <title>요양병원 적정성평가 컨설팅 | 월분석·지표 관리 | 위너넷</title>
+  <meta name="description" content="요양병원 입원급여 적정성평가 자료와 환자평가표·의무기록을 분석해 지표별 현황과 개선 과제를 안내하고, 월별 점검과 평가 대응을 지원합니다.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://winner797.co.kr/wnn_consult/login/wnnpage_consult4.do">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="위너넷">
-  <meta property="og:title" content="병원·요양병원 컨설팅 | 위너넷 컨설팅">
-  <meta property="og:description" content="위너넷의 병원 및 요양병원 컨설팅을 소개하는 페이지입니다.">
+  <meta property="og:title" content="요양병원 적정성평가 컨설팅 | 월분석·지표 관리 | 위너넷">
+  <meta property="og:description" content="요양병원 입원급여 적정성평가 자료와 환자평가표·의무기록을 분석해 지표별 현황과 개선 과제를 안내하고, 월별 점검과 평가 대응을 지원합니다.">
   <meta property="og:url" content="https://winner797.co.kr/wnn_consult/login/wnnpage_consult4.do">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"병원·요양병원 컨설팅","serviceType":"컨설팅","description":"위너넷의 병원 및 요양병원 컨설팅을 소개하는 페이지입니다.","url":"https://winner797.co.kr/wnn_consult/login/wnnpage_consult4.do","provider":{"@type":"Organization","name":"위너넷","url":"https://winner797.co.kr/wnn_consult/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"병원·요양병원 컨설팅","serviceType":"컨설팅","description":"요양병원 입원급여 적정성평가 자료와 환자평가표·의무기록을 분석해 지표별 현황과 개선 과제를 안내하고, 월별 점검과 평가 대응을 지원합니다.","url":"https://winner797.co.kr/wnn_consult/login/wnnpage_consult4.do","provider":{"@type":"Organization","name":"위너넷","url":"https://winner797.co.kr/wnn_consult/"}}</script>
 
 <style>
 .tab-content {
@@ -50,6 +50,11 @@
         <a class="stab-link active" id="tab2" data-bs-toggle="tab" href="#sub-tab2" onclick="changeTab(event, 'sub-tab1')">요양병원컨설팅</a>
     </li>
 </ul>
+<!-- [SEO 본문문구] 마케팅 회신 H열 문구 - 원복하려면 이 주석 두 개 사이를 지우세요 -->
+<div class="wnn-intro" style="padding:18px 24px 6px;font-size:17px;line-height:1.7;font-weight:700;color:#111;">
+적정성평가 점수와 지표를 관리하고 싶은 요양병원을 위해 월별 분석, 환자평가표·의무기록 점검, 평가자료 오류 확인 및 개선 방향을 안내합니다. 윈체크 적정성평가 프로그램을 통한 분석도 확인할 수 있습니다.
+</div>
+<!-- [/SEO 본문문구] -->
 <div class="tab-content" style="padding-bottom: 150px;">
 	<div class="tab-pane fade" id="sub-tab1">
         <div class="steb-container">

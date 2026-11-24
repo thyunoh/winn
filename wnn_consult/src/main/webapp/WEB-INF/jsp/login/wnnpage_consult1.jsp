@@ -22,16 +22,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
-  <title>병의원·요양병원·한방병원 컨설팅 | 위너넷 컨설팅</title>
-  <meta name="description" content="위너넷의 병의원, 요양병원, 한방병원 컨설팅을 소개하는 페이지입니다.">
+  <title>병원·요양병원·한방병원 컨설팅 | 위너넷</title>
+  <meta name="description" content="병원·요양병원·한방병원의 진료비 분석과 청구·심사 업무를 지원합니다. 기관 상황에 맞춰 재청구, 적정성평가, 인증 등 필요한 컨설팅을 안내합니다.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://winner797.co.kr/wnn_consult/login/wnnpage_consult1.do">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="위너넷">
-  <meta property="og:title" content="병의원·요양병원·한방병원 컨설팅 | 위너넷 컨설팅">
-  <meta property="og:description" content="위너넷의 병의원, 요양병원, 한방병원 컨설팅을 소개하는 페이지입니다.">
+  <meta property="og:title" content="병원·요양병원·한방병원 컨설팅 | 위너넷">
+  <meta property="og:description" content="병원·요양병원·한방병원의 진료비 분석과 청구·심사 업무를 지원합니다. 기관 상황에 맞춰 재청구, 적정성평가, 인증 등 필요한 컨설팅을 안내합니다.">
   <meta property="og:url" content="https://winner797.co.kr/wnn_consult/login/wnnpage_consult1.do">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"병의원·요양병원·한방병원 컨설팅","serviceType":"컨설팅","description":"위너넷의 병의원, 요양병원, 한방병원 컨설팅을 소개하는 페이지입니다.","url":"https://winner797.co.kr/wnn_consult/login/wnnpage_consult1.do","provider":{"@type":"Organization","name":"위너넷","url":"https://winner797.co.kr/wnn_consult/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"병의원·요양병원·한방병원 컨설팅","serviceType":"컨설팅","description":"병원·요양병원·한방병원의 진료비 분석과 청구·심사 업무를 지원합니다. 기관 상황에 맞춰 재청구, 적정성평가, 인증 등 필요한 컨설팅을 안내합니다.","url":"https://winner797.co.kr/wnn_consult/login/wnnpage_consult1.do","provider":{"@type":"Organization","name":"위너넷","url":"https://winner797.co.kr/wnn_consult/"}}</script>
 
 <style>
 .tab-content {
@@ -54,7 +54,12 @@
 	</ul>
 	
 	<!-- 콘텐츠 영역 -->
-	<div class="tab-content" style="padding-bottom: 150px;">
+	<!-- [SEO 본문문구] 마케팅 회신 H열 문구 - 원복하려면 이 주석 두 개 사이를 지우세요 -->
+<div class="wnn-intro" style="padding:18px 24px 6px;font-size:17px;line-height:1.7;font-weight:700;color:#111;">
+병원 운영 중 진료비 청구나 심사, 적정성평가, 인증 준비에 어려움이 있다면 기관 상황에 맞는 컨설팅을 확인해 보세요. 위너넷이 의료기관별 실무 과제를 함께 점검합니다.
+</div>
+<!-- [/SEO 본문문구] -->
+<div class="tab-content" style="padding-bottom: 150px;">
 	    <div class="tab-pane fade" id="sub-tab1">
 	        <div class="steb-container">
 	            <div class="chart-wrap">
