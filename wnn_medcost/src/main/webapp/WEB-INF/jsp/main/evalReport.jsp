@@ -1484,7 +1484,9 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
           예상 구간 = 지표 정의(TPL_DEF 07)의 기관 처방률 참고 기준 : 10% 이하 5점 · 40% 이상 1점 · 그 사이 3점.
           가중치 = SP 와 같게 TRUNCATE(구간 ÷ 5 × 가중치, 2). */
   function isPsyNoSam(r){
-    return !!r && r.cate_cd==='07' && n(r.ntorval)===0 && Math.abs(n(r.cal_val)-30)<0.001 && n(r.s_score)===3;
+    if (!r || r.cate_cd!=='07' || n(r.ntorval)!==0) return false;
+    /* [2026-11-26] 신규 저장 방식 = 분모 0 행(청구 미업로드 → 7~전월 누적으로 산정). 옛 방식 = 30%·3점 고정(7월 등 누적 없는 달). */
+    return n(r.dtorval)===0 ? n(r.cal_val)>0 : (Math.abs(n(r.cal_val)-30)<0.001 && n(r.s_score)===3);
   }
   function psyZoneOfRate(rate){ rate=n(rate); return rate<=10 ? 5 : (rate>=40 ? 1 : 3); }
   function psyZoneRangeTxt(z){ return z===5 ? '10% 이하' : (z===1 ? '40% 이상' : '10~40% 미만'); }
@@ -1502,6 +1504,8 @@ jQuery(function(){   // $(document).ready — top.jsp 전역(hospid/hospnm)·jQu
   }
   function psyNoSamAna(r){
     var w=n(r.stdweig), got=n(r.weigval), s=n(r.s_score)||3;
+    /* [2026-11-26] 신규 방식 — 청구 미업로드 달은 7~전월 누적 처방률(cal_val)로 산정한 결과를 그대로 적는다(경고 줄 없음: 향후 반영 가정이 없다). */
+    if (n(r.dtorval)===0 && !(Math.abs(n(r.cal_val)-30)<0.001 && n(r.s_score)===3)) return '<b>'+psyAnaDate()+'일 분석일 기준 청구 SAM 파일 미 업로드 상태로, 7월~전월 누적 항정신성의약품 처방률 '+f1(n(r.cal_val))+'%를 기준으로 표준화 '+s+'점, 가중치 '+f1(got)+'점으로 산정함.</b>';
     var html = '<b>'+psyAnaDate()+'일 분석일 기준 청구 SAM 파일 미 업로드 상태로 표준화 '+s+'점, 가중치 '+f1(got)+'점으로 산정함.</b>';
     var p = _psyPrevSp || _psyPrev;                       // 등록 SP 합산(점수와 같은 환자 수 기준) 우선, 없으면(7월 보고서) 목록 ● 기준
     if (!p || !(n(p.d)>0)) return html;                       // 앞달 실측이 없으면 경고 줄은 생략

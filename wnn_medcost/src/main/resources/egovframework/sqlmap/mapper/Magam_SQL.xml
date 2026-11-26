@@ -5159,8 +5159,10 @@
                         WHEN (ROUND(SUM(main.NTORVAL), 2) / ROUND(SUM(main.DTORVAL), 2) * 100) > MAX(w.END_INDI)    THEN CONCAT('-', CEIL(ROUND(SUM(main.NTORVAL), 2) - MAX(w.END_INDI) * ROUND(SUM(main.DTORVAL), 2) / 100),'명')
                         ELSE  '' END AS  fiveZone
                         
-		         , ROUND(EVALUATION_INDICATORS_VALUE('1',main.CATE_CD,MAX(main.JOBYYMM),SUM(main.DTORVAL),SUM(main.NTORVAL)), 2) AS cal_avg  -- ROUND(AVG(main.CAL_VAL), 2) AS cal_avg
-		         , ROUND(EVALUATION_INDICATORS_VALUE('2',main.CATE_CD,MAX(main.JOBYYMM),SUM(main.DTORVAL),SUM(main.NTORVAL)), 2) AS weigavg  -- ROUND(AVG(main.WEIGVAL), 2) AS weigavg
+		         , CASE WHEN main.CATE_CD = '07' AND SUM(main.DTORVAL) = 0 THEN ROUND(MAX(main.CAL_VAL), 2)
+		                  ELSE ROUND(EVALUATION_INDICATORS_VALUE('1',main.CATE_CD,MAX(main.JOBYYMM),SUM(main.DTORVAL),SUM(main.NTORVAL)), 2) END AS cal_avg  -- ROUND(AVG(main.CAL_VAL), 2) AS cal_avg
+		         , CASE WHEN main.CATE_CD = '07' AND SUM(main.DTORVAL) = 0 THEN ROUND(MAX(main.WEIGVAL), 2)
+		                  ELSE ROUND(EVALUATION_INDICATORS_VALUE('2',main.CATE_CD,MAX(main.JOBYYMM),SUM(main.DTORVAL),SUM(main.NTORVAL)), 2) END AS weigavg  -- ROUND(AVG(main.WEIGVAL), 2) AS weigavg
 		         , main.CATE_CD AS cate_cd
 		    FROM TBL_PAT_INDI main
 		    JOIN (SELECT wm.*
