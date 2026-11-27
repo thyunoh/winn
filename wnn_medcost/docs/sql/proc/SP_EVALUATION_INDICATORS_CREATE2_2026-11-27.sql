@@ -683,6 +683,12 @@ BEGIN
 			                         AND b.DOC_DT             = a.DOC_DT )
 			            )
 			       )
+					   AND NOT EXISTS (SELECT 1
+			                     FROM TBL_PATVAL_MST x
+			                    WHERE x.HOSP_CD  = a.HOSP_CD
+			                      AND x.PAT_ID   = a.PAT_ID
+			                      AND x.MED_START LIKE CONCAT(pre_month, '%')
+			                      AND x.DOC_DT   = a.DOC_DT)  /* [2026-11-27] 전월·당월 작성일 동일 → 입원일·평가구분 무관 제외 */
 		),
 		previousmonth AS (
 		    SELECT b.PAT_ID AS patId
@@ -846,13 +852,6 @@ BEGIN
 		  INTO dtorvalue, ntorvalue
 		  FROM current_month cm
 		  JOIN previousmonth pm ON cm.patId = pm.patId
-                       /* [2026-11-27] 전월·당월 작성일(DOC_DT)이 같으면 입원일·평가구분과 무관하게 개선 대상 제외 */
-                       AND NOT EXISTS (SELECT 1
-                                         FROM TBL_PATVAL_MST x
-                                        WHERE x.HOSP_CD      = hosp_cd
-                                          AND x.PAT_ID       = cm.patId
-                                          AND x.MED_START LIKE CONCAT(pre_month, '%')
-                                          AND x.DOC_DT       = cm.docDt)
 		                       /* [2026-10-01] 전월 평가표와 이어지는 입원만 */
 		                       AND FN_ADMIT_CONT(hosp_cd, cm.patId, cm.patNm, pm.admitDt, pm.medStart, cm.admitDt) = 'Y' COLLATE utf8mb4_0900_ai_ci;
 
