@@ -2206,7 +2206,12 @@
 			 , cm.curtStep4
 			 
 			 <![CDATA[
-			 , CASE WHEN /* 악화 조건 충족, 개선 조건 충족 */
+			 , CASE WHEN EXISTS (SELECT 1 FROM TBL_PATVAL_MST x
+				                               WHERE x.HOSP_CD = #{hospCd}
+				                                 AND x.PAT_ID = cm.patId
+				                                 AND x.MED_START LIKE CONCAT(DATE_FORMAT(DATE_SUB(CONCAT(#{jobYymm}, '01'), INTERVAL 1 MONTH), '%Y%m'), '%')
+				                                 AND x.DOC_DT = cm.docDt) THEN '2' /* [2026-11-27] 전월·당월 작성일 동일 → 제외(입원일 무관) */
+				 WHEN /* 악화 조건 충족, 개선 조건 충족 */
 			            ((pm.prevStep2 + pm.prevStep3 + pm.prevStep4) < (cm.curtStep2 + cm.curtStep3 + cm.curtStep4)
 			             OR 
 			             CASE
